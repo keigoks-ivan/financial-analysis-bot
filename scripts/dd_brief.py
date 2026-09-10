@@ -843,7 +843,23 @@ def _fallback_parse_audit(text):
     return {"red": red, "yellow_rows": yellow_rows}
 
 
-def _audit_counts(text):
+def _audit_counts(audit_path, text=None):
+    """判斷級🔴／🟡計數。優先用`dd_gate.parse_audit`的結構化 red／yellow
+    （表格或散文雙路徑解析、排除標「不計」的列、首行「判斷級🔴=N」與逐條計數
+    不符時印 WARNING 但仍以首行為準——這套邏輯本來就在`dd_gate.py`，這裡不
+    重寫）；`dd_gate`不可用或解析失敗才退回舊regex——舊regex只認得到阿拉伯
+    數字摘要句(如「🟡=4」)，抓不到中文數字摘要(「🟡 三項」)或沒有摘要句只有
+    表格的檔，2026-09-11 WP-G 修（TXN 成對驗證抓到首屏🟡顯示破折號）。"""
+    if dd_gate is not None and hasattr(dd_gate, "parse_audit") and audit_path:
+        try:
+            parsed = dd_gate.parse_audit(str(audit_path))
+            return (str(parsed["red"]), str(parsed["yellow"]))
+        except Exception:
+            pass
+    if text is None:
+        if not audit_path or not Path(audit_path).exists():
+            return (None, None)
+        text = Path(audit_path).read_text(encoding="utf-8")
     red = re.search(r"🔴\s*[=＝]?\s*(\d+)", text)
     yellow = re.search(r"🟡\s*[=＝]?\s*(\d+)", text)
     return (red.group(1) if red else None, yellow.group(1) if yellow else None)
@@ -853,7 +869,7 @@ def render_gate_yellow(audit_path):
     if not audit_path or not Path(audit_path).exists():
         return "<p>—（本次未提供 gate audit）</p>"
     text = Path(audit_path).read_text(encoding="utf-8")
-    red, yellow = _audit_counts(text)
+    red, yellow = _audit_counts(audit_path, text)
     summary = f"<p>跨模型冷讀：判斷級 🔴 {dash(red)}、🟡 {dash(yellow)}</p>"
     if dd_gate is not None and hasattr(dd_gate, "parse_audit"):
         try:
@@ -879,7 +895,7 @@ def _audit_summary_line(audit_path):
     if not audit_path or not Path(audit_path).exists():
         return "—（本次未提供 gate audit）"
     text = Path(audit_path).read_text(encoding="utf-8")
-    red, yellow = _audit_counts(text)
+    red, yellow = _audit_counts(audit_path, text)
     return f"opus 抽查：判斷級 🔴 {dash(red)}、🟡 {dash(yellow)}"
 
 

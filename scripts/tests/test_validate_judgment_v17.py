@@ -166,12 +166,25 @@ _SRC_CASES = [
 ]
 
 
+# WP-G（2026-09-11）：J2 scenario_ref／scenario_meta.json sidecar 接線修好後
+# （原本讀錯檔，valuation_dependent 恆為 None、檢查形同沒接線），這兩份既有
+# 存查真的被驗出 scenario_meta.valuation_dependent 與 decision_inputs 同名欄
+# 不一致——是 J2 現在真的跑起來後揭露的既有資料缺口，不是本次新引入的迴歸，
+# 不放寬檢查去遷就存量檔（回報見交付訊息）。
+_KNOWN_J2_VALUATION_DEPENDENT_MISMATCH = {"BE_20260905", "PANW_20260904"}
+
+
 @pytest.mark.parametrize("subdir,fname", _SRC_CASES)
 def test_src_judgment_zero_fail(subdir, fname):
     path = NOTES_SRC / subdir / fname
     if not path.exists():
         pytest.skip(f"fixture 不存在：{path}")
     fails, _warns = vj.validate_file(path, None, j1_warn=False)
+    if subdir in _KNOWN_J2_VALUATION_DEPENDENT_MISMATCH:
+        assert fails and all("valuation_dependent" in f for f in fails), (
+            f"{fname} 出現非預期 FAIL（不只是已知的 J2 valuation_dependent 缺口）：{fails}"
+        )
+        return
     assert fails == [], f"{fname} 出現非預期 FAIL：{fails}"
 
 
@@ -240,7 +253,19 @@ def _src_judgment(name="BE_20260905"):
     path = NOTES_SRC / name / f"{name}.judgment.json"
     if not path.exists():
         pytest.skip(f"fixture 不存在：{path}")
-    return json.loads(path.read_text(encoding="utf-8"))
+    data = json.loads(path.read_text(encoding="utf-8"))
+    # WP-G（2026-09-11）：val_denominator_note_checks() 只在新格式檔（premortem
+    # 已是 view 分組的 blind_spots）生效——BE/PANW 這兩份既有存查本身是舊格式，
+    # 平時不會踩這條新規則，但本檔多個測試會把 premortem 手動改造成新格式來測
+    # 反證三視角，改造後若 decision_inputs.val_denominator_disputed 剛好有值
+    # （BE/PANW 皆為 False）就會意外新增一條與被測邏輯無關的 val_denominator_note
+    # FAIL。這裡補一句依據，讓這批「刻意造成新格式」的測試繼續只測它們原本要
+    # 測的東西；真正驗證 val_denominator_note 規則本身的測試見下方
+    # test_val_denominator_note_*。
+    di = data.get("decision_inputs") or {}
+    if di.get("val_denominator_disputed") is not None and not di.get("val_denominator_note"):
+        di["val_denominator_note"] = "測試 fixture 補值：不驗證此欄語意，僅避免與本檔無關的 FAIL"
+    return data
 
 
 @pytest.mark.parametrize("top,key", [
@@ -503,3 +528,277 @@ def test_v18_fixture_really_is_the_slim_shape():
 def test_v18_j4_plain_checks_accept_six_without_five():
     warns = vj.j4_plain_checks(json.loads(V18_FIXTURE.read_text(encoding="utf-8")))
     assert warns == [], warns
+
+
+# ---------------------------------------------------------------------------
+# WP-G（2026-09-11）item 1：scenario_ref 相對路徑解析＋J2 真的跑完
+#
+# Codex 第三輪複審抓到：v17/v18 run 目錄慣例把 scenario_ref 寫成相對 repo
+# root 的路徑（如 `.dd_build/runs/TXN_20260910/scenario.json`），舊版
+# `_load_scenario_meta_for_j2` 一律把相對路徑接在 judgment 所在目錄後面，拼
+# 出不存在的重複目錄，J2 直接整段回「略過」；另有獨立的接線洞——J2 讀的是
+# scenario_ref 指向的 scenario.json（dd_scenario.py 的輸入，沒有
+# bear_5y_price／irr_base_pct／scenario_tree 這些算出來的欄），不是
+# scenario_meta.json（dd_scenario.py 的輸出 sidecar）。
+# ---------------------------------------------------------------------------
+
+def test_resolve_scenario_ref_path_absolute_used_directly(tmp_path):
+    f = tmp_path / "scenario.json"
+    f.write_text("{}", encoding="utf-8")
+    resolved = vj._resolve_scenario_ref_path(str(f), tmp_path / "judgment.json")
+    assert resolved == f
+
+
+def test_resolve_scenario_ref_path_tries_repo_root_first(tmp_path):
+    """相對路徑優先以 repo root 解析——用一個真實存在、repo root 相對路徑
+    但在 judgment 所在目錄底下找不到的既有檔案，驗證回傳的是 repo-root 候選。"""
+    rel = "scripts/dd_schema/judgment.schema.json"
+    judgment_path = tmp_path / "somewhere" / "judgment.json"  # 底下沒有這個相對路徑
+    resolved = vj._resolve_scenario_ref_path(rel, judgment_path)
+    assert resolved == (vj.ROOT / rel)
+
+
+def test_resolve_scenario_ref_path_falls_back_to_judgment_dir(tmp_path):
+    """repo root 找不到、judgment 所在目錄相對路徑存在時退回該路徑（相容
+    notes/site-internal/dd/_src 既有存查把 scenario_ref 寫成相對 judgment 檔
+    自身位置的慣例）。"""
+    scen = tmp_path / "scenario.json"
+    scen.write_text("{}", encoding="utf-8")
+    judgment_path = tmp_path / "judgment.json"
+    resolved = vj._resolve_scenario_ref_path("scenario.json", judgment_path)
+    assert resolved == scen
+
+
+def test_resolve_scenario_ref_path_none_when_neither_exists(tmp_path):
+    resolved = vj._resolve_scenario_ref_path(
+        "does/not/exist.json", tmp_path / "judgment.json"
+    )
+    assert resolved is None
+
+
+def _write_j2_fixture(tmp_path, *, irr_mismatch=False):
+    """v17/v18 in-flight run 目錄慣例：judgment.json／scenario.json／
+    scenario_meta.json 三檔同層，scenario_ref 用裸檔名相對路徑（不含 run 目
+    錄自身名稱，因為 judgment 檔跟它同層——TXN_20260910 那種『scenario_ref
+    含 run 目錄名、judgment 也在該 run 目錄』的重複目錄案例由上面三個
+    _resolve_scenario_ref_path 測試涵蓋，這裡專測 J2 拿到 sidecar 後真的執行
+    檢查）。"""
+    run_dir = tmp_path / "TXN_FAKE"
+    run_dir.mkdir()
+    (run_dir / "scenario.json").write_text("{}", encoding="utf-8")
+    scenario_meta = {
+        "bull_5y_price": 560.0, "bear_5y_price": 200.0,
+        "p_bull_pct": 25, "p_bear_pct": 30, "upside_5y_pct": 48.6,
+        "ev5y_pct": 44.7, "irr_base_pct": 20.0 if irr_mismatch else 8.2,
+        "asym_ratio": 4.6,
+        "scenario_tree": {
+            "terminal_label": "FY2031E",
+            "eps": {"bull": [10, 12, 14, 16, 20], "base": [10, 11, 12, 13, 16],
+                    "bear": [9, 8, 7, 6, 10.2]},
+            "valuation_dependent": False,
+        },
+    }
+    (run_dir / "scenario_meta.json").write_text(
+        json.dumps(scenario_meta, ensure_ascii=False), encoding="utf-8"
+    )
+    judgment_path = run_dir / "judgment.json"
+    data = {
+        "scenario_ref": "scenario.json",
+        "decision_inputs": {"price_at_dd": 258.44, "irr_base_pct": 8.2, "ev5y_pct": 44.7,
+                              "valuation_dependent": False},
+        "premortem": {"max_dd": {"lo": -45}},
+        "eps_meta": {"base_eps_path": {"FY2026": 8.49}},
+        "meta": {"date": "2026-09-10"},
+    }
+    judgment_path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    return judgment_path, data
+
+
+def test_j2_loads_sidecar_not_scenario_input(tmp_path):
+    """`_load_scenario_meta_for_j2` 回傳的必須是 scenario_meta.json（有
+    bear_5y_price／scenario_tree），不是 scenario_ref 指向的 scenario.json
+    （沒有這些欄）；且不再回「略過」訊息。"""
+    judgment_path, data = _write_j2_fixture(tmp_path)
+    sref, warn = vj._load_scenario_meta_for_j2(data, judgment_path)
+    assert warn is None, warn
+    assert sref is not None
+    assert sref.get("bear_5y_price") == 200.0
+    assert sref.get("scenario_tree", {}).get("terminal_label") == "FY2031E"
+
+
+def test_j2_math_checks_really_executes_and_catches_mismatch(tmp_path):
+    """J2 拿到正確的 sidecar 後，Max DD 恆等式／irr_base_pct 對帳等檢查要真
+    的跑——用一個刻意不一致的 irr_base_pct 觸發 FAIL，證明不是靜默 no-op。"""
+    judgment_path, data = _write_j2_fixture(tmp_path, irr_mismatch=True)
+    fails, warns = vj.j2_math_checks(data, judgment_path)
+    assert any("irr_base_pct" in f for f in fails), (fails, warns)
+
+
+def test_j2_math_checks_clean_fixture_passes(tmp_path):
+    judgment_path, data = _write_j2_fixture(tmp_path)
+    fails, warns = vj.j2_math_checks(data, judgment_path)
+    assert fails == [], fails
+
+
+def test_j2_base_eps_path_year_mismatch_is_warn_not_fail(tmp_path):
+    """WP-G：base_eps_path 是三年錨還是完整五年路徑，dd_scenario.py／
+    dd_schema/decision_inputs.md／verify_dd_math.py 三處均未明文契約——語料
+    34 份現行檔 30+ 延伸到終端年，僅 TXN／AVGO 維持三年錨且新舊版一致，非
+    本輪新退化。契約不明前降級為 WARN，不擋。`_write_j2_fixture` 的
+    base_eps_path 只到 FY2026、終端年 FY2031E，年期天然不同，直接驗證這個
+    落差只進 warns、不進 fails。"""
+    judgment_path, data = _write_j2_fixture(tmp_path)
+    fails, warns = vj.j2_math_checks(data, judgment_path)
+    assert not any("年期" in f for f in fails), fails
+    assert any("年期" in w for w in warns), warns
+
+
+# ---------------------------------------------------------------------------
+# WP-G item 2：行動門檻變動必須有理由（threshold_drift_checks，J6）
+# ---------------------------------------------------------------------------
+
+def _threshold_evidence(tmp_path, prior_threshold="&lt;$8"):
+    evidence = {
+        "prior_dd": {
+            "status": "ok",
+            "triggers": {
+                "status": "ok", "format": "table",
+                "rows": [
+                    {"n": "3", "類型": "Single Thing（H1）",
+                     "指標與門檻": prior_threshold},
+                ],
+            },
+        }
+    }
+    p = tmp_path / "evidence.json"
+    p.write_text(json.dumps(evidence, ensure_ascii=False), encoding="utf-8")
+    return p
+
+
+def test_threshold_drift_unattributed_change_fails(tmp_path):
+    ev = _threshold_evidence(tmp_path)
+    data = {
+        "triggers": [{"type": "Single Thing", "threshold": "連 2 季 YoY 轉負"}],
+        "contradictions": [],
+    }
+    fails, warns = vj.threshold_drift_checks(data, ev)
+    assert any("Single Thing" in f for f in fails), (fails, warns)
+
+
+def test_threshold_drift_attributed_change_passes(tmp_path):
+    ev = _threshold_evidence(tmp_path)
+    data = {
+        "triggers": [{"type": "Single Thing", "threshold": "連 2 季 YoY 轉負"}],
+        "contradictions": [{
+            "axis": "唯一致命點改判",
+            "cause": "新證據",
+            "side_a": "舊：FCF/share <$8",
+            "side_b": "新：工業＋車用連 2 季 YoY 轉負（理由：管理層 Q2 指出 FCF 已由谷底回升，工業/車用去庫存才是 Y5 EPS 最大敏感度）",
+        }],
+    }
+    fails, warns = vj.threshold_drift_checks(data, ev)
+    assert fails == [], fails
+
+
+def test_threshold_drift_non_1to1_is_warn_not_fail(tmp_path):
+    """前份或本次不是剛好一列（此例本次兩列 Single Thing）——比不出來，只
+    WARN 不猜、不 FAIL。"""
+    ev = _threshold_evidence(tmp_path)
+    data = {
+        "triggers": [
+            {"type": "Single Thing", "threshold": "連 2 季 YoY 轉負"},
+            {"type": "Single Thing", "threshold": "另一條"},
+        ],
+        "contradictions": [],
+    }
+    fails, warns = vj.threshold_drift_checks(data, ev)
+    assert fails == []
+    assert any("非 1:1" in w for w in warns), warns
+
+
+def test_threshold_drift_unchanged_text_is_clean(tmp_path):
+    ev = _threshold_evidence(tmp_path, prior_threshold="&lt;$8")
+    data = {
+        "triggers": [{"type": "Single Thing", "threshold": "<$8"}],
+        "contradictions": [],
+    }
+    fails, warns = vj.threshold_drift_checks(data, ev)
+    # fixture 沒有「清倉」列（前份與本次皆 0 列），該型別合法落 WARN「比不出
+    # 來」；Single Thing 門檻文字正規化後相同才是本測重點：不進 fails。
+    assert fails == []
+    assert not any("Single Thing" in w for w in warns), warns
+
+
+# ---------------------------------------------------------------------------
+# WP-G item 5：val_denominator_note 完整性
+# ---------------------------------------------------------------------------
+
+def _new_format_premortem():
+    return {
+        "blind_spots": [
+            {"view": v, "evidence": "x"} for v in vj._COUNTER_VIEWS
+        ],
+    }
+
+
+def test_val_denominator_note_missing_fails_new_format():
+    data = {
+        "premortem": _new_format_premortem(),
+        "decision_inputs": {"val_denominator_disputed": False},
+    }
+    fails = vj.val_denominator_note_checks(data)
+    assert any("val_denominator_note" in f for f in fails), fails
+
+
+def test_val_denominator_note_present_passes():
+    data = {
+        "premortem": _new_format_premortem(),
+        "decision_inputs": {
+            "val_denominator_disputed": False,
+            "val_denominator_note": "trailing 受谷底 EPS 污染改採 forward，FY2026E 成長假設本身非本次爭點",
+        },
+    }
+    fails = vj.val_denominator_note_checks(data)
+    assert fails == []
+
+
+def test_val_denominator_note_not_checked_for_old_format():
+    """舊格式（有 failure_story，blind_spots 純字串）不受本檢查影響，即使
+    disputed 有值也不 FAIL——只驗新格式檔。"""
+    data = {
+        "premortem": {"failure_story": "x", "blind_spots": ["純字串反證"]},
+        "decision_inputs": {"val_denominator_disputed": False},
+    }
+    fails = vj.val_denominator_note_checks(data)
+    assert fails == []
+
+
+def test_val_denominator_disputed_absent_no_fail():
+    data = {
+        "premortem": _new_format_premortem(),
+        "decision_inputs": {},
+    }
+    fails = vj.val_denominator_note_checks(data)
+    assert fails == []
+
+
+# ---------------------------------------------------------------------------
+# WP-G item 4：trap_analysis.evidence_for／evidence_against 反向引用提醒
+# ---------------------------------------------------------------------------
+
+def test_trap_analysis_evidence_for_warns_on_new_format():
+    data = {
+        "premortem": _new_format_premortem(),
+        "trap_analysis": {"verdict": "🟢", "evidence_for": "2 盞衰退信號皆為週期所致"},
+    }
+    warns = vj.trap_analysis_redundancy_checks(data)
+    assert any("evidence_for" in w for w in warns), warns
+
+
+def test_trap_analysis_empty_fields_no_warn():
+    data = {
+        "premortem": _new_format_premortem(),
+        "trap_analysis": {"verdict": "🟢", "label": "非陷阱"},
+    }
+    warns = vj.trap_analysis_redundancy_checks(data)
+    assert warns == []

@@ -79,6 +79,20 @@ Two layers:
       evidence 或 assumption，或該條有非空 not_applicable_reason（合法「不
       適用」出口）。舊格式（有 failure_story 且 blind_spots 為純字串）不受
       影響。
+  11. J6 行動門檻變動必須有理由（FAIL，--evidence 給定才啟用，WP-G
+      2026-09-11）: `triggers[].type ∈ {"Single Thing", "清倉"}`（判斷規則
+      明訂的「唯一居所」型別）前份與本次各剛好一列時，門檻文字（正規化後）
+      不同卻在 `contradictions[]` 找不到 `cause∈{新證據,方法變動}`、
+      `side_a≠side_b`、且提及該型別字樣的對應條目 → FAIL；非 1:1（0 或
+      ≥2 列）比不出來只 WARN，不猜。見 `threshold_drift_checks()`。
+  12. trap_analysis.evidence_for／evidence_against 反向引用提醒（WARN，
+      WP-G 2026-09-11）: 新格式檔（反證唯一居所＝premortem.blind_spots[]）
+      仍手填這兩欄時 WARN，提醒改引用反證紀錄——語意方向是否正確不做機械
+      判斷。見 `trap_analysis_redundancy_checks()`。
+  13. val_denominator_note 完整性（FAIL，WP-G 2026-09-11）: 新格式檔
+      `decision_inputs.val_denominator_disputed` 存在（true 或 false）而
+      `val_denominator_note` 缺或空 → FAIL；理由內容是否充分不做語意審。見
+      `val_denominator_note_checks()`。
 
 Usage:
   python3 scripts/validate_judgment.py FILE.json [--report] [--evidence EVIDENCE.json]
@@ -89,6 +103,7 @@ Exit 0 = no FAIL-level issues (or --report). Exit 1 otherwise.
 from __future__ import annotations
 
 import argparse
+import html as html_lib
 import json
 import re
 import sys
@@ -194,6 +209,32 @@ def _strip_parenthetical(s: str) -> str:
     return re.sub(r"[（(].*?[）)]", "", s or "").strip()
 
 
+# ---------------------------------------------------------------------------
+# scenario_ref 路徑解析（WP-G 2026-09-11 修，Codex 第三輪複審 A 項）：原本
+# 相對路徑一律直接接在 judgment 所在目錄後面——v17/v18 run 目錄慣例把
+# scenario_ref 寫成相對 repo root 的路徑（如 `.dd_build/runs/TXN_20260910/
+# scenario.json`，本身已含 run 目錄名），與 judgment_path.parent 相接會拼出
+# 重複目錄、檔案必然不存在，J2／scenario_ref 交叉檢查因此全數「略過」而非
+# 真的跑過。改法：絕對路徑直接用；相對路徑先以 repo root 解析，再以 judgment
+# 所在目錄解析（相容 `notes/site-internal/dd/_src` 底下少數把 scenario_ref
+# 寫成相對 judgment 檔自身位置的既有存查）；兩處都不存在才回傳 None，呼叫端
+# 自行印出清楚的略過訊息。單一權威，cross_field_checks／_load_scenario_meta_
+# for_j2／apply_fixes 三處共用。
+# ---------------------------------------------------------------------------
+
+def _resolve_scenario_ref_path(ref: str, judgment_path: Path) -> Path | None:
+    p = Path(ref)
+    if p.is_absolute():
+        return p if p.exists() else None
+    root_candidate = ROOT / p
+    if root_candidate.exists():
+        return root_candidate
+    dir_candidate = judgment_path.parent / p
+    if dir_candidate.exists():
+        return dir_candidate
+    return None
+
+
 def cross_field_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
     fails, warns = [], []
 
@@ -277,11 +318,12 @@ def cross_field_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
     # scenario-meta artifact; resolved relative to the judgment.json file).
     scenario_ref = data.get("scenario_ref")
     if scenario_ref:
-        ref_path = Path(scenario_ref)
-        if not ref_path.is_absolute():
-            ref_path = judgment_path.parent / scenario_ref
-        if not ref_path.exists():
-            warns.append(f"scenario_ref {scenario_ref!r} 指向的檔案不存在（{ref_path}），略過交叉檢查")
+        ref_path = _resolve_scenario_ref_path(scenario_ref, judgment_path)
+        if ref_path is None:
+            warns.append(
+                f"scenario_ref {scenario_ref!r} 找不到（試過絕對路徑／repo root／"
+                f"judgment 所在目錄），略過交叉檢查"
+            )
         elif dd_scenario is None:
             warns.append("dd_scenario 模組載入失敗，略過 scenario_ref 交叉檢查")
         else:
@@ -400,21 +442,45 @@ def _extract_fy_year(s) -> int | None:
 
 
 def _load_scenario_meta_for_j2(data: dict, judgment_path: Path):
-    """回傳 (scenario_meta_dict_or_None, warn_msg_or_None)。獨立於
-    cross_field_checks 既有的 scenario_ref 解析（不動既有函式），解析規則
-    相同：相對路徑以 judgment 所在目錄為準。"""
+    """回傳 (scenario_meta_dict_or_None, warn_msg_or_None)。
+
+    WP-G 修（2026-09-11，Codex 第三輪複審 A 項）：J2 檢查用到的欄位
+    （bear_5y_price／irr_base_pct／ev5y_pct／scenario_tree 及其巢狀
+    valuation_dependent）活在 dd_scenario.py 的輸出 sidecar
+    `scenario_meta.json`，不在 `scenario_ref` 指向的 `scenario.json`——後者
+    是 dd_scenario.py 的輸入檔，只有 EPS 路徑／終端倍數／機率等原始假設，
+    沒有算出來的六個情境欄。舊版直接把 scenario_ref 指向的檔案當 sref
+    用，這裡的檢查因此全數靜默 no-op（`sref.get("bear_5y_price")` 等一律
+    None）。改法：先用 `_resolve_scenario_ref_path` 確認 scenario_ref 本身
+    可解析（給出清楚的略過訊息），再用既有的
+    `dd_delta._sibling_scenario_meta`（archive 命名
+    `{stem}.scenario_meta.json` 或 in-flight run 目錄同層裸檔名
+    `scenario_meta.json`，單一權威不重寫）找同目錄的 sidecar 供 J2 實際
+    檢查；sidecar 找不到才略過（scenario_ref 本身存在與否只影響訊息用字，
+    不影響 sidecar 尋找——兩者是獨立慣例）。"""
     scenario_ref = data.get("scenario_ref")
     if not scenario_ref:
         return None, "scenario_ref 未填，J2 判斷層恆等式略過"
-    ref_path = Path(scenario_ref)
-    if not ref_path.is_absolute():
-        ref_path = judgment_path.parent / scenario_ref
-    if not ref_path.exists():
-        return None, f"scenario_ref {scenario_ref!r} 指向的檔案不存在（{ref_path}），J2 略過"
+    ref_path = _resolve_scenario_ref_path(scenario_ref, judgment_path)
+    if ref_path is None:
+        return None, (
+            f"scenario_ref {scenario_ref!r} 找不到（試過絕對路徑／repo root／"
+            f"judgment 所在目錄），J2 略過"
+        )
     try:
-        return json.loads(ref_path.read_text(encoding="utf-8")), None
+        import dd_delta  # 延遲載入避免循環 import（dd_delta 頂層 import 本檔）
+    except Exception as e:  # pragma: no cover - defensive
+        return None, f"dd_delta 模組載入失敗（{e}），J2 略過"
+    sidecar = dd_delta._sibling_scenario_meta(judgment_path)
+    if sidecar is None:
+        return None, (
+            f"scenario_ref {ref_path} 存在，但找不到 scenario_meta.json sidecar"
+            f"（dd_delta._sibling_scenario_meta 兩種慣例皆未命中），J2 略過"
+        )
+    try:
+        return json.loads(sidecar.read_text(encoding="utf-8")), None
     except json.JSONDecodeError as e:
-        return None, f"scenario_ref {ref_path}: JSON parse error: {e}"
+        return None, f"scenario_meta sidecar {sidecar}: JSON parse error: {e}"
 
 
 def j2_math_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
@@ -457,8 +523,17 @@ def j2_math_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
                 f"（容忍 {tol}pp）"
             )
 
-    # 情境樹年期：scenario_meta 終端年 vs eps_meta.base_eps_path 終端年；
-    # 與報告年+5 差 >1 年只 WARN（容忍財年錯位，同 verify_dd_math 檢查 B）
+    # 情境樹年期：scenario_meta 終端年 vs eps_meta.base_eps_path 終端年。
+    # WP-G（2026-09-11）：查過 dd_scenario.py／dd_schema/decision_inputs.md／
+    # verify_dd_math.py 三處，皆未定義 base_eps_path 是否必須延伸到情境樹終
+    # 端年——base_eps_path 的既有消費端（snapshot_consensus.py／
+    # build_variance_tracker.py／build_catalyst_page.py）用途是財報季 EPS
+    # 承保比對，只需覆蓋近期財年，不天然要求延伸到 Y5 終端年。語料實測（34
+    # 份現行 judgment.json）：30+ 份延伸到終端年，僅 TXN（三份存查皆同）與
+    # AVGO 維持三年錨且新舊版一致——非本輪新退化，是既有慣例分歧。契約未
+    # 明文前只 WARN 供人工複核，不 FAIL，避免把「未寫死的既有差異」錯判成
+    # 本次退步（與報告年+5 差 >1 年的既有寬容同精神，同 verify_dd_math 檢查
+    # B）。
     scenario_tree = sref.get("scenario_tree") or {}
     term_year = _extract_fy_year(scenario_tree.get("terminal_label"))
     eps_path = (data.get("eps_meta") or {}).get("base_eps_path") or {}
@@ -466,9 +541,11 @@ def j2_math_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
     if term_year and eps_years:
         max_eps_year = max(eps_years)
         if max_eps_year != term_year:
-            fails.append(
-                f"J2｜情境樹年期錯配：scenario_meta.scenario_tree.terminal_label 宣告 "
+            warns.append(
+                f"J2｜情境樹年期提示：scenario_meta.scenario_tree.terminal_label 宣告 "
                 f"FY{term_year}，但 eps_meta.base_eps_path 終端年是 FY{max_eps_year}"
+                f"——base_eps_path 年期契約未明文（三年錨或完整路徑皆有既有先例），"
+                f"僅供人工複核，不擋"
             )
     dd_date = (data.get("meta") or {}).get("date") or ""
     if term_year and re.match(r"^\d{4}", dd_date):
@@ -490,8 +567,13 @@ def j2_math_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
         )
 
     # scenario_meta.valuation_dependent 與 decision_inputs 同名欄一致性
-    # （J3 --fix 不自動修此欄，不一致必須人工裁定）
-    sref_vd = sref.get("valuation_dependent")
+    # （J3 --fix 不自動修此欄，不一致必須人工裁定）。WP-G 修：
+    # dd_scenario.build_meta() 把這欄寫在 scenario_tree.valuation_dependent
+    # 巢狀底下（不是 sref 頂層），舊版讀 sref.get("valuation_dependent") 一
+    # 律 None、此檢查形同沒接線；改讀巢狀路徑，頂層當相容 fallback。
+    sref_vd = scenario_tree.get("valuation_dependent")
+    if sref_vd is None:
+        sref_vd = sref.get("valuation_dependent")
     di_vd = di.get("valuation_dependent")
     if sref_vd is not None and di_vd is not None and bool(sref_vd) != bool(di_vd):
         fails.append(
@@ -562,6 +644,101 @@ def j1_traceability_checks(data: dict, evidence_path: Path | None, warn_only: bo
                 if ref_id not in referenced:
                     claim = (f.get("claim") or "")[:60]
                     target.append(f"J1｜{ref_id}｜{claim}")
+
+    return fails, warns
+
+
+# ---------------------------------------------------------------------------
+# J6: 行動門檻變動必須有理由（--evidence 給定才啟用，WP-G 2026-09-11）
+#
+# TXN 成對驗證（notes/site-internal/dd/_src/…_v18_paired_test_TXN_20260910.md
+# 閘⑧）實測抓到：唯一致命點（Single Thing）從「FY2026 FCF/share <$8」換成
+# 「工業＋車用連 2 季 YoY 轉負」、清倉門檻由 $8 上調到 $9，但
+# `contradictions[]` 對應條目卻寫「各欄逐欄相同」——既有 layer 4 drift_checks
+# 只驗證 prior_field 有沒有提到 rearm_trigger 這個欄名，不驗證條目內文是否
+# 誠實描述了差異，所以「field 名字掛著、side_a/side_b 卻抄成一樣」不會被攔。
+#
+# 只比對 `triggers[].type ∈ {"Single Thing", "清倉"}` 這兩種判斷規則明訂
+# 「唯一居所」（§5 thesis Single Thing／§5 唯一清倉級）的型別——前份與本次
+# 各剛好一列時才是可靠的 1:1 比對，不是剛好一列（0 或 ≥2）視為比不出來，只
+# WARN 不 FAIL（不要猜）。門檻文字（前份用 dd_prior.extract_triggers 產出
+# 的「指標與門檻」合併欄，本次用 triggers[].threshold）正規化後不同，卻在
+# contradictions[] 找不到 cause∈{新證據,方法變動}、side_a≠side_b、且提及該
+# 型別字樣的條目 → FAIL。
+# ---------------------------------------------------------------------------
+
+_THRESHOLD_DRIFT_TYPES = ("Single Thing", "清倉")
+_THRESHOLD_DRIFT_TOKENS = {
+    "Single Thing": ("Single Thing", "唯一致命點", "唯一樞紐"),
+    "清倉": ("清倉",),
+}
+
+
+def _unescape_and_norm(s):
+    if not isinstance(s, str):
+        return None
+    return unicodedata.normalize("NFKC", html_lib.unescape(s)).strip()
+
+
+def _prior_trigger_rows_by_type(prior_triggers: dict, type_label: str) -> list:
+    """prior_dd.triggers（dd_prior.extract_triggers 的表格輸出，欄名取自原
+    HTML 表頭，含「類型」欄可能帶括注如「Single Thing（H1）」）依去括注後的
+    類型比對，回傳等於 type_label 的列。"""
+    if not isinstance(prior_triggers, dict) or prior_triggers.get("format") != "table":
+        return []
+    out = []
+    for row in prior_triggers.get("rows") or []:
+        if not isinstance(row, dict):
+            continue
+        raw_type = row.get("類型") or ""
+        if _strip_parenthetical(raw_type) == type_label:
+            out.append(row)
+    return out
+
+
+def threshold_drift_checks(data: dict, evidence_path: Path | None) -> tuple[list, list]:
+    fails, warns = [], []
+    if evidence_path is None or not evidence_path.exists():
+        return fails, warns
+    try:
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return fails, warns
+
+    prior_dd = evidence.get("prior_dd") or {}
+    if prior_dd.get("status") != "ok":
+        return fails, warns
+    prior_triggers = prior_dd.get("triggers") or {}
+    cur_triggers = data.get("triggers") or []
+    contradictions = data.get("contradictions") or []
+
+    for type_label in _THRESHOLD_DRIFT_TYPES:
+        prior_rows = _prior_trigger_rows_by_type(prior_triggers, type_label)
+        cur_rows = [t for t in cur_triggers if isinstance(t, dict) and t.get("type") == type_label]
+        if len(prior_rows) != 1 or len(cur_rows) != 1:
+            warns.append(
+                f"J6｜門檻漂移比對（{type_label}）：前份 {len(prior_rows)} 列／本次 "
+                f"{len(cur_rows)} 列，非 1:1 無法機械比對，略過"
+            )
+            continue
+        prior_text = _unescape_and_norm(prior_rows[0].get("指標與門檻"))
+        cur_text = _unescape_and_norm(cur_rows[0].get("threshold"))
+        if prior_text is None or cur_text is None or prior_text == cur_text:
+            continue
+        tokens = _THRESHOLD_DRIFT_TOKENS[type_label]
+        covered = any(
+            isinstance(c, dict)
+            and c.get("cause") in ("新證據", "方法變動")
+            and _unescape_and_norm(c.get("side_a")) != _unescape_and_norm(c.get("side_b"))
+            and any(tok in f"{c.get('axis','')}{c.get('side_a','')}{c.get('side_b','')}" for tok in tokens)
+            for c in contradictions
+        )
+        if not covered:
+            fails.append(
+                f"J6｜門檻漂移未歸因（{type_label}）：前份「{prior_text}」→本次「{cur_text}」，"
+                f"contradictions[] 找不到 cause∈{{新證據,方法變動}}、side_a≠side_b、且提及"
+                f"「{type_label}」字樣的對應條目——rearm_trigger／觸發器不得寫「相同」"
+            )
 
     return fails, warns
 
@@ -733,6 +910,65 @@ def premortem_counterevidence_checks(data: dict) -> list:
                 f"$.premortem.blind_spots: 視角「{view}」缺非空 evidence／assumption，"
                 f"也無 not_applicable_reason（新格式反證唯一來源不得三視角全空）"
             )
+    return fails
+
+
+# ---------------------------------------------------------------------------
+# WP-G 修 #4（2026-09-11，Codex 第三輪複審「反向引用」項）：judgment-rules.md
+# §2 問六已明寫 trap_analysis 只交 verdict＋label，判斷依據一律寫在
+# premortem.blind_spots[]（反證唯一居所）並在 §5.R／trap_analysis 引用，不在
+# trap_analysis.evidence_for／evidence_against 本欄重寫——TXN 成對驗證仍查到
+# 新版把這兩欄填成散文，且方向與反證紀錄不同調（消費端若直讀會拿到相反意
+# 思）。schema 早已把這兩欄降為選填（見 judgment.schema.json trap_analysis
+# 只 required verdict），本檢查只補「新格式檔仍手填時提醒改讀反證紀錄」的
+# WARN——語意方向（填的到底支持哪邊）不是能機械判斷的事，交既有 gate 審，
+# 這裡只查欄位形狀／是否存在，不新增 LLM 判斷。
+# ---------------------------------------------------------------------------
+
+def trap_analysis_redundancy_checks(data: dict) -> list:
+    warns = []
+    premortem = data.get("premortem")
+    if not isinstance(premortem, dict) or not _premortem_is_new_format(premortem):
+        return warns
+    trap = data.get("trap_analysis") or {}
+    for key in ("evidence_for", "evidence_against"):
+        v = trap.get(key)
+        if isinstance(v, str) and v.strip():
+            warns.append(
+                f"$.trap_analysis.{key}: 新格式檔（反證唯一居所＝premortem.blind_spots[]）"
+                f"不建議填本欄——判斷依據應寫進反證紀錄並在此引用，不重寫一份可能語意反向"
+                f"的散文（judgment-rules.md §2 問六）"
+            )
+    return warns
+
+
+# ---------------------------------------------------------------------------
+# WP-G 修 #5（2026-09-11，Codex 第三輪複審「val_denominator_disputed=false
+# 無據」項）：judgment-rules.md 問五分母窗口硬規則只規定 disputed=true 時該
+# 便宜論證無效，沒有規定填 false 時要不要交代理由——新版填 false 卻沒有一句
+# 可定位的「所選分母為何可用」，消費端讀不到這個判斷是怎麼下的。本檢查只驗
+# 「填了 disputed 就必須有非空 note」這個形狀／存在性條件，note 內容是否足
+# 以支持 false／true 仍交既有 gate 判斷，不做語意審。僅對新格式檔（判斷層
+# schema 已進化到 v18 骨架）生效，沿用 WP-E 的 _premortem_is_new_format 當
+# 版本判準，不誤傷舊格式既有存查。
+# ---------------------------------------------------------------------------
+
+def val_denominator_note_checks(data: dict) -> list:
+    fails = []
+    premortem = data.get("premortem")
+    if not isinstance(premortem, dict) or not _premortem_is_new_format(premortem):
+        return fails
+    di = data.get("decision_inputs") or {}
+    disputed = di.get("val_denominator_disputed")
+    if disputed is None:
+        return fails
+    note = di.get("val_denominator_note")
+    if not isinstance(note, str) or not note.strip():
+        fails.append(
+            f"$.decision_inputs.val_denominator_note: val_denominator_disputed="
+            f"{disputed!r} 已填但 note 缺或空——填 false 或 true 都要一句「所選分母"
+            f"（FY2026E／FY2027E／forward）為何可用或為何仍是爭點」"
+        )
     return fails
 
 
@@ -1018,10 +1254,13 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
     j1_fails, j1_warns = j1_traceability_checks(data, evidence_path, warn_only=j1_warn)
     j4_warns = j4_plain_checks(data)
     j5_fails, j5_warns = j5_plain_role_checks(data)
+    j6_fails, j6_warns = threshold_drift_checks(data, evidence_path)  # WP-G 修 #2：行動門檻變動必須有理由
+    trap_warns = trap_analysis_redundancy_checks(data)  # WP-G 修 #4：反向引用
+    val_note_fails = val_denominator_note_checks(data)  # WP-G 修 #5：分母爭議欄需附一句依據
 
     fails = (struct_errs + cross_fails + pair_fails + leak_fails + expand_fails + premortem_fails
-             + drift_fails + j2_fails + j1_fails + j5_fails)
-    warns = cross_warns + drift_warns + j2_warns + j1_warns + j4_warns + j5_warns
+             + drift_fails + j2_fails + j1_fails + j5_fails + j6_fails + val_note_fails)
+    warns = cross_warns + drift_warns + j2_warns + j1_warns + j4_warns + j5_warns + j6_warns + trap_warns
     return fails, warns
 
 
@@ -1062,8 +1301,9 @@ def apply_fixes(data: dict, judgment_path: Path) -> list:
 
     scenario_ref = data.get("scenario_ref")
     if scenario_ref and not Path(scenario_ref).is_absolute():
-        abs_path = (judgment_path.parent / scenario_ref).resolve()
-        if abs_path.exists():
+        resolved = _resolve_scenario_ref_path(scenario_ref, judgment_path)
+        if resolved is not None:
+            abs_path = resolved.resolve()
             data["scenario_ref"] = str(abs_path)
             applied.append(f"scenario_ref 相對路徑 {scenario_ref!r} → {data['scenario_ref']!r}")
 

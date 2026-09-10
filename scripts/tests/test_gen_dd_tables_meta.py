@@ -134,6 +134,57 @@ def test_scenario_metrics_are_identical_across_four_render_entrypoints():
     assert ">1.7<" in tiles
 
 
+# ---------------------------------------------------------------------------
+# WP-G item 6b（2026-09-11）：judgment-rules.md §0.5(二) 給的條件式展開示例是
+# `[{"item","value"}]`，但 E3／E8／E10 各自要自己的專屬逐列形狀——TXN
+# 2026-09-10 實例：governance.capital_returns 填成 7 筆 {item,value}，
+# render_e10_html 原本讀 year/buyback/…/rd 全空，渲出七列全空表。改法：偵測
+# 到退化成示例形狀時改渲染兩欄表。
+# ---------------------------------------------------------------------------
+
+def test_render_e10_item_value_shape_renders_two_column_table():
+    judgment = {
+        "governance": {
+            "capital_returns": [
+                {"item": "十年回饋", "value": "回饋 130% FCF"},
+                {"item": "負債", "value": "總債 140 億"},
+            ],
+        },
+    }
+    html = gen_dd_tables.render_e10_html(judgment)
+    assert "十年回饋" in html and "回饋 130% FCF" in html
+    assert "總債 140 億" in html
+    assert "<th>項目</th><th>內容</th>" in html
+
+
+def test_render_e10_normal_shape_unchanged():
+    judgment = {
+        "governance": {
+            "capital_returns": [
+                {"year": "2025", "buyback": "6 億", "dividend": "52 億",
+                 "capex": "10 億", "rd": "8 億"},
+            ],
+        },
+    }
+    html = gen_dd_tables.render_e10_html(judgment)
+    assert "<th>年度</th><th>回購</th><th>股利</th><th>資本支出</th><th>研發</th>" in html
+    assert "<td>2025</td><td>6 億</td>" in html
+
+
+def test_render_e3_item_value_shape_renders_two_column_table():
+    judgment = {"industry": {"tam_table": [{"item": "展開理由", "value": "估值依賴低滲透"}]}}
+    html = gen_dd_tables.render_e3_html(judgment)
+    assert "<th>項目</th><th>內容</th>" in html
+    assert "展開理由" in html and "估值依賴低滲透" in html
+
+
+def test_render_e8_item_value_shape_renders_two_column_table():
+    judgment = {"growth": {"segments": [{"item": "分部驅動", "value": "量增為主"}]}}
+    html = gen_dd_tables.render_e8_html(judgment)
+    assert "<th>項目</th><th>內容</th>" in html
+    assert "分部驅動" in html and "量增為主" in html
+
+
 def test_wdc_ev_uses_scenario_meta_even_inside_historical_tolerance():
     """2026-09-07：重現 WDC 7.0／6.8；發布值必須採 scenario 的 6.8。"""
     src = SCRIPTS_DIR.parent / "notes" / "site-internal" / "dd" / "_src" / "WDC_20260906"

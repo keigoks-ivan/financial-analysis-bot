@@ -16,7 +16,7 @@
 
 ## 0.5｜三個共用約定
 
-**(一)反證紀錄=`premortem.blind_spots[]`單一居所**——「這判斷可能錯在哪」只寫這一份，每條：`view`(擇一：`論點失敗`/`論點成功但股東經濟變差`/`價格已反映太多`)｜`evidence`｜`assumption`受影響假設｜`consequence`財務或估值後果｜`ruling`採納或反駁＋理由｜`watch`觀測點(＋`evidence_refs`)。三視角**至少各一條**，不適用就在該條寫`not_applicable_reason`(validator認這個欄)。steelman、失敗故事與第二敗局、自我攻擊、trap判斷依據、`plain.fears`/`plain.how_to_lose`一律**引用本紀錄不重寫**。
+**(一)反證紀錄=`premortem.blind_spots[]`單一居所**——「這判斷可能錯在哪」只寫這一份，每條：`view`(擇一：`論點失敗`/`論點成功但股東經濟變差`/`價格已反映太多`)｜`evidence`｜`assumption`受影響假設｜`consequence`財務或估值後果｜`ruling`採納或反駁＋理由｜`watch`觀測點(＋`evidence_refs`)。三視角**至少各一條**，不適用就在該條寫`not_applicable_reason`(validator認這個欄)。steelman、失敗故事與第二敗局、自我攻擊、trap判斷依據、`plain.fears`/`plain.how_to_lose`一律**引用本紀錄不重寫**。**降位不得安靜刪門檻(2026-09-11新增)**：前份反證帶指標門檻(如同業ASP或成長差連N季門檻)，本輪即使把論點降位到`moat.threats`等處，仍須保留「指標＋門檻＋資料來源」；指標本輪證據包取不到值就標「資料缺口」，不得整條消失；確實不成立才退休並在`contradictions[]`寫理由。
 
 **(二)未展開標記**——`industry.tam_table`(問一)/`growth.segments`(問三)/`governance.capital_returns`(問四)/`valuation.peers`(問五)為條件式(觸發見各題)。**展開時該欄必須是陣列**（`[{"item": "…", "value": "…"}]` 這種逐列形狀，不得用物件裝散文）；不展開時該欄填`{"expanded": false, "reason": "為何不展開＋何時重新展開"}`，**理由與重啟觸發缺一即無效**(頁面渲染成一行「未展開：理由」)。展開與否是判斷：估值或裁決承重在該區塊就必須展開；理由不得只寫「營收占比低」「資料難找」。
 
@@ -120,7 +120,7 @@
 
 **最小交付(下游估值燈與screener直讀，永不進條件式)**：Forward P/E(NTM)五年分位`valuation.percentile_5y`(公式=(當前−5Y低)÷(5Y高−5Y低)×100%，整數位；**必引`valuation_history`，禁由現價外推**)｜Forward PEG `valuation.peg`(Non-GAAP 3年EPS CAGR，<1.0便宜/1~2合理/>2貴)｜`val_light`+`val_light_derivation`｜`upside_short_pct`/`upside_mid_pct`。判斷句=**現價要求未來發生什麼才划算，我信不信**。
 
-- 分母窗口硬規則：CAGR基期含一次性效應→分母改前瞻錨定(FY當年共識→FY+3外推)，禁用被污染的trailing窗。「估值便宜」的分母若正是本份爭點→設`decision_inputs.val_denominator_disputed=true`，該便宜論證無效。
+- 分母窗口硬規則：CAGR基期含一次性效應→分母改前瞻錨定(FY當年共識→FY+3外推)，禁用被污染的trailing窗。「估值便宜」的分母若正是本份爭點→設`decision_inputs.val_denominator_disputed=true`，該便宜論證無效。**填`val_denominator_disputed`(true或false皆同，2026-09-11新增)時，同時填一句`decision_inputs.val_denominator_note`**：說明所選分母(FY2026E／FY2027E／forward)為何可用、或為何仍是爭點——trailing窗受污染不自動代表換forward就解除爭議，這句話要交代清楚，不得無據填false。
 - **條件式加尺**：其餘倍數(Trailing P/E、EV/EBITDA、P/FCF、P/S)、GAAP與5年PEG、同業tier比較(`valuation.peers`)、賣方目標價——**主尺與交叉檢查衝突、或結論靠re-rate撐時才加**。展開同業比較先判業務模式tier(IP company/Turnkey ASIC/Foundry/SaaS訂閱型/寡占消費品牌)，禁跨tier高倍數當anchor；無同tier→標「無ideal peer group，溢折價需獨立推導」。目標價非每檔必要論證。
 - QC-30同業溢價收斂壓測：Fwd PE>同業中位50%以上→加收斂情境(對手PE上修至同業均，或標的PE收斂50%，取與成長熄火Bear較保守者)，標「相對同業溢價__%，收斂風險列R4」。多尺矛盾明文化：兩把尺方向相反→明寫矛盾+由archetype決定優先尺(商品/循環：P/B優先；複利：Fwd P/E・PEG優先；未獲利：EV/GP對照EV/S)+取捨理由。consensus落後註記：bottom-up vs共識FY3 EPS差>20%→標「consensus落後風險」，亦為估值燈盲點3偵測器。
 - **`appendix_a`四欄(`val`/`signal`/`ma`/`long_term_confidence`)與品質分**：判準全文在`references/timing-appendix.md`(未讀不得填)——估值燈四色切點、盲點1/2/3救援、品質分5項體質veto、final_signal六步、週線六態與大盤豁免、long_term_confidence映射，**本檔不重述**。此處只記三件與本檔其他節接線的事：①QC-31為signal對映的權威定義，與附錄A表衝突時以QC-31為準；R:R不足或估值🔴均≠C(落B)，C/X須有thesis-level失敗證據，估值🔴+動能爆衝+品質A/B一律落B。②`long_term_confidence`上限「中」的兩條硬接線在本檔：問三缺口無法歸因、問四`capalloc_grade`=C。③QC-45未獲利股(GAAP負EPS)估值燈改雙尺取較嚴者：growth-adjusted EV/S=fwd EV/S÷fwd營收成長%(<0.5🟢/0.5-1.0🟡/1.0-1.5🟠/>1.5🔴)，與自身上市以來fwd EV/S分位(同30/70/85切點；上市<3年僅輔助)；EPS轉正後改回PE/PEG尺。
@@ -132,7 +132,7 @@
 - 與Single Thing對帳(承接視角①)：✅直接撞上→不動；⚠部分重疊→回補secondary trigger；❌完全獨立→回Single Thing重寫/新增primary。⚠/❌卻未改動Single Thing→自我打回重做。視角②成立且機率不可忽略→反映進情境樹Bull終端倍數假設。
 - **Max DD(`premortem.max_dd`)**：填範圍`lo`/`hi`(**禁單點**，寬度≥10pp，<10pp=假精準打回)+`path_risk`(🟢0～−30%/🟡−30～−50%/🔴<−50%)。`trigger_time`**選填**，有依據才寫，不得為填欄位生成精確時間；不會恢復則明寫「thesis已破」。**Max DD不是機械算出來的**：`lo`由dd-meta直讀，回撤範圍的**推導依據必須寫在`reasoning.premortem`**——從哪個情境的價格路徑、哪次可比歷史回撤、或哪個倍數壓縮推出來，不得只給結果。**硬接線**：🔴且thesis脆弱(`moat.trend`↓或`runway_post_y5`🔴或估值依賴型)→倉位上限下修(例6%→≤3%)+持有年限警示；🔴但thesis完整→不因波動砍倉，註記「深回撤心理準備」+警示。
 - 自我攻擊(QC-13)：`decision_out`確定後、寫檔前跑一次inner monologue「要推翻此裁決，最強3個反駁點是什麼」。觸及核心論據者→檢查對應模組、**併進反證紀錄**(新增條目或補既有條目`ruling`)，反駁成立則修正終判。**不另開一份自我攻擊清單。**
-- trap定性(`trap_analysis`)：本欄**只交`verdict`**(🟢非陷阱/🟡觀察期/🔴高風險陷阱，與`decision_inputs.trap`同源同值)+一句`label`。判斷依據(陷阱模式、正反最強論據須引具體財務數字、空頭最強一擊=18個月內造成30%+虧損的最可能路徑與監測指標)一律寫在反證紀錄、於`reasoning.trap_analysis`引用，不在本欄重寫。
+- trap定性(`trap_analysis`)：本欄**只交`verdict`**(🟢非陷阱/🟡觀察期/🔴高風險陷阱，與`decision_inputs.trap`同源同值)+一句`label`。判斷依據(陷阱模式、正反最強論據須引具體財務數字、空頭最強一擊=18個月內造成30%+虧損的最可能路徑與監測指標)一律寫在反證紀錄、於`reasoning.trap_analysis`引用，不在本欄重寫。**`evidence_for`/`evidence_against`不要填(2026-09-11強化措辭)**：這兩欄是schema相容的舊欄位，判斷依據的唯一居所是`premortem.blind_spots[]`；填了容易兩處各寫一份、方向還對不上(曾見`evidence_for`寫成反對陷阱的論據)，需要消費時改引反證紀錄，不重寫散文。
 
 ---
 
@@ -157,7 +157,7 @@
 1. **共識與矛盾清單**：先列方向一致的判斷；再列矛盾，每則含矛盾點/A側結論/B側結論/性質(可調和=程度差異；不可調和=方向相反)。矛盾拓撲：爭議集中單一軸→點名該軸；瀰漫多處→信心整體下修。
 2. **⚖強制裁決**(每個「不可調和」矛盾必填)：矛盾/我選哪邊/依據(不能是「直覺」「平衡考慮」)/會settle此衝突的硬數據點/執行路徑。執行路徑至少一條if-then+一條反向條件(證據往反方向走時做什麼)，動作具體(升級小倉測試/減持/加碼至X%/清倉)，禁「再評估」「持續觀察」；**期限依該矛盾實際可觀測的時間窗給，不硬配2Y/5Y/10Y三段**。能settle的數據今天不存在→「不可裁決至某時點」是合法輸出。
 3. **裁決推理三檢**：①分母爭議(見問五)②證據權重三級：L1已實現事實>L2 sourced前瞻估計>L3敘事，裁決預設站L1較高側，以L2/L3反駁L1須明寫理由③Steelman義務：裁決為觀望/迴避→「現在就買的最強論證」；裁決為進場→「現在就賣的最強論證」。**論證本身寫進反證紀錄**(視角=論點失敗或價格已反映太多)，本節只引用該條目並逐點回應；回應只覆述原立場=裁決不成立，重寫。
-4. **前份逐欄漂移歸因(按原因分組)**：`evidence.prior_dd.drift_watch`固定20欄仍逐欄記新舊值，但**文字按原因分組**——現價一次變動連帶改IRR/EV/AR/估值燈時開**一個**`contradictions[]`條目，`cause`三選一(`價格變動`/`新證據`/`方法變動`)，`prior_field`填該原因涵蓋的**全部欄名陣列**(單欄仍可填字串)，各欄本次值/前份值在條目內逐欄列清。**每個漂移欄都必須映射到某一個原因條目**(validator以`prior_field`對帳，漏一欄=FAIL)；「更新數據」不算歸因，方法驅動須明標。**裁決(`dca_verdict`)、核心假設與情境方法的改變仍各自一條實質解釋，不得併進價格那條。**
+4. **前份逐欄漂移歸因(按原因分組)**：`evidence.prior_dd.drift_watch`固定20欄仍逐欄記新舊值，但**文字按原因分組**——現價一次變動連帶改IRR/EV/AR/估值燈時開**一個**`contradictions[]`條目，`cause`三選一(`價格變動`/`新證據`/`方法變動`)，`prior_field`填該原因涵蓋的**全部欄名陣列**(單欄仍可填字串)，各欄本次值/前份值在條目內逐欄列清。**每個漂移欄都必須映射到某一個原因條目**(validator以`prior_field`對帳，漏一欄=FAIL)；「更新數據」不算歸因，方法驅動須明標。**裁決(`dca_verdict`)、核心假設與情境方法的改變仍各自一條實質解釋，不得併進價格那條。** **行動門檻同受此律(2026-09-11新增)**：`kill_metrics[]`/`triggers[]`/`decision_inputs`裡任何門檻數字或唯一致命點(Single Thing)與前份不同，必須在`contradictions[]`有一條`cause`=`新證據`或`方法變動`的條目寫「舊門檻→新門檻＋理由」；`rearm_trigger`不得對已變動的門檻寫「相同」(TXN 2026-09-10教訓：唯一致命點換成別的指標、清倉門檻$8→$9，`contradictions[]`卻寫「各欄逐欄相同」)。
 5. **QC-52 DD↔ID對帳(事實先讀、結論後對)**：ID的結論永遠不出現在輸入位置，只出現在對帳位置。引用只用`evidence.json.canonical_id.facts`(需求/供給sourced數據、產能時程、利潤池、玩家矩陣)作補充彈藥並標「ID:{theme}+as-of」，禁讀其決策層與分歧敘事。對帳(強制)：①一致→問一寫一行「產業物理供需={sd_verdict}(ID:{theme}, as-of{date})」，sd_verdict只當事實錨、禁作方向論據②分歧→`contradictions[]`明文分歧理由並標「分歧→建議重跑ID」③Phase II打折，須經自身位置閘交叉驗證後才可載入問一，Phase III/IV可直接引用④無ID→標「ID gap:{industry}」，不阻斷。**Fail-safe：QC-52是加值層非依賴層**，ledger失敗或無ID照舊自主判斷，永不降級裁決。
 6. **知識帳本先讀後裁**：前次裁決為觀望/迴避且to-date報酬>+30%→強制列入`contradictions[]`，複審不得只以「估值更貴了」維持觀望，須明寫「上次觀望/迴避後漲__%，本次維持/翻面理由是___」。
 7. **QC-51同形狀peer對帳**：同archetype或同產業鏈位置peer在30天內拿不同裁決→明文「{peer}於{日期}判{裁決}而本檔判{裁決}，差異理由=___」。不強制同裁決，只強制差異被說出來；無近期peer裁決→一句帶過，不阻斷。

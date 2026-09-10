@@ -357,6 +357,40 @@ def _unexpanded_table(table_id: str, block, header: str):
             + '<tr><td colspan="{n}">未展開：{r}</td></tr>\n</table>\n'.format(n=ncol, r=reason))
 
 
+# ---------------------------------------------------------------------------
+# WP-G 修 #6b（2026-09-11，Codex 第三輪複審「B．陣列形狀修補仍未與表格渲染
+# 契約對齊」項）：judgment-rules.md §0.5(二) 給的條件式展開陣列示例是
+# `[{"item": "…", "value": "…"}]`，但 E3/E8/E10 各自要的是自己的專屬逐列形狀
+# （E3 segment/tam_now/…、E8 segment/fy0_rev/…、E10 year/buyback/…）——判斷
+# agent 照字面套用示例形狀時（TXN 2026-09-10 實例：governance.capital_returns
+# 填成 7 筆 {item,value}），原本的專屬欄位 renderer 全部讀不到值，渲染出全空
+# 表格而非「未展開」訊息，讀者看不出哪裡壞了。這裡加一個輕量偵測＋通用兩欄
+# 渲染：第一列有 item/value 鍵、卻沒有該表自己的第一個專屬鍵，判定為退化成
+# 示例形狀，改渲染兩欄「項目／內容」表，不強行對應五到七個專屬欄位。
+# ---------------------------------------------------------------------------
+
+def _is_item_value_shape(rows_data: list, primary_key: str) -> bool:
+    if not rows_data:
+        return False
+    first = rows_data[0]
+    return (
+        isinstance(first, dict)
+        and "item" in first and "value" in first
+        and primary_key not in first
+    )
+
+
+def _render_item_value_table(table_id: str, rows_data: list) -> str:
+    rows = [
+        "<tr><td>{item}</td><td>{value}</td></tr>".format(
+            item=esc(r.get("item")), value=esc(r.get("value"))
+        )
+        for r in rows_data if isinstance(r, dict)
+    ]
+    header = "<tr><th>項目</th><th>內容</th></tr>"
+    return '<table id="{tid}">\n'.format(tid=table_id) + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
 def render_e3_html(j: dict) -> str:
     block = (j.get("industry") or {}).get("tam_table")
     rows_data = block if isinstance(block, list) else []
@@ -377,6 +411,8 @@ def render_e3_html(j: dict) -> str:
     skipped = _unexpanded_table("e3", block, header)
     if skipped:
         return skipped
+    if _is_item_value_shape(rows_data, "segment"):
+        return _render_item_value_table("e3", rows_data)
     return '<table id="e3">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
 
 
@@ -478,6 +514,8 @@ def render_e8_html(j: dict) -> str:
     skipped = _unexpanded_table("e8", block, header)
     if skipped:
         return skipped
+    if _is_item_value_shape(rows_data, "segment"):
+        return _render_item_value_table("e8", rows_data)
     return '<table id="e8">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
 
 
@@ -530,7 +568,12 @@ def render_e10_html(j: dict) -> str:
         )
     header = "<tr><th>年度</th><th>回購</th><th>股利</th><th>資本支出</th><th>研發</th></tr>"
     skipped = _unexpanded_table("e10", block, header)
-    table = skipped or ('<table id="e10">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n")
+    if skipped:
+        table = skipped
+    elif _is_item_value_shape(rows_data, "year"):
+        table = _render_item_value_table("e10", rows_data)
+    else:
+        table = '<table id="e10">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
     score_rows = gov.get("scorecard") or []
     if score_rows:
         items = "".join(

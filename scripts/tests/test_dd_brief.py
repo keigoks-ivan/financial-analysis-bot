@@ -222,8 +222,14 @@ def test_gate_audit_counts_render_in_decision_fold(tmp_path):
     # the audit's red/yellow counts must show up somewhere -- both in the
     # 「這個判斷建立在多少證據上」evidence-quality table and inside the folded
     # 「決策矩陣稽核」detail block (render_gate_yellow).
+    #
+    # WP-G（2026-09-11）：_audit_counts() 改優先用 dd_gate.parse_audit 的結構化
+    # 計數，regex 只作 fallback。這份既有 fixture 的旁白寫「🟡3」，但實際逐條
+    # 標記只有 ③⑥ 兩項🟡（②是🔴）——parse_audit 逐條計數＝2 才是真正對得上
+    # findings 的數字，舊 regex 只是矇對了旁白裡的阿拉伯數字，不是巧合對的count；
+    # 這正是本次要修的問題本身，斷言改成機械正確值。
     assert "判斷級 🔴 1" in html_text
-    assert "🟡 3" in html_text
+    assert "🟡 2" in html_text
     m = re.search(r"決策矩陣稽核、跨模型冷讀與各模組推理原文</summary>(.*?)</details>", html_text, re.S)
     assert m, "decision-audit fold missing"
     assert "本次未提供 gate audit" not in m.group(1)
@@ -550,3 +556,57 @@ def test_old_shape_keeps_five_heading(tmp_path):
     j = json.loads((SRC_DIR / "BE_20260905" / "BE_20260905.judgment.json").read_text(encoding="utf-8"))
     heading, _html, _fb = dd_brief.render_five(j)
     assert heading == dd_brief.LEAD_HEADING_FIVE
+
+
+# ---------------------------------------------------------------------------
+# WP-G item 6a（2026-09-11）：`_audit_counts` 改優先用 `dd_gate.parse_audit`
+# 的結構化 red／yellow，regex 只作歷史 fallback——舊 regex 只認得到摘要句裡
+# 緊跟🟡的阿拉伯數字，中文數字摘要（「🟡 三項」）或沒有摘要句只有表格的檔會
+# 直接落空回 None（首屏顯示「—」，TXN 2026-09-10 實測即此案例）。
+# ---------------------------------------------------------------------------
+
+_AUDIT_TABLE = (
+    "| # | 軸 | 燈 | 依據 |\n"
+    "|---|---|---|---|\n"
+    "| 1 | 競爭惡化 | 🟢 | ok |\n"
+    "| 2 | 供需 durability | 🟡 | 待觀察 |\n"
+    "| 3 | 其他結構變數 | 🟡 | 待觀察 |\n"
+    "| 4 | priced-in | 🟢 | ok |\n"
+)
+
+
+def test_audit_counts_chinese_digit_summary_uses_table(tmp_path):
+    """摘要句用中文數字（regex 抓不到），仍要靠表格算出正確的 red/yellow。"""
+    audit = tmp_path / "gate_audit.md"
+    audit.write_text(
+        "## AUDIT: 判斷級🔴 = 0\n\n" + _AUDIT_TABLE
+        + "\n附註：🟡 兩項，皆不改裁決方向。\n",
+        encoding="utf-8",
+    )
+    red, yellow = dd_brief._audit_counts(audit)
+    assert red == "0"
+    assert yellow == "2"
+
+
+def test_audit_counts_arabic_digit_summary_still_works(tmp_path):
+    """既有阿拉伯數字摘要句（regex 舊行為能抓到的案例）改走 dd_gate.parse_audit
+    後仍要給出一致、正確的計數，不是巧合退化。"""
+    audit = tmp_path / "gate_audit.md"
+    audit.write_text(
+        "## AUDIT: 判斷級🔴 = 0\n\n" + _AUDIT_TABLE
+        + "\n附註：🟡 = 2，皆不改裁決方向。\n",
+        encoding="utf-8",
+    )
+    red, yellow = dd_brief._audit_counts(audit)
+    assert red == "0"
+    assert yellow == "2"
+
+
+def test_audit_counts_no_summary_line_uses_table(tmp_path):
+    """沒有「判斷級🔴=N」首行、也沒有🟡摘要句，只有表格——仍要能從表格逐條
+    算出正確計數，不是回 None／「—」。"""
+    audit = tmp_path / "gate_audit.md"
+    audit.write_text(_AUDIT_TABLE, encoding="utf-8")
+    red, yellow = dd_brief._audit_counts(audit)
+    assert red == "0"
+    assert yellow == "2"
