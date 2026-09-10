@@ -14,13 +14,21 @@ Owner: the 2026-09-06 card-wall redesign (stat chips + search + top3 cards +
 scoreboard + accordion directory with auto-extracted one-line verdicts) was
 判定「超級混亂」— too many moving parts, and 美股/台股/多資產 got blended
 together inside the same accordion themes. Replaced with ONE plain layout:
-four blocks (🇺🇸 美股 / 🇹🇼 台股 / 🧩 多資產 / 🌏 總經・跨國), each its own
-pill table styled after `_nav_common.make_toggle()`'s sub-nav bar (label
-column + wrapped pill row, small red/gold/blue status badges). Removed:
-stat cards, search box, top3 cards, scoreboard table, accordion directory,
-their JS, `_extract_verdict()` / VERDICT_OVERRIDES / THEMES / LEGACY_HASH.
-housing_gdp's ~47 country/case pages stay off this page (reachable from the
-hub); everything else from the old SECTIONS is still linked somewhere.
+five blocks (🇺🇸 美股 / 🇹🇼 台股 / 🧩 多資產 / 🏠 房價與所得 / 🌏 總經・跨國), each
+its own pill table styled after `_nav_common.make_toggle()`'s sub-nav bar
+(label column + wrapped pill row, small red/gold/blue status badges).
+Removed: stat cards, search box, top3 cards, scoreboard table, accordion
+directory, their JS, `_extract_verdict()` / VERDICT_OVERRIDES / THEMES /
+LEGACY_HASH.
+
+2026-09-10 — housing_gdp 獨立分區，全部 50 頁列出
+================================================================================
+Supersedes the line above: housing_gdp's ~47 country/case pages no longer
+stay off this page. New 🏠 房價與所得 block covers all 50
+docs/backtest/housing_gdp/ pages (hub + 9 series + 6 主線／假說 pages + 35
+country/case pages, one row per region/status). The old 🌏 總經・跨國「房價×GDP」
+row (hub + regression.html) is removed — those two links moved into 🏠; 🌏
+now carries 國家掃描 only.
 
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
@@ -48,7 +56,7 @@ def _conv(links):
     return [(u, lb, st, False) for (u, lb, _k, st) in links]
 
 
-# ── 四大分區（美股／台股／多資產／總經・跨國）───────────────────────────────
+# ── 五大分區（美股／台股／多資產／房價與所得／總經・跨國）───────────────────
 # rows: [ (row_label, row_id_or_None, [ (url, text, status_or_None, is_current), ... ] ), ... ]
 BLOCKS = [
     dict(id="us", emoji="🇺🇸", title="美股", rows=[
@@ -162,11 +170,74 @@ BLOCKS = [
             ("/backtest/daily_vs_weekly_global/", "日/週·全球", None, False),
         ]),
     ]),
-    dict(id="macro", emoji="🌏", title="總經・跨國", rows=[
-        ("房價×GDP", None, [
-            ("/backtest/housing_gdp/", "研究總覽：所得、信貸、估值、房貸與回撤一次看", "研究", False),
-            ("/backtest/housing_gdp/regression.html", "主線迴歸（原首頁）", "研究", False),
+    dict(id="housing", emoji="🏠", title="房價與所得・43 經濟體", rows=[
+        ("總覽", None, [
+            ("/backtest/housing_gdp/", "研究總覽：短中期看信貸，所得只在同一國 3～7 年有用", "研究", False),
         ]),
+        ("九個系列", None, [
+            ("/backtest/housing_gdp/gdppc_level.html", "人均 GDP 實際金額", "研究", False),
+            ("/backtest/housing_gdp/income_affordability.html", "所得與房價所得比", "研究", False),
+            ("/backtest/housing_gdp/income_horizon.html", "所得×房價：時間尺度", "研究", False),
+            ("/backtest/housing_gdp/catchup.html", "追趕假說", "研究", False),
+            ("/backtest/housing_gdp/mortgage_burden.html", "房貸負擔", "研究", False),
+            ("/backtest/housing_gdp/house_price_drawdown.html", "房價回撤", "研究", False),
+            ("/backtest/housing_gdp/credit_lead.html", "信貸預警", "研究", False),
+            ("/backtest/housing_gdp/price_to_rent.html", "房價租金比", "研究", False),
+            ("/backtest/housing_gdp/household_debt.html", "家庭負債空間", "研究", False),
+        ]),
+        ("主線與假說", None, [
+            ("/backtest/housing_gdp/regression.html", "主線迴歸", "研究", False),
+            ("/backtest/housing_gdp/catchup.html", "追趕假說（重測版）", "研究", False),
+            ("/backtest/housing_gdp/catchup_v1.html", "追趕假說（舊版，已凍結）", "研究", False),
+            ("/backtest/housing_gdp/divergence.html", "三型分流", "研究", False),
+            ("/backtest/housing_gdp/gdp_band.html", "GDP 帶假說", "研究", False),
+            ("/backtest/housing_gdp/city_catchup.html", "補漲假說：城市版", "研究", False),
+        ]),
+        ("個案・已重寫", None, [
+            ("/backtest/housing_gdp/taiwan.html", "台灣：貴、熱、還沒跌", "研究", False),
+            ("/backtest/housing_gdp/malaysia.html", "馬來西亞：變便宜、去槓桿、原地踏步", "研究", False),
+            ("/backtest/housing_gdp/japan.html", "日本：崩過、沒回來、租金比偏貴", "研究", False),
+            ("/backtest/housing_gdp/usa.html", "美國（重寫中）", "研究", False),
+        ]),
+        ("個案・亞太", None, [
+            ("/backtest/housing_gdp/australia.html", "澳洲", "研究", False),
+            ("/backtest/housing_gdp/china.html", "中國", "研究", False),
+            ("/backtest/housing_gdp/hongkong.html", "香港", "研究", False),
+            ("/backtest/housing_gdp/india.html", "印度", "研究", False),
+            ("/backtest/housing_gdp/indonesia.html", "印尼", "研究", False),
+            ("/backtest/housing_gdp/korea.html", "南韓", "研究", False),
+            ("/backtest/housing_gdp/newzealand.html", "紐西蘭", "研究", False),
+            ("/backtest/housing_gdp/singapore.html", "新加坡", "研究", False),
+            ("/backtest/housing_gdp/thailand.html", "泰國", "研究", False),
+        ]),
+        ("個案・歐洲", None, [
+            ("/backtest/housing_gdp/austria.html", "奧地利", "研究", False),
+            ("/backtest/housing_gdp/czechia.html", "捷克", "研究", False),
+            ("/backtest/housing_gdp/denmark.html", "丹麥", "研究", False),
+            ("/backtest/housing_gdp/france.html", "法國", "研究", False),
+            ("/backtest/housing_gdp/germany.html", "德國", "研究", False),
+            ("/backtest/housing_gdp/greece.html", "希臘", "研究", False),
+            ("/backtest/housing_gdp/ireland.html", "愛爾蘭", "研究", False),
+            ("/backtest/housing_gdp/italy.html", "義大利", "研究", False),
+            ("/backtest/housing_gdp/netherlands.html", "荷蘭", "研究", False),
+            ("/backtest/housing_gdp/norway.html", "挪威", "研究", False),
+            ("/backtest/housing_gdp/poland.html", "波蘭", "研究", False),
+            ("/backtest/housing_gdp/portugal.html", "葡萄牙", "研究", False),
+            ("/backtest/housing_gdp/spain.html", "西班牙", "研究", False),
+            ("/backtest/housing_gdp/sweden.html", "瑞典", "研究", False),
+            ("/backtest/housing_gdp/switzerland.html", "瑞士", "研究", False),
+            ("/backtest/housing_gdp/uk.html", "英國", "研究", False),
+        ]),
+        ("個案・美洲與其他", None, [
+            ("/backtest/housing_gdp/brazil.html", "巴西", "研究", False),
+            ("/backtest/housing_gdp/canada.html", "加拿大", "研究", False),
+            ("/backtest/housing_gdp/israel.html", "以色列", "研究", False),
+            ("/backtest/housing_gdp/mexico.html", "墨西哥", "研究", False),
+            ("/backtest/housing_gdp/southafrica.html", "南非", "研究", False),
+            ("/backtest/housing_gdp/turkey.html", "土耳其", "研究", False),
+        ]),
+    ]),
+    dict(id="macro", emoji="🌏", title="總經・跨國", rows=[
         ("國家掃描", "scan", [
             ("/backtest/country_scan/us.html", "美國：市場結構與九個投資鏡頭", "研究", False),
             ("/backtest/country_scan/taiwan.html", "台灣：市場結構與八個投資鏡頭", "研究", False),
@@ -285,7 +356,7 @@ footer{background:var(--card);border-top:1px solid var(--line);color:var(--sec);
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
   <h1>量化回測</h1>
-  <div class="sub">全部回測頁的目錄，依美股／台股／多資產／總經・跨國四大分區列出，每列一個系統或研究主題。</div>
+  <div class="sub">全部回測頁的目錄，依美股／台股／多資產／房價與所得／總經・跨國五大分區列出，每列一個系統或研究主題。</div>
   <div class="ov-live-line"><a href="%LIVE_LINE_URL%">%LIVE_LINE_TEXT%</a></div>
 </div></div>
 
