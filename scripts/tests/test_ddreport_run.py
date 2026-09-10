@@ -1160,6 +1160,11 @@ def test_digest_reuse_only_spawns_new_transcript(tmp_path):
 
 
 def test_gate_bundle_keeps_digest_but_omits_full_transcript(tmp_path):
+    """2026-09-10 WP-A：gate_view (g) 只留 digest `topic="risk"` 的 items（＋全部
+    `qa_flags`，此處未給不影響）——digest.json 本身無 direction 欄位（14 份既有
+    run 實測皆無），`topic="risk"` 是既有分類裡最接近的替代，理由見
+    `dd_bundle.py::_gate_digest_risk_section` docstring／`gate_contract.md`。
+    非 risk 的 item 不上表；逐字稿全文一律不附（閘從不讀 transcript 檔）。"""
     run_dir = tmp_path / "run"
     (run_dir / "bundles").mkdir(parents=True)
     transcript = tmp_path / "Q4.md"
@@ -1170,18 +1175,122 @@ def test_gate_bundle_keeps_digest_but_omits_full_transcript(tmp_path):
         "transcripts": {"selected": {"recent_four_quarters": [str(transcript)]}},
     }), encoding="utf-8")
     (run_dir / "digest.json").write_text(json.dumps({
-        "items": [{"claim": "DIGEST-MARKER"}], "source_files": [str(transcript)]
+        "items": [
+            {"claim": "DIGEST-RISK-MARKER", "topic": "risk"},
+            {"claim": "DIGEST-GUIDANCE-MARKER", "topic": "guidance"},
+        ],
+        "source_files": [str(transcript)],
     }), encoding="utf-8")
     (run_dir / "judgment.json").write_text(json.dumps({"decision_out": {"verdict": "觀望"}}), encoding="utf-8")
     args = argparse.Namespace(
         run_dir=str(run_dir), evidence=None, digest=None, judgment=None,
-        transcript=None, critic_gates=str(tmp_path / "missing.md"), out=None,
+        transcript=None, gate_contract=str(tmp_path / "missing.md"), out=None,
     )
 
     assert dd_bundle.cmd_gate(args) == 0
     text = (run_dir / "bundles" / "gate.md").read_text(encoding="utf-8")
-    assert "DIGEST-MARKER" in text
+    assert "DIGEST-RISK-MARKER" in text
+    assert "DIGEST-GUIDANCE-MARKER" not in text
     assert "FULL-TRANSCRIPT-SECRET-MARKER" not in text
+
+
+def test_gate_view_negative_and_referenced_findings_only(tmp_path):
+    """2026-09-10 WP-A：gate_view (a)+(b) findings 表——全部負向 finding、
+    以及被判斷引用或 `affects` 命中 decision_inputs/thesis/moat_trend 但未列
+    `evidence_dismissed` 的 finding 才上表；純正向、未被引用、affects 也不
+    命中的 finding 不上表（不是硬條件要驗的欄位，塞進去只會分散閘的注意
+    力）。同時驗 (e) `scenario_meta.json` sidecar 與 (f) `prior_dd` 原樣附上。"""
+    run_dir = tmp_path / "run"
+    (run_dir / "bundles").mkdir(parents=True)
+    evidence = {
+        "ticker": "Z", "date": "20260101",
+        "numbers": {}, "events": {}, "ledger": {}, "canonical_id": {},
+        "prior_dd": {"status": "ok", "drift_watch": {"foo": "DRIFT-WATCH-MARKER"}},
+        "coverage": {
+            "axis_neg": {
+                "status": "found", "queries_run": ["q1", "q2"],
+                "findings": [{
+                    "id": "axis_neg#0", "direction": "-", "as_of": "2026-01-01",
+                    "claim": "NEGATIVE-FINDING-CLAIM", "source": "src1", "affects": [],
+                }],
+            },
+            "axis_pos_unreferenced": {
+                "status": "found", "queries_run": ["q3"],
+                "findings": [{
+                    "id": "axis_pos_unreferenced#0", "direction": "+", "as_of": "2026-01-01",
+                    "claim": "POSITIVE-UNREFERENCED-CLAIM", "source": "src2", "affects": [],
+                }],
+            },
+            "axis_pos_referenced": {
+                "status": "found", "queries_run": ["q4"],
+                "findings": [{
+                    "id": "axis_pos_referenced#0", "direction": "+", "as_of": "2026-01-01",
+                    "claim": "POSITIVE-REFERENCED-CLAIM", "source": "src3", "affects": [],
+                }],
+            },
+        },
+    }
+    judgment = {
+        "decision_out": {"verdict": "觀望"},
+        "evidence_dismissed": [],
+        "reasoning": {"note": "見 axis_pos_referenced#0 的討論"},
+    }
+    (run_dir / "evidence.json").write_text(json.dumps(evidence), encoding="utf-8")
+    (run_dir / "judgment.json").write_text(json.dumps(judgment), encoding="utf-8")
+    (run_dir / "scenario_meta.json").write_text(
+        json.dumps({"asym_ratio": 4.2, "ev5y_pct": 33.3, "irr_base_pct": 9.9, "marker": "SCENARIO-META-MARKER"}),
+        encoding="utf-8",
+    )
+    args = argparse.Namespace(
+        run_dir=str(run_dir), evidence=None, digest=None, judgment=None,
+        transcript=None, gate_contract=None, out=None,
+    )
+
+    assert dd_bundle.cmd_gate(args) == 0
+    text = (run_dir / "bundles" / "gate.md").read_text(encoding="utf-8")
+    assert "NEGATIVE-FINDING-CLAIM" in text
+    assert "POSITIVE-REFERENCED-CLAIM" in text  # id 出現在 judgment.reasoning 文字內 → 被引用
+    assert "POSITIVE-UNREFERENCED-CLAIM" not in text
+    assert "SCENARIO-META-MARKER" in text
+    assert "DRIFT-WATCH-MARKER" in text
+
+
+def test_gate_bundle_uses_gate_contract_not_critic_gates(tmp_path):
+    """2026-09-10 WP-A：閘改附 `gate_contract.md`（v17 版、只審 judgment 欄
+    位、無 WebSearch、無讀 HTML），不再附 v15 `references/critic-gates.md`
+    （要求讀 `dd_sections.py text` 全文＋WebSearch 10-14 輪＋輸出
+    `## FINDINGS` 表格，與 v17 閘「禁搜尋、只審 judgment」矛盾）。"""
+    run_dir = tmp_path / "run"
+    (run_dir / "bundles").mkdir(parents=True)
+    (run_dir / "evidence.json").write_text(json.dumps({
+        "ticker": "Z", "date": "20260101", "numbers": {}, "coverage": {},
+        "events": {}, "prior_dd": {}, "ledger": {}, "canonical_id": {},
+    }), encoding="utf-8")
+    (run_dir / "judgment.json").write_text(json.dumps({"decision_out": {"verdict": "觀望"}}), encoding="utf-8")
+
+    # 不指定 --gate-contract：走預設路徑，讀真正的 scripts/dd_prompts/gate_contract.md。
+    args = argparse.Namespace(
+        run_dir=str(run_dir), evidence=None, digest=None, judgment=None,
+        transcript=None, gate_contract=None, out=None,
+    )
+    assert dd_bundle.cmd_gate(args) == 0
+    text = (run_dir / "bundles" / "gate.md").read_text(encoding="utf-8")
+    assert "gate_contract.md" in text
+    # v15 critic-gates.md 專屬的輸出格式表頭（QC-41 開頭固定機器可讀區塊）不應
+    # 出現——確認真的換了條文權威檔，不是換了名字但內容照舊。
+    assert "段落 id | 一句話 | 最小修法" not in text
+    assert "### QC-48" not in text
+
+    # 顯式指定 --gate-contract 時改讀該檔（讓呼叫端可以指到別份合規文件）。
+    contract = tmp_path / "custom_gate_contract.md"
+    contract.write_text("CUSTOM-GATE-CONTRACT-MARKER", encoding="utf-8")
+    args2 = argparse.Namespace(
+        run_dir=str(run_dir), evidence=None, digest=None, judgment=None,
+        transcript=None, gate_contract=str(contract), out=None,
+    )
+    assert dd_bundle.cmd_gate(args2) == 0
+    text2 = (run_dir / "bundles" / "gate.md").read_text(encoding="utf-8")
+    assert "CUSTOM-GATE-CONTRACT-MARKER" in text2
 
 
 def test_judge_bundle_loads_latest_quarter_from_full_path(tmp_path):

@@ -160,10 +160,27 @@ def spawn(
     slim = _slim_enabled()
     if slim:
         cmd.extend(SLIM_ARGS)
+    # 2026-09-10（WP-A 任務 3）：`--tools` 限縮與上面 SLIM_ARGS（setting-sources／
+    # mcp／chrome／slash-commands）脫鉤，不再只在 slim 模式加——`--tools` 限縮的
+    # 是「哪些工具的 schema 會被列進前綴」，跟 SLIM_ARGS 限縮的「載入哪些設定
+    # 來源」是兩件事，沒有理由讓後者的 A/B 開關也連帶關掉前者。語意依據
+    # `claude --help`：「Use "" to disable all tools, "default" to use all
+    # tools, or specify tool names」——空字串合法，已用
+    # `echo "只回 OK" | claude -p --model sonnet --max-turns 1 --tools ""`
+    # 實測可行（cache_read 3302，比帶滿前綴更小）。規則：
+    #   - 有給 allowed_tools：一定傳 `--tools <同一組>`（內建工具集只留
+    #     allowedTools 同一組，其餘 schema 不進前綴）。
+    #   - 沒給 allowed_tools（無工具單輪呼叫）：一定傳 `--tools ""`，把內建
+    #     工具集清空——除非呼叫端已自己在 `extra_args` 帶了 `--tools`（例如
+    #     `ddreport.py::_spawn_oneshot` 目前仍手動傳
+    #     `extra_args=["--tools", ""]`），此時不重複加，避免指令列出現兩次
+    #     `--tools` 旗標。
+    if not (extra_args and "--tools" in list(extra_args)):
         if allowed_tools:
-            # 內建工具集只留 allowedTools 同一組，其餘 schema 不進前綴
             cmd.append("--tools")
             cmd.extend(list(allowed_tools))
+        else:
+            cmd.extend(["--tools", ""])
     if extra_args:
         cmd.extend(list(extra_args))
 

@@ -10,9 +10,18 @@ judgment.schema.json）→ ③evidence 緊湊版 → ④最新一季逐字稿全
 ⑤digest → ⑥`references/v16/judgment-rules.md` 全文 → ⑦archetype 條件載入
 reference（依 judgment-rules §1 表）。
 
-`gate` 段落順序：①任務頭 → ③evidence 緊湊版 → ⑤digest → judgment.json
-全文 → `references/critic-gates.md` 全文。2026-09-06：閘不再重帶逐字稿全文；
-逐字證據已在 evidence／digest，避免跨模型冷讀重付整份逐字稿上下文。
+`gate` 段落順序：①任務頭 → ②`gate_view`（機械抽出，見下）→ judgment.json
+全文 → `gate_contract.md` 全文。2026-09-10（WP-A）：閘不再附 evidence／digest
+全文與 v15 `references/critic-gates.md`（後者要求讀 HTML／WebSearch 10-14
+輪／另一套輸出格式，與 v17 閘「禁搜尋、只審 judgment」互相矛盾，見
+`scripts/dd_prompts/gate_contract.md` 開頭對照表）。`gate_view` 改機械抽出
+①全部負向 finding、②judgment 有引用／affects 命中但未列
+`evidence_dismissed` 的 finding、③coverage 逐軸 status/計數表、④numbers
+最新 KPI／估值現值／segments 名單（非整包 numbers）、⑤`scenario_meta.json`
+sidecar、⑥`prior_dd`（含 drift_watch，原樣）、⑦digest 的 risk 子集＋全部
+qa_flags（digest.json 無 direction 欄位，topic="risk" 是既有分類裡最接近
+的替代，理由見 `gate_contract.md`）。2026-09-06 舊註記：閘不再重帶逐字稿
+全文；逐字證據已在 evidence／digest，避免跨模型冷讀重付整份逐字稿上下文。
 
 用法：
   python3 scripts/dd_bundle.py judge --run-dir DIR [--out DIR/bundles/judge.md]
@@ -20,7 +29,7 @@ reference（依 judgment-rules §1 表）。
       [--transcript FILE] [--judgment-rules FILE] --out FILE
   python3 scripts/dd_bundle.py gate --run-dir DIR [--out DIR/bundles/gate.md]
   python3 scripts/dd_bundle.py gate --evidence FILE --judgment FILE
-      [--digest FILE] [--transcript FILE] [--critic-gates FILE] --out FILE
+      [--digest FILE] [--transcript FILE] [--gate-contract FILE] --out FILE
 
 印 bundle 位元組數與 chars/3 估 token。
 """
@@ -28,12 +37,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import dd_delta  # noqa: E402 — _sibling_scenario_meta（scenario_meta sidecar 尋檔規則），單一權威不複製
 import dd_sections  # noqa: E402 — LEAK_PATTERNS（QC-40 詞表），單一權威不複製
 import qc  # noqa: E402 — CJK_PUNCT_RE（半形標點規則），單一權威不複製
 import validate_prose  # noqa: E402  （2026-09-06 WP4b：dump_number_whitelist 單一權威不複製）
@@ -41,7 +52,8 @@ import validate_prose  # noqa: E402  （2026-09-06 WP4b：dump_number_whitelist 
 SCHEMA_PATH = ROOT / "scripts" / "dd_schema" / "judgment.schema.json"
 SKILL_REFS_DIR = ROOT / ".claude" / "skills" / "stock-analyst" / "references"
 JUDGMENT_RULES_PATH = SKILL_REFS_DIR / "v16" / "judgment-rules.md"
-CRITIC_GATES_PATH = SKILL_REFS_DIR / "critic-gates.md"
+PROMPTS_DIR = ROOT / "scripts" / "dd_prompts"
+GATE_CONTRACT_PATH = PROMPTS_DIR / "gate_contract.md"  # 2026-09-10 WP-A：取代 critic-gates.md（v15 協議，與 v17 閘矛盾）
 RENDER_RULES_PATH = SKILL_REFS_DIR / "v16" / "render-rules.md"  # 2026-09-06 WP4b（散文 agent 唯一讀本）
 
 # archetype → 條件載入 reference（judgment-rules.md §1 表；ALWAYS_REFS 為該表
@@ -67,7 +79,8 @@ def _task_header(ticker, date, mode: str) -> str:
         "輸出 `judgment.json`（形狀見下方 schema 速查），不得臆測未在證據包內出現的數字或事件；"
         "負向 finding 未處置一律列 `evidence_refs` 或 `evidence_dismissed[]`（見 schema 速查 evidence_refs 用法）。"
         if mode == "judge" else
-        "輸出 critic gate 判定（PASS／PASS-with-fixes／FAIL）與逐條 finding，依 `references/critic-gates.md` 全文的 checklist 逐項作答。"
+        "輸出 critic gate 判定（PASS／PASS-with-fixes／FAIL）與逐條 finding，依本訊息內建的 ①–⑧ checklist（見下）逐項作答，"
+        "checklist 條文權威與欄位對照表見 `gate_contract.md`。"
     )
     return (
         f"## ① 任務頭\n\n"
@@ -321,6 +334,267 @@ def _archetype_refs_section(evidence: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# v17 WP-A（2026-09-10）：gate_view —— 閘不再吃 evidence／digest 全文，改機械
+# 抽出「checklist 真正會用到」的子集。設計依據：gate.md.tmpl ①–⑧ 逐條複核
+# 清單只問「證據包已有而判斷未接的東西」與「覆蓋面／新鮮度／情境樹對帳」，
+# 不需要通篇 claim／source 原文或整包 numbers——機械抽出把 151–236KB 的閘
+# bundle 壓到 checklist 真正查得到的子集，同時保留可稽核性（每列附
+# axis/id，閘仍能回指具體欄位）。
+# ---------------------------------------------------------------------------
+
+_AFFECTS_PREFIXES = ("decision_inputs", "thesis", "moat_trend")
+
+
+def _finding_stable_id(axis: str, i: int, f: dict) -> str:
+    """與 `_coverage_table` 同一套 fallback：finding 自身無 `id` 時用
+    `{axis}#{i}`（實測 14 份既有 evidence.json 每條 finding 皆已帶 `id`，
+    這裡只是防呆，不是常態路徑）。"""
+    return f.get("id") or f"{axis}#{i}"
+
+
+def _iter_findings(coverage: dict):
+    """逐軸、逐 finding yield `(axis, stable_id, finding_dict)`。"""
+    for axis, v in (coverage or {}).items():
+        if not isinstance(v, dict):
+            continue
+        for i, f in enumerate(v.get("findings") or []):
+            yield axis, _finding_stable_id(axis, i, f), f
+
+
+def _dismissed_refs(judgment: dict) -> list:
+    return [str(d.get("ref", "")) for d in (judgment.get("evidence_dismissed") or []) if isinstance(d, dict)]
+
+
+def _is_dismissed(fid: str, dismissed_refs: list) -> bool:
+    """`evidence_dismissed[].ref` 是自由文字（如 "gate_audit#6
+    decision_inputs.irr_base_pct"），不保證與 finding id 完全相等，故用
+    雙向子字串包含判定，不用精確比對。"""
+    if not fid:
+        return False
+    return any(ref and (fid in ref or ref in fid) for ref in dismissed_refs)
+
+
+def _affects_hits(affects) -> list:
+    return [a for a in (affects or []) if isinstance(a, str) and a.startswith(_AFFECTS_PREFIXES)]
+
+
+def _judgment_reference_blob(judgment: dict) -> str:
+    """整份 judgment 序列化後的文字，供「finding id 是否被引用」的子字串
+    掃描——涵蓋 `reasoning`、`contradictions[].evidence_refs`、
+    `moat.threats[].evidence_refs`、`premortem.blind_spots[].evidence_refs`、
+    `triggers[].evidence_refs`、`thesis.R[].evidence_refs` 等所有位置（比逐
+    欄位分別掃更穩，schema 新增 evidence_refs 掛點時不必跟著改本函式）。
+    排除 `evidence_dismissed` 本身，避免「finding 只出現在自己的 dismiss
+    ref 裡」被誤判成「被引用」。"""
+    j = dict(judgment)
+    j.pop("evidence_dismissed", None)
+    return json.dumps(j, ensure_ascii=False)
+
+
+def _gate_findings_table(evidence: dict, judgment: dict) -> str:
+    """checklist ①（負向 finding 是否被判斷接住）＋ ⑤/⑥ 交叉引用的機械
+    子集：收 (a) 全部 direction="-" 的 finding；(b) 未列在
+    `evidence_dismissed` 且被判斷引用（id 出現在 judgment 文字裡）或
+    `affects` 命中 decision_inputs／thesis／moat_trend 的 finding（可能是
+    正向）。純正向且未被引用、affects 也不命中的 finding 不上表——那些對
+    checklist 無用，硬塞只會佔位。"""
+    cov = evidence.get("coverage") or {}
+    dismissed_refs = _dismissed_refs(judgment)
+    blob = _judgment_reference_blob(judgment)
+    dismiss_reason = {
+        str(d.get("ref", "")): d.get("reason", "")
+        for d in (judgment.get("evidence_dismissed") or []) if isinstance(d, dict)
+    }
+
+    rows = []
+    for axis, fid, f in _iter_findings(cov):
+        direction = f.get("direction", "")
+        dismissed = _is_dismissed(fid, dismissed_refs)
+        referenced = (not dismissed) and bool(fid) and (fid in blob)
+        hits = [] if dismissed else _affects_hits(f.get("affects"))
+        if not (direction == "-" or referenced or hits):
+            continue
+        claim = (f.get("claim") or "").replace("|", "\\|").replace("\n", " ")
+        source = (f.get("source") or "").replace("|", "\\|").replace("\n", " ")
+        affects = ",".join(f.get("affects") or [])
+        if dismissed:
+            ref_hit = next((r for r in dismissed_refs if r and (fid in r or r in fid)), "")
+            note = (dismiss_reason.get(ref_hit, "") or "").replace("|", "\\|").replace("\n", " ")
+            dismissed_col = f"Y：{note}"
+        else:
+            dismissed_col = "N"
+        rows.append(
+            f"| {axis} | {fid} | {direction} | {f.get('as_of', '')} | {claim} | {source} | "
+            f"{affects} | {'Y' if referenced else 'N'} | {dismissed_col} |"
+        )
+
+    header = [
+        "| axis | id | dir | as_of | claim | source | affects | 被引用 | evidence_dismissed |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    if not rows:
+        return "\n".join(header) + "\n\n（本檔無符合條件的 finding：無負向、無被引用、affects 也未命中）"
+    return "\n".join(header + rows)
+
+
+def _gate_coverage_summary(coverage: dict) -> str:
+    """checklist ⑤ 覆蓋面掃描：逐軸 status／findings 數／queries 數；
+    status 為 none／not_applicable 的軸額外列出查詢詞原文，供閘判斷
+    「queries_run 是否 <2 條或不相關」（其餘軸已 found，計數已足夠）。"""
+    lines = ["| axis | status | n_findings | n_queries |", "|---|---|---|---|"]
+    detail = []
+    for axis, v in (coverage or {}).items():
+        if not isinstance(v, dict):
+            continue
+        status = v.get("status")
+        findings = v.get("findings") or []
+        queries = v.get("queries_run") or []
+        lines.append(f"| {axis} | {status} | {len(findings)} | {len(queries)} |")
+        if status in ("none", "not_applicable"):
+            reuse = ""
+            if v.get("reused_from"):
+                reuse = "（沿用 {0}，{1}d）".format(v.get("reused_from"), v.get("age_days"))
+            qtext = "；".join(queries) if queries else "（無查詢記錄）"
+            detail.append(f"- **{axis}**（{status}）{reuse}：{qtext}")
+    out = "\n".join(lines)
+    if detail:
+        out += "\n\n未涵蓋／不適用軸的查詢詞原文（供判相關性）：\n" + "\n".join(detail)
+    return out
+
+
+_SEGMENT_MEMBER_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*Segment[A-Za-z0-9]*Member")
+
+
+def _extract_segment_names(edgar_concentrations: dict) -> list:
+    """`numbers.edgar_concentrations.excerpt` 是原始 XBRL tag 文字（常
+    >1000 字、對閘無實質資訊），只抽其中的 `XxxSegmentMember` 名稱當「segments
+    名單」，不帶整段 excerpt。"""
+    excerpt = (edgar_concentrations or {}).get("excerpt") or ""
+    return sorted(set(_SEGMENT_MEMBER_RE.findall(excerpt)))
+
+
+def _gate_numbers_summary(evidence: dict) -> str:
+    """checklist ⑦ 數字新鮮度：只帶 `numbers.latest_quarter_kpis`（逐項
+    metric/value/as_of，checklist ⑦ 逐字點名的欄位）＋ price_at_dd／
+    earnings_recency／估值現值（非五年歷史）／segments 名單，不帶整包
+    `numbers`（peer_financials／edgar excerpt 原文／momentum 等對 checklist
+    無直接用途）。"""
+    numbers = evidence.get("numbers") or {}
+    out = {
+        "price_at_dd": numbers.get("price_at_dd"),
+        "price_as_of": numbers.get("price_as_of"),
+        "earnings_recency": numbers.get("earnings_recency"),
+    }
+    trailing = ((numbers.get("valuation_history") or {}).get("trailing")) or {}
+    val_current = {}
+    for k in ("pe", "ps", "ev_s"):
+        node = trailing.get(k) or {}
+        if node:
+            val_current[k] = {
+                "current": node.get("current"),
+                "percentile_within_annual_points": node.get("current_percentile_within_annual_points"),
+            }
+    fwd_points = ((numbers.get("valuation_history") or {}).get("fwd_recent_window") or {}).get("points") or []
+    if fwd_points:
+        val_current["fwd_pe_latest_snapshot"] = fwd_points[-1]
+    out["valuation_current"] = val_current
+    if numbers.get("latest_quarter_kpis"):
+        out["latest_quarter_kpis"] = numbers.get("latest_quarter_kpis")
+    out["segments"] = _extract_segment_names(numbers.get("edgar_concentrations") or {})
+
+    lines = ["numbers 摘要（僅最新 KPI／估值現值／segments 名單，非整包 numbers）", ""]
+    lines.append(_JSON_NOTE)
+    lines.append(_json_block(out))
+    return "\n".join(lines)
+
+
+def _gate_scenario_meta_section(judgment_path: Path) -> str:
+    """checklist ⑥(iii) `decision_inputs.irr_base_pct`／`ev5y_pct` 與
+    `scenario_meta` 對帳，需要這份 sidecar 的權威值——找法沿用
+    `dd_delta._sibling_scenario_meta`（archive 命名慣例／in-flight run 目錄
+    慣例二擇一，見該函式註解），不在本檔重造一套找檔邏輯。"""
+    lines = ["scenario_meta.json sidecar（判斷層情境樹權威，checklist ⑥(iii) 對帳用）", ""]
+    p = dd_delta._sibling_scenario_meta(Path(judgment_path))
+    if not p:
+        lines.append("[找不到 scenario_meta.json sidecar（archive 命名慣例與 in-flight run 目錄慣例皆未命中）]")
+        return "\n".join(lines)
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
+        lines.append(f"[scenario_meta {p} 讀取失敗或非合法 JSON]")
+        return "\n".join(lines)
+    lines.append(f"（來源：{p}）")
+    lines.append(_JSON_NOTE)
+    lines.append(_json_block(obj))
+    return "\n".join(lines)
+
+
+def _gate_prior_dd_section(evidence: dict) -> str:
+    """checklist ⑧ QC-49 前份漂移歸因：`evidence.prior_dd` 已含
+    `drift_watch`／`prior_meta`／`H`／`R`／`triggers` 等，原樣附上（不是
+    大檔，且欄位彼此耦合不易再拆）。"""
+    lines = ["prior_dd（前份裁決＋drift_watch，原樣；checklist ⑧ 對帳用）", ""]
+    lines.append(_JSON_NOTE)
+    lines.append(_json_block(evidence.get("prior_dd") or {}))
+    return "\n".join(lines)
+
+
+def _gate_digest_risk_section(digest_path) -> str:
+    """digest.json 的 `items[]` 實測（14 份既有 run 全查）沒有 `direction`
+    欄位，只有 `topic`（白名單見 validate_digest.py：guidance/margin/
+    competition/capital_allocation/product/risk/customer/commitment）——
+    `topic=="risk"` 是既有分類裡與「負向」語意最接近的替代，`qa_flags`
+    （管理層迴避／未正面回答的問答，本來就是已篩過的可疑清單）全數保留。
+    非 risk 的 items（guidance/margin/product 等中性或正向摘要）對閘的
+    checklist 無直接用途，不上 bundle。"""
+    lines = [
+        "digest 風險子集（topic=\"risk\" 的 items ＋ 全部 qa_flags；"
+        "digest.json 無 direction 欄位，理由見本函式 docstring／gate_contract.md）",
+        "",
+    ]
+    if not digest_path or not Path(digest_path).exists():
+        lines.append(f"[找不到 digest：{digest_path}]")
+        return "\n".join(lines)
+    raw = Path(digest_path).read_text(encoding="utf-8")
+    try:
+        obj = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        lines.append("[digest 非合法 JSON，略過風險子集抽取]")
+        return "\n".join(lines)
+    items = obj.get("items") or []
+    risk_items = [it for it in items if it.get("topic") == "risk"]
+    view = {"risk_items": risk_items, "qa_flags": obj.get("qa_flags") or []}
+    lines.append(_JSON_NOTE)
+    lines.append(_json_block(view))
+    return "\n".join(lines)
+
+
+def _gate_view_section(evidence: dict, judgment: dict, judgment_path: Path, digest_path) -> str:
+    lines = [
+        "## ② gate_view（機械抽出，非 evidence／digest 全文；抽取規則與 checklist 對照表見 "
+        "`scripts/dd_prompts/gate_contract.md`）",
+        "",
+        "ticker={0}　date={1}　archetype_hint={2}".format(
+            evidence.get("ticker"), evidence.get("date"), evidence.get("archetype_hint")),
+        "",
+        "### (a)+(b) 負向 finding／被引用或 affects 命中且未列 evidence_dismissed 的 finding",
+        _gate_findings_table(evidence, judgment),
+        "",
+        "### (c) coverage 逐軸總覽",
+        _gate_coverage_summary(evidence.get("coverage") or {}),
+        "",
+        "### (d) " + _gate_numbers_summary(evidence),
+        "",
+        "### (e) " + _gate_scenario_meta_section(judgment_path),
+        "",
+        "### (f) " + _gate_prior_dd_section(evidence),
+        "",
+        "### (g) " + _gate_digest_risk_section(digest_path),
+    ]
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # v17 WP4b（2026-09-06）：散文（prose）bundle —— `ddreport.py prose prepare`
 # 呼叫，組 bundles/prose.md 給散文 agent 一次讀取。段落順序見任務指示：
 # ①任務頭 → ②render-rules.md 全文 → ③judgment.json 全文（含 reasoning）→
@@ -407,12 +681,30 @@ def _prose_budget_section(judgment_path: Path, tables_dir: Path) -> str:
     return "\n".join(lines)
 
 
-def _numbers_whitelist_section(judgment: dict, evidence: dict | None) -> str:
+def _numbers_whitelist_section(judgment: dict) -> str:
+    """2026-09-10（WP-A 任務 2）：只收 judgment 數字，不再併 evidence。
+
+    依據：① prose.md.tmpl 本身明講「**不讀** evidence.json 全文——承重數字
+    一律來自 judgment.json（含其 reasoning）」，白名單併入 evidence 數字與
+    這條指示矛盾（等於明著告訴 agent 可以抄 evidence 裡判斷沒引用過的數
+    字）。② 實際擋盤的機械閘（`ddreport.py::_run_gates` → `validate_prose.py
+    PROSE_DIR --judgment ... --evidence ...`）是直接讀 judgment.json／
+    evidence.json 兩個檔案重算 ref_numbers，不消費本函式或本 bundle 的輸
+    出——拿掉 evidence 不會讓任何原本會過的 prose 變成 FAIL，只是不再主
+    動展示 evidence 裡的數字誘使 agent 去抄。③ `gen_dd_tables.py` 的機械表
+    格（e2–e12）以 judgment 欄位為主，唯一吃 evidence 的是 revlog（前份
+    比對，機械生成、agent 不寫），不影響散文白名單的需求範圍。
+
+    註記（surface conflict，未動）：references/v16/render-rules.md §0.2 一行
+    寫「承重數字必須已存在於 judgment.json(或 evidence.json)」，字面上仍
+    允許 evidence 來源——與 prose.md.tmpl 的「不讀 evidence」說法不完全一
+    致。render-rules.md 不在本次任務可改檔案清單內，這裡選擇對齊
+    prose.md.tmpl 較嚴的那條（agent 動筆前只看得到 judgment 數字），機械
+    閘本身仍保留 evidence 當寬鬆備援，兩邊互不衝突、只是本函式不再把
+    evidence 數字主動攤在 agent 眼前。"""
     numbers = validate_prose.dump_number_whitelist(judgment)
-    if evidence:
-        numbers = sorted(set(numbers) | set(validate_prose.dump_number_whitelist(evidence)))
     lines = [
-        "## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字）",
+        "## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）",
         "",
         "```",
     ]
@@ -470,7 +762,7 @@ def cmd_prose(args) -> int:
         + "\n\n```json\n" + judgment_compact + "\n```",
         _table_listing_section(tables_dir),
         _prose_budget_section(judgment_path, tables_dir),
-        _numbers_whitelist_section(judgment, evidence),
+        _numbers_whitelist_section(judgment),
         _mechanical_sids_section(prose_dir),
     ]
     _write_bundle(parts, out_path)
@@ -540,10 +832,16 @@ def cmd_gate(args) -> int:
     evidence = _load_json(evidence_path)
     # 2026-09-06：judgment.json 落地檔是 pretty-print，嵌入 gate bundle 前轉緊湊
     # JSON（省縮排空白）；找不到檔／非合法 JSON 時原樣保留既有錯誤訊息或原始文字。
+    # 2026-09-10（WP-A）：同時需要 judgment 的 dict 形態餵 gate_view（找
+    # evidence_dismissed／被引用 finding），故此處改保留 parsed dict；找不到
+    # 檔或非合法 JSON 時 judgment_obj 退回空 dict（gate_view 的各函式對空
+    # dict 皆有防呆，不會炸）。
+    judgment_obj: dict = {}
     if judgment_path.exists():
         judgment_raw = judgment_path.read_text(encoding="utf-8")
         try:
-            judgment_text = json.dumps(json.loads(judgment_raw), ensure_ascii=False, separators=(",", ":"))
+            judgment_obj = json.loads(judgment_raw)
+            judgment_text = json.dumps(judgment_obj, ensure_ascii=False, separators=(",", ":"))
             judgment_note = _JSON_NOTE + "\n\n"
         except (json.JSONDecodeError, ValueError):
             judgment_text = judgment_raw
@@ -551,19 +849,18 @@ def cmd_gate(args) -> int:
     else:
         judgment_text = f"[找不到 judgment：{judgment_path}]"
         judgment_note = ""
-    critic_gates_path = Path(args.critic_gates) if args.critic_gates else CRITIC_GATES_PATH
-    critic_gates_text = (
-        critic_gates_path.read_text(encoding="utf-8") if critic_gates_path.exists()
-        else f"[找不到 {critic_gates_path}]"
+    gate_contract_path = Path(args.gate_contract) if args.gate_contract else GATE_CONTRACT_PATH
+    gate_contract_text = (
+        gate_contract_path.read_text(encoding="utf-8") if gate_contract_path.exists()
+        else f"[找不到 {gate_contract_path}]"
     )
 
     parts = [
         _task_header(evidence.get("ticker"), evidence.get("date"), "gate"),
-        _evidence_compact(evidence),
-        # 2026-09-06：閘只吃 evidence 摘要＋digest，不重帶最新季逐字稿全文。
-        _digest_section(digest_path),
-        "## judgment.json 全文\n\n" + judgment_note + "```json\n" + judgment_text + "\n```",
-        "## references/critic-gates.md 全文\n\n" + critic_gates_text,
+        _gate_view_section(evidence, judgment_obj, judgment_path, digest_path),
+        "## ③ judgment.json 全文（被審對象，原樣保留）\n\n" + judgment_note + "```json\n" + judgment_text + "\n```",
+        "## ④ gate_contract.md 全文（v17 checklist 條文權威，取代 v15 references/critic-gates.md）\n\n"
+        + gate_contract_text,
     ]
     _write_bundle(parts, out_path)
     return 0
@@ -588,7 +885,7 @@ def main(argv):
     p_gate.add_argument("--digest", help="digest.json 路徑")
     p_gate.add_argument("--judgment", help="judgment.json 路徑（無 --run-dir 時必填）")
     p_gate.add_argument("--transcript", help="逐字稿檔路徑；未給則由 evidence.transcripts 自動找")
-    p_gate.add_argument("--critic-gates", help="critic-gates.md 路徑（預設 references/critic-gates.md）")
+    p_gate.add_argument("--gate-contract", help="gate_contract.md 路徑（預設 scripts/dd_prompts/gate_contract.md）")
     p_gate.add_argument("--out", help="輸出 bundle 路徑（無 --run-dir 時必填）")
     p_gate.set_defaults(func=cmd_gate)
 
