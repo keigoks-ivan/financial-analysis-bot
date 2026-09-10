@@ -28,8 +28,14 @@ jobs:
         with:
           python-version: "3.12"  # 與 daily-us-close.yml 的 stages/check_seat_stage_alerts 步驟同版本
 
-      # check_seat_stage_alerts.py 及其匯入的 build_stages.py 只用標準庫
-      # （json / sys / argparse / pathlib），無需額外安裝套件。
+      # check_seat_stage_alerts.py 本身只用標準庫，但它 import 的
+      # build_stages.py 依序 import numpy/pandas，build_stages 又 import
+      # tech_core（pandas）與 build_rs_turn（numpy/pandas/requests）——即使
+      # --test-email 路徑不會呼叫這些模組的任何函式，import 仍會在檔案頂層
+      # 觸發，套件缺一樣會 ModuleNotFoundError（同 daily-us-close.yml 該步驟
+      # 的依賴聯集，只是這裡只需其中三個）。
+      - name: Install dependencies
+        run: pip install pandas numpy requests
 
       - name: Write test alert body
         run: python scripts/check_seat_stage_alerts.py --test-email
