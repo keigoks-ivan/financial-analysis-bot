@@ -224,10 +224,18 @@ def _evidence_compact(evidence: dict) -> str:
 
 
 def _find_transcript_path(ticker: str, filename: str):
-    if not ticker or not filename:
+    """2026-09-10：`recent_four_quarters[]` 由 Stage 0 寫入時已是完整路徑
+    （koyfin.md.tmpl 規格），先直接用；只有純檔名才回退到 Google Drive glob。
+    之前一律把完整路徑再接到 glob 樣板後面，14 份判斷包全部「找不到逐字稿」。"""
+    if not filename:
+        return None
+    direct = Path(filename)
+    if direct.is_absolute() and direct.exists():
+        return direct
+    if not ticker:
         return None
     home = Path.home()
-    pattern = f"Library/CloudStorage/GoogleDrive-*/我的雲端硬碟/007美股/{ticker}/{filename}"
+    pattern = f"Library/CloudStorage/GoogleDrive-*/我的雲端硬碟/007美股/{ticker}/{direct.name}"
     matches = list(home.glob(pattern))
     return matches[0] if matches else None
 
@@ -248,7 +256,10 @@ def _transcript_section(evidence: dict, explicit_path) -> str:
     if not rec:
         lines.append("[找不到逐字稿：evidence.transcripts.selected.recent_four_quarters 為空或缺席]")
         return "\n".join(lines)
-    filename = rec[0]
+    # 2026-09-10：清單依日期由舊到新（koyfin.md.tmpl），最新一季是最後一篇；
+    # Stage 0 的 digest 也是拿 recent4[:-1] 給摘要、留最後一篇給判斷 agent。
+    # 之前取 [0] 拿到的是最舊那季，且與 digest 重疊。
+    filename = rec[-1]
     found = _find_transcript_path(ticker, filename)
     if found:
         lines.append(f"（來源：{found}）\n")

@@ -1184,5 +1184,28 @@ def test_gate_bundle_keeps_digest_but_omits_full_transcript(tmp_path):
     assert "FULL-TRANSCRIPT-SECRET-MARKER" not in text
 
 
+def test_judge_bundle_loads_latest_quarter_from_full_path(tmp_path):
+    """2026-09-10 P0：判斷包必須拿 recent_four_quarters 的最後一篇（最新季），
+    且清單裡已是完整路徑時直接讀，不再重拼 Google Drive glob。"""
+    run_dir = tmp_path / "run"
+    (run_dir / "bundles").mkdir(parents=True)
+    oldest = tmp_path / "Q1.md"; oldest.write_text("OLDEST-QUARTER-MARKER", encoding="utf-8")
+    latest = tmp_path / "Q4.md"; latest.write_text("LATEST-QUARTER-MARKER", encoding="utf-8")
+    (run_dir / "evidence.json").write_text(json.dumps({
+        "ticker": "Z", "date": "20260101", "numbers": {}, "coverage": {},
+        "events": {}, "prior_dd": {}, "ledger": {}, "canonical_id": {},
+        "transcripts": {"selected": {"recent_four_quarters": [str(oldest), str(latest)]}},
+    }), encoding="utf-8")
+    args = argparse.Namespace(
+        run_dir=str(run_dir), evidence=None, digest=None, transcript=None,
+        judgment_rules=str(tmp_path / "missing_rules.md"), out=None,
+    )
+    assert dd_bundle.cmd_judge(args) == 0
+    text = (run_dir / "bundles" / "judge.md").read_text(encoding="utf-8")
+    assert "LATEST-QUARTER-MARKER" in text
+    assert "OLDEST-QUARTER-MARKER" not in text
+    assert "找不到逐字稿" not in text
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
