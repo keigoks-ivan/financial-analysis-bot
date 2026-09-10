@@ -15,7 +15,7 @@
 
 ## 0.5｜兩個共用約定(2026-09-10規則精簡)
 
-**(一)反證紀錄＝`premortem.blind_spots[]`單一居所**——「這判斷可能錯在哪」只寫這一份，每條：`view`(擇一：`論點失敗`／`論點成功但股東經濟變差`／`價格已反映太多`)｜`evidence`｜`assumption`受影響假設｜`consequence`財務或估值後果｜`ruling`採納或反駁＋理由｜`watch`觀測點(＋`evidence_refs`)。三視角**至少各一條**，不適用就寫明為何不適用。§12 steelman、§13失敗故事與第二敗局、§18自我攻擊與trap判斷依據、`plain.fears`／`how_to_lose`一律**引用本紀錄不重寫**——不同問法不再各要一份答案。
+**(一)反證紀錄＝`premortem.blind_spots[]`單一居所**——「這判斷可能錯在哪」只寫這一份，每條：`view`(擇一：`論點失敗`／`論點成功但股東經濟變差`／`價格已反映太多`)｜`evidence`｜`assumption`受影響假設｜`consequence`財務或估值後果｜`ruling`採納或反駁＋理由｜`watch`觀測點(＋`evidence_refs`)。三視角**至少各一條**，不適用就在該條寫 `not_applicable_reason`（validator 認這個欄）。§12 steelman、§13失敗故事與第二敗局、§18自我攻擊與trap判斷依據、`plain.fears`／`how_to_lose`一律**引用本紀錄不重寫**——不同問法不再各要一份答案。
 
 **(二)未展開標記**——`industry.tam_table`(§3.F)／`growth.segments`(§6.I)／`governance.capital_returns`(§7.D)／`valuation.peers`(§10)改條件式(觸發見各節)。不展開時該欄改填`{"expanded": false, "reason": "為何不展開＋何時重新展開"}`，**理由與重啟觸發缺一即無效**(頁面渲染成一行「未展開：理由」)。展開與否是判斷：估值或裁決承重在該區塊就必須展開；理由不得只寫「營收占比低」「資料難找」。
 
