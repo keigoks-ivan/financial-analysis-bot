@@ -197,6 +197,7 @@ RESEARCH_OOS_LINKS = [
     ("/backtest/a0_d1_comfort/", "A0＋D1 舒服度", "a0_d1_comfort", "研究"),
     ("/backtest/f_comfort/", "F 組合舒服度", "f_comfort", "研究"),
     ("/backtest/comfort_tournament/", "舒服度錦標賽", "comfort_tournament", "研究"),
+    ("/backtest/futures_leg/", "F70 換 CTA 腿", "futures_leg", "否決"),
     ("/backtest/cross_sectional_trend/", "橫斷面版趨勢", "cross_sec_trend", "研究"),
     ("/backtest/a0_proposal/", "A0 提案（10 月回顧點）", "a0_proposal", "研究"),
 ]
