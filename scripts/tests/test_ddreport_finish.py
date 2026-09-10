@@ -316,7 +316,7 @@ def test_finish_commit_file_whitelist_and_push(tmp_path, monkeypatch):
     assert "-m" in commit_calls[0]
     msg = commit_calls[0][commit_calls[0].index("-m") + 1]
     assert ticker in msg
-    assert "v17 全帳" in msg
+    assert "v17 $" in msg  # 2026-09-10 WP-B：commit subject 改報真成本「v17 $Z.ZZ／X.XM」
     assert "resync research+screener" in msg
 
     push_calls = [c for c in git_calls if c[0] == "push"]
