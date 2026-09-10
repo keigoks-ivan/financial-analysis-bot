@@ -185,7 +185,7 @@ BLOCKS = [
     ]),
     dict(id="housing", emoji="🏠", title="房價與所得・43 經濟體", rows=[
         ("總覽", None, [
-            ("/backtest/housing_gdp/", "研究總覽：短中期看信貸，所得只在同一國 3～7 年有用", "研究", False),
+            ("/backtest/housing_gdp/", "研究總覽：短中期看信貸", "研究", False),
         ]),
         ("九個系列", None, [
             ("/backtest/housing_gdp/gdppc_level.html", "人均 GDP 實際金額", "研究", False),
@@ -200,7 +200,6 @@ BLOCKS = [
         ]),
         ("主線與假說", None, [
             ("/backtest/housing_gdp/regression.html", "主線迴歸", "研究", False),
-            ("/backtest/housing_gdp/catchup.html", "追趕假說", "研究", False),
             ("/backtest/housing_gdp/divergence.html", "三型分流", "研究", False),
             ("/backtest/housing_gdp/gdp_band.html", "GDP 帶假說", "研究", False),
             ("/backtest/housing_gdp/city_catchup.html", "補漲假說：城市版", "研究", False),
