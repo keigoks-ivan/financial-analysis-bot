@@ -252,7 +252,7 @@ BLOCKS = [
     dict(id="macro", emoji="🌏", title="總經・跨國", rows=[
         ("國家掃描", "scan", [
             ("/backtest/country_scan/us.html", "美國：十檔股票的指數、一千五百檔的兩種定價", "研究", False),
-            ("/backtest/country_scan/taiwan.html", "台灣：市場結構與八個投資鏡頭", "研究", False),
+            ("/backtest/country_scan/taiwan.html", "台灣：一檔股票的指數、六百七十檔的兩種定價", "研究", False),
             ("/backtest/country_scan/japan.html", "日本：市場結構與七個投資鏡頭", "研究", False),
             ("/backtest/country_scan/malaysia.html", "馬來西亞：市場結構與四個投資鏡頭", "研究", False),
         ]),
