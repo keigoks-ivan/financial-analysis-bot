@@ -355,7 +355,10 @@ def _unexpanded_table(table_id: str, block, header: str):
     沒展開，不是靜靜消失。非未展開形狀回 None，呼叫端照原路走。"""
     if not (isinstance(block, dict) and block.get("expanded") is False):
         return None
-    ncol = header.count("<th>")
+    # v19（WP-H2-2）：七表表頭部分欄位改標 class="num"（<th class="num">…），
+    # 原本的 exact-match "<th>" 計數會漏算這些欄，colspan 算少（已實測 E10
+    # 未展開分支 5 欄算成 1 欄）——改用 "<th" 前綴計數，兩種寫法都算得到。
+    ncol = header.count("<th")
     reason = esc(block.get("reason") or "（未附理由）")
     return ('<table id="{tid}">\n'.format(tid=table_id) + header + "\n"
             + '<tr><td colspan="{n}">未展開：{r}</td></tr>\n</table>\n'.format(n=ncol, r=reason))
@@ -401,16 +404,23 @@ def render_e3_html(j: dict) -> str:
     rows = []
     for r in rows_data:
         rows.append(
-            "<tr><td>{seg}</td><td>{now}</td><td>{y5}</td><td>{pen}</td><td>{cagr}</td>"
+            '<tr><td>{seg}</td><td class="num">{now}</td><td class="num">{y5}</td>'
+            '<td class="num">{pen}</td><td class="num">{cagr}</td>'
             "<td>{vcp}</td><td>{pp}</td></tr>".format(
                 seg=esc(r.get("segment")), now=esc(r.get("tam_now")), y5=esc(r.get("tam_5y")),
                 pen=esc(r.get("penetration_pct")), cagr=esc(r.get("cagr_pct")),
                 vcp=esc(r.get("value_chain_position")), pp=esc(r.get("profit_pool_shift")),
             )
         )
+    # v19（WP-H2-2，2026-09-11）：七表數值欄改標 class="num"（新版面 CSS 靠
+    # class 而非欄序套右對齊／等寬數字樣式），第一欄的名稱/標籤欄不加——沿用
+    # dd_templates/v19.css 的 td.num 慣例。舊版面 dd_template/dd.css 沒有
+    # `.num` 選擇器，這個 class 屬性對舊版面是無作用的多餘屬性（純新增，不影
+    # 響既有視覺），故舊版面重跑只多這個屬性、其餘 bytes 不變。
     header = (
-        "<tr><th>段</th><th>TAM(現)</th><th>TAM(5Y)</th><th>滲透率</th>"
-        "<th>段CAGR</th><th>Value Chain位置</th><th>利潤池占比遷移</th></tr>"
+        '<tr><th>段</th><th class="num">TAM(現)</th><th class="num">TAM(5Y)</th>'
+        '<th class="num">滲透率</th><th class="num">段CAGR</th>'
+        "<th>Value Chain位置</th><th>利潤池占比遷移</th></tr>"
     )
     skipped = _unexpanded_table("e3", block, header)
     if skipped:
@@ -435,13 +445,15 @@ def render_e5_html(j: dict) -> str:
     rows = []
     for r in rows_data:
         rows.append(
-            "<tr><td>{drv}</td><td>{now}</td><td>{hist}</td><td>{spread}</td><td>{link}</td></tr>".format(
+            '<tr><td>{drv}</td><td class="num">{now}</td><td class="num">{hist}</td>'
+            '<td class="num">{spread}</td><td>{link}</td></tr>'.format(
                 drv=esc(r.get("driver")), now=esc(r.get("metric_now")),
                 hist=esc(r.get("metric_hist_avg")), spread=esc(r.get("spread")),
                 link=esc(r.get("moat_linkage")),
             )
         )
-    header = "<tr><th>驅動因子</th><th>現值</th><th>歷史均值</th><th>價差</th><th>護城河連結</th></tr>"
+    header = ('<tr><th>驅動因子</th><th class="num">現值</th><th class="num">歷史均值</th>'
+              '<th class="num">價差</th><th>護城河連結</th></tr>')
     table = '<table id="e5">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
     return summary + "\n" + table
 
@@ -455,16 +467,18 @@ def render_e6_html(j: dict) -> str:
     rows = []
     for r in rows_data:
         rows.append(
-            "<tr><td>{name}</td><td>{rg}</td><td>{gm}</td><td>{om}</td><td>{rd}</td>"
-            "<td>{fcf}</td><td>{nc}</td><td>{note}</td></tr>".format(
+            '<tr><td>{name}</td><td class="num">{rg}</td><td class="num">{gm}</td>'
+            '<td class="num">{om}</td><td class="num">{rd}</td>'
+            '<td class="num">{fcf}</td><td class="num">{nc}</td><td>{note}</td></tr>'.format(
                 name=esc(r.get("name")), rg=esc(r.get("rev_growth")), gm=esc(r.get("gm")),
                 om=esc(r.get("om")), rd=esc(r.get("rd_intensity")), fcf=esc(r.get("fcf_margin")),
                 nc=esc(r.get("net_cash")), note=esc(r.get("strategy_note")),
             )
         )
     header = (
-        "<tr><th>對手</th><th>營收成長</th><th>毛利率</th><th>營業利益率</th>"
-        "<th>研發密度</th><th>FCF利潤率</th><th>淨現金</th><th>策略備註</th></tr>"
+        '<tr><th>對手</th><th class="num">營收成長</th><th class="num">毛利率</th>'
+        '<th class="num">營業利益率</th><th class="num">研發密度</th>'
+        '<th class="num">FCF利潤率</th><th class="num">淨現金</th><th>策略備註</th></tr>'
     )
     return '<table id="e6">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
 
@@ -479,12 +493,12 @@ def render_e7_html(j: dict) -> str:
     rows = []
     for r in rows_data:
         rows.append(
-            "<tr><td>{n}</td><td>{q}</td><td>{status}</td><td>{ev}</td></tr>".format(
+            '<tr><td class="num">{n}</td><td>{q}</td><td>{status}</td><td>{ev}</td></tr>'.format(
                 n=esc(r.get("n")), q=esc(r.get("question")), status=esc(r.get("status")),
                 ev=esc(r.get("evidence")),
             )
         )
-    header = "<tr><th>#</th><th>檢查點</th><th>狀態</th><th>證據</th></tr>"
+    header = '<tr><th class="num">#</th><th>檢查點</th><th>狀態</th><th>證據</th></tr>'
     summary = (
         '<tr><td colspan="4">象限：{quad}｜ROIIC：{roiic}｜再投資率：{ri}｜'
         "內生成長天花板：{ceil}（{note}）</td></tr>"
@@ -504,16 +518,18 @@ def render_e8_html(j: dict) -> str:
     rows = []
     for r in rows_data:
         rows.append(
-            "<tr><td>{seg}</td><td>{fy0}</td><td>{fy1}</td><td>{fy2}</td>"
-            "<td>{om0}→{om1}→{om2}</td><td>{eps}</td></tr>".format(
+            '<tr><td>{seg}</td><td class="num">{fy0}</td><td class="num">{fy1}</td>'
+            '<td class="num">{fy2}</td>'
+            '<td>{om0}→{om1}→{om2}</td><td class="num">{eps}</td></tr>'.format(
                 seg=esc(r.get("segment")), fy0=esc(r.get("fy0_rev")), fy1=esc(r.get("fy1e_rev")),
                 fy2=esc(r.get("fy2e_rev")), om0=esc(r.get("om_fy0")), om1=esc(r.get("om_fy1e")),
                 om2=esc(r.get("om_fy2e")), eps=esc(r.get("eps_contribution_pct")),
             )
         )
     header = (
-        "<tr><th>段</th><th>FY0營收</th><th>FY+1E</th><th>FY+2E</th>"
-        "<th>OM軌跡(FY0→FY+2E)</th><th>對EPS貢獻%</th></tr>"
+        '<tr><th>段</th><th class="num">FY0營收</th><th class="num">FY+1E</th>'
+        '<th class="num">FY+2E</th>'
+        '<th>OM軌跡(FY0→FY+2E)</th><th class="num">對EPS貢獻%</th></tr>'
     )
     skipped = _unexpanded_table("e8", block, header)
     if skipped:
@@ -539,16 +555,20 @@ def render_e9_html(j: dict) -> str:
         d = dupont.get(y, {})
         c = ccc.get(y, {})
         rows.append(
-            "<tr><td>{y}</td><td>{nm}</td><td>{at}</td><td>{lev}</td><td>{roe}</td>"
-            "<td>{dso}</td><td>{dio}</td><td>{dpo}</td><td>{ccc}</td></tr>".format(
+            '<tr><td>{y}</td><td class="num">{nm}</td><td class="num">{at}</td>'
+            '<td class="num">{lev}</td><td class="num">{roe}</td>'
+            '<td class="num">{dso}</td><td class="num">{dio}</td><td class="num">{dpo}</td>'
+            '<td class="num">{ccc}</td></tr>'.format(
                 y=esc(y), nm=esc(d.get("net_margin")), at=esc(d.get("asset_turnover")),
                 lev=esc(d.get("leverage")), roe=esc(d.get("roe")), dso=esc(c.get("dso")),
                 dio=esc(c.get("dio")), dpo=esc(c.get("dpo")), ccc=esc(c.get("ccc")),
             )
         )
     header = (
-        "<tr><th>年度</th><th>淨利率</th><th>資產週轉</th><th>槓桿</th><th>ROE</th>"
-        "<th>DSO</th><th>DIO</th><th>DPO</th><th>CCC</th></tr>"
+        '<tr><th>年度</th><th class="num">淨利率</th><th class="num">資產週轉</th>'
+        '<th class="num">槓桿</th><th class="num">ROE</th>'
+        '<th class="num">DSO</th><th class="num">DIO</th><th class="num">DPO</th>'
+        '<th class="num">CCC</th></tr>'
     )
     return '<table id="e9">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
 
@@ -565,12 +585,14 @@ def render_e10_html(j: dict) -> str:
     rows = []
     for r in rows_data:
         rows.append(
-            "<tr><td>{y}</td><td>{bb}</td><td>{div}</td><td>{capex}</td><td>{rd}</td></tr>".format(
+            '<tr><td>{y}</td><td class="num">{bb}</td><td class="num">{div}</td>'
+            '<td class="num">{capex}</td><td class="num">{rd}</td></tr>'.format(
                 y=esc(r.get("year")), bb=esc(r.get("buyback")), div=esc(r.get("dividend")),
                 capex=esc(r.get("capex")), rd=esc(r.get("rd")),
             )
         )
-    header = "<tr><th>年度</th><th>回購</th><th>股利</th><th>資本支出</th><th>研發</th></tr>"
+    header = ('<tr><th>年度</th><th class="num">回購</th><th class="num">股利</th>'
+              '<th class="num">資本支出</th><th class="num">研發</th></tr>')
     skipped = _unexpanded_table("e10", block, header)
     if skipped:
         table = skipped
@@ -831,6 +853,700 @@ def render_s14_html(j: dict) -> str:
     return "\n".join(parts) + "\n"
 
 
+# ---------------------------------------------------------------------------
+# v19（WP-H2-2，2026-09-11）：新版面頁首（meta 行/h1/摘要/五張卡/24 格篩選器
+# 資料列/改變主意三條）與 s7/s8/s10/decision 的免費資料折疊區、v19 專用附錄
+# A/B/C 與 revlog 片段。規格：notes/site-internal/dd/_v19_layout_spec_20260911.md。
+#
+# 零 LLM：只讀 build_dd_meta() 已投影好的 dd-meta 欄位（`meta`）、投影視圖
+# （`j` = dd_project.view_for() 的輸出）、facts.json、scenario_meta.json——
+# 不新增判斷、不外推判斷檔沒有的新數字。唯一允許的算術是「已 sourced 的兩個
+# 數字相乘/相減」（例：一年/兩年合理價＝price_at_dd×(1+upside_pct/100)），
+# 一律標「由 X% 推算」。只在 `dd_project.is_v19(raw)` 為真時由 main() 呼叫；
+# 舊形狀報告完全不受影響（見下方 main() 的 if 分支）。
+#
+# 這些函式輸出的 HTML 片段（v19-*.html）由 render_dd.py 的
+# `assemble_from_parts_v19()` 讀取並注入 v19.html 模板；canonical id
+# （s1..s14/decision/appA/appB/appC/revlog）與舊版面共用，dd_sections.py 既有
+# 的 bytes/leaks 掃描機制不需改動即可涵蓋。
+# ---------------------------------------------------------------------------
+
+_DOT_HEX_V19 = {
+    "🟢": "#16A34A", "🟡": "#D97706", "🟠": "#EA580C", "🔴": "#DC2626", "⚪": "#94A3B8",
+}
+_DOT_COLOR_NAME_V19 = {"🟢": "綠", "🟡": "黃", "🟠": "橙", "🔴": "紅", "⚪": "灰"}
+_RISK_LEVEL_LABEL_V19 = {"🟢": "低", "🟡": "中", "🟠": "中高", "🔴": "高"}
+_RUNWAY_LABEL_V19 = {"🟢": "結構性", "🟡": "待驗證", "🟠": "轉弱", "🔴": "消退中"}
+_MOAT_TREND_LABEL_V19 = {"↑": "上升", "→": "持平", "↓": "下降"}
+_CLOCK_PHASE_LABEL_V19 = {"I": "第一階段", "II": "第二階段", "III": "第三階段", "IV": "第四階段"}
+_SIGNAL_PLAIN_V19 = {"進場": "進場時機", "觀望": "時機不到", "迴避": "避開"}
+_EXEC_SHORT_V19 = {"進場": "現價分批", "觀望": "等重啟門檻", "迴避": "不參與"}
+_IRR_NOTE_V19 = {"進場": "過門檻，不用等回檔", "觀望": "不到門檻，等價格", "迴避": "不到門檻"}
+_DIRECTION_DOT_V19 = {"+": "🟢", "-": "🔴", "0": "⚪"}
+_DIRECTION_LABEL_V19 = {"+": "正", "-": "負", "0": "中"}
+_FY_KEY_RE_V19 = re.compile(r"FY\s*(\d{4})")
+
+
+def _dot(emoji: str, fallback: str = "#94A3B8") -> str:
+    hexv = _DOT_HEX_V19.get(emoji, fallback) if emoji else fallback
+    return f'<span class="dot" style="background:{hexv}"></span>'
+
+
+def _strip_paren(text) -> str:
+    if not text:
+        return ""
+    return re.split(r"[（(]", str(text), 1)[0].strip()
+
+
+def _v19_pct(v, nd: int = 1) -> str:
+    if v is None:
+        return "—"
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return esc(v)
+    sign = "+" if f > 0 else ("−" if f < 0 else "")
+    return f"{sign}{abs(f):.{nd}f}%"
+
+
+def _v19_usd(v) -> str:
+    if v is None:
+        return "—"
+    try:
+        return "${0:,.0f}".format(float(v))
+    except (TypeError, ValueError):
+        return esc(v)
+
+
+def _v19_usd2(v) -> str:
+    """同 `_v19_usd` 但保留 2 位小數——僅用於「現價」本身（判斷日收盤價，
+    dd-meta.price_at_dd 原樣數字），推算出的目標價一律用整數。"""
+    if v is None:
+        return "—"
+    try:
+        return "${0:,.2f}".format(float(v))
+    except (TypeError, ValueError):
+        return esc(v)
+
+
+def _v19_derive_target(price_at_dd, pct):
+    """price_at_dd × (1+pct/100)——兩個已 sourced 的 dd-meta 數字的算術，不是
+    新判斷；呼叫端必須在旁標「由 X% 推算」。"""
+    if price_at_dd is None or pct is None:
+        return None
+    try:
+        return round(float(price_at_dd) * (1 + float(pct) / 100.0))
+    except (TypeError, ValueError):
+        return None
+
+
+def _pct5y_tier_label(pct) -> str:
+    if pct is None:
+        return ""
+    try:
+        v = float(pct)
+    except (TypeError, ValueError):
+        return ""
+    if v >= 85:
+        return "貴"
+    if v >= 50:
+        return "合理偏貴"
+    if v >= 15:
+        return "合理"
+    return "便宜"
+
+
+def _fy2_label(meta: dict) -> str:
+    """由 eps_meta.base_eps_path（dd-meta 已投影為 base_eps_path）的財年鍵反推
+    第二個前瞻財年標籤（跳過含 A 後綴的已實現年）；沒有可用鍵時回退通用
+    「FY2」，不臆造年份。"""
+    path = meta.get("base_eps_path") or {}
+    years = sorted(
+        (int(m.group(1)), k) for k, m in
+        ((k, _FY_KEY_RE_V19.search(k)) for k in path if isinstance(k, str)) if m
+    )
+    forward = [k for _y, k in years if not k.endswith("A")]
+    return forward[1] if len(forward) >= 2 else "FY2"
+
+
+def _fact_by_id(facts: dict | None, fid: str):
+    for q in ((facts or {}).get("questions") or {}).values():
+        for f in (q or {}).get("facts") or []:
+            if isinstance(f, dict) and f.get("id") == fid:
+                return f
+    return None
+
+
+def _price_as_of(facts: dict | None) -> str:
+    f = _fact_by_id(facts, "f_price_at_dd")
+    if not f:
+        return ""
+    period = f.get("period") or ""
+    return period.split("（")[0].strip() if period else ""
+
+
+# ---- 頁首：meta 行／h1／摘要 --------------------------------------------
+
+def _split_bullets(text: str, max_items: int = 3) -> list:
+    """持有人 2026-09-11 拍板：能條列就條列，文字不得擠成一段——頁首摘要段
+    改 2-3 條條列，不用段落。oneliner 是判斷檔既有單一字串，機械層沒有 LLM
+    可重寫，只能用既有的分句標點（；/;／。！？）當斷點原樣切開，不新增、不
+    改寫任何字；切不出多段就回傳單一條（不硬湊）。超過 max_items 時，多出
+    的片段用「，」併入最後一條（不是用「；」再串——那正是這條規則要拆掉的
+    寫法），避免內容遺失又不違反規則字面。"""
+    if not text:
+        return []
+    parts = [p.strip() for p in re.split(r"[；;]", text) if p.strip()]
+    if len(parts) <= 1:
+        parts = [p.strip() for p in re.split(r"(?<=[。！？])", text) if p.strip()]
+    if len(parts) > max_items:
+        parts = parts[:max_items - 1] + ["，".join(parts[max_items - 1:])]
+    return parts or [text]
+
+
+def render_v19_header_top_html(j: dict, meta: dict, facts: dict | None) -> str:
+    meta_top = j.get("meta") or {}
+    ticker = meta_top.get("ticker") or meta.get("ticker") or ""
+    company = meta_top.get("company_name") or ticker
+    date = meta.get("date") or meta_top.get("date") or ""
+    price = meta.get("price_at_dd")
+    price_as_of = _price_as_of(facts)
+    headline = (j.get("thesis") or {}).get("headline") or meta.get("oneliner") or j.get("oneliner") or ""
+    summary = meta.get("oneliner") or j.get("oneliner") or ""
+    date_price = f"{esc(date)}　・　收盤 {_v19_usd2(price)}"
+    if price_as_of:
+        date_price += f"（{esc(price_as_of)}）"
+    meta_line = f"個股深度研究　・　{esc(ticker)}　{esc(company)}"
+    summary_items = _split_bullets(summary, max_items=3)
+    summary_html = (
+        '<ul class="pts" style="margin:0;font-size:16px;color:#334155">'
+        + "".join(f"<li>{esc(it)}</li>" for it in summary_items) + "</ul>"
+    )
+    return (
+        '<div style="display:flex;flex-direction:row;justify-content:space-between;'
+        'align-items:baseline;gap:16px;font-size:13px;color:#64748B">'
+        f'<div>{meta_line}</div><div>{date_price}</div></div>\n'
+        '<h1 style="font-size:30px;line-height:1.35;margin:0;font-weight:700;'
+        f'letter-spacing:0.005em">{esc(headline)}</h1>\n'
+        f'{summary_html}'
+    )
+
+
+# ---- 頁首：五張卡 ----------------------------------------------------------
+
+def _v19_card(label: str, value_html: str, sub_html: str, dark: bool = False) -> str:
+    bg = "#1E3A5F" if dark else "#FFFFFF"
+    color = "#FFFFFF" if dark else "#1E3A5F"
+    border = "" if dark else "border:1px solid #E2E8F0;"
+    lab_color = "rgba(255,255,255,.75)" if dark else "#64748B"
+    sub_color = "rgba(255,255,255,.85)" if dark else "#64748B"
+    val_size = "26" if dark else "24"
+    val_extra = "line-height:1.1" if dark else "font-variant-numeric:tabular-nums"
+    return (
+        f'<div style="background:{bg};color:{color};{border}border-radius:6px;'
+        f'padding:16px 18px;display:flex;flex-direction:column;gap:4px">'
+        f'<div style="font-size:12px;color:{lab_color}">{esc(label)}</div>'
+        f'<div style="font-size:{val_size}px;font-weight:700;{val_extra}">{value_html}</div>'
+        f'<div style="font-size:12.5px;color:{sub_color}">{sub_html}</div>'
+        f'</div>'
+    )
+
+
+def render_v19_cards_html(meta: dict, j: dict) -> str:
+    dout = j.get("decision_out") or {}
+    verdict = meta.get("dca_verdict") or dout.get("verdict") or "—"
+    role = meta.get("dca_role") or dout.get("role") or "—"
+    exec_short = _EXEC_SHORT_V19.get(verdict, _strip_paren(dout.get("exec_line")) or "—")
+
+    p_bull, p_bear = meta.get("p_bull_pct"), meta.get("p_bear_pct")
+    p_base = None
+    if isinstance(p_bull, (int, float)) and isinstance(p_bear, (int, float)):
+        p_base = round(100 - p_bull - p_bear)
+    ev5y, irr = meta.get("ev5y_pct"), meta.get("irr_base_pct")
+    irr_note = _IRR_NOTE_V19.get(verdict, "")
+
+    max_dd = (j.get("premortem") or {}).get("max_dd") or {}
+    lo, hi = max_dd.get("lo"), max_dd.get("hi")
+    path_risk = max_dd.get("path_risk") or ""
+    # 顯示順序＝淺至深（hi 在前、lo 在後），對照樣稿「−30～−56%」讀法；
+    # path_risk_from_lo 的燈號計算仍以 lo（較深的那端）為準，不受顯示順序影響。
+    if hi is not None and lo is not None:
+        maxdd_val = _v19_pct(hi, 0) + "～" + _v19_pct(lo, 0)
+    elif lo is not None:
+        maxdd_val = _v19_pct(lo, 0)
+    elif hi is not None:
+        maxdd_val = _v19_pct(hi, 0)
+    else:
+        maxdd_val = "—"
+
+    fpe = meta.get("fpe_fy2")
+    pct5y = meta.get("pct_5y")
+    val = meta.get("val")
+    tier = _pct5y_tier_label(pct5y)
+    fpe_val = f"{fpe:.1f}x" if isinstance(fpe, (int, float)) else "—"
+
+    cards = [
+        _v19_card("裁決", esc(verdict),
+                  f"角色：{esc(role)}　·　{esc(exec_short)}", dark=True),
+        _v19_card("五年機率加權報酬", _v19_pct(ev5y),
+                   f"牛 {esc(p_bull)}%／基 {esc(p_base) if p_base is not None else '—'}%／熊 {esc(p_bear)}%"),
+        _v19_card("基本情境年化", _v19_pct(irr), esc(irr_note)),
+        _v19_card("最大回撤範圍", maxdd_val,
+                   _dot(path_risk) + f"路徑風險{esc(_RISK_LEVEL_LABEL_V19.get(path_risk, '—'))}"),
+        _v19_card(f"本益比（{esc(_fy2_label(meta))}）", fpe_val,
+                   (_dot(val) + f"五年分位 {esc(pct5y)}%，{esc(tier)}") if pct5y is not None else _dot(val) + "估值燈"),
+    ]
+    return '<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px">' \
+        + "".join(cards) + "</div>"
+
+
+# ---- 頁首：24 格篩選器資料列 ----------------------------------------------
+
+def _v19_cell(label: str, value_html: str) -> str:
+    return f'<div><div class="k">{esc(label)}</div><div class="v">{value_html}</div></div>'
+
+
+def render_v19_grid_html(meta: dict, j: dict) -> str:
+    price = meta.get("price_at_dd")
+
+    def num(v, nd=1, suffix="x"):
+        if not isinstance(v, (int, float)):
+            return "—"
+        return f"{v:.{nd}f}{suffix}"
+
+    trap_label = _strip_paren(meta.get("trap_label")) or "—"
+    runway = meta.get("runway_post_y5")
+    moat_trend_label = _MOAT_TREND_LABEL_V19.get(meta.get("moat_trend"), "—")
+    archetype_secondary = _strip_paren(((j.get("archetype") or {}).get("secondary")))
+    clock_label = _CLOCK_PHASE_LABEL_V19.get(meta.get("industry_clock_phase"), meta.get("industry_clock_phase") or "—")
+
+    up_1y, up_2y, up_5y = meta.get("upside_short_pct"), meta.get("upside_mid_pct"), meta.get("upside_5y_pct")
+    tgt_1y = _v19_derive_target(price, up_1y)
+    tgt_2y = _v19_derive_target(price, up_2y)
+    tgt_5y = _v19_derive_target(price, up_5y)
+
+    verdict = meta.get("dca_verdict") or (j.get("decision_out") or {}).get("verdict")
+    rearm_label = "加碼窗口" if verdict == "進場" else "重啟門檻"
+
+    row1 = [
+        _v19_cell("基本面評級", esc(meta.get("verdict")) or "—"),
+        _v19_cell("訊號", f'{esc(meta.get("signal"))}　<span class="vs">{esc(_SIGNAL_PLAIN_V19.get(verdict, "—"))}</span>'),
+        _v19_cell("估值燈", _dot(meta.get("val")) + esc(_DOT_COLOR_NAME_V19.get(meta.get("val"), "—"))),
+        _v19_cell("均線", _dot("🟢" if meta.get("ma") == "✅" else "🔴") + ("強勢" if meta.get("ma") == "✅" else ("弱勢" if meta.get("ma") == "❌" else "—"))),
+        _v19_cell("陷阱", _dot(meta.get("trap")) + esc(trap_label)),
+        _v19_cell("五年後跑道", _dot(runway) + esc(_RUNWAY_LABEL_V19.get(runway, "—"))),
+    ]
+    row2 = [
+        _v19_cell("護城河", f'{esc(meta.get("moat"))}　{esc(moat_trend_label)}　'
+                   f'<span class="vs">執行 {esc(meta.get("moat_execution"))}・定價 {esc(meta.get("moat_pricing_power"))}</span>'),
+        _v19_cell("品質分", esc(meta.get("quality_score")) or "—"),
+        _v19_cell("成長持久", esc(meta.get("growth_durability")) or "—"),
+        _v19_cell("資本配置", esc(meta.get("capalloc_grade")) or "—"),
+        _v19_cell("原型", esc(meta.get("archetype")) + (f'　<span class="vs">{esc(archetype_secondary)}</span>' if archetype_secondary else "") if meta.get("archetype") else "—"),
+        _v19_cell("產業時鐘", esc(clock_label) + (f'　<span class="vs">{esc(meta.get("cycle_position"))}</span>' if meta.get("cycle_position") else "")),
+    ]
+    row3 = [
+        _v19_cell(f"本益比（{esc(_fy2_label(meta))}）", num(meta.get("fpe_fy2"))),
+        _v19_cell("PEG（FY2）", num(meta.get("peg_fy2"), nd=2, suffix="")),
+        _v19_cell("五年分位", (esc(meta.get("pct_5y")) + "%　<span class=\"vs\">見 §10 估值口徑</span>") if meta.get("pct_5y") is not None else "—"),
+        _v19_cell("一年合理價", f'{_v19_usd(tgt_1y)}　<span class="vs">由 {_v19_pct(up_1y, 1)} 推算</span>' if tgt_1y is not None else "—"),
+        _v19_cell("兩年合理價", f'{_v19_usd(tgt_2y)}　<span class="vs">由 {_v19_pct(up_2y, 1)} 推算</span>' if tgt_2y is not None else "—"),
+        _v19_cell("五年基本情境", f'{_v19_usd(tgt_5y)}　<span class="vs">由 {_v19_pct(up_5y, 1)} 推算</span>' if tgt_5y is not None else "—"),
+    ]
+    row4 = [
+        _v19_cell("牛市五年價", f'{_v19_usd(meta.get("bull_5y_price"))}　<span class="vs">{esc(meta.get("p_bull_pct"))}%</span>' if meta.get("bull_5y_price") is not None else "—"),
+        _v19_cell("熊市五年價", f'{_v19_usd(meta.get("bear_5y_price"))}　<span class="vs">{esc(meta.get("p_bear_pct"))}%</span>' if meta.get("bear_5y_price") is not None else "—"),
+        _v19_cell("不對稱比", esc(meta.get("asym_ratio")) if meta.get("asym_ratio") is not None else "—"),
+        _v19_cell("內生成長上限", (esc(meta.get("endo_growth_ceiling")) + "%") if meta.get("endo_growth_ceiling") is not None else "—"),
+        _v19_cell("AI 風險", (_dot(meta.get("ai_risk")) + esc(_RISK_LEVEL_LABEL_V19.get(meta.get("ai_risk"), "—"))) if meta.get("ai_risk") else "—"),
+        _v19_cell(rearm_label, esc(meta.get("rearm_trigger")) or "—"),
+    ]
+    grid = "".join(row1 + row2 + row3 + row4)
+    return (
+        '<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));'
+        'gap:8px 14px;font-size:12.5px;line-height:1.45">' + grid + "</div>"
+    )
+
+
+# ---- 頁首：什麼會讓我改變主意（三條，取自 triggers[]） --------------------
+
+_CHANGEMIND_PRIORITY_V19 = ["估值rearm", "加碼", "Single Thing", "清倉", "減碼", "風險"]
+
+
+def _norm_trigger_type(t: dict) -> str:
+    return re.sub(r"[（(].*?[）)]", "", t.get("type") or "").strip()
+
+
+def render_v19_changemind_html(j: dict) -> str:
+    triggers = j.get("triggers") or []
+    by_type: dict = {}
+    for t in triggers:
+        by_type.setdefault(_norm_trigger_type(t), []).append(t)
+    picked = []
+    for typ in _CHANGEMIND_PRIORITY_V19:
+        cands = by_type.get(typ) or []
+        if cands:
+            picked.append(cands[0])
+        if len(picked) >= 3:
+            break
+    if len(picked) < 3:
+        for t in triggers:
+            if t not in picked:
+                picked.append(t)
+            if len(picked) >= 3:
+                break
+    items = []
+    for t in picked[:3]:
+        threshold = t.get("threshold") or ""
+        metric = t.get("metric") or ""
+        strong_bits = threshold or metric
+        detail = f"（{metric}）" if threshold and metric else ""
+        action = t.get("action") or ""
+        items.append(f"<li><strong>{esc(strong_bits)}</strong>{esc(detail)}：{esc(action)}。</li>")
+    if not items:
+        items = ["<li>—</li>"]
+    return (
+        '<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:6px;'
+        'padding:18px 22px;display:flex;flex-direction:column;gap:8px">'
+        '<div style="font-size:13px;color:#64748B;letter-spacing:0.06em">什麼會讓我改變主意</div>'
+        '<ul class="pts" style="font-size:15px">' + "".join(items) + "</ul></div>"
+    )
+
+
+def render_v19_dashboard_html(j: dict, meta: dict, facts: dict | None) -> str:
+    """v19 版面頁首整塊：meta 行/h1/摘要/五張卡/24 格篩選器資料列/改變主意。"""
+    top = render_v19_header_top_html(j, meta, facts)
+    cards = render_v19_cards_html(meta, j)
+    grid = render_v19_grid_html(meta, j)
+    changemind = render_v19_changemind_html(j)
+    return (
+        '<header style="display:flex;flex-direction:column;gap:20px">\n'
+        + top + "\n" + cards + "\n"
+        + '<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:6px;'
+          'padding:14px 18px;display:flex;flex-direction:column;gap:10px">'
+          '<div style="display:flex;flex-direction:row;justify-content:space-between;'
+          'align-items:baseline"><div style="font-size:12px;color:#64748B;'
+          'letter-spacing:0.06em">篩選器資料</div><div style="font-size:11.5px;color:#94A3B8">'
+          '與 /dd-screener/ 同源，機器讀 dd-meta，人讀這一列</div></div>'
+        + grid + "</div>\n"
+        + changemind + "\n</header>\n"
+    )
+
+
+# ---- 免費資料區：§7 三到四年財務表 + ROE 拆解 -----------------------------
+
+def render_v19_financials_html(j: dict) -> str | None:
+    """quality.three_year[] 欄位隨列變動（毛利率/營益率用 Q2_2025/Q2_2026，
+    trailing P/E 用 FY2022/FY2025）；動態收集出現過的欄位當表頭，缺格印「—」，
+    不補算。"""
+    rows_data = (j.get("quality") or {}).get("three_year") or []
+    if not rows_data:
+        return None
+    cols: list = []
+    for r in rows_data:
+        if not isinstance(r, dict):
+            continue
+        for k in r:
+            if k != "metric" and k not in cols:
+                cols.append(k)
+    header = "<tr><th>指標</th>" + "".join(f'<th class="num">{esc(c)}</th>' for c in cols) + "</tr>"
+    rows = []
+    for r in rows_data:
+        if not isinstance(r, dict):
+            continue
+        cells = "".join(f'<td class="num">{esc(r[c]) if c in r else "—"}</td>' for c in cols)
+        rows.append(f"<tr><td>{esc(r.get('metric'))}</td>{cells}</tr>")
+    return '<table id="e9b">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+def render_v19_roe_html(j: dict) -> str | None:
+    quality = j.get("quality") or {}
+    rows_data = list(quality.get("dupont") or []) + list(quality.get("ccc") or [])
+    if not rows_data:
+        return None
+    return _render_item_value_table("roe", rows_data)
+
+
+# ---- 免費資料區：§8 法說原話（facts 逐句 quote 欄） ------------------------
+
+def render_v19_quotes_html(facts: dict | None) -> str | None:
+    if not facts:
+        return None
+    items = []
+    for q in (facts.get("questions") or {}).values():
+        for f in (q or {}).get("facts") or []:
+            if not (isinstance(f, dict) and f.get("quote")):
+                continue
+            src = f.get("source") or {}
+            as_of = src.get("as_of") or f.get("period") or ""
+            items.append(
+                f'<li>「{esc(f["quote"])}」<span class="mach">（{esc(f.get("label"))}，{esc(as_of)}）</span></li>'
+            )
+    if not items:
+        return None
+    return '<ul class="pts" id="quotes">' + "".join(items) + "</ul>\n"
+
+
+# ---- 免費資料區：§10 情境樹逐項（scenario_meta.scenario_tree） -----------
+
+def render_v19_scenario_tree_html(scenario_meta: dict | None) -> str | None:
+    tree = (scenario_meta or {}).get("scenario_tree")
+    if not isinstance(tree, dict):
+        return None
+    eps, pe, p = tree.get("eps") or {}, tree.get("pe") or {}, tree.get("p") or {}
+    start = tree.get("start") or {}
+    n_years = max((len(v) for v in eps.values() if isinstance(v, list)), default=0)
+    header = ("<tr><th>情境</th><th class=\"num\">機率</th>"
+              + "".join(f'<th class="num">年{i + 1}</th>' for i in range(n_years))
+              + "<th class=\"num\">終端倍數</th></tr>")
+    label_map = {"bull": "牛", "base": "基本", "bear": "熊"}
+    rows = []
+    for key in ("bull", "base", "bear"):
+        path = eps.get(key) or []
+        cells = "".join(f'<td class="num">{esc(v)}</td>' for v in path)
+        pad = "".join('<td class="num">—</td>' for _ in range(n_years - len(path)))
+        rows.append(
+            f'<tr><td>{label_map.get(key, key)}</td><td class="num">{esc(p.get(key))}%</td>'
+            f'{cells}{pad}<td class="num">{esc(pe.get(key))}x</td></tr>'
+        )
+    note = ""
+    if start:
+        note = (f'<p class="mach">起點：EPS {esc(start.get("eps"))}、'
+                f'本益比 {esc(start.get("pe"))}x（{esc(start.get("basis"))}）</p>')
+    return '<table id="stree">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n" + note
+
+
+# ---- 免費資料區：§10 同業對照（facts 的 f_peer_* 三項利潤率） -------------
+
+_PEER_FACT_RE = re.compile(r"^f_peer_([a-z0-9]+)_(gross_margin_pct|operating_margin_pct|fcf_margin_pct)$")
+_PEER_METRIC_LABEL = {
+    "gross_margin_pct": "毛利率", "operating_margin_pct": "營業利益率", "fcf_margin_pct": "FCF 利潤率",
+}
+
+
+def render_v19_peers_html(facts: dict | None) -> str | None:
+    """facts 有同業區塊（f_peer_<ticker>_<metric>）才輸出；管線端尚未搬完時
+    這裡回 None，呼叫端 fallback 到既有 E6（moat.competitors，判斷視圖）。"""
+    if not facts:
+        return None
+    by_ticker: dict = {}
+    for q in (facts.get("questions") or {}).values():
+        for f in (q or {}).get("facts") or []:
+            if not isinstance(f, dict):
+                continue
+            m = _PEER_FACT_RE.match(f.get("id") or "")
+            if not m:
+                continue
+            tk, metric = m.group(1).upper(), m.group(2)
+            by_ticker.setdefault(tk, {})[metric] = f.get("value")
+    if not by_ticker:
+        return None
+    metrics = ["gross_margin_pct", "operating_margin_pct", "fcf_margin_pct"]
+    header = "<tr><th>公司</th>" + "".join(f'<th class="num">{_PEER_METRIC_LABEL[m]}</th>' for m in metrics) + "</tr>"
+    rows = [
+        "<tr><td>{tk}</td>{cells}</tr>".format(
+            tk=esc(tk),
+            cells="".join(f'<td class="num">{esc(by_ticker[tk].get(m, "—"))}</td>' for m in metrics),
+        )
+        for tk in sorted(by_ticker)
+    ]
+    return '<table id="peers">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+# ---- 免費資料區：§5 護城河——v19 答案表的實際形狀與舊 E5/E7/E8 renderer
+# 預期的欄位名不同（E5 期待 driver/metric_now/metric_hist_avg/spread/
+# moat_linkage 窄表，v19 的 moat.spread_table 是「一列一指標、一欄一公司」的
+# 寬表；E7 期待 n/question/status/evidence，v19 的 checkpoints 是
+# item/level/text；E8 期待 fy0_rev/fy1e_rev/fy2e_rev，v19 的 segments 是
+# share/driver/note）——沿用舊 renderer 會整表空白（已實測 e5/e7/e8.html 對
+# FIX fixture 全空），故 v19 另立三個對應實際形狀的 renderer，取代 E5/E7/E8
+# 在 v19 版面的注入（E6 對手對照欄位名不變，繼續沿用）。
+# ---------------------------------------------------------------------------
+
+def render_v19_spread_html(j: dict) -> str | None:
+    rows_data = (j.get("moat") or {}).get("spread_table") or []
+    if not rows_data:
+        return None
+    cols: list = []
+    for r in rows_data:
+        if not isinstance(r, dict):
+            continue
+        for k in r:
+            if k not in ("metric", "note") and k not in cols:
+                cols.append(k)
+    header = ("<tr><th>指標</th>" + "".join(f'<th class="num">{esc(c)}</th>' for c in cols)
+              + "<th>備註</th></tr>")
+    rows = []
+    for r in rows_data:
+        if not isinstance(r, dict):
+            continue
+        cells = "".join(f'<td class="num">{esc(r[c]) if c in r else "—"}</td>' for c in cols)
+        rows.append(f"<tr><td>{esc(r.get('metric'))}</td>{cells}<td>{esc(r.get('note'))}</td></tr>")
+    return '<table id="spread">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+def render_v19_threats_html(j: dict) -> str | None:
+    rows_data = (j.get("moat") or {}).get("threats") or []
+    if not rows_data:
+        return None
+    items = [
+        '<li>{dot}{text}<span class="mach">（機率：{p}）</span></li>'.format(
+            dot=_dot(r.get("level")), text=esc(r.get("text")), p=esc(r.get("p")),
+        )
+        for r in rows_data if isinstance(r, dict)
+    ]
+    if not items:
+        return None
+    return '<ul class="pts" id="threats">' + "".join(items) + "</ul>\n"
+
+
+def render_v19_roic_checkpoints_html(j: dict) -> str | None:
+    rd = (j.get("moat") or {}).get("roic_durability") or {}
+    rows_data = rd.get("checkpoints") or []
+    if not rows_data:
+        return None
+    header = "<tr><th>持續期檢查點</th><th>判定</th><th>依據</th></tr>"
+    rows = [
+        "<tr><td>{item}</td><td>{dot}</td><td>{text}</td></tr>".format(
+            item=esc(r.get("item")), dot=_dot(r.get("level")), text=esc(r.get("text")),
+        )
+        for r in rows_data if isinstance(r, dict)
+    ]
+    summary = ""
+    if rd.get("quadrant") or rd.get("endo_ceiling") is not None:
+        summary = (
+            '<p class="mach">象限：{q}｜ROIIC：{roiic}｜再投資率：{ri}｜'
+            "內生成長天花板：{c}（{note}）</p>"
+        ).format(q=esc(rd.get("quadrant")), roiic=esc(rd.get("roiic")),
+                  ri=esc(rd.get("reinvest_rate")), c=esc(rd.get("endo_ceiling")),
+                  note=esc(rd.get("formula_note")))
+    return '<table id="roic">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n" + summary
+
+
+# ---- 免費資料區：§6 成長——分部前瞻（growth.segments，share/driver/note 形狀）
+
+def render_v19_segments_html(j: dict) -> str | None:
+    rows_data = (j.get("growth") or {}).get("segments") or []
+    if not rows_data:
+        return None
+    header = '<tr><th>分部</th><th class="num">占比</th><th>驅動</th><th>備註</th></tr>'
+    rows = [
+        '<tr><td>{seg}</td><td class="num">{share}</td><td>{drv}</td><td>{note}</td></tr>'.format(
+            seg=esc(r.get("segment")), share=esc(r.get("share")) or "—",
+            drv=esc(r.get("driver")), note=esc(r.get("note")) or "—",
+        )
+        for r in rows_data if isinstance(r, dict)
+    ]
+    return '<table id="segs">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+# ---- 免費資料區：decision 折疊——致命指標全表／催化劑全表 ------------------
+
+def render_v19_kill_html(j: dict) -> str | None:
+    rows_data = j.get("kill_metrics") or []
+    if not rows_data:
+        return None
+    header = "<tr><th>致命指標</th><th>熊市門檻</th><th>頻率</th><th>來源</th><th>狀態</th></tr>"
+    rows = [
+        "<tr><td>{m}</td><td>{th}</td><td>{w}</td><td>{s}</td><td>{st}</td></tr>".format(
+            m=esc(r.get("metric")), th=esc(r.get("bear_threshold")), w=esc(r.get("window")),
+            s=esc(r.get("source")), st=esc(r.get("last_status")),
+        )
+        for r in rows_data
+    ]
+    return '<table id="kill">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+def render_v19_catalysts_html(j: dict) -> str | None:
+    cats = sorted(j.get("catalysts") or [], key=lambda c: c.get("date") or "9999-99")
+    if not cats:
+        return None
+    header = "<tr><th>日期</th><th>事件</th><th>類型</th><th>影響</th><th>觀察重點</th></tr>"
+    rows = [
+        "<tr><td>{d}</td><td>{e}</td><td>{t}</td><td>{i}</td><td>{w}</td></tr>".format(
+            d=esc(c.get("date")), e=esc(c.get("event")), t=esc(c.get("type")),
+            i=esc(c.get("impact")) or "—", w=esc(c.get("watch")),
+        )
+        for c in cats
+    ]
+    return '<table id="catalysts">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+# ---- v19 專用附錄 A（擇時）------------------------------------------------
+
+def render_v19_appA_html(j: dict, meta: dict, facts: dict | None) -> str:
+    """位置（回撤/突破）與階段（選股看板代碼）不在 judgment/facts 證據包內，
+    不臆造——只印均線、產業循環位置（decision_inputs.cycle_position，注意這
+    是景氣循環位置，不是股價技術位置）與距 52 週高點（facts，若有）。"""
+    ma = meta.get("ma")
+    ma_label = "強勢" if ma == "✅" else ("弱勢" if ma == "❌" else "—")
+    cycle_pos = meta.get("cycle_position") or "—"
+    f = _fact_by_id(facts, "f_q6_distance_from_52w_high")
+    dist52 = f.get("value") if f else None
+    parts = [f"均線：{esc(ma_label)}", f"產業循環位置：{esc(cycle_pos)}"]
+    if dist52 is not None:
+        parts.append(f"距 52 週高點 {_v19_pct(dist52, 1)}")
+    line = "　・　".join(parts) + "。股價技術位置／階段（選股看板代碼）本輪證據包未提供，不填。擇時只是燈號，不進裁決。"
+    return (
+        '<details id="appA">\n<summary>附錄 A　擇時</summary>\n'
+        f'<div class="mach" style="margin-top:6px">{line}</div>\n</details>\n'
+    )
+
+
+# ---- v19 專用附錄 B（證據清單，facts.findings_digest，缺就不寫此段） ------
+
+def render_v19_appB_html(facts: dict | None) -> str | None:
+    items = (facts or {}).get("findings_digest") or []
+    if not items:
+        return None
+    header = '<tr><th style="width:8%">方向</th><th>發現</th><th>來源</th><th>日期</th></tr>'
+    rows = []
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        direction = it.get("direction")
+        rows.append(
+            "<tr><td>{dot}{lab}</td><td>{claim}</td><td>{src}</td><td>{date}</td></tr>".format(
+                dot=_dot(_DIRECTION_DOT_V19.get(direction, "⚪")),
+                lab=esc(_DIRECTION_LABEL_V19.get(direction, "—")),
+                claim=esc(it.get("claim")), src=esc(it.get("source")), date=esc(it.get("as_of")),
+            )
+        )
+    return (
+        '<details id="appB">\n<summary>附錄 B　證據清單</summary>\n'
+        '<table style="margin-top:8px">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n</details>\n"
+    )
+
+
+# ---- v19 專用附錄 C（跟上一份比，contradictions[].prior_field，缺就不寫） -
+
+def render_v19_appC_html(j: dict) -> str | None:
+    items = [c for c in (j.get("contradictions") or []) if isinstance(c, dict) and c.get("prior_field")]
+    if not items:
+        return None
+    header = "<tr><th>欄位</th><th>上一份</th><th>本份</th><th>原因</th></tr>"
+    rows = [
+        "<tr><td>{axis}</td><td>{a}</td><td>{b}</td><td>{r}</td></tr>".format(
+            axis=esc(c.get("axis")), a=esc(c.get("side_a")), b=esc(c.get("side_b")), r=esc(c.get("ruling")),
+        )
+        for c in items
+    ]
+    note = ""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import dd_prior  # noqa: E402 — 只讀既有 DRIFT_WATCH 清單，不改該檔
+        note = '<p class="mach">對帳欄位清單（DRIFT_WATCH，共 {0} 欄）：{1}</p>'.format(
+            len(dd_prior.DRIFT_WATCH), esc("、".join(dd_prior.DRIFT_WATCH))
+        )
+    except Exception:
+        pass
+    return (
+        '<details id="appC">\n<summary>附錄 C　跟上一份比</summary>\n'
+        '<table style="margin-top:8px">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+        + note + "</details>\n"
+    )
+
+
 def write_mechanical_prose(j: dict, prior: dict | None, out_dir: Path,
                            scenario_meta: dict | None = None) -> list:
     """把 revlog／s14／appA 三個機械段寫進 `out_dir/{sid}.html`（`out_dir`
@@ -889,9 +1605,45 @@ def main():
         if src.exists():
             (out_dir / "e11.html").write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
 
+    v19_written = []
+    if dd_project.is_v19(raw):
+        # v19（WP-H2-2）：新版面頁首與免費資料區片段，只對 meta.contract=="v19"
+        # 的判斷檔生成——舊形狀報告的輸出檔案集合完全不變（見上方既有五行）。
+        facts = dd_project.load_facts(raw, jpath)
+        (out_dir / "v19-dashboard.html").write_text(
+            render_v19_dashboard_html(j, meta, facts), encoding="utf-8")
+        v19_written.append("v19-dashboard.html")
+        for name, html_text in (
+            ("v19-spread.html", render_v19_spread_html(j)),
+            ("v19-threats.html", render_v19_threats_html(j)),
+            ("v19-roic.html", render_v19_roic_checkpoints_html(j)),
+            ("v19-segs.html", render_v19_segments_html(j)),
+            ("v19-e9b.html", render_v19_financials_html(j)),
+            ("v19-roe.html", render_v19_roe_html(j)),
+            ("v19-quotes.html", render_v19_quotes_html(facts)),
+            ("v19-stree.html", render_v19_scenario_tree_html(scenario_meta)),
+            ("v19-peers.html", render_v19_peers_html(facts)),
+            ("v19-kill.html", render_v19_kill_html(j)),
+            ("v19-catalysts.html", render_v19_catalysts_html(j)),
+            ("v19-appB.html", render_v19_appB_html(facts)),
+            ("v19-appC.html", render_v19_appC_html(j)),
+        ):
+            if html_text:
+                (out_dir / name).write_text(html_text, encoding="utf-8")
+                v19_written.append(name)
+        (out_dir / "v19-appA.html").write_text(
+            render_v19_appA_html(j, meta, facts), encoding="utf-8")
+        v19_written.append("v19-appA.html")
+        (out_dir / "v19-revlog.html").write_text(
+            render_revlog_html(j, None, scenario_meta), encoding="utf-8")
+        v19_written.append("v19-revlog.html")
+        (out_dir / "v19-s14.html").write_text(render_s14_html(j), encoding="utf-8")
+        v19_written.append("v19-s14.html")
+
     print(f"寫入 {out_dir}: dd-meta.html, e2.html, e12.html, appA-table.html, dashboard.html, "
           "e3.html, e5.html, e6.html, e7.html, e8.html, e9.html, e10.html"
-          + (", audit.html" if audit_html else "（無 audit_rows，略過 audit.html）"))
+          + (", audit.html" if audit_html else "（無 audit_rows，略過 audit.html）")
+          + (", " + ", ".join(v19_written) if v19_written else ""))
 
 
 if __name__ == "__main__":

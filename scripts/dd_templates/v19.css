@@ -1,0 +1,132 @@
+/* scripts/dd_templates/v19.css — DD v19 完整版版面樣式
+ *
+ * 依 notes/site-internal/dd/_v19_layout_spec_20260911.md 與樣稿
+ * notes/site-internal/dd/_v19_layout/{TSM,FIX}_mockup.dc.html 的 <helmet><style>
+ * 逐條搬移；render_dd.py 的 assemble_from_parts_v19() 內嵌本檔到 <style>。
+ * 2026-09-11（WP-H2-2）新增。站台色票：ink #1E3A5F／mut #64748B／
+ * bg #F8FAFC／card #FFFFFF／accent #3B82F6；燈號色點：綠 #16A34A／
+ * 黃 #D97706／橙 #EA580C／紅 #DC2626／灰 #94A3B8。
+ *
+ * 與樣稿的唯一結構差異：加了 @media (max-width:900px) 手機單欄與側欄目錄
+ * 收合（樣稿本身只有 @media print，規格要求「手機單欄、目錄收合」是 H2 補）。
+ */
+
+body.v19-dd {
+  margin: 0;
+  background: #F8FAFC;
+  color: #1E3A5F;
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  font-size: 15.5px;
+  line-height: 1.75;
+}
+.v19-dd a { color: #1E3A5F; text-decoration: underline; text-underline-offset: 3px; }
+.v19-dd a:hover { color: #3B82F6; }
+.v19-dd .toc a { text-decoration: none; }
+.v19-dd .toc a:hover { color: #3B82F6; }
+.v19-dd h2 { font-size: 21px; line-height: 1.35; margin: 0; font-weight: 700; letter-spacing: 0.01em; }
+.v19-dd .lead { font-size: 16.5px; font-weight: 700; margin: 0; line-height: 1.6; }
+.v19-dd ul.pts { margin: 0; padding-left: 20px; }
+.v19-dd ul.pts li { margin: 0; padding: 4px 0; }
+.v19-dd ul.pts li::marker { color: #94A3B8; }
+.v19-dd table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.v19-dd th { text-align: left; font-weight: 500; color: #64748B; border-bottom: 1px solid #CBD5E1; padding: 8px 10px; }
+.v19-dd td { border-bottom: 1px solid #E2E8F0; padding: 8px 10px; vertical-align: top; }
+.v19-dd td.num, .v19-dd th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.v19-dd .mach { font-size: 12.5px; color: #64748B; }
+.v19-dd .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
+.v19-dd .k { color: #64748B; }
+.v19-dd .v { font-weight: 700; }
+.v19-dd .vs { font-weight: 400; color: #64748B; }
+.v19-dd details > summary { cursor: pointer; font-size: 13.5px; color: #64748B; list-style: none; }
+.v19-dd details > summary::before { content: '▸ '; }
+.v19-dd details[open] > summary::before { content: '▾ '; }
+
+.v19-frame {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  width: 1200px;
+  max-width: 100%;
+  min-height: 100%;
+  background: #F8FAFC;
+}
+
+/* 側欄目錄用 <details class="toc" open> 承載——桌機固定展開（見下 min-width
+   媒體查詢強制展開，不受 open 屬性影響）、手機原生可收合（規格「手機單欄、
+   目錄收合」）。 */
+.v19-dd details.toc {
+  width: 208px;
+  flex: 0 0 208px;
+  padding: 40px 20px 40px 28px;
+  border-right: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  box-sizing: border-box;
+}
+.v19-dd details.toc > summary {
+  font-size: 12px; color: #64748B; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px;
+  list-style: none; cursor: pointer;
+}
+.v19-dd details.toc > summary::before { content: none; }
+.v19-dd details.toc .toc-links {
+  display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; line-height: 1.5;
+}
+
+.v19-dd main.page {
+  flex: 1 1 auto;
+  max-width: 900px;
+  padding: 40px 56px 64px 48px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.v19-dd section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.v19-dd #revlog {
+  border-top: 1px solid #E2E8F0;
+  padding-top: 20px;
+  gap: 10px;
+}
+
+.v19-dd details#appA, .v19-dd details#appB, .v19-dd details#appC {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.v19-dd details#appA summary, .v19-dd details#appB summary, .v19-dd details#appC summary {
+  font-size: 17px; font-weight: 700; color: #1E3A5F;
+}
+
+/* 桌機固定展開：即使使用者點掉 <details>（或初始未帶 open），寬螢幕一律強制
+   顯示內容——「桌機固定」不依賴 JS 也不依賴 open 屬性。 */
+@media (min-width: 901px) {
+  .v19-dd details.toc:not([open]) .toc-links { display: flex !important; }
+}
+
+/* 手機單欄、目錄收合（規格 H2 補；樣稿本身無此段） */
+@media (max-width: 900px) {
+  .v19-frame { flex-direction: column; width: 100%; }
+  .v19-dd details.toc {
+    width: 100%; flex: none; border-right: none; border-bottom: 1px solid #E2E8F0;
+    padding: 16px 20px;
+  }
+  .v19-dd details.toc > summary { font-size: 13px; color: #1E3A5F; font-weight: 700; }
+  .v19-dd main.page { max-width: 100%; padding: 24px 18px 48px; }
+  .v19-dd div[style*="grid-template-columns: repeat(5"],
+  .v19-dd div[style*="grid-template-columns:repeat(5"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .v19-dd div[style*="grid-template-columns: repeat(6"],
+  .v19-dd div[style*="grid-template-columns:repeat(6"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+@media print {
+  .v19-dd details.toc { display: none; }
+  .v19-dd main.page { padding: 0; max-width: 100%; }
+  .v19-dd .v19-frame { width: 100%; }
+  .v19-dd details { display: block; }
+  .v19-dd details > summary { display: none; }
+}

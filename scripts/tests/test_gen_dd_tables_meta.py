@@ -167,8 +167,13 @@ def test_render_e10_normal_shape_unchanged():
         },
     }
     html = gen_dd_tables.render_e10_html(judgment)
-    assert "<th>年度</th><th>回購</th><th>股利</th><th>資本支出</th><th>研發</th>" in html
-    assert "<td>2025</td><td>6 億</td>" in html
+    # v19（WP-H2-2，2026-09-11）：七表數值欄新增 class="num"（v19.css 的
+    # td.num 靠 class 選右對齊，不靠欄序）；本測試名稱「unchanged」指的是
+    # shape（正常陣列 vs item/value fallback 兩者不混淆），不是逐字 HTML
+    # 不變——header/cell 文字與欄數本身確實沒變，只多了這個屬性。
+    assert ('<th>年度</th><th class="num">回購</th><th class="num">股利</th>'
+            '<th class="num">資本支出</th><th class="num">研發</th>') in html
+    assert '<td>2025</td><td class="num">6 億</td>' in html
 
 
 def test_render_e3_item_value_shape_renders_two_column_table():

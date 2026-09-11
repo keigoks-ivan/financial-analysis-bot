@@ -64,6 +64,32 @@ DECISION_PROSE_FLOOR_V16 = 2 * dd_sections.KB
 
 CYCLICAL_ARCHETYPE = "循環/商品"
 
+# v19（WP-H2-2，2026-09-11 持有人拍板「能條列就條列，文字不得擠成一段」）：
+# 散文目標從「一段連續文字湊到幾 KB」改成「幾條條列」。bytes 區間本身不變
+# （那是 dd_sections.py 的權威 BUDGETS——v15/v16 段落年代留下的上界，本檔照舊
+# 只讀不寫），但用它反推「建議條列數」會失真：實測 `_v19_layout/FIX_mockup.
+# dc.html` 的真實 `<li>` 平均約 143 bytes、`<p class="lead">` 平均約 118
+# bytes（皆含標籤），拿舊制 s5 的 ceiling 15000B 去除，換算會逼近 90 條，遠
+# 超規格講死的「2–6 條」——bytes 上界對條列風格已經寬鬆到不構成真正上限，硬
+# 湊成一個「byte 區間換算條列數」的公式只會每段都算出同一個 6（飽和），沒有
+# 資訊量。改用更誠實的訊號：這段的表格 bytes 是否已經承接大半資料密度——已
+# 承接（table_bytes 占 ceiling 比重高）就建議偏少（3 條，正文只做框架與重
+# 點）；表格薄或沒有表格就建議偏多（5 條，正文本身是資料主力）。這是「建議」
+# 不是硬性 gate，寫作時仍以規格「2–6 條、寧可多條短的」為準繩。
+AVG_LEAD_BYTES = 118
+AVG_BULLET_BYTES = 143
+BULLET_COUNT_MIN = 2
+BULLET_COUNT_MAX = 6
+_TABLE_HEAVY_RATIO = 0.30  # table_bytes / budget_ceiling 超過此比例視為「表格已承接大半資料」
+
+
+def _suggest_bullets(table_bytes, budget_ceiling):
+    """回傳單一建議條列數（2–6），依表格是否已承接大半資料密度偏少或偏多。"""
+    if not budget_ceiling:
+        return None
+    ratio = table_bytes / budget_ceiling if budget_ceiling else 0
+    return 3 if ratio >= _TABLE_HEAVY_RATIO else 5
+
 
 def _table_bytes(tables_dir: Path, ids):
     """回傳 (合計bytes, 尚未生成的 id 清單)。"""
@@ -101,6 +127,7 @@ def build_rows(tables_dir: Path, judgment: dict):
                 "section": cid, "budget": None, "table_bytes": table_bytes,
                 "pending_tables": pending,
                 "prose_target_lo": None, "prose_target_hi": None,
+                "bullets_suggested": None,
                 "note": "無上限",
             })
             continue
@@ -123,6 +150,7 @@ def build_rows(tables_dir: Path, judgment: dict):
             "pending_tables": pending,
             "prose_target_lo": round(target_lo),
             "prose_target_hi": round(target_hi),
+            "bullets_suggested": _suggest_bullets(table_bytes, budget_ceiling),
             "note": "",
         })
     return rows
@@ -158,8 +186,13 @@ def _fmt_target(row):
     return f"{row['prose_target_lo']:.0f}-{row['prose_target_hi']:.0f}"
 
 
+def _fmt_bullets(row):
+    n = row.get("bullets_suggested")
+    return "—" if n is None else f"{n} 條（2–6 內）"
+
+
 def render_table(rows, hint) -> str:
-    lines = [f"{'段':<10}{'預算(B)':>14}{'表格bytes':>12}{'散文目標區間(B)':>20}  備註"]
+    lines = [f"{'段':<10}{'預算(B)':>14}{'表格bytes':>12}{'散文目標區間(B)':>20}{'建議條列數':>16}  備註"]
     for r in rows:
         note = r.get("note") or ""
         if r.get("pending_tables"):
@@ -167,7 +200,7 @@ def render_table(rows, hint) -> str:
             note = f"{note} {tag}".strip() if note else tag
         lines.append(
             f"{r['section']:<10}{_fmt_budget(r['budget']):>14}{r['table_bytes']:>12}"
-            f"{_fmt_target(r):>20}  {note}"
+            f"{_fmt_target(r):>20}{_fmt_bullets(r):>16}  {note}"
         )
     lines.append("")
     biz_kb = hint["biz_min_pct"] * hint["target_total_file_bytes"] / 1000
@@ -176,6 +209,11 @@ def render_table(rows, hint) -> str:
         f"{hint['biz_min_pct']*100:.0f}% ≈ {biz_kb:.1f}KB；已知表格bytes={hint['biz_table_bytes_known']}B；"
         f"至少需散文≈{hint['biz_prose_bytes_needed_min']/1000:.2f}KB"
         + (f"（{hint['note']}）" if hint["note"] else "")
+    )
+    lines.append(
+        "建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於"
+        "上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、"
+        "寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。"
     )
     return "\n".join(lines)
 

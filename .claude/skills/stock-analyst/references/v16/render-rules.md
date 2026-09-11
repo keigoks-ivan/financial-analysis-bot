@@ -53,6 +53,56 @@
 
 ---
 
+## 2b｜v19 版面（`render_dd.py --assemble --layout v19`，WP-H2-2，2026-09-11 新增）
+
+**版面規格權威**：`notes/site-internal/dd/_v19_layout_spec_20260911.md`（含樣稿 `_v19_layout/{TSM,FIX}_mockup.dc.html`）。模板檔：`scripts/dd_templates/v19.html`＋`v19.css`（取代 `dd_template/dd.css`，不共用）。canonical section id 與舊版面完全共用（`s1`..`s14`/`decision`/`appA`/`appB`/`appC`/`revlog`），`dd_sections.py` 既有的 bytes／leaks 掃描不需改動即可涵蓋 v19 產物；`--layout` 預設仍是 `legacy`，v19 是選配。
+
+**與舊版面的關鍵差異**：
+
+1. **側欄目錄取代頂部 toc**——v19 自帶 `<details class="toc" open>` 側欄，不用舊 `TOC_LABELS`／`<nav class="dd-toc">`／`TOC_SCRIPT`。
+2. **頁首（dashboard）整塊機械生成**——五張卡／24 格篩選器資料列／改變主意三條由 `gen_dd_tables.py::render_v19_dashboard_html()` 一次生成成 `v19-dashboard.html`，散文 agent 不寫頁首（見 prose.md.tmpl）。
+3. **appA／appB／appC／revlog／s14 一律讀 TABLES_DIR，不是 PROSE_DIR**——這五段是純機械投影（`v19-appA.html`／`v19-appB.html`／`v19-appC.html`／`v19-revlog.html`／`v19-s14.html`），appB／appC 條件性（分別要 `facts.findings_digest` 與 `contradictions[].prior_field` 有內容才生成）。
+4. **免費資料折疊區在注入時才包 `<details>`**——`gen_dd_tables.py` 的表格 renderer 本身只回傳裸 `<table>`（供舊版面沿用），**折疊包裝在 `render_dd.py` 的 `_V19_MARKER_SPECS` 注入層做**，不在 renderer 裡。
+
+**表格注入標記（v19 專用，新增於既有 `<!-- E.. -->` 慣例之外）**：
+
+| 標記 | 注入段 | 內容 | 折疊？ |
+|---|---|---|---|
+| `<!-- E2 -->` | `s2` | §2 H1-H3 表（沿用舊 `e2.html`） | 否（規格「常駐」） |
+| `<!-- E3 -->` | `s3` | 市場空間與利潤池流向（沿用舊 `e3.html`） | 是 |
+| `<!-- E6 -->` | `s5` | 對手財務對照與威脅分級（`e6.html`＋`v19-spread.html`＋`v19-threats.html` 合一個折疊區） | 是 |
+| `<!-- E7 -->` | `s5` | 持續期四檢查點（`v19-roic.html`，非舊 `e7.html`——見下方欄位形狀落差） | 是 |
+| `<!-- E8 -->` | `s6` | 分部前瞻（`v19-segs.html`，非舊 `e8.html`） | 是 |
+| `<!-- E9B -->` | `s7` | 三到四年財務表（`v19-e9b.html`） | 是 |
+| `<!-- ROE -->` | `s7` | ROE 拆解（`v19-roe.html`） | 是 |
+| `<!-- QUOTES -->` | `s8` | 法說原話（`v19-quotes.html`，逐句 facts `quote` 欄） | 是 |
+| `<!-- E10 -->` | `s9` | 資本配置四年表（沿用舊 `e10.html`） | 是 |
+| `<!-- E11 -->` | `s10` | 情境樹 Bull/Base/Bear 合一表（`dd_scenario.py --html` 產物，若有） | 否（規格「常駐」） |
+| `<!-- STREE -->` | `s10` | 終端 EPS 與倍數依據（`v19-stree.html`，由 `scenario_meta.scenario_tree` 生成，不需 `dd_scenario.py` 額外產物） | 是 |
+| `<!-- PEERS -->` | `s10` | 同業對照（`v19-peers.html`，facts 的 `f_peer_<ticker>_<metric>` 三項利潤率；facts 缺此區塊時回 None，不 fallback 到判斷視圖） | 是 |
+| `<!-- E12 -->` | `decision` | 監測與觸發器、致命指標、催化劑（`e12.html`＋`v19-kill.html`＋`v19-catalysts.html` 合一個折疊區） | 是 |
+| `<!-- AUDIT -->` | `decision` | 決策矩陣逐 row 檢核（沿用舊 `audit.html`，該檔本身已自帶 `<details class="audit">` 外層，不再二次包裝） | 否（已自帶） |
+
+**為什麼 §5／§6 不沿用舊 `e5.html`／`e7.html`／`e8.html`**：v19 判斷檔的 `moat.spread_table`（一列一指標、一欄一公司的寬表）、`moat.roic_durability.checkpoints`（`item`/`level`/`text`）、`growth.segments`（`share`/`driver`/`note`）欄位形狀與舊 renderer 預期的窄表欄位名不同——沿用舊 renderer 對 v19 判斷檔會整表空白（WP-H2-2 實測 `e5`/`e7`/`e8.html` 對 FIX fixture 全空）。`gen_dd_tables.py` 因此另立 `render_v19_spread_html`／`render_v19_roic_checkpoints_html`／`render_v19_segments_html`／`render_v19_threats_html` 四個對應 v19 實際形狀的 renderer，只用於 v19 版面注入，不影響舊版面沿用的 `render_e5_html`/`render_e7_html`/`render_e8_html`（原函式保留不動）。
+
+**七表數值欄位新增 `class="num"`**（v19.css 的 `td.num`／`th.num` 靠 class 選右對齊等寬數字，不靠欄序）：`render_e3_html`/`render_e5_html`/`render_e6_html`/`render_e7_html`/`render_e8_html`/`render_e9_html`/`render_e10_html` 的數值欄一律加了 `class="num"`（第一欄的名稱/年度/段別標籤欄不加，對照 TSM 樣稿慣例）；`{item,value}` 兩欄表（`_render_item_value_table`）沿用不變。**這個改動對舊版面是純新增屬性**（`dd_template/dd.css` 沒有 `.num` 選擇器，屬性存在但不生效），舊版面 14 份既有完整版重跑只多這個屬性、其餘 bytes 不變（已用 `judgment_v18_TXN.json` fixture 跑 stash 前後 diff 驗證，唯一意外落點是 `_unexpanded_table()` 的 `ncol = header.count("<th>")` 因表頭多了 `class="num"` 不再精確匹配、colspan 算少——已修成 `header.count("<th")`）。
+
+---
+
+## 2c｜條列紀律（持有人 2026-09-11 拍板：能條列就條列，文字不得擠成一段）
+
+適用範圍：v19 版面全部散文段（`s1`..`s12`/`decision`），**§11 矛盾裁定、§12 最可能怎麼賠、§13 行動條件同一套規則，不得放寬**。
+
+1. 頁首摘要段（h1 下方那段）改 2–3 條條列，不寫成一段連續文字——機械層（`gen_dd_tables.py::render_v19_header_top_html`）對 `oneliner` 用既有分句標點（`；`/`;`/`。`/`！`/`？`）切開成 `<ul class="pts">`，不新增、不改寫任何字；散文段（s1..s12/decision）由散文 agent 直接寫成條列，不經過這個機械切分。
+2. 每段 `<p class="lead">` 只准一句、不超過 40 字。
+3. 每條 `<li>` 只放一件事——不准用「；」把兩三件事串成一條，要講兩件事拆兩條。
+4. 條列數量 2–6 條皆合法，證據厚的段寧可多開幾條短的，不要少數幾條長的。
+5. 機器代號（row 編號、Hard/Soft Veto、🟢🟡🔴 等）一律降成段尾 `<div class="mach">` 小字，不進 lead 與條列本身。
+
+`scripts/dd_prompts/prose.md.tmpl` 已按此條文重寫（見該檔「風格」節）；`dd_prose_budget.py` 的「建議條列數」提示（`_suggest_bullets`）僅供參考，不是機械 gate——舊制 bytes 區間（`dd_sections.py::BUDGETS`）本身不因條列化而改動，整檔篇幅下限仍由管線端把關。
+
+---
+
 ## 3｜prose契約：只准鋪陳不得新增數字
 
 **核心規則**：`reasoning`(QC-33每模組≥3行壓縮推導)與各章節敘事可擴寫語言、調整語氣、補連接詞，**但正文任何承重數字必須已存在於`judgment.json`(或`evidence.json`)**——不得現場心算、外推、四捨五入出新數字。`validate_prose.py`容忍：四捨五入到小數點後1位後相同／4位數年份／≤12的小整數(月份/計數)／§x.y、E1-E12、H1-H3、R1-R3、#n、FYxx、Qx這類章節代號；其餘數字須能在judgment物件中追溯到，否則FAIL。

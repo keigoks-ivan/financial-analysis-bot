@@ -464,6 +464,199 @@ def assemble_from_parts(prose_dir: Path, tables_dir: Path, title=None,
     return _render_shell(meta_block, schema, title, sources, dash_block, sections_block)
 
 
+# ---------------------------------------------------------------------------
+# --assemble PROSE_DIR --tables TABLES_DIR --layout v19  (WP-H2-2, 2026-09-11)
+# ---------------------------------------------------------------------------
+#
+# 新版面（notes/site-internal/dd/_v19_layout_spec_20260911.md）：頁首五張卡＋
+# 24 格篩選器資料列＋改變主意三條由 gen_dd_tables.py 的 v19-dashboard.html
+# 一次生成（見該檔 render_v19_dashboard_html）；本函式只負責讀 PROSE_DIR 的
+# 13 段散文（s1..s12/decision，判斷 agent 或 dd_project.py prose-stub 產出）
+# ＋TABLES_DIR 的機械片段（含既有 e2/e3/e6/e9/e10/e12/audit 與新 v19-* 片段），
+# 用 scripts/dd_templates/v19.html／v19.css 組成整頁。canonical section id 與
+# 舊版面共用（s1..s14/decision/appA/appB/appC/revlog），dd_sections.py 的
+# bytes／leaks 掃描不需改動即可涵蓋 v19 產物。
+#
+# 與 assemble_from_parts()（舊版面）的關鍵差異：
+#   - 免費資料區的表格片段大半是 v19 專屬 renderer（v19-spread/v19-roic/
+#     v19-segs 等）而非舊 e5/e7/e8——v19 判斷檔的欄位形狀與舊 E5/E7/E8
+#     renderer 預期的窄表欄位名不同，沿用舊 renderer 會整表空白（已實測），
+#     見 gen_dd_tables.py 該三個新函式的模組註解。
+#   - appA/appB/appC/revlog/s14 一律從 TABLES_DIR 讀（gen_dd_tables.py 的
+#     v19 分支輸出），不是 PROSE_DIR——這五段是純機械投影，不需要散文 agent
+#     或 prose-stub 產出對應檔案（呼應 dd_project.prose_stub() 的既有慣例：
+#     「revlog／s14／appA 由 gen_dd_tables.py 機械生成，不在此」）。
+#   - 目錄（側欄 <details class="toc">）與頁首五張卡/24格/改變主意都是 v19
+#     版面自有元件，不透過舊 TOC_LABELS／`<nav class="dd-toc">`／TOC_SCRIPT。
+
+V19_TEMPLATE_DIR = Path(__file__).resolve().parent / "dd_templates"
+V19_HTML_PATH = V19_TEMPLATE_DIR / "v19.html"
+V19_CSS_PATH = V19_TEMPLATE_DIR / "v19.css"
+
+V19_TOC_LABELS = {
+    "s1": "1　結論", "s2": "2　我押的事", "s3": "3　產業", "s4": "4　商模與致命數字",
+    "s5": "5　護城河", "s6": "6　成長", "s7": "7　財務", "s8": "8　最新一季",
+    "s9": "9　治理與資本配置", "s10": "10　估值與三種未來", "s11": "11　矛盾裁定",
+    "s12": "12　最可能怎麼賠", "decision": "13　怎麼行動", "s14": "14　複審",
+    "appA": "附錄 A　擇時", "appB": "附錄 B　證據清單", "appC": "附錄 C　跟上一份比",
+    "revlog": "版本紀錄",
+}
+V19_TOC_ORDER = list(V19_TOC_LABELS.keys())
+
+# 13 段散文（判斷 agent 或 dd_project.py prose-stub 產出，PROSE_DIR/{sid}.html）。
+# s14/appA/appB/appC/revlog 是機械段，不在此列（見上方模組註解）。
+_ASSEMBLE_ORDER_V19 = [
+    "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12", "decision",
+]
+_ASSEMBLE_REQUIRED_V19 = list(_ASSEMBLE_ORDER_V19)
+
+# gen_dd_tables.py 的 v19 分支必然輸出的機械段（appB/appC 條件性，不在此列）。
+_TABLES_REQUIRED_V19 = [
+    "dd-meta.html", "v19-dashboard.html", "v19-appA.html", "v19-revlog.html", "v19-s14.html",
+]
+
+# 段 -> 注入規格清單。每筆 {marker, files, folded, label}：files 是
+# TABLES_DIR 底下的檔名（可多檔合併成一塊折疊區，缺檔的靜默略過）；
+# folded=True 時外面包一層 `<details><summary>{label}</summary>…</details>`
+# （規格表「折疊：…」欄逐條對應）；folded=False 的是規格表寫「常駐」的內容
+# （§2 的 H1-H3 表、§10 的情境表），直接注入不折疊。標記命名沿用既有
+# `<!-- E.. -->` 慣例（render-rules.md §2），v19 新增的標記見
+# .claude/skills/stock-analyst/references/v16/render-rules.md 同節的 v19 表。
+# audit.html 本身已自帶 `<details class="audit">` 外層（gen_dd_tables.py::
+# render_audit_html），folded=False 避免重複包裝。
+_V19_MARKER_SPECS = {
+    "s2": [
+        {"marker": "<!-- E2 -->", "files": ["e2.html"], "folded": False},
+    ],
+    "s3": [
+        {"marker": "<!-- E3 -->", "files": ["e3.html"], "folded": True, "label": "市場空間與利潤池流向"},
+    ],
+    "s5": [
+        {"marker": "<!-- E6 -->", "files": ["e6.html", "v19-spread.html", "v19-threats.html"],
+         "folded": True, "label": "對手財務對照與威脅分級"},
+        {"marker": "<!-- E7 -->", "files": ["v19-roic.html"], "folded": True, "label": "持續期四檢查點"},
+    ],
+    "s6": [
+        {"marker": "<!-- E8 -->", "files": ["v19-segs.html"], "folded": True, "label": "分部前瞻"},
+    ],
+    "s7": [
+        {"marker": "<!-- E9B -->", "files": ["v19-e9b.html"], "folded": True, "label": "三到四年財務表"},
+        {"marker": "<!-- ROE -->", "files": ["v19-roe.html"], "folded": True, "label": "ROE 拆解"},
+    ],
+    "s8": [
+        {"marker": "<!-- QUOTES -->", "files": ["v19-quotes.html"], "folded": True, "label": "法說原話"},
+    ],
+    "s9": [
+        {"marker": "<!-- E10 -->", "files": ["e10.html"], "folded": True, "label": "資本配置四年表"},
+    ],
+    "s10": [
+        {"marker": "<!-- E11 -->", "files": ["e11.html"], "folded": False},
+        {"marker": "<!-- STREE -->", "files": ["v19-stree.html"], "folded": True, "label": "終端 EPS 與倍數依據"},
+        {"marker": "<!-- PEERS -->", "files": ["v19-peers.html"], "folded": True, "label": "同業對照"},
+    ],
+    "decision": [
+        {"marker": "<!-- E12 -->", "files": ["e12.html", "v19-kill.html", "v19-catalysts.html"],
+         "folded": True, "label": "監測與觸發器、致命指標、催化劑"},
+        {"marker": "<!-- AUDIT -->", "files": ["audit.html"], "folded": False},
+    ],
+}
+
+
+def _v19_gather(tables_dir: Path, spec: dict):
+    """依 spec 讀 files（缺檔靜默略過），非空才回傳；folded 時外包一層
+    `<details><summary>{label}</summary>…</details>`。"""
+    parts = [html_text for html_text in (_read_opt(tables_dir / f) for f in spec["files"]) if html_text]
+    if not parts:
+        return None
+    content = "\n".join(parts)
+    if spec.get("folded") and spec.get("label"):
+        return f'<details><summary>{spec["label"]}</summary>\n{content}\n</details>\n'
+    return content
+
+
+def _render_shell_v19(meta_block: str, schema: str, title: str, sources: str,
+                       dashboard_block: str, sections_html: str, present: set) -> str:
+    css = V19_CSS_PATH.read_text(encoding="utf-8")
+    tmpl = V19_HTML_PATH.read_text(encoding="utf-8")
+    toc_links = "\n".join(
+        f'<a href="#{cid}">{V19_TOC_LABELS[cid]}</a>' for cid in V19_TOC_ORDER if cid in present
+    )
+    html = tmpl
+    html = html.replace("<!-- V19:SCHEMA -->", schema)
+    html = html.replace("<!-- V19:TITLE -->", title)
+    html = html.replace("<!-- V19:DD_META -->", meta_block)
+    html = html.replace("<!-- V19:CSS -->", css)
+    html = html.replace("<!-- V19:TOC -->", toc_links)
+    html = html.replace("<!-- V19:DASHBOARD -->", dashboard_block)
+    html = html.replace("<!-- V19:SECTIONS -->", sections_html)
+    html = html.replace("<!-- V19:FOOTER -->", FOOTER_TEMPLATE.format(schema=schema, sources=sources))
+    html = html.replace("<!-- V19:PRINTBTN -->", PRINTBTN)
+    return html
+
+
+def assemble_from_parts_v19(prose_dir: Path, tables_dir: Path, title=None,
+                             sources=None, judgment_path=None) -> str:
+    """v19 版面：PROSE_DIR/{sid}.html（s1..s12/decision，13 段）+
+    TABLES_DIR/*.html（gen_dd_tables.py 的既有與 v19 片段）-> 完整 v19 版面
+    HTML。契約細節見本節開頭的模組註解與
+    notes/site-internal/dd/_v19_layout_spec_20260911.md。"""
+    missing_prose = [cid for cid in _ASSEMBLE_REQUIRED_V19
+                      if not (prose_dir / f"{cid}.html").exists()]
+    if missing_prose:
+        raise ValueError(f"PROSE_DIR 缺少必要段落（v19）：{', '.join(missing_prose)}")
+
+    missing_tables = [name for name in _TABLES_REQUIRED_V19
+                       if not (tables_dir / name).exists()]
+    if missing_tables:
+        raise ValueError(f"TABLES_DIR 缺少必要檔案（v19）：{', '.join(missing_tables)}")
+
+    meta_block = (tables_dir / "dd-meta.html").read_text(encoding="utf-8")
+    meta = dd_sections.dd_meta_json(meta_block) or {}
+    schema = meta.get("schema", "v15.0")
+
+    judgment = None
+    if judgment_path is not None:
+        judgment = json.loads(Path(judgment_path).read_text(encoding="utf-8"))
+
+    if title is None:
+        title = _title_from_judgment(judgment) if judgment else ""
+    if sources is None:
+        sources = ""
+
+    dashboard_block = (tables_dir / "v19-dashboard.html").read_text(encoding="utf-8").strip("\n")
+
+    chunks = []
+    present = set()
+    for cid in _ASSEMBLE_ORDER_V19:
+        chunk = (prose_dir / f"{cid}.html").read_text(encoding="utf-8")
+        tag = _outer_tag(chunk)
+        for spec in _V19_MARKER_SPECS.get(cid, []):
+            insert_html = _v19_gather(tables_dir, spec)
+            chunk = _inject_marker_or_append(chunk, spec["marker"], insert_html, tag)
+        chunks.append(chunk)
+        present.add(cid)
+
+    # 機械段：s14 -> appA -> appB(選填) -> appC(選填) -> revlog（順序見規格
+    # 表；appA/appB/appC/revlog 一律讀 TABLES_DIR，見模組註解）。
+    chunks.append((tables_dir / "v19-s14.html").read_text(encoding="utf-8"))
+    present.add("s14")
+    chunks.append((tables_dir / "v19-appA.html").read_text(encoding="utf-8"))
+    present.add("appA")
+    appB_html = _read_opt(tables_dir / "v19-appB.html")
+    if appB_html:
+        chunks.append(appB_html)
+        present.add("appB")
+    appC_html = _read_opt(tables_dir / "v19-appC.html")
+    if appC_html:
+        chunks.append(appC_html)
+        present.add("appC")
+    chunks.append((tables_dir / "v19-revlog.html").read_text(encoding="utf-8"))
+    present.add("revlog")
+
+    sections_html = "\n\n".join(chunks)
+    return _render_shell_v19(meta_block, schema, title, sources, dashboard_block, sections_html, present)
+
+
 def _direct_site_nav(out_path: Path):
     import site_nav
     return site_nav.process(out_path)
@@ -644,8 +837,13 @@ def _cmd_assemble(args):
     if not args.tables:
         print("render_dd: --assemble 需要搭配 --tables DIR", file=sys.stderr)
         sys.exit(2)
+    layout = getattr(args, "layout", None) or "legacy"
+    if layout not in ("legacy", "v19"):
+        print(f"render_dd: --layout 只接受 legacy 或 v19，收到 {layout!r}", file=sys.stderr)
+        sys.exit(2)
+    assemble_fn = assemble_from_parts_v19 if layout == "v19" else assemble_from_parts
     try:
-        html = assemble_from_parts(
+        html = assemble_fn(
             Path(args.assemble), Path(args.tables),
             title=args.title, sources=args.sources,
             judgment_path=Path(args.judgment) if args.judgment else None,
@@ -671,8 +869,11 @@ def main():
     ap.add_argument("--no-postprocess", action="store_true", help="跳過 nav/primer/livebar 注入")
     ap.add_argument("--to-body", metavar="FILE", help="既有完整 HTML 檔 -> BODY")
     ap.add_argument("--check", metavar="FILE", help="回歸測試：既有檔 to-body 再 render，比對可見文字")
-    ap.add_argument("--assemble", metavar="PROSE_DIR", help="v16 模式：組裝 prose/ 目錄（需搭配 --tables）")
-    ap.add_argument("--tables", metavar="TABLES_DIR", help="v16 模式：gen_dd_tables.py 產物目錄")
+    ap.add_argument("--assemble", metavar="PROSE_DIR", help="v16/v19 模式：組裝 prose/ 目錄（需搭配 --tables）")
+    ap.add_argument("--tables", metavar="TABLES_DIR", help="v16/v19 模式：gen_dd_tables.py 產物目錄")
+    ap.add_argument("--layout", choices=["legacy", "v19"], default="legacy",
+                     help="--assemble 用哪套版面模板：legacy（預設，既有 dd_template/dd.css）或 v19"
+                          "（scripts/dd_templates/v19.html+v19.css，見 WP-H2-2）")
     ap.add_argument("--title", help="v16 模式：TITLE 註解內容（覆蓋 judgment 推導）")
     ap.add_argument("--sources", help="v16 模式：SOURCES 註解內容（judgment.json 無此欄位，建議手動帶）")
     ap.add_argument("--judgment", metavar="JUDGMENT.json", help="v16 模式：judgment.json 路徑，用於推導 TITLE")
