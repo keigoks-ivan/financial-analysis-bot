@@ -34,6 +34,12 @@
 5. **機械生成的白話句**（改變主意三條、訊號白話）較生硬，真跑後由散文覆蓋；`appA` 的位置／階段（看板代碼）判斷檔沒有，未臆造。
 6. `FACTS_MAX_TURNS=8`／`BUDGET_CACHE_READ_FACTS=900K` 未經真跑校準；delta 路徑對 v19 prior 尚未整理。
 
+## 待補的小工作（H2-3，Codex 看完一起做）
+
+- `gen_dd_tables.render_e5_html` 改讀同業矩陣形狀（metric／各同業值／note），舊窄形狀 fallback；v19 標記表 `s5` 直接指 `e5.html`，撤掉平行函式。
+- 同業對照表優先讀 `facts.peer_comparison`，缺才讀 `dd_project` P-26 投影。
+- 70KB floor 改結構驗收（見風險 3）。
+
 ## 下一步（待 Codex 與持有人）
 
 - 處理第 3 點後，持有人授權 TSM 全套一次（v19，不發布），對照 2026-08-08 那份：六問／反證／數字有無漏、估值與行動條件是否有據、時間與總成本（含事實表與散文）。
