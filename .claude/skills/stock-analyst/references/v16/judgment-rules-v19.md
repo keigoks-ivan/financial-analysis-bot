@@ -1,4 +1,4 @@
-<!-- generated-from: .claude/skills/stock-analyst/references/v16/judgment-rules.md sha256:e89aa4eb30b44cdd -->
+<!-- generated-from: .claude/skills/stock-analyst/references/v16/judgment-rules.md sha256:fa337ad18d2bdbed -->
 <!-- 由 scripts/dd_rules.py build-v19 產生，勿手改。 -->
 
 # stock-analyst v19 — judgment-rules-v19.md（**程式產物，勿手改**）
@@ -87,6 +87,8 @@
 **硬接線**：`moat.trend`=↓且等級≤B→決策矩陣Hard Veto(迴避)，由`dd_decision.py`機械執行。
 
 **§5.R報酬持續期(ROIC durability；判準全文見always-on的`references/roic-durability.md`，本檔不重述四象限與四檢查點判準)**：①當期ROIC定位(稅後營業利益率×投入資本周轉率，直引DuPont)＋②持續期四檢查點(需求基礎值/決策層級/價值鏈分配/社會容忍度)各給🟢🟡🔴＋sourced證據(與QC-39軸B共用不另搜)；**四檢查點餵`moat.trend`與問三Runway，社會容忍度🔴須出現在反證紀錄**。③再投資空間=**ROIIC/再投資率/內生上界的全份唯一推導處**，寫`moat.roic_durability`的`roiic`/`reinvest_rate`/`endo_ceiling`：內生成長率=增量ROIC×再投資率；再投資率口徑`(Capex−D&A+ΔWC+收購淨額)÷NOPAT`，負CCC業務公式失效改以ROIIC為上界；ROIIC(3Y)=(NOPAT_t−NOPAT_t−3)÷(投入資本_t−投入資本_t−3)。**問三與情境樹sanity check引用同一組數字、不重算**，只寫與共識的口徑差。
+
+`moat.roic_durability.checkpoints[]`四項(需求基礎值/決策層級/價值鏈分配/社會容忍度)**每項各一筆物件**，鍵名固定`item`(四項名稱之一，逐字比對，不得改寫或縮寫)/`level`(🟢🟡🔴)/`text`(判讀句)；查無或不適用改填`not_applicable_reason`，不得留空物件湊數。四項缺一或`text`與`not_applicable_reason`皆空即FAIL(`validate_judgment.v19_required_items_checks`)。
 
 ### 問三｜成長
 
@@ -191,9 +193,9 @@
 
 **加減碼與持有年限**：長抱賣出分軌(硬規則)——核心角色或爆發候選的減碼與清倉必須是thesis級觸發，估值偏高/漲幅本身/觸及目標價最多trim，永不單獨清倉；衛星不受此限；爆發候選加碼須至少一條「論點增強」(非價格)。持有年限短(<2年)/中(2-5年)/長(5-10年)各填依據：`runway_post_y5`=🔴→上限≤3Y；`capalloc_grade`=C或估值依賴型→上限中期2-5年；Max DD🔴→標「中途出場風險高」。
 
-**`triggers[]`(E12監測與觸發器，唯一居所)**：每列`n`/`text`/`type`/`maps_to`/`metric`/`threshold`/`action`/`source_freq`/`date`。type enum：假設驗證(H1-H3)/風險(R1-R3)/Single Thing/估值rearm/加碼/減碼/清倉/複審日期。至少一列須有`date`。`kill_metrics[]`=減碼/清倉/風險列；`rearm_trigger`=估值rearm/進場首倉列；`catalysts[]`獨立居所，其餘章節一律引用不重述。
+**`triggers[]`(E12監測與觸發器，唯一居所)**：每列`n`/`text`/`type`/`maps_to`/`metric`/`threshold`/`action`/`source_freq`/`date`。type enum(僅此八值，不得加註)：假設驗證/風險/Single Thing/估值rearm/加碼/減碼/清倉/複審日期——該列對應到哪個H1-H3或R1-R3寫在`maps_to`，不要塞進`type`(如`假設驗證(H1-H3)`直接FAIL)。至少一列須有`date`。`kill_metrics[]`是陣列(不是以索引數字當鍵的物件)，每條必填`metric`/`bear_threshold`/`window`(bear情境門檻/監測頻率)並附`source`，=減碼/清倉/風險列；`rearm_trigger`=估值rearm/進場首倉列；`catalysts[]`獨立居所，type enum為英文六值product/regulatory/capacity/guidance/macro/other(不得寫中文如「財報」「客戶財報」)，其餘章節一律引用不重述。
 
-**`thesis`(假設與風險)**：持有期宣告決定變數是訊號或噪音(<6個月：財報newsflow權重高；>2年：護城河趨勢與ROIC方向為主)。H1/H2/H3各須含①數字門檻②信息來源③漂移觸發條件，禁延用上份報告；**期限依「這條假設什麼時候看得出來」填1-3段**(`2y`/`5y`/`10y`填其可觀測者、其餘留`null`)，不硬配三段——但**有長期論點就必須有長期證據**，不得整份只剩下一季財報級指標。QC-35漂移分級：2Y假設連2季TTM偏離≥5%削弱/連3季≥10%反轉；5Y假設連4季≥5%削弱/連6季≥10%反轉；10Y假設跨2年度偏離削弱/跨3年度反轉。QC-34：一律TTM或年度數據，禁單季snapshot。R1/R2/R3：⚡短期(1-2季，連2季即減倉)/🔥中期(4-6季，連4季才大動作)/🐢長期(2+年，需≥50%機率才砍倉)，禁binary discrete event。Single Thing：1個明確可觀測binary discrete event，五格(描述/為什麼致命/如果發生/如何監測/12-24個月機率)，唯一居所。
+**`thesis`(假設與風險)**：持有期宣告決定變數是訊號或噪音(<6個月：財報newsflow權重高；>2年：護城河趨勢與ROIC方向為主)。H1/H2/H3各須含①數字門檻②信息來源③漂移觸發條件，禁延用上份報告；**期限依「這條假設什麼時候看得出來」填1-3段**(`2y`/`5y`/`10y`填其可觀測者、其餘留`null`)，不硬配三段——但**有長期論點就必須有長期證據**，不得整份只剩下一季財報級指標。QC-35漂移分級：2Y假設連2季TTM偏離≥5%削弱/連3季≥10%反轉；5Y假設連4季≥5%削弱/連6季≥10%反轉；10Y假設跨2年度偏離削弱/跨3年度反轉。QC-34：一律TTM或年度數據，禁單季snapshot。R1/R2/R3：⚡短期(1-2季，連2季即減倉)/🔥中期(4-6季，連4季才大動作)/🐢長期(2+年，需≥50%機率才砍倉)，禁binary discrete event；`clock`欄位只能填⚡/🔥/🐢三個emoji之一(enum，不得寫時間敘述或下一檢核點日期)，複審日期與細節寫`threshold`或另開`triggers[]`複審日期列。Single Thing：1個明確可觀測binary discrete event，五格(描述/為什麼致命/如果發生/如何監測/12-24個月機率)，唯一居所。
 
 ---
 

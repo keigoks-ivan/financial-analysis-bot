@@ -709,16 +709,26 @@ def scenario_input_from_v19(raw: dict, facts: dict | None) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# normalize：格式正規化（WP-H2-1，2026-09-11）
+# normalize：格式正規化（WP-H2-1，2026-09-11；界線擴充於 WP-H2-5，2026-09-11）
 #
 # 判斷段改成一回合交卷後，剩下的失敗多半是**形狀**而不是判斷（把該包陣列的東
 # 西寫成單一物件、沿用 v18 的欄名、路徑寫成相對）。這些由程式修，不要為此再燒
 # 一輪模型。
 #
-# **界線（Codex 開工前提第 2 條）**：只准修三類——
+# **界線（Codex WP-H2-1 開工前提第 2 條 + WP-H2-5 第一次真跑擴充）**：只准修
+# 六類——
 #   ①路徑（facts_ref／scenario_ref 相對 → 絕對）
 #   ②確定的欄名映射（下表；一對一、無歧義才列）
 #   ③單物件包陣列（依 schema 的 v19_contract 宣告，該是陣列卻給了單一物件）
+#   ④數字鍵 dict → 陣列（鍵為連續字串「0」「1」…「N-1」的物件，依 schema 宣告
+#     的陣列路徑轉正；同時涵蓋「頂層重複欄（v18 習慣殘留）與 counter_evidence
+#     正式欄同時存在」的去重——頂層版本回填正式版本缺的鍵（不覆寫既有值）後
+#     捨棄，兩邊都填的是同一份判斷值搬錯地方，不是新內容）
+#   ⑤確定的 enum 別名對照（下表；只認得出的別名才轉，轉不出或非別名嘗試一律
+#     不動、留給 validate 照實報 FAIL——不是「猜一個給它」）
+#   ⑥檢查點鍵名改名（`moat.roic_durability.checkpoints[]` 的
+#     name/answer/label/light → item/text/level，屬②的巢狀特例，因位置夠深
+#     獨立列出）
 # **一律不補**：理由、評級、false、門檻、機率，以及任何缺值。修不掉就讓
 # validate FAIL，交 patch map（上限 1 輪）或交指揮者，不得用預設值發布。
 # ---------------------------------------------------------------------------
@@ -743,11 +753,36 @@ _RENAME_MAP = {
 _ANSWER_RENAME = {"facts": "fact_refs", "refs": "fact_refs", "values": "verdict_values"}
 # v18 住頂層、v19 收進 counter_evidence 的四塊（純搬家，內容不動）。
 _INTO_COUNTER_EVIDENCE = ("contradictions", "triggers", "kill_metrics", "evidence_dismissed")
+# ⑥ §5.R 四檢查點鍵名（validate_judgment.v19_required_items_checks 認
+# item/text/not_applicable_reason；level 供渲染燈號）——判斷者常沿用別名。
+_CHECKPOINT_RENAME = {"name": "item", "answer": "text", "label": "level", "light": "level"}
+
+# ⑤ triggers[].type：括號註解（如「假設驗證(H1-H3)」）是常見誤寫，H/R 編號本
+# 該寫在 maps_to。只在「去括號後」剛好命中 enum 才轉；命中不了就不動、留 FAIL
+# （不是每個括號都安全去掉）。
+_TRIGGER_TYPE_ENUM = (
+    "假設驗證", "風險", "Single Thing", "估值rearm",
+    "加碼", "減碼", "清倉", "複審日期",
+)
+_TRIGGER_TYPE_PAREN_RE = re.compile(r"[（(][^（）()]*[）)]?\s*$")
+
+# ⑤ catalysts[].type：中文別名 → 英文 enum，依特異度排序（複合詞先比對，避免
+# 「財報」提早吃掉「客戶財報」）。只對含中文字元、且不是已合法 enum 值的字串
+# 生效——非中文或對不上任何別名的值一律不動、留 FAIL（表外的值不動）。
+_CATALYST_TYPE_ENUM = ("product", "regulatory", "capacity", "guidance", "macro", "other")
+_CATALYST_TYPE_KEYWORDS = (
+    ("客戶財報", "macro"), ("總經", "macro"),
+    ("產能", "capacity"), ("里程碑", "capacity"),
+    ("監管", "regulatory"), ("法規", "regulatory"), ("關稅", "regulatory"),
+    ("產品", "product"), ("新品", "product"),
+    ("財報", "guidance"), ("指引", "guidance"),
+)
+_CJK_RE = re.compile(r"[一-鿿]")
 
 
 def _v19_array_paths(schema_node, prefix="", out=None):
     """走 v19_contract schema，蒐集所有宣告為 array 的欄位路徑（`a.b.c`，陣列
-    元素以 `[]` 略過不展開）。用來判斷「該是陣列卻給了單一物件」。"""
+    元素以 `[]` 略過不展開）。用來判斷「該是陣列卻給了單一物件／數字鍵物件」。"""
     out = [] if out is None else out
     if not isinstance(schema_node, dict):
         return out
@@ -765,6 +800,21 @@ def _v19_array_paths(schema_node, prefix="", out=None):
     return out
 
 
+def _coerce_numeric_dict(d):
+    """④ dict 鍵為連續數字字串「0」「1」…「N-1」→依鍵排序的 list；不是這個
+    形狀（缺號、不連續、有非數字鍵、空物件）一律回傳 None，交給後續檢查照實
+    報 FAIL——不強猜順序。"""
+    if not isinstance(d, dict) or not d:
+        return None
+    keys = list(d.keys())
+    if not all(isinstance(kk, str) and kk.isdigit() for kk in keys):
+        return None
+    n = len(keys)
+    if sorted(keys, key=int) != [str(i) for i in range(n)]:
+        return None
+    return [d[str(i)] for i in range(n)]
+
+
 def _wrap_singletons(node, prefix, array_paths, changes):
     if not isinstance(node, dict):
         return
@@ -772,9 +822,15 @@ def _wrap_singletons(node, prefix, array_paths, changes):
         path = f"{prefix}.{k}" if prefix else k
         v = node[k]
         if path in array_paths and isinstance(v, dict):
-            node[k] = [v]
-            changes.append(f"單物件包陣列：{path}")
-            v = node[k]
+            coerced = _coerce_numeric_dict(v)
+            if coerced is not None:
+                node[k] = coerced
+                changes.append(f"數字鍵轉陣列：{path}")
+                v = node[k]
+            else:
+                node[k] = [v]
+                changes.append(f"單物件包陣列：{path}")
+                v = node[k]
         if isinstance(v, dict):
             _wrap_singletons(v, path, array_paths, changes)
         elif isinstance(v, list):
@@ -792,6 +848,65 @@ def _rename_keys(node, table, changes, label):
             changes.append(f"欄名映射：{label}{old} → {new}")
 
 
+def _normalize_checkpoints(out, changes):
+    """⑥ moat.roic_durability.checkpoints[] 的鍵名改名（純搬家，值不動）。"""
+    try:
+        cps = out["answers"]["q2_moat"]["verdict_values"]["moat"]["roic_durability"]["checkpoints"]
+    except (KeyError, TypeError):
+        return
+    if not isinstance(cps, list):
+        return
+    for i, c in enumerate(cps):
+        if isinstance(c, dict):
+            _rename_keys(
+                c, _CHECKPOINT_RENAME, changes,
+                f"answers.q2_moat.verdict_values.moat.roic_durability.checkpoints[{i}].",
+            )
+
+
+def _normalize_trigger_types(out, changes):
+    """⑤ counter_evidence.triggers[].type 的括號註解去除（H1-H3/R1-R3 屬於
+    maps_to，不屬於 type）。"""
+    try:
+        triggers = out["counter_evidence"]["triggers"]
+    except (KeyError, TypeError):
+        return
+    if not isinstance(triggers, list):
+        return
+    for i, t in enumerate(triggers):
+        if not isinstance(t, dict):
+            continue
+        v = t.get("type")
+        if not isinstance(v, str) or v in _TRIGGER_TYPE_ENUM:
+            continue
+        stripped = _TRIGGER_TYPE_PAREN_RE.sub("", v).strip()
+        if stripped in _TRIGGER_TYPE_ENUM:
+            t["type"] = stripped
+            changes.append(f"enum別名：counter_evidence.triggers[{i}].type {v!r} → {stripped!r}")
+
+
+def _normalize_catalyst_types(out, changes):
+    """⑤ 頂層 catalysts[].type 的中文別名 → 英文 enum。"""
+    catalysts = out.get("catalysts")
+    if not isinstance(catalysts, list):
+        return
+    for i, c in enumerate(catalysts):
+        if not isinstance(c, dict):
+            continue
+        v = c.get("type")
+        if not isinstance(v, str) or v in _CATALYST_TYPE_ENUM:
+            continue
+        if not _CJK_RE.search(v):
+            continue  # 非中文別名嘗試——表外的值不動，留 FAIL
+        target = "other"
+        for kw, en in _CATALYST_TYPE_KEYWORDS:
+            if kw in v:
+                target = en
+                break
+        c["type"] = target
+        changes.append(f"enum別名：catalysts[{i}].type {v!r} → {target!r}")
+
+
 def normalize(raw: dict, judgment_path=None) -> tuple:
     """回傳 (normalized_dict, changes)。非 v19 一律原物件回傳、零變更。"""
     if not is_v19(raw):
@@ -806,15 +921,50 @@ def normalize(raw: dict, judgment_path=None) -> tuple:
         _rename_keys(answers, _RENAME_MAP["answers"], changes, "answers.")
         for qk, ans in answers.items():
             _rename_keys(ans, _ANSWER_RENAME, changes, f"answers.{qk}.")
+
+    # ⑥ §5.R 四檢查點鍵名
+    _normalize_checkpoints(out, changes)
+
+    # ②＋④ 頂層四塊搬進 counter_evidence；兩邊都有時（v18 習慣殘留＋v19 正式
+    # 欄並存）先把頂層版本的數字鍵轉陣列，再回填正式版本缺的鍵（不覆寫既有
+    # 值），無可回填內容就單純丟棄頂層重複版本。
     ce = out.setdefault("counter_evidence", {}) if any(
         k in out for k in _INTO_COUNTER_EVIDENCE) else out.get("counter_evidence")
     if isinstance(ce, dict):
         for k in _INTO_COUNTER_EVIDENCE:
-            if k in out and k not in ce:
-                ce[k] = out.pop(k)
+            if k not in out:
+                continue
+            root_val = out.pop(k)
+            coerced = _coerce_numeric_dict(root_val)
+            if coerced is not None:
+                changes.append(f"數字鍵轉陣列：頂層 {k}（{len(coerced)} 項）")
+                root_val = coerced
+            if k not in ce:
+                ce[k] = root_val
                 changes.append(f"欄名映射：{k} → counter_evidence.{k}")
+                continue
+            existing = ce.get(k)
+            filled = 0
+            if isinstance(existing, list) and isinstance(root_val, list):
+                for i, item in enumerate(root_val):
+                    if i >= len(existing):
+                        break
+                    tgt = existing[i]
+                    if isinstance(tgt, dict) and isinstance(item, dict):
+                        for fk, fv in item.items():
+                            cur = tgt.get(fk)
+                            if (cur is None or cur == "") and fv not in (None, ""):
+                                tgt[fk] = fv
+                                filled += 1
+            if filled:
+                changes.append(
+                    f"去重回填：頂層重複 {k}（與 counter_evidence.{k} 同時存在）"
+                    f"回填 {filled} 個欄位後移除頂層版本"
+                )
+            else:
+                changes.append(f"移除頂層重複欄位：{k}（counter_evidence 已有版本，頂層版本無可回填內容）")
 
-    # ③ 單物件包陣列（依 schema 宣告，不自己列清單）
+    # ③＋④ 單物件包陣列／數字鍵轉陣列（依 schema 宣告，不自己列清單）
     try:
         schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
         array_paths = set(_v19_array_paths(schema.get("v19_contract") or {}))
@@ -822,6 +972,11 @@ def normalize(raw: dict, judgment_path=None) -> tuple:
         array_paths = set()
     if array_paths:
         _wrap_singletons(out, "", array_paths, changes)
+
+    # ⑤ enum 別名（觸發器 type 去括號、催化劑 type 中文→英文；只認得出的別名
+    # 才轉，轉不出／非別名嘗試一律不動）
+    _normalize_trigger_types(out, changes)
+    _normalize_catalyst_types(out, changes)
 
     # ① 路徑：相對 → 絕對（找不到檔就不動，讓 validate 照實報缺）
     base = Path(judgment_path).parent if judgment_path else None
@@ -834,6 +989,9 @@ def normalize(raw: dict, judgment_path=None) -> tuple:
                 out[key] = str(cand.resolve())
                 changes.append(f"路徑：{key} → 絕對路徑")
                 break
+
+    if changes:
+        out.setdefault("normalize_log", []).extend(changes)
     return out, changes
 
 

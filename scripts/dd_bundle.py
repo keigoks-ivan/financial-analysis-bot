@@ -51,6 +51,7 @@ import dd_project  # noqa: E402 — v19 判斷檔 → 舊形狀視圖（WP-H1）
 import dd_rules  # noqa: E402 — 規則單一來源與 v19 產物版本戳（WP-H2-3）
 import dd_sections  # noqa: E402 — LEAK_PATTERNS（QC-40 詞表），單一權威不複製
 import qc  # noqa: E402 — CJK_PUNCT_RE（半形標點規則），單一權威不複製
+import validate_judgment  # noqa: E402 — ROIC_CHECKPOINT_NAMES（WP-H2-5），單一權威不複製
 import validate_prose  # noqa: E402  （2026-09-06 WP4b：dump_number_whitelist 單一權威不複製）
 
 SCHEMA_PATH = ROOT / "scripts" / "dd_schema" / "judgment.schema.json"
@@ -227,6 +228,21 @@ def _schema_cheatsheet(contract: str = "v18") -> str:
             "同理不要寫 `moat.spread_table`／`moat.competitors`（同業數字在事實表的 "
             "`peer_comparison`，你只寫 `moat.competitor_notes` 每家一句判讀）、"
             "`reasoning`／`plain`／`contradictions` 等舊形狀頂層欄、以及整份 `scenario.json`。"
+        )
+        lines.append("")
+        lines.append("### §5.R 四檢查點形狀（checkpoints[] 未在上方展開，這裡手動點名）")
+        lines.append(
+            "`answers.q2_moat.verdict_values.moat.roic_durability.checkpoints[]` 四項"
+            "（" + "／".join(validate_judgment.ROIC_CHECKPOINT_NAMES) + "）**每項各一筆物件**，"
+            "鍵名固定 `item`（四項名稱之一，逐字比對，不得改寫或縮寫）／`level`（🟢🟡🔴）／"
+            "`text`（判讀句；查無或不適用改填 `not_applicable_reason`）。四項缺一，或某項 "
+            "`text` 與 `not_applicable_reason` 皆空＝FAIL（`validate_judgment.v19_required_items_checks`）。"
+        )
+        lines.append("")
+        lines.append("### kill_metrics[] 形狀（counter_evidence.kill_metrics，未在上方展開，這裡手動點名）")
+        lines.append(
+            "是**陣列**（`[{...}, {...}]`），不是以索引數字（`\"0\"`／`\"1\"`）當鍵的物件；"
+            "每條必填 `metric`／`bear_threshold`／`window`，並附 `source`（資料來源）。"
         )
         lines.append("")
         lines.append("### 機器語言／半形標點洩漏詞表（單一權威：`dd_sections.LEAK_PATTERNS` ＋ `qc.CJK_PUNCT_RE`）")

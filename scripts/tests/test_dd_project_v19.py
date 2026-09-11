@@ -697,3 +697,122 @@ def test_normalize_does_not_backfill_missing_judgment_values(tmp_path):
                                      j1_warn=True)
     assert fails, "缺判斷值的檔經正規化後仍必須 FAIL"
     assert any("需求基礎值" in f for f in fails), fails
+
+
+# --- WP-H2-5（2026-09-11）：v19 契約第一次真跑（FIX_20260911）撞到的形狀擴充 --
+
+def test_normalize_coerces_numeric_dict_kill_metrics_and_dedups(tmp_path):
+    """真跑重現：頂層殘留數字鍵 kill_metrics（v18 習慣殘留，欄位反而比
+    counter_evidence 正式版本完整）＋頂層殘留空 triggers。正規化後：數字鍵轉
+    陣列、回填正式版本缺的鍵（不覆寫既有值）、頂層重複版本一律移除。"""
+    raw = _load(V19_JUDGMENT)
+    ce_km = raw["counter_evidence"]["kill_metrics"]
+    assert len(ce_km) >= 2
+    # 頂層數字鍵版本＝完整複本（模擬 Fable 沿用 v18 習慣多寫一份到頂層）。
+    raw["kill_metrics"] = {str(i): dict(m) for i, m in enumerate(ce_km)}
+    # counter_evidence 正式版本＝模擬真跑缺 bear_threshold/window，threshold/
+    # action 故意填不同的占位值，驗證既有值不被頂層版本覆寫。
+    raw["counter_evidence"]["kill_metrics"] = [
+        {"metric": m["metric"], "threshold": "占位threshold", "action": "占位action"}
+        for m in ce_km
+    ]
+    raw["triggers"] = {}  # 常見殘留：空物件，counter_evidence 已有正式版本
+    p = tmp_path / "judgment.json"
+    p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    out, changes = dd_project.normalize(raw, p)
+
+    assert "kill_metrics" not in out and "triggers" not in out
+    out_km = out["counter_evidence"]["kill_metrics"]
+    for i, item in enumerate(out_km):
+        assert item["bear_threshold"] == ce_km[i]["bear_threshold"]
+        assert item["window"] == ce_km[i]["window"]
+        assert item["threshold"] == "占位threshold", "既有值不得被頂層重複版本覆寫"
+        assert item["action"] == "占位action"
+    assert any("去重回填" in c and "kill_metrics" in c for c in changes)
+    assert any("移除頂層重複欄位：triggers" in c for c in changes)
+    assert out.get("normalize_log") == changes
+
+
+def test_normalize_fixes_checkpoint_key_aliases(tmp_path):
+    """§5.R 四檢查點的別名鍵（name/answer/light）→ item/text/level（純搬家）。"""
+    raw = _load(V19_JUDGMENT)
+    cps = raw["answers"]["q2_moat"]["verdict_values"]["moat"]["roic_durability"]["checkpoints"]
+    assert len(cps) == 4
+    originals = [dict(c) for c in cps]
+    for c in cps:
+        c["name"] = c.pop("item")
+        c["answer"] = c.pop("text")
+        c["light"] = c.pop("level")
+    p = tmp_path / "judgment.json"
+    p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    out, changes = dd_project.normalize(raw, p)
+    out_cps = out["answers"]["q2_moat"]["verdict_values"]["moat"]["roic_durability"]["checkpoints"]
+    for i, c in enumerate(out_cps):
+        assert c["item"] == originals[i]["item"]
+        assert c["text"] == originals[i]["text"]
+        assert c["level"] == originals[i]["level"]
+        assert "name" not in c and "answer" not in c and "light" not in c
+    assert len([c for c in changes if "checkpoints[" in c]) == 4 * 3
+
+
+def test_normalize_fixes_trigger_type_parenthetical_and_leaves_unmatched(tmp_path):
+    """triggers[].type 去括號註解；括號去掉仍對不上 enum 的表外值一律不動。"""
+    raw = _load(V19_JUDGMENT)
+    trig = raw["counter_evidence"]["triggers"]
+    assert len(trig) >= 2
+    trig[0]["type"] = "假設驗證(H1-H3)"
+    trig[1]["type"] = "神秘類型(ABC)"  # 表外值：去括號後仍不在 enum，不得亂轉
+    p = tmp_path / "judgment.json"
+    p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    out, changes = dd_project.normalize(raw, p)
+    out_trig = out["counter_evidence"]["triggers"]
+    assert out_trig[0]["type"] == "假設驗證"
+    assert out_trig[1]["type"] == "神秘類型(ABC)"
+    assert any("triggers[0].type" in c for c in changes)
+    assert not any("triggers[1].type" in c for c in changes)
+    assert out.get("normalize_log") == changes
+
+
+def test_normalize_fixes_catalyst_type_chinese_synonyms_and_leaves_unmatched(tmp_path):
+    """catalysts[].type 中文別名 → 英文 enum（依特異度排序，「客戶財報」不被
+    「財報」提早吃掉）；非中文或對不上任何別名的表外值一律不動。"""
+    raw = _load(V19_JUDGMENT)
+    cats = raw["catalysts"]
+    template = dict(cats[0])
+    cats[0]["type"] = "財報"
+    cats[1]["type"] = "客戶財報"
+    cats[2]["type"] = "產能里程碑"
+    cats[3]["type"] = "財報＋10-K"
+    other_hit = dict(template)
+    other_hit["type"] = "併購傳聞"  # 中文但不在五組關鍵字內 → 其餘 → other
+    untouched = dict(template)
+    untouched["type"] = "not_a_real_enum_value"  # 非中文、表外值不動
+    cats.append(other_hit)
+    cats.append(untouched)
+    p = tmp_path / "judgment.json"
+    p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    out, changes = dd_project.normalize(raw, p)
+    out_cats = out["catalysts"]
+    assert out_cats[0]["type"] == "guidance"
+    assert out_cats[1]["type"] == "macro"
+    assert out_cats[2]["type"] == "capacity"
+    assert out_cats[3]["type"] == "guidance"
+    assert out_cats[-2]["type"] == "other"
+    assert out_cats[-1]["type"] == "not_a_real_enum_value"
+    assert not any(f"catalysts[{len(out_cats) - 1}]" in c for c in changes)
+
+
+def test_normalize_does_not_touch_judgment_fields(tmp_path):
+    """界線測試：clock 的自然語言敘述與 decision_inputs.valuation_dependent
+    的一致性都是判斷缺口，不是形狀問題——正規化一個字都不改。"""
+    raw = _load(V19_JUDGMENT)
+    clock_text = "1–2 季；下一檢核點 2026-11（Q3 FY2026 財報）"
+    raw["thesis"]["R"][0]["clock"] = clock_text
+    raw["decision_inputs"]["valuation_dependent"] = False
+    p = tmp_path / "judgment.json"
+    p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    out, changes = dd_project.normalize(raw, p)
+    assert out["thesis"]["R"][0]["clock"] == clock_text
+    assert out["decision_inputs"]["valuation_dependent"] is False
+    assert not any("clock" in c for c in changes)
+    assert not any("valuation_dependent" in c for c in changes)
