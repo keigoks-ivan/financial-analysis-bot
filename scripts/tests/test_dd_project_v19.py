@@ -449,3 +449,251 @@ def test_facts_extract_is_deterministic(tmp_path):
     guidance = [f for q in a["questions"].values() for f in q["facts"]
                 if f["kind"] == "guidance"]
     assert guidance, "管理層展望必須記成 guidance 而非 realized"
+
+
+# ---------------------------------------------------------------------------
+# 7. WP-H2-1（2026-09-11）：擋門、護城河表搬移、格式正規化
+# ---------------------------------------------------------------------------
+
+def _v19_run(tmp_path, facts=True, scenario_meta=True, mutate=None):
+    """組一份 v19 run 目錄；`facts=False` 拔掉事實檔、`scenario_meta=False`
+    拔掉 sidecar，用來重現 Codex 點名的兩個漏擋。"""
+    d = tmp_path
+    raw = _load(V19_JUDGMENT)
+    raw["facts_ref"] = str(d / "facts.json") if facts else str(d / "__missing__.json")
+    raw["scenario_ref"] = str(d / "scenario.json")
+    if mutate:
+        mutate(raw)
+    (d / "judgment.json").write_text(json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8")
+    if facts:
+        shutil.copyfile(V19_FACTS, d / "facts.json")
+    shutil.copyfile(V19_SCENARIO, d / "scenario.json")
+    shutil.copyfile(V19_EVIDENCE, d / "evidence.json")
+    if scenario_meta:
+        shutil.copyfile(V19_SCENARIO_META, d / "scenario_meta.json")
+    return d / "judgment.json"
+
+
+def test_v19_baseline_run_passes(tmp_path):
+    """先釘住基準：兩樣都在時 0 FAIL——否則下面兩個負向測試證明不了任何事。"""
+    path = _v19_run(tmp_path)
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert fails == [], fails
+
+
+def test_v19_missing_facts_file_is_fail(tmp_path):
+    """Codex 漏擋①：事實檔不存在時，H1 仍 0 FAIL（引用核對與部分投影靜默跳過）。
+    v19 正式流程必須擋——沒有事實表就沒有可追溯性。"""
+    path = _v19_run(tmp_path, facts=False)
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert any("事實檔" in f for f in fails), fails
+
+
+def test_v19_unparseable_facts_file_is_fail(tmp_path):
+    """事實檔在、但不是合法 JSON——同樣不得放行。"""
+    path = _v19_run(tmp_path)
+    (tmp_path / "facts.json").write_text("{ 這不是 JSON", encoding="utf-8")
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert any("事實檔" in f for f in fails), fails
+
+
+def test_v19_facts_failing_its_own_check_is_fail(tmp_path):
+    """事實檔可解析但過不了 `dd_facts.check`（這裡：value 為 null 卻沒標
+    needs_sonnet）——判斷檔一樣不得放行。"""
+    path = _v19_run(tmp_path)
+    facts = _load(tmp_path / "facts.json")
+    facts["questions"]["q1_business"]["facts"][0]["value"] = None
+    facts["questions"]["q1_business"]["facts"][0].pop("needs_sonnet", None)
+    (tmp_path / "facts.json").write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert any("dd_facts check" in f for f in fails), fails
+
+
+def test_v19_missing_scenario_meta_is_fail(tmp_path):
+    """Codex 漏擋②：scenario_meta 不存在時 J2 靜默略過、仍 0 FAIL。
+    v19 要求情境結果完整且 J2 確實執行。"""
+    path = _v19_run(tmp_path, scenario_meta=False)
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert any("J2" in f and "確實執行" in f for f in fails), fails
+
+
+def test_v19_j2_not_actually_executed_is_fail(tmp_path):
+    """「沒算」與「算過通過」不可同樣算過關：scenario_meta 在、但缺
+    `bear_5y_price`，Max DD 恆等式根本沒跑 → FAIL（舊形狀只 WARN）。"""
+    path = _v19_run(tmp_path)
+    meta = _load(tmp_path / "scenario_meta.json")
+    meta.pop("bear_5y_price", None)
+    (tmp_path / "scenario_meta.json").write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert any("Max DD 恆等式略過" in f for f in fails), fails
+
+
+def test_v19_dangling_fact_ref_is_fail(tmp_path):
+    """`fact_refs` 指到事實表沒有的 id ＝ 斷鏈，FAIL。"""
+    def mutate(raw):
+        raw["answers"]["q1_business"]["fact_refs"].append("f_does_not_exist")
+    path = _v19_run(tmp_path, mutate=mutate)
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert any("f_does_not_exist" in f for f in fails), fails
+
+
+# --- 護城河表部分搬移（Codex 裁定 3） ------------------------------------
+
+def test_peer_tables_are_projected_from_facts(v19_view):
+    """同業數字來自 facts.peer_comparison，判斷者只寫 strategy_note。"""
+    raw, view = v19_view
+    moat_raw = raw["answers"]["q2_moat"]["verdict_values"]["moat"]
+    assert "spread_table" not in moat_raw and "competitors" not in moat_raw, \
+        "v19 判斷檔不該再帶同業數字表"
+    facts = _load(V19_FACTS)
+    pc = facts["peer_comparison"]
+    peers = [r for r in pc["rows"] if r["name"] != pc.get("subject")]
+    assert len(view["moat"]["competitors"]) == len(peers)
+    eme_row = next(r for r in pc["rows"] if r["name"] == "EME")
+    eme_view = next(c for c in view["moat"]["competitors"] if c["name"].startswith("EME"))
+    assert eme_view["om"] == eme_row["values"]["operating_margin_pct"]
+    assert eme_view["gm"] == eme_row["values"]["gross_margin_pct"]
+    assert "無力發動價格戰" in json.dumps(view["moat"]["competitors"], ensure_ascii=False)
+    assert len(view["moat"]["spread_table"]) == len(pc["metrics"])
+
+
+def test_peer_tables_absent_when_facts_have_no_peers(tmp_path):
+    """事實表沒有同業資料 → 兩張表都不生（不放空表假裝比過）。"""
+    path = _v19_run(tmp_path)
+    facts = _load(tmp_path / "facts.json")
+    facts.pop("peer_comparison", None)
+    (tmp_path / "facts.json").write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+    _raw, view = dd_project.load_view(path)
+    assert "spread_table" not in view["moat"]
+    assert "competitors" not in view["moat"]
+
+
+def test_peer_comparison_extract_matches_evidence():
+    """`dd_facts.build_peer_comparison` 只搬數字、期間、口徑、來源，不加判讀。"""
+    evidence = _load(V19_EVIDENCE)
+    pc = dd_facts.build_peer_comparison(evidence["numbers"], subject=evidence.get("ticker"))
+    peers = (evidence["numbers"] or {}).get("peer_financials") or {}
+    assert len(pc["rows"]) == len(peers)
+    for row in pc["rows"]:
+        src = peers[row["name"]]
+        assert row["period"] == src.get("fiscal_period_as_of")
+        assert row["source"]["type"] == "evidence_numbers"
+        for m in pc["metrics"]:
+            assert row["values"][m["key"]] == src.get(m["key"])
+    # 整欄皆 null 的度量不列（研發密度四家皆未揭露）
+    assert "rd_intensity_pct" not in {m["key"] for m in pc["metrics"]}
+
+
+# --- 必要項目是否有回答（取代 minItems） ---------------------------------
+
+def test_checkpoints_require_an_answer_not_four_empty_objects(tmp_path):
+    """四個空物件過得了 minItems，過不了「四項各有沒有回答」。"""
+    def mutate(raw):
+        rd = raw["answers"]["q2_moat"]["verdict_values"]["moat"]["roic_durability"]
+        rd["checkpoints"] = [{}, {}, {}, {}]
+    path = _v19_run(tmp_path, mutate=mutate)
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    for name in vj.ROIC_CHECKPOINT_NAMES:
+        assert any(name in f for f in fails), (name, fails)
+
+
+def test_checkpoint_listed_but_unanswered_is_fail(tmp_path):
+    """某一項列了但 text 空、也沒寫不適用理由 → FAIL。"""
+    def mutate(raw):
+        rd = raw["answers"]["q2_moat"]["verdict_values"]["moat"]["roic_durability"]
+        rd["checkpoints"][3] = {"item": "社會容忍度", "level": "🟡", "text": "  "}
+    path = _v19_run(tmp_path, mutate=mutate)
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert any("社會容忍度" in f and "沒有回答" in f for f in fails), fails
+
+
+def test_checkpoint_not_applicable_with_reason_passes(tmp_path):
+    """不適用但寫了理由 ＝ 有回答。"""
+    def mutate(raw):
+        rd = raw["answers"]["q2_moat"]["verdict_values"]["moat"]["roic_durability"]
+        rd["checkpoints"][3] = {"item": "社會容忍度",
+                                "not_applicable_reason": "受管制費率案決定，本軸不適用"}
+    path = _v19_run(tmp_path, mutate=mutate)
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert not any("社會容忍度" in f for f in fails), fails
+
+
+def test_no_peers_and_no_reason_is_fail(tmp_path):
+    """查無同業又不寫理由 → FAIL（空物件與空陣列都不算回答）。"""
+    def mutate(raw):
+        raw["answers"]["q2_moat"]["verdict_values"]["moat"]["competitor_notes"] = []
+    path = _v19_run(tmp_path, mutate=mutate)
+    facts = _load(V19_FACTS)
+    facts.pop("peer_comparison", None)
+    (tmp_path / "facts.json").write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert any("peer_na_reason" in f for f in fails), fails
+
+
+def test_competitor_note_missing_strategy_note_is_fail(tmp_path):
+    def mutate(raw):
+        moat = raw["answers"]["q2_moat"]["verdict_values"]["moat"]
+        moat["competitor_notes"].append({"name": "XYZ", "strategy_note": ""})
+    path = _v19_run(tmp_path, mutate=mutate)
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert any("competitor_notes" in f for f in fails), fails
+
+
+# --- 格式正規化只修形狀 --------------------------------------------------
+
+def test_normalize_is_noop_for_old_shape():
+    raw = _load(FIXTURES / "judgment_v18_TXN.json")
+    out, changes = dd_project.normalize(raw, FIXTURES / "judgment_v18_TXN.json")
+    assert out is raw and changes == []
+
+
+def test_normalize_fixes_shape_only(tmp_path):
+    """三類會修：路徑、確定的欄名映射、單物件包陣列。"""
+    raw = _load(V19_JUDGMENT)
+    raw["answers"]["q1"] = raw["answers"].pop("q1_business")
+    raw["answers"]["q1"]["facts"] = raw["answers"]["q1"].pop("fact_refs")
+    raw["triggers"] = raw["counter_evidence"].pop("triggers")
+    raw["counter_evidence"]["blind_spots"] = raw["counter_evidence"]["blind_spots"][0]
+    raw["facts_ref"] = "scripts/tests/fixtures/facts_FIX_20260911.json"
+    p = tmp_path / "judgment.json"
+    p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    out, changes = dd_project.normalize(raw, p)
+    assert "q1_business" in out["answers"] and "q1" not in out["answers"]
+    assert "fact_refs" in out["answers"]["q1_business"]
+    assert "triggers" in out["counter_evidence"] and "triggers" not in out
+    assert isinstance(out["counter_evidence"]["blind_spots"], list)
+    assert Path(out["facts_ref"]).is_absolute()
+    assert len(changes) >= 5
+
+
+def test_normalize_does_not_backfill_missing_judgment_values(tmp_path):
+    """**界線測試**：缺理由／缺評級／缺機率，正規化一個都不補，validate 仍 FAIL。"""
+    def mutate(raw):
+        moat = raw["answers"]["q2_moat"]["verdict_values"]["moat"]
+        moat["grade"] = None                                    # 缺評級
+        moat["roic_durability"]["checkpoints"][0].pop("text")    # 缺理由
+        raw["scenario_inputs"]["p"].pop("bear")                  # 缺機率
+    path = _v19_run(tmp_path, mutate=mutate)
+    before = _load(path)
+    out, _changes = dd_project.normalize(before, path)
+    assert out["answers"]["q2_moat"]["verdict_values"]["moat"]["grade"] is None
+    assert "text" not in out["answers"]["q2_moat"]["verdict_values"]["moat"][
+        "roic_durability"]["checkpoints"][0]
+    assert "bear" not in out["scenario_inputs"]["p"]
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    fails, _warns = vj.validate_file(path, evidence_path=path.parent / "evidence.json",
+                                     j1_warn=True)
+    assert fails, "缺判斷值的檔經正規化後仍必須 FAIL"
+    assert any("需求基礎值" in f for f in fails), fails

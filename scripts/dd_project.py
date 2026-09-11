@@ -26,6 +26,8 @@ gate_view、`dd_delta.py` 的 DRIFT_WATCH 對帳）全部依舊欄位取資料�
 CLI：
   python3 scripts/dd_project.py view JUDGMENT.json [--facts F.json] \\
       [--scenario-meta M.json] [--out VIEW.json]
+  python3 scripts/dd_project.py scenario JUDGMENT.json [--out scenario.json]
+  python3 scripts/dd_project.py normalize JUDGMENT.json [--write]
   python3 scripts/dd_project.py prose-stub JUDGMENT.json --out PROSE_DIR \\
       [--facts F.json] [--scenario-meta M.json]
 """
@@ -197,6 +199,99 @@ def _fill_moat_scores(moat: dict) -> dict:
 # 影響度（高／中／低）是判斷，程式不填——留 None，讓渲染顯示「—」。
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# P-26 同業對照表（WP-H2-1，2026-09-11；Codex 裁定 3「部分搬移」）
+#
+# 同業的數字、期間、口徑、來源住 `facts.peer_comparison`，判斷者只寫每家的
+# `strategy_note`（對手有沒有本錢打價格戰、策略定位）。這裡把兩邊合起來還原成
+# 舊形狀的兩張表：`moat.spread_table`（度量為列）與 `moat.competitors`（對手為
+# 列）。**一個數字都不新增、不換算**：facts 沒有的度量就留 None，由渲染顯示空格。
+# ---------------------------------------------------------------------------
+
+# facts 的度量 key → 舊形狀 competitors 欄名（E6 表頭順序）。
+_PEER_KEY_TO_COMPETITOR_FIELD = {
+    "rev_growth_pct": "rev_growth",
+    "gross_margin_pct": "gm",
+    "operating_margin_pct": "om",
+    "rd_intensity_pct": "rd_intensity",
+    "fcf_margin_pct": "fcf_margin",
+    "net_cash": "net_cash",
+}
+
+
+def _peer_rows(facts):
+    pc = (facts or {}).get("peer_comparison") or {}
+    metrics = [m for m in (pc.get("metrics") or []) if isinstance(m, dict) and m.get("key")]
+    rows = [r for r in (pc.get("rows") or []) if isinstance(r, dict) and r.get("name")]
+    return pc, metrics, rows
+
+
+def spread_table_from_facts(facts, notes=None) -> list:
+    """度量為列：`{"metric": 中文表頭, "period": …, "unit": …, <公司名>: 值, "note": …}`。
+
+    `notes`＝判斷者的 `moat.spread_notes`（{度量 key: 一句判讀}），沒給就退回
+    facts 的 metric 事實層註記；兩者皆無就不放 note 欄。"""
+    _pc, metrics, rows = _peer_rows(facts)
+    out = []
+    for m in metrics:
+        key = m["key"]
+        row = {"metric": m.get("label") or key}
+        periods = set()
+        for r in rows:
+            val = (r.get("values") or {}).get(key)
+            row[r["name"]] = val
+            if val is not None and r.get("period"):
+                periods.add(r["period"])
+        if len(periods) == 1:
+            row["period"] = periods.pop()
+        if m.get("unit"):
+            row["unit"] = m["unit"]
+        note = (notes or {}).get(key) or m.get("note")
+        if note:
+            row["note"] = note
+        out.append(row)
+    return out
+
+
+def competitors_from_facts(facts, competitor_notes=None) -> list:
+    """對手為列（不含本檔自己）。數字來自 facts，`strategy_note` 來自判斷者。
+
+    對名：先精確比對，再比對「facts 名是判斷者寫法的前綴」（判斷者常寫
+    `EME（EMCOR）`，facts 只有 `EME`）。對不上就留空 note，由
+    `validate_judgment` 的必要項目檢查報缺，不靜默補字。"""
+    pc, metrics, rows = _peer_rows(facts)
+    subject = pc.get("subject")
+    notes = {}
+    for n in competitor_notes or []:
+        if isinstance(n, dict) and n.get("name"):
+            notes[n["name"]] = n
+    out = []
+    for r in rows:
+        name = r["name"]
+        if r.get("is_subject") or (subject and name == subject):
+            continue
+        entry = {"name": name}
+        for m in metrics:
+            field = _PEER_KEY_TO_COMPETITOR_FIELD.get(m["key"])
+            if field:
+                entry[field] = (r.get("values") or {}).get(m["key"])
+        hit = notes.get(name)
+        if hit is None:
+            for jname, n in notes.items():
+                if jname.startswith(name) or name.startswith(jname):
+                    hit = n
+                    break
+        if hit:
+            if hit.get("name"):
+                entry["name"] = hit["name"]
+            if hit.get("strategy_note"):
+                entry["strategy_note"] = hit["strategy_note"]
+        if r.get("period"):
+            entry["period"] = r["period"]
+        out.append(entry)
+    return out
+
+
 _TRIGGER_TO_CATALYST_TYPE = {
     "複審日期": "other", "假設驗證": "guidance", "風險": "other",
     "Single Thing": "other", "估值rearm": "other",
@@ -258,6 +353,14 @@ def project(judgment: dict, facts: dict | None = None,
     view["moat"] = _fill_moat_scores(copy.deepcopy(_vv(j, "q2_moat", "moat") or {}))
     # 機制句是 v19 新欄，舊形狀沒有對應欄位；併進 trend_evidence 會竄改原文，
     # 故原樣保留在 moat.mechanism（舊 schema 不禁止額外欄位，渲染不讀）。
+    # P-26 同業兩張表 ← facts.peer_comparison ＋ 判斷者的 strategy_note／
+    # spread_notes。facts 沒有同業資料時兩張表都不生（`moat.peer_na_reason`
+    # 由 validate 要求判斷者說明），不放空表假裝有比過。
+    spread_notes = view["moat"].pop("spread_notes", None)
+    competitor_notes = view["moat"].pop("competitor_notes", None)
+    if (facts or {}).get("peer_comparison"):
+        view["moat"]["spread_table"] = spread_table_from_facts(facts, spread_notes)
+        view["moat"]["competitors"] = competitors_from_facts(facts, competitor_notes)
 
     # P-07 growth ← 問三
     # driver_mix／endo_ceiling_basis 是 v19 新欄，舊 schema 不禁額外欄位，原樣
@@ -605,6 +708,150 @@ def scenario_input_from_v19(raw: dict, facts: dict | None) -> dict:
     return out
 
 
+# ---------------------------------------------------------------------------
+# normalize：格式正規化（WP-H2-1，2026-09-11）
+#
+# 判斷段改成一回合交卷後，剩下的失敗多半是**形狀**而不是判斷（把該包陣列的東
+# 西寫成單一物件、沿用 v18 的欄名、路徑寫成相對）。這些由程式修，不要為此再燒
+# 一輪模型。
+#
+# **界線（Codex 開工前提第 2 條）**：只准修三類——
+#   ①路徑（facts_ref／scenario_ref 相對 → 絕對）
+#   ②確定的欄名映射（下表；一對一、無歧義才列）
+#   ③單物件包陣列（依 schema 的 v19_contract 宣告，該是陣列卻給了單一物件）
+# **一律不補**：理由、評級、false、門檻、機率，以及任何缺值。修不掉就讓
+# validate FAIL，交 patch map（上限 1 輪）或交指揮者，不得用預設值發布。
+# ---------------------------------------------------------------------------
+
+SCHEMA_PATH = SCRIPT_DIR / "dd_schema" / "judgment.schema.json"
+
+# ②欄名映射：{父節點路徑: {舊名: 新名}}；父路徑 "" ＝頂層。只列一對一、語意
+# 完全相同的改名，任何需要判斷「這兩個是不是同一件事」的都不列。
+_RENAME_MAP = {
+    "": {
+        "scenario": "scenario_inputs",          # v18 另一個檔的名字
+        "scenario_input": "scenario_inputs",
+        "counterevidence": "counter_evidence",
+        "facts_path": "facts_ref",
+    },
+    "answers": {
+        "q1": "q1_business", "q2": "q2_moat", "q3": "q3_growth",
+        "q4": "q4_capital", "q5": "q5_valuation", "q6": "q6_how_wrong",
+    },
+}
+# 每個 answers.qX 底下的同款改名（判斷者常沿用 v18 的欄名）。
+_ANSWER_RENAME = {"facts": "fact_refs", "refs": "fact_refs", "values": "verdict_values"}
+# v18 住頂層、v19 收進 counter_evidence 的四塊（純搬家，內容不動）。
+_INTO_COUNTER_EVIDENCE = ("contradictions", "triggers", "kill_metrics", "evidence_dismissed")
+
+
+def _v19_array_paths(schema_node, prefix="", out=None):
+    """走 v19_contract schema，蒐集所有宣告為 array 的欄位路徑（`a.b.c`，陣列
+    元素以 `[]` 略過不展開）。用來判斷「該是陣列卻給了單一物件」。"""
+    out = [] if out is None else out
+    if not isinstance(schema_node, dict):
+        return out
+    props = schema_node.get("properties")
+    if isinstance(props, dict):
+        for k, v in props.items():
+            path = f"{prefix}.{k}" if prefix else k
+            if isinstance(v, dict) and v.get("type") == "array":
+                out.append(path)
+                items = v.get("items")
+                if isinstance(items, dict):
+                    _v19_array_paths(items, path, out)
+            else:
+                _v19_array_paths(v, path, out)
+    return out
+
+
+def _wrap_singletons(node, prefix, array_paths, changes):
+    if not isinstance(node, dict):
+        return
+    for k in list(node.keys()):
+        path = f"{prefix}.{k}" if prefix else k
+        v = node[k]
+        if path in array_paths and isinstance(v, dict):
+            node[k] = [v]
+            changes.append(f"單物件包陣列：{path}")
+            v = node[k]
+        if isinstance(v, dict):
+            _wrap_singletons(v, path, array_paths, changes)
+        elif isinstance(v, list):
+            for item in v:
+                if isinstance(item, dict):
+                    _wrap_singletons(item, path, array_paths, changes)
+
+
+def _rename_keys(node, table, changes, label):
+    if not isinstance(node, dict):
+        return
+    for old, new in table.items():
+        if old in node and new not in node:
+            node[new] = node.pop(old)
+            changes.append(f"欄名映射：{label}{old} → {new}")
+
+
+def normalize(raw: dict, judgment_path=None) -> tuple:
+    """回傳 (normalized_dict, changes)。非 v19 一律原物件回傳、零變更。"""
+    if not is_v19(raw):
+        return raw, []
+    out = copy.deepcopy(raw)
+    changes = []
+
+    # ② 欄名映射
+    _rename_keys(out, _RENAME_MAP[""], changes, "")
+    answers = out.get("answers")
+    if isinstance(answers, dict):
+        _rename_keys(answers, _RENAME_MAP["answers"], changes, "answers.")
+        for qk, ans in answers.items():
+            _rename_keys(ans, _ANSWER_RENAME, changes, f"answers.{qk}.")
+    ce = out.setdefault("counter_evidence", {}) if any(
+        k in out for k in _INTO_COUNTER_EVIDENCE) else out.get("counter_evidence")
+    if isinstance(ce, dict):
+        for k in _INTO_COUNTER_EVIDENCE:
+            if k in out and k not in ce:
+                ce[k] = out.pop(k)
+                changes.append(f"欄名映射：{k} → counter_evidence.{k}")
+
+    # ③ 單物件包陣列（依 schema 宣告，不自己列清單）
+    try:
+        schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+        array_paths = set(_v19_array_paths(schema.get("v19_contract") or {}))
+    except (OSError, json.JSONDecodeError, ValueError):
+        array_paths = set()
+    if array_paths:
+        _wrap_singletons(out, "", array_paths, changes)
+
+    # ① 路徑：相對 → 絕對（找不到檔就不動，讓 validate 照實報缺）
+    base = Path(judgment_path).parent if judgment_path else None
+    for key in ("facts_ref", "scenario_ref"):
+        ref = out.get(key)
+        if not isinstance(ref, str) or not ref or Path(ref).is_absolute():
+            continue
+        for cand in ([ROOT / ref] + ([base / ref] if base else [])):
+            if cand.exists():
+                out[key] = str(cand.resolve())
+                changes.append(f"路徑：{key} → 絕對路徑")
+                break
+    return out, changes
+
+
+def cmd_normalize(args) -> int:
+    path = Path(args.judgment)
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not is_v19(raw):
+        print("[skip] 非 v19 形狀，正規化不適用", file=sys.stderr)
+        return 0
+    out, changes = normalize(raw, path)
+    for c in changes:
+        print(f"  · {c}")
+    print("正規化 {0} 項{1}".format(len(changes), "（未寫檔，加 --write 才落地）" if not args.write else ""))
+    if args.write and changes:
+        path.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return 0
+
+
 def cmd_scenario(args) -> int:
     raw = json.loads(Path(args.judgment).read_text(encoding="utf-8"))
     if not is_v19(raw):
@@ -671,6 +918,11 @@ def main(argv=None) -> int:
     p_sc.add_argument("--facts")
     p_sc.add_argument("--out", help="輸出 scenario.json 路徑；不給就印到 stdout")
     p_sc.set_defaults(func=cmd_scenario)
+
+    p_nm = sub.add_parser("normalize", help="格式正規化（只修路徑／欄名映射／單物件包陣列，不補判斷值）")
+    p_nm.add_argument("judgment")
+    p_nm.add_argument("--write", action="store_true", help="就地寫回；不給只印會改什麼")
+    p_nm.set_defaults(func=cmd_normalize)
 
     p_stub = sub.add_parser("prose-stub", help="產完整版散文段的機械骨架（v19 專用）")
     p_stub.add_argument("judgment")

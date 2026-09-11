@@ -53,6 +53,9 @@ import validate_prose  # noqa: E402  （2026-09-06 WP4b：dump_number_whitelist 
 SCHEMA_PATH = ROOT / "scripts" / "dd_schema" / "judgment.schema.json"
 SKILL_REFS_DIR = ROOT / ".claude" / "skills" / "stock-analyst" / "references"
 JUDGMENT_RULES_PATH = SKILL_REFS_DIR / "v16" / "judgment-rules.md"
+# 2026-09-11 WP-H2-1：v19 判斷包的規則精簡版（只留五出手點判準與反證處置）。
+# 完整規則檔留給 v18 路徑與人工查閱，不動——見該檔開頭的分工說明。
+JUDGMENT_RULES_V19_PATH = SKILL_REFS_DIR / "v16" / "judgment-rules-v19.md"
 PROMPTS_DIR = ROOT / "scripts" / "dd_prompts"
 GATE_CONTRACT_PATH = PROMPTS_DIR / "gate_contract.md"  # 2026-09-10 WP-A：取代 critic-gates.md（v15 協議，與 v17 閘矛盾）
 RENDER_RULES_PATH = SKILL_REFS_DIR / "v16" / "render-rules.md"  # 2026-09-06 WP4b（散文 agent 唯一讀本）
@@ -90,6 +93,26 @@ def _task_header(ticker, date, mode: str) -> str:
     )
 
 
+def _task_header_v19(ticker, date) -> str:
+    """v19 判斷 agent 的任務頭（WP-H2-1，2026-09-11）。
+
+    v19 只在**五個關鍵點**要判斷，其餘由程式投影與算術產生——任務頭先把這五點
+    講死，避免判斷 agent 沿用 v18 習慣去填已經不歸它的欄。"""
+    return (
+        "## ① 任務頭\n\n"
+        f"標的：{ticker}　日期：{date}　角色：stock-analyst **v19 判斷 agent**。\n\n"
+        "你只在五個地方出手，一回合交卷：\n\n"
+        "1. **論點與唯一致命數字**（`thesis`／`answers.q1_business`）\n"
+        "2. **護城河方向與再投資報酬**（`answers.q2_moat`／`answers.q3_growth`）\n"
+        "3. **情境樹假設**（`scenario_inputs`：三支 EPS 路徑、終端倍數、機率、Max DD 範圍與依據）\n"
+        "4. **反證裁定**（`counter_evidence`：三視角反證、矛盾裁定、觸發器與行動條件）\n"
+        "5. **決策輸入**（`decision_inputs` 九欄＋`appendix_a` 七欄＋`eps_meta`）\n\n"
+        "其餘欄位（評分、燈號、白話段、reasoning 摘要、`scenario.json`、`decision_out` 矩陣欄、"
+        "同業對照表的數字）**由程式從你寫的這幾塊投影出來**——你不要填，填了機械閘會擋。"
+        "事實一律引 `facts.json` 的 id，不重抄數字；不得臆測未在事實表或逐字稿內出現的數字或事件。"
+    )
+
+
 # 2026-09-06：schema 速查瘦身用型別簡寫表（語意不變，只縮寫 type 字面值）。
 _TYPE_ABBR = {
     "string": "str", "object": "obj", "array": "arr",
@@ -97,8 +120,11 @@ _TYPE_ABBR = {
 }
 
 
-def _schema_cheatsheet() -> str:
+def _schema_cheatsheet(contract: str = "v18") -> str:
     """機械生成 schema 速查。
+
+    2026-09-11（WP-H2-1）：`contract="v19"` 時改走 schema 的 `v19_contract`
+    區塊——H1 的已知缺口是速查仍印舊形狀，判斷 agent 因此會照舊形狀寫。
 
     2026-09-06：改成縮排巢狀格式（不重複完整路徑，只在陣列/物件邊界縮排一格），
     type/enum/pattern/maxLength/minItems 壓成一行緊湊記法；required 標記從
@@ -106,7 +132,12 @@ def _schema_cheatsheet() -> str:
     一個不少，只是省掉逐行重複的路徑前綴與中文標籤字。
     """
     schema = _load_json(SCHEMA_PATH)
-    lines = ["## ② Schema 速查（機械生成自 judgment.schema.json，緊湊版）", ""]
+    if contract == "v19":
+        schema = schema.get("v19_contract") or {}
+        lines = ["## ② Schema 速查（judge-owned 形狀；機械生成自 judgment.schema.json "
+                 "的 v19_contract 區塊）", ""]
+    else:
+        lines = ["## ② Schema 速查（機械生成自 judgment.schema.json，緊湊版）", ""]
     lines.append(
         "格式：縮排＝巢狀層級（不重複完整路徑）；行首 `*`＝必填；"
         "型別簡寫 str/obj/arr/int/num/bool，`a|b`＝可為多型別（含 null）；"
@@ -166,6 +197,39 @@ def _schema_cheatsheet() -> str:
         walk(v, k, k in top_req, 0)
 
     lines.append("")
+    if contract == "v19":
+        lines.append("### evidence_refs 用法（v19）")
+        lines.append(
+            "`counter_evidence.contradictions[]`／`counter_evidence.blind_spots[]`／"
+            "`counter_evidence.triggers[]`／`answers.q2_moat.verdict_values.moat.threats[]`／"
+            "`thesis.R[]` 可各自加選填 `evidence_refs: [string]`，格式 `axis_id#index`"
+            "（對應事實表 `findings_digest[]` 的 `id`）。無法對應到既有證據、但仍要捨棄的"
+            "負向 finding，記到 `counter_evidence.evidence_dismissed: [{ref, reason}]`"
+            "（理由要指得出證據本身的問題，不得寫「影響不大」）。`validate_judgment.py "
+            "--evidence`（J1）會檢查每條 `direction==\"-\"` 的 finding 是否被上述任一處"
+            "引用，未引用＝FAIL。"
+        )
+        lines.append("")
+        lines.append("### fact_refs 用法（v19）")
+        lines.append(
+            "`answers.qX.fact_refs[]` 只准填事實表裡真的存在的 `f_*` id（引不到＝FAIL）。"
+            "承重數字一律引 id，不要把數值再抄一份到判斷欄；事實表沒有的數字就是沒有，"
+            "在該欄寫「事實表未涵蓋」並在最終回報點名，不得自行估算。"
+        )
+        lines.append("")
+        lines.append("### 不要填的欄（填了即 FAIL）")
+        lines.append(
+            "`decision_inputs` 的 " + "、".join(f"`{k}`" for k in dd_project.PROJECTED_DECISION_INPUT_KEYS)
+            + " 一律留 `null` 或整個不寫——由程式從六問答案與事實表投影。"
+            "同理不要寫 `moat.spread_table`／`moat.competitors`（同業數字在事實表的 "
+            "`peer_comparison`，你只寫 `moat.competitor_notes` 每家一句判讀）、"
+            "`reasoning`／`plain`／`contradictions` 等舊形狀頂層欄、以及整份 `scenario.json`。"
+        )
+        lines.append("")
+        lines.append("### 機器語言／半形標點洩漏詞表（單一權威：`dd_sections.LEAK_PATTERNS` ＋ `qc.CJK_PUNCT_RE`）")
+        lines.append("、".join(f"`{p}`" for p in dd_sections.LEAK_PATTERNS))
+        lines.append(f"- CJK 字元後接半形 `,` `.` `:`（正則 `{qc.CJK_PUNCT_RE.pattern}`）——一律應為全形 ，。：")
+        return "\n".join(lines)
     lines.append("### evidence_refs 用法（v17 新增）")
     lines.append(
         "`contradictions[]`／`moat.threats[]`／`premortem.blind_spots[]`（物件形態時）／"
@@ -295,6 +359,33 @@ def _digest_section(digest_path) -> str:
         lines.append(f"[找不到 digest：{digest_path}]")
         return "\n".join(lines)
     raw = Path(digest_path).read_text(encoding="utf-8")
+    try:
+        obj = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        lines.append("```json")
+        lines.append(raw)
+        lines.append("```")
+        return "\n".join(lines)
+    lines.append(_JSON_NOTE)
+    lines.append(_json_block(obj))
+    return "\n".join(lines)
+
+
+def _facts_section(facts_path) -> str:
+    """v19 判斷 bundle 的 ③ 段：事實表全文（含 `findings_digest` 與
+    `peer_comparison`）。WP-H2-1（2026-09-11）。
+
+    這一段取代 v18 的「證據包緊湊版＋digest 全文」——事實已在 Stage 0 收過一次、
+    對過口徑，判斷層不該再從 250KB 原始證據裡挖。`findings_digest` 住在事實表內
+    且**不按方向裁掉**（正向、中性、負向、來源衝突、查無的軸都在），所以瘦身沒有
+    把反證拿掉。"""
+    lines = ["## ③ facts.json 事實表全文（判斷層唯一的數字來源；含 findings_digest 與同業對照）", ""]
+    p = Path(facts_path) if facts_path else None
+    if not p or not p.exists():
+        lines.append(f"[找不到事實表：{facts_path}]——沒有事實表就沒有可追溯性，"
+                     "請回報 orchestrator 先跑 `dd_facts.py extract`，不要自行從證據包挖數字。")
+        return "\n".join(lines)
+    raw = p.read_text(encoding="utf-8")
     try:
         obj = json.loads(raw)
     except (json.JSONDecodeError, ValueError):
@@ -796,6 +887,28 @@ def cmd_judge(args) -> int:
         print(f"✗ evidence 檔不存在：{evidence_path}", file=sys.stderr)
         return 1
     evidence = _load_json(evidence_path)
+
+    # WP-H2-1（2026-09-11）：v19 是預設。瘦身包＝任務頭（五出手點）＋v19 schema
+    # 速查＋事實表全文（含 findings_digest，不按方向裁）＋最新一季逐字稿全文＋
+    # 規則精簡版＋archetype 條件載入。**不再帶**證據包緊湊版與 digest 全文——
+    # 那兩塊的內容已由事實表收過一次，帶兩份就是讓判斷層再挖一次同一批數字。
+    # `--contract v18` 回舊包（A/B 或回退用）。
+    if getattr(args, "contract", "v19") == "v19":
+        facts_arg = getattr(args, "facts", None)
+        facts_path = Path(facts_arg) if facts_arg else (
+            (run_dir / "facts.json") if args.run_dir else None)
+        rules_path = Path(args.judgment_rules) if args.judgment_rules else JUDGMENT_RULES_V19_PATH
+        parts = [
+            _task_header_v19(evidence.get("ticker"), evidence.get("date")),
+            _schema_cheatsheet("v19"),
+            _facts_section(facts_path),
+            _transcript_section(evidence, args.transcript),
+            _judgment_rules_section(rules_path),
+            _archetype_refs_section(evidence),
+        ]
+        _write_bundle(parts, out_path)
+        return 0
+
     judgment_rules_path = Path(args.judgment_rules) if args.judgment_rules else JUDGMENT_RULES_PATH
 
     parts = [
@@ -879,7 +992,12 @@ def main(argv):
     p_judge.add_argument("--evidence", help="evidence.json 路徑（無 --run-dir 時必填）")
     p_judge.add_argument("--digest", help="digest.json 路徑")
     p_judge.add_argument("--transcript", help="逐字稿檔路徑；未給則由 evidence.transcripts 自動找")
-    p_judge.add_argument("--judgment-rules", help="judgment-rules.md 路徑（預設 references/v16/judgment-rules.md）")
+    p_judge.add_argument("--judgment-rules",
+                         help="規則檔路徑（v19 預設 references/v16/judgment-rules-v19.md；"
+                              "--contract v18 預設 references/v16/judgment-rules.md）")
+    p_judge.add_argument("--facts", help="facts.json 路徑（v19 專用；預設 run_dir/facts.json）")
+    p_judge.add_argument("--contract", default="v19", choices=["v19", "v18"],
+                         help="判斷契約：v19（預設，瘦身包＋五出手點）／v18（舊包，A/B 或回退用）")
     p_judge.add_argument("--out", help="輸出 bundle 路徑（無 --run-dir 時必填）")
     p_judge.set_defaults(func=cmd_judge)
 

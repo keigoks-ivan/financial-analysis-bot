@@ -34,6 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dd_bundle  # noqa: E402  （WP-C：delta 判斷 prompt 沿用 `_transcript_section` 抓最新一季逐字稿，只 import 不改其內部）
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
 import dd_meta_reader  # noqa: E402  （WP7a peers 來源③：讀 id-meta related_tickers，不改其內部）
+import dd_project  # noqa: E402  （WP-H2-1：v19 判斷檔的形狀正規化與投影，唯一轉接）
 import dd_metric_resolver  # noqa: E402  （2026-09-07：batch 摘要 Max DD 改用共用 helper，只 import 不改其內部）
 import dd_sections  # noqa: E402  （2026-09-06 WP4b：leak_hits／split_sections，gates 用來把 FAIL 歸因到 sid）
 import dd_prose_budget  # noqa: E402  （2026-09-08：散文段深度下限閘沿用同一份目標區間，不另定義門檻）
@@ -50,9 +51,10 @@ FINISH_MAXDD_EPSILON = 0.01  # 2026-09-07：Max DD 是 judgment 直拷值，只�
 # ---------------------------------------------------------------------------
 # WP1d: run 目錄狀態機（Stage 0 → 判斷 → 閘 → 快速版 → 散文〔--full〕）串接常數
 # ---------------------------------------------------------------------------
-# 2026-09-06 WP4b：`prose` 加在 `brief` 之後——`cmd_run` 只在 `--full` 時把
-# 預設 `--until` 推到 "prose"（不給 `--full` 時 until 仍預設 "brief"，狀態機
-# 迴圈就不會跑到這一段，語意等同「無 --full 狀態機不含它」，見設計稿 §3.5）。
+# 2026-09-06 WP4b：`prose` 加在 `brief` 之後。
+# 2026-09-11 WP-H2-1：`cmd_run` 的預設 `--until` 改為 "prose"——v19 的產物就是
+# 完整版，`--full` 降為 no-op 相容旗標。**快速版（brief）暫不退役**：仍在序列
+# 內照跑照產，等 H2 驗收通過由持有人拍板停產（計劃書第十一節）。
 STAGE_ORDER = ["stage0", "judged", "gated", "brief", "prose"]
 DEFAULT_JUDGMENT_MODEL = "fable"
 # 判斷模型↔閘模型對調表（跨模型冷讀，見 _wp_spec_v17_batch2_20260905.md WP1d §4）
@@ -147,6 +149,12 @@ AXES_MAX_TURNS_SEGMENTED = 14
 SPAWN_TOOLS_COVERAGE = ["WebSearch", "WebFetch", "Read", "Write", "Bash"]
 SPAWN_TOOLS_NUMBERS = ["WebSearch", "WebFetch", "Read", "Write", "Bash"]
 SPAWN_TOOLS_DIGEST = ["Read", "Write", "Bash"]
+# WP-H2-1（2026-09-11）：六問事實表 agent——只整理事實、不上網（證據不足是缺口，
+# 記進 gaps 回報，不自搜補洞），故無 WebSearch／WebFetch。輪次與預算比照逐字稿
+# 摘要（同樣是「讀定稿材料寫一份結構化 JSON」的工作），未經真跑校準。
+SPAWN_TOOLS_FACTS = ["Read", "Write", "Bash"]
+FACTS_MAX_TURNS = 8
+BUDGET_CACHE_READ_FACTS = 900_000
 
 # WP7a #5：Stage 0 預算重校（AVGO 2026-09-05 實測），Stage 0 段總目標 ≤6M
 # （母稿 §4 表同步改，不在本檔範圍）。
@@ -581,6 +589,13 @@ def _digest_cache_store(file_path, items, qa_flags):
         "qa_flags": clean_flags,
     })
     return True
+
+
+def _iso_date(date):
+    """`20260911` → `2026-09-11`（facts.schema 只收帶連字號的形狀）；已帶連字號
+    或形狀不符就原樣回傳，不猜。"""
+    s = str(date or "").strip()
+    return "{0}-{1}-{2}".format(s[:4], s[4:6], s[6:8]) if re.match(r"^\d{8}$", s) else s
 
 
 def _parse_yyyymmdd(value):
@@ -1681,6 +1696,97 @@ def _fresh_stage_preserving_prior(manifest, stage_name):
     return stage
 
 
+def _do_facts(ticker, date, run_dir, replay_dir, stage):
+    """WP-H2-1（2026-09-11）：六問事實表。兩步——
+
+    1. `dd_facts.py extract`（零 LLM）從定稿 evidence／digest 抽機械可抽的部分，
+       落 `facts_draft.json`，抽不到的題留 `needs_sonnet` ＋一句缺什麼。
+    2. sonnet 事實表 agent 讀初稿＋證據包＋摘要＋最新一季逐字稿全文，只補
+       `needs_sonnet` 的題與承重條目的原文片段，寫 `facts.json`；跑完
+       `dd_facts.py check`。
+
+    **降級而非阻斷**：agent 沒寫出檔、或寫出的檔過不了 check 時，退回機械初稿
+    當 `facts.json`（初稿本身合格，且六題都帶 `needs_sonnet: true` 明說「這題沒
+    補齊」）並把失敗原文記進 manifest。理由：初稿是誠實的不完整，不是編造；讓
+    判斷層看得到「這題事實未補齊」比讓整條 run 停在一次 agent 抖動上好。
+    `--replay-from` 一律只用機械初稿（回溯重放不打 API，fixture 也沒有事實表
+    的 replay marker）。
+
+    回傳一個 dict 記在 `stages.stage0.facts`：`ok`／`fallback`／`check_tail`。"""
+    py = _pick_python()
+    draft_path = run_dir / "facts_draft.json"
+    facts_path = run_dir / "facts.json"
+    out = {"ok": False, "fallback": False, "draft": str(draft_path), "out": str(facts_path)}
+
+    r_ex = subprocess.run(
+        [py, str(SCRIPTS_DIR / "dd_facts.py"), "extract", "--run-dir", str(run_dir),
+         "--date", _iso_date(date), "--out", str(draft_path)],
+        capture_output=True, text=True,
+    )
+    out["extract_tail"] = (r_ex.stdout + r_ex.stderr).strip()[-800:]
+    if r_ex.returncode != 0 or not draft_path.exists():
+        out["note"] = "dd_facts.py extract 失敗，無事實表可用"
+        _print_step_status("stage0.facts", "extract_rc={0}".format(r_ex.returncode), "PASS", "FAIL")
+        return out
+
+    if replay_dir:
+        out["fallback"] = True
+        out["note"] = "replay：只用機械初稿，不派事實表 agent"
+    else:
+        prompt_path = run_dir / "prompts" / "a_facts.md"
+        prompt_path.parent.mkdir(parents=True, exist_ok=True)
+        evidence = _load_json_or(run_dir / "evidence.json", {})
+        transcript = dd_bundle._find_transcript_path(
+            ticker,
+            (((evidence.get("transcripts") or {}).get("selected") or {})
+             .get("recent_four_quarters") or [None])[-1],
+        )
+        prompt_path.write_text(_render_template(PROMPTS_TMPL_DIR / "facts.md.tmpl", {
+            "TICKER": ticker, "DATE": date,
+            "EVIDENCE_PATH": str(run_dir / "evidence.json"),
+            "DIGEST_PATH": str(run_dir / "digest.json"),
+            "FACTS_DRAFT_PATH": str(draft_path),
+            "FACTS_OUT_PATH": str(facts_path),
+            "TRANSCRIPT_PATH": str(transcript) if transcript else "（證據包未帶最新一季逐字稿，略過）",
+            "TRANSCRIPT_BASENAME": transcript.name if transcript else "",
+            "MAX_TURNS": str(FACTS_MAX_TURNS),
+        }), encoding="utf-8")
+        r_spawn = dd_headless.spawn(
+            prompt_path=prompt_path, model="sonnet", allowed_tools=SPAWN_TOOLS_FACTS,
+            max_turns=FACTS_MAX_TURNS, budget_cache_read=BUDGET_CACHE_READ_FACTS,
+            out_json=run_dir / "agents" / "a_facts.json", cwd=run_dir,
+        )
+        stage.setdefault("agent_usage", []).append(r_spawn)
+
+    if facts_path.exists():
+        r_ck = subprocess.run(
+            [py, str(SCRIPTS_DIR / "dd_facts.py"), "check", str(facts_path), "--report"],
+            capture_output=True, text=True,
+        )
+        check_out = (r_ck.stdout + r_ck.stderr).strip()
+        out["check_tail"] = check_out[-1500:]
+        if re.search(r"^\[PASS\]", check_out, re.M):
+            out["ok"] = True
+            _print_step_status("stage0.facts", "check PASS", "PASS", "PASS")
+            return out
+        out["note"] = "事實表 agent 的產物未通過 dd_facts check，退回機械初稿"
+    else:
+        out["note"] = out.get("note") or "事實表 agent 未寫出 facts.json，退回機械初稿"
+
+    shutil.copyfile(draft_path, facts_path)
+    out["fallback"] = True
+    r_ck2 = subprocess.run(
+        [py, str(SCRIPTS_DIR / "dd_facts.py"), "check", str(facts_path), "--report"],
+        capture_output=True, text=True,
+    )
+    check_out2 = (r_ck2.stdout + r_ck2.stderr).strip()
+    out["check_tail"] = check_out2[-1500:]
+    out["ok"] = bool(re.search(r"^\[PASS\]", check_out2, re.M))
+    _print_step_status("stage0.facts", "fallback＝機械初稿（{0}）".format(out.get("note")),
+                       "PASS", "PASS" if out["ok"] else "FAIL")
+    return out
+
+
 def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manifest):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
@@ -1774,6 +1880,17 @@ def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manife
     stage["finalize_retries"] = retries
     stage["finalize_tail"] = out_text[-3000:]
 
+    # WP-H2-1（2026-09-11）：Stage 0 末尾的事實表——證據 finalize 過了才做
+    # （事實要從定稿的 evidence／digest 抽，不然抽到半成品）。刻意**不新增
+    # STAGE_ORDER 段**：新增段會動到 `--resume` 的索引語意與既有 manifest 的
+    # 相容判斷，而事實表在語意上就是 Stage 0 的最後一件收集工作。
+    if rc == 0:
+        stage["facts"] = _do_facts(ticker, date, run_dir, replay_dir, stage)
+        if not stage["facts"].get("ok"):
+            rc = 1
+        over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
+        stage["over_budget"] = over_budget
+
     ok = (rc == 0) and (over_budget is False or accept_over_budget)
     stage["state"] = "PASS" if ok else ("FAIL" if rc != 0 else "OVER_BUDGET")
     stage["ended"] = _now()
@@ -1795,11 +1912,106 @@ def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manife
 # WP1d judge：bundle → prompt(judge.md.tmpl) → spawn → judge check → 修一輪
 # ---------------------------------------------------------------------------
 
+# v19 的 decision_out：只把矩陣機械欄與 requires_critic 併回原檔。
+# `rearm_trigger`／`exec_line` 在 v19 住 `counter_evidence.action_conditions`
+# 一處（投影時才進 decision_out），併回來會讓同一件事兩邊都有，validate 會擋。
+_V19_DECISION_OUT_KEYS = ("verdict", "role", "row_hit", "pacing", "holding_cap",
+                          "audit_rows", "requires_critic")
+
+
+def _judge_check_v19(run_dir, judgment_path, evidence_path, tables_dir, py):
+    """WP-H2-1（2026-09-11）：v19 判斷檔的 judge check。
+
+    `dd_decision.py`（依派工單不動）只讀 `decision_inputs`，而 v19 原檔只有
+    judge-owned 九欄——所以這條路徑是：**格式正規化 → `dd_project view` 產投影
+    檔 → `dd_project scenario` 產 dd_scenario 的輸入檔 → `dd_scenario` →
+    `dd_decision run`（對投影檔）→ 把 `decision_out` 併回原檔 → validate 原檔**。
+    validate 自己會再投影一次（單一轉接），所以驗的仍是同一份視圖。
+
+    正規化只修形狀（路徑／欄名映射／單物件包陣列），不補任何判斷值——見
+    `dd_project.normalize` 的界線註解。"""
+    parts, ok = [], True
+
+    raw = _load_json(judgment_path)
+    normalized, changes = dd_project.normalize(raw, judgment_path)
+    if changes:
+        _atomic_write_json(judgment_path, normalized)
+        parts.append("[dd_project normalize] 修了 {0} 項形狀：\n{1}".format(
+            len(changes), "\n".join("  · " + c for c in changes)))
+
+    scenario_path = run_dir / "scenario.json"
+    r0 = subprocess.run(
+        [py, str(SCRIPTS_DIR / "dd_project.py"), "scenario", str(judgment_path),
+         "--out", str(scenario_path)],
+        capture_output=True, text=True,
+    )
+    parts.append("[dd_project.py scenario] rc={0}\n{1}".format(
+        r0.returncode, (r0.stdout + r0.stderr).strip()))
+    ok = ok and (r0.returncode == 0)
+
+    view_path = run_dir / "judgment_view.json"
+    r1 = subprocess.run(
+        [py, str(SCRIPTS_DIR / "dd_project.py"), "view", str(judgment_path),
+         "--out", str(view_path)],
+        capture_output=True, text=True,
+    )
+    parts.append("[dd_project.py view] rc={0}\n{1}".format(
+        r1.returncode, (r1.stdout + r1.stderr).strip()))
+    ok = ok and (r1.returncode == 0)
+
+    if scenario_path.exists():
+        r2 = subprocess.run(
+            [py, str(SCRIPTS_DIR / "dd_scenario.py"), str(scenario_path),
+             "--html", str(tables_dir / "e11.html"),
+             "--meta", str(run_dir / "scenario_meta.json")],
+            capture_output=True, text=True,
+        )
+        parts.append("[dd_scenario.py] rc={0}\n{1}".format(
+            r2.returncode, (r2.stdout + r2.stderr).strip()))
+        ok = ok and (r2.returncode == 0)
+
+    if view_path.exists():
+        r3 = subprocess.run(
+            [py, str(SCRIPTS_DIR / "dd_decision.py"), "run", str(view_path),
+             "--html", str(tables_dir / "audit.html"), "--json", str(view_path)],
+            capture_output=True, text=True,
+        )
+        parts.append("[dd_decision.py run] rc={0}\n{1}".format(
+            r3.returncode, (r3.stdout + r3.stderr).strip()))
+        ok = ok and (r3.returncode == 0)
+        if r3.returncode == 0:
+            view = _load_json(view_path)
+            merged = dict(_load_json(judgment_path).get("decision_out") or {})
+            for k in _V19_DECISION_OUT_KEYS:
+                if k in (view.get("decision_out") or {}):
+                    merged[k] = (view["decision_out"])[k]
+            cur = _load_json(judgment_path)
+            cur["decision_out"] = merged
+            _atomic_write_json(judgment_path, cur)
+
+    vj_cmd = [py, str(SCRIPTS_DIR / "validate_judgment.py"), str(judgment_path),
+              "--evidence", str(evidence_path), "--fix", "--report"]
+    if os.environ.get("DD_J1_WARN") == "1":
+        vj_cmd.append("--j1-warn")
+    r4 = subprocess.run(vj_cmd, capture_output=True, text=True)
+    vj_out = (r4.stdout + r4.stderr).strip()
+    parts.append("[validate_judgment.py] rc={0}\n{1}".format(r4.returncode, vj_out))
+    if re.search(r"^\[FAIL\]", vj_out, re.M):
+        ok = False
+    elif not re.search(r"^\[PASS\]", vj_out, re.M):
+        ok = False
+    return ok, parts
+
+
 def _judge_check(ticker, date):
     """`ddreport.py judge check TICKER DATE`：依序跑 dd_scenario.py／
     dd_decision.py run／validate_judgment.py --fix --report，回傳
     (ok, report_text)。`validate_judgment.py --report` 恆 exit 0，PASS/FAIL
-    要從輸出的 `[PASS]`／`[FAIL]` 首行判斷，不能只看 returncode。"""
+    要從輸出的 `[PASS]`／`[FAIL]` 首行判斷，不能只看 returncode。
+
+    2026-09-11（WP-H2-1）：判斷檔標了 `meta.contract="v19"` 時改走
+    `_judge_check_v19`（多一步投影與 scenario 產生）。判別只看**實際寫出來的
+    那份判斷檔**，不看流程預期——replay 重放舊 fixture 時仍走舊路徑。"""
     run_dir = _run_dir(ticker, date)
     py = _pick_python()
     scenario_path = run_dir / "scenario.json"
@@ -1807,6 +2019,14 @@ def _judge_check(ticker, date):
     evidence_path = run_dir / "evidence.json"
     tables_dir = run_dir / "tables"
     tables_dir.mkdir(parents=True, exist_ok=True)
+
+    if judgment_path.exists():
+        try:
+            if dd_project.is_v19(_load_json(judgment_path)):
+                ok, parts = _judge_check_v19(run_dir, judgment_path, evidence_path, tables_dir, py)
+                return ok, "\n\n".join(parts)
+        except (json.JSONDecodeError, ValueError) as e:
+            return False, "[error] judgment.json 不是合法 JSON：{0}".format(e)
 
     parts = []
     ok = True
@@ -1873,7 +2093,7 @@ def _gate_patch_mode():
     return m if m in ("patchmap", "loop") else GATE_PATCH_MODE_DEFAULT
 
 
-_JUDGE_LOOP_WRITE_MARKER = "## 寫（各一次 Write"
+_JUDGE_LOOP_WRITE_MARKER = "## 寫（一次 Write"
 
 
 def _render_oneshot_judge_prompt(mapping):
@@ -1892,22 +2112,27 @@ _FENCE_ANY_RE = re.compile(r"```(?:json)?[ \t]*\n(.*?)\n```", re.S)
 
 
 def _parse_oneshot_judgment(text):
-    """從一次性呼叫的回覆抽出 judgment／scenario 兩份 JSON。回傳 dict 或 None
-    （缺任一、JSON 解析失敗都算 None，由呼叫端決定回退）。優先認 `json:judgment`
-    ／`json:scenario` 標記；沒標記時退而取回覆內恰好兩個 JSON 區塊、依序視為
-    judgment／scenario。"""
+    """從一次性呼叫的回覆抽出 judgment（＋舊形狀的 scenario）JSON。回傳 dict 或
+    None（解析失敗算 None，由呼叫端決定回退）。優先認 `json:judgment`／
+    `json:scenario` 標記；沒標記時退而取回覆內的 JSON 區塊——兩個就依序視為
+    judgment／scenario，**一個就當 judgment**（2026-09-11 WP-H2-1：v19 只交一個
+    檔，回覆備援也只會有一塊）。"""
     text = text or ""
     found = {}
     for tag, body in _FENCE_RE.findall(text):
         found.setdefault(tag, body)
-    if not ("judgment" in found and "scenario" in found):
+    if "judgment" not in found:
         blocks = _FENCE_ANY_RE.findall(text)
         if len(blocks) == 2:
             found = {"judgment": blocks[0], "scenario": blocks[1]}
-    if not ("judgment" in found and "scenario" in found):
+        elif len(blocks) == 1:
+            found = {"judgment": blocks[0]}
+    if "judgment" not in found:
         return None
     out = {}
     for tag in ("judgment", "scenario"):
+        if tag not in found:
+            continue
         try:
             obj = json.loads(found[tag])
         except (json.JSONDecodeError, ValueError):
@@ -2030,12 +2255,24 @@ def _spawn_short(prompt_path, model, out_json, cwd, budget, max_turns):
 
 
 def _short_outputs_ready(run_dir, started_at, result_text):
-    """短迴圈收工判定：兩檔都在且 mtime 晚於本輪開跑 → True；否則退而解析
-    回覆內的 fenced JSON（備援），有就落檔回 True；都沒有 → False。"""
+    """短迴圈收工判定：該交的檔都在且 mtime 晚於本輪開跑 → True；否則退而解析
+    回覆內的 fenced JSON（備援），有就落檔回 True；都沒有 → False。
+
+    2026-09-11（WP-H2-1）：v19 只交 `judgment.json` 一個檔（`scenario.json` 由
+    程式從 `scenario_inputs` 產生），所以 scenario 的新鮮度只對舊形狀要求。"""
     jp = run_dir / "judgment.json"
     sp = run_dir / "scenario.json"
-    if jp.exists() and sp.exists() and jp.stat().st_mtime >= started_at and sp.stat().st_mtime >= started_at:
-        return True
+    if jp.exists() and jp.stat().st_mtime >= started_at:
+        if sp.exists() and sp.stat().st_mtime >= started_at:
+            return True
+        try:
+            single_file = dd_project.is_v19(_load_json(jp))
+        except (json.JSONDecodeError, ValueError):
+            # 壞 JSON 判不出形狀。v19 是現行預設、且只交一個檔——當作已交件，
+            # 讓既有的「語法修復」短迴圈去修，比整段回退 loop 便宜。
+            single_file = True
+        if single_file:
+            return True
     parsed = _parse_oneshot_judgment(result_text)
     if parsed:
         _write_oneshot_outputs(run_dir, parsed)
@@ -2046,20 +2283,24 @@ def _short_outputs_ready(run_dir, started_at, result_text):
 def _write_oneshot_outputs(run_dir, parsed):
     (run_dir / "judgment.json").write_text(
         json.dumps(parsed["judgment"], ensure_ascii=False, indent=2), encoding="utf-8")
-    (run_dir / "scenario.json").write_text(
-        json.dumps(parsed["scenario"], ensure_ascii=False, indent=2), encoding="utf-8")
+    if "scenario" in parsed:  # v19 不交這個檔（由 scenario_inputs 產生）
+        (run_dir / "scenario.json").write_text(
+            json.dumps(parsed["scenario"], ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def _judge_syntax_check_cmd(judgment_path, scenario_path):
-    """2026-09-06（FIX_20260908）：`judge_oneshot_tail.md.tmpl`（步驟③）與
+def _judge_syntax_check_cmd(*paths):
+    """2026-09-06（FIX_20260908）：`judge_oneshot_tail.md.tmpl`（步驟②）與
     `judge_json_repair.md.tmpl`（修復後自檢）共用同一條 Bash 語法自檢指令
-    ——`json.load` 掃過兩份判斷物，任一份不是合法 JSON 就丟
+    ——`json.load` 掃過傳入的判斷物，任一份不是合法 JSON 就丟
     `JSONDecodeError`（有輸出）、都過就沒有任何輸出。路徑走 `sys.argv`
-    （不內嵌進 `-c` 字串），避免路徑含空白或特殊字元被誤拆。"""
+    （不內嵌進 `-c` 字串），避免路徑含空白或特殊字元被誤拆。
+
+    2026-09-11（WP-H2-1）：改收可變長度路徑——v19 只有 `judgment.json` 一個檔，
+    把不存在的 `scenario.json` 一起丟進去會變成 FileNotFoundError 假警報。"""
     return (
         "python3 -c \"import json,sys; [json.load(open(p, encoding='utf-8')) "
-        "for p in sys.argv[1:]]\" {0} {1}"
-    ).format(judgment_path, scenario_path)
+        "for p in sys.argv[1:]]\" {0}"
+    ).format(" ".join(str(p) for p in paths))
 
 
 def _normalize_judge_outputs(run_dir):
@@ -2122,7 +2363,10 @@ def _repair_judge_json_file(run_dir, name, err_msg, ticker, date, judgment_model
         _render_format_template(PROMPTS_TMPL_DIR / "judge_json_repair.md.tmpl", {
             "ticker": ticker, "date": date, "name": name, "path": str(path),
             "error": err_msg,
-            "check_cmd": _judge_syntax_check_cmd(str(judgment_path), str(scenario_path)),
+            # 2026-09-11（WP-H2-1）：只掃**這一輪真的存在或即將被重寫**的檔——
+            # v19 沒有 scenario.json，硬掃會變成 FileNotFoundError 假警報。
+            "check_cmd": _judge_syntax_check_cmd(*(
+                [str(judgment_path)] + ([str(scenario_path)] if scenario_path.exists() else []))),
             "max_turns": str(JUDGE_JSON_REPAIR_MAX_TURNS),
         }),
         encoding="utf-8",
@@ -2568,9 +2812,10 @@ def _do_judge_full(ticker, date, judgment_model, replay_dir, accept_over_budget,
         "run_dir": str(run_dir), "bundle_path": str(bundle_path),
         "judgment_path": str(judgment_path), "scenario_path": str(scenario_path),
         "ticker": ticker, "date": date, "max_turns": str(JUDGE_MAX_TURNS),
-        # 2026-09-06（FIX_20260908）：short 模板步驟③與語法修復模板共用同一條
+        # 2026-09-06（FIX_20260908）：short 模板步驟②與語法修復模板共用同一條
         # 自檢指令，這裡先算好塞進 mapping，兩邊模板都直接取用同一份字串。
-        "check_cmd": _judge_syntax_check_cmd(str(judgment_path), str(scenario_path)),
+        # 2026-09-11（WP-H2-1）：v19 只交 judgment.json，自檢只掃這一份。
+        "check_cmd": _judge_syntax_check_cmd(str(judgment_path)),
     }
     prompt_path.write_text(_render_format_template(PROMPTS_TMPL_DIR / "judge.md.tmpl", mapping), encoding="utf-8")
     if replay_dir:
@@ -2674,6 +2919,17 @@ def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept
     if fix_mode is None:
         fix_mode = "loop" if replay_dir else _judge_mode()
 
+    # WP-H2-1（2026-09-11）：v19 的修補上限是**一次 patch map**。修不了就停、
+    # 印「交指揮者」，不再回退 loop 修正 agent——loop 那條路是「讓模型自己整段
+    # 再想一次」，與「判斷一回合」的設計直接衝突，而且真正修不掉的多半是缺判斷
+    # 值（程式不准補、模型再跑一次也只會編一個），該由人裁定。
+    v19_one_shot_fix = False
+    if judgment_path.exists():
+        try:
+            v19_one_shot_fix = dd_project.is_v19(_load_json(judgment_path))
+        except (json.JSONDecodeError, ValueError):
+            v19_one_shot_fix = False
+
     if not ok and fix_mode == "short":
         # 定點修正＝patch map：失敗原文＋目前兩檔全文進 prompt、無工具單輪，
         # 回覆只列「路徑 → 新值」，orchestrator 套用後再跑 check。
@@ -2724,6 +2980,11 @@ def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept
             print("[judged] " + stage["short_fix_fallback"])
             fix_mode = "loop"
             fix_suffix = "{0}_loop".format(fix_suffix)
+        if v19_one_shot_fix and fix_mode == "loop":
+            # v19：patch map 是唯一一次修補機會，不回退 loop。
+            stage["short_fix_fallback"] = (stage.get("short_fix_fallback") or "") \
+                + "｜v19：patch map 上限 1 輪，不回退 loop，停下交指揮者"
+            fix_mode = "stop"
 
     if not ok and fix_mode == "loop":
         fix_path = run_dir / "prompts" / "b1_fix.md"
@@ -2766,6 +3027,12 @@ def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept
         "judged", "ok={0} over_budget={1} validate={2}".format(ok, over_budget, j1_warn),
         "validate PASS", stage["state"],
     )
+    if v19_one_shot_fix and not ok:
+        # WP-H2-1：v19 用完一輪 patch map 仍 FAIL＝多半是缺判斷值，程式不准補、
+        # 模型再想一次只會編一個。停在這裡、不發布，交指揮者裁定。
+        print("[judged] **交指揮者**：v19 判斷物已用完一輪 patch map 仍未通過 "
+              "judge check，不繼續往下跑、不發布。失敗原文見上方與 manifest 的 "
+              "stages.judged.check_report_tail。", file=sys.stderr)
     if stage["state"] != "PASS":
         _print_resume_hint(ticker, date, "judged")
     return 0 if stage["state"] == "PASS" else 1
@@ -4776,7 +5043,7 @@ def cmd_finish(args):
 
 
 # ---------------------------------------------------------------------------
-# WP1d run：串接 stage0 → judged → gated → brief，支援 --until／--resume
+# WP1d run：串接 stage0 → judged → gated → brief → prose，支援 --until／--resume
 # ---------------------------------------------------------------------------
 
 def cmd_run(args):
@@ -4799,10 +5066,12 @@ def cmd_run(args):
     replay_dir = _ensure_replay_env(args.replay_from)
 
     until_explicit = args.until is not None
-    # 2026-09-06 WP4b：`--full` 沒有明講 `--until` 時，預設把狀態機推到
-    # "prose"（散文層）；沒給 `--full` 仍預設停在 "brief"（快速版）——這是
-    # 「無 --full 狀態機不含 prose 段」的實作方式，STAGE_ORDER 本身不分裝。
-    until = args.until or ("prose" if args.full else "brief")
+    # 2026-09-11（WP-H2-1，計劃書第十一節）：**預設終點改 "prose"**——v19 的
+    # 產物就是完整版，不再需要 `--full` 才跑散文層。`--full` 旗標保留但已成
+    # no-op（既有呼叫端、batch 轉送與測試都還在傳它）。快速版（brief 段）
+    # **暫不退役**：仍在 STAGE_ORDER 內照跑照產，等 H2 驗收通過由持有人拍板
+    # 停產；在那之前 `--until brief` 仍是有效的停點。
+    until = args.until or "prose"
     if until not in STAGE_ORDER:
         print("[error] --until 必須是 {0} 之一".format(STAGE_ORDER), file=sys.stderr)
         return 2
@@ -4895,8 +5164,9 @@ def cmd_run(args):
 
     # WP6a：run 預設接 finish；--no-finish／--dry-run／明講 --until 皆不接
     # （含明講 `--until brief`——語意上等同「就跑到這裡，先別 finish」）。
-    # 2026-09-06：`--full` 的預設終點是 "prose"，同樣視為「跑到預設終點」
-    # 而接 finish；`until_explicit` 仍是唯一的「使用者刻意要求停在這裡」判準。
+    # 2026-09-11（WP-H2-1）：預設終點已是 "prose"（完整版）。`until_explicit`
+    # 仍是唯一的「使用者刻意要求停在這裡」判準；`--until prose` 明講時同樣
+    # 不自動接 finish。
     if (not until_explicit) and until in ("brief", "prose") and not args.no_finish and not args.dry_run:
         return _do_finish(
             ticker, date,
@@ -5305,16 +5575,16 @@ def build_parser():
     rn.add_argument("--gate-patch-mode", default=None, choices=["patchmap", "loop"],
                     help="閘 🔴 修補跑法：patchmap（預設，無工具單輪回 patch map）／loop（舊：agent 自己 Read／Write／Bash＋重跑 check）")  # 2026-09-06
     rn.add_argument("--full", action="store_true",
-                     help="v17 WP4b：預設終點推到 prose（散文層），從快速版的 judgment.json 額外補跑"
-                          "完整版 docs/dd/DD_{T}_{D}.html")
+                     help="（2026-09-11 起 no-op）預設終點已是 prose 完整版；旗標保留只為"
+                          "相容既有呼叫端與 batch 轉送，不再改變行為")
     rn.add_argument("--replay-from", default=None, metavar="DIR")
     rn.add_argument("--until", default=None, choices=STAGE_ORDER,
-                     help="預設跑到 brief 並自動接 finish；明講此旗標（含 --until brief）視為"
-                          "刻意要求停在該段，不自動接 finish")
+                     help="預設跑到 prose（完整版）並自動接 finish；明講此旗標（含 --until prose）"
+                          "視為刻意要求停在該段，不自動接 finish")
     rn.add_argument("--resume", action="store_true")
     rn.add_argument("--offline", action="store_true")
     rn.add_argument("--accept-over-budget", action="store_true")
-    rn.add_argument("--no-finish", action="store_true", help="brief 完成後不自動接 finish")
+    rn.add_argument("--no-finish", action="store_true", help="跑到預設終點（prose）後不自動接 finish")
     rn.add_argument("--dry-run", action="store_true", help="同 --no-finish；WP6a 精神對齊")
     rn.add_argument("--no-push", action="store_true", help="finish 時 commit 但不 push")
     rn.add_argument("--skip-dd-screener", action="store_true",

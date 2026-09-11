@@ -21,7 +21,7 @@
 | `meta`／`oneliner`／`facts_ref`／`scenario_ref` | 標頭與兩個輸入檔指標 | — |
 | `thesis` | H1–H3、R1–Rn、Single Thing | 出手點①：假設、門檻、漂移觸發 |
 | `answers.q1_business` | 結論句＋短理由＋`fact_refs`＋`revenue_quality`／`unit_econ_note`／`archetype`／`industry`／`single_thing` | 出手點①：商模門檻與唯一致命數字 |
-| `answers.q2_moat` | ＋`moat.mechanism`／`trend`／`trend_evidence`／`grade`／子評分／`spread_table`／`competitors`／`threats`／`roic_durability` | 出手點②：優勢機制、持續性、子評分與重要性。**等級不可由分數推**——實檔 8.5 分同時對應 A 與 B |
+| `answers.q2_moat` | ＋`moat.mechanism`／`trend`／`trend_evidence`／`grade`／子評分／`competitor_notes`／`spread_notes`（選填）／`peer_na_reason`（查無或不適用時必填）／`threats`／`roic_durability` | 出手點②：優勢機制、持續性、子評分與重要性。**等級不可由分數推**——實檔 8.5 分同時對應 A 與 B。2026-09-11（WP-H2-1）：同業的**數字、期間、口徑、來源搬進 `facts.peer_comparison`**，判斷者只寫每家一句 `strategy_note`（有沒有本錢打價格戰、策略定位）與口徑判讀 `spread_notes` |
 | `answers.q3_growth` | ＋`growth.driver_mix`／`runway_post_y5`／`endo_ceiling_basis`／`segments` | 出手點②：未來滲透率、第二曲線是否可信、缺口歸因 |
 | `answers.q4_capital` | ＋`capalloc.items[]`（逐項適用性與輸入）／`governance`／`quality` | Codex 表：併購 NOPAT 歸屬、ROIIC 代理、不可比資料與不適用項的處理由判斷者決定 |
 | `answers.q5_valuation` | ＋`valuation.basis`（正常化口徑）／`val_light`／`peg`／`percentile_5y`／`denominator_disputed`＋`denominator_note` | 盈餘是否正常化、一次性因素、分母爭議 |
@@ -79,6 +79,7 @@
 | P-04 | `archetype` ← 問一 | — |
 | P-05 | `industry` ← 問一 | — |
 | P-06 | `moat` ← 問二；`combined` 缺時取 execution／pricing 平均、`score` 缺時取 `combined` | **`grade` 不推**（實檔反例） |
+| P-26 | `moat.spread_table`（度量為列）／`moat.competitors`（對手為列）← `facts.peer_comparison` ＋ 判斷者的 `competitor_notes`／`spread_notes`。對名先精確比對、再比對前綴（判斷者寫 `EME（EMCOR）`、facts 是 `EME`）。**facts 沒有同業資料時兩張表都不生**（不放空表假裝比過） | 只搬數字、不換算、不補缺的度量；對不上名就留空 note，由必要項目檢查報缺 |
 | P-07 | `growth` ← 問三（`driver_mix`／`endo_ceiling_basis` 原樣留著供散文引用） | — |
 | P-08 | `quality` ← 問四 | 缺就空物件，E9 顯示未提供 |
 | P-09 | `governance` ← 問四；`scorecard` 缺時由計分卡逐項生成 | 逐項文字照抄判斷者的 `input` |
@@ -101,9 +102,18 @@
 ## 四、v19 專屬檢查（`validate_judgment.py::v19_contract_checks`）
 
 1. `v19_contract` 形狀（schema 子集直譯器）。
-2. `answers[].fact_refs[]` 的 id 必須在 `facts.json` 找得到——facts 解析不到時只 WARN，不硬擋。
-3. `decision_inputs` 的十三個投影欄不得被填成非 null（同一件事不准兩邊都填）。
-4. J2 終端年檢查升 FAIL（見 `decision_inputs.md` §7）。
+2. **事實檔擋門（WP-H2-1，2026-09-11）**：`facts_ref` 解析不到、不是合法 JSON、或事實檔自身過不了 `dd_facts.check` → **FAIL**。H1 時期這裡只 WARN，Codex 用 fixture 重現「事實檔不存在仍 0 FAIL」，本輪升為硬擋——沒有事實表就沒有可追溯性，不得組頁。
+3. `answers[].fact_refs[]` 的 id 必須在 `facts.json` 找得到（斷鏈＝FAIL）。
+4. `decision_inputs` 的十三個投影欄不得被填成非 null（同一件事不准兩邊都填）。
+5. **必要項目是否有回答（`v19_required_items_checks`，取代 `minItems`）**：§5.R 四檢查點（需求基礎值／決策層級／價值鏈分配／社會容忍度）各要一個回答——判讀句 `text` 或不適用理由 `not_applicable_reason`，**空物件不算**；同業對照要嘛 `moat.competitor_notes` 每家一句 `strategy_note`、要嘛 `moat.peer_na_reason` 寫明為何查無或不適用。
+6. **J2 必須真的執行（WP-H2-1）**：`scenario_meta` sidecar 找不到、或 Max DD 恆等式因缺 `price_at_dd`／`bear_5y_price`／`max_dd.lo` 而沒算 → **FAIL**（舊形狀維持 WARN）。「沒算」與「算過通過」不可同樣算過關。
+7. J2 終端年檢查升 FAIL（見 `decision_inputs.md` §7）。
+
+## 四之二、格式正規化（`dd_project.py normalize`，WP-H2-1）
+
+判斷段改一回合交卷後，剩下的失敗多半是形狀。`normalize` 只准修三類：**①路徑**（`facts_ref`／`scenario_ref` 相對 → 絕對）**②確定的欄名映射**（`answers.q1`→`q1_business`、`facts`→`fact_refs`、頂層 `triggers`／`contradictions`／`kill_metrics`／`evidence_dismissed` → `counter_evidence.*`、`scenario`→`scenario_inputs` 等一對一無歧義項）**③單物件包陣列**（依 `v19_contract` 宣告為 array 的路徑，給了單一物件就包起來）。
+
+**一律不補**：理由、評級、`false`、門檻、機率，以及任何缺值。修不掉 → 讓 validate FAIL → 一輪 patch map（**上限 1**）→ 仍 FAIL 就停下印「交指揮者」、**不回退 loop、不發布**（`ddreport.py::_judge_finalize_after_check`）。
 
 ## 五、required 條目數
 

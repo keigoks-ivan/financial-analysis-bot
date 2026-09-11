@@ -55,6 +55,16 @@ v18 的判斷 agent 要自己從 250KB 的證據包裡挖數字、對齊期間�
 
 每題可帶 `needs_sonnet: true`＋`needs_sonnet_note`，表示機械抽取抽不完、仍須整理 agent 補。**程式不得為了填滿欄位而編造**——抽不到就留空並標記。
 
+## 三之二、`peer_comparison`：同業對照表（WP-H2-1，2026-09-11）
+
+Codex 裁定 3「護城河表部分搬移」的落點。同業的**數字、期間、口徑、來源**住這裡，判斷者不再抄；判斷者只寫 `moat.competitor_notes`（每家一句：有沒有本錢打價格戰、策略定位）與 `moat.spread_notes`（選填的口徑判讀）。
+
+形狀：`metrics[]`（`key`／`label`／`unit`，key 沿用 `evidence.numbers.peer_financials` 的欄名不改名）＋ `rows[]`（一列一家公司含本檔自己，逐列帶 `period`／`basis`／`source`／`values`／`note`；`is_subject` 或 `subject` 標出本檔）。`dd_facts.py extract` 從 `evidence.numbers.peer_financials` 機械抽；**整欄皆 null 的度量不列**（例：多數非軟體業者不單獨揭露研發），並在 `gaps[]` 記一條。`dd_project.py` 由此投影回舊形狀的 `moat.spread_table`（度量為列）與 `moat.competitors`（對手為列）。
+
+本區塊與 `q2_moat` 底下的 `f_peer_*` 事實是**同一次採集的兩種形狀**（表格形 vs 可被 `fact_refs` 引用的條目形），不是兩份資料。
+
+事實表整張沒有同業資料時，兩張表都不生——判斷者必須在 `moat.peer_na_reason` 說明為何沒有可比同業，空著即機械閘 FAIL。
+
 ## 四、機械可抽 vs 必須由人（或整理 agent）補
 
 `scripts/dd_facts.py extract` 從 `evidence.json` 的 `numbers` 與 `coverage`／`events` 抽下列：

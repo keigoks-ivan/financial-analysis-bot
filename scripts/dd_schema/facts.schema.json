@@ -65,6 +65,54 @@
       }
     },
 
+    "peer_comparison": {
+      "type": "object",
+      "description": "2026-09-11（WP-H2-1，Codex 裁定 3「護城河表部分搬移」）：同業對照表的**數字、期間、口徑、來源**住這裡，不再由判斷者抄進 judgment。判斷者只寫每個對手的 strategy_note（無力價格戰與否、策略定位）與四檢查點燈號。dd_facts.py extract 從 evidence.numbers.peer_financials 機械抽出；抽不到的度量留 null（別編），並在 gaps 記一條。dd_project.py 由本區塊投影出舊形狀的 moat.spread_table（度量為列）與 moat.competitors（對手為列）。本區塊與 q2_moat 底下的 f_peer_* 事實是**同一次採集的兩種形狀**（表格形 vs 可被 fact_refs 引用的條目形），不是兩份資料；改一邊必須改另一邊的產生器（scripts/dd_facts.py::build_peer_comparison 與 _peer_facts 同讀 evidence.numbers.peer_financials）。",
+      "required": ["metrics", "rows"],
+      "properties": {
+        "subject": {
+          "type": ["string", "null"],
+          "description": "本檔自己在 rows 裡的 name（同業表要把自己也列進去才比得出價差）。"
+        },
+        "metrics": {
+          "type": "array",
+          "minItems": 1,
+          "description": "對照哪幾個度量。key 用 evidence.numbers.peer_financials 的欄名（gross_margin_pct／operating_margin_pct／fcf_margin_pct／rd_intensity_pct…），label 是中文表頭。",
+          "items": {
+            "type": "object",
+            "required": ["key", "label"],
+            "properties": {
+              "key": {"type": "string"},
+              "label": {"type": "string"},
+              "unit": {"type": ["string", "null"]},
+              "note": {"type": ["string", "null"], "description": "口徑註記（事實層），例：含預收款。判讀句不寫在這裡。"}
+            }
+          }
+        },
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "description": "一列一家公司（含本檔自己）。period／basis／source 逐列帶，因為同業資料常不同期。",
+          "items": {
+            "type": "object",
+            "required": ["name", "values", "source"],
+            "properties": {
+              "name": {"type": "string"},
+              "is_subject": {"type": ["boolean", "null"]},
+              "period": {"type": ["string", "null"]},
+              "basis": {"type": ["string", "null"]},
+              "values": {
+                "type": "object",
+                "description": "{metric key: 值}。取不到的度量填 null，不得省略成「未涵蓋」字串以外的猜測值。"
+              },
+              "source": {"$ref": "#/definitions/source"},
+              "note": {"type": ["string", "null"]}
+            }
+          }
+        }
+      }
+    },
+
     "gaps": {
       "type": "array",
       "description": "整份查不到、但判斷需要的東西（軸級或題級皆可）。缺口要被看見，不得以「未提及」帶過。",
@@ -107,8 +155,8 @@
         },
         "label": {"type": ["string", "null"]},
         "value": {
-          "type": ["number", "string", "boolean", "null"],
-          "description": "null 只允許出現在 needs_sonnet=true 的佔位條目。"
+          "type": ["number", "string", "boolean", "array", "null"],
+          "description": "null 只允許出現在 needs_sonnet=true 的佔位條目。**陣列只用於區間**（指引上下緣，如 [3300, 3310]）——實檔 PANW／SNOW 的 latest_quarter_kpis 就是這個形狀，硬轉成單一數字會憑空挑一邊。2026-09-11（WP-H2-1）放寬。"
         },
         "period": {
           "type": ["string", "null"],

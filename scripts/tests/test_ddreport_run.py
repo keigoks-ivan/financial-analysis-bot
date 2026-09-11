@@ -264,6 +264,10 @@ def test_stage0_first_run_respawns_once_when_part_file_never_written(monkeypatch
         return 1, "finalize FAIL #{0}".format(finalize_calls["n"]), set()
 
     monkeypatch.setattr(ddreport, "_finalize_run_dir", fake_finalize)
+    # WP-H2-1（2026-09-11）：Stage 0 末尾多了事實表一步，但這個測試問的是重派
+    # 邏輯、run_dir 裡沒有真的 evidence.json——事實表另有專屬測試，這裡擋掉。
+    monkeypatch.setattr(ddreport, "_do_facts",
+                        lambda t, d, rd, replay, stage: {"ok": True, "fallback": False})
 
     try:
         manifest = {"ticker": ticker, "date": date, "stages": {}}
@@ -1964,6 +1968,187 @@ def test_do_judge_delta_verdict_flip_escalates_to_full(tmp_path, monkeypatch):
         assert rejected["decision_out"]["verdict"] == "觀望"
     finally:
         shutil.rmtree(run_dir, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
+# WP-H2-1（2026-09-11）：判斷段一回合（v19）、patch 上限 1、Stage 0 事實表
+# ---------------------------------------------------------------------------
+
+FIXTURES_DIR = TESTS_DIR / "fixtures"
+
+
+def _seed_v19_run(run_dir):
+    """把 v19 fixture 放進 run 目錄：判斷檔的兩個 ref 指到同目錄，**不放
+    scenario.json**——v19 的判斷 agent 只交一個檔，scenario 由程式產生。"""
+    (run_dir / "prompts").mkdir(parents=True, exist_ok=True)
+    (run_dir / "agents").mkdir(parents=True, exist_ok=True)
+    (run_dir / "bundles").mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(FIXTURES_DIR / "facts_FIX_20260911.json", run_dir / "facts.json")
+    shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", run_dir / "evidence.json")
+    raw = json.loads((FIXTURES_DIR / "judgment_v19_FIX.json").read_text(encoding="utf-8"))
+    raw["facts_ref"] = str(run_dir / "facts.json")
+    raw["scenario_ref"] = str(run_dir / "scenario.json")
+    return raw
+
+
+def test_v19_judge_one_round_writes_single_file_and_skips_loop(monkeypatch):
+    """判斷一回合：agent 只 Write 出 `judgment.json`（沒有 scenario.json），
+    短迴圈仍要判定「已交件」、直接進 judge check，不回退 loop 模式。"""
+    ticker, date = "ZTESTV19", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    raw = _seed_v19_run(run_dir)
+
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0))
+    monkeypatch.setattr(ddreport, "_judge_delta_route",
+                        lambda t, d, rd, nd: {"mode": "full", "reasons": ["test"], "delta_path": None})
+
+    loop_spawns = []
+    monkeypatch.setattr(ddreport.dd_headless, "spawn",
+                        lambda **kw: loop_spawns.append(kw) or {"ok": True, "over_budget": False})
+
+    def fake_short(prompt_path, model, out_json, cwd, budget, max_turns):
+        (run_dir / "judgment.json").write_text(
+            json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+        return {"ok": True, "over_budget": False, "num_turns": 2, "result_text": "DONE"}
+
+    monkeypatch.setattr(ddreport, "_spawn_short", fake_short)
+    checks = []
+    monkeypatch.setattr(ddreport, "_judge_check",
+                        lambda t, d: checks.append((t, d)) or (True, "[PASS] 假造（0 FAIL／0 WARN）"))
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {}}
+        rc = ddreport._do_judge(ticker, date, "fable", None, False, manifest)
+        assert rc == 0
+        assert not (run_dir / "scenario.json").exists(), "v19 判斷 agent 不該寫 scenario.json"
+        assert len(checks) == 1, "一回合＋一次 check，不該有第二輪"
+        assert loop_spawns == [], "不得回退 loop 模式"
+        m = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert m["stages"]["judged"]["state"] == "PASS"
+        assert m["stages"]["judged"]["judge_mode"] == "short"
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_v19_patch_map_capped_at_one_round_then_stops(monkeypatch):
+    """patch 上限 1：patch map 回不出來時，**不**回退 loop 修正 agent，
+    停下印「交指揮者」、stage FAIL。"""
+    ticker, date = "ZTESTV19PATCH", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    raw = _seed_v19_run(run_dir)
+
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0))
+    monkeypatch.setattr(ddreport, "_judge_delta_route",
+                        lambda t, d, rd, nd: {"mode": "full", "reasons": ["test"], "delta_path": None})
+
+    loop_spawns = []
+    monkeypatch.setattr(ddreport.dd_headless, "spawn",
+                        lambda **kw: loop_spawns.append(kw) or {"ok": True, "over_budget": False})
+
+    def fake_short(prompt_path, model, out_json, cwd, budget, max_turns):
+        (run_dir / "judgment.json").write_text(
+            json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+        return {"ok": True, "over_budget": False, "num_turns": 2, "result_text": "DONE"}
+
+    oneshots = []
+
+    def fake_oneshot(prompt_path, model, out_json, cwd, budget):
+        oneshots.append(prompt_path)
+        return {"ok": True, "over_budget": False, "result_text": "我修不動這個欄位。"}
+
+    monkeypatch.setattr(ddreport, "_spawn_short", fake_short)
+    monkeypatch.setattr(ddreport, "_spawn_oneshot", fake_oneshot)
+    monkeypatch.setattr(ddreport, "_judge_check",
+                        lambda t, d: (False, "[FAIL] 假造（1 FAIL／0 WARN）"))
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {}}
+        rc = ddreport._do_judge(ticker, date, "fable", None, False, manifest)
+        assert rc == 1
+        assert len(oneshots) == 1, "patch map 只准一輪"
+        assert loop_spawns == [], "v19 不得回退 loop 修正 agent"
+        m = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        stage = m["stages"]["judged"]
+        assert stage["state"] == "FAIL"
+        assert "交指揮者" in stage["short_fix_fallback"]
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_stage0_facts_falls_back_to_mechanical_draft(monkeypatch):
+    """Stage 0 事實表：agent 沒寫出 facts.json → 退回機械初稿（誠實的不完整），
+    stage 仍 PASS 並在 manifest 記下 fallback 原因。"""
+    ticker, date = "ZTESTFACTS", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", run_dir / "evidence.json")
+
+    monkeypatch.setattr(ddreport.dd_headless, "spawn",
+                        lambda **kw: {"ok": True, "over_budget": False, "num_turns": 1})
+
+    try:
+        stage = {"agent_usage": []}
+        out = ddreport._do_facts(ticker, date, run_dir, None, stage)
+        assert out["ok"] is True
+        assert out["fallback"] is True
+        assert (run_dir / "facts.json").exists()
+        assert (run_dir / "facts_draft.json").exists()
+        facts = json.loads((run_dir / "facts.json").read_text(encoding="utf-8"))
+        # 機械初稿＝誠實的不完整：抽不到的題目自己標 needs_sonnet，不假裝完整
+        assert any(q.get("needs_sonnet") for q in facts["questions"].values())
+        assert facts["peer_comparison"]["rows"], "同業對照表要從 evidence 抽出來"
+        assert len(stage["agent_usage"]) == 1
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_stage0_facts_replay_uses_draft_without_spawning(monkeypatch):
+    """`--replay-from` 不打 API：只跑零 LLM 抽取，不派事實表 agent。"""
+    ticker, date = "ZTESTFACTSREPLAY", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", run_dir / "evidence.json")
+
+    def boom(**kw):
+        raise AssertionError("replay 模式不得派事實表 agent")
+
+    monkeypatch.setattr(ddreport.dd_headless, "spawn", boom)
+
+    try:
+        stage = {"agent_usage": []}
+        out = ddreport._do_facts(ticker, date, run_dir, Path("/tmp/whatever"), stage)
+        assert out["ok"] is True and out["fallback"] is True
+        assert stage["agent_usage"] == []
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_judge_bundle_v19_is_slimmer_and_uses_v19_cheatsheet(tmp_path):
+    """v19 判斷包：schema 速查切到 v19_contract、帶事實表、不再帶證據包緊湊版
+    與 digest 全文；同一份證據下比 v18 包小。"""
+    shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", tmp_path / "evidence.json")
+    shutil.copyfile(FIXTURES_DIR / "facts_FIX_20260911.json", tmp_path / "facts.json")
+    # 同尺比較必須含 digest——v19 省下的正是「證據包緊湊版＋digest 全文」那兩段，
+    # 少放 digest 會讓 v18 包憑空瘦一圈，比出來的差距不算數。
+    digest_src = REPO_ROOT / "notes/site-internal/dd/_src/FIX_20260906/FIX_20260906.transcript_digest.json"
+    if digest_src.exists():
+        shutil.copyfile(digest_src, tmp_path / "digest.json")
+    out19, out18 = tmp_path / "judge_v19.md", tmp_path / "judge_v18.md"
+    base = dict(run_dir=str(tmp_path), evidence=None, digest=None, transcript=None,
+                judgment_rules=None, facts=None, out=None)
+    assert dd_bundle.cmd_judge(argparse.Namespace(**dict(base, contract="v19", out=str(out19)))) == 0
+    assert dd_bundle.cmd_judge(argparse.Namespace(**dict(base, contract="v18", out=str(out18)))) == 0
+    t19 = out19.read_text(encoding="utf-8")
+    t18 = out18.read_text(encoding="utf-8")
+    assert "v19_contract 區塊" in t19
+    assert "facts.json 事實表全文" in t19
+    assert "## ③ Evidence 緊湊版" not in t19 and "## ⑤ Digest" not in t19
+    assert "counter_evidence.contradictions[]" in t19  # evidence_refs 用法改 v19 路徑
+    assert "出手點①" in t19  # 規則精簡版
+    assert "## ③ Evidence 緊湊版" in t18  # 舊包原樣可用
+    assert len(t19.encode("utf-8")) < len(t18.encode("utf-8"))
 
 
 if __name__ == "__main__":

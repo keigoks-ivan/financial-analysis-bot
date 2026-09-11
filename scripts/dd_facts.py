@@ -94,6 +94,12 @@ def _fact(fid, label, value, period, unit, basis, kind, source, **extra):
     for k, v in extra.items():
         if v is not None:
             fact[k] = v
+    # 2026-09-11（WP-H2-1）：抽出來就是空值的條目一律自己標 needs_sonnet——
+    # `check()` 本來就擋「value 為 null 卻未標 needs_sonnet」，但抽取器沒有自己
+    # 遵守，實檔（CIEN 的 `f_kpi3_free_cash_flow`，證據包該列 value 缺）因此讓
+    # 機械初稿自己過不了自己的檢查。標記＝誠實的不完整，不是編造。
+    if fact.get("value") is None and "needs_sonnet" not in fact:
+        fact["needs_sonnet"] = True
     return fact
 
 
@@ -275,6 +281,61 @@ def _peer_facts(numbers, buckets):
             ))
 
 
+# ---------------------------------------------------------------------------
+# 2026-09-11（WP-H2-1）：同業對照表搬到事實層。判斷者不再抄同業數字，只寫
+# strategy_note（對手為何無力／有力發動價格戰）與四檢查點燈號；本區塊的
+# metrics／rows 由 dd_project.py 投影成舊形狀的 moat.spread_table（度量為列）
+# 與 moat.competitors（對手為列）。度量 key 直接沿用 evidence 的欄名，不改名。
+# ---------------------------------------------------------------------------
+
+PEER_METRICS = (
+    ("gross_margin_pct", "毛利率", "%"),
+    ("operating_margin_pct", "營業利益率", "%"),
+    ("fcf_margin_pct", "FCF 利潤率", "%"),
+    ("rd_intensity_pct", "研發密度", "%"),
+)
+
+
+def build_peer_comparison(numbers, subject=None) -> dict:
+    """evidence.numbers.peer_financials → facts.peer_comparison。
+
+    只搬數字、期間、口徑、來源；一個判讀字都不加。某度量整欄皆 null（例：
+    多數非軟體業者不單獨揭露研發）就整個 metric 不列，避免表上出現一整欄空白
+    假裝有對照。沒有 peer_financials 時回空 dict（呼叫端不寫這個鍵）。"""
+    peers = numbers.get("peer_financials") or {}
+    rows = []
+    for name, node in peers.items():
+        if not isinstance(node, dict):
+            continue
+        values = {k: node.get(k) for k, _label, _unit in PEER_METRICS}
+        row = {
+            "name": name,
+            "period": node.get("fiscal_period_as_of"),
+            "basis": node.get("source") or "evidence.numbers.peer_financials",
+            "values": values,
+            "source": _src("evidence_numbers", "numbers.peer_financials.{0}".format(name),
+                           as_of=node.get("fiscal_period_as_of")),
+        }
+        if subject and name == subject:
+            row["is_subject"] = True
+        if node.get("note"):
+            row["note"] = node.get("note")
+        rows.append(row)
+    if not rows:
+        return {}
+    metrics = []
+    for key, label, unit in PEER_METRICS:
+        if all(r["values"].get(key) is None for r in rows):
+            continue
+        metrics.append({"key": key, "label": label, "unit": unit})
+    if not metrics:
+        return {}
+    out = {"metrics": metrics, "rows": rows}
+    if subject:
+        out["subject"] = subject
+    return out
+
+
 def _recency_fact(numbers, buckets):
     rec = numbers.get("earnings_recency") or {}
     if rec.get("last_earnings_date"):
@@ -360,6 +421,28 @@ def extract(evidence, digest=None, evidence_ref=None, digest_ref=None, date=None
         "findings_digest": build_findings_digest(evidence),
         "gaps": [],
     }
+    # 2026-09-11（WP-H2-1）：同業對照表——判斷者不再抄數字。
+    peer_comparison = build_peer_comparison(numbers, subject=evidence.get("ticker"))
+    if peer_comparison:
+        facts["peer_comparison"] = peer_comparison
+        missing = [k for k, label, _u in PEER_METRICS
+                   if k not in {m["key"] for m in peer_comparison["metrics"]}]
+        if missing:
+            facts["gaps"].append({
+                "topic": "同業對照缺度量：{0}".format("、".join(missing)),
+                "question": "q2_moat",
+                "why": "evidence.numbers.peer_financials 該欄整欄為 null（常見於未單獨揭露研發的業者），"
+                       "事實表 agent 若能從財報補就補，補不到即為缺口，判斷者不得自行估。",
+                "tried": ["evidence.numbers.peer_financials"],
+            })
+    else:
+        facts["gaps"].append({
+            "topic": "同業對照表",
+            "question": "q2_moat",
+            "why": "evidence.numbers.peer_financials 無資料，護城河同業數字整張缺——"
+                   "事實表 agent 須補，補不到時判斷者要在 moat.peer_na_reason 說明為何沒有可比同業。",
+            "tried": ["evidence.numbers.peer_financials"],
+        })
     if digest:
         flags = digest.get("qa_flags") or []
         if flags:

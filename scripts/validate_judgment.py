@@ -97,12 +97,22 @@ Two layers:
   14. v19 契約（FAIL／WARN，WP-H1 2026-09-11）: 判斷檔帶 `meta.contract`＝
       `"v19"` 時，先用 schema 的 `v19_contract` 區塊驗 judge-owned 形狀，再由
       `dd_project.project()` 投影成舊形狀視圖，**上列 1–13 全部改讀視圖**
-      （檢查語義不變，不是新開一套）。另加三條 v19 專屬檢查：`fact_refs[]` 的
-      id 必須在 `facts.json` 找得到、由程式投影的 13 個 `decision_inputs` 機械欄
-      不得被判斷者填成非 null、J2 的終端年檢查升 FAIL（終端年＝判斷日起第 5 個
-      完整會計年度，`base_eps_path`＝共識三年錨，見
-      `dd_schema/decision_inputs.md`）。**舊形狀（無 `meta.contract`）完全不走
-      這條路**，驗法與輸出逐字不變。
+      （檢查語義不變，不是新開一套）。v19 專屬檢查（WP-H2-1 2026-09-11 補上
+      Codex 點名的兩個漏擋）：
+        (a) **事實檔擋門**——`facts_ref` 解析不到／不是合法 JSON／事實檔自身過
+            不了 `dd_facts.check` 一律 FAIL（H1 時期只 WARN，fixture 實測「事實
+            檔不存在仍 0 FAIL」）；
+        (b) `fact_refs[]` 的 id 必須在 `facts.json` 找得到（斷鏈＝FAIL）；
+        (c) 由程式投影的 13 個 `decision_inputs` 機械欄不得被判斷者填成非 null；
+        (d) **必要項目是否有回答**（`v19_required_items_checks`，取代 schema 的
+            `minItems`）——§5.R 四檢查點各要一句判讀或一句不適用理由、同業對照
+            要嘛每家一句 `strategy_note` 要嘛寫 `moat.peer_na_reason`，空物件與
+            空陣列不算回答；
+        (e) **J2 必須真的執行**——`scenario_meta` sidecar 找不到、或 Max DD 恆等
+            式因缺輸入而沒算，一律 FAIL（舊形狀維持 WARN）；
+        (f) J2 的終端年檢查升 FAIL（終端年＝判斷日起第 5 個完整會計年度，
+            `base_eps_path`＝共識三年錨，見 `dd_schema/decision_inputs.md`）。
+      **舊形狀（無 `meta.contract`）完全不走這條路**，驗法與輸出逐字不變。
 
 Usage:
   python3 scripts/validate_judgment.py FILE.json [--report] [--evidence EVIDENCE.json]
@@ -497,16 +507,27 @@ def _load_scenario_meta_for_j2(data: dict, judgment_path: Path):
 
 
 def j2_math_checks(data: dict, judgment_path: Path,
-                   strict_terminal_year: bool = False) -> tuple[list, list]:
+                   strict_terminal_year: bool = False,
+                   require_executed: bool = False) -> tuple[list, list]:
     """WP2 J2 — 判斷層恆等式：Max DD 下限 vs Bear 終點跌幅、
     decision_inputs.irr_base_pct／ev5y_pct 對 scenario_meta、情境樹年期、
     Bull EPS 對 Base 的退化、scenario_meta.valuation_dependent 與
-    decision_inputs 同名欄一致性。恆常執行（不需 --evidence）。"""
+    decision_inputs 同名欄一致性。恆常執行（不需 --evidence）。
+
+    `require_executed`（WP-H2-1，2026-09-11；Codex 複審點名的第二個漏擋）：
+    v19 正式流程下，「scenario_meta 找不到」與「Max DD 恆等式沒有輸入所以沒算」
+    都從 WARN 升為 FAIL。原本兩者皆只 WARN——資料缺失時 J2 靜默略過，看起來
+    像通過。舊形狀維持 WARN（既有慣例不回頭改）。"""
     fails, warns = [], []
     sref, warn = _load_scenario_meta_for_j2(data, judgment_path)
     if sref is None:
         if warn:
-            warns.append(f"J2｜{warn}")
+            (fails if require_executed else warns).append(f"J2｜{warn}")
+        if require_executed:
+            fails.append(
+                "J2｜v19 契約要求情境結果完整且 J2 確實執行——scenario_meta 不可解析時"
+                "不得放行組頁（先跑 `ddreport.py judge check`，dd_scenario.py 會產出 sidecar）"
+            )
         return fails, warns
 
     di = data.get("decision_inputs") or {}
@@ -524,7 +545,9 @@ def j2_math_checks(data: dict, judgment_path: Path,
                 f"{bear_p}）——路徑最大回撤不可能小於任一情境終點跌幅"
             )
     else:
-        warns.append("J2｜缺 price_at_dd／bear_5y_price／premortem.max_dd.lo 任一，Max DD 恆等式略過")
+        msg = "J2｜缺 price_at_dd／bear_5y_price／premortem.max_dd.lo 任一，Max DD 恆等式略過"
+        # v19：「沒算」與「算過通過」不可同樣算過關（WP-H2-1）。
+        (fails if require_executed else warns).append(msg)
 
     # decision_inputs.irr_base_pct／ev5y_pct 對 scenario_meta
     for key, tol in (("irr_base_pct", J2_IRR_TOL), ("ev5y_pct", J2_EV_TOL)):
@@ -1265,14 +1288,85 @@ def j5_plain_role_checks(data: dict) -> tuple:
             (fails if strong else warns).append(msg)
     return fails, warns
 
-def v19_contract_checks(raw: dict, schema: dict, facts: dict | None,
-                        facts_path_found: bool) -> tuple[list, list]:
-    """v19 專屬檢查（WP-H1 2026-09-11）。舊形狀完全不跑本函式。
+# WP-H2-1（2026-09-11）：§5.R 四檢查點的正式名稱（references/roic-durability.md
+# §1–§4）。改以「四項各有沒有回答」取代 schema 的 `minItems: 4`——四個空物件
+# 過得了長度檢查，過不了這裡。
+ROIC_CHECKPOINT_NAMES = ("需求基礎值", "決策層級", "價值鏈分配", "社會容忍度")
 
-    三件事：(1) 用 schema 的 `v19_contract` 區塊驗 judge-owned 形狀；(2)
-    `answers[].fact_refs[]` 的每個 id 必須在 facts.json 找得到（facts 解析不到
-    只 WARN，不硬擋——判斷檔本身仍可獨立驗）；(3) 由程式投影的
-    `decision_inputs` 機械欄不得被判斷者填成非 null（同一件事不准兩邊都填）。
+
+def _answered(text) -> bool:
+    """回答過＝非空字串。空物件、空字串、None 一律不算回答。"""
+    return isinstance(text, str) and text.strip() != ""
+
+
+def v19_required_items_checks(raw: dict, facts: dict | None) -> list:
+    """WP-H2-1（Codex 裁定 3 後半）：把「必要項目是否有回答」從長度檢查改成內容
+    檢查。**查無或不適用要有理由，空物件不算回答。**
+
+    兩處：
+    1. `moat.roic_durability.checkpoints` 的四檢查點——每項要嘛有 `text`
+       （判讀句），要嘛有 `not_applicable_reason`；四項缺一即 FAIL。
+    2. 同業對照——`facts.peer_comparison` 有列且 `moat.competitor_notes` 每家
+       一句 `strategy_note`；沒有可比同業時 `moat.peer_na_reason` 必須寫理由。
+    """
+    fails = []
+    moat = (((raw.get("answers") or {}).get("q2_moat") or {})
+            .get("verdict_values") or {}).get("moat") or {}
+
+    cps = (moat.get("roic_durability") or {}).get("checkpoints") or []
+    for name in ROIC_CHECKPOINT_NAMES:
+        hit = None
+        for c in cps:
+            if isinstance(c, dict) and name in str(c.get("item") or ""):
+                hit = c
+                break
+        if hit is None:
+            fails.append(
+                f"v19｜§5.R 四檢查點缺「{name}」——四項各要一個回答（判讀句或不適用理由），"
+                f"不是湊滿四列"
+            )
+        elif not (_answered(hit.get("text")) or _answered(hit.get("not_applicable_reason"))):
+            fails.append(
+                f"v19｜§5.R 檢查點「{name}」有列但沒有回答（text 與 not_applicable_reason 皆空）"
+            )
+
+    peer_rows = ((facts or {}).get("peer_comparison") or {}).get("rows") or []
+    subject = ((facts or {}).get("peer_comparison") or {}).get("subject")
+    peer_names = [r.get("name") for r in peer_rows
+                  if isinstance(r, dict) and r.get("name")
+                  and not r.get("is_subject") and r.get("name") != subject]
+    notes = [n for n in (moat.get("competitor_notes") or []) if isinstance(n, dict)]
+    named = [n for n in notes if _answered(n.get("name")) and _answered(n.get("strategy_note"))]
+    if peer_names and not named:
+        fails.append(
+            "v19｜facts.peer_comparison 有 {0} 家同業數字，但 moat.competitor_notes 沒有任何"
+            "一家寫出判讀（每家一句：有沒有本錢打價格戰、策略定位）".format(len(peer_names))
+        )
+    if not peer_names and not named and not _answered(moat.get("peer_na_reason")):
+        fails.append(
+            "v19｜沒有同業對照（facts.peer_comparison 無可比同業且 moat.competitor_notes 為空），"
+            "但 moat.peer_na_reason 沒寫理由——查無或不適用要說清楚為什麼，不得留空"
+        )
+    for n in notes:
+        if not (_answered(n.get("name")) and _answered(n.get("strategy_note"))):
+            fails.append(
+                "v19｜moat.competitor_notes 有條目缺 name 或 strategy_note：{0}".format(n)
+            )
+    return fails
+
+
+def v19_contract_checks(raw: dict, schema: dict, facts: dict | None,
+                        facts_path_found: bool,
+                        facts_error: str | None = None) -> tuple[list, list]:
+    """v19 專屬檢查（WP-H1 2026-09-11；WP-H2-1 2026-09-11 補擋門）。舊形狀完全
+    不跑本函式。
+
+    (1) 用 schema 的 `v19_contract` 區塊驗 judge-owned 形狀；(2) **事實檔必須
+    存在、可解析且自身 `dd_facts.py check` 通過**——H1 時期 facts 缺席只 WARN，
+    Codex 用 fixture 重現「事實檔不存在仍 0 FAIL」，本輪升為 FAIL；(3)
+    `answers[].fact_refs[]` 的每個 id 必須在 facts.json 找得到；(4) 由程式投影
+    的 `decision_inputs` 機械欄不得被判斷者填成非 null；(5) 必要項目是否有回答
+    （見 `v19_required_items_checks`）。
     """
     fails, warns = [], []
     v19_schema = schema.get("v19_contract")
@@ -1280,6 +1374,23 @@ def v19_contract_checks(raw: dict, schema: dict, facts: dict | None,
         warns.append("v19｜judgment.schema.json 缺 v19_contract 區塊，judge-owned 形狀未驗")
     else:
         fails.extend(f"v19｜{e}" for e in schema_validate(raw, v19_schema, "$"))
+
+    # (2) 事實檔擋門：缺、不可解析、或 facts 自身檢查不過，一律 FAIL。
+    if not facts_path_found or facts is None:
+        fails.append(
+            "v19｜事實檔（facts_ref＝{0!r}）{1}——v19 的判斷只准引 facts.json 的事實 id，"
+            "沒有事實檔就沒有可追溯性，不得組頁".format(
+                raw.get("facts_ref"),
+                "解析失敗：{0}".format(facts_error) if facts_error else "找不到或不可解析")
+        )
+    else:
+        try:
+            import dd_facts  # 延遲載入避免循環 import（dd_facts 頂層 import 本檔）
+        except Exception as e:  # pragma: no cover - defensive
+            warns.append(f"v19｜dd_facts 模組載入失敗（{e}），事實檔自檢略過")
+        else:
+            f_fails, _f_warns = dd_facts.check(facts)
+            fails.extend("v19｜事實檔未通過 dd_facts check：{0}".format(m) for m in f_fails)
 
     fact_ids = set()
     for q in ((facts or {}).get("questions") or {}).values():
@@ -1296,11 +1407,8 @@ def v19_contract_checks(raw: dict, schema: dict, facts: dict | None,
                 fails.append(
                     f"v19｜answers.{qkey}.fact_refs 引用了 facts.json 沒有的 id：{ref}"
                 )
-    if not facts_path_found:
-        warns.append(
-            "v19｜facts_ref 解析不到（或未提供 --facts），fact_refs 可追溯性與三個事實欄"
-            "（price_at_dd／week26_return_pct／consensus_rev_3m_pct）的投影未驗"
-        )
+
+    fails.extend(v19_required_items_checks(raw, facts))
 
     raw_di = raw.get("decision_inputs") or {}
     dirty = [k for k in dd_project.PROJECTED_DECISION_INPUT_KEYS
@@ -1327,9 +1435,14 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
             else dd_project.resolve_facts_path(raw, path)
         )
         facts_found = bool(resolved_facts_path and Path(resolved_facts_path).exists())
-        facts = dd_project.load_facts(raw, path, resolved_facts_path) if facts_found else None
+        facts, facts_error = None, None
+        if facts_found:
+            try:
+                facts = json.loads(Path(resolved_facts_path).read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError, ValueError) as e:
+                facts_error = str(e)
         data = dd_project.project(raw, facts)
-        v19_fails, v19_warns = v19_contract_checks(raw, schema, facts, facts_found)
+        v19_fails, v19_warns = v19_contract_checks(raw, schema, facts, facts_found, facts_error)
     else:
         data = raw
         v19_fails, v19_warns = [], []
@@ -1341,7 +1454,8 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
     expand_fails = expandable_block_checks(data)  # WP-E 修 #2：B1-B4 未展開標記完整性
     premortem_fails = premortem_counterevidence_checks(data)  # WP-E 修 #3：新格式反證三視角
     drift_fails, drift_warns = drift_checks(data, path, evidence_path)
-    j2_fails, j2_warns = j2_math_checks(data, path, strict_terminal_year=v19)
+    j2_fails, j2_warns = j2_math_checks(data, path, strict_terminal_year=v19,
+                                        require_executed=v19)
     j1_fails, j1_warns = j1_traceability_checks(data, evidence_path, warn_only=j1_warn)
     j4_warns = j4_plain_checks(data)
     j5_fails, j5_warns = j5_plain_role_checks(data)

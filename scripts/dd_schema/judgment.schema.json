@@ -730,10 +730,10 @@
                     "type": "object",
                     "required": [
                       "mechanism", "grade", "trend", "trend_evidence",
-                      "execution", "pricing", "spread_table", "competitors",
+                      "execution", "pricing", "competitor_notes",
                       "threats", "roic_durability"
                     ],
-                    "description": "`combined` 缺時由程式取 execution／pricing 平均，`score` 缺時取 combined（判斷者要加權就自己填）；**`grade` 一律由判斷者給，程式不從分數推等級**（實檔證據：8.5 分同時有 A 與 B 兩種等級，映射不成立）。",
+                    "description": "`combined` 缺時由程式取 execution／pricing 平均，`score` 缺時取 combined（判斷者要加權就自己填）；**`grade` 一律由判斷者給，程式不從分數推等級**（實檔證據：8.5 分同時有 A 與 B 兩種等級，映射不成立）。2026-09-11（WP-H2-1）：`spread_table`／`competitors` 兩張表的**同業數字、期間、口徑、來源搬到 facts.peer_comparison**，由 dd_project.py 投影還原；判斷者只寫 `competitor_notes`（每家一句：有沒有本錢打價格戰、策略定位）與選填的 `spread_notes`（度量 key → 一句判讀）。沒有可比同業時 `competitor_notes` 可為空陣列，但必須填 `peer_na_reason`——空物件湊數不算回答（檢查在 validate_judgment.v19_required_items_checks）。",
                     "properties": {
                       "mechanism": {"type": ["string", "null"], "description": "優勢機制一句：客戶為什麼離不開、對手為什麼補不上。"},
                       "execution": {"type": ["number", "null"]},
@@ -743,15 +743,31 @@
                       "grade": {"type": ["string", "null"], "enum": ["S", "A", "B", "C", "X", null]},
                       "trend": {"type": ["string", "null"], "enum": ["↑", "→", "↓", null]},
                       "trend_evidence": {"type": ["string", "null"]},
-                      "spread_table": {"type": "array", "minItems": 1, "items": {"type": "object"}},
-                      "competitors": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+                      "competitor_notes": {
+                        "type": "array",
+                        "description": "每家對手一條：{name, strategy_note}。數字不要抄——投影時由 facts.peer_comparison 併入。",
+                        "items": {
+                          "type": "object",
+                          "required": ["name", "strategy_note"],
+                          "properties": {
+                            "name": {"type": "string", "minLength": 1},
+                            "strategy_note": {"type": "string", "minLength": 1}
+                          }
+                        }
+                      },
+                      "spread_notes": {"type": ["object", "null"], "description": "選填。{度量 key: 一句判讀}，會成為同業表該列的 note。"},
+                      "peer_na_reason": {"type": ["string", "null"], "description": "沒有可比同業或事實表取不到同業數字時，一句理由（查無／不適用都要說清楚為什麼）。"},
                       "threats": {"type": "array", "items": {"type": "object"}},
                       "roic_durability": {
                         "type": "object",
                         "required": ["checkpoints", "roiic", "reinvest_rate", "endo_ceiling"],
                         "properties": {
                           "quadrant": {"type": ["string", "null"]},
-                          "checkpoints": {"type": "array", "minItems": 4, "items": {"type": "object"}},
+                          "checkpoints": {
+                            "type": "array",
+                            "description": "四檢查點（需求基礎值／決策層級／價值鏈分配／社會容忍度）。**不再以 minItems 計長度**——改驗四項是否各有回答（item＋level＋text，或 not_applicable_reason），空物件不算，見 validate_judgment.v19_required_items_checks。",
+                            "items": {"type": "object"}
+                          },
                           "roiic": {"type": ["number", "string", "null"]},
                           "reinvest_rate": {"type": ["number", "string", "null"]},
                           "endo_ceiling": {"type": ["number", "null"]},
