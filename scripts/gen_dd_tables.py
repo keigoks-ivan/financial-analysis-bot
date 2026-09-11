@@ -1337,7 +1337,12 @@ def render_v19_financials_html(j: dict) -> str | None:
     不補算。"""
     rows_data = (j.get("quality") or {}).get("three_year") or []
     if not rows_data:
-        return None
+        # 2026-09-11 FIX v19 首跑：v19 判斷檔不擁有 quality.three_year、facts 抽取器
+        # 也尚未建多年度序列（H2-6 待補）。表不能憑空生，但也不能讓讀者看不到缺口、
+        # 讓 verify_dd_math 誤報「必交表缺席」——印一列資料缺口，id 仍是 e9b。
+        return ('<table id="e9b">\n<tr><th>指標</th><th class="num">說明</th></tr>\n'
+                '<tr><td>三到四年財務表</td><td class="num">資料缺口：事實表未含多年度序列'
+                '（v19 抽取器待補，見 H2-6）</td></tr>\n</table>\n')
     cols: list = []
     for r in rows_data:
         if not isinstance(r, dict):
