@@ -216,6 +216,7 @@ BLOCKS = [
             ("/backtest/housing_gdp/australia.html", "澳洲：貴、槓桿重、沒崩過", "研究", False),
             ("/backtest/housing_gdp/newzealand.html", "紐西蘭：貴、還在跌、政策做滿", "研究", False),
             ("/backtest/housing_gdp/korea.html", "南韓：全國便宜、首爾不便宜、槓桿在退", "研究", False),
+            ("/backtest/housing_gdp/germany.html", "德國：三十年變便宜、柏林翻倍、漲時沒借錢", "研究", False),
         ]),
         ("個案・亞太", None, [
             ("/backtest/housing_gdp/china.html", "中國", "研究", False),
@@ -229,7 +230,6 @@ BLOCKS = [
             ("/backtest/housing_gdp/czechia.html", "捷克", "研究", False),
             ("/backtest/housing_gdp/denmark.html", "丹麥", "研究", False),
             ("/backtest/housing_gdp/france.html", "法國", "研究", False),
-            ("/backtest/housing_gdp/germany.html", "德國", "研究", False),
             ("/backtest/housing_gdp/greece.html", "希臘", "研究", False),
             ("/backtest/housing_gdp/ireland.html", "愛爾蘭", "研究", False),
             ("/backtest/housing_gdp/italy.html", "義大利", "研究", False),
