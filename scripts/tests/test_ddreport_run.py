@@ -598,7 +598,7 @@ def test_do_gate_patch_branch_spawns_inline_prompt_with_judgment(monkeypatch):
             )
             return _FakeCompleted(0)
         if prog.endswith("dd_gate.py") and "parse" in cmd:
-            return _FakeCompleted(0, stdout=json.dumps({"red": 1, "yellow": 0, "findings": []}))
+            return _FakeCompleted(0, stdout=json.dumps({"red": 1 if len(spawn_calls) < 3 else 0, "yellow": 0, "findings": []}))
         raise AssertionError("未預期的 subprocess.run 呼叫：{0}".format(cmd))
 
     monkeypatch.setattr(ddreport.subprocess, "run", fake_subprocess_run)
@@ -608,18 +608,20 @@ def test_do_gate_patch_branch_spawns_inline_prompt_with_judgment(monkeypatch):
 
     def fake_spawn(**kw):
         spawn_calls.append(kw)
+        if Path(kw["prompt_path"]).name == "g_gate_inline.md":
+            audit_path.write_text("新一輪審核", encoding="utf-8")
         return {"ok": True, "over_budget": False, "num_turns": 1, "cache_read": 0}
 
     monkeypatch.setattr(ddreport.dd_headless, "spawn", fake_spawn)
     monkeypatch.setattr(ddreport, "_judge_check", lambda t, d: (True, "[PASS] 假造"))
-    monkeypatch.setattr(ddreport, "_read_decision_verdict", lambda rd: "進場")
+    monkeypatch.setattr(ddreport, "_validate_current_judgment", lambda rd: (True, ""))
 
     try:
         manifest = {"ticker": ticker, "date": date, "stages": {}}
         rc = ddreport._do_gate(ticker, date, "fable", None, False, manifest)
         assert rc == 0
-        # 第一個 spawn 是 gate 稽核本身、第二個是 patch agent
-        assert len(spawn_calls) == 2
+        # 2026-09-11：修補後即使裁決不變，也必須第三次派審核。
+        assert len(spawn_calls) == 3
         patch_prompt_path = Path(spawn_calls[1]["prompt_path"])
         assert patch_prompt_path.name == "b1_patch_inline.md"
         text = patch_prompt_path.read_text(encoding="utf-8")
@@ -717,8 +719,12 @@ def test_resume_gate_stage_parses_existing_audit_without_respawn(monkeypatch):
         lambda cmd, *a, **k: _FakeCompleted(0, stdout=json.dumps({"red": 0, "yellow": 0, "findings": []})),
     )
 
+    monkeypatch.setattr(ddreport, "_validate_current_judgment", lambda rd: (True, ""))
     try:
         manifest = {"ticker": ticker, "date": date, "stages": {"gated": {"state": "RUNNING", "agent_usage": []}}}
+        stage = manifest["stages"]["gated"]
+        stage["input_signature"] = ddreport._gate_input_signature(run_dir)
+        stage["audit_sha256"] = ddreport.hashlib.sha256((run_dir / "gate_audit.md").read_bytes()).hexdigest()
         rc = ddreport._resume_gate_stage(ticker, date, "fable", None, False, manifest)
         assert rc == 0
         assert spawn_calls == []  # red=0，不需要 patch agent，也沒有重跑 gate spawn
@@ -2125,15 +2131,8 @@ def test_stage0_facts_replay_uses_draft_without_spawning(monkeypatch):
         shutil.rmtree(run_dir, ignore_errors=True)
 
 
-def test_judge_bundle_v19_is_slimmer_and_uses_v19_cheatsheet(tmp_path):
-    """v19 判斷包：schema 速查切到 v19_contract、帶事實表、不再帶證據包緊湊版
-    與 digest 全文 JSON；同一份證據下比 v18 包小。
-
-    2026-09-11（WP-H2-3）：兩處隨裁定改動——①digest 改以**壓縮全表**回到包裡
-    （Codex 裁定 1：機械初稿不會把只出現在摘要裡的反證抬進 facts），所以 `## ⑤
-    Digest` 的整份 JSON 仍不在，但 `## ③b` 壓縮全表在；②規則檔改由
-    `dd_rules.py build-v19` 從 `judgment-rules.md` 抽出（Codex 裁定 2），產物不
-    再有手寫版的「出手點①」小標，改以版本戳與「程式產生」標頭辨識。"""
+def test_judge_bundle_v19_keeps_original_evidence_and_uses_v19_cheatsheet(tmp_path):
+    """2026-09-11：以原始資料完整保留驗收，不再要求 v19 比 v18 短。"""
     shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", tmp_path / "evidence.json")
     shutil.copyfile(FIXTURES_DIR / "facts_FIX_20260911.json", tmp_path / "facts.json")
     # 同尺比較必須含 digest——v19 省下的正是「證據包緊湊版＋digest 全文」那兩段，
@@ -2155,7 +2154,11 @@ def test_judge_bundle_v19_is_slimmer_and_uses_v19_cheatsheet(tmp_path):
     assert "counter_evidence.contradictions[]" in t19  # evidence_refs 用法改 v19 路徑
     assert "由 scripts/dd_rules.py build-v19 產生，勿手改" in t19  # 裁定 2：規則是產物
     assert "## ③ Evidence 緊湊版" in t18  # 舊包原樣可用
-    assert len(t19.encode("utf-8")) < len(t18.encode("utf-8"))
+    assert "## ③c 原始證據" in t19
+    block = t19.split("## ③c 原始證據", 1)[1].split("```json\n", 1)[1].split("```", 1)[0]
+    assert json.loads(block) == json.loads((tmp_path / "evidence.json").read_text())
+    assert "事實表沒有的數字就是沒有" not in t19
+    assert "判斷層唯一的數字來源" not in t19
 
 
 def test_judge_bundle_digest_items_carry_stable_citation_and_locator(tmp_path):

@@ -92,6 +92,9 @@ def _page(overrides=None, drop=()):
             continue
         if sid == "s2":
             parts.append(_section(sid, extra=H_TABLE))
+        elif sid == "s7":
+            parts.append(_section(sid, extra='<table id="e9b"><tr><th>指標</th><th>2025</th></tr>'
+                                  '<tr><td>營收</td><td>100</td></tr></table>'))
         elif sid == "s10":
             parts.append(_section(sid, extra=STREE))
         elif sid == "s12":
@@ -252,3 +255,22 @@ def test_fact_id_in_facts_json_passes(tmp_path):
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
+
+
+@pytest.mark.parametrize("word", ["row8", "QC-22", "估值燈", "val 🟠"])
+def test_appendix_internal_terms_are_rejected(tmp_path, word):
+    """2026-09-11：附錄即使折疊也須驗收，腳本與樣式內容不誤判。"""
+    html = _page() + '<section id="appC"><details><summary>變動說明</summary><p>' + word + '</p></details></section>'
+    ok, findings = _run(html, tmp_path)
+    assert not ok
+    assert any(sid == "_leaks" and word in reason for sid, reason in findings)
+    clean = _page() + '<script>const internal = "row8 QC-22";</script>'
+    assert _run(clean, tmp_path)[0]
+
+
+@pytest.mark.parametrize("content", ["—", "資料缺口：未取得財務序列"])
+def test_financial_history_label_or_gap_does_not_count_as_data(tmp_path, content):
+    gap_table = '<table id="e9b"><tr><th>指標</th><th>值</th></tr><tr><td>財務歷史</td><td>' + content + '</td></tr></table>'
+    ok, findings = _run(_page({"s7": _section("s7", extra=gap_table)}), tmp_path)
+    assert not ok
+    assert any(sid == "s7" and "空表" in reason for sid, reason in findings)

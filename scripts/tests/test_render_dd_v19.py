@@ -153,17 +153,18 @@ def test_s2_h1_h3_table_not_folded(assembled_html):
     assert "<summary>市場空間" not in window
 
 
-def test_decision_has_two_separate_folded_blocks(assembled_html):
+def test_decision_keeps_actions_and_preserves_audit_internally(assembled_html, built):
     i = assembled_html.find('id="decision"')
     j = assembled_html.find('id="s14"')
     window = assembled_html[i:j]
-    assert 'class="audit"' in window  # audit.html 自帶外層，不二次包裝
+    # 2026-09-11：程式稽核留檔，讀者仍能看到全部觸發器、致命指標與催化劑。
+    assert 'class="audit"' not in assembled_html
+    assert 'class="audit"' in (built[0] / "audit.html").read_text()
     assert "監測與觸發器、致命指標、催化劑" in window
     assert 'id="triggers"' in window
     assert 'id="kill"' in window
     assert 'id="catalysts"' in window
-    # audit 的 <details class="audit"> 不應該又被包進第二層 <details><summary>
-    assert window.count("<details") >= 2
+    assert window.count("<details") >= 1
 
 
 def test_appA_appB_appC_all_present_in_order(assembled_html):

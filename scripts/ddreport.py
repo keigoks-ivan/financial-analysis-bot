@@ -31,6 +31,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import validate_judgment  # 2026-09-11：最終驗收直接讀實際檔案，不正規化或重寫。
 import dd_bundle  # noqa: E402  （WP-C：delta 判斷 prompt 沿用 `_transcript_section` 抓最新一季逐字稿，只 import 不改其內部）
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
 import dd_meta_reader  # noqa: E402  （WP7a peers 來源③：讀 id-meta related_tickers，不改其內部）
@@ -3148,6 +3149,42 @@ def _resume_judge_stage(ticker, date, judgment_model, replay_dir, accept_over_bu
 # WP1d gate：dd_gate.py／dd_brief.py 由 WP3／WP4a 並行交付。
 # ---------------------------------------------------------------------------
 
+def _gate_input_signature(run_dir):
+    """2026-09-11：審核綁定原始輸入內容，裁決相同也不能沿用不同版本的審核。"""
+    run_dir = Path(run_dir)
+    names = ("evidence.json", "digest.json", "facts.json", "judgment.json",
+             "scenario.json", "scenario_meta.json")
+    paths = {name: run_dir / name for name in names}
+    raw = _load_json_or(run_dir / "judgment.json", {})
+    if dd_project.is_v19(raw):
+        facts_path = dd_project.resolve_facts_path(raw, run_dir / "judgment.json")
+        if facts_path:
+            paths["resolved_facts"] = Path(facts_path)
+    paths["gate_contract"] = PROMPTS_TMPL_DIR / "gate_contract.md"
+    return {name: hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
+            for name, path in paths.items()}
+
+
+def _gate_audit_is_current(run_dir, stage):
+    """2026-09-11：舊紀錄沒有版本戳，或審核檔／輸入曾改動，都須重新審核。"""
+    audit = Path(run_dir) / "gate_audit.md"
+    return (audit.is_file()
+            and stage.get("input_signature") == _gate_input_signature(run_dir)
+            and stage.get("audit_sha256") == hashlib.sha256(audit.read_bytes()).hexdigest())
+
+
+def _validate_current_judgment(run_dir):
+    """2026-09-11：沿用既有驗證器，只讀最終檔，避免驗收時又修改受審內容。"""
+    run_dir = Path(run_dir)
+    try:
+        fails, _warns = validate_judgment.validate_file(
+            run_dir / "judgment.json", run_dir / "evidence.json",
+            j1_warn=os.environ.get("DD_J1_WARN") == "1")
+        return not fails, "\n".join(fails)
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        return False, "判斷檔驗證無法完成：{0}".format(exc)
+
+
 def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, _depth=0):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
@@ -3204,6 +3241,12 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
         _append_replay_marker(gate_prompt_path, {"kind": "gate", "out": str(audit_path)})
 
     inline_gate_prompt_path = _write_inline_prompt(gate_prompt_path, gate_bundle_path)
+    # 2026-09-11：新派審核不能撿到舊檔；先留輸入版本，成功產檔後才記審核版本。
+    stage["input_signature"] = _gate_input_signature(run_dir)
+    stage.pop("audit_sha256", None)
+    if audit_path.exists():
+        audit_path.unlink()
+    _atomic_write_json(manifest_path, manifest)
 
     gate_model = GATE_MODEL_FOR.get(judgment_model, "opus")
     agents_dir = run_dir / "agents"
@@ -3216,7 +3259,7 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
     over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
     stage["over_budget"] = over_budget
 
-    if not audit_path.exists():
+    if not r_spawn.get("ok") or not audit_path.exists():
         stage["state"] = "FAIL"
         stage["ended"] = _now()
         stage["note"] = "spawn 未產出 gate_audit.md"
@@ -3226,6 +3269,8 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
         _print_resume_hint(ticker, date, "gated")
         return 1
 
+    stage["audit_sha256"] = hashlib.sha256(audit_path.read_bytes()).hexdigest()
+    _atomic_write_json(manifest_path, manifest)
     return _gate_finalize_from_audit(
         ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage,
         audit_path, _depth=_depth,
@@ -3234,10 +3279,7 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
 
 def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_over_budget,
                                manifest, stage, audit_path, _depth=0):
-    """`gate_audit.md` 已存在（剛 spawn 產出，或 WP7b #5 `--resume` 在
-    `gated_fail`／`gated_running` 時發現既有稽核檔）：parse 它、red>0 才派
-    修補 agent（inline judgment.json 全文，不重跑一次 gate spawn），
-    red=0 直接收斂為 PASS／OVER_BUDGET。"""
+    """2026-09-11：審核最多修補一次並重審；零紅燈仍須驗當下判斷與輸入版本。"""
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
     py = _pick_python()
@@ -3287,8 +3329,15 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
 
     over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
     red = parsed["red"]
+    # 2026-09-11：只修補一次；修完必須重審內容，不能靠裁決沒變就放行。
+    if red and _depth >= 1:
+        stage["state"] = "FAIL"
+        stage["ended"] = _now()
+        stage["note"] = "修補後重審仍有紅燈，停止自動修補"
+        manifest["state"] = "gated_fail"
+        _atomic_write_json(manifest_path, manifest)
+        return 1
     if red and red > 0:
-        prior_verdict = _read_decision_verdict(run_dir)
         judgment_path = run_dir / "judgment.json"
         scenario_path = run_dir / "scenario.json"
         # 2026-09-06：閘 🔴 修補模式（patchmap／loop）——replay 模式一律 loop
@@ -3382,20 +3431,22 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
 
         ok_check, report_check = _judge_check(ticker, date)
         stage["patch_check_tail"] = report_check[-3000:]
-        new_verdict = _read_decision_verdict(run_dir)
-
-        if new_verdict != prior_verdict and _depth < 1:
+        if ok_check and (not over_budget or accept_over_budget):
             manifest["stages"]["gated"] = stage
             _atomic_write_json(manifest_path, manifest)
-            print("[gate] verdict 翻面（{0} → {1}），重跑一次 gate".format(prior_verdict, new_verdict))
-            return _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, _depth=_depth + 1)
-
-        final_ok = ok_check and (over_budget is False or accept_over_budget)
-        stage["state"] = "PASS" if final_ok else ("OVER_BUDGET" if (ok_check and over_budget) else "FAIL")
+            return _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget,
+                            manifest, _depth=_depth + 1)
+        stage["state"] = "OVER_BUDGET" if ok_check else "FAIL"
     else:
         stage["over_budget"] = over_budget
-        final_ok = (over_budget is False) or accept_over_budget
-        stage["state"] = "PASS" if final_ok else "OVER_BUDGET"
+        ok_check, report_check = _validate_current_judgment(run_dir)
+        stage["patch_check_tail"] = report_check[-3000:]
+        current = _gate_audit_is_current(run_dir, stage)
+        if not current:
+            stage["note"] = "審核結果與目前輸入不符，須重新審核"
+        final_ok = ok_check and current and (not over_budget or accept_over_budget)
+        stage["state"] = "PASS" if final_ok else (
+            "OVER_BUDGET" if ok_check and current and over_budget else "FAIL")
 
     stage["ended"] = _now()
     manifest["stages"]["gated"] = stage
@@ -3412,13 +3463,11 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
 
 
 def _resume_gate_stage(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest):
-    """WP7b #5：`--resume` 落在 `gated_fail`／`gated_running` 時的專用入口。
-    既有 `gate_audit.md` 可能是上一輪已經跑完的稽核結果（只是後續
-    parse／patch 步驟中斷），先直接 parse 它，不重新花一次 gate spawn；
-    parse 不到（audit 檔不存在）才退回完整 `_do_gate`。"""
+    """2026-09-11：續跑只重用輸入及審核內容皆未變的紀錄，其餘重新審核。"""
     run_dir = _run_dir(ticker, date)
     audit_path = run_dir / "gate_audit.md"
-    if not audit_path.exists():
+    saved_stage = manifest.get("stages", {}).get("gated") or {}
+    if not _gate_audit_is_current(run_dir, saved_stage):
         return _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest)
 
     stage = manifest.setdefault("stages", {}).get("gated") or {
@@ -3757,7 +3806,9 @@ def _run_gates(run_dir, ticker, date, out_html=None, postprocess=False):
         ok = False
         findings.append(("_math", (r_math.stdout + r_math.stderr).strip()[-500:]))
 
-    return ok, findings
+    # 2026-09-11：最終輸出也驗，不只驗先前的 DD_preview.html。
+    findings += _final_v19_findings(run_dir, out_path)
+    return ok and not findings, findings
 
 
 def cmd_gates(args):
@@ -3794,6 +3845,25 @@ def _is_v19_layout(html_path) -> bool:
     return 'name="dd-layout" content="v19"' in head
 
 
+def _final_v19_findings(run_dir, html_path, manifest=None):
+    """2026-09-11：組頁與完成前共用驗收；檢查當下判斷、審核版本與實際輸出頁。"""
+    run_dir = Path(run_dir)
+    raw = _load_json_or(run_dir / "judgment.json", {})
+    if not dd_project.is_v19(raw) and not _is_v19_layout(html_path):
+        return []
+    findings = []
+    ok, report = _validate_current_judgment(run_dir)
+    if not ok:
+        findings.append(("_judgment", report))
+    manifest = manifest if manifest is not None else _load_json_or(run_dir / "manifest.json", {})
+    gate_stage = manifest.get("stages", {}).get("gated") or {}
+    if gate_stage.get("state") != "PASS" or not _gate_audit_is_current(run_dir, gate_stage):
+        findings.append(("_gate", "審核結果未對應目前輸入，須重新審核"))
+    if _is_v19_layout(html_path):
+        findings += _v19_structure_findings(run_dir, html_path)
+    return findings
+
+
 def _v19_structure_findings(run_dir, preview):
     """跑 `scripts/validate_report_v19.py --json`，把 findings 原樣轉成
     `(sid, 原因)`。腳本本身跑不起來時回一條 `_v19_structure` 的 finding——
@@ -3809,7 +3879,7 @@ def _v19_structure_findings(run_dir, preview):
         payload = json.loads(r.stdout) if r.stdout.strip() else None
     except (json.JSONDecodeError, ValueError):
         payload = None
-    if payload is None:
+    if not isinstance(payload, dict) or (r.returncode != 0 or payload.get("ok") is not True) and not payload.get("findings"):
         return [("_v19_structure", "v19 結構驗收跑不起來：{0}".format(
             (r.stdout + r.stderr).strip()[-400:]))]
     return [(f.get("sid") or "_v19_structure", "v19 結構驗收：" + str(f.get("reason")))
@@ -4978,6 +5048,12 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
     html_path = _finish_target_html(ticker, date, manifest)
     if not html_path.exists():
         print("[error] 找不到報告檔：{0}".format(html_path), file=sys.stderr)
+        return 1
+
+    # 2026-09-11：stage PASS 不能代替當下產物驗收，使用與組頁相同的檢查。
+    final_findings = _final_v19_findings(run_dir, html_path, manifest)
+    if final_findings:
+        print("[HOLD] 最終產物未通過：{0}".format(final_findings), file=sys.stderr)
         return 1
 
     # 2026-09-07：任何發布副作用前先跑權威驗算＋三方一致性；dry-run 也不略過。

@@ -524,8 +524,7 @@ _TABLES_REQUIRED_V19 = [
 # （§2 的 H1-H3 表、§10 的情境表），直接注入不折疊。標記命名沿用既有
 # `<!-- E.. -->` 慣例（render-rules.md §2），v19 新增的標記見
 # .claude/skills/stock-analyst/references/v16/render-rules.md 同節的 v19 表。
-# audit.html 本身已自帶 `<details class="audit">` 外層（gen_dd_tables.py::
-# render_audit_html），folded=False 避免重複包裝。
+# 2026-09-11：audit.html 保留在內部產物，讀者頁不注入程式矩陣；判斷理由與行動條件照常呈現。
 _V19_MARKER_SPECS = {
     "s2": [
         {"marker": "<!-- E2 -->", "files": ["e2.html"], "folded": False},
@@ -559,7 +558,7 @@ _V19_MARKER_SPECS = {
     "decision": [
         {"marker": "<!-- E12 -->", "files": ["e12.html", "v19-kill.html", "v19-catalysts.html"],
          "folded": True, "label": "監測與觸發器、致命指標、催化劑"},
-        {"marker": "<!-- AUDIT -->", "files": ["audit.html"], "folded": False},
+        {"marker": "<!-- AUDIT -->", "files": [], "folded": False},
     ],
 }
 

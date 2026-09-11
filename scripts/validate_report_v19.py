@@ -51,6 +51,7 @@ from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS_DIR))
+import dd_sections  # 2026-09-11：共用既有洩漏詞表，附錄也屬於讀者可見內容。
 import validate_prose  # noqa: E402 — 數字抽取與白名單的單一權威，不複製一套
 
 # 六問 → 散文段（依 scripts/dd_schema/section_map.json 的 answers.q1…q6 對映；
@@ -133,7 +134,9 @@ def _table_has_data_row(table_inner: str) -> bool:
         if "<td" not in inner:
             continue
         cells = re.findall(r"<td\b[^>]*>(.*?)</td>", inner, re.S)
-        if any(not _is_placeholder(_text(c)) for c in cells):
+        # 2026-09-11：欄名或「資料缺口」不算資料，至少一個值欄必須有實質內容。
+        if any(not _is_placeholder(_text(c)) and not _text(c).startswith("資料缺口")
+               for c in cells[1:]):
             return True
     return False
 
@@ -217,6 +220,7 @@ def _check_required_tables(html_text: str, sections: dict) -> list:
 
     for sid, label, inner in (
         ("s2", "H1–H3 核心假設表", _first_table_in("s2")),
+        ("s7", "財務歷史表（table#e9b）", _by_id("e9b")),
         ("s10", "情境樹（table#stree）", _by_id("stree")),
         ("decision", "監測與觸發器（table#triggers）", _by_id("triggers")),
         ("revlog", "版本紀錄", _first_table_in("revlog")),
@@ -344,7 +348,10 @@ def _check_placeholders(sections: dict) -> list:
 def validate(report_path, judgment_path=None, facts_path=None, scenario_meta_path=None):
     html_text = Path(report_path).read_text(encoding="utf-8")
     sections = _sections(html_text)
-    findings = []
+    # 2026-09-11：展開折疊區再用既有詞表檢查，避免附錄成為驗收死角。
+    expanded = re.sub(r"<(\/?)(?:details)\b", r"<\1div", html_text, flags=re.I)
+    findings = [("_leaks", "第 {0} 行出現內部用語：{1}（{2}）".format(line, word, context))
+                for line, word, context in dd_sections.leak_hits(expanded)]
     findings += _check_placeholders(sections)
     findings += _check_six_questions(sections)
     findings += _check_three_views(sections)

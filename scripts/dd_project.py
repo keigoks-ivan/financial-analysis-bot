@@ -766,19 +766,6 @@ _TRIGGER_TYPE_ENUM = (
 )
 _TRIGGER_TYPE_PAREN_RE = re.compile(r"[（(][^（）()]*[）)]?\s*$")
 
-# ⑤ catalysts[].type：中文別名 → 英文 enum，依特異度排序（複合詞先比對，避免
-# 「財報」提早吃掉「客戶財報」）。只對含中文字元、且不是已合法 enum 值的字串
-# 生效——非中文或對不上任何別名的值一律不動、留 FAIL（表外的值不動）。
-_CATALYST_TYPE_ENUM = ("product", "regulatory", "capacity", "guidance", "macro", "other")
-_CATALYST_TYPE_KEYWORDS = (
-    ("客戶財報", "macro"), ("總經", "macro"),
-    ("產能", "capacity"), ("里程碑", "capacity"),
-    ("監管", "regulatory"), ("法規", "regulatory"), ("關稅", "regulatory"),
-    ("產品", "product"), ("新品", "product"),
-    ("財報", "guidance"), ("指引", "guidance"),
-)
-_CJK_RE = re.compile(r"[一-鿿]")
-
 
 def _v19_array_paths(schema_node, prefix="", out=None):
     """走 v19_contract schema，蒐集所有宣告為 array 的欄位路徑（`a.b.c`，陣列
@@ -885,26 +872,6 @@ def _normalize_trigger_types(out, changes):
             changes.append(f"enum別名：counter_evidence.triggers[{i}].type {v!r} → {stripped!r}")
 
 
-def _normalize_catalyst_types(out, changes):
-    """⑤ 頂層 catalysts[].type 的中文別名 → 英文 enum。"""
-    catalysts = out.get("catalysts")
-    if not isinstance(catalysts, list):
-        return
-    for i, c in enumerate(catalysts):
-        if not isinstance(c, dict):
-            continue
-        v = c.get("type")
-        if not isinstance(v, str) or v in _CATALYST_TYPE_ENUM:
-            continue
-        if not _CJK_RE.search(v):
-            continue  # 非中文別名嘗試——表外的值不動，留 FAIL
-        target = "other"
-        for kw, en in _CATALYST_TYPE_KEYWORDS:
-            if kw in v:
-                target = en
-                break
-        c["type"] = target
-        changes.append(f"enum別名：catalysts[{i}].type {v!r} → {target!r}")
 
 
 def normalize(raw: dict, judgment_path=None) -> tuple:
@@ -973,10 +940,9 @@ def normalize(raw: dict, judgment_path=None) -> tuple:
     if array_paths:
         _wrap_singletons(out, "", array_paths, changes)
 
-    # ⑤ enum 別名（觸發器 type 去括號、催化劑 type 中文→英文；只認得出的別名
-    # 才轉，轉不出／非別名嘗試一律不動）
+    # 2026-09-11：僅清除觸發器 type 的括號註解，不改事件分類。
     _normalize_trigger_types(out, changes)
-    _normalize_catalyst_types(out, changes)
+    # 2026-09-11：分類由判斷者填合法 enum，格式整理不得猜分類或改成 other。
 
     # ① 路徑：相對 → 絕對（找不到檔就不動，讓 validate 照實報缺）
     base = Path(judgment_path).parent if judgment_path else None

@@ -17,7 +17,7 @@
 bundle 接在「===== BUNDLE =====」分隔行之後，已包含你需要的全部輸入：
 
 - 任務頭與 **v19 schema 速查**（judge-owned 欄位形狀、required 標記、不要填的欄清單、機器語言洩漏詞表）
-- **`facts.json` 事實表全文**——六問各一組有 id 的事實（值／期間／單位／口徑／來源），加 `findings_digest[]`（evidence 的 coverage／events 逐條，**不按方向裁掉**：正向、中性、負向、來源衝突、查無的軸都在），加 `peer_comparison`（同業數字與口徑）。**這是你的數字來源**——不用再從原始證據包挖。
+- **`facts.json` 事實表全文**——六問各一組有 id 的事實（值／期間／單位／口徑／來源），加 `findings_digest[]`（evidence 的 coverage／events 逐條，**不按方向裁掉**：正向、中性、負向、來源衝突、查無的軸都在），加 `peer_comparison`（同業數字與口徑）。**這是引用索引**；另附原始 `evidence.json` 全文與前三季摘要，索引漏收時可直接核對原始證據。
 - **最新一季逐字稿全文**（親讀口徑：這是你自己讀到的一手材料）
 - **`judgment-rules-v19.md`**（五出手點判準與反證處置）＋ archetype 命中時的條件載入規則段
 
@@ -26,7 +26,8 @@ bundle 之外的檔一律不開：不讀 `render-rules.md`／`html-output.md`／
 ## 四條在動筆前先掃一遍的硬規則
 
 1. **負向證據強制處置（機械硬擋）**——事實表 `findings_digest[]` 內每一條 `direction="-"` 的 finding，必須落在 `counter_evidence.contradictions[]`／`blind_spots[]`／`triggers[]`／`answers.q2_moat…moat.threats[]`／`thesis.R[]` 之一的 `evidence_refs`，或寫進 `counter_evidence.evidence_dismissed[]`（`{{"ref": …, "reason": …}}`，理由要指得出證據本身的問題，不得寫「影響不大」）。**先掃負向 finding 清單再動筆**，比事後補洞省輪次。
-2. **事實只引 id，不重抄**——承重數字寫進該題的 `fact_refs[]`（只准填事實表真的有的 `f_*` id）。事實表沒有的數字就是沒有：在該欄寫「事實表未涵蓋」並在最終回報點名，**不得自行估算或從記憶補**。
+<!-- 2026-09-11：取消事實表獨占數字來源，保留原始證據的直接引用。 -->
+2. **引用可追溯**——事實表已有的資料使用該題 `fact_refs[]`；索引漏收時，可在判斷理由引用本包原始證據，寫明欄位路徑、來源、期間與口徑。不得捏造 `f_*` id，不得從記憶補數字；原始證據也沒有才標資料缺口。
 3. **前份漂移按原因分組**——`prior_dd.drift_watch` 20 欄逐欄記新舊值，但文字按原因開條目：`{{"cause": "價格變動|新證據|方法變動", "prior_field": ["price_at_dd", "irr_base_pct", …], "ruling": "各欄本次值／前份值逐欄列清＋主因"}}`。每個漂移欄都必須映射到某一條，漏一欄＝FAIL；裁決、核心假設與情境方法的改變仍各自一條實質解釋。**行動門檻（`kill_metrics`／`triggers` 的門檻數字、Single Thing）與前份不同時必歸因**，`rearm_trigger` 不得對已變動的門檻寫「相同」。
 4. **enum 欄位只准用速查列出的值**（`triggers[].type`／`catalysts[].type`／`thesis.R[].clock` 等，不得自行加註解或譯成中文，H1-H3／R1-R3 編號寫在 `maps_to` 不是 `type`）；**§5.R 四檢查點四項必答**（`moat.roic_durability.checkpoints[]` 每項 `item`／`level`／`text`，查無或不適用改填 `not_applicable_reason`，缺一即 FAIL）；**`kill_metrics[]` 是陣列**，不是以索引數字當鍵的物件。
 

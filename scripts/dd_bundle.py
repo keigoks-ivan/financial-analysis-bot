@@ -9,7 +9,7 @@ Markdown，供判斷 agent（judge）或判斷層 critic（gate）一次讀取�
 judgment.schema.json）→ ③evidence 緊湊版 → ④最新一季逐字稿全文 →
 ⑤digest → ⑥`references/v16/judgment-rules.md` 全文 → ⑦archetype 條件載入
 reference（依 judgment-rules §1 表）。`--contract v19`（預設）改成 ①任務頭 →
-②v19 schema 速查 → ③`facts.json` 全文 → ③b 前三季摘要壓縮全表（WP-H2-3）→
+②v19 schema 速查 → ③`facts.json` 引用索引 → ③c 原始證據全文 → ③b 前三季摘要壓縮全表 →
 ④最新一季逐字稿全文 → ⑥規則檔 v19 產物 → ⑦archetype 條件載入。
 
 `gate` 段落順序：①任務頭 → ②`gate_view`（機械抽出，見下）→ judgment.json
@@ -113,7 +113,7 @@ def _task_header_v19(ticker, date) -> str:
         "5. **決策輸入**（`decision_inputs` 九欄＋`appendix_a` 七欄＋`eps_meta`）\n\n"
         "其餘欄位（評分、燈號、白話段、reasoning 摘要、`scenario.json`、`decision_out` 矩陣欄、"
         "同業對照表的數字）**由程式從你寫的這幾塊投影出來**——你不要填，填了機械閘會擋。"
-        "事實一律引 `facts.json` 的 id，不重抄數字；不得臆測未在事實表或逐字稿內出現的數字或事件。"
+        "事實表是引用索引，不是唯一數字來源。已有事實用 `fact_refs` 引 id；漏收的資料可直接引用本包原始證據，寫明欄位路徑、來源與期間，不得捏造 fact id。不得從記憶補數字。"
     )
 
 
@@ -217,8 +217,8 @@ def _schema_cheatsheet(contract: str = "v18") -> str:
         lines.append("### fact_refs 用法（v19）")
         lines.append(
             "`answers.qX.fact_refs[]` 只准填事實表裡真的存在的 `f_*` id（引不到＝FAIL）。"
-            "承重數字一律引 id，不要把數值再抄一份到判斷欄；事實表沒有的數字就是沒有，"
-            "在該欄寫「事實表未涵蓋」並在最終回報點名，不得自行估算。"
+            "索引漏收時可引用本包原始證據，寫明欄位路徑、來源與期間；"
+            "不要捏造 fact id，也不要從記憶補數字。"
         )
         lines.append("")
         lines.append("### 不要填的欄（填了即 FAIL）")
@@ -338,24 +338,10 @@ def _find_transcript_path(ticker: str, filename: str):
 
 
 
-def _prior_and_events_section(evidence: dict) -> str:
-    """2026-09-11（FIX v19 首跑抓到的契約漏洞）：v19 判斷包原本只帶 facts／摘要／
-    逐字稿／規則，**前份判斷（prior_dd：裁決、角色、rearm、drift_watch）與 events／
-    ledger 都沒進包**，判斷 agent 只能寫「前份裁決事實表未涵蓋」，閘 ⑧ 前份漂移
-    歸因必紅。這三塊是站內自己的機械資料，不是研究事實，不經事實表、原樣帶入。"""
-    # events 已經由 facts.findings_digest 帶入、ledger 只在閘用；判斷包只補 prior_dd，
-    # 維持「v19 包比 v18 小」的既有不變量（test_judge_bundle_v19_is_slimmer）。
-    lines = ["## ③c 前份判斷（evidence.prior_dd 原樣；QC-49 漂移歸因用）", ""]
-    prior = evidence.get("prior_dd") or {}
-    # 只帶裁決相關的機械欄（prior_meta／drift_watch／裁決／角色／價格／日期），
-    # revlog 與路徑不進包——省下的正是讓 v19 包維持比 v18 小的那幾百 bytes。
-    compact = {k: prior.get(k) for k in ("date", "schema", "dca_verdict", "dca_role",
-                                          "price_at_dd", "prior_meta", "drift_watch") if k in prior}
-    lines.append("### prior_dd（裁決相關欄原樣；revlog 略）")
-    lines.append(_JSON_NOTE)
-    lines.append(_json_block(compact))
-    lines.append("")
-    return "\n".join(lines).rstrip() + "\n"
+def _source_evidence_section(evidence: dict) -> str:
+    """2026-09-11：原始證據完整保留，取消事實表漏抽就看不到資料的單一路徑。"""
+    return "## ③c 原始證據（evidence.json 全文；事實表未收錄時可直接引用）\n\n" + _json_block(evidence)
+
 
 def _transcript_section(evidence: dict, explicit_path) -> str:
     lines = ["## ④ 最新一季逐字稿全文", ""]
@@ -411,18 +397,11 @@ def _digest_section(digest_path) -> str:
 
 
 def _facts_section(facts_path) -> str:
-    """v19 判斷 bundle 的 ③ 段：事實表全文（含 `findings_digest` 與
-    `peer_comparison`）。WP-H2-1（2026-09-11）。
-
-    這一段取代 v18 的「證據包緊湊版＋digest 全文」——事實已在 Stage 0 收過一次、
-    對過口徑，判斷層不該再從 250KB 原始證據裡挖。`findings_digest` 住在事實表內
-    且**不按方向裁掉**（正向、中性、負向、來源衝突、查無的軸都在），所以瘦身沒有
-    把反證拿掉。"""
-    lines = ["## ③ facts.json 事實表全文（判斷層唯一的數字來源；含 findings_digest 與同業對照）", ""]
+    """2026-09-11：事實表保留為整理與引用索引，原始證據另附全文。"""
+    lines = ["## ③ facts.json 事實表全文（引用索引；含 findings_digest 與同業對照）", ""]
     p = Path(facts_path) if facts_path else None
     if not p or not p.exists():
-        lines.append(f"[找不到事實表：{facts_path}]——沒有事實表就沒有可追溯性，"
-                     "請回報 orchestrator 先跑 `dd_facts.py extract`，不要自行從證據包挖數字。")
+        lines.append(f"[找不到事實表：{facts_path}]——請先補回引用索引，不得捏造 fact id。")
         return "\n".join(lines)
     raw = p.read_text(encoding="utf-8")
     try:
@@ -545,7 +524,17 @@ def _judgment_rules_section(path, contract: str = "v18") -> str:
     if contract == "v18" and p == JUDGMENT_RULES_PATH:
         lines.append(dd_rules.render("v18", source_path=p))
     else:
-        lines.append(p.read_text(encoding="utf-8"))
+        rules = p.read_text(encoding="utf-8")
+        if contract == "v19":
+            # 2026-09-11：依持有人簡化指示，組包時撤掉舊的事實表獨占條款；技能檔不改。
+            rules = "\n".join(line for line in rules.split("\n")
+                              if not line.startswith("> **事實一律引 id**："))
+            rules = rules.replace("①承重數字一律引事實表的", "①事實表已有的承重數字引其")
+            rules = rules.replace("②事實表沒有的數字就是沒有——標「事實表未涵蓋」",
+                                  "②事實表漏收時引用本包原始證據的路徑、來源與期間；原始證據也缺才標「資料缺口」")
+            rules = rules.replace("前份DD只透過事實表與`findings_digest`帶進來",
+                                  "前份DD透過本包原始證據的`prior_dd`帶進來")
+        lines.append(rules)
     return "\n".join(lines)
 
 
@@ -1138,14 +1127,7 @@ def cmd_judge(args) -> int:
         return 1
     evidence = _load_json(evidence_path)
 
-    # WP-H2-1（2026-09-11）：v19 是預設。瘦身包＝任務頭（五出手點）＋v19 schema
-    # 速查＋事實表全文（含 findings_digest，不按方向裁）＋前三季摘要壓縮全表＋
-    # 最新一季逐字稿全文＋規則精簡版＋archetype 條件載入。**不再帶**證據包緊湊版
-    # ——那塊的內容已由事實表收過一次，帶兩份就是讓判斷層再挖一次同一批數字。
-    # WP-H2-3（2026-09-11，Codex 裁定 1）：digest 改「壓縮全表」帶回來（不是拿掉，
-    # 也不是整份 JSON）——機械初稿不會把只出現在摘要裡的反證抬進 facts，而事實檢查
-    # 對這種漏失是 0 FAIL、0 WARN。有逐項來源覆蓋檢查之前不得移除。
-    # `--contract v18` 回舊包（A/B 或回退用）。
+    # 2026-09-11：保留原始證據，不再以輸入包較小作為完整性的替代驗收。
     if getattr(args, "contract", "v19") == "v19":
         facts_arg = getattr(args, "facts", None)
         facts_path = Path(facts_arg) if facts_arg else (
@@ -1164,7 +1146,7 @@ def cmd_judge(args) -> int:
             _task_header_v19(evidence.get("ticker"), evidence.get("date")),
             _schema_cheatsheet("v19"),
             _facts_section(facts_path),
-            _prior_and_events_section(evidence),
+            _source_evidence_section(evidence),
             _digest_lines_section(digest_path),
             _transcript_section(evidence, args.transcript),
             _judgment_rules_section(rules_path, "v19"),
@@ -1253,10 +1235,14 @@ def cmd_gate(args) -> int:
         else f"[找不到 {gate_contract_path}]"
     )
 
-    parts = [
-        _task_header(evidence.get("ticker"), evidence.get("date"), "gate"),
-        _gate_view_section(evidence, judgment_obj, judgment_path, digest_path),
-    ]
+    # 2026-09-11：v19 審核與判斷讀同份原始證據，取消另一套欄位與方向篩選。
+    parts = [_task_header(evidence.get("ticker"), evidence.get("date"), "gate")]
+    if dd_project.is_v19(judgment_raw_obj):
+        parts += [_source_evidence_section(evidence),
+                  _gate_scenario_meta_section(judgment_path),
+                  _digest_lines_section(digest_path)]
+    else:
+        parts.append(_gate_view_section(evidence, judgment_obj, judgment_path, digest_path))
     if facts_obj is not None:
         parts.append(_gate_referenced_facts_section(judgment_raw_obj, facts_obj))
     parts += [

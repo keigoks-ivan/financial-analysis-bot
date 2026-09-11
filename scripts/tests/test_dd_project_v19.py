@@ -350,9 +350,10 @@ def test_bundles_build_for_v19(run_dir, tmp_path):
         assert r.returncode == 0, r.stderr
         assert out.stat().st_size > 10000
     gate_text = (tmp_path / "gate.md").read_text(encoding="utf-8")
-    # 閘要看得到原檔（v19 形狀）與機械抽出的負向 finding 表
+    # 2026-09-11：閘與判斷看同一份原始證據，正負證據都保留。
     assert '"contract":"v19"' in gate_text.replace(" ", "")
-    assert "負向 finding" in gate_text
+    block = gate_text.split("## ③c 原始證據", 1)[1].split("```json\n", 1)[1].split("```", 1)[0]
+    assert json.loads(block) == _load(run_dir / "evidence.json")
 
 
 def test_prose_stub_and_full_assembly(run_dir, tmp_path):
@@ -773,33 +774,20 @@ def test_normalize_fixes_trigger_type_parenthetical_and_leaves_unmatched(tmp_pat
     assert out.get("normalize_log") == changes
 
 
-def test_normalize_fixes_catalyst_type_chinese_synonyms_and_leaves_unmatched(tmp_path):
-    """catalysts[].type 中文別名 → 英文 enum（依特異度排序，「客戶財報」不被
-    「財報」提早吃掉）；非中文或對不上任何別名的表外值一律不動。"""
+def test_normalize_leaves_catalyst_classification_to_judge(tmp_path):
+    """2026-09-11：不猜分類，未知中文與英文一律留給 schema 擋下。"""
     raw = _load(V19_JUDGMENT)
-    cats = raw["catalysts"]
-    template = dict(cats[0])
-    cats[0]["type"] = "財報"
-    cats[1]["type"] = "客戶財報"
-    cats[2]["type"] = "產能里程碑"
-    cats[3]["type"] = "財報＋10-K"
-    other_hit = dict(template)
-    other_hit["type"] = "併購傳聞"  # 中文但不在五組關鍵字內 → 其餘 → other
-    untouched = dict(template)
-    untouched["type"] = "not_a_real_enum_value"  # 非中文、表外值不動
-    cats.append(other_hit)
-    cats.append(untouched)
+    original = ["財報", "客戶財報", "產能里程碑", "財報＋10-K", "併購傳聞", "unknown", "macro"]
+    template = raw["catalysts"][0]
+    raw["catalysts"] = [dict(template, type=value) for value in original]
     p = tmp_path / "judgment.json"
     p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
     out, changes = dd_project.normalize(raw, p)
-    out_cats = out["catalysts"]
-    assert out_cats[0]["type"] == "guidance"
-    assert out_cats[1]["type"] == "macro"
-    assert out_cats[2]["type"] == "capacity"
-    assert out_cats[3]["type"] == "guidance"
-    assert out_cats[-2]["type"] == "other"
-    assert out_cats[-1]["type"] == "not_a_real_enum_value"
-    assert not any(f"catalysts[{len(out_cats) - 1}]" in c for c in changes)
+    assert [c["type"] for c in out["catalysts"]] == original
+    assert not any("catalysts" in change for change in changes)
+    view = dd_project.project(out)
+    errors = vj.schema_validate(view, _load(SCRIPTS_DIR / "dd_schema/judgment.schema.json"), "$")
+    assert any("catalysts[1].type" in error for error in errors)
 
 
 def test_normalize_does_not_touch_judgment_fields(tmp_path):
