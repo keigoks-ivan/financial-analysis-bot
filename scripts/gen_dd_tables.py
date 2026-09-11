@@ -312,7 +312,7 @@ def render_appA_table_html(j: dict) -> str:
     moat = j.get("moat") or {}
     stress = aa.get("stress") or {}
     header = (
-        "<tr><th>訊號</th><th>品質分（護城河/成長/財務）</th><th>估值燈</th><th>MA</th>"
+        "<tr><th>訊號</th><th>品質分（護城河/成長/財務）</th><th>估值</th><th>MA</th>"
         "<th>陷阱定性</th><th>壓力測試</th><th>長期持有信心</th></tr>"
     )
     row = (
@@ -1190,7 +1190,7 @@ def render_v19_cards_html(meta: dict, j: dict) -> str:
         _v19_card("最大回撤範圍", maxdd_val,
                    _dot(path_risk) + f"路徑風險{esc(_RISK_LEVEL_LABEL_V19.get(path_risk, '—'))}"),
         _v19_card(f"本益比（{esc(_fy2_label(meta))}）", fpe_val,
-                   (_dot(val) + f"五年分位 {esc(pct5y)}%，{esc(tier)}") if pct5y is not None else _dot(val) + "估值燈"),
+                   (_dot(val) + f"五年分位 {esc(pct5y)}%，{esc(tier)}") if pct5y is not None else _dot(val) + "估值"),
     ]
     return '<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px">' \
         + "".join(cards) + "</div>"
@@ -1227,7 +1227,7 @@ def render_v19_grid_html(meta: dict, j: dict) -> str:
     row1 = [
         _v19_cell("基本面評級", esc(meta.get("verdict")) or "—"),
         _v19_cell("訊號", f'{esc(meta.get("signal"))}　<span class="vs">{esc(_SIGNAL_PLAIN_V19.get(verdict, "—"))}</span>'),
-        _v19_cell("估值燈", _dot(meta.get("val")) + esc(_DOT_COLOR_NAME_V19.get(meta.get("val"), "—"))),
+        _v19_cell("估值", _dot(meta.get("val")) + esc(_DOT_COLOR_NAME_V19.get(meta.get("val"), "—"))),
         _v19_cell("均線", _dot("🟢" if meta.get("ma") == "✅" else "🔴") + ("強勢" if meta.get("ma") == "✅" else ("弱勢" if meta.get("ma") == "❌" else "—"))),
         _v19_cell("陷阱", _dot(meta.get("trap")) + esc(trap_label)),
         _v19_cell("五年後跑道", _dot(runway) + esc(_RUNWAY_LABEL_V19.get(runway, "—"))),
@@ -1323,7 +1323,7 @@ def render_v19_dashboard_html(j: dict, meta: dict, facts: dict | None) -> str:
           '<div style="display:flex;flex-direction:row;justify-content:space-between;'
           'align-items:baseline"><div style="font-size:12px;color:#64748B;'
           'letter-spacing:0.06em">篩選器資料</div><div style="font-size:11.5px;color:#94A3B8">'
-          '與 /dd-screener/ 同源，機器讀 dd-meta，人讀這一列</div></div>'
+          '與篩選器同一份數字</div></div>'
         + grid + "</div>\n"
         + changemind + "\n</header>\n"
     )
