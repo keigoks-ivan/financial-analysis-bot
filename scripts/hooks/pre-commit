@@ -147,7 +147,23 @@ if [ -n "$ADDED_DD" ] || [ -n "$ADDED_DCA" ]; then
   #   laziness pass; per-section budgets in the skill are the primary gate.
   # v13/v14 legacy band kept at 110/150/200KB; pre-v13 DD at 80/90KB.
   for f in $ADDED_DD; do
-    if grep -qE '"schema"[[:space:]]*:[[:space:]]*"v15' "$f" 2>/dev/null; then
+    # 2026-09-11（WP-H2-3，Codex 裁定 3）：v19 版面改跑**結構與內容驗收**，
+    # 不看 bytes。v19 的散文是條列白話（lead ≤40 字＋2–6 條短條列），寫得好
+    # 反而短；沿用 70KB floor 只會逼出灌水。判別看產物自己的 dd-layout meta
+    # （scripts/dd_templates/v19.html 寫的），不看 schema——v19 判斷檔渲染出
+    # 的 dd-meta schema 仍是 v15.x。70KB floor 留給 legacy 版面，一字未改。
+    if grep -q 'name="dd-layout" content="v19"' "$f" 2>/dev/null; then
+      echo "   $f: v19 版面 → 結構驗收（validate_report_v19.py），不套 70KB floor"
+      if ! python3 scripts/validate_report_v19.py "$f" > /tmp/_dd_v19_structure.log 2>&1; then
+        echo ""
+        echo "❌ v19 structure gate FAILED — commit blocked."
+        tail -30 /tmp/_dd_v19_structure.log | sed 's/^/   /'
+        echo ""
+        echo "   六問 lead/條列、三視角、行動條件、必要表格非空、佔位掃描。"
+        echo "   補的是內容不是長度：多開一條帶 fact id 的條列，不要把句子拉長。"
+        FAIL=1
+      fi
+    elif grep -qE '"schema"[[:space:]]*:[[:space:]]*"v15' "$f" 2>/dev/null; then
       check_report_size "$f" 70000 80000 "DD" 115000 || FAIL=1
     elif grep -qE '"schema"[[:space:]]*:[[:space:]]*"v1[34]' "$f" 2>/dev/null; then
       check_report_size "$f" 110000 150000 "DD" 200000 || FAIL=1
@@ -338,6 +354,24 @@ if [ -n "$STAGED_SC" ] && [ "$FAIL" -eq 0 ]; then
     echo ""
     echo "❌ build_supply_chain_tiers.py FAILED — commit blocked."
     tail -15 /tmp/_sc_tiers.log | sed 's/^/   /'
+    FAIL=1
+  fi
+fi
+
+# ---- Judgment-rules single source (WP-H2-3, 2026-09-11) ----------------------
+# judgment-rules.md 是唯一人工維護的規則來源；judgment-rules-v19.md 是
+# `scripts/dd_rules.py build-v19` 的產物。改了來源卻忘了重生產物，判斷層會拿
+# 一份過期規則去定案而沒有人會發現——所以來源或產物只要進了 staged 區就核對
+# 版本戳。零 token、不上網。
+STAGED_RULES=$(echo "$STAGED" | grep -E '^\.claude/skills/stock-analyst/references/v16/judgment-rules(-v19)?\.md$' || true)
+if [ -n "$STAGED_RULES" ]; then
+  echo "→ pre-commit: judgment-rules v19 產物與來源版本戳"
+  if ! python3 scripts/dd_rules.py check > /tmp/_dd_rules_check.log 2>&1; then
+    echo ""
+    echo "❌ judgment-rules v19 product is stale — commit blocked."
+    tail -10 /tmp/_dd_rules_check.log | sed 's/^/   /'
+    echo ""
+    echo "   跑 python3 scripts/dd_rules.py build-v19 後把產物一起 commit。"
     FAIL=1
   fi
 fi

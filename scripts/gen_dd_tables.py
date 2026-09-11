@@ -435,13 +435,11 @@ def render_e3_html(j: dict) -> str:
 # grade} 摘要 + moat.spread_table[])
 # ---------------------------------------------------------------------------
 
-def render_e5_html(j: dict) -> str:
-    moat = j.get("moat") or {}
-    summary = (
-        '<p class="e5-summary">執行力 {ex} ｜ 定價力 {pr} ｜ 綜合 {comb} ｜ 護城河評級 {grade}</p>'
-    ).format(ex=esc(moat.get("execution")), pr=esc(moat.get("pricing")),
-              comb=esc(moat.get("combined")), grade=esc(moat.get("grade")))
-    rows_data = moat.get("spread_table") or []
+# 舊窄形狀（v15/v18 判斷檔手填）的欄名指紋：一列一個驅動因子。
+_E5_NARROW_KEYS = ("driver", "metric_now", "metric_hist_avg", "spread", "moat_linkage")
+
+
+def _e5_narrow_rows(rows_data) -> str:
     rows = []
     for r in rows_data:
         rows.append(
@@ -454,7 +452,105 @@ def render_e5_html(j: dict) -> str:
         )
     header = ('<tr><th>驅動因子</th><th class="num">現值</th><th class="num">歷史均值</th>'
               '<th class="num">價差</th><th>護城河連結</th></tr>')
-    table = '<table id="e5">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+    return '<table id="e5">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+def _e5_matrix_from_facts(facts):
+    """`facts.peer_comparison` → 同業矩陣（度量為列、公司為欄）。
+
+    優先讀事實表而不是 `dd_project` 的 P-26 投影：事實表帶得到期間與單位，投影
+    為了還原舊形狀會把它們攤平掉。回 `(欄名清單, 列 dict 清單)`；facts 沒有同業
+    區塊回 None。"""
+    pc = (facts or {}).get("peer_comparison") or {}
+    metrics = [m for m in (pc.get("metrics") or []) if isinstance(m, dict) and m.get("key")]
+    peers = [r for r in (pc.get("rows") or []) if isinstance(r, dict) and r.get("name")]
+    if not metrics or not peers:
+        return None
+    cols = [r["name"] for r in peers]
+    rows = []
+    for m in metrics:
+        label = m.get("label") or m["key"]
+        if m.get("unit"):
+            label = "{0}（{1}）".format(label, m["unit"])
+        row = {"metric": label}
+        periods = []
+        for r in peers:
+            val = (r.get("values") or {}).get(m["key"])
+            row[r["name"]] = val
+            if val is not None and r.get("period") and r["period"] not in periods:
+                periods.append(r["period"])
+        note = m.get("note") or ""
+        if not note and len(periods) == 1:
+            note = periods[0]
+        row["note"] = note
+        rows.append(row)
+    return cols, rows
+
+
+def _e5_matrix_from_rows(rows_data):
+    """寬形狀 `moat.spread_table`（v19＝P-26 投影，或判斷者手填的寬表）→
+    `(欄名清單, 列)`。欄＝除 metric／note／period／unit 以外的鍵，依首次出現序。"""
+    cols = []
+    for r in rows_data:
+        if not isinstance(r, dict):
+            continue
+        for k in r:
+            if k not in ("metric", "note", "period", "unit") and k not in cols:
+                cols.append(k)
+    if not cols:
+        return None
+    rows = []
+    for r in rows_data:
+        if not isinstance(r, dict):
+            continue
+        label = r.get("metric")
+        if r.get("unit"):
+            label = "{0}（{1}）".format(label, r["unit"])
+        row = {"metric": label}
+        for c in cols:
+            row[c] = r.get(c)
+        row["note"] = r.get("note") or r.get("period") or ""
+        rows.append(row)
+    return cols, rows
+
+
+def _e5_matrix_html(cols, rows) -> str:
+    header = ('<tr><th>指標</th>'
+              + "".join('<th class="num">{0}</th>'.format(esc(c)) for c in cols)
+              + "<th>備註</th></tr>")
+    body = []
+    for r in rows:
+        cells = "".join(
+            '<td class="num">{0}</td>'.format(esc(r[c]) if r.get(c) is not None else "—")
+            for c in cols)
+        body.append("<tr><td>{0}</td>{1}<td>{2}</td></tr>".format(
+            esc(r.get("metric")), cells, esc(r.get("note")) or "—"))
+    return '<table id="e5">\n' + header + "\n" + "\n".join(body) + "\n</table>\n"
+
+
+def render_e5_html(j: dict, facts=None) -> str:
+    """E5 護城河／同業對照表。
+
+    2026-09-11（WP-H2-3）：改讀**同業矩陣形狀**（metric／各同業值／note），舊窄
+    形狀（driver／metric_now／metric_hist_avg／spread／moat_linkage）原樣 fallback
+    ——36 份舊格式判斷檔的輸出因此逐位元組不變。資料來源優先序：①`facts
+    .peer_comparison`（期間與單位最完整）②`moat.spread_table`（v19 是 `dd_project`
+    的 P-26 投影，舊形狀是判斷者手填）。
+
+    H2-2 的 `render_v19_spread_html()` 平行函式由本函式接手（已撤），v19 版面的
+    §5 標記直接指 `e5.html`——同一張表兩支 renderer 是漂移的溫床。"""
+    moat = j.get("moat") or {}
+    summary = (
+        '<p class="e5-summary">執行力 {ex} ｜ 定價力 {pr} ｜ 綜合 {comb} ｜ 護城河評級 {grade}</p>'
+    ).format(ex=esc(moat.get("execution")), pr=esc(moat.get("pricing")),
+              comb=esc(moat.get("combined")), grade=esc(moat.get("grade")))
+    rows_data = moat.get("spread_table") or []
+    narrow = any(isinstance(r, dict) and any(k in r for k in _E5_NARROW_KEYS)
+                 for r in rows_data)
+    if narrow:
+        return summary + "\n" + _e5_narrow_rows(rows_data)
+    matrix = _e5_matrix_from_facts(facts) or _e5_matrix_from_rows(rows_data)
+    table = _e5_matrix_html(*matrix) if matrix else _e5_narrow_rows(rows_data)
     return summary + "\n" + table
 
 
@@ -1353,37 +1449,17 @@ def render_v19_peers_html(facts: dict | None) -> str | None:
     return '<table id="peers">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
 
 
-# ---- 免費資料區：§5 護城河——v19 答案表的實際形狀與舊 E5/E7/E8 renderer
-# 預期的欄位名不同（E5 期待 driver/metric_now/metric_hist_avg/spread/
-# moat_linkage 窄表，v19 的 moat.spread_table 是「一列一指標、一欄一公司」的
-# 寬表；E7 期待 n/question/status/evidence，v19 的 checkpoints 是
+# ---- 免費資料區：§5 護城河——v19 答案表的實際形狀與舊 E7/E8 renderer 預期的
+# 欄位名不同（E7 期待 n/question/status/evidence，v19 的 checkpoints 是
 # item/level/text；E8 期待 fy0_rev/fy1e_rev/fy2e_rev，v19 的 segments 是
-# share/driver/note）——沿用舊 renderer 會整表空白（已實測 e5/e7/e8.html 對
-# FIX fixture 全空），故 v19 另立三個對應實際形狀的 renderer，取代 E5/E7/E8
-# 在 v19 版面的注入（E6 對手對照欄位名不變，繼續沿用）。
+# share/driver/note）——沿用舊 renderer 會整表空白（已實測 e7/e8.html 對 FIX
+# fixture 全空），故 v19 另立兩個對應實際形狀的 renderer，取代 E7/E8 在 v19
+# 版面的注入（E6 對手對照欄位名不變，繼續沿用）。
+#
+# 2026-09-11（WP-H2-3）：原本這裡還有第三支 `render_v19_spread_html()`——已撤。
+# `render_e5_html()` 現在自己認得同業矩陣形狀（並優先讀 `facts.peer_comparison`），
+# v19 版面的 §5 標記直接指 `e5.html`；同一張表留兩支 renderer 是漂移的溫床。
 # ---------------------------------------------------------------------------
-
-def render_v19_spread_html(j: dict) -> str | None:
-    rows_data = (j.get("moat") or {}).get("spread_table") or []
-    if not rows_data:
-        return None
-    cols: list = []
-    for r in rows_data:
-        if not isinstance(r, dict):
-            continue
-        for k in r:
-            if k not in ("metric", "note") and k not in cols:
-                cols.append(k)
-    header = ("<tr><th>指標</th>" + "".join(f'<th class="num">{esc(c)}</th>' for c in cols)
-              + "<th>備註</th></tr>")
-    rows = []
-    for r in rows_data:
-        if not isinstance(r, dict):
-            continue
-        cells = "".join(f'<td class="num">{esc(r[c]) if c in r else "—"}</td>' for c in cols)
-        rows.append(f"<tr><td>{esc(r.get('metric'))}</td>{cells}<td>{esc(r.get('note'))}</td></tr>")
-    return '<table id="spread">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
-
 
 def render_v19_threats_html(j: dict) -> str | None:
     rows_data = (j.get("moat") or {}).get("threats") or []
@@ -1589,7 +1665,10 @@ def main():
 
     # WP1c 修法1（七表由判斷物生成）
     (out_dir / "e3.html").write_text(render_e3_html(j), encoding="utf-8")
-    (out_dir / "e5.html").write_text(render_e5_html(j), encoding="utf-8")
+    # 2026-09-11（WP-H2-3）：E5 對 v19 改讀同業矩陣，優先取 facts.peer_comparison；
+    # 舊形狀判斷檔 load_facts 回 None，走既有窄表路徑，輸出逐位元組不變。
+    e5_facts = dd_project.load_facts(raw, jpath) if dd_project.is_v19(raw) else None
+    (out_dir / "e5.html").write_text(render_e5_html(j, e5_facts), encoding="utf-8")
     (out_dir / "e6.html").write_text(render_e6_html(j), encoding="utf-8")
     (out_dir / "e7.html").write_text(render_e7_html(j), encoding="utf-8")
     (out_dir / "e8.html").write_text(render_e8_html(j), encoding="utf-8")
@@ -1614,7 +1693,6 @@ def main():
             render_v19_dashboard_html(j, meta, facts), encoding="utf-8")
         v19_written.append("v19-dashboard.html")
         for name, html_text in (
-            ("v19-spread.html", render_v19_spread_html(j)),
             ("v19-threats.html", render_v19_threats_html(j)),
             ("v19-roic.html", render_v19_roic_checkpoints_html(j)),
             ("v19-segs.html", render_v19_segments_html(j)),

@@ -1775,6 +1775,13 @@ def _do_facts(ticker, date, run_dir, replay_dir, stage):
 
     shutil.copyfile(draft_path, facts_path)
     out["fallback"] = True
+    # WP-H2-3（2026-09-11，Codex 裁定 1）：**失手退回初稿 ≠ 完整輸入**。初稿是
+    # 誠實的不完整（六題都帶 `needs_sonnet`），但判斷層拿它當唯一數字來源會在
+    # 「這題沒補齊」上做判斷而不自知——所以這裡多記一筆 `incomplete`，由
+    # `_do_stage0` 升到 manifest 頂層 `facts_incomplete`，判斷段見到就停，交指揮者。
+    # **`--replay-from` 例外**：回溯重放本來就刻意只用機械初稿（不打 API、fixture
+    # 也沒有事實表的 replay marker），那是設計不是失手，不標 incomplete。
+    out["incomplete"] = not bool(replay_dir)
     r_ck2 = subprocess.run(
         [py, str(SCRIPTS_DIR / "dd_facts.py"), "check", str(facts_path), "--report"],
         capture_output=True, text=True,
@@ -1888,6 +1895,9 @@ def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manife
         stage["facts"] = _do_facts(ticker, date, run_dir, replay_dir, stage)
         if not stage["facts"].get("ok"):
             rc = 1
+        # WP-H2-3：事實表未補齊時在 manifest 頂層留一面旗，讓判斷段（可能是另一
+        # 個 process、另一天 `--resume`）看得到，不必再去翻 stage 結構。
+        manifest["facts_incomplete"] = bool(stage["facts"].get("incomplete"))
         over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
         stage["over_budget"] = over_budget
 
@@ -2745,6 +2755,36 @@ def _judge_reuse_prior(ticker, date, judgment_model, accept_over_budget, manifes
     )
 
 
+# WP-H2-3（2026-09-11）：TSM 成對測試用的判斷契約覆寫。`ddreport.py judge
+# --contract v18` 讓**同一份證據**再跑一次舊契約的判斷包，好回答「v19 的分工有
+# 沒有漏掉 v18 看得到的東西、省了多少」。兩次跑共用同一個 run 目錄（證據只收一
+# 次，這正是成對測試的重點），**產物以檔名區分**：跑完把 `judgment.json` 等四件
+# 快照成 `*_v19.json`／`*_v18.json`，下一次換契約跑不會蓋掉上一次的結果。
+# 活檔（`judgment.json`）永遠是最後一次跑出來的那份，下游 prose／gate／finish
+# 的語意不變——要比較就比兩份快照，不要去猜活檔是誰。
+_JUDGE_CONTRACT_OVERRIDE = None
+_JUDGE_SNAPSHOT_FILES = ("judgment.json", "scenario.json", "scenario_meta.json", "judgment_view.json")
+
+
+def _judge_contract():
+    return _JUDGE_CONTRACT_OVERRIDE or "v19"
+
+
+def _snapshot_judge_outputs(run_dir, contract):
+    """把本輪判斷產物複製成帶契約字尾的快照。複製不是搬移——活檔留在原位，
+    下游不受影響。回傳已快照的檔名清單。"""
+    done = []
+    for name in _JUDGE_SNAPSHOT_FILES:
+        src = Path(run_dir) / name
+        if not src.exists():
+            continue
+        stem, _, ext = name.rpartition(".")
+        dst = Path(run_dir) / "{0}_{1}.{2}".format(stem, contract, ext)
+        shutil.copyfile(src, dst)
+        done.append(dst.name)
+    return done
+
+
 def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, no_delta=False):
     """WP-C（2026-09-10）：判斷段總入口。先建立/接續 `judged` stage，再問一次
     `_judge_delta_route` 決定本輪要 `full`（既有整份判斷流程，改名
@@ -2754,15 +2794,34 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
     也沒有「prior 存查」這個概念可比）。"""
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
+
+    # WP-H2-3（2026-09-11，Codex 裁定 1）：事實表 spawn 失手、退回機械初稿時
+    # **判斷段不准開跑**。理由：v19 的判斷層只看事實表，初稿的六題全帶
+    # `needs_sonnet`（＝這題沒補齊），拿它去判斷等於在半份輸入上定案，而事實
+    # 檢查對「摘要裡才有的反證沒被抬進來」是查不到的（0 FAIL、0 WARN）。
+    # 便宜的修法是重跑 Stage 0 的事實表，不是讓判斷層硬吞。
+    if manifest.get("facts_incomplete"):
+        print("[judged] 事實表未完成，交指揮者：Stage 0 的事實表 agent 失手、"
+              "目前 facts.json 是機械初稿（六題皆 needs_sonnet）。"
+              "先重跑 `ddreport.py stage0 {0} {1}` 補齊事實表，再進判斷段。".format(ticker, date))
+        _print_step_status("judged", "facts_incomplete=true", "facts PASS", "BLOCKED")
+        return 1
+
     stage = _fresh_stage_preserving_prior(manifest, "judged")
     manifest.setdefault("stages", {})["judged"] = stage
     manifest["judgment_model"] = judgment_model
     manifest["state"] = "judged_running"
     _atomic_write_json(manifest_path, manifest)
 
+    contract = _judge_contract()
+    manifest["judge_contract"] = contract
     route = {"mode": "full", "reasons": ["replay_from"] if replay_dir else ["no_prior_judgment_archive"],
              "delta_path": None}
-    if not replay_dir:
+    if contract != "v19":
+        # 成對測試要的是「同證據、整份重判」——走 delta 或 reuse 會把 v19 那輪的
+        # 結論帶進來，比出來的差異就不算數了。
+        route["reasons"] = ["contract_override_{0}".format(contract)]
+    elif not replay_dir:
         route = _judge_delta_route(ticker, date, run_dir, no_delta)
     stage["delta_mode"] = route["mode"]
     stage["judge_route_reasons"] = route["reasons"]
@@ -2773,11 +2832,20 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
     _atomic_write_json(manifest_path, manifest)
 
     if route["mode"] == "reuse":
-        return _judge_reuse_prior(ticker, date, judgment_model, accept_over_budget, manifest, stage, route)
-    if route["mode"] == "delta":
-        return _do_judge_delta(ticker, date, judgment_model, accept_over_budget, manifest, stage, route)
+        rc = _judge_reuse_prior(ticker, date, judgment_model, accept_over_budget, manifest, stage, route)
+    elif route["mode"] == "delta":
+        rc = _do_judge_delta(ticker, date, judgment_model, accept_over_budget, manifest, stage, route)
+    else:
+        rc = _do_judge_full(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage)
 
-    return _do_judge_full(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage)
+    if rc == 0:
+        snapped = _snapshot_judge_outputs(run_dir, contract)
+        if snapped:
+            stage["contract_snapshot"] = snapped
+            manifest["stages"]["judged"] = stage
+            _atomic_write_json(manifest_path, manifest)
+            print("[judged] 契約 {0} 產物快照：{1}".format(contract, "、".join(snapped)))
+    return rc
 
 
 def _do_judge_full(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage):
@@ -2790,9 +2858,12 @@ def _do_judge_full(ticker, date, judgment_model, replay_dir, accept_over_budget,
     manifest_path = run_dir / "manifest.json"
 
     py = _pick_python()
-    bundle_path = run_dir / "bundles" / "judge.md"
+    contract = _judge_contract()
+    bundle_path = run_dir / "bundles" / ("judge.md" if contract == "v19"
+                                         else "judge_{0}.md".format(contract))
     rb = subprocess.run(
-        [py, str(SCRIPTS_DIR / "dd_bundle.py"), "judge", "--run-dir", str(run_dir)],
+        [py, str(SCRIPTS_DIR / "dd_bundle.py"), "judge", "--run-dir", str(run_dir),
+         "--contract", contract, "--out", str(bundle_path)],
         capture_output=True, text=True,
     )
     if rb.returncode != 0:
@@ -3611,6 +3682,16 @@ def _run_gates(run_dir, ticker, date, out_html=None, postprocess=False):
         "--tables", str(tables_dir), "--judgment", str(judgment_path),
         "-o", str(out_path),
     ]
+    # WP-H2-3（2026-09-11）：正式流程對 v19 判斷檔組頁時要傳 `--layout v19`——
+    # H2-2 把新版面做出來了但這條呼叫沒接上，v19 run 會靜靜地組成舊版面（既有
+    # 檔案都在、不會報錯，只是頁首五張卡與 24 格全部不見）。判別看**判斷檔實際
+    # 的 contract**，與 `_judge_check` 同一條原則：replay 重放舊 fixture 仍走舊版面。
+    if judgment_path.exists():
+        try:
+            if dd_project.is_v19(_load_json(judgment_path)):
+                assemble_cmd += ["--layout", "v19"]
+        except (json.JSONDecodeError, ValueError):
+            pass
     if not postprocess:
         assemble_cmd.append("--no-postprocess")
     r_asm = subprocess.run(assemble_cmd, capture_output=True, text=True)
@@ -3697,6 +3778,39 @@ def cmd_gates(args):
 _PROSE_MECHANICAL_SIDS = ("revlog", "s14", "appA")
 
 
+def _is_v19_layout(html_path) -> bool:
+    """組裝出來的頁面是不是 v19 版面。判別看**產物自己**的 `dd-layout` meta
+    （`scripts/dd_templates/v19.html` 寫的），不看流程預期——與 `_judge_check`
+    的判別原則一致：replay 重放舊 fixture 時該走舊路徑就走舊路徑。"""
+    try:
+        head = Path(html_path).read_text(encoding="utf-8", errors="replace")[:4000]
+    except OSError:
+        return False
+    return 'name="dd-layout" content="v19"' in head
+
+
+def _v19_structure_findings(run_dir, preview):
+    """跑 `scripts/validate_report_v19.py --json`，把 findings 原樣轉成
+    `(sid, 原因)`。腳本本身跑不起來時回一條 `_v19_structure` 的 finding——
+    **不靜默放行**：驗收閘跑不動和驗收不過一樣要擋。"""
+    run_dir = Path(run_dir)
+    cmd = [_pick_python(), str(SCRIPTS_DIR / "validate_report_v19.py"), str(preview),
+           "--judgment", str(run_dir / "judgment.json"), "--json"]
+    for flag, name in (("--facts", "facts.json"), ("--scenario-meta", "scenario_meta.json")):
+        if (run_dir / name).exists():
+            cmd += [flag, str(run_dir / name)]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    try:
+        payload = json.loads(r.stdout) if r.stdout.strip() else None
+    except (json.JSONDecodeError, ValueError):
+        payload = None
+    if payload is None:
+        return [("_v19_structure", "v19 結構驗收跑不起來：{0}".format(
+            (r.stdout + r.stderr).strip()[-400:]))]
+    return [(f.get("sid") or "_v19_structure", "v19 結構驗收：" + str(f.get("reason")))
+            for f in (payload.get("findings") or [])]
+
+
 def _prose_depth_findings(run_dir, ticker, date):
     """回傳 [(sid, reason), ...]：整檔深度未達發布底線時擋下，並附偏低段清單。
 
@@ -3715,6 +3829,13 @@ def _prose_depth_findings(run_dir, ticker, date):
     preview = Path(run_dir) / "DD_preview.html"
     if not preview.exists():
         return []  # 組裝失敗由 _run_gates 的 _assemble finding 負責回報
+
+    # WP-H2-3（2026-09-11，Codex 裁定 3）：v19 版面改走**結構與內容驗收**，
+    # 不用 bytes。v19 的散文是條列白話（lead ≤40 字＋2–6 條短條列），寫得好反
+    # 而短；沿用 70KB 整檔 floor 只會逼出灌水。70KB floor 留給 legacy 版面。
+    if _is_v19_layout(preview):
+        return _v19_structure_findings(run_dir, preview)
+
     total = preview.stat().st_size
     if total >= DD_FULL_FLOOR_BYTES:
         return []
@@ -5636,6 +5757,10 @@ def build_parser():
     jg.add_argument("--accept-over-budget", action="store_true")
     jg.add_argument("--no-delta", action="store_true",
                      help="WP-C：強制整份重寫，不問複審 delta 路由（即使有 prior 存查）")
+    jg.add_argument("--contract", default="v19", choices=["v19", "v18"],
+                     help="判斷契約（WP-H2-3 成對測試用）：v19＝預設瘦身包；v18＝同一份證據"
+                          "改用舊包再判一次。兩次共用同一個 run 目錄，產物以 *_v19.json／"
+                          "*_v18.json 快照區分；v18 一律整份重判（不走 delta／reuse）。")
 
     def _cmd_judge(args):
         ticker = args.ticker.strip().upper()
@@ -5646,8 +5771,9 @@ def build_parser():
             "steps": [], "agents": [], "stages": {},
         })
         model = args.judgment_model or manifest.get("judgment_model") or DEFAULT_JUDGMENT_MODEL
-        global _JUDGE_MODE_OVERRIDE
+        global _JUDGE_MODE_OVERRIDE, _JUDGE_CONTRACT_OVERRIDE
         _JUDGE_MODE_OVERRIDE = args.judge_mode
+        _JUDGE_CONTRACT_OVERRIDE = getattr(args, "contract", None)
         return _do_judge(ticker, date, model, replay_dir, args.accept_over_budget, manifest,
                           no_delta=args.no_delta)
 

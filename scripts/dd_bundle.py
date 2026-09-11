@@ -8,7 +8,9 @@ Markdown，供判斷 agent（judge）或判斷層 critic（gate）一次讀取�
 `judge` 段落順序：①任務頭 → ②schema 速查（機械生成自
 judgment.schema.json）→ ③evidence 緊湊版 → ④最新一季逐字稿全文 →
 ⑤digest → ⑥`references/v16/judgment-rules.md` 全文 → ⑦archetype 條件載入
-reference（依 judgment-rules §1 表）。
+reference（依 judgment-rules §1 表）。`--contract v19`（預設）改成 ①任務頭 →
+②v19 schema 速查 → ③`facts.json` 全文 → ③b 前三季摘要壓縮全表（WP-H2-3）→
+④最新一季逐字稿全文 → ⑥規則檔 v19 產物 → ⑦archetype 條件載入。
 
 `gate` 段落順序：①任務頭 → ②`gate_view`（機械抽出，見下）→ judgment.json
 全文 → `gate_contract.md` 全文。2026-09-10（WP-A）：閘不再附 evidence／digest
@@ -46,6 +48,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dd_delta  # noqa: E402 — _sibling_scenario_meta（scenario_meta sidecar 尋檔規則），單一權威不複製
 import dd_project  # noqa: E402 — v19 判斷檔 → 舊形狀視圖（WP-H1）；舊形狀是 identity
+import dd_rules  # noqa: E402 — 規則單一來源與 v19 產物版本戳（WP-H2-3）
 import dd_sections  # noqa: E402 — LEAK_PATTERNS（QC-40 詞表），單一權威不複製
 import qc  # noqa: E402 — CJK_PUNCT_RE（半形標點規則），單一權威不複製
 import validate_prose  # noqa: E402  （2026-09-06 WP4b：dump_number_whitelist 單一權威不複製）
@@ -398,13 +401,86 @@ def _facts_section(facts_path) -> str:
     return "\n".join(lines)
 
 
-def _judgment_rules_section(path) -> str:
+def _digest_lines_section(digest_path) -> str:
+    """v19 判斷 bundle 的 ③b 段：前三季（與其餘非最新一季）逐字稿摘要的**壓縮全表**。
+
+    WP-H2-3（2026-09-11，Codex 裁定 1）：H2-1 原本把 digest 整份拿掉，只留事實表
+    ——實測顯示「只出現在摘要裡的反證」不會被機械初稿抬進 facts，而事實檢查對這
+    種漏失是 0 FAIL、0 WARN（檢查不到的東西不會響）。在有「逐項來源覆蓋檢查」之
+    前，判斷層必須看得到摘要的**全部** items 與 qa_flags；省的是排版不是內容——
+    每條壓成一行「季別｜topic｜claim｜方向」，quote／speaker／file 等定位欄不帶
+    （要逐字原文時回 evidence／事實表查該 finding）。
+
+    `方向` 欄：`digest.json` 的 item 沒有 direction 欄位（摘要 agent 被明令禁裁
+    方向，見 `dd_prompts/digest.md.tmpl` 規則 6）。這裡**不臆造方向**——item 自
+    帶 `direction` 就照抄，否則以 `topic == "risk"` 當唯一機械代理標「風險」，其
+    餘標「未標」，並在段首把這件事講明白，免得判斷層把「未標」讀成「中性」。"""
+    lines = ["## ③b 前三季逐字稿摘要（壓縮全表：全部 items 與 qa_flags，不按方向裁）", ""]
+    p = Path(digest_path) if digest_path else None
+    if not p or not p.exists():
+        lines.append(f"[找不到摘要：{digest_path}]——若這檔本來就只有一季逐字稿，忽略本段；"
+                     "否則回報 orchestrator，不要當作「沒有反證」。")
+        return "\n".join(lines)
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, ValueError):
+        lines.append(f"[摘要不是合法 JSON：{digest_path}]——回報 orchestrator。")
+        return "\n".join(lines)
+
+    items = [i for i in (obj.get("items") or []) if isinstance(i, dict)]
+    flags = [f for f in (obj.get("qa_flags") or []) if isinstance(f, dict)]
+    lines.append(
+        "摘要 agent 被禁止裁方向，所以「方向」欄只有兩種來源：item 自帶 `direction`，"
+        "或以 `topic == \"risk\"` 為機械代理。**「未標」不等於中性**——這些條目要不要"
+        "當反證由你判斷。逐字原文與出處在事實表與證據包，需要時引該 finding 的 id。"
+    )
+    lines.append("")
+    lines.append("### items（{0} 條）".format(len(items)))
+    if not items:
+        lines.append("（無）")
+    for it in items:
+        topic = str(it.get("topic") or "—")
+        direction = it.get("direction")
+        if direction is None:
+            direction = "風險" if topic == "risk" else "未標"
+        lines.append("- {0}｜{1}｜{2}｜{3}".format(
+            it.get("date") or "期間未標", topic,
+            _one_line(it.get("claim")), direction))
+    lines.append("")
+    lines.append("### qa_flags（{0} 條：管理層迴避／改口／保留）".format(len(flags)))
+    if not flags:
+        lines.append("（無）")
+    for fl in flags:
+        lines.append("- {0}｜回應型態：{1}".format(
+            _one_line(fl.get("question")), _one_line(fl.get("response_pattern"))))
+    return "\n".join(lines)
+
+
+def _one_line(text) -> str:
+    """壓成一行：換行轉空白、連續空白收斂。內容一字不刪（壓的是排版不是資訊）。"""
+    if text is None:
+        return "—"
+    return re.sub(r"\s+", " ", str(text)).strip() or "—"
+
+
+def _judgment_rules_section(path, contract: str = "v18") -> str:
+    """⑥ 段規則檔全文。
+
+    WP-H2-3（2026-09-11，Codex 裁定 2）：規則的唯一人工維護來源是
+    `judgment-rules.md`，`judgment-rules-v19.md` 降為 `dd_rules.py build-v19`
+    的產物。v18 路徑改**經 `dd_rules.render("v18")` 產視圖**，好處是來源檔裡的
+    `<!-- only:v19 -->` 段與標記行不會漏進 v18 的包（內容一字不改，只是把不屬
+    於這一版的段落拿掉）。指定 `--judgment-rules` 時照原樣讀那份檔，不做視圖轉
+    換——那是給「指到另一份合規文件」用的逃生口。"""
     lines = ["## ⑥ judgment-rules.md 全文", ""]
     p = Path(path)
     if not p.exists():
         lines.append(f"[找不到 {p}]")
         return "\n".join(lines)
-    lines.append(p.read_text(encoding="utf-8"))
+    if contract == "v18" and p == JUDGMENT_RULES_PATH:
+        lines.append(dd_rules.render("v18", source_path=p))
+    else:
+        lines.append(p.read_text(encoding="utf-8"))
     return "\n".join(lines)
 
 
@@ -661,6 +737,109 @@ def _gate_digest_risk_section(digest_path) -> str:
     return "\n".join(lines)
 
 
+def _iter_facts(facts: dict):
+    """逐條走事實表的 facts（六問各一組），回傳 (qkey, fact dict)。"""
+    for qkey, q in ((facts or {}).get("questions") or {}).items():
+        for f in (q or {}).get("facts") or []:
+            if isinstance(f, dict) and f.get("id"):
+                yield qkey, f
+
+
+def _collect_fact_refs(raw_judgment: dict) -> list:
+    """判斷檔內所有 `fact_refs`（六問答案、也可能出現在別處）的 id，去重保序。
+
+    走的是**原始 v19 判斷檔**不是投影視圖：`fact_refs` 是 v19 自有欄位，投影
+    視圖為了相容舊形狀不保證保留它。"""
+    seen, out = set(), []
+
+    def walk(node):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                if k == "fact_refs" and isinstance(v, list):
+                    for r in v:
+                        r = str(r)
+                        if r and r not in seen:
+                            seen.add(r)
+                            out.append(r)
+                else:
+                    walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+
+    walk(raw_judgment or {})
+    return out
+
+
+def _gate_referenced_facts_section(raw_judgment: dict, facts: dict) -> str:
+    """v19 閘的「被引用事實」段（WP-H2-3，Codex 接線缺口 2）。
+
+    H2-1 的閘 bundle 只有 `fact_refs` 的 **id**，沒有值也沒有原文——閘要查
+    「這個數字是不是這個意思」時得靠猜，等於沒查。這裡把被引用到的事實逐條
+    帶入（id／值＋單位／期間與口徑／來源與原文片段），另附 `findings_digest`
+    中**方向為負或來源有衝突**的條目（閘的職責之一就是問「這些負向的東西，
+    判斷者處理了沒有」）。
+
+    刻意**不帶整份事實表**：閘要看的是「判斷者引了什麼、漏了什麼負向的」，
+    不是把 Stage 0 的收集成果再付一次上下文。"""
+    lines = ["## ②b 被引用的事實與負向條目（v19；閘要查數字時不必猜）", ""]
+    if not facts:
+        lines.append("[本 run 沒有 facts.json——不是 v19 run，或事實表未產出。]")
+        return "\n".join(lines)
+
+    index = {f["id"]: (qkey, f) for qkey, f in _iter_facts(facts)}
+    refs = _collect_fact_refs(raw_judgment)
+    lines.append("### 判斷檔 `fact_refs` 引到的事實（{0} 條）".format(len(refs)))
+    if not refs:
+        lines.append("（判斷檔沒有任何 `fact_refs`——這本身就是要問的事：承重數字沒有可追溯來源。）")
+    for ref in refs:
+        hit = index.get(ref)
+        if hit is None:
+            lines.append("- `{0}`：**事實表查無此 id**（斷鏈——承重數字追不回來源）".format(ref))
+            continue
+        qkey, f = hit
+        src = f.get("source") or {}
+        lines.append("- `{0}`（{1}）｜{2}＝{3}{4}｜期間與口徑：{5}／{6}｜kind：{7}".format(
+            ref, qkey, _one_line(f.get("label")), _one_line(f.get("value")),
+            (" " + str(f.get("unit"))) if f.get("unit") else "",
+            _one_line(f.get("period")), _one_line(f.get("basis")), _one_line(f.get("kind"))))
+        lines.append("  - 來源：{0}（{1}，as_of {2}）".format(
+            _one_line(src.get("citation")), _one_line(src.get("ref")), _one_line(src.get("as_of"))))
+        if f.get("note"):
+            lines.append("  - 註記：{0}".format(_one_line(f.get("note"))))
+
+    neg = []
+    for d in (facts.get("findings_digest") or []):
+        if not isinstance(d, dict):
+            continue
+        direction = str(d.get("direction") or "")
+        status = str(d.get("status") or "")
+        if direction == "-" or "conflict" in status or "衝突" in status:
+            neg.append(d)
+    lines.append("")
+    lines.append("### findings_digest 中方向為負或來源衝突的條目（{0} 條）".format(len(neg)))
+    if not neg:
+        lines.append("（無。若判斷檔通篇沒有反證，這件事本身值得問。）")
+    for d in neg:
+        lines.append("- `{0}`（{1}｜方向 {2}｜狀態 {3}）：{4}".format(
+            _one_line(d.get("id")), _one_line(d.get("axis")),
+            _one_line(d.get("direction")), _one_line(d.get("status")), _one_line(d.get("claim"))))
+        lines.append("  - 來源：{0}（as_of {1}）｜affects：{2}".format(
+            _one_line(d.get("source")), _one_line(d.get("as_of")),
+            _one_line("、".join(str(a) for a in (d.get("affects") or [])) or "—")))
+    gaps = facts.get("gaps") or []
+    if gaps:
+        lines.append("")
+        lines.append("### 事實表自陳的缺口（{0} 條）".format(len(gaps)))
+        for g in gaps:
+            if isinstance(g, dict):
+                lines.append("- {0}：{1}".format(_one_line(g.get("id") or g.get("question")),
+                                                 _one_line(g.get("why"))))
+            else:
+                lines.append("- {0}".format(_one_line(g)))
+    return "\n".join(lines)
+
+
 def _gate_view_section(evidence: dict, judgment: dict, judgment_path: Path, digest_path) -> str:
     lines = [
         "## ② gate_view（機械抽出，非 evidence／digest 全文；抽取規則與 checklist 對照表見 "
@@ -889,21 +1068,34 @@ def cmd_judge(args) -> int:
     evidence = _load_json(evidence_path)
 
     # WP-H2-1（2026-09-11）：v19 是預設。瘦身包＝任務頭（五出手點）＋v19 schema
-    # 速查＋事實表全文（含 findings_digest，不按方向裁）＋最新一季逐字稿全文＋
-    # 規則精簡版＋archetype 條件載入。**不再帶**證據包緊湊版與 digest 全文——
-    # 那兩塊的內容已由事實表收過一次，帶兩份就是讓判斷層再挖一次同一批數字。
+    # 速查＋事實表全文（含 findings_digest，不按方向裁）＋前三季摘要壓縮全表＋
+    # 最新一季逐字稿全文＋規則精簡版＋archetype 條件載入。**不再帶**證據包緊湊版
+    # ——那塊的內容已由事實表收過一次，帶兩份就是讓判斷層再挖一次同一批數字。
+    # WP-H2-3（2026-09-11，Codex 裁定 1）：digest 改「壓縮全表」帶回來（不是拿掉，
+    # 也不是整份 JSON）——機械初稿不會把只出現在摘要裡的反證抬進 facts，而事實檢查
+    # 對這種漏失是 0 FAIL、0 WARN。有逐項來源覆蓋檢查之前不得移除。
     # `--contract v18` 回舊包（A/B 或回退用）。
     if getattr(args, "contract", "v19") == "v19":
         facts_arg = getattr(args, "facts", None)
         facts_path = Path(facts_arg) if facts_arg else (
             (run_dir / "facts.json") if args.run_dir else None)
         rules_path = Path(args.judgment_rules) if args.judgment_rules else JUDGMENT_RULES_V19_PATH
+        # WP-H2-3（Codex 裁定 2）：v19 規則檔是產物不是人工檔——組包前先核對它與
+        # 來源 `judgment-rules.md` 的版本戳。不一致就**擋下**（不是警告後照跑）：
+        # 拿一份過期的規則去判斷，錯在哪不會有人發現。`--judgment-rules` 指到別份
+        # 檔時跳過此檢查（逃生口，責任在呼叫端）。
+        if not args.judgment_rules:
+            ok_rules, msg_rules = dd_rules.check(rules_path)
+            if not ok_rules:
+                print("✗ " + msg_rules, file=sys.stderr)
+                return 1
         parts = [
             _task_header_v19(evidence.get("ticker"), evidence.get("date")),
             _schema_cheatsheet("v19"),
             _facts_section(facts_path),
+            _digest_lines_section(digest_path),
             _transcript_section(evidence, args.transcript),
-            _judgment_rules_section(rules_path),
+            _judgment_rules_section(rules_path, "v19"),
             _archetype_refs_section(evidence),
         ]
         _write_bundle(parts, out_path)
@@ -954,11 +1146,13 @@ def cmd_gate(args) -> int:
     # 實際寫的那份，v19 不例外）；gate_view 的機械抽取則讀 dd_project 投影視圖，
     # 才找得到反證、evidence_dismissed 與被引用的 finding。舊形狀兩者同一物件。
     judgment_obj: dict = {}
+    judgment_raw_obj: dict = {}
     if judgment_path.exists():
         judgment_raw = judgment_path.read_text(encoding="utf-8")
         try:
-            judgment_obj = dd_project.view_for(json.loads(judgment_raw), judgment_path)
-            judgment_text = json.dumps(json.loads(judgment_raw), ensure_ascii=False, separators=(",", ":"))
+            judgment_raw_obj = json.loads(judgment_raw)
+            judgment_obj = dd_project.view_for(judgment_raw_obj, judgment_path)
+            judgment_text = json.dumps(judgment_raw_obj, ensure_ascii=False, separators=(",", ":"))
             judgment_note = _JSON_NOTE + "\n\n"
         except (json.JSONDecodeError, ValueError):
             judgment_text = judgment_raw
@@ -966,6 +1160,21 @@ def cmd_gate(args) -> int:
     else:
         judgment_text = f"[找不到 judgment：{judgment_path}]"
         judgment_note = ""
+
+    # WP-H2-3（Codex 接線缺口 2）：v19 run 的閘要看得到被引用事實的**值與原文**，
+    # 不能只有 id。非 v19（舊形狀）不加這一段，閘 bundle 一位元組不變。
+    facts_obj = None
+    if judgment_raw_obj and dd_project.is_v19(judgment_raw_obj):
+        facts_arg = getattr(args, "facts", None)
+        facts_file = Path(facts_arg) if facts_arg else (
+            (Path(args.run_dir) / "facts.json") if args.run_dir else None)
+        if facts_file and facts_file.exists():
+            try:
+                facts_obj = json.loads(facts_file.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, ValueError):
+                facts_obj = None
+        if facts_obj is None:
+            facts_obj = dd_project.load_facts(judgment_raw_obj, judgment_path)
     gate_contract_path = Path(args.gate_contract) if args.gate_contract else GATE_CONTRACT_PATH
     gate_contract_text = (
         gate_contract_path.read_text(encoding="utf-8") if gate_contract_path.exists()
@@ -975,6 +1184,10 @@ def cmd_gate(args) -> int:
     parts = [
         _task_header(evidence.get("ticker"), evidence.get("date"), "gate"),
         _gate_view_section(evidence, judgment_obj, judgment_path, digest_path),
+    ]
+    if facts_obj is not None:
+        parts.append(_gate_referenced_facts_section(judgment_raw_obj, facts_obj))
+    parts += [
         "## ③ judgment.json 全文（被審對象，原樣保留）\n\n" + judgment_note + "```json\n" + judgment_text + "\n```",
         "## ④ gate_contract.md 全文（v17 checklist 條文權威，取代 v15 references/critic-gates.md）\n\n"
         + gate_contract_text,
@@ -1006,6 +1219,7 @@ def main(argv):
     p_gate.add_argument("--evidence", help="evidence.json 路徑（無 --run-dir 時必填）")
     p_gate.add_argument("--digest", help="digest.json 路徑")
     p_gate.add_argument("--judgment", help="judgment.json 路徑（無 --run-dir 時必填）")
+    p_gate.add_argument("--facts", help="facts.json 路徑（v19：閘要看被引用事實的值與原文；預設 run_dir/facts.json）")
     p_gate.add_argument("--transcript", help="逐字稿檔路徑；未給則由 evidence.transcripts 自動找")
     p_gate.add_argument("--gate-contract", help="gate_contract.md 路徑（預設 scripts/dd_prompts/gate_contract.md）")
     p_gate.add_argument("--out", help="輸出 bundle 路徑（無 --run-dir 時必填）")

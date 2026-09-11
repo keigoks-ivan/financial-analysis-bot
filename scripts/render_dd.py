@@ -478,10 +478,12 @@ def assemble_from_parts(prose_dir: Path, tables_dir: Path, title=None,
 # bytes／leaks 掃描不需改動即可涵蓋 v19 產物。
 #
 # 與 assemble_from_parts()（舊版面）的關鍵差異：
-#   - 免費資料區的表格片段大半是 v19 專屬 renderer（v19-spread/v19-roic/
-#     v19-segs 等）而非舊 e5/e7/e8——v19 判斷檔的欄位形狀與舊 E5/E7/E8
-#     renderer 預期的窄表欄位名不同，沿用舊 renderer 會整表空白（已實測），
-#     見 gen_dd_tables.py 該三個新函式的模組註解。
+#   - 免費資料區的 §5 持續期表與 §6 分部表用 v19 專屬 renderer（v19-roic／
+#     v19-segs）而非舊 e7/e8——v19 判斷檔的欄位形狀與舊 E7/E8 renderer 預期的
+#     窄表欄位名不同，沿用舊 renderer 會整表空白（已實測），見 gen_dd_tables.py
+#     該兩個函式的模組註解。**E5 同業對照表例外**（2026-09-11 WP-H2-3）：
+#     `render_e5_html()` 已自己認得同業矩陣形狀並優先讀 `facts.peer_comparison`，
+#     所以 §5 直接注入 `e5.html`，原本的 `v19-spread.html` 平行產物已撤。
 #   - appA/appB/appC/revlog/s14 一律從 TABLES_DIR 讀（gen_dd_tables.py 的
 #     v19 分支輸出），不是 PROSE_DIR——這五段是純機械投影，不需要散文 agent
 #     或 prose-stub 產出對應檔案（呼應 dd_project.prose_stub() 的既有慣例：
@@ -532,7 +534,7 @@ _V19_MARKER_SPECS = {
         {"marker": "<!-- E3 -->", "files": ["e3.html"], "folded": True, "label": "市場空間與利潤池流向"},
     ],
     "s5": [
-        {"marker": "<!-- E6 -->", "files": ["e6.html", "v19-spread.html", "v19-threats.html"],
+        {"marker": "<!-- E6 -->", "files": ["e5.html", "e6.html", "v19-threats.html"],
          "folded": True, "label": "對手財務對照與威脅分級"},
         {"marker": "<!-- E7 -->", "files": ["v19-roic.html"], "folded": True, "label": "持續期四檢查點"},
     ],

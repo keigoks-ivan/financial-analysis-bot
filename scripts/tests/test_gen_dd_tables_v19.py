@@ -152,11 +152,38 @@ def test_dashboard_assembles_header_cards_grid_changemind(view, meta, facts):
 # ---------------------------------------------------------------------------
 
 def test_spread_table_uses_wide_shape_columns(view):
-    html = gdt.render_v19_spread_html(view)
-    assert html is not None
-    assert 'id="spread"' in html
+    """2026-09-11（WP-H2-3）：同業矩陣改由 `render_e5_html` 直接渲染（原本的
+    `render_v19_spread_html` 平行函式已撤），表 id 回到 `e5`。"""
+    html = gdt.render_e5_html(view)
+    assert 'id="e5"' in html
     assert "FIX" in html and "EME" in html
     assert "16.45" in html  # FIX 營益率數字確實落進表格，不是空欄
+
+
+def test_e5_prefers_facts_peer_comparison_over_projection(view, facts):
+    """優先序：facts.peer_comparison（帶期間與單位）> moat.spread_table 投影。"""
+    html = gdt.render_e5_html(view, facts)
+    assert 'id="e5"' in html
+    pc = facts["peer_comparison"]
+    for row in pc["rows"]:
+        assert row["name"] in html
+    # 事實表的期間會落進備註欄（投影路徑沒有這一欄）。
+    periods = {r.get("period") for r in pc["rows"] if r.get("period")}
+    assert any(p in html for p in periods)
+
+
+def test_e5_narrow_shape_unchanged(view):
+    """舊窄形狀（driver/metric_now/…）走原路徑，表頭一字不變——36 份舊格式
+    判斷檔的 e5.html 因此逐位元組相同。"""
+    narrow = {"moat": {"execution": 8, "pricing": 7, "combined": 7.5, "grade": "B",
+                       "spread_table": [{"driver": "D1", "metric_now": "1", "metric_hist_avg": "2",
+                                          "spread": "-1", "moat_linkage": "L"}]}}
+    html = gdt.render_e5_html(narrow)
+    assert "<th>驅動因子</th>" in html and "<th>護城河連結</th>" in html
+    assert "<td>D1</td>" in html
+    # 有 facts 也不改變舊形狀的渲染（指紋命中就走原路徑）。
+    assert gdt.render_e5_html(narrow, {"peer_comparison": {"metrics": [{"key": "x", "label": "X"}],
+                                                            "rows": [{"name": "P", "values": {"x": 1}}]}}) == html
 
 
 def test_roic_checkpoints_uses_item_level_text_shape(view):
@@ -179,14 +206,12 @@ def test_threats_renders_when_present(view):
     assert "客戶自購設備" in html
 
 
-def test_legacy_e5_e7_e8_are_empty_for_v19_shape_documenting_the_gap(view):
-    """既有 E5/E7/E8 renderer 對 v19 判斷檔的欄位形狀不吻合——這不是本輪要修
-    的東西（v19 版面改走 v19-spread/v19-roic/v19-segs），但迴歸測試留一個
-    誠實的紀錄，避免以後有人誤以為 e5/e7/e8.html 對 v19 檔也能用。"""
-    e5 = gdt.render_e5_html(view)
+def test_legacy_e7_e8_are_empty_for_v19_shape_documenting_the_gap(view):
+    """E7/E8 renderer 對 v19 判斷檔的欄位形狀仍不吻合——v19 版面改走
+    v19-roic/v19-segs，迴歸測試留一個誠實的紀錄。E5 已於 WP-H2-3 修好
+    （見 test_spread_table_uses_wide_shape_columns），不再列在此。"""
     e7 = gdt.render_e7_html(view)
     e8 = gdt.render_e8_html(view)
-    assert "16.45" not in e5  # 對照 test_spread_table_uses_wide_shape_columns 有抓到
     assert "需求基礎值" not in e7
     assert "58%（Q2）" not in e8
 
@@ -259,8 +284,12 @@ def test_cli_writes_v19_fragments_only_for_v19_contract(tmp_path):
     )
     assert r.returncode == 0, r.stderr
     for name in ("v19-dashboard.html", "v19-appA.html", "v19-revlog.html", "v19-s14.html",
-                 "v19-spread.html", "v19-roic.html", "v19-segs.html"):
+                 "v19-roic.html", "v19-segs.html"):
         assert (out_v19 / name).exists(), f"missing {name}"
+    # WP-H2-3：同業矩陣回到 e5.html，不再另產 v19-spread.html。
+    assert not (out_v19 / "v19-spread.html").exists()
+    e5 = (out_v19 / "e5.html").read_text(encoding="utf-8")
+    assert 'id="e5"' in e5 and "EME" in e5
 
     out_legacy = tmp_path / "legacy_out"
     r = subprocess.run(

@@ -65,6 +65,14 @@ MODULES = {
 # v16 pipeline（gen_dd_tables.py 產出，dd-meta "pipeline":"v16"）改檢查表格 id
 # 存在性——關鍵字式偵測會被「改標題」繞過（v16 dry-run §11 item 1 教訓）。
 V16_TABLE_IDS = ["e3", "e5", "e6", "e7", "e8", "e9", "e10"]
+# v19 版面（`<meta name="dd-layout" content="v19">`，scripts/dd_templates/v19.html）
+# 的 §5.R 持續期表／§6 分部表／§7 財務表用的是 v19 專屬 renderer，表格 id 不同
+# （`roic`／`segs`／`e9b`），**但模組本身一個都沒少**。2026-09-11（WP-H2-3）：不加
+# 這個對照表的話，本閘會對每一份 v19 報告噴「必交模組表格缺席」——閘還掃得到檔，
+# 只是問錯了 id，正是 CLAUDE.md 2026-09-07 那條「改產物形態要逐一點名既有的閘」
+# 講的失效方式。e3/e5/e6/e10 兩個版面共用同一支 renderer，id 不變。
+V19_TABLE_IDS = ["e3", "e5", "e6", "roic", "segs", "e9b", "e10"]
+V19_LAYOUT_MARK = 'name="dd-layout" content="v19"'
 SP = "[  \\t]*"   # 半形/全形空白
 
 
@@ -191,7 +199,8 @@ def check_file(path):
     elif meta.get("pipeline") == "v16":
         # v16 產出：gen_dd_tables.py 一律產生 <table id="e{N}">，直接查表格
         # id 存在性（不會被「改標題」繞過）。
-        for tid in V16_TABLE_IDS:
+        table_ids = V19_TABLE_IDS if V19_LAYOUT_MARK in html else V16_TABLE_IDS
+        for tid in table_ids:
             if not re.search(rf'<table\b[^>]*\bid="{tid}"', html):
                 fails.append(f"必交模組表格 <table id=\"{tid}\"> 全文缺席（v16 pipeline 表格存在性檢查）")
     else:

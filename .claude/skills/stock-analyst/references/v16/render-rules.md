@@ -70,7 +70,7 @@
 |---|---|---|---|
 | `<!-- E2 -->` | `s2` | §2 H1-H3 表（沿用舊 `e2.html`） | 否（規格「常駐」） |
 | `<!-- E3 -->` | `s3` | 市場空間與利潤池流向（沿用舊 `e3.html`） | 是 |
-| `<!-- E6 -->` | `s5` | 對手財務對照與威脅分級（`e6.html`＋`v19-spread.html`＋`v19-threats.html` 合一個折疊區） | 是 |
+| `<!-- E6 -->` | `s5` | 對手財務對照與威脅分級（`e5.html`＋`e6.html`＋`v19-threats.html` 合一個折疊區） | 是 |
 | `<!-- E7 -->` | `s5` | 持續期四檢查點（`v19-roic.html`，非舊 `e7.html`——見下方欄位形狀落差） | 是 |
 | `<!-- E8 -->` | `s6` | 分部前瞻（`v19-segs.html`，非舊 `e8.html`） | 是 |
 | `<!-- E9B -->` | `s7` | 三到四年財務表（`v19-e9b.html`） | 是 |
@@ -83,7 +83,9 @@
 | `<!-- E12 -->` | `decision` | 監測與觸發器、致命指標、催化劑（`e12.html`＋`v19-kill.html`＋`v19-catalysts.html` 合一個折疊區） | 是 |
 | `<!-- AUDIT -->` | `decision` | 決策矩陣逐 row 檢核（沿用舊 `audit.html`，該檔本身已自帶 `<details class="audit">` 外層，不再二次包裝） | 否（已自帶） |
 
-**為什麼 §5／§6 不沿用舊 `e5.html`／`e7.html`／`e8.html`**：v19 判斷檔的 `moat.spread_table`（一列一指標、一欄一公司的寬表）、`moat.roic_durability.checkpoints`（`item`/`level`/`text`）、`growth.segments`（`share`/`driver`/`note`）欄位形狀與舊 renderer 預期的窄表欄位名不同——沿用舊 renderer 對 v19 判斷檔會整表空白（WP-H2-2 實測 `e5`/`e7`/`e8.html` 對 FIX fixture 全空）。`gen_dd_tables.py` 因此另立 `render_v19_spread_html`／`render_v19_roic_checkpoints_html`／`render_v19_segments_html`／`render_v19_threats_html` 四個對應 v19 實際形狀的 renderer，只用於 v19 版面注入，不影響舊版面沿用的 `render_e5_html`/`render_e7_html`/`render_e8_html`（原函式保留不動）。
+**為什麼 §5 持續期表／§6 分部表不沿用舊 `e7.html`／`e8.html`**：v19 判斷檔的 `moat.roic_durability.checkpoints`（`item`/`level`/`text`）、`growth.segments`（`share`/`driver`/`note`）欄位形狀與舊 renderer 預期的窄表欄位名不同——沿用舊 renderer 對 v19 判斷檔會整表空白（WP-H2-2 實測 `e7`/`e8.html` 對 FIX fixture 全空）。`gen_dd_tables.py` 因此另立 `render_v19_roic_checkpoints_html`／`render_v19_segments_html`／`render_v19_threats_html` 三個對應 v19 實際形狀的 renderer，只用於 v19 版面注入，不影響舊版面沿用的 `render_e7_html`/`render_e8_html`（原函式保留不動）。
+
+**E5 同業對照表是例外**（2026-09-11 WP-H2-3）：`render_e5_html()` 已改成自己認得兩種形狀——同業矩陣（metric／各同業值／note，優先讀 `facts.peer_comparison`，缺才讀 `moat.spread_table` 的 P-26 投影）與舊窄表（`driver`/`metric_now`/… 指紋命中就走原路徑，36 份舊格式判斷檔輸出逐位元組不變）。原本的 `render_v19_spread_html` 平行函式已撤，v19 的 `<!-- E6 -->` 折疊區直接注入 `e5.html`：同一張表留兩支 renderer 是漂移的溫床。
 
 **七表數值欄位新增 `class="num"`**（v19.css 的 `td.num`／`th.num` 靠 class 選右對齊等寬數字，不靠欄序）：`render_e3_html`/`render_e5_html`/`render_e6_html`/`render_e7_html`/`render_e8_html`/`render_e9_html`/`render_e10_html` 的數值欄一律加了 `class="num"`（第一欄的名稱/年度/段別標籤欄不加，對照 TSM 樣稿慣例）；`{item,value}` 兩欄表（`_render_item_value_table`）沿用不變。**這個改動對舊版面是純新增屬性**（`dd_template/dd.css` 沒有 `.num` 選擇器，屬性存在但不生效），舊版面 14 份既有完整版重跑只多這個屬性、其餘 bytes 不變（已用 `judgment_v18_TXN.json` fixture 跑 stash 前後 diff 驗證，唯一意外落點是 `_unexpanded_table()` 的 `ncol = header.count("<th>")` 因表頭多了 `class="num"` 不再精確匹配、colspan 算少——已修成 `header.count("<th")`）。
 

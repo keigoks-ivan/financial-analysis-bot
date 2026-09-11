@@ -1,8 +1,16 @@
 # stock-analyst v18 — judgment-rules.md(判斷層唯一always-on規則檔)
 
+<!-- only:v18 -->
 > 你是誰：v18判斷階段。輸入=`evidence.json`＋逐字稿 `.md`＋本檔(＋條件載入reference)。
 > 輸出契約：欄位形狀見`scripts/dd_schema/judgment.schema.json`；`decision_inputs`語意見`decision_inputs.md`；judgment→dd-meta對映見`judgment-to-ddmeta.md`，本檔不重述schema。
 > v18骨架=六個核心問題(§2)。**六問是每檔必答的問題，不是每家公司填同一組數字**：各題列的是預設最小交付物，表格是需要時的產物、不是入場費；特殊公司換尺(§1 archetype路由)優先於六問預設尺。
+<!-- /only -->
+
+<!-- only:v19 -->
+> 你是誰：v19判斷階段。輸入=本 bundle 全文(`facts.json`事實表＋前三季摘要壓縮全表＋最新一季逐字稿＋本檔＋archetype條件載入段)，**bundle 之外的檔一律不開**。
+> 骨架=六個核心問題(§2)，但你只在五個出手點落判斷(論點與唯一致命數字／護城河方向與再投資報酬／情境樹假設／反證裁定／決策輸入)，其餘欄位由程式投影。
+> **事實一律引 id**：承重數字寫該題的 `fact_refs[]`，不把數值再抄一份；事實表沒有的數字就是沒有，寫「事實表未涵蓋」並在最終回報點名，不得自行估算或從記憶補。
+<!-- /only -->
 
 ---
 
@@ -30,6 +38,7 @@
 
 路由：primary決定門檻組/估值主錨/signal對映。blend=兩套都跑並標背離(如MU=循環+secular)。信心低→品質複利gate+疑似archetype疊加標「待確認」。**護欄：archetype只換gate-set/估值主錨/signal對映，永不碰深度標準與流程紀律。**
 
+<!-- only:v18 -->
 條件載入(必Read，未讀不得換尺)：
 
 | primary落在 | 必Read |
@@ -39,6 +48,11 @@
 | 任一(寫問二§5.R前) | `references/roic-durability.md` |
 | 任一(決策層動筆前) | `references/judgment-playbook.md`(QC-53觸發索引=問題字典非作業簿；命中才答，核心已答的引用不重寫) |
 | 填`appendix_a`四欄前 | `references/timing-appendix.md`(未讀不得填) |
+<!-- /only -->
+
+<!-- only:v19 -->
+條件載入的判準(`cyclical-lens.md`／`archetype-gatesets.md`／`roic-durability.md`／`judgment-playbook.md`／`timing-appendix.md`)**已依archetype內嵌在本bundle的⑦段**，直接讀那裡，不要試圖開檔。
+<!-- /only -->
 
 **預設尺(品質複利成長)門檻**：FCF Margin>15%(正規化5年均>15%、單年谷>10%)｜ROIC>15%且>WACC，10年≥70%年份達標｜毛利率10年≥70%年份改善｜Capex/Rev<5%優、<10%尚可｜未來3年EPS CAGR>20%，或12-20%且runway≥10Y高durability(明標「非高成長股，靠長runway複利達標」)｜PEG<1.0便宜/1-2合理/>2貴｜D/E<0.7、現金/Rev 10~50%｜護城河>8分且趨勢擴大。10年數據取不到→5年替代並標「5年樣本」。
 
@@ -138,7 +152,13 @@
 
 ## 3｜情境樹與不對稱報酬(`scenario.json`；機率是判斷，算術歸`dd_scenario.py`)
 
+<!-- only:v18 -->
 先寫`.dd_build/{T}_{D}.scenario.json`(EPS路徑五年、終端倍數、機率、yield、second_stage)，跑`python3 scripts/dd_scenario.py FILE --meta …`，FAIL未清不得進決策層。
+<!-- /only -->
+
+<!-- only:v19 -->
+情境樹的假設寫進`scenario_inputs`(EPS路徑五年、終端倍數、機率、yield、second_stage、Max DD範圍與依據)，**你不寫`scenario.json`**——那份由程式從`scenario_inputs`產生後跑`dd_scenario.py`，算術不歸你。本節下列各條講的是那些假設本身要滿足什麼。
+<!-- /only -->
 
 - 機率時間視角：Bear機率5Y視角不應<20%(多數25-30%；極強護城河+短期已兌現才壓15-20%)；Bull/Bear散布5Y應比1Y/2Y寬至少50%；Base機率不應>50%。**QC-39閘B durability(雙向，必填)**：bear機率須註明依據searched durability或pattern外推；有sourced結構性durability仍硬套bear→須說明「為何不採信」，否則bear機率不得高於base；durability薄弱不得因「產業在缺」壓低bear。
 - **內生天花板sanity check**：Base情境EPS CAGR貢獻vs問二§5.R內生天花板(**引用同一組數字不重算**)→天花板內✅/超出⚠。超出⚠→Bear機率強制≥30%；例外：缺口已歸因sourced新segment/新S曲線→Bear下限回落25%。
@@ -202,9 +222,21 @@
 
 **QC-19重大事件判讀**：輸入`evidence.json.coverage.major_events`(近12個月)，本層只判讀重大性與路由、不重搜。五類必判讀：①M&A(>市值5%或5年最大2倍)=🔴，入風險與估值稀釋評估②集體訴訟=入治理+trap重評③臨床/FDA讀數(醫療生技類)=直接讀正負向④CEO/CFO離職、SEC調查、財報重編=🔴高風險初篩⑤主要客戶流失=重算成長假設。無重大事件→治理標🟢正面確認。**近90天且與核心假設/護城河相關的事件，須納入`thesis.R`或`moat.threats`，不得只記錄不接線。**
 
+<!-- only:v18 -->
 **負向證據強制處置(J1，validator硬擋)**：證據包內**每一條`dir=-`的finding**都必須落到二者其一——①出現在`contradictions[]`/`moat.threats[]`/`premortem.blind_spots[]`/`triggers[]`/`thesis.R[]`之一的`evidence_refs`；②寫進頂層`evidence_dismissed[]`，每條`{"ref": …, "reason": …}`，理由要指得出證據本身的問題(口徑不可比/來源不可回溯/已被更新一季數字取代)，不得寫「影響不大」。**先掃一遍負向finding清單再動筆**，比事後補洞省輪次。
+<!-- /only -->
 
+<!-- only:v19 -->
+**負向證據強制處置(J1，validator硬擋)**：事實表`findings_digest[]`內**每一條`direction="-"`的finding**都必須落到二者其一——①出現在`counter_evidence.contradictions[]`/`blind_spots[]`/`triggers[]`/`answers.q2_moat`的`moat.threats[]`/`thesis.R[]`之一的`evidence_refs`；②寫進`counter_evidence.evidence_dismissed[]`，每條`{"ref": …, "reason": …}`，理由要指得出證據本身的問題(口徑不可比/來源不可回溯/已被更新一季數字取代)，不得寫「影響不大」。**先掃一遍負向finding清單再動筆**，比事後補洞省輪次。前三季摘要的條目沒有方向欄(摘要agent被禁止裁方向)，「未標」不等於中性——要不要當反證由你判斷。
+<!-- /only -->
+
+<!-- only:v18 -->
 **數字引用優先序(違反即無效輸出)**：①任何營運指標(客戶數/NRR/RPO/GM/SBC等)以`numbers.latest_quarter_kpis.items[]`為準——**同指標只准引最新一季官方值**，證據包他處較舊值不得進judgment。②四個必引來源，缺項標「證據包未涵蓋」，禁以記憶或推估補：五年高低點→`valuation_history`(禁由現價外推分位)；共識上修下修→`consensus_revision`(`stale=true`降為旁證，不得作唯一依據)；客戶/地區集中度→`edgar_concentrations`；對手財務→`peer_financials`。③`numbers.momentum_26w.rsi14_usable=false`(52週新高3%內)時，`appendix_a` timing欄不得引RSI，改以26週漲幅與位置描述；`decision_inputs.momentum_overheated`亦不得單以RSI認定。④逐字稿：最新一季為親讀口徑；引用其餘三季摘要內容時在該欄標「來源：摘要」，信心度標註要誠實反映這件事。
+<!-- /only -->
+
+<!-- only:v19 -->
+**數字引用優先序(違反即無效輸出)**：①承重數字一律引事實表的`f_*` id(寫進該題`fact_refs[]`)，**不重抄數值**；同指標只准引事實表內最新一季的那條。②事實表沒有的數字就是沒有——標「事實表未涵蓋」並在最終回報點名，禁以記憶或推估補，禁自行換算或外推(五年高低點分位、共識上修下修、客戶與地區集中度、對手財務，缺就是缺)。③`momentum_26w`的RSI被事實表標為不可用(52週新高3%內)時，`appendix_a` timing欄不得引RSI，改以26週漲幅與位置描述；`decision_inputs.momentum_overheated`亦不得單以RSI認定。④逐字稿：最新一季為親讀口徑；引用前三季摘要內容時在該欄標「來源：摘要」，信心度標註要誠實反映這件事。
+<!-- /only -->
 
 ---
 
@@ -223,4 +255,10 @@
 
 QC-39覆蓋矩陣仍是主力，本表是backstop——**不得為交稿而讓它全綠**，🟡/🔴照實填(是`judgment.json`回報必要欄位)；蓋章的是Stage 1G，不是判斷agent自己。
 
+<!-- only:v18 -->
 **輸出與禁令**：一次Write`judgment.json`、一次Write`scenario.json`；三支驗證FAIL只准改被點名欄位重跑，未收斂列入回報。**禁WebSearch/WebFetch**：證據不足標「證據包未涵蓋」，不得自搜補洞，回報orchestrator是否需回Stage 0補軸。判斷三支驗證全過前禁寫散文/HTML(呈現規則見`render-rules.md`)；禁Read `docs/dd/`任何既有報告(前份DD只透過`evidence.json.prior_dd`三區塊)。禁從上一份報告複製結論文字；假設表、TAM、評分一律從本輪證據重推。
+<!-- /only -->
+
+<!-- only:v19 -->
+**輸出與禁令**：**一次Write`judgment.json`，只交這一個檔**(`scenario.json`由程式從`scenario_inputs`產生)；驗證FAIL只准改被點名欄位，其餘一字不動，未收斂列入回報。**禁WebSearch/WebFetch**：證據不足標「事實表未涵蓋」，不得自搜補洞，回報orchestrator是否需回Stage 0補軸。禁寫散文/HTML、禁跑`gen_dd_tables.py`／`render_dd.py`；禁Read `docs/dd/`任何既有報告(前份DD只透過事實表與`findings_digest`帶進來)；禁重讀自己剛寫出的檔。禁從上一份報告複製結論文字；假設表、TAM、評分一律從本輪事實重推。
+<!-- /only -->

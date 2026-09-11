@@ -2127,7 +2127,13 @@ def test_stage0_facts_replay_uses_draft_without_spawning(monkeypatch):
 
 def test_judge_bundle_v19_is_slimmer_and_uses_v19_cheatsheet(tmp_path):
     """v19 判斷包：schema 速查切到 v19_contract、帶事實表、不再帶證據包緊湊版
-    與 digest 全文；同一份證據下比 v18 包小。"""
+    與 digest 全文 JSON；同一份證據下比 v18 包小。
+
+    2026-09-11（WP-H2-3）：兩處隨裁定改動——①digest 改以**壓縮全表**回到包裡
+    （Codex 裁定 1：機械初稿不會把只出現在摘要裡的反證抬進 facts），所以 `## ⑤
+    Digest` 的整份 JSON 仍不在，但 `## ③b` 壓縮全表在；②規則檔改由
+    `dd_rules.py build-v19` 從 `judgment-rules.md` 抽出（Codex 裁定 2），產物不
+    再有手寫版的「出手點①」小標，改以版本戳與「程式產生」標頭辨識。"""
     shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", tmp_path / "evidence.json")
     shutil.copyfile(FIXTURES_DIR / "facts_FIX_20260911.json", tmp_path / "facts.json")
     # 同尺比較必須含 digest——v19 省下的正是「證據包緊湊版＋digest 全文」那兩段，
@@ -2145,10 +2151,173 @@ def test_judge_bundle_v19_is_slimmer_and_uses_v19_cheatsheet(tmp_path):
     assert "v19_contract 區塊" in t19
     assert "facts.json 事實表全文" in t19
     assert "## ③ Evidence 緊湊版" not in t19 and "## ⑤ Digest" not in t19
+    assert "## ③b 前三季逐字稿摘要（壓縮全表" in t19  # 裁定 1：摘要以壓縮全表回到包裡
     assert "counter_evidence.contradictions[]" in t19  # evidence_refs 用法改 v19 路徑
-    assert "出手點①" in t19  # 規則精簡版
+    assert "由 scripts/dd_rules.py build-v19 產生，勿手改" in t19  # 裁定 2：規則是產物
     assert "## ③ Evidence 緊湊版" in t18  # 舊包原樣可用
     assert len(t19.encode("utf-8")) < len(t18.encode("utf-8"))
+
+
+# ---------------------------------------------------------------------------
+# WP-H2-3（2026-09-11）：事實表未補齊擋判斷段、組頁傳 --layout v19、閘附被引用事實
+# ---------------------------------------------------------------------------
+
+def test_facts_fallback_marks_incomplete_and_blocks_judge(monkeypatch, capsys):
+    """事實表 agent 失手 → 退回機械初稿、manifest 記 `facts_incomplete=true`、
+    判斷段**不開跑**（Codex 裁定 1）。初稿本身合格所以 stage0 仍 PASS——擋的是
+    「拿半份輸入去定案」，不是把整條 run 停在一次 agent 抖動上。"""
+    ticker, date = "ZTESTFACTSINCOMPLETE", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", run_dir / "evidence.json")
+    # agent 什麼都沒寫（facts.json 不存在）→ 走 fallback
+    monkeypatch.setattr(ddreport.dd_headless, "spawn",
+                        lambda **kw: {"ok": True, "over_budget": False, "num_turns": 1})
+    try:
+        stage = {"agent_usage": []}
+        out = ddreport._do_facts(ticker, date, run_dir, None, stage)
+        assert out["fallback"] is True and out["incomplete"] is True
+
+        manifest = {"ticker": ticker, "date": date, "stages": {}, "facts_incomplete": True}
+        def boom(*a, **kw):
+            raise AssertionError("facts_incomplete 時不得進判斷段")
+        monkeypatch.setattr(ddreport, "_do_judge_full", boom)
+        monkeypatch.setattr(ddreport, "_judge_delta_route", boom)
+        rc = ddreport._do_judge(ticker, date, "fable", None, False, manifest)
+        assert rc == 1
+        assert "事實表未完成，交指揮者" in capsys.readouterr().out
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_run_gates_passes_layout_v19_for_v19_judgment(tmp_path, monkeypatch):
+    """正式流程對 v19 判斷檔組頁時必須傳 `--layout v19`（H2-2 把版面做好了但
+    這條呼叫沒接上，v19 run 會靜靜組成舊版面且不報錯）。舊形狀不加旗標。"""
+    captured = []
+
+    def fake_run(cmd, **kw):
+        captured.append(list(cmd))
+        return _FakeCompleted(returncode=1, stdout="stop-here")
+
+    run_dir = tmp_path / "run"
+    (run_dir / "prose").mkdir(parents=True)
+    (run_dir / "tables").mkdir(parents=True)
+    monkeypatch.setattr(ddreport.subprocess, "run", fake_run)
+
+    def _assemble_cmd():
+        # `_pick_python()` 也會 subprocess.run（探 venv），只挑 render_dd 那一條。
+        hits = [c for c in captured if any("render_dd.py" in str(x) for x in c)]
+        assert hits, captured
+        return hits[0]
+
+    (run_dir / "judgment.json").write_text(
+        json.dumps({"meta": {"contract": "v19"}}), encoding="utf-8")
+    ddreport._run_gates(run_dir, "Z", "20260101")
+    cmd = _assemble_cmd()
+    assert "--layout" in cmd and cmd[cmd.index("--layout") + 1] == "v19"
+
+    captured.clear()
+    (run_dir / "judgment.json").write_text(json.dumps({"meta": {}}), encoding="utf-8")
+    ddreport._run_gates(run_dir, "Z", "20260101")
+    assert "--layout" not in _assemble_cmd()
+
+
+def test_v19_layout_render_has_header_cards_and_grid(tmp_path):
+    """端到端：v19 fixture 經 gen_dd_tables → prose-stub → render_dd --layout v19
+    組出的頁面帶 v19 模板標記（五張卡、24 格篩選器資料列）。"""
+    tables, prose = tmp_path / "tables", tmp_path / "prose"
+    for args in (
+        [str(SCRIPTS_DIR / "gen_dd_tables.py"), str(FIXTURES_DIR / "judgment_v19_FIX.json"),
+         "--out", str(tables), "--scenario-meta", str(FIXTURES_DIR / "scenario_meta_FIX_20260911.json")],
+        [str(SCRIPTS_DIR / "dd_project.py"), "prose-stub", str(FIXTURES_DIR / "judgment_v19_FIX.json"),
+         "--out", str(prose), "--facts", str(FIXTURES_DIR / "facts_FIX_20260911.json")],
+    ):
+        r = subprocess.run([sys.executable, *args], capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+
+    out = tmp_path / "page.html"
+    r = subprocess.run([sys.executable, str(SCRIPTS_DIR / "render_dd.py"),
+                        "--assemble", str(prose), "--tables", str(tables),
+                        "--judgment", str(FIXTURES_DIR / "judgment_v19_FIX.json"),
+                        "--layout", "v19", "--no-postprocess", "-o", str(out)],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    html = out.read_text(encoding="utf-8")
+    assert 'name="dd-layout" content="v19"' in html
+    assert html.count('<div class="k">') == 24      # 24 格篩選器資料列
+    for label in ("裁決", "五年機率加權報酬", "基本情境年化", "最大回撤範圍", "本益比"):
+        assert label in html                         # 頁首五張卡
+    assert "V19:" not in html                        # 沒有殘留模板標記
+
+
+def test_gate_bundle_carries_referenced_fact_values_and_sources(tmp_path):
+    """閘 bundle 要帶被引用事實的**值與來源原文**，不能只有 id（Codex 接線缺口
+    2）；另附 findings_digest 中方向為負／來源衝突的條目。"""
+    shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", tmp_path / "evidence.json")
+    facts = json.loads((FIXTURES_DIR / "facts_FIX_20260911.json").read_text(encoding="utf-8"))
+    # 加一條可辨識的測試事實，並讓判斷檔引用它。
+    facts["questions"]["q1_business"]["facts"].append({
+        "id": "f_probe_marker", "label": "測試指標", "value": "12345-VALUE-MARKER",
+        "period": "Q9 FY9999", "unit": "x", "basis": "測試口徑", "kind": "realized",
+        "source": {"type": "manual", "ref": "probe", "as_of": "2026-09-11",
+                   "citation": "PROBE-CITATION-MARKER"},
+    })
+    facts["findings_digest"].append({
+        "id": "probe_neg#0", "axis": "probe", "direction": "-",
+        "claim": "NEGATIVE-PROBE-CLAIM", "source": "probe src", "as_of": "2026-09-11"})
+    (tmp_path / "facts.json").write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "judgment.json").write_text(json.dumps({
+        "meta": {"contract": "v19"},
+        "answers": {"q1_business": {"verdict": "x", "fact_refs": ["f_probe_marker", "f_missing_id"]}},
+        "decision_out": {"verdict": "觀望"},
+    }, ensure_ascii=False), encoding="utf-8")
+
+    out = tmp_path / "gate.md"
+    args = argparse.Namespace(run_dir=str(tmp_path), evidence=None, digest=None, judgment=None,
+                              transcript=None, gate_contract=None, facts=None, out=str(out))
+    assert dd_bundle.cmd_gate(args) == 0
+    text = out.read_text(encoding="utf-8")
+    assert "12345-VALUE-MARKER" in text          # 值
+    assert "PROBE-CITATION-MARKER" in text       # 來源原文
+    assert "Q9 FY9999" in text                   # 期間口徑
+    assert "NEGATIVE-PROBE-CLAIM" in text        # 負向條目
+    assert "f_missing_id" in text and "事實表查無此 id" in text  # 斷鏈點名
+
+
+def test_gate_bundle_unchanged_for_legacy_shape(tmp_path):
+    """舊形狀（非 v19）判斷檔不加這一段——閘 bundle 一位元組不變。"""
+    shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", tmp_path / "evidence.json")
+    (tmp_path / "judgment.json").write_text(
+        json.dumps({"decision_out": {"verdict": "觀望"}}), encoding="utf-8")
+    out = tmp_path / "gate.md"
+    args = argparse.Namespace(run_dir=str(tmp_path), evidence=None, digest=None, judgment=None,
+                              transcript=None, gate_contract=None, facts=None, out=str(out))
+    assert dd_bundle.cmd_gate(args) == 0
+    assert "被引用的事實與負向條目" not in out.read_text(encoding="utf-8")
+
+
+def test_math_gate_knows_v19_table_ids(tmp_path):
+    """`verify_dd_math.py` 的必交模組存在性檢查對 v19 版面要查 v19 的表格 id
+    （roic／segs／e9b），不是 e7／e8／e9——否則每一份 v19 報告都會被噴「必交模組
+    表格缺席」，而模組其實一個都沒少（CLAUDE.md 2026-09-07 那條的失效方式）。"""
+    import verify_dd_math
+
+    v16_html = "".join('<table id="{0}">x</table>'.format(t) for t in verify_dd_math.V16_TABLE_IDS)
+    v19_html = (verify_dd_math.V19_LAYOUT_MARK
+                + "".join('<table id="{0}">x</table>'.format(t)
+                          for t in verify_dd_math.V19_TABLE_IDS))
+    assert "e7" in verify_dd_math.V16_TABLE_IDS and "roic" in verify_dd_math.V19_TABLE_IDS
+
+    def missing(html):
+        ids = (verify_dd_math.V19_TABLE_IDS
+               if verify_dd_math.V19_LAYOUT_MARK in html else verify_dd_math.V16_TABLE_IDS)
+        return [t for t in ids if 'id="{0}"'.format(t) not in html]
+
+    assert missing(v16_html) == []
+    assert missing(v19_html) == []
+    # v19 版面若拿舊 id 表去查，會誤報三張缺席——這就是本測試在守的東西。
+    assert [t for t in verify_dd_math.V16_TABLE_IDS if 'id="{0}"'.format(t) not in v19_html] == [
+        "e7", "e8", "e9"]
 
 
 if __name__ == "__main__":
