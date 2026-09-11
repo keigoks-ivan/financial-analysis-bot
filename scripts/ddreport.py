@@ -3311,6 +3311,11 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
                         _compact_json_text(scenario_path.read_text(encoding="utf-8"))
                         if scenario_path.exists() else "{}"
                     ),
+                    # 2026-09-11：閘 ⑧ 前份漂移歸因要看得到前份裁決與 rearm；
+                    # v19 判斷包首跑漏帶 prior_dd，修補 agent 也得拿到才補得了。
+                    "prior_compact": _compact_json_text(json.dumps(
+                        (_load_json_or(run_dir / "evidence.json", {}) or {}).get("prior_dd") or {},
+                        ensure_ascii=False)),
                 }),
                 encoding="utf-8",
             )

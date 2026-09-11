@@ -337,6 +337,26 @@ def _find_transcript_path(ticker: str, filename: str):
     return matches[0] if matches else None
 
 
+
+def _prior_and_events_section(evidence: dict) -> str:
+    """2026-09-11（FIX v19 首跑抓到的契約漏洞）：v19 判斷包原本只帶 facts／摘要／
+    逐字稿／規則，**前份判斷（prior_dd：裁決、角色、rearm、drift_watch）與 events／
+    ledger 都沒進包**，判斷 agent 只能寫「前份裁決事實表未涵蓋」，閘 ⑧ 前份漂移
+    歸因必紅。這三塊是站內自己的機械資料，不是研究事實，不經事實表、原樣帶入。"""
+    # events 已經由 facts.findings_digest 帶入、ledger 只在閘用；判斷包只補 prior_dd，
+    # 維持「v19 包比 v18 小」的既有不變量（test_judge_bundle_v19_is_slimmer）。
+    lines = ["## ③c 前份判斷（evidence.prior_dd 原樣；QC-49 漂移歸因用）", ""]
+    prior = evidence.get("prior_dd") or {}
+    # 只帶裁決相關的機械欄（prior_meta／drift_watch／裁決／角色／價格／日期），
+    # revlog 與路徑不進包——省下的正是讓 v19 包維持比 v18 小的那幾百 bytes。
+    compact = {k: prior.get(k) for k in ("date", "schema", "dca_verdict", "dca_role",
+                                          "price_at_dd", "prior_meta", "drift_watch") if k in prior}
+    lines.append("### prior_dd（裁決相關欄原樣；revlog 略）")
+    lines.append(_JSON_NOTE)
+    lines.append(_json_block(compact))
+    lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
 def _transcript_section(evidence: dict, explicit_path) -> str:
     lines = ["## ④ 最新一季逐字稿全文", ""]
     if explicit_path:
@@ -1144,6 +1164,7 @@ def cmd_judge(args) -> int:
             _task_header_v19(evidence.get("ticker"), evidence.get("date")),
             _schema_cheatsheet("v19"),
             _facts_section(facts_path),
+            _prior_and_events_section(evidence),
             _digest_lines_section(digest_path),
             _transcript_section(evidence, args.transcript),
             _judgment_rules_section(rules_path, "v19"),
