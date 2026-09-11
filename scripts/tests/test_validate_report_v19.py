@@ -11,6 +11,7 @@ Python 3.9 相容。
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -32,6 +33,33 @@ TRIGGERS = ('<table id="triggers">\n<tr><th>#</th><th>觸發器</th></tr>\n'
 REVLOG = ('<section id="revlog">\n<h2>版本紀錄</h2>\n<table>\n'
           "<tr><th>日期</th><th>裁決</th></tr>\n<tr><td>2026-09-11</td><td>觀望</td></tr>\n"
           "</table>\n</section>")
+
+
+def _fact(fid, unit="%"):
+    return {"id": fid, "value": 1, "period": "Q1", "unit": unit, "basis": "測試口徑",
+            "kind": "realized", "source": {"type": "manual", "ref": "test"}}
+
+
+# 這份檔的所有正向 fixture 條列都引 f_kpi0_gaap／f_price_at_dd（見下方各 _section
+# 預設 bullets／VIEW_BULLETS／ACTION_BULLETS）——放進事實表讓 fact id 溯源查
+# （check #7，2026-09-11）在既有測試裡查得到來源，不因新閘而假紅。
+FACTS = {
+    "questions": {
+        "q1_business": {"facts": [_fact("f_kpi0_gaap"), _fact("f_price_at_dd", unit="USD")]},
+        "q2_moat": {"facts": []},
+        "q3_growth": {"facts": []},
+        "q4_capital": {"facts": []},
+        "q5_valuation": {"facts": []},
+        "q6_how_wrong": {"facts": []},
+    },
+}
+
+EMPTY_FACTS = {
+    "questions": {
+        "q1_business": {"facts": []}, "q2_moat": {"facts": []}, "q3_growth": {"facts": []},
+        "q4_capital": {"facts": []}, "q5_valuation": {"facts": []}, "q6_how_wrong": {"facts": []},
+    },
+}
 
 VIEW_BULLETS = "\n".join(
     "<li><strong>{0}</strong>：這一條寫了實質內容與依據（f_kpi0_gaap）。</li>".format(v)
@@ -81,10 +109,16 @@ def _page(overrides=None, drop=()):
     return ('<meta name="dd-layout" content="v19">\n' + "\n".join(parts) + "\n")
 
 
-def _run(html, tmp_path, name="r.html"):
+def _run(html, tmp_path, name="r.html", facts=FACTS, judgment_path=None):
+    """`facts=FACTS`（預設）幫每個測試都補上一份可核對條列 fact id 的事實表；
+    `facts=None` 模擬完全沒給 `--facts`（見 test_fact_id_missing_facts_file_fails）。"""
     p = tmp_path / name
     p.write_text(html, encoding="utf-8")
-    return vr.validate(p)
+    facts_path = None
+    if facts is not None:
+        facts_path = tmp_path / "facts.json"
+        facts_path.write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+    return vr.validate(p, judgment_path=judgment_path, facts_path=facts_path)
 
 
 def test_complete_page_passes(tmp_path):
@@ -181,6 +215,39 @@ def test_mechanical_sections_are_not_placeholder_checked(tmp_path):
     被誤判成空段。"""
     ok, _ = _run(_page(), tmp_path)
     assert ok
+
+
+# ---------------------------------------------------------------------------
+# check #7（2026-09-11，Codex 複審缺口 2）：條列裡的 fact id 真的查得到來源
+# ---------------------------------------------------------------------------
+
+def test_fact_id_not_in_facts_json_fails(tmp_path):
+    """反例：條列引用的 fact id 全換成不存在的 `f_nonexistent_*`，事實表也是
+    空的——舊版只驗證 `f_*` 正則格式會悄悄 PASS，新版必須真的去查 facts.json。"""
+    page = _page(overrides={"s4": _section("s4", bullets=[
+        "第一條理由，帶事實 id（f_nonexistent_alpha）。",
+        "第二條理由，另一件事（f_nonexistent_beta）。",
+    ])})
+    ok, findings = _run(page, tmp_path, facts=EMPTY_FACTS)
+    assert not ok
+    assert any(sid == "s4" and "查無來源" in r
+               and "f_nonexistent_alpha" in r and "f_nonexistent_beta" in r
+               for sid, r in findings)
+
+
+def test_fact_id_missing_facts_file_fails(tmp_path):
+    """反例：正文帶 fact id 的條列一切正常，但完全沒提供 `--facts`——不能悄悄
+    放行，必須 FAIL 並點名斷鏈的 id。"""
+    ok, findings = _run(_page(), tmp_path, facts=None)
+    assert not ok
+    assert any("找不到事實表" in r for _sid, r in findings)
+
+
+def test_fact_id_in_facts_json_passes(tmp_path):
+    """正向對照：正常 fixture（fact id 都在事實表裡）要 PASS——確認新閘不是
+    一律 FAIL。"""
+    ok, findings = _run(_page(), tmp_path, facts=FACTS)
+    assert ok, findings
 
 
 if __name__ == "__main__":

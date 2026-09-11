@@ -90,6 +90,27 @@ def test_check_flags_handwritten_product(tmp_path):
     assert ok is False and "沒有版本戳" in msg
 
 
+def test_check_flags_tampered_body_even_with_correct_stamp(tmp_path):
+    """反例（Codex 2026-09-11 複審缺口 1）：來源沒改、版本戳照舊，但產物的**正文**
+    被手改——舊版 `check()` 只比對開頭的版本戳，這種竄改會悄悄 PASS。現在必須
+    重新從來源生成一次並整份比對，才抓得到。"""
+    src = tmp_path / "rules.md"
+    out = tmp_path / "rules-v19.md"
+    src.write_text(SOURCE, encoding="utf-8")
+    dd_rules.build_v19(out_path=out, source_path=src)
+    stamp_before = dd_rules.product_stamp(out)
+    assert dd_rules.check(out, src)[0] is True  # 先確認乾淨狀態真的 PASS
+
+    tampered = out.read_text(encoding="utf-8").replace("共用段落二。", "共用段落二（被動過手腳）。")
+    out.write_text(tampered, encoding="utf-8")
+    assert dd_rules.product_stamp(out) == stamp_before  # 版本戳原封不動
+
+    ok, msg = dd_rules.check(out, src)
+    assert ok is False
+    assert "沒有版本戳" not in msg      # 不是戳不見，是正文本身不一致
+    assert "行不同" in msg              # 訊息要印出差異行數
+
+
 def test_repo_product_is_current():
     """repo 內現行的 v19 規則產物必須是當下來源的產物（pre-commit 也擋這件事，
     這條測試讓忘記重生在 CI／本機測試階段就紅）。"""

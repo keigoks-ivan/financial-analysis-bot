@@ -24,6 +24,12 @@
    找得到。共用 `validate_prose.py` 的抽取與白名單實作，不另立一套口徑。
 6. **佔位文字不算過**——「（略）」「TODO」「TBD」「待補」「—」整段這類佔位，
    出現在 lead／條列／必要表格的資料格裡一律 FAIL；標題齊全不等於寫完。
+7. **條列裡的 fact id 真的查得到來源**（2026-09-11，Codex 複審缺口 2）——check
+   #1 只驗證 `f_*` 符合正則，引用全換成不存在的 `f_nonexistent_*` 一樣 PASS。
+   現在對每個被引用的 fact id：(a) 必須存在於 `facts.json`（缺 `--facts` 或
+   id 查無 → FAIL，列出斷鏈 id）；(b) 優先核對是否落在判斷檔 `answers[].
+   fact_refs` 允許引用的清單，不在清單但確實存在於 facts.json 時放行（判斷檔
+   的 fact_refs 是精簡摘錄，散文援引同一份事實表的其他條目不算斷鏈）。
 
 ## 用法
 
@@ -56,6 +62,17 @@ SIX_QUESTION_SIDS = {
     "s9": "問四 現金與資本配置",
     "s10": "問五 估值",
     "s12": "問六 可能看錯在哪",
+}
+
+# 段落 → facts.json / judgment.answers 的題號 key。與 SIX_QUESTION_SIDS 同一組
+# 對映，供 fact id 溯源查用（見 _check_fact_id_links）。
+SID_TO_QKEY = {
+    "s4": "q1_business",
+    "s5": "q2_moat",
+    "s6": "q3_growth",
+    "s9": "q4_capital",
+    "s10": "q5_valuation",
+    "s12": "q6_how_wrong",
 }
 
 LEAD_MAX_CHARS = 40
@@ -211,6 +228,90 @@ def _check_required_tables(html_text: str, sections: dict) -> list:
     return findings
 
 
+def _collect_facts_ids(facts_json: dict) -> set:
+    """facts.json 六題底下所有 fact 的 id（`questions.*.facts[].id`）。"""
+    ids = set()
+    questions = (facts_json or {}).get("questions") or {}
+    for q in questions.values():
+        for fact in (q or {}).get("facts") or []:
+            if isinstance(fact, dict):
+                fid = fact.get("id")
+                if isinstance(fid, str) and fid:
+                    ids.add(fid)
+    return ids
+
+
+def _collect_fact_refs_union(judgment_json: dict) -> set:
+    """judgment.answers 逐題 `fact_refs[]` 的聯集——判斷檔宣稱『我引用了這些
+    id』的完整清單，不分屬於哪一題（散文援引其他題的既有事實不算斷鏈）。"""
+    refs = set()
+    answers = (judgment_json or {}).get("answers") or {}
+    for ans in answers.values():
+        if isinstance(ans, dict):
+            for r in ans.get("fact_refs") or []:
+                if isinstance(r, str):
+                    refs.add(r)
+    return refs
+
+
+def _cited_fact_ids_by_section(sections: dict) -> dict:
+    """逐段落收集條列裡出現的 `f_*` id（只看散文自己寫的文字，不看機械表格）。"""
+    out = {}
+    for sid, body in sections.items():
+        ids = set()
+        for bullet in _LI_RE.findall(_authored_text(body)):
+            ids |= set(_FACT_ID_RE.findall(_text(bullet)))
+        if ids:
+            out[sid] = ids
+    return out
+
+
+def _check_fact_id_links(sections: dict, facts_path, judgment_path) -> list:
+    """條列裡的 fact id 要真的查得到來源，不是符合 `f_*` 正則就算數
+    （2026-09-11，Codex 複審缺口 2）。缺事實表或 id 查無 → FAIL 並列出斷鏈 id。"""
+    findings = []
+    cited = _cited_fact_ids_by_section(sections)
+    if not cited:
+        return findings  # 沒有條列引用 fact id，交給 check #1（帶 fact id 條列數）去擋
+
+    if not facts_path or not Path(facts_path).exists():
+        all_ids = sorted({fid for ids in cited.values() for fid in ids})
+        findings.append((
+            "facts",
+            "找不到事實表（--facts {0}）——散文引用了 {1} 個 fact id 卻無法核對來源，"
+            "視為斷鏈：{2}".format(facts_path, len(all_ids), "、".join(all_ids))))
+        return findings
+
+    try:
+        facts_json = json.loads(Path(facts_path).read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, ValueError) as exc:
+        findings.append(("facts", "事實表 {0} 不是合法 JSON：{1}".format(facts_path, exc)))
+        return findings
+    valid_ids = _collect_facts_ids(facts_json)
+
+    judgment_json = None
+    if judgment_path and Path(judgment_path).exists():
+        try:
+            judgment_json = json.loads(Path(judgment_path).read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, ValueError):
+            judgment_json = None
+    refs_union = _collect_fact_refs_union(judgment_json) if judgment_json else set()
+    # (b) 優先核對是否落在判斷檔 fact_refs 允許清單；不在清單但至少存在於
+    # facts.json 時放行——refs_union 理論上是 valid_ids 的子集，取聯集只是
+    # 讓「判斷檔引了、事實表卻查無」這種本身已由斷鏈訊息涵蓋的情況不重複判定。
+    allowed_ids = valid_ids | refs_union
+
+    for sid, ids in sorted(cited.items()):
+        broken = sorted(i for i in ids if i not in allowed_ids)
+        if broken:
+            qkey = SID_TO_QKEY.get(sid)
+            qkey_note = "（對映題號 {0}）".format(qkey) if qkey else ""
+            findings.append((sid, "{0} 個 fact id 查無來源（不在 facts.json，"
+                                  "判斷檔 fact_refs 也沒引用過）{1}：{2}".format(
+                                      len(broken), qkey_note, "、".join(broken))))
+    return findings
+
+
 def _check_numbers(sections: dict, ref_numbers: set) -> list:
     findings = []
     for sid, body in sections.items():
@@ -249,6 +350,7 @@ def validate(report_path, judgment_path=None, facts_path=None, scenario_meta_pat
     findings += _check_three_views(sections)
     findings += _check_action_conditions(sections)
     findings += _check_required_tables(html_text, sections)
+    findings += _check_fact_id_links(sections, facts_path, judgment_path)
 
     if judgment_path:
         numbers = set()

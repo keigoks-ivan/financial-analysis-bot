@@ -41,6 +41,7 @@ import argparse
 import hashlib
 import re
 import sys
+from itertools import zip_longest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -123,10 +124,13 @@ def _v19_header(stamp: str, source_path: Path) -> str:
     ).format(rel=rel, stamp=stamp)
 
 
-def build_v19(out_path=None, source_path=None) -> str:
-    src = Path(source_path) if source_path else SOURCE_PATH
-    stamp = source_stamp(src)
-    body = render("v19", source_path=src)
+def _build_v19_text(source_path: Path) -> str:
+    """v19 產物的完整內容（不落檔）。`build_v19` 與 `check` 共用同一份生成邏輯，
+    這樣 `check` 才能把磁碟上的產物與「重新生成應該長什麼樣」**整份比對**，
+    不是只比開頭的版本戳（2026-09-11，Codex 複審缺口 1：保留戳、改產物正文仍
+    會 PASS，就是因為舊版 check 只讀版本戳沒有重生內容比對）。"""
+    stamp = source_stamp(source_path)
+    body = render("v19", source_path=source_path)
     # 來源檔第一行是 v18 的標題（`# stock-analyst v18 — judgment-rules.md…`），
     # 產物已自帶標題，去掉重複的那一行避免一份檔兩個 H1。
     lines = body.split("\n")
@@ -134,7 +138,12 @@ def build_v19(out_path=None, source_path=None) -> str:
         lines = lines[1:]
         while lines and not lines[0].strip():
             lines = lines[1:]
-    text = _v19_header(stamp, src) + "\n".join(lines)
+    return _v19_header(stamp, source_path) + "\n".join(lines)
+
+
+def build_v19(out_path=None, source_path=None) -> str:
+    src = Path(source_path) if source_path else SOURCE_PATH
+    text = _build_v19_text(src)
     target = Path(out_path) if out_path else V19_PATH
     target.write_text(text, encoding="utf-8")
     return text
@@ -152,24 +161,40 @@ def product_stamp(product_path=None, product_text=None):
 
 
 def check(product_path=None, source_path=None):
-    """回傳 `(ok, 訊息)`：產物在不在、版本戳對不對得上來源。"""
+    """回傳 `(ok, 訊息)`：產物在不在、內容是不是與來源**重新生成的結果**逐位元組一致。
+
+    2026-09-11 修正（Codex 複審缺口 1）：舊版只比開頭的版本戳——保留戳、改產物
+    正文仍會 PASS。現在把來源重新跑一次 `_build_v19_text`，與磁碟上的產物整份
+    比對；不一致時另外標出版本戳是否也不同（過期 vs. 內容被手改兩種訊息）。"""
     src = Path(source_path) if source_path else SOURCE_PATH
     prod = Path(product_path) if product_path else V19_PATH
     if not src.exists():
         return False, "找不到規則來源 {0}".format(src)
     if not prod.exists():
         return False, "找不到 v19 規則產物 {0}——先跑 `python3 scripts/dd_rules.py build-v19`".format(prod)
-    want = source_stamp(src)
-    got = product_stamp(prod)
+    got_text = prod.read_text(encoding="utf-8")
+    got = product_stamp(prod, got_text)
     if got is None:
         return False, (
             "{0} 沒有版本戳（是不是被手改或手寫的？）——"
             "規則的唯一人工來源是 {1}，產物請跑 `python3 scripts/dd_rules.py build-v19` 重生".format(prod, src))
+    want = source_stamp(src)
+    expected_text = _build_v19_text(src)
+    if got_text == expected_text:
+        return True, "v19 規則產物與來源一致（sha256:{0}）".format(want)
+    exp_lines = expected_text.split("\n")
+    got_lines = got_text.split("\n")
+    diff_lines = sum(
+        1 for a, b in zip_longest(got_lines, exp_lines, fillvalue=None) if a != b)
     if got != want:
         return False, (
-            "v19 規則產物過期：{0} 的版本戳 {1} ≠ 來源 {2} 的 {3}——"
-            "先跑 `python3 scripts/dd_rules.py build-v19` 重生，再組判斷包".format(prod, got, src, want))
-    return True, "v19 規則產物與來源一致（sha256:{0}）".format(want)
+            "v19 規則產物過期：{0} 的版本戳 {1} ≠ 來源 {2} 的 {3}（正文 {4} 行不同）——"
+            "先跑 `python3 scripts/dd_rules.py build-v19` 重生，再組判斷包".format(
+                prod, got, src, want, diff_lines))
+    return False, (
+        "v19 規則產物內容與來源重新生成的結果不一致（{0} 行不同），即使版本戳相同——"
+        "產物疑似被手改，規則的唯一人工來源是 {1}，請跑 `python3 scripts/dd_rules.py build-v19` "
+        "重生，不要直接改產物".format(diff_lines, src))
 
 
 def cmd_build_v19(args) -> int:

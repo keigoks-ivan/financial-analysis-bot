@@ -408,8 +408,16 @@ def _digest_lines_section(digest_path) -> str:
     ——實測顯示「只出現在摘要裡的反證」不會被機械初稿抬進 facts，而事實檢查對這
     種漏失是 0 FAIL、0 WARN（檢查不到的東西不會響）。在有「逐項來源覆蓋檢查」之
     前，判斷層必須看得到摘要的**全部** items 與 qa_flags；省的是排版不是內容——
-    每條壓成一行「季別｜topic｜claim｜方向」，quote／speaker／file 等定位欄不帶
-    （要逐字原文時回 evidence／事實表查該 finding）。
+    每條壓成一行「引用編號｜季別｜topic｜claim｜方向｜來源檔」，quote／speaker
+    等逐字定位欄仍不帶（要逐字原文時回事實表或原始逐字稿查）。
+
+    `引用編號`（WP-H2-4，2026-09-11，Codex 複審缺口 3）：digest item 目前沒有
+    `id` 欄，schema 不強制——item 自帶 `id` 就沿用，否則以「檔案代號#序號」現算
+    （序號＝該檔案內第幾條，1 起算），讓判斷層能點名「哪一條」而不是只講得出
+    「哪一季」。檔案代號＝段首的 `source_files` 對照表（F1／F2…），**不是每條都
+    重印一次完整檔名**——88 條 items 逐條複製一次完整逐字稿路徑會讓這段本身胖
+    過 v18 省下的量，違背 WP-H2-3 把 v19 包壓瘦的整條設計初衷；對照表只印一次，
+    每條的來源定位透過代號回查即可。
 
     `方向` 欄：`digest.json` 的 item 沒有 direction 欄位（摘要 agent 被明令禁裁
     方向，見 `dd_prompts/digest.md.tmpl` 規則 6）。這裡**不臆造方向**——item 自
@@ -435,16 +443,37 @@ def _digest_lines_section(digest_path) -> str:
         "當反證由你判斷。逐字原文與出處在事實表與證據包，需要時引該 finding 的 id。"
     )
     lines.append("")
+    # 2026-09-11（WP-H2-4，Codex 複審缺口 3）：檔案代號對照表只印一次，每條 item
+    # 用代號＋序號當穩定引用編號＋來源定位——不逐條重印完整逐字稿路徑（見上方
+    # docstring 的篇幅理由）。
+    source_files = [str(f) for f in (obj.get("source_files") or []) if f]
+    file_code = {}
+    if source_files:
+        lines.append("檔案代號（下方引用編號 F#｜序號 用；序號＝該檔第幾條 item，1 起算）：")
+        for i, f in enumerate(source_files, 1):
+            code = "F{0}".format(i)
+            file_code[f] = code
+            lines.append("- {0} = {1}".format(code, Path(f).name))
+        lines.append("")
     lines.append("### items（{0} 條）".format(len(items)))
     if not items:
         lines.append("（無）")
+    per_code_seq = {}
     for it in items:
         topic = str(it.get("topic") or "—")
         direction = it.get("direction")
         if direction is None:
             direction = "風險" if topic == "risk" else "未標"
-        lines.append("- {0}｜{1}｜{2}｜{3}".format(
-            it.get("date") or "期間未標", topic,
+        raw_file = it.get("file")
+        code = file_code.get(raw_file) if raw_file else None
+        if code is None:
+            # item.file 不在 source_files 裡（不該發生，但不臆造——保底用檔名本身）。
+            code = _one_line(Path(str(raw_file)).name) if raw_file else "—"
+        per_code_seq[code] = per_code_seq.get(code, 0) + 1
+        # 穩定引用編號：item 自帶 id 就用；否則現算「檔案代號#序號」（見上方 docstring）。
+        cite_id = it.get("id") or "{0}#{1}".format(code, per_code_seq[code])
+        lines.append("- `{0}`｜{1}｜{2}｜{3}｜{4}".format(
+            cite_id, it.get("date") or "期間未標", topic,
             _one_line(it.get("claim")), direction))
     lines.append("")
     lines.append("### qa_flags（{0} 條：管理層迴避／改口／保留）".format(len(flags)))
@@ -805,6 +834,12 @@ def _gate_referenced_facts_section(raw_judgment: dict, facts: dict) -> str:
             _one_line(f.get("period")), _one_line(f.get("basis")), _one_line(f.get("kind"))))
         lines.append("  - 來源：{0}（{1}，as_of {2}）".format(
             _one_line(src.get("citation")), _one_line(src.get("ref")), _one_line(src.get("as_of"))))
+        # 2026-09-11（WP-H2-4，Codex 複審缺口 3）：有 quote／locator 就帶——閘要
+        # 核對「這個數字是不是這個意思」，光有 citation 名稱查不到原文段落。
+        if src.get("locator"):
+            lines.append("  - 定位：{0}".format(_one_line(src.get("locator"))))
+        if f.get("quote"):
+            lines.append("  - 原文：「{0}」".format(_one_line(f.get("quote"))))
         if f.get("note"):
             lines.append("  - 註記：{0}".format(_one_line(f.get("note"))))
 

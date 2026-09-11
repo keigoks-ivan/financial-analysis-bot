@@ -2158,6 +2158,34 @@ def test_judge_bundle_v19_is_slimmer_and_uses_v19_cheatsheet(tmp_path):
     assert len(t19.encode("utf-8")) < len(t18.encode("utf-8"))
 
 
+def test_judge_bundle_digest_items_carry_stable_citation_and_locator(tmp_path):
+    """反例（WP-H2-4，Codex 2026-09-11 複審缺口 3）：③b 前三季摘要壓縮表每條要有
+    穩定引用編號（item 自帶 id 或「檔案代號#序號」）與來源定位（檔案代號對照
+    表），不能只有季別/topic/claim/方向四個空泛欄位。"""
+    shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", tmp_path / "evidence.json")
+    digest = {
+        "source_files": ["/a/CALL_A.md", "/b/CALL_B.md"],
+        "items": [
+            {"topic": "guidance", "claim": "claim-one", "quote": "q1", "speaker": "CFO",
+             "date": "2025-10-24", "file": "/a/CALL_A.md"},
+            {"topic": "risk", "claim": "claim-two", "quote": "q2", "speaker": "CEO",
+             "date": "2025-10-24", "file": "/a/CALL_A.md"},
+            {"id": "own-stable-id", "topic": "margin", "claim": "claim-three", "quote": "q3",
+             "speaker": "CFO", "date": "2025-07-24", "file": "/b/CALL_B.md"},
+        ],
+        "qa_flags": [],
+    }
+    (tmp_path / "digest.json").write_text(json.dumps(digest, ensure_ascii=False), encoding="utf-8")
+    out = tmp_path / "judge_v19.md"
+    args = argparse.Namespace(run_dir=str(tmp_path), evidence=None, digest=None, transcript=None,
+                              judgment_rules=None, facts=None, contract="v19", out=str(out))
+    assert dd_bundle.cmd_judge(args) == 0
+    text = out.read_text(encoding="utf-8")
+    assert "F1 = CALL_A.md" in text and "F2 = CALL_B.md" in text  # 檔案代號對照表＝來源定位
+    assert "`F1#1`" in text and "`F1#2`" in text                 # 同一檔第二條序號累加
+    assert "`own-stable-id`" in text                              # item 自帶 id 就沿用不現算
+
+
 # ---------------------------------------------------------------------------
 # WP-H2-3（2026-09-11）：事實表未補齊擋判斷段、組頁傳 --layout v19、閘附被引用事實
 # ---------------------------------------------------------------------------
@@ -2282,6 +2310,35 @@ def test_gate_bundle_carries_referenced_fact_values_and_sources(tmp_path):
     assert "Q9 FY9999" in text                   # 期間口徑
     assert "NEGATIVE-PROBE-CLAIM" in text        # 負向條目
     assert "f_missing_id" in text and "事實表查無此 id" in text  # 斷鏈點名
+
+
+def test_gate_bundle_carries_fact_quote_and_locator(tmp_path):
+    """反例（WP-H2-4，Codex 2026-09-11 複審缺口 3）：事實值與來源引文已帶入，
+    但 `quote` 與 `source.locator` 沒帶——加一條同時有這兩欄的測試事實並被
+    判斷檔引用，gate bundle 必須把兩者都印出來，不能只有值與 citation 名稱。"""
+    shutil.copyfile(FIXTURES_DIR / "evidence_FIX_20260911.json", tmp_path / "evidence.json")
+    facts = json.loads((FIXTURES_DIR / "facts_FIX_20260911.json").read_text(encoding="utf-8"))
+    facts["questions"]["q1_business"]["facts"].append({
+        "id": "f_probe_quote", "label": "測試引文指標", "value": 42,
+        "period": "Q9 FY9999", "unit": "x", "basis": "測試口徑", "kind": "realized",
+        "quote": "PROBE-QUOTE-MARKER 原文片段",
+        "source": {"type": "manual", "ref": "probe", "as_of": "2026-09-11",
+                   "citation": "PROBE-CITATION-MARKER", "locator": "PROBE-LOCATOR-MARKER"},
+    })
+    (tmp_path / "facts.json").write_text(json.dumps(facts, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "judgment.json").write_text(json.dumps({
+        "meta": {"contract": "v19"},
+        "answers": {"q1_business": {"verdict": "x", "fact_refs": ["f_probe_quote"]}},
+        "decision_out": {"verdict": "觀望"},
+    }, ensure_ascii=False), encoding="utf-8")
+
+    out = tmp_path / "gate.md"
+    args = argparse.Namespace(run_dir=str(tmp_path), evidence=None, digest=None, judgment=None,
+                              transcript=None, gate_contract=None, facts=None, out=str(out))
+    assert dd_bundle.cmd_gate(args) == 0
+    text = out.read_text(encoding="utf-8")
+    assert "PROBE-QUOTE-MARKER" in text     # 原文
+    assert "PROBE-LOCATOR-MARKER" in text   # 段落定位
 
 
 def test_gate_bundle_unchanged_for_legacy_shape(tmp_path):
