@@ -872,6 +872,32 @@ def _normalize_trigger_types(out, changes):
             changes.append(f"enum別名：counter_evidence.triggers[{i}].type {v!r} → {stripped!r}")
 
 
+_CATALYST_IMPACT_ENUM = ("高", "中", "低")
+
+
+def _normalize_catalyst_impact_and_probability(out, changes):
+    """2026-09-11：兩種純格式錯不再停下來等人。①catalysts[].impact 只准高／中／低，
+    判斷者若填了整段「發生了會怎樣」的文字，把文字原樣搬到 watch、impact 留空——
+    不猜等級。②thesis.single_thing.probability 是字串欄，數字就轉字串。"""
+    catalysts = out.get("catalysts")
+    if isinstance(catalysts, list):
+        for i, c in enumerate(catalysts):
+            if not isinstance(c, dict):
+                continue
+            v = c.get("impact")
+            if not isinstance(v, str) or v in _CATALYST_IMPACT_ENUM:
+                continue
+            watch = (c.get("watch") or "").rstrip("；")
+            c["watch"] = (watch + "；影響：" + v) if watch else ("影響：" + v)
+            c["impact"] = None
+            changes.append(f"格式：catalysts[{i}].impact 非高／中／低，文字搬至 watch、impact 留空")
+    st = ((out.get("thesis") or {}).get("single_thing")) if isinstance(out.get("thesis"), dict) else None
+    if isinstance(st, dict) and isinstance(st.get("probability"), (int, float)) and not isinstance(st.get("probability"), bool):
+        old = st["probability"]
+        st["probability"] = str(old)
+        changes.append(f"格式：thesis.single_thing.probability {old!r} → {st['probability']!r}")
+
+
 
 
 def normalize(raw: dict, judgment_path=None) -> tuple:
@@ -942,6 +968,7 @@ def normalize(raw: dict, judgment_path=None) -> tuple:
 
     # 2026-09-11：僅清除觸發器 type 的括號註解，不改事件分類。
     _normalize_trigger_types(out, changes)
+    _normalize_catalyst_impact_and_probability(out, changes)
     # 2026-09-11：分類由判斷者填合法 enum，格式整理不得猜分類或改成 other。
 
     # ① 路徑：相對 → 絕對（找不到檔就不動，讓 validate 照實報缺）

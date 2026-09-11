@@ -804,3 +804,22 @@ def test_normalize_does_not_touch_judgment_fields(tmp_path):
     assert out["decision_inputs"]["valuation_dependent"] is False
     assert not any("clock" in c for c in changes)
     assert not any("valuation_dependent" in c for c in changes)
+
+
+def test_normalize_moves_catalyst_impact_text_and_stringifies_probability(tmp_path):
+    """2026-09-11：impact 填了整段文字 → 搬到 watch、impact 留空（不猜等級）；
+    probability 數字 → 字串；合法值一律不動。"""
+    raw = _load(V19_JUDGMENT)
+    raw["catalysts"][0]["impact"] = "FY27 同店展望低於 15%→Base 路徑下修"
+    raw["catalysts"][0]["watch"] = "同店 backlog QoQ"
+    raw["catalysts"][1]["impact"] = "高"
+    raw["thesis"]["single_thing"]["probability"] = 20
+    p = tmp_path / "judgment.json"
+    p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    out, changes = dd_project.normalize(raw, p)
+    assert out["catalysts"][0]["impact"] is None
+    assert out["catalysts"][0]["watch"] == "同店 backlog QoQ；影響：FY27 同店展望低於 15%→Base 路徑下修"
+    assert out["catalysts"][1]["impact"] == "高"
+    assert out["thesis"]["single_thing"]["probability"] == "20"
+    assert sum("catalysts[0].impact" in c for c in changes) == 1
+    assert any("probability" in c for c in changes)
