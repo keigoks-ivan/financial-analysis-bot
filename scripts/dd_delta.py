@@ -45,6 +45,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import dd_prior  # sibling module — reuse DRIFT_WATCH (single source of truth)
+import dd_project  # noqa: E402 — v19 → 舊形狀視圖（WP-H1）；舊形狀是 identity
 import validate_judgment  # sibling module — reuse _prior_fields_of（A4 歸因正規化，單一權威）
 import dd_metric_resolver  # sibling module — reuse resolve_scenario_metrics (P2-2 2026-09-07)
 
@@ -548,7 +549,11 @@ def cmd_generate(argv):
         return 2
 
     prior_evidence = json.loads(prior_evidence_path.read_text(encoding="utf-8"))
-    prior_judgment = json.loads(prior_judgment_path.read_text(encoding="utf-8"))
+    # 2026-09-11（WP-H1）：v19 判斷檔一律先投影成舊形狀視圖再比對——DRIFT_WATCH
+    # 的欄位路徑與 deep_diff 的路徑語義都建立在舊形狀上，保留檢查語義。舊形狀
+    # view_for() 是 identity，既有行為零改動。
+    prior_judgment = dd_project.view_for(
+        json.loads(prior_judgment_path.read_text(encoding="utf-8")), prior_judgment_path)
     new_evidence = json.loads(Path(args.evidence).read_text(encoding="utf-8"))
 
     numbers_changed, fields_from_numbers = build_numbers_changed(prior_evidence, new_evidence)
@@ -663,8 +668,10 @@ def cmd_check(argv):
     delta = json.loads(Path(args.delta_json).read_text(encoding="utf-8"))
     judgment_path = Path(args.judgment)
     prior_judgment_path = Path(args.prior_judgment)
-    judgment = json.loads(judgment_path.read_text(encoding="utf-8"))
-    prior_judgment = json.loads(prior_judgment_path.read_text(encoding="utf-8"))
+    judgment = dd_project.view_for(
+        json.loads(judgment_path.read_text(encoding="utf-8")), judgment_path)
+    prior_judgment = dd_project.view_for(
+        json.loads(prior_judgment_path.read_text(encoding="utf-8")), prior_judgment_path)
 
     scenario_meta = (
         _load_json_optional(Path(args.scenario_meta)) if args.scenario_meta

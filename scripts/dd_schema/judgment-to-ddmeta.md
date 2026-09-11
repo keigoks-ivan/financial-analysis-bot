@@ -108,3 +108,11 @@ E3/E5/E6/E7/E8/E9/E10 缺對應 judgment 子物件或子物件為空陣列 → `
 ## 六、v16 新增、dd-meta 沒有的 `decision_inputs` 七欄
 
 `thesis_irreconcilable`／`valuation_dependent`／`market_wrong_reason_given`／`week26_return_pct`／`momentum_overheated`／`cycle_gates_pass`／`consensus_rev_3m_pct` 是決策矩陣（`dd_decision.py`，WP1b）需要但 dd-meta 從未落欄的中間變數，**不進 dd-meta**，只在 `judgment.json` 內供矩陣腳本讀取；反推工具（`dd_judgment_from_meta.py`）一律填 `null`（回溯反推，無法從既有 dd-meta 取得）。
+
+## 七、v19 判斷檔怎麼對到本表（2026-09-11，WP-H1）
+
+本表的左欄（dd-meta 欄名）與右欄（judgment.json 路徑）**一列未改**。`meta.contract`＝`v19` 的判斷檔先由 `scripts/dd_project.py` 投影成舊形狀視圖，`gen_dd_tables.build_dd_meta()` 讀的是那個視圖，所以本表對 v19 一樣成立、下游（`build_picks.py`／`build_dd_screener.py`／`engine/`／`build_track_record.py`／`check_seat_stage_alerts.py`）讀到的 dd-meta 欄位與 v18 同義。
+
+實測（FIX 2026-09-11 同一份判斷，v18 原檔 vs 手工轉 v19 後投影）：dd-meta **52 欄逐欄相同、0 差異**。
+
+v19 的新居所對照（完整表見 `judgment-v19.md`）：`moat.*`→`answers.q2_moat.verdict_values.moat`、`growth.*`→`answers.q3_growth.verdict_values.growth`、`valuation.*`→`answers.q5_valuation.verdict_values.valuation`、`trap_analysis.verdict`→`answers.q6_how_wrong.verdict_values.trap.verdict`、`premortem.max_dd`→`scenario_inputs.max_dd`、`triggers[]`／`kill_metrics[]`／`decision_out.rearm_trigger`→`counter_evidence`。

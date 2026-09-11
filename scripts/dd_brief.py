@@ -41,6 +41,9 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 import gen_dd_tables as gdt  # noqa: E402
 from dd_metric_resolver import resolve_scenario_metrics  # noqa: E402
+# v19（WP-H1 2026-09-11）：v19 判斷檔先投影成舊形狀視圖再渲染，本檔的渲染邏輯
+# 與版式一字不動；舊形狀 view_for() 是 identity，既有頁面逐 byte 不變。
+import dd_project  # noqa: E402
 
 TEMPLATE_PATH = SCRIPT_DIR / "dd_templates" / "brief.html"
 
@@ -1107,7 +1110,8 @@ def main():
         print(f"ERROR: judgment file not found: {judgment_path}", file=sys.stderr)
         sys.exit(1)
 
-    j = load_json(judgment_path)
+    raw = load_json(judgment_path)
+    j = dd_project.view_for(raw, judgment_path)  # 舊形狀＝原物件；v19＝投影視圖
     scenario_meta = load_json(scenario_meta_path)
     evidence = load_json(evidence_path)
     decision_audit_html = None

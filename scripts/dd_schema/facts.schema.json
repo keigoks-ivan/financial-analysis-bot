@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "dd_schema/facts.schema.json",
+  "title": "DD v19 facts.json（六問事實表）",
+  "description": "2026-09-11（WP-H1）：v19 判斷層的事實輸入檔。六問各一組事實，每條事實有穩定 id、值、期間／單位／口徑、來源定位與 kind（realized／guidance／estimate／claim——「將成長」記為預期不記為事實）；另有 findings_digest[]，evidence 的 coverage／events findings 精簡清單，**不按方向裁掉**（正向反證、中性結構變化、來源衝突、缺口都要在），每條指回 evidence 的 finding id。沒有篇幅硬上限：判斷需要的資料不因配額被丟掉。機械可抽的部分由 scripts/dd_facts.py extract 產出（零 LLM），抽不到的欄留空並標 needs_sonnet，由整理 agent 補；程式不得為了填滿欄位而捏造值。說明見 scripts/dd_schema/facts.md。本檔用 validate_judgment.py 的 draft-07 子集直譯器驗（type／required／properties／items／enum／pattern／minItems／minLength／maxLength），非完整 draft-07。",
+  "type": "object",
+  "required": ["meta", "questions", "findings_digest"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["ticker", "date", "schema"],
+      "properties": {
+        "ticker": {"type": "string"},
+        "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+        "schema": {"type": "string", "pattern": "^facts-v1$"},
+        "generator": {"type": ["string", "null"]},
+        "evidence_ref": {"type": ["string", "null"]},
+        "digest_ref": {"type": ["string", "null"]},
+        "prior_facts_ref": {
+          "type": ["string", "null"],
+          "description": "複審（delta）模式沿用的上一份 facts.json 路徑；每條事實再以 carry 欄標沿用／更新。"
+        }
+      }
+    },
+
+    "questions": {
+      "type": "object",
+      "required": [
+        "q1_business", "q2_moat", "q3_growth",
+        "q4_capital", "q5_valuation", "q6_how_wrong"
+      ],
+      "description": "六問各一組事實，key 與 judgment v19 的 answers 同名（q1_business／q2_moat／q3_growth／q4_capital／q5_valuation／q6_how_wrong）。",
+      "properties": {
+        "q1_business": {"$ref": "#/definitions/question"},
+        "q2_moat": {"$ref": "#/definitions/question"},
+        "q3_growth": {"$ref": "#/definitions/question"},
+        "q4_capital": {"$ref": "#/definitions/question"},
+        "q5_valuation": {"$ref": "#/definitions/question"},
+        "q6_how_wrong": {"$ref": "#/definitions/question"}
+      }
+    },
+
+    "findings_digest": {
+      "type": "array",
+      "description": "evidence.coverage／events 的 findings 精簡清單。硬規則：不得按 direction 裁掉條目——正向、中性、負向、來源衝突、查無（status=none 的軸）都要在；承重或衝突項附 quote 原文片段。",
+      "items": {
+        "type": "object",
+        "required": ["id", "axis", "direction", "claim"],
+        "properties": {
+          "id": {"type": "string", "description": "evidence 的 finding id（無 id 時以 {axis}#{index} 現算，與 validate_judgment J1 同一算法）"},
+          "axis": {"type": "string"},
+          "section": {"type": ["string", "null"], "enum": ["coverage", "events", null]},
+          "direction": {"type": ["string", "null"], "enum": ["+", "0", "-", null]},
+          "claim": {"type": ["string", "null"]},
+          "source": {"type": ["string", "null"]},
+          "as_of": {"type": ["string", "null"]},
+          "affects": {"type": "array", "items": {"type": "string"}},
+          "quote": {"type": ["string", "null"]},
+          "status": {
+            "type": ["string", "null"],
+            "enum": ["ok", "conflict", "gap", "none", null],
+            "description": "conflict＝與另一條事實或 finding 衝突（另在 fact.conflict 記對造 id）；gap／none＝該軸查無料，條目仍要在。"
+          }
+        }
+      }
+    },
+
+    "gaps": {
+      "type": "array",
+      "description": "整份查不到、但判斷需要的東西（軸級或題級皆可）。缺口要被看見，不得以「未提及」帶過。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "topic": {"type": ["string", "null"]},
+          "question": {"type": ["string", "null"]},
+          "why": {"type": ["string", "null"]},
+          "tried": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  },
+
+  "definitions": {
+    "question": {
+      "type": "object",
+      "required": ["facts"],
+      "properties": {
+        "label": {"type": ["string", "null"]},
+        "facts": {"type": "array", "items": {"$ref": "#/definitions/fact"}},
+        "needs_sonnet": {
+          "type": ["boolean", "null"],
+          "description": "true＝機械抽取抽不完，本題仍須由整理 agent 補事實。程式不得因為要填滿而編造，缺就標 true。"
+        },
+        "needs_sonnet_note": {"type": ["string", "null"]},
+        "gaps": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+
+    "fact": {
+      "type": "object",
+      "required": ["id", "value", "period", "unit", "basis", "kind", "source"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^f_[a-z0-9_]+$",
+          "description": "穩定 id；judgment v19 的 answers[].fact_refs[] 只准引這個 id。同一事實跨輪沿用同一 id。"
+        },
+        "label": {"type": ["string", "null"]},
+        "value": {
+          "type": ["number", "string", "boolean", "null"],
+          "description": "null 只允許出現在 needs_sonnet=true 的佔位條目。"
+        },
+        "period": {
+          "type": ["string", "null"],
+          "description": "這個值屬於哪一段期間（Q2 FY2026／FY2025A／LTM／2026-09-04 快照）。"
+        },
+        "unit": {"type": ["string", "null"]},
+        "basis": {
+          "type": ["string", "null"],
+          "description": "口徑：GAAP／Non-GAAP、占誰的比重、分母是哪一年、是否含一次性。口徑不明的數字不得當事實用。"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["realized", "guidance", "estimate", "claim"],
+          "description": "realized＝已實現；guidance＝管理層指引；estimate＝分析師或共識預估；claim＝來源的說法（含「將成長」這類未來式）。預期不得記成事實。"
+        },
+        "source": {"$ref": "#/definitions/source"},
+        "quote": {
+          "type": ["string", "null"],
+          "description": "承重或衝突項附原文片段，讓閘看得到 Fable 實際採用的原文。"
+        },
+        "conflict": {
+          "type": ["object", "null"],
+          "properties": {
+            "with": {"type": "array", "items": {"type": "string"}},
+            "note": {"type": ["string", "null"]}
+          }
+        },
+        "needs_sonnet": {"type": ["boolean", "null"]},
+        "carry": {
+          "type": ["string", "null"],
+          "enum": ["new", "updated", "carried_forward", null],
+          "description": "複審模式用：沿用／更新／新增。carried_forward 仍須帶原來源。"
+        },
+        "note": {"type": ["string", "null"]}
+      }
+    },
+
+    "source": {
+      "type": "object",
+      "required": ["type", "ref"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "evidence_finding", "evidence_numbers", "transcript",
+            "digest", "prior_dd", "filing", "manual"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "description": "定位：evidence finding id（customer_second_source#1）／numbers 路徑（numbers.latest_quarter_kpis.items[0]）／逐字稿檔名／digest item id。"
+        },
+        "locator": {
+          "type": ["string", "null"],
+          "description": "檔內定位：段落、表列、第幾問答。逐字稿來源必填到段落層級。"
+        },
+        "as_of": {"type": ["string", "null"]},
+        "citation": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

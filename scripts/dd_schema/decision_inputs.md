@@ -104,3 +104,17 @@
 - 所有 emoji enum（`val`/`ma`/`trap`/`runway_post_y5`）必須是純 emoji，不得帶文字前綴（同 `dd-meta-schema.md` 既有規則）。
 - `moat_trend` 必須是單一 Unicode 箭頭（↑/→/↓）。
 - bool 欄一律三態（`true`/`false`/`null`），**不可用字串 `"unknown"` 代替 `null`**——`dd_decision.py` 的 gap 偵測邏輯是 `is None` 判斷，字串 `"unknown"` 會被當成 truthy 值誤判。
+
+## 7. 終端年與 `base_eps_path` 契約（2026-09-11 定死，WP-H1）
+
+v18 之前這件事沒有明文，於是同一批判斷檔出現兩種慣例：多數把 `eps_meta.base_eps_path` 一路延伸到情境樹終端年，TXN 與 AVGO 只放共識三年錨。`validate_judgment.py` 的 J2 年期檢查因此只能 WARN、不能擋。本節把兩件事定死：
+
+1. **終端年＝判斷日起第 5 個完整會計年度。** 以判斷檔 `meta.date` 的年份 +5 為準，容忍 ±1 年給非 12 月結算的財年（`fy_end_month` 不同者，如 1 月結算的 FY 標示會整體位移一年）。`scenario.json` 的 `terminal_label`（如 `FY2031E`）是唯一宣告處，`dd_scenario.py` 照此算五年路徑與終端價。
+2. **`base_eps_path`＝共識三年錨**，不是情境樹路徑：基期實際值（`FY2025A`）＋ FY+1E／FY+2E／FY+3E ＋ `source`。它的既有消費端（`snapshot_consensus.py`／`build_variance_tracker.py`／`build_catalyst_page.py`）做的是財報季 EPS 承保比對，只需要覆蓋近期財年；情境樹的五年 EPS 路徑住在 `scenario.json`／`scenario_meta.json` 的 `scenario_tree.eps`，兩者不重複儲存。
+
+**檢查強度**（`validate_judgment.py::j2_math_checks` 的 `strict_terminal_year`）：
+
+| 形狀 | 終端年 vs 判斷年+5 差 >1 年 | `base_eps_path` 終端年 ≠ 情境樹終端年 |
+|---|---|---|
+| v19（`meta.contract`＝`v19`） | **FAIL** | 短於終端年＝契約本身，不報；**長於**終端年＝口徑不一致，**FAIL** |
+| 舊形狀（無 `meta.contract`） | WARN（維持原狀，既有慣例分歧不回頭改） | WARN（維持原狀） |

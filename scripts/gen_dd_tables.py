@@ -45,6 +45,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dd_metric_resolver import resolve_max_dd_pct, resolve_scenario_metrics  # noqa: E402
+# v19（WP-H1 2026-09-11）：判斷檔若帶 meta.contract="v19"，本檔的 dd-meta 與七表
+# 一律讀 dd_project 投影出的舊形狀視圖；舊形狀 view_for() 是 identity，既有輸出
+# 逐 byte 不變。
+import dd_project  # noqa: E402
 
 E12_ID_TOKEN_RE = re.compile(r"[HR]\d+")
 
@@ -853,7 +857,8 @@ def main():
     args = ap.parse_args()
 
     jpath = Path(args.judgment)
-    j = load_json(jpath)
+    raw = load_json(jpath)
+    j = dd_project.view_for(raw, jpath)  # 舊形狀＝原物件；v19＝投影視圖
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 

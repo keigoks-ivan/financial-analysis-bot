@@ -94,9 +94,19 @@ Two layers:
       `val_denominator_note` 缺或空 → FAIL；理由內容是否充分不做語意審。見
       `val_denominator_note_checks()`。
 
+  14. v19 契約（FAIL／WARN，WP-H1 2026-09-11）: 判斷檔帶 `meta.contract`＝
+      `"v19"` 時，先用 schema 的 `v19_contract` 區塊驗 judge-owned 形狀，再由
+      `dd_project.project()` 投影成舊形狀視圖，**上列 1–13 全部改讀視圖**
+      （檢查語義不變，不是新開一套）。另加三條 v19 專屬檢查：`fact_refs[]` 的
+      id 必須在 `facts.json` 找得到、由程式投影的 13 個 `decision_inputs` 機械欄
+      不得被判斷者填成非 null、J2 的終端年檢查升 FAIL（終端年＝判斷日起第 5 個
+      完整會計年度，`base_eps_path`＝共識三年錨，見
+      `dd_schema/decision_inputs.md`）。**舊形狀（無 `meta.contract`）完全不走
+      這條路**，驗法與輸出逐字不變。
+
 Usage:
   python3 scripts/validate_judgment.py FILE.json [--report] [--evidence EVIDENCE.json]
-                                        [--j1-warn] [--fix]
+                                        [--facts FACTS.json] [--j1-warn] [--fix]
 
 Exit 0 = no FAIL-level issues (or --report). Exit 1 otherwise.
 """
@@ -124,6 +134,9 @@ import dd_sections  # noqa: E402 — LEAK_PATTERNS（QC-40 詞表，單一權威
 import qc  # noqa: E402 — CJK_PUNCT_RE（半形標點規則，單一權威）
 # layer 4（漂移歸因）：current 側 judgment→dd-meta 映射單一權威，import 重用。
 import gen_dd_tables  # noqa: E402
+# v19（WP-H1）：新契約 → 舊形狀視圖的單一程式轉接；舊形狀 project() 是 identity，
+# 故本檔對既有判斷檔的行為完全不變。
+import dd_project  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -483,7 +496,8 @@ def _load_scenario_meta_for_j2(data: dict, judgment_path: Path):
         return None, f"scenario_meta sidecar {sidecar}: JSON parse error: {e}"
 
 
-def j2_math_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
+def j2_math_checks(data: dict, judgment_path: Path,
+                   strict_terminal_year: bool = False) -> tuple[list, list]:
     """WP2 J2 — 判斷層恆等式：Max DD 下限 vs Bear 終點跌幅、
     decision_inputs.irr_base_pct／ev5y_pct 對 scenario_meta、情境樹年期、
     Bull EPS 對 Base 的退化、scenario_meta.valuation_dependent 與
@@ -540,7 +554,16 @@ def j2_math_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
     eps_years = [y for y in (_extract_fy_year(k) for k in eps_path) if y is not None]
     if term_year and eps_years:
         max_eps_year = max(eps_years)
-        if max_eps_year != term_year:
+        if strict_terminal_year:
+            # v19 契約（decision_inputs.md「終端年與 base_eps_path」節）：
+            # base_eps_path＝共識三年錨，本來就短於終端年，短不算問題；只有
+            # 「路徑伸得比終端年還遠」才是口徑不一致。
+            if max_eps_year > term_year:
+                fails.append(
+                    f"J2｜base_eps_path 終端年 FY{max_eps_year} 超過情境樹終端年 "
+                    f"FY{term_year}——v19 契約規定 base_eps_path 是共識三年錨，不得伸過終端年"
+                )
+        elif max_eps_year != term_year:
             warns.append(
                 f"J2｜情境樹年期提示：scenario_meta.scenario_tree.terminal_label 宣告 "
                 f"FY{term_year}，但 eps_meta.base_eps_path 終端年是 FY{max_eps_year}"
@@ -551,10 +574,13 @@ def j2_math_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
     if term_year and re.match(r"^\d{4}", dd_date):
         dd_year = int(dd_date[:4])
         if abs(term_year - (dd_year + 5)) > J2_YEAR_WARN_TOL:
-            warns.append(
+            msg = (
                 f"J2｜終端年 FY{term_year} 與報告年+5（{dd_year + 5}）差 "
-                f">{J2_YEAR_WARN_TOL} 年——確認主時距宣告與財年口徑"
+                f">{J2_YEAR_WARN_TOL} 年——終端年契約＝判斷日起第 5 個完整會計年度"
+                f"（見 dd_schema/decision_inputs.md）"
             )
+            # v19 形狀：契約已定死，升 FAIL；舊形狀維持 WARN（既有慣例分歧不回頭改）。
+            (fails if strict_terminal_year else warns).append(msg)
 
     # Bull 前兩年 EPS 與 Base 相同＝情境退化（verify_dd_math 檢查 E 同款）
     bull_path = (scenario_tree.get("eps") or {}).get("bull") or []
@@ -1239,9 +1265,74 @@ def j5_plain_role_checks(data: dict) -> tuple:
             (fails if strong else warns).append(msg)
     return fails, warns
 
-def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool = False):
+def v19_contract_checks(raw: dict, schema: dict, facts: dict | None,
+                        facts_path_found: bool) -> tuple[list, list]:
+    """v19 專屬檢查（WP-H1 2026-09-11）。舊形狀完全不跑本函式。
+
+    三件事：(1) 用 schema 的 `v19_contract` 區塊驗 judge-owned 形狀；(2)
+    `answers[].fact_refs[]` 的每個 id 必須在 facts.json 找得到（facts 解析不到
+    只 WARN，不硬擋——判斷檔本身仍可獨立驗）；(3) 由程式投影的
+    `decision_inputs` 機械欄不得被判斷者填成非 null（同一件事不准兩邊都填）。
+    """
+    fails, warns = [], []
+    v19_schema = schema.get("v19_contract")
+    if not v19_schema:
+        warns.append("v19｜judgment.schema.json 缺 v19_contract 區塊，judge-owned 形狀未驗")
+    else:
+        fails.extend(f"v19｜{e}" for e in schema_validate(raw, v19_schema, "$"))
+
+    fact_ids = set()
+    for q in ((facts or {}).get("questions") or {}).values():
+        for f in (q or {}).get("facts") or []:
+            if isinstance(f, dict) and f.get("id"):
+                fact_ids.add(f["id"])
+    for qkey, ans in (raw.get("answers") or {}).items():
+        if not isinstance(ans, dict):
+            continue
+        for ref in ans.get("fact_refs") or []:
+            if not facts_path_found:
+                continue
+            if ref not in fact_ids:
+                fails.append(
+                    f"v19｜answers.{qkey}.fact_refs 引用了 facts.json 沒有的 id：{ref}"
+                )
+    if not facts_path_found:
+        warns.append(
+            "v19｜facts_ref 解析不到（或未提供 --facts），fact_refs 可追溯性與三個事實欄"
+            "（price_at_dd／week26_return_pct／consensus_rev_3m_pct）的投影未驗"
+        )
+
+    raw_di = raw.get("decision_inputs") or {}
+    dirty = [k for k in dd_project.PROJECTED_DECISION_INPUT_KEYS
+             if raw_di.get(k) is not None]
+    if dirty:
+        fails.append(
+            "v19｜decision_inputs 出現由程式投影的欄且值非 null：{0}"
+            "——同一件事不准兩邊都填（歸屬表見 dd_schema/judgment-v19.md）".format(dirty)
+        )
+    return fails, warns
+
+
+def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool = False,
+                  facts_path: Path | None = None):
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
-    data = json.loads(path.read_text(encoding="utf-8"))
+    raw = json.loads(path.read_text(encoding="utf-8"))
+
+    # v19：先驗 judge-owned 形狀，再投影成舊形狀視圖，後面所有檢查一律讀視圖
+    # （檢查語義不變）。舊形狀 raw is data，一個分支都不走。
+    v19 = dd_project.is_v19(raw)
+    if v19:
+        resolved_facts_path = (
+            Path(facts_path) if facts_path
+            else dd_project.resolve_facts_path(raw, path)
+        )
+        facts_found = bool(resolved_facts_path and Path(resolved_facts_path).exists())
+        facts = dd_project.load_facts(raw, path, resolved_facts_path) if facts_found else None
+        data = dd_project.project(raw, facts)
+        v19_fails, v19_warns = v19_contract_checks(raw, schema, facts, facts_found)
+    else:
+        data = raw
+        v19_fails, v19_warns = [], []
 
     struct_errs = schema_validate(data, schema, "$")
     cross_fails, cross_warns = cross_field_checks(data, path)
@@ -1250,7 +1341,7 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
     expand_fails = expandable_block_checks(data)  # WP-E 修 #2：B1-B4 未展開標記完整性
     premortem_fails = premortem_counterevidence_checks(data)  # WP-E 修 #3：新格式反證三視角
     drift_fails, drift_warns = drift_checks(data, path, evidence_path)
-    j2_fails, j2_warns = j2_math_checks(data, path)
+    j2_fails, j2_warns = j2_math_checks(data, path, strict_terminal_year=v19)
     j1_fails, j1_warns = j1_traceability_checks(data, evidence_path, warn_only=j1_warn)
     j4_warns = j4_plain_checks(data)
     j5_fails, j5_warns = j5_plain_role_checks(data)
@@ -1258,9 +1349,11 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
     trap_warns = trap_analysis_redundancy_checks(data)  # WP-G 修 #4：反向引用
     val_note_fails = val_denominator_note_checks(data)  # WP-G 修 #5：分母爭議欄需附一句依據
 
-    fails = (struct_errs + cross_fails + pair_fails + leak_fails + expand_fails + premortem_fails
-             + drift_fails + j2_fails + j1_fails + j5_fails + j6_fails + val_note_fails)
-    warns = cross_warns + drift_warns + j2_warns + j1_warns + j4_warns + j5_warns + j6_warns + trap_warns
+    fails = (v19_fails + struct_errs + cross_fails + pair_fails + leak_fails + expand_fails
+             + premortem_fails + drift_fails + j2_fails + j1_fails + j5_fails + j6_fails
+             + val_note_fails)
+    warns = (v19_warns + cross_warns + drift_warns + j2_warns + j1_warns + j4_warns
+             + j5_warns + j6_warns + trap_warns)
     return fails, warns
 
 
@@ -1342,6 +1435,7 @@ def main():
     ap.add_argument("file", help="judgment.json 路徑")
     ap.add_argument("--report", action="store_true", help="永遠 exit 0，只印報告")
     ap.add_argument("--evidence", help="evidence.json 路徑；給了才啟用漂移檢查（layer 4）與 J1")
+    ap.add_argument("--facts", help="facts.json 路徑（v19 專用；不給時讀判斷檔的 facts_ref）")
     ap.add_argument("--j1-warn", action="store_true", help="J1 負向證據可追溯 FAIL 降為 WARN（校準用）")
     ap.add_argument("--fix", action="store_true", help="套用 J3 可自動修正項並寫回檔案，再照常跑驗證報告")
     args = ap.parse_args()
@@ -1363,7 +1457,8 @@ def main():
             print("  無可自動修正項")
 
     evidence_path = Path(args.evidence) if args.evidence else None
-    fails, warns = validate_file(path, evidence_path, j1_warn=args.j1_warn)
+    fails, warns = validate_file(path, evidence_path, j1_warn=args.j1_warn,
+                                facts_path=Path(args.facts) if args.facts else None)
 
     tag = "FAIL" if fails else "PASS"
     print(f"[{tag}] {path.name}（{len(fails)} FAIL／{len(warns)} WARN）")

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "dd_schema/judgment.schema.json",
   "title": "stock-analyst v17 judgment.json (WP1c draft-07 subset)",
-  "description": "2026-09-10 (v18 基準版, 前身 WP-D/WP-E): (0) required 條目 184->136——固定表格的逐欄子項、與權威欄同源的 appendix_a 投影欄、reasoning 非承重模組改選填；判斷輸入 (decision_inputs 22 欄)、下游直讀欄 (dca_role/max_dd/ev5y_pct/irr_base_pct/peg/percentile_5y/val_light)、四個條件式區塊 key、premortem/contradictions/triggers 契約全部維持必填。plain.six = 六問白話。以下為 WP-D 既有條款: (1) premortem.blind_spots[] 是反證紀錄的 canonical 居所 (view/evidence/assumption/consequence/ruling/watch)，failure_story/second_failure/trap_analysis 各欄降為選填的引用面；(2) 條件式展開區塊 (industry.tam_table / growth.segments / governance.capital_returns / valuation.peers) 額外接受 {\"expanded\": false, \"reason\": \"...\"} 物件形狀；(3) contradictions[].prior_field 可為欄名陣列並帶 cause，讓多欄共用一個歸因。全部只放寬不收緊，舊形狀仍合法。Interpreted by scripts/validate_judgment.py's lightweight generic validator (supports: type/required/properties/items/enum/pattern/minItems/minLength/maxLength/additionalProperties only -- NOT a full draft-07 implementation). Cross-field rules (H<->R<->triggers mapping, decision_inputs completeness, scenario_ref consistency, date>=1 row) are NOT expressible here and are checked separately in validate_judgment.py. See scripts/dd_schema/judgment-to-ddmeta.md for the dd-meta field derivation table.",
+  "description": "2026-09-10 (v18 基準版, 前身 WP-D/WP-E): (0) required 條目 184->136——固定表格的逐欄子項、與權威欄同源的 appendix_a 投影欄、reasoning 非承重模組改選填；判斷輸入 (decision_inputs 22 欄)、下游直讀欄 (dca_role/max_dd/ev5y_pct/irr_base_pct/peg/percentile_5y/val_light)、四個條件式區塊 key、premortem/contradictions/triggers 契約全部維持必填。plain.six = 六問白話。以下為 WP-D 既有條款: (1) premortem.blind_spots[] 是反證紀錄的 canonical 居所 (view/evidence/assumption/consequence/ruling/watch)，failure_story/second_failure/trap_analysis 各欄降為選填的引用面；(2) 條件式展開區塊 (industry.tam_table / growth.segments / governance.capital_returns / valuation.peers) 額外接受 {\"expanded\": false, \"reason\": \"...\"} 物件形狀；(3) contradictions[].prior_field 可為欄名陣列並帶 cause，讓多欄共用一個歸因。全部只放寬不收緊，舊形狀仍合法。Interpreted by scripts/validate_judgment.py's lightweight generic validator (supports: type/required/properties/items/enum/pattern/minItems/minLength/maxLength/additionalProperties only -- NOT a full draft-07 implementation). Cross-field rules (H<->R<->triggers mapping, decision_inputs completeness, scenario_ref consistency, date>=1 row) are NOT expressible here and are checked separately in validate_judgment.py. See scripts/dd_schema/judgment-to-ddmeta.md for the dd-meta field derivation table. 2026-09-11 (WP-H1): 本檔新增頂層 `v19_contract` 區塊——`meta.contract`＝\"v19\" 的判斷檔改用該區塊驗 judge-owned 形狀，再由 scripts/dd_project.py 投影成舊形狀視圖、照舊跑本區塊的 required/properties 與全部 cross-field 檢查。**舊形狀（無 meta.contract 標記）完全不受影響**：驗法、渲染、逐 byte 輸出一律不變。欄位歸屬見 scripts/dd_schema/judgment-v19.md。",
   "type": "object",
   "required": [
     "meta", "oneliner", "archetype", "thesis", "industry", "moat", "growth",
@@ -636,6 +636,452 @@
         "prior_compare_reason": {"type": ["string", "null"]},
         "how_to_lose": {"type": ["string", "null"]},
         "evidence_quality": {"type": ["string", "null"]}
+      }
+    }
+  },
+
+  "v19_contract": {
+    "title": "v19 判斷檔契約（judge-owned 形狀；WP-H1 2026-09-11）",
+    "description": "以 `meta.contract`＝\"v19\" 判別。**舊形狀（無此標記）一律照舊驗、照舊渲染，本區塊不套用。** v19 只要求判斷者寫「必須判斷的東西」：六問 answers（結論句＋短理由＋fact_refs＋結構化判斷值）、scenario_inputs（三支 EPS 路徑／終端倍數／機率／Max DD 範圍）、counter_evidence（反證三視角、矛盾裁定、觸發器、行動條件的唯一居所）、decision_inputs 的 judge-owned 欄，以及 thesis／appendix_a／eps_meta。其餘舊頂層欄（industry／moat／growth／quality／governance／valuation／trap_analysis／premortem／contradictions／triggers／kill_metrics／plain／reasoning／archetype／catalysts 與 decision_inputs 的純機械欄）由 `scripts/dd_project.py` 投影生成，判斷者不重填——兩邊都填會被 validate_judgment 的 v19 檢查擋下。投影後的視圖仍照舊跑整份 judgment.schema.json 與所有 cross-field 檢查（J1／J2／J6／同源／leak／展開區塊／反證三視角），檢查語義不變。欄位歸屬表見 `scripts/dd_schema/judgment-v19.md`。",
+    "type": "object",
+    "required": [
+      "meta", "oneliner", "facts_ref", "thesis", "answers", "scenario_inputs",
+      "counter_evidence", "decision_inputs", "decision_out", "appendix_a",
+      "eps_meta", "scenario_ref"
+    ],
+    "properties": {
+      "meta": {
+        "type": "object",
+        "required": ["ticker", "date", "schema", "contract"],
+        "properties": {
+          "ticker": {"type": "string"},
+          "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+          "schema": {"type": "string", "pattern": "^v1[2345]\\.\\d+$"},
+          "contract": {"type": "string", "enum": ["v19"]},
+          "company_name": {"type": ["string", "null"]}
+        }
+      },
+      "oneliner": {"type": "string", "maxLength": 200},
+      "facts_ref": {
+        "type": "string",
+        "minLength": 1,
+        "description": "facts.json 路徑（絕對或相對 repo root／判斷檔所在目錄）。answers[].fact_refs[] 只准引該檔的 fact id。"
+      },
+      "scenario_ref": {"type": ["string", "null"]},
+
+      "answers": {
+        "type": "object",
+        "required": [
+          "q1_business", "q2_moat", "q3_growth",
+          "q4_capital", "q5_valuation", "q6_how_wrong"
+        ],
+        "properties": {
+          "q1_business": {
+            "type": "object",
+            "required": ["verdict", "reasoning", "fact_refs", "verdict_values"],
+            "properties": {
+              "verdict": {"type": "string", "minLength": 1, "description": "結論先行的白話判斷句一句；投影成 plain.six.how_it_makes_money。"},
+              "reasoning": {"type": "string", "minLength": 1, "description": "從證據到結論的短理由；投影成 reasoning.industry。"},
+              "fact_refs": {"type": "array", "items": {"type": "string", "pattern": "^f_[a-z0-9_]+$"}},
+              "verdict_values": {
+                "type": "object",
+                "required": ["archetype", "industry", "revenue_quality", "unit_econ_note"],
+                "properties": {
+                  "revenue_quality": {"type": ["string", "null"], "description": "營收品質：誰付錢、經常性或專案型、收款與認列方式。"},
+                  "unit_econ_note": {"type": ["string", "null"], "description": "單位經濟：一單生意賺多少、規模化後會變好還是變差。"},
+                  "archetype": {
+                    "type": "object",
+                    "required": ["primary"],
+                    "properties": {
+                      "primary": {"type": ["string", "null"]},
+                      "secondary": {"type": ["string", "null"]},
+                      "confidence": {"type": ["string", "null"]},
+                      "fingerprint": {"type": ["string", "null"]}
+                    }
+                  },
+                  "industry": {
+                    "type": "object",
+                    "required": ["clock_phase", "sd_verdict_source", "tam_table"],
+                    "properties": {
+                      "clock_phase": {"type": ["string", "null"], "enum": ["I", "II", "III", "IV", null]},
+                      "sd_verdict_source": {"type": ["string", "null"]},
+                      "bargaining": {"type": "object"},
+                      "profit_pool_dir": {"type": ["string", "null"]},
+                      "tam_table": {"type": ["array", "object"]}
+                    }
+                  },
+                  "single_thing": {"type": "object"}
+                }
+              }
+            }
+          },
+          "q2_moat": {
+            "type": "object",
+            "required": ["verdict", "reasoning", "fact_refs", "verdict_values"],
+            "properties": {
+              "verdict": {"type": "string", "minLength": 1},
+              "reasoning": {"type": "string", "minLength": 1},
+              "fact_refs": {"type": "array", "items": {"type": "string", "pattern": "^f_[a-z0-9_]+$"}},
+              "verdict_values": {
+                "type": "object",
+                "required": ["moat"],
+                "properties": {
+                  "moat": {
+                    "type": "object",
+                    "required": [
+                      "mechanism", "grade", "trend", "trend_evidence",
+                      "execution", "pricing", "spread_table", "competitors",
+                      "threats", "roic_durability"
+                    ],
+                    "description": "`combined` 缺時由程式取 execution／pricing 平均，`score` 缺時取 combined（判斷者要加權就自己填）；**`grade` 一律由判斷者給，程式不從分數推等級**（實檔證據：8.5 分同時有 A 與 B 兩種等級，映射不成立）。",
+                    "properties": {
+                      "mechanism": {"type": ["string", "null"], "description": "優勢機制一句：客戶為什麼離不開、對手為什麼補不上。"},
+                      "execution": {"type": ["number", "null"]},
+                      "pricing": {"type": ["number", "null"]},
+                      "combined": {"type": ["number", "null"]},
+                      "score": {"type": ["number", "null"]},
+                      "grade": {"type": ["string", "null"], "enum": ["S", "A", "B", "C", "X", null]},
+                      "trend": {"type": ["string", "null"], "enum": ["↑", "→", "↓", null]},
+                      "trend_evidence": {"type": ["string", "null"]},
+                      "spread_table": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+                      "competitors": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+                      "threats": {"type": "array", "items": {"type": "object"}},
+                      "roic_durability": {
+                        "type": "object",
+                        "required": ["checkpoints", "roiic", "reinvest_rate", "endo_ceiling"],
+                        "properties": {
+                          "quadrant": {"type": ["string", "null"]},
+                          "checkpoints": {"type": "array", "minItems": 4, "items": {"type": "object"}},
+                          "roiic": {"type": ["number", "string", "null"]},
+                          "reinvest_rate": {"type": ["number", "string", "null"]},
+                          "endo_ceiling": {"type": ["number", "null"]},
+                          "formula_note": {"type": ["string", "null"]}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "q3_growth": {
+            "type": "object",
+            "required": ["verdict", "reasoning", "fact_refs", "verdict_values"],
+            "properties": {
+              "verdict": {"type": "string", "minLength": 1},
+              "reasoning": {"type": "string", "minLength": 1},
+              "fact_refs": {"type": "array", "items": {"type": "string", "pattern": "^f_[a-z0-9_]+$"}},
+              "verdict_values": {
+                "type": "object",
+                "required": ["growth"],
+                "properties": {
+                  "growth": {
+                    "type": "object",
+                    "required": ["driver_mix", "runway_post_y5", "endo_ceiling_basis", "segments"],
+                    "properties": {
+                      "driver_mix": {"type": ["string", "null"], "description": "成長是量、價、併購還是回購；各占多少。"},
+                      "runway_years": {"type": ["number", "string", "null"]},
+                      "runway_post_y5": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
+                      "endo_ceiling_basis": {"type": ["string", "null"], "description": "內生上界的依據與缺口歸因（引問二同一組數字，不重算）。"},
+                      "segments": {"type": ["array", "object"]},
+                      "seven_questions": {"type": "array"},
+                      "decay_signals": {"type": "array"},
+                      "trap_rating": {"type": ["string", "null"]}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "q4_capital": {
+            "type": "object",
+            "required": ["verdict", "reasoning", "fact_refs", "verdict_values"],
+            "properties": {
+              "verdict": {"type": "string", "minLength": 1},
+              "reasoning": {"type": "string", "minLength": 1},
+              "fact_refs": {"type": "array", "items": {"type": "string", "pattern": "^f_[a-z0-9_]+$"}},
+              "verdict_values": {
+                "type": "object",
+                "required": ["capalloc", "governance"],
+                "properties": {
+                  "capalloc": {
+                    "type": "object",
+                    "required": ["items"],
+                    "description": "資本配置計分卡三項的**適用性與輸入由判斷者明示**，加總成 A／B／C 由程式依既有規則算（適用項 ≥2 過＝A、1＝B、0＝C）；三項皆不適用時 grade 留空，程式不猜。判斷者要自行給 `grade` 也可以，給了就以判斷者為準並由程式核對。",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "object",
+                          "required": ["name", "applicable", "passed", "input"],
+                          "properties": {
+                            "name": {"type": "string", "enum": ["ma_roiic", "buyback_yield", "sbc_dilution"]},
+                            "applicable": {"type": ["boolean", "null"]},
+                            "passed": {"type": ["boolean", "null"]},
+                            "input": {"type": ["string", "null"], "description": "這一項的判斷輸入與口徑一句（含數字與 fact id）。"}
+                          }
+                        }
+                      },
+                      "grade": {"type": ["string", "null"], "enum": ["A", "B", "C", null]}
+                    }
+                  },
+                  "governance": {
+                    "type": "object",
+                    "required": ["capital_returns"],
+                    "properties": {
+                      "capital_returns": {"type": ["array", "object"]},
+                      "scorecard": {"type": "array", "items": {"type": "object"}},
+                      "sbc": {"type": "object"}
+                    }
+                  },
+                  "quality": {"type": "object", "description": "三年體質／DuPont／CCC 等表；E9 要渲染時才給，未給時 E9 顯示未提供。"}
+                }
+              }
+            }
+          },
+          "q5_valuation": {
+            "type": "object",
+            "required": ["verdict", "reasoning", "fact_refs", "verdict_values"],
+            "properties": {
+              "verdict": {"type": "string", "minLength": 1},
+              "reasoning": {"type": "string", "minLength": 1},
+              "fact_refs": {"type": "array", "items": {"type": "string", "pattern": "^f_[a-z0-9_]+$"}},
+              "verdict_values": {
+                "type": "object",
+                "required": ["valuation"],
+                "properties": {
+                  "valuation": {
+                    "type": "object",
+                    "required": [
+                      "basis", "peers", "peg", "percentile_5y", "val_light",
+                      "val_light_derivation", "upside_short_pct", "upside_mid_pct",
+                      "denominator_disputed", "denominator_note"
+                    ],
+                    "properties": {
+                      "basis": {"type": ["string", "null"], "description": "正常化口徑：用哪一年的 EPS、是否剔除一次性、為什麼這把尺對這個 archetype 有效。"},
+                      "tier": {"type": ["string", "null"]},
+                      "peers": {"type": ["array", "object"]},
+                      "fwd_pe": {"type": ["number", "null"]},
+                      "peg": {"type": ["number", "null"]},
+                      "percentile_5y": {"type": ["number", "null"]},
+                      "val_light": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🟠", "🔴", null]},
+                      "val_light_derivation": {"type": ["string", "null"]},
+                      "targets": {"type": "object"},
+                      "upside_short_pct": {"type": ["number", "null"]},
+                      "upside_mid_pct": {"type": ["number", "null"]},
+                      "denominator_disputed": {"type": ["boolean", "null"], "description": "投影成 decision_inputs.val_denominator_disputed。"},
+                      "denominator_note": {"type": ["string", "null"], "description": "投影成 decision_inputs.val_denominator_note；填 true 或 false 都要一句依據。"}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "q6_how_wrong": {
+            "type": "object",
+            "required": ["verdict", "reasoning", "fact_refs", "verdict_values"],
+            "properties": {
+              "verdict": {"type": "string", "minLength": 1},
+              "reasoning": {"type": "string", "minLength": 1},
+              "fact_refs": {"type": "array", "items": {"type": "string", "pattern": "^f_[a-z0-9_]+$"}},
+              "verdict_values": {
+                "type": "object",
+                "required": ["trap"],
+                "description": "Max DD 範圍的唯一居所是 `scenario_inputs.max_dd`（含 `basis` 理由），本題不重填；`path_risk` 燈由程式依既有切點（🟢 0～−30%／🟡 −30～−50%／🔴 <−50%）從 lo 算。",
+                "properties": {
+                  "trap": {
+                    "type": "object",
+                    "required": ["verdict", "label"],
+                    "properties": {
+                      "verdict": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
+                      "label": {"type": ["string", "null"]}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+
+      "scenario_inputs": {
+        "type": "object",
+        "required": ["eps", "pe", "p", "terminal_label", "max_dd"],
+        "description": "情境假設由判斷者明示，EV／IRR／AR／path_risk 燈由程式算。終端年契約見 `scripts/dd_schema/decision_inputs.md` §7：判斷日起第 5 個完整會計年度。`dd_project.py scenario` 由本區塊機械產出 `dd_scenario.py` 的輸入檔——同一組 EPS 路徑、倍數與機率只寫一次，判斷者不另寫 scenario.json。",
+        "properties": {
+          "terminal_label": {"type": "string", "minLength": 1},
+          "start": {"type": "object"},
+          "eps": {
+            "type": "object",
+            "required": ["bull", "base", "bear"],
+            "properties": {
+              "bull": {"type": "array", "minItems": 1, "items": {"type": "number"}},
+              "base": {"type": "array", "minItems": 1, "items": {"type": "number"}},
+              "bear": {"type": "array", "minItems": 1, "items": {"type": "number"}}
+            }
+          },
+          "pe": {
+            "type": "object",
+            "required": ["bull", "base", "bear"],
+            "properties": {
+              "bull": {"type": ["number", "null"]},
+              "base": {"type": ["number", "null"]},
+              "bear": {"type": ["number", "null"]}
+            }
+          },
+          "p": {
+            "type": "object",
+            "required": ["bull", "base", "bear"],
+            "properties": {
+              "bull": {"type": ["number", "null"]},
+              "base": {"type": ["number", "null"]},
+              "bear": {"type": ["number", "null"]}
+            }
+          },
+          "yield_pct": {"type": "object"},
+          "second_stage": {"type": "object"},
+          "basis": {
+            "type": "object",
+            "description": "三情境各一句假設依據（bull／base／bear）；由 `dd_project.py scenario` 帶進 scenario.json 的 scenarios[].basis。"
+          },
+          "endo_ceiling_exceeded": {
+            "type": ["boolean", "null"],
+            "description": "Base 情境 EPS CAGR 是否超出問二的內生天花板——判斷者引同一組數字判定，程式不反推；true 時 dd_scenario.py 要求 p_bear ≥30。"
+          },
+          "peer_max_fpe": {
+            "type": ["number", "null"],
+            "description": "終端倍數的同業現值對照上限；缺時 `dd_project.py scenario` 退回 facts 的 f_q5_peer_max_fpe。"
+          },
+          "max_dd": {
+            "type": "object",
+            "required": ["lo", "hi", "basis"],
+            "properties": {
+              "lo": {"type": ["number", "null"]},
+              "hi": {"type": ["number", "null"]},
+              "basis": {"type": ["string", "null"], "description": "從哪個情境的價格路徑、哪次可比歷史回撤或哪個倍數壓縮推出來；沒有依據不得只給結果。"},
+              "trigger_time": {"type": ["string", "null"]}
+            }
+          }
+        }
+      },
+
+      "counter_evidence": {
+        "type": "object",
+        "required": ["blind_spots", "contradictions", "triggers", "action_conditions"],
+        "description": "反證與行動條件的**唯一居所**：三視角反證紀錄、矛盾裁定（含 cause 歸因）、觸發器、致命指標、rearm 與執行語。§11／§12／監測器／dd-meta 全部從這裡投影，不得在別處再寫一份。",
+        "properties": {
+          "blind_spots": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "view": {"type": ["string", "null"], "enum": ["論點失敗", "論點成功但股東經濟變差", "價格已反映太多", null]},
+                "evidence": {"type": ["string", "null"]},
+                "assumption": {"type": ["string", "null"]},
+                "consequence": {"type": ["string", "null"]},
+                "ruling": {"type": ["string", "null"]},
+                "watch": {"type": ["string", "null"]},
+                "not_applicable_reason": {"type": ["string", "null"]},
+                "evidence_refs": {"type": "array", "items": {"type": "string"}},
+                "fact_refs": {"type": "array", "items": {"type": "string"}}
+              }
+            }
+          },
+          "contradictions": {"type": "array", "items": {"type": "object"}},
+          "triggers": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+          "kill_metrics": {"type": "array", "items": {"type": "object"}},
+          "evidence_dismissed": {"type": "array", "items": {"type": "object"}},
+          "action_conditions": {
+            "type": "object",
+            "required": ["rearm_trigger", "exec_line"],
+            "properties": {
+              "rearm_trigger": {"type": ["string", "null"], "maxLength": 120},
+              "exec_line": {"type": ["string", "null"]},
+              "holding_cap": {"type": ["string", "null"], "description": "判斷者可留空；決策矩陣會機械寫入 decision_out.holding_cap。"}
+            }
+          }
+        }
+      },
+
+      "decision_inputs": {
+        "type": "object",
+        "required": [
+          "signal", "ma", "cycle_position", "cycle_verdict",
+          "thesis_irreconcilable", "valuation_dependent", "market_wrong_reason_given",
+          "momentum_overheated", "cycle_gates_pass"
+        ],
+        "description": "v19 只留 judge-owned 欄。其餘 13 欄（trap／val／moat／moat_trend／runway_post_y5／capalloc_grade／archetype／price_at_dd／week26_return_pct／consensus_rev_3m_pct／asym_ratio／irr_base_pct／ev5y_pct）與 val_denominator_disputed／note 由程式投影；判斷者填了非 null 值會被 v19 檢查擋下（同一件事不准兩邊都填）。覆寫層欄位（role_hint／qc49_inherit_prior／prior_verdict／prior_role／held_now）仍可選填。",
+        "properties": {
+          "signal": {"type": ["string", "null"], "enum": ["A+", "A", "B", "C", "X", null]},
+          "ma": {"type": ["string", "null"], "enum": ["🟢", "✅", "🟡", "🟠", "❌", "-", null]},
+          "cycle_position": {"type": ["string", "null"]},
+          "cycle_verdict": {"type": ["string", "null"]},
+          "thesis_irreconcilable": {"type": ["boolean", "null"]},
+          "valuation_dependent": {"type": ["boolean", "null"]},
+          "market_wrong_reason_given": {"type": ["boolean", "string", "null"]},
+          "momentum_overheated": {"type": ["boolean", "null"]},
+          "cycle_gates_pass": {"type": ["boolean", "null"]}
+        }
+      },
+
+      "decision_out": {
+        "type": "object",
+        "required": ["verdict", "role", "row_hit", "audit_rows"],
+        "description": "**程式寫入**（`dd_decision.py run` 對投影視圖跑決策矩陣後合併回檔）；判斷者不手算裁決。`rearm_trigger`／`exec_line` 住在 counter_evidence.action_conditions，由投影補回本區塊。",
+        "properties": {
+          "verdict": {"type": ["string", "null"]},
+          "role": {"type": ["string", "null"]},
+          "row_hit": {"type": ["string", "null"]},
+          "pacing": {"type": "array", "items": {"type": "string"}},
+          "holding_cap": {"type": ["string", "null"]},
+          "requires_critic": {"type": "array", "items": {"type": "string"}},
+          "audit_rows": {"type": "array", "items": {"type": ["string", "object"]}}
+        }
+      },
+
+      "thesis": {
+        "type": "object",
+        "required": ["H", "R", "single_thing"],
+        "description": "假設與風險維持 v18 形狀（出手點①），投影原樣搬。",
+        "properties": {
+          "H": {"type": "array", "minItems": 3, "items": {"type": "object"}},
+          "R": {"type": "array", "minItems": 3, "items": {"type": "object"}},
+          "single_thing": {"type": "object"}
+        }
+      },
+
+      "appendix_a": {
+        "type": "object",
+        "required": ["growth_durability", "quality_score", "ai_risk", "long_term_confidence", "fpe_fy2", "peg_fy2", "stress"],
+        "description": "只留 judge-owned 評分欄；signal／val／ma／verdict／pct_5y／兩個 upside／moat_score 由 gen_dd_tables 從權威欄投影（v18 已如此），不重填。",
+        "properties": {
+          "growth_durability": {"type": ["number", "null"]},
+          "quality_score": {"type": ["number", "null"]},
+          "ai_risk": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
+          "long_term_confidence": {"type": ["string", "null"], "enum": ["高", "中", "低", null]},
+          "fpe_fy2": {"type": ["number", "null"]},
+          "peg_fy2": {"type": ["number", "null"]},
+          "stress": {"type": "object", "required": ["pass", "total"], "properties": {"pass": {"type": ["integer", "null"]}, "total": {"type": ["integer", "null"]}}}
+        }
+      },
+
+      "eps_meta": {
+        "type": "object",
+        "required": ["base_eps_path"],
+        "description": "`base_eps_path`＝共識三年錨（基期＋FY+1E／FY+2E／FY+3E），不是情境樹終端年路徑——契約見 decision_inputs.md「終端年」節。",
+        "properties": {
+          "base_eps_path": {"type": "object"},
+          "fy_end_month": {"type": ["integer", "null"]},
+          "eps_basis": {"type": ["string", "null"]}
+        }
+      },
+
+      "catalysts": {
+        "type": "array",
+        "description": "選填。judgment-to-ddmeta.md 明文 catalysts 與 triggers 是獨立居所（catalysts 常含觸發器沒有的事件），故 v19 保留可選頂層欄；**缺席時**由投影從帶日期的 triggers 機械生成，不捏造影響度。",
+        "items": {"type": "object"}
       }
     }
   }

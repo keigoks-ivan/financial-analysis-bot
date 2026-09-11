@@ -45,6 +45,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dd_delta  # noqa: E402 — _sibling_scenario_meta（scenario_meta sidecar 尋檔規則），單一權威不複製
+import dd_project  # noqa: E402 — v19 判斷檔 → 舊形狀視圖（WP-H1）；舊形狀是 identity
 import dd_sections  # noqa: E402 — LEAK_PATTERNS（QC-40 詞表），單一權威不複製
 import qc  # noqa: E402 — CJK_PUNCT_RE（半形標點規則），單一權威不複製
 import validate_prose  # noqa: E402  （2026-09-06 WP4b：dump_number_whitelist 單一權威不複製）
@@ -836,12 +837,15 @@ def cmd_gate(args) -> int:
     # evidence_dismissed／被引用 finding），故此處改保留 parsed dict；找不到
     # 檔或非合法 JSON 時 judgment_obj 退回空 dict（gate_view 的各函式對空
     # dict 皆有防呆，不會炸）。
+    # 2026-09-11（WP-H1）：③ 段的 judgment 全文維持**原樣**（被審對象就是判斷者
+    # 實際寫的那份，v19 不例外）；gate_view 的機械抽取則讀 dd_project 投影視圖，
+    # 才找得到反證、evidence_dismissed 與被引用的 finding。舊形狀兩者同一物件。
     judgment_obj: dict = {}
     if judgment_path.exists():
         judgment_raw = judgment_path.read_text(encoding="utf-8")
         try:
-            judgment_obj = json.loads(judgment_raw)
-            judgment_text = json.dumps(judgment_obj, ensure_ascii=False, separators=(",", ":"))
+            judgment_obj = dd_project.view_for(json.loads(judgment_raw), judgment_path)
+            judgment_text = json.dumps(json.loads(judgment_raw), ensure_ascii=False, separators=(",", ":"))
             judgment_note = _JSON_NOTE + "\n\n"
         except (json.JSONDecodeError, ValueError):
             judgment_text = judgment_raw

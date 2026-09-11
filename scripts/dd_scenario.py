@@ -8,6 +8,12 @@
 
 輸入：`.dd_build/{TICKER}_{YYYYMMDD}.scenario.json`（見 SKILL.md §10.5+10.6 引用範例）。
 
+**終端年契約（2026-09-11 WP-H1 定死，權威條文在 `scripts/dd_schema/decision_inputs.md`
+§7）**：`terminal_label`（如 `FY2031E`）＝**判斷日起第 5 個完整會計年度**，容忍 ±1 年給
+非 12 月結算的財年；`eps_path` 五年即由此年往回推。判斷檔的 `eps_meta.base_eps_path` 是
+**共識三年錨**（基期＋FY+1E／FY+2E／FY+3E），不是這裡的五年路徑，兩者不重複儲存。
+v19 判斷檔違反此契約由 `validate_judgment.py` 的 J2 報 FAIL（舊形狀維持 WARN）。
+
 用法：
   python3 scripts/dd_scenario.py FILE.json                      # 終端機表格＋驗證
   python3 scripts/dd_scenario.py FILE.json --html OUT.html       # 另寫 E11 表片段

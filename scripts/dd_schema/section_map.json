@@ -34,8 +34,27 @@
     {"path": "reasoning.valuation", "sid": "s10"},
     {"path": "reasoning.trap_analysis", "sid": "s1"},
     {"path": "reasoning.premortem", "sid": "s12"},
-    {"path": "reasoning.scenario", "sid": "s10"}
+    {"path": "reasoning.scenario", "sid": "s10"},
+
+    {"path": "facts_ref", "sid": "s1"},
+    {"path": "answers.q1_business", "sid": "s4"},
+    {"path": "answers.q1_business.verdict_values.industry", "sid": "s3"},
+    {"path": "answers.q1_business.verdict_values.single_thing", "sid": "s2"},
+    {"path": "answers.q2_moat", "sid": "s5"},
+    {"path": "answers.q3_growth", "sid": "s6"},
+    {"path": "answers.q4_capital", "sid": "s9"},
+    {"path": "answers.q4_capital.verdict_values.quality", "sid": "s7"},
+    {"path": "answers.q5_valuation", "sid": "s10"},
+    {"path": "answers.q6_how_wrong", "sid": "s12"},
+    {"path": "scenario_inputs", "sid": "s10"},
+    {"path": "scenario_inputs.max_dd", "sid": "s12"},
+    {"path": "counter_evidence.blind_spots", "sid": "s12"},
+    {"path": "counter_evidence.contradictions", "sid": "s11"},
+    {"path": "counter_evidence.triggers", "sid": "decision"},
+    {"path": "counter_evidence.kill_metrics", "sid": "decision"},
+    {"path": "counter_evidence.action_conditions", "sid": "decision"}
   ],
+  "v19_note": "2026-09-11（WP-H1）：本表新增 v19 契約的路徑對映（answers.q1…q6／scenario_inputs／counter_evidence／facts_ref），舊形狀路徑一列未改。dd_delta 的 _path_to_sids 是前綴比對，巢狀路徑會同時命中外層與內層（answers.q1_business.verdict_values.industry → s3 與 s4），這是刻意的：問一的判斷句落 §4 商業模式、其產業事實落 §3。刻意不加的一條：**裸 `counter_evidence` 不對映 decision**——`decision` 在 always_rewrite_sids 內，映了會讓 `dd_delta check` 把反證紀錄與矛盾裁定一併變成「永遠允許改動」，比舊形狀（contradictions→s11、premortem→s12 都不是永遠允許）寬鬆，等於偷放行為；故只逐條映 triggers／kill_metrics／action_conditions 三個原本就住在 decision 段的子塊。散文段能拿到的東西：每問的結論句（answers[].verdict）、短理由（answers[].reasoning）與引用事實（answers[].fact_refs）——完整版散文寫成外資報告式條列白話是 H2 prompt 的工作，本包只保證對映與骨架（dd_project.py prose-stub）。",
   "judgment_path_to_sid_note": "GUESSED -- render-rules.md SS2 only documents 5 table-injection markers (E2/E11/AUDIT/E12/APPA_TABLE), not a full section<->field map. This list is inferred from html-output.md's 章節顯示順序 section-content descriptions. Needs holder review. dd_delta.py's `check` also derives its `ALWAYS_ALLOWED_JUDGMENT_PATHS` from this table (every path whose sid is in always_rewrite_sids), so edits here directly change what `check` permits without evidence backing.",
   "numbers_sid_overrides": {
     "latest_quarter_kpis": ["s8"],
