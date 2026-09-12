@@ -24,7 +24,13 @@ export function installResearch({document,storage,fetch,context,pause,notify,dow
   for(const [key,value] of Object.entries(v?.rules||defaults))$('rule-'+key).value=String(value);
   $('ideaSave').textContent=v?'儲存為新版本':'建立想法';$('researchEditor').hidden=false;$('exploreIdea').disabled=true;$('finalIdea').disabled=true;
  }
+ function renderFocus(){
+  const v=version(),cases=state.cases.filter(c=>c.versionId===v?.id),ready=cases.filter(c=>Number.isFinite(c.outcomes[10]?.return)).length;
+  $('ideaFocus').textContent=v?v.title+' · v'+v.number:'找到值得重複驗證的現象';
+  $('ideaProgress').textContent=v?`${cases.length} 個案例 · ${ready} 個已揭露後 10 根結果`:'先留下判斷，往後重播再看結果。';
+ }
  function render(){
+  renderFocus();
   const versions=state.ideas.flatMap(i=>i.versions),v=version();
   for(const id of ['researchVersion','captureVersion']){$(id).innerHTML='<option value="">選擇想法版本</option>'+versions.map(v=>`<option value="${v.id}">${esc(v.title)} · v${v.number}</option>`).join('');$(id).value=selected||'';}
   $('researchCount').textContent=`${state.ideas.length} 個想法 · ${state.cases.length} 個案例`;
@@ -68,6 +74,8 @@ export function installResearch({document,storage,fetch,context,pause,notify,dow
   }catch(e){change(()=>{state.trials.find(t=>t.id===trial.id).status='paused';});throw e;}finally{busy=false;render();}
  }
  $('researchBtn').onclick=guard(()=>{pause();render();$('researchDialog').showModal();});
+ $('quickResearch').onclick=()=>$('researchBtn').onclick();
+ $('quickIdeaNew').onclick=guard(()=>{pause();fillEditor();render();$('researchDialog').showModal();});
  $('ideaNew').onclick=()=>fillEditor();$('ideaRevise').onclick=()=>{if(version())fillEditor(version());};
  $('researchVersion').onchange=()=>{selected=$('researchVersion').value;$('researchEditor').hidden=true;render();};$('caseHorizon').onchange=render;
  $('ideaForm').onsubmit=guard(e=>{e.preventDefault();const rules=Object.fromEntries(['market','setup','trend','band','lookback','volume','hold','stop','allocation'].map(k=>[k,$('rule-'+k).value]));const v=change(()=>addIdea(state,{title:$('ideaTitle').value,hypothesis:$('ideaHypothesis').value,invalidation:$('ideaFailure').value,rules},editing));selected=v.id;$('researchEditor').hidden=true;render();note('想法版本已保存。可回到圖表記錄機會，或先跑探索批次。');});
@@ -90,7 +98,7 @@ export function installResearch({document,storage,fetch,context,pause,notify,dow
   refresh(){
    const c=context();if(!c||failed)return;
    const signature=c.run+':'+c.frame+':'+c.bars.at(-1)?.time+':'+c.canCapture;if(signature===lastRefresh)return;lastRefresh=signature;
-   try{const unseen=c.symbol&&!state.seen.includes(c.symbol),pending=state.cases.some(x=>x.run===c.run&&Object.keys(x.outcomes).length<3);if(unseen||pending)change(()=>{markSeen(state,c.symbol);return resolveOpportunities(state,c)||unseen;});$('recordOpportunity').disabled=!c.canCapture;}catch(e){failed=true;note('研究紀錄儲存失敗；請先備份，暫停研究操作。',true);}
+   try{const unseen=c.symbol&&!state.seen.includes(c.symbol),pending=state.cases.some(x=>x.run===c.run&&Object.keys(x.outcomes).length<3);if(unseen||pending)change(()=>{markSeen(state,c.symbol);return resolveOpportunities(state,c)||unseen;});$('recordOpportunity').disabled=!c.canCapture;renderFocus();}catch(e){failed=true;note('研究紀錄儲存失敗；請先備份，暫停研究操作。',true);}
   }
  };
 }

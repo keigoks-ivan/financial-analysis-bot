@@ -138,17 +138,24 @@ async function loadCampaign(plan=null,saved=null){
 }
 function renderControls(){
   $('replayMode').disabled=loading;$('runLength').disabled=loading;$('resetBtn').disabled=loading;
-  if(!engine){for(const id of ['playBtn','stepBtn','submitOrder','closeBtn','finishBtn'])$(id).disabled=true;return;}
+  if(!engine){for(const id of ['playBtn','stepBtn','submitOrder','closeBtn','finishBtn','quickBuy','quickSell','quickFlatten'])$(id).disabled=true;return;}
   text('playBtn',engine.ended?'本場已結束':playing?'Ⅱ 暫停':'▶ 開始重播');
   text('playState',engine.ended?'練習結束':playing?'重播中':'已暫停');
   $('playBtn').disabled=loading||engine.ended;$('stepBtn').disabled=loading||engine.ended;
   $('submitOrder').disabled=loading||engine.ended||engine.liquidating;
   $('closeBtn').disabled=loading||engine.ended||!engine.position||engine.liquidating;
+  $('quickBuy').disabled=$('submitOrder').disabled;
+  $('quickSell').disabled=$('submitOrder').disabled||(isStock()&&engine.position<=0);
+  $('quickFlatten').disabled=$('closeBtn').disabled;
   $('sessionSelect').disabled=loading;$('runLength').disabled=loading;$('resetBtn').disabled=loading;
   text('finishBtn',engine.ended?'查看復盤 ↗':'結束與復盤 ↗');
 }
 function renderTicket(){
   const qty=Number($('qty').value)||0;
+  text('quickBuy',`買進 ${qty} ${unit()}`);text('quickSell',`賣出 ${isStock()?Math.min(qty,Math.max(0,engine.position)):qty} ${unit()}`);
+  const pending=engine.orders.filter(active).length;
+  text('quickPosition',`${engine.position?`${engine.position>0?'持有':'空單'} ${Math.abs(engine.position)} ${unit()}`:'目前空手'}${pending?` · ${pending} 筆委託待成交`:''}${engine.protection?' · 持倉停損停利已啟用':''}`);
+  text('quickTradeNote',`${isDaily()?'市價委託，下一交易日開盤撮合。':'市價委託，重播後按成交量撮合。'}${isStock()?'賣出最多為目前持股。':'賣出可建立空單。'}進階欄位不套用到這兩個按鈕。`);
   $('buySide').className=side===1?'selected buy':'buy';$('sellSide').className=side===-1?'selected sell':'sell';
   $('submitOrder').className='submit '+(side===1?'buy':'sell');text('submitOrder',`${side===1?'買進':'賣出'} ${qty} ${unit()}`);
   $('priceLabel').hidden=$('orderType').value==='market';$('orderPrice').required=$('orderType').value!=='market';
@@ -372,9 +379,9 @@ function render(){
   renderControls();renderTicket();renderActivity();drawChart();research.refresh();
 }
 function confirmAction(title,message,callback){setPlaying(false);text('confirmTitle',title);text('confirmText',message);confirmCallback=callback;$('confirmDialog').showModal();}
-function placeOrder(input){
+function placeOrder(input,useProtection=true){
   if(loading||!engine)throw Error('行情尚未載入。');
-  if(!input.reduceOnly&&(!engine.position||Math.sign(engine.position)===input.side||input.qty>Math.abs(engine.position))&&(input.side===1||!isStock())){const stop=Number($('stopPrice').value),target=Number($('targetPrice').value);if(stop||target)input.protection=validateProtection(input.side,input.type==='market'?engine.last:input.price,stop,target);}
+  if(useProtection&&!input.reduceOnly&&(!engine.position||Math.sign(engine.position)===input.side||input.qty>Math.abs(engine.position))&&(input.side===1||!isStock())){const stop=Number($('stopPrice').value),target=Number($('targetPrice').value);if(stop||target)input.protection=validateProtection(input.side,input.type==='market'?engine.last:input.price,stop,target);}
   const o=engine.submit(input);tab='orders';reviewCursor=null;render();save();notify(o.status==='rejected'?o.message:`委託 #${o.id} 已送出。${playing?'等待撮合。':'開始重播後才會撮合。'}`,o.status==='rejected');return{id:o.id,status:o.status,message:o.message};
 }
 function showStockRules(){
@@ -426,6 +433,12 @@ $('qtyMinus').onclick=()=>{$('qty').value=Math.max(1,(Number($('qty').value)||1)
 $('qtyPlus').onclick=()=>{$('qty').value=Math.min(isStock()?100000:20,(Number($('qty').value)||0)+1);renderTicket();};
 $('orderForm').onsubmit=e=>{e.preventDefault();try{placeOrder({side,qty:Number($('qty').value),type:$('orderType').value,price:Number($('orderPrice').value),reduceOnly:$('reduceOnly').checked,reason:$('reason').value});}catch(error){notify(error.message,true);}};
 $('closeBtn').onclick=()=>{try{const o=engine.flatten();tab='orders';notify(`平倉委託 #${o.id} 已送出，開始重播後按市場流動性成交。`);render();save();}catch(e){notify(e.message,true);}};
+for(const [id,direction] of [['quickBuy',1],['quickSell',-1]])$(id).onclick=()=>{
+  try{const qty=Number($('qty').value);if(!Number.isInteger(qty)||qty<1||qty>(isStock()?100000:20))throw Error('請輸入有效的整數數量。');
+    placeOrder({side:direction,qty:isStock()&&direction===-1?Math.min(qty,engine.position):qty,type:'market',reduceOnly:isStock()&&direction===-1,reason:''},false);
+  }catch(e){notify(e.message,true);}
+};
+$('quickFlatten').onclick=()=>$('closeBtn').onclick();
 $('rulesBtn').onclick=showRules;
 $('journalBtn').onclick=showJournal;
 $('drawHorizontal').onclick=()=>selectDrawTool('horizontal');$('drawTrend').onclick=()=>selectDrawTool('trend');
