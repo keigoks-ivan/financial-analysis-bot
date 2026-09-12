@@ -25,11 +25,31 @@ export function createStockRun(pool,days=120,plan=null,random=Math.random,action
   data.contract=pool.symbol;data.sessionLabel=`${pool.market==='TW'?'台股':'美股'}個股 ${days} 日`;data.rules=stockRules(pool.market);
   return data;
 }
-// Chart adjustment uses only splits already effective at the visible cutoff.
+// Rebase history to the visible day's nominal price using only effective actions.
+function stockActionFactors(bar,previous,dividends=true){
+  const split=bar.split||1,reference=previous?.close/split;
+  const cash=dividends&&bar.dividend&&previous?1-bar.dividend/reference:1;
+  if(!(split>0&&Number.isFinite(split)&&cash>0&&Number.isFinite(cash)))throw Error('除權息資料無法形成有效還原價格，請重新抽取標的。');
+  return {price:cash/split,volume:split};
+}
+export function stockPriceFactor(data,index,from,cutoff,dividends=true){
+  const all=[...data.historyDaily,...data.dailyBars.slice(0,index+1)],lo=Math.min(from,cutoff),hi=Math.max(from,cutoff);let factor=1;
+  for(let i=0;i<all.length;i++){const b=all[i];if(b.openTime>lo&&b.openTime<=hi)factor*=stockActionFactors(b,all[i-1],dividends).price;}
+  return from<=cutoff?factor:1/factor;
+}
+export function stockDrawingPrice(data,index,point,cutoff){
+  const basis=point.basis??point.time;
+  // Older saved drawings used split-only prices; convert their anchor once at render time.
+  const legacy=point.adjustment==='total-return'?1:stockPriceFactor(data,index,point.time,basis)/stockPriceFactor(data,index,point.time,basis,false);
+  return point.price*legacy*stockPriceFactor(data,index,basis,cutoff);
+}
 export function stockChartBars(data,index,cutoff=Infinity){
-  const all=visibleDailyBars([...data.historyDaily,...data.dailyBars.slice(0,index+1)],cutoff);let factor=1;
+  const all=visibleDailyBars([...data.historyDaily,...data.dailyBars.slice(0,index+1)],cutoff);let priceFactor=1,volumeFactor=1;
   const result=[];
-  for(let i=all.length-1;i>=0;i--){const b=all[i];result.push({...b,open:b.open/factor,high:b.high/factor,low:b.low/factor,close:b.close/factor,volume:b.volume*factor});factor*=b.split||1;}
+  for(let i=all.length-1;i>=0;i--){
+    const b=all[i];result.push({...b,open:b.open*priceFactor,high:b.high*priceFactor,low:b.low*priceFactor,close:b.close*priceFactor,volume:b.volume*volumeFactor});
+    const action=stockActionFactors(b,all[i-1]);priceFactor*=action.price;volumeFactor*=action.volume;
+  }
   return result.reverse();
 }
 export class StockReplayEngine extends DailyReplayEngine{
