@@ -10,13 +10,32 @@ export function stockExecution(market,side,price){
   const p=price*(1+side*.0005),tick=market==='US'?.01:p<10?.01:p<50?.05:p<100?.1:p<500?.5:p<1000?1:5;
   return round((side===1?Math.ceil(p/tick-1e-9):Math.floor(p/tick+1e-9))*tick);
 }
+export const STOCK_LIQUIDITY={TW:{window:60,minVolume:1000000,minTurnover:100000000},US:{window:60,minVolume:1000000,minTurnover:25000000}};
+export function stockLiquidity(pool){
+  const rules=STOCK_LIQUIDITY[pool.market],ranges=[],starts={60:0,120:0,240:0};let latest=null;
+  const median=values=>{values.sort((a,b)=>a-b);return (values[29]+values[30])/2;};
+  for(let i=119;i<pool.days.length;i++){
+    const bars=pool.days.slice(i-59,i+1),volume=median(bars.map(b=>b.volume)),turnover=median(bars.map(b=>b.close*b.volume));
+    const recent=pool.days[i].time-bars[0].time<=100*86400;
+    latest={date:pool.days[i].date,medianVolume:volume,medianTurnover:turnover};
+    if(i<120||i>pool.days.length-61||!recent||volume<rules.minVolume||turnover<rules.minTurnover)continue;
+    const last=ranges.at(-1);if(last&&last[1]===i-1)last[1]=i;else ranges.push([i,i]);
+    for(const days of [60,120,240])if(i<=pool.days.length-days-1)starts[days]++;
+  }
+  return {...rules,ranges,starts,latest};
+}
 export function pickStock(catalog,market,days,random=Math.random,previous=null){
-  let pool=catalog.filter(s=>s.market===market&&s.count>=days+121);if(!pool.length)throw Error('這個市場沒有足夠的行情。');
+  let pool=catalog.filter(s=>s.market===market&&s.count>=days+121&&(!s.liquidity||s.liquidity.starts[days]>0));if(!pool.length)throw Error('這個市場沒有足夠的行情。');
   const other=pool.filter(s=>s.symbol!==previous?.symbol);if(other.length)pool=other;
   return pool[Math.min(pool.length-1,Math.floor(random()*pool.length))];
 }
-export function createStockRun(pool,days=120,plan=null,random=Math.random,actions=null){
+export function createStockRun(pool,days=120,plan=null,random=Math.random,actions=null,liquidity=null){
   if(plan&&(plan.symbol!==pool.symbol||plan.market!==pool.market))throw Error('股票與儲存進度不符。');
+  if(!plan){
+    const ranges=(liquidity||stockLiquidity(pool)).ranges,starts=ranges.flatMap(([from,to])=>Array.from({length:Math.max(0,Math.min(to,pool.days.length-days-1)-from+1)},(_,i)=>from+i));
+    if(!starts.length)throw Error('這檔股票沒有符合成交量與成交金額條件的歷史起點。');
+    plan={start:starts[Math.min(starts.length-1,Math.floor(random()*starts.length))],days};
+  }
   const data=createDailyRun(pool,days,plan,random);
   data.marketCalendar=actions?.calendars?.[pool.market]||pool.days.map(b=>b.date);data.actionDates=actions?.symbols?.[pool.symbol]||{};
   data.stock={symbol:pool.symbol,name:pool.name,market:pool.market,currency:pool.currency};
