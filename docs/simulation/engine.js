@@ -55,7 +55,7 @@ export class ReplayEngine {
     o.remaining-=qty;o.filled+=qty;o.fillValue+=price*qty;o.status=o.remaining?'partial':'filled';
     o.message=o.remaining?'部分成交，其餘等待流動性':'已成交';
     this.fills.push({orderId:o.id,time:t,side:o.side,qty,price,fee,realized:pnl,closing,
-      positionAfter:this.position,reason:o.reason,system:o.system,reference:this.last,slippage:(price-this.last)*o.side});
+      positionAfter:this.position,reason:o.reason,system:o.system,...(o.closeReason?{closeReason:o.closeReason}:{}),reference:this.last,slippage:(price-this.last)*o.side});
     updateProtectionAfterFill(this,o,before);
   }
   tick(t,index) {

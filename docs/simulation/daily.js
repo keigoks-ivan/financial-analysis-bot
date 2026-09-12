@@ -50,6 +50,7 @@ export class DailyReplayEngine extends ReplayEngine{
       if(b.rollOut&&this.position){
         for(const o of this.orders)if(active(o)){o.status='cancelled';o.message='到期練習平倉，取消委託';}
         const o=super.submit({side:-Math.sign(this.position),qty:Math.abs(this.position),type:'market',reduceOnly:true,system:true,reason:'到期日前月資料結束，模擬平倉'});
+        o.closeReason='expiry';
         this.executeOpen(o,b.close,b.time);
         this.events.push({time:b.time,message:'本月契約資料結束，已按末筆收盤參考價加計 2 點滑價模擬平倉；下個交易日使用次月。'});
       }

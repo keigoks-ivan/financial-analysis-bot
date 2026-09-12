@@ -18,6 +18,8 @@ function workspaceState(){return {snapshot:engine.snapshot(),blind:$('blind').ch
 function restoreWorkspace(saved){drawings=Array.isArray(saved?.drawings)?saved.drawings:[];journalKey=saved?.journalKey||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);if(saved){if([60,300,900,3600,86400,604800,2592000].includes(saved.frame))frame=saved.frame;$('fullBlind').checked=!!saved.fullBlind;$('blind').checked=saved.blind!==false;if(Number.isInteger(saved.visible))visible=Math.max(12,Math.min(300,saved.visible));}if($('fullBlind').checked)$('blind').checked=true;$('stopPrice').value=engine.protection?.stop??'';$('targetPrice').value=engine.protection?.target??'';drawTool=null;drawStart=null;dragOverlay=null;lastProtectionForm=null;configureInstrument();}
 const isStock=()=>!!engine?.data.stock,unit=()=>isStock()?'股':'口',capital=()=>isStock()?engine.data.rules.capital:RULES.capital,multiplier=()=>isStock()?1:200,currencyLabel=()=>engine?.data.stock?.currency==='USD'?'US$':'NT$',price=n=>money(n,isStock()?2:0),modeValue=()=>engine?.data.stock?.market||(isDaily()?'daily':'tick');
 const isDaily=()=>engine?.data.mode==='daily';
+const isExpiryFill=f=>!isStock()&&!!f.system&&(f.closeReason==='expiry'||f.reason==='到期日前月資料結束，模擬平倉');
+const fillAction=f=>isExpiryFill(f)?`到期平倉（${f.side===1?'買回':'賣出'}）`:f.side===1?'買進':'賣出';
 const frameLabel=()=>frame===2592000?'月 K':frame===604800?'週 K':frame===86400?'日 K':`${frame/60} 分 K`;
 function configureMode(daily,length,saved=null){
   $('replayMode').value=modeValue();
@@ -215,17 +217,18 @@ function drawChart(){
   for(const f of engine.fills.filter(f=>f.time<=cutoff)){
     const fillPrice=isStock()?f.price*stockPriceFactor(engine.data,engine.index,f.time,cutoff):f.price;
     const i=shown.findIndex(b=>isDaily()?f.time>=b.openTime&&f.time<=(b.endTime??b.time):candleBucket(f.time,frame)===b.time);if(i<0)continue;
-    tradeLabels.set(i+':'+f.side,{i,side:f.side});
+    const expiry=isExpiryFill(f);tradeLabels.set(i+':'+f.side+':'+expiry,{i,side:f.side,expiry});
     if(fillPrice<lo||fillPrice>hi)continue;
-    const xx=x(i),fy=y(fillPrice),dir=f.side===1?1:-1;ctx.fillStyle=f.side===1?'#ffb3bc':'#8aefce';ctx.beginPath();ctx.moveTo(xx,fy);ctx.lineTo(xx-5,fy+dir*9);ctx.lineTo(xx+5,fy+dir*9);ctx.closePath();ctx.fill();
+    const xx=x(i),fy=y(fillPrice),dir=f.side===1?1:-1;ctx.fillStyle=expiry?'#f1c66e':f.side===1?'#ffb3bc':'#8aefce';ctx.beginPath();ctx.moveTo(xx,fy);ctx.lineTo(xx-5,fy+dir*9);ctx.lineTo(xx+5,fy+dir*9);ctx.closePath();ctx.fill();
   }
   if(reviewCursor===null&&engine.position&&engine.average>=lo&&engine.average<=hi){ctx.strokeStyle='#8daef8';ctx.setLineDash([7,4]);ctx.beginPath();ctx.moveTo(left,y(engine.average));ctx.lineTo(right,y(engine.average));ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#a5c0ff';ctx.fillText(`持倉均價 ${money(engine.average,1)}`,left+5,y(engine.average)-6);}
   ctx.save();ctx.font='bold 13px ui-monospace, monospace';ctx.textAlign='center';ctx.textBaseline='middle';
-  for(const {i,side} of tradeLabels.values()){
-    const b=shown[i],xx=x(i),buy=side===1;
-    const labelY=Math.max(top+9,Math.min(bottom-9,buy?y(b.low)+17:y(b.high)-17));
-    ctx.fillStyle='#101319';ctx.fillRect(xx-8,labelY-8,16,16);
-    ctx.fillStyle=buy?'#ffb3bc':'#8aefce';ctx.fillText(buy?'B':'S',xx,labelY);
+  for(const {i,side,expiry} of tradeLabels.values()){
+    const b=shown[i],buy=side===1,width=expiry?64:16,xx=Math.max(left+width/2,Math.min(right-width/2,x(i)));
+    const gap=17+(expiry&&tradeLabels.has(i+':'+side+':false')?20:0);
+    const labelY=Math.max(top+9,Math.min(bottom-9,buy?y(b.low)+gap:y(b.high)-gap));
+    ctx.fillStyle='#101319';ctx.fillRect(xx-width/2,labelY-8,width,16);
+    ctx.fillStyle=expiry?'#f1c66e':buy?'#ffb3bc':'#8aefce';ctx.fillText(expiry?'到期平倉':buy?'B':'S',xx,labelY);
   }
   ctx.restore();drawOverlays(ctx);
 }
@@ -344,7 +347,7 @@ function renderActivity(){
   }else if(tab==='orders'){
     $('activityBody').innerHTML=!engine.orders.length?empty('尚無委託'):`<table><thead><tr><th>時間 / 編號</th><th>方向</th><th>類型 / 價格</th><th>成交 / 委託</th><th>狀態</th><th>說明</th><th></th></tr></thead><tbody>${engine.orders.slice().reverse().map(o=>`<tr><td class="num">${stamp(o.submitted)} #${o.id}</td><td class="${o.side===1?'up':'down'}">${o.side===1?'買':'賣'}${o.reduceOnly?' · 減倉':''}</td><td>${types[o.type]} ${o.price??''}</td><td class="num">${o.filled} / ${o.qty}</td><td>${names[o.status]}</td><td>${esc(o.message)}</td><td>${active(o)&&!o.system?`<button data-cancel="${o.id}">取消</button>`:''}</td></tr>`).join('')}</tbody></table>`;
   }else{
-    $('activityBody').innerHTML=!engine.fills.length?empty('尚無成交'):`<table><thead><tr><th>時間</th><th>方向</th><th>口數</th><th>成交價</th><th>手續費＋稅</th><th>平倉毛損益</th><th>委託</th></tr></thead><tbody>${engine.fills.slice().reverse().map(f=>`<tr><td class="num">${stamp(f.time)}</td><td class="${f.side===1?'up':'down'}">${f.side===1?'買':'賣'}</td><td>${f.qty}</td><td class="num">${price(f.price)}</td><td class="num">${money(f.fee,2)}</td><td class="num ${tint(f.realized)}">${f.closing?signed(f.realized):'—'}</td><td>#${f.orderId}${f.system?' 風險平倉':''}</td></tr>`).join('')}</tbody></table>`;
+    $('activityBody').innerHTML=!engine.fills.length?empty('尚無成交'):`<table><thead><tr><th>時間</th><th>方向</th><th>口數</th><th>成交價</th><th>手續費＋稅</th><th>平倉毛損益</th><th>委託</th></tr></thead><tbody>${engine.fills.slice().reverse().map(f=>`<tr><td class="num">${stamp(f.time)}</td><td class="${f.side===1?'up':'down'}">${f.side===1?'買':'賣'}</td><td>${f.qty}</td><td class="num">${price(f.price)}</td><td class="num">${money(f.fee,2)}</td><td class="num ${tint(f.realized)}">${f.closing?signed(f.realized):'—'}</td><td>#${f.orderId}${isExpiryFill(f)?' 到期平倉':f.system?' 風險平倉':''}</td></tr>`).join('')}</tbody></table>`;
   }
 }
 function render(){
@@ -396,7 +399,7 @@ function equitySVG(){
 function showReview(){
   setPlaying(false);archiveRun();
   const net=engine.equity-capital(),closed=engine.fills.filter(f=>f.closing),slip=engine.fills.reduce((s,f)=>s+Math.max(0,f.slippage)*f.qty*multiplier(),0);
-  $('reviewContent').innerHTML=`<p>${hiddenIdentity()?'日期隱藏':engine.data.date} · ${esc(instrumentLabel())} · ${engine.data.sessionLabel||"日盤"} · ${stamp(engine.data.playStart??engine.data.start+1800)} — ${stamp(engine.time)}<br>結束時持倉：${engine.position?`${engine.position>0?'多':'空'} ${Math.abs(engine.position)} ${unit()}，以下權益包含未實現損益。`:'已空手。'}</p><div class="review-grid"><div><span>本場淨損益</span><strong class="${tint(net)}">${signed(net)}</strong></div><div><span>最大回撤</span><strong>${(engine.maxDrawdown*100).toFixed(2)}%</strong></div><div><span>手續費＋交易稅</span><strong>${money(engine.fees)}</strong></div><div><span>平倉毛損益</span><strong>${signed(engine.realized)}</strong></div><div><span>未實現損益</span><strong>${signed(engine.unrealized)}</strong></div><div><span>成交筆數 / ${unit()}數</span><strong>${engine.fills.length} / ${engine.fills.reduce((s,f)=>s+f.qty,0)}</strong></div></div>${statisticsHTML()}${equitySVG()}<p>相對成交參考價的不利滑價估算：${currencyLabel()} ${money(slip,2)}，已包含於成交價，未重複扣款。空手基準損益為 ${currencyLabel()} 0。${isStock()?'股息收入：'+currencyLabel()+' '+money(engine.dividendIncome,2)+'。':''}${closed.length?'統計按完整開倉至平倉合併，包含手續費；未結束部位不列入勝率。':'尚無完整平倉交易。'}</p>${engine.events.map(e=>`<p class="up">${stamp(e.time)} ${esc(maskMessage(e.message))}</p>`).join('')}<h3>逐筆回看</h3><p>點選成交時間，主圖會退回到當時可見的 K 線；帳戶總覽仍顯示本場結束值。</p>${engine.fills.length?engine.fills.map(f=>`<div class="review-trade"><button data-review-time="${f.time}">${stamp(f.time)} ↗</button> <span class="${f.side===1?'up':'down'}">${f.side===1?'買進':'賣出'} ${f.qty} ${unit()}</span> @ ${price(f.price)}<p>${esc(f.reason||'未記錄進場理由。')}</p><small>委託 #${f.orderId} · 成本 ${money(f.fee,2)} · ${f.closing?'平倉毛損益 '+signed(f.realized):'開倉 / 加碼'}</small></div>`).join(''):'<p>本場沒有成交。觀察市場、選擇不交易，也是一種決策。</p>'}<div class="dialog-actions"><button id="exportBtn">下載本場紀錄</button><button data-close="reviewDialog" class="primary">返回交易室</button></div>`;
+  $('reviewContent').innerHTML=`<p>${hiddenIdentity()?'日期隱藏':engine.data.date} · ${esc(instrumentLabel())} · ${engine.data.sessionLabel||"日盤"} · ${stamp(engine.data.playStart??engine.data.start+1800)} — ${stamp(engine.time)}<br>結束時持倉：${engine.position?`${engine.position>0?'多':'空'} ${Math.abs(engine.position)} ${unit()}，以下權益包含未實現損益。`:'已空手。'}</p><div class="review-grid"><div><span>本場淨損益</span><strong class="${tint(net)}">${signed(net)}</strong></div><div><span>最大回撤</span><strong>${(engine.maxDrawdown*100).toFixed(2)}%</strong></div><div><span>手續費＋交易稅</span><strong>${money(engine.fees)}</strong></div><div><span>平倉毛損益</span><strong>${signed(engine.realized)}</strong></div><div><span>未實現損益</span><strong>${signed(engine.unrealized)}</strong></div><div><span>成交筆數 / ${unit()}數</span><strong>${engine.fills.length} / ${engine.fills.reduce((s,f)=>s+f.qty,0)}</strong></div></div>${statisticsHTML()}${equitySVG()}<p>相對成交參考價的不利滑價估算：${currencyLabel()} ${money(slip,2)}，已包含於成交價，未重複扣款。空手基準損益為 ${currencyLabel()} 0。${isStock()?'股息收入：'+currencyLabel()+' '+money(engine.dividendIncome,2)+'。':''}${closed.length?'統計按完整開倉至平倉合併，包含手續費；未結束部位不列入勝率。':'尚無完整平倉交易。'}</p>${engine.events.map(e=>`<p class="up">${stamp(e.time)} ${esc(maskMessage(e.message))}</p>`).join('')}<h3>逐筆回看</h3><p>點選成交時間，主圖會退回到當時可見的 K 線；帳戶總覽仍顯示本場結束值。</p>${engine.fills.length?engine.fills.map(f=>`<div class="review-trade"><button data-review-time="${f.time}">${stamp(f.time)} ↗</button> <span class="${f.side===1?'up':'down'}">${fillAction(f)} ${f.qty} ${unit()}</span> @ ${price(f.price)}<p>${esc(f.reason||'未記錄進場理由。')}</p><small>委託 #${f.orderId} · 成本 ${money(f.fee,2)} · ${f.closing?'平倉毛損益 '+signed(f.realized):'開倉 / 加碼'}</small></div>`).join(''):'<p>本場沒有成交。觀察市場、選擇不交易，也是一種決策。</p>'}<div class="dialog-actions"><button id="exportBtn">下載本場紀錄</button><button data-close="reviewDialog" class="primary">返回交易室</button></div>`;
   $('reviewDialog').showModal();
 }
 function exportSession(){
@@ -414,7 +417,7 @@ function registerTools(){
 }
 $('submitOrder').insertAdjacentHTML('beforebegin','<label class="blind reduce-label"><input id="reduceOnly" type="checkbox"> <span id="reduceLabel">只減倉（保護性停損）</span></label>');
 $('playBtn').onclick=()=>{reviewCursor=null;setPlaying(!playing);};
-$('stepBtn').onclick=()=>{setPlaying(false);reviewCursor=null;const n=engine.fills.length,v=engine.events.length;if(isDaily())engine.nextDay();else engine.advanceBy(10);if(engine.fills.length>n){const f=engine.fills.at(-1);notify(`${stamp(f.time)} ${f.side===1?'買進':'賣出'} ${f.qty} ${unit()} @ ${price(f.price)}，成本 ${currencyLabel()} ${money(f.fee,2)}。`);}if(engine.events.length>v)notify(engine.events.at(-1).message,true);render();save();if(engine.ended)showReview();};
+$('stepBtn').onclick=()=>{setPlaying(false);reviewCursor=null;const n=engine.fills.length,v=engine.events.length;if(isDaily())engine.nextDay();else engine.advanceBy(10);if(engine.fills.length>n){const f=engine.fills.at(-1);notify(`${stamp(f.time)} ${fillAction(f)} ${f.qty} ${unit()} @ ${price(f.price)}，成本 ${currencyLabel()} ${money(f.fee,2)}。`);}if(engine.events.length>v)notify(engine.events.at(-1).message,true);render();save();if(engine.ended)showReview();};
 $('buySide').onclick=()=>{side=1;renderTicket();};$('sellSide').onclick=()=>{side=-1;renderTicket();};
 for(const id of ['qty','orderType','reduceOnly'])$(id).addEventListener('input',()=>engine&&renderTicket());
 $('qtyMinus').onclick=()=>{$('qty').value=Math.max(1,(Number($('qty').value)||1)-1);renderTicket();};
@@ -479,7 +482,7 @@ window.addEventListener('pagehide',save);document.addEventListener('visibilitych
 function loop(now){
   const elapsed=lastFrame?Math.min((now-lastFrame)/1000,.5):0;lastFrame=now;
   if(playing&&engine&&!loading){const n=engine.fills.length,events=engine.events.length;engine.advanceBy(elapsed*Number($('speed').value));
-    if(engine.fills.length>n){const f=engine.fills.at(-1);notify(`${stamp(f.time)} ${f.side===1?'買進':'賣出'} ${f.qty} ${unit()} @ ${price(f.price)}，成本 ${currencyLabel()} ${money(f.fee,2)}。`);}
+    if(engine.fills.length>n){const f=engine.fills.at(-1);notify(`${stamp(f.time)} ${fillAction(f)} ${f.qty} ${unit()} @ ${price(f.price)}，成本 ${currencyLabel()} ${money(f.fee,2)}。`);}
     if(engine.events.length>events)notify(engine.events.at(-1).message,true);
     if(now-lastPaint>180){render();lastPaint=now;}
     if(now-lastSaved>4000){save();lastSaved=now;}
