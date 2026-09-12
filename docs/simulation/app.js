@@ -1,3 +1,4 @@
+import {installResearch} from './research-ui.js';
 import {aggregateCalendar,tradeStatistics,sizePosition,visibleDailyBars} from './analytics.js';
 import {validateProtection} from './protection.js';
 import {ReplayEngine,RULES,active} from './engine.js';
@@ -30,7 +31,7 @@ function configureMode(daily,length,saved=null){
   if(daily)$('orderType').value='market';$('orderType').disabled=daily;
   text('reduceLabel',daily?'只減倉':'只減倉（保護性停損）');
   configureInstrument();
-  text('dataMode',isStock()?`${stockCatalog.filter(s=>s.market===engine.data.stock.market&&s.liquidity?.starts[length]>0).length} 檔活躍個股 · 日 K`:daily?'真實分鐘行情聚合日 K':'真實逐筆資料');text('stepBtn',daily?'下一交易日 →':'＋10 秒');
+  text('dataMode',isStock()?`${research.explorationCatalog(stockCatalog).filter(s=>s.market===engine.data.stock.market&&s.liquidity?.starts[length]>0).length} 檔活躍個股 · 日 K`:daily?'真實分鐘行情聚合日 K':'真實逐筆資料');text('stepBtn',daily?'下一交易日 →':'＋10 秒');
   text('tapeTitle',daily?'近期日線收盤':'市場逐筆成交');
   text('ticketNote',isStock()?'以股數買賣、現金全額交易。下一交易日開盤參考價加計 0.05% 滑價撮合；不模擬盤中或零股專屬撮合。':daily?'收盤後決策，下一交易日開盤市價成交（通常從夜盤開始）。每邊估計滑價 2 點；僅於開收盤檢查風險。':'下一秒起撮合，成交價可能不同。時段收盤未成交單失效；連續模式保留持倉。');
   document.querySelectorAll('[data-frame]').forEach(b=>b.disabled=daily&&![86400,604800,2592000].includes(Number(b.dataset.frame)));
@@ -65,7 +66,7 @@ async function loadStock(market,plan=null,saved=null){
   try{
     if(!stockCatalog){const r=await fetch('./data/stocks/catalog.json');if(!r.ok)throw Error('個股清單載入失敗。');stockCatalog=await r.json();}
     const days=plan?.days??([60,120,240].includes(Number($('runLength').value))?Number($('runLength').value):120);
-    const selected=plan?stockCatalog.find(s=>s.symbol===plan.symbol&&s.market===market):pickStock(stockCatalog,market,days,Math.random,engine?.data.stock);
+    const selected=plan?stockCatalog.find(s=>s.symbol===plan.symbol&&s.market===market):pickStock(research.explorationCatalog(stockCatalog),market,days,Math.random,engine?.data.stock);
     if(!selected)throw Error('找不到這個股票的儲存進度。');
     const r=await fetch('./data/stocks/'+selected.symbol+'.json');if(!r.ok)throw Error('個股行情載入失敗。');const pool=await r.json();
     if(pool.sha256!==selected.sha256)throw Error('個股資料版本不一致，請重新整理。');if(request!==loadId)return;
@@ -230,6 +231,7 @@ function drawChart(){
     ctx.fillStyle='#101319';ctx.fillRect(xx-width/2,labelY-8,width,16);
     ctx.fillStyle=expiry?'#f1c66e':buy?'#ffb3bc':'#8aefce';ctx.fillText(expiry?'到期平倉':buy?'B':'S',xx,labelY);
   }
+  for(const mark of research.markers(journalKey).filter(m=>m.time<=cutoff)){const i=shown.findIndex(b=>isDaily()?mark.time>=b.openTime&&mark.time<=(b.endTime??b.time):candleBucket(mark.time,frame)===b.time);if(i<0)continue;const xx=x(i),yy=Math.max(top+10,Math.min(bottom-10,y(shown[i].high)-37));ctx.fillStyle='#101319';ctx.fillRect(xx-15,yy-9,30,18);ctx.fillStyle='#7bcde1';ctx.fillText(mark.label,xx,yy);}
   ctx.restore();drawOverlays(ctx);
 }
 function riskEstimate(){
@@ -367,7 +369,7 @@ function render(){
   $('progress').style.width=(isDaily()?engine.index/engine.data.dailyPlan.days*100:duration(engine.time)/Math.max(1,duration(engine.data.end))*100)+'%';
   $('tapeRows').innerHTML=engine.data.ticks.slice(Math.max(0,engine.index-5),engine.index+1).map((t,i,a)=>`<div class="tape-row"><span>${isDaily()?stamp(t[0]):time(t[0])}</span><span class="${i?tint(t[1]-a[i-1][1]):''}">${price(t[1])}</span><span>${t[2]}</span></div>`).reverse().join('');
   manifest.forEach((m,i)=>$('sessionSelect').options[i+1].textContent=$('blind').checked?`${m.label} · ${m.sessionLabel||'日盤'}`:`${m.date} · ${m.sessionLabel||'日盤'}`);
-  renderControls();renderTicket();renderActivity();drawChart();
+  renderControls();renderTicket();renderActivity();drawChart();research.refresh();
 }
 function confirmAction(title,message,callback){setPlaying(false);text('confirmTitle',title);text('confirmText',message);confirmCallback=callback;$('confirmDialog').showModal();}
 function placeOrder(input){
@@ -377,7 +379,7 @@ function placeOrder(input){
 }
 function showStockRules(){
   const tw=engine.data.stock.market==='TW';
-  $('rulesContent').innerHTML=`<p>使用 Yahoo Finance 歷史日 K、成交量、股息與拆併股資料。台股 ${stockCatalog.filter(s=>s.market==='TW'&&s.liquidity?.starts[120]>0).length} 檔、美股 ${stockCatalog.filter(s=>s.market==='US'&&s.liquidity?.starts[120]>0).length} 檔可抽取 120 日練習，是指定的多產業練習池，並非全市場或歷史成分股；有存續股票偏差，不能用來估算策略普遍績效。每次隨機新局抽取不同股票與日期，可練習 60／120／240 個交易日。</p><h3>成交活躍度篩選</h3><p>開局採當時已完成的最近 60 個交易日：每日成交股數中位數至少 100 萬股；收盤價 × 成交股數的每日金額中位數，台股至少 NT$ 1 億、美股至少 US$ 2,500 萬。金額為日線估算，非交易所精確成交金額。60 筆資料須在 100 個日曆日內，避免抽到長期停牌或缺漏區間。只看開局已知資料，不用後續成交量決定起點；開局後活躍度仍會變動。舊局依原進度恢復。</p><h3>現股帳戶</h3><p>起始資金 ${currencyLabel()} ${money(capital())}，全額現金交易，委託以整數股計算，最多 100,000 股。不能放空、融資或超額賣出，也沒有期貨保證金。買單預留估計金額，開盤跳空導致現金不足時整筆拒絕。賣出價款先列應收交割款，入帳後才可再買進。台股採 T+2；美股依歷史制度採 T+3／T+2／T+1，2024-05-28 起 T+1。交割日使用資料池共同交易日曆估計，不是券商實際可用額度；不提供未交割資金買進。未模擬匯兌與借券。</p><h3>日線成交與費用</h3><p>收盤後決策，以下一個有成交資料的交易日開盤價加計 0.05% 不利滑價作為成交參考，並向不利方向對齊價格跳動。這是日線教學撮合，不是真實開盤市價委託或零股專屬撮合；不還原盤中路徑與開盤排隊。台股 2015 年 6 月起，若全天單一價且接近前收 ±10%，推估為鎖住漲跌停：鎖漲停不買、鎖跌停不賣。此為保守日線判定，並非官方漲跌停參考價；公司行動與特殊無漲跌幅日可能不適用。零量日不成交；共同交易日曆上缺此股票行情時，取消舊委託並提示可能停牌或資料缺漏，不冒充已確認停牌。</p><p>${tw?'台股練習成本：買賣手續費各 0.1425%，每筆最低 NT$ 20；賣出交易稅固定 0.3%，當日沖銷也採此保守練習費率，未套用歷史當沖優惠。實際券商折扣及最低手續費不同。一般整張單位是 1,000 股，本模式允許以股練習但不模擬零股撮合。':'美股練習成本：每股 US$ 0.005、每筆最低 US$ 1，沒有另計 SEC／FINRA、交易所或券商附加費，不代表特定券商報價。'}本場金額均為 ${engine.data.stock.currency}；最大回撤只採每日收盤權益。</p><h3>拆併股與股息</h3><p>價格先還原成當時名目價格，拆併股生效時才調整持股數及平均成本，並取消舊委託。不足一股以當日開盤參考價折算練習現金；這是簡化補償。個股日／週／月 K 與 MA20／60／120 採還原權息：以目前重播日的價格為基準，依已生效的拆併股與現金股息比例回調歷史開高低收，消除機械除權息缺口。只套用已發生事件，回看較早成交時也不使用之後的事件；不代表填息獲利。成交量只調整股數變動，股息不改成交量。</p><p>持有到除息日的股息以資料所列每股金額計入，當天新買進不領當次股息。除息取得應收股息，依 FinMind／Nasdaq 可查得的實際發放日入帳；目前 ${money(Object.values(stockActions.coverage).reduce((s,c)=>s+c.dividends,0))} 筆歷史除息事件中有 ${money(Object.values(stockActions.coverage).reduce((s,c)=>s+c.paymentDates,0))} 筆匹配發放日。查不到日期的款項保留在權益，但不加入可用現金。未扣股息稅或補充保費。B／S 位置與畫線同步換算為還原價；委託、持倉成本、停損停利與帳戶仍使用當時實際價格，股息只按應收與發放規則計一次。資料未涵蓋的現金增資、減資與其他複雜公司行動不自行補造。</p><p>資料可能有缺漏，無資料的日期不生成 K 線。完整盲測可同時隱藏股票名稱與日期，結束後揭露；資料仍下載至瀏覽器，不是防作弊競賽。進度及最近 20 局復盤保存在此瀏覽器。<a href="https://help.yahoo.com/kb/SLN28256.html" target="_blank" rel="noreferrer">Yahoo 還原價說明</a> · <a href="https://www.twse.com.tw/zh/about/company/guide.html" target="_blank" rel="noreferrer">證交所投資指南</a> · <a href="https://www.twse.com.tw/en/products/system/trading.html" target="_blank" rel="noreferrer">台股交易制度</a></p>`;
+  $('rulesContent').innerHTML=`<p>使用 Yahoo Finance 歷史日 K、成交量、股息與拆併股資料。台股 ${stockCatalog.filter(s=>s.market==='TW'&&s.liquidity?.starts[120]>0).length} 檔、美股 ${stockCatalog.filter(s=>s.market==='US'&&s.liquidity?.starts[120]>0).length} 檔可抽取 120 日練習，是指定的多產業練習池，並非全市場或歷史成分股；有存續股票偏差，不能用來估算策略普遍績效。部分標的保留供研究室最終驗證，一般新局暫不抽取。每次隨機新局抽取不同股票與日期，可練習 60／120／240 個交易日。</p><h3>成交活躍度篩選</h3><p>開局採當時已完成的最近 60 個交易日：每日成交股數中位數至少 100 萬股；收盤價 × 成交股數的每日金額中位數，台股至少 NT$ 1 億、美股至少 US$ 2,500 萬。金額為日線估算，非交易所精確成交金額。60 筆資料須在 100 個日曆日內，避免抽到長期停牌或缺漏區間。只看開局已知資料，不用後續成交量決定起點；開局後活躍度仍會變動。舊局依原進度恢復。</p><h3>現股帳戶</h3><p>起始資金 ${currencyLabel()} ${money(capital())}，全額現金交易，委託以整數股計算，最多 100,000 股。不能放空、融資或超額賣出，也沒有期貨保證金。買單預留估計金額，開盤跳空導致現金不足時整筆拒絕。賣出價款先列應收交割款，入帳後才可再買進。台股採 T+2；美股依歷史制度採 T+3／T+2／T+1，2024-05-28 起 T+1。交割日使用資料池共同交易日曆估計，不是券商實際可用額度；不提供未交割資金買進。未模擬匯兌與借券。</p><h3>日線成交與費用</h3><p>收盤後決策，以下一個有成交資料的交易日開盤價加計 0.05% 不利滑價作為成交參考，並向不利方向對齊價格跳動。這是日線教學撮合，不是真實開盤市價委託或零股專屬撮合；不還原盤中路徑與開盤排隊。台股 2015 年 6 月起，若全天單一價且接近前收 ±10%，推估為鎖住漲跌停：鎖漲停不買、鎖跌停不賣。此為保守日線判定，並非官方漲跌停參考價；公司行動與特殊無漲跌幅日可能不適用。零量日不成交；共同交易日曆上缺此股票行情時，取消舊委託並提示可能停牌或資料缺漏，不冒充已確認停牌。</p><p>${tw?'台股練習成本：買賣手續費各 0.1425%，每筆最低 NT$ 20；賣出交易稅固定 0.3%，當日沖銷也採此保守練習費率，未套用歷史當沖優惠。實際券商折扣及最低手續費不同。一般整張單位是 1,000 股，本模式允許以股練習但不模擬零股撮合。':'美股練習成本：每股 US$ 0.005、每筆最低 US$ 1，沒有另計 SEC／FINRA、交易所或券商附加費，不代表特定券商報價。'}本場金額均為 ${engine.data.stock.currency}；最大回撤只採每日收盤權益。</p><h3>拆併股與股息</h3><p>價格先還原成當時名目價格，拆併股生效時才調整持股數及平均成本，並取消舊委託。不足一股以當日開盤參考價折算練習現金；這是簡化補償。個股日／週／月 K 與 MA20／60／120 採還原權息：以目前重播日的價格為基準，依已生效的拆併股與現金股息比例回調歷史開高低收，消除機械除權息缺口。只套用已發生事件，回看較早成交時也不使用之後的事件；不代表填息獲利。成交量只調整股數變動，股息不改成交量。</p><p>持有到除息日的股息以資料所列每股金額計入，當天新買進不領當次股息。除息取得應收股息，依 FinMind／Nasdaq 可查得的實際發放日入帳；目前 ${money(Object.values(stockActions.coverage).reduce((s,c)=>s+c.dividends,0))} 筆歷史除息事件中有 ${money(Object.values(stockActions.coverage).reduce((s,c)=>s+c.paymentDates,0))} 筆匹配發放日。查不到日期的款項保留在權益，但不加入可用現金。未扣股息稅或補充保費。B／S 位置與畫線同步換算為還原價；委託、持倉成本、停損停利與帳戶仍使用當時實際價格，股息只按應收與發放規則計一次。資料未涵蓋的現金增資、減資與其他複雜公司行動不自行補造。</p><p>資料可能有缺漏，無資料的日期不生成 K 線。完整盲測可同時隱藏股票名稱與日期，結束後揭露；資料仍下載至瀏覽器，不是防作弊競賽。進度及最近 20 局復盤保存在此瀏覽器。<a href="https://help.yahoo.com/kb/SLN28256.html" target="_blank" rel="noreferrer">Yahoo 還原價說明</a> · <a href="https://www.twse.com.tw/zh/about/company/guide.html" target="_blank" rel="noreferrer">證交所投資指南</a> · <a href="https://www.twse.com.tw/en/products/system/trading.html" target="_blank" rel="noreferrer">台股交易制度</a></p>`;
   $('rulesContent').insertAdjacentHTML('beforeend',practiceRules());$('rulesDialog').showModal();
 }
 function practiceRules(){return '<h3>圖上保護、畫線與復盤</h3><p>進場委託可附 SL／TP，成交後套用至全部持倉；可拖曳或輸入價位後按「套用」。清空兩價再套用會移除保護。逐筆模式觸發後至少延遲一秒、共用成交量容量；持倉保護跨時段保留。日線同根同時觸及先停損，跳空依開盤，屬保守區間估算。止損不能保證限制最大損失。</p><p>風險比例按目前帳戶權益估計數量，考慮費用緩衝與可用資金，實際跳空與滑價仍可能超出。水平線與趨勢線依時間及價格保存，切週期仍保留；拆股後按當時可見基準調整畫線。復盤按完整開倉至空手計算勝率、獲利因子及連續虧損，加碼與分批出場合併；股息另列。最近 20 局及筆記、線圖保存在此瀏覽器，可下載備份。</p>';}
@@ -490,6 +492,13 @@ function loop(now){
   }
   requestAnimationFrame(loop);
 }
+function researchContext(withImage=false){
+ if(!engine)return null;
+ const visible=isStock()?stockChartBars(engine.data,engine.index):isDaily()?[...engine.data.historyDaily,...engine.data.dailyBars.slice(0,engine.index+1)]:bars;
+ let image=null;if(withImage)try{image=$('chart').toDataURL?.('image/webp',.35)||null;}catch{}
+ return {run:journalKey,time:engine.time,mode:isStock()?'stock':isDaily()?'daily':'tick',market:engine.data.stock?.market||'TX',symbol:engine.data.stock?.symbol||null,unit:isDaily()?'交易日':`${frame/60} 分 K`,frame:isDaily()?86400:frame,blind:hiddenIdentity(),canCapture:!engine.ended&&!loading&&reviewCursor===null&&chartOffset===0&&visible.length>0,bars:visible,image};
+}
+const research=installResearch({document,storage:localStorage,fetch,context:researchContext,pause:()=>setPlaying(false),notify,download:downloadData,onChange:()=>drawChart()});
 try{
   const r=await fetch('./data/manifest.json');if(!r.ok)throw Error('無法載入交易場次。');manifest=await r.json();
   const cr=await fetch('./data/campaigns/catalog.json');if(!cr.ok)throw Error('無法載入連續行情清單。');catalog=await cr.json();
