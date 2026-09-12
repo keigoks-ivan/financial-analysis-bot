@@ -70,7 +70,7 @@ async function loadStock(market,plan=null,saved=null){
     const r=await fetch('./data/stocks/'+selected.symbol+'.json');if(!r.ok)throw Error('個股行情載入失敗。');const pool=await r.json();
     if(pool.sha256!==selected.sha256)throw Error('個股資料版本不一致，請重新整理。');if(request!==loadId)return;
     if(!stockActions){const ar=await fetch('./data/stocks/actions.json');if(!ar.ok)throw Error('交割與股息資料載入失敗。');stockActions=await ar.json();}
-    if(request!==loadId)return;engine=new StockReplayEngine(createStockRun(pool,days,plan,Math.random,stockActions,selected.liquidity),saved?.snapshot);configureMode(true,days,saved);
+    if(request!==loadId)return;engine=new StockReplayEngine(createStockRun(pool,days,plan,Math.random,stockActions,selected.liquidity),saved?.snapshot);if(!saved){$('fullBlind').checked=true;$('blind').checked=true;}configureMode(true,days,saved);
     $('qty').value=market==='TW'?'100':'10';$('orderPrice').value=engine.last;resetChart();restoreWorkspace(saved);loading=false;setTimeframe(frame);render();save();
     notify(saved?'已恢復同一檔股票與同一局進度。':'已抽取 '+(hiddenIdentity()?'盲測標的':selected.name+'（'+selected.symbol+'）')+'，共 '+days+' 個交易日；開局前 60 日符合成交活躍度條件。買進扣現金，賣出須有持股。');
   }catch(e){loading=false;notify(e.message,true);renderControls();}
