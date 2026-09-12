@@ -56,3 +56,17 @@ export function readBattle(storage){
  if(b.version!==1||!Array.isArray(b.episodes)||b.episodes.length!==b.config.count||b.episodes.some(e=>!e.plan||!Array.isArray(e.chart)||!Array.isArray(e.strategies)||e.strategies.length!==4||e.strategies.some(s=>!Number.isFinite(s.return)||!Array.isArray(s.curve))))throw Error('對戰紀錄格式無效。');return b;
 }
 export {stockRules,hash as fingerprint};
+
+export function arenaExplanation(battle){
+ const rows=arenaSummary(battle.episodes),ranked=rows.slice().sort((a,b)=>b.averageReturn-a.averageReturn),top=ranked[0],equal=(a,b)=>Math.abs(a-b)<1e-8;
+ const leaders=ranked.filter(r=>equal(r.averageReturn,top.averageReturn)),low=Math.min(...rows.map(r=>r.averageDrawdown)),calmest=rows.filter(r=>equal(r.averageDrawdown,low)),names=xs=>xs.map(r=>r.name).join('、'),percent=n=>(n*100).toFixed(2)+'%';
+ const profitTitle=top.averageReturn< -1e-8?'這次誰虧得較少？':top.averageReturn>1e-8?'這次誰賺得較多？':'這次誰守住本金？';
+ const profitText=`${names(leaders)}${leaders.length>1?'並列。':'。'}以每個帳戶原本的 100 元來看，期末平均變成 ${(100*(1+top.averageReturn)).toFixed(2)} 元（${percent(top.averageReturn)}）。${leaders.every(r=>r.entries===0)?'這些規則本次都沒有成交買進，結果來自持有現金。':''}`;
+ const riskText=`${names(calmest)}${calmest.length>1?'並列。':'。'}每天收盤觀察，各場帳戶從先前高點跌下來的最大幅度，平均為 ${percent(low)}。${calmest.some(r=>r.entries===0)?'其中有規則整場沒有買進；少跌也可能來自一直持有現金。':''}`;
+ const strategyId=top.id==='hold'?(ranked.find(r=>r.id!=='hold'&&r.entries>0)?.id||'trend'):top.id;
+ let episodeIndex=0,gap=-1;
+ battle.episodes.forEach((e,i)=>{const distance=Math.abs(e.strategies.find(s=>s.id===strategyId).return-e.strategies.find(s=>s.id==='hold').return);if(distance>gap){gap=distance;episodeIndex=i;}});
+ const selected=STRATEGIES.find(s=>s.id===strategyId),anyTrades=rows.some(r=>r.entries>0);
+ const nextText=!anyTrades?'這次四套規則都沒有買進。先查看未成交原因，再用原設定換一段行情；目前沒有買賣案例可比較。':`先看「${selected.name}」的買賣位置，對照持有基準：差別發生在何時進場、何時離場，還是持有現金的時間？${!calmest.some(r=>leaders.some(l=>l.id===r.id))?'本次報酬領先與跌幅最小的是不同規則，可以一起比較。':''}`;
+ return {profitTitle,profitText,riskText,nextText,strategyId,episodeIndex,leaders:leaders.map(r=>r.id),calmest:calmest.map(r=>r.id)};
+}
