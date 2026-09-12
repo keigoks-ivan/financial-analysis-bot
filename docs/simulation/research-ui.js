@@ -1,8 +1,8 @@
-import {RESEARCH_KEY,hash,newResearch,addIdea,reserveUniverse,markSeen,beginTrial,addOpportunity,resolveOpportunities,evaluateStock,researchStats} from './research.js';
+import {RESEARCH_KEY,hash,newResearch,addIdea,reserveUniverse,markSeen,beginTrial,addOpportunity,addQuickObservation,analysisPacket,resolveOpportunities,evaluateStock,researchStats} from './research.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pct=n=>n===null||n===undefined?'—':(n*100).toFixed(2)+'%';
 export function installResearch({document,storage,fetch,context,pause,notify,download,onChange=()=>{}}){
- const $=id=>document.getElementById(id);let state,failed=false,busy=false,pauseRequested=false,editing=null,catalog=null,actions=null,selected=null,lastContext=null,lastRefresh=null,launching=false;
+ const $=id=>document.getElementById(id);let state,failed=false,busy=false,pauseRequested=false,editing=null,catalog=null,actions=null,selected=null,lastContext=null,lastRefresh=null,launching=false,quickContext=null;
  try{
   const raw=storage.getItem(RESEARCH_KEY);state=raw?JSON.parse(raw):newResearch();
   if(state.version!==1||!['ideas','cases','trials','seen','used'].every(k=>Array.isArray(state[k]))||!(state.heldouts===null||Array.isArray(state.heldouts)))throw Error('研究紀錄格式無效');
@@ -25,12 +25,15 @@ export function installResearch({document,storage,fetch,context,pause,notify,dow
   $('ideaSave').textContent=v?'儲存為新版本':'建立想法';$('researchEditor').hidden=false;$('exploreIdea').disabled=true;$('finalIdea').disabled=true;
  }
  function renderFocus(){
+  const notes=state.cases.filter(c=>c.quick);if(notes.length){$('ideaFocus').textContent=notes.at(-1).reason;$('ideaProgress').textContent=`${notes.length} 筆快速觀察 · 先累積案例，再整理規則` ;return;}
   const v=version(),cases=state.cases.filter(c=>c.versionId===v?.id),ready=cases.filter(c=>Number.isFinite(c.outcomes[10]?.return)).length;
   $('ideaFocus').textContent=v?v.title+' · v'+v.number:'找到值得重複驗證的現象';
   $('ideaProgress').textContent=v?`${cases.length} 個案例 · ${ready} 個已揭露後 10 根結果`:'先留下判斷，往後重播再看結果。';
  }
  function render(){
   renderFocus();
+  $('observationCount').textContent=state.cases.length+' 個已保存案例';
+  $('observationList').innerHTML=state.cases.slice().reverse().map(c=>`<details class="research-case"><summary>${c.direction===1?'看漲':c.direction===-1?'看跌':'先觀察'} · ${esc(c.reason.slice(0,80))}</summary><p>${esc(c.reason)}</p><p class="muted">${c.blind?'盲測標的':esc(c.symbol||'台指期')} · ${esc(c.unit)}${c.quick?'':' · 既有研究版本案例'}</p>${c.image?.startsWith('data:image/webp;base64,')?`<img src="${c.image}" alt="記錄當下可見的圖表">`:''}<div class="research-outcomes">${[5,10,20].map(n=>{const o=c.outcomes[n];return `<span>後 ${n} 根<b>${o?.unavailable?'不適用':o?pct(c.direction===0?o.change:o.return):'尚未揭露'}</b><small>${c.direction===0?'價格漲跌':'依看漲／看跌方向計算'} · 未扣交易成本</small></span>`;}).join('')}</div></details>`).join('')||'<p class="muted">看到值得研究的現象，按「標記目前圖表」，留一句話即可。</p>';
   const versions=state.ideas.flatMap(i=>i.versions),v=version();
   for(const id of ['researchVersion','captureVersion']){$(id).innerHTML='<option value="">選擇想法版本</option>'+versions.map(v=>`<option value="${v.id}">${esc(v.title)} · v${v.number}</option>`).join('');$(id).value=selected||'';}
   $('researchCount').textContent=`${state.ideas.length} 個想法 · ${state.cases.length} 個案例`;
@@ -75,12 +78,17 @@ export function installResearch({document,storage,fetch,context,pause,notify,dow
  }
  $('researchBtn').onclick=guard(()=>{pause();render();$('researchDialog').showModal();});
  $('quickResearch').onclick=()=>$('researchBtn').onclick();
- $('quickIdeaNew').onclick=guard(()=>{pause();fillEditor();render();$('researchDialog').showModal();});
+ $('quickIdeaNew').onclick=()=>$('recordOpportunity').onclick();
  $('ideaNew').onclick=()=>fillEditor();$('ideaRevise').onclick=()=>{if(version())fillEditor(version());};
  $('researchVersion').onchange=()=>{selected=$('researchVersion').value;$('researchEditor').hidden=true;render();};$('caseHorizon').onchange=render;
  $('ideaForm').onsubmit=guard(e=>{e.preventDefault();const rules=Object.fromEntries(['market','setup','trend','band','lookback','volume','hold','stop','allocation'].map(k=>[k,$('rule-'+k).value]));const v=change(()=>addIdea(state,{title:$('ideaTitle').value,hypothesis:$('ideaHypothesis').value,invalidation:$('ideaFailure').value,rules},editing));selected=v.id;$('researchEditor').hidden=true;render();note('想法版本已保存。可回到圖表記錄機會，或先跑探索批次。');});
- $('recordOpportunity').onclick=guard(()=>{pause();lastContext=context(true);if(!lastContext?.canCapture)throw Error('請回到未結束的最新行情，再記錄機會。');if(!state.ideas.length){fillEditor();render();$('researchDialog').showModal();note('先建立想法，再記錄當下機會。');return;}render();$('captureVersion').value=selected||state.ideas.at(-1).versions.at(-1).id;$('captureReason').value='';$('captureFailure').value=state.ideas.flatMap(i=>i.versions).find(v=>v.id===$('captureVersion').value)?.invalidation||'';$('captureDecision').value='observe';$('captureDirection').value='1';$('captureDialog').showModal();});
+ $('recordStructured').onclick=guard(()=>{pause();lastContext=context(true);if(!lastContext?.canCapture)throw Error('請回到未結束的最新行情，再記錄機會。');if(!state.ideas.length){fillEditor();render();$('researchDialog').showModal();note('先建立想法，再記錄當下機會。');return;}render();$('captureVersion').value=selected||state.ideas.at(-1).versions.at(-1).id;$('captureReason').value='';$('captureFailure').value=state.ideas.flatMap(i=>i.versions).find(v=>v.id===$('captureVersion').value)?.invalidation||'';$('captureDecision').value='observe';$('captureDirection').value='1';$('captureDialog').showModal();});
  $('captureForm').onsubmit=guard(e=>{e.preventDefault();const now=context();if(now?.run!==lastContext?.run||now?.time!==lastContext?.time||!now.canCapture)throw Error('行情已移動，請重新記錄機會。');const v=state.ideas.flatMap(i=>i.versions).find(v=>v.id===$('captureVersion').value);if(!v)throw Error('請選擇想法版本。');change(()=>addOpportunity(state,v,lastContext,{decision:$('captureDecision').value,direction:Number($('captureDirection').value),reason:$('captureReason').value,failure:$('captureFailure').value}));selected=v.id;$('captureDialog').close();render();onChange();notify('機會已保存；後續只在行情揭露後更新結果。');});
+ $('recordOpportunity').onclick=guard(()=>{pause();quickContext=context(true);if(!quickContext?.canCapture)throw Error('請回到未結束的最新行情，再標記想法。');$('quickNoteText').value='';$('quickNoteDirection').value='0';$('quickNoteDialog').showModal();});
+ $('newObservation').onclick=guard(async()=>{$('researchDialog').close();await $('recordOpportunity').onclick();});
+ $('quickNoteForm').onsubmit=guard(e=>{e.preventDefault();const now=context();if(!now?.canCapture||now.run!==quickContext?.run||now.time!==quickContext?.time||now.frame!==quickContext?.frame)throw Error('行情已移動，請重新標記圖表。');change(()=>addQuickObservation(state,quickContext,{reason:$('quickNoteText').value,direction:Number($('quickNoteDirection').value)}));$('quickNoteDialog').close();render();onChange();notify('想法與當下圖表已保存。可以繼續看圖，之後一起交給我分析。');});
+ for(const id of ['prepareAnalysis','prepareAnalysisDialog'])$(id).onclick=()=>{pause();$('analysisDialog').showModal();};
+ $('downloadAnalysis').onclick=guard(()=>{if(busy)throw Error('請先暫停規則試驗，再匯出分析檔。');const packet=analysisPacket(state,context());download(JSON.stringify(packet,null,2),'trading-idea-analysis.json');notify('分析檔已準備下載；請附到目前對話，我就能接著整理與回測。');});
  async function launch(kind){
   if(busy||launching)return;launching=true;
   try{pause();const v=version();if(!v)return;const c=await universe();if(!actions)actions=await request('./data/stocks/actions.json');const trial=change(()=>{const t=beginTrial(state,v,c,kind);t.actionsHash=hash(JSON.stringify(actions));return t;});await execute(trial);}finally{launching=false;}
@@ -98,7 +106,7 @@ export function installResearch({document,storage,fetch,context,pause,notify,dow
   refresh(){
    const c=context();if(!c||failed)return;
    const signature=c.run+':'+c.frame+':'+c.bars.at(-1)?.time+':'+c.canCapture;if(signature===lastRefresh)return;lastRefresh=signature;
-   try{const unseen=c.symbol&&!state.seen.includes(c.symbol),pending=state.cases.some(x=>x.run===c.run&&Object.keys(x.outcomes).length<3);if(unseen||pending)change(()=>{markSeen(state,c.symbol);return resolveOpportunities(state,c)||unseen;});$('recordOpportunity').disabled=!c.canCapture;renderFocus();}catch(e){failed=true;note('研究紀錄儲存失敗；請先備份，暫停研究操作。',true);}
+   try{const unseen=c.symbol&&!state.seen.includes(c.symbol),pending=state.cases.some(x=>x.run===c.run&&Object.keys(x.outcomes).length<3);if(unseen||pending)change(()=>{markSeen(state,c.symbol);return resolveOpportunities(state,c)||unseen;});$('recordOpportunity').disabled=!c.canCapture;$('recordStructured').disabled=!c.canCapture;renderFocus();}catch(e){failed=true;note('研究紀錄儲存失敗；請先備份，暫停研究操作。',true);}
   }
  };
 }

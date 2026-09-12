@@ -10,7 +10,7 @@ export class ReplayEngine {
     this.orders=[]; this.fills=[]; this.history=[]; this.events=[]; this.sequence=0;
     this.peak=RULES.capital; this.maxDrawdown=0; this.liquidating=false; this.ended=false;
     this.volume=0; this.turnover=0; this.high=this.last; this.low=this.last; this.flow=0;
-    this.closedSegments=0;this.protection=null;
+    this.closedSegments=0;this.protection=null;this.marginLimitPercent=100;
     this.advance(Math.min(data.playStart??data.start+1800,data.end));
     if(saved) this.restore(saved);
   }
@@ -18,6 +18,17 @@ export class ReplayEngine {
   get equity(){return this.cash+this.unrealized;}
   get reserved(){return this.orders.filter(o=>active(o)&&!o.reduceOnly).reduce((s,o)=>s+o.remaining*RULES.initialMargin,0);}
   get available(){return this.equity-Math.abs(this.position)*RULES.initialMargin-this.reserved;}
+  get marginUsed(){return Math.abs(this.position)*RULES.initialMargin;}
+  get marginCapacity(){return Math.max(0,this.equity*this.marginLimitPercent/100-this.marginUsed-this.reserved);}
+  setMarginLimit(percent){
+    if(!Number.isFinite(percent)||percent<5||percent>100)throw Error('保證金使用上限請設定為 5–100%。');
+    this.marginLimitPercent=percent;
+  }
+  marginFits(o,qty,after,equity){
+    if(o.reduceOnly||Math.abs(after)<=Math.abs(this.position))return true;
+    const remainingReserve=Math.max(0,this.reserved-qty*RULES.initialMargin);
+    return Math.abs(after)*RULES.initialMargin+remainingReserve<=Math.max(0,equity)*this.marginLimitPercent/100;
+  }
   get vwap(){return this.volume?this.turnover/this.volume:this.last;}
   submit({side,qty,type='market',price=null,reduceOnly=false,reason='',system=false,protection=null}) {
     if(this.ended) throw Error('本場已結束，請重新練習。');
@@ -35,6 +46,7 @@ export class ReplayEngine {
       return reject('只減倉委託必須與持倉反向，且不能超過持倉口數。');
     const estimate=(RULES.commission+this.last*RULES.multiplier*RULES.taxRate)*qty;
     if(!reduceOnly && this.available < estimate) return reject('可用保證金不足，已拒絕委託。');
+    if(!reduceOnly&&this.marginCapacity<estimate){o.status='rejected';o.message='超過設定的保證金使用上限（含待成交委託）';}
     return o;
   }
   cancel(id,message='使用者取消') {const o=this.orders.find(o=>o.id===id);if(o&&active(o)&&!o.system){o.status='cancelled';o.message=message;return true;}return false;}
@@ -98,6 +110,7 @@ export class ReplayEngine {
       if(!o.reduceOnly&&increases&&this.equity-fee-impact < Math.abs(after)*RULES.initialMargin){
         o.status='rejected';o.message='成交前權益不足，取消剩餘口數';continue;
       }
+      if(!this.marginFits(o,qty,after,this.equity-fee-impact)){o.status='rejected';o.message='成交前超過保證金使用上限，取消剩餘委託';continue;}
       this.fill(o,qty,execution,time);capacity-=qty;
     }
     this.peak=Math.max(this.peak,this.equity);
@@ -150,6 +163,7 @@ export class ReplayEngine {
   restore(saved){
     if(saved.version!==1||saved.sourceHash!==this.data.sha256||saved.sessionId!==this.data.id)throw Error('儲存版本與資料不一致。');
     const s=saved.state;
+    if(s?.marginLimitPercent!==undefined)this.setMarginLimit(s.marginLimitPercent);
     if(!s||!Number.isInteger(s.index)||s.index<0||s.index>=this.data.ticks.length||!Number.isFinite(s.time)||s.time<this.data.start||s.time>this.data.end)throw Error('進度格式無效。');
     for(const k of ['cash','position','average','realized','fees','peak','maxDrawdown','volume','turnover','high','low','flow','sequence','last'])if(!Number.isFinite(s[k]))throw Error('帳戶格式無效。');
     for(const k of ['orders','fills','history','events'])if(!Array.isArray(s[k]))throw Error('紀錄格式無效。');

@@ -32,6 +32,7 @@ export class DailyReplayEngine extends ReplayEngine{
     const qty=Math.min(o.remaining,o.reduceOnly?Math.abs(this.position):o.remaining),execution=price+o.side*2;
     const after=this.position+o.side*qty,fee=(RULES.commission+execution*RULES.multiplier*RULES.taxRate)*qty;
     if(!o.reduceOnly&&Math.abs(after)>Math.abs(this.position)&&this.equity-fee-2*qty*RULES.multiplier<Math.abs(after)*RULES.initialMargin){o.status='rejected';o.message='開盤跳空後保證金不足';return;}
+    if(!this.marginFits(o,qty,after,this.equity-fee-2*qty*RULES.multiplier)){o.status='rejected';o.message='開盤後超過保證金使用上限';return;}
     this.fill(o,qty,execution,time);
   }
   advance(target){

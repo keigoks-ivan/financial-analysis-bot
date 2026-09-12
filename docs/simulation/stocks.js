@@ -10,6 +10,13 @@ export function stockExecution(market,side,price){
   const p=price*(1+side*.0005),tick=market==='US'?.01:p<10?.01:p<50?.05:p<100?.1:p<500?.5:p<1000?1:5;
   return round((side===1?Math.ceil(p/tick-1e-9):Math.floor(p/tick+1e-9))*tick);
 }
+// Integer shares including commissions; use the known price for preview and the open for execution.
+export function stockBudgetQty(market,price,budget){
+ if(!(Number.isFinite(price)&&price>0&&Number.isFinite(budget)&&budget>0))return 0;
+ let lo=0,hi=Math.min(100000,Math.floor(budget/price));
+ while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(mid*price+stockFee(market,1,mid,price)<=budget)lo=mid;else hi=mid-1;}
+ return lo;
+}
 export const STOCK_LIQUIDITY={TW:{window:60,minVolume:1000000,minTurnover:100000000},US:{window:60,minVolume:1000000,minTurnover:25000000}};
 export function stockLiquidity(pool){
   const rules=STOCK_LIQUIDITY[pool.market],ranges=[],starts={60:0,120:0,240:0};let latest=null;
@@ -74,17 +81,18 @@ export function stockChartBars(data,index,cutoff=Infinity){
 export class StockReplayEngine extends DailyReplayEngine{
   get unrealized(){return (this.last-this.average)*this.position;}
   get equity(){return this.cash+this.position*this.last+(this.receivables||[]).filter(r=>!r.paid).reduce((s,r)=>s+r.amount,0);}
-  get reserved(){return this.orders.filter(o=>active(o)&&o.side===1).reduce((s,o)=>s+o.remaining*this.last*1.001+stockFee(this.data.stock.market,1,o.remaining,this.last),0);}
+  get reserved(){return this.orders.filter(o=>active(o)&&o.side===1).reduce((s,o)=>s+(o.budget??(o.remaining*this.last*1.001+stockFee(this.data.stock.market,1,o.remaining,this.last))),0);}
   get available(){return this.cash-this.reserved;}
-  submit({side,qty,type='market',reduceOnly=false,reason='',system=false,protection=null}){
+  submit({side,qty,type='market',reduceOnly=false,reason='',system=false,protection=null,budget=null}){
     if(this.ended)throw Error('本場已結束，請重新練習。');
     if(type!=='market')throw Error('個股日線只提供下一交易日開盤參考價撮合。');
     if(![1,-1].includes(side)||!Number.isInteger(qty)||qty<1||qty>100000)throw Error('請輸入 1–100,000 整數股數。');
-    const o={protection:protection?validateProtection(side,this.last,protection.stop,protection.target):null,id:++this.sequence,side,qty,remaining:qty,type,price:null,reduceOnly:side===-1,reason:String(reason).slice(0,200),system,submitted:this.time,readyAt:this.time+1,status:'pending',filled:0,fillValue:0,message:'等待下一交易日開盤參考價'};
+    if(budget!==null&&(side!==1||!Number.isFinite(budget)||budget<=0))throw Error('買進金額必須為正數。');
+    const o={budget,protection:protection?validateProtection(side,this.last,protection.stop,protection.target):null,id:++this.sequence,side,qty,remaining:qty,type,price:null,reduceOnly:side===-1,reason:String(reason).slice(0,200),system,submitted:this.time,readyAt:this.time+1,status:'pending',filled:0,fillValue:0,message:'等待下一交易日開盤參考價'};
     const priorSells=this.orders.filter(p=>active(p)&&p.side===-1).reduce((s,p)=>s+p.remaining,0),cash=this.available;
     this.orders.push(o);
     if(side===-1&&qty>this.position-priorSells){o.status='rejected';o.message='現股只能賣出持有股數，尚未成交賣單也會預留股數';}
-    if(side===1&&(reduceOnly||qty*this.last+stockFee(this.data.stock.market,1,qty,this.last)>cash)){o.status='rejected';o.message=reduceOnly?'現股只減倉不能買進':'可用現金不足';}
+    if(side===1&&(reduceOnly||(budget??(qty*this.last+stockFee(this.data.stock.market,1,qty,this.last)))>cash)){o.status='rejected';o.message=reduceOnly?'現股只減倉不能買進':'可用現金不足';}
     return o;
   }
   fill(o,qty,price,time){
@@ -101,7 +109,15 @@ export class StockReplayEngine extends DailyReplayEngine{
   executeOpen(o,price,time){
     if(this.currentBar?.unavailable||this.currentBar?.volume===0){o.status='expired';o.message='當日無可用成交資料，委託不成交';return;}
     if(this.data.stock.market==='TW'&&lockedDirection(this.currentBar||{},this.data.dailyBars[this.index])===o.side){o.status='expired';o.message='日線推估鎖住漲跌停，保守不成交（非官方限價資料）';return;}
-    const execution=stockExecution(this.data.stock.market,o.side,price),qty=o.remaining;
+    const execution=stockExecution(this.data.stock.market,o.side,price);
+    if(o.budget!==null&&o.budget!==undefined){
+      // Keep other budget orders' reserved cash intact. Shares are fixed only at the execution price.
+      const other=this.orders.filter(p=>p!==o&&active(p)&&p.side===1).reduce((s,p)=>s+(p.budget??(p.remaining*execution+stockFee(this.data.stock.market,1,p.remaining,execution))),0);
+      const actual=stockBudgetQty(this.data.stock.market,execution,Math.min(o.budget,Math.max(0,this.cash-other)));
+      if(!actual){o.status='rejected';o.message='開盤可用金額不足買進一股（含費用）';return;}
+      o.estimatedQty=o.qty;o.qty=actual;o.remaining=actual;
+    }
+    const qty=o.remaining;
     if(o.side===1&&execution*qty+stockFee(this.data.stock.market,1,qty,execution)>this.cash){o.status='rejected';o.message='開盤跳空後現金不足，整筆不成交';return;}
     if(o.side===-1&&qty>this.position){o.status='rejected';o.message='持股不足，整筆不成交';return;}
     this.fill(o,qty,execution,time);
