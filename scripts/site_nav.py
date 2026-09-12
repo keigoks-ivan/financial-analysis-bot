@@ -201,8 +201,10 @@ GROUP_LABELS = {"pick": "選股", "research": "研究", "market": "市場", "sys
 
 def build_nav(group=None, item=None):
     def dd(name):
+        # 2026-09-12：移出 f-string 內的跳脫引號，維持 Python 3.9 可解析。
+        active_attr = ' class="active"'
         links = "\n".join(
-            f'          <a href="{href}"{" class=\"active\"" if group == name and item == key else ""}>{label}</a>'
+            f'          <a href="{href}"{active_attr if group == name and item == key else ""}>{label}</a>'
             for key, href, label in MENU[name]
         )
         act = " active" if group == name else ""
@@ -219,6 +221,8 @@ def build_nav(group=None, item=None):
     mm_cls = ' class="active"' if group == "mm" else ""
     flow_cls = ' class="active"' if group == "flow" else ""
     howto_cls = ' class="active"' if group == "howto" else ""
+    # 2026-09-12：在系統之後加入模擬交易入口，使用同站歷史重播。
+    simulation_cls = ' class="active"' if group == "simulation" else ""
     search_cls = ' class="active"' if group == "search" else ""
     return f"""<header class="imq-nav-root">
   <div class="imq-nav-inner">
@@ -230,6 +234,7 @@ def build_nav(group=None, item=None):
 {dd("research")}
       <a href="/mental-models/"{mm_cls}>心智模型</a>
 {dd("system")}
+      <a href="/simulation/"{simulation_cls}>模擬</a>
       <a href="/flow/"{flow_cls}>投資流程</a>
       <a href="/how-to.html"{howto_cls}>使用指南</a>
       <a href="/search.html"{search_cls}>搜尋</a>
@@ -267,8 +272,10 @@ ENGINE_SUBNAV = [
 
 
 def build_subnav(links, current):
+    # 2026-09-12：與主導覽使用相同的 Python 3.9 相容寫法，輸出不變。
+    active_attr = ' class="active"'
     items = "".join(
-        f'<a href="{href}"{" class=\"active\"" if href == current else ""}>{label}</a>'
+        f'<a href="{href}"{active_attr if href == current else ""}>{label}</a>'
         for href, label in links
     )
     return f'\n<div class="imq-subnav"><div class="imq-subnav-inner">{items}</div></div>'
@@ -366,6 +373,8 @@ PREFIX_ACTIVE = [
     # 資料端點文件）同屬「資料層」語意，故映射到 data 而非 bt。
     ("cache/", ("system", "data")),
     ("data.html", ("system", "data")),  # 公開資料（2026-07-11 新增）
+    # 2026-09-12：模擬交易使用獨立入口，保留返回研究站的導覽。
+    ("simulation/", ("simulation", None)),
     # 頂層
     ("flow/", ("flow", None)),  # 投資流程（2026-07-19 復活孤兒頁；頂層連結，howto 模式）
     ("mental-models/", ("mm", None)),

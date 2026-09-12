@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="canonical" href="https://research.investmquest.com/simulation/">
+<title>盤感 LAB｜市場實戰重播</title><meta name="description" content="使用台指期逐筆行情、台股與美股個股日 K，練習交易與復盤。"><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23101319'/%3E%3Cpath d='M8 22V10m8 15V6m8 15V9' stroke='%23d8fb70' stroke-width='3'/%3E%3C/svg%3E"><link rel="stylesheet" href="style.css"></head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/simulation/" class="active">模擬</a>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<header class="top"><a class="brand" href="./"><span class="brand-icon">Ⅲ</span> 盤感 <em>LAB</em></a><span class="top-caption">市場實戰重播</span><nav><span class="mode" id="dataMode">真實逐筆資料</span><button id="journalBtn" class="quiet">練習紀錄簿</button><button id="rulesBtn" class="quiet">資料與成交規則 ↗</button></nav></header>
+<main><section class="sessionbar"><div><p class="eyebrow">MARKET REPLAY / 交易練習室</p><h1>把判斷，放進市場。</h1></div><div class="session-controls"><label>練習模式<select id="replayMode" aria-label="練習模式"><option value="tick">逐筆實戰</option><option value="daily">台指期日線</option><option value="TW">台股個股日線</option><option value="US">美股個股日線</option></select></label><label id="sessionLabel">交易場次<select id="sessionSelect" aria-label="選擇交易場次"></select></label><label>新局長度<select id="runLength" aria-label="新局長度"><option value="3">3 個交易日</option><option value="5" selected>5 個交易日</option><option value="10">10 個交易日</option></select></label><label class="blind"><input id="blind" type="checkbox" checked> 隱藏日期</label><label class="blind"><input id="fullBlind" type="checkbox"> 完整盲測</label><button id="resetBtn" class="quiet">隨機新局</button></div></section>
+<section class="account" aria-label="模擬帳戶"><div><span>帳戶權益 <small id="accountCurrency">TWD</small></span><strong id="equity">1,000,000</strong></div><div><span>本場損益</span><strong id="pnl">0</strong></div><div><span id="availableLabel">可用保證金</span><strong id="available">1,000,000</strong></div><div><span>未實現損益</span><strong id="unrealized">0</strong></div><div><span>本場最大回撤</span><strong id="drawdown">0.00%</strong></div></section>
+<section class="workspace"><section class="market panel"><div class="market-head"><div><div class="instrument"><strong id="instrumentSymbol">TX</strong> <span id="instrumentName">臺股期貨 · 大台</span><span class="tag" id="contract">近月</span></div><div class="quote"><strong id="last">—</strong><span id="change">—</span></div></div><div class="market-stats"><span>開盤<b id="open">—</b></span><span>截至目前最高<b id="high">—</b></span><span>截至目前最低<b id="low">—</b></span><span>累計成交量<b id="volume">—</b></span></div></div><div class="chart-toolbar"><div class="timeframes" aria-label="K 線週期"><button data-frame="60" class="active">1 分</button><button data-frame="300">5 分</button><button data-frame="900">15 分</button><button data-frame="3600">60 分</button><button data-frame="86400">日 K</button><button data-frame="604800">週 K</button><button data-frame="2592000">月 K</button></div><span id="chartInfo">K 線與成交量 · 僅顯示已重播資料</span><button id="zoomOut" class="quiet" aria-label="縮小圖表">−</button><button id="zoomIn" class="quiet" aria-label="放大圖表">＋</button></div><div class="chart-context"><strong id="chartPeriod">1 分 K</strong><span id="chartRange"></span><button id="chartLatest" class="quiet" hidden>回到最新</button><small>B 買進成交 · S 賣出成交 · 滾輪／雙指縮放 · 拖曳移動 · 雙擊重設</small></div><div class="ma-legend" aria-label="移動平均線"><span class="ma20">MA20 <b id="ma20">—</b></span><span class="ma60">MA60 <b id="ma60">—</b></span><span class="ma120">MA120 <b id="ma120">—</b></span><small>收盤價簡單均線 · 含形成中 K 線</small></div><div class="drawing-toolbar"><button id="drawHorizontal" class="quiet">＋ 水平線</button><button id="drawTrend" class="quiet">＋ 趨勢線</button><button id="undoDrawing" class="quiet">復原畫線</button><button id="clearDrawings" class="quiet">清除畫線</button><span id="drawingHint">畫線只保存在這一局</span></div><div class="chart-wrap"><canvas id="chart" aria-label="台指期價格與成交量圖表">價格圖表需要支援 Canvas 的瀏覽器。</canvas><div id="chartTooltip" class="chart-tooltip" hidden></div><span class="watermark" id="watermark">TX / REPLAY</span></div><div class="playback"><div class="clock"><span id="playState">已暫停</span><strong id="clock">09:15:00</strong><small id="sessionDate">盲測練習 · 日盤</small></div><button id="playBtn" class="primary">▶ 開始重播</button><button id="stepBtn" class="quiet">＋10 秒</button><label class="speed">速度<select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="15" selected>15×</option><option value="60">60×</option><option value="300">300×</option></select></label><button id="finishBtn" class="quiet">結束與復盤 ↗</button></div><div class="progress"><i id="progress"></i></div></section>
+<aside class="ticket panel"><div class="section-title"><h2>交易委託</h2><span class="tag">模擬帳戶</span></div><div class="side-switch"><button id="buySide" class="selected buy">買進 · 做多</button><button id="sellSide" class="sell">賣出 · 做空</button></div><form id="orderForm"><label>委託類型<select id="orderType"><option value="market">市價單</option><option value="limit">限價單</option><option value="stop">停損市價單</option></select></label><label id="priceLabel" hidden>委託價格<input id="orderPrice" type="number" min="1" step="1" inputmode="numeric"></label><label><span id="quantityLabel">口數</span><div class="quantity"><button type="button" id="qtyMinus" aria-label="減少一口">−</button><input id="qty" type="number" min="1" max="20" step="1" value="1" required aria-label="委託口數"><button type="button" id="qtyPlus" aria-label="增加一口">＋</button></div></label><section class="risk-tools"><div class="risk-grid"><label>停損價<input id="stopPrice" type="number" step="any" min="0" placeholder="選填"></label><label>停利價<input id="targetPrice" type="number" step="any" min="0" placeholder="選填"></label></div><div class="risk-grid"><label>每筆風險 %<input id="riskPercent" type="number" min="0.1" max="10" step="0.1" value="1"></label><button id="sizeBtn" type="button">計算可買數量</button></div><div id="riskSummary" class="risk-summary">設定停損後可計算風險</div><button id="applyProtection" type="button" class="quiet">套用到目前持倉</button><p class="ticket-note">SL／TP 線可拖曳。日線同根雙觸價，保守先停損。</p></section><div class="quote-pair"><span>估計買價<b id="bid">—</b></span><span>估計賣價<b id="ask">—</b></span></div><div class="order-facts"><div><span id="pointLabel">每點損益 / 口</span><b id="pointValue">NT$ 200</b></div><div><span id="reserveLabel">預留練習保證金</span><b id="requiredMargin">—</b></div><div><span>預估單邊手續費＋稅</span><b id="estimatedCost">—</b></div></div><label class="note-label">進場理由 <small>選填，留給復盤時的自己</small><textarea id="reason" rows="2" maxlength="200" placeholder="我看到了什麼？什麼情況代表判斷失效？"></textarea></label><button id="submitOrder" type="submit" class="submit buy">買進 1 口</button><p id="ticketNote" class="ticket-note">下一秒起撮合，成交價可能不同。時段收盤未成交單失效；連續模式保留持倉。</p></form><div id="settlementInfo" class="settlement-info" hidden></div><div id="notice" class="notice" role="status" aria-live="polite">下單後開始重播，觀察委託如何成交。</div></aside>
+<section class="activity panel"><div class="section-title"><div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="position" class="active">持倉 <span id="positionCount">0</span></button><button role="tab" aria-selected="false" data-tab="orders">委託 <span id="orderCount">0</span></button><button role="tab" aria-selected="false" data-tab="fills">成交紀錄</button></div><button id="closeBtn" class="quiet danger">市價平倉</button></div><div id="activityBody" class="table-scroll"><div class="empty">目前沒有持倉<span>先觀察價格，再決定要不要出手。</span></div></div></section>
+<aside class="tape panel"><div class="section-title"><h2 id="tapeTitle">市場逐筆成交</h2><span class="tag">真實資料</span></div><div class="tape-head"><span>時間</span><span>價格</span><span id="tapeUnit">口數</span></div><div id="tapeRows"></div></aside></section>
+<footer><span id="timezoneNote">● 歷史重播 · 非即時行情 · 台北時間</span><span id="saveStatus">進度保存在此瀏覽器</span><span>不預測方向，只記錄你的決策。</span></footer></main>
+<dialog id="rulesDialog"><div class="dialog-head"><h2>資料與成交規則</h2><button data-close="rulesDialog" aria-label="關閉">✕</button></div><div id="rulesContent"></div></dialog>
+<dialog id="reviewDialog"><div class="dialog-head"><div><p class="eyebrow">SESSION REVIEW</p><h2>回看這一次的決策。</h2></div><button data-close="reviewDialog" aria-label="關閉">✕</button></div><div id="reviewContent"></div></dialog>
+<dialog id="journalDialog"><div class="dialog-head"><h2>練習紀錄簿</h2><button data-close="journalDialog" aria-label="關閉">✕</button></div><div id="journalContent"></div></dialog><dialog id="confirmDialog"><div class="dialog-head"><h2 id="confirmTitle">重新練習</h2><button data-close="confirmDialog" aria-label="關閉">✕</button></div><p id="confirmText"></p><div class="dialog-actions"><button data-close="confirmDialog">取消</button><button id="confirmAction" class="primary">確認</button></div></dialog>
+<script type="module" src="app.js"></script></body></html>
