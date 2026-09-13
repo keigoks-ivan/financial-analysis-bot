@@ -52,6 +52,24 @@ DAILY_CARD_CAPS = {"haiku": 440, "sonnet": 80, "deepread": 12, "theme_weekly": 2
 # from the subprocess env unconditionally.
 _API_ENV_KEYS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL")
 
+# Claude Code reports subscription exhaustion through the CLI's stderr or
+# error envelope rather than a stable exit code.  Keep this deliberately
+# narrow so a transient transport/model error still gets the existing retries.
+# 2026-09-13：訂閱額度耗盡要立即熔斷，避免每批重試並繼續消耗時間。
+_QUOTA_ERROR_MARKERS = (
+    "usage limit",
+    "you've hit your limit",
+    "you have hit your limit",
+    "hit your session limit",
+    "quota exceeded",
+    "quota exhausted",
+    "rate limit",
+    "out of credits",
+    "credit balance",
+    "subscription limit",
+    "monthly limit",
+)
+
 _PIPELINE_GUARD = """
 【執行環境（最高優先）】
 你在一條無人值守的自動化 pipeline 裡，沒有人會讀你的問題或回覆你。
@@ -86,6 +104,12 @@ def _parse_json_loose(text: str):
     return json.loads(text)
 
 
+def _is_quota_exhausted(text: str) -> bool:
+    """Return whether CLI text indicates exhausted subscription capacity."""
+    lowered = (text or "").lower().replace("_", " ")
+    return any(marker in lowered for marker in _QUOTA_ERROR_MARKERS)
+
+
 @dataclass
 class Ledger:
     """Run-scoped token/card accounting, one instance shared across a whole
@@ -98,6 +122,23 @@ class Ledger:
     calls: dict = field(default_factory=lambda: {"haiku": 0, "sonnet": 0})
     capped: dict = field(default_factory=lambda: {"haiku": False, "sonnet": False})
     failures: list = field(default_factory=list)
+    quota_exhausted: bool = False
+    quota_error: str = ""
+
+    def record_failure(self, label: str, model: str, error: str) -> None:
+        self.failures.append({"label": label, "model": model, "error": error})
+
+    def trip_quota(self, label: str, model: str, error: str) -> None:
+        """Trip the run scoped subscription breaker exactly once."""
+        self.quota_exhausted = True
+        self.quota_error = error
+        if not any(f.get("quota_exhausted") for f in self.failures):
+            self.failures.append({
+                "label": label,
+                "model": model,
+                "error": error,
+                "quota_exhausted": True,
+            })
 
     def room(self, model: str, card_count: int) -> bool:
         cap = DAILY_CARD_CAPS.get(model)
@@ -126,6 +167,7 @@ class Ledger:
             "calls": dict(self.calls),
             "capped": dict(self.capped),
             "failures": len(self.failures),
+            "quota_exhausted": self.quota_exhausted,
         }
 
 
@@ -160,17 +202,33 @@ def run_claude(
               f"({card_count} cards would exceed {DAILY_CARD_CAPS.get(key)})",
               file=sys.stderr)
         return None, {"capped": True}
+    # 2026-09-13：同一 run 已確認訂閱額度耗盡時，後續批次直接走既有 fallback。
+    if ledger is not None and ledger.quota_exhausted:
+        print(f"[intel/llm] {label}: subscription quota exhausted, skipping",
+              file=sys.stderr)
+        return None, {
+            "error": ledger.quota_error or "subscription quota exhausted",
+            "quota_exhausted": True,
+        }
 
     cli = shutil.which("claude")
     if not cli:
+        # 2026-09-13：預檢失敗也要進 Ledger，run_daily 才能標記 degraded。
+        if ledger is not None:
+            ledger.record_failure(label, key, "claude CLI not found on PATH")
         return None, {"error": "claude CLI not found on PATH"}
     if not (os.environ.get("CLAUDE_CODE_OAUTH_TOKEN") or os.environ.get("CLAUDE_CODE_USE_LOCAL_AUTH")):
+        # 2026-09-13：保留訂閱路由，並讓直接呼叫者看見憑證預檢失敗。
+        if ledger is not None:
+            ledger.record_failure(label, key, "CLAUDE_CODE_OAUTH_TOKEN not set")
         return None, {"error": "CLAUDE_CODE_OAUTH_TOKEN not set"}
 
     env = _cli_env()
     last_bad_head = ""
     last_err = ""
     for attempt in range(1, MAX_ATTEMPTS + 1):
+        attempt_err = ""
+        quota_text = ""
         guard = _PIPELINE_GUARD
         if last_bad_head:
             guard += (
@@ -195,12 +253,14 @@ def run_claude(
                 timeout=timeout, cwd="/tmp", env=env,
             )
             if proc.returncode != 0:
-                last_err = f"claude CLI exited {proc.returncode}: {(proc.stderr or proc.stdout)[:300]}"
-                raise RuntimeError(last_err)
+                quota_text = "\n".join(filter(None, (proc.stderr, proc.stdout)))
+                attempt_err = f"claude CLI exited {proc.returncode}: {quota_text[:300]}"
+                raise RuntimeError(attempt_err)
             envelope = json.loads(proc.stdout)
             if envelope.get("is_error") or envelope.get("subtype") != "success":
-                last_err = f"error envelope: {str(envelope)[:300]}"
-                raise RuntimeError(last_err)
+                quota_text = json.dumps(envelope, ensure_ascii=False)
+                attempt_err = f"error envelope: {quota_text[:300]}"
+                raise RuntimeError(attempt_err)
             raw_text = envelope.get("result") or ""
             if not raw_text.strip():
                 last_err = "empty result"
@@ -224,13 +284,19 @@ def run_claude(
             print(f"[intel/llm] {label}: ok, tokens in={in_tok} out={out_tok}", file=sys.stderr)
             return parsed, usage_summary
         except subprocess.TimeoutExpired:
-            last_err = f"timeout after {timeout}s"
+            attempt_err = f"timeout after {timeout}s"
         except Exception as e:  # noqa: BLE001 — one bad batch must not kill the run
-            last_err = last_err or str(e)[:300]
+            attempt_err = attempt_err or str(e)[:300]
+        last_err = attempt_err
         print(f"[intel/llm] {label}: attempt {attempt} failed ({last_err[:160]})", file=sys.stderr)
+        # 2026-09-13：只掃失敗 CLI 路徑的完整錯誤文字，避免成功研究內容誤觸熔斷。
+        if quota_text and _is_quota_exhausted(quota_text):
+            if ledger is not None:
+                ledger.trip_quota(label, key, quota_text[:300])
+            return None, {"error": last_err, "quota_exhausted": True}
         if attempt < MAX_ATTEMPTS:
             time.sleep(RETRY_SLEEP_SEC)
 
     if ledger is not None:
-        ledger.failures.append({"label": label, "model": key, "error": last_err})
+        ledger.record_failure(label, key, last_err)
     return None, {"error": last_err}

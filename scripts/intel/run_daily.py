@@ -72,6 +72,19 @@ def _llm_available() -> bool:
     return bool(os.environ.get("CLAUDE_CODE_OAUTH_TOKEN") or os.environ.get("CLAUDE_CODE_USE_LOCAL_AUTH"))
 
 
+def _llm_status(ledger: Ledger, cards: list[dict] | None = None) -> str:
+    # 2026-09-13：把實際失敗、訂閱熔斷與每日 cap fallback 反映到公開標記。
+    fallback_sources = {"fallback_no_llm"}
+    has_card_fallback = any(
+        c.get("_classify_source") in fallback_sources
+        or c.get("_summarize_source") in fallback_sources
+        for c in (cards or [])
+    )
+    if ledger.failures or ledger.quota_exhausted or any(ledger.capped.values()) or has_card_fallback:
+        return "degraded"
+    return "ok"
+
+
 def run_fetch(date: str) -> bool:
     cmd = [sys.executable, str(INTEL_DIR / "fetch.py"), "--date", date]
     print(f"[intel/run_daily] fetch: {' '.join(cmd)}")
@@ -161,7 +174,7 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         site_read_zh = digest.get("site_read_zh")
         classified_count = sum(1 for c in result["all"] if c.get("relevant"))
         summarized_count = summarized["log"]["summarized"]
-        llm_tag = "ok"
+        llm_tag = _llm_status(ledger, result["all"] + summarized["cards"])
 
     deep_counts = {"ok": 0, "paywall": 0, "fail": 0, "skipped": 0}
     for c in finalized:

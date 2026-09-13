@@ -50,6 +50,8 @@ DEFAULT_PATHS = {
     "internals": os.path.join(DOCS, "monitor", "data", "internals.json"),
     "macro_calendar": os.path.join(DOCS, "monitor", "data", "macro_calendar.json"),
     "read": os.path.join(DOCS, "market", "data", "read.json"),
+    # 2026-09-13：接入獨立官方來源及已回補歷史，不受既有 monitor 欄位限制。
+    "source_evidence": os.path.join(DATA, "market_sources", "latest.json"),
     "detective": os.path.join(DOCS, "detective", "data", "latest.json"),
     "flowmap": os.path.join(DOCS, "flowmap", "data", "latest.json"),
     "flowmap_prices": os.path.join(DATA, "flowmap_prices.json"),
@@ -1684,13 +1686,40 @@ def read_headline_fields(read_data, today):
     return headline, read_as_of
 
 
+def attach_source_evidence(evidence, source_data, gaps):
+    """2026-09-13：加入來源命名空間；同口徑同日差異並列，保留原始兩個值。"""
+    if source_data is None:
+        return None
+    if source_data.get("schema") != "market-source-evidence-v1":
+        raise ValueError("新增來源證據格式無法驗證")
+    quotes = source_data.get("quotes") or {}
+    if any(not ref.startswith("source:") for ref in quotes):
+        raise ValueError("新增來源不可覆寫舊欄位")
+    evidence["quotes"].update(quotes)
+    conflicts = []
+    for s in source_data.get("sources", []):
+        if s.get("status") not in ("ok", "not_enabled", "not_fetched"):
+            gaps.append("新增來源 " + s.get("label", s["id"]) + "：" + str(s.get("reason") or s["status"]))
+        ref = s.get("compare_ref")
+        old = evidence["quotes"].get(ref) if ref else None
+        new = quotes.get("source:" + s["id"])
+        if old and new and old.get("as_of") == new.get("as_of"):
+            a, b = old.get("num"), new.get("num")
+            if isinstance(a, (int, float)) and isinstance(b, (int, float)) and abs(a - b) > s.get("compare_tolerance", 0.01):
+                conflicts.append({"label": s["label"], "legacy_ref": ref, "source_ref": "source:" + s["id"],
+                                  "as_of": new["as_of"], "legacy_value": a, "source_value": b})
+    result = {k: v for k, v in source_data.items() if k != "quotes"}
+    result["conflicts"] = conflicts
+    return result
+
+
 def _fmt_pack_val(x):
     if x is None:
         return "—"
     return x
 
 
-def print_evidence_pack(evidence):
+def print_evidence_pack(evidence, source_research=None):
     lines = ["=== 市況判讀證據包（build_market_state.py --evidence-pack）==="]
     quotes = evidence.get("quotes") or {}
     lines.append("")
@@ -1742,6 +1771,11 @@ def print_evidence_pack(evidence):
     lines.append(f"as_of＝{_fmt_pack_val(ev.get('as_of'))}")
 
     print("\n".join(lines))
+    if source_research:
+        # 2026-09-13：完整歷史留資料層，模型只讀來源狀態和四個期間的比較。
+        print("\n── 官方來源與長期比較 ──")
+        for source in source_research.get("sources", []):
+            print(json.dumps({k: source.get(k) for k in ("id", "label", "status", "first_date", "observation_count", "data_mode", "periods")}, ensure_ascii=False))
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1768,6 +1802,7 @@ def main():
     internals_data = _load_json(paths["internals"], gaps, "internals")
     macro_calendar_data = _load_json(paths["macro_calendar"], gaps, "macro_calendar")
     read_data = _load_json(paths["read"])  # 選填（判讀尚未落地前正常缺檔），不記 gap
+    source_data = _load_json(paths["source_evidence"])
     detective_data = _load_json(paths["detective"], gaps, "detective")
     flowmap_data = _load_json(paths["flowmap"], gaps, "flowmap")
     flowmap_prices_data = _load_json(paths["flowmap_prices"], gaps, "flowmap_prices")
@@ -1796,10 +1831,11 @@ def main():
     flows = build_flows(flowmap_data, flowmap_prices_data, gaps)
     evidence = build_evidence(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data,
                                macro_calendar_data, intel_data, flows, read_data, today, gaps)
+    source_research = attach_source_evidence(evidence, source_data, gaps)
     read_headline, read_as_of = read_headline_fields(read_data, today)
 
     if args.evidence_pack:
-        print_evidence_pack(evidence)
+        print_evidence_pack(evidence, source_research)
         return
 
     ledger_asof = ledger_as_of(forecasts_rows)
@@ -1869,6 +1905,7 @@ def main():
         "read_zh": read_zh,
         "freshness": freshness,
         "evidence": evidence,
+        "source_research": source_research,
         "read_headline": read_headline,
         "read_as_of": read_as_of,
         "gaps": gaps,

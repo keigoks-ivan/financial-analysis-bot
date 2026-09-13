@@ -23,6 +23,11 @@ on:
     - cron: "30 23 * * 1-5"   # 07:30 台北（UTC+8）＝週二至週六台北早班快照
     - cron: "30 8 * * 2-6"    # 16:30 台北＝原有完整 full refresh 班次
   workflow_dispatch:
+  # 2026-09-13：成功的上游資料到齊即保存版本，定時班次保留作補漏；不在 Actions 呼叫模型。
+  workflow_run:
+    workflows: ["Intel 2.0 Daily Chain", "Daily Market Monitor", "Daily Conditional Flow Map", "Daily Statistical Properties Panel"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: write
@@ -33,8 +38,9 @@ concurrency:
 
 jobs:
   build-market-state:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -44,12 +50,27 @@ jobs:
         with:
           python-version: "3.12"
 
+      # 2026-09-13：官方資料用免費端點／免費金鑰抓取，不呼叫付費模型；部分失敗保留最後成功值。
+      - name: Refresh official source history
+        continue-on-error: true
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+          BEA_API_KEY: ${{ secrets.BEA_API_KEY }}
+          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        run: python scripts/market_sources.py collect --write --timeout 15 --retries 1
+
       - name: Build market state
         run: python scripts/build_market_state.py
 
+      - name: Save evidence and coherent release
+        run: python scripts/market_refresh.py record --write
+
       - name: Commit and push if changed
         run: |
-          PATHS="docs/market/data/state.json"
+          # 2026-09-13：只提交本步產物，判讀沿用上一份並明示等待重評。
+          PATHS="data/market_sources docs/market/data/state.json docs/market/data/refresh.json docs/market/data/snapshots docs/market/data/releases"
           if git status --porcelain $PATHS | grep -q .; then
             echo "Changes detected"
           else
@@ -66,7 +87,7 @@ jobs:
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
-            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            git pull --rebase origin main || { echo "Rebase failed; rebuild against latest evidence"; exit 1; }
             sleep $((RANDOM % 20 + 5))
           done
           echo "Push failed after 6 attempts"

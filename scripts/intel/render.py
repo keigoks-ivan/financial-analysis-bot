@@ -61,6 +61,8 @@ DOCS_INTEL = ROOT / "docs" / "intel"
 DATA_DIR = DOCS_INTEL / "data"
 PENDING_DIR = DOCS_INTEL / "pending"
 HEALTH_FILE = DATA_DIR / "sources_health.json"
+# 2026-09-13：情報頁連到同一份官方時間序列，獨立顯示來源日及缺口。
+MARKET_SOURCES_FILE = ROOT / "data" / "market_sources" / "latest.json"
 THREADS_FILE = DATA_DIR / "threads.json"
 
 # 2.0 Phase A：跨站台唯讀資料源（各自獨立 fail-safe，缺檔/缺欄位一律回 DASH，
@@ -2068,6 +2070,33 @@ def h2(zh: str, en: str, count=None) -> str:
     return f'<h2>{esc(zh)}<span class="en">{esc(en)}</span>{cnt}</h2>'
 
 
+def render_official_sources(data: dict) -> str:
+    """2026-09-13：數據更新是可查證的事實，不能自動改寫成新聞因果或買賣訊號。"""
+    if not data or data.get("schema") != "market-source-evidence-v1":
+        return '<p class="note">官方時間序列尚未接入。<a href="/market/#sourceResearchCard">查看來源與歷史比較 →</a></p>'
+    sources = data.get("sources") or []
+    available = sum(bool(s.get("latest")) for s in sources)
+    issues = [s for s in sources if s.get("status") not in ("ok", "not_enabled")]
+    p = ['<p class="note">官方時間序列：' + str(available) + '／' + str(len(sources)) +
+         ' 項有資料，' + str(len(issues)) + ' 項待核對。資料檢查日 ' + esc(data.get("as_of") or DASH) +
+         '。<a href="/market/#sourceResearchCard">查看原始來源、歷史比較與缺口 →</a></p>']
+    rows = sorted([s for s in sources if s.get("latest")],
+                  key=lambda s: (s["latest"]["date"], s.get("id", "")), reverse=True)[:8]
+    if rows:
+        p.append('<details><summary>最近觀測期的數據（不代表今天發布）</summary><div class="table-scroll"><table><thead><tr><th>序列</th><th>觀測期</th><th>數值</th><th>狀態</th></tr></thead><tbody>')
+        for s in rows:
+            latest = s["latest"]
+            label = esc(s.get("label") or s.get("id"))
+            url = s.get("source_url") or ""
+            if _safe_href(url) and url.startswith("https://"):
+                label = '<a href="' + esc(url) + '" rel="noopener nofollow">' + label + '</a>'
+            state = "正常" if s.get("status") == "ok" else "待核對，保留最後可得值"
+            p.append('<tr><td>' + label + '</td><td>' + esc(latest.get("date")) + '</td><td>' +
+                     esc(fmt_num(latest.get("value"))) + ' ' + esc(s.get("unit")) + '</td><td>' + state + '</td></tr>')
+        p.append('</tbody></table></div></details>')
+    return "\n".join(p)
+
+
 def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: bool,
                     badges: dict = None) -> str:
     gauges = payload.get("gauges") or []
@@ -2131,6 +2160,8 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
         snap = load_status_snapshot()
         p.append(h2("現況", "Status"))
         p.append(render_status_strip(snap))
+        # 2026-09-13：只加在今日頁，歷史封存不得混入現在才取得的修訂資料。
+        p.append(render_official_sources(load_json_safe(MARKET_SOURCES_FILE) or {}))
         det = snap.get("_detective") or {}
         state = load_json_safe(DETECTIVE_STATE_FILE) or {}
         transitions_n = len(state.get("transitions_today") or [])
