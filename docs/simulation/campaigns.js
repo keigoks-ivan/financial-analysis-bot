@@ -1,4 +1,8 @@
-export function pickCampaign(catalog,days,random=Math.random,previous=null){
+import {randomFloat,randomInt} from './random.js';
+
+function asPlans(value){return (Array.isArray(value)?value:[value]).filter(Boolean).map(x=>x.campaign??x.snapshot?.campaign??x);}
+function overlap(aStart,aDays,bStart,bDays){const overlapDays=Math.max(0,Math.min(aStart+aDays-1,bStart+bDays-1)-Math.max(aStart,bStart)+1);return overlapDays/Math.min(aDays,bDays)>=.5;}
+export function pickCampaign(catalog,days,random=randomFloat,previous=null){
   if(![3,5,10].includes(days))throw Error('請選擇 3、5 或 10 個交易日。');
   const windows=[];
   for(let i=0;i<=catalog.length-days;i++){
@@ -6,11 +10,10 @@ export function pickCampaign(catalog,days,random=Math.random,previous=null){
     if(selected.every(d=>d.group===selected[0].group&&d.contract===selected[0].contract))windows.push(selected);
   }
   if(!windows.length)throw Error('現有連續資料不足以支援這個長度。');
-  const alternatives=windows.filter(w=>w[0].id!==previous?.ids?.[0]);
-  const pool=alternatives.length?alternatives:windows;
-  const index=Math.min(pool.length-1,Math.floor(random()*pool.length));
-  const blocks=pool[index],segment=Math.min(1,Math.floor(random()*2));
-  const minutes=30+Math.min(120,Math.floor(random()*121));
+  const recent=asPlans(previous).filter(p=>Array.isArray(p.ids)&&p.days===days).slice(0,5),positions=new Map(catalog.map((c,i)=>[c.id,i]));
+  const fresh=windows.filter(w=>{const start=positions.get(w[0].id);return !recent.some(p=>{const prior=positions.get(p.ids[0]),priorBlock=Number.isInteger(prior)?catalog[prior]:null;return Number.isInteger(start)&&Number.isInteger(prior)&&priorBlock?.group===w[0].group&&priorBlock?.contract===w[0].contract&&overlap(start,days,prior,Number(p.days)||days);});});
+  const fallback=windows.filter(w=>w[0].id!==recent[0]?.ids?.[0]),pool=fresh.length?fresh:fallback.length?fallback:windows;
+  const blocks=pool[randomInt(pool.length,random)],segment=randomInt(2,random),minutes=30+randomInt(121,random);
   return {days,ids:blocks.map(b=>b.id),segment,minutes};
 }
 export function assembleCampaign(chunks,plan){

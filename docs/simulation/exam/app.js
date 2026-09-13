@@ -1,4 +1,5 @@
 import {EXAM_KEY,eligibleQuestions,selectStart,makeQuestion,newExam,answerQuestion,questionView,examSummary,examPacket,readExam,classifySeries,selectScenarioStart,scheduleScenarios,archiveExam,cumulativeResearch,selectionStats,contextGroups} from './model.js';
+import {shuffle} from '../random.js';
 const $=id=>document.getElementById(id),pct=n=>n===null?'—':(n*100).toFixed(1)+'%',esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let exam=null,review=0,visible=120,busy=false,storageBlocked=false,history=[];
 try{exam=readExam(localStorage);}catch{$('storageStatus').textContent='無法讀取本機進度，原始資料已保留。本次可練習並下載，但不會覆寫舊資料。';storageBlocked=true;}
@@ -22,11 +23,11 @@ $('start').onclick=async()=>{
   const candidates=eligibleQuestions(catalog,market),questions=[],cache=new Map(),series=new Map(),prior=history.flatMap(r=>r.rows);
   if(!candidates.length)throw Error('目前沒有合適的題庫。');
   for(let n=0;n<count;n++){
-   const shuffled=candidates.map(s=>({s,r:Math.random()})).sort((a,b)=>a.r-b.r);let item,start;
-   for(const x of shuffled){
-    if(!cache.has(x.s.symbol)){const pool=await json('../data/stocks/'+encodeURIComponent(x.s.symbol)+'.json');cache.set(x.s.symbol,pool);series.set(x.s.symbol,classifySeries(pool));}
-    start=selectScenarioStart(x.s,horizon,[...prior,...questions],series.get(x.s.symbol),schedule[n]);
-    if(start!==null){item=x.s;break;}
+   const shuffled=shuffle(candidates);let item,start;
+   for(const s of shuffled){
+    if(!cache.has(s.symbol)){const pool=await json('../data/stocks/'+encodeURIComponent(s.symbol)+'.json');cache.set(s.symbol,pool);series.set(s.symbol,classifySeries(pool));}
+    start=selectScenarioStart(s,horizon,[...prior,...questions],series.get(s.symbol),schedule[n]);
+    if(start!==null){item=s;break;}
    }
    if(!item)throw Error('此情境的未重複題目不足，請改選市場、模式或題數。');
    const q=makeQuestion(cache.get(item.symbol),item,start,horizon);q.system=series.get(item.symbol)[start];questions.push(q);$('status').textContent=`正在準備第 ${n+1}／${count} 題…`;

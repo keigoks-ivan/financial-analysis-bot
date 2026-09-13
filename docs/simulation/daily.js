@@ -1,13 +1,18 @@
 import {executeDailyProtection} from './protection.js';
 import {ReplayEngine,RULES,active} from './engine.js';
+import {randomFloat,randomInt} from './random.js';
 
-export function createDailyRun(pool,days=120,plan=null,random=Math.random,previous=null){
+function asPlans(value){return (Array.isArray(value)?value:[value]).filter(Boolean).map(x=>x.dailyPlan??x.snapshot?.dailyPlan??x);}
+function overlaps(start,days,plan){return Number.isInteger(plan?.start)&&Math.abs(start-plan.start)<Math.max(days,Number(plan.days)||days);}
+export function createDailyRun(pool,days=120,plan=null,random=randomFloat,previous=null){
   if(![60,120,240].includes(days))throw Error('日線練習請選擇 60、120 或 240 個交易日。');
   const min=120,max=pool.days.length-days-1;
   if(max<min)throw Error('日線資料不足。');
   if(!plan){
-    const choices=Array.from({length:max-min+1},(_,i)=>i+min).filter(i=>i!==previous?.start);
-    plan={start:choices[Math.min(choices.length-1,Math.floor(random()*choices.length))],days};
+    const choices=Array.from({length:max-min+1},(_,i)=>i+min),recent=asPlans(previous).filter(p=>!p.symbol).slice(0,5);
+    const fresh=choices.filter(i=>!recent.some(p=>overlaps(i,days,p)));
+    const fallback=choices.filter(i=>i!==recent[0]?.start),pool=fresh.length?fresh:fallback.length?fallback:choices;
+    plan={start:pool[randomInt(pool.length,random)],days};
   }
   if(plan.days!==days||!Number.isInteger(plan.start)||plan.start<min||plan.start>max)throw Error('日線進度設定無效。');
   const selected=pool.days.slice(plan.start,plan.start+days+1),first=selected[0];

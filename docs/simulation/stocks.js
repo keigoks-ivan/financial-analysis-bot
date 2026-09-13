@@ -3,6 +3,7 @@ import {validateProtection,updateProtectionAfterFill,executeDailyProtection} fro
 import {settlementDate,lockedDirection,settleReceivables} from './settlement.js';
 import {DailyReplayEngine,createDailyRun} from './daily.js';
 import {active} from './engine.js';
+import {randomFloat,randomInt} from './random.js';
 export const stockRules=market=>market==='TW'?{capital:1000000,currency:'TWD',commissionRate:.001425,minCommission:20,sellTax:.003,slippage:.0005}:{capital:100000,currency:'USD',commissionPerShare:.005,minCommission:1,sellTax:0,slippage:.0005};
 const round=n=>Math.round((n+Number.EPSILON)*100)/100;
 export function stockFee(market,side,qty,price){const r=stockRules(market);return round(Math.max(r.minCommission,r.commissionRate?qty*price*r.commissionRate:qty*r.commissionPerShare)+(side===-1?qty*price*r.sellTax:0));}
@@ -31,17 +32,22 @@ export function stockLiquidity(pool){
   }
   return {...rules,ranges,starts,latest};
 }
-export function pickStock(catalog,market,days,random=Math.random,previous=null){
+function asPlans(value){return (Array.isArray(value)?value:[value]).filter(Boolean).map(x=>x.dailyPlan??x.snapshot?.dailyPlan??x);}
+function overlaps(start,days,plan){return Number.isInteger(plan?.start)&&plan.symbol&&Math.abs(start-plan.start)<Math.max(days,Number(plan.days)||days);}
+export function pickStock(catalog,market,days,random=randomFloat,previous=null){
   let pool=catalog.filter(s=>s.market===market&&s.count>=days+121&&(!s.liquidity||s.liquidity.starts[days]>0));if(!pool.length)throw Error('這個市場沒有足夠的行情。');
-  const other=pool.filter(s=>s.symbol!==previous?.symbol);if(other.length)pool=other;
-  return pool[Math.min(pool.length-1,Math.floor(random()*pool.length))];
+  const recent=asPlans(previous).filter(p=>p.market===market&&p.symbol).slice(0,5),blocked=new Set(recent.slice(0,3).map(p=>p.symbol));
+  const other=pool.filter(s=>!blocked.has(s.symbol));
+  if(other.length)pool=other;else{const latest=recent[0]?.symbol,available=pool.filter(s=>s.symbol!==latest);if(available.length)pool=available;}
+  return pool[randomInt(pool.length,random)];
 }
-export function createStockRun(pool,days=120,plan=null,random=Math.random,actions=null,liquidity=null){
+export function createStockRun(pool,days=120,plan=null,random=randomFloat,actions=null,liquidity=null,previous=null){
   if(plan&&(plan.symbol!==pool.symbol||plan.market!==pool.market))throw Error('股票與儲存進度不符。');
   if(!plan){
     const ranges=(liquidity||stockLiquidity(pool)).ranges,starts=ranges.flatMap(([from,to])=>Array.from({length:Math.max(0,Math.min(to,pool.days.length-days-1)-from+1)},(_,i)=>from+i));
     if(!starts.length)throw Error('這檔股票沒有符合成交量與成交金額條件的歷史起點。');
-    plan={start:starts[Math.min(starts.length-1,Math.floor(random()*starts.length))],days};
+    const recent=asPlans(previous).filter(p=>p.symbol===pool.symbol).slice(0,5),fresh=starts.filter(i=>!recent.some(p=>overlaps(i,days,p))),fallback=starts.filter(i=>i!==recent[0]?.start),poolStarts=fresh.length?fresh:fallback.length?fallback:starts;
+    plan={start:poolStarts[randomInt(poolStarts.length,random)],days};
   }
   const data=createDailyRun(pool,days,plan,random);
   data.marketCalendar=actions?.calendars?.[pool.market]||pool.days.map(b=>b.date);data.actionDates=actions?.symbols?.[pool.symbol]||{};

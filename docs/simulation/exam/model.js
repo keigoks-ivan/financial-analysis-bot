@@ -1,15 +1,16 @@
 import {stockChartBars} from '../stocks.js';
 import {movingAverage} from '../indicators.js';
 import {hash} from '../research.js';
+import {randomFloat,randomInt} from '../random.js';
 export const EXAM_KEY='tx-decision-exam-v1';
 export const TAGS=['趨勢延續','回檔轉強','突破','區間整理','其他'];
 export function eligibleQuestions(catalog,market){
  return catalog.filter(s=>(market==='mixed'||s.market===market||market==='ETF')&&(market==='ETF'||hash(s.symbol)%4!==0)&&s.liquidity?.ranges?.some(([a,b])=>Math.max(a,239)<=Math.min(b,s.count-21)));
 }
-export function selectStart(item,horizon,used=[],random=Math.random){
+export function selectStart(item,horizon,used=[],random=randomFloat){
  const starts=item.liquidity.ranges.flatMap(([a,b])=>Array.from({length:Math.max(0,Math.min(b,item.count-horizon-1)-Math.max(a,239)+1)},(_,i)=>Math.max(a,239)+i)).filter(i=>!used.some(q=>q.symbol===item.symbol&&Math.abs(q.start-i)<=120+horizon));
  if(!starts.length)throw Error('沒有未重複的合適題目，請改選市場或減少題數。');
- return starts[Math.min(starts.length-1,Math.floor(random()*starts.length))];
+ return starts[randomInt(starts.length,random)];
 }
 export function makeQuestion(pool,item,start,horizon){
  if(![5,10,20].includes(horizon)||start<239||start+horizon>=pool.days.length)throw Error('題目資料範圍不足。');
@@ -84,16 +85,16 @@ export function classifySeries(pool){
   return {trend,position,behavior,volume:b.volume>=v*1.5?'放量':b.volume<=v*.7?'縮量':'無明顯變化',bucket,model:'visible-scenario-v1'};
  });
 }
-export function selectScenarioStart(item,horizon,used,series,scenario,random=Math.random){
+export function selectScenarioStart(item,horizon,used,series,scenario,random=randomFloat){
  const ranges=item.liquidity.ranges.flatMap(([a,b])=>Array.from({length:Math.max(0,Math.min(b,item.count-horizon-1)-Math.max(a,239)+1)},(_,i)=>Math.max(a,239)+i));
  const starts=ranges.filter(i=>(!scenario||series[i]?.bucket===scenario)&&!used.some(q=>q.symbol===item.symbol&&Math.abs(q.start-i)<=120+horizon));
  if(!starts.length)return null;
- return starts[Math.min(starts.length-1,Math.floor(random()*starts.length))];
+ return starts[randomInt(starts.length,random)];
 }
-export function scheduleScenarios(mode,focus,count,random=Math.random){
+export function scheduleScenarios(mode,focus,count,random=randomFloat){
  if(!['random','focused','balanced'].includes(mode)||![10,20].includes(count)||!SCENARIOS.includes(focus))throw Error('請檢查出題方式。');
  const schedule=Array.from({length:count},(_,i)=>mode==='random'?null:mode==='focused'?focus:SCENARIOS[i%SCENARIOS.length]);
- for(let i=schedule.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[schedule[i],schedule[j]]=[schedule[j],schedule[i]];}return schedule;
+ for(let i=schedule.length-1;i>0;i--){const j=randomInt(i+1,random);[schedule[i],schedule[j]]=[schedule[j],schedule[i]];}return schedule;
 }
 export function compactExam(exam){
  if(!exam.finished)throw Error('未交卷不納入累積結果。');
