@@ -71,7 +71,11 @@ jobs:
       - name: Compute dates and weekly-gate
         run: |
           echo "DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)" >> "$GITHUB_ENV"
-          if [ "$(date -u +%u)" = "7" ] || [ "${{ inputs.force_weekly }}" = "true" ]; then
+          # 2026-09-13：週日 22:30 UTC 的排程常被 GitHub 延到週一 00:0x UTC 才起跑（實測 08-24 起連續三週），
+          # 用起跑當下的星期判斷會永遠是 false，crowding／regime／catalyst／kill-watch 因此停更四週；
+          # 週一 06:00 UTC 前起跑的班次視為週日段（週一 22:30 UTC 的正常班次不受影響）。
+          UTC_DOW="$(date -u +%u)"; UTC_HOUR="$(date -u +%H)"
+          if [ "$UTC_DOW" = "7" ] || { [ "$UTC_DOW" = "1" ] && [ "$((10#$UTC_HOUR))" -lt 6 ]; } || [ "${{ inputs.force_weekly }}" = "true" ]; then
             echo "IS_SUNDAY=true" >> "$GITHUB_ENV"
           else
             echo "IS_SUNDAY=false" >> "$GITHUB_ENV"
