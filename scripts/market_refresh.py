@@ -126,6 +126,15 @@ def quote_changes(current, previous):
     return changes
 
 
+def evidence_unchanged(snapshot, read):
+    # 2026-09-13：引用數字（quotes）與上次判讀保存的證據完全相同，就是同一批證據；合成日、來源健康
+    # 與帳簿元資料改變不算新證據，不重做研究、不標等待重評（同日重跑冪等）。
+    saved = (read or {}).get("evidence_snapshot")
+    if not isinstance(saved, dict) or not isinstance(saved.get("quotes"), dict):
+        return False
+    return not quote_changes(snapshot["state"], {"evidence": saved})
+
+
 def history_rows(data_dir):
     rows = []
     for p in sorted((Path(data_dir) / "snapshots").glob("*.json")):
@@ -199,7 +208,7 @@ def prepare(snapshot, read, data_dir, work_dir, today):
         previous = None
     request = {"schema": "market-refresh-request-v1", "snapshot_id": snapshot["snapshot_id"],
                "analysis_date": today.isoformat(), "prior_read_hash": digest(read),
-               "run_analysis": not errors and read.get("snapshot_id") != snapshot["snapshot_id"],
+               "run_analysis": not errors and read.get("snapshot_id") != snapshot["snapshot_id"] and not evidence_unchanged(snapshot, read),
                "mode": "weekly" if today.weekday() == 0 else "daily",
                "errors": errors, "warnings": warnings,
                "comparison_baseline": previous["snapshot_id"] if previous else None,
@@ -307,8 +316,9 @@ def validate_candidate(candidate, snapshot, request, prior_read, today, ledger_p
 
 
 def make_release(snapshot, read, prior, history, now, errors, warnings, accepted=False):
-    status = "blocked" if errors else "degraded" if warnings else "ok" if read.get("snapshot_id") == snapshot["snapshot_id"] else "needs_review"
-    if not accepted and read.get("snapshot_id") != snapshot["snapshot_id"] and not errors:
+    same = read.get("snapshot_id") == snapshot["snapshot_id"] or evidence_unchanged(snapshot, read)
+    status = "blocked" if errors else "degraded" if warnings else "ok" if same else "needs_review"
+    if not accepted and not same and not errors:
         status = "needs_review"
     reasons = errors + warnings
     if status == "needs_review":

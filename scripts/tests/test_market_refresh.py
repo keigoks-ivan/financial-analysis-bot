@@ -348,3 +348,19 @@ def test_locked_publish_rejects_a_prior_read_changed_by_another_process(tmp_path
             data_dir, _snapshot(), prior, [], "2026-09-13T00:00:00+00:00", [], [], False,
             refresh.digest(prior),
         )
+
+
+def test_same_quotes_with_new_metadata_is_not_a_new_evidence_version(tmp_path):
+    # 2026-09-13：引用數字沒變、只有合成日／元資料變，不重做研究、不標等待重評。
+    import market_refresh as mr
+    quotes = {"monitor:sp500": {"label": "S&P 500", "num": 100.0, "as_of": "2026-09-11"}}
+    read = {"snapshot_id": "old", "evidence_snapshot": {"quotes": dict(quotes)}, "as_of": "2026-09-13"}
+    state = {"as_of": "2026-09-13", "gaps": ["runner path"], "evidence": {"quotes": dict(quotes)}}
+    snapshot = mr.make_snapshot(state, {})
+    assert snapshot["snapshot_id"] != "old"
+    assert mr.evidence_unchanged(snapshot, read)
+    refresh, _ = mr.make_release(snapshot, read, {}, [], "now", [], [], accepted=False)
+    assert refresh["status"] == "ok"
+    changed = mr.make_snapshot({**state, "evidence": {"quotes": {"monitor:sp500": {**quotes["monitor:sp500"], "num": 101.0}}}}, {})
+    assert not mr.evidence_unchanged(changed, read)
+    assert mr.make_release(changed, read, {}, [], "now", [], [], accepted=False)[0]["status"] == "needs_review"
