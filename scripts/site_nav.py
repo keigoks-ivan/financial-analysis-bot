@@ -221,6 +221,8 @@ def build_nav(group=None, item=None):
     mm_cls = ' class="active"' if group == "mm" else ""
     flow_cls = ' class="active"' if group == "flow" else ""
     howto_cls = ' class="active"' if group == "howto" else ""
+    # 2026-09-13：補回全站模擬入口，避免重建頁面遺失。
+    simulation_cls = ' class="active"' if group == "simulation" else ""
     search_cls = ' class="active"' if group == "search" else ""
     return f"""<header class="imq-nav-root">
   <div class="imq-nav-inner">
@@ -232,6 +234,7 @@ def build_nav(group=None, item=None):
 {dd("research")}
       <a href="/mental-models/"{mm_cls}>心智模型</a>
 {dd("system")}
+      <a href="/simulation/"{simulation_cls}>模擬</a>
       <a href="/flow/"{flow_cls}>投資流程</a>
       <a href="/how-to.html"{howto_cls}>使用指南</a>
       <a href="/search.html"{search_cls}>搜尋</a>
@@ -370,6 +373,8 @@ PREFIX_ACTIVE = [
     # 資料端點文件）同屬「資料層」語意，故映射到 data 而非 bt。
     ("cache/", ("system", "data")),
     ("data.html", ("system", "data")),  # 公開資料（2026-07-11 新增）
+    # 2026-09-13：補回模擬頁高亮，與全站入口保持一致。
+    ("simulation/", ("simulation", None)),
     # 頂層
     ("flow/", ("flow", None)),  # 投資流程（2026-07-19 復活孤兒頁；頂層連結，howto 模式）
     ("mental-models/", ("mm", None)),
