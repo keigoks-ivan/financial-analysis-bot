@@ -217,12 +217,19 @@ def classify_stale(as_of_str, today, cadence):
     d = parse_date_loose(as_of_str)
     if d is None:
         return True, "stale"
+    if d > today:
+        return True, "stale"
+    # 2026-09-13：月頻來源常以該月 1 日標期別；鮮度從期末起算。
+    if cadence == "monthly" and str(as_of_str).count("-") == 2:
+        d = date(d.year, d.month, calendar.monthrange(d.year, d.month)[1])
     n = (today - d).days
-    if n < 0:
-        n = 0
+    # 當月期別已發布但自然期末尚未到時，age 為 0；上方 raw date 檢查仍會
+    # 阻擋真正的未來日期（2026-09-13）。
+    n = max(0, n)
     if n > limit:
         return True, "stale"
-    if n > limit / 2.0:
+    warn_after = 7 if cadence == "weekly" else limit / 2.0
+    if n > warn_after:
         return False, "warn"
     return False, "ok"
 
@@ -611,7 +618,10 @@ def _infer_unit_from_text(text_zh):
     return "pct" if "%" in tail else "none"
 
 
-def build_fuses(intel_data, forecasts_rows, monitor_data, gaps):
+FLAG_METRIC_REF = {"DXY／美元 COT": "monitor:dxy"}  # 2026-09-13：門檻明確落在 DXY level。
+
+
+def build_fuses(intel_data, forecasts_rows, monitor_data, gaps, evidence_quotes=None):
     ledger_rows = [dict(r) for r in (forecasts_rows or [])
                     if r.get("source") == "macro-falsifier" and r.get("status") == "open"]
     for r in ledger_rows:
@@ -651,17 +661,58 @@ def build_fuses(intel_data, forecasts_rows, monitor_data, gaps):
             matched_ids.add(row.get("id"))
             unit = unit_from_resolver(row.get("resolver"))
             p, resolve_by = row.get("p"), row.get("resolve_by")
-            metric = _disambig(theme, metric, ((row.get("resolver") or {}).get("series") or "").split(":", 1)[-1])
+            key = ((row.get("resolver") or {}).get("series") or "").split(":", 1)[-1]
+            metric = _disambig(theme, metric, key)
+            # 2026-09-13：intel flag 是歷史快照；已能映射帳簿 resolver 時，以同一
+            # monitor ref 的最新值／日期重算距離，並保留 flag 原值供稽核。
+            ref = (row.get("resolver") or {}).get("series") or f"monitor:{key}"
+            quote = (evidence_quotes or {}).get(ref)
+            item = find_monitor_item(monitor_data, key)
+            current = quote.get("num") if quote else (parse_num(item.get("val")) if item else None)
+            threshold = (row.get("resolver") or {}).get("value")
+            if current is not None and threshold is not None:
+                now_value = current
+                distance = round(abs(threshold - current) / abs(current) * 100, 1) if current else None
+                current_as_of = quote.get("as_of") if quote else item.get("date")
+                current_source = ref
+            else:
+                now_value = flag.get("value")
+                distance = flag.get("distance_pct")
+                current_as_of = flag.get("as_of") or (intel_data or {}).get("date")
+                current_source = "intel_snapshot"
+                gaps.append(f"fuses：{theme}／{metric} 無 monitor 現值，沿用 intel 舊來源日 {current_as_of or '未知'}")
         else:
             unit = _infer_unit_from_text(flag.get("text_zh"))
             p, resolve_by = None, None
+            ref = FLAG_METRIC_REF.get(metric)
+            quote = (evidence_quotes or {}).get(ref) if ref else None
+            if quote and quote.get("num") is not None:
+                now_value, threshold = quote["num"], flag.get("threshold")
+                distance = (round(abs(threshold - now_value) / abs(now_value) * 100, 1)
+                            if threshold is not None and now_value else None)
+                current_as_of, current_source = quote.get("as_of"), ref
+            else:
+                now_value = flag.get("value")
+                distance = flag.get("distance_pct")
+                current_as_of = flag.get("as_of") or (intel_data or {}).get("date")
+                current_source = "intel_snapshot"
         fuses.append({
             "theme": theme, "metric": metric,
-            "now": fmt_val(flag.get("value"), unit),
-            "threshold": fmt_val(flag.get("threshold"), unit),
-            "dist_pct": flag.get("distance_pct"),
+            "now": fmt_val(now_value, unit),
+            "threshold": fmt_val(threshold if candidates else flag.get("threshold"), unit),
+            "dist_pct": distance,
             "p": p, "resolve_by": resolve_by, "link": flag.get("link"),
+            "as_of": current_as_of, "source_id": current_source,
+            "historical": {"value": flag.get("value"), "distance_pct": flag.get("distance_pct"),
+                           "as_of": flag.get("as_of") or (intel_data or {}).get("date")},
+            "distance_abs": (round(abs((threshold if candidates else flag.get("threshold")) - now_value) * 100, 1)
+                             if unit == "pct" and now_value is not None and
+                             (threshold if candidates else flag.get("threshold")) is not None else None),
+            "change_unit": "bp" if unit == "pct" else unit,
         })
+        if current_source == "monitor:tp10y":
+            fuses[-1]["historical_metric"] = fuses[-1]["metric"]
+            fuses[-1]["metric"] = "Kim–Wright 10Y term premium"
 
     for r in ledger_rows:
         if r.get("id") in matched_ids:
@@ -675,24 +726,33 @@ def build_fuses(intel_data, forecasts_rows, monitor_data, gaps):
             continue
         now_val = parse_num(item.get("val"))
         threshold_val = resolver.get("value")
-        if not now_val or threshold_val is None:
+        if now_val is None or threshold_val is None:
             gaps.append(f"fuses：{r.get('id')} 現值無法解析（{item.get('val')!r}），該筆略過")
             continue
         unit = unit_from_resolver(resolver)
-        dist_pct = round(abs(threshold_val - now_val) / abs(now_val) * 100, 1)
+        dist_pct = round(abs(threshold_val - now_val) / abs(now_val) * 100, 1) if now_val else None
         segs = r.get("_segments") or []
         metric_label = _disambig(r.get("_theme"), segs[0], key) if segs else r.get("_theme")
+        historical_metric = metric_label if key == "tp10y" else None
+        if key == "tp10y":
+            metric_label = "Kim–Wright 10Y term premium"
         fuses.append({
             "theme": r.get("_theme"), "metric": metric_label,
             "now": fmt_val(now_val, unit), "threshold": fmt_val(threshold_val, unit),
             "dist_pct": dist_pct, "p": r.get("p"), "resolve_by": r.get("resolve_by"),
             "link": _derive_link(r.get("source_ref")),
+            "as_of": item.get("date"), "source_id": f"monitor:{key}",
+            "historical": None,
+            "historical_metric": historical_metric,
+            "distance_abs": (round(abs(threshold_val - now_val) * 100, 1)
+                             if unit == "pct" else round(abs(threshold_val - now_val), 2)),
+            "change_unit": "bp" if unit == "pct" else unit,
         })
 
     # 防護：前端圖表對 dist_pct 做 Math.max，缺值會讓整個 fuses 圖壞掉，寧可略過不留 null
     final = []
     for f in fuses:
-        if f.get("dist_pct") is None:
+        if f.get("dist_pct") is None and f.get("distance_abs") is None:
             gaps.append(f"fuses：{f.get('theme')}／{f.get('metric')} 缺 dist_pct，該筆略過")
             continue
         final.append(f)
@@ -873,10 +933,13 @@ def build_triggers(flowmap_data, forecasts_rows, gaps):
     ff = (flowmap_data or {}).get("frozen_forecast") or {}
     spx = next((c for c in ff.get("cta", []) or [] if c.get("market") == "SPX"), None)
     if spx and spx.get("nearest_flip_level") is not None:
+        before = parse_num(spx.get("current_composite"))
+        after = parse_num(spx.get("if_breached_composite"))
+        crossing_up = before is not None and after is not None and after > before
         triggers.append({
-            "label": "SPY 收盤跌破",
+            "label": "SPY 收盤站上" if crossing_up else "SPY 收盤跌破",
             "level": f"{spx['nearest_flip_level']:.1f}",
-            "why": (f"CTA {spx.get('nearest_flip_window')} 日窗翻空，SPX 複合體 "
+            "why": (f"CTA {spx.get('nearest_flip_window')} 日窗{'翻多' if crossing_up else '翻空'}，SPX 複合體 "
                     f"{spx.get('current_composite')}→{spx.get('if_breached_composite')}"),
         })
     else:
@@ -943,13 +1006,18 @@ def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, env
     if spx and spx.get("levels"):
         nearest = min(spx["levels"], key=lambda l: abs(l.get("dist_pct", 999)))
         if nearest.get("dist_pct") is not None:
-            dist = abs(nearest["dist_pct"])
+            dist = nearest["dist_pct"]
+
+    # 2026-09-13：距離正負代表門檻在現價上／下方，CTA 文案必須保留方向。
+    cta_pressure = (f"上方 {numstr(abs(dist))}% 有機械追價買盤" if dist is not None and dist > 0
+                    else f"下方 {numstr(abs(dist))}% 有機械賣壓" if dist is not None
+                    else "CTA 最近翻轉距離不可用")
 
     headline = (
         f"接下來一個月 SPY 收高機率 {pctstr(spy21.get('p'))}%"
         f"（基準 {pctstr(spy21.get('p_clim'))}%）＝{judge_word(spy21.get('p'), spy21.get('p_clim'))}；"
         f"波動升高機率 {pctstr(vol21.get('p'))}%（基準 {pctstr(vol21.get('p_clim'))}%）；"
-        f"下方 {numstr(dist)}% 有機械賣壓；"
+        f"{cta_pressure}；"
         f"三個月 {pctstr(spy63.get('p'))}%（基準 {pctstr(spy63.get('p_clim'))}%）。"
     )
 
@@ -975,7 +1043,8 @@ def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, env
     lev = (flows.get("lev_etf") or {}).get("shock_minus2_bn") or {}
     lev_txt = "、".join(f"{k} {v:+.2f}" for k, v in lev.items() if v is not None) if lev else "—"
     bullets.append(
-        f"資金流：CTA（趨勢跟隨基金）複合體最近翻轉價位距現價 {numstr(dist)}%；"
+        f"資金流：CTA（趨勢跟隨基金）複合體最近翻轉價位"
+        f"在現價{'上方' if dist is not None and dist > 0 else '下方' if dist is not None else ''} {numstr(abs(dist) if dist is not None else None)}%；"
         f"波動控制基金（依波動度自動加減碼的基金）目前曝險 {vc.get('exposure_pct', '—')}%"
         f"（已實現波動 1 月 {vc.get('rv_1m', '—')}、3 月 {vc.get('rv_3m', '—')}）；"
         f"若明天大盤跌 2%，槓桿 ETF 為維持槓桿倍數的機械賣壓估計 {lev_txt}"
@@ -1245,6 +1314,9 @@ def _chg30_from_series(values):
 def _quote_from_item(item):
     if not item:
         return None
+    raw_unit = item.get("unit")
+    unit = {"bps": "pct", "pp": "pct", "pct": "pct", "usd_b": "USD_bn",
+            "k": "thousand_persons", "abs": "index"}.get(raw_unit, raw_unit or "none")
     return {
         "label": item.get("label"),
         "val": item.get("val"),
@@ -1253,7 +1325,66 @@ def _quote_from_item(item):
         "chg30_pct": _chg30_from_series(item.get("spark")),
         "z": item.get("z"),
         "as_of": item.get("date"),
+        "unit": unit, "source_id": item.get("source_id"),
+        "pctile_window": item.get("pctile_window"),
+        "window": item.get("pctile_window"),
+        "frequency": item.get("frequency"),
+        "status": "stale" if item.get("stale") else "ok",
+        "source_label": item.get("source_label"),
     }
+
+
+def _producer_quote_meta(prefix, key):
+    """讀 producer registry，替舊 cache 補可驗證的單位／頻率／統計窗。"""
+    try:
+        module_name = "build_monitor" if prefix == "monitor" else "build_monitor_internals"
+        mod = __import__(module_name)
+        spec = mod.S.get(key) or {}
+    except (ImportError, AttributeError):
+        spec = {}
+    freq = spec.get("freq")
+    frequency = {"d": "daily", "w": "weekly", "m": "monthly"}.get(freq)
+    pctile_window = {"d": "252_observations", "w": "52_observations",
+                      "m": "12_observations"}.get(freq)
+    raw_unit = spec.get("unit")
+    if prefix == "monitor":
+        fx_units = {"usdjpy": "JPY_per_USD", "usdtwd": "TWD_per_USD",
+                    "eurusd": "USD_per_EUR", "gbpusd": "USD_per_GBP",
+                    "usdcny": "CNY_per_USD", "usdkrw": "KRW_per_USD",
+                    "audusd": "USD_per_AUD"}
+        if key in fx_units:
+            unit = fx_units[key]
+        elif spec.get("src") == "ratio":
+            unit = "ratio"
+        elif raw_unit == "bps":
+            unit = "pct"
+        elif raw_unit == "bps_lvl":
+            unit = "bp"
+        elif raw_unit == "usd_b":
+            unit = "USD_bn"
+        elif raw_unit == "k":
+            unit = "thousand_persons"
+        elif spec.get("prefix") == "$":
+            unit = "USD"
+        else:
+            unit = "index"
+    else:
+        exact = {"spy_dvol_z": "USD_bn", "qqq_dvol_z": "USD_bn",
+                 "spx_opt_vol": "million_contracts", "qqew_qqq": "ratio",
+                 "vix_vix3m": "ratio", "ipo_spy": "ratio", "short_vol_ratio": "ratio",
+                 "pc_total": "ratio", "pc_index": "ratio", "pc_equity": "ratio",
+                 "pc_vix": "ratio", "sahm": "percentage_points", "vrp_20d": "vol_points",
+                 "vix1d_vix": "vol_points", "vxn_vix": "vol_points"}
+        unit = exact.get(key, {"pp": "pct", "bps": "pct", "k": "thousand_persons",
+                               "abs": "index", "pct": "index"}.get(raw_unit, raw_unit or "none"))
+    source = spec.get("ticker") if prefix == "monitor" else key
+    if isinstance(source, tuple):
+        source = key
+    provider = spec.get("src") if prefix == "monitor" else "monitor_internals"
+    source_label = {"fred": "FRED", "yf": "Yahoo Finance", "ratio": "衍生比率",
+                    "cnn": "CNN", "monitor_internals": "市場內部資料 producer"}.get(provider, provider)
+    return {"frequency": frequency, "pctile_window": pctile_window,
+            "unit": unit, "source_id": source, "source_label": source_label}
 
 
 def _items_to_quotes(data, prefix, gaps, label):
@@ -1265,7 +1396,19 @@ def _items_to_quotes(data, prefix, gaps, label):
         for it in cat.get("items", []) or []:
             key = it.get("key")
             if key:
-                quotes[f"{prefix}:{key}"] = _quote_from_item(it)
+                enriched = dict(it)
+                for field, value in _producer_quote_meta(prefix, key).items():
+                    if field == "unit" or not enriched.get(field):
+                        enriched[field] = value
+                quote = _quote_from_item(enriched)
+                quote["source_id"] = f"{prefix}:{key}" if not enriched.get("source_id") else enriched["source_id"]
+                # 現有 tp10y cache 仍可能寫 ACM；canonical provider 由 registry
+                # 正規化，無須等待下一次行情重抓（2026-09-13）。
+                if prefix == "monitor" and key == "tp10y":
+                    quote["label"] = "10Y 期限溢價（Kim–Wright）"
+                    quote["source_id"] = "FRED:THREEFYTP10"
+                    quote["source_label"] = "Kim–Wright／FRED"
+                quotes[f"{prefix}:{key}"] = quote
     return quotes
 
 
@@ -1389,7 +1532,66 @@ def build_quotes(monitor_data, internals_data, score_history_data, crowding_data
     quotes.update(_stress_quotes(score_history_data, gaps))
     quotes.update(_cot_quotes(crowding_data, gaps))
     quotes.update(_flow_quotes(flowmap_data, flows, gaps))
+    # 2026-09-13：UI 直接讀這四個 provenance 欄位；舊 producer 未帶時由
+    # namespace 與既有欄位補齊，保留原欄位以維持向後相容。
+    for ref, quote in quotes.items():
+        namespace = ref.split(":", 1)[0]
+        if not quote.get("source_id"):
+            quote["source_id"] = ref
+        if not quote.get("source_label"):
+            quote["source_label"] = {"stress": "市場壓力分數", "cot": "CFTC COT",
+                                      "flow": "Flowmap"}.get(namespace, namespace)
+        if not quote.get("unit"):
+            quote["unit"] = "none"
+        if not quote.get("frequency"):
+            quote["frequency"] = {"stress": "daily", "cot": "weekly",
+                                   "flow": "daily"}.get(namespace, "unknown")
+        if not quote.get("status"):
+            quote["status"] = "ok" if quote.get("as_of") else "unavailable"
+        quote.setdefault("pctile_window", None)
+        quote.setdefault("window", quote.get("pctile_window"))
     return quotes
+
+
+def repair_cpi_yoy_from_official(evidence, source_data, gaps):
+    """以官方 CPI index 的 365 日基準校正舊 internals CPI YoY cache。"""
+    source = next((s for s in (source_data or {}).get("sources", [])
+                   if s.get("id") in ("fred_cpi", "bls_cpi") and s.get("status") == "ok"), None)
+    quote = (evidence.get("quotes") or {}).get("internals:cpi_yoy")
+    if quote is None:
+        return
+    if not source:
+        quote.update({"val": None, "num": None, "status": "unavailable",
+                      "source_id": "official_cpi_unavailable"})
+        gaps.append("CPI YoY：官方來源不可用，舊 cache 不採用")
+        if evidence.get("labor_inflation"):
+            evidence["labor_inflation"]["cpi_yoy"] = None
+        return
+    period = next((p for p in source.get("periods", [])
+                   if p.get("days") == 365 and p.get("status") == "ok"), None)
+    before = period.get("before") if period else None
+    current = period.get("current") if period else None
+    current_date = parse_date_loose(period.get("current_date")) if period else None
+    baseline_date = parse_date_loose(period.get("actual_start")) if period else None
+    exact_12m = (current_date is not None and baseline_date is not None and
+                 current_date.month == baseline_date.month and
+                 current_date.year - baseline_date.year == 1)
+    if (not isinstance(before, (int, float)) or not isinstance(current, (int, float)) or
+            before == 0 or not exact_12m):
+        quote.update({"val": None, "num": None, "status": "unavailable",
+                      "source_id": "source:" + source["id"], "as_of": source.get("latest", {}).get("date")})
+        gaps.append("CPI YoY：官方來源缺 365 日可比基準，舊 cache 不採用")
+        if evidence.get("labor_inflation"):
+            evidence["labor_inflation"]["cpi_yoy"] = None
+        return
+    yoy = round((current / before - 1.0) * 100, 2)
+    as_of = period.get("current_date") or (source.get("latest") or {}).get("date")
+    quote.update({"val": f"{yoy:.2f}%", "num": yoy, "as_of": as_of, "unit": "pct",
+                  "source_id": "source:" + source["id"], "window": "365d",
+                  "status": "ok", "pctile": None, "z": None, "chg30_pct": None,
+                  "pctile_window": None})
+    if evidence.get("labor_inflation"):
+        evidence["labor_inflation"]["cpi_yoy"] = yoy
 
 
 def _qget(quotes, ref, field):
@@ -1688,6 +1890,18 @@ def attach_source_evidence(evidence, source_data, gaps):
     quotes = source_data.get("quotes") or {}
     if any(not ref.startswith("source:") for ref in quotes):
         raise ValueError("新增來源不可覆寫舊欄位")
+    source_specs = {"source:" + s.get("id", ""): s for s in source_data.get("sources", [])}
+    normalized = {}
+    for ref, original in quotes.items():
+        quote = dict(original)
+        spec = source_specs.get(ref) or {}
+        quote.setdefault("source_id", ref)
+        quote.setdefault("source_label", spec.get("provider") or spec.get("label") or "官方來源")
+        quote.setdefault("frequency", spec.get("frequency") or "unknown")
+        quote.setdefault("status", spec.get("status") or "unknown")
+        quote.setdefault("window", quote.get("pctile_window"))
+        normalized[ref] = quote
+    quotes = normalized
     evidence["quotes"].update(quotes)
     conflicts = []
     for s in source_data.get("sources", []):
@@ -1825,6 +2039,7 @@ def main():
     evidence = build_evidence(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data,
                                macro_calendar_data, intel_data, flows, read_data, today, gaps)
     source_research = attach_source_evidence(evidence, source_data, gaps)
+    repair_cpi_yoy_from_official(evidence, source_data, gaps)
     read_headline, read_as_of = read_headline_fields(read_data, today)
 
     if args.evidence_pack:
@@ -1842,7 +2057,7 @@ def main():
     if forecasts_rows is None:
         gaps.append("forecasts.jsonl 缺檔，council／council_summary／fuses／triggers③ 連動受影響")
 
-    fuses = build_fuses(intel_data, forecasts_rows, monitor_data, gaps)
+    fuses = build_fuses(intel_data, forecasts_rows, monitor_data, gaps, evidence.get("quotes"))
     anomalies = build_anomalies(monitor_data)
     stock_pulse = build_stock_pulse(decisions_rows, today, gaps)
     # 名單層開放命題計數（板機訊號／GRP 席位／精選榜／十倍股），供頁面「個股脈搏」顯示

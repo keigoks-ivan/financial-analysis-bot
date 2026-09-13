@@ -20,10 +20,11 @@ build_monitor.py — 全資產市場監測（/monitor/）資料層＋異常引�
 
 from __future__ import annotations
 
+import calendar
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -166,7 +167,7 @@ _d("real10y", "10Y TIPS 實質利率", "rates", "fred", "DFII10", unit="bps",
 _d("bei5y", "5Y 通膨預期", "rates", "fred", "T5YIE", unit="bps", pct_alert="both")
 _d("bei5y5y", "5y5y Forward 通膨", "rates", "fred", "T5YIFR", unit="bps",
    pct_alert="both")
-_d("tp10y", "10Y 期限溢價（ACM）", "rates", "fred", "THREEFYTP10", unit="bps",
+_d("tp10y", "10Y 期限溢價（Kim–Wright）", "rates", "fred", "THREEFYTP10", unit="bps",
    invert=True, pct_alert="high", freq="w")  # 日頻 series 但 NY Fed 發布有數日 lag
 _d("tlt", "TLT 長債 ETF", "rates", "yf", "TLT", prefix="$")
 
@@ -542,6 +543,28 @@ def fmt_val(v, spec) -> str:
     return f"{spec['prefix']}{v:,.{spec['dp']}f}"
 
 
+def level_unit(key, spec):
+    """2026-09-13：現值單位；spec.unit 的 pct 是變化算法，不能外流成 level unit。"""
+    fx = {"usdjpy": "JPY_per_USD", "usdtwd": "TWD_per_USD", "eurusd": "USD_per_EUR",
+          "gbpusd": "USD_per_GBP", "usdcny": "CNY_per_USD", "usdkrw": "KRW_per_USD",
+          "audusd": "USD_per_AUD"}
+    if key in fx:
+        return fx[key]
+    if spec["src"] == "ratio":
+        return "ratio"
+    if spec["unit"] == "bps":
+        return "pct"
+    if spec["unit"] == "bps_lvl":
+        return "bp"
+    if spec["unit"] == "usd_b":
+        return "USD_bn"
+    if spec["unit"] == "k":
+        return "thousand_persons"
+    if spec["prefix"] == "$":
+        return "USD"
+    return "index"
+
+
 def fmt_chg(chg, unit, dp=2) -> str:
     if chg is None:
         return "—"
@@ -791,8 +814,15 @@ def main() -> int:
     # 對下游／頁面可見。負值分支是防禦：有號差在 bar 晚於 as_of 時為負，永遠不會
     # > limit，未來 bar 因此會靜默過關（原 bug）——明確判死而非靠減法。
     for key, it in items.items():
-        limit = STALE_DAYS if S[key]["freq"] == "d" else 12
+        # 2026-09-13：週線 bar 標的是該週觀測日，跨週末後 6 天仍是正常週頻資料；
+        # 月頻則按期末衡量，避免月初期別被當成已落後整月。
+        freq = S[key]["freq"]
+        limit = STALE_DAYS if freq == "d" else (12 if freq == "w" else 45)
         lag = (as_of_dt - datetime.strptime(it["date"], "%Y-%m-%d")).days
+        if freq == "m":
+            bar_dt = datetime.strptime(it["date"], "%Y-%m-%d")
+            lag = (as_of_dt.date() - date(bar_dt.year, bar_dt.month,
+                   calendar.monthrange(bar_dt.year, bar_dt.month)[1])).days
         it["lag_days"] = lag
         if lag < 0:
             warn(f"{key}: bar {it['date']} 晚於 as_of {as_of}（截斷後不該發生）"
@@ -822,7 +852,11 @@ def main() -> int:
             if sp["cat"] != cat_key or key not in items:
                 continue
             it = items[key]
-            rows.append({"key": key, "label": sp["label"], "unit": sp["unit"],
+            rows.append({"key": key, "label": sp["label"], "unit": level_unit(key, sp),
+                         "source_id": sp["ticker"] if sp["src"] != "ratio" else key,
+                         "pctile_window": "252_observations" if sp["freq"] == "d" else "52_observations",
+                         "frequency": "daily" if sp["freq"] == "d" else "weekly",
+                         "status": "stale" if it["stale"] else "ok",
                          "val": it["val_fmt"], "chg": it["chg_fmt"], "dir": it["dir"],
                          "z": it["z"], "pctile": it["pctile"],
                          "p20": it["p20"], "p60": it["p60"],

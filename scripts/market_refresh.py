@@ -18,9 +18,11 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import check_market_read as critic
+from market_history import build_history_context
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "docs/market/data"
+SOURCE_DIR = ROOT / "data/market_sources/series"
 TAIPEI = timezone(timedelta(hours=8))
 
 
@@ -214,6 +216,9 @@ def prepare(snapshot, read, data_dir, work_dir, today):
                "comparison_baseline": previous["snapshot_id"] if previous else None,
                "changes": quote_changes(snapshot["state"], previous["state"] if previous else {}),
                "periods": period_comparisons(snapshot, history), "previous_read": read,
+               # 2026-09-13：訂閱判讀同步取得官方觀測史與區域事實，保留原快照比較口徑。
+               "history_context": build_history_context(snapshot["state"], SOURCE_DIR, today),
+               "presentation_guidance": "每個判讀文字欄位先用二至四句重點概括完整正反理由與關鍵條件，每句約六十字以內，之後再接完整推導。不要把多層術語括號塞進第一段；區域與期間比較以 history_context 的實際觀測日期和單位為準。",
                "billing": "subscription_only", "allow_paid_fallback": False}
     run_dir = Path(work_dir) / snapshot["snapshot_id"]
     immutable_json(run_dir / "evidence.json", snapshot)
@@ -326,6 +331,9 @@ def make_release(snapshot, read, prior, history, now, errors, warnings, accepted
     refresh = {"schema": "market-refresh-v1", "snapshot_id": snapshot["snapshot_id"],
                "data_as_of": snapshot["state"].get("as_of"), "analysis_as_of": read.get("as_of"),
                "generated_at": now, "last_success_at": now if accepted else prior.get("last_success_at"),
+               # 2026-09-13：成功整合資料與核准判讀是兩個時鐘，不讓日更冒充新判讀。
+               "last_data_success_at": now if not errors else prior.get("last_data_success_at"),
+               "last_analysis_success_at": now if accepted else prior.get("last_analysis_success_at", prior.get("last_success_at")),
                "status": status, "reasons": reasons, "billing": "subscription_only"}
     bundle = {"snapshot_id": snapshot["snapshot_id"], "state": snapshot["state"],
               "read": read, "refresh": refresh, "history": history, "periods": []}
@@ -336,11 +344,14 @@ def publish(data_dir, snapshot, read, history, now, errors, warnings, accepted=F
     data_dir = Path(data_dir)
     prior = read_json(data_dir / "refresh.json", {})
     refresh, bundle = make_release(snapshot, read, prior, history, now, errors, warnings, accepted)
+    # 2026-09-13：歷史顯示層獨立於既有證據 hash，舊快照仍可原樣驗證。
+    bundle["history_context"] = build_history_context(snapshot["state"], SOURCE_DIR, snapshot["state"].get("as_of"))
     if prior.get("snapshot_id") == snapshot["snapshot_id"] and prior.get("status") == refresh["status"] and prior.get("reasons") == refresh["reasons"]:
         old_path = prior.get("bundle", "")
         if old_path.startswith("releases/") and ".." not in old_path:
             old = read_json(data_dir / old_path, {})
-            if old.get("read") == read:
+            if (old.get("read") == read and old.get("history_context") == bundle["history_context"]
+                    and "last_data_success_at" in prior and "last_analysis_success_at" in prior):
                 return prior
     bundle["periods"] = period_comparisons(snapshot, history_rows(data_dir))
     # 2026-09-13：先保存不可變內容，最後切換指標。前端只讀同一包，避免跨批混用。

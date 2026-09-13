@@ -91,6 +91,23 @@ h1{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.95re
 .scenario-card .scenario-horizon{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-muted);margin-bottom:.65rem}
 .scenario-card .scenario-field{font-size:.82rem;color:var(--text-secondary);line-height:1.75;margin-top:.55rem}
 .scenario-card .scenario-field strong{color:var(--text);font-size:.78rem}
+.summary-list{margin:.55rem 0 0 1.05rem;padding:0;color:var(--text-secondary);font-size:.84rem;line-height:1.7}
+.summary-list li+li{margin-top:.25rem}.compact-details{margin-top:.65rem}
+.compact-details>summary{font-size:.78rem;color:var(--accent);cursor:pointer;font-weight:600}
+.quote-meta{display:block;margin-top:.18rem;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-secondary)}
+.quote-meta .chip{margin-left:.3rem}.prob-meta{display:block;font-size:10px;color:var(--text-muted);white-space:normal}
+.section-fold>summary{cursor:pointer;list-style:none}.section-fold>summary::-webkit-details-marker{display:none}
+.section-fold>summary h2:after{content:' ＋';font-family:'Inter',sans-serif;font-size:.85rem;color:var(--text-muted)}
+.section-fold[open]>summary h2:after{content:' −'}
+#sec-global:empty{display:none}
+.global-grid{grid-template-columns:repeat(4,1fr)}.region-card h3{font-family:'Playfair Display','Noto Serif TC',serif;font-size:1rem}
+.region-observation{padding:.45rem 0;border-bottom:1px solid var(--border-light);font-size:.8rem}.region-observation:last-child{border:0}
+.region-observation b{display:block;color:var(--text)}.history-toolbar{display:flex;gap:.55rem;flex-wrap:wrap;align-items:center;margin:.7rem 0}
+.history-toolbar select{font:inherit;font-size:.8rem;color:var(--text);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem}
+.spark{width:100%;height:72px;margin:.35rem 0}.history-change{font-family:'IBM Plex Mono',monospace;font-size:.8rem}
+@media(max-width:900px){.global-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.wrap{padding:0 14px}.hero{padding-top:1.7rem}.judgment-numbers{grid-template-columns:1fr}.source-table{min-width:860px}.scenario-card .scenario-field{line-height:1.6}}
+@media(max-width:620px){.global-grid{grid-template-columns:1fr}}
 .load-fail{margin-top:1.4rem;padding:.9rem 1.1rem;background:var(--crit-bg);color:var(--crit);
            border-radius:var(--radius);font-size:.85rem}
 
@@ -242,7 +259,15 @@ footer.imq-foot a{color:var(--text-secondary)}
   .mini-nav{position:static;margin:0 0 1.2rem;padding:.4rem 0;border-bottom:none;box-shadow:none;background:transparent}
   .mini-nav-inner{padding-bottom:.2rem}
 }
-  </style>
+  /* 2026-09-13：手機卡片不可被表格撐寬；時間框架改為直排重點。 */
+.grid>*{min-width:0}.card{overflow-wrap:anywhere}.history-toolbar select{max-width:100%}
+@media(max-width:620px){
+#horizonTable,#horizonTable tbody,#horizonTable tr,#horizonTable td{display:block;width:auto;min-width:0;max-width:none!important;white-space:normal;text-align:left}
+#horizonTable tr:first-child{display:none}#horizonTable tr{padding:.8rem 0;border-bottom:1px solid var(--border)}
+#horizonTable td{border:0;padding:.3rem 0}#horizonTable td[data-label]:before{content:attr(data-label) "：";font-weight:600;color:var(--text-muted)}
+.g4{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
 <style id="imq-nav-style">
@@ -324,17 +349,8 @@ footer.imq-foot a{color:var(--text-secondary)}
   <div class="hero">
     <span class="overline">InvestMQuest Research · 市場</span>
     <h1>市況主控台</h1>
-    <p class="lede">
-      從歷史變化看市場現況，再檢視未來情境成立的條件。
-      <strong>資料日期與判讀日期分開標示，每個數字都可回查來源。</strong>
-      官方資料涵蓋成長、通膨、利率、流動性與部位，並與站上的跨資產監測、情報及預測帳簿對照。
-    </p>
-    <div class="mandate">
-      <strong>閱讀方式：</strong>先看最新觀測與歷史比較，再看已核對的判讀、情境及證偽條件。
-      資料缺口與來源分歧會保留，資料更新不會自動替舊判讀背書。「市況曝險規則（模擬）」區塊，在序貫檢定（SPRT）
-      證明優於基準前<strong>只顯示不執行</strong>，不連任何實倉。
-      個股與組合的進出，依各公司深度報告（DD）寫定的證偽條件決定，不由本頁驅動。
-    </div>
+    <p class="lede"><strong id="heroConclusion">最新市場結論載入中。</strong></p>
+    <div class="mandate"><strong>本期重點：</strong><span id="heroFocus">現況、最新變化、改判條件。</span></div>
     <div class="asof" id="asof">目前市場資料載入中…</div>
     <div class="refresh-status" id="refreshStatus" hidden aria-live="polite"></div>
     <div class="load-fail" id="loadFail" hidden>資料載入失敗。</div>
@@ -345,7 +361,10 @@ footer.imq-foot a{color:var(--text-secondary)}
   <nav class="mini-nav" id="miniNav" aria-label="頁內導覽">
     <div class="mini-nav-inner">
       <a href="#sec-judgment">判讀</a>
-      <a href="#sec-forces">力量</a>
+      <a href="#sec-history">變化</a>
+      <a href="#sec-global">跨市場</a>
+      <a href="#sec-scenarios">情境</a>
+      <a href="#sec-forces">主要力量</a>
       <a href="#sec-transmission">傳導</a>
       <a href="#sec-positioning">部位</a>
       <a href="#sec-analogs">類比</a>
@@ -381,8 +400,8 @@ footer.imq-foot a{color:var(--text-secondary)}
   </section>
 
   <section id="sec-history">
-    <h2>過去怎麼走到今天<span class="en">Period Changes</span></h2>
-    <p class="section-sub">比較同一批資料包中的起點與目前資料；只列出有變化的指標。歷史不足時會直接標示，不以近期數字假裝長期趨勢。</p>
+    <h2>判讀版本追溯<span class="en">Snapshot History</span></h2>
+    <p class="section-sub">比較判讀資料包保存的起點與當期值，用於追查當時版本。正式歷史比較見上方跨市場現況。</p>
     <div class="card">
       <div class="period-controls"><label for="periodSelect">比較期間</label><select id="periodSelect" disabled><option value="7">1 週</option><option value="30" selected>1 個月</option><option value="90">3 個月</option><option value="365">1 年</option></select></div>
       <p class="note" id="periodNote"></p>
@@ -410,10 +429,23 @@ footer.imq-foot a{color:var(--text-secondary)}
     </div>
   </section>
 
+  <section id="sec-global">
+    <h2>跨市場現況<span class="en">Global Context</span></h2>
+    <p class="section-sub">區域卡只顯示實際取得的資料。走勢使用目前修訂後歷史；日期跨度與比較起點逐項列明。</p>
+    <div class="grid global-grid" id="regionGrid"></div>
+    <div class="card" id="historySeriesCard" style="margin-top:14px" hidden>
+      <h3>主要指標走勢與變化</h3>
+      <div class="history-toolbar"><label for="historySeriesSelect">指標</label><select id="historySeriesSelect"></select><label for="historyWindowSelect">比較</label><select id="historyWindowSelect"></select></div>
+      <div id="historySeriesView"></div>
+    </div>
+    <div class="grid g2" id="globalTransmission" style="margin-top:14px"></div>
+    <details class="compact-details" id="historyLimits" hidden><summary>資料缺口與修訂限制</summary><div id="historyLimitsBody"></div></details>
+  </section>
+
   <section id="sec-forces">
-    <h2>三股力量<span class="en">Forces</span></h2>
-    <p class="section-sub">先保留判讀日的論證與引用理由，再列目前機械讀數。兩者日期不同時，後者只用於檢查原判讀是否仍成立。</p>
-    <div class="grid" id="forcesGrid" style="grid-template-columns:repeat(auto-fit,minmax(420px,1fr))"></div>
+    <h2>主要力量<span class="en">Forces</span></h2>
+    <p class="section-sub">依本期資料列出最重要的力量，最多顯示 4 項。完整論證與引用品質保留在卡片內。</p>
+    <div class="grid" id="forcesGrid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))"></div>
   </section>
 
   <section id="sec-transmission">
@@ -484,7 +516,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     <div class="grid g5" id="env"></div>
   </section>
 
-  <section class="grid g2">
+  <section class="grid g2" id="sec-models">
     <div class="card">
       <h2>預測議會<span class="en">Forecast Council</span></h2>
       <p class="section-sub">把好幾個獨立模型對同一件事的機率彙總起來——像多方意見表決，不是單一模型說了算。</p>
@@ -499,7 +531,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       </div>
     </div>
     <div class="card">
-      <h2>機械賣家在哪裡<span class="en">Conditional Flow</span></h2>
+      <h2>機械買賣觸發<span class="en">Conditional Flow</span></h2>
       <p class="section-sub">這裡看三種規則型參與者可能的動作：CTA 翻轉價位、波動控制基金（依波動度自動加減碼的基金）的曝險水位、槓桿 ETF（用衍生品放大單日報酬、每天收盤要再平衡）在大跌情境下的賣壓估計。</p>
       <div class="srclinks"><a href="/flowmap/">來源 → 條件流量地圖</a></div>
       <div id="ladder"></div>
@@ -507,7 +539,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     </div>
   </section>
 
-  <section class="grid g3">
+  <section class="grid g3" id="sec-signals">
     <div class="card">
       <h2>引信距離<span class="en">Falsifier Distance</span></h2>
       <p class="section-sub">總經情勢轉向的預警門檻——距離越近，越接近必須重新評估判讀的時刻。</p>
@@ -526,13 +558,13 @@ footer.imq-foot a{color:var(--text-secondary)}
     </div>
   </section>
 
-  <section>
+  <section id="sec-triggers">
     <h2>會改變今天讀法的三個數字<span class="en">Watch Triggers</span></h2>
     <p class="section-sub">機械觸發點，不是預測。</p>
     <div class="trig" id="triggers"></div>
   </section>
 
-  <section class="grid g2">
+  <section class="grid g2" id="sec-scoreboard">
     <div class="card">
       <h2>記分板<span class="en">Scoreboard</span></h2>
       <div class="srclinks"><a href="/flowmap/#sec-scorecard">來源 → 成績單（flowmap）</a></div>
@@ -578,7 +610,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     </div>
   </section>
 
-  <div class="disclaimer">
+  <div class="disclaimer" id="marketDisclaimer">
     <strong>免責與定位：</strong>本頁為 InvestMQuest Research 內部研究文件，<strong>彙整層描述器，非投資建議</strong>。
     所有區塊的判定機制、信心度與資料延遲，皆已在各自來源頁標註；本頁不重算、不加權合成單一總分。
     「市況曝險規則」為模擬帳戶記分，在序貫檢定證明優於基準前不連任何實倉；判紅即撤，期間不因單一案例調整參數。
@@ -596,6 +628,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   </div>
 </footer>
 
+<script src="text-summaries.js"></script>
 <script>
 (function () {
   "use strict";
@@ -611,6 +644,69 @@ footer.imq-foot a{color:var(--text-secondary)}
     return String(s).replace(/[&<>"]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
     });
+  }
+  // 2026-09-13：首頁只顯示可核對的短重點，完整原文留在展開區。
+  function splitTopLevel(text, delimiters) {
+    var out = [], buffer = "", depth = 0;
+    String(text).split("").forEach(function (char) {
+      if (char === "（" || char === "(") depth += 1;
+      buffer += char;
+      if (char === "）" || char === ")") depth = Math.max(0, depth - 1);
+      if (!depth && delimiters.indexOf(char) >= 0) { out.push(buffer); buffer = ""; }
+    });
+    if (buffer.trim()) out.push(buffer);
+    return out;
+  }
+  function concisePoints(value, limit) {
+    var edited = window.MARKET_TEXT_SUMMARIES && window.MARKET_TEXT_SUMMARIES[String(value || "").trim()];
+    if (Array.isArray(edited) && edited.length) return edited.slice(0, limit || 4);
+    var text = value == null ? "" : String(value).replace(/\s+/g, " ").trim();
+    if (!text) return [];
+    var chunks = splitTopLevel(text, "。！？；;");
+    var max = limit || 4;
+    var out = [];
+    chunks.some(function (chunk) {
+      chunk = chunk.trim();
+      if (!chunk) return false;
+      if (chunk.length <= 92) {
+        out.push(chunk);
+        return out.length >= max;
+      }
+      // 2026-09-13：只在逗號邊界抽取完整片語；若／如果條件句維持到句末，不截條件。
+      var clauses = splitTopLevel(chunk, "，,：:");
+      var grouped = "";
+      clauses.some(function (clause) {
+        if (!clause) return false;
+        if (/^(若|如果|除非)/.test(grouped || clause)) {
+          grouped += clause;
+          return false;
+        }
+        if (grouped && (grouped + clause).length > 76) {
+          out.push(grouped);
+          grouped = clause;
+        } else {
+          grouped += clause;
+        }
+        return out.length >= max;
+      });
+      if (out.length < max && grouped) out.push(grouped);
+      return out.length >= max;
+    });
+    return out;
+  }
+  function compactText(value, limit) {
+    var points = concisePoints(value, limit);
+    var original = value == null ? "" : String(value).trim();
+    if (!original) return "—";
+    var supplied = window.MARKET_TEXT_SUMMARIES && window.MARKET_TEXT_SUMMARIES[original];
+    if (Array.isArray(supplied) && supplied.length) points = supplied.slice(0, limit || 4);
+    if (!points.length) return '<details class="compact-details"><summary>查看完整原文</summary><p class="note">' + esc(original) + '</p></details>';
+    return '<ul class="summary-list">' + points.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join("") +
+      '<\/ul><details class="compact-details"><summary>查看完整原文</summary><p class="note">' + esc(original) + '</p></details>';
+  }
+  function probabilityMeta(row) {
+    var n = row && (row.calibration_n != null ? row.calibration_n : row.n);
+    return n != null ? "研究判斷 · 校準樣本 n=" + n : "研究判斷 · 尚無校準樣本";
   }
   function fmtSigned(v, d) {
     if (v === null || v === undefined) return "—";
@@ -663,11 +759,13 @@ footer.imq-foot a{color:var(--text-secondary)}
     if (refresh.data_as_of) details.push("目前資料截至 " + refresh.data_as_of);
     if (refresh.analysis_as_of) details.push("判讀截至 " + refresh.analysis_as_of);
     if (refresh.generated_at) details.push("本次產生於 " + twStamp(refresh.generated_at));
-    if (refresh.last_success_at) details.push("最近成功更新 " + twStamp(refresh.last_success_at));
+    if (refresh.last_data_success_at) details.push("最近資料成功更新 " + twStamp(refresh.last_data_success_at));
+    if (refresh.last_analysis_success_at) details.push("最近判讀核准 " + twStamp(refresh.last_analysis_success_at));
+    else if (refresh.last_success_at) details.push("最近判讀核准 " + twStamp(refresh.last_success_at));
     var reason = refreshText(refresh.reasons);
     host.innerHTML = '<span class="chip ' + status[0] + '">' + esc(status[1]) + '</span>' +
       (details.length ? '<span class="refresh-detail">' + esc(details.join("　·　")) + '</span>' : '') +
-      (reason ? '<div>更新說明：' + esc(reason) + '</div>' : '');
+      (reason ? '<div><strong>更新說明</strong>' + compactText(reason, 3) + '</div>' : '');
     host.hidden = false;
   }
 
@@ -878,6 +976,53 @@ footer.imq-foot a{color:var(--text-secondary)}
     var q = read && read.evidence_snapshot && read.evidence_snapshot.quotes;
     return (q && q[ref]) || null;
   }
+  function quoteUnit(q, ref) {
+    if (q && q.unit) return String(q.unit);
+    if (/yield|rate|spread|oas|bei|premium|sofr|iorb/i.test(ref || "")) return "單位未知";
+    return "單位未知";
+  }
+  function quoteChange(q, ref) {
+    if (!q || q.chg30_pct == null) return "—";
+    if (Number(q.chg30_pct) <= -100) return "無法計算";
+    var frequency = String(q.frequency || q.cadence || "").toLowerCase();
+    var windowNote = frequency === "monthly" ? "近 30 期觀測，非 30 日" : "近 30 筆觀測";
+    var relative = fmtSigned(q.chg30_pct, 1) + "%（" + windowNote + "）";
+    var unit = String(q.unit || "").toLowerCase();
+    var absolute = q.delta30 != null ? Number(q.delta30) : q.change_abs != null ? Number(q.change_abs) : null;
+    if (absolute == null && q.num != null && Number(q.num) > 0 && isFinite(Number(q.num))) {
+      var base = Number(q.num) / (1 + Number(q.chg30_pct) / 100);
+      absolute = Number(q.num) - base;
+    }
+    if (absolute != null && isFinite(absolute) && (unit === "percent" || unit === "percentage_points" || unit === "%" || unit === "pct")) {
+      return relative + "（" + fmtSigned(absolute, 2) + " 個百分點／" + fmtSigned(absolute * 100, 0) + " bp）";
+    }
+    if (absolute != null && isFinite(absolute) && (unit === "bp" || unit === "bps" || unit.indexOf("基點") >= 0)) {
+      return relative + "（" + fmtSigned(absolute, 1) + " bp）";
+    }
+    return relative;
+  }
+  function quotePctile(q) {
+    if (!q || q.pctile == null) return "—";
+    return Math.round(q.pctile) + "；窗口 " + esc(q.pctile_window || "未知");
+  }
+  function quoteDateMeta(q, comparisonDate) {
+    var asOf = q && q.as_of ? q.as_of : "日期未知";
+    var age = q && q.as_of && comparisonDate ? daysBetween(q.as_of, comparisonDate) : null;
+    var frequency = String(q && (q.frequency || q.cadence) || "").toLowerCase();
+    var maxAge = frequency === "annual" ? 400 : frequency === "quarterly" ? 120 : frequency === "monthly" ? 45 : frequency === "weekly" ? 10 : 7;
+    // 2026-09-13：官方明示的鮮度優先；舊資料以期末計算月／季報發布遲滯。
+    var periodAge = age;
+    if (q && q.as_of && comparisonDate && (frequency === "monthly" || frequency === "quarterly")) {
+      var d = new Date(q.as_of + "T00:00:00Z");
+      var endMonth = frequency === "quarterly" ? Math.floor(d.getUTCMonth() / 3) * 3 + 3 : d.getUTCMonth() + 1;
+      var periodEnd = new Date(Date.UTC(d.getUTCFullYear(), endMonth, 0)).toISOString().slice(0, 10);
+      periodAge = Math.max(0, daysBetween(periodEnd, comparisonDate));
+    }
+    var stale = q && (q.stale === true || q.status === "stale" || q.freshness_status === "stale" || (q.stale !== false && periodAge != null && periodAge > maxAge));
+    var future = age != null && age < 0;
+    var status = future ? '<span class="chip warn">未來日期</span>' : stale ? '<span class="chip stale">過期</span>' : "";
+    return '<span class="quote-meta">資料 ' + esc(asOf) + (frequency ? " · " + esc({daily:"日資料",weekly:"週資料",monthly:"月資料",quarterly:"季資料",annual:"年資料",unknown:"頻率未知"}[frequency] || frequency) : "") + status + '</span>';
+  }
   // COT（期貨持倉報告）市場英文名的白話對照——quotes.cot:* 的 label 目前是原始英文市場名，
   // 這裡覆寫成中文，monitor:*／internals:* 的 label 已是中文不需要這層。
   var COT_MARKET_ZH = {
@@ -937,21 +1082,26 @@ footer.imq-foot a{color:var(--text-secondary)}
     host.innerHTML = renderHorizonDumbbell(horizons.map(function (h) {
       return { label: h.label || h.key, p: h.p_up, clim: h.p_clim_up };
     }));
-    var html = "<tr><th>框架</th><th>SPY 收高 p</th><th>基準</th><th>回撤 p</th><th>基準</th><th>邏輯</th><th>帳簿命題</th></tr>";
+    var html = "<tr><th>期限／截止日</th><th>SPY 收高</th><th>歷史基準</th><th>回撤</th><th>歷史基準</th><th>重點與完整推導</th><th>帳簿命題</th></tr>";
     horizons.forEach(function (h) {
       var dd = ddInfo(h);
       var claimHtml = (h.claim_ids && h.claim_ids.length)
         ? h.claim_ids.map(function (id) { return '<a href="/flowmap/#ledger">' + esc(id) + '</a>'; }).join("　")
         : "—";
-      html += "<tr><td>" + esc(h.label || h.key) + "</td>" +
-        "<td class=\"num\">" + (h.p_up != null ? Math.round(h.p_up * 100) + "%" : "—") + "</td>" +
+      var horizonDate = h.resolve_by || h.end_date || h.deadline || h.as_of || "日期未提供";
+      html += "<tr><td>" + esc({"3m":"3 個月","6m":"6 個月","12m":"12 個月"}[h.key] || h.label || h.key) + '<span class="quote-meta">截至 ' + esc(horizonDate) + '</span></td>' +
+        "<td class=\"num\">" + (h.p_up != null ? Math.round(h.p_up * 100) + "%" : "—") + '<span class="prob-meta">' + esc(probabilityMeta(h)) + "</span></td>" +
         "<td class=\"num\">" + (h.p_clim_up != null ? Math.round(h.p_clim_up * 100) + "%" : "—") + "</td>" +
         "<td class=\"num\">" + (dd && dd.p != null ? dd.label + " " + Math.round(dd.p * 100) + "%" : "—") + "</td>" +
         "<td class=\"num\">" + (dd && dd.clim != null ? Math.round(dd.clim * 100) + "%" : "—") + "</td>" +
-        "<td style=\"max-width:340px\">" + esc(h.logic_zh || "") + "</td>" +
+        "<td style=\"max-width:340px\">" + compactText(h.logic_zh || "", 3) + "</td>" +
         "<td class=\"num\">" + claimHtml + "</td></tr>";
     });
     tableHost.innerHTML = html;
+    var cellLabels = ["", "SPY 收高", "收高歷史基準", "回撤", "回撤歷史基準", "", "帳簿命題"];
+    tableHost.querySelectorAll("tr").forEach(function (row, index) {
+      if (index) Array.from(row.cells).forEach(function (cell, col) { if (cellLabels[col]) cell.dataset.label = cellLabels[col]; });
+    });
   }
   function renderJudgment(read, state) {
     var card = $("#judgmentCard");
@@ -988,11 +1138,11 @@ footer.imq-foot a{color:var(--text-secondary)}
       banner.hidden = true;
       mechFallback.hidden = true;
     }
-    $("#judgmentThesis").textContent = read.thesis_zh || "";
-    $("#judgmentPath").textContent = read.path_zh || "";
+    $("#judgmentThesis").innerHTML = compactText(read.thesis_zh || "", 3);
+    $("#judgmentPath").innerHTML = compactText(read.path_zh || "", 3);
     var vsPrior = $("#judgmentVsPrior");
     if (read.vs_prior_zh) {
-      vsPrior.textContent = "相較前期：" + read.vs_prior_zh;
+      vsPrior.innerHTML = "<strong>相較前期</strong>" + compactText(read.vs_prior_zh, 3);
       vsPrior.hidden = false;
     } else {
       vsPrior.hidden = true;
@@ -1004,7 +1154,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     timeContext.hidden = false;
     var dataGapText = refreshText(read.data_gaps_zh);
     if (dataGapText) {
-      dataGaps.innerHTML = "<strong>資料缺口：</strong>" + esc(dataGapText);
+      dataGaps.innerHTML = "<strong>資料缺口</strong>" + compactText(dataGapText, 3);
       dataGaps.hidden = false;
     } else {
       dataGaps.hidden = true;
@@ -1019,7 +1169,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       var h = byKey[o[0]];
       var p = h && h.p_up != null ? Math.round(h.p_up * 100) + "%" : "—";
       var base = h && h.p_clim_up != null ? "基準 " + Math.round(h.p_clim_up * 100) + "%" : "基準 —";
-      return '<div class="jn"><div class="lab">' + o[1] + '收高</div><div class="val">' + p + '</div><div class="base">' + base + '</div></div>';
+      return '<div class="jn"><div class="lab">' + o[1] + '收高</div><div class="val">' + p + '</div><div class="base">' + base + '</div><div class="prob-meta">' + esc(probabilityMeta(h)) + '</div></div>';
     }).join("");
     renderHorizons(read, state);
   }
@@ -1225,7 +1375,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     if (!forces.length) { host.innerHTML = '<div class="loading">本期判讀尚無力量拆解。</div>'; return; }
     var judgmentAsOf = (read && read.as_of) || "—";
     var currentAsOf = (state && state.as_of) || "—";
-    host.innerHTML = forces.map(function (f) {
+    host.innerHTML = forces.slice(0, 4).map(function (f) {
       var editorialRows = (f.refs || []).map(function (r) {
         var saved = resolveJudgmentQuote(read, r.ref);
         var savedValue = saved && saved.val != null ? saved.val : "未保存";
@@ -1238,16 +1388,16 @@ footer.imq-foot a{color:var(--text-secondary)}
       var liveRows = (f.refs || []).map(function (r) {
         var q = resolveQuote(state, r.ref);
         return "<tr><td title=\"" + esc(r.ref) + "\">" + esc(refLabel(state, r.ref)) + "</td>" +
-          "<td class=\"num\">" + esc(q && q.val != null ? q.val : "—") + "</td>" +
-          "<td class=\"num\">" + (q && q.pctile != null ? Math.round(q.pctile) : "—") + "</td>" +
-          "<td class=\"num\">" + (q && q.chg30_pct != null ? fmtSigned(q.chg30_pct, 1) + "%" : "—") + "</td>" +
-          "<td class=\"num\">" + esc(q && q.as_of ? q.as_of : "—") + "</td></tr>";
+          "<td class=\"num\">" + esc(q && q.val != null ? q.val : q && q.num != null ? historyValue(q.num, q.unit) : "—") + "</td>" +
+          "<td class=\"num\">" + quotePctile(q) + "</td>" +
+          "<td class=\"num\">" + esc(quoteChange(q, r.ref)) + "</td>" +
+          "<td class=\"num\">" + quoteDateMeta(q, currentAsOf) + "</td></tr>";
       }).join("");
       return '<div class="card"><h3 style="font-family:\'Playfair Display\',\'Noto Serif TC\',Georgia,serif;font-size:1.02rem;margin-bottom:.5rem">' +
-        esc(f.title) + '</h3><div class="force-editorial"><strong>判讀日論證（截至 ' + esc(judgmentAsOf) + '）：</strong>' +
-        esc(f.mechanism_zh) + '</div><details><summary>查看判讀日保存數據與引用理由</summary><p class="note">「未保存」表示這一期判讀當時沒有保存證據快照；不以目前數據補填。</p><div class="tw"><table class="mt"><tr><th>指標</th><th>保存值</th><th>保存分位</th><th>保存資料日期</th><th>當時引用理由</th></tr>' +
-        editorialRows + '</table></div></details><div class="force-live-label">目前機械讀數（資料截至 ' + esc(currentAsOf) + '；不回填判讀日）</div><div class="tw"><table class="mt"><tr><th>指標</th><th>目前值</th><th>目前分位</th><th>目前 30 天變化</th><th>各指標日期</th></tr>' +
-        liveRows + '</table></div></div>';
+        esc((window.MARKET_TITLE_SUMMARIES || {})[f.title] || f.title) + '</h3><div class="force-editorial"><strong>判讀日重點（截至 ' + esc(judgmentAsOf) + '）</strong>' +
+        compactText(f.mechanism_zh, 3) + '</div><details><summary>查看判讀日保存數據與引用理由</summary><p class="note">「未保存」表示這一期判讀當時沒有保存證據快照；不以目前數據補填。</p><div class="tw"><table class="mt"><tr><th>指標</th><th>保存值</th><th>保存分位</th><th>保存資料日期</th><th>當時引用理由</th></tr>' +
+        editorialRows + '</table></div></details><details class="compact-details"><summary>目前數據與日期（截至 ' + esc(currentAsOf) + '）</summary><div class="tw"><table class="mt"><tr><th>指標</th><th>目前值</th><th>目前分位</th><th>近期變化</th><th>各指標日期</th></tr>' +
+        liveRows + '</table></div></details></div>';
     }).join("");
   }
 
@@ -1300,56 +1450,59 @@ footer.imq-foot a{color:var(--text-secondary)}
         ]);
       }
       return '<div class="card tile"><div class="lab" style="font-weight:600;color:var(--text)">' + esc(TRANSMISSION_LABEL[key]) + '</div>' +
+        quoteDateMeta({ as_of: d && d.as_of }, state && state.as_of) +
         '<div class="kv" style="margin:.6rem 0">' + rows + '</div>' + flagsHtml +
-        '<p class="note" style="margin-top:.6rem">' + esc(tmap[key] || "—") + '</p></div>';
+        '<div class="note" style="margin-top:.6rem">' + compactText(tmap[key] || "—", 3) + '</div></div>';
     }).join("");
   }
 
   // ── 部位與流量（block 5）──
-  function positioningLeft(pos) {
+  function positioningLeft(pos, state, currentAsOf) {
     var f = pos && pos.flows;
-    var rows = kvRows([
-      ["CTA（趨勢跟隨基金）翻轉距離", f && f.cta_flip_dist_pct != null ? fmtSigned(f.cta_flip_dist_pct, 1) + "%" : "—"],
-      ["CTA 下一階水位", f && f.cta_flip_level != null ? fmtNum(f.cta_flip_level, 2) : "—"],
-      ["波動控制基金下一階已實現波動", f && f.vc_next_rv != null ? fmtNum(f.vc_next_rv, 1) : "—"],
-      ["對應賣壓（十億美元）", f && f.vc_next_flow_bn != null ? fmtNum(f.vc_next_flow_bn, 1) : "—"],
-      ["月末方向", f && f.month_end_dir ? f.month_end_dir : "—"]
-    ]);
+    var specs = [["CTA（趨勢跟隨基金）翻轉距離", "flow:cta_flip_dist_pct", f && f.cta_flip_dist_pct],
+      ["CTA 下一階水位", "flow:cta_flip_level", f && f.cta_flip_level], ["波動控制基金下一階已實現波動", "flow:vc_next_rv", f && f.vc_next_rv],
+      ["對應賣壓（十億美元）", "flow:vc_next_flow_bn", f && f.vc_next_flow_bn], ["月末方向", "flow:month_end_dir", f && f.month_end_dir]];
+    var rows = specs.map(function (spec) {
+      var q = resolveQuote(state, spec[1]);
+      var value = q && q.val != null ? q.val : spec[2] == null ? "—" : spec[2];
+      return '<b>' + esc(spec[0]) + '</b><span>' + esc(value) + quoteDateMeta(q || { as_of: pos && pos.as_of }, currentAsOf) + '</span>';
+    }).join("");
     var buyback = (f && f.buyback_cov_next4) || [];
     var bbHtml = buyback.length ? '<p class="note" style="margin-top:.5rem">庫藏股靜默未來四週覆蓋率：' +
       buyback.map(function (v) { return fmtNum(v, 0) + "%"; }).join(" → ") + '</p>' : "";
-    return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">機械賣家在哪裡</div>' +
+    return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">機械買賣觸發</div>' +
       '<div class="kv" style="margin:.6rem 0">' + rows + '</div>' + bbHtml + '</div>';
   }
-  function positioningMid(pos) {
+  function positioningMid(pos, state, currentAsOf) {
     var list = (pos && pos.cot_extremes) || [];
     var rowsHtml = list.length ? list.map(function (c) {
-      return "<tr><td title=\"" + esc(c.market) + "\">" + esc(COT_MARKET_ZH[c.market] || c.market) + "</td><td class=\"num\">" + fmtSigned(c.net_pct_oi, 1) + "%</td>" +
+      var q = resolveQuote(state, "cot:" + c.market);
+      return "<tr><td title=\"" + esc(c.market) + "\">" + esc(COT_MARKET_ZH[c.market] || c.market) + quoteDateMeta(q, currentAsOf) + "</td><td class=\"num\">" + fmtSigned(c.net_pct_oi, 1) + "%</td>" +
         "<td class=\"num\">" + fmtNum(c.pctile_3y, 0) + "</td><td>" + esc(COT_SIDE_ZH[c.side] || c.side || "") + "</td></tr>";
     }).join("") : "<tr><td colspan=\"4\" class=\"loading\">尚無 COT 極端部位。</td></tr>";
     return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">COT（期貨持倉報告）部位極端表</div>' +
       '<div class="tw"><table class="mt" style="margin-top:.5rem"><tr><th>市場</th><th>淨部位（未平倉量%）</th><th>三年分位</th><th>方向</th></tr>' + rowsHtml + '</table></div></div>';
   }
-  function positioningRight(pos) {
+  function positioningRight(pos, state, currentAsOf) {
     var vm = pos && pos.vol_mispricing;
-    var rows = kvRows([
-      ["VIX", vm && vm.vix != null ? fmtNum(vm.vix, 1) : "—"],
-      ["VIX9D", vm && vm.vix9d != null ? fmtNum(vm.vix9d, 1) : "—"],
-      ["VIX3M", vm && vm.vix3m != null ? fmtNum(vm.vix3m, 1) : "—"],
-      ["MOVE 債市波動（分位）", vm && vm.move != null ? fmtNum(vm.move, 0) + "（" + (vm.move_pctile != null ? Math.round(vm.move_pctile) : "—") + "）" : "—"],
-      ["OVX（油價波動指數）", vm && vm.ovx != null ? fmtNum(vm.ovx, 1) : "—"],
-      ["NAAIM（主動經理人曝險調查）", pos && pos.naaim != null ? fmtNum(pos.naaim, 0) : "—"],
-      ["個股賣權比", valPctile(pos && pos.pc_equity, 2)],
-      ["VRP 波動風險溢酬（20 日）", valZ(pos && pos.vrp_20d, 1)],
-      ["空頭覆蓋率", pos && pos.short_vol_ratio != null ? fmtNum(pos.short_vol_ratio, 2) : "—"]
-    ]);
+    var specs = [["VIX", "monitor:vix", vm && vm.vix], ["VIX9D", "monitor:vix9d", vm && vm.vix9d],
+      ["VIX3M", "internals:vix3m", vm && vm.vix3m], ["MOVE 債市波動", "monitor:move", vm && vm.move],
+      ["OVX（油價波動指數）", "internals:ovx", vm && vm.ovx], ["NAAIM（主動經理人曝險調查）", "internals:naaim", pos && pos.naaim],
+      ["個股賣權比", "internals:pc_equity", pos && pos.pc_equity], ["VRP 波動風險溢酬（20 日）", "internals:vrp_20d", pos && pos.vrp_20d],
+      ["空頭覆蓋率", "internals:short_vol_ratio", pos && pos.short_vol_ratio]];
+    var rows = specs.map(function (spec) {
+      var q = resolveQuote(state, spec[1]);
+      var value = q && q.val != null ? q.val : typeof spec[2] === "object" ? (spec[2].val == null ? "—" : spec[2].val) : spec[2] == null ? "—" : fmtNum(spec[2], 1);
+      return '<b>' + esc(spec[0]) + '</b><span>' + esc(value) + quoteDateMeta(q || { as_of: pos && pos.as_of }, currentAsOf) + '</span>';
+    }).join("");
     return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">波動錯價</div>' +
       '<div class="kv" style="margin:.6rem 0">' + rows + '</div></div>';
   }
   function renderPositioning(read, state) {
     var pos = (state && state.evidence && state.evidence.positioning) || null;
-    $("#positioningGrid").innerHTML = positioningLeft(pos) + positioningMid(pos) + positioningRight(pos);
-    $("#positioningJudgment").textContent = (read && read.positioning_zh) || "—";
+    var currentAsOf = state && state.as_of;
+    $("#positioningGrid").innerHTML = positioningLeft(pos, state, currentAsOf) + positioningMid(pos, state, currentAsOf) + positioningRight(pos, state, currentAsOf);
+    $("#positioningJudgment").innerHTML = compactText((read && read.positioning_zh) || "—", 3);
   }
 
   // ── 歷史類比（block 6）──
@@ -1391,9 +1544,9 @@ footer.imq-foot a{color:var(--text-secondary)}
       var refs = publicRefLabels(state, s.refs);
       return '<div class="card scenario-card"><h3>' + esc(s.name_zh || "未命名情境") + '</h3>' +
         '<div class="scenario-horizon">期限：' + esc(s.horizon || "—") + '</div>' +
-        '<p class="scenario-field"><strong>成立條件：</strong>' + esc(s.conditions_zh || "—") + '</p>' +
-        '<p class="scenario-field"><strong>改判條件：</strong>' + esc(s.falsifiers_zh || "—") + '</p>' +
-        '<p class="scenario-field"><strong>跨資產含義：</strong>' + esc(s.asset_implications_zh || "—") + '</p>' +
+        '<div class="scenario-field"><strong>成立條件</strong>' + compactText(s.conditions_zh || "—", 3) + '</div>' +
+        '<div class="scenario-field"><strong>改判條件</strong>' + compactText(s.falsifiers_zh || "—", 3) + '</div>' +
+        '<div class="scenario-field"><strong>跨資產含義</strong>' + compactText(s.asset_implications_zh || "—", 3) + '</div>' +
         (refs ? '<p class="note">核對指標：' + esc(refs) + '</p>' : '') + '</div>';
     }).join("");
   }
@@ -1421,14 +1574,19 @@ footer.imq-foot a{color:var(--text-secondary)}
           curDisplay = (field === "num" && q.val != null) ? q.val : (fmtSigned(cur, 1) + (field === "chg30_pct" ? "%" : ""));
         }
         var dist = distancePct(cur, f.threshold);
+        var distText = dist != null ? fmtSigned(dist, 1) + "%（相對）" : "—";
+        if (field === "num" && cur != null && q && /^(pct|percent|pp|percentage_points)$/.test(q.unit || "")) {
+          var gap = f.threshold - cur;
+          distText = /^monitor:/.test(f.ref) ? fmtSigned(gap * 100, 1) + " bp" : fmtSigned(gap, 2) + " 個百分點";
+        }
         var dir = FALSIFIER_DIR_LABEL[f.direction] || ["neutral", f.direction || "—"];
         var claim = f.claim_id ? councilById[f.claim_id] : null;
         html += "<tr><td><span class=\"chip " + dir[0] + "\">" + dir[1] + "</span></td>" +
           "<td title=\"" + esc(f.ref) + "\">" + esc(f.label) + "</td>" +
-          "<td class=\"num\">" + esc(curDisplay) + "</td>" +
+          "<td class=\"num\">" + esc(curDisplay) + quoteDateMeta(q, state.as_of) + "</td>" +
           "<td class=\"num\">" + esc(f.op || "") + " " + esc(f.threshold) + esc(f.unit || "") + "</td>" +
-          "<td class=\"num\">" + (dist != null ? fmtSigned(dist, 1) + "%" : "—") + "</td>" +
-          "<td>" + esc(f.read_zh) + "</td>" +
+          "<td class=\"num\">" + esc(distText) + "</td>" +
+          "<td>" + compactText(f.read_zh, 3) + "</td>" +
           "<td class=\"num\">" + (claim && claim.p != null ? Math.round(claim.p * 100) + "%" : "—") + "</td></tr>";
       });
     }
@@ -1444,7 +1602,7 @@ footer.imq-foot a{color:var(--text-secondary)}
         html += "<tr><td>" + esc(d.claim) + "</td>" +
           "<td class=\"num\">" + (d.table_p != null ? Math.round(d.table_p * 100) + "%" : "—") + "</td>" +
           "<td class=\"num\">" + (d.my_p != null ? Math.round(d.my_p * 100) + "%" : "—") + "</td>" +
-          "<td>" + esc(d.why) + "</td></tr>";
+          "<td>" + compactText(d.why, 3) + "</td></tr>";
       });
     }
     $("#deviationsTable").innerHTML = html;
@@ -1643,28 +1801,22 @@ footer.imq-foot a{color:var(--text-secondary)}
   function renderFuses(list) {
     list = list || [];
     if (!list.length) { $("#fuses").innerHTML = '<div class="loading">尚無引信資料。</div>'; return; }
-    var rows = list.slice().sort(function (a, b) { return a.dist_pct - b.dist_pct; });
-    var W = 660, L = 190, R = W - 70, rh = 26, H = rows.length * rh + 30;
-    var max = Math.max(45, Math.ceil(Math.max.apply(null, rows.map(function (r) { return r.dist_pct; })) / 10) * 10);
-    var x = function (v) { return L + (R - L) * (v / max); };
-    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block">';
-    var step = max / 4;
-    for (var v = 0; v <= max + .01; v += step) {
-      s += '<line class="gridline" x1="' + x(v) + '" y1="6" x2="' + x(v) + '" y2="' + (H - 22) + '"/>' +
-        '<text x="' + x(v) + '" y="' + (H - 6) + '" text-anchor="middle">' + Math.round(v) + '%</text>';
-    }
-    rows.forEach(function (r, i) {
-      var y = 12 + i * rh;
-      var label = r.metric || r.theme || "";
-      s += '<text class="lab" x="' + (L - 10) + '" y="' + (y + 5) + '" text-anchor="end">' + esc(label) + '</text>';
-      s += '<rect class="bar" x="' + x(0) + '" y="' + (y - 6) + '" width="' + (x(r.dist_pct) - x(0)) +
-        '" height="12" rx="4"><title>' + esc(label) + '：現值 ' + esc(r.now) + '，門檻 ' + esc(r.threshold) +
-        '，距門檻 ' + r.dist_pct + '%</title></rect>';
-      s += '<text x="' + (x(r.dist_pct) + 6) + '" y="' + (y + 4) + '">' + r.dist_pct + '%</text>';
-      if (r.p != null) s += '<text x="' + (R + 12) + '" y="' + (y + 4) + '" style="fill:var(--s1);font-weight:600">p ' + Math.round(r.p * 100) + '%</text>';
+    var rows = list.slice().sort(function (a, b) {
+      var av = a.distance_abs != null ? Math.abs(a.distance_abs) : Math.abs(a.dist_pct == null ? Infinity : a.dist_pct);
+      var bv = b.distance_abs != null ? Math.abs(b.distance_abs) : Math.abs(b.dist_pct == null ? Infinity : b.dist_pct);
+      return av - bv;
     });
-    s += '</svg>';
-    $("#fuses").innerHTML = s;
+    var html = '<div class="tw"><table class="mt"><tr><th>引信</th><th>現值</th><th>門檻</th><th>距離</th><th>期限機率</th></tr>';
+    rows.forEach(function (r) {
+      var label = r.metric || r.theme || "";
+      var distance = r.distance_abs != null
+        ? fmtSigned(r.distance_abs, 2) + historyUnit(r.change_unit)
+        : r.dist_pct != null ? fmtSigned(r.dist_pct, 1) + "%（相對距離）" : "—";
+      html += '<tr><td>' + esc(label) + '<span class="quote-meta">資料 ' + esc(r.as_of || "日期未知") + '</span></td>' +
+        '<td class="num">' + esc(r.now == null ? "—" : r.now) + '</td><td class="num">' + esc(r.threshold == null ? "—" : r.threshold) +
+        '</td><td class="num">' + esc(distance) + '</td><td class="num">' + (r.p != null ? Math.round(r.p * 100) + "%" : "—") + '</td></tr>';
+    });
+    $("#fuses").innerHTML = html + '</table></div>';
   }
 
   var ANOM_SEV_CLASS = { crit: "crit", warn: "warn" };
@@ -1872,12 +2024,135 @@ footer.imq-foot a{color:var(--text-secondary)}
     $("#loadFail").hidden = false;
     $("#page-body").hidden = true;
   }
-  function renderMarket(data, read, history, periods) {
+  function foldSection(id) {
+    var section = document.getElementById(id);
+    if (!section || section.querySelector(":scope > .section-fold")) return;
+    var title = section.querySelector(":scope > h2");
+    if (!title) {
+      var labels = { "sec-models": "模型議會與條件流量", "sec-signals": "引信與異常",
+        "sec-scoreboard": "模型記分與資料新鮮度", "sec-thesis": "機械讀法與核對資料" };
+      if (!labels[id]) return;
+      title = document.createElement("h2");
+      title.textContent = labels[id];
+    }
+    var details = document.createElement("details");
+    details.className = "section-fold";
+    var summary = document.createElement("summary");
+    summary.appendChild(title);
+    details.appendChild(summary);
+    while (section.firstChild) details.appendChild(section.firstChild);
+    section.appendChild(details);
+  }
+  function arrangePage() {
+    var page = $("#page-body");
+    ["sec-judgment", "sec-global", "sec-scenarios", "sec-falsifiers", "sec-history", "sec-source-history",
+      "sec-forces", "sec-transmission", "sec-positioning", "sec-analogs", "sec-judgment-score", "sec-evidence",
+      "sec-thesis", "sec-env", "sec-models", "sec-signals", "sec-triggers", "sec-scoreboard", "sec-exposure"].forEach(function (id) {
+      var node = document.getElementById(id);
+      if (node) page.appendChild(node);
+    });
+    page.appendChild($("#marketDisclaimer"));
+    ["sec-history", "sec-source-history", "sec-analogs", "sec-judgment-score", "sec-thesis", "sec-env", "sec-models",
+      "sec-signals", "sec-triggers", "sec-scoreboard", "sec-exposure"].forEach(foldSection);
+  }
+  function historyUnit(unit) {
+    return { percent: "%", percentage_points: " 個百分點", pp: " 個百分點", bp: " bp",
+      USD_per_EUR: " 美元／歐元", index: " 點", index_2006_100: " 點（2006＝100）", index_1997_100: " 點（1997＝100）", USD: " 美元", TWD: " 元" }[unit] || (unit ? " " + unit : "（單位未知）");
+  }
+  function historyValue(value, unit) {
+    if (value == null) return "—";
+    if (unit === "TWD" && Math.abs(value) >= 1e8) return fmtNum(value / 1e8, 1) + " 億元";
+    return Number(value).toLocaleString("en-US", {maximumFractionDigits:2}) + historyUnit(unit);
+  }
+  function historyChange(change, unit) {
+    if (!change || change.status !== "ok") return "此期間無可比資料";
+    if (change.change_unit === "return_pct") return fmtSigned(change.return_pct, 1) + "%";
+    if (change.change_unit === "pp") return fmtSigned(change.delta, 2) + " 個百分點（" + fmtSigned(change.bp, 0) + " bp）";
+    return fmtSigned(change.delta, 2) + historyUnit(unit);
+  }
+  function sparkline(rows) {
+    rows = (rows || []).filter(function (r) { return r && isFinite(Number(r.value)); });
+    if (rows.length < 2) return "";
+    var values = rows.map(function (r) { return Number(r.value); });
+    var lo = Math.min.apply(null, values), hi = Math.max.apply(null, values), span = hi - lo || 1;
+    var firstTime = Date.parse(rows[0].date), timeSpan = Date.parse(rows[rows.length - 1].date) - firstTime;
+    var pts = rows.map(function (r, i) { return ((timeSpan > 0 ? (Date.parse(r.date) - firstTime) / timeSpan : i / (rows.length - 1)) * 100).toFixed(1) + "," + (66 - (Number(r.value) - lo) / span * 58).toFixed(1); }).join(" ");
+    return '<svg class="spark" viewBox="0 0 100 72" preserveAspectRatio="none" aria-label="歷史走勢"><polyline points="' + pts + '" fill="none" stroke="var(--s1)" stroke-width="1.8" vector-effect="non-scaling-stroke"/></svg>';
+  }
+  function renderHistoryContext(context) {
+    var section = $("#sec-global");
+    if (!context || context.schema !== "market-history-context-v1") { section.hidden = true; return; }
+    section.hidden = false;
+    var regions = (context.regions || []).filter(function (region) { return region.observations && region.observations.length; });
+    $("#regionGrid").innerHTML = regions.map(function (region) {
+      var rows = region.observations.filter(function (row) {
+        return row.ref !== "monitor:twii" || !region.observations.some(function (q) { return q.ref === "source:twse_taiex_history"; });
+      }).map(function (row) {
+        var link = safeSourceUrl(row.source_url, "") ? '<a href="' + esc(row.source_url) + '" target="_blank" rel="noopener">' + esc(row.label) + '</a>' : esc(row.label);
+        var movement = row.chg30_pct == null ? "" : '<span class="quote-meta">' + (row.ref.indexOf("monitor:") === 0 ? "近 30 筆 " : "30 日 ") + esc(fmtSigned(row.chg30_pct, 1)) + '%</span>';
+        return '<div class="region-observation"><b>' + link + '</b><span>' + esc(row.display || historyValue(row.value, row.unit)) + '</span>' + quoteDateMeta(row, context.as_of) + movement + '</div>';
+      }).join("");
+      return '<div class="card region-card"><h3>' + esc(region.label) + '</h3>' + rows + '</div>';
+    }).join("");
+
+    var priorityTerms = ["sp500", "taiex", "treasury_10y", "cpi", "dollar", "tankan"];
+    var series = (context.series || []).filter(function (item) { return item.chart && item.chart.length > 1 && item.coverage && item.coverage.long_history; });
+    series.sort(function (a, b) {
+      function rank(item) {
+        var id = String(item.id || "").toLowerCase();
+        var found = priorityTerms.findIndex(function (term) { return id.indexOf(term) >= 0; });
+        return found < 0 ? priorityTerms.length : found;
+      }
+      return rank(a) - rank(b) || String(a.label || a.id).localeCompare(String(b.label || b.id), "zh-Hant");
+    });
+    var card = $("#historySeriesCard"), seriesSelect = $("#historySeriesSelect"), windowSelect = $("#historyWindowSelect");
+    card.hidden = !series.length;
+    if (series.length) {
+      seriesSelect.innerHTML = series.map(function (item, index) { return '<option value="' + index + '">' + esc(item.label + (item.transform === "yoy" ? "｜年增率" : "")) + '</option>'; }).join("");
+      function comparisonLabel(change, fallback) {
+        return { mom: "月對月", qoq: "季對季", yoy: "年對年", window: fallback }[change && change.comparison] || fallback;
+      }
+      function setWindows(item) {
+        var available = (context.windows || []).filter(function (w) { return item.changes && item.changes[w.id] && item.changes[w.id].status === "ok"; });
+        windowSelect.innerHTML = available.map(function (w) {
+          var label = comparisonLabel(item.changes[w.id], w.label);
+          return '<option value="' + esc(w.id) + '"' + (w.id === "30d" ? " selected" : "") + '>' + esc(label) + '</option>';
+        }).join("");
+        windowSelect.disabled = !available.length;
+      }
+      function showSeries() {
+        var item = series[Number(seriesSelect.value) || 0], change = (item.changes || {})[windowSelect.value];
+        var actual = change && change.actual_start && change.actual_end ? change.actual_start + " 至 " + change.actual_end : "沒有實際可比跨度";
+        $("#historySeriesView").innerHTML = '<strong>' + esc(item.label + (item.transform === "yoy" ? "｜年增率" : "")) + '</strong><span class="quote-meta">' + esc({daily:"日資料",weekly:"週資料",monthly:"月資料",quarterly:"季資料",annual:"年資料"}[item.frequency] || "頻率未知") + ' · ' + esc({latest_revised:"依最新修訂值",point_in_time:"已保存當時版本",filing_versions:"歷次申報版本",rolling_history:"已保存觀測歷史"}[item.data_mode] || "修訂模式未知") + ' · 全圖 ' + esc(item.coverage.first_date) + ' 至 ' + esc(item.coverage.last_date) + '</span>' + sparkline(item.chart) + '<div class="history-change">' + esc(historyChange(change, item.unit)) + '</div><p class="note">實際比較：' + esc(actual) + '。最新值 ' + esc(historyValue(item.latest.value, item.unit)) + '，資料日期 ' + esc(item.latest.date) + '。</p>';
+      }
+      seriesSelect.onchange = function () { setWindows(series[Number(seriesSelect.value) || 0]); showSeries(); };
+      windowSelect.onchange = showSeries; setWindows(series[0]); showSeries();
+    }
+    $("#globalTransmission").innerHTML = (context.transmission || []).slice(0, 4).map(function (item) {
+      return '<div class="card"><h3>' + esc(item.title) + '</h3><ul class="summary-list"><li>' + esc(item.condition) + '</li><li>' + esc(item.mechanism) + '</li></ul><p class="note">證據：' + esc((item.evidence_refs || []).map(function (ref) { var found = (context.series || []).find(function (v) { return v.source_ref === ref; }); return found ? found.label : ref; }).join("、") || "未提供") + '</p></div>';
+    }).join("");
+    var limits = [];
+    if (context.replay && context.replay.note) limits.push(context.replay.note);
+    (context.regions || []).forEach(function (region) {
+      (region.data_gaps || []).forEach(function (gap) { limits.push(region.label + "：" + gap); });
+    });
+    (context.missing_sources || []).forEach(function (item) { limits.push(item.impact + " " + item.substitute_limit); });
+    (context.data_gaps || []).forEach(function (gap) { limits.push(gap); });
+    $("#historyLimits").hidden = !limits.length;
+    $("#historyLimitsBody").innerHTML = limits.length ? '<ul class="summary-list">' + limits.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>' : "";
+  }
+  function renderMarket(data, read, history, periods, historyContext) {
     $("#asof").textContent = "目前市場資料截至：" + esc(data.as_of || "—") +
       (data.generated_at ? "　·　資料產生於 " + twStamp(data.generated_at) : "");
     $("#page-body").hidden = false;
 
     var rz = data.read_zh || {};
+    var headline = read && read.thesis_zh || rz.headline || "今日無合成判讀。";
+    $("#heroConclusion").textContent = concisePoints(headline, 1)[0] || headline;
+    var focus = [];
+    if (read && read.vs_prior_zh) focus.push("最新變化：" + (concisePoints(read.vs_prior_zh, 1)[0] || read.vs_prior_zh));
+    if (read && read.falsifiers && read.falsifiers[0]) focus.push("改判：" + (read.falsifiers[0].label || read.falsifiers[0].read_zh));
+    $("#heroFocus").textContent = focus.length ? focus.slice(0, 2).join("　·　") : "現況、最新變化、改判條件。";
     $("#thesisHeadline").textContent = rz.headline || "今日無合成判讀。";
     $("#thesisBullets").innerHTML = (rz.bullets || []).map(function (b) { return "<li>" + esc(b) + "</li>"; }).join("");
 
@@ -1896,6 +2171,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     renderKelly(data.kelly_rule);
     renderJudgmentScore(data);
     renderSourceResearch(data.source_research);
+    renderHistoryContext(historyContext);
 
     var usableRead = read && read.as_of ? read : null;
     renderJudgment(usableRead, data);
@@ -1973,11 +2249,12 @@ footer.imq-foot a{color:var(--text-secondary)}
         throw new Error("invalid bundle");
       }
       renderRefreshStatus(nested);
-      renderMarket(bundle.state, bundle.read, bundle.history, bundle.periods);
+      renderMarket(bundle.state, bundle.read, bundle.history, bundle.periods, bundle.history_context);
     }).catch(function () {
       showLoadFailure("自動更新資料包載入失敗；為避免混用不同日期的資料，本頁保留等待下一次成功更新。");
     });
   }
+  arrangePage();
   fetch("data/refresh.json").then(function (r) {
     if (r.status === 404) return null;
     if (!r.ok) throw new Error("refresh.json HTTP " + r.status);

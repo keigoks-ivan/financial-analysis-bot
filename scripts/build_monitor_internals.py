@@ -593,7 +593,9 @@ def realized_vol_20d(pts: list) -> list:
 
 
 def yoy_series(pts: list) -> list:
-    """月頻 series 的 12 期 YoY（%）。"""
+    """月頻 series 的 12 期 YoY（%）。需要當期加 12 個月前共 13 點。"""
+    # 2026-09-13：明示 13 點輸入契約，避免 producer 只取 12 個月資料後把
+    # 最舊／最新誤當 YoY；公式仍是同月相隔 12 期。
     out = []
     for i in range(12, len(pts)):
         d, v = pts[i]
@@ -972,6 +974,18 @@ def fmt_val(v, spec) -> str:
     if u == "k":
         return f"{v:,.0f}K"
     return f"{spec['prefix']}{v:,.{spec['dp']}f}"
+
+
+def level_unit(key, spec):
+    """2026-09-13：將統計算法 unit 轉成現值實際單位。"""
+    exact = {"spy_dvol_z": "USD_bn", "qqq_dvol_z": "USD_bn",
+             "spx_opt_vol": "million_contracts", "qqew_qqq": "ratio",
+             "vix_vix3m": "ratio", "ipo_spy": "ratio", "short_vol_ratio": "ratio",
+             "pc_total": "ratio", "pc_index": "ratio", "pc_equity": "ratio",
+             "pc_vix": "ratio", "sahm": "percentage_points", "vrp_20d": "vol_points",
+             "vix1d_vix": "vol_points", "vxn_vix": "vol_points"}
+    return exact.get(key, {"pp": "pct", "bps": "pct", "k": "thousand_persons",
+                           "abs": "index", "pct": "index"}.get(spec["unit"], spec["unit"]))
 
 
 def fmt_chg(chg, unit, dp=2) -> str:
@@ -1423,7 +1437,12 @@ def main() -> int:
             if sp["cat"] != cat_key or key not in items:
                 continue
             it = items[key]
-            rows.append({"key": key, "label": sp["label"], "unit": sp["unit"],
+            rows.append({"key": key, "label": sp["label"], "unit": level_unit(key, sp),
+                         "source_id": key,
+                         "pctile_window": ("252_observations" if sp["freq"] == "d" else
+                                            "52_observations" if sp["freq"] == "w" else "12_observations"),
+                         "frequency": {"d": "daily", "w": "weekly", "m": "monthly"}[sp["freq"]],
+                         "status": "stale" if it["stale"] else "ok",
                          "val": it["val_fmt"], "chg": it["chg_fmt"], "dir": it["dir"],
                          "z": it["z"], "pctile": it["pctile"],
                          "p20": it["p20"], "p60": it["p60"],

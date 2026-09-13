@@ -26,6 +26,8 @@ import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+from market_history import compare_observations
+
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_REGISTRY = ROOT / "data/market_source_registry.json"
 PROVIDERS = {
@@ -354,15 +356,10 @@ def summarize_series(spec, stored, status, end):
     if stale and summary["status"] == "ok":
         summary["status"] = "stale"
         summary["reason"] = "最新可得觀測期偏舊，請核對來源發布日曆"
-    tolerance = {"daily": 7, "weekly": 14, "monthly": 45, "quarterly": 100, "annual": 400}[spec["frequency"]]
+    # 2026-09-13：月／季資料按年月對齊，不把上月資料當成七日變化。
     for days in (7, 30, 90, 365):
-        target = parse_date(latest["date"]) - timedelta(days=days)
-        eligible = [r for r in rows if target - timedelta(days=tolerance) <= parse_date(r["date"]) <= target]
-        baseline = eligible[-1] if eligible else None
-        row = {"days": days, "requested_start": target.isoformat(), "actual_start": baseline["date"] if baseline else None,
-               "current_date": latest["date"], "status": "ok" if baseline else "insufficient_history"}
-        if baseline:
-            row.update({"before": baseline["value"], "current": latest["value"], "delta": latest["value"] - baseline["value"]})
+        row = compare_observations(rows, spec["frequency"], spec["unit"], days)
+        row.update({"days": days, "current_date": latest["date"]})
         summary["periods"].append(row)
     window_rows = [r for r in rows if parse_date(r["date"]) >= end - timedelta(days=3653)]
     window = [r["value"] for r in window_rows]

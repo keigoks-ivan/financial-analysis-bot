@@ -17,6 +17,12 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 import market_refresh as refresh  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def isolated_source_history(tmp_path, monkeypatch):
+    # 2026-09-13：合成測試不能讀取工作目錄的正式市場觀測史。
+    monkeypatch.setattr(refresh, "SOURCE_DIR", tmp_path / "sources" / "series")
+
+
 def _state(as_of="2026-09-13", value=100.0, council_summary="穩定"):
     """最小可保存 state；每筆 quote 同時帶驗證所需數值與日期。"""
     return {
@@ -364,3 +370,34 @@ def test_same_quotes_with_new_metadata_is_not_a_new_evidence_version(tmp_path):
     changed = mr.make_snapshot({**state, "evidence": {"quotes": {"monitor:sp500": {**quotes["monitor:sp500"], "num": 101.0}}}}, {})
     assert not mr.evidence_unchanged(changed, read)
     assert mr.make_release(changed, read, {}, [], "now", [], [], accepted=False)[0]["status"] == "needs_review"
+
+
+def test_history_revision_republishes_without_changing_snapshot_or_analysis(tmp_path, monkeypatch):
+    # 2026-09-13：歷史補回也要上站，同日重跑不製造版本或刷新判讀核准時間。
+    data_dir = tmp_path / "data"
+    snapshot = _snapshot()
+    read = {"snapshot_id": snapshot["snapshot_id"], "as_of": "2026-09-13"}
+    context = {"schema": "market-history-context-v1", "series": []}
+    monkeypatch.setattr(refresh, "build_history_context", lambda *args: copy.deepcopy(context))
+    first = refresh.publish(data_dir, snapshot, read, [], "first", [], [], accepted=True)
+    same = refresh.publish(data_dir, snapshot, read, [], "second", [], [])
+    assert same == first
+    context["series"].append({"id": "history_added"})
+    revised = refresh.publish(data_dir, snapshot, read, [], "third", [], [])
+    assert revised["bundle"] != first["bundle"]
+    assert revised["snapshot_id"] == first["snapshot_id"]
+    assert revised["last_data_success_at"] == "third"
+    assert revised["last_analysis_success_at"] == "first"
+    assert revised["last_success_at"] == "first"
+    assert refresh.read_json(data_dir / "read.json") == read
+    request = refresh.prepare(snapshot, read, data_dir, tmp_path / "work", date(2026, 9, 13))
+    assert request["history_context"] == context
+    assert request["run_analysis"] is False
+
+
+def test_failed_data_build_keeps_last_success_clocks():
+    prior = {"last_data_success_at": "data-ok", "last_success_at": "legacy-analysis-ok"}
+    result, _ = refresh.make_release(_snapshot(), {}, prior, [], "failed-now", ["失敗"], [])
+    assert result["status"] == "blocked"
+    assert result["last_data_success_at"] == "data-ok"
+    assert result["last_analysis_success_at"] == "legacy-analysis-ok"
