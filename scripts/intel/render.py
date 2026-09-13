@@ -1791,7 +1791,8 @@ def load_status_snapshot() -> dict:
     out["_detective"] = det
 
     reg = load_json_safe(REGIME_LATEST_FILE) or {}
-    out["regime_label"] = (reg.get("composite") or {}).get("label_zh") or DASH
+    # 2026-09-13：首頁摘要不再轉載歷史 composite。
+    out["regime_label"] = "六軸觀測與市場判讀" if reg.get("schema") == "regime-observations-v2" else DASH
 
     clock = load_json_safe(MACRO_CLOCK_FILE) or {}
     out["clock_quadrant"] = clock.get("quadrant") or DASH
@@ -2100,6 +2101,11 @@ def render_official_sources(data: dict) -> str:
 def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: bool,
                     badges: dict = None) -> str:
     gauges = payload.get("gauges") or []
+    # 2026-09-13：首頁不轉載舊摘要中的 regime 標籤；封存頁保留當時原文。
+    shared_regime = not is_archive and (load_json_safe(REGIME_LATEST_FILE) or {}).get("schema") == "regime-observations-v2"
+    if shared_regime:
+        gauges = [dict(g, value="六軸觀測", metric="判讀見市況主控台", status="green", pctile=None, chg=None)
+                  if g.get("category") == "regime" else g for g in gauges]
     flags = payload.get("flags") or []
     brief_zh = payload.get("brief_zh") or []
     cards = payload.get("cards") or []
@@ -2201,7 +2207,10 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     p.append(h2("市場早報", "Brief"))
     p.append('<div class="sheet"><div class="main">')
     p.append(render_brief(brief_zh))
-    p.append(render_site_read(payload.get("site_read_zh")))
+    if shared_regime:
+        p.append('<p class="note"><a href="/regime/">最新六軸觀測 →</a> · <a href="/market/">站內監測判讀、未來情境與證偽條件 →</a>（共用已審查市場版本）</p>')
+    else:
+        p.append(render_site_read(payload.get("site_read_zh")))
     p.append("</div>")
     p.append('<aside class="side">')
     p.append(render_focus(main))
@@ -2415,39 +2424,28 @@ def render_weekly_regime() -> str:
             _weekly_section_head("大類資產環境", "Regime", None)
             + '<div class="empty">今日尚無資料，見 <a href="/regime/">/regime/</a>。</div>'
         )
+    # 2026-09-13：週更區只列有日期的機械觀測；綜合判讀共用市場發布包。
     meta = d.get("meta") or {}
-    as_of = meta.get("publish_date") or (d.get("generated_at") or "")[:10]
-    parts = [_weekly_section_head("大類資產環境", "Regime", as_of)]
-
-    comp = d.get("composite") or {}
-    label_zh = comp.get("label_zh") or DASH
-    label_en = comp.get("label_en") or ""
-    parts.append(
-        '<div style="margin:2px 0 10px">'
-        f'<div style="font-size:19px;font-weight:700;color:var(--ink)">{esc(label_zh)}</div>'
-        + (f'<div class="note" style="margin-top:2px">{esc(label_en)}</div>' if label_en else "")
-        + "</div>"
-    )
-
-    axes = d.get("axes") or []
-    if axes:
-        rows = "".join(
-            "<tr>"
-            f'<td>{esc(a.get("name")) or DASH}</td>'
-            f'<td>{esc((a.get("reading") or "")[:90]) or DASH}</td>'
-            f'<td><span class="pill">{esc(a.get("pill")) or DASH}</span></td>'
-            "</tr>"
-            for a in axes
-        )
-        parts.append(
-            '<div class="twrap"><table class="t"><thead><tr>'
-            "<th>維度</th><th>現值</th><th>訊號</th>"
-            "</tr></thead><tbody>" + rows + "</tbody></table></div>"
-        )
-    else:
-        parts.append('<div class="empty">今日無維度資料。</div>')
-
-    parts.append('<p class="note"><a href="/regime/">完整互動頁 →</a></p>')
+    parts = [_weekly_section_head("大類資產環境", "Regime", meta.get("data_as_of"))]
+    parts.append('<p class="note">週度觀測；<a href="/regime/">最新六軸觀測與市場判讀 →</a></p>')
+    rows = []
+    formula = {"copper_gold": "HG=F／GC=F", "small_large": "IWM／SPY", "hy_ig": "HYG／LQD"}
+    for r in d.get("growth_defense_ratios") or []:
+        m = r.get("mechanical") or {}
+        value = f"{m['value']:.6f}" if m.get("value") is not None else DASH
+        rows.append('<tr>' + f'<td>{esc(r.get("name"))}（{esc(formula.get(r.get("key"))) }）</td>'
+                    + f'<td class="num">{value}</td><td>{esc(m.get("as_of")) or DASH}</td></tr>')
+    if rows:
+        parts.append('<div class="twrap"><table class="t"><thead><tr><th>價格比代理</th><th>比率</th><th>週線標記日</th></tr></thead><tbody>'
+                     + ''.join(rows) + '</tbody></table></div>')
+    rows = []
+    for c in d.get("cot_percentile_5y") or []:
+        rows.append('<tr>' + f'<td>{esc(c.get("market"))}</td><td>{esc(c.get("net"))}</td>'
+                    + f'<td class="num">{esc(fmt_num(c.get("pctile_5y")))}</td><td>{esc(c.get("as_of")) or DASH}</td></tr>')
+    if rows:
+        parts.append('<div class="twrap"><table class="t"><thead><tr><th>COT 市場</th><th>淨部位</th><th>5 年分位</th><th>觀測日</th></tr></thead><tbody>'
+                     + ''.join(rows) + '</tbody></table></div>')
+    parts.append('<p class="note">週線標記可能為週初或週末，並非確定收盤日。HYG／LQD 是 ETF 價格比，並非 HY OAS 信用利差。</p>')
     return "".join(parts)
 
 

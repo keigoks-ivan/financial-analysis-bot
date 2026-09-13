@@ -295,22 +295,15 @@ def build_environment(regime_data, macro_clock_data, detective_data, monitor_dat
     # 1) regime
     if regime_data is None:
         gaps.append("regime latest.json 缺檔，environment.regime 記為空")
-    comp = (regime_data or {}).get("composite") or {}
-    label_zh = comp.get("label_zh") or ""
-    parts = label_zh.split(" · ", 1)
-    first = parts[0] if parts else None
-    second = parts[1] if len(parts) > 1 else ""
-    pos = comp.get("pos_0to1")
-    regime_as_of = ((regime_data or {}).get("meta") or {}).get("publish_date")
-    stale, _st = classify_stale(regime_as_of, today, "regime")
-    tone = "neutral"
-    if pos is not None and bands:
-        tone = BAND_TONE.get(classify_band(pos * 100, bands), "neutral")
+    # 2026-09-13：環境卡呈現週度觀測，7 月定性評分不再冒充最新現況。
+    regime_meta = (regime_data or {}).get("meta") or {}
+    regime_as_of = regime_meta.get("data_as_of")
+    stale, _st = classify_stale(regime_as_of, today, "weekly")
     tiles.append({
         "key": "regime", "label": "大類資產環境（regime）",
-        "value": first,
-        "sub": (f"{second} · 六軸定性 {pos:.2f}" if pos is not None else (second or None)),
-        "as_of": regime_as_of, "cadence": cadence_label("regime"), "stale": stale, "tone": tone,
+        "value": "跨資產週度觀測" if regime_as_of else "跨資產資料待更新",
+        "sub": f"COT {regime_meta.get('cot_as_of') or '缺資料'} · 比率週線 {regime_meta.get('ratio_as_of') or '缺資料'} · 判讀見市場研究",
+        "as_of": regime_as_of, "cadence": cadence_label("weekly"), "stale": stale, "tone": "neutral",
     })
 
     # 2) macro_clock
@@ -1057,8 +1050,8 @@ def build_components(sources, ledger_asof, exposure_track_asof, today):
     add("flowmap", (sources["flowmap"] or {}).get("as_of") if sources["flowmap"] else None, "daily")
     add("statlab", (sources["statlab"] or {}).get("as_of") if sources["statlab"] else None, "daily")
     add("intel", (sources["intel"] or {}).get("date") if sources["intel"] else None, "daily")
-    add("regime", ((sources["regime"] or {}).get("meta") or {}).get("publish_date")
-        if sources["regime"] else None, "regime")
+    add("regime", ((sources["regime"] or {}).get("meta") or {}).get("data_as_of")
+        if sources["regime"] else None, "weekly")
     add("macro_clock", (sources["macro_clock"] or {}).get("as_of") if sources["macro_clock"] else None, "monthly")
     add("crowding", (sources["crowding"] or {}).get("cot_as_of") if sources["crowding"] else None, "weekly")
     add("ledger", ledger_asof, "daily")
@@ -1083,8 +1076,8 @@ def build_freshness(sources, ledger_asof, nowcast_as_of, today, long_track_data,
     row("statlab 統計面板", (sources["statlab"] or {}).get("as_of") if sources["statlab"] else None, "daily")
     row("intel 情報監視器", (sources["intel"] or {}).get("date") if sources["intel"] else None, "daily")
     row("forecast ledger 預測帳簿", ledger_asof, "daily")
-    row("regime 大類資產環境", ((sources["regime"] or {}).get("meta") or {}).get("publish_date")
-        if sources["regime"] else None, "regime")
+    row("regime 大類資產環境", ((sources["regime"] or {}).get("meta") or {}).get("data_as_of")
+        if sources["regime"] else None, "weekly")
     row("crowding COT 部位", (sources["crowding"] or {}).get("cot_as_of") if sources["crowding"] else None, "weekly")
     row("總經時鐘", (sources["macro_clock"] or {}).get("as_of") if sources["macro_clock"] else None, "monthly")
     row("系統主控台（實單主系統）", long_track_as_of(long_track_data), "daily")
@@ -1873,7 +1866,7 @@ def main():
         (flowmap_data or {}).get("as_of"),
         (statlab_data or {}).get("as_of"),
         (intel_data or {}).get("date"),
-        ((regime_data or {}).get("meta") or {}).get("publish_date"),
+        ((regime_data or {}).get("meta") or {}).get("data_as_of"),
         (macro_clock_data or {}).get("as_of"),
         (crowding_data or {}).get("cot_as_of"),
         ledger_asof,

@@ -17,6 +17,8 @@ Mechanical (recomputed every run)
 
 Editorial (carried from the Vol.1 pilot; NEVER overwritten by mechanical)
 ------------------------------------------------------------------------
+  * 2026-09-13: archived under historical_editorial; current consumers use
+    daily market release observations and its reviewed analysis.
   * Six-axis regime scorecard marker positions + one-line reads + pills.
   * Composite (qualitative) read.
   * Trigger / monitoring table.
@@ -272,7 +274,9 @@ def cot_compute(history):
         if len(win5) < 150:
             gaps.append(f"COT {zh}：5y 樣本僅 {len(win5)} 週（<150），百分位可信度打折")
         rows.append({"market": zh, "group": grp, "pctile_5y": p5, "net": net,
-                     "extreme": flag, "delta_4w_pp_oi": d4})
+                     "extreme": flag, "delta_4w_pp_oi": d4,
+                     # 2026-09-13：每筆部位保留自己的觀測日與樣本數。
+                     "as_of": cur_date, "sample_weeks": len(win5)})
     rows.sort(key=lambda r: (r["pctile_5y"] is not None, r["pctile_5y"]), reverse=True)
     return rows, latest, gaps
 
@@ -353,10 +357,12 @@ def _stooq_weekly(ticker):
     return rows or None
 
 
-def build_price_cache(skip_fetch):
+def build_price_cache(skip_fetch, price_cache=None):
     """Incrementally refresh data/regime_prices.json.  Returns
     {symbol: [(week_end, close), ...]} (possibly from cache alone)."""
-    cache = load_json(PRICE_CACHE, {"meta": {}, "series": {}})
+    # 2026-09-13：離線模式只讀快取，支援隔離驗收。
+    price_cache = price_cache or PRICE_CACHE
+    cache = load_json(price_cache, {"meta": {}, "series": {}})
     series = cache.setdefault("series", {})
     fetched = {}
     if not skip_fetch:
@@ -404,7 +410,7 @@ def build_price_cache(skip_fetch):
         "note": "weekly close cache for regime growth/defence ratios; "
                 "yfinance->stooq (ETFs only); incremental.",
     }
-    wrote = write_json_if_changed(PRICE_CACHE, cache)
+    wrote = write_json_if_changed(price_cache, cache) if not skip_fetch else False
     n = {t: len(series.get(t, [])) for t in RATIO_SYMBOLS}
     info(f"price cache: {n}, {'written' if wrote else 'no change'}")
     return {t: [(d, c) for d, c in series.get(t, [])] for t in RATIO_SYMBOLS}
@@ -438,7 +444,8 @@ def ratio_compute(price_series):
         if len(rs) >= 53:
             vals = [v for _, v in rs]
             mech["as_of"] = rs[-1][0]
-            mech["value"] = rnd(vals[-1], 4)
+            # 2026-09-13：銅金比量級很小，保留八位小數避免四位捨入失真。
+            mech["value"] = rnd(vals[-1], 8)
             if vals[-53]:
                 mech["chg_12m_pct"] = rnd((vals[-1] / vals[-53] - 1) * 100, 1)
             mech["pctile_2y"] = pctile_incl(vals[-104:], vals[-1])
@@ -577,35 +584,53 @@ def render_dashboard(payload):
         pv = m.get("pctile_2y")
         txt = r["name"]
         if v is not None:
-            txt += f' {v:.3f}'
+            txt += f' {v:.6f}'
         if pv is not None:
-            txt += f'（2y {pv:.0f}）'
+            txt += f'（近兩年週樣本分位 {pv:.0f}）'
+        # 2026-09-13：價格比、OAS 與百分位分開標示，避免把代理當信用利差。
+        spec = next(x for x in RATIOS_EDITORIAL if x["key"] == r["key"])
+        txt += f' · {spec["num"]}/{spec["den"]} · 週線標記 {m.get("as_of") or "缺資料"}'
+        if m.get("chg_12m_pct") is not None:
+            txt += f' · 52 週比率變化 {m["chg_12m_pct"]:+.1f}%'
         rchips.append(txt)
     ratio_chips = chips(rchips, "#1e2a3a", "#a9c7f0")
 
+    # 2026-09-13：完整部位列保留日期、方向、四週變化，避免極端清單被當方向預測。
+    cot_table = '<div style="overflow-x:auto"><table style="width:100%;min-width:560px;text-align:left"><thead><tr><th>市場</th><th>淨部位</th><th>5 年分位</th><th>4 週變化（占 OI 百分點）</th><th>觀測日</th></tr></thead><tbody>'
+    for c in cot:
+        delta = c.get("delta_4w_pp_oi")
+        change = f"{delta:+.2f}" if delta is not None else "—"
+        cot_table += f'<tr><td>{_esc(c["market"])}</td><td>{_esc(c["net"])}</td><td>{_esc(c["pctile_5y"])}</td><td>{change}</td><td>{_esc(c.get("as_of") or "缺資料")}</td></tr>'
+    cot_table += '</tbody></table></div>'
     return (
         f'{DASH_START}\n'
         f'<div style="{st}">'
         f'<div style="font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.14em;'
         f'text-transform:uppercase;color:#5b9bff;margin-bottom:12px">'
         f'大類資產 Regime · 自動儀表</div>'
-        f'<div style="overflow-x:auto;margin-bottom:14px">{svg_scorecard()}</div>'
+        f'<p id="regime-weekly-status" data-as-of="{_esc(payload["meta"].get("data_as_of") or "")}">最舊有效觀測 {_esc(payload["meta"].get("data_as_of") or "部分資料缺漏")}</p>'
+        f'<p>週度部位與相對價格。每日六軸觀測與市場判讀見上方。</p>'
+        f'<details style="margin:12px 0"><summary>2026-07-06 歷史評分（非本期判讀）</summary>'
+        f'<div style="overflow-x:auto">{svg_scorecard()}</div></details>'
         f'<div style="margin-bottom:8px"><b>COT 極端偏多（5y ≥ 90）：</b><br>{cot_hot}</div>'
         f'<div style="margin-bottom:8px"><b>COT 極端偏空（5y ≤ 10）：</b><br>{cot_cold}</div>'
-        f'<div style="margin:10px 0 6px"><b>成長 vs 防禦比率</b>（機械 value · 2y 百分位）</div>{ratio_chips}'
+        f'<details style="margin:12px 0"><summary>全部 COT 市場 · 分位高低不等於未來漲跌</summary>{cot_table}</details>'
+        f'<div style="margin:10px 0 6px"><b>成長 vs 防禦比率</b>（價格比；不是信用利差）</div>{ratio_chips}'
         f'<div style="margin-top:12px;font-family:ui-monospace,monospace;font-size:11px;'
         f'color:{_C["ink3"]}">COT as-of {_esc(payload["meta"].get("cot_as_of") or "—")} · '
-        f'比率 as-of {_esc(payload["meta"].get("ratio_as_of") or "—")} · '
-        f'更新 {payload["generated_at"][:10]} · 描述器非擇時</div>'
+        f'比率週線標記 {_esc(payload["meta"].get("ratio_as_of") or "—")} · '
+        f'產物更新 {payload["generated_at"][:10]} · 週線標記不代表確定收盤日</div>'
         f'</div>\n{DASH_END}'
     )
 
 
-def inject_dashboard(payload):
-    if not os.path.exists(INDEX_HTML):
-        warn(f"index.html not found ({INDEX_HTML}); skipping dashboard injection")
+def inject_dashboard(payload, index_html=None):
+    # 2026-09-13：預覽輸出與正式頁共用同一渲染器。
+    index_html = index_html or INDEX_HTML
+    if not os.path.exists(index_html):
+        warn(f"index.html not found ({index_html}); skipping dashboard injection")
         return
-    with open(INDEX_HTML, encoding="utf-8") as f:
+    with open(index_html, encoding="utf-8") as f:
         html = f.read()
     if DASH_START not in html or DASH_END not in html:
         warn("dashboard markers not found in index.html; skipping injection")
@@ -616,7 +641,7 @@ def inject_dashboard(payload):
     if new == html:
         info("dashboard: no change")
         return
-    with open(INDEX_HTML, "w", encoding="utf-8") as f:
+    with open(index_html, "w", encoding="utf-8") as f:
         f.write(new)
     info("dashboard: injected into index.html")
 
@@ -629,25 +654,31 @@ def main():
     ap = argparse.ArgumentParser(description="Cross-asset regime weekly builder")
     ap.add_argument("--skip-fetch", action="store_true",
                     help="offline: skip price fetch, recompute from caches only")
+    # 2026-09-13：允許隔離驗收輸出，不改正式頁或共用快取。
+    ap.add_argument("--out-dir", default=OUT_DIR)
+    ap.add_argument("--cot-history", default=COT_HISTORY)
+    ap.add_argument("--price-cache", default=PRICE_CACHE)
     args = ap.parse_args()
 
-    gaps = list(GAPS)
+    # 2026-09-13：舊刊的缺口與評分僅供歷史查閱，不冒充本期觀測。
+    gaps = list(GAPS[1:])
     cot_ok = ratio_ok = False
 
     # ── COT layer (mechanical, from shared cot_history.json) ────────────────
     cot_rows, cot_as_of = [], None
     try:
-        history = load_json(COT_HISTORY)
+        history = load_json(args.cot_history)
         cot_rows, cot_as_of, cg = cot_compute(history)
         gaps += cg
         cot_ok = bool(cot_rows)
     except Exception as e:
         warn(f"COT layer failed: {e}")
+        gaps.append("COT 本次計算失敗，請查看各筆觀測日。")
 
     # ── Ratio layer (mechanical, yfinance->stooq cache) ─────────────────────
     ratios_out, ratio_as_of = [], None
     try:
-        price_series = build_price_cache(args.skip_fetch)
+        price_series = build_price_cache(args.skip_fetch, args.price_cache)
         ratios_out, rg = ratio_compute(price_series)
         gaps += rg
         asofs = [r["mechanical"]["as_of"] for r in ratios_out
@@ -656,6 +687,7 @@ def main():
         ratio_ok = any(r["mechanical"]["value"] is not None for r in ratios_out)
     except Exception as e:
         warn(f"ratio layer failed: {e}")
+        gaps.append("跨資產比率本次計算失敗。")
         ratios_out = [dict({k: r[k] for k in ("key", "name", "sub", "reading", "src")},
                            pos_0to1=r["pos"],
                            mechanical={"value": None, "chg_12m_pct": None,
@@ -666,6 +698,13 @@ def main():
     meta = dict(META_EDITORIAL)
     meta["cot_as_of"] = cot_as_of
     meta["ratio_as_of"] = ratio_as_of
+    # 2026-09-13：週線標記不等於收盤日，完整度以最舊有效觀測日揭露。
+    meta["editorial_as_of"] = META_EDITORIAL["publish_date"]
+    dates = [c.get("as_of") for c in cot_rows] + [
+        r.get("mechanical", {}).get("as_of") for r in ratios_out]
+    meta["data_as_of"] = min(dates) if len(cot_rows) == len(REGIME_COT_MARKETS) and len(ratios_out) == 3 and all(dates) else None
+    meta["cot_note"] = f"COT 部位觀測日 {cot_as_of or '缺資料'}，並非發布日；週度資料。"
+    meta["ratio_date_note"] = "上游週線標記日，可能為週初或週末，並非確定收盤日。"
 
     payload = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -680,15 +719,30 @@ def main():
         "gaps": gaps,
     }
 
-    wrote = write_json_if_changed(OUT_JSON, payload)
+    # 2026-09-13：兩層皆失敗時保留最後成功產物；不把失敗寫成新版本。
+    if not cot_ok and not ratio_ok:
+        warn("both COT and ratio layers failed — preserving previous output")
+        sys.exit(1)
+    output = os.path.join(args.out_dir, "data", "latest.json")
+    # 2026-09-13：舊判讀搬入歷史欄位，所有下游不再把 7 月評分當現況。
+    payload["schema"] = "regime-observations-v2"
+    payload["historical_editorial"] = {"as_of": META_EDITORIAL["publish_date"],
+        "composite": payload.pop("composite"), "axes": payload.pop("axes"),
+        "triggers": payload.pop("triggers"), "gaps": GAPS, "meta": META_EDITORIAL}
+    payload.update(composite={}, axes=[], triggers=[], analysis_url="/market/")
+    for r in payload["growth_defense_ratios"]:
+        r["historical_editorial"] = {"as_of": META_EDITORIAL["publish_date"],
+                                    "reading": r.pop("reading", None), "pos_0to1": r.pop("pos_0to1", None)}
+        spec = next(x for x in RATIOS_EDITORIAL if x["key"] == r["key"])
+        r["src"] = f"{spec['num']}/{spec['den']}，調整後週線價格比（yfinance／ETF 備援 Stooq）"
+    wrote = write_json_if_changed(output, payload)
+    if not wrote:
+        payload = load_json(output, payload)
     info(f"latest.json: {'written' if wrote else 'no change'} "
          f"(cot {len(cot_rows)} rows @ {cot_as_of}, ratios @ {ratio_as_of})")
 
-    inject_dashboard(payload)
+    inject_dashboard(payload, os.path.join(args.out_dir, "index.html"))
 
-    if not cot_ok and not ratio_ok:
-        warn("both COT and ratio layers failed — exiting non-zero")
-        sys.exit(1)
     info("done.")
 
 
