@@ -106,7 +106,7 @@ h1{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.95re
 .history-toolbar select{font:inherit;font-size:.8rem;color:var(--text);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem}
 .spark{width:100%;height:72px;margin:.35rem 0}.history-change{font-family:'IBM Plex Mono',monospace;font-size:.8rem}
 @media(max-width:900px){.global-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:620px){.wrap{padding:0 14px}.hero{padding-top:1.7rem}.judgment-numbers{grid-template-columns:1fr}.source-table{min-width:860px}.scenario-card .scenario-field{line-height:1.6}}
+@media(max-width:620px){.wrap{padding:0 14px}.hero{padding-top:1.7rem}.source-table{min-width:860px}.scenario-card .scenario-field{line-height:1.6}}
 @media(max-width:620px){.global-grid{grid-template-columns:1fr}}
 .load-fail{margin-top:1.4rem;padding:.9rem 1.1rem;background:var(--crit-bg);color:var(--crit);
            border-radius:var(--radius);font-size:.85rem}
@@ -239,11 +239,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 .judgment-thesis{font-size:1.05rem;color:var(--text);line-height:1.85;margin-bottom:.5rem}
 .judgment-path{font-size:.9rem;color:var(--text-secondary);line-height:1.8;margin-bottom:.7rem}
 .judgment-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:.9rem}
-.judgment-numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:.6rem}
-.judgment-numbers .jn{background:var(--bg-card2);border:1px solid var(--border-light);border-radius:8px;padding:.7rem .8rem}
-.judgment-numbers .jn .lab{font-size:11.5px;color:var(--text-muted)}
-.judgment-numbers .jn .val{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.7rem;font-weight:700;color:var(--accent);margin:.2rem 0}
-.judgment-numbers .jn .base{font-size:11px;color:var(--text-muted)}
+#questionBoardTrace,#horizonClaimLinks{overflow-wrap:anywhere}
 
 /* 2026-09-14：把本期問題拆成可在手機逐張閱讀的卡片，並保留判讀日證據。 */
 #sec-questions{scroll-margin-top:110px}
@@ -271,13 +267,14 @@ footer.imq-foot a{color:var(--text-secondary)}
 @media(max-width:768px){
   h1{font-size:1.5rem}
   .exp-top{flex-direction:column}
-  .judgment-numbers{grid-template-columns:1fr}
   .mini-nav{position:static;margin:0 0 1.2rem;padding:.4rem 0;border-bottom:none;box-shadow:none;background:transparent}
   .mini-nav-inner{padding-bottom:.2rem}
 }
   /* 2026-09-13：手機卡片不可被表格撐寬；時間框架改為直排重點。 */
 .grid>*{min-width:0}.card{overflow-wrap:anywhere}.history-toolbar select{max-width:100%}
 @media(max-width:620px){
+/* 2026-09-14：手機以可讀數值取代縮小後難辨的重複機率圖。 */
+#horizonDumbbell,#horizonCard>.legend{display:none}
 #horizonTable,#horizonTable tbody,#horizonTable tr,#horizonTable td{display:block;width:auto;min-width:0;max-width:none!important;white-space:normal;text-align:left}
 #horizonTable tr:first-child{display:none}#horizonTable tr{padding:.8rem 0;border-bottom:1px solid var(--border)}
 #horizonTable td{border:0;padding:.3rem 0}#horizonTable td[data-label]:before{content:attr(data-label) "：";font-weight:600;color:var(--text-muted)}
@@ -398,42 +395,43 @@ footer.imq-foot a{color:var(--text-secondary)}
     <div class="card judgment-card" id="judgmentCard">
       <div class="stale-banner" id="staleBanner" hidden></div>
       <div class="overline" style="margin-bottom:.4rem">本期判讀（保留當時證據）</div>
-      <p class="section-sub" style="margin-top:-.1rem">這裡回答判讀日當時「市況怎麼看」：機率是站方綜合力量／傳導／部位／類比後的判斷，不是機械公式跑出來的數字。最新數據另列，不會回填成當時已知的證據。</p>
+      <p class="section-sub" style="margin-top:-.1rem">判讀保留當時證據；目前數據另列。</p>
       <div class="time-separation" id="judgmentTimeContext" hidden></div>
       <div class="data-gap-banner" id="judgmentDataGaps" hidden></div>
       <p id="judgmentThesis" class="judgment-thesis"></p>
       <p id="judgmentPath" class="judgment-path"></p>
       <p id="judgmentVsPrior" class="note" hidden></p>
       <div class="judgment-meta" id="judgmentMeta"></div>
-      <div class="judgment-numbers" id="judgmentNumbers"></div>
       <p class="note" id="judgmentMechFallback" hidden></p>
     </div>
 
     <div class="card" style="margin-top:14px" id="horizonCard">
-      <h2 style="margin-bottom:.3rem">三個時間框架<span class="en">Horizons</span></h2>
-      <div class="legend"><span><i style="background:var(--s1)"></i>判讀 p</span><span><i class="hollow"></i>基準（歷史無條件頻率）</span></div>
+      <h2 style="margin-bottom:.3rem">三個時間框架</h2>
+      <div class="legend"><span><i style="background:var(--s1)"></i>判讀機率</span><span><i class="hollow"></i>基準（歷史無條件頻率）</span></div>
       <div id="horizonDumbbell"></div>
       <div class="tw"><table class="mt" id="horizonTable"></table></div>
+      <details class="compact-details" id="horizonClaims" hidden><summary>查看帳簿命題</summary><div id="horizonClaimLinks"></div></details>
     </div>
   </section>
 
   <section id="sec-questions" hidden>
     <div class="question-board-head">
       <div>
-        <h2>本期待驗證問題<span class="en">Question Board</span></h2>
+        <h2>本期待驗證問題</h2>
         <p class="section-sub" id="questionBoardSummary"></p>
       </div>
       <div class="question-board-meta" id="questionBoardMeta"></div>
     </div>
     <div class="grid question-grid" id="questionBoardGrid"></div>
     <details class="compact-details" id="questionBoardSources" hidden>
-      <summary>查看問題板資料來源</summary>
+      <summary>查看問題板資料來源與追溯</summary>
+      <div class="note" id="questionBoardTrace"></div>
       <div class="srclinks" id="questionBoardSourceLinks" style="margin-top:.6rem"></div>
     </details>
   </section>
 
   <section id="sec-history">
-    <h2>判讀版本追溯<span class="en">Snapshot History</span></h2>
+    <h2>判讀版本追溯</h2>
     <p class="section-sub">比較判讀資料包保存的起點與當期值，用於追查當時版本。正式歷史比較見上方跨市場現況。</p>
     <div class="card">
       <div class="period-controls"><label for="periodSelect">比較期間</label><select id="periodSelect" disabled><option value="7">1 週</option><option value="30" selected>1 個月</option><option value="90">3 個月</option><option value="365">1 年</option></select></div>
@@ -443,7 +441,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   </section>
 
   <section id="sec-source-history">
-    <h2>來源覆蓋與長期資料<span class="en">Source Coverage</span></h2>
+    <h2>來源覆蓋與長期資料</h2>
     <p class="section-sub">長期回補使用來源的歷史觀測值，獨立於判讀歷史快照。最新值採來源其後修訂的版本，不等於判讀日當時已知的數字。</p>
     <div class="card" id="sourceResearchCard">
       <div class="source-summary" id="sourceResearchSummary"></div>
@@ -463,8 +461,8 @@ footer.imq-foot a{color:var(--text-secondary)}
   </section>
 
   <section id="sec-global">
-    <h2>跨市場現況<span class="en">Global Context</span></h2>
-    <p class="section-sub">區域卡只顯示實際取得的資料。走勢使用目前修訂後歷史；日期跨度與比較起點逐項列明。</p>
+    <h2>跨市場現況</h2>
+    <p class="section-sub">走勢使用目前修訂後歷史；日期跨度與比較起點逐項列明。</p>
     <div class="grid global-grid" id="regionGrid"></div>
     <div class="card" id="historySeriesCard" style="margin-top:14px" hidden>
       <h3>主要指標走勢與變化</h3>
@@ -476,47 +474,45 @@ footer.imq-foot a{color:var(--text-secondary)}
   </section>
 
   <section id="sec-forces">
-    <h2>主要力量<span class="en">Forces</span></h2>
-    <p class="section-sub">依本期資料列出最重要的力量，最多顯示 4 項。完整論證與引用品質保留在卡片內。</p>
+    <h2>主要力量</h2>
     <div class="grid" id="forcesGrid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))"></div>
   </section>
 
   <section id="sec-transmission">
-    <h2>傳導與內部訊號<span class="en">Transmission</span></h2>
-    <p class="section-sub">四格是目前機械讀數；卡片底下的文字是判讀日留下的解釋，兩者分開閱讀。</p>
+    <h2>傳導與內部訊號</h2>
+    <p class="section-sub">目前機械讀數；卡片文字是判讀日解釋。</p>
     <div class="grid g4" id="transmissionGrid"></div>
   </section>
 
   <section id="sec-positioning">
-    <h2>部位與流量<span class="en">Positioning &amp; Flows</span></h2>
-    <p class="section-sub">三張卡是目前機械讀數；其下文字是判讀日的部位解讀，不把今天的讀數倒灌回舊結論。</p>
+    <h2>部位與流量</h2>
+    <p class="section-sub">目前機械讀數；下方文字是判讀日解釋。</p>
     <div class="grid g3eq" id="positioningGrid"></div>
     <p class="note" id="positioningJudgment"></p>
   </section>
 
   <section id="sec-analogs">
-    <h2>歷史類比<span class="en">Analogs</span></h2>
+    <h2>歷史類比</h2>
     <p class="section-sub">列出判讀者認為現在最像的歷史時期：吻合特徵與不同之處都攤開，當年結果只是參考，不是這次的預測。</p>
     <div class="grid" id="analogsGrid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
   </section>
 
   <section id="sec-scenarios">
-    <h2>接下來可能怎麼走<span class="en">Scenarios</span></h2>
+    <h2>接下來可能怎麼走</h2>
     <p class="section-sub">情境是待驗證的條件式推演，列出成立條件、改判條件與跨資產含義；不是價格目標或交易指令。</p>
     <div class="grid" id="scenariosGrid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
   </section>
 
   <section id="sec-falsifiers">
-    <h2>什麼會改變這個判讀<span class="en">Falsifiers</span></h2>
+    <h2>什麼會改變這個判讀</h2>
     <p class="section-sub">這些數字一旦走到門檻，判讀就要改；距離都是機械算的，與引信區同款式，但這是判讀者選的證偽條件。</p>
     <div class="tw"><table class="mt" id="falsifiersTable"></table></div>
 
-    <h2 style="margin-top:1.8rem">與帳簿表格的分歧<span class="en">Deviations</span></h2>
-    <div class="tw"><table class="mt" id="deviationsTable"></table></div>
+    <details class="compact-details"><summary>查看與帳簿表格的分歧</summary><div class="tw"><table class="mt" id="deviationsTable"></table></div></details>
   </section>
 
   <section id="sec-judgment-score">
-    <h2>判讀記分<span class="en">Judgment Score</span></h2>
+    <h2>判讀記分</h2>
     <p class="section-sub">本週判讀自己也要接受記分：寫下的機率會像下方其他模組一樣落帳（記進預測帳簿，之後要結算對錯），用序貫檢定（SPRT）追蹤長期是否優於基準，不是判讀者自己說了算。</p>
     <div class="scorecard-grid" id="judgmentScoreGrid"></div>
     <h3 class="scorecard-subhead">歷次判讀<span class="en">History</span></h3>
@@ -524,7 +520,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   </section>
 
   <div class="evidence-heading" id="sec-evidence">
-    <h2>證據層<span class="en">Evidence Layer</span></h2>
+    <h2>證據層</h2>
     <p class="section-sub">以下是各管線的原始數據，全部照實列出、沒有經過篩選；判讀邏輯見上方，這裡的數字讓你自己核對。</p>
   </div>
 
@@ -537,7 +533,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   </section>
 
   <section id="sec-env">
-    <h2>現在是什麼環境<span class="en">Environment</span></h2>
+    <h2>現在是什麼環境</h2>
     <p class="section-sub">五套讀法各自獨立，不合成一個分數；第五磚是實單執行層的目標曝險，來自系統主控台。</p>
     <div class="srclinks">
       <a href="/regime/">來源 → 大類資產 regime</a>
@@ -551,7 +547,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   <section class="grid g2" id="sec-models">
     <div class="card">
-      <h2>預測議會<span class="en">Forecast Council</span></h2>
+      <h2>預測議會</h2>
       <p class="section-sub">把好幾個獨立模型對同一件事的機率彙總起來——像多方意見表決，不是單一模型說了算。</p>
       <div class="srclinks"><a href="/flowmap/#sec-scorecard">來源 → 成績單（flowmap）</a></div>
       <div class="legend"><span><i style="background:var(--s1)"></i>系統機率</span><span><i class="hollow"></i>空手猜（不看今天狀況，只算歷史發生的比例）</span></div>
@@ -564,7 +560,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       </div>
     </div>
     <div class="card">
-      <h2>機械買賣觸發<span class="en">Conditional Flow</span></h2>
+      <h2>機械買賣觸發</h2>
       <p class="section-sub">這裡看三種規則型參與者可能的動作：CTA 翻轉價位、波動控制基金（依波動度自動加減碼的基金）的曝險水位、槓桿 ETF（用衍生品放大單日報酬、每天收盤要再平衡）在大跌情境下的賣壓估計。</p>
       <div class="srclinks"><a href="/flowmap/">來源 → 條件流量地圖</a></div>
       <div id="ladder"></div>
@@ -574,7 +570,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   <section class="grid g3" id="sec-signals">
     <div class="card">
-      <h2>引信距離<span class="en">Falsifier Distance</span></h2>
+      <h2>引信距離</h2>
       <p class="section-sub">總經情勢轉向的預警門檻——距離越近，越接近必須重新評估判讀的時刻。</p>
       <div class="srclinks"><a href="/intel/">來源 → 情報監視器（轉折雷達）</a><a href="/macro/">來源 → 總經深度報告</a></div>
       <div class="legend"><span><i style="background:var(--s2)"></i>距門檻還差多少（%）</span><span class="chip p">p</span><span style="margin-left:-8px">＝系統認為區間內觸及的機率（帳上有單的才有）</span></div>
@@ -582,24 +578,24 @@ footer.imq-foot a{color:var(--text-secondary)}
       <p class="note">期限溢價系列為 FRED Kim–Wright 口徑，非 NY Fed ACM。</p>
     </div>
     <div class="card">
-      <h2>今日異常<span class="en">Anomalies</span></h2>
+      <h2>今日異常</h2>
       <div class="srclinks"><a href="/monitor/">來源 → 市場監測</a></div>
       <div id="anom" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
-      <h2 style="margin-top:18px">個股層脈搏<span class="en">Stock Pulse</span></h2>
+      <h2 style="margin-top:18px">個股層脈搏</h2>
       <div class="srclinks"><a href="/research/">來源 → 個股研究</a></div>
       <div id="pulse"></div>
     </div>
   </section>
 
   <section id="sec-triggers">
-    <h2>會改變今天讀法的三個數字<span class="en">Watch Triggers</span></h2>
+    <h2>會改變今天讀法的三個數字</h2>
     <p class="section-sub">機械觸發點，不是預測。</p>
     <div class="trig" id="triggers"></div>
   </section>
 
   <section class="grid g2" id="sec-scoreboard">
     <div class="card">
-      <h2>記分板<span class="en">Scoreboard</span></h2>
+      <h2>記分板</h2>
       <div class="srclinks"><a href="/flowmap/#sec-scorecard">來源 → 成績單（flowmap）</a></div>
       <div class="scorecard-grid" id="scoreGrid"></div>
       <h3 class="scorecard-subhead">預測對帳簿<span class="en">Ledger Sources</span></h3>
@@ -608,13 +604,13 @@ footer.imq-foot a{color:var(--text-secondary)}
       <p class="note">判定方式是序貫檢定（SPRT）；紅燈只代表已達淘汰門檻，等持有人在校準輪決定要不要收掉，本頁不會自動關閉或修改任何模組。</p>
     </div>
     <div class="card">
-      <h2>資料新鮮度<span class="en">Freshness</span></h2>
+      <h2>資料新鮮度</h2>
       <div class="tw"><table class="mt" id="fresh"></table></div>
     </div>
   </section>
 
   <section id="sec-exposure">
-    <h2>市況曝險規則<span class="en">Exposure Rule</span><span class="proto-badge">模擬 · 未證明前只顯示不執行</span></h2>
+    <h2>市況曝險規則<span class="proto-badge">模擬 · 未證明前只顯示不執行</span></h2>
     <p class="section-sub">週頻規則：波動度×趨勢×信用 三因子決定目標曝險，三軌各自的新倉閘只是輸入之一，不是指令。序貫檢定（SPRT）判定不優於基準即撤，期間不因單一案例調整參數。</p>
     <div class="card">
       <div class="exp-top">
@@ -643,13 +639,14 @@ footer.imq-foot a{color:var(--text-secondary)}
     </div>
   </section>
 
-  <div class="disclaimer" id="marketDisclaimer">
-    <strong>免責與定位：</strong>本頁為 InvestMQuest Research 內部研究文件，<strong>彙整層描述器，非投資建議</strong>。
+  <details class="disclaimer" id="marketDisclaimer">
+    <summary><strong>研究參考 · 方法與限制</strong></summary>
+    本頁為 InvestMQuest Research 內部研究文件，<strong>彙整層描述器，非投資建議</strong>。
     所有區塊的判定機制、信心度與資料延遲，皆已在各自來源頁標註；本頁不重算、不加權合成單一總分。
     「市況曝險規則」為模擬帳戶記分，在序貫檢定證明優於基準前不連任何實倉；判紅即撤，期間不因單一案例調整參數。
     過往統計關係不保證未來重演。「本週判讀」同樣進帳簿以序貫檢定（SPRT）記分，若判定不優於基準，
     判讀層即降為純文字評論，頁面拿掉機率呈現，只留證據層機械讀法。
-  </div>
+  </details>
 
   </div>
 </div>
@@ -785,21 +782,26 @@ footer.imq-foot a{color:var(--text-secondary)}
   }
   // refresh.json 是自動更新管線的可選狀態檔。舊部署沒有它時，市場頁仍只依 state/read 顯示。
   function renderRefreshStatus(refresh) {
+    // 2026-09-14：主畫面保留狀態與資料日期，技術更新追溯收進原生展開區。
     var host = $("#refreshStatus");
-    if (!refresh || typeof refresh !== "object") { host.hidden = true; return; }
+    if (!refresh || typeof refresh !== "object") { host.hidden = true; $("#asof").hidden = false; return; }
     var status = REFRESH_STATUS[refresh.status] || ["neutral", refresh.status || "更新狀態未提供"];
-    var details = [];
-    if (refresh.data_as_of) details.push("目前資料截至 " + refresh.data_as_of);
-    if (refresh.analysis_as_of) details.push("判讀截至 " + refresh.analysis_as_of);
-    if (refresh.generated_at) details.push("本次產生於 " + twStamp(refresh.generated_at));
-    if (refresh.last_data_success_at) details.push("最近資料成功更新 " + twStamp(refresh.last_data_success_at));
-    if (refresh.last_analysis_success_at) details.push("最近判讀核准 " + twStamp(refresh.last_analysis_success_at));
-    else if (refresh.last_success_at) details.push("最近判讀核准 " + twStamp(refresh.last_success_at));
-    var reason = refreshText(refresh.reasons);
+    var dates = [];
+    if (refresh.data_as_of) dates.push("目前資料 " + refresh.data_as_of);
+    if (refresh.analysis_as_of) dates.push("判讀 " + refresh.analysis_as_of);
+    var detailLines = [];
+    if (refresh.generated_at) detailLines.push("本次產生於 " + twStamp(refresh.generated_at));
+    if (refresh.last_data_success_at) detailLines.push("最近資料成功更新 " + twStamp(refresh.last_data_success_at));
+    if (refresh.last_analysis_success_at) detailLines.push("最近判讀核准 " + twStamp(refresh.last_analysis_success_at));
+    else if (refresh.last_success_at) detailLines.push("最近判讀核准 " + twStamp(refresh.last_success_at));
+    var reasons = Array.isArray(refresh.reasons) ? refresh.reasons.filter(Boolean) : (refresh.reasons ? [refresh.reasons] : []);
     host.innerHTML = '<span class="chip ' + status[0] + '">' + esc(status[1]) + '</span>' +
-      (details.length ? '<span class="refresh-detail">' + esc(details.join("　·　")) + '</span>' : '') +
-      (reason ? '<div><strong>更新說明</strong>' + compactText(reason, 3) + '</div>' : '');
+      (dates.length ? '<span class="refresh-detail">' + esc(dates.join("　·　")) + '</span>' : '') +
+      (detailLines.length || reasons.length ? '<details class="compact-details"><summary>更新詳情' + (reasons.length ? '（' + reasons.length + ' 項）' : '') + '</summary>' +
+        (detailLines.length ? '<p class="note">' + esc(detailLines.join("　·　")) + '</p>' : '') +
+        (reasons.length ? '<div><strong>更新說明</strong><ul class="summary-list">' + reasons.map(function (item) { return '<li>' + esc(item) + '</li>'; }).join("") + '</ul></div>' : '') + '</details>' : '');
     host.hidden = false;
+    $("#asof").hidden = true;
   }
 
   // ── SPRT（同 /flowmap/ 參數：p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20 才判定）──
@@ -1112,14 +1114,15 @@ footer.imq-foot a{color:var(--text-secondary)}
     var questions = board && board.schema === "market-question-board-v1" && Array.isArray(board.questions) ? board.questions : [];
     if (!questions.length) { section.hidden = true; $("#questionBoardGrid").innerHTML = ""; return; }
     section.hidden = false;
-    $("#questionBoardSummary").textContent = (board.summary ? board.summary + "　" : "") + "本區更新不代表既有機率判讀已重新核准。";
+    $("#questionBoardSummary").textContent = board.summary || "";
     var review = board.review || {};
     var reviewLabel = review.status === "needs_review" ? '<span class="chip warn">需要重審</span>' : review.status === "current" ? '<span class="chip good">已核對本期證據</span>' : '<span class="chip neutral">審查狀態未知</span>';
     var changedRefs = questionList(review.changed_refs);
     var snapshot = String(board.snapshot_id || "");
     $("#questionBoardMeta").innerHTML = reviewLabel + '　判讀截至 ' + esc(board.as_of || "日期未知") +
-      (snapshot ? '　·　快照 <span title="' + esc(snapshot) + '">' + esc(snapshot.slice(0, 8)) + '</span>' : '') + (review.reason ? '<br>' + esc(review.reason) : '') +
+      (review.reason ? '<br>' + esc(review.reason) : '') +
       (changedRefs.length ? '<br>變動證據：' + esc(changedRefs.map(function (ref) { return refLabel(state, ref); }).join("、")) : '');
+    $("#questionBoardTrace").textContent = snapshot ? "快照 " + snapshot : "未提供快照編號。";
     $("#questionBoardGrid").innerHTML = questions.map(function (q) {
       var alternativeList = questionList(q.alternative_explanations);
       var alternatives = alternativeList.length ? '<div class="question-field"><strong>替代解釋</strong><ul class="summary-list">' + alternativeList.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul></div>' : "";
@@ -1180,34 +1183,41 @@ footer.imq-foot a{color:var(--text-secondary)}
     return s;
   }
   function renderHorizons(read, state) {
+    // 2026-09-14：命題連結保留供追溯，但不再擠占三個時間框架主表。
     var host = $("#horizonDumbbell");
     var tableHost = $("#horizonTable");
+    var claimDetails = $("#horizonClaims");
+    var claimHost = $("#horizonClaimLinks");
     var horizons = (read && read.horizons) || [];
     if (!horizons.length) {
       host.innerHTML = "";
-      tableHost.innerHTML = "<tr><th>框架</th><th colspan=\"6\" class=\"loading\">本期判讀尚無時間框架資料。</th></tr>";
+      tableHost.innerHTML = "<tr><th>框架</th><th colspan=\"5\" class=\"loading\">本期判讀尚無時間框架資料。</th></tr>";
+      claimDetails.hidden = true;
+      claimHost.innerHTML = "";
       return;
     }
     host.innerHTML = renderHorizonDumbbell(horizons.map(function (h) {
       return { label: h.label || h.key, p: h.p_up, clim: h.p_clim_up };
     }));
-    var html = "<tr><th>期限／截止日</th><th>SPY 收高</th><th>歷史基準</th><th>回撤</th><th>歷史基準</th><th>重點與完整推導</th><th>帳簿命題</th></tr>";
+    var html = "<tr><th>期限／截止日</th><th>SPY 收高</th><th>歷史基準</th><th>回撤</th><th>歷史基準</th><th>重點與完整推導</th></tr>";
+    var claimRows = [];
     horizons.forEach(function (h) {
       var dd = ddInfo(h);
-      var claimHtml = (h.claim_ids && h.claim_ids.length)
-        ? h.claim_ids.map(function (id) { return '<a href="/flowmap/#ledger">' + esc(id) + '</a>'; }).join("　")
-        : "—";
+      var claimIds = (h.claim_ids || []).filter(Boolean);
+      if (claimIds.length) claimRows.push('<p class="note"><strong>' + esc({"3m":"3 個月","6m":"6 個月","12m":"12 個月"}[h.key] || h.label || h.key) + '：</strong>' +
+        claimIds.map(function (id) { return '<a href="/flowmap/#ledger">' + esc(id) + '</a>'; }).join("　") + '</p>');
       var horizonDate = h.resolve_by || h.end_date || h.deadline || h.as_of || "日期未提供";
       html += "<tr><td>" + esc({"3m":"3 個月","6m":"6 個月","12m":"12 個月"}[h.key] || h.label || h.key) + '<span class="quote-meta">截至 ' + esc(horizonDate) + '</span></td>' +
         "<td class=\"num\">" + (h.p_up != null ? Math.round(h.p_up * 100) + "%" : "—") + '<span class="prob-meta">' + esc(probabilityMeta(h)) + "</span></td>" +
         "<td class=\"num\">" + (h.p_clim_up != null ? Math.round(h.p_clim_up * 100) + "%" : "—") + "</td>" +
         "<td class=\"num\">" + (dd && dd.p != null ? dd.label + " " + Math.round(dd.p * 100) + "%" : "—") + "</td>" +
         "<td class=\"num\">" + (dd && dd.clim != null ? Math.round(dd.clim * 100) + "%" : "—") + "</td>" +
-        "<td style=\"max-width:340px\">" + compactText(h.logic_zh || "", 3) + "</td>" +
-        "<td class=\"num\">" + claimHtml + "</td></tr>";
+        "<td style=\"max-width:340px\">" + compactText(h.logic_zh || "", 3) + "</td></tr>";
     });
     tableHost.innerHTML = html;
-    var cellLabels = ["", "SPY 收高", "收高歷史基準", "回撤", "回撤歷史基準", "", "帳簿命題"];
+    claimHost.innerHTML = claimRows.join("");
+    claimDetails.hidden = !claimRows.length;
+    var cellLabels = ["", "SPY 收高", "收高歷史基準", "回撤", "回撤歷史基準", ""];
     tableHost.querySelectorAll("tr").forEach(function (row, index) {
       if (index) Array.from(row.cells).forEach(function (cell, col) { if (cellLabels[col]) cell.dataset.label = cellLabels[col]; });
     });
@@ -1227,7 +1237,6 @@ footer.imq-foot a{color:var(--text-secondary)}
       $("#judgmentPath").textContent = "";
       $("#judgmentVsPrior").hidden = true;
       $("#judgmentMeta").textContent = "";
-      $("#judgmentNumbers").innerHTML = "";
       mechFallback.hidden = true;
       renderHorizons(null, state);
       return;
@@ -1257,29 +1266,18 @@ footer.imq-foot a{color:var(--text-secondary)}
       vsPrior.hidden = true;
     }
     var currentAsOf = (state && state.as_of) || "—";
-    timeContext.innerHTML = '<strong>時間分層：</strong>本期判讀使用截至 ' + esc(read.as_of || "—") +
-      ' 的證據；頁面目前機械數據截至 ' + esc(currentAsOf) +
-      '。目前讀數用來檢查判讀是否仍成立，不能當作判讀日已知資料。';
+    timeContext.innerHTML = '<strong>時間分層：</strong>判讀 ' + esc(read.as_of || "—") + '　·　目前資料 ' + esc(currentAsOf);
     timeContext.hidden = false;
     var dataGapText = refreshText(read.data_gaps_zh);
     if (dataGapText) {
-      dataGaps.innerHTML = "<strong>資料缺口</strong>" + compactText(dataGapText, 3);
+      var dataGapLabel = Array.isArray(read.data_gaps_zh) ? "資料缺口（" + read.data_gaps_zh.filter(Boolean).length + " 項）" : "資料缺口";
+      dataGaps.innerHTML = '<details><summary><strong>' + dataGapLabel + '</strong></summary>' + compactText(dataGapText, 3) + '</details>';
       dataGaps.hidden = false;
     } else {
       dataGaps.hidden = true;
     }
-    $("#judgmentMeta").textContent = "判讀資料截至 " + (read.as_of || "—") +
-      "　·　有效期 " + (read.valid_days != null ? read.valid_days + " 天" : "—") +
+    $("#judgmentMeta").textContent = "有效期 " + (read.valid_days != null ? read.valid_days + " 天" : "—") +
       "　·　" + (AUTHOR_LABEL[read.author] || read.author || "—");
-    var byKey = {};
-    (read.horizons || []).forEach(function (h) { byKey[h.key] = h; });
-    var order = [["3m", "3 個月"], ["6m", "6 個月"], ["12m", "12 個月"]];
-    $("#judgmentNumbers").innerHTML = order.map(function (o) {
-      var h = byKey[o[0]];
-      var p = h && h.p_up != null ? Math.round(h.p_up * 100) + "%" : "—";
-      var base = h && h.p_clim_up != null ? "基準 " + Math.round(h.p_clim_up * 100) + "%" : "基準 —";
-      return '<div class="jn"><div class="lab">' + o[1] + '收高</div><div class="val">' + p + '</div><div class="base">' + base + '</div><div class="prob-meta">' + esc(probabilityMeta(h)) + '</div></div>';
-    }).join("");
     renderHorizons(read, state);
   }
 
@@ -2371,6 +2369,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     return r.json();
   }).then(function (refresh) {
     if (refresh === null) {
+      renderRefreshStatus(null);
       loadLegacyFiles();
       return;
     }

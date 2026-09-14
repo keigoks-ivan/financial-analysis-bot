@@ -55,9 +55,9 @@ def test_market_page_renders_question_board_with_point_in_time_evidence():
     assert "期限：" in html
     assert "需要重審" in html
     assert "本期待驗證問題" in html
-    assert "本區更新不代表既有機率判讀已重新核准" in html
     assert "審查狀態未知" in html
-    assert "snapshot.slice(0, 8)" in html
+    assert '"快照 " + snapshot' in html
+    assert 'id="questionBoardTrace"' in html
     assert "支持條件" in html
     assert "未確認時" in html
     assert "獨立性註記" in html
@@ -65,6 +65,19 @@ def test_market_page_renders_question_board_with_point_in_time_evidence():
     assert 'safeSourceUrl(source.url, "")' in html
     assert "查看問題板資料來源" in html
     assert '<a href="#sec-evidence">頁內證據層</a>' in html
+
+
+# 2026-09-14：追溯資訊保留在原生展開區，主時間框架表維持閱讀焦點。
+def test_market_page_collapses_technical_trace_details():
+    html = PAGE.read_text(encoding="utf-8")
+    assert '<details class="compact-details" id="horizonClaims" hidden>' in html
+    assert "查看帳簿命題" in html
+    assert "claimDetails.hidden = !claimRows.length" in html
+    assert "<th>帳簿命題</th>" not in html
+    assert 'id="judgmentNumbers"' not in html
+    assert "查看與帳簿表格的分歧" in html
+    assert "研究參考 · 方法與限制" in html
+    assert '<h2 style="margin-bottom:.3rem">三個時間框架<span class="en">' not in html
 
 
 def test_market_page_renders_history_context_without_empty_region_cards():
