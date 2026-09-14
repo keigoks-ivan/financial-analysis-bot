@@ -401,3 +401,66 @@ def test_failed_data_build_keeps_last_success_clocks():
     assert result["status"] == "blocked"
     assert result["last_data_success_at"] == "data-ok"
     assert result["last_analysis_success_at"] == "legacy-analysis-ok"
+
+
+def test_publish_includes_question_board_and_prepare_marks_separate_review(tmp_path):
+    # 2026-09-14：問題板漂移要進發布版本與請求，但不能冒充一般判讀已完整更新。
+    import market_questions
+    data_dir, work_dir = tmp_path / "data", tmp_path / "work"
+    anchor = _snapshot("2026-09-13", 100.0)
+    current = _snapshot("2026-09-14", 101.0)
+    _write_snapshot(data_dir, anchor)
+    quote = copy.deepcopy(anchor["state"]["evidence"]["quotes"]["monitor:sp500"])
+    board = {"schema": "market-question-board-v1", "as_of": "2026-09-13",
+             "snapshot_id": anchor["snapshot_id"], "summary": "待驗證。", "author_model": "writer",
+             "questions": [{"id": "q1", "title": "問題", "assessment": "暫定",
+                            "main_explanation": "主解釋", "alternative_explanations": ["替代"],
+                            "supports": [{"ref": "monitor:sp500", "note": "支持"}],
+                            "opposes": [{"ref": "monitor:sp500", "note": "反對"}], "unexplained": [],
+                            "priced_in": {"known": "已知", "unknown": "未知"},
+                            "next_checks": [{"watch": "數值", "if_seen": "成立", "if_absent": "不成立", "by": "2026-09-20"}],
+                            "confidence": "中", "independence_note": "獨立"}],
+             "evidence_snapshot": {"quotes": {"monitor:sp500": quote}},
+             "editorial_review": {"model": "reviewer", "verdict": "pass"}}
+    board["editorial_review"]["content_hash"] = market_questions.board_hash(board)
+    refresh.atomic_json(data_dir / "questions.json", board)
+
+    request = refresh.prepare(current, {}, data_dir, work_dir, date(2026, 9, 14))
+    assert request["question_board_needs_review"] is True
+    assert request["run_question_board"] is True
+    assert request["run_analysis"] is True
+    assert request["analysis_scope"] == "full_read"
+    assert request["previous_question_board"]["as_of"] == "2026-09-13"
+    assert request["previous_question_board"]["review"]["status"] == "needs_review"
+
+    published = refresh.publish(data_dir, current, {}, [], "now", [], [])
+    bundle = json.loads((data_dir / published["bundle"]).read_text(encoding="utf-8"))
+    assert bundle["question_board"]["review"]["status"] == "needs_review"
+
+
+def test_due_question_board_alone_runs_questions_only(tmp_path):
+    import market_questions
+    data_dir, work_dir = tmp_path / "data", tmp_path / "work"
+    current = _snapshot("2026-09-13", 100.0)
+    _write_snapshot(data_dir, current)
+    quote = copy.deepcopy(current["state"]["evidence"]["quotes"]["monitor:sp500"])
+    board = {"schema": "market-question-board-v1", "as_of": "2026-09-13",
+             "snapshot_id": current["snapshot_id"], "summary": "待驗證。", "author_model": "writer",
+             "questions": [{"id": "q1", "title": "問題", "assessment": "暫定", "main_explanation": "主解釋",
+                            "alternative_explanations": ["替代"], "supports": [{"ref": "monitor:sp500", "note": "支持"}],
+                            "opposes": [{"ref": "monitor:sp500", "note": "反對"}], "unexplained": [],
+                            "priced_in": {"known": "已知", "unknown": "未知"},
+                            "next_checks": [{"watch": "數值", "if_seen": "成立", "if_absent": "不成立", "by": "2026-09-13"}],
+                            "confidence": "中", "independence_note": "獨立"}],
+             "evidence_snapshot": {"quotes": {"monitor:sp500": quote}},
+             "editorial_review": {"model": "reviewer", "verdict": "pass"}}
+    board["editorial_review"]["content_hash"] = market_questions.board_hash(board)
+    refresh.atomic_json(data_dir / "questions.json", board)
+    read = {"snapshot_id": current["snapshot_id"], "as_of": "2026-09-13",
+            "evidence_snapshot": copy.deepcopy(current["state"]["evidence"])}
+
+    request = refresh.prepare(current, read, data_dir, work_dir, date(2026, 9, 13))
+
+    assert request["run_analysis"] is True
+    assert request["run_question_board"] is True
+    assert request["analysis_scope"] == "questions_only"

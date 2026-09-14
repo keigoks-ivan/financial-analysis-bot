@@ -245,6 +245,22 @@ footer.imq-foot a{color:var(--text-secondary)}
 .judgment-numbers .jn .val{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.7rem;font-weight:700;color:var(--accent);margin:.2rem 0}
 .judgment-numbers .jn .base{font-size:11px;color:var(--text-muted)}
 
+/* 2026-09-14：把本期問題拆成可在手機逐張閱讀的卡片，並保留判讀日證據。 */
+#sec-questions{scroll-margin-top:110px}
+.question-board-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;flex-wrap:wrap;margin-bottom:.8rem}
+.question-board-meta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-muted)}
+.question-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.question-card h3{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.02rem;margin-bottom:.5rem}
+.question-assessment{font-size:.92rem;color:var(--text);line-height:1.75;margin-bottom:.7rem}
+.question-field{font-size:.82rem;color:var(--text-secondary);line-height:1.7;margin-top:.55rem}
+.question-field strong{display:block;color:var(--text);font-size:.78rem;margin-bottom:.12rem}
+.question-check{margin-top:.45rem;padding:.5rem .6rem;border-left:2px solid var(--gold);background:var(--bg-card2);font-size:.8rem;color:var(--text-secondary);line-height:1.65}
+.question-check .due{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-muted);margin-top:.2rem}
+.evidence-list{margin:.35rem 0 0 1.05rem;color:var(--text-secondary);font-size:.8rem;line-height:1.65}
+.evidence-list li+li{margin-top:.45rem}
+.evidence-value{display:block;color:var(--text);margin-top:.1rem}
+.evidence-current{display:block;margin-top:.15rem;color:var(--text-muted)}
+
 .g4{grid-template-columns:repeat(4,1fr)}
 .g3eq{grid-template-columns:repeat(3,1fr)}
 @media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr)}.g3eq{grid-template-columns:1fr}}
@@ -362,6 +378,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   <nav class="mini-nav" id="miniNav" aria-label="頁內導覽">
     <div class="mini-nav-inner">
       <a href="#sec-judgment">判讀</a>
+      <a href="#sec-questions">待驗證</a>
       <a href="#sec-history">變化</a>
       <a href="#sec-global">跨市場</a>
       <a href="#sec-scenarios">情境</a>
@@ -398,6 +415,21 @@ footer.imq-foot a{color:var(--text-secondary)}
       <div id="horizonDumbbell"></div>
       <div class="tw"><table class="mt" id="horizonTable"></table></div>
     </div>
+  </section>
+
+  <section id="sec-questions" hidden>
+    <div class="question-board-head">
+      <div>
+        <h2>本期待驗證問題<span class="en">Question Board</span></h2>
+        <p class="section-sub" id="questionBoardSummary"></p>
+      </div>
+      <div class="question-board-meta" id="questionBoardMeta"></div>
+    </div>
+    <div class="grid question-grid" id="questionBoardGrid"></div>
+    <details class="compact-details" id="questionBoardSources" hidden>
+      <summary>查看問題板資料來源</summary>
+      <div class="srclinks" id="questionBoardSourceLinks" style="margin-top:.6rem"></div>
+    </details>
   </section>
 
   <section id="sec-history">
@@ -1040,6 +1072,82 @@ footer.imq-foot a{color:var(--text-secondary)}
     var q = resolveQuote(state, ref);
     if (ref.indexOf("cot:") === 0) return COT_MARKET_ZH[ref.slice(4)] || (q && q.label) || ref.slice(4);
     return (q && q.label) || ref;
+  }
+
+  function questionQuoteValue(q) {
+    if (!q) return "—";
+    // 2026-09-14：官方百分比序列以數值與單位顯示，避免透出原始英文 val。
+    if (q.unit === "percent" && q.num != null) return sourceResearchValue(q.num, q.unit).replace(" %", "%");
+    if (q.val != null && String(q.val).trim()) {
+      return typeof q.val === "number" && q.unit ? sourceResearchValue(q.val, q.unit).replace(" %", "%") : String(q.val);
+    }
+    if (q.num == null) return "—";
+    return fmtNum(q.num, 2) + (q.unit ? " " + q.unit : "");
+  }
+  function questionList(value) {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    return value == null || value === "" ? [] : [value];
+  }
+  function quoteHasChanged(thenQuote, currentQuote) {
+    if (!thenQuote || !currentQuote) return false;
+    var thenValue = thenQuote.num != null ? Number(thenQuote.num) : String(thenQuote.val == null ? "" : thenQuote.val);
+    var currentValue = currentQuote.num != null ? Number(currentQuote.num) : String(currentQuote.val == null ? "" : currentQuote.val);
+    return thenValue !== currentValue || String(thenQuote.as_of || "") !== String(currentQuote.as_of || "") ||
+      String(thenQuote.unit || "") !== String(currentQuote.unit || "") || String(thenQuote.status || thenQuote.freshness_status || "") !== String(currentQuote.status || currentQuote.freshness_status || "");
+  }
+  function questionEvidenceList(items, board, state) {
+    var snapshot = board && board.evidence_snapshot && board.evidence_snapshot.quotes || {};
+    return (items || []).map(function (item) {
+      var ref = item && item.ref || "";
+      var thenQuote = snapshot[ref] || null;
+      var currentQuote = resolveQuote(state, ref);
+      var thenLine = thenQuote ? '<span class="evidence-value">判讀當時：' + esc(questionQuoteValue(thenQuote)) + quoteDateMeta(thenQuote, board.as_of) + '</span>' : '<span class="evidence-value">判讀當時數值未保存。</span>';
+      var currentLine = thenQuote && !currentQuote ? '<span class="evidence-current">目前來源缺失。</span>' : quoteHasChanged(thenQuote, currentQuote) ? '<span class="evidence-current">目前：' + esc(questionQuoteValue(currentQuote)) + quoteDateMeta(currentQuote, state && state.as_of) + '</span>' : "";
+      var label = thenQuote && thenQuote.label || refLabel(state, ref);
+      return '<li><b>' + esc(label) + '</b>' + (item && item.note ? '：' + esc(item.note) : '') + thenLine + currentLine + '</li>';
+    }).join("");
+  }
+  function renderQuestionBoard(board, state) {
+    var section = $("#sec-questions");
+    var questions = board && board.schema === "market-question-board-v1" && Array.isArray(board.questions) ? board.questions : [];
+    if (!questions.length) { section.hidden = true; $("#questionBoardGrid").innerHTML = ""; return; }
+    section.hidden = false;
+    $("#questionBoardSummary").textContent = (board.summary ? board.summary + "　" : "") + "本區更新不代表既有機率判讀已重新核准。";
+    var review = board.review || {};
+    var reviewLabel = review.status === "needs_review" ? '<span class="chip warn">需要重審</span>' : review.status === "current" ? '<span class="chip good">已核對本期證據</span>' : '<span class="chip neutral">審查狀態未知</span>';
+    var changedRefs = questionList(review.changed_refs);
+    var snapshot = String(board.snapshot_id || "");
+    $("#questionBoardMeta").innerHTML = reviewLabel + '　判讀截至 ' + esc(board.as_of || "日期未知") +
+      (snapshot ? '　·　快照 <span title="' + esc(snapshot) + '">' + esc(snapshot.slice(0, 8)) + '</span>' : '') + (review.reason ? '<br>' + esc(review.reason) : '') +
+      (changedRefs.length ? '<br>變動證據：' + esc(changedRefs.map(function (ref) { return refLabel(state, ref); }).join("、")) : '');
+    $("#questionBoardGrid").innerHTML = questions.map(function (q) {
+      var alternativeList = questionList(q.alternative_explanations);
+      var alternatives = alternativeList.length ? '<div class="question-field"><strong>替代解釋</strong><ul class="summary-list">' + alternativeList.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul></div>' : "";
+      var checks = (q.next_checks || []).map(function (c) {
+        var outcomes = [c.if_seen ? '<li><strong>支持條件</strong>' + esc(c.if_seen) + '</li>' : '', c.if_absent ? '<li><strong>未確認時</strong>' + esc(c.if_absent) + '</li>' : ''].filter(Boolean).join("");
+        return '<div class="question-check"><b>' + esc(c.watch || "待驗證") + '</b>' + (outcomes ? '<ul class="summary-list">' + outcomes + '</ul>' : '') + '<span class="due">期限：' + esc(c.by || "未訂") + '</span></div>';
+      }).join("");
+      var supports = questionEvidenceList(q.supports, board, state), opposes = questionEvidenceList(q.opposes, board, state);
+      var unknown = questionList(q.unexplained).concat(questionList(q.priced_in && q.priced_in.unknown));
+      var detailParts = [];
+      if (supports) detailParts.push('<div class="question-field"><strong>支持證據</strong><ul class="evidence-list">' + supports + '</ul></div>');
+      if (opposes) detailParts.push('<div class="question-field"><strong>反對證據</strong><ul class="evidence-list">' + opposes + '</ul></div>');
+      if (unknown.length) detailParts.push('<div class="question-field"><strong>尚未解釋／市場未知</strong><ul class="summary-list">' + unknown.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul></div>');
+      var known = questionList(q.priced_in && q.priced_in.known);
+      if (known.length) detailParts.push('<div class="question-field"><strong>市場已知</strong><ul class="summary-list">' + known.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul></div>');
+      if (q.independence_note) detailParts.push('<div class="question-field"><strong>獨立性註記</strong>' + esc(q.independence_note) + '</div>');
+      return '<article class="card question-card"><h3>' + esc(q.title || q.id || "待驗證問題") + '</h3>' +
+        (q.assessment ? '<p class="question-assessment">' + esc(q.assessment) + '</p>' : '') +
+        (q.main_explanation ? '<div class="question-field"><strong>主要解釋</strong>' + esc(q.main_explanation) + '</div>' : '') + alternatives +
+        (checks ? '<div class="question-field"><strong>下一驗證點</strong>' + checks + '</div>' : '') +
+        (detailParts.length ? '<details class="compact-details"><summary>查看支持、反對與未知</summary>' + detailParts.join("") + '</details>' : '') +
+        (q.confidence != null ? '<p class="note">信心：' + esc(q.confidence) + '</p>' : '') + '</article>';
+    }).join("");
+    var sources = (board.sources || []).filter(function (source) { return source && source.title && safeSourceUrl(source.url, ""); });
+    $("#questionBoardSources").hidden = false;
+    $("#questionBoardSourceLinks").innerHTML = sources.map(function (source) {
+      return '<a href="' + esc(safeSourceUrl(source.url, "")) + '" target="_blank" rel="noopener">' + esc(source.title) + '</a>';
+    }).join("") + '<a href="#sec-evidence">頁內證據層</a>';
   }
 
   // ── 本週判讀（block 1）＋三個時間框架（block 2）──
@@ -2046,7 +2154,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   }
   function arrangePage() {
     var page = $("#page-body");
-    ["sec-judgment", "sec-global", "sec-scenarios", "sec-falsifiers", "sec-history", "sec-source-history",
+    ["sec-judgment", "sec-questions", "sec-global", "sec-scenarios", "sec-falsifiers", "sec-history", "sec-source-history",
       "sec-forces", "sec-transmission", "sec-positioning", "sec-analogs", "sec-judgment-score", "sec-evidence",
       "sec-thesis", "sec-env", "sec-models", "sec-signals", "sec-triggers", "sec-scoreboard", "sec-exposure"].forEach(function (id) {
       var node = document.getElementById(id);
@@ -2142,7 +2250,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     $("#historyLimits").hidden = !limits.length;
     $("#historyLimitsBody").innerHTML = limits.length ? '<ul class="summary-list">' + limits.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>' : "";
   }
-  function renderMarket(data, read, history, periods, historyContext) {
+  function renderMarket(data, read, history, periods, historyContext, questionBoard) {
     $("#asof").textContent = "目前市場資料截至：" + esc(data.as_of || "—") +
       (data.generated_at ? "　·　資料產生於 " + twStamp(data.generated_at) : "");
     $("#page-body").hidden = false;
@@ -2173,6 +2281,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     renderJudgmentScore(data);
     renderSourceResearch(data.source_research);
     renderHistoryContext(historyContext);
+    renderQuestionBoard(questionBoard, data);
 
     var usableRead = read && read.as_of ? read : null;
     renderJudgment(usableRead, data);
@@ -2220,7 +2329,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       return r.text();
     }).catch(function () { return null; });
     Promise.all([state, read, history]).then(function (loaded) {
-      renderMarket(loaded[0], loaded[1], loaded[2], null);
+      renderMarket(loaded[0], loaded[1], loaded[2], null, null);
     }).catch(function () {
       showLoadFailure("市場資料載入失敗。請稍後再試。");
     });
@@ -2250,7 +2359,7 @@ footer.imq-foot a{color:var(--text-secondary)}
         throw new Error("invalid bundle");
       }
       renderRefreshStatus(nested);
-      renderMarket(bundle.state, bundle.read, bundle.history, bundle.periods, bundle.history_context);
+      renderMarket(bundle.state, bundle.read, bundle.history, bundle.periods, bundle.history_context, bundle.question_board);
     }).catch(function () {
       showLoadFailure("自動更新資料包載入失敗；為避免混用不同日期的資料，本頁保留等待下一次成功更新。");
     });

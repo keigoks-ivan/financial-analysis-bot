@@ -19,6 +19,7 @@ from pathlib import Path
 
 import check_market_read as critic
 from market_history import build_history_context
+from market_questions import load_question_board
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "docs/market/data"
@@ -208,14 +209,26 @@ def prepare(snapshot, read, data_dir, work_dir, today):
     previous = next((r for r in history if r["snapshot_id"] == baseline_id), None)
     if previous and previous["snapshot_id"] == snapshot["snapshot_id"] and read.get("snapshot_id") != snapshot["snapshot_id"]:
         previous = None
+    question_board = load_question_board(data_dir, snapshot)
+    question_needs_review = bool(question_board and question_board["review"]["status"] == "needs_review")
+    full_read = not errors and read.get("snapshot_id") != snapshot["snapshot_id"] and not evidence_unchanged(snapshot, read)
+    run_question_board = not errors and question_needs_review
     request = {"schema": "market-refresh-request-v1", "snapshot_id": snapshot["snapshot_id"],
                "analysis_date": today.isoformat(), "prior_read_hash": digest(read),
-               "run_analysis": not errors and read.get("snapshot_id") != snapshot["snapshot_id"] and not evidence_unchanged(snapshot, read),
+               "run_analysis": full_read or run_question_board,
+               "run_question_board": run_question_board,
+               "analysis_scope": "full_read" if full_read else "questions_only" if run_question_board else None,
                "mode": "weekly" if today.weekday() == 0 else "daily",
                "errors": errors, "warnings": warnings,
                "comparison_baseline": previous["snapshot_id"] if previous else None,
                "changes": quote_changes(snapshot["state"], previous["state"] if previous else {}),
                "periods": period_comparisons(snapshot, history), "previous_read": read,
+               # 2026-09-14：問題板是獨立研究產物；只提供舊板與更新指引，不把資料刷新冒充完整重讀。
+               "previous_question_board": question_board,
+               "question_board_needs_review": question_needs_review,
+               "question_board_guidance": ("依 market-question-board-v1 產出完整 questions、evidence_snapshot 與 editorial_review；先把候選板存到工作目錄，以不同於 author_model 的模型冷讀，再用 market_questions.py validate 驗證。驗證通過後才由發布程序外的明確步驟保存 reviewed questions.json；待重評期間保留原結論與原 as_of。" if question_needs_review else
+                                           "尚無 questions.json；本次不假裝已完成問題板研究。需建立時依 market-question-board-v1 完整研究、異模型冷讀、驗證後再明確保存。" if question_board is None else
+                                           "問題板引用證據仍有效；毋須改寫既有結論。"),
                # 2026-09-13：訂閱判讀同步取得官方觀測史與區域事實，保留原快照比較口徑。
                "history_context": build_history_context(snapshot["state"], SOURCE_DIR, today),
                "presentation_guidance": "每個判讀文字欄位先用二至四句重點概括完整正反理由與關鍵條件，每句約六十字以內，之後再接完整推導。不要把多層術語括號塞進第一段；區域與期間比較以 history_context 的實際觀測日期和單位為準。",
@@ -320,7 +333,7 @@ def validate_candidate(candidate, snapshot, request, prior_read, today, ledger_p
     return errors, warnings
 
 
-def make_release(snapshot, read, prior, history, now, errors, warnings, accepted=False):
+def make_release(snapshot, read, prior, history, now, errors, warnings, accepted=False, question_board=None):
     same = read.get("snapshot_id") == snapshot["snapshot_id"] or evidence_unchanged(snapshot, read)
     status = "blocked" if errors else "degraded" if warnings else "ok" if same else "needs_review"
     if not accepted and not same and not errors:
@@ -336,14 +349,16 @@ def make_release(snapshot, read, prior, history, now, errors, warnings, accepted
                "last_analysis_success_at": now if accepted else prior.get("last_analysis_success_at", prior.get("last_success_at")),
                "status": status, "reasons": reasons, "billing": "subscription_only"}
     bundle = {"snapshot_id": snapshot["snapshot_id"], "state": snapshot["state"],
-              "read": read, "refresh": refresh, "history": history, "periods": []}
+              "read": read, "refresh": refresh, "history": history, "periods": [],
+              "question_board": question_board}
     return refresh, bundle
 
 
 def publish(data_dir, snapshot, read, history, now, errors, warnings, accepted=False):
     data_dir = Path(data_dir)
     prior = read_json(data_dir / "refresh.json", {})
-    refresh, bundle = make_release(snapshot, read, prior, history, now, errors, warnings, accepted)
+    question_board = load_question_board(data_dir, snapshot)
+    refresh, bundle = make_release(snapshot, read, prior, history, now, errors, warnings, accepted, question_board)
     # 2026-09-13：歷史顯示層獨立於既有證據 hash，舊快照仍可原樣驗證。
     bundle["history_context"] = build_history_context(snapshot["state"], SOURCE_DIR, snapshot["state"].get("as_of"))
     if prior.get("snapshot_id") == snapshot["snapshot_id"] and prior.get("status") == refresh["status"] and prior.get("reasons") == refresh["reasons"]:
@@ -351,6 +366,7 @@ def publish(data_dir, snapshot, read, history, now, errors, warnings, accepted=F
         if old_path.startswith("releases/") and ".." not in old_path:
             old = read_json(data_dir / old_path, {})
             if (old.get("read") == read and old.get("history_context") == bundle["history_context"]
+                    and old.get("question_board") == question_board
                     and "last_data_success_at" in prior and "last_analysis_success_at" in prior):
                 return prior
     bundle["periods"] = period_comparisons(snapshot, history_rows(data_dir))

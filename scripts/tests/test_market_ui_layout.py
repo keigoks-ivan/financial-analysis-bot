@@ -32,10 +32,39 @@ def test_market_page_reserves_global_slot_and_orders_sections():
     html = PAGE.read_text(encoding="utf-8")
     assert '<section id="sec-global">' in html
     order = [
-        '"sec-judgment", "sec-global", "sec-scenarios", "sec-falsifiers", "sec-history", "sec-source-history"',
+        '"sec-judgment", "sec-questions", "sec-global", "sec-scenarios", "sec-falsifiers", "sec-history", "sec-source-history"',
         '"sec-history", "sec-source-history", "sec-analogs", "sec-judgment-score"',
     ]
     assert all(fragment in html for fragment in order)
+
+
+def test_market_page_renders_question_board_with_point_in_time_evidence():
+    html = PAGE.read_text(encoding="utf-8")
+    assert '<section id="sec-questions" hidden>' in html
+    assert 'function renderQuestionBoard(board, state)' in html
+    assert 'board.schema === "market-question-board-v1"' in html
+    assert "bundle.question_board" in html
+    assert "board.evidence_snapshot && board.evidence_snapshot.quotes" in html
+    assert "判讀當時：" in html
+    assert "quoteHasChanged(thenQuote, currentQuote)" in html
+    assert "目前：" in html
+    assert "目前來源缺失" in html
+    assert "thenQuote && thenQuote.label" in html
+    assert 'String(thenQuote.unit || "")' in html
+    assert "查看支持、反對與未知" in html
+    assert "期限：" in html
+    assert "需要重審" in html
+    assert "本期待驗證問題" in html
+    assert "本區更新不代表既有機率判讀已重新核准" in html
+    assert "審查狀態未知" in html
+    assert "snapshot.slice(0, 8)" in html
+    assert "支持條件" in html
+    assert "未確認時" in html
+    assert "獨立性註記" in html
+    assert "board.sources" in html
+    assert 'safeSourceUrl(source.url, "")' in html
+    assert "查看問題板資料來源" in html
+    assert '<a href="#sec-evidence">頁內證據層</a>' in html
 
 
 def test_market_page_renders_history_context_without_empty_region_cards():
