@@ -471,12 +471,15 @@ footer a{color:var(--muted)}
   .ms-cockpit{display:block;background:var(--card);border:1px solid var(--border);border-radius:12px;
               box-shadow:var(--shadow-sm);padding:1.1rem 1.3rem;margin-bottom:1rem;color:var(--text);
               text-decoration:none;cursor:pointer;transition:all .18s ease}
+  .ms-cockpit[hidden]{display:none}
   .ms-cockpit:hover{text-decoration:none;color:var(--text);border-color:#d1d5db;box-shadow:var(--shadow-md);transform:translateY(-1px)}
   .ms-cockpit-top{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:.5rem}
   .ms-cockpit-tag{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:.05em;
                   color:var(--accent);text-transform:uppercase}
   .ms-cockpit-asof{font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--muted)}
   .ms-cockpit-headline{font-size:.88rem;color:var(--text-sec);line-height:1.7;margin:0 0 .7rem;max-width:86ch}
+  .ms-cockpit-points{margin:-.15rem 0 .8rem 1.1rem;padding:0;font-size:.78rem;color:var(--text-sec);line-height:1.6;max-width:92ch}
+  .ms-cockpit-points:empty{display:none}.ms-cockpit-points li+li{margin-top:.2rem}
   .ms-cockpit-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.7rem}
   .ms-cockpit-chip{display:inline-flex;flex-direction:column;gap:.1rem;font-size:.68rem;color:var(--muted);
                    background:var(--accent-soft);border-radius:8px;padding:.35rem .6rem}
@@ -490,10 +493,11 @@ footer a{color:var(--muted)}
     </div>
     <a class="ms-cockpit" id="msCockpit" href="/market/" hidden>
       <div class="ms-cockpit-top">
-        <span class="ms-cockpit-tag">市況主控台 · 合成層</span>
+        <span class="ms-cockpit-tag">市況主控台</span>
         <span class="ms-cockpit-asof" id="mcAsof"></span>
       </div>
       <p class="ms-cockpit-headline" id="mcHeadline"></p>
+      <ul class="ms-cockpit-points" id="mcPoints"></ul>
       <div class="ms-cockpit-chips" id="mcChips"></div>
       <span class="ms-cockpit-cta">打開市況主控台 →</span>
     </a>
@@ -537,6 +541,7 @@ footer a{color:var(--muted)}
     </div>
   </div>
 </section>
+<script src="/market/text-summaries.js"></script>
 <script>
 (function(){
   var anyData=false;
@@ -719,13 +724,36 @@ footer a{color:var(--muted)}
   // 不影響下方既有四磚；四磚的資料源與判斷邏輯本身不變。
   function mcEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function mcPct(v){return (v==null)?'—':Math.round(v*100)+'%';}
+  // 2026-09-14：首頁只放完整短句；完整判讀留在 /market/，不以截字製造殘句。
+  function mcShortRead(value){
+    var original=String(value||'').replace(/\s+/g,' ').trim();
+    var edited=window.MARKET_TEXT_SUMMARIES&&window.MARKET_TEXT_SUMMARIES[original];
+    if(Array.isArray(edited)&&edited.length){
+      return {headline:edited[0],points:edited.slice(1,3)};
+    }
+    if(original&&original.length<=80)return {headline:original,points:[]};
+    var sentences=original.match(/[^。！？]+[。！？]/g)||[];
+    var short=[];
+    for(var i=0;i<sentences.length&&short.length<3;i++){
+      var sentence=sentences[i].trim();
+      if(sentence.length>80)break;
+      short.push(sentence);
+    }
+    return short.length?{headline:short[0],points:short.slice(1,3)}:{headline:'查看最新市況判讀',points:[]};
+  }
   var p5=getJSON('/market/data/state.json').then(function(d){
     var rz=d.read_zh||{}, cs=d.council_summary||{}, env=d.environment||[];
     // v4：判讀層主張優先，過期或尚無判讀時 K1 的 read_headline 為 null，退回既有機械 headline
-    var headline=(d.read_headline!=null && d.read_headline!=='')?d.read_headline:rz.headline;
+    var hasEditorial=d.read_headline!=null&&d.read_headline!=='';
+    var headline=hasEditorial?d.read_headline:rz.headline;
     if(!headline)return;
-    el('mcHeadline').textContent=headline;
-    if(d.as_of)el('mcAsof').textContent='as-of '+d.as_of;
+    var brief=mcShortRead(headline);
+    el('mcHeadline').textContent=brief.headline;
+    el('mcPoints').innerHTML=brief.points.map(function(p){return '<li>'+mcEsc(p)+'</li>';}).join('');
+    var dates=[];
+    if(hasEditorial&&d.read_as_of)dates.push('判讀 '+d.read_as_of);
+    if(d.as_of)dates.push('資料 '+d.as_of);
+    el('mcAsof').textContent=dates.join(' · ');
     var chips=[];
     var spy21=cs.spy_up_21d;
     if(spy21)chips.push(['SPY 一個月收高機率', mcPct(spy21.p)+'（基準 '+mcPct(spy21.p_clim)+'）']);
