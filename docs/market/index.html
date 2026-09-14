@@ -168,6 +168,13 @@ table.mt td.num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabul
 .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
 .kv b{font-family:'IBM Plex Mono',monospace;font-weight:600;white-space:nowrap;color:var(--text)}
 .kv span{color:var(--text-secondary)}
+/* 2026-09-14：窄卡片的長指標名稱可換行，避免把數值與資料日期擠出卡片。 */
+.metric-kv{grid-template-columns:minmax(0,1fr) minmax(5.5rem,auto);column-gap:10px;align-items:start}
+.metric-kv b{min-width:0;white-space:normal;line-height:1.45}
+.metric-kv>span{min-width:0;text-align:right;overflow-wrap:anywhere}
+/* 2026-09-14：傳導數值與單位維持同列；其下資料日期仍可依卡寬換行。 */
+.transmission-kv>span{white-space:nowrap}
+.transmission-kv .quote-meta{white-space:normal}
 
 .trig{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media(max-width:900px){.trig{grid-template-columns:1fr}}
@@ -243,6 +250,8 @@ footer.imq-foot a{color:var(--text-secondary)}
 
 /* 2026-09-14：把本期問題拆成可在手機逐張閱讀的卡片，並保留判讀日證據。 */
 #sec-questions{scroll-margin-top:110px}
+/* 2026-09-14：頁內導覽跳轉時預留固定導覽列高度，避免各段標題被遮住。 */
+#page-body>section,#sec-evidence{scroll-margin-top:110px}
 .question-board-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;flex-wrap:wrap;margin-bottom:.8rem}
 .question-board-meta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-muted)}
 .question-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
@@ -494,13 +503,14 @@ footer.imq-foot a{color:var(--text-secondary)}
   <section id="sec-analogs">
     <h2>歷史類比</h2>
     <p class="section-sub">列出判讀者認為現在最像的歷史時期：吻合特徵與不同之處都攤開，當年結果只是參考，不是這次的預測。</p>
-    <div class="grid" id="analogsGrid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
+    <!-- 2026-09-14：極窄手機窗下卡片最小寬度不得超過內容區。 -->
+    <div class="grid" id="analogsGrid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))"></div>
   </section>
 
   <section id="sec-scenarios">
     <h2>接下來可能怎麼走</h2>
     <p class="section-sub">情境是待驗證的條件式推演，列出成立條件、改判條件與跨資產含義；不是價格目標或交易指令。</p>
-    <div class="grid" id="scenariosGrid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
+    <div class="grid" id="scenariosGrid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))"></div>
   </section>
 
   <section id="sec-falsifiers">
@@ -1558,7 +1568,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       }
       return '<div class="card tile"><div class="lab" style="font-weight:600;color:var(--text)">' + esc(TRANSMISSION_LABEL[key]) + '</div>' +
         quoteDateMeta({ as_of: d && d.as_of }, state && state.as_of) +
-        '<div class="kv" style="margin:.6rem 0">' + rows + '</div>' + flagsHtml +
+        '<div class="kv metric-kv transmission-kv" style="margin:.6rem 0">' + rows + '</div>' + flagsHtml +
         '<div class="note" style="margin-top:.6rem">' + compactText(tmap[key] || "—", 3) + '</div></div>';
     }).join("");
   }
@@ -1578,7 +1588,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     var bbHtml = buyback.length ? '<p class="note" style="margin-top:.5rem">庫藏股靜默未來四週覆蓋率：' +
       buyback.map(function (v) { return fmtNum(v, 0) + "%"; }).join(" → ") + '</p>' : "";
     return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">機械買賣觸發</div>' +
-      '<div class="kv" style="margin:.6rem 0">' + rows + '</div>' + bbHtml + '</div>';
+      '<div class="kv metric-kv" style="margin:.6rem 0">' + rows + '</div>' + bbHtml + '</div>';
   }
   function positioningMid(pos, state, currentAsOf) {
     var list = (pos && pos.cot_extremes) || [];
@@ -1603,7 +1613,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       return '<b>' + esc(spec[0]) + '</b><span>' + esc(value) + quoteDateMeta(q || { as_of: pos && pos.as_of }, currentAsOf) + '</span>';
     }).join("");
     return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">波動錯價</div>' +
-      '<div class="kv" style="margin:.6rem 0">' + rows + '</div></div>';
+      '<div class="kv metric-kv" style="margin:.6rem 0">' + rows + '</div></div>';
   }
   function renderPositioning(read, state) {
     var pos = (state && state.evidence && state.evidence.positioning) || null;

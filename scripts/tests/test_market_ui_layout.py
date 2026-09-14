@@ -108,3 +108,27 @@ def test_long_copy_and_live_tables_are_collapsed_with_precise_metadata():
     assert "目前數據與日期" in html
     assert "近 30 筆觀測" in html
     assert "近期變化" in html
+
+
+# 2026-09-14：窄卡片的鍵值欄允許長中文標籤換行，數值與日期仍保有獨立欄寬。
+def test_metric_cards_keep_values_readable_without_overflow():
+    html = PAGE.read_text(encoding="utf-8")
+    assert ".metric-kv{grid-template-columns:minmax(0,1fr) minmax(5.5rem,auto)" in html
+    assert ".metric-kv b{min-width:0;white-space:normal" in html
+    assert ".metric-kv>span{min-width:0;text-align:right;overflow-wrap:anywhere}" in html
+    assert ".transmission-kv>span{white-space:nowrap}" in html
+    assert ".transmission-kv .quote-meta{white-space:normal}" in html
+    assert html.count('class="kv metric-kv') == 3
+
+
+# 2026-09-14：320px 視窗下類比與情境卡不得以固定最小寬度撐出頁面。
+def test_narrative_card_grids_shrink_to_the_content_width():
+    html = PAGE.read_text(encoding="utf-8")
+    responsive_columns = "grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))"
+    assert html.count(responsive_columns) == 2
+
+
+# 2026-09-14：頁內導覽需替固定導覽列保留空間，跳轉後仍看得到段落標題。
+def test_in_page_navigation_keeps_section_headings_visible():
+    html = PAGE.read_text(encoding="utf-8")
+    assert "#page-body>section,#sec-evidence{scroll-margin-top:110px}" in html
