@@ -299,6 +299,7 @@ PREFIX_ACTIVE = [
     ("engine/", ("pick", None)),
     ("research/momentum-5/", ("pick", None)),
     ("research/price-momentum/", ("pick", None)),
+    ("research/price-momentum-tw/", ("pick", None)),
     ("qgm/", ("pick", None)),
     ("qgm-tw/", ("pick", None)),
     ("screeners.html", ("pick", None)),
