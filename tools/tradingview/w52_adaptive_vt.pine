@@ -24,10 +24,10 @@
 //   · 預設刻度 0~150%：滿載＝100%、cap 上限＝150%。這是滿載的百分比。
 //   · 官方四腿（QQQ／SMH／0050／2330）把「滿載權重」填 50，畫面仍是 0~150%，
 //     面板會在括號內附上對應的組合 pp（0~75，兩腿相加 0~150），與官網卡片一致。
-//   · 門檻／格＝滿載的 %。預設 20／10＝持有人設定（比官網 A2 等效值 40／20
-//     緊一倍，追蹤更貼、調整次數約兩倍）；要完全對齊官網節奏改回 40／20。
-//     評估頻率同官網＝每日。選配套袖 N 日平滑（預設 10）再降頻——只平滑倉位
-//     大小，W52 閘門跌破仍當日歸零（硬規則）。
+//   · 門檻／格＝滿載的 %。預設（網站規則開）＝ 40／20、套袖不平滑，與網站影子頁
+//     ma-confirm.html 逐日對得上；「網站規則」關閉才用下方持有人變體 20／10＋
+//     套袖 N 日平滑（預設 10）——追蹤更貼、調整次數約兩倍，僅供研究，不是準則。
+//     評估頻率同網站＝每日。平滑只影響套袖大小，W52 閘門跌破仍當日歸零（硬規則）。
 //   · 歷史需求：σ_t 至少 252 根日 bar、閘門至少 52 週；面板會顯示暖機進度。
 //
 // 誠實邊界：
@@ -41,10 +41,14 @@
 //
 // 候選層（2026-09-15 持有人提案，影子追蹤中、尚非實單）：日線均線長多確認。
 //   五條件：收 > MA60、收 > MA120、收 > MA200、MA120 斜率 > 0、MA200 斜率 > 0
-//   （斜率＝MA 今日 > MA 20 個交易日前）。五條全對才准 cap 1.5，否則該日上限退回
-//   1.0——只管「借錢加碼」這件事，W52 閘門與套袖原樣。對齊
-//   scripts/update_long_track_w52_adaptive_ma_confirm.py（影子頁 ma-confirm.html）。
-//   面板開關預設開；官網模式強制關（官網＝實單，無此層）。
+//   （斜率＝MA 今日 > MA 20 個交易日前；三個價格條件各加 1% 遲滯，見下）。五條全對
+//   才准 cap 1.5，否則該日上限退回 1.0——只管「借錢加碼」這件事，W52 閘門與套袖原樣。
+//   對齊 scripts/update_long_track_w52_adaptive_ma_confirm.py（影子頁 ma-confirm.html）。
+//   均線層獨立開關，預設開；不受下方「網站規則」開關連動——要對帳實單主系統（無此層）
+//   把它關掉即可。
+//
+// 版本準則（2026-09-15）：候選規則以網站影子頁（ma-confirm.html）為準，本指標預設值
+//   即影子頁設定（網站規則開＋均線確認開）；兩邊數字不同時以影子頁為準，本檔案是移植。
 // =============================================================================
 
 indicator("W52 × 自適應波動率 — 持股率", shorttitle="持股率 W52×σt", overlay=false, precision=1)
@@ -65,17 +69,18 @@ normDisp = input.bool(true, "以滿載＝100% 顯示（cap 上限 150%）", grou
 
 // ---- 執行層（門檻/格＝滿載的 %；預設 20/10 持有人設定，官網等效 40/20）--------
 grpE     = "執行層 A2（升格 2026-07-22）"
-official = input.bool(false, "官網模式（對帳用）", group=grpE, tooltip="開啟後強制官網 A2 設定：門檻 40／格 20／套袖不平滑，無視下方自訂值。用來跟官網頁面對帳（驗證移植正確性），對完關掉即回持有人設定。", display=display.none)
+official = input.bool(true, "網站規則（預設；對帳用）", group=grpE, tooltip="開啟（預設）＝門檻 40／格 20／套袖不平滑，與網站影子頁 ma-confirm.html 逐日對得上（候選規則的唯一準則）。關閉才用下方自訂的 20／10／平滑——這是持有人研究用的變體，不是準則。要對帳「實單主系統」（無均線層，cap 固定 1.5）另把下方「均線確認」關掉即可，兩個開關互相獨立。", display=display.none)
 bandPct  = input.float(20.0, "調整門檻（滿載的 %）", minval=0, step=5, group=grpE, tooltip="持有人設定 20：目標與現持差距小於滿載的 20% 就不動。注意：官網 A2 等效值是 40（20pp 對滿載 50pp 的腿），20 比官網緊一倍，調整次數約兩倍。", display=display.none)
 gridPct  = input.float(10.0, "取整格（滿載的 %）", minval=1, step=5, group=grpE, tooltip="持有人設定 10：調整時取整到 10% 格點（0/10/20/…/150）。官網等效值是 20。", display=display.none)
 smoothN  = input.int(10, "套袖平滑（日，1=關）", minval=1, maxval=60, group=grpE, tooltip="對套袖 w 取 N 日簡單均線再算目標，抹掉 σ_t/RV20 的日頻抖動、降低調整次數。W52 閘門不經過平滑：跌破當日目標直接歸零，出場速度不受影響。非官網規則（官網用原始 w），屬持有人變體。", display=display.none)
 
 grpM     = "均線確認（候選 2026-09-15，尚非實單）"
-maConf   = input.bool(true, "啟用均線長多確認", group=grpM, tooltip="五條件（收 > MA60/120/200、MA120 與 MA200 斜率 > 0）全對才准開到 cap 1.5，否則當日上限退回 1.0。只限制加碼，不改 W52 閘門與套袖。官網模式開啟時強制關閉。", display=display.none)
+maConf   = input.bool(true, "啟用均線長多確認", group=grpM, tooltip="五條件（收 > MA60/120/200、MA120 與 MA200 斜率 > 0）全對才准開到 cap 1.5，否則當日上限退回 1.0。只限制加碼，不改 W52 閘門與套袖。獨立開關，不受「網站規則」開關連動；預設開＝對齊網站影子頁 ma-confirm.html。要對帳「實單主系統」（無均線層，cap 固定 1.5）就把本開關關掉。", display=display.none)
 maFast   = input.int(60,  "MA 短", minval=5, group=grpM, display=display.none)
 maMid    = input.int(120, "MA 中", minval=5, group=grpM, display=display.none)
 maSlow   = input.int(200, "MA 長", minval=5, group=grpM, display=display.none)
 slopeLag = input.int(20,  "斜率比較日數", minval=1, group=grpM, tooltip="MA 今日 > MA N 日前算斜率為正。回測 5／20／60 結論相同，凍結 20。", display=display.none)
+maBuf    = input.float(1.0, "價格條件遲滯（%）", minval=0, step=0.5, group=grpM, tooltip="收 > MA60/120/200 三個價格條件加遲滯，避免收盤貼著 MA 天天翻造成執行層抖動：條件目前關，收盤要漲過 MA 才轉開；目前開，收盤要跌破 MA×(1−本值) 才轉關；中間帶沿用前一日狀態。斜率兩條件不受影響。預設 1%，對齊網站影子頁 2026-09-15 同日修訂（回測判準通過）。", display=display.none)
 showMaBlk = input.bool(true, "標示「波動已低、均線擋住加碼」", group=grpM, tooltip="閘門在場、σ_t/RV20 > 1（本可加碼）但均線五條件不全對的日子，底色轉淡紫。顯示層輔助。", display=display.none)
 
 grpD     = "顯示（主角＝持股率）"
@@ -91,7 +96,7 @@ annFac   = annIn > 0 ? annIn : (isCrypto ? 365 : 252)
 effBand  = official ? 40.0 : bandPct
 effGrid  = official ? 20.0 : gridPct
 effSm    = official ? 1 : smoothN
-effMa    = official ? false : maConf                   // 官網＝實單，無均線層
+effMa    = maConf                                      // 均線層獨立開關，不再被「網站規則」開關強制關閉
 execBand = slot * effBand / 100.0
 execGrid = slot * effGrid / 100.0
 execCap  = slot * cap                                  // 持股率上限（滿載 × cap）
@@ -144,9 +149,19 @@ maF = ta.sma(close, maFast)
 maM = ta.sma(close, maMid)
 maS = ta.sma(close, maSlow)
 maReady = not na(maS) and not na(maS[slopeLag])         // MA 未暖機（含斜率回看）＝不確認 → cap 1.0，對齊來源實作 NaN→False
-cGt60   = maReady and close > maF
-cGt120  = maReady and close > maM
-cGt200  = maReady and close > maS
+
+// 三個價格條件的遲滯狀態機（2026-09-15 同日修訂）：關→開需收盤>MA；開→關需收盤<MA×(1−maBuf%)；
+// 中間帶沿用前一日狀態。逐位元對齊 update_long_track_w52_adaptive_ma_confirm.py 的 `_hyst`。
+var bool sGt60  = false
+var bool sGt120 = false
+var bool sGt200 = false
+sGt60  := close > maF ? true : (close < maF * (1 - maBuf / 100) ? false : sGt60)
+sGt120 := close > maM ? true : (close < maM * (1 - maBuf / 100) ? false : sGt120)
+sGt200 := close > maS ? true : (close < maS * (1 - maBuf / 100) ? false : sGt200)
+
+cGt60   = maReady and sGt60
+cGt120  = maReady and sGt120
+cGt200  = maReady and sGt200
 cS120   = maReady and maM > maM[slopeLag]
 cS200   = maReady and maS > maS[slopeLag]
 maScore = (cGt60 ? 1 : 0) + (cGt120 ? 1 : 0) + (cGt200 ? 1 : 0) + (cS120 ? 1 : 0) + (cS200 ? 1 : 0)
@@ -219,7 +234,7 @@ trow(i, k, v, col) =>
 if showTbl and barstate.islast and not notDaily
     warm = nSig < medMin or na(w52)
     ppTag = (normDisp and slot != 100.0) ? "（" + str.tostring(heldPos, "#.#") + " pp）" : ""
-    trow(0, syminfo.ticker + " 持股率" + (official ? "（官網模式）" : ""), fnum(heldPos * mult, "#.#") + unit + ppTag, posCol)
+    trow(0, syminfo.ticker + " 持股率" + (official ? "（網站規則）" : "（自訂）"), fnum(heldPos * mult, "#.#") + unit + ppTag, posCol)
     trow(1, "理論目標", fnum(targetPos * mult, "#.#") + unit, color.silver)
     trow(2, "W52 閘門", gate ? "在場" : "出場", gate ? #2e9e5b : #e05252)
     trow(3, "週收 / W52", fnum(close, format.mintick) + " / " + fnum(w52, format.mintick), color.silver)
