@@ -74,14 +74,15 @@ jobs:
         # 2026-08-17 decision record). Same two-cron schedule; NO email of its own.
         run: python scripts/update_long_track_w52_adaptive_tw_semivol.py
 
-      - name: Run cap 1.5 + daily MA long-confirm shadow tracking page
-        # 2026-09-15: read-only US+TW shadow page (docs/long-track-w52-adaptive/ma-confirm.html).
-        # Holder-proposed candidate: gate/sleeve-denominator/exec-layer identical to the cap 1.5
-        # LIVE main system; only difference is an added daily-MA long-confirm condition that
-        # caps the vol-target sleeve at 1.0 (instead of 1.5) whenever the 5-condition MA score
-        # is not all-true. NOT adopted as a live rule (pre-registered review point 2026-10; see
-        # script docstring). Same two-cron schedule; NO email of its own.
-        run: python scripts/update_long_track_w52_adaptive_ma_confirm.py
+      - name: Run cap 1.5 no-MA legacy-rule shadow tracking page
+        # 2026-09-15: read-only US+TW shadow page (docs/long-track-w52-adaptive/noma.html).
+        # This is the RETIRED 2026-07-18~2026-09-14 live rule (cap fixed 1.5, no daily-MA
+        # confirm layer). The daily-MA long-confirm condition that was previously tracked
+        # here as a candidate is now part of the LIVE main system (cap_eff); this script
+        # (renamed from update_long_track_w52_adaptive_ma_confirm.py) keeps tracking the
+        # old rule as a read-only shadow for the MA-layer kill condition (rule_ledger.md).
+        # Same two-cron schedule; NO email of its own.
+        run: python scripts/update_long_track_w52_adaptive_noma.py
 
       - name: Read change alert
         id: alert
@@ -177,7 +178,7 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/long-track-w52-adaptive/ma-confirm.html docs/long-track-w52-adaptive/ma_confirm_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/f70_signal_state.json
+          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/long-track-w52-adaptive/noma.html docs/long-track-w52-adaptive/noma_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/f70_signal_state.json
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then

@@ -1,47 +1,36 @@
 #!/usr/bin/env python3
-"""W52 × 自適應 cap 1.5 ＋「日線均線長多確認」— 唯讀影子追蹤頁產生器
+"""W52 × 自適應 cap 1.5（無均線層）— 舊實單規則・唯讀影子追蹤頁產生器
 ================================================================================
-持有人 2026-09-15 提出的候選規則：實單主系統（update_long_track_w52_adaptive.py）只在平靜
-regime（σ_t/RV20 > 1）借錢加碼到 150%；本頁在此之上多加一道<b>日線均線長多確認</b>——只有
-均線也配合長多時才准許加碼到 cap 1.5，均線不配合就退回 cap 1.0。<b>本頁唯讀、不採用為實單、
-無 email</b>；實單主系統的規則、程式碼、輸出檔（_body.html／state.json）完全不受本頁影響。
+本頁是<b>實單主系統 2026-07-18～2026-09-14 的規則</b>（cap 1.5、無日線均線層），
+2026-09-15 持有人拍板為股票腿加一道日線均線確認後，主系統
+（update_long_track_w52_adaptive.py）改採「cap_eff：五條件全對 1.5、否則 1.0」，
+本頁的舊規則同日降為<b>唯讀影子</b>，供均線層 kill condition（帳本
+knowledge/rule_ledger.md「實單主系統規則鏈」(d)(e)）對帳用。<b>本頁唯讀、不採用為
+實單、無 email</b>；實單主系統的規則、程式碼、輸出檔（_body.html／state.json）完全
+不受本頁影響。本檔前身為候選影子 update_long_track_w52_adaptive_ma_confirm.py
+（曾追蹤「加均線確認」的候選規則），2026-09-15 該候選規則轉正為實單後，本檔改名、
+改造為追蹤「退役的舊規則」，即與前身角色互換。
 
-規則（凍結，照 2026-09-15 提案，不自行調參）：
+規則（凍結，2026-07-17 定案、2026-09-15 起降為影子，不再變動）：
   1. 週線 W52 單線閘門——與實單主系統逐位元相同（W-FRI；週收 > SMA52w 在場、< 出場）。
-  2. 自適應波動率套袖分母——與實單主系統逐位元相同：σ_t ＝ RV20 的
-     rolling(756, min_periods=252).median()；raw_ratio ＝ σ_t／RV20。
-  3. <b>日線均線長多確認（score5，lag 20，本頁唯一新增條件）</b>：以 auto-adjust 收盤價算
-     ma60/ma120/ma200；五條件——收盤 > MA60、收盤 > MA120、收盤 > MA200、MA120 今日 >
-     MA120 20 個交易日前、MA200 今日 > MA200 20 個交易日前——全對 → ma5_on=True。
-     cap_eff = 1.5 if ma5_on else 1.0；w = min(cap_eff, raw_ratio)（均線不配合時借錢加碼的
-     上限退回 1.0，其餘與實單完全相同）。
-  4. 執行層 A2（同實單）：20pp 門檻＋10% 取整＋取整後 clamp 於 50×1.5＝75pp（固定，
-     不隨 cap_eff 變動）；最終目標權重 = 0.5 × 閘門 × 套袖（每市場兩腿各自計算）。
+  2. 自適應波動率套袖：σ_t ＝ RV20 的 rolling(756, min_periods=252).median()；
+     raw_ratio ＝ σ_t／RV20；<b>w = min(1.5, raw_ratio)（cap 固定 1.5，無均線條件）</b>。
+  3. 執行層 A2（同實單）：20pp 門檻＋10% 取整＋取整後 clamp 於 50×1.5＝75pp；
+     最終目標權重 = 0.5 × 閘門 × 套袖（每市場兩腿各自計算）。
 
-2026-09-15 同日修訂（缺陷 4）：三個價格條件（收盤 > MA60／MA120／MA200）加 1% 遲滯
-（hysteresis，見 `_hyst`／`MA_BUF`）——理由＝收盤在 MA60 附近天天翻，造成執行層抖動。
-條件目前關則收盤 > MA 才轉開；目前開則收盤 < MA×(1−1%) 才轉關；中間帶沿用前一日狀態。
-兩條斜率條件（MA120／MA200 斜率向上）不變。回測依 v7-backtest
-run_w52_adaptive_ma_confirm.py 的預註冊判準（兩市場同時滿足：年執行層變動次數不高於
-buf=0、CAGR 不低於 buf=0 逾 0.2pp、MDD 不深於 buf=0 逾 0.5pp）驗證通過，採用 buf=0.01。
-本頁 2026-09-15 才上線、無實錄可保留，故規則改動後 `ma_confirm_state.json` 重新
-backfill（非累加式修訂）。
-
-預註冊（2026-09-15）：本頁與實單並行 ≥ 60 交易日後、於 2026-10 回顧點比較三件事——
-(a) 市場已從高點跌超過 5% 仍持有超過 100% 曝險的天數，(b) 執行層變動次數，(c) 兩條執行層
-淨值差。本頁不自動採用；回測顯示美股 Calmar 持平（0.60→0.61、CAGR −0.3pp）、台股變差
-（1.24→1.14、CAGR −1.5pp），這是用報酬買心理壓力，數字上沒有理由自動採用。（此段數字為
-原提案、未計入同日遲滯修訂，判準卡片本身依規定保留不動；下方回測表已改採 buf=0.01 新數字。）
+歷史：2026-09-15 轉為影子當日，一次性從實單主系統 state.json 複製
+2026-09-15（MA_LAYER_START_DATE）之前的 history_us／history_tw 紀錄當起始（那些本來
+就是同一條舊規則算出來的，見 `build_noma_seed`）；當天與其後改由本頁自己的
+`_daily_record`（無均線層）逐日追加，不再讀主系統的每日訊號（`load_main_state` 僅
+供頁面「本頁 vs 主系統」唯讀對照卡使用，不影響本頁自身歷史）。
 
 回測數字轉錄自 v7-backtest results/vol_targeting/w52_adaptive_ma_confirm_lag20_buf1.json
-（run_w52_adaptive_ma_confirm.py --buf 0.01 產出；美股資料截至 2026-06-11、台股至
-2026-09-08，斜率 lag 20、價格條件遲滯 buf=1%；lag 5/60 結論相同）。閘門、套袖分母、
-執行層與實單主系統逐位元相同，僅 cap_eff 是否退回 1.0 這一件事不同——不掃參擇優、
-不改機制形狀、不加濾網。
+的 cap1.5（無均線）分支（run_w52_adaptive_ma_confirm.py --buf 0.01 產出；美股資料截至
+2026-06-11、台股至 2026-09-08）；閘門、套袖分母、執行層與實單主系統逐位元相同，
+僅均線條件這一件事不同——不掃參擇優、不改機制形狀、不加濾網。
 
-輸出：docs/long-track-w52-adaptive/ma-confirm.html ＋ ma_confirm_state.json（history_us／
-history_tw 各 1260 回放＝近五年，date-keyed merge 冪等；_daily_record 每腿另記
-ma5_on／cap_eff／ma_cond／sleeve_variant="ma_confirm_l20_h1"）。另唯讀讀取實單主系統的
+輸出：docs/long-track-w52-adaptive/noma.html ＋ noma_state.json（history_us／
+history_tw 各 1260 回放＝近五年，date-keyed merge 冪等）。另唯讀讀取實單主系統的
 docs/long-track-w52-adaptive/state.json（history_us／history_tw／tickers），供「本頁 vs
 主系統」對照卡與雙線曝險時間軸使用（唯讀，不寫入、不影響主系統）。
 
@@ -76,13 +65,12 @@ NAV_BLOCK = full_nav_block("system", "lthub")
 # ---- output dir: <repo_root>/docs/long-track-w52-adaptive/ -----------------
 _cand = [HERE.parent / "docs", HERE.parents[2] / "docs" if len(HERE.parents) >= 3 else HERE / "docs"]
 DOCS = next((c for c in _cand if c.exists()), _cand[0])
-OUTPUT = DOCS / "long-track-w52-adaptive" / "ma-confirm.html"
-STATE_JSON = DOCS / "long-track-w52-adaptive" / "ma_confirm_state.json"
+OUTPUT = DOCS / "long-track-w52-adaptive" / "noma.html"
+STATE_JSON = DOCS / "long-track-w52-adaptive" / "noma_state.json"
 MAIN_STATE_JSON = DOCS / "long-track-w52-adaptive" / "state.json"   # 唯讀：實單主系統對照
-# 無 email／alert：本頁為持有人 2026-09-15 提案的唯讀影子追蹤（不採用為實單），不觸發任何通知。
+# 無 email／alert：本頁為退役舊規則的唯讀影子追蹤（不採用為實單），不觸發任何通知。
 
-PROPOSAL_DATE = "2026-09-15"                # 持有人提案日
-MA_LAG = 20                                 # 均線斜率比較日數（凍結；lag 5/60 結論相同）
+MA_LAYER_START_DATE = "2026-09-15"          # 主系統均線層上線日＝本頁降為影子日（持有人拍板）
 
 US_TICKERS = ["QQQ", "SMH"]
 TW_TICKERS = ["0050", "2330"]
@@ -101,16 +89,16 @@ HISTORY_CAP = 1320                         # state.json history 陣列上限（>
 # ---------------------------------------------------------------------------
 # 回測摘要（v7-backtest results/vol_targeting/w52_adaptive_ma_confirm_lag20_buf1.json，
 # run_w52_adaptive_ma_confirm.build_market --buf 0.01 轉錄；美股窗至 2026-06-11、台股窗至
-# 2026-09-08，斜率 lag 20、價格條件遲滯 buf=1%（缺陷 4，2026-09-15 同日修訂，判準通過採用）
-# ——持有人凍結規則，不因報告日期落後而重跑調整；lag 5/60 結論相同）。
+# 2026-09-08，斜率 lag 20、價格條件遲滯 buf=1%）。本頁（無均線層）＝該 json 的 cap1.5
+# 分支；現行實單主系統（2026-09-15 起加均線層）＝cap1.5_ma 分支。
 # 每列：(label, cagr%, mdd%, calmar, martin, avg_expo%, peak_expo%)。
 # ---------------------------------------------------------------------------
 BT_MA_US = {
     "window": ["2005-01-03", "2026-06-11"],
     "rows": [
         ("cap1.0 無槓桿對照", 12.68, -22.38, 0.5664, 1.437, 70, 100),
-        ("cap1.5 實單主系統", 14.11, -23.68, 0.5957, 1.283, 85, 150),
-        ("cap1.5＋均線確認（本頁追蹤）", 13.88, -22.95, 0.6046, 1.291, 83, 150),
+        ("cap1.5（本頁追蹤，舊實單規則，2026-07-18～2026-09-14）", 14.11, -23.68, 0.5957, 1.283, 85, 150),
+        ("cap1.5＋均線確認（現行實單主系統，2026-09-15 起）", 13.88, -22.95, 0.6046, 1.291, 83, 150),
         ("50/50 買進持有", 17.67, -56.93, 0.3103, 1.261, 100, 100),
     ],
 }
@@ -118,8 +106,8 @@ BT_MA_TW = {
     "window": ["2014-01-01", "2026-09-08"],
     "rows": [
         ("cap1.0 無槓桿對照", 19.33, -19.13, 1.0108, 2.525, 70, 100),
-        ("cap1.5 實單主系統", 23.32, -18.88, 1.2355, 2.593, 84, 145),
-        ("cap1.5＋均線確認（本頁追蹤）", 22.72, -19.08, 1.1909, 2.510, 83, 150),
+        ("cap1.5（本頁追蹤，舊實單規則，2026-07-18～2026-09-14）", 23.32, -18.88, 1.2355, 2.593, 84, 145),
+        ("cap1.5＋均線確認（現行實單主系統，2026-09-15 起）", 22.72, -19.08, 1.1909, 2.510, 83, 150),
         ("50/50 買進持有", 26.81, -39.47, 0.6792, 2.731, 100, 100),
     ],
 }
@@ -267,86 +255,44 @@ def gate_state(px: pd.Series) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Sleeve — adaptive median (verbatim port of main system's _sleeve_from) ＋
-# 日線均線長多確認（持有人 2026-09-15 提案，本頁唯一新增條件）
+# Sleeve — adaptive median（舊規則，2026-07-18～2026-09-14 為實單；2026-09-15 起
+# 主系統加均線層，本頁維持這條舊規則不變、降為影子）
 # ---------------------------------------------------------------------------
-CAP = 1.5   # 均線配合時的曝險上限（同實單主系統）；均線不配合時 cap_eff 退回 1.0
-MA_BUF = 0.01  # 缺陷 4（2026-09-15 同日修訂）：三個價格條件的遲滯緩衝＝1%，回測判準通過後採用
+CAP = 1.5   # 曝險上限，固定（舊規則無均線條件，不隨任何條件退回 1.0）
 
-# 執行層常數（同實單主系統 A2：門檻 20pp／格 10%／取整後 clamp 於 50×CAP＝75pp，
-# 固定不隨 cap_eff 變動）。band／grid／clamp 皆組合 pp；整數 pp 空間比較。
+# 執行層常數（同實單主系統 A2：門檻 20pp／格 10%／取整後 clamp 於 50×CAP＝75pp）。
+# band／grid／clamp 皆組合 pp；整數 pp 空間比較。
 EXEC_BAND = 20.0
 EXEC_GRID = 10.0
-EXEC_CLAMP = 50.0 * CAP           # 固定 75pp（單腿滿載）；不隨 cap_eff 是否退回 1.0 而變
+EXEC_CLAMP = 50.0 * CAP           # 固定 75pp（單腿滿載）
 EXEC_UPGRADE_DATE = "2026-07-22"  # 執行層升格 A2 之日（同實單主系統，規則凍結日仍為 FREEZE_DATE）
 
 
-def _hyst(close: pd.Series, ma: pd.Series, buf: float) -> pd.Series:
-    """收盤 vs MA 的遲滯狀態機（缺陷 4，2026-09-15 同日修訂）：條件目前關→收盤>ma
-    才轉開；目前開→收盤<ma×(1−buf) 才轉關；中間帶沿用前一日狀態，起始為 False。
-    逐位元對齊 v7-backtest run_w52_adaptive_ma_confirm._hyst。buf=0 時 off=收盤<ma
-    與 on 互補（相等時沿用前值）——與原本「收盤>ma」在收盤==ma 那一刻有微小差異，允許。"""
-    on = close > ma
-    off = close < ma * (1.0 - buf)
-    st = pd.Series(np.nan, index=close.index)
-    st[on] = 1.0
-    st[off] = 0.0
-    return st.ffill().fillna(0.0) > 0.5
-
-
-def _ma_conditions(px: pd.Series, lag: int = MA_LAG) -> tuple:
-    """日線均線長多 score5（持有人 2026-09-15 提案；同日修訂加 1% 遲滯，缺陷 4）。
-    逐位元對齊 v7-backtest run_w52_adaptive_ma_confirm.ma_score5(lag=20, buf=MA_BUF)：
-    五條件——收盤>MA60、收盤>MA120、收盤>MA200（三者皆用 `_hyst` 加 1% 遲滯，理由＝收盤
-    在 MA60 附近天天翻會造成執行層抖動）、MA120 今日>MA120 lag 日前、MA200 今日>MA200
-    lag 日前（斜率兩條件不加遲滯，維持原樣）——全對→ma5_on=True。因果、無前視。
-    回傳 (cond_dict, ma5_on)。"""
-    ma60 = px.rolling(60).mean()
-    ma120 = px.rolling(120).mean()
-    ma200 = px.rolling(200).mean()
-    cond = {
-        "gt60": bool(_hyst(px, ma60, MA_BUF).iloc[-1]),
-        "gt120": bool(_hyst(px, ma120, MA_BUF).iloc[-1]),
-        "gt200": bool(_hyst(px, ma200, MA_BUF).iloc[-1]),
-        "s120_up": bool(ma120.iloc[-1] > ma120.shift(lag).iloc[-1]),
-        "s200_up": bool(ma200.iloc[-1] > ma200.shift(lag).iloc[-1]),
-    }
-    ma5_on = all(cond.values())
-    return cond, ma5_on
-
-
 def _sleeve_from(px: pd.Series, win: int = 20):
-    """Returns (rv20_now, sigma_t_now, sleeve, raw_ratio, ma5_on, cap_eff). RV20／σ_t／
-    raw_ratio 與實單主系統 _sleeve_from 逐位元相同（σ_t ＝ RV20 的
-    rolling(756, min_periods=252).median()；raw_ratio ＝ σ_t/RV20，未 clip）。
-    cap_eff = 1.5 if ma5_on else 1.0（均線不配合時，借錢加碼的上限退回 1.0）；
-    w = min(cap_eff, raw_ratio)——與 v7-backtest run_w52_adaptive_ma_confirm.leg_weight
-    的 "cap1.5_ma" 分支數學等價（ratio<=cap 時取 ratio、ratio>cap 時取 cap，即
-    ratio.clip(upper=cap)）。因果、無前視。"""
+    """Returns (rv20_now, sigma_t_now, sleeve, raw_ratio). 舊規則（無均線層，
+    2026-07-18～2026-09-14 為實單）：σ_t ＝ RV20 的 rolling(756, min_periods=252).median()；
+    raw_ratio ＝ σ_t/RV20（未 clip）；w = clip(raw_ratio, upper=CAP=1.5)（真波動率目標，
+    可上到 150%，cap 固定不隨均線條件變動）。逐位元對齊改規則前的
+    update_long_track_w52_adaptive.py（見 git 歷史）。因果、無前視。"""
     lr = np.log(px / px.shift(1))
     rv = lr.rolling(win).std() * np.sqrt(252)
     sigma = rv.rolling(MED_WIN, min_periods=MIN_PERIODS).median()
     rv_now = float(rv.iloc[-1])
     sig_now = float(sigma.iloc[-1])
-    _, ma5_on = _ma_conditions(px)
-    cap_eff = 1.5 if ma5_on else 1.0
     if rv_now > 0 and not np.isnan(sig_now):
         raw = sig_now / rv_now
-        w = min(cap_eff, raw)
+        w = min(CAP, raw)
     else:
-        raw, w = 1.0, min(cap_eff, 1.0)
+        raw, w = 1.0, 1.0
         if np.isnan(sig_now):
             sig_now = rv_now
-    return rv_now, sig_now, w, raw, ma5_on, cap_eff
+    return rv_now, sig_now, w, raw
 
 
 def sleeve_state(px: pd.Series) -> dict:
-    rv_now, sig_now, w, raw, ma5_on, cap_eff = _sleeve_from(px)
-    cond, _ = _ma_conditions(px)
+    rv_now, sig_now, w, raw = _sleeve_from(px)
     # 距離開槓桿：raw < 1 時波動還要降 (1-raw) 才到 1.0（開始借錢）；raw ≥ 1 已在借
     return {"rv20": rv_now, "sigma_t": sig_now, "sleeve": w, "raw_ratio": raw,
-            "ma5_on": ma5_on, "cap_eff": cap_eff, "ma_cond": cond,
-            "sleeve_variant": "ma_confirm_l20_h1",
             "levered": bool(raw > 1.0), "dist_to_lever": max(0.0, 1.0 - raw)}
 
 
@@ -365,16 +311,15 @@ def _daily_record(px_map: dict, legs: list, d: pd.Timestamp, source: str) -> dic
     """One market's one-day target weights, computed byte-identically to the
     live path: gate = 已收完 W-FRI 週棒 ffill 到 d（_gate_core(px[:d]).pos_daily.iloc[-1]，
     逐位元對齊 run_w52_adaptive.gate_w52，與實單主系統相同）；sleeve = adaptive median
-    × 均線 cap_eff on px[:d]（無前視：px_map[t].loc[:d] 截到當日）。
-    source ∈ {'replay','live'}. Records sigma_t_pct／ma5_on／cap_eff／ma_cond per leg."""
+    on px[:d]（舊規則，無均線層；無前視：px_map[t].loc[:d] 截到當日）。
+    source ∈ {'replay','live'}. Records sigma_t_pct per leg."""
     rec = {"date": d.strftime("%Y-%m-%d"), "source": source, "tickers": {}}
     combined = 0.0
     for t in legs:
         pxd = px_map[t].loc[:d]
         *_, pos_daily = _gate_core(pxd)
         gate = bool(pos_daily.iloc[-1])
-        rv_now, sig_now, sleeve, raw, ma5_on, cap_eff = _sleeve_from(pxd)
-        cond, _ = _ma_conditions(pxd)
+        rv_now, sig_now, sleeve, raw = _sleeve_from(pxd)
         final = WEIGHTS[t] * ((1 if gate else 0) * sleeve)
         combined += final
         rec["tickers"][t] = {
@@ -383,10 +328,6 @@ def _daily_record(px_map: dict, legs: list, d: pd.Timestamp, source: str) -> dic
             "sigma_t_pct": round(sig_now * 100, 2),
             "raw_ratio": round(raw, 4),
             "sleeve": round(sleeve, 4),
-            "ma5_on": ma5_on,
-            "cap_eff": cap_eff,
-            "ma_cond": cond,
-            "sleeve_variant": "ma_confirm_l20_h1",
             "final_pct": round(final * 100, 1),   # 組合 pp，0..75（每腿滿槓桿 75）
         }
     rec["combined_pct"] = round(combined * 100, 1)
@@ -401,6 +342,16 @@ def build_backfill(px_map: dict, legs: list, n_days: int = BACKFILL_DAYS) -> lis
         common = px_map[t].index if common is None else common.intersection(px_map[t].index)
     dates = common.sort_values()[-n_days:]
     return [_daily_record(px_map, legs, d, "replay") for d in dates]
+
+
+def build_noma_seed(main_state: dict, hist_key: str) -> list:
+    """一次性種子（2026-09-15 轉影子當日用）：把主系統 state.json 既有 history_us／
+    history_tw 複製過來當本頁起始歷史——只取 MA_LAYER_START_DATE（均線層上線日）之前
+    的紀錄，因為那些本來就是舊規則（cap 1.5、無均線層）算出來的；當天或之後的主系統
+    紀錄已含均線層，不適用本頁，一律由本頁自己的 build_backfill（無均線層）重算填補
+    （merge_history 以日期為 key，只補缺、不覆蓋，兩者不會衝突）。"""
+    hist = main_state.get(hist_key, [])
+    return [r for r in hist if r["date"] < MA_LAYER_START_DATE]
 
 
 def merge_history(prev_history: list, backfill: list, today_rec: dict,
@@ -507,29 +458,12 @@ def ticker_card(t: str, d: dict) -> str:
             '⚠ 接近出場（近 W52）</span>') if near_exit else ""
     rv = d["rv20"] * 100
     sig = d["sigma_t"] * 100
-    ma5_on = d["ma5_on"]
-    cap_eff = d["cap_eff"]
-    cond = d["ma_cond"]
-
-    def _lamp(name, ok):
-        bg = "var(--green-bg)" if ok else "var(--red-bg)"
-        fg = "var(--green-text)" if ok else "var(--red-text)"
-        mark = "✓" if ok else "✕"
-        return f'<span class="tag" style="background:{bg};color:{fg};margin:0 .2rem .2rem 0">{mark} {name}</span>'
-
-    lamps = "".join([
-        _lamp("收盤&gt;MA60", cond["gt60"]),
-        _lamp("收盤&gt;MA120", cond["gt120"]),
-        _lamp("收盤&gt;MA200", cond["gt200"]),
-        _lamp(f"MA120斜率↑(lag{MA_LAG})", cond["s120_up"]),
-        _lamp(f"MA200斜率↑(lag{MA_LAG})", cond["s200_up"]),
-    ])
     return f"""<div class="tcard">
   <div class="tcard-hdr">
     <span class="tname">{t}</span>
     <span class="pos-badge pos-{col}">最終權重 {d['final']*100:.0f}%</span>
   </div>
-  <div class="tcard-sub">閘門 {'在場' if gate_on else '出場'} × 套袖 {d['sleeve']*100:.0f}%（cap_eff {cap_eff:.1f}）
+  <div class="tcard-sub">閘門 {'在場' if gate_on else '出場'} × 套袖 {d['sleeve']*100:.0f}%
     → 佔本標的 50% 額度的 {d['fill']*100:.0f}% · 目標權重 0.5 × {1 if gate_on else 0} × {d['sleeve']:.2f} = {d['final']*100:.0f}%{warn}</div>
   <div class="sig-row">
     <div class="sig {'on' if gate_on else 'off'}">
@@ -538,18 +472,13 @@ def ticker_card(t: str, d: dict) -> str:
         ｜W104 {d['w104']:.2f} <b style="color:var(--{'green' if d104>=0 else 'red'})">{fmt_pct(d104,1)}</b>
         ｜W250 {d['w250']:.2f} <b style="color:var(--{'green' if d250>=0 else 'red'})">{fmt_pct(d250,1)}</b>
         ｜W104斜率 {'↑' if d['s104_pos'] else '↓'}｜W250斜率 {'↑' if d['s250_pos'] else '↓'}
-        <br><span style="font-size:.72rem">W52 單線閘門：週收 &gt; W52 在場、&lt; W52 出場（與實單主系統逐位元相同，不受本頁均線條件影響）。</span></div>
-    </div>
-    <div class="sig {'on' if ma5_on else 'off'}">
-      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">日線均線長多確認（score5，持有人提案）</span><span class="sig-mark">{'✓ 五條全對' if ma5_on else '✕ 未全對'}</span></div>
-      <div class="sig-detail">{lamps}
-        <br><span style="font-size:.72rem">五條全對 → cap_eff = <b>1.5</b>（同實單）；任一條不對 → cap_eff 退回 <b>1.0</b>（凍結規則，不調參）。三個價格條件（收盤 vs MA60/120/200）加 1% 遲滯：關轉開要收盤 &gt; MA，開轉關要收盤 &lt; MA×99%，中間帶維持前一日狀態（2026-09-15 同日修訂，理由是收盤貼著 MA60 天天翻會讓執行層跟著抖動）。</span></div>
+        <br><span style="font-size:.72rem">W52 單線閘門：週收 &gt; W52 在場、&lt; W52 出場（W104/W250 僅供背景參考，不入閘門決策）。與實單主系統逐位元相同。</span></div>
     </div>
     <div class="sig {'on' if d['levered'] else ('off' if d['sleeve']<0.999 else '')}">
-      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">自適應套袖 × cap_eff {cap_eff:.1f}</span><span class="sig-mark">{d['sleeve']*100:.0f}%</span></div>
+      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">自適應套袖 × cap 1.5（舊規則，無均線層）</span><span class="sig-mark">{d['sleeve']*100:.0f}%</span></div>
       <div class="sig-detail">RV20 <b>{rv:.1f}%</b> vs σ_t <b>{sig:.1f}%</b> → σ_t/RV20 原始比率 <b>{d['raw_ratio']:.2f}</b>
-        → w = min(cap_eff {cap_eff:.1f}, {d['raw_ratio']:.2f}) = <b>{d['sleeve']:.2f}</b>
-        <br><span style="font-size:.72rem">{('<b style=color:var(--green)>已開槓桿</b>：波動低於自身近 3 年中位，加碼到 %.0f%%。' % (d['sleeve']*100)) if d['levered'] else ('未開槓桿（σ_t/RV &lt; cap_eff，減碼中）：波動<b>再降 %.0f%%</b>才會開始借錢。' % (d['dist_to_lever']*100))} RV20／σ_t 分母與實單主系統完全相同，差異只在上限 cap_eff。</span></div>
+        → w = clip({d['raw_ratio']:.2f}, 上限 1.5) = <b>{d['sleeve']:.2f}</b>
+        <br><span style="font-size:.72rem">{('<b style=color:var(--green)>已開槓桿</b>：波動低於自身近 3 年中位，加碼到 %.0f%%。' % (d['sleeve']*100)) if d['levered'] else ('未開槓桿（σ_t/RV &lt; 1，減碼中）：波動<b>再降 %.0f%%</b>才到 1.0 開始借錢。' % (d['dist_to_lever']*100))} 本頁 cap 固定 1.5，不受均線條件影響（<a href="/long-track/#live">實單主系統</a> 2026-09-15 起改為 cap_eff，均線不配合時退回 1.0）。</span></div>
     </div>
   </div>
 </div>"""
@@ -588,8 +517,9 @@ def recent_table(t: str, d: dict) -> str:
 
 
 def backtest_section(mkt: dict) -> str:
-    """回測主表（4 列：cap1.0／cap1.5 實單／cap1.5＋均線確認 本頁／50-50 買進持有），
-    轉錄自 v7-backtest results/vol_targeting/w52_adaptive_ma_confirm_lag20_buf1.json（BT_MA_US/TW）。"""
+    """回測主表（4 列：cap1.0／本頁 cap1.5（舊規則）／主系統 cap1.5＋均線確認／
+    50-50 買進持有），轉錄自 v7-backtest
+    results/vol_targeting/w52_adaptive_ma_confirm_lag20_buf1.json（BT_MA_US/TW）。"""
     bt = mkt["bt"]
     rows = ""
     for lab, cagr, mdd, calmar, martin, avg, peak in bt["rows"]:
@@ -599,9 +529,9 @@ def backtest_section(mkt: dict) -> str:
                  f'<td class="num">{martin:.3f}</td><td class="num">{avg:.0f}%</td>'
                  f'<td class="num">{peak:.0f}%</td></tr>\n')
     return f"""<div class="card">
-<h3>回測摘要 — {mkt['short']}（均線確認候選 vs 實單主系統・窗 {bt['window'][0]} ～ {bt['window'][1]}）</h3>
+<h3>回測摘要 — {mkt['short']}（舊規則影子 vs 現行實單主系統・窗 {bt['window'][0]} ～ {bt['window'][1]}）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
-主列（藍底）＝<b>cap1.5＋均線確認（本頁追蹤，持有人 2026-09-15 提案，價格條件已加 1% 遲滯）</b>；灰底列＝實單主系統對照（cap1.5，規則除均線條件外完全相同）。
+主列（藍底）＝<b>cap1.5（本頁追蹤，舊實單規則，2026-07-18～2026-09-14，無均線層）</b>；灰底列＝現行實單主系統對照（cap1.5＋均線確認，2026-09-15 起，規則除均線條件外完全相同）。
 數字轉錄自 v7-backtest <code>results/vol_targeting/w52_adaptive_ma_confirm_lag20_buf1.json</code>：<b>美股資料截至 2026-06-11、台股至 2026-09-08，斜率 lag 20、價格條件遲滯 buf=1%；lag 5/60 結論相同</b>。</p>
 <table><thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th><th class="num">平均曝險</th><th class="num">峰值</th></tr></thead>
 <tbody>{rows}</tbody></table>
@@ -609,22 +539,23 @@ def backtest_section(mkt: dict) -> str:
 
 
 def era_section(mkt: dict) -> str:
-    """分期表（只列 實單 cap1.5 vs 本頁 cap1.5＋均線確認，同一份 JSON 的 subperiods）。"""
+    """分期表（只列 本頁 cap1.5〔舊規則〕vs 主系統 cap1.5＋均線確認〔現行〕，同一份
+    JSON 的 subperiods）。"""
     rows = ""
     for lab, lc, lm, lcal, sc, sm, scal in mkt["era"]:
         rows += (f'<tr><td>{lab}</td>'
                  f'<td class="num">{lc:+.2f}%</td><td class="num">{lm:.2f}%</td><td class="num">{lcal:.4f}</td>'
                  f'<td class="num">{sc:+.2f}%</td><td class="num">{sm:.2f}%</td><td class="num">{scal:.4f}</td></tr>\n')
     return f"""<div class="card">
-<h3>{mkt['short']} 分期回測 — 實單（cap1.5）vs 本頁（cap1.5＋均線確認）</h3>
-<table><thead><tr><th>期間</th><th class="num" colspan="3">實單 CAGR／MDD／Calmar</th><th class="num" colspan="3">本頁 CAGR／MDD／Calmar</th></tr></thead>
+<h3>{mkt['short']} 分期回測 — 本頁（cap1.5，舊規則）vs 主系統（cap1.5＋均線確認，現行）</h3>
+<table><thead><tr><th>期間</th><th class="num" colspan="3">本頁 CAGR／MDD／Calmar</th><th class="num" colspan="3">主系統 CAGR／MDD／Calmar</th></tr></thead>
 <tbody>{rows}</tbody></table>
 </div>"""
 
 
 def annual_perf_section(mkt: dict) -> str:
-    """逐年回測績效表：只列 實單（cap1.5）vs 本頁（cap1.5＋均線確認），轉錄自同一份
-    JSON 的 annual。欄位＝年度、實單報酬%、本頁報酬%、差 pp。"""
+    """逐年回測績效表：只列 本頁（cap1.5，舊規則）vs 主系統（cap1.5＋均線確認，現行），
+    轉錄自同一份 JSON 的 annual。欄位＝年度、本頁報酬%、主系統報酬%、差 pp。"""
     rows = mkt["annual"]
     win = mkt["bt"]["window"]
     body = ""
@@ -639,10 +570,10 @@ def annual_perf_section(mkt: dict) -> str:
                  f'<td class="num" style="color:{sc}">{fmt_pct(shadow, 1)}</td>'
                  f'<td class="num" style="color:{dc}">{diff:+.1f}</td></tr>\n')
     return f"""<div class="card">
-<h3>{mkt['short']} 逐年回測 — 實單（cap1.5）vs 本頁（cap1.5＋均線確認）（窗 {win[0]} ～ {win[1]}）</h3>
+<h3>{mkt['short']} 逐年回測 — 本頁（cap1.5，舊規則）vs 主系統（cap1.5＋均線確認，現行）（窗 {win[0]} ～ {win[1]}）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-差＝本頁 − 實單（pp）。<b>末年為 YTD 部分年</b>（美股窗至 2026-06-11、台股窗至 2026-09-08）。<b>逐年數字為回測、非實盤</b>，兩者規則除均線確認外完全相同。</p>
-<table><thead><tr><th>年度</th><th class="num">實單 cap1.5</th><th class="num">本頁 cap1.5＋均線</th><th class="num">差 (pp)</th></tr></thead>
+差＝主系統 − 本頁（pp）。<b>末年為 YTD 部分年</b>（美股窗至 2026-06-11、台股窗至 2026-09-08）。<b>逐年數字為回測、非實盤</b>，兩者規則除均線確認外完全相同。</p>
+<table><thead><tr><th>年度</th><th class="num">本頁 cap1.5</th><th class="num">主系統 cap1.5＋均線</th><th class="num">差 (pp)</th></tr></thead>
 <tbody>{body}</tbody></table>
 </div>"""
 
@@ -776,9 +707,9 @@ def main_snapshot_card(mkt_key: str, main_state: dict) -> str:
                  f'<td class="num">{d["final_weight_pct"]:.1f}%</td>'
                  f'<td class="num">{d["executed_pct"]:.0f}%</td></tr>\n')
     return f"""<div class="card" style="border:2px solid var(--blue-border)">
-<h3 style="color:var(--blue-text)">{mkt['short']} 本頁（cap1.5＋均線確認）vs 實單主系統（cap1.5，唯讀對照・主系統數據截至 {main_data_date}）</h3>
+<h3 style="color:var(--blue-text)">{mkt['short']} 本頁（cap1.5，舊規則）vs 實單主系統（cap1.5＋均線確認，唯讀對照・主系統數據截至 {main_data_date}）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-下表為<b>實單主系統</b>當前讀數，直接讀取 state.json，唯讀不寫入、不受本頁影響。差異只來自套袖上限——本頁均線不配合時 cap_eff 退回 1.0，主系統固定 1.5。
+下表為<b>實單主系統</b>當前讀數，直接讀取 state.json，唯讀不寫入、不受本頁影響。差異只來自套袖上限——主系統均線不配合時 cap_eff 退回 1.0，本頁固定 1.5（舊規則、無均線層）。
 主系統組合目標 <b>{tgt_sum:.1f}%</b>、執行層現持 <b>{exe_sum:.0f}%</b>。</p>
 <table><thead><tr><th>腿</th><th class="num">閘門</th><th class="num">RV20</th><th class="num">σ_t</th><th class="num">raw ratio</th><th class="num">目標</th><th class="num">現持</th></tr></thead>
 <tbody>{rows}</tbody></table>
@@ -795,8 +726,8 @@ var CMP_LAB_{suf}={cmp['labels']},CMP_SHADOW_{suf}={cmp['shadow']},CMP_MAIN_{suf
 new Chart(document.getElementById('chart-cmp-{suf}'),{{
   type:'line',
   data:{{labels:CMP_LAB_{suf},datasets:[
-    {{label:'本頁（均線確認）現持',data:CMP_SHADOW_{suf},borderColor:GREEN,borderWidth:2,stepped:true,pointRadius:0,pointHoverRadius:3,tension:0}},
-    {{label:'實單主系統現持',data:CMP_MAIN_{suf},borderColor:BLUE,borderWidth:2,borderDash:[5,3],stepped:true,pointRadius:0,pointHoverRadius:3,tension:0}}
+    {{label:'本頁（舊規則）現持',data:CMP_SHADOW_{suf},borderColor:GREEN,borderWidth:2,stepped:true,pointRadius:0,pointHoverRadius:3,tension:0}},
+    {{label:'實單主系統（均線確認）現持',data:CMP_MAIN_{suf},borderColor:BLUE,borderWidth:2,borderDash:[5,3],stepped:true,pointRadius:0,pointHoverRadius:3,tension:0}}
   ]}},
   options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
     plugins:{{legend:{{display:true,position:'top',align:'start',labels:{{usePointStyle:true,pointStyle:'line',padding:12}}}},
@@ -814,9 +745,9 @@ def _cmp_card_html(suf: str, cmp: dict, mkt: dict) -> str:
         return (f'<div class="card"><h3>{mkt["short"]} 本頁 vs 實單主系統 — 執行層曝險時間軸對照</h3>'
                 '<p style="font-size:.82rem;color:var(--muted)">兩邊歷史尚無重疊日期，暫無法對照（本頁剛建立，需與主系統累積共同的實錄天數後才會出現對照線）。</p></div>')
     return f"""<div class="card">
-<h3>{mkt['short']} 執行層曝險時間軸對照 — 本頁（均線確認）vs 實單主系統</h3>
+<h3>{mkt['short']} 執行層曝險時間軸對照 — 本頁（舊規則）vs 實單主系統（均線確認）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
-兩條線都是<b>執行層現持</b>（A2 20pp 門檻＋10% 取整後的實際組合曝險，非每日理論目標），差異僅來自套袖上限（本頁均線不配合時 cap_eff 退回 1.0）。
+兩條線都是<b>執行層現持</b>（A2 20pp 門檻＋10% 取整後的實際組合曝險，非每日理論目標），差異僅來自套袖上限（主系統均線不配合時 cap_eff 退回 1.0，本頁固定 1.5）。
 交集窗 {cmp['span']}，共 {cmp['n']} 個交易日。</p>
 <div class="chart-wrap"><canvas id="chart-cmp-{suf}"></canvas></div>
 </div>"""
@@ -1051,7 +982,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
 <div style="font-size:.72rem;color:var(--muted);margin-top:.6rem;line-height:1.7">
 名詞：<b>W52</b>＝過去 52 週（約一年）收盤價的平均線，本系統用它當長期趨勢的進出場閘門（週收在上方視為多頭、在下方視為空頭）；
 <b>套袖（自適應波動率）</b>＝波動低於自身近 3 年中位數時加碼、波動升高時自動減碼的機制；
-<b>cap_eff</b>＝本頁的曝險上限，均線五條件全對時是 1.5（同實單）、任一條不對時退回 1.0（本頁與實單主系統唯一的差異）；
+<b>cap</b>＝曝險上限（本頁固定 1.5＝單一腿最高可放大到自身額度的 150%，舊規則、無均線條件；<a href="/long-track/#live">實單主系統</a> 2026-09-15 起改為 cap_eff，均線不配合時退回 1.0）；
 <b>執行層／A2</b>＝目標權重與現持部位差要達到 20 個百分點門檻才真的調整，避免天天微調。
 </div>
 </div>"""
@@ -1110,8 +1041,8 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
   <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>cap 1.5＋日線均線確認（美+台）｜唯讀影子追蹤 | InvestMQuest Research</title>
-  <meta name="description" content="W52 × 自適應波動率 cap 1.5＋日線均線長多確認（持有人 2026-09-15 提案）· 美股 QQQ+SMH ＋ 台股 0050+2330 · 唯讀影子追蹤頁，不採用為實單、無 email · 均線不配合時 cap_eff 退回 1.0">
+  <title>cap 1.5 無均線層（美+台）｜舊規則影子 | InvestMQuest Research</title>
+  <meta name="description" content="W52 × 自適應波動率 cap 1.5，無日線均線層（2026-07-18～2026-09-14 舊實單規則）· 美股 QQQ+SMH ＋ 台股 0050+2330 · 2026-09-15 起降為唯讀影子，不採用為實單、無 email · 供均線層 kill condition 對帳">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -1219,14 +1150,14 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </div>
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">W52 × 自適應波動率（實單主系統）</a> / cap 1.5＋日線均線確認</div>
-    <h1>cap 1.5＋日線均線確認 — 唯讀影子追蹤</h1>
-    <div class="sub">美股 QQQ+SMH ＋ 台股 0050+2330 · 持有人 {PROPOSAL_DATE} 提案：均線五條件不全對時，借錢加碼的上限（cap_eff）退回 <b>1.0</b>；五條全對時同實單 <b>1.5</b>。閘門、套袖分母、執行層與<a href="/long-track/#live">實單主系統</a>逐位元相同。<b>本頁唯讀、不採用為實單、無 email</b>。</div>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">W52 × 自適應波動率（實單主系統）</a> / cap 1.5（舊規則影子）</div>
+    <h1>cap 1.5，無均線層 — 舊實單規則・唯讀影子</h1>
+    <div class="sub">美股 QQQ+SMH ＋ 台股 0050+2330 · 2026-07-18～2026-09-14 的實單規則（cap 固定 <b>1.5</b>，無均線條件）；持有人 {MA_LAYER_START_DATE} 拍板為股票腿加日線均線確認後，本頁降為唯讀影子，供均線層 kill condition 對帳。閘門、套袖分母、執行層與<a href="/long-track/#live">實單主系統</a>逐位元相同。<b>本頁唯讀、不採用為實單、無 email</b>。</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
-      <a href="/long-track/#live" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">實單主系統 cap 1.5</a>
+      <a href="/long-track/#live" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">回實單主系統（cap_eff＋均線確認）</a>
       <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">cap 1.0 影子對照</a>
       <a href="/long-track-w52-adaptive/tw-semivol.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股 B-ii 影子（唯讀）</a>
-      <a href="/long-track-w52-adaptive/ma-confirm.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">cap 1.5＋均線確認（本頁）</a>
+      <a href="/long-track/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">系統主控台</a>
     </div>
     <div class="mkt-switch-row" role="group" aria-label="市場切換（美股／台股）">
       <span class="mkt-switch-label">看單一市場：</span>
@@ -1238,9 +1169,9 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 <div class="container">
 
 <div class="oos-banner">
-  <span class="tag-loud">唯讀影子追蹤・持有人 {PROPOSAL_DATE} 提案・無 email・不構成倉位建議</span>
-  <div style="font-size:.86rem">本頁追蹤持有人 {PROPOSAL_DATE} 提出的候選規則：<b>實單主系統只在平靜 regime（σ_t/RV20 &gt; 1）借錢加碼到 150%；本頁多加一道「日線均線長多確認」——均線五條件（收盤 &gt; MA60／MA120／MA200、MA120／MA200 斜率向上，lag {MA_LAG}）全對時 cap_eff = 1.5（同實單），任一條不對時 cap_eff 退回 1.0</b>。W52 閘門、套袖分母（RV20、σ_t）、執行層 A2（20pp／10%／clamp 75pp）與<a href="/long-track/#live">實單主系統</a><b>逐位元相同</b>，唯一差異就是這道均線確認。
-  <br><br><b>本頁不採用為實單、無獨立 email</b>——可行動變化只顯示在頁面上，任何通知一律由實單主系統覆蓋。凍結規則、不調參，見下方「追蹤規則」與回測表。</div>
+  <span class="tag-loud">舊規則・唯讀影子・2026-09-15 起降級・無 email・不構成倉位建議</span>
+  <div style="font-size:.86rem">本頁是<b>實單主系統 2026-07-18～2026-09-14 的規則</b>：W52 單線閘門 × 自適應 σ 波動率目標，<b>cap 固定 1.5，無均線條件</b>。{MA_LAYER_START_DATE} 持有人拍板為股票腿加一道<b>日線均線確認</b>後，主系統改採「cap_eff：均線五條件全對 1.5、否則 1.0」，本頁的舊規則同日降為<b>唯讀影子</b>。W52 閘門、套袖分母（RV20、σ_t）、執行層 A2（20pp／10%／clamp 75pp）與<a href="/long-track/#live">實單主系統</a><b>逐位元相同</b>，唯一差異就是本頁沒有均線條件。
+  <br><br><b>本頁不採用為實單、無獨立 email</b>——可行動變化只顯示在頁面上，任何通知一律由實單主系統覆蓋。用途：供均線層 kill condition（帳本 <code>knowledge/rule_ledger.md</code>「實單主系統規則鏈」(d)(e)）對帳，凍結規則、不調參，見下方「追蹤規則」與回測表。</div>
 </div>
 
 <div class="dual-stat">
@@ -1254,31 +1185,33 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 {markets_html}
 
 <div class="card">
-<h3>追蹤規則（cap 1.5＋日線均線確認；持有人 {PROPOSAL_DATE} 提案，凍結不調參）</h3>
+<h3>追蹤規則（cap 1.5，無均線層；2026-07-17 定案、2026-09-15 起降為影子，凍結不調參）</h3>
 <div class="rule-list">
 ① <b>四腿、兩市場</b>：美股 {{QQQ, SMH}} 各 50%、台股 {{0050, 2330}} 各 50%（.TW，內嵌幻影分割修復）。兩組合各自獨立追蹤（各 100%），日報酬 50/50 加權合成（<b>絕不直接相加 equity curve</b>）。<br>
-② <b>週線 W52 單線閘門</b>（W-FRI）：<b>週收盤 &gt; SMA52w 在場、&lt; SMA52w 出場</b>；與實單主系統逐位元相同，不受本頁均線條件影響。<br>
-③ <b>自適應波動率套袖分母</b>：σ_t＝RV20 的 <b>rolling(756, min_periods=252).median()</b>；raw_ratio＝σ_t／RV20；與實單主系統逐位元相同。<br>
-④ <b>日線均線長多確認（本頁唯一新增條件）</b>：以 auto-adjust 收盤價算 <code>ma60/ma120/ma200</code>；五條件——收盤 &gt; MA60、收盤 &gt; MA120、收盤 &gt; MA200、MA120 今日 &gt; MA120 {MA_LAG} 個交易日前、MA200 今日 &gt; MA200 {MA_LAG} 個交易日前——<b>全對 → cap_eff = 1.5</b>（同實單）；<b>任一條不對 → cap_eff 退回 1.0</b>。<b>w = min(cap_eff, raw_ratio)</b>。三個價格條件（收盤 vs MA60/120/200）各加 <b>1% 遲滯</b>：條件目前關，收盤要漲過 MA 才轉開；目前開，收盤要跌破 MA×99% 才轉關；介於中間沿用前一日狀態。兩個斜率條件不受影響。<b>2026-09-15 同日修訂</b>：收盤貼著 MA60 天天翻，會讓執行層跟著抖動，加遲滯後年執行層變動次數下降，回測判準（兩市場同時：變動次數不高於無遲滯版、CAGR 不低於無遲滯版逾 0.2pp、MDD 不深於無遲滯版逾 0.5pp）通過，採用 1% 緩衝。<br>
-⑤ <b>機制與視窗凍結</b>：W52 閘門、滾動中位數 3 年（756／252）、均線 lag {MA_LAG} 皆鎖死，<b>此後不再調整</b>；不掃參擇優、不改機制形狀、不加濾網後重跑（lag 5/60 結論相同，見回測表）。<br>
-⑥ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
-⑦ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
-⑧ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
-⑨ <b>執行層 A2（同實單主系統）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×1.5＝75pp（<b>固定，不隨 cap_eff 變動</b>）；<b>回測主數字含此執行層</b>。<br>
-<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t／均線條件皆為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁無 email</b>——可行動變化只顯示在頁面上，不觸發任何通知。</span>
+② <b>週線 W52 單線閘門</b>（W-FRI）：<b>週收盤 &gt; SMA52w 在場、&lt; SMA52w 出場</b>；與實單主系統逐位元相同。<br>
+③ <b>自適應波動率套袖</b>：σ_t＝RV20 的 <b>rolling(756, min_periods=252).median()</b>；raw_ratio＝σ_t／RV20；<b>w = clip(raw_ratio, 上限 1.5)</b>——cap 固定，不受任何均線條件影響（實單主系統 2026-09-15 起改為 cap_eff，見<a href="/long-track/#live">實單主系統</a>）。<br>
+④ <b>機制與視窗凍結</b>：W52 閘門、滾動中位數 3 年（756／252）皆鎖死，<b>此後不再調整</b>；不掃參擇優、不改機制形狀、不加濾網後重跑。<br>
+⑤ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
+⑥ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
+⑦ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
+⑧ <b>執行層 A2（同實單主系統）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×1.5＝75pp；<b>回測主數字含此執行層</b>。<br>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁無 email</b>——可行動變化只顯示在頁面上，不觸發任何通知。</span>
 </div>
 </div>
 
 <div class="card" style="border:2px solid var(--blue-border)">
-<h3 style="color:var(--blue-text)">預註冊採用判準（{PROPOSAL_DATE}）</h3>
+<h3 style="color:var(--blue-text)">均線層 kill condition（{MA_LAYER_START_DATE} 起，帳本預註冊）</h3>
 <div class="rule-list" style="font-size:.86rem">
-預註冊（2026-09-15）：本頁與實單並行 ≥ 60 交易日後、於 2026-10 回顧點比較三件事——(a) 市場已從高點跌超過 5% 仍持有超過 100% 曝險的天數，(b) 執行層變動次數，(c) 兩條執行層淨值差。本頁不自動採用；回測顯示美股 Calmar 持平（0.60→0.61、CAGR −0.3pp）、台股變差（1.24→1.14、CAGR −1.5pp），這是用報酬買心理壓力，數字上沒有理由自動採用。
+本頁存在的目的是給均線層 kill condition 一個對帳基準（見 <code>knowledge/rule_ledger.md</code>「實單主系統規則鏈」）：<br>
+(d) 均線層 kill：自 {MA_LAYER_START_DATE} 起前瞻 250 個交易日，若實單（含均線層）年化落後本頁（舊規則影子）超過 3 個百分點，且「跌中持有超過 100% 的天數」沒有少於本頁的一半 → 均線層撤回，實單復歸本頁這條舊規則。<br>
+(e) 抖動 kill：任一腿 60 個交易日內 cap_eff 翻轉 ≥ 6 次 → 遲滯參數送 10 月回顧點檢討；連兩季 → 均線層撤回。<br>
+檢查點：2026-10 回顧點與其後每季。回測顯示均線層在美股 Calmar 略升（0.60→0.60）、台股略降（1.24→1.19），這是用少量報酬換「不在跌中借錢」的紀律，數字本身不構成自動撤回的理由。
 </div>
 </div>
 
 </div>
 <footer class="imq-foot">
-  <div>&copy; {datetime.now().year} InvestMQuest Research · cap 1.5＋日線均線確認（美+台）· 唯讀影子追蹤・實單主系統見 <a href="/long-track/#live">/long-track/#live</a></div>
+  <div>&copy; {datetime.now().year} InvestMQuest Research · cap 1.5，無均線層（美+台）· 舊規則・唯讀影子・實單主系統見 <a href="/long-track/#live">/long-track/#live</a></div>
   <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
 </footer>
 <script>
@@ -1383,11 +1316,18 @@ def main():
     changes = detect_changes(prev_state, sigs)
     data_date = max(sigs[t]["wk_date"] for t in ALL_TICKERS)
 
-    # ---- per-market history: rule-replay backfill (once) + daily live append ----
+    # ---- per-market history: one-time seed from main system (pre-MA-layer dates)
+    #      + rule-replay backfill (fills any remaining gap, incl. today on the
+    #      2026-09-15 cut-over run) + daily live append ----
     hist_map = {}
     for m in MARKETS:
         legs = m["legs"]
         prev_history = prev_state.get(m["hist_key"], [])
+        if len(prev_history) < BACKFILL_DAYS:
+            seed = build_noma_seed(main_state, m["hist_key"])
+            if len(seed) > len(prev_history):
+                prev_history = seed
+                print(f"{m['short']} seeded {len(seed)} pre-{MA_LAYER_START_DATE} days from main system state.json")
         backfill = build_backfill(px_map, legs) if len(prev_history) < BACKFILL_DAYS else []
         daily_date = max(px_map[t].index[-1] for t in legs)
         today_rec = _daily_record(px_map, legs, daily_date, "live")
@@ -1425,9 +1365,9 @@ def main():
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "data_date": data_date,
         "ruleset_locked_date": FREEZE_DATE,
-        "candidate_proposal_date": PROPOSAL_DATE,
-        "mechanism": "W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x cap_eff (1.5 if daily-MA-score5 long-confirm else 1.0, lag %d, price conditions w/ %.0f%% hysteresis since 2026-09-15) x exec layer A2 20pp/10%%round/clamp fixed 75pp" % (MA_LAG, MA_BUF * 100),
-        "status": "READ-ONLY SHADOW tracking page (holder proposal %s); not adopted as live rule; no email; review point 2026-10 (>=60 tracking days)" % PROPOSAL_DATE,
+        "retired_as_live_date": MA_LAYER_START_DATE,
+        "mechanism": "W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x cap 1.5 fixed (no MA condition) x exec layer A2 20pp/10%round/clamp fixed 75pp",
+        "status": "READ-ONLY SHADOW of the retired pre-%s live rule (cap 1.5, no MA layer); not the live rule; no email; kept for MA-layer kill condition reconciliation (rule_ledger.md)" % MA_LAYER_START_DATE,
         "not_a_live_signal": True,
         "last_change_date": last_change_date,
         "last_change_desc": last_change_desc,
@@ -1443,10 +1383,6 @@ def main():
                 "raw_ratio": round(sigs[t]["raw_ratio"], 4),
                 "levered": sigs[t]["levered"],
                 "sleeve_weight": round(sigs[t]["sleeve"], 4),
-                "ma5_on": sigs[t]["ma5_on"],
-                "cap_eff": sigs[t]["cap_eff"],
-                "ma_cond": sigs[t]["ma_cond"],
-                "sleeve_variant": sigs[t]["sleeve_variant"],
                 "final_weight_pct": round(sigs[t]["final"] * 100, 1),
                 "executed_pct": exec_last[t],
                 "wk_date": sigs[t]["wk_date"],

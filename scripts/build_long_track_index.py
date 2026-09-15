@@ -60,15 +60,20 @@ SPRT_MEANING = {          # 見 build_live_scoreboard.py 的 green/yellow/red �
 # 每組＝(分類、色、突出、系統清單)；系統 dict：name／url／one／status／freq／email
 GROUPS = [
     ("實單主系統", "live", True, [
-        {"name": "W52 × 自適應波動率 cap 1.5（美 + 台）", "url": "/long-track-w52-adaptive/",
-         "one": "兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層。"
-                "<b>2026-07-18 起接棒為實單主系統</b>。",
+        {"name": "W52 × 自適應波動率 cap_eff（美 + 台）", "url": "/long-track-w52-adaptive/",
+         "one": "兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap_eff ＋ A2 執行層。"
+                "<b>2026-07-18 起接棒為實單主系統；2026-09-15 起股票腿加日線均線確認</b>"
+                "（均線五條件全對 cap_eff=1.5，否則退回 1.0）。",
          "status": ("實單", "live"), "freq": "每交易日 × 2（台／美收盤後）", "email": "✅ 有"},
     ]),
     ("影子對照（同引擎、不上槓桿）", "shadow", False, [
         {"name": "W52 × 自適應波動率 cap 1.0 影子", "url": "/long-track-w52-adaptive/leverage.html",
          "one": "同引擎的 cap 1.0（不上槓桿）影子線，供槓桿 vs 不槓桿對照。",
          "status": ("影子對照", "shadow"), "freq": "每交易日 × 2", "email": "❌（併入主系統通知）"},
+        {"name": "舊實單規則 cap 1.5（無均線層）", "url": "/long-track-w52-adaptive/noma.html",
+         "one": "2026-07-18～2026-09-14 的實單規則（cap 固定 1.5，無均線條件），"
+                "2026-09-15 均線層上線後降為唯讀影子，供 kill condition 對帳。",
+         "status": ("影子對照", "shadow"), "freq": "每交易日 × 2", "email": "❌（無 email）"},
     ]),
     ("前瞻 OOS 候選（決策前研究通過、尚非實單）", "cand", False, [
         {"name": "🥇 GLD 金 sleeve", "url": "/long-track-gld/",
@@ -83,10 +88,6 @@ GROUPS = [
                 "D1 拿掉 SPY 因為 A 已是美股。",
          "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日（隨 W52 主系統更新）",
          "email": "✅（D1X 腿部位變化、月底再平衡）"},
-        {"name": "📐 cap 1.5＋日線均線確認（美 + 台）", "url": "/long-track-w52-adaptive/ma-confirm.html",
-         "one": "2026-09-15 持有人提案的影子：均線五條件不全對時退回 cap 1.0，其餘與實單相同；"
-                "10 月回顧點比較。<b>尚非實單</b>。",
-         "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日 × 2（隨 W52 主系統更新）", "email": "❌"},
     ]),
     ("已退役・凍結對照（被 W52×自適應取代）", "ret", False, [
         {"name": "STX50（SMH/QQQ 美股）", "url": "/long-track-smh/",
