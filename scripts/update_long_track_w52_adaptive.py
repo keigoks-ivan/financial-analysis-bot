@@ -68,6 +68,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yfinance as yf
+from pandas.tseries.holiday import USFederalHolidayCalendar
+from pandas.tseries.offsets import CustomBusinessDay
 
 # ---- nav import (byte-identical file across two repos) ---------------------
 HERE = Path(__file__).resolve().parent
@@ -96,6 +98,14 @@ OUTPUT = DOCS / "long-track-w52-adaptive" / "_body.html"
 STATE_JSON = DOCS / "long-track-w52-adaptive" / "state.json"
 ALERT_FILE = DOCS.parent / "lt_w52a_alert.txt"    # 實單主系統：可行動變化 email 提醒
 ALERT_HTML = DOCS.parent / "long_track_w52_mail.html"  # 同一事件的美觀 HTML 版（§5.7）
+F70_STATE_JSON = DOCS / "long-track" / "f70_signal_state.json"  # F70 均線版區塊唯讀來源
+# F70 帳戶層權重公式（2026-09-15 起頁面新增區塊，紙上候選・尚非實單）：
+# 股票腿（QQQ/SMH）執行層現持 pct（組合刻度 0~150）× 0.7 ＋ 每腿 D1X pos × 0.3 × 1/3。
+# 逐位元對齊 build_f70_alert.py 的 WEIGHT_D1X／LEG_WEIGHT（本頁抄常數值，不 import，
+# 避免呈現層跨檔耦合到另一支 CI 腳本）。
+F70_WEIGHT_STOCK = 0.7
+F70_WEIGHT_D1X = 0.30
+F70_LEG_WEIGHT = 1.0 / 3.0
 LT_W52_PAGE_URL = "https://research.investmquest.com/long-track-w52-adaptive/"
 # 槓桿回測數字由 results/vol_targeting/w52_adaptive_leverage.json 轉錄為下方 LEV 常數
 # （fab 副本無法讀 v7 results，故轉錄；比照主頁 BT_US/BT_TW 慣例）。曝險/燃料表
@@ -548,10 +558,12 @@ def band_exec_replay(history: list, legs: list) -> dict:
 def events_card(mkt: dict, events: list) -> str:
     # 2026-07-24：事件表由近三年窗改為過濾最近一年（365 個日曆天），標題同步；
     # band_exec_replay 本身仍對全史（現已近五年）重放以確保現持狀態正確，只有本表顯示過濾。
+    # 2026-09-15 重做：瘦身為日期／腿／舊→新／原因四欄（拿掉「當日組合執行曝險」欄，
+    # 該資訊已在主圖 pane 2 與今天結論條呈現，事件表只留「哪天哪腿為什麼變」）。
     cutoff = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
     recent_events = [e for e in events if e["date"] >= cutoff]
     if not recent_events:
-        body = ('<tr><td colspan="5" style="text-align:center;color:var(--muted)">'
+        body = ('<tr><td colspan="4" style="text-align:center;color:var(--muted)">'
                 '最近一年窗內無執行層調整事件（皆未跨 20pp 門檻）</td></tr>')
     else:
         body = ""
@@ -559,13 +571,12 @@ def events_card(mkt: dict, events: list) -> str:
             rc = "var(--blue-text)" if ev["reason"] == "閘門翻轉" else "var(--amber-text)"
             body += (f'<tr><td>{ev["date"]}</td><td><b>{ev["leg"]}</b></td>'
                      f'<td>{ev["from"]:.0f}% → {ev["to"]:.0f}%</td>'
-                     f'<td style="color:{rc}">{ev["reason"]}</td>'
-                     f'<td class="num">{ev["combined_exec_pct"]:.0f}%</td></tr>\n')
+                     f'<td style="color:{rc}">{ev["reason"]}</td></tr>\n')
     return f"""<div class="card">
 <h3>{mkt['short']} 最近一年執行層訊號變化事件（A2：20pp 門檻＋10% 取整＋clamp 150%）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-只有當某腿目標與現持差 ≥ 20pp 才調整（取整到 10% 格、再 clamp 於 75%），故事件遠少於每日微調。倒序列出最近 365 天內全部事件；「變化」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」否則「波動調整」。</p>
-<table><thead><tr><th>日期</th><th>腿</th><th>變化</th><th>原因</th><th class="num">當日組合執行曝險</th></tr></thead>
+只有當某腿目標與現持差 ≥ 20pp 才調整（取整到 10% 格、再 clamp 於 75%），故事件遠少於每日微調。倒序列出最近 365 天內全部事件；「舊→新」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」否則「波動調整」。</p>
+<table><thead><tr><th>日期</th><th>腿</th><th>舊→新</th><th>原因</th></tr></thead>
 <tbody>{body}</tbody></table>
 </div>"""
 
@@ -573,6 +584,27 @@ def events_card(mkt: dict, events: list) -> str:
 # ---------------------------------------------------------------------------
 # HTML helpers
 # ---------------------------------------------------------------------------
+# 站台色票（沿用既有 JS 變數 GREEN/BLUE/AMBER 的十六進位值，Lightweight Charts
+# 主圖與 :root CSS 共用一份，避免顏色分岔）。PURPLE 為 2026-09-15 新增（cap_eff
+# 被壓回 1.0 的色塊），站台先前無此語意色，選一個與現有奶油×海軍藍×金搭配的紫。
+GREEN_HEX = "#16a34a"
+BLUE_HEX = "#1565c0"
+AMBER_HEX = "#d97706"
+RED_HEX = "#b91c1c"
+PURPLE_HEX = "#6d28d9"
+BRAND_HEX = "#0d2244"
+TEXT_HEX = "#0c1521"
+BORDER_HEX = "#e5dfd0"
+LWC_PANE_H = (260, 220, 160)               # 價格／曝險（持股率，主角，最顯眼）／波動，固定像素高度
+LWC_RESERVE_H = 32                         # 時間軸列＋pane 分隔線佔用（實測 v5 約 28~30px，留餘裕）
+LWC_TOTAL_H = sum(LWC_PANE_H) + LWC_RESERVE_H
+# v5 pane 高度實測（見任務交付）：IPaneApi.setHeight() 會把「其餘 pane」依它們彼此的目前
+# 比例重新分掉剩餘空間，連續呼叫三次 setHeight 會互相打架、最後一個 pane 的呼叫會打散前面
+# 設好的高度（親測 300/160/160 呼叫完變成 431/26/135 這種跟目標無關的結果）。改用
+# setStretchFactor()（用像素數字本身當權重）沒有這個互相覆寫的問題，權重比例＝像素比例，
+# 已用最小可重現頁面對照驗證（實測 260/220/160 權重 → 261/220.5/160.5px，誤差 <1px）。
+
+
 def fmt_pct(v, dp=2):
     return f"{'+' if v >= 0 else ''}{v:.{dp}f}%"
 
@@ -587,20 +619,20 @@ def fill_color(fill):
     return "red"
 
 
-def ticker_card(t: str, d: dict) -> str:
+def ticker_card(t: str, d: dict, exec_pct: float = None) -> str:
+    """2026-09-15 重做：卡片瘦身——只留閘門、收／W52 距離、均線五燈、cap_eff、raw、
+    套袖、目標 pp、現持 pp。八週閘門軌跡（W104/W250 背景）收進 recent_table 的
+    <details>，不再重複列在卡片內。exec_pct＝該腿執行層現持（組合 pp，來自
+    band_exec_replay 的 last[t]），None 時不顯示現持欄（呼叫端一律會傳）。"""
     col = fill_color(d["fill"])
     gate_on = d["gate"]
     d52 = (d["wk_close"] / d["w52"] - 1) * 100
-    d104 = (d["wk_close"] / d["w104"] - 1) * 100
-    d250 = (d["wk_close"] / d["w250"] - 1) * 100
-    near_exit = gate_on and abs(d52) < 2.0
-    warn = (' <span style="color:var(--amber);font-weight:700;font-size:.72rem">'
-            '⚠ 接近出場（近 W52）</span>') if near_exit else ""
-    rv = d["rv20"] * 100
-    sig = d["sigma_t"] * 100
     ma5_on = d["ma5_on"]
     cap_eff = d["cap_eff"]
     cond = d["ma_cond"]
+    n_on = sum(1 for v in cond.values() if v)
+    target_pp = d["final"] * 100
+    exec_txt = f"{exec_pct:.0f}pp" if exec_pct is not None else "—"
 
     def _lamp(name, ok):
         bg = "var(--green-bg)" if ok else "var(--red-bg)"
@@ -609,40 +641,30 @@ def ticker_card(t: str, d: dict) -> str:
         return f'<span class="tag" style="background:{bg};color:{fg};margin:0 .2rem .2rem 0">{mark} {name}</span>'
 
     lamps = "".join([
-        _lamp("收盤&gt;MA60", cond["gt60"]),
-        _lamp("收盤&gt;MA120", cond["gt120"]),
-        _lamp("收盤&gt;MA200", cond["gt200"]),
-        _lamp(f"MA120斜率↑(lag{MA_LAG})", cond["s120_up"]),
-        _lamp(f"MA200斜率↑(lag{MA_LAG})", cond["s200_up"]),
+        _lamp("收&gt;MA60", cond["gt60"]),
+        _lamp("收&gt;MA120", cond["gt120"]),
+        _lamp("收&gt;MA200", cond["gt200"]),
+        _lamp("MA120↑", cond["s120_up"]),
+        _lamp("MA200↑", cond["s200_up"]),
     ])
+    gate_pill = (f'<span class="tag" style="background:var(--green-bg);color:var(--green-text)">✓ 在場</span>'
+                 if gate_on else
+                 f'<span class="tag" style="background:var(--red-bg);color:var(--red-text)">✕ 出場</span>')
     return f"""<div class="tcard">
   <div class="tcard-hdr">
     <span class="tname">{t}</span>
-    <span class="pos-badge pos-{col}">最終權重 {d['final']*100:.0f}%</span>
+    <span class="pos-badge pos-{col}">目標 {target_pp:.0f}pp ／ 現持 {exec_txt}</span>
   </div>
-  <div class="tcard-sub">閘門 {'在場' if gate_on else '出場'} × 套袖 {d['sleeve']*100:.0f}%（cap_eff {cap_eff:.1f}）
-    → 佔本標的 50% 額度的 {d['fill']*100:.0f}% · 目標權重 0.5 × {1 if gate_on else 0} × {d['sleeve']:.2f} = {d['final']*100:.0f}%{warn}</div>
-  <div class="sig-row">
-    <div class="sig {'on' if gate_on else 'off'}">
-      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">週線長軌閘門</span><span class="sig-mark">{'✓ 在場' if gate_on else '✕ 出場'}</span></div>
-      <div class="sig-detail">週收 {d['wk_close']:.2f}｜W52 {d['w52']:.2f} <b style="color:var(--{'green' if d52>=0 else 'red'})">{fmt_pct(d52,1)}</b>
-        ｜W104 {d['w104']:.2f} <b style="color:var(--{'green' if d104>=0 else 'red'})">{fmt_pct(d104,1)}</b>
-        ｜W250 {d['w250']:.2f} <b style="color:var(--{'green' if d250>=0 else 'red'})">{fmt_pct(d250,1)}</b>
-        ｜W104斜率 {'↑' if d['s104_pos'] else '↓'}｜W250斜率 {'↑' if d['s250_pos'] else '↓'}
-        <br><span style="font-size:.72rem">W52 單線閘門：週收 &gt; W52 在場、&lt; W52 出場（W104/W250 僅供背景參考，不入閘門決策）。</span></div>
-    </div>
-    <div class="sig {'on' if ma5_on else 'off'}">
-      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">日線均線長多確認（2026-09-15 起併入實單）</span><span class="sig-mark">{'✓ 五條全對' if ma5_on else '✕ 未全對'}</span></div>
-      <div class="sig-detail">{lamps}
-        <br><span style="font-size:.72rem">五條全對 → cap_eff = <b>1.5</b>；任一條不對 → cap_eff 退回 <b>1.0</b>（凍結規則，不調參）。三個價格條件（收盤 vs MA60/120/200）加 1% 遲滯：關轉開要收盤 &gt; MA，開轉關要收盤 &lt; MA×99%，中間帶維持前一日狀態。</span></div>
-    </div>
-    <div class="sig {'on' if d['levered'] else ('off' if d['sleeve']<0.999 else '')}">
-      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">自適應套袖 × cap_eff {cap_eff:.1f}</span><span class="sig-mark">{d['sleeve']*100:.0f}%</span></div>
-      <div class="sig-detail">RV20 <b>{rv:.1f}%</b> vs σ_t <b>{sig:.1f}%</b> → σ_t/RV20 原始比率 <b>{d['raw_ratio']:.2f}</b>
-        → w = min(cap_eff {cap_eff:.1f}, {d['raw_ratio']:.2f}) = <b>{d['sleeve']:.2f}</b>
-        <br><span style="font-size:.72rem">{('<b style=color:var(--green)>已開槓桿</b>：波動低於自身近 3 年中位，加碼到 %.0f%%。' % (d['sleeve']*100)) if d['levered'] else ('未開槓桿（σ_t/RV &lt; cap_eff，減碼中）：波動<b>再降 %.0f%%</b>才會開始借錢。' % (d['dist_to_lever']*100))}</span></div>
-    </div>
+  <div class="tcard-row">{gate_pill}
+    <span class="tcard-metric">距 W52 <b style="color:var(--{'green' if d52>=0 else 'red'})">{fmt_pct(d52,1)}</b></span>
+    <span class="tcard-metric">均線 <b>{n_on}/5</b></span>
+    <span class="tcard-metric">cap_eff <b>{cap_eff:.1f}</b></span>
   </div>
+  <div class="tcard-row">
+    <span class="tcard-metric">raw σ_t/RV20 <b>{d['raw_ratio']:.2f}</b></span>
+    <span class="tcard-metric">套袖 <b>{d['sleeve']:.2f}</b></span>
+  </div>
+  <div class="tcard-lamps">{lamps}</div>
 </div>"""
 
 
@@ -716,7 +738,7 @@ def backtest_section(mkt: dict) -> str:
 </div>
 
 <div class="card">
-<h3>{mkt['short']} 曝險分布統計</h3>
+<h3>{mkt['short']} 曝險分布統計（舊實單規則 2026-07-18～2026-09-14 回測，供對照——尚未含均線層）</h3>
 <table><thead><tr><th>設計</th><th class="num">全窗均</th><th class="num">近三年均</th><th class="num">&gt;100% 天數</th><th class="num">≥145% 天數</th><th class="num">峰值</th></tr></thead>
 <tbody>{dist}</tbody></table>
 <table style="margin-top:.5rem"><thead><tr><th>cap 1.5 分期平均曝險</th>{era_head}</tr></thead><tbody><tr><td>平均曝險</td>{era_cells}</tr></tbody></table>
@@ -724,14 +746,14 @@ def backtest_section(mkt: dict) -> str:
 </div>
 
 <div class="card">
-<h3>{mkt['short']} 融資利差敏感度（cap 1.5）</h3>
+<h3>{mkt['short']} 融資利差敏感度（cap 1.5；舊實單規則 2026-07-18～2026-09-14 回測，供對照——尚未含均線層）</h3>
 <table><thead><tr><th>融資利差</th><th class="num">CAGR</th><th class="num">Calmar</th></tr></thead>
 <tbody>{sens}</tbody></table>
 <div class="takeaway"><b>誠實更正</b>：原預期「6% 融資 → 增益歸零」<b>不成立</b>——真波動率目標只借一點點（平均曝險 83～85%），融資利差對 Calmar 的侵蝕有限。<b>美股這一腿槓桿的風險調整報酬本就次優、任何利差下都不佔優</b>。「必須用期貨」的真正理由是<b>保證金／強制平倉機制與台股散戶實務</b>，不是融資吃掉增益。</div>
 </div>
 
 <div class="card">
-<h3>{mkt['short']} 壓力統計（歷史最差）</h3>
+<h3>{mkt['short']} 壓力統計（歷史最差；舊實單規則 2026-07-18～2026-09-14 回測，供對照——尚未含均線層）</h3>
 <table><thead><tr><th>設計</th><th class="num">最差單日</th><th class="num">最差 20 日</th></tr></thead>
 <tbody>
 <tr class="rowhl"><td>cap 1.5</td><td class="num">{st['cap15'][0]:.1f}%</td><td class="num">{st['cap15'][1]:.1f}%</td></tr>
@@ -758,9 +780,9 @@ def annual_perf_section(mkt: dict) -> str:
                  f'<td class="num" style="color:{bc}">{fmt_pct(bhr, 1)}</td>'
                  f'<td class="num" style="color:{ec}">{exc:+.1f}</td></tr>\n')
     return f"""<div class="card">
-<h3>{mkt['short']} 逐年回測績效 — 系統（cap 1.5＋執行層 A2）vs 50/50 買進持有（窗 {win[0]} ～ {win[1]}）</h3>
+<h3>{mkt['short']} 逐年回測績效（舊實單規則 2026-07-18～2026-09-14 回測，供對照——尚未含均線層）— 系統（cap 1.5＋執行層 A2）vs 50/50 買進持有（窗 {win[0]} ～ {win[1]}）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-<b>系統</b>＝正式配置（cap 1.5＋執行層 A2，含融資利差 1.5%/年），與本頁主數字（{mkt['short']} CAGR {'14.10' if mkt['key']=='us' else '22.98'}%／Calmar {'0.5953' if mkt['key']=='us' else '1.2173'}）<b>同一條 NAV</b>；<b>B&amp;H</b>＝該市場兩腿各 50% 買進持有。逐年報酬由<b>日 NAV 年末/年初</b>計算（非月度近似）。超額為系統 − B&amp;H（pp）。</p>
+<b>系統</b>＝均線層上線前的正式配置（cap 1.5＋執行層 A2，含融資利差 1.5%/年，CAGR {'14.10' if mkt['key']=='us' else '22.98'}%／Calmar {'0.5953' if mkt['key']=='us' else '1.2173'}），逐年數字<b>尚未重算含均線層的版本</b>，只作對照；<b>B&amp;H</b>＝該市場兩腿各 50% 買進持有。逐年報酬由<b>日 NAV 年末/年初</b>計算（非月度近似）。超額為系統 − B&amp;H（pp）。</p>
 <table><thead><tr><th>年度</th><th class="num">系統報酬</th><th class="num">B&amp;H 報酬</th><th class="num">超額 (pp)</th></tr></thead>
 <tbody>{body}</tbody></table>
 <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">回測含執行層與融資利差 1.5%/年、還原股價；<b>部分年以 YTD 標註</b>（美股末年 2026 為部分年；美股 2005 為完整年）。<b>逐年數字為回測、非實盤。</b>趨勢型系統的簽名＝多數年份落後買進持有、在崩盤年（如美股 2008 +40.1pp／2022 +19.0pp、台股 2022 +17.9pp）大幅超額——以參與度換抗跌，非逐年勝出。</div>
@@ -791,9 +813,90 @@ GFC 段兩者 MDD 同為 −36.4%，純 W52 閘門更深（−38.6%）。與美�
 
 
 # ---------------------------------------------------------------------------
+# F70 均線版（2026-09-15 新增區塊；紙上候選・尚非實單，非規則函式、唯讀 D1X 訊號檔）
+# ---------------------------------------------------------------------------
+def _f70_next_rebalance(date_str: str) -> str:
+    """月底再平衡日近似——逐行抄自 scripts/build_f70_alert.py::next_rebalance_date
+    （不 import，避免呈現層耦合另一支 CI 腳本）：用 CustomBusinessDay(美國聯邦假日
+    行事曆) 往後走近似營業日，直到下一步會跨月為止，回傳跨月前那一天。"""
+    cbd = CustomBusinessDay(calendar=USFederalHolidayCalendar())
+    cur = pd.Timestamp(date_str)
+    while True:
+        nxt = cur + cbd
+        if nxt.month != cur.month:
+            return cur.strftime("%Y-%m-%d")
+        cur = nxt
+
+
+def f70_section(exec_last_us: dict, main_data_date: str) -> str:
+    """F70 均線版帳戶表：股票腿（QQQ/SMH）執行層現持（0~150 組合刻度）× 70% ＋
+    每腿 D1X（TLT/GLD/DBC）pos × 30% × 1/3。D1X 部位讀 docs/long-track/f70_signal_state.json
+    的 records 最新一筆（唯讀，本頁不產生此檔）。exec_last_us＝該市場 band_exec_replay 的
+    last dict（{'QQQ':pct,'SMH':pct}，組合刻度 0~150，來自既有 exec_map，非新規則）。
+    讀不到檔或空 records 時回傳「D1X 資料未就緒」，不拋例外。"""
+    try:
+        raw = json.loads(F70_STATE_JSON.read_text())
+        records = raw.get("records") or {}
+        if not records:
+            raise ValueError("empty records")
+        d1x_date = sorted(records.keys())[-1]
+        d1x = records[d1x_date]
+        legs_d1x = ["TLT", "GLD", "DBC"]
+        for t in legs_d1x:
+            if t not in d1x or "pos" not in d1x[t]:
+                raise ValueError(f"missing {t}.pos")
+    except Exception:
+        return """<div class="card">
+<h3>F70 均線版（股票腿 70% ＋ TLT/GLD/DBC 30%）<span class="tag" style="background:var(--amber-bg);color:var(--amber-text);margin-left:.4rem">紙上候選・尚非實單</span></h3>
+<p style="font-size:.85rem;color:var(--muted)">D1X 資料未就緒。</p>
+</div>"""
+
+    rows = []
+    total = 0.0
+    for t in ("QQQ", "SMH"):
+        pct = exec_last_us.get(t, 0.0) * F70_WEIGHT_STOCK
+        rows.append((t, pct, "股票腿現持 × 70%"))
+        total += pct
+    for t in legs_d1x:
+        pct = float(d1x[t]["pos"]) * F70_WEIGHT_D1X * F70_LEG_WEIGHT * 100
+        gate_txt = "在場" if d1x[t].get("gate") else "出場"
+        rows.append((t, pct, f"D1X pos {d1x[t]['pos']:.2f}（{gate_txt}）× 30% × 1/3"))
+        total += pct
+    cash = 100.0 - total
+
+    body = ""
+    for name, pct, note_txt in rows:
+        body += (f'<tr><td><b>{name}</b></td><td class="num">{pct:.1f}%</td>'
+                 f'<td style="color:var(--muted);font-size:.8rem">{note_txt}</td></tr>\n')
+    cash_color = "var(--red-text)" if cash < 0 else "var(--text)"
+    body += (f'<tr class="rowhl"><td><b>現金</b></td><td class="num" style="color:{cash_color}">{cash:.1f}%</td>'
+             f'<td style="color:var(--muted);font-size:.8rem">= 100% − 合計曝險（可為負，代表借款）</td></tr>\n')
+    body += (f'<tr class="rowhl"><td><b>合計曝險</b></td><td class="num">{total:.1f}%</td>'
+             f'<td style="color:var(--muted);font-size:.8rem">QQQ + SMH + TLT + GLD + DBC 加總</td></tr>\n')
+
+    lag_note = (f'（D1X 資料 as-of <b>{d1x_date}</b>，主系統資料 as-of <b>{main_data_date}</b>——'
+                f'CI 排程 F70 alert 在主系統之後跑，資料可能晚一天，此為已知落差，非錯誤）'
+                if d1x_date != main_data_date else f'（D1X 與主系統資料同為 as-of <b>{d1x_date}</b>）')
+    next_reb = _f70_next_rebalance(main_data_date)
+    return f"""<div class="card">
+<h3>F70 均線版（股票腿 70% ＋ TLT/GLD/DBC 30%）<span class="tag" style="background:var(--amber-bg);color:var(--amber-text);margin-left:.4rem">紙上候選・尚非實單</span></h3>
+<p style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem">
+帳戶層權重 = 股票腿（QQQ、SMH）執行層現持 × 70% ＋ 每腿 D1X（TLT／GLD／DBC，各自的長短期趨勢與動能投票決定部位）× 30% × 三分之一{lag_note}。月底再平衡回 70／30，下一個近似月底交易日：<b>{next_reb}</b>。</p>
+<table><thead><tr><th>腿</th><th class="num">帳戶層權重</th><th>算法</th></tr></thead>
+<tbody>{body}</tbody></table>
+<p style="font-size:.76rem;color:var(--muted);margin-top:.6rem">D1X（TLT/GLD/DBC 分散腿）目前僅是紙上研究、未接實單；QQQ／SMH 兩腿沿用本頁實單執行層現持。詳見 <a href="/backtest/f_comfort/">F70 均線版研究頁</a>、<a href="/long-track/#scoreboard">記分板 S-F70</a>。</p>
+</div>"""
+
+
+# ---------------------------------------------------------------------------
 # per-market render (html block + chart JS)
 # ---------------------------------------------------------------------------
-def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dict:
+def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict, leg_panel: dict) -> dict:
+    """2026-09-15 重做：拿掉 Chart.js 用的量表／乘法鏈／燃料表／回測縮圖欄位
+    （對應圖表已改用 Lightweight Charts 主圖或收進 <details> 純表格），新增主圖
+    三 pane 要嵌的 JSON——每腿收盤／W52（正規化 1260 日前=100，同比例）、閘門出場
+    ／cap_eff=1.0 區間的色塊 ribbon（唯讀取自 leg_panel，見 _leg_chart_panel；
+    leg_panel 為空〈--render-only〉時主圖不繪、只顯示說明文字）。"""
     legs = mkt["legs"]
     a, b = legs[0], legs[1]
 
@@ -802,47 +905,70 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
     H = {
         "labels": _col(lambda r: r["date"]),
         "comb": _col(lambda r: r["combined_pct"]),
-        "a": _col(lambda r: r["tickers"][a]["final_pct"]),
-        "b": _col(lambda r: r["tickers"][b]["final_pct"]),
         "arv": _col(lambda r: r["tickers"][a]["rv20_pct"]),
         "brv": _col(lambda r: r["tickers"][b]["rv20_pct"]),
         "asig": _col(lambda r: r["tickers"][a]["sigma_t_pct"]),
         "bsig": _col(lambda r: r["tickers"][b]["sigma_t_pct"]),
         "src": _col(lambda r: r["source"]),
-        # 燃料表：組合 σ_t/RV 原始比率均值（clip 顯示 2.5）
-        "fuel": _col(lambda r: round(min(2.5, 0.5 * (r["tickers"][a].get("raw_ratio", 1.0)
-                                                     + r["tickers"][b].get("raw_ratio", 1.0))), 2)),
         # executed layer (A2: 20pp band + 10% round + clamp 50×cap) — deterministic replay
         "cexe": json.dumps(exec_replay["combined"], separators=(",", ":")),
-        "aexe": json.dumps(exec_replay["executed"].get(a, []), separators=(",", ":")),
-        "bexe": json.dumps(exec_replay["executed"].get(b, []), separators=(",", ":")),
     }
     combined = sum(sigs[t]["final"] for t in legs) * 100            # 今日目標（訊號）
     exec_combined = round(exec_replay["combined"][-1], 1) if exec_replay["combined"] else combined  # 現持（執行層）
     exec_finals = [round(exec_replay["last"].get(t, 0.0), 1) for t in legs]   # 每腿現持（執行層）
     ccol = fill_color(combined / 100)
-    slot = {t: WEIGHTS[t] * 100 for t in legs}
     finals = [round(sigs[t]["final"] * 100, 1) for t in legs]        # 組合 pp（滿載 50×cap；A2 門檻／email 判斷用，不動）
-    # 每腿乘法鏈圖（chart-chain）：2026-07-24 起改為「自身滿載＝100%」基準顯示（純顯示變換，
-    # 不影響上面 finals／組合 pp 判斷）。fill_self：gate×sleeve 的自身結果，0~150%（cap1.5）。
-    fill_self = [round(sigs[t]["fill"] * 100, 1) for t in legs]
-    gate_cut = [round(100.0 if not sigs[t]["gate"] else 0.0, 1) for t in legs]
-    sleeve_cut = [round(max(0.0, 100.0 - fill_self[i] - gate_cut[i]), 1) for i, t in enumerate(legs)]
     n_replay = sum(1 for r in history if r["source"] == "replay")
     n_live = sum(1 for r in history if r["source"] == "live")
     span = (f"{history[0]['date']} → {history[-1]['date']}" if history else "—")
+
+    dates = [r["date"] for r in history]
+    has_chart = bool(leg_panel) and all(t in leg_panel for t in legs)
+    chart = {"has_chart": has_chart}
+    if has_chart:
+        pa, pb = leg_panel[a], leg_panel[b]
+
+        def _norm(closes, w52s):
+            base = next((v for v in closes if v is not None), None)
+            if not base:
+                return [None] * len(closes), [None] * len(closes)
+            cn = [None if v is None else round(v / base * 100, 3) for v in closes]
+            wn = [None if v is None else round(v / base * 100, 3) for v in w52s]
+            return cn, wn
+
+        an, awn = _norm(pa["close"], pa["w52"])
+        bn, bwn = _norm(pb["close"], pb["w52"])
+        # 色塊 ribbon：兩腿任一「出場」→ 紅；否則兩腿任一 cap_eff 被壓到 1.0（均線
+        # 五條未全對）→ 紫；兩者皆非（雙腿在場且五條全對）不畫（transparent，乾淨）。
+        ribbon = []
+        for i, d in enumerate(dates):
+            exit_any = (pa["gate"][i] == 0) or (pb["gate"][i] == 0)
+            cap10_any = (not pa["ma5_on"][i]) or (not pb["ma5_on"][i])
+            if exit_any:
+                ribbon.append([d, "exit"])
+            elif cap10_any:
+                ribbon.append([d, "cap10"])
+        chart.update({
+            "dates": json.dumps(dates, separators=(",", ":")),
+            "a_norm": json.dumps(an, separators=(",", ":")),
+            "b_norm": json.dumps(bn, separators=(",", ":")),
+            "a_w52_norm": json.dumps(awn, separators=(",", ":")),
+            "b_w52_norm": json.dumps(bwn, separators=(",", ":")),
+            "a_raw": json.dumps(pa["close"], separators=(",", ":")),
+            "b_raw": json.dumps(pb["close"], separators=(",", ":")),
+            "a_w52_raw": json.dumps(pa["w52"], separators=(",", ":")),
+            "b_w52_raw": json.dumps(pb["w52"], separators=(",", ":")),
+            "ribbon": json.dumps(ribbon, separators=(",", ":")),
+            "has_revision": RULE_REVISION_DATE in dates,
+            "ma60_now": {a: pa["ma60_now"], b: pb["ma60_now"]},
+        })
+
     return {
         "legs": legs, "a": a, "b": b, "combined": combined, "exec_combined": exec_combined,
-        "exec_finals": exec_finals, "ccol": ccol,
-        "finals": finals, "fill_self": fill_self,
-        "C_FINALS": json.dumps(fill_self, separators=(",", ":")),
-        "C_SLEEVE": json.dumps(sleeve_cut, separators=(",", ":")),
-        "C_GATE": json.dumps(gate_cut, separators=(",", ":")),
+        "exec_finals": exec_finals, "ccol": ccol, "finals": finals,
         "H": H, "n_replay": n_replay, "n_live": n_live, "span": span,
         "nhist": len(history), "events": exec_replay["events"],
-        "BT_L": json.dumps(mkt["bt_nav"]["labels"], separators=(",", ":")),
-        "BT_C": json.dumps(mkt["bt_nav"]["combo"], separators=(",", ":")),
-        "BT_B": json.dumps(mkt["bt_nav"]["bh"], separators=(",", ":")),
+        "chart": chart,
     }
 
 
@@ -861,202 +987,203 @@ def _dual_breakdown(legs, finals, exec_finals):
 
 
 def market_html(mkt: dict, sigs: dict, md: dict) -> str:
+    """2026-09-15 重做：Chart.js 全部移除，主圖改 Lightweight Charts 三 pane
+    （容器＋1Y/3Y/5Y 按鈕＋自訂 hover 圖例，JS 見 market_js）。每腿卡片改由
+    generate_html 統一組成跨市場一列四張，不再放在這裡。回測堆疊表／逐年／
+    曝險分布／利差敏感度／壓力統計／近 8 週閘門軌跡全部收進一個 <details>
+    （預設收起）；台股另外把 2330 長窗附錄也收進同一個 details。"""
     legs = mkt["legs"]
-    exec_finals = md["exec_finals"]
-    ccol = md["ccol"]
-    finals = md["finals"]
     suf = mkt["key"]
-    cards = "".join(ticker_card(t, sigs[t]) for t in legs)
-    dual, combined, exec_combined = _dual_breakdown(legs, finals, exec_finals)
-    return f"""<div class="mkt-section" id="mkt-{suf}" data-market="{suf}">
-<div class="mkt-hd"><span class="mkt-tag">{mkt['name']}</span></div>
-
-<div class="status-hero hero-{ccol}">
-  <div class="status-badge"><span class="dot"></span><span>{mkt['short']} 組合曝險</span></div>
-  <div class="status-exposure" style="display:flex;gap:1.4rem;justify-content:center;align-items:baseline;flex-wrap:wrap">
-    <span>目標 {combined:.0f}%<span style="font-size:.4em;color:var(--muted);font-weight:600"> 訊號</span></span>
-    <span style="opacity:.55;font-size:.7em">／</span>
-    <span>現持 {exec_combined:.0f}%<span style="font-size:.4em;color:var(--muted);font-weight:600"> 執行層</span></span>
-  </div>
-  <div style="font-size:.8rem;color:var(--muted)">{dual}。</div>
-</div>
-
-<div class="card">
-<h3>{mkt['short']} 當前部位視覺 — 合成曝險量表 × 每腿乘法鏈</h3>
-<div class="viz-split">
-  <div>
-    <div class="gauge-box">
-      <canvas id="chart-gauge-{suf}"></canvas>
-      <div class="gauge-center"><div class="g-num hero-{ccol}" style="color:var(--{ccol})">{combined:.0f}%</div><div class="g-lab">目標曝險（訊號）· 現持 {exec_combined:.0f}%</div></div>
-    </div>
-  </div>
-  <div>
-    <div class="chart-wrap-xs"><canvas id="chart-chain-{suf}"></canvas></div>
+    chart = md["chart"]
+    if chart["has_chart"]:
+        title_top_0 = 8
+        title_top_1 = LWC_PANE_H[0] + 8
+        title_top_2 = LWC_PANE_H[0] + LWC_PANE_H[1] + 8
+        chart_html = f"""<div class="lwc-toolbar">
+  <div class="lwc-legend" id="lwc-legend-{suf}">將滑鼠移到圖上看逐日數值</div>
+  <div class="lwc-range-btns">
+    <button type="button" class="lwc-range-btn active" data-range="1" onclick="lwcRange_{suf}(1,this)">1Y</button>
+    <button type="button" class="lwc-range-btn" data-range="3" onclick="lwcRange_{suf}(3,this)">3Y</button>
+    <button type="button" class="lwc-range-btn" data-range="5" onclick="lwcRange_{suf}(5,this)">5Y</button>
   </div>
 </div>
-<div style="font-size:.76rem;color:var(--muted);margin-top:.7rem"><b>每腿以自身滿載＝100% 顯示</b>（cap 1.5 上限 150%；合成曝險量表仍為組合層 0~150%，不變）＝<b style="color:var(--text)">最終持有</b> ＋ <b style="color:var(--amber-text)">套袖折減</b>（高波減碼）＋ <b>閘門關閉</b>（出場歸零）。{legs[0]} 自身滿載 {md['fill_self'][0]:.0f}%（組合 pp {finals[0]:.0f}%）、{legs[1]} 自身滿載 {md['fill_self'][1]:.0f}%（組合 pp {finals[1]:.0f}%）。</div>
+<div style="position:relative">
+  <div id="lwc-chart-{suf}" class="lwc-chart"></div>
+  <div class="lwc-pane-title" style="top:{title_top_0}px">價格（正規化 100）</div>
+  <div class="lwc-pane-title" style="top:{title_top_1}px">曝險（現持粗線／目標細線）</div>
+  <div class="lwc-pane-title" style="top:{title_top_2}px">RV20 vs σ_t</div>
 </div>
-
-<div class="card">
-<h3>{mkt['short']} 近五年權重時間軸 — 現持（執行層）vs 每日理論目標</h3>
-<p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
-<b style="color:var(--text)">粗階梯線＝現持（執行層）</b>＝A2 20pp 門檻＋10% 取整＋clamp 150% 的實際持股率（跨門檻才動）；<b>細線＝每日理論目標（訊號）</b>（未過門檻不調）。
-末端值：{dual}。
-線段<b>實線＝每日實錄</b>、<b>虛線＝規則回放</b>（首次生成往回重算，誠實區隔）。窗 {md['span']}，共 {md['nhist']} 個交易日（回放 {md['n_replay']}／實錄 {md['n_live']}）。</p>
-<div class="chart-wrap"><canvas id="chart-weights-{suf}"></canvas></div>
 <div class="legend-note">
-  <span class="ln-item"><span class="ln-line" style="border-top-width:3px"></span>執行層（粗階梯）</span>
-  <span class="ln-item"><span class="ln-line" style="border-top-color:rgba(120,120,120,.5)"></span>每日理論目標（細）</span>
-  <span class="ln-item"><span class="ln-line"></span>每日實錄</span>
-  <span class="ln-item"><span class="ln-line ln-dash"></span>規則回放</span>
-</div>
-<h3 style="margin-top:1.1rem">{mkt['short']} 近五年套袖觸發脈絡 — RV20 vs σ_t（動態）</h3>
-<p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
-本頁 σ_t 是<b>動態線</b>（近 3 年 RV20 滾動中位數），不是固定 σ 版的水平虛線。當 RV20（實線）升破自身 σ_t（虛線）時套袖按比例減碼；RV20 ≤ σ_t 時滿載。regime 抬升時 σ_t 跟著上移，是這頁與固定 σ 版的唯一機制差異。</p>
-<div class="chart-wrap-sm"><canvas id="chart-rv-{suf}"></canvas></div>
-<h3 style="margin-top:1.1rem">{mkt['short']} 近五年槓桿燃料表 — σ_t/RV 原始比率</h3>
-<p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
-σ_t/RV &gt; <b>1.0</b>（下虛線）＝當下比自身近 3 年平靜、cap 1.5 開始借錢；&gt; <b>1.5</b>（上虛線）＝連 cap 1.5 也滿載 150%。崩盤時比率暴跌到 1 以下、槓桿自動關閉。上方時間軸的綠粗階梯＝本頁 cap 1.5 執行；比率超過 1.0 的部分就是「借的錢」。</p>
-<div class="chart-wrap-sm"><canvas id="chart-fuel-{suf}"></canvas></div>
+  <span class="ln-item"><span class="ln-swatch" style="background:{BLUE_HEX}"></span>{legs[0]}</span>
+  <span class="ln-item"><span class="ln-swatch" style="background:{AMBER_HEX}"></span>{legs[1]}</span>
+  <span class="ln-item"><span class="ln-line"></span>W52（各腿同比例）</span>
+  <span class="ln-item"><span class="ln-swatch" style="background:var(--red)"></span>閘門出場（曝險 pane 底色）</span>
+  <span class="ln-item"><span class="ln-swatch" style="background:var(--purple)"></span>cap_eff 退回 1.0（曝險 pane 底色）</span>
+</div>"""
+    else:
+        chart_html = ('<p style="font-size:.85rem;color:var(--muted);padding:1rem 0">'
+                      'render-only 模式（未重新抓取價格）不重繪主圖；下次正常執行（抓價）會自動補回。</p>')
+    appendix = appendix_2330_section() if suf == "tw" else ""
+    return f"""<div class="mkt-section" id="mkt-{suf}" data-market="{suf}">
+<div class="mkt-hd"><span class="mkt-tag">{mkt['name']} — 主圖（近一年，可切 1Y／3Y／5Y）</span></div>
+
+<div class="card">
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
+三個垂直排列的圖：<b>價格</b>（{legs[0]}／{legs[1]} 各自正規化為近 1260 個交易日前＝100，並附 W52 週均線同比例對照）、<b>曝險</b>（現持〈執行層，粗階梯，主角〉vs 每日理論目標〈訊號，細線〉，附 100%／150% 參考線、2026-09-15 均線層上線的標記，並用底色標出閘門出場與 cap_eff 被壓回 1.0 的期間）、<b>波動</b>（RV20 實際波動 vs σ_t 自適應門檻，兩腿各一組顏色）。拖曳可平移、滾輪可縮放，游標停在圖上看逐日數值。</p>
+{chart_html}
 </div>
 
 {events_card(mkt, md['events'])}
 
-<div class="tgrid">{cards}</div>
-
 <div class="card">
-<h3>{mkt['short']} 回測縮圖 — 自適應中位數 3y（含執行層）vs 50/50 B&amp;H（對數淨值＋回撤）</h3>
-<p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-回測快照（{mkt['bt_nav']['labels'][0]} → {mkt['bt_nav']['labels'][-1]}）。淨值線＝<b>自適應中位數 3y（含執行層，與追蹤操作同規則）</b>，由 run_band_exec_ablation 月度 NAV 靜態轉錄；B&amp;H 線不變。</p>
-<div class="grid2">
-  <div class="chart-wrap-sm"><canvas id="chart-bt-nav-{suf}"></canvas></div>
-  <div class="chart-wrap-sm"><canvas id="chart-bt-dd-{suf}"></canvas></div>
-</div>
-</div>
-
-{"".join(recent_table(t, sigs[t]) for t in legs)}
-
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:.88rem">{mkt['short']} 回測與統計（點開看完整數字：回測堆疊表、逐年績效、曝險分布、利差敏感度、壓力統計、近 8 週閘門軌跡{'、2330 長窗附錄' if appendix else ''}）</summary>
+<div style="margin-top:.9rem">
 {backtest_section(mkt)}
-
 {annual_perf_section(mkt)}
+{appendix}
+{"".join(recent_table(t, sigs[t]) for t in legs)}
+</div>
+</details>
+</div>
 </div>
 """
 
 
 def market_js(mkt: dict, md: dict) -> str:
+    """2026-09-15 重做：Lightweight Charts v5 三 pane（價格／曝險／波動），取代
+    全部 Chart.js canvas（gauge／chain／weights-timeline／RV／fuel／回測縮圖）。
+    v5 series 建立 API 為 chart.addSeries(TypeConstant, options, paneIndex)
+    （非 v4 的 addLineSeries 等），markers 走 LightweightCharts.createSeriesMarkers
+    plugin 函式，皆已對照官方 v5.0.8 文件與 unpkg 實際檔案核對過（見任務交付）。
+    leg_panel 不可用（--render-only）時 chart['has_chart'] 為 False，不輸出任何
+    圖表 JS（market_html 會顯示說明文字取代容器）。"""
     suf = mkt["key"]
     legs = mkt["legs"]
-    combined = md["combined"]
-    ccol = md["ccol"]
-    CCOL_HEX = {"green": "#16a34a", "blue": "#1d4ed8",
-                "amber": "#a16207", "red": "#b91c1c"}[ccol]
+    chart = md["chart"]
+    if not chart["has_chart"]:
+        return f"// ===== market: {suf} ===== (render-only：無 px_map，不建主圖)\n"
     H = md["H"]
+    revision_marker = (f"""
+  var revMarkers_{suf} = LightweightCharts.createSeriesMarkers(execSeries_{suf}, [
+    {{time:'{RULE_REVISION_DATE}', position:'aboveBar', color:'{BRAND_HEX}', shape:'circle', text:'均線層上線 {RULE_REVISION_DATE}'}}
+  ]);""" if chart["has_revision"] else "")
     return f"""
-// ===== market: {suf} =====
-// 0~150 刻度：base（≤100）＋ 槓桿段（>100，紅）＋ 現金
-new Chart(document.getElementById('chart-gauge-{suf}'),{{
-  type:'doughnut',
-  data:{{labels:['曝險','槓桿 (&gt;100%)','現金'],datasets:[{{data:[{min(100.0,combined):.1f},{max(0.0,combined-100):.1f},{max(0.0,150-combined):.1f}],
-    backgroundColor:['{CCOL_HEX}','#dc2626','#ece7db'],borderWidth:0}}]}},
-  options:{{rotation:-90,circumference:180,cutout:'72%',responsive:true,maintainAspectRatio:false,
-    plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:function(c){{return c.label+': '+c.parsed.toFixed(1)+'%'}}}}}}}}}}
-}});
+// ===== market: {suf}（Lightweight Charts v5） =====
+(function(){{
+  var DATES_{suf} = {chart['dates']};
+  var A_NORM_{suf} = {chart['a_norm']}, B_NORM_{suf} = {chart['b_norm']};
+  var A_W52N_{suf} = {chart['a_w52_norm']}, B_W52N_{suf} = {chart['b_w52_norm']};
+  var A_RAW_{suf} = {chart['a_raw']}, B_RAW_{suf} = {chart['b_raw']};
+  var A_W52R_{suf} = {chart['a_w52_raw']}, B_W52R_{suf} = {chart['b_w52_raw']};
+  var RIBBON_{suf} = {chart['ribbon']};
+  var CEXE_{suf} = {H['cexe']}, COMB_{suf} = {H['comb']};
+  var ARV_{suf} = {H['arv']}, BRV_{suf} = {H['brv']}, ASIG_{suf} = {H['asig']}, BSIG_{suf} = {H['bsig']};
 
-new Chart(document.getElementById('chart-chain-{suf}'),{{
-  type:'bar',
-  data:{{labels:['{legs[0]}','{legs[1]}'],datasets:[
-    {{label:'最終持有',data:{md['C_FINALS']},backgroundColor:[GREEN,AMBER],borderWidth:0,stack:'s'}},
-    {{label:'套袖折減',data:{md['C_SLEEVE']},backgroundColor:'rgba(161,98,7,0.28)',borderWidth:0,stack:'s'}},
-    {{label:'閘門關閉',data:{md['C_GATE']},backgroundColor:'rgba(120,120,120,0.22)',borderWidth:0,stack:'s'}}
-  ]}},
-  options:{{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-    plugins:{{legend:{{display:true,position:'bottom',labels:{{usePointStyle:true,pointStyle:'rect',padding:10,boxWidth:10}}}},
-      tooltip:{{callbacks:{{label:function(c){{return c.dataset.label+': '+c.parsed.x.toFixed(1)+'%'}}}}}}}},
-    scales:{{x:{{stacked:true,min:0,max:150,grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{callback:function(v){{return v+'%'}}}}}},
-      y:{{stacked:true,grid:{{display:false}}}}}}
-  }}
-}});
+  function _pts(vals){{ var out=[]; for(var i=0;i<vals.length;i++){{ if(vals[i]!==null && vals[i]!==undefined){{ out.push({{time:DATES_{suf}[i], value:vals[i]}}); }} }} return out; }}
 
-var W_LAB_{suf}={H['labels']},W_SRC_{suf}={H['src']};
-function segDash_{suf}(ctx){{return W_SRC_{suf}[ctx.p1DataIndex]==='live'?undefined:[3,3];}}
-new Chart(document.getElementById('chart-weights-{suf}'),{{
-  type:'line',
-  data:{{labels:W_LAB_{suf},datasets:[
-    {{label:'合成執行 cap 1.5',data:{H['cexe']},borderColor:GREEN,backgroundColor:'rgba(22,163,74,0.09)',
-     borderWidth:2.8,stepped:true,pointRadius:0,pointHoverRadius:3,fill:'origin',segment:{{borderDash:segDash_{suf}}}}},
-    {{label:'{legs[0]} 執行',data:{H['aexe']},borderColor:BLUE,borderWidth:1.6,stepped:true,pointRadius:0,pointHoverRadius:3,segment:{{borderDash:segDash_{suf}}}}},
-    {{label:'{legs[1]} 執行',data:{H['bexe']},borderColor:AMBER,borderWidth:1.6,stepped:true,pointRadius:0,pointHoverRadius:3,segment:{{borderDash:segDash_{suf}}}}},
-    {{label:'100% 分界',data:W_LAB_{suf}.map(function(){{return 100;}}),borderColor:'rgba(120,120,120,0.55)',borderWidth:1,borderDash:[2,3],pointRadius:0}},
-    {{label:'合成目標（理論）',data:{H['comb']},borderColor:'rgba(22,163,74,0.35)',borderWidth:1,pointRadius:0,pointHoverRadius:2,tension:0.15}}
-  ]}},
-  options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
-    plugins:{{legend:{{display:true,position:'top',align:'start',labels:{{usePointStyle:true,pointStyle:'line',padding:12}}}},
-      tooltip:{{callbacks:{{title:function(c){{return c[0].label+' · '+(W_SRC_{suf}[c[0].dataIndex]==='live'?'每日實錄':'規則回放')}},
-        label:function(c){{return c.dataset.label+': '+c.parsed.y.toFixed(1)+'%'}}}}}}}},
-    scales:{{x:{{grid:{{display:false}},ticks:{{maxTicksLimit:12,font:{{size:10}},maxRotation:0,autoSkip:true}}}},
-      y:{{min:0,max:155,grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{callback:function(v){{return v+'%'}},font:{{size:10}}}}}}}}
-  }}
-}});
+  var el_{suf} = document.getElementById('lwc-chart-{suf}');
+  var chart_{suf} = LightweightCharts.createChart(el_{suf}, {{
+    width: el_{suf}.clientWidth, height: {LWC_TOTAL_H},
+    layout: {{ background:{{color:'transparent'}}, textColor:'{TEXT_HEX}',
+      panes:{{separatorColor:'{BORDER_HEX}', separatorHoverColor:'{BORDER_HEX}'}} }},
+    grid: {{ vertLines:{{color:'rgba(0,0,0,0.06)'}}, horzLines:{{color:'rgba(0,0,0,0.06)'}} }},
+    rightPriceScale: {{ borderColor:'{BORDER_HEX}' }},
+    timeScale: {{ borderColor:'{BORDER_HEX}' }},
+  }});
 
-new Chart(document.getElementById('chart-rv-{suf}'),{{
-  type:'line',
-  data:{{labels:W_LAB_{suf},datasets:[
-    {{label:'{legs[0]} RV20',data:{H['arv']},borderColor:BLUE,borderWidth:1.6,pointRadius:0,pointHoverRadius:3,tension:0.15}},
-    {{label:'{legs[1]} RV20',data:{H['brv']},borderColor:AMBER,borderWidth:1.6,pointRadius:0,pointHoverRadius:3,tension:0.15}},
-    {{label:'{legs[0]} σ_t（動態）',data:{H['asig']},borderColor:'rgba(21,101,192,0.55)',borderWidth:1.4,borderDash:[6,4],pointRadius:0,pointHoverRadius:3,tension:0.15}},
-    {{label:'{legs[1]} σ_t（動態）',data:{H['bsig']},borderColor:'rgba(217,119,6,0.55)',borderWidth:1.4,borderDash:[6,4],pointRadius:0,pointHoverRadius:3,tension:0.15}}
-  ]}},
-  options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
-    plugins:{{legend:{{display:true,position:'top',align:'start',labels:{{usePointStyle:true,pointStyle:'line',padding:10}}}},
-      tooltip:{{callbacks:{{label:function(c){{return c.dataset.label+': '+c.parsed.y.toFixed(1)+'%'}}}}}}}},
-    scales:{{x:{{grid:{{display:false}},ticks:{{maxTicksLimit:12,font:{{size:10}},maxRotation:0,autoSkip:true}}}},
-      y:{{beginAtZero:true,grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{callback:function(v){{return v+'%'}},font:{{size:10}}}}}}}}
-  }}
-}});
+  // ---- pane 0：價格（正規化 100=近 1260 交易日前）+ W52（同比例，實線 60% 透明）----
+  var pxA_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
+    {{color:'{BLUE_HEX}', lineWidth:2, priceLineVisible:false, lastValueVisible:false}}, 0);
+  var pxB_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
+    {{color:'{AMBER_HEX}', lineWidth:2, priceLineVisible:false, lastValueVisible:false}}, 0);
+  var w52A_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
+    {{color:'rgba(21,101,192,0.6)', lineWidth:1, priceLineVisible:false, lastValueVisible:false}}, 0);
+  var w52B_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
+    {{color:'rgba(217,119,6,0.6)', lineWidth:1, priceLineVisible:false, lastValueVisible:false}}, 0);
+  chart_{suf}.priceScale('right').applyOptions({{scaleMargins:{{top:0.08, bottom:0.08}}}});
+  pxA_{suf}.setData(_pts(A_NORM_{suf}));
+  pxB_{suf}.setData(_pts(B_NORM_{suf}));
+  w52A_{suf}.setData(_pts(A_W52N_{suf}));
+  w52B_{suf}.setData(_pts(B_W52N_{suf}));
 
-// 槓桿燃料表：σ_t/RV 比率 vs 1.0/1.5 參考線
-new Chart(document.getElementById('chart-fuel-{suf}'),{{
-  type:'line',
-  data:{{labels:W_LAB_{suf},datasets:[
-    {{label:'σ_t/RV',data:{H['fuel']},borderColor:AMBER,borderWidth:1.5,pointRadius:0,pointHoverRadius:3,tension:0.1}},
-    {{label:'1.0（開始借錢）',data:W_LAB_{suf}.map(function(){{return 1.0;}}),borderColor:'rgba(22,163,74,0.7)',borderWidth:1,borderDash:[5,4],pointRadius:0}},
-    {{label:'1.5（滿載 150%）',data:W_LAB_{suf}.map(function(){{return 1.5;}}),borderColor:'rgba(220,38,38,0.7)',borderWidth:1,borderDash:[5,4],pointRadius:0}}
-  ]}},
-  options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
-    plugins:{{legend:{{display:true,position:'top',align:'start',labels:{{usePointStyle:true,pointStyle:'line',padding:10}}}},
-      tooltip:{{callbacks:{{label:function(c){{return c.dataset.label+': '+c.parsed.y.toFixed(2)}}}}}}}},
-    scales:{{x:{{grid:{{display:false}},ticks:{{maxTicksLimit:12,font:{{size:10}},maxRotation:0,autoSkip:true}}}},
-      y:{{beginAtZero:true,suggestedMax:2.5,grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{font:{{size:10}}}}}}}}
-  }}
-}});
+  // ---- pane 1：曝險（主角）——現持（執行層，粗階梯）vs 每日理論目標（訊號，細線）；
+  // 閘門出場／cap_eff 退回 1.0 的色塊改畫在這裡（獨立、隱藏的 price scale，鋪滿
+  // 整個 pane 高度），不再放價格 pane（2026-09-15 持有人回饋：放價格 pane 看起來
+  // 像浮在圖裡不相干的細棒）----
+  chart_{suf}.addPane();
+  var ribbon_{suf} = chart_{suf}.addSeries(LightweightCharts.HistogramSeries,
+    {{priceScaleId:'ribbon', priceLineVisible:false, lastValueVisible:false}}, 1);
+  ribbon_{suf}.priceScale().applyOptions({{scaleMargins:{{top:0, bottom:0}}, visible:false}});
+  ribbon_{suf}.setData(RIBBON_{suf}.map(function(r){{
+    return {{time:r[0], value:1, color: r[1]==='exit' ? 'rgba(185,28,28,0.10)' : 'rgba(109,40,217,0.12)'}};
+  }}));
+  var execSeries_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
+    {{color:'{GREEN_HEX}', lineWidth:3, lineType:LightweightCharts.LineType.WithSteps,
+      priceLineVisible:false, lastValueVisible:false}}, 1);
+  var targetSeries_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
+    {{color:'rgba(22,163,74,0.4)', lineWidth:1, priceLineVisible:false, lastValueVisible:false}}, 1);
+  execSeries_{suf}.setData(_pts(CEXE_{suf}));
+  targetSeries_{suf}.setData(_pts(COMB_{suf}));
+  execSeries_{suf}.createPriceLine({{price:100, color:'rgba(120,120,120,0.6)',
+    lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, title:'100%', axisLabelVisible:true}});
+  execSeries_{suf}.createPriceLine({{price:150, color:'rgba(220,38,38,0.6)',
+    lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, title:'150%', axisLabelVisible:true}});{revision_marker}
 
-var BT_LAB_{suf}={md['BT_L']},BT_C_{suf}={md['BT_C']},BT_B_{suf}={md['BT_B']};
-new Chart(document.getElementById('chart-bt-nav-{suf}'),{{
-  type:'line',
-  data:{{labels:BT_LAB_{suf},datasets:[
-    {{label:'自適應中位數 3y（含執行層）',data:BT_C_{suf},borderColor:GREEN,borderWidth:2,pointRadius:0,pointHoverRadius:3,tension:0.1}},
-    {{label:'50/50 B&H',data:BT_B_{suf},borderColor:BLUE,borderWidth:1.3,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.1}}
-  ]}},
-  options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
-    plugins:{{legend:{{display:true,position:'top',align:'start',labels:{{usePointStyle:true,pointStyle:'line',padding:10}}}},
-      tooltip:{{callbacks:{{label:function(c){{return c.dataset.label+': '+c.parsed.y.toFixed(2)+'×'}}}}}}}},
-    scales:{{x:{{grid:{{display:false}},ticks:{{maxTicksLimit:8,font:{{size:9}},maxRotation:0,autoSkip:true}}}},
-      y:{{type:'logarithmic',grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{callback:function(v){{return v+'×'}},font:{{size:9}}}}}}}}
-  }}
-}});
-new Chart(document.getElementById('chart-bt-dd-{suf}'),{{
-  type:'line',
-  data:{{labels:BT_LAB_{suf},datasets:[
-    {{label:'自適應中位數 3y（含執行層）',data:_dd(BT_C_{suf}),borderColor:GREEN,backgroundColor:'rgba(22,163,74,0.12)',borderWidth:1.4,fill:'origin',pointRadius:0,tension:0.1}},
-    {{label:'50/50 B&H',data:_dd(BT_B_{suf}),borderColor:BLUE,backgroundColor:'rgba(21,101,192,0.06)',borderWidth:1.1,fill:'origin',pointRadius:0,tension:0.1}}
-  ]}},
-  options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
-    plugins:{{legend:{{display:true,position:'top',align:'start',labels:{{usePointStyle:true,pointStyle:'line',padding:10}}}},
-      tooltip:{{callbacks:{{label:function(c){{return c.dataset.label+': '+c.parsed.y.toFixed(1)+'%'}}}}}}}},
-    scales:{{x:{{grid:{{display:false}},ticks:{{maxTicksLimit:8,font:{{size:9}},maxRotation:0,autoSkip:true}}}},
-      y:{{grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{callback:function(v){{return v+'%'}},font:{{size:9}}}}}}}}
-  }}
-}});
+  // ---- pane 2：RV20 vs σ_t（每腿各一組顏色）----
+  chart_{suf}.addPane();
+  var rvA_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
+    {{color:'{BLUE_HEX}', lineWidth:1.6, priceLineVisible:false, lastValueVisible:false}}, 2);
+  var rvB_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
+    {{color:'{AMBER_HEX}', lineWidth:1.6, priceLineVisible:false, lastValueVisible:false}}, 2);
+  var sigA_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
+    {{color:'rgba(21,101,192,0.6)', lineWidth:1.4, lineStyle:LightweightCharts.LineStyle.Dashed,
+      priceLineVisible:false, lastValueVisible:false}}, 2);
+  var sigB_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
+    {{color:'rgba(217,119,6,0.6)', lineWidth:1.4, lineStyle:LightweightCharts.LineStyle.Dashed,
+      priceLineVisible:false, lastValueVisible:false}}, 2);
+  rvA_{suf}.setData(_pts(ARV_{suf})); rvB_{suf}.setData(_pts(BRV_{suf}));
+  sigA_{suf}.setData(_pts(ASIG_{suf})); sigB_{suf}.setData(_pts(BSIG_{suf}));
+
+  // v5 IPaneApi.setHeight() 互相覆寫（連續呼叫會把「其餘 pane」按彼此當下比例重新
+  // 分配剩餘空間，最後一個 pane 的呼叫會打散前面設好的值——親測 300/160/160 呼叫完
+  // 變成 431/26/135），改用 setStretchFactor()（像素數字本身當權重，互不覆寫，
+  // 已用最小可重現頁面對照驗證，誤差 <1px）。LWC_TOTAL_H 已含時間軸列＋pane
+  // 分隔線的估計餘裕（{LWC_RESERVE_H}px）。
+  chart_{suf}.panes()[0].setStretchFactor({LWC_PANE_H[0]});
+  chart_{suf}.panes()[1].setStretchFactor({LWC_PANE_H[1]});
+  chart_{suf}.panes()[2].setStretchFactor({LWC_PANE_H[2]});
+  chart_{suf}.timeScale().fitContent();
+
+  // ---- 1Y/3Y/5Y 範圍按鈕 ----
+  window.lwcRange_{suf} = function(years, btnEl){{
+    var n = Math.min(DATES_{suf}.length - 1, Math.round(years * 252));
+    var from = DATES_{suf}[Math.max(0, DATES_{suf}.length - 1 - n)];
+    var to = DATES_{suf}[DATES_{suf}.length - 1];
+    chart_{suf}.timeScale().setVisibleRange({{from: from, to: to}});
+    if (btnEl) {{
+      var wrap = btnEl.parentElement;
+      Array.prototype.forEach.call(wrap.children, function(b){{ b.classList.remove('active'); }});
+      btnEl.classList.add('active');
+    }}
+  }};
+  lwcRange_{suf}(1, null);
+
+  // ---- 十字線 hover 圖例 ----
+  var legendEl_{suf} = document.getElementById('lwc-legend-{suf}');
+  chart_{suf}.subscribeCrosshairMove(function(param){{
+    var i = _lwcIdx(param, DATES_{suf});
+    if (i < 0 || i >= DATES_{suf}.length) {{ return; }}
+    var fmt = function(v, dp){{ return (v===null||v===undefined) ? '—' : v.toFixed(dp===undefined?2:dp); }};
+    legendEl_{suf}.innerHTML =
+      '<b>' + DATES_{suf}[i] + '</b>　' +
+      '{legs[0]} ' + fmt(A_RAW_{suf}[i]) + '（W52 ' + fmt(A_W52R_{suf}[i]) + '）　' +
+      '{legs[1]} ' + fmt(B_RAW_{suf}[i]) + '（W52 ' + fmt(B_W52R_{suf}[i]) + '）　' +
+      '現持 ' + fmt(CEXE_{suf}[i], 0) + '% ／ 目標 ' + fmt(COMB_{suf}[i], 0) + '%　' +
+      'RV20 ' + fmt(ARV_{suf}[i], 1) + '/' + fmt(BRV_{suf}[i], 1) + '% ／ σ_t ' +
+      fmt(ASIG_{suf}[i], 1) + '/' + fmt(BSIG_{suf}[i], 1) + '%';
+  }});
+}})();
 """
 
 
@@ -1073,49 +1200,70 @@ def market_switch_buttons() -> str:
 
 
 # ---------------------------------------------------------------------------
-# 「今天結論」box（2026-09-10，頁面最上方三句白話）— 全部沿用既有已算好的值
-# （sigs 的 gate/final/wk_close/w52、exp、last_change_date/desc），不新增任何指標。
+# 「今天結論」條（2026-09-15 重做）：兩市場並排卡，每市場一個大數字＝現持曝險
+# （執行層 executed，非訊號目標），並列目標％、逐腿閘門／均線 x/5／cap_eff／
+# 下一個會動的價位。價位計算：均線五條全對時算「跌破 MA60×(1−MA_BUF) 降回
+# cap_eff 1.0」的價位；未全對時算「站回 MA60 之上」（其餘四條件仍須同時成立
+# 才恢復 1.5，此為簡化揭露、非精確到「哪一條在撐」，見任務交付說明）；閘門一律
+# 算「跌破/漲回 W52」的價位。MA60 現值來自 leg_panel（main() 新增區塊用既有
+# px_map 算出，--render-only 沒有 px_map 時為 None，此時只顯示 W52 價位）。
 # ---------------------------------------------------------------------------
-def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
-                     last_change_desc: str | None) -> str:
-    # 句 1：現在持有什麼（各腿權重＋帳戶曝險）
-    leg_bits = []
-    for m in MARKETS:
-        parts = [f"{t} {sigs[t]['final']*100:.0f}%（{'在場' if sigs[t]['gate'] else '出場'}）"
-                 for t in m["legs"]]
-        leg_bits.append(f"{m['short']}＝{'＋'.join(parts)}，帳戶目標曝險 {exp[m['key']]:.0f}%")
-    holding = "現在持有：" + "；".join(leg_bits) + "。"
+def _leg_trigger_text(t: str, d: dict, ma60_now: float | None) -> str:
+    parts = []
+    if d["gate"]:
+        parts.append(f"跌破 W52 {d['w52']:.2f} 出場")
+    else:
+        parts.append(f"漲回 W52 {d['w52']:.2f} 之上進場")
+    if ma60_now is not None:
+        if d["ma5_on"]:
+            trig_px = ma60_now * (1.0 - MA_BUF)
+            parts.append(f"跌破 {trig_px:.2f}（MA60×{100*(1-MA_BUF):.0f}%）cap_eff 降回 1.0")
+        else:
+            parts.append(f"站回 {ma60_now:.2f}（MA60）之上（其餘四條件仍須同時成立才恢復 cap_eff 1.5）")
+    return "；".join(parts)
 
-    # 句 2：最近一次變動——哪天、發生了什麼（沿用 detect_changes 已寫入 state 的敘述）
+
+def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
+                     last_change_desc: str | None, exec_map: dict,
+                     leg_panel_map: dict | None = None) -> str:
+    leg_panel_map = leg_panel_map or {}
     if last_change_date:
         changed = f"最近一次執行層變動：{last_change_date}，{last_change_desc or '（無敘述）'}。"
     else:
         changed = "最近一次執行層變動：尚無紀錄（近期沒有任何一腿的目標與現持差達到 20 個百分點的調整門檻）。"
 
-    # 句 3：下一個可能觸發的條件——挑離 W52 閘門最近的一腿；在場＝還要跌多少才出場，
-    # 出場＝還要漲多少才重新進場（距離＝既有 wk_close/w52 現算的百分比差，非新指標）。
-    trig = []
-    for t in ALL_TICKERS:
-        d = sigs[t]
-        d52 = (d["wk_close"] / d["w52"] - 1) * 100 if d["w52"] else 0.0
-        trig.append((abs(d52), t, d52, d["gate"]))
-    trig.sort(key=lambda x: x[0])
-    _, tt, td52, tgate = trig[0]
-    if tgate:
-        nxt = (f"下一個可能觸發：{tt} 目前週收在 W52（過去 52 週收盤均線，本系統用它判斷長期趨勢方向"
-               f"的閘門）之上 {abs(td52):.1f}%，若週收跌破 W52 即觸發出場（仍須配合執行層 A2——"
-               f"目標與現持差要達到 20 個百分點門檻才會真的調整部位、且取整至 10% 一格）。")
-    else:
-        nxt = (f"下一個可能觸發：{tt} 目前已出場（週收在 W52 之下 {abs(td52):.1f}%），"
-               f"需要週收漲回 W52 之上才會重新觸發進場。")
+    mkt_cards = ""
+    for m in MARKETS:
+        key = m["key"]
+        exec_last = exec_map[key]["last"]
+        exec_combined = round(sum(exec_last.get(t, 0.0) for t in m["legs"]), 0)
+        target_combined = round(sum(sigs[t]["final"] for t in m["legs"]) * 100, 0)
+        ccol = fill_color(exec_combined / 100)
+        panel = leg_panel_map.get(key) or {}
+        leg_rows = ""
+        for t in m["legs"]:
+            d = sigs[t]
+            n_on = sum(1 for v in d["ma_cond"].values() if v)
+            gate_pill = (f'<span class="tag" style="background:var(--green-bg);color:var(--green-text)">在場</span>'
+                        if d["gate"] else
+                        f'<span class="tag" style="background:var(--red-bg);color:var(--red-text)">出場</span>')
+            ma60_now = (panel.get(t) or {}).get("ma60_now") if panel else None
+            trig = _leg_trigger_text(t, d, ma60_now)
+            leg_rows += (f'<div class="today-leg"><b>{t}</b> {gate_pill} '
+                        f'均線 <b>{n_on}/5</b> · cap_eff <b>{d["cap_eff"]:.1f}</b> · '
+                        f'現持 <b>{exec_last.get(t, 0.0):.0f}pp</b><br>'
+                        f'<span style="color:var(--muted);font-size:.78rem">下一個會動的價位：{trig}</span></div>')
+        mkt_cards += f"""<div class="today-mkt hero-{ccol}">
+  <div class="today-mkt-name">{m['name']}</div>
+  <div class="today-mkt-num" style="color:var(--{ccol})">{exec_combined:.0f}%</div>
+  <div class="today-mkt-sub">現持曝險（執行層）· 目標 {target_combined:.0f}%（訊號）</div>
+  {leg_rows}
+</div>"""
 
     return f"""<div class="card" style="border:2px solid var(--brand);background:#eef4ff">
 <h3 style="color:var(--brand)">今天結論</h3>
-<div class="rule-list" style="font-size:.88rem">
-{holding}<br>
-{changed}<br>
-{nxt}
-</div>
+<div class="today-grid">{mkt_cards}</div>
+<div class="rule-list" style="font-size:.85rem;margin-top:.8rem">{changed}</div>
 <div style="font-size:.72rem;color:var(--muted);margin-top:.6rem;line-height:1.7">
 名詞：<b>W52</b>＝過去 52 週（約一年）收盤價的平均線，本系統用它當長期趨勢的進出場閘門（週收在上方視為多頭、在下方視為空頭）；
 <b>套袖（自適應波動率）</b>＝波動低於自身近 3 年中位數時加碼、波動升高時自動減碼的機制；
@@ -1129,8 +1277,10 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
 # Full HTML
 # ---------------------------------------------------------------------------
 def generate_html(sigs: dict, changes: list | None, last_change_date: str | None,
-                  hist_map: dict, exec_map: dict, last_change_desc: str | None = None) -> str:
+                  hist_map: dict, exec_map: dict, last_change_desc: str | None = None,
+                  leg_panel_map: dict | None = None) -> str:
     changes = changes or []
+    leg_panel_map = leg_panel_map or {m["key"]: {} for m in MARKETS}
     now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
     data_date = max(sigs[t]["wk_date"] for t in ALL_TICKERS)
     # 週線 bar 由 pandas 以「週結束的週五」為標籤，故週間跑時 data_date 會是本週五
@@ -1144,11 +1294,21 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
         if week_provisional else
         f"數據截至 {data_date}（週五收盤）")
 
-    md_map = {m["key"]: _market_data(m, sigs, hist_map.get(m["key"], []), exec_map[m["key"]]) for m in MARKETS}
+    md_map = {m["key"]: _market_data(m, sigs, hist_map.get(m["key"], []), exec_map[m["key"]],
+                                     leg_panel_map.get(m["key"], {})) for m in MARKETS}
     exp_us = md_map["us"]["combined"]
     exp_tw = md_map["tw"]["combined"]
     today_conclusion_html = today_conclusion(sigs, {"us": exp_us, "tw": exp_tw},
-                                             last_change_date, last_change_desc)
+                                             last_change_date, last_change_desc,
+                                             exec_map, leg_panel_map)
+    # 2026-09-15 重做 §3.1.3：四腿卡片改一列四張（QQQ/SMH/0050/2330），跨兩市場，
+    # 不再各自放在 market_html 裡；exec_last 取自既有 exec_map（band_exec_replay，
+    # 非新規則）。
+    exec_last_all = {}
+    for m in MARKETS:
+        exec_last_all.update(exec_map[m["key"]]["last"])
+    legs_row_html = "".join(ticker_card(t, sigs[t], exec_last_all.get(t)) for t in ALL_TICKERS)
+    f70_section_html = f70_section(exec_map["us"]["last"], data_date)
 
     change_html = (
         ('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;'
@@ -1170,19 +1330,23 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
   <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- 本頁是 nav-less iframe 片段，被 /long-track/#live 嵌入；沒有 target="_top" 的
+       <a> 點下去會在 iframe 內開整個站（套娃）。base target="_top" 讓全頁連結預設在
+       父視窗開；不影響相對路徑解析（沒有設 base href）。 -->
+  <base target="_top">
   <title>W52 × 自適應波動率 150%（美+台）｜實單主系統 | InvestMQuest Research</title>
   <meta name="description" content="W52 × 自適應波動率 cap 1.5（150%）· 2026-07-18 起實單主系統（美+台）· 週線 W52 單線閘門 × 自適應 σ 波動率目標 × 執行層 · email 提醒可行動變化">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/imq-base.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
 :root{{--brand:#0d2244;--bg:#f7f3ea;--card:#ffffff;--text:#0c1521;--muted:#9aa7b8;--border:#e5dfd0;
   --green:#15803d;--green-bg:#eafaef;--green-border:var(--line);--green-text:#15803d;
   --red:#b91c1c;--red-bg:#fbeceb;--red-border:var(--line);--red-text:#b91c1c;
   --amber:#a16207;--amber-bg:#fbf3df;--amber-border:var(--line);--amber-text:#a16207;
-  --blue:#1d4ed8;--blue-bg:#e8eef5;--blue-border:var(--line);--blue-text:#1d4ed8}}
+  --blue:#1d4ed8;--blue-bg:#e8eef5;--blue-border:var(--line);--blue-text:#1d4ed8;
+  --purple:#6d28d9;--purple-bg:#f1eafc;--purple-border:var(--line);--purple-text:#6d28d9}}
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{font-family:var(--sans),-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--text);line-height:1.65;font-size:14px}}
@@ -1228,48 +1392,46 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 .hero-amber .dot{{background:var(--amber)}}.hero-amber .status-exposure{{color:var(--amber)}}
 .hero-red .status-badge{{background:var(--red-bg);color:var(--red-text);border:2px solid var(--red-border)}}
 .hero-red .dot{{background:var(--red)}}.hero-red .status-exposure{{color:var(--red)}}
-.dual-stat{{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}}
-.dual-stat .ds{{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;text-align:center;box-shadow:var(--sh-1)}}
-.dual-stat .ds .dsn{{font-size:1.9rem;font-weight:800;letter-spacing:-.02em}}
-.dual-stat .ds .dsl{{font-size:.76rem;color:var(--muted);margin-top:.2rem}}
-.tgrid{{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}}
+.tgrid-4{{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1rem}}
 .tcard{{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;box-shadow:var(--sh-1)}}
-.tcard-hdr{{display:flex;align-items:center;justify-content:space-between;margin-bottom:.2rem}}
+.tcard-hdr{{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:.3rem}}
 .tname{{font-size:1.3rem;font-weight:800;letter-spacing:-.02em}}
-.pos-badge{{font-size:.95rem;font-weight:700;padding:.25rem .7rem;border-radius:6px}}
+.pos-badge{{font-size:.78rem;font-weight:700;padding:.25rem .6rem;border-radius:6px}}
 .pos-green{{background:var(--green-bg);color:var(--green-text)}}.pos-blue{{background:var(--blue-bg);color:var(--blue-text)}}
 .pos-amber{{background:var(--amber-bg);color:var(--amber-text)}}.pos-red{{background:var(--red-bg);color:var(--red-text)}}
-.tcard-sub{{font-size:.75rem;color:var(--muted);margin-bottom:.75rem}}
-.sig-row{{display:grid;grid-template-columns:1fr;gap:.5rem}}
-.sig{{border:1px solid var(--border);border-radius:var(--r);padding:.55rem .7rem;background:var(--card)}}
-.sig.on{{border-color:var(--green-border);background:var(--green-bg)}}
-.sig.off{{border-color:var(--red-border);background:var(--red-bg)}}
-.sig-top{{display:flex;align-items:center;gap:.5rem}}
-.sig-dot{{width:11px;height:11px;border-radius:50%}}
-.sig.on .sig-dot{{background:var(--green)}}.sig.off .sig-dot{{background:var(--red)}}
-.sig-name{{font-weight:700;font-size:.85rem}}
-.sig-mark{{margin-left:auto;font-weight:800}}
-.sig.on .sig-mark{{color:var(--green)}}.sig.off .sig-mark{{color:var(--red)}}
-.sig-detail{{font-size:.74rem;color:var(--muted);margin-top:.2rem;font-variant-numeric:tabular-nums}}
+.tcard-row{{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;font-size:.8rem;margin-bottom:.4rem}}
+.tcard-metric{{color:var(--muted)}}.tcard-metric b{{color:var(--text)}}
+.tcard-lamps{{margin-top:.3rem}}
 .oos-banner{{background:linear-gradient(135deg,#fdf6e3 0%,#faf0d7 100%);border:2px solid var(--amber);border-radius:12px;padding:1rem 1.3rem;margin:1rem 0}}
 .oos-banner .tag-loud{{display:inline-block;background:var(--amber);color:#fff;font-size:.72rem;font-weight:800;letter-spacing:.06em;padding:.22rem .7rem;border-radius:99px;margin-bottom:.45rem}}
 .oos-banner b{{color:var(--amber-text)}}
 .rule-list{{font-size:.82rem;line-height:1.9}}.rule-list b{{color:var(--text)}}
-.chart-wrap{{position:relative;width:100%;height:400px}}
-.chart-wrap-sm{{position:relative;width:100%;height:300px}}
-.chart-wrap-xs{{position:relative;width:100%;height:210px}}
-.viz-split{{display:grid;grid-template-columns:260px 1fr;gap:1.25rem;align-items:center}}
-.gauge-box{{position:relative;width:100%;max-width:240px;margin:0 auto;height:150px}}
-.gauge-center{{position:absolute;left:0;right:0;bottom:6px;text-align:center}}
-.gauge-center .g-num{{font-size:2.1rem;font-weight:800;line-height:1;letter-spacing:-.02em}}
-.gauge-center .g-lab{{font-size:.7rem;color:var(--muted);margin-top:.15rem}}
+.today-grid{{display:grid;grid-template-columns:1fr 1fr;gap:1rem}}
+.today-mkt{{border:2px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;background:var(--card)}}
+.today-mkt-name{{font-weight:700;font-size:.9rem;margin-bottom:.15rem}}
+.today-mkt-num{{font-size:2.1rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}}
+.today-mkt-sub{{font-size:.76rem;color:var(--muted);margin-bottom:.6rem}}
+.today-mkt.hero-green{{border-color:var(--green-border)}}.today-mkt.hero-blue{{border-color:var(--blue-border)}}
+.today-mkt.hero-amber{{border-color:var(--amber-border)}}.today-mkt.hero-red{{border-color:var(--red-border)}}
+.today-leg{{font-size:.82rem;padding:.5rem 0;border-top:1px dashed var(--border)}}
 .legend-note{{font-size:.74rem;color:var(--muted);margin-top:.6rem;display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center}}
 .legend-note .ln-item{{display:inline-flex;align-items:center;gap:.35rem}}
 .legend-note .ln-line{{display:inline-block;width:22px;height:0;border-top:2.4px solid var(--muted)}}
 .legend-note .ln-dash{{border-top-style:dashed}}
+.legend-note .ln-swatch{{display:inline-block;width:11px;height:11px;border-radius:3px}}
+.lwc-toolbar{{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:.4rem}}
+.lwc-legend{{font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}}
+.lwc-range-btns{{display:flex;gap:.3rem}}
+.lwc-range-btn{{font:inherit;font-size:.76rem;font-weight:600;padding:.25rem .65rem;border-radius:6px;
+  border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}}
+.lwc-range-btn.active{{background:var(--brand);color:#fff;border-color:var(--brand)}}
+.lwc-chart{{position:relative;width:100%;height:{LWC_TOTAL_H}px}}
+.lwc-pane-title{{position:absolute;left:8px;font-size:.72rem;font-weight:700;color:var(--muted);
+  background:rgba(255,255,255,.72);padding:.05rem .4rem;border-radius:4px;pointer-events:none;z-index:3}}
 .grid2{{display:grid;grid-template-columns:1fr 1fr;gap:1rem}}
-@media(max-width:768px){{.tgrid{{grid-template-columns:1fr}}.status-exposure{{font-size:2rem}}table{{font-size:.74rem}}th,td{{padding:.4rem .45rem}}
-  .viz-split{{grid-template-columns:1fr}}.grid2{{grid-template-columns:1fr}}.dual-stat{{grid-template-columns:1fr}}.chart-wrap{{height:320px}}}}
+@media(max-width:768px){{.tgrid-4{{grid-template-columns:1fr 1fr}}.status-exposure{{font-size:2rem}}table{{font-size:.74rem}}th,td{{padding:.4rem .45rem}}
+  .grid2{{grid-template-columns:1fr}}.today-grid{{grid-template-columns:1fr}}}}
+@media(max-width:480px){{.tgrid-4{{grid-template-columns:1fr}}}}
 </style>
 </head>
 <body>
@@ -1310,16 +1472,21 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
   <br><br><b>誠實紀律（兩點白紙黑字）</b>：<b>①</b> <b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點（60 個追蹤交易日，或首次 ≥ 10% 組合回撤事件）</b>——即先上實單、再於回顧點檢驗水下體驗是否符合預期。<b>②</b> <b>美股採 cap 1.5 是「知情決策」</b>：研究顯示<b>美股這一腿槓桿的風險調整報酬（Calmar）較不划算</b>、任何融資利差下都不佔優，<b>選擇兩市場一致性與報酬（而非風險調整最優）</b>，明知美股這一腿是為對稱操作付的代價。<b>此外</b>：槓桿放大所有模型誤差、深熊未實測（見 2330 長窗與誠實揭露）、台股須用期貨非融資、實際峰值建議壓 140% 留保證金緩衝。均線層預註冊 kill condition 見帳本 <code>knowledge/rule_ledger.md</code>「實單主系統規則鏈」。</div>
 </div>
 
-<div class="dual-stat">
-  <div class="ds"><div class="dsn hero-{md_map['us']['ccol']}" style="color:var(--{md_map['us']['ccol']})">{exp_us:.0f}%</div><div class="dsl">美股 QQQ+SMH 組合目標曝險</div></div>
-  <div class="ds"><div class="dsn hero-{md_map['tw']['ccol']}" style="color:var(--{md_map['tw']['ccol']})">{exp_tw:.0f}%</div><div class="dsl">台股 0050+2330 組合目標曝險</div></div>
-</div>
 <div class="status-date" style="text-align:center;margin-bottom:.5rem">{data_asof_label} · 頁面更新 {now} 台北時間 · 兩組合各自獨立追蹤（各 100%）</div>
 
 {change_html}
 
+<div class="mkt-hd"><span class="mkt-tag">四腿卡片</span></div>
+<div class="tgrid-4">{legs_row_html}</div>
+
+{f70_section_html}
+
 {markets_html}
 
+<div class="card">
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則說明（點開看完整規則、2026-09-15 均線層修訂與 kill condition，白話版）</summary>
+<div style="margin-top:.9rem">
 <div class="card">
 <h3>追蹤主系統規則（W52 × 自適應波動率 × 均線確認；{FREEZE_DATE} 定案，{RULE_REVISION_DATE} 起加均線層，此後不再調整）</h3>
 <div class="rule-list">
@@ -1347,8 +1514,6 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </div>
 </details>
 </div>
-
-{appendix_2330_section()}
 
 <div class="card">
 <h3>期貨實務實作（研究，非下單指令）</h3>
@@ -1380,22 +1545,31 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 <span style="color:var(--muted);font-size:.78rem">補充：台股回測數字為 7 bps 均一成本；<b>真實成本版（賣出證交稅 0050 15bps／2330 35bps）約再降 0.5pp CAGR</b>（cap 1.5 -0.52pp），見<a href="/backtest/vol_targeting/tw.html">台股實驗室的真實成本版</a>。</span>
 </div>
 </div>
+</div>
+</details>
+</div>
 
 </div>
 <footer class="imq-foot">
   <div>&copy; {datetime.now().year} InvestMQuest Research · W52 × 自適應波動率 150%（美+台）· 2026-07-18 起實單主系統</div>
   <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
 </footer>
+<script src="https://unpkg.com/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js"></script>
 <script>
-Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
-Chart.defaults.font.size=11;
-var GREEN="#16a34a",BLUE="#1565c0",AMBER="#d97706";
-function _dd(nav){{var dd=[],pk=0;for(var i=0;i<nav.length;i++){{if(nav[i]>pk)pk=nav[i];dd.push((nav[i]/pk-1)*100);}}return dd;}}
+// 十字線 hover 圖例共用索引查找：優先用 param.logical（時間軸邏輯索引，與資料陣列
+// 索引一一對應，不受時間值是字串或 BusinessDay 物件影響）；退化時再嘗試比對日期字串。
+function _lwcIdx(param, dates){{
+  if (typeof param.logical === 'number') return param.logical;
+  var t = param.time;
+  if (t == null) return -1;
+  var key = (typeof t === 'string') ? t
+    : (t.year + '-' + String(t.month).padStart(2,'0') + '-' + String(t.day).padStart(2,'0'));
+  return dates.indexOf(key);
+}}
 {markets_js}
 
 // ---- 一鍵切換美股／台股（純前端，兩市場區塊皆由伺服器端產出，僅切顯示；
-//      務必等所有 Chart.js 圖表建立完成後才隱藏非選取市場，避免隱藏容器內
-//      canvas 量到 0 寬高）----
+//      務必等所有圖表建立完成後才隱藏非選取市場，避免隱藏容器內圖表量到 0 寬高）----
 var MKT_LS_KEY = 'ltw52_market';
 function switchMarket(key){{
   document.querySelectorAll('.mkt-section').forEach(function(el){{
@@ -1537,6 +1711,48 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
     )
 
 
+# ---------------------------------------------------------------------------
+# 呈現層專用資料（非規則）：主圖 pane 1 的每腿收盤／W52 序列＋均線層歷史狀態，
+# 與「今天結論」下一個觸發價位。2026-09-15 新增，只在 main() 已有 px_map（非
+# --render-only）時計算，用既有 fetch_close 已抓到的價格，不重新抓價。
+# 逐日 gate／cap_eff 歷史序列為「唯讀重算」：呼叫既有規則函式 _gate_core／_hyst
+# （不修改其程式碼一字）在完整價格序列上一次算出全歷史布林序列，數學上與
+# _daily_record 逐日截斷計算等價（皆為因果、無前視的 rolling／hysteresis），
+# 只是這裡是為了畫圖表用向量化一次算完，不寫回 state.json、不影響任何規則輸出。
+# ---------------------------------------------------------------------------
+def _leg_chart_panel(px_map: dict, legs: list, dates: list) -> dict:
+    idx = pd.DatetimeIndex([pd.Timestamp(d) for d in dates])
+    out = {}
+    for t in legs:
+        px = px_map[t]
+        wk, pos, w52, w104, w250, s104, s250, pos_daily = _gate_core(px)
+        w52_daily = w52.reindex(px.index, method="ffill")
+        ma60 = px.rolling(60).mean()
+        ma120 = px.rolling(120).mean()
+        ma200 = px.rolling(200).mean()
+        gt60 = _hyst(px, ma60, MA_BUF)
+        gt120 = _hyst(px, ma120, MA_BUF)
+        gt200 = _hyst(px, ma200, MA_BUF)
+        s120_up = ma120 > ma120.shift(MA_LAG)
+        s200_up = ma200 > ma200.shift(MA_LAG)
+        ma5_on_daily = gt60 & gt120 & gt200 & s120_up & s200_up
+
+        def _align(s):
+            v = s.reindex(idx)
+            return [None if pd.isna(x) else float(x) for x in v]
+
+        gate_v = [int(v) if pd.notna(v) else 0 for v in pos_daily.reindex(idx)]
+        ma5_v = [bool(v) if pd.notna(v) else False for v in ma5_on_daily.reindex(idx)]
+        out[t] = {
+            "close": _align(px), "w52": _align(w52_daily),
+            "gate": gate_v, "ma5_on": ma5_v,
+            "ma60_now": None if pd.isna(ma60.iloc[-1]) else float(ma60.iloc[-1]),
+            "ma120_now": None if pd.isna(ma120.iloc[-1]) else float(ma120.iloc[-1]),
+            "ma200_now": None if pd.isna(ma200.iloc[-1]) else float(ma200.iloc[-1]),
+        }
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--render-only", action="store_true",
@@ -1591,9 +1807,13 @@ def main():
         exec_map = {m["key"]: band_exec_replay(hist_map[m["key"]], m["legs"]) for m in MARKETS}
         last_change_date = prev_state.get("last_change_date")
         last_change_desc = prev_state.get("last_change_desc")
+        # --render-only 沒有 px_map（不重抓價），主圖 pane 1 的價格／W52 序列與「今天
+        # 結論」的精確觸發價位需要 px_map 才能算，這裡留空——generate_html／
+        # today_conclusion／market_html 會顯示 render-only 說明文字而非硬湊數字。
+        leg_panel_map = {m["key"]: {} for m in MARKETS}
 
         html = generate_html(sigs, [], last_change_date, hist_map, exec_map,
-                             last_change_desc=last_change_desc)
+                             last_change_desc=last_change_desc, leg_panel_map=leg_panel_map)
         OUTPUT.parent.mkdir(parents=True, exist_ok=True)
         OUTPUT.write_text(html, encoding="utf-8")
         print(f"[render-only] Written {OUTPUT} ({len(html):,} bytes). "
@@ -1633,6 +1853,10 @@ def main():
 
     # ---- per-market execution layer replay (deterministic from history) ----
     exec_map = {m["key"]: band_exec_replay(hist_map[m["key"]], m["legs"]) for m in MARKETS}
+    # ---- 呈現層專用：主圖 pane 1 每腿收盤／W52／均線層歷史狀態（新增區塊，不改
+    # 既有規則資料流，用本函式已抓到的 px_map，不重新抓價；見 _leg_chart_panel）----
+    leg_panel_map = {m["key"]: _leg_chart_panel(px_map, m["legs"], [r["date"] for r in hist_map[m["key"]]])
+                     for m in MARKETS}
     exec_last = {}
     for m in MARKETS:
         er = exec_map[m["key"]]
@@ -1679,7 +1903,7 @@ def main():
         print(f"Mail HTML written: {ALERT_HTML}")
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map,
-                         last_change_desc=last_change_desc)
+                         last_change_desc=last_change_desc, leg_panel_map=leg_panel_map)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
