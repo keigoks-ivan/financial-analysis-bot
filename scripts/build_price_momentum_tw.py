@@ -167,7 +167,7 @@ import random
 import sys
 import time
 import warnings
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 warnings.filterwarnings('ignore')
@@ -228,6 +228,8 @@ MIN_PRICE_COVERAGE_TW = 250  # fail-safe floor on >=253-close ticker count, ACRO
                               # also the download-retry gate threshold
 LIQUIDITY_WINDOW = 120       # trailing sessions for the median $-volume liquidity gate
 LIQUIDITY_TOP_N = 300        # weekly scoring universe size after the liquidity gate
+MIN_LISTING_DAYS = 365       # 上市日期 must be >= this many days before as_of (2026-09-16 day-1 amendment)
+INNOVATION_BOARD_SUFFIX = '-創'  # 創新板 names carry this 公司簡稱 suffix; excluded (2026-09-16 day-1 amendment)
 
 
 PREREG = {
@@ -249,6 +251,11 @@ PREREG = {
             "ETF、權證、特別股），金融股保留——P10 是純價格序列，美股版也未排除"
             "任何 GICS 產業。每檔記 name（公司簡稱）與 sector（產業別代碼轉中文，"
             "對照表寫死在 script 裡）。上櫃（TPEx）不納入。"
+            "創新板不納入（公司簡稱以「-創」結尾者；API 無板別欄位，用簡稱慣例辨識）。"
+            "上市日期距執行日不足 365 天者不納入——用 API 的「上市日期」算，不用價格筆數算，"
+            "因為 yfinance 的 .TW 歷史含興櫃時期價格，253 筆收盤不能代表已上市一年。"
+            "（以上兩條為 2026-09-16 第一天修正：首次 inception 後同日、任何換倉前撤回重建，"
+            "起因是 7610 聯友金屬-創 以 2025-09-09 上市之姿排兩線第一。）"
         ),
         "liquidity_gate": (
             "流動性閘（美股版沒有的一步，因為美股版直接借用 S&P 500 成分當大型股"
@@ -354,7 +361,7 @@ PREREG = {
         "title": "市場調整（台股版與美股版的三處差異；其餘規格逐字相同）",
         "universe_swap": (
             "名單來源由 Wikipedia S&P 500 + NQ100_EXTRAS 換成證交所 OpenAPI 上市公司名冊"
-            "（4 位數字代碼、金融股保留、上櫃不納入），並加一道美股版沒有的流動性閘：對通過 "
+            "（4 位數字代碼、金融股保留、上櫃不納入、創新板不納入、上市未滿 365 天不納入），並加一道美股版沒有的流動性閘：對通過 "
             "253 筆收盤門檻的名字，取最近 120 個交易日「收盤 × 成交股數」中位數，降冪取前 "
             "300 名為本週 universe——這是用價量資料機械代理「大型股」，功能等同美股版用 "
             "S&P 500 成分篩大型股。"
@@ -381,7 +388,7 @@ class FailSafeAbort(Exception):
     to print a warning and exit 0 without touching track.json."""
 
 
-def fetch_twse_listed():
+def fetch_twse_listed(as_of_date):
     """TWSE 上市公司名冊 — OpenAPI t187ap03_L（requests、瀏覽器 UA、timeout
     60），與 minervini-quality-backtest 的 universe_builder.py::fetch_twse_tickers()
     同一種抓法（見 data/universe_builder.py 第 85-105 行）。只保留公司代號為 4
@@ -389,7 +396,13 @@ def fetch_twse_listed():
     產業）。產業別代碼經 SECTOR_MAP 轉中文，不在表內者記「未分類」。回傳
     (code_map, listed_raw)：code_map = {code: {'name': 公司簡稱, 'sector': ...}}，
     listed_raw = API 原始筆數（4 位數字過濾前），供 coverage 揭露用。少於
-    MIN_LISTED_TW 筆 4 位數字代碼 → FailSafeAbort。"""
+    MIN_LISTED_TW 筆 4 位數字代碼 → FailSafeAbort。
+
+    2026-09-16 day-1 amendment（首次 inception 後同日、任何換倉前撤回重建）：
+    另排除兩類——(a) 創新板：公司簡稱以「-創」結尾（API 無板別欄位，這是證交所
+    的簡稱慣例）；(b) 上市未滿 MIN_LISTING_DAYS 天：以 API 的「上市日期」計，
+    因 yfinance 的 .TW 歷史含興櫃時期價格，253 筆收盤不能代表上市年資（首例
+    7610 聯友金屬-創，2025-09-09 上市卻有 852 筆收盤）。"""
     try:
         resp = requests.get(TWSE_LISTED_URL, headers={'User-Agent': BROWSER_UA}, timeout=60)
         data = resp.json()
@@ -403,8 +416,18 @@ def fetch_twse_listed():
         if not (len(code) == 4 and code.isdigit()):
             continue
         name = str(row.get('公司簡稱', '')).strip()
+        if name.endswith(INNOVATION_BOARD_SUFFIX):
+            continue  # 創新板 excluded (2026-09-16 amendment)
+        listed_str = str(row.get('上市日期', '')).strip()
+        try:
+            listed_on = datetime.strptime(listed_str, '%Y%m%d').date()
+        except ValueError:
+            continue  # unparsable listing date -> treated as not yet seasoned
+        if (as_of_date - listed_on).days < MIN_LISTING_DAYS:
+            continue  # listed < MIN_LISTING_DAYS ago (2026-09-16 amendment)
         ind_code = str(row.get('產業別', '')).strip()
-        code_map[code] = {'name': name, 'sector': SECTOR_MAP.get(ind_code, '未分類')}
+        code_map[code] = {'name': name, 'sector': SECTOR_MAP.get(ind_code, '未分類'),
+                          'listed': listed_on.isoformat()}
 
     if len(code_map) < MIN_LISTED_TW:
         raise FailSafeAbort(
@@ -734,11 +757,11 @@ def build():
     as_of = now.strftime('%Y-%m-%d')
     print(f"=== Price-Momentum TW (P10-TW) Build: {as_of} ===")
 
-    code_map, listed_raw = fetch_twse_listed()
+    code_map, listed_raw = fetch_twse_listed(now.date())
     codes = sorted(code_map.keys())
     tickers = [f"{c}.TW" for c in codes]
     name_map = {f"{c}.TW": info['name'] for c, info in code_map.items()}
-    print(f"TWSE listed 4-digit codes: {len(tickers)} (raw API rows: {listed_raw})")
+    print(f"TWSE listed 4-digit codes, ex-創新板, listed >= {MIN_LISTING_DAYS}d: {len(tickers)} (raw API rows: {listed_raw})")
 
     px, bench = download_prices_with_retry(tickers)
     bench_close = float(bench.iloc[-1])
@@ -840,7 +863,7 @@ def build():
             'data_gaps': [],
             'changelog': [{
                 'date': as_of,
-                'event': 'P10 台股（雙線 L12/L6）PREREG 凍結（2026-09-16），兩線同日 inception。',
+                'event': 'P10 台股（雙線 L12/L6）PREREG 凍結（2026-09-16），兩線同日 inception。2026-09-15 的首次 inception 於同日撤回重建：名單加排創新板與上市未滿 365 天者（起因 7610 聯友金屬-創），撤回時尚未發生任何換倉。',
             }],
         }
     else:
