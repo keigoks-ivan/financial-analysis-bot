@@ -83,6 +83,10 @@ GROUPS = [
                 "D1 拿掉 SPY 因為 A 已是美股。",
          "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日（隨 W52 主系統更新）",
          "email": "✅（D1X 腿部位變化、月底再平衡）"},
+        {"name": "📐 cap 1.5＋日線均線確認（美 + 台）", "url": "/long-track-w52-adaptive/ma-confirm.html",
+         "one": "2026-09-15 持有人提案的影子：均線五條件不全對時退回 cap 1.0，其餘與實單相同；"
+                "10 月回顧點比較。<b>尚非實單</b>。",
+         "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日 × 2（隨 W52 主系統更新）", "email": "❌"},
     ]),
     ("已退役・凍結對照（被 W52×自適應取代）", "ret", False, [
         {"name": "STX50（SMH/QQQ 美股）", "url": "/long-track-smh/",
