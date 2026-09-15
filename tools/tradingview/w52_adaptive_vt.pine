@@ -153,14 +153,14 @@ maScore = (cGt60 ? 1 : 0) + (cGt120 ? 1 : 0) + (cGt200 ? 1 : 0) + (cS120 ? 1 : 0
 ma5On   = maScore == 5
 capEff  = effMa and not ma5On ? 1.0 : cap              // 均線不配合 → 只准到滿載，不借錢
 
-sleeve   = hasVol ? math.min(capEff, rawRatio) : 1.0
+sleeve   = hasVol ? math.min(cap, rawRatio) : 1.0      // 原始套袖（不含均線層，供平滑與面板「原始」顯示）
 levered  = rawRatio > 1.0                              // 波動面本可加碼
 maBlock  = effMa and gate and levered and not ma5On   // 本可加碼、被均線擋住
 
 // =============================================================================
 // 3. 目標持股率與執行層 A2（整數空間比較）
 // =============================================================================
-sleeveSm  = effSm > 1 ? ta.sma(sleeve, effSm) : sleeve       // 平滑只作用在套袖（官網模式＝關）
+sleeveSm  = math.min(capEff, effSm > 1 ? ta.sma(sleeve, effSm) : sleeve)   // 平滑只作用在套袖；均線上限 capEff 是硬規則，平滑之後才套（同閘門，當日生效）
 targetPos = slot * (gate ? 1.0 : 0.0) * sleeveSm       // 0 ~ 滿載×cap；閘門硬規則不平滑
 
 var float heldPos = 0.0                                // 持股率（執行層現持）
