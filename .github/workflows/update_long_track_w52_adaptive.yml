@@ -84,29 +84,29 @@ jobs:
         # Same two-cron schedule; NO email of its own.
         run: python scripts/update_long_track_w52_adaptive_noma.py
 
-      - name: Read change alert
-        id: alert
+      - name: Build synthesized live mail (today conclusion + F70 MA account)
+        # 2026-09-15 持有人拍板：實單信與 F70 信合成一封。build_live_mail.py 零 LLM、
+        # 純組版，只讀上面兩步驟寫的 lt_w52a_alert.txt／lt_f70_alert.txt 與兩份
+        # state.json，不抓價、不算訊號、不改任何 state；任一 alert 存在才寫
+        # lt_live_alert.txt／live_mail.html，兩者皆無則不寫檔（exit 0）。test_email
+        # 手動觸發時加 --test-email：不論 alert 有無都寫 live_mail.html（標「測試信」），
+        # 但不寫 lt_live_alert.txt（避免偽造「今天有可行動變化」的紀錄）。
         run: |
-          if [ -f lt_w52a_alert.txt ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            {
-              echo "body<<ALERT_EOF"
-              awk 1 lt_w52a_alert.txt   # 保證恰好一個尾換行（不論來源檔有無），避免最後一行與 ALERT_EOF 黏連
-              echo "ALERT_EOF"
-            } >> "$GITHUB_OUTPUT"
+          if [ "${{ inputs.test_email }}" = "true" ]; then
+            python scripts/build_live_mail.py --test-email
           else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+            python scripts/build_live_mail.py
           fi
 
-      - name: Read F70 alert
-        id: f70alert
+      - name: Read live mail alert
+        id: livealert
         run: |
-          if [ -f lt_f70_alert.txt ]; then
+          if [ -f lt_live_alert.txt ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             {
-              echo "body<<F70ALERT_EOF"
-              awk 1 lt_f70_alert.txt   # 保證恰好一個尾換行，避免最後一行與 F70ALERT_EOF 黏連
-              echo "F70ALERT_EOF"
+              echo "body<<LIVEALERT_EOF"
+              awk 1 lt_live_alert.txt   # 保證恰好一個尾換行（不論來源檔有無），避免最後一行與 LIVEALERT_EOF 黏連
+              echo "LIVEALERT_EOF"
             } >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -130,8 +130,10 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Email actionable change
-        if: (steps.alert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
+      - name: Email actionable change (synthesized US+TW live + F70)
+        # 2026-09-15 起：原本「實單信」與「F70 信」兩封合成這一封，內容＝今天結論
+        # （美＋台四腿）＋ F70 均線版帳戶表＋兩邊 alert 原文（見 build_live_mail.py）。
+        if: (steps.livealert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
         continue-on-error: true
         uses: dawidd6/action-send-mail@v3
         with:
@@ -140,38 +142,16 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_APP_PASSWORD }}
-          subject: "⚡ W52×自適應波動率 150%（美+台・實單）可行動變化 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          subject: "⚡ 實單系統 可行動變化（美＋台＋F70）${{ steps.livealert.outputs.changed == 'true' && '' || '(測試信)' }}"
           to: keigoks@gmail.com
           from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
-          html_body: file://long_track_w52_mail.html
+          html_body: file://live_mail.html
           body: |
-            ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}
+            ${{ steps.livealert.outputs.changed == 'true' && steps.livealert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}
 
             —
-            InvestMQuest · W52 × 自適應波動率 150%（美+台）實單主系統
-            每交易日台股/美股收盤後自動檢查 · 可行動變化＝任一腿閘門翻轉或最終權重與現持差 ≥ 10pp
-            退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_w52_adaptive.yml
-
-      - name: Email F70 alert (paper candidate)
-        if: (steps.f70alert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
-        continue-on-error: true
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_APP_PASSWORD }}
-          subject: "F70 紙上候選訊號 ${{ steps.f70alert.outputs.changed == 'true' && '' || '(測試信)' }}"
-          to: keigoks@gmail.com
-          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
-          html_body: file://f70_mail.html
-          body: |
-            ${{ steps.f70alert.outputs.changed == 'true' && steps.f70alert.outputs.body || '這是測試信 — F70 email 推播管線正常。目前無可行動變化。' }}
-
-            —
-            InvestMQuest · F70 紙上候選（70% 系統 A ＋ 30% D1X／TLT/GLD/DBC，尚非實單）
-            每交易日台股/美股收盤後自動檢查 · 事件＝D1X 任一腿部位變化或月底再平衡日
+            InvestMQuest · 實單系統合成信（美＋台＋F70，2026-09-15 起取代原本的實單信與 F70 信）
+            每交易日台股/美股收盤後自動檢查 · 可行動變化＝美/台任一腿最終權重與現持差 ≥ 20pp 或 F70 D1X 腿部位變化／月底再平衡
             退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_w52_adaptive.yml
 
       - name: Commit and push
