@@ -450,6 +450,14 @@ def normalize_v20(obj):
             if k in quality and quality[k] is None:
                 quality[k] = {}
                 changes.append("q4.verdict_values.quality.{0}: null → {{}}（空物件，未補值）".format(k))
+    # TSM 2026-09-16 第二跑：governance.sbc 寫成一句話，schema 要 object（無必填子欄）。
+    # 字串原文包進 {"note": …}，內容一字不動。
+    gov = q4.get("governance")
+    if isinstance(gov, dict):
+        for k in ("sbc", "capital_returns"):
+            if isinstance(gov.get(k), str):
+                gov[k] = {"note": gov[k]}
+                changes.append("q4.verdict_values.governance.{0}: 字串 → {{\"note\": 原文}}".format(k))
     return obj, changes
 
 

@@ -169,3 +169,22 @@ zh-analyst-prose 掃描（22KB 散文）：「——」0、「；」0、「不�
 
 改動：`prompts/coverage.md.tmpl` 拿掉自我驗證與 Bash（工具只留 WebSearch／WebFetch／Write，寫完即停）；並行 12；`do_plan` 改程序內呼叫 `ddreport.cmd_plan`，磁碟逐字稿 ≤100 天時 `KOYFIN_DOWNLOAD_TIMEOUT` 暫設 15s（`--skip-koyfin` 強制）。
 品質代價：重大事件軸漏掉亞利桑那廠集體訴訟（3 次搜尋全用在證券詐欺類），終端市場 12→5 條。已改搜尋上限照題目數（重大事件 5、分段軸 6、其餘 3–4），待下次實測。
+
+### 8d｜同日晚間：TSM 全新端到端（含均線六態機械化後重判）
+
+| 段 | 通數 | 花費 | 時間 | 結果 |
+|---|---|---|---|---|
+| plan | 0 | $0 | 16 秒 | PASS（Koyfin 快路徑） |
+| stage0 | 13（12 軸＋numbers） | $3.28 | 3.4 分 | PASS，31 findings |
+| facts | 0 | $0 | 秒級 | PASS（含程式算的 f_ma_state=🟡 與四條均線數字） |
+| judged 第 1 次 | 1（Fable） | $3.25 | 9.3 分 | 2 形狀錯（quality.buyback／lumpiness null）→ normalize_v20 |
+| gated 第 1 輪（無均線事實） | 1＋patch＋1 | $3.11 | 9 分 | 🔴 3（含「角色因均線缺席降衛星」） |
+| judged 第 2 次（有均線事實） | 1 | $3.20 | 9.1 分 | 1 形狀錯（governance.sbc 字串）→ normalize_v20；判斷者照抄 ma=🟡 |
+| gated 第 2 輪 | 1＋patch＋1 | $2.82 | 8.4 分 | 🔴 1：漂移歸因把「角色核心→衛星（矩陣因 ma=🟡 落 9b）」歸成價格變動，oneliner 仍寫核心 |
+
+到閘為止合計（不含重判）$9.3；含重判 $12.5。裁決：進場·條件式｜衛星，5Y EV 81.4%、IRR base 13.0%、不對稱 6.3。
+
+發現：
+1. **均線六態機械化後，閘紅燈 3 → 1**，剩的是漂移歸因措辭（程式改了輸入 → 角色變 → 判斷者應歸「方法變動」卻寫「價格變動」）。可考慮由程式對 program-owned 欄（ma／price_at_dd／asym 等）自動生成一條 `cause=方法變動／價格變動` 的 contradictions 條目，判斷者只補文字。
+2. 判斷者在 oneliner 先寫了角色（核心），但角色由 `dd_decision.py` 事後算——oneliner 不該含角色字樣，或由程式投影。
+3. 判斷單輪 9 分、閘 3 分、patch 2–4 分穩定；散文（sonnet）11–25 分且思考 44K–116K token 不受 MAX_THINKING_TOKENS 管，下一步試 `--effort low`。
