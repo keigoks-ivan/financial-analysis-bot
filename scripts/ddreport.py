@@ -4110,7 +4110,11 @@ def _final_v19_findings(run_dir, html_path, manifest=None):
     gate_stage = manifest.get("stages", {}).get("gated") or {}
     if gate_stage.get("state") != "PASS" or not _gate_audit_is_current(run_dir, gate_stage):
         findings.append(("_gate", "審核結果未對應目前輸入，須重新審核"))
-    if _is_v19_layout(html_path):
+    # 2026-09-17：dd2（v20）run 的散文由 sonnet 寫、驗收在 scripts/dd2/run.py `_gates_v20`
+    # （組頁／白名單／機器語言／標點／驗算／篇幅下限）；本檔的 _v19_structure_findings 是
+    # 2026-09-11 WP-H2 未完成品（要求條列附 f_* id、e9b 財務表非空——抽取器 H2-6 未做），
+    # 對 dd2 產物一律誤報，故 manifest.pipeline == "dd2-v20" 時不跑。
+    if _is_v19_layout(html_path) and manifest.get("pipeline") != "dd2-v20":
         findings += _v19_structure_findings(run_dir, html_path)
     return findings
 
@@ -5134,6 +5138,15 @@ def _finish_consistency_sources(run_dir, html_path):
     if source_errors:
         return None, source_errors, [], source_paths, fallback_items
 
+    # 2026-09-17：v19 判斷物的 decision_inputs 三欄由判斷者留白（多半連鍵都不寫）、max_dd 在
+    # scenario_inputs；三方對帳改讀 dd_project 投影視圖（WP-H1「既有檢查全部讀視圖」），
+    # 缺鍵視同設計性 null。舊形狀判斷物行為不變。
+    is_v19_judgment = dd_project.is_v19(judgment)
+    if is_v19_judgment:
+        try:
+            judgment = dd_project.view_for(judgment, judgment_path)
+        except Exception as exc:  # 投影失敗就照原檔比，讓 mismatch 自己說話
+            source_errors.append("judgment 投影視圖失敗：{0}".format(exc))
     decision_inputs = judgment.get("decision_inputs") or {}
     max_dd = (judgment.get("premortem") or {}).get("max_dd") or {}
     lo, hi = max_dd.get("lo"), max_dd.get("hi")
@@ -5157,7 +5170,7 @@ def _finish_consistency_sources(run_dir, html_path):
         }
         # 2026-09-07：主判斷 prompt 明定三欄留 null；scenario 有值時明列 N/A，
         # 但 key 缺失或 scenario 也缺值仍交給 mismatch 擋下。
-        if field in decision_inputs and judgment_value is None and scenario_value is not None:
+        if (field in decision_inputs or is_v19_judgment) and judgment_value is None and scenario_value is not None:
             na_items.append({
                 "field": field, "source": "judgment",
                 "path": str(judgment_path),

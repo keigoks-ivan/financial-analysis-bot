@@ -1,36 +1,47 @@
 ---
 name: ddreport
-version: v4.1
-released: 2026-09-11
-description: "任何 DD 觸發語 → `python3 scripts/ddreport.py run {T} [--judgment-model]`，無頭四段（sonnet 收證據＋事實表 → Fable 五出手點判斷一回合 → opus 閘 → 零 LLM 快速版＋sonnet 散文完整版），完成自動 finish＋commit＋push；exit 2 表示遠端領先，orchestrator 用 worktree cherry-pick 推。觸發：『{ticker} DD』『個股分析 {ticker}』『{ticker} 定見』『最終判斷 {ticker}』『該不該進場 {ticker}』『買不買 {ticker}』『conviction analysis {ticker}』『{ticker} dca』『{ticker} 全套』『{ticker} 走完整流程』『ddreport {ticker}』『/ddreport {ticker}』。裸 ticker（句中無其他限定詞）與『這檔如何／值不值得研究／先篩一下 {ticker}／{ticker} 快篩』仍走 stock-screen-v1。"
+version: v5.0
+released: 2026-09-17
+description: "任何 DD 觸發語 → `python3 scripts/dd2/run.py {T}`（v20 管線，2026-09-17 起預設；並行期一週，舊鏈 `scripts/ddreport.py run {T}` 保留可叫）。四通 LLM：sonnet 每軸一通採證 → Fable 單輪判斷 → opus 單輪閘（紅燈一通 patch map 再閘一次，仍紅停下交人）→ sonnet 前後半並行散文；其餘零 LLM，完成自動 finish＋commit＋push。觸發：『{ticker} DD』『個股分析 {ticker}』『{ticker} 定見』『最終判斷 {ticker}』『該不該進場 {ticker}』『買不買 {ticker}』『conviction analysis {ticker}』『{ticker} dca』『{ticker} 全套』『{ticker} 走完整流程』『ddreport {ticker}』『/ddreport {ticker}』。裸 ticker 與『這檔如何／值不值得研究／先篩一下 {ticker}／{ticker} 快篩』仍走 stock-screen-v1。"
 ---
 
-# ddreport v4.1（v19 判斷一回合）
+# ddreport v5.0（v20 管線，dd2）
 
 ```bash
-python3 scripts/ddreport.py run {T}                            # 預設＝完整版（跑到 prose）
-python3 scripts/ddreport.py run {T} --until brief              # 只到快速版就停
-python3 scripts/ddreport.py run {T} --judgment-model opus      # 換判斷模型
+python3 scripts/dd2/run.py {T}                              # 預設＝全流程到 finish（commit＋push）
+python3 scripts/dd2/run.py {T} --archetype "循環/商品"       # 前份無 archetype 或要換尺時指定
+python3 scripts/dd2/run.py {T} --until gated                 # 只到閘就停
+python3 scripts/dd2/run.py {T} --dry-run                     # 產物留 run 目錄，不寫 docs/、不 commit
+python3 scripts/dd2/run.py {T} --resume [--redo judged,gated,prose] [--reuse-judgment] [--reuse-prose]
+python3 scripts/ddreport.py run {T}                          # 舊鏈（v17／v19），並行期一週內可叫
 ```
 
-一條指令跑完：plan → Stage 0（sonnet 收證據）→ 0e 摘要 →**事實表**（`dd_facts.py extract` 零 LLM 抽 ＋ sonnet 補 `needs_sonnet` 的題，寫 `facts.json`）→ 判斷（Fable，五出手點、**一回合只 Write `judgment.json`**）→ Stage 1G 跨模型閘（opus，只擋判斷級 🔴）→ 快速版（零 LLM）→ 散文完整版（sonnet）→ finish（`update_dd_index.py` 同步、commit、push main）。互動 session 只下這一行，再讀回報。
+一條指令跑完：plan（零 LLM，Koyfin 磁碟快路徑）→ stage0（sonnet，只查證據庫過期的軸，每軸一通、12 並行、不重試）→ facts（零 LLM 事實表，含程式算的週線均線六態 `f_ma_state`）→ judged（Fable 單輪無工具，串流接回覆；形狀錯 normalize 一次即停）→ gated（opus 單輪；🔴 → 一通 patch map → 再閘；仍 🔴 停下交指揮者）→ brief（零 LLM）→ prose（sonnet 前後半兩通並行）→ finish（沿用 `ddreport.py finish`：update_dd_index 同步、archive、commit、push）。互動 session 只下這一行，再讀回報。
 
-**v19 判斷契約（2026-09-11 WP-H2-1）**：判斷者只在五個點出手——①論點與唯一致命數字 ②護城河方向與再投資報酬 ③情境樹假設 ④反證裁定 ⑤決策輸入與行動條件；其餘（評分燈號、白話段、`scenario.json`、同業對照表數字、`decision_inputs` 十三個機械欄）由 `dd_project.py` 一處投影。事實只收一次寫進 `facts.json`，判斷只引 fact id。`judge check` 由 orchestrator 代跑；形狀錯由 `dd_project.py normalize` 修（只修路徑／欄名映射／單物件包陣列，**不補任何判斷值**），修不掉 → 一輪 patch map（上限 1）→ 仍 FAIL 就**停下印「交指揮者」、不發布**。擋門三項（事實檔缺或不合格、`scenario_meta` 缺或 J2 沒真的算、`fact_refs` 斷鏈）一律 FAIL。
+**判斷契約＝v19 judge-owned 欄**（`scripts/dd_schema/judgment.schema.json` 的 `v19_contract`）；規則卡在 `scripts/dd2/cards/`（來源 `references/`，`cards.py check` 驗來源戳）。**程式擁有的欄**：`decision_inputs.ma`（週線六態）、`price_at_dd`、以及因 ma 變動導致的裁決／角色漂移歸因，判斷者填什麼都會被覆寫。**判斷通維持預設思考**（2026-09-17 MU A/B：`--judge-effort medium` 便宜 $0.33 但自觸發硬否決、閘多一紅）。
 
-**`--full` 已是 no-op**：預設終點就是完整版。快速版（`docs/dd/brief/`）**暫不退役**，仍照跑照產，等 H2 驗收通過由持有人拍板停產。
+**證據庫** `facts/{T}/`：按軸保存期限（財報數字到下一季、競爭客戶 90 天、法規地緣 180 天、資本市場 30 天、重大事件 14 天），重跑只查過期軸。
 
-**複審路由（WP-C，2026-09-10）**：判斷段開跑前若 `notes/site-internal/dd/_src/` 有同 ticker 的 prior 判斷存查，預設先問零 LLM 差異引擎 `dd_delta.py` 這輪跟 prior 比改了什麼，決定 Fable 是整份重寫（full）、只補被點名欄位（delta，輸入小很多）、還是完全不必進 Fable（<45 天且零實質變動，直接沿用 prior 判斷）。升級回全套的情形：prior 存查 >180 天或股價變動 >40%（`dd_delta.py` 自算）、evidence.events 出現併購／SEC 調查重編財報／FDA 裁定類新事件、delta 判斷寫出的裁決相對 prior 翻面（自動作廢重跑，不是使用者要處理的錯誤）。閘不因複審模式簡化——delta／reuse 產出的判斷物照樣走 opus 跨模型冷讀。無 prior 存查時行為與過去完全相同（全套）。`--no-delta` 強制整份重寫，跳過路由判斷。
-
-**exit code**：0 成功；2＝遠端領先（push 被拒），開 worktree cherry-pick 後再推；其餘＝FAIL，看 stderr 與 `.dd_build/runs/{T}_{D}/manifest.json`。
+**exit code**：0 成功；2＝遠端領先（push 被拒），開 worktree cherry-pick 後再推；其餘＝FAIL，看 stderr 與 `.dd_build/runs/{T}_{D}/manifest.json`（`stages.*.note` 有 FAIL 原文，`gate_audit.md` 有閘清單）。
 
 ## 回報格式
 
-報告路徑、統一裁決（＋倉位角色）、三個數字（5Y EV%／IRR base%／Max DD%）、全帳三欄（input／output／total tokens，取 manifest 各段 usage 加總）、閘 🔴 n 🟡 n、fallback 段數。
+報告路徑、統一裁決（＋倉位角色）、三個數字（5Y EV%／IRR base%／Max DD%）、帳（spawns／cache_write／output／cache_read／cost）、閘 🔴 n 🟡 n、修補輪數。run.py 結尾已印這六項，照抄。
+
+## 停下交人的情況（不要自己再開 LLM 修）
+
+- 閘兩輪後仍 🔴：把 `gate_audit.md` 的紅燈列給持有人，由持有人決定重判（`--redo judged --resume`）或改規則。
+- 判斷形狀錯 normalize 後仍 FAIL：貼 `judge_check.txt` 的 ✗ 行。
+- 散文篇幅或白名單 FAIL：貼 `stages.prose.note`；重跑 `--redo prose --resume --reuse-judgment`（不重花判斷）。
 
 ## 不做的事
 
-- 不讀 bundle／報告／validator 全文，不手敲 `dd_*.py`。
-- 不重做分析、不改判斷（門檻與矩陣權威在 `.claude/skills/stock-analyst/references/`）。
+- 不讀 bundle／報告全文，不手敲 `dd_*.py`。
+- 不重做分析、不改判斷（門檻與矩陣權威在 `references/`；均線 ✅/🟡 合併等規則變更走 rule_ledger）。
 - 不在鏈外另跑 critic（閘已在鏈內且跨模型）。
 
-**回退**：`git checkout dd-v16.2-final -- .claude/skills scripts`
+## 並行期（2026-09-17 起一週）
+
+每跑一檔記三樣：帳單、閘紅黃燈數、裁決是否與前份同向（`scripts/dd2/README.md` §8 系列表格）。任一檔出現舊鏈不會有的失敗，回 `python3 scripts/ddreport.py run {T}` 並記錄。設計稿 `notes/site-internal/dd/_dd_v20_clean_design_20260916.md`。
+
+**回退**：`git checkout dd-v16.2-final -- .claude/skills scripts`（舊鏈整套），或只改本檔指令行回 `scripts/ddreport.py run`。

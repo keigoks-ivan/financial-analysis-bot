@@ -707,7 +707,13 @@ def _gate_once(ctx, st, idx):
              "判斷級 🔴 = {0}，🟡 = {1}".format(len(reds), len(yellows)), ""]
     for x in clean:
         lines.append("- {0} {1} `{2}` {3}".format(x["light"], x["item"], x["judgment_path"], x["reason"]))
-    (ctx.run_dir / "gate_audit.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    audit_path = ctx.run_dir / "gate_audit.md"
+    audit_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # 舊鏈 finish 的 _gate_audit_is_current 要這兩個欄（審核綁定輸入內容）
+    import hashlib as _hl
+    st["audit_sha256"] = _hl.sha256(audit_path.read_bytes()).hexdigest()
+    st["input_signature"] = ddreport._gate_input_signature(ctx.run_dir)
+    ctx.save()
     return True, clean, reds, yellows
 
 

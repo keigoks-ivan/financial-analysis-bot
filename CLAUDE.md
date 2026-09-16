@@ -9,7 +9,8 @@
 | **Orchestrator（主線程大腦）** | **opus**（路由判斷、並行 session git 風險判讀、A/B 與衝突裁定；不因「只是跑 pipeline」降級） |
 | **DD 深度報告 writer（stock-analyst / ddreport）、多檔並行生產批** | **sonnet**（2026-08-08 起全面採用、無升 opus 例外，見下） |
 | **DD 寫稿後 critic（QC-41 / QC-48 / QC-50 / row 8b）** | **opus**＋強化職責書（見下） |
-| **v17 DD（現行）** | Stage 0／0e **sonnet**／判斷 **Fable**／閘 **opus**／快速版零 LLM／散文（`--full`）**sonnet**；orchestrator 只跑一條指令（**2026-09-06 持有人拍板維持**：opus 判斷 A/B（FIX 同證據包）思考 89K 對 Fable 22K、31 分對 13 分、$5.5 對 $5.6，還寫壞 JSON——判斷留 Fable、其餘便宜模型；指揮 session 用 opus，勿用 Fable，DD 批次用 `ddreport.py batch` 跑完只讀摘要） |
+| **v20 DD（2026-09-17 起預設，並行期一週）** | 入口 `scripts/dd2/run.py`（skill `ddreport` v5.0）：採證 **sonnet** 每軸一通／判斷 **Fable** 單輪預設思考／閘 **opus** 單輪＋一通 patch map／散文 **sonnet** 前後半並行；週線均線六態與程式欄漂移歸因由程式算；舊鏈 `ddreport.py run` 保留一週，任一檔出現舊鏈不會有的失敗即回退並記錄 |
+| **v17 DD（舊鏈，並行期保留）** | Stage 0／0e **sonnet**／判斷 **Fable**／閘 **opus**／快速版零 LLM／散文（`--full`）**sonnet**；orchestrator 只跑一條指令（**2026-09-06 持有人拍板維持**：opus 判斷 A/B（FIX 同證據包）思考 89K 對 Fable 22K、31 分對 13 分、$5.5 對 $5.6，還寫壞 JSON——判斷留 Fable、其餘便宜模型；指揮 session 用 opus，勿用 Fable，DD 批次用 `ddreport.py batch` 跑完只讀摘要） |
 | 產業 ID / 供應鏈 / macro 新報告寫稿（重研究、判斷密集） | opus（**維持不動**，DD 的證據不外推到此列） |
 | ID / macro / synthesis 的 cold-review critic（industry-thesis-critic、id-review） | sonnet（該列 writer 仍是 opus，故 critic 維持 sonnet） |
 | 報告可讀性打磨 / 中文改寫潤色（如 macro 打磨） | sonnet |

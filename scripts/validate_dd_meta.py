@@ -40,6 +40,9 @@ IN_SCOPE_VERSIONS = ("v12", "v13", "v14", "v15")
 
 # Required fields with their expected Python types (after json.loads).
 # Keys present here MUST appear in every v12 dd-meta block.
+# 可缺席的必填欄（資料源本身不可用時；值仍不得為 null，要缺就整欄不寫）
+OMITTABLE_FIELDS = {"pct_5y"}
+
 REQUIRED_FIELDS = {
     "ticker": str,
     "schema": str,
@@ -254,8 +257,13 @@ def validate_meta(meta: dict):
                 )
 
     # Required fields: presence + type
+    # 2026-09-17：pct_5y 允許缺席——ADR（如 TSM）的 yfinance 年度 P/E 序列幣別／股數口徑錯亂，
+    # 判斷者正確地不填分位；下游（build_quality_entry／build_dd_screener）對缺值已是 None-safe（品質分取中性 0.5）。
+    # 其餘欄位維持必填。
     for field, expected_type in REQUIRED_FIELDS.items():
         if field not in meta:
+            if field in OMITTABLE_FIELDS:
+                continue
             errs.append(f"missing required field: {field}")
             continue
         v = meta[field]

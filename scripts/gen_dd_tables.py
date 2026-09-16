@@ -1615,10 +1615,9 @@ def render_v19_appC_html(j: dict) -> str | None:
     note = ""
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import dd_prior  # noqa: E402 — 只讀既有 DRIFT_WATCH 清單，不改該檔
-        note = '<p class="mach">對帳欄位清單（DRIFT_WATCH，共 {0} 欄）：{1}</p>'.format(
-            len(dd_prior.DRIFT_WATCH), esc("、".join(dd_prior.DRIFT_WATCH))
-        )
+        # 2026-09-17：原本在此渲染「對帳欄位清單（DRIFT_WATCH…）」的 dd-meta 欄名給讀者，
+        # 命中 QC-40 機器語言閘（runway_post_y5／archetype 等）；欄名對讀者無意義，改不渲染。
+        note = ""
     except Exception:
         pass
     return (

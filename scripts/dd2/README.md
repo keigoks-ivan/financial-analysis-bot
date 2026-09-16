@@ -229,3 +229,13 @@ MU 到閘停下合計約 $17.5（含被切掉的那次 $6.09）；正式一次�
 
 結論：預設思考多花 $0.33、1.5 分鐘，判斷內部一致性明顯較好（不會自己觸發硬否決）。**判斷通維持預設思考，不帶 --effort**；`--judge-effort` 留作實驗旗標。64K 單則截斷已由 `oneshot_stream` 接回，不需靠壓思考避免。
 三檔驗收現況：TXN／TSM 全過閘；MU 閘剩 2 紅停下（判斷級，交人）。
+
+### 8h｜2026-09-17：切換為預設（skill ddreport v5.0，並行一週）＋ finish 接線
+
+用 TSM_20260916（閘 0 紅）驗 `ddreport.py finish --dry-run`，打通四處舊鏈接線（皆 v19 09-11 未完成處，不影響舊形狀判斷物）：
+1. `validate_dd_meta.py`：`pct_5y` 可缺席（ADR 的 yfinance 年度 P/E 序列口徑錯亂，判斷者正確留白；下游 None-safe）。
+2. `ddreport._final_v19_findings`：`manifest.pipeline == "dd2-v20"` 不跑未完成的 `_v19_structure_findings`（dd2 有自己的 `_gates_v20`）。
+3. `gen_dd_tables.render_v19_appC_html`：拿掉渲染 dd-meta 欄名的 `.mach` 行（QC-40）。
+4. `ddreport._finish_consistency_sources`：v19 判斷物讀 `dd_project.view_for` 投影視圖，三欄缺鍵視同設計性 null。
+dd2 側：閘記 `audit_sha256`／`input_signature`（供 `_gate_audit_is_current`）。
+結果：`[finish-check] 三方數字一致`、`verify_dd_math.py PASS`、檔案集 9 項列出。真正的 commit＋push 尚未對任何 v20 產物執行。
