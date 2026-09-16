@@ -544,6 +544,39 @@ def load_view(judgment_path, facts_path=None, scenario_meta=None) -> tuple:
 # 面，散文品質（外資報告風格、條列白話）是 H2 散文 prompt 的工作。
 # ---------------------------------------------------------------------------
 
+def judge_schema(schema):
+    """2026-09-11：v19 原樣投影的寬物件補上既有 schema，避免省略真正會驗的型別。"""
+    out = copy.deepcopy(schema["v19_contract"])
+    legacy = schema["properties"]
+    def fill(node, source):
+        if source.get("properties"):
+            if not node.get("properties"):
+                node["properties"] = copy.deepcopy(source["properties"])
+                if "required" in source:
+                    node["required"] = copy.deepcopy(source["required"])
+            else:
+                for key, child in node["properties"].items():
+                    if key in source["properties"]:
+                        fill(child, source["properties"][key])
+        if source.get("items") and node.get("items") is not None:
+            fill(node["items"], source["items"])
+    for key in ("thesis", "catalysts", "appendix_a", "eps_meta"):
+        if key in out["properties"] and key in legacy:
+            fill(out["properties"][key], legacy[key])
+    ce = out["properties"]["counter_evidence"]["properties"]
+    for key in ("contradictions", "triggers", "kill_metrics", "evidence_dismissed"):
+        if key in legacy:
+            fill(ce[key], legacy[key])
+    for answer in out["properties"]["answers"]["properties"].values():
+        for key, node in answer["properties"]["verdict_values"]["properties"].items():
+            if key in legacy:
+                fill(node, legacy[key])
+    quality = out["properties"]["answers"]["properties"]["q4_capital"]["properties"]["verdict_values"]["properties"]["quality"]
+    for key in ("financial_note", "latest_quarter_note"):
+        quality.setdefault("properties", {})[key] = {"type": "string", "minLength": 1}
+    return out
+
+
 def _esc(v) -> str:
     return _html.escape("" if v is None else str(v))
 
@@ -588,6 +621,89 @@ def _answer_block(raw: dict, qkey: str) -> str:
         parts.append("<p class=\"note\">引用事實：{0}</p>".format(
             _esc("、".join(str(r) for r in refs))))
     return "\n".join(parts) if parts else "<p>—</p>"
+
+
+# 2026-09-11：直接呈現研究原文，避免第三個模型重寫時漏掉後果、裁定與行動。
+_READER_LABELS = {
+    "headline": "核心判斷", "holding_period": "持有期間", "horizon": "期間", "driver": "驅動因素",
+    "signal_vs_noise": "判讀依據", "text": "內容", "threshold": "失效門檻", "2y": "兩年檢查",
+    "5y": "五年檢查", "10y": "十年檢查", "source": "來源", "drift_rule": "偏離處理",
+    "description": "關鍵事件", "why_fatal": "影響原因", "if_happens": "發生後果", "how_monitor": "如何追蹤",
+    "probability": "機率判斷", "revenue_quality": "收入品質", "unit_econ_note": "單位經濟",
+    "sd_verdict_source": "供需判斷", "bargaining": "議價關係", "up": "上游", "down": "下游",
+    "geo": "地區曝險", "profit_pool_dir": "利潤流向", "seven_questions": "成長依據",
+    "driver_mix": "成長來源", "endo_ceiling_basis": "內生成長上限", "runway_years": "成長期間",
+    "decay_signals": "衰退訊號", "assumption": "受影響假設", "evidence": "證據", "consequence": "後果",
+    "ruling": "採納判斷", "watch": "追蹤項目", "not_applicable_reason": "不適用原因",
+    "side_a": "原判斷或正方", "side_b": "新判斷或反方", "cause": "變動原因", "if_then": "行動條件",
+    "settle_metric": "驗證指標", "exec_line": "執行方式", "rearm_trigger": "重新進場條件",
+    "holding_cap": "持倉上限", "reason": "理由", "ref": "證據定位", "h_ref": "對應假設",
+    "action": "處理方式", "clock": "風險時點", "financial_note": "財務判讀",
+    "latest_quarter_note": "最新一季判讀",
+}
+
+
+def _reader_fields(obj, keys=None):
+    if not isinstance(obj, dict):
+        if isinstance(obj, list):
+            return "<ul>" + "".join("<li>" + (_reader_fields(x) if isinstance(x, dict) else _esc(x)) +
+                                     "</li>" for x in obj if x is not None) + "</ul>"
+        return _esc(obj)
+    parts = []
+    for key in keys or obj.keys():
+        value = obj.get(key)
+        if key not in _READER_LABELS or value in (None, "", [], {}):
+            continue
+        content = _reader_fields(value) if isinstance(value, (dict, list)) else _esc(value)
+        parts.append("<div><b>{0}</b>：{1}</div>".format(_esc(_READER_LABELS[key]), content))
+    return "\n".join(parts)
+
+
+def research_sections(raw, view):
+    """2026-09-11：正式零模型組頁；必要正文缺少時阻擋，不拿佔位骨架冒充研究。"""
+    answers = raw.get("answers") or {}
+    for key in ("q1_business", "q2_moat", "q3_growth", "q4_capital", "q5_valuation", "q6_how_wrong"):
+        answer = answers.get(key) or {}
+        if not all(isinstance(answer.get(k), str) and answer[k].strip() for k in ("verdict", "reasoning")):
+            raise ValueError("缺少可直接呈現的六問正文：" + key)
+    values = lambda key: (answers.get(key) or {}).get("verdict_values") or {}
+    q1, q3, q4 = values("q1_business"), values("q3_growth"), values("q4_capital")
+    quality = q4.get("quality") or {}
+    for key in ("financial_note", "latest_quarter_note"):
+        if not isinstance(quality.get(key), str) or not quality[key].strip():
+            raise ValueError("缺少必要正文：answers.q4_capital.verdict_values.quality." + key)
+    thesis = raw.get("thesis") or {}
+    ce = raw.get("counter_evidence") or {}
+    body = {"s1": "<p>" + _esc(raw.get("oneliner")) + "</p>" + _reader_fields(thesis, ["headline"]),
+            "s2": _reader_fields(thesis, ["holding_period"]),
+            "s3": _reader_fields(q1.get("industry") or {}, ["sd_verdict_source", "bargaining", "profit_pool_dir"]),
+            "s4": _answer_block(raw, "q1_business") + _reader_fields(q1, ["revenue_quality", "unit_econ_note"]),
+            "s5": _answer_block(raw, "q2_moat"),
+            "s6": _answer_block(raw, "q3_growth") + _reader_fields(q3.get("growth") or {},
+                ["driver_mix", "runway_years", "seven_questions", "endo_ceiling_basis", "decay_signals"]),
+            "s7": "<p>" + _esc(quality["financial_note"]) + "</p>",
+            "s8": "<p>" + _esc(quality["latest_quarter_note"]) + "</p>",
+            "s9": _answer_block(raw, "q4_capital"),
+            "s10": _answer_block(raw, "q5_valuation"),
+            "s11": "", "s12": _answer_block(raw, "q6_how_wrong"),
+            "decision": _reader_fields(ce.get("action_conditions") or {})}
+    for item in thesis.get("H") or []:
+        body["s2"] += "<h3>" + _esc(item.get("id")) + "</h3>" + _reader_fields(item)
+    for item in thesis.get("R") or []:
+        body["s12"] += "<h3>" + _esc(item.get("id")) + "</h3>" + _reader_fields(item)
+    body["s12"] += _reader_fields(thesis.get("single_thing") or {})
+    for item in ce.get("blind_spots") or []:
+        body["s12"] += "<h3>" + _esc(item.get("view")) + "</h3>" + _reader_fields(item)
+    for item in ce.get("contradictions") or []:
+        body["s11"] += "<h3>" + _esc(item.get("axis")) + "</h3>" + _reader_fields(item)
+    for item in ce.get("evidence_dismissed") or []:
+        body["s11"] += _reader_fields(item)
+    if not body["s11"]:
+        body["s11"] = "<p>本次未列出矛盾裁定或不採納證據。</p>"
+    dout = view.get("decision_out") or {}
+    body["decision"] = "<p><b>" + _esc(dout.get("verdict")) + "</b>｜" + _esc(dout.get("role")) + "</p>" + body["decision"]
+    return {sid: '<section id="{0}"><h2>{1}</h2>\n{2}\n</section>\n'.format(
+        sid, _esc(heading), body[sid]) for sid, heading in _STUB_SECTIONS}
 
 
 def prose_stub(raw: dict, view: dict) -> dict:
@@ -872,25 +988,8 @@ def _normalize_trigger_types(out, changes):
             changes.append(f"enum別名：counter_evidence.triggers[{i}].type {v!r} → {stripped!r}")
 
 
-_CATALYST_IMPACT_ENUM = ("高", "中", "低")
-
-
-def _normalize_catalyst_impact_and_probability(out, changes):
-    """2026-09-11：兩種純格式錯不再停下來等人。①catalysts[].impact 只准高／中／低，
-    判斷者若填了整段「發生了會怎樣」的文字，把文字原樣搬到 watch、impact 留空——
-    不猜等級。②thesis.single_thing.probability 是字串欄，數字就轉字串。"""
-    catalysts = out.get("catalysts")
-    if isinstance(catalysts, list):
-        for i, c in enumerate(catalysts):
-            if not isinstance(c, dict):
-                continue
-            v = c.get("impact")
-            if not isinstance(v, str) or v in _CATALYST_IMPACT_ENUM:
-                continue
-            watch = (c.get("watch") or "").rstrip("；")
-            c["watch"] = (watch + "；影響：" + v) if watch else ("影響：" + v)
-            c["impact"] = None
-            changes.append(f"格式：catalysts[{i}].impact 非高／中／低，文字搬至 watch、impact 留空")
+def _normalize_probability(out, changes):
+    """2026-09-11：數字機率只轉字串，不增補單位；未知影響評級留原值讓驗證報錯。"""
     st = ((out.get("thesis") or {}).get("single_thing")) if isinstance(out.get("thesis"), dict) else None
     if isinstance(st, dict) and isinstance(st.get("probability"), (int, float)) and not isinstance(st.get("probability"), bool):
         old = st["probability"]
@@ -918,44 +1017,17 @@ def normalize(raw: dict, judgment_path=None) -> tuple:
     # ⑥ §5.R 四檢查點鍵名
     _normalize_checkpoints(out, changes)
 
-    # ②＋④ 頂層四塊搬進 counter_evidence；兩邊都有時（v18 習慣殘留＋v19 正式
-    # 欄並存）先把頂層版本的數字鍵轉陣列，再回填正式版本缺的鍵（不覆寫既有
-    # 值），無可回填內容就單純丟棄頂層重複版本。
+    # 2026-09-11：兩處並存屬衝突，不能按陣列位置合併後吞掉額外反證。
     ce = out.setdefault("counter_evidence", {}) if any(
         k in out for k in _INTO_COUNTER_EVIDENCE) else out.get("counter_evidence")
     if isinstance(ce, dict):
         for k in _INTO_COUNTER_EVIDENCE:
             if k not in out:
                 continue
-            root_val = out.pop(k)
-            coerced = _coerce_numeric_dict(root_val)
-            if coerced is not None:
-                changes.append(f"數字鍵轉陣列：頂層 {k}（{len(coerced)} 項）")
-                root_val = coerced
-            if k not in ce:
-                ce[k] = root_val
-                changes.append(f"欄名映射：{k} → counter_evidence.{k}")
-                continue
-            existing = ce.get(k)
-            filled = 0
-            if isinstance(existing, list) and isinstance(root_val, list):
-                for i, item in enumerate(root_val):
-                    if i >= len(existing):
-                        break
-                    tgt = existing[i]
-                    if isinstance(tgt, dict) and isinstance(item, dict):
-                        for fk, fv in item.items():
-                            cur = tgt.get(fk)
-                            if (cur is None or cur == "") and fv not in (None, ""):
-                                tgt[fk] = fv
-                                filled += 1
-            if filled:
-                changes.append(
-                    f"去重回填：頂層重複 {k}（與 counter_evidence.{k} 同時存在）"
-                    f"回填 {filled} 個欄位後移除頂層版本"
-                )
-            else:
-                changes.append(f"移除頂層重複欄位：{k}（counter_evidence 已有版本，頂層版本無可回填內容）")
+            if k in ce:
+                raise ValueError("v19 欄位衝突：$.{0} 與 $.counter_evidence.{0} 同時存在".format(k))
+            ce[k] = out.pop(k)
+            changes.append("欄名映射：{0} → counter_evidence.{0}".format(k))
 
     # ③＋④ 單物件包陣列／數字鍵轉陣列（依 schema 宣告，不自己列清單）
     try:
@@ -968,7 +1040,7 @@ def normalize(raw: dict, judgment_path=None) -> tuple:
 
     # 2026-09-11：僅清除觸發器 type 的括號註解，不改事件分類。
     _normalize_trigger_types(out, changes)
-    _normalize_catalyst_impact_and_probability(out, changes)
+    _normalize_probability(out, changes)
     # 2026-09-11：分類由判斷者填合法 enum，格式整理不得猜分類或改成 other。
 
     # ① 路徑：相對 → 絕對（找不到檔就不動，讓 validate 照實報缺）

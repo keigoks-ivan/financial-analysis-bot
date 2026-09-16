@@ -126,6 +126,8 @@ def test_judge_stage_stops_on_over_budget_unless_accepted(monkeypatch):
         lambda **kw: {"ok": True, "over_budget": True, "num_turns": 1, "cache_read": 999999},
     )
     monkeypatch.setattr(ddreport, "_judge_check", lambda t, d: (True, "[PASS] 假造：judge check ok"))
+    # 2026-09-11：本例只測超額處理，假執行器須明確交件，不能依靠舊缺檔回退。
+    monkeypatch.setattr(ddreport, "_short_outputs_ready", lambda *a: True)
 
     try:
         manifest = {"ticker": ticker, "date": date, "stages": {}}
@@ -2148,9 +2150,9 @@ def test_judge_bundle_v19_keeps_original_evidence_and_uses_v19_cheatsheet(tmp_pa
     t19 = out19.read_text(encoding="utf-8")
     t18 = out18.read_text(encoding="utf-8")
     assert "v19_contract 區塊" in t19
-    assert "facts.json 事實表全文" in t19
+    assert "事實索引全文" in t19
     assert "## ③ Evidence 緊湊版" not in t19 and "## ⑤ Digest" not in t19
-    assert "## ③b 前三季逐字稿摘要（壓縮全表" in t19  # 裁定 1：摘要以壓縮全表回到包裡
+    assert "## ③b 前三季摘要全文" in t19  # 裁定 1：摘要以壓縮全表回到包裡
     assert "counter_evidence.contradictions[]" in t19  # evidence_refs 用法改 v19 路徑
     assert "由 scripts/dd_rules.py build-v19 產生，勿手改" in t19  # 裁定 2：規則是產物
     assert "## ③ Evidence 緊湊版" in t18  # 舊包原樣可用

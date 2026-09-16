@@ -137,7 +137,7 @@ def _schema_cheatsheet(contract: str = "v18") -> str:
     """
     schema = _load_json(SCHEMA_PATH)
     if contract == "v19":
-        schema = schema.get("v19_contract") or {}
+        schema = dd_project.judge_schema(schema)
         lines = ["## ② Schema 速查（judge-owned 形狀；機械生成自 judgment.schema.json "
                  "的 v19_contract 區塊）", ""]
     else:
@@ -341,6 +341,83 @@ def _find_transcript_path(ticker: str, filename: str):
 def _source_evidence_section(evidence: dict) -> str:
     """2026-09-11：原始證據完整保留，取消事實表漏抽就看不到資料的單一路徑。"""
     return "## ③c 原始證據（evidence.json 全文；事實表未收錄時可直接引用）\n\n" + _json_block(evidence)
+
+
+def _frozen_sources(run_dir, evidence, digest_path, transcript, facts_path=None):
+    """2026-09-11：判斷與審核共用來源快照；外部逐字稿事後變動不改本輪材料。"""
+    run_dir = Path(run_dir)
+    path = run_dir / "source_snapshot.json"
+    current = {"evidence": evidence,
+               "digest": _load_json(digest_path) if digest_path and Path(digest_path).exists() else None,
+               "facts": _load_json(facts_path) if facts_path and Path(facts_path).exists() else None}
+    if path.exists():
+        saved = _load_json(path)
+        for key, value in current.items():
+            if saved.get(key) != value:
+                raise ValueError("來源快照與目前 {0} 不符；請以新 run 重建研究與審核".format(key))
+        if transcript and saved.get("transcript_explicit") != str(Path(transcript).resolve()):
+            raise ValueError("逐字稿指定路徑與來源快照不符")
+        return saved
+    current["transcript"] = _transcript_section(evidence, transcript)
+    current["transcript_explicit"] = str(Path(transcript).resolve()) if transcript else None
+    path.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
+    return current
+
+
+def source_locator_errors(raw, run_dir):
+    """2026-09-11：只驗明確宣告的來源定位，不用數字正則猜歷史事實或情境假設。"""
+    errors = []
+    snapshot_path = Path(run_dir) / "source_snapshot.json"
+    snapshot = _load_json(snapshot_path) if snapshot_path.exists() else {}
+    documents = {"evidence.json": snapshot.get("evidence"), "digest.json": snapshot.get("digest"),
+                 "facts.json": snapshot.get("facts"), "source_snapshot.json": snapshot}
+    def walk(value):
+        if isinstance(value, dict):
+            for v in value.values():
+                walk(v)
+        elif isinstance(value, list):
+            for v in value:
+                walk(v)
+        elif isinstance(value, str):
+            for match in re.finditer(r"(evidence\.json|digest\.json|facts\.json|source_snapshot\.json)#(/[^\s，。；、）)]+)", value):
+                filename, pointer = match.groups()
+                node = documents.get(filename)
+                try:
+                    for key in pointer.split("/")[1:]:
+                        key = key.replace("~1", "/").replace("~0", "~")
+                        node = node[int(key)] if isinstance(node, list) else node[key]
+                except (ValueError, TypeError, KeyError, IndexError):
+                    errors.append("來源定位不存在：" + match.group(0))
+    walk(raw)
+    return errors
+
+
+def _digest_locator_index(digest):
+    """2026-09-11：保留既有引用代號，只列定位，不重述摘要全文。"""
+    digest = digest or {}
+    codes = {str(f): "F" + str(i) for i, f in enumerate(digest.get("source_files") or [], 1)}
+    lines = ["來源定位："] + ["- {0} = {1}".format(c, Path(f).name) for f, c in codes.items()]
+    counts = {}
+    for i, item in enumerate(digest.get("items") or []):
+        if not isinstance(item, dict):
+            continue
+        filename = str(item.get("file") or "")
+        code = codes.get(filename, Path(filename).name if filename else "—")
+        counts[code] = counts.get(code, 0) + 1
+        cite = item.get("id") or "{0}#{1}".format(code, counts[code])
+        lines.append("- `{0}` → digest.json#/items/{1}".format(cite, i))
+    return "\n".join(lines)
+
+
+def _frozen_source_parts(saved):
+    """2026-09-11：保留所有摘要欄位與來源定位，兩個角色使用逐字相同的來源區塊。"""
+    return [_source_evidence_section(saved["evidence"]),
+            "## ③b 前三季摘要全文（來源：摘要）\n\n" + _json_block(saved["digest"]) + "\n" + _digest_locator_index(saved["digest"]),
+            "## ③d 事實索引全文\n\n" + _json_block(saved["facts"]),
+            saved["transcript"],
+            "來源定位使用 evidence.json#/<JSON Pointer>、digest.json#/<JSON Pointer>；"
+            "逐字稿使用 source_snapshot.json#/transcript，另附原句與段落。歷史事實標單位與期間，衍生值標公式，未來數字標假設。"
+            "關鍵數字無可核對原文，審核不得視為完整。"]
 
 
 def _transcript_section(evidence: dict, explicit_path) -> str:
@@ -1142,13 +1219,17 @@ def cmd_judge(args) -> int:
             if not ok_rules:
                 print("✗ " + msg_rules, file=sys.stderr)
                 return 1
-        parts = [
+        try:
+            source_parts = _frozen_source_parts(_frozen_sources(
+                run_dir, evidence, digest_path, args.transcript, facts_path)) if args.run_dir else [
+                    _source_evidence_section(evidence), _digest_lines_section(digest_path),
+                    _facts_section(facts_path), _transcript_section(evidence, args.transcript)]
+        except (ValueError, OSError) as exc:
+            print("✗ " + str(exc), file=sys.stderr)
+            return 1
+        parts = source_parts + [
             _task_header_v19(evidence.get("ticker"), evidence.get("date")),
             _schema_cheatsheet("v19"),
-            _facts_section(facts_path),
-            _source_evidence_section(evidence),
-            _digest_lines_section(digest_path),
-            _transcript_section(evidence, args.transcript),
             _judgment_rules_section(rules_path, "v19"),
             _archetype_refs_section(evidence),
         ]
@@ -1238,9 +1319,16 @@ def cmd_gate(args) -> int:
     # 2026-09-11：v19 審核與判斷讀同份原始證據，取消另一套欄位與方向篩選。
     parts = [_task_header(evidence.get("ticker"), evidence.get("date"), "gate")]
     if dd_project.is_v19(judgment_raw_obj):
-        parts += [_source_evidence_section(evidence),
-                  _gate_scenario_meta_section(judgment_path),
-                  _digest_lines_section(digest_path)]
+        try:
+            source_parts = _frozen_source_parts(_frozen_sources(
+                run_dir, evidence, digest_path, args.transcript,
+                facts_file or dd_project.resolve_facts_path(judgment_raw_obj, judgment_path))) if args.run_dir else [
+                    _source_evidence_section(evidence), _digest_lines_section(digest_path),
+                    _transcript_section(evidence, args.transcript)]
+        except (ValueError, OSError) as exc:
+            print("✗ " + str(exc), file=sys.stderr)
+            return 1
+        parts = source_parts + parts + [_gate_scenario_meta_section(judgment_path)]
     else:
         parts.append(_gate_view_section(evidence, judgment_obj, judgment_path, digest_path))
     if facts_obj is not None:

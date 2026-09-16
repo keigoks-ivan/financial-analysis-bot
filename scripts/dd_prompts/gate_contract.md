@@ -65,9 +65,10 @@ Stage 0 evidence 收集的職責，不是閘的職責）。
   ＝ sanity 失敗，須在 `reasoning` 處理，沒處理＝🔴）。
 - (ii) gate_view (e) `scenario_meta.scenario_tree.eps.{bull,base,bear}` 是否有實質價差（Bull EPS
   幾乎等於 Base、幾乎全靠 `pe.bull` 撐估值＝退化，🔴）。
-- (iii) `decision_inputs.irr_base_pct`／`ev5y_pct`／`asym_ratio` 與 gate_view (e) `scenario_meta` 對應
-  欄位是否一致（不吻合＝🔴；`decision_inputs` 三欄若透過 `evidence_dismissed` 明確聲明「腳本回填、
-  不手填以免編造」且 gate_view (e) 確有對應腳本值，屬合規處理方式，不算 🔴）。
+- (iii) 2026-09-11：v19 的 IRR／EV／asym 由 scenario_meta 經 dd_metric_resolver 提供，
+  原始 decision_inputs 三欄缺省或 null 合法，不要求在 evidence_dismissed 聲明程式回填。
+  moat.combined／score 缺省時由 dd_project 計算；不能為此要求作者手填。
+  舊格式若手填結果，仍核對 scenario_meta；ROIIC 缺輸入、口徑或算式仍為實質問題。
 
 **⑦ 數字新鮮度**：判斷物引用的每一個營運指標，是否都不比 gate_view (d)
 `numbers.latest_quarter_kpis[].as_of` 對應項目舊？有一個更舊即 🔴。`decision_inputs.consensus_rev_3m_pct`

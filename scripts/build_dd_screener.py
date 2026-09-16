@@ -90,6 +90,7 @@ from update_dd_index import (  # noqa: E402
 from load_eps_estimates_xlsx import (  # noqa: E402
     ExcelSnapshot,
     SKIP_TICKERS,
+    apply_adr_ratio,
     find_latest_excel,
     load_latest_excel,
 )
@@ -996,6 +997,10 @@ def _fetch_live_fy_eps(
         "eps_fy_curr_usd_orig": None,  # original Excel USD value (audit)
         "eps_fy_next_usd_orig": None,
         "eps_fy3_usd_orig": None,
+        # 2026-09-12: set only when excel_record went through apply_adr_ratio()
+        # (data/adr_ratios.json 表列 ticker，如 TSM) — None for the vast majority
+        # of tickers, matching every other field's "not applicable" default here.
+        "eps_basis": None,
     }
     if not (p_at_dd and fpe_fy2 and p_at_dd > 0 and fpe_fy2 > 0):
         return out
@@ -1012,6 +1017,7 @@ def _fetch_live_fy_eps(
         out["growth_fy1_fy2_pct"] = excel_record.get("growth_fy1_fy2_pct")
         out["growth_fy2_fy3_pct"] = excel_record.get("growth_fy2_fy3_pct")
         out["cagr_fy1_fy3_pct"] = excel_record.get("cagr_fy1_fy3_pct")
+        out["eps_basis"] = excel_record.get("eps_basis")
         # Fallback: compute growth/CAGR from FY1/FY2/FY3 when the Excel drops the
         # pre-computed columns (2026-06-23 Koyfin export left cols 5/6/7 blank for
         # the whole universe). Without this the xlsx_forward eps2y fallback and
@@ -1815,7 +1821,7 @@ def enrich_ticker(
     fpe = entry.get("fpe_fy2")
     p_dd = entry.get("price_at_dd")
     p_now = ma.get("price") if ma else None
-    excel_record = excel_snapshot.get(t) if excel_snapshot else None
+    excel_record = apply_adr_ratio(t, excel_snapshot.get(t)) if excel_snapshot else None
     live_fy_result: dict | None = None
     if fpe and p_dd and fpe > 0 and p_dd > 0:
         live_fy_result = _fetch_live_fy_eps(
@@ -1836,6 +1842,7 @@ def enrich_ticker(
             "growth_fy2_fy3_pct": excel_record.get("growth_fy2_fy3_pct"),
             "cagr_fy1_fy3_pct": excel_record.get("cagr_fy1_fy3_pct"),
             "eps_source": "xlsx",
+            "eps_basis": excel_record.get("eps_basis"),
         }
 
     pe_drift = _compute_live_pe_drift(entry, ma, live_fy_result=live_fy_result)
@@ -1924,6 +1931,8 @@ def enrich_ticker(
         "eps_fy3_yoy_pct": _lfy.get("growth_fy2_fy3_pct"),
         "eps_fy1_fy3_cagr_pct": _lfy.get("cagr_fy1_fy3_pct"),
         "eps_source": _lfy.get("eps_source", "yfinance"),
+        # 2026-09-12: 換算註記（None 除非 ticker 在 data/adr_ratios.json 表列，如 TSM）
+        "eps_basis": _lfy.get("eps_basis"),
         # v1.8: month-over-month revision per FY (vs prev Excel snapshot)
         **fy_revision,  # eps_fy_curr_revision_pct, eps_fy_next_revision_pct, eps_revision_baseline_date
         # v1.8.5: foreign-listing native-currency display (TWD/JPY/etc.)

@@ -1,6 +1,6 @@
-## 寫（短迴圈：Write 一次、Bash 一次自檢，就停）
+## 寫（Write 一次，由程式檢查）
 
-你這一輪只有 **Write** 與 **Bash** 兩個工具：沒有 Read、沒有搜尋。規則檔或 bundle 內凡提到「跑 judge check」「三支驗證」「FAIL 只准改欄位重跑」的字句，在本模式下都由 orchestrator 代跑——你只負責把判斷物的**內容**一次寫滿、寫對，Bash 只給你做語法自檢（見下方步驟②），不是給你跑別的東西。
+你這一輪只有 **Write**，沒有 Read、Bash 或搜尋。規則檔提到的檢查都由程式執行；你只交完整研究內容。
 
 1. 一次 `Write` → `{judgment_path}`（形狀見 bundle 內 v19 schema 速查；`meta.contract` 必須是 `"v19"`）。
 
@@ -28,15 +28,14 @@
 
    `dd_scenario.py` 會擋：`eps_path` 長度 ≠ 5、終端 EPS 非 Bear＜Base＜Bull、Bear 終端 EPS＞`consensus.fy2`、三機率加總 ≠ 100、`p_bear`＜20、`endo_ceiling_exceeded=true` 且 `p_bear`＜30、`p_base`＞50。另有機械閘：Bull 前兩年 EPS 不得與 Base 相同（情境退化）、`|max_dd.lo|` 不得小於任一情境終點跌幅。**機率與路徑是你的判斷，算術（IRR／三分量／AR／10Y）全由腳本算，不要自己填結果欄。**
 
-2. 一次 `Bash`，**只准跑這一條指令**，不准跑其他任何指令、不准 `cat` 自己剛寫的檔、不准跑驗證腳本：
+2. 寫完即停止。本輪只有 Write；語法與內容檢查由程式執行，不再 Bash 自檢或重寫。
 
-```
-{check_cmd}
-```
-
-   沒有任何輸出＝過。若跳出 `JSONDecodeError`，就把整檔重新 `Write` 一次（不 `Edit`、不分次寫），再跑**同一條**上面的 Bash 一次確認過了。
-
-3. 回覆一行 `DONE`，不要摘要、不要最終回報。
+<!-- 2026-09-11：原文直接供完整頁面呈現，取消另一輪散文重述。 -->
+六問的 verdict／reasoning 直接寫給讀者：結論先行，解釋原因、限制與反方依據。
+在 answers.q4_capital.verdict_values.quality 內另填 financial_note 與 latest_quarter_note：
+前者說明現金流、獲利品質與風險；後者解釋最新一季相對前期／共識的變化及其含義。
+兩欄沿用 quality 物件，不另交散文檔。反證記錄保留證據、後果、採納理由與行動條件。
+不以固定字數或一句話限制分析深度。歷史數字附期間、單位及原文定位；推算附輸入與公式；預測明標假設。
 
 - 檔案是可直接 `json.loads` 的嚴格 JSON：雙引號、無註解、無尾逗號、無省略號、不得用「同上」代替內容。
 - 一律寫**緊湊 JSON**（不縮排、不換行，逗號與冒號後不留空白，等同 `json.dumps(obj, separators=(",", ":"))`）——省輸出 token，鍵名與 schema 不變；orchestrator 落檔後會自動轉回縮排格式。

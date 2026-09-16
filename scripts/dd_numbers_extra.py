@@ -45,7 +45,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 warnings.filterwarnings("ignore")
 
-from load_eps_estimates_xlsx import DEFAULT_DATA_DIR, FILENAME_RE, load_excel  # noqa: E402
+from load_eps_estimates_xlsx import (  # noqa: E402
+    DEFAULT_DATA_DIR, FILENAME_RE, apply_adr_ratio, load_excel,
+)
 
 CACHE_DIR = ROOT / ".dd_build" / "_cache"
 SEC_HEADERS = {"User-Agent": "financial-analysis-bot keigoks@gmail.com"}
@@ -202,11 +204,14 @@ def compute_valuation_history(ticker, date_dt):
                 key=lambda p: FILENAME_RE.search(p.name).group(1),
             )
             fwd_points = []
+            fwd_eps_basis = None
             for p in files:
                 snap = load_excel(p)
-                rec = snap.get(ticker)
+                rec = apply_adr_ratio(ticker, snap.get(ticker))
                 if not rec or rec.get("fy1") in (None, 0):
                     continue
+                if rec.get("eps_basis"):
+                    fwd_eps_basis = rec["eps_basis"]
                 snap_dt = datetime.strptime(FILENAME_RE.search(p.name).group(1), "%Y%m%d")
                 pos = close.index.get_indexer([pd.Timestamp(snap_dt)], method="nearest")[0]
                 price = float(close.iloc[pos])
@@ -228,6 +233,8 @@ def compute_valuation_history(ticker, date_dt):
                         "非 5 年歷史，不得引用為『5年分位』"
                     ),
                 }
+                if fwd_eps_basis:
+                    out["fwd_recent_window"]["eps_basis"] = fwd_eps_basis
             else:
                 out["fwd_recent_window"] = {"note": f"{ticker} 不在任一 data/eps-estimates/ 快照，或 FY1 EPS 缺失"}
         except Exception as e:
@@ -444,7 +451,7 @@ def compute_consensus_revision(ticker, date_dt):
         result["stale"] = stale
 
         latest_snap = load_excel(latest_path)
-        latest_rec = latest_snap.get(ticker)
+        latest_rec = apply_adr_ratio(ticker, latest_snap.get(ticker))
         if latest_rec is None:
             result["note"] = f"{ticker} 不在最新快照 {latest_path.name}"
             return result
@@ -452,13 +459,15 @@ def compute_consensus_revision(ticker, date_dt):
             "file": latest_path.name, "date": latest_snap.snapshot_date,
             "fy1": latest_rec.get("fy1"), "fy2": latest_rec.get("fy2"), "fy3": latest_rec.get("fy3"),
         }
+        if latest_rec.get("eps_basis"):
+            result["eps_basis"] = latest_rec["eps_basis"]
         if stale:
             result["note"] = f"最新快照 {latest_snap.snapshot_date} 距報告日 {date_dt.date()} 已超過21天，FY 估值仍是財報前/舊季快照"
 
         if len(valid) >= 2:
             prev_path, prev_d = valid[-2]
             prev_snap = load_excel(prev_path)
-            prev_rec = prev_snap.get(ticker)
+            prev_rec = apply_adr_ratio(ticker, prev_snap.get(ticker))
             if prev_rec is not None:
                 result["previous_snapshot"] = {
                     "file": prev_path.name, "date": prev_snap.snapshot_date,
@@ -485,7 +494,7 @@ def compute_consensus_revision(ticker, date_dt):
             best_dt = datetime.strptime(best_d, "%Y%m%d")
             if abs((best_dt - target).days) <= 35:
                 snap90 = load_excel(best_path)
-                rec90 = snap90.get(ticker)
+                rec90 = apply_adr_ratio(ticker, snap90.get(ticker))
                 if rec90 is not None:
                     result["snapshot_90d_prior"] = {
                         "file": best_path.name, "date": snap90.snapshot_date,

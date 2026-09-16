@@ -61,6 +61,51 @@ DEFAULT_DATA_DIR = ROOT / "data" / "eps-estimates"
 NS = {"s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 FILENAME_RE = re.compile(r"DD_universe_EPS_estimates_(\d{8})\.xlsx$")
 
+# 2026-09-12: ADR 換算表 — Koyfin 匯出的 fy1/fy2/fy3 EPS 有時是普通股口徑，不是
+# ADR 口徑（例：TSM 1 ADR = 5 股普通股）。單一權威讀取點，dd_numbers_extra.py
+# 與 build_dd_screener.py 都呼叫 apply_adr_ratio()，不各自寫一份換算。
+ADR_RATIOS_PATH = ROOT / "data" / "adr_ratios.json"
+_adr_ratios_cache = None
+
+
+def load_adr_ratios(path=None):
+    """讀 data/adr_ratios.json。查無檔案或格式錯一律回空 dict，不擋任何呼叫端
+    （沒有表就等於沒有任何 ticker 需要換算，行為與換算表新增前完全相同）。"""
+    global _adr_ratios_cache
+    if path is None and _adr_ratios_cache is not None:
+        return _adr_ratios_cache
+    p = path or ADR_RATIOS_PATH
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        data = {}
+    if path is None:
+        _adr_ratios_cache = data
+    return data
+
+
+def apply_adr_ratio(ticker, record, ratios=None):
+    """把 Koyfin 記錄的 fy1/fy2/fy3 EPS 由普通股口徑換成 ADR 口徑（僅 adr_ratios.json
+    表列的 ticker）。growth_fy1_fy2_pct／growth_fy2_fy3_pct／cagr_fy1_fy3_pct 是比率，
+    換算前後不變，原樣保留。查無表列的 ticker（絕大多數）原樣回傳同一個 dict——不新增
+    任何鍵，確保非 ADR ticker 輸出零變化。"""
+    if not record:
+        return record
+    if ratios is None:
+        ratios = load_adr_ratios()
+    info = ratios.get(ticker)
+    ratio = info.get("ratio") if info else None
+    if not ratio:
+        return record
+    out = dict(record)
+    for k in ("fy1", "fy2", "fy3"):
+        if out.get(k) is not None:
+            out[k] = round(out[k] * ratio, 4)
+    out["eps_basis"] = "adr-usd (koyfin ordinary ×{0})".format(
+        int(ratio) if float(ratio).is_integer() else ratio
+    )
+    return out
+
 
 # Foreign exchange suffix → bare TW/JP/etc. base used in Excel.
 # Excel exports use bare numeric codes (2330, 6857) while the DD universe uses

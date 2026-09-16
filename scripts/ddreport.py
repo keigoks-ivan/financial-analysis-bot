@@ -18,6 +18,8 @@
 """
 from __future__ import annotations
 
+import copy
+import uuid
 import argparse
 import hashlib
 import html as html_lib
@@ -33,6 +35,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import validate_judgment  # 2026-09-11：最終驗收直接讀實際檔案，不正規化或重寫。
 import dd_bundle  # noqa: E402  （WP-C：delta 判斷 prompt 沿用 `_transcript_section` 抓最新一季逐字稿，只 import 不改其內部）
+import dd_codex  # 2026-09-11：明選 Codex 才走直接回傳，不默默改供應商。
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
 import dd_meta_reader  # noqa: E402  （WP7a peers 來源③：讀 id-meta related_tickers，不改其內部）
 import dd_project  # noqa: E402  （WP-H2-1：v19 判斷檔的形狀正規化與投影，唯一轉接）
@@ -59,7 +62,9 @@ FINISH_MAXDD_EPSILON = 0.01  # 2026-09-07：Max DD 是 judgment 直拷值，只�
 STAGE_ORDER = ["stage0", "judged", "gated", "brief", "prose"]
 DEFAULT_JUDGMENT_MODEL = "fable"
 # 判斷模型↔閘模型對調表（跨模型冷讀，見 _wp_spec_v17_batch2_20260905.md WP1d §4）
-GATE_MODEL_FOR = {"fable": "opus", "opus": "sonnet", "sonnet": "opus"}
+GATE_MODEL_FOR = {"fable": "opus", "opus": "sonnet", "sonnet": "opus",
+                  "gpt-5.6-sol": "gpt-6-astra", "gpt-5.6-terra": "gpt-6-astra",
+                  "gpt-6-astra": "gpt-5.6-sol"}
 JUDGE_MAX_TURNS = 10  # 2026-09-05：AVGO／WDAY 第 9 輪才寫完，8 太緊
 # WP7b #1（_wp_spec_v17_batch5_20260905.md）：bundle 改內嵌進 prompt（不再讓
 # agent 自己 Read 240KB 檔）後，fix agent 仍要讀 77KB judgment.json＋改＋
@@ -1944,7 +1949,19 @@ def _judge_check_v19(run_dir, judgment_path, evidence_path, tables_dir, py):
     parts, ok = [], True
 
     raw = _load_json(judgment_path)
-    normalized, changes = dd_project.normalize(raw, judgment_path)
+    if _load_json_or(run_dir / "manifest.json", {}).get("render_mode") == "research_fields":
+        try:
+            dd_project.research_sections(raw, dd_project.view_for(raw, judgment_path))
+        except ValueError as exc:
+            return False, [str(exc)]
+    locator_errors = dd_bundle.source_locator_errors(raw, run_dir)
+    if locator_errors:
+        return False, locator_errors
+    # 2026-09-11：衝突保留原檔並回報，不能正規化成丟失反證的成功結果。
+    try:
+        normalized, changes = dd_project.normalize(raw, judgment_path)
+    except ValueError as exc:
+        return False, [str(exc)]
     if changes:
         _atomic_write_json(judgment_path, normalized)
         parts.append("[dd_project normalize] 修了 {0} 項形狀：\n{1}".format(
@@ -2129,6 +2146,13 @@ def _parse_oneshot_judgment(text):
     judgment／scenario，**一個就當 judgment**（2026-09-11 WP-H2-1：v19 只交一個
     檔，回覆備援也只會有一塊）。"""
     text = text or ""
+    # 2026-09-11：直接回傳嚴格 JSON，不要求工具寫檔或額外 DONE。
+    try:
+        direct = json.loads(text)
+        if isinstance(direct, dict) and dd_project.is_v19(direct):
+            return {"judgment": direct}
+    except ValueError:
+        pass
     found = {}
     for tag, body in _FENCE_RE.findall(text):
         found.setdefault(tag, body)
@@ -2210,6 +2234,108 @@ def _parse_patch_map(text):
     return out
 
 
+def _schema_at_path(schema, path):
+    """2026-09-11：同一份 schema 供修補提示與正式路徑驗證，不另列欄位規格。"""
+    if not re.fullmatch(r"\$(?:\.[A-Za-z_][A-Za-z_0-9]*|\[\d+\])+", path):
+        raise ValueError("非法欄位路徑：" + path)
+    node = schema
+    for match in _JSONPATH_TOKEN_RE.finditer(path[1:]):
+        if match.group(2) is not None:
+            node = node.get("items")
+        else:
+            props = node.get("properties")
+            node = props.get(match.group(1)) if props else ({} if node.get("additionalProperties") is not False else None)
+        if not isinstance(node, dict):
+            raise ValueError("非 v19 正式路徑：" + path)
+    return node
+
+
+def _repair_schema_context(raw, report):
+    """2026-09-11：缺欄位時也提供型別與 enum，避免修完才產生新格式錯。"""
+    schema = _load_json(dd_project.SCHEMA_PATH)
+    schema = dd_project.judge_schema(schema) if dd_project.is_v19(raw) else schema
+    paths = set(re.findall(r"\$(?:\.[A-Za-z_][A-Za-z_0-9]*|\[\d+\])+", report))
+    # schema_validate 的 missing required key 訊息有時只指到父節點。
+    for error in validate_judgment.schema_validate(raw, schema):
+        paths.update(re.findall(r"\$(?:\.[A-Za-z_][A-Za-z_0-9]*|\[\d+\])+", error))
+    fragments = {}
+    for path in sorted(paths):
+        try:
+            fragments[path] = _schema_at_path(schema, path)
+        except ValueError:
+            continue
+    return "\n\n## 修補欄位規格（schema 原文；目前值見完整研究檔）\n" + json.dumps(
+        fragments or schema, ensure_ascii=False, separators=(",", ":"))
+
+
+def _claim_report_repair(run_dir, reason):
+    """2026-09-11：每份 v19 報告共用一次修補，先落帳，失敗與 resume 都不退額度。"""
+    run_dir = Path(run_dir)
+    ledger = run_dir / "repair_budget.json"
+    # 已有舊版修補紀錄時也視為額度用盡，不能靠升版取得額外一輪。
+    if any(p.is_file() for pattern in ("judge_fix_*.json", "gate_patch_*.json", "judgment_repair_*.json")
+           for p in (run_dir / "agents").glob(pattern)):
+        return False
+    try:
+        with ledger.open("x", encoding="utf-8") as fh:
+            json.dump({"used": 1, "reason": reason, "started": _now()}, fh, ensure_ascii=False)
+    except FileExistsError:
+        return False
+    return True
+
+
+def _apply_v19_patch_candidate(run_dir, raw, patches):
+    """2026-09-11：壞 patch 不覆蓋原檔，留候選、錯誤與原版供查核。"""
+    schema = dd_project.judge_schema(_load_json(dd_project.SCHEMA_PATH))
+    candidate = copy.deepcopy(raw)
+    errors = []
+    pm = patches.get("judgment") or {}
+    if patches.get("scenario"):
+        errors.append("v19 只能修 scenario_inputs，不接受 scenario.json 修補")
+    for path, value in pm.items():
+        try:
+            if path.split(".")[1].split("[")[0] in ("meta", "facts_ref", "scenario_ref", "decision_out"):
+                raise ValueError("不能修補程式或來源欄位：" + path)
+            node = _schema_at_path(schema, path)
+            invalid = validate_judgment.schema_validate(value, node, path)
+            if invalid:
+                errors.extend(invalid)
+            else:
+                _set_json_path(candidate, path, value)
+        except (ValueError, TypeError, KeyError, IndexError) as exc:
+            errors.append(str(exc))
+    errors.extend(validate_judgment.schema_validate(candidate, schema))
+    attempt = run_dir / "agents" / ("patch_candidate_" + uuid.uuid4().hex)
+    attempt.mkdir(parents=True)
+    _atomic_write_json(attempt / "before.json", raw)
+    _atomic_write_json(attempt / "proposed.json", candidate)
+    if not errors:
+        facts = dd_project.resolve_facts_path(raw, run_dir / "judgment.json")
+        if facts:
+            candidate["facts_ref"] = str(Path(facts).resolve())
+        original_ref = candidate.get("scenario_ref")
+        candidate["scenario_ref"] = str(attempt / "scenario_meta.json")
+        _atomic_write_json(attempt / "judgment.json", candidate)
+        for name in ("evidence.json", "digest.json", "source_snapshot.json", "manifest.json"):
+            if (run_dir / name).exists():
+                shutil.copyfile(run_dir / name, attempt / name)
+        (attempt / "tables").mkdir()
+        ok, report = _judge_check_v19(attempt, attempt / "judgment.json", attempt / "evidence.json",
+                                     attempt / "tables", _pick_python())
+        if not ok:
+            errors.extend(report)
+        else:
+            candidate = _load_json(attempt / "judgment.json")
+            candidate["scenario_ref"] = original_ref
+            candidate["facts_ref"] = raw.get("facts_ref")
+            # sidecar 先寫，研究檔最後接受；任一步失敗會讓舊審核版本戳失效。
+            for name in ("scenario.json", "scenario_meta.json"):
+                _atomic_write_json(run_dir / name, _load_json(attempt / name))
+            _atomic_write_json(run_dir / "judgment.json", candidate)
+    _atomic_write_json(attempt / "validation.json", {"ok": not errors, "errors": errors})
+    return (len(pm), []) if not errors else (0, errors)
+
+
 def _apply_patch_map(run_dir, patches):
     """把 patch map 套到 judgment.json／scenario.json；回傳 (套用筆數, 錯誤清單)。
 
@@ -2219,6 +2345,10 @@ def _apply_patch_map(run_dir, patches):
     整份判斷物覆寫成只剩 16 個欄位（資料破壞，不是修補）。錯誤訊息含檔名與
     `JSONDecodeError` 原文，讓呼叫端可以判斷「這份 patch 其實整檔沒套到」。
     """
+    # 2026-09-11：v19 修補整批驗證後才接受，舊格式維持原契約。
+    raw = _load_json_or(Path(run_dir) / "judgment.json", {})
+    if dd_project.is_v19(raw):
+        return _apply_v19_patch_candidate(Path(run_dir), raw, patches)
     applied, errors = 0, []
     for name in ("judgment", "scenario"):
         pm = patches.get(name) or {}
@@ -2246,6 +2376,9 @@ def _apply_patch_map(run_dir, patches):
 def _spawn_oneshot(prompt_path, model, out_json, cwd, budget):
     """無工具、單輪的 `claude -p`（`--tools ""`）：回覆全文在 result_text。
     只用於輸出很小的場合（定點修正的 patch map）；整份判斷物太大會撞輸出上限。"""
+    # 2026-09-11：純回傳模式沿用既有登入，不啟用 API 或模型降級重試。
+    if model in dd_codex.MODELS:
+        return dd_codex.spawn(prompt_path, model, out_json, budget)
     return dd_headless.spawn(
         prompt_path=prompt_path, model=model, allowed_tools=None, max_turns=1,
         budget_cache_read=budget, out_json=out_json, cwd=cwd,
@@ -2260,7 +2393,10 @@ def _spawn_short(prompt_path, model, out_json, cwd, budget, max_turns):
     語法自檢指令用（見 `judge_oneshot_tail.md.tmpl`／`judge_json_repair.md.tmpl`）
     ——不是給 agent 自由跑腳本或驗證內容。"""
     return dd_headless.spawn(
-        prompt_path=prompt_path, model=model, allowed_tools=["Write", "Bash"], max_turns=max_turns,
+        # 2026-09-11：v19 初次研究只寫一次，自檢交給程式；舊散文執行器保留。
+        prompt_path=prompt_path, model=model,
+        allowed_tools=["Write"] if "judge_short" in Path(prompt_path).name else ["Write", "Bash"],
+        max_turns=max_turns,
         budget_cache_read=budget, out_json=out_json, cwd=cwd,
     )
 
@@ -2322,7 +2458,9 @@ def _normalize_judge_outputs(run_dir):
     照常報錯——呼叫端把回傳的 errors 記進 manifest stage["normalize_error"]。
     回傳 (已正規化的檔名清單, 錯誤訊息清單)。"""
     normalized, errors = [], []
-    for name in ("judgment", "scenario"):
+    # 2026-09-11：v19 的 scenario 是待重算衍生物，不修補上一輪殘留檔。
+    names = ("judgment",) if dd_project.is_v19(_load_json_or(run_dir / "judgment.json", {})) else ("judgment", "scenario")
+    for name in names:
         path = run_dir / "{0}.json".format(name)
         if not path.exists():
             continue
@@ -2362,6 +2500,9 @@ def _repair_judge_json_file(run_dir, name, err_msg, ticker, date, judgment_model
     path = run_dir / "{0}.json".format(name)
     if not path.exists():
         return False, None
+    # 2026-09-11：語法修復也算唯一一次修補，不能在 schema 段再取得一輪。
+    if _judge_contract() == "v19" and not _claim_report_repair(run_dir, "json_syntax"):
+        return False, None
     original_text = path.read_text(encoding="utf-8")
     backup_path = agents_dir / "{0}_broken_backup.json".format(name)
     backup_path.write_text(original_text, encoding="utf-8")
@@ -2396,6 +2537,9 @@ def _repair_judge_json_file(run_dir, name, err_msg, ticker, date, judgment_model
     try:
         json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, ValueError):
+        # 2026-09-11：保留壞候選，但恢復原件，不能把失敗修補當成目前研究。
+        (agents_dir / (name + "_repair_rejected.json")).write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+        path.write_text(original_text, encoding="utf-8")
         return False, usage
     return True, usage
 
@@ -2810,6 +2954,9 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
 
     stage = _fresh_stage_preserving_prior(manifest, "judged")
     manifest.setdefault("stages", {})["judged"] = stage
+    # 2026-09-11：首次模型對照固定完整證據，不混用舊供應商的 delta／reuse 路徑。
+    if judgment_model in dd_codex.MODELS:
+        no_delta = True
     manifest["judgment_model"] = judgment_model
     manifest["state"] = "judged_running"
     _atomic_write_json(manifest_path, manifest)
@@ -2860,6 +3007,10 @@ def _do_judge_full(ticker, date, judgment_model, replay_dir, accept_over_budget,
 
     py = _pick_python()
     contract = _judge_contract()
+    # 2026-09-11：新完整研究在交稿時就驗正文，避免到組頁才發現缺章。
+    if contract == "v19" and not replay_dir:
+        manifest["render_mode"] = "research_fields"
+        _atomic_write_json(manifest_path, manifest)
     bundle_path = run_dir / "bundles" / ("judge.md" if contract == "v19"
                                          else "judge_{0}.md".format(contract))
     rb = subprocess.run(
@@ -2900,6 +3051,29 @@ def _do_judge_full(ticker, date, judgment_model, replay_dir, accept_over_budget,
     agents_dir = run_dir / "agents"
     mode = "loop" if replay_dir else _judge_mode()
     stage["judge_mode"] = mode
+    # 2026-09-11：Codex 只接 v19 完整研究；不沿用 Claude Write／Bash 路徑。
+    if judgment_model in dd_codex.MODELS and not replay_dir:
+        if contract != "v19":
+            raise ValueError("Codex 研究轉接只支援 v19")
+        direct_path = run_dir / "prompts" / "b1_judge_direct.md"
+        instructions = _render_oneshot_judge_prompt(dict(mapping, max_turns="1"))
+        # 同一套內容規則，僅替換輸出傳輸指令。
+        instructions = instructions.replace("Write", "直接回傳").replace(str(judgment_path), "回覆正文")
+        instructions += "\n最終輸出為完整 judgment JSON object，無程式碼圍欄；不要寫檔。"
+        direct_path.write_text(bundle_path.read_text(encoding="utf-8") + "\n\n" + instructions, encoding="utf-8")
+        usage = _spawn_oneshot(direct_path, judgment_model, agents_dir / "judge_1.json",
+                               run_dir, JUDGE_BUDGET_CACHE_READ)
+        stage["agent_usage"].append(usage)
+        parsed = _parse_oneshot_judgment(usage.get("result_text")) if usage.get("ok") else None
+        if parsed is None:
+            stage.update({"state": "FAIL", "ended": _now(), "note": "研究回覆未完整交付合法 v19 JSON"})
+            manifest["state"] = "judged_fail"
+            _atomic_write_json(manifest_path, manifest)
+            return 1
+        _write_oneshot_outputs(run_dir, parsed)
+        ok, report = _judge_check(ticker, date)
+        return _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept_over_budget,
+            manifest, stage, agents_dir, ok, report, fix_mode="short")
     if mode == "short":
         os_prompt_path = run_dir / "prompts" / "b1_judge_short.md"
         mapping_short = dict(mapping, max_turns=str(JUDGE_SHORT_MAX_TURNS))
@@ -2938,6 +3112,15 @@ def _do_judge_full(ticker, date, judgment_model, replay_dir, accept_over_budget,
                 ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage,
                 agents_dir, ok, report, fix_suffix="1", fix_mode="short",
             )
+        # 2026-09-11：缺檔、截斷或修補失敗即停，不用整段重跑繞過一次上限。
+        if contract == "v19":
+            stage["state"] = "FAIL"
+            stage["ended"] = _now()
+            stage["note"] = "研究輸出缺失或 JSON 修補失敗；停止整段回退"
+            manifest["stages"]["judged"] = stage
+            manifest["state"] = "judged_fail"
+            _atomic_write_json(manifest_path, manifest)
+            return 1
         if ready and not json_ready_ok:
             # 語法修復仍失敗：不能假裝有修就跑 judge check——直接回退 loop，
             # 讓下面既有的 loop-mode 判斷 agent 重新整段來過。
@@ -3002,6 +3185,13 @@ def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept
         except (json.JSONDecodeError, ValueError):
             v19_one_shot_fix = False
 
+    # 2026-09-11：格式修補與審核修補共用額度，包含續跑。
+    if not ok and v19_one_shot_fix and not _claim_report_repair(run_dir, "schema"):
+        stage["note"] = "本報告已用過一次修補，停止追加模型"
+        fix_mode = "stop"
+    elif not ok and v19_one_shot_fix and not replay_dir:
+        fix_mode = "short"
+
     if not ok and fix_mode == "short":
         # 定點修正＝patch map：失敗原文＋目前兩檔全文進 prompt、無工具單輪，
         # 回覆只列「路徑 → 新值」，orchestrator 套用後再跑 check。
@@ -3028,6 +3218,8 @@ def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept
                 _compact_json_text(scenario_path.read_text(encoding="utf-8")) if scenario_path.exists() else "{}",
             ),
             encoding="utf-8")
+        fix_os_path.write_text(fix_os_path.read_text(encoding="utf-8") +
+                               _repair_schema_context(_load_json(judgment_path), report), encoding="utf-8")
         r_fix = _spawn_oneshot(fix_os_path, judgment_model,
                                agents_dir / "judge_fix_{0}.json".format(fix_suffix),
                                run_dir, JUDGE_BUDGET_CACHE_READ)
@@ -3153,7 +3345,7 @@ def _gate_input_signature(run_dir):
     """2026-09-11：審核綁定原始輸入內容，裁決相同也不能沿用不同版本的審核。"""
     run_dir = Path(run_dir)
     names = ("evidence.json", "digest.json", "facts.json", "judgment.json",
-             "scenario.json", "scenario_meta.json")
+             "scenario.json", "scenario_meta.json", "source_snapshot.json")
     paths = {name: run_dir / name for name in names}
     raw = _load_json_or(run_dir / "judgment.json", {})
     if dd_project.is_v19(raw):
@@ -3161,6 +3353,8 @@ def _gate_input_signature(run_dir):
         if facts_path:
             paths["resolved_facts"] = Path(facts_path)
     paths["gate_contract"] = PROMPTS_TMPL_DIR / "gate_contract.md"
+    paths["gate_prompt"] = PROMPTS_TMPL_DIR / "gate.md.tmpl"
+    paths["gate_bundle"] = run_dir / "bundles" / "gate.md"
     return {name: hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None
             for name, path in paths.items()}
 
@@ -3180,6 +3374,7 @@ def _validate_current_judgment(run_dir):
         fails, _warns = validate_judgment.validate_file(
             run_dir / "judgment.json", run_dir / "evidence.json",
             j1_warn=os.environ.get("DD_J1_WARN") == "1")
+        fails.extend(dd_bundle.source_locator_errors(_load_json(run_dir / "judgment.json"), run_dir))
         return not fails, "\n".join(fails)
     except (OSError, ValueError, TypeError, KeyError) as exc:
         return False, "判斷檔驗證無法完成：{0}".format(exc)
@@ -3250,11 +3445,22 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
 
     gate_model = GATE_MODEL_FOR.get(judgment_model, "opus")
     agents_dir = run_dir / "agents"
-    r_spawn = dd_headless.spawn(
-        prompt_path=inline_gate_prompt_path, model=gate_model, allowed_tools=["Read", "Write"],
-        max_turns=GATE_MAX_TURNS, budget_cache_read=GATE_BUDGET_CACHE_READ,
-        out_json=agents_dir / "gate_{0}.json".format(_depth + 1), cwd=run_dir,
-    )
+    # 2026-09-11：獨立 Codex session 直接交稽核文字，由程式存檔。
+    if gate_model in dd_codex.MODELS and not replay_dir:
+        text = inline_gate_prompt_path.read_text(encoding="utf-8")
+        text = text.replace("一次 Write", "直接回傳").replace(str(audit_path), "回覆正文")
+        text += "\n只回傳完整 AUDIT 首行與八列審核表及必要附註，不寫檔、不另加最終回報。"
+        inline_gate_prompt_path.write_text(text, encoding="utf-8")
+        r_spawn = _spawn_oneshot(inline_gate_prompt_path, gate_model,
+                                 agents_dir / "gate_{0}.json".format(_depth + 1), run_dir, GATE_BUDGET_CACHE_READ)
+        if r_spawn.get("ok"):
+            audit_path.write_text(r_spawn["result_text"], encoding="utf-8")
+    else:
+        r_spawn = dd_headless.spawn(
+            prompt_path=inline_gate_prompt_path, model=gate_model, allowed_tools=["Read", "Write"],
+            max_turns=GATE_MAX_TURNS, budget_cache_read=GATE_BUDGET_CACHE_READ,
+            out_json=agents_dir / "gate_{0}.json".format(_depth + 1), cwd=run_dir,
+        )
     stage["agent_usage"].append(r_spawn)
     over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
     stage["over_budget"] = over_budget
@@ -3327,6 +3533,15 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
         _print_resume_hint(ticker, date, "gated")
         return 1
 
+    # 2026-09-11：資料不足仍可維持原燈號，但不能把關鍵缺口當完整報告。
+    if dd_project.is_v19(_load_json_or(run_dir / "judgment.json", {})):
+        completeness = re.findall(r"^## COMPLETENESS: (PASS|FAIL)$", audit_path.read_text(encoding="utf-8"), re.M)
+        if completeness != ["PASS"] and parsed["red"] == 0:
+            stage.update({"state": "FAIL", "ended": _now(), "note": "審核未確認關鍵來源與必要正文完整"})
+            manifest["state"] = "gated_fail"
+            _atomic_write_json(manifest_path, manifest)
+            return 1
+
     over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
     red = parsed["red"]
     # 2026-09-11：只修補一次；修完必須重審內容，不能靠裁決沒變就放行。
@@ -3340,6 +3555,15 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
     if red and red > 0:
         judgment_path = run_dir / "judgment.json"
         scenario_path = run_dir / "scenario.json"
+        # 2026-09-11：已在格式段用過修補，這裡即停；跨 resume 也不重置。
+        v19_patch = dd_project.is_v19(_load_json_or(judgment_path, {}))
+        if v19_patch and not _claim_report_repair(run_dir, "gate"):
+            stage["state"] = "FAIL"
+            stage["ended"] = _now()
+            stage["note"] = "本報告已用過一次修補，審核仍未通過"
+            manifest["state"] = "gated_fail"
+            _atomic_write_json(manifest_path, manifest)
+            return 1
         # 2026-09-06：閘 🔴 修補模式（patchmap／loop）——replay 模式一律 loop
         # （fake_claude.py 的 replay marker 目前只認 loop 那套逐輪腳本）。
         mode = "loop" if replay_dir else _gate_patch_mode()
@@ -3368,6 +3592,12 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
                 }),
                 encoding="utf-8",
             )
+            patch_short_path.write_text(patch_short_path.read_text(encoding="utf-8") +
+                _repair_schema_context(_load_json(judgment_path), audit_path.read_text(encoding="utf-8")) +
+                "\n## 完整來源與研究規格\n" + (run_dir / "bundles" / "gate.md").read_text(encoding="utf-8")
+                if (run_dir / "bundles" / "gate.md").exists() else
+                patch_short_path.read_text(encoding="utf-8") +
+                _repair_schema_context(_load_json(judgment_path), ""), encoding="utf-8")
             r_fix = _spawn_oneshot(
                 patch_short_path, judgment_model,
                 agents_dir / "gate_patch_{0}.json".format(_depth + 1),
@@ -3396,6 +3626,14 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
                     r_fix.get("ok"))
                 print("[gate] " + stage["gate_patch_fallback"])
                 mode = "loop"
+
+        if v19_patch and mode == "loop" and not replay_dir and not patched_by_map:
+            stage["state"] = "FAIL"
+            stage["ended"] = _now()
+            stage["note"] = "唯一修補未通過，不追加 loop 修補"
+            manifest["state"] = "gated_fail"
+            _atomic_write_json(manifest_path, manifest)
+            return 1
 
         if mode == "loop" and not patched_by_map:
             patch_prompt_path = run_dir / "prompts" / "b1_patch.md"
@@ -3586,6 +3824,19 @@ def _do_prose_prepare(ticker, date):
         print("[error] gen_dd_tables.py 失敗：\n{0}".format((r1.stdout + r1.stderr)[-1000:]), file=sys.stderr)
         return 1
     print(r1.stdout.strip())
+
+    # 2026-09-11：v19 直接呈現研究內容，不組散文 prompt、不另派重寫模型。
+    raw = _load_json(judgment_path)
+    if dd_project.is_v19(raw):
+        try:
+            parts = dd_project.research_sections(raw, dd_project.view_for(raw, judgment_path))
+        except ValueError as exc:
+            print("[error] " + str(exc), file=sys.stderr)
+            return 1
+        prose_dir.mkdir(parents=True, exist_ok=True)
+        for sid, content in parts.items():
+            (prose_dir / (sid + ".html")).write_text(content, encoding="utf-8")
+        return 0
 
     # C-1 機械段（revlog／s14／appA）——直接 import 呼叫（見檔頭 `import
     # gen_dd_tables as gdt`），不另外幫 gen_dd_tables.py 的 CLI 加旗標。
@@ -3943,8 +4194,12 @@ def _prose_depth_findings(run_dir, ticker, date):
 def _prose_check(ticker, date):
     """`prose check TICKER DATE`＝split＋gates 一次跑完，輸出只有 sid 清單
     ＋原因（不吐六支腳本全文）——散文 agent 在自己的 Bash 呼叫裡用這支。"""
-    written, split_errors = _do_prose_split(ticker, date)
     run_dir = _run_dir(ticker, date)
+    # 2026-09-11：v19 不再消費 prose_A/B 舊產物。
+    if dd_project.is_v19(_load_json_or(run_dir / "judgment.json", {})):
+        split_errors = [] if _do_prose_prepare(ticker, date) == 0 else ["研究正文組頁失敗"]
+    else:
+        written, split_errors = _do_prose_split(ticker, date)
     ok, findings = _run_gates(run_dir, ticker, date)
     # 2026-09-08：深度下限與既有六支閘併列，同樣以 sid 歸因，讓 agent 的
     # 那一輪修補能一起處理。
@@ -3982,6 +4237,9 @@ def _resume_prose_stage(ticker, date, manifest, accept_over_budget=False, dry_ru
     """
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
+    # 2026-09-11：續跑也由目前研究欄位重新組頁，不能撿舊散文或追加模型。
+    if dd_project.is_v19(_load_json_or(run_dir / "judgment.json", {})):
+        return _do_prose_run(ticker, date, manifest, accept_over_budget, dry_run)
     stage = manifest.setdefault("stages", {}).get("prose") or {
         "state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False,
     }
@@ -4024,6 +4282,30 @@ def _do_prose_run(ticker, date, manifest, accept_over_budget=False, dry_run=Fals
     manifest.setdefault("stages", {})["prose"] = stage
     manifest["state"] = "prose_running"
     _atomic_write_json(manifest_path, manifest)
+
+    # 2026-09-11：v19 全文組頁只有程式；缺正文或驗收失敗即停，不回退散文模型。
+    if dd_project.is_v19(_load_json_or(run_dir / "judgment.json", {})):
+        rc = _do_prose_prepare(ticker, date)
+        out_path = run_dir / "DD_full.html"
+        findings = []
+        ok = False
+        if rc == 0:
+            ok, findings = _run_gates(run_dir, ticker, date, out_html=str(out_path), postprocess=False)
+            if ok:
+                findings += _final_v19_findings(run_dir, out_path, manifest)
+                ok = not findings
+        # 2026-09-11：只把已驗收的頁面送至發布目錄，失敗候選留在 run 內。
+        if ok and not dry_run:
+            target = DD_DIR / "DD_{0}_{1}.html".format(ticker, date)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(out_path, target)
+            out_path = target
+        stage.update({"state": "PASS" if ok else "FAIL", "ended": _now(),
+                      "out_path": str(out_path), "render_mode": "research_fields",
+                      "findings": findings, "prepare_rc": rc, "over_budget": False})
+        manifest["state"] = "prose_pass" if ok else "prose_fail"
+        _atomic_write_json(manifest_path, manifest)
+        return 0 if ok else 1
 
     bundle_path = run_dir / "bundles" / "prose.md"
     prompt_path = run_dir / "prompts" / "b2_prose.md"
@@ -4463,6 +4745,7 @@ def _stage_elapsed_seconds(stage):
 def _usage_observation(stage):
     usage = list((stage or {}).get("agent_usage") or []) + list((stage or {}).get("agent_usage_prior") or [])
     return {
+        "cost_complete": all(u.get("cost_available", True) and u.get("cost_usd") is not None for u in usage),
         "cache_read": sum((u or {}).get("cache_read", 0) or 0 for u in usage),
         "output": sum((u or {}).get("output_tokens", 0) or 0 for u in usage),
         "cost_usd": sum((u or {}).get("cost_usd", 0) or 0 for u in usage),
@@ -4478,10 +4761,10 @@ def _record_stage_observation(manifest, stage_name):
     if elapsed is not None:
         obs["elapsed_seconds"] = elapsed
     stage["observation"] = obs
-    print("[段落] {0} 結束 {1}／牆鐘 {2}／cache_read {3}／output {4}／cost ${5:.2f}".format(
+    print("[段落] {0} 結束 {1}／牆鐘 {2}／cache_read {3}／output {4}／cost {5}".format(
         stage_name, stage.get("ended") or _now(),
         "{0:.1f}s".format(elapsed) if elapsed is not None else "—",
-        obs["cache_read"], obs["output"], obs["cost_usd"],
+        obs["cache_read"], obs["output"], "${0:.2f}".format(obs["cost_usd"]) if obs["cost_complete"] else "未知（僅有已知費用小計）",
     ))
     return obs
 
@@ -4496,6 +4779,7 @@ def _build_token_ledger(manifest):
     by_stage = {}
     total_cost = 0.0
     total_stage_wall = 0.0
+    cost_complete = True  # 2026-09-11：CLI 未提供費用不能記成免費。
     for stage_name, stage in (manifest.get("stages") or {}).items():
         usage_list = list((stage or {}).get("agent_usage") or []) + list((stage or {}).get("agent_usage_prior") or [])
         buckets = _sum_usage_by_model(usage_list)
@@ -4507,6 +4791,7 @@ def _build_token_ledger(manifest):
             agent_seconds=observation["agent_seconds"], cost_usd=observation["cost_usd"],
             cache_read=observation["cache_read"], output=observation["output"],
         )
+        cost_complete = cost_complete and observation["cost_complete"]
         total_cost += observation["cost_usd"]
         total_stage_wall += wall_seconds or 0.0
         for k, v in buckets.items():
@@ -4516,7 +4801,7 @@ def _build_token_ledger(manifest):
     return {
         "totals": totals,
         "by_stage": by_stage,
-        "summary": {"cost_usd": total_cost, "stage_wall_seconds": total_stage_wall},
+        "summary": {"cost_usd": total_cost, "cost_complete": cost_complete, "stage_wall_seconds": total_stage_wall},
     }
 
 
@@ -4566,6 +4851,8 @@ def _ledger_summary_line(ledger, prior_total=0):
         total_cache_read / 1_000_000.0, total_output / 1_000.0, total_cost,
         fable_cost, opus_cost, sonnet_cost,
     )
+    if not (ledger.get("summary") or {}).get("cost_complete", True):
+        line = "全帳美元費用未知（CLI 未提供）；" + line.replace("全帳", "已知費用小計", 1)
     if prior_total:
         line += "（含先前段 cache_read {0:.1f}M）".format(prior_total / 1_000_000.0)
     return line
@@ -5771,7 +6058,7 @@ def build_parser():
     rn.add_argument("--axes-per-batch", type=int, default=AXES_PER_BATCH_DEFAULT)
     rn.add_argument("--reuse-days", type=int, default=REUSE_DAYS_DEFAULT,
                     help="表上未列軸的預設沿用上限（見 COVERAGE_REUSE_POLICY）；0＝全部不沿用（2026-09-06；2026-09-10 改按軸失效）")
-    rn.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    rn.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"] + list(dd_codex.MODELS))
     rn.add_argument("--judge-mode", default=None, choices=["short", "loop"],
                     help="判斷段跑法：short（預設，只給 Write、≤4 輪，check 由 orchestrator 跑）／loop（舊：agent 自己 Write＋check＋修）")
     rn.add_argument("--gate-patch-mode", default=None, choices=["patchmap", "loop"],
@@ -5832,7 +6119,7 @@ def build_parser():
     jg = sub.add_parser("judge")
     jg.add_argument("ticker")
     jg.add_argument("date")
-    jg.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    jg.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"] + list(dd_codex.MODELS))
     jg.add_argument("--judge-mode", default=None, choices=["short", "loop"])
     jg.add_argument("--replay-from", default=None, metavar="DIR")
     jg.add_argument("--accept-over-budget", action="store_true")
@@ -5863,7 +6150,7 @@ def build_parser():
     ga = sub.add_parser("gate")
     ga.add_argument("ticker")
     ga.add_argument("date")
-    ga.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    ga.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"] + list(dd_codex.MODELS))
     ga.add_argument("--gate-patch-mode", default=None, choices=["patchmap", "loop"],
                      help="閘 🔴 修補跑法：patchmap（預設，無工具單輪回 patch map，orchestrator 代套用＋代跑 check）"
                           "／loop（舊：agent 自己 Read／Write／Bash＋重跑 check）")  # 2026-09-06
@@ -5929,7 +6216,7 @@ def build_parser():
                      help="每行一個 ticker，# 開頭整行略過")
     ba.add_argument("--date", default=None, help="YYYYMMDD；預設今天，所有 ticker 共用同一天")
     ba.add_argument("--full", action="store_true")
-    ba.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    ba.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"] + list(dd_codex.MODELS))
     ba.add_argument("--judge-mode", default=None, choices=["short", "loop"])
     ba.add_argument("--gate-patch-mode", default=None, choices=["patchmap", "loop"])
     ba.add_argument("--no-push", action="store_true")

@@ -702,36 +702,15 @@ def test_normalize_does_not_backfill_missing_judgment_values(tmp_path):
 
 # --- WP-H2-5（2026-09-11）：v19 契約第一次真跑（FIX_20260911）撞到的形狀擴充 --
 
-def test_normalize_coerces_numeric_dict_kill_metrics_and_dedups(tmp_path):
-    """真跑重現：頂層殘留數字鍵 kill_metrics（v18 習慣殘留，欄位反而比
-    counter_evidence 正式版本完整）＋頂層殘留空 triggers。正規化後：數字鍵轉
-    陣列、回填正式版本缺的鍵（不覆寫既有值）、頂層重複版本一律移除。"""
+def test_normalize_conflicting_counterevidence_is_not_merged(tmp_path):
+    """2026-09-11：兩份反證不能按位置猜合併；出錯原件保持完整。"""
     raw = _load(V19_JUDGMENT)
-    ce_km = raw["counter_evidence"]["kill_metrics"]
-    assert len(ce_km) >= 2
-    # 頂層數字鍵版本＝完整複本（模擬 Fable 沿用 v18 習慣多寫一份到頂層）。
-    raw["kill_metrics"] = {str(i): dict(m) for i, m in enumerate(ce_km)}
-    # counter_evidence 正式版本＝模擬真跑缺 bear_threshold/window，threshold/
-    # action 故意填不同的占位值，驗證既有值不被頂層版本覆寫。
-    raw["counter_evidence"]["kill_metrics"] = [
-        {"metric": m["metric"], "threshold": "占位threshold", "action": "占位action"}
-        for m in ce_km
-    ]
-    raw["triggers"] = {}  # 常見殘留：空物件，counter_evidence 已有正式版本
-    p = tmp_path / "judgment.json"
-    p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
-    out, changes = dd_project.normalize(raw, p)
-
-    assert "kill_metrics" not in out and "triggers" not in out
-    out_km = out["counter_evidence"]["kill_metrics"]
-    for i, item in enumerate(out_km):
-        assert item["bear_threshold"] == ce_km[i]["bear_threshold"]
-        assert item["window"] == ce_km[i]["window"]
-        assert item["threshold"] == "占位threshold", "既有值不得被頂層重複版本覆寫"
-        assert item["action"] == "占位action"
-    assert any("去重回填" in c and "kill_metrics" in c for c in changes)
-    assert any("移除頂層重複欄位：triggers" in c for c in changes)
-    assert out.get("normalize_log") == changes
+    raw["kill_metrics"] = {str(i): dict(m) for i, m in enumerate(raw["counter_evidence"]["kill_metrics"])}
+    raw["counter_evidence"]["kill_metrics"] = []
+    before = copy.deepcopy(raw)
+    with pytest.raises(ValueError, match="欄位衝突"):
+        dd_project.normalize(raw, tmp_path / "judgment.json")
+    assert raw == before
 
 
 def test_normalize_fixes_checkpoint_key_aliases(tmp_path):
@@ -806,8 +785,8 @@ def test_normalize_does_not_touch_judgment_fields(tmp_path):
     assert not any("valuation_dependent" in c for c in changes)
 
 
-def test_normalize_moves_catalyst_impact_text_and_stringifies_probability(tmp_path):
-    """2026-09-11：impact 填了整段文字 → 搬到 watch、impact 留空（不猜等級）；
+def test_normalize_keeps_invalid_impact_and_stringifies_probability(tmp_path):
+    """2026-09-11：impact 填了整段文字 → 保留原值讓驗證報錯（不以 null 消除錯誤）；
     probability 數字 → 字串；合法值一律不動。"""
     raw = _load(V19_JUDGMENT)
     raw["catalysts"][0]["impact"] = "FY27 同店展望低於 15%→Base 路徑下修"
@@ -817,9 +796,9 @@ def test_normalize_moves_catalyst_impact_text_and_stringifies_probability(tmp_pa
     p = tmp_path / "judgment.json"
     p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
     out, changes = dd_project.normalize(raw, p)
-    assert out["catalysts"][0]["impact"] is None
-    assert out["catalysts"][0]["watch"] == "同店 backlog QoQ；影響：FY27 同店展望低於 15%→Base 路徑下修"
+    assert out["catalysts"][0]["impact"] == raw["catalysts"][0]["impact"]
+    assert out["catalysts"][0]["watch"] == "同店 backlog QoQ"
     assert out["catalysts"][1]["impact"] == "高"
     assert out["thesis"]["single_thing"]["probability"] == "20"
-    assert sum("catalysts[0].impact" in c for c in changes) == 1
+    assert not any("catalysts[0].impact" in c for c in changes)
     assert any("probability" in c for c in changes)
