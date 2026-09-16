@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import unicodedata
@@ -53,6 +54,11 @@ OVERHEAT_R26_PCT = 80.0     # 時機燈：26 週漲幅 >+80% ＝ 過熱（不進
 LISTING_ALIAS = {"2330.TW": "TSM"}   # 本地掛牌 → ADR（同公司只留一席）
 HYST_NEW_RUNS = 2           # 遲滯：新席需連 2 次週跑過閘
 HYST_INCUMBENT_FAILS = 4    # 遲滯：現任席連 4 次不過閘才下席（硬 veto 除外）
+# 2026-09-16 持有人拍板：席位不再看 DD 裁決——迴避不否決、觀望不降權，DD 只當標籤顯示。
+# 本機模擬（DD 影響開／關同日對照）陣容與排名表零差異：6 檔迴避名字本來就過不了
+# 品質閘或位置閘。環境變數 ARENA_DD_INFLUENCE=1 可暫時恢復舊行為（對照用）。
+DD_VERDICT_INFLUENCE = os.environ.get("ARENA_DD_INFLUENCE", "0") == "1"
+
 # B4② 降權版（2026-09-04 持有人拍板）：DD 180 天內裁決＝觀望的現任席，遲滯保護降權
 # 4→2 次不過閘即下席（新席遲滯與硬 veto 不變）。依據：席位層回溯考卷只命中 FIX 一檔；
 # DD 池全體 miss 組（觀望但後續漲）8 檔中位 +39% vs save 組（觀望且後續跌）112 檔中位 −10.5%，
@@ -345,7 +351,7 @@ def row_dict(s: dict) -> dict:
     # grp_route 已不讀 DD 角色）——分歧代表 DD 判斷的可長抱程度跟耐久數字對不上，
     # 值得人工複審，語意與 v2 時代相同、只是比對基準換了。
     mismatch = fresh and ((route == "satellite" and "核心" in role) or (route == "core" and "衛星" in role))
-    if s.get("dca_verdict") == "迴避":
+    if DD_VERDICT_INFLUENCE and s.get("dca_verdict") == "迴避":
         g = dict(g); g["pass"] = False; g["why"] = ["DD 迴避（veto）"] + list(g["why"])
     g_method = ({True: "FY1→FY3 CAGR", False: "FY1→FY2 單年"}.get(g.get("g_three_year")))
     return {"ticker": s["ticker"], "verdict": s.get("dca_verdict"),
@@ -555,7 +561,7 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     L.append("甲 擁有層｜排序只看擁有層分：成長（最多算 30）加 FY1 盈餘殖利率，"
              "ROIC 超過 30% 加 2 分，PEG 超過 2 扣 5 分。資格要過品質、三年成長預估（Koyfin）、市值三關，"
              "核心席另外要看耐久（五年 ROIC 平均或 QGM 五年穩定度）。"
-             "DD 選配，只有迴避會否決，其餘只標角色。｜位置與階段都只是燈號，不進排序")
+             "DD 選配，裁決不影響席位（2026-09-16 起），只標角色。｜位置與階段都只是燈號，不進排序")
     L.append("欄位說明：score＝擁有層分、grow＝FY1→FY3 成長%、EY＝FY1 盈餘殖利率%、rev1m＝FY+1 單月修正%、"
              "timing＝位置、stage＝階段、"
              "seat＝席位、dd＝DD 標籤、moat＝護城河；note＝註記")
@@ -911,7 +917,7 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
              '<th>位置</th>'
              '<th class="bw-l">階段</th>'
              '<th class="bw-l" title="目前坐核心／衛星席次；空白＝未坐席">席</th>'
-             '<th class="bw-l" title="DD 裁決標籤——只做 veto（迴避）與角色標籤，不參與排序；⚠過期＝逾 180 天">DD</th>'
+             '<th class="bw-l" title="DD 裁決標籤——僅供顯示（2026-09-16 起不否決、不降權）；⚠過期＝逾 180 天">DD</th>'
              '<th class="bw-l" title="護城河評級與趨勢：字母＝評級，↑升 →平 ↓降">護城河</th>'
              '<th class="bw-l" title="資格閘未過／狀態摘要，完整原因見各 chip title">註記</th>'
              "</tr>")
@@ -1043,7 +1049,7 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     head_line = f"選股看板 v2 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
     rule_line = ("排序只看擁有層分：成長（最多算 30）加 FY1 盈餘殖利率，ROIC 超過 30% 加 2 分，"
                  "PEG 超過 2 扣 5 分。資格要過品質、三年成長預估（Koyfin）、市值三關，核心席另外要看耐久"
-                 "（五年 ROIC 平均或 QGM 五年穩定度）。DD 選配，只有迴避會否決，其餘只標角色。")
+                 "（五年 ROIC 平均或 QGM 五年穩定度）。DD 選配，裁決不影響席位（2026-09-16 起），只標角色。")
     timing_note = "位置與階段都只是燈號，不進排序。"
 
     return (
@@ -1225,14 +1231,14 @@ def main() -> int:
             h.append([as_of, bool(r["grp"]["pass"])])
         del h[:-8]
     def hard_veto(r):
-        return r["grp"].get("veto") or r["verdict"] == "迴避" or not r.get("cap_ok")
+        return r["grp"].get("veto") or (DD_VERDICT_INFLUENCE and r["verdict"] == "迴避") or not r.get("cap_ok")
     def eligible(r):
         h = hist.get(r["ticker"], [])
         if r["ticker"] in incumbents:
             if hard_veto(r):
                 r["hyst"] = "硬 veto 下席"; return False
             # B4② 降權版：DD 新鮮且裁決＝觀望的現任席，下席門檻用 2 次而非 4 次
-            watch = bool(r.get("dd_fresh")) and r.get("verdict") == "觀望"
+            watch = DD_VERDICT_INFLUENCE and bool(r.get("dd_fresh")) and r.get("verdict") == "觀望"
             fails_n = HYST_INCUMBENT_FAILS_WATCH if watch else HYST_INCUMBENT_FAILS
             tag = "（DD 觀望）" if watch else ""
             recent = [x[1] for x in h[-fails_n:]]
@@ -1366,7 +1372,7 @@ def main() -> int:
     BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
         "schema_version": "2.0",
-        "method": "v2 擁有層×時機層分離（2026-09-02）：排序＝own_score；R 為燈號；DD 只 veto／角色；遲滯 2/4（DD 180 天內觀望之現任席 2，B4② 降權版 2026-09-04）",
+        "method": "v2 擁有層×時機層分離（2026-09-02）：排序＝own_score；R 為燈號；DD 只標角色、不 veto 不降權（2026-09-16 起）；遲滯 2/4",
         "universe_n": len(universe_rows),
         "seats_without_card": sorted(r["ticker"] for r in core_seats + sat_seats if r["ticker"] not in card_stats),
         "own_board": own_board,
@@ -1471,8 +1477,8 @@ def main() -> int:
 席位資格（<b>v3 擁有層×時機層</b>，2026-09-09 持有人拍板：席位不再要求先有 DD）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF ≥10；capex 週期豁免 ROIC ≥25 ∧ FCF ≥0）×
 <b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%，且成長必須是三年期 Koyfin 數字——只有 FY1→FY2 單年 fallback 的名字不入席，改列「可選但先不入席」隊列）× <b>位置閘</b>（站上 52 週線且 26 週漲幅 ≤+80%）× 無重下修否決（FY+1 單月 ≤−10%）。
 排序＝<b>擁有層分數</b>＝min(成長，30)＋FY1 盈餘殖利率（ROIC ≥30 +2；PEG &gt;2 −5）；上修幅度降為燈號。
-<b>DD 選配</b>：不再是入席前提，只做 veto（迴避＝否決）與角色標籤（僅供顯示，≤180 天有效）；沒有 DD 的名字一樣同場排序、正常入席。
-<b>遲滯</b>：新席連 2 次週跑過閘、現任連 4 次不過才下席（硬 veto 除外；DD 180 天內裁決＝觀望的現任席降權為連 2 次不過即下，B4② 2026-09-04）。
+<b>DD 選配</b>：不再是入席前提，2026-09-16 起裁決也不再否決或降權，只留角色標籤（僅供顯示，≤180 天有效）；沒有 DD 的名字一樣同場排序、正常入席。
+<b>遲滯</b>：新席連 2 次週跑過閘、現任連 4 次不過才下席（硬 veto＝重下修／市值不足除外；2026-09-16 起 DD 觀望不再降權）。
 <b>軌別路由</b>：核心席另需耐久——五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75% → 核心；未達標或無耐久資料 → 衛星。DD 角色不影響軌別，只當顯示標籤（與軌別衝突時標 ⚠ 供人裁）。<b>耐久達標＝核心候選，不等於保證核心席</b>：沒卡進核心前 5 名的耐久名字會回頭跟非耐久名字一起搶衛星 5 席（純比 own_score），此時席位表仍標示其軌別為「核心」（代表可長抱），另加註「耐久・暫居衛星」。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
 <b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。
