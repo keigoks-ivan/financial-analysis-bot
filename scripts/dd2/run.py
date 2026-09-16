@@ -517,8 +517,10 @@ def program_drift_entries(ctx, obj, decision_out=None):
             if f in program_fields:
                 log.append("拆掉判斷者條目 prior_field '{0}'（程式欄）".format(f))
                 continue
-            if f in DECISION_FIELDS and e.get("cause") == "價格變動":
-                log.append("拆掉判斷者條目 prior_field '{0}'（裁決變更不得併入價格原因）".format(f))
+            # 裁決／角色掛在「價格變動」下：只有程式會接手歸因（ma 變動）時才拆，否則留給閘審
+            # （MU 2026-09-17：ma 沒變卻拆掉，變成沒人歸因 → 驗證 FAIL）
+            if f in DECISION_FIELDS and e.get("cause") == "價格變動" and ma_changed:
+                log.append("拆掉判斷者條目 prior_field '{0}'（裁決變更不得併入價格原因，改由程式歸因於 ma）".format(f))
                 continue
             keep.append(f)
         e["prior_field"] = keep
@@ -615,7 +617,21 @@ def do_judged(ctx):
     if ctx.args.reuse_judgment and jpath.exists():
         st["agent_usage"] = prev_usage
         st["reused_judgment"] = True
-        obj = _load_json(jpath)
+        # 優先從原始回覆重建（judgment.json 可能已被上一輪的 normalize／程式歸因／patch 改過，
+        # 不是乾淨起點；MU 2026-09-17 就是拆過的欄位被寫回磁碟導致重用時找不到）
+        obj = None
+        raw_path = agents_dir / "judge_1.json"
+        if raw_path.exists():
+            raw = _load_json(raw_path) or {}
+            text = raw.get("stitched_text") or raw.get("result") or ""
+            if text:
+                cand, err = sp.strip_json(text)
+                if isinstance(cand, dict):
+                    obj = cand
+                    st["reused_from"] = "agents/judge_1.json"
+        if obj is None:
+            obj = _load_json(jpath)
+            st["reused_from"] = "judgment.json"
     else:
         b = bundle.build_judge(ctx.run_dir, cards_dir=CARDS_DIR)
         st["bundle_bytes"] = b.get("bytes")
