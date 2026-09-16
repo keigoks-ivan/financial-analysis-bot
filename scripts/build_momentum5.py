@@ -470,8 +470,13 @@ def build():
         close = g(t, 'price')
         entry = float(s['entry_price'])
         ret_since = round((close / entry - 1) * 100, 1) if close is not None else None
-        if ret_since is not None:
-            seat_rets.append(ret_since / 100.0)
+        # 2026-09-16: sleeve accounting. Each seat is a 20-unit sleeve at
+        # inception; when a seat is swapped, portfolio.json records the sleeve
+        # value the outgoing name settled to as the incoming name's
+        # sleeve_at_entry, so realised P&L stays in the headline return instead
+        # of vanishing with the swapped-out ticker. Missing key = 20 (untouched).
+        sleeve = float(s.get('sleeve_at_entry', 100.0 / len(seats_cfg)))
+        seat_rets.append(sleeve * (close / entry) if close is not None else sleeve)
 
         rev_fy1 = g(t, 'rev_fy1')
         rev_fy2 = g(t, 'rev_fy2')
@@ -543,7 +548,7 @@ def build():
                 break
 
     # ── portfolio equal-weight return vs SPY over same window ──
-    port_ret = round(sum(seat_rets) / len(seat_rets) * 100, 1) if seat_rets else None
+    port_ret = round((sum(seat_rets) / 100.0 - 1) * 100, 1) if seat_rets else None
     spy_ret = round((spy_close / spy_entry - 1) * 100, 1)
     alpha = round(port_ret - spy_ret, 1) if port_ret is not None else None
 
