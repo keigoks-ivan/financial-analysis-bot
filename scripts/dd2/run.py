@@ -132,6 +132,19 @@ def _usage_record(label, r, extra=None):
     return rec
 
 
+def _enrich_from_raw(r, out_json):
+    """spawn_many 走 dd_headless.spawn，不會算 thinking／haiku；從落地的 raw JSON 補。"""
+    try:
+        raw = _load_json(Path(out_json))
+    except Exception:
+        return r
+    mu = raw.get("modelUsage") or {}
+    r = dict(r or {})
+    r["thinking_tokens"] = sum((v.get("thinkingTokens") or 0) for v in mu.values() if isinstance(v, dict))
+    r["haiku_input_tokens"] = sum((v.get("inputTokens") or 0) for k, v in mu.items() if "haiku" in k and isinstance(v, dict))
+    return r
+
+
 def _sub(cmd, cwd=None):
     r = subprocess.run([str(c) for c in cmd], capture_output=True, text=True, cwd=cwd)
     return r.returncode, (r.stdout or "") + (r.stderr or "")
@@ -292,7 +305,7 @@ def do_stage0(ctx):
             s["out"] = "agents/{0}.json".format(s["id"])
         results = dd_headless.spawn_many(specs, max_parallel=STAGE0_MAX_PARALLEL)
         for s, r in zip(specs, results):
-            r = r or {"ok": False}
+            r = _enrich_from_raw(r or {"ok": False}, run_dir / s["out"])
             st["agent_usage"].append(_usage_record(s["id"], r, {"axis_id": s.get("axis_id")}))
         ctx.save()
 
@@ -606,8 +619,11 @@ def do_judged(ctx):
     else:
         b = bundle.build_judge(ctx.run_dir, cards_dir=CARDS_DIR)
         st["bundle_bytes"] = b.get("bytes")
-        r = sp.oneshot(b["prompt_path"], ctx.judgment_model, agents_dir / "judge_1.json", ctx.run_dir,
-                       thinking_cap=JUDGE_THINKING_CAP, budget_cache_read=JUDGE_BUDGET)
+        extra = ["--effort", ctx.args.judge_effort] if ctx.args.judge_effort else None
+        r = sp.oneshot_stream(b["prompt_path"], ctx.judgment_model, agents_dir / "judge_1.json", ctx.run_dir,
+                              thinking_cap=JUDGE_THINKING_CAP, budget_cache_read=JUDGE_BUDGET, extra_args=extra)
+        st["judge_effort"] = ctx.args.judge_effort
+        st["stitched_parts"] = r.get("stitched_parts")
         st["agent_usage"].append(_usage_record("judge_1", r))
         ctx.save()
         if not r.get("ok") or not r.get("result_text"):
@@ -650,8 +666,8 @@ def _gate_once(ctx, st, idx):
     agents_dir = ctx.run_dir / "agents"
     b = bundle.build_gate(ctx.run_dir, cards_dir=CARDS_DIR)
     st.setdefault("bundle_bytes", []).append(b.get("bytes"))
-    r = sp.oneshot(b["prompt_path"], ctx.gate_model, agents_dir / "gate_{0}.json".format(idx), ctx.run_dir,
-                   budget_cache_read=GATE_BUDGET)
+    r = sp.oneshot_stream(b["prompt_path"], ctx.gate_model, agents_dir / "gate_{0}.json".format(idx), ctx.run_dir,
+                          budget_cache_read=GATE_BUDGET)
     st["agent_usage"].append(_usage_record("gate_{0}".format(idx), r))
     ctx.save()
     if not r.get("ok") or not r.get("result_text"):
@@ -695,8 +711,9 @@ def _gate_patch(ctx, st, clean, idx):
     )
     ppath = ctx.run_dir / "prompts" / "gate_patch_{0}.md".format(idx)
     ppath.write_text(text, encoding="utf-8")
-    r = sp.oneshot(ppath, ctx.judgment_model, agents_dir / "gate_patch_{0}.json".format(idx), ctx.run_dir,
-                   thinking_cap=JUDGE_THINKING_CAP, budget_cache_read=JUDGE_BUDGET)
+    r = sp.oneshot_stream(ppath, ctx.judgment_model, agents_dir / "gate_patch_{0}.json".format(idx), ctx.run_dir,
+                          thinking_cap=JUDGE_THINKING_CAP, budget_cache_read=JUDGE_BUDGET,
+                          extra_args=(["--effort", ctx.args.judge_effort] if ctx.args.judge_effort else None))
     st["agent_usage"].append(_usage_record("gate_patch_{0}".format(idx), r))
     ctx.save()
     if not r.get("ok") or not r.get("result_text"):
@@ -897,7 +914,7 @@ def do_prose(ctx):
                           "budget_cache_read": PROSE_BUDGET, "run_dir": str(ctx.run_dir)})
         results = dd_headless.spawn_many(specs, max_parallel=2)
         for spec, r in zip(specs, results):
-            st["agent_usage"].append(_usage_record(spec["id"], r or {"ok": False}))
+            st["agent_usage"].append(_usage_record(spec["id"], _enrich_from_raw(r or {"ok": False}, spec["out"])))
         ctx.save()
     missing = [n for n in ("prose_A.html", "prose_B.html") if not (ctx.run_dir / n).exists()]
     if missing:
@@ -999,6 +1016,8 @@ def main(argv=None):
     ap.add_argument("--archetype", default=None)
     ap.add_argument("--peers", default=None)
     ap.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    ap.add_argument("--judge-effort", default=None, choices=["low", "medium", "high"],
+                    help="判斷／修補通的 --effort（實測 Fable 小題 low/medium 思考歸零；預設不帶＝完整思考）")
     ap.add_argument("--until", default=None, choices=STAGES, help="跑到這段就停（含）")
     ap.add_argument("--resume", action="store_true", help="manifest 已 PASS 的段跳過")
     ap.add_argument("--redo", default=None, help="逗號分隔的段名，即使已 PASS 也重跑（配 --resume）")

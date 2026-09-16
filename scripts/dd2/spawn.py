@@ -186,3 +186,86 @@ def strip_json(text):
         return json.loads(snippet), None
     except json.JSONDecodeError as e:
         return None, "json.loads failed: {0}".format(e)
+
+# ---------------------------------------------------------------------------
+# 串流版單輪（2026-09-17 MU 案例）：`--output-format json` 只回最後一則 assistant 文字，
+# Fable 思考 41K＋JSON 23K 撞到 64K 單則上限被切兩則時，程式只拿到 JSON 尾巴。
+# 改 `stream-json --verbose`，把所有 assistant 文字塊接起來；usage 從最後的 result 事件取。
+# 指令列旗標與 dd_headless 同一組（slim／--tools ""），不改 dd_headless.py。
+# ---------------------------------------------------------------------------
+
+def _stream_cmd(model, max_turns, extra_args=None):
+    cmd = [dd_headless._claude_bin() if hasattr(dd_headless, "_claude_bin") else os.environ.get("DD_CLAUDE_BIN", "claude"),
+           "-p", "--model", model, "--output-format", "stream-json", "--verbose",
+           "--max-turns", str(max_turns)]
+    if dd_headless._slim_enabled():
+        cmd.extend(dd_headless.SLIM_ARGS)
+    if not (extra_args and "--tools" in list(extra_args)):
+        cmd.extend(["--tools", ""])
+    if extra_args:
+        cmd.extend(list(extra_args))
+    return cmd
+
+
+def oneshot_stream(prompt_path, model, out_json, cwd, *, thinking_cap=None, budget_cache_read=None,
+                   extra_args=None, timeout_s=3600):
+    """無工具單輪，串流收集所有 assistant 文字。回傳 dict 同 oneshot，另加 `stitched_parts`（接了幾則）。"""
+    import subprocess, time as _time
+    prompt_text = Path(prompt_path).read_text(encoding="utf-8")
+    env_key = _MAX_THINKING_TOKENS_ENV
+    had_prev = env_key in os.environ
+    prev = os.environ.get(env_key)
+    if thinking_cap is not None:
+        os.environ[env_key] = str(thinking_cap)
+    t0 = _time.time()
+    try:
+        proc = subprocess.run(_stream_cmd(model, 1, extra_args), input=prompt_text, capture_output=True,
+                              text=True, cwd=str(cwd) if cwd else None, timeout=timeout_s)
+    finally:
+        if thinking_cap is not None:
+            if had_prev:
+                os.environ[env_key] = prev
+            else:
+                os.environ.pop(env_key, None)
+    texts, result_ev, n_assist = [], None, 0
+    for line in (proc.stdout or "").splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if ev.get("type") == "assistant":
+            content = (ev.get("message") or {}).get("content") or []
+            t = "".join(c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text")
+            if t:
+                texts.append(t)
+                n_assist += 1
+        elif ev.get("type") == "result":
+            result_ev = ev
+    stitched = "".join(texts)
+    result_ev = result_ev or {}
+    usage = result_ev.get("usage") or {}
+    mu = result_ev.get("modelUsage") or {}
+    rec = {
+        "ok": proc.returncode == 0 and bool(stitched) and result_ev.get("subtype", "success") == "success",
+        "result_text": stitched, "stitched_parts": n_assist,
+        "num_turns": result_ev.get("num_turns"),
+        "output_tokens": usage.get("output_tokens"),
+        "cache_read": usage.get("cache_read_input_tokens"),
+        "cache_creation": usage.get("cache_creation_input_tokens"),
+        "cost_usd": result_ev.get("total_cost_usd"),
+        "duration_ms": result_ev.get("duration_ms") or int((_time.time() - t0) * 1000),
+        "thinking_tokens": sum((v.get("thinkingTokens") or 0) for v in mu.values() if isinstance(v, dict)),
+        "haiku_input_tokens": sum((v.get("inputTokens") or 0) for k, v in mu.items() if "haiku" in k and isinstance(v, dict)),
+        "over_budget": bool(budget_cache_read and (usage.get("cache_read_input_tokens") or 0) > budget_cache_read),
+        "raw_path": str(out_json), "returncode": proc.returncode,
+        "stderr_tail": (proc.stderr or "")[-500:],
+    }
+    if out_json:
+        Path(out_json).parent.mkdir(parents=True, exist_ok=True)
+        Path(out_json).write_text(json.dumps({"result_event": result_ev, "stitched_text": stitched,
+                                              "stitched_parts": n_assist, "cmd_effort": extra_args},
+                                             ensure_ascii=False, indent=1), encoding="utf-8")
+    return rec
