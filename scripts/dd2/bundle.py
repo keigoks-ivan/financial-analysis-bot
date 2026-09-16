@@ -391,10 +391,14 @@ def _prose_write_instruction(part, prose_a_path, prose_b_path):
               "寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。")
     if part == "A":
         return ("## 寫（只有 Write 工具，最多 4 輪）\n\n本通只負責**前半**：輸出一個檔 `{0}`，依序含 {1} 七段。後半由另一通同時在寫，你不要碰。\n\n"
+                "**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，"
+                "不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。\n\n"
                 .format(prose_a_path, _PROSE_SIDS_A) + common)
     if part == "B":
         return ("## 寫（只有 Write 工具，最多 4 輪）\n\n本通只負責**後半**：輸出一個檔 `{0}`，依序含 {1}。前半（s1–s7）由另一通同時在寫，你不要碰；"
-                "s1 的結論與 decision 段的裁決都以 judgment 投影視圖為準，不需對照前半。\n\n".format(prose_b_path, _PROSE_SIDS_B) + common)
+                "s1 的結論與 decision 段的裁決都以 judgment 投影視圖為準，不需對照前半。\n\n"
+                "每章 3–6 條，每條 100–200 字；s10（估值與三種未來）與 s12（最可能怎麼賠）至少 1,500 bytes，把情境輸入、終端倍數、反證三視角的裁定鋪開。\n\n"
+                .format(prose_b_path, _PROSE_SIDS_B) + common)
     return ("## 寫（只有 Write 工具，最多 6 輪）\n\n輸出兩個檔：\n\n1. `{0}`：依序含 {1} 七段。\n2. `{2}`：依序含 {3}。\n\n"
             .format(prose_a_path, _PROSE_SIDS_A, prose_b_path, _PROSE_SIDS_B) + common)
 
