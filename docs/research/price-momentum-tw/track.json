@@ -6,7 +6,7 @@
   "frozen_date": "2026-09-16",
   "positioning": "P10 台股版是零基本面成分、全機械、自帶 NAV 的純價格動能 paper track——鏡射美股版 P10（/research/price-momentum/）於台股市場：除股票名單、基準與資料來源三處外，規則、門檻與程式路徑逐字相同，用意是把兩個市場的表現差異歸因到市場本身，而不是規則本身。它不是收斂面：不回饋 DD 裁決鏈、不進 picks/GRP/三軌/cockpit 任何清單，不得被其他 session 引用為「某檔在 P10 台股上」的選股依據。個股層零人為干預；唯一人類接觸點是 prereg 的 review points 與 kill conditions。",
   "universe_and_data": {
-   "universe": "上市普通股。來源：證交所 OpenAPI t187ap03_L（上市公司基本資料，requests、瀏覽器 UA、timeout 60）。保留公司代號為 4 位數字者（排除 ETF、權證、特別股），金融股保留——P10 是純價格序列，美股版也未排除任何 GICS 產業。每檔記 name（公司簡稱）與 sector（產業別代碼轉中文，對照表寫死在 script 裡）。上櫃（TPEx）不納入。創新板不納入（公司簡稱以「-創」結尾者；API 無板別欄位，用簡稱慣例辨識）。上市日期距執行日不足 365 天者不納入——用 API 的「上市日期」算，不用價格筆數算，因為 yfinance 的 .TW 歷史含興櫃時期價格，253 筆收盤不能代表已上市一年。（以上兩條為 2026-09-16 第一天修正：首次 inception 後同日、任何換倉前撤回重建，起因是 7610 聯友金屬-創 以 2025-09-09 上市之姿排兩線第一。）",
+   "universe": "上市普通股加上上櫃普通股（2026-09-16 同日第二次修正，原設計僅上市，見下）。上市來源：證交所 OpenAPI t187ap03_L（上市公司基本資料，requests、瀏覽器 UA、timeout 60）；上櫃來源：櫃買中心 OpenAPI mopsfin_t187ap03_O（上櫃公司基本資料，同樣的抓法）。兩邊都只保留公司代號為 4 位數字者（排除 ETF、權證、特別股），金融股保留——P10 是純價格序列，美股版也未排除任何 GICS 產業。每檔記 name（公司簡稱）與 sector（產業別代碼轉中文，上市上櫃共用同一張對照表，兩個交易所的產業別編碼體系相同）。創新板不納入（公司簡稱以「-創」結尾者；API 無板別欄位，用簡稱慣例辨識，上市上櫃同一條規則，上櫃目前查無此類名字）。上市或上櫃日期距執行日不足 365 天者不納入——上市用證交所「上市日期」、上櫃用櫃買中心「DateOfListing」，都不用價格筆數算，因為 yfinance 的歷史可能含興櫃時期價格。同一代號若兩邊都出現（理論上不會發生），以上市資料優先。（創新板與上市未滿一年兩條排除規則為 2026-09-16 第一天修正：首次 inception 後同日、任何換倉前撤回重建，起因是 7610 聯友金屬-創 以 2025-09-09 上市之姿排兩線第一。名單擴為上市 ∪ 上櫃為同日第二次修正：原先上櫃不納入，本次撤回重建改為納入，同樣在任何換倉前完成，未發生任何換倉。）",
    "liquidity_gate": "流動性閘（美股版沒有的一步，因為美股版直接借用 S&P 500 成分當大型股代理）：在通過 253 筆收盤門檻的名字中，計算最近 120 個交易日「收盤 × 成交股數」的中位數，降冪排序取前 300 名為本週 universe（同分以代號字母序 tie-break）。只有這 300 檔進入 L12/L6 計分；掉出前 300 名視為不合格，於下一次月度換倉賣出，與美股版指數剔除的處理邏輯一致。",
    "prices": "把全部 4 位數字代號（yfinance 代碼 {代號}.TW）+ 0050.TW 切成每批約 100 檔，逐批呼叫 yf.download(period='2y', interval='1d', auto_adjust=True, group_by='ticker', threads=True)（下載參數、批次與重試邏輯逐字沿用美股版做法），批間 sleep 後合併回同一份 DataFrame；整批下載失敗（0050 序列是否成功、≥253-close 覆蓋率是否達標）即指數退避重試，最多 4 次嘗試（約 20s／60s／150s 遞增＋jitter）。",
    "sufficiency_floor": "個股資料充足門檻：dropna 後 close series 長度 ≥ 253，否則排除（記入 coverage 統計）。"
@@ -39,7 +39,7 @@
   "turnover": {
    "definition": "每次 rebalance 記 n_sells。turnover_12m_annualized = 近 12 次 rebalance 的 Σ n_sells / 10（不足 12 次先照實際次數年化，標註 partial: true）。"
   },
-  "fail_safe": "以下任一 → print warning、exit 0、完全不動 track.json：TWSE OpenAPI 抓取失敗，或 4 位數字代碼少於 700 筆；價格資料充足（≥253 closes）的 ticker 數少於 250（涵蓋全部上市代碼，非僅流動性前 300）；0050.TW 序列為空；任何未捕捉例外（top-level try/except 包 main）。",
+  "fail_safe": "以下任一 → print warning、exit 0、完全不動 track.json：TWSE OpenAPI 抓取失敗，或 4 位數字代碼少於 700 筆；TPEx OpenAPI 抓取失敗，或 4 位數字代碼少於 500 筆——兩邊任一縮水都中止，不准只用單邊資料靜默跑完；價格資料充足（≥253 closes）的 ticker 數少於 250（涵蓋全部上市 ∪ 上櫃代碼，非僅流動性前 300）；0050.TW 序列為空；任何未捕捉例外（top-level try/except 包 main）。",
   "kill_conditions": {
    "evaluation_point": "正式評估點 2028-09-16（24 個月）；期中讀數可看、不具裁決力。No re-tuning、no re-adding、closed stays closed。",
    "kill_1": "24 個月 NAV 落後 0050.TW 且 Max DD 比 0050.TW 深 → 關閉。",
@@ -61,19 +61,19 @@
   },
   "market_adaptation": {
    "title": "市場調整（台股版與美股版的三處差異；其餘規格逐字相同）",
-   "universe_swap": "名單來源由 Wikipedia S&P 500 + NQ100_EXTRAS 換成證交所 OpenAPI 上市公司名冊（4 位數字代碼、金融股保留、上櫃不納入、創新板不納入、上市未滿 365 天不納入），並加一道美股版沒有的流動性閘：對通過 253 筆收盤門檻的名字，取最近 120 個交易日「收盤 × 成交股數」中位數，降冪取前 300 名為本週 universe——這是用價量資料機械代理「大型股」，功能等同美股版用 S&P 500 成分篩大型股。",
-   "benchmark_swap": "基準由 SPY 換成元大台灣 50（0050.TW）還原收盤——0050 對台股的代表性等同 SPY 對美股，但集中度更高（成分股中台積電占比約五成到六成）；加權指數 ^TWII 不含股利、會讓基準變好打，故不用。",
+   "universe_swap": "名單來源由 Wikipedia S&P 500 + NQ100_EXTRAS 換成證交所 OpenAPI 上市公司名冊 ∪ 櫃買中心 OpenAPI 上櫃公司名冊（4 位數字代碼、金融股保留、創新板不納入、上市或上櫃未滿 365 天不納入；同代號兩邊都有時以上市優先，理論上不會發生），並加一道美股版沒有的流動性閘：對通過 253 筆收盤門檻的名字，取最近 120 個交易日「收盤 × 成交股數」中位數，降冪取前 300 名為本週 universe——這是用價量資料機械代理「大型股」，功能等同美股版用 S&P 500 成分篩大型股。（原設計僅納入上市、上櫃不納入；2026-09-16 同日第二次修正改為上市 ∪ 上櫃——P10 是市場純價格動能的機械測試，沒有理由只涵蓋半個市場。本次修正在首次 inception 後、任何換倉前完成，未發生任何換倉。）",
+   "benchmark_swap": "基準由 SPY 換成元大台灣 50（0050.TW）還原收盤——0050 對台股的代表性等同 SPY 對美股，但集中度更高（成分股中台積電占比約五成到六成）；加權指數 ^TWII 不含股利、會讓基準變好打，故不用。名單納入上櫃後，與基準的母體已不完全對齊——0050 成分股全部是上市股，不含任何上櫃股；這是已知取捨，不因此換基準。",
    "kill_2_swap": "kill ②（與 Momentum-5 shadow line C 對帳）不適用——台股沒有對應的 revision-momentum 對照線可供對帳，本條在台股版直接標示不適用，不生成替代條件。",
    "trading_calendar_note": "台股一年約 245 個交易日，MIN_CLOSES=253 筆收盤約等於 12.4 個月，比美股（一年約 252 個交易日）略長；此常數刻意不因市場調整，維持與美股版逐字相同的資料充足門檻。"
   }
  },
- "as_of": "2026-09-15",
- "inception_date": "2026-09-15",
+ "as_of": "2026-09-16",
+ "inception_date": "2026-09-16",
  "bench_close_inception": 106.9,
  "last_rebalance_month": "2026-09",
  "nav_series": [
   {
-   "date": "2026-09-15",
+   "date": "2026-09-16",
    "nav_L12": 100.0,
    "nav_L6": 100.0,
    "nav_bench": 100.0,
@@ -87,7 +87,8 @@
     {
      "ticker": "2408.TW",
      "name": "南亞科",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 465.5,
      "rank": 1,
      "score": 11.58,
@@ -99,7 +100,8 @@
     {
      "ticker": "3037.TW",
      "name": "欣興",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 951.0,
      "rank": 2,
      "score": 9.69,
@@ -111,7 +113,8 @@
     {
      "ticker": "3189.TW",
      "name": "景碩",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 795.0,
      "rank": 3,
      "score": 9.29,
@@ -123,7 +126,8 @@
     {
      "ticker": "2344.TW",
      "name": "華邦電",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 159.5,
      "rank": 4,
      "score": 9.19,
@@ -135,7 +139,8 @@
     {
      "ticker": "3026.TW",
      "name": "禾伸堂",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 726.0,
      "rank": 5,
      "score": 8.98,
@@ -147,7 +152,8 @@
     {
      "ticker": "8046.TW",
      "name": "南電",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 1085.0,
      "rank": 6,
      "score": 6.84,
@@ -159,7 +165,8 @@
     {
      "ticker": "2383.TW",
      "name": "台光電",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 5115.0,
      "rank": 7,
      "score": 6.68,
@@ -169,45 +176,48 @@
      "eligible": true
     },
     {
+     "ticker": "4973.TWO",
+     "name": "廣穎電通",
+     "market": "TPEx",
+     "entry_date": "2026-09-16",
+     "entry_price": 135.0,
+     "rank": 8,
+     "score": 6.63,
+     "heat": true,
+     "units": 0.07407407407407407,
+     "last_price": 135.0,
+     "eligible": true
+    },
+    {
+     "ticker": "3081.TWO",
+     "name": "聯亞",
+     "market": "TPEx",
+     "entry_date": "2026-09-16",
+     "entry_price": 2675.0,
+     "rank": 9,
+     "score": 6.33,
+     "heat": true,
+     "units": 0.003738317757009346,
+     "last_price": 2675.0,
+     "eligible": true
+    },
+    {
      "ticker": "2337.TW",
      "name": "旺宏",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 114.5,
-     "rank": 8,
+     "rank": 10,
      "score": 6.06,
      "heat": true,
      "units": 0.08733624454148471,
      "last_price": 114.5,
      "eligible": true
-    },
-    {
-     "ticker": "2059.TW",
-     "name": "川湖",
-     "entry_date": "2026-09-15",
-     "entry_price": 11715.0,
-     "rank": 9,
-     "score": 5.63,
-     "heat": true,
-     "units": 0.0008536064874093043,
-     "last_price": 11715.0,
-     "eligible": true
-    },
-    {
-     "ticker": "3135.TW",
-     "name": "凌航",
-     "entry_date": "2026-09-15",
-     "entry_price": 158.5,
-     "rank": 10,
-     "score": 5.52,
-     "heat": true,
-     "units": 0.06309148264984227,
-     "last_price": 158.5,
-     "eligible": true
     }
    ],
    "rebalance_history": [
     {
-     "date": "2026-09-15",
+     "date": "2026-09-16",
      "event": "inception",
      "sells": [],
      "buys": [
@@ -218,14 +228,15 @@
       "3026.TW",
       "8046.TW",
       "2383.TW",
-      "2337.TW",
-      "2059.TW",
-      "3135.TW"
+      "4973.TWO",
+      "3081.TWO",
+      "2337.TW"
      ],
      "holdings": [
       {
        "ticker": "2408.TW",
        "name": "南亞科",
+       "market": "TWSE",
        "rank": 1,
        "score": 11.58,
        "units": 0.021482
@@ -233,6 +244,7 @@
       {
        "ticker": "3037.TW",
        "name": "欣興",
+       "market": "TWSE",
        "rank": 2,
        "score": 9.69,
        "units": 0.010515
@@ -240,6 +252,7 @@
       {
        "ticker": "3189.TW",
        "name": "景碩",
+       "market": "TWSE",
        "rank": 3,
        "score": 9.29,
        "units": 0.012579
@@ -247,6 +260,7 @@
       {
        "ticker": "2344.TW",
        "name": "華邦電",
+       "market": "TWSE",
        "rank": 4,
        "score": 9.19,
        "units": 0.062696
@@ -254,6 +268,7 @@
       {
        "ticker": "3026.TW",
        "name": "禾伸堂",
+       "market": "TWSE",
        "rank": 5,
        "score": 8.98,
        "units": 0.013774
@@ -261,6 +276,7 @@
       {
        "ticker": "8046.TW",
        "name": "南電",
+       "market": "TWSE",
        "rank": 6,
        "score": 6.84,
        "units": 0.009217
@@ -268,33 +284,37 @@
       {
        "ticker": "2383.TW",
        "name": "台光電",
+       "market": "TWSE",
        "rank": 7,
        "score": 6.68,
        "units": 0.001955
       },
       {
+       "ticker": "4973.TWO",
+       "name": "廣穎電通",
+       "market": "TPEx",
+       "rank": 8,
+       "score": 6.63,
+       "units": 0.074074
+      },
+      {
+       "ticker": "3081.TWO",
+       "name": "聯亞",
+       "market": "TPEx",
+       "rank": 9,
+       "score": 6.33,
+       "units": 0.003738
+      },
+      {
        "ticker": "2337.TW",
        "name": "旺宏",
-       "rank": 8,
+       "market": "TWSE",
+       "rank": 10,
        "score": 6.06,
        "units": 0.087336
-      },
-      {
-       "ticker": "2059.TW",
-       "name": "川湖",
-       "rank": 9,
-       "score": 5.63,
-       "units": 0.000854
-      },
-      {
-       "ticker": "3135.TW",
-       "name": "凌航",
-       "rank": 10,
-       "score": 5.52,
-       "units": 0.063091
       }
      ],
-     "eligible_count": 208,
+     "eligible_count": 231,
      "cash_seats": 0,
      "n_sells": 0
     }
@@ -311,7 +331,8 @@
     {
      "ticker": "3026.TW",
      "name": "禾伸堂",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 726.0,
      "rank": 1,
      "score": 4.7,
@@ -323,7 +344,8 @@
     {
      "ticker": "2059.TW",
      "name": "川湖",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 11715.0,
      "rank": 2,
      "score": 4.03,
@@ -333,11 +355,25 @@
      "eligible": true
     },
     {
+     "ticker": "6182.TWO",
+     "name": "合晶",
+     "market": "TPEx",
+     "entry_date": "2026-09-16",
+     "entry_price": 105.5,
+     "rank": 3,
+     "score": 2.6,
+     "heat": true,
+     "units": 0.0947867298578199,
+     "last_price": 105.5,
+     "eligible": true
+    },
+    {
      "ticker": "6213.TW",
      "name": "聯茂",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 519.0,
-     "rank": 3,
+     "rank": 4,
      "score": 2.42,
      "heat": true,
      "units": 0.019267822736030827,
@@ -347,9 +383,10 @@
     {
      "ticker": "6672.TW",
      "name": "騰輝電子-KY",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 291.0,
-     "rank": 4,
+     "rank": 5,
      "score": 2.36,
      "heat": false,
      "units": 0.03436426116838488,
@@ -357,11 +394,25 @@
      "eligible": true
     },
     {
+     "ticker": "6274.TWO",
+     "name": "台燿",
+     "market": "TPEx",
+     "entry_date": "2026-09-16",
+     "entry_price": 1370.0,
+     "rank": 6,
+     "score": 2.26,
+     "heat": true,
+     "units": 0.0072992700729927005,
+     "last_price": 1370.0,
+     "eligible": true
+    },
+    {
      "ticker": "6446.TW",
      "name": "藥華藥",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 1205.0,
-     "rank": 5,
+     "rank": 7,
      "score": 2.18,
      "heat": false,
      "units": 0.008298755186721992,
@@ -369,23 +420,25 @@
      "eligible": true
     },
     {
-     "ticker": "6834.TW",
-     "name": "天二科技",
-     "entry_date": "2026-09-15",
-     "entry_price": 97.1,
-     "rank": 6,
-     "score": 2.06,
-     "heat": false,
-     "units": 0.10298661335885789,
-     "last_price": 97.0999984741211,
+     "ticker": "6173.TWO",
+     "name": "信昌電",
+     "market": "TPEx",
+     "entry_date": "2026-09-16",
+     "entry_price": 294.5,
+     "rank": 8,
+     "score": 2.05,
+     "heat": true,
+     "units": 0.03395585738539898,
+     "last_price": 294.5,
      "eligible": true
     },
     {
      "ticker": "2395.TW",
      "name": "研華",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 685.0,
-     "rank": 7,
+     "rank": 9,
      "score": 1.89,
      "heat": false,
      "units": 0.014598540145985401,
@@ -395,61 +448,39 @@
     {
      "ticker": "2383.TW",
      "name": "台光電",
-     "entry_date": "2026-09-15",
+     "market": "TWSE",
+     "entry_date": "2026-09-16",
      "entry_price": 5115.0,
-     "rank": 8,
+     "rank": 10,
      "score": 1.85,
      "heat": true,
      "units": 0.0019550342130987292,
      "last_price": 5115.0,
      "eligible": true
-    },
-    {
-     "ticker": "3443.TW",
-     "name": "創意",
-     "entry_date": "2026-09-15",
-     "entry_price": 6035.0,
-     "rank": 9,
-     "score": 1.85,
-     "heat": true,
-     "units": 0.0016570008285004142,
-     "last_price": 6035.0,
-     "eligible": true
-    },
-    {
-     "ticker": "4958.TW",
-     "name": "臻鼎-KY",
-     "entry_date": "2026-09-15",
-     "entry_price": 477.5,
-     "rank": 10,
-     "score": 1.83,
-     "heat": false,
-     "units": 0.020942408376963352,
-     "last_price": 477.5,
-     "eligible": true
     }
    ],
    "rebalance_history": [
     {
-     "date": "2026-09-15",
+     "date": "2026-09-16",
      "event": "inception",
      "sells": [],
      "buys": [
       "3026.TW",
       "2059.TW",
+      "6182.TWO",
       "6213.TW",
       "6672.TW",
+      "6274.TWO",
       "6446.TW",
-      "6834.TW",
+      "6173.TWO",
       "2395.TW",
-      "2383.TW",
-      "3443.TW",
-      "4958.TW"
+      "2383.TW"
      ],
      "holdings": [
       {
        "ticker": "3026.TW",
        "name": "禾伸堂",
+       "market": "TWSE",
        "rank": 1,
        "score": 4.7,
        "units": 0.013774
@@ -457,68 +488,77 @@
       {
        "ticker": "2059.TW",
        "name": "川湖",
+       "market": "TWSE",
        "rank": 2,
        "score": 4.03,
        "units": 0.000854
       },
       {
+       "ticker": "6182.TWO",
+       "name": "合晶",
+       "market": "TPEx",
+       "rank": 3,
+       "score": 2.6,
+       "units": 0.094787
+      },
+      {
        "ticker": "6213.TW",
        "name": "聯茂",
-       "rank": 3,
+       "market": "TWSE",
+       "rank": 4,
        "score": 2.42,
        "units": 0.019268
       },
       {
        "ticker": "6672.TW",
        "name": "騰輝電子-KY",
-       "rank": 4,
+       "market": "TWSE",
+       "rank": 5,
        "score": 2.36,
        "units": 0.034364
       },
       {
+       "ticker": "6274.TWO",
+       "name": "台燿",
+       "market": "TPEx",
+       "rank": 6,
+       "score": 2.26,
+       "units": 0.007299
+      },
+      {
        "ticker": "6446.TW",
        "name": "藥華藥",
-       "rank": 5,
+       "market": "TWSE",
+       "rank": 7,
        "score": 2.18,
        "units": 0.008299
       },
       {
-       "ticker": "6834.TW",
-       "name": "天二科技",
-       "rank": 6,
-       "score": 2.06,
-       "units": 0.102987
+       "ticker": "6173.TWO",
+       "name": "信昌電",
+       "market": "TPEx",
+       "rank": 8,
+       "score": 2.05,
+       "units": 0.033956
       },
       {
        "ticker": "2395.TW",
        "name": "研華",
-       "rank": 7,
+       "market": "TWSE",
+       "rank": 9,
        "score": 1.89,
        "units": 0.014599
       },
       {
        "ticker": "2383.TW",
        "name": "台光電",
-       "rank": 8,
+       "market": "TWSE",
+       "rank": 10,
        "score": 1.85,
        "units": 0.001955
-      },
-      {
-       "ticker": "3443.TW",
-       "name": "創意",
-       "rank": 9,
-       "score": 1.85,
-       "units": 0.001657
-      },
-      {
-       "ticker": "4958.TW",
-       "name": "臻鼎-KY",
-       "rank": 10,
-       "score": 1.83,
-       "units": 0.020942
       }
      ],
-     "eligible_count": 207,
+     "eligible_count": 221,
      "cash_seats": 0,
      "n_sells": 0
     }
@@ -533,8 +573,8 @@
  "data_gaps": [],
  "changelog": [
   {
-   "date": "2026-09-15",
-   "event": "P10 台股（雙線 L12/L6）PREREG 凍結（2026-09-16），兩線同日 inception。2026-09-15 的首次 inception 於同日撤回重建：名單加排創新板與上市未滿 365 天者（起因 7610 聯友金屬-創），撤回時尚未發生任何換倉。"
+   "date": "2026-09-16",
+   "event": "P10 台股（雙線 L12/L6）PREREG 凍結（2026-09-16），兩線同日 inception。2026-09-15 的首次 inception 於同日撤回重建：名單加排創新板與上市未滿 365 天者（起因 7610 聯友金屬-創），撤回時尚未發生任何換倉。同日第二次修正：名單由僅上市擴為上市 ∪ 上櫃（合併後同一道流動性閘取前 300 名），同樣在任何換倉前撤回重建，未發生任何換倉。"
   }
  ]
 }

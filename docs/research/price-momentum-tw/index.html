@@ -314,7 +314,7 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
 <footer class="disclaimer">
   <div class="wrap">
     <div>本頁為研究流程展示，<b>非投資建議</b>；所呈現之名單、分數與 NAV 序列僅為量化研究的機械化紀錄，不構成任何證券之買賣要約或招攬。P10 台股（L12/L6 雙線）為零人為干預的 paper track，<b>不進入 picks／GRP／三軌／cockpit 任何選股裁決鏈</b>；50/50 混合 NAV 為事後衍生物，不是第三條線，亦非收斂面。所有數據為第三方來源之預估值，可能有誤差或延遲，投資決策前請自行查證並自負風險。</div>
-    <div style="margin-top:.5rem">三點台股版特有揭露：基準 0050 成分股集中度高，台積電占比約五成到六成；資料充足門檻 253 筆收盤在台股約等於 12.4 個月，比美股略長；本追蹤只涵蓋上市普通股，上櫃（TPEx）、創新板（簡稱「-創」）與上市未滿一年者不納入。上市年資以證交所上市日期計，不以價格筆數計，因為 Yahoo 的歷史含興櫃時期價格。</div>
+    <div style="margin-top:.5rem">三點台股版特有揭露：名單為上市加上櫃普通股，創新板（簡稱「-創」）與上市或上櫃未滿一年者不納入，年資以交易所公告的上市／上櫃日期計，不以價格筆數計，因為 Yahoo 的歷史可能含興櫃時期價格；資料充足門檻 253 筆收盤在台股約等於 12.4 個月，比美股略長；基準 0050 只含上市股，成分股集中度高（台積電占比約五成到六成），與名單母體不完全對齊。</div>
     <div style="margin-top:.5rem">&copy; 2026 InvestMQuest Research · <a href="/disclosures.html">方法論與揭露</a></div>
   </div>
 </footer>
@@ -329,7 +329,7 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
   function fmtPct(v){ if(v===null||v===undefined) return '—'; return (v>0?'+':'') + v.toFixed(1) + '%'; }
   function pnClass(v){ if(v===null||v===undefined) return ''; return v>0?'pos':(v<0?'neg':''); }
   function fmtNum(v,d){ return (v===null||v===undefined) ? '—' : Number(v).toFixed(d===undefined?2:d); }
-  function displayCode(t){ return String(t==null?'':t).replace(/\.TW$/,''); }
+  function displayCode(t){ return String(t==null?'':t).replace(/\.TWO?$/,''); }
 
   function showError(){
     var tb = $('nav-body'); if(tb) tb.innerHTML = '<tr><td colspan="8" class="errbox" style="border:none">資料載入失敗，稍後再試。</td></tr>';
@@ -419,13 +419,14 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
       holdings.slice().sort(function(a,b){ return (a.rank||999)-(b.rank||999); }).forEach(function(h){
         var ret = (h.last_price!=null && h.entry_price) ? (h.last_price/h.entry_price - 1)*100 : null;
         var weight = (navLatest && h.units!=null && h.last_price!=null) ? (h.units*h.last_price/navLatest*100) : null;
+        var marketTag = (h.market === 'TPEx') ? '<span class="tag line" title="上櫃（TPEx）">櫃</span>' : '';
         var heatTag = h.heat ? '<span class="tag heat">🔥 heat</span>' : '';
         var ineligibleTag = (h.eligible === false)
           ? '<span class="tag ineligible" title="已不符合資格（跌破 200DMA 或動能轉負）；排名／Score 為最後一次合格時的舊值，非最新，將於下一次月度換倉賣出（非立即賣出）">⚠ 已不合格</span>'
           : '';
         var tr = document.createElement('tr');
         tr.innerHTML =
-          '<td>'+esc(displayCode(h.ticker))+' '+esc(h.name||'')+heatTag+ineligibleTag+'</td>'+
+          '<td>'+esc(displayCode(h.ticker))+' '+esc(h.name||'')+marketTag+heatTag+ineligibleTag+'</td>'+
           '<td>#'+(h.rank!=null?h.rank:'—')+'</td>'+
           '<td>'+fmtNum(h.score,2)+'</td>'+
           '<td style="text-align:left">'+esc(h.entry_date||'—')+'</td>'+

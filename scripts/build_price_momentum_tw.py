@@ -29,11 +29,15 @@ lines.
 
 FROZEN SPEC (PREREG'd 2026-09-16 — LOCKED, do not tune here)
 --------------------------------------------------------------
-Universe  : TWSE-listed companies (證交所 OpenAPI t187ap03_L, browser UA,
-            requests, timeout 60). Keep 4-digit numeric 公司代號 only
-            (excludes ETF/warrants/preferred shares); financials are KEPT
-            (P10 is a pure-price series — the US line doesn't exclude any
-            GICS sector either). TPEx (上櫃) is not included. Each name
+Universe  : TWSE-listed (證交所 OpenAPI t187ap03_L) UNION TPEx-listed
+            (櫃買中心 OpenAPI mopsfin_t187ap03_O) companies — browser UA,
+            requests, timeout 60; yfinance suffix .TW / .TWO. Keep 4-digit
+            numeric codes only (excludes ETF/warrants/preferred shares);
+            financials are KEPT (P10 is a pure-price series — the US line
+            doesn't exclude any GICS sector either). Excluded (2026-09-16
+            same-day amendments, before any rebalance): 創新板 names (簡稱
+            ends in -創) and names listed < 365 days by the exchange's own
+            listing date (yfinance history includes 興櫃 prices). Each name
             carries `name` (公司簡稱) and `sector` (產業別 code -> Chinese
             name via a hardcoded table; codes not in the table -> '未分類').
             A liquidity gate then narrows the >=253-close-sufficient names
@@ -188,6 +192,7 @@ ROOT = Path(__file__).resolve().parent.parent
 TRACK_JSON = ROOT / 'docs' / 'research' / 'price-momentum-tw' / 'track.json'
 
 TWSE_LISTED_URL = 'https://openapi.twse.com.tw/v1/opendata/t187ap03_L'
+TPEX_LISTED_URL = 'https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap03_O'
 BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
 BENCH_TICKER = '0050.TW'
 
@@ -223,6 +228,8 @@ LINE_KEYS = ('L12', 'L6')
 # ── TW-specific universe thresholds (design spec §五 — the "換掉的三樣東西"
 #    part of the spec, not a tuning of the frozen thresholds above) ──
 MIN_LISTED_TW = 700          # fail-safe floor on TWSE OpenAPI 4-digit listed-code count
+MIN_LISTED_TPEX = 500        # fail-safe floor on TPEx OpenAPI 4-digit listed-code count
+                              # (2026-09-16 day-2 amendment — universe widened to TWSE ∪ TPEx)
 MIN_PRICE_COVERAGE_TW = 250  # fail-safe floor on >=253-close ticker count, ACROSS ALL
                               # TWSE-listed codes (not just the liquidity-gated 300);
                               # also the download-retry gate threshold
@@ -246,16 +253,21 @@ PREREG = {
     ),
     "universe_and_data": {
         "universe": (
-            "上市普通股。來源：證交所 OpenAPI t187ap03_L（上市公司基本資料，"
-            "requests、瀏覽器 UA、timeout 60）。保留公司代號為 4 位數字者（排除 "
-            "ETF、權證、特別股），金融股保留——P10 是純價格序列，美股版也未排除"
-            "任何 GICS 產業。每檔記 name（公司簡稱）與 sector（產業別代碼轉中文，"
-            "對照表寫死在 script 裡）。上櫃（TPEx）不納入。"
-            "創新板不納入（公司簡稱以「-創」結尾者；API 無板別欄位，用簡稱慣例辨識）。"
-            "上市日期距執行日不足 365 天者不納入——用 API 的「上市日期」算，不用價格筆數算，"
-            "因為 yfinance 的 .TW 歷史含興櫃時期價格，253 筆收盤不能代表已上市一年。"
-            "（以上兩條為 2026-09-16 第一天修正：首次 inception 後同日、任何換倉前撤回重建，"
-            "起因是 7610 聯友金屬-創 以 2025-09-09 上市之姿排兩線第一。）"
+            "上市普通股加上上櫃普通股（2026-09-16 同日第二次修正，原設計僅上市，見下）。"
+            "上市來源：證交所 OpenAPI t187ap03_L（上市公司基本資料，requests、瀏覽器 UA、"
+            "timeout 60）；上櫃來源：櫃買中心 OpenAPI mopsfin_t187ap03_O（上櫃公司基本資料，"
+            "同樣的抓法）。兩邊都只保留公司代號為 4 位數字者（排除 ETF、權證、特別股），"
+            "金融股保留——P10 是純價格序列，美股版也未排除任何 GICS 產業。每檔記 name"
+            "（公司簡稱）與 sector（產業別代碼轉中文，上市上櫃共用同一張對照表，兩個交易所"
+            "的產業別編碼體系相同）。創新板不納入（公司簡稱以「-創」結尾者；API 無板別欄位，"
+            "用簡稱慣例辨識，上市上櫃同一條規則，上櫃目前查無此類名字）。上市或上櫃日期距"
+            "執行日不足 365 天者不納入——上市用證交所「上市日期」、上櫃用櫃買中心"
+            "「DateOfListing」，都不用價格筆數算，因為 yfinance 的歷史可能含興櫃時期價格。"
+            "同一代號若兩邊都出現（理論上不會發生），以上市資料優先。"
+            "（創新板與上市未滿一年兩條排除規則為 2026-09-16 第一天修正：首次 inception 後"
+            "同日、任何換倉前撤回重建，起因是 7610 聯友金屬-創 以 2025-09-09 上市之姿排兩線"
+            "第一。名單擴為上市 ∪ 上櫃為同日第二次修正：原先上櫃不納入，本次撤回重建改為"
+            "納入，同樣在任何換倉前完成，未發生任何換倉。）"
         ),
         "liquidity_gate": (
             "流動性閘（美股版沒有的一步，因為美股版直接借用 S&P 500 成分當大型股"
@@ -309,9 +321,10 @@ PREREG = {
     },
     "fail_safe": (
         "以下任一 → print warning、exit 0、完全不動 track.json：TWSE OpenAPI 抓取失敗，或 "
-        "4 位數字代碼少於 700 筆；價格資料充足（≥253 closes）的 ticker 數少於 250（涵蓋全部"
-        "上市代碼，非僅流動性前 300）；0050.TW 序列為空；任何未捕捉例外（top-level try/except "
-        "包 main）。"
+        "4 位數字代碼少於 700 筆；TPEx OpenAPI 抓取失敗，或 4 位數字代碼少於 500 筆——兩邊"
+        "任一縮水都中止，不准只用單邊資料靜默跑完；價格資料充足（≥253 closes）的 ticker 數"
+        "少於 250（涵蓋全部上市 ∪ 上櫃代碼，非僅流動性前 300）；0050.TW 序列為空；任何未捕捉"
+        "例外（top-level try/except 包 main）。"
     ),
     "kill_conditions": {
         "evaluation_point": "正式評估點 2028-09-16（24 個月）；期中讀數可看、不具裁決力。No re-tuning、no re-adding、closed stays closed。",
@@ -360,16 +373,21 @@ PREREG = {
     "market_adaptation": {
         "title": "市場調整（台股版與美股版的三處差異；其餘規格逐字相同）",
         "universe_swap": (
-            "名單來源由 Wikipedia S&P 500 + NQ100_EXTRAS 換成證交所 OpenAPI 上市公司名冊"
-            "（4 位數字代碼、金融股保留、上櫃不納入、創新板不納入、上市未滿 365 天不納入），並加一道美股版沒有的流動性閘：對通過 "
-            "253 筆收盤門檻的名字，取最近 120 個交易日「收盤 × 成交股數」中位數，降冪取前 "
-            "300 名為本週 universe——這是用價量資料機械代理「大型股」，功能等同美股版用 "
-            "S&P 500 成分篩大型股。"
+            "名單來源由 Wikipedia S&P 500 + NQ100_EXTRAS 換成證交所 OpenAPI 上市公司名冊 "
+            "∪ 櫃買中心 OpenAPI 上櫃公司名冊（4 位數字代碼、金融股保留、創新板不納入、"
+            "上市或上櫃未滿 365 天不納入；同代號兩邊都有時以上市優先，理論上不會發生），"
+            "並加一道美股版沒有的流動性閘：對通過 253 筆收盤門檻的名字，取最近 120 個交易日"
+            "「收盤 × 成交股數」中位數，降冪取前 300 名為本週 universe——這是用價量資料機械"
+            "代理「大型股」，功能等同美股版用 S&P 500 成分篩大型股。（原設計僅納入上市、"
+            "上櫃不納入；2026-09-16 同日第二次修正改為上市 ∪ 上櫃——P10 是市場純價格動能的"
+            "機械測試，沒有理由只涵蓋半個市場。本次修正在首次 inception 後、任何換倉前完成，"
+            "未發生任何換倉。）"
         ),
         "benchmark_swap": (
             "基準由 SPY 換成元大台灣 50（0050.TW）還原收盤——0050 對台股的代表性等同 SPY "
             "對美股，但集中度更高（成分股中台積電占比約五成到六成）；加權指數 ^TWII 不含"
-            "股利、會讓基準變好打，故不用。"
+            "股利、會讓基準變好打，故不用。名單納入上櫃後，與基準的母體已不完全對齊——"
+            "0050 成分股全部是上市股，不含任何上櫃股；這是已知取捨，不因此換基準。"
         ),
         "kill_2_swap": (
             "kill ②（與 Momentum-5 shadow line C 對帳）不適用——台股沒有對應的 "
@@ -394,15 +412,20 @@ def fetch_twse_listed(as_of_date):
     同一種抓法（見 data/universe_builder.py 第 85-105 行）。只保留公司代號為 4
     位數字者（排除 ETF/權證/特別股）；金融股保留（P10 是純價格序列，不排除任何
     產業）。產業別代碼經 SECTOR_MAP 轉中文，不在表內者記「未分類」。回傳
-    (code_map, listed_raw)：code_map = {code: {'name': 公司簡稱, 'sector': ...}}，
-    listed_raw = API 原始筆數（4 位數字過濾前），供 coverage 揭露用。少於
-    MIN_LISTED_TW 筆 4 位數字代碼 → FailSafeAbort。
+    (code_map, listed_raw)：code_map = {code: {'name': 公司簡稱, 'sector': ...,
+    'market': 'TWSE'}}，listed_raw = API 原始筆數（4 位數字過濾前），供 coverage
+    揭露用。少於 MIN_LISTED_TW 筆 4 位數字代碼 → FailSafeAbort。
 
     2026-09-16 day-1 amendment（首次 inception 後同日、任何換倉前撤回重建）：
     另排除兩類——(a) 創新板：公司簡稱以「-創」結尾（API 無板別欄位，這是證交所
     的簡稱慣例）；(b) 上市未滿 MIN_LISTING_DAYS 天：以 API 的「上市日期」計，
     因 yfinance 的 .TW 歷史含興櫃時期價格，253 筆收盤不能代表上市年資（首例
-    7610 聯友金屬-創，2025-09-09 上市卻有 852 筆收盤）。"""
+    7610 聯友金屬-創，2025-09-09 上市卻有 852 筆收盤）。
+
+    2026-09-16 day-2 amendment（同一天再次修正，見 fetch_tpex_listed() 與
+    PREREG['market_adaptation']['universe_swap']）：universe 由「僅上市」擴為
+    「上市 ∪ 上櫃」，`market` 欄位即為這次修正新增，供 build() 合併與 holdings
+    標記市場用。"""
     try:
         resp = requests.get(TWSE_LISTED_URL, headers={'User-Agent': BROWSER_UA}, timeout=60)
         data = resp.json()
@@ -427,11 +450,57 @@ def fetch_twse_listed(as_of_date):
             continue  # listed < MIN_LISTING_DAYS ago (2026-09-16 amendment)
         ind_code = str(row.get('產業別', '')).strip()
         code_map[code] = {'name': name, 'sector': SECTOR_MAP.get(ind_code, '未分類'),
-                          'listed': listed_on.isoformat()}
+                          'listed': listed_on.isoformat(), 'market': 'TWSE'}
 
     if len(code_map) < MIN_LISTED_TW:
         raise FailSafeAbort(
             f"TWSE listed 4-digit codes only {len(code_map)} (< {MIN_LISTED_TW})")
+    return code_map, listed_raw
+
+
+def fetch_tpex_listed(as_of_date):
+    """TPEx 上櫃公司名冊 — OpenAPI mopsfin_t187ap03_O（requests、瀏覽器 UA、
+    timeout 60）。2026-09-16 day-2 amendment：universe 由「僅上市」擴為「上市 ∪
+    上櫃」，本函式與 fetch_twse_listed() 並列，過濾規則逐字相同，只是欄位名換成
+    該 API 的英文欄位：SecuritiesCompanyCode（代號）、CompanyAbbreviation（簡
+    稱）、SecuritiesIndustryCode（產業別代碼，與證交所同一套編碼體系）、
+    DateOfListing（上櫃日期，格式同為 YYYYMMDD，已實測確認）。只保留代號為 4
+    位數字者；簡稱以「-創」結尾者排除（上櫃理論上沒有創新板名字，規則仍與上市
+    一致）；上櫃日期距 as_of_date 不足 MIN_LISTING_DAYS 天者排除；產業別代碼查
+    同一張 SECTOR_MAP，查不到記「未分類」。回傳 (code_map, listed_raw)：
+    code_map = {code: {'name': 公司簡稱, 'sector': ..., 'market': 'TPEx'}}，
+    listed_raw = API 原始筆數（4 位數字過濾前）。少於 MIN_LISTED_TPEX 筆 4 位
+    數字代碼 → FailSafeAbort。API 抓取失敗同樣 → FailSafeAbort（不准只用上市單
+    邊靜默縮水，見 PREREG['fail_safe']）。"""
+    try:
+        resp = requests.get(TPEX_LISTED_URL, headers={'User-Agent': BROWSER_UA}, timeout=60)
+        data = resp.json()
+    except Exception as e:
+        raise FailSafeAbort(f"TPEx OpenAPI mopsfin_t187ap03_O fetch failed ({type(e).__name__}: {e})")
+
+    listed_raw = len(data)
+    code_map = {}
+    for row in data:
+        code = str(row.get('SecuritiesCompanyCode', '')).strip()
+        if not (len(code) == 4 and code.isdigit()):
+            continue
+        name = str(row.get('CompanyAbbreviation', '')).strip()
+        if name.endswith(INNOVATION_BOARD_SUFFIX):
+            continue  # 創新板 excluded (rule parity with TWSE side; TPEx has none today)
+        listed_str = str(row.get('DateOfListing', '')).strip()
+        try:
+            listed_on = datetime.strptime(listed_str, '%Y%m%d').date()
+        except ValueError:
+            continue  # unparsable listing date -> treated as not yet seasoned
+        if (as_of_date - listed_on).days < MIN_LISTING_DAYS:
+            continue  # listed < MIN_LISTING_DAYS ago
+        ind_code = str(row.get('SecuritiesIndustryCode', '')).strip()
+        code_map[code] = {'name': name, 'sector': SECTOR_MAP.get(ind_code, '未分類'),
+                          'listed': listed_on.isoformat(), 'market': 'TPEx'}
+
+    if len(code_map) < MIN_LISTED_TPEX:
+        raise FailSafeAbort(
+            f"TPEx listed 4-digit codes only {len(code_map)} (< {MIN_LISTED_TPEX})")
     return code_map, listed_raw
 
 
@@ -622,13 +691,15 @@ def mark_to_market(cash, holdings, price_now):
     return total, stale
 
 
-def do_rebalance(nav, holdings, elig, price_now, as_of, name_map):
+def do_rebalance(nav, holdings, elig, price_now, as_of, name_map, market_map):
     """Sell anything not in this month's eligible top-40; backfill empty
     seats with the highest-ranked unheld eligible names; reset the WHOLE
     resulting holding set to equal weight NAV/N_SEATS. Shared code path for
     both lines — the caller passes in that line's own elig ranking.
     name_map = {ticker: 公司簡稱} — TW-only addition so each holding also
-    carries a display name (design spec §四)."""
+    carries a display name (design spec §四). market_map = {ticker: 'TWSE'|
+    'TPEx'} — 2026-09-16 day-2 amendment, so each holding also carries which
+    market it trades on."""
     top40 = set(elig.head(TOP_HOLD).index)
     held_tickers = [h['ticker'] for h in holdings]
     survivors = [t for t in held_tickers if t in top40]
@@ -656,6 +727,7 @@ def do_rebalance(nav, holdings, elig, price_now, as_of, name_map):
         new_holdings.append({
             'ticker': t,
             'name': name_map.get(t, ''),
+            'market': market_map.get(t, ''),
             'entry_date': as_of,
             'entry_price': round(float(p), 2),
             'rank': int(row['rank']),
@@ -669,17 +741,17 @@ def do_rebalance(nav, holdings, elig, price_now, as_of, name_map):
     return new_holdings, cash, sells, buys, cash_seats
 
 
-def process_line_inception(elig, price_now, as_of, eligible_count, name_map):
+def process_line_inception(elig, price_now, as_of, eligible_count, name_map, market_map):
     """Build one line's inception state (NAV=100, first rebalance). Shared
     by both L12 and L6 — see build()."""
     nav = 100.0
-    holdings, cash, sells, buys, cash_seats = do_rebalance(nav, [], elig, price_now, as_of, name_map)
+    holdings, cash, sells, buys, cash_seats = do_rebalance(nav, [], elig, price_now, as_of, name_map, market_map)
     for h in holdings:
         h['eligible'] = True  # rebalance-fresh holdings are always eligible by construction
     rebalance_history = [{
         'date': as_of, 'event': 'inception', 'sells': [], 'buys': buys,
-        'holdings': [{'ticker': h['ticker'], 'name': h.get('name', ''), 'rank': h['rank'],
-                      'score': h['score'], 'units': round(h['units'], 6)} for h in holdings],
+        'holdings': [{'ticker': h['ticker'], 'name': h.get('name', ''), 'market': h.get('market', ''),
+                      'rank': h['rank'], 'score': h['score'], 'units': round(h['units'], 6)} for h in holdings],
         'eligible_count': eligible_count, 'cash_seats': cash_seats, 'n_sells': 0,
     }]
     line_state = {
@@ -695,7 +767,7 @@ def process_line_inception(elig, price_now, as_of, eligible_count, name_map):
 
 
 def process_line_update(line_key, elig, price_now, as_of, is_new_month, line_state,
-                         eligible_count, data_gaps_out, name_map):
+                         eligible_count, data_gaps_out, name_map, market_map):
     """Mark-to-market (and rebalance, if is_new_month) one line's existing
     state in place. Shared by both L12 and L6 — see build(). Returns
     (nav_now, changelog_event_or_None)."""
@@ -709,13 +781,13 @@ def process_line_update(line_key, elig, price_now, as_of, is_new_month, line_sta
             data_gaps_out.append({'date': as_of, 'line': line_key,
                                   'reason': 'stale price pre-rebalance', 'tickers': stale})
         new_holdings, new_cash, sells, buys, cash_seats = do_rebalance(
-            nav_pre, holdings, elig, price_now, as_of, name_map)
+            nav_pre, holdings, elig, price_now, as_of, name_map, market_map)
         for h in new_holdings:
             h['eligible'] = True  # rebalance-fresh holdings are always eligible by construction
         rebalance_entry = {
             'date': as_of, 'event': 'rebalance', 'sells': sells, 'buys': buys,
-            'holdings': [{'ticker': h['ticker'], 'name': h.get('name', ''), 'rank': h['rank'],
-                          'score': h['score'], 'units': round(h['units'], 6)} for h in new_holdings],
+            'holdings': [{'ticker': h['ticker'], 'name': h.get('name', ''), 'market': h.get('market', ''),
+                          'rank': h['rank'], 'score': h['score'], 'units': round(h['units'], 6)} for h in new_holdings],
             'eligible_count': eligible_count, 'cash_seats': cash_seats, 'n_sells': len(sells),
         }
         if line_state['rebalance_history'] and line_state['rebalance_history'][-1]['date'] == as_of:
@@ -757,11 +829,28 @@ def build():
     as_of = now.strftime('%Y-%m-%d')
     print(f"=== Price-Momentum TW (P10-TW) Build: {as_of} ===")
 
-    code_map, listed_raw = fetch_twse_listed(now.date())
-    codes = sorted(code_map.keys())
-    tickers = [f"{c}.TW" for c in codes]
-    name_map = {f"{c}.TW": info['name'] for c, info in code_map.items()}
-    print(f"TWSE listed 4-digit codes, ex-創新板, listed >= {MIN_LISTING_DAYS}d: {len(tickers)} (raw API rows: {listed_raw})")
+    # ── universe (2026-09-16 day-2 amendment): TWSE ∪ TPEx. Any single API
+    #    failure aborts the whole build — never silently shrink to one side. ──
+    code_map_twse, listed_raw_twse = fetch_twse_listed(now.date())
+    code_map_tpex_raw, listed_raw_tpex = fetch_tpex_listed(now.date())
+    # TWSE takes priority on a code collision (theoretical only — see spec).
+    code_map_tpex = {c: info for c, info in code_map_tpex_raw.items() if c not in code_map_twse}
+    n_tpex_dropped_dupe = len(code_map_tpex_raw) - len(code_map_tpex)
+
+    twse_codes = sorted(code_map_twse.keys())
+    tpex_codes = sorted(code_map_tpex.keys())
+    # combined ticker list, kept fully alphabetical (by full ticker string) so
+    # the existing score-tie-break-by-ticker-alphabetical-order convention
+    # extends unchanged across both markets (see build_elig()).
+    tickers = sorted([f"{c}.TW" for c in twse_codes] + [f"{c}.TWO" for c in tpex_codes])
+    name_map = {f"{c}.TW": info['name'] for c, info in code_map_twse.items()}
+    name_map.update({f"{c}.TWO": info['name'] for c, info in code_map_tpex.items()})
+    market_map = {f"{c}.TW": 'TWSE' for c in twse_codes}
+    market_map.update({f"{c}.TWO": 'TPEx' for c in tpex_codes})
+    print(f"TWSE listed 4-digit codes, ex-創新板, listed >= {MIN_LISTING_DAYS}d: {len(twse_codes)} (raw API rows: {listed_raw_twse})")
+    print(f"TPEx listed 4-digit codes, ex-創新板, listed >= {MIN_LISTING_DAYS}d: {len(tpex_codes)} (raw API rows: {listed_raw_tpex}"
+          f"{f'; {n_tpex_dropped_dupe} dropped as TWSE-code duplicates' if n_tpex_dropped_dupe else ''})")
+    print(f"combined universe (TWSE ∪ TPEx) 4-digit codes: {len(tickers)}")
 
     px, bench = download_prices_with_retry(tickers)
     bench_close = float(bench.iloc[-1])
@@ -780,7 +869,7 @@ def build():
             continue
         n_price_sufficient_all += 1
         price_sufficient.append(t)
-    print(f"price-sufficient (>=253 closes, ALL TWSE listed): {n_price_sufficient_all}")
+    print(f"price-sufficient (>=253 closes, ALL TWSE+TPEx listed): {n_price_sufficient_all}")
 
     if n_price_sufficient_all < MIN_PRICE_COVERAGE_TW:
         raise FailSafeAbort(f"price coverage {n_price_sufficient_all} < {MIN_PRICE_COVERAGE_TW}")
@@ -828,9 +917,13 @@ def build():
     }
 
     coverage = dict(
-        listed_raw=listed_raw,
+        listed_raw=listed_raw_twse,
+        listed_raw_tpex=listed_raw_tpex,
+        twse_codes=len(twse_codes),
+        tpex_codes=len(tpex_codes),
         price_sufficient_all=n_price_sufficient_all,
         universe=len(universe),
+        universe_tpex=sum(1 for t in universe if market_map.get(t) == 'TPEx'),
         L12=dict(scored=len(rows_l12), eligible=int(len(elig['L12']))),
         L6=dict(scored=len(rows_l6), eligible=int(len(elig['L6']))),
     )
@@ -846,7 +939,7 @@ def build():
         lines_state = {}
         for lk in LINE_KEYS:
             line_state, nav = process_line_inception(
-                elig[lk], price_now, as_of, coverage[lk]['eligible'], name_map)
+                elig[lk], price_now, as_of, coverage[lk]['eligible'], name_map, market_map)
             lines_state[lk] = line_state
             nav_now[lk] = nav
             print(f"    {lk} holdings: {[h['ticker'] for h in line_state['holdings']]}")
@@ -863,7 +956,7 @@ def build():
             'data_gaps': [],
             'changelog': [{
                 'date': as_of,
-                'event': 'P10 台股（雙線 L12/L6）PREREG 凍結（2026-09-16），兩線同日 inception。2026-09-15 的首次 inception 於同日撤回重建：名單加排創新板與上市未滿 365 天者（起因 7610 聯友金屬-創），撤回時尚未發生任何換倉。',
+                'event': 'P10 台股（雙線 L12/L6）PREREG 凍結（2026-09-16），兩線同日 inception。2026-09-15 的首次 inception 於同日撤回重建：名單加排創新板與上市未滿 365 天者（起因 7610 聯友金屬-創），撤回時尚未發生任何換倉。同日第二次修正：名單由僅上市擴為上市 ∪ 上櫃（合併後同一道流動性閘取前 300 名），同樣在任何換倉前撤回重建，未發生任何換倉。',
             }],
         }
     else:
@@ -873,7 +966,7 @@ def build():
         for lk in LINE_KEYS:
             nav, event = process_line_update(
                 lk, elig[lk], price_now, as_of, is_new_month,
-                state['lines'][lk], coverage[lk]['eligible'], data_gaps, name_map)
+                state['lines'][lk], coverage[lk]['eligible'], data_gaps, name_map, market_map)
             nav_now[lk] = nav
             if event:
                 changelog_events.append(event)
@@ -958,7 +1051,7 @@ def main():
     for lk in LINE_KEYS:
         ls = state['lines'][lk]
         print(f"    {lk} holdings ({len(ls['holdings'])}): "
-              f"{[(h['ticker'], h['name'], h['rank'], h['score'], h.get('heat')) for h in ls['holdings']]}")
+              f"{[(h['ticker'], h['name'], h.get('market'), h['rank'], h['score'], h.get('heat')) for h in ls['holdings']]}")
         print(f"    {lk} flags: {ls['flags']}")
 
 
