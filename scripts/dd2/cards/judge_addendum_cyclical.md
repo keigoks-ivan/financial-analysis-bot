@@ -1,5 +1,5 @@
 <!-- source: .claude/skills/stock-analyst/references/cyclical-lens.md sha256:b13d95972edd47ea git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
-<!-- load-when: archetype.primary 或 secondary ∈ {循環/商品, EMS/ODM}（QC-43 判定，含 capex 建設循環／需求量循環子型） -->
+<!-- load-when: archetype.primary 或 secondary ∈ {循環/商品，EMS/ODM}（QC-43 判定，含 capex 建設循環／需求量循環子型） -->
 
 # QC-42 循環交易讀數（附錄 B）附卡
 
@@ -20,7 +20,7 @@ capex 建設循環（ORCL 型，6 訊號）：capex/折舊比(低/正常化=買�
 
 ## 四、落欄與 §13 row 8b 接線
 `cycle_position`(深谷投降｜早循環｜中循環｜晚循環｜過熱頂部)＋`cycle_verdict`(右側可追蹤｜等回踩｜頂部觀望｜未觸發)；非循環 archetype 不填，整欄省略。[§落欄]
-接 §13 row 8b：位置∈{深谷投降,早循環}+五閘全過+moat底線+獨立critic冷讀通過→落「進場・條件式(循環衛星)」(倉位上限3%)；任一不成立→只落研究提名，§13維持觀望。驗證失敗不得升級，只能降回觀望。`trade_stance`僅進HTML不入dd-meta。[§row8b]
+接 §13 row 8b：位置∈{深谷投降，早循環}+五閘全過+moat底線+獨立critic冷讀通過→落「進場・條件式(循環衛星)」(倉位上限3%)；任一不成立→只落研究提名，§13維持觀望。驗證失敗不得升級，只能降回觀望。`trade_stance`僅進HTML不入dd-meta。[§row8b]
 
 ## 五、雙制度與兩軌背離
 有 secular sleeve + commodity sleeve → 循環鏡頭只套 commodity sleeve，secular sleeve 一句話另計(不隨循環賣)。[§⑤]

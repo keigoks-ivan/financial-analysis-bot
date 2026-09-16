@@ -21,7 +21,7 @@
 | 段落 | 處置 | 理由 |
 |---|---|---|
 | 北極星目標句（好生意優先好價格、獲利品質、ROIC持續期、護城河產業結構） | 保留（濃縮） | 併入卡頭，是判斷①⑤的價值前提，非純身份描述 |
-| 「身份：買側資深分析師+PM決策層...分工：倉位%由portfolio-manager組合層決定」 | 部分保留 | 身份句保留一句於卡頭；分工細節（decision_out只給倉位角色不拍板組合佔比）丟棄——decision_out矩陣欄程式投影，非judge輸出 |
+| 「身份：買側資深分析師+PM決策層……分工：倉位%由portfolio-manager組合層決定」 | 部分保留 | 身份句保留一句於卡頭；分工細節（decision_out只給倉位角色不拍板組合佔比）丟棄——decision_out矩陣欄程式投影，非judge輸出 |
 
 ## §0.5｜三個共用約定（行26-32）
 
@@ -45,7 +45,7 @@
 | 段落 | 處置 | 理由 |
 |---|---|---|
 | 六題總覽表（問題/判斷句落在/每份必交的數字/白話欄） | 丟棄 | 白話欄`plain.six.*`為程式投影欄位；其餘「判斷句落在」「必交數字」內容已在下方各問詳細段落重複覆蓋，總覽表是冗餘摘要 |
-| 「六題都要有reasoning推導(§7)」「不要為讓每題等長而灌水...」 | 保留（濃縮） | 併入共用約定「一次判斷、寫一遍」條目 |
+| 「六題都要有reasoning推導(§7)」「不要為讓每題等長而灌水……」 | 保留（濃縮） | 併入共用約定「一次判斷、寫一遍」條目 |
 
 ## §2 問一｜怎麼賺錢（行61-71）
 
@@ -137,7 +137,7 @@
 |---|---|---|
 | decision_inputs判斷密集七欄表格 | 保留 | ⑤決策輸入的字面核心，逐欄保留（含缺值方向） |
 | 覆寫層（val_denominator_disputed/qc49_inherit_prior+prior_verdict+prior_role/held_now）、三個衍生欄一律null | 保留 | 告知judge不得自行計算三個衍生欄，屬硬性禁令 |
-| **「row 8a資格」「row 8b資格」兩段**（無Hard/Soft Veto+signal≥B+runway🟢+動能非爆發尾端...等完整條件組合） | **丟棄** | 程式投影——這是`dd_decision.py`用來機械路由decision_out.role的資格判定，tmpl明確排除decision_out矩陣欄，judge只需正確填好decision_inputs各欄，資格運算本身不歸judge |
+| **「row 8a資格」「row 8b資格」兩段**（無Hard/Soft Veto+signal≥B+runway🟢+動能非爆發尾端……等完整條件組合） | **丟棄** | 程式投影——這是`dd_decision.py`用來機械路由decision_out.role的資格判定，tmpl明確排除decision_out矩陣欄，judge只需正確填好decision_inputs各欄，資格運算本身不歸judge |
 | **「裁決品質四問」整段**（①相鄰裁決雙向檢核②問題屬性路由③唯一約束隔離④裁決翻譯層，含「已持有與新邊際資金動作分開寫」） | **丟棄** | 程式投影／篇幅取捨（自述）——內容多數指向decision_out的角色與動作翻譯（清倉/調整/加碼三選一），非judge直接寫入decision_inputs的欄位；**此為我最不確定該不該丟的段落之一**，因「觀望須點名binding constraint，rearm_trigger=該約束的否定」這條對④的rearm_trigger品質有直接指導意義 |
 | **「倉位角色與進場計畫（decision_out.role）」整段**（核心/衛星/追蹤/不持有四值、迴避-不持有規則、觀望-追蹤規則、row 8a/8b倉位上限） | **丟棄** | 程式投影——tmpl明確列出decision_out.role為排除項（「填了即FAIL」清單內），此為`dd_decision.py`計算後的輸出，非judge欄位 |
 | **「加減碼與持有年限」整段**（長抱賣出分軌硬規則、持有年限短中長三段依據） | **丟棄** | 程式投影——與decision_out.role緊密綁定的行動翻譯規則，同上理由排除 |

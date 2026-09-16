@@ -1,5 +1,5 @@
 <!-- source: .claude/skills/stock-analyst/references/archetype-gatesets.md sha256:d173785f92087f36 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
-<!-- load-when: archetype.primary ∈ {金融, 未獲利高成長, 轉機/特殊情境, 受監管公用/穩定內需} -->
+<!-- load-when: archetype.primary ∈ {金融，未獲利高成長，轉機/特殊情境，受監管公用/穩定內需} -->
 
 # archetype 換尺 gate-set 附卡（QC-44/45/46）
 
