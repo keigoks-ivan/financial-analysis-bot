@@ -433,7 +433,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
       <br>• <strong>財務品質分（QualityGate，0–1）</strong>：帶「可原諒條件」的品質閘（4 條件計分：FCF / ROIC / EPS CAGR / PEG；<strong>2026-07-03 起 D/E 退出計分、降為 ⚠ advisory</strong>）—— <code>4/4</code> → 1.00；<code>3/4</code> 唯一 fail 在 <strong>PEG</strong>（估值，非品質本體）→ 0.85；<code>3/4</code> fail 在 <strong>FCF / ROIC / EPS CAGR</strong>（品質本體缺陷）→ 0.50；<code>2/4</code> → 0.30；<code>≤1/4</code> → 0.10。任一條件無資料（灰色）→ 該條退出分母、按比例換算後套同一映射，並標 <code>quality_gate_partial</code>。
       <br>• <strong>護城河分（MoatScore，0–1）</strong>：<code>moat_score/10</code> × 趨勢乘數（<code>↑ ×1.10 / → ×1.00 / ↓ ×0.80</code>），封頂 1.0。無 moat 資料 → 0.50。
       <br>• <strong>上修動能分（RevisionScore，0–1）</strong>：FY1/FY2/FY3 各自上修（diff ≥ +0.5%）= +1 / 持平 = 0 / 下修（≤ −0.5%）= −1；<code>raw = 0.2·FY1 + 0.3·FY2 + 0.5·FY3</code>（<strong>FY3 權重最大 = 成長曲線後段</strong>），<code>上修動能分 = (raw+1)/2</code>。FY3 上修幅度 &gt; FY1 上修幅度（後段變陡）再 +0.05。「新」chip / 無 baseline → 0.50 中性，標 <code>revision_no_baseline</code>。
-      <br>• <strong>兩條硬性否決（不進公式，直接處置）</strong>：① FY1/FY2/FY3 <strong>三欄全部下修</strong> → 綜合評分強制歸 0、該列沉底 + <span style="color:var(--neg)">⛔</span>（下修是領先指標、品質分是落後指標，兩者衝突時以下修訊號為準）；② 護城河趨勢 <code>↓</code> 且<strong>非四條件全過</strong>（<code>pass_count &lt; 4</code>）→ 綜合評分封頂 0.50。
+      <br>• <strong>兩條硬性否決（不進公式，直接處置）</strong>：① FY1/FY2/FY3 <strong>三欄全部下修</strong> → 綜合評分強制歸 0、該列沉底 + <span style="color:var(--neg)">⛔</span>（下修是領先指標、品質分是落後指標，兩者衝突時以下修訊號為準）；② 護城河趨勢 <code>↓</code> 且<strong>非四條件全過</strong>（<code>pass_count &lt; 4</code>）→ 綜合評分封頂 0.50。<strong>2026-09-17 起</strong>：FY1/FY2/FY3 修正 % 一律以公司財報幣別計算（非原始 USD），避免非美元公司在兩次匯出之間單純因匯率變動就被誤判全下修否決；查不到財報幣別或當日匯率時才退回 USD 對比，個股欄位 hover 會標「未排除匯率」。
       <br>權重與映射值寫在 <code>scripts/build_dd_screener.py</code> 檔頭常數（<code>FUNNEL_*</code>），server 端 build 時算好寫進 <code>latest.json</code>（<code>funnel_rank</code> + 三個子分 + 各 flag）。表頭「綜合」欄 hover 看子分拆解。
     </div>
 
@@ -1211,6 +1211,14 @@ function _renderRawEpsCell(s, field) {
       chip = '<div style="font-size:9px;color:' + color + ';font-weight:600;margin-top:1px">'
            + arrow + sign + rev.toFixed(1) + '%' + ageSuffix + '</div>';
       tipBase += ' | vs ' + baseTipName + ' ' + (up ? '上修' : '下修') + ' ' + sign + rev.toFixed(1) + '%';
+    }
+    // 2026-09-17: 修正動能一律以公司財報幣別計算（非原始 USD），排除兩次
+    // 匯出之間純匯率變動造成的假修正（見 eps_fx_normalize.py）；查不到幣別
+    // 或匯率時退回 USD 對比並標「未排除匯率」，避免誤讀為真上修/下修。
+    if (s.eps_revision_currency && s.eps_revision_currency !== 'USD') {
+      tipBase += s.eps_revision_fx_normalized
+        ? (' | 以 ' + s.eps_revision_currency + ' 計算，已排除匯率')
+        : ' | 未排除匯率';
     }
   }
   var tip = ' title="' + tipBase + '"';

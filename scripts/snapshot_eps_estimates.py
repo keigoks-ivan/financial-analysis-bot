@@ -62,15 +62,24 @@ SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 try:
-    from dd_screener_quality import EU_SUFFIX_MAP
+    from dd_screener_quality import EU_SUFFIX_MAP, TICKER_YF_OVERRIDE
 except ImportError:
     EU_SUFFIX_MAP: dict[str, str] = {}
+    TICKER_YF_OVERRIDE: dict[str, str] = {}
 
 from load_eps_estimates_xlsx import (
     ExcelSnapshot,
     find_excel_for_month,
     find_latest_excel,
     load_excel,
+)
+from eps_fx_normalize import (
+    get_fx_rate,
+    get_reporting_currency,
+    load_fx_daily_cache,
+    load_reporting_currency_cache,
+    save_fx_daily_cache,
+    save_reporting_currency_cache,
 )
 
 OUTPUT_DIR = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"
@@ -81,6 +90,20 @@ TAIPEI_TZ = timezone(timedelta(hours=8))
 
 def _yf_ticker_for(dd_ticker: str) -> str:
     return f"{dd_ticker}{EU_SUFFIX_MAP[dd_ticker]}" if dd_ticker in EU_SUFFIX_MAP else dd_ticker
+
+
+def _yf_ticker_full(dd_ticker: str) -> str:
+    """Same resolution as build_dd_screener.py's _yf_ticker_for_ma() (explicit
+    override -> EU suffix -> pass-through) — used ONLY for the reporting-
+    currency lookup below so it agrees with the rest of the build for ADR /
+    explicit-override tickers (LVMH -> MC.PA, ABB -> ABBNY, ...). Kept
+    separate from `_yf_ticker_for` above (EU-suffix only) to avoid changing
+    the existing trailing_eps / yfinance-fallback fetch behavior."""
+    if dd_ticker in TICKER_YF_OVERRIDE:
+        return TICKER_YF_OVERRIDE[dd_ticker]
+    if dd_ticker in EU_SUFFIX_MAP:
+        return f"{dd_ticker}{EU_SUFFIX_MAP[dd_ticker]}"
+    return dd_ticker
 
 
 def _fetch_yf_one(dd_ticker: str) -> dict | None:
@@ -258,6 +281,47 @@ def snapshot_from_excel(
     if failed:
         print(f"  Failed: {', '.join(failed[:20])}" + ("..." if len(failed) > 20 else ""))
 
+    # 2026-09-17: reporting currency (per ticker) + fx_local_per_usd (per
+    # currency, as of this snapshot's date) — so a FUTURE build comparing
+    # against this baseline can FX-normalize without a history lookup (see
+    # eps_fx_normalize.py / build_dd_screener.py's _compute_fy_eps_revision).
+    # Best-effort: a yfinance failure here never blocks writing the snapshot.
+    reporting_ccy_cache = load_reporting_currency_cache()
+    fx_cache = load_fx_daily_cache()
+    print(f"\n  Fetching reporting currency for {len(universe)} tickers "
+          f"(cache: {len(reporting_ccy_cache)} known)...")
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futs = {ex.submit(get_reporting_currency, t, _yf_ticker_full(t),
+                           reporting_ccy_cache): t for t in universe}
+        for fut in as_completed(futs):
+            try:
+                fut.result(timeout=20)
+            except Exception:
+                pass  # missing currency -> per-ticker field stays None below
+
+    currencies_needed = {
+        (reporting_ccy_cache.get(t) or {}).get("currency")
+        for t in universe
+    }
+    currencies_needed.discard(None)
+    currencies_needed.discard("USD")
+    fx_local_per_usd: dict[str, float] = {}
+    for ccy in sorted(currencies_needed):
+        rate = get_fx_rate(ccy, excel.snapshot_date, fx_cache)
+        if rate is not None:
+            fx_local_per_usd[ccy] = round(rate, 6)
+    print(f"  fx_local_per_usd: {fx_local_per_usd}")
+
+    for t, rec in results.items():
+        rec["reporting_currency"] = (reporting_ccy_cache.get(t) or {}).get("currency")
+
+    if not dry_run:
+        try:
+            save_reporting_currency_cache(reporting_ccy_cache)
+            save_fx_daily_cache(fx_cache)
+        except Exception as exc:
+            print(f"  WARN: failed to save FX/reporting-currency cache: {exc}", file=sys.stderr)
+
     doc = {
         "captured_at": captured_at,
         "for_month": month_key,
@@ -268,6 +332,7 @@ def snapshot_from_excel(
         "xlsx_covered": len(xlsx_tickers),
         "yfinance_fetched": len(results) - len(xlsx_tickers),
         "failed": failed,
+        "fx_local_per_usd": fx_local_per_usd,
         "tickers": results,
     }
 

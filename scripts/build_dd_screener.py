@@ -94,6 +94,15 @@ from load_eps_estimates_xlsx import (  # noqa: E402
     find_latest_excel,
     load_latest_excel,
 )
+from eps_fx_normalize import (  # noqa: E402
+    compute_fx_normalized_revision,
+    get_fx_rate,
+    get_reporting_currency,
+    load_fx_daily_cache,
+    load_reporting_currency_cache,
+    save_fx_daily_cache,
+    save_reporting_currency_cache,
+)
 
 OUTPUT_DIR = ROOT / "docs" / "dd-screener"
 OUTPUT_PATH = OUTPUT_DIR / "latest.json"
@@ -1617,13 +1626,33 @@ def compute_asym_flag(row: dict) -> str | None:
     return None
 
 
-def _compute_fy_eps_revision(ticker: str, eps_curr: float | None,
+def _compute_fy_eps_revision(ticker: str, yf_ticker: str, eps_curr: float | None,
                               eps_next: float | None, eps_fy3: float | None,
-                              prev_snapshot: dict) -> dict:
+                              prev_snapshot: dict, current_snapshot_date: str | None,
+                              reporting_ccy_cache: dict, fx_cache: dict) -> dict:
     """Compute period-over-period FY1 / FY2 / FY3 EPS revision % vs prev snapshot.
 
+    2026-09-17: two fixes on top of the plain (eps_curr/prev_curr - 1) ratio:
+
+      1. ADR ratio — baseline snapshots (docs/dd-screener/eps-estimates-
+         snapshots/*.json, written by snapshot_eps_estimates.py) always store
+         raw Koyfin ordinary-share EPS, never ADR-adjusted, whereas `eps_curr`
+         /`eps_next`/`eps_fy3` here already went through apply_adr_ratio() at
+         the call site (build_dd_screener.py's excel_record). Re-apply the
+         same ratio to the baseline row so e.g. TSM's 3.40/4.49/5.70 baseline
+         is compared against its own ADR basis (17.0/22.45/28.5), not against
+         the current ADR-adjusted value (which made TSM show a fake +397%).
+      2. FX normalization — both snapshots' EPS are USD-converted by Koyfin at
+         each export's own FX rate, so a non-USD reporter (ASML/EUR,
+         2330.TW/TWD, RACE/EUR, ...) shows a fake revision whenever the FX
+         rate moved between the two dates. Compare in the reporting currency
+         instead (see eps_fx_normalize.py); falls back to the raw USD ratio
+         (flagged via eps_revision_fx_normalized=False) when the reporting
+         currency or either day's FX rate can't be resolved.
+
     Returns dict with eps_fy_curr_revision_pct, eps_fy_next_revision_pct,
-    eps_fy3_revision_pct, eps_revision_baseline_date. Values None when previous
+    eps_fy3_revision_pct, eps_revision_baseline_date, eps_revision_currency,
+    eps_revision_fx_normalized. Revision % values are None when previous
     snapshot is missing or ticker wasn't in prior snapshot (new addition).
     """
     out = {
@@ -1631,25 +1660,60 @@ def _compute_fy_eps_revision(ticker: str, eps_curr: float | None,
         "eps_fy_next_revision_pct": None,
         "eps_fy3_revision_pct": None,
         "eps_revision_baseline_date": None,
+        "eps_revision_currency": None,
+        "eps_revision_fx_normalized": None,
     }
     if not prev_snapshot:
         return out
     prev_tickers = prev_snapshot.get("tickers") or {}
     prev_row = prev_tickers.get(ticker)
-    out["eps_revision_baseline_date"] = (
-        prev_snapshot.get("snapshot_date") or prev_snapshot.get("for_month")
-    )
+    baseline_date = prev_snapshot.get("snapshot_date") or prev_snapshot.get("for_month")
+    out["eps_revision_baseline_date"] = baseline_date
     if prev_row is None:
         return out
-    prev_curr = prev_row.get("eps_fy_curr") or prev_row.get("eps_0y")
-    prev_next = prev_row.get("eps_fy_next") or prev_row.get("eps_1y")
-    prev_fy3 = prev_row.get("eps_fy3")
-    if eps_curr and prev_curr and prev_curr > 0:
-        out["eps_fy_curr_revision_pct"] = round((eps_curr / prev_curr - 1) * 100, 2)
-    if eps_next and prev_next and prev_next > 0:
-        out["eps_fy_next_revision_pct"] = round((eps_next / prev_next - 1) * 100, 2)
-    if eps_fy3 and prev_fy3 and prev_fy3 > 0:
-        out["eps_fy3_revision_pct"] = round((eps_fy3 / prev_fy3 - 1) * 100, 2)
+    prev_curr_raw = prev_row.get("eps_fy_curr") or prev_row.get("eps_0y")
+    prev_next_raw = prev_row.get("eps_fy_next") or prev_row.get("eps_1y")
+    prev_fy3_raw = prev_row.get("eps_fy3")
+    # Fix 1: ADR-adjust the baseline the same way the current side already was.
+    _prev_adr = apply_adr_ratio(ticker, {"fy1": prev_curr_raw, "fy2": prev_next_raw,
+                                          "fy3": prev_fy3_raw})
+    prev_curr = _prev_adr.get("fy1")
+    prev_next = _prev_adr.get("fy2")
+    prev_fy3 = _prev_adr.get("fy3")
+
+    # Fix 2: FX-normalize to the reporting currency. Resolved once per ticker
+    # (same currency/dates for all three FY buckets).
+    currency = get_reporting_currency(ticker, yf_ticker, reporting_ccy_cache)
+    fx_current = fx_baseline = None
+    if currency and currency.upper() != "USD":
+        # Prefer the baseline snapshot's own stored rate (fx_local_per_usd,
+        # written by snapshot_eps_estimates.py from 2026-09 onward) over a
+        # fresh history lookup — deterministic, and the correct "as of that
+        # export" rate rather than whatever a later re-derivation would find.
+        fx_baseline = (prev_snapshot.get("fx_local_per_usd") or {}).get(currency)
+        if fx_baseline is None and baseline_date:
+            fx_baseline = get_fx_rate(currency, baseline_date, fx_cache)
+        if current_snapshot_date:
+            fx_current = get_fx_rate(currency, current_snapshot_date, fx_cache)
+
+    fx_normalized_flags = []
+    for cur_val, prev_val, out_key in (
+        (eps_curr, prev_curr, "eps_fy_curr_revision_pct"),
+        (eps_next, prev_next, "eps_fy_next_revision_pct"),
+        (eps_fy3, prev_fy3, "eps_fy3_revision_pct"),
+    ):
+        if not cur_val or not prev_val or prev_val <= 0:
+            continue
+        pct, normalized = compute_fx_normalized_revision(
+            cur_val, prev_val, currency, fx_current, fx_baseline
+        )
+        if pct is not None:
+            out[out_key] = round(pct, 2)
+            fx_normalized_flags.append(normalized)
+
+    out["eps_revision_currency"] = currency
+    if fx_normalized_flags:
+        out["eps_revision_fx_normalized"] = all(fx_normalized_flags)
     return out
 
 
@@ -1829,6 +1893,8 @@ def enrich_ticker(
     prev_snapshot: dict | None = None,
     excel_snapshot: ExcelSnapshot | None = None,
     qgm_durable_index: dict | None = None,
+    reporting_ccy_cache: dict | None = None,
+    fx_cache: dict | None = None,
 ) -> dict:
     """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
 
@@ -1867,6 +1933,14 @@ def enrich_ticker(
     ticker. See knowledge/rule_ledger.md v3 席位資格 row.
     """
     t = entry["ticker"]
+    # 2026-09-17: shared, thread-safe caches for FX-normalized EPS revision
+    # (see _compute_fy_eps_revision) — default to a fresh dict when the
+    # caller doesn't pass one (e.g. ad-hoc/test calls), same pattern as the
+    # other Optional[dict]=None params on this function.
+    if reporting_ccy_cache is None:
+        reporting_ccy_cache = {}
+    if fx_cache is None:
+        fx_cache = {}
     quality, source, quality_meta = get_quality_for_ticker(t, qgm_index)
     # v1.3: peg_fallback — frozen PEG came from yfinance manual forwardPE/CAGR
     # path (denominator not comparable to mainstream forward consensus). The
@@ -2047,7 +2121,11 @@ def enrich_ticker(
     _rev_curr = _lfy.get("eps_fy_curr_usd_orig") or eps_curr_val
     _rev_next = _lfy.get("eps_fy_next_usd_orig") or eps_next_val
     _rev_fy3 = _lfy.get("eps_fy3_usd_orig") or _lfy.get("eps_fy3")
-    fy_revision = _compute_fy_eps_revision(t, _rev_curr, _rev_next, _rev_fy3, prev_snapshot or {})
+    fy_revision = _compute_fy_eps_revision(
+        t, _yf_ticker_for_ma(t), _rev_curr, _rev_next, _rev_fy3, prev_snapshot or {},
+        excel_snapshot.snapshot_date if excel_snapshot else None,
+        reporting_ccy_cache, fx_cache,
+    )
 
     # v1.3: FunnelRank — 漏斗綜合分 (基本面三層: QualityGate + Moat + Revision).
     # 用 per-FY revision %（vs 上一份 snapshot）的 FY1/FY2/FY3 三欄合成 RevisionScore;
@@ -2106,7 +2184,8 @@ def enrich_ticker(
         # 2026-09-12: 換算註記（None 除非 ticker 在 data/adr_ratios.json 表列，如 TSM）
         "eps_basis": _lfy.get("eps_basis"),
         # v1.8: month-over-month revision per FY (vs prev Excel snapshot)
-        **fy_revision,  # eps_fy_curr_revision_pct, eps_fy_next_revision_pct, eps_revision_baseline_date
+        **fy_revision,  # eps_fy_curr_revision_pct, eps_fy_next_revision_pct, eps_fy3_revision_pct,
+                        # eps_revision_baseline_date, eps_revision_currency, eps_revision_fx_normalized
         # v1.8.5: foreign-listing native-currency display (TWD/JPY/etc.)
         "eps_display_currency": _lfy.get("eps_display_currency", "USD"),
         "eps_fx_rate": _lfy.get("eps_fx_rate"),
@@ -2304,6 +2383,16 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         missing_us = []
         fallback_yf = [e["ticker"] for e in universe]
 
+    # Step 0e: 2026-09-17 — persistent caches for FX-normalized EPS revision
+    # (reporting currency + daily FX rate; see eps_fx_normalize.py). Loaded
+    # once, mutated in place (thread-safe) inside enrich_ticker, saved back
+    # after the enrichment loop below so rebuilds don't re-hit yfinance for
+    # tickers/dates already resolved.
+    reporting_ccy_cache = load_reporting_currency_cache()
+    fx_cache = load_fx_daily_cache()
+    print(f"  Step 0    reporting-currency cache: {len(reporting_ccy_cache)} tickers known "
+          f"({sum(1 for v in fx_cache.values() for _ in v)} FX rate(s) cached)")
+
     # Step 3.5: daily 5y high — single batched yf.download, fresh today for the
     # ATH spotlight on the main page. Weekly ma.high_250w_price stays for
     # backward compat (entry-state.html consumers); the daily fields live
@@ -2317,7 +2406,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot, qgm_durable_index): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot, qgm_durable_index, reporting_ccy_cache, fx_cache): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):
@@ -2330,6 +2419,15 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
             if i % 10 == 0 or i == len(futs):
                 elapsed = time.time() - t0
                 print(f"    [{i:>3}/{len(futs)}] {elapsed:.0f}s")
+
+    # Step 4.4: persist the reporting-currency / FX caches (new tickers/dates
+    # resolved during this run) — best-effort, never blocks the build.
+    if not dry_run:
+        try:
+            save_reporting_currency_cache(reporting_ccy_cache)
+            save_fx_daily_cache(fx_cache)
+        except Exception as exc:
+            print(f"  WARN: failed to save FX/reporting-currency cache: {exc}", file=sys.stderr)
 
     # Step 4.5: merge daily 5y high fields into ma sub-object (post-enrich so
     # we don't widen enrich_ticker's signature). For tickers whose daily fetch
