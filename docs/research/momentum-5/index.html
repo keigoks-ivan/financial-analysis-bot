@@ -194,11 +194,13 @@ table.data tr.is-seat:hover td{background:#efe9da}
   <div class="wrap">
     <span class="eyebrow">研究提名組合 · 非投資建議</span>
     <h1>Momentum-5 · <span class="accent">S&amp;P 500</span> 十二個月上修動能組合</h1>
-    <p class="sub">一個五席的研究提名組合，用意在於觀察「EPS 修正動能＋人工催化劑判斷」在十二個月尺度上能不能持續跑贏大盤。<b>每週六自動更新（本地排程跑點，遇休眠或離線會於下次開機自動補跑）</b>，資料截至下方「資料更新」時間戳（頁面載入時動態顯示），換席則為人工裁決——程式只計算指標、亮出旗標，永遠不會自動換人。本頁為研究流程展示，不構成任何投資建議。</p>
+    <p class="sub">一個五席的研究提名組合，用意在於觀察「EPS 修正動能」在十二個月尺度上能不能持續跑贏大盤。<b>每週六自動更新</b>，資料截至下方「資料更新」時間戳（頁面載入時動態顯示）。<b>2026-09-16 起換席全由程式在每月第一個週六依規則執行，人工不再介入</b>；旗標＝下次月換的預告。本頁為研究流程展示，不構成任何投資建議。</p>
     <div class="meta" id="hero-meta">
       <span class="chip">資料更新：<b id="m-asof">—</b></span>
       <span class="chip">組合成立：<b id="m-inception">—</b></span>
       <span class="perf-badge flat" id="m-perf">績效載入中…</span>
+      <a class="chip" href="/research/momentum-5-short/">Short · 財報後 60 日</a>
+      <a class="chip" href="/research/momentum-5-fast/">Fast · 30 天上修快線</a>
     </div>
   </div>
 </div>
@@ -221,14 +223,13 @@ table.data tr.is-seat:hover td{background:#efe9da}
     <div class="sec-hdr">
       <span class="sec-eyebrow">Rotation Rules</span>
       <span class="sec-title">換手規則</span>
-      <span class="sec-desc">先寫規則、後看名單——換席前先過這五道</span>
+      <span class="sec-desc">2026-09-16 起全機械執行，人工不再介入</span>
     </div>
     <ul class="rules-list">
-      <li><span class="rn">1</span><div><b>月頻修正檢查。</b>每月固定複審一次五席的 EPS 修正動能與排名，非月頻不主動調整（<span id="r-cadence">monthly</span>）。</div></li>
-      <li><span class="rn">2</span><div><b>單月修正轉負自動複審。</b>任一席位三個月共識修正平均（rev_avg）跌破 −2% 時，程式亮出 🔁 複審旗標，強制人工重看 thesis。</div></li>
-      <li><span class="rn">3</span><div><b>挑戰者須超越最弱席 0.5σ。</b>板凳名單中任一名字的綜合分數，要比現任最弱席高出至少 <span id="r-margin">0.5</span> 個標準差（z 單位），才會被標記為 ⚔️ 挑戰者——高一點點不算數。</div></li>
-      <li><span class="rn">4</span><div><b>VIX≥40 加速窗口。</b><span id="r-vix">VIX≥40 事件窗允許計畫外換倉</span>；一般時期換席只在月頻檢查點發生。</div></li>
-      <li><span class="rn">5</span><div><b>席位寧缺勿濫。</b><span id="r-policy">換席為人工裁決，script 僅亮旗標</span>；沒有夠格的挑戰者時，寧可留空觀察，也不硬湊滿五席。</div></li>
+      <li><span class="rn">1</span><div><b>月頻執行。</b>每月第一個成功週更日，程式自動檢查五席並換手；同月內不重複執行。</div></li>
+      <li><span class="rn">2</span><div><b>踢出（任一成立）。</b>三否決任一未過；或 30 天修正平均（rev30_avg）≤ 0；或收盤距 52 週高點超過 10%；或綜合分數排名跌出前 40（進場門檻是前 20，出場放寬到前 40，減少來回換手）。</div></li>
+      <li><span class="rn">3</span><div><b>補位條件。</b>從當週 eligible 前 20 名依分數由高到低挑選，須 30 天修正平均 > 0、距 52 週高點 10% 以內、不是現任持股，且同一 GICS 產業（sector）含現任最多 2 席。</div></li>
+      <li><span class="rn">4</span><div><b>候選不足留空席。</b>補不到人時該席以現金持有，不硬湊；下個月再檢查一次。</div></li>
     </ul>
   </div>
 </section>
@@ -315,13 +316,13 @@ table.data tr.is-seat:hover td{background:#efe9da}
         </ul>
       </div>
       <div class="xcard">
-        <h4>20 → 5：三條收斂規則</h4>
+        <h4>20 → 5：程式收斂規則</h4>
         <ul>
-          <li><span class="k">已在跑：</span>30 天修正平均要大於 0，上修在最近 30 天內持續發生，不是三個月前的舊聞。</li>
-          <li><span class="k">貼近前高：</span>收盤價距 52 週高點在 10% 以內，排除還在破位或盤整的名字。</li>
-          <li><span class="k">催化劑可指認＋主題上限 2 席：</span>能講清楚上修的實體來源（訂單、產能、政策），同一主題最多兩席。</li>
+          <li><span class="k">已在跑：</span>30 天修正平均要大於 0，程式每月自動檢查，上修必須是最近 30 天內持續發生。</li>
+          <li><span class="k">貼近前高：</span>收盤價距 52 週高點在 10% 以內，程式自動檢查，排除還在破位或盤整的名字。</li>
+          <li><span class="k">同產業上限 2 席：</span>同一 GICS 產業（含現任）最多兩席，程式自動計算；「催化劑可指認」需要人工判斷，機械化後不再檢查。</li>
         </ul>
-        <p style="margin-top:.6rem;font-size:.8rem;color:var(--muted)">2026-09-16 起拿掉一條舊偏好：舊版挑最不擁擠的名字，實測結果是躲開已經在漲的股票。</p>
+        <p style="margin-top:.6rem;font-size:.8rem;color:var(--muted)">2026-09-16 起拿掉一條舊偏好：舊版挑最不擁擠的名字，實測結果是躲開已經在漲的股票。同日起這三條規則改由程式在每月第一個週六自動執行，2026-07-02 至 2026-09-16 為人工執行期。</p>
       </div>
       <div class="xcard weak-card">
         <h4>已知弱點（三條）</h4>
@@ -345,9 +346,9 @@ table.data tr.is-seat:hover td{background:#efe9da}
       <ul>
         <li><b>成分股：</b>S&amp;P 500 成分名單取自 Wikipedia（以瀏覽器 User-Agent 抓取），每週重抓，隨指數調整同步。</li>
         <li><b>價格與估值：</b>yfinance 提供的還原日線收盤價，計算 200 日均線、六個月與十二個月報酬；分析師預估趨勢（eps_trend）提供 FY1／FY2 共識的 <b>90 天修正快照</b>——修正幅度請當方向訊號，勿當精確值。</li>
-        <li><b>更新節奏：</b>由本機 launchd 排程每日檢查、於每週六觸發重跑（原 GitHub Actions workflow 自 2026 年 8 月起因 Yahoo 封鎖機房 IP 導致 eps_trend 覆蓋率歸零而停用此資料源，改為本地跑點）；若當週六 Mac 休眠或離線，排程會在下次開機時偵測資料已過期（≥ 8 天）並自動補跑，不需人工觸發。資料截至上方「資料更新」時間戳（頁面載入時動態讀取 <span class="mono">data.json</span> 的 <span class="mono">as_of</span> 欄位）。</li>
+        <li><b>更新節奏：</b>由 GitHub Actions <span class="mono">weekly-market-update.yml</span> 每週六觸發重跑；同一次 run 依序建置主線、影子六線、Short、Fast。資料截至上方「資料更新」時間戳（頁面載入時動態讀取 <span class="mono">data.json</span> 的 <span class="mono">as_of</span> 欄位）。</li>
         <li><b>Fail-safe：</b>當 eps_trend 覆蓋率不足（&lt; 300 檔）或 Screen 執行失敗時，程式會直接跳過、<b>不覆寫既有 data.json</b>，本頁因此保留上一份良好資料，而不是渲染出破碎或空白的一週。</li>
-        <li><b>換席治理：</b>五席與板凳名單存於 <span class="mono">portfolio.json</span>，為人工維護的唯一真實來源；週更程式只計算指標、亮出旗標，<b>永遠不會自動換人</b>。</li>
+        <li><b>換席治理：</b>五席名單存於 <span class="mono">portfolio.json</span>；<b>2026-09-16 起換手全機械</b>——每月第一個成功週更日，程式依收斂規則自動踢出、補位、寫入 changelog，不需人工介入。2026-07-02 至 2026-09-16 為人工裁決期，紀錄保留在 changelog 裡。</li>
       </ul>
     </div>
   </div>
@@ -419,19 +420,31 @@ table.data tr.is-seat:hover td{background:#efe9da}
       perf.textContent = '成立以來績效暫無'; perf.className='perf-badge flat';
     }
 
-    // ── rules text from portfolio.json ──
-    var R = pf.rules || {};
-    if(R.review_cadence) $('r-cadence').textContent = R.review_cadence;
-    if(R.challenger_margin_z!==undefined) $('r-margin').textContent = R.challenger_margin_z;
-    if(R.vix_window) $('r-vix').textContent = R.vix_window;
-    if(R.seat_policy) $('r-policy').textContent = R.seat_policy;
-
     // ── seats (join portfolio config + data metrics by ticker) ──
     var metricsByTkr = {};
     (d.seats||[]).forEach(function(s){ metricsByTkr[s.ticker] = s; });
     var grid = $('seat-grid');
     grid.innerHTML = '';
     (pf.seats||[]).forEach(function(cfg){
+      if(cfg.ticker == null){
+        // v3 (2026-09-16): empty seat left by mechanical rotation — no
+        // qualifying candidate this month, held as cash until refilled.
+        var emptyCard = document.createElement('div');
+        emptyCard.className = 'seat-card';
+        emptyCard.innerHTML =
+          '<div class="seat-top">'+
+            '<div class="seat-id">'+
+              '<span class="seat-tkr">空席（現金）</span>'+
+              '<span class="seat-weight">'+ (cfg.weight_pct||20) +'% 等權</span>'+
+            '</div>'+
+          '</div>'+
+          '<p class="seat-thesis">上個月沒有符合收斂規則的候選，本席以現金持有，下個月再檢查一次。</p>'+
+          '<div class="seat-metrics">'+
+            metric('Sleeve 現金', (cfg.sleeve_at_entry!=null?cfg.sleeve_at_entry.toFixed(2):'—')) +
+          '</div>';
+        grid.appendChild(emptyCard);
+        return;
+      }
       var m = metricsByTkr[cfg.ticker] || {};
       var flags = (m.flags||[]).map(function(f){
         var fm = FLAG_META[f]; if(!fm) return '';
@@ -467,7 +480,7 @@ table.data tr.is-seat:hover td{background:#efe9da}
     });
 
     // ── top 20 ──
-    var seatSet = {}; (pf.seats||[]).forEach(function(s){ seatSet[s.ticker]=1; });
+    var seatSet = {}; (pf.seats||[]).forEach(function(s){ if(s.ticker) seatSet[s.ticker]=1; });
     var benchSet = {}; (pf.bench||[]).forEach(function(b){ benchSet[b.ticker]=1; });
     var tb = $('top20-body');
     tb.innerHTML = '';

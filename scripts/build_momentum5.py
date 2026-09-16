@@ -119,6 +119,23 @@ MIN_EPS_COVERAGE = 300                 # fail-safe floor
 # — see portfolio.json's rules.convergence_v2 for the full spec.
 STALLED_PX52WH_MIN = 0.90               # seat px_over_52wh < 0.90 (>10% off 52wk high) -> flag
 
+# spec v3 (2026-09-16, owner-approved): main-line governance goes fully
+# mechanical — see apply_mechanical_rotation() below and portfolio.json's
+# rules.governance_v3 for the full spec. The 2026-07-02–2026-09-16 human
+# judgment period is preserved in changelog, not erased or rewritten.
+EXIT_RANK_MAX = 40                      # seat composite rank > 40 -> evict (entry gate stays top-20)
+SECTOR_CAP = 2                          # same GICS sector, incumbents included, max 2 seats
+
+# Chinese sector labels (own copy — kept identical to docs/research/momentum-5/
+# index.html's SECTOR_ZH table; used only to render theme/thesis text for
+# mechanically-filled seats, does not feed any judgment logic).
+SECTOR_ZH = {
+    'Information Technology': '資訊科技', 'Industrials': '工業', 'Energy': '能源',
+    'Health Care': '醫療保健', 'Materials': '原物料', 'Financials': '金融',
+    'Consumer Discretionary': '非必需消費', 'Consumer Staples': '必需消費',
+    'Utilities': '公用事業', 'Real Estate': '不動產', 'Communication Services': '通訊服務',
+}
+
 # 2026-08-20: raw-dump-only constants feeding shadow lines R (residual momentum)
 # and H (52-week high) — NOT part of the frozen composite/veto logic above.
 RESMOM_REG_WINDOW = 252                # line R: OLS regression window (trading days)
@@ -429,13 +446,214 @@ def run_screen():
     return univ, spy_close, float(spy6), coverage
 
 
+def _fmt_pct_zh(v, decimals=1):
+    """'+x.x%' / '-x.x%' / '—' — used only for mechanical-rotation changelog
+    and auto-generated thesis text, not for any judgment logic."""
+    if v is None:
+        return '—'
+    return f"{'+' if v > 0 else ''}{v:.{decimals}f}%"
+
+
+def apply_mechanical_rotation(portfolio, univ, as_of, sector_map):
+    """v3 (2026-09-16, owner-approved) — Momentum-5 main line goes fully
+    mechanical. Mutates `portfolio` in place (seats/rules/changelog/
+    last_rotation_month) and persists it to PORTFOLIO_JSON; also returns
+    `portfolio` for convenience/testability. Pure w.r.t. inputs otherwise —
+    no other global state read, so it can be imported and unit-tested with a
+    synthetic `portfolio` dict + a synthetic `univ` DataFrame (must carry
+    columns: eligible, rev30_fy1, rev30_fy2, px_over_52wh, rank, price,
+    sector). The 2026-07-02–2026-09-16 human-curated period is untouched
+    history in changelog — this function only ever appends.
+
+    CADENCE: runs only when as_of's calendar month != portfolio's
+    last_rotation_month (mirrors the shadow track's "first successful weekly
+    update of the month" convention). A same-month call is a total no-op —
+    it does not even read/write portfolio.json again. On a new month it
+    ALWAYS updates last_rotation_month and writes the file, even if zero
+    seats actually turn over (so the gate correctly advances either way).
+
+    EVICT (any one of, checked only for seats holding a ticker):
+      - ticker not present in this week's univ (delisted / dropped from the
+        index) — checked first, short-circuits the other checks below;
+      - eligible is False (failed one of the three frozen vetoes);
+      - rev30_avg (mean of rev30_fy1/rev30_fy2, missing counts as failing)
+        <= 0;
+      - px_over_52wh < STALLED_PX52WH_MIN (0.90, i.e. >10% off the 52-week
+        high) — same threshold as the seat-card 'stalled' flag;
+      - (only checked when eligible, since rank is only defined for the
+        eligible universe) composite rank > EXIT_RANK_MAX (40) — the entry
+        gate stays the top-20 pool, exit is deliberately looser (top-40) to
+        cut back-and-forth churn.
+    A seat's sleeve settles at eviction: sleeve_at_entry * close/entry_price
+    (or unchanged if this week's close is unavailable) becomes that seat's
+    new sleeve_at_entry, i.e. it goes to cash and stays there — mirrors
+    build_momentum5_short.py's sleeve settlement.
+
+    FILL: empty seats (freshly evicted this run, or already empty from a
+    prior month) are filled, in score order, from this week's eligible
+    top-20 pool, excluding: current holders (post-eviction), any candidate
+    with rev30_avg <= 0 or px_over_52wh < 0.90, and any candidate whose GICS
+    sector already holds SECTOR_CAP (2) seats (incumbents counted). Filling
+    stops when seats run out OR the top-20 pool is exhausted — an unfillable
+    seat is deliberately left empty (cash), never force-filled. A filled
+    seat gets ticker/entry_date=as_of/entry_price=this week's close/
+    weight_pct(unchanged, 20)/theme(GICS sector, Chinese)/an auto-generated
+    thesis string; sleeve_at_entry is whatever cash value the seat already
+    holds (untouched by the fill step itself).
+    """
+    current_month = as_of[:7]
+    if portfolio.get('last_rotation_month') == current_month:
+        return portfolio  # not this month's rotation window yet — total no-op
+
+    seats = portfolio['seats']
+    rules = portfolio.setdefault('rules', {})
+    changelog = portfolio.setdefault('changelog', [])
+
+    def g(t, col, default=None):
+        if t is not None and t in univ.index and col in univ.columns:
+            v = univ.at[t, col]
+            if pd.notna(v):
+                return float(v) if isinstance(v, (int, float, np.floating, np.integer)) else v
+        return default
+
+    def rev30_avg_of(t):
+        vals = [v for v in (g(t, 'rev30_fy1'), g(t, 'rev30_fy2')) if v is not None]
+        return sum(vals) / len(vals) if vals else None
+
+    # ── evict ──
+    evicted = []
+    kept_seats = []
+    for seat in seats:
+        t = seat.get('ticker')
+        if t is None:
+            kept_seats.append(seat)  # already empty; fill step below may fill it
+            continue
+        reasons = []
+        if t not in univ.index:
+            reasons.append('下市／剔除指數')
+        else:
+            eligible = bool(univ.at[t, 'eligible']) if pd.notna(univ.at[t, 'eligible']) else False
+            if not eligible:
+                reasons.append('三否決未過')
+            rev30_avg = rev30_avg_of(t)
+            if rev30_avg is None or rev30_avg <= 0:
+                reasons.append('30D 修正≤0')
+            px52 = g(t, 'px_over_52wh')
+            if px52 is None or px52 < STALLED_PX52WH_MIN:
+                reasons.append('距 52 週高點>10%')
+            if eligible:
+                rank = g(t, 'rank')
+                if rank is None or rank > EXIT_RANK_MAX:
+                    reasons.append('排名>40')
+        if not reasons:
+            kept_seats.append(seat)
+            continue
+        close = g(t, 'price')
+        entry = float(seat['entry_price'])
+        sleeve_at_entry = float(seat.get('sleeve_at_entry', 100.0 / len(seats)))
+        settled = round(sleeve_at_entry * (close / entry), 2) if close is not None else round(sleeve_at_entry, 2)
+        ret_pct = round((close / entry - 1) * 100, 1) if close is not None else None
+        evicted.append({'ticker': t, 'reasons': reasons, 'entry_price': entry,
+                         'close': close, 'ret_pct': ret_pct, 'settled': settled})
+        kept_seats.append({
+            'ticker': None, 'entry_date': None, 'entry_price': None,
+            'weight_pct': seat.get('weight_pct', 20), 'theme': None, 'thesis': None,
+            'sleeve_at_entry': settled,
+        })
+
+    # ── fill ──
+    current_tickers = {s['ticker'] for s in kept_seats if s['ticker']}
+    sector_counts = {}
+    for s in kept_seats:
+        if s['ticker']:
+            sec = sector_map.get(s['ticker'])
+            if sec:
+                sector_counts[sec] = sector_counts.get(sec, 0) + 1
+
+    elig_sorted = univ[univ['eligible']].sort_values('score', ascending=False)
+    top20 = elig_sorted.head(20)
+
+    filled = []
+    for seat in kept_seats:
+        if seat['ticker'] is not None:
+            continue
+        chosen = None
+        for t in top20.index:
+            if t in current_tickers:
+                continue
+            rev30_avg = rev30_avg_of(t)
+            if rev30_avg is None or rev30_avg <= 0:
+                continue
+            px52 = g(t, 'px_over_52wh')
+            if px52 is None or px52 < STALLED_PX52WH_MIN:
+                continue
+            sec = sector_map.get(t)
+            if sec and sector_counts.get(sec, 0) >= SECTOR_CAP:
+                continue
+            chosen = t
+            break
+        if chosen is None:
+            continue  # no qualifying candidate left — leave this seat empty (cash)
+        close = g(chosen, 'price')
+        rank = g(chosen, 'rank')
+        rev_fy1, rev_fy2 = g(chosen, 'rev_fy1'), g(chosen, 'rev_fy2')
+        rev30_avg = rev30_avg_of(chosen)
+        px52 = g(chosen, 'px_over_52wh')
+        px52_diff_pct = (px52 - 1) * 100 if px52 is not None else None
+        sec_en = sector_map.get(chosen)
+        sec_zh = SECTOR_ZH.get(sec_en, sec_en or '')
+        thesis = (f"機械進場：composite 第 {int(rank) if rank is not None else '—'} 名，"
+                  f"FY1／FY2 90 天上修 {_fmt_pct_zh(rev_fy1)}／{_fmt_pct_zh(rev_fy2)}，"
+                  f"30 天 {_fmt_pct_zh(rev30_avg)}，距 52 週高點 {_fmt_pct_zh(px52_diff_pct)}")
+        seat['ticker'] = chosen
+        seat['entry_date'] = as_of
+        seat['entry_price'] = round(close, 2) if close is not None else None
+        seat['weight_pct'] = seat.get('weight_pct', 20)
+        seat['theme'] = sec_zh
+        seat['thesis'] = thesis
+        # sleeve_at_entry already holds the correct cash figure (settled at
+        # eviction, or carried over from an earlier empty month) — untouched.
+        sector_counts[sec_en] = sector_counts.get(sec_en, 0) + 1
+        current_tickers.add(chosen)
+        filled.append({'ticker': chosen, 'sector_zh': sec_zh})
+
+    portfolio['seats'] = kept_seats
+    portfolio['last_rotation_month'] = current_month
+    rules['governance_v3'] = (
+        "2026-09-16 起全機械：每月第一個成功週更由程式依 v2 條件踢出／補位，"
+        "人工不再介入；2026-07-02 至 2026-09-16 為人工裁決期，紀錄保留"
+    )
+
+    n_empty = sum(1 for s in kept_seats if s['ticker'] is None)
+    if evicted or filled:
+        evict_desc = '、'.join(
+            f"{e['ticker']}（{_fmt_pct_zh(e['ret_pct'])}，{'／'.join(e['reasons'])}）" for e in evicted
+        ) or '無'
+        fill_desc = '、'.join(f"{f['ticker']}（{f['sector_zh']}）" for f in filled) or '無'
+        changelog.append({
+            'date': as_of,
+            'event': f"月度機械換席：踢出 {evict_desc}；補入 {fill_desc}；留空 {n_empty} 席。",
+        })
+    else:
+        changelog.append({
+            'date': as_of,
+            'event': '月度機械檢查：五席全數維持（否決／30D 修正／距高點／排名皆過關），無異動。',
+        })
+
+    # Persisted by main() AFTER data.json / raw_factors.json are written, so a
+    # crash mid-build can't leave portfolio.json rotated while data.json lags.
+    print(f"  ✓ mechanical rotation ({current_month}): "
+          f"evicted={[e['ticker'] for e in evicted]} filled={[f['ticker'] for f in filled]} "
+          f"empty_seats={n_empty}")
+    return portfolio
+
+
 def build():
     now = datetime.now(timezone.utc)
     as_of = now.strftime('%Y-%m-%d')
     print(f"=== Momentum-5 Build: {as_of} ===")
 
     portfolio = json.loads(PORTFOLIO_JSON.read_text(encoding='utf-8'))
-    seats_cfg = portfolio['seats']
     bench_cfg = portfolio.get('bench', [])
     spy_entry = float(portfolio['benchmark']['entry_price'])
 
@@ -448,6 +666,13 @@ def build():
         _emit_gh_skip_warning(
             f"eps_trend coverage {coverage['eps_trend']} < {MIN_EPS_COVERAGE}")
         return None
+
+    # ── mechanical rotation (v3, 2026-09-16): monthly, fully automatic —
+    #    mutates + persists portfolio.json in place; re-bind seats_cfg after. ──
+    sector_map = univ['sector'].to_dict()
+    rotated = portfolio.get('last_rotation_month') != as_of[:7]
+    apply_mechanical_rotation(portfolio, univ, as_of, sector_map)
+    seats_cfg = portfolio['seats']
 
     def g(t, col, default=None):
         """Safe scalar lookup from the screen frame."""
@@ -467,15 +692,26 @@ def build():
     seat_rets = []
     for s in seats_cfg:
         t = s['ticker']
-        close = g(t, 'price')
-        entry = float(s['entry_price'])
-        ret_since = round((close / entry - 1) * 100, 1) if close is not None else None
         # 2026-09-16: sleeve accounting. Each seat is a 20-unit sleeve at
         # inception; when a seat is swapped, portfolio.json records the sleeve
         # value the outgoing name settled to as the incoming name's
         # sleeve_at_entry, so realised P&L stays in the headline return instead
         # of vanishing with the swapped-out ticker. Missing key = 20 (untouched).
         sleeve = float(s.get('sleeve_at_entry', 100.0 / len(seats_cfg)))
+        if t is None:
+            # v3 (2026-09-16): empty seat left by apply_mechanical_rotation()
+            # (no qualifying candidate) — held as cash, contributes its sleeve
+            # value unchanged to port_ret, no metrics/flags to compute.
+            seat_rets.append(sleeve)
+            seats_out.append({
+                'ticker': None, 'close': None, 'ret_since_entry_pct': None,
+                'rev_fy1': None, 'rev_fy2': None, 'rev30_avg': None,
+                'px_over_52wh': None, 'score': None, 'rank': None, 'flags': [],
+            })
+            continue
+        close = g(t, 'price')
+        entry = float(s['entry_price'])
+        ret_since = round((close / entry - 1) * 100, 1) if close is not None else None
         seat_rets.append(sleeve * (close / entry) if close is not None else sleeve)
 
         rev_fy1 = g(t, 'rev_fy1')
@@ -616,6 +852,7 @@ def build():
             'report_date': gv_str(t, 'report_date'),
             'resmom': gv(t, 'resmom'),
             'px_over_52wh': gv(t, 'px_over_52wh'),
+            'sector': gv_str(t, 'sector'),  # 2026-09-16: raw-dump passthrough, feeds Fast line's sector cap
         })
     surprise_coverage = sum(1 for r in raw_universe if r['surprise_pct'] is not None)
     resmom_coverage = sum(1 for r in raw_universe if r['resmom'] is not None)
@@ -636,7 +873,7 @@ def build():
         'universe': raw_universe,
     }
 
-    return payload, raw_payload
+    return payload, raw_payload, (portfolio if rotated else None)
 
 
 def _existing_data_json_as_of():
@@ -685,7 +922,7 @@ def main():
         # coverage fail-safe already logged (warning already emitted in build())
         sys.exit(0)
 
-    payload, raw_payload = result
+    payload, raw_payload, rotated_portfolio = result
 
     DATA_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + '\n',
                          encoding='utf-8')
@@ -695,7 +932,7 @@ def main():
     print("    seats:")
     for s in payload['seats']:
         flags = ('  [' + ','.join(s['flags']) + ']') if s['flags'] else ''
-        print(f"      {s['ticker']:<5} close={s['close']}  ret={s['ret_since_entry_pct']}%  "
+        print(f"      {(s['ticker'] or '(空席)'):<5} close={s['close']}  ret={s['ret_since_entry_pct']}%  "
               f"revFY1={s['rev_fy1']}  revFY2={s['rev_fy2']}  score={s['score']}  "
               f"rank={s['rank']}{flags}")
 
@@ -707,6 +944,13 @@ def main():
           f"report_date_coverage={raw_payload['report_date_coverage']}, "
           f"resmom_coverage={raw_payload['resmom_coverage']}, "
           f"px52wh_coverage={raw_payload['px52wh_coverage']})")
+
+    if rotated_portfolio is not None:
+        # v3 mechanical rotation ran this month — persist portfolio.json last,
+        # after data.json / raw_factors.json, so the three files move together.
+        PORTFOLIO_JSON.write_text(json.dumps(rotated_portfolio, ensure_ascii=False, indent=1) + '\n',
+                                  encoding='utf-8')
+        print(f"  ✓ wrote {PORTFOLIO_JSON.relative_to(ROOT)} (mechanical rotation persisted)")
 
 
 if __name__ == '__main__':
