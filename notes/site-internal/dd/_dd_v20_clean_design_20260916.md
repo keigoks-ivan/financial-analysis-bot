@@ -85,13 +85,13 @@ TXN 2026-09-07 全套實際帳單（manifest 各段加總）：
 |---|---|
 | 模型 | Fable（持有人 2026-09-06 拍板） |
 | 工具 | 無。單輪。回覆全文即 JSON |
-| 輸入 | 事實表 facts.json（目標 ≤ 60KB）+ 最新一季逐字稿（原文）+ 規則卡（≤ 15KB）+ 前份判斷摘要（≤ 5KB） |
+| 輸入 | 事實表 facts.json（目標 ≤ 60KB）+ 最新一季逐字稿（原文）+ 判斷卡（≤ 16KB）+ 兩張常載附卡（ROIC 持續期、判斷手冊，各 ≤ 4KB）+ 條件附卡（循環股、特殊 archetype，命中才載，各 ≤ 4KB）+ 前份判斷摘要（≤ 5KB） |
 | 輸出 | judgment.json，只含五塊：thesis、moat、scenario_inputs、counter_evidence、decision_inputs。目標 5 到 8KB，輸出 token ≤ 10K |
 | 預算 | 輸出 token 上限 15K。超過視為違約，FAIL |
 
 不再附 evidence.json 原文和前三季 digest。理由：事實表就是它們的整理版，兩份都放讓 Fable 每通多讀 190KB，且 2026-09-11 之後沒有證據顯示原文有被引用到事實表以外的內容。若驗收發現判斷品質掉，回補的順序是「先補事實表的涵蓋」，不是把原文塞回去。
 
-規則卡是新東西。從 `references/v16/judgment-rules-v19.md`（45KB）抽出判斷五個點真正需要看的判準，壓到 15KB 以內，由程式在 build 時生成，版本跟著 references 走。references 仍是權威，規則卡是它的投影。
+規則卡是新東西。從 `references/v16/judgment-rules-v19.md`（45KB）抽出判斷五個點真正需要看的判準，壓到 16KB 以內。卡是人工濃縮（sonnet 抽、人審），存 `scripts/dd2/cards/`，檔頭記來源 sha256；`cards.py check` 在來源變動時報 STALE，不自動重生。references 仍是權威，規則卡是它的投影。2026-09-16 實作發現：roic-durability 與 judgment-playbook 在現行路由是每次都載，不是 archetype 條件式，故判斷通規則總量約 24KB。
 
 ### 4.3 審（gate）
 
