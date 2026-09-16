@@ -317,10 +317,11 @@ table.data tr.is-seat:hover td{background:#efe9da}
       <div class="xcard">
         <h4>20 → 5：三條收斂規則</h4>
         <ul>
-          <li><span class="k">催化劑可指認：</span>能講清楚上修的實體來源（訂單、產能、政策），不只是數字漂亮。</li>
-          <li><span class="k">期望差優先：</span>優先選市場對未來 EPS 仍低估、賣方還在追趕的名字。</li>
-          <li><span class="k">主題上限 2 席：</span>同一主題最多兩席，避免五席其實是同一注。</li>
+          <li><span class="k">已在跑：</span>30 天修正平均要大於 0，上修在最近 30 天內持續發生，不是三個月前的舊聞。</li>
+          <li><span class="k">貼近前高：</span>收盤價距 52 週高點在 10% 以內，排除還在破位或盤整的名字。</li>
+          <li><span class="k">催化劑可指認＋主題上限 2 席：</span>能講清楚上修的實體來源（訂單、產能、政策），同一主題最多兩席。</li>
         </ul>
+        <p style="margin-top:.6rem;font-size:.8rem;color:var(--muted)">2026-09-16 起拿掉一條舊偏好：舊版挑最不擁擠的名字，實測結果是躲開已經在漲的股票。</p>
       </div>
       <div class="xcard weak-card">
         <h4>已知弱點（三條）</h4>
@@ -366,7 +367,8 @@ table.data tr.is-seat:hover td{background:#efe9da}
     review:     {cls:'review',     icon:'🔁', label:'複審（90D 轉負）'},
     review_fresh:{cls:'review',    icon:'🔻', label:'複審（30D 新鮮下修）'},
     challenger: {cls:'challenger', icon:'⚔️', label:'挑戰者出現'},
-    heat:       {cls:'heat',       icon:'🔥', label:'過熱'}
+    heat:       {cls:'heat',       icon:'🔥', label:'過熱'},
+    stalled:    {cls:'review',     icon:'🐢', label:'未在跑（不符收斂 v2）'}
   };
   var SECTOR_ZH = {
     'Information Technology':'資訊科技','Industrials':'工業','Energy':'能源',
@@ -436,6 +438,7 @@ table.data tr.is-seat:hover td{background:#efe9da}
         return '<span class="flag '+fm.cls+'">'+fm.icon+' '+fm.label+'</span>';
       }).join('');
       var ret = m.ret_since_entry_pct;
+      var px52Diff = (m.px_over_52wh!=null) ? (m.px_over_52wh-1)*100 : null;
       var card = document.createElement('div');
       card.className = 'seat-card';
       card.innerHTML =
@@ -453,6 +456,7 @@ table.data tr.is-seat:hover td{background:#efe9da}
           metric('進場日', cfg.entry_date||'—') +
           metric('最新收盤', (m.close!=null?m.close.toFixed(2):'—')) +
           metric('進場以來', fmtPct(ret), pnClass(ret)) +
+          metric('距 52W 高', fmtPct(px52Diff), pnClass(px52Diff)) +
           metric('EPS修正FY1', fmtPct(m.rev_fy1)) +
           metric('EPS修正FY2', fmtPct(m.rev_fy2)) +
           metric('EPS修正30D', fmtPct(m.rev30_avg)) +

@@ -298,6 +298,7 @@ PREFIX_ACTIVE = [
     ("dd-screener/", ("pick", None)),
     ("engine/", ("pick", None)),
     ("research/momentum-5/", ("pick", None)),
+    ("research/momentum-5-short/", ("pick", None)),
     ("research/price-momentum/", ("pick", None)),
     ("research/price-momentum-tw/", ("pick", None)),
     ("qgm/", ("pick", None)),

@@ -112,6 +112,12 @@ REVIEW_REV30 = -2.0                    # seat rev30_avg <= -2 (fresh downgrade) 
                                        # threshold mirrors the 90D rule's -2, same convention, not tuned
 HEAT_RET12 = 2.5                       # seat 12M return > +250% -> flag
 MIN_EPS_COVERAGE = 300                 # fail-safe floor
+# spec v2 (2026-09-16, owner-approved): 20->5 human convergence layer flips
+# preference to "already running". This seat-level informational flag mirrors
+# one of that rule's two necessary conditions (the other, rev30_avg<=0, reuses
+# the existing rev30_avg computed below). Does NOT touch composite/veto/top20
+# — see portfolio.json's rules.convergence_v2 for the full spec.
+STALLED_PX52WH_MIN = 0.90               # seat px_over_52wh < 0.90 (>10% off 52wk high) -> flag
 
 # 2026-08-20: raw-dump-only constants feeding shadow lines R (residual momentum)
 # and H (52-week high) — NOT part of the frozen composite/veto logic above.
@@ -333,7 +339,8 @@ def run_screen():
     # passthrough ONLY — does not touch the frozen composite/veto logic above.
     def surprise_info(t):
         try:
-            eh = yf.Ticker(t).earnings_history
+            tk = yf.Ticker(t)
+            eh = tk.earnings_history
             if eh is None or eh.empty:
                 return t, None
             eh = eh[eh['epsActual'].notna()]
@@ -355,7 +362,29 @@ def run_screen():
             # date" for freshness gating is slightly conservative (marks
             # things stale a bit sooner than the true announcement date
             # would), not lenient.
-            return t, dict(surprise_pct=float(sp) * 100.0, surprise_date=date_iso)
+            result = dict(surprise_pct=float(sp) * 100.0, surprise_date=date_iso, report_date=None)
+            # report_date (2026-09-16 addition): the ACTUAL announcement date,
+            # from the same yf.Ticker(t) object's get_earnings_dates() call —
+            # distinct from surprise_date above (fiscal-period END date). Feeds
+            # build_momentum5_short.py's PEAD freshness window, which needs the
+            # real announcement date, not the quarter-end. Raw-dump passthrough
+            # only — does not touch surprise_pct/surprise_date or anything in
+            # the frozen composite/veto logic. Best-effort: any failure here
+            # just leaves report_date=None.
+            try:
+                ed = tk.get_earnings_dates(limit=8)
+                if ed is not None and not ed.empty and 'Reported EPS' in ed.columns:
+                    ed_idx = ed.index
+                    if getattr(ed_idx, 'tz', None) is not None:
+                        ed_idx = ed_idx.tz_localize(None)
+                    today = pd.Timestamp(datetime.now(timezone.utc).date())
+                    mask = (ed_idx <= today) & ed['Reported EPS'].notna().to_numpy()
+                    reported = ed_idx[mask]
+                    if len(reported):
+                        result['report_date'] = reported.max().date().isoformat()
+            except Exception:
+                pass
+            return t, result
         except Exception:
             return t, None
 
@@ -470,6 +499,13 @@ def build():
         rev30_vals = [v for v in (rev30_fy1, rev30_fy2) if v is not None]
         rev30_avg = sum(rev30_vals) / len(rev30_vals) if rev30_vals else None
 
+        # v2 收斂規則（2026-09-16）「已在跑優先」的兩個必要條件——30D 修正轉負
+        # 或已遠離 52 週高點 10% 以上——任一不成立就亮 stalled，供人工複審參考。
+        px_over_52wh = g(t, 'px_over_52wh')
+        if (rev30_avg is not None and rev30_avg <= 0) or \
+           (px_over_52wh is not None and px_over_52wh < STALLED_PX52WH_MIN):
+            flags.append('stalled')
+
         seats_out.append({
             'ticker': t,
             'close': round(close, 2) if close is not None else None,
@@ -477,6 +513,7 @@ def build():
             'rev_fy1': round(rev_fy1, 1) if rev_fy1 is not None else None,
             'rev_fy2': round(rev_fy2, 1) if rev_fy2 is not None else None,
             'rev30_avg': round(rev30_avg, 1) if rev30_avg is not None else None,
+            'px_over_52wh': round(px_over_52wh, 4) if px_over_52wh is not None else None,
             'score': round(score, 2) if score is not None else None,
             'rank': int(rank) if rank is not None else None,
             'flags': flags,
@@ -571,17 +608,24 @@ def build():
             'pct_up_126': gv(t, 'pct_up_126'),
             'surprise_pct': gv(t, 'surprise_pct'),
             'surprise_date': gv_str(t, 'surprise_date'),
+            'report_date': gv_str(t, 'report_date'),
             'resmom': gv(t, 'resmom'),
             'px_over_52wh': gv(t, 'px_over_52wh'),
         })
     surprise_coverage = sum(1 for r in raw_universe if r['surprise_pct'] is not None)
     resmom_coverage = sum(1 for r in raw_universe if r['resmom'] is not None)
     px52wh_coverage = sum(1 for r in raw_universe if r['px_over_52wh'] is not None)
+    # report_date (2026-09-16 addition): the actual announcement date, distinct
+    # from surprise_date's fiscal-period-end date — see surprise_info()'s
+    # docstring comment above. Feeds build_momentum5_short.py's PEAD freshness
+    # window; raw-dump passthrough only.
+    report_date_coverage = sum(1 for r in raw_universe if r['report_date'] is not None)
     raw_payload = {
         'as_of': as_of,
         'spy_close': round(spy_close, 2),
         'spy6': float(spy6),  # SPY's own 6M return — needed to rebuild relmom6 = mom6 - spy6
         'surprise_coverage': surprise_coverage,
+        'report_date_coverage': report_date_coverage,
         'resmom_coverage': resmom_coverage,
         'px52wh_coverage': px52wh_coverage,
         'universe': raw_universe,
@@ -655,6 +699,7 @@ def main():
     print(f"  ✓ wrote {RAW_FACTORS_JSON.relative_to(ROOT)} "
           f"({len(raw_payload['universe'])} tickers, "
           f"surprise_coverage={raw_payload['surprise_coverage']}, "
+          f"report_date_coverage={raw_payload['report_date_coverage']}, "
           f"resmom_coverage={raw_payload['resmom_coverage']}, "
           f"px52wh_coverage={raw_payload['px52wh_coverage']})")
 

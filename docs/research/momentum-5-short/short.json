@@ -1,0 +1,272 @@
+{
+ "schema": "momentum5-short-v1",
+ "prereg": {
+  "title": "Momentum-5 Short：財報後六十日驚喜漂移機械線",
+  "frozen_date": "2026-09-16",
+  "objective": "檢定財報驚喜後的股價反應能不能在六十個交易日內持續產生超額報酬。",
+  "design": "純機械操作，每週六用 Momentum-5 主線同一份原始資料跑五席等權組合，不做任何人工判斷。進場看財報驚喜與 30 天修正動能，出場只看持有天數與下一次財報，沒有停損。",
+  "entry_rules": [
+   "財報公布日（yfinance get_earnings_dates 的實際公布日，非季底日）距本週資料截止日在 45 個日曆天內，且財報驚喜（surprise_pct）大於 0",
+   "30 天 EPS 修正平均（rev30_fy1 與 rev30_fy2 平均）大於 0，兩者都要有值",
+   "收盤價站上 200 日均線",
+   "12 個月報酬不超過 250%（同 Momentum-5 主線的極端否決）",
+   "不可為現任五席任一持股",
+   "候選池不足 3 檔時，本週不進新席"
+  ],
+  "exit_rules": [
+   "進場滿 84 個日曆天（約 60 個交易日）強制出場",
+   "該股公布下一次財報（以實際公布日 report_date 判斷）即出場",
+   "無停損——刻意設計，為了跟回測條件一致"
+  ],
+  "data_gates": [
+   "全市場財報驚喜覆蓋不到 300 檔：本週不換倉，現有持倉照最新收盤價 mark-to-market",
+   "全市場財報公布日覆蓋不到 300 檔：與驚喜覆蓋閘同等處理，本週不換倉，只 mark-to-market",
+   "raw_factors.json 的資料日未比 short.json 已記錄的更新：視為同一週，不重複處理"
+  ],
+  "scoring": "分數＝驚喜幅度的 z 分數（候選池內先做 5/95 百分位 winsorize）加上 30 天修正平均的 z 分數，同分以 ticker 字母序決勝。",
+  "portfolio_rules": {
+   "weighting": "等權五席，各占 NAV 20%",
+   "nav_base": "100（成立當週）",
+   "sleeve": "每席各自一個 sleeve，起始值 20；出場結算為現金，再進場時把現金投入新股",
+   "no_stop": "無停損；出場只看持有天數到期或下一次財報公布，不看虧損幅度"
+  },
+  "evidence": "持有人自有回測（v7-backtest pead_backtest，SEC EDGAR SUE，2009–2026）：最高驚喜五分位 60 日事件累積超額 +0.66%，t 值 3.7；效果統計上存在但幅度小",
+  "known_weaknesses": [
+   "效果本身很小：自有回測最高驚喜五分位的 60 日累積超額只有 +0.66%",
+   "yfinance 的 surprisePercent 不是學術定義的 SUE（標準化未預期盈餘），只是實際數字對預估數字的粗略比例",
+   "五席等權集中，單一持股占 NAV 20%",
+   "無停損，中途下跌不會提前出場",
+   "分析師修正資料本身有 2-6 週滯後",
+   "驚喜%在預估值很小時容易失真，已用 winsorize 5/95 處理極端值",
+   "沒有公布日（report_date）資料的股票會直接被排除出候選池，不是記為不新鮮"
+  ],
+  "disclosure": "紙上研究組合，機械式進出場，無交易成本，非投資建議。"
+ },
+ "as_of": "2026-09-16",
+ "inception": "2026-09-16",
+ "spy_close_inception": 757.39,
+ "seats": [
+  {
+   "seat_no": 1,
+   "ticker": "MPC",
+   "entry_date": "2026-09-16",
+   "entry_price": 410.84,
+   "entry_surprise_date": "2026-06-30",
+   "entry_report_date": "2026-08-04",
+   "entry_surprise_pct": 27.1,
+   "entry_rev30_avg": 21.1,
+   "entry_score": 5.18,
+   "sleeve_at_entry": 20.0,
+   "sleeve_value": 20.0,
+   "last_price": 410.84,
+   "days_held": 0,
+   "exit_due_date": "2026-12-09"
+  },
+  {
+   "seat_no": 2,
+   "ticker": "TGT",
+   "entry_date": "2026-09-16",
+   "entry_price": 154.4,
+   "entry_surprise_date": "2026-07-31",
+   "entry_report_date": "2026-08-19",
+   "entry_surprise_pct": 75.8,
+   "entry_rev30_avg": 13.3,
+   "entry_score": 4.85,
+   "sleeve_at_entry": 20.0,
+   "sleeve_value": 20.0,
+   "last_price": 154.4,
+   "days_held": 0,
+   "exit_due_date": "2026-12-09"
+  },
+  {
+   "seat_no": 3,
+   "ticker": "CRM",
+   "entry_date": "2026-09-16",
+   "entry_price": 255.65,
+   "entry_surprise_date": "2026-07-31",
+   "entry_report_date": "2026-08-26",
+   "entry_surprise_pct": 80.4,
+   "entry_rev30_avg": 10.5,
+   "entry_score": 4.18,
+   "sleeve_at_entry": 20.0,
+   "sleeve_value": 20.0,
+   "last_price": 255.65,
+   "days_held": 0,
+   "exit_due_date": "2026-12-09"
+  },
+  {
+   "seat_no": 4,
+   "ticker": "ALL",
+   "entry_date": "2026-09-16",
+   "entry_price": 257.21,
+   "entry_surprise_date": "2026-06-30",
+   "entry_report_date": "2026-08-05",
+   "entry_surprise_pct": 48.0,
+   "entry_rev30_avg": 8.1,
+   "entry_score": 3.55,
+   "sleeve_at_entry": 20.0,
+   "sleeve_value": 20.0,
+   "last_price": 257.21,
+   "days_held": 0,
+   "exit_due_date": "2026-12-09"
+  },
+  {
+   "seat_no": 5,
+   "ticker": "KEYS",
+   "entry_date": "2026-09-16",
+   "entry_price": 313.36,
+   "entry_surprise_date": "2026-07-31",
+   "entry_report_date": "2026-08-18",
+   "entry_surprise_pct": 23.7,
+   "entry_rev30_avg": 14.2,
+   "entry_score": 3.28,
+   "sleeve_at_entry": 20.0,
+   "sleeve_value": 20.0,
+   "last_price": 313.36,
+   "days_held": 0,
+   "exit_due_date": "2026-12-09"
+  }
+ ],
+ "nav": [
+  {
+   "date": "2026-09-16",
+   "nav": 100.0,
+   "spy_nav": 100.0
+  }
+ ],
+ "events": [
+  {
+   "date": "2026-09-16",
+   "seat": 1,
+   "action": "enter",
+   "ticker": "MPC",
+   "reason": "inception",
+   "price": 410.84
+  },
+  {
+   "date": "2026-09-16",
+   "seat": 2,
+   "action": "enter",
+   "ticker": "TGT",
+   "reason": "inception",
+   "price": 154.4
+  },
+  {
+   "date": "2026-09-16",
+   "seat": 3,
+   "action": "enter",
+   "ticker": "CRM",
+   "reason": "inception",
+   "price": 255.65
+  },
+  {
+   "date": "2026-09-16",
+   "seat": 4,
+   "action": "enter",
+   "ticker": "ALL",
+   "reason": "inception",
+   "price": 257.21
+  },
+  {
+   "date": "2026-09-16",
+   "seat": 5,
+   "action": "enter",
+   "ticker": "KEYS",
+   "reason": "inception",
+   "price": 313.36
+  }
+ ],
+ "candidates_top10": [
+  {
+   "ticker": "MPC",
+   "surprise_pct": 27.1,
+   "surprise_date": "2026-06-30",
+   "report_date": "2026-08-04",
+   "rev30_avg": 21.1,
+   "score": 5.18,
+   "is_seat": false
+  },
+  {
+   "ticker": "TGT",
+   "surprise_pct": 75.8,
+   "surprise_date": "2026-07-31",
+   "report_date": "2026-08-19",
+   "rev30_avg": 13.3,
+   "score": 4.85,
+   "is_seat": false
+  },
+  {
+   "ticker": "CRM",
+   "surprise_pct": 80.4,
+   "surprise_date": "2026-07-31",
+   "report_date": "2026-08-26",
+   "rev30_avg": 10.5,
+   "score": 4.18,
+   "is_seat": false
+  },
+  {
+   "ticker": "ALL",
+   "surprise_pct": 48.0,
+   "surprise_date": "2026-06-30",
+   "report_date": "2026-08-05",
+   "rev30_avg": 8.1,
+   "score": 3.55,
+   "is_seat": false
+  },
+  {
+   "ticker": "KEYS",
+   "surprise_pct": 23.7,
+   "surprise_date": "2026-07-31",
+   "report_date": "2026-08-18",
+   "rev30_avg": 14.2,
+   "score": 3.28,
+   "is_seat": false
+  },
+  {
+   "ticker": "PSX",
+   "surprise_pct": 25.4,
+   "surprise_date": "2026-06-30",
+   "report_date": "2026-08-05",
+   "rev30_avg": 12.6,
+   "score": 3.01,
+   "is_seat": false
+  },
+  {
+   "ticker": "ROST",
+   "surprise_pct": 36.7,
+   "surprise_date": "2026-07-31",
+   "report_date": "2026-08-20",
+   "rev30_avg": 7.0,
+   "score": 2.48,
+   "is_seat": false
+  },
+  {
+   "ticker": "NTAP",
+   "surprise_pct": 21.5,
+   "surprise_date": "2026-07-31",
+   "report_date": "2026-09-02",
+   "rev30_avg": 11.2,
+   "score": 2.4,
+   "is_seat": false
+  },
+  {
+   "ticker": "HPE",
+   "surprise_pct": 18.4,
+   "surprise_date": "2026-07-31",
+   "report_date": "2026-09-02",
+   "rev30_avg": 12.1,
+   "score": 2.39,
+   "is_seat": false
+  },
+  {
+   "ticker": "SJM",
+   "surprise_pct": 46.2,
+   "surprise_date": "2026-07-31",
+   "report_date": "2026-08-26",
+   "rev30_avg": 3.7,
+   "score": 2.35,
+   "is_seat": false
+  }
+ ],
+ "data_gaps": []
+}
