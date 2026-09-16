@@ -38,12 +38,20 @@ import spawn as sp  # noqa: E402
 STAGES = ["plan", "stage0", "facts", "judged", "gated", "brief", "prose", "finish"]
 
 # 設計稿 §4 的通契約
-COVERAGE_MAX_TURNS = 8
-COVERAGE_MAX_TURNS_SEGMENTED = 12
+# 2026-09-16：採證 agent 拿掉自我驗證（Bash）與重寫輪，只留搜尋／讀網頁／寫檔——
+# 舊模板每軸 7–10 輪裡有 2–4 輪在跑 validate_evidence.py 自驗，v20 由 run.py 驗。
+COVERAGE_TOOLS = ["WebSearch", "WebFetch", "Write"]
+COVERAGE_MAX_TURNS = 6
+COVERAGE_MAX_TURNS_SEGMENTED = 10
+COVERAGE_TMPL = HERE / "prompts" / "coverage.md.tmpl"
 COVERAGE_BUDGET = ddreport.BUDGET_CACHE_READ_COVERAGE
 NUMBERS_MAX_TURNS = 14
 NUMBERS_BUDGET = ddreport.BUDGET_CACHE_READ_NUMBERS
-STAGE0_MAX_PARALLEL = int(os.environ.get("DD_MAX_PARALLEL", "8"))
+# 12 軸一波開完：牆鐘時間＝最慢那軸，不是兩波相加；token 逐 agent 算、與並行度無關。撞 rate limit 再降。
+STAGE0_MAX_PARALLEL = int(os.environ.get("DD_MAX_PARALLEL", "12"))
+# Koyfin 下載逾時寫死 300 秒（session 過期會等滿才退回磁碟）；磁碟逐字稿在這天數內就把逾時壓到 15 秒。
+KOYFIN_DISK_FRESH_DAYS = 100
+KOYFIN_FAST_TIMEOUT = 15
 JUDGE_THINKING_CAP = 32_000
 JUDGE_BUDGET = ddreport.JUDGE_BUDGET_CACHE_READ
 GATE_BUDGET = ddreport.GATE_BUDGET_CACHE_READ
@@ -138,21 +146,46 @@ def _today_iso(date_yyyymmdd):
 # facts_store 按軸決定，不用舊鏈整包 30 天那套。
 # ---------------------------------------------------------------------------
 
+def _disk_transcript_age_days(ticker, date_yyyymmdd):
+    """Drive 資料夾裡最新逐字稿（檔名尾 _YYYYMMDD.md）距 run 日幾天；找不到回 None。"""
+    folder = ddreport._find_koyfin_drive_folder(ticker)
+    if not folder:
+        return None
+    dates = []
+    for f in folder.glob("*.md"):
+        m = re.search(r"_(\d{8})\.md$", f.name)
+        if m:
+            dates.append(m.group(1))
+    if not dates:
+        return None
+    latest = max(dates)
+    d0 = _dt.date(int(latest[:4]), int(latest[4:6]), int(latest[6:8]))
+    d1 = _dt.date(int(date_yyyymmdd[:4]), int(date_yyyymmdd[4:6]), int(date_yyyymmdd[6:8]))
+    return (d1 - d0).days
+
+
 def do_plan(ctx):
-    cmd = [_pick_python(), SCRIPTS_DIR / "ddreport.py", "plan", ctx.ticker, "--date", ctx.date,
-           "--reuse-days", "0", "--axes-per-batch", "1"]
-    if ctx.args.archetype:
-        cmd += ["--archetype", ctx.args.archetype]
-    if ctx.args.peers:
-        cmd += ["--peers", ctx.args.peers]
-    if ctx.args.offline:
-        cmd.append("--offline")
-    rc, out = _sub(cmd, cwd=REPO_ROOT)
+    ns = argparse.Namespace(
+        ticker=ctx.ticker, date=ctx.date, archetype=ctx.args.archetype, peers=ctx.args.peers,
+        segments=None, axes_per_batch=1, offline=ctx.args.offline, reuse_days=0,
+    )
+    age = _disk_transcript_age_days(ctx.ticker, ctx.date)
+    fast = ctx.args.skip_koyfin or (age is not None and age <= KOYFIN_DISK_FRESH_DAYS)
+    prev_timeout = ddreport.KOYFIN_DOWNLOAD_TIMEOUT
+    if fast:
+        ddreport.KOYFIN_DOWNLOAD_TIMEOUT = KOYFIN_FAST_TIMEOUT
+    t0 = time.time()
+    try:
+        rc = ddreport.cmd_plan(ns)
+    finally:
+        ddreport.KOYFIN_DOWNLOAD_TIMEOUT = prev_timeout
     ctx.load_manifest()
     st = ctx.stage_begin("plan")
-    st["cmd"] = " ".join(str(c) for c in cmd)
+    st["koyfin_fast_path"] = bool(fast)
+    st["disk_transcript_age_days"] = age
+    st["seconds"] = int(time.time() - t0)
     ok = rc == 0 and (ctx.run_dir / "evidence.json").exists() and (ctx.run_dir / "axes.json").exists()
-    return ctx.stage_end("plan", ok, out)
+    return ctx.stage_end("plan", ok, "rc={0} koyfin_fast={1} disk_age={2}d {3}s".format(rc, fast, age, st["seconds"]))
 
 
 # ---------------------------------------------------------------------------
@@ -217,20 +250,25 @@ def do_stage0(ctx):
         is_major = axis_id == "major_events"
         is_seg = (not is_major) and ddreport._is_segmented_axis(axis)
         part_rel = "parts/axes_{0}.json".format(k)
+        # 搜尋上限照題目數：重大事件五類各一次、分段軸（終端市場逐段）6 次、其餘 3 次。
+        # 2026-09-16 TSM 實測固定 3 次時，重大事件把 3 次都用在證券詐欺類，漏掉亞利桑那廠集體訴訟；終端市場 12 條掉到 5 條。
+        n_q = len(axis.get("queries") or [])
+        max_search = 5 if is_major else (6 if is_seg else max(3, min(n_q, 4)))
         mapping = {
             "TICKER": ctx.ticker,
             "N_AXES": "1",
+            "MAX_SEARCH": str(max_search),
             "AXES_BLOCK": ddreport._axis_block([axis]),
             "PART_PATH": str(run_dir / part_rel),
             "EVENTS_BLOCK": ddreport.EVENTS_ADDENDUM if is_major else "",
             "EVENTS_JSON_KEY": (',\n  "events": ' + ddreport.EVENTS_JSON_SAMPLE) if is_major else "",
         }
-        text = ddreport._render_template(ddreport.PROMPTS_TMPL_DIR / "coverage.md.tmpl", mapping)
+        text = ddreport._render_template(COVERAGE_TMPL, mapping)
         prompt_rel = "prompts/a_{0}_{1}.md".format(k, axis_id)
         (run_dir / prompt_rel).write_text(text, encoding="utf-8")
         specs.append({"id": "a_{0}_{1}".format(k, axis_id), "axis_id": axis_id, "model": "sonnet",
-                      "prompt": prompt_rel, "out": part_rel, "tools": ddreport.SPAWN_TOOLS_COVERAGE,
-                      "max_turns": COVERAGE_MAX_TURNS_SEGMENTED if is_seg else COVERAGE_MAX_TURNS,
+                      "prompt": prompt_rel, "out": part_rel, "tools": COVERAGE_TOOLS,
+                      "max_turns": COVERAGE_MAX_TURNS_SEGMENTED if (is_seg or is_major) else COVERAGE_MAX_TURNS,
                       "budget_cache_read": COVERAGE_BUDGET, "run_dir": str(run_dir)})
 
     # numbers：一通，或沿用
@@ -745,6 +783,7 @@ def main(argv=None):
     ap.add_argument("--offline", action="store_true")
     ap.add_argument("--dry-run", action="store_true", help="產物留在 run 目錄，不寫 docs/、不 commit")
     ap.add_argument("--no-push", action="store_true")
+    ap.add_argument("--skip-koyfin", action="store_true", help="不等 Koyfin 下載（逾時壓到 15 秒），直接用磁碟逐字稿")
     ap.add_argument("--no-gate-patch", action="store_true", help="閘紅燈後不做 patch map，直接停")
     ap.add_argument("--force-gate", action="store_true",
                     help="閘紅燈仍往下做 brief／prose 預覽（只在 --dry-run 有效；manifest 記 FAIL，finish 拒絕）")

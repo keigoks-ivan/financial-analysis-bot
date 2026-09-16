@@ -156,3 +156,16 @@ finish   python3 scripts/ddreport.py finish T D [--no-push]
 現況唯一擋門：sonnet 心算「毛利率季增 3.4 個百分點」（判斷物無此數，validate_prose 擋）。呈現卡已加「不得心算衍生數字」。下一次跑：`--resume --reuse-judgment`（判斷不重花）重跑 prose 一通約 $1.6。
 
 zh-analyst-prose 掃描（22KB 散文）：「——」0、「；」0、「不是A是B」1、比喻 0、機制詞 0（第一版 43 個分號，改卡後歸零）。
+
+### 8c｜同日：採證段三改＋Koyfin 快路徑（TSM 全新實測）
+
+| | TSM 2026-09-11（舊模板） | TSM 2026-09-16（v20 模板） |
+|---|---|---|
+| 準備段 | 5 分（Koyfin 逾時 300s） | 16 秒（磁碟逐字稿 62 天內 → 逾時壓 15s） |
+| 採證 spawn | 12 通 $6.12 | 13 通 $3.28 |
+| 牆鐘 | 約 15 分（8 並行兩波） | 3.4 分（12 並行一波） |
+| 每軸輪數 | 7–17 | 4–7（數字 10） |
+| findings | 40 | 31 |
+
+改動：`prompts/coverage.md.tmpl` 拿掉自我驗證與 Bash（工具只留 WebSearch／WebFetch／Write，寫完即停）；並行 12；`do_plan` 改程序內呼叫 `ddreport.cmd_plan`，磁碟逐字稿 ≤100 天時 `KOYFIN_DOWNLOAD_TIMEOUT` 暫設 15s（`--skip-koyfin` 強制）。
+品質代價：重大事件軸漏掉亞利桑那廠集體訴訟（3 次搜尋全用在證券詐欺類），終端市場 12→5 條。已改搜尋上限照題目數（重大事件 5、分段軸 6、其餘 3–4），待下次實測。
