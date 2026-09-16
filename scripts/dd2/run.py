@@ -341,6 +341,47 @@ def do_stage0(ctx):
 # facts：零 LLM 事實表
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# 週線均線六態（timing-appendix §F）：純機械，判斷者不得自判。
+# 2026-09-16：TXN 判斷者無資料硬填 ✅（閘抓）、TSM 填「-」（矩陣自動降衛星）——兩檔同一個洞。
+# 借 dd_screener_ma.compute_ma_snapshot（yfinance 週線＋快取）與 build_quality_entry 的六態映射。
+# ---------------------------------------------------------------------------
+
+def _ma_state(ticker):
+    import dd_screener_ma
+    import build_quality_entry
+    snap = dd_screener_ma.compute_ma_snapshot(ticker, use_cache=True)
+    label, _score = build_quality_entry.ma_state_label_and_score(snap or {})
+    if label == "—":
+        label = "-"
+    return snap or {}, label
+
+
+def _inject_ma_facts(ctx, facts_path):
+    """把六態與四個均線數字加進 facts.json 的 q5_valuation.facts；回 (label, snapshot)。"""
+    snap, label = _ma_state(ctx.ticker)
+    _atomic_write_json(ctx.run_dir / "ma_snapshot.json", {"label": label, "snapshot": snap})
+    facts = _load_json(facts_path)
+    q5 = facts.setdefault("questions", {}).setdefault("q5_valuation", {})
+    arr = q5.setdefault("facts", [])
+    arr[:] = [f for f in arr if not str(f.get("id", "")).startswith("f_ma_")]
+    as_of = _today_iso(ctx.date)
+    src = {"type": "manual", "ref": "ma_snapshot.json", "as_of": as_of,
+           "citation": "程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）"}
+    basis = "timing-appendix §F 週線六態：🟢 價<W52且>W104且三斜率正｜✅ 價>W52>W104>W250且W250斜率>+3%｜🟡 排列過但W250斜率−3~+3%｜🟠 價<W104但>W250｜❌ 價<W250或斜率<−3%"
+    arr.append({"id": "f_ma_state", "label": "週線均線六態（decision_inputs.ma 必須等於此值）", "value": label,
+                "period": as_of, "unit": None, "basis": basis, "kind": "realized", "source": src,
+                "quote": "price {0} / W52 {1} / W104 {2} / W250 {3} / W250 13週斜率 {4}%".format(
+                    snap.get("price"), snap.get("w52"), snap.get("w104"), snap.get("w250"), snap.get("slope_w250_pct"))})
+    for key, lab in (("w52", "52 週均線"), ("w104", "104 週均線"), ("w250", "250 週均線"), ("slope_w250_pct", "W250 13 週斜率")):
+        if snap.get(key) is not None:
+            arr.append({"id": "f_ma_" + key, "label": lab, "value": snap.get(key), "period": as_of,
+                        "unit": "%" if key.endswith("pct") else "USD", "basis": "週線收盤 SMA（yfinance auto_adjust）",
+                        "kind": "realized", "source": src})
+    _atomic_write_json(facts_path, facts)
+    return label, snap
+
+
 def do_facts(ctx):
     st = ctx.stage_begin("facts")
     py = _pick_python()
@@ -349,8 +390,16 @@ def do_facts(ctx):
                    "--date", _today_iso(ctx.date), "--out", out])
     if rc != 0 or not out.exists():
         return ctx.stage_end("facts", False, o1)
+    try:
+        label, snap = _inject_ma_facts(ctx, out)
+        st["ma_state"] = label
+        st["ma_snapshot"] = {k: snap.get(k) for k in ("price", "w52", "w104", "w250", "slope_w250_pct")}
+    except Exception as exc:  # 均線抓不到不擋事實表，記下來讓判斷者填「-」
+        st["ma_state_error"] = str(exc)[:300]
     rc2, o2 = _sub([py, SCRIPTS_DIR / "dd_facts.py", "check", out, "--report"])
     st["facts_bytes"] = out.stat().st_size
+    if re.search(r"^\[FAIL\]", o2, re.M):
+        return ctx.stage_end("facts", False, o1 + "\n" + o2)
     return ctx.stage_end("facts", True, o1 + "\n" + o2)
 
 
@@ -366,6 +415,16 @@ def _write_judgment(ctx, obj):
     # 兩個檔案指標是機械欄：判斷者不必猜路徑（TXN 2026-09-16 首跑 scenario_ref 沒填 → J2 略過、8 欄漂移對帳成 None）
     obj["facts_ref"] = str(ctx.run_dir / "facts.json")
     obj["scenario_ref"] = str(ctx.run_dir / "scenario.json")
+    # 機械覆寫：decision_inputs.ma ＝ 事實表 f_ma_state（程式算的週線六態），判斷者填什麼都不算
+    ma_path = ctx.run_dir / "ma_snapshot.json"
+    if ma_path.exists():
+        label = (_load_json(ma_path) or {}).get("label")
+        if label:
+            di = obj.setdefault("decision_inputs", {})
+            if di.get("ma") != label:
+                ctx.manifest.setdefault("mechanical_overrides", []).append(
+                    {"path": "$.decision_inputs.ma", "judge": di.get("ma"), "program": label})
+                di["ma"] = label
     path = ctx.run_dir / "judgment.json"
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
     return path
@@ -382,6 +441,15 @@ def normalize_v20(obj):
     if isinstance(q1, dict) and isinstance(q1.get("single_thing"), str) and isinstance(thesis_st, dict):
         q1["single_thing"] = dict(thesis_st)
         changes.append("q1.verdict_values.single_thing: 指標字串 → 複製 thesis.single_thing")
+    # TSM 2026-09-16：q4 quality 的 buyback／lumpiness 留 null，schema 要 object（無必填子欄）。
+    # 空物件＝「判斷者沒填」，不補任何值；渲染端把空物件當未展開。
+    q4 = ((obj.get("answers") or {}).get("q4_capital") or {}).get("verdict_values") or {}
+    quality = q4.get("quality")
+    if isinstance(quality, dict):
+        for k in ("buyback", "lumpiness"):
+            if k in quality and quality[k] is None:
+                quality[k] = {}
+                changes.append("q4.verdict_values.quality.{0}: null → {{}}（空物件，未補值）".format(k))
     return obj, changes
 
 
@@ -780,6 +848,7 @@ def main(argv=None):
     ap.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
     ap.add_argument("--until", default=None, choices=STAGES, help="跑到這段就停（含）")
     ap.add_argument("--resume", action="store_true", help="manifest 已 PASS 的段跳過")
+    ap.add_argument("--redo", default=None, help="逗號分隔的段名，即使已 PASS 也重跑（配 --resume）")
     ap.add_argument("--offline", action="store_true")
     ap.add_argument("--dry-run", action="store_true", help="產物留在 run 目錄，不寫 docs/、不 commit")
     ap.add_argument("--no-push", action="store_true")
@@ -803,8 +872,9 @@ def main(argv=None):
         ("gated", do_gated), ("brief", do_brief), ("prose", do_prose),
     ]
     t0 = time.time()
+    redo = set(x.strip() for x in (args.redo or "").split(",") if x.strip())
     for name, fn in order:
-        if args.resume and ctx.stage_passed(name):
+        if args.resume and ctx.stage_passed(name) and name not in redo:
             print("[{0}] skip（已 PASS）".format(name))
         elif args.resume and name == "gated" and args.force_gate and args.dry_run \
                 and (ctx.manifest.get("stages", {}).get("gated") or {}).get("rounds"):

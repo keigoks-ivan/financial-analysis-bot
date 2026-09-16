@@ -226,6 +226,7 @@ def drift_rule_section(prior_summary_text: str) -> str:
         "`方法變動` 那條即可），每條 `cause` 三選一（`價格變動`／`新證據`／`方法變動`），漏一欄＝FAIL。"
         "`kill_metrics`／`rearm_trigger`／Single Thing 的門檻與前份不同時，另開一條 `cause`∈{`新證據`,`方法變動`}、"
         "`side_a`=舊門檻原文、`side_b`=新門檻原文，條目文字要含該動作名（如「清倉」「減碼」）；唯一致命點變動的那條文字要含「Single Thing」字樣，`side_a`=前份唯一致命點原文、`side_b`=本次原文。"
+        "\n\n`decision_inputs.ma`（週線均線六態）由程式從週線均線算出，值在事實表 `f_ma_state`：**照抄該值**，不得自判、不得填 ✅ 或「-」；程式落檔時會強制覆寫成事實表的值。"
     )
 
 
@@ -402,6 +403,7 @@ def build_prose(run_dir, *, cards_dir) -> dict:
         ("numbers_whitelist", dd_bundle._numbers_whitelist_section(judgment)),
         ("mechanical_sids", dd_bundle._mechanical_sids_section(prose_dir)),
         ("prose_card", _card_section("prose_card.md（散文卡）", cards_dir / "prose_card.md")),
+        ("leak_words", leak_words_section()),
         ("judgment_view", "## judgment 投影視圖（dd_project.view_for，緊湊 JSON）\n\n"
             + dd_bundle._JSON_NOTE + "\n\n```json\n" + view_compact + "\n```"),
     ]
