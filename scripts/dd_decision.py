@@ -52,8 +52,12 @@ SIGNAL_RANK = {"X": 0, "C": 1, "B": 2, "A": 3, "A+": 4}
 MOAT_RANK = {"S": 0, "A": 1, "B": 2, "C": 3, "X": 4}
 VAL_GREEN_YELLOW = ("🟢", "🟡")
 VAL_ORANGE_RED = ("🟠", "🔴")
-MA_GREEN = ("🟢", "✅")
-MA_MID = ("🟡", "🟠", "-")
+# 2026-09-16 持有人拍板（rule_ledger「MA ✅/🟡 對矩陣合併」）：🟡（排列完整但 W250 13 週斜率 −3～+3%）
+# 對 baseline row 9/10 視同 ✅。依據：265 檔母體 W250 斜率中位 1.4%、只有 19% 超過 +3%；140 檔排列完整
+# 的多頭裡 74 檔被標 🟡、22 檔卡在 2～3% 邊緣，核心／衛星標籤隨一個落後指標的門檻抖動（TSM 2.91% 案例）。
+# ❌（價 < W250 或斜率 < −3%）與 🟠 語意不變。
+MA_GREEN = ("🟢", "✅", "🟡")
+MA_MID = ("🟠", "-")
 MA_RED = "❌"
 CYCLE_POS_EARLY = ("深谷投降", "早循環")
 CYCLICAL_RE = re.compile(r"循環|商品|EMS/ODM")
@@ -367,11 +371,11 @@ def _evaluate_matrix(inputs: dict) -> dict:
         and sig_rank >= SIGNAL_RANK["B"] and val_le_yellow and ma_mid
     )
 
-    _audit(audit_rows, "9", "無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅} → 進場", row9_hit,
+    _audit(audit_rows, "9", "無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場", row9_hit,
            f"signal={signal!r}, val={val!r}, ma={ma!r}")
-    _audit(audit_rows, "9b", "無 Veto + signal≥B + val≤🟡 + MA∈{🟡,🟠,-}（W250斜率未轉負）→ 進場·條件式（長波段佈局）",
+    _audit(audit_rows, "9b", "無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）",
            row9b_hit, f"signal={signal!r}, val={val!r}, ma={ma!r}")
-    _audit(audit_rows, "10", "無 Veto + signal≥A + MA∈{🟢,✅} + val∈{🟢,🟡} → 進場", row10_hit,
+    _audit(audit_rows, "10", "無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場", row10_hit,
            f"signal={signal!r}, val={val!r}, ma={ma!r}")
 
     if row10_hit or row9_hit:

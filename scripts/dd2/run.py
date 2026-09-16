@@ -425,9 +425,140 @@ def _write_judgment(ctx, obj):
                 ctx.manifest.setdefault("mechanical_overrides", []).append(
                     {"path": "$.decision_inputs.ma", "judge": di.get("ma"), "program": label})
                 di["ma"] = label
+    obj, drift_log = program_drift_entries(ctx, obj, decision_out=None)
+    st = ctx.manifest.get("stages", {}).get("judged")
+    if isinstance(st, dict):
+        st["program_drift"] = drift_log
+        st["oneliner_role_words"] = _oneliner_role_warn(obj)
     path = ctx.run_dir / "judgment.json"
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
     return path
+
+
+# ---------------------------------------------------------------------------
+# 程式欄位漂移歸因（2026-09-16 TSM 閘紅燈 ⑧）：ma 由程式算、price_at_dd 由事實表來，
+# 因 ma 變動導致矩陣改列的裁決／角色變動也是機械結果。這幾欄的 contradictions 條目由程式
+# 生成，判斷者只歸因基本面欄位；判斷者條目裡誤掛這幾欄（尤其掛在「價格變動」下）一律拆掉。
+# ---------------------------------------------------------------------------
+
+PROGRAM_DRIFT_FIELDS_MA = ("ma",)
+PROGRAM_DRIFT_FIELDS_PRICE = ("price_at_dd",)
+DECISION_FIELDS = ("dca_verdict", "dca_role")
+_PROGRAM_TAG = "[程式歸因]"
+
+
+def _prior_meta(ctx):
+    pp = ctx.run_dir / "parts" / "prior.json"
+    if not pp.exists():
+        return {}
+    pd_ = (_load_json(pp) or {}).get("prior_dd") or {}
+    pm = dict(pd_.get("prior_meta") or {})
+    for k in ("dca_verdict", "dca_role", "price_at_dd"):
+        if pm.get(k) is None and pd_.get(k) is not None:
+            pm[k] = pd_.get(k)
+    return pm
+
+
+def _current_price(ctx):
+    ev = ctx.run_dir / "evidence.json"
+    if ev.exists():
+        return ((_load_json(ev) or {}).get("numbers") or {}).get("price_at_dd")
+    return None
+
+
+def _ma_label(ctx):
+    mp = ctx.run_dir / "ma_snapshot.json"
+    return ((_load_json(mp) or {}).get("label") if mp.exists() else None)
+
+
+def _mk_entry(cause, fields, axis, side_a, side_b, ruling):
+    return {"axis": _PROGRAM_TAG + axis, "cause": cause, "prior_field": list(fields),
+            "side_a": side_a, "side_b": side_b, "ruling": ruling,
+            "evidence_level": "程式計算", "settle_metric": "—", "if_then": [], "evidence_refs": []}
+
+
+def program_drift_entries(ctx, obj, decision_out=None):
+    """回 (obj, log)。把程式欄位從判斷者條目拆掉，前插程式條目。decision_out 有值時（judge check 之後）
+    才把裁決／角色變動併進 ma 那條。可重複呼叫（先移除舊的程式條目再重建）。"""
+    log = []
+    pm = _prior_meta(ctx)
+    decision_out = decision_out or obj.get("decision_out") or None
+    ce = obj.setdefault("counter_evidence", {})
+    entries = [e for e in (ce.get("contradictions") or []) if isinstance(e, dict)]
+    entries = [e for e in entries if not str(e.get("axis", "")).startswith(_PROGRAM_TAG)]
+    ma_now, ma_prev = _ma_label(ctx), pm.get("ma")
+    price_now, price_prev = _current_price(ctx), pm.get("price_at_dd")
+    ma_changed = bool(ma_now) and ma_prev is not None and ma_now != ma_prev
+    program_fields = set(PROGRAM_DRIFT_FIELDS_MA) | set(PROGRAM_DRIFT_FIELDS_PRICE)
+
+    # 1. 拆判斷者條目裡的程式欄；掛在「價格變動」下的裁決／角色也拆
+    for e in entries:
+        pf = e.get("prior_field")
+        if isinstance(pf, str):
+            pf = [pf]
+        if not isinstance(pf, list):
+            continue
+        keep = []
+        for f in pf:
+            if f in program_fields:
+                log.append("拆掉判斷者條目 prior_field '{0}'（程式欄）".format(f))
+                continue
+            if f in DECISION_FIELDS and e.get("cause") == "價格變動":
+                log.append("拆掉判斷者條目 prior_field '{0}'（裁決變更不得併入價格原因）".format(f))
+                continue
+            keep.append(f)
+        e["prior_field"] = keep
+
+    # 2. 程式條目
+    new_entries = []
+    if ma_now is not None:
+        fields = list(PROGRAM_DRIFT_FIELDS_MA)
+        axis = "週線均線六態由程式算（timing-appendix §F）：前份 {0} → 本次 {1}".format(ma_prev, ma_now)
+        ruling = "均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；" + (
+            "此欄變動屬方法變動，不是基本面新證據。" if ma_changed else "與前份相同。")
+        if ma_changed and not decision_out:
+            # 裁決還沒算：先預留兩欄，讓 validate 的漂移對帳過得了；phase 2 再依實際裁決改寫
+            fields += list(DECISION_FIELDS)
+            axis += "；裁決／角色若因此被矩陣改列，直接原因為本欄（待 dd_decision.py 算出後補實際值）"
+        if decision_out and ma_changed:
+            v_prev, r_prev = pm.get("dca_verdict"), pm.get("dca_role")
+            v_now, r_now = decision_out.get("verdict"), decision_out.get("role")
+            moved = []
+            if v_prev is not None and v_now and v_now != v_prev:
+                moved.append("dca_verdict")
+            if r_prev is not None and r_now and r_now != r_prev:
+                moved.append("dca_role")
+            if moved:
+                fields += moved
+                parts = []
+                if "dca_verdict" in moved:
+                    parts.append("裁決 {0}→{1}".format(v_prev, v_now))
+                if "dca_role" in moved:
+                    parts.append("角色 {0}→{1}".format(r_prev, r_now))
+                axis += "；矩陣落第 {0} 列，{1} 隨之改變".format(decision_out.get("row_hit"), "、".join(parts))
+                ruling += " 裁決與角色由 dd_decision.py 依 decision_inputs 機械路由，本次變動的直接原因是 ma 這一欄（{0}→{1}）；基本面欄位的變動另見判斷者條目。".format(ma_prev, ma_now)
+        new_entries.append(_mk_entry("方法變動", fields, axis,
+                                     "前份 ma={0}".format(ma_prev), "本次 ma={0}".format(ma_now), ruling))
+        log.append("程式條目：ma（方法變動）" + ("＋" + "/".join(fields[1:]) if len(fields) > 1 else ""))
+    if price_now is not None:
+        try:
+            chg = (float(price_now) / float(price_prev) - 1.0) * 100.0 if price_prev else None
+        except (TypeError, ValueError, ZeroDivisionError):
+            chg = None
+        new_entries.append(_mk_entry("價格變動", list(PROGRAM_DRIFT_FIELDS_PRICE),
+                                     "判斷日現價由事實表帶入：前份 {0} → 本次 {1}{2}".format(
+                                         price_prev, price_now, "（{0:+.1f}%）".format(chg) if chg is not None else ""),
+                                     "前份 price_at_dd={0}".format(price_prev), "本次 price_at_dd={0}".format(price_now),
+                                     "現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。"))
+        log.append("程式條目：price_at_dd（價格變動）")
+    ce["contradictions"] = new_entries + entries
+    return obj, log
+
+
+def _oneliner_role_warn(obj):
+    ol = str(obj.get("oneliner") or "")
+    hits = [w for w in ("核心倉", "衛星倉", "核心持有", "追蹤池", "不持有") if w in ol]
+    return hits
 
 
 def normalize_v20(obj):
@@ -494,6 +625,13 @@ def do_judged(ctx):
     if not ok:
         rc, out = _sub([_pick_python(), SCRIPTS_DIR / "dd_project.py", "normalize", jpath, "--write"])
         st["normalize_note"] = out[-1500:]
+        ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
+    if ok:
+        # phase 2：decision_out 已由 dd_decision.py 寫回 judgment.json，把因 ma 變動導致的裁決／角色變動併進程式條目
+        cur = _load_json(jpath)
+        cur, drift_log2 = program_drift_entries(ctx, cur, decision_out=cur.get("decision_out") or {})
+        jpath.write_text(json.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
+        st["program_drift"] = drift_log2
         ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
     (ctx.run_dir / "judge_check.txt").write_text(report, encoding="utf-8")
     return ctx.stage_end("judged", ok, report)
