@@ -156,8 +156,12 @@ def weekly_structure(ticker: str) -> dict:
             "dist_hi52": (last / hi52 - 1) * 100}
 
 
-def load_qgm_rows(stocks_map: dict, exclude: set | None = None) -> list[dict]:
+def load_qgm_rows(stocks_map: dict, exclude: set | None = None,
+                  latest_none: dict | None = None) -> list[dict]:
     """QGM（姊妹 repo 品質池，US＋TW）→ 無 DD 名字的擁有層列（v2：DD 選配）。
+    latest_none＝dd-screener latest.json 裡 dd_status="none" 的列（--include-non-dd 產出），
+    2026-09-16 起用它帶的 Koyfin FY1／FY3 補三年 CAGR——在此之前這些列被 main() 整批丟掉，
+    QGM 名字永遠只有單年成長、g_three_year 恆為 False、永遠進不了席位（v3「DD 選配」名存實亡）。
     欄位對齊 latest.json 口徑：roic／fcf／成長（FY1→FY2 單年，QGM 的 cagr2y 以 FY0 為基期會膨脹）
     ／live_fpe_est＝fy1_per／時機取週線 cache，缺則用 QGM trend template 條件 1＋3。"""
     rows = []
@@ -184,6 +188,17 @@ def load_qgm_rows(stocks_map: dict, exclude: set | None = None) -> list[dict]:
                     return None if v is None else float(v)
                 fy1, fy2 = x.get("fy1_eps"), x.get("fy2_eps")
                 g1 = ((fy2 / fy1 - 1) * 100) if fy1 and fy2 and fy1 > 0 else None
+                # 2026-09-16：優先用 dd-screener 供給列的 Koyfin 三年 CAGR；欄位空（Koyfin 匯出
+                # 常留白 CAGR 欄）就用同列的 FY1／FY3 自算，公式同 build_dd_screener 的 fallback。
+                ln = (latest_none or {}).get(tk) or {}
+                g3 = ln.get("eps_fy1_fy3_cagr_pct")
+                if g3 is None and ln.get("eps_source") == "xlsx":
+                    lf1, lf3 = ln.get("eps_fy_curr"), ln.get("eps_fy3")
+                    if lf1 and lf3 and lf1 > 0 and lf3 > 0:
+                        g3 = ((lf3 / lf1) ** 0.5 - 1) * 100
+                if g3 is not None:
+                    g1 = g3
+                g_method = "FY1→FY3 CAGR" if g3 is not None else "FY1→FY2 單年"
                 per1 = x.get("fy1_per")
                 st = weekly_structure(tk)
                 conds = (x.get("trend_template") or {}).get("conditions") or {}
@@ -194,7 +209,7 @@ def load_qgm_rows(stocks_map: dict, exclude: set | None = None) -> list[dict]:
                 roic = hv("roic"); fcf = hv("fcf_margin")
                 rows.append({
                     "ticker": tk, "name": tk, "sector": "", "_src": "qgm", "_qgm_pool": src,
-                    "_durable_5y": durable, "_g_method": "FY1→FY2 單年",
+                    "_durable_5y": durable, "_g_method": g_method,
                     "roic": roic * 100 if roic is not None else None,
                     "fcf": fcf * 100 if fcf is not None else None,
                     "de": hv("debt_to_equity"),
@@ -1099,6 +1114,8 @@ def main() -> int:
     stocks = json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]
     # latest.json 若以 --include-non-dd 產出，無 DD 列（dd_status="none"）改由 load_qgm_rows 供給
     #（帶 _src／_durable_5y／_mktcap），這裡先排除以免搶走 QGM 列的身份標記
+    # 2026-09-16：丟掉前先留一份給 load_qgm_rows 補三年 CAGR（見該函式 docstring）
+    latest_none = {s["ticker"]: s for s in stocks if s.get("dd_status") == "none"}
     stocks = [s for s in stocks if s.get("dd_status") != "none"]
     # 2026-09-02 持有人拍板：v2 先只做美股（含 ADR），台股另建獨立系統——母體排除 .TW
     stocks = [s for s in stocks if market_ok(s["ticker"])]
@@ -1131,7 +1148,7 @@ def main() -> int:
         if adr in stocks_map:
             stocks_map.pop(local, None); aliased.add(local)
     stocks = [s for s in stocks if s["ticker"] in stocks_map]
-    qgm_rows = load_qgm_rows(stocks_map, exclude=aliased)
+    qgm_rows = load_qgm_rows(stocks_map, exclude=aliased, latest_none=latest_none)
     qgm_tickers = {r["ticker"] for r in qgm_rows}
     universe_rows = [row_dict(s) for s in stocks] + [row_dict(s) for s in qgm_rows]
     # dedupe 修復（2026-09-09）：load_qgm_rows／load_light_rows 過去只各自對
