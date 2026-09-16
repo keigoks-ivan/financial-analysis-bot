@@ -135,3 +135,24 @@ finish   python3 scripts/ddreport.py finish T D [--no-push]
 閘三紅：⑤ `decision_inputs.ma` 無均線資料卻填 ✅（決定 row 10 vs 9b）；⑥ ROIIC 25% 無算式、再投資率取值無理由；⑧ 情境路徑變動誤歸「價格變動」。三項都是判斷級，不是形狀。閘另指出同業組（2308.TW／VRT／ETN／SU.PA）是電源系統廠不是類比 IC 廠，屬 plan 沿用 archive peers 的資料問題。
 
 待持有人決定：閘紅燈後是否允許一通 patch map（Fable 單輪只回被點名欄位，約 $1）再重閘一次；或維持停下交人。
+
+### 8b｜同日晚間：閘後一通修補＋散文段（持有人改拍板允許一通 patch map）
+
+| 段 | 通數 | 花費 | 時間 | 結果 |
+|---|---|---|---|---|
+| gated 第 1 輪 | 1（opus） | $1.03 | 3.2 分 | 🔴 3 |
+| gate patch | 1（Fable 單輪，patch map 14 筆，候選目錄驗證 PASS 才套用） | $1.68 | 3.9 分 | 均線那條修掉 |
+| gated 第 2 輪 | 1（opus） | $1.10 | 3.5 分 | 🔴 2（ROIIC 無算式；Bear 情境算術接不上敘述）→ 停 |
+| brief | 0 | $0 | 秒級 | PASS，52,888B（`--force-gate` dry-run 預覽） |
+| prose | 1（sonnet，Write only） | $1.20／$1.60 | 15／21 分 | 兩次都寫約 22KB 散文；組頁 96,058B |
+
+到閘停下為止 $7.33（舊鏈同檔到閘 $9.24）。含強行預覽的 brief＋prose 合計 $8.93（舊鏈全套 $15.99）。
+
+散文段三個發現：
+1. **sonnet 思考 95K token、只寫 22KB**（第二次）。已加 `PROSE_THINKING_CAP=8000`。
+2. **舊鏈 2026-09-11 的 `validate_report_v19`（要求條列附 f_* id、e9b 財務表非空）是未完成品**，e9b 的抽取器本身沒做（H2-6）。v20 改用 `run._gates_v20`：組頁（v19 版面）＋validate_prose＋leaks（機械表 appB／appC 的命中降 WARN）＋qc＋verify_dd_math＋篇幅下限＋zh-analyst-prose 機械掃描（WARN）。
+3. **v19 版面表格就 74KB**，散文本體 22KB 時整檔 96KB 已在 75–105KB 帶內；散文下限校準為 20KB／s5 3KB。呈現卡拿掉 `.mach` 機器代號小字（會被 leak 閘擋）。
+
+現況唯一擋門：sonnet 心算「毛利率季增 3.4 個百分點」（判斷物無此數，validate_prose 擋）。呈現卡已加「不得心算衍生數字」。下一次跑：`--resume --reuse-judgment`（判斷不重花）重跑 prose 一通約 $1.6。
+
+zh-analyst-prose 掃描（22KB 散文）：「——」0、「；」0、「不是A是B」1、比喻 0、機制詞 0（第一版 43 個分號，改卡後歸零）。

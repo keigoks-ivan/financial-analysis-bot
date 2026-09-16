@@ -103,11 +103,30 @@ def oneshot(prompt_path, model, out_json, cwd, *, thinking_cap=None, budget_cach
     return _augment_with_raw_usage(result, out_json)
 
 
-def agentic(prompt_path, model, out_json, cwd, tools, max_turns, budget_cache_read=None):
+def agentic(prompt_path, model, out_json, cwd, tools, max_turns, budget_cache_read=None, thinking_cap=None):
     """多輪、帶工具呼叫（查／寫兩通用；帶 `allowed_tools`＋`max_turns`）。
 
     回傳 dict 同 `oneshot`（含 `thinking_tokens`／`haiku_input_tokens`）。
+    `thinking_cap`：同 oneshot，以 MAX_THINKING_TOKENS 環境變數暫設（2026-09-16 TXN 散文通實測
+    sonnet 思考 95K token、只寫 22KB，故加上限）。
     """
+    env_key = _MAX_THINKING_TOKENS_ENV
+    had_prev = env_key in os.environ
+    prev = os.environ.get(env_key)
+    if thinking_cap is not None:
+        os.environ[env_key] = str(thinking_cap)
+    try:
+        result = _agentic_inner(prompt_path, model, out_json, cwd, tools, max_turns, budget_cache_read)
+    finally:
+        if thinking_cap is not None:
+            if had_prev:
+                os.environ[env_key] = prev
+            else:
+                os.environ.pop(env_key, None)
+    return result
+
+
+def _agentic_inner(prompt_path, model, out_json, cwd, tools, max_turns, budget_cache_read):
     result = dd_headless.spawn(
         prompt_path=prompt_path,
         model=model,

@@ -15,6 +15,7 @@ import argparse
 import datetime as _dt
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -388,21 +389,25 @@ def do_judged(ctx):
 # gated：opus 單輪無工具；JSON 陣列；任一 🔴 即停
 # ---------------------------------------------------------------------------
 
-def do_gated(ctx):
-    st = ctx.stage_begin("gated")
+GATE_PATCH_MAX = 1  # 2026-09-16 持有人拍板：閘紅燈後允許一通 patch map，再閘一次，仍紅就停
+
+
+def _gate_once(ctx, st, idx):
+    """跑一次閘。回 (ok_spawn, clean_items, reds, yellows)。"""
     agents_dir = ctx.run_dir / "agents"
     b = bundle.build_gate(ctx.run_dir, cards_dir=CARDS_DIR)
-    st["bundle_bytes"] = b.get("bytes")
-    r = sp.oneshot(b["prompt_path"], ctx.gate_model, agents_dir / "gate_1.json", ctx.run_dir,
+    st.setdefault("bundle_bytes", []).append(b.get("bytes"))
+    r = sp.oneshot(b["prompt_path"], ctx.gate_model, agents_dir / "gate_{0}.json".format(idx), ctx.run_dir,
                    budget_cache_read=GATE_BUDGET)
-    st["agent_usage"].append(_usage_record("gate_1", r))
+    st["agent_usage"].append(_usage_record("gate_{0}".format(idx), r))
     ctx.save()
     if not r.get("ok") or not r.get("result_text"):
-        return ctx.stage_end("gated", False, "gate spawn failed")
+        return False, [], [], []
     items, err = sp.strip_json(r["result_text"])
     if not isinstance(items, list):
-        (ctx.run_dir / "gate_raw.txt").write_text(r["result_text"], encoding="utf-8")
-        return ctx.stage_end("gated", False, "gate 回覆不是 JSON 陣列：{0}（原文存 gate_raw.txt）".format(err))
+        (ctx.run_dir / "gate_raw_{0}.txt".format(idx)).write_text(r["result_text"], encoding="utf-8")
+        st["gate_parse_error"] = "gate 回覆不是 JSON 陣列：{0}".format(err)
+        return False, [], [], []
     clean = []
     for it in items:
         if not isinstance(it, dict):
@@ -412,18 +417,73 @@ def do_gated(ctx):
     reds = [x for x in clean if x["light"].startswith("🔴")]
     yellows = [x for x in clean if x["light"].startswith("🟡")]
     _atomic_write_json(ctx.run_dir / "gate_result.json",
-                       {"model": ctx.gate_model, "items": clean, "red": len(reds), "yellow": len(yellows)})
-    lines = ["# gate_audit（dd2 v20，{0}）".format(ctx.gate_model), "",
+                       {"model": ctx.gate_model, "round": idx, "items": clean, "red": len(reds), "yellow": len(yellows)})
+    lines = ["# gate_audit（dd2 v20，{0}，第 {1} 輪）".format(ctx.gate_model, idx), "",
              "判斷級 🔴 = {0}，🟡 = {1}".format(len(reds), len(yellows)), ""]
     for x in clean:
         lines.append("- {0} {1} `{2}` {3}".format(x["light"], x["item"], x["judgment_path"], x["reason"]))
     (ctx.run_dir / "gate_audit.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    st["red"] = len(reds)
-    st["yellow"] = len(yellows)
-    if reds:
-        return ctx.stage_end("gated", False, "閘紅燈 {0} 項，停下交指揮者：\n".format(len(reds)) +
-                             "\n".join("- {0} {1} {2}".format(x["item"], x["judgment_path"], x["reason"]) for x in reds))
-    return ctx.stage_end("gated", True, "🔴 0 🟡 {0}".format(len(yellows)))
+    return True, clean, reds, yellows
+
+
+def _gate_patch(ctx, st, clean, idx):
+    """閘紅燈後的一通定點修補：Fable 單輪回 patch map，程式用舊鏈的候選目錄驗證後套用。回 (ok, note)。"""
+    agents_dir = ctx.run_dir / "agents"
+    jpath = ctx.run_dir / "judgment.json"
+    raw = _load_json(jpath)
+    prior = _load_json(ctx.run_dir / "parts" / "prior.json") if (ctx.run_dir / "parts" / "prior.json").exists() else {}
+    items = [x for x in clean if x["light"].startswith(("🔴", "🟡"))]
+    gate_items = "\n".join("- {0} {1} `{2}` {3}".format(x["light"], x["item"], x["judgment_path"], x["reason"]) for x in items)
+    tmpl = (HERE / "prompts" / "gate_patch.md.tmpl").read_text(encoding="utf-8")
+    text = tmpl.format(
+        ticker=ctx.ticker, date=ctx.date, gate_items=gate_items,
+        judgment_compact=json.dumps(raw, ensure_ascii=False, separators=(",", ":")),
+        prior_compact=bundle.prior_summary(prior),
+    )
+    ppath = ctx.run_dir / "prompts" / "gate_patch_{0}.md".format(idx)
+    ppath.write_text(text, encoding="utf-8")
+    r = sp.oneshot(ppath, ctx.judgment_model, agents_dir / "gate_patch_{0}.json".format(idx), ctx.run_dir,
+                   thinking_cap=JUDGE_THINKING_CAP, budget_cache_read=JUDGE_BUDGET)
+    st["agent_usage"].append(_usage_record("gate_patch_{0}".format(idx), r))
+    ctx.save()
+    if not r.get("ok") or not r.get("result_text"):
+        return False, "patch spawn failed"
+    patches = ddreport._parse_patch_map(r["result_text"])
+    if not patches:
+        (ctx.run_dir / "gate_patch_raw_{0}.txt".format(idx)).write_text(r["result_text"], encoding="utf-8")
+        return False, "patch 回覆解析不到 json:patch 區塊"
+    applied, errors = ddreport._apply_patch_map(ctx.run_dir, patches)
+    st.setdefault("patches", []).append({"round": idx, "requested": len(patches.get("judgment") or {}),
+                                         "applied": applied, "errors": errors[:20]})
+    ctx.save()
+    if errors:
+        return False, "patch 驗證未過（原檔未動）：\n" + "\n".join(str(e)[:200] for e in errors[:10])
+    ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
+    (ctx.run_dir / "judge_check.txt").write_text(report, encoding="utf-8")
+    return ok, "patch 套用 {0} 筆，judge check {1}".format(applied, "PASS" if ok else "FAIL")
+
+
+def do_gated(ctx):
+    st = ctx.stage_begin("gated")
+    (ctx.run_dir / "agents").mkdir(exist_ok=True)
+    max_rounds = 1 + (0 if ctx.args.no_gate_patch else GATE_PATCH_MAX)
+    for idx in range(1, max_rounds + 1):
+        ok_spawn, clean, reds, yellows = _gate_once(ctx, st, idx)
+        if not ok_spawn:
+            return ctx.stage_end("gated", False, st.get("gate_parse_error") or "gate spawn failed")
+        st["red"] = len(reds)
+        st["yellow"] = len(yellows)
+        st["rounds"] = idx
+        if not reds:
+            return ctx.stage_end("gated", True, "🔴 0 🟡 {0}（第 {1} 輪）".format(len(yellows), idx))
+        if idx >= max_rounds:
+            break
+        ok, note = _gate_patch(ctx, st, clean, idx)
+        st["patch_note"] = note
+        if not ok:
+            return ctx.stage_end("gated", False, "閘紅燈 {0} 項，修補失敗：{1}".format(len(reds), note))
+    return ctx.stage_end("gated", False, "閘紅燈 {0} 項（{1} 輪後仍紅），停下交指揮者：\n".format(len(reds), st["rounds"]) +
+                         "\n".join("- {0} {1} {2}".format(x["item"], x["judgment_path"], x["reason"]) for x in reds))
 
 
 # ---------------------------------------------------------------------------
@@ -440,37 +500,161 @@ def do_brief(ctx):
 # prose：sonnet，只有 Write，≤6 輪；split → gates；FAIL 即停，沒有補寫輪
 # ---------------------------------------------------------------------------
 
-def do_prose(ctx):
-    st = ctx.stage_begin("prose")
-    agents_dir = ctx.run_dir / "agents"
-    rc = ddreport._do_prose_prepare(ctx.ticker, ctx.date)
+# ---------------------------------------------------------------------------
+# v20 散文閘：沿用舊鏈六支機械檢查（組頁／數字白名單／機器語言／標點／驗算），
+# 但不接 2026-09-11 未完成的 validate_report_v19（要求條列附 f_* id、要求抽取器
+# 尚未實作的 e9b 財務表非空），改用自己的篇幅下限與中文寫作掃描。
+# ---------------------------------------------------------------------------
+
+PROSE_TOTAL_FLOOR = ddreport.DD_FULL_FLOOR_BYTES   # 70,000，與 pre-commit 同值
+# 2026-09-16 校準：v19 版面把約 74KB 內容放進機械表格（TXN 預覽 96KB 含 22KB 散文），
+# 散文本體下限不能照舊版面的 46KB 訂。先取 20KB／s5 3KB，等三檔對照再調。
+PROSE_TEXT_FLOOR = 20_000                            # 散文本體（不含表格）下限
+PROSE_SECTION_FLOOR = {"s3": 1500, "s4": 1500, "s5": 3000, "s6": 1500, "s7": 1200, "s10": 1200, "s12": 1500}
+PROSE_THINKING_CAP = 8_000                            # sonnet 散文通思考上限（實測 95K 太浪費）
+_MECH_TABLE_SIDS = ("appB", "appC", "revlog", "s14", "appA")  # v19 機械表的機器語言命中降為 WARN
+
+_ZH_PATTERNS = [
+    ("——", r"——"), ("；", r"；"),
+    ("不是A是B", r"不是[^。]{1,30}(?:而是|，是)"),
+    ("這就是", r"這就是"), ("自我說明", r"值得(?:注意|點出|一提)|本頁不"),
+    ("比喻", r"吹出|煞車|柱子|震央|癒合|扛著|甩開|雪崩|閘門|藥方|天平|鏡像|同一張牌|拆柱"),
+    ("半形逗號接中文", r"[\u4e00-\u9fff],"),
+]
+
+
+def _zh_scan(prose_dir):
+    """zh-analyst-prose §一 的機械掃描，回 [(sid, 問題, 次數)]。只掃散文段（不掃機械表）。"""
+    import html as _html
+    out = []
+    for f in sorted(Path(prose_dir).glob("*.html")):
+        sid = f.stem
+        if sid in _MECH_TABLE_SIDS:
+            continue
+        plain = _html.unescape(re.sub(r"<[^>]+>", " ", f.read_text(encoding="utf-8")))
+        for label, pat in _ZH_PATTERNS:
+            n = len(re.findall(pat, plain))
+            if n:
+                out.append((sid, label, n))
+    return out
+
+
+def _gates_v20(ctx, out_html=None, postprocess=False):
+    """回 (ok, findings, warns)。findings 擋，warns 只印。"""
+    import dd_sections
+    run_dir = ctx.run_dir
+    py = _pick_python()
+    prose_dir, tables_dir = run_dir / "prose", run_dir / "tables"
+    judgment_path, evidence_path = run_dir / "judgment.json", run_dir / "evidence.json"
+    out_path = Path(out_html) if out_html else run_dir / "DD_preview.html"
+    findings, warns = [], []
+
+    cmd = [py, SCRIPTS_DIR / "render_dd.py", "--assemble", prose_dir, "--tables", tables_dir,
+           "--judgment", judgment_path, "-o", out_path, "--layout", "v19"]
+    if not postprocess:
+        cmd.append("--no-postprocess")
+    rc, out = _sub(cmd)
     if rc != 0:
-        return ctx.stage_end("prose", False, "prose prepare 失敗（gen_dd_tables／機械段）")
-    for name in ("prose_A.html", "prose_B.html", "prose_fix.html"):
-        p = ctx.run_dir / name
-        if p.exists():
-            p.unlink()
-    b = bundle.build_prose(ctx.run_dir, cards_dir=CARDS_DIR)
-    st["bundle_bytes"] = b.get("bytes")
-    r = sp.agentic(b["prompt_path"], "sonnet", agents_dir / "prose_1.json", ctx.run_dir,
-                   tools=["Write"], max_turns=PROSE_MAX_TURNS, budget_cache_read=PROSE_BUDGET)
-    st["agent_usage"].append(_usage_record("prose_1", r))
-    ctx.save()
+        return False, [("_assemble", out.strip()[-500:])], warns
+
+    vp = [py, SCRIPTS_DIR / "validate_prose.py", prose_dir, "--judgment", judgment_path, "--json"]
+    if evidence_path.exists():
+        vp += ["--evidence", evidence_path]
+    r = subprocess.run([str(c) for c in vp], capture_output=True, text=True)
+    try:
+        vj = json.loads(r.stdout) if r.stdout.strip() else None
+    except (json.JSONDecodeError, ValueError):
+        vj = None
+    if vj is None:
+        findings.append(("_validate_prose", (r.stdout + r.stderr).strip()[-500:]))
+    else:
+        for sid, misses in (vj.get("by_section") or {}).items():
+            sample = "、".join("{0}（{1}）".format(m.get("raw"), m.get("context")) for m in misses[:3])
+            findings.append((sid, "validate_prose：{0} 個未覆蓋數字：{1}".format(len(misses), sample)))
+
+    html_text = out_path.read_text(encoding="utf-8")
+    markers = dd_sections.split_sections(html_text)
+    for lineno, word, ctxt in dd_sections.leak_hits(html_text):
+        sid = ddreport._sid_for_line(html_text, lineno, markers) or "_global"
+        (warns if sid in _MECH_TABLE_SIDS else findings).append((sid, "leaks：{0}（…{1}…）".format(word, ctxt)))
+
+    rc, out = _sub([py, SCRIPTS_DIR / "qc.py", "--escalate", out_path])
+    if rc != 0:
+        findings.append(("_qc", out.strip()[-500:]))
+    rc, out = _sub([py, SCRIPTS_DIR / "verify_dd_math.py", out_path])
+    if rc != 0:
+        findings.append(("_math", out.strip()[-500:]))
+
+    total = out_path.stat().st_size
+    text_total = sum(f.stat().st_size for f in prose_dir.glob("*.html") if f.stem not in _MECH_TABLE_SIDS)
+    if total < PROSE_TOTAL_FLOOR:
+        findings.append(("_depth", "整檔 {0:,}B < 下限 {1:,}B".format(total, PROSE_TOTAL_FLOOR)))
+    if text_total < PROSE_TEXT_FLOOR:
+        findings.append(("_depth", "散文本體 {0:,}B < 下限 {1:,}B".format(text_total, PROSE_TEXT_FLOOR)))
+    for sid, floor in PROSE_SECTION_FLOOR.items():
+        f = prose_dir / (sid + ".html")
+        if f.exists() and f.stat().st_size < floor:
+            findings.append((sid, "篇幅 {0:,}B < 下限 {1:,}B".format(f.stat().st_size, floor)))
+    for sid, label, n in _zh_scan(prose_dir):
+        warns.append((sid, "zh：{0} ×{1}".format(label, n)))
+    return not findings, findings, warns
+
+
+def _prose_prepare_v20(ctx):
+    """v20 的散文準備：只跑 gen_dd_tables（v19 分支同時產 v19-s14／appA／revlog 機械段），
+    不呼叫舊鏈 `_do_prose_prepare`——它在 v19 判斷檔上會改走「判斷者直接寫給讀者」的
+    research_sections 路徑，要求 financial_note 等散文欄，v20 那些由 sonnet 寫。回 (ok, note)。"""
+    run_dir = ctx.run_dir
+    judgment_path = run_dir / "judgment.json"
+    scenario_meta_path = run_dir / "scenario_meta.json"
+    tables_dir = run_dir / "tables"
+    tables_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "prose").mkdir(parents=True, exist_ok=True)
+    cmd = [_pick_python(), SCRIPTS_DIR / "gen_dd_tables.py", judgment_path, "--out", tables_dir,
+           "--scenario-html", tables_dir / "e11.html"]
+    if scenario_meta_path.exists():
+        cmd += ["--scenario-meta", scenario_meta_path]
+    rc, out = _sub(cmd)
+    return rc == 0, out[-1200:]
+
+
+def do_prose(ctx):
+    prev_usage_all = list((ctx.manifest.get("stages", {}).get("prose") or {}).get("agent_usage") or [])
+    st = ctx.stage_begin("prose")
+    st["agent_usage"] = prev_usage_all if ctx.args.reuse_prose else []
+    agents_dir = ctx.run_dir / "agents"
+    ok0, note0 = _prose_prepare_v20(ctx)
+    if not ok0:
+        return ctx.stage_end("prose", False, "prose prepare 失敗（gen_dd_tables）：" + note0)
+    if ctx.args.reuse_prose and (ctx.run_dir / "prose_A.html").exists():
+        st["reused_prose"] = True
+    else:
+        for name in ("prose_A.html", "prose_B.html", "prose_fix.html"):
+            p = ctx.run_dir / name
+            if p.exists():
+                p.unlink()
+        b = bundle.build_prose(ctx.run_dir, cards_dir=CARDS_DIR)
+        st["bundle_bytes"] = b.get("bytes")
+        r = sp.agentic(b["prompt_path"], "sonnet", agents_dir / "prose_1.json", ctx.run_dir,
+                       tools=["Write"], max_turns=PROSE_MAX_TURNS, budget_cache_read=PROSE_BUDGET,
+                       thinking_cap=PROSE_THINKING_CAP)
+        st["agent_usage"].append(_usage_record("prose_1", r))
+        ctx.save()
     missing = [n for n in ("prose_A.html", "prose_B.html") if not (ctx.run_dir / n).exists()]
     if missing:
         return ctx.stage_end("prose", False, "散文 agent 未寫出 {0}".format("、".join(missing)))
     written, errors = ddreport._do_prose_split(ctx.ticker, ctx.date)
     st["sids"] = written
-    ok, findings = ddreport._run_gates(ctx.run_dir, ctx.ticker, ctx.date)
-    depth = ddreport._prose_depth_findings(ctx.run_dir, ctx.ticker, ctx.date)
-    findings = list(findings) + list(depth)
-    if errors or not ok or depth:
+    ok, findings, warns = _gates_v20(ctx)
+    st["zh_warns"] = ["{0}：{1}".format(a, b) for a, b in warns]
+    for a, b in warns:
+        print("  [warn] {0}：{1}".format(a, b))
+    if errors or not ok:
         note = "\n".join(["[split] " + e for e in errors] + ["- {0}：{1}".format(s, why) for s, why in findings])
         return ctx.stage_end("prose", False, note or "gates FAIL")
     out_path = (ctx.run_dir / "DD_full_preview.html") if ctx.args.dry_run \
         else (ddreport.DD_DIR / "DD_{0}_{1}.html".format(ctx.ticker, ctx.date))
-    ok2, findings2 = ddreport._run_gates(ctx.run_dir, ctx.ticker, ctx.date, out_html=out_path,
-                                         postprocess=not ctx.args.dry_run)
+    ok2, findings2, _ = _gates_v20(ctx, out_html=out_path, postprocess=not ctx.args.dry_run)
     st["out_path"] = str(out_path)
     if not ok2:
         return ctx.stage_end("prose", False, "\n".join("- {0}：{1}".format(s, w) for s, w in findings2))
@@ -561,6 +745,11 @@ def main(argv=None):
     ap.add_argument("--offline", action="store_true")
     ap.add_argument("--dry-run", action="store_true", help="產物留在 run 目錄，不寫 docs/、不 commit")
     ap.add_argument("--no-push", action="store_true")
+    ap.add_argument("--no-gate-patch", action="store_true", help="閘紅燈後不做 patch map，直接停")
+    ap.add_argument("--force-gate", action="store_true",
+                    help="閘紅燈仍往下做 brief／prose 預覽（只在 --dry-run 有效；manifest 記 FAIL，finish 拒絕）")
+    ap.add_argument("--reuse-prose", action="store_true",
+                    help="prose 段不 spawn，拿既有 prose_A/B.html 走 split＋gates（除錯／省錢用）")
     ap.add_argument("--reuse-judgment", action="store_true",
                     help="judged 段不 spawn，拿既有 judgment.json 走 normalize＋check（除錯／省錢用）")
     args = ap.parse_args(argv)
@@ -578,12 +767,18 @@ def main(argv=None):
     for name, fn in order:
         if args.resume and ctx.stage_passed(name):
             print("[{0}] skip（已 PASS）".format(name))
+        elif args.resume and name == "gated" and args.force_gate and args.dry_run \
+                and (ctx.manifest.get("stages", {}).get("gated") or {}).get("rounds"):
+            # 已跑過閘且紅燈未清，--force-gate（只限 dry-run）跳過重跑，往下做預覽；manifest 仍記 FAIL，finish 會拒絕
+            print("[gated] skip（FAIL，--force-gate 強行往下，僅供預覽）")
         else:
             ok = fn(ctx)
-            if not ok:
+            if not ok and not (name == "gated" and args.force_gate and args.dry_run):
                 report(ctx)
                 print("\nFAIL 於 {0}。看 {1}".format(name, ctx.manifest_path), file=sys.stderr)
                 return 1
+            if not ok:
+                print("[gated] FAIL 但 --force-gate（dry-run）強行往下，僅供預覽，不得發布")
         if args.until == name:
             report(ctx)
             return 0

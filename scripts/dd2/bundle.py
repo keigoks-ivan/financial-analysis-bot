@@ -365,6 +365,9 @@ def build_gate(run_dir, *, cards_dir) -> dict:
         ("scenario_meta", dd_bundle._gate_scenario_meta_section(judgment_path)),
         # 2026-09-16 TXN 首次過閘：閘回報「bundle 沒附軸覆蓋總覽」，覆蓋面掃描 (a) 沒得看；補上舊鏈同一段（機械）。
         ("coverage_summary", dd_bundle._gate_coverage_summary(evidence.get("coverage") or {})),
+        ("prior_summary", "## 前份判斷摘要（含 drift_watch_prior 20 欄前份值；漂移歸因對帳用）\n\n```json\n"
+            + prior_summary(dd_bundle._load_json(run_dir / "parts" / "prior.json")
+                            if (run_dir / "parts" / "prior.json").exists() else {}) + "\n```"),
         ("judgment_full", "## judgment.json 全文（被審對象，緊湊格式）\n\n"
             + dd_bundle._JSON_NOTE + "\n\n```json\n" + judgment_compact + "\n```"),
         ("tail", _gate_tail_section()),
