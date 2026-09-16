@@ -380,7 +380,26 @@ def build_gate(run_dir, *, cards_dir) -> dict:
 # prose
 # ---------------------------------------------------------------------------
 
-def build_prose(run_dir, *, cards_dir) -> dict:
+_PROSE_SIDS_A = "s1、s2、s3、s4、s5、s6、s7"
+_PROSE_SIDS_B = "s8、s9、s10、s11、s12、decision（s85 若觸發併入）"
+
+
+def _prose_write_instruction(part, prose_a_path, prose_b_path):
+    common = ("每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，"
+              "格式與每段固定三塊（`<h2>`／`<p class=\"lead\">`／`<ul class=\"pts\">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。\n\n"
+              "動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。"
+              "寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。")
+    if part == "A":
+        return ("## 寫（只有 Write 工具，最多 4 輪）\n\n本通只負責**前半**：輸出一個檔 `{0}`，依序含 {1} 七段。後半由另一通同時在寫，你不要碰。\n\n"
+                .format(prose_a_path, _PROSE_SIDS_A) + common)
+    if part == "B":
+        return ("## 寫（只有 Write 工具，最多 4 輪）\n\n本通只負責**後半**：輸出一個檔 `{0}`，依序含 {1}。前半（s1–s7）由另一通同時在寫，你不要碰；"
+                "s1 的結論與 decision 段的裁決都以 judgment 投影視圖為準，不需對照前半。\n\n".format(prose_b_path, _PROSE_SIDS_B) + common)
+    return ("## 寫（只有 Write 工具，最多 6 輪）\n\n輸出兩個檔：\n\n1. `{0}`：依序含 {1} 七段。\n2. `{2}`：依序含 {3}。\n\n"
+            .format(prose_a_path, _PROSE_SIDS_A, prose_b_path, _PROSE_SIDS_B) + common)
+
+
+def build_prose(run_dir, *, cards_dir, part=None) -> dict:
     run_dir = Path(run_dir)
     cards_dir = Path(cards_dir)
     judgment_path = run_dir / "judgment.json"
@@ -413,15 +432,17 @@ def build_prose(run_dir, *, cards_dir) -> dict:
     header_mapping = {
         "ticker": ticker or "", "date": date or "",
         "prose_a_path": str(prose_a_path), "prose_b_path": str(prose_b_path),
+        "write_instruction": _prose_write_instruction(part, prose_a_path, prose_b_path),
     }
-    return _assemble(run_dir, "prose", ticker, date, named_parts, header_mapping=header_mapping)
+    name = "prose" if part is None else "prose_{0}".format(part)
+    return _assemble(run_dir, name, ticker, date, named_parts, header_mapping=header_mapping, template="prose")
 
 
 # ---------------------------------------------------------------------------
 # 共用組裝：寫 bundle、接任務頭寫 prompt、算各段 bytes
 # ---------------------------------------------------------------------------
 
-def _assemble(run_dir: Path, name: str, ticker, date, named_parts, header_mapping=None) -> dict:
+def _assemble(run_dir: Path, name: str, ticker, date, named_parts, header_mapping=None, template=None) -> dict:
     bundle_parts = [text for _, text in named_parts]
     bundle_path = run_dir / "bundles" / "{0}.md".format(name)
     dd_bundle._write_bundle(bundle_parts, bundle_path)
@@ -430,7 +451,7 @@ def _assemble(run_dir: Path, name: str, ticker, date, named_parts, header_mappin
     mapping = {"ticker": ticker or "", "date": date or ""}
     if header_mapping:
         mapping.update(header_mapping)
-    header_text = _render_template(PROMPTS_DIR / "{0}.md.tmpl".format(name), mapping)
+    header_text = _render_template(PROMPTS_DIR / "{0}.md.tmpl".format(template or name), mapping)
 
     prompt_text = header_text + BUNDLE_SEPARATOR + bundle_text
     prompt_path = run_dir / "prompts" / "{0}.md".format(name)

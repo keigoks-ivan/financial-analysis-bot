@@ -56,6 +56,7 @@ JUDGE_THINKING_CAP = 32_000
 JUDGE_BUDGET = ddreport.JUDGE_BUDGET_CACHE_READ
 GATE_BUDGET = ddreport.GATE_BUDGET_CACHE_READ
 PROSE_MAX_TURNS = 6
+PROSE_MAX_TURNS_HALF = 4  # 前後半各一通
 PROSE_BUDGET = ddreport.PROSE_BUDGET_CACHE_READ
 DEFAULT_JUDGMENT_MODEL = ddreport.DEFAULT_JUDGMENT_MODEL
 GATE_MODEL_FOR = ddreport.GATE_MODEL_FOR
@@ -885,12 +886,18 @@ def do_prose(ctx):
             p = ctx.run_dir / name
             if p.exists():
                 p.unlink()
-        b = bundle.build_prose(ctx.run_dir, cards_dir=CARDS_DIR)
-        st["bundle_bytes"] = b.get("bytes")
-        r = sp.agentic(b["prompt_path"], "sonnet", agents_dir / "prose_1.json", ctx.run_dir,
-                       tools=["Write"], max_turns=PROSE_MAX_TURNS, budget_cache_read=PROSE_BUDGET,
-                       thinking_cap=PROSE_THINKING_CAP)
-        st["agent_usage"].append(_usage_record("prose_1", r))
+        # 2026-09-16：前後半兩通同時寫（牆鐘減半，token 不變）；每通只列大綱不預演全文
+        specs = []
+        for part in ("A", "B"):
+            b = bundle.build_prose(ctx.run_dir, cards_dir=CARDS_DIR, part=part)
+            st.setdefault("bundle_bytes", {})[part] = b.get("bytes")
+            specs.append({"id": "prose_{0}".format(part), "model": "sonnet",
+                          "prompt": str(b["prompt_path"]), "out": str(agents_dir / "prose_{0}.json".format(part)),
+                          "tools": ["Write"], "max_turns": PROSE_MAX_TURNS_HALF,
+                          "budget_cache_read": PROSE_BUDGET, "run_dir": str(ctx.run_dir)})
+        results = dd_headless.spawn_many(specs, max_parallel=2)
+        for spec, r in zip(specs, results):
+            st["agent_usage"].append(_usage_record(spec["id"], r or {"ok": False}))
         ctx.save()
     missing = [n for n in ("prose_A.html", "prose_B.html") if not (ctx.run_dir / n).exists()]
     if missing:
