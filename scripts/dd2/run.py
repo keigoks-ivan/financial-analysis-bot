@@ -831,6 +831,66 @@ def _zh_scan(prose_dir):
     return out
 
 
+# ---------------------------------------------------------------------------
+# 表格 id 外洩清洗：判斷者偶爾把內部代號（事實表 id／軸-finding id）原樣寫進
+# judgment 的文字欄（thesis.H[]/R[] 的信息來源／漂移觸發條件等），
+# gen_dd_tables.py 原樣渲染進 tables/*.html（如 §2 H1-H3 表 e2.html），是機器
+# 語言外洩——dd_sections.LEAK_PATTERNS 目前收不到這兩種形狀（`f_*` 事實 id、
+# `軸名#n` finding id），故在這裡另開一道 v20 專用的機械清洗＋機械閘。
+# ---------------------------------------------------------------------------
+
+_ID_TOKEN_RE = re.compile(r"f_[a-z0-9_]+|[a-z_]+#\d+")
+_ID_IN_BRACKETS_RE = re.compile(r"[（(]\s*(?:f_[a-z0-9_]+|[a-z_]+#\d+)\s*[)）]")
+
+
+def sanitize_table_ids(html):
+    """機械清洗 `tables/*.html` 的可見文字：移除 `f_[a-z0-9_]+`（事實表 id，如
+    `f_consensus_rev_3m_fy1_pct`）與 `[a-z_]+#\\d+`（軸／finding id，如
+    `competitive_share_entrants#0`）這兩種內部代號，含外層全形／半形括號一起
+    收掉；移除後留下的多餘「；」「、」與空括號一併清乾淨。回
+    `(cleaned_html, n_removed)`，`n_removed` 是移除的 token 總數（不分是否帶括號）。
+    不碰 HTML 標籤本身或其屬性值（如 `style="background:#16A34A"` 的色碼不會
+    被誤判——`#` 前面不是連續小寫字母／底線就不算命中）。"""
+    n_removed = 0
+
+    def _sub_bracket(m):
+        nonlocal n_removed
+        n_removed += 1
+        return ""
+
+    out = _ID_IN_BRACKETS_RE.sub(_sub_bracket, html)
+
+    def _sub_bare(m):
+        nonlocal n_removed
+        n_removed += 1
+        return ""
+
+    out = _ID_TOKEN_RE.sub(_sub_bare, out)
+
+    # 收乾淨移除後留下的多餘標點（順序：先處理貼著括號的分隔號，再收空括號，
+    # 最後收貼著標籤／標點的分隔號）。
+    out = re.sub(r"([（(])\s*[；、]+", r"\1", out)
+    out = re.sub(r"[；、]+\s*([)）])", r"\1", out)
+    out = re.sub(r"[（(]\s*[)）]", "", out)
+    out = re.sub(r"[；、]{2,}", lambda m: m.group(0)[0], out)
+    out = re.sub(r"([：:])[；、]+", r"\1", out)
+    out = re.sub(r"[；、]+\s*([。！？])", r"\1", out)
+    out = re.sub(r"(>)\s*[；、]+", r"\1", out)
+    out = re.sub(r"[；、]+\s*(<)", r"\1", out)
+    return out, n_removed
+
+
+def _visible_text_for_id_scan(html_text):
+    """去標籤後的可見文字，只給 `f_*`／`軸名#n` id 外洩掃描用：先挖掉
+    `<script>`/`<style>` 區塊內容（CSS 色碼／JSON metadata 不是讀者看得到的
+    文字，會誤傷；dd-meta 的 JSON 也在 `<script>` 內，一併排除），`<details>`
+    折疊區保留——收合但仍在 DOM 內，攤開就看得到，算可見文字。"""
+    t = html_text
+    for tag in ("script", "style"):
+        t = re.sub(rf"<{tag}\b.*?</{tag}>", " ", t, flags=re.DOTALL | re.IGNORECASE)
+    return re.sub(r"<[^>]+>", " ", t)
+
+
 def _gates_v20(ctx, out_html=None, postprocess=False):
     """回 (ok, findings, warns)。findings 擋，warns 只印。"""
     import dd_sections
@@ -870,6 +930,12 @@ def _gates_v20(ctx, out_html=None, postprocess=False):
         sid = ddreport._sid_for_line(html_text, lineno, markers) or "_global"
         (warns if sid in _MECH_TABLE_SIDS else findings).append((sid, "leaks：{0}（…{1}…）".format(word, ctxt)))
 
+    leaked_ids = _ID_TOKEN_RE.findall(_visible_text_for_id_scan(html_text))
+    if leaked_ids:
+        sample = "、".join(leaked_ids[:3])
+        findings.append(("_leak_ids", "可見文字仍含 {0} 個機器 id token（f_* 事實 id／軸名#n finding id），"
+                          "前三個：{1}".format(len(leaked_ids), sample)))
+
     rc, out = _sub([py, SCRIPTS_DIR / "qc.py", "--escalate", out_path])
     if rc != 0:
         findings.append(("_qc", out.strip()[-500:]))
@@ -893,9 +959,12 @@ def _gates_v20(ctx, out_html=None, postprocess=False):
 
 
 def _prose_prepare_v20(ctx):
-    """v20 的散文準備：只跑 gen_dd_tables（v19 分支同時產 v19-s14／appA／revlog 機械段），
+    """v20 的散文準備：跑 gen_dd_tables（v19 分支同時產 v19-s14／appA／revlog 機械段），
     不呼叫舊鏈 `_do_prose_prepare`——它在 v19 判斷檔上會改走「判斷者直接寫給讀者」的
-    research_sections 路徑，要求 financial_note 等散文欄，v20 那些由 sonnet 寫。回 (ok, note)。"""
+    research_sections 路徑，要求 financial_note 等散文欄，v20 那些由 sonnet 寫。
+    gen_dd_tables 跑完後對 tables/*.html 跑一次 sanitize_table_ids 機械清洗（見
+    上方模組註解），移除數量記進 manifest `stages.prose.table_ids_removed`。
+    回 (ok, note)。"""
     run_dir = ctx.run_dir
     judgment_path = run_dir / "judgment.json"
     scenario_meta_path = run_dir / "scenario_meta.json"
@@ -907,7 +976,19 @@ def _prose_prepare_v20(ctx):
     if scenario_meta_path.exists():
         cmd += ["--scenario-meta", scenario_meta_path]
     rc, out = _sub(cmd)
-    return rc == 0, out[-1200:]
+    if rc != 0:
+        return False, out[-1200:]
+
+    total_removed = 0
+    for f in sorted(tables_dir.glob("*.html")):
+        text = f.read_text(encoding="utf-8")
+        cleaned, n = sanitize_table_ids(text)
+        if n:
+            f.write_text(cleaned, encoding="utf-8")
+            total_removed += n
+    ctx.manifest.setdefault("stages", {}).setdefault("prose", {})["table_ids_removed"] = total_removed
+
+    return True, out[-1200:]
 
 
 def do_prose(ctx):

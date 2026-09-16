@@ -28,10 +28,17 @@ body.v19-dd {
 .v19-dd ul.pts { margin: 0; padding-left: 20px; }
 .v19-dd ul.pts li { margin: 0; padding: 4px 0; }
 .v19-dd ul.pts li::marker { color: #94A3B8; }
-.v19-dd table { border-collapse: collapse; width: 100%; font-size: 14px; }
-.v19-dd th { text-align: left; font-weight: 500; color: #64748B; border-bottom: 1px solid #CBD5E1; padding: 8px 10px; }
-.v19-dd td { border-bottom: 1px solid #E2E8F0; padding: 8px 10px; vertical-align: top; }
+.v19-dd table { border-collapse: collapse; width: 100%; font-size: 14px; table-layout: fixed; }
+.v19-dd th { text-align: left; font-weight: 500; color: #64748B; border-bottom: 1px solid #CBD5E1; padding: 8px 10px; white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+.v19-dd td { border-bottom: 1px solid #E2E8F0; padding: 8px 10px; vertical-align: top; word-break: break-word; overflow-wrap: anywhere; }
 .v19-dd td.num, .v19-dd th.num { text-align: right; font-variant-numeric: tabular-nums; }
+/* 寬表（欄數 ≥7）橫向捲動容器——由 render_dd.py::_v19_gather() 依欄數包裝
+   （見 WP-H2-2 後續修補；e2/e3/e11 這類 8–12 欄長中文表在 796px 版心內用
+   table-layout:fixed 仍會把每欄壓成兩三個字，給表格本身一個可讀下限，超出
+   容器寬度就交給這層 overflow-x 捲動，不擠壓其他欄）。手機 @media 版心更窄，
+   同一層 overflow-x 規則已涵蓋，不需要另外複寫。 */
+.v19-dd .tbl-scroll { overflow-x: auto; }
+.v19-dd .tbl-scroll table { min-width: 720px; }
 .v19-dd .mach { font-size: 12.5px; color: #64748B; }
 .v19-dd .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
 .v19-dd .k { color: #64748B; }
@@ -121,6 +128,9 @@ body.v19-dd {
   .v19-dd div[style*="grid-template-columns:repeat(5"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .v19-dd div[style*="grid-template-columns: repeat(6"],
   .v19-dd div[style*="grid-template-columns:repeat(6"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  /* 手機版心更窄，寬表的 min-width 下限必超出容器，overflow-x 沿用桌機同一條
+     規則即會觸發；這裡只補 iOS 慣性捲動手感。 */
+  .v19-dd .tbl-scroll { -webkit-overflow-scrolling: touch; }
 }
 
 @media print {

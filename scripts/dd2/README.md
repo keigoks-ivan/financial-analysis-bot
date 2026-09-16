@@ -239,3 +239,9 @@ MU 到閘停下合計約 $17.5（含被切掉的那次 $6.09）；正式一次�
 4. `ddreport._finish_consistency_sources`：v19 判斷物讀 `dd_project.view_for` 投影視圖，三欄缺鍵視同設計性 null。
 dd2 側：閘記 `audit_sha256`／`input_signature`（供 `_gate_audit_is_current`）。
 結果：`[finish-check] 三方數字一致`、`verify_dd_math.py PASS`、檔案集 9 項列出。真正的 commit＋push 尚未對任何 v20 產物執行。
+
+### 8i｜2026-09-17：表格版面修正（持有人看 TSM 完整版「表格格式跑掉」）
+
+根因兩個：①判斷者把 `f_*` 事實 id 與 `軸名#n` finding id 寫進文字欄，gen_dd_tables 原樣渲染，無空格長字串把「信息來源」欄撐到 263px、「核心假設」欄擠到 68px；②v19.css 表格 auto layout、無斷字、無橫向捲動。
+修法（sonnet 實作＋人工補一處）：v19.css `table-layout:fixed`＋`word-break`＋`.tbl-scroll`；render_dd v19 assemble 對 ≥7 欄的表包 `.tbl-scroll` 並依欄數給 `min-width`（每欄 120px、下限 720px）；`run.sanitize_table_ids` 組頁前清掉表格裡的兩種 id（TSM 清 14 個）並在 `_gates_v20` 加可見文字 id 掃描（FAIL）；判斷 bundle 加「文字欄不得出現 id，引用放 fact_refs／evidence_refs」。TSM 重組 100,906B，[prose] PASS，瀏覽器實測 §2 八欄表可橫向捲、每欄約 8 字一行、正文 id 命中 0。
+待辦：H1–H3 表的 2Y／5Y／10Y 三欄判斷者常留空，可考慮機械略過全空欄。

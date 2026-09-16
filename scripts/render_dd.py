@@ -563,13 +563,60 @@ _V19_MARKER_SPECS = {
 }
 
 
+# 寬表橫向捲動包裝（v19 版面專用，只在這裡包——不動 gen_dd_tables.py 的輸出、
+# 不影響 legacy 版面 assemble_from_parts()）。診斷見
+# notes/site-internal/dd/_v19_layout_spec_20260911.md 後續修補：§2 H1-H3 表
+# （e2.html，8 欄）與 §10 情境表（e11.html，12 欄）在 796px 版心內用 auto
+# table-layout 會把長字串欄撐爆、擠壓其他欄成一行兩三個字；改 table-layout:
+# fixed（見 v19.css）後仍需要一個可讀下限＋捲動出口，欄數 ≥7 才包，避免小表
+# 也套上不必要的橫向捲動容器。
+_V19_WIDE_TABLE_MIN_COLS = 7
+_V19_WIDE_TABLE_COL_PX = 120  # 寬表每欄最小寬度
+_V19_TABLE_RE = re.compile(r"<table\b[^>]*>.*?</table>", re.DOTALL | re.IGNORECASE)
+_V19_CELL_OPEN_RE = re.compile(r"<t[hd]\b([^>]*)>", re.IGNORECASE)
+_V19_COLSPAN_RE = re.compile(r"colspan\s*=\s*[\"']?(\d+)", re.IGNORECASE)
+_V19_ROW_RE = re.compile(r"<tr\b.*?</tr>", re.DOTALL | re.IGNORECASE)
+
+
+def _v19_table_col_count(table_html: str) -> int:
+    """粗略欄數：抓表格第一列（第一個 <tr>；沒有就整段）裡的 <th>/<td> 數，
+    colspan 照實加總。夠用即可，不追求嚴謹 DOM 解析。"""
+    m = _V19_ROW_RE.search(table_html)
+    row = m.group(0) if m else table_html
+    total = 0
+    for attrs in _V19_CELL_OPEN_RE.findall(row):
+        cm = _V19_COLSPAN_RE.search(attrs)
+        total += int(cm.group(1)) if cm else 1
+    return total
+
+
+def _v19_wrap_wide_tables(html: str) -> str:
+    """每個 `<table>` 分別檢查欄數，≥7 欄的外面單獨包一層
+    `<div class="tbl-scroll" style="overflow-x:auto">`（樣式見 v19.css
+    `.v19-dd .tbl-scroll`）；同一段落裡的窄表（如 e11.html 的 10Y IRR 小表）
+    不包。"""
+    def _sub(m):
+        table_html = m.group(0)
+        cols = _v19_table_col_count(table_html)
+        if cols >= _V19_WIDE_TABLE_MIN_COLS:
+            # 2026-09-17：最小寬度隨欄數算（每欄 120px，下限 720px），寬表在 796px 版心內直接橫向捲，
+            # 每欄約 8 個中文字一行；固定 90px 等分時 8 欄仍是五六個字就換行。
+            min_w = max(720, cols * _V19_WIDE_TABLE_COL_PX)
+            if table_html.startswith("<table") and " style=" not in table_html.split(">", 1)[0]:
+                table_html = table_html.replace("<table", '<table style="min-width:{0}px"'.format(min_w), 1)
+            return '<div class="tbl-scroll" style="overflow-x:auto">\n' + table_html + '\n</div>'
+        return table_html
+    return _V19_TABLE_RE.sub(_sub, html)
+
+
 def _v19_gather(tables_dir: Path, spec: dict):
-    """依 spec 讀 files（缺檔靜默略過），非空才回傳；folded 時外包一層
-    `<details><summary>{label}</summary>…</details>`。"""
+    """依 spec 讀 files（缺檔靜默略過），非空才回傳；寬表（≥7 欄）先各自包
+    捲動容器，folded 時外包一層 `<details><summary>{label}</summary>…</details>`。"""
     parts = [html_text for html_text in (_read_opt(tables_dir / f) for f in spec["files"]) if html_text]
     if not parts:
         return None
     content = "\n".join(parts)
+    content = _v19_wrap_wide_tables(content)
     if spec.get("folded") and spec.get("label"):
         return f'<details><summary>{spec["label"]}</summary>\n{content}\n</details>\n'
     return content

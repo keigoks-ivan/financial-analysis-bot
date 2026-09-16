@@ -147,7 +147,7 @@ def test_s2_h1_h3_table_not_folded(assembled_html):
     i = assembled_html.find('id="s2"')
     j = assembled_html.find('id="s3"')
     window = assembled_html[i:j]
-    assert "<table>" in window  # e2.html 本身無 id，是裸 <table>
+    assert "<table" in window and "</table>" in window  # e2.html 是裸 <table>；2026-09-17 起寬表帶 min-width 行內樣式並包 .tbl-scroll，只驗有表且未折疊
     # 不應該被包進這段自己新增的 <details>（判斷本段沒有 <summary> 緊貼在
     # e2 表格前）
     assert "<summary>市場空間" not in window
