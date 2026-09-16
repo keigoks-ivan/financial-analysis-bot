@@ -269,6 +269,14 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
       <span class="chip" data-filter="dir" data-value="any">[Any]</span>
     </div>
     <div class="filter-group">
+      <span class="filter-label">ROIC 來源</span>
+      <span class="chip active" data-filter="quadrant" data-value="All" title="不限 ROIC 拆解型態">[All]</span>
+      <span class="chip" data-filter="quadrant" data-value="HH" title="利厚轉快：NOPAT 利潤率 ≥15% ＋ 投入資本周轉率 ≥1.0x">[利厚轉快]</span>
+      <span class="chip" data-filter="quadrant" data-value="HL" title="利厚轉慢：NOPAT 利潤率 ≥15%，周轉率 <1.0x">[利厚轉慢]</span>
+      <span class="chip" data-filter="quadrant" data-value="LH" title="利薄轉快：NOPAT 利潤率 <15%，周轉率 ≥1.0x">[利薄轉快]</span>
+      <span class="chip" data-filter="quadrant" data-value="LL" title="利薄轉慢：NOPAT 利潤率 <15%，周轉率 <1.0x">[利薄轉慢]</span>
+    </div>
+    <div class="filter-group">
       <span class="filter-label">Preset</span>
       <span class="chip active" data-filter="preset" data-value="MLB">[QGM MLB]</span>
       <span class="chip" data-filter="preset" data-value="Custom">[Custom]</span>
@@ -476,6 +484,16 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
         <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>
       </li>
 
+      <li><strong>ROIC 拆解與存續力（ROIC 來源 / ROIC 走勢 / 增量 ROIC / 再投資率 / 隱含成長，2026-09-16）</strong>：緊接在 ROIC 欄後的 5 個純資訊欄，回答「這個 ROIC 從哪來、能不能撐住、新投的錢還賺不賺」。全部選填——只有 Koyfin xlsx 有帶這批欄位（<code>EBIT Margin %</code> / <code>ROIC 3Y Avg %</code> / <code>Tax Rate %</code> / <code>Revenue FY(-3)</code> / <code>EBIT FY(-3)</code> / <code>Invested Capital FY(-3)</code>）的名字才有值，其餘顯示 <code>—</code>。
+        <br><em>ROIC 來源（四象限）：</em><strong>利厚轉快</strong>＝NOPAT 利潤率 ≥15% 且投入資本周轉率 ≥1.0x；<strong>利厚轉慢</strong>＝利潤率高、周轉慢；<strong>利薄轉快</strong>＝利潤率低、周轉快；<strong>利薄轉慢</strong>＝兩者皆低。NOPAT 利潤率 = EBIT 利潤率 ×（1 − 有效稅率）；周轉率 = 營收 / 投入資本。hover 看實際利潤率與周轉率數字。
+        <br><em>ROIC 走勢：</em>現在 ROIC ÷ 過去 5 年平均 ROIC —— <code>≥1.10</code> 上升／<code>≤0.90</code> 下滑／其餘持平，判斷高 ROIC 是不是曇花一現。hover 看比值與 3 年平均 ROIC。
+        <br><em>增量 ROIC：</em>近 3 個財年 <code>(今年 NOPAT − 3 年前 NOPAT) ÷ 新增投入資本</code>——新增的一塊錢資本賺到多少報酬，比「總 ROIC」更能看出<strong>新成長是否值錢</strong>。若這 3 年投入資本不增反減（如大舉買回庫藏股），顯示<code>資本縮減</code>——此時「增量報酬率」沒有意義，不是缺資料。極端值會限縮顯示範圍（避免除以極小分母噴出失真的天文數字）。
+        <br><em>再投資率：</em>近 3 年新增投入資本 ÷ 期間年化 NOPAT——公司把多少獲利拿去繼續投資擴張，可以是負值（投入資本減少）。
+        <br><em>隱含成長：</em>增量 ROIC × 再投資率——機械推算的<strong>內生成長率上限</strong>，是描述器不是預測，也不是買賣建議。
+        <br><em>有效稅率：</em>取 Excel <code>Tax Rate %</code>，超出 <code>[0, 50%]</code> 合理區間（空白／負值／異常值）一律視為缺資料，改用 21% 預設稅率。
+        <br><em>資料來源：</em><code>scripts/load_eps_estimates_xlsx.py</code> 解析 Koyfin xlsx 選填欄位 → <code>scripts/build_dd_screener.py</code> 的 <code>compute_roic_decomposition()</code> 純函式計算，寫入 <code>latest.json</code> 每檔的對應欄位；上方 chip 列「ROIC 來源」可依四象限篩選。
+      </li>
+
       <li><strong>FY+1→FY+3 CAGR</strong>：Excel buy-side forward 2Y CAGR（%）— <strong>v1.9 起改用 Excel snapshot</strong>。
         <br><em>來源：</em>Excel <code>cagr_fy1_fy3_pct</code>（FY+1 → FY+3 純前瞻 2 年期複合成長率，目前約 219/241 ticker 覆蓋，動態隨 Koyfin watchlist 增刪）；少數 yfinance-only ticker（6146.T / 6857.T 等無 Excel 資料）fallback yfinance「+1y / +2y」row；SU / ABB 因 Koyfin export 資料異常於 <code>scripts/load_eps_estimates_xlsx.py</code> <code>_SKIP_TICKERS</code> 名單中略過。
         <br><em>窗口語意：</em>跟舊版「yearAgo → FY+1」(含 1 個過去實際 EPS) 不同；現在是 2 個前瞻 estimate (FY+1 vs FY+3) — buy-side 對未來 2 年的純前瞻 expectation。
@@ -577,6 +595,7 @@ var MOAT_TREND_WORD = {'↑':'轉強', '→':'持平', '↓':'轉弱'};
 var state = {
   moat:    'S',      // S | A | B | C | All
   dir:     'updown', // updown | up | any
+  quadrant: 'All',   // All | HH | HL | LH | LL — ROIC 分解四象限（2026-09-16）
   preset:  'MLB',    // MLB | Custom
   timing:  'any',    // any | qichi (起漲點) | pullback (回調帶)
   customThresholds: { fcf: 10, roic: 15, eps2y: 15, peg: 2.0, de: 0.7 },
@@ -670,6 +689,13 @@ function moatChipPass(stock) {
   return (stock.moat_grade || '') === state.moat;
 }
 
+function quadrantChipPass(stock) {
+  // 2026-09-16: ROIC 分解四象限 chip — exact code match (HH/HL/LH/LL);
+  // [All] passes everything, incl. stocks with no quadrant (missing inputs).
+  if (state.quadrant === 'All') return true;
+  return (stock.roic_quadrant_code || '') === state.quadrant;
+}
+
 function dirFilter(stock) {
   var trend = stock.moat_trend || '→';
   if (state.dir === 'up')     return trend === '↑';
@@ -726,6 +752,7 @@ function applyFilters(stocks) {
     }
     if (!dirFilter(s)) return false;
     if (!timingPass(s)) return false;
+    if (!quadrantChipPass(s)) return false;
     return true;
   });
 }
@@ -1217,6 +1244,76 @@ function _renderGrowthCell(s, field, source) {
        + ';font-weight:' + weight + '">' + v.toFixed(1) + '%</td>';
 }
 
+// 2026-09-16: ROIC 分解 / 存續力 / 增量 ROIC×再投資率 —— 純資訊欄（無 pass/fail
+// 配色），資料全部來自 build_dd_screener.compute_roic_decomposition()。缺資料
+// （None，多半是舊 xlsx 沒有這批選填欄位）一律顯示 "—"。
+function _renderRoicQuadrantCell(s) {
+  var q = s.roic_quadrant;
+  if (!q) return '<td style="color:var(--muted)">—</td>';
+  var nm = s.nopat_margin_pct, tv = s.ic_turnover_x;
+  var nmT = (typeof nm === 'number') ? nm.toFixed(1) + '%' : '—';
+  var tvT = (typeof tv === 'number') ? tv.toFixed(2) + 'x' : '—';
+  var tip = 'NOPAT 利潤率 ' + nmT + '｜投入資本周轉率 ' + tvT + '（' + (s.roic_quadrant_code || '') + '）';
+  return '<td title="' + tip + '" style="font-size:11px;white-space:nowrap">' + q + '</td>';
+}
+
+function _renderRoicTrendCell(s) {
+  var t = s.roic_trend_5y;
+  if (!t) return '<td style="color:var(--muted)">—</td>';
+  var ratio = s.roic_vs_5y_x;
+  var ratioT = (typeof ratio === 'number') ? ratio.toFixed(2) + 'x' : '—';
+  var r3y = s.roic_3y_avg_pct;
+  var r3yT = (typeof r3y === 'number') ? r3y.toFixed(1) + '%' : '—';
+  var color = (t === '上升') ? 'var(--pos)' : (t === '下滑') ? 'var(--neg)' : 'var(--sec)';
+  var tip = '現在 ROIC ÷ 過去 5 年平均 = ' + ratioT + '｜3 年平均 ROIC ' + r3yT;
+  return '<td title="' + tip + '" style="color:' + color + ';font-weight:600">' + t + '</td>';
+}
+
+// 原始財務數字（百萬美元）hover 明細 — Revenue / EBIT / Invested Capital 的
+// FY vs FY-3 對照，供增量 ROIC / 再投資率兩欄的 tooltip 附掛（後端 "capital"
+// 子物件，見 compute_roic_decomposition()）。任一組數字缺值就整組跳過。
+function _capitalTipSuffix(s) {
+  var cap = s.capital;
+  if (!cap) return '';
+  function pair(label, fy, fy3) {
+    if (fy === null || fy === undefined || fy3 === null || fy3 === undefined) return '';
+    return '｜' + label + ' $' + fy.toLocaleString() + 'M（3 年前 $' + fy3.toLocaleString() + 'M）';
+  }
+  return pair('營收', cap.rev_fy, cap.rev_fy3)
+       + pair('EBIT', cap.ebit_fy, cap.ebit_fy3)
+       + pair('投入資本', cap.ic_fy, cap.ic_fy3);
+}
+
+function _renderIncrementalRoicCell(s) {
+  var v = s.incremental_roic_pct;
+  var capTip = _capitalTipSuffix(s);
+  if (v !== null && v !== undefined) {
+    var color = (v >= 15) ? 'var(--pos)' : (v < 0) ? 'var(--neg)' : 'var(--sec)';
+    var clampNote = s.incremental_roic_clamped ? '（數值極端，已限縮顯示範圍）' : '';
+    return '<td title="近 3 個財年新增投入資本的報酬率' + clampNote + capTip + '" style="color:' + color + '">'
+         + v.toFixed(1) + '%</td>';
+  }
+  if (s.incremental_roic_note) {
+    return '<td style="color:var(--muted)" title="近 3 年投入資本不增反減（如買回庫藏股），無法定義新增資本的報酬率' + capTip + '">'
+         + s.incremental_roic_note + '</td>';
+  }
+  return '<td style="color:var(--muted)">—</td>';
+}
+
+function _renderReinvestRateCell(s) {
+  var v = s.reinvest_rate_pct;
+  if (v === null || v === undefined) return '<td style="color:var(--muted)">—</td>';
+  return '<td title="近 3 年新增投入資本 ÷ 期間年化 NOPAT' + _capitalTipSuffix(s) + '">' + v.toFixed(1) + '%</td>';
+}
+
+function _renderImpliedGrowthCell(s) {
+  var v = s.implied_growth_pct;
+  if (v === null || v === undefined) return '<td style="color:var(--muted)">—</td>';
+  var color = (v >= 10) ? 'var(--pos)' : (v < 0) ? 'var(--neg)' : 'var(--sec)';
+  return '<td title="增量 ROIC × 再投資率 —— 機械推算的內生成長率上限，描述器非預測" style="color:' + color + ';font-weight:600">'
+       + v.toFixed(1) + '%</td>';
+}
+
 function _renderLiveIRRInner(s) {
   // v1.7.3: 簡化為「只顯示最新數字」+ IRR 區間配色 — 拿掉 DD 對照 sub-line + 比較 tooltip
   // live 缺值時 fallback 顯示 frozen DD 值（無 label）；heuristic 標 `*`。
@@ -1295,6 +1392,17 @@ function buildTable(stocks) {
     if (c.key === 'peg') {
       th += _thSortable('2Y P/E', 'live_fpe_est', {title: '即時 FY+2 Forward P/E — yfinance 每日抓 FY EPS 重算；hover 看 DD frozen 對比與漂移幅度'});
     }
+    if (c.key === 'roic') {
+      // 2026-09-16: ROIC 分解 / 存續力 / 增量 ROIC×再投資率 —— 三個機械模組，
+      // 全部 derive 自 Koyfin xlsx 選填欄位（EBIT Margin % / ROIC 3Y Avg % /
+      // Tax Rate % / Revenue／EBIT／Invested Capital FY(-3)）。見
+      // build_dd_screener.compute_roic_decomposition() 與 dd-screener build 規格。
+      th += _thSortable('ROIC 來源', 'roic_quadrant_code', {title: 'ROIC 拆解 = NOPAT 利潤率 × 投入資本周轉率，四象限標示獲利厚薄與資本周轉快慢（利厚：NOPAT 利潤率 ≥15%；轉快：周轉率 ≥1.0x）'});
+      th += _thSortable('ROIC 走勢', 'roic_vs_5y_x', {title: '現在 ROIC ÷ 過去 5 年平均 ROIC —— ≥1.10 上升／≤0.90 下滑／其餘持平'});
+      th += _thSortable('增量 ROIC', 'incremental_roic_pct', {title: '近 3 個財年：(今年 NOPAT − 3 年前 NOPAT) ÷ 新增投入資本 —— 新增的一塊錢資本賺到多少報酬，判斷成長是否值得繼續投'});
+      th += _thSortable('再投資率', 'reinvest_rate_pct', {title: '近 3 年新增投入資本 ÷ 期間年化 NOPAT —— 公司把多少獲利拿去繼續投資擴張'});
+      th += _thSortable('隱含成長', 'implied_growth_pct', {title: '增量 ROIC × 再投資率 —— 機械推算的內生成長率上限，描述器非預測'});
+    }
     return th;
   }).join('');
 
@@ -1363,6 +1471,11 @@ function buildTable(stocks) {
       }
       if (c.key === 'peg') {
         html += _renderLivePECell(s);
+      }
+      if (c.key === 'roic') {
+        html += _renderRoicQuadrantCell(s) + _renderRoicTrendCell(s)
+              + _renderIncrementalRoicCell(s) + _renderReinvestRateCell(s)
+              + _renderImpliedGrowthCell(s);
       }
       return html;
     }).join('');
@@ -1679,10 +1792,11 @@ document.querySelectorAll('.chip[data-filter]').forEach(function(chip) {
     chip.classList.add('active');
 
     // Update state
-    if (filterName === 'moat')   state.moat   = val;
-    if (filterName === 'dir')    state.dir    = val;
-    if (filterName === 'preset') state.preset = val;
-    if (filterName === 'timing') state.timing = val;
+    if (filterName === 'moat')     state.moat     = val;
+    if (filterName === 'dir')      state.dir      = val;
+    if (filterName === 'quadrant') state.quadrant = val;
+    if (filterName === 'preset')   state.preset   = val;
+    if (filterName === 'timing')   state.timing   = val;
 
     // Show/hide custom panel
     var panel = document.getElementById('custom-panel');

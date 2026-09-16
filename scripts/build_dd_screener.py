@@ -1653,6 +1653,169 @@ def _compute_fy_eps_revision(ticker: str, eps_curr: float | None,
     return out
 
 
+# 2026-09-16: default effective tax rate used whenever the xlsx "Tax Rate %"
+# column is blank or outside the 0..50 sanity band (see compute_roic_decomposition).
+ROIC_DECOMP_DEFAULT_TAX_RATE = 21.0
+
+
+def compute_roic_decomposition(record: dict | None, roic_pct) -> dict:
+    """ROIC 分解 ×存續力 × 增量 ROIC×再投資率 —— 三個機械模組（2026-09-16）。
+
+    Derived entirely from the optional Koyfin xlsx columns documented in
+    load_eps_estimates_xlsx.py's module docstring (EBIT Margin % / ROIC 3Y
+    Avg % / Tax Rate % / Revenue FY(-3) / EBIT FY(-3) / Invested Capital
+    FY(-3)). `record` is the RAW per-ticker dict from ExcelSnapshot.get(t) —
+    i.e. `_excel_record_for_eps2y` in enrich_ticker(), NOT the ADR-adjusted
+    apply_adr_ratio() version: these are aggregate financials/margins, not
+    per-share EPS, so ADR conversion doesn't apply (same rationale as the
+    existing roic_pct/fcf_margin_pct/roic_5y_avg_pct reads). `roic_pct` is
+    the screener's already-resolved current-period ROIC % (post koyfin-xlsx/
+    QGM/yfinance priority — see enrich_ticker), passed in separately so this
+    function stays pure/testable without the full enrich_ticker context.
+
+    Pure function — no I/O, no side effects. All outputs None when the
+    underlying inputs are missing (record=None or column absent on a legacy
+    xlsx), except tax_rate_pct/tax_rate_source which always resolve (falling
+    back to the 21% default) since that's the documented behavior for a
+    blank/garbage Tax Rate % cell. Every percent value rounded to 2dp.
+
+    Field contract (see 2026-09-16 dd-screener build spec):
+      ebit_margin_pct, tax_rate_pct, tax_rate_source ("xlsx"|"default21"),
+      nopat_margin_pct, ic_turnover_x, roic_quadrant, roic_quadrant_code,
+      roic_3y_avg_pct, roic_vs_5y_x, roic_trend_5y, incremental_roic_pct,
+      incremental_roic_note, incremental_roic_clamped, reinvest_rate_pct,
+      implied_growth_pct, capital{rev_fy,rev_fy3,ebit_fy,ebit_fy3,ic_fy,ic_fy3}.
+    """
+    rec = record or {}
+
+    def _num(x):
+        return float(x) if isinstance(x, (int, float)) else None
+
+    ebit_margin = _num(rec.get("ebit_margin_pct"))
+    tax_rate_raw = _num(rec.get("tax_rate_pct"))
+    rev_fy = _num(rec.get("rev_fy"))
+    rev_fy3 = _num(rec.get("rev_fy3"))
+    ebit_fy = _num(rec.get("ebit_fy"))
+    ebit_fy3 = _num(rec.get("ebit_fy3"))
+    ic_fy = _num(rec.get("ic_fy"))
+    ic_fy3 = _num(rec.get("ic_fy3"))
+    roic_3y = _num(rec.get("roic_3y_avg_pct"))
+    roic_5y = _num(rec.get("roic_5y_avg_pct"))
+    roic_now = _num(roic_pct)
+
+    out = {
+        "ebit_margin_pct": round(ebit_margin, 2) if ebit_margin is not None else None,
+        "tax_rate_pct": None,
+        "tax_rate_source": None,
+        "nopat_margin_pct": None,
+        "ic_turnover_x": None,
+        "roic_quadrant": None,
+        "roic_quadrant_code": None,
+        "roic_3y_avg_pct": round(roic_3y, 2) if roic_3y is not None else None,
+        "roic_vs_5y_x": None,
+        "roic_trend_5y": None,
+        "incremental_roic_pct": None,
+        "incremental_roic_note": None,
+        "incremental_roic_clamped": False,
+        "reinvest_rate_pct": None,
+        "implied_growth_pct": None,
+        "capital": {
+            "rev_fy": round(rev_fy, 2) if rev_fy is not None else None,
+            "rev_fy3": round(rev_fy3, 2) if rev_fy3 is not None else None,
+            "ebit_fy": round(ebit_fy, 2) if ebit_fy is not None else None,
+            "ebit_fy3": round(ebit_fy3, 2) if ebit_fy3 is not None else None,
+            "ic_fy": round(ic_fy, 2) if ic_fy is not None else None,
+            "ic_fy3": round(ic_fy3, 2) if ic_fy3 is not None else None,
+        },
+    }
+
+    # Tax rate: xlsx value sane-checked to [0, 50]; else default 21% (always
+    # resolves — see docstring).
+    if tax_rate_raw is not None and 0 <= tax_rate_raw <= 50:
+        tax_rate = tax_rate_raw
+        out["tax_rate_source"] = "xlsx"
+    else:
+        tax_rate = ROIC_DECOMP_DEFAULT_TAX_RATE
+        out["tax_rate_source"] = "default21"
+    out["tax_rate_pct"] = round(tax_rate, 2)
+
+    # 1) ROIC decomposition: NOPAT margin × invested-capital turnover, 4-quadrant.
+    nopat_margin = None
+    if ebit_margin is not None:
+        nopat_margin = ebit_margin * (1 - tax_rate / 100.0)
+        out["nopat_margin_pct"] = round(nopat_margin, 2)
+
+    ic_turnover = None
+    if ic_fy is not None and ic_fy > 0 and rev_fy is not None:
+        ic_turnover = rev_fy / ic_fy
+        out["ic_turnover_x"] = round(ic_turnover, 2)
+
+    if nopat_margin is not None and ic_turnover is not None:
+        high_margin = nopat_margin >= 15
+        high_turnover = ic_turnover >= 1.0
+        if high_margin and high_turnover:
+            out["roic_quadrant"], out["roic_quadrant_code"] = "利厚轉快", "HH"
+        elif high_margin:
+            out["roic_quadrant"], out["roic_quadrant_code"] = "利厚轉慢", "HL"
+        elif high_turnover:
+            out["roic_quadrant"], out["roic_quadrant_code"] = "利薄轉快", "LH"
+        else:
+            out["roic_quadrant"], out["roic_quadrant_code"] = "利薄轉慢", "LL"
+
+    # 2) ROIC persistence: current ROIC vs 5Y average.
+    if roic_now is not None and roic_5y is not None and roic_5y > 0:
+        ratio = roic_now / roic_5y
+        out["roic_vs_5y_x"] = round(ratio, 2)
+        if ratio >= 1.10:
+            out["roic_trend_5y"] = "上升"
+        elif ratio <= 0.90:
+            out["roic_trend_5y"] = "下滑"
+        else:
+            out["roic_trend_5y"] = "持平"
+
+    # 3) Incremental ROIC × reinvestment rate over the last 3 fiscal years.
+    delta_ic = None
+    if ic_fy is not None and ic_fy3 is not None:
+        delta_ic = ic_fy - ic_fy3
+
+    nopat_fy = ebit_fy * (1 - tax_rate / 100.0) if ebit_fy is not None else None
+    nopat_fy3 = ebit_fy3 * (1 - tax_rate / 100.0) if ebit_fy3 is not None else None
+
+    if delta_ic is not None and nopat_fy is not None and nopat_fy3 is not None:
+        if delta_ic > 0 and ic_fy3 is not None and ic_fy3 > 0:
+            incr_roic = (nopat_fy - nopat_fy3) / delta_ic * 100.0
+            clamped = False
+            if incr_roic > 500:
+                incr_roic, clamped = 500.0, True
+            elif incr_roic < -200:
+                incr_roic, clamped = -200.0, True
+            out["incremental_roic_pct"] = round(incr_roic, 2)
+            out["incremental_roic_clamped"] = clamped
+        elif delta_ic <= 0:
+            out["incremental_roic_note"] = "資本縮減"
+
+        denom = 3 * (nopat_fy + nopat_fy3) / 2.0
+        if denom > 0:
+            reinvest = delta_ic / denom * 100.0
+            if reinvest > 200:
+                reinvest = 200.0
+            elif reinvest < -100:
+                reinvest = -100.0
+            out["reinvest_rate_pct"] = round(reinvest, 2)
+
+    # implied_growth_pct = incremental_roic_pct × reinvest_rate_pct / 100 —
+    # only when both resolved and incremental_roic_pct wasn't saturated by
+    # the [-200, 500] clamp (a clamped value is a sentinel, not a real rate).
+    if (out["incremental_roic_pct"] is not None
+            and out["reinvest_rate_pct"] is not None
+            and not out["incremental_roic_clamped"]):
+        out["implied_growth_pct"] = round(
+            out["incremental_roic_pct"] * out["reinvest_rate_pct"] / 100.0, 2
+        )
+
+    return out
+
+
 def enrich_ticker(
     entry: dict,
     qgm_index: dict,
@@ -1777,6 +1940,12 @@ def enrich_ticker(
     else:
         durable_5y = None
         durable_source = None
+
+    # 2026-09-16: ROIC 分解 + 存續力 + 增量 ROIC×再投資率 —— pure derivation,
+    # see compute_roic_decomposition() docstring. Uses the resolved current
+    # ROIC % (post koyfin-xlsx/QGM/yfinance priority above) + the raw Excel
+    # record (roic_5y_avg_pct / roic_3y_avg_pct / EBIT / IC / revenue columns).
+    roic_decomp = compute_roic_decomposition(_excel_record_for_eps2y, quality.get("roic"))
 
     pass_count, fails = evaluate_criteria(quality)
 
@@ -1913,6 +2082,9 @@ def enrich_ticker(
         # 2026-09-09 (v3 席位資格): core-seat durability signal — see docstring.
         "durable_5y": durable_5y,
         "durable_source": durable_source,
+        **roic_decomp,   # ebit_margin_pct/tax_rate_*/nopat_margin_pct/ic_turnover_x/
+                         # roic_quadrant*/roic_3y_avg_pct/roic_vs_5y_x/roic_trend_5y/
+                         # incremental_roic_*/reinvest_rate_pct/implied_growth_pct/capital
         "ev5y_pct": ev5y_pct,
         "ma": ma,
         "ma_from_cache": ma_from_cache,
@@ -2251,6 +2423,20 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         "no_data": no_data,
     }
 
+    # 2026-09-16: ROIC decomposition summary — counts per quadrant, coverage
+    # of the incremental-ROIC module, and how many hit "資本縮減" (capital
+    # shrank over the 3Y window, e.g. buybacks, so incremental ROIC is
+    # undefined). See compute_roic_decomposition().
+    quadrant_counts = Counter(s.get("roic_quadrant_code") for s in enriched if s.get("roic_quadrant_code"))
+    roic_decomp_summary = {
+        "quadrant_hh": quadrant_counts.get("HH", 0),
+        "quadrant_hl": quadrant_counts.get("HL", 0),
+        "quadrant_lh": quadrant_counts.get("LH", 0),
+        "quadrant_ll": quadrant_counts.get("LL", 0),
+        "incremental_roic_count": sum(1 for s in enriched if s.get("incremental_roic_pct") is not None),
+        "capital_shrink_count": sum(1 for s in enriched if s.get("incremental_roic_note") == "資本縮減"),
+    }
+
     # Build final document
     tz_taipei = timezone(timedelta(hours=8))
     now = datetime.now(tz_taipei)
@@ -2278,6 +2464,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
             "moat_down_cap": FUNNEL_MOAT_DOWN_CAP,
         },
         "summary": summary,
+        "roic_decomp_summary": roic_decomp_summary,
         "stocks": enriched,
     }
     # v1.8: surface Excel provenance + diff for the FE banner

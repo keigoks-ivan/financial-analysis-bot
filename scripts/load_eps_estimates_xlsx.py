@@ -23,10 +23,31 @@ simply None on every record.
 
 A third optional column (2026-09-09, v3 席位資格 durability source — see
 scripts/engine/build_dd_screener.py enrich_ticker's `durable_5y`/`durable_source`):
-any header containing "roic" AND ("5y" or "5 yr" or "avg") maps to
-`roic_5y_avg` (checked BEFORE the plain "roic" rule above, since a header like
-"ROIC 5Y Avg %" would otherwise match "roic" first). Also OPTIONAL, same
+any header containing "roic" AND ("5y" or "5 yr") maps to `roic_5y_avg`
+(checked BEFORE the plain "roic" rule above, since a header like "ROIC 5Y
+Avg %" would otherwise match "roic" first). Also OPTIONAL, same
 ratio-vs-percent rule as roic/fcf_margin below, output field `roic_5y_avg_pct`.
+NOTE (2026-09-16): this rule used to also trigger on a bare "avg" in the
+header, which meant "ROIC 3Y Avg %" was mis-captured as roic_5y_avg — tightened
+to require "5y"/"5 yr" specifically, with a sibling "3y"/"3 yr" rule added
+right below it for `roic_3y_avg`.
+
+Nine more optional columns (2026-09-16, ROIC decomposition / persistence /
+incremental-ROIC screener additions — see scripts/build_dd_screener.py
+compute_roic_decomposition()): exact header strings, all OPTIONAL and all
+None on any pre-2026-09-16 xlsx —
+  "EBIT Margin %"          -> ebit_margin_pct   (LTM, percent)
+  "ROIC 3Y Avg %"          -> roic_3y_avg_pct   (percent; see NOTE above)
+  "Tax Rate %"             -> tax_rate_pct      (percent; may be blank/garbage —
+                              sanity-checked and defaulted downstream in
+                              build_dd_screener.py, NOT here)
+  "Revenue FY" / "Revenue FY-3"                 -> rev_fy / rev_fy3   (USD millions)
+  "EBIT FY" / "EBIT FY-3"                       -> ebit_fy / ebit_fy3 (USD millions; may be negative)
+  "Invested Capital FY" / "Invested Capital FY-3" -> ic_fy / ic_fy3   (USD millions)
+The three percent columns follow the same ratio-vs-percent rule as
+roic/fcf_margin below. The six USD-millions columns are passed through as
+plain floats (no ratio/percent handling — they're absolute dollar figures,
+not margins) via `_to_num`.
 
 Percent-unit rule for the optional columns: a value is treated as a raw
 ratio (e.g. 0.19) and multiplied by 100 iff its header has no "%" marker AND
@@ -258,15 +279,33 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
             header_map[col] = "growth_fy2_fy3"
         elif "fy1" in lv and "fy3" in lv and "cagr" in lv:
             header_map[col] = "cagr_fy1_fy3"
-        elif "roic" in lv and ("5y" in lv or "5 yr" in lv or "avg" in lv):
+        elif "roic" in lv and ("5y" in lv or "5 yr" in lv):
             header_map[col] = "roic_5y_avg"
             field_has_pct["roic_5y_avg"] = "%" in lv
+        elif "roic" in lv and ("3y" in lv or "3 yr" in lv):
+            header_map[col] = "roic_3y_avg"
+            field_has_pct["roic_3y_avg"] = "%" in lv
         elif "roic" in lv:
             header_map[col] = "roic"
             field_has_pct["roic"] = "%" in lv
         elif ("fcf" in lv and "margin" in lv) or ("free cash flow" in lv and "margin" in lv):
             header_map[col] = "fcf_margin"
             field_has_pct["fcf_margin"] = "%" in lv
+        # 2026-09-16: ROIC decomposition / incremental-ROIC inputs (see module
+        # docstring). "ebit" + "margin" checked BEFORE the bare "ebit fy" rule
+        # so "EBIT Margin %" doesn't fall through to the FY/FY-3 branch.
+        elif "ebit" in lv and "margin" in lv:
+            header_map[col] = "ebit_margin"
+            field_has_pct["ebit_margin"] = "%" in lv
+        elif "tax" in lv and "rate" in lv:
+            header_map[col] = "tax_rate"
+            field_has_pct["tax_rate"] = "%" in lv
+        elif "revenue" in lv and "fy" in lv:
+            header_map[col] = "rev_fy3" if "3" in lv else "rev_fy"
+        elif "ebit" in lv and "fy" in lv:
+            header_map[col] = "ebit_fy3" if "3" in lv else "ebit_fy"
+        elif "invested" in lv and "capital" in lv:
+            header_map[col] = "ic_fy3" if "3" in lv else "ic_fy"
 
     out: dict[str, dict] = {}
     for r in rows[1:]:
@@ -298,6 +337,14 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
                 return None
             return round(float(x), 4)
 
+        # 2026-09-16: rev_fy/rev_fy3/ebit_fy/ebit_fy3/ic_fy/ic_fy3 — raw USD
+        # millions, no ratio/percent handling (they're absolute dollar figures,
+        # not margins). Plain float passthrough, same rounding as _to_eps.
+        def _to_num(x):
+            if x is None or not isinstance(x, (int, float)):
+                return None
+            return round(float(x), 4)
+
         # 2026-09-09: roic_pct / fcf_margin_pct — see module docstring for the
         # ratio-vs-percent detection rule. `has_pct` comes from the header text
         # captured once above; absent header (field never mapped) -> has_pct
@@ -320,6 +367,18 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
             "roic_pct": _to_quality_pct(rec.get("roic"), field_has_pct.get("roic", False)),
             "fcf_margin_pct": _to_quality_pct(rec.get("fcf_margin"), field_has_pct.get("fcf_margin", False)),
             "roic_5y_avg_pct": _to_quality_pct(rec.get("roic_5y_avg"), field_has_pct.get("roic_5y_avg", False)),
+            # 2026-09-16: ROIC decomposition / persistence / incremental-ROIC
+            # inputs (see module docstring + build_dd_screener.compute_roic_decomposition).
+            # All OPTIONAL — None on every pre-2026-09-16 xlsx.
+            "ebit_margin_pct": _to_quality_pct(rec.get("ebit_margin"), field_has_pct.get("ebit_margin", False)),
+            "roic_3y_avg_pct": _to_quality_pct(rec.get("roic_3y_avg"), field_has_pct.get("roic_3y_avg", False)),
+            "tax_rate_pct": _to_quality_pct(rec.get("tax_rate"), field_has_pct.get("tax_rate", False)),
+            "rev_fy": _to_num(rec.get("rev_fy")),
+            "rev_fy3": _to_num(rec.get("rev_fy3")),
+            "ebit_fy": _to_num(rec.get("ebit_fy")),
+            "ebit_fy3": _to_num(rec.get("ebit_fy3")),
+            "ic_fy": _to_num(rec.get("ic_fy")),
+            "ic_fy3": _to_num(rec.get("ic_fy3")),
         }
     return out
 
