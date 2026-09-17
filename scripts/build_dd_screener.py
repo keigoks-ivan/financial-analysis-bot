@@ -1518,6 +1518,75 @@ def _load_prev_month_snapshot() -> dict:
     return _PREV_MONTH_SNAPSHOT_CACHE
 
 
+# Module-level cache for the v4 席位引擎 3-month revision baseline (see
+# _load_eps_rev_3m_baseline()) — same pattern as _PREV_MONTH_SNAPSHOT_CACHE.
+_EPS_REV_3M_BASELINE_CACHE: dict = {}
+_EPS_REV_3M_BASELINE_LOADED: bool = False
+
+
+def _load_eps_rev_3m_baseline() -> dict:
+    """v4 席位引擎 (2026-09-17): load the canonical monthly EPS snapshot closest
+    to 90 days before the current Excel snapshot date — baseline for
+    `eps_rev_3m_pct` (own_score v4 revision percentile input, see
+    knowledge/rule_ledger.md v4 席位引擎列). Only considers canonical
+    month-end snapshots (`{YYYY-MM}.json`), not intra-month dated refreshes
+    (`{YYYY-MM}-DD.json`) — a "3-month-ago roster", not "last refresh before
+    today". Cached at module level, same pattern as _load_prev_month_snapshot().
+    Returns the full snapshot dict (with "tickers" key), or {} if none found.
+    """
+    global _EPS_REV_3M_BASELINE_CACHE, _EPS_REV_3M_BASELINE_LOADED
+    if _EPS_REV_3M_BASELINE_LOADED:
+        return _EPS_REV_3M_BASELINE_CACHE
+    _EPS_REV_3M_BASELINE_LOADED = True
+    snapshot_dir = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"
+
+    import re
+
+    try:
+        latest_xlsx = find_latest_excel()
+    except Exception:
+        latest_xlsx = None
+    current_date = None
+    if latest_xlsx is not None:
+        m = re.search(r"_(\d{4})(\d{2})(\d{2})\.xlsx$", latest_xlsx.name)
+        if m:
+            try:
+                current_date = datetime(int(m.group(1)), int(m.group(2)), int(m.group(3))).date()
+            except ValueError:
+                current_date = None
+    if current_date is None:
+        current_date = datetime.now(timezone(timedelta(hours=8))).date()
+    target = current_date - timedelta(days=90)
+
+    canonical_re = re.compile(r"^(\d{4})-(\d{2})\.json$")
+    best_path, best_diff, best_data = None, None, None
+    if snapshot_dir.exists():
+        for p in snapshot_dir.iterdir():
+            if not canonical_re.match(p.name):
+                continue
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            sd = data.get("snapshot_date")
+            if not sd:
+                continue
+            try:
+                sd_date = datetime.strptime(sd, "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            diff = abs((sd_date - target).days)
+            if best_diff is None or diff < best_diff:
+                best_diff, best_path, best_data = diff, p, data
+
+    if best_path is not None:
+        _EPS_REV_3M_BASELINE_CACHE = best_data
+        print(f"  EPS 3m-revision baseline: {best_path.name} "
+              f"(snapshot {best_data.get('snapshot_date')}, target ~{target.isoformat()})",
+              file=sys.stderr)
+    return _EPS_REV_3M_BASELINE_CACHE
+
+
 def _compute_eps_revision(entry: dict, eps2y_live: float | None, prev_snapshot: dict) -> dict:
     """Compute EPS revision momentum vs last month's snapshot.
 
@@ -1768,6 +1837,49 @@ def _compute_fy_eps_revision(ticker: str, yf_ticker: str, eps_curr: float | None
     if fx_normalized_flags:
         out["eps_revision_fx_normalized"] = all(fx_normalized_flags)
     return out
+
+
+# FY weights for eps_rev_3m_pct — see _compute_eps_rev_3m() (v4 席位引擎, 2026-09-17).
+EPS_REV_3M_FY_WEIGHTS = {
+    "eps_fy_curr_revision_pct": 0.2,
+    "eps_fy_next_revision_pct": 0.3,
+    "eps_fy3_revision_pct": 0.5,
+}
+
+
+def _compute_eps_rev_3m(ticker: str, yf_ticker: str, eps_curr: float | None,
+                         eps_next: float | None, eps_fy3: float | None,
+                         baseline_snapshot: dict, current_snapshot_date: str | None,
+                         reporting_ccy_cache: dict, fx_cache: dict) -> dict:
+    """v4 席位引擎 (2026-09-17): FY-weighted (0.2/0.3/0.5) FX-normalized EPS
+    revision of the current xlsx vs a ~90-day-back monthly baseline (see
+    _load_eps_rev_3m_baseline()) — own_score v4's revision percentile input
+    (knowledge/rule_ledger.md v4 席位引擎列). Reuses _compute_fy_eps_revision()
+    verbatim (same ADR-adjust + eps_fx_normalize machinery) against the 3m
+    baseline instead of the 1-month-back one, then folds the three per-FY
+    revision %s into a single weighted number — same weights available
+    renormalize (e.g. FY3 missing → weight over FY1/FY2 only).
+
+    Returns eps_rev_3m_pct / eps_rev_3m_baseline_date / eps_rev_3m_fx_normalized.
+    All None when the baseline snapshot lacks the ticker (see
+    _compute_fy_eps_revision's own prev_row is None short-circuit).
+    """
+    rev = _compute_fy_eps_revision(
+        ticker, yf_ticker, eps_curr, eps_next, eps_fy3, baseline_snapshot,
+        current_snapshot_date, reporting_ccy_cache, fx_cache,
+    )
+    parts, weight_sum = [], 0.0
+    for key, w in EPS_REV_3M_FY_WEIGHTS.items():
+        v = rev.get(key)
+        if v is not None:
+            parts.append(v * w)
+            weight_sum += w
+    eps_rev_3m_pct = round(sum(parts) / weight_sum, 2) if weight_sum > 0 else None
+    return {
+        "eps_rev_3m_pct": eps_rev_3m_pct,
+        "eps_rev_3m_baseline_date": rev.get("eps_revision_baseline_date"),
+        "eps_rev_3m_fx_normalized": rev.get("eps_revision_fx_normalized"),
+    }
 
 
 # 2026-09-16: default effective tax rate used whenever the xlsx "Tax Rate %"
@@ -2108,6 +2220,9 @@ def compute_fundamental_gates(record: dict | None, roic_quadrant_code: str | Non
     fail_count = sum(1 for v in veto.values() if v == "fail")
     known_count = sum(1 for v in veto.values() if v is not None)
     out.update(veto)
+    # v4 席位引擎 (2026-09-17): own_score v4 的品質百分位輸入之一（見 grp.own_raw()）
+    # ——之前只在本函式內部算 fcf_ni 的 pass/fail，沒有把比值本身曝出去。
+    out["fcf_ni_ratio"] = _r2(fcf_ni_ratio)
     out["quality_veto_fail_count"] = fail_count
     out["quality_veto_fails"] = [QUALITY_VETO_LABELS[k] for k, v in veto.items() if v == "fail"]
     if known_count == 0:
@@ -2282,6 +2397,7 @@ def enrich_ticker(
     qgm_durable_index: dict | None = None,
     reporting_ccy_cache: dict | None = None,
     fx_cache: dict | None = None,
+    eps_rev_3m_baseline: dict | None = None,
 ) -> dict:
     """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
 
@@ -2386,21 +2502,28 @@ def enrich_ticker(
             source = "koyfin-xlsx"
             quality_koyfin_stamp = excel_snapshot.snapshot_date if excel_snapshot else None
 
-    # 2026-09-09 (v3 席位資格): durable_5y — core-seat durability signal, priority
-    # Koyfin roic_5y_avg_pct (>=15% -> True) then QGM roic_5y_stability.pct_above
+    # durable_5y — core-seat durability signal. v3 (2026-09-09): priority Koyfin
+    # roic_5y_avg_pct (>=15% -> True) then QGM roic_5y_stability.pct_above
     # (>=75% -> True) via qgm_durable_index; None when neither source covers t.
-    # See docstring above + knowledge/rule_ledger.md v3 席位資格 row.
+    # v4 (2026-09-17, knowledge/rule_ledger.md v4 席位引擎列): when BOTH sources
+    # cover the ticker, OR them (either threshold met -> durable) instead of
+    # letting Koyfin's presence hide a QGM pass — priority-only meant a Koyfin
+    # roic_5y_avg_pct just under 15% could mask a QGM stability >=75% that would
+    # otherwise have qualified the name. Single-source coverage still behaves
+    # exactly as v3 (OR against None is a no-op).
     _koyfin_r5y = _excel_record_for_eps2y.get("roic_5y_avg_pct") if _excel_record_for_eps2y else None
     _qgm_r5y = (qgm_durable_index or {}).get(t)
-    if _koyfin_r5y is not None:
-        durable_5y = _koyfin_r5y >= 15.0
-        durable_source = "koyfin-xlsx"
-    elif _qgm_r5y is not None:
-        durable_5y = _qgm_r5y >= 0.75
-        durable_source = "qgm"
-    else:
+    _koyfin_pass = None if _koyfin_r5y is None else _koyfin_r5y >= 15.0
+    _qgm_pass = None if _qgm_r5y is None else _qgm_r5y >= 0.75
+    if _koyfin_pass is None and _qgm_pass is None:
         durable_5y = None
         durable_source = None
+    elif _koyfin_pass or _qgm_pass:
+        durable_5y = True
+        durable_source = "koyfin-xlsx" if _koyfin_pass else "qgm"
+    else:
+        durable_5y = False
+        durable_source = "koyfin-xlsx" if _koyfin_pass is not None else "qgm"
 
     # 2026-09-16: ROIC 分解 + 存續力 + 增量 ROIC×再投資率 —— pure derivation,
     # see compute_roic_decomposition() docstring. Uses the resolved current
@@ -2514,6 +2637,14 @@ def enrich_ticker(
         reporting_ccy_cache, fx_cache,
     )
 
+    # v4 席位引擎 (2026-09-17): own_score v4 的三月上修輸入 — 同一台機械對 ~90 天前
+    # 的月度 baseline 算一次（見 _compute_eps_rev_3m() docstring）。
+    eps_rev_3m = _compute_eps_rev_3m(
+        t, _yf_ticker_for_ma(t), _rev_curr, _rev_next, _rev_fy3, eps_rev_3m_baseline or {},
+        excel_snapshot.snapshot_date if excel_snapshot else None,
+        reporting_ccy_cache, fx_cache,
+    )
+
     # 2026-09-17: fundamental gates — DD 技能既有機械規則搬進 screener (see
     # compute_fundamental_gates() docstring). eps_fy1_consec_down (item A5)
     # needs the 3 monthly baselines + FX/ADR normalization, so it's computed
@@ -2565,6 +2696,11 @@ def enrich_ticker(
         # 2026-09-09 (v3 席位資格): core-seat durability signal — see docstring.
         "durable_5y": durable_5y,
         "durable_source": durable_source,
+        # v4 席位引擎 (2026-09-17): raw durability magnitudes, for the seat-table 耐久
+        # column's hover tooltip (engine/build_arena.py) — durable_5y/durable_source
+        # alone tell pass/fail + which source, not the underlying number.
+        "roic_5y_avg_pct": round(_koyfin_r5y, 2) if _koyfin_r5y is not None else None,
+        "qgm_roic_5y_stability_pct": round(_qgm_r5y * 100, 1) if _qgm_r5y is not None else None,
         **roic_decomp,   # ebit_margin_pct/tax_rate_*/nopat_margin_pct/ic_turnover_x/
                          # roic_quadrant*/roic_3y_avg_pct/roic_vs_5y_x/roic_trend_5y/
                          # incremental_roic_*/reinvest_rate_pct/implied_growth_pct/capital
@@ -2595,6 +2731,7 @@ def enrich_ticker(
         # v1.8: month-over-month revision per FY (vs prev Excel snapshot)
         **fy_revision,  # eps_fy_curr_revision_pct, eps_fy_next_revision_pct, eps_fy3_revision_pct,
                         # eps_revision_baseline_date, eps_revision_currency, eps_revision_fx_normalized
+        **eps_rev_3m,   # v4 席位引擎: eps_rev_3m_pct, eps_rev_3m_baseline_date, eps_rev_3m_fx_normalized
         # v1.8.5: foreign-listing native-currency display (TWD/JPY/etc.)
         "eps_display_currency": _lfy.get("eps_display_currency", "USD"),
         "eps_fx_rate": _lfy.get("eps_fx_rate"),
@@ -2770,6 +2907,14 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     else:
         print("  Step 0    EPS prev-month snapshot: not found (revision_dir=新增 for all)")
 
+    # v4 席位引擎 (2026-09-17): ~90-day-back monthly baseline for eps_rev_3m_pct.
+    eps_rev_3m_baseline = _load_eps_rev_3m_baseline()
+    if eps_rev_3m_baseline.get("tickers"):
+        print(f"  Step 0    EPS 3m-revision baseline: {eps_rev_3m_baseline.get('snapshot_date')} "
+              f"({len(eps_rev_3m_baseline.get('tickers') or {})} tickers)")
+    else:
+        print("  Step 0    EPS 3m-revision baseline: not found (eps_rev_3m_pct=None for all)")
+
     # Step 0d: v1.8 — load EPS estimates Excel (primary EPS source)
     excel_snapshot = load_latest_excel()
     if excel_snapshot is not None:
@@ -2815,7 +2960,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot, qgm_durable_index, reporting_ccy_cache, fx_cache): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot, qgm_durable_index, reporting_ccy_cache, fx_cache, eps_rev_3m_baseline): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):

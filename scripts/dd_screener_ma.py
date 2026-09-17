@@ -74,6 +74,10 @@ _ALL_NONE: dict = {
     "weeks_since_250w_high": None,
     "is_full_5y":            None,
     "drift_4w_min_in_8w":    None,
+    # v4 席位引擎 (2026-09-17): 12-1 個月動能 + 12 個月總報酬，engine.grp own_score
+    # 排序鍵用（見 knowledge/rule_ledger.md v4 席位引擎列）。
+    "mom_12_1_pct":          None,
+    "ret_12m_pct":           None,
 }
 
 
@@ -170,6 +174,14 @@ def _compute_derived(closes: "pd.Series") -> dict:
         if past_drifts:
             drift_4w_min_in_8w = _float2(min(past_drifts))
 
+    # v4 席位引擎 (2026-09-17): 12-1 個月動能（略過最近 1 個月，抓 12 個月裡前 11 個月
+    # 的動能——經典 mom 12-1 訊號）與 12 個月總報酬。皆需 >=53 週資料（12 個月 ≈ 53 週）。
+    mom_12_1_pct = None
+    ret_12m_pct = None
+    if n >= 53:
+        mom_12_1_pct = _float2((closes.iloc[-5] / closes.iloc[-53] - 1) * 100)
+        ret_12m_pct = _float2((closes.iloc[-1] / closes.iloc[-53] - 1) * 100)
+
     return {
         "price":          price,
         "w52":            w52,
@@ -184,6 +196,8 @@ def _compute_derived(closes: "pd.Series") -> dict:
         "weeks_since_250w_high": weeks_since_250w_high,
         "is_full_5y":            is_full_5y,
         "drift_4w_min_in_8w":    drift_4w_min_in_8w,
+        "mom_12_1_pct":          mom_12_1_pct,
+        "ret_12m_pct":           ret_12m_pct,
     }
 
 
@@ -206,6 +220,9 @@ def compute_ma_snapshot(yf_ticker: str, period: str = "5y", *, use_cache: bool =
         "weeks_since_250w_high": int   | None,
         "is_full_5y":            bool  | None,
         "drift_4w_min_in_8w":    float | None,
+        # v4 席位引擎 (2026-09-17):
+        "mom_12_1_pct":          float | None,  # close[-5]/close[-53]-1, ×100
+        "ret_12m_pct":           float | None,  # close[-1]/close[-53]-1, ×100
       }
 
     v1.7 cache-backed paths (use_cache=True, default):

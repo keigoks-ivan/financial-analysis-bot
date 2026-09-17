@@ -17,17 +17,22 @@ Regime 撥盤（v1 規則鎖定；資訊性，不接倉位系統）：
 輸出：docs/engine/arena.json + arena.html。
 Usage: python3 scripts/engine/build_arena.py [--ledger]
 
---ledger（2026-09-09）：帳本（gate_history／snapshots，遲滯 2/4 的計數依據）預設唯讀——
-不帶旗標時，用「既有帳本」算席位並照常寫 arena.json／board.txt／fragments，但不追加
-gate_history 列、不寫新 snapshot，遲滯時鐘不前進。只有 `.github/workflows/weekly-engine.yml`
-的排程跑次帶 `--ledger` 真正寫帳本，避免手動/ad-hoc 執行把遲滯用「跑次」而非「週次」計數
-（2026-09-08 VRTX/INCY 因連續數日手動重跑被提早坐席即為此故）。
+--ledger：帳本（arena-ledger.json：last_rotation_month／roster／w52_fail_streak／
+snapshots）預設唯讀——不帶旗標時，用「既有帳本」算席位並照常寫 arena.json／board.txt／
+fragments，但不推進月頻輪動時鐘、不追加 snapshot。只有 `.github/workflows/weekly-engine.yml`
+的排程跑次帶 `--ledger` 真正寫帳本，避免手動/ad-hoc 執行提早觸發輪動或誤記週跌破 52 週線
+次數（沿用 2026-09-08 VRTX/INCY 教訓的精神：跑次不能當週次算）。
+
+v4 席位引擎（2026-09-17 持有人拍板，見 knowledge/rule_ledger.md「v4 席位引擎」列）：
+月頻輪動取代週遲滯——每月第一次 --ledger 跑整批重選一次；期間只有硬否決（DD 迴避／體質
+拒絕／衰退 ⛔／三月上修 ≤−5％／市值不足／連兩週跌破 52 週線）能換人，空位由下一名遞補。
+own_score 排序改五個百分位（三月上修／12-1 月動能／成長封頂 30／品質／盈餘殖利率）在
+ELIGIBLE 集合內互相比較，見 scripts/engine/grp.py 檔頭 v4 段與 own_score_v4()。
 """
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import sys
 import unicodedata
@@ -39,8 +44,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
 from engine.grp import (  # noqa: E402
-    DD_FRESH_DAYS, G_MIN_CAGR, MKTCAP_MIN, P_LABEL_HTML, Q_FCF_MIN, Q_ROIC_MIN, R_VETO_FY1,
-    cap_ok, fetch_caps, grp_route, grp_score, market_ok,
+    DD_FRESH_DAYS, G_MIN_CAGR, G_MIN_CAGR_DURABLE, LAMP_ACTION, MKTCAP_MIN, MOM_12_1_OVERHEAT,
+    P_LABEL_HTML, PEAK_ROIC_X, Q_FCF_MIN, Q_ROIC_MIN, R26_OVERHEAT_FALLBACK, R_VETO_FY1,
+    cap_ok, fetch_caps, grp_route, grp_score, market_ok, own_score_v4, timing_lamp,
 )
 from dd_screener_quality import load_qgm_durability_index  # noqa: E402
 
@@ -50,20 +56,13 @@ QGM_TW = ROOT / "docs" / "qgm-tw" / "latest.json"
 BOARD_TXT = OUT_DIR / "board.txt"
 BOARD_HTML = OUT_DIR / "_board_body.html"   # 2026-09-02：HTML 版看板（表格＋燈號），raw fragment 供 cockpit innerHTML 與 _arena_body.html 內嵌共用
 TWD_PER_USD = 32.0          # QGM-TW 市值（新台幣十億）換算門檻用，近似值
-OVERHEAT_R26_PCT = 80.0     # 時機燈：26 週漲幅 >+80% ＝ 過熱（不進席位，只列擁有層）
 LISTING_ALIAS = {"2330.TW": "TSM"}   # 本地掛牌 → ADR（同公司只留一席）
-HYST_NEW_RUNS = 2           # 遲滯：新席需連 2 次週跑過閘
-HYST_INCUMBENT_FAILS = 4    # 遲滯：現任席連 4 次不過閘才下席（硬 veto 除外）
-# 2026-09-16 持有人拍板：席位不再看 DD 裁決——迴避不否決、觀望不降權，DD 只當標籤顯示。
-# 本機模擬（DD 影響開／關同日對照）陣容與排名表零差異：6 檔迴避名字本來就過不了
-# 品質閘或位置閘。環境變數 ARENA_DD_INFLUENCE=1 可暫時恢復舊行為（對照用）。
-DD_VERDICT_INFLUENCE = os.environ.get("ARENA_DD_INFLUENCE", "0") == "1"
-
-# B4② 降權版（2026-09-04 持有人拍板）：DD 180 天內裁決＝觀望的現任席，遲滯保護降權
-# 4→2 次不過閘即下席（新席遲滯與硬 veto 不變）。依據：席位層回溯考卷只命中 FIX 一檔；
-# DD 池全體 miss 組（觀望但後續漲）8 檔中位 +39% vs save 組（觀望且後續跌）112 檔中位 −10.5%，
-# miss 尾巴太肥故不硬擋、只降權。詳 knowledge/rule_ledger.md。
-HYST_INCUMBENT_FAILS_WATCH = 2
+# v4 席位引擎（2026-09-17 持有人拍板，見 knowledge/rule_ledger.md「v4 席位引擎」列）：
+# 週遲滯（新席連 2 次過閘／現任連 4 次不過才下席）整批換成月頻輪動——10 週對照顯示
+# 週遲滯在保護雜訊（23 檔坐過 10 席，核心 −3.8%／核心＋衛星 −8.4% vs SPY +1.2%）。
+# 舊 HYST_* 常數與 DD_VERDICT_INFLUENCE 旗標已隨此改版移除（生產路徑不再讀）；
+# DD 迴避否決改為無條件（見 grp.grp_score 的 veto_dd_avoid），不再靠環境變數開關。
+W52_FAIL_STREAK_VETO = 2   # 硬否決之一：現任席連續此數目週跑站不上 52 週線 → 立即下席
 
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 MARKET_STATE = ROOT / "docs" / "screener" / "market_state.json"
@@ -276,16 +275,22 @@ def _apply_durable_fallback(s: dict) -> None:
       4. 皆缺 → None（grp_route 落款「耐久資料不足，只能衛星」）。
     """
     if s.get("durable_5y") is not None:
+        # v4：權威值已就緒時，QGM 供給列可能仍缺 qgm_roic_5y_stability_pct（耐久欄
+        # hover 用）——若 s["_durable_5y"]（0-1 分數）在場就順手補上，不覆寫既有值。
+        if s.get("qgm_roic_5y_stability_pct") is None and s.get("_durable_5y") is not None:
+            s["qgm_roic_5y_stability_pct"] = round(s["_durable_5y"] * 100, 1)
         return
     raw = s.get("_durable_5y")
     if raw is not None:
         s["durable_5y"] = raw >= 0.75
         s["durable_source"] = "qgm"
+        s["qgm_roic_5y_stability_pct"] = round(raw * 100, 1)
         return
     hit = _qgm_durable_index().get(s.get("ticker"))
     if hit is not None:
         s["durable_5y"] = hit >= 0.75
         s["durable_source"] = "qgm"
+        s["qgm_roic_5y_stability_pct"] = round(hit * 100, 1)
         return
     s.setdefault("durable_5y", None)
     s.setdefault("durable_source", None)
@@ -337,29 +342,33 @@ def row_dict(s: dict) -> dict:
         st = weekly_structure(s["ticker"])
         s["_r26"] = st.get("r26") if st else None
         s["_r52"] = st.get("r52") if st else None
-    g = grp_score(s)
-    # 時機燈：過熱（26 週 >+80%）——不進席位，擁有層照列
-    if g["p_label"] and s.get("_r26") is not None and s["_r26"] > OVERHEAT_R26_PCT:
-        g = dict(g); g["p_label"] = "overheated"; g["pass"] = False
-        g["why"] = [f"位置閘：過熱（26 週 {s['_r26']:+.0f}%）"] + list(g["why"])
-    _apply_durable_fallback(s)   # v3：確保 s["durable_5y"]/s["durable_source"] 就緒供 grp_route 讀
+    _apply_durable_fallback(s)   # v4：durable_5y 就緒供成長閘門檻（10%/15%）與 grp_route 讀
+    g = grp_score(s)             # v4：過熱／頂點／新硬否決／三月上修否決皆已在 grp_score 內算好
     route, route_why = grp_route(s)
+    # v4 核心候選資格＝耐久達標 AND 不過熱（見 grp.py 檔頭 v4 段第 3 點；頂點不排除，
+    # 只留顯示註記 g["peak"]）——build_arena.main() 用這個欄位挑核心 5 席。
+    core_candidate = route == "core" and not g["overheated"]
     role = s.get("dca_role") or ""
     age = s.get("dd_age_days")
     fresh = bool(s.get("dca_verdict")) and (age is None or age <= DD_FRESH_DAYS)
-    # role_mismatch 現在比對的是「DD 自己講的角色」vs「耐久判定出的軌別」（v3
+    # role_mismatch 現在比對的是「DD 自己講的角色」vs「耐久判定出的軌別」（v3 起
     # grp_route 已不讀 DD 角色）——分歧代表 DD 判斷的可長抱程度跟耐久數字對不上，
     # 值得人工複審，語意與 v2 時代相同、只是比對基準換了。
     mismatch = fresh and ((route == "satellite" and "核心" in role) or (route == "core" and "衛星" in role))
-    if DD_VERDICT_INFLUENCE and s.get("dca_verdict") == "迴避":
-        g = dict(g); g["pass"] = False; g["why"] = ["DD 迴避（veto）"] + list(g["why"])
     g_method = ({True: "FY1→FY3 CAGR", False: "FY1→FY2 單年"}.get(g.get("g_three_year")))
+    # v4 時機燈（grp.timing_lamp，pure）：s["_stage_code"] 由呼叫端（main()）注入，
+    # s["_overheated"] 用本列剛算好的 g["overheated"]（同一份判定，不重算）。
+    s["_overheated"] = g["overheated"]
+    lamp = timing_lamp(s)
     return {"ticker": s["ticker"], "verdict": s.get("dca_verdict"),
-            "role": role, "route": route, "route_why": route_why,
+            "role": role, "route": route, "route_why": route_why, "core_candidate": core_candidate,
             "role_mismatch": mismatch, "dd_tag": dd_tag(s), "dd_age_days": age, "dd_fresh": fresh,
             "src": s.get("_src") or "dd-pool", "g_method": g_method,
             "durable_5y": s.get("durable_5y"), "durable_source": s.get("durable_source"),
+            "durable_roic_5y_avg_pct": s.get("roic_5y_avg_pct"),
+            "durable_qgm_pct": s.get("qgm_roic_5y_stability_pct"),
             "grp": g, "score": g["score"],
+            "lamp": lamp, "action": LAMP_ACTION.get(lamp["code"], "—"),
             "roic": g["quality"].get("roic"), "fcf": g["quality"].get("fcf"),
             "peg": (s.get("live_peg") if s.get("live_peg") is not None else s.get("peg")),
             "r26": s.get("_r26"), "r52": s.get("_r52"),
@@ -487,6 +496,13 @@ W_IDX, W_TICKER, W_SCORE, W_GROW = 2, 9, 5, 6
 W_EY, W_ROIC, W_FCF, W_PEG, W_REV = 5, 5, 5, 5, 6
 W_TIMING, W_SEAT, W_DD, W_MOAT = 6, 4, 19, 4
 
+# v4 席位表（board.txt「目前席位」區塊，見 render_board_text）欄寬與 ASCII 代碼——
+# 時機燈／倉位另立一套代碼（GRN/YLW/HOT/RED/OUT、FULL/HALF/ZERO/-），與上面舊 P_LABEL
+# 系（BRK/PB/TR/HOT/DN，全母體表沿用）刻意分開，語意不同不能共用一張表。
+LAMP_CODE_ASCII = {"green": "GRN", "yellow": "YLW", "hot": "HOT", "red": "RED", "out": "OUT"}
+ACTION_CODE_ASCII = {"green": "FULL", "yellow": "HALF", "hot": "HALF", "red": "ZERO", "out": "-"}
+W_SEATCODE, W_RANK, W_REV3M, W_MOM12, W_DUR, W_LAMPCODE, W_ACTCODE = 4, 5, 6, 6, 3, 4, 4
+
 
 def _role_code(role) -> str:
     role = role or ""
@@ -534,86 +550,108 @@ def moat_ascii(m) -> str:
     return f"{grade}{_ARROW_ASCII.get(arrow, '')}"
 
 
-def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, lamp_map) -> str:
-    """附錄 B 式等寬看板（持有人 2026-09-02 指定形式；2026-09-02 對齊修正）：目前席位
-    ＋擁有層排序表＋DD 進場 vs 機械資格＋無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt
-    與 <pre> 嵌頁（docs/engine/_arena_body.html、docs/cockpit/index.html 皆讀同一份文字）。
+def render_board_text(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap, entered, lamp_map) -> str:
+    """附錄 B 式等寬看板（持有人 2026-09-02 指定形式；2026-09-17 v4 改版——目前席位
+    區塊改新欄序 席/代號/排名分/三月上修/12M動能/耐久/時機/倉位/DD/備註，見
+    knowledge/rule_ledger.md「v4 席位引擎」列）：目前席位＋擁有層排序表＋DD 進場 vs
+    機械資格＋無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt 與 <pre> 嵌頁
+    （docs/engine/_arena_body.html、docs/cockpit/index.html 皆讀同一份文字）。
 
     對齊規則：瀏覽器對 CJK 常用 fallback 字型，其字寬不保證是等寬字型 cell 的精準 2 倍，
     f-string {x:w} 補白也只算 code point 不算顯示寬度——兩者都會讓含中文/emoji 的欄位
-    在瀏覽器 <pre> 裡跑版。故主表 note 欄以左（#/ticker/score/grow/EY/ROIC/FCF/PEG/
-    rev1m/timing/seat/dd/moat）一律 ASCII 代碼，任何字型都保證對齊；中文只留在最後的
-    note 欄（不需要再對齊）與表頭上方的圖例行（純 prose，非欄位）。"""
+    在瀏覽器 <pre> 裡跑版。故主表 note 欄以左一律 ASCII 代碼，任何字型都保證對齊；
+    中文只留在最後的 note 欄（不需要再對齊）與表頭上方的圖例行（純 prose，非欄位）。"""
     seat_of = {r["ticker"]: "核心席" for r in core_seats}
     seat_of.update({r["ticker"]: "衛星席" for r in sat_seats})
     seat_code = {r["ticker"]: f"C{j}" for j, r in enumerate(core_seats, 1)}
     seat_code.update({r["ticker"]: f"S{j}" for j, r in enumerate(sat_seats, 1)})
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
     prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
-    track_code = {"核心席": "C", "衛星席": "S"}
 
     def tk(t) -> str:
         return _pad(str(t)[:W_TICKER], W_TICKER)
 
     L = []
-    L.append(f"選股看板 v2｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
+    L.append(f"選股看板 v4｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
              "｜母體＝美股含 ADR；台股另建（.TW 不在本看板）")
-    L.append("甲 擁有層｜排序只看擁有層分：成長（最多算 30）加 FY1 盈餘殖利率，"
-             "ROIC 超過 30% 加 2 分，PEG 超過 2 扣 5 分。資格要過品質、三年成長預估（Koyfin）、市值三關，"
-             "核心席另外要看耐久（五年 ROIC 平均或 QGM 五年穩定度）。"
-             "DD 選配，裁決不影響席位（2026-09-16 起），只標角色。｜位置與階段都只是燈號，不進排序")
-    L.append("欄位說明：score＝擁有層分、grow＝FY1→FY3 成長%、EY＝FY1 盈餘殖利率%、rev1m＝FY+1 單月修正%、"
-             "timing＝位置、stage＝階段、"
-             "seat＝席位、dd＝DD 標籤、moat＝護城河；note＝註記")
-    L.append("timing 代碼：BRK＝突破、PB＝回踩、TR＝趨勢、HOT＝過熱、DN＝線下"
-             "｜stage 代碼：WEAK＝弱勢、TURN＝轉強、BASE＝築底、HIGH＝高檔整理、CONT＝收縮完成、"
-             "LEAD＝領先、TRAN＝過渡、-＝資料缺"
-             "｜seat：C1-C5＝核心席次、S1-S5＝衛星席次｜moat：字母＝評級，+/=/-＝護城河趨勢升/平/降"
-             "｜dd：IN/WATCH/AVOID/legacy/none，core/sat/trk＝角色，Nd＝天數，!old＝逾 180 天過期")
+    L.append("這是研究層陣容——值不值得擁有，月頻換人，不是帳戶持倉。")
+    L.append("排名分＝三月上修、12M 動能、成長（封頂 30）、品質（FCF/淨利與稀釋率百分位平均；"
+             "增量 ROIC>=15% 免計 FCF/淨利）、盈餘殖利率，五個排名百分位在合格集合內平均。")
+    L.append("欄位說明：rank=排名分、rev3m=三月上修%（已排除匯率）、mom12=12減1個月動能%、"
+             "dur=耐久（Y=核心資格達標：五年 ROIC 平均或 QGM 五年穩定度）、lamp=時機燈、"
+             "act=倉位（跟 lamp 一對一）、dd=DD 標籤（僅供顯示）；note=備註")
+    L.append("lamp/act 代碼：GRN/FULL=可進·正常倉、YLW/HALF=半倉、HOT/HALF=過熱·半倉、"
+             "RED/ZERO=等板機·零倉、OUT/-=不合格·未站上 52 週線")
+    L.append("seat：C1-C5=核心席次、S1-S5=衛星席次、B1-B5=候補（未坐席）"
+             "｜dd：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，!old=逾 180 天過期")
+    L.append("資格門檻：市值 200 億以上、品質閘、三年成長 15%（耐久者 10%）、站上 52 週線、"
+             "三月上修 <=-5% 否決、體質拒絕/衰退⛔/DD迴避同樣否決。過熱與頂點不擋資格，"
+             "只排除核心候選（過熱）或純顯示（頂點）；核心候選另需耐久且不過熱；無產業集中度上限。")
+    L.append("換人規則：每月第一次排程換一次席；期間只有硬否決（迴避/拒絕/⛔/三月上修<=-5/"
+             "市值不足/連兩週跌破 52 週線）能換人，空位由下一名遞補。")
+    L.append("怎麼用：席位+時機綠燈=正常倉可以買；席位+時機紅燈=先別動，等板機。")
     L.append("")
-    L.append("== 目前席位：核心 5 ＋ 衛星 5")
-    for track, seats in (("核心席", core_seats), ("衛星席", sat_seats)):
+    L.append("== 目前席位：核心 5 ＋ 衛星 5 ＋ 候補 5")
+    hdr2 = (f"{'seat':<{W_SEATCODE}} {'ticker':<{W_TICKER}} {'rank':>{W_RANK}} {'rev3m':>{W_REV3M}} "
+            f"{'mom12':>{W_MOM12}} {'dur':<{W_DUR}} {'lamp':<{W_LAMPCODE}} {'act':<{W_ACTCODE}} "
+            f"{'dd':<{W_DD}} note")
+    L.append(hdr2)
+    for track_label, seats, prefix in (("核心席", core_seats, "C"), ("衛星席", sat_seats, "S"),
+                                       ("候補", bench_seats, "B")):
         for j, r in enumerate(seats, 1):
-            if prev_seats.get(r["ticker"]) == track:
+            g = r["grp"]
+            raw = (g.get("own") or {}).get("raw") or {}
+            lamp = r.get("lamp") or {}
+            if prefix != "B" and prev_seats.get(r["ticker"]) == track_label:
                 chg = ""
-            elif r["ticker"] not in prev_seats:
+            elif prefix != "B" and r["ticker"] not in prev_seats:
                 chg = "NEW"
+            elif prefix != "B":
+                chg = f"FROM:{'C' if prev_seats[r['ticker']] == '核心席' else 'S'}"
             else:
-                chg = f"FROM:{track_code.get(prev_seats[r['ticker']], '?')}"
-            hyst_txt = r.get("hyst") or ""
-            if track == "衛星席" and r.get("route") == "core":
-                # 耐久達標（route=="core"）但沒卡進核心前 5 名、改按 own_score 坐衛星席
-                # ——route 標籤仍標「核心」（語意＝耐久），這裡另外註記實際坐哪個席次。
-                hyst_txt = (hyst_txt + "；" if hyst_txt else "") + "耐久・暫居衛星"
+                chg = ""
+            note_bits = []
+            if g.get("peak"):
+                note_bits.append("頂點")
+            if g.get("overheated"):
+                note_bits.append("過熱")
+            if chg:
+                note_bits.append(chg)
+            if r.get("seat_note"):
+                note_bits.append(r["seat_note"])
+            if r.get("route_why"):
+                note_bits.append(r["route_why"])
             L.append(
-                f"  {track_code[track]}{j} {tk(r['ticker'])} {_n(r['score'], W_SCORE)} "
-                f"{_pad(TIMING_CODE.get(r['grp'].get('p_label'), 'DN'), W_TIMING)} "
-                f"{_pad(STAGE_CODE_ASCII.get(lamp_map.get(r['ticker']), '-'), W_STAGE)} "
-                f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {_pad(chg, 6)} {hyst_txt}"
+                f"{_pad(f'{prefix}{j}', W_SEATCODE)} {tk(r['ticker'])} {_n(r['score'], W_RANK)} "
+                f"{_n(g.get('eps_rev_3m_pct'), W_REV3M)} {_n(raw.get('mom'), W_MOM12)} "
+                f"{_pad('Y' if r.get('durable_5y') else '-', W_DUR)} "
+                f"{_pad(LAMP_CODE_ASCII.get(lamp.get('code'), '-'), W_LAMPCODE)} "
+                f"{_pad(ACTION_CODE_ASCII.get(lamp.get('code'), '-'), W_ACTCODE)} "
+                f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {'；'.join(note_bits)}"
             )
     gone = [t for t in prev_seats if t not in seat_of]
     if gone:
         why = {r["ticker"]: r for r in rows}
         for t in gone:
             r = why.get(t)
-            why_txt = "；".join((((r or {}).get("grp") or {}).get("why") or [])[:2]) or ("擁有層分數被擠下" if r else "不在母體")
-            L.append(f"  DOWN {tk(t)} {(r or {}).get('hyst') or ''}：{why_txt}")
+            why_txt = "；".join((((r or {}).get("grp") or {}).get("why") or [])[:2]) or ("排名分被擠下" if r else "不在母體")
+            L.append(f"  DOWN {tk(t)}：{why_txt}")
     L.append("")
     hdr = (f"{'#':>{W_IDX}} {'ticker':<{W_TICKER}} {'score':>{W_SCORE}} {'grow':>{W_GROW}} "
            f"{'EY':>{W_EY}} {'ROIC':>{W_ROIC}} {'FCF':>{W_FCF}} {'PEG':>{W_PEG}} {'rev1m':>{W_REV}} "
            f"{'timing':<{W_TIMING}} {'stage':<{W_STAGE}} {'seat':<{W_SEAT}} {'dd':<{W_DD}} {'moat':<{W_MOAT}} note")
     L.append(hdr)
-    own = [r for r in rows if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0]
+    # v4：全母體看板改用真正 ELIGIBLE 名次（own_score_v4）——只有過全部資格閘的名字
+    # 才有有效排名分，見 apply_own_score_v4()／grp.own_score_v4()。
+    own = sorted((r for r in rows if r["grp"].get("pass")), key=lambda r: -(r["score"] or 0))
     for i, r in enumerate(own[:40], 1):
         g = r["grp"]; o = g.get("own") or {}
         note = "；".join(list(g.get("why") or [])[:2])
         if r.get("g_method") == "FY1→FY2 單年":
             note = ("成長=FY1→FY2 單年；" + note) if note else "成長=FY1→FY2 單年"
-        if r.get("hyst") and "候補" in r["hyst"]:
-            note = (r["hyst"] + "；" + note) if note else r["hyst"]
         L.append(
             f"{i:>{W_IDX}} {tk(r['ticker'])} {_n(r['score'], W_SCORE)} {_n(g.get('g'), W_GROW)} "
-            f"{_n(o.get('ey'), W_EY)} {_n(r.get('roic'), W_ROIC)} {_n(r.get('fcf'), W_FCF)} "
+            f"{_n((o.get('raw') or {}).get('ey'), W_EY)} {_n(r.get('roic'), W_ROIC)} {_n(r.get('fcf'), W_FCF)} "
             f"{_n(r.get('peg'), W_PEG, 2)} {_n(g.get('r_fy1'), W_REV)} "
             f"{_pad(TIMING_CODE.get(g.get('p_label'), 'DN'), W_TIMING)} "
             f"{_pad(STAGE_CODE_ASCII.get(lamp_map.get(r['ticker']), '-'), W_STAGE)} "
@@ -631,18 +669,25 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
         )
     L.append("")
     L.append("== 可選但先不入席：缺三年成長預估（加進 Koyfin 名單即可）")
-    L.append("這些名字三閘都過，但成長只有單年預估（yfinance FY1→FY2，非 Koyfin FY1→FY3 CAGR），"
-             "所以只列隊、不佔席、不計遲滯。加進 Koyfin watchlist 補上三年成長率，"
-             "下次 build 就會脫隊、以三年成長率重新競爭席位（不需要先有 DD）。")
-    for r in own:   # own 已按擁有層分降冪排列，此處不需另外排序
-        if r.get("qual") != "light" and not r["grp"].get("g_three_year") and r["grp"]["pass"]:
-            g = r["grp"]
-            L.append(
-                f"   {tk(r['ticker'])} score {_n(r['score'], W_SCORE)} grow(單年) {_n(g.get('g'), W_GROW)} "
-                f"ROIC {_n(r.get('roic'), W_ROIC)} FCF {_n(r.get('fcf'), W_FCF)} "
-                f"distHi {_n(g.get('dist_hi'), 6)} "
-                f"{_pad(TIMING_CODE.get(g.get('p_label'), 'DN'), W_TIMING)}"
-            )
+    L.append("這些名字其餘資格都過，但成長只有單年預估（yfinance FY1→FY2，非 Koyfin FY1→FY3 CAGR），"
+             "v4 起三年期是成長閘硬性必備，所以只列隊、不佔席、不計輪動。加進 Koyfin watchlist "
+             "補上三年成長率，下次 build 就會脫隊、以三年成長率重新競爭席位（不需要先有 DD）。")
+    # v4：g_three_year 直接併入成長閘 pass/fail，這類名字的 grp.pass 恆為 False，
+    # 故改掃全母體 `rows`（而非只含 pass=True 的 own），依成長率（單年）降冪排列。
+    queue_rows = sorted(
+        (r for r in rows if r.get("qual") != "light" and not r["grp"].get("g_three_year")
+         and r["grp"].get("g") is not None and r["grp"]["g"] >= 15
+         and (r["grp"].get("quality") or {}).get("pass") and not r["grp"].get("veto")
+         and r["grp"].get("above_w52")),
+        key=lambda r: -(r["grp"].get("g") or 0))
+    for r in queue_rows[:20]:
+        g = r["grp"]
+        L.append(
+            f"   {tk(r['ticker'])} grow(單年) {_n(g.get('g'), W_GROW)} "
+            f"ROIC {_n(r.get('roic'), W_ROIC)} FCF {_n(r.get('fcf'), W_FCF)} "
+            f"distHi {_n(g.get('dist_hi'), 6)} "
+            f"{_pad(TIMING_CODE.get(g.get('p_label'), 'DN'), W_TIMING)}"
+        )
     return "\n".join(L) + "\n"
 
 
@@ -835,6 +880,7 @@ _BOARD_CSS = """<style>
   font-variant-numeric:tabular-nums}
 .board-wrap td.bw-note{white-space:normal;text-align:left;font-family:var(--sans,inherit);min-width:160px}
 .board-wrap tr.bw-seated td{background:var(--paper,rgba(0,0,0,.025))}
+.board-wrap tr.bw-muted-row td{opacity:.6}
 .board-wrap tbody tr:hover td{background:var(--line-soft,rgba(0,0,0,.03))}
 .board-wrap .bw-muted{color:var(--muted,#999)}
 .board-wrap a{color:var(--accent,#0d2244);font-weight:650;text-decoration:none}
@@ -892,28 +938,34 @@ else document.addEventListener('DOMContentLoaded', refreshStageLamp);
 })();</script>"""
 
 
-def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, lamp_map) -> str:
-    """HTML TABLE 版看板（2026-09-02，取代 <pre> ASCII——持有人否決理由：對齊靠瀏覽器排版
-    引擎解決，燈號用顏色不用代碼）。回傳裸片段（無 html/head/body），可直接 innerHTML 或
-    接進另一頁 <body>。內容與 render_board_text 同源同排序，只是呈現層換成表格＋燈號＋chip。"""
+def render_board_html(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap, entered, lamp_map) -> str:
+    """HTML TABLE 版看板（2026-09-02，取代 <pre> ASCII；2026-09-17 v4 席位表改版——新欄序
+    席/代號/排名分/三月上修/12M動能/耐久/時機/倉位/DD/備註，見 knowledge/rule_ledger.md
+    「v4 席位引擎」列）。回傳裸片段（無 html/head/body），可直接 innerHTML 或接進另一頁
+    <body>。內容與 render_board_text 同源同排序，只是呈現層換成表格＋燈號＋chip。"""
     seat_label = {}
     for i, r in enumerate(core_seats, 1):
         seat_label[r["ticker"]] = f"核心 {i}"
     for i, r in enumerate(sat_seats, 1):
         seat_label[r["ticker"]] = f"衛星 {i}"
 
-    own = [r for r in rows if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0][:40]
+    # v4：全母體看板改直接用已排序的 ELIGIBLE 名次（own_score_v4）——只有真的過全部
+    # 資格閘的名字才有有效排名分，見 apply_own_score_v4()／grp.own_score_v4()。`rows`
+    # 即 main() 的 universe_rows，已被 apply_own_score_v4() 就地回填 score／grp.own，
+    # 這裡重新依 pass＋score 排序等同重建一份 ranked，不需要另外傳參數。
+    rows_ranked = sorted((r for r in rows if r["grp"].get("pass")), key=lambda r: -(r["score"] or 0))
+    own = rows_ranked[:40]
 
     thead = ("<tr>"
              '<th title="排序名次">#</th>'
              '<th class="bw-l" title="點擊連到該股 DD #decision 錨點（若有 v13+ DD）">Ticker</th>'
-             '<th title="擁有層分＝min(成長,30)＋FY1 盈餘殖利率（ROIC≥30 持續期 +2；PEG>2 罰 −5）——排序鍵">擁有層分</th>'
+             '<th title="own_score v4：三月上修／12M 動能／成長封頂 30／品質／盈餘殖利率五個排名百分位平均——排序鍵">排名分</th>'
              '<th title="FY1→FY3 EPS CAGR（缺 FY3 用 2 年成長率代替）">成長%</th>'
              '<th title="FY1 盈餘殖利率＝100 ÷ FY1 P/E">EY%</th>'
              '<th title="投入資本回報率 ROIC">ROIC%</th>'
              '<th title="自由現金流利潤率">FCF%</th>'
              '<th title="PEG＝FY1 P/E ÷ 成長%">PEG</th>'
-             '<th title="FY+1 單月 EPS 修正——燈號不參與排序；≤−10% 為資格否決線">上修燈</th>'
+             '<th title="FY+1 單月 EPS 修正（燈號，非主否決線；v4 主否決看三月上修 ≤−5%，見排名分 hover）">上修燈</th>'
              '<th>位置</th>'
              '<th class="bw-l">階段</th>'
              '<th class="bw-l" title="目前坐核心／衛星席次；空白＝未坐席">席</th>'
@@ -952,41 +1004,85 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     main_tbl = ('<div class="bw-scroll"><table><thead>' + thead + "</thead><tbody>"
                 + "".join(body_rows) + "</tbody></table></div>")
 
-    # ── 目前席位：核心 5 ＋ 衛星 5 ──
+    # ── 目前席位：核心 5 ＋ 衛星 5 ＋ 候補 5（v4 新欄序，2026-09-17）──
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
     prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
-    track_code = {"核心席": "C", "衛星席": "S"}
-    seat_thead = ("<tr><th class=\"bw-l\">席</th><th class=\"bw-l\">Ticker</th>"
-                  "<th>擁有層分</th><th class=\"bw-l\">位置</th>"
-                  "<th class=\"bw-l\">階段</th>"
-                  "<th class=\"bw-l\">DD</th><th class=\"bw-l\">遲滯</th></tr>")
-    seat_rows = []
-    for track_label, seats, code_letter in (("核心席", core_seats, "C"), ("衛星席", sat_seats, "S")):
-        for j, r in enumerate(seats, 1):
-            g = r["grp"]
-            if prev_seats.get(r["ticker"]) == track_label:
-                chg = ""
-            elif r["ticker"] not in prev_seats:
-                chg = "NEW"
-            else:
-                chg = f'FROM:{track_code.get(prev_seats[r["ticker"]], "?")}'
-            hyst_txt = (f'<span class="bw-chip" title="本期新換入或跨軌轉入">{escape(chg)}</span> ' if chg else "") \
-                       + escape(r.get("hyst") or "—")
-            if track_label == "衛星席" and r.get("route") == "core":
-                # 耐久達標（route=="core"）但沒卡進核心前 5 名、改按 own_score 坐衛星席
-                # ——route 標籤仍標「核心」（語意＝耐久），這裡另外標一個 chip 說明實際坐哪席。
-                hyst_txt += " " + _chip_html("耐久・暫居衛星", "耐久達標（可長抱），但未進核心前 5 名，"
-                                              "改依擁有層分數坐衛星席")
-            seat_rows.append(
-                f'<tr><td class="bw-l">{code_letter}{j}</td>'
+    seat_thead = ("<tr><th class=\"bw-l\">席</th><th class=\"bw-l\">代號</th>"
+                  "<th title=\"own_score v4：三月上修／12M 動能／成長封頂 30／品質／盈餘殖利率"
+                  "五個排名百分位平均，見下方說明\">排名分</th>"
+                  "<th title=\"近三個月 FY 加權 EPS 上修（已排除匯率）\">三月上修%</th>"
+                  "<th title=\"12 減 1 個月價格動能\">12M 動能%</th>"
+                  "<th class=\"bw-l\" title=\"核心資格：五年 ROIC 平均或 QGM 五年穩定度達標\">耐久</th>"
+                  "<th class=\"bw-l\">時機</th><th class=\"bw-l\">倉位</th>"
+                  "<th class=\"bw-l\">DD</th><th class=\"bw-l\">備註</th></tr>")
+
+    def _seat_remark(r: dict) -> str:
+        g = r["grp"]; bits = []
+        if g.get("peak"):
+            bits.append(_chip_html("⚠ 頂點", "ROIC 高於五年平均 1.3 倍以上——只能衛星，非下市訊號"))
+        if g.get("overheated"):
+            bits.append(_chip_html("🟠 過熱", "12-1 個月動能 >150%（或 fallback 26 週漲幅 >80%）——只能衛星"))
+        if r.get("seat_note"):
+            bits.append(escape(r["seat_note"]))
+        if r.get("route_why"):
+            bits.append(f'<span class="bw-muted">{escape(r["route_why"])}</span>')
+        return "".join(bits) or '<span class="bw-muted">—</span>'
+
+    def _seat_tr(r: dict, code: str, muted: bool = False) -> str:
+        g = r["grp"]; o = g.get("own") or {}; raw = o.get("raw") or {}
+        rank_title = (f"三月上修分位 {_num(o.get('p_rev'), 1)}／12M 動能分位 {_num(o.get('p_mom'), 1)}／"
+                      f"成長分位 {_num(o.get('p_g'), 1)}／品質分位 {_num(o.get('p_q'), 1)}／"
+                      f"盈餘殖利率分位 {_num(o.get('p_ey'), 1)}｜原始值：上修 {_num(raw.get('rev'), 1)}%、"
+                      f"動能 {_num(raw.get('mom'), 1)}%、成長 {_num(raw.get('g'), 1)}%、EY {_num(raw.get('ey'), 1)}%")
+        durable_bits = []
+        if r.get("durable_roic_5y_avg_pct") is not None:
+            durable_bits.append(f"五年 ROIC 平均 {r['durable_roic_5y_avg_pct']:.1f}%")
+        if r.get("durable_qgm_pct") is not None:
+            durable_bits.append(f"QGM 五年穩定度 {r['durable_qgm_pct']:.1f}%")
+        durable_cell = (f'<span title="{escape("；".join(durable_bits) or "耐久資料不足")}">'
+                        f'{"✓" if r.get("durable_5y") else "—"}</span>')
+        lamp = r.get("lamp") or {}
+        p_txt = {"breakout": "突破帶", "pullback": "回踩", "in_trend": "趨勢內"}.get(g.get("p_label"), "52 週線下")
+        stage_txt = STAGE_LABEL.get(lamp_map.get(r["ticker"]), "無資料")
+        lamp_title = (f'{lamp.get("why", "")}｜位置：{p_txt}｜階段：{stage_txt}'
+                     + (f'｜板機：{lamp["trigger"]}' if lamp.get("trigger") else ""))
+        lamp_cell = f'<span class="bw-pill" title="{escape(lamp_title)}">{escape(lamp.get("label", "—"))}</span>'
+        cls = ' class="bw-muted-row"' if muted else ""
+        return (f'<tr{cls}><td class="bw-l">{escape(code)}</td>'
                 f'<td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
-                f"<td>{_num(r.get('score'), 1)}</td>"
-                f'<td class="bw-l">{_timing_pill(g.get("p_label"), r.get("r26"), g.get("dist_hi"))}</td>'
-                f'<td class="bw-l">{_stage_pill(r["ticker"], lamp_map)}</td>'
+                f'<td title="{escape(rank_title)}">{_num(r.get("score"), 1)}</td>'
+                f'<td>{_num(g.get("eps_rev_3m_pct"), 1)}</td>'
+                f'<td>{_num(raw.get("mom"), 1)}</td>'
+                f'<td class="bw-l">{durable_cell}</td>'
+                f'<td class="bw-l">{lamp_cell}</td>'
+                f'<td class="bw-l">{escape(r.get("action") or "—")}</td>'
                 f'<td class="bw-l">{_dd_pill(r.get("dd_tag"))}</td>'
-                f'<td class="bw-l">{hyst_txt}</td></tr>')
+                f'<td class="bw-note">{_seat_remark(r)}</td></tr>')
+
+    seat_rows = ([_seat_tr(r, f"C{j}") for j, r in enumerate(core_seats, 1)]
+                + [_seat_tr(r, f"S{j}") for j, r in enumerate(sat_seats, 1)]
+                + [_seat_tr(r, f"B{j}", muted=True) for j, r in enumerate(bench_seats, 1)])
     seat_tbl = ('<div class="bw-scroll"><table><thead>' + seat_thead + "</thead><tbody>"
                 + "".join(seat_rows) + "</tbody></table></div>")
+
+    seat_legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表</summary>
+<div class="bw-note-line">這是研究層陣容——值不值得擁有，月頻換人，不是帳戶持倉。</div>
+<div class="bw-note-line"><b>排名分</b>：三月上修、12M 動能、成長（封頂 30）、品質（FCF÷淨利與稀釋率百分位平均；
+增量 ROIC ≥15%＝投資有回報者免計 FCF÷淨利）、盈餘殖利率——五個排名百分位平均。</div>
+<div class="bw-note-line"><b>三月上修</b>：近三個月 FY 加權 EPS 上修幅度（已排除匯率影響）。
+<b>12M 動能</b>：12 減 1 個月價格動能（略過最近一個月）。</div>
+<div class="bw-note-line"><b>耐久</b>：核心資格——五年 ROIC 平均達標或 QGM 五年穩定度達標，兩者有一個成立就算。</div>
+<div class="bw-note-line"><b>時機</b>：🟢 可進（多頭排列）／🟡 半倉（站上 52 週線但未達綠燈）／
+🟠 過熱（12 個月動能過熱）／🔴 等板機（跌破 200 日線、RS 太弱、離高點太遠或階段弱勢）／
+⚫ 不合格（未站上 52 週線）。<b>倉位</b>跟時機一對一：正常倉／半倉／零倉．等板機／—。</div>
+<div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤，僅供顯示，不影響席位。
+<b>備註</b>：⚠ 頂點＝ROIC 高於五年平均 1.3 倍（只能衛星，非下市訊號）；
+🟠 過熱＝12 個月動能超過 150%（只能衛星）；新席／現任／遞補＝本期席位異動狀態。</div>
+<div class="bw-note-line">資格門檻：市值 200 億以上、品質閘、三年成長 15%（耐久者 10%）、站上 52 週線、
+三個月下修達 5% 否決、體質拒絕／衰退 ⛔／DD 迴避同樣否決。無產業集中度上限。</div>
+<div class="bw-note-line">換人規則：每月第一次排程換一次席；期間只有硬否決能把人換掉，空位由下一名遞補。</div>
+<div class="bw-note-line">怎麼用：席位在＋時機綠燈＝正常倉可以買；席位在＋時機紅燈＝先別動，等板機。</div>
+</details>"""
 
     gone = [t for t in prev_seats if t not in seat_label]
     if gone:
@@ -996,9 +1092,8 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
             r = why_map.get(t)
             why = (((r or {}).get("grp") or {}).get("why") or [])
             chips = _chips_from_why(why, limit=2) if why else []
-            reason = _chips_html(chips) if chips else '<span class="bw-muted">擁有層分數被擠下／不在母體</span>'
-            lines.append(f'<div class="bw-note-line">🔻 DOWN <b>{escape(t)}</b>'
-                         f'（{escape((r or {}).get("hyst") or "—")}）：{reason}</div>')
+            reason = _chips_html(chips) if chips else '<span class="bw-muted">排名分被擠下／不在母體</span>'
+            lines.append(f'<div class="bw-note-line">🔻 DOWN <b>{escape(t)}</b>：{reason}</div>')
         changes_html = "".join(lines)
     else:
         changes_html = '<div class="bw-note-line">本期無下席變動。</div>'
@@ -1023,11 +1118,17 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     else:
         ng_tbl = '<div class="bw-note-line">進場票全數過機械三閘，無需人工複審。</div>'
 
-    # ── 可選但先不入席：缺三年成長預估（v3 席位資格，2026-09-09）──
-    # own 已按擁有層分降冪排列，queue_rows 保留該順序（等同「Sort that table by own
-    # score desc」）。資格線改成長來源（三年 Koyfin CAGR 才入席），不再看 src——
-    # DD 池名字若也只有 FY1→FY2 單年 fallback（缺 FY3 預估）一樣進這條隊。
-    queue_rows = [r for r in own if r.get("qual") != "light" and not r["grp"].get("g_three_year") and r["grp"]["pass"]]
+    # ── 可選但先不入席：缺三年成長預估（v3 席位資格 2026-09-09；v4 起 g_three_year
+    # 直接併入成長閘 pass/fail——這類名字的 grp.pass 恆為 False，故改從全母體 `rows`
+    # 找「其餘資格都過、只差三年成長」的名字，依成長率（單年）降冪排列，不再能沿用
+    # `own`（v4 的 own 只含真正 ELIGIBLE 名字）。DD 池名字若也只有 FY1→FY2 單年
+    # fallback（缺 FY3 預估）一樣進這條隊。──
+    queue_rows = sorted(
+        (r for r in rows if r.get("qual") != "light" and not r["grp"].get("g_three_year")
+         and r["grp"].get("g") is not None and r["grp"]["g"] >= 15
+         and (r["grp"].get("quality") or {}).get("pass") and not r["grp"].get("veto")
+         and r["grp"].get("above_w52")),
+        key=lambda r: -(r["grp"].get("g") or 0))[:20]
     if queue_rows:
         q_thead = ('<tr><th class="bw-l">Ticker</th><th>擁有層分</th>'
                    '<th title="FY1→FY2 單年成長率（yfinance）——非三年期 Koyfin FY1→FY3 CAGR，兩把尺不等長">成長%（單年）</th>'
@@ -1046,21 +1147,21 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     else:
         qgm_tbl = '<div class="bw-note-line">目前無候選（都已有三年成長預估或未過機械三閘）。</div>'
 
-    head_line = f"選股看板 v2 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
-    rule_line = ("排序只看擁有層分：成長（最多算 30）加 FY1 盈餘殖利率，ROIC 超過 30% 加 2 分，"
-                 "PEG 超過 2 扣 5 分。資格要過品質、三年成長預估（Koyfin）、市值三關，核心席另外要看耐久"
-                 "（五年 ROIC 平均或 QGM 五年穩定度）。DD 選配，裁決不影響席位（2026-09-16 起），只標角色。")
-    timing_note = "位置與階段都只是燈號，不進排序。"
+    head_line = f"選股看板 v4 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
+    rule_line = ("排序＝own_score v4：三月上修、12M 動能、成長（封頂 30）、品質、盈餘殖利率五個排名"
+                 "百分位在合格集合內平均。資格要過品質、三年成長預估（durable 者 10%、否則 15%）、"
+                 "市值、站上 52 週線、三月上修 ≤−5% 否決、體質拒絕／衰退 ⛔／DD 迴避同樣否決。"
+                 "核心候選另需耐久（五年 ROIC 平均或 QGM 五年穩定度）且不過熱；無產業集中度上限。")
+    timing_note = "過熱與頂點不擋資格，只排除核心候選（過熱）或純顯示（頂點）；時機燈是另一層週頻判斷，不進排序。"
 
     return (
         '<div class="board-wrap">' + _BOARD_CSS
         + f'<div class="bw-head">{escape(head_line)}</div>'
         + f'<div class="bw-rule">{escape(rule_line)}</div>'
         + f'<div class="bw-rule">{escape(timing_note)}</div>'
-        + '<h3 class="bw-sec">目前席位：核心 5 ＋ 衛星 5</h3>'
-        + '<div class="bw-sub">這就是本週的陣容。C1–C5＝核心席次、S1–S5＝衛星席次；'
-          'NEW＝本期新換入、FROM:X＝跨軌轉入。</div>'
-        + seat_tbl + changes_html
+        + '<h3 class="bw-sec">目前席位：核心 5 ＋ 衛星 5 ＋ 候補 5</h3>'
+        + '<div class="bw-sub">這就是本月的陣容。C1–C5＝核心席次、S1–S5＝衛星席次、B1–B5＝候補（未坐席，muted）。</div>'
+        + seat_tbl + seat_legend + changes_html
         + '<h3 class="bw-sec">全母體看板（擁有層排序）</h3>'
         + '<div class="bw-sub">席位是從這張表由上往下挑出來的<span class="stage-lamp-asof"></span>。</div>'
         + main_tbl
@@ -1111,11 +1212,148 @@ def _last_snapshot_before(snapshots: list[dict], as_of: str) -> dict | None:
     return earlier[-1] if earlier else None
 
 
+# ── v4 席位引擎：own_score 跨檔百分位 ＋ 月頻輪動（純函式，見 knowledge/rule_ledger.md
+#    「v4 席位引擎（2026-09-17）」列）───────────────────────────────────────────
+
+def apply_own_score_v4(universe_rows: list) -> list:
+    """v4：在 ELIGIBLE 集合（r["grp"]["pass"] 為真）內算跨檔 own_score_v4 百分位，
+    就地回填每列的 r["grp"]["own"]／r["score"]（universe_rows 內的列物件身分不變，
+    後續顯示邏輯直接看得到更新；grp 子物件仍照現有慣例換新 dict 避免共享 mutation）。
+    回傳「有效名次」清單——只含分數非 None 者（<4/5 百分位缺值不參與排名，仍留在
+    universe_rows 供顯示，語意同 sim_seats.py 的 `elig=[r for r in elig if r['comp'] is not None]`），
+    依分數降冪排序。"""
+    elig = [r for r in universe_rows if r["grp"].get("pass")]
+    # load_light_rows() 供給列的 grp 是自己拼的 ad hoc dict（不經 grp_score()），
+    # 沒有 "own" key——缺 raw 就當全空（own_score_v4 對缺值一律 None，天然算不出
+    # 排名分而落榜，不需要另外特判快審卡）。
+    raws = [(r["grp"].get("own") or {}).get("raw") or {} for r in elig]
+    results = own_score_v4(raws)
+    ranked = []
+    for r, res in zip(elig, results):
+        r["grp"] = dict(r["grp"])
+        r["grp"]["own"] = res
+        r["score"] = res["score"] if res["score"] is not None else 0.0
+        if res["score"] is not None:
+            ranked.append(r)
+    ranked.sort(key=lambda r: -r["score"])
+    return ranked
+
+
+def rotation_month(as_of: str) -> str:
+    """as_of（'YYYY-MM-DD'）→ 'YYYY-MM'，月頻輪動比較粒度。"""
+    return (as_of or "")[:7]
+
+
+def select_fresh_roster(ranked: list, core_slots: int = CORE_SLOTS, sat_slots: int = SAT_SLOTS) -> dict:
+    """v4 整批重選（pure）：`ranked` 為 apply_own_score_v4() 的輸出（已按分數降冪
+    排序、只含有效名次者）。核心＝core_candidate（耐久且不過熱，見 row_dict()）中
+    前 core_slots 名；衛星＝母體中所有未坐核心席者（含過熱／頂點／非耐久——衛星
+    公開競爭，v3 沿用至今的設計）前 sat_slots 名。無產業/主題集中度上限（2026-09-17
+    持有人拍板）。回傳 {"core":[ticker,...], "sat":[ticker,...]}。"""
+    core = [r for r in ranked if r.get("core_candidate")][:core_slots]
+    core_t = {r["ticker"] for r in core}
+    sat = [r for r in ranked if r["ticker"] not in core_t][:sat_slots]
+    return {"core": [r["ticker"] for r in core], "sat": [r["ticker"] for r in sat]}
+
+
+def hard_veto_v4(r: dict, w52_fail_streak: int = 0) -> str | None:
+    """v4 硬否決判定（pure）——回傳觸發理由，或 None（未觸發）。六個條件之一：
+    DD 迴避／體質拒絕／衰退 ⛔／三月上修 ≤−5（皆已在 grp_score 算成 grp["veto_*"]
+    細項）、市值不足（r["cap_ok"]，apply_cap() 算好）、連續 `w52_fail_streak` 次
+    週跑站不上 52 週線（跨次跑狀態，呼叫端從 ledger 讀，見 W52_FAIL_STREAK_VETO）。
+    只用在「月中沿用現任席」的路徑——整批重選（select_fresh_roster）不需要這個。"""
+    g = r.get("grp") or {}
+    if g.get("veto_dd_avoid"):
+        return "DD 迴避"
+    if g.get("veto_quality_reject"):
+        return "體質拒絕"
+    if g.get("veto_decline"):
+        return "衰退 ⛔"
+    if g.get("veto_revision"):
+        return "三月上修 ≤ −5"
+    if not r.get("cap_ok", True):
+        return "市值不足"
+    if w52_fail_streak >= W52_FAIL_STREAK_VETO:
+        return "連續兩週跌破 52 週線"
+    return None
+
+
+def rotate_roster(current_month: str, last_rotation_month, prev_roster, ranked: list,
+                  w52_fail_streaks: dict | None = None,
+                  core_slots: int = CORE_SLOTS, sat_slots: int = SAT_SLOTS,
+                  all_by_ticker: dict | None = None) -> dict:
+    """v4 月頻輪動主體（pure）。
+      - 本月第一次跑（last_rotation_month != current_month，或無 prev_roster）→
+        整批重選（select_fresh_roster），rotated=True。
+      - 同月內的後續跑 → 沿用 prev_roster；任何現任席命中 hard_veto_v4() 立即移除，
+        空位由 ranked 中尚未入席的下一名遞補（核心缺只從 core_candidate 池找、
+        衛星缺對全母體公開競爭，與整批重選同一套資格邏輯）；找不到人可補則留空。
+
+    重要：現任席的沿用檢查查的是 `all_by_ticker`（全母體，含資格閘未過者），不是
+    `ranked`（只含 ELIGIBLE、已排名者）——月中軟性資格失守（成長掉出門檻、品質閘
+    未過等）不該立刻下席，只有 hard_veto_v4() 認定的六個硬否決才下席，這正是月頻
+    輪動要給的「不因單週雜訊洗掉席位」的容忍度。`all_by_ticker` 未提供時 fallback
+    用 `ranked` 建索引（相容舊呼叫，但退化成「掉出 ELIGIBLE 即視同跌出母體」，
+    僅供測試用；正式呼叫請務必傳全母體）。
+    回傳 {"core":[...], "sat":[...], "rotated": bool, "removed":[(ticker,why),...],
+    "filled":[(track,ticker),...]}（ticker 清單，不是列物件）。"""
+    w52_fail_streaks = w52_fail_streaks or {}
+    universe_by_ticker = all_by_ticker if all_by_ticker is not None else {r["ticker"]: r for r in ranked}
+
+    if prev_roster is None or last_rotation_month != current_month:
+        fresh = select_fresh_roster(ranked, core_slots, sat_slots)
+        return {"core": fresh["core"], "sat": fresh["sat"], "rotated": True,
+                "removed": [], "filled": []}
+
+    removed: list = []
+
+    def _carry(track: str) -> list:
+        kept = []
+        for t in prev_roster.get(track, []) or []:
+            r = universe_by_ticker.get(t)
+            if r is None:
+                removed.append((t, "跌出母體（下市或資料消失）"))
+                continue
+            why = hard_veto_v4(r, w52_fail_streaks.get(t, 0))
+            if why:
+                removed.append((t, why))
+                continue
+            kept.append(t)   # 沿用——即便本次未過全部資格閘，非硬否決不下席
+        return kept
+
+    core_kept = _carry("core")
+    sat_kept = _carry("sat")
+    removed_tickers = {t for t, _why in removed}
+    filled: list = []
+
+    def _fill(kept: list, slots: int, pool: list, track: str) -> list:
+        # 剛被硬否決下席的名字本回合不得遞補回自己的空位——即便它仍在 ranked／
+        # core_pool 裡（例如 w52 連續兩週否決，資格本身其餘條件都還過），見
+        # test_rotate_roster_w52_streak_evicts_after_two_consecutive_runs。
+        seated = set(core_kept) | set(sat_kept) | removed_tickers
+        for r in pool:
+            if len(kept) >= slots:
+                break
+            if r["ticker"] in seated:
+                continue
+            kept.append(r["ticker"])
+            seated.add(r["ticker"])
+            filled.append((track, r["ticker"]))
+        return kept
+
+    core_pool = [r for r in ranked if r.get("core_candidate")]
+    core_kept = _fill(core_kept, core_slots, core_pool, "core")
+    sat_kept = _fill(sat_kept, sat_slots, ranked, "sat")   # 衛星公開競爭：全母體皆可遞補
+
+    return {"core": core_kept, "sat": sat_kept, "rotated": False,
+            "removed": removed, "filled": filled}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ledger", action="store_true",
-                         help="寫入 arena-ledger.json（gate_history／snapshots，遲滯時鐘前進）；"
-                              "僅 weekly-engine.yml 排程使用，手動跑不帶此旗標＝帳本唯讀")
+                         help="寫入 arena-ledger.json（last_rotation_month／roster／snapshots，"
+                              "月頻輪動時鐘前進）；僅 weekly-engine.yml 排程使用，手動跑不帶此旗標＝帳本唯讀")
     args = parser.parse_args()
     stocks = json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]
     # latest.json 若以 --include-non-dd 產出，無 DD 列（dd_status="none"）改由 load_qgm_rows 供給
@@ -1135,18 +1373,22 @@ def main() -> int:
     except (OSError, json.JSONDecodeError):
         card_stats = {}
 
-    # ── v3 席位資格（2026-09-09 持有人拍板，見 knowledge/rule_ledger.md）：DD 選配 ──
-    #   母體＝DD 池（全部裁決，迴避者 veto）∪ QGM 品質池（US＋TW）∪ 快審卡
-    #   資格＝品質閘（ROIC/FCF）∩ G 成長閘 ∩ 三年成長預估必備（Koyfin FY1→FY3 CAGR，
-    #        單年 fallback 不算）∩ 市值 ∩ P 位置閘（未過熱）∩ 無重下修否決
-    #   核心席另需耐久：五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75%，見 grp.grp_route
-    #   （2026-09-09 修復：耐久達標＝核心候選，不等於保證核心席——沒卡進核心前 5 名的
-    #   耐久名字會回頭跟非耐久名字一起搶衛星 5 席，衛星資格不受 route 限制，見下方
-    #   sat_pool 註解；route 標籤本身不變，只影響「核心候選資格」，不再決定「能不能
-    #   坐衛星」）
-    #   排序＝own_score（擁有層），R 上修只作燈號；遲滯：新席連 2 次過、現任連 4 次不過才下
-    #   （DD 180 天內觀望之現任席降權為連 2 次不過即下，B4② 2026-09-04，未變）
-    #   DD 不再是入席前提：迴避仍 veto，觀望／進場僅供角色標籤參考（role_mismatch 顯示用）
+    # ── v4 席位引擎（2026-09-17 持有人拍板，見 knowledge/rule_ledger.md「v4 席位引擎」列）──
+    #   母體＝DD 池（全部裁決）∪ QGM 品質池（US＋TW）∪ 快審卡（不變）
+    #   資格＝品質閘（ROIC/FCF，不變）∩ 三年成長預估必備（Koyfin FY1→FY3 CAGR，durable_5y
+    #        者 10% 否則 15%）∩ 市值 ∩ 位置閘（站上 52 週線）∩ 三月上修否決（≤−5%，
+    #        FY+1 單月 ≤−10% 僅缺值時 fallback）∩ 新硬否決（體質拒絕／衰退 ⛔／DD 迴避
+    #        180 天內）。過熱（12-1 月動能 >150%）與頂點（roic_vs_5y_x ≥1.3）不是資格閘，
+    #        只排除核心候選（過熱）或純顯示（頂點）——見 grp.grp_score()。
+    #   核心候選＝route=="core"（耐久，grp.grp_route）AND 不過熱；核心＝候選前 5 名。
+    #   衛星＝母體中所有未坐核心席的合格名字（含過熱／頂點／非耐久）前 5 名，公開競爭、
+    #   無產業/主題集中度上限。
+    #   排序＝own_score v4：三月上修／12-1 月動能／成長封頂 30／品質／盈餘殖利率五個
+    #   百分位在 ELIGIBLE 集合內互相比較後平均（見 grp.own_score_v4()）。
+    #   輪動＝月頻：每月第一次 --ledger 跑重新整批選一次，期間只有硬否決（迴避／拒絕／
+    #   ⛔／三月上修 ≤−5／市值不足／連兩週跌破 52 週線）能換人，空位由下一名遞補
+    #   （見 rotate_roster()）。
+    #   DD 不再是入席前提：只做迴避否決，觀望／進場僅供角色標籤參考（role_mismatch 顯示用）。
     stocks_map = {s["ticker"]: s for s in stocks}
     # 同一家公司的 ADR／本地掛牌只留一個（席位不得重複曝險）：本地掛牌讓位給 ADR
     aliased = set()
@@ -1156,6 +1398,12 @@ def main() -> int:
     stocks = [s for s in stocks if s["ticker"] in stocks_map]
     qgm_rows = load_qgm_rows(stocks_map, exclude=aliased, latest_none=latest_none)
     qgm_tickers = {r["ticker"] for r in qgm_rows}
+    # v4 時機燈（grp.timing_lamp，pure）需要階段代碼——lamp_map 提前載入（原本在
+    # render 前才讀），注入每檔 s["_stage_code"]，讓 row_dict() 能在算完 grp_score()
+    # 的 overheated 之後一次把燈號算好、掛在列上（見下 row_dict() 呼叫端改法）。
+    lamp_map = load_lamp()
+    for s in stocks + qgm_rows:
+        s["_stage_code"] = lamp_map.get(s["ticker"])
     universe_rows = [row_dict(s) for s in stocks] + [row_dict(s) for s in qgm_rows]
     # dedupe 修復（2026-09-09）：load_qgm_rows／load_light_rows 過去只各自對
     # stocks_map（dd-pool）去重，沒對過彼此——INCY 這類同時在 QGM 品質池與快審卡
@@ -1195,96 +1443,66 @@ def main() -> int:
     universe_rows = [apply_cap(r) for r in universe_rows]
     universe_rows.sort(key=lambda r: -(r["score"] or 0))
 
-    # ── 遲滯（arena-ledger gate_history，append-only）──
+    # ── v4 own_score 跨檔百分位（見 grp.own_score_v4()）：只在 ELIGIBLE 集合內比較 ──
+    ranked = apply_own_score_v4(universe_rows)   # 已依 score 降冪排序、只含有效名次者
+    for i, r in enumerate(ranked, 1):
+        r["rank"] = i
+    ranked_by_ticker = {r["ticker"]: r for r in ranked}
+
+    # ── 月頻輪動（arena-ledger.json，見 knowledge/rule_ledger.md「v4 席位引擎」列）──
     try:
         ledger0 = json.loads(LEDGER_JSON.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        ledger0 = {"schema_version": "1.0", "snapshots": []}
-    bootstrap = not ledger0.get("gate_history")   # 首跑：無歷史，新席只需本次過閘
-    hist = ledger0.setdefault("gate_history", {})
+        ledger0 = {"schema_version": "4.0", "snapshots": []}
     try:
         as_of = json.loads(DD_LATEST.read_text(encoding="utf-8")).get("as_of", "—")
     except (OSError, json.JSONDecodeError):
         as_of = "—"
-    # prev＝上一筆「日期嚴格早於今天」的 snapshot（同日重跑防自我比較，見檔頭 --ledger 說明）
+    current_month = rotation_month(as_of)
+    last_rotation_month = ledger0.get("last_rotation_month")
+    prev_roster = ledger0.get("roster")            # {"core":[...], "sat":[...]}——月度持久化
+    w52_fail_streaks = ledger0.get("w52_fail_streak") or {}
+    # prev＝上一筆「日期嚴格早於今天」的 snapshot，只給「席位變動帳本」的 up/down 對照用
+    # （沿用既有 render_seat_changes／render_board_text 的 NEW/FROM 標記邏輯，與月頻輪動
+    # 本身的 carry-forward 狀態〔prev_roster〕是兩件事：後者決定「這個月坐誰」，前者只是
+    # 「跟上一筆記錄比誰上誰下」的顯示層對照）。
     prev = _last_snapshot_before(ledger0.get("snapshots", []), as_of) or {"core": [], "sat": []}
-    incumbents = set(prev.get("core", [])) | set(prev.get("sat", []))
-    # v3 席位資格（2026-09-09 持有人拍板「未來不會每檔跑 DD，席位資格不能綁 DD」，
-    # 見 knowledge/rule_ledger.md）：KILL 了 2026-09-08 那條「席位需有 DD」（用 src==
-    # "qgm" 整批排除）——改用成長來源本身當資格線。單年成長（yfinance FY1→FY2）與
-    # 三年 CAGR（Koyfin FY1→FY3）兩把尺不等長，30 分封頂讓單年基期效應（如 INCY
-    # +157%）直接拿滿分，2026-09-08 VRTX／INCY 就這樣以 33 分擠掉 LLY（27.2，三年
-    # 口徑）——這個量級落差問題本身沒變，只是資格線從「有沒有 DD」換成「成長是不是
-    # 三年期」，不管 DD 池還是 QGM 池，只要成長只有單年 fallback（g_three_year 非
-    # True）就進「可選但先不入席」隊列，不得入席／候補、不計遲滯；有三年成長率的
-    # QGM 供給列（--include-non-dd 上排程後會逐步發生）則正常參與席位競爭。
-    # 快審卡（qual=="light"）是 2026-07-04 拍板的獨立衛星席第二資格來源，跟 DD／
-    # 三年成長無關（本來就不受舊 src=="qgm" 排除影響），這裡明白排除在三年成長閘
-    # 之外，維持原有行為不被本次改動波及。
-    seat_universe = [r for r in universe_rows
-                     if r.get("qual") == "light" or r["grp"].get("g_three_year")]
-    for r in seat_universe:
-        h = hist.setdefault(r["ticker"], [])
-        if h and h[-1][0] == as_of:
-            h[-1] = [as_of, bool(r["grp"]["pass"])]
-        else:
-            h.append([as_of, bool(r["grp"]["pass"])])
-        del h[:-8]
-    def hard_veto(r):
-        return r["grp"].get("veto") or (DD_VERDICT_INFLUENCE and r["verdict"] == "迴避") or not r.get("cap_ok")
-    def eligible(r):
-        h = hist.get(r["ticker"], [])
-        if r["ticker"] in incumbents:
-            if hard_veto(r):
-                r["hyst"] = "硬 veto 下席"; return False
-            # B4② 降權版：DD 新鮮且裁決＝觀望的現任席，下席門檻用 2 次而非 4 次
-            watch = DD_VERDICT_INFLUENCE and bool(r.get("dd_fresh")) and r.get("verdict") == "觀望"
-            fails_n = HYST_INCUMBENT_FAILS_WATCH if watch else HYST_INCUMBENT_FAILS
-            tag = "（DD 觀望）" if watch else ""
-            recent = [x[1] for x in h[-fails_n:]]
-            if r["grp"]["pass"]:
-                r["hyst"] = "現任"; return True
-            if len(recent) >= fails_n and not any(recent):
-                r["hyst"] = f"連 {fails_n} 次不過閘下席{tag}"; return False
-            r["hyst"] = f"現任·觀察中 {len(recent)}/{fails_n}{tag}"; return True
-        recent = [x[1] for x in h[-HYST_NEW_RUNS:]]
-        if r["grp"]["pass"] and bootstrap:
-            r["hyst"] = "新席（首跑免遲滯）"; return True
-        if r["grp"]["pass"] and len(recent) >= HYST_NEW_RUNS and all(recent):
-            r["hyst"] = "新席（連 2 次過閘）"; return True
-        if r["grp"]["pass"]:
-            r["hyst"] = f"候補·待第 2 次過閘（{len(recent)}/{HYST_NEW_RUNS}）"
-        return False
-    passed = [r for r in seat_universe if eligible(r)]
-    passed.sort(key=lambda r: (0 if r["grp"]["pass"] else 1, -(r["score"] or 0)))   # 過閘者優先，觀察中現任其後
-    failed = [r for r in seat_universe if r not in passed]
-    core_pass = [r for r in passed if r["route"] == "core"]
-    core_seats = core_pass[:CORE_SLOTS]
+
+    all_by_ticker = {r["ticker"]: r for r in universe_rows}
+    rotation = rotate_roster(current_month, last_rotation_month, prev_roster, ranked, w52_fail_streaks,
+                             all_by_ticker=all_by_ticker)
+    # 沿用的現任席可能本次未過全部資格閘（非硬否決不下席，見 rotate_roster()）——
+    # 這種列不在 ranked（ELIGIBLE-only）裡，改查全母體 all_by_ticker 才能顯示。
+    core_seats = [ranked_by_ticker.get(t) or all_by_ticker.get(t) for t in rotation["core"]]
+    core_seats = [r for r in core_seats if r is not None]
+    sat_seats = [ranked_by_ticker.get(t) or all_by_ticker.get(t) for t in rotation["sat"]]
+    sat_seats = [r for r in sat_seats if r is not None]
     core_seated = {r["ticker"] for r in core_seats}
-    # 2026-09-09 修復：衛星席公開競爭——route=="core"（耐久達標）但沒卡進核心前 5 名
-    # 的名字，跟 route=="satellite" 名字合併，一起按 own_score 搶衛星 5 席，不再讓
-    # route 本身把他們擋在衛星資格之外。修前 bug：core_pass[CORE_SLOTS:] 這批「耐久
-    # 但沒排進核心」的名字（如 LLY／ANET／APH／KLAC／LRCX）整批出局（core 排不進、
-    # sat 進不了），衛星池只剩非耐久名字這個窄池，5 席常只填出 2-4 席、且分數懸殊
-    # （見 2026-09-08 ROKU 6.8／INCY 3.3 vs 核心板凳 LLY 27.3）。route 標籤語意不變
-    # （仍代表耐久與否，供 render 端標「耐久・暫居衛星」），只是「坐哪個席次」改看
-    # own_score 排序，不再受 route 限制——衛星席＝母體中所有未坐核心席的合格名字，
-    # 不分 route，按分數前 5 入席。
-    sat_pool = [r for r in passed if r["ticker"] not in core_seated]
-    sat_seats = sat_pool[:SAT_SLOTS]
     sat_seated = {r["ticker"] for r in sat_seats}
     seated_all = core_seated | sat_seated
-    core_bench = [r for r in core_pass if r["ticker"] not in seated_all] \
-        + [r for r in failed if r["route"] == "core" and r["grp"]["pass"]]
-    sat_bench = [r for r in sat_pool if r["route"] == "satellite" and r["ticker"] not in seated_all] \
-        + [r for r in failed if r["route"] == "satellite" and r["grp"]["pass"]]
+
+    # 備註欄用：新席／現任／遞補（Step 3 備註欄），並把移除理由掛回去顯示。
+    prior_tickers = set((prev_roster or {}).get("core", []) or []) | set((prev_roster or {}).get("sat", []) or [])
+    filled_tickers = {t for _, t in rotation["filled"]}
+    removed_map = dict(rotation["removed"])
+    for r in core_seats + sat_seats:
+        t = r["ticker"]
+        if rotation["rotated"]:
+            r["seat_note"] = "現任" if t in prior_tickers else "新席"
+        else:
+            r["seat_note"] = "遞補" if t in filled_tickers else "現任"
+
+    # 候補（Step 3：候補 1–5，合併單一清單，不分核心/衛星）——核心板凳／衛星板凳仍各自
+    # 保留供 arena.html「M5 對照組」既有的擂台/板凳文案與 universe_board 沿用。
+    core_bench = [r for r in ranked if r.get("core_candidate") and r["ticker"] not in seated_all][:8]
+    sat_bench = [r for r in ranked if r["ticker"] not in seated_all and r["ticker"]
+                not in {x["ticker"] for x in core_bench}][:8]
+    bench_seats = sorted(core_bench + sat_bench, key=lambda r: -(r["score"] or 0))[:5]
     entered = [r for r in universe_rows if r["verdict"] == "進場"]
 
-    seated = {r["ticker"] for r in core_seats + sat_seats}
-    challengers = [r for r in seat_universe if r["grp"]["pass"] and r["ticker"] not in seated]
-    challengers.sort(key=lambda r: -r["score"])
+    challengers = [r for r in ranked if r["ticker"] not in seated_all]
 
-    # 擂台配對（v2）：軌別配對——核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者
+    # 擂台配對（v2 起沿用）：軌別配對——核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者
     # （形狀降為資訊欄；moat 耐久性同級的才有資格互換）
     duels = []
     for seat in core_seats + sat_seats:
@@ -1303,9 +1521,9 @@ def main() -> int:
     max_share = (conc_rows[0][1] / n_seated * 100) if n_seated else 0
 
     # ── 席位變動帳本（append-only）：席位組成變了才記一筆，換席決策從此可結算 ──
-    # 2026-09-09：帳本寫入只在 --ledger（weekly-engine.yml 排程）才發生；手動/ad-hoc 跑
-    # 只讀既有帳本算席位、照常寫 arena.json 等輸出，不追加 gate_history／snapshots，
-    # 遲滯時鐘不前進（見檔頭 docstring 與 knowledge/rule_ledger.md v2 遲滯列 2026-09-09 註記）。
+    # 帳本寫入只在 --ledger（weekly-engine.yml 排程）才發生；手動/ad-hoc 跑只讀既有帳本
+    # 算席位、照常寫 arena.json 等輸出，不推進月頻輪動時鐘、不追加 snapshot（見檔頭
+    # docstring 與 knowledge/rule_ledger.md「v4 席位引擎」列）。
     ledger = ledger0
 
     def _seat_meta(r: dict) -> dict:
@@ -1326,7 +1544,9 @@ def main() -> int:
             "sat": [r["ticker"] for r in sat_seats],
             "core_meta": [_seat_meta(r) for r in core_seats],
             "sat_meta": [_seat_meta(r) for r in sat_seats],
-            "rule_version": "v3"}
+            "rotated": rotation["rotated"],
+            "removed": [{"ticker": t, "why": w} for t, w in rotation["removed"]],
+            "rule_version": "v4"}
     changes = []
     # 比較基準＝嚴格早於今天的最後一筆——同日重跑不可拿「今天已寫入的自己」當基準
     # （self-referential bug：會把「今天跟今天比較」的假差異當成真變動，見檔頭說明）。
@@ -1347,39 +1567,69 @@ def main() -> int:
                 ledger["snapshots"][-1] = snap   # 同日重跑覆蓋（冪等）——不再依附自我比較
             else:
                 ledger["snapshots"].append(snap)
+        # v4 月頻輪動狀態（見 rotate_roster() docstring）——只在 --ledger 排程跑時前進：
+        #   last_rotation_month／roster：下次跑靠這兩個值判斷「這個月是否已經選過」；
+        #   w52_fail_streak：above_w52 為 False 逐次 +1、True 歸零（清掉不再追蹤的
+        #   ticker，避免帳本無限增長）、None（資料缺）維持原值不動。
+        new_streak = dict(w52_fail_streaks)
+        for r in universe_rows:
+            above = r["grp"].get("above_w52")
+            if above is False:
+                new_streak[r["ticker"]] = new_streak.get(r["ticker"], 0) + 1
+            elif above is True:
+                new_streak.pop(r["ticker"], None)
+        ledger["w52_fail_streak"] = new_streak
+        ledger["last_rotation_month"] = current_month
+        ledger["roster"] = {"core": [r["ticker"] for r in core_seats],
+                            "sat": [r["ticker"] for r in sat_seats]}
         LEDGER_JSON.parent.mkdir(parents=True, exist_ok=True)
         LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
                                encoding="utf-8")
     else:
-        print("帳本唯讀（未帶 --ledger）：gate_history／snapshots 未寫入，遲滯未前進。")
+        print("帳本唯讀（未帶 --ledger）：last_rotation_month／roster／snapshots 未寫入，輪動時鐘未前進。")
     recent_changes = [c for s in ledger["snapshots"][-6:] for c in (s.get("changes") or [])]
 
     dial = regime_dial()
     def compact(r):
-        g = r["grp"]
-        return {"ticker": r["ticker"], "score": r["score"], "g": g.get("g"), "g_method": r.get("g_method"),
-                "ey": (g.get("own") or {}).get("ey"), "roic": r.get("roic"), "fcf": r.get("fcf"),
-                "peg": r.get("peg"), "r_fy1": g.get("r_fy1"), "p_label": g.get("p_label"),
+        g = r["grp"]; o = g.get("own") or {}
+        return {"ticker": r["ticker"], "score": r["score"], "rank": r.get("rank"),
+                "g": g.get("g"), "g_method": r.get("g_method"),
+                "ey": (o.get("raw") or {}).get("ey"), "roic": r.get("roic"), "fcf": r.get("fcf"),
+                "peg": r.get("peg"), "eps_rev_3m_pct": g.get("eps_rev_3m_pct"), "p_label": g.get("p_label"),
+                "p_rev": o.get("p_rev"), "p_mom": o.get("p_mom"), "p_g": o.get("p_g"),
+                "p_q": o.get("p_q"), "p_ey": o.get("p_ey"),
+                "overheated": g.get("overheated"), "peak": g.get("peak"),
+                "durable_5y": r.get("durable_5y"), "durable_source": r.get("durable_source"),
+                "lamp": r.get("lamp"), "action": r.get("action"),
                 "r26": r.get("r26"), "pass": g.get("pass"), "why": g.get("why"),
-                "route": r["route"], "dd_tag": r.get("dd_tag"), "verdict": r.get("verdict"),
-                "moat": r.get("moat"), "src": r.get("src"), "hyst": r.get("hyst"), "dd_path": r.get("dd_path")}
+                "route": r["route"], "route_why": r.get("route_why"),
+                "dd_tag": r.get("dd_tag"), "verdict": r.get("verdict"),
+                "moat": r.get("moat"), "src": r.get("src"), "seat_note": r.get("seat_note"),
+                "dd_path": r.get("dd_path")}
     own_board = [compact(r) for r in universe_rows
                  if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0][:60]
-    lamp_map = load_lamp()
-    board_text = render_board_text(as_of, universe_rows, core_seats, sat_seats, prev, entered, lamp_map)
+    board_text = render_board_text(as_of, universe_rows, core_seats, sat_seats, bench_seats, prev, entered, lamp_map)
     BOARD_TXT.write_text(board_text, encoding="utf-8")
-    board_html = render_board_html(as_of, universe_rows, core_seats, sat_seats, prev, entered, lamp_map)
+    board_html = render_board_html(as_of, universe_rows, core_seats, sat_seats, bench_seats, prev, entered, lamp_map)
     BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
-        "schema_version": "2.0",
-        "method": "v2 擁有層×時機層分離（2026-09-02）：排序＝own_score；R 為燈號；DD 只標角色、不 veto 不降權（2026-09-16 起）；遲滯 2/4",
+        "schema_version": "4.0",
+        "method": ("v4 席位引擎（2026-09-17）：核心候選＝耐久（五年 ROIC 平均 ≥15% 或 QGM 五年穩定度 "
+                  "≥75%）且不過熱（12-1 月動能 ≤150%）；排序＝own_score v4，三月上修／12-1 月動能／"
+                  "成長封頂 30／品質（FCF∶淨利＋稀釋率，投資有回報者免計 FCF∶淨利）／盈餘殖利率五個"
+                  "百分位在合格集合內平均；三月上修 ≤−5% 否決（FY+1 單月 ≤−10% 僅缺值 fallback）；"
+                  "無產業集中度上限；每月第一次排程重選，期間只有硬否決能換人、空位遞補"),
         "universe_n": len(universe_rows),
         "seats_without_card": sorted(r["ticker"] for r in core_seats + sat_seats if r["ticker"] not in card_stats),
         "own_board": own_board,
         "run_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "regime": dial,
+        "rotation": {"rotated": rotation["rotated"], "current_month": current_month,
+                    "removed": [{"ticker": t, "why": w} for t, w in rotation["removed"]],
+                    "filled": [{"track": tr, "ticker": t} for tr, t in rotation["filled"]]},
         "core_seats": core_seats, "core_bench": core_bench[:8],
         "sat_seats": sat_seats, "sat_vacant": SAT_SLOTS - len(sat_seats),
+        "bench_seats": bench_seats,
         "duels": duels, "challengers_top": challengers[:15],
         "concentration": [{"sector": k, "n": v} for k, v in conc_rows],
         "max_sector_share_pct": round(max_share),
@@ -1474,20 +1724,21 @@ def main() -> int:
 <h1>席位擂台 · 組合層</h1>
 <div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
-席位資格（<b>v3 擁有層×時機層</b>，2026-09-09 持有人拍板：席位不再要求先有 DD）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF ≥10；capex 週期豁免 ROIC ≥25 ∧ FCF ≥0）×
-<b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%，且成長必須是三年期 Koyfin 數字——只有 FY1→FY2 單年 fallback 的名字不入席，改列「可選但先不入席」隊列）× <b>位置閘</b>（站上 52 週線且 26 週漲幅 ≤+80%）× 無重下修否決（FY+1 單月 ≤−10%）。
-排序＝<b>擁有層分數</b>＝min(成長，30)＋FY1 盈餘殖利率（ROIC ≥30 +2；PEG &gt;2 −5）；上修幅度降為燈號。
-<b>DD 選配</b>：不再是入席前提，2026-09-16 起裁決也不再否決或降權，只留角色標籤（僅供顯示，≤180 天有效）；沒有 DD 的名字一樣同場排序、正常入席。
-<b>遲滯</b>：新席連 2 次週跑過閘、現任連 4 次不過才下席（硬 veto＝重下修／市值不足除外；2026-09-16 起 DD 觀望不再降權）。
-<b>軌別路由</b>：核心席另需耐久——五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75% → 核心；未達標或無耐久資料 → 衛星。DD 角色不影響軌別，只當顯示標籤（與軌別衝突時標 ⚠ 供人裁）。<b>耐久達標＝核心候選，不等於保證核心席</b>：沒卡進核心前 5 名的耐久名字會回頭跟非耐久名字一起搶衛星 5 席（純比 own_score），此時席位表仍標示其軌別為「核心」（代表可長抱），另加註「耐久・暫居衛星」。
+席位資格（<b>v4 擁有層×時機層</b>，2026-09-17 持有人拍板）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF ≥10；capex 週期豁免 ROIC ≥25 ∧ FCF ≥0）×
+<b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%，耐久者放寬至 10%；且成長必須是三年期 Koyfin 數字——只有 FY1→FY2 單年 fallback 的名字不入席，改列「可選但先不入席」隊列）× <b>位置閘</b>（站上 52 週線）× <b>三月上修否決</b>（≤−5%，FY+1 單月 ≤−10% 僅缺值時 fallback）× 新硬否決（體質拒絕／衰退 ⛔／DD 迴避 180 天內）。
+排序＝<b>own_score v4</b>：三月上修、12-1 月動能、成長（封頂 30）、品質（FCF÷淨利與稀釋率百分位平均；投資有回報者〔增量 ROIC ≥15%〕免計 FCF÷淨利）、盈餘殖利率，五個排名百分位在合格集合內互相比較後平均。
+<b>過熱／頂點不是資格閘</b>：12-1 月動能 &gt;150%（缺值 fallback 26 週漲幅 &gt;80%）＝過熱，排除核心候選（只能衛星）；roic_vs_5y_x ≥1.3＝頂點，純顯示註記（⚠），不影響核心候選資格。
+<b>DD 選配</b>：不是入席前提，只做迴避否決（180 天內），觀望／進場僅供角色標籤參考（僅供顯示）。
+<b>月頻輪動</b>：每月第一次排程整批重選一次；期間只有硬否決（迴避／拒絕／⛔／三月上修 ≤−5／市值不足／連兩週跌破 52 週線）能換人，空位由下一名遞補。
+<b>軌別路由</b>：核心候選另需耐久——五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75%（兩者有一成立即可）→ 核心；未達標或無耐久資料 → 衛星。DD 角色不影響軌別，只當顯示標籤（與軌別衝突時標 ⚠ 供人裁）。<b>耐久＋不過熱＝核心候選，不等於保證核心席</b>：沒卡進核心前 5 名的核心候選會回頭跟其餘合格名字一起搶衛星 5 席（純比 own_score），此時席位表仍標示其軌別為「核心」（代表可長抱），另加註「耐久・暫居衛星」。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
-<b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。
+<b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。無產業/主題集中度上限（2026-09-17 持有人拍板）。
 <b>快審卡</b>：衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評），與三年成長閘、DD 皆無關。
-三閘未過的進場票落板凳、寧缺勿濫。</div>
-<div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v3 擁有層×時機層 ｜ 週更</div>
+資格未過的進場票落板凳、寧缺勿濫。</div>
+<div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v4 擁有層×時機層 ｜ 月頻輪動</div>
 </div>
-<div class="block"><h2>選股看板 v2</h2>
-<div class="block-sub">擁有層排序（值不值得擁有）與位置、階段（現在能不能動）分開讀；DD 只做 veto 與角色標籤。</div>
+<div class="block"><h2>選股看板 v4</h2>
+<div class="block-sub">own_score 排序（值不值得擁有）與時機燈（現在能不能買）分開讀；DD 只做迴避否決與角色標籤。</div>
 {board_html}</div>
 <div class="stat-row">
 <div class="stat"><strong>{dial['label'] if dial['level'] else '—'}</strong><span>Regime 撥盤（{dial['level'] if dial['level'] else '—'}×）</span></div>

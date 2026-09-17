@@ -101,7 +101,7 @@
         dd: !!(dd && Array.isArray(dd.stocks)),
         universe: !!(universeBoard && Array.isArray(universeBoard.rows))
       },
-      quality: {}, dd: {}, seat: {}, ownScore: {}, gMethod: {},
+      quality: {}, dd: {}, seat: {}, ownScore: {}, gMethod: {}, fundWarn: {},
       timingCode: {}, timingDetail: {}, boardSet: {}, researchSet: {},
       historyDates: (history && history.dates) || [],
       historyStages: (history && history.stages) || {},
@@ -163,6 +163,17 @@
         if (!idx.quality[r.ticker]) {
           idx.quality[r.ticker] = qualityFromRoicFcf(r.roic, r.fcf);
           idx.quality[r.ticker].source = "dd-screener";
+        }
+        // 2026-09-17（v4 席位引擎附帶）：體質/衰退警訊標記——只在「過品質閘但另一
+        // 套機械體質檢查（compute_fundamental_gates）亮警」時掛一個小警示點，見
+        // qualityWarnFor()。不落新格、不開新清單，缺值＝不掛點。
+        if (r.decline_signal_light != null || r.quality_veto_level != null) {
+          idx.fundWarn[r.ticker] = {
+            decline_signal_light: r.decline_signal_light || null,
+            quality_veto_level: r.quality_veto_level || null,
+            decline_signals: r.decline_signals || [],
+            quality_veto_fails: r.quality_veto_fails || []
+          };
         }
       });
     }
@@ -237,11 +248,40 @@
     return { verdict: d.verdict, cls: DD_CLS[d.verdict] || "dd-none", path: d.dd_path, tag: d.dd_tag || null };
   }
 
+  // ── 品質×時機矩陣附帶標記（2026-09-17，v4 席位引擎同批）：過品質閘（ROIC/FCF）
+  // 但 compute_fundamental_gates 的另一套機械體質檢查亮警（衰退燈 🔴／⛔，或體質
+  // 淨評級 降一級／拒絕）——不新增格子、不開新清單，只在既有品質徽章上加一個小
+  // 警示點＋tooltip。q.pass 非 true 或無 fundWarn 資料 → 不掛點（見設計稿要求
+  // 「missing data → no dot」）。
+  var DECLINE_WARN_LIGHTS = { "🔴": true, "⛔": true };
+  var VETO_WARN_LEVELS = { "降一級": true, "拒絕": true };
+  function qualityWarnFor(idx, ticker) {
+    var q = idx.quality[ticker];
+    if (!q || q.pass !== true) return null;
+    var fw = idx.fundWarn[ticker];
+    if (!fw) return null;
+    var hit = DECLINE_WARN_LIGHTS[fw.decline_signal_light] || VETO_WARN_LEVELS[fw.quality_veto_level];
+    if (!hit) return null;
+    var reasons = (fw.decline_signals || []).concat(fw.quality_veto_fails || []);
+    return { reasons: reasons, title: "過閘但有警訊：" + (reasons.length ? reasons.join("、") : "詳見個股報告") };
+  }
+  function qualityWarnDotHTML(idx, ticker) {
+    var w = qualityWarnFor(idx, ticker);
+    if (!w) return "";
+    return '<i class="qtm-warn-dot" title="' + esc(w.title) + '">⚠</i>';
+  }
+
   // ── 四格內容（品質／擁有層分／時機／DD）──────────────────────────────
   function qualityCellHTML(idx, ticker) {
     var q = idx.quality[ticker];
+    var warn = qualityWarnFor(idx, ticker);
     if (!q || q.pass == null) return { cls: "q-mut", label: "無資料", sub: "還沒有財務資料可判，不是未過" };
-    if (q.pass) return { cls: "q-pos", label: q.exempt ? "過（資本週期豁免）" : "過", sub: "" };
+    if (q.pass) {
+      return {
+        cls: "q-pos", label: q.exempt ? "過（資本週期豁免）" : "過",
+        sub: warn ? warn.title : "", warn: warn
+      };
+    }
     return { cls: "q-neg", label: "未過", sub: (q.why && q.why[0]) || "" };
   }
   function timingCellHTML(idx, ticker) {
@@ -272,7 +312,7 @@
     var d = ddInfo(idx, ticker);
     var dCls = d.verdict === "進場" ? "q-pos" : (d.verdict === "觀望" ? "q-warn" : (d.verdict === "迴避" ? "q-neg" : "q-mut"));
     return (
-      '<span class="qtm-cell ' + qCls + '"><i class="qtm-dot"></i>' + esc(Q_SHORT[qb]) + "</span>" +
+      '<span class="qtm-cell ' + qCls + '"><i class="qtm-dot"></i>' + esc(Q_SHORT[qb]) + qualityWarnDotHTML(idx, ticker) + "</span>" +
       '<span class="qtm-cell q-mut"><i class="qtm-dot"></i>' + esc(ownTxt) + "</span>" +
       '<span class="qtm-cell ' + tCls + '"><i class="qtm-dot"></i>' + esc(STAGE_SHORT[code] || code) + "</span>" +
       '<span class="qtm-cell ' + dCls + '"><i class="qtm-dot"></i>' + esc(DD_SHORT[d.verdict] || "無") + "</span>"
@@ -294,7 +334,8 @@
     var seat = idx.seat[ticker];
     var chip = function (c) { return '<span class="qtm-cell ' + c.cls + '" style="display:inline-flex"><i class="qtm-dot"></i>' + esc(c.label) + "</span>"; };
     var html = "";
-    html += popupRow("品質", chip(qc), qc.sub ? esc(qc.sub) : "");
+    html += popupRow("品質", chip(qc) + (qc.warn ? ('<i class="qtm-warn-dot" title="' + esc(qc.warn.title) + '">⚠</i>') : ""),
+                     qc.sub ? esc(qc.sub) : "");
     html += popupRow(
       "擁有層分",
       own == null ? "—" : ("<b>" + fmt1(own) + "</b>" + (seat ? (" " + esc(SEAT_LABEL[seat])) : "")),
@@ -624,9 +665,12 @@
       var hideMismatchBadge = !!(opts && opts.hideMismatchBadge);
       var mismatchBadge = (mismatch && !hideMismatchBadge) ? '<span class="qtm-warnflag">DD 進場・品質未過</span>' : "";
       var ddLabel = d.tag || d.verdict;
+      var warn = qualityWarnFor(idx, ticker);
       var titleTxt = ticker + "：" + ddLabel + (isNew ? "（本週新進此格）" : "")
-        + (mismatch ? "；DD 進場但品質未過，值得重新檢查論點" : "");
-      return '<span class="' + cls + '" data-qtm-tk="' + esc(ticker) + '" data-qtm-mtx="1" tabindex="0" role="button" title="' + esc(titleTxt) + '">' + esc(ticker) + seatBadge + mismatchBadge + "</span>";
+        + (mismatch ? "；DD 進場但品質未過，值得重新檢查論點" : "")
+        + (warn ? "；" + warn.title : "");
+      var warnDot = warn ? ('<i class="qtm-warn-dot" title="' + esc(warn.title) + '">⚠</i>') : "";
+      return '<span class="' + cls + '" data-qtm-tk="' + esc(ticker) + '" data-qtm-mtx="1" tabindex="0" role="button" title="' + esc(titleTxt) + '">' + esc(ticker) + seatBadge + warnDot + mismatchBadge + "</span>";
     }
     // 本週清單的名單渲染：同一顆 tickerChipHTML（外框、標記、彈出小卡皆共用），
     // 只是排版脈絡不同（清單而非格子）；沿用格子相同的「前 8 個＋更多 N」節流，

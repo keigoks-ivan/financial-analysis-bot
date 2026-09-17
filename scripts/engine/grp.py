@@ -27,13 +27,40 @@ _picks_first_principles_review_20260902.md Part A／D）——**擁有層與時�
   遲滯（build_arena）：新席需連 2 次週跑過閘；現任席連 4 次不過才下席（硬 veto 除外）；
       DD 180 天內裁決＝觀望的現任席降權為連 2 次不過即下（B4② 2026-09-04）。
   規則登記：knowledge/rule_ledger.md（v2 三條；R −2% 否決同日提名候刪審查；B4② 降權版）。
+
+v4（2026-09-17 持有人拍板「席位引擎 v4」；依據 10 週對照：核心 −3.8%／核心＋衛星 −8.4%
+vs SPY +1.2%、首批 B&H +1.0%、10 週 23 檔坐過 10 席——換手率過高、單月尺度的週遲滯在
+「保護」雜訊而非訊號）——五項改動：
+  1. 成長閘：三年期 Koyfin CAGR 仍是硬性必備（單年 fallback 不算），門檻 15%，但
+     durable_5y 為 True 者放寬到 10%（複利股基期已高，成長速度本來就該慢下來）。
+  2. 上修否決：改看三個月（FY 加權 0.2/0.3/0.5）EPS 上修 eps_rev_3m_pct ≤ −5% 才否決，
+     取代原本 FY+1 單月 ≤ −10%；後者只在前者缺值時當 fallback。
+  3. 過熱不再是資格閘：12-1 個月動能 mom_12_1_pct > 150%（缺值 fallback 26 週漲幅
+     > 80%）→ overheated=True，不否決資格，但排除出核心候選（只能衛星）。峰頂
+     （roic_vs_5y_x ≥ 1.3）另立 peak 旗標，是純顯示註記（⚠ 頂點），**不**排除核心
+     候選——實測回溯（NVDA／CLS 皆 peak 但穩居核心候選前 5）證明頂點是「賺得比五年
+     均值快」的健康訊號，不是該離場的訊號；過熱（短線動能滿檔）才是該功成身退進
+     衛星、讓時機燈接手判斷買點的訊號。兩者字面接近但語意不同，故意分開存放。
+  4. 排序：own_score 改五個百分位（三月上修／12-1 月動能／成長封頂 30／品質／盈餘
+     殖利率）在 ELIGIBLE 集合內互相比較後平均（需 ≥4/5），品質＝FCF/淨利與稀釋率
+     百分位平均，但 incremental_roic_pct ≥15 者（投資有回報）免計 FCF/淨利、品質只看
+     稀釋率。舊 own_score（v2 公式）保留一輪對照，存 own_v2。
+  5. 時機燈 timing_lamp()：把位置／RS／200 日線／階段收斂成一個燈號＋倉位建議，
+     不再是三個獨立欄位；核心 vs 衛星是「值不值得擁有」的月頻判斷，時機燈是「現在
+     能不能買」的週頻判斷——CLS 是最佳示範：耐久＋不過熱→核心候選，但距高 −31%／
+     RS 33／跌破 200 日線→🔴 等板機／零倉，兩層判斷刻意不互相污染。
+  無產業/主題集中度上限（持有人拍板：席位本來就沒幾席，硬性 cap 只會逼著湊數）。
+  月頻輪動（見 build_arena 檔頭）：每月第一次 --ledger 跑重新選一次，期間只有硬否決
+  （迴避／拒絕/⛔／三月上修 ≤−5／市值不足／連兩週跌破 52 週線）能換人，空位由下一
+  名遞補。規則登記：knowledge/rule_ledger.md「v4 席位引擎（2026-09-17）」。
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-G_MIN_CAGR = 15.0        # G 閘：FY1→FY3 EPS CAGR
+G_MIN_CAGR = 15.0        # G 閘：FY1→FY3 EPS CAGR（非耐久）
+G_MIN_CAGR_DURABLE = 10.0  # v4：durable_5y=True 者放寬門檻（複利股基期高、成長本該慢）
 # 擁有層（v2）：品質閘與排序鍵常數
 Q_ROIC_MIN = 15.0        # 品質閘：ROIC ≥15%
 Q_FCF_MIN = 10.0         # 品質閘：FCF margin ≥10%
@@ -94,9 +121,16 @@ def cap_ok(cap) -> bool | None:
 # 對穩定複利股會全滅；上修「幅度」由排序層獎勵，資格層只問方向）
 R_MIN_FY1 = 0.0          # R 閘：FY+1 單月修正 > 0
 R_MIN_2Y_PP = 0.0        # R 閘：eps2y 修正 pp > 0（替代路徑）
-R_VETO_FY1 = -10.0       # R 否決（v2）：FY+1 單月下修超過此值才否決；−2% 降為燈號（見檔頭 v2）
+R_VETO_FY1 = -10.0       # R 否決 fallback（v4）：僅在 eps_rev_3m_pct 缺值時用 FY+1 單月 ≤ 此值否決
+EPS_REV_3M_VETO = -5.0   # v4 主否決：三月上修（FY 加權）≤ 此值 → 否決（見 build_dd_screener._compute_eps_rev_3m）
 P_BREAKOUT_DIST = -5.0   # 距 52 週高 ≥ -5% ＝突破帶
 P_PULLBACK = (-25.0, -8.0)   # 回檔帶（含趨勢完好）
+# v4：過熱／頂點——不是資格閘，只決定核心候選資格（過熱）與顯示註記（頂點）。見檔頭 v4 段。
+MOM_12_1_OVERHEAT = 150.0   # 12-1 個月動能（ma.mom_12_1_pct）> 此值 → overheated
+R26_OVERHEAT_FALLBACK = 80.0  # mom_12_1_pct 缺值時 fallback：26 週漲幅（_r26，build_arena.weekly_structure）
+PEAK_ROIC_X = 1.3          # roic_vs_5y_x ≥ 此值 → peak（純顯示註記，不影響核心候選資格）
+# v4 時機燈 action 對照（build_arena 倉位欄）
+LAMP_ACTION = {"green": "正常倉", "yellow": "半倉", "hot": "半倉", "red": "零倉・等板機", "out": "—"}
 
 
 def _f(v):
@@ -107,41 +141,177 @@ def _f(v):
         return None
 
 
+def own_raw(s: dict) -> dict:
+    """v4 own_score 單檔原始輸入（pure）——見 own_score_v4() 做跨檔百分位排序。
+    g 只認真三年期 Koyfin CAGR（eps_fy1_fy3_cagr_pct，封頂 30），不像 grp_score 的
+    g 閘變數那樣 fallback 到 eps2y——ELIGIBLE 集合本身已要求 g_three_year=True，
+    這裡沒有 fallback 的必要（也不該讓單年基期效應混進排序）。"""
+    g_raw = _f(s.get("eps_fy1_fy3_cagr_pct"))
+    g = min(g_raw, OWN_G_CAP) if g_raw is not None else None
+    fpe = _f(s.get("live_fpe_est"))
+    ey = (100.0 / fpe) if fpe and fpe > 0 else None
+    if ey is None:
+        px = _f((s.get("ma") or {}).get("price")); e1 = _f(s.get("eps_fy_next"))
+        if px and e1 and px > 0:
+            ey = e1 / px * 100.0
+    return {
+        "rev": _f(s.get("eps_rev_3m_pct")),
+        "mom": _f((s.get("ma") or {}).get("mom_12_1_pct")),
+        "g": round(g, 2) if g is not None else None,
+        "ey": round(ey, 2) if ey is not None else None,
+        "fcf_ni": _f(s.get("fcf_ni_ratio")),
+        "dilution": _f(s.get("sbc_dilution_pct_yr")),
+        "incremental_roic_pct": _f(s.get("incremental_roic_pct")),
+    }
+
+
+def own_score_v4(rows: list) -> list:
+    """own_score v4 — 五個百分位排序鍵在 ELIGIBLE 集合內互相比較（pure，跨檔）。
+    `rows`：ELIGIBLE 母體，元素可以是 own_raw() 的輸出（帶 "rev" key）或完整
+    stock dict（本函式會自動套一次 own_raw()），順序與回傳列表一一對應。
+
+    百分位＝100 × (population 中 ≤ 自己的比例)（"weak" 定義，含自己），dilution 反向
+    （越低分位越高）。品質分位 p_q＝FCF/淨利與稀釋率兩個分位的平均，但
+    incremental_roic_pct ≥15（投資有回報）者免計 FCF/淨利、p_q 只看稀釋率分位
+    （見 grp.py 檔頭 v4 段第 4 點）。score＝五個分位（p_rev/p_mom/p_g/p_q/p_ey）
+    平均，至少 4/5 有值才給分，否則 None（呼叫端應把 None 排除出排名，不要當 0 用）。
+    """
+    raws = [r if "rev" in r else own_raw(r) for r in rows]
+
+    def pctl(key, sign=1.0):
+        vals = sorted(rw[key] * sign for rw in raws if rw.get(key) is not None)
+        n = len(vals)
+        out = []
+        for rw in raws:
+            v = rw.get(key)
+            if v is None or n == 0:
+                out.append(None)
+            else:
+                out.append(round(100.0 * sum(1 for x in vals if x <= v * sign) / n, 1))
+        return out
+
+    p_rev = pctl("rev"); p_mom = pctl("mom"); p_g = pctl("g"); p_ey = pctl("ey")
+    p_fcf_ni = pctl("fcf_ni"); p_dil = pctl("dilution", sign=-1.0)
+    out = []
+    for i, rw in enumerate(raws):
+        incr = rw.get("incremental_roic_pct")
+        exempt = incr is not None and incr >= 15.0
+        if exempt:
+            p_q = p_dil[i]
+        else:
+            qs = [x for x in (p_fcf_ni[i], p_dil[i]) if x is not None]
+            p_q = round(sum(qs) / len(qs), 1) if qs else None
+        parts = [x for x in (p_rev[i], p_mom[i], p_g[i], p_q, p_ey[i]) if x is not None]
+        score = round(sum(parts) / len(parts), 1) if len(parts) >= 4 else None
+        out.append({"p_rev": p_rev[i], "p_mom": p_mom[i], "p_g": p_g[i], "p_q": p_q,
+                    "p_ey": p_ey[i], "q_fcf_ni_exempt": exempt, "score": score, "raw": rw})
+    return out
+
+
+_STAGE_RED = ("S0",)
+_STAGE_GREEN = ("S1", "S3", "S4")
+
+
+def timing_lamp(s: dict) -> dict:
+    """v4 時機燈（pure）——把位置／RS／200 日線／階段收斂成單一燈號＋倉位建議。
+    輸入（皆從 s 讀，呼叫端須先把這些欄位就緒——build_arena 在呼叫前注入
+    `s["_stage_code"]`＝docs/stages/data/lamp.json 查到的階段代碼，
+    `s["_overheated"]`＝grp_score() 算好的 overheated 布林）：
+      s["ma"]["above_w52"], s["timing"]["vs_200ma_pct"/"rs_score"/"dist_52w_high_pct"],
+      s["_stage_code"], s["_overheated"]
+    輸出：{"code","label","size","trigger","why"}，見 grp.py 檔頭 v4 段第 5 點。
+    優先序：out（未站上 52 週線）＞ red（結構轉弱）＞ hot（過熱）＞ green（多頭排列）
+    ＞ yellow（其餘站上 52 週線者）。"""
+    ma = s.get("ma") or {}
+    timing = s.get("timing") or {}
+    above_w52 = ma.get("above_w52")
+    vs200 = _f(timing.get("vs_200ma_pct"))
+    rs = _f(timing.get("rs_score"))
+    dist_hi = _f(timing.get("dist_52w_high_pct"))
+    stage = s.get("_stage_code")
+    overheated = bool(s.get("_overheated"))
+
+    if not above_w52:
+        return {"code": "out", "label": "⚫ 不合格", "size": 0.0, "trigger": None,
+                "why": "未站上 52 週線"}
+
+    red_hits = []
+    if vs200 is not None and vs200 < 0:
+        red_hits.append(("站回 200 日線且 RS ≥ 50", f"vs 200 日線 {vs200:+.1f}%"))
+    if rs is not None and rs < 40:
+        red_hits.append(("RS 回到 50 以上", f"RS {rs:.0f}"))
+    if dist_hi is not None and dist_hi < -25:
+        red_hits.append(("回到高點 25% 內", f"距高點 {dist_hi:+.1f}%"))
+    if stage in _STAGE_RED:
+        red_hits.append(("站回 200 日線且 RS ≥ 50", "階段 S0 弱勢"))
+    if red_hits:
+        trigger = red_hits[0][0]
+        return {"code": "red", "label": "🔴 等板機", "size": 0.0, "trigger": trigger,
+                "why": "、".join(h[1] for h in red_hits)}
+
+    if overheated:
+        return {"code": "hot", "label": "🟠 過熱", "size": 0.5, "trigger": None,
+                "why": "12-1 個月動能過熱"}
+
+    stage_ok = stage is None or stage in _STAGE_GREEN
+    if (vs200 is not None and vs200 >= 0 and rs is not None and rs >= 50
+            and dist_hi is not None and dist_hi >= -15 and stage_ok):
+        return {"code": "green", "label": "🟢 可進", "size": 1.0, "trigger": None,
+                "why": f"vs 200 日線 {vs200:+.1f}%、RS {rs:.0f}、距高點 {dist_hi:+.1f}%"
+                       + (f"、階段 {stage}" if stage else "")}
+
+    bits = []
+    if vs200 is not None: bits.append(f"vs 200 日線 {vs200:+.1f}%")
+    if rs is not None: bits.append(f"RS {rs:.0f}")
+    if dist_hi is not None: bits.append(f"距高點 {dist_hi:+.1f}%")
+    if stage: bits.append(f"階段 {stage}")
+    return {"code": "yellow", "label": "🟡 半倉", "size": 0.5, "trigger": None,
+            "why": "、".join(bits) or "站上 52 週線但未達綠燈條件"}
+
+
 def grp_score(s: dict) -> dict:
-    """latest.json 一檔 → GRP 判定。回傳 {pass, g, r, p_label, veto, score, why[]}。
-    score 只在全過時有意義（= R 主排序鍵，tiebreak G）。"""
+    """latest.json 一檔 → GRP v4 判定。回傳 {pass, g, r, p_label, veto, overheated, peak,
+    own, own_v2, score, why[]}。score 為 0.0 佔位——真正的 v4 排序分需要跨檔百分位
+    （見 own_score_v4()），由呼叫端（build_arena）算完 ELIGIBLE 集合後回填 grp["own"]
+    與 grp["score"]。"""
     why = []
-    # G
-    # v3 席位資格（2026-09-09）：g_three_year 記錄這個 g 是不是真的三年期 Koyfin
-    # FY1→FY3 CAGR——QGM 供給列（_g_method=="FY1→FY2 單年"）把單年成長塞進同一個
-    # eps_fy1_fy3_cagr_pct 欄位（見 build_arena.load_qgm_rows），欄位存在不代表
-    # 三年，故排除該情況；一旦這檔改走 dd-screener（--include-non-dd）拿到真 Koyfin
-    # 三年 CAGR，_g_method 就不會被設，g_three_year 會正確變 True。build_arena 的
-    # seat_universe 用這個欄位當入席資格閘（見該檔 main()）。
+    # G（v4：三年期 Koyfin CAGR 為硬性必備——g_three_year 記錄這個 g 是不是真的三年期
+    # FY1→FY3 CAGR；QGM 供給列（_g_method=="FY1→FY2 單年"）把單年成長塞進同一個
+    # eps_fy1_fy3_cagr_pct 欄位，欄位存在不代表三年，故排除該情況。門檻：durable_5y
+    # 為 True 者 10%，否則 15%（見檔頭 v4 段）——durable_5y 由呼叫端 build_arena
+    # ._apply_durable_fallback() 先補好，本函式只讀不算。）
     g_raw_3y = _f(s.get("eps_fy1_fy3_cagr_pct"))
     g_three_year = g_raw_3y is not None and s.get("_g_method") != "FY1→FY2 單年"
     g = g_raw_3y
     if g is None:
         g = _f(s.get("eps2y_live")) or _f(s.get("eps2y"))
         if g is not None:
-            why.append("成長閘用 2 年成長率代替（缺 FY3 預估）")
-    g_pass = g is not None and g >= G_MIN_CAGR
+            why.append("成長閘用 2 年成長率代替（缺 FY3 預估，v4 不採計為資格）")
+    g_min = G_MIN_CAGR_DURABLE if s.get("durable_5y") else G_MIN_CAGR
+    g_pass = bool(g_three_year) and g is not None and g >= g_min
     if not g_pass:
-        why.append(f"成長閘未過（CAGR {g if g is not None else '缺'}）")
+        if not g_three_year:
+            why.append(f"成長閘未過（v4 需三年期 Koyfin CAGR，現值 {g if g is not None else '缺'}）")
+        else:
+            why.append(f"成長閘未過（CAGR {g if g is not None else '缺'} < {g_min:.0f}%）")
 
-    # R
+    # R（v4：三月上修否決取代 FY+1 單月否決；後者只在前者缺值時當 fallback）
+    eps_rev_3m = _f(s.get("eps_rev_3m_pct"))
     r_fy1 = _f(s.get("eps_fy_next_revision_pct"))
     r_2y = _f(s.get("eps2y_revision_pp"))
-    veto = r_fy1 is not None and r_fy1 <= R_VETO_FY1
-    r_pass = (not veto) and ((r_fy1 is not None and r_fy1 > R_MIN_FY1)
-                             or (r_2y is not None and r_2y > R_MIN_2Y_PP))
-    if veto:
-        why.append(f"上修閘否決（FY+1 下修 {r_fy1:+.1f}%）")
-    elif not r_pass:
-        why.append(f"上修閘未過（FY+1 {r_fy1 if r_fy1 is not None else '缺'}％／2Y {r_2y if r_2y is not None else '缺'}pp）")
-    r_strength = max(r_fy1 or 0.0, (r_2y or 0.0) * 2.0)   # pp 換算近似倍率，僅排序用
+    if eps_rev_3m is not None:
+        r_veto = eps_rev_3m <= EPS_REV_3M_VETO
+        if r_veto:
+            why.append(f"三月上修否決（{eps_rev_3m:+.1f}% ≤ {EPS_REV_3M_VETO:.0f}%）")
+    else:
+        r_veto = r_fy1 is not None and r_fy1 <= R_VETO_FY1
+        if r_veto:
+            why.append(f"上修閘否決（三月上修缺值，fallback FY+1 下修 {r_fy1:+.1f}%）")
+    r_pass = (not r_veto) and ((r_fy1 is not None and r_fy1 > R_MIN_FY1)
+                               or (r_2y is not None and r_2y > R_MIN_2Y_PP))
+    r_strength = max(r_fy1 or 0.0, (r_2y or 0.0) * 2.0)   # pp 換算近似倍率，僅舊排序對照用
 
-    # P
+    # P（不變：站上 52 週線＋距高位置標籤；過熱不再併入本閘，見下）
     ma = s.get("ma") or {}
     above_52w = bool(ma.get("above_w52"))
     dist_hi = _f((s.get("timing") or {}).get("dist_52w_high_pct"))   # 52 週高優先
@@ -156,25 +326,60 @@ def grp_score(s: dict) -> dict:
             p_label = "pullback"
         else:
             p_label = "in_trend"
-    p_pass = p_label in ("breakout", "pullback", "in_trend")
+    p_pass = above_52w and (p_label in ("breakout", "pullback", "in_trend"))
     if not p_pass:
         why.append("位置閘未過（站在 52 週線下或資料缺）")
 
-    # v2：R 閘降為燈號——資格不再要求「有上修」，只留重下修否決；排序改擁有層 own_score
+    # 新增硬否決（v4，2026-09-17）：體質拒絕／衰退 ⛔／DD 迴避（180 天內）
+    quality_veto_level = s.get("quality_veto_level")
+    decline_signal_light = s.get("decline_signal_light")
+    veto_quality = quality_veto_level == "拒絕"
+    veto_decline = decline_signal_light == "⛔"
+    dd_age = _f(s.get("dd_age_days"))
+    veto_dd_avoid = s.get("dca_verdict") == "迴避" and (dd_age is None or dd_age <= DD_FRESH_DAYS)
+    if veto_quality:
+        why.append("體質閘：拒絕（quality_veto_level）")
+    if veto_decline:
+        why.append("衰退訊號 ⛔（decline_signal_light）")
+    if veto_dd_avoid:
+        age_txt = f"{int(dd_age)}d 內" if dd_age is not None else ""
+        why.append(f"DD 迴避否決{age_txt}")
+    veto = bool(r_veto or veto_quality or veto_decline or veto_dd_avoid)
+
+    # 過熱／頂點（v4）：不是資格閘，只決定核心候選資格（過熱）與顯示註記（頂點）。
+    # 過熱＝12-1 個月動能 >150%，缺值 fallback 26 週漲幅 >80%（s["_r26"]，
+    # build_arena.row_dict 在呼叫本函式前已就緒）。頂點＝roic_vs_5y_x ≥1.3，純顯示——
+    # 實測回溯 NVDA／CLS 皆頂點仍穩居核心候選前 5，見檔頭 v4 段第 3 點。
+    mom = _f(ma.get("mom_12_1_pct"))
+    r26 = _f(s.get("_r26"))
+    if mom is not None:
+        overheated = mom > MOM_12_1_OVERHEAT
+    else:
+        overheated = r26 is not None and r26 > R26_OVERHEAT_FALLBACK
+    roic_vs_5y_x = _f(s.get("roic_vs_5y_x"))
+    peak = roic_vs_5y_x is not None and roic_vs_5y_x >= PEAK_ROIC_X
+
     all_pass = g_pass and (not veto) and p_pass
-    if not r_pass and not veto:
+    if not r_pass and not r_veto:
         why = [w for w in why if not w.startswith("上修閘未過")]
-    own = own_score(s, g)
+    own_v2 = own_score(s, g)     # v2 公式原封不動，供對照一輪（own_v2，見檔頭 v4 段第 4 點）
     q = quality_gate(s)
     return {"pass": all_pass and q["pass"], "veto": veto,
+            # v4 硬否決細項（build_arena.hard_veto_v4 月度輪動用，避免對 why[] 字串解析）：
+            "veto_revision": r_veto, "veto_quality_reject": veto_quality,
+            "veto_decline": veto_decline, "veto_dd_avoid": veto_dd_avoid,
             "g": round(g, 1) if g is not None else None,
-            "g_three_year": g_three_year if g is not None else None,   # v3：入席資格用（僅 build_arena.seat_universe 讀）
+            "g_three_year": g_three_year if g is not None else None,
+            "g_min": g_min,
             "r_fy1": r_fy1, "r_2y": r_2y, "r_pass": r_pass,
+            "eps_rev_3m_pct": eps_rev_3m,
             "r_strength": round(r_strength, 2),
-            "p_label": p_label, "dist_hi": dist_hi, "price": px,
-            "quality": q, "own": own,
-            "score": own["score"] if own["score"] is not None else 0.0,   # v2：擁有層排序鍵
-            "score_v1": round(r_strength + (g or 0) / 100.0, 3),          # 舊 R 排序（對照用）
+            "p_label": p_label, "dist_hi": dist_hi, "price": px, "above_w52": above_52w,
+            "overheated": overheated, "peak": peak, "roic_vs_5y_x": roic_vs_5y_x,
+            "quality": q, "own": {"raw": own_raw(s), "score": None},   # 跨檔百分位由 build_arena 回填
+            "own_v2": own_v2,
+            "score": 0.0,   # 佔位；build_arena 算完 own_score_v4() 後覆寫
+            "score_v1": round(r_strength + (g or 0) / 100.0, 3),          # v1/v2 R 排序（對照用）
             "why": why + ([] if q["pass"] else q["why"])}
 
 

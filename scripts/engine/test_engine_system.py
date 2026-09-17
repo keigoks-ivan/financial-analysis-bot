@@ -47,35 +47,70 @@ def _stock(**kw):
 
 
 def test_grp_gates():
-    print("[1] GRP 三閘語義")
+    print("[1] GRP v4 資格閘語義")
     g = grp_score(_stock())
     ok(g["pass"] and g["p_label"] == "pullback", "基準樣本全過、回踩帶標籤")
-    ok(not grp_score(_stock(eps_fy1_fy3_cagr_pct=14.9))["pass"], "G 14.9 < 15 → fail")
-    g = grp_score(_stock(eps_fy_next_revision_pct=0.0, eps2y_revision_pp=0.0))
-    ok(g["pass"] and not g["r_pass"], "v2：R 零修正 → 資格仍過（R 降為燈號），r_pass=False")
-    g = grp_score(_stock(eps_fy_next_revision_pct=-2.5, eps2y_revision_pp=3.0))
-    ok(not g["veto"] and g["pass"], "v2：FY+1 下修 -2.5% → 不再一票否決（燈號）")
-    g = grp_score(_stock(eps_fy_next_revision_pct=-12.0, eps2y_revision_pp=3.0))
-    ok(g["veto"] and not g["pass"], "v2：FY+1 下修 -12% → 否決（2Y 正也救不回）")
-    # 擁有層（v2）
-    g = grp_score(_stock())
-    ok(abs(g["score"] - (25.0 + 4.0)) < 1e-6, "own_score＝min(G,30)＋EY（25＋100/25）")
-    ok(grp_score(_stock(eps_fy1_fy3_cagr_pct=60.0))["own"]["g_capped"] == 30.0, "成長封頂 30")
-    ok(grp_score(_stock(roic=35.0))["score"] == 25.0 + 4.0 + 2.0, "ROIC ≥30 持續期 +2")
-    ok(grp_score(_stock(live_peg=2.5))["score"] == 25.0 + 4.0 - 5.0, "PEG >2 → −5")
+    ok(not grp_score(_stock(eps_fy1_fy3_cagr_pct=14.9, durable_5y=False))["pass"],
+       "非耐久 G 14.9 < 15 → fail")
+    ok(grp_score(_stock(eps_fy1_fy3_cagr_pct=12.0, durable_5y=True))["pass"],
+       "v4：durable_5y=True 放寬成長門檻至 10%，12% 應過")
+    ok(not grp_score(_stock(eps_fy1_fy3_cagr_pct=12.0, durable_5y=False))["pass"],
+       "同一個 12%，非耐久仍卡在 15% 門檻")
+    g = grp_score(_stock(eps_fy1_fy3_cagr_pct=None, eps2y=40.0, durable_5y=True))
+    ok(not g["pass"], "v4：成長閘硬性要求三年期 Koyfin CAGR，單年 fallback 不算資格")
+    # v4：三月上修否決取代 FY+1 單月否決
+    g = grp_score(_stock(eps_rev_3m_pct=-6.0, eps_fy_next_revision_pct=5.0))
+    ok(g["veto"] and not g["pass"], "三月上修 -6% ≤ -5% → 否決（FY+1 正值也救不回）")
+    g = grp_score(_stock(eps_rev_3m_pct=None, eps_fy_next_revision_pct=-12.0))
+    ok(g["veto"], "三月上修缺值 → fallback FY+1 單月 ≤-10% 否決")
+    g = grp_score(_stock(eps_rev_3m_pct=None, eps_fy_next_revision_pct=-8.0))
+    ok(not g["veto"], "fallback 否決線是 -10%，-8% 不否決")
+    g = grp_score(_stock(eps_rev_3m_pct=1.0, eps_fy_next_revision_pct=-50.0))
+    ok(not g["veto"], "三月上修存在時不看 FY+1 fallback")
+    # v4：新硬否決（體質拒絕／衰退 ⛔／DD 迴避 180 天內）
+    ok(grp_score(_stock(quality_veto_level="拒絕"))["veto"], "體質閘拒絕 → 否決")
+    ok(grp_score(_stock(decline_signal_light="⛔"))["veto"], "衰退訊號 ⛔ → 否決")
+    ok(grp_score(_stock(dca_verdict="迴避", dd_age_days=30))["veto"], "180 天內 DD 迴避 → 否決")
+    ok(not grp_score(_stock(dca_verdict="迴避", dd_age_days=200))["veto"],
+       "超過 180 天的舊迴避裁決不否決")
+    # v4：過熱／頂點不擋資格，只是旗標
+    g = grp_score(_stock(ma={"above_w52": True, "price": 100.0, "mom_12_1_pct": 200.0},
+                         timing={"dist_52w_high_pct": -10.0}))
+    ok(g["overheated"] and g["pass"], "過熱（12-1 月動能 >150%）不擋資格，只標旗標")
+    g = grp_score(_stock(roic_vs_5y_x=2.0))
+    ok(g["peak"] and g["pass"], "頂點（roic_vs_5y_x ≥1.3）純顯示，不擋資格")
     ok(not grp_score(_stock(roic=12.0))["pass"], "品質閘 ROIC 12 < 15 → fail")
     ok(not grp_score(_stock(fcf=5.0))["pass"], "品質閘 FCF 5 < 10（ROIC 20 未達豁免）→ fail")
     g = grp_score(_stock(roic=26.0, fcf=3.0))
     ok(g["pass"] and g["quality"]["exempt"], "capex 週期豁免：ROIC 26 ∧ FCF 3 → 過")
     ok(grp_score(_stock(roic=None, fcf=None))["quality"]["pass"] is None, "金融（品質欄全缺）→ None 另軌")
-    g = grp_score(_stock(eps_fy_next_revision_pct=None, eps2y_revision_pp=0.7))
-    ok(g["pass"], "FY+1 缺值、2Y +0.7pp → 替代路徑過")
     g = grp_score(_stock(ma={"above_w52": False, "price": 100.0}))
     ok(not g["pass"] and g["p_label"] is None, "52 週線下 → P fail")
     ok(grp_score(_stock(timing={"dist_52w_high_pct": -3.0}))["p_label"] == "breakout",
        "距高 -3% → 突破帶")
     ok(grp_score(_stock(timing={"dist_52w_high_pct": -30.0}))["p_label"] == "in_trend",
        "距高 -30%（趨勢在但深回檔）→ 趨勢內，不給回踩帶標籤")
+
+
+def test_own_score_v4():
+    print("[1b] own_score v4：跨檔百分位＋FCF/淨利豁免")
+    from engine.grp import own_score_v4
+    rows = [
+        {"rev": 10, "mom": 20, "g": 25, "ey": 4, "fcf_ni": 1.2, "dilution": 1.0,
+         "incremental_roic_pct": None},
+        {"rev": 5, "mom": 10, "g": 15, "ey": 3, "fcf_ni": 0.8, "dilution": 2.0,
+         "incremental_roic_pct": 20.0},
+        {"rev": -2, "mom": -5, "g": 10, "ey": 2, "fcf_ni": 0.5, "dilution": 3.0,
+         "incremental_roic_pct": None},
+        {"rev": 20, "mom": 30, "g": 30, "ey": 5, "fcf_ni": None, "dilution": 0.5,
+         "incremental_roic_pct": None},
+        {"rev": 0, "mom": 0, "g": None, "ey": None, "fcf_ni": 1.0, "dilution": 1.5,
+         "incremental_roic_pct": None},
+    ]
+    out = own_score_v4(rows)
+    ok(out[3]["score"] == 100.0, "全軸最佳值 → 排名分 100")
+    ok(out[4]["score"] is None, "只有 3/5 百分位有值 → score None（不參與排名）")
+    ok(out[1]["q_fcf_ni_exempt"] is True, "incremental_roic_pct ≥15 → 免計 FCF/淨利")
 
 
 def test_route():
@@ -167,8 +202,8 @@ def test_site_consistency():
     missing = sorted(r["ticker"] for r in seats if r["ticker"] not in cards["by_ticker"])
     ok(missing == arena.get("seats_without_card", missing),
        f"無決策卡的席位已在 arena.json 明列（{len(missing)}/{len(seats)} 席：{'、'.join(missing) or '—'}）")
-    ok(all(r["grp"]["pass"] or (r.get("hyst") or "").startswith("現任") for r in seats),
-       "席位全數過閘，或為遲滯觀察中的現任席")
+    ok(all(r["grp"]["pass"] or r.get("seat_note") == "現任" for r in seats),
+       "席位全數過閘，或為月頻輪動沿用中的現任席（v4 寬限期：非硬否決不下席）")
     ok(all(r.get("cap_ok") for r in seats if "cap_ok" in r),
        "席位全數通過市值門檻")
     ok(all(r["route"] == "core" for r in arena["core_seats"]), "核心席全為 core 路由")
@@ -198,7 +233,7 @@ def test_site_consistency():
 
 
 if __name__ == "__main__":
-    for fn in (test_grp_gates, test_route, test_cap_floor, test_market_gate,
+    for fn in (test_grp_gates, test_own_score_v4, test_route, test_cap_floor, test_market_gate,
                test_claim_settlement, test_dual_source_r, test_light_merge,
                test_site_consistency):
         fn()
