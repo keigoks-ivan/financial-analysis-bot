@@ -190,7 +190,7 @@ bundle 依序包含：v19 schema 速查、`facts.json` 事實表全文、最新�
     trigger_time: str|null
 *counter_evidence
   *blind_spots[]: arr ≥1
-    view: str|null enum[論點失敗,論點成功但股東經濟變差,價格已反映太多,None]
+    view: str|null enum[論點失敗｜論點成功但股東經濟變差｜價格已反映太多｜None]
     evidence: str|null
     assumption: str|null
     consequence: str|null
@@ -201,7 +201,7 @@ bundle 依序包含：v19 schema 速查、`facts.json` 事實表全文、最新�
     fact_refs[]: arr str
   *contradictions[]: arr
     axis: str|null
-    cause: str|null enum[價格變動,新證據,方法變動,None]
+    cause: str|null enum[價格變動｜新證據｜方法變動｜None]
     prior_field: str|arr|null
     side_a: str|null
     side_b: str|null
@@ -213,7 +213,7 @@ bundle 依序包含：v19 schema 速查、`facts.json` 事實表全文、最新�
   *triggers[]: arr ≥1
     *n: int|str
     *text: str|null
-    *type: str|null enum[假設驗證,風險,Single Thing,估值rearm,加碼,減碼,清倉,複審日期,None]
+    *type: str|null enum[假設驗證｜風險｜Single Thing｜估值rearm｜加碼｜減碼｜清倉｜複審日期｜None]
     *maps_to: str|null
     *metric: str|null
     *threshold: str|null
@@ -280,7 +280,7 @@ bundle 依序包含：v19 schema 速查、`facts.json` 事實表全文、最新�
   *growth_durability: num|null
   *quality_score: num|null
   *ai_risk: str|null enum[🟢,🟡,🔴,None]
-  *long_term_confidence: str|null enum[高,中,低,None]
+  *long_term_confidence: str|null enum[高｜中｜低｜None]
   *fpe_fy2: num|null
   *peg_fy2: num|null
   *stress
@@ -295,7 +295,7 @@ catalysts[]: arr
   date_precision: str|null enum[month,quarter,None]
   *type: str|null enum[product,regulatory,capacity,guidance,macro,other,None]
   *event: str|null
-  *impact: str|null enum[高,中,低,None]
+  *impact: str|null enum[高｜中｜低｜None]
   *watch: str|null
 
 ### evidence_refs 用法（v19）
