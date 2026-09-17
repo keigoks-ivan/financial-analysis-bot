@@ -1124,31 +1124,31 @@ def extract_template_parts():
 
 
 DEFINITIONS_TEXT = [
-    "利差＝10Y 減 3M，單位百分點，月頻（日頻序列先取月均）。主線全部國家用 10Y−3M；"
+    "利差＝10Y 減 3M，單位百分點，月頻（日頻序列先取月均）。主線全部國家用 10Y−3M。"
     "美國另加 10Y−2Y（T10Y2Y 月均）作對照欄，不進主線計算。",
-    "美國的 3M 用 TB3MS（3 個月期公債），公債對公債，跟 10Y 公債殖利率口徑一致；德/英/"
+    "美國的 3M 用 TB3MS（3 個月期公債），公債對公債，跟 10Y 公債殖利率口徑一致。德/英/"
     "日/加/澳/韓六國的 3M 用 IR3TIB（銀行同業拆款利率）。FRED 的 OECD 資料庫沒有這六國"
     "對應的公債 3M 序列可換，同業拆款利率含信用溢價，會讓這六國的利差水準整體偏低、"
-    "倒掛事件偏多，跨國比較時要記住這個系統性偏差；台灣另外用商業本票，見下方說明。",
+    "倒掛事件偏多，跨國比較時要記住這個系統性偏差。台灣另外用商業本票，見下方說明。",
     "TB3MS 原始報的是「貼現率」（discount basis），比債券等值殖利率（bond-equivalent "
     "yield）低，利率越高差越大，直接拿貼現率跟 10Y 公債殖利率相減會系統性偏高，把利差"
     "沒那麼深的倒掛事件洗掉。美國的利差先把 TB3MS 轉成債券等值殖利率再減：BEY ＝ 365 × "
-    "d ／ (360 − d × 91)，d 是 TB3MS 除以 100 的小數，91 是 3 個月的天數，算完再乘回"
+    "d ／ (360 − d × 91)，d 是 TB3MS 除以 100 的小數，91 是 3 個月的天數，算完再乘回 "
     "100，這是 3 個月期以內公債的標準換算公式。",
     "倒掛月＝該月利差小於 0。倒掛事件＝第一個倒掛月為事件起點，起點後 24 個月內的所有"
     "倒掛月都算同一事件（避免像 2019 年那種斷斷續續被拆成多次事件）。每個事件記錄起點、"
     "期間最深的利差、倒掛總月數。",
-    "衰退定義 A（主線，八國同一把尺）：技術性衰退＝實質 GDP 季增率連續兩季負成長。"
+    "衰退定義 A（主線，八國同一套定義）：技術性衰退＝實質 GDP 季增率連續兩季負成長。"
     "衰退起點＝第一個負成長季的第一個月，終點＝之後第一個正成長季的第一個月。",
-    "衰退定義 B（對照）：OECD 衰退指標等於 1 的期間，起點取指標由 0 轉 1 的月份；"
+    "衰退定義 B（對照）：OECD 衰退指標等於 1 的期間，起點取指標由 0 轉 1 的月份。"
     "這條序列在 2022 年 9 月停更，樣本只到那裡。",
     "衰退定義 C（僅美國）：NBER 認定的衰退期（USRECDM），這條序列持續更新到現在。",
     "台灣的 3M 用商業本票次級市場利率（31-90 天），不是同業拆款也不是公債，含發行企業的"
     "信用溢價，偏差方向跟德/英/日/加/澳/韓六國的 IR3TIB 一樣，會讓利差系統性偏低、倒掛"
     "事件偏多。",
-    "台灣主線（定義 A）用技術性衰退，跟其餘七國同一把尺，GDP 季增率資料從 2000 年第 1 季"
-    "開始。另外跑一把只有台灣用的對照尺（定義 T）：國發會「台灣景氣循環基準日期」峰到谷，"
-    "峰的次月為衰退起點，谷月納入衰退期間；這把尺樣本窗從 1996 年 1 月起（台灣 10Y 公債"
+    "台灣主線（定義 A）用技術性衰退，跟其餘七國同一套定義，GDP 季增率資料從 2000 年第 1 季"
+    "開始。另外跑一套只有台灣用的對照定義（定義 T）：國發會「台灣景氣循環基準日期」峰到谷，"
+    "峰的次月為衰退起點，谷月納入衰退期間。定義 T 的樣本窗從 1996 年 1 月起（台灣 10Y 公債"
     "序列 1995 年斷斷續續，1996 年才連續）。",
     "命中＝事件起點後 H 個月內出現衰退起點，H 分別算 12、24、36 個月，主線報 24。"
     "事件起點當下若已經在衰退中，單獨標「已在衰退中」，不算命中也不算落空，但仍列出。"
@@ -1209,7 +1209,7 @@ def _section_us_alt_spread(countries_data) -> str:
 <th class="num">事件數</th><th class="num">H=24 命中率</th><th class="num">提升倍數</th></tr></thead>
 <tbody>{body}</tbody></table></div>
 <div class="note">同業拆款利率（IR3TIB）含銀行間信用溢價，景氣正常時本來就會比公債利率高
-一截，拿它跟 10Y 公債殖利率相減，容易做出偏淺、偏早、不是公債曲線真的倒掛的假事件；美國
+一截，拿它跟 10Y 公債殖利率相減，容易做出偏淺、偏早、不是公債曲線真的倒掛的假事件。美國
 主線改用 TB3MS（3 個月期公債），而且 TB3MS 本身是貼現率，還要轉成債券等值殖利率才能跟
 10Y 公債殖利率同口徑相減（換算公式見上方定義段），才是公債對公債的標準口徑。10Y−2Y 是市場最常引用的另一種
 倒掛口徑，短端換成 2 年期公債，事件切法也會跟著變，這兩欄只做對照，不進主表計算。
@@ -1224,9 +1224,9 @@ def section_method(countries_data):
     return f"""
 <div class="section">
 <h2 class="section-title">十一、方法：怎麼定義「倒掛」與「衰退」</h2>
-<div class="takeaway">這頁的判定規則在跑資料前就定死，八個國家套同一把尺，中途不因某國
+<div class="takeaway">這頁的判定規則在跑資料前就定死，八個國家套同一套定義，中途不因某國
 結果好不好看而回頭調整。台灣的利率與 GDP 來自央行與主計總處官方資料庫，同樣跑技術性
-衰退這把尺；另外多跑一把國發會峰谷的尺作對照，其餘定義維持一致。</div>
+衰退這套定義。另外多跑一套國發會峰谷的對照定義，其餘定義維持一致。</div>
 <div class="card"><ul class="disc">{lis}</ul>
 {alt_spread}
 </div>
@@ -1366,9 +1366,9 @@ def section_hero_v2(pooled_h, pooled_lead, tw_status, finding_a, finding_b):
           f"比不看訊號的基率 {fmt_pct(base)} 高 {fmt_num(uplift, 1)} 倍，方向是真的，但各國強弱差很多。")
     q2 = (f"多久會看到衰退？前置期中位數 {fmt_num(lead_med, 0)} 個月，"
           f"最短 {fmt_num(pooled_lead['min'], 0)} 個月、最長 {fmt_num(pooled_lead['max'], 0)} 個月，"
-          f"是一條曲線不是一個固定數字。")
-    tw_note = "台灣併入主表。" if tw_status == "ok" else "台灣資料整理中，本頁先出七國版本。"
-    q3 = f"八國都適用嗎？不是。{tw_note}各國命中率差很多，也有國家的倒掛是衰退先到才出現，不是先行指標。"
+          f"要當一個範圍看，別當時間表。")
+    tw_note = "台灣併入主表。" if tw_status == "ok" else "台灣資料整理中，先出七國版本。"
+    q3 = f"八國都適用嗎？各國答案不同。{tw_note}命中率差很多，也有國家的倒掛是衰退先到才出現。"
 
     return f"""
 <div class="hero">
@@ -1379,8 +1379,8 @@ def section_hero_v2(pooled_h, pooled_lead, tw_status, finding_a, finding_b):
     <p>{esc(finding_a)} {esc(finding_b)}</p>
   </div>
   <div class="hero-stats">
-    <div><div class="hs-label">合併池命中率 H=24</div><div class="hs-value">{fmt_pct(hit_rate)}</div></div>
-    <div><div class="hs-label">合併池基率 H=24</div><div class="hs-value">{fmt_pct(base)}</div></div>
+    <div><div class="hs-label">合併池命中率・24 個月內</div><div class="hs-value">{fmt_pct(hit_rate)}</div></div>
+    <div><div class="hs-label">合併池基率・24 個月內</div><div class="hs-value">{fmt_pct(base)}</div></div>
     <div><div class="hs-label">提升倍數</div><div class="hs-value">{fmt_num(uplift, 1)}x</div></div>
     <div><div class="hs-label">前置期中位數</div><div class="hs-value">{fmt_num(lead_med, 0)} 月</div></div>
   </div>
@@ -1426,8 +1426,8 @@ def section1(countries_data, pooled_h):
 
     lead = (f"合併池命中率 {fmt_pct(hp['hit_rate'])}，基率 {fmt_pct(hp['base_rate'])}，"
             f"提升 {fmt_num(hp['uplift'], 1)} 倍，方向上倒掛確實墊高衰退機率。"
-            f"但拆到國家層級，命中率從最低到最高差很多，這節用 95% 信賴區間檢查每個國家的"
-            f"命中率是不是真的高於基率，不是只看點估計。")
+            f"但拆到國家層級，命中率從最低到最高差很多，這節用 95% 信賴區間（confidence interval）"
+            f"檢查每個國家的命中率是不是真的高於基率，不是只看點估計。")
 
     labels = [r["name"] for r in rows_data] + [pooled_row["name"]]
     all_rows = rows_data + [pooled_row]
@@ -1453,8 +1453,8 @@ new Chart(document.getElementById('chart1'), {{
 """
     chart_html = '<div class="chart-wrap" style="height:420px"><canvas id="chart1"></canvas></div>'
     caption = ("藍色區間是命中率的 95% 信賴區間，藍點是命中率的點估計，灰色長條是同一段時間"
-               "不看訊號的基率。藍色區間整段都在灰色長條右邊，代表訊號站得住；藍色區間蓋回灰色"
-               "長條，代表這個樣本數還分不出倒掛跟瞎猜的差別。")
+               "不看訊號的基率。藍色區間整段都在灰色長條右邊，代表訊號站得住。"
+               "藍色區間蓋回灰色長條，代表這個樣本數還分不出倒掛訊號跟不看訊號的差別。")
 
     def _fmt_row(r):
         already = "—" if r["n_already"] is None else f"{r['n_already']}／{r['n_events']}"
@@ -1485,7 +1485,7 @@ new Chart(document.getElementById('chart1'), {{
     note_parts = []
     if straddlers:
         note_parts.append(f"{'、'.join(straddlers)}的 95% 信賴區間跨回基率，樣本數不夠大，"
-                           f"統計上還不能說這幾國的倒掛訊號比瞎猜準。")
+                           f"統計上還不能說這幾國的倒掛訊號比不看訊號準。")
     else:
         note_parts.append("八個國家的命中率信賴區間都沒有跨回基率，方向上都站得住。")
     if small_n:
@@ -1507,12 +1507,12 @@ def section2(pr_points, pr_pooled):
                                and p["precision"] < 0.5 and p["recall"] >= 0.5]
 
     if lo_recall:
-        title = f"{'、'.join(p['name'] for p in lo_recall)}倒掛沒響時，衰退照樣來"
+        title = f"{'、'.join(p['name'] for p in lo_recall)}沒出現倒掛時，衰退照樣來"
     else:
-        title = "精確率高不等於召回率高：倒掛沒響時衰退照樣來"
+        title = "精確率高不等於召回率高：沒出現倒掛時衰退照樣來"
 
-    lead = (f"精確率是「倒掛響了，衰退真的來」的比率（就是表 1 的命中率）；召回率是「衰退發生前，"
-            f"倒掛有沒有先響過」（反向召回率）。合併池精確率 {fmt_pct(pr_pooled['precision'])}，"
+    lead = (f"精確率是「出現倒掛，衰退真的來」的比率（就是表 1 的命中率）。召回率是「衰退發生前，"
+            f"倒掛有沒有先出現過」（反向召回率）。合併池精確率 {fmt_pct(pr_pooled['precision'])}，"
             f"召回率 {fmt_pct(pr_pooled['recall'])}，這節看兩者是不是同時高，還是只有一邊高。")
 
     names = [p["name"] for p in pr_points] + [pr_pooled["name"]]
@@ -1540,13 +1540,13 @@ new Chart(document.getElementById('chart2'), {{
 }});
 """
     chart_html = '<div class="chart-wrap" style="height:380px"><canvas id="chart2"></canvas></div>'
-    caption = ("右上角代表精確率、召回率都高，訊號可靠又不太漏接。右下角代表倒掛響了通常真的衰退，"
-               "但很多次衰退發生前倒掛沒先響，訊號漏接率高。左邊代表倒掛響了不一定準。")
+    caption = ("右上角代表精確率、召回率都高，訊號可靠又不太漏接。右下角代表出現倒掛通常真的衰退，"
+               "但很多次衰退發生前倒掛沒先出現，訊號漏接率高。左邊代表出現倒掛不一定準。")
 
     note = ""
     if hi_recall_lo_precision:
         note += (f"{'、'.join(p['name'] for p in hi_recall_lo_precision)}落在精確率低、召回率不低"
-                  f"的區域，倒掛響了不一定準，但衰退發生前多半出現過倒掛。")
+                  f"的區域，出現倒掛不一定準，但衰退發生前多半出現過倒掛。")
     if lo_recall:
         note += (f"{'、'.join(p['name'] for p in lo_recall)}召回率低於五成，代表這些國家一半以上的"
                   f"衰退發生前 24 個月內沒出現過倒掛，倒掛不是這些國家衰退的必要條件。")
@@ -1632,16 +1632,16 @@ new Chart(document.getElementById('chart3'), {{
 <tbody>{''.join(rows)}</tbody></table></div>"""
 
     if ci_overlap:
-        note = (f"深倒掛（{deep_n} 筆）命中率 {fmt_pct(deep_rate)}，95% CI 是 "
-                f"{fmt_ci(deep_ci_lo, deep_ci_hi)}；淺倒掛（{shallow_n} 筆）命中率 {fmt_pct(shallow_rate)}，"
-                f"95% CI 是 {fmt_ci(shallow_ci_lo, shallow_ci_hi)}，兩個區間大幅重疊，這個樣本數還不能"
-                f"斷言深倒掛比淺倒掛準。淺倒掛內部再拆長短（50.0% 對 33.3%）的樣本更小，n 只有 8 跟 18，"
+        note = (f"深倒掛（{deep_n} 筆）命中率 {fmt_pct(deep_rate)}，95% 信賴區間是 "
+                f"{fmt_ci(deep_ci_lo, deep_ci_hi)}。淺倒掛（{shallow_n} 筆）命中率 {fmt_pct(shallow_rate)}，"
+                f"95% 信賴區間是 {fmt_ci(shallow_ci_lo, shallow_ci_hi)}，兩個區間大幅重疊，這個樣本數還不能"
+                f"斷言深倒掛比淺倒掛準。淺倒掛內部再拆長短（50.0% 對 33.3%）的樣本更小，分母只有 8 跟 18，"
                 f"差距同樣落在雜訊範圍，不當成論點。深度是事件當下就看得到的訊號，持續月數要等事件"
                 f"結束才知道，這兩件事本來就該分開看，不代表兩者現在測出顯著差異。")
     else:
         note = (f"深倒掛（{deep_n} 筆）命中率 {fmt_pct(deep_rate)}，淺倒掛（{shallow_n} 筆）命中率 "
-                f"{fmt_pct(shallow_rate)}，95% CI 分別是 {fmt_ci(deep_ci_lo, deep_ci_hi)} 與 "
-                f"{fmt_ci(shallow_ci_lo, shallow_ci_hi)}，兩個區間不重疊。深度是事件當下就看得到的訊號；"
+                f"{fmt_pct(shallow_rate)}，95% 信賴區間分別是 {fmt_ci(deep_ci_lo, deep_ci_hi)} 與 "
+                f"{fmt_ci(shallow_ci_lo, shallow_ci_hi)}，兩個區間不重疊。深度是事件當下就看得到的訊號。"
                 f"持續月數要等事件結束才知道，不是起點當下可用的訊號，兩者不能放在同一個時間點上比較。")
 
     html = _section_shell(2, title, lead, _std_body(chart_html, caption, table_html, note) + f"<script>{chart_js}</script>")
@@ -1668,9 +1668,9 @@ def section4(pooled_curve, us_curve, pooled_base_curve, us_base_curve,
     else:
         title = "倒掛之後衰退要多久才來：這是一條曲線，不是一個數字"
 
-    lead = (f"累積命中曲線回答「等到第 k 個月，命中率累積到多少」，跟表 1 只報一個 H=24 的數字不同。"
-            f"合併池在 k=24 累積命中率 {fmt_pct(k24['hit_rate'])}（n={k24['n']}），"
-            f"k=36 累積命中率 {fmt_pct(k36['hit_rate'])}（n={k36['n']}）。")
+    lead = (f"累積命中曲線回答「等到第 k 個月，命中率累積到多少」，跟表 1 只報 24 個月內一個數字不同。"
+            f"合併池在第 24 個月累積命中率 {fmt_pct(k24['hit_rate'])}（{k24['n']} 筆），"
+            f"第 36 個月累積命中率 {fmt_pct(k36['hit_rate'])}（{k36['n']} 筆）。")
 
     labels = list(range(1, len(pooled_curve) + 1))
     pooled_hit_arr = [p["hit_rate"] for p in pooled_curve]
@@ -1701,7 +1701,7 @@ new Chart(document.getElementById('chart4'), {{
 """
     chart_html4 = '<div class="chart-wrap" style="height:340px"><canvas id="chart4"></canvas></div>'
     caption4 = ("實線是累積命中率，虛線是不看訊號的無條件基率，兩條線的距離就是訊號的邊際貢獻。"
-                "線越早分開、分得越開，訊號的時間價值越高；線在後段還在往上爬，代表窗口拉更長還有用。")
+                "線越早分開、分得越開，訊號的時間價值越高。線在後段還在往上爬，代表窗口拉更長還有用。")
 
     median = pooled_lead["median"]
     names_lead = [p["name"] for p in lead_strip]
@@ -1864,9 +1864,9 @@ new Chart(document.getElementById('chart7'), {{
 }});
 """
     chart_html7 = '<div class="chart-wrap" style="height:340px"><canvas id="chart7"></canvas></div>'
-    caption7 = ("深色兩條是精確率（曲線響了、衰退真的來的比率），淺色兩條是召回率（該國每次衰退"
+    caption7 = ("深色兩條是精確率（曲線出現倒掛、衰退真的來的比率），淺色兩條是召回率（該國每次衰退"
                 "發生前，那條曲線是否曾出現倒掛月）。只看精確率會偏向美國，因為美國自己的事件數少、"
-                "分母小；兩組都要看才能判斷哪條曲線真的更有用。")
+                "分母小。兩組都要看才能判斷哪條曲線真的更有用。")
 
     better_prec_with_us = [r["name"] for r in rows_ucc
                             if r["us_curve_hit_rate"] is not None and r["own_curve_hit_rate"] is not None
@@ -1977,10 +1977,10 @@ def section6(period_split):
     else:
         title = "2000 年之後訊號有沒有變鈍"
 
-    lead = (f"合併池事件依起點分成 2000 年以前與以後兩組，各自算命中率（H=24）與同期基率，"
-            f"再用 95% 信賴區間檢查差距是不是雜訊。2000 年以前 n={pooled['pre']['n']}，"
-            f"2000 年以後 n={pooled['post']['n']}，這節只報數字，QE 年代利差被壓低是常見的"
-            f"解釋，但本頁不下因果結論。")
+    lead = (f"合併池事件依起點分成 2000 年以前與以後兩組，各自算 24 個月內的命中率與同期基率，"
+            f"再用 95% 信賴區間檢查差距是不是雜訊。2000 年以前 {pooled['pre']['n']} 筆，"
+            f"2000 年以後 {pooled['post']['n']} 筆，這節只報數字，QE 年代利差被壓低是常見的"
+            f"解釋，這裡不下因果結論。")
 
     labels8 = ["2000 年以前", "2000 年以後"]
     pooled_hr = [pooled["pre"]["hit_rate"], pooled["post"]["hit_rate"]]
@@ -2006,10 +2006,10 @@ new Chart(document.getElementById('chart8'), {{
     caption = ("四條長條左半是合併池，右半是美國單獨算的，每組左邊命中率、右邊基率，"
                "2000 年以前對照 2000 年以後。看的是命中率降了多少、基率是不是同時也降了。")
 
-    note = (f"合併池 2000 年以前命中率 {fmt_pct(pre_hr)}（95% CI {fmt_ci(*pre_ci)}），2000 年以後 "
-            f"{fmt_pct(post_hr)}（95% CI {fmt_ci(*post_ci)}），兩個區間大幅重疊，這個樣本數看不出"
-            f"訊號明顯變鈍。美國 2000 年以前 n={us['pre']['n'] if us else '—'}、以後 "
-            f"n={us['post']['n'] if us else '—'}，95% CI 分別是 {fmt_ci(*us_pre_ci)} 與 "
+    note = (f"合併池 2000 年以前命中率 {fmt_pct(pre_hr)}（95% 信賴區間 {fmt_ci(*pre_ci)}），2000 年以後 "
+            f"{fmt_pct(post_hr)}（95% 信賴區間 {fmt_ci(*post_ci)}），兩個區間大幅重疊，這個樣本數看不出"
+            f"訊號明顯變鈍。美國 2000 年以前 {us['pre']['n'] if us else '—'} 筆、以後 "
+            f"{us['post']['n'] if us else '—'} 筆，95% 信賴區間分別是 {fmt_ci(*us_pre_ci)} 與 "
             f"{fmt_ci(*us_post_ci)}，樣本只有個位數，區間寬到不能單獨拿美國的數字下結論。")
 
     html = _section_shell(5, title, lead, _std_body(chart_html, caption, "", note) + f"<script>{chart_js8}</script>")
@@ -2070,7 +2070,7 @@ new Chart(document.getElementById('chart9'), {{
     lead = ("2022 年那一波，多數主要經濟體的利差都一度轉負，這節直接把同一時間點的訊號攤開來看"
             "實際結果，不用平均數字掩蓋分歧。")
     note = ("這張表只做訊號與結果的對帳，不解釋「為什麼有的國家躲過去了」，那要另外查財政刺激、"
-            "就業市場緊俏程度這類傳導管道，本頁不做因果推論。")
+            "就業市場緊俏程度這類傳導管道，這裡不做因果推論。")
 
     html = _section_shell(6, title, lead, _std_body(chart_html, caption, table_html, note) + f"<script>{chart_js9}</script>")
     return html, n_hit, n_miss
@@ -2103,7 +2103,7 @@ def section8(already_rows):
         names = "、".join(f"{r['name']}（{r['n_already']}／{r['n_events']}）" for r in flagged)
         note = f"{names}出現過起點時已在衰退中的事件，這幾個國家的倒掛訊號在這幾次是同時指標而非領先指標。"
     else:
-        note = "八國樣本內沒有出現「起點時已在衰退中」的事件，倒掛在本頁樣本裡都發生在衰退之前。"
+        note = "八國樣本內沒有出現「起點時已在衰退中」的事件，倒掛在這個樣本裡都發生在衰退之前。"
 
     html = _section_shell(7, title, lead, table_html + f'\n<div class="note">{esc(note)}</div>\n')
     return html
@@ -2136,19 +2136,19 @@ def section9(dumbbell_rows):
     others_shifted = any(m[0] != "US" and m[4] != 0 for m in rank_moves)
 
     if all_rate_rose and us_top_both and others_shifted:
-        title = "換尺後命中率全面上升；美國提升倍數兩把尺都排第一，其餘國家排序隨尺變動"
+        title = "換一種衰退定義後命中率全面上升，美國的提升倍數仍是八國第一，其餘排序不穩"
     elif all_rate_rose and max_rank_shift <= 2:
-        title = "換尺後命中率全面上升，提升倍數的國家排序大致不變"
+        title = "換一種衰退定義後命中率全面上升，提升倍數的國家排序大致不變"
     elif all_rate_rose and biggest_move:
-        title = f"換尺後命中率全面上升，但提升倍數排序大幅變動：{biggest_move[1]}換了 {max_rank_shift} 名"
+        title = f"換一種衰退定義後命中率全面上升，但提升倍數排序大幅變動：{biggest_move[1]}換了 {max_rank_shift} 名"
     elif biggest_move:
-        title = f"換一把尺，{biggest_move[1]}的提升倍數排名變化最大"
+        title = f"換一種衰退定義，{biggest_move[1]}的提升倍數排名變化最大"
     else:
-        title = "換一把尺，答案有沒有變"
+        title = "換一種衰退定義，答案有沒有變"
 
     lead = ("主線用定義 A（技術性衰退），這節把每國換成對照定義（美國換 NBER、台灣換國發會"
             "峰谷、其餘六國換 OECD 指標）重算一次命中率與提升倍數（命中率÷該定義自己的基率），"
-            "看的不只是命中率會不會變，還有換尺後國家之間的排序穩不穩。")
+            "看的不只是命中率會不會變，還有換一種定義後國家之間的排序穩不穩。")
 
     names = [r["name"] for r in dumbbell_rows]
     a_vals = [r["a_rate"] for r in dumbbell_rows]
@@ -2176,7 +2176,7 @@ new Chart(document.getElementById('chart10'), {{
 """
     chart_html = '<div class="chart-wrap" style="height:380px"><canvas id="chart10"></canvas></div>'
     caption = ("藍點是主線定義 A 的命中率，橘點是對照定義（美國 NBER、台灣國發會峰谷、其餘六國 "
-               "OECD 指標）的命中率，中間灰色線只是連接兩點。點離得越遠，代表換一把尺答案差越多。")
+               "OECD 指標）的命中率，中間灰色線只是連接兩點。點離得越遠，代表換一種定義答案差越多。")
 
     alt_labels = {r["name"]: r["alt_label"] for r in dumbbell_rows}
     rows = []
@@ -2197,28 +2197,28 @@ new Chart(document.getElementById('chart10'), {{
 <tbody>{''.join(rows)}</tbody></table></div>"""
 
     if all_rate_rose and us_top_both and others_shifted:
-        note = (f"八國換尺後命中率沒有一個下降，六個 OECD 對照國的命中率普遍上升，因為官方指標抓的"
-                f"是景氣循環下行段，觸發得比技術性衰退頻繁，基率也跟著墊高。美國換成 NBER 之後提升"
-                f"倍數仍是八國最高，兩把尺排名都是第一，這個結論穩。但其餘七國的提升倍數排名幾乎"
-                f"都跟著換尺變動，最大一次是{biggest_move[1]}，從第 {biggest_move[2]} 名換到第 "
-                f"{biggest_move[3]} 名。{biggest_move[1]}定義 A 下的事件數只有 3 筆，樣本小到任何"
-                f"一把尺都可能把排名整個翻轉，不是訊號本身變了，是分母太小；南韓的事件數也只有個位"
-                f"數，同樣要打折看。台灣換成國發會峰谷後樣本窗更長，看到的事件不是同一組，命中率差"
+        note = (f"八國換成對照定義後命中率沒有一個下降，六個 OECD 對照國的命中率普遍上升，因為官方"
+                f"指標抓的是景氣循環下行段，觸發得比技術性衰退頻繁，基率也跟著墊高。美國換成 NBER "
+                f"之後提升倍數仍是八國最高，兩種定義排名都是第一，這個結論穩。其餘七國的提升倍數"
+                f"排名幾乎都跟著換定義變動，最大一次是{biggest_move[1]}，從第 {biggest_move[2]} 名"
+                f"換到第 {biggest_move[3]} 名，差別來自分母太小：{biggest_move[1]}定義 A 下的事件數"
+                f"只有 3 筆，樣本小到任何一種定義都可能把排名整個翻轉。南韓的事件數也只有個位數，"
+                f"同樣要打折看。台灣換成國發會峰谷後樣本窗更長，看到的事件不是同一組，命中率差"
                 f"不能直接相減比較，只能各自看提升倍數。")
     elif all_rate_rose and max_rank_shift <= 2:
-        note = ("八國換尺後命中率沒有一個下降，多數明顯上升，但提升倍數（把基率也墊高的效果"
-                "扣掉之後）排名大致沒有大幅洗牌，換一把尺不會推翻表 1 的結論。")
+        note = ("八國換成對照定義後命中率沒有一個下降，多數明顯上升，但提升倍數（把基率也墊高的效果"
+                "扣掉之後）排名大致沒有大幅洗牌，換一種定義不會推翻表 1 的結論。")
     elif all_rate_rose and biggest_move:
-        note = (f"八國換尺後命中率沒有一個下降，六個 OECD 對照國的命中率普遍上升，因為官方指標抓的"
-                f"是景氣循環下行段，觸發得比技術性衰退頻繁，基率也跟著墊高。單看命中率會誤以為訊號"
-                f"全面變準，但把基率一起考慮的提升倍數排名並不穩定，{biggest_move[1]}從第 "
-                f"{biggest_move[2]} 名換到第 {biggest_move[3]} 名，換了 {max_rank_shift} 名，"
-                f"日本、南韓這類樣本只有個位數事件的國家，換一把尺結果就可能整個翻轉，不是訊號"
-                f"本身變了，是分母太小。台灣換成國發會峰谷後樣本窗更長，看到的事件不是同一組，"
+        note = (f"八國換成對照定義後命中率沒有一個下降，六個 OECD 對照國的命中率普遍上升，因為官方"
+                f"指標抓的是景氣循環下行段，觸發得比技術性衰退頻繁，基率也跟著墊高。單看命中率會誤"
+                f"以為訊號全面變準，但把基率一起考慮的提升倍數排名並不穩定，{biggest_move[1]}從第 "
+                f"{biggest_move[2]} 名換到第 {biggest_move[3]} 名，換了 {max_rank_shift} 名，差別"
+                f"來自分母太小：日本、南韓這類樣本只有個位數事件的國家，換一種定義結果就可能整個"
+                f"翻轉。台灣換成國發會峰谷後樣本窗更長，看到的事件不是同一組，"
                 f"命中率差不能直接相減比較，只能各自看提升倍數。")
     else:
-        note = ("換尺後命中率有升有降，提升倍數的排名也跟著變，結論會因為換了哪一把尺而不同，"
-                "不能只看定義 A 的結果就下定論。")
+        note = ("換成對照定義後命中率有升有降，提升倍數的排名也跟著變，結論會因為換了哪一種定義"
+                "而不同，不能只看定義 A 的結果就下定論。")
 
     html = _section_shell(8, title, lead, _std_body(chart_html, caption, table_html, note) + f"<script>{chart_js10}</script>")
     return html
@@ -2352,12 +2352,12 @@ def section12(tw_status, tw_data):
                  "市場利率、主計總處實質 GDP 季增率、國發會景氣循環基準日期")
         pts = (tw_data or {}).get("peaks_troughs") or []
         if pts:
-            tw_line = (f"<li>台灣資料整理中，本頁先出七國版本。國發會景氣循環基準日期（峰谷）已查證到"
+            tw_line = (f"<li>台灣資料整理中，先出七國版本。國發會景氣循環基準日期（峰谷）已查證到"
                        f"完整官方表格（{len(pts)} 次循環，1954 年起，見下方附表），但十年期公債殖利率、"
                        f"90 天期商業本票次級市場利率、實質 GDP 季增率這三項是互動查詢系統，沒有在時限內"
                        f"拿到可用的完整序列，四項缺一，台灣目前不能跑完整回測，不用假資料湊數。</li>")
         else:
-            tw_line = (f"<li>台灣資料整理中，本頁先出七國版本：{esc(detail)}"
+            tw_line = (f"<li>台灣資料整理中，先出七國版本：{esc(detail)}"
                        f"尚未齊備到可以跑完整回測的程度，缺什麼在回報裡逐項列出，不用假資料湊數。</li>")
         if pts:
             rows = "".join(f"<tr><td>{esc(i + 1)}</td><td>{esc(p['peak'])}</td>"
@@ -2374,34 +2374,34 @@ def section12(tw_status, tw_data):
         tw_line = ("<li>台灣的實質 GDP 季增率只從 2000 年第 1 季開始，定義 A 的樣本期間因此比"
                    "其餘七國短，事件數少，命中率的統計不確定性大。台灣的 3M 用商業本票次級市場"
                    "利率（不是同業拆款、也不是公債），含企業信用溢價，偏差方向跟其餘七國的 "
-                   "IR3TIB 一樣：利差整體偏低、倒掛事件偏多，方法段已註明。對照尺定義 T"
-                   "（國發會峰谷）樣本窗比定義 A 長，兩把尺看到的事件不是同一組，數字不能直接"
-                   "跨尺相減比較，只能各自看提升倍數。</li>")
+                   "IR3TIB 一樣：利差整體偏低、倒掛事件偏多，方法段已註明。對照定義 T"
+                   "（國發會峰谷）樣本窗比定義 A 長，兩種定義看到的事件不是同一組，數字不能直接"
+                   "跨定義相減比較，只能各自看提升倍數。</li>")
     return f"""
 <div class="section">
 <h2 class="section-title">{CN_NUM[11]}、這頁沒有告訴你的事</h2>
 <div class="card"><ul class="disc">
 <li>日本樣本短：實質 GDP 季增率只從 1994 年起有資料，衰退事件數本來就少，命中率與
 基率的分母都小，數字的不確定性比其他國家大，不宜跟樣本更長的國家直接比大小。</li>
-<li>技術性衰退（定義 A）這把尺會漏掉不是「連兩季負成長」但普遍認定是衰退的事件。
+<li>技術性衰退（定義 A）這個定義會漏掉不是「連兩季負成長」但普遍認定是衰退的事件。
 美國 2001 年那次衰退（NBER 認定 2001-03 至 2001-11）沒有連續兩季 GDP 負成長，定義 A
-在美國這裡會漏掉它，只有定義 C（NBER）抓得到，第九節換尺後命中率會不同。</li>
+在美國這裡會漏掉它，只有定義 C（NBER）抓得到，第九節換一種定義後命中率會不同。</li>
 <li>澳洲樣本內幾乎三十年沒有技術性衰退（直到近年才出現符合定義的事件），這段期間的
 「基率」會被壓得很低，任何一次倒掛的提升倍數都容易被放大，判讀時要留意分母。</li>
-<li>OECD 衰退指標（定義 B）2022 年 9 月停更，2022 年之後的所有事件在這把尺下都無法
-判定命中或落空，本頁一律標「未到期」，不是它顯示沒衰退。</li>
+<li>OECD 衰退指標（定義 B）2022 年 9 月停更，2022 年之後的事件在這個定義下一律標
+「未到期」，不是它顯示沒衰退。</li>
 {tw_line}
-<li>第一節的信賴區間用 n＝可判定事件數算命中率 CI，用 n＝滾動月數算基率 CI；基率 CI 的
-月份彼此不是獨立觀測（同一次衰退會被鄰近好幾個月一起算進去），區間比真正獨立樣本該有的
-還要窄，讀基率 CI 時要打折看待。</li>
-<li>第五節用美國曲線預測其他國家，樣本窗取的是美國事件窗與該國定義 A 樣本窗的交集；
+<li>第一節的信賴區間，命中率那欄用 n＝可判定事件數，基率那欄用 n＝滾動月數。基率信賴
+區間的月份彼此不是獨立觀測（同一次衰退會被鄰近好幾個月一起算進去），區間比真正獨立樣本
+該有的還要窄，讀基率信賴區間時要打折看待。</li>
+<li>第五節用美國曲線預測其他國家，樣本窗取的是美國事件窗與該國定義 A 樣本窗的交集。
 美國利差序列從 1953-04 起，比其餘七國定義 A 樣本窗的起點都早，交集窗因此就等於各國
 自己的樣本窗，兩邊樣本窗相同，是同窗重算，不是拿不同期間的數字硬湊在一起比較。</li>
 <li>第三節把倒掛月數（持續）當成分桶條件之一，但持續月數要等事件走完才知道，不是事件
-起點當下就能用的訊號；深度（最深利差）才是起點當下就看得到的。這節只回報兩者分開後的
+起點當下就能用的訊號，深度（最深利差）才是起點當下就看得到的。這節只回報兩者分開後的
 命中率，不代表持續月數可以在起點當下拿來做判斷。</li>
 <li>全部序列都是官方統計事後定案的數字，跑資料當下離現在越近的月份，GDP 數字越可能
-之後被修正，本頁用的是抓取當下的最新公布值，不會回頭用修正後數字改寫已經定案的事件。</li>
+之後被修正，這裡用的是抓取當下的最新公布值，不會回頭用修正後數字改寫已經定案的事件。</li>
 </ul>
 {tw_table}
 </div>
@@ -2432,14 +2432,14 @@ def generate_html(countries_data, pooled_lead, pooled_h, per_country_lead, poole
     main_style, nav_block = extract_template_parts()
     h24 = pooled_h[PRIMARY_H]
     title = "殖利率倒掛與經濟衰退：八國回測 | InvestMQuest Research"
-    tw_desc_note = ("台灣併入主表，另跑國發會峰谷對照尺。" if tw_status == "ok"
-                     else "台灣資料整理中，本頁先出七國版本。")
+    tw_desc_note = ("台灣併入主表，另跑國發會峰谷對照定義。" if tw_status == "ok"
+                     else "台灣資料整理中，先出七國版本。")
     countries_desc = "美/德/英/日/加/澳/韓/台" if tw_status == "ok" else "美/德/英/日/加/澳/韓"
-    description = (f"用 FRED 與台灣央行、主計總處資料對{countries_desc}套同一把尺回測 10Y-3M 利差倒掛："
-                    f"合併池 H=24 個月命中率 {fmt_pct(h24['hit_rate'])}、基率 {fmt_pct(h24['base_rate'])}、"
-                    f"提升 {fmt_num(h24['uplift'], 1)} 倍，前置期中位數 {fmt_num(pooled_lead['median'], 0)} 個月；"
+    description = (f"用 FRED 與台灣央行、主計總處資料對{countries_desc}套同一套定義回測 10Y-3M 利差倒掛："
+                    f"合併池 24 個月內命中率 {fmt_pct(h24['hit_rate'])}、基率 {fmt_pct(h24['base_rate'])}、"
+                    f"提升 {fmt_num(h24['uplift'], 1)} 倍，前置期中位數 {fmt_num(pooled_lead['median'], 0)} 個月。"
                     f"{tw_desc_note}另檢查信賴區間、精確率與召回率、深度與持續分桶、累積命中曲線、"
-                    f"八國同步與美國曲線交叉檢驗、2000 年前後對照、換尺啞鈴圖。")
+                    f"八國同步與美國曲線交叉檢驗、2000 年前後對照、換一種定義啞鈴圖。")
 
     try:
         sys.path.insert(0, str(NAV_DIR))
@@ -2466,7 +2466,7 @@ def generate_html(countries_data, pooled_lead, pooled_h, per_country_lead, poole
     s12_html = section12(tw_status, tw_data)
 
     if k_sep:
-        finding_a = f"倒掛之後要等到第 {k_sep} 個月，累積命中率才明顯超過基率，不是一倒掛馬上就準。"
+        finding_a = f"倒掛之後要等到第 {k_sep} 個月，累積命中率才明顯超過基率。"
     else:
         finding_a = "累積命中率跟基率的差距全程都不明顯，時間拉長也拉不開差距。"
     if len(better_recall_with_us) >= 5:
@@ -2486,9 +2486,9 @@ def generate_html(countries_data, pooled_lead, pooled_h, per_country_lead, poole
     takeaway = ("<b>給沒有統計背景的讀者：</b>這頁做的事很單純。利差是 10 年期公債殖利率減 3 個月期"
                 "利率，跌到 0 以下叫「倒掛」，歷史上市場常拿它當衰退警訊。我們把八個國家的利率與 GDP "
                 "資料全部拉出來，用同一套規則自動判定倒掛事件與衰退事件，算命中率、算多久看到、算"
-                "跟瞎猜比有沒有比較準，再逐一檢查訊號的信賴區間、深淺長短、同步性與換尺穩健度。本頁"
-                "不做「現在該不該擔心」的建議，也不預測下一次衰退什麼時候來，只回報歷史上這個訊號"
-                "準不準、準多快、在哪些條件下會失真。")
+                "跟不看訊號比有沒有比較準，再逐一檢查訊號的信賴區間、深淺長短、同步性與換一種定義"
+                "後的穩健度。本頁不做「現在該不該擔心」的建議，也不預測下一次衰退什麼時候來，只回報"
+                "歷史上這個訊號準不準、準多快、在哪些條件下會失真。")
 
     body = f"""<!DOCTYPE html>
 <html lang="zh-Hant">
