@@ -260,6 +260,11 @@ BLOCKS = [
         ]),
         ("殖利率倒掛", "yc", [
             ("/backtest/yield_curve/", "殖利率倒掛預示衰退嗎：八國、同一把尺", "研究", False),
+            ("/backtest/yc_equity/", "倒掛之後股票該賣嗎：八國前向報酬", "研究", False),
+        ]),
+        ("衰退訊號", "sig", [
+            ("/backtest/sahm_rule/", "Sahm 法則跨國適用嗎：失業率認衰退", "研究", False),
+            ("/backtest/first_cut/", "第一次降息之後股市是漲是跌：有無衰退分兩組", "研究", False),
         ]),
     ]),
 ]

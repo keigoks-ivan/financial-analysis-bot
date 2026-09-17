@@ -168,6 +168,9 @@ RESEARCH_CRASH_LINKS = [
 RESEARCH_MACRO_LINKS = [
     ("/backtest/housing_gdp/", "人均GDP與房價", "housing_gdp", "研究"),
     ("/backtest/yield_curve/", "殖利率倒掛與衰退", "yield_curve", "研究"),
+    ("/backtest/yc_equity/", "倒掛之後股票該賣嗎", "yc_equity", "研究"),
+    ("/backtest/sahm_rule/", "Sahm 法則跨國", "sahm_rule", "研究"),
+    ("/backtest/first_cut/", "第一次降息後的股市", "first_cut", "研究"),
 ]
 
 # 2026-08-15 新增：台股可轉債（CB）研究專區——五個獨立回測（折價組合/停止轉換/
