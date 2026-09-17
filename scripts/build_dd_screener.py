@@ -2136,7 +2136,21 @@ _FUND_RAW_FIELDS = (
     "target_high", "target_low", "target_avg", "last_price_local",
     "ni_margin_ltm_pct", "est_rev_cagr_3y_pct", "est_eps_cagr_3y_pct",
     "below_52w_high_pct",
+    # 2026-09-17 (second same-day refresh, 籌碼面): see compute_fundamental_gates()
+    # §L below and scripts/load_eps_estimates_xlsx.py docstring "Two more optional
+    # columns" section.
+    "short_interest_pct_float", "insider_net_buy_3m",
 )
+
+# v4.1（2026-09-17，見 knowledge/rule_ledger.md「v4.1 融券比 >10% 只能衛星」列）：
+# 融券占流通股比門檻——超過此值只在 GRP 席位引擎（scripts/engine/grp.py）排除核心
+# 候選資格（衛星照樣能坐），不是這裡的資格閘，這裡只算旗標供顯示。
+SHORT_SQUEEZE_PCT = 10.0
+# 內部人訊號門檻：insider_net_buy_3m（近 3 個月淨買賣股數，Koyfin "Insider
+# Transactions, Shares (Net) - 3M"）> 0 視為淨買超（"買"）、< 0 視為淨賣超
+# （"賣"）、= 0 或缺值不判定方向（None）——單純看淨股數正負號，不設額外門檻
+# （3 個月窗已經是 Koyfin 提供的最短週期，方向本身就是訊號，不疊加大小門檻）。
+# 純備註 badge，不是排序因子、不是資格閘。
 
 
 def compute_fundamental_gates(record: dict | None, roic_quadrant_code: str | None,
@@ -2145,8 +2159,9 @@ def compute_fundamental_gates(record: dict | None, roic_quadrant_code: str | Non
     """DD 技能既有的機械化規則逐字搬進 screener（2026-09-17）——體質五項 veto
     [timing-appendix §B/H] + 六組衍生 gate（營運槓桿 QC-27 / 毛利觸發 QC-26 /
     資本配置機械版 問四 / capex 強度 §1 / 虧損股 gate QC-45 / 衰退訊號 問三 /
-    估值對自身歷史 閘3閘5 / 目標價分歧 #23 / 動能 rows 5,8a / CCC）。不新創門檻，
-    來源見各節內註解。
+    估值對自身歷史 閘3閘5 / 目標價分歧 #23 / 動能 rows 5,8a / CCC）+ §L 籌碼面
+    （融券占流通股比旗標 short_squeeze_flag、內部人淨買賣方向 insider_signal，
+    2026-09-17 第二次同日更新新增）。不新創門檻，來源見各節內註解。
 
     `record` is the RAW per-ticker Excel dict (ExcelSnapshot.get(t)) — same
     convention as compute_roic_decomposition(): aggregate financials/margins/
@@ -2378,6 +2393,24 @@ def compute_fundamental_gates(record: dict | None, roic_quadrant_code: str | Non
     if roic_quadrant_code == "LH" and ccc is not None:
         lh_note = "供應商融資" if ccc < 0 else ("需查 CCC" if ccc > 60 else None)
     out["lh_ccc_note"] = lh_note
+
+    # --- L. Short interest / insider (2026-09-17, 籌碼面) ------------------------
+    # 兩者皆純描述器：short_squeeze_flag 不是資格閘（GRP 席位引擎的融券排除核心候選
+    # 判定另在 scripts/engine/grp.py grp_score() 讀 short_interest_pct_float 自算，
+    # 不讀這個旗標）；insider_signal 只是備註 badge，兩者都不進 funnel_rank 公式。
+    si_pct = fund["short_interest_pct_float"]
+    out["short_interest_pct_float"] = si_pct
+    out["short_squeeze_flag"] = (si_pct > SHORT_SQUEEZE_PCT) if si_pct is not None else None
+    insider_net = fund["insider_net_buy_3m"]
+    out["insider_net_buy_3m"] = insider_net
+    if insider_net is None:
+        out["insider_signal"] = None
+    elif insider_net > 0:
+        out["insider_signal"] = "買"
+    elif insider_net < 0:
+        out["insider_signal"] = "賣"
+    else:
+        out["insider_signal"] = None
 
     return out
 
@@ -2707,7 +2740,9 @@ def enrich_ticker(
         **fund_gates,    # 2026-09-17: 體質五項 veto/quality_veto_*/ol_divergence_*/
                          # gm_yoy_pp/gm_trigger/capalloc_mech_grade/capex_*/rule_of_40/
                          # cash_runway_months/decline_signal_*/pe_vs_5y_x/pb_vs_5y_x/
-                         # target_range_x/target_upside_pct/rsi14/return_6m_*/ccc_*/fund
+                         # target_range_x/target_upside_pct/rsi14/return_6m_*/ccc_*/fund/
+                         # short_interest_pct_float/short_squeeze_flag/insider_net_buy_3m/
+                         # insider_signal（皆純描述器，見 compute_fundamental_gates §L）
         "ev5y_pct": ev5y_pct,
         "ma": ma,
         "ma_from_cache": ma_from_cache,

@@ -94,7 +94,9 @@ def test_all_none_row_renders_safely():
                 "eps_fy1_consec_down", "ol_divergence_pp", "ol_divergence_label",
                 "gm_trigger", "capalloc_mech_grade", "capex_pct_rev",
                 "rule_of_40", "cash_runway_months", "pe_vs_5y_x", "target_upside_pct",
-                "rsi_overheated", "return_6m_gate", "rsi_usable", "lh_ccc_note"):
+                "rsi_overheated", "return_6m_gate", "rsi_usable", "lh_ccc_note",
+                "short_interest_pct_float", "short_squeeze_flag",
+                "insider_net_buy_3m", "insider_signal"):
         assert g[key] is None
     assert g["quality_veto_fail_count"] == 0
     assert g["quality_veto_level"] is None  # no veto item known at all -> None, not a false "維持"
@@ -128,6 +130,33 @@ def test_net_cash_row_with_no_net_debt_ebitda_passes_leverage():
     rec_pos_unknown = {"net_debt_ebitda_x": None, "net_debt_ltm": 50.0}
     g2 = bds.compute_fundamental_gates(rec_pos_unknown, None, eps_fy1=None)
     assert g2["leverage"] is None  # net debt positive but no EBITDA multiple -> unknown
+
+
+def test_short_interest_and_insider_signal_2026_09_17():
+    # short_squeeze_flag: > 10 -> True, <= 10 -> False, missing -> None (untouched
+    # by test_all_none_row_renders_safely above).
+    hi = bds.compute_fundamental_gates({"short_interest_pct_float": 12.5}, None, None)
+    assert hi["short_interest_pct_float"] == 12.5
+    assert hi["short_squeeze_flag"] is True
+    lo = bds.compute_fundamental_gates({"short_interest_pct_float": 3.2}, None, None)
+    assert lo["short_squeeze_flag"] is False
+    exactly_ten = bds.compute_fundamental_gates({"short_interest_pct_float": 10.0}, None, None)
+    assert exactly_ten["short_squeeze_flag"] is False, "門檻是 > 10，不是 >= 10"
+
+    # insider_signal: net buy > 0 -> 買, net sell < 0 -> 賣, 0 or missing -> None.
+    buy = bds.compute_fundamental_gates({"insider_net_buy_3m": 15000.0}, None, None)
+    assert buy["insider_net_buy_3m"] == 15000.0
+    assert buy["insider_signal"] == "買"
+    sell = bds.compute_fundamental_gates({"insider_net_buy_3m": -5000.0}, None, None)
+    assert sell["insider_signal"] == "賣"
+    flat = bds.compute_fundamental_gates({"insider_net_buy_3m": 0.0}, None, None)
+    assert flat["insider_signal"] is None
+
+    # both land inside the "fund" sub-object too (per _FUND_RAW_FIELDS).
+    both = bds.compute_fundamental_gates(
+        {"short_interest_pct_float": 22.0, "insider_net_buy_3m": -1000.0}, None, None)
+    assert both["fund"]["short_interest_pct_float"] == 22.0
+    assert both["fund"]["insider_net_buy_3m"] == -1000.0
 
 
 def test_monotonic_gm_decline_fails():

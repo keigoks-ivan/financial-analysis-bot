@@ -8,6 +8,13 @@
     v4 revision veto (eps_rev_3m_pct <= -5, falling back to the old FY+1 <= -10 rule
     only when eps_rev_3m_pct is missing)
 
+v4.1 additions (2026-09-17, see knowledge/rule_ledger.md "v4.1 融券比 >10% 只能衛星"
+and "v4.1 基期效應＋循環股守門" rows): high_short_interest (core-candidacy exclusion
+only, not a ranking factor or eligibility gate), _base_effect_growth() (overrides g
+with FY2->FY3 growth when FY1->FY2 jumped on a low base), and own_raw()/own_score_v4()
+cyclical guard (caps p_g/p_ey percentiles at 50 when PEG is suspiciously low on a
+cyclical-shaped stock).
+
 Hand-made inputs only — no network, no disk reads of real dd-screener/lamp data.
 Same style as scripts/tests/test_fundamental_gates.py.
 """
@@ -15,6 +22,8 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+
+import pytest
 
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
@@ -234,3 +243,132 @@ def test_overheat_fallback_to_r26_when_mom_missing():
     assert hot["overheated"] is True
     cool = grp.grp_score(_stock(ma={"above_w52": True, "price": 100.0, "mom_12_1_pct": None}, _r26=50.0))
     assert cool["overheated"] is False
+
+
+# ── v4.1 融券高（core-candidacy only, NOT a ranking factor / eligibility gate） ──
+# See knowledge/rule_ledger.md "v4.1 融券比 >10% 只能衛星（2026-09-17）".
+
+def test_high_short_interest_flag_above_threshold():
+    g = grp.grp_score(_stock(short_interest_pct_float=12.5))
+    assert g["high_short_interest"] is True
+    assert g["short_interest_pct_float"] == 12.5
+    assert g["pass"], "融券高不是資格閘，不否決 pass"
+    assert not g["veto"], "融券高不是硬否決"
+
+
+def test_high_short_interest_flag_below_threshold():
+    g = grp.grp_score(_stock(short_interest_pct_float=3.0))
+    assert g["high_short_interest"] is False
+    assert g["pass"]
+
+
+def test_high_short_interest_flag_missing_is_false_not_none():
+    g = grp.grp_score(_stock())   # no short_interest_pct_float key at all
+    assert g["high_short_interest"] is False
+    assert g["short_interest_pct_float"] is None
+    assert g["pass"], "缺融券資料不影響資格（fail-open 顯示、不否決）"
+
+
+# ── v4.1 基期效應（base effect） ──────────────────────────────────────────
+# See knowledge/rule_ledger.md "v4.1 基期效應＋循環股守門（2026-09-17）".
+
+def test_base_effect_triggers_and_overrides_g_mrk_shape():
+    # MRK-shaped: 2.75 -> 9.55 -> 10.62. FY1->FY2 jumps 3.47x (>1.6x), FY2->FY3
+    # is only +11.2% (<20%) -> base effect fires, g becomes FY2->FY3 growth.
+    g = grp.grp_score(_stock(
+        eps_fy1_fy3_cagr_pct=97.0, eps_fy_curr=2.75, eps_fy_next=9.55, eps_fy3=10.62,
+        durable_5y=True,
+    ))
+    assert g["base_effect"] is True
+    assert g["g"] == pytest.approx(11.2, abs=0.5)
+    assert g["g_three_year"] is True, "基期校正後仍是三年期資料，不是退回單年 fallback"
+    # 97% would trivially clear both bars; ~11% only clears the durable 10% bar.
+    assert g["pass"], "MRK 型基期校正後的 g（~11%）只能靠 durable 10% 放寬過關"
+
+
+def test_base_effect_does_not_trigger_when_growth_is_smooth_mu_shape():
+    # MU-shaped: 73.4 -> 156.3 -> 171.6. FY1->FY2 jumps 2.13x (>1.6x) but
+    # FY2->FY3 is only +9.8% (<20%) -> base effect fires -> g fails growth gate.
+    g = grp.grp_score(_stock(
+        eps_fy1_fy3_cagr_pct=52.9, eps_fy_curr=73.4, eps_fy_next=156.3, eps_fy3=171.6,
+        durable_5y=False,
+    ))
+    assert g["base_effect"] is True
+    assert g["g"] == pytest.approx(9.79, abs=0.2)
+    assert not g["pass"], "MU 型基期校正後 g<10%，非 durable 亦低於 15% 門檻，應失敗"
+
+
+def test_base_effect_not_flagged_for_nvda_shape():
+    # NVDA-shaped: 9.31 -> 15.61 -> 21.06. FY1->FY2 is 1.68x (>1.6x) but
+    # FY2->FY3 is +34.9% (>=20%) -> base effect must NOT fire.
+    g = grp.grp_score(_stock(
+        eps_fy1_fy3_cagr_pct=50.5, eps_fy_curr=9.31, eps_fy_next=15.61, eps_fy3=21.06,
+    ))
+    assert g["base_effect"] is False
+    assert g["g"] == pytest.approx(50.5, abs=0.01), "未觸發基期效應時應原樣沿用三年 CAGR"
+
+
+def test_base_effect_absent_raw_eps_fields_falls_back_to_cagr():
+    g = grp.grp_score(_stock(eps_fy1_fy3_cagr_pct=25.0))   # no eps_fy_curr/next/fy3
+    assert g["base_effect"] is False
+    assert g["g"] == 25.0
+
+
+# ── v4.1 own_raw()/own_score_v4() 循環股守門（cyclical guard） ───────────────
+
+def _cyclical_stock(peg=0.2, gm_swing=True, capex_high=False):
+    s = {"eps_fy1_fy3_cagr_pct": 40.0, "eps_rev_3m_pct": 5.0,
+         "live_fpe_est": 10.0, "ma": {"mom_12_1_pct": 10.0}, "live_peg": peg}
+    if gm_swing:
+        s["fund"] = {"gm_ltm_pct": 20.0, "gm_fy1_pct": 35.0, "gm_fy2_pct": 45.0, "gm_fy3_pct": 30.0}
+    if capex_high:
+        s["capex_pct_rev"] = 22.0
+    return s
+
+
+def test_own_raw_cycle_guard_true_when_cyclical_and_peg_low():
+    raw = grp.own_raw(_cyclical_stock(peg=0.15, gm_swing=True))
+    assert raw["cyclical"] is True
+    assert raw["cycle_guard"] is True
+    assert raw["cycle_guard_detail"]["peg"] == 0.15
+
+
+def test_own_raw_cycle_guard_false_when_peg_not_low_enough():
+    raw = grp.own_raw(_cyclical_stock(peg=0.8, gm_swing=True))
+    assert raw["cyclical"] is True, "毛利率跨距 >20pp 本身仍標記循環，純顯示"
+    assert raw["cycle_guard"] is False, "PEG 0.8 未低於 0.3，不觸發 guard"
+
+
+def test_own_raw_cycle_guard_false_when_not_cyclical():
+    s = _cyclical_stock(peg=0.1, gm_swing=False)
+    s["capex_pct_rev"] = 5.0
+    raw = grp.own_raw(s)
+    assert raw["cyclical"] is False
+    assert raw["cycle_guard"] is False
+
+
+def test_own_raw_cycle_guard_false_when_peg_missing():
+    s = _cyclical_stock(peg=None, gm_swing=True)
+    del s["live_peg"]
+    raw = grp.own_raw(s)
+    assert raw["cyclical"] is True
+    assert raw["cycle_guard"] is False, "缺 PEG 無法判斷是否可疑，不觸發 guard"
+
+
+def test_own_raw_cycle_guard_via_capex_intensity():
+    s = _cyclical_stock(peg=0.1, gm_swing=False, capex_high=True)
+    raw = grp.own_raw(s)
+    assert raw["cyclical"] is True, "資本支出佔營收 >15% 亦視為循環股"
+    assert raw["cycle_guard"] is True
+
+
+def test_own_score_v4_caps_p_g_and_p_ey_when_cycle_guard():
+    rows = _five_row_fixture()
+    # Turn row 3 (currently the top scorer on every axis) into a cycle-guard case.
+    rows[3]["cyclical"] = True
+    rows[3]["cycle_guard"] = True
+    out = grp.own_score_v4(rows)
+    assert out[3]["p_g"] == 50.0, "guard 觸發時 p_g 應封頂 50（未封頂前是 100.0）"
+    assert out[3]["p_ey"] == 50.0, "guard 觸發時 p_ey 應封頂 50（未封頂前是 100.0）"
+    # untouched rows keep their original percentiles
+    assert out[0]["p_g"] != 50.0 or rows[0].get("cycle_guard")

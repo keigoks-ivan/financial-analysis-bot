@@ -509,6 +509,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
       <li><strong>資本配置</strong>：機械版 2-of-3 評等（<strong>不是</strong> DD 報告內 LLM 質性評等）——股數稀釋率年化 ≤1.5%（庫藏股使其為負）、庫藏股佔 FCF ≤80%（或無庫藏股）、槓桿過關（同「體質」欄槓桿項）三項各自過關與否，<code>3</code> 項過關＝<code>A</code>、<code>2</code> 項＝<code>B</code>、<code>≤1</code> 項＝<code>C</code>；已知項 &lt;2 顯示 <code>—</code>。hover 看稀釋率／庫藏股佔FCF／SBC佔營收三個數字。
       </li>
 
+      <li><strong>籌碼</strong>：融券占流通股比（Short Interest % of Float）＋近 3 個月內部人淨買賣方向——<code>&gt;10%</code> 標紅（軋空風險偏高；同一數字也讓該股在 GRP 席位引擎排序中只能列衛星、不進核心候選，但這裡的顯示本身不是資格閘）；旁邊 ▲買／▼賣 badge 為近 3 個月內部人淨買賣方向（淨股數 <code>&gt;0</code> 為買、<code>&lt;0</code> 為賣、<code>=0</code> 或缺值不顯示）。兩者皆為描述器，不進入綜合評分公式。全部選填，未覆蓋的名字顯示 <code>—</code>。
+        <br><em>來源：</em>Koyfin「Short Interest &gt; % Of Shares Outstanding」與「Insider Transactions, Shares (Net) - 3M」，經 <code>scripts/load_eps_estimates_xlsx.py</code> 解析 → <code>compute_fundamental_gates()</code> §L 算出 <code>short_squeeze_flag</code>／<code>insider_signal</code>。
+      </li>
+
       <li><strong>估值 vs 5Y</strong>：NTM 本益比 ÷ 過去 5 年平均本益比——<code>&gt;1.5x</code> 標紅，代表目前估值明顯貴於自身歷史區間（非同業比較）。hover 另附 PB 對 5 年均值倍數（<code>&gt;2.0x</code> 視為偏貴）。
       </li>
 
@@ -1404,6 +1408,29 @@ function _renderCapallocCell(s) {
   return '<td title="' + tip + '" style="color:' + color + ';font-weight:600">' + grade + '</td>';
 }
 
+// 2026-09-17（第二次同日更新）：籌碼面——融券占流通股比 + 內部人淨買賣方向，全部選填，
+// 見 compute_fundamental_gates() §L。純描述器，不進 funnel_rank 公式。
+function _renderChipsCell(s) {
+  var si = s.short_interest_pct_float;
+  var ins = s.insider_net_buy_3m;
+  var sig = s.insider_signal;
+  if ((si === null || si === undefined) && (ins === null || ins === undefined)) {
+    return '<td style="color:var(--muted)">—</td>';
+  }
+  var siT = (typeof si === 'number') ? si.toFixed(1) + '%' : '—';
+  var siColor = s.short_squeeze_flag ? 'var(--neg)' : 'var(--sec)';
+  var insT = (typeof ins === 'number') ? (ins > 0 ? '+' : '') + Math.round(ins).toLocaleString() + ' 股' : '—';
+  var badge = '';
+  if (sig === '買') {
+    badge = '<span style="color:var(--pos);margin-left:4px;font-weight:600" title="近 3 個月內部人淨買超 ' + insT + '">▲買</span>';
+  } else if (sig === '賣') {
+    badge = '<span style="color:var(--neg);margin-left:4px;font-weight:600" title="近 3 個月內部人淨賣超 ' + insT + '">▼賣</span>';
+  }
+  var tip = '融券占流通股比 ' + siT + (s.short_squeeze_flag ? '（>10%，軋空風險偏高，GRP 席位排序中只能列衛星）' : '')
+    + '｜內部人近 3 個月淨買賣 ' + insT;
+  return '<td title="' + tip + '" style="color:' + siColor + (s.short_squeeze_flag ? ';font-weight:600' : '') + '">' + siT + badge + '</td>';
+}
+
 function _renderValuationVs5yCell(s) {
   var v = s.pe_vs_5y_x;
   if (v === null || v === undefined) return '<td style="color:var(--muted)">—</td>';
@@ -1599,6 +1626,7 @@ function buildTable(stocks) {
   var thQualityVeto = _thSortable('體質', 'quality_veto_fail_count', {title: 'DD 體質五項 veto：毛利連降／FCF對淨利率／營收連四季負／槓桿／FY1連三月下修 —— 0-2 項不合格維持評等、3 項降一級、4-5 項拒絕，hover 看命中哪幾項'});
   var thDeclineSignal = _thSortable('衰退訊號', 'decline_signal_count', {title: '衰退訊號計數（6 項機械指標）：🟢 0 項／🟡 1-2 項／🔴 3-4 項／⛔ ≥5 項，hover 看命中哪幾項'});
   var thCapAlloc = _thSortable('資本配置', 'capalloc_mech_grade', {title: '資本配置機械版評等（股數稀釋率≤1.5%/yr、庫藏股佔FCF≤80%、槓桿過關，三項符合幾項）—— 與 DD 報告內 LLM 資本配置評等是不同東西'});
+  var thChips = _thSortable('籌碼', 'short_interest_pct_float', {title: '融券占流通股比（Short Interest % of Float）——>10% 標紅（軋空風險偏高，同時使該股在 GRP 席位排序中只能列衛星）＋近 3 個月內部人淨買賣方向（▲買／▼賣）。兩者皆為描述器，非資格閘、不進綜合評分'});
 
   // ---- 時機 group: MA | 距ATH | vs50DMA | RS | 動能 ----
   var thMa = '<th>MA</th>';
@@ -1617,7 +1645,7 @@ function buildTable(stocks) {
     {label: '獲利', span: 9},
     {label: '成長', span: 6},
     {label: '估值', span: 4},
-    {label: '體質', span: 4},
+    {label: '體質', span: 5},
     {label: '時機', span: 5},
     {label: '其他', span: 1},
   ];
@@ -1639,7 +1667,7 @@ function buildTable(stocks) {
     // 估值
     thPeg + thLivePe + thValuationVs5y + th5yExpect +
     // 體質
-    thPassCount + thQualityVeto + thDeclineSignal + thCapAlloc +
+    thPassCount + thQualityVeto + thDeclineSignal + thCapAlloc + thChips +
     // 時機
     thMa + thDistAth + thVs50dma + thRs + thMomentum +
     // 其他
@@ -1679,6 +1707,7 @@ function buildTable(stocks) {
     var tdQualityVeto = _renderQualityVetoCell(s);
     var tdDeclineSignal = _renderDeclineSignalCell(s);
     var tdCapAlloc = _renderCapallocCell(s);
+    var tdChips = _renderChipsCell(s);
 
     // 時機
     var tmg = s.timing || {};
@@ -1772,7 +1801,7 @@ function buildTable(stocks) {
       // 估值
       tdPeg + tdLivePe + tdValuationVs5y + td5yExpect +
       // 體質
-      tdPassCount + tdQualityVeto + tdDeclineSignal + tdCapAlloc +
+      tdPassCount + tdQualityVeto + tdDeclineSignal + tdCapAlloc + tdChips +
       // 時機
       tdMa + tdDistAth + tdVs50dma + tdRs + tdMomentum +
       // 其他

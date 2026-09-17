@@ -53,6 +53,24 @@ vs SPY +1.2%、首批 B&H +1.0%、10 週 23 檔坐過 10 席——換手率過�
   月頻輪動（見 build_arena 檔頭）：每月第一次 --ledger 跑重新選一次，期間只有硬否決
   （迴避／拒絕/⛔／三月上修 ≤−5／市值不足／連兩週跌破 52 週線）能換人，空位由下一
   名遞補。規則登記：knowledge/rule_ledger.md「v4 席位引擎（2026-09-17）」。
+
+v4.1（2026-09-17 持有人拍板，三項 DD-free 機械規則搬進引擎，皆非新創判準）：
+  1. 融券高：short_interest_pct_float > 10% → high_short_interest=True，比照
+     overheated 待遇——不進 own_score 排序、不是資格閘，只排除核心候選（衛星照樣能
+     坐）。依據：高融券預測低報酬的學術證據集中在尾巴（>10-20% 流通股），大型優質
+     股母體內 1-3% 的差異是雜訊。內部人買賣（insider_net_buy_3m／insider_signal）
+     全程只是 build_arena 席位表的備註 badge，不是排序因子、不是資格閘。
+  2. 基期效應（_base_effect_growth()）：Koyfin 三年 FY1→FY3 CAGR 若因 FY1→FY2 低
+     基期跳增（>1.6x）而 FY2→FY3 成長 <20%，改用 FY2→FY3 成長率取代，同時用在
+     成長閘（grp_score 的 g）與排序鍵（own_raw 的 g）——例：MRK／MU 兩檔原始三年
+     CAGR 皆被 FY1→FY2 低基期跳增蓋掉真實的 FY2→FY3 穩態成長。
+  3. 循環股守門（own_raw()／own_score_v4()）：毛利率四點跨距 >20pp 或資本支出佔
+     營收 >15% → cyclical；cyclical 且 PEG（live_peg 優先，fallback peg）<0.3 →
+     cycle_guard=True，成長分位／盈餘殖利率分位封頂 50 再平均——循環股在景氣高點
+     常同時出現「爆量成長」與「PEG 低到可疑」，不封頂會讓排序誤判成複利成長。
+  規則登記：knowledge/rule_ledger.md「v4.1 融券比 >10% 只能衛星」「v4.1 基期效應＋
+  循環股守門」兩列（皆 2026-09-17）。設計稿：notes/site-internal/root/
+  _seat_engine_v4_20260917.md「v4.1 追加」段。
 """
 from __future__ import annotations
 
@@ -129,6 +147,19 @@ P_PULLBACK = (-25.0, -8.0)   # 回檔帶（含趨勢完好）
 MOM_12_1_OVERHEAT = 150.0   # 12-1 個月動能（ma.mom_12_1_pct）> 此值 → overheated
 R26_OVERHEAT_FALLBACK = 80.0  # mom_12_1_pct 缺值時 fallback：26 週漲幅（_r26，build_arena.weekly_structure）
 PEAK_ROIC_X = 1.3          # roic_vs_5y_x ≥ 此值 → peak（純顯示註記，不影響核心候選資格）
+# v4.1（2026-09-17，見 knowledge/rule_ledger.md「v4.1 融券比 >10% 只能衛星」列）：
+# 融券比不是排序因子、不是資格閘——只比照 overheated 的待遇，排除核心候選資格
+# （衛星照樣能坐）。依據：高融券預測低報酬的學術證據集中在尾巴（>10-20% 流通股），
+# 大型優質股母體內 1-3% 的差異是雜訊，故不進 own_score 排序。
+SI_CORE_EXCLUDE_PCT = 10.0   # short_interest_pct_float > 此值 → high_short_interest（只能衛星）
+# v4.1（2026-09-17，見 rule_ledger「v4.1 基期效應＋循環股守門」列）：基期效應與
+# 循環股守門的門檻常數，DD 技能既有機械規則搬進引擎，不新創判準。
+BASE_EFFECT_STEP12_X = 1.6     # FY1→FY2 跳增倍數門檻（f2/f1）
+BASE_EFFECT_STEP23_CAP = 0.20  # FY2→FY3 成長需 < 此值（20%）才判定為基期失真
+CYCLE_GM_SWING_PP = 20.0       # 循環股守門：毛利率（LTM/FY-1/FY-2/FY-3）四點跨距門檻（pp）
+CYCLE_CAPEX_PCT_REV = 15.0     # 循環股守門：資本支出佔營收門檻（%）
+CYCLE_GUARD_PEG_MAX = 0.3      # 循環股守門：PEG 需 < 此值才觸發 guard（cyclical 且低到可疑）
+CYCLE_GUARD_PCTL_CAP = 50.0    # guard 觸發時，own_score_v4 的 p_g／p_ey 百分位上限
 # v4 時機燈 action 對照（build_arena 倉位欄）
 LAMP_ACTION = {"green": "正常倉", "yellow": "半倉", "hot": "半倉", "red": "零倉・等板機", "out": "—"}
 
@@ -141,12 +172,43 @@ def _f(v):
         return None
 
 
+def _base_effect_growth(s: dict) -> tuple:
+    """v4.1（2026-09-17，見 knowledge/rule_ledger.md「v4.1 基期效應＋循環股守門」列）
+    基期效應（base effect）：Koyfin 三年 FY1→FY3 CAGR 是幾何平均，若 FY1→FY2 因低基期
+    （例如轉虧為盈次年、或極小分母）跳增，會把整段三年 CAGR 拉得虛高，蓋掉 FY2→FY3
+    才是穩態成長的事實（例：MRK 2.75→9.55→10.62，CAGR 幾何平均看似高速，但 FY2→FY3
+    只有 +11%；MU 73.4→156.3→171.6 同理）。DD 技能既有機械規則搬進引擎，不新創判準。
+
+    f1/f2/f3（eps_fy_curr/eps_fy_next/eps_fy3）三者皆為正值時，若 FY2/FY1 之比
+    > BASE_EFFECT_STEP12_X 且 FY3/FY2−1 < BASE_EFFECT_STEP23_CAP，改用 FY2→FY3
+    成長率取代 eps_fy1_fy3_cagr_pct（回傳 base_effect=True）；其餘情況原樣沿用三年
+    CAGR（base_effect=False）。改用的仍是三年期 Koyfin 預估資料本身，只是換一種
+    算法讀穩態成長，**不影響** g_three_year 判定（不是退回單年 fallback）。
+    回傳 (g, base_effect, detail|None)；detail 供 UI tooltip 顯示兩段成長率。"""
+    cagr = _f(s.get("eps_fy1_fy3_cagr_pct"))
+    f1, f2, f3 = _f(s.get("eps_fy_curr")), _f(s.get("eps_fy_next")), _f(s.get("eps_fy3"))
+    if f1 is not None and f2 is not None and f3 is not None and f1 > 0 and f2 > 0 and f3 > 0:
+        step12_x = f2 / f1
+        step23_pct = (f3 / f2 - 1.0) * 100.0
+        if step12_x > BASE_EFFECT_STEP12_X and step23_pct < BASE_EFFECT_STEP23_CAP * 100.0:
+            detail = {"fy1_fy2_pct": round((step12_x - 1.0) * 100.0, 1), "fy2_fy3_pct": round(step23_pct, 1)}
+            return round(step23_pct, 2), True, detail
+    return cagr, False, None
+
+
 def own_raw(s: dict) -> dict:
     """v4 own_score 單檔原始輸入（pure）——見 own_score_v4() 做跨檔百分位排序。
-    g 只認真三年期 Koyfin CAGR（eps_fy1_fy3_cagr_pct，封頂 30），不像 grp_score 的
-    g 閘變數那樣 fallback 到 eps2y——ELIGIBLE 集合本身已要求 g_three_year=True，
-    這裡沒有 fallback 的必要（也不該讓單年基期效應混進排序）。"""
-    g_raw = _f(s.get("eps_fy1_fy3_cagr_pct"))
+    g 只認真三年期 Koyfin CAGR（eps_fy1_fy3_cagr_pct，封頂 30，v4.1 起先過
+    _base_effect_growth() 基期效應校正），不像 grp_score 的 g 閘變數那樣 fallback
+    到 eps2y——ELIGIBLE 集合本身已要求 g_three_year=True，這裡沒有 fallback 的
+    必要（也不該讓單年基期效應混進排序）。
+
+    v4.1 另算循環股守門（cyclical／cycle_guard，見檔頭同名段）：cyclical＝毛利率
+    （LTM/FY-1/FY-2/FY-3，需 ≥3 點）跨距 >20pp 或資本支出佔營收 >15%；guard＝
+    cyclical 且 PEG（live_peg 優先，fallback peg）<0.3——PEG 低到可疑通常是循環股
+    在景氣高點被低估未來獲利，own_score_v4() 依 cycle_guard 把 p_g／p_ey 百分位
+    封頂 50，cyclical 本身即使未觸發 guard 也照樣回傳，供純顯示用的「循環」備註。"""
+    g_raw, base_effect, base_effect_detail = _base_effect_growth(s)
     g = min(g_raw, OWN_G_CAP) if g_raw is not None else None
     fpe = _f(s.get("live_fpe_est"))
     ey = (100.0 / fpe) if fpe and fpe > 0 else None
@@ -154,6 +216,19 @@ def own_raw(s: dict) -> dict:
         px = _f((s.get("ma") or {}).get("price")); e1 = _f(s.get("eps_fy_next"))
         if px and e1 and px > 0:
             ey = e1 / px * 100.0
+    fund = s.get("fund") or {}
+    gms = [v for v in (_f(fund.get(k)) for k in
+                        ("gm_ltm_pct", "gm_fy1_pct", "gm_fy2_pct", "gm_fy3_pct")) if v is not None]
+    gm_swing = (max(gms) - min(gms)) if len(gms) >= 3 else None
+    capex_pct_rev = _f(s.get("capex_pct_rev"))
+    cyclical = bool((gm_swing is not None and gm_swing > CYCLE_GM_SWING_PP)
+                     or (capex_pct_rev is not None and capex_pct_rev > CYCLE_CAPEX_PCT_REV))
+    peg = _f(s.get("live_peg"))
+    if peg is None:
+        peg = _f(s.get("peg"))
+    cycle_guard = bool(cyclical and peg is not None and peg < CYCLE_GUARD_PEG_MAX)
+    cycle_guard_detail = ({"gm_swing_pp": round(gm_swing, 1) if gm_swing is not None else None,
+                           "capex_pct_rev": capex_pct_rev, "peg": peg} if cyclical else None)
     return {
         "rev": _f(s.get("eps_rev_3m_pct")),
         "mom": _f((s.get("ma") or {}).get("mom_12_1_pct")),
@@ -162,6 +237,8 @@ def own_raw(s: dict) -> dict:
         "fcf_ni": _f(s.get("fcf_ni_ratio")),
         "dilution": _f(s.get("sbc_dilution_pct_yr")),
         "incremental_roic_pct": _f(s.get("incremental_roic_pct")),
+        "base_effect": base_effect, "base_effect_detail": base_effect_detail,
+        "cyclical": cyclical, "cycle_guard": cycle_guard, "cycle_guard_detail": cycle_guard_detail,
     }
 
 
@@ -192,6 +269,16 @@ def own_score_v4(rows: list) -> list:
 
     p_rev = pctl("rev"); p_mom = pctl("mom"); p_g = pctl("g"); p_ey = pctl("ey")
     p_fcf_ni = pctl("fcf_ni"); p_dil = pctl("dilution", sign=-1.0)
+    # v4.1 循環股守門（見 own_raw() docstring／rule_ledger「v4.1 基期效應＋循環股
+    # 守門」列）：cycle_guard=True 的列，成長分位／盈餘殖利率分位封頂 50 再平均——
+    # 循環股在景氣高點常同時出現「爆量成長」與「PEG 低到可疑」，不封頂會讓 own_score
+    # 排序被循環見頂訊號誤判成複利成長。
+    for i, rw in enumerate(raws):
+        if rw.get("cycle_guard"):
+            if p_g[i] is not None:
+                p_g[i] = min(p_g[i], CYCLE_GUARD_PCTL_CAP)
+            if p_ey[i] is not None:
+                p_ey[i] = min(p_ey[i], CYCLE_GUARD_PCTL_CAP)
     out = []
     for i, rw in enumerate(raws):
         incr = rw.get("incremental_roic_pct")
@@ -204,7 +291,10 @@ def own_score_v4(rows: list) -> list:
         parts = [x for x in (p_rev[i], p_mom[i], p_g[i], p_q, p_ey[i]) if x is not None]
         score = round(sum(parts) / len(parts), 1) if len(parts) >= 4 else None
         out.append({"p_rev": p_rev[i], "p_mom": p_mom[i], "p_g": p_g[i], "p_q": p_q,
-                    "p_ey": p_ey[i], "q_fcf_ni_exempt": exempt, "score": score, "raw": rw})
+                    "p_ey": p_ey[i], "q_fcf_ni_exempt": exempt, "score": score, "raw": rw,
+                    "base_effect": rw.get("base_effect"), "base_effect_detail": rw.get("base_effect_detail"),
+                    "cyclical": rw.get("cyclical"), "cycle_guard": rw.get("cycle_guard"),
+                    "cycle_guard_detail": rw.get("cycle_guard_detail")})
     return out
 
 
@@ -280,7 +370,7 @@ def grp_score(s: dict) -> dict:
     # eps_fy1_fy3_cagr_pct 欄位，欄位存在不代表三年，故排除該情況。門檻：durable_5y
     # 為 True 者 10%，否則 15%（見檔頭 v4 段）——durable_5y 由呼叫端 build_arena
     # ._apply_durable_fallback() 先補好，本函式只讀不算。）
-    g_raw_3y = _f(s.get("eps_fy1_fy3_cagr_pct"))
+    g_raw_3y, base_effect, base_effect_detail = _base_effect_growth(s)
     g_three_year = g_raw_3y is not None and s.get("_g_method") != "FY1→FY2 單年"
     g = g_raw_3y
     if g is None:
@@ -359,6 +449,11 @@ def grp_score(s: dict) -> dict:
     roic_vs_5y_x = _f(s.get("roic_vs_5y_x"))
     peak = roic_vs_5y_x is not None and roic_vs_5y_x >= PEAK_ROIC_X
 
+    # 融券高（v4.1，2026-09-17）：不是資格閘、不進 own_score 排序——只比照 overheated
+    # 的待遇排除核心候選（衛星照樣能坐）。見檔頭 SI_CORE_EXCLUDE_PCT 常數註解。
+    si_pct = _f(s.get("short_interest_pct_float"))
+    high_short_interest = si_pct is not None and si_pct > SI_CORE_EXCLUDE_PCT
+
     all_pass = g_pass and (not veto) and p_pass
     if not r_pass and not r_veto:
         why = [w for w in why if not w.startswith("上修閘未過")]
@@ -376,6 +471,8 @@ def grp_score(s: dict) -> dict:
             "r_strength": round(r_strength, 2),
             "p_label": p_label, "dist_hi": dist_hi, "price": px, "above_w52": above_52w,
             "overheated": overheated, "peak": peak, "roic_vs_5y_x": roic_vs_5y_x,
+            "high_short_interest": high_short_interest, "short_interest_pct_float": si_pct,
+            "base_effect": base_effect, "base_effect_detail": base_effect_detail,
             "quality": q, "own": {"raw": own_raw(s), "score": None},   # 跨檔百分位由 build_arena 回填
             "own_v2": own_v2,
             "score": 0.0,   # 佔位；build_arena 算完 own_score_v4() 後覆寫

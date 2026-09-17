@@ -88,6 +88,20 @@ happens downstream in compute_fundamental_gates, not here):
   "Net Income Margin LTM %" / "Est Rev CAGR 3Y %" / "Est EPS CAGR 3Y %" / "Below 52W High %"
       -> ni_margin_ltm_pct, est_rev_cagr_3y_pct, est_eps_cagr_3y_pct, below_52w_high_pct
 
+Two more optional columns (2026-09-17, short-interest / insider screener additions —
+see scripts/build_dd_screener.py compute_fundamental_gates() §L and
+scripts/engine/grp.py grp_score()'s high_short_interest): EXACT header strings, both
+OPTIONAL and None on any pre-2026-09-17b (second same-day refresh) xlsx, matched in
+`_NEW_FUND_HEADER_MAP` the same way as the 35 fields above — chosen to avoid the
+substrings "revenue"/"ebit"+"fy" that would otherwise collide with the legacy loose
+rules:
+  "Short Interest % Float"  -> short_interest_pct_float (percent, already in % units —
+                                Koyfin "Short Interest > % Of Shares Outstanding")
+  "Insider Net Buy 3M"      -> insider_net_buy_3m (raw share count, signed — positive
+                                = net buying, negative = net selling; Koyfin "Insider
+                                Transactions, Shares (Net) - 3M")
+Both plain float passthrough via `_to_num` (no ratio/percent detection needed).
+
 Sheet 2 "Notes" stores snapshot date at B2, and — optionally, only present on
 xlsx carrying the Koyfin ROIC/FCF Margin columns — a quality-source label at
 B3 (defaults to "koyfin-web" when absent, matching the A2/B2 label/value
@@ -319,6 +333,10 @@ _NEW_FUND_HEADER_MAP: dict[str, str] = {
     "Est Rev CAGR 3Y %": "est_rev_cagr_3y_pct",
     "Est EPS CAGR 3Y %": "est_eps_cagr_3y_pct",
     "Below 52W High %": "below_52w_high_pct",
+    # 2026-09-17 (second same-day refresh): short-interest / insider columns —
+    # see module docstring "Two more optional columns" section above.
+    "Short Interest % Float": "short_interest_pct_float",
+    "Insider Net Buy 3M": "insider_net_buy_3m",
 }
 
 

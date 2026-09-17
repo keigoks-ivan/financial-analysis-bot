@@ -28,6 +28,15 @@ v4 席位引擎（2026-09-17 持有人拍板，見 knowledge/rule_ledger.md「v4
 拒絕／衰退 ⛔／三月上修 ≤−5％／市值不足／連兩週跌破 52 週線）能換人，空位由下一名遞補。
 own_score 排序改五個百分位（三月上修／12-1 月動能／成長封頂 30／品質／盈餘殖利率）在
 ELIGIBLE 集合內互相比較，見 scripts/engine/grp.py 檔頭 v4 段與 own_score_v4()。
+
+v4.1（2026-09-17 持有人拍板，見 knowledge/rule_ledger.md「v4.1 融券比 >10% 只能衛星」與
+「v4.1 基期效應＋循環股守門」兩列；實作全在 scripts/engine/grp.py，本檔只多讀
+grp["high_short_interest"]/["base_effect"]/own["cyclical"]/["cycle_guard"] 三組欄位
+決定 core_candidate 與備註 badge）：融券占流通股比 >10% 比照過熱待遇——只排除
+core_candidate（衛星照樣能坐），不進 own_score 排序、不是資格閘；內部人買賣
+（insider_signal）全程只是備註 badge。成長遇基期效應改用 FY2→FY3 成長率；循環股
+PEG 過低觸發循環守門時成長／盈餘殖利率分位封頂 50。設計稿：notes/site-internal/
+root/_seat_engine_v4_20260917.md「v4.1 追加」段。
 """
 from __future__ import annotations
 
@@ -347,7 +356,9 @@ def row_dict(s: dict) -> dict:
     route, route_why = grp_route(s)
     # v4 核心候選資格＝耐久達標 AND 不過熱（見 grp.py 檔頭 v4 段第 3 點；頂點不排除，
     # 只留顯示註記 g["peak"]）——build_arena.main() 用這個欄位挑核心 5 席。
-    core_candidate = route == "core" and not g["overheated"]
+    # v4.1（2026-09-17，見 knowledge/rule_ledger.md「v4.1 融券比 >10% 只能衛星」列）：
+    # 融券高比照過熱的待遇——不進排序、不是資格閘，只排除核心候選資格（衛星照樣能坐）。
+    core_candidate = route == "core" and not g["overheated"] and not g["high_short_interest"]
     role = s.get("dca_role") or ""
     age = s.get("dd_age_days")
     fresh = bool(s.get("dca_verdict")) and (age is None or age <= DD_FRESH_DAYS)
@@ -372,6 +383,11 @@ def row_dict(s: dict) -> dict:
             "roic": g["quality"].get("roic"), "fcf": g["quality"].get("fcf"),
             "peg": (s.get("live_peg") if s.get("live_peg") is not None else s.get("peg")),
             "r26": s.get("_r26"), "r52": s.get("_r52"),
+            # 2026-09-17（籌碼面備註 badge，見 knowledge/rule_ledger.md「v4.1 融券比
+            # >10% 只能衛星」列）：insider 全程只是備註，不進資格與排序；SI 的排除
+            # 核心候選判定已在 g["high_short_interest"]／core_candidate 算好，這裡
+            # 只多帶原始 % 與內部人訊號供席位表 hover 顯示用。
+            "insider_signal": s.get("insider_signal"), "insider_net_buy_3m": s.get("insider_net_buy_3m"),
             "moat": f'{s.get("moat_grade") or "?"}{s.get("moat_trend") or ""}' if s.get("moat_grade") else "—",
             "shape": shape_of(s["ticker"]),
             "dd_path": s.get("dd_path")}
@@ -576,7 +592,10 @@ def render_board_text(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
              "｜母體＝美股含 ADR；台股另建（.TW 不在本看板）")
     L.append("這是研究層陣容——值不值得擁有，月頻換人，不是帳戶持倉。")
     L.append("排名分＝三月上修、12M 動能、成長（封頂 30）、品質（FCF/淨利與稀釋率百分位平均；"
-             "增量 ROIC>=15% 免計 FCF/淨利）、盈餘殖利率，五個排名百分位在合格集合內平均。")
+             "增量 ROIC>=15% 免計 FCF/淨利）、盈餘殖利率，五個排名百分位在合格集合內平均。"
+             "成長遇基期效應（FY1->FY2 因低基期跳增、FY2->FY3 <20%）改用 FY2->FY3 成長率。"
+             "循環股（毛利跨距>20pp 或 capex 佔營收>15%）若 PEG<0.3 觸發循環守門，成長/盈餘"
+             "殖利率分位封頂 50。")
     L.append("欄位說明：rank=排名分、rev3m=三月上修%（已排除匯率）、mom12=12減1個月動能%、"
              "dur=耐久（Y=核心資格達標：五年 ROIC 平均或 QGM 五年穩定度）、lamp=時機燈、"
              "act=倉位（跟 lamp 一對一）、dd=DD 標籤（僅供顯示）；note=備註")
@@ -585,8 +604,9 @@ def render_board_text(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
     L.append("seat：C1-C5=核心席次、S1-S5=衛星席次、B1-B5=候補（未坐席）"
              "｜dd：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，!old=逾 180 天過期")
     L.append("資格門檻：市值 200 億以上、品質閘、三年成長 15%（耐久者 10%）、站上 52 週線、"
-             "三月上修 <=-5% 否決、體質拒絕/衰退⛔/DD迴避同樣否決。過熱與頂點不擋資格，"
-             "只排除核心候選（過熱）或純顯示（頂點）；核心候選另需耐久且不過熱；無產業集中度上限。")
+             "三月上修 <=-5% 否決、體質拒絕/衰退⛔/DD迴避同樣否決。過熱／融券高（SI>10%）與"
+             "頂點不擋資格，只排除核心候選（過熱、融券高）或純顯示（頂點）；核心候選另需耐久"
+             "且不過熱且非融券高；無產業集中度上限；內部人買賣僅備註，不進資格與排序。")
     L.append("換人規則：每月第一次排程換一次席；期間只有硬否決（迴避/拒絕/⛔/三月上修<=-5/"
              "市值不足/連兩週跌破 52 週線）能換人，空位由下一名遞補。")
     L.append("怎麼用：席位+時機綠燈=正常倉可以買；席位+時機紅燈=先別動，等板機。")
@@ -615,6 +635,19 @@ def render_board_text(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
                 note_bits.append("頂點")
             if g.get("overheated"):
                 note_bits.append("過熱")
+            if g.get("high_short_interest"):
+                note_bits.append("融券高")
+            if g.get("base_effect"):
+                note_bits.append("基期")
+            own_raw_ = ((g.get("own") or {}).get("raw")) or {}
+            if own_raw_.get("cycle_guard"):
+                note_bits.append("循環守門")
+            elif own_raw_.get("cyclical"):
+                note_bits.append("循環")
+            if r.get("insider_signal") == "買":
+                note_bits.append("內部人買")
+            elif r.get("insider_signal") == "賣":
+                note_bits.append("內部人賣")
             if chg:
                 note_bits.append(chg)
             if r.get("seat_note"):
@@ -1022,6 +1055,30 @@ def render_board_html(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
             bits.append(_chip_html("⚠ 頂點", "ROIC 高於五年平均 1.3 倍以上——只能衛星，非下市訊號"))
         if g.get("overheated"):
             bits.append(_chip_html("🟠 過熱", "12-1 個月動能 >150%（或 fallback 26 週漲幅 >80%）——只能衛星"))
+        if g.get("high_short_interest"):
+            si = g.get("short_interest_pct_float")
+            siT = f"{si:.1f}%" if isinstance(si, (int, float)) else "—"
+            bits.append(_chip_html("🔴 融券高", f"融券占流通股比 {siT}（>10%）——只能衛星，非資格閘、不進排序"))
+        if g.get("base_effect"):
+            d = g.get("base_effect_detail") or {}
+            bits.append(_chip_html("基期", f'FY1→FY2 跳 +{d.get("fy1_fy2_pct", "—")}%，'
+                                          f'FY2→FY3 只 +{d.get("fy2_fy3_pct", "—")}%，成長改用 FY2→FY3'))
+        own_raw_ = ((g.get("own") or {}).get("raw")) or {}
+        if own_raw_.get("cycle_guard"):
+            cd = own_raw_.get("cycle_guard_detail") or {}
+            bits.append(_chip_html("循環守門", f'毛利跨距 {cd.get("gm_swing_pp", "—")}pp／資本支出佔營收 '
+                                             f'{cd.get("capex_pct_rev", "—")}%／PEG {cd.get("peg", "—")}'
+                                             '——成長與盈餘殖利率分位封頂 50'))
+        elif own_raw_.get("cyclical"):
+            bits.append(_chip_html("循環", "毛利率跨距 >20pp 或資本支出佔營收 >15%——純顯示，未觸發守門"))
+        if r.get("insider_signal") == "買":
+            insT = r.get("insider_net_buy_3m")
+            insT = f"{insT:+,.0f} 股" if isinstance(insT, (int, float)) else "—"
+            bits.append(_chip_html("內部人買", f"近 3 個月內部人淨買超 {insT}——僅供備註，不進資格與排序"))
+        elif r.get("insider_signal") == "賣":
+            insT = r.get("insider_net_buy_3m")
+            insT = f"{insT:+,.0f} 股" if isinstance(insT, (int, float)) else "—"
+            bits.append(_chip_html("內部人賣", f"近 3 個月內部人淨賣超 {insT}——僅供備註，不進資格與排序"))
         if r.get("seat_note"):
             bits.append(escape(r["seat_note"]))
         if r.get("route_why"):
@@ -1077,7 +1134,12 @@ def render_board_html(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
 ⚫ 不合格（未站上 52 週線）。<b>倉位</b>跟時機一對一：正常倉／半倉／零倉．等板機／—。</div>
 <div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤，僅供顯示，不影響席位。
 <b>備註</b>：⚠ 頂點＝ROIC 高於五年平均 1.3 倍（只能衛星，非下市訊號）；
-🟠 過熱＝12 個月動能超過 150%（只能衛星）；新席／現任／遞補＝本期席位異動狀態。</div>
+🟠 過熱＝12 個月動能超過 150%（只能衛星）；🔴 融券高＝融券占流通股比 &gt;10%（只能衛星，
+非資格閘、不進 own_score 排序，依據見頁尾規則登記）；<b>基期</b>＝三年 CAGR 因 FY1→FY2
+低基期跳增而改用 FY2→FY3 成長率取代；<b>循環守門</b>＝循環股（毛利率跨距大或資本支出
+佔營收高）且 PEG 低到可疑，成長與盈餘殖利率分位封頂 50；<b>循環</b>＝循環股但未觸發守門，
+純顯示；<b>內部人買／內部人賣</b>＝近 3 個月內部人淨買賣方向，僅供備註，不進資格與排序；
+新席／現任／遞補＝本期席位異動狀態。</div>
 <div class="bw-note-line">資格門檻：市值 200 億以上、品質閘、三年成長 15%（耐久者 10%）、站上 52 週線、
 三個月下修達 5% 否決、體質拒絕／衰退 ⛔／DD 迴避同樣否決。無產業集中度上限。</div>
 <div class="bw-note-line">換人規則：每月第一次排程換一次席；期間只有硬否決能把人換掉，空位由下一名遞補。</div>
@@ -1149,10 +1211,13 @@ def render_board_html(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
 
     head_line = f"選股看板 v4 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
     rule_line = ("排序＝own_score v4：三月上修、12M 動能、成長（封頂 30）、品質、盈餘殖利率五個排名"
-                 "百分位在合格集合內平均。資格要過品質、三年成長預估（durable 者 10%、否則 15%）、"
-                 "市值、站上 52 週線、三月上修 ≤−5% 否決、體質拒絕／衰退 ⛔／DD 迴避同樣否決。"
-                 "核心候選另需耐久（五年 ROIC 平均或 QGM 五年穩定度）且不過熱；無產業集中度上限。")
-    timing_note = "過熱與頂點不擋資格，只排除核心候選（過熱）或純顯示（頂點）；時機燈是另一層週頻判斷，不進排序。"
+                 "百分位在合格集合內平均（成長遇基期效應改用 FY2→FY3 成長率；循環股 PEG 過低時"
+                 "觸發循環守門，成長／盈餘殖利率分位封頂 50）。資格要過品質、三年成長預估（durable "
+                 "者 10%、否則 15%）、市值、站上 52 週線、三月上修 ≤−5% 否決、體質拒絕／衰退 ⛔／"
+                 "DD 迴避同樣否決。核心候選另需耐久（五年 ROIC 平均或 QGM 五年穩定度）且不過熱、"
+                 "融券占流通股比不超過 10%；無產業集中度上限。內部人買賣僅備註，不進資格與排序。")
+    timing_note = ("過熱／融券高（>10%）與頂點不擋資格，只排除核心候選（過熱、融券高）或純顯示"
+                   "（頂點）；時機燈是另一層週頻判斷，不進排序。")
 
     return (
         '<div class="board-wrap">' + _BOARD_CSS
@@ -1599,6 +1664,11 @@ def main() -> int:
                 "p_rev": o.get("p_rev"), "p_mom": o.get("p_mom"), "p_g": o.get("p_g"),
                 "p_q": o.get("p_q"), "p_ey": o.get("p_ey"),
                 "overheated": g.get("overheated"), "peak": g.get("peak"),
+                "high_short_interest": g.get("high_short_interest"),
+                "short_interest_pct_float": g.get("short_interest_pct_float"),
+                "base_effect": g.get("base_effect"),
+                "cyclical": o.get("cyclical"), "cycle_guard": o.get("cycle_guard"),
+                "insider_signal": r.get("insider_signal"), "insider_net_buy_3m": r.get("insider_net_buy_3m"),
                 "durable_5y": r.get("durable_5y"), "durable_source": r.get("durable_source"),
                 "lamp": r.get("lamp"), "action": r.get("action"),
                 "r26": r.get("r26"), "pass": g.get("pass"), "why": g.get("why"),
@@ -1614,11 +1684,14 @@ def main() -> int:
     BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
         "schema_version": "4.0",
-        "method": ("v4 席位引擎（2026-09-17）：核心候選＝耐久（五年 ROIC 平均 ≥15% 或 QGM 五年穩定度 "
-                  "≥75%）且不過熱（12-1 月動能 ≤150%）；排序＝own_score v4，三月上修／12-1 月動能／"
-                  "成長封頂 30／品質（FCF∶淨利＋稀釋率，投資有回報者免計 FCF∶淨利）／盈餘殖利率五個"
-                  "百分位在合格集合內平均；三月上修 ≤−5% 否決（FY+1 單月 ≤−10% 僅缺值 fallback）；"
-                  "無產業集中度上限；每月第一次排程重選，期間只有硬否決能換人、空位遞補"),
+        "method": ("v4.1 席位引擎（2026-09-17）：核心候選＝耐久（五年 ROIC 平均 ≥15% 或 QGM 五年穩定度 "
+                  "≥75%）且不過熱（12-1 月動能 ≤150%）且融券占流通股比不超過 10%（融券高比照過熱，"
+                  "只排除核心候選、不進排序、不是資格閘）；排序＝own_score v4，三月上修／12-1 月動能／"
+                  "成長封頂 30（遇基期效應改用 FY2→FY3 成長率；循環股 PEG 過低觸發循環守門、成長與"
+                  "盈餘殖利率分位封頂 50）／品質（FCF∶淨利＋稀釋率，投資有回報者免計 FCF∶淨利）／"
+                  "盈餘殖利率五個百分位在合格集合內平均；三月上修 ≤−5% 否決（FY+1 單月 ≤−10% 僅缺值 "
+                  "fallback）；無產業集中度上限；內部人買賣僅備註，不進資格與排序；每月第一次排程"
+                  "重選，期間只有硬否決能換人、空位遞補"),
         "universe_n": len(universe_rows),
         "seats_without_card": sorted(r["ticker"] for r in core_seats + sat_seats if r["ticker"] not in card_stats),
         "own_board": own_board,
@@ -1726,11 +1799,11 @@ def main() -> int:
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
 席位資格（<b>v4 擁有層×時機層</b>，2026-09-17 持有人拍板）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF ≥10；capex 週期豁免 ROIC ≥25 ∧ FCF ≥0）×
 <b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%，耐久者放寬至 10%；且成長必須是三年期 Koyfin 數字——只有 FY1→FY2 單年 fallback 的名字不入席，改列「可選但先不入席」隊列）× <b>位置閘</b>（站上 52 週線）× <b>三月上修否決</b>（≤−5%，FY+1 單月 ≤−10% 僅缺值時 fallback）× 新硬否決（體質拒絕／衰退 ⛔／DD 迴避 180 天內）。
-排序＝<b>own_score v4</b>：三月上修、12-1 月動能、成長（封頂 30）、品質（FCF÷淨利與稀釋率百分位平均；投資有回報者〔增量 ROIC ≥15%〕免計 FCF÷淨利）、盈餘殖利率，五個排名百分位在合格集合內互相比較後平均。
-<b>過熱／頂點不是資格閘</b>：12-1 月動能 &gt;150%（缺值 fallback 26 週漲幅 &gt;80%）＝過熱，排除核心候選（只能衛星）；roic_vs_5y_x ≥1.3＝頂點，純顯示註記（⚠），不影響核心候選資格。
+排序＝<b>own_score v4</b>：三月上修、12-1 月動能、成長（封頂 30）、品質（FCF÷淨利與稀釋率百分位平均；投資有回報者〔增量 ROIC ≥15%〕免計 FCF÷淨利）、盈餘殖利率，五個排名百分位在合格集合內互相比較後平均。成長遇<b>基期效應</b>（FY1→FY2 因低基期跳增 &gt;1.6x 且 FY2→FY3 成長 &lt;20%）改用 FY2→FY3 成長率取代；<b>循環股守門</b>（毛利率跨距 &gt;20pp 或資本支出佔營收 &gt;15%，且 PEG &lt;0.3）觸發時成長／盈餘殖利率分位封頂 50。
+<b>過熱／融券高／頂點不是資格閘</b>：12-1 月動能 &gt;150%（缺值 fallback 26 週漲幅 &gt;80%）＝過熱、融券占流通股比 &gt;10%＝融券高，兩者皆排除核心候選（只能衛星，不進排序，依據見頁尾規則登記）；roic_vs_5y_x ≥1.3＝頂點，純顯示註記（⚠），不影響核心候選資格。<b>內部人買賣</b>（近 3 個月淨股數）僅供備註，不進資格與排序。
 <b>DD 選配</b>：不是入席前提，只做迴避否決（180 天內），觀望／進場僅供角色標籤參考（僅供顯示）。
 <b>月頻輪動</b>：每月第一次排程整批重選一次；期間只有硬否決（迴避／拒絕／⛔／三月上修 ≤−5／市值不足／連兩週跌破 52 週線）能換人，空位由下一名遞補。
-<b>軌別路由</b>：核心候選另需耐久——五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75%（兩者有一成立即可）→ 核心；未達標或無耐久資料 → 衛星。DD 角色不影響軌別，只當顯示標籤（與軌別衝突時標 ⚠ 供人裁）。<b>耐久＋不過熱＝核心候選，不等於保證核心席</b>：沒卡進核心前 5 名的核心候選會回頭跟其餘合格名字一起搶衛星 5 席（純比 own_score），此時席位表仍標示其軌別為「核心」（代表可長抱），另加註「耐久・暫居衛星」。
+<b>軌別路由</b>：核心候選另需耐久——五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75%（兩者有一成立即可）→ 核心；未達標或無耐久資料 → 衛星。DD 角色不影響軌別，只當顯示標籤（與軌別衝突時標 ⚠ 供人裁）。<b>耐久＋不過熱＋融券不高＝核心候選，不等於保證核心席</b>：沒卡進核心前 5 名的核心候選會回頭跟其餘合格名字一起搶衛星 5 席（純比 own_score），此時席位表仍標示其軌別為「核心」（代表可長抱），另加註「耐久・暫居衛星」。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
 <b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。無產業/主題集中度上限（2026-09-17 持有人拍板）。
 <b>快審卡</b>：衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評），與三年成長閘、DD 皆無關。
