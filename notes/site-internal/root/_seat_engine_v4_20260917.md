@@ -105,3 +105,42 @@ Koyfin watchlist 同日再加兩欄（融券占流通股比、內部人淨買賣
 **沒做/未驗證**：三條規則皆為 DD 技能既有機械規則的移植，未額外做獨立回測（回測依據
 是任務給定的實際三檔數字，非樣本內外分離的統計檢定）；循環股守門的 PEG<0.3 門檻與
 毛利跨距/資本支出雙路徑判準沿用 DD 技能既有數字，未在本引擎脈絡重新校準。
+
+## 時機燈日更（2026-09-17）
+
+**問題**：cockpit 席位表的時機燈（→倉位動作）原料——dd-screener `timing.*`／`ma.*`、
+`docs/stages/data/lamp.json`——本來就每天跟著 `daily-taipei-morning.yml` 更新，但只有
+`weekly-engine.yml` 的 `build_arena.py --ledger` 跑次會讀進來重算燈號，燈最多落後 6 天，
+跟原料的更新頻率脫節。月頻輪動（值不值得擁有）跟時機燈（現在能不能買）本來就是刻意
+分開的兩層判斷（見上「改了什麼」第 8 點），只是「讀」的頻率一直沒補上。
+
+**改法**：`build_arena.py` 新增 `--lamp-only` 唯讀旗標——讀 `arena-ledger.json` 的
+`roster`（缺則退回 `arena.json` 現有 `core_seats`／`sat_seats`）決定要刷新哪些席位／
+候補，對每檔重讀 dd-screener／QGM 最新 `ma`／`timing` 與 `lamp.json` 階段，借用既有
+`grp_score()` 的位置閘與 `timing_lamp()` 重算 P 閘欄位（`above_w52`／`p_label`／
+`dist_hi`／`price`／`overheated`）與燈號／倉位，只覆寫這些欄位＋新增
+`lamp_as_of`／`lamp_source`／`lamp_last_rotation_date` 三個戳記，`own_score`／排名／
+席位組成一律原樣保留、不重算、不寫 `arena-ledger.json`。`board.txt`／
+`_board_body.html` 只原地替換「目前席位」區塊（`_seat_section_lines()`／
+`_seat_section_html()`，抽成獨立函式供全量重建與唯讀刷新共用同一份格式），全母體表／
+DD 對照／候選佇列維持上次 `--ledger` 跑次內容不變。任何輸入缺失（`arena.json`／
+`arena-ledger.json` 皆讀不到）一律印 warning、`exit 0`，不擋排程。掛進
+`daily-taipei-morning.yml`（實際排程跑班次）與 `daily-non-fundamental-refresh.yml`
+（已停用排程，僅手動 dispatch，同步加這步保持一致）Step 1 之後。
+
+**驗證**：對真實資料跑 `--lamp-only`，因當天輸入未變，15 檔席位/候補燈號逐一比對
+前後完全一致；`arena.json` 的 `core_seats`/`sat_seats`/`bench_seats` 除
+`lamp`/`action`/`r26`/`r52`/`grp.above_w52`/`grp.p_label`/`grp.dist_hi`/
+`grp.price`/`grp.overheated` 外零欄位差異，`own_board`/`duels`/`rotation`/
+`concentration` 等其餘欄位逐位元組相同；`arena-ledger.json` md5／mtime 皆未變。
+`board.txt`／`_board_body.html` 只有「目前席位」區塊新增兩行新鮮度戳記＋DOWN
+異動列原因退化成「不在母體」（因唯讀模式不重建全母體 `rows`，此為刻意降級，
+待下次 `--ledger` 跑次自然恢復完整原因），其餘全母體表／DD 對照／候選佇列
+逐位元組相同。
+
+**沒做/未驗證**：目前 repo 內 `arena-ledger.json` 尚未跑過 v4 `--ledger`（`roster`
+仍是 `None`，最近一筆 snapshot 是 2026-09-12 的 v3 陣容），`--lamp-only` 因此走的是
+「退回 `arena.json` 現有席位」那條 fallback 路徑——`roster` 非空時的主路徑要等下次
+`weekly-engine.yml --ledger` 跑過後才有真實資料可驗；DOWN 列因唯讀模式拿不到全母體
+`rows` 而降級成「不在母體」的行為只在這次的資料錯位下被觸發到，正常狀態（ledger 與
+`arena.json` 同步）下 DOWN 列理論上應為空，未在乾淨狀態下驗證過。

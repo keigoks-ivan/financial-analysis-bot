@@ -66,6 +66,16 @@ jobs:
         run: python scripts/build_dd_screener.py --include-non-dd
         continue-on-error: true
 
+      # 席位擂台時機燈日更（2026-09-17 持有人拍板，見 scripts/engine/build_arena.py
+      # 檔頭 --lamp-only 段／knowledge/rule_ledger.md「時機燈日更、席位月更」列）：
+      # 唯讀重算 docs/engine/arena.json 既有席位/候補的時機燈與倉位，讀剛更新的
+      # dd-screener latest.json（timing.*/ma.*）與 docs/stages/data/lamp.json——
+      # 不碰選股/月頻輪動，不寫 arena-ledger.json（那個只有 weekly-engine.yml 的
+      # --ledger 跑次會寫）。失敗只 warning，不擋本帶其餘 step。
+      - name: "[non-fundamental] Step 2 — Arena lamp-only daily refresh (timing lamp, not seats)"
+        run: python scripts/engine/build_arena.py --lamp-only || echo "::warning::lamp refresh failed"
+        continue-on-error: true
+
       - name: "[non-fundamental] Step 3 — Quality-Entry screener"
         run: python scripts/build_quality_entry.py
         continue-on-error: true
@@ -129,7 +139,10 @@ jobs:
             docs/dd-screener/quality-entry-snapshots/ \
             docs/dd-screener/state-machine/data/study/closes_daily/ \
             docs/dd-screener/sop-funnel.html \
-            docs/dd-screener/sop-funnel/; do
+            docs/dd-screener/sop-funnel/ \
+            docs/engine/arena.json \
+            docs/engine/_board_body.html \
+            docs/engine/board.txt; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if [ -z "$PATHS" ]; then
