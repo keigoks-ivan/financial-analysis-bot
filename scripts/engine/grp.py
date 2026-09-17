@@ -83,6 +83,34 @@ Row 新帶 rev_anchor（"earnings"|"calendar_3m"）／rev_baseline_date／
 days_to_next_earnings 供 build_arena 席位表 tooltip 與「下次財報」欄使用。
 eps_rev_3m_pct／EPS_REV_3M_VETO 否決線本身不動（見 rule_ledger「上修改為財報後
 錨定」列）。
+
+v5（2026-09-17 持有人拍板「品質派 ∩ 獲利上修 ∩ 突破還原權息歷史新高」；依據
+notes/site-internal/root/_seat_engine_v5_20260917.md）——品質＝資格、上修＝排序、
+歷史新高＝板機，價格動能整個退出排序：
+  1. 耐久改一致性判準（durable_5y_v5()）：QGM 五年穩定度 ≥75%，OR Koyfin 五年
+     ROIC 平均 ≥15% AND 三年平均 ≥15% AND 現值 ≥15%——v4 只看五年均值一項，
+     一次性獲利把五年均值撐高但三年/現值已經退燒的名字不再算耐久。耐久改列為
+     資格閘本體的一部分（v4 只用耐久決定核心 vs 衛星軌別，不影響整體資格）：
+     不耐久＝不進母體，沒有衛星席可以退（v5 沒有衛星軌）。
+  2. 融券高（short_interest_pct_float >10%）從「只排除核心候選」升級為「整體
+     資格閘排除」——同理，沒有衛星軌可以收留融券高的名字。
+  3. 排序徹底簡化為單一變數：上修（財報後錨定優先，缺值退回三月）降冪，
+     tie-break implied_growth_pct 降冪，再 tie-break 盈餘殖利率降冪
+     （grp.pool_sort_key()）。v4 的五百分位 own_score（own_score_v4()）保留
+     一輪不變，只做「排名分」tooltip 的「v4 對照」，不參與排序、不影響席位。
+  4. 新增「池」概念（POOL_REV_MIN=5.0）：資格閘全過且耐久達標的名字才叫
+     ELIGIBLE；ELIGIBLE 中上修 ≥+5% 才進「池」（可排席位／可買）；ELIGIBLE
+     但上修 <+5% 的名字列「品質過閘、上修未達 5%」收合區供人工複審，不進池。
+  5. timing_lamp() 全面改用歷史新高距離（ma.dist_ath_pct，還原權息全歷史，
+     見 build_dd_screener.compute_ath_highs()）取代原本以 52 週高為準的位置／
+     RS／階段：紅＝距新高 <−10% 或跌破 200 日線；綠＝距新高 ≥−3% 且站上 200
+     日線（突破帶）；黃＝−10%~−3% 之間且站上 200 日線；過熱（半倉）＝12-1
+     月動能 >150% 但仍需滿足綠燈級的新高距離，否則按原距離判黃/紅。RS 與生命
+     週期階段降為 tooltip 資訊，不再是燈號輸入。核心＝池中前 5（月頻輪動不變，
+     見 build_arena.rotate_roster）；衛星席被「等待池」取代（池中扣掉核心的
+     其餘名字，按上修排序＋距新高%）；候補區塊取消，池本身就是候補。
+  規則登記：knowledge/rule_ledger.md「v5 席位引擎：品質派資格 × 上修排序 ×
+  歷史新高板機（2026-09-17）」列。
 """
 from __future__ import annotations
 
@@ -172,8 +200,17 @@ CYCLE_GM_SWING_PP = 20.0       # 循環股守門：毛利率（LTM/FY-1/FY-2/FY-
 CYCLE_CAPEX_PCT_REV = 15.0     # 循環股守門：資本支出佔營收門檻（%）
 CYCLE_GUARD_PEG_MAX = 0.3      # 循環股守門：PEG 需 < 此值才觸發 guard（cyclical 且低到可疑）
 CYCLE_GUARD_PCTL_CAP = 50.0    # guard 觸發時，own_score_v4 的 p_g／p_ey 百分位上限
-# v4 時機燈 action 對照（build_arena 倉位欄）
+# v4 時機燈 action 對照（build_arena 倉位欄；v5 沿用同一份，位置大小不變，見檔頭 v5 段）
 LAMP_ACTION = {"green": "正常倉", "yellow": "半倉", "hot": "半倉", "red": "零倉・等板機", "out": "—"}
+# v5（2026-09-17，見檔頭 v5 段／rule_ledger「v5 席位引擎」列）——耐久一致性判準常數：
+DURABLE_QGM_STABILITY_MIN = 75.0   # QGM 五年 ROIC 穩定度 pct_above（0-100 尺度）≥ 此值
+DURABLE_ROIC_MIN = 15.0            # Koyfin 路徑：五年平均／三年平均／現值三者皆須 ≥ 此值
+POOL_REV_MIN = 5.0                 # 池門檻：財報後上修（缺值退回三月）≥ 此值才進池
+# v5 時機燈（timing_lamp()）——距歷史新高（ma.dist_ath_pct，還原權息全歷史）分帶：
+ATH_RED_DIST = -10.0     # < 此值（或跌破 200 日線）＝紅燈
+ATH_GREEN_DIST = -3.0    # ≥ 此值 且站上 200 日線＝綠燈（突破帶）
+# −10% ~ −3% 之間且站上 200 日線＝黃燈；過熱（12-1 月動能 >150%）需同時滿足綠燈級
+# 距離才降為橘燈半倉，否則按原距離判黃/紅（MOM_12_1_OVERHEAT 沿用上面 v4 定義的常數）。
 
 
 def _f(v):
@@ -209,6 +246,51 @@ def _revision_anchor(s: dict) -> tuple:
     if threem is not None:
         return threem, "calendar_3m", s.get("eps_rev_3m_baseline_date")
     return None, None, None
+
+
+def durable_5y_v5(s: dict) -> tuple:
+    """v5 耐久一致性判準（2026-09-17，見檔頭 v5 段／rule_ledger「v5 席位引擎」列）：
+    durable = consistency, not average——OR 兩條路徑：
+      1. QGM 五年 ROIC 穩定度 pct_above（s["qgm_roic_5y_stability_pct"]，0-100 尺度）
+         ≥ DURABLE_QGM_STABILITY_MIN。
+      2. Koyfin 三點一致：五年平均（s["roic_5y_avg_pct"]）、三年平均
+         （s["roic_3y_avg_pct"]）、現值（s["roic"]）皆 ≥ DURABLE_ROIC_MIN——v4 只看
+         五年均值一項（單一數字），一次性利潤把五年均值撐高、但三年均值與現值已經
+         退燒的名字不再算耐久（三點缺一即無法判定該路徑，回傳 None，不是 False）。
+    回傳 (durable_5y, durable_source)：兩條路徑皆缺資料 → (None, None)（無法判定，
+    不是「未達標」）；durable_source ∈ {"qgm", "koyfin-xlsx", None}。單一權威實作，
+    build_dd_screener.enrich_ticker() 與本模組共用，避免耐久判準抄兩份而日後漂移。"""
+    qgm_pct = _f(s.get("qgm_roic_5y_stability_pct"))
+    qgm_pass = None if qgm_pct is None else qgm_pct >= DURABLE_QGM_STABILITY_MIN
+    r5y = _f(s.get("roic_5y_avg_pct"))
+    r3y = _f(s.get("roic_3y_avg_pct"))
+    r_now = _f(s.get("roic"))
+    if r5y is None or r3y is None or r_now is None:
+        koyfin_pass = None
+    else:
+        koyfin_pass = r5y >= DURABLE_ROIC_MIN and r3y >= DURABLE_ROIC_MIN and r_now >= DURABLE_ROIC_MIN
+    if qgm_pass is None and koyfin_pass is None:
+        return None, None
+    if qgm_pass or koyfin_pass:
+        return True, ("qgm" if qgm_pass else "koyfin-xlsx")
+    return False, ("koyfin-xlsx" if koyfin_pass is not None else "qgm")
+
+
+def pool_sort_key(rev, implied_growth=None, ey=None) -> tuple:
+    """v5 池排序鍵（2026-09-17，見檔頭 v5 段）：上修降冪，tie-break implied_growth_pct
+    降冪，再 tie-break 盈餘殖利率降冪。純函式——回傳可直接丟進 `sorted(rows, key=...)`
+    的 tuple；None 一律視為最差（排最後），用負無限大占位（sorted 是升冪，故整體取負）。
+    """
+    neg_inf = float("-inf")
+    return (-(rev if rev is not None else neg_inf),
+            -(implied_growth if implied_growth is not None else neg_inf),
+            -(ey if ey is not None else neg_inf))
+
+
+def in_pool(rev_used_pct) -> bool:
+    """v5 池門檻（見 POOL_REV_MIN）：上修（財報後錨定優先，缺值退回三月）
+    ≥ +5% 才進池；資格閘全過但上修 <+5% 者「品質過閘、上修未達 5%」，不進池。"""
+    return rev_used_pct is not None and rev_used_pct >= POOL_REV_MIN
 
 
 def _base_effect_growth(s: dict) -> tuple:
@@ -343,72 +425,84 @@ def own_score_v4(rows: list) -> list:
     return out
 
 
-_STAGE_RED = ("S0",)
-_STAGE_GREEN = ("S1", "S3", "S4")
-
-
 def timing_lamp(s: dict) -> dict:
-    """v4 時機燈（pure）——把位置／RS／200 日線／階段收斂成單一燈號＋倉位建議。
-    輸入（皆從 s 讀，呼叫端須先把這些欄位就緒——build_arena 在呼叫前注入
-    `s["_stage_code"]`＝docs/stages/data/lamp.json 查到的階段代碼，
-    `s["_overheated"]`＝grp_score() 算好的 overheated 布林）：
-      s["ma"]["above_w52"], s["timing"]["vs_200ma_pct"/"rs_score"/"dist_52w_high_pct"],
-      s["_stage_code"], s["_overheated"]
-    輸出：{"code","label","size","trigger","why"}，見 grp.py 檔頭 v4 段第 5 點。
-    優先序：out（未站上 52 週線）＞ red（結構轉弱）＞ hot（過熱）＞ green（多頭排列）
-    ＞ yellow（其餘站上 52 週線者）。"""
+    """v5 時機燈（pure，2026-09-17 owner thesis「突破還原權息歷史新高」，見檔頭 v5
+    段第 5 點；取代 v4 以 52 週高/RS/生命週期階段為準的位置判定）——距歷史新高
+    （ma.dist_ath_pct，還原權息全歷史，見 build_dd_screener.compute_ath_highs()）
+    與 200 日線收斂成單一燈號＋倉位建議。RS／生命週期階段降為 tooltip 專屬資訊，
+    不再是燈號輸入（呼叫端自行在渲染層附加，本函式不讀）。
+    輸入：s["ma"]["above_w52"/"dist_ath_pct"/"ath_adj_price"/"price"/"mom_12_1_pct"],
+    s["timing"]["vs_200ma_pct"]。
+    輸出：{"code","label","size","trigger","why"}。
+    優先序：out（未站上 52 週線）＞ red（距新高 <−10% 或跌破 200 日線）＞
+    hot（過熱，仍需滿足綠燈級距離，否則按原距離落 yellow）＞ green（距新高 ≥−3%
+    且站上 200 日線，突破帶）＞ yellow（−10%~−3% 之間且站上 200 日線，或資料不足
+    以判定）。倉位：green 1.0／yellow 0.5／hot 0.5／red 0／out 0（LAMP_ACTION，
+    沿用 v4 定義不變）。"""
     ma = s.get("ma") or {}
     timing = s.get("timing") or {}
     above_w52 = ma.get("above_w52")
+    dist_ath = _f(ma.get("dist_ath_pct"))
     vs200 = _f(timing.get("vs_200ma_pct"))
-    rs = _f(timing.get("rs_score"))
-    dist_hi = _f(timing.get("dist_52w_high_pct"))
-    stage = s.get("_stage_code")
-    overheated = bool(s.get("_overheated"))
+    mom = _f(ma.get("mom_12_1_pct"))
 
     if not above_w52:
         return {"code": "out", "label": "⚫ 不合格", "size": 0.0, "trigger": None,
                 "why": "未站上 52 週線"}
 
     red_hits = []
+    if dist_ath is not None and dist_ath < ATH_RED_DIST:
+        ath_px = _f(ma.get("ath_adj_price"))
+        px = _f(ma.get("price"))
+        need = ""
+        if ath_px is not None and px is not None and px > 0:
+            need = f"（現價 {px:.2f}，還原新高 {ath_px:.2f}，需再漲 {(ath_px / px - 1) * 100:.1f}%）"
+        elif ath_px is not None:
+            need = f"（還原新高 {ath_px:.2f}）"
+        red_hits.append(f"距歷史新高 {dist_ath:+.1f}%{need}")
     if vs200 is not None and vs200 < 0:
-        red_hits.append(("站回 200 日線且 RS ≥ 50", f"vs 200 日線 {vs200:+.1f}%"))
-    if rs is not None and rs < 40:
-        red_hits.append(("RS 回到 50 以上", f"RS {rs:.0f}"))
-    if dist_hi is not None and dist_hi < -25:
-        red_hits.append(("回到高點 25% 內", f"距高點 {dist_hi:+.1f}%"))
-    if stage in _STAGE_RED:
-        red_hits.append(("站回 200 日線且 RS ≥ 50", "階段 S0 弱勢"))
+        red_hits.append(f"跌破 200 日線 {vs200:+.1f}%")
     if red_hits:
-        trigger = red_hits[0][0]
-        return {"code": "red", "label": "🔴 等板機", "size": 0.0, "trigger": trigger,
-                "why": "、".join(h[1] for h in red_hits)}
+        return {"code": "red", "label": "🔴 等板機", "size": 0.0,
+                "trigger": "突破還原歷史新高", "why": "、".join(red_hits)}
 
-    if overheated:
+    green_ok = dist_ath is not None and dist_ath >= ATH_GREEN_DIST and (vs200 is None or vs200 >= 0)
+    overheated = mom is not None and mom > MOM_12_1_OVERHEAT
+    if overheated and green_ok:
         return {"code": "hot", "label": "🟠 過熱", "size": 0.5, "trigger": None,
-                "why": "12-1 個月動能過熱"}
-
-    stage_ok = stage is None or stage in _STAGE_GREEN
-    if (vs200 is not None and vs200 >= 0 and rs is not None and rs >= 50
-            and dist_hi is not None and dist_hi >= -15 and stage_ok):
+                "why": f"12-1 個月動能 {mom:+.1f}%（半倉——已在突破帶附近但動能過熱）"}
+    if green_ok:
+        bits = [f"距歷史新高 {dist_ath:+.1f}%（突破帶）"]
+        if vs200 is not None:
+            bits.append(f"vs 200 日線 {vs200:+.1f}%")
         return {"code": "green", "label": "🟢 可進", "size": 1.0, "trigger": None,
-                "why": f"vs 200 日線 {vs200:+.1f}%、RS {rs:.0f}、距高點 {dist_hi:+.1f}%"
-                       + (f"、階段 {stage}" if stage else "")}
+                "why": "、".join(bits)}
+
+    yellow_ok = dist_ath is not None and ATH_RED_DIST <= dist_ath < ATH_GREEN_DIST \
+        and (vs200 is None or vs200 >= 0)
+    if yellow_ok:
+        bits = [f"距歷史新高 {dist_ath:+.1f}%（接近新高，未到突破帶）"]
+        if vs200 is not None:
+            bits.append(f"vs 200 日線 {vs200:+.1f}%")
+        return {"code": "yellow", "label": "🟡 半倉", "size": 0.5, "trigger": None,
+                "why": "、".join(bits)}
 
     bits = []
+    if dist_ath is not None: bits.append(f"距歷史新高 {dist_ath:+.1f}%")
     if vs200 is not None: bits.append(f"vs 200 日線 {vs200:+.1f}%")
-    if rs is not None: bits.append(f"RS {rs:.0f}")
-    if dist_hi is not None: bits.append(f"距高點 {dist_hi:+.1f}%")
-    if stage: bits.append(f"階段 {stage}")
     return {"code": "yellow", "label": "🟡 半倉", "size": 0.5, "trigger": None,
-            "why": "、".join(bits) or "站上 52 週線但未達綠燈條件"}
+            "why": "、".join(bits) or "站上 52 週線但距歷史新高資料缺，暫列半倉"}
 
 
 def grp_score(s: dict) -> dict:
-    """latest.json 一檔 → GRP v4 判定。回傳 {pass, g, r, p_label, veto, overheated, peak,
-    own, own_v2, score, why[]}。score 為 0.0 佔位——真正的 v4 排序分需要跨檔百分位
-    （見 own_score_v4()），由呼叫端（build_arena）算完 ELIGIBLE 集合後回填 grp["own"]
-    與 grp["score"]。"""
+    """latest.json 一檔 → GRP 資格判定。回傳 {pass, g, r, p_label, veto, overheated, peak,
+    own, own_v2, score, why[]}。`pass`（2026-09-17 v5 起，見檔頭 v5 段）＝品質派資格
+    （成長／位置／上修否決／體質拒絕／衰退⛔／DD 迴避）∧ 耐久達標（durable_5y）∧
+    非融券高——這是 ELIGIBLE（資格閘）本身，不含「上修 ≥5% 進池」這道 v5 新增的
+    池門檻（後者是排序層/呼叫端用 grp.in_pool() 另外判斷，不混進 `pass`）。
+    score 為 0.0 佔位——v4 對照排名分需要跨檔百分位（見 own_score_v4()，v5 起僅供
+    tooltip 對照、不參與排序），由呼叫端（build_arena）算完 ELIGIBLE 集合後回填
+    grp["own"] 與 grp["score"]；v5 實際排序改用 grp.pool_sort_key()（見檔頭 v5 段）。"""
     why = []
     # G（v4：三年期 Koyfin CAGR 為硬性必備——g_three_year 記錄這個 g 是不是真的三年期
     # FY1→FY3 CAGR；QGM 供給列（_g_method=="FY1→FY2 單年"）把單年成長塞進同一個
@@ -498,20 +592,34 @@ def grp_score(s: dict) -> dict:
     roic_vs_5y_x = _f(s.get("roic_vs_5y_x"))
     peak = roic_vs_5y_x is not None and roic_vs_5y_x >= PEAK_ROIC_X
 
-    # 融券高（v4.1，2026-09-17）：不是資格閘、不進 own_score 排序——只比照 overheated
-    # 的待遇排除核心候選（衛星照樣能坐）。見檔頭 SI_CORE_EXCLUDE_PCT 常數註解。
+    # 融券高（v5，2026-09-17，見檔頭 v5 段第 2 點）：從 v4.1「只排除核心候選」升級
+    # 為整體資格閘排除——v5 沒有衛星軌可以收留融券高的名字（見 SI_CORE_EXCLUDE_PCT
+    # 常數註解；常數本身不動，改動的是它的後果）。
     si_pct = _f(s.get("short_interest_pct_float"))
     high_short_interest = si_pct is not None and si_pct > SI_CORE_EXCLUDE_PCT
+    if high_short_interest:
+        why.append(f"融券占流通股比過高排除（{si_pct:.1f}% > {SI_CORE_EXCLUDE_PCT:.0f}%）")
 
-    all_pass = g_pass and (not veto) and p_pass
+    # 耐久（v5，2026-09-17，見檔頭 v5 段第 1 點／grp.durable_5y_v5()）：從「只決定
+    # 核心 vs 衛星軌別」升級為資格閘本體——不耐久＝不進母體，沒有衛星席可以退。
+    # durable_5y 由呼叫端（build_dd_screener.enrich_ticker，透過 durable_5y_v5()）
+    # 先算好，本函式只讀不算。
+    durable = s.get("durable_5y")
+    if not durable:
+        why.append("耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年"
+                    "平均∧三年平均∧現值三者皆 ≥15%）" if durable is False
+                    else "耐久資料缺，不進池（v5 資格必備，見 grp.durable_5y_v5()）")
+
+    all_pass = g_pass and (not veto) and p_pass and bool(durable) and (not high_short_interest)
     if not r_pass and not r_veto:
         why = [w for w in why if not w.startswith("上修閘未過")]
     own_v2 = own_score(s, g)     # v2 公式原封不動，供對照一輪（own_v2，見檔頭 v4 段第 4 點）
     q = quality_gate(s)
     return {"pass": all_pass and q["pass"], "veto": veto,
-            # v4 硬否決細項（build_arena.hard_veto_v4 月度輪動用，避免對 why[] 字串解析）：
+            # v4 硬否決細項（build_arena.hard_veto_v4/v5 月度輪動用，避免對 why[] 字串解析）：
             "veto_revision": r_veto, "veto_quality_reject": veto_quality,
             "veto_decline": veto_decline, "veto_dd_avoid": veto_dd_avoid,
+            "veto_high_short_interest": high_short_interest,   # v5 新增：整體資格閘排除
             "g": round(g, 1) if g is not None else None,
             "g_three_year": g_three_year if g is not None else None,
             "g_min": g_min,
@@ -600,7 +708,14 @@ _DURABLE_LABEL = {"koyfin-xlsx": "五年 ROIC 平均 ≥15%", "qgm": "QGM 五年
 def grp_route(s: dict) -> tuple[str, str]:
     """回傳 (軌別 core|satellite, 理由)。前提：GRP 已 pass。
     v3：耐久達標（durable_5y is True）→ 核心候選；未達標或無耐久資料 → 只能衛星。
-    DD 角色不影響軌別，只在 build_arena.row_dict 當 role_mismatch 比對用的顯示標籤。"""
+    DD 角色不影響軌別，只在 build_arena.row_dict 當 role_mismatch 比對用的顯示標籤。
+
+    v5 附註（2026-09-17，見檔頭 v5 段）：耐久已升級為 grp_score() 的資格閘本體，
+    凡是 pass=True 的列必然 durable_5y=True，故本函式在 v5 對 ELIGIBLE 集合而言
+    恆回傳 "core"——保留本函式與其回傳值純粹是為了不動既有 role_mismatch 顯示
+    邏輯與 test_engine_system.test_route() 的獨立單元測試（本函式本身不知道「有
+    沒有 pass」，仍對任意 durable_5y 輸入誠實回應），v5 的核心／等待池分野改由
+    build_arena 依池排序（grp.pool_sort_key()）取前 5 名決定，不再讀本函式。"""
     durable = s.get("durable_5y")
     if durable:
         label = _DURABLE_LABEL.get(s.get("durable_source"), "耐久達標")

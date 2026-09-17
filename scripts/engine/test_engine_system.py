@@ -41,7 +41,11 @@ def _stock(**kw):
             "eps2y_revision_pp": 0.5, "moat_grade": "A", "moat_trend": "→",
             "roic": 20.0, "fcf": 15.0, "live_fpe_est": 25.0,
             "ma": {"above_w52": True, "price": 100.0},
-            "timing": {"dist_52w_high_pct": -10.0}}
+            "timing": {"dist_52w_high_pct": -10.0},
+            # v5（2026-09-17，見 grp.py 檔頭 v5 段）：durable_5y 升級為資格閘本體
+            # （不再只決定核心/衛星軌別）——預設 True 讓其他不是在測耐久本身的
+            # 斷言不會因為這個新閘而連帶失敗；test_route() 逐次都明講覆寫這個值。
+            "durable_5y": True}
     base.update(kw)
     return base
 

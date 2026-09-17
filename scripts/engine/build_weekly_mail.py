@@ -50,7 +50,11 @@ SCORECARD_JSON = ROOT / "docs" / "flowmap" / "data" / "scorecard.json"
 OUT_HTML = ROOT / "engine_weekly_mail.html"
 OUT_SUBJECT = ROOT / "engine_weekly_mail_subject.txt"
 
-TRACK_LABEL = {"core": "核心", "sat": "衛星"}
+# v5 席位引擎（2026-09-17，見 knowledge/rule_ledger.md「v5 席位引擎」列）：sat 軌
+# 現在是「等待池」（池扣掉核心，全量，非固定 5 席）——標籤跟著改，但底下的
+# diff/render 機制不變（等待池churn 本來就會比舊制衛星 5 席更頻繁，屬預期行為，
+# 未特別壓縮顯示，見任務報告「沒做/未驗證」）。
+TRACK_LABEL = {"core": "核心", "sat": "等待池"}
 P_LABEL_TXT = {"breakout": "突破帶", "pullback": "回踩", "in_trend": "趨勢內",
                "overheated": "過熱"}
 P_LABEL_DOT = {"breakout": "🟢", "pullback": "🟢", "in_trend": "🟡", "overheated": "🟠"}
@@ -458,15 +462,15 @@ def main() -> int:
     k_change = len(changed_tickers)
     change_txt = "首週" if degrade else str(k_change)
 
-    subject = (f"📋 每週選股結果 {report_date}｜核心 {n_core}/5 · 衛星 {n_sat}/5 · "
+    subject = (f"📋 每週選股結果 {report_date}｜核心 {n_core}/5 · 等待池 {n_sat} · "
                f"爆發 {n_baofa} · 十倍 {n_tenbagger}｜換席 {change_txt}")
 
     # ── 一分鐘版三句 ──
-    sent1 = ("本週核心與衛星席位由「三閘評分」（GRP：成長閘×上修閘×位置閘）換算出的"
-             "<strong>擁有層分</strong>排序決定——看成長速度與盈餘殖利率，ROIC 高有加分、"
-             "本益成長比過高會扣分；<strong>時機燈</strong>（突破帶／回踩／趨勢內／過熱／"
-             "52 週線下）只做標示、不參與排序；DD 報告只負責否決不合格公司，或標示"
-             "核心／衛星角色。")
+    sent1 = ("本週核心席位由「品質派資格」（品質閘×三年成長×站上 52 週線×耐久一致性）"
+             "過閘後，按<strong>財報後上修</strong>降冪排序取前 5；<strong>時機燈</strong>"
+             "（距歷史新高突破帶／接近新高／過熱／等板機／52 週線下）只做標示、不參與"
+             "排序；DD 報告只負責否決不合格公司，或標示核心角色。等待池＝池扣掉核心的"
+             "其餘合格名字。")
     if degrade:
         sent2 = "本週<strong>無前週資料可比</strong>，暫無法判定換席（HEAD 上無可對照的上週擂台紀錄）。"
     elif has_changes:
@@ -474,7 +478,7 @@ def main() -> int:
         if core_in or core_out:
             bits.append(f'核心入 {"、".join(core_in) or "—"}／出 {"、".join(core_out) or "—"}')
         if sat_in or sat_out:
-            bits.append(f'衛星入 {"、".join(sat_in) or "—"}／出 {"、".join(sat_out) or "—"}')
+            bits.append(f'等待池入 {"、".join(sat_in) or "—"}／出 {"、".join(sat_out) or "—"}')
         sent2 = f'本週<strong>換席 {k_change} 檔</strong>——' + "；".join(bits) + "，原因見下段機械推導。"
     else:
         sent2 = "本週<strong>無換席</strong>，陣容與上週相同。"
@@ -494,10 +498,10 @@ def main() -> int:
                      + render_seat_table(core_cur, 0, "核心", prev_core_tickers, core_out,
                                           degrade, arena, "core"))
     sat_section = (f'<div style="font-size:13px;color:{TEXT_GRAY};margin:0 0 6px;">'
-                    f'衛星席（{n_sat}/5，空缺 {sat_vacant}）</div>'
-                    + render_seat_table(sat_cur, sat_vacant, "衛星", prev_sat_tickers, sat_out,
+                    f'等待池（{n_sat} 檔——池扣掉核心，v5 起無固定席次，見 sat_vacant={sat_vacant} 已恆為 0）</div>'
+                    + render_seat_table(sat_cur, sat_vacant, "等待池", prev_sat_tickers, sat_out,
                                          degrade, arena, "sat"))
-    section_roster = (section_header("SEAT ROSTER", "核心席／衛星席")
+    section_roster = (section_header("SEAT ROSTER", "核心席／等待池")
                        + core_section + sat_section)
 
     # ── §SEAT CHANGES ──

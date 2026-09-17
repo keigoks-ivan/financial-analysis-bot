@@ -1,133 +1,164 @@
-選股看板 v4｜as_of 2026-09-17｜母體 275（DD 池＋QGM 無 DD＋快審卡）｜母體＝美股含 ADR；台股另建（.TW 不在本看板）
-這是研究層陣容——值不值得擁有，月頻換人，不是帳戶持倉。
-排名分＝財報後上修（缺財報錨定退回三個月）、12M 動能、成長（封頂 30）、品質（FCF/淨利與稀釋率百分位平均；增量 ROIC>=15% 免計 FCF/淨利）、盈餘殖利率，五個排名百分位在合格集合內平均。成長遇基期效應（FY1->FY2 因低基期跳增、FY2->FY3 <20%）改用 FY2->FY3 成長率。循環股（毛利跨距>20pp 或 capex 佔營收>15%）若 PEG<0.3 觸發循環守門，成長/盈餘殖利率分位封頂 50。
-下方「目前席位」與「擁有層排序」兩張表共用同一套欄位（rank/rev/nextE/mom12/dur/lamp/act/dd/note），不重覆說明；擁有層排序表另多一欄 seat 標目前坐哪一席。
-欄位說明：rank=排名分、rev=財報後上修%（已排除匯率；以該股自己最近一次財報日前最新月度 snapshot 為基準，缺財報錨定退回三個月）、nextE=距下次財報天數、mom12=12減1個月動能%、dur=耐久（Y=核心資格達標：五年 ROIC 平均或 QGM 五年穩定度）、lamp=時機燈、act=倉位（跟 lamp 一對一，每日更新）、seat=目前坐哪一席（空白=未坐席，只在擁有層排序表出現）、dd=DD 標籤（僅供顯示）；note=備註（財報前=距下次財報 <=7 天，分數為財報前快照）
-lamp/act 代碼：GRN/FULL=可進·正常倉、YLW/HALF=半倉、HOT/HALF=過熱·半倉、RED/ZERO=等板機·零倉、OUT/-=不合格·未站上 52 週線
-seat：C1-C5=核心席次、S1-S5=衛星席次、B1-B5=候補（未坐席，僅目前席位表標記）｜dd：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，!old=逾 180 天過期
-資格門檻：市值 200 億以上、品質閘、三年成長 15%（耐久者 10%）、站上 52 週線、財報後上修達 5% 否決（缺財報錨定退回三月上修）、體質拒絕/衰退⛔/DD迴避同樣否決。過熱／融券高（SI>10%）與頂點不擋資格，只排除核心候選（過熱、融券高）或純顯示（頂點）；核心候選另需耐久且不過熱且非融券高；無產業集中度上限；內部人買賣僅備註，不進資格與排序。
-換人規則：每月第一次排程換一次席；期間只有硬否決（迴避/拒絕/⛔/財報後上修達5%（缺財報錨定退回三月上修）/市值不足/連兩週跌破 52 週線）能換人，空位由下一名遞補。
-怎麼用：席位+時機綠燈=正常倉可以買；席位+時機紅燈=先別動，等板機。
+選股看板 v5｜as_of 2026-09-17｜上修資料（Koyfin xlsx）as_of 2026-09-17｜價格/距新高/時機燈 as_of 2026-09-17｜母體 275（DD 池＋QGM 無 DD＋快審卡）｜母體＝美股含 ADR；台股另建（.TW 不在本看板）
+資格＝品質派（品質閘×三年成長×站上 52 週線×耐久一致性）、排序＝上修（財報後錨定，缺值退回三月）、板機＝突破還原權息歷史新高。核心月頻換人，其餘每日重排；這是研究層陣容，不是帳戶持倉。
+池＝資格全過且耐久達標的名字中，財報後上修 ≥5% 者；池內依上修降冪排序，同值 tie-break implied_growth_pct、再 tie-break 盈餘殖利率（own_score_v4 五百分位對照分保留一輪，見全母體對照表與各列 hover 的「v4 對照」，不參與本排序）。核心＝池前 5，月頻輪動（每月第一次排程整批重選一次，期間僅硬否決能換人、空位由池遞補）。衛星軌已取消——沒卡進核心前 5 的池成員全部叫「等待池」，依時機燈分兩段顯示：②可買（綠/橘燈，今天板機亮的）與③等待池（其餘）。
+耐久＝QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%——一致性判準，不是單一數字；不耐久即不進池，v5 沒有衛星席可以退。融券占流通股比 >10% 亦整體排除（同理，沒有衛星席可以收留）。過熱（12-1 月動能 >150%）與頂點（roic_vs_5y_x ≥1.3）不擋資格：過熱只影響時機燈（🟠半倉），頂點純顯示。
+欄位說明：rev=財報後上修%（已排除匯率；以該股自己最近一次財報日前最新月度 snapshot 為基準，缺財報錨定退回三個月）、distATH=距還原權息全歷史最高收盤價%（非 52 週高）、nextE=距下次財報天數、dur=耐久（Y=達標）、lamp=時機燈、act=倉位（跟 lamp 一對一，每日更新）、seat/#=核心席次或池內排序名次、dd=DD 標籤（僅供顯示）、note=備註（頂點/循環/循環守門/基期/內部人/財報前/新席）
+lamp/act 代碼：GRN/FULL=可進·正常倉（距新高 ≥−3% 且站上 200 日線）、YLW/HALF=半倉（距新高 −10%~−3%）、HOT/HALF=過熱·半倉（動能 >150% 但仍在突破帶附近）、RED/ZERO=等板機·零倉（距新高 <−10% 或跌破 200 日線）、OUT/-=不合格·未站上 52 週線
+dd 代碼：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，!old=逾 180 天過期
+怎麼用：核心或②可買＝現在可以買；③等待池＝上修夠強但還沒突破，等板機。
 
-== 目前席位：核心 5 ＋ 衛星 5 ＋ 候補 5
-時機更新：2026-09-17（每日）／席位更新：—（每月換席）
-seat ticker     rank    rev  nextE  mom12 dur lamp act  dd                  note
-C1   JBL        74.6   16.4    13d   39.8 Y   RED  ZERO WATCH/sat 76d       內部人賣；NEW；新席；五年 ROIC 平均 ≥15%＝複利耐久
-C2   LRCX       69.0   49.0    34d  148.8 Y   RED  ZERO IN/sat 49d          內部人賣；FROM:S；新席；五年 ROIC 平均 ≥15%＝複利耐久
-C3   NVDA       68.5   23.0    61d   21.6 Y   YLW  HALF IN/core 17d         頂點；內部人賣；新席；五年 ROIC 平均 ≥15%＝複利耐久
-C4   ASML       67.1   29.8    27d   90.5 Y   YLW  HALF IN/core 63d         內部人買；新席；五年 ROIC 平均 ≥15%＝複利耐久
-C5   CAT        64.3    6.5    42d   79.0 Y   RED  ZERO WATCH/trk 43d       內部人賣；NEW；新席；五年 ROIC 平均 ≥15%＝複利耐久
-S1   DELL       75.4   30.2    71d  239.3 Y   HOT  HALF WATCH/trk 14d       頂點；過熱；內部人賣；NEW；新席；五年 ROIC 平均 ≥15%＝複利耐久
-S2   STX        74.0  102.6    40d  287.4 Y   RED  ZERO WATCH/trk 50d       頂點；過熱；循環；內部人賣；NEW；新席；五年 ROIC 平均 ≥15%＝複利耐久
-S3   AMAT       69.1    8.7    56d  160.4 Y   RED  ZERO WATCH/core 83d      過熱；內部人賣；NEW；新席；五年 ROIC 平均 ≥15%＝複利耐久
-S4   TER        64.9   23.7    34d  214.0 Y   RED  ZERO WATCH/sat 83d       頂點；過熱；內部人賣；NEW；新席；五年 ROIC 平均 ≥15%＝複利耐久
-S5   CAH        62.7   15.9    49d   55.0 Y   YLW  HALF IN/sat 115d         內部人買；NEW；新席；五年 ROIC 平均 ≥15%＝複利耐久
-B1   TSM        62.6   14.1    28d   59.0 Y   YLW  HALF IN/core 1d          循環；內部人買；五年 ROIC 平均 ≥15%＝複利耐久
-B2   CLS        62.1   44.6    39d   17.2 Y   RED  ZERO WATCH/trk 68d       頂點；內部人賣；五年 ROIC 平均 ≥15%＝複利耐久
-B3   KLAC       62.0   38.3    41d   77.0 Y   RED  ZERO WATCH/trk 50d       內部人賣；五年 ROIC 平均 ≥15%＝複利耐久
-B4   ATI        59.6   16.1    40d  156.4 -   RED  ZERO WATCH/sat 122d      過熱；內部人賣；五年 ROIC 平均 ≥15%未達標，只能衛星
-B5   FIX        58.5   12.2    35d  108.0 Y   RED  ZERO WATCH/trk 11d       頂點；內部人賣；五年 ROIC 平均 ≥15%＝複利耐久
-  DOWN TSM      ：不在母體
-  DOWN FIX      ：不在母體
-  DOWN TXN      ：不在母體
-  DOWN VRT      ：不在母體
-  DOWN PLTR     ：不在母體
-  DOWN LLY      ：不在母體
-  DOWN ANET     ：不在母體
+== ① 核心席（5）
+時機更新：2026-09-17（每日）／席位更新：2026-09-17（每月換席）
+seat ticker       rev distATH  nextE dur lamp act  dd                  note
+C1   STX        102.6   -28.4    40d Y   RED  ZERO WATCH/trk 50d       頂點；循環；內部人賣；新席
+C2   LRCX        49.0   -37.9    34d Y   RED  ZERO IN/sat 49d          內部人賣；新席
+C3   CLS         44.6   -31.4    39d Y   RED  ZERO WATCH/trk 68d       頂點；內部人賣；新席
+C4   KLAC        38.3   -44.5    41d Y   RED  ZERO WATCH/trk 50d       內部人賣；新席
+C5   DELL        30.2    -0.7    71d Y   HOT  HALF WATCH/trk 14d       頂點；內部人賣；新席
+  DOWN NVDA     ：排名分被擠下
+  DOWN ASML     ：排名分被擠下
+  DOWN TSM      ：排名分被擠下
+  DOWN FIX      ：排名分被擠下
+  DOWN TXN      ：排名分被擠下
 
- # ticker     rank    rev  nextE  mom12 dur lamp act  seat dd                  note
- 1 DELL       75.4   30.2    71d  239.3 Y   HOT  HALF S1   WATCH/trk 14d       頂點；過熱；內部人賣
- 2 JBL        74.6   16.4    13d   39.8 Y   RED  ZERO C1   WATCH/sat 76d       內部人賣
- 3 STX        74.0  102.6    40d  287.4 Y   RED  ZERO S2   WATCH/trk 50d       頂點；過熱；循環；內部人賣
- 4 AMAT       69.1    8.7    56d  160.4 Y   RED  ZERO S3   WATCH/core 83d      過熱；內部人賣
- 5 LRCX       69.0   49.0    34d  148.8 Y   RED  ZERO C2   IN/sat 49d          內部人賣
- 6 NVDA       68.5   23.0    61d   21.6 Y   YLW  HALF C3   IN/core 17d         頂點；內部人賣
- 7 ASML       67.1   29.8    27d   90.5 Y   YLW  HALF C4   IN/core 63d         內部人買
- 8 TER        64.9   23.7    34d  214.0 Y   RED  ZERO S4   WATCH/sat 83d       頂點；過熱；內部人賣
- 9 CAT        64.3    6.5    42d   79.0 Y   RED  ZERO C5   WATCH/trk 43d       內部人賣
-10 CAH        62.7   15.9    49d   55.0 Y   YLW  HALF S5   IN/sat 115d         內部人買
-11 TSM        62.6   14.1    28d   59.0 Y   YLW  HALF      IN/core 1d          循環；內部人買
-12 CLS        62.1   44.6    39d   17.2 Y   RED  ZERO      WATCH/trk 68d       頂點；內部人賣
-13 KLAC       62.0   38.3    41d   77.0 Y   RED  ZERO      WATCH/trk 50d       內部人賣
-14 ATI        59.6   16.1    40d  156.4 -   RED  ZERO      WATCH/sat 122d      過熱；內部人賣
-15 FIX        58.5   12.2    35d  108.0 Y   RED  ZERO      WATCH/trk 11d       頂點；內部人賣
-16 NTAP       57.6    9.4    75d   56.3 Y   GRN  FULL      WATCH/sat 122d      內部人賣
-17 CRS        55.6   25.8    35d  105.7 -   RED  ZERO      IN/core 16d         頂點；內部人賣
-18 TXN        54.4   12.3    40d   51.2 Y   RED  ZERO      IN/core 10d         循環；內部人買
-19 MRK        52.3    0.0    42d   90.4 Y   GRN  FULL      WATCH/sat 115d      基期；內部人賣
-20 LLY        52.1    4.5    42d   68.0 Y   YLW  HALF      IN/core 42d         內部人賣
-21 WDC        51.6    8.8    49d  331.5 -   RED  ZERO      WATCH/trk 11d       頂點；過熱；循環守門；內部人賣
-22 ABNB       50.9    3.9    49d   47.4 Y   YLW  HALF      IN/core 76d         內部人賣
-23 MNST       50.9    0.5    49d   49.0 Y   YLW  HALF      WATCH 122d          內部人買
-24 JNJ        48.9   -1.1    26d   56.1 Y   GRN  FULL      WATCH/trk 63d       內部人賣
-25 EBAY       48.4    2.0    48d   15.4 Y   YLW  HALF      WATCH/sat 124d      頂點；內部人買
-26 MCK        48.4    0.2    48d   23.4 Y   YLW  HALF      IN/core 115d        內部人賣
-27 MAR        47.6    0.6    47d   33.8 Y   RED  ZERO      WATCH/core 69d      內部人賣
-28 GEV        45.6    3.3    41d   53.6 -   RED  ZERO      WATCH/trk 56d       
-29 VIK        45.3    0.1    62d   49.1 -   RED  ZERO      WATCH/trk 17d       循環
-30 ABBV       44.7   -0.1    42d   22.8 Y   YLW  HALF      WATCH/sat 115d      內部人賣
-31 MSFT       44.3   24.2    41d   -5.9 Y   YLW  HALF      IN/core 49d         循環；內部人賣
-32 ALAB       43.9   36.0    47d   16.2 -   RED  ZERO      WATCH/sat 118d      內部人賣
-33 FTNT       43.1   11.0    48d   82.3 Y   GRN  FULL      WATCH/trk 49d       內部人賣
-34 MA         41.3    1.1    42d    0.0 Y   YLW  HALF      IN/core 76d         內部人賣
-35 V          41.1    1.1    40d    9.5 Y   YLW  HALF      IN/core 50d         頂點；內部人賣
-36 ANET       40.0   14.9    47d   26.1 Y   GRN  FULL      WATCH/trk 43d       內部人賣
-37 QCOM       39.4    1.9    42d   -2.2 Y   RED  ZERO      IN/sat 49d          內部人賣
-38 HLT        38.4   -0.0    41d   21.8 Y   RED  ZERO      WATCH/core 76d      頂點；內部人賣
-39 ROK        35.4    1.8    49d   27.3 Y   RED  ZERO      WATCH 89d           內部人賣
-40 PLTR       35.1   10.5    46d   -1.3 -   YLW  HALF      IN/sat 43d          內部人賣
+== ② 可買（等待池中時機燈綠/橘，共 1 檔——今天板機亮的）
+#    ticker       rev distATH  nextE dur lamp act  dd                  note
+1    FTNT        11.0    -0.6    48d Y   GRN  FULL WATCH/trk 49d       內部人賣
+
+== ③ 等待池（上修強、還沒突破，共 14 檔）
+#    ticker       rev distATH  nextE dur lamp act  dd                  note
+1    ASML        29.8   -19.4    27d Y   RED  ZERO IN/core 63d         內部人買
+2    MSFT        24.2    -8.8    41d Y   YLW  HALF IN/core 49d         循環；內部人賣
+3    TER         23.7   -29.5    34d Y   RED  ZERO WATCH/sat 83d       頂點；內部人賣
+4    NVDA        23.0    -9.1    61d Y   YLW  HALF IN/core 17d         頂點；內部人賣
+5    JBL         16.4   -22.9    13d Y   RED  ZERO WATCH/sat 76d       內部人賣
+6    CAH         15.9    -6.5    49d Y   YLW  HALF IN/sat 115d         內部人買
+7    ANET        14.9    -6.2    47d Y   YLW  HALF WATCH/trk 43d       內部人賣
+8    TSM         14.1   -12.3    28d Y   RED  ZERO IN/core 1d          循環；內部人買
+9    TXN         12.3   -21.1    40d Y   RED  ZERO IN/core 10d         循環；內部人買
+10   FIX         12.2   -23.1    35d Y   RED  ZERO WATCH/trk 11d       頂點；內部人賣
+11   NTAP         9.4    -7.5    75d Y   YLW  HALF WATCH/sat 122d      內部人賣
+12   AMAT         8.7   -42.5    56d Y   RED  ZERO WATCH/core 83d      內部人賣
+13   CAT          6.5   -26.4    42d Y   RED  ZERO WATCH/trk 43d       內部人賣
+14   GRMN         6.3   -11.2    41d Y   RED  ZERO WATCH/trk 49d       內部人賣
+
+== ④ 品質過閘、上修未達 5%（共 19 檔，僅供複審，不進池）
+#    ticker       rev distATH  nextE dur lamp act  dd                  note
+1    MSI          4.8    -6.8    49d Y   YLW  HALF WATCH 116d          內部人賣
+2    LLY          4.5   -11.1    42d Y   RED  ZERO IN/core 42d         內部人賣
+3    ABNB         3.9   -22.8    49d Y   RED  ZERO IN/core 76d         內部人賣
+4    QCOM         1.9   -25.7    42d Y   RED  ZERO IN/sat 49d          內部人賣
+5    ROK          1.8   -15.9    49d Y   RED  ZERO WATCH 89d           內部人賣
+6    MA           1.1    -5.3    42d Y   YLW  HALF IN/core 76d         內部人賣
+7    V            1.1    -3.4    40d Y   YLW  HALF IN/core 50d         頂點；內部人賣
+8    MAR          0.6   -16.6    47d Y   RED  ZERO WATCH/core 69d      內部人賣
+9    MNST         0.5   -10.8    49d Y   RED  ZERO WATCH 122d          內部人買
+10   AAPL         0.4    -2.2    42d Y   GRN  FULL WATCH/trk 48d       內部人賣
+11   MCK          0.2   -10.7    48d Y   RED  ZERO IN/core 115d        內部人賣
+12   MRK          0.0    -6.8    42d Y   YLW  HALF WATCH/sat 115d      基期；內部人賣
+13   HLT         -0.0   -12.7    41d Y   RED  ZERO WATCH/core 76d      頂點；內部人賣
+14   ABBV        -0.1    -1.3    42d Y   GRN  FULL WATCH/sat 115d      內部人賣
+15   JNJ         -1.1    -4.0    26d Y   YLW  HALF WATCH/trk 63d       內部人賣
+16   META        -2.8   -14.5    41d Y   RED  ZERO IN/core 49d         循環；內部人賣
+17   AMP            -       -      - Y   YLW  HALF none                
+18   EXPE           -       -      - Y   YLW  HALF none                
+19   ROKU           -       -      - -   -    -    WATCH/sat           
+
+== 全母體看板（v4 對照排序，僅供對照——上方 ①②③ 才是 v5 實際排序）
+ # ticker       rev distATH  nextE dur lamp act  seat dd                  note
+ 1 DELL        30.2    -0.7    71d Y   HOT  HALF C5   WATCH/trk 14d       頂點；內部人賣
+ 2 JBL         16.4   -22.9    13d Y   RED  ZERO      WATCH/sat 76d       內部人賣
+ 3 STX        102.6   -28.4    40d Y   RED  ZERO C1   WATCH/trk 50d       頂點；循環；內部人賣
+ 4 AMAT         8.7   -42.5    56d Y   RED  ZERO      WATCH/core 83d      內部人賣
+ 5 LRCX        49.0   -37.9    34d Y   RED  ZERO C2   IN/sat 49d          內部人賣
+ 6 NVDA        23.0    -9.1    61d Y   YLW  HALF      IN/core 17d         頂點；內部人賣
+ 7 CAT          6.5   -26.4    42d Y   RED  ZERO      WATCH/trk 43d       內部人賣
+ 8 TER         23.7   -29.5    34d Y   RED  ZERO      WATCH/sat 83d       頂點；內部人賣
+ 9 ASML        29.8   -19.4    27d Y   RED  ZERO      IN/core 63d         內部人買
+10 CAH         15.9    -6.5    49d Y   YLW  HALF      IN/sat 115d         內部人買
+11 TSM         14.1   -12.3    28d Y   RED  ZERO      IN/core 1d          循環；內部人買
+12 KLAC        38.3   -44.5    41d Y   RED  ZERO C4   WATCH/trk 50d       內部人賣
+13 CLS         44.6   -31.4    39d Y   RED  ZERO C3   WATCH/trk 68d       頂點；內部人賣
+14 NTAP         9.4    -7.5    75d Y   YLW  HALF      WATCH/sat 122d      內部人賣
+15 FIX         12.2   -23.1    35d Y   RED  ZERO      WATCH/trk 11d       頂點；內部人賣
+16 TXN         12.3   -21.1    40d Y   RED  ZERO      IN/core 10d         循環；內部人買
+17 MRK          0.0    -6.8    42d Y   YLW  HALF      WATCH/sat 115d      基期；內部人賣
+18 MNST         0.5   -10.8    49d Y   RED  ZERO      WATCH 122d          內部人買
+19 ABNB         3.9   -22.8    49d Y   RED  ZERO      IN/core 76d         內部人賣
+20 LLY          4.5   -11.1    42d Y   RED  ZERO      IN/core 42d         內部人賣
+21 JNJ         -1.1    -4.0    26d Y   YLW  HALF      WATCH/trk 63d       內部人賣
+22 MCK          0.2   -10.7    48d Y   RED  ZERO      IN/core 115d        內部人賣
+23 MAR          0.6   -16.6    47d Y   RED  ZERO      WATCH/core 69d      內部人賣
+24 ABBV        -0.1    -1.3    42d Y   GRN  FULL      WATCH/sat 115d      內部人賣
+25 MSFT        24.2    -8.8    41d Y   YLW  HALF      IN/core 49d         循環；內部人賣
+26 FTNT        11.0    -0.6    48d Y   GRN  FULL      WATCH/trk 49d       內部人賣
+27 MA           1.1    -5.3    42d Y   YLW  HALF      IN/core 76d         內部人賣
+28 V            1.1    -3.4    40d Y   YLW  HALF      IN/core 50d         頂點；內部人賣
+29 QCOM         1.9   -25.7    42d Y   RED  ZERO      IN/sat 49d          內部人賣
+30 ANET        14.9    -6.2    47d Y   YLW  HALF      WATCH/trk 43d       內部人賣
+31 HLT         -0.0   -12.7    41d Y   RED  ZERO      WATCH/core 76d      頂點；內部人賣
+32 ROK          1.8   -15.9    49d Y   RED  ZERO      WATCH 89d           內部人賣
+33 META        -2.8   -14.5    41d Y   RED  ZERO      IN/core 49d         循環；內部人賣
+34 MSI          4.8    -6.8    49d Y   YLW  HALF      WATCH 116d          內部人賣
+35 AAPL         0.4    -2.2    42d Y   GRN  FULL      WATCH/trk 48d       內部人賣
+36 GRMN         6.3   -11.2    41d Y   RED  ZERO      WATCH/trk 49d       內部人賣
+37 ROKU           -       -      - -   -    -         WATCH/sat           
+38 EXPE           -       -      - Y   YLW  HALF      none                
+39 AMP            -       -      - Y   YLW  HALF      none                
 
 == DD 裁決進場 vs 機械資格
-  進場 67：過閘 16／未過 51
+  進場 67：過閘 14／未過 53
    X SMTC      DN     市值 13B 低於門檻 20B；雷達三閘資料不足或未過（隨主榜週更再驗）
-   X CRDO      DN     位置閘未過（站在 52 週線下或資料缺）
+   X CRDO      DN     位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
+   X PLTR      PB     耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
    X APH       PB     財報後上修否決（-42.0% ≤ -5%）
    X TT        DN     位置閘未過（站在 52 週線下或資料缺）
    X MPWR      DN     位置閘未過（站在 52 週線下或資料缺）
    X 6857.T    PB     市值資料缺漏，資格從嚴不予通過；成長閘用 2 年成長率代替（缺 FY3 預估，v4 不採計為資格）；成長閘未過（v4 需三年期 Koyfin CAGR，現值 50.19）
    X 6146.T    DN     市值資料缺漏，資格從嚴不予通過；成長閘用 2 年成長率代替（缺 FY3 預估，v4 不採計為資格）；成長閘未過（v4 需三年期 Koyfin CAGR，現值 30.89）
-   X ONON      DN     市值 12B 低於門檻 20B；位置閘未過（站在 52 週線下或資料缺）
+   X ONON      DN     市值 12B 低於門檻 20B；位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
+   X CRS       TR     耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
    X FICO      DN     市值 20B 低於門檻 20B；位置閘未過（站在 52 週線下或資料缺）
    X TEL       DN     位置閘未過（站在 52 週線下或資料缺）
    X NFLX      DN     位置閘未過（站在 52 週線下或資料缺）
    X BKNG      DN     位置閘未過（站在 52 週線下或資料缺）
-   X SU        PB     品質閘 ROIC 13.08
-   X VRT       DN     位置閘未過（站在 52 週線下或資料缺）
-   X BX        DN     位置閘未過（站在 52 週線下或資料缺）；品質閘 ROIC 缺
+   X SU        TR     耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 13.08
+   X VRT       DN     位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
+   X BX        DN     位置閘未過（站在 52 週線下或資料缺）；耐久資料缺，不進池（v5 資格必備，見 grp.durable_5y_v5()）；品質閘 ROIC 缺
    X AVGO      DN     位置閘未過（站在 52 週線下或資料缺）
-   X NXPI      DN     位置閘未過（站在 52 週線下或資料缺）
-   X NU        DN     位置閘未過（站在 52 週線下或資料缺）；品質閘 ROIC 缺
+   X NXPI      DN     位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
+   X NU        DN     位置閘未過（站在 52 週線下或資料缺）；耐久資料缺，不進池（v5 資格必備，見 grp.durable_5y_v5()）；品質閘 ROIC 缺
    X STRL      DN     位置閘未過（站在 52 週線下或資料缺）
    X ROST      PB     成長閘未過（CAGR 7.7166 < 10%）
    X APP       DN     位置閘未過（站在 52 週線下或資料缺）
-   X GOOGL     PB     成長閘未過（CAGR -7.7256 < 10%）；品質閘 ROIC 13.86
-   X WDAY      PB     品質閘 ROIC 11.47
-   X AMD       PB     品質閘 ROIC 7.78
-   X SE        DN     位置閘未過（站在 52 週線下或資料缺）；品質閘 ROIC 8.59
-   X EAT       PB     市值 10B 低於門檻 20B；成長閘未過（CAGR 11.4908 < 15%）；品質閘 FCF 9.6
+   X GOOGL     PB     成長閘未過（CAGR -7.7256 < 15%）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 13.86
+   X WDAY      PB     耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 11.47
+   X AMD       PB     耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 7.78
+   X SE        DN     位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 8.59
+   X EAT       PB     市值 10B 低於門檻 20B；成長閘未過（CAGR 11.4908 < 15%）；融券占流通股比過高排除（14.4% > 10%）
    X MWA       DN     市值 4B 低於門檻 20B；成長閘未過（CAGR 3.4439 < 15%）；位置閘未過（站在 52 週線下或資料缺）
    X CDNS      DN     位置閘未過（站在 52 週線下或資料缺）；品質閘 ROIC 14.48
-   X ADI       PB     品質閘 ROIC 10.29
-   X DE        BRK    品質閘 ROIC 12.93；品質閘 FCF 6.74
-   X BLK       DN     位置閘未過（站在 52 週線下或資料缺）；品質閘 ROIC 9.63
-   X NOW       TR     品質閘 ROIC 6.55
+   X ADI       PB     耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 10.29
+   X DE        BRK    耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 12.93；品質閘 FCF 6.74
+   X BLK       DN     位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 9.63
+   X NOW       TR     耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 6.55
    X DECK      DN     市值 12B 低於門檻 20B；位置閘未過（站在 52 週線下或資料缺）
-   X CRM       TR     成長閘未過（CAGR 5.0668 < 15%）；品質閘 ROIC 8.51
+   X CRM       TR     成長閘未過（CAGR 5.0668 < 15%）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 8.51
    X SBUX      PB     品質閘 FCF 9.5
    X GILD      BRK    成長閘用 2 年成長率代替（缺 FY3 預估，v4 不採計為資格）；成長閘未過（v4 需三年期 Koyfin CAGR，現值 10.16）
-   X AMZN      PB     成長閘未過（CAGR 2.0002 < 15%）；品質閘 ROIC 7.31；品質閘 FCF -1.5
-   X GRAB      DN     市值 14B 低於門檻 20B；位置閘未過（站在 52 週線下或資料缺）；品質閘 ROIC 1.65
-   X COHR      TR     品質閘 ROIC 5.75；品質閘 FCF -14.38
-   X HUBB      DN     位置閘未過（站在 52 週線下或資料缺）；品質閘 ROIC 13.19
+   X AMZN      PB     成長閘未過（CAGR 2.0002 < 15%）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 7.31
+   X GRAB      DN     市值 14B 低於門檻 20B；位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
+   X COHR      TR     耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）；品質閘 ROIC 5.75；品質閘 FCF -14.38
+   X HUBB      DN     成長閘未過（CAGR 11.6393 < 15%）；位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
    X TPC       PB     市值 4B 低於門檻 20B；成長閘用 2 年成長率代替（缺 FY3 預估，v4 不採計為資格）；成長閘未過（v4 需三年期 Koyfin CAGR，現值 100.5）
-   X ROP       DN     成長閘未過（CAGR 8.9802 < 15%）；位置閘未過（站在 52 週線下或資料缺）；品質閘 ROIC 6.22
-   X MOD       DN     市值 12B 低於門檻 20B；位置閘未過（站在 52 週線下或資料缺）；品質閘 FCF 2.97
-   X UBER      DN     位置閘未過（站在 52 週線下或資料缺）
+   X ROP       DN     成長閘未過（CAGR 8.9802 < 15%）；位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
+   X MOD       DN     市值 12B 低於門檻 20B；位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
+   X UBER      DN     位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
    X WLDN      DN     市值 1B 低於門檻 20B；成長閘用 2 年成長率代替（缺 FY3 預估，v4 不採計為資格）；成長閘未過（v4 需三年期 Koyfin CAGR，現值 5.28）
-   X J         PB     市值 15B 低於門檻 20B；成長閘未過（CAGR 13.4673 < 15%）；品質閘 ROIC 8.67
-   X COF       DN     位置閘未過（站在 52 週線下或資料缺）；品質閘 ROIC 缺
+   X J         PB     市值 15B 低於門檻 20B；成長閘未過（CAGR 13.4673 < 15%）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
+   X COF       DN     位置閘未過（站在 52 週線下或資料缺）；耐久資料缺，不進池（v5 資格必備，見 grp.durable_5y_v5()）；品質閘 ROIC 缺
    X ALV       DN     市值 9B 低於門檻 20B；成長閘未過（CAGR 14.338 < 15%）；位置閘未過（站在 52 週線下或資料缺）
-   X CARR      DN     成長閘未過（CAGR 13.9113 < 15%）；位置閘未過（站在 52 週線下或資料缺）；品質閘 ROIC 6.73
+   X CARR      DN     成長閘未過（CAGR 13.9113 < 15%）；位置閘未過（站在 52 週線下或資料缺）；耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者皆 ≥15%）
    X GLXY      DN     市值 5B 低於門檻 20B；成長閘未過（v4 需三年期 Koyfin CAGR，現值 缺）；財報後上修否決（-585.7% ≤ -5%）
    X DY        DN     市值 13B 低於門檻 20B；雷達三閘資料不足或未過（隨主榜週更再驗）
 

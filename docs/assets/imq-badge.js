@@ -33,7 +33,9 @@
   var QCOLS = ["pass", "fail", "none"];
   var QCOL_LABEL = { pass: "品質過", fail: "品質未過", none: "無品質資料" };
   var DD_CLS = { "進場": "dd-in", "觀望": "dd-watch", "迴避": "dd-avoid" };
-  var SEAT_LABEL = { C: "核心席", S: "衛星席", B: "板凳" };
+  // v5 席位引擎（2026-09-17，見 knowledge/rule_ledger.md「v5 席位引擎」列）：S 標記
+  // 現在代表「等待池」（arena.sat_seats 全量，非固定 5 席衛星），標籤跟著改名。
+  var SEAT_LABEL = { C: "核心席", S: "等待池", B: "板凳" };
   var URLS = {
     arena: "/engine/arena.json",
     lamp: "/stages/data/lamp.json",
@@ -805,7 +807,7 @@
         "略過（品質未過×弱勢）——兩邊都沒亮，預設收合、不用花時間。" +
         "這是注意力導引，不是買賣指令，也不是排名。</p>" +
         "<p><b>不限格子的小標</b>：代號旁若掛著「DD 進場・品質未過」，是 DD 判斷過進場、但現在財務數字過不了品質閘的名字，任何格子都可能出現，完整名單見上方本週清單③論點矛盾。</p>" +
-        "<p><b>標記圖例</b>：C／S／B＝核心席／衛星席／候補，數字是席次序；外框實線＝進場、空心＝觀望、虛線＝無 DD、劃線＝迴避；" +
+        "<p><b>標記圖例</b>：C／S／B＝核心席／等待池／候補，數字是席次序；外框實線＝進場、空心＝觀望、虛線＝無 DD、劃線＝迴避；" +
         "底線＝本週新進此格；Δ＝較 5 個交易日前的家數變化；「更多」可展開看完整名單。</p>" +
         "<p><b>母體切換</b>：席位榜（現任與候補，約 60 檔）／研究母體（DD 池美股加品質池加缺三年成長預估的隊列，約 " + esc(String(uniN)) + " 檔——" +
         "席位不用先有 DD，但成長預估要是三年期，只有單年預估的才排在隊列）／" +
@@ -837,7 +839,7 @@
         '<span class="qtm-legend-item">' + legendChip("dd-watch") + "＝DD 觀望</span>" +
         '<span class="qtm-legend-item">' + legendChip("dd-none") + "＝沒有 DD</span>" +
         '<span class="qtm-legend-item">' + legendChip("dd-avoid") + "＝DD 迴避</span>" +
-        '<span class="qtm-legend-item"><span class="qtm-seat">C</span>核心席／<span class="qtm-seat">S</span>衛星席／' +
+        '<span class="qtm-legend-item"><span class="qtm-seat">C</span>核心席／<span class="qtm-seat">S</span>等待池／' +
         '<span class="qtm-seat">B</span>候補，數字＝席次</span>' +
         '<span class="qtm-legend-item">' + legendChip("new-week") + "＝本週新進</span>" +
         "</div>";

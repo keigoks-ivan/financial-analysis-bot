@@ -15,30 +15,29 @@ Regime 撥盤（v1 規則鎖定；資訊性，不接倉位系統）：
   形狀敏感度：突破帶/動能重估 對 regime 最敏感；循環轉折次之；規則詳頁尾。
 
 輸出：docs/engine/arena.json + arena.html。
-Usage: python3 scripts/engine/build_arena.py [--ledger] [--lamp-only]
+Usage: python3 scripts/engine/build_arena.py [--ledger] [--daily | --lamp-only]
 
---ledger：帳本（arena-ledger.json：last_rotation_month／roster／w52_fail_streak／
-snapshots）預設唯讀——不帶旗標時，用「既有帳本」算席位並照常寫 arena.json／board.txt／
+--ledger：帳本（arena-ledger.json：last_rotation_month／roster.core／w52_fail_streak／
+snapshots）預設唯讀——不帶旗標時，用「既有帳本」算核心席並照常寫 arena.json／board.txt／
 fragments，但不推進月頻輪動時鐘、不追加 snapshot。只有 `.github/workflows/weekly-engine.yml`
 的排程跑次帶 `--ledger` 真正寫帳本，避免手動/ad-hoc 執行提早觸發輪動或誤記週跌破 52 週線
 次數（沿用 2026-09-08 VRTX/INCY 教訓的精神：跑次不能當週次算）。
 
---lamp-only（2026-09-17 持有人拍板，見 knowledge/rule_ledger.md「時機燈日更、席位月更」
-列；同日再擴大範圍見「全母體看板欄位對齊」段）：唯讀模式，只重算既有席位＋候補＋
-全母體表（arena.json own_board[]）的時機燈／倉位（timing.*／ma.above_w52 與
-mom_12_1_pct／docs/stages/data/lamp.json 階段／overheated），不重跑選股或月頻輪動、
-不寫 arena-ledger.json、不動任何列的 score／rank／own/g/pass/veto。席位名單優先讀
-arena-ledger.json 的 roster，缺則退回 arena.json 現有 core_seats／sat_seats；兩者皆缺
-→ 印 warning、exit 0（不擋排程）。只改 arena.json 的席位列＋own_board[] 本身＋
-lamp_as_of／lamp_source／lamp_last_rotation_date 三個戳記，board.txt／
-_board_body.html 只原地替換「目前席位」與「全母體看板（擁有層排序）」兩個區塊本體
-（own_board 缺時後者優雅退回、維持上次週跑內容），DD 對照／候選佇列維持上次週跑
-（`--ledger`）內容不變——那些欄位的排序鍵是跨檔百分位，only weekly-engine.yml 的
-`--ledger` 跑次能動。見 `scripts/engine/run_lamp_only()`、
-`.github/workflows/daily-taipei-morning.yml`。時機燈原料（dd-screener timing.*/ma.*）
-本來就每日跟著 build_dd_screener.py 更新，只是過去只有週跑的 build_arena.py --ledger
-會讀進來算 lamp——這支旗標把「讀」的頻率補成跟「寫」一樣，不動「值不值得擁有」
-（own_score／席位）這條月頻時鐘。
+--daily（2026-09-17 持有人拍板，v5 席位引擎起取代 v4「--lamp-only 只刷時機燈」的窄流程，
+見 knowledge/rule_ledger.md「v5 席位引擎」列／grp.py 檔頭 v5 段第 5 點）：全量重跑資格／
+池／排序／時機燈／距歷史新高，帳本唯讀（不寫 arena-ledger.json）——這其實就是不帶
+`--ledger` 的預設路徑本身（本來就是「全量重算、只讀不寫帳本」），`--daily` 只是給
+workflow 檔一個明講意圖的旗標名，不觸發額外分支。核心席名單仍從 arena-ledger.json 的
+`roster.core` 讀（月頻輪動時鐘不因 `--daily` 前進）；若現任核心席本次命中硬否決
+（hard_veto_v5()），本次輸出會立即顯示替換（空位由池遞補），但要等下一次
+`weekly-engine.yml` 的 `--ledger` 排程跑次才會真正把這次替換寫回帳本、前進月頻時鐘。
+`--lamp-only` 是 v4 舊名，向下相容別名，語意等同 `--daily`——v5 起沒有「窄流程只刷時機
+燈」這回事，因為資格/池/排序本身已經便宜到可以每天全量重算（見 grp.py 檔頭 v5 段：
+上修排序鍵只在新的 Koyfin xlsx 匯入時才變，但距歷史新高／時機燈／倉位每天都變，
+`--daily` 一次重算兩者，頁首同時標 `rev_data_as_of`／`price_as_of` 兩個日期供讀者
+分辨資料新鮮度）。掛在 `.github/workflows/daily-taipei-morning.yml`（與
+`daily-non-fundamental-refresh.yml` 手動 dispatch 同步）Step 1 之後，取代舊有的
+`--lamp-only` 呼叫。
 
 v4 席位引擎（2026-09-17 持有人拍板，見 knowledge/rule_ledger.md「v4 席位引擎」列）：
 月頻輪動取代週遲滯——每月第一次 --ledger 跑整批重選一次；期間只有硬否決（DD 迴避／體質
@@ -65,6 +64,34 @@ dd_screener._compute_eps_rev_since_earnings() 算好、以每檔自己最近一�
 method 字串）同步改標，grp["eps_rev_3m_pct"] 欄位本身不變、仍保留供對照。新增
 「下次財報」欄（grp["days_to_next_earnings"]）標示距下次財報天數 ≤7 天的名字，
 提醒讀者該分數是財報前快照。
+
+v5 席位引擎（2026-09-17 持有人拍板「品質派 ∩ 獲利上修 ∩ 突破還原權息歷史新高」；
+完整判斷規則見 scripts/engine/grp.py 檔頭 v5 段／knowledge/rule_ledger.md「v5 席位
+引擎」列／notes/site-internal/root/_seat_engine_v5_20260917.md）——本檔改動：
+  1. 母體/資格/池：不變的是母體組成（DD 池∪QGM 品質池∪快審卡）；grp_score() 已把
+     耐久（durable_5y）與融券高升級為資格閘本體，本檔只需在 ELIGIBLE 集合
+     （r["grp"]["pass"]）上再疊加「上修 ≥5%」這道池門檻（grp.in_pool()），見
+     main() 的 `pool_rows`／`not_in_pool_rows`。
+  2. 排序：`pool_rows` 依 grp.pool_sort_key()（上修降冪、tie-break implied_growth_pct、
+     再 tie-break EY）排序，取代 v4 的 own_score_v4 百分位排序；後者（`ranked`／
+     `apply_own_score_v4()`）保留一輪只做「v4 對照」tooltip 與全母體對照表。
+  3. 席位：核心＝ `select_fresh_roster_v5()`/`rotate_roster()` 對 `pool_rows` 取前
+     5（月頻輪動機制不變，只是候選池換成 pool_rows）；衛星軌取消，`waiting_pool`
+     （池扣掉核心）依時機燈拆成 `buyable`（綠/橘燈）與 `waiting_rest`（其餘）兩段
+     顯示。`sat_seats`（arena.json）保留 key 向下相容，內容改成整個 `waiting_pool`
+     （每列帶 `track:"pool"` 標記）；`sat_vacant` 恆為 0（池無固定席次概念）。
+  4. 時機燈：grp.timing_lamp() 全面改讀 `ma.dist_ath_pct`（見 build_dd_screener.
+     compute_ath_highs()，還原權息全歷史 ATH，快取 data/ath_cache.json），本檔
+     row_dict() 只多把 `dist_ath_pct`/`ath_adj_price`/`ath_adj_date`/`ath_source`
+     從 `s["ma"]` 帶進顯示列（見 _row_cells()／_shared_thead_cells() 欄位改版）。
+  5. `--daily`（見上）取代 v4 `--lamp-only` 窄流程；run_lamp_only() 與其專用的
+     `_refresh_row_timing`/`_fresh_timing_bundle`/`_patch_*_in_*` 系列輔助函式已
+     移除（連同 v4 的 `select_fresh_roster`/`hard_veto_v4`/舊版 `rotate_roster`
+     ——v5 版同名函式見上方 select_fresh_roster_v5()/hard_veto_v5()/rotate_roster()）。
+  6. M5 對照組（`_arena_body.html`，PREREG 凍結，只換殼不改文）：其「衛星席位」
+     沿用固定 5 席快照概念，資料源改接 `waiting_pool[:SAT_SLOTS]`（見 main() 內
+     `sat_seats_m5` 變數），與 payload 真正的 v5 `sat_seats`（全量等待池）是兩件
+     事，故獨立變數不共用，避免污染 M5 頁面既有的擂台/板凳文案。
 """
 from __future__ import annotations
 
@@ -82,8 +109,9 @@ from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
 from engine.grp import (  # noqa: E402
     DD_FRESH_DAYS, G_MIN_CAGR, G_MIN_CAGR_DURABLE, LAMP_ACTION, MKTCAP_MIN, MOM_12_1_OVERHEAT,
-    P_LABEL_HTML, PEAK_ROIC_X, Q_FCF_MIN, Q_ROIC_MIN, R26_OVERHEAT_FALLBACK, R_VETO_FY1,
-    cap_ok, fetch_caps, grp_route, grp_score, market_ok, own_score_v4, timing_lamp,
+    P_LABEL_HTML, PEAK_ROIC_X, POOL_REV_MIN, Q_FCF_MIN, Q_ROIC_MIN, R26_OVERHEAT_FALLBACK,
+    R_VETO_FY1, cap_ok, fetch_caps, grp_route, grp_score, in_pool, market_ok, own_score_v4,
+    pool_sort_key, timing_lamp,
 )
 from dd_screener_quality import load_qgm_durability_index  # noqa: E402
 
@@ -379,14 +407,15 @@ def row_dict(s: dict) -> dict:
         st = weekly_structure(s["ticker"])
         s["_r26"] = st.get("r26") if st else None
         s["_r52"] = st.get("r52") if st else None
-    _apply_durable_fallback(s)   # v4：durable_5y 就緒供成長閘門檻（10%/15%）與 grp_route 讀
-    g = grp_score(s)             # v4：過熱／頂點／新硬否決／上修否決（財報後錨定，缺值退回三月）皆已在 grp_score 內算好
+    _apply_durable_fallback(s)   # durable_5y 就緒——v5 起是 grp_score() 資格閘本體，見該函式
+    g = grp_score(s)             # v5：品質派資格（成長/位置/上修否決/硬否決/耐久/融券高）皆已在 grp_score 內算好
     route, route_why = grp_route(s)
-    # v4 核心候選資格＝耐久達標 AND 不過熱（見 grp.py 檔頭 v4 段第 3 點；頂點不排除，
-    # 只留顯示註記 g["peak"]）——build_arena.main() 用這個欄位挑核心 5 席。
-    # v4.1（2026-09-17，見 knowledge/rule_ledger.md「v4.1 融券比 >10% 只能衛星」列）：
-    # 融券高比照過熱的待遇——不進排序、不是資格閘，只排除核心候選資格（衛星照樣能坐）。
-    core_candidate = route == "core" and not g["overheated"] and not g["high_short_interest"]
+    # v5（2026-09-17，見 grp.py 檔頭 v5 段）：耐久與融券高已升級為 grp_score() 的
+    # 資格閘本體（g["pass"] 已反映），「core_candidate」保留給 M5 對照組擂台頁
+    # （_arena_body.html，PREREG 凍結、本輪不重做）的板凳/擂台邏輯沿用，定義簡化為
+    # 「軌別為 core 且非融券高」——過熱不再排除核心候選（v5 核心＝池前 5，見
+    # select_fresh_roster()/rotate_roster()，不再讀本欄位）。
+    core_candidate = route == "core" and not g["high_short_interest"]
     role = s.get("dca_role") or ""
     age = s.get("dd_age_days")
     fresh = bool(s.get("dca_verdict")) and (age is None or age <= DD_FRESH_DAYS)
@@ -411,6 +440,14 @@ def row_dict(s: dict) -> dict:
             "roic": g["quality"].get("roic"), "fcf": g["quality"].get("fcf"),
             "peg": (s.get("live_peg") if s.get("live_peg") is not None else s.get("peg")),
             "r26": s.get("_r26"), "r52": s.get("_r52"),
+            # v5（2026-09-17，見 grp.py 檔頭 v5 段）：距歷史新高／implied_growth_pct
+            # 是池排序（grp.pool_sort_key()）與 timing_lamp() 板機的原料，直接從 s
+            # 讀（timing_lamp 已經讀過 s["ma"]，這裡另存一份供席位表欄位／tooltip用）。
+            "dist_ath_pct": (s.get("ma") or {}).get("dist_ath_pct"),
+            "ath_adj_price": (s.get("ma") or {}).get("ath_adj_price"),
+            "ath_adj_date": (s.get("ma") or {}).get("ath_adj_date"),
+            "ath_source": (s.get("ma") or {}).get("ath_source"),
+            "implied_growth_pct": s.get("implied_growth_pct"),
             # 2026-09-17（籌碼面備註 badge，見 knowledge/rule_ledger.md「v4.1 融券比
             # >10% 只能衛星」列）：insider 全程只是備註，不進資格與排序；SI 的排除
             # 核心候選判定已在 g["high_short_interest"]／core_candidate 算好，這裡
@@ -546,6 +583,7 @@ W_TIMING, W_SEAT, W_DD, W_MOAT = 6, 4, 19, 4
 LAMP_CODE_ASCII = {"green": "GRN", "yellow": "YLW", "hot": "HOT", "red": "RED", "out": "OUT"}
 ACTION_CODE_ASCII = {"green": "FULL", "yellow": "HALF", "hot": "HALF", "red": "ZERO", "out": "-"}
 W_SEATCODE, W_RANK, W_REV3M, W_MOM12, W_DUR, W_LAMPCODE, W_ACTCODE = 4, 5, 6, 6, 3, 4, 4
+W_DISTATH = 7   # v5（2026-09-17）：距歷史新高% 欄寬，取代 v4 的 W_MOM12（12M 動能%欄，v5 排序不再用）
 # 財報錨定上修（2026-09-17）：「下次財報」欄寬——board.txt 席位表新增欄，見
 # _seat_section_lines()／knowledge/rule_ledger.md「上修改為財報後錨定」列。
 W_NEXTEARN = 6
@@ -602,31 +640,25 @@ def _ticker_col(t) -> str:
 
 
 def _own_board_ascii_hdr() -> str:
-    """擁有層排序表 ASCII 表頭——render_board_text()／_patch_main_table_in_text()／
-    run_lamp_only() 三處逐字共用同一個字串（唯一 source），避免各自手打一份而漂移
-    （2026-09-08 教訓：`_patch_seat_section_in_text()` 的 end_marker 曾經對不上表頭
-    差點讓 --lamp-only 靜默略過刷新，見同函式註解）。"""
-    return (f"{'#':>{W_IDX}} {'ticker':<{W_TICKER}} {'rank':>{W_RANK}} {'rev':>{W_REV3M}} "
-           f"{'nextE':>{W_NEXTEARN}} {'mom12':>{W_MOM12}} {'dur':<{W_DUR}} {'lamp':<{W_LAMPCODE}} "
+    """全母體對照表（v4 對照排序）ASCII 表頭——render_board_text() 的唯一 source，
+    避免手打第二份而漂移。v5（2026-09-17，見 grp.py 檔頭 v5 段）：rank/mom12 欄
+    換成 distATH。"""
+    return (f"{'#':>{W_IDX}} {'ticker':<{W_TICKER}} {'rev':>{W_REV3M}} {'distATH':>{W_DISTATH}} "
+           f"{'nextE':>{W_NEXTEARN}} {'dur':<{W_DUR}} {'lamp':<{W_LAMPCODE}} "
            f"{'act':<{W_ACTCODE}} {'seat':<{W_SEATCODE}} {'dd':<{W_DD}} note")
 
 
 def _own_board_ascii_row(i: int, v: dict, seat_code: dict) -> str:
-    """全母體排序表單一 ASCII 列——render_board_text() 全量重建與 run_lamp_only()
-    唯讀刷新（own_board[] 已是 `_flat_view()` 扁平 schema）共用同一份格式，見兩處
-    呼叫端／knowledge/rule_ledger.md「全母體看板欄位對齊」設計稿。欄序與寬度同
-    `_seat_section_lines()` 的席位列（rank/rev/nextE/mom12/dur/lamp/act/seat/dd/note），
-    只是第一欄是排序名次而非席次代碼。`seat_code`＝{ticker: "C1"/"S2"}，未坐席留空白。"""
+    """全母體對照表單一 ASCII 列（own_board[]，`_flat_view()` 扁平 schema）。欄序與
+    寬度同 `_pool_ascii_row()` 的池列（rev/distATH/nextE/dur/lamp/act/seat/dd/note），
+    只是第一欄是 v4 對照排名名次而非席次代碼，且多一欄「席」標目前坐哪一核心席。
+    `seat_code`＝{ticker: "C1"}，未坐席留空白。"""
     lamp = v.get("lamp") or {}
     days_ne = v.get("days_to_next_earnings")
     next_earn_cell = f"{int(days_ne)}d" if days_ne is not None else "-"
     note_bits = []
     if v.get("peak"):
         note_bits.append("頂點")
-    if v.get("overheated"):
-        note_bits.append("過熱")
-    if v.get("high_short_interest"):
-        note_bits.append("融券高")
     if v.get("base_effect"):
         note_bits.append("基期")
     if v.get("cycle_guard"):
@@ -642,9 +674,9 @@ def _own_board_ascii_row(i: int, v: dict, seat_code: dict) -> str:
     if v.get("g_method") == "FY1→FY2 單年":
         note_bits.append("成長=FY1→FY2 單年")
     return (
-        f"{i:>{W_IDX}} {_ticker_col(v['ticker'])} {_n(v.get('score'), W_RANK)} "
-        f"{_n(v.get('rev_used_pct'), W_REV3M)} {_pad(next_earn_cell, W_NEXTEARN, right=True)} "
-        f"{_n(v.get('mom'), W_MOM12)} "
+        f"{i:>{W_IDX}} {_ticker_col(v['ticker'])} "
+        f"{_n(v.get('rev_used_pct'), W_REV3M)} {_n(v.get('dist_ath_pct'), W_DISTATH)} "
+        f"{_pad(next_earn_cell, W_NEXTEARN, right=True)} "
         f"{_pad('Y' if v.get('durable_5y') else '-', W_DUR)} "
         f"{_pad(LAMP_CODE_ASCII.get(lamp.get('code'), '-'), W_LAMPCODE)} "
         f"{_pad(ACTION_CODE_ASCII.get(lamp.get('code'), '-'), W_ACTCODE)} "
@@ -653,79 +685,70 @@ def _own_board_ascii_row(i: int, v: dict, seat_code: dict) -> str:
     )
 
 
-def _seat_section_lines(core_seats, sat_seats, bench_seats, prev_snap, rows,
-                        lamp_as_of=None, last_rotation_date=None) -> list[str]:
-    """『目前席位：核心 5＋衛星 5＋候補 5』區塊（board.txt 用，含 DOWN 異動列）——獨立
-    成函式供 render_board_text() 全量重建與 run_lamp_only() 唯讀刷新共用同一份格式
-    （見檔頭 --lamp-only 段）：後者只重算列內時機欄位（lamp／action／grp 的 P 閘與
-    overheated），原樣呼叫本函式重繪這段；全母體表／DD 對照／候選佇列需要全母體
-    `rows` 才能重建，唯讀模式不動、維持上次 `--ledger` 跑次內容（`rows` 在該路徑
-    傳空清單，DOWN 列的原因只會退化成「不在母體」，是刻意的降級，見呼叫端）。"""
-    seat_of = {r["ticker"]: "核心席" for r in core_seats}
-    seat_of.update({r["ticker"]: "衛星席" for r in sat_seats})
-    prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
-    prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
+def _pool_ascii_row(label, r: dict) -> str:
+    """v5 池／核心席 ASCII 單列（nested row_dict() 形狀）——① 核心席與 ②③ 池表共用
+    同一份格式，`label` 是席次代碼（"C1"）或池內排序名次（int），見 grp.py 檔頭
+    v5 段。取代 v4 `_seat_section_lines()` 逐列展開寫法。"""
+    g = r["grp"]
+    lamp = r.get("lamp") or {}
+    note_bits = []
+    if g.get("peak"):
+        note_bits.append("頂點")
+    if g.get("base_effect"):
+        note_bits.append("基期")
+    own_raw_ = ((g.get("own") or {}).get("raw")) or {}
+    if own_raw_.get("cycle_guard"):
+        note_bits.append("循環守門")
+    elif own_raw_.get("cyclical"):
+        note_bits.append("循環")
+    if r.get("insider_signal") == "買":
+        note_bits.append("內部人買")
+    elif r.get("insider_signal") == "賣":
+        note_bits.append("內部人賣")
+    days_ne = g.get("days_to_next_earnings")
+    # 財報錨定上修（2026-09-17）：距下次財報 <=7 天者標記——提醒讀者這個
+    # 分數是財報前快照（財報後上修分位可能一週內就變動）。
+    if days_ne is not None and 0 <= days_ne <= 7:
+        note_bits.append("財報前")
+    if r.get("seat_note"):
+        note_bits.append(r["seat_note"])
+    next_earn_cell = f"{int(days_ne)}d" if days_ne is not None else "-"
+    return (
+        f"{_pad(str(label), W_SEATCODE)} {_ticker_col(r['ticker'])} "
+        f"{_n(g.get('rev_used_pct'), W_REV3M)} {_n(r.get('dist_ath_pct'), W_DISTATH)} "
+        f"{_pad(next_earn_cell, W_NEXTEARN, right=True)} "
+        f"{_pad('Y' if r.get('durable_5y') else '-', W_DUR)} "
+        f"{_pad(LAMP_CODE_ASCII.get(lamp.get('code'), '-'), W_LAMPCODE)} "
+        f"{_pad(ACTION_CODE_ASCII.get(lamp.get('code'), '-'), W_ACTCODE)} "
+        f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {'；'.join(note_bits)}"
+    )
 
-    L = ["== 目前席位：核心 5 ＋ 衛星 5 ＋ 候補 5"]
+
+_POOL_ASCII_HDR_SEAT = (f"{'seat':<{W_SEATCODE}} {'ticker':<{W_TICKER}} {'rev':>{W_REV3M}} "
+                        f"{'distATH':>{W_DISTATH}} {'nextE':>{W_NEXTEARN}} {'dur':<{W_DUR}} "
+                        f"{'lamp':<{W_LAMPCODE}} {'act':<{W_ACTCODE}} {'dd':<{W_DD}} note")
+_POOL_ASCII_HDR_IDX = (f"{'#':<{W_SEATCODE}} {'ticker':<{W_TICKER}} {'rev':>{W_REV3M}} "
+                       f"{'distATH':>{W_DISTATH}} {'nextE':>{W_NEXTEARN}} {'dur':<{W_DUR}} "
+                       f"{'lamp':<{W_LAMPCODE}} {'act':<{W_ACTCODE}} {'dd':<{W_DD}} note")
+
+
+def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
+                        lamp_as_of=None, last_rotation_date=None) -> list[str]:
+    """v5『① 核心席（5）／② 可買／③ 等待池』區塊（board.txt 用，含 DOWN 異動列）——
+    取代 v4「核心5＋衛星5＋候補5」（見 grp.py 檔頭 v5 段第 3-4 點／
+    knowledge/rule_ledger.md「v5 席位引擎」列）。核心＝池前 5（月頻輪動，硬否決
+    立即下席、空位由池遞補，見 rotate_roster()）；可買＝等待池中時機燈 green/hot
+    者（「今天板機亮的」，可能是空清單）；等待池＝其餘池成員（依上修排序，即
+    `pool_rows` 扣掉核心後剩下的，見呼叫端）。"""
+    seat_of = {r["ticker"]: "核心席" for r in core_seats}
+    prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
+
+    L = ["== ① 核心席（5）"]
     if lamp_as_of or last_rotation_date:
         L.append(f"時機更新：{lamp_as_of or '—'}（每日）／席位更新：{last_rotation_date or '—'}（每月換席）")
-    hdr2 = (f"{'seat':<{W_SEATCODE}} {'ticker':<{W_TICKER}} {'rank':>{W_RANK}} {'rev':>{W_REV3M}} "
-            f"{'nextE':>{W_NEXTEARN}} {'mom12':>{W_MOM12}} {'dur':<{W_DUR}} {'lamp':<{W_LAMPCODE}} "
-            f"{'act':<{W_ACTCODE}} {'dd':<{W_DD}} note")
-    L.append(hdr2)
-    for track_label, seats, prefix in (("核心席", core_seats, "C"), ("衛星席", sat_seats, "S"),
-                                       ("候補", bench_seats, "B")):
-        for j, r in enumerate(seats, 1):
-            g = r["grp"]
-            raw = (g.get("own") or {}).get("raw") or {}
-            lamp = r.get("lamp") or {}
-            if prefix != "B" and prev_seats.get(r["ticker"]) == track_label:
-                chg = ""
-            elif prefix != "B" and r["ticker"] not in prev_seats:
-                chg = "NEW"
-            elif prefix != "B":
-                chg = f"FROM:{'C' if prev_seats[r['ticker']] == '核心席' else 'S'}"
-            else:
-                chg = ""
-            note_bits = []
-            if g.get("peak"):
-                note_bits.append("頂點")
-            if g.get("overheated"):
-                note_bits.append("過熱")
-            if g.get("high_short_interest"):
-                note_bits.append("融券高")
-            if g.get("base_effect"):
-                note_bits.append("基期")
-            own_raw_ = ((g.get("own") or {}).get("raw")) or {}
-            if own_raw_.get("cycle_guard"):
-                note_bits.append("循環守門")
-            elif own_raw_.get("cyclical"):
-                note_bits.append("循環")
-            if r.get("insider_signal") == "買":
-                note_bits.append("內部人買")
-            elif r.get("insider_signal") == "賣":
-                note_bits.append("內部人賣")
-            days_ne = g.get("days_to_next_earnings")
-            # 財報錨定上修（2026-09-17）：距下次財報 <=7 天者標記——提醒讀者這個
-            # 分數是財報前快照（財報後上修分位可能一週內就變動）。
-            if days_ne is not None and 0 <= days_ne <= 7:
-                note_bits.append("財報前")
-            if chg:
-                note_bits.append(chg)
-            if r.get("seat_note"):
-                note_bits.append(r["seat_note"])
-            if r.get("route_why"):
-                note_bits.append(r["route_why"])
-            next_earn_cell = f"{int(days_ne)}d" if days_ne is not None else "-"
-            L.append(
-                f"{_pad(f'{prefix}{j}', W_SEATCODE)} {_ticker_col(r['ticker'])} {_n(r['score'], W_RANK)} "
-                f"{_n(g.get('rev_used_pct'), W_REV3M)} {_pad(next_earn_cell, W_NEXTEARN, right=True)} "
-                f"{_n(raw.get('mom'), W_MOM12)} "
-                f"{_pad('Y' if r.get('durable_5y') else '-', W_DUR)} "
-                f"{_pad(LAMP_CODE_ASCII.get(lamp.get('code'), '-'), W_LAMPCODE)} "
-                f"{_pad(ACTION_CODE_ASCII.get(lamp.get('code'), '-'), W_ACTCODE)} "
-                f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {'；'.join(note_bits)}"
-            )
+    L.append(_POOL_ASCII_HDR_SEAT)
+    for j, r in enumerate(core_seats, 1):
+        L.append(_pool_ascii_row(f"C{j}", r))
     gone = [t for t in prev_seats if t not in seat_of]
     if gone:
         why = {r["ticker"]: r for r in rows}
@@ -734,15 +757,34 @@ def _seat_section_lines(core_seats, sat_seats, bench_seats, prev_snap, rows,
             why_txt = "；".join((((r or {}).get("grp") or {}).get("why") or [])[:2]) or ("排名分被擠下" if r else "不在母體")
             L.append(f"  DOWN {_ticker_col(t)}：{why_txt}")
     L.append("")
+
+    L.append(f"== ② 可買（等待池中時機燈綠/橘，共 {len(buyable)} 檔——今天板機亮的）")
+    if buyable:
+        L.append(_POOL_ASCII_HDR_IDX)
+        for i, r in enumerate(buyable, 1):
+            L.append(_pool_ascii_row(i, r))
+    else:
+        L.append("  （無——等待池目前沒有名字板機亮燈）")
+    L.append("")
+
+    L.append(f"== ③ 等待池（上修強、還沒突破，共 {len(waiting_rest)} 檔）")
+    if waiting_rest:
+        L.append(_POOL_ASCII_HDR_IDX)
+        for i, r in enumerate(waiting_rest, 1):
+            L.append(_pool_ascii_row(i, r))
+    else:
+        L.append("  （無）")
+    L.append("")
     return L
 
 
-def render_board_text(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap, entered, lamp_map,
+def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_pool_rows, prev_snap,
+                      entered, lamp_map, rev_data_as_of=None, price_as_of=None,
                       lamp_as_of=None, last_rotation_date=None) -> str:
-    """附錄 B 式等寬看板（持有人 2026-09-02 指定形式；2026-09-17 v4 改版——目前席位
-    區塊改新欄序 席/代號/排名分/財報後上修/下次財報/12M動能/耐久/時機/倉位/DD/備註，見
-    knowledge/rule_ledger.md「v4 席位引擎」「上修改為財報後錨定」兩列）：目前席位＋擁有層排序表＋DD 進場 vs
-    機械資格＋無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt 與 <pre> 嵌頁
+    """v5 附錄 B 式等寬看板（2026-09-17，見 grp.py 檔頭 v5 段／knowledge/rule_ledger.md
+    「v5 席位引擎」列，取代 v4「核心5＋衛星5＋候補5」）：① 核心席（5）／② 可買／
+    ③ 等待池／④ 品質過閘、上修未達 5%＋全母體 v4 對照排序＋DD 進場 vs 機械資格＋
+    無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt 與 <pre> 嵌頁
     （docs/engine/_arena_body.html、docs/cockpit/index.html 皆讀同一份文字）。
 
     對齊規則：瀏覽器對 CJK 常用 fallback 字型，其字寬不保證是等寬字型 cell 的精準 2 倍，
@@ -750,53 +792,68 @@ def render_board_text(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
     在瀏覽器 <pre> 裡跑版。故主表 note 欄以左一律 ASCII 代碼，任何字型都保證對齊；
     中文只留在最後的 note 欄（不需要再對齊）與表頭上方的圖例行（純 prose，非欄位）。
 
-    `lamp_as_of`／`last_rotation_date`（2026-09-17，見 --lamp-only 段）：「目前席位」
-    區塊的兩行新鮮度戳記，由 run_lamp_only() 與本函式共用的 _seat_section_lines()
-    渲染；main() 全量重建時同樣傳入（lamp_as_of=as_of），保持兩條路徑輸出格式一致。"""
+    `rev_data_as_of`／`price_as_of`（daily 全量重跑，見 grp.py 檔頭 v5 段）：上修
+    （池排序鍵）只在新的 Koyfin xlsx 匯入時真的變動，價格／距歷史新高／時機燈每天
+    都變——頁首分開標兩個日期，讀者才看得出「排序」與「板機」各自的資料新鮮度。
+    `lamp_as_of`／`last_rotation_date`：「核心席」區塊的兩行新鮮度戳記，見
+    _pool_section_lines()。"""
     seat_code = {r["ticker"]: f"C{j}" for j, r in enumerate(core_seats, 1)}
-    seat_code.update({r["ticker"]: f"S{j}" for j, r in enumerate(sat_seats, 1)})
 
     L = []
-    L.append(f"選股看板 v4｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
+    freshness_bits = []
+    if rev_data_as_of:
+        freshness_bits.append(f"上修資料（Koyfin xlsx）as_of {rev_data_as_of}")
+    if price_as_of:
+        freshness_bits.append(f"價格/距新高/時機燈 as_of {price_as_of}")
+    freshness = "｜".join(freshness_bits)
+    L.append(f"選股看板 v5｜as_of {as_of}" + (f"｜{freshness}" if freshness else "")
+             + f"｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
              "｜母體＝美股含 ADR；台股另建（.TW 不在本看板）")
-    L.append("這是研究層陣容——值不值得擁有，月頻換人，不是帳戶持倉。")
-    L.append("排名分＝財報後上修（缺財報錨定退回三個月）、12M 動能、成長（封頂 30）、品質"
-             "（FCF/淨利與稀釋率百分位平均；增量 ROIC>=15% 免計 FCF/淨利）、盈餘殖利率，"
-             "五個排名百分位在合格集合內平均。成長遇基期效應（FY1->FY2 因低基期跳增、"
-             "FY2->FY3 <20%）改用 FY2->FY3 成長率。循環股（毛利跨距>20pp 或 capex 佔營收"
-             ">15%）若 PEG<0.3 觸發循環守門，成長/盈餘殖利率分位封頂 50。")
-    L.append("下方「目前席位」與「擁有層排序」兩張表共用同一套欄位（rank/rev/nextE/mom12/"
-             "dur/lamp/act/dd/note），不重覆說明；擁有層排序表另多一欄 seat 標目前坐哪一席。")
-    L.append("欄位說明：rank=排名分、rev=財報後上修%（已排除匯率；以該股自己最近一次財報日"
-             "前最新月度 snapshot 為基準，缺財報錨定退回三個月）、nextE=距下次財報天數、"
-             "mom12=12減1個月動能%、dur=耐久（Y=核心資格達標：五年 ROIC 平均或 QGM 五年"
-             "穩定度）、lamp=時機燈、act=倉位（跟 lamp 一對一，每日更新）、"
-             "seat=目前坐哪一席（空白=未坐席，只在擁有層排序表出現）、"
-             "dd=DD 標籤（僅供顯示）；note=備註（財報前=距下次財報 <=7 天，分數為財報前快照）")
-    L.append("lamp/act 代碼：GRN/FULL=可進·正常倉、YLW/HALF=半倉、HOT/HALF=過熱·半倉、"
-             "RED/ZERO=等板機·零倉、OUT/-=不合格·未站上 52 週線")
-    L.append("seat：C1-C5=核心席次、S1-S5=衛星席次、B1-B5=候補（未坐席，僅目前席位表標記）"
-             "｜dd：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，!old=逾 180 天過期")
-    L.append("資格門檻：市值 200 億以上、品質閘、三年成長 15%（耐久者 10%）、站上 52 週線、"
-             "財報後上修達 5% 否決（缺財報錨定退回三月上修）、體質拒絕/衰退⛔/DD迴避同樣否決。"
-             "過熱／融券高（SI>10%）與頂點不擋資格，只排除核心候選（過熱、融券高）或純顯示"
-             "（頂點）；核心候選另需耐久且不過熱且非融券高；無產業集中度上限；內部人買賣僅"
-             "備註，不進資格與排序。")
-    L.append("換人規則：每月第一次排程換一次席；期間只有硬否決（迴避/拒絕/⛔/財報後上修"
-             "達5%（缺財報錨定退回三月上修）/市值不足/連兩週跌破 52 週線）能換人，空位由"
-             "下一名遞補。")
-    L.append("怎麼用：席位+時機綠燈=正常倉可以買；席位+時機紅燈=先別動，等板機。")
+    L.append("資格＝品質派（品質閘×三年成長×站上 52 週線×耐久一致性）、排序＝上修"
+             "（財報後錨定，缺值退回三月）、板機＝突破還原權息歷史新高。核心月頻換人，"
+             "其餘每日重排；這是研究層陣容，不是帳戶持倉。")
+    L.append("池＝資格全過且耐久達標的名字中，財報後上修 ≥5% 者；池內依上修降冪排序，"
+             "同值 tie-break implied_growth_pct、再 tie-break 盈餘殖利率（own_score_v4 "
+             "五百分位對照分保留一輪，見全母體對照表與各列 hover 的「v4 對照」，不參與"
+             "本排序）。核心＝池前 5，月頻輪動（每月第一次排程整批重選一次，期間僅硬"
+             "否決能換人、空位由池遞補）。衛星軌已取消——沒卡進核心前 5 的池成員全部"
+             "叫「等待池」，依時機燈分兩段顯示：②可買（綠/橘燈，今天板機亮的）與"
+             "③等待池（其餘）。")
+    L.append("耐久＝QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者"
+             "皆 ≥15%——一致性判準，不是單一數字；不耐久即不進池，v5 沒有衛星席可以"
+             "退。融券占流通股比 >10% 亦整體排除（同理，沒有衛星席可以收留）。過熱"
+             "（12-1 月動能 >150%）與頂點（roic_vs_5y_x ≥1.3）不擋資格：過熱只影響"
+             "時機燈（🟠半倉），頂點純顯示。")
+    L.append("欄位說明：rev=財報後上修%（已排除匯率；以該股自己最近一次財報日前最新"
+             "月度 snapshot 為基準，缺財報錨定退回三個月）、distATH=距還原權息全歷史"
+             "最高收盤價%（非 52 週高）、nextE=距下次財報天數、dur=耐久（Y=達標）、"
+             "lamp=時機燈、act=倉位（跟 lamp 一對一，每日更新）、seat/#=核心席次或池內"
+             "排序名次、dd=DD 標籤（僅供顯示）、note=備註（頂點/循環/循環守門/基期/"
+             "內部人/財報前/新席）")
+    L.append("lamp/act 代碼：GRN/FULL=可進·正常倉（距新高 ≥−3% 且站上 200 日線）、"
+             "YLW/HALF=半倉（距新高 −10%~−3%）、HOT/HALF=過熱·半倉（動能 >150% 但仍在"
+             "突破帶附近）、RED/ZERO=等板機·零倉（距新高 <−10% 或跌破 200 日線）、"
+             "OUT/-=不合格·未站上 52 週線")
+    L.append("dd 代碼：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，"
+             "!old=逾 180 天過期")
+    L.append("怎麼用：核心或②可買＝現在可以買；③等待池＝上修夠強但還沒突破，等板機。")
     L.append("")
-    L.extend(_seat_section_lines(core_seats, sat_seats, bench_seats, prev_snap, rows,
+    L.extend(_pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
                                  lamp_as_of, last_rotation_date))
-    # 2026-09-17（全母體看板欄位對齊）：擁有層排序表改用「目前席位」表同一套 ASCII
-    # 欄位（rank/rev/nextE/mom12/dur/lamp/act/seat/dd/note），見 _seat_section_lines()
-    # 的 hdr2 與 knowledge/rule_ledger.md 同名設計稿；成長/EY/ROIC/FCF/PEG/上修燈/位置/
-    # 階段/護城河等舊欄不再另闢 ASCII 欄（純文字沒有 hover，這些數字改看 HTML 版
-    # _board_body.html 各列 title，與「目前席位」表的既有取捨一致）。
+
+    L.append(f"== ④ 品質過閘、上修未達 5%（共 {len(not_in_pool_rows)} 檔，僅供複審，不進池）")
+    if not_in_pool_rows:
+        L.append(_POOL_ASCII_HDR_IDX)
+        for i, r in enumerate(not_in_pool_rows[:40], 1):
+            L.append(_pool_ascii_row(i, r))
+    else:
+        L.append("  （無）")
+    L.append("")
+
+    L.append("== 全母體看板（v4 對照排序，僅供對照——上方 ①②③ 才是 v5 實際排序）")
     L.append(_own_board_ascii_hdr())
-    # v4：全母體看板改用真正 ELIGIBLE 名次（own_score_v4）——只有過全部資格閘的名字
-    # 才有有效排名分，見 apply_own_score_v4()／grp.own_score_v4()。
+    # v5：全母體對照表仍用舊 own_score_v4 名次（見 apply_own_score_v4()），只做對照，
+    # 不影響 ①②③ 的池排序（後者用 grp.pool_sort_key()，見呼叫端 main()）。
     own = sorted((r for r in rows if r["grp"].get("pass")), key=lambda r: -(r["score"] or 0))
     for i, r in enumerate(own[:40], 1):
         L.append(_own_board_ascii_row(i, _flat_view(r), seat_code))
@@ -1101,8 +1158,7 @@ def _flat_view(r: dict) -> dict:
     供 `_row_cells()`／`_seat_remark()` 共用渲染——只加不減、不改既有欄位語意，
     上述既有消費端不受影響。這個函式也是 `_seat_tr()`／全母體表列渲染的共用
     入口：席位表與全母體表的每一列都先經過 `_flat_view()` 正規化成同一份形狀，
-    再交給 `_row_cells()` 畫，兩表因此不會分岔成兩份邏輯（--lamp-only 唯讀刷新
-    直接對 own_board 已是扁平列的資料操作，見 run_lamp_only()／_refresh_flat_view_timing()）。"""
+    再交給 `_row_cells()` 畫，兩表因此不會分岔成兩份邏輯。"""
     g = r["grp"]; o = g.get("own") or {}; raw = o.get("raw") or {}
     return {"ticker": r["ticker"], "score": r["score"], "rank": r.get("rank"),
             "role": r.get("role"), "dd_age_days": r.get("dd_age_days"),   # dd_ascii() 用
@@ -1128,6 +1184,10 @@ def _flat_view(r: dict) -> dict:
             "durable_roic_5y_avg_pct": r.get("durable_roic_5y_avg_pct"),
             "durable_qgm_pct": r.get("durable_qgm_pct"),
             "lamp": r.get("lamp"), "action": r.get("action"),
+            # v5（2026-09-17）：距歷史新高／implied_growth_pct，見 row_dict() 同名欄位註解。
+            "dist_ath_pct": r.get("dist_ath_pct"), "ath_adj_price": r.get("ath_adj_price"),
+            "ath_adj_date": r.get("ath_adj_date"), "ath_source": r.get("ath_source"),
+            "implied_growth_pct": r.get("implied_growth_pct"),
             "r26": r.get("r26"), "pass": g.get("pass"), "why": g.get("why"),
             "route": r["route"], "route_why": r.get("route_why"),
             "dd_tag": r.get("dd_tag"), "verdict": r.get("verdict"),
@@ -1140,13 +1200,11 @@ def _seat_remark(v: dict) -> str:
     扁平 schema（2026-09-17 全母體看板欄位對齊，取代舊版直接讀巢狀 r["grp"]）。"""
     bits = []
     if v.get("peak"):
-        bits.append(_chip_html("⚠ 頂點", "ROIC 高於五年平均 1.3 倍以上——只能衛星，非下市訊號"))
-    if v.get("overheated"):
-        bits.append(_chip_html("🟠 過熱", "12-1 個月動能 >150%（或 fallback 26 週漲幅 >80%）——只能衛星"))
-    if v.get("high_short_interest"):
-        si = v.get("short_interest_pct_float")
-        siT = f"{si:.1f}%" if isinstance(si, (int, float)) else "—"
-        bits.append(_chip_html("🔴 融券高", f"融券占流通股比 {siT}（>10%）——只能衛星，非資格閘、不進排序"))
+        bits.append(_chip_html("⚠ 頂點", "ROIC 高於五年平均 1.3 倍以上——純顯示，非下市訊號"))
+    # v5（2026-09-17，見 grp.py 檔頭 v5 段）：過熱不再是排除核心候選的旗標（時機燈
+    # 🟠 過熱本身已經是這個資訊的呈現）；融券高升級為整體資格閘排除，凡是會出現在
+    # 池／席位表的列，high_short_interest 必為 False（不可能出現在這裡），故兩個
+    # chip 一併移除，不留死判斷式。
     if v.get("base_effect"):
         d = v.get("base_effect_detail") or {}
         bits.append(_chip_html("基期", f'FY1→FY2 跳 +{d.get("fy1_fy2_pct", "—")}%，'
@@ -1174,18 +1232,23 @@ def _seat_remark(v: dict) -> str:
 
 
 def _shared_thead_cells() -> list[str]:
-    """代號…備註 10 個共用 <th>——席位表（_seat_section_html）與全母體表
-    （render_board_html）逐字共用，見 knowledge/rule_ledger.md「全母體看板欄位
-    對齊」設計稿；避免兩表的表頭文字各寫一份而日後漂移。"""
+    """代號…備註 9 個共用 <th>——席位表（_seat_section_html／池表）與全母體表
+    （render_board_html）逐字共用，避免兩表的表頭文字各寫一份而日後漂移。
+    v5（2026-09-17，見 grp.py 檔頭 v5 段）：欄序改為代號／上修%（財報後）／
+    距歷史新高%／下次財報／耐久／時機／倉位／DD／備註——移除 v4 的「排名分」
+    （own_score 五百分位，v5 起降為本欄 tooltip 的「v4 對照」，不再單獨佔欄）與
+    「12M 動能%」欄（v5 排序不再用價格動能，動能只留在時機燈 hover）。"""
     return [
         '<th class="bw-l">代號</th>',
-        '<th title="own_score v4：財報後上修／12M 動能／成長封頂 30／品質／盈餘殖利率'
-        '五個排名百分位平均；另列成長／EY／ROIC／FCF／PEG 原始值供對照，見下方列 hover">排名分</th>',
-        '<th title="以該股自己最近一次財報日前最新月度 snapshot 為基準的 FY 加權 EPS '
-        '上修（已排除匯率）；缺財報錨定時退回近三個月，詳見各列 hover">財報後上修%</th>',
+        '<th title="v5 排序鍵：以該股自己最近一次財報日前最新月度 snapshot 為基準的 '
+        'FY 加權 EPS 上修（已排除匯率），缺財報錨定時退回近三個月；池內依此欄降冪排序，'
+        '同值 tie-break implied_growth_pct、再 tie-break 盈餘殖利率。hover 另列基準快照日、'
+        '錨定方式、v4 對照排名分（五百分位平均，僅供對照，v5 不用於排序）">上修%（財報後）</th>',
+        '<th title="距離還原權息全歷史最高收盤價（yfinance history period=max，非 52 週高）；'
+        '負值＝現價低於史上最高。板機：站上此欄 ≥−3% 且站上 200 日線＝突破帶（時機燈綠燈）">距歷史新高%</th>',
         '<th class="bw-l" title="距下次財報天數；<=7 天標記——分數為財報前快照">下次財報</th>',
-        '<th title="12 減 1 個月價格動能">12M 動能%</th>',
-        '<th class="bw-l" title="核心資格：五年 ROIC 平均或 QGM 五年穩定度達標">耐久</th>',
+        '<th class="bw-l" title="池資格：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均∧'
+        '三年平均∧現值三者皆 ≥15%——一致性判準，非單一數字">耐久</th>',
         '<th class="bw-l">時機</th>',
         '<th class="bw-l">倉位</th>',
         '<th class="bw-l" title="個股報告的裁決標籤，僅供顯示，不影響席位／排序；'
@@ -1195,15 +1258,19 @@ def _shared_thead_cells() -> list[str]:
 
 
 def _row_cells(v: dict, lamp_map: dict) -> list[str]:
-    """代號…備註 10 個共用 <td>——席位表（_seat_tr）與全母體表（_board_tr）共用同一份
-    渲染，見兩處呼叫端／knowledge/rule_ledger.md「全母體看板欄位對齊」設計稿。輸入
-    `v` 是 `_flat_view()`（或 arena.json own_board[] 原生）產出的扁平列。"""
+    """代號…備註 9 個共用 <td>——席位表（_seat_tr）與全母體表（_board_tr）共用同一份
+    渲染，見兩處呼叫端。輸入 `v` 是 `_flat_view()`（或 arena.json own_board[] 原生）
+    產出的扁平列。v5（2026-09-17，見 grp.py 檔頭 v5 段）：移除排名分／12M 動能%
+    兩欄，新增距歷史新高%；v4 對照排名分與階段/RS 降為 tooltip 專屬資訊。"""
     tk = v["ticker"]
-    rank_title = (f"財報後上修分位 {_num(v.get('p_rev'), 1)}／12M 動能分位 {_num(v.get('p_mom'), 1)}／"
-                  f"成長分位 {_num(v.get('p_g'), 1)}／品質分位 {_num(v.get('p_q'), 1)}／"
-                  f"盈餘殖利率分位 {_num(v.get('p_ey'), 1)}｜原始值：上修 {_num(v.get('rev_used_pct'), 1)}%、"
-                  f"動能 {_num(v.get('mom'), 1)}%、成長 {_num(v.get('g'), 1)}%、EY {_num(v.get('ey'), 1)}%、"
-                  f"ROIC {_num(v.get('roic'), 1)}%、FCF {_num(v.get('fcf'), 1)}%、PEG {_num(v.get('peg'), 2)}")
+    # 財報錨定上修（2026-09-17）＋ v5 對照（2026-09-17）：上修欄 tooltip 併入基準快照日、
+    # 錨定方式（財報／日曆）與 v4 對照排名分（own_score_v4 五百分位平均，僅供對照）。
+    rev_anchor_txt = {"earnings": "財報後", "calendar_3m": "日曆三個月（缺財報錨定）"}.get(
+        v.get("rev_anchor"), "—")
+    rev_title = (f"錨定：{rev_anchor_txt}｜基準快照 {v.get('rev_baseline_date') or '—'}｜"
+                 f"v4 對照排名分（僅供對照，v5 不用於排序）：{_num(v.get('score'), 1)}｜"
+                 f"implied_growth {_num(v.get('implied_growth_pct'), 1)}%｜"
+                 f"EY {_num(v.get('ey'), 1)}%（tie-break 順序：上修→implied_growth→EY）")
     durable_bits = []
     if v.get("durable_roic_5y_avg_pct") is not None:
         durable_bits.append(f"五年 ROIC 平均 {v['durable_roic_5y_avg_pct']:.1f}%")
@@ -1211,11 +1278,6 @@ def _row_cells(v: dict, lamp_map: dict) -> list[str]:
         durable_bits.append(f"QGM 五年穩定度 {v['durable_qgm_pct']:.1f}%")
     durable_cell = (f'<span title="{escape("；".join(durable_bits) or "耐久資料不足")}">'
                     f'{"✓" if v.get("durable_5y") else "—"}</span>')
-    # 財報錨定上修（2026-09-17）：上修欄 tooltip 標基準快照日＋錨定方式（財報／日曆）；
-    # 「下次財報」欄天數 <=7 者用 warn pill 標示——分數是財報前快照。
-    rev_anchor_txt = {"earnings": "財報後", "calendar_3m": "日曆三個月（缺財報錨定）"}.get(
-        v.get("rev_anchor"), "—")
-    rev_title = f"錨定：{rev_anchor_txt}｜基準快照 {v.get('rev_baseline_date') or '—'}"
     days_ne = v.get("days_to_next_earnings")
     if days_ne is None:
         next_earn_cell = '<span class="bw-muted">—</span>'
@@ -1225,17 +1287,22 @@ def _row_cells(v: dict, lamp_map: dict) -> list[str]:
     else:
         next_earn_cell = f"{int(days_ne)} 天"
     lamp = v.get("lamp") or {}
-    p_txt = {"breakout": "突破帶", "pullback": "回踩", "in_trend": "趨勢內"}.get(v.get("p_label"), "52 週線下")
     stage_txt = STAGE_LABEL.get(lamp_map.get(tk), "無資料")
-    lamp_title = (f'{lamp.get("why", "")}｜位置：{p_txt}｜階段：{stage_txt}'
+    ath_bits = []
+    if v.get("ath_adj_price") is not None:
+        ath_bits.append(f"還原新高 {v['ath_adj_price']:.2f}"
+                        + (f"（{v['ath_adj_date']}）" if v.get("ath_adj_date") else ""))
+    if v.get("ath_source") == "5y":
+        ath_bits.append("5 年高代理（全歷史查詢失敗）")
+    dist_ath_title = "｜".join(ath_bits) or "資料缺"
+    lamp_title = (f'{lamp.get("why", "")}｜階段：{stage_txt}（RS／階段僅供參考，不影響燈號）'
                  + (f'｜板機：{lamp["trigger"]}' if lamp.get("trigger") else ""))
     lamp_cell = f'<span class="bw-pill" title="{escape(lamp_title)}">{escape(lamp.get("label", "—"))}</span>'
     return [
         f'<td class="bw-l"><strong>{_tk_link(v)}</strong></td>',
-        f'<td title="{escape(rank_title)}">{_num(v.get("score"), 1)}</td>',
         f'<td title="{escape(rev_title)}">{_num(v.get("rev_used_pct"), 1)}</td>',
+        f'<td title="{escape(dist_ath_title)}">{_num(v.get("dist_ath_pct"), 1)}</td>',
         f'<td class="bw-l">{next_earn_cell}</td>',
-        f'<td>{_num(v.get("mom"), 1)}</td>',
         f'<td class="bw-l">{durable_cell}</td>',
         f'<td class="bw-l">{lamp_cell}</td>',
         f'<td class="bw-l">{escape(v.get("action") or "—")}</td>',
@@ -1252,72 +1319,70 @@ def _seat_tr(r: dict, code: str, lamp_map: dict, muted: bool = False) -> str:
 
 
 def _board_tr(v: dict, idx: int, seat_code: str | None, lamp_map: dict) -> str:
-    """全母體表單列——# 排序名次 ＋ 10 個共用欄 ＋ 席（目前坐哪一席，未坐席留白）。
-    `seat_code` 是 "C1"/"S2" 這類字串（與席位表自己的席次代碼同一套詞彙）或 None。"""
+    """全母體表單列——# 排序名次 ＋ 9 個共用欄 ＋ 席（目前坐哪一席，未坐席留白）。
+    `seat_code` 是 "C1"/"S2" 這類字串（與席位表自己的席次代碼同一套詞彙）或 None。
+    v5（2026-09-17）：共用欄從 10 個減為 9 個（見 _shared_thead_cells()），席欄插入點
+    跟著從 index 8 移到 index 7（倉位／DD 之間，語意不變：插在「倉位」欄之後）。"""
     cells = _row_cells(v, lamp_map)
     seat_cell = (f'<td class="bw-l">{escape(seat_code)}</td>' if seat_code
                 else '<td class="bw-l"><span class="bw-muted">—</span></td>')
     cls = ' class="bw-seated"' if seat_code else ""
-    return (f'<tr{cls}><td>{idx}</td>' + "".join(cells[:8]) + seat_cell + "".join(cells[8:])
+    return (f'<tr{cls}><td>{idx}</td>' + "".join(cells[:7]) + seat_cell + "".join(cells[7:])
             + "</tr>")
 
 
-def _seat_section_html(core_seats, sat_seats, bench_seats, prev_snap, rows, lamp_map,
+def _pool_table_html(rows_list: list, lamp_map: dict, seat_prefix: str | None = None) -> str:
+    """一張池表（① 核心席／② 可買／③ 等待池／④ 收合皆共用）：`seat_prefix` 給定
+    （如 "C"）時第一欄是席次代碼 C1..；否則是池內排序名次 1.."""
+    if not rows_list:
+        return '<div class="bw-note-line">（無）</div>'
+    thead = ('<tr><th class="bw-l">' + ("席" if seat_prefix else "#") + "</th>"
+             + "".join(_shared_thead_cells()) + "</tr>")
+    body = [_seat_tr(r, f"{seat_prefix}{i}" if seat_prefix else str(i), lamp_map)
+            for i, r in enumerate(rows_list, 1)]
+    return ('<div class="bw-scroll"><table><thead>' + thead + "</thead><tbody>"
+            + "".join(body) + "</tbody></table></div>")
+
+
+def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_map,
                        lamp_as_of=None, last_rotation_date=None) -> str:
-    """『目前席位：核心 5＋衛星 5＋候補 5』HTML 區塊（h3＋sub＋表＋legend＋變動列）——
-    獨立成函式供 render_board_html() 全量重建與 run_lamp_only() 唯讀刷新共用同一份
-    格式（見檔頭 --lamp-only 段）：後者只重算列內時機欄位，原樣呼叫本函式重繪這段；
-    全母體表／DD 對照／候選佇列需要全母體 `rows` 才能重建，唯讀模式不動、維持上次
-    `--ledger` 跑次內容（`rows` 在該路徑傳空清單，DOWN 列的原因只會退化成
-    「排名分被擠下／不在母體」，是刻意的降級，見呼叫端）。"""
-    seat_label = {}
-    for i, r in enumerate(core_seats, 1):
-        seat_label[r["ticker"]] = f"核心 {i}"
-    for i, r in enumerate(sat_seats, 1):
-        seat_label[r["ticker"]] = f"衛星 {i}"
+    """v5『① 核心席（5）／② 可買／③ 等待池』HTML 區塊（h3＋sub＋表＋legend＋DOWN
+    變動列）——取代 v4「核心5＋衛星5＋候補5」，見 grp.py 檔頭 v5 段／
+    knowledge/rule_ledger.md「v5 席位引擎」列。核心＝池前 5（月頻輪動，硬否決立即
+    下席、空位由池遞補）；可買＝等待池中時機燈綠/橘者；等待池＝其餘池成員。"""
+    seat_label = {r["ticker"]: f"核心 {i}" for i, r in enumerate(core_seats, 1)}
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
-    prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
-    # 2026-09-17（全母體看板欄位對齊）：代號…備註 10 欄改由 _shared_thead_cells() 供應，
-    # 與全母體表逐字共用，避免兩表表頭各寫一份而漂移。
-    seat_thead = '<tr><th class="bw-l">席</th>' + "".join(_shared_thead_cells()) + "</tr>"
 
-    seat_rows = ([_seat_tr(r, f"C{j}", lamp_map) for j, r in enumerate(core_seats, 1)]
-                + [_seat_tr(r, f"S{j}", lamp_map) for j, r in enumerate(sat_seats, 1)]
-                + [_seat_tr(r, f"B{j}", lamp_map, muted=True) for j, r in enumerate(bench_seats, 1)])
-    seat_tbl = ('<div class="bw-scroll"><table><thead>' + seat_thead + "</thead><tbody>"
-                + "".join(seat_rows) + "</tbody></table></div>")
+    core_tbl = _pool_table_html(core_seats, lamp_map, seat_prefix="C")
+    buyable_tbl = _pool_table_html(buyable, lamp_map)
+    waiting_tbl = _pool_table_html(waiting_rest, lamp_map)
 
-    seat_legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表（下方「全母體看板」同一套欄位、共用本段說明）</summary>
-<div class="bw-note-line">這是研究層陣容——值不值得擁有，月頻換人，不是帳戶持倉。下方「全母體看板」是同一套
-排名分／財報後上修／時機／倉位／DD／備註欄位攤平到全母體，只多一欄「席」標目前坐哪一席（空白＝未坐席）；
-兩表欄位定義完全相同，不重覆說明。</div>
-<div class="bw-note-line"><b>排名分</b>：財報後上修、12M 動能、成長（封頂 30）、品質（FCF÷淨利與稀釋率百分位平均；
-增量 ROIC ≥15%＝投資有回報者免計 FCF÷淨利）、盈餘殖利率——五個排名百分位平均；hover 另列成長／EY／
-ROIC／FCF／PEG 原始值供對照（不是排序公式的一部分，純顯示）。</div>
-<div class="bw-note-line"><b>財報後上修</b>：以該股自己最近一次財報日前最新月度 snapshot 為基準的 FY 加權
-EPS 上修幅度（已排除匯率影響）——每檔錨定自己的財報日，不是全母體共用一個日曆窗（見頁尾規則
-登記「上修改為財報後錨定」）；缺財報錨定（尚未查到最近一次財報日，或查到的財報日之前沒有更早的
-月度 snapshot 可比）時退回舊制的近三個月日曆 baseline，個別列 hover 會標基準快照日與錨定方式。
-<b>下次財報</b>：距下次財報天數，≤7 天標橘色——提醒這個分數是財報前快照，財報後上修分位可能一週
-內就變動。<b>12M 動能</b>：12 減 1 個月價格動能（略過最近一個月）。</div>
-<div class="bw-note-line"><b>耐久</b>：核心資格——五年 ROIC 平均達標或 QGM 五年穩定度達標，兩者有一個成立就算。</div>
-<div class="bw-note-line"><b>時機</b>：🟢 可進（多頭排列）／🟡 半倉（站上 52 週線但未達綠燈）／
-🟠 過熱（12 個月動能過熱）／🔴 等板機（跌破 200 日線、RS 太弱、離高點太遠或階段弱勢）／
-⚫ 不合格（未站上 52 週線）；hover 另標當下位置（突破帶／回踩／趨勢內／52 週線下）與階段。
-<b>倉位</b>跟時機一對一：正常倉／半倉／零倉．等板機／—。時機更新（每日）：每日跟著 dd-screener／
-stages 資料重算，不需等月頻換席；下方全母體表同步每日更新。</div>
-<div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤，僅供顯示，不影響席位／排序；有護城河評級時併入本欄 hover。
-<b>備註</b>：⚠ 頂點＝ROIC 高於五年平均 1.3 倍（只能衛星，非下市訊號）；
-🟠 過熱＝12 個月動能超過 150%（只能衛星）；🔴 融券高＝融券占流通股比 &gt;10%（只能衛星，
-非資格閘、不進 own_score 排序，依據見頁尾規則登記）；<b>基期</b>＝三年 CAGR 因 FY1→FY2
-低基期跳增而改用 FY2→FY3 成長率取代；<b>循環守門</b>＝循環股（毛利率跨距大或資本支出
-佔營收高）且 PEG 低到可疑，成長與盈餘殖利率分位封頂 50；<b>循環</b>＝循環股但未觸發守門，
-純顯示；<b>財報前</b>＝距下次財報 ≤7 天；<b>內部人買／內部人賣</b>＝近 3 個月內部人淨買賣方向，
-僅供備註，不進資格與排序；新席／現任／遞補＝本期席位異動狀態。</div>
+    legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表（下方「全母體看板」共用本段說明）</summary>
+<div class="bw-note-line">資格＝品質派（品質閘×三年成長×站上 52 週線×耐久一致性）、排序＝上修（財報後
+錨定，缺值退回三月）、板機＝突破還原權息歷史新高。池＝資格全過且耐久達標的名字中，財報後上修 ≥5% 者；
+池內依上修降冪排序，同值 tie-break implied_growth_pct、再 tie-break 盈餘殖利率。核心＝池前 5，月頻輪動
+（每月第一次排程整批重選一次，期間僅硬否決能換人、空位由池遞補）。衛星軌已取消——沒卡進核心前 5 的
+池成員全部叫「等待池」，依時機燈分兩段顯示：②可買（綠/橘燈，今天板機亮的）與③等待池（其餘）。
+own_score_v4 五百分位對照分（v4 對照）保留一輪，只在「上修%（財報後）」欄 hover 顯示，不參與本排序。</div>
+<div class="bw-note-line"><b>耐久</b>：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者
+皆 ≥15%——一致性判準，不是單一數字；不耐久即不進池，v5 沒有衛星席可以退。融券占流通股比 &gt;10% 亦
+整體排除（同理，沒有衛星席可以收留）。</div>
+<div class="bw-note-line"><b>時機</b>：🟢 可進（距歷史新高 ≥−3% 且站上 200 日線，突破帶）／🟡 半倉
+（距新高 −10%~−3%）／🟠 過熱（12-1 月動能 &gt;150%，但仍在突破帶附近）／🔴 等板機（距新高 &lt;−10%
+或跌破 200 日線）／⚫ 不合格（未站上 52 週線）；RS／生命週期階段降為 hover 專屬資訊，不影響燈號。
+<b>倉位</b>跟時機一對一：正常倉／半倉／零倉．等板機／—。時機（含距歷史新高／倉位）每日更新，不需等
+月頻換席。</div>
+<div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤，僅供顯示，不影響席位／排序；有護城河評級時併入
+本欄 hover。<b>備註</b>：⚠ 頂點＝ROIC 高於五年平均 1.3 倍（純顯示，非下市訊號）；<b>基期</b>＝三年
+CAGR 因 FY1→FY2 低基期跳增而改用 FY2→FY3 成長率取代；<b>循環守門</b>＝循環股（毛利率跨距大或資本支出
+佔營收高）且 PEG 低到可疑（純顯示，v5 排序不再套用分位封頂）；<b>循環</b>＝循環股但未觸發守門，純顯示；
+<b>財報前</b>＝距下次財報 ≤7 天；<b>內部人買／內部人賣</b>＝近 3 個月內部人淨買賣方向，僅供備註，不進
+資格與排序；新席／現任／遞補＝本期席位異動狀態。</div>
 <div class="bw-note-line">資格門檻：市值 200 億以上、品質閘、三年成長 15%（耐久者 10%）、站上 52 週線、
-財報後上修達 5%（缺財報錨定退回三個月）否決、體質拒絕／衰退 ⛔／DD 迴避同樣否決。無產業集中度上限。</div>
-<div class="bw-note-line">換人規則：每月第一次排程換一次席；期間只有硬否決能把人換掉，空位由下一名遞補。</div>
-<div class="bw-note-line">怎麼用：席位在＋時機綠燈＝正常倉可以買；席位在＋時機紅燈＝先別動，等板機。</div>
+財報後上修達 −5% 否決（缺財報錨定退回三個月）、體質拒絕／衰退 ⛔／DD 迴避／融券占流通股比 &gt;10%
+同樣排除（皆整體資格閘，不留衛星軌）。無產業集中度上限。</div>
+<div class="bw-note-line">換人規則：每月第一次排程換一次核心席；期間只有硬否決能把人換掉，空位由池遞補。</div>
+<div class="bw-note-line">怎麼用：核心或②可買＝現在可以買；③等待池＝上修夠強但還沒突破，等板機。</div>
 </details>"""
 
     gone = [t for t in prev_seats if t not in seat_label]
@@ -1338,48 +1403,73 @@ stages 資料重算，不需等月頻換席；下方全母體表同步每日更�
                 f'席位更新：{escape(last_rotation_date or "—")}（每月換席）</div>'
                 if (lamp_as_of or last_rotation_date) else "")
 
-    return ('<h3 class="bw-sec">目前席位：核心 5 ＋ 衛星 5 ＋ 候補 5</h3>'
-           + '<div class="bw-sub">這就是本月的陣容。C1–C5＝核心席次、S1–S5＝衛星席次、B1–B5＝候補（未坐席，muted）。</div>'
-           + freshness
-           + seat_tbl + seat_legend + changes_html)
+    return ('<h3 class="bw-sec">① 核心席（5）</h3>'
+           + '<div class="bw-sub">池前 5，月頻輪動；硬否決立即下席，空位由池遞補。</div>'
+           + freshness + core_tbl + legend + changes_html
+           + f'<h3 class="bw-sec">② 可買（{len(buyable)} 檔）</h3>'
+           + '<div class="bw-sub">等待池中時機燈綠/橘者——今天板機亮的，可能是空清單。</div>'
+           + buyable_tbl
+           + f'<h3 class="bw-sec">③ 等待池（{len(waiting_rest)} 檔）</h3>'
+           + '<div class="bw-sub">上修強、還沒突破——池中扣掉核心與②可買後的其餘名字，依上修排序。</div>'
+           + waiting_tbl)
 
 
-def render_board_html(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap, entered, lamp_map,
+def _collapsed_section_html(not_in_pool_rows: list, lamp_map: dict) -> str:
+    """v5『④ 品質過閘、上修未達 5%』收合區塊——資格全過但財報後上修未達 +5%，不進池，
+    僅供人工複審，見 grp.py 檔頭 v5 段第 4 點。"""
+    return (f'<details class="bw-fold"><summary>④ 品質過閘、上修未達 5%'
+            f'（{len(not_in_pool_rows)} 檔，點開複審）</summary>'
+           + '<div class="bw-sub">資格全過（品質×三年成長×站上 52 週線×耐久）但財報後上修未達 +5%，'
+             '不進池、不佔核心席，僅供人工複審；依上修排序，補上更新的財報或修正即可能進池。</div>'
+           + _pool_table_html(not_in_pool_rows, lamp_map) + '</details>')
+
+
+def _own_board_section_html(views: list[dict], seat_code_map: dict, lamp_map: dict) -> str:
+    """『全母體看板（v4 對照排序）』h3＋說明＋表格——render_board_html() 用；`views`
+    需已依 score（v4 五百分位對照分，僅供對照，見 grp.py 檔頭 v5 段第 3 點）降冪
+    排序、至多 40 列；`seat_code_map`＝{ticker: "C1"/"S2"}。v5（2026-09-17）：席欄
+    插入點從 index 8 移到 index 7，見 _board_tr() 註解。"""
+    thead_cells = _shared_thead_cells()
+    thead = ('<tr><th title="排序名次（v4 對照分降冪，僅供對照——池的實際排序見上方表格）">#</th>'
+             + "".join(thead_cells[:7])
+             + '<th class="bw-l" title="目前坐核心席次；空白＝未坐席">席</th>'
+             + "".join(thead_cells[7:]) + "</tr>")
+    body_rows = [_board_tr(v, i, seat_code_map.get(v["ticker"]), lamp_map) for i, v in enumerate(views, 1)]
+    main_tbl = ('<div class="bw-scroll"><table><thead>' + thead + "</thead><tbody>"
+                + "".join(body_rows) + "</tbody></table></div>")
+    return ('<h3 class="bw-sec">全母體看板（v4 對照排序）</h3>'
+           + '<div class="bw-sub">v4 對照排名分（五百分位平均：上修／12M 動能／成長／品質／盈餘殖利率，'
+             '僅供對照，不是 v5 池的排序鍵）攤平到全母體，只多一欄「席」；欄位定義見上方「怎麼讀這張表」，'
+             '不重覆說明。核心席是從上方②③表格（池，依上修排序）取前 5，不是從這張表挑的'
+             '<span class="stage-lamp-asof"></span>。</div>'
+           + main_tbl)
+
+
+def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_pool_rows, prev_snap,
+                      entered, lamp_map, rev_data_as_of=None, price_as_of=None,
                       lamp_as_of=None, last_rotation_date=None) -> str:
-    """HTML TABLE 版看板（2026-09-02，取代 <pre> ASCII；2026-09-17 v4 席位表改版——新欄序
-    席/代號/排名分/財報後上修/下次財報/12M動能/耐久/時機/倉位/DD/備註，見
-    knowledge/rule_ledger.md「v4 席位引擎」「上修改為財報後錨定」兩列）。回傳裸片段
-    （無 html/head/body），可直接 innerHTML 或接進另一頁
-    <body>。內容與 render_board_text 同源同排序，只是呈現層換成表格＋燈號＋chip。
+    """HTML TABLE 版看板 v5（2026-09-17，見 grp.py 檔頭 v5 段／knowledge/rule_ledger.md
+    「v5 席位引擎」列，取代 v4「核心5＋衛星5＋候補5」）。回傳裸片段（無 html/head/body），
+    可直接 innerHTML 或接進另一頁 <body>。內容與 render_board_text 同源同排序，只是
+    呈現層換成表格＋燈號＋chip。
 
-    `lamp_as_of`／`last_rotation_date`（2026-09-17，見 --lamp-only 段）：轉交
-    _seat_section_html() 渲染成「目前席位」區塊的兩行新鮮度戳記。
+    `rev_data_as_of`／`price_as_of`：頁首分開標「上修資料（Koyfin xlsx）」與
+    「價格/距新高/時機燈」兩個日期，見 render_board_text() docstring 同名段。
+    `lamp_as_of`／`last_rotation_date`：轉交 _pool_section_html() 渲染成「① 核心席」
+    區塊的兩行新鮮度戳記。"""
+    # 席次代碼（C1-C5）——與「① 核心席」表自己的席次代碼同一套詞彙，供全母體表
+    # 「席」欄顯示。
+    seat_code_map = {r["ticker"]: f"C{i}" for i, r in enumerate(core_seats, 1)}
 
-    2026-09-17（全母體看板欄位對齊，見 notes/site-internal/root/
-    _seat_engine_v4_20260917.md 同名段／knowledge/rule_ledger.md）：主表欄位改與
-    「目前席位」表逐字同一套（代號…備註 10 欄共用 _shared_thead_cells()／_row_cells()，
-    只多一欄「席」標目前坐哪一席），成長%／EY%／ROIC%／FCF%／PEG／上修燈／位置／階段
-    等舊欄摺進「排名分」「時機」「DD」三欄的 tooltip（見 _row_cells()／_dd_pill()），
-    不再另闢欄位——兩表因此可以逐列直接比對同一批數字，不用切兩套心智模型。"""
-    # 席次代碼（C1-C5／S1-S5）——與「目前席位」表自己的席次代碼同一套詞彙，供全母體表
-    # 「席」欄顯示；候補（B1-B5）不在此標記（維持既有：全母體表只標「目前坐哪一席」，
-    # 候補身分從其排名位置本身即可判讀，不重覆標記，見設計稿）。
-    seat_code_map = {}
-    for i, r in enumerate(core_seats, 1):
-        seat_code_map[r["ticker"]] = f"C{i}"
-    for i, r in enumerate(sat_seats, 1):
-        seat_code_map[r["ticker"]] = f"S{i}"
-
-    # v4：全母體看板改直接用已排序的 ELIGIBLE 名次（own_score_v4）——只有真的過全部
-    # 資格閘的名字才有有效排名分，見 apply_own_score_v4()／grp.own_score_v4()。`rows`
-    # 即 main() 的 universe_rows，已被 apply_own_score_v4() 就地回填 score／grp.own，
-    # 這裡重新依 pass＋score 排序等同重建一份 ranked，不需要另外傳參數。
+    # v4 對照：全母體看板仍用 own_score_v4 名次排序，只做對照，不影響 ①②③ 的池排序
+    # （後者用 grp.pool_sort_key()，見呼叫端 main()）。
     rows_ranked = sorted((r for r in rows if r["grp"].get("pass")), key=lambda r: -(r["score"] or 0))
     own = rows_ranked[:40]
     own_section = _own_board_section_html([_flat_view(r) for r in own], seat_code_map, lamp_map)
 
-    seat_section = _seat_section_html(core_seats, sat_seats, bench_seats, prev_snap, rows, lamp_map,
+    pool_section = _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_map,
                                       lamp_as_of, last_rotation_date)
+    collapsed_section = _collapsed_section_html(not_in_pool_rows, lamp_map)
 
     # ── DD 進場 vs 機械資格 ──
     ok_n = sum(1 for r in entered if r["grp"]["pass"])
@@ -1433,32 +1523,39 @@ def render_board_html(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
     else:
         qgm_tbl = '<div class="bw-note-line">目前無候選（都已有三年成長預估或未過機械三閘）。</div>'
 
-    head_line = f"選股看板 v4 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
-    rule_line = ("排序＝own_score v4：財報後上修（缺財報錨定退回三個月）、12M 動能、成長（封頂 30）、"
-                 "品質、盈餘殖利率五個排名百分位在合格集合內平均（成長遇基期效應改用 FY2→FY3 成長率；"
-                 "循環股 PEG 過低時觸發循環守門，成長／盈餘殖利率分位封頂 50）。資格要過品質、三年"
-                 "成長預估（durable 者 10%、否則 15%）、市值、站上 52 週線、財報後上修達 5%（缺財報"
-                 "錨定退回三個月）否決、體質拒絕／衰退 ⛔／DD 迴避同樣否決。核心候選另需耐久（五年 "
-                 "ROIC 平均或 QGM 五年穩定度）且不過熱、融券占流通股比不超過 10%；無產業集中度上限。"
-                 "內部人買賣僅備註，不進資格與排序。")
-    timing_note = ("過熱／融券高（>10%）與頂點不擋資格，只排除核心候選（過熱、融券高）或純顯示"
-                   "（頂點）；時機燈／倉位每日跟著 dd-screener／stages 資料重算，不進排序（見上方"
-                   "「怎麼讀這張表」）。")
+    freshness_bits = []
+    if rev_data_as_of:
+        freshness_bits.append(f"上修資料（Koyfin xlsx）as_of {rev_data_as_of}")
+    if price_as_of:
+        freshness_bits.append(f"價格/距新高/時機燈 as_of {price_as_of}")
+    freshness_line = " · ".join(freshness_bits)
+    head_line = (f"選股看板 v5 · as_of {as_of}" + (f" · {freshness_line}" if freshness_line else "")
+                + f" · 母體 {len(rows)}（美股含 ADR；台股另建）")
+    rule_line = ("資格＝品質派（品質閘×三年成長×站上 52 週線×耐久一致性：QGM 五年穩定度 ≥75% 或 "
+                 "Koyfin 五年∧三年∧現值三者皆 ≥15%）；排序＝上修（財報後錨定，缺值退回三月）降冪，"
+                 "tie-break implied_growth_pct、再 tie-break 盈餘殖利率；板機＝距還原權息全歷史最高"
+                 "收盤價（見時機燈）。財報後上修達 −5% 否決（缺財報錨定退回三個月）、體質拒絕／衰退 "
+                 "⛔／DD 迴避／融券占流通股比 >10% 皆整體排除。核心＝池前 5，月頻輪動；衛星軌已取消，"
+                 "池扣掉核心即「等待池」。無產業集中度上限；內部人買賣僅備註，不進資格與排序；"
+                 "own_score_v4 五百分位對照分保留一輪供 hover 對照。")
+    timing_note = ("過熱（12-1 月動能 >150%）與頂點不擋資格，只影響時機燈（🟠半倉）或純顯示；"
+                   "時機燈／倉位每日跟著 dd-screener 資料重算，不進排序（見上方「怎麼讀這張表」）。")
 
     return (
         '<div class="board-wrap">' + _BOARD_CSS
         + f'<div class="bw-head">{escape(head_line)}</div>'
         + f'<div class="bw-rule">{escape(rule_line)}</div>'
         + f'<div class="bw-rule">{escape(timing_note)}</div>'
-        + seat_section
+        + pool_section
+        + collapsed_section
         + own_section
         + '<h3 class="bw-sec">DD 進場 vs 機械資格</h3>'
-        + f'<div class="bw-sub">{escape(dd_gate_sub)}——過閘者已在席位或候補中，這裡只列未過者供人工複審。</div>'
+        + f'<div class="bw-sub">{escape(dd_gate_sub)}——過閘者已在池或核心席中，這裡只列未過者供人工複審。</div>'
         + ng_tbl
         + '<h3 class="bw-sec">可選但先不入席：缺三年成長預估（加進 Koyfin 名單即可）</h3>'
         + '<div class="bw-sub">這些名字三閘都過，但成長只有單年預估（yfinance FY1→FY2，非 Koyfin FY1→FY3 CAGR），'
-          '所以只列隊、不佔席、不計遲滯。加進 Koyfin watchlist 補上三年成長率，下次 build 就會脫隊、'
-          '以三年成長率重新競爭席位（不需要先有 DD）。</div>'
+          '所以只列隊、不佔席、不計輪動。加進 Koyfin watchlist 補上三年成長率，下次 build 就會脫隊、'
+          '以三年成長率重新競爭池排序（不需要先有 DD）。</div>'
         + qgm_tbl
         + '<div class="bw-note-line">同內容另存純文字版 <a href="/engine/board.txt">board.txt</a>（終端機／郵件用）。</div>'
         + "</div>"
@@ -1531,25 +1628,27 @@ def rotation_month(as_of: str) -> str:
     return (as_of or "")[:7]
 
 
-def select_fresh_roster(ranked: list, core_slots: int = CORE_SLOTS, sat_slots: int = SAT_SLOTS) -> dict:
-    """v4 整批重選（pure）：`ranked` 為 apply_own_score_v4() 的輸出（已按分數降冪
-    排序、只含有效名次者）。核心＝core_candidate（耐久且不過熱，見 row_dict()）中
-    前 core_slots 名；衛星＝母體中所有未坐核心席者（含過熱／頂點／非耐久——衛星
-    公開競爭，v3 沿用至今的設計）前 sat_slots 名。無產業/主題集中度上限（2026-09-17
-    持有人拍板）。回傳 {"core":[ticker,...], "sat":[ticker,...]}。"""
-    core = [r for r in ranked if r.get("core_candidate")][:core_slots]
-    core_t = {r["ticker"] for r in core}
-    sat = [r for r in ranked if r["ticker"] not in core_t][:sat_slots]
-    return {"core": [r["ticker"] for r in core], "sat": [r["ticker"] for r in sat]}
+def select_fresh_roster_v5(pool_ranked: list, core_slots: int = CORE_SLOTS) -> list:
+    """v5 整批重選（pure，2026-09-17，見 grp.py 檔頭 v5 段第 3-4 點／
+    knowledge/rule_ledger.md「v5 席位引擎」列）：`pool_ranked` 為池（資格閘全過 ∧
+    耐久達標 ∧ 財報後上修 ≥5%）依 grp.pool_sort_key() 排序後的列表——池本身已經是
+    全部資格檻，沒有 v4「core_candidate」那道濾網，池內名次就是唯一判準。回傳前
+    `core_slots` 名的 ticker 清單。無產業/主題集中度上限（2026-09-17 持有人拍板，
+    v4 已拍板、v5 沿用不變）。"""
+    return [r["ticker"] for r in pool_ranked[:core_slots]]
 
 
-def hard_veto_v4(r: dict, w52_fail_streak: int = 0) -> str | None:
-    """v4 硬否決判定（pure）——回傳觸發理由，或 None（未觸發）。六個條件之一：
-    DD 迴避／體質拒絕／衰退 ⛔／上修達 5%（財報後錨定，缺值退回三個月；皆已在
-    grp_score 算成 grp["veto_*"] 細項）、市值不足（r["cap_ok"]，apply_cap() 算好）、
-    連續 `w52_fail_streak` 次週跑站不上 52 週線（跨次跑狀態，呼叫端從 ledger 讀，
-    見 W52_FAIL_STREAK_VETO）。只用在「月中沿用現任席」的路徑——整批重選
-    （select_fresh_roster）不需要這個。"""
+def hard_veto_v5(r: dict, w52_fail_streak: int = 0) -> str | None:
+    """v5 硬否決判定（pure，2026-09-17，見 grp.py 檔頭 v5 段）——回傳觸發理由，或
+    None（未觸發）。七個條件之一（v4 六個 + 融券高，見下）：DD 迴避／體質拒絕／
+    衰退 ⛔／上修達 5%（財報後錨定，缺值退回三個月）／融券占流通股比 >10%（v5 新增
+    ——升級為整體資格閘排除後，現任核心席若融券轉高也該立即下席，見 grp_score()
+    的 veto_high_short_interest）——皆已在 grp_score 算成 grp["veto_*"] 細項；
+    市值不足（r["cap_ok"]，apply_cap() 算好）；連續 `w52_fail_streak` 次週跑站不上
+    52 週線（跨次跑狀態，呼叫端從 ledger 讀，見 W52_FAIL_STREAK_VETO）。只用在
+    「月中沿用現任核心席」的路徑——整批重選（select_fresh_roster_v5）不需要這個。
+    耐久／成長／品質三道軟性資格閘掉出門檻不在此列，維持 v4 以來的容忍度（月頻
+    輪動的重點就是不因單週/單月雜訊洗掉席位，只有這七個硬否決才立即下席）。"""
     g = r.get("grp") or {}
     if g.get("veto_dd_avoid"):
         return "DD 迴避"
@@ -1559,6 +1658,8 @@ def hard_veto_v4(r: dict, w52_fail_streak: int = 0) -> str | None:
         return "衰退 ⛔"
     if g.get("veto_revision"):
         return "財報後上修 ≤ −5" if g.get("rev_anchor") == "earnings" else "三月上修 ≤ −5"
+    if g.get("veto_high_short_interest"):
+        return "融券占流通股比 >10%"
     if not r.get("cap_ok", True):
         return "市值不足"
     if w52_fail_streak >= W52_FAIL_STREAK_VETO:
@@ -1566,395 +1667,93 @@ def hard_veto_v4(r: dict, w52_fail_streak: int = 0) -> str | None:
     return None
 
 
-def rotate_roster(current_month: str, last_rotation_month, prev_roster, ranked: list,
+def rotate_roster(current_month: str, last_rotation_month, prev_core_roster, pool_ranked: list,
                   w52_fail_streaks: dict | None = None,
-                  core_slots: int = CORE_SLOTS, sat_slots: int = SAT_SLOTS,
+                  core_slots: int = CORE_SLOTS,
                   all_by_ticker: dict | None = None) -> dict:
-    """v4 月頻輪動主體（pure）。
-      - 本月第一次跑（last_rotation_month != current_month，或無 prev_roster）→
-        整批重選（select_fresh_roster），rotated=True。
-      - 同月內的後續跑 → 沿用 prev_roster；任何現任席命中 hard_veto_v4() 立即移除，
-        空位由 ranked 中尚未入席的下一名遞補（核心缺只從 core_candidate 池找、
-        衛星缺對全母體公開競爭，與整批重選同一套資格邏輯）；找不到人可補則留空。
+    """v5 月頻輪動主體（pure，2026-09-17，見 grp.py 檔頭 v5 段第 3 點／
+    knowledge/rule_ledger.md「v5 席位引擎」列）——只管核心席；等待池（②可買／
+    ③等待池）沒有衛星軌需要跨次跑持續追蹤的狀態，每次呼叫端直接從當次 `pool_ranked`
+    扣掉核心即得，見 main()。
+      - 本月第一次跑（last_rotation_month != current_month，或無 prev_core_roster）
+        → 整批重選（select_fresh_roster_v5），rotated=True。
+      - 同月內的後續跑（包含 `--daily`／`--lamp-only` 每日重跑，見檔頭 --daily 段）
+        → 沿用 prev_core_roster；任何現任核心席命中 hard_veto_v5() 立即移除，空位
+        由 `pool_ranked` 中尚未入席的下一名遞補；找不到人可補則留空。
 
     重要：現任席的沿用檢查查的是 `all_by_ticker`（全母體，含資格閘未過者），不是
-    `ranked`（只含 ELIGIBLE、已排名者）——月中軟性資格失守（成長掉出門檻、品質閘
-    未過等）不該立刻下席，只有 hard_veto_v4() 認定的六個硬否決才下席，這正是月頻
-    輪動要給的「不因單週雜訊洗掉席位」的容忍度。`all_by_ticker` 未提供時 fallback
-    用 `ranked` 建索引（相容舊呼叫，但退化成「掉出 ELIGIBLE 即視同跌出母體」，
-    僅供測試用；正式呼叫請務必傳全母體）。
-    回傳 {"core":[...], "sat":[...], "rotated": bool, "removed":[(ticker,why),...],
-    "filled":[(track,ticker),...]}（ticker 清單，不是列物件）。"""
+    `pool_ranked`（只含池內、已排名者）——月中軟性資格失守（成長掉出門檻、品質閘
+    未過、耐久跌出門檻等）不該立刻下席，只有 hard_veto_v5() 認定的七個硬否決才
+    下席，這正是月頻輪動要給的「不因單週/單月雜訊洗掉席位」的容忍度。
+    `all_by_ticker` 未提供時 fallback 用 `pool_ranked` 建索引（相容舊呼叫，但退化
+    成「掉出池即視同跌出母體」，僅供測試用；正式呼叫請務必傳全母體）。
+    回傳 {"core":[...], "rotated": bool, "removed":[(ticker,why),...],
+    "filled":[(track,ticker),...]}（ticker 清單，不是列物件；`filled` 的 track 恆為
+    "core"，欄位保留是為了與 v4 帳本格式相容、不必改 build_arena.py 其餘讀法）。"""
     w52_fail_streaks = w52_fail_streaks or {}
-    universe_by_ticker = all_by_ticker if all_by_ticker is not None else {r["ticker"]: r for r in ranked}
+    universe_by_ticker = all_by_ticker if all_by_ticker is not None else {r["ticker"]: r for r in pool_ranked}
 
-    if prev_roster is None or last_rotation_month != current_month:
-        fresh = select_fresh_roster(ranked, core_slots, sat_slots)
-        return {"core": fresh["core"], "sat": fresh["sat"], "rotated": True,
-                "removed": [], "filled": []}
+    if prev_core_roster is None or last_rotation_month != current_month:
+        core = select_fresh_roster_v5(pool_ranked, core_slots)
+        return {"core": core, "rotated": True, "removed": [], "filled": []}
 
     removed: list = []
-
-    def _carry(track: str) -> list:
-        kept = []
-        for t in prev_roster.get(track, []) or []:
-            r = universe_by_ticker.get(t)
-            if r is None:
-                removed.append((t, "跌出母體（下市或資料消失）"))
-                continue
-            why = hard_veto_v4(r, w52_fail_streaks.get(t, 0))
-            if why:
-                removed.append((t, why))
-                continue
-            kept.append(t)   # 沿用——即便本次未過全部資格閘，非硬否決不下席
-        return kept
-
-    core_kept = _carry("core")
-    sat_kept = _carry("sat")
+    kept: list = []
+    for t in prev_core_roster or []:
+        r = universe_by_ticker.get(t)
+        if r is None:
+            removed.append((t, "跌出母體（下市或資料消失）"))
+            continue
+        why = hard_veto_v5(r, w52_fail_streaks.get(t, 0))
+        if why:
+            removed.append((t, why))
+            continue
+        kept.append(t)   # 沿用——即便本次未過全部資格閘，非硬否決不下席
     removed_tickers = {t for t, _why in removed}
     filled: list = []
 
-    def _fill(kept: list, slots: int, pool: list, track: str) -> list:
-        # 剛被硬否決下席的名字本回合不得遞補回自己的空位——即便它仍在 ranked／
-        # core_pool 裡（例如 w52 連續兩週否決，資格本身其餘條件都還過），見
-        # test_rotate_roster_w52_streak_evicts_after_two_consecutive_runs。
-        seated = set(core_kept) | set(sat_kept) | removed_tickers
-        for r in pool:
-            if len(kept) >= slots:
-                break
-            if r["ticker"] in seated:
-                continue
-            kept.append(r["ticker"])
-            seated.add(r["ticker"])
-            filled.append((track, r["ticker"]))
-        return kept
+    # 剛被硬否決下席的名字本回合不得遞補回自己的空位——即便它仍在 pool_ranked 裡
+    # （例如 w52 連續兩週否決，資格本身其餘條件都還過），見
+    # test_rotate_roster_w52_streak_evicts_after_two_consecutive_runs。
+    seated = set(kept) | removed_tickers
+    for r in pool_ranked:
+        if len(kept) >= core_slots:
+            break
+        if r["ticker"] in seated:
+            continue
+        kept.append(r["ticker"])
+        seated.add(r["ticker"])
+        filled.append(("core", r["ticker"]))
 
-    core_pool = [r for r in ranked if r.get("core_candidate")]
-    core_kept = _fill(core_kept, core_slots, core_pool, "core")
-    sat_kept = _fill(sat_kept, sat_slots, ranked, "sat")   # 衛星公開競爭：全母體皆可遞補
+    return {"core": kept, "rotated": False, "removed": removed, "filled": filled}
 
-    return {"core": core_kept, "sat": sat_kept, "rotated": False,
-            "removed": removed, "filled": filled}
-
-
-# ── --lamp-only（2026-09-17 持有人拍板，見檔頭 --lamp-only 段／knowledge/rule_ledger.md
-#    「時機燈日更、席位月更」列）：唯讀時機燈日更，見 run_lamp_only() ────────────────
 
 def _find_last_rotation_date(snapshots: list[dict]) -> str | None:
-    """帳本 snapshots 中最近一筆 rotated=True 的日期——供席位表『席位更新：』顯示用
-    （main() 與 run_lamp_only() 皆呼叫）。"""
+    """帳本 snapshots 中最近一筆 rotated=True 的日期——供席位表『席位更新：』顯示用。"""
     return next((sn.get("date") for sn in reversed(snapshots or []) if sn.get("rotated")), None)
 
 
-def _load_stock_sources() -> tuple[dict, dict]:
-    """--lamp-only 用的輕量來源查表：DD 池（dd-screener latest.json）＋ QGM 品質池
-    （US／TW），只為了給既有席位/候補 ticker 補最新 ma／timing 欄位，不做母體重建
-    （不含快審卡、不算 latest_none 的三年 CAGR fallback——那些只影響 own_score，
-    --lamp-only 不碰，見 run_lamp_only() docstring）。"""
-    try:
-        stocks = json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]
-    except (OSError, json.JSONDecodeError, KeyError):
-        stocks = []
-    stocks = [s for s in stocks if s.get("dd_status") != "none" and market_ok(s["ticker"])]
-    stocks_map = {s["ticker"]: s for s in stocks}
-    for local, adr in LISTING_ALIAS.items():
-        if adr in stocks_map:
-            stocks_map.pop(local, None)
-    qgm_map = {r["ticker"]: r for r in load_qgm_rows(stocks_map)}
-    return stocks_map, qgm_map
-
-
-def _fresh_timing_bundle(s: dict, lamp_map: dict) -> dict:
-    """--lamp-only 唯讀刷新的共用核心（pure 除了就地寫 s 的 `_r26`/`_r52`/`_stage_code`/
-    `_overheated` 暫存欄，供 grp_score()／timing_lamp() 讀）：重算單一 ticker 的時機
-    欄位（above_w52／p_label／dist_hi／price／overheated／原始 12M 動能／lamp／action／
-    r26／r52），不動 own_score／排名/席位。供 `_refresh_row_timing()`（巢狀 row.grp，
-    席位/候補列用）與 `_refresh_flat_view_timing()`（own_board 扁平列用）共用同一份
-    計算，兩者只是把結果寫回不同形狀的容器——不重複發明公式，見兩處呼叫端與檔頭
-    --lamp-only 段。"""
-    st = weekly_structure(s["ticker"])
-    s["_r26"] = st.get("r26") if st else None
-    s["_r52"] = st.get("r52") if st else None
-    fresh = grp_score(s)
-    s["_stage_code"] = lamp_map.get(s["ticker"])
-    s["_overheated"] = fresh["overheated"]
-    lamp = timing_lamp(s)
-    return {"above_w52": fresh["above_w52"], "p_label": fresh["p_label"], "dist_hi": fresh["dist_hi"],
-            "price": fresh["price"], "overheated": fresh["overheated"],
-            "mom": (fresh.get("own") or {}).get("raw", {}).get("mom"),
-            "lamp": lamp, "action": LAMP_ACTION.get(lamp["code"], "—"),
-            "r26": s.get("_r26"), "r52": s.get("_r52")}
-
-
-def _refresh_row_timing(row: dict, s: dict, lamp_map: dict) -> None:
-    """--lamp-only 唯讀刷新：就地更新單一席位/候補列（巢狀 row["grp"] 形狀）的時機
-    欄位（above_w52／p_label／dist_hi／price／overheated／lamp／action／r26／r52）——
-    own／score／pass／veto／g／r 等擁有層欄位一律丟棄不採用；row 其餘既有欄位
-    （score／rank／route／core_candidate／seat_note／durable_5y…）原樣保留，見檔頭
-    --lamp-only 段：唯讀模式不得動席位/分數/排名。"""
-    b = _fresh_timing_bundle(s, lamp_map)
-    g = dict(row["grp"])
-    for k in ("above_w52", "p_label", "dist_hi", "price", "overheated"):
-        g[k] = b[k]
-    row["grp"] = g
-    row["lamp"] = b["lamp"]
-    row["action"] = b["action"]
-    row["r26"] = b["r26"]
-    row["r52"] = b["r52"]
-
-
-def _refresh_flat_view_timing(v: dict, s: dict, lamp_map: dict) -> None:
-    """--lamp-only 唯讀刷新：同上，但作用在 own_board[] 已是扁平 schema（`_flat_view()`
-    輸出形狀）的列上——供全母體表每日時機／倉位刷新用（2026-09-17 全母體看板欄位
-    對齊，見 run_lamp_only()）。只動 p_label／overheated／mom／lamp／action／r26，
-    其餘欄位（score／rank／durable_5y／dd_tag…）原樣保留。"""
-    b = _fresh_timing_bundle(s, lamp_map)
-    v["p_label"] = b["p_label"]
-    v["overheated"] = b["overheated"]
-    v["mom"] = b["mom"]
-    v["lamp"] = b["lamp"]
-    v["action"] = b["action"]
-    v["r26"] = b["r26"]
-
-
-def _patch_seat_section_in_text(old_text: str, new_lines: list[str]) -> str | None:
-    """在既有 board.txt 內容裡原地替換『== 目前席位…』區塊（run_lamp_only() 用）；
-    找不到起訖 marker（格式意外改變）回傳 None，呼叫端原樣保留舊檔不覆寫，不擋排程。"""
-    lines = old_text.split("\n")
-    start_marker = "== 目前席位：核心 5 ＋ 衛星 5 ＋ 候補 5"
-    # 擁有層排序表 ASCII 表頭與「目前席位」表同一套欄位，唯一 source 見 _own_board_ascii_hdr()
-    # ——這裡直接呼叫而非手打字串，避免對不上 marker、讓 run_lamp_only() 靜默略過刷新。
-    end_marker = _own_board_ascii_hdr()
-    try:
-        start_idx = lines.index(start_marker)
-        end_idx = lines.index(end_marker, start_idx + 1)
-    except ValueError:
-        return None
-    return "\n".join(lines[:start_idx] + new_lines + lines[end_idx:])
-
-
-def _patch_seat_section_in_html(old_html: str, new_section_html: str) -> str | None:
-    """同上，_board_body.html 版（字串子字串替換，見 run_lamp_only()）。"""
-    start_marker = '<h3 class="bw-sec">目前席位：核心 5 ＋ 衛星 5 ＋ 候補 5</h3>'
-    end_marker = '<h3 class="bw-sec">全母體看板（擁有層排序）</h3>'
-    start_idx = old_html.find(start_marker)
-    end_idx = old_html.find(end_marker, start_idx + 1) if start_idx >= 0 else -1
-    if start_idx < 0 or end_idx < 0:
-        return None
-    return old_html[:start_idx] + new_section_html + old_html[end_idx:]
-
-
-def _own_board_section_html(views: list[dict], seat_code_map: dict, lamp_map: dict) -> str:
-    """『全母體看板（擁有層排序）』h3＋說明＋表格——render_board_html() 全量重建與
-    run_lamp_only() 唯讀刷新（own_board[] 已是 `_flat_view()` 扁平列）共用同一份格式，
-    見兩處呼叫端／knowledge/rule_ledger.md「全母體看板欄位對齊」設計稿。`views` 需
-    已依 score 降冪排序、至多 40 列；`seat_code_map`＝{ticker: "C1"/"S2"}。"""
-    thead_cells = _shared_thead_cells()
-    thead = ('<tr><th title="排序名次">#</th>' + "".join(thead_cells[:8])
-             + '<th class="bw-l" title="目前坐核心／衛星席次；空白＝未坐席">席</th>'
-             + "".join(thead_cells[8:]) + "</tr>")
-    body_rows = [_board_tr(v, i, seat_code_map.get(v["ticker"]), lamp_map) for i, v in enumerate(views, 1)]
-    main_tbl = ('<div class="bw-scroll"><table><thead>' + thead + "</thead><tbody>"
-                + "".join(body_rows) + "</tbody></table></div>")
-    return ('<h3 class="bw-sec">全母體看板（擁有層排序）</h3>'
-           + '<div class="bw-sub">同一套排名分／財報後上修／時機／倉位／DD／備註欄位攤平到全母體，'
-             '只多一欄「席」；欄位定義見上方「怎麼讀這張表」，不重覆說明。'
-             '席位是從這張表由上往下挑出來的<span class="stage-lamp-asof"></span>。</div>'
-           + main_tbl)
-
-
-def _patch_main_table_in_text(old_text: str, new_lines: list[str]) -> str | None:
-    """在既有 board.txt 內容裡原地替換『擁有層排序表』本體（表頭起、至下一個
-    `== DD 裁決進場 vs 機械資格` 區段止，含表頭與其後的空行）——run_lamp_only()
-    全母體表每日刷新用。找不到起訖 marker（格式意外改變）回傳 None，呼叫端原樣
-    保留舊檔不覆寫，不擋排程。`new_lines` 需含表頭本身（同 render_board_text() 的
-    `hdr`）與結尾空行。"""
-    lines = old_text.split("\n")
-    start_marker = _own_board_ascii_hdr()
-    end_marker = "== DD 裁決進場 vs 機械資格"
-    try:
-        start_idx = lines.index(start_marker)
-        end_idx = lines.index(end_marker, start_idx + 1)
-    except ValueError:
-        return None
-    return "\n".join(lines[:start_idx] + new_lines + lines[end_idx:])
-
-
-def _patch_main_table_in_html(old_html: str, new_section_html: str) -> str | None:
-    """同上，_board_body.html 版（字串子字串替換，見 run_lamp_only()）。"""
-    start_marker = '<h3 class="bw-sec">全母體看板（擁有層排序）</h3>'
-    end_marker = '<h3 class="bw-sec">DD 進場 vs 機械資格</h3>'
-    start_idx = old_html.find(start_marker)
-    end_idx = old_html.find(end_marker, start_idx + 1) if start_idx >= 0 else -1
-    if start_idx < 0 or end_idx < 0:
-        return None
-    return old_html[:start_idx] + new_section_html + old_html[end_idx:]
-
-
-def run_lamp_only() -> int:
-    """--lamp-only（唯讀）：daily-taipei-morning.yml 每日跑，只重算既有席位／候補的
-    時機燈＋倉位，不重跑選股／輪動、不寫 arena-ledger.json。依據（2026-09-17 持有人
-    拍板，見 knowledge/rule_ledger.md「時機燈日更、席位月更」列）：時機燈原料
-    （dd-screener timing.*/ma.*、docs/stages/data/lamp.json）本來就每日更新，但過去
-    只有 weekly-engine.yml 的 --ledger 跑次會讀進來算 lamp，導致席位表的燈號最多
-    落後 6 天。這支旗標只把「讀」的頻率補成跟「寫」一樣，不動「值不值得擁有」
-    （own_score／席位／排名）這條月頻時鐘——見檔頭 --lamp-only 段。
-
-    席位名單優先讀 arena-ledger.json 的 roster，缺則退回 arena.json 現有
-    core_seats／sat_seats；兩者皆缺（或 arena.json 本身缺檔/壞檔）→ 印 warning、
-    exit 0，不擋排程。只改 arena.json 的席位列本身＋lamp_as_of／lamp_source／
-    lamp_last_rotation_date 三個戳記；board.txt／_board_body.html 只原地替換
-    『目前席位』區塊（_seat_section_lines()／_seat_section_html()，與 main() 全量
-    重建共用同一份格式）。DD 對照／候選佇列維持上次 `--ledger` 跑次內容不變——那些
-    欄位的排序鍵是跨檔百分位，只有 weekly-engine.yml 的 `--ledger` 跑次能動。
-
-    2026-09-17（全母體看板欄位對齊，見 notes/site-internal/root/
-    _seat_engine_v4_20260917.md 同名段）：全母體表（『擁有層排序』）的時機／倉位
-    也改成每日隨這支旗標刷新——arena.json 的 `own_board[]`（`_flat_view()` 扁平列）
-    就地更新 p_label／overheated／mom／lamp／action（同一份 `_refresh_flat_view_timing()`
-    邏輯，不動 score／rank／pass／durable_5y 等擁有層欄位），board.txt／_board_body.html
-    的擁有層排序表本體同步原地替換。`own_board` 缺（例如上次 `--ledger` 跑次是舊版
-    schema、或 arena.json 本身就沒有這個 key）時優雅退回舊行為：只刷新『目前席位』
-    區塊，全母體表維持上次 `--ledger` 跑次內容不動，不印額外 warning（這是預期的
-    向下相容路徑，不是錯誤）。"""
-    try:
-        payload = json.loads(ARENA_JSON.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        print("::warning::--lamp-only：docs/engine/arena.json 不存在或壞檔，無法刷新時機燈，略過")
-        return 0
-
-    try:
-        ledger = json.loads(LEDGER_JSON.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        ledger = {}
-
-    row_by_ticker = {r["ticker"]: r for r in
-                     (payload.get("core_seats") or []) + (payload.get("sat_seats") or [])
-                     + (payload.get("bench_seats") or [])}
-    roster = ledger.get("roster") or {}
-    core_tickers = roster.get("core") or [r["ticker"] for r in payload.get("core_seats") or []]
-    sat_tickers = roster.get("sat") or [r["ticker"] for r in payload.get("sat_seats") or []]
-    core_seats = [row_by_ticker[t] for t in core_tickers if t in row_by_ticker]
-    sat_seats = [row_by_ticker[t] for t in sat_tickers if t in row_by_ticker]
-    bench_seats = payload.get("bench_seats") or []
-    if not core_seats and not sat_seats and not bench_seats:
-        print("::warning::--lamp-only：arena-ledger.json／arena.json 皆無可用席位，略過")
-        return 0
-
-    stocks_map, qgm_map = _load_stock_sources()
-    lamp_map = load_lamp()
-    missing = []
-    for row in core_seats + sat_seats + bench_seats:
-        t = row["ticker"]
-        s = stocks_map.get(t) or qgm_map.get(t)
-        if s is None:
-            missing.append(t)
-            continue
-        _refresh_row_timing(row, s, lamp_map)
-    if missing:
-        print(f"  [lamp-only] 找不到來源資料，時機燈維持前次值：{missing}")
-
-    try:
-        lamp_as_of = json.loads(DD_LATEST.read_text(encoding="utf-8")).get("as_of", "—")
-    except (OSError, json.JSONDecodeError):
-        lamp_as_of = "—"
-    last_rotation_date = _find_last_rotation_date(ledger.get("snapshots") or [])
-
-    # 全母體表（own_board[]）每日時機／倉位刷新——同一批 stocks_map／qgm_map／lamp_map，
-    # 只多讀 own_board 本身；own_board 缺（舊 schema 或本來就沒有）優雅退回，不印 warning
-    # （見本函式 docstring）。
-    own_board = payload.get("own_board")
-    own_board_missing = []
-    if own_board:
-        for v in own_board:
-            t = v.get("ticker")
-            s = stocks_map.get(t) or qgm_map.get(t) if t else None
-            if s is None:
-                if t:
-                    own_board_missing.append(t)
-                continue
-            _refresh_flat_view_timing(v, s, lamp_map)
-        if own_board_missing:
-            print(f"  [lamp-only] 全母體表：找不到來源資料，時機燈維持前次值：{own_board_missing}")
-
-    payload["core_seats"] = core_seats
-    payload["sat_seats"] = sat_seats
-    payload["bench_seats"] = bench_seats
-    payload["lamp_as_of"] = lamp_as_of
-    payload["lamp_source"] = "daily"
-    payload["lamp_last_rotation_date"] = last_rotation_date
-    ARENA_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
-
-    # 席次代碼（C1-C5／S1-S5）——與「目前席位」表同一套詞彙，供全母體表「席」欄／
-    # ASCII seat 欄顯示；候補不標記（見 render_board_html()／_own_board_section_html() 同款取捨）。
-    seat_code_map = {r["ticker"]: f"C{i}" for i, r in enumerate(core_seats, 1)}
-    seat_code_map.update({r["ticker"]: f"S{i}" for i, r in enumerate(sat_seats, 1)})
-
-    prev_snap = _last_snapshot_before(ledger.get("snapshots") or [], lamp_as_of) or {"core": [], "sat": []}
-    new_seat_lines = _seat_section_lines(core_seats, sat_seats, bench_seats, prev_snap, [],
-                                         lamp_as_of, last_rotation_date)
-    if BOARD_TXT.exists():
-        patched = _patch_seat_section_in_text(BOARD_TXT.read_text(encoding="utf-8"), new_seat_lines)
-        if patched is None:
-            print("::warning::--lamp-only：board.txt 找不到『目前席位』區塊 marker，略過該檔刷新")
-        else:
-            BOARD_TXT.write_text(patched, encoding="utf-8")
-    else:
-        print("::warning::--lamp-only：docs/engine/board.txt 不存在，略過該檔刷新")
-
-    new_seat_html = _seat_section_html(core_seats, sat_seats, bench_seats, prev_snap, [], lamp_map,
-                                       lamp_as_of, last_rotation_date)
-    if BOARD_HTML.exists():
-        patched_html = _patch_seat_section_in_html(BOARD_HTML.read_text(encoding="utf-8"), new_seat_html)
-        if patched_html is None:
-            print("::warning::--lamp-only：_board_body.html 找不到『目前席位』區塊 marker，略過該檔刷新")
-        else:
-            BOARD_HTML.write_text(patched_html, encoding="utf-8")
-    else:
-        print("::warning::--lamp-only：docs/engine/_board_body.html 不存在，略過該檔刷新")
-
-    own_board_refreshed = 0
-    if own_board:
-        own_board_sorted = sorted(own_board, key=lambda v: -(v.get("score") or 0))
-        own_board_views = own_board_sorted[:40]
-        own_board_refreshed = len(own_board)
-
-        new_main_lines = ([_own_board_ascii_hdr()]
-                          + [_own_board_ascii_row(i, v, seat_code_map) for i, v in enumerate(own_board_views, 1)]
-                          + [""])
-        if BOARD_TXT.exists():
-            patched_main = _patch_main_table_in_text(BOARD_TXT.read_text(encoding="utf-8"), new_main_lines)
-            if patched_main is None:
-                print("::warning::--lamp-only：board.txt 找不到『擁有層排序表』區塊 marker，略過該檔刷新")
-            else:
-                BOARD_TXT.write_text(patched_main, encoding="utf-8")
-
-        new_main_html = _own_board_section_html(own_board_views, seat_code_map, lamp_map)
-        if BOARD_HTML.exists():
-            patched_main_html = _patch_main_table_in_html(BOARD_HTML.read_text(encoding="utf-8"), new_main_html)
-            if patched_main_html is None:
-                print("::warning::--lamp-only：_board_body.html 找不到『擁有層排序表』區塊 marker，略過該檔刷新")
-            else:
-                BOARD_HTML.write_text(patched_main_html, encoding="utf-8")
-    else:
-        print("  [lamp-only] arena.json 缺 own_board，全母體表沿用上次 --ledger 內容（僅刷新席位區塊）")
-
-    print(f"lamp-only: 刷新 core={len(core_seats)} sat={len(sat_seats)} bench={len(bench_seats)} "
-          f"own_board={own_board_refreshed}｜lamp_as_of={lamp_as_of}｜席位更新={last_rotation_date}")
-    return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ledger", action="store_true",
-                         help="寫入 arena-ledger.json（last_rotation_month／roster／snapshots，"
+                         help="寫入 arena-ledger.json（last_rotation_month／roster.core／snapshots，"
                               "月頻輪動時鐘前進）；僅 weekly-engine.yml 排程使用，手動跑不帶此旗標＝帳本唯讀")
+    parser.add_argument("--daily", action="store_true",
+                         help="daily-taipei-morning.yml 用：全量重跑資格/池/排序/時機燈/距歷史新高，"
+                              "但不寫 arena-ledger.json——核心席名單仍從帳本 roster.core 讀（月頻輪動不變），"
+                              "現任核心席若命中硬否決本次即被替換顯示（下次 --ledger 排程跑次才真正落帳）。"
+                              "見 grp.py 檔頭 v5 段第 3-5 點。")
     parser.add_argument("--lamp-only", action="store_true",
-                         help="唯讀模式，只重算既有席位／候補的時機燈與倉位（daily-taipei-morning.yml 用）；"
-                              "不重跑選股／輪動、不寫 arena-ledger.json，見檔頭 --lamp-only 段")
+                         help="v4 舊名，向下相容別名——語意等同 --daily（v5 起沒有窄流程的『只刷時機燈』，"
+                              "資格/池/排序本來就便宜到可以每天全量重算，見 --daily 說明）")
     args = parser.parse_args()
-    if args.lamp_only:
-        return run_lamp_only()
+    # --daily／--lamp-only 只是「不寫帳本」這件事的明講旗標——不帶 --ledger 的預設路徑
+    # 本來就已經是「全量重算、帳本唯讀」，兩個旗標存在只為了讓 workflow 檔的意圖讀起來
+    # 明確，並保留 v4 時代 --lamp-only 呼叫端字面相容，不觸發任何額外分支。
+    if args.daily or args.lamp_only:
+        print("daily 模式：全量重跑資格/池/排序/時機燈，帳本唯讀（核心席名單仍取自 roster.core）。")
     stocks = json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]
     # latest.json 若以 --include-non-dd 產出，無 DD 列（dd_status="none"）改由 load_qgm_rows 供給
     #（帶 _src／_durable_5y／_mktcap），這裡先排除以免搶走 QGM 列的身份標記
@@ -2044,87 +1843,124 @@ def main() -> int:
     universe_rows = [apply_cap(r) for r in universe_rows]
     universe_rows.sort(key=lambda r: -(r["score"] or 0))
 
-    # ── v4 own_score 跨檔百分位（見 grp.own_score_v4()）：只在 ELIGIBLE 集合內比較 ──
-    ranked = apply_own_score_v4(universe_rows)   # 已依 score 降冪排序、只含有效名次者
+    # ── v4 own_score 跨檔百分位（見 grp.own_score_v4()）：保留一輪，只做「v4 對照」
+    # tooltip 與全母體對照表排序，不影響下方 v5 池排序（見 grp.py 檔頭 v5 段第 3 點）──
+    ranked = apply_own_score_v4(universe_rows)   # 已依 v4 score 降冪排序、只含有效名次者
     for i, r in enumerate(ranked, 1):
         r["rank"] = i
-    ranked_by_ticker = {r["ticker"]: r for r in ranked}
 
-    # ── 月頻輪動（arena-ledger.json，見 knowledge/rule_ledger.md「v4 席位引擎」列）──
+    # ── v5 池（品質派資格 ∧ 耐久 ∧ 財報後上修 ≥5%，見 grp.py 檔頭 v5 段第 1-4 點）──
+    # r["grp"]["pass"] 已在 grp_score() 內反映品質閘/成長閘/位置閘/上修否決/新硬否決/
+    # 耐久/融券高（見該函式 v5 段落），這裡只再疊加 v5 新增的「池」門檻（上修 ≥5%）。
+    eligible = [r for r in universe_rows if r["grp"].get("pass")]
+
+    def _pool_key(r: dict):
+        ey = ((r["grp"].get("own") or {}).get("raw") or {}).get("ey")
+        return pool_sort_key(r["grp"].get("rev_used_pct"), r.get("implied_growth_pct"), ey)
+
+    pool_rows = sorted((r for r in eligible if in_pool(r["grp"].get("rev_used_pct"))), key=_pool_key)
+    for i, r in enumerate(pool_rows, 1):
+        r["pool_rank"] = i
+    not_in_pool_rows = sorted((r for r in eligible if not in_pool(r["grp"].get("rev_used_pct"))), key=_pool_key)
+    pool_by_ticker = {r["ticker"]: r for r in pool_rows}
+
+    # ── 月頻輪動（arena-ledger.json，只管核心席，見 rotate_roster() docstring／
+    # knowledge/rule_ledger.md「v5 席位引擎」列）──
     try:
         ledger0 = json.loads(LEDGER_JSON.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        ledger0 = {"schema_version": "4.0", "snapshots": []}
+        ledger0 = {"schema_version": "5.0", "snapshots": []}
     try:
-        as_of = json.loads(DD_LATEST.read_text(encoding="utf-8")).get("as_of", "—")
+        _dd_latest_doc = json.loads(DD_LATEST.read_text(encoding="utf-8"))
+        as_of = _dd_latest_doc.get("as_of", "—")
+        # daily 全量重跑（見 --daily 段）：上修（池排序鍵）只在新的 Koyfin xlsx 匯入時
+        # 真的變動，價格/距歷史新高/時機燈每天都變——頁首分開標兩個日期，見
+        # render_board_text()/render_board_html() 的 rev_data_as_of/price_as_of 參數。
+        rev_data_as_of = (_dd_latest_doc.get("eps_estimates_source") or {}).get("snapshot_date")
     except (OSError, json.JSONDecodeError):
         as_of = "—"
+        rev_data_as_of = None
+    price_as_of = as_of if as_of != "—" else None
     current_month = rotation_month(as_of)
     last_rotation_month = ledger0.get("last_rotation_month")
-    prev_roster = ledger0.get("roster")            # {"core":[...], "sat":[...]}——月度持久化
+    prev_core_roster = (ledger0.get("roster") or {}).get("core")   # 月度持久化，只留核心
     w52_fail_streaks = ledger0.get("w52_fail_streak") or {}
     # prev＝上一筆「日期嚴格早於今天」的 snapshot，只給「席位變動帳本」的 up/down 對照用
-    # （沿用既有 render_seat_changes／render_board_text 的 NEW/FROM 標記邏輯，與月頻輪動
-    # 本身的 carry-forward 狀態〔prev_roster〕是兩件事：後者決定「這個月坐誰」，前者只是
-    # 「跟上一筆記錄比誰上誰下」的顯示層對照）。
+    # （沿用既有 render_seat_changes 的 NEW/FROM 標記邏輯，與月頻輪動本身的 carry-forward
+    # 狀態〔prev_core_roster〕是兩件事：後者決定「這個月核心坐誰」，前者只是「跟上一筆
+    # 記錄比誰上誰下」的顯示層對照）。
     prev = _last_snapshot_before(ledger0.get("snapshots", []), as_of) or {"core": [], "sat": []}
 
     all_by_ticker = {r["ticker"]: r for r in universe_rows}
-    rotation = rotate_roster(current_month, last_rotation_month, prev_roster, ranked, w52_fail_streaks,
-                             all_by_ticker=all_by_ticker)
-    # 沿用的現任席可能本次未過全部資格閘（非硬否決不下席，見 rotate_roster()）——
-    # 這種列不在 ranked（ELIGIBLE-only）裡，改查全母體 all_by_ticker 才能顯示。
-    core_seats = [ranked_by_ticker.get(t) or all_by_ticker.get(t) for t in rotation["core"]]
+    rotation = rotate_roster(current_month, last_rotation_month, prev_core_roster, pool_rows,
+                             w52_fail_streaks, all_by_ticker=all_by_ticker)
+    # 沿用的現任核心席可能本次未過全部資格閘（非硬否決不下席，見 rotate_roster()）——
+    # 這種列不在 pool_rows（池內、已排名者）裡，改查全母體 all_by_ticker 才能顯示。
+    core_seats = [pool_by_ticker.get(t) or all_by_ticker.get(t) for t in rotation["core"]]
     core_seats = [r for r in core_seats if r is not None]
-    sat_seats = [ranked_by_ticker.get(t) or all_by_ticker.get(t) for t in rotation["sat"]]
-    sat_seats = [r for r in sat_seats if r is not None]
     core_seated = {r["ticker"] for r in core_seats}
-    sat_seated = {r["ticker"] for r in sat_seats}
-    seated_all = core_seated | sat_seated
 
-    # 備註欄用：新席／現任／遞補（Step 3 備註欄），並把移除理由掛回去顯示。
-    prior_tickers = set((prev_roster or {}).get("core", []) or []) | set((prev_roster or {}).get("sat", []) or [])
+    # 等待池＝池扣掉核心，依上修排序（已經是 pool_rows 的順序，直接篩即可）；
+    # 可買＝等待池中時機燈綠/橘者（今天板機亮的，可能是空清單）；等待池（顯示用）＝
+    # 其餘（見 grp.py 檔頭 v5 段第 5 點／knowledge/rule_ledger.md「v5 席位引擎」列）。
+    waiting_pool = [r for r in pool_rows if r["ticker"] not in core_seated]
+    buyable = [r for r in waiting_pool if (r.get("lamp") or {}).get("code") in ("green", "hot")]
+    buyable_tickers = {r["ticker"] for r in buyable}
+    waiting_rest = [r for r in waiting_pool if r["ticker"] not in buyable_tickers]
+
+    # 備註欄用：新席／現任／遞補（核心席專屬——等待池不是持久化名單，沒有「新進池／
+    # 退池」這種跨次跑狀態需要標記），並把移除理由掛回去顯示。
+    prior_core_tickers = set(prev_core_roster or [])
     filled_tickers = {t for _, t in rotation["filled"]}
     removed_map = dict(rotation["removed"])
-    for r in core_seats + sat_seats:
+    for r in core_seats:
         t = r["ticker"]
         if rotation["rotated"]:
-            r["seat_note"] = "現任" if t in prior_tickers else "新席"
+            r["seat_note"] = "現任" if t in prior_core_tickers else "新席"
         else:
             r["seat_note"] = "遞補" if t in filled_tickers else "現任"
+        r["track"] = "core"
+    for r in waiting_pool:
+        r["track"] = "pool"   # 2026-09-17：backward-compat 標記，見 payload["sat_seats"] 註解
 
-    # 候補（Step 3：候補 1–5，合併單一清單，不分核心/衛星）——核心板凳／衛星板凳仍各自
-    # 保留供 arena.html「M5 對照組」既有的擂台/板凳文案與 universe_board 沿用。
-    core_bench = [r for r in ranked if r.get("core_candidate") and r["ticker"] not in seated_all][:8]
-    sat_bench = [r for r in ranked if r["ticker"] not in seated_all and r["ticker"]
-                not in {x["ticker"] for x in core_bench}][:8]
-    bench_seats = sorted(core_bench + sat_bench, key=lambda r: -(r["score"] or 0))[:5]
+    # ── M5 對照組（_arena_body.html，PREREG 凍結，只換殼不改文，見 CLAUDE.md「Site
+    # composition」段與 knowledge/rule_ledger.md）：這裡的「衛星」是凍結實驗自己的
+    # 固定 5 席快照，取等待池前 5（依上修排序）當資料源，與下方真正的 v5「等待池」
+    # （payload["sat_seats"]／waiting_pool 全量）是兩件事，故另立變數不共用。──
+    sat_seats_m5 = waiting_pool[:SAT_SLOTS]
+    seated_all = core_seated | {r["ticker"] for r in sat_seats_m5}
+
+    core_bench = [r for r in pool_rows if r["ticker"] not in seated_all][:8]
+    sat_bench: list = []   # v5 無獨立衛星候選概念（見上）；bench_seats 直接用 core_bench
+    bench_seats = core_bench[:5]
     entered = [r for r in universe_rows if r["verdict"] == "進場"]
 
     challengers = [r for r in ranked if r["ticker"] not in seated_all]
 
-    # 擂台配對（v2 起沿用）：軌別配對——核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者
+    # 擂台配對（M5 對照組沿用不變）：軌別配對——核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者
     # （形狀降為資訊欄；moat 耐久性同級的才有資格互換）
     duels = []
-    for seat in core_seats + sat_seats:
+    for seat in core_seats + sat_seats_m5:
         rivals = [c for c in challengers if c["route"] == seat["route"]]
         top = rivals[0] if rivals else None
         duels.append({"seat": seat, "challenger": top,
                       "alert": bool(top and top["score"] > seat["score"])})
 
-    # 席位產業集中度
+    # 席位產業集中度（M5 對照組沿用不變）
     conc: dict[str, int] = {}
-    for r in core_seats + sat_seats:
+    for r in core_seats + sat_seats_m5:
         sec = sectors.get(r["ticker"]) or "（未分類）"
         conc[sec] = conc.get(sec, 0) + 1
-    n_seated = len(core_seats + sat_seats)
+    n_seated = len(core_seats + sat_seats_m5)
     conc_rows = sorted(conc.items(), key=lambda kv: -kv[1])
     max_share = (conc_rows[0][1] / n_seated * 100) if n_seated else 0
 
-    # ── 席位變動帳本（append-only）：席位組成變了才記一筆，換席決策從此可結算 ──
-    # 帳本寫入只在 --ledger（weekly-engine.yml 排程）才發生；手動/ad-hoc 跑只讀既有帳本
-    # 算席位、照常寫 arena.json 等輸出，不推進月頻輪動時鐘、不追加 snapshot（見檔頭
-    # docstring 與 knowledge/rule_ledger.md「v4 席位引擎」列）。
+    # ── 席位變動帳本（append-only）：核心席組成變了才記一筆，換席決策從此可結算 ──
+    # 帳本寫入只在 --ledger（weekly-engine.yml 排程）才發生；`--daily`／`--lamp-only`／
+    # 手動跑只讀既有帳本算核心席、照常寫 arena.json 等輸出（含每日重算的池/排序/時機
+    # 燈），不推進月頻輪動時鐘、不追加 snapshot（見檔頭 --daily 段與
+    # knowledge/rule_ledger.md「v5 席位引擎」列）。`sat`（snapshot 內的等待池快照）
+    # 純供歷史稽核用，不是持久化狀態——每次重跑都用當次 waiting_pool 重新填。
     ledger = ledger0
 
     def _seat_meta(r: dict) -> dict:
@@ -2142,12 +1978,12 @@ def main() -> int:
 
     snap = {"date": as_of,
             "core": [r["ticker"] for r in core_seats],
-            "sat": [r["ticker"] for r in sat_seats],
+            "sat": [r["ticker"] for r in waiting_pool],
             "core_meta": [_seat_meta(r) for r in core_seats],
-            "sat_meta": [_seat_meta(r) for r in sat_seats],
+            "sat_meta": [_seat_meta(r) for r in waiting_pool],
             "rotated": rotation["rotated"],
             "removed": [{"ticker": t, "why": w} for t, w in rotation["removed"]],
-            "rule_version": "v4"}
+            "rule_version": "v5"}
     changes = []
     # 比較基準＝嚴格早於今天的最後一筆——同日重跑不可拿「今天已寫入的自己」當基準
     # （self-referential bug：會把「今天跟今天比較」的假差異當成真變動，見檔頭說明）。
@@ -2155,11 +1991,11 @@ def main() -> int:
     today_entry_exists = bool(ledger["snapshots"]) and ledger["snapshots"][-1]["date"] == as_of
     if args.ledger:
         if prev_snap is None or (set(prev_snap["core"]) != set(snap["core"])
-                                 or set(prev_snap["sat"]) != set(snap["sat"])):
+                                 or set(prev_snap.get("sat") or []) != set(snap["sat"])):
             if prev_snap:
                 for track in ("core", "sat"):
-                    up = sorted(set(snap[track]) - set(prev_snap[track]))
-                    down = sorted(set(prev_snap[track]) - set(snap[track]))
+                    up = sorted(set(snap[track]) - set(prev_snap.get(track) or []))
+                    down = sorted(set(prev_snap.get(track) or []) - set(snap[track]))
                     if up or down:
                         changes.append({"track": track, "in": up, "out": down,
                                         "from": prev_snap["date"], "to": snap["date"]})
@@ -2168,10 +2004,10 @@ def main() -> int:
                 ledger["snapshots"][-1] = snap   # 同日重跑覆蓋（冪等）——不再依附自我比較
             else:
                 ledger["snapshots"].append(snap)
-        # v4 月頻輪動狀態（見 rotate_roster() docstring）——只在 --ledger 排程跑時前進：
-        #   last_rotation_month／roster：下次跑靠這兩個值判斷「這個月是否已經選過」；
-        #   w52_fail_streak：above_w52 為 False 逐次 +1、True 歸零（清掉不再追蹤的
-        #   ticker，避免帳本無限增長）、None（資料缺）維持原值不動。
+        # v5 月頻輪動狀態（見 rotate_roster() docstring）——只在 --ledger 排程跑時前進：
+        #   last_rotation_month／roster.core：下次跑靠這兩個值判斷「這個月核心是否已
+        #   經選過」；w52_fail_streak：above_w52 為 False 逐次 +1、True 歸零（清掉不再
+        #   追蹤的 ticker，避免帳本無限增長）、None（資料缺）維持原值不動。
         new_streak = dict(w52_fail_streaks)
         for r in universe_rows:
             above = r["grp"].get("above_w52")
@@ -2181,43 +2017,51 @@ def main() -> int:
                 new_streak.pop(r["ticker"], None)
         ledger["w52_fail_streak"] = new_streak
         ledger["last_rotation_month"] = current_month
-        ledger["roster"] = {"core": [r["ticker"] for r in core_seats],
-                            "sat": [r["ticker"] for r in sat_seats]}
+        ledger["roster"] = {"core": [r["ticker"] for r in core_seats]}   # v5：等待池不持久化，見上
         LEDGER_JSON.parent.mkdir(parents=True, exist_ok=True)
         LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
                                encoding="utf-8")
     else:
-        print("帳本唯讀（未帶 --ledger）：last_rotation_month／roster／snapshots 未寫入，輪動時鐘未前進。")
+        print("帳本唯讀（未帶 --ledger）：last_rotation_month／roster.core／snapshots 未寫入，輪動時鐘未前進。")
     recent_changes = [c for s in ledger["snapshots"][-6:] for c in (s.get("changes") or [])]
 
     dial = regime_dial()
     own_board = [_flat_view(r) for r in universe_rows
                  if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0][:60]
-    # 時機燈新鮮度戳記（2026-09-17，見 --lamp-only 段）：全量重建時 lamp 一定是這一跑
-    # 剛算好的（as_of＝今天），席位更新日＝今天（若本跑真的輪動）否則沿用帳本最近一次
-    # rotated=True 的 snapshot 日期——run_lamp_only() 唯讀刷新時共用同一份格式函式。
+    # 席位更新日戳記：全量重建時池/時機燈一定是這一跑剛算好的（as_of＝今天），
+    # 核心席更新日＝今天（若本跑真的輪動）否則沿用帳本最近一次 rotated=True 的
+    # snapshot 日期（見 --daily 段：`--daily`／`--lamp-only` 跑次因不帶 --ledger，
+    # 即使命中硬否決換人也不會前進這個日期，等下次 --ledger 排程跑次才真的落帳）。
     last_rotation_date = as_of if rotation["rotated"] else _find_last_rotation_date(ledger.get("snapshots") or [])
-    board_text = render_board_text(as_of, universe_rows, core_seats, sat_seats, bench_seats, prev, entered, lamp_map,
-                                   lamp_as_of=as_of, last_rotation_date=last_rotation_date)
+    board_text = render_board_text(as_of, universe_rows, core_seats, buyable, waiting_rest, not_in_pool_rows,
+                                   prev, entered, lamp_map, rev_data_as_of=rev_data_as_of,
+                                   price_as_of=price_as_of, lamp_as_of=as_of,
+                                   last_rotation_date=last_rotation_date)
     BOARD_TXT.write_text(board_text, encoding="utf-8")
-    board_html = render_board_html(as_of, universe_rows, core_seats, sat_seats, bench_seats, prev, entered, lamp_map,
-                                   lamp_as_of=as_of, last_rotation_date=last_rotation_date)
+    board_html = render_board_html(as_of, universe_rows, core_seats, buyable, waiting_rest, not_in_pool_rows,
+                                   prev, entered, lamp_map, rev_data_as_of=rev_data_as_of,
+                                   price_as_of=price_as_of, lamp_as_of=as_of,
+                                   last_rotation_date=last_rotation_date)
     BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
-        "schema_version": "4.0",
-        "lamp_as_of": as_of, "lamp_source": "weekly", "lamp_last_rotation_date": last_rotation_date,
-        "method": ("v4.1 席位引擎（2026-09-17，同日再改：上修改為財報後錨定）：核心候選＝耐久（五年 ROIC 平均 "
-                  "≥15% 或 QGM 五年穩定度 ≥75%）且不過熱（12-1 月動能 ≤150%）且融券占流通股比不超過 "
-                  "10%（融券高比照過熱，只排除核心候選、不進排序、不是資格閘）；排序＝own_score v4，"
-                  "財報後上修（以該股自己最近一次財報日前最新月度 snapshot 為基準，缺財報錨定退回舊制"
-                  "近三個月日曆窗）／12-1 月動能／成長封頂 30（遇基期效應改用 FY2→FY3 成長率；循環股 "
-                  "PEG 過低觸發循環守門、成長與盈餘殖利率分位封頂 50）／品質（FCF∶淨利＋稀釋率，投資"
-                  "有回報者免計 FCF∶淨利）／盈餘殖利率五個百分位在合格集合內平均；財報後上修達 5%"
-                  "（缺財報錨定退回三個月）否決（FY+1 單月 ≤−10% 僅兩者皆缺值時 fallback）；無產業"
-                  "集中度上限；內部人買賣僅備註，不進資格與排序；每月第一次排程重選，期間只有硬否決"
-                  "能換人、空位遞補"),
+        "schema_version": "5.0",
+        "lamp_as_of": as_of, "lamp_source": "daily", "lamp_last_rotation_date": last_rotation_date,
+        "rev_data_as_of": rev_data_as_of, "price_as_of": price_as_of,
+        "method": ("v5 席位引擎（2026-09-17，owner thesis「品質派 ∩ 獲利上修 ∩ 突破還原權息歷史新高」）："
+                  "資格＝品質派——品質閘（ROIC≥15∧FCF≥10，或 ROIC≥25∧FCF≥0 資本週期豁免）×三年成長"
+                  "（Koyfin FY1→FY3 CAGR≥15%，耐久者 10%）×站上 52 週線×耐久一致性（QGM 五年穩定度 "
+                  "≥75%，或 Koyfin 五年∧三年∧現值三者皆 ≥15%）；財報後上修 ≤−5%（缺財報錨定退回三個月）／"
+                  "體質拒絕／衰退 ⛔／DD 迴避／融券占流通股比 >10% 皆整體排除（v5 無衛星軌可退）。排序＝"
+                  "上修（財報後錨定，缺值退回三月）降冪，tie-break implied_growth_pct、再 tie-break 盈餘"
+                  "殖利率——池＝資格全過名字中上修 ≥5% 者，own_score_v4 五百分位對照分保留一輪僅供 "
+                  "hover 對照、不參與排序。板機＝時機燈（距還原權息全歷史最高收盤價與 200 日線）：綠＝"
+                  "距新高 ≥−3% 且站上 200 日線；黃＝−10%~−3%；紅＝距新高 <−10% 或跌破 200 日線；橘＝過熱"
+                  "（12-1 月動能 >150%）但仍在突破帶附近，倉位對應 1.0/0.5/0/0.5。核心＝池前 5，月頻輪動"
+                  "（每月第一次排程整批重選一次，期間僅硬否決能換人、空位由池遞補）；衛星軌已取消，池扣掉"
+                  "核心即「等待池」，依時機燈分②可買／③等待池顯示。無產業集中度上限；內部人買賣僅備註，"
+                  "不進資格與排序。"),
         "universe_n": len(universe_rows),
-        "seats_without_card": sorted(r["ticker"] for r in core_seats + sat_seats if r["ticker"] not in card_stats),
+        "seats_without_card": sorted(r["ticker"] for r in core_seats + waiting_pool if r["ticker"] not in card_stats),
         "own_board": own_board,
         "run_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "regime": dial,
@@ -2225,7 +2069,15 @@ def main() -> int:
                     "removed": [{"ticker": t, "why": w} for t, w in rotation["removed"]],
                     "filled": [{"track": tr, "ticker": t} for tr, t in rotation["filled"]]},
         "core_seats": core_seats, "core_bench": core_bench[:8],
-        "sat_seats": sat_seats, "sat_vacant": SAT_SLOTS - len(sat_seats),
+        # v5：sat_seats 保留 key 供既有消費端（build_pipeline_page.py／
+        # generate_list_forecasts.py／build_weekly_mail.py／docs/assets/imq-badge.js）
+        # 向下相容，內容改成整個等待池（每列帶 track:"pool" 標記，見 row_dict()/
+        # main() 上方賦值）；sat_vacant 恆為 0——池不是固定 5 席，沒有「空缺」概念，
+        # 保留欄位只為了不讓舊消費端算術出錯。新欄位 buyable_seats／waiting_pool／
+        # not_in_pool 供未來消費端直接讀對應區塊，不必自己重新篩 sat_seats。
+        "sat_seats": waiting_pool, "sat_vacant": 0,
+        "buyable_seats": buyable, "waiting_pool": waiting_rest, "not_in_pool": not_in_pool_rows,
+        "pool_size": len(pool_rows),
         "bench_seats": bench_seats,
         "duels": duels, "challengers_top": challengers[:15],
         "concentration": [{"sector": k, "n": v} for k, v in conc_rows],
@@ -2296,9 +2148,11 @@ def main() -> int:
         core_tbl = core_tbl.replace("</tbody>", (
             f'<tr><td class="left">{len(core_seats)+i+1}. <span class="muted">（空缺）</span></td>'
             f'<td class="left muted" colspan="6">進場核心票中無三閘全過者遞補 — 寧缺勿濫</td></tr></tbody>'), 1)
-    sat_body = "".join(seat_tr(r, i) for i, r in enumerate(sat_seats, 1))
-    for i in range(payload["sat_vacant"]):
-        sat_body += (f'<tr><td class="left">{len(sat_seats)+i+1}. <span class="muted">（空缺）</span></td>'
+    # M5 對照組（PREREG 凍結，見上方 sat_seats_m5 定義註解）：取等待池前 5 當這個
+    # 凍結實驗自己的固定「衛星席位」快照，與下方 v5 真正的等待池表無關。
+    sat_body = "".join(seat_tr(r, i) for i, r in enumerate(sat_seats_m5, 1))
+    for i in range(SAT_SLOTS - len(sat_seats_m5)):
+        sat_body += (f'<tr><td class="left">{len(sat_seats_m5)+i+1}. <span class="muted">（空缺）</span></td>'
                      f'<td class="left muted" colspan="6">等衛星候選同時拿到進場裁決＋三閘全過</td></tr>')
     sat_tbl = head + sat_body + "</tbody></table>"
 
@@ -2332,15 +2186,15 @@ def main() -> int:
 <b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。無產業/主題集中度上限（2026-09-17 持有人拍板）。
 <b>快審卡</b>：衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評），與三年成長閘、DD 皆無關。
 資格未過的進場票落板凳、寧缺勿濫。</div>
-<div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v4 擁有層×時機層 ｜ 月頻輪動</div>
+<div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v5 品質派資格×上修排序×歷史新高板機 ｜ 月頻輪動</div>
 </div>
-<div class="block"><h2>選股看板 v4</h2>
-<div class="block-sub">own_score 排序（值不值得擁有）與時機燈（現在能不能買）分開讀；DD 只做迴避否決與角色標籤。</div>
+<div class="block"><h2>選股看板 v5</h2>
+<div class="block-sub">上修排序（值不值得擁有）與時機燈（現在能不能買）分開讀；DD 只做迴避否決與角色標籤。</div>
 {board_html}</div>
 <div class="stat-row">
 <div class="stat"><strong>{dial['label'] if dial['level'] else '—'}</strong><span>Regime 撥盤（{dial['level'] if dial['level'] else '—'}×）</span></div>
 <div class="stat"><strong>{sum(1 for d in duels if d['alert'])}</strong><span>⚔ 擂台警報</span></div>
-<div class="stat"><strong>{len(core_seats)}/{CORE_SLOTS} · {len(sat_seats)}/{SAT_SLOTS}</strong><span>核心 · 衛星席位</span></div>
+<div class="stat"><strong>{len(core_seats)}/{CORE_SLOTS} · {len(sat_seats_m5)}/{SAT_SLOTS}</strong><span>核心 · 衛星席位</span></div>
 <div class="stat"><strong>{payload['max_sector_share_pct']}%</strong><span>最大單一產業占席</span></div>
 </div>
 <div class="note">Regime：{escape(dial.get('detail') or '')}（as of {escape(str(dial.get('as_of') or '—'))}）。
@@ -2348,7 +2202,7 @@ def main() -> int:
 防守 0.25＝correction／跌破 200DMA／≥8。<b>資訊性，不接倉位系統</b>——新倉節奏由人按撥盤自裁。
 形狀敏感度：突破帶/動能重估最敏感（防守時停新倉）、循環轉折次之（防守時只留回踩單）。</div>
 <div class="block"><h2>核心席位（{len(core_seats)}/{CORE_SLOTS}）</h2>{core_tbl}</div>
-<div class="block"><h2>衛星席位（{len(sat_seats)}/{SAT_SLOTS}）</h2>{sat_tbl}</div>
+<div class="block"><h2>衛星席位（{len(sat_seats_m5)}/{SAT_SLOTS}）</h2>{sat_tbl}</div>
 <div class="block"><h2>擂台對戰表</h2>
 <div class="block-sub">軌別配對：核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者（moat 耐久性同級才有資格互換；
 挑戰者資格＝裁決 ∈ {{進場、觀望}} ∩ 三閘全過）。觀望挑戰者勝出＝先觸發它的複審，不是直接換。</div>
@@ -2363,7 +2217,7 @@ def main() -> int:
 {_STAGE_LAMP_SCRIPT}"""
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    universe_board = build_universe_board(universe_rows, core_seats, sat_seats, core_bench, sat_bench, as_of)
+    universe_board = build_universe_board(universe_rows, core_seats, sat_seats_m5, core_bench, sat_bench, as_of)
     UNIVERSE_BOARD_JSON.write_text(json.dumps(universe_board, ensure_ascii=False, indent=1), encoding="utf-8")
     ARENA_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     ARENA_HTML.write_text(
@@ -2371,8 +2225,8 @@ def main() -> int:
                          "核心 5＋衛星 5 席位 vs 同形狀挑戰者的每月擂台 — regime 撥盤與集中度警戒"),
         encoding="utf-8")
     print(f"arena: regime={dial['label']} 警報={sum(1 for d in duels if d['alert'])} "
-          f"核心={[r['ticker'] for r in core_seats]} 衛星={[r['ticker'] for r in sat_seats]} "
-          f"集中度={payload['max_sector_share_pct']}%")
+          f"核心={[r['ticker'] for r in core_seats]} 等待池={len(waiting_pool)}（可買 {len(buyable)}）"
+          f" 集中度={payload['max_sector_share_pct']}%")
     return 0
 
 

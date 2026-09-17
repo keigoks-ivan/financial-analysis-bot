@@ -205,7 +205,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   <div class="hero">
     <div class="eyebrow">Stock-Selection Console · 選股主控台</div>
     <h1>選股主控台</h1>
-    <p class="sub">四個分頁是同一條決策鏈上的四站，不是四套方法——出手三關：<b>品質閘＝資格（ROIC／FCF／成長／市值；DD 只能否決或標角色）→ 擁有層排序＝席位（值不值得擁有，月尺度）→ 板機＝時機（週尺度）</b>；精選榜收的是席位規格外的名字（循環拐點型與小市值），與陣容零重疊。</p>
+    <p class="sub">四個分頁是同一條決策鏈上的四站，不是四套方法——出手三關：<b>品質派資格閘（ROIC／FCF／成長／市值／耐久一致性；DD 只能否決或標角色）→ 上修排序＝池與核心席（值不值得擁有，核心月尺度換人）→ 板機＝距歷史新高（週尺度）</b>；精選榜收的是池規格外的名字（循環拐點型與小市值），與陣容零重疊。</p>
   </div>
 
   <!-- 分頁列（順序照決策鏈：今天 → 陣容 → 時機 → 櫥窗） -->
@@ -233,7 +233,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <div class="sec-head">
       <span class="sec-num">2</span>
       <h2 class="sec-title">陣容</h2>
-      <span class="sec-desc">席位＝擁有層排序；位置與階段只是燈號；DD 選配，只有迴避會否決，觀望／進場只是標角色——沒有 DD 一樣能入席，但成長預估要是三年期，只有單年預估的先列隊，核心席另外要看耐久。換席裁決見「席位排序」分頁；這是研究層陣容，不是帳戶持倉。</span>
+      <span class="sec-desc">席位＝上修排序（財報後錨定，缺值退回三個月）；距歷史新高只是燈號；DD 選配，只有迴避會否決，觀望／進場只是標角色——沒有 DD 一樣能入池，但成長預估要是三年期，只有單年預估的先列隊，入池另外要看耐久一致性（QGM 五年穩定度，或 Koyfin 五年∧三年∧現值三者皆達標）。換席裁決見「席位排序」分頁；這是研究層陣容，不是帳戶持倉。</span>
     </div>
     <div id="roster-mount"><div class="placeholder">載入中⋯</div></div>
   </section>
@@ -304,7 +304,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
 
   <!-- ═══ 分頁 4：席位排序（含第二層 sub-tab：席位總表／雷達／擂台／卡片／記分板）═══ -->
   <div class="tab-panel" id="panel-seats">
-    <p class="embed-note">擁有層×時機層決策引擎（GRP v2）：擁有層排序 × 時機燈 × 席位擂台 × 自動結算 · 五個子分頁同一份底層資料 · <a href="/engine/">獨立頁</a></p>
+    <p class="embed-note">品質派資格 × 上修排序 × 歷史新高板機決策引擎（GRP v5）：上修排序 × 時機燈 × 席位擂台 × 自動結算 · 五個子分頁同一份底層資料 · <a href="/engine/">獨立頁</a></p>
     <div class="subtabbar" role="tablist">
       <button type="button" class="subtab-btn" data-sub="overview" data-src="/engine/_index_body.html" role="tab">席位總表</button>
       <button type="button" class="subtab-btn" data-sub="radar" data-src="/engine/_radar_body.html" role="tab">雷達</button>
@@ -640,8 +640,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     var rows = '';
     rows += groupRow('核心席（'+S.arena.core_seats.length+'/5）');
     S.arena.core_seats.forEach(function(s,i){ rows += row('核心 '+(i+1), s, false); });
-    rows += groupRow('衛星席（'+((S.arena.sat_seats||[]).length)+'/5）');
-    (S.arena.sat_seats||[]).forEach(function(s,i){ rows += row('衛星 '+(i+1), s, true); });
+    // v5 席位引擎（2026-09-17，見 knowledge/rule_ledger.md「v5 席位引擎」列）：
+    // sat_seats 現在是整個等待池（無固定 5 席），標籤與計數跟著改，不再假裝「/5」。
+    rows += groupRow('等待池（'+((S.arena.sat_seats||[]).length)+' 檔）');
+    (S.arena.sat_seats||[]).forEach(function(s,i){ rows += row('等待池 '+(i+1), s, true); });
     var vac = S.arena.sat_vacant||0;
     if(vac>0) rows += '<tr><td class="roster-seat">衛星 '+((S.arena.sat_seats||[]).length+1)+'–5</td>'+
       '<td colspan="12" style="color:var(--muted);font-size:.8rem">空 '+vac+' 席——空位是刻意的，空位即倉位管理</td></tr>';

@@ -238,7 +238,11 @@ def extract_grp_items():
     items = []
     for seat_key, role_label, offset in (
         ("core_seats", "GRP 核心席位", GRP_OFFSETS["核心"]),
-        ("sat_seats", "GRP 衛星席位", GRP_OFFSETS["衛星"]),
+        # v5 席位引擎（2026-09-17）：sat_seats 內容從「衛星 5 席」改成整個等待池
+        # （見 knowledge/rule_ledger.md「v5 席位引擎」列），role_label 跟著更名；
+        # PREREG 凍結的 offset（+0.05）本身不動——本函式逐檔掛一張命題，等待池
+        # 檔數變多只代表本輪多掛幾張，不改變單張命題的機率設定。
+        ("sat_seats", "GRP 等待池", GRP_OFFSETS["衛星"]),
     ):
         for seat in data.get(seat_key) or []:
             ticker = seat.get("ticker")

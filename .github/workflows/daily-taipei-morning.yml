@@ -66,14 +66,15 @@ jobs:
         run: python scripts/build_dd_screener.py --include-non-dd
         continue-on-error: true
 
-      # 席位擂台時機燈日更（2026-09-17 持有人拍板，見 scripts/engine/build_arena.py
-      # 檔頭 --lamp-only 段／knowledge/rule_ledger.md「時機燈日更、席位月更」列）：
-      # 唯讀重算 docs/engine/arena.json 既有席位/候補的時機燈與倉位，讀剛更新的
-      # dd-screener latest.json（timing.*/ma.*）與 docs/stages/data/lamp.json——
-      # 不碰選股/月頻輪動，不寫 arena-ledger.json（那個只有 weekly-engine.yml 的
-      # --ledger 跑次會寫）。失敗只 warning，不擋本帶其餘 step。
-      - name: "[non-fundamental] Step 2 — Arena lamp-only daily refresh (timing lamp, not seats)"
-        run: python scripts/engine/build_arena.py --lamp-only || echo "::warning::lamp refresh failed"
+      # 席位擂台每日全量重跑（v5 席位引擎，2026-09-17 持有人拍板，取代 v4 的窄流程
+      # --lamp-only，見 scripts/engine/build_arena.py 檔頭 --daily 段／
+      # knowledge/rule_ledger.md「v5 席位引擎」列）：全量重算資格/池/排序/時機燈/
+      # 距歷史新高，讀剛更新的 dd-screener latest.json（timing.*/ma.*，含
+      # dist_ath_pct）；不寫 arena-ledger.json（那個只有 weekly-engine.yml 的
+      # --ledger 跑次會寫），核心席名單仍取自帳本 roster.core（月頻輪動不變）。
+      # 失敗只 warning，不擋本帶其餘 step。
+      - name: "[non-fundamental] Step 2 — Arena daily refresh (pool/timing lamp, core seats from ledger)"
+        run: python scripts/engine/build_arena.py --daily || echo "::warning::daily arena refresh failed"
         continue-on-error: true
 
       - name: "[non-fundamental] Step 3 — Quality-Entry screener"

@@ -61,12 +61,13 @@ jobs:
         # dispatch，保持一致避免手動跑出跟排程不同的 universe。
         run: python scripts/build_dd_screener.py --include-non-dd
 
-      # 席位擂台時機燈日更（2026-09-17 持有人拍板，見 scripts/engine/build_arena.py
-      # 檔頭 --lamp-only 段）：與 daily-taipei-morning.yml（實際排程跑這步的班次）
-      # 同步加這步，本檔排程已停用只留手動 dispatch，保持一致避免手動跑出跟排程
-      # 不同的席位表狀態。唯讀，不寫 arena-ledger.json。
-      - name: Step 2 — Arena lamp-only daily refresh (timing lamp, not seats)
-        run: python scripts/engine/build_arena.py --lamp-only || echo "::warning::lamp refresh failed"
+      # 席位擂台每日全量重跑（v5 席位引擎，2026-09-17 持有人拍板，取代 v4 的窄流程
+      # --lamp-only，見 scripts/engine/build_arena.py 檔頭 --daily 段）：與
+      # daily-taipei-morning.yml（實際排程跑這步的班次）同步加這步，本檔排程已
+      # 停用只留手動 dispatch，保持一致避免手動跑出跟排程不同的席位表狀態。
+      # 不寫 arena-ledger.json，核心席名單仍取自帳本 roster.core。
+      - name: Step 2 — Arena daily refresh (pool/timing lamp, core seats from ledger)
+        run: python scripts/engine/build_arena.py --daily || echo "::warning::daily arena refresh failed"
         continue-on-error: true
 
       - name: Step 3 — Quality-Entry screener

@@ -1,19 +1,26 @@
 """Unit tests for scripts/engine/grp.py's v4 additions (2026-09-17 席位引擎 v4 overhaul
 — see knowledge/rule_ledger.md "v4 席位引擎" row):
 
-  - timing_lamp(): pure timing-lamp truth table (out/red/hot/green/yellow, missing stage)
   - own_score_v4(): cross-sectional percentile math on a 5-row fixture, incl. the
-    FCF/NI exemption when incremental_roic_pct >= 15
+    FCF/NI exemption when incremental_roic_pct >= 15 (kept unchanged in v5 as the
+    "v4 對照" tooltip score — see test_grp_v5.py for what v5 changes)
   - grp_score(): eligibility gates, incl. the 10% durable-growth relaxation and the
     v4 revision veto (eps_rev_3m_pct <= -5, falling back to the old FY+1 <= -10 rule
     only when eps_rev_3m_pct is missing)
 
 v4.1 additions (2026-09-17, see knowledge/rule_ledger.md "v4.1 融券比 >10% 只能衛星"
-and "v4.1 基期效應＋循環股守門" rows): high_short_interest (core-candidacy exclusion
-only, not a ranking factor or eligibility gate), _base_effect_growth() (overrides g
-with FY2->FY3 growth when FY1->FY2 jumped on a low base), and own_raw()/own_score_v4()
+and "v4.1 基期效應＋循環股守門" rows): _base_effect_growth() (overrides g with
+FY2->FY3 growth when FY1->FY2 jumped on a low base), and own_raw()/own_score_v4()
 cyclical guard (caps p_g/p_ey percentiles at 50 when PEG is suspiciously low on a
-cyclical-shaped stock).
+cyclical-shaped stock) — both unchanged in v5, still exercised here.
+
+v5 NOTE (2026-09-17, see knowledge/rule_ledger.md "v5 席位引擎" row): timing_lamp()
+was rewritten wholesale (ATH-distance based, not 52w-high/RS/stage based) and
+high_short_interest was upgraded from "core-candidacy exclusion only" to "full
+eligibility exclusion" — both of those test sections were rewritten below (not
+deleted) to match. New v5-only behavior (durable-as-eligibility-gate, pool
+membership, pool_sort_key ranking, timing_lamp v5 truth table) is covered in
+scripts/tests/test_grp_v5.py, not duplicated here.
 
 Hand-made inputs only — no network, no disk reads of real dd-screener/lamp data.
 Same style as scripts/tests/test_fundamental_gates.py.
@@ -31,15 +38,16 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 from engine import grp  # noqa: E402
 
 
-# ── timing_lamp() truth table ────────────────────────────────────────────────
+# ── timing_lamp() truth table (v5 — ATH-distance based; see grp.py 檔頭 v5 段
+# and test_grp_v5.py for the fuller table incl. hot-requires-proximity) ───────
 
-def _lamp_input(above_w52=True, vs200=5.0, rs=60.0, dist_hi=-5.0, stage="S1", overheated=False):
-    return {
-        "ma": {"above_w52": above_w52},
-        "timing": {"vs_200ma_pct": vs200, "rs_score": rs, "dist_52w_high_pct": dist_hi},
-        "_stage_code": stage,
-        "_overheated": overheated,
-    }
+def _lamp_input(above_w52=True, dist_ath=-1.0, vs200=5.0, mom=None, ath_price=None, price=None):
+    ma = {"above_w52": above_w52, "dist_ath_pct": dist_ath, "mom_12_1_pct": mom}
+    if ath_price is not None:
+        ma["ath_adj_price"] = ath_price
+    if price is not None:
+        ma["price"] = price
+    return {"ma": ma, "timing": {"vs_200ma_pct": vs200}}
 
 
 def test_timing_lamp_out_when_below_w52():
@@ -48,55 +56,60 @@ def test_timing_lamp_out_when_below_w52():
     assert lamp["size"] == 0.0
 
 
-def test_timing_lamp_red_vs200_negative():
-    lamp = grp.timing_lamp(_lamp_input(vs200=-1.0))
+def test_timing_lamp_red_dist_ath_below_minus10():
+    lamp = grp.timing_lamp(_lamp_input(dist_ath=-15.0))
     assert lamp["code"] == "red"
-    assert lamp["trigger"] == "站回 200 日線且 RS ≥ 50"
+    assert lamp["trigger"] == "突破還原歷史新高"
 
 
-def test_timing_lamp_red_rs_weak():
-    lamp = grp.timing_lamp(_lamp_input(rs=30.0))
-    assert lamp["code"] == "red"
-    assert lamp["trigger"] == "RS 回到 50 以上"
-
-
-def test_timing_lamp_red_far_from_high():
-    lamp = grp.timing_lamp(_lamp_input(dist_hi=-30.0))
-    assert lamp["code"] == "red"
-    assert lamp["trigger"] == "回到高點 25% 內"
-
-
-def test_timing_lamp_red_stage_s0():
-    lamp = grp.timing_lamp(_lamp_input(stage="S0"))
-    assert lamp["code"] == "red"
-
-
-def test_timing_lamp_hot_overheated_overrides_green_setup():
-    lamp = grp.timing_lamp(_lamp_input(overheated=True))
-    assert lamp["code"] == "hot"
-    assert lamp["size"] == 0.5
+def test_timing_lamp_red_vs200_negative_even_near_high():
+    lamp = grp.timing_lamp(_lamp_input(dist_ath=-1.0, vs200=-2.0))
+    assert lamp["code"] == "red", "距新高很近但跌破 200 日線仍是紅燈"
 
 
 def test_timing_lamp_green_all_conditions_met():
-    lamp = grp.timing_lamp(_lamp_input())
+    lamp = grp.timing_lamp(_lamp_input(dist_ath=-1.0, vs200=5.0))
     assert lamp["code"] == "green"
     assert lamp["size"] == 1.0
 
 
-def test_timing_lamp_green_missing_stage_does_not_block():
-    lamp = grp.timing_lamp(_lamp_input(stage=None))
-    assert lamp["code"] == "green", "缺 stage 應視為中性，不擋 green"
+def test_timing_lamp_green_boundary_exactly_minus3():
+    lamp = grp.timing_lamp(_lamp_input(dist_ath=-3.0, vs200=0.0))
+    assert lamp["code"] == "green", "距新高剛好 -3% 應算 green（>= 邊界）"
 
 
-def test_timing_lamp_yellow_stage_not_in_green_set():
-    lamp = grp.timing_lamp(_lamp_input(stage="S2"))
+def test_timing_lamp_yellow_between_minus10_and_minus3():
+    lamp = grp.timing_lamp(_lamp_input(dist_ath=-7.0, vs200=1.0))
     assert lamp["code"] == "yellow"
     assert lamp["size"] == 0.5
 
 
+def test_timing_lamp_yellow_boundary_exactly_minus10():
+    lamp = grp.timing_lamp(_lamp_input(dist_ath=-10.0, vs200=1.0))
+    assert lamp["code"] == "yellow", "距新高剛好 -10% 落 yellow（非 <-10% 的 red）"
+
+
+def test_timing_lamp_hot_requires_green_level_proximity():
+    """過熱（mom>150）仍需滿足綠燈級距離才降級為 hot；否則按原距離判 yellow/red。"""
+    hot = grp.timing_lamp(_lamp_input(dist_ath=-1.0, vs200=1.0, mom=200.0))
+    assert hot["code"] == "hot"
+    assert hot["size"] == 0.5
+
+    not_hot_but_yellow = grp.timing_lamp(_lamp_input(dist_ath=-7.0, vs200=1.0, mom=200.0))
+    assert not_hot_but_yellow["code"] == "yellow", (
+        "過熱但距新高只在 yellow 帶（未達 green-level proximity）→ 仍是 yellow，不是 hot"
+    )
+
+
 def test_timing_lamp_yellow_when_numeric_inputs_missing():
-    lamp = grp.timing_lamp(_lamp_input(vs200=None, rs=None, dist_hi=None, stage=None))
+    lamp = grp.timing_lamp(_lamp_input(dist_ath=None, vs200=None))
     assert lamp["code"] == "yellow", "above_w52 但關鍵數字缺 → 無法確認 green，落 yellow"
+
+
+def test_timing_lamp_red_trigger_includes_price_needed_when_available():
+    lamp = grp.timing_lamp(_lamp_input(dist_ath=-20.0, ath_price=125.0, price=100.0))
+    assert lamp["code"] == "red"
+    assert "125.00" in lamp["why"], "red 的 why 應含還原新高價，供讀者知道還差多少"
 
 
 def test_lamp_action_mapping():
@@ -179,6 +192,14 @@ def _stock(**kw):
         "roic": 20.0, "fcf": 15.0, "live_fpe_est": 20.0,
         "ma": {"above_w52": True, "price": 100.0, "mom_12_1_pct": 10.0},
         "timing": {"dist_52w_high_pct": -10.0},
+        # v5（2026-09-17，see grp.py 檔頭 v5 段）：durable_5y is now folded into
+        # grp_score()'s eligibility gate itself (previously it only decided
+        # core-vs-satellite routing). Default True here so every OTHER test in
+        # this file — which isn't testing durable/eligibility itself — keeps
+        # isolating its own variable instead of incidentally failing the new
+        # durable gate; tests that specifically exercise durable_5y still pass
+        # it explicitly per-call and override this default.
+        "durable_5y": True,
     }
     base.update(kw)
     return base
@@ -313,15 +334,20 @@ def test_overheat_fallback_to_r26_when_mom_missing():
     assert cool["overheated"] is False
 
 
-# ── v4.1 融券高（core-candidacy only, NOT a ranking factor / eligibility gate） ──
-# See knowledge/rule_ledger.md "v4.1 融券比 >10% 只能衛星（2026-09-17）".
+# ── 融券高：v4.1 was core-candidacy-only; v5 upgraded it to a full eligibility
+# exclusion (no satellite track left to hold high-SI names on) — see
+# knowledge/rule_ledger.md "v4.1 融券比 >10% 只能衛星" (superseded) and "v5 席位
+# 引擎" rows, and grp.py 檔頭 v5 段第 2 點. These three tests were rewritten
+# (not deleted) to assert the new pass=False outcome; `veto` itself is left
+# untouched by this flag (see the separate `veto_high_short_interest` field
+# build_arena.hard_veto_v5() reads for immediate core-seat eviction). ──
 
-def test_high_short_interest_flag_above_threshold():
+def test_high_short_interest_flag_above_threshold_excludes_eligibility():
     g = grp.grp_score(_stock(short_interest_pct_float=12.5))
     assert g["high_short_interest"] is True
     assert g["short_interest_pct_float"] == 12.5
-    assert g["pass"], "融券高不是資格閘，不否決 pass"
-    assert not g["veto"], "融券高不是硬否決"
+    assert not g["pass"], "v5：融券高整體排除資格（沒有衛星軌可以退）"
+    assert g["veto_high_short_interest"] is True
 
 
 def test_high_short_interest_flag_below_threshold():

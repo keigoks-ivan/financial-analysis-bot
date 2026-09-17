@@ -83,6 +83,10 @@ from dd_screener_quality import (  # noqa: E402
     load_qgm_index,
 )
 from dd_screener_ma import compute_ma_snapshot  # noqa: E402
+# v5 席位引擎 (2026-09-17, knowledge/rule_ledger.md「v5 席位引擎」列)：耐久一致性
+# 判準單一權威實作在 engine.grp（見該模組 durable_5y_v5() docstring），避免同一條
+# 判準在 screener／engine 兩層各抄一份而日後漂移（QC-7 教訓）。
+from engine.grp import durable_5y_v5 as grp_durable_5y_v5  # noqa: E402
 from update_dd_index import (  # noqa: E402
     collect_dca_ev_map,
     collect_dca_moat_trend_map,
@@ -952,6 +956,122 @@ def compute_daily_5y_highs(dd_tickers: list[str]) -> dict[str, dict]:
         f"  [daily-5y] Computed for {len(out)}/{len(dd_tickers)} tickers",
         file=sys.stderr,
     )
+    return out
+
+
+ATH_CACHE_PATH = ROOT / "data" / "ath_cache.json"
+ATH_CACHE_TTL_DAYS = 7   # v5 席位引擎 (2026-09-17)：全歷史還原權息 ATH 快取 TTL
+
+
+def _load_ath_cache() -> dict:
+    try:
+        return json.loads(ATH_CACHE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _save_ath_cache(cache: dict) -> None:
+    try:
+        ATH_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        ATH_CACHE_PATH.write_text(json.dumps(cache, ensure_ascii=False, indent=1), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def compute_ath_highs(dd_tickers: list[str], price_map: dict[str, float],
+                       daily_5y_map: dict[str, dict] | None = None) -> dict[str, dict]:
+    """v5 席位引擎 (2026-09-17, knowledge/rule_ledger.md「v5 席位引擎」列)：全歷史
+    還原權息新高（`ath_adj_price`／`ath_adj_date`／`dist_ath_pct`／`ath_source`），
+    是 v5 timing_lamp() 板機（engine/grp.py 檔頭 v5 段第 5 點）的原料。
+
+    Cache（`data/ath_cache.json`，{dd_ticker: {ath_price, ath_date, checked_date}}）
+    採「7 天 TTL + 高水位每日刷新」兩層機制，避免每天對全母體重抓全歷史每日線：
+      1. cache 缺該 ticker，或 `checked_date` 距今 >= ATH_CACHE_TTL_DAYS 天（過期）
+         → 這批 ticker 一次性 chunked `yf.download(period="max", auto_adjust=True)`
+         真正重算全歷史最高收盤價與日期，`checked_date` 更新為今天。
+      2. 其餘（cache 新鮮）→ 只用當下價格（`price_map`，來自本輪已算好的
+         `row["ma"]["price"]`，週線快取為準）做高水位比較：現價 > 快取的 ath_price
+         → 視為當日創新高，ath_price/ath_date 更新為現價/今天，但**不**更新
+         `checked_date`（TTL 時鐘只認真正的全歷史重算，不能被每日高水位更新
+         無限順延）。
+      3. 兩者皆失敗（yfinance 掛掉且無舊 cache）→ fallback 用 `daily_5y_map`
+         （`compute_daily_5y_highs()` 產出的 `high_5y_daily_price`）當替代
+         ATH，`ath_source="5y"` 標示這是代理值而非真正全歷史新高，`ath_adj_date`
+         留 None（5y 高不含精確日期不同源，不假裝有）。查無任何來源者整筆略過
+         （下游優雅退回「—」，不假造數字，同 `compute_daily_5y_highs()` 慣例）。
+    絕不中止 build——任何一步失敗都吞例外、留給下一層 fallback 或整筆略過。
+    """
+    if not dd_tickers:
+        return {}
+    cache = _load_ath_cache()
+    today_dt = datetime.now(timezone.utc)
+    today = today_dt.strftime("%Y-%m-%d")
+
+    def _stale(t: str) -> bool:
+        entry = cache.get(t)
+        if not entry or not entry.get("checked_date") or not entry.get("ath_price"):
+            return True
+        try:
+            checked = datetime.strptime(entry["checked_date"], "%Y-%m-%d")
+        except (TypeError, ValueError):
+            return True
+        return (today_dt.replace(tzinfo=None) - checked).days >= ATH_CACHE_TTL_DAYS
+
+    need_full = [t for t in dd_tickers if _stale(t)]
+    if need_full:
+        yf_map: dict[str, str] = {t: _yf_ticker_for_ma(t) for t in need_full}
+        yf_tickers = list(set(yf_map.values()))
+        print(f"  [ath] Full-history pull for {len(yf_tickers)} tickers (cache stale/missing) ...",
+              file=sys.stderr)
+        try:
+            raw = _chunked_download_with_retry(yf_tickers, period="max", interval="1d",
+                                                chunk_size=50, max_retries=3,
+                                                backoff_seconds=(15, 60, 180))
+        except Exception as exc:   # noqa: BLE001 — never abort the build over ATH
+            print(f"  [ath] full-history pull raised {exc!r}, skipping this batch", file=sys.stderr)
+            raw = None
+        if raw is not None and not raw.empty:
+            for t, yf_t in yf_map.items():
+                try:
+                    s = raw["Close"].dropna() if len(yf_tickers) == 1 else raw[yf_t]["Close"].dropna()
+                except (KeyError, TypeError):
+                    continue
+                if s.empty:
+                    continue
+                try:
+                    high = float(s.max())
+                    if high <= 0:
+                        continue
+                    high_date = s.index[int(s.values.argmax())]
+                    cache[t] = {"ath_price": round(high, 2),
+                                "ath_date": high_date.strftime("%Y-%m-%d"),
+                                "checked_date": today}
+                except Exception:   # noqa: BLE001
+                    continue
+        succeeded = sum(1 for t in need_full if cache.get(t, {}).get("checked_date") == today)
+        print(f"  [ath] Done: {succeeded}/{len(need_full)} tickers refreshed", file=sys.stderr)
+
+    out: dict[str, dict] = {}
+    for t in dd_tickers:
+        entry = cache.get(t)
+        px = price_map.get(t)
+        if entry is None or not entry.get("ath_price"):
+            d5y = (daily_5y_map or {}).get(t)
+            if d5y and d5y.get("high_5y_daily_price"):
+                high = d5y["high_5y_daily_price"]
+                dist = round((px - high) / high * 100, 2) if px else d5y.get("dist_5y_high_daily_pct")
+                out[t] = {"ath_adj_price": high, "ath_adj_date": None,
+                          "dist_ath_pct": dist, "ath_source": "5y"}
+            continue
+        # 高水位每日刷新（見 docstring）：現價超過快取 ATH → 今天就是新高，不用等下次
+        # 全歷史重算；checked_date 原樣保留（TTL 時鐘只認真正的全歷史重算）。
+        if px is not None and px > entry["ath_price"]:
+            entry = dict(entry, ath_price=round(float(px), 2), ath_date=today)
+            cache[t] = {**cache[t], "ath_price": entry["ath_price"], "ath_date": entry["ath_date"]}
+        dist = round((px - entry["ath_price"]) / entry["ath_price"] * 100, 2) if px else None
+        out[t] = {"ath_adj_price": entry["ath_price"], "ath_adj_date": entry["ath_date"],
+                  "dist_ath_pct": dist, "ath_source": "full"}
+    _save_ath_cache(cache)
     return out
 
 
@@ -2807,28 +2927,28 @@ def enrich_ticker(
             source = "koyfin-xlsx"
             quality_koyfin_stamp = excel_snapshot.snapshot_date if excel_snapshot else None
 
-    # durable_5y — core-seat durability signal. v3 (2026-09-09): priority Koyfin
-    # roic_5y_avg_pct (>=15% -> True) then QGM roic_5y_stability.pct_above
-    # (>=75% -> True) via qgm_durable_index; None when neither source covers t.
-    # v4 (2026-09-17, knowledge/rule_ledger.md v4 席位引擎列): when BOTH sources
-    # cover the ticker, OR them (either threshold met -> durable) instead of
-    # letting Koyfin's presence hide a QGM pass — priority-only meant a Koyfin
-    # roic_5y_avg_pct just under 15% could mask a QGM stability >=75% that would
-    # otherwise have qualified the name. Single-source coverage still behaves
-    # exactly as v3 (OR against None is a no-op).
-    _koyfin_r5y = _excel_record_for_eps2y.get("roic_5y_avg_pct") if _excel_record_for_eps2y else None
+    # durable_5y — pool-eligibility durability signal (v5 起是資格閘本體，不再只是
+    # 核心/衛星軌別判準，見 engine/grp.py 檔頭 v5 段第 1 點). v3 (2026-09-09):
+    # priority Koyfin roic_5y_avg_pct (>=15% -> True) then QGM
+    # roic_5y_stability.pct_above (>=75% -> True); v4 (2026-09-17): OR both
+    # sources when both cover the ticker. v5 (2026-09-17, knowledge/rule_ledger.md
+    # 「v5 席位引擎」列): durable = consistency, not average — the Koyfin path now
+    # requires roic_5y_avg_pct AND roic_3y_avg_pct AND the current resolved ROIC
+    # (`quality["roic"]`, already resolved via koyfin-xlsx/QGM/yfinance priority
+    # above) to ALL clear 15%, not just the 5y average alone — a one-off profit
+    # spike can push the 5y average over the bar while the 3y average / current
+    # ROIC have already faded. Single authoritative implementation shared with
+    # scripts/engine/grp.py's durable_5y_v5() (see that docstring) so the rule
+    # isn't hand-copied in two places.
     _qgm_r5y = (qgm_durable_index or {}).get(t)
-    _koyfin_pass = None if _koyfin_r5y is None else _koyfin_r5y >= 15.0
-    _qgm_pass = None if _qgm_r5y is None else _qgm_r5y >= 0.75
-    if _koyfin_pass is None and _qgm_pass is None:
-        durable_5y = None
-        durable_source = None
-    elif _koyfin_pass or _qgm_pass:
-        durable_5y = True
-        durable_source = "koyfin-xlsx" if _koyfin_pass else "qgm"
-    else:
-        durable_5y = False
-        durable_source = "koyfin-xlsx" if _koyfin_pass is not None else "qgm"
+    _koyfin_r5y = _excel_record_for_eps2y.get("roic_5y_avg_pct") if _excel_record_for_eps2y else None
+    _koyfin_r3y = _excel_record_for_eps2y.get("roic_3y_avg_pct") if _excel_record_for_eps2y else None
+    durable_5y, durable_source = grp_durable_5y_v5({
+        "qgm_roic_5y_stability_pct": round(_qgm_r5y * 100, 1) if _qgm_r5y is not None else None,
+        "roic_5y_avg_pct": _koyfin_r5y,
+        "roic_3y_avg_pct": _koyfin_r3y,
+        "roic": quality.get("roic"),
+    })
 
     # 2026-09-16: ROIC 分解 + 存續力 + 增量 ROIC×再投資率 —— pure derivation,
     # see compute_roic_decomposition() docstring. Uses the resolved current
@@ -3339,6 +3459,24 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
             d5y = daily_5y_map.get(row.get("ticker"))
             if d5y and isinstance(row.get("ma"), dict):
                 row["ma"].update(d5y)
+
+    # Step 4.55 (v5 席位引擎, 2026-09-17): 全歷史還原權息新高（ath_adj_price/
+    # ath_adj_date/dist_ath_pct/ath_source）——v5 timing_lamp() 板機的原料，見
+    # compute_ath_highs() docstring／knowledge/rule_ledger.md「v5 席位引擎」列。
+    # 用剛合併好的 ma.price（週線快取為準）當現價，skip_ma 時兩者皆缺、整段略過
+    # （同 daily_5y_map 慣例：快照測試不需要真的打網路）。
+    if not skip_ma:
+        price_map = {row.get("ticker"): (row.get("ma") or {}).get("price") for row in enriched}
+        try:
+            ath_map = compute_ath_highs(all_dd_tickers, price_map, daily_5y_map)
+        except Exception as exc:   # noqa: BLE001 — ATH is additive, never abort the build
+            print(f"  WARN: compute_ath_highs failed (non-fatal): {exc}", file=sys.stderr)
+            ath_map = {}
+        if ath_map:
+            for row in enriched:
+                d_ath = ath_map.get(row.get("ticker"))
+                if d_ath and isinstance(row.get("ma"), dict):
+                    row["ma"].update(d_ath)
 
     # Step 4.6 (v1.9, v14.3 F4): AR Live — recompute the §11.5 asymmetry ratio
     # at today's price for reports that emit bull/bear targets + probabilities.
