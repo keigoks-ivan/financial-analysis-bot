@@ -39,6 +39,10 @@ Exit 0＝全部通過（WARN 不算失敗，只有 FAIL 會擋 exit code）；Ex
      要能找到括號白話註解（（...）或(...）），否則列為 WARN 提醒補註解——白話工程規範見
      `notes/site-internal/root/_plainlang_styleguide.md` §一模板 3。此檢查只提醒不擋 commit，
      因為判斷「這個括號是不是在解釋這個術語」本質上是語意問題，機械只能做粗略提醒。
+  12. vs_prior_zh 首句白話結論（2026-09-17 持有人指出首屏「本期重點」沒人看得懂）：頁面直接
+     引用 vs_prior_zh 的第一句當首屏摘要，所以第一句必須是讀者看得懂的結論——≤ 60 字、
+     以句號收，且不得含「命題／負責／證偽表／到期／觸發」這類記帳語（記帳明細從第二句起寫）。
+     缺 vs_prior_zh 只 WARN（首期無上期可比）。
 """
 from __future__ import annotations
 
@@ -387,6 +391,32 @@ def check_jargon_gloss(data: dict):
     return PASS, "*_zh 字串中出現的術語（如有）皆在同欄位找到緊接的括號白話註解"
 
 
+VS_PRIOR_LEAD_MAX = 60
+VS_PRIOR_LEDGER_WORDS = ("命題", "負責", "證偽表", "到期", "觸發")
+
+
+def check_vs_prior_lead(data: dict):
+    """見模組 docstring 第 12 項：vs_prior_zh 第一句要是白話結論，頁面首屏直接引用。"""
+    text = data.get("vs_prior_zh")
+    if not isinstance(text, str) or not text.strip():
+        return WARN, "缺 vs_prior_zh（首期無上期可比時可接受）"
+    text = text.strip()
+    m = re.search(r"[。！？]", text)
+    if not m:
+        return FAIL, "vs_prior_zh 沒有句號，無法取出第一句"
+    lead = text[: m.end()]
+    problems = []
+    n = len(lead.replace(" ", ""))
+    if n > VS_PRIOR_LEAD_MAX:
+        problems.append(f"第一句 {n} 字，超過 {VS_PRIOR_LEAD_MAX} 字")
+    hits = [w for w in VS_PRIOR_LEDGER_WORDS if w in lead]
+    if hits:
+        problems.append(f"第一句含記帳語 {hits}，記帳明細請從第二句起寫")
+    if problems:
+        return FAIL, "；".join(problems) + f"——第一句：「{lead}」"
+    return PASS, f"vs_prior_zh 第一句 {n} 字、無記帳語：「{lead}」"
+
+
 CHECKS = (
     ("schema_keys", check_schema_keys, False),
     ("refs_resolvable", check_refs_resolvable, True),
@@ -399,6 +429,7 @@ CHECKS = (
     ("deviations_required", check_deviations, False),
     ("fullwidth_punct", check_fullwidth_punct, False),
     ("jargon_gloss", check_jargon_gloss, False),
+    ("vs_prior_lead", check_vs_prior_lead, False),
 )
 
 
