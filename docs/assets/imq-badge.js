@@ -3,7 +3,8 @@
  *
  * 定位（設計稿 §0）：純瀏覽器端把既有 JSON 接起來畫，不落新名單檔、不新增
  * build 腳本輸出。所有資料一律 fetch 既有端點：
- *   /engine/arena.json         擁有層分／席位／DD 裁決／ROIC／FCF（own_board 母體）
+ *   /engine/arena.json         v4 對照分／席位／DD 裁決／ROIC／FCF（own_board 母體；
+ *                              v5 起真正的排序鍵是財報後上修，own_board.score 僅供對照）
  *   /stages/data/lamp.json     全母體時機碼（今日）
  *   /stages/data/latest.json  轉強～領先四段的天數／來路／RS 等細節（S1–S4 才有）
  *   /stages/data/history.json 250 個交易日的每日階段字串（算 Δ／本週新進／命中率）
@@ -273,7 +274,7 @@
     return '<i class="qtm-warn-dot" title="' + esc(w.title) + '">⚠</i>';
   }
 
-  // ── 四格內容（品質／擁有層分／時機／DD）──────────────────────────────
+  // ── 四格內容（品質／v4 對照分／時機／DD）──────────────────────────────
   function qualityCellHTML(idx, ticker) {
     var q = idx.quality[ticker];
     var warn = qualityWarnFor(idx, ticker);
@@ -339,9 +340,9 @@
     html += popupRow("品質", chip(qc) + (qc.warn ? ('<i class="qtm-warn-dot" title="' + esc(qc.warn.title) + '">⚠</i>') : ""),
                      qc.sub ? esc(qc.sub) : "");
     html += popupRow(
-      "擁有層分",
+      "v4 對照分",
       own == null ? "—" : ("<b>" + fmt1(own) + "</b>" + (seat ? (" " + esc(SEAT_LABEL[seat])) : "")),
-      singleYear ? "單年成長法" : ""
+      (singleYear ? "單年成長法　" : "") + "own_score_v4 百分位對照，v5 不用於排序"
     );
     html += popupRow("時機", chip(t), prev ? ("來自" + esc(prev.label) + "，" + prev.days + " 天前") : "");
     html += popupRow("DD 裁決", chip(d), (d.tag && d.tag !== d.label) ? esc(d.tag) : "");
@@ -444,8 +445,8 @@
       return a < b ? -1 : (a > b ? 1 : 0);
     });
   }
-  // 本週清單專用排序：席位標記（C／S／B）優先，同層再依擁有層分排序——
-  // 與 sortTickers 共用擁有層分邏輯，只多一層「有沒有席位」的優先鍵。
+  // 本週清單專用排序：席位標記（C／S／B）優先，同層再依 v4 對照分排序（僅供排序穩定，
+  // 不是 v5 實際排序鍵）——與 sortTickers 共用同一邏輯，只多一層「有沒有席位」的優先鍵。
   function sortTickersSeatFirst(idx, list) {
     return list.slice().sort(function (a, b) {
       var sa = idx.seat[a] ? 1 : 0, sb = idx.seat[b] ? 1 : 0;
@@ -816,7 +817,7 @@
         "樣本數低於 20 標「樣本不足」。轉強格另外附一組對照——同樣深回檔但當天沒有轉強的股票，比較兩邊誰的後續表現好（對照資料不足會標明）。" +
         "這些數字描述過去，不是預測。</p>" +
         "<p><b>更新時間</b>：階段（縱軸）每個交易日美股收盤後更新，目前資料日 " + esc(idx.lampAsOf || "—") + "；" +
-        "品質、擁有層分、席位（橫軸與標記）每週日隨選股引擎更新，目前資料日 " +
+        "品質、v4 對照分每日隨選股引擎更新，核心席為月頻輪動（僅硬否決可中途換人），目前資料日 " +
         esc(idx.arenaAsOf ? String(idx.arenaAsOf).slice(0, 10) : "—") + "；" +
         "DD 裁決隨新報告發布更新，目前資料日 " + esc(idx.ddAsOf || "—") + "。</p>" +
         "<p class=\"qtm-rules-close\">名單只回答「看誰」，不回答「買不買」與「何時」。</p>" +

@@ -2221,18 +2221,21 @@ def main() -> int:
 
     body = f"""<div class="hero">
 <h1>席位擂台 · 組合層</h1>
-<div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
+<div class="hero-sub"><b>本頁「衛星席位」是 M5 對照組凍結下來的固定 {SAT_SLOTS} 檔快照（等待池前 {SAT_SLOTS} 檔，依上修排序）
+——v5 起真正的衛星軌已取消，等待池本身沒有固定席次。完整等待池、時機燈與核心輪動請看上方「選股看板 v5」；
+本頁只保留擂台配對／席位變動帳本／產業分布這些既有的凍結視圖，僅換殼不改文。</b></div>
+<div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星快照 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
-席位資格（<b>v4 擁有層×時機層</b>，2026-09-17 持有人拍板）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF ≥10；capex 週期豁免 ROIC ≥25 ∧ FCF ≥0）×
-<b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%，耐久者放寬至 10%；且成長必須是三年期 Koyfin 數字——只有 FY1→FY2 單年 fallback 的名字不入席，改列「可選但先不入席」隊列）× <b>位置閘</b>（站上 52 週線）× <b>財報後上修否決</b>（≤−5%，以該股自己最近一次財報日前最新月度 snapshot 為基準，缺財報錨定退回舊制近三個月日曆窗；FY+1 單月 ≤−10% 僅兩者皆缺值時 fallback；2026-09-17 見規則登記「上修改為財報後錨定」）× 新硬否決（體質拒絕／衰退 ⛔／DD 迴避 180 天內）。
-排序＝<b>own_score v4</b>：財報後上修（缺財報錨定退回三個月）、12-1 月動能、成長（封頂 30）、品質（FCF÷淨利與稀釋率百分位平均；投資有回報者〔增量 ROIC ≥15%〕免計 FCF÷淨利）、盈餘殖利率，五個排名百分位在合格集合內互相比較後平均。成長遇<b>基期效應</b>（FY1→FY2 因低基期跳增 &gt;1.6x 且 FY2→FY3 成長 &lt;20%）改用 FY2→FY3 成長率取代；<b>循環股守門</b>（毛利率跨距 &gt;20pp 或資本支出佔營收 &gt;15%，且 PEG &lt;0.3）觸發時成長／盈餘殖利率分位封頂 50。
-<b>過熱／融券高／頂點不是資格閘</b>：12-1 月動能 &gt;150%（缺值 fallback 26 週漲幅 &gt;80%）＝過熱、融券占流通股比 &gt;10%＝融券高，兩者皆排除核心候選（只能衛星，不進排序，依據見頁尾規則登記）；roic_vs_5y_x ≥1.3＝頂點，純顯示註記（⚠），不影響核心候選資格。<b>內部人買賣</b>（近 3 個月淨股數）僅供備註，不進資格與排序。
-<b>DD 選配</b>：不是入席前提，只做迴避否決（180 天內），觀望／進場僅供角色標籤參考（僅供顯示）。
-<b>月頻輪動</b>：每月第一次排程整批重選一次；期間只有硬否決（迴避／拒絕／⛔／財報後上修達 5%（缺財報錨定退回三個月）／市值不足／連兩週跌破 52 週線）能換人，空位由下一名遞補。
-<b>軌別路由</b>：核心候選另需耐久——五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75%（兩者有一成立即可）→ 核心；未達標或無耐久資料 → 衛星。DD 角色不影響軌別，只當顯示標籤（與軌別衝突時標 ⚠ 供人裁）。<b>耐久＋不過熱＋融券不高＝核心候選，不等於保證核心席</b>：沒卡進核心前 5 名的核心候選會回頭跟其餘合格名字一起搶衛星 5 席（純比 own_score），此時席位表仍標示其軌別為「核心」（代表可長抱），另加註「耐久・暫居衛星」。
+資格（<b>v5 品質派</b>，2026-09-17 持有人拍板）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF ≥10；capex 週期豁免 ROIC ≥25 ∧ FCF ≥0）×
+<b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%，耐久者放寬至 10%；且成長必須是三年期 Koyfin 數字——只有 FY1→FY2 單年 fallback 的名字不入池，改列「可選但先不入池」隊列）× <b>位置閘</b>（站上 52 週線）× <b>耐久一致性</b>（QGM 五年穩定度 ≥75%，或 Koyfin 五年∧三年∧現值三者皆 ≥15%）× <b>財報後上修否決</b>（≤−5%，以該股自己最近一次財報日前最新月度 snapshot 為基準，缺財報錨定退回舊制近三個月日曆窗；FY+1 單月 ≤−10% 僅兩者皆缺值時 fallback）× 新硬否決（體質拒絕／衰退 ⛔／DD 迴避 180 天內／融券占流通股比 &gt;10%）——<b>不耐久、融券高皆整體資格排除，v5 沒有衛星軌可以收留</b>。
+排序＝<b>上修單一變數</b>（財報後錨定，缺值退回三個月）降冪，同值 tie-break implied_growth_pct、再 tie-break 盈餘殖利率——資格全過者中，上修 ≥+5% 才進「池」，池即候選／候補的全部。舊 <b>own_score v4</b>（財報後上修、12-1 月動能、成長封頂 30、品質、盈餘殖利率五個百分位平均）保留一輪只做逐檔「v4 對照」，不參與本排序。成長遇<b>基期效應</b>（FY1→FY2 因低基期跳增 &gt;1.6x 且 FY2→FY3 成長 &lt;20%）改用 FY2→FY3 成長率取代（此項仍作用於成長閘本身）。
+<b>過熱／頂點不是資格閘</b>：12-1 月動能 &gt;150%（缺值 fallback 26 週漲幅 &gt;80%）＝過熱，只影響時機燈（🟠過熱，半倉），v5 起不再排除核心候選（核心純比池內排序前 5）；roic_vs_5y_x ≥1.3＝頂點，純顯示註記（⚠）。<b>內部人買賣</b>（近 3 個月淨股數）僅供備註，不進資格與排序。
+<b>DD 選配</b>：不是入池前提，只做迴避否決（180 天內），觀望／進場僅供角色標籤參考（僅供顯示）。
+<b>月頻輪動</b>：每月第一次排程整批重選一次；期間只有七項硬否決（迴避／拒絕／⛔／財報後上修跌破 ≤−5%／市值不足／連兩週跌破 52 週線／融券轉高）能讓現任核心下席，空位由池遞補。
+<b>核心＝池前 5</b>（純比上修排序，不再有 DD 角色或護城河字母路由）；沒卡進核心前 5 名的池成員全部叫「等待池」，本頁的「衛星席位」只是取其中前 {SAT_SLOTS} 檔當這個凍結實驗自己的固定快照，並非真的還有一個 {SAT_SLOTS} 席的衛星軌。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
 <b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。無產業/主題集中度上限（2026-09-17 持有人拍板）。
-<b>快審卡</b>：衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評），與三年成長閘、DD 皆無關。
+<b>快審卡</b>：等待池另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評），與三年成長閘、DD 皆無關。
 資格未過的進場票落板凳、寧缺勿濫。</div>
 <div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v5 品質派資格×上修排序×歷史新高板機 ｜ 月頻輪動</div>
 </div>
@@ -2242,7 +2245,7 @@ def main() -> int:
 <div class="stat-row">
 <div class="stat"><strong>{dial['label'] if dial['level'] else '—'}</strong><span>Regime 撥盤（{dial['level'] if dial['level'] else '—'}×）</span></div>
 <div class="stat"><strong>{sum(1 for d in duels if d['alert'])}</strong><span>⚔ 擂台警報</span></div>
-<div class="stat"><strong>{len(core_seats)}/{CORE_SLOTS} · {len(sat_seats_m5)}/{SAT_SLOTS}</strong><span>核心 · 衛星席位</span></div>
+<div class="stat"><strong>{len(core_seats)}/{CORE_SLOTS} · {len(sat_seats_m5)}/{SAT_SLOTS}</strong><span>核心 · 衛星快照</span></div>
 <div class="stat"><strong>{payload['max_sector_share_pct']}%</strong><span>最大單一產業占席</span></div>
 </div>
 <div class="note">Regime：{escape(dial.get('detail') or '')}（as of {escape(str(dial.get('as_of') or '—'))}）。
@@ -2250,10 +2253,11 @@ def main() -> int:
 防守 0.25＝correction／跌破 200DMA／≥8。<b>資訊性，不接倉位系統</b>——新倉節奏由人按撥盤自裁。
 形狀敏感度：突破帶/動能重估最敏感（防守時停新倉）、循環轉折次之（防守時只留回踩單）。</div>
 <div class="block"><h2>核心席位（{len(core_seats)}/{CORE_SLOTS}）</h2>{core_tbl}</div>
-<div class="block"><h2>衛星席位（{len(sat_seats_m5)}/{SAT_SLOTS}）</h2>{sat_tbl}</div>
+<div class="block"><h2>衛星席位·M5 快照（{len(sat_seats_m5)}/{SAT_SLOTS}）</h2>{sat_tbl}</div>
 <div class="block"><h2>擂台對戰表</h2>
-<div class="block-sub">軌別配對：核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者（moat 耐久性同級才有資格互換；
-挑戰者資格＝裁決 ∈ {{進場、觀望}} ∩ 三閘全過）。觀望挑戰者勝出＝先觸發它的複審，不是直接換。</div>
+<div class="block-sub">v5 起池內名字的軌別一律是「核心」（見 grp.grp_route() v5 附註：耐久已升級為資格閘本體，
+沒過耐久的名字根本進不了池），故本表不再有「核心向」「衛星向」挑戰者的區分，核心席與衛星快照皆對比同一份
+挑戰者池（形狀僅供資訊）；挑戰者資格＝裁決 ∈ {{進場、觀望}} ∩ 資格全過。觀望挑戰者勝出＝先觸發它的複審，不是直接換。</div>
 {duel_tbl}</div>
 <div class="block"><h2>席位變動帳本</h2>
 <div class="block-sub">append-only——席位組成變動才記一筆；有帳本，換席決策才能被結算（誰換對了、誰換錯了，91 天後對答案）。</div>
@@ -2270,7 +2274,7 @@ def main() -> int:
     ARENA_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     ARENA_HTML.write_text(
         page_embed_shell("席位擂台 · 席位排序", body,
-                         "核心 5＋衛星 5 席位 vs 同形狀挑戰者的每月擂台 — regime 撥盤與集中度警戒"),
+                         "核心 5 席 vs 等待池前 5 檔快照（M5 對照組）vs 同形狀挑戰者的每月擂台 — regime 撥盤與集中度警戒"),
         encoding="utf-8")
     print(f"arena: regime={dial['label']} 警報={sum(1 for d in duels if d['alert'])} "
           f"核心={[r['ticker'] for r in core_seats]} 等待池={len(waiting_pool)}（可買 {len(buyable)}）"

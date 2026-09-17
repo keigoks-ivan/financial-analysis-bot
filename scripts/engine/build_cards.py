@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars  # noqa: E402
-from engine.grp import G_MIN_CAGR, P_LABEL_HTML, R_VETO_FY1, grp_route, grp_score  # noqa: E402
+from engine.grp import EPS_REV_3M_VETO, G_MIN_CAGR, P_LABEL_HTML, R_VETO_FY1, grp_route, grp_score  # noqa: E402
 # v3 席位資格（2026-09-09）：grp_route() 改讀 s["durable_5y"]/s["durable_source"]，
 # 這裡沿用 build_arena 的正規化 helper（dd-screener 權威值 → QGM 供給列原始值 →
 # 本地 QGM 索引 fallback），跟擂台頁同一套判定，見該函式 docstring。
@@ -164,7 +164,7 @@ def _claim_counts(c: dict) -> tuple[int, int, int, str]:
 
 def render_overview(cards: list[dict]) -> str:
     """頁首總覽表——30 秒掃全局的入口：每列一檔卡片，ticker 錨點連到下方展開卡。"""
-    seat_label = {"core": "🎯 核心", "sat": "🛰 衛星"}
+    seat_label = {"core": "🎯 核心", "sat": "🛰 等待池"}
     rows = ""
     for c in cards:
         tk = escape(c["ticker"])
@@ -220,27 +220,35 @@ def render_card(c: dict, *, open_default: bool) -> str:
     if gd:
         g = gd["grp"]
         grp_fail = not g["pass"]
-        g_ok = g["g"] is not None and g["g"] >= G_MIN_CAGR
-        r_val = g["r_fy1"] if g["r_fy1"] is not None else g["r_2y"]
-        r_ok = (not g["veto"]) and ((g["r_fy1"] or 0) > 0 or (g["r_2y"] or 0) > 0)
+        g_min = g.get("g_min", G_MIN_CAGR)
+        g_ok = g["g"] is not None and g["g"] >= g_min
+        rev_used = g.get("rev_used_pct")
+        rev_anchor = g.get("rev_anchor")
+        r_ok = not g["veto"]
         p_ok = g["p_label"] is not None
         def cell(ok, veto=False):
             if veto:
                 return '<span class="tag tag-dn">⛔ 下修否決</span>'
             return '<span class="tag tag-up">✅</span>' if ok else '<span class="tag tag-dn">❌</span>'
         dist = f'（距高 {g["dist_hi"]:+.0f}%）' if g["dist_hi"] is not None else ""
+        anchor_label = {"earnings": "財報後", "calendar_3m": "三月"}.get(rev_anchor, "—")
+        # v5（2026-09-17，見 rule_ledger「v5 席位引擎」列）：上修否決改看財報後錨定上修
+        # （grp["rev_used_pct"]，缺財報錨定退回三個月），R_VETO_FY1（FY+1 單月 ≤−10%）
+        # 只在兩者皆缺值時當 fallback；此表原先誤顯示 r_fy1／r_2y 與舊 −10% 門檻，v5 起改讀
+        # 真正驅動 grp["veto"] 的欄位，避免卡片與 ⛔ 標記對不上號。
         guard_html = f"""<table style="margin-bottom:8px"><thead><tr>
-<th class="left">GRP 守門（席位存在理由 · 週更自動）</th><th>現值</th><th>門檻</th><th>狀態</th><th class="left">破閘動作</th></tr></thead><tbody>
+<th class="left">GRP 守門（席位存在理由 · 每日自動）</th><th>現值</th><th>門檻</th><th>狀態</th><th class="left">破閘動作</th></tr></thead><tbody>
 <tr><td class="left">成長閘 G（FY1→FY3 CAGR）</td><td>{pct(g["g"], 1, False) if g["g"] is not None else "—"}</td>
-<td>≥{G_MIN_CAGR:.0f}%</td><td>{cell(g_ok)}</td><td class="left">跌破 → 複審</td></tr>
-<tr><td class="left">上修閘 R（FY+1 月修／2Y pp）</td>
-<td>{pct(g["r_fy1"]) if g["r_fy1"] is not None else "—"}／{f'{g["r_2y"]:+.1f}pp' if g["r_2y"] is not None else "—"}</td>
-<td>&gt;0（≤{R_VETO_FY1:.0f}% 否決）</td><td>{cell(r_ok, g["veto"])}</td><td class="left">下修 → 減碼複審</td></tr>
+<td>≥{g_min:.0f}%</td><td>{cell(g_ok)}</td><td class="left">跌破 → 複審</td></tr>
+<tr><td class="left">上修閘 R（{anchor_label}上修，缺財報錨定退回三月）</td>
+<td>{pct(rev_used) if rev_used is not None else "—"}</td>
+<td>&gt;{EPS_REV_3M_VETO:.0f}%（≤{EPS_REV_3M_VETO:.0f}% 否決，雙源皆缺才退回 FY+1 單月 ≤{R_VETO_FY1:.0f}%）</td><td>{cell(r_ok, g["veto"])}</td><td class="left">下修 → 減碼複審</td></tr>
 <tr><td class="left">位置閘 P（52 週線＋位置帶）</td>
 <td class="left">{P_LABEL_HTML.get(g["p_label"])}{dist}</td>
 <td>站上 52 週線</td><td>{cell(p_ok)}</td><td class="left">破線 → 複審</td></tr>
-</tbody></table>"""
-        _ = r_val
+</tbody></table>
+<div class="note" style="font-size:11.5px;margin:-4px 0 8px">v5 起另有耐久一致性／融券占流通股比 &gt;10%／DD 迴避／體質拒絕／衰退 ⛔ 四項整體資格排除，
+未逐列展開——任一觸發都會反映在上方「⛔ 三閘落席」總警示。</div>"""
 
     alert = ""
     if grp_fail:
@@ -250,10 +258,10 @@ def render_card(c: dict, *, open_default: bool) -> str:
     elif n_due:
         alert = f'<span class="tag tag-blind">⏰ {n_due} 條到期</span>'
     seat_badge = {"core": '<span class="tag tag-up">🎯 核心席</span>',
-                  "sat": '<span class="tag tag-pool">🛰 衛星席</span>'}.get(
+                  "sat": '<span class="tag tag-pool">🛰 等待池</span>'}.get(
         c.get("_seat"), '<span class="tag tag-blind">板凳</span>')
     is_light = c.get("qual_tier") == "light"
-    tier_badge = '　<span class="tag tag-pool">🪶 快審（衛星限定）</span>' if is_light else ""
+    tier_badge = '　<span class="tag tag-pool">🪶 快審（等待池限定）</span>' if is_light else ""
     src_line = (f'快審卡 {escape(c.get("card_date") or "")}（無完整 DD——核心席需升級 v14 DD）'
                 if is_light else
                 f'DD {escape(c.get("dd_date") or "")}（<a href="{escape(c.get("source_dd") or "#")}#decision">原報告</a>）')
@@ -328,7 +336,7 @@ def main() -> int:
                       f'<span class="cnt">（{len(core_cards)} 檔）</span></h2>'
                       + "".join(render_card(c, open_default=True) for c in core_cards))
     if sat_cards:
-        sections += (f'<h2 class="seat-section">衛星席'
+        sections += (f'<h2 class="seat-section">等待池'
                       f'<span class="cnt">（{len(sat_cards)} 檔）</span></h2>'
                       + "".join(render_card(c, open_default=True) for c in sat_cards))
     if bench_cards:
@@ -339,9 +347,9 @@ def main() -> int:
 
     body = f"""<div class="hero">
 <h1>決策卡 · 判斷層</h1>
-<div class="hero-sub">一席一卡，兩層守門：上層三閘評分（GRP，成長閘／上修閘／位置閘，週更自動結算，
+<div class="hero-sub">一席一卡，兩層守門：上層三閘評分（GRP，成長閘／上修閘／位置閘，每日自動結算，
 破閘自動亮 ⛔）＋下層深層證偽（基本面宣稱，財報期人工結算）。卡片分兩級：完整 DD 抽取卡
-（核心席）vs 🪶 快審卡（衛星席限定，5% 倉）。下表 30 秒掃全局，點 ticker 或卡片展開細節。</div>
+（核心席）vs 🪶 快審卡（等待池限定——v5 衛星軌已取消，無固定倉位上限）。下表 30 秒掃全局，點 ticker 或卡片展開細節。</div>
 <div class="asof">{len(cards)} 張卡 ｜ {n_claims} 條宣稱（❌ 觸發 {n_breach} · ⏰ 到期 {n_due}）｜ 週更結算</div>
 </div>
 {render_overview(cards)}

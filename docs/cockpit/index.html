@@ -514,8 +514,9 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
 
   // ---------- ② 陣容（唯一名單：等寬看板原文 + 欄位對齊表，一行一檔讀完整條鏈） ----------
   // 時機路由（2026-07-11 持有人拍板，登記 knowledge/rule_ledger.md）：
-  // 核心席＝sop-funnel 板機；衛星席＝cyclical-track 位置閘（sop 品質閘系統性排除
-  // 爆發/循環型，衛星在 sop 裡永遠不亮）。低熱名單外的衛星席誠實標「未覆蓋」不猜。
+  // 核心席＝sop-funnel 板機；等待池（v5 前稱衛星席）＝cyclical-track 位置閘（sop 品質閘
+  // 系統性排除爆發/循環型，等待池名字在 sop 裡永遠不亮）。低熱名單外的等待池名字誠實
+  // 標「未覆蓋」不猜。
   // 板機狀態的白話補充：肉眼看板機字串本身即可判讀，機制細節收進 title（手機長按可看）
   var GATE_GLOSS = {
     '🎯 板機亮': '進場訊號今天亮了，規則上今天就是出手日',
@@ -526,40 +527,49 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     '🔥 等回踩': '循環股目前過熱，不追，等回踩',
     '無時機訊號': '這檔是長跑型衛星，兩套時機系統都不看管它——何時進場目前靠人工判斷'
   };
-  // 時機燈 p_label 白話（定義見 scripts/engine/grp.py：breakout＝距 52w 高 ≤5%、pullback＝回檔 8–25% 且趨勢在、
-  // in_trend＝其餘趨勢內、overheated＝26 週漲幅 >+80%、null＝站在 52 週線下或資料缺）——燈號只標示不排序
-  var PLABEL_GLOSS = {'breakout':'突破帶','pullback':'回踩','in_trend':'趨勢內','overheated':'過熱'};
-  var TIMING_DOT = {'breakout':'🟢','pullback':'🟢','in_trend':'🟡','overheated':'🟠'};
-  function timingPill(p_label, r26){
-    var g = PLABEL_GLOSS[p_label] || '線下';
-    var dot = TIMING_DOT[p_label] || '🔴';
-    var r26t = (r26!=null && !isNaN(r26)) ? ('26 週漲幅 '+(r26>=0?'+':'')+fmt(r26,1)+'%') : '26 週漲幅資料缺';
-    return '<span class="imq-badge" title="時機燈只標示不排序——'+esc(r26t)+'">'+dot+' '+esc(g)+'</span>';
+  // 時機燈（v5，2026-09-17 起，見 scripts/engine/grp.py timing_lamp()）：距歷史新高
+  // （還原權息全歷史，ma.dist_ath_pct）＋200 日線收斂成單一燈號＋倉位建議——
+  // 🟢 可進（距新高 ≥−3% 且站上 200 日線）／🟡 半倉（−10%~−3%）／🟠 過熱（半倉，仍在
+  // 綠燈距離內但動能 >150%）／🔴 等板機（距新高 <−10% 或跌破 200 日線）／⚫ 不合格（未站
+  // 上 52 週線）。只標示現在能不能買，不參與排序（排序看上修，見上方選股看板）。
+  var LAMP_DOT = {green:'🟢', yellow:'🟡', hot:'🟠', red:'🔴', out:'⚫'};
+  function timingPill(lamp){
+    lamp = lamp || {};
+    var dot = LAMP_DOT[lamp.code] || '🔴';
+    var label = (lamp.label || '—').replace(/^[^\s]+\s*/, '');   // 去掉 lamp.label 自帶的燈號 emoji，dot 統一另補
+    return '<span class="imq-badge" title="時機燈只標示不排序，不參與排名——'+esc(lamp.why || '資料缺')+'">'+dot+' '+esc(label || '—')+'</span>';
   }
-  // 上修燈：FY+1 單月修正，v2 降為燈號不參與排序（≤−10% 仍是資格否決線，見 grp.py R_VETO_FY1；veto 後不會出現在席位表）
-  function revPill(r){
+  // 上修（財報後錨定，缺值退回三個月）：v5 起是唯一排序鍵，此處以燈號重複顯示同一數字方便
+  // 對照；≤−5% 為資格否決線（雙源皆缺才退回 FY+1 單月 ≤−10% fallback，見 grp.py EPS_REV_3M_VETO）
+  function revPill(g){
+    g = g || {};
+    var r = g.rev_used_pct;
     if(r==null||isNaN(r)) return '<span class="imq-badge">—</span>';
-    var cls = (r>=5) ? 'imq-badge pos' : ((r<=-10) ? 'imq-badge neg' : 'imq-badge');
-    var label = (r>=5) ? ('上修 +'+fmt(r,1)+'%') : ((r<=-10) ? ('否決 '+fmt(r,1)+'%') : ('持平 '+(r>=0?'+':'')+fmt(r,1)+'%'));
-    return '<span class="'+cls+'" title="FY+1 單月 EPS 修正——是燈號不是排序鍵；≤−10% 仍是資格否決線，veto 後不會出現在席位表">'+label+'</span>';
+    var anchor = (g.rev_anchor === 'earnings') ? '財報後' : '三月';
+    var cls = (r>=5) ? 'imq-badge pos' : ((r<=-5) ? 'imq-badge neg' : 'imq-badge');
+    var label = (r>=5) ? ('上修 +'+fmt(r,1)+'%') : ((r<=-5) ? ('否決 '+fmt(r,1)+'%') : ('持平 '+(r>=0?'+':'')+fmt(r,1)+'%'));
+    return '<span class="'+cls+'" title="'+esc(anchor)+'上修——v5 排序鍵；≤−5% 為資格否決線（雙源皆缺才退回 FY+1 單月 ≤−10%），veto 後不會出現在席位表">'+label+'</span>';
   }
   function vCls(v){ return v==='進場'?'v-in':(v==='觀望'?'v-watch':(v==='迴避'?'v-avoid':'')); }
-  // 擁有層分公式白話（見 scripts/engine/grp.py own_score）：min(成長,30) ＋ EY（盈餘殖利率）＋ ROIC≥30 持續 +2 － PEG>2 罰 −5
+  // v4 對照分（own_score_v4，見 scripts/engine/grp.py）：財報後上修／12-1 月動能／成長封頂 30／
+  // 品質（FCF÷淨利與稀釋率）／盈餘殖利率五個排名百分位在合格集合內互相比較後平均——
+  // v5 起僅供逐檔對照 tooltip，不參與排序（真正的 v5 排序鍵是上方「上修%（財報後）」欄）
   function ownTooltip(grp, scoreVal){
     var own = grp.own || {};
     var parts = [];
-    if(own.g_capped!=null) parts.push('min(成長,30)='+fmt(own.g_capped,1));
-    if(own.ey!=null) parts.push('EY='+fmt(own.ey,1));
-    parts.push(own.durable ? 'ROIC≥30 持續 +2' : 'ROIC<30 +0');
-    parts.push(own.peg_penalty ? 'PEG>2 罰 −5' : 'PEG≤2 −0');
-    var eq = (scoreVal!=null && !isNaN(scoreVal)) ? (' ＝ '+fmt(scoreVal,2)) : '';
-    return '擁有層分＝'+parts.join(' + ')+eq;
+    if(own.p_rev!=null) parts.push('上修分位='+fmt(own.p_rev,0));
+    if(own.p_mom!=null) parts.push('動能分位='+fmt(own.p_mom,0));
+    if(own.p_g!=null) parts.push('成長分位='+fmt(own.p_g,0));
+    if(own.p_q!=null) parts.push('品質分位='+fmt(own.p_q,0));
+    if(own.p_ey!=null) parts.push('殖利率分位='+fmt(own.p_ey,0));
+    var eq = (scoreVal!=null && !isNaN(scoreVal)) ? (' ＝ '+fmt(scoreVal,1)) : '';
+    return 'v4 對照分（不參與 v5 排序）＝平均('+(parts.join('、') || '資料不足')+')'+eq;
   }
   function ddCell(s, liveV){
     var tag = s.dd_tag || '待 DD';
     var cls = vCls(s.verdict);
     var drift = (liveV[s.ticker] && s.verdict && liveV[s.ticker] !== s.verdict)
-      ? ' <span style="color:var(--amber)" title="現行 DD 裁決（'+esc(liveV[s.ticker])+'）與週更快照（'+esc(s.verdict)+'）分歧——換席裁決待下次擁有層引擎週更">⚠</span>' : '';
+      ? ' <span style="color:var(--amber)" title="現行 DD 裁決（'+esc(liveV[s.ticker])+'）與快照（'+esc(s.verdict)+'）分歧——DD 僅供顯示標籤，不影響資格與排序">⚠</span>' : '';
     return '<span class="'+cls+'">'+esc(tag)+'</span>'+drift;
   }
   function hystCell(s, newSeat, isSat){
@@ -580,7 +590,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       (S.sop.standby_b||[]).forEach(function(x){ if(x&&x.ticker&&!trig[x.ticker]) trig[x.ticker]='待命 B'; });
       (S.sop.standby_c||[]).forEach(function(x){ if(x&&x.ticker&&!trig[x.ticker]) trig[x.ticker]='待命 C'; });
     }
-    // 衛星席位置閘：cyclical-track 低熱名單
+    // 等待池位置閘：cyclical-track 低熱名單
     var cycGate = {};
     if(S.cyc && Array.isArray(S.cyc.low_heat)){
       S.cyc.low_heat.forEach(function(x){ if(x&&x.ticker) cycGate[x.ticker] = x.hot ? '🔥 等回踩' : '低熱 · 可執行'; });
@@ -630,8 +640,8 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
         '<td class="roster-tk">'+tkHtml+'</td>'+
         scoreCell +
         numTd(grp.g,1) + numTd(own.ey,1) + numTd(s.roic,1) + numTd(s.fcf,1) + numTd(s.peg,2) +
-        '<td>'+revPill(grp.r_fy1)+'</td>'+
-        '<td>'+timingPill(grp.p_label, s.r26)+'</td>'+
+        '<td>'+revPill(grp)+'</td>'+
+        '<td>'+timingPill(s.lamp)+'</td>'+
         '<td>'+ddCell(s, liveV)+'</td>'+
         '<td>'+hystCell(s, newSeat, isSat)+'</td>'+
         '<td title="'+esc(gloss)+'">'+esc(gate)+'</td>'+
@@ -650,11 +660,11 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     var bench = (S.arena.core_bench||[]).map(function(b){return b.ticker;}).filter(Boolean);
     var asof = S.arena.run_timestamp ? String(S.arena.run_timestamp).slice(0,10) : '';
     var thead = '<tr><th>席</th><th>Ticker</th>'+
-      '<th class="num" title="'+esc('擁有層分＝min(成長,30) ＋ EY（盈餘殖利率）＋ ROIC≥30 持續 +2 － PEG>2 罰 −5；逐檔算式見該列 hover')+'">擁有層分</th>'+
+      '<th class="num" title="'+esc('own_score_v4 五百分位對照分——僅供逐檔對照，v5 不用於排序；真正的排序鍵是選股看板的「上修%（財報後）」欄。逐檔算式見該列 hover')+'">v4 對照分</th>'+
       '<th class="num">成長%</th><th class="num">EY%</th><th class="num">ROIC%</th><th class="num">FCF%</th><th class="num">PEG</th>'+
-      '<th title="'+esc('FY+1 單月 EPS 修正——是燈號不是排序鍵；≤−10% 仍是資格否決線，veto 後不會出現在席位表')+'">上修燈</th>'+
-      '<th title="'+esc('位置燈只標示不排序，定義見 scripts/engine/grp.py')+'">時機燈</th>'+
-      '<th>DD</th><th>遲滯</th><th>板機</th></tr>';
+      '<th title="'+esc('財報後上修（缺值退回三個月）——v5 排序鍵；≤−5% 為資格否決線（雙源皆缺才退回 FY+1 單月 ≤−10%），veto 後不會出現在席位表')+'">上修</th>'+
+      '<th title="'+esc('距歷史新高（還原權息全歷史）＋200 日線收斂成單一燈號，只標示現在能不能買、不參與排序，定義見 scripts/engine/grp.py timing_lamp()')+'">時機燈</th>'+
+      '<th>DD</th><th>異動</th><th>板機</th></tr>';
     // 選股看板（HTML TABLE 版）已含席位＋燈號＋DD/護城河，是陣容區首個元素；
     // 舊 13 欄明細表收進 <details>（板機欄是它獨有的資訊，故保留，預設收合——
     // 看板 fetch 失敗時無看板卡，明細表改預設展開，陣容不至於整塊開天窗）
@@ -676,7 +686,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       (bench.length?('板凳前排：'+esc(bench.join('、'))+' · '):'')+
       (asof?('席位歸屬 as-of '+esc(asof)+'（擁有層引擎週更）· '):'')+
       (ledgerNote?(ledgerNote+' · '):'')+
-      'DD 只做 veto／角色標籤，不參與排序；上修為燈號；等寬版看 <a href="/engine/board.txt">/engine/board.txt</a>'+
+      'DD 只做 veto／角色標籤，不參與排序；上修＝v5 排序鍵，時機燈只標示能不能買；等寬版看 <a href="/engine/board.txt">/engine/board.txt</a>'+
       '</div></div></details>';
     refreshLampCells(mount);
     if(window.IMQBadge) window.IMQBadge.mountMatrix('qt-matrix-mount', {universe:'research'});

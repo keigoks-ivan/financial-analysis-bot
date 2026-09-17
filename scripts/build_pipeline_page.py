@@ -36,6 +36,9 @@ from site_nav import DD_SCREENER_SUBNAV, build_subnav, full_nav_block  # noqa: E
 # 排序主幹＝擁有層分 own_score（v2，2026-09-02 持有人拍板「照推薦執行」；
 # notes/site-internal/root/_picks_first_principles_review_20260902.md Part D）——
 # 取代舊 GRP R 上修排序；quality_gate() 僅供本頁 display-only 標記，不進資格閘判定。
+# 2026-09-17 附註：/engine/ 的 GRP 決策引擎已改版至 v5（品質派資格 × 財報後上修排序 ×
+# 歷史新高板機，own_score 在該側降為 v4 對照 tooltip、不再排序）——本頁核心軌仍沿用自己
+# 的 own_score（v2）獨立排序，兩邊不再「同源」，見下方文案。
 from engine.grp import grp_score, own_score, quality_gate  # noqa: E402
 
 # ── paths ─────────────────────────────────────────────────────────────────────
@@ -46,7 +49,7 @@ CYCLICAL_JSON = DDS / "cyclical-track.json"
 SOP_LATEST = DDS / "sop-funnel" / "latest.json"
 SOP_LEDGER = DDS / "sop-funnel" / "ledger.json"
 PRE_ID_SCAN = DDS / "pre_id_scan.json"
-ARENA_JSON = ROOT / "docs" / "engine" / "arena.json"   # own_board[]：擁有層分單一 source（v2）
+ARENA_JSON = ROOT / "docs" / "engine" / "arena.json"   # own_board[].score：own_score_v4 百分位（2026-09-17 起 /engine/ 本身已改用上修排序，此值僅供「v4 對照」，見 build_arena.py own_score_v4()）
 WEEKLY_CACHE_DIR = ROOT / "data" / "weekly_cache"
 # 2026-07-10 選股主控台整併：pipeline 改輸出 nav-less 片段，供 /cockpit/#pipeline
 # 分頁 iframe 嵌入；/dd-screener/pipeline.html 已改為 redirect stub（見 site_nav SKIP_FILES）。
@@ -214,10 +217,13 @@ def _certainty(s: dict) -> float:
 
 
 # ── 擁有層分（own_score，v2 排序主幹）───────────────────────────────────────
-# 2026-09-02 持有人拍板「照推薦執行」：擁有層與時機層分離，Pipeline 的席位排序改讀
-# own_score，與 /engine/ 決策引擎席位看板同源（優先讀 docs/engine/arena.json own_board
-# 單一 source；缺 arena 列才 fallback 現算 engine.grp.own_score()）。DD 統一裁決在此
+# 2026-09-02 持有人拍板「照推薦執行」：擁有層與時機層分離，Pipeline 的核心軌排序改讀
+# own_score（優先讀 docs/engine/arena.json own_board 的 own_score_v4 百分位對照分；
+# 缺 arena 列才 fallback 現算 engine.grp.own_score() v2 公式）。DD 統一裁決在此
 # 只做否決／角色標籤（walked upstream by 資格閘 + is_core_role），不是排序鍵本身。
+# 2026-09-17 附註：/engine/ 本身已改版 v5，own_board 這個 score 欄位在該側也降為
+# 「v4 對照」，不再是 /engine/ 的排序依據——本頁讀它純粹是沿用既有排序公式，不再是
+# 「與席位看板同源」（兩邊排序鍵已分家，見 build_pipeline_page.py 檔頭附註）。
 _ARENA_OWN_CACHE: dict = {}   # ticker -> own_board row，_load_arena_own() 於 build() 填一次
 
 
@@ -227,8 +233,9 @@ def _load_arena_own() -> dict:
 
 
 def _own_info(s: dict) -> dict:
-    """擁有層資訊：{score, p_label}。優先讀 arena.json own_board（與席位看板同源）；
-    缺列（未進 own_board 池，如非 DD-pool 名字）才 fallback 現算 own_score()/grp_score()。"""
+    """擁有層資訊：{score, p_label}。優先讀 arena.json own_board 的 own_score_v4 百分位
+    （v4 對照分，非 /engine/ 現行排序依據）；缺列（未進 own_board 池，如非 DD-pool 名字）
+    才 fallback 現算 own_score()/grp_score()（v2 公式，與前者尺度不同，混用時請注意）。"""
     row = _ARENA_OWN_CACHE.get(s["ticker"])
     if row is not None:
         return {"score": row.get("score") or 0.0, "p_label": row.get("p_label"), "source": "arena"}
@@ -419,13 +426,14 @@ def render_core(core_sorted: list) -> str:
   <h3>核心軌 <span class="cnt">席位 {len(sleeve)}/{CORE_SLOTS}</span></h3>
   <div class="track-desc">
     <b>方式甲 · 結構長抱線的核心分軌。</b>軌別＝<b>DD 裁決＝進場 且 角色含「核心持倉」</b>；<b>席位硬上限 {CORE_SLOTS} 檔</b>（章程 core ≤5）。
-    選席＝<b>角色優先</b>：無條件核心持倉先佔位，餘席依 <b>擁有層分</b>（own_score＝min(成長，30)＋FY1 盈餘殖利率＋持續期加分－倍數風險，2026-09-02 v2 拍板的排序主幹，與 <a href="/engine/">GRP 決策引擎</a> 席位看板同源）補足；超出落板凳。
+    選席＝<b>角色優先</b>：無條件核心持倉先佔位，餘席依 <b>擁有層分</b>（own_score＝min(成長，30)＋FY1 盈餘殖利率＋持續期加分－倍數風險，2026-09-02 v2 拍板的排序主幹）補足；超出落板凳。
+    <b>本頁核心軌自成一格</b>：選席以 DD 裁決＋角色為準，own_score 只排序同樣過關者——與 <a href="/engine/">GRP 決策引擎</a> 目前的 v5 上修排序（品質派資格 × 財報後上修排序）分屬不同排序鍵，不是同一份榜。
     <b>DD 統一裁決在此只做否決／角色標籤，不是排序鍵</b>——資格仍由上方資格閘與角色判定，own_score 只回答「同樣過關者排第幾」。
     <b>EV5y × 確定性維持參考子訊號</b>（僅列示、不主導排序）；EV5y 取 <code>live_ev5y_pct</code> 優先、缺則 <code>ev5y_pct</code>。單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
   </div>
   <div class="seg-h seg-in">核心席位（最終 {CORE_SLOTS}）· {len(sleeve)} 檔</div>
   {_core_table(sleeve, "目前無可執行核心進場票。")}
-  <div class="track-note">排序鍵＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC ≥30 +2、PEG >2 −5），與席位看板同源；上修幅度降為燈號。</div>
+  <div class="track-note">排序鍵＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC ≥30 +2、PEG >2 −5），本頁獨立排序（與 /engine/ 目前 v5 的上修排序分屬不同鍵）；上修幅度降為燈號。</div>
   {noncore_note}
   <div class="seg-h seg-watch">核心板凳（進場核心·超出席位，等席位開遞補）· {len(bench_core)} 檔</div>
   {_core_table(bench_core, "無溢出板凳名字。")}
@@ -758,7 +766,7 @@ def render_leaderboard(univ: list, artifacts: list, n_total: int) -> str:
     return f"""<section class="block" id="leaderboard">
   <h2 class="block-h"><span class="step">6</span> 全宇宙潛力榜 · 補 DD 導航</h2>
   <div class="block-sub">
-    把 <b>EV5y × 確定性</b> 套到全宇宙 {n_total} 檔——<b>這是研究補 DD 優先序，非席位排序</b>（席位排序主幹＝<b>擁有層分</b>〔own_score，2026-09-02 v2 拍板，與 <a href="/engine/">GRP 決策引擎</a> 席位看板同源；DD 統一裁決在席位排序只做否決／角色標籤，不是資格本身〕，EV5y 在此僅作補 DD 導航的參考子訊號）。
+    把 <b>EV5y × 確定性</b> 套到全宇宙 {n_total} 檔——<b>這是研究補 DD 優先序，非席位排序</b>（本頁核心軌排序主幹＝<b>擁有層分</b>〔own_score，2026-09-02 v2 拍板；與 <a href="/engine/">GRP 決策引擎</a> 目前 v5 的上修排序分屬不同鍵，DD 統一裁決在此只做否決／角色標籤，不是資格本身〕，EV5y 在此僅作補 DD 導航的參考子訊號）。
     <b>確定性</b>（moat+quality/20）全宇宙皆有；<b>EV5y</b> 出處分兩級：
     <span class="prov prov-rig">🟢 §11.5</span> 機率加權情境（嚴謹、有反偏差防線）vs
     <span class="prov prov-heur">🟡 heur</span> 啟發式估計（僅方向性）。
@@ -1098,7 +1106,7 @@ body{{background:transparent}}</style>
       <b>發現 → 資格閘 → 三軌射擊名單 → 板機 → 監控 → 回看鏡</b>。所有數字來自既有 JSON，每週隨基本面刷新自動更新。
       本頁只呈現<b>研究層</b>，實際持倉與權重不上站。
       <b>分工（兩條線＋一個板機＋一個對照）</b>：本頁是<b>方式甲（結構長抱線）</b>與<b>方式乙（循環時機線）</b>共用的<b>流程與板機</b>視圖——核心／衛星結構軌＝甲線，衛星循環軌＝乙線，sop-funnel＝兩線共用板機。
-      <b>席位排序主幹＝擁有層分</b>（own_score，2026-09-02 v2 拍板，與 <a href="/engine/">GRP 決策引擎</a> 席位看板同源；EV5y×確定性維持參考子訊號，DD 統一裁決只做否決／角色標籤非資格本身），對外成品榜見 <a href="/picks/">精選清單</a>。
+      <b>本頁核心軌排序主幹＝擁有層分</b>（own_score，2026-09-02 v2 拍板；與 <a href="/engine/">GRP 決策引擎</a> 目前的 v5 上修排序分屬不同鍵，非同一份榜——EV5y×確定性維持參考子訊號，DD 統一裁決只做否決／角色標籤非資格本身），對外成品榜見 <a href="/picks/">精選清單</a>。
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><strong>{_fmt_stamp(run_ts)}</strong>最後更新（台北）</div>

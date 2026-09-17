@@ -58,7 +58,7 @@ TRACK_LABEL = {"core": "核心", "sat": "等待池"}
 P_LABEL_TXT = {"breakout": "突破帶", "pullback": "回踩", "in_trend": "趨勢內",
                "overheated": "過熱"}
 P_LABEL_DOT = {"breakout": "🟢", "pullback": "🟢", "in_trend": "🟡", "overheated": "🟠"}
-LEDGER_SOURCES = [("grp-seat", "三閘評分（GRP）席位"), ("own-board", "擁有層全榜"),
+LEDGER_SOURCES = [("grp-seat", "GRP 席位（上修排序）"), ("own-board", "擁有層全榜"),
                   ("picks-baofa", "爆發候選"), ("picks-late", "爆發晚段候選"),
                   ("mech-nodd", "無 DD 機械過閘"), ("sop-funnel", "機械板機（狀態機）")]
 
@@ -149,6 +149,9 @@ def seat_threshold(arena: dict, track: str) -> tuple[float | None, str | None]:
 
 
 def exit_reason(ticker: str, track: str, arena: dict) -> str:
+    """v5（2026-09-17）：DD 裁決只剩「迴避」會否決資格，「觀望」不影響資格與排序——
+    只有 verdict==迴避 才可歸因於 DD；其餘非核心原因一律是排序（上修）或其他資格閘落敗，
+    見 knowledge/rule_ledger.md「v5 席位引擎」列／grp.py grp_score()。"""
     pool = build_pool(arena)
     row = pool.get(ticker)
     if row is not None:
@@ -157,23 +160,23 @@ def exit_reason(ticker: str, track: str, arena: dict) -> str:
             why0 = (grp.get("why") or [None])[0]
             return humanize_why(why0)
         verdict = row.get("verdict")
-        if verdict and verdict != "進場":
-            return f"DD 裁決轉{verdict}，失去席位資格"
-        # grp.pass=true 且 verdict=進場，但未坐席 → 分數被擠下
+        if verdict == "迴避":
+            return "DD 裁決轉迴避，觸發否決失去資格"
+        # grp.pass=true 且非迴避（含觀望／進場／無裁決），但未坐席 → 分數被擠下
         thresh, thresh_ticker = seat_threshold(arena, track)
         score = row.get("score")
         if thresh is not None and score is not None:
             extra = f"（現末席 {thresh_ticker}）" if thresh_ticker else ""
-            return f"分數被擠下——現 {score:.2f} 分，末席門檻 {thresh:.2f} 分{extra}"
+            return f"上修排序被擠下——現 v4 對照分 {score:.2f}，末席 {thresh:.2f}{extra}"
         return "機械層未留下具體原因"
     # 本週 arena.json 全站找不到 → 查 dd-screener latest.json 的裁決
     verdict = dd_screener_verdict(ticker)
     if verdict is None:
         return "跌出資格池（本週雷達／dd-screener 無此檔合格紀錄）"
-    if verdict != "進場":
-        return f"DD 裁決轉{verdict}，失去席位資格"
-    return ("機械層未留下具體原因（DD 裁決仍為進場，但明確名次未收錄於本週擂台"
-            "候選前 15 名內，機械層截斷）")
+    if verdict == "迴避":
+        return "DD 裁決轉迴避，觸發否決失去資格"
+    return ("機械層未留下具體原因（DD 裁決非迴避、不構成否決，但明確名次未收錄於本週"
+            "候選集內，機械層截斷）")
 
 
 # ── 擁有層四值：core_seats/sat_seats/core_bench/challengers_top 巢狀 grp，
@@ -196,16 +199,21 @@ def timing_txt(p_label) -> str:
 
 # ── 換入 / 全陣容 入選原因 ─────────────────────────────────────────────
 def entry_reason(row: dict, seat_no: int) -> str:
+    """v5（2026-09-17）：核心席不再要求 DD 裁決＝進場（DD 只做迴避否決／角色標籤），
+    上修否決改看財報後錨定（缺值退回三個月），故改讀 grp['rev_used_pct']／['rev_anchor']
+    取代舊 r_fy1；排序也改為上修單一變數，score 欄改標「v4 對照分」（own_score_v4，非本輪
+    實際排序依據），見 knowledge/rule_ledger.md「v5 席位引擎」列。"""
     ol = own_layer(row)
     g_txt = f"{ol['g']:.1f}%" if isinstance(ol['g'], (int, float)) else "—"
     grp = row.get("grp") or {}
-    r = grp.get("r_fy1")
-    r_txt = f"{r:+.1f}%" if isinstance(r, (int, float)) else "—"
+    rev = grp.get("rev_used_pct")
+    rev_txt = f"{rev:+.1f}%" if isinstance(rev, (int, float)) else "—"
+    anchor_txt = "財報後" if grp.get("rev_anchor") == "earnings" else "三月"
     p_label = P_LABEL_TXT.get(ol["p_label"], "52 週線下或缺")
     score_txt = f"{ol['score']:.2f}" if isinstance(ol['score'], (int, float)) else "—"
-    return (f"DD 裁決進場，{row.get('route_why') or '護城河資料缺'}。"
-            f"三閘：成長 {g_txt}／預估上修 {r_txt}／位置 {p_label}。"
-            f"本週第 {seat_no} 名，分數 {score_txt}。")
+    return (f"{row.get('route_why') or '護城河資料缺'}。"
+            f"資格：成長 {g_txt}／{anchor_txt}上修 {rev_txt}／位置 {p_label}。"
+            f"本輪核心第 {seat_no} 名（依上修排序；v4 對照分 {score_txt}）。")
 
 
 # ── 前後週差異 ──────────────────────────────────────────────────────────
@@ -361,8 +369,8 @@ def render_seat_table(cur_rows: list[dict], vacant_n: int, track_label: str,
                        prev_tickers: list[str], out_tickers: list[str],
                        degrade: bool, arena: dict, track: str) -> str:
     # 窄螢幕（375px）友善：5 欄，數字/DD/遲滯疊行顯示，避免橫向溢出。
-    headers = [("Ticker", "left"), ("擁有層分", "right"), ("時機燈", "left"),
-               ("DD 標籤／遲滯狀態", "left"), ("與上週對照", "left")]
+    headers = [("Ticker", "left"), ("v4 對照分", "right"), ("時機燈", "left"),
+               ("DD 標籤", "left"), ("與上週對照", "left")]
     prev_rank = {t: i + 1 for i, t in enumerate(prev_tickers)}
     rows = []
     for i, row in enumerate(cur_rows, 1):
@@ -536,9 +544,9 @@ def main() -> int:
         section_changes = "".join(parts)
     section_changes_full = section_header("SEAT CHANGES", "換席原因") + section_changes
 
-    # ── §CHALLENGERS（窄螢幕友善：4 欄，DD 標籤／遲滯狀態疊行）──
-    chal_headers = [("Ticker", "left"), ("擁有層分", "right"), ("三閘通過", "left"),
-                    ("DD 標籤／遲滯狀態", "left")]
+    # ── §CHALLENGERS（窄螢幕友善：4 欄，DD 標籤疊行）──
+    chal_headers = [("Ticker", "left"), ("v4 對照分", "right"), ("資格通過", "left"),
+                    ("DD 標籤", "left")]
     chal_rows = []
     for i, row in enumerate((arena.get("challengers_top") or [])[:5], 1):
         ol = own_layer(row)
@@ -557,9 +565,9 @@ def main() -> int:
 
     section_challengers += (f'<div style="font-size:13px;color:{TEXT_GRAY};margin:4px 0 8px;">'
                              f'「無 DD 而機械過閘」＝擁有層全榜中不是來自 DD 資料池、'
-                             f'但仍通過三閘資格的股票：</div>')
+                             f'但仍通過資格閘的股票：</div>')
     if mech_nodd:
-        mech_headers = [("Ticker", "left"), ("擁有層分", "right"), ("成長（%）", "right"),
+        mech_headers = [("Ticker", "left"), ("v4 對照分", "right"), ("成長（%）", "right"),
                         ("殖利率（%）", "right")]
         mech_rows = [[f"<strong>{escape(r['ticker'])}</strong>", fmt2(r.get('score')),
                       fmt1(r.get('g')), fmt1(r.get('ey'))] for r in mech_nodd[:8]]
