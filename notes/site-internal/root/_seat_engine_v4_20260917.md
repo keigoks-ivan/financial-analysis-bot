@@ -213,3 +213,64 @@ DD 對照／候選佇列維持上次 `--ledger` 跑次內容不變。任何輸�
 （`.T`/`.TW` 等）的 `get_earnings_dates()` 覆蓋率未逐檔驗證——目前席位引擎母體
 本就排除 `.TW`（2026-09-02 拍板），實際受影響面小；財報日快取的 3 天 TTL 是沿用
 `build_flowmap.py` 7 天 TTL 縮短的估計值，未做「多久算太舊」的專門校準。
+
+## 全母體看板欄位對齊（2026-09-17）
+
+**問題**：`_board_body.html`「全母體看板（擁有層排序）」與「目前席位」兩張表過去是
+兩套獨立欄位（全母體表＝#／成長%／EY%／ROIC%／FCF%／PEG／上修燈／位置／階段／席／
+DD／護城河／註記；席位表＝席／代號／排名分／財報後上修%／下次財報／12M 動能%／
+耐久／時機／倉位／DD／備註），同一檔 JBL/TSM 出現在兩表時要切兩套心智模型才看得出
+是同一批數字，且全母體表的「上修燈」「時機（位置）」不是席位表用來排序/否決的
+`own_score`／財報後上修欄位，容易讓人誤讀成兩套判斷。
+
+**改法**：全母體表改用與席位表逐字相同的 10 個核心欄（代號…備註），渲染邏輯抽成
+共用函式（`_flat_view()` 把巢狀 `row_dict()` 列攤平成單一 schema、`_row_cells()`／
+`_seat_remark()`／`_dd_pill()` 吃這個 schema 產生共用 `<td>`；`_seat_tr()` 與新
+`_board_tr()` 只差第一欄與是否插「席」欄，不是兩份平行邏輯）。移除的成長%／EY%／
+ROIC%／FCF%／PEG 摺進「排名分」tooltip 的原始值列（`_row_cells()` 的 `rank_title`）；
+位置／階段摺進「時機」pill 的 tooltip（`lamp_title`，沿用席位表既有作法）；護城河
+摺進「DD」pill 的 tooltip（`_dd_pill()` 新增 `moat` 參數）。全母體表保留「#」（排序
+名次，score 降冪不變）並新增「席」欄（目前坐哪一席，C1-C5/S1-S5，只標核心/衛星、
+候補不重覆標記——候補身分本來就能從排名位置判讀）。board.txt 的 ASCII 全母體表
+（`render_board_text()` 主迴圈）同步改用與「目前席位」表同一套 ASCII 欄
+（rank/rev/nextE/mom12/dur/lamp/act/seat/dd/note，唯一 source 是新函式
+`_own_board_ascii_hdr()`／`_own_board_ascii_row()`，避免像 2026-09-08 那次一樣
+表頭字串各寫一份而漂移）；成長/EY/ROIC/FCF/PEG/上修燈/位置/階段/護城河等舊欄不再
+另闢 ASCII 欄（純文字沒有 hover，這點取捨與席位表既有 ASCII 表一致）。表頭上方
+legend（HTML「怎麼讀這張表」／board.txt「欄位說明」行）改寫成一份、明講下方全母體表
+共用同一套定義，不重複列一份。
+
+**`--lamp-only` 隨之擴大範圍**：`arena.json` 的 `own_board[]` 本來就是 `_flat_view()`
+輸出的同一份 schema（本次只加了 5 個純附加欄位：`mom`／`durable_roic_5y_avg_pct`／
+`durable_qgm_pct`／`base_effect_detail`／`cycle_guard_detail`／`role`／
+`dd_age_days`，既有消費端 `build_pipeline_page.py`／`generate_list_forecasts.py`／
+`build_weekly_mail.py`／`docs/assets/imq-badge.js` 讀的既有欄位一個沒動），所以
+`run_lamp_only()` 直接對 `own_board[]` 逐列呼叫新函式 `_refresh_flat_view_timing()`
+（與席位/候補用的 `_refresh_row_timing()` 共用同一個核心 `_fresh_timing_bundle()`，
+不重複發明公式），只動 `p_label`／`overheated`／`mom`／`lamp`／`action`，
+`board.txt`／`_board_body.html` 的全母體表本體用 `_patch_main_table_in_text()`／
+`_patch_main_table_in_html()` 原地替換（與既有 `_patch_seat_section_in_*()` 同一種
+「找 marker、換中間、頭尾原樣保留」手法）。`own_board` 缺（舊 schema 產物、或
+`arena.json` 本身沒有這個 key）時優雅退回：只刷新「目前席位」區塊，全母體表維持
+上次 `--ledger` 內容不動，不算錯誤、不印 warning。
+
+**驗證**：`python3.12 scripts/engine/build_arena.py`（無 `--ledger`）後
+`--lamp-only`，parse `_board_body.html`：兩表逐列 cell 數與各自表頭 cell 數一致
+（seat 11／board 12，`board.txt` 兩張 ASCII 表欄位對齊，見下段落差說明）；JBL
+（C1，核心席同時排名 #2）、TSM（B1 候補同時排名 #11）兩表排名分/財報後上修/時機
+逐位元組相同，MSFT（只在全母體表，#31，未坐席）正常顯示、席欄為「—」。單元測試
+擴充 `scripts/tests/test_arena_lamp_only.py`：`_refresh_flat_view_timing()` 三個
+案例（一般刷新／翻至 out／翻至 hot，鏡射既有 `_refresh_row_timing()` 測試）＋
+`run_lamp_only()` 兩個端到端案例（`own_board` 存在時全母體表本體被換新、DD 對照
+段落逐字不動；`own_board` 缺時全母體表逐字保留、僅席位區塊刷新），加上既有
+`own_board == payload["own_board"]` 全等斷言改寫成「score 不變＋時機欄位已更新」
+的具體斷言（該全等斷言本身就是本次要打破的舊行為，不是誤傷）。
+
+**已知、刻意的落差（非缺陷）**：全母體表比席位表多一欄「席」（12 欄 vs 11
+欄）——席位表的第一欄本身就是席次代碼（C1/S1/B1），全母體表的第一欄是全域排序
+名次（#），兩者語意不同、不能合併成一欄，所以「兩表欄位數完全相同」這件事字面上
+不成立；但代號…備註這 10 個共用欄（表頭文字與每列渲染邏輯）在兩表逐字相同，
+同一檔出現在兩表時數字保證一致，達成本次要解決的「兩表可以直接對比」這個實質
+目的。全母體表「席」欄只標「目前坐哪一核心/衛星席」，不幫候補標 B 碼（候補的
+身分已經隱含在其排名位置本身，加了反而是重複資訊）。「缺三年成長預估」候選佇列表
+與「DD 進場 vs 機械資格」表本次未動欄位（依指示維持原樣）。
