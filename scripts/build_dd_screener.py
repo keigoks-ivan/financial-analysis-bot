@@ -178,6 +178,12 @@ FUNNEL_REVISION_NO_BASELINE = 0.50        # 「新」chip / 無 baseline → 中
 # Hard veto / cap（不進加權公式，直接處置）。
 FUNNEL_MOAT_DOWN_CAP = 0.50   # moat trend ↓ 且非四條件全過 → FunnelRank cap
 
+# 2026-09-17（owner 拍板）：體質五項 veto（compute_fundamental_gates 的
+# quality_veto_level）與衰退訊號（decline_signal_light）併入 FunnelRank —— 見
+# compute_funnel_rank() docstring「四道處置」。
+FUNNEL_QUALITY_REJECT_CAP = 0.30      # quality_veto_level == "拒絕" → cap
+FUNNEL_QUALITY_DOWNGRADE_CAP = 0.60   # quality_veto_level == "降一級" → cap
+
 
 def compute_quality_gate(quality: dict) -> tuple[float, bool]:
     """QualityGate (0–1) with forgivable-fail logic + partial-data scaling.
@@ -284,16 +290,29 @@ def compute_funnel_rank(
     rev_fy1,
     rev_fy2,
     rev_fy3,
+    quality_veto_level: str | None = None,
+    decline_signal_light: str | None = None,
 ) -> dict:
     """Compose FunnelRank (0–1) from the three fundamental sub-scores + vetoes.
 
-    Two hard processes outside the weighted formula:
+    Four processes outside the weighted formula (max-severity wins — a hard 0
+    always stays 0 regardless of what the soft caps below would have computed):
       1. FY1/FY2/FY3 三欄全部下修 → FunnelRank 強制歸 0（領先指標壓過落後的品質分），
          該列沉底 + veto_all_downgrade=True（FE 顯示 ⛔）。三欄須皆有資料且皆下修。
       2. moat trend ↓ 且非四條件全過（pass_count < len(SCORED_CRITERIA)）→ FunnelRank cap 0.50。
+      3. （2026-09-17 owner 拍板）decline_signal_light == "⛔"（compute_fundamental_gates
+         的衰退訊號 6 項機械指標命中 ≥5 項）→ FunnelRank 同樣強制歸 0，
+         veto_decline_signal=True——衰退訊號跟 FY 下修一樣屬領先指標，一併壓過落後的
+         品質分。
+      4. （2026-09-17 owner 拍板）quality_veto_level（compute_fundamental_gates 的
+         體質五項 veto）="拒絕" → cap 0.30；="降一級" → cap 0.60，
+         funnel_cap_quality=True + funnel_cap_quality_level 記錄命中的級別。
+         但當 rev_fy1/rev_fy2/rev_fy3 三欄皆有資料且皆 ≥ +0.5%（FUNNEL_REVISION_THRESHOLD，
+         全部上修）時，此封頂不生效（quality_cap_overridden_by_revision=True）——
+         上修同樣是領先指標，壓過落後的體質評等。
 
     Returns a dict of all funnel fields (rounded to 4dp so the FE can re-derive
-    the weighted sum within < 0.001 for non-veto rows).
+    the weighted sum within < 0.001 for non-veto, non-capped rows).
     """
     quality_gate, q_partial = compute_quality_gate(quality)
     moat_adj, moat_missing = compute_moat_score_adj(moat_score, moat_trend)
@@ -315,16 +334,46 @@ def compute_funnel_rank(
         and rev_fy2 <= -FUNNEL_REVISION_THRESHOLD
         and rev_fy3 <= -FUNNEL_REVISION_THRESHOLD
     )
+    # Veto 3 (new): decline-signal light at ⛔ (≥5 of 6 mechanical hits).
+    veto_decline_signal = decline_signal_light == "⛔"
+
+    # Override (c): leading revisions (all three FY, each ≥ +0.5%) override the
+    # lagging quality-cap in (b) — same FX-normalized inputs as veto 1 above.
+    revisions_all_up = (
+        rev_fy1 is not None and rev_fy2 is not None and rev_fy3 is not None
+        and rev_fy1 >= FUNNEL_REVISION_THRESHOLD
+        and rev_fy2 >= FUNNEL_REVISION_THRESHOLD
+        and rev_fy3 >= FUNNEL_REVISION_THRESHOLD
+    )
+    quality_cap_overridden_by_revision = (
+        quality_veto_level in ("拒絕", "降一級") and revisions_all_up
+    )
+
     cap_moat_down = False
-    if all_down:
+    funnel_cap_quality = False
+    funnel_cap_quality_level = None
+    if all_down or veto_decline_signal:
         funnel = 0.0
-    elif moat_trend == "↓" and pass_count < len(SCORED_CRITERIA):
-        # Veto 2: weakening moat WITHOUT a clean full pass → cap.
-        # 2026-07-03: max pass_count 由 5→4（D/E 退出計分）。原條件硬編 `<= 4`
-        # ＝「非 5/5」；現改 `< len(SCORED_CRITERIA)`（＝「非 4/4」）以維持相同語義
-        # ——四條件全過的 ↓-trend 名字不被 cap，未全過的才 cap。
-        cap_moat_down = funnel > FUNNEL_MOAT_DOWN_CAP
-        funnel = min(funnel, FUNNEL_MOAT_DOWN_CAP)
+    else:
+        if moat_trend == "↓" and pass_count < len(SCORED_CRITERIA):
+            # Cap 2: weakening moat WITHOUT a clean full pass → cap.
+            # 2026-07-03: max pass_count 由 5→4（D/E 退出計分）。原條件硬編 `<= 4`
+            # ＝「非 5/5」；現改 `< len(SCORED_CRITERIA)`（＝「非 4/4」）以維持相同語義
+            # ——四條件全過的 ↓-trend 名字不被 cap，未全過的才 cap。
+            cap_moat_down = funnel > FUNNEL_MOAT_DOWN_CAP
+            funnel = min(funnel, FUNNEL_MOAT_DOWN_CAP)
+
+        if not quality_cap_overridden_by_revision:
+            cap_value = None
+            if quality_veto_level == "拒絕":
+                cap_value = FUNNEL_QUALITY_REJECT_CAP
+            elif quality_veto_level == "降一級":
+                cap_value = FUNNEL_QUALITY_DOWNGRADE_CAP
+            if cap_value is not None:
+                funnel_cap_quality = funnel > cap_value
+                funnel = min(funnel, cap_value)
+                if funnel_cap_quality:
+                    funnel_cap_quality_level = quality_veto_level
 
     return {
         "funnel_rank": round(funnel, 4),
@@ -333,6 +382,10 @@ def compute_funnel_rank(
         "revision_score": revision_score,
         "veto_all_downgrade": all_down,
         "funnel_cap_moat_down": cap_moat_down,
+        "veto_decline_signal": veto_decline_signal,
+        "funnel_cap_quality": funnel_cap_quality,
+        "funnel_cap_quality_level": funnel_cap_quality_level,
+        "quality_cap_overridden_by_revision": quality_cap_overridden_by_revision,
         "quality_gate_partial": q_partial,
         "moat_no_data": moat_missing,
         "revision_no_baseline": no_baseline,
@@ -2479,6 +2532,8 @@ def enrich_ticker(
     # 用 per-FY revision %（vs 上一份 snapshot）的 FY1/FY2/FY3 三欄合成 RevisionScore;
     # quality 已含 Excel-overridden eps2y; moat_score 來自 dd-meta (entry); moat_trend
     # 已套 DCA 箭頭。時機 (第四層) 不進公式 — 維持 filter。
+    # 2026-09-17: 併入 fund_gates 的 quality_veto_level / decline_signal_light
+    # （見 compute_funnel_rank() docstring「四道處置」）。
     funnel = compute_funnel_rank(
         quality,
         pass_count,
@@ -2487,6 +2542,8 @@ def enrich_ticker(
         fy_revision.get("eps_fy_curr_revision_pct"),
         fy_revision.get("eps_fy_next_revision_pct"),
         fy_revision.get("eps_fy3_revision_pct"),
+        quality_veto_level=fund_gates.get("quality_veto_level"),
+        decline_signal_light=fund_gates.get("decline_signal_light"),
     )
 
     return {
@@ -2905,6 +2962,21 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         "return_6m_blocked_count": sum(1 for s in enriched if s.get("return_6m_gate") == "擋下"),
     }
 
+    # 2026-09-17: FunnelRank gate summary — counts for the two new hard/soft
+    # processes wired into compute_funnel_rank() (veto_decline_signal /
+    # funnel_cap_quality by level / quality_cap_overridden_by_revision).
+    quality_cap_level_counts = Counter(
+        s.get("funnel_cap_quality_level") for s in enriched if s.get("funnel_cap_quality")
+    )
+    funnel_gate_summary = {
+        "veto_decline_signal_count": sum(1 for s in enriched if s.get("veto_decline_signal")),
+        "quality_cap_reject_count": quality_cap_level_counts.get("拒絕", 0),
+        "quality_cap_downgrade_count": quality_cap_level_counts.get("降一級", 0),
+        "quality_cap_overridden_by_revision_count": sum(
+            1 for s in enriched if s.get("quality_cap_overridden_by_revision")
+        ),
+    }
+
     # Build final document
     tz_taipei = timezone(timedelta(hours=8))
     now = datetime.now(tz_taipei)
@@ -2930,10 +3002,14 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
             "revision_fy_weights": FUNNEL_REVISION_FY_WEIGHTS,
             "revision_threshold_pct": FUNNEL_REVISION_THRESHOLD,
             "moat_down_cap": FUNNEL_MOAT_DOWN_CAP,
+            # 2026-09-17: 體質五項 veto 併入 FunnelRank 的兩個軟性封頂值。
+            "quality_reject_cap": FUNNEL_QUALITY_REJECT_CAP,
+            "quality_downgrade_cap": FUNNEL_QUALITY_DOWNGRADE_CAP,
         },
         "summary": summary,
         "roic_decomp_summary": roic_decomp_summary,
         "fundamental_gates_summary": fundamental_gates_summary,
+        "funnel_gate_summary": funnel_gate_summary,
         "stocks": enriched,
     }
     # v1.8: surface Excel provenance + diff for the FE banner

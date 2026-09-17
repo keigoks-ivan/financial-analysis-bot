@@ -80,6 +80,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
 .tbl thead{position:sticky;top:0;z-index:3}
 .tbl th{background:var(--card);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--sec);font-weight:600;padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:normal;line-height:1.3;vertical-align:middle;max-width:90px}
 .tbl th.left{text-align:left}
+.tbl tr.th-group th{text-align:center;cursor:default;background:var(--line-soft);border-bottom:1px solid var(--line)}
 .tbl td{vertical-align:middle}
 .tbl th.sortable{cursor:pointer;user-select:none}
 .tbl th.sortable:hover{background:var(--line-soft);color:var(--ink)}
@@ -433,7 +434,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
       <br>• <strong>財務品質分（QualityGate，0–1）</strong>：帶「可原諒條件」的品質閘（4 條件計分：FCF / ROIC / EPS CAGR / PEG；<strong>2026-07-03 起 D/E 退出計分、降為 ⚠ advisory</strong>）—— <code>4/4</code> → 1.00；<code>3/4</code> 唯一 fail 在 <strong>PEG</strong>（估值，非品質本體）→ 0.85；<code>3/4</code> fail 在 <strong>FCF / ROIC / EPS CAGR</strong>（品質本體缺陷）→ 0.50；<code>2/4</code> → 0.30；<code>≤1/4</code> → 0.10。任一條件無資料（灰色）→ 該條退出分母、按比例換算後套同一映射，並標 <code>quality_gate_partial</code>。
       <br>• <strong>護城河分（MoatScore，0–1）</strong>：<code>moat_score/10</code> × 趨勢乘數（<code>↑ ×1.10 / → ×1.00 / ↓ ×0.80</code>），封頂 1.0。無 moat 資料 → 0.50。
       <br>• <strong>上修動能分（RevisionScore，0–1）</strong>：FY1/FY2/FY3 各自上修（diff ≥ +0.5%）= +1 / 持平 = 0 / 下修（≤ −0.5%）= −1；<code>raw = 0.2·FY1 + 0.3·FY2 + 0.5·FY3</code>（<strong>FY3 權重最大 = 成長曲線後段</strong>），<code>上修動能分 = (raw+1)/2</code>。FY3 上修幅度 &gt; FY1 上修幅度（後段變陡）再 +0.05。「新」chip / 無 baseline → 0.50 中性，標 <code>revision_no_baseline</code>。
-      <br>• <strong>兩條硬性否決（不進公式，直接處置）</strong>：① FY1/FY2/FY3 <strong>三欄全部下修</strong> → 綜合評分強制歸 0、該列沉底 + <span style="color:var(--neg)">⛔</span>（下修是領先指標、品質分是落後指標，兩者衝突時以下修訊號為準）；② 護城河趨勢 <code>↓</code> 且<strong>非四條件全過</strong>（<code>pass_count &lt; 4</code>）→ 綜合評分封頂 0.50。<strong>2026-09-17 起</strong>：FY1/FY2/FY3 修正 % 一律以公司財報幣別計算（非原始 USD），避免非美元公司在兩次匯出之間單純因匯率變動就被誤判全下修否決；查不到財報幣別或當日匯率時才退回 USD 對比，個股欄位 hover 會標「未排除匯率」。
+      <br>• <strong>四道不進公式的直接處置（2026-09-17 起，依嚴重度：兩個歸零 → 兩個封頂）</strong>：① FY1/FY2/FY3 <strong>三欄全部下修</strong> → 綜合評分強制歸 0、該列沉底 + <span style="color:var(--neg)">⛔</span>（下修是領先指標、品質分是落後指標，兩者衝突時以下修訊號為準）；② <strong>衰退訊號</strong>達 <span style="color:var(--neg)">⛔</span>（體質衰退訊號 6 項機械指標命中 ≥5 項）→ 綜合評分同樣強制歸 0（衰退訊號同屬領先指標，一樣壓過落後的品質分）；③ 護城河趨勢 <code>↓</code> 且<strong>非四條件全過</strong>（<code>pass_count &lt; 4</code>）→ 綜合評分封頂 0.50；④ <strong>體質五項 veto</strong> 命中<code>拒絕</code>（4-5 項不合格）→ 封頂 0.30、命中<code>降一級</code>（3 項不合格）→ 封頂 0.60——但當 FY1/FY2/FY3 <strong>三欄全部上修</strong>（各 ≥ +0.5%）時此封頂不生效（上修同屬領先指標，一樣壓過落後的體質評等）。同一列若同時符合多個條件，一律取最保守（最低）的分數，歸零的兩條優先權最高。FY1/FY2/FY3 修正 % 一律以公司財報幣別計算（非原始 USD），避免非美元公司在兩次匯出之間單純因匯率變動就被誤判全下修否決或誤觸發上修覆蓋；查不到財報幣別或當日匯率時才退回 USD 對比，個股欄位 hover 會標「未排除匯率」。
       <br>權重與映射值寫在 <code>scripts/build_dd_screener.py</code> 檔頭常數（<code>FUNNEL_*</code>），server 端 build 時算好寫進 <code>latest.json</code>（<code>funnel_rank</code> + 三個子分 + 各 flag）。表頭「綜合」欄 hover 看子分拆解。
     </div>
 
@@ -1473,8 +1474,10 @@ function _renderFunnelCell(s) {
     return '<td class="left" style="color:var(--muted)">—</td>';
   }
   var fmt3 = function(x){ return (x === null || x === undefined) ? '—' : x.toFixed(3); };
-  var w = (DATA && DATA.funnel_config && DATA.funnel_config.weights)
-        || { quality: 0.40, moat: 0.30, revision: 0.30 };
+  var cfg = (DATA && DATA.funnel_config) || {};
+  var w = cfg.weights || { quality: 0.40, moat: 0.30, revision: 0.30 };
+  var qRejectCap = (cfg.quality_reject_cap !== undefined) ? cfg.quality_reject_cap : 0.30;
+  var qDowngradeCap = (cfg.quality_downgrade_cap !== undefined) ? cfg.quality_downgrade_cap : 0.60;
   var parts = [
     '綜合評分 ' + f.toFixed(3) + ' = ' + w.quality + '·財務品質分 + '
       + w.moat + '·護城河分 + ' + w.revision + '·上修動能分',
@@ -1482,8 +1485,17 @@ function _renderFunnelCell(s) {
     '護城河分 ' + fmt3(s.moat_score_adj) + (s.moat_no_data ? '（無 moat 資料 → 0.50）' : ''),
     '上修動能分 ' + fmt3(s.revision_score) + (s.revision_no_baseline ? '（新/無 baseline → 0.50 中性）' : '')
   ];
+  // 2026-09-17: 四道不進公式的直接處置（見上方「綜合評分」說明區塊）——歸零兩條
+  // 互斥（見 compute_funnel_rank，命中任一即短路、不再算封頂），封頂兩條可能同列
+  // 並存（moat cap 與 quality cap 各自檢查，取較低值），故不用 else if。
   if (s.veto_all_downgrade) parts.push('⛔ FY1/FY2/FY3 全下修 → 強制歸 0、沉底');
-  else if (s.funnel_cap_moat_down) parts.push('護城河 ↓ 且通過數 ≤ 4 → 封頂 0.50');
+  if (s.veto_decline_signal) parts.push('⛔ 衰退訊號達 ⛔（6 項機械指標命中 ≥5 項）→ 強制歸 0、沉底');
+  if (s.funnel_cap_moat_down) parts.push('護城河 ↓ 且通過數 ≤ 4 → 封頂 0.50');
+  if (s.funnel_cap_quality) {
+    var qCap = (s.funnel_cap_quality_level === '拒絕') ? qRejectCap : qDowngradeCap;
+    parts.push('體質五項 veto「' + s.funnel_cap_quality_level + '」→ 封頂 ' + qCap.toFixed(2));
+  }
+  if (s.quality_cap_overridden_by_revision) parts.push('體質封頂本應觸發，但 FY1/FY2/FY3 三欄全部上修 → 封頂不生效');
   var tip = ' title="' + parts.join('; ').replace(/"/g, '&quot;') + '"';
   var color;
   if (f >= 0.75)      color = 'var(--pos)';
@@ -1494,136 +1506,187 @@ function _renderFunnelCell(s) {
        + 'font-weight:700;color:' + color + '">' + f.toFixed(3) + '</td>';
 }
 
+// 2026-09-17: column-group reorder — plain pass/fail criterion cell (FCF /
+// ROIC), unchanged rendering logic, just extracted so buildTable() can place
+// FCF/ROIC/D-E in different column groups instead of one contiguous run.
+function _renderPlainCritCell(s, c) {
+  var flag = passFlag(s, c);
+  var v = s[c.key];
+  var display;
+  if (v === null || v === undefined) {
+    display = '—';
+  } else {
+    var decimals = (c.unit === 'x') ? 2 : 1;
+    display = v.toFixed(decimals) + c.unit;
+  }
+  return '<td style="' + cellStyle(flag) + '">' + display + '</td>';
+}
+
+// D/E — advisory, unchanged rendering logic (see criteriaHtml history).
+function _renderAdvisoryCritCell(s, c) {
+  var dv = s[c.key];
+  var thr = getThresholds()[c.key];
+  if (thr === undefined) thr = c.threshold;
+  if (dv === null || dv === undefined) {
+    return '<td style="color:var(--muted)" title="無 D/E 資料（如負權益）">—</td>';
+  }
+  var warn = dv > thr;
+  var deDisp = dv.toFixed(2) + c.unit;
+  return warn
+    ? '<td style="background:#fbf3df;color:var(--warn);font-weight:600" ' +
+      'title="D/E ' + deDisp + ' > ' + thr + ' — 高槓桿警示（advisory，不計入通過條件、不擋閘）">' +
+      '⚠ ' + deDisp + '</td>'
+    : '<td style="color:var(--sec)" title="D/E ' + deDisp + '（advisory，不計入通過條件）">' + deDisp + '</td>';
+}
+
 function buildTable(stocks) {
   if (!stocks.length) return '<p style="padding:20px;color:var(--muted);font-size:12px">（無符合資料）</p>';
 
   var criteria = getCriteria();
+  var critByKey = {};
+  criteria.forEach(function(c) { critByKey[c.key] = c; });
   stocks = _sortStocks(stocks);
+
+  // 2026-09-17（owner：「獲利的部分放在比較前面，同類型的排在附近」）— column
+  // groups: 身分 / 獲利 / 成長 / 估值 / 體質 / 時機 / 其他。Every column below
+  // keeps its pre-existing sort key / tooltip / renderer / filter behaviour —
+  // this section only changes WHERE each <th>/<td> sits, not what it does.
+  // The old single `criteria.map()` loop bundled FCF/ROIC/EPS/PEG/D-E plus a
+  // dozen unrelated satellite columns (體質/衰退訊號/資本配置/估值vs5Y/目標價/
+  // 動能) into one contiguous run keyed off c.key === 'roic'; those satellites
+  // are pulled out here into their correct groups instead.
 
   // v1.7: header sort keys now point to LIVE fields where available.
   // 2Y P/E / PEG / 5Y IRR / FY+1→FY+3 CAGR 都改成 live primary、frozen 進 tooltip。
   // 排序時 null 自動沉底（_sortStocks），所以 live 缺失的 ticker 排在後面。
   // v1.9: eps2y column 改顯示 Excel forward CAGR，sort key 也改 eps_fy1_fy3_cagr_pct
-  var LIVE_SORT_KEY = { 'eps2y': 'eps_fy1_fy3_cagr_pct', 'peg': 'live_peg' };
-  var criteriaHeaders = criteria.map(function(c) {
-    var sortKey = LIVE_SORT_KEY[c.key] || c.key;
-    var title;
-    if (c.key === 'eps2y') title = 'Excel FY+1→FY+3 forward 2Y CAGR — buy-side consensus，覆蓋隨 Koyfin watchlist 動態變動';
-    else if (c.key === 'peg') title = '即時 PEG = live FwdPE / live EPS CAGR — sort 按 live 數值';
-    var th = _thSortable(c.label, sortKey, title ? {title: title} : undefined);
-    if (c.key === 'eps2y') {
-      // v1.9: 拿掉重複的 FY1→FY3 CAGR side column（主 EPS column 已改顯示同一個
-      // Excel forward CAGR）。保留 FY3 YoY% (單年 YoY，與 forward 2Y CAGR 不同)
-      // 及三個 raw EPS column (Curr FY / Next FY / FY3)。
-      th += _thSortable('FY3 YoY%', 'eps_fy3_yoy_pct', {title: 'Excel FY+2 → FY+3 consensus EPS YoY growth %'});
-      th += _thSortable('Curr FY', 'eps_fy_curr', {title: 'Current FY EPS consensus — Excel FY1E；yfinance fallback: 0y row。下方 chip = vs 上月 1M revision%'});
-      th += _thSortable('Next FY', 'eps_fy_next', {title: 'Next FY EPS consensus — Excel FY2E；yfinance fallback: +1y row。下方 chip = vs 上月 1M revision%'});
-      th += _thSortable('FY3 EPS', 'eps_fy3', {title: 'FY+3 EPS consensus — Excel FY3E；yfinance fallback: +2y row（多數 ticker 缺）'});
-    }
-    if (c.key === 'peg') {
-      th += _thSortable('2Y P/E', 'live_fpe_est', {title: '即時 FY+2 Forward P/E — yfinance 每日抓 FY EPS 重算；hover 看 DD frozen 對比與漂移幅度'});
-    }
-    if (c.key === 'roic') {
-      // 2026-09-16: ROIC 分解 / 存續力 / 增量 ROIC×再投資率 —— 三個機械模組，
-      // 全部 derive 自 Koyfin xlsx 選填欄位（EBIT Margin % / ROIC 3Y Avg % /
-      // Tax Rate % / Revenue／EBIT／Invested Capital FY(-3)）。見
-      // build_dd_screener.compute_roic_decomposition() 與 dd-screener build 規格。
-      th += _thSortable('ROIC 來源', 'roic_quadrant_code', {title: 'ROIC 拆解 = NOPAT 利潤率 × 投入資本周轉率，四象限標示獲利厚薄與資本周轉快慢（利厚：NOPAT 利潤率 ≥15%；轉快：周轉率 ≥1.0x）'});
-      th += _thSortable('ROIC 走勢', 'roic_vs_5y_x', {title: '現在 ROIC ÷ 過去 5 年平均 ROIC —— ≥1.10 上升／≤0.90 下滑／其餘持平'});
-      th += _thSortable('增量 ROIC', 'incremental_roic_pct', {title: '近 3 個財年：(今年 NOPAT − 3 年前 NOPAT) ÷ 新增投入資本 —— 新增的一塊錢資本賺到多少報酬，判斷成長是否值得繼續投'});
-      th += _thSortable('再投資率', 'reinvest_rate_pct', {title: '近 3 年新增投入資本 ÷ 期間年化 NOPAT —— 公司把多少獲利拿去繼續投資擴張'});
-      th += _thSortable('隱含成長', 'implied_growth_pct', {title: '增量 ROIC × 再投資率 —— 機械推算的內生成長率上限，描述器非預測'});
-      // 2026-09-17: 體質五項 veto + 6 組機械化 gate —— 見 compute_fundamental_gates()。
-      th += _thSortable('體質', 'quality_veto_fail_count', {title: 'DD 體質五項 veto：毛利連降／FCF對淨利率／營收連四季負／槓桿／FY1連三月下修 —— 0-2 項不合格維持評等、3 項降一級、4-5 項拒絕，hover 看命中哪幾項'});
-      th += _thSortable('衰退訊號', 'decline_signal_count', {title: '衰退訊號計數（6 項機械指標）：🟢 0 項／🟡 1-2 項／🔴 3-4 項／⛔ ≥5 項，hover 看命中哪幾項'});
-      th += _thSortable('營運槓桿', 'ol_divergence_pp', {title: '營收成長% − 營業利益成長%（僅營業利益為正時計算）—— 負值代表利潤率擴張，正值越大代表成本吃掉營收成長越嚴重'});
-      th += _thSortable('資本配置', 'capalloc_mech_grade', {title: '資本配置機械版評等（股數稀釋率≤1.5%/yr、庫藏股佔FCF≤80%、槓桿過關，三項符合幾項）—— 與 DD 報告內 LLM 資本配置評等是不同東西'});
-      th += _thSortable('估值 vs 5Y', 'pe_vs_5y_x', {title: 'NTM 本益比 ÷ 過去 5 年平均本益比 —— 高於 1.5x 代表估值明顯貴於自身歷史'});
-      th += _thSortable('目標價', 'target_upside_pct', {title: '分析師目標價平均 ÷ 現價 − 1（皆當地掛牌貨幣，僅供比率使用）；hover 看目標價區間與最高/最低'});
-      th += _thSortable('動能', 'rsi14', {title: 'RSI(14) ＋ 近 6 個月報酬率 —— RSI>70 過熱；6 個月報酬 <100% 放行／100-150% 邊界／>150% 擋下；hover 看 RSI 是否可信（距 52 週高點 <3% 時 RSI 易失真）'});
-    }
-    return th;
-  }).join('');
 
-  var thead = '<table class="tbl"><thead><tr>' +
+  // ---- 獲利 group: FCF | ROIC | ROIC 來源 | ROIC 走勢 | 增量 ROIC | 再投資率 | 隱含成長 | 營運槓桿 | D/E ----
+  var thFcf = _thSortable(critByKey.fcf.label, critByKey.fcf.key);
+  var thRoic = _thSortable(critByKey.roic.label, critByKey.roic.key);
+  // 2026-09-16: ROIC 分解 / 存續力 / 增量 ROIC×再投資率 —— 三個機械模組，全部
+  // derive 自 Koyfin xlsx 選填欄位（EBIT Margin % / ROIC 3Y Avg % / Tax Rate % /
+  // Revenue／EBIT／Invested Capital FY(-3)）。見 build_dd_screener.
+  // compute_roic_decomposition() 與 dd-screener build 規格。
+  var thRoicSource = _thSortable('ROIC 來源', 'roic_quadrant_code', {title: 'ROIC 拆解 = NOPAT 利潤率 × 投入資本周轉率，四象限標示獲利厚薄與資本周轉快慢（利厚：NOPAT 利潤率 ≥15%；轉快：周轉率 ≥1.0x）'});
+  var thRoicTrend = _thSortable('ROIC 走勢', 'roic_vs_5y_x', {title: '現在 ROIC ÷ 過去 5 年平均 ROIC —— ≥1.10 上升／≤0.90 下滑／其餘持平'});
+  var thIncrementalRoic = _thSortable('增量 ROIC', 'incremental_roic_pct', {title: '近 3 個財年：(今年 NOPAT − 3 年前 NOPAT) ÷ 新增投入資本 —— 新增的一塊錢資本賺到多少報酬，判斷成長是否值得繼續投'});
+  var thReinvestRate = _thSortable('再投資率', 'reinvest_rate_pct', {title: '近 3 年新增投入資本 ÷ 期間年化 NOPAT —— 公司把多少獲利拿去繼續投資擴張'});
+  var thImpliedGrowth = _thSortable('隱含成長', 'implied_growth_pct', {title: '增量 ROIC × 再投資率 —— 機械推算的內生成長率上限，描述器非預測'});
+  var thOlDivergence = _thSortable('營運槓桿', 'ol_divergence_pp', {title: '營收成長% − 營業利益成長%（僅營業利益為正時計算）—— 負值代表利潤率擴張，正值越大代表成本吃掉營收成長越嚴重'});
+  var thDe = _thSortable(critByKey.de.label, critByKey.de.key);
+
+  // ---- 成長 group: EPS CAGR (+ revision-related satellites) | 目標價 ----
+  var thEps = _thSortable(critByKey.eps2y.label, 'eps_fy1_fy3_cagr_pct', {title: 'Excel FY+1→FY+3 forward 2Y CAGR — buy-side consensus，覆蓋隨 Koyfin watchlist 動態變動'});
+  // v1.9: 拿掉重複的 FY1→FY3 CAGR side column（主 EPS column 已改顯示同一個
+  // Excel forward CAGR）。保留 FY3 YoY% (單年 YoY，與 forward 2Y CAGR 不同)
+  // 及三個 raw EPS column (Curr FY / Next FY / FY3) — 皆帶 vs 上月 revision% chip。
+  var thEpsFy3Yoy = _thSortable('FY3 YoY%', 'eps_fy3_yoy_pct', {title: 'Excel FY+2 → FY+3 consensus EPS YoY growth %'});
+  var thEpsCurrFy = _thSortable('Curr FY', 'eps_fy_curr', {title: 'Current FY EPS consensus — Excel FY1E；yfinance fallback: 0y row。下方 chip = vs 上月 1M revision%'});
+  var thEpsNextFy = _thSortable('Next FY', 'eps_fy_next', {title: 'Next FY EPS consensus — Excel FY2E；yfinance fallback: +1y row。下方 chip = vs 上月 1M revision%'});
+  var thEpsFy3 = _thSortable('FY3 EPS', 'eps_fy3', {title: 'FY+3 EPS consensus — Excel FY3E；yfinance fallback: +2y row（多數 ticker 缺）'});
+  var thTargetUpside = _thSortable('目標價', 'target_upside_pct', {title: '分析師目標價平均 ÷ 現價 − 1（皆當地掛牌貨幣，僅供比率使用）；hover 看目標價區間與最高/最低'});
+
+  // ---- 估值 group: PEG | 2Y P/E | 估值 vs 5Y | 5Y期望 ----
+  var thPeg = _thSortable(critByKey.peg.label, 'live_peg', {title: '即時 PEG = live FwdPE / live EPS CAGR — sort 按 live 數值'});
+  var thLivePe = _thSortable('2Y P/E', 'live_fpe_est', {title: '即時 FY+2 Forward P/E — yfinance 每日抓 FY EPS 重算；hover 看 DD frozen 對比與漂移幅度'});
+  var thValuationVs5y = _thSortable('估值 vs 5Y', 'pe_vs_5y_x', {title: 'NTM 本益比 ÷ 過去 5 年平均本益比 —— 高於 1.5x 代表估值明顯貴於自身歷史'});
+  var th5yExpect = _thSortable('5Y期望', 'live_ev5y_pct', {title: '即時 5 年期望報酬率（原稱 5Y IRR）— 由 DD 決策層 frozen 值用「price_at_dd / price_now」回推（heuristic，假設 terminal value 不變）；hover 看 DD 對比'});
+
+  // ---- 體質 group: 通過 | 體質 | 衰退訊號 | 資本配置 ----
+  // 2026-09-17: 體質五項 veto + 6 組機械化 gate —— 見 compute_fundamental_gates()。
+  var thPassCount = _thSortable('通過', 'pass_count');
+  var thQualityVeto = _thSortable('體質', 'quality_veto_fail_count', {title: 'DD 體質五項 veto：毛利連降／FCF對淨利率／營收連四季負／槓桿／FY1連三月下修 —— 0-2 項不合格維持評等、3 項降一級、4-5 項拒絕，hover 看命中哪幾項'});
+  var thDeclineSignal = _thSortable('衰退訊號', 'decline_signal_count', {title: '衰退訊號計數（6 項機械指標）：🟢 0 項／🟡 1-2 項／🔴 3-4 項／⛔ ≥5 項，hover 看命中哪幾項'});
+  var thCapAlloc = _thSortable('資本配置', 'capalloc_mech_grade', {title: '資本配置機械版評等（股數稀釋率≤1.5%/yr、庫藏股佔FCF≤80%、槓桿過關，三項符合幾項）—— 與 DD 報告內 LLM 資本配置評等是不同東西'});
+
+  // ---- 時機 group: MA | 距ATH | vs50DMA | RS | 動能 ----
+  var thMa = '<th>MA</th>';
+  var thDistAth = _thSortable('距ATH', 'timing.dist_52w_high_pct', {title: '距 52w high (還原權息) — 起漲點 sweet spot ∈ [-7%, 0%]'});
+  var thVs50dma = _thSortable('vs50DMA', 'timing.ma50_pct', {title: '距 50DMA — 起漲點 sweet spot ∈ [0%, +5%]'});
+  var thRs = _thSortable('RS', 'timing.rs_score', {title: 'RS rating vs SPY (0-100 percentile) — 起漲點 門檻 ≥ 80'});
+  var thMomentum = _thSortable('動能', 'rsi14', {title: 'RSI(14) ＋ 近 6 個月報酬率 —— RSI>70 過熱；6 個月報酬 <100% 放行／100-150% 邊界／>150% 擋下；hover 看 RSI 是否可信（距 52 週高點 <3% 時 RSI 易失真）'});
+
+  // ---- 其他 group: Links ----
+  var thLinks = '<th>Links</th>';
+
+  // Group label row (colspan) — column counts must stay in sync with the
+  // sortable header row + row-renderer td sequence below.
+  var COLUMN_GROUPS = [
+    {label: '身分', span: 4},
+    {label: '獲利', span: 9},
+    {label: '成長', span: 6},
+    {label: '估值', span: 4},
+    {label: '體質', span: 4},
+    {label: '時機', span: 5},
+    {label: '其他', span: 1},
+  ];
+  var groupRow = '<tr class="th-group">' + COLUMN_GROUPS.map(function(g) {
+    return '<th colspan="' + g.span + '">' + g.label + '</th>';
+  }).join('') + '</tr>';
+
+  var thead = '<table class="tbl"><thead>' + groupRow + '<tr>' +
+    // 身分
     _thSortable('Ticker', 'ticker', {left: true}) +
     _thSortable('綜合分', 'funnel_rank', {left: true, title: '綜合評分 = 0.40·財務品質分 + 0.30·護城河分 + 0.30·上修動能分（基本面三層；時機不進分）。預設排序鍵。hover 看子分拆解。'}) +
     _thSortable('裁決', 'dca_verdict', {left: true, title: 'DD §13 統一裁決（進場/觀望/迴避）— 只讀 v13/v14 合併報告的決策層 metadata；v12 舊報告顯示 —，DD 重跑後自動補上。點擊跳 #decision 錨點。'}) +
     _thSortable('Moat', 'moat_score', {left: true, title: '依護城河評等分數排序'}) +
-    criteriaHeaders +
-    _thSortable('通過', 'pass_count') +
-    _thSortable('5Y期望', 'live_ev5y_pct', {title: '即時 5 年期望報酬率（原稱 5Y IRR）— 由 DD 決策層 frozen 值用「price_at_dd / price_now」回推（heuristic，假設 terminal value 不變）；hover 看 DD 對比'}) +
-    '<th>MA</th>' +
-    _thSortable('距ATH', 'timing.dist_52w_high_pct', {title: '距 52w high (還原權息) — 起漲點 sweet spot ∈ [-7%, 0%]'}) +
-    _thSortable('vs50DMA', 'timing.ma50_pct', {title: '距 50DMA — 起漲點 sweet spot ∈ [0%, +5%]'}) +
-    _thSortable('RS', 'timing.rs_score', {title: 'RS rating vs SPY (0-100 percentile) — 起漲點 門檻 ≥ 80'}) +
-    '<th>Links</th>' +
+    // 獲利
+    thFcf + thRoic + thRoicSource + thRoicTrend + thIncrementalRoic + thReinvestRate
+      + thImpliedGrowth + thOlDivergence + thDe +
+    // 成長
+    thEps + thEpsFy3Yoy + thEpsCurrFy + thEpsNextFy + thEpsFy3 + thTargetUpside +
+    // 估值
+    thPeg + thLivePe + thValuationVs5y + th5yExpect +
+    // 體質
+    thPassCount + thQualityVeto + thDeclineSignal + thCapAlloc +
+    // 時機
+    thMa + thDistAth + thVs50dma + thRs + thMomentum +
+    // 其他
+    thLinks +
     '</tr></thead><tbody>';
 
   var rows = stocks.map(function(s) {
     var pc = computePassCount(s);
     // v1.7: criteria render dispatches to live helpers for EPS / PEG;
     // 其他 column (FCF / ROIC / D/E) 仍用 frozen 值 (跟股價無關)。
-    // 2Y P/E injected after PEG cell — separately rendered via _renderLivePECell.
-    var criteriaHtml = criteria.map(function(c) {
-      var flag = passFlag(s, c);
-      var html;
-      if (c.advisory) {
-        // 2026-07-03: D/E 為 advisory — 不進 pass_count，不上 pass/fail 配色。
-        // 值 > 門檻（預設 0.7）顯示 ⚠ 警示 badge（只提醒槓桿，不擋閘）。
-        var dv = s[c.key];
-        var thr = getThresholds()[c.key];
-        if (thr === undefined) thr = c.threshold;
-        if (dv === null || dv === undefined) {
-          html = '<td style="color:var(--muted)" title="無 D/E 資料（如負權益）">—</td>';
-        } else {
-          var warn = dv > thr;
-          var deDisp = dv.toFixed(2) + c.unit;
-          html = warn
-            ? '<td style="background:#fbf3df;color:var(--warn);font-weight:600" ' +
-              'title="D/E ' + deDisp + ' > ' + thr + ' — 高槓桿警示（advisory，不計入通過條件、不擋閘）">' +
-              '⚠ ' + deDisp + '</td>'
-            : '<td style="color:var(--sec)" title="D/E ' + deDisp + '（advisory，不計入通過條件）">' + deDisp + '</td>';
-        }
-      } else if (c.key === 'eps2y') {
-        html = _renderLiveEPSCell(s, flag);
-      } else if (c.key === 'peg') {
-        html = _renderLivePEGCell(s, flag);
-      } else {
-        var v = s[c.key];
-        var display;
-        if (v === null || v === undefined) {
-          display = '—';
-        } else {
-          var decimals = (c.unit === 'x') ? 2 : 1;
-          display = v.toFixed(decimals) + c.unit;
-        }
-        html = '<td style="' + cellStyle(flag) + '">' + display + '</td>';
-      }
-      if (c.key === 'eps2y') {
-        // v1.9: 拿掉重複的 FY1→FY3 CAGR cell（主 EPS column 已用同一個 Excel
-        // forward CAGR）。保留 FY3 YoY% + Curr FY / Next FY / FY3 raw EPS。
-        html += _renderGrowthCell(s, 'eps_fy3_yoy_pct');
-        html += _renderRawEpsCell(s, 'eps_fy_curr');
-        html += _renderRawEpsCell(s, 'eps_fy_next');
-        html += _renderRawEpsCell(s, 'eps_fy3');
-      }
-      if (c.key === 'peg') {
-        html += _renderLivePECell(s);
-      }
-      if (c.key === 'roic') {
-        html += _renderRoicQuadrantCell(s) + _renderRoicTrendCell(s)
-              + _renderIncrementalRoicCell(s) + _renderReinvestRateCell(s)
-              + _renderImpliedGrowthCell(s)
-              + _renderQualityVetoCell(s) + _renderDeclineSignalCell(s) + _renderOlDivergenceCell(s)
-              + _renderCapallocCell(s) + _renderValuationVs5yCell(s) + _renderTargetUpsideCell(s)
-              + _renderMomentumCell(s);
-      }
-      return html;
-    }).join('');
 
+    // 獲利
+    var tdFcf = _renderPlainCritCell(s, critByKey.fcf);
+    var tdRoic = _renderPlainCritCell(s, critByKey.roic);
+    var tdRoicSatellites = _renderRoicQuadrantCell(s) + _renderRoicTrendCell(s)
+      + _renderIncrementalRoicCell(s) + _renderReinvestRateCell(s) + _renderImpliedGrowthCell(s);
+    var tdOlDivergence = _renderOlDivergenceCell(s);
+    var tdDe = _renderAdvisoryCritCell(s, critByKey.de);
+
+    // 成長
+    var tdEps = _renderLiveEPSCell(s, passFlag(s, critByKey.eps2y));
+    // v1.9: 拿掉重複的 FY1→FY3 CAGR cell（主 EPS column 已用同一個 Excel
+    // forward CAGR）。保留 FY3 YoY% + Curr FY / Next FY / FY3 raw EPS。
+    var tdEpsSatellites = _renderGrowthCell(s, 'eps_fy3_yoy_pct') + _renderRawEpsCell(s, 'eps_fy_curr')
+      + _renderRawEpsCell(s, 'eps_fy_next') + _renderRawEpsCell(s, 'eps_fy3');
+    var tdTargetUpside = _renderTargetUpsideCell(s);
+
+    // 估值
+    var tdPeg = _renderLivePEGCell(s, passFlag(s, critByKey.peg));
+    var tdLivePe = _renderLivePECell(s);
+    var tdValuationVs5y = _renderValuationVs5yCell(s);
     // 5Y IRR — v1.7 改 live primary (heuristic 回推)
-    var irrHtml = _renderLiveIRRInner(s);
+    var td5yExpect = '<td>' + _renderLiveIRRInner(s) + '</td>';
+
+    // 體質
+    var tdPassCount = '<td>' + passLabel(pc) + '</td>';
+    var tdQualityVeto = _renderQualityVetoCell(s);
+    var tdDeclineSignal = _renderDeclineSignalCell(s);
+    var tdCapAlloc = _renderCapallocCell(s);
+
+    // 時機
+    var tmg = s.timing || {};
+    var tdMa = '<td>' + maBadge(s.ma) + '</td>';
+    var tdDistAth = fmtDistAth(tmg.dist_52w_high_pct);
+    var tdVs50dma = fmtMa50(tmg.ma50_pct);
+    var tdRs = fmtRs(tmg.rs_score);
+    var tdMomentum = _renderMomentumCell(s);
 
     // Links — DD + 定見錨點。v13/v14 的 dca_path 是 DD 自身的 #decision 錨點；
     // legacy /dca/ 連結不再顯示（DCA 已退役，2026-07 起不作為裁決來源）。
@@ -1633,6 +1696,7 @@ function buildTable(stocks) {
     var dcaLink = (s.dca_path && s.dca_path.indexOf('#decision') !== -1)
       ? '<a href="' + s.dca_path + '" class="dd-link" target="_blank">定見</a>'
       : '';
+    var tdLinks = '<td>' + ddLink + dcaLink + '</td>';
 
     // 裁決 cell — v13/v14 dd-meta 的統一裁決；v12-only ticker 留 — 待重跑補上
     var VERDICT_STYLE = {'進場': ['#eafaef', 'var(--pos)'], '觀望': ['#fbf3df', 'var(--warn)'], '迴避': ['#fbeceb', 'var(--neg)']};
@@ -1683,7 +1747,6 @@ function buildTable(stocks) {
     var moatHtml = moatWord + '<sup style="font-size:8px;color:var(--muted)">' + moatGrade + '</sup> ' + moatScore + ' ' + moatTrend;
     var moatTitle = ' title="護城河評等：' + moatWord + '（' + moatGrade + ' 級，分數 ' + moatScore + '）｜趨勢：' + moatTrendWord + '"';
 
-    var tmg = s.timing || {};
     // ⛔ 否決列：整列降透明度 + ticker 旁 ⛔（FY1/FY2/FY3 全下修，已沉底）。
     var rowStyle = s.veto_all_downgrade ? ' style="opacity:.45"' : '';
     var vetoMark = s.veto_all_downgrade
@@ -1695,20 +1758,25 @@ function buildTable(stocks) {
       ? ' <span class="src-badge src-pending-dd" title="QGM 品質池名字，尚未做 DD——一樣有 Koyfin 三年成長與品質數字，可以競爭席位；DD 是選配">待 DD</span>'
       : '';
     return '<tr' + rowStyle + '>' +
+      // 身分
       '<td class="left">' +
         '<span class="ticker-nm">' + s.ticker + '</span>' + vetoMark + pendingDdMark +
       '</td>' +
       _renderFunnelCell(s) +
       verdictHtml +
       '<td class="left"' + moatTitle + ' style="font-size:11px">' + moatHtml + '</td>' +
-      criteriaHtml +
-      '<td>' + passLabel(pc) + '</td>' +
-      '<td>' + irrHtml + '</td>' +
-      '<td>' + maBadge(s.ma) + '</td>' +
-      fmtDistAth(tmg.dist_52w_high_pct) +
-      fmtMa50(tmg.ma50_pct) +
-      fmtRs(tmg.rs_score) +
-      '<td>' + ddLink + dcaLink + '</td>' +
+      // 獲利
+      tdFcf + tdRoic + tdRoicSatellites + tdOlDivergence + tdDe +
+      // 成長
+      tdEps + tdEpsSatellites + tdTargetUpside +
+      // 估值
+      tdPeg + tdLivePe + tdValuationVs5y + td5yExpect +
+      // 體質
+      tdPassCount + tdQualityVeto + tdDeclineSignal + tdCapAlloc +
+      // 時機
+      tdMa + tdDistAth + tdVs50dma + tdRs + tdMomentum +
+      // 其他
+      tdLinks +
       '</tr>';
   }).join('');
 
