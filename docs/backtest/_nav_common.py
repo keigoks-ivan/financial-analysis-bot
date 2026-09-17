@@ -167,6 +167,7 @@ RESEARCH_CRASH_LINKS = [
 # 2026-08-08 新增：跨國總經研究（非可交易系統，故另立一群而不塞進既有四群）。
 RESEARCH_MACRO_LINKS = [
     ("/backtest/housing_gdp/", "人均GDP與房價", "housing_gdp", "研究"),
+    ("/backtest/yield_curve/", "殖利率倒掛與衰退", "yield_curve", "研究"),
 ]
 
 # 2026-08-15 新增：台股可轉債（CB）研究專區——五個獨立回測（折價組合/停止轉換/

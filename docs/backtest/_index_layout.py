@@ -258,6 +258,9 @@ BLOCKS = [
             ("/backtest/country_scan/japan.html", "日本：大盤便宜已定價完、金利回來兩把尺相反", "研究", False),
             ("/backtest/country_scan/malaysia.html", "馬來西亞：報酬寫在股息裡、價差十年為負", "研究", False),
         ]),
+        ("殖利率倒掛", "yc", [
+            ("/backtest/yield_curve/", "殖利率倒掛預示衰退嗎：八國、同一把尺", "研究", False),
+        ]),
     ]),
 ]
 
