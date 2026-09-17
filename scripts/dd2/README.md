@@ -245,3 +245,10 @@ dd2 側：閘記 `audit_sha256`／`input_signature`（供 `_gate_audit_is_curren
 根因兩個：①判斷者把 `f_*` 事實 id 與 `軸名#n` finding id 寫進文字欄，gen_dd_tables 原樣渲染，無空格長字串把「信息來源」欄撐到 263px、「核心假設」欄擠到 68px；②v19.css 表格 auto layout、無斷字、無橫向捲動。
 修法（sonnet 實作＋人工補一處）：v19.css `table-layout:fixed`＋`word-break`＋`.tbl-scroll`；render_dd v19 assemble 對 ≥7 欄的表包 `.tbl-scroll` 並依欄數給 `min-width`（每欄 120px、下限 720px）；`run.sanitize_table_ids` 組頁前清掉表格裡的兩種 id（TSM 清 14 個）並在 `_gates_v20` 加可見文字 id 掃描（FAIL）；判斷 bundle 加「文字欄不得出現 id，引用放 fact_refs／evidence_refs」。TSM 重組 100,906B，[prose] PASS，瀏覽器實測 §2 八欄表可橫向捲、每欄約 8 字一行、正文 id 命中 0。
 待辦：H1–H3 表的 2Y／5Y／10Y 三欄判斷者常留空，可考慮機械略過全空欄。
+
+### 8j｜2026-09-17：TSM 正式發布（v20 首發）＋ pre-commit hook 接線
+
+- 去重：§10 同業對照與 §13 催化劑改「見 §5.F／§14」（f5377b06f）。
+- hook：dd2 產物 head 帶 `<meta name="dd-pipeline" content="dd2-v20">`，pre-commit 對它套 70KB floor、不跑未完成的 validate_report_v19（067af26ec）。
+- 發布：`ddreport.py finish TSM 20260916` → commit 6a18ad887（訊息裡的「v17」是舊鏈模板字樣，待改）；pre-push 被 qc 擋一次：archive 進 notes/ 的 judge.md 內 schema 速查的中文 enum 用半形逗號相連。已改 `dd_bundle._schema_cheatsheet` 用「｜」；archived 檔的修正因 amend 時機撞上另一 session 的 commit，最後以 d926bfd62（掛該 session 的 commit 訊息）上遠端，內容只有那一檔。
+- 教訓：多 session 共用工作目錄時不要用 `git commit --amend`；改用新 commit。

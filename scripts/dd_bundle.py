@@ -160,7 +160,8 @@ def _schema_cheatsheet(contract: str = "v18") -> str:
         if "type" in node and node["type"] != "object" and node["type"] != "array":
             bits.append(type_str(node["type"]))
         if "enum" in node:
-            bits.append("enum[" + ",".join(str(x) for x in node["enum"]) + "]")
+            # 2026-09-17：中文 enum 值用半形逗號相連會被 qc.py 當「中文後接半形標點」擋（archive 進 notes/ 時 pre-push 失敗），改全形「｜」
+            bits.append("enum[" + "｜".join(str(x) for x in node["enum"]) + "]")
         if "pattern" in node:
             bits.append(f"pat={node['pattern']}")
         if "maxLength" in node:
