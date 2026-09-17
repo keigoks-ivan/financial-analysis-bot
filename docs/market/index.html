@@ -2266,10 +2266,24 @@ footer.imq-foot a{color:var(--text-secondary)}
     var rz = data.read_zh || {};
     var headline = read && read.thesis_zh || rz.headline || "今日無合成判讀。";
     $("#heroConclusion").textContent = concisePoints(headline, 1)[0] || headline;
+    // 2026-09-17：持有人指出「最新變化：…　·　改判：…」沒人看得懂。改成兩句白話：
+    // 第一句是「相較前期」的精煉首句；第二句寫清楚哪個門檻會讓看法轉多、哪個會轉空，並附現值。
     var focus = [];
-    if (read && read.vs_prior_zh) focus.push("最新變化：" + (concisePoints(read.vs_prior_zh, 1)[0] || read.vs_prior_zh));
-    if (read && read.falsifiers && read.falsifiers[0]) focus.push("改判：" + (read.falsifiers[0].label || read.falsifiers[0].read_zh));
-    $("#heroFocus").textContent = focus.length ? focus.slice(0, 2).join("　·　") : "現況、最新變化、改判條件。";
+    if (read && read.vs_prior_zh) {
+      var vs = concisePoints(read.vs_prior_zh, 1)[0] || read.vs_prior_zh;
+      focus.push(/[。！？]$/.test(vs) ? vs : vs + "。");
+    }
+    var turnWords = { bullish: "看法轉多", bearish: "看法轉空" };
+    var turns = [];
+    ["bullish", "bearish"].forEach(function (dirKey) {
+      var f = ((read && read.falsifiers) || []).filter(function (x) { return x.direction === dirKey && x.label; })[0];
+      if (!f) return;
+      var q = resolveQuote(data, f.ref);
+      var now = q && q.val != null ? "（現在 " + q.val + "）" : "";
+      turns.push(f.label + now + "就" + turnWords[dirKey]);
+    });
+    if (turns.length) focus.push("改判條件：" + turns.join("；") + "。");
+    $("#heroFocus").textContent = focus.length ? focus.join("") : "現況、最新變化、改判條件。";
     $("#thesisHeadline").textContent = rz.headline || "今日無合成判讀。";
     $("#thesisBullets").innerHTML = (rz.bullets || []).map(function (b) { return "<li>" + esc(b) + "</li>"; }).join("");
 
