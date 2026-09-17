@@ -262,10 +262,21 @@ def extract_grp_items():
 
 
 def extract_picks_items():
+    """picks-baofa（設計稿 §9 row F2）——**dormant 2026-09-17 起**：來源「爆發・循環
+    上修」組已退役（見 knowledge/rule_ledger.md「精選榜改版：爆發組退役、十倍組改 v5
+    小市值池」列），`candidates.json` 的 `official_baofa[]` 已改寫死為空陣列並掛
+    `retired_groups.baofa`。PREREG claim_template（`picks_beat_spy_91d`）與本函式
+    **不刪除**（持有人指示：只降 dormant，不砍樣板）——空陣列自然產生 0 筆草案，
+    非錯誤，此處只是把「為什麼是 0」講清楚，供操作者與既有 tenbagger/nodd 的
+    「今日 0 筆是預期行為」訊息同款式對照。"""
     data = _load_json(CANDIDATES)
     if data is None:
         warn(f"{CANDIDATES} 不存在或無法讀取，picks 名單本輪略過")
         return []
+    if (data.get("retired_groups") or {}).get("baofa"):
+        info("picks-baofa 來源已於 2026-09-17 退役（candidates.json official_baofa[] "
+             "改寫死為空陣列，見 retired_groups.baofa）——本函式維持 dormant，PREREG "
+             "claim_template 保留不刪，n_drafts=0 為預期行為，非錯誤")
     base_date = data.get("as_of")
     if not base_date:
         warn(f"{CANDIDATES} 缺 as_of，picks 名單本輪略過")
@@ -295,10 +306,16 @@ def extract_tenbagger_items():
     if not base_date:
         warn(f"{TENBAGGER} 缺 as_of，tenbagger 名單本輪略過")
         return []
-    candidates = (data.get("official") or data.get("candidates") or [])  # 2026-09-02 orchestrator 定案：official[]＝正式席位（本週 5 檔），candidates[] 為候補；席位優先
+    # 2026-09-17 起（精選榜改版，見 knowledge/rule_ledger.md 同名列）：tenbagger.json
+    # 改為 v5 小市值池 schema，`official[]`＝池（無席位上限，依上修排序，可能為 0 檔——
+    # 見 rule_ledger 同列，資格閘全過的名字很可能因缺三年期成長預估而掛零，這是誠實
+    # 結果不是錯誤）；`candidates[]` 是舊 schema 的遺留鍵名，v5 檔不再產出，此處僅
+    # 當向下相容 fallback 保留，讀不到不代表資料異常。
+    candidates = (data.get("official") or data.get("candidates") or [])
     if not candidates:
-        info(f"docs/picks/tenbagger.json candidates[] 目前為空（0 筆）——"
-             f"符合設計稿 §9 row F2 已知現況，本輪 tenbagger n_drafts=0，非錯誤")
+        info("docs/picks/tenbagger.json official[]（v5 小市值池）目前為空（0 筆）——"
+             "池本身可能真的掛零（見 rule_ledger「精選榜改版」列），本輪 tenbagger "
+             "n_drafts=0，非錯誤")
     items = []
     for it in candidates:
         ticker = it.get("ticker")
@@ -347,11 +364,21 @@ def extract_ownboard_items():
 
 def extract_late_items():
     """picks-late（設計稿 §11.1 row 2）：`candidates.baofa[]` 中 `late_cycle == true` 且
-    `above_w52 == true`（＝只因守門被擋、否則會上榜者）。base_date 取 candidates `as_of`。"""
+    `above_w52 == true`（＝只因守門被擋、否則會上榜者）。base_date 取 candidates `as_of`。
+
+    **dormant 2026-09-17 起**：來源「爆發・循環上修」組已退役（見
+    knowledge/rule_ledger.md「精選榜改版：爆發組退役、十倍組改 v5 小市值池」列），
+    `candidates.json` 的 `baofa[]` 已改寫死為空陣列。PREREG claim_template
+    （`picks_late_beat_spy_91d`）與本函式**不刪除**（持有人指示：只降 dormant，不砍
+    樣板）——空陣列自然產生 0 筆草案，非錯誤。"""
     data = _load_json(CANDIDATES)
     if data is None:
         warn(f"{CANDIDATES} 不存在或無法讀取，late 名單本輪略過")
         return []
+    if (data.get("retired_groups") or {}).get("baofa"):
+        info("picks-late 來源已於 2026-09-17 退役（candidates.json baofa[] 改寫死為空"
+             "陣列，見 retired_groups.baofa）——本函式維持 dormant，PREREG "
+             "claim_template 保留不刪，n_drafts=0 為預期行為，非錯誤")
     base_date = data.get("as_of")
     if not base_date:
         warn(f"{CANDIDATES} 缺 as_of，late 名單本輪略過")

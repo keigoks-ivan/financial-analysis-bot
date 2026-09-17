@@ -77,6 +77,16 @@ jobs:
         run: python scripts/engine/build_arena.py --daily || echo "::warning::daily arena refresh failed"
         continue-on-error: true
 
+      # 精選榜「十倍」組 v5 小市值池（2026-09-17 持有人拍板「精選榜改版」，見
+      # knowledge/rule_ledger.md「精選榜改版：爆發組退役、十倍組改 v5 小市值池」列）：
+      # 與上面 Arena daily refresh 讀同一份剛更新的 dd-screener latest.json，跑同一套
+      # GRP 席位 v5 資格閘規則（scripts/engine/grp.py），只換市值帶（$10億–$200億，
+      # GRP 席位地板之下）——排在 Arena 之後、Quality-Entry 之前，失敗只 warning，
+      # 不擋本帶其餘 step。
+      - name: "[non-fundamental] Step 2b — Picks tenbagger v5 small-cap pool daily refresh"
+        run: python scripts/build_tenbagger.py || echo "::warning::tenbagger v5 small-cap pool refresh failed"
+        continue-on-error: true
+
       - name: "[non-fundamental] Step 3 — Quality-Entry screener"
         run: python scripts/build_quality_entry.py
         continue-on-error: true
@@ -143,7 +153,8 @@ jobs:
             docs/dd-screener/sop-funnel/ \
             docs/engine/arena.json \
             docs/engine/_board_body.html \
-            docs/engine/board.txt; do
+            docs/engine/board.txt \
+            docs/picks/tenbagger.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if [ -z "$PATHS" ]; then

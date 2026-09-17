@@ -59,18 +59,19 @@ jobs:
       - name: Build Kelly-tilt paper track
         run: python scripts/build_kelly_track.py || echo "build_kelly_track failed — continuing"
 
-      - name: Build picks candidates
-        run: python scripts/build_picks.py
-
-      - name: Build tenbagger track (monthly self-guarded)
-        run: python scripts/build_tenbagger.py
+      # 2026-09-17 持有人拍板「精選榜改版」移除本週更兩步（見
+      # knowledge/rule_ledger.md「精選榜改版：爆發組退役、十倍組改 v5 小市值池」列）：
+      # build_picks.py 兩組皆已退役，改為 frozen 輸出，只靠 scripts/update_dd_index.py
+      # 的 DD/DCA 同步鏈呼叫即可保持 candidates.json 新鮮，週更再跑一次不會多產生
+      # 任何內容；build_tenbagger.py 改為每日隨 GRP 席位一起刷新（見
+      # daily-taipei-morning.yml Step 2b），週更沒有存在理由。
 
       - name: Build macro investment clock (mechanical layer)
         run: python scripts/build_macro_clock.py
 
       - name: Commit and push if changed
         run: |
-          if git status --porcelain docs/markets.html docs/sectors.html docs/cache/risk_gauge.json docs/cache/risk_history.json docs/research/momentum-5/data.json docs/research/momentum-5/raw_factors.json docs/research/momentum-5/shadow.json docs/research/momentum-5/portfolio.json docs/research/momentum-5-short/short.json docs/research/momentum-5-fast/fast.json docs/research/price-momentum/track.json data/trend_track_prices.json docs/research/trend-track/track.json docs/market/data/exposure_track.json docs/market/data/kelly_track.json docs/picks/candidates.json docs/picks/tenbagger.json docs/macro/data/clock.json | grep -q .; then
+          if git status --porcelain docs/markets.html docs/sectors.html docs/cache/risk_gauge.json docs/cache/risk_history.json docs/research/momentum-5/data.json docs/research/momentum-5/raw_factors.json docs/research/momentum-5/shadow.json docs/research/momentum-5/portfolio.json docs/research/momentum-5-short/short.json docs/research/momentum-5-fast/fast.json docs/research/price-momentum/track.json data/trend_track_prices.json docs/research/trend-track/track.json docs/market/data/exposure_track.json docs/market/data/kelly_track.json docs/macro/data/clock.json | grep -q .; then
             echo "Changes detected"
           else
             echo "No changes to commit"
@@ -78,7 +79,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/markets.html docs/sectors.html docs/cache/risk_gauge.json docs/cache/risk_history.json docs/research/momentum-5/data.json docs/research/momentum-5/raw_factors.json docs/research/momentum-5/shadow.json docs/research/momentum-5/portfolio.json docs/research/momentum-5-short/short.json docs/research/momentum-5-fast/fast.json docs/research/price-momentum/track.json data/trend_track_prices.json docs/research/trend-track/track.json docs/market/data/exposure_track.json docs/market/data/kelly_track.json docs/picks/candidates.json docs/picks/tenbagger.json docs/macro/data/clock.json
+          git add docs/markets.html docs/sectors.html docs/cache/risk_gauge.json docs/cache/risk_history.json docs/research/momentum-5/data.json docs/research/momentum-5/raw_factors.json docs/research/momentum-5/shadow.json docs/research/momentum-5/portfolio.json docs/research/momentum-5-short/short.json docs/research/momentum-5-fast/fast.json docs/research/price-momentum/track.json data/trend_track_prices.json docs/research/trend-track/track.json docs/market/data/exposure_track.json docs/market/data/kelly_track.json docs/macro/data/clock.json
           DATE=$(date -u +"%Y-%m-%d")
           git commit -m "data: weekly market update ${DATE}"
           for i in 1 2 3 4 5 6; do

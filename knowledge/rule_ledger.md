@@ -188,3 +188,11 @@
 
 加一提刪一（本次提名候刪審查）：timing-appendix §F「🟡 觀察池（剛站回 W104，站上 < 4 週）」——從未被任何機械路徑算出（`dd_screener_ma`／`build_quality_entry` 六態映射無此分支），兩輪 0 觸發即為裝飾條文。
 
+## 2026-09-17：精選榜改版（爆發組退役、十倍組改 v5 小市值池）
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **精選榜改版：爆發組退役、十倍組改 v5 小市值池**——「爆發・循環上修」組（`scripts/build_picks.py` 原 `build_baofa()`）整組退役，`docs/picks/candidates.json` 的 `official_baofa[]`／`baofa[]` 改寫死為空陣列並掛 `retired_groups.baofa`（比照長熬 2026-07-29 退役先例）；「十倍」組（`scripts/build_tenbagger.py`）**全面重寫**：不再自建結構六條件 gate-set（3 年營收 CAGR／毛利/內部人/稀釋/EV-S 逐檔 yfinance 掃描），改**逐字重用** GRP 席位 v5 資格閘（`scripts/engine/grp.py` `quality_gate`／`durable_5y_v5`／成長閘含基期效應／`grp_score`／`pool_sort_key`／`in_pool`／`timing_lamp`，經 `scripts/engine/build_arena.py` `row_dict`／`_flat_view` 呼叫）跑在 $10億–$200億市值帶（GRP 席位 $200億地板之下，零重疊是設計）；母體讀 `data/engine/universe.json` ∪ `docs/dd-screener/latest.json`（`--include-non-dd` 已把 QGM 品質池併入同一套 v5 欄位），查不到 v5 欄位或市值未知者計入「資料不足」如實列計數，不猜測湊池。無核心席、無月頻輪動（「只看不進倉位」），改為每日隨 GRP 席位 `--daily` 一起重算（`.github/workflows/daily-taipei-morning.yml` Step 2b，鏡射進 `daily-non-fundamental-refresh.yml`）。`scripts/generate_list_forecasts.py` 的 `picks-baofa`／`picks-late` producer 降為 dormant（PREREG claim_template 保留不刪，讀空陣列自然產生 0 筆草案並印明理由）。 | 2026-09-17 | 持有人拍板：爆發（循環拐點型）追的是循環股價格動能，與 v5 席位引擎 thesis「品質派資格 ∩ 獲利上修排序 ∩ 突破還原歷史新高、價格動能整個退出排序」正面矛盾；站上記分板顯示循環轉折形狀（n=20）期中報酬中位數 −2.8%、虧損率 55%，是輸家形狀不是贏家形狀，沒有理由讓精選榜繼續產這個形狀的候選。十倍組原 gate-set（v0.1/v0.2）是與 GRP 席位完全獨立的一把尺（機械抓取六條件 vs 品質派資格＋上修排序＋歷史新高板機），兩把尺長期並存造成「同一頁兩套邏輯、讀者要學兩遍」的認知成本，且原 gate-set 從未做過回溯考卷驗證（未調參常數，見舊檔頭「未調參」標記散布六條件）；統一為同一套已通過 v5 校準的規則，只換市值帶，是更低風險的做法。 | 小市值池「可買」名單（時機燈綠/橘）連續 8 週掛零、且同期 GRP 席位可買名單非零（顯示不是市場普遍無標的，是市值帶下規則系統性篩不出東西）→ 檢討是否小市值股結構性缺 Koyfin 三年期成長預估（`eps_fy1_fy3_cagr_pct`），若命中率長期 <10% 則考慮成長閘對此帶降級為 2 年 fallback 可採計（不同於 GRP 席位本身的門檻，需另立分支，不可直接改 `grp.py` 通用常數）；或 12 週小市值池「可買」名字中位報酬連兩次月度對照顯著落後同期 GRP 席位「可買」名字 ≥5 個百分點 → 降為 display-only（拿掉「只看不進倉位」的隱含期待，改標「觀察池，無績效追蹤意義」）。 | — |
+
+加一提刪一（本次提名候刪審查）：**v2 乙軌雙守門**（峰頂／共識路徑下彎，`scripts/build_picks.py` 原 `build_baofa()` 內）——隨爆發組整組退役，這條規則已無任何呼叫路徑（orphaned code，本次一併刪除），提名審計欄正式記為「已隨來源退役，非規則本身失效」，供 2026-10 校準輪存查，不再視為待審的獨立判斷類規則。
+

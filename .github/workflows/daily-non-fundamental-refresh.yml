@@ -70,6 +70,13 @@ jobs:
         run: python scripts/engine/build_arena.py --daily || echo "::warning::daily arena refresh failed"
         continue-on-error: true
 
+      # 精選榜「十倍」組 v5 小市值池（2026-09-17 持有人拍板「精選榜改版」）：與
+      # daily-taipei-morning.yml（實際排程跑這步的班次）同步加這步，本檔排程已停用
+      # 只留手動 dispatch，保持一致避免手動跑出跟排程不同的池狀態。
+      - name: Step 2b — Picks tenbagger v5 small-cap pool daily refresh
+        run: python scripts/build_tenbagger.py || echo "::warning::tenbagger v5 small-cap pool refresh failed"
+        continue-on-error: true
+
       - name: Step 3 — Quality-Entry screener
         run: python scripts/build_quality_entry.py
         continue-on-error: true
@@ -134,7 +141,8 @@ jobs:
                   docs/dd-screener/sop-funnel/ \
                   docs/engine/arena.json \
                   docs/engine/_board_body.html \
-                  docs/engine/board.txt
+                  docs/engine/board.txt \
+                  docs/picks/tenbagger.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
