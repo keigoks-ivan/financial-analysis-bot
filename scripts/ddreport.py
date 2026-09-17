@@ -5438,8 +5438,10 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
     total_cost = (ledger.get("summary") or {}).get("cost_usd", 0.0)
     # 2026-09-10（WP-B）：「v17 全帳 X.XM」只算 cache_read 低估真成本，改成
     # 「v17 $Z.ZZ／X.XM」——$ 在前（真成本），cache_read 仍留在後面當量級參考。
-    commit_subject = "Add {0} {1} {2}（{3}｜{4}；v17 ${5:.2f}／{6:.1f}M）".format(
-        ticker, label, date, verdict, role, total_cost, total_m,
+    # 2026-09-17：管線字樣改讀 manifest.pipeline（dd2 為 "dd2-v20"；舊鏈 manifest 無此鍵→維持 v17）。
+    pipeline_tag = manifest.get("pipeline") or "v17"
+    commit_subject = "Add {0} {1} {2}（{3}｜{4}；{7} ${5:.2f}／{6:.1f}M）".format(
+        ticker, label, date, verdict, role, total_cost, total_m, pipeline_tag,
     )
     if not sync_later:
         commit_subject += "; resync research+screener"
