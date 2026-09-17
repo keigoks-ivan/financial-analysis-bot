@@ -494,6 +494,29 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
         <br><em>資料來源：</em><code>scripts/load_eps_estimates_xlsx.py</code> 解析 Koyfin xlsx 選填欄位 → <code>scripts/build_dd_screener.py</code> 的 <code>compute_roic_decomposition()</code> 純函式計算，寫入 <code>latest.json</code> 每檔的對應欄位；上方 chip 列「ROIC 來源」可依四象限篩選。
       </li>
 
+      <li><strong>體質</strong>：DD 技能既有的<strong>體質五項 veto</strong>——毛利連降 / FCF對淨利率偏低 / 營收連四季負 / 槓桿(淨負債/EBITDA>3x) / FY1 連三個月下修，逐字搬進 screener，不新創門檻。數字＝不合格項數；<code>0-2</code> 項＝維持評等、<code>3</code> 項＝降一級、<code>4-5</code> 項＝拒絕（顏色對應）。hover 看命中哪幾項。
+        <br><em>來源：</em><code>scripts/build_dd_screener.py</code> 的 <code>compute_fundamental_gates()</code>；FY1 連三月下修那一項另需 <code>docs/dd-screener/eps-estimates-snapshots/</code> 三份月度 baseline + 匯率／ADR 正規化，任一步查無資料即顯示未知（不計入不合格）。全部選填，未覆蓋的名字顯示 <code>—</code>。
+      </li>
+
+      <li><strong>衰退訊號</strong>：6 項機械指標（毛利連兩年降 / EPS 成長靠財務工程 / FCF 遜於淨利 / SBC 佔營收偏高 / 資本支出侵蝕 FCF / 營收連四季負）命中幾項的燈號 + 計數——<code>🟢 0</code> 項／<code>🟡 1-2</code> 項／<code>🔴 3-4</code> 項／<code>⛔ ≥5</code> 項。hover 看命中哪幾項。
+        <br><em>來源：</em><code>compute_fundamental_gates()</code>，每項獨立判斷缺資料則不計入（不會虛報全綠）。
+      </li>
+
+      <li><strong>營運槓桿</strong>：營收成長% − 營業利益成長%（僅營業利益為正時計算）——負值＝<strong>利潤率擴張</strong>（成本控制優於營收成長）；<code>0-3pp</code>＝<strong>接近平衡</strong>；<code>3-7pp</code>＝<strong>壓縮</strong>；<code>&gt;7pp</code>＝<strong>嚴重壓縮</strong>（成本吃掉營收成長）。hover 看實際 pp 差。
+      </li>
+
+      <li><strong>資本配置</strong>：機械版 2-of-3 評等（<strong>不是</strong> DD 報告內 LLM 質性評等）——股數稀釋率年化 ≤1.5%（庫藏股使其為負）、庫藏股佔 FCF ≤80%（或無庫藏股）、槓桿過關（同「體質」欄槓桿項）三項各自過關與否，<code>3</code> 項過關＝<code>A</code>、<code>2</code> 項＝<code>B</code>、<code>≤1</code> 項＝<code>C</code>；已知項 &lt;2 顯示 <code>—</code>。hover 看稀釋率／庫藏股佔FCF／SBC佔營收三個數字。
+      </li>
+
+      <li><strong>估值 vs 5Y</strong>：NTM 本益比 ÷ 過去 5 年平均本益比——<code>&gt;1.5x</code> 標紅，代表目前估值明顯貴於自身歷史區間（非同業比較）。hover 另附 PB 對 5 年均值倍數（<code>&gt;2.0x</code> 視為偏貴）。
+      </li>
+
+      <li><strong>目標價</strong>：分析師目標價平均 ÷ 現價 − 1（%）——皆為當地掛牌貨幣（如台股用 TWD），僅供比率使用，不與美股價格混算。hover 看目標價區間（最高/最低）與高低比（<code>&gt;2.5x</code> 代表分析師分歧偏大，數字參考價值降低）。
+      </li>
+
+      <li><strong>動能</strong>：<code>RSI(14) / 近 6 個月報酬率</code>——RSI 右上標 <code>*</code> 代表 &gt;70 過熱；6 個月報酬門檻 <code>&lt;100%</code> 放行／<code>100-150%</code> 邊界／<code>&gt;150%</code> 擋下（顏色對應）。hover 標註 RSI 是否可信——距 52 週高點 &lt;3% 時 RSI 容易失真，不宜單獨引用。
+      </li>
+
       <li><strong>FY+1→FY+3 CAGR</strong>：Excel buy-side forward 2Y CAGR（%）— <strong>v1.9 起改用 Excel snapshot</strong>。
         <br><em>來源：</em>Excel <code>cagr_fy1_fy3_pct</code>（FY+1 → FY+3 純前瞻 2 年期複合成長率，目前約 219/241 ticker 覆蓋，動態隨 Koyfin watchlist 增刪）；少數 yfinance-only ticker（6146.T / 6857.T 等無 Excel 資料）fallback yfinance「+1y / +2y」row；SU / ABB 因 Koyfin export 資料異常於 <code>scripts/load_eps_estimates_xlsx.py</code> <code>_SKIP_TICKERS</code> 名單中略過。
         <br><em>窗口語意：</em>跟舊版「yearAgo → FY+1」(含 1 個過去實際 EPS) 不同；現在是 2 個前瞻 estimate (FY+1 vs FY+3) — buy-side 對未來 2 年的純前瞻 expectation。
@@ -1322,6 +1345,106 @@ function _renderImpliedGrowthCell(s) {
        + v.toFixed(1) + '%</td>';
 }
 
+// 2026-09-17: 體質五項 veto + 6 組機械化 gate —— 全部從 build_dd_screener.py
+// compute_fundamental_gates() 衍生（見其 docstring），資料來源是 35 個新增選填
+// Koyfin xlsx 欄位（scripts/load_eps_estimates_xlsx.py 2026-09-17 段）。與 ROIC
+// 拆解一樣，全部選填 —— 舊 xlsx 或 Koyfin 未覆蓋的名字，s.fund 全 None，一律顯示 —。
+function _fundHasAnyData(s) {
+  var f = s.fund;
+  if (!f) return false;
+  for (var k in f) {
+    if (Object.prototype.hasOwnProperty.call(f, k) && f[k] !== null && f[k] !== undefined) return true;
+  }
+  return false;
+}
+
+function _renderQualityVetoCell(s) {
+  // quality_veto_level is null when none of the 5 veto items could be
+  // evaluated at all (not just "no fund data") — treat the same as —.
+  if (!_fundHasAnyData(s) || !s.quality_veto_level) return '<td style="color:var(--muted)">—</td>';
+  var n = s.quality_veto_fail_count || 0;
+  var level = s.quality_veto_level;
+  var fails = s.quality_veto_fails || [];
+  var color = (level === '拒絕') ? 'var(--neg)' : (level === '降一級') ? 'var(--warn)' : 'var(--sec)';
+  var tip = 'DD 體質五項 veto（毛利連降／FCF對淨利率／營收連四季負／槓桿／FY1連三月下修）：'
+    + level + '，' + n + ' 項不合格' + (fails.length ? '（' + fails.join('、') + '）' : '（五項皆合格或未知）');
+  return '<td title="' + tip + '" style="color:' + color + ';font-weight:600">' + n + '</td>';
+}
+
+function _renderDeclineSignalCell(s) {
+  if (!_fundHasAnyData(s)) return '<td style="color:var(--muted)">—</td>';
+  var light = s.decline_signal_light || '🟢';
+  var n = s.decline_signal_count || 0;
+  var signals = s.decline_signals || [];
+  var tip = '衰退訊號（6 項機械指標命中幾項）：' + n + ' 項' + (signals.length ? '：' + signals.join('、') : '（無命中）');
+  return '<td title="' + tip + '">' + light + ' ' + n + '</td>';
+}
+
+function _renderOlDivergenceCell(s) {
+  var label = s.ol_divergence_label;
+  if (!label) return '<td style="color:var(--muted)">—</td>';
+  var pp = s.ol_divergence_pp;
+  var color = (label === '嚴重壓縮') ? 'var(--neg)' : (label === '壓縮') ? 'var(--warn)'
+            : (label === '利潤率擴張') ? 'var(--pos)' : 'var(--sec)';
+  var ppT = (typeof pp === 'number') ? pp.toFixed(2) + 'pp' : '—';
+  return '<td title="營收成長% − 營業利益成長% = ' + ppT + '（僅營業利益為正時計算）" style="color:' + color + '">' + label + '</td>';
+}
+
+function _renderCapallocCell(s) {
+  var grade = s.capalloc_mech_grade;
+  if (!grade) return '<td style="color:var(--muted)">—</td>';
+  var color = (grade === 'A') ? 'var(--pos)' : (grade === 'B') ? 'var(--sec)' : 'var(--neg)';
+  var dil = s.sbc_dilution_pct_yr, bb = s.buyback_fcf_pct, sbc = s.sbc_pct_rev;
+  var dilT = (typeof dil === 'number') ? dil.toFixed(2) + '%/yr' : '—';
+  var bbT = (typeof bb === 'number') ? bb.toFixed(1) + '%' : '—（無庫藏股或FCF為負）';
+  var sbcT = (typeof sbc === 'number') ? sbc.toFixed(1) + '%' : '—';
+  var tip = '資本配置機械版（與 DD 報告 LLM 資本配置評等是不同東西）｜股數稀釋率(年化) ' + dilT
+    + '｜庫藏股佔FCF ' + bbT + '｜SBC佔營收 ' + sbcT;
+  return '<td title="' + tip + '" style="color:' + color + ';font-weight:600">' + grade + '</td>';
+}
+
+function _renderValuationVs5yCell(s) {
+  var v = s.pe_vs_5y_x;
+  if (v === null || v === undefined) return '<td style="color:var(--muted)">—</td>';
+  var flag = s.pe_vs_5y_flag;
+  var color = flag ? 'var(--neg)' : 'var(--sec)';
+  var pbv = s.pb_vs_5y_x;
+  var pbT = (typeof pbv === 'number') ? pbv.toFixed(2) + 'x' : '—';
+  var tip = 'NTM 本益比 ÷ 過去 5 年平均本益比' + (flag ? '（> 1.5x，貴於自身歷史）' : '') + '｜PB 對 5 年均值 ' + pbT;
+  return '<td title="' + tip + '" style="color:' + color + (flag ? ';font-weight:600' : '') + '">' + v.toFixed(2) + 'x</td>';
+}
+
+function _renderTargetUpsideCell(s) {
+  var v = s.target_upside_pct;
+  if (v === null || v === undefined) return '<td style="color:var(--muted)">—</td>';
+  var color = (v >= 0) ? 'var(--pos)' : 'var(--neg)';
+  var rangeX = s.target_range_x;
+  var rangeT = (typeof rangeX === 'number') ? rangeX.toFixed(2) + 'x' : '—';
+  var f = s.fund || {};
+  var hi = (typeof f.target_high === 'number') ? f.target_high.toFixed(2) : '—';
+  var lo = (typeof f.target_low === 'number') ? f.target_low.toFixed(2) : '—';
+  var flagNote = s.target_range_flag ? '（分歧偏大 >2.5x）' : '';
+  var tip = '分析師目標價平均 vs 現價（皆當地掛牌貨幣，僅供比率使用）｜目標價區間 ' + lo + ' ~ ' + hi
+    + '（高/低比 ' + rangeT + flagNote + '）';
+  var sign = v > 0 ? '+' : '';
+  return '<td title="' + tip + '" style="color:' + color + '">' + sign + v.toFixed(1) + '%</td>';
+}
+
+function _renderMomentumCell(s) {
+  var rsi = s.rsi14, ret = s.return_6m_pct;
+  if ((rsi === null || rsi === undefined) && (ret === null || ret === undefined)) {
+    return '<td style="color:var(--muted)">—</td>';
+  }
+  var gate = s.return_6m_gate;
+  var gateColor = (gate === '擋下') ? 'var(--neg)' : (gate === '邊界') ? 'var(--warn)' : 'var(--sec)';
+  var rsiT = (typeof rsi === 'number') ? rsi.toFixed(1) : '—';
+  var retT = (typeof ret === 'number') ? (ret > 0 ? '+' : '') + ret.toFixed(1) + '%' : '—';
+  var rsiMark = s.rsi_overheated ? '<sup style="color:var(--neg)" title="RSI(14) > 70 過熱">*</sup>' : '';
+  var usableNote = (s.rsi_usable === false) ? '｜距 52 週高點 <3%，RSI 易失真不可信' : '';
+  var tip = '近 6 個月報酬率門檻：' + (gate || '—') + '（<100% 放行／100-150% 邊界／>150% 擋下）' + usableNote;
+  return '<td title="' + tip + '" style="color:' + gateColor + '">' + rsiT + rsiMark + ' / ' + retT + '</td>';
+}
+
 function _renderLiveIRRInner(s) {
   // v1.7.3: 簡化為「只顯示最新數字」+ IRR 區間配色 — 拿掉 DD 對照 sub-line + 比較 tooltip
   // live 缺值時 fallback 顯示 frozen DD 值（無 label）；heuristic 標 `*`。
@@ -1410,6 +1533,14 @@ function buildTable(stocks) {
       th += _thSortable('增量 ROIC', 'incremental_roic_pct', {title: '近 3 個財年：(今年 NOPAT − 3 年前 NOPAT) ÷ 新增投入資本 —— 新增的一塊錢資本賺到多少報酬，判斷成長是否值得繼續投'});
       th += _thSortable('再投資率', 'reinvest_rate_pct', {title: '近 3 年新增投入資本 ÷ 期間年化 NOPAT —— 公司把多少獲利拿去繼續投資擴張'});
       th += _thSortable('隱含成長', 'implied_growth_pct', {title: '增量 ROIC × 再投資率 —— 機械推算的內生成長率上限，描述器非預測'});
+      // 2026-09-17: 體質五項 veto + 6 組機械化 gate —— 見 compute_fundamental_gates()。
+      th += _thSortable('體質', 'quality_veto_fail_count', {title: 'DD 體質五項 veto：毛利連降／FCF對淨利率／營收連四季負／槓桿／FY1連三月下修 —— 0-2 項不合格維持評等、3 項降一級、4-5 項拒絕，hover 看命中哪幾項'});
+      th += _thSortable('衰退訊號', 'decline_signal_count', {title: '衰退訊號計數（6 項機械指標）：🟢 0 項／🟡 1-2 項／🔴 3-4 項／⛔ ≥5 項，hover 看命中哪幾項'});
+      th += _thSortable('營運槓桿', 'ol_divergence_pp', {title: '營收成長% − 營業利益成長%（僅營業利益為正時計算）—— 負值代表利潤率擴張，正值越大代表成本吃掉營收成長越嚴重'});
+      th += _thSortable('資本配置', 'capalloc_mech_grade', {title: '資本配置機械版評等（股數稀釋率≤1.5%/yr、庫藏股佔FCF≤80%、槓桿過關，三項符合幾項）—— 與 DD 報告內 LLM 資本配置評等是不同東西'});
+      th += _thSortable('估值 vs 5Y', 'pe_vs_5y_x', {title: 'NTM 本益比 ÷ 過去 5 年平均本益比 —— 高於 1.5x 代表估值明顯貴於自身歷史'});
+      th += _thSortable('目標價', 'target_upside_pct', {title: '分析師目標價平均 ÷ 現價 − 1（皆當地掛牌貨幣，僅供比率使用）；hover 看目標價區間與最高/最低'});
+      th += _thSortable('動能', 'rsi14', {title: 'RSI(14) ＋ 近 6 個月報酬率 —— RSI>70 過熱；6 個月報酬 <100% 放行／100-150% 邊界／>150% 擋下；hover 看 RSI 是否可信（距 52 週高點 <3% 時 RSI 易失真）'});
     }
     return th;
   }).join('');
@@ -1483,7 +1614,10 @@ function buildTable(stocks) {
       if (c.key === 'roic') {
         html += _renderRoicQuadrantCell(s) + _renderRoicTrendCell(s)
               + _renderIncrementalRoicCell(s) + _renderReinvestRateCell(s)
-              + _renderImpliedGrowthCell(s);
+              + _renderImpliedGrowthCell(s)
+              + _renderQualityVetoCell(s) + _renderDeclineSignalCell(s) + _renderOlDivergenceCell(s)
+              + _renderCapallocCell(s) + _renderValuationVs5yCell(s) + _renderTargetUpsideCell(s)
+              + _renderMomentumCell(s);
       }
       return html;
     }).join('');

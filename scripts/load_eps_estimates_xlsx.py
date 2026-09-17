@@ -57,6 +57,37 @@ percent) without needing the header text as a cue. When the header itself
 says "%" (e.g. "ROIC %", the column refresh-eps-screener-web writes), the
 value is trusted as already being in percent units and passed through as-is.
 
+35 more optional columns (2026-09-17, fundamental-gates screener additions —
+see scripts/build_dd_screener.py compute_fundamental_gates()): EXACT header
+strings only (`_NEW_FUND_HEADER_MAP` below), matched against the raw header
+text BEFORE the loose substring rules above so there is no risk of a partial
+token (e.g. "ebit", "revenue", "fy") from these new columns colliding with
+the existing ebit_margin/tax_rate/rev_fy/ebit_fy/ic_fy loose rules — this is
+exactly the bug that once made AAPL's legacy `ebit_fy` read 9.58 (a stray
+"Op Income Growth YoY %" cell) instead of 133050 (the real "EBIT FY" cell).
+All 35 are OPTIONAL and None on any pre-2026-09-17 xlsx. Every one of these
+headers already carries an explicit unit marker ("%" or "x") in this
+Koyfin export and the cell value is already in that unit (e.g. "ROIC %"
+66.77 means 66.77%, not 0.6677) — so unlike roic_pct/fcf_margin_pct above,
+no ratio-vs-percent detection is needed; all 35 are plain float passthrough
+via `_to_num` (sign preserved — Capex LTM / Buyback LTM are negative
+cash-flow figures, Net Debt LTM negative means net cash; abs()/derivation
+happens downstream in compute_fundamental_gates, not here):
+
+  "Rev YoY FQ0/-1/-2/-3 %"          -> rev_yoy_fq0_pct..rev_yoy_fq3_pct (quarterly revenue YoY, latest quarter first)
+  "Gross Margin LTM/FY-1/-2/-3 %"   -> gm_ltm_pct, gm_fy1_pct, gm_fy2_pct, gm_fy3_pct
+  "Sales LTM" / "Op Income LTM"     -> sales_ltm, ebit_ltm (USD millions)
+  "Net Debt / EBITDA x"             -> net_debt_ebitda_x (blank when net cash / negative EBITDA)
+  "Sales Growth YoY %" / "Op Income Growth YoY %" -> sales_growth_fy_pct, ebit_growth_fy_pct
+  "Diluted Shares FY" / "-FY-3"     -> dil_shares_fy, dil_shares_fy3 (millions)
+  "SBC/Capex/FCF/Net Debt/Buyback LTM" -> sbc_ltm, capex_ltm, fcf_ltm, net_debt_ltm, buyback_ltm (USD millions)
+  "CCC Days"                        -> ccc_days
+  "PE NTM x" / "PE NTM 5Y Avg x" / "PB x" / "PB 5Y Avg x" -> pe_ntm_x, pe_ntm_5y_avg_x, pb_x, pb_5y_avg_x
+  "RSI 14" / "Price Chg 6M %"       -> rsi14, price_chg_6m_pct
+  "Target High/Low/Avg" / "Last Price Local" -> target_high, target_low, target_avg, last_price_local (LOCAL listing currency)
+  "Net Income Margin LTM %" / "Est Rev CAGR 3Y %" / "Est EPS CAGR 3Y %" / "Below 52W High %"
+      -> ni_margin_ltm_pct, est_rev_cagr_3y_pct, est_eps_cagr_3y_pct, below_52w_high_pct
+
 Sheet 2 "Notes" stores snapshot date at B2, and — optionally, only present on
 xlsx carrying the Koyfin ROIC/FCF Margin columns — a quality-source label at
 B3 (defaults to "koyfin-web" when absent, matching the A2/B2 label/value
@@ -248,6 +279,49 @@ def _col_letter(ref: str) -> str:
     return "".join(ch for ch in ref if ch.isalpha())
 
 
+# 2026-09-17: exact-header → field-name map for the 35 new fundamental-gates
+# columns (see module docstring). Matched verbatim against the stripped
+# header text (case-sensitive, no substring/token matching) so these can
+# never collide with the loose "ebit"/"revenue"/"fy"/"5y" rules below.
+_NEW_FUND_HEADER_MAP: dict[str, str] = {
+    "Rev YoY FQ0 %": "rev_yoy_fq0_pct",
+    "Rev YoY FQ-1 %": "rev_yoy_fq1_pct",
+    "Rev YoY FQ-2 %": "rev_yoy_fq2_pct",
+    "Rev YoY FQ-3 %": "rev_yoy_fq3_pct",
+    "Gross Margin LTM %": "gm_ltm_pct",
+    "Gross Margin FY-1 %": "gm_fy1_pct",
+    "Gross Margin FY-2 %": "gm_fy2_pct",
+    "Gross Margin FY-3 %": "gm_fy3_pct",
+    "Sales LTM": "sales_ltm",
+    "Op Income LTM": "ebit_ltm",
+    "Net Debt / EBITDA x": "net_debt_ebitda_x",
+    "Sales Growth YoY %": "sales_growth_fy_pct",
+    "Op Income Growth YoY %": "ebit_growth_fy_pct",
+    "Diluted Shares FY": "dil_shares_fy",
+    "Diluted Shares FY-3": "dil_shares_fy3",
+    "SBC LTM": "sbc_ltm",
+    "Capex LTM": "capex_ltm",
+    "FCF LTM": "fcf_ltm",
+    "Net Debt LTM": "net_debt_ltm",
+    "Buyback LTM": "buyback_ltm",
+    "CCC Days": "ccc_days",
+    "PE NTM x": "pe_ntm_x",
+    "PE NTM 5Y Avg x": "pe_ntm_5y_avg_x",
+    "PB x": "pb_x",
+    "PB 5Y Avg x": "pb_5y_avg_x",
+    "RSI 14": "rsi14",
+    "Price Chg 6M %": "price_chg_6m_pct",
+    "Target High": "target_high",
+    "Target Low": "target_low",
+    "Target Avg": "target_avg",
+    "Last Price Local": "last_price_local",
+    "Net Income Margin LTM %": "ni_margin_ltm_pct",
+    "Est Rev CAGR 3Y %": "est_rev_cagr_3y_pct",
+    "Est EPS CAGR 3Y %": "est_eps_cagr_3y_pct",
+    "Below 52W High %": "below_52w_high_pct",
+}
+
+
 def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
     rows = sheet_root.findall(".//s:row", NS)
     if not rows:
@@ -264,9 +338,14 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
         if not isinstance(v, str):
             continue
         col = _col_letter(c.attrib.get("r", ""))
-        lv = v.strip().lower()
+        raw = v.strip()
+        lv = raw.lower()
         if lv == "ticker":
             header_map[col] = "ticker"
+        elif raw in _NEW_FUND_HEADER_MAP:
+            # 2026-09-17: exact match, checked BEFORE any loose substring rule
+            # below — see module docstring + _NEW_FUND_HEADER_MAP comment.
+            header_map[col] = _NEW_FUND_HEADER_MAP[raw]
         elif "fy1" in lv and "eps" in lv:
             header_map[col] = "fy1"
         elif "fy2" in lv and "eps" in lv:
@@ -380,6 +459,11 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
             "ic_fy": _to_num(rec.get("ic_fy")),
             "ic_fy3": _to_num(rec.get("ic_fy3")),
         }
+        # 2026-09-17: 35 fundamental-gates columns — plain float passthrough,
+        # see module docstring (_NEW_FUND_HEADER_MAP already carries the
+        # final field name, so no per-field renaming needed here).
+        for _fname in _NEW_FUND_HEADER_MAP.values():
+            out[ticker][_fname] = _to_num(rec.get(_fname))
     return out
 
 

@@ -1880,6 +1880,340 @@ def compute_roic_decomposition(record: dict | None, roic_pct) -> dict:
     return out
 
 
+# 2026-09-17: 體質五項 veto zh 標籤 — see compute_fundamental_gates() item A.
+QUALITY_VETO_LABELS = {
+    "gm_3y_decline": "毛利連降",
+    "fcf_ni": "FCF/淨利",
+    "rev_4q_negative": "營收連四季負",
+    "leverage": "槓桿",
+    "eps_fy1_consec_down": "FY1連三月下修",
+}
+
+# A5 baseline months for eps_fy1_consec_down — canonical month-end snapshots
+# under docs/dd-screener/eps-estimates-snapshots/.
+_EPS_FY1_BASELINE_MONTHS = ("2026-06", "2026-07", "2026-08")
+_eps_fy1_baseline_cache: dict | None = None
+
+
+def _load_eps_fy1_baselines() -> dict:
+    """Load the 3 monthly EPS snapshots used by compute_eps_fy1_consec_down()
+    (compute_fundamental_gates item A5). Cached at module level, same pattern
+    as _load_prev_month_snapshot()."""
+    global _eps_fy1_baseline_cache
+    if _eps_fy1_baseline_cache is not None:
+        return _eps_fy1_baseline_cache
+    snapshot_dir = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"
+    out = {}
+    for month in _EPS_FY1_BASELINE_MONTHS:
+        try:
+            out[month] = json.loads((snapshot_dir / f"{month}.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            out[month] = {}
+    _eps_fy1_baseline_cache = out
+    return out
+
+
+def compute_eps_fy1_consec_down(ticker: str, yf_ticker: str, eps_fy1_current: float | None,
+                                 current_snapshot_date: str | None,
+                                 reporting_ccy_cache: dict, fx_cache: dict,
+                                 baselines: dict | None = None) -> str | None:
+    """體質五項 veto item A5 [timing-appendix §B/H]: fail if FY1 EPS was
+    revised down in each of the last 3 monthly baselines (2026-06->07,
+    07->08, 08->current xlsx), each step <= -0.5%. FX-normalized (to the
+    reporting currency) + ADR-adjusted exactly like _compute_fy_eps_revision
+    does, so non-USD names / ADRs aren't false positives from a pure FX or
+    share-count-basis move.
+
+    Kept separate from compute_fundamental_gates() (which stays a pure,
+    network-free function) because this item alone needs the 3 on-disk
+    baseline snapshots + get_reporting_currency()/get_fx_rate() (yfinance-
+    backed, cached). `baselines` is injectable so tests can supply synthetic
+    snapshots without touching disk/network. Returns None (unknown) when
+    any step's data or FX rate can't be resolved — never raises.
+    """
+    baselines = baselines if baselines is not None else _load_eps_fy1_baselines()
+    points = []
+    for month in _EPS_FY1_BASELINE_MONTHS:
+        snap = baselines.get(month) or {}
+        row = (snap.get("tickers") or {}).get(ticker)
+        if row is None:
+            return None
+        raw = row.get("eps_fy_curr") or row.get("eps_0y")
+        adj = apply_adr_ratio(ticker, {"fy1": raw}).get("fy1")
+        points.append((snap.get("snapshot_date") or month, adj))
+    points.append((current_snapshot_date, eps_fy1_current))
+    if any(v is None for _, v in points):
+        return None
+
+    currency = get_reporting_currency(ticker, yf_ticker, reporting_ccy_cache)
+    steps = []
+    for (d0, v0), (d1, v1) in zip(points, points[1:]):
+        fx0 = fx1 = None
+        if currency and currency.upper() != "USD":
+            fx0 = get_fx_rate(currency, d0, fx_cache) if d0 else None
+            fx1 = get_fx_rate(currency, d1, fx_cache) if d1 else None
+        pct, _ = compute_fx_normalized_revision(v1, v0, currency, fx1, fx0)
+        if pct is None:
+            return None
+        steps.append(pct)
+    return "fail" if all(p <= -0.5 for p in steps) else "pass"
+
+
+_FUND_RAW_FIELDS = (
+    "rev_yoy_fq0_pct", "rev_yoy_fq1_pct", "rev_yoy_fq2_pct", "rev_yoy_fq3_pct",
+    "gm_ltm_pct", "gm_fy1_pct", "gm_fy2_pct", "gm_fy3_pct",
+    "sales_ltm", "ebit_ltm", "net_debt_ebitda_x",
+    "sales_growth_fy_pct", "ebit_growth_fy_pct",
+    "dil_shares_fy", "dil_shares_fy3",
+    "sbc_ltm", "capex_ltm", "fcf_ltm", "net_debt_ltm", "buyback_ltm",
+    "ccc_days", "pe_ntm_x", "pe_ntm_5y_avg_x", "pb_x", "pb_5y_avg_x",
+    "rsi14", "price_chg_6m_pct",
+    "target_high", "target_low", "target_avg", "last_price_local",
+    "ni_margin_ltm_pct", "est_rev_cagr_3y_pct", "est_eps_cagr_3y_pct",
+    "below_52w_high_pct",
+)
+
+
+def compute_fundamental_gates(record: dict | None, roic_quadrant_code: str | None,
+                               eps_fy1: float | None,
+                               eps_fy1_consec_down: str | None = None) -> dict:
+    """DD 技能既有的機械化規則逐字搬進 screener（2026-09-17）——體質五項 veto
+    [timing-appendix §B/H] + 六組衍生 gate（營運槓桿 QC-27 / 毛利觸發 QC-26 /
+    資本配置機械版 問四 / capex 強度 §1 / 虧損股 gate QC-45 / 衰退訊號 問三 /
+    估值對自身歷史 閘3閘5 / 目標價分歧 #23 / 動能 rows 5,8a / CCC）。不新創門檻，
+    來源見各節內註解。
+
+    `record` is the RAW per-ticker Excel dict (ExcelSnapshot.get(t)) — same
+    convention as compute_roic_decomposition(): aggregate financials/margins/
+    prices, not per-share EPS, so no ADR adjustment. Target High/Low/Avg and
+    Last Price Local are the listing's LOCAL currency and only ever used as
+    ratios to each other here (never mixed with USD).
+
+    `eps_fy1_consec_down` (item A5) is computed upstream by
+    compute_eps_fy1_consec_down() — needs network/disk I/O, so it's passed in
+    as a plain "pass"|"fail"|None to keep this function itself pure and
+    unit-testable without network. All outputs None when the underlying
+    inputs are missing; every percent/ratio value rounded to 2dp.
+    """
+    rec = record or {}
+
+    def _n(key):
+        v = rec.get(key)
+        return float(v) if isinstance(v, (int, float)) else None
+
+    def _r2(x):
+        return round(x, 2) if isinstance(x, (int, float)) else None
+
+    fund = {k: _r2(_n(k)) for k in _FUND_RAW_FIELDS}
+    out = {"fund": fund}
+
+    gm_ltm, gm_fy1, gm_fy2, gm_fy3 = (fund["gm_ltm_pct"], fund["gm_fy1_pct"],
+                                       fund["gm_fy2_pct"], fund["gm_fy3_pct"])
+    ni_margin = fund["ni_margin_ltm_pct"]
+    fcf_margin = _r2(_n("fcf_margin_pct"))  # pre-existing 2026-09-09 Koyfin column, same record
+    net_debt_ebitda = fund["net_debt_ebitda_x"]
+    net_debt_ltm = fund["net_debt_ltm"]
+    rev_yoy = [fund["rev_yoy_fq0_pct"], fund["rev_yoy_fq1_pct"],
+               fund["rev_yoy_fq2_pct"], fund["rev_yoy_fq3_pct"]]
+    sales_growth, ebit_growth = fund["sales_growth_fy_pct"], fund["ebit_growth_fy_pct"]
+    ebit_ltm = fund["ebit_ltm"]
+    dil_fy, dil_fy3 = fund["dil_shares_fy"], fund["dil_shares_fy3"]
+    sbc_ltm, capex_ltm, fcf_ltm, buyback_ltm = (fund["sbc_ltm"], fund["capex_ltm"],
+                                                 fund["fcf_ltm"], fund["buyback_ltm"])
+    sales_ltm = fund["sales_ltm"]
+
+    # --- A. 體質五項 veto ---------------------------------------------------
+    veto = {}
+
+    if None not in (gm_ltm, gm_fy1, gm_fy2, gm_fy3):
+        monotonic = gm_ltm < gm_fy1 < gm_fy2 < gm_fy3
+        veto["gm_3y_decline"] = "fail" if monotonic and (gm_fy3 - gm_ltm) > 2.0 else "pass"
+    else:
+        veto["gm_3y_decline"] = None
+
+    fcf_ni_ratio = None
+    if fcf_margin is not None and ni_margin is not None and ni_margin > 0:
+        fcf_ni_ratio = fcf_margin / ni_margin
+        veto["fcf_ni"] = "fail" if fcf_ni_ratio < 0.7 else "pass"
+    else:
+        veto["fcf_ni"] = None
+
+    if all(v is not None for v in rev_yoy):
+        veto["rev_4q_negative"] = "fail" if all(v < 0 for v in rev_yoy) else "pass"
+    else:
+        veto["rev_4q_negative"] = None
+
+    if net_debt_ebitda is not None:
+        veto["leverage"] = "fail" if net_debt_ebitda > 3.0 else "pass"
+    elif net_debt_ltm is not None:
+        veto["leverage"] = "pass" if net_debt_ltm < 0 else None
+    else:
+        veto["leverage"] = None
+
+    veto["eps_fy1_consec_down"] = eps_fy1_consec_down if eps_fy1_consec_down in ("pass", "fail") else None
+
+    fail_count = sum(1 for v in veto.values() if v == "fail")
+    known_count = sum(1 for v in veto.values() if v is not None)
+    out.update(veto)
+    out["quality_veto_fail_count"] = fail_count
+    out["quality_veto_fails"] = [QUALITY_VETO_LABELS[k] for k, v in veto.items() if v == "fail"]
+    if known_count == 0:
+        # No coverage at all (e.g. ticker predates the 2026-09-17 xlsx columns) —
+        # None, not a misleading "維持" default (see FE _fundHasAnyData() gate).
+        out["quality_veto_level"] = None
+    elif fail_count >= 4:
+        out["quality_veto_level"] = "拒絕"
+    elif fail_count == 3:
+        out["quality_veto_level"] = "降一級"
+    else:
+        out["quality_veto_level"] = "維持"
+
+    # --- B. Operating-leverage divergence [QC-27] ----------------------------
+    ol_divergence_pp = None
+    ol_divergence_label = None
+    if sales_growth is not None and ebit_growth is not None and ebit_ltm is not None and ebit_ltm > 0:
+        ol_divergence_pp = sales_growth - ebit_growth
+        if ol_divergence_pp < 0:
+            ol_divergence_label = "利潤率擴張"
+        elif ol_divergence_pp <= 3:
+            ol_divergence_label = "接近平衡"
+        elif ol_divergence_pp <= 7:
+            ol_divergence_label = "壓縮"
+        else:
+            ol_divergence_label = "嚴重壓縮"
+    out["ol_divergence_pp"] = _r2(ol_divergence_pp)
+    out["ol_divergence_label"] = ol_divergence_label
+
+    # --- C. Gross-margin trigger [QC-26] --------------------------------------
+    gm_yoy_pp = (gm_ltm - gm_fy1) if gm_ltm is not None and gm_fy1 is not None else None
+    out["gm_yoy_pp"] = _r2(gm_yoy_pp)
+    out["gm_trigger"] = (gm_yoy_pp < -1.5) if gm_yoy_pp is not None else None
+
+    # --- D. Capital allocation, mechanical 2-of-3 [問四] -----------------------
+    sbc_dilution_pct_yr = None
+    dilution_ok = None
+    if dil_fy is not None and dil_fy3 is not None and dil_fy3 > 0 and dil_fy > 0:
+        sbc_dilution_pct_yr = ((dil_fy / dil_fy3) ** (1 / 3) - 1) * 100
+        dilution_ok = sbc_dilution_pct_yr <= 1.5
+    out["sbc_dilution_pct_yr"] = _r2(sbc_dilution_pct_yr)
+
+    buyback_fcf_pct = None
+    buyback_ok = None
+    if buyback_ltm is not None:
+        if buyback_ltm == 0:
+            buyback_ok = True
+        elif fcf_ltm is not None and fcf_ltm > 0:
+            buyback_fcf_pct = abs(buyback_ltm) / fcf_ltm * 100
+            buyback_ok = buyback_fcf_pct <= 80
+    out["buyback_fcf_pct"] = _r2(buyback_fcf_pct)
+
+    sbc_pct_rev = (sbc_ltm / sales_ltm * 100) if sbc_ltm is not None and sales_ltm is not None and sales_ltm > 0 else None
+    out["sbc_pct_rev"] = _r2(sbc_pct_rev)
+
+    leverage_ok = (veto["leverage"] == "pass") if veto["leverage"] is not None else None
+    capalloc_items = [x for x in (dilution_ok, buyback_ok, leverage_ok) if x is not None]
+    if len(capalloc_items) < 2:
+        out["capalloc_mech_grade"] = None
+    else:
+        passes = sum(1 for x in capalloc_items if x)
+        out["capalloc_mech_grade"] = "A" if passes >= 3 else ("B" if passes == 2 else "C")
+
+    # --- E. Capex intensity [§1 預設尺] -----------------------------------------
+    capex_pct_rev = (abs(capex_ltm) / sales_ltm * 100) if capex_ltm is not None and sales_ltm is not None and sales_ltm > 0 else None
+    out["capex_pct_rev"] = _r2(capex_pct_rev)
+    out["capex_intensity_label"] = (
+        None if capex_pct_rev is None else ("輕" if capex_pct_rev < 5 else ("中" if capex_pct_rev < 10 else "重"))
+    )
+    capex_fcf_pct = (abs(capex_ltm) / fcf_ltm * 100) if capex_ltm is not None and fcf_ltm is not None and fcf_ltm > 0 else None
+    out["capex_fcf_pct"] = _r2(capex_fcf_pct)
+
+    # --- F. Unprofitable-company gates [QC-45] ---------------------------------
+    rule_of_40 = None
+    cash_runway_months = None
+    unprofitable = (ni_margin is not None and ni_margin < 0) or (eps_fy1 is not None and eps_fy1 < 0)
+    if unprofitable:
+        if sales_growth is not None and fcf_margin is not None:
+            rule_of_40 = sales_growth + fcf_margin
+        if fcf_ltm is not None and fcf_ltm < 0 and net_debt_ltm is not None and net_debt_ltm < 0:
+            cash_runway_months = (-net_debt_ltm) / (abs(fcf_ltm) / 12)
+    out["rule_of_40"] = _r2(rule_of_40)
+    out["rule_of_40_flag"] = (rule_of_40 < 20) if rule_of_40 is not None else None
+    out["cash_runway_months"] = _r2(cash_runway_months)
+    out["cash_runway_flag"] = (cash_runway_months < 12) if cash_runway_months is not None else None
+
+    # --- G. Decline-signal count [問三，6 個機械項] -------------------------------
+    est_rev_cagr, est_eps_cagr = fund["est_rev_cagr_3y_pct"], fund["est_eps_cagr_3y_pct"]
+    gm_2y_known = gm_ltm is not None and gm_fy1 is not None and gm_fy2 is not None
+    eps_engineer_known = est_eps_cagr is not None and est_rev_cagr is not None
+    decline_checks = (
+        (gm_2y_known, gm_2y_known and gm_ltm < gm_fy1 and gm_fy1 < gm_fy2, "毛利連兩年降"),
+        (eps_engineer_known, eps_engineer_known and (est_eps_cagr - est_rev_cagr) > 5, "EPS 成長靠財務工程"),
+        (fcf_ni_ratio is not None, fcf_ni_ratio is not None and fcf_ni_ratio < 0.75, "FCF 遜於淨利"),
+        (sbc_pct_rev is not None, sbc_pct_rev is not None and sbc_pct_rev > 5, "SBC 佔營收偏高"),
+        (capex_fcf_pct is not None, capex_fcf_pct is not None and capex_fcf_pct > 60, "資本支出侵蝕 FCF"),
+        (veto["rev_4q_negative"] is not None, veto["rev_4q_negative"] == "fail", "營收連四季負"),
+    )
+    decline_signals = [label for known, hit, label in decline_checks if known and hit]
+    out["decline_signal_count"] = len(decline_signals)
+    out["decline_signals"] = decline_signals
+    if len(decline_signals) == 0:
+        out["decline_signal_light"] = "🟢"
+    elif len(decline_signals) <= 2:
+        out["decline_signal_light"] = "🟡"
+    elif len(decline_signals) <= 4:
+        out["decline_signal_light"] = "🔴"
+    else:
+        out["decline_signal_light"] = "⛔"
+
+    # --- H. Valuation vs own history [閘3/閘5] -----------------------------------
+    pe_x, pe_5y = fund["pe_ntm_x"], fund["pe_ntm_5y_avg_x"]
+    pb_x, pb_5y = fund["pb_x"], fund["pb_5y_avg_x"]
+    pe_vs_5y_x = pe_x / pe_5y if pe_x is not None and pe_5y is not None and pe_5y > 0 else None
+    pb_vs_5y_x = pb_x / pb_5y if pb_x is not None and pb_5y is not None and pb_5y > 0 else None
+    out["pe_vs_5y_x"] = _r2(pe_vs_5y_x)
+    out["pe_vs_5y_flag"] = (pe_vs_5y_x > 1.5) if pe_vs_5y_x is not None else None
+    out["pb_vs_5y_x"] = _r2(pb_vs_5y_x)
+    out["pb_vs_5y_flag"] = (pb_vs_5y_x > 2.0) if pb_vs_5y_x is not None else None
+
+    # --- I. Consensus dispersion [#23] -------------------------------------------
+    t_high, t_low, t_avg, last_px = (fund["target_high"], fund["target_low"],
+                                      fund["target_avg"], fund["last_price_local"])
+    target_range_x = t_high / t_low if t_high is not None and t_low is not None and t_low > 0 else None
+    target_upside_pct = ((t_avg / last_px - 1) * 100
+                          if t_avg is not None and last_px is not None and last_px > 0 else None)
+    out["target_range_x"] = _r2(target_range_x)
+    out["target_range_flag"] = (target_range_x > 2.5) if target_range_x is not None else None
+    out["target_upside_pct"] = _r2(target_upside_pct)
+
+    # --- J. Momentum gates [decision-layer rows 5 / 8a] ---------------------------
+    rsi14 = fund["rsi14"]
+    ret_6m = fund["price_chg_6m_pct"]
+    below_52w = fund["below_52w_high_pct"]
+    out["rsi14"] = rsi14
+    out["rsi_overheated"] = (rsi14 > 70) if rsi14 is not None else None
+    out["return_6m_pct"] = ret_6m
+    if ret_6m is None:
+        out["return_6m_gate"] = None
+    elif ret_6m > 150:
+        out["return_6m_gate"] = "擋下"
+    elif ret_6m >= 100:
+        out["return_6m_gate"] = "邊界"
+    else:
+        out["return_6m_gate"] = "放行"
+    out["rsi_usable"] = (abs(below_52w) > 3) if below_52w is not None else None
+
+    # --- K. CCC passthrough + LH note ----------------------------------------------
+    ccc = fund["ccc_days"]
+    out["ccc_days"] = ccc
+    out["ccc_supplier_financed"] = (ccc < 0) if ccc is not None else None
+    lh_note = None
+    if roic_quadrant_code == "LH" and ccc is not None:
+        lh_note = "供應商融資" if ccc < 0 else ("需查 CCC" if ccc > 60 else None)
+    out["lh_ccc_note"] = lh_note
+
+    return out
+
+
 def enrich_ticker(
     entry: dict,
     qgm_index: dict,
@@ -2127,6 +2461,20 @@ def enrich_ticker(
         reporting_ccy_cache, fx_cache,
     )
 
+    # 2026-09-17: fundamental gates — DD 技能既有機械規則搬進 screener (see
+    # compute_fundamental_gates() docstring). eps_fy1_consec_down (item A5)
+    # needs the 3 monthly baselines + FX/ADR normalization, so it's computed
+    # separately and passed in, keeping compute_fundamental_gates itself pure.
+    eps_fy1_consec_down = compute_eps_fy1_consec_down(
+        t, _yf_ticker_for_ma(t), _rev_curr,
+        excel_snapshot.snapshot_date if excel_snapshot else None,
+        reporting_ccy_cache, fx_cache,
+    )
+    fund_gates = compute_fundamental_gates(
+        _excel_record_for_eps2y, roic_decomp.get("roic_quadrant_code"),
+        eps_curr_val, eps_fy1_consec_down,
+    )
+
     # v1.3: FunnelRank — 漏斗綜合分 (基本面三層: QualityGate + Moat + Revision).
     # 用 per-FY revision %（vs 上一份 snapshot）的 FY1/FY2/FY3 三欄合成 RevisionScore;
     # quality 已含 Excel-overridden eps2y; moat_score 來自 dd-meta (entry); moat_trend
@@ -2163,6 +2511,10 @@ def enrich_ticker(
         **roic_decomp,   # ebit_margin_pct/tax_rate_*/nopat_margin_pct/ic_turnover_x/
                          # roic_quadrant*/roic_3y_avg_pct/roic_vs_5y_x/roic_trend_5y/
                          # incremental_roic_*/reinvest_rate_pct/implied_growth_pct/capital
+        **fund_gates,    # 2026-09-17: 體質五項 veto/quality_veto_*/ol_divergence_*/
+                         # gm_yoy_pp/gm_trigger/capalloc_mech_grade/capex_*/rule_of_40/
+                         # cash_runway_months/decline_signal_*/pe_vs_5y_x/pb_vs_5y_x/
+                         # target_range_x/target_upside_pct/rsi14/return_6m_*/ccc_*/fund
         "ev5y_pct": ev5y_pct,
         "ma": ma,
         "ma_from_cache": ma_from_cache,
@@ -2535,6 +2887,24 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         "capital_shrink_count": sum(1 for s in enriched if s.get("incremental_roic_note") == "資本縮減"),
     }
 
+    # 2026-09-17: fundamental gates summary — counts per quality_veto_level /
+    # decline_signal_light, plus three momentum/valuation flag tallies. See
+    # compute_fundamental_gates().
+    veto_level_counts = Counter(s.get("quality_veto_level") for s in enriched if s.get("quality_veto_level"))
+    decline_light_counts = Counter(s.get("decline_signal_light") for s in enriched if s.get("decline_signal_light"))
+    fundamental_gates_summary = {
+        "veto_level_maintain": veto_level_counts.get("維持", 0),
+        "veto_level_downgrade": veto_level_counts.get("降一級", 0),
+        "veto_level_reject": veto_level_counts.get("拒絕", 0),
+        "decline_light_green": decline_light_counts.get("🟢", 0),
+        "decline_light_yellow": decline_light_counts.get("🟡", 0),
+        "decline_light_red": decline_light_counts.get("🔴", 0),
+        "decline_light_black": decline_light_counts.get("⛔", 0),
+        "pe_vs_5y_high_count": sum(1 for s in enriched if s.get("pe_vs_5y_x") is not None and s["pe_vs_5y_x"] > 1.5),
+        "rsi_overheated_count": sum(1 for s in enriched if s.get("rsi14") is not None and s["rsi14"] > 70),
+        "return_6m_blocked_count": sum(1 for s in enriched if s.get("return_6m_gate") == "擋下"),
+    }
+
     # Build final document
     tz_taipei = timezone(timedelta(hours=8))
     now = datetime.now(tz_taipei)
@@ -2563,6 +2933,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         },
         "summary": summary,
         "roic_decomp_summary": roic_decomp_summary,
+        "fundamental_gates_summary": fundamental_gates_summary,
         "stocks": enriched,
     }
     # v1.8: surface Excel provenance + diff for the FE banner
