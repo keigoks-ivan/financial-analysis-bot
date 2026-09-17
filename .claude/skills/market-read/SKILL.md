@@ -3,7 +3,7 @@ name: market-read
 description: market-read — 市況主控台判讀層（週頻＋事件觸發）。orchestrator 讀證據包後寫 docs/market/data/read.json（三股力量／傳導／部位／類比／三框架機率／證偽表），機械 critic 過後把 5–8 張命題落進帳簿（source market-read），頁面 /market/ 第一屏渲染。觸發：「跑市況判讀」「market read」「本週市況判讀」「更新市況主控台判讀」。
 ---
 
-# market-read v1.0（2026-09-03）
+# market-read v1.3（2026-09-17）
 
 **定位**：`/market/` 是機械證據層（日更、零 LLM）＋判讀層（本 skill）兩層。判讀層回答「未來 3／6／12 個月股市的可能方向與背後邏輯」，每一個機率都進帳簿被 SPRT 打分；判紅即降為評論。設計凍結稿：`notes/site-internal/root/_market_read_design_20260903.md`。**判讀者＝orchestrator（opus 級），不外包給 sonnet、不上 cron。**
 
@@ -20,6 +20,7 @@ description: market-read — 市況主控台判讀層（週頻＋事件觸發）
    - **上一期** `docs/market/data/read.json` 與 `docs/market/data/read_history.jsonl`：判讀要對上期負責——哪些證偽被觸發、三框架機率為何改、上期命題現況（`python knowledge/q.py --forecasts` 看 market-read 段）。
 2. **寫 `docs/market/data/read.json`**（schema `market-read-v1`，逐欄照首份 2026-09-02 版）：
    - `thesis_zh` 一句主張；`path_zh` 路徑句（先弱後強／先強後弱／區間…＋觸發者）。
+   - `vs_prior_zh`（相較前期）：**第一句必須是一句白話結論**，≤ 60 字、以句號收，讀者不看後文就知道上期看法對不對、方向有沒有變（例：「上期的看法大多被這週的證據撐住：升息已被市場定價，長債壓力與平均股票退潮都更明顯。」）。不得用「對上期負責」「N 張命題未到期」「證偽表十條有一條觸發」這類記帳語開頭，記帳明細從第二句起寫。頁面「本期重點」直接取這一句當首句，`check_market_read.py` 目前不檢查這條，靠複審把關（2026-09-17 持有人指出舊寫法沒人看得懂）。
    - `horizons` 三筆：p_up 相對基準的偏離必須在 `logic_zh` 講清楚；3 個月附 p_dd10、12 個月附 p_dd20。
    - `forces` 2–4 張，每張 refs ≥2、每個 ref 一句「為什麼看它」。
    - `transmission` 四格（erp／credit／split／liquidity）各一句判讀。
@@ -104,6 +105,7 @@ Agent({
 ```
 
 ## 版本
+- v1.3 2026-09-17：`vs_prior_zh` 第一句必須是白話結論（頁面「本期重點」直接引用）；改判條件在首屏改為各取一條轉多與轉空門檻附現值。
 - v1.2 2026-09-08：白話關卡適用範圍明文擴大到 `docs/market/index.html` 手寫文案與 `build_market_state.py` 機械模板句（原本只管 `read.json`）；本輪清查對照表落 `_plainlang_styleguide.md` §2.11。
 - v1.1 2026-09-03：新增 Auto 模式（雲端 routine `market-read-auto`，見 §5）——`check_read_triggers.py` 判定觸發、冷讀 subagent 模型配對與職責書、失敗寫 `read_status.json`、email 摘要交 `market-read-notify.yml`。手動模式（步驟 1–6）不變。
 - v1.0 2026-09-03：首版；首份判讀 2026-09-02（先弱後強；3m 0.52／6m 0.55／12m 0.60；7 張命題）。
