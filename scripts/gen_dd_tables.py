@@ -1436,7 +1436,15 @@ _PEER_METRIC_LABEL = {
 
 def render_v19_peers_html(facts: dict | None) -> str | None:
     """facts 有同業區塊（f_peer_<ticker>_<metric>）才輸出；管線端尚未搬完時
-    這裡回 None，呼叫端 fallback 到既有 E6（moat.competitors，判斷視圖）。"""
+    這裡回 None，呼叫端 fallback 到既有 E6（moat.competitors，判斷視圖）。
+
+    2026-09-17（TSM 20260916 去重稽核）：本函式固定只取毛利率／營業利益率／
+    FCF 利潤率三個指標，逐行核對後確認與 `render_e5_html()` 的同業矩陣（優先
+    讀 `facts.peer_comparison`，欄位含這三個再加研發密度）在這三欄上逐位元組
+    相同（僅列/欄互換）——e5 欄位較多、又在護城河脈絡，故留 e5，本表改一行
+    「見 §5.F」，不再重複渲染整張表；`id="peers"` 留在段落上，注入規格
+    （render_dd.py `_V19_MARKER_SPECS["s10"]`）才找得到檔。門檻（by_ticker 有
+    資料才輸出）不變，只是輸出內容從表格換成引導句。"""
     if not facts:
         return None
     by_ticker: dict = {}
@@ -1451,16 +1459,7 @@ def render_v19_peers_html(facts: dict | None) -> str | None:
             by_ticker.setdefault(tk, {})[metric] = f.get("value")
     if not by_ticker:
         return None
-    metrics = ["gross_margin_pct", "operating_margin_pct", "fcf_margin_pct"]
-    header = "<tr><th>公司</th>" + "".join(f'<th class="num">{_PEER_METRIC_LABEL[m]}</th>' for m in metrics) + "</tr>"
-    rows = [
-        "<tr><td>{tk}</td>{cells}</tr>".format(
-            tk=esc(tk),
-            cells="".join(f'<td class="num">{esc(by_ticker[tk].get(m, "—"))}</td>' for m in metrics),
-        )
-        for tk in sorted(by_ticker)
-    ]
-    return '<table id="peers">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+    return '<p id="peers">同業財務對照見 §5.F。</p>\n'
 
 
 # ---- 免費資料區：§5 護城河——v19 答案表的實際形狀與舊 E7/E8 renderer 預期的
@@ -1550,18 +1549,16 @@ def render_v19_kill_html(j: dict) -> str | None:
 
 
 def render_v19_catalysts_html(j: dict) -> str | None:
+    """2026-09-17（TSM 20260916 去重稽核）：本表把 `catalysts[]` 逐字轉成表格，
+    與 `render_s14_html()` §14 複審主文那張表同一份 `catalysts[]`、同樣的日期/
+    事件/類型/影響/觀察重點五欄，逐位元組相同——留 §14 主文那張（複審脈絡），
+    本折疊區改一行「見 §14」，`id="catalysts"` 留在段落上，注入規格
+    （render_dd.py `_V19_MARKER_SPECS["decision"]`）才找得到檔。門檻（有
+    catalysts 才輸出）不變，只是輸出內容從表格換成引導句。"""
     cats = sorted(j.get("catalysts") or [], key=lambda c: c.get("date") or "9999-99")
     if not cats:
         return None
-    header = "<tr><th>日期</th><th>事件</th><th>類型</th><th>影響</th><th>觀察重點</th></tr>"
-    rows = [
-        "<tr><td>{d}</td><td>{e}</td><td>{t}</td><td>{i}</td><td>{w}</td></tr>".format(
-            d=esc(c.get("date")), e=esc(c.get("event")), t=esc(c.get("type")),
-            i=esc(c.get("impact")) or "—", w=esc(c.get("watch")),
-        )
-        for c in cats
-    ]
-    return '<table id="catalysts">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+    return '<p id="catalysts">催化劑行事曆見 §14。</p>\n'
 
 
 # ---- v19 專用附錄 A（擇時）------------------------------------------------
