@@ -200,6 +200,21 @@ def test_segments_uses_share_driver_note_shape(view):
     assert "58%（Q2）" in html
 
 
+def test_segments_falls_back_to_item_value_shape():
+    """TSM 20260916 實例：growth.segments 退化成 [{item,value}]（HPC／手機／
+    IoT／車用／DCE 五筆），舊 segment/share/driver/note 專屬欄位全讀不到，
+    須走 e3/e8/e10 同一套 item/value fallback，不再印出 5 列空白「—」。"""
+    j = {"growth": {"segments": [
+        {"item": "HPC", "value": "66% 營收，季增 20%（Q2 2026）"},
+        {"item": "智慧型手機", "value": "22%，季減 4%"},
+    ]}}
+    html = gdt.render_v19_segments_html(j)
+    assert html is not None
+    assert '<table id="segs">' in html
+    assert "HPC" in html
+    assert "66% 營收，季增 20%（Q2 2026）" in html
+
+
 def test_threats_renders_when_present(view):
     html = gdt.render_v19_threats_html(view)
     assert html is not None
@@ -236,6 +251,29 @@ def test_appB_renders_when_findings_digest_present(facts):
 def test_appB_none_when_facts_missing():
     assert gdt.render_v19_appB_html(None) is None
     assert gdt.render_v19_appB_html({"findings_digest": []}) is None
+
+
+def test_appB_drops_rows_with_empty_claim_and_source():
+    """TSM 20260916 實例：coverage/events 軸缺覆蓋時 findings_digest 灌入
+    claim／source 皆空的佔位項（如 regulatory_antitrust#none），不應印成
+    整列空白的 <tr>；有內容的列不受影響。"""
+    facts = {"findings_digest": [
+        {"direction": "neutral", "claim": "有內容", "source": "10-K", "as_of": "2026-09-01"},
+        {"id": "regulatory_antitrust#none", "direction": None, "claim": None, "source": None, "as_of": None},
+    ]}
+    html = gdt.render_v19_appB_html(facts)
+    assert html is not None
+    assert "有內容" in html
+    assert html.count("<tr>") == 2  # 表頭 + 1 筆有內容的列
+
+
+def test_appB_all_empty_renders_placeholder_row():
+    facts = {"findings_digest": [
+        {"direction": None, "claim": None, "source": None, "as_of": None},
+    ]}
+    html = gdt.render_v19_appB_html(facts)
+    assert html is not None
+    assert "本份無證據條目" in html
 
 
 def test_appC_renders_when_contradictions_have_prior_field(view):

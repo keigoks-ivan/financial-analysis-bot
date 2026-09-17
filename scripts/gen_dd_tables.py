@@ -1519,6 +1519,8 @@ def render_v19_segments_html(j: dict) -> str | None:
     rows_data = (j.get("growth") or {}).get("segments") or []
     if not rows_data:
         return None
+    if _is_item_value_shape(rows_data, "segment"):
+        return _render_item_value_table("segs", rows_data)
     header = '<tr><th>分部</th><th class="num">占比</th><th>驅動</th><th>備註</th></tr>'
     rows = [
         '<tr><td>{seg}</td><td class="num">{share}</td><td>{drv}</td><td>{note}</td></tr>'.format(
@@ -1594,6 +1596,12 @@ def render_v19_appB_html(facts: dict | None) -> str | None:
     for it in items:
         if not isinstance(it, dict):
             continue
+        # 2026-09-17：coverage/events 軸缺覆蓋時 findings_digest 灌入
+        # claim／source 皆空的佔位項（如 regulatory_antitrust#none），印出
+        # 是整列「—」的空白列，對讀者無意義——claim 與 source 皆空就不印
+        # 這一列；不動其餘列。
+        if not it.get("claim") and not it.get("source"):
+            continue
         direction = it.get("direction")
         rows.append(
             "<tr><td>{dot}{lab}</td><td>{claim}</td><td>{src}</td><td>{date}</td></tr>".format(
@@ -1602,6 +1610,8 @@ def render_v19_appB_html(facts: dict | None) -> str | None:
                 claim=esc(it.get("claim")), src=esc(it.get("source")), date=esc(it.get("as_of")),
             )
         )
+    if not rows:
+        rows = ['<tr><td colspan="4">本份無證據條目</td></tr>']
     return (
         '<details id="appB">\n<summary>附錄 B　證據清單</summary>\n'
         '<table style="margin-top:8px">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n</details>\n"
