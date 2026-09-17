@@ -1170,6 +1170,19 @@ function _renderLiveEPSCell(s, flag) {
   } else {
     parts.push('修正動能 baseline 累積中（首月 snapshot 尚未對照）');
   }
+  // 財報錨定上修 (2026-09-17，見 knowledge/rule_ledger.md「上修改為財報後錨定」列)：
+  // eps_rev_since_earnings_pct 是以該股自己最近一次財報日前最新月度 snapshot 為
+  // 基準的 FY 加權上修（缺財報錨定時等於舊制 eps_rev_3m_pct）——只加進 tooltip，
+  // 不新增欄位，見 build_dd_screener.py enrich_ticker()。
+  if (s.eps_rev_since_earnings_pct !== null && s.eps_rev_since_earnings_pct !== undefined) {
+    var revSinceSign = s.eps_rev_since_earnings_pct > 0 ? '+' : '';
+    var revSinceBase = s.eps_rev_since_earnings_baseline_date
+      ? _baselineDateClean(s.eps_rev_since_earnings_baseline_date) : '?';
+    parts.push('財報後 ' + revSinceSign + s.eps_rev_since_earnings_pct.toFixed(1) + '%（基準 ' + revSinceBase + '）');
+  }
+  if (s.days_to_next_earnings !== null && s.days_to_next_earnings !== undefined) {
+    parts.push('下次財報 ' + s.days_to_next_earnings + ' 天');
+  }
   var tip = ' title="' + parts.join('; ') + '"';
   // cellStyle() wants a BOOLEAN (truthy→green / falsy→red / null→grey). A
   // 'pass'/'fail' STRING is always truthy → fails wrongly rendered green

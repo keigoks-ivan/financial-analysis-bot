@@ -144,3 +144,72 @@ DD 對照／候選佇列維持上次 `--ledger` 跑次內容不變。任何輸�
 `weekly-engine.yml --ledger` 跑過後才有真實資料可驗；DOWN 列因唯讀模式拿不到全母體
 `rows` 而降級成「不在母體」的行為只在這次的資料錯位下被觸發到，正常狀態（ledger 與
 `arena.json` 同步）下 DOWN 列理論上應為空，未在乾淨狀態下驗證過。
+
+## 財報錨定上修（2026-09-17）
+
+**問題**：`eps_rev_3m_pct`（`build_dd_screener.py::_compute_eps_rev_3m`）拿今天的
+共識跟 ~90 天前的月度 baseline snapshot 比——是一個「日曆錨」，對報告日期分散的
+母體不公平：7 月初就發財報的名字，上修動能一個月後就因為日曆理由過期出窗；還沒
+發財報的名字反而卡在接近零，兩者不是同一把尺。
+
+**改法**：每檔改認自己的財報日，不認共用的日曆窗。
+
+1. **每檔財報日曆**——`get_earnings_calendar()`（`build_dd_screener.py`）用
+   `yf.Ticker(t).get_earnings_dates(limit=12)` 一次拿到最近一次已公布財報日
+   （`last_earnings_date`，篩 `Reported EPS` 非空）與下次財報日（`next_earnings_date`，
+   最近一筆未來列），持久快取在新檔 `data/earnings_calendar_cache.json`（3 天內不
+   重抓，同一 ticker/yf_ticker 鍵，thread-safe，同 `eps_fx_normalize.py` reporting-
+   currency cache 的寫法）。查過 repo 既有的財報日來源：`data/flowmap_earnings_cache.json`
+   （`build_flowmap.py`）只覆蓋 SP100 前 100 大市值、只存 next_earnings_date，缺
+   ASML/TER/JBL/CLS/CAH/DELL/STX 等中小型 DD 名字且沒有 last_earnings_date；
+   `dd_numbers_extra.py::compute_price_and_earnings_recency()` 與
+   `build_momentum5.py` 的 `report_date` 欄用同一套 `get_earnings_dates()` 手法但
+   都是單檔即時查、無持久快取——沿用同一手法、新建一個涵蓋全 DD-screener 母體的
+   持久快取，而非硬套現成但覆蓋不足的快取。
+2. **baseline picker**——`pick_strictly_before_baseline()`（純函式）在
+   `docs/dd-screener/eps-estimates-snapshots/*.json` 的**canonical 月度快照**
+   （`{YYYY-MM}.json`，不含 intra-month `{YYYY-MM}-DD.json`，與既有
+   `_load_eps_rev_3m_baseline()`/`_load_eps_fy1_baselines()` 同一慣例）中，挑
+   snapshot_date **嚴格早於**該檔 `last_earnings_date` 的最新一筆——「財報前市場
+   怎麼看」而非「財報後已經反映修正的市場怎麼看」。查無合格快照（尚未進入本輪
+   財報季、或所有快照都晚於財報日）回傳 `None`，呼叫端退回 `eps_rev_3m_pct`。
+3. **算法**——`_compute_eps_rev_since_earnings()` 拿到 baseline 後，逐字重用
+   `_compute_fy_eps_revision()`（ADR 換算＋FX 正規化）與新抽出的
+   `_fold_eps_rev_fy_weighted()`（0.2/0.3/0.5 FY 加權，从 `_compute_eps_rev_3m()`
+   拆出來給兩邊共用，不重寫 FX/ADR 邏輯）。輸出 `eps_rev_since_earnings_pct` /
+   `eps_rev_since_earnings_baseline_date` / `eps_rev_anchor`
+   （`"earnings"|"calendar_3m"`）/ `eps_rev_since_earnings_days`（基準快照日距今
+   天數，退回三個月時仍算，反映該退回值本身有多舊）。`eps_rev_3m_pct` 本身不動、
+   繼續保留供對照（見 `enrich_ticker()` 呼叫處）。
+4. **席位引擎**——`grp._revision_anchor()`（新函式）統一決定 `own_raw()` 的 `rev`
+   欄與 `grp_score()` 的上修否決要用哪個值：`eps_rev_since_earnings_pct` 優先，
+   缺值退回 `eps_rev_3m_pct`（第二層 fallback，只在極舊快照或手測 fixture 完全沒有
+   新欄位時才會用到——screener 本身已經把「查無財報錨定」的情況折算進
+   `eps_rev_since_earnings_pct`）。`grp_score()` 回傳新增 `rev_used_pct` /
+   `rev_anchor` / `rev_baseline_date` / `days_to_next_earnings` 四個欄位供
+   `build_arena.py` 渲染。`EPS_REV_3M_VETO=-5.0` 否決線本身不動。
+5. **顯示層**——`build_arena.py` 的席位表欄位「三月上修%」改標「財報後上修%」
+   （tooltip 標基準快照日＋錨定方式），新增「下次財報」欄（天數，≤7 天橘色 pill
+   標記——分數是財報前快照）；board.txt legend、`_arena_body.html` 擂台頁說明、
+   `arena.json` 的 `method` 字串同步改文案。`docs/dd-screener/index.html` 的
+   「成長」欄 CAGR tooltip（`_renderLiveEPSCell`）加兩行：「財報後 +X%（基準
+   YYYY-MM-DD）」與「下次財報 N 天」，不新增欄位。
+
+**Sanity 驗證（14 檔，見任務報告逐檔數字）**：既有月度 canonical 快照只有
+`2026-05.json`（`snapshot_date` 帶說明字尾「2026-05-26 (incremental updates over
+2026-05-25 base)」，只取前 10 碼）、`2026-06.json`（2026-06-23）、`2026-07.json`
+（2026-07-30）、`2026-08.json`（2026-08-28）四份。NVDA 財報日 2026-08-26 早於
+2026-08 快照的 2026-08-28（快照反而晚 2 天，若採用會混進財報後的修正）——picker
+正確跳過 2026-08、退回 2026-07，驗證「只有嚴格早於財報日」這條規則真的擋下了會
+汙染量測的快照；DELL 財報日 2026-09-01 晚於 2026-08-28，picker 正確採用 2026-08。
+這兩個邊界案例合起來覆蓋了 sanity 檢查要求的兩種情境。
+
+**證偽條件**：兩輪月頻輪動下來，若拿舊制日曆三個月排序重算會產生更好的 12 週
+席位報酬（即財報錨定反而是雜訊，不是訊號）→ 撤回本條，`own_raw()`/`grp_score()`
+的上修輸入退回 `eps_rev_3m_pct`；或財報錨定組（`rev_anchor=="earnings"` 的席位）
+12 週中位報酬顯著落後日曆錨組，連兩輪 → 同上撤回。
+
+**沒做/未驗證**：`get_earnings_calendar()` 對台股/日股等非美 yfinance 代碼
+（`.T`/`.TW` 等）的 `get_earnings_dates()` 覆蓋率未逐檔驗證——目前席位引擎母體
+本就排除 `.TW`（2026-09-02 拍板），實際受影響面小；財報日快取的 3 天 TTL 是沿用
+`build_flowmap.py` 7 天 TTL 縮短的估計值，未做「多久算太舊」的專門校準。

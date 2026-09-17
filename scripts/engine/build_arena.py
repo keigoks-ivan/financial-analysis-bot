@@ -51,6 +51,17 @@ core_candidate（衛星照樣能坐），不進 own_score 排序、不是資格�
 （insider_signal）全程只是備註 badge。成長遇基期效應改用 FY2→FY3 成長率；循環股
 PEG 過低觸發循環守門時成長／盈餘殖利率分位封頂 50。設計稿：notes/site-internal/
 root/_seat_engine_v4_20260917.md「v4.1 追加」段。
+
+財報錨定上修（2026-09-17 持有人拍板，見 knowledge/rule_ledger.md「上修改為財報後
+錨定」列）：own_score 的上修排序輸入與上修否決改讀 grp["rev_used_pct"]（build_
+dd_screener._compute_eps_rev_since_earnings() 算好、以每檔自己最近一次財報日為
+錨的 FY 加權上修；缺財報錨定時退回舊的 ~90 天日曆 baseline，即 eps_rev_3m_pct，
+見 grp._revision_anchor()），取代固定 ~90 天日曆窗——後者對報告日期分散的母體不
+公平（早報者的上修一個月後就因日曆理由過期出窗，晚報者反而卡在接近零）。本檔的
+下游顯示（seat table「財報後上修%」欄＋tooltip、board.txt legend、arena.json
+method 字串）同步改標，grp["eps_rev_3m_pct"] 欄位本身不變、仍保留供對照。新增
+「下次財報」欄（grp["days_to_next_earnings"]）標示距下次財報天數 ≤7 天的名字，
+提醒讀者該分數是財報前快照。
 """
 from __future__ import annotations
 
@@ -366,7 +377,7 @@ def row_dict(s: dict) -> dict:
         s["_r26"] = st.get("r26") if st else None
         s["_r52"] = st.get("r52") if st else None
     _apply_durable_fallback(s)   # v4：durable_5y 就緒供成長閘門檻（10%/15%）與 grp_route 讀
-    g = grp_score(s)             # v4：過熱／頂點／新硬否決／三月上修否決皆已在 grp_score 內算好
+    g = grp_score(s)             # v4：過熱／頂點／新硬否決／上修否決（財報後錨定，缺值退回三月）皆已在 grp_score 內算好
     route, route_why = grp_route(s)
     # v4 核心候選資格＝耐久達標 AND 不過熱（見 grp.py 檔頭 v4 段第 3 點；頂點不排除，
     # 只留顯示註記 g["peak"]）——build_arena.main() 用這個欄位挑核心 5 席。
@@ -532,6 +543,9 @@ W_TIMING, W_SEAT, W_DD, W_MOAT = 6, 4, 19, 4
 LAMP_CODE_ASCII = {"green": "GRN", "yellow": "YLW", "hot": "HOT", "red": "RED", "out": "OUT"}
 ACTION_CODE_ASCII = {"green": "FULL", "yellow": "HALF", "hot": "HALF", "red": "ZERO", "out": "-"}
 W_SEATCODE, W_RANK, W_REV3M, W_MOM12, W_DUR, W_LAMPCODE, W_ACTCODE = 4, 5, 6, 6, 3, 4, 4
+# 財報錨定上修（2026-09-17）：「下次財報」欄寬——board.txt 席位表新增欄，見
+# _seat_section_lines()／knowledge/rule_ledger.md「上修改為財報後錨定」列。
+W_NEXTEARN = 6
 
 
 def _role_code(role) -> str:
@@ -600,9 +614,9 @@ def _seat_section_lines(core_seats, sat_seats, bench_seats, prev_snap, rows,
     L = ["== 目前席位：核心 5 ＋ 衛星 5 ＋ 候補 5"]
     if lamp_as_of or last_rotation_date:
         L.append(f"時機更新：{lamp_as_of or '—'}（每日）／席位更新：{last_rotation_date or '—'}（每月換席）")
-    hdr2 = (f"{'seat':<{W_SEATCODE}} {'ticker':<{W_TICKER}} {'rank':>{W_RANK}} {'rev3m':>{W_REV3M}} "
-            f"{'mom12':>{W_MOM12}} {'dur':<{W_DUR}} {'lamp':<{W_LAMPCODE}} {'act':<{W_ACTCODE}} "
-            f"{'dd':<{W_DD}} note")
+    hdr2 = (f"{'seat':<{W_SEATCODE}} {'ticker':<{W_TICKER}} {'rank':>{W_RANK}} {'rev':>{W_REV3M}} "
+            f"{'nextE':>{W_NEXTEARN}} {'mom12':>{W_MOM12}} {'dur':<{W_DUR}} {'lamp':<{W_LAMPCODE}} "
+            f"{'act':<{W_ACTCODE}} {'dd':<{W_DD}} note")
     L.append(hdr2)
     for track_label, seats, prefix in (("核心席", core_seats, "C"), ("衛星席", sat_seats, "S"),
                                        ("候補", bench_seats, "B")):
@@ -636,15 +650,22 @@ def _seat_section_lines(core_seats, sat_seats, bench_seats, prev_snap, rows,
                 note_bits.append("內部人買")
             elif r.get("insider_signal") == "賣":
                 note_bits.append("內部人賣")
+            days_ne = g.get("days_to_next_earnings")
+            # 財報錨定上修（2026-09-17）：距下次財報 <=7 天者標記——提醒讀者這個
+            # 分數是財報前快照（財報後上修分位可能一週內就變動）。
+            if days_ne is not None and 0 <= days_ne <= 7:
+                note_bits.append("財報前")
             if chg:
                 note_bits.append(chg)
             if r.get("seat_note"):
                 note_bits.append(r["seat_note"])
             if r.get("route_why"):
                 note_bits.append(r["route_why"])
+            next_earn_cell = f"{int(days_ne)}d" if days_ne is not None else "-"
             L.append(
                 f"{_pad(f'{prefix}{j}', W_SEATCODE)} {_ticker_col(r['ticker'])} {_n(r['score'], W_RANK)} "
-                f"{_n(g.get('eps_rev_3m_pct'), W_REV3M)} {_n(raw.get('mom'), W_MOM12)} "
+                f"{_n(g.get('rev_used_pct'), W_REV3M)} {_pad(next_earn_cell, W_NEXTEARN, right=True)} "
+                f"{_n(raw.get('mom'), W_MOM12)} "
                 f"{_pad('Y' if r.get('durable_5y') else '-', W_DUR)} "
                 f"{_pad(LAMP_CODE_ASCII.get(lamp.get('code'), '-'), W_LAMPCODE)} "
                 f"{_pad(ACTION_CODE_ASCII.get(lamp.get('code'), '-'), W_ACTCODE)} "
@@ -664,8 +685,8 @@ def _seat_section_lines(core_seats, sat_seats, bench_seats, prev_snap, rows,
 def render_board_text(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap, entered, lamp_map,
                       lamp_as_of=None, last_rotation_date=None) -> str:
     """附錄 B 式等寬看板（持有人 2026-09-02 指定形式；2026-09-17 v4 改版——目前席位
-    區塊改新欄序 席/代號/排名分/三月上修/12M動能/耐久/時機/倉位/DD/備註，見
-    knowledge/rule_ledger.md「v4 席位引擎」列）：目前席位＋擁有層排序表＋DD 進場 vs
+    區塊改新欄序 席/代號/排名分/財報後上修/下次財報/12M動能/耐久/時機/倉位/DD/備註，見
+    knowledge/rule_ledger.md「v4 席位引擎」「上修改為財報後錨定」兩列）：目前席位＋擁有層排序表＋DD 進場 vs
     機械資格＋無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt 與 <pre> 嵌頁
     （docs/engine/_arena_body.html、docs/cockpit/index.html 皆讀同一份文字）。
 
@@ -684,24 +705,28 @@ def render_board_text(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
     L.append(f"選股看板 v4｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
              "｜母體＝美股含 ADR；台股另建（.TW 不在本看板）")
     L.append("這是研究層陣容——值不值得擁有，月頻換人，不是帳戶持倉。")
-    L.append("排名分＝三月上修、12M 動能、成長（封頂 30）、品質（FCF/淨利與稀釋率百分位平均；"
-             "增量 ROIC>=15% 免計 FCF/淨利）、盈餘殖利率，五個排名百分位在合格集合內平均。"
-             "成長遇基期效應（FY1->FY2 因低基期跳增、FY2->FY3 <20%）改用 FY2->FY3 成長率。"
-             "循環股（毛利跨距>20pp 或 capex 佔營收>15%）若 PEG<0.3 觸發循環守門，成長/盈餘"
-             "殖利率分位封頂 50。")
-    L.append("欄位說明：rank=排名分、rev3m=三月上修%（已排除匯率）、mom12=12減1個月動能%、"
-             "dur=耐久（Y=核心資格達標：五年 ROIC 平均或 QGM 五年穩定度）、lamp=時機燈、"
-             "act=倉位（跟 lamp 一對一）、dd=DD 標籤（僅供顯示）；note=備註")
+    L.append("排名分＝財報後上修（缺財報錨定退回三個月）、12M 動能、成長（封頂 30）、品質"
+             "（FCF/淨利與稀釋率百分位平均；增量 ROIC>=15% 免計 FCF/淨利）、盈餘殖利率，"
+             "五個排名百分位在合格集合內平均。成長遇基期效應（FY1->FY2 因低基期跳增、"
+             "FY2->FY3 <20%）改用 FY2->FY3 成長率。循環股（毛利跨距>20pp 或 capex 佔營收"
+             ">15%）若 PEG<0.3 觸發循環守門，成長/盈餘殖利率分位封頂 50。")
+    L.append("欄位說明：rank=排名分、rev=財報後上修%（已排除匯率；以該股自己最近一次財報日"
+             "前最新月度 snapshot 為基準，缺財報錨定退回三個月）、nextE=距下次財報天數、"
+             "mom12=12減1個月動能%、dur=耐久（Y=核心資格達標：五年 ROIC 平均或 QGM 五年"
+             "穩定度）、lamp=時機燈、act=倉位（跟 lamp 一對一）、dd=DD 標籤（僅供顯示）；"
+             "note=備註（財報前=距下次財報 <=7 天，分數為財報前快照）")
     L.append("lamp/act 代碼：GRN/FULL=可進·正常倉、YLW/HALF=半倉、HOT/HALF=過熱·半倉、"
              "RED/ZERO=等板機·零倉、OUT/-=不合格·未站上 52 週線")
     L.append("seat：C1-C5=核心席次、S1-S5=衛星席次、B1-B5=候補（未坐席）"
              "｜dd：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，!old=逾 180 天過期")
     L.append("資格門檻：市值 200 億以上、品質閘、三年成長 15%（耐久者 10%）、站上 52 週線、"
-             "三月上修 <=-5% 否決、體質拒絕/衰退⛔/DD迴避同樣否決。過熱／融券高（SI>10%）與"
-             "頂點不擋資格，只排除核心候選（過熱、融券高）或純顯示（頂點）；核心候選另需耐久"
-             "且不過熱且非融券高；無產業集中度上限；內部人買賣僅備註，不進資格與排序。")
-    L.append("換人規則：每月第一次排程換一次席；期間只有硬否決（迴避/拒絕/⛔/三月上修<=-5/"
-             "市值不足/連兩週跌破 52 週線）能換人，空位由下一名遞補。")
+             "財報後上修達 5% 否決（缺財報錨定退回三月上修）、體質拒絕/衰退⛔/DD迴避同樣否決。"
+             "過熱／融券高（SI>10%）與頂點不擋資格，只排除核心候選（過熱、融券高）或純顯示"
+             "（頂點）；核心候選另需耐久且不過熱且非融券高；無產業集中度上限；內部人買賣僅"
+             "備註，不進資格與排序。")
+    L.append("換人規則：每月第一次排程換一次席；期間只有硬否決（迴避/拒絕/⛔/財報後上修"
+             "達5%（缺財報錨定退回三月上修）/市值不足/連兩週跌破 52 週線）能換人，空位由"
+             "下一名遞補。")
     L.append("怎麼用：席位+時機綠燈=正常倉可以買；席位+時機紅燈=先別動，等板機。")
     L.append("")
     L.extend(_seat_section_lines(core_seats, sat_seats, bench_seats, prev_snap, rows,
@@ -1046,7 +1071,7 @@ def _seat_remark(r: dict) -> str:
 
 def _seat_tr(r: dict, code: str, lamp_map: dict, muted: bool = False) -> str:
     g = r["grp"]; o = g.get("own") or {}; raw = o.get("raw") or {}
-    rank_title = (f"三月上修分位 {_num(o.get('p_rev'), 1)}／12M 動能分位 {_num(o.get('p_mom'), 1)}／"
+    rank_title = (f"財報後上修分位 {_num(o.get('p_rev'), 1)}／12M 動能分位 {_num(o.get('p_mom'), 1)}／"
                   f"成長分位 {_num(o.get('p_g'), 1)}／品質分位 {_num(o.get('p_q'), 1)}／"
                   f"盈餘殖利率分位 {_num(o.get('p_ey'), 1)}｜原始值：上修 {_num(raw.get('rev'), 1)}%、"
                   f"動能 {_num(raw.get('mom'), 1)}%、成長 {_num(raw.get('g'), 1)}%、EY {_num(raw.get('ey'), 1)}%")
@@ -1057,6 +1082,19 @@ def _seat_tr(r: dict, code: str, lamp_map: dict, muted: bool = False) -> str:
         durable_bits.append(f"QGM 五年穩定度 {r['durable_qgm_pct']:.1f}%")
     durable_cell = (f'<span title="{escape("；".join(durable_bits) or "耐久資料不足")}">'
                     f'{"✓" if r.get("durable_5y") else "—"}</span>')
+    # 財報錨定上修（2026-09-17）：上修欄 tooltip 標基準快照日＋錨定方式（財報／日曆）；
+    # 「下次財報」欄天數 <=7 者用 warn pill 標示——分數是財報前快照。
+    rev_anchor_txt = {"earnings": "財報後", "calendar_3m": "日曆三個月（缺財報錨定）"}.get(
+        g.get("rev_anchor"), "—")
+    rev_title = f"錨定：{rev_anchor_txt}｜基準快照 {g.get('rev_baseline_date') or '—'}"
+    days_ne = g.get("days_to_next_earnings")
+    if days_ne is None:
+        next_earn_cell = '<span class="bw-muted">—</span>'
+    elif 0 <= days_ne <= 7:
+        next_earn_cell = (f'<span class="bw-pill bw-pill-warn" '
+                          f'title="距下次財報 {int(days_ne)} 天——分數為財報前快照">{int(days_ne)} 天</span>')
+    else:
+        next_earn_cell = f"{int(days_ne)} 天"
     lamp = r.get("lamp") or {}
     p_txt = {"breakout": "突破帶", "pullback": "回踩", "in_trend": "趨勢內"}.get(g.get("p_label"), "52 週線下")
     stage_txt = STAGE_LABEL.get(lamp_map.get(r["ticker"]), "無資料")
@@ -1067,7 +1105,8 @@ def _seat_tr(r: dict, code: str, lamp_map: dict, muted: bool = False) -> str:
     return (f'<tr{cls}><td class="bw-l">{escape(code)}</td>'
             f'<td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
             f'<td title="{escape(rank_title)}">{_num(r.get("score"), 1)}</td>'
-            f'<td>{_num(g.get("eps_rev_3m_pct"), 1)}</td>'
+            f'<td title="{escape(rev_title)}">{_num(g.get("rev_used_pct"), 1)}</td>'
+            f'<td class="bw-l">{next_earn_cell}</td>'
             f'<td>{_num(raw.get("mom"), 1)}</td>'
             f'<td class="bw-l">{durable_cell}</td>'
             f'<td class="bw-l">{lamp_cell}</td>'
@@ -1092,9 +1131,11 @@ def _seat_section_html(core_seats, sat_seats, bench_seats, prev_snap, rows, lamp
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
     prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
     seat_thead = ("<tr><th class=\"bw-l\">席</th><th class=\"bw-l\">代號</th>"
-                  "<th title=\"own_score v4：三月上修／12M 動能／成長封頂 30／品質／盈餘殖利率"
+                  "<th title=\"own_score v4：財報後上修／12M 動能／成長封頂 30／品質／盈餘殖利率"
                   "五個排名百分位平均，見下方說明\">排名分</th>"
-                  "<th title=\"近三個月 FY 加權 EPS 上修（已排除匯率）\">三月上修%</th>"
+                  "<th title=\"以該股自己最近一次財報日前最新月度 snapshot 為基準的 FY 加權 EPS "
+                  "上修（已排除匯率）；缺財報錨定時退回近三個月，詳見各列 hover\">財報後上修%</th>"
+                  "<th class=\"bw-l\" title=\"距下次財報天數；<=7 天標記——分數為財報前快照\">下次財報</th>"
                   "<th title=\"12 減 1 個月價格動能\">12M 動能%</th>"
                   "<th class=\"bw-l\" title=\"核心資格：五年 ROIC 平均或 QGM 五年穩定度達標\">耐久</th>"
                   "<th class=\"bw-l\">時機</th><th class=\"bw-l\">倉位</th>"
@@ -1108,10 +1149,14 @@ def _seat_section_html(core_seats, sat_seats, bench_seats, prev_snap, rows, lamp
 
     seat_legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表</summary>
 <div class="bw-note-line">這是研究層陣容——值不值得擁有，月頻換人，不是帳戶持倉。</div>
-<div class="bw-note-line"><b>排名分</b>：三月上修、12M 動能、成長（封頂 30）、品質（FCF÷淨利與稀釋率百分位平均；
+<div class="bw-note-line"><b>排名分</b>：財報後上修、12M 動能、成長（封頂 30）、品質（FCF÷淨利與稀釋率百分位平均；
 增量 ROIC ≥15%＝投資有回報者免計 FCF÷淨利）、盈餘殖利率——五個排名百分位平均。</div>
-<div class="bw-note-line"><b>三月上修</b>：近三個月 FY 加權 EPS 上修幅度（已排除匯率影響）。
-<b>12M 動能</b>：12 減 1 個月價格動能（略過最近一個月）。</div>
+<div class="bw-note-line"><b>財報後上修</b>：以該股自己最近一次財報日前最新月度 snapshot 為基準的 FY 加權
+EPS 上修幅度（已排除匯率影響）——每檔錨定自己的財報日，不是全母體共用一個日曆窗（見頁尾規則
+登記「上修改為財報後錨定」）；缺財報錨定（尚未查到最近一次財報日，或查到的財報日之前沒有更早的
+月度 snapshot 可比）時退回舊制的近三個月日曆 baseline，個別列 hover 會標基準快照日與錨定方式。
+<b>下次財報</b>：距下次財報天數，≤7 天標橘色——提醒這個分數是財報前快照，財報後上修分位可能一週
+內就變動。<b>12M 動能</b>：12 減 1 個月價格動能（略過最近一個月）。</div>
 <div class="bw-note-line"><b>耐久</b>：核心資格——五年 ROIC 平均達標或 QGM 五年穩定度達標，兩者有一個成立就算。</div>
 <div class="bw-note-line"><b>時機</b>：🟢 可進（多頭排列）／🟡 半倉（站上 52 週線但未達綠燈）／
 🟠 過熱（12 個月動能過熱）／🔴 等板機（跌破 200 日線、RS 太弱、離高點太遠或階段弱勢）／
@@ -1122,10 +1167,10 @@ def _seat_section_html(core_seats, sat_seats, bench_seats, prev_snap, rows, lamp
 非資格閘、不進 own_score 排序，依據見頁尾規則登記）；<b>基期</b>＝三年 CAGR 因 FY1→FY2
 低基期跳增而改用 FY2→FY3 成長率取代；<b>循環守門</b>＝循環股（毛利率跨距大或資本支出
 佔營收高）且 PEG 低到可疑，成長與盈餘殖利率分位封頂 50；<b>循環</b>＝循環股但未觸發守門，
-純顯示；<b>內部人買／內部人賣</b>＝近 3 個月內部人淨買賣方向，僅供備註，不進資格與排序；
-新席／現任／遞補＝本期席位異動狀態。</div>
+純顯示；<b>財報前</b>＝距下次財報 ≤7 天；<b>內部人買／內部人賣</b>＝近 3 個月內部人淨買賣方向，
+僅供備註，不進資格與排序；新席／現任／遞補＝本期席位異動狀態。</div>
 <div class="bw-note-line">資格門檻：市值 200 億以上、品質閘、三年成長 15%（耐久者 10%）、站上 52 週線、
-三個月下修達 5% 否決、體質拒絕／衰退 ⛔／DD 迴避同樣否決。無產業集中度上限。</div>
+財報後上修達 5%（缺財報錨定退回三個月）否決、體質拒絕／衰退 ⛔／DD 迴避同樣否決。無產業集中度上限。</div>
 <div class="bw-note-line">換人規則：每月第一次排程換一次席；期間只有硬否決能把人換掉，空位由下一名遞補。</div>
 <div class="bw-note-line">怎麼用：席位在＋時機綠燈＝正常倉可以買；席位在＋時機紅燈＝先別動，等板機。</div>
 </details>"""
@@ -1157,8 +1202,9 @@ def _seat_section_html(core_seats, sat_seats, bench_seats, prev_snap, rows, lamp
 def render_board_html(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap, entered, lamp_map,
                       lamp_as_of=None, last_rotation_date=None) -> str:
     """HTML TABLE 版看板（2026-09-02，取代 <pre> ASCII；2026-09-17 v4 席位表改版——新欄序
-    席/代號/排名分/三月上修/12M動能/耐久/時機/倉位/DD/備註，見 knowledge/rule_ledger.md
-    「v4 席位引擎」列）。回傳裸片段（無 html/head/body），可直接 innerHTML 或接進另一頁
+    席/代號/排名分/財報後上修/下次財報/12M動能/耐久/時機/倉位/DD/備註，見
+    knowledge/rule_ledger.md「v4 席位引擎」「上修改為財報後錨定」兩列）。回傳裸片段
+    （無 html/head/body），可直接 innerHTML 或接進另一頁
     <body>。內容與 render_board_text 同源同排序，只是呈現層換成表格＋燈號＋chip。
 
     `lamp_as_of`／`last_rotation_date`（2026-09-17，見 --lamp-only 段）：轉交
@@ -1179,13 +1225,13 @@ def render_board_html(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
     thead = ("<tr>"
              '<th title="排序名次">#</th>'
              '<th class="bw-l" title="點擊連到該股 DD #decision 錨點（若有 v13+ DD）">Ticker</th>'
-             '<th title="own_score v4：三月上修／12M 動能／成長封頂 30／品質／盈餘殖利率五個排名百分位平均——排序鍵">排名分</th>'
+             '<th title="own_score v4：財報後上修（缺財報錨定退回三個月）／12M 動能／成長封頂 30／品質／盈餘殖利率五個排名百分位平均——排序鍵">排名分</th>'
              '<th title="FY1→FY3 EPS CAGR（缺 FY3 用 2 年成長率代替）">成長%</th>'
              '<th title="FY1 盈餘殖利率＝100 ÷ FY1 P/E">EY%</th>'
              '<th title="投入資本回報率 ROIC">ROIC%</th>'
              '<th title="自由現金流利潤率">FCF%</th>'
              '<th title="PEG＝FY1 P/E ÷ 成長%">PEG</th>'
-             '<th title="FY+1 單月 EPS 修正（燈號，非主否決線；v4 主否決看三月上修 ≤−5%，見排名分 hover）">上修燈</th>'
+             '<th title="FY+1 單月 EPS 修正（燈號，非主否決線；v4 主否決看財報後上修 ≤−5%，缺財報錨定退回三個月，見排名分 hover）">上修燈</th>'
              '<th>位置</th>'
              '<th class="bw-l">階段</th>'
              '<th class="bw-l" title="目前坐核心／衛星席次；空白＝未坐席">席</th>'
@@ -1277,12 +1323,13 @@ def render_board_html(as_of, rows, core_seats, sat_seats, bench_seats, prev_snap
         qgm_tbl = '<div class="bw-note-line">目前無候選（都已有三年成長預估或未過機械三閘）。</div>'
 
     head_line = f"選股看板 v4 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
-    rule_line = ("排序＝own_score v4：三月上修、12M 動能、成長（封頂 30）、品質、盈餘殖利率五個排名"
-                 "百分位在合格集合內平均（成長遇基期效應改用 FY2→FY3 成長率；循環股 PEG 過低時"
-                 "觸發循環守門，成長／盈餘殖利率分位封頂 50）。資格要過品質、三年成長預估（durable "
-                 "者 10%、否則 15%）、市值、站上 52 週線、三月上修 ≤−5% 否決、體質拒絕／衰退 ⛔／"
-                 "DD 迴避同樣否決。核心候選另需耐久（五年 ROIC 平均或 QGM 五年穩定度）且不過熱、"
-                 "融券占流通股比不超過 10%；無產業集中度上限。內部人買賣僅備註，不進資格與排序。")
+    rule_line = ("排序＝own_score v4：財報後上修（缺財報錨定退回三個月）、12M 動能、成長（封頂 30）、"
+                 "品質、盈餘殖利率五個排名百分位在合格集合內平均（成長遇基期效應改用 FY2→FY3 成長率；"
+                 "循環股 PEG 過低時觸發循環守門，成長／盈餘殖利率分位封頂 50）。資格要過品質、三年"
+                 "成長預估（durable 者 10%、否則 15%）、市值、站上 52 週線、財報後上修達 5%（缺財報"
+                 "錨定退回三個月）否決、體質拒絕／衰退 ⛔／DD 迴避同樣否決。核心候選另需耐久（五年 "
+                 "ROIC 平均或 QGM 五年穩定度）且不過熱、融券占流通股比不超過 10%；無產業集中度上限。"
+                 "內部人買賣僅備註，不進資格與排序。")
     timing_note = ("過熱／融券高（>10%）與頂點不擋資格，只排除核心候選（過熱、融券高）或純顯示"
                    "（頂點）；時機燈是另一層週頻判斷，不進排序。")
 
@@ -1388,10 +1435,11 @@ def select_fresh_roster(ranked: list, core_slots: int = CORE_SLOTS, sat_slots: i
 
 def hard_veto_v4(r: dict, w52_fail_streak: int = 0) -> str | None:
     """v4 硬否決判定（pure）——回傳觸發理由，或 None（未觸發）。六個條件之一：
-    DD 迴避／體質拒絕／衰退 ⛔／三月上修 ≤−5（皆已在 grp_score 算成 grp["veto_*"]
-    細項）、市值不足（r["cap_ok"]，apply_cap() 算好）、連續 `w52_fail_streak` 次
-    週跑站不上 52 週線（跨次跑狀態，呼叫端從 ledger 讀，見 W52_FAIL_STREAK_VETO）。
-    只用在「月中沿用現任席」的路徑——整批重選（select_fresh_roster）不需要這個。"""
+    DD 迴避／體質拒絕／衰退 ⛔／上修達 5%（財報後錨定，缺值退回三個月；皆已在
+    grp_score 算成 grp["veto_*"] 細項）、市值不足（r["cap_ok"]，apply_cap() 算好）、
+    連續 `w52_fail_streak` 次週跑站不上 52 週線（跨次跑狀態，呼叫端從 ledger 讀，
+    見 W52_FAIL_STREAK_VETO）。只用在「月中沿用現任席」的路徑——整批重選
+    （select_fresh_roster）不需要這個。"""
     g = r.get("grp") or {}
     if g.get("veto_dd_avoid"):
         return "DD 迴避"
@@ -1400,7 +1448,7 @@ def hard_veto_v4(r: dict, w52_fail_streak: int = 0) -> str | None:
     if g.get("veto_decline"):
         return "衰退 ⛔"
     if g.get("veto_revision"):
-        return "三月上修 ≤ −5"
+        return "財報後上修 ≤ −5" if g.get("rev_anchor") == "earnings" else "三月上修 ≤ −5"
     if not r.get("cap_ok", True):
         return "市值不足"
     if w52_fail_streak >= W52_FAIL_STREAK_VETO:
@@ -1685,18 +1733,19 @@ def main() -> int:
     # ── v4 席位引擎（2026-09-17 持有人拍板，見 knowledge/rule_ledger.md「v4 席位引擎」列）──
     #   母體＝DD 池（全部裁決）∪ QGM 品質池（US＋TW）∪ 快審卡（不變）
     #   資格＝品質閘（ROIC/FCF，不變）∩ 三年成長預估必備（Koyfin FY1→FY3 CAGR，durable_5y
-    #        者 10% 否則 15%）∩ 市值 ∩ 位置閘（站上 52 週線）∩ 三月上修否決（≤−5%，
-    #        FY+1 單月 ≤−10% 僅缺值時 fallback）∩ 新硬否決（體質拒絕／衰退 ⛔／DD 迴避
+    #        者 10% 否則 15%）∩ 市值 ∩ 位置閘（站上 52 週線）∩ 上修否決（財報後錨定 ≤−5%，
+    #        缺財報錨定退回三個月日曆窗，FY+1 單月 ≤−10% 僅兩者皆缺值時 fallback；2026-09-17
+    #        見 rule_ledger「上修改為財報後錨定」列）∩ 新硬否決（體質拒絕／衰退 ⛔／DD 迴避
     #        180 天內）。過熱（12-1 月動能 >150%）與頂點（roic_vs_5y_x ≥1.3）不是資格閘，
     #        只排除核心候選（過熱）或純顯示（頂點）——見 grp.grp_score()。
     #   核心候選＝route=="core"（耐久，grp.grp_route）AND 不過熱；核心＝候選前 5 名。
     #   衛星＝母體中所有未坐核心席的合格名字（含過熱／頂點／非耐久）前 5 名，公開競爭、
     #   無產業/主題集中度上限。
-    #   排序＝own_score v4：三月上修／12-1 月動能／成長封頂 30／品質／盈餘殖利率五個
-    #   百分位在 ELIGIBLE 集合內互相比較後平均（見 grp.own_score_v4()）。
+    #   排序＝own_score v4：財報後上修（缺財報錨定退回三個月）／12-1 月動能／成長封頂 30／
+    #   品質／盈餘殖利率五個百分位在 ELIGIBLE 集合內互相比較後平均（見 grp.own_score_v4()）。
     #   輪動＝月頻：每月第一次 --ledger 跑重新整批選一次，期間只有硬否決（迴避／拒絕／
-    #   ⛔／三月上修 ≤−5／市值不足／連兩週跌破 52 週線）能換人，空位由下一名遞補
-    #   （見 rotate_roster()）。
+    #   ⛔／財報後上修達 5%（缺財報錨定退回三個月）／市值不足／連兩週跌破 52 週線）能換人，
+    #   空位由下一名遞補（見 rotate_roster()）。
     #   DD 不再是入席前提：只做迴避否決，觀望／進場僅供角色標籤參考（role_mismatch 顯示用）。
     stocks_map = {s["ticker"]: s for s in stocks}
     # 同一家公司的 ADR／本地掛牌只留一個（席位不得重複曝險）：本地掛牌讓位給 ADR
@@ -1905,6 +1954,11 @@ def main() -> int:
                 "g": g.get("g"), "g_method": r.get("g_method"),
                 "ey": (o.get("raw") or {}).get("ey"), "roic": r.get("roic"), "fcf": r.get("fcf"),
                 "peg": r.get("peg"), "eps_rev_3m_pct": g.get("eps_rev_3m_pct"), "p_label": g.get("p_label"),
+                # 財報錨定上修（2026-09-17）：實際用於排序/否決的值＋錨定方式/基準快照日/
+                # 距下次財報天數，見 grp._revision_anchor()。
+                "rev_used_pct": g.get("rev_used_pct"), "rev_anchor": g.get("rev_anchor"),
+                "rev_baseline_date": g.get("rev_baseline_date"),
+                "days_to_next_earnings": g.get("days_to_next_earnings"),
                 "p_rev": o.get("p_rev"), "p_mom": o.get("p_mom"), "p_g": o.get("p_g"),
                 "p_q": o.get("p_q"), "p_ey": o.get("p_ey"),
                 "overheated": g.get("overheated"), "peak": g.get("peak"),
@@ -1935,14 +1989,16 @@ def main() -> int:
     payload = {
         "schema_version": "4.0",
         "lamp_as_of": as_of, "lamp_source": "weekly", "lamp_last_rotation_date": last_rotation_date,
-        "method": ("v4.1 席位引擎（2026-09-17）：核心候選＝耐久（五年 ROIC 平均 ≥15% 或 QGM 五年穩定度 "
-                  "≥75%）且不過熱（12-1 月動能 ≤150%）且融券占流通股比不超過 10%（融券高比照過熱，"
-                  "只排除核心候選、不進排序、不是資格閘）；排序＝own_score v4，三月上修／12-1 月動能／"
-                  "成長封頂 30（遇基期效應改用 FY2→FY3 成長率；循環股 PEG 過低觸發循環守門、成長與"
-                  "盈餘殖利率分位封頂 50）／品質（FCF∶淨利＋稀釋率，投資有回報者免計 FCF∶淨利）／"
-                  "盈餘殖利率五個百分位在合格集合內平均；三月上修 ≤−5% 否決（FY+1 單月 ≤−10% 僅缺值 "
-                  "fallback）；無產業集中度上限；內部人買賣僅備註，不進資格與排序；每月第一次排程"
-                  "重選，期間只有硬否決能換人、空位遞補"),
+        "method": ("v4.1 席位引擎（2026-09-17，同日再改：上修改為財報後錨定）：核心候選＝耐久（五年 ROIC 平均 "
+                  "≥15% 或 QGM 五年穩定度 ≥75%）且不過熱（12-1 月動能 ≤150%）且融券占流通股比不超過 "
+                  "10%（融券高比照過熱，只排除核心候選、不進排序、不是資格閘）；排序＝own_score v4，"
+                  "財報後上修（以該股自己最近一次財報日前最新月度 snapshot 為基準，缺財報錨定退回舊制"
+                  "近三個月日曆窗）／12-1 月動能／成長封頂 30（遇基期效應改用 FY2→FY3 成長率；循環股 "
+                  "PEG 過低觸發循環守門、成長與盈餘殖利率分位封頂 50）／品質（FCF∶淨利＋稀釋率，投資"
+                  "有回報者免計 FCF∶淨利）／盈餘殖利率五個百分位在合格集合內平均；財報後上修達 5%"
+                  "（缺財報錨定退回三個月）否決（FY+1 單月 ≤−10% 僅兩者皆缺值時 fallback）；無產業"
+                  "集中度上限；內部人買賣僅備註，不進資格與排序；每月第一次排程重選，期間只有硬否決"
+                  "能換人、空位遞補"),
         "universe_n": len(universe_rows),
         "seats_without_card": sorted(r["ticker"] for r in core_seats + sat_seats if r["ticker"] not in card_stats),
         "own_board": own_board,
@@ -2049,11 +2105,11 @@ def main() -> int:
 <div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
 席位資格（<b>v4 擁有層×時機層</b>，2026-09-17 持有人拍板）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF ≥10；capex 週期豁免 ROIC ≥25 ∧ FCF ≥0）×
-<b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%，耐久者放寬至 10%；且成長必須是三年期 Koyfin 數字——只有 FY1→FY2 單年 fallback 的名字不入席，改列「可選但先不入席」隊列）× <b>位置閘</b>（站上 52 週線）× <b>三月上修否決</b>（≤−5%，FY+1 單月 ≤−10% 僅缺值時 fallback）× 新硬否決（體質拒絕／衰退 ⛔／DD 迴避 180 天內）。
-排序＝<b>own_score v4</b>：三月上修、12-1 月動能、成長（封頂 30）、品質（FCF÷淨利與稀釋率百分位平均；投資有回報者〔增量 ROIC ≥15%〕免計 FCF÷淨利）、盈餘殖利率，五個排名百分位在合格集合內互相比較後平均。成長遇<b>基期效應</b>（FY1→FY2 因低基期跳增 &gt;1.6x 且 FY2→FY3 成長 &lt;20%）改用 FY2→FY3 成長率取代；<b>循環股守門</b>（毛利率跨距 &gt;20pp 或資本支出佔營收 &gt;15%，且 PEG &lt;0.3）觸發時成長／盈餘殖利率分位封頂 50。
+<b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%，耐久者放寬至 10%；且成長必須是三年期 Koyfin 數字——只有 FY1→FY2 單年 fallback 的名字不入席，改列「可選但先不入席」隊列）× <b>位置閘</b>（站上 52 週線）× <b>財報後上修否決</b>（≤−5%，以該股自己最近一次財報日前最新月度 snapshot 為基準，缺財報錨定退回舊制近三個月日曆窗；FY+1 單月 ≤−10% 僅兩者皆缺值時 fallback；2026-09-17 見規則登記「上修改為財報後錨定」）× 新硬否決（體質拒絕／衰退 ⛔／DD 迴避 180 天內）。
+排序＝<b>own_score v4</b>：財報後上修（缺財報錨定退回三個月）、12-1 月動能、成長（封頂 30）、品質（FCF÷淨利與稀釋率百分位平均；投資有回報者〔增量 ROIC ≥15%〕免計 FCF÷淨利）、盈餘殖利率，五個排名百分位在合格集合內互相比較後平均。成長遇<b>基期效應</b>（FY1→FY2 因低基期跳增 &gt;1.6x 且 FY2→FY3 成長 &lt;20%）改用 FY2→FY3 成長率取代；<b>循環股守門</b>（毛利率跨距 &gt;20pp 或資本支出佔營收 &gt;15%，且 PEG &lt;0.3）觸發時成長／盈餘殖利率分位封頂 50。
 <b>過熱／融券高／頂點不是資格閘</b>：12-1 月動能 &gt;150%（缺值 fallback 26 週漲幅 &gt;80%）＝過熱、融券占流通股比 &gt;10%＝融券高，兩者皆排除核心候選（只能衛星，不進排序，依據見頁尾規則登記）；roic_vs_5y_x ≥1.3＝頂點，純顯示註記（⚠），不影響核心候選資格。<b>內部人買賣</b>（近 3 個月淨股數）僅供備註，不進資格與排序。
 <b>DD 選配</b>：不是入席前提，只做迴避否決（180 天內），觀望／進場僅供角色標籤參考（僅供顯示）。
-<b>月頻輪動</b>：每月第一次排程整批重選一次；期間只有硬否決（迴避／拒絕／⛔／三月上修 ≤−5／市值不足／連兩週跌破 52 週線）能換人，空位由下一名遞補。
+<b>月頻輪動</b>：每月第一次排程整批重選一次；期間只有硬否決（迴避／拒絕／⛔／財報後上修達 5%（缺財報錨定退回三個月）／市值不足／連兩週跌破 52 週線）能換人，空位由下一名遞補。
 <b>軌別路由</b>：核心候選另需耐久——五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75%（兩者有一成立即可）→ 核心；未達標或無耐久資料 → 衛星。DD 角色不影響軌別，只當顯示標籤（與軌別衝突時標 ⚠ 供人裁）。<b>耐久＋不過熱＋融券不高＝核心候選，不等於保證核心席</b>：沒卡進核心前 5 名的核心候選會回頭跟其餘合格名字一起搶衛星 5 席（純比 own_score），此時席位表仍標示其軌別為「核心」（代表可長抱），另加註「耐久・暫居衛星」。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
 <b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。無產業/主題集中度上限（2026-09-17 持有人拍板）。

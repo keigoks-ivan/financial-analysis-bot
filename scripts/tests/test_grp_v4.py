@@ -218,6 +218,74 @@ def test_revision_veto_fy1_fallback_only_when_3m_missing():
     assert not ignored_fy1["veto"], "3m 上修存在時，FY+1 fallback 不該被拿來否決"
 
 
+# ── 財報錨定上修（2026-09-17，見 knowledge/rule_ledger.md「上修改為財報後錨定」
+# 列）：_revision_anchor()／own_raw()／grp_score() 的 eps_rev_since_earnings_pct
+# 優先、eps_rev_3m_pct 後備選錨邏輯 ────────────────────────────────────────────
+
+def test_revision_anchor_prefers_since_earnings_when_present():
+    value, anchor, baseline = grp._revision_anchor({
+        "eps_rev_since_earnings_pct": 7.5,
+        "eps_rev_since_earnings_baseline_date": "2026-07-30",
+        "eps_rev_anchor": "earnings",
+        "eps_rev_3m_pct": -20.0,   # must be ignored — since-earnings wins
+        "eps_rev_3m_baseline_date": "2026-06-23",
+    })
+    assert (value, anchor, baseline) == (7.5, "earnings", "2026-07-30")
+
+
+def test_revision_anchor_falls_back_to_calendar_3m_when_since_earnings_absent():
+    """Back-compat safety net: a fixture / older dd-screener rebuild that only
+    sets eps_rev_3m_pct (no eps_rev_since_earnings_pct at all) must behave
+    exactly as before this feature — this is what _stock()'s default
+    eps_rev_3m_pct=5.0 relies on across every other test in this file."""
+    value, anchor, baseline = grp._revision_anchor({
+        "eps_rev_3m_pct": -6.0, "eps_rev_3m_baseline_date": "2026-06-23",
+    })
+    assert (value, anchor, baseline) == (-6.0, "calendar_3m", "2026-06-23")
+
+
+def test_revision_anchor_none_when_both_missing():
+    assert grp._revision_anchor({}) == (None, None, None)
+
+
+def test_own_raw_rev_field_uses_since_earnings_and_carries_anchor():
+    raw = grp.own_raw({
+        "eps_rev_since_earnings_pct": 12.0,
+        "eps_rev_since_earnings_baseline_date": "2026-08-28",
+        "eps_rev_anchor": "earnings",
+        "eps_rev_3m_pct": -50.0,
+    })
+    assert raw["rev"] == 12.0
+    assert raw["rev_anchor"] == "earnings"
+    assert raw["rev_baseline_date"] == "2026-08-28"
+
+
+def test_grp_score_veto_uses_since_earnings_value_over_calendar_3m():
+    # eps_rev_since_earnings_pct <= -5 vetoes even though the stale calendar
+    # eps_rev_3m_pct sitting alongside it is positive.
+    g = grp.grp_score(_stock(
+        eps_rev_since_earnings_pct=-6.0, eps_rev_anchor="earnings",
+        eps_rev_since_earnings_baseline_date="2026-08-28",
+        eps_rev_3m_pct=5.0, eps_fy_next_revision_pct=5.0,
+    ))
+    assert g["veto"] and not g["pass"]
+    assert g["rev_anchor"] == "earnings"
+    assert g["rev_used_pct"] == -6.0
+    assert any("財報後上修否決" in w for w in g["why"])
+
+
+def test_grp_score_veto_falls_back_to_calendar_3m_label_when_since_earnings_absent():
+    g = grp.grp_score(_stock(eps_rev_3m_pct=-6.0))
+    assert g["veto"]
+    assert g["rev_anchor"] == "calendar_3m"
+    assert any("三月上修否決" in w for w in g["why"])
+
+
+def test_grp_score_exposes_days_to_next_earnings():
+    g = grp.grp_score(_stock(days_to_next_earnings=5))
+    assert g["days_to_next_earnings"] == 5
+
+
 def test_new_hard_vetoes():
     assert grp.grp_score(_stock(quality_veto_level="拒絕"))["veto"]
     assert grp.grp_score(_stock(decline_signal_light="⛔"))["veto"]

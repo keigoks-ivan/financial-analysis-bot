@@ -44,6 +44,7 @@ import argparse
 import json
 import logging
 import sys
+import threading
 import time
 import warnings
 from collections import Counter
@@ -1587,6 +1588,182 @@ def _load_eps_rev_3m_baseline() -> dict:
     return _EPS_REV_3M_BASELINE_CACHE
 
 
+# ---------------------------------------------------------------------------
+# 財報錨定上修 (2026-09-17，見 knowledge/rule_ledger.md「上修改為財報後錨定」列)
+# ---------------------------------------------------------------------------
+# WHY: eps_rev_3m_pct above anchors on a fixed ~90-CALENDAR-day-back baseline
+# — unfair across reporting calendars, since an early-July reporter's post-
+# earnings upgrade ages out of that window a month later for purely calendar
+# reasons, while a name that hasn't reported yet this cycle sits near zero.
+# Fix: anchor each ticker's revision baseline to ITS OWN most recent earnings
+# date instead of a universe-wide calendar offset. eps_rev_3m_pct itself is
+# untouched (still displayed/used elsewhere); this adds a parallel
+# eps_rev_since_earnings_pct field (see enrich_ticker's call site) that the
+# seat engine (scripts/engine/grp.py) now prefers, falling back to
+# eps_rev_3m_pct when the earnings anchor can't be resolved.
+
+EARNINGS_CALENDAR_CACHE_PATH = ROOT / "data" / "earnings_calendar_cache.json"
+# Refresh cadence: short enough to pick up a ticker that JUST reported (so
+# last_earnings_date flips promptly and the new baseline kicks in), long
+# enough that a full-universe daily rebuild doesn't re-hit yfinance for every
+# ticker on every run. No existing cache in data/ covers the full DD-screener
+# universe with both last/next earnings dates (data/flowmap_earnings_cache.json
+# is next-only and scoped to the S&P-100-by-market-cap subset — misses ASML/
+# TER/JBL/CLS/CAH/DELL/STX etc.), so this is a new persistent cache, same
+# load/save/thread-lock pattern as eps_fx_normalize.py's reporting-currency
+# cache (get_reporting_currency()).
+EARNINGS_CALENDAR_CACHE_MAX_AGE_DAYS = 3
+_earnings_calendar_lock = threading.Lock()
+
+
+def load_earnings_calendar_cache(path: Path | None = None) -> dict:
+    p = path or EARNINGS_CALENDAR_CACHE_PATH
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def save_earnings_calendar_cache(cache: dict, path: Path | None = None) -> None:
+    p = path or EARNINGS_CALENDAR_CACHE_PATH
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(cache, ensure_ascii=False, indent=2, sort_keys=True),
+                 encoding="utf-8")
+
+
+def get_earnings_calendar(dd_ticker: str, yf_ticker: str, cache: dict) -> dict:
+    """Per-ticker {last_earnings_date, next_earnings_date} (YYYY-MM-DD strings,
+    None when unknown/not yet resolved).
+
+    Same yfinance get_earnings_dates() pattern already used elsewhere in this
+    repo (build_momentum5.py's report_date fetch, dd_numbers_extra.py's
+    compute_price_and_earnings_recency()): the most recent PAST row with a
+    non-null "Reported EPS" is last_earnings_date; the nearest FUTURE row
+    (estimated, "Reported EPS" still null) is next_earnings_date — one call
+    gets both instead of two separate lookups.
+
+    Thread-safe (enrich_ticker runs inside a ThreadPoolExecutor) via the
+    module-level lock, mutates `cache` in place, persisted to disk once by
+    the caller after the enrichment loop (save_earnings_calendar_cache()) —
+    same convention as reporting_ccy_cache/fx_cache. Never raises: any
+    yfinance failure returns the previously cached value (possibly all-None
+    on first ever fetch) rather than aborting the build.
+    """
+    today = datetime.now(timezone(timedelta(hours=8))).date()
+    with _earnings_calendar_lock:
+        hit = dict(cache.get(dd_ticker) or {})
+    if hit.get("checked"):
+        try:
+            checked = datetime.strptime(hit["checked"], "%Y-%m-%d").date()
+            if (today - checked).days < EARNINGS_CALENDAR_CACHE_MAX_AGE_DAYS:
+                return {"last_earnings_date": hit.get("last_earnings_date"),
+                        "next_earnings_date": hit.get("next_earnings_date")}
+        except ValueError:
+            pass
+    last_ed = next_ed = None
+    try:
+        ed = yf.Ticker(yf_ticker).get_earnings_dates(limit=12)
+        if ed is not None and not ed.empty:
+            idx = ed.index
+            if getattr(idx, "tz", None) is not None:
+                idx = idx.tz_localize(None)
+            today_ts = pd.Timestamp(today)
+            if "Reported EPS" in ed.columns:
+                reported_mask = ed["Reported EPS"].notna().to_numpy()
+            else:
+                reported_mask = np.zeros(len(ed), dtype=bool)
+            past = idx[(idx <= today_ts) & reported_mask]
+            if len(past):
+                last_ed = past.max().date().isoformat()
+            future = idx[idx > today_ts]
+            if len(future):
+                next_ed = future.min().date().isoformat()
+    except Exception:
+        # Never abort the build — fall back to whatever was cached before
+        # (None the first time a ticker is ever seen).
+        return {"last_earnings_date": hit.get("last_earnings_date"),
+                "next_earnings_date": hit.get("next_earnings_date")}
+    with _earnings_calendar_lock:
+        cache[dd_ticker] = {"last_earnings_date": last_ed, "next_earnings_date": next_ed,
+                             "checked": today.isoformat()}
+    return {"last_earnings_date": last_ed, "next_earnings_date": next_ed}
+
+
+# Module-level cache: every canonical month-end EPS snapshot on disk, for
+# pick_strictly_before_baseline() below — distinct from
+# _load_eps_rev_3m_baseline() (single snapshot closest to a 90-day-back
+# target) and _load_eps_fy1_baselines() (fixed 3-month list): the earnings
+# anchor needs ALL canonical months available so the picker can choose per-
+# ticker against THAT ticker's own last_earnings_date, not one shared target.
+_ALL_MONTHLY_SNAPSHOTS_CACHE: dict | None = None
+
+
+def _load_all_monthly_snapshots() -> dict:
+    """Load every canonical month-end snapshot ({YYYY-MM}.json — NOT the
+    intra-month {YYYY-MM}-DD.json dated refreshes, same canonical-only
+    convention as _load_eps_rev_3m_baseline()/_load_eps_fy1_baselines())
+    under docs/dd-screener/eps-estimates-snapshots/, keyed by month string.
+    Cached at module level, same pattern as this file's other _load_*
+    snapshot loaders."""
+    global _ALL_MONTHLY_SNAPSHOTS_CACHE
+    if _ALL_MONTHLY_SNAPSHOTS_CACHE is not None:
+        return _ALL_MONTHLY_SNAPSHOTS_CACHE
+    import re
+    snapshot_dir = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"
+    canonical_re = re.compile(r"^(\d{4}-\d{2})\.json$")
+    out: dict = {}
+    if snapshot_dir.exists():
+        for p in snapshot_dir.iterdir():
+            m = canonical_re.match(p.name)
+            if not m:
+                continue
+            try:
+                out[m.group(1)] = json.loads(p.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+    _ALL_MONTHLY_SNAPSHOTS_CACHE = out
+    return out
+
+
+def pick_strictly_before_baseline(snapshots: dict, target_date: str | None) -> dict | None:
+    """Pure function (2026-09-17 財報錨定上修): among `snapshots` (any mapping
+    of key -> snapshot dict, each expected to carry a `snapshot_date`
+    "YYYY-MM-DD" string, possibly with a trailing descriptive suffix like
+    "2026-05-26 (incremental updates over 2026-05-25 base)" — only the first
+    10 chars are parsed), return the snapshot dict whose snapshot_date is the
+    LATEST one STRICTLY BEFORE `target_date` (also "YYYY-MM-DD").
+
+    This is the earnings-anchor rule: `target_date` is a ticker's own
+    last_earnings_date, and the baseline we want is "what consensus looked
+    like right before this ticker actually reported" — never a snapshot
+    taken ON OR AFTER the earnings date itself (that could already contain
+    the post-earnings revision being measured).
+
+    Returns None when `target_date` is falsy/unparseable, or no snapshot
+    qualifies (e.g. the ticker hasn't reported yet this cycle, or every
+    available snapshot postdates the earnings date) — callers use None to
+    trigger the calendar-3m fallback (see _compute_eps_rev_since_earnings()).
+    """
+    if not target_date:
+        return None
+    try:
+        target = datetime.strptime(target_date[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None
+    best_date, best_snap = None, None
+    for snap in snapshots.values():
+        sd = (snap or {}).get("snapshot_date")
+        if not sd:
+            continue
+        try:
+            sd_date = datetime.strptime(sd[:10], "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if sd_date < target and (best_date is None or sd_date > best_date):
+            best_date, best_snap = sd_date, snap
+    return best_snap
+
+
 def _compute_eps_revision(entry: dict, eps2y_live: float | None, prev_snapshot: dict) -> dict:
     """Compute EPS revision momentum vs last month's snapshot.
 
@@ -1847,6 +2024,25 @@ EPS_REV_3M_FY_WEIGHTS = {
 }
 
 
+def _fold_eps_rev_fy_weighted(rev: dict) -> float | None:
+    """Fold _compute_fy_eps_revision()'s three per-FY revision %s into a
+    single 0.2/0.3/0.5 (FY1/FY2/FY3) weighted number, renormalizing over
+    whichever FYs are present (e.g. FY3 missing -> weight over FY1/FY2 only).
+    None when none of the three are present.
+
+    Factored out of _compute_eps_rev_3m() (2026-09-17 財報錨定上修) so
+    _compute_eps_rev_since_earnings() can reuse the exact same fold without
+    duplicating it — only the baseline picker differs between the two.
+    """
+    parts, weight_sum = [], 0.0
+    for key, w in EPS_REV_3M_FY_WEIGHTS.items():
+        v = rev.get(key)
+        if v is not None:
+            parts.append(v * w)
+            weight_sum += w
+    return round(sum(parts) / weight_sum, 2) if weight_sum > 0 else None
+
+
 def _compute_eps_rev_3m(ticker: str, yf_ticker: str, eps_curr: float | None,
                          eps_next: float | None, eps_fy3: float | None,
                          baseline_snapshot: dict, current_snapshot_date: str | None,
@@ -1857,8 +2053,7 @@ def _compute_eps_rev_3m(ticker: str, yf_ticker: str, eps_curr: float | None,
     (knowledge/rule_ledger.md v4 席位引擎列). Reuses _compute_fy_eps_revision()
     verbatim (same ADR-adjust + eps_fx_normalize machinery) against the 3m
     baseline instead of the 1-month-back one, then folds the three per-FY
-    revision %s into a single weighted number — same weights available
-    renormalize (e.g. FY3 missing → weight over FY1/FY2 only).
+    revision %s into a single weighted number via _fold_eps_rev_fy_weighted().
 
     Returns eps_rev_3m_pct / eps_rev_3m_baseline_date / eps_rev_3m_fx_normalized.
     All None when the baseline snapshot lacks the ticker (see
@@ -1868,17 +2063,82 @@ def _compute_eps_rev_3m(ticker: str, yf_ticker: str, eps_curr: float | None,
         ticker, yf_ticker, eps_curr, eps_next, eps_fy3, baseline_snapshot,
         current_snapshot_date, reporting_ccy_cache, fx_cache,
     )
-    parts, weight_sum = [], 0.0
-    for key, w in EPS_REV_3M_FY_WEIGHTS.items():
-        v = rev.get(key)
-        if v is not None:
-            parts.append(v * w)
-            weight_sum += w
-    eps_rev_3m_pct = round(sum(parts) / weight_sum, 2) if weight_sum > 0 else None
     return {
-        "eps_rev_3m_pct": eps_rev_3m_pct,
+        "eps_rev_3m_pct": _fold_eps_rev_fy_weighted(rev),
         "eps_rev_3m_baseline_date": rev.get("eps_revision_baseline_date"),
         "eps_rev_3m_fx_normalized": rev.get("eps_revision_fx_normalized"),
+    }
+
+
+def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float | None,
+                                     eps_next: float | None, eps_fy3: float | None,
+                                     last_earnings_date: str | None,
+                                     current_snapshot_date: str | None,
+                                     reporting_ccy_cache: dict, fx_cache: dict,
+                                     eps_rev_3m_result: dict,
+                                     monthly_snapshots: dict | None = None) -> dict:
+    """v4 席位引擎財報錨定上修 (2026-09-17 owner decision — see
+    knowledge/rule_ledger.md「上修改為財報後錨定」列 for the calendar-window
+    unfairness this fixes): like _compute_eps_rev_3m(), but the baseline
+    snapshot is picked by pick_strictly_before_baseline() against THIS
+    ticker's own `last_earnings_date`, not a fixed ~90-day-back target shared
+    by the whole universe. Reuses _compute_fy_eps_revision() verbatim (same
+    ADR-adjust + FX-normalize machinery) and _fold_eps_rev_fy_weighted()
+    (same 0.2/0.3/0.5 FY weights) — only the baseline picker differs; no
+    duplicated FX/ADR/fold logic.
+
+    Falls back to `eps_rev_3m_result` (the caller's already-computed
+    _compute_eps_rev_3m() output for this ticker — not recomputed here) when
+    last_earnings_date is unknown, or no canonical monthly snapshot strictly
+    predates it (ticker hasn't reported yet this cycle / every snapshot
+    postdates the earnings date).
+
+    Returns:
+      eps_rev_since_earnings_pct           — the FY-weighted revision % (or
+                                              the calendar-3m fallback value)
+      eps_rev_since_earnings_baseline_date — snapshot_date actually used
+      eps_rev_anchor                       — "earnings" | "calendar_3m"
+      eps_rev_since_earnings_days          — days between the baseline
+                                              snapshot actually used and
+                                              TODAY (how stale the anchor is,
+                                              regardless of which anchor won)
+
+    `monthly_snapshots` is injectable (defaults to _load_all_monthly_
+    snapshots(), same convention as compute_eps_fy1_consec_down()'s
+    `baselines` param) so tests can supply synthetic snapshots without
+    touching disk.
+    """
+    today = datetime.now(timezone(timedelta(hours=8))).date()
+    monthly_snapshots = (monthly_snapshots if monthly_snapshots is not None
+                         else _load_all_monthly_snapshots())
+
+    def _days_since(baseline_date):
+        if not baseline_date:
+            return None
+        try:
+            return (today - datetime.strptime(baseline_date[:10], "%Y-%m-%d").date()).days
+        except ValueError:
+            return None
+
+    baseline = pick_strictly_before_baseline(monthly_snapshots, last_earnings_date)
+    if baseline is None:
+        baseline_date = eps_rev_3m_result.get("eps_rev_3m_baseline_date")
+        return {
+            "eps_rev_since_earnings_pct": eps_rev_3m_result.get("eps_rev_3m_pct"),
+            "eps_rev_since_earnings_baseline_date": baseline_date,
+            "eps_rev_anchor": "calendar_3m",
+            "eps_rev_since_earnings_days": _days_since(baseline_date),
+        }
+    rev = _compute_fy_eps_revision(
+        ticker, yf_ticker, eps_curr, eps_next, eps_fy3, baseline,
+        current_snapshot_date, reporting_ccy_cache, fx_cache,
+    )
+    baseline_date = rev.get("eps_revision_baseline_date")
+    return {
+        "eps_rev_since_earnings_pct": _fold_eps_rev_fy_weighted(rev),
+        "eps_rev_since_earnings_baseline_date": baseline_date,
+        "eps_rev_anchor": "earnings",
+        "eps_rev_since_earnings_days": _days_since(baseline_date),
     }
 
 
@@ -2431,6 +2691,7 @@ def enrich_ticker(
     reporting_ccy_cache: dict | None = None,
     fx_cache: dict | None = None,
     eps_rev_3m_baseline: dict | None = None,
+    earnings_calendar_cache: dict | None = None,
 ) -> dict:
     """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
 
@@ -2467,6 +2728,15 @@ def enrich_ticker(
     (>=15 -> True) first; if absent, QGM roic_5y_stability.pct_above via
     `qgm_durable_index` (>=0.75 -> True); None when neither source has this
     ticker. See knowledge/rule_ledger.md v3 席位資格 row.
+
+    2026-09-17 (財報錨定上修，see knowledge/rule_ledger.md「上修改為財報後錨定」
+    row): also emits last_earnings_date/next_earnings_date/
+    days_to_next_earnings (get_earnings_calendar()) and
+    eps_rev_since_earnings_pct/eps_rev_since_earnings_baseline_date/
+    eps_rev_anchor/eps_rev_since_earnings_days
+    (_compute_eps_rev_since_earnings()) — the seat engine's revision input
+    anchored on this ticker's own last earnings date instead of a fixed
+    calendar offset, falling back to the existing eps_rev_3m_pct machinery.
     """
     t = entry["ticker"]
     # 2026-09-17: shared, thread-safe caches for FX-normalized EPS revision
@@ -2477,6 +2747,8 @@ def enrich_ticker(
         reporting_ccy_cache = {}
     if fx_cache is None:
         fx_cache = {}
+    if earnings_calendar_cache is None:
+        earnings_calendar_cache = {}
     quality, source, quality_meta = get_quality_for_ticker(t, qgm_index)
     # v1.3: peg_fallback — frozen PEG came from yfinance manual forwardPE/CAGR
     # path (denominator not comparable to mainstream forward consensus). The
@@ -2678,6 +2950,30 @@ def enrich_ticker(
         reporting_ccy_cache, fx_cache,
     )
 
+    # 財報錨定上修 (2026-09-17, owner decision — see knowledge/rule_ledger.md
+    # 「上修改為財報後錨定」row): per-ticker last/next earnings date, then the
+    # same FY-weighted machinery anchored on THIS ticker's own last earnings
+    # date instead of the fixed ~90-day calendar window above (eps_rev_3m
+    # untouched, still used as the fallback when the earnings anchor can't be
+    # resolved — see _compute_eps_rev_since_earnings() docstring).
+    _earnings_cal = get_earnings_calendar(t, _yf_ticker_for_ma(t), earnings_calendar_cache)
+    last_earnings_date = _earnings_cal.get("last_earnings_date")
+    next_earnings_date = _earnings_cal.get("next_earnings_date")
+    days_to_next_earnings = None
+    if next_earnings_date:
+        try:
+            _today = datetime.now(timezone(timedelta(hours=8))).date()
+            days_to_next_earnings = (
+                datetime.strptime(next_earnings_date, "%Y-%m-%d").date() - _today
+            ).days
+        except ValueError:
+            days_to_next_earnings = None
+    eps_rev_since_earnings = _compute_eps_rev_since_earnings(
+        t, _yf_ticker_for_ma(t), _rev_curr, _rev_next, _rev_fy3, last_earnings_date,
+        excel_snapshot.snapshot_date if excel_snapshot else None,
+        reporting_ccy_cache, fx_cache, eps_rev_3m,
+    )
+
     # 2026-09-17: fundamental gates — DD 技能既有機械規則搬進 screener (see
     # compute_fundamental_gates() docstring). eps_fy1_consec_down (item A5)
     # needs the 3 monthly baselines + FX/ADR normalization, so it's computed
@@ -2767,6 +3063,13 @@ def enrich_ticker(
         **fy_revision,  # eps_fy_curr_revision_pct, eps_fy_next_revision_pct, eps_fy3_revision_pct,
                         # eps_revision_baseline_date, eps_revision_currency, eps_revision_fx_normalized
         **eps_rev_3m,   # v4 席位引擎: eps_rev_3m_pct, eps_rev_3m_baseline_date, eps_rev_3m_fx_normalized
+        # 財報錨定上修 (2026-09-17): per-ticker earnings calendar + the
+        # earnings-anchored revision (see _compute_eps_rev_since_earnings()).
+        "last_earnings_date": last_earnings_date,
+        "next_earnings_date": next_earnings_date,
+        "days_to_next_earnings": days_to_next_earnings,
+        **eps_rev_since_earnings,  # eps_rev_since_earnings_pct, eps_rev_since_earnings_baseline_date,
+                                   # eps_rev_anchor, eps_rev_since_earnings_days
         # v1.8.5: foreign-listing native-currency display (TWD/JPY/etc.)
         "eps_display_currency": _lfy.get("eps_display_currency", "USD"),
         "eps_fx_rate": _lfy.get("eps_fx_rate"),
@@ -2982,6 +3285,12 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     print(f"  Step 0    reporting-currency cache: {len(reporting_ccy_cache)} tickers known "
           f"({sum(1 for v in fx_cache.values() for _ in v)} FX rate(s) cached)")
 
+    # 財報錨定上修 (2026-09-17): persistent per-ticker last/next earnings date
+    # cache (see get_earnings_calendar() docstring) — same load-once/mutate-
+    # in-threads/save-once convention as reporting_ccy_cache/fx_cache above.
+    earnings_calendar_cache = load_earnings_calendar_cache()
+    print(f"  Step 0    earnings-calendar cache: {len(earnings_calendar_cache)} tickers known")
+
     # Step 3.5: daily 5y high — single batched yf.download, fresh today for the
     # ATH spotlight on the main page. Weekly ma.high_250w_price stays for
     # backward compat (entry-state.html consumers); the daily fields live
@@ -2995,7 +3304,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot, qgm_durable_index, reporting_ccy_cache, fx_cache, eps_rev_3m_baseline): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot, qgm_durable_index, reporting_ccy_cache, fx_cache, eps_rev_3m_baseline, earnings_calendar_cache): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):
@@ -3017,6 +3326,10 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
             save_fx_daily_cache(fx_cache)
         except Exception as exc:
             print(f"  WARN: failed to save FX/reporting-currency cache: {exc}", file=sys.stderr)
+        try:
+            save_earnings_calendar_cache(earnings_calendar_cache)
+        except Exception as exc:
+            print(f"  WARN: failed to save earnings-calendar cache: {exc}", file=sys.stderr)
 
     # Step 4.5: merge daily 5y high fields into ma sub-object (post-enrich so
     # we don't widen enrich_ticker's signature). For tickers whose daily fetch

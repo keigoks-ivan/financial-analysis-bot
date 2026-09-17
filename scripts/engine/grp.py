@@ -71,6 +71,18 @@ v4.1（2026-09-17 持有人拍板，三項 DD-free 機械規則搬進引擎，�
   規則登記：knowledge/rule_ledger.md「v4.1 融券比 >10% 只能衛星」「v4.1 基期效應＋
   循環股守門」兩列（皆 2026-09-17）。設計稿：notes/site-internal/root/
   _seat_engine_v4_20260917.md「v4.1 追加」段。
+
+財報錨定上修（2026-09-17 持有人拍板）——三月上修否決的固定 ~90 天日曆窗在報告日不
+對齊的母體上不公平：7 月初就發財報的名字，上修動能一個月後就因為日曆理由過期出窗，
+而還沒發財報的名字反而卡在接近零。改法：own_raw()／grp_score() 的上修輸入改讀
+build_dd_screener._compute_eps_rev_since_earnings() 算好的 eps_rev_since_earnings_pct
+（同一台 FY 加權 0.2/0.3/0.5 FX 正規化機械，只是 baseline 改成「這檔自己最近一次財報
+日之前最新的月度 snapshot」），缺值才退回 eps_rev_3m_pct（見 _revision_anchor()，
+兩者間的抉擇邏輯集中在這一個函式，own_raw／grp_score 都呼叫它，不各自判斷一次）。
+Row 新帶 rev_anchor（"earnings"|"calendar_3m"）／rev_baseline_date／
+days_to_next_earnings 供 build_arena 席位表 tooltip 與「下次財報」欄使用。
+eps_rev_3m_pct／EPS_REV_3M_VETO 否決線本身不動（見 rule_ledger「上修改為財報後
+錨定」列）。
 """
 from __future__ import annotations
 
@@ -172,6 +184,33 @@ def _f(v):
         return None
 
 
+def _revision_anchor(s: dict) -> tuple:
+    """財報錨定上修（2026-09-17 owner decision — see knowledge/rule_ledger.md
+    「上修改為財報後錨定」row）: revision input shared by own_raw() (ranking)
+    and grp_score() (veto). Primary source is eps_rev_since_earnings_pct
+    (build_dd_screener._compute_eps_rev_since_earnings() — anchored on THIS
+    ticker's own last earnings date, not a fixed ~90-day calendar window);
+    falls back to eps_rev_3m_pct (the old calendar-anchored value) only when
+    the earnings-anchored field is entirely absent from `s` (e.g. an older
+    dd-screener rebuild predating this feature, or a hand-built test fixture
+    that only sets eps_rev_3m_pct — the screener itself already folds the
+    calendar-3m fallback into eps_rev_since_earnings_pct via eps_rev_anchor
+    when a ticker has no qualifying earnings-anchor baseline, so this second
+    fallback layer is purely a back-compat safety net).
+
+    Returns (value, anchor, baseline_date):
+      anchor — "earnings" | "calendar_3m" | None (None only when both fields
+                are missing).
+    """
+    since = _f(s.get("eps_rev_since_earnings_pct"))
+    if since is not None:
+        return since, (s.get("eps_rev_anchor") or "earnings"), s.get("eps_rev_since_earnings_baseline_date")
+    threem = _f(s.get("eps_rev_3m_pct"))
+    if threem is not None:
+        return threem, "calendar_3m", s.get("eps_rev_3m_baseline_date")
+    return None, None, None
+
+
 def _base_effect_growth(s: dict) -> tuple:
     """v4.1（2026-09-17，見 knowledge/rule_ledger.md「v4.1 基期效應＋循環股守門」列）
     基期效應（base effect）：Koyfin 三年 FY1→FY3 CAGR 是幾何平均，若 FY1→FY2 因低基期
@@ -229,8 +268,14 @@ def own_raw(s: dict) -> dict:
     cycle_guard = bool(cyclical and peg is not None and peg < CYCLE_GUARD_PEG_MAX)
     cycle_guard_detail = ({"gm_swing_pp": round(gm_swing, 1) if gm_swing is not None else None,
                            "capex_pct_rev": capex_pct_rev, "peg": peg} if cyclical else None)
+    rev_value, rev_anchor, rev_baseline_date = _revision_anchor(s)
     return {
-        "rev": _f(s.get("eps_rev_3m_pct")),
+        # 財報錨定上修（2026-09-17，見 _revision_anchor() docstring）：eps_rev_
+        # since_earnings_pct 優先，eps_rev_3m_pct 為後備。rev_anchor/
+        # rev_baseline_date 純顯示，供席位表 tooltip 標「基準快照日／錨定方式」。
+        "rev": rev_value,
+        "rev_anchor": rev_anchor,
+        "rev_baseline_date": rev_baseline_date,
         "mom": _f((s.get("ma") or {}).get("mom_12_1_pct")),
         "g": round(g, 2) if g is not None else None,
         "ey": round(ey, 2) if ey is not None else None,
@@ -385,18 +430,22 @@ def grp_score(s: dict) -> dict:
         else:
             why.append(f"成長閘未過（CAGR {g if g is not None else '缺'} < {g_min:.0f}%）")
 
-    # R（v4：三月上修否決取代 FY+1 單月否決；後者只在前者缺值時當 fallback）
-    eps_rev_3m = _f(s.get("eps_rev_3m_pct"))
+    # R（v4：上修否決；2026-09-17 財報錨定上修起改讀 eps_rev_since_earnings_pct
+    # ／eps_rev_3m_pct 後備，見 _revision_anchor()；FY+1 單月否決仍是兩者皆缺時
+    # 的最終 fallback）
+    eps_rev_3m = _f(s.get("eps_rev_3m_pct"))   # 舊欄位，仍保留供顯示/對照（見 docstring）
+    rev_value, rev_anchor, rev_baseline_date = _revision_anchor(s)
     r_fy1 = _f(s.get("eps_fy_next_revision_pct"))
     r_2y = _f(s.get("eps2y_revision_pp"))
-    if eps_rev_3m is not None:
-        r_veto = eps_rev_3m <= EPS_REV_3M_VETO
+    if rev_value is not None:
+        r_veto = rev_value <= EPS_REV_3M_VETO
         if r_veto:
-            why.append(f"三月上修否決（{eps_rev_3m:+.1f}% ≤ {EPS_REV_3M_VETO:.0f}%）")
+            anchor_label = "財報後上修" if rev_anchor == "earnings" else "三月上修"
+            why.append(f"{anchor_label}否決（{rev_value:+.1f}% ≤ {EPS_REV_3M_VETO:.0f}%）")
     else:
         r_veto = r_fy1 is not None and r_fy1 <= R_VETO_FY1
         if r_veto:
-            why.append(f"上修閘否決（三月上修缺值，fallback FY+1 下修 {r_fy1:+.1f}%）")
+            why.append(f"上修閘否決（財報後／三月上修皆缺值，fallback FY+1 下修 {r_fy1:+.1f}%）")
     r_pass = (not r_veto) and ((r_fy1 is not None and r_fy1 > R_MIN_FY1)
                                or (r_2y is not None and r_2y > R_MIN_2Y_PP))
     r_strength = max(r_fy1 or 0.0, (r_2y or 0.0) * 2.0)   # pp 換算近似倍率，僅舊排序對照用
@@ -468,6 +517,12 @@ def grp_score(s: dict) -> dict:
             "g_min": g_min,
             "r_fy1": r_fy1, "r_2y": r_2y, "r_pass": r_pass,
             "eps_rev_3m_pct": eps_rev_3m,
+            # 財報錨定上修（2026-09-17）：veto 與排序實際採用的值/錨定方式/基準
+            # 快照日——build_arena 席位表用這三個欄位渲染「財報後上修」欄與
+            # tooltip，不用再自行重跑 _revision_anchor()。
+            "rev_used_pct": rev_value, "rev_anchor": rev_anchor,
+            "rev_baseline_date": rev_baseline_date,
+            "days_to_next_earnings": s.get("days_to_next_earnings"),
             "r_strength": round(r_strength, 2),
             "p_label": p_label, "dist_hi": dist_hi, "price": px, "above_w52": above_52w,
             "overheated": overheated, "peak": peak, "roic_vs_5y_x": roic_vs_5y_x,
