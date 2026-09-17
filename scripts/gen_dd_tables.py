@@ -235,18 +235,27 @@ def render_e2_html(j: dict) -> str:
     H = (j.get("thesis") or {}).get("H") or []
     rows = []
     for h in H:
+        # 2026-09-17（表格簡化）：2y/5y/10y 原本各自一欄，但每個假設多半只填
+        # 其中一個期限（schema B6 註記：1-3 段皆合法，非硬配三段）——三欄併
+        # 一欄「驗證點」，逐期限印「2Y：…」，只印真的有值的那幾段；欄位仍
+        # 全部讀 h.get("2y"/"5y"/"10y")，沒有新增或捨棄任何原始數字。
+        verify_bits = [
+            "{0}：{1}".format(label, esc(h.get(key)))
+            for label, key in (("2Y", "2y"), ("5Y", "5y"), ("10Y", "10y"))
+            if h.get(key)
+        ]
         rows.append(
-            "<tr><td>{id}</td><td>{text}</td><td>{y2}</td><td>{y5}</td><td>{y10}</td>"
+            "<tr><td>{id}</td><td>{text}</td><td>{verify}</td>"
             "<td>{th}</td><td>{src}</td><td>{drift}</td></tr>".format(
                 id=esc(h.get("id")), text=esc(h.get("text")),
-                y2=esc(h.get("2y")), y5=esc(h.get("5y")), y10=esc(h.get("10y")),
+                verify="<br>".join(verify_bits),
                 th=esc(h.get("threshold")), src=esc(h.get("source")),
                 drift=esc(h.get("drift_rule")),
             )
         )
     header = (
-        "<tr><th>#</th><th>核心假設</th><th>2Y驗證點</th><th>5Y驗證點</th>"
-        "<th>10Y驗證點</th><th>具體數字門檻</th><th>信息來源</th><th>漂移觸發條件</th></tr>"
+        "<tr><th>#</th><th>核心假設</th><th>驗證點</th>"
+        "<th>具體數字門檻</th><th>信息來源</th><th>漂移觸發條件</th></tr>"
     )
     return "<table>\n" + header + "\n" + "\n".join(rows) + "\n</table>\n"
 

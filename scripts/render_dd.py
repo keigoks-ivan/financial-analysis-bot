@@ -566,7 +566,9 @@ _V19_MARKER_SPECS = {
 # 寬表橫向捲動包裝（v19 版面專用，只在這裡包——不動 gen_dd_tables.py 的輸出、
 # 不影響 legacy 版面 assemble_from_parts()）。診斷見
 # notes/site-internal/dd/_v19_layout_spec_20260911.md 後續修補：§2 H1-H3 表
-# （e2.html，8 欄）與 §10 情境表（e11.html，12 欄）在 796px 版心內用 auto
+# （e2.html，原 8 欄，2026-09-17 起 2y/5y/10y 併成一欄「驗證點」降到 6 欄、
+# 已低於下方門檻不再觸發此包裝）與 §10 情境表（e11.html，12 欄）在 796px
+# 版心內用 auto
 # table-layout 會把長字串欄撐爆、擠壓其他欄成一行兩三個字；改 table-layout:
 # fixed（見 v19.css）後仍需要一個可讀下限＋捲動出口，欄數 ≥7 才包，避免小表
 # 也套上不必要的橫向捲動容器。
