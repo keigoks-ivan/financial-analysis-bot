@@ -70,6 +70,13 @@ jobs:
         run: python scripts/engine/build_arena.py --daily || echo "::warning::daily arena refresh failed"
         continue-on-error: true
 
+      # v5 smallcap 池第二 Koyfin 母體（2026-09-17）：與 daily-taipei-morning.yml
+      # 同步加這步，本檔排程已停用只留手動 dispatch，保持一致避免手動跑出跟排程
+      # 不同的 universe。
+      - name: Step 2a — DD Screener smallcap pool latest.json
+        run: python scripts/build_dd_screener.py --universe smallcap || echo "::warning::smallcap dd-screener build failed"
+        continue-on-error: true
+
       # 精選榜「十倍」組 v5 小市值池（2026-09-17 持有人拍板「精選榜改版」）：與
       # daily-taipei-morning.yml（實際排程跑這步的班次）同步加這步，本檔排程已停用
       # 只留手動 dispatch，保持一致避免手動跑出跟排程不同的池狀態。
@@ -131,8 +138,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # smallcap 池（2026-09-17）：目錄要到 build_dd_screener.py --universe
+          # smallcap 第一次成功跑完才存在；用 mkdir -p 保底，避免這條新加的
+          # pathspec 在目錄還沒建立前讓整個 `git add` 因找不到路徑而整段失敗
+          # （git add 對任一 pathspec 找不到檔案是整呼叫失敗，不是單條略過）。
+          mkdir -p docs/dd-screener/smallcap
           git add data/weekly_cache/ \
                   docs/dd-screener/latest.json \
+                  docs/dd-screener/smallcap/ \
                   docs/dd-screener/quality-entry.html \
                   docs/dd-screener/quality-entry.json \
                   docs/dd-screener/quality-entry-snapshots/ \

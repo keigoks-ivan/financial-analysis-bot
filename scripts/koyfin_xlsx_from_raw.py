@@ -22,7 +22,13 @@ written into the xlsx, matching the original 52-field prototype's behavior).
 
 Usage:
     python3 scripts/koyfin_xlsx_from_raw.py --raw PATH --out PATH \\
-        --snapshot-date YYYY-MM-DD
+        --snapshot-date YYYY-MM-DD [--universe-note "..."]
+
+`--out` is a full path (no hardcoded DD_universe family name in this script),
+so the v5 smallcap pool (2026-09-17, second Koyfin universe — see
+scripts/build_dd_screener.py --universe smallcap) reuses this builder
+unchanged, just pointing --out at data/eps-estimates/DD_smallcap_EPS_estimates_
+YYYYMMDD.xlsx and passing --universe-note to label the Notes sheet.
 
 Loader: scripts/load_eps_estimates_xlsx.py (exact-header match for all 35+2
 fundamental-gates columns via `_NEW_FUND_HEADER_MAP`; legacy 7 + ROIC/FCF
@@ -137,6 +143,11 @@ def main() -> int:
     ap.add_argument("--raw", required=True, help="Path to the KROW-dumped raw txt (pipe-separated)")
     ap.add_argument("--out", required=True, help="Output xlsx path")
     ap.add_argument("--snapshot-date", required=True, help="YYYY-MM-DD, written to Notes!B2")
+    ap.add_argument("--universe-note", default=None,
+                     help="Optional Notes!B4 label describing the source universe when it isn't the "
+                          "default DD_universe watchlist (2026-09-17, v5 smallcap pool) — e.g. "
+                          "\"dd_smallcap watchlist (screen dd_smallcap_v5: US, $1-20B, ROIC>=15, FCF>=10)\". "
+                          "Omit for the default family (no B4 row written, output unchanged).")
     args = ap.parse_args()
 
     wb = Workbook()
@@ -155,6 +166,8 @@ def main() -> int:
     ws2 = wb.create_sheet("Notes")
     ws2["A2"] = "Snapshot Date"; ws2["B2"] = args.snapshot_date
     ws2["A3"] = "Quality Source"; ws2["B3"] = "koyfin-web"
+    if args.universe_note:
+        ws2["A4"] = "Universe"; ws2["B4"] = args.universe_note
     ws2["B5"] = (
         f"{args.snapshot_date} web scrape, {len(HEADER) - 1} fields (19 prior + 35 fundamental-gates "
         "cols [2026-09-17] + 2 short-interest/insider cols [2026-09-17b]). Money=USD mm; shares=mm "

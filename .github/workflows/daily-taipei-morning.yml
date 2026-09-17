@@ -77,12 +77,23 @@ jobs:
         run: python scripts/engine/build_arena.py --daily || echo "::warning::daily arena refresh failed"
         continue-on-error: true
 
+      # v5 smallcap 池第二 Koyfin 母體（2026-09-17，見 notes/site-internal/root/
+      # _koyfin_smallcap_watchlist_20260917.md）：dd_smallcap watchlist 自己的
+      # xlsx family（DD_smallcap_EPS_estimates_*），寫 docs/dd-screener/smallcap/
+      # latest.json，跟主 dd-screener latest.json 隔離。Koyfin 重新抓取仍是手動
+      # （見該 skill），本步只重跑機械 enrich（ROIC 分解／體質閘／距歷史新高／
+      # 動能／財報日曆／融券），失敗只 warning 不擋本帶其餘 step。
+      - name: "[non-fundamental] Step 2a — DD Screener smallcap pool latest.json"
+        run: python scripts/build_dd_screener.py --universe smallcap || echo "::warning::smallcap dd-screener build failed"
+        continue-on-error: true
+
       # 精選榜「十倍」組 v5 小市值池（2026-09-17 持有人拍板「精選榜改版」，見
       # knowledge/rule_ledger.md「精選榜改版：爆發組退役、十倍組改 v5 小市值池」列）：
       # 與上面 Arena daily refresh 讀同一份剛更新的 dd-screener latest.json，跑同一套
       # GRP 席位 v5 資格閘規則（scripts/engine/grp.py），只換市值帶（$10億–$200億，
       # GRP 席位地板之下）——排在 Arena 之後、Quality-Entry 之前，失敗只 warning，
-      # 不擋本帶其餘 step。
+      # 不擋本帶其餘 step。母體 2026-09-17 起併入上一步的 smallcap latest.json
+      # （見 build_tenbagger.py load_universe()）。
       - name: "[non-fundamental] Step 2b — Picks tenbagger v5 small-cap pool daily refresh"
         run: python scripts/build_tenbagger.py || echo "::warning::tenbagger v5 small-cap pool refresh failed"
         continue-on-error: true
@@ -145,6 +156,7 @@ jobs:
           for p in \
             data/weekly_cache/ \
             docs/dd-screener/latest.json \
+            docs/dd-screener/smallcap/ \
             docs/dd-screener/quality-entry.html \
             docs/dd-screener/quality-entry.json \
             docs/dd-screener/quality-entry-snapshots/ \

@@ -29,6 +29,10 @@ Usage:
   python3 scripts/snapshot_eps_estimates.py --month 2026-04   # specific month
   python3 scripts/snapshot_eps_estimates.py --dry-run
   python3 scripts/snapshot_eps_estimates.py --max-workers 8
+  python3 scripts/snapshot_eps_estimates.py --universe smallcap   # v5 smallcap
+      # pool (2026-09-17): DD_smallcap_EPS_estimates_ family, xlsx's own
+      # tickers as universe, writes docs/dd-screener/smallcap/
+      # eps-estimates-snapshots/ — see build_dd_screener.py --universe smallcap
 
 Pattern:
   ThreadPoolExecutor(max_workers=4) mirrors build_fundamentals_cache.py.
@@ -354,22 +358,36 @@ def main() -> None:
     p.add_argument("--max-workers", type=int, default=4)
     p.add_argument("--skip-trailing", action="store_true",
                    help="Skip yfinance trailingEps fetch (eps_cagr_2y will be null)")
+    p.add_argument("--universe", choices=["dd", "smallcap"], default="dd",
+                   help="v5 smallcap pool (2026-09-17): 'smallcap' snapshots the "
+                        "DD_smallcap_EPS_estimates_ xlsx family with its own ticker "
+                        "universe (from the xlsx itself, not latest.json) and writes "
+                        "to docs/dd-screener/smallcap/eps-estimates-snapshots/ instead "
+                        "of the main dir. Default 'dd' = unchanged behaviour.")
     args = p.parse_args()
 
     print(f"=== EPS Estimates Snapshot · {datetime.now(TAIPEI_TZ).isoformat(timespec='seconds')} ===\n")
 
+    family = "DD_smallcap_EPS_estimates_" if args.universe == "smallcap" else "DD_universe_EPS_estimates_"
     if args.month:
-        path = find_excel_for_month(args.month)
+        path = find_excel_for_month(args.month, family=family)
         if path is None:
-            raise SystemExit(f"ERROR: no Excel found for month {args.month} in data/eps-estimates/")
+            raise SystemExit(f"ERROR: no Excel found for month {args.month} in data/eps-estimates/ (family={family})")
     else:
-        path = find_latest_excel()
+        path = find_latest_excel(family=family)
         if path is None:
-            raise SystemExit("ERROR: no Excel found in data/eps-estimates/ — "
-                             "place DD_universe_EPS_estimates_YYYYMMDD.xlsx there first")
+            raise SystemExit(f"ERROR: no Excel found in data/eps-estimates/ (family={family}) — "
+                             "place the xlsx there first")
 
     excel = load_excel(path)
-    universe = load_universe()
+    if args.universe == "smallcap":
+        # No DD pool / QGM assumptions — universe is exactly the xlsx's own
+        # tickers (see build_dd_screener.py --universe smallcap, same rule).
+        universe = sorted(excel.tickers)
+        global OUTPUT_DIR
+        OUTPUT_DIR = ROOT / "docs" / "dd-screener" / "smallcap" / "eps-estimates-snapshots"
+    else:
+        universe = load_universe()
 
     if args.skip_trailing:
         # Force trailing-fetch to skip (testing): patch the function

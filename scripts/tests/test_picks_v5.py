@@ -64,8 +64,15 @@ def _patch_tenbagger_paths(monkeypatch, tmp_path):
     dd_latest = tmp_path / "latest.json"
     picks_json = tmp_path / "picks.json"
     out_json = tmp_path / "tenbagger.json"
+    # v5 smallcap pool (2026-09-17): point at a tmp_path file that doesn't exist
+    # by default (load_json() fail-safe returns None) so this suite's fixtures
+    # stay hermetic — without this, bt.SMALLCAP_LATEST would default to the
+    # real repo docs/dd-screener/smallcap/latest.json and leak production
+    # tickers into these synthetic-universe tests once that file exists.
+    smallcap_latest = tmp_path / "smallcap_latest.json"
     monkeypatch.setattr(bt, "UNIVERSE_JSON", str(universe_json))
     monkeypatch.setattr(bt, "DD_LATEST", str(dd_latest))
+    monkeypatch.setattr(bt, "SMALLCAP_LATEST", str(smallcap_latest))
     monkeypatch.setattr(bt, "PICKS", str(picks_json))
     monkeypatch.setattr(bt, "OUT", str(out_json))
     # Cap resolution's network fallback (grp.fetch_caps) must never touch the
@@ -73,7 +80,8 @@ def _patch_tenbagger_paths(monkeypatch, tmp_path):
     monkeypatch.setattr(grp, "load_caps", lambda: {})
     monkeypatch.setattr(grp, "fetch_caps", lambda tickers, caps=None: dict(caps or {}))
     monkeypatch.setattr(bt.arena, "qgm_cap_map", lambda: {})
-    return {"universe": universe_json, "latest": dd_latest, "picks": picks_json, "out": out_json}
+    return {"universe": universe_json, "latest": dd_latest, "picks": picks_json,
+            "out": out_json, "smallcap_latest": smallcap_latest}
 
 
 def _write_universe(path, tickers):

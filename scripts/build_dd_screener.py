@@ -74,7 +74,12 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from dd_screener_dd_loader import load_dd_universe, load_non_dd_universe, _norm_dca_role  # noqa: E402
+from dd_screener_dd_loader import (  # noqa: E402
+    load_dd_universe,
+    load_non_dd_universe,
+    _norm_dca_role,
+    _DD_ONLY_FIELDS,
+)
 from dd_screener_quality import (  # noqa: E402
     EU_SUFFIX_MAP,
     TICKER_YF_OVERRIDE,
@@ -87,6 +92,7 @@ from dd_screener_ma import compute_ma_snapshot  # noqa: E402
 # 判準單一權威實作在 engine.grp（見該模組 durable_5y_v5() docstring），避免同一條
 # 判準在 screener／engine 兩層各抄一份而日後漂移（QC-7 教訓）。
 from engine.grp import durable_5y_v5 as grp_durable_5y_v5  # noqa: E402
+from engine.grp import market_ok as grp_market_ok  # noqa: E402
 from update_dd_index import (  # noqa: E402
     collect_dca_ev_map,
     collect_dca_moat_trend_map,
@@ -112,6 +118,68 @@ from eps_fx_normalize import (  # noqa: E402
 OUTPUT_DIR = ROOT / "docs" / "dd-screener"
 OUTPUT_PATH = OUTPUT_DIR / "latest.json"
 SCREENER_LATEST = ROOT / "docs" / "screener" / "latest.json"
+
+# v5 smallcap pool (2026-09-17, second Koyfin universe — see notes/site-internal/
+# root/_koyfin_smallcap_watchlist_20260917.md and .claude/skills/
+# refresh-eps-screener-web/SKILL.md): `--universe smallcap` writes to an isolated
+# output dir / xlsx family / snapshot dir so the main dd-universe build stays
+# byte-for-byte unchanged. UNIVERSE_MODE is a process-global set once in main()
+# and never mutated mid-run — safe because a single CLI invocation only ever
+# builds one universe. It's a global (not threaded through every helper's
+# signature) because several snapshot-loader helpers below (_load_prev_month_
+# snapshot / _load_eps_rev_3m_baseline / _load_all_monthly_snapshots /
+# _load_eps_fy1_baselines) are called both at top-level in build() and reused
+# unchanged by enrich_ticker()'s per-ticker thread workers — widening a dozen
+# call signatures to carry an explicit mode param would be far more invasive
+# than one global consulted by a handful of path-resolving helpers.
+UNIVERSE_MODE = "dd"  # "dd" | "smallcap"
+SMALLCAP_XLSX_FAMILY = "DD_smallcap_EPS_estimates_"
+SMALLCAP_OUTPUT_DIR = OUTPUT_DIR / "smallcap"
+SMALLCAP_OUTPUT_PATH = SMALLCAP_OUTPUT_DIR / "latest.json"
+_DD_SNAPSHOT_DIR = OUTPUT_DIR / "eps-estimates-snapshots"
+SMALLCAP_SNAPSHOT_DIR = SMALLCAP_OUTPUT_DIR / "eps-estimates-snapshots"
+
+
+def _output_dir() -> Path:
+    return SMALLCAP_OUTPUT_DIR if UNIVERSE_MODE == "smallcap" else OUTPUT_DIR
+
+
+def _output_path() -> Path:
+    return SMALLCAP_OUTPUT_PATH if UNIVERSE_MODE == "smallcap" else OUTPUT_PATH
+
+
+def _snapshot_dir() -> Path:
+    return SMALLCAP_SNAPSHOT_DIR if UNIVERSE_MODE == "smallcap" else _DD_SNAPSHOT_DIR
+
+
+def _excel_family() -> str:
+    return SMALLCAP_XLSX_FAMILY if UNIVERSE_MODE == "smallcap" else "DD_universe_EPS_estimates_"
+
+
+def _find_latest_excel_for_mode():
+    return find_latest_excel(family=_excel_family())
+
+
+def _smallcap_universe_entries(excel_snapshot) -> list[dict]:
+    """v5 smallcap pool (2026-09-17): build universe entries straight from the
+    smallcap xlsx's own tickers — no DD pool / QGM assumptions. Shaped
+    identically to dd_screener_dd_loader.load_non_dd_universe()'s output
+    (dd_status="none", every DD-only field None, `universe_source` distinct)
+    so enrich_ticker()'s existing non-DD code path (already exercised in prod
+    via --include-non-dd) handles these rows unchanged — this is a pure
+    function (no I/O) precisely so it's unit-testable without a real xlsx or
+    network access; see scripts/tests/test_smallcap_universe.py."""
+    return [
+        {
+            "ticker": t, "name": t, "sector": "",
+            **{f: None for f in _DD_ONLY_FIELDS},
+            "dd_status": "none",
+            "universe_source": "smallcap-koyfin",
+            "qgm_seed": None,
+        }
+        for t in sorted(excel_snapshot.tickers)
+        if grp_market_ok(t)
+    ]
 # P1: 機器抽取的 v12 舊 DD 裁決 overlay（僅補 dd-meta 沒有原生 dca_verdict 的 ticker）。
 # 缺檔／壞檔一律靜默降級（見 apply_verdict_overlay），screener 行為回到現狀。
 VERDICT_OVERLAY_PATH = ROOT / "docs" / "dd" / "verdict_overlay.json"
@@ -1582,12 +1650,12 @@ def _load_prev_month_snapshot() -> dict:
         return _PREV_MONTH_SNAPSHOT_CACHE
 
     _PREV_MONTH_SNAPSHOT_LOADED = True
-    snapshot_dir = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"
+    snapshot_dir = _snapshot_dir()
 
     # Step 1: intra-month dated baseline. Derive current Excel snapshot date
     # from data/eps-estimates/ filename (DD_universe_EPS_estimates_YYYYMMDD.xlsx).
     try:
-        latest_xlsx = find_latest_excel()
+        latest_xlsx = _find_latest_excel_for_mode()
     except Exception:
         latest_xlsx = None
     if latest_xlsx is not None:
@@ -1659,12 +1727,12 @@ def _load_eps_rev_3m_baseline() -> dict:
     if _EPS_REV_3M_BASELINE_LOADED:
         return _EPS_REV_3M_BASELINE_CACHE
     _EPS_REV_3M_BASELINE_LOADED = True
-    snapshot_dir = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"
+    snapshot_dir = _snapshot_dir()
 
     import re
 
     try:
-        latest_xlsx = find_latest_excel()
+        latest_xlsx = _find_latest_excel_for_mode()
     except Exception:
         latest_xlsx = None
     current_date = None
@@ -1695,6 +1763,20 @@ def _load_eps_rev_3m_baseline() -> dict:
             try:
                 sd_date = datetime.strptime(sd, "%Y-%m-%d").date()
             except ValueError:
+                continue
+            # 2026-09-17 (v5 smallcap pool first-baseline fix, found during
+            # verification): a snapshot must actually be a PAST roster to mean
+            # anything as a "3-months-ago" comparison point — without this
+            # guard, a brand-new pool's first-ever snapshot (written the same
+            # day as its first build, per this task's Step 6 instruction) is
+            # the only file that exists, so "closest to target" picks it
+            # regardless of how far it actually is from `target`, comparing
+            # today's data against itself and silently producing a fake 0.0%
+            # revision for every ticker instead of the correct "no baseline
+            # yet" None. Every existing multi-month pool (the main dd universe)
+            # is unaffected — its real historical snapshots are always closer
+            # to `target` than today's own date, so this guard is a no-op there.
+            if sd_date >= current_date:
                 continue
             diff = abs((sd_date - target).days)
             if best_diff is None or diff < best_diff:
@@ -1829,7 +1911,7 @@ def _load_all_monthly_snapshots() -> dict:
     if _ALL_MONTHLY_SNAPSHOTS_CACHE is not None:
         return _ALL_MONTHLY_SNAPSHOTS_CACHE
     import re
-    snapshot_dir = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"
+    snapshot_dir = _snapshot_dir()
     canonical_re = re.compile(r"^(\d{4}-\d{2})\.json$")
     out: dict = {}
     if snapshot_dir.exists():
@@ -2447,7 +2529,7 @@ def _load_eps_fy1_baselines() -> dict:
     global _eps_fy1_baseline_cache
     if _eps_fy1_baseline_cache is not None:
         return _eps_fy1_baseline_cache
-    snapshot_dir = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"
+    snapshot_dir = _snapshot_dir()
     out = {}
     for month in _EPS_FY1_BASELINE_MONTHS:
         try:
@@ -3007,18 +3089,43 @@ def enrich_ticker(
             excel_record=excel_record, dd_ticker=t,
         )
     elif excel_record is not None:
-        # No DD anchor — still surface Excel FY1/FY2/FY3 (no eps_now / revision)
+        # No DD anchor — still surface Excel FY1/FY2/FY3 (no eps_now / revision).
+        # 2026-09-17 (v5 smallcap pool — bug found during verification, fixed
+        # here because it silently starved the v3 席位資格 growth gate for
+        # EVERY non-DD ticker, not just this task's new pool): this branch is
+        # the ONLY code path for every dd_status="none" ticker (27 existing
+        # QGM names + 208 new smallcap names). koyfin_xlsx_from_raw.py's
+        # growth/CAGR columns are always None by construction (see that
+        # script's docstring: "build 自算，不從 Koyfin 讀" — computed here, not
+        # scraped). The sibling `if fpe and p_dd` branch above reaches this
+        # same situation via _fetch_live_fy_eps(), which already has a FY1/FY2/
+        # FY3 fallback (see that function's lines ~1278-1283) — this branch had
+        # been copying excel_record's raw (always-None) fields verbatim with NO
+        # fallback, so eps_fy1_fy3_cagr_pct was silently None for 100% of
+        # non-DD tickers even when fy1/fy2/fy3 EPS were present (e.g. ADP
+        # 12.26→13.4→14.58 — a real, computable CAGR). Same formulas as
+        # _fetch_live_fy_eps()'s fallback, kept in sync with it.
+        _xf1, _xf2, _xf3 = excel_record.get("fy1"), excel_record.get("fy2"), excel_record.get("fy3")
+        _growth_fy1_fy2 = excel_record.get("growth_fy1_fy2_pct")
+        if _growth_fy1_fy2 is None and _xf1 and _xf2 and _xf1 > 0:
+            _growth_fy1_fy2 = round((_xf2 / _xf1 - 1) * 100, 4)
+        _growth_fy2_fy3 = excel_record.get("growth_fy2_fy3_pct")
+        if _growth_fy2_fy3 is None and _xf2 and _xf3 and _xf2 > 0:
+            _growth_fy2_fy3 = round((_xf3 / _xf2 - 1) * 100, 4)
+        _cagr_fy1_fy3 = excel_record.get("cagr_fy1_fy3_pct")
+        if _cagr_fy1_fy3 is None and _xf1 and _xf3 and _xf1 > 0 and _xf3 > 0:
+            _cagr_fy1_fy3 = round(((_xf3 / _xf1) ** 0.5 - 1) * 100, 4)
         live_fy_result = {
             "live_fpe_real": None, "yf_fy_label": None,
             "eps_at_dd": None, "eps_now": None, "eps_revision_pct": None,
-            "eps_0y_raw": excel_record.get("fy1"),
-            "eps_1y_raw": excel_record.get("fy2"),
+            "eps_0y_raw": _xf1,
+            "eps_1y_raw": _xf2,
             "eps_year_ago": None,
             "trailing_eps": None,
-            "eps_fy3": excel_record.get("fy3"),
-            "growth_fy1_fy2_pct": excel_record.get("growth_fy1_fy2_pct"),
-            "growth_fy2_fy3_pct": excel_record.get("growth_fy2_fy3_pct"),
-            "cagr_fy1_fy3_pct": excel_record.get("cagr_fy1_fy3_pct"),
+            "eps_fy3": _xf3,
+            "growth_fy1_fy2_pct": _growth_fy1_fy2,
+            "growth_fy2_fy3_pct": _growth_fy2_fy3,
+            "cagr_fy1_fy3_pct": _cagr_fy1_fy3,
             "eps_source": "xlsx",
             "eps_basis": excel_record.get("eps_basis"),
         }
@@ -3287,40 +3394,66 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     t0 = time.time()
 
     # Step 0: v1.4 — load previous latest.json's MA snapshots as fallback cache
-    ma_cache = load_ma_cache(OUTPUT_PATH)
+    ma_cache = load_ma_cache(_output_path())
     print(f"  Step 0    MA cache from prev latest.json: {len(ma_cache)} tickers")
 
     # Step 0b: v1.5 — load previous latest.json's quality fields as fallback
     # cache for yfinance-source rows (sister to MA cache, same rate-limit cause)
-    quality_cache = load_quality_cache(OUTPUT_PATH)
+    quality_cache = load_quality_cache(_output_path())
     print(f"  Step 0    quality cache from prev latest.json: {len(quality_cache)} yfinance tickers")
 
     # Step 1-2
-    universe = load_dd_universe()
-    if top_n:
-        universe = universe[:top_n]
-    print(f"  Step 1-2  DD universe: {len(universe)} tickers")
+    if UNIVERSE_MODE == "smallcap":
+        # v5 smallcap pool (2026-09-17): no DD pool / QGM assumptions — the
+        # ticker universe is exactly the smallcap xlsx's own tickers (from a
+        # dedicated Koyfin screen+watchlist, see notes/site-internal/root/
+        # _koyfin_smallcap_watchlist_20260917.md), shaped identically to
+        # load_non_dd_universe()'s output (dd_status="none", every DD-only
+        # field None) so enrich_ticker()'s existing non-DD code path (already
+        # exercised in prod by --include-non-dd) handles these rows unchanged.
+        _smallcap_excel = load_latest_excel(family=_excel_family())
+        if _smallcap_excel is None:
+            print(f"  Step 1-2  smallcap xlsx NOT FOUND (family={_excel_family()}) "
+                  "— empty universe", file=sys.stderr)
+            universe = []
+        else:
+            universe = _smallcap_universe_entries(_smallcap_excel)
+        if top_n:
+            universe = universe[:top_n]
+        print(f"  Step 1-2  smallcap universe (xlsx family={_excel_family()}): "
+              f"{len(universe)} tickers")
+        # No DD reports exist for these names — verdict overlay is a DD-only
+        # enrichment (extracts dca_verdict from docs/dd/), skip it gracefully.
+        ov = {"dd_meta": 0, "overlay_extracted": 0, "none": len(universe),
+              "overlay_loaded": 0, "overlay_stale_skipped": 0}
+        print(f"  Step 1-2  verdict source: skipped (smallcap universe has no DD reports), "
+              f"none={ov['none']}")
+    else:
+        universe = load_dd_universe()
+        if top_n:
+            universe = universe[:top_n]
+        print(f"  Step 1-2  DD universe: {len(universe)} tickers")
 
-    # Step 1-2c (選股系統 v2, 2026-09): optional non-DD universe from QGM quality
-    # pools (US + TW) — DD becomes optional. OFF by default so CI/prod build
-    # behaviour is unchanged until this is flipped on deliberately; every field
-    # that would normally come from dd-meta is null on these rows (dd_status
-    # "none"), and Step 5's evaluate_criteria()/enrich_ticker() are already
-    # None-safe on those fields (see downstream-risk audit in the PR notes).
-    if include_non_dd:
-        existing_tickers = {e["ticker"] for e in universe}
-        non_dd_universe = load_non_dd_universe(existing_tickers)
-        universe = universe + non_dd_universe
-        print(f"  Step 1-2c non-DD universe (QGM): +{len(non_dd_universe)} tickers "
-              f"({sum(1 for r in non_dd_universe if r['universe_source'] == 'qgm-us')} US, "
-              f"{sum(1 for r in non_dd_universe if r['universe_source'] == 'qgm-tw')} TW) "
-              f"→ total {len(universe)}")
+        # Step 1-2c (選股系統 v2, 2026-09): optional non-DD universe from QGM quality
+        # pools (US + TW) — DD becomes optional. OFF by default so CI/prod build
+        # behaviour is unchanged until this is flipped on deliberately; every field
+        # that would normally come from dd-meta is null on these rows (dd_status
+        # "none"), and Step 5's evaluate_criteria()/enrich_ticker() are already
+        # None-safe on those fields (see downstream-risk audit in the PR notes).
+        if include_non_dd:
+            existing_tickers = {e["ticker"] for e in universe}
+            non_dd_universe = load_non_dd_universe(existing_tickers)
+            universe = universe + non_dd_universe
+            print(f"  Step 1-2c non-DD universe (QGM): +{len(non_dd_universe)} tickers "
+                  f"({sum(1 for r in non_dd_universe if r['universe_source'] == 'qgm-us')} US, "
+                  f"{sum(1 for r in non_dd_universe if r['universe_source'] == 'qgm-tw')} TW) "
+                  f"→ total {len(universe)}")
 
-    # Step 1-2b: P1 — 補機器抽取的 v12 舊 DD 裁決（失敗安全；overlay 缺檔則行為回到現狀）
-    ov = apply_verdict_overlay(universe)
-    print(f"  Step 1-2  verdict source: dd_meta={ov['dd_meta']} "
-          f"overlay_extracted={ov['overlay_extracted']} none={ov['none']} "
-          f"(overlay 記錄 {ov['overlay_loaded']}，file 不符跳過 {ov['overlay_stale_skipped']})")
+        # Step 1-2b: P1 — 補機器抽取的 v12 舊 DD 裁決（失敗安全；overlay 缺檔則行為回到現狀）
+        ov = apply_verdict_overlay(universe)
+        print(f"  Step 1-2  verdict source: dd_meta={ov['dd_meta']} "
+              f"overlay_extracted={ov['overlay_extracted']} none={ov['none']} "
+              f"(overlay 記錄 {ov['overlay_loaded']}，file 不符跳過 {ov['overlay_stale_skipped']})")
 
     # Step 3 prep
     qgm_index = load_qgm_index()
@@ -3374,7 +3507,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         print("  Step 0    EPS 3m-revision baseline: not found (eps_rev_3m_pct=None for all)")
 
     # Step 0d: v1.8 — load EPS estimates Excel (primary EPS source)
-    excel_snapshot = load_latest_excel()
+    excel_snapshot = load_latest_excel(family=_excel_family())
     if excel_snapshot is not None:
         all_dd_tk = [e["ticker"] for e in universe]
         us_adr = {t for t in all_dd_tk if "." not in t}
@@ -3664,17 +3797,19 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
 
     print(f"\n  ✓ Elapsed: {time.time()-t0:.0f}s")
 
+    out_path = _output_path()
     if dry_run:
-        print(f"  (dry-run) skipping write to {OUTPUT_PATH}")
+        print(f"  (dry-run) skipping write to {out_path}")
     else:
-        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        OUTPUT_PATH.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"  ✓ Wrote {OUTPUT_PATH} ({OUTPUT_PATH.stat().st_size:,} bytes)")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"  ✓ Wrote {out_path} ({out_path.stat().st_size:,} bytes)")
 
     return doc
 
 
 def main() -> None:
+    global UNIVERSE_MODE
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--top", type=int, default=None, help="Limit to first N tickers (smoke test)")
     p.add_argument("--no-ma", action="store_true", help="Skip MA fetch (faster smoke)")
@@ -3684,15 +3819,25 @@ def main() -> None:
                    help="選股系統 v2: also carry QGM quality-pool tickers with no DD "
                         "(dd_status=none). Default OFF — CI/prod behaviour unchanged "
                         "until deliberately flipped on.")
+    p.add_argument("--universe", choices=["dd", "smallcap"], default="dd",
+                   help="v5 smallcap pool (2026-09-17): 'smallcap' builds the second "
+                        "Koyfin universe (dd_smallcap watchlist screen, $1-20B / "
+                        "ROIC>=15 / FCF>=10) from its own xlsx family, with no DD pool "
+                        "/ QGM assumptions, writing to docs/dd-screener/smallcap/ "
+                        "instead of the main latest.json. Default 'dd' = unchanged "
+                        "behaviour (--include-non-dd still applies only to 'dd').")
     args = p.parse_args()
+    UNIVERSE_MODE = args.universe
     build(top_n=args.top, skip_ma=args.no_ma, dry_run=args.dry_run, workers=args.workers,
           include_non_dd=args.include_non_dd)
 
     # Discovery pool refresh (v2.4 chain): "ID 標 🔴 核心受益但尚未建 DD" 名單
     # → docs/dd-screener/discovery_pool.json，供 /dd-screener/ 折疊區塊渲染。
     # 純本地掃描（id-meta + DD 檔名），不碰網路；失敗只 warn 不 abort（同
-    # yfinance-failure 政策 — screener 主表永遠優先）。
-    if not args.dry_run:
+    # yfinance-failure 政策 — screener 主表永遠優先）。DD-report-only enrichment
+    # (scans docs/dd/) — skip for the smallcap universe, which has no DD reports
+    # and must never touch the main discovery_pool.json artifact.
+    if not args.dry_run and args.universe != "smallcap":
         try:
             from list_breakout_candidates import write_pool
             pool_path = write_pool()

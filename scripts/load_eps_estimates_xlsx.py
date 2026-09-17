@@ -107,6 +107,15 @@ xlsx carrying the Koyfin ROIC/FCF Margin columns — a quality-source label at
 B3 (defaults to "koyfin-web" when absent, matching the A2/B2 label/value
 convention used for the snapshot date).
 
+Family parameter (2026-09-17, v5 smallcap pool): find_latest_excel() /
+find_excel_for_month() / load_latest_excel() take an optional `family` kwarg
+(filename prefix before the YYYYMMDD date) so the v5 smallcap pool's
+DD_smallcap_EPS_estimates_YYYYMMDD.xlsx (built from a separate Koyfin
+watchlist — see .claude/skills/refresh-eps-screener-web/SKILL.md and
+scripts/build_dd_screener.py --universe smallcap) can be located without
+touching the default DD_universe_EPS_estimates_ behaviour every other caller
+relies on (all of them omit the kwarg).
+
 Edge cases handled (per Notes B10):
   - FY3 missing (SEZL) -> fy3=None, growth_fy2_fy3=None, cagr=None
   - FY1 negative (LYV) -> cagr=None (geometric mean undefined)
@@ -126,6 +135,24 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_DIR = ROOT / "data" / "eps-estimates"
 NS = {"s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 FILENAME_RE = re.compile(r"DD_universe_EPS_estimates_(\d{8})\.xlsx$")
+DEFAULT_FAMILY = "DD_universe_EPS_estimates_"
+
+# Fallback date-suffix matcher used by load_excel() when Notes!B2 is absent —
+# family-agnostic (any "..._<8 digits>.xlsx") so it works for both the default
+# DD_universe_* family and the v5 smallcap pool's DD_smallcap_EPS_estimates_*
+# family (2026-09-17, see scripts/build_dd_screener.py --universe smallcap).
+_GENERIC_DATE_SUFFIX_RE = re.compile(r"_(\d{8})\.xlsx$")
+
+
+def _family_re(family: str) -> re.Pattern:
+    """Build a family-scoped filename regex, e.g. family="DD_smallcap_EPS_estimates_"
+    -> matches "DD_smallcap_EPS_estimates_20260917.xlsx". Mirrors FILENAME_RE's
+    shape (used as the default family's regex) but parametrized so
+    find_latest_excel()/find_excel_for_month()/load_latest_excel() can serve a
+    second xlsx family (2026-09-17 v5 smallcap pool) without touching default
+    behaviour for every existing DD_universe_* caller (none of which pass
+    `family`)."""
+    return re.compile(re.escape(family) + r"(\d{8})\.xlsx$")
 
 # 2026-09-12: ADR 換算表 — Koyfin 匯出的 fy1/fy2/fy3 EPS 有時是普通股口徑，不是
 # ADR 口徑（例：TSM 1 ADR = 5 股普通股）。單一權威讀取點，dd_numbers_extra.py
@@ -529,8 +556,8 @@ def load_excel(path: Path) -> ExcelSnapshot:
         quality_source = _parse_notes_quality_source(z, sst)
 
     if not snap_date:
-        # Fallback: derive from filename DD_universe_EPS_estimates_YYYYMMDD.xlsx
-        m = FILENAME_RE.search(path.name)
+        # Fallback: derive from filename (any family) "..._YYYYMMDD.xlsx"
+        m = _GENERIC_DATE_SUFFIX_RE.search(path.name)
         if m:
             d = m.group(1)
             snap_date = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
@@ -545,32 +572,42 @@ def load_excel(path: Path) -> ExcelSnapshot:
     )
 
 
-def find_latest_excel(data_dir: Path = DEFAULT_DATA_DIR) -> Path | None:
-    """Scan data dir, return the lexicographically largest filename matching pattern."""
+def find_latest_excel(data_dir: Path = DEFAULT_DATA_DIR, family: str = DEFAULT_FAMILY) -> Path | None:
+    """Scan data dir, return the lexicographically largest filename matching pattern.
+
+    `family` (2026-09-17, v5 smallcap pool): the filename prefix before the
+    YYYYMMDD date, e.g. "DD_smallcap_EPS_estimates_" for the second Koyfin
+    universe (see scripts/build_dd_screener.py --universe smallcap). Defaults
+    to the original DD_universe_ prefix — every existing caller omits this
+    kwarg, so behaviour is unchanged."""
     if not data_dir.exists():
         return None
+    pat = _family_re(family)
     candidates = sorted(
-        (p for p in data_dir.glob("DD_universe_EPS_estimates_*.xlsx") if FILENAME_RE.search(p.name)),
-        key=lambda p: FILENAME_RE.search(p.name).group(1),
+        (p for p in data_dir.glob(f"{family}*.xlsx") if pat.search(p.name)),
+        key=lambda p: pat.search(p.name).group(1),
         reverse=True,
     )
     return candidates[0] if candidates else None
 
 
-def find_excel_for_month(month: str, data_dir: Path = DEFAULT_DATA_DIR) -> Path | None:
-    """month = 'YYYY-MM'. Returns the Excel whose snapshot YYYYMM matches, else None."""
+def find_excel_for_month(month: str, data_dir: Path = DEFAULT_DATA_DIR,
+                          family: str = DEFAULT_FAMILY) -> Path | None:
+    """month = 'YYYY-MM'. Returns the Excel whose snapshot YYYYMM matches, else None.
+    `family`: see find_latest_excel() docstring."""
     if not data_dir.exists():
         return None
     target = month.replace("-", "")  # "YYYYMM"
-    for p in data_dir.glob("DD_universe_EPS_estimates_*.xlsx"):
-        m = FILENAME_RE.search(p.name)
+    pat = _family_re(family)
+    for p in data_dir.glob(f"{family}*.xlsx"):
+        m = pat.search(p.name)
         if m and m.group(1).startswith(target):
             return p
     return None
 
 
-def load_latest_excel(data_dir: Path = DEFAULT_DATA_DIR) -> ExcelSnapshot | None:
-    path = find_latest_excel(data_dir)
+def load_latest_excel(data_dir: Path = DEFAULT_DATA_DIR, family: str = DEFAULT_FAMILY) -> ExcelSnapshot | None:
+    path = find_latest_excel(data_dir, family=family)
     if path is None:
         return None
     return load_excel(path)

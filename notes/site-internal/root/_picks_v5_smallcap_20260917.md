@@ -48,3 +48,48 @@ Koyfin 三年期預估、13/56 卡融券 >10%，卡點重疊、分散在多閘�
 小市值池目前掛零，無「可買」實例可供 UI 視覺驗算（表格渲染以合成 fixture 在
 `scripts/tests/test_picks_v5.py` 驗證）。市值網路補抓對 .KL/.T/.AX/.SW 等非 .TW
 外國掛牌會打 404（`grp.fetch_caps()` 既有行為，非本次新增，僅警告不影響輸出）。
+
+## 追記（2026-09-17b）：母體太窄是主因，補第二個 Koyfin 母體
+
+上面「資格閘全過 0」的漏斗顯示卡點分散在耐久／52 週線／三年成長／融券四道閘，
+但更根本的問題是母體只有 56 檔——`data/engine/universe.json` ∪ 主 dd-screener
+池落在 $10–200 億市值帶的名字就這麼多，56 檔要同時扛四道閘，統計上池長期掛零
+是必然，不是規則系統性太嚴。
+
+**新母體＝獨立 Koyfin 篩選器**，不沿用 DD 池／QGM 池：
+
+- 篩選器 `dd_smallcap_v5`：Trading Country=US（含 ADR）、Market Cap $1,000M–
+  $20,000M、ROIC (LTM) ≥15%、FCF Margin % (LTM) ≥10%——209 檔命中。
+- 存成 watchlist `dd_smallcap`（與既有 `dd_screener` 各自獨立，互不覆蓋），
+  欄位比照 `dd_screener` 複製同一套 80 欄（同一份 Koyfin 帳號 duplicate
+  watchlist 再換 ticker 成員，見 `_koyfin_smallcap_watchlist_20260917.md`）。
+- `scripts/build_dd_screener.py --universe smallcap`：母體只認這 209 檔（無
+  DD 池／QGM 池假設），寫 `docs/dd-screener/smallcap/latest.json`，主
+  latest.json 位元組不變（同檔改動前後對 AAPL/NVDA/TSM 關鍵欄位做過 diff）。
+- `scripts/build_tenbagger.py`：母體改讀 smallcap latest.json ∪ 主
+  latest.json 帶內名字，同 ticker 兩邊都有時主池列優先——56 檔不會被小市值
+  池的資料蓋掉，只是多 209 檔候選可以判定資格。
+
+**首次快照無基準**：`docs/dd-screener/smallcap/eps-estimates-snapshots/
+2026-09.json` 是這批母體第一份月度快照，本輪上修（`rev_used_pct`）沒有前月
+可比，資格閘全過的 smallcap 名字這輪一律顯示上修缺值，`grp.in_pool()` 對缺值
+不收（既有規則，非本次新增），所以池今天仍可能是 0——是基準未建，不是規則
+又失靈一次。頁面（`docs/picks/_embed.html`）用 `smallcap_rev_baseline_note`
+欄位顯示「上修基準將於下次快照建立（YYYY-MM）」，避免使用者誤讀。下次重跑
+（10 月）才有第一個真實上修數字可判。
+
+**驗證過程中發現並修的兩個既有 bug（非本次新增規則，純機械修正）**：
+1. `_fetch_live_fy_eps()` 的「無 DD 錨點」分支（`build_dd_screener.py` 約
+   3077 行）只把 xlsx 的 `growth_fy1_fy2_pct`／`cagr_fy1_fy3_pct` 原樣抄出，
+   沒有像有 DD 錨點的分支那樣做 FY1/FY2/FY3 回推 fallback——這條分支是**所有**
+   `dd_status="none"` 名字（既有 QGM 27 檔＋新 smallcap 208 檔）的唯一路徑，
+   結果 27 檔既有 QGM 名字與全部 smallcap 名字的 `eps_fy1_fy3_cagr_pct` 一律
+   是 None（即使 fy1/fy3 EPS 都在），三年成長閘因此系統性餓死。修完後 QGM
+   27/27、smallcap 183/208 拿到真實 CAGR。
+2. `_load_eps_rev_3m_baseline()` 挑「離目標 90 天最近」的月度快照時沒檢查
+   候選快照是否真的早於今天——smallcap 池第一次建母體時，唯一存在的快照就是
+   今天剛寫的 `2026-09.json`，於是被當成「最近」基準選中，把每個 ticker 的
+   今天資料拿去跟自己比，得出假的 `0.0%`（不是預期中的 `None`）。加了
+   `sd_date >= current_date` 就跳過的守門後，smallcap 池首輪正確顯示
+   `None`；主池母體因為一直有真實歷史快照，這個守門是 no-op（同一份基準
+   選擇結果不變，已跑 `--include-non-dd` 前後對照驗證）。

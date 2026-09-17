@@ -82,6 +82,11 @@ PICKS = os.path.join(DOCS, "picks", "picks.json")
 OUT = os.path.join(DOCS, "picks", "tenbagger.json")
 UNIVERSE_JSON = os.path.join(ROOT, "data", "engine", "universe.json")
 DD_LATEST = os.path.join(DOCS, "dd-screener", "latest.json")
+# v5 smallcap pool (2026-09-17): second Koyfin universe (own screen + watchlist,
+# see notes/site-internal/root/_koyfin_smallcap_watchlist_20260917.md), its own
+# dd-screener build (scripts/build_dd_screener.py --universe smallcap) writes
+# here, isolated from the main DD_LATEST above.
+SMALLCAP_LATEST = os.path.join(DOCS, "dd-screener", "smallcap", "latest.json")
 
 TW8 = timezone(timedelta(hours=8))
 
@@ -112,9 +117,17 @@ def load_json(path, label):
 
 
 def load_universe():
-    """data/engine/universe.json ∪ dd-screener latest.json 的 ticker 聯集，
-    market_ok() 過濾（排除 .TW，同 GRP 席位口徑）。回傳 (排序後 ticker 名單,
-    latest.json 全檔, {ticker: stock row})。"""
+    """data/engine/universe.json ∪ dd-screener latest.json ∪ smallcap 池
+    latest.json 的 ticker 聯集，market_ok() 過濾（排除 .TW，同 GRP 席位口徑）。
+    smallcap 池與主 latest.json 同時收錄同一 ticker 時，主 latest.json 的列
+    （DD 池／QGM 品質池，欄位較完整）優先——smallcap 池純粹補主池沒有的名字，
+    不覆蓋既有 56 檔（2026-09-17 v5 smallcap 池，見
+    notes/site-internal/root/_koyfin_smallcap_watchlist_20260917.md）。
+    回傳 (排序後 ticker 名單, latest.json 全檔, {ticker: stock row}, smallcap_meta,
+    smallcap_tickers)。smallcap_meta＝{"as_of","rev_data_as_of","universe_size"}，
+    皆可能為 None／0（smallcap latest.json 缺檔或空）。smallcap_tickers＝這次母體
+    中「列資料來自 smallcap 池且未被主池遮蔽」的 ticker 集合，供上修基準未建提示
+    句判定用（見 main() 的 _smallcap_rev_baseline_note()）。"""
     tickers = set()
     uni = load_json(UNIVERSE_JSON, "universe.json")
     if isinstance(uni, dict):
@@ -130,8 +143,32 @@ def load_universe():
         if tk:
             tickers.add(tk)
             latest_by_ticker[tk] = s
+
+    smallcap_doc = load_json(SMALLCAP_LATEST, "smallcap dd-screener latest.json")
+    smallcap_stocks = (smallcap_doc or {}).get("stocks") or []
+    smallcap_tickers = set()  # non-shadowed smallcap-sourced tickers (main 檔優先者不算)
+    smallcap_shadowed = 0
+    for s in smallcap_stocks:
+        tk = s.get("ticker")
+        if not tk:
+            continue
+        tickers.add(tk)
+        if tk in latest_by_ticker:
+            smallcap_shadowed += 1  # 主 latest.json 已有此 ticker，主檔列優先
+        else:
+            latest_by_ticker[tk] = s
+            smallcap_tickers.add(tk)
+    if smallcap_shadowed:
+        info(f"smallcap 池 {smallcap_shadowed} 檔與主 dd-screener 池重疊，主檔列優先（未覆蓋）")
+    smallcap_meta = {
+        "as_of": (smallcap_doc or {}).get("as_of"),
+        "rev_data_as_of": ((smallcap_doc or {}).get("eps_estimates_source") or {}).get("snapshot_date"),
+        "universe_size": len(smallcap_stocks),
+    }
+
     tickers = {t for t in tickers if grp.market_ok(t)}
-    return sorted(tickers), (latest or {}), latest_by_ticker
+    smallcap_tickers &= tickers
+    return sorted(tickers), (latest or {}), latest_by_ticker, smallcap_meta, smallcap_tickers
 
 
 def resolve_caps(tickers, latest_by_ticker):
@@ -180,6 +217,39 @@ def pool_key(r):
     return grp.pool_sort_key(g.get("rev_used_pct"), r.get("implied_growth_pct"), raw.get("ey"))
 
 
+def _smallcap_rev_baseline_note(smallcap_meta, candidate_rows, smallcap_tickers):
+    """v5 smallcap 池首次快照（2026-09-17）：上修（rev_used_pct）沒有前月基準
+    可比，grp.in_pool() 對 None 一律不收（見該函式 docstring，不是本檔新規則）。
+    這是資料本身的狀態（首次快照，無前月可比），不是資格閘判定結果——用
+    `candidate_rows`（市值帶內的 smallcap 候選，還沒套資格閘）判定基準是否
+    已建，不能只看資格閘全過者（今天可能因為耐久／52週線等其他閘就已經 0 檔，
+    但那不代表上修基準已經建好，兩件事各自獨立，混為一談會在耐久閘之類的閘
+    也卡光時，錯誤地不顯示這則提示句）。沒有前月基準就回傳提示句給頁面顯示，
+    避免使用者誤讀成小市值池全員動能掛零。回傳 None 代表不需要顯示（非
+    smallcap 母體、母體中沒有市值帶內候選、或基準已存在）。"""
+    if not smallcap_tickers:
+        return None
+    smallcap_candidates = [r for r in candidate_rows if r["ticker"] in smallcap_tickers]
+    if not smallcap_candidates:
+        return None
+    has_rev = any((r.get("grp") or {}).get("rev_used_pct") is not None for r in smallcap_candidates)
+    if has_rev:
+        return None
+    rev_date = smallcap_meta.get("rev_data_as_of") or ""
+    next_month = None
+    if len(rev_date) >= 7:
+        try:
+            y, m = int(rev_date[:4]), int(rev_date[5:7])
+            m += 1
+            if m > 12:
+                m = 1
+                y += 1
+            next_month = f"{y:04d}-{m:02d}"
+        except ValueError:
+            next_month = None
+    return f"上修基準將於下次快照建立（{next_month or '下次重跑'}）"
+
+
 def to_out_row(r, caps):
     v = arena._flat_view(r)  # noqa: SLF001 — GRP 席位表本尊同一份扁平化函式，見檔頭 docstring
     cap = caps.get(r["ticker"])
@@ -194,7 +264,7 @@ def main():
     if isinstance(picks, dict) and isinstance(picks.get("veto"), list):
         veto = {t for t in picks["veto"] if isinstance(t, str)}
 
-    all_tickers, latest_doc, latest_by_ticker = load_universe()
+    all_tickers, latest_doc, latest_by_ticker, smallcap_meta, smallcap_tickers = load_universe()
     universe_size = len(all_tickers)
     if universe_size == 0:
         warn("universe.json 與 dd-screener latest.json 皆無法讀取或皆空，保留既有 "
@@ -202,7 +272,7 @@ def main():
         return 0
 
     funnel = OrderedDict()
-    funnel["universe（S&P500+400+NDX100+既有追蹤 ∪ dd-screener 池，扣 .TW）"] = universe_size
+    funnel["universe（S&P500+400+NDX100+既有追蹤 ∪ dd-screener 池 ∪ smallcap 池，扣 .TW）"] = universe_size
 
     in_screener = [t for t in all_tickers if t in latest_by_ticker]
     no_screener_data = universe_size - len(in_screener)
@@ -224,6 +294,9 @@ def main():
 
     eligible = [r for r in rows_all if (r.get("grp") or {}).get("pass")]
     funnel["資格閘全過（品質×耐久×三年成長×站上52週線×否決）＝ELIGIBLE"] = len(eligible)
+    smallcap_rev_baseline_note = _smallcap_rev_baseline_note(smallcap_meta, rows_all, smallcap_tickers)
+    if smallcap_rev_baseline_note:
+        info(f"smallcap 池：{smallcap_rev_baseline_note}")
 
     pool_rows = sorted((r for r in eligible if grp.in_pool((r.get("grp") or {}).get("rev_used_pct"))),
                        key=pool_key)
@@ -271,6 +344,10 @@ def main():
         },
         "outside_band": out_of_band,
         "veto": vetoed,
+        "smallcap_as_of": smallcap_meta.get("as_of"),
+        "smallcap_rev_data_as_of": smallcap_meta.get("rev_data_as_of"),
+        "smallcap_universe_size": smallcap_meta.get("universe_size"),
+        "smallcap_rev_baseline_note": smallcap_rev_baseline_note,
         "note": ("十倍組 v5 小市值池（2026-09-17 起）：GRP 席位同一套 v5 資格閘規則"
                  "（品質閘×耐久一致性×三年成長×站上52週線×財報後上修否決）跑在 "
                  "$10億–$200億市值帶——GRP 席位地板之下、零重疊是設計。池＝資格全過"
@@ -279,7 +356,10 @@ def main():
                  "者；等待池依燈號分接近新高（🟡）／拉回中（🔴）。本組只看不進倉位，"
                  "無核心席、無月頻輪動。持有人 veto（picks.json veto[]）優先於一切規則。"
                  "資料不足＝母體中查不到 dd-screener/QGM 池 v5 欄位或市值未知者，如實"
-                 "列計數，不用寬鬆假設硬湊池。每日隨 dd-screener latest.json 重算。"),
+                 "列計數，不用寬鬆假設硬湊池。每日隨 dd-screener latest.json 重算。"
+                 "2026-09-17 起母體多一路：Koyfin 篩選器 dd_smallcap_v5（美股含 ADR、"
+                 "市值 10 億–200 億美元、ROIC≥15%、自由現金流利潤率≥10%）產生的 "
+                 "dd_smallcap 觀察名單，與主 dd-screener 池同 ticker 時主池列優先。"),
         "official": official_out,
         "buyable": buyable_out,
         "waiting": {"yellow": waiting_yellow, "red": waiting_red},

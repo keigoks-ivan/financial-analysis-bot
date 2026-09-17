@@ -171,7 +171,7 @@ footer a{font-weight:600}
   <div class="container">
     <div class="section-head"><h2>怎麼讀這張表</h2></div>
     <div class="hero gov" style="max-width:none;margin-top:0">
-      <p><b>資格</b>＝品質閘（ROIC ≥15% 且自由現金流利潤率 ≥10%，或 ROIC ≥25% 時自由現金流利潤率 ≥0% 的資本週期豁免）× 三年期獲利成長預估（一般門檻 15%，耐久達標者放寬到 10%）× 站上 52 週均線 × 耐久一致性（QGM 五年穩定度 ≥75%，或五年平均、三年平均、當期 ROIC 三者皆 ≥15%）。體質拒絕、衰退訊號、180 天內的 DD 迴避裁決、融券占流通股比逾 10%、財報後獲利上修（缺值退回三個月）跌破 −5%，任一觸發即排除資格，本頁不留衛星軌可以收留。</p>
+      <p><b>母體</b>來自兩個 Koyfin 篩選器：主池沿用既有 dd_screener 觀察名單（DD 池與 QGM 品質池），2026-09-17 起新增 dd_smallcap_v5——條件為美股（含 ADR）、市值 10 億–200 億美元、ROIC（近 12 個月）≥15%、自由現金流利潤率（近 12 個月）≥10%，同一 ticker 兩池都有時主池列優先。<b>資格</b>＝品質閘（ROIC ≥15% 且自由現金流利潤率 ≥10%，或 ROIC ≥25% 時自由現金流利潤率 ≥0% 的資本週期豁免）× 三年期獲利成長預估（一般門檻 15%，耐久達標者放寬到 10%）× 站上 52 週均線 × 耐久一致性（QGM 五年穩定度 ≥75%，或五年平均、三年平均、當期 ROIC 三者皆 ≥15%）。體質拒絕、衰退訊號、180 天內的 DD 迴避裁決、融券占流通股比逾 10%、財報後獲利上修（缺值退回三個月）跌破 −5%，任一觸發即排除資格，本頁不留衛星軌可以收留。</p>
       <p><b>上修%（財報後）</b>優先讀該股自己最近一次財報後的獲利上修幅度，缺值才退回近三個月；池內排序先看這欄降冪，同值再看隱含成長率、再看盈餘殖利率。<b>距歷史新高%</b>是還原配息後的全歷史最高收盤價距離，不是 52 週高。</p>
       <p><b>時機</b>：🟢 可進＝距歷史新高 ≥−3% 且站上 200 日均線；🟡 半倉＝距新高 −10%～−3%；🟠 過熱＝12 個月減 1 個月動能 &gt;150% 但仍在突破帶附近；🔴 等板機＝距新高 &lt;−10% 或跌破 200 日均線。<b>倉位</b>跟時機一對一：正常倉／半倉／零倉·等板機。</p>
       <p><b>DD</b>是個股報告的裁決標籤，僅供顯示，不影響資格與排序；沒有 DD 是常態，本頁多數名字市值不到三閘評分席位的追蹤門檻。<b>備註</b>欄的頂點、基期、循環守門、內部人買賣，同樣純顯示，不進資格與排序，定義與三閘評分席位表逐字相同。</p>
@@ -318,7 +318,16 @@ footer a{font-weight:600}
     var asofEl = document.getElementById('pool-asof');
     if(asofEl){
       asofEl.textContent = '上修資料日 '+(d.rev_data_as_of||d.as_of||'—')+'　·　價格日 '+(d.price_as_of||d.as_of||'—')
-        +'　·　池 '+((d.official||[]).length)+' 檔（可買 '+((d.buyable||[]).length)+'）';
+        +'　·　池 '+((d.official||[]).length)+' 檔（可買 '+((d.buyable||[]).length)+'）'
+        +'　·　小市值資料日 '+(d.smallcap_rev_data_as_of||d.smallcap_as_of||'—')
+        +'　·　小市值母體 '+(d.smallcap_universe_size!=null?d.smallcap_universe_size:'—')+' 檔';
+      if(d.smallcap_rev_baseline_note){
+        var noteDiv=document.createElement('div');
+        noteDiv.className='asof';
+        noteDiv.style.marginTop='.3rem';
+        noteDiv.textContent='小市值池上修：'+d.smallcap_rev_baseline_note+'，今天池內看不到小市值名字是正常現象，不是資格閘出錯';
+        asofEl.parentNode.insertBefore(noteDiv, asofEl.nextSibling);
+      }
     }
   }).catch(function(e){
     dataErr('pool-buyable-body');
