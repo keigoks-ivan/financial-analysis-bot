@@ -732,6 +732,32 @@ _POOL_ASCII_HDR_IDX = (f"{'#':<{W_SEATCODE}} {'ticker':<{W_TICKER}} {'rev':>{W_R
                        f"{'lamp':<{W_LAMPCODE}} {'act':<{W_ACTCODE}} {'dd':<{W_DD}} note")
 
 
+def _group_waiting_pool_by_timing(waiting_rest: list) -> tuple[list, list, list]:
+    """v5（2026-09-17 owner follow-up，見 knowledge/rule_ledger.md「v5 席位引擎」
+    列）：③ 等待池依時機燈分三段顯示——🟡 接近新高（距新高 −10%~−3%，站上 200 日線）
+    ／🔴 拉回中（距新高 <−10% 或跌破 200 日線）／⚫ 資料缺（`dist_ath_pct` 缺值，
+    燈號退回 yellow fallback，無法歸類進前兩段）。分組只看 `dist_ath_pct` 是否存在
+    與 `lamp["code"]`是否為 "red"——`waiting_rest` 本身已排除 green/hot（見②可買
+    定義），故其餘只會落在 yellow 或 red，本函式不重算燈號。組內維持傳入順序（呼叫端
+    已依上修降冪排序）。"""
+    yellow, red, gray = [], [], []
+    for r in waiting_rest:
+        if r.get("dist_ath_pct") is None:
+            gray.append(r)
+        elif (r.get("lamp") or {}).get("code") == "red":
+            red.append(r)
+        else:
+            yellow.append(r)
+    return yellow, red, gray
+
+
+_WAIT_GROUP_LABELS = (
+    ("🟡 接近新高（距新高 −10%~−3%，站上 200 日線）", "yellow"),
+    ("🔴 拉回中（距新高 <−10% 或跌破 200 日線）", "red"),
+    ("⚫ 資料缺（距歷史新高資料不足，無法歸類）", "gray"),
+)
+
+
 def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
                         lamp_as_of=None, last_rotation_date=None) -> list[str]:
     """v5『① 核心席（5）／② 可買／③ 等待池』區塊（board.txt 用，含 DOWN 異動列）——
@@ -767,13 +793,20 @@ def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
         L.append("  （無——等待池目前沒有名字板機亮燈）")
     L.append("")
 
-    L.append(f"== ③ 等待池（上修強、還沒突破，共 {len(waiting_rest)} 檔）")
-    if waiting_rest:
-        L.append(_POOL_ASCII_HDR_IDX)
-        for i, r in enumerate(waiting_rest, 1):
-            L.append(_pool_ascii_row(i, r))
-    else:
+    L.append(f"== ③ 等待池（上修強、還沒突破，共 {len(waiting_rest)} 檔；依時機燈分組，組內依上修排序）")
+    if not waiting_rest:
         L.append("  （無）")
+    else:
+        yellow, red, gray = _group_waiting_pool_by_timing(waiting_rest)
+        groups = {"yellow": yellow, "red": red, "gray": gray}
+        for label, key in _WAIT_GROUP_LABELS:
+            group = groups[key]
+            if not group:
+                continue
+            L.append(f"  -- {label}（{len(group)} 檔）")
+            L.append(_POOL_ASCII_HDR_IDX)
+            for i, r in enumerate(group, 1):
+                L.append(_pool_ascii_row(i, r))
     L.append("")
     return L
 
@@ -817,8 +850,8 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
              "五百分位對照分保留一輪，見全母體對照表與各列 hover 的「v4 對照」，不參與"
              "本排序）。核心＝池前 5，月頻輪動（每月第一次排程整批重選一次，期間僅硬"
              "否決能換人、空位由池遞補）。衛星軌已取消——沒卡進核心前 5 的池成員全部"
-             "叫「等待池」，依時機燈分兩段顯示：②可買（綠/橘燈，今天板機亮的）與"
-             "③等待池（其餘）。")
+             "叫「等待池」，依時機燈分組：②可買（綠/橘燈，今天板機亮的）；③等待池"
+             "（其餘）再依時機燈細分🟡接近新高／🔴拉回中／⚫資料缺三段，組內依上修排序。")
     L.append("耐久＝QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者"
              "皆 ≥15%——一致性判準，不是單一數字；不耐久即不進池，v5 沒有衛星席可以"
              "退。融券占流通股比 >10% 亦整體排除（同理，沒有衛星席可以收留）。過熱"
@@ -1355,14 +1388,28 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 
     core_tbl = _pool_table_html(core_seats, lamp_map, seat_prefix="C")
     buyable_tbl = _pool_table_html(buyable, lamp_map)
-    waiting_tbl = _pool_table_html(waiting_rest, lamp_map)
+    waiting_yellow, waiting_red, waiting_gray = _group_waiting_pool_by_timing(waiting_rest)
+    if not waiting_rest:
+        waiting_tbl = '<div class="bw-note-line">（無）</div>'
+    else:
+        waiting_parts = []
+        for label, group in ((_WAIT_GROUP_LABELS[0][0], waiting_yellow),
+                             (_WAIT_GROUP_LABELS[1][0], waiting_red),
+                             (_WAIT_GROUP_LABELS[2][0], waiting_gray)):
+            if not group:
+                continue
+            waiting_parts.append(
+                f'<div class="bw-sub" style="margin-top:10px"><b>{escape(label)}</b>'
+                f'（{len(group)} 檔）</div>' + _pool_table_html(group, lamp_map))
+        waiting_tbl = "".join(waiting_parts)
 
     legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表（下方「全母體看板」共用本段說明）</summary>
 <div class="bw-note-line">資格＝品質派（品質閘×三年成長×站上 52 週線×耐久一致性）、排序＝上修（財報後
 錨定，缺值退回三月）、板機＝突破還原權息歷史新高。池＝資格全過且耐久達標的名字中，財報後上修 ≥5% 者；
 池內依上修降冪排序，同值 tie-break implied_growth_pct、再 tie-break 盈餘殖利率。核心＝池前 5，月頻輪動
 （每月第一次排程整批重選一次，期間僅硬否決能換人、空位由池遞補）。衛星軌已取消——沒卡進核心前 5 的
-池成員全部叫「等待池」，依時機燈分兩段顯示：②可買（綠/橘燈，今天板機亮的）與③等待池（其餘）。
+池成員全部叫「等待池」，依時機燈分組：②可買（綠/橘燈，今天板機亮的）；③等待池（其餘）再依時機燈細分
+🟡接近新高／🔴拉回中／⚫資料缺三段，組內依上修排序。
 own_score_v4 五百分位對照分（v4 對照）保留一輪，只在「上修%（財報後）」欄 hover 顯示，不參與本排序。</div>
 <div class="bw-note-line"><b>耐久</b>：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均∧三年平均∧現值三者
 皆 ≥15%——一致性判準，不是單一數字；不耐久即不進池，v5 沒有衛星席可以退。融券占流通股比 &gt;10% 亦
@@ -1410,7 +1457,8 @@ CAGR 因 FY1→FY2 低基期跳增而改用 FY2→FY3 成長率取代；<b>循�
            + '<div class="bw-sub">等待池中時機燈綠/橘者——今天板機亮的，可能是空清單。</div>'
            + buyable_tbl
            + f'<h3 class="bw-sec">③ 等待池（{len(waiting_rest)} 檔）</h3>'
-           + '<div class="bw-sub">上修強、還沒突破——池中扣掉核心與②可買後的其餘名字，依上修排序。</div>'
+           + '<div class="bw-sub">上修強、還沒突破——池中扣掉核心與②可買後的其餘名字，'
+             '依時機燈分組（🟡接近新高／🔴拉回中／⚫資料缺），組內依上修排序。</div>'
            + waiting_tbl)
 
 

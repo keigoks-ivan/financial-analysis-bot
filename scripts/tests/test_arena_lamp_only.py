@@ -222,3 +222,28 @@ def test_argparse_daily_and_lamp_only_are_ledger_readonly_aliases():
     for flag in ("--daily", "--lamp-only"):
         args = parser.parse_args([flag])
         assert args.ledger is False
+
+
+# ── ③ 等待池 timing-lamp grouping (2026-09-17 owner follow-up) ──────────────
+
+def _waiting_row(ticker, dist_ath, lamp_code):
+    return {"ticker": ticker, "dist_ath_pct": dist_ath, "lamp": {"code": lamp_code}}
+
+
+def test_group_waiting_pool_splits_yellow_red_gray_preserving_order():
+    rows = [
+        _waiting_row("A", -8.8, "yellow"),
+        _waiting_row("B", -19.4, "red"),
+        _waiting_row("C", -6.2, "yellow"),
+        _waiting_row("D", None, "yellow"),   # data missing -> gray, even though lamp said yellow
+        _waiting_row("E", -21.1, "red"),
+    ]
+    yellow, red, gray = build_arena._group_waiting_pool_by_timing(rows)
+    assert [r["ticker"] for r in yellow] == ["A", "C"], "組內維持傳入順序（已依上修降冪排序）"
+    assert [r["ticker"] for r in red] == ["B", "E"]
+    assert [r["ticker"] for r in gray] == ["D"], "dist_ath_pct 缺值優先歸類為資料缺，不管 lamp code"
+
+
+def test_group_waiting_pool_all_empty_groups_are_valid():
+    yellow, red, gray = build_arena._group_waiting_pool_by_timing([])
+    assert yellow == [] and red == [] and gray == []
