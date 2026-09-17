@@ -152,7 +152,14 @@ if [ -n "$ADDED_DD" ] || [ -n "$ADDED_DCA" ]; then
     # 反而短；沿用 70KB floor 只會逼出灌水。判別看產物自己的 dd-layout meta
     # （scripts/dd_templates/v19.html 寫的），不看 schema——v19 判斷檔渲染出
     # 的 dd-meta schema 仍是 v15.x。70KB floor 留給 legacy 版面，一字未改。
-    if grep -q 'name="dd-layout" content="v19"' "$f" 2>/dev/null; then
+    if grep -q 'name="dd-pipeline" content="dd2-v20"' "$f" 2>/dev/null; then
+      # 2026-09-17（持有人拍板）：dd2（v20）產物——結構／數字白名單／機器語言／篇幅下限
+      # 已在 scripts/dd2/run.py _gates_v20 組頁時驗過；validate_report_v19.py 是 2026-09-11
+      # 未完成品（要求條列附 f_* id、e9b 財務表非空，抽取器未做），對 v20 一律誤報，故不跑，
+      # 改套與 v15 相同的 70KB floor。判別看 dd2 組頁時寫進 head 的 dd-pipeline meta。
+      echo "   $f: dd2 v20 產物 → 套 70KB floor（結構驗收已在 dd2 _gates_v20）"
+      check_report_size "$f" 70000 80000 "DD" 115000 || FAIL=1
+    elif grep -q 'name="dd-layout" content="v19"' "$f" 2>/dev/null; then
       echo "   $f: v19 版面 → 結構驗收（validate_report_v19.py），不套 70KB floor"
       if ! python3 scripts/validate_report_v19.py "$f" > /tmp/_dd_v19_structure.log 2>&1; then
         echo ""

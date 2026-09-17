@@ -891,6 +891,26 @@ def _visible_text_for_id_scan(html_text):
     return re.sub(r"<[^>]+>", " ", t)
 
 
+_PIPELINE_META = '<meta name="dd-pipeline" content="dd2-v20">'
+
+
+def _mark_pipeline(out_path):
+    """在組好的頁面 head 加 dd-pipeline 標記：pre-commit hook 看到就知道結構驗收已由 dd2 做過，
+    改套 70KB floor 而不跑未完成的 validate_report_v19（2026-09-17 持有人拍板）。"""
+    p = Path(out_path)
+    if not p.exists():
+        return
+    html = p.read_text(encoding="utf-8")
+    if "dd-pipeline" in html:
+        return
+    anchor = 'name="dd-layout" content="v19">'
+    if anchor in html:
+        html = html.replace(anchor, anchor + "\n" + _PIPELINE_META, 1)
+    elif "</head>" in html:
+        html = html.replace("</head>", _PIPELINE_META + "\n</head>", 1)
+    p.write_text(html, encoding="utf-8")
+
+
 def _gates_v20(ctx, out_html=None, postprocess=False):
     """回 (ok, findings, warns)。findings 擋，warns 只印。"""
     import dd_sections
@@ -908,6 +928,7 @@ def _gates_v20(ctx, out_html=None, postprocess=False):
     rc, out = _sub(cmd)
     if rc != 0:
         return False, [("_assemble", out.strip()[-500:])], warns
+    _mark_pipeline(out_path)
 
     vp = [py, SCRIPTS_DIR / "validate_prose.py", prose_dir, "--judgment", judgment_path, "--json"]
     if evidence_path.exists():
