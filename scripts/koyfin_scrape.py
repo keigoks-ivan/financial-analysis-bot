@@ -50,6 +50,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+VIEWPORT = {"width": 1600, "height": 900}
 SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
@@ -73,38 +74,62 @@ def _djb2(s: str) -> int:
 
 
 def _is_logged_out(page) -> bool:
-    """Best-effort logged-out signal: a password input is present on the
-    page. Matches the task's explicit exit-3 contract ("if a password input
-    is present"). Not verified against a live Koyfin login page (no session
-    available to this run) — if Koyfin's login form doesn't use
-    input[type=password] this needs recalibration on first real use."""
+    """登出訊號（2026-09-18 對照真實頁面後改）：三個任一成立就算登出——
+    (1) 網址在 /login（Koyfin 未登入開 watchlist 會轉到 /login?prevUrl=...）；
+    (2) 頁上有密碼欄；(3) 頁首有「Log In」按鈕（未登入的首頁沒有密碼欄，
+    只有 Sign Up Free／Log In 兩顆按鈕，原本只看密碼欄會誤判成已登入）。"""
     try:
-        return page.locator('input[type="password"]').count() > 0
+        if "/login" in (page.url or ""):
+            return True
+        if page.locator('input[type="password"]').count() > 0:
+            return True
+        return page.evaluate(
+            "() => [...document.querySelectorAll('a,button')]"
+            ".some(e => /^log ?in$/i.test(e.textContent.trim()))"
+        )
+    except Exception:
+        return False
+
+
+def _tabs_rendered(page) -> bool:
+    try:
+        return page.locator("span.kui-tabs-header-item__label-text").count() > 0
     except Exception:
         return False
 
 
 def cmd_login(profile_dir: Path, headless: bool) -> int:
+    """一次性人工登入：開 watchlist 網址（未登入會轉到 /login），等使用者自己登入。
+    「已登入」的判準是登出訊號消失且 watchlist 分頁列真的渲染出來，不是「沒看到
+    密碼欄」（首頁本來就沒有密碼欄，2026-09-18 第一次跑就因此秒關）。"""
     from playwright.sync_api import sync_playwright
 
     profile_dir.mkdir(parents=True, exist_ok=True)
     print(f"[login] persistent profile: {profile_dir}")
+    target = FAMILIES[FAMILY_ORDER[0]]["url"]
     with sync_playwright() as p:
         context = p.chromium.launch_persistent_context(
-            user_data_dir=str(profile_dir), headless=headless
+            user_data_dir=str(profile_dir), headless=headless,
+            viewport=VIEWPORT,   # 1280 寬時 Koyfin 會收起工具列（USD 按鈕消失），見 2026-09-18 實測
         )
         page = context.pages[0] if context.pages else context.new_page()
-        page.goto(KOYFIN_HOME, wait_until="domcontentloaded")
-        print("[login] browser open — please log in to Koyfin manually. "
-              "This script never types credentials. Polling up to 10 minutes...")
+        page.goto(target, wait_until="domcontentloaded")
+        print("[login] 瀏覽器已開。請在視窗裡登入 Koyfin（本腳本不會輸入帳密）。"
+              "登入後會自動回到 watchlist 頁，看到分頁列就算完成，最多等 10 分鐘。", flush=True)
         deadline = time.time() + LOGIN_TIMEOUT_SECS
         while time.time() < deadline:
-            if not _is_logged_out(page):
-                print("[login] no password input detected — treating as logged in.")
-                context.close()
-                return 0
+            # 登入流程（尤其 Google／SSO）可能開新分頁，所以每一頁都看，不只盯原本那頁。
+            for pg in list(context.pages):
+                try:
+                    if not _is_logged_out(pg) and _tabs_rendered(pg):
+                        print("[login] 偵測到 watchlist 分頁列，登入完成；profile 已保存。", flush=True)
+                        time.sleep(2)
+                        context.close()
+                        return 0
+                except Exception:
+                    continue
             time.sleep(LOGIN_POLL_SECS)
-        print("[login] timed out after 10 minutes without detecting a logged-in state.")
+        print("[login] 10 分鐘內沒偵測到登入完成。")
         context.close()
         return 1
 
@@ -161,8 +186,13 @@ def scrape_one(context, family_key: str, date_str: str, timeout_sec: int) -> int
     print(f"[{family_key}] navigating to {fam['url']}")
     page.goto(fam["url"], wait_until="domcontentloaded")
 
+    # 等到「轉去 /login」或「分頁列出現」其中一個，最多 20 秒，再判登入狀態。
+    for _ in range(40):
+        if _is_logged_out(page) or _tabs_rendered(page):
+            break
+        page.wait_for_timeout(500)
     if _is_logged_out(page):
-        print(f"[{family_key}] 請先跑 --login（password input present — not logged in）")
+        print(f"[{family_key}] 請先跑 --login（未登入：轉到 /login 或頁首有 Log In 按鈕）")
         page.close()
         return 3
 
@@ -267,7 +297,8 @@ def cmd_scrape(profile_dir: Path, names: list[str], date_str: str, headless: boo
     worst = 0
     with sync_playwright() as p:
         context = p.chromium.launch_persistent_context(
-            user_data_dir=str(profile_dir), headless=headless
+            user_data_dir=str(profile_dir), headless=headless,
+            viewport=VIEWPORT,   # 1280 寬時 Koyfin 會收起工具列（USD 按鈕消失），見 2026-09-18 實測
         )
         try:
             for name in names:

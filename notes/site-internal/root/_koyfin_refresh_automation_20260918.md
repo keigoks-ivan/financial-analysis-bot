@@ -78,3 +78,9 @@ Step 0.5（用 Columns 對話框新增新欄位）沒有自動化。這步只在
 ## 2026-09-18 補記：選擇器已對照真實頁面
 
 用登入中的 Chrome 看過 /myw 頁：作用中分頁是 `div.kui-tabs-header-item--active`（`aria-selected="true"`），名稱在 `span.kui-tabs-header-item__label-text`；表格容器 class 含 `table__scrollContainer___`；幣別是右上角 `button.kui-button` 裡的 `span.kui-button__text`，文字 USD。腳本的三個檢查都對得上。還沒跑過的只有 Playwright 持久 profile 的完整抓取，第一次 `--login` 之後跑一次就知道。
+
+## 2026-09-18 實跑結果
+
+- 第一版 `--login` 秒關：首頁沒有密碼欄，腳本就當已登入。已改成「登出訊號消失且 watchlist 分頁列出現」才算完成，而且每個瀏覽器分頁都看（Google／SSO 登入會開新分頁）。
+- 第一次抓取卡在 USD 檢查：預設視窗 1280 寬時 Koyfin 收起工具列，USD 按鈕不在畫面上。視窗改 1600×900 後正常。
+- dd_largecap 自動抓取結果與同日人工抓取逐字相同：160 檔、bytes 66677、djb2 3646933340，80 欄表頭、對帳無漏檔。
