@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.investmquest.koyfin-refresh — monthly Koyfin three-watchlist refresh
+  (scripts/koyfin_refresh_all.py --scrape). NOT installed by this task — see
+  notes/site-internal/root/_koyfin_refresh_automation_20260918.md for the
+  install/uninstall commands. House style copied from the existing
+  ~/Library/LaunchAgents/com.investmquest.taifex-ticks.plist (read-only
+  reference, not modified by this task).
+
+  Target: first Saturday of the month, 09:30 local time.
+
+  TIMEZONE LIMITATION: launchd's StartCalendarInterval fires in the machine's
+  LOCAL system timezone — there is no per-job timezone field. "09:30
+  Asia/Taipei" is only correct if this Mac's System Settings > Date & Time is
+  itself set to Asia/Taipei (or Hour/Minute below are adjusted to whatever
+  the local offset from Taipei is at install time, remembering Taipei has no
+  DST so the offset is fixed year-round relative to UTC, but NOT necessarily
+  fixed relative to a US-timezone Mac observing DST).
+
+  "FIRST SATURDAY OF MONTH" LIMITATION: launchd has no native "Nth weekday of
+  month" trigger. Within one StartCalendarInterval dictionary, Day and
+  Weekday are ANDed (fires only when BOTH match); multiple dictionaries in
+  the array are ORed. So this uses the standard launchd trick: one dict per
+  Day value 1-7, each also requiring Weekday=6 (Saturday) — in any given
+  month exactly one of Day 1..7 is a Saturday, so the AND collapses to "the
+  first Saturday" without launchd ever needing to count occurrences itself.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.investmquest.koyfin-refresh</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/python3.12</string>
+    <string>/Users/ivanchang/financial-analysis-bot/scripts/koyfin_refresh_all.py</string>
+    <string>--scrape</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/ivanchang/financial-analysis-bot</string>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Day</key><integer>1</integer><key>Weekday</key><integer>6</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Day</key><integer>2</integer><key>Weekday</key><integer>6</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Day</key><integer>3</integer><key>Weekday</key><integer>6</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Day</key><integer>4</integer><key>Weekday</key><integer>6</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Day</key><integer>5</integer><key>Weekday</key><integer>6</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Day</key><integer>6</integer><key>Weekday</key><integer>6</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Day</key><integer>7</integer><key>Weekday</key><integer>6</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>30</integer></dict>
+  </array>
+  <key>StandardOutPath</key>
+  <string>/Users/ivanchang/Library/Logs/koyfin-refresh.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/ivanchang/Library/Logs/koyfin-refresh.log</string>
+</dict>
+</plist>

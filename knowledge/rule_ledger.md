@@ -220,3 +220,9 @@
 | 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
 |---|---|---|---|---|
 | **③b 太貴不入池**：席位排序頁在 ③ 等待池之後加一區，列「其他資格全過、只有估值閘紅燈」的名字（`grp.grp_score()` 新欄 `pass_ex_valuation` 為 True 且 `pass` 為 False），依上修排序，欄位同池表（估值／時機燈／衰退／體質／DD／底部）。純顯示，不進池、不佔席、不改任何排序（`scripts/engine/build_arena.py` `too_expensive_rows()`／`_too_expensive_section_html()`，ASCII 版同段）。同日估值閘倍數門檻 1.5→1.75（持有人看過 39 檔合格名字的分布後定：1.5 只砍 DELL 1.74，2.0 砍不到任何名字，1.75 讓這道閘在極端才動）。 | 2026-09-18 | 持有人持有 TSM、DELL 等名字，問「持有的股票漲貴被移除後怎麼看」。查證發現全母體看板只列資格全過的 40 檔，估值紅的名字整頁消失，持有者看不到它的燈號與四個壞訊號（衰退 ⛔／體質拒絕／DD 迴避／跌破 200 日線）。估值紅的語意是「不加碼」不是「賣」，所以要有一區把這些名字留在頁上。 | 若三個月內 ③b 長期為空（估值閘幾乎不動）或持有人不看，併回 ④ 收合區。 | 待審 |
+
+## 2026-09-18：Koyfin 三份清單月度重抓自動化
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **指紋校驗與分割／異常 gate，在自動化路徑裡繼續當硬 stop**：`scripts/koyfin_refresh_all.py` 對 `dd_screener`／`dd_smallcap`／`dd_largecap` 三份 watchlist，逐一驗 djb2 指紋（瀏覽器與 Python 各自獨立算一次，兜不起來 exit 5、不落檔——`scripts/koyfin_scrape.py`）與 FY1 盈餘估值機械篩（|變動| ≥35% 或翻號 exit 6、不建 xlsx、不跑任何下游指令）。判斷本體（分割／壞資料／真實分析師修正三選一，`.claude/skills/refresh-eps-screener-web/SKILL.md` Step 5 決策樹）維持人工，程式只找出可疑名單，不自動放行。 | 2026-09-18 | 手動流程每月要開 Chrome 跑 8 步、15-30 分鐘，三份 watchlist 疊起來是重複勞動，故寫程式接手。但自動化本身的風險是把原 skill「零轉抄」與「分割 gate 不准想當然」兩條硬規則，在改寫成程式時悄悄鬆掉——若自動化路徑對指紋兜不起來或 FY1 大幅跳動的情況靜默略過或自動放行，壞資料或誤判的分割會直接流進 dd-screener 母體與席位引擎，比手動漏做更難事後查出來。 | 連續兩個月，scraper 因 Koyfin 改版（表格結構整個換掉，不只是 class 後綴輪換——`koyfin_scraper.js` 已用前綴選擇器擋掉後綴輪換）而失敗 → 退回手動 skill（`.claude/skills/refresh-eps-screener-web/SKILL.md`）逐月操作，直到重新核對並校準 `koyfin_scraper.js` 的表頭陣列 `F`。 | 待審 |
