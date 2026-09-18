@@ -330,7 +330,7 @@ def git_commit(built: list[dict], push: bool) -> int:
         print(proc.stderr, file=sys.stderr)
         return proc.returncode
     if push:
-        proc = run(["git", "pull", "--rebase"])
+        proc = run(["git", "pull", "--rebase", "--autostash"])   # 無人值守：工作樹常有未提交檔，沒 autostash 會停
         print(proc.stdout)
         if proc.returncode != 0:
             print(proc.stderr, file=sys.stderr)
