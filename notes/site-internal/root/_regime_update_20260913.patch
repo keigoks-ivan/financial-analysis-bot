@@ -1,0 +1,1171 @@
+--- a/scripts/build_regime.py
++++ b/scripts/build_regime.py
+@@ -17,6 +17,8 @@
+ 
+ Editorial (carried from the Vol.1 pilot; NEVER overwritten by mechanical)
+ ------------------------------------------------------------------------
++  * 2026-09-13: archived under historical_editorial; current consumers use
++    daily market release observations and its reviewed analysis.
+   * Six-axis regime scorecard marker positions + one-line reads + pills.
+   * Composite (qualitative) read.
+   * Trigger / monitoring table.
+@@ -272,7 +274,9 @@
+         if len(win5) < 150:
+             gaps.append(f"COT {zh}：5y 樣本僅 {len(win5)} 週（<150），百分位可信度打折")
+         rows.append({"market": zh, "group": grp, "pctile_5y": p5, "net": net,
+-                     "extreme": flag, "delta_4w_pp_oi": d4})
++                     "extreme": flag, "delta_4w_pp_oi": d4,
++                     # 2026-09-13：每筆部位保留自己的觀測日與樣本數。
++                     "as_of": cur_date, "sample_weeks": len(win5)})
+     rows.sort(key=lambda r: (r["pctile_5y"] is not None, r["pctile_5y"]), reverse=True)
+     return rows, latest, gaps
+ 
+@@ -353,10 +357,12 @@
+     return rows or None
+ 
+ 
+-def build_price_cache(skip_fetch):
++def build_price_cache(skip_fetch, price_cache=None):
+     """Incrementally refresh data/regime_prices.json.  Returns
+     {symbol: [(week_end, close), ...]} (possibly from cache alone)."""
+-    cache = load_json(PRICE_CACHE, {"meta": {}, "series": {}})
++    # 2026-09-13：離線模式只讀快取，支援隔離驗收。
++    price_cache = price_cache or PRICE_CACHE
++    cache = load_json(price_cache, {"meta": {}, "series": {}})
+     series = cache.setdefault("series", {})
+     fetched = {}
+     if not skip_fetch:
+@@ -404,7 +410,7 @@
+         "note": "weekly close cache for regime growth/defence ratios; "
+                 "yfinance->stooq (ETFs only); incremental.",
+     }
+-    wrote = write_json_if_changed(PRICE_CACHE, cache)
++    wrote = write_json_if_changed(price_cache, cache) if not skip_fetch else False
+     n = {t: len(series.get(t, [])) for t in RATIO_SYMBOLS}
+     info(f"price cache: {n}, {'written' if wrote else 'no change'}")
+     return {t: [(d, c) for d, c in series.get(t, [])] for t in RATIO_SYMBOLS}
+@@ -438,7 +444,8 @@
+         if len(rs) >= 53:
+             vals = [v for _, v in rs]
+             mech["as_of"] = rs[-1][0]
+-            mech["value"] = rnd(vals[-1], 4)
++            # 2026-09-13：銅金比量級很小，保留八位小數避免四位捨入失真。
++            mech["value"] = rnd(vals[-1], 8)
+             if vals[-53]:
+                 mech["chg_12m_pct"] = rnd((vals[-1] / vals[-53] - 1) * 100, 1)
+             mech["pctile_2y"] = pctile_incl(vals[-104:], vals[-1])
+@@ -577,35 +584,53 @@
+         pv = m.get("pctile_2y")
+         txt = r["name"]
+         if v is not None:
+-            txt += f' {v:.3f}'
++            txt += f' {v:.6f}'
+         if pv is not None:
+-            txt += f'（2y {pv:.0f}）'
++            txt += f'（近兩年週樣本分位 {pv:.0f}）'
++        # 2026-09-13：價格比、OAS 與百分位分開標示，避免把代理當信用利差。
++        spec = next(x for x in RATIOS_EDITORIAL if x["key"] == r["key"])
++        txt += f' · {spec["num"]}/{spec["den"]} · 週線標記 {m.get("as_of") or "缺資料"}'
++        if m.get("chg_12m_pct") is not None:
++            txt += f' · 52 週比率變化 {m["chg_12m_pct"]:+.1f}%'
+         rchips.append(txt)
+     ratio_chips = chips(rchips, "#1e2a3a", "#a9c7f0")
+ 
++    # 2026-09-13：完整部位列保留日期、方向、四週變化，避免極端清單被當方向預測。
++    cot_table = '<div style="overflow-x:auto"><table style="width:100%;min-width:560px;text-align:left"><thead><tr><th>市場</th><th>淨部位</th><th>5 年分位</th><th>4 週變化（占 OI 百分點）</th><th>觀測日</th></tr></thead><tbody>'
++    for c in cot:
++        delta = c.get("delta_4w_pp_oi")
++        change = f"{delta:+.2f}" if delta is not None else "—"
++        cot_table += f'<tr><td>{_esc(c["market"])}</td><td>{_esc(c["net"])}</td><td>{_esc(c["pctile_5y"])}</td><td>{change}</td><td>{_esc(c.get("as_of") or "缺資料")}</td></tr>'
++    cot_table += '</tbody></table></div>'
+     return (
+         f'{DASH_START}\n'
+         f'<div style="{st}">'
+         f'<div style="font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.14em;'
+         f'text-transform:uppercase;color:#5b9bff;margin-bottom:12px">'
+         f'大類資產 Regime · 自動儀表</div>'
+-        f'<div style="overflow-x:auto;margin-bottom:14px">{svg_scorecard()}</div>'
++        f'<p id="regime-weekly-status" data-as-of="{_esc(payload["meta"].get("data_as_of") or "")}">最舊有效觀測 {_esc(payload["meta"].get("data_as_of") or "部分資料缺漏")}</p>'
++        f'<p>週度部位與相對價格。每日六軸觀測與市場判讀見上方。</p>'
++        f'<details style="margin:12px 0"><summary>2026-07-06 歷史評分（非本期判讀）</summary>'
++        f'<div style="overflow-x:auto">{svg_scorecard()}</div></details>'
+         f'<div style="margin-bottom:8px"><b>COT 極端偏多（5y ≥ 90）：</b><br>{cot_hot}</div>'
+         f'<div style="margin-bottom:8px"><b>COT 極端偏空（5y ≤ 10）：</b><br>{cot_cold}</div>'
+-        f'<div style="margin:10px 0 6px"><b>成長 vs 防禦比率</b>（機械 value · 2y 百分位）</div>{ratio_chips}'
++        f'<details style="margin:12px 0"><summary>全部 COT 市場 · 分位高低不等於未來漲跌</summary>{cot_table}</details>'
++        f'<div style="margin:10px 0 6px"><b>成長 vs 防禦比率</b>（價格比；不是信用利差）</div>{ratio_chips}'
+         f'<div style="margin-top:12px;font-family:ui-monospace,monospace;font-size:11px;'
+         f'color:{_C["ink3"]}">COT as-of {_esc(payload["meta"].get("cot_as_of") or "—")} · '
+-        f'比率 as-of {_esc(payload["meta"].get("ratio_as_of") or "—")} · '
+-        f'更新 {payload["generated_at"][:10]} · 描述器非擇時</div>'
++        f'比率週線標記 {_esc(payload["meta"].get("ratio_as_of") or "—")} · '
++        f'產物更新 {payload["generated_at"][:10]} · 週線標記不代表確定收盤日</div>'
+         f'</div>\n{DASH_END}'
+     )
+ 
+ 
+-def inject_dashboard(payload):
+-    if not os.path.exists(INDEX_HTML):
+-        warn(f"index.html not found ({INDEX_HTML}); skipping dashboard injection")
++def inject_dashboard(payload, index_html=None):
++    # 2026-09-13：預覽輸出與正式頁共用同一渲染器。
++    index_html = index_html or INDEX_HTML
++    if not os.path.exists(index_html):
++        warn(f"index.html not found ({index_html}); skipping dashboard injection")
+         return
+-    with open(INDEX_HTML, encoding="utf-8") as f:
++    with open(index_html, encoding="utf-8") as f:
+         html = f.read()
+     if DASH_START not in html or DASH_END not in html:
+         warn("dashboard markers not found in index.html; skipping injection")
+@@ -616,7 +641,7 @@
+     if new == html:
+         info("dashboard: no change")
+         return
+-    with open(INDEX_HTML, "w", encoding="utf-8") as f:
++    with open(index_html, "w", encoding="utf-8") as f:
+         f.write(new)
+     info("dashboard: injected into index.html")
+ 
+@@ -629,25 +654,31 @@
+     ap = argparse.ArgumentParser(description="Cross-asset regime weekly builder")
+     ap.add_argument("--skip-fetch", action="store_true",
+                     help="offline: skip price fetch, recompute from caches only")
++    # 2026-09-13：允許隔離驗收輸出，不改正式頁或共用快取。
++    ap.add_argument("--out-dir", default=OUT_DIR)
++    ap.add_argument("--cot-history", default=COT_HISTORY)
++    ap.add_argument("--price-cache", default=PRICE_CACHE)
+     args = ap.parse_args()
+ 
+-    gaps = list(GAPS)
++    # 2026-09-13：舊刊的缺口與評分僅供歷史查閱，不冒充本期觀測。
++    gaps = list(GAPS[1:])
+     cot_ok = ratio_ok = False
+ 
+     # ── COT layer (mechanical, from shared cot_history.json) ────────────────
+     cot_rows, cot_as_of = [], None
+     try:
+-        history = load_json(COT_HISTORY)
++        history = load_json(args.cot_history)
+         cot_rows, cot_as_of, cg = cot_compute(history)
+         gaps += cg
+         cot_ok = bool(cot_rows)
+     except Exception as e:
+         warn(f"COT layer failed: {e}")
++        gaps.append("COT 本次計算失敗，請查看各筆觀測日。")
+ 
+     # ── Ratio layer (mechanical, yfinance->stooq cache) ─────────────────────
+     ratios_out, ratio_as_of = [], None
+     try:
+-        price_series = build_price_cache(args.skip_fetch)
++        price_series = build_price_cache(args.skip_fetch, args.price_cache)
+         ratios_out, rg = ratio_compute(price_series)
+         gaps += rg
+         asofs = [r["mechanical"]["as_of"] for r in ratios_out
+@@ -656,6 +687,7 @@
+         ratio_ok = any(r["mechanical"]["value"] is not None for r in ratios_out)
+     except Exception as e:
+         warn(f"ratio layer failed: {e}")
++        gaps.append("跨資產比率本次計算失敗。")
+         ratios_out = [dict({k: r[k] for k in ("key", "name", "sub", "reading", "src")},
+                            pos_0to1=r["pos"],
+                            mechanical={"value": None, "chg_12m_pct": None,
+@@ -666,6 +698,13 @@
+     meta = dict(META_EDITORIAL)
+     meta["cot_as_of"] = cot_as_of
+     meta["ratio_as_of"] = ratio_as_of
++    # 2026-09-13：週線標記不等於收盤日，完整度以最舊有效觀測日揭露。
++    meta["editorial_as_of"] = META_EDITORIAL["publish_date"]
++    dates = [c.get("as_of") for c in cot_rows] + [
++        r.get("mechanical", {}).get("as_of") for r in ratios_out]
++    meta["data_as_of"] = min(dates) if len(cot_rows) == len(REGIME_COT_MARKETS) and len(ratios_out) == 3 and all(dates) else None
++    meta["cot_note"] = f"COT 部位觀測日 {cot_as_of or '缺資料'}，並非發布日；週度資料。"
++    meta["ratio_date_note"] = "上游週線標記日，可能為週初或週末，並非確定收盤日。"
+ 
+     payload = {
+         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+@@ -680,15 +719,30 @@
+         "gaps": gaps,
+     }
+ 
+-    wrote = write_json_if_changed(OUT_JSON, payload)
++    # 2026-09-13：兩層皆失敗時保留最後成功產物；不把失敗寫成新版本。
++    if not cot_ok and not ratio_ok:
++        warn("both COT and ratio layers failed — preserving previous output")
++        sys.exit(1)
++    output = os.path.join(args.out_dir, "data", "latest.json")
++    # 2026-09-13：舊判讀搬入歷史欄位，所有下游不再把 7 月評分當現況。
++    payload["schema"] = "regime-observations-v2"
++    payload["historical_editorial"] = {"as_of": META_EDITORIAL["publish_date"],
++        "composite": payload.pop("composite"), "axes": payload.pop("axes"),
++        "triggers": payload.pop("triggers"), "gaps": GAPS, "meta": META_EDITORIAL}
++    payload.update(composite={}, axes=[], triggers=[], analysis_url="/market/")
++    for r in payload["growth_defense_ratios"]:
++        r["historical_editorial"] = {"as_of": META_EDITORIAL["publish_date"],
++                                    "reading": r.pop("reading", None), "pos_0to1": r.pop("pos_0to1", None)}
++        spec = next(x for x in RATIOS_EDITORIAL if x["key"] == r["key"])
++        r["src"] = f"{spec['num']}/{spec['den']}，調整後週線價格比（yfinance／ETF 備援 Stooq）"
++    wrote = write_json_if_changed(output, payload)
++    if not wrote:
++        payload = load_json(output, payload)
+     info(f"latest.json: {'written' if wrote else 'no change'} "
+          f"(cot {len(cot_rows)} rows @ {cot_as_of}, ratios @ {ratio_as_of})")
+ 
+-    inject_dashboard(payload)
+-
+-    if not cot_ok and not ratio_ok:
+-        warn("both COT and ratio layers failed — exiting non-zero")
+-        sys.exit(1)
++    inject_dashboard(payload, os.path.join(args.out_dir, "index.html"))
++
+     info("done.")
+ 
+ 
+--- a/scripts/build_market_state.py
++++ b/scripts/build_market_state.py
+@@ -295,22 +295,15 @@
+     # 1) regime
+     if regime_data is None:
+         gaps.append("regime latest.json 缺檔，environment.regime 記為空")
+-    comp = (regime_data or {}).get("composite") or {}
+-    label_zh = comp.get("label_zh") or ""
+-    parts = label_zh.split(" · ", 1)
+-    first = parts[0] if parts else None
+-    second = parts[1] if len(parts) > 1 else ""
+-    pos = comp.get("pos_0to1")
+-    regime_as_of = ((regime_data or {}).get("meta") or {}).get("publish_date")
+-    stale, _st = classify_stale(regime_as_of, today, "regime")
+-    tone = "neutral"
+-    if pos is not None and bands:
+-        tone = BAND_TONE.get(classify_band(pos * 100, bands), "neutral")
++    # 2026-09-13：環境卡呈現週度觀測，7 月定性評分不再冒充最新現況。
++    regime_meta = (regime_data or {}).get("meta") or {}
++    regime_as_of = regime_meta.get("data_as_of")
++    stale, _st = classify_stale(regime_as_of, today, "weekly")
+     tiles.append({
+         "key": "regime", "label": "大類資產環境（regime）",
+-        "value": first,
+-        "sub": (f"{second} · 六軸定性 {pos:.2f}" if pos is not None else (second or None)),
+-        "as_of": regime_as_of, "cadence": cadence_label("regime"), "stale": stale, "tone": tone,
++        "value": "跨資產週度觀測" if regime_as_of else "跨資產資料待更新",
++        "sub": f"COT {regime_meta.get('cot_as_of') or '缺資料'} · 比率週線 {regime_meta.get('ratio_as_of') or '缺資料'} · 判讀見市場研究",
++        "as_of": regime_as_of, "cadence": cadence_label("weekly"), "stale": stale, "tone": "neutral",
+     })
+ 
+     # 2) macro_clock
+@@ -1057,8 +1050,8 @@
+     add("flowmap", (sources["flowmap"] or {}).get("as_of") if sources["flowmap"] else None, "daily")
+     add("statlab", (sources["statlab"] or {}).get("as_of") if sources["statlab"] else None, "daily")
+     add("intel", (sources["intel"] or {}).get("date") if sources["intel"] else None, "daily")
+-    add("regime", ((sources["regime"] or {}).get("meta") or {}).get("publish_date")
+-        if sources["regime"] else None, "regime")
++    add("regime", ((sources["regime"] or {}).get("meta") or {}).get("data_as_of")
++        if sources["regime"] else None, "weekly")
+     add("macro_clock", (sources["macro_clock"] or {}).get("as_of") if sources["macro_clock"] else None, "monthly")
+     add("crowding", (sources["crowding"] or {}).get("cot_as_of") if sources["crowding"] else None, "weekly")
+     add("ledger", ledger_asof, "daily")
+@@ -1083,8 +1076,8 @@
+     row("statlab 統計面板", (sources["statlab"] or {}).get("as_of") if sources["statlab"] else None, "daily")
+     row("intel 情報監視器", (sources["intel"] or {}).get("date") if sources["intel"] else None, "daily")
+     row("forecast ledger 預測帳簿", ledger_asof, "daily")
+-    row("regime 大類資產環境", ((sources["regime"] or {}).get("meta") or {}).get("publish_date")
+-        if sources["regime"] else None, "regime")
++    row("regime 大類資產環境", ((sources["regime"] or {}).get("meta") or {}).get("data_as_of")
++        if sources["regime"] else None, "weekly")
+     row("crowding COT 部位", (sources["crowding"] or {}).get("cot_as_of") if sources["crowding"] else None, "weekly")
+     row("總經時鐘", (sources["macro_clock"] or {}).get("as_of") if sources["macro_clock"] else None, "monthly")
+     row("系統主控台（實單主系統）", long_track_as_of(long_track_data), "daily")
+@@ -1873,7 +1866,7 @@
+         (flowmap_data or {}).get("as_of"),
+         (statlab_data or {}).get("as_of"),
+         (intel_data or {}).get("date"),
+-        ((regime_data or {}).get("meta") or {}).get("publish_date"),
++        ((regime_data or {}).get("meta") or {}).get("data_as_of"),
+         (macro_clock_data or {}).get("as_of"),
+         (crowding_data or {}).get("cot_as_of"),
+         ledger_asof,
+--- a/scripts/intel/render.py
++++ b/scripts/intel/render.py
+@@ -1791,7 +1791,8 @@
+     out["_detective"] = det
+ 
+     reg = load_json_safe(REGIME_LATEST_FILE) or {}
+-    out["regime_label"] = (reg.get("composite") or {}).get("label_zh") or DASH
++    # 2026-09-13：首頁摘要不再轉載歷史 composite。
++    out["regime_label"] = "六軸觀測與市場判讀" if reg.get("schema") == "regime-observations-v2" else DASH
+ 
+     clock = load_json_safe(MACRO_CLOCK_FILE) or {}
+     out["clock_quadrant"] = clock.get("quadrant") or DASH
+@@ -2415,39 +2416,28 @@
+             _weekly_section_head("大類資產環境", "Regime", None)
+             + '<div class="empty">今日尚無資料，見 <a href="/regime/">/regime/</a>。</div>'
+         )
++    # 2026-09-13：週更區只列有日期的機械觀測；綜合判讀共用市場發布包。
+     meta = d.get("meta") or {}
+-    as_of = meta.get("publish_date") or (d.get("generated_at") or "")[:10]
+-    parts = [_weekly_section_head("大類資產環境", "Regime", as_of)]
+-
+-    comp = d.get("composite") or {}
+-    label_zh = comp.get("label_zh") or DASH
+-    label_en = comp.get("label_en") or ""
+-    parts.append(
+-        '<div style="margin:2px 0 10px">'
+-        f'<div style="font-size:19px;font-weight:700;color:var(--ink)">{esc(label_zh)}</div>'
+-        + (f'<div class="note" style="margin-top:2px">{esc(label_en)}</div>' if label_en else "")
+-        + "</div>"
+-    )
+-
+-    axes = d.get("axes") or []
+-    if axes:
+-        rows = "".join(
+-            "<tr>"
+-            f'<td>{esc(a.get("name")) or DASH}</td>'
+-            f'<td>{esc((a.get("reading") or "")[:90]) or DASH}</td>'
+-            f'<td><span class="pill">{esc(a.get("pill")) or DASH}</span></td>'
+-            "</tr>"
+-            for a in axes
+-        )
+-        parts.append(
+-            '<div class="twrap"><table class="t"><thead><tr>'
+-            "<th>維度</th><th>現值</th><th>訊號</th>"
+-            "</tr></thead><tbody>" + rows + "</tbody></table></div>"
+-        )
+-    else:
+-        parts.append('<div class="empty">今日無維度資料。</div>')
+-
+-    parts.append('<p class="note"><a href="/regime/">完整互動頁 →</a></p>')
++    parts = [_weekly_section_head("大類資產環境", "Regime", meta.get("data_as_of"))]
++    parts.append('<p class="note">週度觀測；<a href="/regime/">最新六軸觀測與市場判讀 →</a></p>')
++    rows = []
++    formula = {"copper_gold": "HG=F／GC=F", "small_large": "IWM／SPY", "hy_ig": "HYG／LQD"}
++    for r in d.get("growth_defense_ratios") or []:
++        m = r.get("mechanical") or {}
++        value = f"{m['value']:.6f}" if m.get("value") is not None else DASH
++        rows.append('<tr>' + f'<td>{esc(r.get("name"))}（{esc(formula.get(r.get("key"))) }）</td>'
++                    + f'<td class="num">{value}</td><td>{esc(m.get("as_of")) or DASH}</td></tr>')
++    if rows:
++        parts.append('<div class="twrap"><table class="t"><thead><tr><th>價格比代理</th><th>比率</th><th>週線標記日</th></tr></thead><tbody>'
++                     + ''.join(rows) + '</tbody></table></div>')
++    rows = []
++    for c in d.get("cot_percentile_5y") or []:
++        rows.append('<tr>' + f'<td>{esc(c.get("market"))}</td><td>{esc(c.get("net"))}</td>'
++                    + f'<td class="num">{esc(fmt_num(c.get("pctile_5y")))}</td><td>{esc(c.get("as_of")) or DASH}</td></tr>')
++    if rows:
++        parts.append('<div class="twrap"><table class="t"><thead><tr><th>COT 市場</th><th>淨部位</th><th>5 年分位</th><th>觀測日</th></tr></thead><tbody>'
++                     + ''.join(rows) + '</tbody></table></div>')
++    parts.append('<p class="note">週線標記可能為週初或週末，並非確定收盤日。HYG／LQD 是 ETF 價格比，並非 HY OAS 信用利差。</p>')
+     return "".join(parts)
+ 
+ 
+--- a/docs/regime/index.html
++++ b/docs/regime/index.html
+@@ -134,7 +134,16 @@
+   .reports .report-lede{font-size:.83rem}
+   header nav{gap:0}
+ }
+-  </style>
++  /* 2026-09-13：六軸卡片於窄螢幕改為單欄，日期與缺口保持可見。 */
++.rg-status{padding:12px 16px;background:var(--paper,#f4f5f7);border:1px solid var(--border,#ddd);border-radius:8px;font-size:13px;line-height:1.8}
++.rg-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0}
++.rg-axis{border:1px solid var(--border,#ddd);border-radius:10px;padding:18px;min-width:0}
++.rg-axis h4,.rg-scenario h4{margin:0 0 6px;font-size:18px}.rg-axis>p,.rg-note{font-size:13px;color:#626976;line-height:1.8}
++.rg-quote{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:12px 0;border-top:1px solid var(--border,#ddd);font-size:13px}
++.rg-quote a{color:inherit}.rg-quote strong{font-size:17px;font-variant-numeric:tabular-nums}.rg-quote small{grid-column:1/-1;color:#626976}
++.rg-reading{margin-top:28px;padding:24px;border:1px solid var(--border,#ddd);border-radius:10px}.rg-reading p{line-height:1.9}.rg-reading summary{cursor:pointer;font-weight:600;padding:12px 0}.rg-scenario{border-top:1px solid var(--border,#ddd);padding:18px 0}
++@media(max-width:900px){.rg-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:580px){.rg-grid{grid-template-columns:1fr}.rg-reading{padding:16px}}
++</style>
+ </head>
+ <body>
+ <style id="imq-nav-style">
+@@ -218,27 +227,28 @@
+     <div class="crumb"><a href="/">首頁</a> &rsaquo; 大類資產 Regime</div>
+     <span class="eyebrow">Cross-Asset Regime Dashboard</span>
+     <h1>大類資產 Regime 儀表</h1>
+-    <p class="sub">現在是什麼大類資產 regime。六條 regime 軸——利率／久期、美元、信用、成長 vs 恐慌、股票風險偏好、商品——各落在 risk-off ↔ risk-on 連續軸的哪一格，再疊上 CFTC COT 跨資產部位的 5 年百分位極端、與成長 vs 防禦三比率（銅金比／HY-IG／小型-大型）。收斂成「現在是什麼 regime、哪個 archetype 有順逆風、哪個大類部位到極端」。</p>
+-    <div class="mandate">
+-      <strong>定位：</strong>本儀表是<strong>描述器（describer），不是配置指令、非擇時訊號</strong>。它描繪大類資產 regime 的狀態與部位極端，與首頁風險儀表、擁擠交易監測、產業輪動監測同家族——<strong>不對指數部（75%）下任何加減碼指令</strong>（指數部走總守則機械規則），對個股部僅提供選 archetype 的宏觀背景。六軸 marker 位置與綜合判讀為定性合成，<strong>非可交易指數</strong>；COT 百分位與比率指標為機械可算並週更。
+-    </div>
++    <p class="sub">追蹤利率、美元、信用、成長、股票與商品的變化。先看各資產的最新觀測，再對照市場判讀與可能路徑，檢查哪些證據支持、哪些已經改變。</p>
++    <div class="mandate"><strong>更新方式：</strong>六軸觀測與市場頁共用每日資料；判讀沿用已審查版本並標明日期。COT 與跨資產比率每週更新，歷史評分保留在下方供回顧。</div>
+     <p style="margin-top:.7rem;font-size:.8rem;color:var(--text-muted)">整體市況一頁看：<a href="/market/" style="color:var(--accent);font-weight:600">市況主控台 →</a></p>
+   </div>
+ </div>
+ 
++<!-- 2026-09-13：每日事實與判讀共用市場發布包，不另開模型任務。 -->
++<div class="section"><div class="container"><div id="regime-current" aria-live="polite"><p>正在讀取最新市場觀測…</p><noscript>請啟用 JavaScript 查看每日六軸觀測，或前往市場頁。下方仍提供週度資料。</noscript></div></div></div>
++<script src="current.js" defer></script>
+ <!-- 自動儀表：內容由週更 pipeline（build_regime.py）在下方兩個標記之間重生，勿手改標記間內容 -->
+ <div class="section dash-section" id="live-dashboard">
+   <div class="container">
+-    <h2 class="section-title">即時 Regime 記分卡 <span class="count">週更</span></h2>
++    <h2 class="section-title">部位與相對價格 <span class="count">週更</span></h2>
+     <!-- REGIME_AUTO_DASH_START -->
+-<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#12161f;border:1px solid #2a3242;border-radius:12px;padding:18px 20px;color:#e6e9ef;line-height:1.6;font-size:14px"><div style="font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5b9bff;margin-bottom:12px">大類資產 Regime · 自動儀表</div><div style="overflow-x:auto;margin-bottom:14px"><svg viewBox="0 0 900 406" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif" role="img" aria-label="六軸 regime 記分卡"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5b9bff"/><stop offset="0.5" stop-color="#3a4351"/><stop offset="1" stop-color="#e0a256"/></linearGradient><marker id="ah" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e0a256"/></marker></defs><text x="186" y="34" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace" text-anchor="start">◄ RISK-OFF</text><text x="364" y="34" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace" text-anchor="middle">中性</text><text x="542" y="34" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace" text-anchor="end">RISK-ON ►</text><text x="0" y="34" fill="#9aa4b5" font-size="10" font-weight="700" font-family="ui-monospace,monospace">REGIME 軸</text><text x="566" y="34" fill="#9aa4b5" font-size="10" font-weight="700" font-family="ui-monospace,monospace">狀態 · 讀數</text><line x1="0" y1="44" x2="900" y2="44" stroke="#2a3242" stroke-width="1"/><text x="168" y="77" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">利率／久期</text><text x="168" y="92" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Rates / Duration</text><rect x="186" y="75" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="71" x2="364" y2="89" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="385" cy="80" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="64" width="64" height="17" rx="8.5" fill="#c78a2c"/><text x="598" y="76" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">中性偏暖</text><text x="566" y="94" fill="#9aa4b5" font-size="10.5">升息路徑降溫，久期逆風轉緩</text><line x1="0" y1="104" x2="900" y2="104" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="125" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">美元</text><text x="168" y="140" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">US Dollar</text><rect x="186" y="123" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="119" x2="364" y2="137" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><line x1="321" y1="128" x2="398" y2="128" stroke="#e0a256" stroke-width="2" stroke-dasharray="2 2" marker-end="url(#ah)" opacity="0.85"/><circle cx="407" cy="128" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="112" width="76" height="17" rx="8.5" fill="#9085e9"/><text x="604" y="124" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">轉暖／翻向</text><text x="566" y="142" fill="#9aa4b5" font-size="10.5">擁擠做多，翻向回落</text><line x1="0" y1="152" x2="900" y2="152" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="173" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">信用</text><text x="168" y="188" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Credit (HY vs IG)</text><rect x="186" y="171" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="167" x2="364" y2="185" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="464" cy="176" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="160" width="40" height="17" rx="8.5" fill="#c78a2c"/><text x="586" y="172" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">偏暖</text><text x="566" y="190" fill="#9aa4b5" font-size="10.5">HY spread 偏緊，風險偏好完好</text><line x1="0" y1="200" x2="900" y2="200" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="221" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">成長 vs 恐慌</text><text x="168" y="236" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Growth vs Fear</text><rect x="186" y="219" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="215" x2="364" y2="233" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="414" cy="224" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="208" width="40" height="17" rx="8.5" fill="#c78a2c"/><text x="586" y="220" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">偏暖</text><text x="566" y="238" fill="#9aa4b5" font-size="10.5">循環／小型領先，中段偏暖</text><line x1="0" y1="248" x2="900" y2="248" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="269" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">股票風險偏好</text><text x="168" y="284" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Equity Risk Appetite</text><rect x="186" y="267" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="263" x2="364" y2="281" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="364" cy="272" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="256" width="40" height="17" rx="8.5" fill="#6b7280"/><text x="586" y="268" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">中性</text><text x="566" y="286" fill="#9aa4b5" font-size="10.5">皮平靜、骨防禦</text><line x1="0" y1="296" x2="900" y2="296" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="317" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">商品</text><text x="168" y="332" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Commodities</text><rect x="186" y="315" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="311" x2="364" y2="329" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="435" cy="320" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="304" width="76" height="17" rx="8.5" fill="#b3801f"/><text x="604" y="316" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">偏暖但擁擠</text><text x="566" y="334" fill="#9aa4b5" font-size="10.5">金屬買盤沉重但擁擠</text><line x1="0" y1="354" x2="900" y2="354" stroke="#6b7484" stroke-width="1.4"/><text x="168" y="369" fill="#e6e9ef" font-size="13.5" font-weight="800" text-anchor="end">綜合判讀</text><text x="168" y="384" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Composite（定性）</text><rect x="186" y="364" width="356" height="12" rx="6" fill="url(#rg)"/><line x1="364" y1="359" x2="364" y2="381" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="410" cy="370" r="8.5" fill="#e0a256" stroke="#12161f" stroke-width="2.5"/><text x="566" y="364" fill="#e6e9ef" font-size="13" font-weight="800">晚週期再通脹 · 美元見頂回落</text><text x="566" y="380" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace">risk-on 傾斜 · late-cycle reflation</text></svg></div><div style="margin-bottom:8px"><b>COT 極端偏多（5y ≥ 90）：</b><br><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#7f1d1d;color:#fecaca">銅 Copper 99</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#7f1d1d;color:#fecaca">黃金 Gold 96</span></div><div style="margin-bottom:8px"><b>COT 極端偏空（5y ≤ 10）：</b><br><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#0c4a6e;color:#bae6fd">Nasdaq-100 8</span></div><div style="margin:10px 0 6px"><b>成長 vs 防禦比率</b>（機械 value · 2y 百分位）</div><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#1e2a3a;color:#a9c7f0">銅／金比 0.002（2y 59）</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#1e2a3a;color:#a9c7f0">小型／大型 0.383（2y 64）</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#1e2a3a;color:#a9c7f0">高收益／投等 0.751（2y 99）</span><div style="margin-top:12px;font-family:ui-monospace,monospace;font-size:11px;color:#6b7484">COT as-of 2026-08-18 · 比率 as-of 2026-08-31 · 更新 2026-09-01 · 描述器非擇時</div></div>
++<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#12161f;border:1px solid #2a3242;border-radius:12px;padding:18px 20px;color:#e6e9ef;line-height:1.6;font-size:14px"><div style="font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5b9bff;margin-bottom:12px">大類資產 Regime · 自動儀表</div><p id="regime-weekly-status" data-as-of="2026-09-07">最舊有效觀測 2026-09-07</p><p>週度部位與相對價格。每日六軸觀測與市場判讀見上方。</p><details style="margin:12px 0"><summary>2026-07-06 歷史評分（非本期判讀）</summary><div style="overflow-x:auto"><svg viewBox="0 0 900 406" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif" role="img" aria-label="六軸 regime 記分卡"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5b9bff"/><stop offset="0.5" stop-color="#3a4351"/><stop offset="1" stop-color="#e0a256"/></linearGradient><marker id="ah" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e0a256"/></marker></defs><text x="186" y="34" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace" text-anchor="start">◄ RISK-OFF</text><text x="364" y="34" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace" text-anchor="middle">中性</text><text x="542" y="34" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace" text-anchor="end">RISK-ON ►</text><text x="0" y="34" fill="#9aa4b5" font-size="10" font-weight="700" font-family="ui-monospace,monospace">REGIME 軸</text><text x="566" y="34" fill="#9aa4b5" font-size="10" font-weight="700" font-family="ui-monospace,monospace">狀態 · 讀數</text><line x1="0" y1="44" x2="900" y2="44" stroke="#2a3242" stroke-width="1"/><text x="168" y="77" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">利率／久期</text><text x="168" y="92" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Rates / Duration</text><rect x="186" y="75" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="71" x2="364" y2="89" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="385" cy="80" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="64" width="64" height="17" rx="8.5" fill="#c78a2c"/><text x="598" y="76" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">中性偏暖</text><text x="566" y="94" fill="#9aa4b5" font-size="10.5">升息路徑降溫，久期逆風轉緩</text><line x1="0" y1="104" x2="900" y2="104" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="125" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">美元</text><text x="168" y="140" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">US Dollar</text><rect x="186" y="123" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="119" x2="364" y2="137" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><line x1="321" y1="128" x2="398" y2="128" stroke="#e0a256" stroke-width="2" stroke-dasharray="2 2" marker-end="url(#ah)" opacity="0.85"/><circle cx="407" cy="128" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="112" width="76" height="17" rx="8.5" fill="#9085e9"/><text x="604" y="124" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">轉暖／翻向</text><text x="566" y="142" fill="#9aa4b5" font-size="10.5">擁擠做多，翻向回落</text><line x1="0" y1="152" x2="900" y2="152" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="173" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">信用</text><text x="168" y="188" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Credit (HY vs IG)</text><rect x="186" y="171" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="167" x2="364" y2="185" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="464" cy="176" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="160" width="40" height="17" rx="8.5" fill="#c78a2c"/><text x="586" y="172" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">偏暖</text><text x="566" y="190" fill="#9aa4b5" font-size="10.5">HY spread 偏緊，風險偏好完好</text><line x1="0" y1="200" x2="900" y2="200" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="221" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">成長 vs 恐慌</text><text x="168" y="236" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Growth vs Fear</text><rect x="186" y="219" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="215" x2="364" y2="233" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="414" cy="224" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="208" width="40" height="17" rx="8.5" fill="#c78a2c"/><text x="586" y="220" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">偏暖</text><text x="566" y="238" fill="#9aa4b5" font-size="10.5">循環／小型領先，中段偏暖</text><line x1="0" y1="248" x2="900" y2="248" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="269" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">股票風險偏好</text><text x="168" y="284" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Equity Risk Appetite</text><rect x="186" y="267" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="263" x2="364" y2="281" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="364" cy="272" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="256" width="40" height="17" rx="8.5" fill="#6b7280"/><text x="586" y="268" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">中性</text><text x="566" y="286" fill="#9aa4b5" font-size="10.5">皮平靜、骨防禦</text><line x1="0" y1="296" x2="900" y2="296" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="317" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">商品</text><text x="168" y="332" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Commodities</text><rect x="186" y="315" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="311" x2="364" y2="329" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="435" cy="320" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="304" width="76" height="17" rx="8.5" fill="#b3801f"/><text x="604" y="316" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">偏暖但擁擠</text><text x="566" y="334" fill="#9aa4b5" font-size="10.5">金屬買盤沉重但擁擠</text><line x1="0" y1="354" x2="900" y2="354" stroke="#6b7484" stroke-width="1.4"/><text x="168" y="369" fill="#e6e9ef" font-size="13.5" font-weight="800" text-anchor="end">綜合判讀</text><text x="168" y="384" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Composite（定性）</text><rect x="186" y="364" width="356" height="12" rx="6" fill="url(#rg)"/><line x1="364" y1="359" x2="364" y2="381" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="410" cy="370" r="8.5" fill="#e0a256" stroke="#12161f" stroke-width="2.5"/><text x="566" y="364" fill="#e6e9ef" font-size="13" font-weight="800">晚週期再通脹 · 美元見頂回落</text><text x="566" y="380" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace">risk-on 傾斜 · late-cycle reflation</text></svg></div></details><div style="margin-bottom:8px"><b>COT 極端偏多（5y ≥ 90）：</b><br><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#7f1d1d;color:#fecaca">銅 Copper 100</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#7f1d1d;color:#fecaca">黃金 Gold 98</span></div><div style="margin-bottom:8px"><b>COT 極端偏空（5y ≤ 10）：</b><br><span style="color:#6b7484">—</span></div><details style="margin:12px 0"><summary>全部 COT 市場 · 分位高低不等於未來漲跌</summary><div style="overflow-x:auto"><table style="width:100%;min-width:560px;text-align:left"><thead><tr><th>市場</th><th>淨部位</th><th>5 年分位</th><th>4 週變化（占 OI 百分點）</th><th>觀測日</th></tr></thead><tbody><tr><td>銅 Copper</td><td>淨多</td><td>100.0</td><td>+4.03</td><td>2026-09-08</td></tr><tr><td>黃金 Gold</td><td>淨多</td><td>98.5</td><td>+1.97</td><td>2026-09-08</td></tr><tr><td>日圓 JPY</td><td>淨多</td><td>76.2</td><td>+12.90</td><td>2026-09-08</td></tr><tr><td>美國 2Y 公債</td><td>淨空</td><td>73.5</td><td>+1.94</td><td>2026-09-08</td></tr><tr><td>Nasdaq-100</td><td>淨多</td><td>64.2</td><td>+20.98</td><td>2026-09-08</td></tr><tr><td>白銀 Silver</td><td>淨多</td><td>61.2</td><td>+4.69</td><td>2026-09-08</td></tr><tr><td>S&amp;P 500</td><td>淨空</td><td>56.9</td><td>-4.20</td><td>2026-09-08</td></tr><tr><td>美國 5Y 公債</td><td>淨空</td><td>56.5</td><td>-0.83</td><td>2026-09-08</td></tr><tr><td>美元指數 DX</td><td>淨多</td><td>48.8</td><td>-12.78</td><td>2026-09-08</td></tr><tr><td>美國 10Y 公債</td><td>淨空</td><td>26.2</td><td>+0.78</td><td>2026-09-08</td></tr><tr><td>WTI 原油</td><td>淨多</td><td>16.9</td><td>+1.80</td><td>2026-09-08</td></tr><tr><td>VIX 期貨</td><td>淨空</td><td>15.4</td><td>-2.35</td><td>2026-09-08</td></tr><tr><td>美國 30Y 公債</td><td>淨空</td><td>12.7</td><td>-1.49</td><td>2026-09-08</td></tr></tbody></table></div></details><div style="margin:10px 0 6px"><b>成長 vs 防禦比率</b>（價格比；不是信用利差）</div><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#1e2a3a;color:#a9c7f0">銅／金比 0.001485（近兩年週樣本分位 59） · HG=F/GC=F · 週線標記 2026-09-07 · 52 週比率變化 +18.1%</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#1e2a3a;color:#a9c7f0">小型／大型 0.377985（近兩年週樣本分位 59） · IWM/SPY · 週線標記 2026-09-07 · 52 週比率變化 +4.2%</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#1e2a3a;color:#a9c7f0">高收益／投等 0.753451（近兩年週樣本分位 100） · HYG/LQD · 週線標記 2026-09-07 · 52 週比率變化 +5.3%</span><div style="margin-top:12px;font-family:ui-monospace,monospace;font-size:11px;color:#6b7484">COT as-of 2026-09-08 · 比率週線標記 2026-09-07 · 產物更新 2026-09-13 · 週線標記不代表確定收盤日</div></div>
+ <!-- REGIME_AUTO_DASH_END -->
+   </div>
+ </div>
+ 
+ <div class="section" id="regime-reports">
+   <div class="container">
+-    <h2 class="section-title">期刊 · Regime Issues</h2>
++    <h2 class="section-title">歷史判讀 · Regime Issues</h2>
+ 
+     <ul class="reports">
+ <!--
+@@ -250,8 +260,8 @@
+       <li>
+         <a href="REGIME_20260706.html">
+           <div class="report-date">2026-07-06</div>
+-          <div class="report-title">創刊號 Vol.1 <span class="vol-tag">最新</span></div>
+-          <div class="report-lede">當前處於晚週期再通脹、且美元自擁擠極端見頂回落的 regime——六軸中四軸偏暖、兩軸中性，綜合落在 risk-on 傾斜，但這是「平靜的皮、防禦的骨」而非乾淨多頭 · 三條關鍵軸：美元 COT 淨多 4 週暴增 +21.5pp 後遇弱非農翻向（對非美／EM／商品由逆風轉順風）、商品部位極端（銅 COT 第 96.9 百分位觸旗）、信用歷史性偏緊（HY OAS 第 17 百分位） · 兩端極端的部位指紋：銅觸頂做多、Nasdaq-100 觸底偏空。</div>
++          <div class="report-title">創刊號 Vol.1 <span class="vol-tag">歷史</span></div>
++          <div class="report-lede">2026 年 7 月 6 日的判讀存檔：晚週期再通脹、美元回落與商品部位擁擠。文內數值與結論均屬當時觀測；最新情勢請看本頁上方。</div>
+           <span class="report-arrow">&rarr;</span>
+         </a>
+       </li>
+@@ -264,7 +274,7 @@
+   <div class="disclaimer">
+     <strong>免責與定位：</strong>
+     本儀表為 InvestMQuest Research 內部跨資產策略研究文件，<strong>描述器非擇時訊號、非投資建議</strong>。
+-    六軸 regime 軸狀態與綜合判讀為基於 CFTC COT 部位、跨資產 ETF 動能與現貨的<strong>定性合成判讀</strong>，
++    最新觀測與定性判讀分別標示日期；歷史六軸評分保留作回顧。市場綜合判讀屬<strong>定性研究</strong>，
+     非量化 regime 模型、非可交易指數；COT 5 年百分位與成長／防禦比率指標為機械可算並週更。
+     COT 為週度、比率為慢變數，不宜當日／高頻擇時。指數部配置走總守則機械規則不由本表驅動；
+     個股部進出另依 DD §14 統一裁決與 thesis 級證偽。過往統計關係不保證未來重演。
+--- a/docs/regime/data/latest.json
++++ b/docs/regime/data/latest.json
+@@ -1,270 +1,330 @@
+ {
+-  "axes": [
+-    {
+-      "key": "rates",
+-      "name": "利率／久期",
+-      "pill": "中性偏暖",
+-      "pos": 0.56,
+-      "reading": "10Y 4.47%（7/2），弱非農後由 4.53% 回落；9 月升息機率 64%→55%。COT 公債各天期仍淨空（10Y 5y 第 24.6、30Y 20.8 百分位），升息路徑降溫、久期逆風轉緩。",
+-      "src": "10Y CNBC/dshort 2026-07-02 · CFTC COT 2026-06-23 · TLT/IEF yfinance 2026-07-05",
+-      "sub": "Rates / Duration"
+-    },
+-    {
+-      "key": "usd",
+-      "name": "美元",
+-      "pill": "轉暖／翻向",
+-      "pos": 0.62,
+-      "reading": "COT 美元淨多 4 週暴增 +21.5pp 至 6/23（擁擠做多），7/2 弱非農後 DXY 由 101.5 跌破 101（100.8）翻向回落。UUP 2y 動能第 98 百分位為全資產最延伸——極端多頭遇催化劑正在鬆動，對非美／EM／商品由逆風轉順風。",
+-      "src": "COT DX 2026-06-23（Δ4w +21.53）· DXY tradingeconomics 2026-07-03 · UUP yfinance 2026-07-05",
+-      "sub": "US Dollar"
+-    },
+-    {
+-      "key": "credit",
+-      "name": "信用",
+-      "pill": "偏暖",
+-      "pos": 0.78,
+-      "reading": "HY OAS 2.78%（6/25），落在 10 年區間第 17 百分位（歷史性偏緊）；IG OAS ~80bp。HYG 站上 52 週均線 +1.9%，信用胃納完好——本表最明確的 risk-on 軸；惟 spread 已現微幅走闊的早警。",
+-      "src": "ICE BofA HY OAS FRED 2026-06-25 · HYG/LQD yfinance 2026-07-05",
+-      "sub": "Credit (HY vs IG)"
+-    },
+-    {
+-      "key": "growth",
+-      "name": "成長 vs 恐慌",
+-      "pill": "偏暖",
+-      "pos": 0.64,
+-      "reading": "銅金比 2y 第 56 百分位、近 13 週上行（成長訊號回溫）；小型股領先大型（IWM +34.8% vs SPY +20.4%，12m）。但黃金 COT 第 86 百分位同步偏多——再通脹與避險同時被買，屬「什麼都漲」的晚週期形狀。",
+-      "src": "銅金比 yfinance 2y 週線 2026-07-06 · IWM/SPY yfinance 2026-07-05 · Gold COT 2026-06-23",
+-      "sub": "Growth vs Fear"
+-    },
+-    {
+-      "key": "equity",
+-      "name": "股票風險胃納",
+-      "pill": "中性",
+-      "pos": 0.5,
+-      "reading": "表面平靜——VIX 偏低、VIX 期貨淨空（5y 第 29.6 百分位）；但水面下偏防禦：Nasdaq-100 COT 淨空落在 5y 第 8.1 百分位（極端偏空），IBIT 12m −43.9% 高 β 投機軌已斷。平靜的皮、防禦的骨。",
+-      "src": "Nasdaq/VIX COT 2026-06-23 · IBIT yfinance 2026-07-05",
+-      "sub": "Equity Risk Appetite"
+-    },
+-    {
+-      "key": "commod",
+-      "name": "商品",
+-      "pill": "偏暖但擁擠",
+-      "pos": 0.7,
+-      "reading": "金屬買盤沉重但擁擠：銅 COT 5y 第 96.9 百分位（極端做多、觸旗）、黃金 86.2、白銀 48.5；WTI 原油僅第 10.4 百分位（能源被落下）。再通脹由金屬與 AI 電氣化主導，非廣度能源——多頭已高度擁擠，去化風險升。",
+-      "src": "Copper/Gold/Silver/WTI COT 2026-06-23 · USO yfinance 2026-07-05",
+-      "sub": "Commodities"
+-    }
+-  ],
+-  "composite": {
+-    "label_en": "Late-cycle reflation, dollar rolling over",
+-    "label_zh": "晚週期再通脹 · 美元見頂回落",
+-    "method": "qualitative weighted read across 6 axes; not a tradable index",
+-    "pos_0to1": 0.63
+-  },
++  "analysis_url": "/market/",
++  "axes": [],
++  "composite": {},
+   "cot_percentile_5y": [
+     {
+-      "delta_4w_pp_oi": 0.93,
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": 4.03,
+       "extreme": "極端做多",
+       "group": "商品",
+       "market": "銅 Copper",
+       "net": "淨多",
+-      "pctile_5y": 98.8
+-    },
+-    {
+-      "delta_4w_pp_oi": 6.72,
++      "pctile_5y": 100.0,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": 1.97,
+       "extreme": "極端做多",
+       "group": "商品",
+       "market": "黃金 Gold",
+       "net": "淨多",
+-      "pctile_5y": 95.8
+-    },
+-    {
+-      "delta_4w_pp_oi": 0.36,
++      "pctile_5y": 98.5,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": 12.9,
++      "extreme": null,
++      "group": "外匯",
++      "market": "日圓 JPY",
++      "net": "淨多",
++      "pctile_5y": 76.2,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": 1.94,
++      "extreme": null,
++      "group": "利率",
++      "market": "美國 2Y 公債",
++      "net": "淨空",
++      "pctile_5y": 73.5,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": 20.98,
++      "extreme": null,
++      "group": "股指",
++      "market": "Nasdaq-100",
++      "net": "淨多",
++      "pctile_5y": 64.2,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": 4.69,
++      "extreme": null,
++      "group": "商品",
++      "market": "白銀 Silver",
++      "net": "淨多",
++      "pctile_5y": 61.2,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": -4.2,
+       "extreme": null,
+       "group": "股指",
+       "market": "S&P 500",
+       "net": "淨空",
+-      "pctile_5y": 78.1
+-    },
+-    {
+-      "delta_4w_pp_oi": 5.71,
+-      "extreme": null,
+-      "group": "利率",
+-      "market": "美國 2Y 公債",
+-      "net": "淨空",
+-      "pctile_5y": 73.8
+-    },
+-    {
+-      "delta_4w_pp_oi": 22.01,
+-      "extreme": null,
+-      "group": "外匯",
+-      "market": "日圓 JPY",
+-      "net": "淨空",
+-      "pctile_5y": 66.9
+-    },
+-    {
+-      "delta_4w_pp_oi": 1.4,
++      "pctile_5y": 56.9,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": -0.83,
+       "extreme": null,
+       "group": "利率",
+       "market": "美國 5Y 公債",
+       "net": "淨空",
+-      "pctile_5y": 60.4
+-    },
+-    {
+-      "delta_4w_pp_oi": 10.87,
++      "pctile_5y": 56.5,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": -12.78,
+       "extreme": null,
+       "group": "外匯",
+       "market": "美元指數 DX",
+       "net": "淨多",
+-      "pctile_5y": 59.2
+-    },
+-    {
+-      "delta_4w_pp_oi": -2.38,
++      "pctile_5y": 48.8,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": 0.78,
++      "extreme": null,
++      "group": "利率",
++      "market": "美國 10Y 公債",
++      "net": "淨空",
++      "pctile_5y": 26.2,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": 1.8,
+       "extreme": null,
+       "group": "商品",
+-      "market": "白銀 Silver",
+-      "net": "淨多",
+-      "pctile_5y": 37.3
+-    },
+-    {
+-      "delta_4w_pp_oi": -2.02,
++      "market": "WTI 原油",
++      "net": "淨多",
++      "pctile_5y": 16.9,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": -2.35,
+       "extreme": null,
+       "group": "波動",
+       "market": "VIX 期貨",
+       "net": "淨空",
+-      "pctile_5y": 19.6
+-    },
+-    {
+-      "delta_4w_pp_oi": -0.24,
+-      "extreme": null,
+-      "group": "利率",
+-      "market": "美國 10Y 公債",
+-      "net": "淨空",
+-      "pctile_5y": 16.9
+-    },
+-    {
+-      "delta_4w_pp_oi": 2.08,
+-      "extreme": null,
+-      "group": "商品",
+-      "market": "WTI 原油",
+-      "net": "淨多",
+-      "pctile_5y": 14.2
+-    },
+-    {
+-      "delta_4w_pp_oi": -1.42,
++      "pctile_5y": 15.4,
++      "sample_weeks": 260
++    },
++    {
++      "as_of": "2026-09-08",
++      "delta_4w_pp_oi": -1.49,
+       "extreme": null,
+       "group": "利率",
+       "market": "美國 30Y 公債",
+       "net": "淨空",
+-      "pctile_5y": 10.8
+-    },
+-    {
+-      "delta_4w_pp_oi": -5.08,
+-      "extreme": "極端偏空",
+-      "group": "股指",
+-      "market": "Nasdaq-100",
+-      "net": "淨空",
+-      "pctile_5y": 7.7
++      "pctile_5y": 12.7,
++      "sample_weeks": 260
+     }
+   ],
+   "gaps": [
+-    "COT 停在 2026-06-23（6/30 期因美國國慶假期順延未發布）；美元／利率軸的 7 月初翻向以現貨與殖利率確認，COT 尚未捕捉。",
+     "無 prime-brokerage 實際曝險資料（GS/MS PB），positioning 僅以 CFTC 大額投機 ＋ ETF 動能三角，機構真實槓桿不可見。",
+     "銅金比、HY/IG、小型/大型為現貨比率代理，非官方 regime 指數；六軸 marker 位置與合成軸為定性判讀，非量化模型。",
+     "信用以 HY/IG OAS 與 HYG/LQD 代理，無 CDX／單一券種細部；spread 微幅走闊的早警訊號樣本短。"
+   ],
+-  "generated_at": "2026-08-23T22:46:25Z",
++  "generated_at": "2026-09-13T12:14:21Z",
+   "growth_defense_ratios": [
+     {
++      "historical_editorial": {
++        "as_of": "2026-07-06",
++        "pos_0to1": 0.56,
++        "reading": "2y 第 56 百分位，近 13 週上行 — 成長脈動回溫、中段偏成長"
++      },
+       "key": "copper_gold",
+       "mechanical": {
+-        "as_of": "2026-08-17",
+-        "chg_12m_pct": 6.8,
+-        "pctile_2y": 46.2,
+-        "value": 0.0014
++        "as_of": "2026-09-07",
++        "chg_12m_pct": 18.1,
++        "pctile_2y": 58.7,
++        "value": 0.00148518
+       },
+       "name": "銅／金比",
+-      "pos_0to1": 0.56,
+-      "reading": "2y 第 56 百分位，近 13 週上行 — 成長脈動回溫、中段偏成長",
+-      "src": "yfinance HG=F / GC=F 2y 週線",
++      "src": "HG=F/GC=F，調整後週線價格比（yfinance／ETF 備援 Stooq）",
+       "sub": "Copper / Gold"
+     },
+     {
++      "historical_editorial": {
++        "as_of": "2026-07-06",
++        "pos_0to1": 0.74,
++        "reading": "小型明顯領先，IWM +34.8% vs SPY +20.4%（12m）— 循環／廣度領導，risk-on"
++      },
+       "key": "small_large",
+       "mechanical": {
+-        "as_of": "2026-08-17",
+-        "chg_12m_pct": 7.6,
+-        "pctile_2y": 88.5,
+-        "value": 0.3917
++        "as_of": "2026-09-07",
++        "chg_12m_pct": 4.2,
++        "pctile_2y": 58.7,
++        "value": 0.3779848
+       },
+       "name": "小型／大型",
+-      "pos_0to1": 0.74,
+-      "reading": "小型明顯領先，IWM +34.8% vs SPY +20.4%（12m）— 循環／廣度領導，risk-on",
+-      "src": "IWM/SPY yfinance 2y 週線",
++      "src": "IWM/SPY，調整後週線價格比（yfinance／ETF 備援 Stooq）",
+       "sub": "Russell 2000 / S&P 500"
+     },
+     {
++      "historical_editorial": {
++        "as_of": "2026-07-06",
++        "pos_0to1": 0.6,
++        "reading": "HY OAS 2.78%（10y 第 17 百分位，偏緊）、HYG 站上均線 — 信用風險偏好存，惟動能百分位低"
++      },
+       "key": "hy_ig",
+       "mechanical": {
+-        "as_of": "2026-08-17",
+-        "chg_12m_pct": 3.6,
++        "as_of": "2026-09-07",
++        "chg_12m_pct": 5.3,
+         "pctile_2y": 100.0,
+-        "value": 0.7516
++        "value": 0.75345092
+       },
+       "name": "高收益／投等",
+-      "pos_0to1": 0.6,
+-      "reading": "HY OAS 2.78%（10y 第 17 百分位，偏緊）、HYG 站上均線 — 信用胃納存，惟動能百分位低",
+-      "src": "ICE BofA HY OAS · HYG/LQD yfinance 2y 週線",
++      "src": "HYG/LQD，調整後週線價格比（yfinance／ETF 備援 Stooq）",
+       "sub": "HY / IG credit"
+     }
+   ],
++  "historical_editorial": {
++    "as_of": "2026-07-06",
++    "axes": [
++      {
++        "key": "rates",
++        "name": "利率／久期",
++        "pill": "中性偏暖",
++        "pos": 0.56,
++        "reading": "10Y 4.47%（7/2），弱非農後由 4.53% 回落；9 月升息機率 64%→55%。COT 公債各天期仍淨空（10Y 5y 第 24.6、30Y 20.8 百分位），升息路徑降溫、久期逆風轉緩。",
++        "src": "10Y CNBC/dshort 2026-07-02 · CFTC COT 2026-06-23 · TLT/IEF yfinance 2026-07-05",
++        "sub": "Rates / Duration"
++      },
++      {
++        "key": "usd",
++        "name": "美元",
++        "pill": "轉暖／翻向",
++        "pos": 0.62,
++        "reading": "COT 美元淨多 4 週暴增 +21.5pp 至 6/23（擁擠做多），7/2 弱非農後 DXY 由 101.5 跌破 101（100.8）翻向回落。UUP 2y 動能第 98 百分位為全資產最延伸——極端多頭遇催化劑正在鬆動，對非美／EM／商品由逆風轉順風。",
++        "src": "COT DX 2026-06-23（Δ4w +21.53）· DXY tradingeconomics 2026-07-03 · UUP yfinance 2026-07-05",
++        "sub": "US Dollar"
++      },
++      {
++        "key": "credit",
++        "name": "信用",
++        "pill": "偏暖",
++        "pos": 0.78,
++        "reading": "HY OAS 2.78%（6/25），落在 10 年區間第 17 百分位（歷史性偏緊）；IG OAS ~80bp。HYG 站上 52 週均線 +1.9%，信用風險偏好完好——本表最明確的 risk-on 軸；惟 spread 已現微幅走闊的早警。",
++        "src": "ICE BofA HY OAS FRED 2026-06-25 · HYG/LQD yfinance 2026-07-05",
++        "sub": "Credit (HY vs IG)"
++      },
++      {
++        "key": "growth",
++        "name": "成長 vs 恐慌",
++        "pill": "偏暖",
++        "pos": 0.64,
++        "reading": "銅金比 2y 第 56 百分位、近 13 週上行（成長訊號回溫）；小型股領先大型（IWM +34.8% vs SPY +20.4%，12m）。但黃金 COT 第 86 百分位同步偏多——再通脹與避險同時被買，屬「什麼都漲」的晚週期形狀。",
++        "src": "銅金比 yfinance 2y 週線 2026-07-06 · IWM/SPY yfinance 2026-07-05 · Gold COT 2026-06-23",
++        "sub": "Growth vs Fear"
++      },
++      {
++        "key": "equity",
++        "name": "股票風險偏好",
++        "pill": "中性",
++        "pos": 0.5,
++        "reading": "表面平靜——VIX 偏低、VIX 期貨淨空（5y 第 29.6 百分位）；但水面下偏防禦：Nasdaq-100 COT 淨空落在 5y 第 8.1 百分位（極端偏空），IBIT 12m −43.9% 高 β 投機軌已斷。平靜的皮、防禦的骨。",
++        "src": "Nasdaq/VIX COT 2026-06-23 · IBIT yfinance 2026-07-05",
++        "sub": "Equity Risk Appetite"
++      },
++      {
++        "key": "commod",
++        "name": "商品",
++        "pill": "偏暖但擁擠",
++        "pos": 0.7,
++        "reading": "金屬買盤沉重但擁擠：銅 COT 5y 第 96.9 百分位（極端做多、觸旗）、黃金 86.2、白銀 48.5；WTI 原油僅第 10.4 百分位（能源被落下）。再通脹由金屬與 AI 電氣化主導，非廣度能源——多頭已高度擁擠，去化風險升。",
++        "src": "Copper/Gold/Silver/WTI COT 2026-06-23 · USO yfinance 2026-07-05",
++        "sub": "Commodities"
++      }
++    ],
++    "composite": {
++      "label_en": "Late-cycle reflation, dollar rolling over",
++      "label_zh": "晚週期再通脹 · 美元見頂回落",
++      "method": "qualitative weighted read across 6 axes; not a tradable index",
++      "pos_0to1": 0.63
++    },
++    "gaps": [
++      "COT 停在 2026-06-23（6/30 期因美國國慶假期順延未發布）；美元／利率軸的 7 月初翻向以現貨與殖利率確認，COT 尚未捕捉。",
++      "無 prime-brokerage 實際曝險資料（GS/MS PB），positioning 僅以 CFTC 大額投機 ＋ ETF 動能三角，機構真實槓桿不可見。",
++      "銅金比、HY/IG、小型/大型為現貨比率代理，非官方 regime 指數；六軸 marker 位置與合成軸為定性判讀，非量化模型。",
++      "信用以 HY/IG OAS 與 HYG/LQD 代理，無 CDX／單一券種細部；spread 微幅走闊的早警訊號樣本短。"
++    ],
++    "meta": {
++      "cot_note": "6/30 CFTC report delayed by US holiday; latest available 2026-06-23. USD/rates July turn confirmed on spot, not yet in COT.",
++      "etf_as_of": "2026-07-05",
++      "macro_as_of": "2026-07-03",
++      "note": "Describer, not a timing/allocation signal. Composite axis is qualitative, not a tradable index. Mechanical layers (COT percentiles, ratio metrics) refresh weekly; six-axis markers / composite / triggers are editorial.",
++      "publish_date": "2026-07-06",
++      "title": "Cross-Asset Regime Dashboard",
++      "vol": 1
++    },
++    "triggers": [
++      {
++        "ax": "利率／久期",
++        "now": "4.47%、升息機率 55%，路徑降溫（偏暖）",
++        "off": "10Y 收上 4.7% 或升息機率回升",
++        "on": "10Y 跌破 4.2% 或轉降息預期"
++      },
++      {
++        "ax": "美元",
++        "now": "100.8、COT 仍擁擠多頭，翻向初期（轉暖）",
++        "off": "DXY 收復 102、COT 淨多續增",
++        "on": "DXY 確認跌破 100、COT 淨多去化"
++      },
++      {
++        "ax": "信用",
++        "now": "2.78%、第 17 百分位偏緊，微幅早警（偏暖）",
++        "off": "HY OAS 走闊上破 3.5%",
++        "on": "HY OAS 維持 3% 以下"
++      },
++      {
++        "ax": "成長 vs 恐慌",
++        "now": "銅金比 56 百分位上行（偏暖）",
++        "off": "銅金比轉跌、黃金獨強",
++        "on": "銅金比上破前高、小型續領先"
++      },
++      {
++        "ax": "股票偏好",
++        "now": "VIX 低但 Nasdaq 部位防禦（中性）",
++        "off": "VIX 上破 20、Nasdaq 空頭回補失敗",
++        "on": "Nasdaq 極端空頭軋空、VIX 續低"
++      },
++      {
++        "ax": "商品",
++        "now": "銅第 96.9 百分位極端擁擠，脆（偏暖但擁擠）",
++        "off": "銅 COT 自 97 百分位擁擠去化",
++        "on": "現貨續創高且部位不再增溫"
++      }
++    ]
++  },
+   "meta": {
+-    "cot_as_of": "2026-08-18",
+-    "cot_note": "6/30 CFTC report delayed by US holiday; latest available 2026-06-23. USD/rates July turn confirmed on spot, not yet in COT.",
++    "cot_as_of": "2026-09-08",
++    "cot_note": "COT 部位觀測日 2026-09-08，並非發布日；週度資料。",
++    "data_as_of": "2026-09-07",
++    "editorial_as_of": "2026-07-06",
+     "etf_as_of": "2026-07-05",
+     "macro_as_of": "2026-07-03",
+     "note": "Describer, not a timing/allocation signal. Composite axis is qualitative, not a tradable index. Mechanical layers (COT percentiles, ratio metrics) refresh weekly; six-axis markers / composite / triggers are editorial.",
+     "publish_date": "2026-07-06",
+-    "ratio_as_of": "2026-08-17",
++    "ratio_as_of": "2026-09-07",
++    "ratio_date_note": "上游週線標記日，可能為週初或週末，並非確定收盤日。",
+     "title": "Cross-Asset Regime Dashboard",
+     "vol": 1
+   },
+-  "triggers": [
+-    {
+-      "ax": "利率／久期",
+-      "now": "4.47%、升息機率 55%，路徑降溫（偏暖）",
+-      "off": "10Y 收上 4.7% 或升息機率回升",
+-      "on": "10Y 跌破 4.2% 或轉降息預期"
+-    },
+-    {
+-      "ax": "美元",
+-      "now": "100.8、COT 仍擁擠多頭，翻向初期（轉暖）",
+-      "off": "DXY 收復 102、COT 淨多續增",
+-      "on": "DXY 確認跌破 100、COT 淨多去化"
+-    },
+-    {
+-      "ax": "信用",
+-      "now": "2.78%、第 17 百分位偏緊，微幅早警（偏暖）",
+-      "off": "HY OAS 走闊上破 3.5%",
+-      "on": "HY OAS 維持 3% 以下"
+-    },
+-    {
+-      "ax": "成長 vs 恐慌",
+-      "now": "銅金比 56 百分位上行（偏暖）",
+-      "off": "銅金比轉跌、黃金獨強",
+-      "on": "銅金比上破前高、小型續領先"
+-    },
+-    {
+-      "ax": "股票胃納",
+-      "now": "VIX 低但 Nasdaq 部位防禦（中性）",
+-      "off": "VIX 上破 20、Nasdaq 空頭回補失敗",
+-      "on": "Nasdaq 極端空頭軋空、VIX 續低"
+-    },
+-    {
+-      "ax": "商品",
+-      "now": "銅第 96.9 百分位極端擁擠，脆（偏暖但擁擠）",
+-      "off": "銅 COT 自 97 百分位擁擠去化",
+-      "on": "現貨續創高且部位不再增溫"
+-    }
+-  ]
++  "schema": "regime-observations-v2",
++  "triggers": []
+ }
+--- /dev/null
++++ b/docs/regime/current.js
+@@ -0,0 +1,79 @@
++/* 2026-09-13：共用市場發布包，避免六軸事實與已核准判讀各自停更。 */
++(function () {
++  'use strict';
++  const axes = [
++    ['利率與久期', '名目利率、實質利率與曲線', ['source:fred_treasury_10y', 'monitor:real10y', 'monitor:t10y2y']],
++    ['美元與匯率', '美元指數與主要匯率', ['monitor:dxy', 'monitor:usdjpy', 'monitor:eurusd']],
++    ['信用', '信用利差與債券相對價格', ['monitor:hy_oas', 'monitor:ccc_oas', 'monitor:hyg_lqd']],
++    ['成長與防禦', '跨資產相對價格代理', ['monitor:copper_gold', 'monitor:iwm_spy', 'monitor:xly_xlp']],
++    ['股票風險偏好', '指數、廣度與波動', ['monitor:sp500', 'internals:brd_above50', 'monitor:vix']],
++    ['商品', '能源與金屬價格', ['monitor:wti', 'monitor:gold', 'monitor:copper']]
++  ];
++  const statuses = {ok: '判讀與資料同步', needs_review: '資料已更新，等待重評', current: '判讀與資料同步', fresh: '判讀與資料同步', degraded: '部分資料缺漏',
++    pending: '等待重評', pending_analysis: '等待重評', stale: '判讀待更新', blocked: '更新受阻'};
++  const esc = value => String(value == null ? '—' : value).replace(/[&<>"']/g,
++    c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
++  function age(day, now) {
++    if (!/^\d{4}-\d{2}-\d{2}$/.test(day || '')) return null;
++    const stamp = Date.parse(day + 'T00:00:00Z');
++    return Number.isFinite(stamp) ? Math.floor((now - stamp) / 86400000) : null;
++  }
++  function quoteHTML(ref, quotes, now) {
++    const q = quotes[ref] || {};
++    const days = age(q.as_of, now);
++    const usable = Number.isFinite(q.num) && days !== null && days >= 0;
++    const state = !usable ? '缺少有效觀測' : days > 4 ? '資料較舊' : q.status && q.status !== 'ok' ? '來源待恢復' : '';
++    let value = usable ? (q.val || String(q.num)) : '—';
++    if (usable && q.unit === 'percent') value = q.num.toFixed(2) + '%';
++    const link = /^https:\/\//.test(q.source_url || '') ? q.source_url : '/monitor/';
++    return '<div class="rg-quote"><a href="' + esc(link) + '">' + esc(q.label || ref) + '</a>' +
++      '<strong>' + esc(value) + '</strong><small>' + esc(q.as_of) + (state ? ' · ' + state : '') + '</small></div>';
++  }
++  function render(bundle, now) {
++    const state = bundle.state || {}, refresh = bundle.refresh || {}, read = bundle.read || {};
++    const quotes = (state.evidence || {}).quotes || {};
++    const accepted = (read.review || {}).verdict === 'pass' && read.as_of && age(read.as_of, now) !== null && age(read.as_of, now) >= 0;
++    const expired = accepted && Number.isFinite(read.valid_days) && age(read.as_of, now) > read.valid_days;
++    let html = '<div class="rg-status">資料包日期 ' + esc(refresh.data_as_of || state.as_of) +
++      ' · 判讀日期 ' + esc(accepted ? read.as_of : null) + ' · ' + esc(statuses[refresh.status] || refresh.status || '狀態未知') +
++      (expired ? ' · 判讀已超過有效期' : '') + '</div>';
++    html += '<h3>最新六軸觀測</h3><p class="rg-note">各筆日期以來源為準。觀測值用於檢查判讀，完整走勢與歷史比較見市場頁。</p><div class="rg-grid">';
++    html += axes.map(([title, sub, refs]) => '<section class="rg-axis"><h4>' + title + '</h4><p>' + sub + '</p>' +
++      refs.map(ref => quoteHTML(ref, quotes, now)).join('') + '</section>').join('');
++    html += '</div><p class="rg-note">HYG／LQD 為 ETF 價格比，會同時受利差與久期影響；HY OAS 為高收益債信用利差。銅金比為不同報價單位的價格比，僅比較自身歷史。</p>';
++    html += '<section class="rg-reading"><h3>市場判讀與可能路徑</h3>';
++    if (accepted) {
++      html += '<p class="rg-note">共用市場頁已審查判讀 · ' + esc(read.as_of) + ' · 當時證據 ' + esc((read.snapshot_id || '').slice(0, 8)) + '</p>';
++      html += '<p>' + esc(read.thesis_zh) + '</p><details><summary>推演路徑與跨資產影響</summary><p>' + esc(read.path_zh) + '</p>';
++      html += (read.scenarios || []).map(s => '<section class="rg-scenario"><h4>' + esc(s.name_zh) + ' · ' + esc(s.horizon) + '</h4><p>' +
++        esc(s.conditions_zh) + '</p><p>' + esc(s.asset_implications_zh) + '</p><p><b>推翻條件：</b>' + esc(s.falsifiers_zh) + '</p></section>').join('');
++      html += '</details>';
++    } else html += '<p>尚無可用的已審查判讀。觀測資料持續顯示。</p>';
++    return html + '<p><a href="/market/">市場完整分析、歷史比較與命題對帳 →</a></p></section>';
++  }
++  async function load() {
++    const weekly = document.getElementById('regime-weekly-status');
++    if (weekly) {
++      const days = age(weekly.dataset.asOf, Date.now());
++      if (days === null || days < 0) weekly.textContent += ' · 週度資料不完整';
++      else if (days > 10) weekly.textContent += ' · 週度資料逾期，等待來源更新';
++    }
++    const root = document.getElementById('regime-current');
++    if (!root) return;
++    try {
++      const response = await fetch('/market/data/refresh.json', {cache: 'no-store'});
++      if (!response.ok) throw new Error('refresh');
++      const refresh = await response.json();
++      if (!/^releases\/[a-f0-9]{64}\.json$/.test(refresh.bundle || '')) throw new Error('bundle path');
++      const result = await fetch('/market/data/' + refresh.bundle);
++      if (!result.ok) throw new Error('bundle');
++      const bundle = await result.json();
++      if (bundle.snapshot_id !== refresh.snapshot_id) throw new Error('snapshot mismatch');
++      root.innerHTML = render(bundle, Date.now());
++    } catch (_) {
++      root.innerHTML = '<p>最新市場資料暫時無法載入。下方保留具日期的週度觀測；<a href="/market/">前往市場頁查看狀態</a>。</p>';
++    }
++  }
++  if (typeof module !== 'undefined' && module.exports) module.exports = {render, quoteHTML, age};
++  if (typeof document !== 'undefined') load();
++}());
+--- /dev/null
++++ b/scripts/tests/test_regime_refresh.py
+@@ -0,0 +1,121 @@
++"""2026-09-13：防止週更時間掩蓋歷史評分，並驗證共用市場判讀的顯示邊界。"""
++from __future__ import annotations
++
++import importlib.util
++import json
++from pathlib import Path
++import shutil
++import subprocess
++import sys
++
++import pytest
++
++SCRIPTS = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(SCRIPTS))
++import build_regime as regime
++import build_market_state as market
++
++
++def build(tmp_path, monkeypatch, missing=False):
++    cot = {"markets": {code: {"series": [["2026-09-08", 1.0]]}
++                       for code, _, _ in regime.REGIME_COT_MARKETS}}
++    path = tmp_path / "cot.json"
++    path.write_text(json.dumps(cot))
++    ratios = [{"key": r["key"], "name": r["name"], "reading": r["reading"],
++               "pos_0to1": r["pos"], "mechanical": {"as_of": "2026-09-07", "value": 1.0,
++               "pctile_2y": 50.0, "chg_12m_pct": 0.0}} for r in regime.RATIOS_EDITORIAL]
++    monkeypatch.setattr(regime, "build_price_cache", lambda *a: {})
++    monkeypatch.setattr(regime, "ratio_compute", lambda *a: (ratios, []))
++    if missing:
++        monkeypatch.setattr(regime, "cot_compute", lambda *a: ([], None, []))
++        monkeypatch.setattr(regime, "ratio_compute", lambda *a: ([], []))
++    monkeypatch.setattr(sys, "argv", ["build_regime", "--skip-fetch", "--out-dir", str(tmp_path),
++                                     "--cot-history", str(path)])
++    regime.main()
++    return json.loads((tmp_path / "data/latest.json").read_text())
++
++
++def test_weekly_refresh_never_redates_editorial(tmp_path, monkeypatch):
++    p = build(tmp_path, monkeypatch)
++    assert p["meta"]["data_as_of"] == "2026-09-07"
++    assert p["historical_editorial"]["as_of"] == "2026-07-06"
++    assert p["composite"] == {} and p["axes"] == [] and p["triggers"] == []
++    assert "2026-06-23" not in p["meta"]["cot_note"]
++    assert all("reading" not in r for r in p["growth_defense_ratios"])
++    html = regime.render_dashboard(p)
++    assert "歷史評分（非本期判讀）" in html
++    assert "HG=F/GC=F" in html and "HYG/LQD" in html
++    assert "2026-09-08" in html and "2026-09-07" in html
++
++
++def test_noop_preserves_timestamp_and_failure_preserves_artifact(tmp_path, monkeypatch):
++    build(tmp_path, monkeypatch)
++    path = tmp_path / "data/latest.json"
++    before = path.read_bytes()
++    build(tmp_path, monkeypatch)
++    assert path.read_bytes() == before
++    with pytest.raises(SystemExit):
++        build(tmp_path, monkeypatch, missing=True)
++    assert path.read_bytes() == before
++
++
++def test_cot_retains_each_markets_actual_date():
++    codes = [x[0] for x in regime.REGIME_COT_MARKETS[:2]]
++    rows, latest, _ = regime.cot_compute({"markets": {
++        codes[0]: {"series": [["2026-09-01", -1.0]]},
++        codes[1]: {"series": [["2026-09-08", 2.0]]}}})
++    assert {x["as_of"] for x in rows} == {"2026-09-01", "2026-09-08"}
++    assert latest == "2026-09-08"
++
++
++def test_small_ratio_retains_useful_precision():
++    from datetime import date, timedelta
++    dates = [(date(2025, 9, 1) + timedelta(weeks=i)).isoformat() for i in range(53)]
++    ratios, _ = regime.ratio_compute({"HG=F": [(d, 6.4695) for d in dates],
++                                     "GC=F": [(d, 4366.2) for d in dates]})
++    assert ratios[0]["mechanical"]["value"] == round(6.4695 / 4366.2, 8)
++
++
++def test_partial_coverage_cannot_claim_a_complete_fresh_date(tmp_path, monkeypatch):
++    original = regime.cot_compute
++    monkeypatch.setattr(regime, "cot_compute", lambda h: (original(h)[0][1:], "2026-09-08", []))
++    p = build(tmp_path, monkeypatch)
++    assert p["meta"]["data_as_of"] is None
++    assert "部分資料缺漏" in regime.render_dashboard(p)
++
++
++def test_market_and_intel_use_observations_not_legacy_score(tmp_path, monkeypatch):
++    from datetime import date
++    p = build(tmp_path, monkeypatch)
++    tile = market.build_environment(p, {}, {}, {}, {}, {}, date(2026, 9, 13), [])[0]
++    assert tile["as_of"] == "2026-09-07" and not tile["stale"]
++    assert "0.63" not in tile["sub"] and tile["tone"] == "neutral"
++    spec = importlib.util.spec_from_file_location("regime_test_intel_render", SCRIPTS / "intel/render.py")
++    renderer = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(renderer)
++    monkeypatch.setattr(renderer, "load_json_safe", lambda *a: p)
++    html = renderer.render_weekly_regime()
++    assert "晚週期再通脹" not in html
++    assert "週線標記日" in html and "2026-09-08" in html
++
++
++@pytest.mark.skipif(not shutil.which("node"), reason="Node is needed for frontend contract checks")
++def test_shared_release_missing_future_unreviewed_and_escaped_values():
++    js = SCRIPTS.parent / "docs/regime/current.js"
++    code = r'''
++const assert = require('assert');
++const ui = require(process.argv[1]);
++const now = Date.parse('2026-09-13T12:00:00Z');
++const q = {'monitor:dxy': {num: 99, val: '<script>bad</script>', as_of:'2026-09-11'}};
++let h = ui.render({state:{evidence:{quotes:q}}, refresh:{status:'needs_review'},
++ read:{as_of:'2026-09-13', thesis_zh:'unapproved'}}, now);
++assert(h.includes('等待重評') && !h.includes('unapproved'));
++assert(h.includes('&lt;script&gt;') && !h.includes('<script>bad'));
++assert(h.includes('缺少有效觀測'));
++assert(ui.quoteHTML('x', {x:{num:12345,val:'12345',as_of:'2026-09-14'}}, now).includes('缺少有效觀測'));
++h = ui.render({read:{as_of:'bad-date',review:{verdict:'pass'},thesis_zh:'invalid'}}, now);
++assert(!h.includes('invalid'));
++h = ui.render({read:{as_of:'2026-07-06',valid_days:10,review:{verdict:'pass'},thesis_zh:'approved'}}, now);
++assert(h.includes('approved') && h.includes('超過有效期'));
++'''
++    subprocess.run([shutil.which("node"), "-e", code, str(js)], check=True)
