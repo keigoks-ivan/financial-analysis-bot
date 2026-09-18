@@ -12,6 +12,14 @@
   - grp_score(): durable-as-eligibility-gate and high-short-interest-as-full-
     exclusion (the veto_high_short_interest field consumed by
     build_arena.hard_veto_v5())
+  - valuation_gate() (v5.1, 2026-09-18 owner decision — see knowledge/rule_ledger.md
+    "v5.1 估值閘" row and grp.py 檔頭 v5.1 段): PEG >2.0 OR PE-NTM-vs-5Y-avg >1.5 →
+    red → not eligible; both missing is NOT a veto (⚪); one missing is judged on
+    the other alone. This is an eligibility/pool gate, not a mid-month hard veto —
+    it deliberately has no test here asserting it's excluded from
+    build_arena.hard_veto_v5()'s seven conditions (that's covered by
+    test_arena_rotation_v4.py's exhaustive hard_veto_v5 test + the build_arena.py
+    comment at that function).
 
 v4 own_score_v4()/own_raw() (percentile ranking, base-effect, cyclical guard) are
 unchanged in v5 — see test_grp_v4.py, not duplicated here.
@@ -140,3 +148,64 @@ def test_pool_membership_is_separate_from_eligibility():
     g = grp.grp_score(_v5_stock(eps_rev_3m_pct=2.0))   # positive revision, but < 5%
     assert g["pass"], "低於 5% 的正向上修仍是 ELIGIBLE（只是不進池）"
     assert not grp.in_pool(g["rev_used_pct"]), "但不滿足池門檻"
+
+
+# ── valuation_gate() (v5.1, 2026-09-18 owner decision — see knowledge/rule_ledger.md
+# "v5.1 估值閘" row and grp.py 檔頭 v5.1 段): PEG >2.0 OR PE-NTM-vs-5Y-avg >1.5 → red;
+# both missing is NOT a veto (⚪); one missing is judged on the other alone ────────────
+
+def test_valuation_gate_red_by_peg():
+    g = grp.valuation_gate({"live_peg": 2.5})
+    assert g["light"] == "🔴"
+    assert g["red_by"] == ["peg"]
+    assert g["peg"] == 2.5 and g["peg_source"] == "live"
+    assert g["why"] == "估值閘紅燈（PEG 2.5 > 2.0）"
+
+
+def test_valuation_gate_red_by_multiple():
+    g = grp.valuation_gate({"pe_vs_5y_x": 1.8})
+    assert g["light"] == "🔴"
+    assert g["red_by"] == ["pe_vs_5y"]
+    assert g["pe_vs_5y_x"] == 1.8
+    assert g["why"] == "估值閘紅燈（PE 相對五年均倍數 1.8x > 1.5x）"
+
+
+def test_valuation_gate_both_missing_is_gray_not_a_veto():
+    g = grp.valuation_gate({})
+    assert g["light"] == "⚪"
+    assert g["red_by"] == []
+    assert g["peg"] is None and g["pe_vs_5y_x"] is None
+    assert g["why"] is not None, "缺值仍要記錄一句話（why），只是不當否決"
+
+
+def test_valuation_gate_live_peg_takes_precedence_over_peg():
+    g = grp.valuation_gate({"live_peg": 1.0, "peg": 5.0})
+    assert g["peg"] == 1.0 and g["peg_source"] == "live", "live_peg 優先，即使 peg（Koyfin）本身會紅"
+    assert g["light"] == "🟢"
+
+
+def test_valuation_gate_one_missing_judged_on_the_other_alone():
+    # PEG 缺（live_peg／peg 皆無），只剩 multiple——用 multiple 單獨判定，不因缺一個
+    # 就補灰燈。這裡刻意選一個「過關」的 multiple，跟「red by multiple」測試（PEG
+    # 缺、multiple 紅）互補，證明「缺一個」本身不影響另一個的判定方向。
+    g = grp.valuation_gate({"pe_vs_5y_x": 1.2})
+    assert g["light"] == "🟢"
+    assert g["peg"] is None and g["pe_vs_5y_x"] == 1.2
+
+    # multiple 缺，只剩 PEG——同理用 PEG 單獨判定。
+    g2 = grp.valuation_gate({"peg": 1.5})
+    assert g2["light"] == "🟢"
+    assert g2["peg"] == 1.5 and g2["pe_vs_5y_x"] is None
+
+
+def test_grp_score_pass_flips_false_on_valuation_red_with_all_other_gates_clean():
+    """重用 _v5_stock()（其餘四道資格閘：成長／位置／上修否決／耐久皆過）——只加
+    估值閘紅燈，pass 應整體翻為 False，veto_valuation=True，why 帶新句型。"""
+    g = grp.grp_score(_v5_stock())
+    assert g["pass"], "sanity：不動估值欄位時，既有 fixture 仍應過閘（missing→⚪ 不否決）"
+
+    g_red = grp.grp_score(_v5_stock(live_peg=2.5))
+    assert not g_red["pass"], "估值閘紅燈應讓整體資格翻為 False"
+    assert g_red["veto_valuation"] is True
+    assert g_red["valuation"]["light"] == "🔴"
+    assert "估值閘紅燈（PEG 2.5 > 2.0）" in g_red["why"]

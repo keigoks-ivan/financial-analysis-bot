@@ -196,3 +196,21 @@
 
 加一提刪一（本次提名候刪審查）：**v2 乙軌雙守門**（峰頂／共識路徑下彎，`scripts/build_picks.py` 原 `build_baofa()` 內）——隨爆發組整組退役，這條規則已無任何呼叫路徑（orphaned code，本次一併刪除），提名審計欄正式記為「已隨來源退役，非規則本身失效」，供 2026-10 校準輪存查，不再視為待審的獨立判斷類規則。
 
+## 2026-09-18：v5.1 估值閘（機械取代 DD 估值判斷）
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **估值閘（v5.1）**：GRP 席位資格閘新增第七道——PEG（`live_peg` 現價重算優先，缺則 `peg` Koyfin）>2.0，或 PE NTM 相對五年均倍數（`pe_vs_5y_x`，dd-screener 已算好）>1.5，任一則紅即整體排除、不進池；兩者皆缺不算否決，標 ⚪ 缺值（僅記錄，不當作綠燈）。這是入池／月頻換席時的資格閘，**不是**月中硬否決——`build_arena.hard_veto_v5()` 七項維持不動，核心席不因估值轉紅在月中被踢，要等下一次月頻整批重選才反映（`scripts/engine/grp.py` `valuation_gate()`／`grp_score()` 新增 `veto_valuation`／`valuation`；`scripts/engine/build_arena.py` 池表與全母體看板新增「估值」欄、legend／rule_line 補一句、why chip 新增比對規則；`docs/cockpit/index.html` 陣容段文案同步） | 2026-09-18 | 持有人 2026-09-18 拍板：估值進場判斷從 DD 報告移交機械——DD 報告才有的五年本益比分位是 DD-only 欄位（沒 DD 的名字沒有這欄），v5.1 起沒 DD 也要能判估值，故改用 dd-screener 既有的 PE NTM 相對五年均倍數（`pe_vs_5y_x`）代替分位；門檻不是新創數字，PEG >2.0 沿用既有品質閘 `peg` 欄門檻（`threshold: 2.0`），倍數 >1.5 沿用 dd-screener 既有 `pe_vs_5y_flag`（`pe_vs_5y_x > 1.5`）的既定切點 | 兩季（約 6 個月）內，被本閘剔除（估值閘紅燈、其餘資格皆過）的名字事後報酬中位數優於同期池中位數 → 撤回此閘，估值判斷交還 DD 或降級為純顯示；或兩季內紅燈剔除名字 <3 檔（樣本不足以判斷）→ 延長觀察期一輪，暫不下結論 | — |
+
+## 2026-09-18：主母體加 Koyfin 大市值來源（DD 選配落實）
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **主母體第三來源（largecap-koyfin）**：dd-screener 主母體（`UNIVERSE_MODE=="dd"`）在既有 DD 池 ∪ QGM 供給列之外，新增第三個 ticker 來源——Koyfin 篩選 `dd_largecap_v5`（美股含 ADR、市值 ≥$200 億、ROIC LTM ≥15、FCF Margin LTM >0），xlsx family `DD_largecap_EPS_estimates_`，供給列 `universe_source="largecap-koyfin"`，不設 `--include-non-dd` 之外的獨立開關（跟 QGM 供給列不同，largecap 來源在 dd mode 一律載入）。實作沿用小市值池的 `_smallcap_universe_entries()`（新增 `source`／`existing_tickers` 參數化，不複製一份），Koyfin xlsx 快照合併進 `enrich_ticker()` 讀取的 `excel_snapshot`（DD_universe 快照撞名優先）；`scripts/engine/build_arena.py` main() 母體過濾只留 `universe_source=="largecap-koyfin"` 列不被下修，不比照 QGM 供給列整批丟給 `load_qgm_rows()`——耐久／市值等欄位走既有 `enrich_ticker()`／`fetch_caps()` None-safe 路徑，同 QGM／smallcap 供給列先例。 | 2026-09-18 | 母體實際只有 252 檔 DD 加 27 檔 QGM，「DD 選配」形同虛設——沒 DD、也不在 QGM 品質池的大型股進不了引擎候選池。持有人 2026-09-18 沿用小市值池同一套 Koyfin 篩選骨架，市值帶改成 ≥$200 億；FCF 門檻從小市值池的 ≥10 放寬到 >0，因為品質閘本體的資本支出豁免路（ROIC ≥25 且 FCF ≥0）需要這批名字先進得了清單才吃得到豁免，門檻不放寬會在清單這一關就先被擋掉。 | 第二份 `DD_largecap_EPS_estimates_` 快照建立（上修基準補齊）後兩個月內，largecap-koyfin 供給列裡通過 `durable_5y` 耐久閘、入池後又因 FCF 轉負被品質閘剔除的比率 ≥50%（豁免路誤放閘）→ FCF 門檻收緊回 ≥10 或另立門檻；或連續兩次月頻換席，largecap-koyfin 供給列合格入池數維持 0 → 檢討 Koyfin 篩選骨架是否系統性篩不出大型股候選，重新校準門檻。 | — |
+
+## 2026-09-18：VCP 深度 1（底部緊度只當標籤與 🟡 排序）
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **VCP 深度 1（底部緊度只當標籤與 🟡 排序）**：dd-screener（`scripts/build_dd_screener.py` `compute_vcp_tag()`）對距還原權息歷史新高 10% 以內（`ma.dist_ath_pct ≥ −10`，與 `timing_lamp()` 紅燈同一條線）的名字，重用既有 5 年日線（`compute_daily_5y_highs()` 已下載的 High/Low/Close/Volume，不再多開一次全母體下載）跑 `vcp_core.calc_vcp()`（原在 `scripts/screener.py`，因 import-time 副作用搬出成獨立模組），算出回檔段數、末段回檔%、量縮比、底部天數與 `vcp_gate`（pass／contraction／trend）。`build_arena.py` 只用這個結果做兩件事：③等待池 🟡（接近新高）組內排序改成先看 `vcp_tight`（回檔一次比一次小＋量縮才算緊）再看既有上修排序鍵（`grp.pool_sort_key()`），🔴／⚫ 兩組與核心席、②可買排序不動；新增「底部」欄純顯示（🟢／🟠 標「緊縮後突破」或「鬆散突破」）。不進 `timing_lamp()`／`grp_score()`／`LAMP_ACTION`，燈號與倉位大小完全不受影響。 | 2026-09-18 | `timing_lamp()` 板機只量距歷史新高與 200 日線兩個數字，量不出同樣站在距新高 10% 內的兩檔，一檔是回檔一次比一次小、量縮的紮實底部，另一檔是鬆散震盪。VCP（Minervini 收縮型態）能補上這個差，但本站沒有 VCP 自己的歷史記分板可驗證勝率，持有人 2026-09-18 拍板深度只做到「標籤加排序」，不讓它進資格或倉位判斷。 | 三個月後（約 2026-12）若 🟡 組裡 `vcp_tight=True` 的名字轉綠燈（突破）的速度沒有比 `vcp_tight=False` 的名字快 → 撤回這個排序，🟡 組退回純上修排序，「底部」欄留著純顯示或一併拿掉；或 🟡 組長期只有個位數名字落在 `vcp_scope=="computed"`（多數卡在 `insufficient_bars`）→ 檢討是否放寬資料門檻。 | — |
+

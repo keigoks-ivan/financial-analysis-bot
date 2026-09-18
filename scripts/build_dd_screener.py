@@ -93,6 +93,16 @@ from dd_screener_ma import compute_ma_snapshot  # noqa: E402
 # 判準在 screener／engine 兩層各抄一份而日後漂移（QC-7 教訓）。
 from engine.grp import durable_5y_v5 as grp_durable_5y_v5  # noqa: E402
 from engine.grp import market_ok as grp_market_ok  # noqa: E402
+# VCP 深度 1 (2026-09-18, notes/site-internal/root/_seat_engine_v5_1_20260918.md
+# §3 / knowledge/rule_ledger.md「VCP 深度 1」列): calc_vcp()/VCP_MIN_BARS moved
+# out of scripts/screener.py into scripts/vcp_core.py (screener.py has an
+# import-time side effect, see vcp_core.py docstring) so it's safe to import
+# here. ATH_RED_DIST reused (not re-hardcoded as -10.0) — same "single source
+# of truth" rationale as the durable_5y_v5/market_ok imports above: it's the
+# same -10% cutoff timing_lamp() uses for red/yellow, and VCP scope is defined
+# to line up with it (see compute_vcp_tag() docstring below).
+from engine.grp import ATH_RED_DIST as GRP_ATH_RED_DIST  # noqa: E402
+from vcp_core import calc_vcp, VCP_MIN_BARS  # noqa: E402
 from update_dd_index import (  # noqa: E402
     collect_dca_ev_map,
     collect_dca_moat_trend_map,
@@ -139,6 +149,16 @@ SMALLCAP_OUTPUT_PATH = SMALLCAP_OUTPUT_DIR / "latest.json"
 _DD_SNAPSHOT_DIR = OUTPUT_DIR / "eps-estimates-snapshots"
 SMALLCAP_SNAPSHOT_DIR = SMALLCAP_OUTPUT_DIR / "eps-estimates-snapshots"
 
+# v5.1 largecap pool (2026-09-18, third Koyfin universe — see notes/site-internal/
+# root/_seat_engine_v5_1_20260918.md §2 and notes/site-internal/root/
+# _koyfin_largecap_watchlist_20260918.md): unlike the smallcap pool above, this
+# is NOT an isolated UNIVERSE_MODE — it's a third ticker source merged straight
+# into the main dd-universe build (UNIVERSE_MODE == "dd") alongside the QGM
+# non-DD rows, so it always writes to the main OUTPUT_PATH/_DD_SNAPSHOT_DIR, not
+# its own subtree. Only the xlsx family differs, hence a bare constant (no
+# _output_dir()/_snapshot_dir()-style mode switch needed).
+LARGECAP_XLSX_FAMILY = "DD_largecap_EPS_estimates_"
+
 
 def _output_dir() -> Path:
     return SMALLCAP_OUTPUT_DIR if UNIVERSE_MODE == "smallcap" else OUTPUT_DIR
@@ -160,25 +180,38 @@ def _find_latest_excel_for_mode():
     return find_latest_excel(family=_excel_family())
 
 
-def _smallcap_universe_entries(excel_snapshot) -> list[dict]:
-    """v5 smallcap pool (2026-09-17): build universe entries straight from the
-    smallcap xlsx's own tickers — no DD pool / QGM assumptions. Shaped
-    identically to dd_screener_dd_loader.load_non_dd_universe()'s output
-    (dd_status="none", every DD-only field None, `universe_source` distinct)
-    so enrich_ticker()'s existing non-DD code path (already exercised in prod
-    via --include-non-dd) handles these rows unchanged — this is a pure
-    function (no I/O) precisely so it's unit-testable without a real xlsx or
-    network access; see scripts/tests/test_smallcap_universe.py."""
+def _smallcap_universe_entries(excel_snapshot, *, source: str = "smallcap-koyfin",
+                                existing_tickers: set[str] | None = None) -> list[dict]:
+    """v5 smallcap pool (2026-09-17): build universe entries straight from an
+    xlsx's own tickers — no DD pool / QGM assumptions. Shaped identically to
+    dd_screener_dd_loader.load_non_dd_universe()'s output (dd_status="none",
+    every DD-only field None, `universe_source` distinct) so enrich_ticker()'s
+    existing non-DD code path (already exercised in prod via --include-non-dd)
+    handles these rows unchanged — this is a pure function (no I/O) precisely
+    so it's unit-testable without a real xlsx or network access; see
+    scripts/tests/test_smallcap_universe.py.
+
+    Generalized 2026-09-18 (v5.1 largecap pool, third Koyfin source — see
+    notes/site-internal/root/_seat_engine_v5_1_20260918.md §2) with two kwargs
+    so the largecap pool reuses this helper instead of a copy-pasted variant:
+      `source` — universe_source tag ("smallcap-koyfin" default,
+                 "largecap-koyfin" for the new source).
+      `existing_tickers` — when given, tickers already in the caller's universe
+                 (DD ∪ QGM) are skipped so the largecap pool only ADDS names,
+                 never duplicates one already present. The smallcap pool never
+                 passes this (its own isolated universe has no prior tickers
+                 to dedupe against), so the default None preserves its exact
+                 pre-existing behaviour."""
     return [
         {
             "ticker": t, "name": t, "sector": "",
             **{f: None for f in _DD_ONLY_FIELDS},
             "dd_status": "none",
-            "universe_source": "smallcap-koyfin",
+            "universe_source": source,
             "qgm_seed": None,
         }
         for t in sorted(excel_snapshot.tickers)
-        if grp_market_ok(t)
+        if grp_market_ok(t) and (existing_tickers is None or t not in existing_tickers)
     ]
 # P1: 機器抽取的 v12 舊 DD 裁決 overlay（僅補 dd-meta 沒有原生 dca_verdict 的 ticker）。
 # 缺檔／壞檔一律靜默降級（見 apply_verdict_overlay），screener 行為回到現狀。
@@ -954,11 +987,12 @@ def compute_yfinance_timing_fallback(
     return out
 
 
-def compute_daily_5y_highs(dd_tickers: list[str]) -> dict[str, dict]:
+def compute_daily_5y_highs(dd_tickers: list[str]) -> tuple[dict[str, dict], dict[str, dict]]:
     """Batch-fetch 5y DAILY closes and compute true 5Y daily high per ticker.
 
-    Returns {dd_ticker: {high_5y_daily_price, dist_5y_high_daily_pct, days_since_5y_high}}.
-    Tickers yfinance can't fetch are omitted; merge code defaults them to None.
+    Returns (out, ohlcv_map):
+      out — {dd_ticker: {high_5y_daily_price, dist_5y_high_daily_pct, days_since_5y_high}}.
+      Tickers yfinance can't fetch are omitted; merge code defaults them to None.
 
     Why this exists: dd_screener_ma.compute_ma_snapshot() pulls 5y WEEKLY closes
     (cached in data/weekly_cache/). Weekly highs compress intraweek peaks out and
@@ -970,9 +1004,23 @@ def compute_daily_5y_highs(dd_tickers: list[str]) -> dict[str, dict]:
     Cost: one chunked yf.download per build (~30-60s for 200 tickers, chunk_size=50).
     Reuses _chunked_download_with_retry() infrastructure so rate-limit handling
     matches the timing-fallback path.
+
+    ohlcv_map (2026-09-18, VCP depth 1 — see notes/site-internal/root/
+    _seat_engine_v5_1_20260918.md §3 / knowledge/rule_ledger.md「VCP 深度 1」列):
+    {dd_ticker: {"close"/"high"/"low"/"volume": pd.Series}}, sliced from the
+    SAME chunked 5y download as `out` above (`raw` already carries the full
+    OHLCV columns — this function used to throw High/Low/Volume away right
+    after extracting Close). vcp_core.calc_vcp() needs >=VCP_MIN_BARS (221)
+    daily bars of all four fields; the 300-day daily snapshot used elsewhere
+    in this build (dd_screener_ma's MA snapshot, ~206 bars) is not enough, and
+    a THIRD universe-wide download just for VCP was ruled out — this is the
+    reuse path instead. Kept in-process only: never merged into `row["ma"]`,
+    never JSON-serialized (unlike `out`). A ticker missing here (fetch failed,
+    or <50 valid daily bars) is not an error — main()'s VCP step treats it as
+    vcp_scope="insufficient_bars" same as a too-short series.
     """
     if not dd_tickers:
-        return {}
+        return {}, {}
 
     yf_map: dict[str, str] = {t: _yf_ticker_for_ma(t) for t in dd_tickers}
     yf_tickers = list(set(yf_map.values()))
@@ -990,7 +1038,7 @@ def compute_daily_5y_highs(dd_tickers: list[str]) -> dict[str, dict]:
     )
     if raw is None or raw.empty:
         print("  [daily-5y] yf.download returned empty after retries", file=sys.stderr)
-        return {}
+        return {}, {}
 
     def _get_closes(yf_ticker: str):
         try:
@@ -1003,6 +1051,7 @@ def compute_daily_5y_highs(dd_tickers: list[str]) -> dict[str, dict]:
             return None
 
     out: dict[str, dict] = {}
+    ohlcv_map: dict[str, dict] = {}
     for dd_t, yf_t in yf_map.items():
         closes = _get_closes(yf_t)
         if closes is None or len(closes) < 50:
@@ -1020,11 +1069,27 @@ def compute_daily_5y_highs(dd_tickers: list[str]) -> dict[str, dict]:
             }
         except Exception:
             continue
+        # VCP raw material (2026-09-18) — same download, just keep High/Low/
+        # Volume too. Jointly dropna across all four OHLCV columns (rather
+        # than each field's own independent dropna like _get_closes above)
+        # so calc_vcp()'s positional/rolling math never sees a High/Low/Volume
+        # gap that Close doesn't have. Pure addition — doesn't touch `out`.
+        try:
+            frame = (raw if len(yf_tickers) == 1 else raw[yf_t])
+            frame = frame[["High", "Low", "Close", "Volume"]].dropna()
+            if not frame.empty:
+                ohlcv_map[dd_t] = {
+                    "close": frame["Close"], "high": frame["High"],
+                    "low": frame["Low"], "volume": frame["Volume"],
+                }
+        except (KeyError, TypeError):
+            pass
     print(
-        f"  [daily-5y] Computed for {len(out)}/{len(dd_tickers)} tickers",
+        f"  [daily-5y] Computed for {len(out)}/{len(dd_tickers)} tickers "
+        f"(VCP OHLCV retained for {len(ohlcv_map)})",
         file=sys.stderr,
     )
-    return out
+    return out, ohlcv_map
 
 
 ATH_CACHE_PATH = ROOT / "data" / "ath_cache.json"
@@ -1141,6 +1206,78 @@ def compute_ath_highs(dd_tickers: list[str], price_map: dict[str, float],
                   "dist_ath_pct": dist, "ath_source": "full"}
     _save_ath_cache(cache)
     return out
+
+
+# VCP 深度 1 (2026-09-18): only compute for rows within 10% of the adjusted
+# all-time high — the same cutoff timing_lamp() uses for its red/yellow split
+# (grp.ATH_RED_DIST, imported above as GRP_ATH_RED_DIST), so VCP's own 260-bar
+# base-high window is reading off the same all-time-high point as the board's
+# trigger, not some other 260-day local high. See compute_vcp_tag() docstring.
+VCP_ATH_SCOPE_MIN = GRP_ATH_RED_DIST
+
+
+def compute_vcp_tag(dist_ath_pct: float | None, ohlcv: dict | None) -> dict:
+    """VCP depth 1 (2026-09-18, tag-and-sort only — see notes/site-internal/root/
+    _seat_engine_v5_1_20260918.md §3 / knowledge/rule_ledger.md「VCP 深度 1」列).
+    Pure per-row wrapper around vcp_core.calc_vcp(): decides vcp_scope, then
+    either maps calc_vcp()'s output into the vcp_* row fields or leaves them
+    null. Tag-and-sort only — does NOT feed timing_lamp()/grp_score()/
+    LAMP_ACTION (those stay untouched; see build_arena.py's use of these
+    fields for the ③ 等待池 🟡-group sort and the 「底部」 display column).
+
+    `dist_ath_pct` — row["ma"]["dist_ath_pct"] (None when ATH computation
+    didn't run, e.g. skip_ma). `ohlcv` — vcp_ohlcv_map.get(ticker) from
+    compute_daily_5y_highs(): a dict with "close"/"high"/"low"/"volume"
+    pd.Series, or None if that ticker's 5y daily fetch failed / yielded too
+    few valid bars.
+
+    Scope:
+      - dist_ath_pct is None → vcp_scope=None (no ATH data to test the 10%
+        cutoff against at all).
+      - dist_ath_pct < VCP_ATH_SCOPE_MIN (-10%) → "far_from_ath": skipped
+        rather than computed against a base high that isn't the one the
+        board's ATH trigger cares about.
+      - ohlcv missing, or fewer than VCP_MIN_BARS (221) daily bars →
+        "insufficient_bars" (the 300-day MA snapshot elsewhere in this build
+        only yields ~206 bars — not enough; this function only ever sees the
+        5y daily frame, which is either long enough or the ticker is missing).
+      - otherwise → "computed": vcp_core.calc_vcp() runs; vcp_gate/score/
+        pullback_count/last_pullback_pct/vol_dryup_ratio/base_age_days map
+        straight through; vcp_tight = (vcp_gate == "pass").
+
+    Returns exactly the 8 row fields the caller merges in: vcp_scope/
+    vcp_gate/vcp_score/vcp_pullback_count/vcp_last_pullback_pct/
+    vcp_vol_dryup_ratio/vcp_base_age_days/vcp_tight. Never raises on bad
+    `ohlcv` shape by itself — calc_vcp()'s own inputs are always well-formed
+    pd.Series coming from compute_daily_5y_highs(); main()'s call site still
+    wraps this in try/except (additive field, never aborts the build).
+    """
+    empty = {
+        "vcp_scope": None, "vcp_gate": None, "vcp_score": None,
+        "vcp_pullback_count": None, "vcp_last_pullback_pct": None,
+        "vcp_vol_dryup_ratio": None, "vcp_base_age_days": None, "vcp_tight": False,
+    }
+    if dist_ath_pct is None:
+        return dict(empty)
+    if dist_ath_pct < VCP_ATH_SCOPE_MIN:
+        return {**empty, "vcp_scope": "far_from_ath"}
+    close_series = ohlcv.get("close") if ohlcv else None
+    # `close_series is None` (not `not close_series`/`or`) — a non-empty
+    # pd.Series raises ValueError on bool() coercion ("truth value of a
+    # Series is ambiguous"), which `x or default` and `not x` both trigger.
+    if close_series is None or len(close_series) < VCP_MIN_BARS:
+        return {**empty, "vcp_scope": "insufficient_bars"}
+    vcp = calc_vcp(ohlcv["close"], ohlcv["high"], ohlcv["low"], ohlcv["volume"])
+    return {
+        "vcp_scope": "computed",
+        "vcp_gate": vcp["vcp_gate"],
+        "vcp_score": vcp["score"],
+        "vcp_pullback_count": vcp["pullback_count"],
+        "vcp_last_pullback_pct": vcp["last_pullback_pct"],
+        "vcp_vol_dryup_ratio": vcp["vol_dryup_ratio"],
+        "vcp_base_age_days": vcp["base_age_days"],
+        "vcp_tight": vcp["vcp_gate"] == "pass",
+    }
 
 
 def _ev5y_for(ticker: str, dca_ev_map: dict) -> float | None:
@@ -3449,6 +3586,30 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
                   f"{sum(1 for r in non_dd_universe if r['universe_source'] == 'qgm-tw')} TW) "
                   f"→ total {len(universe)}")
 
+        # Step 1-2d (v5.1 母體擴充, 2026-09-18 — notes/site-internal/root/
+        # _seat_engine_v5_1_20260918.md §2, knowledge/rule_ledger.md「2026-09-18：
+        # 主母體加 Koyfin 大市值來源」列): third ticker source — Koyfin
+        # dd_largecap_v5 screen (US, mktcap>=$20B, ROIC LTM>=15, FCF Margin
+        # LTM>0) for names with no DD report and not already in QGM. Same
+        # non-DD row shape as _smallcap_universe_entries() (reused here via its
+        # `source`/`existing_tickers` kwargs, not copy-pasted). Unconditional
+        # in dd mode — NOT gated behind --include-non-dd, since this is a
+        # population source (a third "who's in the universe" input), not the
+        # QGM opt-in switch. Missing xlsx family = universe unchanged (same
+        # no-op shape as --universe smallcap's NOT-FOUND path above).
+        _largecap_excel = load_latest_excel(family=LARGECAP_XLSX_FAMILY)
+        if _largecap_excel is None:
+            print(f"  Step 1-2d largecap universe NOT FOUND (family={LARGECAP_XLSX_FAMILY}) "
+                  "— skipped, universe unchanged")
+        else:
+            _largecap_existing = {e["ticker"] for e in universe}
+            largecap_universe = _smallcap_universe_entries(
+                _largecap_excel, source="largecap-koyfin",
+                existing_tickers=_largecap_existing)
+            universe = universe + largecap_universe
+            print(f"  Step 1-2d largecap universe (xlsx family={LARGECAP_XLSX_FAMILY}): "
+                  f"+{len(largecap_universe)} tickers → total {len(universe)}")
+
         # Step 1-2b: P1 — 補機器抽取的 v12 舊 DD 裁決（失敗安全；overlay 缺檔則行為回到現狀）
         ov = apply_verdict_overlay(universe)
         print(f"  Step 1-2  verdict source: dd_meta={ov['dd_meta']} "
@@ -3508,6 +3669,27 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
 
     # Step 0d: v1.8 — load EPS estimates Excel (primary EPS source)
     excel_snapshot = load_latest_excel(family=_excel_family())
+    # v5.1 largecap pool (2026-09-18): merge the largecap xlsx's Koyfin records
+    # (roic/fcf/roic_5y_avg/roic_3y_avg/EPS estimates/...) into excel_snapshot
+    # so enrich_ticker()'s excel_snapshot.get(t)/.has(t) lookups (keyed only by
+    # ticker, see enrich_ticker() below) see largecap-koyfin rows too — not
+    # just DD-universe ones. DD_universe snapshot wins on ticker collisions.
+    # dd mode only (the isolated `--universe smallcap` build never touches this
+    # third source). Missing family here is silent — Step 1-2d above already
+    # printed the one NOT-FOUND line for this family; no need to repeat it.
+    if UNIVERSE_MODE == "dd":
+        _largecap_excel_for_merge = load_latest_excel(family=LARGECAP_XLSX_FAMILY)
+        if _largecap_excel_for_merge is not None:
+            if excel_snapshot is None:
+                excel_snapshot = _largecap_excel_for_merge
+            else:
+                _merged_tickers = dict(_largecap_excel_for_merge.tickers)
+                _merged_tickers.update(excel_snapshot.tickers)
+                excel_snapshot.tickers = _merged_tickers
+            print(f"  Step 0    largecap Koyfin snapshot merged into main excel_snapshot: "
+                  f"{len(_largecap_excel_for_merge.tickers)} tickers "
+                  f"(family={LARGECAP_XLSX_FAMILY}, snapshot {_largecap_excel_for_merge.snapshot_date}, "
+                  "DD_universe wins on collision)")
     if excel_snapshot is not None:
         all_dd_tk = [e["ticker"] for e in universe]
         us_adr = {t for t in all_dd_tk if "." not in t}
@@ -3549,8 +3731,9 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     # backward compat (entry-state.html consumers); the daily fields live
     # alongside it in the same `ma` sub-object.
     daily_5y_map: dict[str, dict] = {}
+    vcp_ohlcv_map: dict[str, dict] = {}
     if not skip_ma:
-        daily_5y_map = compute_daily_5y_highs(all_dd_tickers)
+        daily_5y_map, vcp_ohlcv_map = compute_daily_5y_highs(all_dd_tickers)
 
     # Step 3 + 4 enrichment, parallel
     print(f"  Step 3-4  enriching (workers={workers}, skip_ma={skip_ma}) ...")
@@ -3610,6 +3793,30 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
                 d_ath = ath_map.get(row.get("ticker"))
                 if d_ath and isinstance(row.get("ma"), dict):
                     row["ma"].update(d_ath)
+
+    # Step 4.57 (VCP depth 1, 2026-09-18 — see notes/site-internal/root/
+    # _seat_engine_v5_1_20260918.md §3 / knowledge/rule_ledger.md「VCP 深度 1」
+    # 列): tag-and-sort only, must run after the ma.dist_ath_pct merge just
+    # above (compute_vcp_tag()'s scope decision reads it) and reuses
+    # vcp_ohlcv_map from compute_daily_5y_highs() — no third universe-wide
+    # download. Runs for both dd/smallcap universes (same main() body, no
+    # UNIVERSE_MODE gate) and even when skip_ma=True (every row just gets
+    # vcp_scope=None, same "no data yet" shape a snapshot test expects).
+    vcp_scope_counts = Counter()
+    for row in enriched:
+        ticker = row.get("ticker")
+        dist_ath = (row.get("ma") or {}).get("dist_ath_pct")
+        try:
+            vcp_tag = compute_vcp_tag(dist_ath, vcp_ohlcv_map.get(ticker))
+        except Exception as exc:   # noqa: BLE001 — VCP is additive, never abort the build
+            print(f"  WARN: compute_vcp_tag failed for {ticker} (non-fatal): {exc}", file=sys.stderr)
+            vcp_tag = compute_vcp_tag(None, None)
+        row.update(vcp_tag)
+        vcp_scope_counts[vcp_tag["vcp_scope"]] += 1
+    print(f"  Step 4.57 VCP: computed {vcp_scope_counts.get('computed', 0)}／"
+          f"far_from_ath {vcp_scope_counts.get('far_from_ath', 0)}／"
+          f"insufficient_bars {vcp_scope_counts.get('insufficient_bars', 0)}／"
+          f"no_ath_data {vcp_scope_counts.get(None, 0)}")
 
     # Step 4.6 (v1.9, v14.3 F4): AR Live — recompute the §11.5 asymmetry ratio
     # at today's price for reports that emit bull/bear targets + probabilities.
