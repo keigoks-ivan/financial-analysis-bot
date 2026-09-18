@@ -200,7 +200,7 @@
 
 | 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
 |---|---|---|---|---|
-| **估值閘（v5.1）**：GRP 席位資格閘新增第七道——PEG（`live_peg` 現價重算優先，缺則 `peg` Koyfin）>2.0，或 PE NTM 相對五年均倍數（`pe_vs_5y_x`，dd-screener 已算好）>1.5，任一則紅即整體排除、不進池；兩者皆缺不算否決，標 ⚪ 缺值（僅記錄，不當作綠燈）。這是入池／月頻換席時的資格閘，**不是**月中硬否決——`build_arena.hard_veto_v5()` 七項維持不動，核心席不因估值轉紅在月中被踢，要等下一次月頻整批重選才反映（`scripts/engine/grp.py` `valuation_gate()`／`grp_score()` 新增 `veto_valuation`／`valuation`；`scripts/engine/build_arena.py` 池表與全母體看板新增「估值」欄、legend／rule_line 補一句、why chip 新增比對規則；`docs/cockpit/index.html` 陣容段文案同步） | 2026-09-18 | 持有人 2026-09-18 拍板：估值進場判斷從 DD 報告移交機械——DD 報告才有的五年本益比分位是 DD-only 欄位（沒 DD 的名字沒有這欄），v5.1 起沒 DD 也要能判估值，故改用 dd-screener 既有的 PE NTM 相對五年均倍數（`pe_vs_5y_x`）代替分位；門檻不是新創數字，PEG >2.0 沿用既有品質閘 `peg` 欄門檻（`threshold: 2.0`），倍數 >1.5 沿用 dd-screener 既有 `pe_vs_5y_flag`（`pe_vs_5y_x > 1.5`）的既定切點 | 兩季（約 6 個月）內，被本閘剔除（估值閘紅燈、其餘資格皆過）的名字事後報酬中位數優於同期池中位數 → 撤回此閘，估值判斷交還 DD 或降級為純顯示；或兩季內紅燈剔除名字 <3 檔（樣本不足以判斷）→ 延長觀察期一輪，暫不下結論 | — |
+| **估值閘（v5.1）**：GRP 席位資格閘新增第七道——PEG（`live_peg` 現價重算優先，缺則 `peg` Koyfin）>2.0，或 PE NTM 相對五年均倍數（`pe_vs_5y_x`，dd-screener 已算好）>1.75，任一則紅即整體排除、不進池；兩者皆缺不算否決，標 ⚪ 缺值（僅記錄，不當作綠燈）。這是入池／月頻換席時的資格閘，**不是**月中硬否決——`build_arena.hard_veto_v5()` 七項維持不動，核心席不因估值轉紅在月中被踢，要等下一次月頻整批重選才反映（`scripts/engine/grp.py` `valuation_gate()`／`grp_score()` 新增 `veto_valuation`／`valuation`；`scripts/engine/build_arena.py` 池表與全母體看板新增「估值」欄、legend／rule_line 補一句、why chip 新增比對規則；`docs/cockpit/index.html` 陣容段文案同步） | 2026-09-18（倍數門檻 1.5→1.75 同日改） | 持有人 2026-09-18 拍板：估值進場判斷從 DD 報告移交機械——DD 報告才有的五年本益比分位是 DD-only 欄位（沒 DD 的名字沒有這欄），v5.1 起沒 DD 也要能判估值，故改用 dd-screener 既有的 PE NTM 相對五年均倍數（`pe_vs_5y_x`）代替分位；門檻不是新創數字，PEG >2.0 沿用既有品質閘 `peg` 欄門檻（`threshold: 2.0`），倍數 >1.5 沿用 dd-screener 既有 `pe_vs_5y_flag`（`pe_vs_5y_x > 1.5`）的既定切點 | 兩季（約 6 個月）內，被本閘剔除（估值閘紅燈、其餘資格皆過）的名字事後報酬中位數優於同期池中位數 → 撤回此閘，估值判斷交還 DD 或降級為純顯示；或兩季內紅燈剔除名字 <3 檔（樣本不足以判斷）→ 延長觀察期一輪，暫不下結論 | — |
 
 ## 2026-09-18：主母體加 Koyfin 大市值來源（DD 選配落實）
 
@@ -214,3 +214,9 @@
 |---|---|---|---|---|
 | **VCP 深度 1（底部緊度只當標籤與 🟡 排序）**：dd-screener（`scripts/build_dd_screener.py` `compute_vcp_tag()`）對距還原權息歷史新高 10% 以內（`ma.dist_ath_pct ≥ −10`，與 `timing_lamp()` 紅燈同一條線）的名字，重用既有 5 年日線（`compute_daily_5y_highs()` 已下載的 High/Low/Close/Volume，不再多開一次全母體下載）跑 `vcp_core.calc_vcp()`（原在 `scripts/screener.py`，因 import-time 副作用搬出成獨立模組），算出回檔段數、末段回檔%、量縮比、底部天數與 `vcp_gate`（pass／contraction／trend）。`build_arena.py` 只用這個結果做兩件事：③等待池 🟡（接近新高）組內排序改成先看 `vcp_tight`（回檔一次比一次小＋量縮才算緊）再看既有上修排序鍵（`grp.pool_sort_key()`），🔴／⚫ 兩組與核心席、②可買排序不動；新增「底部」欄純顯示（🟢／🟠 標「緊縮後突破」或「鬆散突破」）。不進 `timing_lamp()`／`grp_score()`／`LAMP_ACTION`，燈號與倉位大小完全不受影響。 | 2026-09-18 | `timing_lamp()` 板機只量距歷史新高與 200 日線兩個數字，量不出同樣站在距新高 10% 內的兩檔，一檔是回檔一次比一次小、量縮的紮實底部，另一檔是鬆散震盪。VCP（Minervini 收縮型態）能補上這個差，但本站沒有 VCP 自己的歷史記分板可驗證勝率，持有人 2026-09-18 拍板深度只做到「標籤加排序」，不讓它進資格或倉位判斷。 | 三個月後（約 2026-12）若 🟡 組裡 `vcp_tight=True` 的名字轉綠燈（突破）的速度沒有比 `vcp_tight=False` 的名字快 → 撤回這個排序，🟡 組退回純上修排序，「底部」欄留著純顯示或一併拿掉；或 🟡 組長期只有個位數名字落在 `vcp_scope=="computed"`（多數卡在 `insufficient_bars`）→ 檢討是否放寬資料門檻。 | — |
 
+
+## 2026-09-18：③b 太貴不入池（估值閘紅燈名單給持有者看）
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **③b 太貴不入池**：席位排序頁在 ③ 等待池之後加一區，列「其他資格全過、只有估值閘紅燈」的名字（`grp.grp_score()` 新欄 `pass_ex_valuation` 為 True 且 `pass` 為 False），依上修排序，欄位同池表（估值／時機燈／衰退／體質／DD／底部）。純顯示，不進池、不佔席、不改任何排序（`scripts/engine/build_arena.py` `too_expensive_rows()`／`_too_expensive_section_html()`，ASCII 版同段）。同日估值閘倍數門檻 1.5→1.75（持有人看過 39 檔合格名字的分布後定：1.5 只砍 DELL 1.74，2.0 砍不到任何名字，1.75 讓這道閘在極端才動）。 | 2026-09-18 | 持有人持有 TSM、DELL 等名字，問「持有的股票漲貴被移除後怎麼看」。查證發現全母體看板只列資格全過的 40 檔，估值紅的名字整頁消失，持有者看不到它的燈號與四個壞訊號（衰退 ⛔／體質拒絕／DD 迴避／跌破 200 日線）。估值紅的語意是「不加碼」不是「賣」，所以要有一區把這些名字留在頁上。 | 若三個月內 ③b 長期為空（估值閘幾乎不動）或持有人不看，併回 ④ 收合區。 | 待審 |

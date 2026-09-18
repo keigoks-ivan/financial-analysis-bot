@@ -115,7 +115,7 @@ notes/site-internal/root/_seat_engine_v5_20260917.md）——品質＝資格、�
 v5.1（2026-09-18 持有人拍板，見 notes/site-internal/root/
 _seat_engine_v5_1_20260918.md §1／knowledge/rule_ledger.md「v5.1 估值閘」列）——
 資格閘加估值閘，機械取代 DD 報告的估值判斷：紅＝PEG（live_peg 優先，缺則 peg）
->2.0，或 PE NTM 相對五年均倍數（pe_vs_5y_x，dd-screener 已算好）>1.5，任一則紅
+>2.0，或 PE NTM 相對五年均倍數（pe_vs_5y_x，dd-screener 已算好）>1.75，任一則紅
 （valuation_gate()）；紅燈整體排除、不進池，兩者皆缺不算否決（標 ⚪ 缺值）。是
 入池／月頻換席的資格閘，**不是**月中硬否決——不進 build_arena.hard_veto_v5() 的
 七項之列，核心席不因估值轉紅在月中被踢（下次月頻整批重選才會反映）。
@@ -222,7 +222,7 @@ ATH_GREEN_DIST = -3.0    # ≥ 此值 且站上 200 日線＝綠燈（突破帶�
 # v5.1（2026-09-18 持有人拍板，見檔頭 v5.1 段／notes/site-internal/root/
 # _seat_engine_v5_1_20260918.md §1／rule_ledger.md「v5.1 估值閘」列）——估值閘常數：
 VAL_PEG_MAX = 2.0          # PEG（live_peg 優先，缺則 peg）> 此值 → 紅
-VAL_PE_VS_5Y_MAX = 1.5     # PE NTM 相對五年均倍數（s["pe_vs_5y_x"]）> 此值 → 紅
+VAL_PE_VS_5Y_MAX = 1.75    # PE NTM 相對五年均倍數（s["pe_vs_5y_x"]）> 此值 → 紅
 
 
 def _f(v):
@@ -335,7 +335,7 @@ def valuation_gate(s: dict) -> dict:
         reasons.append(f"PEG {peg:.1f} > {VAL_PEG_MAX:.1f}")
     if x is not None and x > VAL_PE_VS_5Y_MAX:
         red_by.append("pe_vs_5y")
-        reasons.append(f"PE 相對五年均倍數 {x:.1f}x > {VAL_PE_VS_5Y_MAX:.1f}x")
+        reasons.append(f"PE 相對五年均倍數 {x:.2f}x > {VAL_PE_VS_5Y_MAX:g}x")
 
     if red_by:
         return {"light": "🔴", "peg": peg, "peg_source": peg_source, "pe_vs_5y_x": x,
@@ -667,7 +667,7 @@ def grp_score(s: dict) -> dict:
                     else "耐久資料缺，不進池（v5 資格必備，見 grp.durable_5y_v5()）")
 
     # 估值閘（v5.1，2026-09-18 持有人拍板，見檔頭 v5.1 段／grp.valuation_gate()／
-    # rule_ledger.md「v5.1 估值閘」列）：PEG >2.0 或 PE NTM 相對五年均倍數 >1.5x，
+    # rule_ledger.md「v5.1 估值閘」列）：PEG >2.0 或 PE NTM 相對五年均倍數 >1.75x，
     # 任一則紅——紅燈整體排除（入池／月頻換席資格閘，非月中硬否決，見
     # build_arena.hard_veto_v5() 同段註解）。
     valuation = valuation_gate(s)
@@ -675,8 +675,9 @@ def grp_score(s: dict) -> dict:
     if veto_valuation:
         why.append(valuation["why"])
 
-    all_pass = (g_pass and (not veto) and p_pass and bool(durable) and (not high_short_interest)
-                and (not veto_valuation))
+    all_pass_ex_valuation = (g_pass and (not veto) and p_pass and bool(durable)
+                             and (not high_short_interest))
+    all_pass = all_pass_ex_valuation and (not veto_valuation)
     if not r_pass and not r_veto:
         why = [w for w in why if not w.startswith("上修閘未過")]
     own_v2 = own_score(s, g)     # v2 公式原封不動，供對照一輪（own_v2，見檔頭 v4 段第 4 點）
@@ -687,6 +688,9 @@ def grp_score(s: dict) -> dict:
             "veto_decline": veto_decline, "veto_dd_avoid": veto_dd_avoid,
             "veto_high_short_interest": high_short_interest,   # v5 新增：整體資格閘排除
             "veto_valuation": veto_valuation, "valuation": valuation,   # v5.1 新增：估值閘
+            # v5.1（2026-09-18 持有人）：「其他資格全過、只差估值」——build_arena 的
+            # 「③b 太貴不入池」區靠這個欄位列名字，讓持有者看得到燈號與壞訊號。
+            "pass_ex_valuation": all_pass_ex_valuation and q["pass"],
             "g": round(g, 1) if g is not None else None,
             "g_three_year": g_three_year if g is not None else None,
             "g_min": g_min,

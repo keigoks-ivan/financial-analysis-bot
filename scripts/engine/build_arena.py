@@ -960,7 +960,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
              "（12-1 月動能 >150%）與頂點（roic_vs_5y_x ≥1.3）不擋資格：過熱只影響"
              "時機燈（🟠半倉），頂點純顯示。")
     L.append("估值閘（v5.1，2026-09-18）＝PEG（現價重算 live_peg 優先，缺則 Koyfin peg）"
-             ">2.0，或 PE NTM 相對五年均倍數 >1.5x，任一則紅——紅燈整體排除、不進池；"
+             ">2.0，或 PE NTM 相對五年均倍數 >1.75x，任一則紅——紅燈整體排除、不進池；"
              "兩者皆缺不算否決，標 ⚪ 缺值。這是入池／月頻換席的資格閘，不是月中硬"
              "否決，核心席不因估值轉紅在月中被踢。")
     L.append("欄位說明：rev=財報後上修%（已排除匯率；以該股自己最近一次財報日前最新"
@@ -982,6 +982,17 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     L.append("")
     L.extend(_pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
                                  lamp_as_of, last_rotation_date))
+
+    _too_exp = too_expensive_rows(rows)
+    L.append(f"== ③b 太貴不入池（共 {len(_too_exp)} 檔；其他資格全過、只有估值紅。持有者看這裡：不加碼，"
+             "不是賣出訊號；出場看衰退⛔／體質拒絕／DD 迴避／跌破 200 日線）")
+    if _too_exp:
+        L.append(_POOL_ASCII_HDR_IDX)
+        for i, r in enumerate(_too_exp[:40], 1):
+            L.append(_pool_ascii_row(i, r))
+    else:
+        L.append("  （無）")
+    L.append("")
 
     L.append(f"== ④ 品質過閘、上修未達 5%（共 {len(not_in_pool_rows)} 檔，僅供複審，不進池）")
     if not_in_pool_rows:
@@ -1460,7 +1471,7 @@ def _shared_thead_cells() -> list[str]:
         '<th class="bw-l" title="池資格：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均∧'
         '三年平均∧現值三者皆 ≥15%——一致性判準，非單一數字">耐久</th>',
         '<th class="bw-l" title="v5.1 估值閘：PEG（現價重算 live_peg 優先，缺則 Koyfin peg）'
-        '&gt;2.0，或 PE NTM 相對五年均倍數 &gt;1.5x，任一則紅——紅燈整體排除、不進池'
+        '&gt;2.0，或 PE NTM 相對五年均倍數 &gt;1.75x，任一則紅——紅燈整體排除、不進池'
         '（入池／月頻換席資格閘，非月中硬否決）。兩者皆缺不算否決，標 ⚪ 缺值。'
         '顯示「PEG／PE 相對五年均倍數」">估值</th>',
         '<th class="bw-l">時機</th>',
@@ -1598,11 +1609,12 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 
     legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表（下方「全母體看板」共用本段說明）</summary>
 <div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看分析師有沒有在財報後上修（排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心 5 席每月換一次，其餘每天重算。這是研究名單，不是帳戶持倉。</div>
-<div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘、三年成長 15%（耐久達標者 10%）、站上 52 週線、耐久一致性。五項全過才有資格。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.5x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
+<div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘、三年成長 15%（耐久達標者 10%）、站上 52 週線、耐久一致性。五項全過才有資格。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
 <div class="bw-note-line"><b>耐久</b>：兩種算法擇一達標即可。QGM 五年 ROIC 穩定度 ≥75%；或 Koyfin 五年平均、三年平均、現值三者都 ≥15%。看的是一致性，不是單一年份。不耐久就不進池，v5 沒有衛星席可退。</div>
 <div class="bw-note-line"><b>第二關 排序</b>：只看財報後上修幅度。基準是該股最近一次財報日前的月度快照，缺財報錨定時退回三個月。上修 ≥5% 才入池，池內依上修由高到低排。同值先比 implied_growth_pct，再比盈餘殖利率。不看股價漲幅。own_score_v4 五百分位對照分只在「上修%（財報後）」欄 hover 顯示，不參與排序。</div>
 <div class="bw-note-line"><b>第三關 時機燈</b>：量的是距還原權息全歷史最高收盤價多遠，燈號直接對應倉位。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉／🟡 半倉＝差 3%~10%／🟠 過熱＝12-1 月動能 &gt;150% 但仍在突破帶附近，半倉／🔴 等板機＝差超過 10% 或跌破 200 日線，零倉／⚫ 不合格＝未站上 52 週線。過熱與頂點不擋資格，只影響燈號。RS 與生命週期階段只在 hover 顯示，不影響燈號。時機燈與倉位每日更新，不用等月頻換席。</div>
 <div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內前 5，每月第一次排程整批重選一次；月中只有硬否決能換人，空位由池遞補。沒進核心的池成員全部叫等待池，依燈號分兩組：②可買＝今天綠燈或橘燈，板機已亮；③等待池＝其餘，再分 🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🔴 拉回中／⚫ 資料缺（這兩組依上修排序），衛星席已取消。</div>
+<div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。</div>
 <div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排③等待池裡 🟡 組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。</div>
 <div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤只是顯示，不影響席位與排序。有護城河評級時併入本欄 hover。</div>
 <div class="bw-note-line"><b>備註欄</b>：以下都只是顯示，不進資格與排序。⚠ 頂點＝ROIC 高於五年平均 1.3 倍；基期＝三年 CAGR 因 FY1→FY2 低基期跳增，改用 FY2→FY3 成長率；循環守門＝循環股（毛利率跨距大或資本支出佔營收高）且 PEG 低到可疑；循環＝循環股但未觸發守門；財報前＝距下次財報 ≤7 天；內部人買／內部人賣＝近 3 個月內部人淨買賣方向；新席／現任／遞補＝本期席位異動狀態。</div>
@@ -1638,6 +1650,28 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
              '依時機燈分組（🟡接近新高／🔴拉回中／⚫資料缺），組內依上修排序。</div>'
            + waiting_tbl)
 
+
+
+def too_expensive_rows(rows: list) -> list:
+    """v5.1（2026-09-18 持有人）：「③b 太貴不入池」的名單——其他資格全過（grp.pass_ex_valuation）
+    但估值閘紅燈（grp.pass 為 False）的列，依池排序鍵（上修降冪）排。給持有者看：名字在這裡
+    ＝不要加碼，不是賣出訊號；出場只看衰退 ⛔／體質拒絕／DD 迴避／跌破 200 日線。"""
+    def _key(r: dict):
+        g = r.get("grp") or {}
+        ey = ((g.get("own") or {}).get("raw") or {}).get("ey")
+        return pool_sort_key(g.get("rev_used_pct"), r.get("implied_growth_pct"), ey)
+    return sorted((r for r in rows
+                   if (r.get("grp") or {}).get("pass_ex_valuation") and not (r.get("grp") or {}).get("pass")),
+                  key=_key)
+
+
+def _too_expensive_section_html(rows_list: list, lamp_map: dict) -> str:
+    """『③b 太貴不入池』區塊（見 too_expensive_rows()）。"""
+    return (f'<h3 class="bw-sec">③b 太貴不入池（{len(rows_list)} 檔）</h3>'
+            '<div class="bw-sub">其他資格全過，只有估值閘紅燈。給持有者看：名字在這裡代表不加碼，'
+            '不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。依上修排序。</div>'
+            + (_pool_table_html(rows_list, lamp_map) if rows_list
+               else '<div class="bw-note-line">目前沒有名字只差估值。</div>'))
 
 def _collapsed_section_html(not_in_pool_rows: list, lamp_map: dict) -> str:
     """v5『④ 品質過閘、上修未達 5%』收合區塊——資格全過但財報後上修未達 +5%，不進池，
@@ -1698,6 +1732,7 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     pool_section = _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_map,
                                       lamp_as_of, last_rotation_date)
     collapsed_section = _collapsed_section_html(not_in_pool_rows, lamp_map)
+    too_expensive_section = _too_expensive_section_html(too_expensive_rows(rows), lamp_map)
 
     # ── DD 進場 vs 機械資格 ──
     ok_n = sum(1 for r in entered if r["grp"]["pass"])
@@ -1762,7 +1797,7 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     rule_line = ("同一套三關一燈。先過資格：市值 200 億以上、品質閘、三年成長、站上 52 週線、"
                  "耐久一致性。再依財報後上修排序，上修 ≥5% 入池。最後由時機燈決定倉位。"
                  "體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 >10%、財報後上修低於 −5%、"
-                 "估值閘紅燈（PEG >2.0 或 PE 相對五年均倍數 >1.5x，兩者皆缺不算否決）都整體排除。"
+                 "估值閘紅燈（PEG >2.0 或 PE 相對五年均倍數 >1.75x，兩者皆缺不算否決）都整體排除。"
                  "核心＝池前 5，每月換一次；其餘為等待池。不設產業上限；內部人買賣只是備註。"
                  "細節見上方「怎麼讀這張表」。")
     timing_note = ("過熱（12-1 月動能 >150%）與頂點不擋資格，只影響時機燈（🟠 半倉）或純顯示。"
@@ -1774,6 +1809,7 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
         + f'<div class="bw-rule">{escape(rule_line)}</div>'
         + f'<div class="bw-rule">{escape(timing_note)}</div>'
         + pool_section
+        + too_expensive_section
         + collapsed_section
         + own_section
         + '<h3 class="bw-sec">DD 進場 vs 機械資格</h3>'

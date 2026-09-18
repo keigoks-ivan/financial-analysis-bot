@@ -163,11 +163,11 @@ def test_valuation_gate_red_by_peg():
 
 
 def test_valuation_gate_red_by_multiple():
-    g = grp.valuation_gate({"pe_vs_5y_x": 1.8})
+    g = grp.valuation_gate({"pe_vs_5y_x": 1.9})
     assert g["light"] == "🔴"
     assert g["red_by"] == ["pe_vs_5y"]
-    assert g["pe_vs_5y_x"] == 1.8
-    assert g["why"] == "估值閘紅燈（PE 相對五年均倍數 1.8x > 1.5x）"
+    assert g["pe_vs_5y_x"] == 1.9
+    assert g["why"] == "估值閘紅燈（PE 相對五年均倍數 1.90x > 1.75x）"
 
 
 def test_valuation_gate_both_missing_is_gray_not_a_veto():

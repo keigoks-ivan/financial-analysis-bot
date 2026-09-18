@@ -1,4 +1,4 @@
-# Koyfin largecap watchlist 建置紀錄（2026-09-18，待建）
+# Koyfin largecap watchlist 建置紀錄（2026-09-18，已建）
 
 給 `refresh-eps-screener-web` skill 未來收編用的操作紀錄。本次是主 dd-screener
 母體（`UNIVERSE_MODE == "dd"`）的**第三個 ticker 來源**，不是像 `dd_smallcap`
@@ -7,12 +7,9 @@
 加 27 檔 QGM，「DD 選配」名存實亡。這批 Koyfin 大市值名字補進來，讓沒 DD、也不在
 QGM 品質池的大型股能進 v5 席位引擎候選池。
 
-狀態是待建。本檔只是操作藍圖，Koyfin 篩選器 `dd_largecap_v5`、watchlist
-`dd_largecap`、對應 xlsx `data/eps-estimates/DD_largecap_EPS_estimates_
-YYYYMMDD.xlsx` 目前都還不存在。程式端（`scripts/build_dd_screener.py` 的
-Step 1-2d、Step 0d excel merge，`scripts/engine/build_arena.py` main() 母體
-過濾）已於 2026-09-18 接好：xlsx 缺檔時兩處都只印一行「NOT FOUND」，其餘照舊
-行為跑完，不會壞現有 build。抓資料、建 watchlist、產出 xlsx 是下一步。
+2026-09-18 已建完。篩選器結果 160 檔，落在 brief 沒給但機械閘要求的 100-700
+區間內，存檔前已回報。以下依序是篩選器、watchlist、抓取、build 四段的實際
+結果；藍圖本身（下面兩節）照原計畫執行，沒有偏離。
 
 ## 篩選器（My Screens → 新建，名稱 `dd_largecap_v5`）
 
@@ -92,6 +89,58 @@ mode），largecap 名字一樣會進母體，兩者是各自獨立的開關。�
 `test_smallcap_universe.py` 同款斷言），所以這批新名字在
 `DD_largecap_EPS_estimates_` 的第二份月度快照（下個月）建立之前，**進不了
 v5 池**，只會停留在候選或衛星層級，不會因為缺上修資料就被誤放行。
+
+## 實際執行結果（2026-09-18）
+
+篩選器 `dd_largecap_v5` 跑出 160 檔，市值前幾名是 NVDA、AAPL、MSFT、META、
+AVGO，市值下緣在 200 億美元附近（門檻線上）。存成 watchlist 先產出 8 欄草稿
+`dd_largecap`（160 檔全數一次存入，未觸發人工上限），再照 `dd_smallcap` 的
+Duplicate Watchlist 流程從 `dd_screener` 複製出 80 欄模板、清空、灌入 160
+檔、砍掉 8 欄草稿、複製版改名成 `dd_largecap`。橫向捲動收表頭文字確認
+`headerCount === 80`；縱向捲動收 Ticker 欄確認恰好 160 檔，兩個數字都跟篩選
+器結果一致。
+
+抓取：注入 skill v2.0 的表頭驅動抓取器，5 段橫向掃描（`[0, 1500, 3000, 4500,
+5858]`，與昨天 smallcap 同寬），背景分頁節流下全程約 25 分鐘。落檔
+`data/eps-estimates/raw/koyfin_largecap_raw_20260918.txt`（此路徑先前沒有
+`raw/` 子目錄，本次新建；smallcap 那次的 raw txt 只存在 scratchpad、沒進
+repo，這次改存進 repo 的 `data/eps-estimates/raw/`，之後同類任務可以延續這
+個位置）。指紋校驗：瀏覽器端與落檔後 Python 重算完全一致——rows=160,
+bytes=66677, djb2=3646933340，零轉抄。
+
+xlsx：`python3 scripts/koyfin_xlsx_from_raw.py` 產出
+`data/eps-estimates/DD_largecap_EPS_estimates_20260918.xlsx`，160 列、56
+欄。抽查 NVDA（ROIC 67.51%、FCF Margin 41.92%）、AAPL（ROIC 66.77%、FCF
+Margin 29.28%）跟畫面上的數字一致。HONA 缺欄最多（24／56 個 None，集中在
+FY-3 歷史欄與 5 年均值），研判是近期新上市或分割後歷史料不足，不是抓取
+錯誤——選填欄缺值本來就 fail-open，不擋這檔的其餘欄位。這是 largecap 母體
+第一次抓取，沒有上一份快照可比對，Step 5 的分割／異常 gate（比對 baseline
+找 |FY1 移動| ≥35%）這次不適用，留給下個月第二份快照時才會生效。
+
+Build：`python3.12 scripts/build_dd_screener.py --include-non-dd` 的 log
+出現 `Step 1-2d largecap universe (xlsx family=DD_largecap_EPS_estimates_):
++60 tickers → total 339`——160 檔裡有 100 檔本來就在 DD 池或 QGM 池（NVDA、
+AAPL 這類名字兩邊都在），只有 60 檔是母體真正新增的。`latest.json` 裡
+`universe_source == "largecap-koyfin"` 的列剛好 60 筆，`dd_status` 全部是
+`"none"`，跟設計文件一致。`python3 scripts/engine/build_arena.py`（唯讀、
+未帶 `--ledger`）跑完：`regime=🛡 防守 警報=7 核心=['STX', 'LRCX', 'CLS',
+'KLAC', 'DELL'] 等待池=13（可買 0）集中度=80%`——核心五席跟這批新名字進來前
+完全一樣，等待池 13 檔裡也沒有任何 largecap-koyfin 來源的名字，符合「新名字
+沒有上修基準、這個月進不了池」的預期。`python3.12 -m pytest
+scripts/tests/test_largecap_universe.py scripts/tests/test_grp_v5.py -q`：
+30 個全過。
+
+**一個操作失誤，據實記錄**：Bulk Actions → Add To Watchlist 的子選單是可捲
+動清單，中途兩次座標點擊落點跟畫面顯示不一致（子選單在同一次互動中重新捲動
+過），誤把這 160 檔加進了兩個跟本次任務無關的既有 watchlist——`RED` 與
+`High Growth Stocks`。這個動作是「加入」不是「取代」，沒有刪掉或覆蓋這兩份
+清單原本的任何檔名；但 Koyfin 沒有「加入時間」這類欄位可查，事後無法可靠地
+分辨哪些是本來就在的、哪些是這次誤加的，所以沒有嘗試回頭清除，怕清錯（誤刪
+使用者原本就有意放進去的名字）。這兩份 watchlist 目前內容已經跟這次
+`dd_largecap_v5` 的 160 檔篩選結果有重疊，需要使用者自己核對、手動清理。
+`dd_screener` 與 `dd_smallcap` 兩份受保護的 watchlist 全程沒有被這次操作
+碰到（每次 Bulk Delete 前都先確認作用分頁標題是複製版，兩次都在刪空前核對
+過 URL／分頁名稱）。
 
 ## 估計新增耗時：每新增 100 檔
 
