@@ -25,8 +25,8 @@ MU 卡住的兩個紅燈，在這個設計下是兩道機械題，第一輪就�
 一個函式，三種題型，後端可換。
 
 ```
-decide(kind, context, question, options) -> {"answer": ..., "confidence": 0.0–1.0, "note": "≤ 40 字"}
-kind ∈ {"noul": 是／否, "choice": 從 options 選一, "score": options 是有序等級}
+decide(kind, context, question, options) -> {"answer": ...｜"confidence": 0.0–1.0｜"note": "≤ 40 字"}
+kind ∈ {"noul": 是／否｜"choice": 從 options 選一｜"score": options 是有序等級}
 ```
 
 後端第一版用 `claude -p`（本機沒有 API key，也沒裝 SDK，管線本來就走 CLI）。
@@ -71,7 +71,7 @@ kind ∈ {"noul": 是／否, "choice": 從 options 選一, "score": options 是�
 
 **D. 缺軸理由站不站得住**（對應 ⑤）
 程式：列 `status` 為 none 或 not_applicable 的軸。
-模型（score）：理由等級 {站得住, 勉強, 站不住}。
+模型（score）：理由等級 {站得住｜勉強｜站不住}。
 程式：站不住且高信心，🔴。
 
 **E. 算式是真算還是估**（對應 ⑥）
@@ -86,12 +86,12 @@ kind ∈ {"noul": 是／否, "choice": 從 options 選一, "score": options 是�
 
 **G. 漂移歸因主因類別**（對應 ⑧，MU 🟡⑧）
 程式：對 `drift_watch` 每一個有變動的欄，取對應的 contradictions 條目。
-模型（choice）：主因 {新證據, 情境方法變更, 價格算術, 程式預設, 無法判定}。
+模型（choice）：主因 {新證據｜情境方法變更｜價格算術｜程式預設｜無法判定}。
 程式：同一欄出現兩種主因，🔴。裁決或核心假設變動被歸到「價格算術」，🔴。
 
 **H. 裁決與一句話方向一致**（對應口徑第 3 種，MU medium 版的錯）
 程式：取 `oneliner` 與 `decision_out.dca_verdict`。
-模型（choice）：oneliner 的方向 {進場, 觀望, 迴避, 看不出}。
+模型（choice）：oneliner 的方向 {進場｜觀望｜迴避｜看不出}。
 程式：與裁決不同且高信心，🔴。
 
 **I. 壓力測試互斥**
