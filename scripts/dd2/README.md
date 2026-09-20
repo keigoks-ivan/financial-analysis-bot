@@ -299,3 +299,5 @@ C 類 0 題（MU 的 `findings_digest` 23 條負向 finding 全部已在 judgmen
 5. 測試檔放在既有慣例的 `scripts/tests/test_dd2_decide.py`（照 `test_dd2_bundle.py`／`test_dd2_spawn.py` 的路子），不是新開 `scripts/dd2/tests/` 目錄——後者在 repo 裡不存在，前者才是現行慣例。
 
 **實測**：`python3 scripts/dd2/decide.py MU_20260917` 真跑一次，數字見上。跑之前先把 `judgment.json`／`scenario.json` 備份（本次結果沒有任何一題信心達 0.95 命中，`apply_decisions` 沒有產生 `overrides`，兩個檔案跑完後與備份逐位元組相同，事後已刪備份）。TSM_20260916／TXN_20260916 只做離線展開（`expand_A/B/C/H` 純程式函式，見 `scripts/tests/test_dd2_decide.py::test_tsm_txn_offline_expand_smoke`），未呼叫模型：TSM 共 11 題（A4／B6／C0／H1），TXN 共 14 題（A4／B9／C0／H1）。
+
+**8k 補記（同日晚，指揮者實測前綴快取）**：把同一份固定前綴（103,014 位元組）改放 system prompt，三題各開一個 `claude -p`（opus、effort low）。`--append-system-prompt-file`：兩次都 cache_read 0、cache_creation 88K／79K、$0.89／$0.79。`--system-prompt-file` 加 `--exclude-dynamic-system-prompt-sections`：三次 cache_read 0／0／47,580，cache_creation 85K／75K／28K，$0.85／$0.75／$0.30。同一份前綴每次 cache_creation 都不同，表示 CLI 送出的前綴每次仍有變動，命中不可靠。結論：靠 CLI 做「一題一通、前綴快取」的成本假設不成立，機械閘維持選配（`--mechanical-gate`），要穩定快取得走直接 API。
