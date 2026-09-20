@@ -34,6 +34,7 @@ from cards import CARDS_DIR  # noqa: E402
 from facts_store import FactsStore  # noqa: E402
 import bundle  # noqa: E402
 import spawn as sp  # noqa: E402
+import decide  # noqa: E402  機械閘（decide.py A/B/C/H 四類，2026-09-20）
 
 STAGES = ["plan", "stage0", "facts", "judged", "gated", "brief", "prose", "finish"]
 
@@ -677,10 +678,42 @@ def do_judged(ctx):
 GATE_PATCH_MAX = 1  # 2026-09-16 持有人拍板：閘紅燈後允許一通 patch map，再閘一次，仍紅就停
 
 
+def _mechanical_extra_section(mid_items):
+    """mid_items（decide.py 信心 0.70–0.95 的題）組成閘 prompt 的提示段，
+    2026-09-20 設計稿 §2：「程式先問過、信心中等的題，請優先審」。沒有 mid_items
+    就不附這段（回 None，`bundle.build_gate` 不加這個 named_part）。"""
+    if not mid_items:
+        return None
+    lines = ["## 程式先問過、信心中等的題，請優先審\n",
+             "以下是機械閘（decide.py）已經問過模型、但信心落在 0.70–0.95 之間、程式"
+             "不敢自己處置的題目，請你複核時優先看這幾條：\n"]
+    for m in mid_items:
+        lines.append("- {0} `{1}` {2}（信心 {3:.2f}）".format(
+            m.get("item"), m.get("judgment_path"), m.get("reason"), float(m.get("confidence") or 0.0)))
+    return "\n".join(lines)
+
+
 def _gate_once(ctx, st, idx):
-    """跑一次閘。回 (ok_spawn, clean_items, reds, yellows)。"""
+    """跑一次閘（機械閘＋opus 閘）。回 (ok_spawn, clean_items, reds, yellows)。
+
+    2026-09-20：每輪 opus 閘之前先跑機械閘（`decide.run_mechanical_gate`，
+    `--mechanical-gate` 才開（2026-09-20 實測每輪 $1.9、前綴快取未命中，預設關））。`mechanical_items`（🔴）排在回傳的
+    `clean_items` 最前面、item 標 `M-A1` 這種，一併寫進 `gate_result.json`／
+    `gate_audit.md`，reds 計數含機械紅燈。`mid_items`（🟡）不進 items 清單，
+    只組成一段提示文字交給 `bundle.build_gate` 的 `extra_section`。
+    `owner_queue.md` 由 `run_mechanical_gate` 自己落檔，不擋這一輪。"""
     agents_dir = ctx.run_dir / "agents"
-    b = bundle.build_gate(ctx.run_dir, cards_dir=CARDS_DIR)
+    mech_items, mid_items = [], []
+    if ctx.args.mechanical_gate:
+        try:
+            mech_payload = decide.run_mechanical_gate(ctx, st)
+            mech_items = mech_payload.get("mechanical_items") or []
+            mid_items = mech_payload.get("mid_items") or []
+            st["agent_usage"].extend(mech_payload.get("usage") or [])
+        except Exception as exc:  # 機械閘本身不該讓整個 gated 段炸掉；記下來、退回純 opus 閘
+            st.setdefault("mechanical_gate_error", []).append(str(exc)[:500])
+        ctx.save()
+    b = bundle.build_gate(ctx.run_dir, cards_dir=CARDS_DIR, extra_section=_mechanical_extra_section(mid_items))
     st.setdefault("bundle_bytes", []).append(b.get("bytes"))
     r = sp.oneshot_stream(b["prompt_path"], ctx.gate_model, agents_dir / "gate_{0}.json".format(idx), ctx.run_dir,
                           budget_cache_read=GATE_BUDGET)
@@ -693,12 +726,13 @@ def _gate_once(ctx, st, idx):
         (ctx.run_dir / "gate_raw_{0}.txt".format(idx)).write_text(r["result_text"], encoding="utf-8")
         st["gate_parse_error"] = "gate 回覆不是 JSON 陣列：{0}".format(err)
         return False, [], [], []
-    clean = []
+    llm_clean = []
     for it in items:
         if not isinstance(it, dict):
             continue
-        clean.append({"item": str(it.get("item", "")), "light": str(it.get("light", "")),
-                      "judgment_path": str(it.get("judgment_path", "")), "reason": str(it.get("reason", ""))})
+        llm_clean.append({"item": str(it.get("item", "")), "light": str(it.get("light", "")),
+                          "judgment_path": str(it.get("judgment_path", "")), "reason": str(it.get("reason", ""))})
+    clean = list(mech_items) + llm_clean
     reds = [x for x in clean if x["light"].startswith("🔴")]
     yellows = [x for x in clean if x["light"].startswith("🟡")]
     _atomic_write_json(ctx.run_dir / "gate_result.json",
@@ -1150,6 +1184,8 @@ def main(argv=None):
     ap.add_argument("--no-push", action="store_true")
     ap.add_argument("--skip-koyfin", action="store_true", help="不等 Koyfin 下載（逾時壓到 15 秒），直接用磁碟逐字稿")
     ap.add_argument("--no-gate-patch", action="store_true", help="閘紅燈後不做 patch map，直接停")
+    ap.add_argument("--mechanical-gate", action="store_true",
+                    help="開啟機械閘（decide.py 的 A/B/C/H 題庫）。2026-09-20 實測每輪 $1.9、前綴快取未命中、無題達 0.95，故預設關，校準完再改預設開")
     ap.add_argument("--force-gate", action="store_true",
                     help="閘紅燈仍往下做 brief／prose 預覽（只在 --dry-run 有效；manifest 記 FAIL，finish 拒絕）")
     ap.add_argument("--reuse-prose", action="store_true",

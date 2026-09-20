@@ -352,7 +352,7 @@ def _gate_tail_section() -> str:
     )
 
 
-def build_gate(run_dir, *, cards_dir) -> dict:
+def build_gate(run_dir, *, cards_dir, extra_section=None) -> dict:
     run_dir = Path(run_dir)
     cards_dir = Path(cards_dir)
     evidence_path = run_dir / "evidence.json"
@@ -376,8 +376,13 @@ def build_gate(run_dir, *, cards_dir) -> dict:
                             if (run_dir / "parts" / "prior.json").exists() else {}) + "\n```"),
         ("judgment_full", "## judgment.json 全文（被審對象，緊湊格式）\n\n"
             + dd_bundle._JSON_NOTE + "\n\n```json\n" + judgment_compact + "\n```"),
-        ("tail", _gate_tail_section()),
     ]
+    # 2026-09-20（機械閘 decide.py）：程式先問過、信心中等的題（mid_items），
+    # 提示閘複核時優先看——內容與段落標題由呼叫端（run.py::_gate_once）組好，
+    # 這裡只是照順序插進 tail 之前，見 README §8k。
+    if extra_section:
+        named_parts.append(("mechanical_hint", extra_section))
+    named_parts.append(("tail", _gate_tail_section()))
     return _assemble(run_dir, "gate", ticker, date, named_parts)
 
 

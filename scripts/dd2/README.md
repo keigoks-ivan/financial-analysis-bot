@@ -252,3 +252,50 @@ dd2 側：閘記 `audit_sha256`／`input_signature`（供 `_gate_audit_is_curren
 - hook：dd2 產物 head 帶 `<meta name="dd-pipeline" content="dd2-v20">`，pre-commit 對它套 70KB floor、不跑未完成的 validate_report_v19（067af26ec）。
 - 發布：`ddreport.py finish TSM 20260916` → commit 6a18ad887（訊息裡的「v17」是舊鏈模板字樣，待改）；pre-push 被 qc 擋一次：archive 進 notes/ 的 judge.md 內 schema 速查的中文 enum 用半形逗號相連。已改 `dd_bundle._schema_cheatsheet` 用「｜」；archived 檔的修正因 amend 時機撞上另一 session 的 commit，最後以 d926bfd62（掛該 session 的 commit 訊息）上遠端，內容只有那一檔。
 - 教訓：多 session 共用工作目錄時不要用 `git commit --amend`；改用新 commit。
+
+### 8k｜2026-09-20：機械閘（decide）第一批
+
+設計稿：`notes/site-internal/dd/_dd_gate_decide_design_20260920.md`（信心門檻 0.95／0.70、第一批只做 A／B／C／H 四類、低信心清單不停 run，2026-09-20 拍板）。
+
+**做了什麼**：新檔 `scripts/dd2/decide.py`——`expand_A`／`expand_B`／`expand_C`／`expand_H` 純程式從 `judgment.json`／`facts.json` 展開題庫，`decide_batch` 用 `claude -p --json-schema` 問模型，`apply_decisions` 依信心分流（≥0.95 機械處置＋🔴、0.70–0.95 進 `mid_items`＋🟡、其餘進 `owner_queue`），`run_mechanical_gate` 串起來落檔。`scripts/dd2/spawn.py::oneshot_stream` 加一段解析 `--json-schema` 的結構化輸出（見下，不動既有文字路徑）。`scripts/dd2/bundle.py::build_gate` 加可選參數 `extra_section`。`scripts/dd2/run.py`：新旗標 `--mechanical-gate`（持有人驗收後改為預設關，理由見下方實測：每輪 $1.9、快取未命中、無題達 0.95），`_gate_once` 每輪先跑機械閘，`mechanical_items` 排在 `clean_items` 最前面一起進 `gate_result.json`／`gate_audit.md`，reds 計數含機械紅燈；`mid_items` 組一段提示文字交 `bundle.build_gate` 的 `extra_section`。`scripts/ddreport.py::_do_finish` 新增一個檢查：`owner_queue.md` 存在且有「- [ ]」未勾項目就印清單、拒絕發布，「- [x]」視為持有人已裁示。
+
+**先講一個推翻設計稿成本假設的實測發現**：`--json-schema` 呼叫的答案不落在文字內容塊，而是走一個叫 `StructuredOutput` 的內建工具，出現在 stream 事件最終 `result` 的 `structured_output` 欄位（`oneshot_stream` 原本只收文字塊，已加一段解析，沒有動既有「有文字就用文字」那條路徑）。但更重要的是快取：`decide_batch` 的固定前綴（judgment／facts 摘要／scenario 三段緊湊 JSON）實測逐位元組相同（MU 三包共同前綴 73,979 字元、102,903 位元組，已用程式比對三份 prompt 檔驗證），三通打給 opus 後 `cache_read` 全部只有 3,580（等於沒命中），`cache_creation` 三通都在 5.5 萬到 6.4 萬 token。**前綴快取沒有跨包生效**——推測原因是 `claude -p` 把整段前綴＋題目當一整條 stdin 字串送出，中間沒有插入快取中斷點，題目（尾段）一變，整段內容的雜湊就不同，快取整段 miss。要真的拿到前綴快取，得在底層用多段 content block 各自標記快取邊界，這超出「不動 `oneshot_stream` 既有行為」的授權範圍，記在待辦。
+
+**實測數字（MU_20260917，opus，effort low）**：
+
+| 包 | 題數 | 花費 | 秒數 | cache_creation | cache_read |
+|---|---|---|---|---|---|
+| decide_A_1 | 4 | $0.70 | 6.5 | 64,283 | 0 |
+| decide_B_1 | 7 | $0.61 | 7.9 | 55,388 | 3,580 |
+| decide_H_1 | 1 | $0.59 | 2.8 | 54,637 | 3,580 |
+| 合計 | 12 | $1.91 | 17.2 | — | — |
+
+C 類 0 題（MU 的 `findings_digest` 23 條負向 finding 全部已在 judgment 全文某處被引用，純比對先篩掉，模型沒被問到）。
+
+**四類答案與信心分布**：12 題信心全落在 0.85–0.95，沒有一題落在「0.95 以上且答案是異常方向」——這一輪機械閘紅燈掛零，11 題全進 `mid_items`，`owner_queue` 空（H1 信心剛好 0.95，但答案「觀望」跟 `decision_out.verdict` 一致，屬乾淨答案，不算命中）。
+
+- A 類（R1–R4 門檻是否已觸發）：四題全答「否」，信心 0.85–0.93。**R4 那題答錯**：模型算出「美光 HBM4 分配估約 20%」，但 R4 自己引用的 `customer_second_source#1` 原文是 SK Hynix 60–70%、Samsung 25–30%、美光拿剩下的（換算下來是 0–15%），真正跑完整輪的 `gate_audit.md`（opus 讀完整 checklist）判定這條門檻已觸發，掛 🔴①。effort=low 沒有推理預算做這個三方拆分減法，算錯了信心卻還有 0.85——正好印證設計稿自己的提醒：「信心值是模型自報的，不是校準過的機率」。
+- B 類（進場路徑是否等約束解除）：7 條路徑，含 $750 的那條（B2）與 rearm 第二腿（B7）都答「否」（違反約束），信心各 0.85，方向跟真正的 `gate_audit.md` ④ 紅燈一致，只是信心不夠格自動處置，轉去 `mid_items` 交 opus 優先審。其餘 5 條（清倉／不追價／已解除路徑）都答「是」，方向合理。
+- C 類：0 題（見上）。
+- H 類：1 題，觀望對觀望，乾淨過。
+
+**發現**：
+1. 快取沒有跨包命中，單檔（MU）機械閘實測花 $1.91，比設計稿估的「整段閘 $1 以內」貴約九成。三檔（MU 12 題、TSM 11 題、TXN 14 題）展開後題數穩定在 11–14 題，C 類三檔都是 0 題。
+2. 0.95／0.70 門檻在這輪實測下「高信心命中」一次都沒發生。不是規則設錯，是 effort=low 只給判斷物／事實／情境三檔簡化前綴時，模型對需要推論的題（尤其 A 類的三方市占拆分）信心報不到 0.95，甚至算錯還敢報 0.85。這一版機械閘目前的實際效果是「幫 opus 排序哪幾題優先看」，還沒有做到設計稿 §0「run 不會停」的自動處置。
+3. 同樣是信心不足，B 類兩題方向都答對，A 類那題方向答錯——B 類是純邏輯拆解（路徑是否等條件解除才進場），A 類要求模型自己做百分比推論，容易錯，兩類的機械可靠度不能一概而論。
+4. TSM／TXN 未真跑：MU 單檔已花 $1.91，若兩檔各再花同一水位，合計遠超持有人設的 $1 門檻，故只做離線展開（TSM 11 題、TXN 14 題），沒有呼叫模型（見下方「實測」小節）。
+
+**待辦**：
+1. 前綴快取要真的生效，`oneshot_stream` 得改成多段 content block 各自標記快取邊界，不能再靠單條 stdin 字串——這需要動 `dd_headless.py` 或改走底層 API，超出本輪授權，留給下一輪。
+2. A 類的百分比推論題可以考慮把拆分算式先由程式算好放進 context（例如把 customer_second_source 的三方份額文字轉成明確的「美光隱含份額區間」數字），不要求模型自己心算減法。
+3. 三檔信心分布已記錄，供下次校準 0.95／0.70 門檻或改用更高 effort 參考；門檻本身是持有人拍板值，這裡不擅自動。
+4. `--mechanical-gate` 與 finish 的 `owner_queue` 檢查已接線，但沒有跑過完整 `do_gated`（依指示不對 MU 跑完整閘）——下一輪校準時應找一個真的會命中 🔴 的案例（例如刻意用高 effort 讓模型對某題信心衝到 0.95 以上），驗證機械紅燈真的會併進 `gate_result.json`／`gate_audit.md`，且 reds 計數含機械紅燈。
+
+**假設**（設計稿沒講清楚的地方，採最保守做法）：
+1. B 類的約束句本身（`exec_line` 拆出來、含「約束」「解除」「才進場」字樣的那一段）不當成一條路徑出題——它是判準本身，不是一條進場動作。
+2. C 類「id 沒出現在 judgment 全文任何地方」採整份 judgment 序列化成緊湊 JSON 字串做子字串比對，不是只挑 `thesis.R`／`moat.threats`／`contradictions`／`triggers`／`evidence_dismissed` 幾個固定路徑逐一核對——三檔真實判斷物都沒有 `moat.threats` 這個路徑（`moat` 相關內容在 `answers.q2_moat` 底下），挑固定路徑會漏抓。
+3. `decide_batch` 的 usage 記錄採可選的 `usage_sink` 參數（呼叫端傳一個 list 進去收），回傳值維持設計稿寫的單一形狀：`list of {id,answer,confidence,note,valid}`。
+4. `run_mechanical_gate(ctx, st)` 不帶輪次參數，補丁輪重跑會覆蓋掉前一輪的 `mechanical_gate.json`／`agents/decide_*.json`，跟 `gate_result.json`／`gate_audit.md` 現有「只留最新一輪」的慣例一致。
+5. 測試檔放在既有慣例的 `scripts/tests/test_dd2_decide.py`（照 `test_dd2_bundle.py`／`test_dd2_spawn.py` 的路子），不是新開 `scripts/dd2/tests/` 目錄——後者在 repo 裡不存在，前者才是現行慣例。
+
+**實測**：`python3 scripts/dd2/decide.py MU_20260917` 真跑一次，數字見上。跑之前先把 `judgment.json`／`scenario.json` 備份（本次結果沒有任何一題信心達 0.95 命中，`apply_decisions` 沒有產生 `overrides`，兩個檔案跑完後與備份逐位元組相同，事後已刪備份）。TSM_20260916／TXN_20260916 只做離線展開（`expand_A/B/C/H` 純程式函式，見 `scripts/tests/test_dd2_decide.py::test_tsm_txn_offline_expand_smoke`），未呼叫模型：TSM 共 11 題（A4／B6／C0／H1），TXN 共 14 題（A4／B9／C0／H1）。

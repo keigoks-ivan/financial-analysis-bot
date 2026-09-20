@@ -570,6 +570,49 @@ def test_finish_dry_run_touches_nothing(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# 2026-09-20：機械閘（decide.py）owner_queue.md 未裁示擋 finish。
+# ---------------------------------------------------------------------------
+
+def test_finish_blocks_when_owner_queue_has_unresolved_items(tmp_path, monkeypatch, capsys):
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, _manifest = _make_run_dir(paths, ticker, date, html_path)
+    (run_dir / "owner_queue.md").write_text(
+        "# owner queue\n\n- [ ] C3 判斷物的內容有沒有實質處理這條？ → 模型答 沒有（信心 0.55）\n",
+        encoding="utf-8")
+
+    git_calls = []
+    monkeypatch.setattr(ddreport, "_git", lambda args, cwd=None: git_calls.append(list(args)))
+    monkeypatch.setattr(ddreport, "_git_ahead_behind", lambda: (0, 0))
+
+    rc = ddreport._do_finish(ticker, date, dry_run=True)
+    assert rc == 1
+    assert git_calls == []
+    err = capsys.readouterr().err
+    assert "owner_queue.md" in err
+    assert "C3" in err
+
+
+def test_finish_allows_when_owner_queue_fully_resolved(tmp_path, monkeypatch):
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, _manifest = _make_run_dir(paths, ticker, date, html_path)
+    (run_dir / "owner_queue.md").write_text(
+        "# owner queue\n\n- [x] C3 判斷物的內容有沒有實質處理這條？ → 模型答 沒有（信心 0.55）\n",
+        encoding="utf-8")
+
+    monkeypatch.setattr(ddreport, "_git", lambda args, cwd=None: None)
+    monkeypatch.setattr(ddreport, "_git_ahead_behind", lambda: (0, 0))
+
+    rc = ddreport._do_finish(ticker, date, dry_run=True)
+    assert rc == 0
+
+
+# ---------------------------------------------------------------------------
 # 2026-09-07：finish 發布前數字一致性硬閘。
 # ---------------------------------------------------------------------------
 

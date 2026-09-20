@@ -248,9 +248,22 @@ def oneshot_stream(prompt_path, model, out_json, cwd, *, thinking_cap=None, budg
     result_ev = result_ev or {}
     usage = result_ev.get("usage") or {}
     mu = result_ev.get("modelUsage") or {}
+    # 2026-09-20（decide.py 實測）：`--json-schema` 呼叫時模型走一個叫
+    # `StructuredOutput` 的內建工具回答，不產生 assistant text 內容塊，上面的
+    # `stitched` 會是空字串；結構化結果落在最終 `result` 事件的
+    # `structured_output`（已解析 dict／list）欄位，`result` 欄位是同一內容
+    # 的 JSON 字串。這裡只在 `stitched` 真的是空、且 `structured_output`
+    # 存在時才補一份等效文字，不改變既有「有 text 就用 text」這條路徑，呼叫端
+    # （run.py 的 judged／gated）原本消費 `result_text` 的邏輯不受影響。
+    structured_output = result_ev.get("structured_output")
+    if not isinstance(structured_output, (dict, list)):
+        structured_output = None
+    result_text = stitched
+    if not result_text and structured_output is not None:
+        result_text = result_ev.get("result") or json.dumps(structured_output, ensure_ascii=False)
     rec = {
-        "ok": proc.returncode == 0 and bool(stitched) and result_ev.get("subtype", "success") == "success",
-        "result_text": stitched, "stitched_parts": n_assist,
+        "ok": proc.returncode == 0 and bool(result_text) and result_ev.get("subtype", "success") == "success",
+        "result_text": result_text, "stitched_parts": n_assist, "structured_output": structured_output,
         "num_turns": result_ev.get("num_turns"),
         "output_tokens": usage.get("output_tokens"),
         "cache_read": usage.get("cache_read_input_tokens"),

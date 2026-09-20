@@ -5332,6 +5332,20 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
         print("[finish-check] 使用存查 fallback：manifest：{0} 不存在，改讀 {1}".format(
             manifest_fallback["run_path"], manifest_fallback["path"]))
 
+    # 2026-09-20（機械閘 decide.py）：owner_queue.md 是機械閘信心不足（< 0.70）
+    # 或答案無效的題目清單，run 不因此停下，但 finish 前必須有人裁示——
+    # 「- [ ]」未勾項目擋發布，「- [x]」視為持有人已裁示、放行。
+    owner_queue_path = run_dir / "owner_queue.md"
+    if owner_queue_path.exists():
+        unresolved = [ln for ln in owner_queue_path.read_text(encoding="utf-8").splitlines()
+                      if ln.strip().startswith("- [ ]")]
+        if unresolved:
+            print("[error] owner_queue.md 有 {0} 項未裁示，拒絕發布：".format(len(unresolved)), file=sys.stderr)
+            for ln in unresolved:
+                print("  {0}".format(ln), file=sys.stderr)
+            print("下一步：逐項裁示後把「- [ ]」改成「- [x]」再重跑 finish。", file=sys.stderr)
+            return 1
+
     # 2026-09-07（P1-2）：任何副作用與 HTML 選擇之前，逐一驗必要 stage 皆
     # PASS——不再只信 brief 一段，SKIPPED 也不算數。
     required_stages, missing_stages = _finish_required_stages(manifest)
