@@ -175,7 +175,7 @@ ALERT_DRIVER_LABELS = {
     "composite_yellow": lambda n: f"{n} 組複合規則成立（黃）",
     "composite_near":   lambda n: f"{n} 組複合規則只差一個條件就成立",
     "kill_breached":    lambda n: f"{n} 條否證指標已越過警戒線",
-    "kill_near":        lambda n: f"{n} 條否證指標快碰到警戒線",
+    "kill_near":        lambda n: f"{n} 條否證指標離警戒線不到兩成",   # near＝距閾值 20% 內
     # escalated 狀態含三種：sev_jump（黃→紅）、composite（併入成立規則）、
     # sustained（黃燈連 5 交易日且仍在峰值 8 成，黃→黃）。2026-09-18 的 9 條全是
     # sustained，寫「升級」會讓讀者以為變嚴重，故用涵蓋三種的說法。
