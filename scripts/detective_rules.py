@@ -553,9 +553,9 @@ RULES = [
     {
         "id": "R1", "name": "股高位×信用背離×廣度走弱", "status": "active",
         "members": [
-            _mon("sp500", "pctile", ">=", 90, "S&P 500 一年分位 ≥90（指數高位）"),
-            _mon("hyg_lqd", "pctile", "<=", 25, "高收益／投資級相對比 分位 ≤25（信用相對走弱）"),
-            _mon("rsp_spy", "pctile", "<=", 25, "等權／市值 S&P 相對比 分位 ≤25（廣度走弱）"),
+            _mon("sp500", "pctile", ">=", 90, "S&P 500 一年分位 ≥90（指數在一年高點附近）"),
+            _mon("hyg_lqd", "pctile", "<=", 25, "高收益／投資級相對比 分位 ≤25（高風險公司債比優質公司債弱）"),
+            _mon("rsp_spy", "pctile", "<=", 25, "等權／市值 S&P 相對比 分位 ≤25（大多數股票沒跟上指數）"),
         ],
         "min_true": 3, "fire_sev": "red", "confirm_days": 2,
         "narrative": ("指數位於一年高位、同時高收益相對投資級走弱且等權相對市值落後，"
@@ -567,9 +567,9 @@ RULES = [
     {
         "id": "R2", "name": "波動結構三件套", "status": "active",
         "members": [
-            _mon("vix_ts", "pctile", ">=", 90, "VIX 期限結構比 一年分位 ≥90"),
-            _mon("skew", "pctile", ">=", 90, "SKEW 偏斜 一年分位 ≥90"),
-            _mon("vvix", "z", ">=", 2, "VVIX 波動的波動 z ≥2"),
+            _mon("vix_ts", "pctile", ">=", 90, "VIX 期限結構比 一年分位 ≥90（近期的恐慌比遠期高）"),
+            _mon("skew", "pctile", ">=", 90, "SKEW 偏斜 一年分位 ≥90（暴跌保險的價格偏貴）"),
+            _mon("vvix", "z", ">=", 2, "VVIX 波動的波動 z ≥2（恐慌指數本身晃得很兇）"),
         ],
         "min_true": 2, "fire_sev": {"yellow": 2, "red": 3}, "confirm_days": 1,
         "narrative": ("VIX 期限結構、偏斜與波動的波動三項分位同處高位，描述選擇權市場"
@@ -580,9 +580,9 @@ RULES = [
     {
         "id": "R3", "name": "流動性三管收縮", "status": "active",
         "members": [
-            _mon("reserves", "z", "<=", -2, "銀行準備金 z ≤−2（準備金收縮）"),
-            _mon("tga", "z", ">=", 2, "財政部一般帳戶 z ≥2（TGA 回補抽水）"),
-            _mon("sofr_iorb", "val", ">", 0, "SOFR 對 IORB 利差 >0（擔保隔夜利率相對準備金利率轉正）"),
+            _mon("reserves", "z", "<=", -2, "銀行準備金 z ≤−2（銀行手上的錢明顯變少）"),
+            _mon("tga", "z", ">=", 2, "財政部一般帳戶（TGA）z ≥2（政府把市場上的錢收回去）"),
+            _mon("sofr_iorb", "val", ">", 0, "SOFR（擔保隔夜利率）對 IORB（準備金利率）利差 >0（短期借錢變貴，資金變緊）"),
         ],
         "min_true": 3, "fire_sev": "yellow", "confirm_days": 1,
         "narrative": ("準備金收縮、財政部一般帳戶回補、SOFR 對 IORB 轉正三者同現，"
@@ -593,9 +593,9 @@ RULES = [
     {
         "id": "R4", "name": "信用內部裂縫", "status": "active",
         "members": [
-            _mon("ccc_oas", "z", ">=", 2, "CCC 利差 z ≥2（低評級端急擴）"),
-            _mon("ig_oas", "z", "<", 1, "投資級利差 |z|<1（投資級按兵不動）", transform="abs"),
-            _mon("hyg_lqd", "pctile", "<=", 20, "高收益／投資級相對比 分位 ≤20"),
+            _mon("ccc_oas", "z", ">=", 2, "CCC 利差 z ≥2（最差等級公司債的借錢成本急升）"),
+            _mon("ig_oas", "z", "<", 1, "投資級利差 |z|<1（優質公司的借錢成本沒什麼變）", transform="abs"),
+            _mon("hyg_lqd", "pctile", "<=", 20, "高收益／投資級相對比 分位 ≤20（高風險公司債比優質公司債弱）"),
         ],
         "min_true": 3, "fire_sev": "red", "confirm_days": 2,
         "narrative": ("CCC 利差急擴、投資級利差按兵不動、高收益相對投資級走弱三者同現，"
@@ -605,11 +605,11 @@ RULES = [
     {
         "id": "R5", "name": "避險同框", "status": "active",
         "members": [
-            _mon("gold", "z", ">=", 1.5, "黃金 z ≥1.5 且走高",
+            _mon("gold", "z", ">=", 1.5, "黃金 z ≥1.5 且走高（黃金明顯上漲）",
                  **{"and": [{"field": "dir", "op": "==", "value": "pos"}]}),
-            _mon("dxy", "z", ">=", 1.5, "美元指數 z ≥1.5 且走高",
+            _mon("dxy", "z", ">=", 1.5, "美元指數 z ≥1.5 且走高（美元明顯走強）",
                  **{"and": [{"field": "dir", "op": "==", "value": "pos"}]}),
-            _mon("real10y", "dir", "==", "neg", "實質 10Y 殖利率走低"),
+            _mon("real10y", "dir", "==", "neg", "實質 10Y 殖利率走低（扣掉通膨後的長期利率下跌）"),
         ],
         "min_true": 3, "fire_sev": "yellow", "confirm_days": 1,
         "narrative": ("黃金與美元同時走強、且實質 10Y 殖利率同日下行，描述跨資產同時"
@@ -621,10 +621,10 @@ RULES = [
         "members": [
             {"type": "signal", "selector": "cot_extreme",
              "params": {"pctile_min": 90},
-             "desc": "COT 投機部位 5 年分位 ≥90 的資產（且有輪動對映）"},
+             "desc": "COT 投機部位 5 年分位 ≥90、且有輪動對映的資產（有資產被投機客押得很滿）"},
             {"type": "signal", "selector": "cot_rotation_weak_join",
              "params": {"pctile_min": 90},
-             "desc": "該擁擠資產於資產輪動 120 日框架象限轉弱（RS-M<100）"},
+             "desc": "該擁擠資產於資產輪動 120 日框架象限轉弱、RS-M<100（押滿的那個資產開始轉弱）"},
         ],
         "min_true": 2, "fire_sev": "yellow", "confirm_days": 1,
         "narrative": ("投機部位五年分位極端擁擠的資產、其於資產輪動框架同時轉弱，"
@@ -634,12 +634,12 @@ RULES = [
     {
         "id": "R7", "name": "窄領導", "status": "active",
         "members": [
-            _mon("sp500", "pctile", ">=", 90, "S&P 500 一年分位 ≥90（指數高位）"),
+            _mon("sp500", "pctile", ">=", 90, "S&P 500 一年分位 ≥90（指數在一年高點附近）"),
             {"type": "subgroup", "min": 2, "conds": [
-                _mon("iwm_spy", "pctile", "<=", 20, "小型／大盤相對比 分位 ≤20"),
-                _mon("kre_xlf", "pctile", "<=", 20, "區域銀行／金融相對比 分位 ≤20"),
-                _mon("djt_dji", "pctile", "<=", 20, "運輸／道瓊相對比 分位 ≤20"),
-            ], "desc": "小型股／區域銀行／運輸相對比 三取二 分位 ≤20"},
+                _mon("iwm_spy", "pctile", "<=", 20, "小型／大盤相對比 分位 ≤20（小型股落後大盤）"),
+                _mon("kre_xlf", "pctile", "<=", 20, "區域銀行／金融相對比 分位 ≤20（區域銀行落後整體金融股）"),
+                _mon("djt_dji", "pctile", "<=", 20, "運輸／道瓊相對比 分位 ≤20（運輸股落後道瓊）"),
+            ], "desc": "小型股／區域銀行／運輸相對比 三取二 分位 ≤20（小型股、區域銀行、運輸股多數落後大盤）"},
         ],
         "min_true": 2, "fire_sev": "yellow", "confirm_days": 2,
         "narrative": ("指數位於一年高位、同時小型股／區域銀行／運輸相對大盤多數走弱，"
@@ -652,9 +652,9 @@ RULES = [
         "members": [
             {"type": "series", "src": "macro_clock", "key": "quadrant",
              "field": "quadrant", "op": "in", "value": ["過熱", "滯脹"],
-             "desc": "總經時鐘象限 ∈｛過熱、滯脹｝"},
-            _mon("copper_gold", "pctile", "<=", 30, "銅金比 一年分位 ≤30（走弱）"),
-            _mon("bei5y", "z", ">=", 1.5, "五年通膨預期 z ≥1.5（偏高）"),
+             "desc": "總經時鐘象限 ∈｛過熱、滯脹｝（景氣處在過熱或滯脹階段）"},
+            _mon("copper_gold", "pctile", "<=", 30, "銅金比 一年分位 ≤30（銅價相對黃金偏弱）"),
+            _mon("bei5y", "z", ">=", 1.5, "五年通膨預期 z ≥1.5（市場預期的通膨偏高）"),
         ],
         "min_true": 3, "fire_sev": "yellow", "confirm_days": 1,
         "narrative": ("總經時鐘位於過熱或滯脹象限、銅金比走弱且五年通膨預期偏高三者同現，"
@@ -664,9 +664,9 @@ RULES = [
     {
         "id": "R9", "name": "自滿組合", "status": "active",
         "members": [
-            _intl("pc_equity", "pctile", "<=", 5, "股票 put／call 比 一年分位 ≤5（極度自滿）"),
-            _mon("skew", "pctile", ">=", 90, "SKEW 偏斜 一年分位 ≥90"),
-            _mon("vix", "pctile", "<=", 10, "VIX 一年分位 ≤10（波動極低）"),
+            _intl("pc_equity", "pctile", "<=", 5, "股票 put／call 比 一年分位 ≤5（買下跌保護的人很少）"),
+            _mon("skew", "pctile", ">=", 90, "SKEW 偏斜 一年分位 ≥90（暴跌保險的價格偏貴）"),
+            _mon("vix", "pctile", "<=", 10, "VIX 一年分位 ≤10（恐慌指數很低）"),
         ],
         "min_true": 3, "fire_sev": "yellow", "confirm_days": 1,
         "narrative": ("股票 put／call 比處一年極低分位、SKEW 偏斜偏高、VIX 一年分位極低"

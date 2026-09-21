@@ -166,16 +166,21 @@ ALERT_BANDS = [               # (上界 exclusive, band, 中文標籤)；calm 0-
     (60.0, "warming", "升溫"), (80.0, "tense", "緊張"),
     (float("inf"), "alert", "警戒"),
 ]
+# 2026-09-21 白話化：這些字串直接進頁面威脅指針與 email 一分鐘版，讀者不懂
+# 「封頂計分」「差 1 個成員」「閾值」這類計分內部用語。只改顯示字，計分不變。
 ALERT_DRIVER_LABELS = {
-    "red_signal":       lambda n: f"{n} 條紅燈訊號",
-    "yellow_signal":    lambda n: f"{n} 條黃燈訊號（封頂計分）",
-    "composite_red":    lambda n: f"{n} 項複合規則觸發（紅）",
-    "composite_yellow": lambda n: f"{n} 項複合規則觸發（黃）",
-    "composite_near":   lambda n: f"{n} 項複合規則距觸發差 1 個成員",
-    "kill_breached":    lambda n: f"{n} 條否證指標越線",
-    "kill_near":        lambda n: f"{n} 條否證指標接近閾值",
-    "escalated":        lambda n: f"{n} 條訊號今日升級",
-    "sustained":        lambda n: f"{n} 條紅燈持續 ≥{ALERT_SUSTAINED_DAYS} 日",
+    "red_signal":       lambda n: f"{n} 條訊號亮紅燈",
+    "yellow_signal":    lambda n: f"{n} 條訊號亮黃燈",
+    "composite_red":    lambda n: f"{n} 組複合規則成立（紅）",
+    "composite_yellow": lambda n: f"{n} 組複合規則成立（黃）",
+    "composite_near":   lambda n: f"{n} 組複合規則只差一個條件就成立",
+    "kill_breached":    lambda n: f"{n} 條否證指標已越過警戒線",
+    "kill_near":        lambda n: f"{n} 條否證指標快碰到警戒線",
+    # escalated 狀態含三種：sev_jump（黃→紅）、composite（併入成立規則）、
+    # sustained（黃燈連 5 交易日且仍在峰值 8 成，黃→黃）。2026-09-18 的 9 條全是
+    # sustained，寫「升級」會讓讀者以為變嚴重，故用涵蓋三種的說法。
+    "escalated":        lambda n: f"{n} 條訊號今天確認還在持續或加重",
+    "sustained":        lambda n: f"{n} 條紅燈已亮 {ALERT_SUSTAINED_DAYS} 天以上",
 }
 
 
