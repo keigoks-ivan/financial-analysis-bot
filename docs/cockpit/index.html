@@ -92,6 +92,7 @@ section.block{padding:1.1rem 0}
 .roster-table tr:last-child td{border-bottom:0}
 .roster-seat{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);white-space:nowrap}
 .roster-tk{font-weight:700}
+.roster-tk .dash-lnk{font-weight:400;font-size:.7rem;color:var(--muted)}
 .roster-note{font-size:.74rem;color:var(--muted);margin-top:.55rem;line-height:1.7}
 .v-in{color:var(--green)}.v-watch{color:var(--amber)}.v-avoid{color:var(--red)}
 .roster-table td.num,.roster-table th.num{text-align:right;font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
@@ -597,8 +598,12 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     }
     // 現行裁決（日更 dd-screener）：顯示層即時；席位歸屬仍歸週更 engine
     var liveV = {};
+    // 個股儀表板只涵蓋 dd-screener 名單內的股票（/stock-dash/ 逐檔 build），
+    // 用同一份 S.dd 判斷該 ticker 有沒有頁面可連，避免連到不存在的資料。
+    var dashOk = {};
     if(S.dd && Array.isArray(S.dd.stocks)){
       S.dd.stocks.forEach(function(x){ if(x&&x.ticker&&x.dca_verdict) liveV[x.ticker]=x.dca_verdict; });
+      S.dd.stocks.forEach(function(x){ if(x&&x.ticker) dashOk[x.ticker]=true; });
     }
     // 換席史（arena-ledger 週更）：取最新一期 snapshot，標出本期新換入的席位；fetch 失敗或格式不符靜默降級
     var newSeat = {core:{}, sat:{}};
@@ -635,6 +640,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       var tkHtml = s.dd_path
         ? ('<a href="'+esc(s.dd_path)+'#decision"'+tkTitle+'>'+tkTxt+'</a>')
         : ('<span'+tkTitle+'>'+tkTxt+'</span>');
+      if(dashOk[s.ticker]) tkHtml += ' <a class="dash-lnk" href="/stock-dash/?t='+esc(s.ticker)+'">儀表板</a>';
       var scoreCell = '<td class="num" title="'+esc(ownTooltip(grp,scoreVal))+'">'+((scoreVal==null||isNaN(scoreVal))?'—':fmt(scoreVal,1))+'</td>';
       return '<tr><td class="roster-seat">'+esc(seatLabel)+'</td>'+
         '<td class="roster-tk">'+tkHtml+'</td>'+

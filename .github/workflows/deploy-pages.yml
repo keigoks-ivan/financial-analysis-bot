@@ -61,6 +61,7 @@ on:
       - "Update W52 × Adaptive Vol-Target Signal (US+TW)"
       - "Daily Market Monitor"                         # dispatch-only：手動刷新時仍部署
       - "Daily Asset Rotation Radar (RRG)"             # dispatch-only：手動刷新時仍部署
+      - "Stock Dashboard Daily Data"                   # 2026-09-22：個股儀表板每日資料（不進 git，靠 artifact），跑完即重部署
     types: [completed]
   schedule:
     - cron: "0 */6 * * *"
@@ -70,6 +71,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read   # gh run list / gh run download（下載 Stock Dashboard Daily Data 最新 artifact，見下方 fail-safe 步驟）
 
 concurrency:
   group: pages-deploy
@@ -90,6 +92,31 @@ jobs:
           # checkout ref is the triggering run's START sha (i.e. BEFORE the cron's
           # data commit), which would deploy stale docs — pin main explicitly.
           ref: main
+
+      # 2026-09-22：個股儀表板逐檔資料（docs/stock-dash/data/，~61MB）刻意不進 git
+      # （見 .gitignore），改由 stock-dash-daily.yml 每日建置後上傳成 artifact，
+      # 這裡在組 Pages artifact 前下載進 docs/stock-dash/data/。Fail-safe：找不到
+      # 上一次成功 run、或下載失敗，都只是 warning，其餘部署照常進行——這一步絕不
+      # 能卡住全站部署（continue-on-error + 腳本自身也一律 exit 0）。
+      - name: Download latest stock-dash data (fail-safe, never blocks deploy)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          mkdir -p docs/stock-dash/data
+          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow stock-dash-daily.yml \
+            --status success --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null)
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+            echo "No successful Stock Dashboard Daily Data run found yet — deploying without stock-dash data."
+            exit 0
+          fi
+          if gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" -n stock-dash-data -D docs/stock-dash/data; then
+            echo "Downloaded stock-dash data from run $RUN_ID"
+          else
+            echo "::warning::Failed to download stock-dash-data artifact (run $RUN_ID) — deploying without it."
+          fi
+          exit 0
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3

@@ -1,0 +1,81 @@
+name: Stock Dashboard Daily Data
+
+# ─────────────────────────────────────────────────────────────────────────
+# 個股儀表板（docs/stock-dash/）每日資料管線。
+#
+# 每檔 docs/stock-dash/data/{T}.json（含判斷層版本 state/{T}.json）由
+# scripts/build_stock_dash_all.py 批次建置，母體讀 docs/dd-screener/latest.json
+# 的 stocks[]（339 檔，今日由既有 dd-screener CI 每日更新）。資料量（~61MB）
+# 刻意不進 git（見 .gitignore docs/stock-dash/data/**）——本 workflow 只把整個
+# docs/stock-dash/data/ 上傳成短保留期 artifact，交給 deploy-pages.yml 在部署前
+# 下載進站（該步驟 fail-safe，找不到/下載失敗都不擋其餘部署，見該檔）。
+#
+# 判斷層版本 state（docs/stock-dash/data/state/{T}.json）必須跨日存活，否則
+# 每次重跑都會被當成該檔第一個版本——本 workflow 在建置前先把上一次成功跑的
+# 整個 data/（含 state/）從本 workflow 自己最近一次成功 run 的 artifact 下載
+# 回來（gh run download，fail-safe：找不到就從冷啟動開始，只有第一次跑或
+# artifact 剛好過了 7 天保留期才會發生），建置完再整包重新上傳，形成鏈狀接續。
+#
+# 排程：接在 daily-taipei-morning.yml（Tue-Sat 01:00 UTC，timeout 90 分鐘，
+# 內含 docs/dd-screener/latest.json 的每日刷新）之後——03:00 UTC 起跑，
+# 即使該帶跑到接近自己的 90 分鐘上限也還有約 2 小時餘裕。
+# ─────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: "0 3 * * 2-6"  # Tue-Sat 03:00 UTC = Tue-Sat 11:00 Taipei
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read   # gh run list / gh run download（讀本工作流程上一次成功 run 的 artifact）
+
+concurrency:
+  group: stock-dash-daily
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy requests lxml
+
+      - name: Restore previous run's data/ (including judgment-layer state/), fail-safe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          mkdir -p docs/stock-dash/data
+          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow stock-dash-daily.yml \
+            --status success --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null)
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+            echo "No previous successful run found — starting cold (first run, or artifact past its 7-day retention)."
+            exit 0
+          fi
+          if gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" -n stock-dash-data -D docs/stock-dash/data; then
+            echo "Restored previous run's data/ from run $RUN_ID"
+          else
+            echo "::warning::Failed to download previous run's artifact (run $RUN_ID) — starting cold."
+          fi
+          exit 0
+
+      - name: Build all tickers
+        run: python3 scripts/build_stock_dash_all.py --workers 6 --timeout 240
+
+      - name: Upload data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-dash-data
+          path: docs/stock-dash/data
+          retention-days: 7
+          if-no-files-found: error

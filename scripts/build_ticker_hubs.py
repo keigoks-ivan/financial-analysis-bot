@@ -397,7 +397,13 @@ def render_snapshot(stock, as_of):
         f'<div class="val">{esc(v)}</div></div>'
         for l, v in cells
     )
-    asof = f'<div class="asof">Screener 快照 as-of {esc(as_of)}（估值欄隨週更管線刷新）。</div>' if as_of else ""
+    asof_bits = []
+    if as_of:
+        asof_bits.append(f'Screener 快照 as-of {esc(as_of)}（估值欄隨週更管線刷新）。')
+    ticker = stock.get("ticker") or ""
+    if ticker:
+        asof_bits.append(f'<a href="/stock-dash/?t={esc(ticker)}">個股儀表板</a>')
+    asof = f'<div class="asof">{" · ".join(asof_bits)}</div>' if asof_bits else ""
     return f'<div class="snap">{inner}</div>\n{asof}'
 
 

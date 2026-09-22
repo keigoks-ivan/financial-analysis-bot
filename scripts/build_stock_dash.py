@@ -22,8 +22,10 @@ Data sources:
 """
 import argparse
 import json
+import os
 import re
 import sys
+import tempfile
 import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -41,6 +43,22 @@ MARKET_DATA_DIR = ROOT / "docs" / "market" / "data"      # read-only source (own
 MARKET_CONTEXT_PATH = OUT_DIR / "_market.json"           # shared summary this script writes, one per day
 SCREENER_LATEST_PATH = ROOT / "docs" / "screener" / "latest.json"  # read-only source (RS+VCP screener universe)
 UNIVERSE_DIST_PATH = OUT_DIR / "_universe_dist.json"     # shared percentile-cut file this script writes
+
+# Disk cache dirs for data that is identical across every ticker built on the same
+# calendar day (a batch run building all 339 dd-screener tickers would otherwise
+# redownload these once *per ticker*). Both are outside docs/ so they never get
+# swept into a git commit or the Pages artifact. FINRA caching is always on: each
+# daily short-volume file is content-addressed by its own date, so a cached copy
+# is never stale. SPY caching only activates when STOCK_DASH_HIST_CACHE_DIR is set
+# (batch builder sets it) — unset by default so a plain single-ticker CLI run
+# behaves exactly as before (always fetches fresh).
+FINRA_CACHE_DIR = Path(os.environ.get("STOCK_DASH_FINRA_CACHE_DIR")
+                        or (Path(tempfile.gettempdir()) / "stock_dash_finra_cache"))
+HIST_CACHE_DIR = Path(os.environ["STOCK_DASH_HIST_CACHE_DIR"]) if os.environ.get("STOCK_DASH_HIST_CACHE_DIR") else None
+# Small committed fallback for _sue_breaks.json when PEAD_EVENTS_CSV (owner's Mac
+# only, see below) isn't reachable and no previously-built copy exists yet either
+# (e.g. a CI runner's very first run before any artifact/cache carries one forward).
+SUE_BREAKS_REFERENCE_PATH = ROOT / "scripts" / "stock_dash_ref" / "sue_breaks_reference.json"
 
 DISPLAY_DAYS = 252          # ~1 trading year shown on the chart
 VOL_PROFILE_LOOKBACK = 120  # trading days for the volume-at-price histogram
@@ -75,6 +93,35 @@ def fetch_history(ticker, period="2y"):
     # Yahoo 收盤後一段時間，當天那根日 K 可能還沒收完（Close 是 NaN），先丟掉，
     # 否則報酬、均線、百分位全部變 NaN。
     df = df[df["Close"].notna()]
+    return df
+
+
+def fetch_history_cached(ticker, period="2y"):
+    """Same as fetch_history but, when STOCK_DASH_HIST_CACHE_DIR is set (a batch
+    run building many tickers in one day — see build_stock_dash_all.py), reuses
+    one on-disk snapshot per (ticker, period, day) instead of every ticker's
+    build re-downloading identical history over the network (used here only for
+    SPY, which every single-ticker build fetches independently even though it's
+    the same series for all of them). Unset (the default for a plain
+    `python3 scripts/build_stock_dash.py TICKER` run), this is byte-identical to
+    calling fetch_history directly — always a fresh fetch."""
+    if HIST_CACHE_DIR is None:
+        return fetch_history(ticker, period)
+    today_str = datetime.now(timezone.utc).strftime("%Y%m%d")
+    cache_path = HIST_CACHE_DIR / f"hist_{ticker}_{period}_{today_str}.pkl"
+    if cache_path.exists():
+        try:
+            return pd.read_pickle(cache_path)
+        except Exception:  # noqa: BLE001
+            pass  # fall through to a fresh fetch
+    df = fetch_history(ticker, period)
+    try:
+        HIST_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        tmp = cache_path.with_suffix(cache_path.suffix + f".tmp{os.getpid()}")
+        df.to_pickle(tmp)
+        os.replace(tmp, cache_path)
+    except OSError:
+        pass  # caching is best-effort only; never fail the build over it
     return df
 
 
@@ -418,14 +465,42 @@ def compute_relative_strength(df, spy_df):
 
 
 # ─────────────────────────────────────────────────────────── FINRA short ───
-def _finra_fetch_one(session, date_str, ticker):
+def _finra_daily_text(session, date_str):
+    """Fetch (or serve from FINRA_CACHE_DIR) one day's full Reg SHO file — the
+    same file every ticker built that day would otherwise redownload from
+    scratch just to grep out its own symbol. Content is immutable per date_str,
+    so the on-disk cache never needs invalidation. Write is atomic (tmp file +
+    os.replace) so concurrent ticker builds racing on a cold cache can't hand
+    each other a half-written file; a failed/partial download simply isn't
+    cached and falls through to a normal per-call fetch next time."""
+    cache_path = FINRA_CACHE_DIR / f"CNMSshvol{date_str}.txt"
+    if cache_path.exists():
+        try:
+            return cache_path.read_text(encoding="utf-8", errors="replace"), None
+        except OSError:
+            pass  # fall through to a fresh download
     url = f"https://cdn.finra.org/equity/regsho/daily/CNMSshvol{date_str}.txt"
+    r = session.get(url, timeout=10)
+    if r.status_code != 200:
+        return None, f"http {r.status_code}"
+    text = r.text
     try:
-        r = session.get(url, timeout=10)
-        if r.status_code != 200:
-            return date_str, None, f"http {r.status_code}"
+        FINRA_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        tmp = cache_path.with_suffix(cache_path.suffix + f".tmp{os.getpid()}")
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, cache_path)
+    except OSError:
+        pass  # caching is best-effort only; never fail the build over it
+    return text, None
+
+
+def _finra_fetch_one(session, date_str, ticker):
+    try:
+        text, err = _finra_daily_text(session, date_str)
+        if text is None:
+            return date_str, None, err
         prefix = f"{date_str}|{ticker}|"
-        for line in r.text.splitlines():
+        for line in text.splitlines():
             if line.startswith(prefix):
                 f = line.split("|")
                 short_vol = float(f[2])
@@ -1558,7 +1633,16 @@ def ensure_market_context():
         return
     ctx = build_market_context()
     MARKET_CONTEXT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    MARKET_CONTEXT_PATH.write_text(json.dumps(ctx, ensure_ascii=False, indent=1), encoding="utf-8")
+    # Atomic write (tmp + os.replace): this function is called by every single
+    # ticker's build and, unlike the other shared files, always rewrites (see
+    # docstring above) — a batch run now builds many tickers in parallel
+    # (build_stock_dash_all.py), so several processes can call this at the same
+    # moment. A plain write_text() from N processes could interleave and hand a
+    # concurrent reader/writer a half-written file; os.replace() is atomic on
+    # both POSIX and Windows, so every reader always sees a complete JSON body.
+    tmp_path = MARKET_CONTEXT_PATH.with_suffix(MARKET_CONTEXT_PATH.suffix + f".tmp{os.getpid()}")
+    tmp_path.write_text(json.dumps(ctx, ensure_ascii=False, indent=1), encoding="utf-8")
+    os.replace(tmp_path, MARKET_CONTEXT_PATH)
 
 
 def compute_market_beta(ticker, df, spy_df, window=252):
@@ -2185,6 +2269,26 @@ def compute_sue(ed, err):
 
 def build_sue_breaks():
     if not PEAD_EVENTS_CSV.exists():
+        # PEAD_EVENTS_CSV only exists on the owner's Mac (v7-backtest is a sibling
+        # repo, not checked out in CI). A committed small reference snapshot
+        # (percentile cuts only, no raw event rows) keeps the SUE 分組對照 feature
+        # working on a CI runner that has never had access to the real file —
+        # ensure_sue_breaks() below prefers a previously-built _sue_breaks.json
+        # over this when one is available (e.g. restored from the prior daily
+        # run's artifact), so this reference is only a cold-start fallback.
+        if SUE_BREAKS_REFERENCE_PATH.exists():
+            try:
+                ref = json.loads(SUE_BREAKS_REFERENCE_PATH.read_text(encoding="utf-8"))
+                if ref.get("status") != "no_data":
+                    ref = dict(ref)
+                    ref["is_reference_fallback"] = True
+                    ref["reference_reason"] = (
+                        f"找不到 {PEAD_EVENTS_CSV}（v7-backtest 回測結果檔案，repo 外部，CI 環境沒有此檔），"
+                        f"改用 commit 內 {SUE_BREAKS_REFERENCE_PATH.relative_to(ROOT)} 的參考切點快照。"
+                    )
+                    return ref
+            except Exception:  # noqa: BLE001
+                pass  # fall through to the normal no_data path below
         return {"status": "no_data", "reason": f"找不到 {PEAD_EVENTS_CSV}（v7-backtest 回測結果檔案，repo 外部）"}
     try:
         df = pd.read_csv(PEAD_EVENTS_CSV, usecols=["ticker", "filed", "sue"])
@@ -3358,7 +3462,7 @@ def apply_versioning(ticker, out, state_dir=None, force=False, dry_run=False):
 def build(ticker, refresh_universe=False, state_dir=None, force_version=False, dry_run=False):
     t = yf.Ticker(ticker)
     df_full = compute_indicators(fetch_history(ticker, "2y"))
-    spy_full = compute_indicators(fetch_history("SPY", "2y"))
+    spy_full = compute_indicators(fetch_history_cached("SPY", "2y"))
 
     as_of = df_full.index[-1].date()
     last = df_full.iloc[-1]
