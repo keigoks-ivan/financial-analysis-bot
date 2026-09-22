@@ -1,0 +1,340 @@
+// ══════════════════════════════════════════════════════════════════════════
+// 共用圖表建構函式（Chart.js 折線／長條／散佈 + lightweight-charts K線）
+// 只用表格、折線、長條、散佈、K 線；不用甜甜圈／半圓儀表／雷達／熱區／扇形。
+// ══════════════════════════════════════════════════════════════════════════
+function buildKLine(container, vm, opts){
+  opts = opts || {};
+  var ph = vm.D.price_history.slice(opts.tail ? -opts.tail : -252);
+  var LWC = window.LightweightCharts;
+  var base = {
+    layout:{background:{type:'solid',color:'transparent'},textColor:COL.sec,fontFamily:"'IBM Plex Mono',monospace",fontSize:10},
+    grid:{vertLines:{color:COL.line},horzLines:{color:COL.line}},
+    rightPriceScale:{borderColor:COL.line,minimumWidth:56},
+    timeScale:{borderColor:COL.line, visible: !opts.mini}
+  };
+  var chart = LWC.createChart(container, Object.assign({}, base, {width:container.clientWidth, height:container.clientHeight}));
+  var series = chart.addCandlestickSeries({
+    upColor:'transparent', downColor:COL.neg, borderUpColor:COL.pos, borderDownColor:COL.neg,
+    wickUpColor:COL.pos, wickDownColor:COL.neg
+  });
+  series.setData(ph.map(function(p){ return {time:p.date, open:p.open, high:p.high, low:p.low, close:p.close}; }));
+  if(!opts.mini){
+    var ma50 = chart.addLineSeries({color:COL.blue, lineWidth:1});
+    ma50.setData(ph.filter(function(p){return p.ma50!=null;}).map(function(p){return {time:p.date, value:p.ma50};}));
+  }
+  chart.timeScale().fitContent();
+  window.addEventListener('resize', function(){ chart.applyOptions({width:container.clientWidth, height:container.clientHeight}); });
+  return chart;
+}
+
+function buildSparkline(canvas, vm, days){
+  var ph = vm.D.price_history.slice(-(days||60));
+  new Chart(canvas, {
+    type:'line',
+    data:{labels:ph.map(function(p){return p.date;}), datasets:[{data:ph.map(function(p){return p.close;}),
+      borderColor: vm.keyData.change>=0?COL.pos:COL.neg, borderWidth:1.4, pointRadius:0, fill:false, tension:0.15}]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{display:false}, y:{display:false}},
+      plugins:{legend:{display:false}, tooltip:{enabled:false}},
+      elements:{line:{borderJoinStyle:'round'}}
+    }
+  });
+}
+
+function buildEpsPathChart(canvas, vm){
+  var c = vm.c1; if(c.status!=='ok') return noData(canvas.parentElement, c.reason);
+  var chart = c.eps_path_chart;
+  var palette = [COL.navy, COL.blue, COL.sky];
+  new Chart(canvas, {
+    type:'line',
+    data:{labels:chart.fy_labels, datasets:chart.series.map(function(s,i){
+      return {label:s.name, data:s.values, borderColor:palette[i], backgroundColor:palette[i], pointRadius:3, borderWidth:2, spanGaps:true};
+    })},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.sec,font:{size:10}}, grid:{display:false}}, y:{ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}},
+      plugins:{legend:{display:true, position:'bottom', labels:{color:COL.sec,font:{size:9.5},boxWidth:10}}}}
+  });
+}
+
+function buildRevYoyChart(canvas, vm){
+  var c = vm.c1; if(c.status!=='ok') return noData(canvas.parentElement, c.reason);
+  new Chart(canvas, {
+    type:'bar',
+    data:{labels:c.rev_yoy_bars.map(function(b){return b.label;}), datasets:[{data:c.rev_yoy_bars.map(function(b){return b.value;}), backgroundColor:[COL.grey,COL.sky,COL.blue,COL.navy]}]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.sec,font:{size:9.5}}, grid:{display:false}}, y:{ticks:{color:COL.muted,font:{size:9},callback:function(v){return v+'%';}}, grid:{color:COL.line}}},
+      plugins:{legend:{display:false}}}
+  });
+}
+
+// 純 HTML/CSS（不用 Chart.js）：兩條水平尺——① 本益比倍數尺（今日 vs 5年均值兩個點）
+// ② 0-100 五年分位尺（今日落點）。只標位置，不上好壞色，方向用中性字（最低／最高）。
+function buildPeBulletChart(el, vm){
+  var c = vm.c2;
+  if(c.status!=='ok') return noData(el, c.reason);
+  var b = c.pe_bullet;
+  var pe = b.pe_ntm_x, avg = b.pe_ntm_5y_avg_x, pct = b.pct_5y, peg = b.live_peg;
+
+  function anchorTx(pos){
+    if(pos<=8) return 'translateX(0%)';
+    if(pos>=92) return 'translateX(-100%)';
+    return 'translateX(-50%)';
+  }
+  function marker(pos, value, name, cls, side){
+    return '<div class="pe-scale-marker '+cls+' '+side+'" style="left:'+pos+'%">'+
+      '<span class="pe-scale-dot"></span>'+
+      '<span class="pe-scale-label" style="transform:'+anchorTx(pos)+'">'+value+'<span class="pe-scale-label-name">'+name+'</span></span>'+
+      '</div>';
+  }
+
+  var scaleHtml;
+  if(pe!=null && avg!=null && avg>0){
+    var axisMax = Math.max(pe, avg) * 1.3;
+    var pePos = Math.max(0, Math.min(100, pe/axisMax*100));
+    var avgPos = Math.max(0, Math.min(100, avg/axisMax*100));
+    scaleHtml =
+      '<div class="pe-scale">'+
+        '<div class="pe-scale-track">'+
+          '<div class="pe-scale-line"></div>'+
+          marker(pePos, fmtNum(pe,1)+'x', '目前NTM本益比', 'cur', 'above')+
+          marker(avgPos, fmtNum(avg,1)+'x', '5年均值', 'avg', 'below')+
+        '</div>'+
+        '<div class="pe-scale-axis"><span>0</span><span>'+fmtNum(axisMax,1)+'x</span></div>'+
+      '</div>'+
+      '<div class="pe-scale-ratio">現值是五年均值的 '+(pe/avg).toFixed(2)+' 倍</div>';
+  } else {
+    scaleHtml = '<div class="pe-scale-empty">NTM 本益比／5 年均值：無資料</div>';
+  }
+
+  var pctHtml;
+  if(pct!=null){
+    var pctPos = Math.max(0, Math.min(100, pct));
+    pctHtml =
+      '<div class="pe-pct">'+
+        '<span class="pe-pct-end">五年最低</span>'+
+        '<div class="pe-pct-track"><div class="pe-pct-line"></div>'+
+          '<div class="pe-pct-marker" style="left:'+pctPos+'%">'+
+            '<span class="pe-pct-dot"></span>'+
+            '<span class="pe-pct-value" style="transform:'+anchorTx(pctPos)+'">第 '+fmtNum(pct,0)+' 百分位</span>'+
+          '</div>'+
+        '</div>'+
+        '<span class="pe-pct-end">五年最高</span>'+
+      '</div>';
+  } else {
+    pctHtml = '<div class="pe-pct-empty">現價於 5 年區間分位：無資料</div>';
+  }
+
+  el.innerHTML = scaleHtml + pctHtml +
+    '<div class="pe-peg">即時PEG '+(peg!=null?fmtNum(peg,2):'無資料')+'</div>';
+}
+
+function buildEpsPriceOverlayChart(canvas, vm){
+  var c = vm.c2; if(c.status!=='ok') return noData(canvas.parentElement, c.reason);
+  var ov = c.eps_price_overlay;
+  if(!ov.eps_points.length || !ov.price_series.length) return noData(canvas.parentElement, ov.eps_reason||'無資料');
+  var labels = ov.price_series.map(function(p){return p.date;});
+  function alignSeries(points, key){
+    var arr = labels.map(function(){return null;});
+    points.forEach(function(p){
+      var idx = labels.findIndex(function(l){return l>=p.snapshot_date;});
+      if(idx<0) idx = labels.length-1;
+      arr[idx] = p[key];
+    });
+    return arr;
+  }
+  new Chart(canvas, {
+    type:'line',
+    data:{labels:labels, datasets:[
+      {label:'股價', data:ov.price_series.map(function(p){return p.close;}), yAxisID:'y', borderColor:COL.navy, pointRadius:0, borderWidth:1.6},
+      {label:'明年度EPS估計', data:alignSeries(ov.eps_points,'eps_fy_next'), yAxisID:'y1', borderColor:COL.gold, backgroundColor:COL.gold, spanGaps:true, pointRadius:4, borderWidth:1.4, borderDash:[4,3]},
+      {label:'後年度EPS估計', data:alignSeries(ov.eps_points,'eps_fy3'), yAxisID:'y1', borderColor:COL.teal, backgroundColor:COL.teal, spanGaps:true, pointRadius:4, borderWidth:1.4, borderDash:[2,2]}
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.muted,font:{size:8},maxTicksLimit:6}, grid:{display:false}},
+              y:{position:'left', ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}},
+              y1:{position:'right', ticks:{color:COL.muted,font:{size:9}}, grid:{display:false}}},
+      plugins:{legend:{display:true,position:'bottom',labels:{color:COL.sec,font:{size:9},boxWidth:10}}}}
+  });
+}
+
+function buildSurpriseChart(canvas, vm){
+  var s = vm.c3.surprises; if(s.status!=='ok') return noData(canvas.parentElement, s.reason);
+  new Chart(canvas, {
+    type:'bar',
+    data:{labels:s.quarters.map(function(q){return q.date;}), datasets:[{data:s.quarters.map(function(q){return q.surprise_pct;}), backgroundColor:COL.navy+'88'}]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.muted,font:{size:8}}, grid:{display:false}}, y:{ticks:{color:COL.muted,font:{size:9},callback:function(v){return v+'%';}}, grid:{color:COL.line}}},
+      plugins:{legend:{display:false}}}
+  });
+}
+
+function buildRoicQuadrantChart(canvas, vm){
+  var c = vm.c4; if(c.status!=='ok') return noData(canvas.parentElement, c.reason);
+  var q = c.quadrant;
+  var XCAP=4, YCAP_LO=-20, YCAP_HI=100;
+  function cx(x){return x==null?null:Math.max(0,Math.min(XCAP,x));}
+  function cy(y){return y==null?null:Math.max(YCAP_LO,Math.min(YCAP_HI,y));}
+  new Chart(canvas, {
+    type:'scatter',
+    data:{datasets:[
+      {label:'其他個股', data:q.universe_points.filter(function(p){return p.ticker!==vm.D.ticker;}).map(function(p){return {x:cx(p.x), y:cy(p.y)};}), backgroundColor:COL.grey+'99', pointRadius:2.5},
+      {label:vm.D.ticker, data: q.x_ic_turnover!=null&&q.y_nopat_margin!=null?[{x:cx(q.x_ic_turnover), y:cy(q.y_nopat_margin)}]:[], backgroundColor:COL.gold, pointRadius:7, pointBorderColor:'#fff', pointBorderWidth:1.5}
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{title:{display:true,text:'投入資本週轉率(x)',color:COL.muted,font:{size:9}}, min:0, max:XCAP, ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}},
+              y:{title:{display:true,text:'NOPAT利潤率(%)',color:COL.muted,font:{size:9}}, min:YCAP_LO, max:YCAP_HI, ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}},
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:function(ctx){return ctx.raw.x.toFixed(2)+'x, '+ctx.raw.y.toFixed(1)+'%';}}}}}
+  });
+}
+
+function buildDurabilityChart(canvas, vm){
+  var c = vm.c4; if(c.status!=='ok') return;
+  var dur = c.durability;
+  new Chart(canvas, {
+    type:'bar',
+    data:{labels:['5年均值','3年均值','LTM','增量ROIC'], datasets:[{data:[dur.roic_5y_avg_pct,dur.roic_3y_avg_pct,dur.roic_ltm_pct,c.incremental.incremental_roic_pct], backgroundColor:[COL.grey,COL.sky,COL.blue,COL.navy]}]},
+    options:{indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.muted,font:{size:9},callback:function(v){return v+'%';}}, grid:{color:COL.line}}, y:{ticks:{color:COL.sec,font:{size:10}}, grid:{display:false}}},
+      plugins:{legend:{display:false}}}
+  });
+}
+
+function buildCapitalChart(canvas, vm){
+  var c = vm.c4; if(c.status!=='ok') return;
+  var cap = c.incremental.capital;
+  new Chart(canvas, {
+    type:'bar',
+    data:{labels:['營收','EBIT','投入資本'], datasets:[
+      {label:'FY-3', data:[cap.rev_fy3,cap.ebit_fy3,cap.ic_fy3], backgroundColor:COL.grey},
+      {label:'FY', data:[cap.rev_fy,cap.ebit_fy,cap.ic_fy], backgroundColor:COL.navy}
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.sec,font:{size:9.5}}, grid:{display:false}}, y:{ticks:{color:COL.muted,font:{size:9},callback:function(v){return abbrevNum(v*1e6);}}, grid:{color:COL.line}}},
+      plugins:{legend:{display:true,position:'bottom',labels:{color:COL.sec,font:{size:9.5},boxWidth:10}}}}
+  });
+}
+
+function buildGrossMarginChart(canvas, vm){
+  var c = vm.c4; if(c.status!=='ok') return;
+  var gm = c.gross_margin_line;
+  new Chart(canvas, {
+    type:'line',
+    data:{labels:['LTM','FY1','FY2','FY3'], datasets:[{data:[gm.ltm,gm.fy1,gm.fy2,gm.fy3], borderColor:COL.navy, backgroundColor:COL.navy+'22', fill:true, pointRadius:3, borderWidth:1.8}]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.sec,font:{size:10}}, grid:{display:false}}, y:{ticks:{color:COL.muted,font:{size:9},callback:function(v){return v+'%';}}, grid:{color:COL.line}}},
+      plugins:{legend:{display:false}}}
+  });
+}
+
+function buildVolumeProfileChart(canvas, vm){
+  var vp = vm.D.volume_profile; if(!vp) return noData(canvas.parentElement,'無資料');
+  var labels = vp.bins.map(function(b){return b.lo.toFixed(0);});
+  var vals = vp.bins.map(function(b){return b.volume;});
+  var colors = vp.bins.map(function(b){
+    var mid=(b.lo+b.hi)/2;
+    return (vp.value_area_low<=mid&&mid<=vp.value_area_high) ? COL.navy+'99' : COL.grey+'66';
+  });
+  new Chart(canvas, {
+    type:'bar',
+    data:{labels:labels, datasets:[{data:vals, backgroundColor:colors}]},
+    options:{indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.muted,font:{size:8},callback:function(v){return abbrevNum(v);}}, grid:{color:COL.line}}, y:{ticks:{color:COL.muted,font:{size:7.5},maxTicksLimit:14}, grid:{display:false}}},
+      plugins:{legend:{display:false}}}
+  });
+}
+
+// 純 HTML/CSS（不用 Chart.js）：52週低→目標價低→現價→目標價中位數／平均→目標價高→52週高，
+// 標籤位置照數值排序，用貪婪演算法分層避免重疊或反序時互相蓋字（例如目標價低低於52週低）。
+function buildPriceRulerChart(el, vm){
+  var c = vm.analystTargets;
+  if(!c || c.status!=='ok') return noData(el, c && c.reason);
+  var raw = (c.price_ruler || []).filter(function(p){ return p.value!=null; });
+  if(!raw.length) return noData(el, '無資料');
+
+  var vals = raw.map(function(p){ return p.value; });
+  var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+  var pad = (hi - lo) * 0.06 || Math.max(hi * 0.06, 1);
+  var axisMin = Math.max(0, lo - pad), axisMax = hi + pad;
+  var span = (axisMax - axisMin) || 1;
+
+  var pts = raw.map(function(p){
+    return {label:p.label, value:p.value, isNow:p.label==='目前股價', pos:(p.value-axisMin)/span*100};
+  });
+  pts.sort(function(a,b){ return a.pos - b.pos; });
+
+  // 貪婪分層：同一層裡前後兩點的位置差要 >= GAP（百分點）才不搶標籤；擠不下就開新層，
+  // 新層交錯上／下（above/below），越晚開的層離基準線越遠。GAP 用容器實際寬度換算，
+  // 固定百分比在手機窄版（390px）會換算成太少像素，讓標籤黏在一起——用 100px 的最小視覺
+  // 間距反推百分比，並夾在 10～28% 之間（實機量過：邊界標籤靠 anchorTx 貼齊邊界時會少掉
+  // 半個字寬的緩衝，數字抓寬一點才夠）。STEP（同側疊層間距）要蓋過標籤本身高度（兩行文字
+  // 實測 ~31px），不然疊多層時上下兩層會重疊——LABEL_H 留 5px 緩衝。
+  var containerWidth = el.clientWidth || 320;
+  var GAP = Math.max(10, Math.min(28, (100 / containerWidth) * 100));
+  var LABEL_H = 36, STEP = LABEL_H, BASE = 13;
+  var lanes = [];
+  pts.forEach(function(p){
+    var li = -1;
+    for(var i=0;i<lanes.length;i++){
+      if(p.pos - lanes[i].last >= GAP){ li = i; break; }
+    }
+    if(li < 0){ li = lanes.length; lanes.push({side: lanes.length%2===0?'above':'below', depth: Math.floor(lanes.length/2)}); }
+    lanes[li].last = p.pos;
+    p.side = lanes[li].side; p.depth = lanes[li].depth;
+  });
+  var maxDepth = pts.reduce(function(m,p){ return Math.max(m,p.depth); }, 0);
+  var trackHeight = 2 * (BASE + maxDepth*STEP + LABEL_H);
+
+  function anchorTx(pos){
+    if(pos<=8) return 'translateX(0%)';
+    if(pos>=92) return 'translateX(-100%)';
+    return 'translateX(-50%)';
+  }
+
+  var markersHtml = pts.map(function(p){
+    var off = BASE + p.depth*STEP;
+    var sideCss = p.side==='above' ? 'bottom:'+off+'px' : 'top:'+off+'px';
+    return '<div class="pr-marker '+(p.isNow?'now':'ref')+'" style="left:'+p.pos+'%">'+
+      '<span class="pr-dot"></span>'+
+      '<span class="pr-label" style="'+sideCss+';transform:'+anchorTx(p.pos)+'">'+
+        fmtNum(p.value,2)+'<span class="pr-label-name">'+p.label+'</span>'+
+      '</span></div>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="pr-track" style="height:'+trackHeight+'px">'+
+      '<div class="pr-line"></div>'+ markersHtml +
+    '</div>'+
+    '<div class="pr-axis"><span>'+fmtNum(axisMin,0)+'</span><span>'+fmtNum(axisMax,0)+'</span></div>';
+}
+
+function buildFunnelBreakdownChart(canvas, vm){
+  var c = vm.c7; if(c.status!=='ok') return noData(canvas.parentElement, c.reason);
+  new Chart(canvas, {
+    type:'bar',
+    data:{labels:['品質關卡×0.40','護城河×0.30','修正動能×0.30'], datasets:[{data:[c.contributions.quality,c.contributions.moat,c.contributions.revision], backgroundColor:[COL.navy,COL.blue,COL.sky]}]},
+    options:{indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      scales:{x:{min:0,max:0.4, ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}, y:{ticks:{color:COL.sec,font:{size:10}}, grid:{display:false}}},
+      plugins:{legend:{display:false}}}
+  });
+}
+
+function buildMoatTrajectoryChart(canvas, vm){
+  var moat = vm.moat;
+  if(!moat || !moat.has_dd || !moat.judgment.history.length) return noData(canvas.parentElement, moat&&moat.reason||'無資料');
+  var hist = moat.judgment.history;
+  new Chart(canvas, {
+    type:'line',
+    data:{labels:hist.map(function(h){return h.date;}), datasets:[
+      {label:'Execution', data:hist.map(function(h){return h.moat_execution;}), borderColor:COL.navy, backgroundColor:COL.navy, pointRadius:4, borderWidth:2, spanGaps:true},
+      {label:'Pricing Power', data:hist.map(function(h){return h.moat_pricing_power;}), borderColor:COL.gold, backgroundColor:COL.gold, pointRadius:4, borderWidth:2, spanGaps:true, borderDash:[4,3]}
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.sec,font:{size:9}}, grid:{display:false}}, y:{min:0,max:10, ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}},
+      plugins:{legend:{display:true,position:'bottom',labels:{color:COL.sec,font:{size:9.5},boxWidth:10}},
+        tooltip:{callbacks:{afterBody:function(items){
+          var idx = items[0].dataIndex; var h = hist[idx];
+          return h.moat_trend ? '趨勢：'+h.moat_trend+'　等級：'+h.moat : '等級：'+h.moat;
+        }}}}
+    }
+  });
+}

@@ -1,0 +1,160 @@
+// ══════════════════════════════════════════════════════════════════════════
+// 共用資料處理層（proto_report.html 與 proto_terminal.html 共用同一份邏輯）
+// 只做格式化與從既有欄位算比率／排序，不新增任何評分或判斷。
+// ══════════════════════════════════════════════════════════════════════════
+"use strict";
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+var COL = {
+  pos: cssVar('--pos')||'#15803d', neg: cssVar('--neg')||'#b91c1c', warn: cssVar('--warn')||'#a16207',
+  navy: cssVar('--x-navy')||'#0d2244', blue: cssVar('--x-blue')||'#3f6a9c', sky: cssVar('--x-sky')||'#8fb0cf',
+  teal: cssVar('--x-teal')||'#3d7a70', grey: cssVar('--x-grey')||'#9aa7b8',
+  gold: cssVar('--gold-deep')||'#8f6d2c', line: cssVar('--line')||'#e5dfd0',
+  sec: cssVar('--sec')||'#6b7a92', muted: cssVar('--muted')||'#9aa7b8', ink: cssVar('--ink')||'#0c1521'
+};
+var CAT = [COL.navy, COL.blue, COL.sky, COL.teal, COL.grey];
+
+function fmtNum(v, nd){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  return Number(v).toLocaleString('en-US',{minimumFractionDigits:nd||0,maximumFractionDigits:nd||0});
+}
+function fmtPct(v, nd){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  var s = v>=0?'+':'';
+  return s+v.toFixed(nd===undefined?2:nd)+'%';
+}
+// 表格數字統一規則：一般負數用括號（非資料方向、不判斷好壞）；三類明訂的資料方向
+// （股價漲跌／EPS 預估上修下修／超額報酬正負）才用 fmtPctColored 上色。
+function fmtPctParen(v, nd){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  var n = v.toFixed(nd===undefined?2:nd);
+  return v<0 ? '('+Math.abs(v).toFixed(nd===undefined?2:nd)+'%)' : '+'+n+'%';
+}
+function fmtPctColored(v, nd){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  var cls = v>=0 ? 'x-pos' : 'x-neg';
+  return '<span class="'+cls+'">'+fmtPct(v,nd)+'</span>';
+}
+function fmtUsdM(v){
+  if(v===null||v===undefined||Number.isNaN(v)) return '—';
+  var sign = v<0 ? '−' : '';
+  var m = Math.abs(v)/1e6;
+  var s = m>=1000 ? Math.round(m).toLocaleString('en-US') : m.toFixed(1);
+  return sign+'$'+s+'M';
+}
+function abbrevNum(v){
+  if(v===null||v===undefined||Number.isNaN(v)) return '';
+  var abs=Math.abs(v), sign=v<0?'-':'';
+  if(abs>=1e9) return sign+(abs/1e9).toFixed(abs>=1e10?0:1)+'B';
+  if(abs>=1e6) return sign+(abs/1e6).toFixed(abs>=1e8?0:1)+'M';
+  if(abs>=1e3) return sign+(abs/1e3).toFixed(abs>=1e5?0:1)+'K';
+  return sign+String(Math.round(abs));
+}
+function noData(el, reason){ if(el) el.innerHTML = '<div class="nodata">無資料'+(reason?'：'+reason:'')+'</div>'; }
+// dd-screener 燈號轉文字（不猜測欄位精確語意，一律轉三段式中性詞）
+var TIER_TXT = {'🟢':'低', '🟡':'中', '🔴':'高'};
+function tierText(v){ return TIER_TXT[v] || v || '無資料'; }
+
+// ── 主要視圖模型：把 DATA(NVDA.json) + MARKET(_market.json) 整理成兩個原型都能直接讀的形狀 ──
+function buildVM(D, M){
+  var jc = D.full.judgment_core;
+  var c1 = jc.eps_revision, c2 = jc.price_vs_eps, c3 = jc.earnings_surprise,
+      c4 = jc.roic_decomposition, c5 = jc.insider, c6 = jc.dd_screener_fields, c7 = jc.funnel_rank;
+  var moat = D.full.moat, moatChanges = D.full.moat_changes, moatRivals = D.full.moat_rivals;
+  var analystTargets = D.full.analyst_targets;
+  var moatCurrent = (moat && moat.has_judgment) ? moat.judgment.current : null;
+  var MOAT_WIDTH_ZH = {wide:'寬', narrow:'窄', none:'無'};
+
+  // 下次財報：全站一律用 dd-screener 口徑（c3 內已是 row.next_earnings_date／days_to_next_earnings）
+  var nextEarn = c3.next_earnings_date, daysEarn = c3.days_to_next_earnings;
+
+  var high52=null, low52=null;
+  (D.price_history||[]).forEach(function(p){
+    if(p.high!=null) high52 = high52==null?p.high:Math.max(high52,p.high);
+    if(p.low!=null) low52 = low52==null?p.low:Math.min(low52,p.low);
+  });
+
+  var keyData = {
+    price: D.quote.close, change: D.quote.change, changePct: D.quote.change_pct,
+    week52: [low52, high52],
+    peNtm: c2.status==='ok' ? c2.pe_bullet.pe_ntm_x : null,
+    peg: c2.status==='ok' ? c2.pe_bullet.live_peg : null,
+    shortPct: D.short_interest_info ? D.short_interest_info.shortPercentOfFloat_pct : null,
+    daysEarn: daysEarn, nextEarn: nextEarn,
+    // 2026-09-22：FunnelRank 不在首屏／封面顯示（30% 權重來自研究報告護城河分，不會隨
+    // build 更新，會誤導成即時排名）——拆解細節仍在附錄，見 renderAppendix 的 funnelHtml。
+    // 主控台陣容狀態（full.cockpit，讀 engine/arena.json），連到 /cockpit/
+    cockpit: (function(ck){
+      if(!ck || ck.status!=='ok') return '無資料';
+      var txt = ck.group + (ck.position ? ' 第 '+ck.position+' '+(ck.group==='核心席'?'席':'檔') : '');
+      return '<a href="/cockpit/">'+txt+'</a>'+(ck.lamp ? '・'+ck.lamp : '');
+    })(D.full.cockpit),
+    moatGrade: (D.full.moat_footprint && D.full.moat_footprint.gm_ltm_pct!=null)
+               ? fmtNum(D.full.moat_footprint.gm_ltm_pct,1)+'%'+(D.full.moat_footprint.peer_median_gm_pct!=null?'／'+fmtNum(D.full.moat_footprint.peer_median_gm_pct,1)+'%':'')
+               : '無資料'
+  };
+
+  // 投資摘要：4 條機械組句，數字全部取自既有欄位，下次財報天數固定用 dd-screener 口徑
+  var fyNext = c1.status==='ok' ? c1.table[1] : null;
+  var summaryBullets = [];
+  if(c1.status==='ok'){
+    summaryBullets.push(
+      c1.fy_labels.next+' EPS 估計較上月 '+fmtPct(fyNext.vs_last_month_pct)+'，近 3 個月 '+fmtPct(fyNext.vs_3m_ago_pct)+
+      '，自上次財報以來 '+fmtPct(fyNext.vs_since_earnings_pct)+'。'
+    );
+  }
+  if(c2.status==='ok'){
+    var b = c2.pe_bullet;
+    summaryBullets.push(
+      '目前 NTM 本益比 '+fmtNum(b.pe_ntm_x,1)+'x，5 年均值 '+fmtNum(b.pe_ntm_5y_avg_x,1)+'x，現價於 5 年區間第 '+fmtNum(b.pct_5y,0)+' 百分位，即時 PEG '+fmtNum(b.live_peg,2)+'。'
+    );
+  }
+  if(c4.status==='ok'){
+    var inc = c4.incremental, gp = inc.consensus_compare;
+    summaryBullets.push(
+      '增量 ROIC '+fmtNum(inc.incremental_roic_pct,1)+'%×再投資率 '+fmtNum(inc.reinvest_rate_pct,1)+'%＝隱含內生成長 '+fmtNum(inc.implied_growth_pct,1)+
+      '%，共識 3 年 EPS 年複合 '+fmtNum(gp.est_eps_cagr_3y_pct,1)+'%'+(gp.gap_vs_eps_cagr_pct!=null?'，相差 '+fmtNum(Math.abs(gp.gap_vs_eps_cagr_pct),1)+' 個百分點':'')+'。'
+    );
+  }
+  var tt = D.scores.trend_template, rel = D.scores.relative_strength_detail, vol = D.scores.volume_detail;
+  summaryBullets.push(
+    '趨勢模板通過 '+tt.pass_count+'/'+tt.of+'，相對強度第 '+fmtNum(rel.percentile,0)+' 百分位，量能比值 '+fmtNum(vol.ratio,2)+
+    '，距 52 週高點 '+fmtPct(D.status_summary.dist_52w_high_pct)+'，距下次財報 '+(daysEarn!=null?daysEarn+' 天':'無資料')+'。'
+  );
+  // 護城河：只放機械數字（2026-09-22 起不放模型判斷）
+  var fpS = D.full.moat_footprint, duS = (D.full.judgment_core.roic_decomposition||{}).durability || {};
+  if(fpS && fpS.gm_ltm_pct!=null && duS.roic_ltm_pct!=null){
+    summaryBullets.push('護城河的數字：毛利率 '+fmtNum(fpS.gm_ltm_pct,2)+'%'+
+      (fpS.peer_median_gm_pct!=null?'（對手中位數 '+fmtNum(fpS.peer_median_gm_pct,2)+'%）':'')+
+      '，ROIC '+fmtNum(duS.roic_ltm_pct,2)+'%'+(duS.roic_5y_avg_pct!=null?'（五年平均 '+fmtNum(duS.roic_5y_avg_pct,2)+'%）':'')+'。');
+  }
+
+  // 財務預估摘要表：FY27/FY28/FY29（用 c1.fy_labels），列＝EPS／EPS成長／以該年EPS算本益比／3個月修正／毛利率
+  var finTable = null;
+  if(c1.status==='ok'){
+    var fyKeys = ['curr','next','fy3'];
+    var labels = fyKeys.map(function(k){return c1.fy_labels[k];});
+    var epsRow = c1.table.map(function(r){return r.current_estimate;});
+    // 第一年的成長用前一財年實際 EPS 當基準（judgment_core.eps_prev_fy，yfinance 同口徑）
+    var prevFy = D.full.judgment_core.eps_prev_fy;
+    var prevEps = (prevFy && prevFy.status==='ok') ? prevFy.actual_eps : null;
+    var growthRow = epsRow.map(function(v,i){
+      if(i===0) return (prevEps && v!=null) ? (v/prevEps-1)*100 : null;
+      return (v/epsRow[i-1]-1)*100;
+    });
+    var prevNote = prevEps ? ('對 '+prevFy.fy+' 實際 EPS '+fmtNum(prevEps,2)) : null;
+    var peRow = epsRow.map(function(v){ return v ? D.quote.close/v : null; });
+    var rev3mRow = c1.table.map(function(r){return r.vs_3m_ago_pct;});
+    var gm = c4.status==='ok' ? c4.gross_margin_line : {};
+    var gmRow = [gm.fy1, gm.fy2, gm.fy3];
+    finTable = {labels:labels, eps:epsRow, growth:growthRow, pe:peRow, rev3m:rev3mRow, gm:gmRow, prevNote:prevNote};
+  }
+
+  return {
+    D:D, M:M, jc:jc, c1:c1, c2:c2, c3:c3, c4:c4, c5:c5, c6:c6, c7:c7,
+    moat:moat, moatCurrent:moatCurrent, moatChanges:moatChanges, moatRivals:moatRivals, moatFootprint:D.full.moat_footprint,
+    analystTargets:analystTargets,
+    nextEarn:nextEarn, daysEarn:daysEarn, keyData:keyData, summaryBullets:summaryBullets, finTable:finTable,
+    judgmentVersion: D.judgment_version, judgmentVersionDate: D.judgment_version_date,
+    latestChanges: D.latest_changes || [], changelog: D.changelog || [], sectionVersions: D.section_versions || {}
+  };
+}

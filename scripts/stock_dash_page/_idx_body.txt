@@ -1,0 +1,183 @@
+<header class="cover">
+  <div class="cover-inner">
+    <div class="cover-left" id="coverLeft"></div>
+    <div class="cover-kd" id="coverKd"></div>
+  </div>
+</header>
+<div class="wrap">
+<div id="outOfListNotice"></div>
+<div class="tksw" style="display:flex;gap:8px;align-items:center;margin:10px 2px 4px">
+  <input type="text" id="tkInput" maxlength="8" placeholder="NVDA" style="font-family:var(--mono);font-size:13px;padding:.35rem .6rem;border:1px solid var(--line);border-radius:var(--r);width:100px;text-transform:uppercase">
+  <button id="tkGo" type="button" style="font-size:12.5px;font-weight:600;padding:.38rem .8rem;border-radius:var(--r);border:1px solid var(--x-navy);background:var(--x-navy);color:#fff;cursor:pointer">查詢</button>
+</div>
+<div id="versionBar" style="font-size:11.5px;color:var(--sec);margin:8px 2px 2px"></div>
+<div id="versionBox" style="font-size:12px;color:var(--body);background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;margin:4px 0 14px"></div>
+
+<section class="firstscreen">
+  <div class="fs-left">
+    <h2>投資摘要</h2>
+    <ul id="summaryBullets"></ul>
+    <div class="exhibit">
+      <div class="ex-label"></div>
+      <div class="ex-title">EPS 預估修正 vs 股價</div>
+      <div class="ex-sub">三個回顧期間比較明年度 EPS 預估變動、股價漲跌與隱含本益比變動</div>
+      <div class="tbl-wrap"><table class="imq-table" id="revVsPriceTable"></table></div>
+      <div class="conclusion" id="revVsPriceSentence"></div>
+      <div class="ex-src">資料來源：dd-screener latest.json + eps-estimates-snapshots + yfinance 日收盤</div>
+    </div>
+    <div class="exhibit">
+      <div class="ex-label"></div>
+      <div class="ex-title">股價 vs EPS 預估</div>
+      <div class="ex-sub">股價（左軸）與明年度／後年度 EPS 估計（右軸），自最早一份估值快照起</div>
+      <div class="chart-box" style="height:230px"><canvas id="chartFsOverlay"></canvas></div>
+      <div class="ex-src">資料來源：yfinance 日收盤 + docs/dd-screener/eps-estimates-snapshots/</div>
+    </div>
+  </div>
+  <div class="fs-right">
+    <div class="tbl-wrap"><table class="kd-table" id="kdTable"></table></div>
+    <h3>財務預估摘要</h3>
+    <div class="tbl-wrap"><table class="imq-table" id="finTable"></table></div>
+  </div>
+</section>
+
+<section class="chapter" id="sec1">
+  <div class="chapter-head"><span class="ch-title">§1　獲利預估與修正</span></div>
+  <div class="chapter-body">
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">財年預估與修正</div>
+        <div class="tbl-wrap"><table class="imq-table" id="s1Table"></table></div>
+        <div class="ex-src">資料來源：dd-screener latest.json + eps-estimates-snapshots</div>
+      </div>
+      <div class="stat-row" id="s1Stats"></div>
+    </div>
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">EPS 估計走勢</div>
+        <div class="chart-box" style="height:190px"><canvas id="chartS1Eps"></canvas></div>
+        <div class="ex-src">資料來源：docs/dd-screener/eps-estimates-snapshots/</div>
+      </div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">近四季營收年增率</div>
+        <div class="chart-box" style="height:150px"><canvas id="chartS1Rev"></canvas></div>
+        <div class="ex-src">資料來源：dd-screener latest.json fund.rev_yoy_fq0-3</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="sec2">
+  <div class="chapter-head"><span class="ch-title">§2　估值</span></div>
+  <div class="chapter-body">
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">NTM 本益比 vs 5 年均值</div>
+        <div class="chart-box"><div class="pe-bullet" id="chartS2Pe"></div></div>
+        <div class="ex-src">資料來源：dd-screener latest.json fund.pe_ntm_x / pe_ntm_5y_avg_x</div>
+      </div>
+    </div>
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">價格尺：52 週低 → 目標價低 → 現價 → 目標價中位數 → 目標價平均 → 目標價高 → 52 週高</div>
+        <div class="chart-box"><div class="pr-ruler" id="chartS2Ruler"></div></div>
+        <div class="ex-src">資料來源：yfinance Ticker.info（分析師目標價／52 週區間），每次 build 都重新抓取，不隨判斷層版本凍結</div>
+      </div>
+      <div class="tbl-wrap"><table class="imq-table" id="s2Table2"></table></div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="sec3">
+  <div class="chapter-head"><span class="ch-title">§3　財報驚喜</span></div>
+  <div class="chapter-body">
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">近 8 季財報 Surprise%</div>
+        <div class="chart-box" style="height:170px"><canvas id="chartS3Surprise"></canvas></div>
+        <div class="ex-src">資料來源：yfinance Ticker.get_earnings_dates()</div>
+      </div>
+    </div>
+    <div>
+      <div class="stat-row" id="s3Stats"></div>
+      <div class="tbl-wrap"><table class="imq-table" id="s3Table"></table></div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="sec4moat">
+  <div class="chapter-head"><span class="ch-title">§4　護城河</span></div>
+  <div class="moat-head" id="moatHead"></div>
+  <div class="chapter-body">
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">本公司的數字（近四季、三年、五年）</div>
+        <div class="tbl-wrap"><table class="imq-table" id="moatSelfTable"></table></div>
+      </div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">ROIC 拆解（杜邦式）</div>
+        <div class="dupont-flow" id="moatDupont"></div>
+      </div>
+    </div>
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">對手對照（現在值）</div>
+        <div class="tbl-wrap"><table class="imq-table" id="moatRivalTable"></table></div>
+        <div class="ex-src" id="moatRivalSrc"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="sec5">
+  <div class="chapter-head"><span class="ch-title">§5　價格與技術</span></div>
+  <div class="chapter-body">
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">K 線（近一年）</div>
+        <div class="chart-box" id="klineBox" style="height:280px"></div>
+        <div class="ex-src">資料來源：yfinance 日 K 線</div>
+      </div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">量價分布（近 120 個交易日）</div>
+        <div class="chart-box" style="height:220px"><canvas id="chartS5Vp"></canvas></div>
+        <div class="ex-src">資料來源：yfinance 日 K 線，價位分箱依成交量加總</div>
+      </div>
+    </div>
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">Minervini 趨勢模板（7 條件）</div>
+        <div class="tbl-wrap"><table class="imq-table" id="s5TrendTable"></table></div>
+        <div class="ex-src">資料來源：yfinance 日 K 線計算的移動平均</div>
+      </div>
+      <div class="stat-row" id="s5Stats"></div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="sec6">
+  <div class="chapter-head"><span class="ch-title">§6　風險</span></div>
+  <div class="chapter-body">
+    <div>
+      <div class="tbl-wrap"><table class="imq-table" id="s6Table"></table></div>
+    </div>
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">選擇權 Put/Call 與隱含波動率</div>
+        <div class="tbl-wrap"><table class="imq-table" id="s6OptTable"></table></div>
+        <div class="ex-src">資料來源：yfinance Ticker.option_chain（近 45 天內最近 4 個到期日）</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="sec7">
+  <div class="chapter-head"><span class="ch-title">§7　大盤</span></div>
+  <div class="chapter-body">
+    <div>
+      <div class="tbl-wrap"><table class="imq-table" id="s7EnvTable"></table></div>
+      <p id="s7Lead" style="font-size:12.5px;color:var(--body);margin-top:10px"></p>
+    </div>
+    <div>
+      <div class="tbl-wrap"><table class="imq-table" id="s7ProbTable"></table></div>
+      <div id="s7Triggers" style="font-size:11.5px;color:var(--sec);margin-top:8px"></div>
+    </div>
+  </div>
+</section>
+
+<section class="appendix" id="appendix">
+  <div class="chapter-head"><span class="ch-title">附錄</span></div>
+  <div class="exhibit"><div class="ex-label"></div><div class="ex-title">FunnelRank 組成拆解</div>
+    <div class="chart-box" style="height:110px"><canvas id="chartApxFunnel"></canvas></div>
+  </div>
+  <div id="appendixBody"></div>
+</section>
+
+<footer>NVDA 個股儀表板原型 A（券商報告式）· 僅供內部樣式評估，非正式發布頁 · 描述器紀律：不含買賣建議</footer>
+</div>

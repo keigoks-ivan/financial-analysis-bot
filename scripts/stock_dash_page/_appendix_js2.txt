@@ -1,0 +1,80 @@
+// ══════════════════════════════════════════════════════════════════════════
+// 附錄：方法、各格為什麼看、FunnelRank 完整拆解、資料來源與日期
+// 正文只留一行資料來源；細節全部收在這裡。
+// ══════════════════════════════════════════════════════════════════════════
+var WHY_TEXT = {
+  eps: '獲利估計修正得快不快，比過去的成長率本身更重要。v7-backtest 用標普 500 成分股回測：若能提前知道明年 EPS 成長率排前 20% 的公司，報酬比後 20% 高 24 個百分點（年化，t=10.5，return_driver 回測）；但拿「已經公布」的 EPS 成長率、營收成長率去分組，兩組報酬幾乎沒有差異。',
+  trend: '3 到 5 年的報酬，三分之二來自獲利真的成長，只有三分之一是本益比變化（v7-backtest return_driver 回測）。這格把股價漲跌拆成兩塊：分析師調高了多少獲利估計、市場又多付了多少本益比。',
+  surprise: '財報公布後，市場消化「意外程度」要花時間。v7-backtest 的 PEAD 回測分成五組，意外程度最高組（SUE 最高）比最低組年化贏 4 個百分點，訓練期和驗證期結果一致；事件後 60 個交易日，最高組超額報酬 +0.66%（t=3.7），最低組 −0.37%（t=−1.9）。',
+  roic: '3 到 5 年的報酬，三分之二來自獲利真的成長（v7-backtest return_driver 回測）。公司自己能長多快，取決於賺錢效率（ROIC）乘上把賺到的錢再投入的比例。',
+  insider: '內部人群聚買進事件後 60 個交易日，超額報酬平均 +1.9%（t=4.2，n=1254，v7-backtest 內部人回測）。但把它當一套可以重複操作的策略、拉長到整個驗證期做成投資組合，超額報酬卻是負的，這裡只當事件提醒，不是進出場依據。',
+  funnel: 'FunnelRank 是 investmquest.com/dd-screener/ 現在使用中的排序分，2026-07-03 與 2026-09-17 兩次拍板定案。品質關卡跟護城河評分反映的是已經發生的體質，獲利修正動能抓的是分析師剛剛改變的看法，抓得比較即時。這格只把既有分數拆開呈現，沒有另外算分數。'
+};
+
+function renderAppendix(container, vm){
+  var D = vm.D, c1=vm.c1,c2=vm.c2,c3=vm.c3,c4=vm.c4,c5=vm.c5,c7=vm.c7;
+
+  var methodRows = [
+    ['獲利預估與修正', (c1.status==='ok'?c1.table_method:'') + '　' + (c1.status==='ok'&&c1.fy_labels?c1.fy_labels.method:'')],
+    ['股價趨勢×獲利', c2.status==='ok'?c2.period_method:''],
+    ['財報驚喜（SUE）', (c3.sue&&c3.sue.status==='ok'?c3.sue.method:'') + '　' + (c3.sue_breaks&&c3.sue_breaks.status!=='no_data'?c3.sue_breaks.method:'')],
+    ['ROIC 拆解', c4.status==='ok'?c4.dupont.note:''],
+    ['內部人群聚買進', c5.cluster_buy&&c5.cluster_buy.status==='ok'?c5.cluster_buy.method:''],
+    ['FunnelRank', c7.status==='ok'?c7.footnote:'']
+  ];
+
+  var whyRows = [
+    ['獲利預估與修正', WHY_TEXT.eps], ['股價趨勢×獲利', WHY_TEXT.trend], ['財報驚喜', WHY_TEXT.surprise],
+    ['ROIC 與資本效率', WHY_TEXT.roic], ['內部人', WHY_TEXT.insider], ['FunnelRank', WHY_TEXT.funnel]
+  ];
+
+  var funnelHtml = '';
+  if(c7.status==='ok'){
+    funnelHtml = '<div class="apx-funnel">' +
+      '<p style="font-size:11.5px;color:var(--sec);margin:0 0 8px">這裡的排名把護城河分數算進去，權重 30%。'+
+      '護城河分數來自既有研究報告，不會隨每次 build 更新，名次僅供參考。</p>'+
+      '<div class="apx-stat-row">' +
+        '<div class="imq-stat"><div class="v">'+fmtNum(c7.funnel_rank,3)+'</div><div class="k">FunnelRank</div></div>'+
+        '<div class="imq-stat"><div class="v">'+c7.rank+' / '+c7.total+'</div><div class="k">名次</div></div>'+
+        '<div class="imq-stat"><div class="v">'+fmtNum(c7.percentile,1)+'%</div><div class="k">百分位</div></div>'+
+      '</div>'+
+      '<div class="tbl-wrap"><table class="imq-table apx-tbl"><thead><tr><th>條件</th><th class="num">數值</th><th>結果</th></tr></thead><tbody>'+
+      c7.quality_criteria.map(function(cr){
+        return '<tr><td>'+cr.label+'</td><td class="num">'+(cr.value!=null?cr.value+cr.unit:'無資料')+'</td><td>'+(cr.pass==null?'無資料':cr.pass?'通過':'未過')+'</td></tr>';
+      }).join('')+
+      '<tr><td>'+c7.de_reference.label+'</td><td class="num">'+(c7.de_reference.value!=null?c7.de_reference.value+c7.de_reference.unit:'無資料')+'</td><td>僅參考</td></tr>'+
+      '</tbody></table></div>'+
+      '<div class="tbl-wrap"><table class="imq-table apx-tbl"><thead><tr><th>財年</th><th class="num">修正%</th><th>方向</th><th class="num">權重</th></tr></thead><tbody>'+
+      c7.revision_fy.map(function(r){
+        return '<tr><td>'+r.fy+'</td><td class="num">'+fmtPct(r.revision_pct)+'</td><td>'+r.direction+'</td><td class="num">'+r.weight+'</td></tr>';
+      }).join('')+'</tbody></table></div>'+
+      '<div class="apx-veto"><b>否決／封頂：</b>'+(c7.vetoes_and_caps.length?c7.vetoes_and_caps.join('；'):'無')+'</div>'+
+      '</div>';
+  }
+
+  var changelogRows = (vm.changelog || []).map(function(e){
+    var trigTxt = (e.triggers||[]).map(function(t){return t.id+'：'+t.desc_zh;}).join('；');
+    return '<tr><td class="num">v'+e.version+'</td><td>'+e.date+'</td><td>'+trigTxt+'</td><td>'+(e.changed_sections||[]).join('、')+'</td></tr>';
+  }).join('');
+
+  var moatGapsHtml =
+    '<h3 class="apx-h3">護城河章的做法</h3>'+
+    '<p style="font-size:11.5px;color:var(--sec);margin:6px 0">只放機械數字：毛利率、ROIC 近四季／三年／五年、增量 ROIC、ROIC 拆解、對手現在值。'+
+    '對手取自研究報告護城河章的對手損益表，沒有就同產業分類前三檔。不放模型寫的判斷，護城河的完整分析連到研究報告。</p>';
+
+  container.innerHTML =
+    '<h3 class="apx-h3">方法</h3>'+
+    '<div class="tbl-wrap"><table class="imq-table apx-tbl">'+methodRows.map(function(r){return '<tr><td class="apx-k">'+r[0]+'</td><td>'+(r[1]||'無資料')+'</td></tr>';}).join('')+'</table></div>'+
+    '<h3 class="apx-h3">各格為什麼看這個</h3>'+
+    '<div class="tbl-wrap"><table class="imq-table apx-tbl">'+whyRows.map(function(r){return '<tr><td class="apx-k">'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('')+'</table></div>'+
+    '<h3 class="apx-h3">FunnelRank 完整拆解</h3>'+funnelHtml+
+    moatGapsHtml+
+    '<h3 class="apx-h3">改版紀錄</h3>'+
+    '<div class="tbl-wrap"><table class="imq-table apx-tbl"><thead><tr><th>版本</th><th>日期</th><th>觸發</th><th>變更小節</th></tr></thead><tbody>'+changelogRows+'</tbody></table></div>'+
+    '<h3 class="apx-h3">資料來源與日期</h3>'+
+    '<div class="tbl-wrap"><table class="imq-table apx-tbl">'+
+      Object.keys(D.data_sources).map(function(k){return '<tr><td class="apx-k">'+k+'</td><td>'+D.data_sources[k]+'</td></tr>';}).join('')+
+      '<tr><td class="apx-k">資料日期</td><td>'+D.as_of+'（產生時間 UTC '+D.generated_at+'）</td></tr>'+
+      '<tr><td class="apx-k">大盤判讀日期</td><td>'+(vm.M.read_as_of||'無資料')+'（有效 '+(vm.M.valid_days!=null?vm.M.valid_days+' 天':'—')+'）</td></tr>'+
+    '</table></div>';
+}

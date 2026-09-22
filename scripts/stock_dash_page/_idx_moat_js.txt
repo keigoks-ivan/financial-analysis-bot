@@ -1,0 +1,53 @@
+// 2026-09-22 持有人拍板：護城河章不放模型生成的判斷，只放機械數字，完整分析連到研究報告。
+function moatEsc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function moatPct(v){ return v!=null ? fmtNum(v,2)+'%' : '無資料'; }
+
+function renderMoatChapter(vm){
+  var fp = vm.moatFootprint || {}, c4 = vm.c4 || {};
+  var research = fp.research;
+
+  document.getElementById('moatHead').innerHTML =
+    '<div class="moat-meta">這一章只放數字，不放模型寫的判斷。'+
+    (research && research.moat_anchor
+      ? '護城河的完整分析見<a href="'+moatEsc(research.moat_anchor)+'">研究報告的護城河章節</a>'+(research.date?'（'+moatEsc(research.date)+'）':'')+'。'
+      : (research && research.path ? '完整分析見<a href="'+moatEsc(research.path)+'">研究報告</a>。' : '這檔還沒有研究報告。'))+
+    '</div>';
+
+  // ── 本公司的數字 ──
+  var du = (c4.status==='ok' && c4.durability) || {}, inc = (c4.status==='ok' && c4.incremental) || {};
+  var rows = [
+    ['毛利率（近四季）', moatPct(fp.gm_ltm_pct) + (fp.peer_median_gm_pct!=null ? '，對手中位數 '+moatPct(fp.peer_median_gm_pct) : '')],
+    ['ROIC（近四季）', moatPct(du.roic_ltm_pct)],
+    ['ROIC 三年平均／五年平均', moatPct(du.roic_3y_avg_pct)+'／'+moatPct(du.roic_5y_avg_pct)],
+    ['ROIC 五年走勢', du.roic_trend_5y || '無資料'],
+    ['增量 ROIC', inc.incremental_roic_clamped ? '超過計算上限（投入資本變化太小，數字沒有意義）' : moatPct(inc.incremental_roic_pct)],
+    ['最新一季營收年增', moatPct(fp.rev_yoy_fq0_pct)]
+  ];
+  document.getElementById('moatSelfTable').innerHTML = '<tbody>'+rows.map(function(r){
+    return '<tr><td class="k">'+r[0]+'</td><td class="v">'+r[1]+'</td></tr>';
+  }).join('')+'</tbody>';
+
+  // ── ROIC 拆解（沿用 roic_decomposition 卡）──
+  if(c4.status==='ok' && c4.dupont){
+    var d = c4.dupont;
+    document.getElementById('moatDupont').innerHTML =
+      '<div class="df-box"><div class="df-v">'+fmtNum(d.ebit_margin_pct,1)+'%</div><div class="df-k">EBIT利潤率</div></div>'+
+      '<span class="df-op">×(1−</span><div class="df-box"><div class="df-v">'+fmtNum(d.tax_rate_pct,1)+'%</div><div class="df-k">稅率</div></div><span class="df-op">)=</span>'+
+      '<div class="df-box"><div class="df-v">'+fmtNum(d.nopat_margin_pct,1)+'%</div><div class="df-k">NOPAT利潤率</div></div>'+
+      '<span class="df-op">×</span><div class="df-box"><div class="df-v">'+fmtNum(d.ic_turnover_x,2)+'x</div><div class="df-k">資本週轉率</div></div>'+
+      '<span class="df-op">=</span><div class="df-box"><div class="df-v">'+fmtNum(d.roic_decomposed_pct,1)+'%</div><div class="df-k">拆解ROIC</div></div>';
+  } else {
+    document.getElementById('moatDupont').innerHTML = '無資料';
+  }
+
+  // ── 對手對照 ──
+  var rv = fp.rivals || [];
+  document.getElementById('moatRivalTable').innerHTML = rv.length ?
+    '<thead><tr><th>對手</th><th class="num">毛利率</th><th class="num">ROIC</th><th class="num">營收年增</th><th class="num">NTM本益比</th></tr></thead><tbody>'+
+    rv.map(function(r){
+      return '<tr><td>'+moatEsc(r.ticker)+'</td><td class="num">'+(r.gm_ltm_pct!=null?r.gm_ltm_pct+'%':'無資料')+'</td>'+
+        '<td class="num">'+(r.roic!=null?r.roic+'%':'無資料')+'</td><td class="num">'+(r.rev_yoy_fq0_pct!=null?r.rev_yoy_fq0_pct+'%':'無資料')+'</td>'+
+        '<td class="num">'+(r.pe_ntm_x!=null?r.pe_ntm_x+'x':'無資料')+'</td></tr>';
+    }).join('')+'</tbody>' : '<tbody><tr><td>沒有可比對手資料</td></tr></tbody>';
+  document.getElementById('moatRivalSrc').textContent = fp.rival_source ? '對手來源：'+fp.rival_source : '';
+}

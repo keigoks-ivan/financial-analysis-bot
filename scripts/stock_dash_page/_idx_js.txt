@@ -1,0 +1,275 @@
+function assignExhibitNumbers(){
+  var els = document.querySelectorAll('.ex-label');
+  var n = 1;
+  els.forEach(function(el){ el.textContent = 'EXHIBIT ' + n; n++; });
+}
+
+function renderCover(vm){
+  var q = vm.D.quote, kd = vm.keyData;
+  var chgCls = q.change>=0?'pos':'neg', sign = q.change>=0?'+':'';
+  document.getElementById('coverLeft').innerHTML =
+    '<span class="tk">'+vm.D.ticker+'</span><span class="nm">'+q.name+'</span>'+
+    '<span class="px">'+q.close.toFixed(2)+'<span class="chg '+chgCls+'">'+sign+q.change.toFixed(2)+'（'+sign+q.change_pct.toFixed(2)+'%）</span></span>';
+  var items = [
+    ['52週區間', kd.week52[0]!=null?kd.week52[0].toFixed(2)+' – '+kd.week52[1].toFixed(2):'無資料'],
+    ['預估本益比(NTM)', kd.peNtm!=null?fmtNum(kd.peNtm,1)+'x':'無資料'],
+    ['PEG', kd.peg!=null?fmtNum(kd.peg,2):'無資料'],
+    ['空單比例', kd.shortPct!=null?fmtNum(kd.shortPct,2)+'%':'無資料'],
+    ['下次財報', kd.nextEarn?kd.nextEarn+'（'+kd.daysEarn+'天）':'無資料'],
+    ['主控台', kd.cockpit],
+    ['毛利率／對手中位數', kd.moatGrade]
+  ];
+  document.getElementById('coverKd').innerHTML = items.map(function(it){
+    return '<div class="kd-item"><span class="kd-k">'+it[0]+'</span><span class="kd-v">'+it[1]+'</span></div>';
+  }).join('');
+
+  document.getElementById('versionBar').innerHTML =
+    '判斷版本 v'+vm.judgmentVersion+'｜'+vm.judgmentVersionDate+' 更新｜行情資料 '+vm.D.as_of;
+
+  var changes = vm.latestChanges;
+  if(changes && changes.length){
+    document.getElementById('versionBox').innerHTML =
+      '<b>本版更新：</b>'+changes.map(function(t){
+        var extra = (t.before!=null || t.after!=null) ? '（'+t.before+' → '+t.after+'）' : '';
+        return t.desc_zh+extra;
+      }).join('；');
+  } else {
+    document.getElementById('versionBox').innerHTML = '<b>本版更新：</b>首次建立';
+  }
+}
+
+// 期間內部代號（python 端 label）→ 面板顯示用的中文措辭。
+var PERIOD_ZH = {'上次財報前後':'上次財報以來', '近1個月':'近一個月', '近3個月':'近三個月'};
+
+function pctWord(v, upWord, downWord){
+  if(v==null||Number.isNaN(v)) return null;
+  return (v>=0?upWord:downWord)+' '+Math.abs(v).toFixed(2)+'%';
+}
+
+function renderRevVsPrice(vm){
+  var c = vm.c2;
+  var tblEl = document.getElementById('revVsPriceTable'), sentEl = document.getElementById('revVsPriceSentence');
+  if(c.status!=='ok'){ noData(tblEl, c.reason); if(sentEl) sentEl.innerHTML=''; return; }
+  var periods = c.periods || [];
+  tblEl.innerHTML =
+    '<thead><tr><th>期間</th><th class="num">明年度 EPS<br>預估變動</th><th class="num">股價漲跌</th><th class="num">隱含本益比<br>變動</th></tr></thead><tbody>'+
+    periods.map(function(p){
+      var lbl = PERIOD_ZH[p.label] || p.label;
+      return '<tr><td>'+lbl+'<span class="base-date">基準：'+(p.base_date||'無資料')+'</span></td>'+
+        '<td class="num">'+fmtPctColored(p.eps_fy_next_chg_pct)+'</td>'+
+        '<td class="num">'+fmtPctColored(p.price_chg_pct)+'</td>'+
+        '<td class="num">'+fmtPctParen(p.implied_ntm_pe_chg_pct)+'</td></tr>';
+    }).join('')+'</tbody>';
+
+  // 機械句：只用上表數字，選基準日最早（涵蓋期間最長）且三個數字都有資料的一格。
+  var complete = periods.filter(function(p){
+    return p.base_date && p.eps_fy_next_chg_pct!=null && p.price_chg_pct!=null && p.implied_ntm_pe_chg_pct!=null;
+  }).sort(function(a,b){ return a.base_date<b.base_date?-1:(a.base_date>b.base_date?1:0); });
+  if(!sentEl) return;
+  if(!complete.length){ sentEl.innerHTML = '無資料：三個期間都缺基準日或估值資料'; return; }
+  var p = complete[0], lbl = PERIOD_ZH[p.label] || p.label;
+  sentEl.innerHTML = lbl+'明年度 EPS 預估'+pctWord(p.eps_fy_next_chg_pct,'上修','下修')+
+    '，股價'+pctWord(p.price_chg_pct,'漲','跌')+
+    '，隱含本益比'+pctWord(p.implied_ntm_pe_chg_pct,'上升','下降')+'。';
+}
+
+function renderFirstScreen(vm){
+  document.getElementById('summaryBullets').innerHTML = vm.summaryBullets.map(function(s){return '<li>'+s+'</li>';}).join('');
+  renderRevVsPrice(vm);
+  buildEpsPriceOverlayChart(document.getElementById('chartFsOverlay'), vm);
+
+  var kd = vm.keyData;
+  document.getElementById('kdTable').innerHTML = [
+    ['股價', fmtNum(kd.price,2)],
+    ['52 週區間', kd.week52[0]!=null?kd.week52[0].toFixed(2)+' – '+kd.week52[1].toFixed(2):'無資料'],
+    ['預估本益比(NTM)', kd.peNtm!=null?fmtNum(kd.peNtm,1)+'x':'無資料'],
+    ['PEG', kd.peg!=null?fmtNum(kd.peg,2):'無資料'],
+    ['空單比例', kd.shortPct!=null?fmtNum(kd.shortPct,2)+'%':'無資料'],
+    ['下次財報', kd.nextEarn?kd.nextEarn+'（'+kd.daysEarn+' 天後）':'無資料'],
+    ['主控台', kd.cockpit]
+  ].map(function(r){return '<tr><td class="k">'+r[0]+'</td><td class="v">'+r[1]+'</td></tr>';}).join('');
+
+  var ft = vm.finTable;
+  if(ft){
+    document.getElementById('finTable').innerHTML =
+      '<thead><tr><th></th>'+ft.labels.map(function(l){return '<th class="num">'+l+'</th>';}).join('')+'</tr></thead><tbody>'+
+      '<tr><td class="k">EPS</td>'+ft.eps.map(function(v){return '<td class="num">'+fmtNum(v,2)+'</td>';}).join('')+'</tr>'+
+      '<tr><td class="k">EPS 成長</td>'+ft.growth.map(function(v,i){return '<td class="num"'+(i===0&&ft.prevNote?' title="'+ft.prevNote+'"':'')+'>'+(v==null?'無前一年基準':fmtPctParen(v,1))+'</td>';}).join('')+'</tr>'+
+      '<tr><td class="k">該年 EPS 本益比</td>'+ft.pe.map(function(v){return '<td class="num">'+(v!=null?fmtNum(v,1)+'x':'無資料')+'</td>';}).join('')+'</tr>'+
+      '<tr><td class="k">3 個月修正</td>'+ft.rev3m.map(function(v){return '<td class="num">'+fmtPctColored(v)+'</td>';}).join('')+'</tr>'+
+      '<tr><td class="k">毛利率</td>'+ft.gm.map(function(v){return '<td class="num">'+fmtNum(v,1)+'%</td>';}).join('')+'</tr>'+
+      '</tbody>';
+  } else { noData(document.getElementById('finTable'), '不在 dd-screener 名單'); }
+}
+
+function renderSec1(vm){
+  var c = vm.c1;
+  if(c.status!=='ok'){ noData(document.getElementById('s1Table'), c.reason); return; }
+  document.getElementById('s1Table').innerHTML =
+    '<thead><tr><th>財年</th><th class="num">目前預估</th><th class="num">較上月</th><th class="num">近3個月</th><th class="num">自上次財報以來</th></tr></thead><tbody>'+
+    c.table.map(function(r){
+      return '<tr><td>'+r.fy+'</td><td class="num">'+fmtNum(r.current_estimate,2)+'</td>'+
+        '<td class="num">'+fmtPctColored(r.vs_last_month_pct)+'</td><td class="num">'+fmtPctColored(r.vs_3m_ago_pct)+'</td>'+
+        '<td class="num">'+fmtPctColored(r.vs_since_earnings_pct)+'</td></tr>';
+    }).join('')+'</tbody>';
+  var rev30 = c.analyst_revisions_30d;
+  var rev30Stats = '';
+  if(rev30.status==='ok'){
+    ['next','curr'].forEach(function(k){
+      var p = rev30.periods[k==='next'?'+1y':'0y'];
+      var lbl = (c.fy_labels && c.fy_labels[k]) || (k==='next'?'明年度':'今年度');
+      if(p && p.up_30d!=null && p.down_30d!=null){
+        rev30Stats += '<div class="imq-stat"><div class="v">'+p.up_30d+' / '+p.down_30d+'</div><div class="k">'+lbl+' EPS估計近30天上修／下修家數</div></div>';
+      }
+    });
+  }
+  document.getElementById('s1Stats').innerHTML =
+    '<div class="imq-stat"><div class="v">'+fmtPct(c.cagr_3y.eps_cagr_3y_pct)+'</div><div class="k">共識3年EPS年複合</div></div>'+
+    '<div class="imq-stat"><div class="v">'+fmtPct(c.cagr_3y.rev_cagr_3y_pct)+'</div><div class="k">共識3年營收年複合</div></div>'+
+    rev30Stats;
+  buildEpsPathChart(document.getElementById('chartS1Eps'), vm);
+  buildRevYoyChart(document.getElementById('chartS1Rev'), vm);
+}
+
+function renderSec2(vm){
+  buildPeBulletChart(document.getElementById('chartS2Pe'), vm);
+  buildPriceRulerChart(document.getElementById('chartS2Ruler'), vm);
+  var at = vm.analystTargets;
+  if(at && at.status==='ok'){
+    document.getElementById('s2Table2').innerHTML =
+      '<tbody>'+
+      '<tr><td class="k">目標價（低／中位數／平均／高）</td><td class="v">'+fmtNum(at.target_low,2)+' / '+fmtNum(at.target_median,2)+' / '+fmtNum(at.target_mean,2)+' / '+fmtNum(at.target_high,2)+'</td></tr>'+
+      '<tr><td class="k">分析師人數</td><td class="v">'+fmtNum(at.num_analysts,0)+'</td></tr>'+
+      '<tr><td class="k">到平均目標價的空間</td><td class="v">'+fmtPct(at.upside_to_mean_pct)+'</td></tr>'+
+      '<tr><td class="k">現價在52週區間的位置</td><td class="v">'+(at.pct_in_52w_range!=null?fmtNum(at.pct_in_52w_range,0)+'%':'無資料')+'</td></tr>'+
+      '</tbody>';
+  } else { noData(document.getElementById('s2Table2'), at && at.reason); }
+}
+
+function renderSec3(vm){
+  buildSurpriseChart(document.getElementById('chartS3Surprise'), vm);
+  var c = vm.c3;
+  var sue = c.sue, breaks = c.sue_breaks;
+  document.getElementById('s3Stats').innerHTML =
+    '<div class="imq-stat"><div class="v">'+(sue.status==='ok'?sue.sue:'—')+'</div><div class="k">本季SUE</div></div>'+
+    '<div class="imq-stat"><div class="v">'+(c.sue_group_label||'—')+'</div><div class="k">回測分組（僅供對照）</div></div>'+
+    '<div class="imq-stat"><div class="v">'+fmtPctColored(c.price_vs_spy_since_earnings_pct)+'</div><div class="k">財報後相對SPY報酬</div></div>';
+  document.getElementById('s3Table').innerHTML =
+    '<tbody>'+
+    '<tr><td class="k">上次財報日</td><td class="v">'+(c.last_earnings_date||'無資料')+'</td></tr>'+
+    '<tr><td class="k">財報後交易日（回測持有60日）</td><td class="v">'+(c.trading_days_since_earnings!=null?c.trading_days_since_earnings:'無資料')+' / 60</td></tr>'+
+    '<tr><td class="k">下次財報日</td><td class="v">'+(c.next_earnings_date||'無資料')+(c.days_to_next_earnings!=null?'（'+c.days_to_next_earnings+' 天後）':'')+'</td></tr>'+
+    (breaks.status!=='no_data'?'<tr><td class="k">分組切點(20/40/60/80百分位)</td><td class="v">'+breaks.percentile_20+' / '+breaks.percentile_40+' / '+breaks.percentile_60+' / '+breaks.percentile_80+'</td></tr>':'')+
+    '</tbody>';
+}
+
+
+function renderSec5(vm){
+  buildKLine(document.getElementById('klineBox'), vm, {});
+  buildVolumeProfileChart(document.getElementById('chartS5Vp'), vm);
+  var tt = vm.D.scores.trend_template;
+  document.getElementById('s5TrendTable').innerHTML =
+    '<thead><tr><th>條件</th><th>結果</th></tr></thead><tbody>'+
+    tt.conditions.map(function(c){ return '<tr><td>'+c.label+'</td><td>'+(c.pass?'目前成立':'目前不成立')+'</td></tr>'; }).join('')+
+    '<tr><td class="k">通過數</td><td>'+tt.pass_count+' / '+tt.of+'</td></tr>'+
+    '</tbody>';
+  var ss = vm.D.status_summary, rel = vm.D.scores.relative_strength_detail, vol = vm.D.scores.volume_detail;
+  document.getElementById('s5Stats').innerHTML =
+    '<div class="imq-stat"><div class="v">'+fmtNum(rel.percentile,0)+'</div><div class="k">相對強度百分位</div></div>'+
+    '<div class="imq-stat"><div class="v">'+fmtNum(vol.ratio,2)+'x</div><div class="k">量能比值</div></div>'+
+    '<div class="imq-stat"><div class="v">'+fmtPct(ss.dist_52w_high_pct)+'</div><div class="k">距52週高點</div></div>'+
+    '<div class="imq-stat"><div class="v">'+fmtNum(ss.support,2)+' / '+fmtNum(ss.resistance,2)+'</div><div class="k">支撐／壓力</div></div>'+
+    '<div class="imq-stat"><div class="v">'+fmtPctColored(ss.rel_strength_vs_spy['3m'])+' / '+fmtPctColored(ss.rel_strength_vs_spy['6m'])+' / '+fmtPctColored(ss.rel_strength_vs_spy['12m'])+'</div><div class="k">對SPY 3M／6M／12M超額</div></div>';
+}
+
+function renderSec6(vm){
+  var D = vm.D, sii = D.short_interest_info, sv = D.short_volume, mb = D.market_env.market_beta, opt = D.options;
+  document.getElementById('s6Table').innerHTML =
+    '<tbody>'+
+    '<tr><td class="k">ATR%（近一年百分位）</td><td class="v">'+fmtNum(D.status_summary.atr_pct,2)+'%（'+fmtNum(D.status_summary.atr_pct_percentile_1y,0)+'百分位）</td></tr>'+
+    (opt.status==='ok'?'<tr><td class="k">20日已實現波動</td><td class="v">'+fmtNum(opt.aggregate.hv20_pct,1)+'%</td></tr>':'')+
+    '<tr><td class="k">Beta（一年期）</td><td class="v">'+(mb?fmtNum(mb.beta,2)+'（相關係數'+fmtNum(mb.correlation,2)+'）':'無資料')+'</td></tr>'+
+    '<tr><td class="k">空單佔流通股比例</td><td class="v">'+fmtNum(sii&&sii.shortPercentOfFloat_pct,2)+'%</td></tr>'+
+    '<tr><td class="k">回補天數</td><td class="v">'+fmtNum(sii&&sii.shortRatio_days_to_cover,2)+' 天</td></tr>'+
+    '<tr><td class="k">放空量30日 z 值</td><td class="v">'+(sv&&sv.z_score_recent30_vs_60!=null?fmtNum(sv.z_score_recent30_vs_60,2):'無資料')+'</td></tr>'+
+    '<tr><td class="k">內部人群聚買進</td><td class="v">'+(vm.c5.cluster_buy.status==='ok'?(vm.c5.cluster_buy.cluster_buy_condition_met?'條件目前成立':'條件目前不成立')+'（近90天'+vm.c5.cluster_buy.n_distinct_buyers+'位買進）':'無資料')+'</td></tr>'+
+    '<tr><td class="k">dd-screener近3個月淨買超</td><td class="v">'+fmtUsdM(vm.c5.dd_screener_net_buy_3m_usd)+'</td></tr>'+
+    '</tbody>';
+  if(opt.status==='ok'){
+    document.getElementById('s6OptTable').innerHTML =
+      '<thead><tr><th>到期日</th><th class="num">天數</th><th class="num">Call量</th><th class="num">Put量</th><th class="num">量比P/C</th><th class="num">ATM IV%</th></tr></thead><tbody>'+
+      opt.expiries.map(function(e){
+        return '<tr><td>'+e.expiry+'</td><td class="num">'+e.dte+'</td><td class="num">'+fmtNum(e.call_volume)+'</td><td class="num">'+fmtNum(e.put_volume)+'</td>'+
+          '<td class="num">'+fmtNum(e.pc_ratio_volume,2)+'</td><td class="num">'+(e.atm_iv_pct!=null?fmtNum(e.atm_iv_pct*100,1)+'%':'無資料')+'</td></tr>';
+      }).join('')+
+      '<tr><td colspan="2" class="k">彙總（30日ATM）</td><td class="num">'+fmtNum(opt.aggregate.call_volume_total)+'</td><td class="num">'+fmtNum(opt.aggregate.put_volume_total)+'</td>'+
+      '<td class="num">'+fmtNum(opt.aggregate.pc_ratio_volume,2)+'</td><td class="num">'+fmtNum(opt.aggregate.atm_iv_30d_pct*100,1)+'%</td></tr>'+
+      '</tbody>';
+  } else { noData(document.getElementById('s6OptTable'), opt.reason); }
+}
+
+var TONE_ZH = {good:'正向', warn:'留意', neutral:'中性', bad:'負向'};
+function renderSec7(vm){
+  var M = vm.M;
+  document.getElementById('s7EnvTable').innerHTML =
+    '<thead><tr><th>指標</th><th>數值</th><th>備註</th><th>日期</th></tr></thead><tbody>'+
+    (M.environment||[]).map(function(e){
+      return '<tr><td>'+(e.label||'')+(e.stale?'（過期）':'')+'</td><td>'+(e.value||'—')+'</td><td>'+(e.sub||'')+'</td><td>'+(e.as_of||'—')+'</td></tr>';
+    }).join('')+'</tbody>';
+  document.getElementById('s7Lead').textContent = (M.path_lead_zh||'判讀不明')+'（研究判讀日期 '+(M.read_as_of||'—')+'，有效 '+(M.valid_days!=null?M.valid_days+' 天':'—')+'）';
+  document.getElementById('s7ProbTable').innerHTML =
+    '<thead><tr><th>情境</th><th class="num">機械合議</th><th class="num">研究判讀</th><th class="num">基準</th></tr></thead><tbody>'+
+    (M.prob_table||[]).map(function(r){
+      return '<tr><td>'+r.name_zh+'</td><td class="num">'+(r.council_p!=null?r.council_p+'%':'—')+'</td><td class="num">'+(r.research_p!=null?r.research_p+'%':'—')+'</td><td class="num">'+(r.baseline_p!=null?r.baseline_p+'%':'—')+'</td></tr>';
+    }).join('')+'</tbody>';
+  document.getElementById('s7Triggers').innerHTML = '<b>觸發水位：</b>'+(M.triggers||[]).map(function(t){return t.label+' '+t.level;}).join('　');
+}
+
+// 站上目前只服務 dd-screener 339 檔名單；不在名單裡的股票預設沒有既有研究報告，
+// EPS 修正、本益比 vs 5 年均值、護城河這幾格會是無資料——在最上面先講一次，
+// 不用讓讀者逐格自己發現。
+function renderOutOfListNotice(vm){
+  var el = document.getElementById('outOfListNotice');
+  if(!el) return;
+  if(vm.jc.in_dd_screener === false){
+    el.innerHTML = '<div class="nodata">'+vm.D.ticker+' 不在 dd-screener 名單（339 檔）。'+
+      '§1 獲利預估修正、§2 本益比 vs 5 年均值、§4 護城河數字這幾格沒有資料。</div>';
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function render(D, M){
+  var vm = buildVM(D, M);
+  assignExhibitNumbers();
+  renderCover(vm);
+  renderOutOfListNotice(vm);
+  renderFirstScreen(vm);
+  renderSec1(vm); renderSec2(vm); renderSec3(vm); renderMoatChapter(vm); renderSec5(vm); renderSec6(vm); renderSec7(vm);
+  buildFunnelBreakdownChart(document.getElementById('chartApxFunnel'), vm);
+  renderAppendix(document.getElementById('appendixBody'), vm);
+}
+
+var params = new URLSearchParams(location.search);
+var TICKER = (params.get('t') || 'NVDA').toUpperCase();
+var tkInput = document.getElementById('tkInput');
+if(tkInput){
+  tkInput.value = TICKER; tkInput.placeholder = TICKER;
+  document.getElementById('tkGo').addEventListener('click', go);
+  tkInput.addEventListener('keydown', function(e){ if(e.key==='Enter') go(); });
+}
+function go(){
+  var v = document.getElementById('tkInput').value.trim().toUpperCase();
+  if(v) location.href = '?t=' + encodeURIComponent(v);
+}
+
+Promise.all([
+  fetch('data/' + TICKER + '.json').then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); }),
+  fetch('data/_market.json').then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); }).catch(function(){ return {status:'no_data'}; })
+]).then(function(results){
+  render(results[0], results[1]);
+}).catch(function(err){
+  document.getElementById('coverLeft').innerHTML =
+    '<span class="nm">找不到 ' + TICKER + ' 的資料（' + err.message + '）。' +
+    '請先執行 <code>python3.12 scripts/build_stock_dash.py ' + TICKER + '</code>。</span>';
+});
