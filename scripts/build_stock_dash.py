@@ -1826,11 +1826,16 @@ def _fx_pair(ticker, current_date, baseline_date):
     global _rep_ccy_cache, _fx_cache
     from eps_fx_normalize import (get_fx_rate, get_reporting_currency,
                                   load_fx_daily_cache, load_reporting_currency_cache)
+    from dd_screener_quality import _yf_ticker_for
     if _rep_ccy_cache is None:
         _rep_ccy_cache = load_reporting_currency_cache()
     if _fx_cache is None:
         _fx_cache = load_fx_daily_cache()
-    ccy = get_reporting_currency(ticker, ticker, _rep_ccy_cache)
+    # get_reporting_currency's 2nd arg must be the yfinance symbol, not the
+    # dd-screener ticker (see its docstring) — was passing `ticker` twice, which
+    # silently broke FX normalization for tickers needing a symbol remap (LVMH,
+    # ABB, AENA, BESI, RMS, 5274.TW, 8299.TW).
+    ccy = get_reporting_currency(ticker, _yf_ticker_for(ticker), _rep_ccy_cache)
     if not ccy or ccy == "USD":
         return ccy, None, None
     return ccy, get_fx_rate(ccy, current_date, _fx_cache), get_fx_rate(ccy, baseline_date, _fx_cache)
@@ -3460,8 +3465,17 @@ def apply_versioning(ticker, out, state_dir=None, force=False, dry_run=False):
 
 # ──────────────────────────────────────────────────────────────── build ────
 def build(ticker, refresh_universe=False, state_dir=None, force_version=False, dry_run=False):
-    t = yf.Ticker(ticker)
-    df_full = compute_indicators(fetch_history(ticker, "2y"))
+    # dd-screener/Koyfin ticker → yfinance symbol (e.g. "LVMH" → "MC.PA", "5274.TW" →
+    # "5274.TWO"). Reuses the map already shared by build_dd_screener.py /
+    # build_fundamentals_cache.py / snapshot_eps_estimates.py etc. (see
+    # dd_screener_quality.TICKER_YF_OVERRIDE / EU_SUFFIX_MAP) rather than duplicating
+    # it. `ticker` itself stays the dd-screener identity everywhere else in this
+    # file — file name, dd-screener/EPS-snapshot/cockpit lookups, FINRA short volume —
+    # only the actual yfinance calls below use the resolved symbol.
+    from dd_screener_quality import _yf_ticker_for
+    yf_ticker = _yf_ticker_for(ticker)
+    t = yf.Ticker(yf_ticker)
+    df_full = compute_indicators(fetch_history(yf_ticker, "2y"))
     spy_full = compute_indicators(fetch_history_cached("SPY", "2y"))
 
     as_of = df_full.index[-1].date()
