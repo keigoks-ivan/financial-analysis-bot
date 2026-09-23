@@ -295,6 +295,36 @@ def _judge_tail_section(judgment_path: Path, thinking_note=None) -> str:
     return "\n".join(lines)
 
 
+def prior_transcripts_section(run_dir) -> str:
+    """2026-09-23：前一季＋投資人日的逐字稿摘錄（digest.json，stage0 的 a2_k 或永久快取）。
+    判斷與閘看同一份，閘才不會把引用摘錄當成捏造。每條只留日期、講者、topic、claim、原話。"""
+    lines = ["## ④b 舊逐字稿摘錄（前一季＋投資人日；對照管理層以前說過什麼）", ""]
+    p = Path(run_dir) / "digest.json"
+    d = dd_bundle._load_json(p) if p.exists() else {}
+    items = d.get("items") or []
+    if not items:
+        lines.append("[本次無舊逐字稿摘錄]")
+        return "\n".join(lines)
+    by_file = {}
+    for it in items:
+        if isinstance(it, dict):
+            by_file.setdefault(Path(it.get("file") or "").name, []).append(it)
+    for name, rows in by_file.items():
+        lines.append("### " + name)
+        for it in rows:
+            lines.append("- {0}｜{1}｜{2}：{3}（原話：\"{4}\"）".format(
+                it.get("date") or "", it.get("speaker") or "", it.get("topic") or "",
+                it.get("claim") or "", it.get("quote") or ""))
+        lines.append("")
+    flags = [f for f in (d.get("qa_flags") or []) if isinstance(f, dict)]
+    if flags:
+        lines.append("### 問答異常語氣（迴避／改口／保留）")
+        for f in flags:
+            lines.append("- {0}｜問：{1}｜答法：{2}".format(
+                Path(f.get("file") or "").name, f.get("question") or "", f.get("response_pattern") or ""))
+    return "\n".join(lines)
+
+
 def build_judge(run_dir, *, cards_dir, judgment_path=None, thinking_note=None) -> dict:
     run_dir = Path(run_dir)
     cards_dir = Path(cards_dir)
@@ -313,6 +343,7 @@ def build_judge(run_dir, *, cards_dir, judgment_path=None, thinking_note=None) -
         ("leak_words", leak_words_section()),
         ("facts", dd_bundle._facts_section(facts_path)),
         ("transcript", dd_bundle._transcript_section(evidence, None)),
+        ("prior_transcripts", prior_transcripts_section(run_dir)),
         ("judge_card", _card_section("④ 判斷卡（judge_card.md）", cards_dir / "judge_card.md")),
         ("addendum_roic", _card_section(
             "⑤a 常載附卡：§5.R 報酬持續期檢核", cards_dir / "judge_addendum_roic.md")),
@@ -369,6 +400,7 @@ def build_gate(run_dir, *, cards_dir, extra_section=None) -> dict:
         ("gate_card", _card_section("① gate_card.md（判斷層閘卡）", cards_dir / "gate_card.md")),
         ("referenced_facts", dd_bundle._gate_referenced_facts_section(raw_judgment, facts)),
         ("scenario_meta", dd_bundle._gate_scenario_meta_section(judgment_path)),
+        ("prior_transcripts", prior_transcripts_section(run_dir)),
         # 2026-09-16 TXN 首次過閘：閘回報「bundle 沒附軸覆蓋總覽」，覆蓋面掃描 (a) 沒得看；補上舊鏈同一段（機械）。
         ("coverage_summary", dd_bundle._gate_coverage_summary(evidence.get("coverage") or {})),
         ("prior_summary", "## 前份判斷摘要（含 drift_watch_prior 20 欄前份值；漂移歸因對帳用）\n\n```json\n"

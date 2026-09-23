@@ -227,6 +227,24 @@ def _price_move_pct(ctx, evidence):
     return None
 
 
+_DIGEST_OPTIONAL_RE = re.compile(r"investor.?day|analyst.?day|capital.?markets.?day|analyst.?investor", re.I)
+
+
+def _digest_targets(evidence):
+    """前一季法說（recent_four_quarters 倒數第二篇；最後一篇＝最新一季全文另給判斷者）
+    ＋ high_signal_optional 裡檔名像投資人日／分析師日的場次。"""
+    sel = ((evidence.get("transcripts") or {}).get("selected")) or {}
+    recent4 = sel.get("recent_four_quarters") or []
+    picks = list(recent4[-2:-1]) + [p for p in (sel.get("high_signal_optional") or [])
+                                    if _DIGEST_OPTIONAL_RE.search(Path(p).name)]
+    seen, out = set(), []
+    for p in picks:
+        if p not in seen and Path(p).exists():
+            seen.add(p)
+            out.append(Path(p))
+    return out
+
+
 def do_stage0(ctx):
     st = ctx.stage_begin("stage0")
     run_dir = ctx.run_dir
@@ -297,6 +315,29 @@ def do_stage0(ctx):
                       "out": "parts/numbers_collect.json", "tools": ddreport.SPAWN_TOOLS_NUMBERS,
                       "max_turns": NUMBERS_MAX_TURNS, "budget_cache_read": NUMBERS_BUDGET,
                       "run_dir": str(run_dir)})
+
+    # 舊逐字稿摘要：只挑前一季＋投資人日類（2026-09-23 持有人拍板）。v20 原本不做 digest，
+    # 事實表因此沒有舊逐字稿內容，判斷者無從對照「以前說的做到沒」。同一份逐字稿走永久快取。
+    digest_targets = _digest_targets(evidence)
+    st["digest_targets"] = [str(p) for p in digest_targets]
+    for old in parts_dir.glob("digest_*.json"):
+        old.unlink()
+    for k, target in enumerate(digest_targets, start=1):
+        part_rel = "parts/digest_{0}.json".format(k)
+        cached = ddreport._digest_cache_lookup(target)
+        if cached is not None:
+            _atomic_write_json(run_dir / part_rel, {"source_files": [str(target)], "items": cached["items"],
+                                                    "qa_flags": cached["qa_flags"]})
+            continue
+        prompt_rel = "prompts/a2_{0}.md".format(k)
+        (run_dir / prompt_rel).write_text(ddreport._render_template(
+            ddreport.PROMPTS_TMPL_DIR / "digest.md.tmpl",
+            {"TICKER": ctx.ticker, "DATE": ctx.date, "TRANSCRIPT_FILE": str(target),
+             "PART_PATH": str(run_dir / part_rel)}), encoding="utf-8")
+        specs.append({"id": "a2_{0}".format(k), "model": "sonnet", "prompt": prompt_rel, "out": part_rel,
+                      "tools": ddreport.SPAWN_TOOLS_DIGEST, "max_turns": ddreport.DIGEST_PER_FILE_MAX_TURNS,
+                      "budget_cache_read": ddreport.BUDGET_CACHE_READ_DIGEST_PER_FILE, "run_dir": str(run_dir),
+                      "transcript": str(target)})
     st["spawn_list"] = [{k: v for k, v in s.items() if k != "run_dir"} for s in specs]
     ctx.save()
 
@@ -320,6 +361,13 @@ def do_stage0(ctx):
     incomplete = []
     for s in specs:
         if s["id"] == "a1_numbers":
+            continue
+        if s["id"].startswith("a2_"):  # 摘要沒交或不合格就缺席，不擋 stage0
+            part = run_dir / s["out"]
+            if part.exists() and _sub([py, SCRIPTS_DIR / "validate_digest.py", part,
+                                          "--transcripts", Path(s["transcript"]).parent])[0] != 0:
+                part.replace(part.with_name(part.name + ".rejected"))
+                st.setdefault("digest_rejected", []).append(s["id"])
             continue
         part = run_dir / [x for x in st["spawn_list"] if x["id"] == s["id"]][0]["out"]
         ok = part.exists()
@@ -586,7 +634,51 @@ def _oneliner_role_warn(obj):
     return hits
 
 
-def normalize_v20(obj):
+_FY_KEY_V20_RE = re.compile(r"^FY\s*(\d{4})([AE]?)$")
+
+
+def _normalize_base_eps_path(obj, facts=None, date=None):
+    """eps_meta.base_eps_path 兩種形狀錯（2026-09-23 AMD，opus 判斷）：
+    ① 陣列（opus 交 5 個數，還不是共識值）→ 用事實表 f_consensus_eps_fy1..3 重建。這欄定義就是
+      Koyfin 共識三年錨，屬程式可得資料，不是判斷值；年度＝報告日所在財年起算（fy_end_month，預設 12）。
+    ② 物件但基期鍵沒有 A（`FY2025` 值 null 或四個年度鍵）→ 只把最早那個鍵改名加 A，數字不動；
+      否則 dd_project 會把基期當 FY1，共識整排錯一格。回傳 changes。"""
+    changes = []
+    meta = obj.get("eps_meta")
+    if not isinstance(meta, dict):
+        return changes
+    path = meta.get("base_eps_path")
+    if isinstance(path, dict):
+        keys = [(int(m.group(1)), m.group(2), k) for k, m in
+                ((k, _FY_KEY_V20_RE.match(k.strip())) for k in path if isinstance(k, str)) if m]
+        if keys:
+            keys.sort()
+            _y, suffix, k0 = keys[0]
+            if not suffix and (len(keys) >= 4 or path.get(k0) is None):
+                new = {}
+                for k, v in path.items():
+                    new[(k.strip() + "A") if k == k0 else k] = v
+                meta["base_eps_path"] = new
+                changes.append("eps_meta.base_eps_path: 基期鍵 {0} → {0}A（數字不動）".format(k0.strip()))
+        return changes
+    if path is None or isinstance(path, dict):
+        return changes
+    idx = ddreport.dd_project._facts_index(facts)
+    vals = {k: ddreport.dd_project._fact_value(idx, "f_consensus_eps_" + k) for k in ("fy1", "fy2", "fy3")}
+    if not all(isinstance(vals.get(k), (int, float)) for k in ("fy1", "fy2", "fy3")) or not date:
+        return changes
+    d = str(date).replace("-", "")
+    year, month = int(d[:4]), int(d[4:6])
+    fy_end = meta.get("fy_end_month") if isinstance(meta.get("fy_end_month"), int) else 12
+    fy1 = year if month <= fy_end else year + 1
+    meta["base_eps_path_judge_raw"] = path
+    meta["base_eps_path"] = {"FY{0}E".format(fy1 + i): vals["fy{0}".format(i + 1)] for i in range(3)}
+    changes.append("eps_meta.base_eps_path: {0} → 事實表共識 FY{1}E–FY{2}E（原值存 base_eps_path_judge_raw）".format(
+        type(path).__name__, fy1, fy1 + 2))
+    return changes
+
+
+def normalize_v20(obj, facts=None, date=None):
     """dd2 自己的形狀修正，只做「指標字串→複製既有物件」，不補任何判斷值。
     TXN 2026-09-16 第三跑：`answers.q1_business.verdict_values.single_thing` 寫成
     「見 thesis.single_thing」字串，規格要物件；thesis.single_thing 本身是完整物件，
@@ -614,6 +706,7 @@ def normalize_v20(obj):
             if isinstance(gov.get(k), str):
                 gov[k] = {"note": gov[k]}
                 changes.append("q4.verdict_values.governance.{0}: 字串 → {{\"note\": 原文}}".format(k))
+    changes += _normalize_base_eps_path(obj, facts, date)
     return obj, changes
 
 
@@ -657,7 +750,8 @@ def do_judged(ctx):
         if obj is None or not isinstance(obj, dict):
             (ctx.run_dir / "judge_raw.txt").write_text(r["result_text"], encoding="utf-8")
             return ctx.stage_end("judged", False, "judge 回覆不是 JSON 物件：{0}（原文存 judge_raw.txt）".format(err))
-    obj, changes = normalize_v20(obj)
+    facts_path = ctx.run_dir / "facts.json"
+    obj, changes = normalize_v20(obj, _load_json(facts_path) if facts_path.exists() else None, ctx.date)
     if changes:
         st["normalize_v20"] = changes
     jpath = _write_judgment(ctx, obj)

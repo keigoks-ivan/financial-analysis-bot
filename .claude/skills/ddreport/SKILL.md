@@ -1,11 +1,13 @@
 ---
 name: ddreport
-version: v5.1
+version: v5.2
 released: 2026-09-23
 description: "任何 DD 觸發語 → `python3 scripts/dd2/run.py {T}`（v20 管線，2026-09-17 起預設；並行期一週，舊鏈 `scripts/ddreport.py run {T}` 保留可叫）。四通 LLM：sonnet 每軸一通採證 → opus 單輪判斷 → sonnet 單輪閘（紅燈一通 patch map 再閘一次，仍紅停下交人）→ sonnet 前後半並行散文；其餘零 LLM，完成自動 finish＋commit＋push。觸發：『{ticker} DD』『個股分析 {ticker}』『{ticker} 定見』『最終判斷 {ticker}』『該不該進場 {ticker}』『買不買 {ticker}』『conviction analysis {ticker}』『{ticker} dca』『{ticker} 全套』『{ticker} 走完整流程』『ddreport {ticker}』『/ddreport {ticker}』。裸 ticker 與『這檔如何／值不值得研究／先篩一下 {ticker}／{ticker} 快篩』仍走 stock-screen-v1。"
 ---
 
-# ddreport v5.1（v20 管線，dd2）
+# ddreport v5.2（v20 管線，dd2）
+
+> v5.2（2026-09-23）：stage0 多做舊逐字稿摘要（前一季＋投資人日／分析師日，sonnet 每篇一通，永久快取），判斷與閘 bundle 加「④b 舊逐字稿摘錄」段；normalize_v20 自動修 `eps_meta.base_eps_path`（基期鍵補 A、陣列改用事實表共識重建）。AMD 實測：摘要兩篇 $2.07（之後免費），判斷引用舊場次 16 處，閘 0 紅。
 
 > v5.1（2026-09-23）：判斷／修補改 opus（Fable 太貴），閘換 sonnet（跨模型冷讀，照 `GATE_MODEL_FOR`）。模型用 CLI 簡稱，自動指向最新版。要回舊組合：`--judgment-model fable`（閘自動回 opus）。
 
