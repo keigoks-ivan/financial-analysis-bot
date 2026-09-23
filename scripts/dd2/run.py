@@ -258,6 +258,27 @@ def _digest_targets(evidence):
     return out
 
 
+def _stage0_part_ok(spec, part, py):
+    """--resume 沿用判定：part 在、形狀合格、不是上一輪寫的缺口檔。"""
+    if not part.exists():
+        return False
+    try:
+        data = _load_json(part)
+    except (OSError, ValueError):
+        return False
+    sid = spec["id"]
+    if sid == "a1_numbers":
+        items = (((data.get("numbers") or {}).get("latest_quarter_kpis")) or {}).get("items") or []
+        return len(items) >= 4
+    if sid.startswith("a2_"):
+        return _sub([py, SCRIPTS_DIR / "validate_digest.py", part,
+                     "--transcripts", Path(spec["transcript"]).parent])[0] == 0
+    cov = (data.get("coverage") or {}).get(spec.get("axis_id")) or {}
+    if "(agent incomplete)" in (cov.get("queries_run") or []):
+        return False
+    return _sub([py, SCRIPTS_DIR / "validate_evidence.py", "--part", part])[0] == 0
+
+
 def do_stage0(ctx):
     st = ctx.stage_begin("stage0")
     run_dir = ctx.run_dir
@@ -333,8 +354,10 @@ def do_stage0(ctx):
     # 事實表因此沒有舊逐字稿內容，判斷者無從對照「以前說的做到沒」。同一份逐字稿走永久快取。
     digest_targets = _digest_targets(evidence)
     st["digest_targets"] = [str(p) for p in digest_targets]
-    for old in parts_dir.glob("digest_*.json"):
-        old.unlink()
+    if not ctx.args.resume:  # 只清 digest_{k}.json；digest_path.json 是 plan 寫的接線檔，不能刪
+        for old in parts_dir.iterdir():
+            if re.fullmatch(r"digest_\d+\.json", old.name):
+                old.unlink()
     for k, target in enumerate(digest_targets, start=1):
         part_rel = "parts/digest_{0}.json".format(k)
         cached = ddreport._digest_cache_lookup(target)
@@ -352,25 +375,33 @@ def do_stage0(ctx):
                       "budget_cache_read": ddreport.BUDGET_CACHE_READ_DIGEST_PER_FILE, "run_dir": str(run_dir),
                       "transcript": str(target)})
     st["spawn_list"] = [{k: v for k, v in s.items() if k != "run_dir"} for s in specs]
+    py = _pick_python()
+
+    # --resume：上一輪已交且合格的 part 直接沿用，只重派沒交或不合格的（2026-09-23 持有人：
+    # 卡住不該整段重跑；STX 首跑只有 numbers 撞輪數，其餘 18 通都是好的）。
+    to_spawn = specs
+    if ctx.args.resume:
+        to_spawn = [s for s in specs if not _stage0_part_ok(s, run_dir / s["out"], py)]
+        st["reused_parts"] = [s["id"] for s in specs if s not in to_spawn]
     ctx.save()
 
-    if specs:
+    if to_spawn:
         # dd_headless.spawn_many 用 spec["out"] 當 raw JSON 落點；子 agent 自己 Write part。
-        for s in specs:
-            s["out"] = "agents/{0}.json".format(s["id"])
-            # 2026-09-23 AMD：--resume 時上一輪的 part（含缺口檔）還在，子 agent 沒有 Read 不能覆寫，
-            # 程式又把舊缺口檔當合格 → 先刪
-            stale_part = run_dir / [x for x in st["spawn_list"] if x["id"] == s["id"]][0]["out"]
+        # 用複本改 out，specs 本身保留 part 路徑給下面驗收用。
+        spawn_specs = []
+        for s in to_spawn:
+            # 2026-09-23 AMD：上一輪的 part（含缺口檔）還在時，子 agent 沒有 Read 不能覆寫 → 先刪
+            stale_part = run_dir / s["out"]
             if stale_part.exists():
                 stale_part.unlink()
-        results = dd_headless.spawn_many(specs, max_parallel=STAGE0_MAX_PARALLEL)
-        for s, r in zip(specs, results):
+            spawn_specs.append(dict(s, out="agents/{0}.json".format(s["id"])))
+        results = dd_headless.spawn_many(spawn_specs, max_parallel=STAGE0_MAX_PARALLEL)
+        for s, r in zip(spawn_specs, results):
             r = _enrich_from_raw(r or {"ok": False}, run_dir / s["out"])
             st["agent_usage"].append(_usage_record(s["id"], r, {"axis_id": s.get("axis_id")}))
         ctx.save()
 
     # 驗 part；缺檔或不合格 → 寫成 none＋note，不重試
-    py = _pick_python()
     incomplete = []
     for s in specs:
         if s["id"] == "a1_numbers":
@@ -382,7 +413,7 @@ def do_stage0(ctx):
                 part.replace(part.with_name(part.name + ".rejected"))
                 st.setdefault("digest_rejected", []).append(s["id"])
             continue
-        part = run_dir / [x for x in st["spawn_list"] if x["id"] == s["id"]][0]["out"]
+        part = run_dir / s["out"]
         ok = part.exists()
         if ok:
             rc, out = _sub([py, SCRIPTS_DIR / "validate_evidence.py", "--part", part])

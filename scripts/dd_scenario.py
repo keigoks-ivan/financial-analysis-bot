@@ -132,7 +132,9 @@ def compute(data):
 
     base_row = rows["base"]
     val_dep = False
-    if base_row["ex_div_total"]:
+    # 2026-09-23 STX：re-rate −12.7%、合計 −4.8% 時比值 2.6 被誤標估值依賴——負負得正。
+    # 規則本意是「報酬靠倍數擴張撐」，所以兩者都要是正的才算。
+    if base_row["ex_div_total"] > 0 and base_row["rerate_contrib"] > 0:
         ratio = base_row["rerate_contrib"] / base_row["ex_div_total"]
         if ratio >= 0.40:
             val_dep = True
