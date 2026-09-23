@@ -90,6 +90,10 @@ Change log:
     2026-09-02 市況主控台上線：MENU["market"] 新增「市況主控台」("market", /market/)
         置於群首位（原首位情報監視器順移第二）；PREFIX_ACTIVE 新增 market/ 前綴映射。
         見 notes/site-internal/root/_market_cockpit_design_20260902.md。
+    2026-09-23：研究 ▾ 下拉新增「個股儀表板」("sdash", /stock-dash/)，緊接在「個股
+        研究」(thub) 之後；PREFIX_ACTIVE 新增 stock-dash/ 前綴映射到 ("research",
+        "sdash")。外部 3 repo synced literal 同步（v7-backtest／morning-briefing／
+        minervini-quality-backtest，見 site-composition.md）。
 """
 
 import re
@@ -158,6 +162,7 @@ MENU = {
     # /t/ 或 /id/ 分頁，故選單只留三個真實頂層目的地；下拉形態不變。
     "research": [
         ("thub", "/t/", "個股研究"),
+        ("sdash", "/stock-dash/", "個股儀表板"),
         ("id", "/id/", "產業研究"),
         ("tier", "/id/tier_matrix.html", "Tier Matrix"),
     ],
@@ -318,6 +323,7 @@ PREFIX_ACTIVE = [
     # "thub"；供應鏈地圖是 /id/ 的一個分頁，改指 "id"。效果＝這些頁面瀏覽時
     # 對應下拉項與群一起高亮，不退化成純群高亮。
     ("t/", ("research", "thub")),  # 個股研究（2026-07-11 新增；2026-08-20 改名）
+    ("stock-dash/", ("research", "sdash")),  # 個股儀表板（2026-09-23 新增）
     ("research/synthesis/", ("research", "thub")),
     ("research/", ("research", "thub")),
     ("dd/", ("research", "thub")),
@@ -439,6 +445,11 @@ SKIP_FILES = {
     "pm/_body.html",                             # iframe 片段（持倉週掃分頁）
     "track-record/index.html",                   # redirect stub -> /long-track/#record
     "track-record/_body.html",                   # iframe 片段（裁決實績分頁）
+    # 2026-09-23：/stock-dash/full.html 是 assemble_prod.py::build_full_redirect() 產出的純
+    # meta-refresh redirect stub（不含 <body> 實質內容），每次 assemble_prod.py 跑都會整檔改寫
+    # 回這個純版本——若不排除，site_nav.py 全站 sweep 會注入 nav，下次 assemble_prod.py 一跑
+    # 又被蓋掉，兩邊互相打架、反覆造成 diff churn（比照 picks/index.html 等既有 redirect stub）。
+    "stock-dash/full.html",                      # redirect stub -> index.html
 }
 
 
