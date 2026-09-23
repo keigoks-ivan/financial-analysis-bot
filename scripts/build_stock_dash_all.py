@@ -59,8 +59,16 @@ DD_SCREENER_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 OUT_DIR = ROOT / "docs" / "stock-dash" / "data"
 BUILD_REPORT_PATH = OUT_DIR / "_build_report.json"
 
-DEFAULT_WORKERS = 6          # bounded parallelism sized for a GitHub-hosted runner
+DEFAULT_WORKERS = 2          # bounded parallelism — kept deliberately low: workers=6 got the
+                              # GitHub runner's IP yfinance-rate-limited around ticker #186/339
+                              # (run 35823204018, 2026-09-23), after which every remaining ticker
+                              # failed in 1-2s with YFRateLimitError for the rest of the run.
 DEFAULT_TIMEOUT_S = 240      # per-ticker hard timeout; typical build is ~40s
+DEFAULT_STAGGER_S = 1.5      # minimum gap between *submitting* consecutive ticker builds, so a
+                              # burst of `workers` subprocesses never all hit yfinance at once.
+RATE_LIMIT_BACKOFFS_S = [60, 120, 240]  # wait before each retry pass over YFRateLimitError failures
+FAIL_THRESHOLD_PCT = 10      # exit non-zero (job goes red) if more than this % of tickers still
+                              # failed after retries — see main() for why this is safe for deploy.
 
 sys.path.insert(0, str(SCRIPTS_DIR))
 import build_stock_dash as bsd  # noqa: E402  (needs sys.path set up first)
@@ -124,17 +132,45 @@ def build_one(python_bin, ticker, timeout, env, extra_args):
         )
         dt = time.time() - t0
         if proc.returncode != 0:
+            stderr_tail = proc.stderr[-2000:] if proc.stderr else ""
             return {
                 "ticker": ticker, "ok": False, "seconds": round(dt, 1),
                 "error": f"exit {proc.returncode}",
-                "stderr_tail": proc.stderr[-2000:] if proc.stderr else "",
+                "stderr_tail": stderr_tail,
+                # yfinance raises this uncaught (see yfinance.exceptions.YFRateLimitError),
+                # so its class name always lands in the traceback build_stock_dash.py prints
+                # to stderr on the way to its exit-1 — cheap, reliable signal to retry on.
+                "rate_limited": "YFRateLimitError" in stderr_tail,
             }
         return {"ticker": ticker, "ok": True, "seconds": round(dt, 1)}
     except subprocess.TimeoutExpired:
         return {"ticker": ticker, "ok": False, "seconds": round(time.time() - t0, 1),
-                 "error": f"timeout after {timeout}s"}
+                 "error": f"timeout after {timeout}s", "rate_limited": False}
     except Exception as e:  # noqa: BLE001
-        return {"ticker": ticker, "ok": False, "seconds": round(time.time() - t0, 1), "error": str(e)}
+        return {"ticker": ticker, "ok": False, "seconds": round(time.time() - t0, 1),
+                 "error": str(e), "rate_limited": False}
+
+
+def run_batch(tickers, python_bin, timeout, env, extra_args, workers, stagger):
+    """Build `tickers` with bounded parallelism, pacing how fast new subprocesses
+    are *submitted* (not just how many run at once) so `workers` of them never all
+    hit yfinance in the same instant. Returns {ticker: result_dict}, one entry per
+    input ticker."""
+    results = {}
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        futs = {}
+        for i, t in enumerate(tickers):
+            if i > 0 and stagger > 0:
+                time.sleep(stagger)
+            futs[ex.submit(build_one, python_bin, t, timeout, env, extra_args)] = t
+        n_done = 0
+        for fut in as_completed(futs):
+            r = fut.result()
+            results[r["ticker"]] = r
+            n_done += 1
+            tag = "ok" if r["ok"] else f"FAIL ({r.get('error')})"
+            print(f"[build_stock_dash_all] ({n_done}/{len(tickers)}) {r['ticker']}: {tag} in {r['seconds']}s")
+    return results
 
 
 def main():
@@ -148,6 +184,10 @@ def main():
     ap.add_argument("--python", default=sys.executable, help="python interpreter to invoke build_stock_dash.py with")
     ap.add_argument("--hist-cache-dir", default=None,
                      help="dir for the shared SPY-history cache (default: a fresh temp dir, cleaned up on a clean exit)")
+    ap.add_argument("--stagger", type=float, default=DEFAULT_STAGGER_S,
+                     help=f"minimum seconds between submitting consecutive ticker builds (default {DEFAULT_STAGGER_S})")
+    ap.add_argument("--fail-threshold-pct", type=float, default=FAIL_THRESHOLD_PCT,
+                     help=f"exit non-zero if more than this %% of tickers still fail after retries (default {FAIL_THRESHOLD_PCT})")
     args = ap.parse_args()
 
     started_at = datetime.now(timezone.utc)
@@ -185,26 +225,39 @@ def main():
     if args.state_dir:
         extra_args += ["--state-dir", args.state_dir]
 
-    results = []
-    with ThreadPoolExecutor(max_workers=args.workers) as ex:
-        futs = {ex.submit(build_one, args.python, t, args.timeout, env, extra_args): t for t in tickers}
-        n_done = 0
-        for fut in as_completed(futs):
-            r = fut.result()
-            results.append(r)
-            n_done += 1
-            tag = "ok" if r["ok"] else f"FAIL ({r.get('error')})"
-            print(f"[build_stock_dash_all] ({n_done}/{len(tickers)}) {r['ticker']}: {tag} in {r['seconds']}s")
+    results = run_batch(tickers, args.python, args.timeout, env, extra_args, args.workers, args.stagger)
+
+    # Retry pass: a ticker that failed with YFRateLimitError gets a few more chances,
+    # each after a longer backoff, on the theory that the runner's IP just needs to
+    # cool off (see the run 35823204018 incident in the DEFAULT_WORKERS comment above).
+    # Non-rate-limited failures (e.g. 5274.TW / 8299.TW's "Quote not found" 404, which
+    # will never succeed) are left alone — retrying them would just burn backoff time.
+    retry_passes = []
+    for round_num, backoff in enumerate(RATE_LIMIT_BACKOFFS_S, start=1):
+        rate_limited = [t for t in tickers if not results[t]["ok"] and results[t].get("rate_limited")]
+        if not rate_limited:
+            break
+        print(f"[build_stock_dash_all] retry pass {round_num}/{len(RATE_LIMIT_BACKOFFS_S)}: "
+              f"{len(rate_limited)} rate-limited ticker(s), waiting {backoff}s before retrying: "
+              f"{', '.join(rate_limited)}")
+        time.sleep(backoff)
+        retry_results = run_batch(rate_limited, args.python, args.timeout, env, extra_args, args.workers, args.stagger)
+        n_recovered = sum(1 for r in retry_results.values() if r["ok"])
+        print(f"[build_stock_dash_all] retry pass {round_num} recovered {n_recovered}/{len(rate_limited)}")
+        retry_passes.append({"pass": round_num, "backoff_seconds": backoff,
+                              "n_retried": len(rate_limited), "n_recovered": n_recovered})
+        results.update(retry_results)
 
     if own_hist_cache_dir:
         shutil.rmtree(hist_cache_dir, ignore_errors=True)
 
     finished_at = datetime.now(timezone.utc)
     total_seconds = time.time() - t_start
-    seconds_list = sorted(r["seconds"] for r in results)
+    results_list = [results[t] for t in tickers]
+    seconds_list = sorted(r["seconds"] for r in results_list)
     failures = [{"ticker": r["ticker"], "error": r.get("error"), "seconds": r["seconds"],
-                 "stderr_tail": r.get("stderr_tail", "")} for r in results if not r["ok"]]
-    n_ok = len(results) - len(failures)
+                 "stderr_tail": r.get("stderr_tail", "")} for r in results_list if not r["ok"]]
+    n_ok = len(results_list) - len(failures)
 
     def pct(p):
         if not seconds_list:
@@ -231,17 +284,30 @@ def main():
             "mean": round(sum(seconds_list) / len(seconds_list), 1) if seconds_list else None,
         },
         "shared_files": shared_status,
+        "retry_passes": retry_passes,
         "failures": failures,
     }
     BUILD_REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    print(f"[build_stock_dash_all] done in {total_seconds:.1f}s — {n_ok}/{len(tickers)} ok, {len(failures)} failed")
+    fail_pct = (len(failures) / len(tickers) * 100) if tickers else 0.0
+    print(f"[build_stock_dash_all] done in {total_seconds:.1f}s — {n_ok}/{len(tickers)} ok, "
+          f"{len(failures)} failed ({fail_pct:.1f}%)")
     print(f"[build_stock_dash_all] report written to {BUILD_REPORT_PATH}")
     if failures:
         print(f"[build_stock_dash_all] failed tickers: {', '.join(f['ticker'] for f in failures)}")
-    # Individual ticker failures never fail the batch (that's the whole point of
-    # this script) — only a setup problem (no tickers found) exits non-zero,
-    # handled above before any work started.
+    # A handful of individual ticker failures never fail the batch (that's the whole
+    # point of this script) — but if more than --fail-threshold-pct still failed even
+    # after the rate-limit retries above, something is systemically wrong (e.g. the
+    # whole run got rate-limited again), so the job exits non-zero to go red instead of
+    # silently publishing a run that's missing a large chunk of tickers. This is safe
+    # for deploy-pages.yml: its artifact-restore step only ever downloads this
+    # workflow's *last successful* run (`gh run list --status success`), so a failed
+    # run here is simply skipped and the site keeps serving the previous good day's
+    # data instead of this run's holes.
+    if fail_pct > args.fail_threshold_pct:
+        print(f"[build_stock_dash_all] FAILING: {fail_pct:.1f}% of tickers failed, "
+              f"over the {args.fail_threshold_pct}% threshold.", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
