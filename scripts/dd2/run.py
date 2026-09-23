@@ -227,16 +227,29 @@ def _price_move_pct(ctx, evidence):
     return None
 
 
-_DIGEST_OPTIONAL_RE = re.compile(r"investor.?day|analyst.?day|capital.?markets.?day|analyst.?investor", re.I)
+_DIGEST_OPTIONAL_RE = re.compile(
+    r"investor.?day|analyst.?day|capital.?markets.?day|analyst.?investor|shareholder.?analyst", re.I)
+_TRANSCRIPT_DATE_RE = re.compile(r"_(\d{8})\.md$")
+DIGEST_POST_QUARTER_MAX = 3
 
 
 def _digest_targets(evidence):
     """前一季法說（recent_four_quarters 倒數第二篇；最後一篇＝最新一季全文另給判斷者）
-    ＋ high_signal_optional 裡檔名像投資人日／分析師日的場次。"""
+    ＋ high_signal_optional 裡檔名像投資人日／分析師日的場次
+    ＋ 最新一季法說之後的場次（同資料夾、檔名日期較新，最多 3 篇取最新）。
+    2026-09-23 STX：選檔器的窗口止於最新一季法說，9 月 Citi／Goldman 會議不在清單裡，
+    但那是管理層最新的說法；Seagate 投資人日叫 Shareholder_Analyst_Call。"""
     sel = ((evidence.get("transcripts") or {}).get("selected")) or {}
     recent4 = sel.get("recent_four_quarters") or []
     picks = list(recent4[-2:-1]) + [p for p in (sel.get("high_signal_optional") or [])
                                     if _DIGEST_OPTIONAL_RE.search(Path(p).name)]
+    if recent4:
+        latest = Path(recent4[-1])
+        m = _TRANSCRIPT_DATE_RE.search(latest.name)
+        if m and latest.parent.is_dir():
+            newer = sorted((mm.group(1), str(p)) for p in latest.parent.glob("*.md")
+                           for mm in [_TRANSCRIPT_DATE_RE.search(p.name)] if mm and mm.group(1) > m.group(1))
+            picks += [p for _d, p in newer[-DIGEST_POST_QUARTER_MAX:]]
     seen, out = set(), []
     for p in picks:
         if p not in seen and Path(p).exists():

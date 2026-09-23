@@ -53,3 +53,18 @@ def test_list_non_december_fiscal_year():
 def test_list_left_alone_without_facts():
     o, ch = run.normalize_v20(_obj([1, 2, 3]), None, "20260923")
     assert o["eps_meta"]["base_eps_path"] == [1, 2, 3] and ch == []
+
+
+def test_digest_targets_prev_quarter_investor_day_and_post_quarter(tmp_path):
+    names = ["X_Q3_2026_Earnings_Call_20260428.md", "X_Q4_2026_Earnings_Call_20260728.md",
+             "X_Shareholder_Analyst_Call_X_plc_20250522.md", "X_Citi_20260909.md",
+             "X_Goldman_20260910.md", "X_A_20260801.md", "X_B_20260802.md", "X_Old_Conf_20250101.md"]
+    for n in names:
+        (tmp_path / n).write_text("x")
+    p = lambda n: str(tmp_path / n)
+    ev = {"transcripts": {"selected": {
+        "recent_four_quarters": [p(names[0]), p(names[1])],
+        "high_signal_optional": [p(names[2]), p(names[7])]}}}
+    got = [x.name for x in run._digest_targets(ev)]
+    assert got == ["X_Q3_2026_Earnings_Call_20260428.md", "X_Shareholder_Analyst_Call_X_plc_20250522.md",
+                   "X_B_20260802.md", "X_Citi_20260909.md", "X_Goldman_20260910.md"]
