@@ -1584,6 +1584,19 @@ def render_v19_appA_html(j: dict, meta: dict, facts: dict | None) -> str:
 
 # ---- v19 專用附錄 B（證據清單，facts.findings_digest，缺就不寫此段） ------
 
+# 2026-09-24：採證 agent 抄的來源字串常見「新聞稿, 」「研究, 」這種中文接半形標點，
+# qc.py 的 CJK 標點檢查會擋整份報告（AMD、STX 各撞一次）。只在附錄 B 顯示時轉全形，
+# facts 原檔不動（閘的輸入簽章綁 facts／evidence）。字元集同 qc.py 的 CJK。
+_APPB_CJK_PUNCT_RE = re.compile(r"([㐀-䶿一-鿿豈-﫿])([,.:])")
+_APPB_FULLWIDTH = {",": "，", ".": "。", ":": "："}
+
+
+def _appb_text(s):
+    if not isinstance(s, str):
+        return s
+    return _APPB_CJK_PUNCT_RE.sub(lambda m: m.group(1) + _APPB_FULLWIDTH[m.group(2)], s)
+
+
 def render_v19_appB_html(facts: dict | None) -> str | None:
     items = (facts or {}).get("findings_digest") or []
     if not items:
@@ -1604,7 +1617,7 @@ def render_v19_appB_html(facts: dict | None) -> str | None:
             "<tr><td>{dot}{lab}</td><td>{claim}</td><td>{src}</td><td>{date}</td></tr>".format(
                 dot=_dot(_DIRECTION_DOT_V19.get(direction, "⚪")),
                 lab=esc(_DIRECTION_LABEL_V19.get(direction, "—")),
-                claim=esc(it.get("claim")), src=esc(it.get("source")), date=esc(it.get("as_of")),
+                claim=esc(_appb_text(it.get("claim"))), src=esc(_appb_text(it.get("source"))), date=esc(it.get("as_of")),
             )
         )
     if not rows:

@@ -341,8 +341,13 @@ def do_stage0(ctx):
     # numbers：一通，或沿用
     numbers_fresh = ctx.store.numbers_fresh(new_quarter=new_q)
     if numbers_fresh:
+        lqk = numbers_fresh.get("latest_quarter_kpis")
+        # 存的時候包了兩層（put_numbers 收 {"latest_quarter_kpis": …, "price_at_dd": …} 又放進
+        # record["latest_quarter_kpis"]）；讀時拆到有 items 那層。2026-09-24 STX 重跑撞到 0 項。
+        if isinstance(lqk, dict) and "items" not in lqk and isinstance(lqk.get("latest_quarter_kpis"), dict):
+            lqk = lqk["latest_quarter_kpis"]
         _atomic_write_json(parts_dir / "numbers_collect.json",
-                           {"numbers": {"latest_quarter_kpis": numbers_fresh.get("latest_quarter_kpis")}})
+                           {"numbers": {"latest_quarter_kpis": lqk}})
         st["numbers_reused"] = True
     elif (prompts_dir / "a1_numbers.md").exists():
         specs.append({"id": "a1_numbers", "model": "sonnet", "prompt": "prompts/a1_numbers.md",
@@ -354,6 +359,9 @@ def do_stage0(ctx):
     # 事實表因此沒有舊逐字稿內容，判斷者無從對照「以前說的做到沒」。同一份逐字稿走永久快取。
     digest_targets = _digest_targets(evidence)
     st["digest_targets"] = [str(p) for p in digest_targets]
+    # digest_0.json 是舊鏈 plan 的「沿用舊摘要」檔，dd2 自己選檔，留著會與 digest_{k} 重複
+    if (parts_dir / "digest_0.json").exists():
+        (parts_dir / "digest_0.json").unlink()
     if not ctx.args.resume:  # 只清 digest_{k}.json；digest_path.json 是 plan 寫的接線檔，不能刪
         for old in parts_dir.iterdir():
             if re.fullmatch(r"digest_\d+\.json", old.name):

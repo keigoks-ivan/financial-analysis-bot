@@ -31,3 +31,11 @@ def test_eps_driven_not_dependent():
 
 def test_negative_rerate_positive_total_not_dependent():
     assert dd_scenario.compute(_data(12.0, 15.0))["valuation_dependent"] is False
+
+
+def test_appb_cjk_halfwidth_punct_converted():
+    import gen_dd_tables
+    facts = {"findings_digest": [{"direction": "+", "claim": "需求強勁.", "source": "Gartner 新聞稿, https://x.com/a.b",
+                                  "as_of": "2026-09-01"}]}
+    out = gen_dd_tables.render_v19_appB_html(facts)
+    assert "新聞稿， https://x.com/a.b" in out and "強勁。" in out
