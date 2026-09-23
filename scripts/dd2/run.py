@@ -53,6 +53,11 @@ STAGE0_MAX_PARALLEL = int(os.environ.get("DD_MAX_PARALLEL", "12"))
 # Koyfin 下載逾時寫死 300 秒（session 過期會等滿才退回磁碟）；磁碟逐字稿在這天數內就把逾時壓到 15 秒。
 KOYFIN_DISK_FRESH_DAYS = 100
 KOYFIN_FAST_TIMEOUT = 15
+# 2026-09-24 持有人：逐字稿要自動抓。plan 前 dd2 自己先跑一次下載（只取最新 30 篇新稿；
+# 下載器預設由舊到新，首次大量回補會在逾時前卡在舊稿）。沒新稿約 6 秒、session 過期會立刻退出。
+# 之後 cmd_plan 內建那次下載一律走 15 秒快路徑（已抓完，只剩列清單）。
+KOYFIN_PREFETCH_LIMIT = 30
+KOYFIN_PREFETCH_TIMEOUT = 240
 JUDGE_THINKING_CAP = 32_000
 JUDGE_BUDGET = ddreport.JUDGE_BUDGET_CACHE_READ
 GATE_BUDGET = ddreport.GATE_BUDGET_CACHE_READ
@@ -179,13 +184,47 @@ def _disk_transcript_age_days(ticker, date_yyyymmdd):
     return (d1 - d0).days
 
 
+def _koyfin_prefetch(ticker):
+    """跑 koyfin_downloader.py 抓新逐字稿。回 dict（new／status／seconds／note），不拋錯——
+    抓不到就用磁碟既有逐字稿，跟舊行為一樣。"""
+    t0 = time.time()
+    if not ddreport.KOYFIN_DOWNLOADER.exists():
+        return {"status": "downloader_missing", "new": None, "seconds": 0}
+    try:
+        r = subprocess.run([ddreport._koyfin_python(), str(ddreport.KOYFIN_DOWNLOADER), "--tickers", ticker,
+                            "--limit", str(KOYFIN_PREFETCH_LIMIT)],
+                           cwd=str(ddreport.KOYFIN_DIR), capture_output=True, text=True,
+                           timeout=KOYFIN_PREFETCH_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return {"status": "timeout", "new": None, "seconds": int(time.time() - t0)}
+    out = (r.stdout or "") + (r.stderr or "")
+    m = re.search(r"(\d+) new transcript\(s\) downloaded", out)
+    res = {"status": "ok" if r.returncode == 0 else "failed", "new": int(m.group(1)) if m else None,
+           "seconds": int(time.time() - t0)}
+    if r.returncode != 0:
+        res["note"] = out.strip()[-400:]
+        if re.search(r"expired|log ?in|sign-?in", out, re.I):
+            res["status"] = "session_expired"
+    return res
+
+
 def do_plan(ctx):
+    prefetch = None
+    if not (ctx.args.skip_koyfin or ctx.args.offline):
+        prefetch = _koyfin_prefetch(ctx.ticker)
+        if prefetch["status"] == "ok":
+            print("koyfin 逐字稿：新抓 {0} 篇（{1} 秒）".format(prefetch["new"], prefetch["seconds"]))
+        elif prefetch["status"] == "session_expired":
+            print("[warn] Koyfin 登入過期，這次用磁碟既有逐字稿。重新登入：cd ~/scripts/koyfin-downloader && "
+                  ".venv/bin/python koyfin_downloader.py --login", file=sys.stderr)
+        else:
+            print("[warn] Koyfin 逐字稿下載 {0}，改用磁碟既有逐字稿".format(prefetch["status"]), file=sys.stderr)
     ns = argparse.Namespace(
         ticker=ctx.ticker, date=ctx.date, archetype=ctx.args.archetype, peers=ctx.args.peers,
         segments=None, axes_per_batch=1, offline=ctx.args.offline, reuse_days=0,
     )
     age = _disk_transcript_age_days(ctx.ticker, ctx.date)
-    fast = ctx.args.skip_koyfin or (age is not None and age <= KOYFIN_DISK_FRESH_DAYS)
+    fast = ctx.args.skip_koyfin or prefetch is not None or (age is not None and age <= KOYFIN_DISK_FRESH_DAYS)
     prev_timeout = ddreport.KOYFIN_DOWNLOAD_TIMEOUT
     if fast:
         ddreport.KOYFIN_DOWNLOAD_TIMEOUT = KOYFIN_FAST_TIMEOUT
@@ -197,6 +236,7 @@ def do_plan(ctx):
     ctx.load_manifest()
     st = ctx.stage_begin("plan")
     st["koyfin_fast_path"] = bool(fast)
+    st["koyfin_prefetch"] = prefetch
     st["disk_transcript_age_days"] = age
     st["seconds"] = int(time.time() - t0)
     ok = rc == 0 and (ctx.run_dir / "evidence.json").exists() and (ctx.run_dir / "axes.json").exists()

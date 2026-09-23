@@ -68,3 +68,23 @@ def test_digest_targets_prev_quarter_investor_day_and_post_quarter(tmp_path):
     got = [x.name for x in run._digest_targets(ev)]
     assert got == ["X_Q3_2026_Earnings_Call_20260428.md", "X_Shareholder_Analyst_Call_X_plc_20250522.md",
                    "X_B_20260802.md", "X_Citi_20260909.md", "X_Goldman_20260910.md"]
+
+
+class _R:
+    def __init__(self, rc, out):
+        self.returncode, self.stdout, self.stderr = rc, out, ""
+
+
+def test_koyfin_prefetch_ok_expired_timeout(monkeypatch):
+    import subprocess
+    monkeypatch.setattr(run.ddreport, "KOYFIN_DOWNLOADER", Path(__file__))  # 存在即可
+    monkeypatch.setattr(run.subprocess, "run", lambda *a, **k: _R(0, "  STX: 3 new transcript(s) downloaded\n"))
+    assert run._koyfin_prefetch("STX")["new"] == 3
+    monkeypatch.setattr(run.subprocess, "run",
+                        lambda *a, **k: _R(1, "Koyfin session appears to be expired (redirected to a login page)"))
+    assert run._koyfin_prefetch("STX")["status"] == "session_expired"
+
+    def _boom(*a, **k):
+        raise subprocess.TimeoutExpired(cmd="x", timeout=1)
+    monkeypatch.setattr(run.subprocess, "run", _boom)
+    assert run._koyfin_prefetch("STX")["status"] == "timeout"

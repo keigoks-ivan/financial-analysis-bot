@@ -8,6 +8,7 @@ description: "任何 DD 觸發語 → `python3 scripts/dd2/run.py {T}`（v20 管
 # ddreport v5.2（v20 管線，dd2）
 
 > v5.2（2026-09-23）：stage0 多做舊逐字稿摘要（前一季＋投資人日／分析師日，sonnet 每篇一通，永久快取），判斷與閘 bundle 加「④b 舊逐字稿摘錄」段；normalize_v20 自動修 `eps_meta.base_eps_path`（基期鍵補 A、陣列改用事實表共識重建）。AMD 實測：摘要兩篇 $2.07（之後免費），判斷引用舊場次 16 處，閘 0 紅。
+> 2026-09-24：plan 前自動跑 Koyfin 下載（最新 30 篇新稿、逾時 240 秒；沒新稿約 6 秒）。登入過期會印重新登入指令並改用磁碟既有逐字稿；`--skip-koyfin`／`--offline` 不抓。
 
 > v5.1（2026-09-23）：判斷／修補改 opus（Fable 太貴），閘換 sonnet（跨模型冷讀，照 `GATE_MODEL_FOR`）。模型用 CLI 簡稱，自動指向最新版。要回舊組合：`--judgment-model fable`（閘自動回 opus）。
 
