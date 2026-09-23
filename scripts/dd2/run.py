@@ -5,7 +5,7 @@
                                [--judgment-model fable|opus|sonnet] [--dry-run] [--no-push]
 
 段：plan → stage0 → facts → judged → gated → brief → prose → finish
-LLM 只在 stage0（sonnet，每軸一通）、judged（Fable，單輪無工具）、gated（opus，單輪無工具）、
+LLM 只在 stage0（sonnet，每軸一通）、judged（opus，單輪無工具）、gated（sonnet，單輪無工具）、
 prose（sonnet，只有 Write）四處出手；其餘全部零 LLM，沿用 scripts/ddreport.py 與 dd_*.py 的既有工具。
 沒有修補輪：形狀錯先 `dd_project.py normalize` 一次，仍錯就 FAIL 停下。閘紅燈即 FAIL 停下。
 
@@ -59,7 +59,7 @@ GATE_BUDGET = ddreport.GATE_BUDGET_CACHE_READ
 PROSE_MAX_TURNS = 6
 PROSE_MAX_TURNS_HALF = 4  # 前後半各一通
 PROSE_BUDGET = ddreport.PROSE_BUDGET_CACHE_READ
-DEFAULT_JUDGMENT_MODEL = ddreport.DEFAULT_JUDGMENT_MODEL
+DEFAULT_JUDGMENT_MODEL = "opus"  # 2026-09-23：v20 判斷改 Opus（Fable 太貴），閘依 GATE_MODEL_FOR 換 sonnet；舊鏈仍 fable
 GATE_MODEL_FOR = ddreport.GATE_MODEL_FOR
 
 _now = ddreport._now
@@ -419,7 +419,7 @@ def do_facts(ctx):
 
 
 # ---------------------------------------------------------------------------
-# judged：Fable 單輪無工具；回覆即 JSON。形狀錯 normalize 一次，仍錯就停。
+# judged：opus 單輪無工具；回覆即 JSON。形狀錯 normalize 一次，仍錯就停。
 # ---------------------------------------------------------------------------
 
 def _write_judgment(ctx, obj):
@@ -672,7 +672,7 @@ def do_judged(ctx):
 
 
 # ---------------------------------------------------------------------------
-# gated：opus 單輪無工具；JSON 陣列；任一 🔴 即停
+# gated：sonnet 單輪無工具；JSON 陣列；任一 🔴 即停
 # ---------------------------------------------------------------------------
 
 GATE_PATCH_MAX = 1  # 2026-09-16 持有人拍板：閘紅燈後允許一通 patch map，再閘一次，仍紅就停
