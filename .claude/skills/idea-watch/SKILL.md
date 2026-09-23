@@ -19,7 +19,7 @@ description: 投資想法查核點的每日深入查核（雲端 routine `idea-w
 1. `docs/ideas/ideas.json`：每個 active 想法的查核點（`label`、`companies`、`company_names`、`keywords`、`supports_if`、`refutes_if`、`keystone`、`due`）。
 2. 每篇想法頁 `docs/ideas/<id>.html` 裡 `CPS` 陣列的中文「成立／推翻」條件（`yes`、`no`），這是判斷的主要依據；`supports_if／refutes_if` 是同一件事的英文版。
 3. `docs/ideas/data/research.json`：上一次的狀態與累積紀錄（沒有這個檔就視為第一次執行）。
-4. `https://research.investmquest.com/briefing/data/idea_hits.json`：早報 Jev 的比對，當線索用，不當結論。
+4. `docs/briefing/data/idea_hits.json`（直接讀 repo 裡的檔，不要走網址：雲端環境的網路代理會擋 research.investmquest.com）：早報 Jev 的比對，當線索用，不當結論。這個檔是前一天早報產生的。
 
 ## 步驟
 
