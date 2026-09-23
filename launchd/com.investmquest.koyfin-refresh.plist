@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  com.investmquest.koyfin-refresh — monthly Koyfin three-watchlist refresh
-  (scripts/koyfin_refresh_all.py --scrape --commit --push). 2026-09-18 持有人拍板安裝 — see
+  com.investmquest.koyfin-refresh — monthly Koyfin three-watchlist refresh.
+  2026-09-18 持有人拍板安裝 — see
   notes/site-internal/root/_koyfin_refresh_automation_20260918.md for the
   install/uninstall commands. House style copied from the existing
   ~/Library/LaunchAgents/com.investmquest.taifex-ticks.plist (read-only
   reference, not modified by this task).
+
+  2026-09-23: points at scripts/koyfin_refresh_worktree.sh instead of
+  scripts/koyfin_refresh_all.py directly. The shared working copy
+  (~/financial-analysis-bot) routinely has other Claude sessions' uncommitted
+  work sitting in it, so running unattended --commit --push straight out of
+  that directory was unsafe (autostash could mangle that work, a plain `git
+  commit` could sweep it in, and the shared copy may not even be on main).
+  The wrapper resets a dedicated worktree (~/.koyfin-refresh-worktree) to a
+  clean origin/main each run and does the scrape/build/commit/push there;
+  the shared copy's working tree is never touched by this job. See the note
+  file's "無人值守 worktree" section for the full design.
 
   Target: first Saturday of the month, 09:30 local time.
 
@@ -32,8 +43,8 @@
   <string>com.investmquest.koyfin-refresh</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/opt/homebrew/bin/python3.12</string>
-    <string>/Users/ivanchang/financial-analysis-bot/scripts/koyfin_refresh_all.py</string>
+    <string>/bin/bash</string>
+    <string>/Users/ivanchang/financial-analysis-bot/scripts/koyfin_refresh_worktree.sh</string>
     <string>--scrape</string>
     <string>--commit</string>
     <string>--push</string>

@@ -330,17 +330,53 @@ def git_commit(built: list[dict], push: bool) -> int:
         print(proc.stderr, file=sys.stderr)
         return proc.returncode
     if push:
-        proc = run(["git", "pull", "--rebase", "--autostash"])   # 無人值守：工作樹常有未提交檔，沒 autostash 會停
-        print(proc.stdout)
-        if proc.returncode != 0:
-            print(proc.stderr, file=sys.stderr)
-            return proc.returncode
-        proc = run(["git", "push", "origin", "main"])
-        print(proc.stdout)
-        if proc.returncode != 0:
-            print(proc.stderr, file=sys.stderr)
-            return proc.returncode
+        return git_push_with_retry()
     return 0
+
+
+def git_push_with_retry(max_attempts: int = 3) -> int:
+    """Push HEAD onto origin's main (`HEAD:main`, not `main` — this also
+    works from a detached-HEAD worktree whose local branch isn't literally
+    named main, as well as the ordinary case of running on branch main).
+
+    No autostash, ever: this repo's shared working copy (~/financial-analysis-bot)
+    routinely has other Claude sessions' uncommitted work sitting in it, and
+    `--autostash` can silently fold that into our rebase or lose it under a
+    conflict — see notes/site-internal/root/_koyfin_refresh_automation_20260918.md.
+    The dedicated automation worktree this now normally runs in is always
+    clean going in, so it never needs autostash in the first place. A plain
+    `git rebase` refusing on a dirty tree (manual/shared-copy runs) is the
+    correct behavior here, not a bug to route around.
+
+    Only rebases when the push is actually rejected (origin/main moved since
+    we branched); retries a few times, and on any rebase conflict aborts the
+    rebase and stops — never force-pushes."""
+    for attempt in range(1, max_attempts + 1):
+        proc = run(["git", "push", "origin", "HEAD:main"])
+        print(proc.stdout)
+        if proc.returncode == 0:
+            return 0
+        print(proc.stderr, file=sys.stderr)
+        print(f"[push] rejected (attempt {attempt}/{max_attempts}) — fetching + rebasing onto "
+              f"origin/main (no autostash; never force-push)...")
+        proc = run(["git", "fetch", "origin", "main"])
+        print(proc.stdout)
+        if proc.returncode != 0:
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        proc = run(["git", "rebase", "origin/main"])
+        print(proc.stdout)
+        if proc.returncode != 0:
+            print(proc.stderr, file=sys.stderr)
+            abort = run(["git", "rebase", "--abort"])
+            print(abort.stdout)
+            print(f"[push] rebase onto origin/main conflicted — aborted, working tree left as it was "
+                  f"before this rebase attempt. This run's commit is still local, unpushed; a human "
+                  f"needs to resolve the conflict by hand before it can go up.", file=sys.stderr)
+            return 1
+    print(f"[push] gave up after {max_attempts} attempts — origin/main kept moving faster than we "
+          f"could rebase onto it. Not force-pushing; rerun later.", file=sys.stderr)
+    return 1
 
 
 def main() -> int:

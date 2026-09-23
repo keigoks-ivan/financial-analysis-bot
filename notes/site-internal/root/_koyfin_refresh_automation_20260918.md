@@ -24,17 +24,33 @@ python3.12 scripts/koyfin_refresh_all.py --scrape --commit
 
 ```bash
 cp launchd/com.investmquest.koyfin-refresh.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.investmquest.koyfin-refresh.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.investmquest.koyfin-refresh.plist
 ```
 
 解除排程：
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.investmquest.koyfin-refresh.plist
+launchctl bootout gui/$(id -u)/com.investmquest.koyfin-refresh
 rm ~/Library/LaunchAgents/com.investmquest.koyfin-refresh.plist
 ```
 
-排程訂在每月第一個週六早上 9:30。launchd 沒有「每月第 N 個週幾」這個原生功能，plist 裡用「週六 且 日期是 1 號到 7 號」七個條件疊起來湊出「第一個週六」，檔頭註解有寫這個湊法。另外 launchd 只認電腦本身設定的時區，不是設定檔裡能指定「台北時間」——這台 Mac 系統時區若不是台北，9:30 就不是台北時間 9:30，要自己核對系統時區或改 Hour 欄位。排程執行的是 `--scrape`（不帶 `--commit`），跑完停下等人看，不會自動推上 main。log 在 `~/Library/Logs/koyfin-refresh.log`。
+排程訂在每月第一個週六早上 9:30。launchd 沒有「每月第 N 個週幾」這個原生功能，plist 裡用「週六 且 日期是 1 號到 7 號」七個條件疊起來湊出「第一個週六」，檔頭註解有寫這個湊法。另外 launchd 只認電腦本身設定的時區，不是設定檔裡能指定「台北時間」——這台 Mac 系統時區若不是台北，9:30 就不是台北時間 9:30，要自己核對系統時區或改 Hour 欄位。**2026-09-23 更正**：排程實際帶的是 `--scrape --commit --push`（不是早先這裡寫的「不帶 --commit」），跑完就真的會推上 main——見下面「無人值守 worktree」一節，push 現在跑在專用 worktree、不是共用工作目錄。log 在 `~/Library/Logs/koyfin-refresh.log`。
+
+## 無人值守 worktree（2026-09-23 補記）
+
+問題：launchd 排程原本直接在共用工作目錄 `~/financial-analysis-bot` 跑 `--scrape --commit --push`，`git_commit()` 用 `git pull --rebase --autostash` 再 push。共用工作目錄隨時可能有別的 Claude session 留著沒 commit 的東西（`git worktree`、暫存檔都可能在）；autostash 可能把那些東西攪壞，`git commit` 也可能把別人 staged 的東西一起掃進去，而且共用工作目錄不一定停在 main 分支上。
+
+修法：排程改指到 `scripts/koyfin_refresh_worktree.sh`，這支 wrapper 每次執行都：
+
+1. `git -C ~/financial-analysis-bot fetch origin main`（只讀，不動共用工作目錄的檔案）。
+2. 把專用 worktree `~/.koyfin-refresh-worktree`（第一次跑會用 `git worktree add --detach` 建出來）重置成乾淨的 detached HEAD，落在剛 fetch 下來的 origin/main（`checkout --force --detach` + `git clean -fdx`）。這個 worktree 只給這支排程用，不留任何跨次執行的狀態。
+3. `cd` 進這個 worktree，在裡面跑 `python3.12 scripts/koyfin_refresh_all.py --scrape --commit --push`。抓值、建 xlsx、跑下游 build、commit、push 全部發生在這個 worktree，不碰共用工作目錄。
+4. push 那段本身也改了（`koyfin_refresh_all.py` 的 `git_commit()`）：不再用 `--autostash`。先直接 `git push origin HEAD:main`；被拒絕（代表 main 在這之間被別人推過）才 `git fetch` + 一般的 `git rebase origin/main`（worktree 本來就是乾淨的，不需要 autostash），最多重試 3 次；只要 rebase 出現衝突，立刻 `git rebase --abort`、印清楚的錯誤訊息、非零 exit，絕不 force push。手動跑（在共用工作目錄）遇到同一段程式碼：如果共用工作目錄當下是髒的，`git rebase` 會直接拒絕（這是對的行為，不會像 autostash 那樣悄悄把別人的東西暫存起來又可能還不回去）。
+5. 跑完（不管成功或失敗）把這次 worktree 裡新產生的 raw txt + fingerprint sidecar（`data/eps-estimates/raw/*`）複製回共用工作目錄的同一個路徑，讓 owner 還是在熟悉的地方找得到。這兩份都不是 git 追蹤的檔案（`koyfin_refresh_all.py` 的 commit 邏輯本來就明講「never data/eps-estimates/raw/*.txt」），純檔案複製，不涉及 git，也不會跟共用工作目錄當下的 git 狀態衝突。worktree 本身那份下次執行前會被 `git clean -fdx` 清掉，共用工作目錄那份會留著。
+
+worktree 不需要處理的東西：Playwright 登入 profile 在 `~/.koyfin-playwright`，本來就在 repo 外、跟 worktree 或共用工作目錄都無關，兩邊共用同一份登入態。下游 build 讀的所有狀態檔（`data/ath_cache.json`、`docs/dd-screener/latest.json`、`docs/engine/*.json`、`docs/stages/data/lamp.json` 等）都是 git 追蹤的檔案，`origin/main` 一 fetch 下來就有，不用另外處理。核對過 `koyfin_scrape.py`／`koyfin_xlsx_from_raw.py`／`build_dd_screener.py`／`build_tenbagger.py`／`engine/build_arena.py` 這五支腳本，沒有任何一支寫死 `~/financial-analysis-bot` 這個路徑，也沒有依賴只存在共用工作目錄裡、沒進 git 的快取／`.env`／金鑰。全部路徑都是從各自腳本檔案位置往上推（`Path(__file__).resolve().parent.parent` 這類寫法），換到 worktree 一樣能跑。
+
+手動互動式跑法不變，還是直接在共用工作目錄跑 `python3.12 scripts/koyfin_refresh_all.py --scrape --commit`（本節開頭那個指令），這支腳本本身沒有變成「只能在 worktree 跑」。它從來就不知道、也不需要知道自己是不是在 worktree 裡。
 
 ## 三份 watchlist
 
