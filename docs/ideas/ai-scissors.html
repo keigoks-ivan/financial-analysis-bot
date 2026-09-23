@@ -48,6 +48,15 @@ p{margin:.6rem 0}
 .b-ref{color:var(--neg);background:var(--neg-bg)}
 .b-mix{color:var(--warn);background:var(--warn-bg)}
 .b-un{color:var(--sec);background:var(--mix-bg)}
+.muted-red{color:var(--neg);font-size:.84rem}
+.cpstatus-wrap{margin:14px 0 22px}
+.cpstatus-star{width:1.6em;text-align:center;color:var(--gold-deep);font-size:.9rem}
+.cpstatus-since{font-family:var(--mono);font-size:.78rem;color:var(--sec);white-space:nowrap}
+.cpstatus-note{margin-top:6px}
+.deep-toggle{font-family:var(--mono);font-size:.72rem;color:var(--accent);background:none;border:1px solid var(--line);border-radius:6px;padding:.25rem .6rem;margin:8px 0 2px;cursor:pointer}
+.deep-toggle:hover{background:var(--line-soft)}
+.deep-sources{display:block;font-size:.76rem;color:var(--muted);margin-top:2px}
+.src-type{color:var(--muted)}
 .cp{scroll-margin-top:70px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px;margin:14px 0}
 .cp-head{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
 .cp-id{font-family:var(--mono);font-size:.72rem;color:var(--gold-deep);font-weight:600}
@@ -153,6 +162,8 @@ p{margin:.6rem 0}
 <div class="meta"><span>建立 2026-09-23</span><span>·</span><span class="badge b-sup">追蹤中</span><span>·</span><span id="hit-total">早報新證據：讀取中</span></div>
 
 <div class="thesis">OpenAI 和 Anthropic 同一天把模型價格降了 20–50%，但 GPU 租金、伺服器 CPU、記憶體和發電設備同時在漲價。利潤會往交期最長、又不用背債的供應商集中。</div>
+
+<div class="cpstatus-wrap" id="cpstatus"></div>
 
 <h2>一頁摘要</h2>
 <ul class="summary">
@@ -304,67 +315,155 @@ p{margin:.6rem 0}
 (function(){
   var IDEA = 'ai-scissors';
   var CPS = [
-    {id:'cp1', t:'AI 營收成長跑贏降價（營收＝用量×單價）', when:'每季（雲廠與模型公司財報）',
+    {id:'cp1', t:'AI 營收成長跑贏降價（營收＝用量×單價）', when:'每季（雲廠與模型公司財報）', keystone:true,
      yes:'OpenAI、Anthropic 年化營收或 Azure AI、Google Cloud 在降價後仍高速成長', no:'AI 營收在降價後連兩季放緩，或 token 總用量走平',
      seed:[
       ['09-22','mix','GPT-6 Sol 降價 50%、Opus 5.5 單價降 20%；Opus 5.5 省下的成本有一部分來自少用 token','VentureBeat／Digital Applied'],
       ['09 月','sup','OpenRouter 每天處理超過 10 兆個 token','Crypto Briefing'],
       ['05 月','sup','Google 每月處理 3.2 千兆個 token，年增 7 倍','TechJack']]},
-    {id:'cp2', t:'GPU 雲同代旗艦租金與長約價格守住', when:'隨時',
+    {id:'cp2', t:'GPU 雲同代旗艦租金與長約價格守住', when:'隨時', keystone:true,
      yes:'同一代旗艦卡（B200／B300／GB300）租金或長約每 MW 價格持平或上調', no:'同一代旗艦卡租金或長約每 MW 價格下跌；舊世代卡（如 H100）降價不算',
      seed:[
       ['09-17','sup','Nebius 10/1 起 GPU 漲 17–21%，三個月內第二次漲','Investing.com'],
       ['09-16','mix','CoreWeave 新約每 MW 年化 4,000 萬美元，但都是 3–6 個月短約','BusinessWire']]},
-    {id:'cp3', t:'記憶體季度合約價續漲，供應商財測上修', when:'每季（美光 9/30、SK 海力士 10 月下旬）',
+    {id:'cp3', t:'記憶體季度合約價續漲，供應商財測上修', when:'每季（美光 9/30、SK 海力士 10 月下旬）', keystone:false,
      yes:'DRAM／HBM 季度合約價上漲、美光或 SK 海力士上修財測', no:'季度合約價下跌或供應商下修財測；只有現貨價變動不算',
      seed:[
       ['09-04','mix','36GB HBM3E 現貨約 2,100 美元，長約 300–400 美元；現貨市場小，只當參考','Seoul Economic Daily'],
       ['09-17','sup','Nebius 記憶體類機器漲 41%','shattered.io']]},
-    {id:'cp4', t:'發電與電網設備交期繼續拉長', when:'每季',
+    {id:'cp4', t:'發電與電網設備交期繼續拉長', when:'每季', keystone:false,
      yes:'渦輪、變壓器交期再拉長', no:'交期開始縮短或出現砍單',
      seed:[
       ['07-22','sup','GE Vernova：今天下單的大型燃氣渦輪 2031 年交貨','Power Engineering'],
       ['09 月','sup','Oracle Jupiter 延宕 7 個月，原因含電力與許可','Finimize']]},
-    {id:'cp5', t:'四大雲廠資本支出上修', when:'每季（10 月下旬財報）',
+    {id:'cp5', t:'四大雲廠資本支出上修', when:'每季（10 月下旬財報）', keystone:false,
      yes:'微軟、Google、亞馬遜、Meta 上修資本支出', no:'下修資本支出指引，或公司明講要放緩；維持高檔持平不算', seed:[]},
-    {id:'cp6', t:'資料中心融資還借得到錢', when:'隨時',
+    {id:'cp6', t:'資料中心融資還借得到錢', when:'隨時', keystone:false,
      yes:'貸款回到 95 以上、上市認購踴躍', no:'貸款普遍跌破 85、上市延後',
      seed:[
       ['09 月','ref','Oracle Jupiter 180 億美元貸款報價 89–91','Finimize'],
       ['09-18','mix','Nscale 申請上市：上半年虧 10.2 億美元，最大客戶佔 52%','SEC S-1'],
       ['09-16','mix','CoreWeave 發可轉債加增資籌錢擴產','BusinessWire']]},
-    {id:'cp7', t:'伺服器 CPU 供不應求（看 Intel、AMD 自己的說法）', when:'每季（Intel 10 月下旬、AMD 11 月初）',
+    {id:'cp7', t:'伺服器 CPU 供不應求（看 Intel、AMD 自己的說法）', when:'每季（Intel 10 月下旬、AMD 11 月初）', keystone:false,
      yes:'Intel、AMD 說伺服器 CPU 供不應求，或調漲價格', no:'Intel、AMD 說供給追上需求，或開始降價',
      seed:[
       ['09 月','sup','伺服器 CPU 從 3 月以來漲 10–20%，Intel、AMD 2026 年伺服器 CPU 賣完','Tom\'s Hardware'],
       ['09-17','sup','Nebius 純 CPU 機器漲 25%','Investing.com'],
       ['Q2','sup','AMD 伺服器 CPU 營收年增超過 70%','IO Fund']]},
-    {id:'cp8', t:'台積電財測、CoWoS 產能與晶圓漲價', when:'每季（10 月中法說）；月營收只當提醒',
+    {id:'cp8', t:'台積電財測、CoWoS 產能與晶圓漲價', when:'每季（10 月中法說）；月營收只當提醒', keystone:false,
      yes:'上修財測、晶圓漲價、CoWoS 需求超過產能', no:'下修財測或客戶砍單；CoWoS 擴產快到 GPU 不缺（對 GPU 雲不利）；單月營收增減不算',
      seed:[
       ['07 月','sup','第三季營收指引 446–458 億美元，年增約 37%；毛利率 65–67%','TSMC 法說'],
       ['09-14','mix','CoWoS 產能 2028 年底翻倍到每月 26 萬片：台積電營收有利，GPU 雲漲價空間縮小','TrendForce']]},
-    {id:'cp9', t:'伺服器台數：信驊營收看三個月平均年增', when:'每月（看三個月平均）',
+    {id:'cp9', t:'伺服器台數：信驊營收看三個月平均年增', when:'每月（看三個月平均）', keystone:false,
      yes:'信驊三個月平均營收年增加速', no:'三個月平均年增轉負；單月增減不算', seed:[]}
   ];
   var VB = {sup:['b-sup','支持'], ref:['b-ref','推翻'], mix:['b-mix','兩面'], un:['b-un','未判斷'],
             supports:['b-sup','支持'], refutes:['b-ref','推翻'], unjudged:['b-un','未判斷']};
+  var STATUS_VB = {supports:['b-sup','支持'], shaky:['b-mix','動搖'], refutes:['b-ref','推翻'], no_data:['b-un','尚無資料']};
+  var ENTRY_VB = {supports:['b-sup','支持'], refutes:['b-ref','推翻'], shaky:['b-mix','動搖'], neutral:['b-un','中性']};
+  var KIND_LABEL = {search:'主動搜尋', earnings:'財報', transcript:'法說逐字稿'};
+  var SRC_TYPE_LABEL = {official:'官方', data:'數據', media:'媒體'};
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function badge(v){var b=VB[v]||VB.un;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
-  function render(hits, state){
+  function statusBadge(s){var b=STATUS_VB[s]||STATUS_VB.no_data;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
+  function entryBadge(v){var b=ENTRY_VB[v]||ENTRY_VB.neutral;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
+  function keystoneOf(c, keystoneMap){
+    if(keystoneMap && Object.prototype.hasOwnProperty.call(keystoneMap, c.id)) return keystoneMap[c.id];
+    return !!c.keystone;
+  }
+  function statusOf(research, cpid){
+    return research && research.status && research.status[IDEA] && research.status[IDEA][cpid];
+  }
+  function entriesFor(research, cpid){
+    var list = ((research && research.entries) || []).filter(function(e){return e.idea===IDEA && e.checkpoint===cpid;});
+    list.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    return list;
+  }
+  function sourcesHtml(sources){
+    if(!sources || !sources.length) return '';
+    return sources.map(function(s){
+      var t = SRC_TYPE_LABEL[s.type] || s.type || '';
+      var link = s.url ? '<a href="'+esc(s.url)+'" rel="noopener">'+esc(s.title||s.url)+'</a>' : esc(s.title||'');
+      return '<span class="src-link">'+link+(t?'<span class="src-type">（'+esc(t)+'）</span>':'')+'</span>';
+    }).join('　');
+  }
+  function deepEntryLine(e){
+    var kind = KIND_LABEL[e.kind] || e.kind || '';
+    var src = sourcesHtml(e.sources);
+    return '<li><span class="d">'+esc((e.date||'').slice(5))+'</span>'+entryBadge(e.verdict)
+      +'<span>'+esc(e.summary||'')+(kind?' <span class="src">'+esc(kind)+'</span>':'')
+      +(src?'<span class="deep-sources">'+src+'</span>':'')+'</span></li>';
+  }
+  function deepBlock(research, researchState, cpid){
+    var head = '<div class="lbl muted" style="margin-top:8px">深入查核（每天 05:15）</div>';
+    if(researchState==='loading') return head+'<ul class="ev"><li class="muted">讀取中</li></ul>';
+    if(researchState==='error') return head+'<ul class="ev"><li class="muted">深入查核資料沒讀到</li></ul>';
+    var list = entriesFor(research, cpid);
+    if(!list.length) return head+'<ul class="ev"><li class="muted">還沒有深入查核紀錄</li></ul>';
+    var shown = list.slice(0,10), rest = list.slice(10);
+    var html = head+'<ul class="ev">';
+    shown.forEach(function(e){ html += deepEntryLine(e); });
+    html += '</ul>';
+    if(rest.length){
+      var mid = 'deep-more-'+cpid;
+      html += '<ul class="ev deep-more" id="'+mid+'" hidden>';
+      rest.forEach(function(e){ html += deepEntryLine(e); });
+      html += '</ul>';
+      html += '<button type="button" class="deep-toggle" data-target="'+mid+'">顯示全部（其餘 '+rest.length+' 則）</button>';
+    }
+    return html;
+  }
+  function fmtRunTime(run){
+    var t = (run && (run.finished || run.date)) || '';
+    var m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(t);
+    return m ? (m[1]+' '+m[2]) : t;
+  }
+  function statusHead(researchState, research){
+    if(researchState==='loading') return '<div class="muted">讀取中</div>';
+    if(researchState==='error') return '<div class="muted">深入查核資料沒讀到</div>';
+    var run = research && research.run;
+    if(!run || !run.status || run.status==='pending') return '<div class="muted">每天 05:15 自動查核，尚未開始</div>';
+    if(run.status==='failed') return '<div class="muted-red">最近一次查核失敗：'+esc(run.reason||'')+'</div>';
+    return '<div class="muted">最後查核 '+esc(fmtRunTime(run))+'</div>';
+  }
+  function statusTable(researchState, research, keystoneMap){
+    var rows='';
+    CPS.forEach(function(c,i){
+      var st = researchState==='ok' ? statusOf(research, c.id) : null;
+      var statusKey = st ? st.status : 'no_data';
+      var reason = st ? (st.reason||'') : (researchState==='ok' ? '尚未查核' : '');
+      var since = st ? (st.since||'') : '';
+      rows += '<tr><td class="cpstatus-star">'+(keystoneOf(c,keystoneMap)?'★':'')+'</td>'
+        +'<td><a href="#'+c.id+'">查核點 '+(i+1)+'：'+esc(c.t)+'</a></td>'
+        +'<td>'+statusBadge(statusKey)+'</td>'
+        +'<td>'+esc(reason)+'</td>'
+        +'<td class="cpstatus-since">'+esc(since)+'</td></tr>';
+    });
+    return '<div class="tbl-wrap"><table class="imq-table cpstatus-tbl"><thead><tr><th></th><th>查核點</th><th>狀態</th><th>理由</th><th>最近確認</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+  function mountStatus(researchState, research, keystoneMap){
+    document.getElementById('cpstatus').innerHTML = statusHead(researchState, research)
+      + statusTable(researchState, research, keystoneMap)
+      + '<div class="muted cpstatus-note">★ 關鍵查核點：轉為推翻時整篇重新評估。</div>';
+  }
+  function render(hits, hitsState, researchState, research, keystoneMap){
     var html='';
     CPS.forEach(function(c,i){
       var h = hits.filter(function(x){return x.checkpoint===c.id;});
-      html+='<div class="cp" id="'+c.id+'"><div class="cp-head"><span class="cp-id">查核點 '+(i+1)+'</span><span class="cp-title">'+esc(c.t)+'</span><span class="cp-when">'+esc(c.when)+'</span></div>';
+      var st = researchState==='ok' ? statusOf(research, c.id) : null;
+      var statusKey = st ? st.status : 'no_data';
+      html+='<div class="cp" id="'+c.id+'"><div class="cp-head"><span class="cp-id">查核點 '+(i+1)+'</span><span class="cp-title">'+(keystoneOf(c,keystoneMap)?'★ ':'')+esc(c.t)+'</span>'+statusBadge(statusKey)+'<span class="cp-when">'+esc(c.when)+'</span></div>';
       html+='<div class="cp-rule"><span>成立</span><span>'+esc(c.yes)+'</span><span>推翻</span><span>'+esc(c.no)+'</span></div>';
-      html+='<div class="lbl muted" style="margin-top:8px">早報新證據</div><ul class="ev">';
+      html+=deepBlock(research, researchState, c.id);
+      html+='<div class="lbl muted" style="margin-top:10px">早報新證據</div><ul class="ev">';
       if(h.length){
         h.forEach(function(x){
           var title = x.url ? '<a href="'+esc(x.url)+'" rel="noopener">'+esc(x.headline)+'</a>' : esc(x.headline);
           html+='<li><span class="d">'+esc((x.date||'').slice(5))+'</span>'+badge(x.verdict)+'<span>'+title+' <span class="src">'+esc(x.source||'')+'</span></span></li>';
         });
       } else {
-        html+='<li class="muted">'+(state==='ok'?'還沒有新證據':state)+'</li>';
+        html+='<li class="muted">'+(hitsState==='ok'?'還沒有新證據':hitsState)+'</li>';
       }
       html+='</ul>';
       if(c.seed.length){
@@ -375,23 +474,57 @@ p{margin:.6rem 0}
       html+='</div>';
     });
     document.getElementById('cps').innerHTML=html;
+    document.querySelectorAll('.deep-toggle').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var t = document.getElementById(btn.getAttribute('data-target'));
+        if(!t) return;
+        if(t.hasAttribute('hidden')){ t.removeAttribute('hidden'); btn.textContent='收合'; }
+        else { t.setAttribute('hidden',''); btn.textContent='顯示全部'; }
+      });
+    });
   }
-  render([], '讀取中');
-  fetch('/briefing/data/idea_hits.json',{cache:'no-store'}).then(function(r){
+  render([], '讀取中', 'loading', null, null);
+  mountStatus('loading', null, null);
+
+  var hitsP = fetch('/briefing/data/idea_hits.json',{cache:'no-store'}).then(function(r){
     if(r.status===404) throw new Error('404'); if(!r.ok) throw new Error('http');
     return r.json();
   }).then(function(d){
     var hits=(d.hits||[]).filter(function(x){return x.idea===IDEA && x.verdict!=='unrelated';});
     hits.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
-    render(hits,'ok');
     var sup=hits.filter(function(x){return x.verdict==='supports';}).length, ref=hits.filter(function(x){return x.verdict==='refutes';}).length;
     var t='早報新證據 '+hits.length+' 則（支持 '+sup+'、推翻 '+ref+'）';
     if(d.history==='unavailable') t+='，較早紀錄沒讀到';
     document.getElementById('hit-total').textContent=t;
+    return {hits:hits, state:'ok'};
   }).catch(function(e){
     var msg = e.message==='404' ? '早報還沒開始比對，每天 06:15 更新' : '早報紀錄沒讀到';
-    render([], msg);
     document.getElementById('hit-total').textContent=msg;
+    return {hits:[], state:msg};
+  });
+
+  var researchP = fetch('/ideas/data/research.json',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('http');
+    return r.json();
+  }).then(function(d){ return {state:'ok', data:d}; }).catch(function(){ return {state:'error', data:null}; });
+
+  var ideasP = fetch('/ideas/ideas.json',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('http');
+    return r.json();
+  }).catch(function(){ return null; });
+
+  Promise.all([hitsP, researchP, ideasP]).then(function(res){
+    var h=res[0], rs=res[1], ideasData=res[2];
+    var keystoneMap = null;
+    if(ideasData && ideasData.ideas){
+      var idea = ideasData.ideas.filter(function(x){return x.id===IDEA;})[0];
+      if(idea && idea.checkpoints){
+        keystoneMap = {};
+        idea.checkpoints.forEach(function(cp){ keystoneMap[cp.id] = !!cp.keystone; });
+      }
+    }
+    render(h.hits, h.state, rs.state, rs.data, keystoneMap);
+    mountStatus(rs.state, rs.data, keystoneMap);
   });
 })();
 </script>

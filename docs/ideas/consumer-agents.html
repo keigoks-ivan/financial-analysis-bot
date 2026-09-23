@@ -48,6 +48,15 @@ p{margin:.6rem 0}
 .b-ref{color:var(--neg);background:var(--neg-bg)}
 .b-mix{color:var(--warn);background:var(--warn-bg)}
 .b-un{color:var(--sec);background:var(--mix-bg)}
+.muted-red{color:var(--neg);font-size:.84rem}
+.cpstatus-wrap{margin:14px 0 22px}
+.cpstatus-star{width:1.6em;text-align:center;color:var(--gold-deep);font-size:.9rem}
+.cpstatus-since{font-family:var(--mono);font-size:.78rem;color:var(--sec);white-space:nowrap}
+.cpstatus-note{margin-top:6px}
+.deep-toggle{font-family:var(--mono);font-size:.72rem;color:var(--accent);background:none;border:1px solid var(--line);border-radius:6px;padding:.25rem .6rem;margin:8px 0 2px;cursor:pointer}
+.deep-toggle:hover{background:var(--line-soft)}
+.deep-sources{display:block;font-size:.76rem;color:var(--muted);margin-top:2px}
+.src-type{color:var(--muted)}
 .cp{scroll-margin-top:70px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px;margin:14px 0}
 .cp-head{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
 .cp-id{font-family:var(--mono);font-size:.72rem;color:var(--gold-deep);font-weight:600}
@@ -153,6 +162,8 @@ p{margin:.6rem 0}
 <div class="meta"><span>建立 2026-09-23</span><span>·</span><span class="badge b-sup">追蹤中</span><span>·</span><span id="hit-total">早報新證據：讀取中</span></div>
 
 <div class="thesis">Meta 的 Muse 讓 AI 代替人比價、訂位、下單。擁有代理人的公司握有「去哪裡買」的決定權，網站只能靠技術手段決定放不放行，交易要經過付款業者。Muse 對 CPU 的實際用量很小，市場對硬體的反應大於實際需求。</div>
+
+<div class="cpstatus-wrap" id="cpstatus"></div>
 
 <h2>一頁摘要</h2>
 <ul class="summary">
@@ -297,42 +308,42 @@ p{margin:.6rem 0}
 (function(){
   var IDEA = 'consumer-agents';
   var CPS = [
-    {id:'cp1', t:'用戶留得住：每日活躍在上線熱度退後止跌', when:'隨時（Meta 10 月下旬財報）',
+    {id:'cp1', t:'用戶留得住：每日活躍在上線熱度退後止跌', when:'隨時（Meta 10 月下旬財報）', keystone:true,
      yes:'熱度退後每日活躍止跌或回升、Meta 公布付費用戶', no:'連續三個月下滑、沒有止跌，或免費版限縮；上線初期的自然回落不算（數字多為第三方估計）',
      seed:[
       ['09-22','sup','上線不到兩週下載超過 250 萬；前 12 天美加 iPhone 180 萬，同期 ChatGPT 130 萬','Reuters'],
       ['09 月','mix','iPhone 每日活躍用戶 35.9 萬，約為下載量的一成多','Ynet'],
       ['09-22','mix','Meta 測試真人接手打電話，代理人完成度還不夠','Reuters']]},
-    {id:'cp2', t:'Meta 走向交易中介：串接平台與抽成', when:'隨時（Meta 10 月下旬財報）',
+    {id:'cp2', t:'Meta 走向交易中介：串接平台與抽成', when:'隨時（Meta 10 月下旬財報）', keystone:false,
      yes:'更多商家接入串接平台、Meta 公布交易抽成或導購收入', no:'串接平台接入停滯、Muse 只靠訂閱',
      seed:[
       ['09-22','sup','Muse 串接平台開放給第三方','HuggingNews'],
       ['09-21～22','sup','Shopify、PayPal、Expedia、Instacart 一天內接入','多家']]},
-    {id:'cp3', t:'商家分兩派：龍頭擋，挑戰者接', when:'隨時',
+    {id:'cp3', t:'商家分兩派：龍頭擋，挑戰者接', when:'隨時', keystone:true,
      yes:'更多挑戰者接入代理人、龍頭擋未表明身分的代理人', no:'接入的商家公布代理人訂單微不足道，或龍頭也全面開放',
      seed:[
       ['09-20','sup','Amazon 擋下 Muse：未表明代理人身分、會進到用戶帳戶頁','TechCrunch'],
       ['09-21','sup','Shopify 所有店家可用 Shop Pay 讓 Muse 結帳','Fintech.ca'],
       ['09-22','sup','Expedia、Instacart 接入 Muse','Seeking Alpha／Instacart']]},
-    {id:'cp4', t:'放行變成技術問題：身分驗證與機器人管理', when:'隨時（Cloudflare 11 月初財報）',
+    {id:'cp4', t:'放行變成技術問題：身分驗證與機器人管理', when:'隨時（Cloudflare 11 月初財報）', keystone:false,
      yes:'更多代理人用簽名表明身分、Cloudflare 財報或 Radar 數據顯示代理人流量成長、法院維持代理人等同用戶', no:'新判決或法律讓網站能用法律擋代理人，或大商家全部自建',
      seed:[
       ['08 月','sup','上訴法院撤銷 Amazon 對 Perplexity 的禁令：代理人照用戶指令行事，視為用戶本人','Engadget'],
       ['09-15','sup','Cloudflare 新加入的網站，有廣告的頁面預設擋代理人','o-mega'],
       ['09 月','mix','Web Bot Auth 是公開標準，AWS 代理人服務也支援','AWS 文件']]},
-    {id:'cp5', t:'代理人付款與出錯責任', when:'隨時',
+    {id:'cp5', t:'代理人付款與出錯責任', when:'隨時', keystone:false,
      yes:'卡組織、支付業者的代理人付款上線或擴大、責任規則明確化', no:'代理人詐騙或誤買事件導致支付業者撤出',
      seed:[
       ['09 月','sup','Visa、Mastercard 都已推出代理人付款系統','Eco／Mastercard'],
       ['09 月','mix','Mac 版 Muse 零時差漏洞已修補；提示注入單一用戶漏洞懸賞最高 13 萬美元','Unite.AI／Meta']]},
-    {id:'cp6', t:'手機作業系統對雲端代理人的態度', when:'隨時',
+    {id:'cp6', t:'手機作業系統對雲端代理人的態度', when:'隨時', keystone:false,
      yes:'Apple、Google 沒有限制雲端代理人代替用戶操作', no:'Apple 或 Google 限制第三方代理人、App 審查規則收緊',
      seed:[]},
-    {id:'cp7', t:'靠廣告和流量的平台受壓（只算明講或第三方數據）', when:'每季',
+    {id:'cp7', t:'靠廣告和流量的平台受壓（只算明講或第三方數據）', when:'每季', keystone:false,
      yes:'平台明講流量或廣告被代理人分走、第三方流量數據顯示代理人分流，或為保護廣告擋代理人', no:'平台明講代理人沒有影響，或代理人流程也能帶廣告；沒提到代理人的廣告收入變化不算',
      seed:[
       ['09-20','sup','Amazon 擋 Muse，理由之一是未授權代理人進出用戶帳戶','TechCrunch']]},
-    {id:'cp8', t:'消費級代理人的硬體用量沒有超出試算', when:'隨時',
+    {id:'cp8', t:'消費級代理人的硬體用量沒有超出試算', when:'隨時', keystone:false,
      yes:'每人資源被壓縮、單顆 CPU 跑更多環境', no:'Meta 等公司公布為消費級代理人大量採購 CPU、記憶體或硬碟',
      seed:[
       ['09 月','sup','Nvidia Vera 機櫃 256 顆 CPU 同時跑超過 22,500 個環境，平均一顆 88 個','Nvidia'],
@@ -340,22 +351,110 @@ p{margin:.6rem 0}
   ];
   var VB = {sup:['b-sup','支持'], ref:['b-ref','推翻'], mix:['b-mix','兩面'], un:['b-un','未判斷'],
             supports:['b-sup','支持'], refutes:['b-ref','推翻'], unjudged:['b-un','未判斷']};
+  var STATUS_VB = {supports:['b-sup','支持'], shaky:['b-mix','動搖'], refutes:['b-ref','推翻'], no_data:['b-un','尚無資料']};
+  var ENTRY_VB = {supports:['b-sup','支持'], refutes:['b-ref','推翻'], shaky:['b-mix','動搖'], neutral:['b-un','中性']};
+  var KIND_LABEL = {search:'主動搜尋', earnings:'財報', transcript:'法說逐字稿'};
+  var SRC_TYPE_LABEL = {official:'官方', data:'數據', media:'媒體'};
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function badge(v){var b=VB[v]||VB.un;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
-  function render(hits, state){
+  function statusBadge(s){var b=STATUS_VB[s]||STATUS_VB.no_data;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
+  function entryBadge(v){var b=ENTRY_VB[v]||ENTRY_VB.neutral;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
+  function keystoneOf(c, keystoneMap){
+    if(keystoneMap && Object.prototype.hasOwnProperty.call(keystoneMap, c.id)) return keystoneMap[c.id];
+    return !!c.keystone;
+  }
+  function statusOf(research, cpid){
+    return research && research.status && research.status[IDEA] && research.status[IDEA][cpid];
+  }
+  function entriesFor(research, cpid){
+    var list = ((research && research.entries) || []).filter(function(e){return e.idea===IDEA && e.checkpoint===cpid;});
+    list.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    return list;
+  }
+  function sourcesHtml(sources){
+    if(!sources || !sources.length) return '';
+    return sources.map(function(s){
+      var t = SRC_TYPE_LABEL[s.type] || s.type || '';
+      var link = s.url ? '<a href="'+esc(s.url)+'" rel="noopener">'+esc(s.title||s.url)+'</a>' : esc(s.title||'');
+      return '<span class="src-link">'+link+(t?'<span class="src-type">（'+esc(t)+'）</span>':'')+'</span>';
+    }).join('　');
+  }
+  function deepEntryLine(e){
+    var kind = KIND_LABEL[e.kind] || e.kind || '';
+    var src = sourcesHtml(e.sources);
+    return '<li><span class="d">'+esc((e.date||'').slice(5))+'</span>'+entryBadge(e.verdict)
+      +'<span>'+esc(e.summary||'')+(kind?' <span class="src">'+esc(kind)+'</span>':'')
+      +(src?'<span class="deep-sources">'+src+'</span>':'')+'</span></li>';
+  }
+  function deepBlock(research, researchState, cpid){
+    var head = '<div class="lbl muted" style="margin-top:8px">深入查核（每天 05:15）</div>';
+    if(researchState==='loading') return head+'<ul class="ev"><li class="muted">讀取中</li></ul>';
+    if(researchState==='error') return head+'<ul class="ev"><li class="muted">深入查核資料沒讀到</li></ul>';
+    var list = entriesFor(research, cpid);
+    if(!list.length) return head+'<ul class="ev"><li class="muted">還沒有深入查核紀錄</li></ul>';
+    var shown = list.slice(0,10), rest = list.slice(10);
+    var html = head+'<ul class="ev">';
+    shown.forEach(function(e){ html += deepEntryLine(e); });
+    html += '</ul>';
+    if(rest.length){
+      var mid = 'deep-more-'+cpid;
+      html += '<ul class="ev deep-more" id="'+mid+'" hidden>';
+      rest.forEach(function(e){ html += deepEntryLine(e); });
+      html += '</ul>';
+      html += '<button type="button" class="deep-toggle" data-target="'+mid+'">顯示全部（其餘 '+rest.length+' 則）</button>';
+    }
+    return html;
+  }
+  function fmtRunTime(run){
+    var t = (run && (run.finished || run.date)) || '';
+    var m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(t);
+    return m ? (m[1]+' '+m[2]) : t;
+  }
+  function statusHead(researchState, research){
+    if(researchState==='loading') return '<div class="muted">讀取中</div>';
+    if(researchState==='error') return '<div class="muted">深入查核資料沒讀到</div>';
+    var run = research && research.run;
+    if(!run || !run.status || run.status==='pending') return '<div class="muted">每天 05:15 自動查核，尚未開始</div>';
+    if(run.status==='failed') return '<div class="muted-red">最近一次查核失敗：'+esc(run.reason||'')+'</div>';
+    return '<div class="muted">最後查核 '+esc(fmtRunTime(run))+'</div>';
+  }
+  function statusTable(researchState, research, keystoneMap){
+    var rows='';
+    CPS.forEach(function(c,i){
+      var st = researchState==='ok' ? statusOf(research, c.id) : null;
+      var statusKey = st ? st.status : 'no_data';
+      var reason = st ? (st.reason||'') : (researchState==='ok' ? '尚未查核' : '');
+      var since = st ? (st.since||'') : '';
+      rows += '<tr><td class="cpstatus-star">'+(keystoneOf(c,keystoneMap)?'★':'')+'</td>'
+        +'<td><a href="#'+c.id+'">查核點 '+(i+1)+'：'+esc(c.t)+'</a></td>'
+        +'<td>'+statusBadge(statusKey)+'</td>'
+        +'<td>'+esc(reason)+'</td>'
+        +'<td class="cpstatus-since">'+esc(since)+'</td></tr>';
+    });
+    return '<div class="tbl-wrap"><table class="imq-table cpstatus-tbl"><thead><tr><th></th><th>查核點</th><th>狀態</th><th>理由</th><th>最近確認</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+  function mountStatus(researchState, research, keystoneMap){
+    document.getElementById('cpstatus').innerHTML = statusHead(researchState, research)
+      + statusTable(researchState, research, keystoneMap)
+      + '<div class="muted cpstatus-note">★ 關鍵查核點：轉為推翻時整篇重新評估。</div>';
+  }
+  function render(hits, hitsState, researchState, research, keystoneMap){
     var html='';
     CPS.forEach(function(c,i){
       var h = hits.filter(function(x){return x.checkpoint===c.id;});
-      html+='<div class="cp" id="'+c.id+'"><div class="cp-head"><span class="cp-id">查核點 '+(i+1)+'</span><span class="cp-title">'+esc(c.t)+'</span><span class="cp-when">'+esc(c.when)+'</span></div>';
+      var st = researchState==='ok' ? statusOf(research, c.id) : null;
+      var statusKey = st ? st.status : 'no_data';
+      html+='<div class="cp" id="'+c.id+'"><div class="cp-head"><span class="cp-id">查核點 '+(i+1)+'</span><span class="cp-title">'+(keystoneOf(c,keystoneMap)?'★ ':'')+esc(c.t)+'</span>'+statusBadge(statusKey)+'<span class="cp-when">'+esc(c.when)+'</span></div>';
       html+='<div class="cp-rule"><span>成立</span><span>'+esc(c.yes)+'</span><span>推翻</span><span>'+esc(c.no)+'</span></div>';
-      html+='<div class="lbl muted" style="margin-top:8px">早報新證據</div><ul class="ev">';
+      html+=deepBlock(research, researchState, c.id);
+      html+='<div class="lbl muted" style="margin-top:10px">早報新證據</div><ul class="ev">';
       if(h.length){
         h.forEach(function(x){
           var title = x.url ? '<a href="'+esc(x.url)+'" rel="noopener">'+esc(x.headline)+'</a>' : esc(x.headline);
           html+='<li><span class="d">'+esc((x.date||'').slice(5))+'</span>'+badge(x.verdict)+'<span>'+title+' <span class="src">'+esc(x.source||'')+'</span></span></li>';
         });
       } else {
-        html+='<li class="muted">'+(state==='ok'?'還沒有新證據':state)+'</li>';
+        html+='<li class="muted">'+(hitsState==='ok'?'還沒有新證據':hitsState)+'</li>';
       }
       html+='</ul>';
       if(c.seed.length){
@@ -366,23 +465,57 @@ p{margin:.6rem 0}
       html+='</div>';
     });
     document.getElementById('cps').innerHTML=html;
+    document.querySelectorAll('.deep-toggle').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var t = document.getElementById(btn.getAttribute('data-target'));
+        if(!t) return;
+        if(t.hasAttribute('hidden')){ t.removeAttribute('hidden'); btn.textContent='收合'; }
+        else { t.setAttribute('hidden',''); btn.textContent='顯示全部'; }
+      });
+    });
   }
-  render([], '讀取中');
-  fetch('/briefing/data/idea_hits.json',{cache:'no-store'}).then(function(r){
+  render([], '讀取中', 'loading', null, null);
+  mountStatus('loading', null, null);
+
+  var hitsP = fetch('/briefing/data/idea_hits.json',{cache:'no-store'}).then(function(r){
     if(r.status===404) throw new Error('404'); if(!r.ok) throw new Error('http');
     return r.json();
   }).then(function(d){
     var hits=(d.hits||[]).filter(function(x){return x.idea===IDEA && x.verdict!=='unrelated';});
     hits.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
-    render(hits,'ok');
     var sup=hits.filter(function(x){return x.verdict==='supports';}).length, ref=hits.filter(function(x){return x.verdict==='refutes';}).length;
     var t='早報新證據 '+hits.length+' 則（支持 '+sup+'、推翻 '+ref+'）';
     if(d.history==='unavailable') t+='，較早紀錄沒讀到';
     document.getElementById('hit-total').textContent=t;
+    return {hits:hits, state:'ok'};
   }).catch(function(e){
     var msg = e.message==='404' ? '早報還沒開始比對，每天 06:15 更新' : '早報紀錄沒讀到';
-    render([], msg);
     document.getElementById('hit-total').textContent=msg;
+    return {hits:[], state:msg};
+  });
+
+  var researchP = fetch('/ideas/data/research.json',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('http');
+    return r.json();
+  }).then(function(d){ return {state:'ok', data:d}; }).catch(function(){ return {state:'error', data:null}; });
+
+  var ideasP = fetch('/ideas/ideas.json',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('http');
+    return r.json();
+  }).catch(function(){ return null; });
+
+  Promise.all([hitsP, researchP, ideasP]).then(function(res){
+    var h=res[0], rs=res[1], ideasData=res[2];
+    var keystoneMap = null;
+    if(ideasData && ideasData.ideas){
+      var idea = ideasData.ideas.filter(function(x){return x.id===IDEA;})[0];
+      if(idea && idea.checkpoints){
+        keystoneMap = {};
+        idea.checkpoints.forEach(function(cp){ keystoneMap[cp.id] = !!cp.keystone; });
+      }
+    }
+    render(h.hits, h.state, rs.state, rs.data, keystoneMap);
+    mountStatus(rs.state, rs.data, keystoneMap);
   });
 })();
 </script>

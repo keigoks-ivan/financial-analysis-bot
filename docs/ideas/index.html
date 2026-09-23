@@ -28,6 +28,8 @@ body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);
 .idea-card h2{margin:0 0 .3rem}
 .row{font-family:var(--mono);font-size:.74rem;color:var(--sec);display:flex;gap:.8rem;flex-wrap:wrap}
 .pos{color:var(--pos)}.neg{color:var(--neg)}
+.cpstatus-line{font-size:.78rem;color:var(--sec);margin-top:.4rem}
+.cpstatus-line.alert{color:var(--neg);font-weight:600}
 .how{font-size:.86rem;color:var(--sec);border-top:1px solid var(--line);margin-top:2rem;padding-top:1rem}
 </style>
 </head>
@@ -128,15 +130,37 @@ body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   var hitsP = fetch('/briefing/data/idea_hits.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():{hits:[]};}).catch(function(){return {hits:[]};});
   var ideasP = fetch('/ideas/ideas.json',{cache:'no-store'}).then(function(r){return r.json();});
-  Promise.all([ideasP,hitsP]).then(function(a){
-    var ideas=a[0].ideas||[], hits=a[1].hits||[], html='';
+  var researchP = fetch('/ideas/data/research.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});
+  function cpstatusLine(it, research){
+    if(!research || !research.status || !research.status[it.id]) return '';
+    var st = research.status[it.id];
+    var cps = it.checkpoints||[];
+    var kCount={supports:0,shaky:0,refutes:0}, aCount={supports:0,shaky:0,refutes:0,no_data:0};
+    var keystoneRefuted=false;
+    cps.forEach(function(cp){
+      var s = (st[cp.id] && st[cp.id].status) || 'no_data';
+      if(aCount.hasOwnProperty(s)) aCount[s]++;
+      if(cp.keystone){
+        if(kCount.hasOwnProperty(s)) kCount[s]++;
+        if(s==='refutes') keystoneRefuted=true;
+      }
+    });
+    var run = research.run || {};
+    var dateLabel = run.finished ? run.finished.slice(0,10) : (run.date || '尚未開始');
+    var text = '關鍵查核點：支持 '+kCount.supports+'、動搖 '+kCount.shaky+'、推翻 '+kCount.refutes
+      +'｜全部：支持 '+aCount.supports+'、動搖 '+aCount.shaky+'、推翻 '+aCount.refutes+'、尚無 '+aCount.no_data
+      +'｜最後查核 '+esc(dateLabel);
+    return '<div class="cpstatus-line'+(keystoneRefuted?' alert':'')+'">'+text+'</div>';
+  }
+  Promise.all([ideasP,hitsP,researchP]).then(function(a){
+    var ideas=a[0].ideas||[], hits=a[1].hits||[], research=a[2], html='';
     ideas.forEach(function(it){
       var h=hits.filter(function(x){return x.idea===it.id && x.verdict!=='unrelated';});
       var sup=h.filter(function(x){return x.verdict==='supports';}).length, ref=h.filter(function(x){return x.verdict==='refutes';}).length;
       var last=h.map(function(x){return x.date||'';}).sort().pop();
       html+='<a class="imq-card idea-card" href="'+esc(it.url)+'"><h2 class="t-h2">'+esc(it.title)+'</h2><div class="row"><span>建立 '+esc(it.created)+'</span><span>查核點 '+(it.checkpoints||[]).length+' 個</span>'
         +'<span>早報證據 '+h.length+' 則（<span class="pos">支持 '+sup+'</span>、<span class="neg">推翻 '+ref+'</span>）</span>'
-        +(last?'<span>最近一則 '+esc(last)+'</span>':'')+'</div></a>';
+        +(last?'<span>最近一則 '+esc(last)+'</span>':'')+'</div>'+cpstatusLine(it, research)+'</a>';
     });
     document.getElementById('list').innerHTML=html||'<p class="sub">還沒有想法</p>';
   }).catch(function(){document.getElementById('list').innerHTML='<p class="sub">想法清單沒讀到</p>';});
