@@ -304,6 +304,11 @@ def do_stage0(ctx):
         # dd_headless.spawn_many 用 spec["out"] 當 raw JSON 落點；子 agent 自己 Write part。
         for s in specs:
             s["out"] = "agents/{0}.json".format(s["id"])
+            # 2026-09-23 AMD：--resume 時上一輪的 part（含缺口檔）還在，子 agent 沒有 Read 不能覆寫，
+            # 程式又把舊缺口檔當合格 → 先刪
+            stale_part = run_dir / [x for x in st["spawn_list"] if x["id"] == s["id"]][0]["out"]
+            if stale_part.exists():
+                stale_part.unlink()
         results = dd_headless.spawn_many(specs, max_parallel=STAGE0_MAX_PARALLEL)
         for s, r in zip(specs, results):
             r = _enrich_from_raw(r or {"ok": False}, run_dir / s["out"])
@@ -323,6 +328,9 @@ def do_stage0(ctx):
             ok = rc == 0
         if not ok:
             incomplete.append(s["axis_id"])
+            if part.exists():  # 不合格原檔留一份查原因（2026-09-23 AMD 首跑被蓋掉查不到）
+                part.replace(part.with_name(part.name + ".rejected"))  # 不能以 .json 結尾，finalize 會併進去
+                part.with_name(part.name + ".rejected.txt").write_text(str(out), encoding="utf-8")
             _atomic_write_json(part, {"coverage": {s["axis_id"]: {
                 "status": "none", "queries_run": ["(agent incomplete)"], "findings": [],
                 "note": "dd2: 子 agent 未在輪數內交出合格 part，記為缺口"}}})
