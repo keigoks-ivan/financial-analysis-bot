@@ -23,11 +23,9 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);line-height:1.7}
 .wrap{max-width:880px;margin:0 auto;padding:28px 16px 64px}
-h1{font-family:var(--serif);color:var(--ink);font-size:1.75rem;margin:.2rem 0 .4rem}
-.sub{color:var(--sec);font-size:.92rem;margin:0 0 1.6rem}
-.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin:12px 0;color:inherit;text-decoration:none;box-shadow:var(--sh-1)}
-.card:hover{box-shadow:var(--sh-2)}
-.card h2{font-size:1.05rem;color:var(--ink);margin:0 0 .3rem;font-family:var(--sans)}
+.sub{color:var(--sec);font-size:.92rem;margin:.3rem 0 1.6rem}
+.idea-card{padding:16px 18px;margin:12px 0}
+.idea-card h2{margin:0 0 .3rem}
 .row{font-family:var(--mono);font-size:.74rem;color:var(--sec);display:flex;gap:.8rem;flex-wrap:wrap}
 .pos{color:var(--pos)}.neg{color:var(--neg)}
 .how{font-size:.86rem;color:var(--sec);border-top:1px solid var(--line);margin-top:2rem;padding-top:1rem}
@@ -112,13 +110,17 @@ h1{font-family:var(--serif);color:var(--ink);font-size:1.75rem;margin:.2rem 0 .4
 </header>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
 <div class="wrap">
-<h1>投資想法</h1>
+<h1 class="t-h1">投資想法</h1>
 <p class="sub">一個想法一頁：推論、查核點、可能受惠的公司。早報每天把判成新事實的新聞比對到查核點，再標支持或推翻。</p>
 <div id="list"><p class="sub">讀取中</p></div>
 <div class="how">
 <p>運作方式：想法寫一次就不改。之後的變化只記在查核點下面。早報每天 06:15 先用公司名和關鍵字比對，再由 Jev 判斷支持、推翻或無關。</p>
 <p>這些是研究推論，不是投資建議。</p>
 </div>
+<footer class="imq-foot">
+  <div>&copy; 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
 </div>
 <script>
 (function(){
@@ -131,7 +133,7 @@ h1{font-family:var(--serif);color:var(--ink);font-size:1.75rem;margin:.2rem 0 .4
       var h=hits.filter(function(x){return x.idea===it.id && x.verdict!=='unrelated';});
       var sup=h.filter(function(x){return x.verdict==='supports';}).length, ref=h.filter(function(x){return x.verdict==='refutes';}).length;
       var last=h.map(function(x){return x.date||'';}).sort().pop();
-      html+='<a class="card" href="'+esc(it.url)+'"><h2>'+esc(it.title)+'</h2><div class="row"><span>建立 '+esc(it.created)+'</span><span>查核點 '+(it.checkpoints||[]).length+' 個</span>'
+      html+='<a class="imq-card idea-card" href="'+esc(it.url)+'"><h2 class="t-h2">'+esc(it.title)+'</h2><div class="row"><span>建立 '+esc(it.created)+'</span><span>查核點 '+(it.checkpoints||[]).length+' 個</span>'
         +'<span>早報證據 '+h.length+' 則（<span class="pos">支持 '+sup+'</span>、<span class="neg">推翻 '+ref+'</span>）</span>'
         +(last?'<span>最近一則 '+esc(last)+'</span>':'')+'</div></a>';
     });
