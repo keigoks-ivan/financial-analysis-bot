@@ -1,0 +1,68 @@
+name: Idea Watch Notify
+
+# 想法查核點 email 通知。零 LLM：雲端 routine idea-watch-auto（每天 05:15
+# 台北）跑完 idea-watch skill 後把 docs/ideas/data/research.json push 到
+# main；本工作流只在該檔變動時被 push 事件觸發，跑
+# scripts/idea_watch_summary.py 判斷「要不要寄」——只有兩種情況寄信：
+#   1. run.status == "failed"（查核本身失敗）
+#   2. 當天（date == run.date）的 changes 裡有 keystone 查核點轉為 refutes
+# 其餘情況（pending、ok 但沒有關鍵推翻）腳本印 send=false，本工作流不寄信、
+# 直接結束。寄信邏輯全收在 idea_watch_summary.py 內，本工作流只是把腳本
+# 輸出（HTML／純文字檔＋主旨＋send 旗標）轉寄出去（沿用
+# market-read-notify.yml 的 mail action、secrets 與 HTML/text 版型）。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/ideas/data/research.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: idea-watch-notify
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build idea-watch summary (send flag + HTML + text + subject)
+        id: summary
+        run: |
+          OUTPUT="$(python3 scripts/idea_watch_summary.py --html idea_watch_mail.html --text idea_watch_mail.txt)"
+          SEND="$(printf '%s\n' "$OUTPUT" | sed -n '1p')"
+          SUBJECT="$(printf '%s\n' "$OUTPUT" | sed -n '2p')"
+          echo "send=$SEND" >> "$GITHUB_OUTPUT"
+          DELIM="EOF_$(date +%s%N)_${RANDOM}"
+          {
+            echo "subject<<$DELIM"
+            printf '%s\n' "$SUBJECT"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Email idea-watch summary
+        if: steps.summary.outputs.send == 'true'
+        uses: dawidd6/action-send-mail@v3
+        continue-on-error: true
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.summary.outputs.subject }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://idea_watch_mail.html
+          body: file://idea_watch_mail.txt
