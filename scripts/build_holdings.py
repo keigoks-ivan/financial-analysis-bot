@@ -47,6 +47,9 @@ def _dd_index(dd_latest: dict) -> dict:
             "dca_verdict": s.get("dca_verdict"),
             "dca_role": s.get("dca_role"),
             "funnel_rank": s.get("funnel_rank"),
+            # 2026-09-22: FunnelRank v2（五層側寫逐層排序法）名次，additive —
+            # funnel_rank（v1 legacy）不動，見 dd_screener_schema.md v1.4。
+            "funnel_v2_rank": s.get("funnel_v2_rank"),
             "signal": s.get("signal"),
             "moat_grade": s.get("moat_grade"),
             "moat_trend": s.get("moat_trend"),
@@ -97,6 +100,7 @@ def _seat_row(seat: dict, track: str, rank: int, dd_idx: dict,
         "dd_date": dd.get("dd_date"),
         "dca_verdict": dd.get("dca_verdict") or seat.get("verdict"),
         "funnel_rank": dd.get("funnel_rank"),
+        "funnel_v2_rank": dd.get("funnel_v2_rank"),
         "signal": dd.get("signal"),
     }
     return row
@@ -168,6 +172,7 @@ def build() -> dict:
             "dd_path": dd.get("dd_path") or c.get("dd_path"),
             "dd_date": dd.get("dd_date"),
             "funnel_rank": dd.get("funnel_rank"),
+            "funnel_v2_rank": dd.get("funnel_v2_rank"),
             "beats_seats": beats_map.get(t, []),   # 分數勝過的在席 ticker 清單（空＝未觸發警報）
         })
 

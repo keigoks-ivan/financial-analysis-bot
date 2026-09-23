@@ -391,7 +391,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--paper);border-left:3px solid var(--accent);border-radius:6px">
           <div><strong style="color:var(--ink)">管線② 主表 — 已建 DD 的名字</strong>（裁決層｜下方各欄位即本表）<br>
-          <span style="color:var(--sec)">有個股深度報告（DD）的名字才進主表。<strong style="color:var(--ink)">綜合評分</strong>（品質 × 護城河趨勢 × EPS 修正動能加權而成，原稱 FunnelRank）排序 ＋ <strong style="color:var(--ink)">五條基本門檻</strong>（FCF/ROIC/EPS CAGR/PEG/D-E）＋ 每份 DD 的<strong style="color:var(--ink)">統一裁決（進場 / 觀望 / 迴避）</strong>。這是判斷層——爆發候選路徑會在此判斷該價位是否仍有不對稱 upside。<em style="color:var(--sec);font-style:normal">用途：判斷該不該進、扮演什麼角色。</em></span></div>
+          <span style="color:var(--sec)">有個股深度報告（DD）的名字才進主表。<strong style="color:var(--ink)">v2 名次</strong>（事業品質 × 再投資引擎 × 期望落差 × 價格四個面向逐層排序，FunnelRank v2；護城河不進排序，每列另有「儀表板」連結可看該檔機械數字）排序 ＋ <strong style="color:var(--ink)">五條基本門檻</strong>（FCF/ROIC/EPS CAGR/PEG/D-E）＋ 每份 DD 的<strong style="color:var(--ink)">統一裁決（進場 / 觀望 / 迴避）</strong>。這是判斷層——爆發候選路徑會在此判斷該價位是否仍有不對稱 upside。<em style="color:var(--sec);font-style:normal">用途：判斷該不該進、扮演什麼角色。</em></span></div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--line-soft);border-left:3px solid var(--muted);border-radius:6px">
           <div><strong style="color:var(--warn)">管線③ AR Live watch —（已退役 2026-07-07）</strong><br>          <span style="color:var(--sec)">原機制＝觀望股回檔使 <code>AR ≥ 4</code> 時自動亮進 watch。上線期間實檔零命中，已將 AR 降為參考資訊；「等回檔」改由 DD §13 裁決層的 26 週位置閘、以及 SOP 漏斗子頁的「冷卻後再武裝」流程管理。<em style="color:var(--sec);font-style:normal">AR 數值仍在主表欄位供參考，不再作為掛單觸發。</em></span></div>
@@ -428,28 +428,44 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
     </div>
 
     <div style="background:var(--line-soft);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:11px;line-height:1.7;color:var(--ink)">
-      <strong style="color:var(--ink);display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">綜合評分 — 漏斗基本面三層合成分（原稱 FunnelRank，v1.3 新增，預設排序鍵）</strong>
-      把「QGM 4/4 → 護城河 → 修正動能 → 時機」四層人工漏斗的<strong>前三層（基本面）</strong>固化成一個 0–1 排序鍵。時機（第四層）<strong>不進排序分</strong>，維持 filter —— 與 Entry State Machine 的「基本面排序、時機另看」哲學一致。
+      <strong style="color:var(--ink);display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">v2 名次 — FunnelRank v2 四層側寫逐層排序法（2026-09-22 起預設排序鍵）</strong>
+      每檔在四個獨立面向上分別打分，排序時先比最弱的那個面向，同一級再比下一個面向，不是把四個分數加權平均成一個總分——某一層真正頂尖的名字，不會因為另一項普通的財務指標被拉到跟該層普通的名字同一個名次區間。時機（進場點）仍不進這個排序，維持獨立 filter。
+      <br>• <strong>護城河不進排序</strong>：護城河是判斷不是可排序的分數，不進本頁任何排序計算。每列名次格右側另有「儀表板」連結，點進去看該檔每日更新的機械數字（<a href="/stock-dash/">/stock-dash/</a>）。
+      <br>• <strong>事業品質（母體百分位）</strong>：5 年 ROIC 均值、FCF 利潤率、FCF／淨利比（封頂 0.8，超過一律打平，不再加分）、淨利率四個欄位的百分位平均。FCF／淨利比封頂是因為分母是 GAAP 淨利，SBC 或一次性費用把淨利壓得很小的公司這一項會虛高，封頂後只罰偏低、不獎偏高。
+      <br>• <strong>再投資引擎（母體百分位）</strong>：機械算出的內生成長率（增量 ROIC × 再投資率）、增量 ROIC、FY1→FY3 EPS CAGR 三個欄位的百分位平均（增量 ROIC 若被極端值哨兵夾住或標記「資本縮減」，該欄不參與）。
+      <br>• <strong>期望落差（母體百分位）</strong>：近 3 個月上修 %、財報後上修 %、內生成長率減共識三年 CAGR 三個欄位的百分位平均——這一項回答「分析師的預估，還沒跟上機械算出的成長速度」。
+      <br>• <strong>價格（母體百分位）</strong>：本益比對五年均值倍數、PEG 兩個反向計分欄位（原始值越低、百分位越高，越便宜排名越高），加目標價上行空間 % 正向計分。目標價 Koyfin 抓不到時（例如 ADR 與原股兩邊資料各缺一半），改用 yfinance 的分析師目標價與現價算。
+      <br>• <strong>五分位 tier</strong>：事業品質／再投資引擎／期望落差／價格四層各自切五級（<code>80–100→4</code> … <code>0–20→0</code>），缺值面向記 <code>-1</code>，排序時當作中性值 2（不加分也不扣分）。排序先比四層裡最弱的一層，打平再比次弱的一層，以此類推；四層全部打平才比四層百分位的中位數，再打平比 ticker 字母序。
+      <br>• <strong>硬否決（沿用既有旗標，不新增判準）</strong>：<code>quality_veto_level=="拒絕"</code>（體質五項機械閘 4-5 項不合格）、<code>decline_signal_light=="⛔"</code>（衰退訊號六項機械指標命中 ≥5 項）、<code>veto_all_downgrade</code>（FY1/FY2/FY3 三欄全部下修）——命中任一即不排名、沉底，ticker 旁顯示 <span style="color:var(--neg)">⛔</span>。
+      <br>• <strong>資料不足</strong>：四個面向少於 3 個有效（tier ≠ -1）→ 不排名、沉底，標示「資料不足」。
+      <br>權重與欄位清單寫在 <code>scripts/build_dd_screener.py</code> 檔頭常數（<code>FUNNEL_V2_*</code>），server 端 build 時算好寫進 <code>latest.json</code>；設計依據見 <code>notes/site-internal/root/_funnel_v2_design_20260922.md</code>。表頭「v2 名次」欄 hover 看四個面向的分數與 tier 拆解。
+    </div>
+
+    <details style="background:var(--paper);border:1px solid var(--line);border-radius:8px;margin-bottom:18px;font-size:11px;line-height:1.7;color:var(--ink)">
+      <summary style="cursor:pointer;padding:14px 18px;font-weight:700;color:var(--sec);font-size:12px;letter-spacing:.02em">舊版 v1（保留一版）— 漏斗基本面三層合成分（原稱 FunnelRank，v1.3）</summary>
+      <div style="padding:0 18px 14px">
+      v2 上線後這一版<strong>不再是預設排序鍵</strong>，欄位仍照算保留一版供對照（下一版將移除）。把「QGM 4/4 → 護城河 → 修正動能 → 時機」四層人工漏斗的<strong>前三層（基本面）</strong>固化成一個 0–1 排序鍵。時機（第四層）<strong>不進排序分</strong>，維持 filter。
       <br><code style="display:inline-block;margin:4px 0;padding:3px 6px">綜合評分 = 0.40·財務品質分 + 0.30·護城河分 + 0.30·上修動能分</code>
       <br>• <strong>財務品質分（QualityGate，0–1）</strong>：帶「可原諒條件」的品質閘（4 條件計分：FCF / ROIC / EPS CAGR / PEG；<strong>2026-07-03 起 D/E 退出計分、降為 ⚠ advisory</strong>）—— <code>4/4</code> → 1.00；<code>3/4</code> 唯一 fail 在 <strong>PEG</strong>（估值，非品質本體）→ 0.85；<code>3/4</code> fail 在 <strong>FCF / ROIC / EPS CAGR</strong>（品質本體缺陷）→ 0.50；<code>2/4</code> → 0.30；<code>≤1/4</code> → 0.10。任一條件無資料（灰色）→ 該條退出分母、按比例換算後套同一映射，並標 <code>quality_gate_partial</code>。
       <br>• <strong>護城河分（MoatScore，0–1）</strong>：<code>moat_score/10</code> × 趨勢乘數（<code>↑ ×1.10 / → ×1.00 / ↓ ×0.80</code>），封頂 1.0。無 moat 資料 → 0.50。
       <br>• <strong>上修動能分（RevisionScore，0–1）</strong>：FY1/FY2/FY3 各自上修（diff ≥ +0.5%）= +1 / 持平 = 0 / 下修（≤ −0.5%）= −1；<code>raw = 0.2·FY1 + 0.3·FY2 + 0.5·FY3</code>（<strong>FY3 權重最大 = 成長曲線後段</strong>），<code>上修動能分 = (raw+1)/2</code>。FY3 上修幅度 &gt; FY1 上修幅度（後段變陡）再 +0.05。「新」chip / 無 baseline → 0.50 中性，標 <code>revision_no_baseline</code>。
-      <br>• <strong>四道不進公式的直接處置（2026-09-17 起，依嚴重度：兩個歸零 → 兩個封頂）</strong>：① FY1/FY2/FY3 <strong>三欄全部下修</strong> → 綜合評分強制歸 0、該列沉底 + <span style="color:var(--neg)">⛔</span>（下修是領先指標、品質分是落後指標，兩者衝突時以下修訊號為準）；② <strong>衰退訊號</strong>達 <span style="color:var(--neg)">⛔</span>（體質衰退訊號 6 項機械指標命中 ≥5 項）→ 綜合評分同樣強制歸 0（衰退訊號同屬領先指標，一樣壓過落後的品質分）；③ 護城河趨勢 <code>↓</code> 且<strong>非四條件全過</strong>（<code>pass_count &lt; 4</code>）→ 綜合評分封頂 0.50；④ <strong>體質五項 veto</strong> 命中<code>拒絕</code>（4-5 項不合格）→ 封頂 0.30、命中<code>降一級</code>（3 項不合格）→ 封頂 0.60——但當 FY1/FY2/FY3 <strong>三欄全部上修</strong>（各 ≥ +0.5%）時此封頂不生效（上修同屬領先指標，一樣壓過落後的體質評等）。同一列若同時符合多個條件，一律取最保守（最低）的分數，歸零的兩條優先權最高。FY1/FY2/FY3 修正 % 一律以公司財報幣別計算（非原始 USD），避免非美元公司在兩次匯出之間單純因匯率變動就被誤判全下修否決或誤觸發上修覆蓋；查不到財報幣別或當日匯率時才退回 USD 對比，個股欄位 hover 會標「未排除匯率」。
-      <br>權重與映射值寫在 <code>scripts/build_dd_screener.py</code> 檔頭常數（<code>FUNNEL_*</code>），server 端 build 時算好寫進 <code>latest.json</code>（<code>funnel_rank</code> + 三個子分 + 各 flag）。表頭「綜合」欄 hover 看子分拆解。
-    </div>
+      <br>• <strong>四道不進公式的直接處置（2026-09-17 起，依嚴重度：兩個歸零 → 兩個封頂）</strong>：① FY1/FY2/FY3 <strong>三欄全部下修</strong> → 綜合評分強制歸 0、該列沉底 + <span style="color:var(--neg)">⛔</span>（下修是領先指標、品質分是落後指標，兩者衝突時以下修訊號為準）；② <strong>衰退訊號</strong>達 <span style="color:var(--neg)">⛔</span>（體質衰退訊號 6 項機械指標命中 ≥5 項）→ 綜合評分同樣強制歸 0（衰退訊號同屬領先指標，一樣壓過落後的品質分）；③ 護城河趨勢 <code>↓</code> 且<strong>非四條件全過</strong>（<code>pass_count &lt; 4</code>）→ 綜合評分封頂 0.50；④ <strong>體質五項 veto</strong> 命中<code>拒絕</code>（4-5 項不合格）→ 封頂 0.30、命中<code>降一級</code>（3 項不合格）→ 封頂 0.60——但當 FY1/FY2/FY3 <strong>三欄全部上修</strong>（各 ≥ +0.5%）時此封頂不生效（上修同屬領先指標，一樣壓過落後的體質評等）。同一列若同時符合多個條件，一律取最保守（最低）的分數，歸零的兩條優先權最高。FY1/FY2/FY3 修正 % 一律以公司財報幣別計算（非原始 USD），避免非美元公司在兩次匯出之間單純因匯率變動就被誤判全下修否決或誤觸發上修覆蓋；查不到財報幣別或當日匯率時才退回 USD 對比，個股欄位 hover 會標「未排除匯率」。<strong>v2 起，③④兩條封頂已停用</strong>——護城河與品質在 v2 是各自獨立的層，轉弱會直接反映在該層的 tier 上，不需要再用封頂模擬同樣的效果；③④對應的判準本身（護城河 ↓、體質五項 veto）仍在，只是不再拿來壓 v1 這個舊分數。
+      <br>權重與映射值寫在 <code>scripts/build_dd_screener.py</code> 檔頭常數（<code>FUNNEL_*</code>），server 端 build 時算好寫進 <code>latest.json</code>（<code>funnel_rank</code> + 三個子分 + 各 flag）。
+      </div>
+    </details>
 
     <ul>
 
       <li><strong>Ticker</strong>：股票代碼（正規格式）。
         <br><em>來源：</em><code>dd-meta JSON</code> → <code>scripts/dd_screener_dd_loader.py</code>
         <br><em>格式：</em>美股 <code>NVDA</code> / 台股 <code>2330.TW</code> / 日股 <code>6857.T</code> / 歐股 <code>RMS</code>（帶交易所後綴的 EU 用內部 suffix map 轉換，DD 名稱保留無後綴形式）
-        <br><em>⛔ 標記：</em>FY1/FY2/FY3 三欄全下修的否決列，ticker 旁顯示 ⛔、整列降透明度並沉底（綜合評分 = 0）。
+        <br><em>⛔ 標記：</em>FY1/FY2/FY3 三欄全下修的否決列，ticker 旁顯示 ⛔、整列降透明度並沉底（v1 綜合評分 = 0；v2 名次為空）。
       </li>
 
-      <li><strong>綜合（Funnel，漏斗綜合分）</strong>：基本面三層合成的 0–1 排序分，<strong>表格預設排序鍵</strong>（降序）。詳見上方「綜合評分」說明。
-        <br><em>公式：</em><code>0.40·財務品質分 + 0.30·護城河分 + 0.30·上修動能分</code>（時機第四層不進分）。
-        <br><em>來源：</em>全部用既有欄位合成（pass_count / 4 條計分明細 + moat_score/trend + FY1/FY2/FY3 修正動能；D/E advisory 不計分），<code>scripts/build_dd_screener.py</code> build 時算好寫進 <code>latest.json</code>。
-        <br><em>互動：</em>3 位小數；hover 看財務品質分／護城河分／上修動能分三個子分拆解 ＋ 否決／封頂說明；點表頭可改回任一欄位排序（原排序選項全保留）。
+      <li><strong>v2 名次（FunnelRank v2，四層側寫逐層排序）</strong>：<strong>表格預設排序鍵</strong>（升序，1 = 最佳）。詳見上方「v2 名次」說明。
+        <br><em>排序法：</em>事業品質、再投資引擎、期望落差、價格四個面向各自算百分位，先比四層裡最弱的一層，打平再比次弱的一層，以此類推（不是加權合成），全部打平才比四層中位數。護城河不參與（2026-09-22 定案）。
+        <br><em>來源：</em>事業品質／再投資引擎／期望落差／價格四層各自的欄位清單見上方說明，<code>scripts/build_dd_screener.py</code> build 時算好寫進 <code>latest.json</code>。
+        <br><em>顯示：</em>名次數字 ＋ 四格迷你側寫（灰色小橫條，最弱面向淡橘底）＋「儀表板」小連結（純顯示，連到該檔的 /stock-dash/）；hover 看四個面向的百分位與 tier 拆解，尾端附 v1 舊制分數對照。點表頭可改回任一欄位排序（原排序選項全保留）。
       </li>
 
       <li><strong>裁決（DD §13 統一裁決）</strong>：每份 v13/v14 合併報告決策層收斂出的單一裁決 —
@@ -628,10 +644,11 @@ var state = {
   timing:  'any',    // any | qichi (起漲點) | pullback (回調帶)
   customThresholds: { fcf: 10, roic: 15, eps2y: 15, peg: 2.0, de: 0.7 },
   customSOnly: true,
-  // v1.3: default sort 改為 FunnelRank 降序（漏斗綜合分）。原欄位排序皆保留 —
-  // 點任一可排序表頭即切換。server 端 latest.json 也已 pre-sort by funnel_rank。
-  sortKey: 'funnel_rank',
-  sortDir: 'desc',   // 'asc' | 'desc'
+  // 2026-09-22: default sort 改為 FunnelRank v2 名次升序（1 = 最佳）。原欄位排序
+  // 皆保留 — 點任一可排序表頭即切換。server 端 latest.json 也已 pre-sort by
+  // funnel_v2_rank。v1 綜合分（funnel_rank）欄位仍照算保留一版，見 hover 拆解。
+  sortKey: 'funnel_v2_rank',
+  sortDir: 'asc',   // 'asc' | 'desc'
   searchQuery: ''    // ticker substring lookup; bypasses chip filters
 };
 
@@ -1507,43 +1524,79 @@ function _renderLiveIRRInner(s) {
   return '<span style="color:' + color + ';font-weight:600">' + sign + Math.abs(shown).toFixed(1) + '%/yr</span>' + heurMark;
 }
 
-// FunnelRank cell (v1.3) — 漏斗綜合分 3 位小數 + 子分拆解 tooltip。
+// FunnelRank v2 cell (2026-09-22 最終定案：護城河不進排序) — v2 名次 + 四格
+// 迷你側寫（事業品質/再投資引擎/期望落差/價格，皆母體百分位同量級）+ 每列
+// 一個「儀表板」小連結（連到 /stock-dash/?t={T}，該檔的個股儀表板）。護城河
+// 三題制已於 2026-09-22 同日放棄，不再有任何護城河顯示欄位。逐層法排序，
+// 非加權合成分——見 notes/site-internal/root/_funnel_v2_design_20260922.md。
+// v1 綜合分（funnel_rank）仍照算保留一版，方法論全文移至頁面下方「舊版 v1」
+// 折疊區，這裡的 tooltip 只帶一行 v1 分數供對照。
+var FUNNEL_V2_LAYER_LABELS = ['事業品質', '再投資引擎', '期望落差', '價格'];
+
 function _renderFunnelCell(s) {
-  var f = s.funnel_rank;
-  if (f === null || f === undefined) {
-    return '<td class="left" style="color:var(--muted)">—</td>';
+  var rank = s.funnel_v2_rank;
+  var tiers = s.funnel_v2_tiers || [];
+  var profile = s.funnel_v2_profile || [];
+  var fmt1 = function(x){ return (x === null || x === undefined) ? '—' : x.toFixed(1); };
+
+  var minTier = null;
+  for (var i = 0; i < FUNNEL_V2_LAYER_LABELS.length; i++) {
+    var tv = (tiers[i] !== undefined) ? tiers[i] : -1;
+    if (minTier === null || tv < minTier) minTier = tv;
   }
-  var fmt3 = function(x){ return (x === null || x === undefined) ? '—' : x.toFixed(3); };
-  var cfg = (DATA && DATA.funnel_config) || {};
-  var w = cfg.weights || { quality: 0.40, moat: 0.30, revision: 0.30 };
-  var qRejectCap = (cfg.quality_reject_cap !== undefined) ? cfg.quality_reject_cap : 0.30;
-  var qDowngradeCap = (cfg.quality_downgrade_cap !== undefined) ? cfg.quality_downgrade_cap : 0.60;
+
+  // 四格迷你側寫：中性灰色小橫條（高度＝百分位），最弱層（tier 最低者，可能
+  // 不只一層並列）加淡橘底標記。無資料層畫一個極短、半透明的條。
+  var bars = FUNNEL_V2_LAYER_LABELS.map(function(label, i) {
+    var val = profile[i];
+    var tier = (tiers[i] !== undefined) ? tiers[i] : -1;
+    var hasData = val !== null && val !== undefined;
+    var h = hasData ? Math.max(2, Math.round(val / 100 * 12)) : 2;
+    var weak = (minTier !== null && tier === minTier);
+    var wrap = 'display:inline-flex;align-items:flex-end;justify-content:center;width:8px;height:13px;'
+      + (weak ? 'background:#fdf1e7;border-radius:2px' : '');
+    return '<span style="' + wrap + '"><span style="display:block;width:4px;height:' + h
+      + 'px;background:var(--sec);border-radius:1px;opacity:' + (hasData ? '0.85' : '0.30') + '"></span></span>';
+  }).join('');
+
+  // 個股儀表板連結（純顯示，不影響排序）。
+  var dashLink = '<a href="/stock-dash/?t=' + encodeURIComponent(s.ticker) + '" target="_blank" style="font-size:8.5px;color:var(--accent);text-decoration:none" title="個股儀表板（每日更新的機械數字）">儀表板</a>';
+
   var parts = [
-    '綜合評分 ' + f.toFixed(3) + ' = ' + w.quality + '·財務品質分 + '
-      + w.moat + '·護城河分 + ' + w.revision + '·上修動能分',
-    '財務品質分 ' + fmt3(s.quality_gate) + (s.quality_gate_partial ? '（部分欄位無資料，按比例換算）' : ''),
-    '護城河分 ' + fmt3(s.moat_score_adj) + (s.moat_no_data ? '（無 moat 資料 → 0.50）' : ''),
-    '上修動能分 ' + fmt3(s.revision_score) + (s.revision_no_baseline ? '（新/無 baseline → 0.50 中性）' : '')
+    'FunnelRank v2 名次 ' + ((rank !== null && rank !== undefined) ? ('#' + rank) : '未排名')
   ];
-  // 2026-09-17: 四道不進公式的直接處置（見上方「綜合評分」說明區塊）——歸零兩條
-  // 互斥（見 compute_funnel_rank，命中任一即短路、不再算封頂），封頂兩條可能同列
-  // 並存（moat cap 與 quality cap 各自檢查，取較低值），故不用 else if。
-  if (s.veto_all_downgrade) parts.push('⛔ FY1/FY2/FY3 全下修 → 強制歸 0、沉底');
-  if (s.veto_decline_signal) parts.push('⛔ 衰退訊號達 ⛔（6 項機械指標命中 ≥5 項）→ 強制歸 0、沉底');
-  if (s.funnel_cap_moat_down) parts.push('護城河 ↓ 且通過數 ≤ 4 → 封頂 0.50');
-  if (s.funnel_cap_quality) {
-    var qCap = (s.funnel_cap_quality_level === '拒絕') ? qRejectCap : qDowngradeCap;
-    parts.push('體質五項 veto「' + s.funnel_cap_quality_level + '」→ 封頂 ' + qCap.toFixed(2));
+  FUNNEL_V2_LAYER_LABELS.forEach(function(label, i) {
+    var val = profile[i];
+    var tier = (tiers[i] !== undefined) ? tiers[i] : -1;
+    parts.push(label + ' 百分位 ' + fmt1(val) + (tier >= 0 ? '（tier ' + tier + '）' : '（缺）'));
+  });
+  if (s.funnel_v2_median !== null && s.funnel_v2_median !== undefined) {
+    parts.push('四層中位數 ' + fmt1(s.funnel_v2_median));
   }
-  if (s.quality_cap_overridden_by_revision) parts.push('體質封頂本應觸發，但 FY1/FY2/FY3 三欄全部上修 → 封頂不生效');
+  if (s.funnel_v2_veto && s.funnel_v2_veto.length) {
+    parts.push('⛔ 硬否決命中：' + s.funnel_v2_veto.join('、') + ' → 不排名、沉底');
+  }
+  if (s.funnel_v2_note) parts.push('⚠ ' + s.funnel_v2_note + ' → 不排名、沉底');
+  if (typeof s.funnel_rank === 'number') {
+    parts.push('（v1 舊制綜合分 ' + s.funnel_rank.toFixed(3) + '，v1 legacy，下一版移除——方法論見頁面下方「舊版 v1」折疊區）');
+  }
   var tip = ' title="' + parts.join('; ').replace(/"/g, '&quot;') + '"';
-  var color;
-  if (f >= 0.75)      color = 'var(--pos)';
-  else if (f >= 0.55) color = 'var(--pos)';
-  else if (f >= 0.35) color = 'var(--warn)';
-  else                color = 'var(--neg)';
-  return '<td class="left"' + tip + ' style="font-variant-numeric:tabular-nums;'
-       + 'font-weight:700;color:' + color + '">' + f.toFixed(3) + '</td>';
+
+  var rankDisplay;
+  if (rank !== null && rank !== undefined) {
+    rankDisplay = '#' + rank;
+  } else if (s.funnel_v2_veto && s.funnel_v2_veto.length) {
+    rankDisplay = '<span style="color:var(--neg)">⛔</span>';
+  } else {
+    rankDisplay = '<span style="color:var(--muted)">缺</span>';
+  }
+
+  return '<td class="left"' + tip + ' style="font-variant-numeric:tabular-nums">'
+    + '<div style="display:flex;align-items:center;gap:5px">'
+    + '<span style="font-weight:700;min-width:22px">' + rankDisplay + '</span>'
+    + '<span style="display:inline-flex;gap:1px">' + bars + '</span>'
+    + dashLink
+    + '</div></td>';
 }
 
 // 2026-09-17: column-group reorder — plain pass/fail criterion cell (FCF /
@@ -1669,7 +1722,7 @@ function buildTable(stocks) {
   var thead = '<table class="tbl"><thead>' + groupRow + '<tr>' +
     // 身分
     _thSortable('Ticker', 'ticker', {left: true}) +
-    _thSortable('綜合分', 'funnel_rank', {left: true, title: '綜合評分 = 0.40·財務品質分 + 0.30·護城河分 + 0.30·上修動能分（基本面三層；時機不進分）。預設排序鍵。hover 看子分拆解。'}) +
+    _thSortable('v2 名次', 'funnel_v2_rank', {left: true, title: 'FunnelRank v2 — 事業品質／再投資引擎／期望落差／價格四層逐層比較排序，不是加權合成分（護城河不進排序；名次格右側另有「儀表板」連結）。預設排序鍵（名次 1 = 最佳）。hover 看四層拆解。'}) +
     _thSortable('裁決', 'dca_verdict', {left: true, title: 'DD §13 統一裁決（進場/觀望/迴避）— 只讀 v13/v14 合併報告的決策層 metadata；v12 舊報告顯示 —，DD 重跑後自動補上。點擊跳 #decision 錨點。'}) +
     _thSortable('Moat', 'moat_score', {left: true, title: '依護城河評等分數排序'}) +
     // 獲利
@@ -1873,6 +1926,11 @@ function renderEpsSourceBanner() {
               + extraMsg
               + ' 覆蓋 ' + src.coverage_count + ' 檔。' + fallbackHtml + missingHtml;
 }
+
+// 2026-09-22 最終定案：護城河不進排序，已無「判斷層覆蓋率／開關狀態」可顯示
+// ——renderMoatRubricCoverageNote()/renderMoatJudgmentStatusNote() 這條說明
+// banner 隨兩版舊設計一併移除。護城河三題制已於同日放棄，不再有任何護城河
+// 顯示欄位；名次格改為每列一個「儀表板」小連結，見 _renderFunnelCell()。
 
 function renderAll() {
   if (!DATA) return;
@@ -2134,8 +2192,9 @@ document.addEventListener('click', function(e) {
     state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
   } else {
     state.sortKey = key;
-    // Sensible default per column: ticker ascending; everything else descending
-    state.sortDir = (key === 'ticker') ? 'asc' : 'desc';
+    // Sensible default per column: ticker / funnel_v2_rank ascending (rank 1 =
+    // best); everything else descending.
+    state.sortDir = (key === 'ticker' || key === 'funnel_v2_rank') ? 'asc' : 'desc';
   }
   if (DATA) renderAll();
 });

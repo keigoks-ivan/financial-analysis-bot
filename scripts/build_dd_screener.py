@@ -43,6 +43,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import statistics
 import sys
 import threading
 import time
@@ -499,6 +500,258 @@ def compute_funnel_rank(
 
 
 # ---------------------------------------------------------------------------
+# FunnelRank v2 (2026-09-22) — 四層側寫逐層排序法，取代 v1 加權合成分
+# ---------------------------------------------------------------------------
+# 設計稿：notes/site-internal/root/_funnel_v2_design_20260922.md
+# 持有人拍板直接換掉主排序鍵，不做影子並行；v1（上方 FUNNEL_* 常數與
+# compute_funnel_rank()）整段保留不動，供對照一版，下一版才移除。
+#
+# 四層＝在全部 stocks（本次建置的完整母體）裡的名次百分位，越高越好。
+# 排序＝逐層 tier 比較（見 compute_funnel_v2() docstring），不是加權合成。
+#
+# 護城河不進排序；護城河三題制已於 2026-09-22 放棄，不再有任何護城河顯示
+# 欄位。同日稍早的護城河層各版草案（三來源鏈＋換算、單一來源＋絕對分層＋
+# 過渡開關、後來的純顯示連結 moat_questions_url/moat_review_due）皆已刪除，
+# 相關函式／常數／summary 欄位一併移除。
+
+# 四層裡至少要有幾層非 null 才排名（見設計稿 §3.1）。
+FUNNEL_V2_MIN_LAYERS = 3
+
+FUNNEL_V2_LAYER_ORDER = ("quality", "engine", "gap", "price")
+
+# 2026-09-23 修正：排序法改「最弱層先比」（leximin），見 _sort_tuple() 與設計稿
+# §3（原文字說「先比最弱的那個面向」，程式先前卻是固定順序 quality→engine→
+# gap→price，兩者不符——固定順序下品質一層就決定大半名次）。缺層（tier -1）在
+# 排序時視為此中性值，不獎不罰，避免「剛好缺一層資料」的股票被系統性推到最前
+# 或最後。
+FUNNEL_V2_MISSING_TIER_AS = 2
+
+# 2026-09-23 修正：quality 層的 fcf_ni_ratio 封頂——原本沒封頂時，GAAP 淨利被
+# SBC／一次性費用壓得很小的公司（CRWD 35.9／PANW 13.4／MDB 11.2）在這一項幾乎
+# 穩拿滿分，但那反映的是分母失真不是品質更好。封頂後 ≥0.8 一律當作「現金轉換
+# 沒問題」打平，只有低於門檻的才繼續往下扣分（v2 設計稿「懲罰過低不獎勵過
+# 高」）。只影響這一層的百分位輸入，不動原始 `fcf_ni_ratio` 欄位或既有 veto
+# 判準（<0.7 fail、decline signal <0.75 仍讀未封頂的原始值）。
+FUNNEL_V2_FCF_NI_CAP = 0.8
+
+
+def _funnel_v2_fund(row: dict, key: str):
+    return (row.get("fund") or {}).get(key)
+
+
+def _funnel_v2_incremental_roic(row: dict):
+    """engine 層的 incremental_roic_pct — 極端值哨兵或「資本縮減」註記時視為缺值
+    （見設計稿 §2.3；夾住的哨兵值/縮減比率不是真實速率，不該進百分位平均）。"""
+    if row.get("incremental_roic_clamped"):
+        return None
+    if row.get("incremental_roic_note") == "資本縮減":
+        return None
+    return row.get("incremental_roic_pct")
+
+
+def _funnel_v2_growth_gap(row: dict):
+    """gap 層的機械成長天花板 − 共識三年 CAGR；任一缺值則這個衍生欄位缺值。"""
+    implied = row.get("implied_growth_pct")
+    est = _funnel_v2_fund(row, "est_eps_cagr_3y_pct")
+    if implied is None or est is None:
+        return None
+    return implied - est
+
+
+def _funnel_v2_fcf_ni_capped(row: dict):
+    """quality 層的 fcf_ni_ratio 輸入——封頂 FUNNEL_V2_FCF_NI_CAP（見該常數註解：
+    懲罰過低，不獎勵過高）。原始 `fcf_ni_ratio` 欄位與 veto 判準不受影響。"""
+    v = row.get("fcf_ni_ratio")
+    if v is None:
+        return None
+    return min(v, FUNNEL_V2_FCF_NI_CAP)
+
+
+# 層名 → [(欄位標籤, 存取器, invert)]。invert=True 表示原始值越低、百分位越高
+# （price 層的「越便宜排名越高」）。moat 層有三條來源鏈，另外處理，不在此表。
+FUNNEL_V2_LAYER_FIELDS = {
+    "quality": [
+        ("roic_5y_avg_pct", lambda r: r.get("roic_5y_avg_pct"), False),
+        ("fcf", lambda r: r.get("fcf"), False),
+        ("fcf_ni_ratio", _funnel_v2_fcf_ni_capped, False),
+        ("ni_margin_ltm_pct", lambda r: _funnel_v2_fund(r, "ni_margin_ltm_pct"), False),
+    ],
+    "engine": [
+        ("implied_growth_pct", lambda r: r.get("implied_growth_pct"), False),
+        ("incremental_roic_pct", _funnel_v2_incremental_roic, False),
+        ("eps_fy1_fy3_cagr_pct", lambda r: r.get("eps_fy1_fy3_cagr_pct"), False),
+    ],
+    "gap": [
+        ("eps_rev_3m_pct", lambda r: r.get("eps_rev_3m_pct"), False),
+        ("eps_rev_since_earnings_pct", lambda r: r.get("eps_rev_since_earnings_pct"), False),
+        ("growth_expectation_gap_pct", _funnel_v2_growth_gap, False),
+    ],
+    # 2026-09-23 修正：拿掉 pct_5y——它是寫 DD 當下從報告抄來的欄位，寫報告之後
+    # 就凍結不動（stale），而且 87 檔非 DD 個股完全沒有這個欄位。價格層改成
+    # pe_vs_5y_x／live_peg 兩個反向欄位＋target_upside_pct 一個正向欄位。
+    # pct_5y 欄位本身仍照算輸出，只是不再進這一層的百分位平均。
+    "price": [
+        ("pe_vs_5y_x", lambda r: r.get("pe_vs_5y_x"), True),
+        ("live_peg", lambda r: r.get("live_peg"), True),
+        ("target_upside_pct", lambda r: r.get("target_upside_pct"), False),
+    ],
+}
+
+
+def _percentile_rank(raw: dict, invert: bool = False) -> dict:
+    """Rank-based percentile 0–100 for each key's value among all present
+    (non-None) values in `raw`. Ties share the same percentile (average-rank
+    method). invert=True flips direction so a LOWER raw value gets a HIGHER
+    percentile (used by the price layer's reverse fields). Keys whose value
+    is None are dropped — they don't participate in the ranking population,
+    matching every layer's "缺值不參與該層排名" rule.
+
+    O(n²) — fine at n≈339 (single build-time pass), avoids a scipy dependency.
+    """
+    present = {k: v for k, v in raw.items() if v is not None}
+    n = len(present)
+    if n == 0:
+        return {}
+    if n == 1:
+        return {next(iter(present)): 50.0}
+    vals = sorted(present.values())
+    out = {}
+    for k, v in present.items():
+        less = sum(1 for x in vals if x < v)
+        equal = sum(1 for x in vals if x == v)
+        avg_rank = less + (equal - 1) / 2.0
+        pct = avg_rank / (n - 1) * 100.0
+        out[k] = (100.0 - pct) if invert else pct
+    return out
+
+
+def compute_funnel_v2(enriched: list[dict]) -> dict:
+    """FunnelRank v2 — 四層側寫逐層排序法（設計稿 §2-§4）。
+
+    Mutates every row in `enriched` in place, adding: `funnel_v2_profile`
+    (4 個母體百分位 0-100, quality→engine→gap→price 順序), `funnel_v2_tiers`
+    (4 個 tier, 同順序, null→-1), `funnel_v2_median` (4 層百分位的中位數，
+    忽略 null), `funnel_v2_top_tier_count`, `funnel_v2_veto` (list, 命中的
+    硬否決旗標), `funnel_v2_rank` (1..N 或 None), `funnel_v2_note` (資料不
+    足時的說明, 否則 None).
+
+    護城河不進排序；護城河三題制已於 2026-09-22 放棄，不再有任何護城河顯示
+    欄位。同日稍早的三版護城河層設計（三來源鏈＋換算、單一來源＋絕對分層＋
+    過渡開關、純顯示連結 moat_questions_url/moat_review_due）皆已刪除，
+    `moat` 不是 `FUNNEL_V2_LAYER_ORDER` 的成員，排序鍵是四層 tier。
+
+    2026-09-23 修正：排序法是「最弱層先比」（leximin，見 `_sort_tuple()`），
+    不是固定順序 quality→engine→gap→price——四個 tier（缺層 -1 視為中性值
+    `FUNNEL_V2_MISSING_TIER_AS`）由小到大排序後逐一比較，最小（最弱）那個先
+    比，同分再比次弱，以此類推；全部打平才比 `funnel_v2_median`，再打平比
+    ticker。原設計稿文字說的就是這個，但先前實作成固定順序，品質一層獨力決
+    定了大半名次。
+
+    硬否決（沿用 v1 既有旗標，見設計稿 §4）與資料不足（<3/4 層非 null）都讓
+    `funnel_v2_rank=None` 並沉底，但兩者是不同的失敗模式，分別記在
+    `funnel_v2_veto` / `funnel_v2_note`——一列若兩者都命中，以否決優先
+    （否決是判斷層結論，資料不足是資料品質問題，判斷層結論優先）。
+
+    Returns a summary dict for the build() step's console banner + the
+    top-level `funnel_v2_summary`/`funnel_v2_config` latest.json blocks.
+    """
+    # ---- quality / engine / gap / price layers (percentile) ------------------
+    layer_pct: dict[str, dict[str, float]] = {}
+    for layer, fields in FUNNEL_V2_LAYER_FIELDS.items():
+        field_pcts = [_percentile_rank({r["ticker"]: getter(r) for r in enriched}, invert=invert)
+                      for _, getter, invert in fields]
+        combined: dict[str, float] = {}
+        for r in enriched:
+            t = r["ticker"]
+            vals = [fp[t] for fp in field_pcts if t in fp]
+            if vals:
+                combined[t] = sum(vals) / len(vals)
+        layer_pct[layer] = combined
+
+    # ---- per-ticker profile / tiers / sufficiency / veto ---------------------
+    def _tier(pct):
+        if pct is None:
+            return -1
+        if pct >= 80:
+            return 4
+        if pct >= 60:
+            return 3
+        if pct >= 40:
+            return 2
+        if pct >= 20:
+            return 1
+        return 0
+
+    eligible: list[dict] = []
+    veto_count = 0
+    insufficient_count = 0
+    top_tier_counts: Counter = Counter()
+    for r in enriched:
+        t = r["ticker"]
+
+        profile = [layer_pct[layer].get(t) for layer in FUNNEL_V2_LAYER_ORDER]
+        tiers = [_tier(p) for p in profile]
+        present = [p for p in profile if p is not None]
+        median = statistics.median(present) if present else None
+        n_present = len(present)
+        top_tier_count = sum(1 for tv in tiers if tv == 4)
+
+        r["funnel_v2_profile"] = [round(p, 2) if p is not None else None for p in profile]
+        r["funnel_v2_tiers"] = tiers
+        r["funnel_v2_median"] = round(median, 2) if median is not None else None
+        r["funnel_v2_top_tier_count"] = top_tier_count
+        top_tier_counts[top_tier_count] += 1
+
+        veto_reasons = []
+        if r.get("quality_veto_level") == "拒絕":
+            veto_reasons.append("quality_veto_level=拒絕")
+        if r.get("decline_signal_light") == "⛔":
+            veto_reasons.append("decline_signal_light=⛔")
+        if r.get("veto_all_downgrade"):
+            veto_reasons.append("veto_all_downgrade")
+        r["funnel_v2_veto"] = veto_reasons
+
+        if veto_reasons:
+            veto_count += 1
+            r["funnel_v2_rank"] = None
+            r["funnel_v2_note"] = None
+        elif n_present < FUNNEL_V2_MIN_LAYERS:
+            insufficient_count += 1
+            r["funnel_v2_rank"] = None
+            r["funnel_v2_note"] = f"資料不足（{n_present}/4 層）"
+        else:
+            r["funnel_v2_note"] = None
+            eligible.append(r)
+
+    def _sort_tuple(r):
+        """Leximin：最弱層先比。缺層（-1）當作中性值 FUNNEL_V2_MISSING_TIER_AS
+        （不獎不罰），四個 tier 由小到大排序後逐一比較——weakest 相同才比第二
+        弱，以此類推。負號是為了讓 Python 的預設遞增排序把「較好」的列排在
+        前面（tier 越大＝越好，取負後數值越小＝排序越前）。全部打平再比
+        `funnel_v2_median`（數值越大越好，同樣取負），最後比 ticker。"""
+        mapped = sorted(FUNNEL_V2_MISSING_TIER_AS if tv == -1 else tv for tv in r["funnel_v2_tiers"])
+        median = r["funnel_v2_median"]
+        return (*[-v for v in mapped], -(median if median is not None else -1.0), r["ticker"])
+
+    eligible.sort(key=_sort_tuple)
+    for i, r in enumerate(eligible, start=1):
+        r["funnel_v2_rank"] = i
+
+    return {
+        "layer_config": {
+            "min_layers": FUNNEL_V2_MIN_LAYERS,
+            "layer_order": list(FUNNEL_V2_LAYER_ORDER),
+            "layer_fields": {layer: [f[0] for f in fields] for layer, fields in FUNNEL_V2_LAYER_FIELDS.items()},
+        },
+        "ranked_count": len(eligible),
+        "veto_count": veto_count,
+        "insufficient_count": insufficient_count,
+        "universe_size": len(enriched),
+        "top_tier_distribution": dict(sorted(top_tier_counts.items())),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Step 5: pass/fail
 # ---------------------------------------------------------------------------
 
@@ -553,13 +806,16 @@ def de_advisory_flag(quality: dict) -> bool:
 
 
 def _sort_key(s: dict) -> tuple:
-    # v1.3: default ordering is FunnelRank desc (漏斗綜合分 — 基本面三層合成).
-    # all-downgrade veto rows carry funnel_rank=0 so they sink to the bottom.
-    # Tie-break preserves the legacy chain: pass_count → moat_score → 5Y IRR
-    # → ticker. The FE honours this order when no column sort is active.
+    # 2026-09-22: default ordering is now FunnelRank v2 (逐層法) ascending —
+    # rank 1 = best, None (veto'd / insufficient data) sinks to the bottom.
+    # Tie-break for None-rank rows preserves the v1.3 legacy chain (funnel_rank
+    # desc → pass_count → moat_score → 5Y IRR → ticker) so veto'd/insufficient
+    # rows still have a stable, sensible relative order among themselves.
+    v2_rank = s.get("funnel_v2_rank")
     funnel = s.get("funnel_rank")
     irr = s.get("ev5y_pct")
     return (
+        v2_rank if v2_rank is not None else float("inf"),
         -(funnel if funnel is not None else -1.0),
         -s["pass_count"],
         -(s.get("moat_score") or 0),
@@ -2966,6 +3222,15 @@ def compute_fundamental_gates(record: dict | None, roic_quadrant_code: str | Non
     out["target_range_x"] = _r2(target_range_x)
     out["target_range_flag"] = (target_range_x > 2.5) if target_range_x is not None else None
     out["target_upside_pct"] = _r2(target_upside_pct)
+    # 2026-09-23: provenance for target_upside_pct. This function stays pure/
+    # network-free (docstring above), so it only ever records "koyfin" when
+    # the Excel record produced a value — the yfinance fallback (for rows
+    # where t_avg/last_px is split across the two Koyfin exports, e.g. TSM
+    # ADR has last_price_local but no target_avg while 2330.TW is the
+    # reverse) is applied by the caller, enrich_ticker(), which overwrites
+    # both fields to "yfinance" when it fires. None here means neither
+    # source has produced a value yet.
+    out["target_upside_source"] = "koyfin" if target_upside_pct is not None else None
 
     # --- J. Momentum gates [decision-layer rows 5 / 8a] ---------------------------
     rsi14 = fund["rsi14"]
@@ -3012,6 +3277,32 @@ def compute_fundamental_gates(record: dict | None, roic_quadrant_code: str | Non
         out["insider_signal"] = None
 
     return out
+
+
+def _target_upside_yfinance_fallback(yf_ticker: str) -> float | None:
+    """target_upside_pct 的 yfinance 備援（2026-09-23）。
+
+    Koyfin 匯出對一部分名字是分裂的：例如 TSM（ADR）有 `fund.last_price_local`
+    卻沒有 `fund.target_avg`，2330.TW 剛好相反——有 `target_avg` 沒有
+    `last_price_local`。兩邊湊不出同一支股票的分子分母，`compute_fundamental_
+    gates()` 的 §I 只能回 None。這裡改讀 yfinance `Ticker.info` 的
+    `targetMeanPrice` 與 `currentPrice`（缺 currentPrice 才退回
+    `regularMarketPrice`）——兩個欄位同一次 `.info` 呼叫、同一個報價來源、同一
+    種貨幣，比例才有效，不會像 Koyfin 兩欄那樣是兩個不同來源拼出來的假分數。
+
+    只在呼叫端（`enrich_ticker()`）確認 Koyfin 那條路徑失敗（None）時才會被
+    呼叫，不對每一檔都多打一次 API。任何例外或缺欄位一律回 None——fail-safe，
+    與本檔其餘 yfinance 呼叫（如 `_fetch_live_fy_eps()`）同一慣例。
+    """
+    try:
+        info = yf.Ticker(yf_ticker).info
+        target_mean = info.get("targetMeanPrice")
+        price = info.get("currentPrice") or info.get("regularMarketPrice")
+        if target_mean and price and float(price) > 0:
+            return round((float(target_mean) / float(price) - 1) * 100, 2)
+    except Exception:
+        pass
+    return None
 
 
 def enrich_ticker(
@@ -3351,6 +3642,14 @@ def enrich_ticker(
         _excel_record_for_eps2y, roic_decomp.get("roic_quadrant_code"),
         eps_curr_val, eps_fy1_consec_down,
     )
+    # 2026-09-23: target_upside_pct yfinance 備援— only when Koyfin's own §I
+    # calc above came back None (see _target_upside_yfinance_fallback()
+    # docstring for why the two sources can't just be averaged/mixed).
+    if fund_gates.get("target_upside_pct") is None:
+        _yf_upside = _target_upside_yfinance_fallback(_yf_ticker_for_ma(t))
+        if _yf_upside is not None:
+            fund_gates["target_upside_pct"] = _yf_upside
+            fund_gates["target_upside_source"] = "yfinance"
 
     # v1.3: FunnelRank — 漏斗綜合分 (基本面三層: QualityGate + Moat + Revision).
     # 用 per-FY revision %（vs 上一份 snapshot）的 FY1/FY2/FY3 三欄合成 RevisionScore;
@@ -3400,9 +3699,11 @@ def enrich_ticker(
         **fund_gates,    # 2026-09-17: 體質五項 veto/quality_veto_*/ol_divergence_*/
                          # gm_yoy_pp/gm_trigger/capalloc_mech_grade/capex_*/rule_of_40/
                          # cash_runway_months/decline_signal_*/pe_vs_5y_x/pb_vs_5y_x/
-                         # target_range_x/target_upside_pct/rsi14/return_6m_*/ccc_*/fund/
-                         # short_interest_pct_float/short_squeeze_flag/insider_net_buy_3m/
-                         # insider_signal（皆純描述器，見 compute_fundamental_gates §L）
+                         # target_range_x/target_upside_pct/target_upside_source（2026-09-23
+                         # 新增，"koyfin"/"yfinance"/None，見上方 fallback 呼叫）/rsi14/
+                         # return_6m_*/ccc_*/fund/short_interest_pct_float/
+                         # short_squeeze_flag/insider_net_buy_3m/insider_signal
+                         # （皆純描述器，見 compute_fundamental_gates §L）
         "ev5y_pct": ev5y_pct,
         "ma": ma,
         "ma_from_cache": ma_from_cache,
@@ -3854,6 +4155,18 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     print(f"  Step 4.7  Asym flags: ◆={asym_counts.get('◆', 0)} "
           f"★★={asym_counts.get('★★', 0)} ★={asym_counts.get('★', 0)}")
 
+    # Step 4.8 (2026-09-22): FunnelRank v2 — 四層側寫逐層排序法, replaces v1
+    # as the default sort key (v1 fields kept, computed above, unchanged).
+    # Must run over the full `enriched` population (population percentiles),
+    # so it runs once here rather than per-ticker inside enrich_ticker().
+    # 護城河不進排序；護城河三題制已於 2026-09-22 放棄，不再有任何護城河
+    # 顯示欄位，故此處不印 moat 覆蓋統計行（已無 summary 欄位可印）。
+    funnel_v2_summary = compute_funnel_v2(enriched)
+    print(f"  Step 4.8  FunnelRank v2: ranked={funnel_v2_summary['ranked_count']} "
+          f"veto={funnel_v2_summary['veto_count']} "
+          f"insufficient={funnel_v2_summary['insufficient_count']} "
+          f"(of {funnel_v2_summary['universe_size']})")
+
     # Step 5: sort (pass/fail already computed above)
     enriched.sort(key=_sort_key)
 
@@ -3954,8 +4267,13 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     doc = {
         # v1.3: + FunnelRank (漏斗綜合排序分) per stock — funnel_rank + 3 sub-scores
         # (quality_gate / moat_score_adj / revision_score) + veto/cap/partial flags
-        # + peg_fallback. Default sort is now funnel_rank desc. See dd_screener_schema.md.
-        "schema_version": "1.3",
+        # + peg_fallback. v1 fields kept as legacy (see dd_screener_schema.md v1.3).
+        # v1.4 (2026-09-22): + FunnelRank v2 (四層側寫逐層排序法：品質→引擎→
+        # 落差→價格)。護城河不進排序；護城河三題制已於 2026-09-22 放棄，不
+        # 再有任何護城河顯示欄位。funnel_v2_rank is now the default sort key
+        # (ascending, None sinks). See dd_screener_schema.md v1.4 and
+        # notes/site-internal/root/_funnel_v2_design_20260922.md.
+        "schema_version": "1.4",
         "run_timestamp": now.isoformat(timespec="seconds"),
         "as_of": now.strftime("%Y-%m-%d"),
         "universe_size": len(enriched),
@@ -3965,6 +4283,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         "default_filter": DEFAULT_FILTER,
         # v1.3: FunnelRank weights/mapping surfaced for the FE methodology panel
         # and audit (per-row sub-scores are computed from these constants).
+        # v1 legacy — kept one version for comparison, no longer the default sort.
         "funnel_config": {
             "weights": FUNNEL_WEIGHTS,
             "quality_map": FUNNEL_QUALITY_MAP,
@@ -3977,6 +4296,13 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
             "quality_reject_cap": FUNNEL_QUALITY_REJECT_CAP,
             "quality_downgrade_cap": FUNNEL_QUALITY_DOWNGRADE_CAP,
         },
+        # v1.4 (2026-09-22): FunnelRank v2 layer config + build-time summary
+        # counts, for the FE methodology panel + QA. Per-row fields (funnel_v2_
+        # rank/tiers/profile/median/top_tier_count/veto/note) live on each
+        # stocks[] entry — see compute_funnel_v2(). 護城河不進排序；護城河
+        # 三題制已於 2026-09-22 放棄，不再有任何護城河顯示欄位。
+        "funnel_v2_config": funnel_v2_summary["layer_config"],
+        "funnel_v2_summary": {k: v for k, v in funnel_v2_summary.items() if k != "layer_config"},
         "summary": summary,
         "roic_decomp_summary": roic_decomp_summary,
         "fundamental_gates_summary": fundamental_gates_summary,

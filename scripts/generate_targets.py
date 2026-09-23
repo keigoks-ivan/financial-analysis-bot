@@ -114,6 +114,9 @@ def merge():
         t["role"] = s.get("dca_role")
         t["irr"] = s.get("live_ev5y_pct")
         t["funnel"] = s.get("funnel_rank")
+        # 2026-09-22: FunnelRank v2（五層側寫逐層排序法）名次，additive —
+        # "funnel"（v1 legacy）不動，見 dd_screener_schema.md v1.4。
+        t["funnel_v2"] = s.get("funnel_v2_rank")
         t["moat"] = (s.get("moat_grade"), s.get("moat_score"), s.get("moat_trend"))
         t["runway"] = s.get("runway_post_y5")
         t["dd_path"] = t["dd_path"] or s.get("dca_path") or s.get("dd_path")
