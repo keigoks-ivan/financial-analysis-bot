@@ -1127,6 +1127,7 @@ footer a{color:var(--muted)}
     if(/^\d{4}-\d{2}-\d{2}$/.test(iso))return iso.slice(5);
     try{var o=twParts(new Date(iso));return o.month+'-'+o.day+' '+o.hour+':'+o.minute;}catch(e){return '—';}
   }
+  function fixTs(t){return (typeof t==='string')?t.replace(/\+00:00Z$/,'Z'):t;}
   function dow(ds){return new Date(ds+'T12:00:00Z').getUTCDay();}
   function addD(ds,n){var t=new Date(ds+'T12:00:00Z');t.setUTCDate(t.getUTCDate()+n);return t.toISOString().slice(0,10);}
   function prevTradingDay(today){var d=addD(today,-1);while(dow(d)===0||dow(d)===6)d=addD(d,-1);return d;}
@@ -1151,9 +1152,16 @@ footer a{color:var(--muted)}
     {g:'us',name:'龜殼商品部位',url:'/turtle-sleeve/state.json',href:'/turtle-sleeve/',ts:function(d){return G(d,'generated_at');},cmp:function(d){return G(d,'data_date');}},
     {g:'us',name:'SMH 槓桿疊加',url:'/long-track-smh/leverage/state.json',ts:function(d){return G(d,'generated_at');},cmp:function(d){return G(d,'data_date');}},
     {g:'us',name:'QGM 品質動能榜（台）',url:'/qgm-tw/latest.json',href:'/qgm-tw/',ts:function(d){return G(d,'run_timestamp');},cmp:function(d){return twYmd(G(d,'run_timestamp'));}},
-    {g:'tw',name:'DD 選股器（EPS）',url:'/dd-screener/latest.json',href:'/dd-screener/',cutoff:9.75,ts:function(d){return G(d,'run_timestamp');},cmp:function(d){return twYmd(G(d,'run_timestamp'));}},
-    {g:'tw',name:'品質進場榜',url:'/dd-screener/quality-entry.json',href:'/dd-screener/quality-entry.html',cutoff:9.75,ts:function(d){return G(d,'run_timestamp');},cmp:function(d){return twYmd(G(d,'run_timestamp'));}},
-    {g:'tw',name:'QGM 品質動能榜（美）',url:'/qgm/latest.json',href:'/qgm/',cutoff:9.0,ts:function(d){return G(d,'run_timestamp');},cmp:function(d){return twYmd(G(d,'run_timestamp'));}},
+    {g:'tw',name:'DD 選股器（EPS）',url:'/dd-screener/latest.json',href:'/dd-screener/',cutoff:15,ts:function(d){return G(d,'run_timestamp');},cmp:function(d){return twYmd(G(d,'run_timestamp'));}},
+    {g:'tw',name:'品質進場榜',url:'/dd-screener/quality-entry.json',href:'/dd-screener/quality-entry.html',cutoff:15,ts:function(d){return G(d,'run_timestamp');},cmp:function(d){return twYmd(G(d,'run_timestamp'));}},
+    {g:'tw',name:'QGM 品質動能榜（美）',url:'/qgm/latest.json',href:'/qgm/',cutoff:15,ts:function(d){return G(d,'run_timestamp');},cmp:function(d){return twYmd(G(d,'run_timestamp'));}},
+    {g:'pm',name:'個股儀表板（NVDA 抽樣）',url:'/stock-dash/data/NVDA.json',href:'/stock-dash/',cutoff:17,ts:function(d){return fixTs(G(d,'generated_at'));},cmp:function(d){return twYmd(fixTs(G(d,'generated_at')));}},
+    {g:'pm',name:'ETF 儀表板 · SMH',url:'/etf-dash/data/SMH.json',href:'/etf-dash/?etf=SMH',cutoff:17,ts:function(d){return G(d,'as_of');},cmp:function(d){return G(d,'as_of');}},
+    {g:'pm',name:'ETF 儀表板 · SMH（愛爾蘭）',url:'/etf-dash/data/SMH_UCITS.json',href:'/etf-dash/?etf=SMH_UCITS',cutoff:17,ts:function(d){return G(d,'as_of');},cmp:function(d){return G(d,'as_of');}},
+    {g:'pm',name:'條件流向圖',url:'/flowmap/data/latest.json',href:'/market/',cutoff:21,ts:function(d){return G(d,'generated_at');},cmp:function(d){return twYmd(G(d,'generated_at'));}},
+    {g:'pm',name:'統計性質面板',url:'/statlab/data/latest.json',href:'/market/',cutoff:21,ts:function(d){return G(d,'generated_at');},cmp:function(d){return twYmd(G(d,'generated_at'));}},
+    {g:'pm',name:'市況主控台（合成）',url:'/market/data/state.json',href:'/market/',cutoff:21,ts:function(d){return G(d,'generated_at');},cmp:function(d){return twYmd(G(d,'generated_at'));}},
+    {g:'pm',name:'CEO 關注清單',url:'/horizon/data/horizon.json',href:'/horizon/',cutoff:23,ts:function(d){return G(d,'generated_at');},cmp:function(d){return twYmd(G(d,'generated_at'));}},
     {g:'wk',name:'Momentum-5 對照',url:'/research/momentum-5/data.json',href:'/research/momentum-5/',due:6,ts:function(d){return G(d,'as_of');},cmp:function(d){return G(d,'as_of');}},
     {g:'wk',name:'Momentum-5 Short',url:'/research/momentum-5-short/short.json',href:'/research/momentum-5-short/',due:6,ts:function(d){return G(d,'as_of');},cmp:function(d){return G(d,'as_of');}},
     {g:'wk',name:'Momentum-5 Fast',url:'/research/momentum-5-fast/fast.json',href:'/research/momentum-5-fast/',due:6,ts:function(d){return G(d,'as_of');},cmp:function(d){return G(d,'as_of');}},
@@ -1167,7 +1175,8 @@ footer a{color:var(--muted)}
   ];
   var GRPS=[
     {k:'us',t:'每日 · 清晨已可驗（前一交易日）'},
-    {k:'tw',t:'每日 · 台北早盤 09:00 後才跑'},
+    {k:'tw',t:'每日 · 台北早盤（排 09:00，GitHub 常延遲，15:00 前顯示待跑）'},
+    {k:'pm',t:'每日 · 下午／傍晚（接在早盤帶之後或下午排程）'},
     {k:'wk',t:'每週（平日顯示上一期屬正常）'}
   ];
 
@@ -1180,7 +1189,7 @@ footer a{color:var(--muted)}
       if(cd>=exp)return {st:'ok',lab:'已更新',cls:'uc-ok',ts:ts};
       return {st:'warn',lab:'落後 '+daysBtw(cd,exp)+' 日',cls:'uc-warn',ts:ts};
     }
-    if(s.g==='tw'){
+    if(s.g==='tw'||s.g==='pm'){
       if(cd===today)return {st:'ok',lab:'今日已跑',cls:'uc-ok',ts:ts};
       if(hour<(s.cutoff||9))return {st:'pend',lab:'尚未到點',cls:'uc-pend',ts:ts};
       var exp2=prevTradingDay(today);
@@ -1218,7 +1227,7 @@ footer a{color:var(--muted)}
       });
       document.getElementById('ucSum').innerHTML='<b>'+nOk+'</b> 已更新'+(nW?' · <b style="color:#a15c00">'+nW+'</b> 落後':'')+(nP?' · '+nP+' 待跑':'')+(nE?' · <b style="color:#a12a2a">'+nE+'</b> 抓不到':'');
       document.getElementById('ucNote').textContent='檢查於 '+today+' '+tp.hour+':'+tp.minute+'（台北）。時戳＝各來源最後更新（台北時間）。';
-      document.getElementById('ucFoot').textContent='註：美股／台股休市日部分來源不更新屬正常；「落後」在假日後首個交易日清晨可能短暫出現、稍後自動追上。台北早盤來源（09:00 後跑）在此之前顯示「尚未到點」。每週來源平日顯示上一期為正常。';
+      document.getElementById('ucFoot').textContent='註：美股／台股休市日部分來源不更新屬正常；「落後」在假日後首個交易日清晨可能短暫出現、稍後自動追上。台北早盤與下午／傍晚來源在各自時點前顯示「尚未到點」（GitHub 排程常延遲 2–5 小時，時點已放寬）。每週來源平日顯示上一期為正常。';
       document.getElementById('upd-check').hidden=false;
     });
   }
