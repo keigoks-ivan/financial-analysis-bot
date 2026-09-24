@@ -19,7 +19,7 @@ description: 投資想法查核點的每日深入查核（雲端 routine `idea-w
 1. `docs/ideas/ideas.json`：每個 active 想法的查核點（`label`、`companies`、`company_names`、`keywords`、`supports_if`、`refutes_if`、`keystone`、`due`）。
 2. 每篇想法頁 `docs/ideas/<id>.html` 裡 `CPS` 陣列的中文「成立／推翻」條件（`yes`、`no`），這是判斷的主要依據；`supports_if／refutes_if` 是同一件事的英文版。
 3. `docs/ideas/data/research.json`：上一次的狀態與累積紀錄（沒有這個檔就視為第一次執行）。
-4. `docs/briefing/data/idea_hits.json`（直接讀 repo 裡的檔）：前一天早報用關鍵字比對找到的新聞。2026-09-24 起早報不再判方向，新的列 `verdict` 都是 `candidate`（可能相關）；判斷交給本 skill 步驟 3 的「早報候選」。
+4. `docs/briefing/data/idea_hits.json`（直接讀 repo 裡的檔）：前一天早報用關鍵字比對找到、並在早報當下由 Claude（opus，讀原文）判過方向的新聞；每列有 `verdict`、`reason_zh`、`basis`。判斷失敗的列 `verdict` 是 `candidate`（可能相關）。
 
 ## 步驟
 
@@ -29,7 +29,10 @@ description: 投資想法查核點的每日深入查核（雲端 routine `idea-w
    - **到期事件**：`due` 裡日期落在「今天往前 3 天到今天」、且 `research.json` 還沒有同一個 `event` 的 `kind: "earnings"` 紀錄者，讀公司官方新聞稿（IR 網站、SEC 8-K、證交所公告）。`approx: true` 的日期要先確認事件真的已發生。
    - **逐字稿補查**：前 3 天內做過 `kind: "earnings"`、但 `transcript_checked` 是 false 的，找法說逐字稿或官方重點摘要，補查新聞稿沒講的財測用字與供需描述。
    - **主動搜尋**：每個 active 查核點用 2～4 組查詢搜過去 48 小時（第一次執行搜過去 30 天）。搜到的重要結果要用 WebFetch 讀原文，不能只靠搜尋摘要；原文讀不到（對方擋機器人、付費牆）才用摘要，並照硬規則註明。查詢從 `label`、`company_names`、`keywords` 組；台灣公司（台積電、信驊、華城等）加中文查詢。優先找一手或專業來源：公司 IR、SEC、證交所公開資訊觀測站、TrendForce 新聞稿、Cloudflare 部落格與 Radar、主要財經媒體。
-   - **早報候選**（每天做）：`idea_hits.json` 裡 `verdict: "candidate"`、而且 `candidate_reviews` 還沒有同一個 url＋idea＋checkpoint 的每一列，逐則用 WebFetch 讀原文（讀不到才用標題與摘要），照步驟 4 判 `supports`／`refutes`／`shaky`／`neutral`／`unrelated`。每一則都寫一列 `candidate_reviews`（含 unrelated）；不是 unrelated 的另外寫一筆 `kind: "candidate"` 的 entry，並照步驟 5 影響狀態。
+   - **早報候選**（每天做）：`idea_hits.json` 裡還沒出現在 `candidate_reviews` 的列（比對 url＋idea＋checkpoint）。
+     - `verdict` 已是 supports／refutes／shaky／neutral：早報已讀原文判過，不重判，直接當證據寫一筆 `kind: "candidate"` entry（`summary` 用 `reason_zh`，`sources[].read` 依 `basis`），照步驟 5 影響狀態；只有會讓關鍵查核點改狀態時，才自己再讀一次原文確認。
+     - `verdict` 是 `candidate`（早報判斷失敗）：用 WebFetch 讀原文，照步驟 4 判斷。
+     - 每一列都寫一筆 `candidate_reviews`（含 unrelated）。
    - **週一全面複查**（2026-09-24 使用者要求）：把每個狀態不是 `no_data` 的查核點，拿它目前 `reason` 裡的每個數字與事實，回到原文逐一核對（WebFetch 讀原文；公司新聞稿、SEC、證交所、TrendForce 優先）。數字對不上就改 `reason`；核對後證據不足以支撐原狀態，就照步驟 5 改狀態並寫 `changes`（`reason` 開頭寫「週一複查：」）。每個查核點寫一筆 `kind: "reverify"` 的 entry，`summary` 寫核對結果（例：「週一複查：3 個數字與原文一致」或「週一複查：營收 650 億美元原文是 7 月底年化，已更正」）。同一週已複查過（`entries` 裡本週一已有 `reverify`）就不重做。
 4. **逐則判斷**：每則證據對照該查核點的「成立／推翻」條件，給 `verdict`：
    - `supports`：符合成立條件。
