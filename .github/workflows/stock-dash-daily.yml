@@ -17,13 +17,19 @@ name: Stock Dashboard Daily Data
 # artifact 剛好過了 7 天保留期才會發生），建置完再整包重新上傳，形成鏈狀接續。
 #
 # 排程：接在 daily-taipei-morning.yml（Tue-Sat 01:00 UTC，timeout 90 分鐘，
-# 內含 docs/dd-screener/latest.json 的每日刷新）之後——03:13 UTC 起跑，
-# 即使該帶跑到接近自己的 90 分鐘上限也還有約 2 小時餘裕。
+# 內含 docs/dd-screener/latest.json 的每日刷新）之後：2026-09-24 起改成 workflow_run
+# 接力（上游成功即跑），18:13 台北的 cron 只當備用，當天已成功就由 gate 跳過。
 # ─────────────────────────────────────────────────────────────────────────
 
 on:
   schedule:
-    - cron: "13 3 * * 2-6"  # Tue-Sat 03:13 UTC = Tue-Sat 11:13 Taipei（避開整點排隊，GitHub 整點排程常延遲數小時）
+    - cron: "13 10 * * 2-6"  # 備用班次：Tue-Sat 10:13 UTC = 18:13 Taipei（接力沒跑成才會真的建置，見 gate）
+  # 2026-09-24：主要觸發＝接力（台北早盤帶刷新 latest.json 成功後立即跑）；GitHub 排程
+  # 常延遲 2–5 小時，靠時鐘排在上游之後會讀到前一天資料。
+  workflow_run:
+    workflows: ["Daily Taipei Morning Band"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -35,7 +41,43 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # 2026-09-24：接力觸發的閘門。workflow_run（台北早盤帶）成功才跑；schedule 是備用班次，
+  # 今天（台北日期）已有成功 run 就跳過，避免重跑；workflow_dispatch 一律跑。
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          UPSTREAM: ${{ github.event.workflow_run.conclusion }}
+        run: |
+          run=true
+          if [ "$EVENT" = "workflow_run" ] && [ "$UPSTREAM" != "success" ]; then
+            echo "Upstream Daily Taipei Morning Band concluded '$UPSTREAM' — skip; fallback schedule will cover."
+            run=false
+          elif [ "$EVENT" = "schedule" ]; then
+            today=$(TZ=Asia/Taipei date +%F)
+            # 只算 build job 真的成功的 run（gate 跳過的 run 整體也是 success，不能算）
+            done_today=0
+            for rid in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow "stock-dash-daily.yml" --status success --limit 10 \
+                --json databaseId,createdAt -q '.[] | "\(.databaseId) \(.createdAt)"' | while read -r id ts; do
+                  [ "$(TZ=Asia/Taipei date -d "$ts" +%F)" = "$today" ] && echo "$id"; done); do
+              ok=$(gh run view "$rid" --repo "$GITHUB_REPOSITORY" --json jobs -q '[.jobs[] | select(.name == "build" and .conclusion == "success")] | length')
+              [ "${ok:-0}" -gt 0 ] && done_today=1 && break
+            done
+            if [ "${done_today:-0}" -gt 0 ]; then
+              echo "Already built successfully today ($today, Taipei) via chain — fallback skipped."
+              run=false
+            fi
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -56,8 +98,9 @@ jobs:
         run: |
           set +e
           mkdir -p docs/stock-dash/data
-          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow stock-dash-daily.yml \
-            --status success --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null)
+          # 取最新一份未過期的 stock-dash-data artifact（gate 跳過的 run 沒有 artifact，不能只看 success）
+          RUN_ID=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=stock-dash-data&per_page=1" \
+            -q '.artifacts[0] | select(.expired == false) | .workflow_run.id' 2>/dev/null)
           if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
             echo "No previous successful run found — starting cold (first run, or artifact past its 7-day retention)."
             exit 0
