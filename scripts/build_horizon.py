@@ -700,6 +700,10 @@ def main():
                   "statlab": "/statlab/", "regime": "/regime/", "crowding": "/crowding/",
                   "總經時鐘": "/macro/", "intel": "/intel/"}
     for f in state.get("freshness", []):
+        # 週更來源天生落後約一週（COT 週五才公布上週二的部位），只在真正 stale 才列；
+        # 日更、月頻的 warn 照列（2026-09-24 flowmap／statlab 就是靠 warn 抓到的）
+        if f.get("status") == "warn" and f.get("cadence") == "週更":
+            continue
         if f.get("status") not in ("ok", None):
             link = next((v for k, v in fresh_link.items() if k in f["pipeline"]), "/market/")
             fires_co.append({"side": "公司", "level": "mid",

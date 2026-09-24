@@ -24,9 +24,9 @@ from __future__ import annotations
 import io
 import json
 import math
+import subprocess
 import sys
 import time
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -37,7 +37,6 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "macro" / "data" / "clock.json"
 
 FRED = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
-UA = {"User-Agent": "Mozilla/5.0 (imq-macro-clock; research script)"}
 
 GROWTH = {"CFNAI": +1, "PAYEMS": +1, "UNRATE": -1}
 INFLATION = {"PCEPILFE": +1, "CPIAUCSL": +1, "T10YIE": +1, "PPIACO": +1}
@@ -49,12 +48,25 @@ QUAD_ASSET = {"復甦": "股票", "過熱": "商品", "滯脹": "現金", "再�
 
 def fred(sid: str) -> pd.Series:
     # 2026-08-19：GH runner 連 FRED 常 read timeout（07-10 起每週皆失敗、clock 卡在 2026-06）
-    # → timeout 30→90 秒＋重試 3 次（指數退避）。本機 30 秒即過，問題在 runner 出口網路。
-    req = urllib.request.Request(FRED.format(sid=sid), headers=UA)
+    # → timeout 30→90 秒＋重試 3 次（指數退避），仍逾時。
+    # 2026-09-24：查到 urllib 對 fred.stlouisfed.org 的 read 會持續 timeout（本機與 GH
+    # runner 皆同一症狀），但 scripts/market_sources.py（2026-09-13 已修）證實同一 CSV
+    # 端點改用 curl subprocess 可正常讀取——對齊同一條修法，不經 shell、不跟隨重導向。
+    # 實測發現：帶自訂 User-Agent（原本的 UA 常數）會被 FRED 端以 HTTP/2 stream error
+    # (curl exit 92) 擋下，拿掉 -A、用 curl 預設 UA 才穩定成功——market_sources.py 的
+    # 同一支 curl 分支本就沒帶 -A，這裡對齊，不覆蓋 header。
+    url = FRED.format(sid=sid)
     last_err = None
     for attempt in range(3):
         try:
-            raw = urllib.request.urlopen(req, timeout=90).read().decode("utf-8")
+            result = subprocess.run(
+                ["curl", "--fail", "--silent", "--show-error", "--compressed",
+                 "--proto", "=https", "--max-redirs", "0", "--max-time", "90", url],
+                capture_output=True, timeout=95,
+            )
+            if result.returncode:
+                raise OSError(f"curl exit {result.returncode}: {result.stderr.decode('utf-8', 'replace').strip()}")
+            raw = result.stdout.decode("utf-8")
             break
         except Exception as e:  # noqa: BLE001
             last_err = e
