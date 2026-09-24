@@ -574,6 +574,31 @@ def do_facts(ctx):
 QC49_WINDOW_DAYS = 90
 
 
+def _valdep_override(ctx):
+    """valuation_dependent 是純算術（Base re-rate 貢獻 ≥ 不含息合計 40%，數字全來自判斷者自己的情境），
+    改由程式定：judge check 算出 scenario_meta 後，判斷者填的值與它不同就覆寫 judgment.json 並留紀錄。
+    2026-09-24 持有人拍板（STX 負負得正、LULU 41% 邊緣兩次 J2 FAIL）。回 True＝有覆寫，呼叫端要重跑 judge check。"""
+    sm_path, jpath = ctx.run_dir / "scenario_meta.json", ctx.run_dir / "judgment.json"
+    if not (sm_path.exists() and jpath.exists()):
+        return False
+    sm = _load_json(sm_path) or {}
+    prog = (sm.get("scenario_tree") or {}).get("valuation_dependent")
+    if prog is None:
+        prog = sm.get("valuation_dependent")
+    if prog is None:
+        return False
+    cur = _load_json(jpath)
+    di = cur.setdefault("decision_inputs", {})
+    if di.get("valuation_dependent") is not None and bool(di.get("valuation_dependent")) == bool(prog):
+        return False
+    ctx.manifest.setdefault("mechanical_overrides", []).append(
+        {"path": "$.decision_inputs.valuation_dependent", "judge": di.get("valuation_dependent"), "program": bool(prog)})
+    di["valuation_dependent"] = bool(prog)
+    jpath.write_text(json.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
+    ctx.save()
+    return True
+
+
 def _qc49_fill(ctx, obj):
     """QC-49：判斷者只答 qc49_inherit_prior（前份觸發器是否全沒發火）；前次裁決／角色由程式從 prior.json 帶，
     判斷者填的一律覆寫。前份超過 90 天或沒有前份 → 不承繼（清成 null）。回 note 或 None。"""
@@ -925,6 +950,8 @@ def do_judged(ctx):
     st["judgment_bytes"] = jpath.stat().st_size
 
     ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
+    if _valdep_override(ctx):  # 覆寫後 dd_decision 要用程式值重算
+        ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
     if not ok:
         rc, out = _sub([_pick_python(), SCRIPTS_DIR / "dd_project.py", "normalize", jpath, "--write"])
         st["normalize_note"] = out[-1500:]
@@ -1061,6 +1088,8 @@ def _gate_patch(ctx, st, clean, idx):
     cur, _ = program_drift_entries(ctx, cur, decision_out=None)
     jpath.write_text(json.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
     ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
+    if _valdep_override(ctx):
+        ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
     if ok:
         cur = _load_json(jpath)
         cur, _ = program_drift_entries(ctx, cur, decision_out=cur.get("decision_out") or {})

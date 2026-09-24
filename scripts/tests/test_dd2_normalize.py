@@ -140,3 +140,14 @@ def test_qc49_fill_window(tmp_path):
     obj = {"decision_inputs": {"qc49_inherit_prior": True}}
     run._qc49_fill(ctx, obj)
     assert obj["decision_inputs"]["qc49_inherit_prior"] is None and "prior_verdict" not in obj["decision_inputs"]
+
+
+def test_valdep_override_uses_scenario_meta(tmp_path):
+    import json, types
+    (tmp_path / "scenario_meta.json").write_text(json.dumps({"scenario_tree": {"valuation_dependent": True}}))
+    (tmp_path / "judgment.json").write_text(json.dumps({"decision_inputs": {"valuation_dependent": False}}))
+    ctx = types.SimpleNamespace(run_dir=tmp_path, manifest={}, save=lambda: None)
+    assert run._valdep_override(ctx) is True
+    assert json.loads((tmp_path / "judgment.json").read_text())["decision_inputs"]["valuation_dependent"] is True
+    assert ctx.manifest["mechanical_overrides"][0]["judge"] is False
+    assert run._valdep_override(ctx) is False  # 已一致就不動
