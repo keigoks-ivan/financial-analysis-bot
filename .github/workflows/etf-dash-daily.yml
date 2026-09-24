@@ -27,7 +27,7 @@ name: ETF Dashboard Daily Data
 # （GitHub 反遞迴機制），故 deploy-pages.yml 的 workflow_run 清單已加入本
 # workflow 名稱（"ETF Dashboard Daily Data"），跑完立即觸發重部署。
 #
-# 排程：Tue-Sat 01:30 UTC（美股收盤後，約 09:30 台北）+ workflow_dispatch 手動。
+# 排程：Tue-Sat 02:43 UTC（約 10:43 台北，接在 daily-taipei-morning 01:00 UTC 的 latest.json 刷新之後）+ workflow_dispatch 手動。
 #
 # Push 迴圈與 rebase 衝突處理照 scripts/ci/ 共用腳本（見 d7995ec63 導入的全站
 # pattern，monthly-eps-snapshot.yml 同款）：push 失敗就 rebase_or_flag.sh，內容
@@ -36,7 +36,7 @@ name: ETF Dashboard Daily Data
 
 on:
   schedule:
-    - cron: "30 1 * * 2-6"  # Tue-Sat 01:30 UTC = Tue-Sat 09:30 Taipei（美股收盤後）
+    - cron: "43 2 * * 2-6"  # Tue-Sat 02:43 UTC = Tue-Sat 10:43 Taipei（接在 01:00 UTC latest.json 刷新之後；避開整點／半點排隊）
   workflow_dispatch:
     inputs:
       retry:
