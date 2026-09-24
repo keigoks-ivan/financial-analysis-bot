@@ -2,8 +2,16 @@ name: ETF Dashboard Daily Data
 
 # ETF 股價 vs 成分股 EPS 預估修正儀表板（/etf-dash/）每日資料管線。
 #
-# 跑 scripts/etf_dash/build_etf_dash.py 四檔（SMH 美國掛牌 + SMH_UCITS 愛爾蘭
-# 掛牌 + QQQ 那斯達克 100 + SPY 標普 500，2026-09-24 加 QQQ／SPY）。
+# 跑 scripts/etf_dash/build_etf_dash.py 六檔（SMH 美國掛牌 + SMH_UCITS 愛爾蘭
+# 掛牌 + QQQ 那斯達克 100 + SPY 標普 500，2026-09-24 加 QQQ／SPY；2026-09-25
+# 再加 TAIEX 台灣加權指數〈TWSE 公開資料機械估算近似持股〉+ 0050 元大台灣50
+# 〈元大投信官方持股頁〉——見 build_etf_dash.py 對應段落的方法論註解）。
+#
+# 2026-09-25 加 TAIEX／0050 後 0050 的 FULL 模式抓取需要 node（parse
+# Yuanta 頁面內嵌的 Nuxt SSR payload，見 build_etf_dash.py::fetch_yuanta_holdings_page
+# 上方註解）——ubuntu-latest runner 本身已內建 Node.js（Actions runner 自己
+# 就是用 Node 跑的），不需要額外的 actions/setup-node 步驟；找不到 node 或
+# eval 失敗都會被當成整體抓取失敗，退回 holdings_cache，不會讓整個 job 掛掉。
 #
 # 2026-09-24 加上 tiered update（見 build_etf_dash.py 模組開頭「Tiered
 # update」說明）：預設 --mode auto，每檔基金各自判斷要 FULL（持股下載＋逐檔
@@ -134,7 +142,7 @@ jobs:
       - name: Install dependencies
         run: pip install "yfinance>=0.2.40" pandas numpy requests openpyxl
 
-      - name: Build ETF dashboard data (SMH + SMH_UCITS + QQQ + SPY)
+      - name: Build ETF dashboard data (SMH + SMH_UCITS + QQQ + SPY + TAIEX + 0050)
         # 個別 ETF 失敗（持股來源格式改版、被擋、yfinance 掛了一整輪重試後仍
         # 失敗）只會讓 build_etf_dash.py 略過那一檔、其餘照跑；只有全部失敗它
         # 才會 non-zero exit——那種情況本步驟紅燈，後面的 commit 步驟仍會跑
@@ -150,7 +158,7 @@ jobs:
         id: build
         env:
           MODE_INPUT: ${{ github.event.inputs.mode || 'auto' }}
-        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --mode "$MODE_INPUT"
+        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --etf TAIEX --etf 0050 --mode "$MODE_INPUT"
 
       - name: Fail loudly if the build step errored
         if: steps.build.outcome == 'failure'
@@ -169,7 +177,7 @@ jobs:
             echo "No changes to commit"
           else
             DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
-            git commit -m "data: ETF dashboard snapshot ${DATE} (SMH + SMH_UCITS + QQQ + SPY)
+            git commit -m "data: ETF dashboard snapshot ${DATE} (SMH + SMH_UCITS + QQQ + SPY + TAIEX + 0050)
 
             Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
             for i in 1 2 3 4 5 6; do

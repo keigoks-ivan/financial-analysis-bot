@@ -56,7 +56,10 @@ import html
 import io
 import json
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import time
 import warnings
 from datetime import datetime, timedelta, timezone
@@ -193,6 +196,39 @@ FUND_REGISTRY = {
         # 閘門——跟 VanEck 那組不同。
         "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx",
         "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy",
+        "other_listings": [],
+    },
+    # 2026-09-24 加的兩檔台股基金——見本檔下方「TAIEX (台灣加權指數)」與
+    # 「0050 (元大台灣卓越50基金)」兩段的 fetch/parse 函式與其上的方法論註解。
+    # 兩者都用 pe_basis_currency="TWD"：本益比／股價換算的基準幣別不是預設的
+    # USD（見 convert_to_basis_currency()），避免把 TWD 數字當 USD 用（過去在
+    # 別的頁面出現過的那種 bug）。
+    "TAIEX": {
+        "label_zh": "台灣加權股價指數（TAIEX，近似持股，非追蹤型 ETF）",
+        "label_en": "Taiwan Capitalization Weighted Stock Index (TAIEX)",
+        "yf_ticker": "^TWII",
+        "isin": None,
+        "source": "twse",
+        "pe_basis_currency": "TWD",
+        "holdings_issuer_zh": "TWSE 公開資料（上市公司基本資料＋個股日成交資訊）機械估算近似持股",
+        # 純文件用途（JSON 的 holdings_source_url／citation 連結）——實際抓取
+        # 用的兩個端點見下方 fetch_twse_taiex_universe()／TWSE_COMPANY_LIST_URL
+        # 與 TWSE_STOCK_DAY_ALL_URL 常數，這裡列的是後者（收盤價，讀者比較
+        # 常需要對照的那個）。
+        "holdings_url": "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL",
+        "holdings_page_url": "https://openapi.twse.com.tw/",
+        "other_listings": [],
+    },
+    "0050": {
+        "label_zh": "元大台灣卓越50基金（0050）",
+        "label_en": "Yuanta/P-shares Taiwan Top 50 ETF (0050)",
+        "yf_ticker": "0050.TW",
+        "isin": "TW0000050004",
+        "source": "yuanta",
+        "pe_basis_currency": "TWD",
+        "holdings_issuer_zh": "元大投信官方持股頁（SSR 內嵌資料）",
+        "holdings_url": "https://www.yuantaetfs.com/product/detail/0050/ratio",
+        "holdings_page_url": "https://www.yuantaetfs.com/product/detail/0050/ratio",
         "other_listings": [],
     },
 }
@@ -647,10 +683,240 @@ def parse_invesco_holdings_json(data: dict) -> tuple[str, list[dict], list[dict]
     return as_of, rows, non_equity
 
 
+# ---------------------------------------------------------------------------
+# TAIEX (台灣加權指數) — 不是追蹤型 ETF，沒有發行商持股清單可下載。改用 TWSE
+# 公開資料自行機械估算近似持股：
+#   - 上市公司基本資料（t187ap03_L）：每家公司「已發行普通股數或TDR原股
+#     發行股數」欄位——普通股在外流通股數，不含特別股。
+#   - 個股日成交資訊（STOCK_DAY_ALL）：當天收盤價。
+#   市值 = 股數 × 收盤價；用「公司代號」（4 位數字）比對兩份資料——TWSE 的
+#   ETF／特別股／TDR 都不會出現在 t187ap03_L 這份「公司」清單裡（它們不是
+#   公司本身，是公司或指數之上的證券包裝），這個 join 天然把它們濾掉，不需要
+#   額外黑名單；「F-」開頭的外國企業註冊股（在台灣掛牌普通股者）視同一般
+#   成分股（它們是公司清單裡的正常一列）。這是近似：真正 TAIEX 編製規則另有
+#   股利／除權息與少數細節調整，這裡沒有重現，只用「普通股數 × 收盤價」排序
+#   ——2026-09-24 實測 TSMC 權重約 41%，量級與市場認知相符，可接受為近似基礎。
+#   只對市值前 TAIEX_TOP_N 檔抓 yfinance eps_trend（全市場上千檔逐檔抓不現實）
+#   ——weight_pct 是「佔全市場總市值」的原始比例，不重新正規化到 100%，這樣
+#   sum(weight_pct) 本身就是 Top-N 對全市場的涵蓋率（跟 excluded／non_equity
+#   的權重概念一致，見 build_methods_note_zh 的 TAIEX 專屬段落）。
+#   2026-09-24 實測：兩個 openapi.twse.com.tw 端點純 requests.get()、不需要
+#   cookie／瀏覽器即可拿到完整 JSON——但這是從境外（非台灣）IP 測試的，
+#   GitHub Actions runner 的實際可達性未另外驗證；擋掉的話 get_holdings_with_fallback()
+#   一樣會退回上次成功的 holdings_cache，不會讓整檔失敗。
+# ---------------------------------------------------------------------------
+
+TWSE_COMPANY_LIST_URL = "https://openapi.twse.com.tw/v1/opendata/t187ap03_L"
+TWSE_STOCK_DAY_ALL_URL = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
+TAIEX_TOP_N = 150  # 2026-09-24 實測涵蓋全市場總市值約 92%；實際數字每次 FULL 動態算出，見 LAST_TAIEX_UNIVERSE_STATS
+
+# parse_twse_taiex_universe() 側寫的全市場統計（TAIEX 方法論段落用，見
+# build_methods_note_zh）。只有這次 run 真的重抓（非 cache fallback）才有值；
+# main() 對每檔基金依序（非併發）呼叫 build_fund，讀取的時序安全。
+LAST_TAIEX_UNIVERSE_STATS: dict | None = None
+
+
+def _roc_date_to_iso(s: str | None) -> str | None:
+    """TWSE 開放資料常見的民國年日期（如 "1150923" = 民國115年09月23日），
+    轉 "YYYY-MM-DD"（西元）。"""
+    if not s or len(s) < 6:
+        return None
+    try:
+        roc_year = int(s[:-4])
+        month = int(s[-4:-2])
+        day = int(s[-2:])
+        return f"{roc_year + 1911:04d}-{month:02d}-{day:02d}"
+    except ValueError:
+        return None
+
+
+def fetch_twse_taiex_universe(cfg: dict) -> dict:
+    companies = requests.get(TWSE_COMPANY_LIST_URL, headers={"User-Agent": UA}, timeout=30)
+    companies.raise_for_status()
+    prices = requests.get(TWSE_STOCK_DAY_ALL_URL, headers={"User-Agent": UA}, timeout=30)
+    prices.raise_for_status()
+    companies_json = companies.json()
+    prices_json = prices.json()
+    if not isinstance(companies_json, list) or not companies_json:
+        raise RuntimeError(f"unexpected/empty response from {TWSE_COMPANY_LIST_URL}")
+    if not isinstance(prices_json, list) or not prices_json:
+        raise RuntimeError(f"unexpected/empty response from {TWSE_STOCK_DAY_ALL_URL}")
+    return {"companies": companies_json, "prices": prices_json}
+
+
+def parse_twse_taiex_universe(raw: dict) -> tuple[str, list[dict], list[dict]]:
+    """回傳 (as_of, holdings[:TAIEX_TOP_N], non_equity=[])——見上方方法論說明。
+    副作用：把全市場統計（可比對市值的公司數、涵蓋 90% 需要幾檔）寫進模組層
+    LAST_TAIEX_UNIVERSE_STATS，供 build_fund_full() 組 TAIEX 專屬方法論文字。"""
+    global LAST_TAIEX_UNIVERSE_STATS
+    companies = raw["companies"]
+    prices = raw["prices"]
+    comp_by_code = {c["公司代號"]: c for c in companies
+                     if len(c.get("公司代號", "")) == 4 and c["公司代號"].isdigit()}
+    price_by_code = {p["Code"]: p for p in prices}
+
+    as_of = None
+    for p in prices:
+        as_of = _roc_date_to_iso(p.get("Date"))
+        if as_of:
+            break
+
+    rows = []
+    for code, c in comp_by_code.items():
+        p = price_by_code.get(code)
+        if not p:
+            continue
+        try:
+            shares = float(c.get("已發行普通股數或TDR原股發行股數") or 0)
+            close = float(p.get("ClosingPrice") or 0)
+        except (TypeError, ValueError):
+            continue
+        if shares <= 0 or close <= 0:
+            continue
+        rows.append({"code": code, "name": (c.get("公司簡稱") or "").strip(), "mkt_cap": shares * close})
+
+    if as_of is None or not rows:
+        raise RuntimeError(f"parsed 0 TAIEX universe rows or missing as-of date "
+                            f"(as_of={as_of!r}, n_companies={len(companies)}, n_prices={len(prices)})")
+
+    rows.sort(key=lambda r: -r["mkt_cap"])
+    total_mkt_cap = sum(r["mkt_cap"] for r in rows)
+
+    n_for_90 = None
+    cum90 = 0.0
+    for i, r in enumerate(rows, start=1):
+        cum90 += r["mkt_cap"]
+        if n_for_90 is None and cum90 / total_mkt_cap >= 0.90:
+            n_for_90 = i
+    LAST_TAIEX_UNIVERSE_STATS = {
+        "n_total": len(rows), "n_for_90pct": n_for_90, "total_mkt_cap_twd": round(total_mkt_cap, 0),
+    }
+
+    holdings = []
+    cum = 0.0
+    for r in rows[:TAIEX_TOP_N]:
+        cum += r["mkt_cap"]
+        holdings.append({
+            "ticker": f"{r['code']}.TW", "raw_ticker_field": r["code"], "name": r["name"],
+            "weight_pct": round(r["mkt_cap"] / total_mkt_cap * 100, 4),
+            "cum_weight_pct": round(cum / total_mkt_cap * 100, 4),
+        })
+    return as_of, holdings, []
+
+
+# ---------------------------------------------------------------------------
+# 0050 (元大台灣卓越50基金) — 元大投信官方持股頁的 SSR 內嵌資料。2026-09-24
+# 實測：/product/detail/0050/ratio 這頁的持股表格不是靠額外 XHR 拉的（猜測
+# etfapi.yuantaetfs.com 底下幾個常見端點都 404，或被 ectranslation 代理擋
+# 掉，且那個代理端點本身只回傳欄位schema，不是資料）——用 Chrome 實際看網路
+# 請求才發現：資料其實是 Nuxt.js 的 SSR（伺服器端渲染），完整 50 檔持股（含
+# 「展開全部」要用的那些）已經內嵌在首次載入的 HTML 裡的一段
+# `window.__NUXT__=(function(a,b,...){ return {...} })(實際值, 實際值, ...)`
+# script——這是 Nuxt 用來去重複字串的序列化格式（函式體用短變數名代表值，
+# 呼叫時才把真正的字串/數字當參數傳回代入）。純 requests.get() 這個 URL
+# （不需要 cookie、不需要瀏覽器）就能拿到完整 HTML；問題只在於「解析」這段
+# IIFE——要拿到真正資料等同於要『執行』這段 JS。這裡用 Node.js 子行程 eval
+# 它（見同目錄 _yuanta_nuxt_extract.js），因為：(1) GitHub Actions
+# ubuntu-latest runner 本身就內建 Node.js（Actions runner 自己是用 Node 跑
+# 的，不需要額外 actions/setup-node 步驟）；(2) 這段 payload 是靜態資料（沒
+# 有任何 DOM／瀏覽器 API 依賴，eval 過程不會發出任何網路請求），風險等同解析
+# 任何一份需要『執行』才能還原的序列化格式，不是「這頁需要瀏覽器」。找不到
+# node、eval 失敗、或解析不出預期的 weightData 結構都當整體抓取失敗，退回
+# holdings_cache（跟其他來源同一套 fallback 邏輯）。
+# ---------------------------------------------------------------------------
+
+YUANTA_NUXT_EXTRACT_JS = Path(__file__).resolve().parent / "_yuanta_nuxt_extract.js"
+
+
+def _yyyymmdd_to_iso(s: str | None) -> str | None:
+    """西元年 8 位數字日期（如 "20260924"）轉 "YYYY-MM-DD"——注意這跟
+    _roc_date_to_iso() 不同：Yuanta PCF.trandate 用的是西元年，不是民國年。"""
+    if not s or len(s) != 8 or not s.isdigit():
+        return None
+    return f"{s[0:4]}-{s[4:6]}-{s[6:8]}"
+
+
+def fetch_yuanta_holdings_page(cfg: dict) -> str:
+    r = requests.get(cfg["holdings_url"], headers={"User-Agent": UA}, timeout=30)
+    r.raise_for_status()
+    if len(r.text) < 10_000:
+        raise RuntimeError(f"suspiciously small response ({len(r.text)} chars) from {cfg['holdings_url']} "
+                            f"— Yuanta page format may have changed")
+    return r.text
+
+
+def parse_yuanta_0050_holdings(html_text: str) -> tuple[str, list[dict], list[dict]]:
+    m = re.search(r"window\.__NUXT__=.*?(?=</script>)", html_text, re.S)
+    if not m:
+        raise RuntimeError("could not locate window.__NUXT__ SSR payload in Yuanta holdings page "
+                            "(page layout may have changed, or this now needs a browser session)")
+    payload_js = m.group(0)
+
+    if shutil.which("node") is None:
+        raise RuntimeError("node executable not found — cannot evaluate Yuanta's Nuxt SSR payload "
+                            "(see module comment above fetch_yuanta_holdings_page)")
+
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
+        f.write(payload_js)
+        payload_path = f.name
+    try:
+        proc = subprocess.run(
+            ["node", str(YUANTA_NUXT_EXTRACT_JS), payload_path],
+            capture_output=True, text=True, timeout=30,
+        )
+    finally:
+        Path(payload_path).unlink(missing_ok=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"node eval of Yuanta SSR payload failed: {(proc.stderr or '').strip()[:500]}")
+    try:
+        data_items = json.loads(proc.stdout)
+    except ValueError as e:
+        raise RuntimeError(f"node eval of Yuanta SSR payload returned non-JSON stdout: {e}") from e
+
+    weight_block = next((item for item in data_items if isinstance(item, dict) and "weightData" in item), None)
+    if not weight_block:
+        raise RuntimeError("Yuanta SSR payload parsed but no 'weightData' block found "
+                            "(page structure may have changed)")
+    wd = weight_block["weightData"] or {}
+    fw = wd.get("FundWeights") or {}
+    stock_rows = fw.get("StockWeights") or []
+    if not stock_rows:
+        raise RuntimeError("Yuanta SSR payload parsed but StockWeights is empty")
+
+    trandate = (wd.get("PCF") or {}).get("trandate")
+    as_of = _yyyymmdd_to_iso(trandate)
+    if not as_of:
+        raise RuntimeError(f"could not determine as-of date from PCF.trandate={trandate!r}")
+
+    holdings = []
+    for r in stock_rows:
+        code = str(r.get("code") or "").strip()
+        w = r.get("weights")
+        if not code or w is None:
+            continue
+        holdings.append({"ticker": f"{code}.TW", "raw_ticker_field": code,
+                          "name": r.get("name") or code, "weight_pct": float(w)})
+    if not holdings:
+        raise RuntimeError("parsed 0 equity holdings from Yuanta SSR payload")
+
+    non_equity = []
+    for group_key, reason in (("FutureWeights", "期貨（非個股，不計入 EPS）"),
+                               ("ETFWeights", "ETF（非個股，不計入 EPS）"),
+                               ("BondWeights", "債券（非個股，不計入 EPS）")):
+        for r in (fw.get(group_key) or []):
+            w = r.get("weights")
+            non_equity.append({"ticker": r.get("code"), "name": r.get("name") or r.get("code") or "（無名稱）",
+                                "weight_pct": float(w) if w is not None else None, "reason": reason})
+
+    return as_of, holdings, non_equity
+
+
 HOLDINGS_SOURCES = {
     "vaneck": (fetch_holdings_xlsx, lambda raw: (*parse_holdings_xlsx(raw), [])),
     "ssga": (fetch_ssga_holdings_xlsx, parse_ssga_holdings_xlsx),
     "invesco": (fetch_invesco_holdings_json, parse_invesco_holdings_json),
+    "twse": (fetch_twse_taiex_universe, parse_twse_taiex_universe),
+    "yuanta": (fetch_yuanta_holdings_page, parse_yuanta_0050_holdings),
 }
 
 
@@ -772,6 +1038,15 @@ def fetch_etf_price_history(yf_ticker: str, calendar_days: int = 200) -> list[di
         raise RuntimeError(f"no price history returned for {yf_ticker}")
     out = []
     for idx, r in hist.iterrows():
+        # 2026-09-25 實測：yfinance 對 0050.TW 2026-09-24 這天回傳 Close=NaN（有
+        # Volume 但沒有收盤價，上游資料缺口，非本檔程式問題）——不篩掉的話
+        # NaN 會原封不動寫進 JSON（json.dumps 預設輸出字面 NaN，不是合法
+        # JSON，前端 JSON.parse 會直接丟例外整頁掛掉），且會污染所有下游算式
+        # （price_chg_pct／implied_pe_chg_pct 全部變 NaN）。當成那天沒有收盤價
+        # （不是 0），_closest_close_on_or_before() 本來就會退回前一個有資料的
+        # 交易日，跟其他來源「缺資料當天」的既有語意一致。
+        if pd.isna(r["Close"]):
+            continue
         out.append({"date": idx.strftime("%Y-%m-%d"), "close": round(float(r["Close"]), 4)})
     return out
 
@@ -834,9 +1109,45 @@ def fetch_prices_batch(tickers: list[str], calendar_days: int = 200) -> dict[str
     return out
 
 
+def build_weight_methodology_note_zh(cfg: dict, holdings: list[dict]) -> str | None:
+    """TAIEX 近似持股／0050 官方持股的權重方法論說明——只有 cfg["source"] in
+    ("twse","yuanta") 才回傳非 None，其他四檔基金（官方完整持股清單本身就是
+    100% 精確）不需要這段。回傳字串會被 build_methods_note_zh() 接在動態組出
+    的一般段落後面。"""
+    if cfg.get("source") == "twse":
+        cap_share = round(sum(h["weight_pct"] or 0 for h in holdings), 2)
+        stats = LAST_TAIEX_UNIVERSE_STATS
+        if stats:
+            return (
+                f"TAIEX 本身不是追蹤型 ETF、沒有發行商持股清單可下載，本頁改用 TWSE 公開資料"
+                f"（上市公司基本資料 t187ap03_L 的「已發行普通股數」× 個股日成交資訊 "
+                f"STOCK_DAY_ALL 的收盤價）機械估算持股與權重，是近似值，除權息與少數編製細節"
+                f"未重現。市值以「公司代號」（4 位數字）比對兩份"
+                f"資料，天然排除 ETF／特別股／TDR（它們不是公司本身，不會出現在公司基本資料"
+                f"清單裡）；「F-」開頭的外國企業註冊股（在台灣掛牌普通股者）視同一般成分股。"
+                f"全市場 {stats['n_total']} 檔可比對到市值與股數，本頁只取權重前 {len(holdings)} 檔"
+                f"（合計 {cap_share:.1f}% 全市場總市值；全市場約需 {stats['n_for_90pct']} 檔即可涵蓋 90%"
+                f"權重），只對這 {len(holdings)} 檔抓 yfinance eps_trend——落在這個子集合之外的"
+                f"成分股不計入本頁任何 EPS 相關計算，也不在完整持股明細裡。"
+            )
+        return (
+            f"TAIEX 近似持股與權重估算方式同上（TWSE 公開資料機械估算），本頁取權重前 "
+            f"{len(holdings)} 檔（合計 {cap_share:.1f}% 全市場總市值），只對這些檔抓 yfinance "
+            "eps_trend；今天沿用上次成功抓取的持股快取，全市場涵蓋率統計未重新計算。"
+        )
+    if cfg.get("source") == "yuanta":
+        return (
+            "0050 的持股是元大投信官方持股頁（0050/ratio）SSR 頁面內嵌的完整權重資料（非"
+            "近似），含股票、期貨等各類資產的權重——期貨（台股期貨／台灣50ETF股票期貨）等"
+            "非個股部位見完整持股明細表的「非個股」列，不計入 EPS。"
+        )
+    return None
+
+
 def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[dict],
                            long_eps: dict, dd_universe_size: int, periods: list[dict],
-                           mode: str, eps_as_of: str, mode_reason: str) -> str:
+                           mode: str, eps_as_of: str, mode_reason: str,
+                           weight_methodology_note_zh: str | None = None) -> str:
     """組 methods_note_zh——2026-09-24 加 QQQ／SPY 之前這段是寫死給 SMH／
     SMH_UCITS 看的（硬編「VanEck」「ASML」「SK Hynix」）。四檔基金共用同一個
     build_fund()，持股來源、非美元成分股、TICKER_ALIAS 用到哪些、長線指數
@@ -849,6 +1160,10 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
         "快取重新配對算「今日加權遠期本益比」——Exhibit 1 的期間表格（EPS 修正％／"
         "股價漲跌／隱含本益比）因此整週不變，只有本益比跟「EPS 預估更新於...」那行"
         f"每天更新。這次是{mode_zh}（{mode_reason}）。",
+    ]
+    if weight_methodology_note_zh:
+        parts.append(weight_methodology_note_zh)
+    parts += [
         f"成分股權重與明細來自{cfg['holdings_issuer_zh']}（見 holdings_source_url，"
         "as of holdings_as_of，非 yfinance 前十大）。每檔成分股的 EPS 修正取 "
         "yfinance Ticker.eps_trend 的「明年度」(+1y) 估計，比較目前值與 7／30／"
@@ -897,12 +1212,21 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
             "完整清單見 JSON 的 non_equity 欄位。"
         )
 
-    fx_tickers = [c for c in constituents if c["eps_currency"] != "USD" or c["price_currency"] != "USD"]
+    pe_basis_ccy = cfg.get("pe_basis_currency", "USD")
+    if pe_basis_ccy != "USD":
+        parts.append(
+            f"本基金本益比／股價的基準幣別是 {pe_basis_ccy}，不是美元——JSON 裡的 eps_fy_next_usd／"
+            f"price_usd 兩個欄位沿用既有命名（跟其餘四檔美元基金共用同一套 schema），但這裡實際"
+            f"存的是換算到 {pe_basis_ccy} 後的值，不是美元金額，使用時請以 weighted_forward_pe."
+            "method／本段為準，不要照字面把欄位名當成美元。"
+        )
+    fx_tickers = [c for c in constituents
+                  if c["eps_currency"] != pe_basis_ccy or c["price_currency"] != pe_basis_ccy]
     if fx_tickers:
         fx_list = "、".join(f"{c['name']}〈{c['ticker']}，{c['eps_currency']} 報表〉" for c in fx_tickers)
         parts.append(
-            f"本基金有 {len(fx_tickers)} 檔成分股的 EPS 或股價不是美元報表／美元掛牌：{fx_list}。"
-            "這些名字先用當日美元匯率把 EPS 與股價分別換算成美元再算比值，EPS修正%本身"
+            f"本基金有 {len(fx_tickers)} 檔成分股的 EPS 或股價不是{pe_basis_ccy}報表／{pe_basis_ccy}掛牌：{fx_list}。"
+            f"這些名字先用當日匯率把 EPS 與股價分別換算成{pe_basis_ccy}再算比值，EPS修正%本身"
             "不需要換算（同幣別比較）。"
         )
 
@@ -985,6 +1309,35 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
 # ---------------------------------------------------------------------------
 
 
+def convert_to_basis_currency(value_local: float | None, local_ccy: str | None, basis_ccy: str,
+                               date_str: str, fx_cache: dict) -> tuple[float | None, bool]:
+    """把 value_local（幣別 local_ccy）換算成該基金算本益比用的基準幣別
+    basis_ccy（見 FUND_REGISTRY cfg["pe_basis_currency"]，多數基金是 USD，
+    2026-09-24 加的 TAIEX／0050 是 TWD）。local_ccy==basis_ccy 是最常見的
+    no-op（USD 基金的美股成分股、TWD 基金的台股成分股都是這條路徑，不查
+    匯率），這樣才不會把 TWD 數字當成 USD 用（過去在別的頁面出現過的那種
+    bug）。跨幣別的兩段都借道 get_fx_rate()（USD 為軸心），不必為 TWD 基金
+    另外寫一套匯率抓取。回傳 (converted_value, ok)——ok=False 時
+    converted_value 一定是 None（其中一段匯率查不到）。"""
+    if value_local is None:
+        return None, True
+    local_ccy = (local_ccy or "USD").upper()
+    basis_ccy = (basis_ccy or "USD").upper()
+    if local_ccy == basis_ccy:
+        return value_local, True
+    if basis_ccy == "USD":
+        rate = get_fx_rate(local_ccy, date_str, fx_cache)  # local_ccy units per 1 USD
+        return (value_local / rate, True) if rate else (None, False)
+    if local_ccy == "USD":
+        rate = get_fx_rate(basis_ccy, date_str, fx_cache)  # basis_ccy units per 1 USD
+        return (value_local * rate, True) if rate else (None, False)
+    rate_local = get_fx_rate(local_ccy, date_str, fx_cache)
+    rate_basis = get_fx_rate(basis_ccy, date_str, fx_cache)
+    if not rate_local or not rate_basis:
+        return None, False
+    return value_local / rate_local * rate_basis, True
+
+
 def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
                      dd_days: dict, today: datetime, stock_dash_universe: set[str],
                      mode_reason: str) -> dict:
@@ -994,6 +1347,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     （build_fund_price()）整週沿用，不重抓。"""
     today_str = today.strftime("%Y-%m-%d")
     as_of_holdings, holdings, non_equity, source_url, used_stale = get_holdings_with_fallback(etf_key, cfg)
+    weight_methodology_note_zh = build_weight_methodology_note_zh(cfg, holdings)
 
     unique_tickers = sorted({h["ticker"] for h in holdings})
     n_new_fetches = 0
@@ -1015,6 +1369,10 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     constituents = []
     excluded = []
     total_weight = sum(h["weight_pct"] or 0 for h in holdings)
+    # 2026-09-24 加 TAIEX／0050：本益比／股價換算的基準幣別不再寫死 USD——
+    # 多數基金仍是 USD（下面兩段 FX 轉換照舊 no-op），台股基金是 TWD（見
+    # FUND_REGISTRY cfg["pe_basis_currency"]），避免把 TWD 數字當美元用。
+    pe_basis_ccy = cfg.get("pe_basis_currency", "USD")
     # 見 classify_revision() 上方 2026-09-24 的說明——按期間分開累積，兩份名單
     # 都會整份進 JSON（period_exclusions／period_capped，見 periods.append()
     # 下方），頁面也會顯示。
@@ -1033,33 +1391,19 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             continue
         currency = info["eps_currency"]
         eps_local = info["eps_fy_next_local"]
-        fx_normalized = True
-        fx_rate = 1.0
-        if currency != "USD":
-            fx_rate = get_fx_rate(currency, today_str, fx_cache)
-            if not fx_rate:
-                fx_normalized = False
-                fx_rate = None
-        eps_usd = (eps_local / fx_rate) if fx_rate else None
+        eps_usd, fx_normalized = convert_to_basis_currency(eps_local, currency, pe_basis_ccy, today_str, fx_cache)
 
-        # 股價也要換成美元——不能預設 info["price"] 就是美元：多數成分股是美股/
-        # ADR（fast_info.currency=='USD'，no-op），但走 TICKER_ALIAS 查到的名字
-        # （目前只有 SK Hynix -> 000660.KS）本身用 KRW 掛牌。這裡用同一個
-        # get_fx_rate() 快取換算，價格與 EPS 都換到美元後再算比率，就不會出現
-        # 「美元 EPS 除以韓元股價」這種分子分母不同幣別的錯誤。
+        # 股價也要換成基準幣別——不能預設 info["price"] 就是基準幣別：多數
+        # 成分股是美股/ADR（fast_info.currency=='USD'，USD 基金 no-op），但走
+        # TICKER_ALIAS 查到的名字（目前只有 SK Hynix -> 000660.KS）本身用 KRW
+        # 掛牌，台股基金的成分股則是 TWD（同樣是 no-op，因為基準幣別也是
+        # TWD）。這裡用同一個 convert_to_basis_currency()／get_fx_rate() 快取
+        # 換算，價格與 EPS 都換到同一個基準幣別後再算比率，就不會出現「基準
+        # 幣別 EPS 除以另一種幣別股價」這種分子分母不同幣別的錯誤。
         price_local = info.get("price")
         price_currency = (info.get("price_currency") or "USD").upper()
-        price_usd = None
-        price_fx_normalized = True
-        if price_local is not None:
-            if price_currency == "USD":
-                price_usd = price_local
-            else:
-                price_fx_rate = get_fx_rate(price_currency, today_str, fx_cache)
-                if price_fx_rate:
-                    price_usd = price_local / price_fx_rate
-                else:
-                    price_fx_normalized = False
+        price_usd, price_fx_normalized = convert_to_basis_currency(
+            price_local, price_currency, pe_basis_ccy, today_str, fx_cache)
 
         anchors_local = info["eps_fy_next_anchors_local"]
         revisions_pct = {}
@@ -1274,12 +1618,13 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         "holdings_stale": used_stale,
         "n_holdings": len(constituents) + len(excluded),
         "n_holdings_covered": len(constituents),
-        "price": {"close": today_price_pt["close"], "date": today_price_pt["date"], "currency": "USD"},
+        "price": {"close": today_price_pt["close"], "date": today_price_pt["date"], "currency": pe_basis_ccy},
         "periods": periods,
         "weighted_forward_pe": {
             "value": weighted_fwd_pe,
             "coverage_pct": round(pe_covered_weight / total_weight * 100, 2) if total_weight else None,
-            "method": "harmonic mean 1/Σw_i·(EPS_i/price_i)；非美元報表(如 ASML)的 EPS 先用當日 FX 換算成美元",
+            "method": f"harmonic mean 1/Σw_i·(EPS_i/price_i)；基準幣別 {pe_basis_ccy}，非{pe_basis_ccy}報表"
+                      f"(如 ASML)的成分股先用當日 FX 換算成{pe_basis_ccy}",
         },
         "constituents": constituents,
         "excluded": excluded,
@@ -1310,7 +1655,8 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         },
         "methods_note_zh": build_methods_note_zh(cfg, constituents, non_equity, long_eps,
                                                   len(stock_dash_universe), periods,
-                                                  "full", today_str, mode_reason),
+                                                  "full", today_str, mode_reason,
+                                                  weight_methodology_note_zh=weight_methodology_note_zh),
     }
 
 
@@ -1330,6 +1676,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
     non_equity = eps_cache.get("non_equity", [])
     cached_tickers = eps_cache["tickers"]
     total_weight = sum(h["weight_pct"] or 0 for h in holdings)
+    weight_methodology_note_zh = build_weight_methodology_note_zh(cfg, holdings)
 
     ok_yf_tickers = sorted({info.get("yf_ticker_used", tk) for tk, info in cached_tickers.items()
                              if info.get("status") == "ok"})
@@ -1346,6 +1693,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
     if eps_as_of_price_pt and eps_as_of_price_pt["close"]:
         price_since_eps_as_of_pct = round((today_price_pt["close"] / eps_as_of_price_pt["close"] - 1) * 100, 4)
 
+    pe_basis_ccy = cfg.get("pe_basis_currency", "USD")
     constituents = []
     excluded = []
     for h in holdings:
@@ -1361,30 +1709,14 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
             continue
         currency = info["eps_currency"]
         eps_local = info["eps_fy_next_local"]
-        fx_rate = 1.0
-        fx_normalized = True
-        if currency != "USD":
-            fx_rate = get_fx_rate(currency, today_str, fx_cache)
-            if not fx_rate:
-                fx_normalized = False
-                fx_rate = None
-        eps_usd = (eps_local / fx_rate) if fx_rate else None
+        eps_usd, fx_normalized = convert_to_basis_currency(eps_local, currency, pe_basis_ccy, today_str, fx_cache)
 
         yf_tk = info.get("yf_ticker_used", h["ticker"])
         price_series_c = batch.get(yf_tk)
         price_local = price_series_c[-1]["close"] if price_series_c else None
         price_currency = (info.get("price_currency") or "USD").upper()
-        price_usd = None
-        price_fx_normalized = True
-        if price_local is not None:
-            if price_currency == "USD":
-                price_usd = price_local
-            else:
-                price_fx_rate = get_fx_rate(price_currency, today_str, fx_cache)
-                if price_fx_rate:
-                    price_usd = price_local / price_fx_rate
-                else:
-                    price_fx_normalized = False
+        price_usd, price_fx_normalized = convert_to_basis_currency(
+            price_local, price_currency, pe_basis_ccy, today_str, fx_cache)
 
         rec.update({
             "status": "ok",
@@ -1483,13 +1815,13 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         "holdings_stale": False,  # 不是抓取失敗，是設計上這週沒重抓——見 mode／methods_note_zh
         "n_holdings": len(constituents) + len(excluded),
         "n_holdings_covered": len(constituents),
-        "price": {"close": today_price_pt["close"], "date": today_price_pt["date"], "currency": "USD"},
+        "price": {"close": today_price_pt["close"], "date": today_price_pt["date"], "currency": pe_basis_ccy},
         "periods": periods,
         "weighted_forward_pe": {
             "value": weighted_fwd_pe,
             "coverage_pct": round(pe_covered_weight / total_weight * 100, 2) if total_weight else None,
-            "method": "harmonic mean 1/Σw_i·(EPS_i/price_i)；EPS 沿用 eps_as_of 快取，股價是今天批次抓的，"
-                      "兩者都用今天的美元匯率換算，非美元報表(如 ASML)一樣先換算成美元",
+            "method": f"harmonic mean 1/Σw_i·(EPS_i/price_i)；EPS 沿用 eps_as_of 快取，股價是今天批次抓的，"
+                      f"兩者都用今天的匯率換算成{pe_basis_ccy}，非{pe_basis_ccy}報表(如 ASML)一樣先換算",
         },
         "constituents": constituents,
         "excluded": excluded,
@@ -1519,7 +1851,8 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
                     "——資料源、取樣頻率、fiscal-year 對齊方式都不同。",
         },
         "methods_note_zh": build_methods_note_zh(cfg, constituents, non_equity, long_eps,
-                                                  0, periods, "price", eps_as_of, mode_reason),
+                                                  0, periods, "price", eps_as_of, mode_reason,
+                                                  weight_methodology_note_zh=weight_methodology_note_zh),
     }
 
 

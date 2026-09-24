@@ -11,6 +11,7 @@ network access. No network, no dependency on docs/dd-screener/latest.json.
 from __future__ import annotations
 
 import io
+import shutil
 from datetime import datetime
 from pathlib import Path
 import sys
@@ -634,3 +635,226 @@ def test_build_fund_price_ticker_missing_from_batch_gets_null_price(tmp_path, mo
     # AAA still contributes to weighted_forward_pe alone
     aaa = next(c for c in result["constituents"] if c["ticker"] == "AAA")
     assert aaa["price_usd"] == 50.0
+
+
+# ── convert_to_basis_currency() — 2026-09-25 加 TAIEX／0050：本益比／股價換算
+#    的基準幣別不再寫死 USD（見 FUND_REGISTRY cfg["pe_basis_currency"]）。同
+#    幣別（含 TWD==TWD）一定是 no-op，不查匯率——這條路徑是回歸測試的重點：
+#    過去在別的頁面出現過「把 TWD 數字當 USD 用」的 bug，這裡確保同幣別時
+#    connect_to_basis_currency 完全不碰 fx_cache／get_fx_rate。────────────────
+
+def test_convert_to_basis_currency_same_currency_is_noop_no_fx_lookup(monkeypatch):
+    def _boom(*a, **kw):
+        raise AssertionError("get_fx_rate should not be called when local_ccy == basis_ccy")
+    monkeypatch.setattr(m, "get_fx_rate", _boom)
+    value, ok = m.convert_to_basis_currency(2475.0, "TWD", "TWD", "2026-09-24", {})
+    assert value == 2475.0 and ok is True
+    # also covers the existing USD==USD path unchanged
+    value, ok = m.convert_to_basis_currency(50.0, "USD", "USD", "2026-09-24", {})
+    assert value == 50.0 and ok is True
+
+
+def test_convert_to_basis_currency_none_value_passthrough():
+    assert m.convert_to_basis_currency(None, "TWD", "TWD", "2026-09-24", {}) == (None, True)
+
+
+def test_convert_to_basis_currency_non_usd_basis_matches_usd_basis_logic():
+    # basis_ccy="USD": local_ccy units per 1 USD (existing get_fx_rate() semantics)
+    fx_cache = {"EUR": {"2026-09-24": {"rate": 0.92}}}
+    value, ok = m.convert_to_basis_currency(92.0, "EUR", "USD", "2026-09-24", fx_cache)
+    assert ok is True
+    assert value == pytest.approx(100.0, abs=0.01)
+    # basis_ccy="TWD", local_ccy="USD": basis_ccy units per 1 USD — multiply, not divide
+    fx_cache2 = {"TWD": {"2026-09-24": {"rate": 31.0}}}
+    value, ok = m.convert_to_basis_currency(10.0, "USD", "TWD", "2026-09-24", fx_cache2)
+    assert ok is True
+    assert value == pytest.approx(310.0, abs=0.01)
+
+
+def test_convert_to_basis_currency_missing_rate_returns_not_ok(monkeypatch):
+    monkeypatch.setattr(m, "get_fx_rate", lambda *a, **kw: None)
+    value, ok = m.convert_to_basis_currency(100.0, "EUR", "USD", "2026-09-24", {})
+    assert value is None and ok is False
+
+
+def _fake_cfg_twd():
+    return {
+        "label_zh": "測試台股基金", "label_en": "Test TW Fund", "yf_ticker": "TESTTW",
+        "isin": None, "other_listings": [], "holdings_issuer_zh": "測試 TWSE 機械估算",
+        "source": "twse", "pe_basis_currency": "TWD",
+    }
+
+
+def test_build_fund_price_twd_basis_price_currency_and_no_us_fx_conversion(tmp_path, monkeypatch):
+    """2026-09-25 加 TAIEX／0050 的回歸測試：pe_basis_currency="TWD" 的基金，
+    成分股本身也是 TWD 報表時，price.currency 要標成 TWD（不是寫死 USD），
+    且 eps_fy_next_usd／price_usd 兩個欄位（沿用既有欄位名稱，語意變成「本益
+    比基準幣別下的值」）要等於原始 TWD 數字本身，不能被誤當 USD 再除一次
+    匯率——這正是過去在別的頁面出現過的那種 bug。"""
+    monkeypatch.setattr(m, "SNAP_DIR", tmp_path / "snapshots")
+
+    def _boom(*a, **kw):
+        raise AssertionError("get_fx_rate should not be called — constituents are already TWD, basis is TWD")
+    monkeypatch.setattr(m, "get_fx_rate", _boom)
+
+    eps_cache = {
+        "eps_as_of": "2026-09-20", "holdings_as_of": "2026-09-19",
+        "holdings_source_url": "https://openapi.twse.com.tw/",
+        "holdings": [{"ticker": "2330.TW", "name": "台積電", "weight_pct": 100.0}],
+        "non_equity": [],
+        "tickers": {
+            "2330.TW": {"status": "ok", "reason": None, "yf_ticker_used": "2330.TW", "eps_currency": "TWD",
+                        "eps_fy_next_local": 142.96, "price_currency": "TWD", "has_stock_dash": False,
+                        "revisions_pct": {"30d": 1.0, "60d": 2.0, "90d": 3.0}},
+        },
+        "periods": [{"key": "30d", "label": "近一個月", "days": 30, "base_date": "2026-08-21",
+                     "eps_chg_pct": 1.0, "price_chg_pct": 1.0, "implied_pe_chg_pct": 0.0,
+                     "coverage_pct": 100.0, "n_covered": 1, "n_total": 1,
+                     "period_exclusions": [], "period_capped": []}],
+        "contributions": {"30d": {"top": [], "bottom": []}},
+    }
+    fake_prices = {
+        "TESTTW": [{"date": "2026-09-24", "close": 48024.6}],
+        "2330.TW": [{"date": "2026-09-24", "close": 2475.0}],
+    }
+    monkeypatch.setattr(m, "fetch_prices_batch", lambda tickers, **kw: fake_prices)
+    result = m.build_fund_price("TAIEX", _fake_cfg_twd(), eps_cache, {}, {}, {},
+                                 datetime(2026, 9, 24), "test forced price")
+    assert result["price"]["currency"] == "TWD"
+    c = result["constituents"][0]
+    assert c["eps_fy_next_usd"] == pytest.approx(142.96, abs=0.001)  # not divided by any FX rate
+    assert c["price_usd"] == pytest.approx(2475.0, abs=0.001)
+    assert "TWD" in result["weighted_forward_pe"]["method"]
+
+
+# ── TWSE (TAIEX) universe — 2026-09-25: TAIEX 沒有官方持股清單可下載，改用
+#    TWSE 公開資料（公司基本資料 t187ap03_L 的已發行普通股數 × STOCK_DAY_ALL
+#    的收盤價）機械估算市值排序。用「公司代號」（4 位數字）比對兩份資料，
+#    天然排除 ETF（如 "0050"／"00631L"，5-6 碼）、特別股（如 "2887B1"，非
+#    純數字）、TDR（"9"開頭 6 碼）——這裡合成三種資料驗證這個排除行為。────
+
+def _twse_fixture():
+    companies = [
+        {"公司代號": "2330", "公司簡稱": "台積電", "已發行普通股數或TDR原股發行股數": "25930380458"},
+        {"公司代號": "2454", "公司簡稱": "聯發科", "已發行普通股數或TDR原股發行股數": "1595131238"},
+        {"公司代號": "1101", "公司簡稱": "台泥", "已發行普通股數或TDR原股發行股數": "7523181742"},
+    ]
+    prices = [
+        {"Date": "1150923", "Code": "2330", "ClosingPrice": "2475.0"},
+        {"Date": "1150923", "Code": "2454", "ClosingPrice": "5285.0"},
+        {"Date": "1150923", "Code": "1101", "ClosingPrice": "30.5"},
+        # 不該出現在 holdings：ETF（5 碼，非公司清單裡的代號）、特別股
+        # （非純數字）、TDR（9 開頭 6 碼）——都不在 comp_by_code，join 自然濾掉
+        {"Date": "1150923", "Code": "0050", "ClosingPrice": "112.33"},
+        {"Date": "1150923", "Code": "2887B1", "ClosingPrice": "50.0"},
+        {"Date": "1150923", "Code": "910322", "ClosingPrice": "80.0"},
+    ]
+    return {"companies": companies, "prices": prices}
+
+
+def test_parse_twse_taiex_universe_excludes_etf_preferred_tdr(monkeypatch):
+    monkeypatch.setattr(m, "TAIEX_TOP_N", 150)
+    as_of, holdings, non_equity = m.parse_twse_taiex_universe(_twse_fixture())
+    assert as_of == "2026-09-23"  # ROC 1150923 -> 西元 2026-09-23
+    assert non_equity == []
+    tickers = [h["ticker"] for h in holdings]
+    assert tickers == ["2330.TW", "2454.TW", "1101.TW"]  # 依市值排序，且 ETF/特別股/TDR 都不在裡面
+    # TSMC 市值最大，佔比最高
+    assert holdings[0]["ticker"] == "2330.TW"
+    assert holdings[0]["weight_pct"] > holdings[1]["weight_pct"] > holdings[2]["weight_pct"]
+    # weight_pct 是佔全市場（這個 fixture 裡的三檔）比例，加總應為 100%
+    assert sum(h["weight_pct"] for h in holdings) == pytest.approx(100.0, abs=0.01)
+    assert holdings[0]["cum_weight_pct"] < holdings[1]["cum_weight_pct"] < holdings[2]["cum_weight_pct"]
+    assert holdings[-1]["cum_weight_pct"] == pytest.approx(100.0, abs=0.01)
+
+
+def test_parse_twse_taiex_universe_respects_top_n(monkeypatch):
+    monkeypatch.setattr(m, "TAIEX_TOP_N", 2)
+    as_of, holdings, non_equity = m.parse_twse_taiex_universe(_twse_fixture())
+    assert len(holdings) == 2
+    assert [h["ticker"] for h in holdings] == ["2330.TW", "2454.TW"]
+    # weight_pct 仍是佔全市場（含被截掉的台泥）比例，因此加總 < 100%
+    assert sum(h["weight_pct"] for h in holdings) < 100.0
+
+
+def test_parse_twse_taiex_universe_sets_last_universe_stats(monkeypatch):
+    monkeypatch.setattr(m, "TAIEX_TOP_N", 150)
+    m.parse_twse_taiex_universe(_twse_fixture())
+    stats = m.LAST_TAIEX_UNIVERSE_STATS
+    assert stats["n_total"] == 3
+    assert stats["n_for_90pct"] is not None
+
+
+def test_parse_twse_taiex_universe_missing_data_raises():
+    with pytest.raises(RuntimeError, match="TAIEX universe"):
+        m.parse_twse_taiex_universe({"companies": [], "prices": []})
+
+
+def test_roc_date_to_iso():
+    assert m._roc_date_to_iso("1150923") == "2026-09-23"
+    assert m._roc_date_to_iso("") is None
+    assert m._roc_date_to_iso(None) is None
+
+
+def test_yyyymmdd_to_iso():
+    assert m._yyyymmdd_to_iso("20260924") == "2026-09-24"
+    assert m._yyyymmdd_to_iso("bad") is None
+    assert m._yyyymmdd_to_iso(None) is None
+
+
+# ── Yuanta (0050) SSR payload parsing — 2026-09-25: 持股資料內嵌在頁面 HTML
+#    的 window.__NUXT__=(function(a,b,...){...})(v1,v2,...) 這段 IIFE 裡，
+#    要拿到真正資料等同於要「執行」這段 JS（見 fetch_yuanta_holdings_page()
+#    上方註解）。這裡用一段跟真實 Nuxt 序列化格式同構、但只含 2 檔股票 + 1
+#    檔期貨的最小合成 payload，驗證 parse 邏輯本身，不對外發任何請求。跳過
+#    （而非失敗）如果這台機器沒有 node——這條解析路徑本來就設計成「找不到
+#    node 就整體抓取失敗、退回 holdings_cache」，測試環境沒有 node 不代表
+#    程式邏輯錯了。──────────────────────────────────────────────────────────
+
+def _yuanta_nuxt_fixture_html() -> str:
+    # 真實 Nuxt payload 是「函式體用短變數名，呼叫時把實際值當參數傳回代入」
+    # 的去重複字串格式；這裡刻意保留同樣的殼（IIFE + 参数替换），但只填最小
+    # 需要的欄位（PCF.trandate 與 FundWeights 三類），驗證
+    # parse_yuanta_0050_holdings() 找得到 window.__NUXT__、送進 node eval、
+    # 且能正確取出 weightData 區塊。
+    payload = (
+        "window.__NUXT__=(function(a,b,c,d,e,f){"
+        "return {data:[{fundData:{}},"
+        "{weightData:{PCF:{trandate:a},"
+        "FundWeights:{"
+        "StockWeights:[{code:b,name:c,weights:d},{code:'2454',name:'聯發科',weights:7.2}],"
+        "FutureWeights:[{code:e,name:f,weights:0.26}],"
+        "ETFWeights:[],BondWeights:[]"
+        "}}}]}"
+        "})('20260924','2330','台積電',56,'TX','臺股期貨');"
+    )
+    return ("<html><head></head><body>"
+            "<script>" + payload + "</script>"
+            "<script>other script not touched</script>"
+            "</body></html>")
+
+
+def _node_missing() -> bool:
+    return shutil.which("node") is None
+
+
+@pytest.mark.skipif(_node_missing(), reason="node not available in this environment")
+def test_parse_yuanta_0050_holdings_basic():
+    as_of, holdings, non_equity = m.parse_yuanta_0050_holdings(_yuanta_nuxt_fixture_html())
+    assert as_of == "2026-09-24"
+    assert [h["ticker"] for h in holdings] == ["2330.TW", "2454.TW"]
+    assert holdings[0]["weight_pct"] == pytest.approx(56.0)
+    assert len(non_equity) == 1
+    assert non_equity[0]["ticker"] == "TX"
+    assert non_equity[0]["reason"].startswith("期貨")
+
+
+def test_parse_yuanta_0050_holdings_missing_nuxt_payload_raises():
+    with pytest.raises(RuntimeError, match="__NUXT__"):
+        m.parse_yuanta_0050_holdings("<html><body>no payload here</body></html>")
+
+
+def test_parse_yuanta_0050_holdings_node_missing_raises(monkeypatch):
+    monkeypatch.setattr(m.shutil, "which", lambda name: None)
+    with pytest.raises(RuntimeError, match="node executable not found"):
+        m.parse_yuanta_0050_holdings(_yuanta_nuxt_fixture_html())
