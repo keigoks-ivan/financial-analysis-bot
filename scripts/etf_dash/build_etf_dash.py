@@ -59,7 +59,7 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
+import os
 import time
 import warnings
 from datetime import datetime, timedelta, timezone
@@ -815,7 +815,7 @@ def parse_twse_taiex_universe(raw: dict) -> tuple[str, list[dict], list[dict]]:
 # script——這是 Nuxt 用來去重複字串的序列化格式（函式體用短變數名代表值，
 # 呼叫時才把真正的字串/數字當參數傳回代入）。純 requests.get() 這個 URL
 # （不需要 cookie、不需要瀏覽器）就能拿到完整 HTML；問題只在於「解析」這段
-# IIFE——要拿到真正資料等同於要『執行』這段 JS。這裡用 Node.js 子行程 eval
+# IIFE——要拿到真正資料等同於要『執行』這段 JS。這裡用 Node.js 子行程在 vm 沙箱內執行
 # 它（見同目錄 _yuanta_nuxt_extract.js），因為：(1) GitHub Actions
 # ubuntu-latest runner 本身就內建 Node.js（Actions runner 自己是用 Node 跑
 # 的，不需要額外 actions/setup-node 步驟）；(2) 這段 payload 是靜態資料（沒
@@ -856,16 +856,13 @@ def parse_yuanta_0050_holdings(html_text: str) -> tuple[str, list[dict], list[di
         raise RuntimeError("node executable not found — cannot evaluate Yuanta's Nuxt SSR payload "
                             "(see module comment above fetch_yuanta_holdings_page)")
 
-    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
-        f.write(payload_js)
-        payload_path = f.name
-    try:
-        proc = subprocess.run(
-            ["node", str(YUANTA_NUXT_EXTRACT_JS), payload_path],
-            capture_output=True, text=True, timeout=30,
-        )
-    finally:
-        Path(payload_path).unlink(missing_ok=True)
+    # payload 是外部網站內容：由 stdin 餵給 vm 沙箱（見 _yuanta_nuxt_extract.js），
+    # 子行程只給 PATH，不帶 GITHUB_TOKEN 等環境變數。
+    proc = subprocess.run(
+        ["node", str(YUANTA_NUXT_EXTRACT_JS)],
+        input=payload_js, capture_output=True, text=True, timeout=30,
+        env={"PATH": os.environ.get("PATH", "")},
+    )
     if proc.returncode != 0:
         raise RuntimeError(f"node eval of Yuanta SSR payload failed: {(proc.stderr or '').strip()[:500]}")
     try:
