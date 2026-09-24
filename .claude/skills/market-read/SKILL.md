@@ -3,11 +3,21 @@ name: market-read
 description: market-read — 市況主控台判讀層（週頻＋事件觸發）。orchestrator 讀證據包後寫 docs/market/data/read.json（三股力量／傳導／部位／類比／三框架機率／證偽表），機械 critic 過後把 5–8 張命題落進帳簿（source market-read），頁面 /market/ 第一屏渲染。觸發：「跑市況判讀」「market read」「本週市況判讀」「更新市況主控台判讀」。
 ---
 
-# market-read v1.3（2026-09-17）
+# market-read v1.4（2026-09-24）
 
 **定位**：`/market/` 是機械證據層（日更、零 LLM）＋判讀層（本 skill）兩層。判讀層回答「未來 3／6／12 個月股市的可能方向與背後邏輯」，每一個機率都進帳簿被 SPRT 打分；判紅即降為評論。設計凍結稿：`notes/site-internal/root/_market_read_design_20260903.md`。**判讀者＝orchestrator（opus 級），不外包給 sonnet、不上 cron。**
 
-**白話關卡（持有人 2026-09-03 指出漏掉，列為硬規則）**：判讀文字＝外資券商白話，照 `_plainlang_styleguide.md` 四句式——每個術語在同一欄位首次出現必附「術語（一句白話）」（期限溢價（投資人要求多付的長債補償）、解壓縮（頂端無事、底層失血）、NAAIM（主動經理人曝險調查）…），先講為什麼再列數字，短句、一句一個意思；頁面永遠不露 `monitor:dgs10` 這類代碼與 SPRT／LLR／n_eff／orchestrator 等內部詞（顯示層用「序貫檢定」「累積證據分」「有效樣本」「站方判讀」）。`check_market_read.py` 的 `jargon_gloss` WARN 必須清零才算完成。**適用範圍不只 `read.json`**——同一把尺也涵蓋 `docs/market/index.html` 的手寫文案與 `scripts/build_market_state.py` 的機械模板句（`judge_word()`／`build_read_zh()` 等）；任何一處新增讀者可見字串，動筆前都要先過這關（對照表見 `_plainlang_styleguide.md` §2.11「市況主控台」）。
+**白話關卡（持有人 2026-09-03 指出漏掉，列為硬規則）**：判讀文字＝外資券商白話，照 `_plainlang_styleguide.md` 四句式——每個術語在同一欄位首次出現必附「術語（一句白話）」（期限溢價（投資人要求多付的長債補償）、解壓縮（頂端無事、底層失血）、NAAIM（主動經理人曝險調查）…），先講為什麼再列數字，短句、一句一個意思；頁面永遠不露 `monitor:dgs10` 這類代碼與 SPRT／LLR／n_eff／orchestrator 等內部詞（顯示層用「序貫檢定」「累積證據分」「有效樣本」「站方判讀」）。`check_market_read.py` 的 `jargon_gloss` 必須通過（2026-09-24 起為 FAIL）。**適用範圍不只 `read.json`**——同一把尺也涵蓋 `docs/market/index.html` 的手寫文案與 `scripts/build_market_state.py` 的機械模板句（`judge_word()`／`build_read_zh()` 等）；任何一處新增讀者可見字串，動筆前都要先過這關（對照表見 `_plainlang_styleguide.md` §2.11「市況主控台」）。
+
+**可讀性硬規則（持有人 2026-09-24 看 9/24 判讀「很不通順」後加；`check_market_read.py` 第 13–17 項 FAIL 擋下）**：
+- **標題句**：`thesis_zh`、`path_zh`、`vs_prior_zh`、每筆 `horizons[].logic_zh` 的第一句是頁面上的標題，≤ 40 字、最多 1 個數字，直接講結論。例：「長天期利率也開始漲了，股市短線偏弱的理由出現。」
+- **其他句子**：一句只講一件事。去掉括號後 ≤ 60 字、最多 3 個數字（日期、年期、「3 個月」「200 日線」這類名稱不算；括號裡的分位數要算）。「；」也算一句的結尾，不要拿它把好幾件事黏成一句。數字放不下就挑最重要的，其餘留給頁面上的數據區。
+- **不用內部用語**：命題→預測；證偽表→改判條件；參考點→「9/23 收盤價」這類具體說法；官方序列／監測序列→官方資料；判讀者→「我」或省略。帳簿、帳上、口徑、型別、結算、交代、裁量、觸發者、「弱的那段」都不寫。
+- **不用比喻**：門口、骨牌、到場、掩護、雪崩、天花板、煞車。直述事實。
+- **出處放句尾**，寫成「（鉅亨 9/24）」；不寫「情報摘要」。
+- **`data_gaps_zh` ≤ 150 字**：只寫會影響本期判斷的缺口。逐條缺料清單頁面上方已機械列出，不重抄。
+- **同一件事全頁只講一次**：主張、路徑、相較前期不要各換一種說法重講同一個結論。
+- 寫完先跑 `python3 scripts/check_market_read.py --file <稿>`，第 13–17 項沒過就照訊息改寫再跑，改到過為止（最多 3 輪）；**這一步在冷讀之前做**，因為冷讀後改正文要重審。
 
 **憲法**：描述器紀律（只講機率與條件；禁「買／賣／加碼／減碼／避開／進場／出場／建議」）；不是收斂面；每個判斷句錨定一個 ref（`monitor:<key>`／`internals:<key>`／`stress:<欄>`／`cot:<市場>`／`flow:<欄>`）並帶 as_of；與帳簿表格分歧必明寫；白話全形（`_plainlang_styleguide.md`）；不改任何機械層檔案。
 
@@ -19,8 +29,8 @@ description: market-read — 市況主控台判讀層（週頻＋事件觸發）
    - 最新 `docs/intel/data/YYYY-MM-DD.json` 的 `brief_zh`；`docs/macro/` 各報告的 kill 表現值（state.fuses 已含）。
    - **上一期** `docs/market/data/read.json` 與 `docs/market/data/read_history.jsonl`：判讀要對上期負責——哪些證偽被觸發、三框架機率為何改、上期命題現況（`python knowledge/q.py --forecasts` 看 market-read 段）。
 2. **寫 `docs/market/data/read.json`**（schema `market-read-v1`，逐欄照首份 2026-09-02 版）：
-   - `thesis_zh` 一句主張；`path_zh` 路徑句（先弱後強／先強後弱／區間…＋觸發者）。
-   - `vs_prior_zh`（相較前期）：**第一句必須是一句白話結論**，≤ 60 字、以句號收，讀者不看後文就知道上期看法對不對、方向有沒有變（例：「上期的看法大多被這週的證據撐住：升息已被市場定價，長債壓力與平均股票退潮都更明顯。」）。不得用「對上期負責」「N 張命題未到期」「證偽表十條有一條觸發」這類記帳語開頭，記帳明細從第二句起寫。頁面「本期重點」直接取這一句當首句；`check_market_read.py` 第 12 項 `vs_prior_lead` 會 FAIL 擋下超過 60 字或含「命題／負責／證偽表／到期／觸發」的首句（2026-09-17 持有人指出舊寫法沒人看得懂）。
+   - `thesis_zh` 第一句是一句主張（標題句規則），後面才是撐它的證據；`path_zh` 路徑句（先弱後強／先強後弱／區間…＋觸發者）。
+   - `vs_prior_zh`（相較前期）：**第一句必須是一句白話結論**，≤ 40 字、最多 1 個數字、以句號收，讀者不看後文就知道上期看法對不對、方向有沒有變（例：「上期的看法大多被這週的證據撐住，方向沒變。」）。不得用「對上期負責」「N 張命題未到期」「證偽表十條有一條觸發」這類記帳語開頭。記帳明細從第二句起寫，也要用白話：「上期八個預測都還沒到期；十個改判條件都沒碰到，其中三個接近了。」頁面「本期重點」直接取這一句當首句；`check_market_read.py` 第 12 項 `vs_prior_lead` 會 FAIL 擋下超過 60 字或含「命題／負責／證偽表／到期／觸發」的首句（2026-09-17 持有人指出舊寫法沒人看得懂）。
    - `horizons` 三筆：p_up 相對基準的偏離必須在 `logic_zh` 講清楚；3 個月附 p_dd10、12 個月附 p_dd20。
    - `forces` 2–4 張，每張 refs ≥2、每個 ref 一句「為什麼看它」。
    - `transmission` 四格（erp／credit／split／liquidity）各一句判讀。
@@ -30,7 +40,7 @@ description: market-read — 市況主控台判讀層（週頻＋事件觸發）
    - `deviations_from_tables`：對議會 summary 與帳上同序列 open 命題，|判讀 p − 表格 p| ≥ 0.05 者逐條寫理由。
    - `forecasts` 5–8 張，**前四張型別凍結**：3m 方向（pxd:SPY at_expiry）、6m 方向、12m 方向、3m 回撤 10%（pxd:SPY any_close "<"）；其餘取自證偽表（monitor／internals 域 any_close）。
    - `assumptions.spx_fwd_pe` 寫來源。
-3. **機械 critic**：`python3 scripts/check_market_read.py` 必須 PASS（FAIL 不得落帳；WARN 要在複審時說明）。
+3. **機械 critic**：`python3 scripts/check_market_read.py` 必須 PASS（FAIL 不得落帳；WARN 要在複審時說明）。可讀性（第 13–17 項）沒過就改寫再跑，最多 3 輪。
 4. **落帳**：`python3 scripts/ledger_from_editorial.py --source market-read --file docs/market/data/read.json`（先 dry-run 看 7 張 p／p_clim）→ `--write`（自動回填 `claim_ids[]`）；把 id 依序填進 `horizons[].claim_ids`（前三張＋第四張進 3m）與對應 `falsifiers[].claim_id`；append 一行到 `docs/market/data/read_history.jsonl`：`{as_of, thesis_zh, path_zh, p_up_3m, p_up_6m, p_up_12m, n_claims, claim_ids}`。
 5. **重建合成層**：`python3 scripts/build_market_state.py`；本機 `python3 -m http.server` 開 `/market/` 看第一屏與證偽表現值。
 6. **停下複審**：列出主張、三框架 p 與基準、與表格分歧、落帳 id；持有人說 push 才 commit（只 stage：read.json、read_history.jsonl、state.json、forecasts.jsonl）。
@@ -89,7 +99,7 @@ routine 的 `allowed_tools` 須含 `Agent`（冷讀 subagent）、`Skill`、`Bas
 2. **內部一致性**：三框架 p 與回撤 p 是否互相說得通；證偽表方向與主張一致；**每張命題的 p 是否與主張方向一致**（2026-09-02 初稿 30 年期 25% 對財政主導論即為此類 🔴）。
 3. **分歧理由**：`deviations_from_tables` 每條理由是否具體到可證偽，而非「我認為」。
 4. **類比誠實**：每個歷史類比是否附不同之處，且不同之處是否真的削弱類比（若削弱卻仍當主要類比→🟡）。
-5. **紀律與白話**：禁語、術語首現括號、全形標點、無流程劇場。
+5. **紀律與白話**：禁語、術語首現括號、全形標點、無流程劇場；讀者看不懂的內部用語、比喻、同一結論換句話重講（機械檢查抓不到的部分）列 🟡。
 6. **遺漏**：證據包中分位 ≥95 或 ≤5、或 30 天變化 |Δ|≥10% 的數字，有無被判讀完全忽略；列出未被引用的極端值。
 
 `verdict`：任一 🔴 → `revise`；否則 `pass`。判讀者依 findings 修稿，最多 2 輪；第 2 輪後仍有 🔴 → 本次判讀失敗（見上方步驟 4）。`review`（模型、verdict、輪次、最後一輪 findings）寫入 read.json 供頁面「判讀記分」區與 email 顯示。
@@ -105,6 +115,7 @@ Agent({
 ```
 
 ## 版本
+- v1.4 2026-09-24：新增「可讀性硬規則」（標題句 ≤ 40 字＋1 個數字、每句 ≤ 60 字＋3 個數字、內部用語與比喻詞禁用、出處放句尾、data_gaps_zh ≤ 150 字），`check_market_read.py` 第 13–17 項 FAIL 擋下；術語白話註解（第 11 項）由 WARN 升為 FAIL；vs_prior 首句上限 60→40 字。
 - v1.3 2026-09-17：`vs_prior_zh` 第一句必須是白話結論（頁面「本期重點」直接引用）；改判條件在首屏改為各取一條轉多與轉空門檻附現值。
 - v1.2 2026-09-08：白話關卡適用範圍明文擴大到 `docs/market/index.html` 手寫文案與 `build_market_state.py` 機械模板句（原本只管 `read.json`）；本輪清查對照表落 `_plainlang_styleguide.md` §2.11。
 - v1.1 2026-09-03：新增 Auto 模式（雲端 routine `market-read-auto`，見 §5）——`check_read_triggers.py` 判定觸發、冷讀 subagent 模型配對與職責書、失敗寫 `read_status.json`、email 摘要交 `market-read-notify.yml`。手動模式（步驟 1–6）不變。

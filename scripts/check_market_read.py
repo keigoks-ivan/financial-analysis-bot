@@ -35,14 +35,20 @@ Exit 0＝全部通過（WARN 不算失敗，只有 FAIL 會擋 exit code）；Ex
      判讀必須至少申報一筆分歧（見函式 docstring 說明本檢查的必然是**啟發式**：schema 裡
      deviations_from_tables 只有自由文字 claim，沒有結構化的 series/ref 欄位可精確對帳）。
   10. 全形標點：*_zh 字串中，CJK 字元後面不得緊接 ASCII 的 , : ; ! ?。
-  11.（WARN only）術語白話註解：*_zh 字串中若出現指定術語清單裡的字詞，同一欄位字串裡應該
-     要能找到括號白話註解（（...）或(...）），否則列為 WARN 提醒補註解——白話工程規範見
-     `notes/site-internal/root/_plainlang_styleguide.md` §一模板 3。此檢查只提醒不擋 commit，
-     因為判斷「這個括號是不是在解釋這個術語」本質上是語意問題，機械只能做粗略提醒。
+  11.（2026-09-24 起 FAIL）術語白話註解：*_zh 字串中若出現指定術語清單裡的字詞，同一欄位字串裡應該
+     要能找到括號白話註解（（...）或(...）），否則 FAIL——白話工程規範見
+     `notes/site-internal/root/_plainlang_styleguide.md` §一模板 3。原本只提醒不擋 commit，
+     2026-09-24 持有人要求改為擋下（白話關卡本來就要求清零）。
   12. vs_prior_zh 首句白話結論（2026-09-17 持有人指出首屏「本期重點」沒人看得懂）：頁面直接
-     引用 vs_prior_zh 的第一句當首屏摘要，所以第一句必須是讀者看得懂的結論——≤ 60 字、
+     引用 vs_prior_zh 的第一句當首屏摘要，所以第一句必須是讀者看得懂的結論——≤ 40 字、
      以句號收，且不得含「命題／負責／證偽表／到期／觸發」這類記帳語（記帳明細從第二句起寫）。
-     缺 vs_prior_zh 只 WARN（首期無上期可比）。
+     缺 vs_prior_zh 只 WARN（首期無上期可比），最多 1 個數字（2026-09-24 由 60 字收緊）。
+  13–17. 可讀性（2026-09-24 持有人看 9/24 判讀「很不通順」後加，全部 FAIL）：
+     13 主張／路徑／三框架 logic 第一句 ≤ 40 字、最多 1 個數字；
+     14 每句（「；」也切）去掉括號後 ≤ 60 字、最多 3 個數字（日期與期限名稱不算）；
+     15 不得出現內部用語（命題、證偽表、參考點、序列…）與比喻詞；
+     16 出處括號（媒體名＋日期）只能放句尾；
+     17 data_gaps_zh ≤ 150 字。
 """
 from __future__ import annotations
 
@@ -82,10 +88,10 @@ EXCEPTION_PHRASES = (
 
 FULLWIDTH_PUNCT_FORBIDDEN = set(",:;!?")
 
-# 白話工程術語清單（WARN only，見模組 docstring 第 11 項）：白話風格指南 style targets 段落
+# 白話工程術語清單（見模組 docstring 第 11 項）：白話風格指南 style targets 段落
 # 舉例的一批＋ ERP／SPRT／LLR／BSS／TIPS／DXY，加上 §2.5 已拍板的名稱（高收益債利差／投資級債
 # 利差／CCC 級債利差、RRP、TGA、長期通膨預期、否證指標、資金鬆緊狀態）。任何一個字詞出現在
-# *_zh 字串裡卻同一欄位找不到括號註解，就 WARN 提醒——不精確也沒關係，這只是提醒補註解用。
+# *_zh 字串裡卻同一欄位找不到括號註解就 FAIL。
 JARGON_TERMS = (
     "期限溢價", "實質利率", "本益比", "解壓縮", "bad yields", "LDI 事件", "K 型晚週期",
     "risk-off", "左肥尾", "中位路徑", "逼空", "去化", "三分位", "NAAIM", "CTA", "COT",
@@ -373,7 +379,7 @@ def check_fullwidth_punct(data: dict):
 
 
 def check_jargon_gloss(data: dict):
-    """WARN only（見模組 docstring 第 11 項）：對每個 *_zh 字串裡出現的 JARGON_TERMS 字詞，要求
+    """（2026-09-24 起 FAIL，見模組 docstring 第 11 項）：對每個 *_zh 字串裡出現的 JARGON_TERMS 字詞，要求
     該字詞在同一欄位字串裡「至少有一次」緊接著括號白話註解（術語（白話）／術語(白話)，比照風格
     指南模板 3）——同一術語在同欄位出現多次時，只要其中一次緊接括號即算已註解（比照站上「首次
     出現處加註即可」的慣例），但不同術語彼此不能互相頂替：field 裡有 A 術語的括號註解，不代表
@@ -387,11 +393,11 @@ def check_jargon_gloss(data: dict):
             if not re.search(pattern, text):
                 missing.append(f"{path} 含術語「{term}」但該術語後面找不到緊接的括號白話註解")
     if missing:
-        return WARN, "；".join(missing)
+        return FAIL, "；".join(missing)
     return PASS, "*_zh 字串中出現的術語（如有）皆在同欄位找到緊接的括號白話註解"
 
 
-VS_PRIOR_LEAD_MAX = 60
+VS_PRIOR_LEAD_MAX = 40
 VS_PRIOR_LEDGER_WORDS = ("命題", "負責", "證偽表", "到期", "觸發")
 
 
@@ -412,9 +418,148 @@ def check_vs_prior_lead(data: dict):
     hits = [w for w in VS_PRIOR_LEDGER_WORDS if w in lead]
     if hits:
         problems.append(f"第一句含記帳語 {hits}，記帳明細請從第二句起寫")
+    n_num = count_numbers(lead)
+    if n_num > HEADLINE_MAX_NUMBERS:
+        problems.append(f"第一句有 {n_num} 個數字，最多 {HEADLINE_MAX_NUMBERS} 個")
     if problems:
         return FAIL, "；".join(problems) + f"——第一句：「{lead}」"
     return PASS, f"vs_prior_zh 第一句 {n} 字、無記帳語：「{lead}」"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 13–17 可讀性（2026-09-24 持有人看 9/24 判讀「很不通順」後加；規則見 market-read SKILL.md
+# 「可讀性硬規則」）。句子以「。！？；」切；括號內容不計字數（白話註解不算長），但括號裡的
+# 數字照算（「（分位 11.9）」也是數字）；日期與期限名稱不算數字。
+# ═══════════════════════════════════════════════════════════════════════════
+
+HEADLINE_MAX_CHARS = 40
+HEADLINE_MAX_NUMBERS = 1
+SENTENCE_MAX_CHARS = 60
+SENTENCE_MAX_NUMBERS = 3
+DATA_GAPS_MAX_CHARS = 150
+INTERNAL_WORDS = (
+    "命題", "證偽表", "參考點", "序列", "帳簿", "帳上", "口徑", "型別", "結算", "交代",
+    "判讀者", "裁量", "觸發者", "那段", "情報摘要",
+)
+METAPHOR_WORDS = ("門口", "骨牌", "到場", "掩護", "雪崩", "天花板", "煞車")
+
+SENTENCE_END = re.compile(r"(?<=[。！？；])")
+PAREN = re.compile(r"（[^（）]*）|\([^()]*\)")
+# 不算「數字」的：日期、年月、期限與均線名稱、指數名稱裡的數字
+NOT_A_NUMBER = re.compile(
+    r"\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}|\d+\s*年期?|\d{1,2}\s*月|\d{1,2}\s*日(?!線)"
+    r"|\d+\s*(?:個月|日線|週線?|個交易日)"
+    r"|(?:標普|S&P|那斯達克|羅素|道瓊|KOSPI|日經|STOXX)\s*\d+"
+)
+NUMBER = re.compile(r"(?<![A-Za-z0-9])[-−+]?\d[\d,]*(?:\.\d+)?")
+# 出處括號：非數字文字＋空白＋日期，例如（鉅亨 9/24）（CNBC，9/24）
+SOURCE_PAREN = re.compile(r"（[^\d（）]+?\s*\d{1,2}/\d{1,2}）")
+
+
+def count_numbers(text: str) -> int:
+    return len(NUMBER.findall(NOT_A_NUMBER.sub("", text)))
+
+
+def body_len(text: str) -> int:
+    return len(PAREN.sub("", text).replace(" ", ""))
+
+
+def split_sentences(text: str):
+    return [s.strip() for s in SENTENCE_END.split(text) if s.strip()]
+
+
+def first_sentence(text: str) -> str:
+    parts = split_sentences(text)
+    return parts[0] if parts else ""
+
+
+def collect_prose(data: dict):
+    """讀者看得到的判讀文字：全部 *_zh，加上沒有 _zh 後綴的 forces[].title 與
+    deviations_from_tables[].why。"""
+    out = list(collect_zh_strings(data))
+    for i, f in enumerate(data.get("forces") or []):
+        if isinstance(f.get("title"), str):
+            out.append((f"$.forces[{i}].title", f["title"]))
+    for i, d in enumerate(data.get("deviations_from_tables") or []):
+        if isinstance(d.get("why"), str):
+            out.append((f"$.deviations_from_tables[{i}].why", d["why"]))
+    return out
+
+
+def headline_fields(data: dict):
+    out = []
+    for key in ("thesis_zh", "path_zh"):
+        if isinstance(data.get(key), str):
+            out.append((f"$.{key}", data[key]))
+    for i, h in enumerate(data.get("horizons") or []):
+        if isinstance(h.get("logic_zh"), str):
+            out.append((f"$.horizons[{i}].logic_zh", h["logic_zh"]))
+    return out
+
+
+def check_headline_leads(data: dict):
+    """13. 主張、路徑、三框架 logic 的第一句是頁面上的標題句：≤ 40 字、最多 1 個數字。
+    vs_prior_zh 的第一句由第 12 項管。"""
+    problems = []
+    for path, text in headline_fields(data):
+        lead = first_sentence(text)
+        n, k = body_len(lead), count_numbers(lead)
+        if n > HEADLINE_MAX_CHARS or k > HEADLINE_MAX_NUMBERS:
+            problems.append(f"{path} 第一句 {n} 字、{k} 個數字（上限 {HEADLINE_MAX_CHARS} 字、"
+                            f"{HEADLINE_MAX_NUMBERS} 個）：「{lead}」")
+    if problems:
+        return FAIL, "；".join(problems)
+    return PASS, f"標題句皆 ≤ {HEADLINE_MAX_CHARS} 字、≤ {HEADLINE_MAX_NUMBERS} 個數字"
+
+
+def check_sentence_size(data: dict):
+    """14. 每一句（含「；」切開的半句）去掉括號後 ≤ 60 字、最多 3 個數字。"""
+    problems = []
+    for path, text in collect_prose(data):
+        for s in split_sentences(text):
+            n, k = body_len(s), count_numbers(s)
+            if n > SENTENCE_MAX_CHARS or k > SENTENCE_MAX_NUMBERS:
+                problems.append(f"{path} {n} 字、{k} 個數字：「{s[:30]}…」")
+    if problems:
+        return FAIL, f"{len(problems)} 句超過上限（{SENTENCE_MAX_CHARS} 字／{SENTENCE_MAX_NUMBERS} 個數字）：" + "；".join(problems)
+    return PASS, f"每句皆 ≤ {SENTENCE_MAX_CHARS} 字、≤ {SENTENCE_MAX_NUMBERS} 個數字"
+
+
+def check_plain_words(data: dict):
+    """15. 不得出現內部用語與比喻詞（替換表見 SKILL.md）。"""
+    hits = []
+    for path, text in collect_prose(data):
+        for w in INTERNAL_WORDS + METAPHOR_WORDS:
+            if w in text:
+                idx = text.index(w)
+                hits.append(f"{path}「{w}」：…{text[max(0, idx - 8):idx + len(w) + 8]}…")
+    if hits:
+        return FAIL, "；".join(hits)
+    return PASS, "未出現內部用語與比喻詞"
+
+
+def check_source_position(data: dict):
+    """16. 出處括號（媒體名＋日期）只能放在句尾，緊接「。！？；」或字串結尾。"""
+    hits = []
+    for path, text in collect_prose(data):
+        for m in SOURCE_PAREN.finditer(text):
+            rest = text[m.end():].lstrip()
+            if rest and rest[0] not in "。！？；":
+                hits.append(f"{path} 出處夾在句中：…{text[max(0, m.start() - 10):m.end() + 6]}…")
+    if hits:
+        return FAIL, "；".join(hits)
+    return PASS, "出處括號皆在句尾"
+
+
+def check_data_gaps_len(data: dict):
+    """17. data_gaps_zh ≤ 150 字：只寫影響本期判斷的缺口，逐條缺料清單頁面已機械列出。"""
+    text = data.get("data_gaps_zh")
+    if not isinstance(text, str):
+        return PASS, "無 data_gaps_zh"
+    n = len(text.replace(" ", ""))
+    if n > DATA_GAPS_MAX_CHARS:
+        return FAIL, f"data_gaps_zh {n} 字，上限 {DATA_GAPS_MAX_CHARS} 字"
+    return PASS, f"data_gaps_zh {n} 字"
 
 
 CHECKS = (
@@ -430,6 +575,11 @@ CHECKS = (
     ("fullwidth_punct", check_fullwidth_punct, False),
     ("jargon_gloss", check_jargon_gloss, False),
     ("vs_prior_lead", check_vs_prior_lead, False),
+    ("headline_leads", check_headline_leads, False),
+    ("sentence_size", check_sentence_size, False),
+    ("plain_words", check_plain_words, False),
+    ("source_position", check_source_position, False),
+    ("data_gaps_len", check_data_gaps_len, False),
 )
 
 

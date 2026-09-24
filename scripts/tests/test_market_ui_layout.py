@@ -18,7 +18,7 @@ def test_market_page_keeps_compact_and_full_text_layers():
 def test_market_page_labels_probability_and_quote_provenance():
     html = PAGE.read_text(encoding="utf-8")
     assert "研究判斷 · 尚無校準樣本" in html
-    assert "pctile_window || \"未知\"" in html
+    assert "pctileWindowLabel(q.pctile_window)" in html
     assert "Number(q.num) / (1 + Number(q.chg30_pct) / 100)" in html
     assert "Number(q.chg30_pct) <= -100" in html
     assert 'frequency === "monthly" ? 45' in html

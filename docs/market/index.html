@@ -406,13 +406,12 @@ footer.imq-foot a{color:var(--text-secondary)}
   <section id="sec-judgment">
     <div class="card judgment-card" id="judgmentCard">
       <div class="stale-banner" id="staleBanner" hidden></div>
-      <div class="overline" style="margin-bottom:.4rem">本期判讀（保留當時證據）</div>
-      <p class="section-sub" style="margin-top:-.1rem">判讀保留當時證據；目前數據另列。</p>
+      <div class="overline" style="margin-bottom:.4rem">本期判讀</div>
       <div class="time-separation" id="judgmentTimeContext" hidden></div>
-      <div class="data-gap-banner" id="judgmentDataGaps" hidden></div>
       <p id="judgmentThesis" class="judgment-thesis"></p>
       <p id="judgmentPath" class="judgment-path"></p>
       <p id="judgmentVsPrior" class="note" hidden></p>
+      <div class="data-gap-banner" id="judgmentDataGaps" hidden></div>
       <div class="judgment-meta" id="judgmentMeta"></div>
       <p class="note" id="judgmentMechFallback" hidden></p>
     </div>
@@ -487,6 +486,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   <section id="sec-forces">
     <h2>主要力量</h2>
+    <p class="section-sub">「未保存」表示這一期判讀當時沒有保存證據快照；不以目前數據補填。</p>
     <div class="grid" id="forcesGrid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))"></div>
   </section>
 
@@ -614,7 +614,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       <h3 class="scorecard-subhead">預測對帳簿<span class="en">Ledger Sources</span></h3>
       <div class="scorecard-grid" id="ledgerGrid"></div>
       <div id="sentinelHost"></div>
-      <p class="note">判定方式是序貫檢定（SPRT）；紅燈只代表已達淘汰門檻，等持有人在校準輪決定要不要收掉，本頁不會自動關閉或修改任何模組。</p>
+      <p class="note">判定方式是序貫檢定（SPRT）；紅燈只代表已達淘汰門檻，等持有人在校準輪決定要不要收掉，本頁不會自動關閉或修改任何模組。「證據累積中（X／20）」代表有效樣本未滿 20 筆前不判定，括號內是目前樣本數／門檻樣本數，不是勝率。</p>
     </div>
     <div class="card">
       <h2>資料新鮮度</h2>
@@ -691,14 +691,21 @@ footer.imq-foot a{color:var(--text-secondary)}
   // 2026-09-13：首頁只顯示可核對的短重點，完整原文留在展開區。
   function splitTopLevel(text, delimiters) {
     var out = [], buffer = "", depth = 0;
-    String(text).split("").forEach(function (char) {
+    var chars = String(text).split("");
+    chars.forEach(function (char, i) {
       if (char === "（" || char === "(") depth += 1;
       buffer += char;
       if (char === "）" || char === ")") depth = Math.max(0, depth - 1);
-      if (!depth && delimiters.indexOf(char) >= 0) { out.push(buffer); buffer = ""; }
+      // 2026-09-24：ASCII , 或 : 夾在兩個數字之間（千分位、時刻）不算切點。
+      var isDigitJoiner = (char === "," || char === ":") && /[0-9]/.test(chars[i - 1] || "") && /[0-9]/.test(chars[i + 1] || "");
+      if (!depth && !isDigitJoiner && delimiters.indexOf(char) >= 0) { out.push(buffer); buffer = ""; }
     });
     if (buffer.trim()) out.push(buffer);
     return out;
+  }
+  // 2026-09-24：預覽重點不可停在「，、；,;」上——那是句子被截斷的痕跡，不是完整的一句。
+  function trimTrailingJoiner(s) {
+    return String(s).replace(/[，、；,;]+$/, "").trim();
   }
   function concisePoints(value, limit) {
     var edited = window.MARKET_TEXT_SUMMARIES && window.MARKET_TEXT_SUMMARIES[String(value || "").trim()];
@@ -735,7 +742,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       if (out.length < max && grouped) out.push(grouped);
       return out.length >= max;
     });
-    return out;
+    return out.map(trimTrailingJoiner).filter(Boolean);
   }
   function compactText(value, limit) {
     var points = concisePoints(value, limit);
@@ -836,7 +843,8 @@ footer.imq-foot a{color:var(--text-secondary)}
     "credit-lead": "信用領先模型", "breadth": "市場廣度模型", "calendar": "日曆效應模型",
     "intel-llm": "新聞閱讀模型", "monitor-read": "市場監測判讀", "detective-read": "警報網判讀",
     "crowding-monitor": "擁擠交易判讀", "market-read": "市況判讀",
-    "sentinel-noise": "哨兵（無技巧對照組）"
+    "sentinel-noise": "哨兵（無技巧對照組）",
+    "own-board": "擁有層前十五", "picks-late": "爆發榜晚段（守門擋下）", "mech-nodd": "無 DD 機械過閘"
   };
   var SCORE_DOT = { green: "🟢", yellow: "🟡", red: "🔴", descriptor: "⚪" };
   var SCORE_STATUS_TEXT = {
@@ -851,9 +859,11 @@ footer.imq-foot a{color:var(--text-secondary)}
     return box;
   }
 
+  // 2026-09-24：「證據累積中」的完整判定機制（20 筆門檻、距離換算非機率預測）
+  // 只在 #sec-scoreboard 區塊說明一次，卡片本身只留短狀態，避免近 50 張卡重複整段字。
   function sprtStateText(sprt, nEff, floor) {
     floor = floor || SPRT_FLOOR;
-    if (!sprt) return "證據累積中：帳上尚未累積可結算樣本。";
+    if (!sprt) return "證據累積中（0／" + floor + "）。";
     if (sprt.state === "accept_h1") {
       return "已證實優於基準（序貫檢定判定於 " + esc(sprt.decided_at || "—") +
         "，有效樣本 n=" + esc(sprt.decided_n) + "）。";
@@ -862,15 +872,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       return "已證實不優於基準，等校準輪處決（序貫檢定判定於 " +
         esc(sprt.decided_at || "—") + "，有效樣本 n=" + esc(sprt.decided_n) + "）。";
     }
-    if (sprt.A == null || sprt.B == null || sprt.llr == null) {
-      return "證據累積中：有效樣本 " + nEff + "，未滿 " + floor + " 筆前不判定。";
-    }
-    var toGreen = Math.max(0, Math.ceil((sprt.A - sprt.llr) / SPRT_LLR_HIT));
-    var toRed = Math.max(0, Math.ceil((sprt.llr - sprt.B) / SPRT_LLR_MISS));
-    var txt = "證據累積中：有效樣本 " + nEff + "，離判綠還差約再 " + toGreen +
-      " 次命中（或離判紅還差約再 " + toRed + " 次未命中，皆假設此後同向不中斷，只是距離換算非機率預測）。";
-    if (nEff < floor) txt += "未滿 " + floor + " 筆前不判定，即使累積證據分（LLR）已達門檻。";
-    return txt;
+    return "證據累積中（" + nEff + "／" + floor + "）。";
   }
 
   function renderSprtCard(key, m) {
@@ -1034,24 +1036,36 @@ footer.imq-foot a{color:var(--text-secondary)}
     if (Number(q.chg30_pct) <= -100) return "無法計算";
     var frequency = String(q.frequency || q.cadence || "").toLowerCase();
     var windowNote = frequency === "monthly" ? "近 30 期觀測，非 30 日" : "近 30 筆觀測";
-    var relative = fmtSigned(q.chg30_pct, 1) + "%（" + windowNote + "）";
     var unit = String(q.unit || "").toLowerCase();
     var absolute = q.delta30 != null ? Number(q.delta30) : q.change_abs != null ? Number(q.change_abs) : null;
     if (absolute == null && q.num != null && Number(q.num) > 0 && isFinite(Number(q.num))) {
       var base = Number(q.num) / (1 + Number(q.chg30_pct) / 100);
       absolute = Number(q.num) - base;
     }
+    // 2026-09-24：bp 只對利率／利差有意義（producer 原始算法單位 unit_raw === "bps"）；
+    // 占比類（站上均線比例、上修家數占比…）unit_raw 是 pp，只給個百分點。
+    var isBpsNative = q.unit_raw === "bps" || unit === "bp" || unit === "bps" || unit.indexOf("基點") >= 0;
+    var extra = "";
     if (absolute != null && isFinite(absolute) && (unit === "percent" || unit === "percentage_points" || unit === "%" || unit === "pct")) {
-      return relative + "（" + fmtSigned(absolute, 2) + " 個百分點／" + fmtSigned(absolute * 100, 0) + " bp）";
+      extra = fmtSigned(absolute, 2) + " 個百分點" + (isBpsNative ? "／" + fmtSigned(absolute * 100, 0) + " bp" : "");
+    } else if (absolute != null && isFinite(absolute) && isBpsNative) {
+      extra = fmtSigned(absolute, 1) + " bp";
     }
-    if (absolute != null && isFinite(absolute) && (unit === "bp" || unit === "bps" || unit.indexOf("基點") >= 0)) {
-      return relative + "（" + fmtSigned(absolute, 1) + " bp）";
-    }
-    return relative;
+    return fmtSigned(q.chg30_pct, 1) + "%（" + windowNote + (extra ? "；" + extra : "") + "）";
+  }
+  // 2026-09-24：pctile_window 是程式內部窗口 token（如 252_observations／available_10y），
+  // 換成白話再顯示，未知形式一律不掛「窗口」二字。
+  var PCTILE_WINDOW_LABEL = { available_10y: "可得的 10 年" };
+  function pctileWindowLabel(token) {
+    if (!token) return "";
+    if (PCTILE_WINDOW_LABEL[token]) return PCTILE_WINDOW_LABEL[token];
+    var m = /^(\d+)_observations$/.exec(token);
+    return m ? "近 " + m[1] + " 筆觀測" : "";
   }
   function quotePctile(q) {
     if (!q || q.pctile == null) return "—";
-    return Math.round(q.pctile) + "；窗口 " + esc(q.pctile_window || "未知");
+    var windowLabel = pctileWindowLabel(q.pctile_window);
+    return Math.round(q.pctile) + (windowLabel ? "（" + esc(windowLabel) + "）" : "");
   }
   function quoteDateMeta(q, comparisonDate) {
     var asOf = q && q.as_of ? q.as_of : "日期未知";
@@ -1122,6 +1136,26 @@ footer.imq-foot a{color:var(--text-secondary)}
       return '<li><b>' + esc(label) + '</b>' + (item && item.note ? '：' + esc(item.note) : '') + thenLine + currentLine + '</li>';
     }).join("");
   }
+  // 2026-09-24：review.reason 是機械組出的 ref 代碼字串（internals:xxx／monitor:xxx），
+  // 讀者看不懂；改算一句白話摘要，代碼清單留給下面「變動證據」那行（已經是中文標籤）。
+  function summarizeReviewReasons(review) {
+    var reasons = Array.isArray(review.reasons) ? review.reasons : [];
+    var changed = 0, missing = 0, expired = 0, due = [];
+    reasons.forEach(function (r) {
+      if (r.indexOf("引用證據已有變動：") === 0) changed++;
+      else if (r.indexOf("引用證據已缺失：") === 0) missing++;
+      else if (r.indexOf("引用證據已過期：") === 0) expired++;
+      else if (r.indexOf("下一次檢查期限已到：") === 0) due = r.slice("下一次檢查期限已到：".length).split("、").filter(Boolean);
+    });
+    var bits = [];
+    if (changed) bits.push(changed + " 項已有變動");
+    if (missing) bits.push(missing + " 項已缺失");
+    if (expired) bits.push(expired + " 項已過期");
+    var sentence = bits.length ? "引用的證據 " + bits.join("，") : "";
+    var dueSentence = due.length ? "檢查期限 " + due.join("、") + " 已過" : "";
+    var combined = [sentence, dueSentence].filter(Boolean).join("；");
+    return combined ? combined + "。" : "";
+  }
   function renderQuestionBoard(board, state) {
     var section = $("#sec-questions");
     var questions = board && board.schema === "market-question-board-v1" && Array.isArray(board.questions) ? board.questions : [];
@@ -1132,8 +1166,9 @@ footer.imq-foot a{color:var(--text-secondary)}
     var reviewLabel = review.status === "needs_review" ? '<span class="chip warn">需要重審</span>' : review.status === "current" ? '<span class="chip good">已核對本期證據</span>' : '<span class="chip neutral">審查狀態未知</span>';
     var changedRefs = questionList(review.changed_refs);
     var snapshot = String(board.snapshot_id || "");
+    var reviewSummary = summarizeReviewReasons(review);
     $("#questionBoardMeta").innerHTML = reviewLabel + '　判讀截至 ' + esc(board.as_of || "日期未知") +
-      (review.reason ? '<br>' + esc(review.reason) : '') +
+      (reviewSummary ? '<br>' + esc(reviewSummary) : '') +
       (changedRefs.length ? '<br>變動證據：' + esc(changedRefs.map(function (ref) { return refLabel(state, ref); }).join("、")) : '');
     $("#questionBoardTrace").textContent = snapshot ? "快照 " + snapshot : "未提供快照編號。";
     $("#questionBoardGrid").innerHTML = questions.map(function (q) {
@@ -1279,11 +1314,13 @@ footer.imq-foot a{color:var(--text-secondary)}
       vsPrior.hidden = true;
     }
     var currentAsOf = (state && state.as_of) || "—";
-    timeContext.innerHTML = '<strong>時間分層：</strong>判讀 ' + esc(read.as_of || "—") + '　·　目前資料 ' + esc(currentAsOf);
+    timeContext.innerHTML = (read.as_of && currentAsOf && read.as_of === currentAsOf)
+      ? '<strong>判讀與資料日期：</strong>' + esc(read.as_of)
+      : '判讀寫於 ' + esc(read.as_of || "—") + '，下方數字更新到 ' + esc(currentAsOf) + '。';
     timeContext.hidden = false;
     var dataGapText = refreshText(read.data_gaps_zh);
     if (dataGapText) {
-      var dataGapLabel = Array.isArray(read.data_gaps_zh) ? "資料缺口（" + read.data_gaps_zh.filter(Boolean).length + " 項）" : "資料缺口";
+      var dataGapLabel = "資料缺口（點開看" + (Array.isArray(read.data_gaps_zh) ? "，" + read.data_gaps_zh.filter(Boolean).length + " 項）" : "）");
       dataGaps.innerHTML = '<details><summary><strong>' + dataGapLabel + '</strong></summary>' + compactText(dataGapText, 3) + '</details>';
       dataGaps.hidden = false;
     } else {
@@ -1515,7 +1552,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       }).join("");
       return '<div class="card"><h3 style="font-family:\'Playfair Display\',\'Noto Serif TC\',Georgia,serif;font-size:1.02rem;margin-bottom:.5rem">' +
         esc((window.MARKET_TITLE_SUMMARIES || {})[f.title] || f.title) + '</h3><div class="force-editorial"><strong>判讀日重點（截至 ' + esc(judgmentAsOf) + '）</strong>' +
-        compactText(f.mechanism_zh, 3) + '</div><details><summary>查看判讀日保存數據與引用理由</summary><p class="note">「未保存」表示這一期判讀當時沒有保存證據快照；不以目前數據補填。</p><div class="tw"><table class="mt"><tr><th>指標</th><th>保存值</th><th>保存分位</th><th>保存資料日期</th><th>當時引用理由</th></tr>' +
+        compactText(f.mechanism_zh, 3) + '</div><details><summary>查看判讀日保存數據與引用理由</summary><div class="tw"><table class="mt"><tr><th>指標</th><th>保存值</th><th>保存分位</th><th>保存資料日期</th><th>當時引用理由</th></tr>' +
         editorialRows + '</table></div></details><details class="compact-details"><summary>目前數據與日期（截至 ' + esc(currentAsOf) + '）</summary><div class="tw"><table class="mt"><tr><th>指標</th><th>目前值</th><th>目前分位</th><th>近期變化</th><th>各指標日期</th></tr>' +
         liveRows + '</table></div></details></div>';
     }).join("");
@@ -1979,7 +2016,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   var LIST_LABEL = {
     "sop-funnel": "板機訊號", "grp-seat": "GRP 席位", "picks-baofa": "精選爆發榜", "tenbagger": "十倍股候選",
-    "own-board": "擁有層前十五（own-board）", "picks-late": "爆發榜晚段（守門擋下）", "mech-nodd": "無 DD 機械過閘"
+    "own-board": "擁有層前十五", "picks-late": "爆發榜晚段（守門擋下）", "mech-nodd": "無 DD 機械過閘"
   };
   var LIST_LINK = {
     "sop-funnel": "/dd-screener/sop-funnel/", "grp-seat": "/cockpit/", "picks-baofa": "/picks/",

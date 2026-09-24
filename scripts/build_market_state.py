@@ -1340,6 +1340,9 @@ def _quote_from_item(item):
         "frequency": item.get("frequency"),
         "status": "stale" if item.get("stale") else "ok",
         "source_label": item.get("source_label"),
+        # 2026-09-24：unit 是壓過的顯示級別（pct/index/…），unit_raw 保留 producer 原始
+        # 算法單位（bps＝利率利差、pp＝占比），前端只在 bps 才顯示 bp 換算。
+        "unit_raw": item.get("unit_raw"),
     }
 
 
@@ -1393,7 +1396,8 @@ def _producer_quote_meta(prefix, key):
     source_label = {"fred": "FRED", "yf": "Yahoo Finance", "ratio": "衍生比率",
                     "cnn": "CNN", "monitor_internals": "市場內部資料 producer"}.get(provider, provider)
     return {"frequency": frequency, "pctile_window": pctile_window,
-            "unit": unit, "source_id": source, "source_label": source_label}
+            "unit": unit, "source_id": source, "source_label": source_label,
+            "unit_raw": raw_unit}
 
 
 def _items_to_quotes(data, prefix, gaps, label):
