@@ -33,9 +33,18 @@ on:
     - cron: "0 8 * * 1-5"   # 台/日收盤後（台北 16:00 / 東京 17:00）
     - cron: "0 11 * * 1-5"  # 馬股收盤後（吉隆坡 19:00）
   workflow_dispatch:
+    inputs:
+      retry:
+        description: >-
+          內部用：由本 workflow 自己在 rebase 衝突後重觸發時帶 1，
+          防止無限重觸發迴圈。手動觸發請留 0。
+        required: false
+        default: "0"
+        type: string
 
 permissions:
   contents: write
+  actions: write  # 讓 GITHUB_TOKEN 能在 rebase 衝突時 `gh workflow run` 重觸發自己一次
 
 concurrency:
   group: daily-asia-close
@@ -81,6 +90,9 @@ jobs:
 
       # ── 收斂：單一 commit + push（路徑＝各原 workflow commit 路徑聯集）──
       - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
         run: |
           PATHS=""
           for p in \
@@ -108,8 +120,14 @@ jobs:
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
-            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            bash scripts/ci/rebase_or_flag.sh || exit 1
             sleep $((RANDOM % 20 + 5))
           done
           echo "Push failed after 6 attempts"
           exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh

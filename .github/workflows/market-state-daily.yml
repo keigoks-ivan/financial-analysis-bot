@@ -23,6 +23,14 @@ on:
     - cron: "30 23 * * 1-5"   # 07:30 台北（UTC+8）＝週二至週六台北早班快照
     - cron: "30 8 * * 2-6"    # 16:30 台北＝原有完整 full refresh 班次
   workflow_dispatch:
+    inputs:
+      retry:
+        description: >-
+          內部用：由本 workflow 自己在 rebase 衝突後重觸發時帶 1，
+          防止無限重觸發迴圈。手動觸發請留 0。
+        required: false
+        default: "0"
+        type: string
   # 2026-09-13：成功的上游資料到齊即保存版本，定時班次保留作補漏；不在 Actions 呼叫模型。
   workflow_run:
     workflows: ["Intel 2.0 Daily Chain", "Daily Market Monitor", "Daily Conditional Flow Map", "Daily Statistical Properties Panel"]
@@ -31,6 +39,7 @@ on:
 
 permissions:
   contents: write
+  actions: write  # 讓 GITHUB_TOKEN 能在 rebase 衝突時 `gh workflow run` 重觸發自己一次
 
 concurrency:
   group: market-state-daily
@@ -68,6 +77,9 @@ jobs:
         run: python scripts/market_refresh.py record --write
 
       - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
         run: |
           # 2026-09-13：只提交本步產物，判讀沿用上一份並明示等待重評。
           PATHS="data/market_sources docs/market/data/state.json docs/market/data/refresh.json docs/market/data/snapshots docs/market/data/releases"
@@ -87,8 +99,16 @@ jobs:
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
-            git pull --rebase origin main || { echo "Rebase failed; rebuild against latest evidence"; exit 1; }
+            # 原本衝突時印 "Rebase failed; rebuild against latest evidence"——helper 換手後，
+            # 下一步的 self-retrigger 會從最新 main 重跑整條 workflow 一次，語意等同（對照最新證據重建）。
+            bash scripts/ci/rebase_or_flag.sh || exit 1
             sleep $((RANDOM % 20 + 5))
           done
           echo "Push failed after 6 attempts"
           exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh

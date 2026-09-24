@@ -4,9 +4,17 @@ on:
   schedule:
     - cron: "8 0 * * 6"
   workflow_dispatch:
+    inputs:
+      retry:
+        description: >-
+          內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0
+        required: false
+        default: "0"
+        type: string
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: ${{ github.workflow }}
@@ -70,6 +78,9 @@ jobs:
         run: python scripts/build_macro_clock.py
 
       - name: Commit and push if changed
+        id: commit_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
         run: |
           if git status --porcelain docs/markets.html docs/sectors.html docs/cache/risk_gauge.json docs/cache/risk_history.json docs/research/momentum-5/data.json docs/research/momentum-5/raw_factors.json docs/research/momentum-5/shadow.json docs/research/momentum-5/portfolio.json docs/research/momentum-5-short/short.json docs/research/momentum-5-fast/fast.json docs/research/price-momentum/track.json data/trend_track_prices.json docs/research/trend-track/track.json docs/market/data/exposure_track.json docs/market/data/kelly_track.json docs/macro/data/clock.json | grep -q .; then
             echo "Changes detected"
@@ -87,8 +98,14 @@ jobs:
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
-            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            bash scripts/ci/rebase_or_flag.sh || exit 1
             sleep $((RANDOM % 20 + 5))
           done
           echo "Push failed after 6 attempts"
           exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh

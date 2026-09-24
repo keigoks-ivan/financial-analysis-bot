@@ -13,6 +13,15 @@ on:
         description: 'Send a test email even without an actionable change'
         type: boolean
         default: false
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
 
 concurrency:
   group: ${{ github.workflow }}
@@ -90,6 +99,9 @@ jobs:
             退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_gld.yml
 
       - name: Commit and push
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
@@ -100,8 +112,14 @@ jobs:
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
-            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            bash scripts/ci/rebase_or_flag.sh || exit 1
             sleep $((RANDOM % 20 + 5))
           done
           echo "Push failed after 6 attempts"
           exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh

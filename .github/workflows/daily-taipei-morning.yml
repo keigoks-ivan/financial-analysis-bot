@@ -201,22 +201,7 @@ jobs:
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
-            if ! git pull --rebase --autostash origin main; then
-              # 同一批產物檔（例如 docs/dd-screener/latest.json）被另一個並行
-              # session/run 同時重建，逐行 merge 會撞內容衝突，不是可重試的
-              # race——不試著自動解 diff，直接 abort 保留乾淨的 repo 狀態。
-              git rebase --abort || true
-              echo "conflict=true" >> "$GITHUB_OUTPUT"
-              if [ "$IS_RETRY" = "1" ]; then
-                # 這次已經是自我重觸發過一次的 retry run，還是撞衝突——不再
-                # 觸發第三次（防無限迴圈），本次 run 以明確失敗訊息結束，
-                # 交給人看。今天這批資料本次 run 沒有推上去。
-                echo "::error::Rebase conflict again on retry run (retry=1) against origin/main (docs/dd-screener/latest.json or another generated path was rebuilt concurrently). Not self-triggering a second retry to avoid an infinite loop. This run's ${DATE:-today} Taipei-morning-band data was NOT pushed; needs a human look or a manual workflow_dispatch."
-              else
-                echo "::warning::Rebase conflict against a concurrent push to origin/main (likely another run rebuilding the same generated files, e.g. docs/dd-screener/latest.json). This run's commit was not pushed; self-triggering a fresh retry run (retry=1) instead so it rebuilds from the latest main rather than dropping today's data."
-              fi
-              exit 1
-            fi
+            bash scripts/ci/rebase_or_flag.sh || exit 1
             sleep $((RANDOM % 20 + 5))
           done
           echo "Push failed after 6 attempts"
@@ -231,6 +216,4 @@ jobs:
         if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh workflow run daily-taipei-morning.yml --ref main -f retry=1
-          echo "::notice::Triggered a fresh retry run (retry=1) of Daily Taipei Morning Band from the latest main. This run ends here without pushing; the retry run will rebuild and push."
+        run: bash scripts/ci/retrigger_once.sh

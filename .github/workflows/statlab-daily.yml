@@ -14,9 +14,16 @@ on:
   schedule:
     - cron: "0 7 * * 2-6"   # Tue-Sat 07:00 UTC = 台北 15:00，美股收盤後安全窗
   workflow_dispatch:
+    inputs:
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: statlab-daily
@@ -42,6 +49,9 @@ jobs:
         run: python scripts/build_statlab.py
 
       - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
         run: |
           PATHS="data/statlab_prices.json docs/statlab/data"
           if git status --porcelain $PATHS | grep -q .; then
@@ -60,8 +70,14 @@ jobs:
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
-            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            bash scripts/ci/rebase_or_flag.sh || exit 1
             sleep $((RANDOM % 20 + 5))
           done
           echo "Push failed after 6 attempts"
           exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh

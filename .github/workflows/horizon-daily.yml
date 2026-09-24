@@ -12,10 +12,18 @@ on:
   schedule:
     - cron: "0 10 * * *"   # 18:00 台北，補漏
   workflow_dispatch:
+    inputs:
+      retry:
+        description: >-
+          內部用：由本 workflow 自己在 rebase 衝突後重觸發時帶 1，
+          防止無限重觸發迴圈。手動觸發請留 0。
+        required: false
+        default: "0"
+        type: string
 
 permissions:
   contents: write
-  actions: read
+  actions: write  # 讓 GITHUB_TOKEN 能在 rebase 衝突時 `gh workflow run` 重觸發自己一次（原為 actions: read，改為 write 以支援 retrigger_once.sh）
 
 concurrency:
   group: horizon-daily
@@ -44,6 +52,9 @@ jobs:
         run: python scripts/build_horizon.py
 
       - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
         run: |
           PATHS="docs/horizon/data"
           if git status --porcelain $PATHS | grep -q .; then
@@ -62,8 +73,14 @@ jobs:
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
-            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            bash scripts/ci/rebase_or_flag.sh || exit 1
             sleep $((RANDOM % 20 + 5))
           done
           echo "Push failed after 6 attempts"
           exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
