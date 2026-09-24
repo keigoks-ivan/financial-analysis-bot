@@ -646,6 +646,10 @@ def program_drift_entries(ctx, obj, decision_out=None):
     log = []
     pm = _prior_meta(ctx)
     decision_out = decision_out or obj.get("decision_out") or None
+    # 判斷者自己也會寫 decision_out（exec_line／rearm_trigger），不代表裁決已算出；
+    # 以有沒有 verdict 判定（2026-09-24 TXN：只看非空 → 沒預留裁決欄、phase 2 也跑不到 → 漂移未歸因 FAIL）
+    if not (isinstance(decision_out, dict) and decision_out.get("verdict")):
+        decision_out = None
     ce = obj.setdefault("counter_evidence", {})
     entries = [e for e in (ce.get("contradictions") or []) if isinstance(e, dict)]
     entries = [e for e in entries if not str(e.get("axis", "")).startswith(_PROGRAM_TAG)]

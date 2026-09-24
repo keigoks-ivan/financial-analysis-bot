@@ -88,3 +88,16 @@ def test_koyfin_prefetch_ok_expired_timeout(monkeypatch):
         raise subprocess.TimeoutExpired(cmd="x", timeout=1)
     monkeypatch.setattr(run.subprocess, "run", _boom)
     assert run._koyfin_prefetch("STX")["status"] == "timeout"
+
+
+def test_program_drift_reserves_decision_fields_when_decision_out_has_no_verdict(tmp_path):
+    import json, types
+    (tmp_path / "parts").mkdir()
+    (tmp_path / "parts" / "prior.json").write_text(json.dumps({"prior_dd": {
+        "dca_verdict": "進場", "dca_role": "核心", "price_at_dd": 100, "prior_meta": {"ma": "✅"}}}))
+    ctx = types.SimpleNamespace(run_dir=tmp_path, ticker="T", date="20260924")
+    run._ma_label = lambda c: "🟡"
+    run._current_price = lambda c: 110
+    obj = {"decision_out": {"exec_line": "分批"}, "counter_evidence": {"contradictions": []}}
+    obj, _ = run.program_drift_entries(ctx, obj, decision_out=None)
+    assert {"dca_verdict", "dca_role"} <= set(obj["counter_evidence"]["contradictions"][0]["prior_field"])
