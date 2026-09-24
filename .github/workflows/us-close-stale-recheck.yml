@@ -1,0 +1,246 @@
+name: US Close Stale Recheck
+
+# ─────────────────────────────────────────────────────────────────────────
+# 2026-09-24 新增。
+#
+# 起因：「Daily US Close Band」（.github/workflows/daily-us-close.yml，排程
+# Mon-Fri 21:45 UTC＝美股收盤後 45 分）常被 GitHub 排程延遲 2 小時以上才真的
+# 開跑。2026-09-22、2026-09-24 兩天都撞到「run 實際跑到 20:00 ET 以後」，此時
+# Yahoo（yfinance）對這批 ETF 回傳的還是前一交易日的 K 棒（新一天的收盤資料
+# 還沒定案），造成三個輸出檔案的資料日期卡在前一個交易日：
+#   - docs/rotation/data/radar.json          （as_of 欄位，build_rotation_radar.py）
+#   - docs/turtle-sleeve/state.json          （data_date 欄位，update_turtle_sleeve.py）
+#   - docs/long-track-smh/leverage/state.json（data_date 欄位，update_leverage_overlay.py）
+# 該次 run 本身不會失敗（exit 0），資料通常隔天會自己補上（self-heal），但
+# 首頁檢查清單期待資料日期 >= 前一個美股交易日，中間這段空窗會讓首頁顯示過期。
+#
+# 做法：本 workflow 錯開在 Daily US Close Band 之後的隔天台北下午（07:23 UTC
+# ＝15:23 台北，離尖峰排程時段有距離），只讀上述三個檔案各自的日期欄位，用
+# America/New_York 時區算出「今天以前最近一個平日」當作期望資料日期；只要有
+# 檔案落後，就重跑「Daily US Close Band」對該檔案用的那一條指令（與該 workflow
+# 裡的呼叫完全一致），跑完再檢查一次，仍過期就用 ::warning:: 記錄、不讓 job
+# 失敗（這三個系統本來就是 OOS／實驗性頁面，資料慢一天不是要中斷排程的等級）。
+#
+# 已知限制（刻意不處理，見下方 Python 區塊註解）：期望日只用「平日」算，不扣
+# 美股假日（感恩節、耶誕節等）。假日隔天早上這裡會誤判前一交易日仍是平日、
+# 判定為過期而重跑一次——重跑只是把同一批（假日當天沒有新收盤）資料再抓一次，
+# 結果應該不變（zero-churn 寫檔本來就是 no-op），頂多多花一次 job 時間，不會
+# 寫壞資料，故不特別處理美股假日曆。
+#
+# 不改 daily-us-close.yml、不改上述三支 script——本 workflow 只是在它們之外
+# 補一次「隔天過期重查」，用同一條指令、同一批輸出路徑。
+# ─────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: "23 7 * * 2-6"  # Tue-Sat 07:23 UTC = 15:23 Taipei（離尖峰排程時段錯開）
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: >-
+          內部用：由本 workflow 自己在 rebase 衝突後重觸發時帶 1，
+          防止無限重觸發迴圈。手動觸發請留 0。
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write  # 讓 GITHUB_TOKEN 能在 rebase 衝突時 `gh workflow run` 重觸發自己一次
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  recheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies (same as Daily US Close Band)
+        run: pip install "yfinance>=0.2.40" pandas numpy requests lxml openpyxl
+
+      # ── 1. 算期望資料日期（America/New_York，今天以前最近一個平日）＋讀三個
+      #    輸出檔案現有的資料日期欄位，判斷是否過期 ──
+      - name: Check staleness of the three data-date fields
+        id: check
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          from datetime import datetime, timedelta
+          from zoneinfo import ZoneInfo
+
+          # 期望資料日＝「今天（America/New_York 日期）以前最近一個平日」，
+          # 不扣美股假日（見檔頭註解：假日隔天誤判為過期只會多重跑一次，
+          # zero-churn 寫檔讓結果仍是 no-op，不會寫壞資料）。
+          ny_now = datetime.now(ZoneInfo("America/New_York"))
+          d = ny_now.date() - timedelta(days=1)
+          while d.weekday() >= 5:  # 5=Sat, 6=Sun
+              d -= timedelta(days=1)
+          expected = d.isoformat()
+
+          targets = {
+              "radar": ("docs/rotation/data/radar.json", "as_of"),
+              "turtle": ("docs/turtle-sleeve/state.json", "data_date"),
+              "leverage": ("docs/long-track-smh/leverage/state.json", "data_date"),
+          }
+
+          lines = [f"expected={expected}"]
+          print(f"[stale-check] NY now: {ny_now.isoformat()} | expected trading date: {expected}")
+          for key, (path, field) in targets.items():
+              date_val, stale = "", "true"
+              if os.path.exists(path):
+                  try:
+                      with open(path, encoding="utf-8") as f:
+                          date_val = json.load(f).get(field, "") or ""
+                      stale = "true" if (not date_val or date_val < expected) else "false"
+                  except Exception as e:
+                      print(f"::warning::failed to read {path}: {e}")
+              else:
+                  print(f"::warning::{path} not found (first run?)")
+              lines.append(f"{key}_date={date_val}")
+              lines.append(f"{key}_stale={stale}")
+              print(f"[stale-check] {key}: date={date_val or '(none)'} stale={stale}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write("\n".join(lines) + "\n")
+          PY
+
+      # ── 2. 只重跑過期的那個——指令與 daily-us-close.yml 對應 step 完全一致 ──
+      - name: "[rotation-radar] Rerun build_rotation_radar.py (stale)"
+        if: steps.check.outputs.radar_stale == 'true'
+        continue-on-error: true
+        run: python scripts/build_rotation_radar.py
+
+      - name: "[turtle-sleeve] Rerun update_turtle_sleeve.py (stale)"
+        if: steps.check.outputs.turtle_stale == 'true'
+        continue-on-error: true
+        run: python scripts/update_turtle_sleeve.py
+
+      - name: "[leverage-overlay] Rerun update_leverage_overlay.py (stale)"
+        if: steps.check.outputs.leverage_stale == 'true'
+        continue-on-error: true
+        run: python scripts/update_leverage_overlay.py
+
+      # ── 3. 重跑後再查一次同樣三個欄位 ──
+      - name: Re-check staleness after rerun
+        id: recheck
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timedelta
+          from zoneinfo import ZoneInfo
+
+          ny_now = datetime.now(ZoneInfo("America/New_York"))
+          d = ny_now.date() - timedelta(days=1)
+          while d.weekday() >= 5:
+              d -= timedelta(days=1)
+          expected = d.isoformat()
+
+          targets = {
+              "radar": ("docs/rotation/data/radar.json", "as_of"),
+              "turtle": ("docs/turtle-sleeve/state.json", "data_date"),
+              "leverage": ("docs/long-track-smh/leverage/state.json", "data_date"),
+          }
+
+          lines = [f"expected={expected}"]
+          for key, (path, field) in targets.items():
+              date_val, stale = "", "true"
+              if os.path.exists(path):
+                  try:
+                      with open(path, encoding="utf-8") as f:
+                          date_val = json.load(f).get(field, "") or ""
+                      stale = "true" if (not date_val or date_val < expected) else "false"
+                  except Exception as e:
+                      print(f"::warning::failed to re-read {path}: {e}")
+              lines.append(f"{key}_date={date_val}")
+              lines.append(f"{key}_stale={stale}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write("\n".join(lines) + "\n")
+          PY
+
+      # ── 4. 仍過期的用 ::warning:: 記錄，不讓 job 失敗 ──
+      - name: Log still-stale outputs (warning only, non-fatal)
+        env:
+          RADAR_WAS: ${{ steps.check.outputs.radar_stale }}
+          RADAR_NOW: ${{ steps.recheck.outputs.radar_stale }}
+          RADAR_DATE: ${{ steps.recheck.outputs.radar_date }}
+          TURTLE_WAS: ${{ steps.check.outputs.turtle_stale }}
+          TURTLE_NOW: ${{ steps.recheck.outputs.turtle_stale }}
+          TURTLE_DATE: ${{ steps.recheck.outputs.turtle_date }}
+          LEVERAGE_WAS: ${{ steps.check.outputs.leverage_stale }}
+          LEVERAGE_NOW: ${{ steps.recheck.outputs.leverage_stale }}
+          LEVERAGE_DATE: ${{ steps.recheck.outputs.leverage_date }}
+          EXPECTED: ${{ steps.recheck.outputs.expected }}
+        run: |
+          if [ "$RADAR_WAS" = "true" ] && [ "$RADAR_NOW" = "true" ]; then
+            echo "::warning::docs/rotation/data/radar.json still stale after rerun (as_of=${RADAR_DATE:-none}, expected=${EXPECTED})"
+          fi
+          if [ "$TURTLE_WAS" = "true" ] && [ "$TURTLE_NOW" = "true" ]; then
+            echo "::warning::docs/turtle-sleeve/state.json still stale after rerun (data_date=${TURTLE_DATE:-none}, expected=${EXPECTED})"
+          fi
+          if [ "$LEVERAGE_WAS" = "true" ] && [ "$LEVERAGE_NOW" = "true" ]; then
+            echo "::warning::docs/long-track-smh/leverage/state.json still stale after rerun (data_date=${LEVERAGE_DATE:-none}, expected=${EXPECTED})"
+          fi
+          echo "done."
+
+      # ── 收斂：單一 commit + push（路徑＝三支 script 各自在 daily-us-close.yml
+      #    裡對應的 commit 路徑聯集）。Zero-churn：沒重跑或重跑後內容沒變
+      #    （build_rotation_radar.py / update_turtle_sleeve.py /
+      #    update_leverage_overlay.py 都是 zero-churn 寫檔）就不會有 diff ──
+      - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          PATHS=""
+          for p in \
+            data/rotation_radar_daily.json \
+            docs/rotation/data/radar.json \
+            docs/rotation/data/snapshots \
+            docs/turtle-sleeve/index.html \
+            docs/turtle-sleeve/state.json \
+            docs/long-track-smh/leverage/index.html \
+            docs/long-track-smh/leverage/state.json; do
+            [ -e "$p" ] && PATHS="$PATHS $p"
+          done
+          if [ -z "$PATHS" ]; then
+            echo "No output paths present; nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "data: US close stale recheck ${DATE}
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
