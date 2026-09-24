@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ETF 儀表板 — InvestMQuest Research</title>
-<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，VanEck 官方完整持股＋yfinance 分析師估計。">
+<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計（SMH／QQQ／SPY）。">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -168,7 +168,7 @@ table{overflow-wrap:break-word}
   <div class="ex-sub">各回顧期間比較成分股加權「明年度」EPS 預估變動、ETF 股價漲跌與隱含本益比變動</div>
   <div class="tbl-wrap"><table class="imq-table" id="periodsTable"></table></div>
   <div class="conclusion" id="periodsSentence"></div>
-  <div class="ex-src">資料來源：VanEck 官方持股下載 + yfinance Ticker.eps_trend + yfinance ETF 日收盤</div>
+  <div class="ex-src" id="ex1Src"></div>
 </section>
 
 <section class="exhibit" id="exhibit2">
@@ -184,14 +184,14 @@ table{overflow-wrap:break-word}
 
 <section class="chapter">
   <div class="chapter-head"><span class="ch-title">貢獻分解</span></div>
-  <div class="ex-sub">加權 EPS 變動 = Σ (成分股權重 × 該股 EPS 修正%)；以下列出貢獻度（權重×修正%）最大的前五名</div>
+  <div class="ex-sub">加權 EPS 變動 = Σ (成分股權重 × 該股 EPS 修正%)；以下分列貢獻度（權重×修正%）最大的上修 Top 10 與下修 Bottom 10</div>
   <div class="two-col">
     <div>
-      <div class="ex-title" style="font-size:.85rem">近一個月最大貢獻者</div>
+      <div class="ex-title" style="font-size:.85rem">近一個月</div>
       <div class="tbl-wrap"><table class="imq-table" id="contrib30"></table></div>
     </div>
     <div>
-      <div class="ex-title" style="font-size:.85rem">近三個月最大貢獻者</div>
+      <div class="ex-title" style="font-size:.85rem">近三個月</div>
       <div class="tbl-wrap"><table class="imq-table" id="contrib90"></table></div>
     </div>
   </div>
@@ -201,6 +201,7 @@ table{overflow-wrap:break-word}
   <div class="chapter-head"><span class="ch-title">完整持股明細</span></div>
   <div class="ex-sub" id="holdingsSub"></div>
   <div class="tbl-wrap"><table class="imq-table" id="holdingsTable"></table></div>
+  <div id="holdingsToggle" style="text-align:center"></div>
 </section>
 
 <section class="chapter">
@@ -246,11 +247,14 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ re
 
 var FUND_LIST = [
   {key:'SMH', label:'SMH（美國）'},
-  {key:'SMH_UCITS', label:'SMH UCITS（愛爾蘭）'}
+  {key:'SMH_UCITS', label:'SMH（愛爾蘭）'},
+  {key:'QQQ', label:'QQQ'},
+  {key:'SPY', label:'SPY'}
 ];
+var FUND_KEYS = FUND_LIST.map(function(f){return f.key;});
 
 function tickerCell(c){
-  var label = esc(c.ticker)+(c.name?'　'+esc(c.name):'');
+  var label = c.ticker ? (esc(c.ticker)+(c.name?'　'+esc(c.name):'')) : esc(c.name||'—');
   if(c.has_stock_dash){
     return '<a href="/stock-dash/?t='+encodeURIComponent(c.ticker)+'">'+label+'</a>';
   }
@@ -285,6 +289,9 @@ function renderInfoStrip(d){
   ];
   if(d.holdings_stale){
     bits.push('<span class="stale-flag">⚠ 今日持股抓取失敗，沿用上次成功快取（as of 上述日期）</span>');
+  }
+  if(d.non_equity_weight_pct){
+    bits.push('<span>現金／期貨／特殊有價證券合計 '+d.non_equity_weight_pct.toFixed(2)+'%（不計入 EPS，見完整持股明細）</span>');
   }
   if(d.other_listings && d.other_listings.length){
     bits.push('<span>其他掛牌：'+d.other_listings.map(function(l){return esc(l.exchange)+' '+esc(l.ticker)+'（'+esc(l.currency)+'）';}).join('、')+'</span>');
@@ -334,39 +341,79 @@ function renderStatRow(d){
   }).join('');
 }
 
-function renderContribTable(elId, list){
+function contribRowsHtml(list){
+  return list.map(function(c){
+    return '<tr><td>'+esc(c.ticker)+'</td>'+
+      '<td class="num">'+(c.weight_pct!=null?c.weight_pct.toFixed(2)+'%':'—')+'</td>'+
+      '<td class="num">'+fmtPctColored(c.revision_pct)+'</td>'+
+      '<td class="num">'+fmtPctColored(c.contribution_pct)+'</td></tr>';
+  }).join('');
+}
+
+function renderContribTable(elId, data){
   var el = document.getElementById(elId);
-  if(!list || !list.length){ noData(el, '無資料'); return; }
-  el.innerHTML = '<thead><tr><th>成分股</th><th class="num">權重</th><th class="num">EPS 修正</th><th class="num">貢獻度</th></tr></thead><tbody>'+
-    list.map(function(c){
-      return '<tr><td>'+esc(c.ticker)+'</td>'+
-        '<td class="num">'+(c.weight_pct!=null?c.weight_pct.toFixed(2)+'%':'—')+'</td>'+
-        '<td class="num">'+fmtPctColored(c.revision_pct)+'</td>'+
-        '<td class="num">'+fmtPctColored(c.contribution_pct)+'</td></tr>';
-    }).join('')+'</tbody>';
+  var top = (data && data.top) || [], bottom = (data && data.bottom) || [];
+  if(!top.length && !bottom.length){ noData(el, '無資料'); return; }
+  var head = '<thead><tr><th>成分股</th><th class="num">權重</th><th class="num">EPS 修正</th><th class="num">貢獻度</th></tr></thead>';
+  var groupRow = function(label){ return '<tr><td colspan="4" style="background:var(--x-navy);color:#fff;font-size:11px;font-weight:600;padding:.3rem .7rem">'+esc(label)+'</td></tr>'; };
+  var body = '<tbody>';
+  if(top.length) body += groupRow('上修貢獻 Top '+top.length) + contribRowsHtml(top);
+  if(bottom.length) body += groupRow('下修貢獻 Bottom '+bottom.length) + contribRowsHtml(bottom);
+  body += '</tbody>';
+  el.innerHTML = head + body;
+}
+
+var HOLDINGS_TOP_N = 50;
+var holdingsState = {all: [], expanded: false};
+
+function holdingsRowHtml(c){
+  var rev30 = c.revisions_pct ? c.revisions_pct['30d'] : null;
+  var rev90 = c.revisions_pct ? c.revisions_pct['90d'] : null;
+  var note = c.is_non_equity ? ('非個股：'+(c.reason||'無資料')) : (c.is_excluded ? ('排除：'+(c.reason||c.status||'無資料')) : '');
+  return '<tr><td>'+tickerCell(c)+'</td>'+
+    '<td class="num">'+(c.weight_pct!=null?c.weight_pct.toFixed(2)+'%':'—')+'</td>'+
+    '<td class="num">'+(c.eps_fy_next_local!=null?fmtNum(c.eps_fy_next_local,2):'—')+'</td>'+
+    '<td>'+esc(c.eps_currency||'—')+'</td>'+
+    '<td class="num">'+fmtPctColored(rev30)+'</td>'+
+    '<td class="num">'+fmtPctColored(rev90)+'</td>'+
+    '<td style="font-size:11px;color:var(--sec)">'+esc(note)+'</td></tr>';
+}
+
+function renderHoldingsRows(){
+  var body = document.getElementById('holdingsTableBody');
+  if(!body) return;
+  var rows = holdingsState.expanded ? holdingsState.all : holdingsState.all.slice(0, HOLDINGS_TOP_N);
+  body.innerHTML = rows.map(holdingsRowHtml).join('');
+  var toggle = document.getElementById('holdingsToggle');
+  if(!toggle) return;
+  if(holdingsState.all.length <= HOLDINGS_TOP_N){
+    toggle.innerHTML = '';
+    return;
+  }
+  toggle.innerHTML = '<button type="button" id="holdingsToggleBtn" class="imq-dd-btn" style="background:var(--x-navy);color:#fff;border:0;border-radius:var(--r);padding:.45rem .9rem;font-size:12px;cursor:pointer;margin-top:8px">'+
+    (holdingsState.expanded ? '只顯示前 '+HOLDINGS_TOP_N+' 檔' : '展開全部（共 '+holdingsState.all.length+' 檔）')+'</button>';
+  document.getElementById('holdingsToggleBtn').addEventListener('click', function(){
+    holdingsState.expanded = !holdingsState.expanded;
+    renderHoldingsRows();
+  });
 }
 
 function renderHoldingsTable(d){
+  var nonEquityCount = (d.non_equity||[]).length;
   document.getElementById('holdingsSub').innerHTML =
-    '共 '+d.n_holdings+' 檔成分股（不含現金／餘額列），依權重排序；ticker 有連結者表示 /stock-dash/ 已有該股個股儀表板。';
-  var all = (d.constituents||[]).concat((d.excluded||[]).map(function(c){ return Object.assign({}, c, {is_excluded:true}); }));
+    '共 '+d.n_holdings+' 檔成分股'+(nonEquityCount?'，另有 '+nonEquityCount+' 筆現金／期貨／特殊有價證券（不計入 EPS，見下表「非個股」列）':'')+
+    '，依權重排序；ticker 有連結者表示 /stock-dash/ 已有該股個股儀表板'+
+    (d.n_holdings > HOLDINGS_TOP_N ? '；預設只顯示前 '+HOLDINGS_TOP_N+' 檔，可展開看全部' : '')+'。';
+  var all = (d.constituents||[])
+    .concat((d.excluded||[]).map(function(c){ return Object.assign({}, c, {is_excluded:true}); }))
+    .concat((d.non_equity||[]).map(function(c){ return Object.assign({}, c, {is_non_equity:true}); }));
   all.sort(function(a,b){ return (b.weight_pct||0)-(a.weight_pct||0); });
   var tbl = document.getElementById('holdingsTable');
-  if(!all.length){ noData(tbl,'無持股資料'); return; }
+  if(!all.length){ noData(tbl,'無持股資料'); document.getElementById('holdingsToggle').innerHTML=''; return; }
+  holdingsState = {all: all, expanded: false};
   tbl.innerHTML = '<thead><tr><th>成分股</th><th class="num">權重</th><th class="num">明年度 EPS<br>(當地幣別)</th><th>幣別</th>'+
-    '<th class="num">修正%（1個月）</th><th class="num">修正%（3個月）</th><th>備註</th></tr></thead><tbody>'+
-    all.map(function(c){
-      var rev30 = c.revisions_pct ? c.revisions_pct['30d'] : null;
-      var rev90 = c.revisions_pct ? c.revisions_pct['90d'] : null;
-      var note = c.is_excluded ? ('排除：'+(c.reason||c.status||'無資料')) : '';
-      return '<tr><td>'+tickerCell(c)+'</td>'+
-        '<td class="num">'+(c.weight_pct!=null?c.weight_pct.toFixed(2)+'%':'—')+'</td>'+
-        '<td class="num">'+(c.eps_fy_next_local!=null?fmtNum(c.eps_fy_next_local,2):'—')+'</td>'+
-        '<td>'+esc(c.eps_currency||'—')+'</td>'+
-        '<td class="num">'+fmtPctColored(rev30)+'</td>'+
-        '<td class="num">'+fmtPctColored(rev90)+'</td>'+
-        '<td style="font-size:11px;color:var(--sec)">'+esc(note)+'</td></tr>';
-    }).join('')+'</tbody>';
+    '<th class="num">修正%（1個月）</th><th class="num">修正%（3個月）</th><th>備註</th></tr></thead><tbody id="holdingsTableBody"></tbody>';
+  renderHoldingsRows();
 }
 
 function renderMethodsNote(d){
@@ -416,6 +463,8 @@ function renderChart(d){
 function render(d){
   renderCover(d);
   renderInfoStrip(d);
+  document.getElementById('ex1Src').textContent =
+    '資料來源：'+(d.holdings_issuer_zh||'基金官方持股下載')+' + yfinance Ticker.eps_trend + yfinance ETF 日收盤';
   renderPeriodsTable(d);
   renderStatRow(d);
   renderChart(d);
@@ -428,7 +477,7 @@ function render(d){
 
 var params = new URLSearchParams(location.search);
 var ETF = (params.get('etf') || 'SMH').toUpperCase();
-if(ETF !== 'SMH' && ETF !== 'SMH_UCITS') ETF = 'SMH';
+if(FUND_KEYS.indexOf(ETF) === -1) ETF = 'SMH';
 
 if(typeof ETF_DASH_INLINE_DATA !== 'undefined'){
   render(ETF_DASH_INLINE_DATA);

@@ -97,6 +97,107 @@ def test_parse_holdings_xlsx_no_data_rows_raises():
         m.parse_holdings_xlsx(raw)
 
 
+# ── SPY (SSGA) holdings xlsx — 2026-09-24 real layout: Name/Ticker/Identifier/
+#    SEDOL/Weight/Sector/Shares Held/Local Currency, Weight is numeric (not a
+#    "19.43%" string), "As of DD-Mon-YYYY" sits in a Fund Name/Ticker/Holdings
+#    header block before the column header row. Dot-tickers (BRK.B), a cash
+#    line (ticker "-"), and a CVR line (numeric-looking ticker) all appear in
+#    the real file (see build_etf_dash.py's TICKER_ALIAS / EQUITY_TICKER_RE
+#    comments) ────────────────────────────────────────────────────────────
+
+def test_parse_ssga_holdings_xlsx_basic():
+    raw = _xlsx_bytes([
+        ["Fund Name:", "State Street® SPDR® S&P 500® ETF Trust", None, None, None, None, None, None],
+        ["Ticker Symbol:", "SPY", None, None, None, None, None, None],
+        ["Holdings:", "As of 23-Sep-2026", None, None, None, None, None, None],
+        [None] * 8,
+        ["Name", "Ticker", "Identifier", "SEDOL", "Weight", "Sector", "Shares Held", "Local Currency"],
+        ["NVIDIA CORP", "NVDA", "67066G104", "2379504", 8.217272, "-", 298385133, "USD"],
+        ["BERKSHIRE HATHAWAY INC CL B", "BRK.B", "084670702", "2073390", 1.422268, "-", 22963774, "USD"],
+        ["US DOLLAR", "-", "999USDZ92", None, 0.210631, "-", 1724799064.7, "USD"],
+        ["TPG INC", "2602335D", "436CVR021", None, 0.000003, "-", 2578626, "USD"],
+        [None] * 8,  # 實測：資料列與免責聲明段落之間有一列全空
+        ["Before investing in a fund, consider its investment objectives...", None, None, None, None, None, None, None],
+    ])
+    as_of, rows, non_equity = m.parse_ssga_holdings_xlsx(raw)
+    assert as_of == "2026-09-23"
+    assert [r["ticker"] for r in rows] == ["NVDA", "BRK.B"]
+    assert rows[1]["weight_pct"] == pytest.approx(1.422268)
+    # cash line + CVR line both excluded as non-equity, weight preserved
+    assert {e["ticker"] for e in non_equity} == {None, "2602335D"}
+    weights = {e["ticker"]: e["weight_pct"] for e in non_equity}
+    assert weights[None] == pytest.approx(0.210631)
+    assert weights["2602335D"] == pytest.approx(0.000003)
+    assert "CVR" in non_equity[1]["reason"] or "特殊" in non_equity[1]["reason"]
+
+
+def test_parse_ssga_holdings_xlsx_missing_header_raises():
+    raw = _xlsx_bytes([["not", "a", "holdings", "sheet"]])
+    with pytest.raises(RuntimeError, match="header row"):
+        m.parse_ssga_holdings_xlsx(raw)
+
+
+def test_ticker_alias_dot_to_dash():
+    assert m.TICKER_ALIAS["BRK.B"] == "BRK-B"
+    assert m.TICKER_ALIAS["BF.B"] == "BF-B"
+
+
+# ── QQQ (Invesco) holdings JSON — 2026-09-24 real shape from
+#    dng-api.invesco.com .../holdings/fund: {"effectiveDate","holdings":[...]}
+#    with COM/ADR/DRNY as real equities and CURR/CURRCOL/IFUT/SYN as
+#    cash/futures/synthetic offset lines (SYN often carries a negative
+#    weight); one row (USDPDV) has percentageOfTotalNetAssets: null ─────────
+
+def _invesco_fixture():
+    return {
+        "cusip": "QQQ", "effectiveDate": "2026-09-23", "effectiveBusinessDate": "2026-09-23",
+        "totalNumberOfHoldings": 6,
+        "holdings": [
+            {"ticker": "NVDA", "issuerName": "NVIDIA Corp", "units": 1, "percentageOfTotalNetAssets": 8.22,
+             "securityTypeName": "Common Stock", "securityTypeCode": "COM", "currency": "USD"},
+            {"ticker": "ASML", "issuerName": "ASML Holding NV", "units": 1, "percentageOfTotalNetAssets": 0.68,
+             "securityTypeName": "NY Registry Shares", "securityTypeCode": "DRNY", "currency": "USD"},
+            {"ticker": "USD", "issuerName": "CASH & EQUIVALENTS", "units": 1, "percentageOfTotalNetAssets": 0.20,
+             "securityTypeName": "Currency", "securityTypeCode": "CURR", "currency": "USD"},
+            {"ticker": "NQZ6", "issuerName": "CME E-Mini NASDAQ 100 Index Future", "units": 1,
+             "percentageOfTotalNetAssets": 0.14, "securityTypeName": "Index Future", "securityTypeCode": "IFUT",
+             "currency": "USD"},
+            {"ticker": None, "issuerName": "CONTRA FUTURE NASDAQ 100 E-MINI DEC26NQZ6", "units": 1,
+             "percentageOfTotalNetAssets": -0.14, "securityTypeName": "Synthetic", "securityTypeCode": "SYN",
+             "currency": "USD"},
+            {"ticker": "USDPDV", "issuerName": "USD Pending Dividends", "units": 0,
+             "percentageOfTotalNetAssets": None, "securityTypeName": "Currency", "securityTypeCode": "CURR",
+             "currency": "USD"},
+        ],
+    }
+
+
+def test_parse_invesco_holdings_json_basic():
+    as_of, rows, non_equity = m.parse_invesco_holdings_json(_invesco_fixture())
+    assert as_of == "2026-09-23"
+    assert [r["ticker"] for r in rows] == ["NVDA", "ASML"]
+    assert len(non_equity) == 4
+    ne_tickers = {e["ticker"] for e in non_equity}
+    assert ne_tickers == {"USD", "NQZ6", None, "USDPDV"}
+    # negative-weight synthetic offset line's weight is preserved, not dropped or clamped
+    syn = next(e for e in non_equity if e["name"].startswith("CONTRA FUTURE"))
+    assert syn["weight_pct"] == pytest.approx(-0.14)
+
+
+def test_parse_invesco_holdings_json_missing_holdings_raises():
+    with pytest.raises(RuntimeError, match="missing effectiveDate or holdings"):
+        m.parse_invesco_holdings_json({"effectiveDate": "2026-09-23", "holdings": []})
+
+
+def test_parse_invesco_holdings_json_all_non_equity_raises():
+    data = {"effectiveDate": "2026-09-23", "holdings": [
+        {"ticker": "USD", "issuerName": "CASH", "percentageOfTotalNetAssets": 100.0,
+         "securityTypeCode": "CURR"},
+    ]}
+    with pytest.raises(RuntimeError, match="0 equity holdings"):
+        m.parse_invesco_holdings_json(data)
+
+
 # ── yfinance rate-limit detector ─────────────────────────────────────────────
 
 class _FakeYFRateLimitError(Exception):

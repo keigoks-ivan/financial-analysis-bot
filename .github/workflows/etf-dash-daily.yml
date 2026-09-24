@@ -2,8 +2,8 @@ name: ETF Dashboard Daily Data
 
 # ETF 股價 vs 成分股 EPS 預估修正儀表板（/etf-dash/）每日資料管線。
 #
-# 跑 scripts/etf_dash/build_etf_dash.py 兩檔（SMH 美國掛牌 + SMH_UCITS 愛爾蘭
-# 掛牌），輸出：
+# 跑 scripts/etf_dash/build_etf_dash.py 四檔（SMH 美國掛牌 + SMH_UCITS 愛爾蘭
+# 掛牌 + QQQ 那斯達克 100 + SPY 標普 500，2026-09-24 加 QQQ／SPY），輸出：
 #   - docs/etf-dash/data/{ETF}.json          正式頁 /etf-dash/?etf= 讀取的資料
 #   - data/etf_dash/snapshots/{ETF}/{date}.json  每日快照（舊版 yfinance-based
 #     EPS 指數用，見 build_etf_dash.py::build_eps_index_series；現行 Exhibit 2
@@ -99,7 +99,12 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 2026-09-24 加 QQQ／SPY 後量級變了：四檔基金共用同一份 ticker_cache，但
+    # 光 QQQ+SPY 的股票聯集就有 ~520 檔（本機實測，見 build_etf_dash.py 的
+    # TICKER_FETCH_PACING_S），逐檔 yfinance eps_trend+fast_info 加上節流本機
+    # 跑完整套約 15-20 分鐘；GitHub runner 網路與 yfinance 限速狀況不定，30
+    # 分鐘的舊上限太緊，拉高到 45 分鐘。
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -112,15 +117,16 @@ jobs:
       - name: Install dependencies
         run: pip install "yfinance>=0.2.40" pandas numpy requests openpyxl
 
-      - name: Build ETF dashboard data (SMH + SMH_UCITS)
-        # 個別 ETF 失敗（VanEck 持股格式改版、yfinance 掛了一整輪重試後仍失敗）
-        # 只會讓 build_etf_dash.py 略過那一檔、其餘照跑；只有兩檔都失敗它才會
-        # non-zero exit——那種情況本步驟紅燈，後面的 commit 步驟仍會跑（用
-        # continue-on-error 讓「有部分資料」也能是 no-op 或部分更新，而不是整個
-        # job 卡死），但至少一檔失敗時這步驟本身會在 job 摘要留紅色 warning。
+      - name: Build ETF dashboard data (SMH + SMH_UCITS + QQQ + SPY)
+        # 個別 ETF 失敗（持股來源格式改版、被擋、yfinance 掛了一整輪重試後仍
+        # 失敗）只會讓 build_etf_dash.py 略過那一檔、其餘照跑；只有全部失敗它
+        # 才會 non-zero exit——那種情況本步驟紅燈，後面的 commit 步驟仍會跑
+        # （用 continue-on-error 讓「有部分資料」也能是 no-op 或部分更新，而
+        # 不是整個 job 卡死），但至少一檔失敗時這步驟本身會在 job 摘要留紅色
+        # warning。
         continue-on-error: true
         id: build
-        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS
+        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY
 
       - name: Fail loudly if the build step errored
         if: steps.build.outcome == 'failure'
@@ -139,7 +145,7 @@ jobs:
             echo "No changes to commit"
           else
             DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
-            git commit -m "data: ETF dashboard snapshot ${DATE} (SMH + SMH_UCITS)
+            git commit -m "data: ETF dashboard snapshot ${DATE} (SMH + SMH_UCITS + QQQ + SPY)
 
             Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
             for i in 1 2 3 4 5 6; do

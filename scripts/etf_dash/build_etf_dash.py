@@ -1,26 +1,40 @@
 #!/usr/bin/env python3
-"""build_etf_dash.py — ETF 股價 vs 成分股 EPS 預估修正儀表板（prototype）。
+"""build_etf_dash.py — ETF 股價 vs 成分股 EPS 預估修正儀表板。
 
-背景：SMH 兩個版本比較——美國掛牌 VanEck Semiconductor ETF（NASDAQ: SMH）
-vs 愛爾蘭 UCITS 版 VanEck Semiconductor UCITS ETF（ISIN IE00BMC38736；LSE
-美元計價 ticker 也叫 SMH，GBP 計價叫 SMGB.L，Xetra 歐元計價叫 VVSM.DE）。
-兩者持股／權重不同（UCITS 有集中度上限），這是本頁要呈現的重點。
+四檔基金：SMH 兩個版本比較（美國掛牌 VanEck Semiconductor ETF vs 愛爾蘭
+UCITS 版，ISIN IE00BMC38736；持股／權重不同，UCITS 有集中度上限，這是這兩
+檔要呈現的重點）＋ 2026-09-24 加的 QQQ（Invesco QQQ Trust，那斯達克 100）與
+SPY（SPDR S&P 500 ETF Trust，標普 500，規模上到 ~500 檔成分股）。
 
 Pipeline：
-  1. 抓 VanEck 官方完整持股下載（US／IE 兩個 fund 頁面的 "Download All
-     Holdings" 連結，實測是純 GET + 一組 cookie，回傳 .xlsx，不需要瀏覽器／
-     JS——見 fetch_holdings_xlsx()）。失敗就退回上次成功抓到的快取
+  1. 抓各基金發行商官方完整持股下載，三種來源、一套 fallback（見 FUND_REGISTRY
+     的 "source" 與 HOLDINGS_SOURCES 分派）：
+       - VanEck（SMH／SMH_UCITS）：fund 頁 "Download All Holdings" 連結，純
+         GET + 一組 disclaimer cookie，回傳 .xlsx（fetch_holdings_xlsx()／
+         parse_holdings_xlsx()）。
+       - SSGA（SPY）：State Street 每日持股 xlsx，直接可下載，不需要 cookie
+         （fetch_ssga_holdings_xlsx()／parse_ssga_holdings_xlsx()）。
+       - Invesco（QQQ）：基金頁「All QQQ holdings」表格背後的 JSON API，純
+         requests.get() 不需要 cookie，但實測偶爾回 406（短暫的 WAF／節流，
+         非永久需要瀏覽器），已加重試（fetch_invesco_holdings_json()／
+         parse_invesco_holdings_json()，見 INVESCO_406_RETRY_BACKOFFS_S）。
+     任何一種失敗（格式改版、被擋、需要瀏覽器）都退回上次成功抓到的快取
      （data/etf_dash/holdings_cache/{ETF}.json），絕不用空資料覆蓋好資料。
+     現金／期貨／CVR 等特殊有價證券三種來源都會被各自的 parse_* 識別出來，
+     不進 EPS 計算但權重會回報（見 non_equity／non_equity_weight_pct）。
   2. 每檔成分股用 yfinance Ticker.eps_trend 抓 0y／+1y 的 current／7d／30d／
      60d／90d 前 EPS 估計（見該欄位自帶的 currency：多數 ADR 是 USD，但
      ASML 這類「美股掛牌、歐洲報表」的名字 eps_trend 是 EUR——這是
      scripts/eps_fx_normalize.py 修過的同一類 bug，這裡重用該模組的
      get_fx_rate() 只在算「加權遠期本益比」這條需要美元 EPS 的地方做 FX
-     轉換；EPS 修正 % 本身是同幣別比較，不需要）。
-  3. ETF 本身的股價走勢用 yfinance 直接抓（SMH／SMH.L 皆為美元計價）。
+     轉換；EPS 修正 % 本身是同幣別比較，不需要）。四檔基金共用同一份
+     ticker_cache（見 main()），同一檔股票（如 NVDA 同時在 SMH／QQQ／SPY）
+     一次 run 只抓一次；新 ticker 之間留 TICKER_FETCH_PACING_S 秒節流，SPY
+     規模上到 ~500 檔後這條線變成整支 pipeline最花時間的部分。
+  3. ETF 本身的股價走勢用 yfinance 直接抓。
   4. 算出：分期間（7d／30d／60d／90d 對齊 eps_trend 的四個錨點）的成分股
      加權 EPS 修正、ETF 股價漲跌、隱含本益比變動；當期加權遠期本益比
-     （harmonic mean）；前五大貢獻者；覆蓋率。
+     （harmonic mean）；上修 Top 10／下修 Bottom 10 貢獻者；覆蓋率。
   5. 寫每日快照 data/etf_dash/snapshots/{ETF}/{YYYY-MM-DD}.json（同日重跑
      覆寫同一檔，冪等），供圖表隨時間自然長出歷史線（見
      build_eps_index_series()）。
@@ -28,16 +42,17 @@ Pipeline：
      preview HTML。
 
 Usage:
-    python3.12 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS
+    python3.12 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY
     python3.12 scripts/etf_dash/build_etf_dash.py --etf SMH --preview-only
 
-Exit code non-zero if BOTH funds failed outright (holdings fetch failed AND
-no cache to fall back on); a single fund failing that way only skips that
-fund and keeps going (see main()).
+Exit code non-zero only if ALL requested funds failed outright (holdings
+fetch failed AND no cache to fall back on); a single fund failing that way
+only skips that fund and keeps going (see main()).
 """
 from __future__ import annotations
 
 import argparse
+import html
 import io
 import json
 import re
@@ -99,12 +114,18 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 # 302 重導向到 ...?cken=true 時已經在 Set-Cookie 裡示範了這個 cookie 的完整
 # 格式——見 CI 測試 notes），純 requests.get() 帶這組 cookie 就能拿到 .xlsx，
 # 不需要瀏覽器/JS。
+# 每檔基金的持股來源——"source" 對應下面 HOLDINGS_SOURCES 的 (fetch_fn,
+# parse_fn) 一組，2026-09-24 新增 QQQ／SPY 時拆出來，讓 get_holdings_with_fallback()
+# 不用管每家發行商的下載格式差異（VanEck 是 xlsx＋cookie 閘門、SSGA(SPY) 是
+# 直接可下載的 xlsx、Invesco(QQQ) 是 JSON API——見各自 fetch_*／parse_* 函式）。
 FUND_REGISTRY = {
     "SMH": {
         "label_zh": "VanEck 半導體 ETF（SMH，那斯達克，美國掛牌）",
         "label_en": "VanEck Semiconductor ETF (SMH, NASDAQ)",
         "yf_ticker": "SMH",
         "isin": None,
+        "source": "vaneck",
+        "holdings_issuer_zh": "VanEck 官方持股下載",
         "holdings_url": "https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/downloads/holdings/",
         "holdings_page_url": "https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/holdings/",
         "holdings_cookies": {
@@ -121,6 +142,8 @@ FUND_REGISTRY = {
         "label_en": "VanEck Semiconductor UCITS ETF (IE00BMC38736; LSE SMH, USD)",
         "yf_ticker": "SMH.L",
         "isin": "IE00BMC38736",
+        "source": "vaneck",
+        "holdings_issuer_zh": "VanEck 官方持股下載",
         "holdings_url": "https://www.vaneck.com/ie/en/investments/semiconductor-etf/downloads/holdings/",
         "holdings_page_url": "https://www.vaneck.com/ie/en/investments/semiconductor-etf/holdings/",
         "holdings_cookies": {
@@ -135,6 +158,37 @@ FUND_REGISTRY = {
             {"exchange": "LSE", "ticker": "SMGB.L", "currency": "GBP"},
             {"exchange": "Xetra", "ticker": "VVSM.DE", "currency": "EUR"},
         ],
+    },
+    "QQQ": {
+        "label_zh": "Invesco QQQ 信託（QQQ，那斯達克 100，美國掛牌）",
+        "label_en": "Invesco QQQ Trust (QQQ, Nasdaq-100)",
+        "yf_ticker": "QQQ",
+        "isin": None,
+        "source": "invesco",
+        "holdings_issuer_zh": "Invesco 官方持股 API",
+        # 2026-09-24 實測：QQQ 基金頁「All QQQ holdings」表格背後的 XHR 端點
+        # （table 的 data-holding-api）是一個乾淨的 JSON API，純 requests.get()
+        # 不帶任何 cookie／session 就能拿到（見 fetch_invesco_holdings_json()）；
+        # 頁面上另一個 data-holdings-api（多了 loadType=initial 參數）反而會被
+        # WAF 擋 406，這裡刻意不用那個。
+        "holdings_url": "https://dng-api.invesco.com/cache/v1/accounts/en_US/shareclasses/QQQ/holdings/fund",
+        "holdings_page_url": "https://www.invesco.com/qqq-etf/en/about.html",
+        "holdings_params": {"idType": "ticker", "interval": "monthly", "productType": "ETF"},
+        "other_listings": [],
+    },
+    "SPY": {
+        "label_zh": "SPDR 標普 500 ETF 信託（SPY，紐約證交所，美國掛牌）",
+        "label_en": "SPDR S&P 500 ETF Trust (SPY, NYSE Arca)",
+        "yf_ticker": "SPY",
+        "isin": None,
+        "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        # 2026-09-24 實測：State Street 每日持股 xlsx 直接可下載（301 重導向到
+        # 同網域的另一個路徑，requests 預設就會跟），不需要 cookie／disclaimer
+        # 閘門——跟 VanEck 那組不同。
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy",
+        "other_listings": [],
     },
 }
 
@@ -152,6 +206,12 @@ FUND_REGISTRY = {
 # 的成分股，往這裡加一行 alias 即可，不需要改其他邏輯。
 TICKER_ALIAS = {
     "SKHYV": "000660.KS",
+    # 2026-09-24 QQQ/SPY 上線：S&P 500 官方持股欄位裡的雙類股用點號分隔
+    # （"BRK.B"／"BF.B"），yfinance 一律用連字號（"BRK-B"／"BF-B"）——實測
+    # SPY 505 檔持股裡只有這兩檔是這個格式（見 build_etf_dash.py 的
+    # parse_ssga_holdings_xlsx 與其測試）。
+    "BRK.B": "BRK-B",
+    "BF.B": "BF-B",
 }
 
 # 2026-09-24 持有人對帳確認的兩個 build_long_eps_index() anomaly_events 根因
@@ -177,6 +237,7 @@ PERIOD_DEFS = [  # (key, yfinance eps_trend 欄名, 中文標籤, 概略天數)
 ]
 
 RATE_LIMIT_BACKOFFS_S = [20, 45, 90]  # yfinance YFRateLimitError 重試等待秒數
+TICKER_FETCH_PACING_S = 0.4  # 每檔新 ticker（快取沒有才算）之間的固定間隔秒數，見 build_fund()
 
 
 def _is_rate_limited(exc: Exception) -> bool:
@@ -204,8 +265,17 @@ def yf_call_with_backoff(fn, *, label: str = ""):
 
 
 # ---------------------------------------------------------------------------
-# VanEck holdings — fetch + parse + cache fallback
+# Holdings — fetch + parse + cache fallback, three issuers (VanEck xlsx／
+# SSGA xlsx／Invesco JSON), one shared fallback wrapper (get_holdings_with_fallback
+# below). Every parse_* function returns (as_of, holdings, non_equity):
+#   holdings    — list of {"ticker","raw_ticker_field","name","weight_pct"}，
+#                 只放看起來像股票的列（yfinance 抓不抓得到是後面的事）。
+#   non_equity  — list of {"ticker","name","weight_pct","reason"}，現金／期貨／
+#                 CVR 等特殊有價證券／SEC 短倉抵銷列——不進 EPS 計算，但權重
+#                 要讓讀者看得到（見 build_fund() 的 non_equity_weight_pct）。
 # ---------------------------------------------------------------------------
+
+EQUITY_TICKER_RE = re.compile(r"^[A-Z]{1,6}(\.[A-Z])?$")  # "NVDA"／"BRK.B"；數字或符號一律不算股票代碼
 
 
 def fetch_holdings_xlsx(cfg: dict) -> bytes:
@@ -275,32 +345,210 @@ def parse_holdings_xlsx(raw: bytes) -> tuple[str, list[dict]]:
 
     if as_of is None or not rows:
         raise RuntimeError(f"parsed 0 holdings or missing as-of date (as_of={as_of!r}, n_rows={len(rows)})")
-    return as_of, rows
+    return as_of, rows  # VanEck 現金列在上面已經濾掉、沒有另外回報權重——沿用既有行為，不動它的呼叫端／測試
 
 
-def get_holdings_with_fallback(etf_key: str, cfg: dict) -> tuple[str, list[dict], str, bool]:
-    """回傳 (as_of, holdings, source_url, used_stale_cache)。
+# ---------------------------------------------------------------------------
+# SPY (State Street SPDR) — daily holdings xlsx，直接可下載，不需要 cookie／
+# disclaimer 閘門（跟 VanEck 不同）。2026-09-24 實測欄位：Name／Ticker／
+# Identifier／SEDOL／Weight／Sector／Shares Held／Local Currency，權重欄本身
+# 就是數字（不是「19.43%」這種字串），"As of DD-Mon-YYYY" 在第 3 列。
+# ---------------------------------------------------------------------------
+
+
+def fetch_ssga_holdings_xlsx(cfg: dict) -> bytes:
+    r = requests.get(cfg["holdings_url"], headers={"User-Agent": UA}, timeout=30, allow_redirects=True)
+    r.raise_for_status()
+    ct = r.headers.get("content-type", "")
+    if "spreadsheet" not in ct and "excel" not in ct and "octet-stream" not in ct:
+        raise RuntimeError(f"unexpected content-type {ct!r} (body len={len(r.content)}) from "
+                            f"{cfg['holdings_url']} — SSGA page format may have changed")
+    if len(r.content) < 500:
+        raise RuntimeError(f"suspiciously small response ({len(r.content)} bytes) from {cfg['holdings_url']}")
+    return r.content
+
+
+def parse_ssga_holdings_xlsx(raw: bytes) -> tuple[str, list[dict], list[dict]]:
+    df = pd.read_excel(io.BytesIO(raw), header=None)
+    header_row_idx = None
+    for i in range(min(8, len(df))):
+        row_vals = [str(v).strip() for v in df.iloc[i].tolist()]
+        if "Name" in row_vals and "Ticker" in row_vals and "Weight" in row_vals:
+            header_row_idx = i
+            break
+    if header_row_idx is None:
+        raise RuntimeError("could not locate header row ('Name'/'Ticker'/'Weight' columns) in SSGA holdings sheet")
+
+    as_of = None
+    for i in range(header_row_idx):
+        # "As of 23-Sep-2026" 這個值實測落在 "Holdings:" 那一列的第 2 欄（col 0
+        # 是標籤），所以整列都要找，不能只看第 1 欄。
+        row_text = " ".join(str(v) for v in df.iloc[i].tolist() if pd.notna(v))
+        m = re.search(r"(\d{1,2})-([A-Za-z]{3})-(\d{4})", row_text)
+        if m:
+            try:
+                as_of = datetime.strptime(m.group(0), "%d-%b-%Y").strftime("%Y-%m-%d")
+            except ValueError:
+                pass
+            break
+
+    cols = [str(c).strip() for c in df.iloc[header_row_idx].tolist()]
+    body = df.iloc[header_row_idx + 1:].copy()
+    body.columns = cols
+
+    def _find_col(name):
+        for c in cols:
+            if c.lower() == name.lower():
+                return c
+        return None
+
+    name_col, ticker_col, weight_col = _find_col("Name"), _find_col("Ticker"), _find_col("Weight")
+    identifier_col = _find_col("Identifier")
+    if not all([name_col, ticker_col, weight_col]):
+        raise RuntimeError(f"SSGA holdings sheet missing expected columns; got {cols!r}")
+
+    rows, non_equity = [], []
+    for _, row in body.iterrows():
+        name = str(row[name_col]).strip() if pd.notna(row[name_col]) else ""
+        if not name:
+            break  # 撞到資料列結束（後面是免責聲明的長文字段落）
+        ticker_raw = str(row[ticker_col]).strip() if pd.notna(row[ticker_col]) else ""
+        identifier = str(row[identifier_col]).strip() if identifier_col and pd.notna(row[identifier_col]) else ""
+        w_raw = row[weight_col]
+        try:
+            weight_pct = float(w_raw)
+        except (TypeError, ValueError):
+            try:
+                weight_pct = float(str(w_raw).replace("%", "").strip())
+            except (TypeError, ValueError):
+                weight_pct = None
+        if not ticker_raw or ticker_raw in ("-", "--", "nan"):
+            non_equity.append({"ticker": None, "name": name, "weight_pct": weight_pct,
+                                "reason": "現金／餘額列（SSGA 持股表無 ticker）"})
+            continue
+        if not EQUITY_TICKER_RE.match(ticker_raw) or "CVR" in identifier.upper():
+            # 例：2026-09-24 這份表裡的 TPG INC，ticker 是識別碼「2602335D」不是
+            # 交易代碼，Identifier 帶 CVR（Contingent Value Right，併購後的或有價值權利
+            # 憑證，不是普通股）——排除但保留權重可見。
+            non_equity.append({"ticker": ticker_raw, "name": name, "weight_pct": weight_pct,
+                                "reason": "非普通股（CVR／特殊有價證券），yfinance 無對應報價"})
+            continue
+        rows.append({"ticker": ticker_raw, "raw_ticker_field": ticker_raw, "name": name, "weight_pct": weight_pct})
+
+    if as_of is None or not rows:
+        raise RuntimeError(f"parsed 0 holdings or missing as-of date (as_of={as_of!r}, n_rows={len(rows)})")
+    return as_of, rows, non_equity
+
+
+# ---------------------------------------------------------------------------
+# QQQ (Invesco) — 基金頁「All QQQ holdings」表格背後的 JSON API，見
+# FUND_REGISTRY["QQQ"] 的註解；純 requests.get() 不需要 cookie。
+# ---------------------------------------------------------------------------
+
+
+# 2026-09-24 實測：這個端點偶爾會回 406（不是真的擋純 requests——同一組
+# headers、隔幾秒重試就恢復 200），看起來是前面 Varnish／WAF 對短時間內連續
+# request 的暫時性節流，不是永久需要瀏覽器。所以這裡跟 yfinance 一樣做「重試
+# 幾次、間隔遞增」，406 仍失敗才真正報錯（往上交給 get_holdings_with_fallback
+# 退回快取）。
+INVESCO_406_RETRY_BACKOFFS_S = [10, 30, 60, 90]
+
+
+def fetch_invesco_holdings_json(cfg: dict) -> dict:
+    last_exc = None
+    for attempt, wait_s in enumerate([0] + INVESCO_406_RETRY_BACKOFFS_S):
+        if wait_s:
+            print(f"[etf_dash] Invesco holdings API not returning JSON yet; retrying in {wait_s}s "
+                  f"({attempt}/{len(INVESCO_406_RETRY_BACKOFFS_S)}): {last_exc}", file=sys.stderr)
+            time.sleep(wait_s)
+        try:
+            r = requests.get(cfg["holdings_url"], params=cfg["holdings_params"],
+                              headers={"User-Agent": UA, "Accept": "application/json, text/plain, */*",
+                                        "Referer": cfg["holdings_page_url"], "Origin": "https://www.invesco.com"},
+                              timeout=30)
+            # 406／403／429／5xx 或 2xx 卻不是 json（實測還遇過 200 但
+            # content-type text/plain 的過渡態）都當同一種暫時性節流處理，
+            # 留到重試預算耗盡才真正報錯往上交給 get_holdings_with_fallback
+            # 退回快取。
+            if r.status_code >= 400:
+                raise RuntimeError(f"{r.status_code} from {cfg['holdings_url']}")
+            ct = r.headers.get("content-type", "")
+            if "json" not in ct:
+                raise RuntimeError(f"unexpected content-type {ct!r} (status {r.status_code}) "
+                                    f"from {cfg['holdings_url']}")
+            return r.json()
+        except (RuntimeError, requests.RequestException) as e:
+            last_exc = e
+    raise RuntimeError(f"Invesco holdings API still not returning JSON after "
+                        f"{len(INVESCO_406_RETRY_BACKOFFS_S) + 1} attempts — "
+                        f"Invesco API format may have changed, or this now needs a browser session "
+                        f"(last error: {last_exc})") from last_exc
+
+
+# securityTypeCode 值見 2026-09-24 實測 QQQ 回應：COM（普通股）／ADR／DRNY（紐約
+# 存託憑證，如 ASML）算股票；CURR（現金）／CURRCOL（現金擔保品）／IFUT（指數
+# 期貨）／SYN（期貨對應的合成抵銷列，權重通常是負的）都不是個股。
+INVESCO_EQUITY_SECURITY_TYPES = {"COM", "ADR", "DRNY"}
+
+
+def parse_invesco_holdings_json(data: dict) -> tuple[str, list[dict], list[dict]]:
+    as_of = data.get("effectiveDate")
+    holdings = data.get("holdings") or []
+    if not as_of or not holdings:
+        raise RuntimeError(f"Invesco holdings JSON missing effectiveDate or holdings (as_of={as_of!r}, "
+                            f"n={len(holdings)})")
+    rows, non_equity = [], []
+    for h in holdings:
+        ticker_raw = (h.get("ticker") or "").strip()
+        # 2026-09-24 實測：issuerName 偶爾帶 HTML 實體（如 "CASH &amp; EQUIVALENTS"），
+        # 不轉回來的話畫面上會被 JS 的 esc() 再跳脫一次變成 "&amp;amp;"。
+        name = html.unescape(h.get("issuerName") or "") or ticker_raw or "（無名稱）"
+        weight_pct = h.get("percentageOfTotalNetAssets")
+        sec_type = (h.get("securityTypeCode") or "").strip().upper()
+        if not ticker_raw or sec_type not in INVESCO_EQUITY_SECURITY_TYPES or not EQUITY_TICKER_RE.match(ticker_raw):
+            non_equity.append({"ticker": ticker_raw or None, "name": name, "weight_pct": weight_pct,
+                                "reason": f"非個股（{h.get('securityTypeName') or sec_type or '無資料'}），"
+                                          f"不計入 EPS"})
+            continue
+        rows.append({"ticker": ticker_raw, "raw_ticker_field": ticker_raw, "name": name, "weight_pct": weight_pct})
+
+    if not rows:
+        raise RuntimeError(f"parsed 0 equity holdings from Invesco JSON (as_of={as_of!r})")
+    return as_of, rows, non_equity
+
+
+HOLDINGS_SOURCES = {
+    "vaneck": (fetch_holdings_xlsx, lambda raw: (*parse_holdings_xlsx(raw), [])),
+    "ssga": (fetch_ssga_holdings_xlsx, parse_ssga_holdings_xlsx),
+    "invesco": (fetch_invesco_holdings_json, parse_invesco_holdings_json),
+}
+
+
+def get_holdings_with_fallback(etf_key: str, cfg: dict) -> tuple[str, list[dict], list[dict], str, bool]:
+    """回傳 (as_of, holdings, non_equity, source_url, used_stale_cache)。
 
     抓取失敗（含格式改版、被擋、需要瀏覽器）一律退回上次成功快取，並清楚
     標記 used_stale_cache=True——絕不用空資料覆蓋 data/etf_dash/holdings_cache/
     裡的好資料（快取檔只在成功解析時才寫入）。兩者都沒有才整檔失敗。"""
     cache_path = HOLDINGS_CACHE_DIR / f"{etf_key}.json"
+    fetch_fn, parse_fn = HOLDINGS_SOURCES[cfg["source"]]
     try:
-        raw = fetch_holdings_xlsx(cfg)
-        as_of, rows = parse_holdings_xlsx(raw)
+        raw = fetch_fn(cfg)
+        as_of, rows, non_equity = parse_fn(raw)
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         cache_path.write_text(json.dumps({
-            "as_of": as_of, "holdings": rows, "source_url": cfg["holdings_url"],
+            "as_of": as_of, "holdings": rows, "non_equity": non_equity, "source_url": cfg["holdings_url"],
             "fetched_at": datetime.now(timezone.utc).isoformat(),
         }, ensure_ascii=False, indent=2), encoding="utf-8")
-        return as_of, rows, cfg["holdings_url"], False
+        return as_of, rows, non_equity, cfg["holdings_url"], False
     except Exception as e:  # noqa: BLE001
         print(f"[etf_dash] WARNING holdings fetch failed for {etf_key}: {e}", file=sys.stderr)
         if cache_path.exists():
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
             print(f"[etf_dash] WARNING falling back to cached holdings for {etf_key} "
                   f"(as_of={cached['as_of']}, fetched_at={cached.get('fetched_at')})", file=sys.stderr)
-            return cached["as_of"], cached["holdings"], cached.get("source_url", cfg["holdings_url"]), True
+            return (cached["as_of"], cached["holdings"], cached.get("non_equity", []),
+                    cached.get("source_url", cfg["holdings_url"]), True)
         raise RuntimeError(f"{etf_key}: holdings fetch failed and no cached fallback exists ({e})") from e
 
 
@@ -398,6 +646,118 @@ def _closest_close_on_or_before(price_series: list[dict], target_date: str):
     return candidates[-1] if candidates else None
 
 
+def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[dict],
+                           long_eps: dict, dd_universe_size: int) -> str:
+    """組 methods_note_zh——2026-09-24 加 QQQ／SPY 之前這段是寫死給 SMH／
+    SMH_UCITS 看的（硬編「VanEck」「ASML」「SK Hynix」）。四檔基金共用同一個
+    build_fund()，持股來源、非美元成分股、TICKER_ALIAS 用到哪些、長線指數
+    覆蓋率與異常事件都因基金而異，所以這裡全部改成從當次算好的資料動態組，
+    不對其他基金硬猜。"""
+    parts = [
+        f"成分股權重與明細來自{cfg['holdings_issuer_zh']}（見 holdings_source_url，"
+        "as of holdings_as_of，非 yfinance 前十大）。每檔成分股的 EPS 修正取 "
+        "yfinance Ticker.eps_trend 的「明年度」(+1y) 估計，比較目前值與 7／30／"
+        "60／90 天前值的百分比變動；ETF 加權 EPS 變動＝當期有資料成分股的"
+        "權重重新正規化後加權平均（無資料或 EPS≤0 者見 excluded 清單，不進分子分母）。"
+        "股價變動用 ETF 自身 yfinance 收盤價，取最接近錨點日期（不晚於當日）的收盤。"
+        "隱含本益比變動＝(1+股價變動)/(1+EPS變動)−1。加權遠期本益比用調和平均"
+        "（1/Σw·(EPS/股價)）。"
+    ]
+
+    non_equity_w = round(sum(e["weight_pct"] or 0 for e in non_equity), 2)
+    if non_equity:
+        top = sorted(non_equity, key=lambda e: abs(e["weight_pct"] or 0), reverse=True)[:6]
+        examples = "、".join(f"{e['name']}（{e['weight_pct']:.2f}%）" if e.get("weight_pct") is not None
+                             else f"{e['name']}" for e in top)
+        parts.append(
+            f"{cfg['holdings_issuer_zh']}的持股清單裡另有現金／期貨／特殊有價證券共 {len(non_equity)} 筆、"
+            f"合計權重 {non_equity_w:.2f}%（{examples}），不是普通股，不計入 EPS 與本益比計算的分子分母，"
+            "完整清單見 JSON 的 non_equity 欄位。"
+        )
+
+    fx_tickers = [c for c in constituents if c["eps_currency"] != "USD" or c["price_currency"] != "USD"]
+    if fx_tickers:
+        fx_list = "、".join(f"{c['name']}〈{c['ticker']}，{c['eps_currency']} 報表〉" for c in fx_tickers)
+        parts.append(
+            f"本基金有 {len(fx_tickers)} 檔成分股的 EPS 或股價不是美元報表／美元掛牌：{fx_list}。"
+            "這些名字先用當日美元匯率把 EPS 與股價分別換算成美元再算比值，EPS修正%本身"
+            "不需要換算（同幣別比較）。"
+        )
+
+    alias_notation, alias_substitution = [], []
+    for c in constituents:
+        used = c.get("yf_ticker_used")
+        if not used or used == c["ticker"]:
+            continue
+        if used.replace("-", ".") == c["ticker"]:
+            alias_notation.append((c["ticker"], used))
+        else:
+            alias_substitution.append((c["ticker"], used, c["name"]))
+    if alias_notation:
+        pairs = "、".join(f"{a}→{b}" for a, b in alias_notation)
+        parts.append(f"雙類股代碼在持股欄位用點號、yfinance 用連字號，代碼轉換：{pairs}（見 TICKER_ALIAS，同一檔股票，不影響股數基礎）。")
+    if alias_substitution:
+        for orig, used, name in alias_substitution:
+            parts.append(
+                f"{name}在持股欄位標的代碼「{orig}」yfinance 查無報價，改用「{used}」取代（見 TICKER_ALIAS）"
+                "——EPS 與股價都是替代標的本身的原始數字，不是換股比例調整過的，避免股數基礎不一致。"
+            )
+
+    parts.append(
+        "Exhibit 2 畫的 EPS 指數來自 docs/dd-screener/latest.json 的 git 歷史"
+        "（scripts/etf_dash/dd_eps_history.py），從 2026-05-19 起、每個有資料"
+        "的交易日一個點，比 yfinance eps_trend 只記得 90 天長得多。權重固定用"
+        "今天的持股權重，指數在第一個資料日訂為 100；股價同一天也 rebase 成 "
+        "100，兩條線才能疊在同一個座標軸上比誰漲得快。"
+    )
+    uncovered = long_eps.get("uncovered_tickers") or []
+    if uncovered:
+        parts.append(
+            f"{'／'.join(uncovered[:12])}{'等' if len(uncovered) > 12 else ''}"
+            f"不在 dd-screener 母體裡（母體現有 {dd_universe_size} 檔美股大型股，見 docs/dd-screener/latest.json），"
+            f"長線覆蓋率因此低於 100%（見 coverage_weight_pct，本基金 "
+            f"{long_eps.get('coverage_weight_pct', 0):.1f}%），缺的那部分不計入分子分母，不是當作沒漲跌。"
+        )
+    parts.append(
+        "Koyfin 的預估資料是月頻更新，兩次更新之間同一個數字連著好幾週不變，"
+        "所以這條線本來就該長得像階梯，不是平滑曲線。"
+        "串接每一步都要過濾兩種假訊號：一是財年輪替——公司的財年結束後，"
+        "「明年度」這個標籤指的年份會往後挪一年，若不處理，eps_fy_next 會"
+        "無端跳一大截；判斷方式是看這一步的 eps_fy_next 是否落在前一天 "
+        "eps_fy3（後年度估計）的 3% 以內，是的話用 eps_fy3 接續，不是財年輪替"
+        "才用前一天的 eps_fy_next 當基準（見 classify_eps_step()）。二是原始資料"
+        "本身的異常——同步驟同步過濾，整步跳過不計入指數也不計入覆蓋率。"
+    )
+    n_rollover = len(long_eps.get("rollover_events") or [])
+    n_anomaly = len(long_eps.get("anomaly_events") or [])
+    if n_rollover or n_anomaly:
+        bits = []
+        if n_rollover:
+            bits.append(f"{n_rollover} 次財年輪替")
+        if n_anomaly:
+            explained = [e for e in (long_eps.get("anomaly_events") or []) if e.get("explanation")]
+            bits.append(f"{n_anomaly} 次資料異常（{len(explained)} 次已對過帳確認根因，"
+                        f"逐筆記錄見 chart.long_eps_index.anomaly_events）")
+        parts.append(f"本基金的長線串接歷史裡偵測到 {'、'.join(bits)}，都已整步排除，不計入指數。")
+    else:
+        parts.append("本基金的長線串接歷史裡目前沒有偵測到財年輪替或資料異常事件。")
+
+    fx_chain_tickers = {tk: ccy for tk, ccy in (long_eps.get("currency_by_ticker") or {}).items() if ccy != "USD"}
+    if fx_chain_tickers:
+        chain_list = "、".join(f"{tk}（{ccy}）" for tk, ccy in sorted(fx_chain_tickers.items()))
+        parts.append(
+            f"非美元報表股票（{chain_list}）在串接每一步時都用當天匯率換算，避免匯率波動被算成 "
+            "EPS 修正，做法與上一段相同，重用 scripts/eps_fx_normalize.py，沒有另外寫一套。"
+        )
+    parts.append(
+        "舊版兩條 EPS 線（bootstrap／history，用 yfinance 資料）保留在 "
+        "chart.eps_index_bootstrap／eps_index_history 供查核，但不畫進 "
+        "Exhibit 2——同一張圖擺兩條定義不同的 EPS 線只會讓人看不懂哪條才是"
+        "真的。"
+    )
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Core computation
 # ---------------------------------------------------------------------------
@@ -406,11 +766,20 @@ def _closest_close_on_or_before(price_series: list[dict], target_date: str):
 def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
                dd_days: dict, today: datetime, stock_dash_universe: set[str]) -> dict:
     today_str = today.strftime("%Y-%m-%d")
-    as_of_holdings, holdings, source_url, used_stale = get_holdings_with_fallback(etf_key, cfg)
+    as_of_holdings, holdings, non_equity, source_url, used_stale = get_holdings_with_fallback(etf_key, cfg)
 
     unique_tickers = sorted({h["ticker"] for h in holdings})
+    n_new_fetches = 0
     for tk in unique_tickers:
         if tk not in ticker_cache:
+            # 輕量節流：SPY／QQQ 規模到幾百檔，四檔基金共用同一份 ticker_cache
+            # （見 main()），但單一 run 裡第一次遇到某檔還是要各抓一次
+            # eps_trend＋fast_info——兩次 yfinance 呼叫之間留一點間隔，降低觸發
+            # YFRateLimitError 的機率（GitHub runner 的 IP 已經在小規模的
+            # SMH/SMH_UCITS 上撞過一次，見 RATE_LIMIT_BACKOFFS_S 的既有重試）。
+            if n_new_fetches:
+                time.sleep(TICKER_FETCH_PACING_S)
+            n_new_fetches += 1
             yf_tk = TICKER_ALIAS.get(tk, tk)  # 例：SKHYV -> 000660.KS
             info = fetch_ticker_eps_and_price(yf_tk)
             info["yf_ticker_used"] = yf_tk
@@ -503,8 +872,16 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
                                   "revision_pct": c["revisions_pct"][key],
                                   "contribution_pct": round(contrib, 4)})
             eps_chg_pct = round(acc, 4)
-            contribs.sort(key=lambda x: abs(x["contribution_pct"]), reverse=True)
-        contributions_by_period[key] = contribs[:5]
+        # 2026-09-24 加 QQQ／SPY 之前這裡是「取貢獻度絕對值前 5 名」，適合
+        # SMH 這種二十幾檔的組合；SPY 有 500 檔，同樣邏輯常常被單一方向洗版
+        # （例如某期間九檔都上修，看不到下修的那一側）。改成分開列「上修貢獻
+        # Top 10」與「下修貢獻 Bottom 10」，兩邊都能看到，檔數少的基金（如
+        # SMH_UCITS）兩份清單容許重疊，不是 bug。
+        contribs_sorted = sorted(contribs, key=lambda x: x["contribution_pct"], reverse=True)
+        contributions_by_period[key] = {
+            "top": contribs_sorted[:10],
+            "bottom": list(reversed(contribs_sorted[-10:])) if contribs_sorted else [],
+        }
 
         anchor_date = (today - timedelta(days=days)).strftime("%Y-%m-%d")
         anchor_pt = _closest_close_on_or_before(price_series, anchor_date)
@@ -575,6 +952,7 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
             })
 
     excluded_weight = sum(e["weight_pct"] or 0 for e in excluded)
+    non_equity_weight = sum(e["weight_pct"] or 0 for e in non_equity)
 
     # 對帳：長線指數的近 90 天變動，應該跟 Exhibit 1 用 yfinance 算出來的「近三個月」
     # 落在同一個量級——兩條線資料來源、期間定義都不同（長線是每天 as-of 的
@@ -601,6 +979,7 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
         "as_of": today_str,
         "holdings_as_of": as_of_holdings,
         "holdings_source_url": source_url,
+        "holdings_issuer_zh": cfg["holdings_issuer_zh"],
         "holdings_stale": used_stale,
         "n_holdings": len(constituents) + len(excluded),
         "n_holdings_covered": len(constituents),
@@ -614,6 +993,8 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
         "constituents": constituents,
         "excluded": excluded,
         "excluded_weight_pct": round(excluded_weight, 2),
+        "non_equity": non_equity,
+        "non_equity_weight_pct": round(non_equity_weight, 2),
         "contributions": contributions_by_period,
         "chart": {
             "price_series": chart_price_series,
@@ -636,52 +1017,8 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
             "note": "長線（dd-screener 快照鏈）與 yfinance 90 天單點理論上量級相近但不必相等"
                     "——資料源、取樣頻率、fiscal-year 對齊方式都不同。",
         },
-        "methods_note_zh": (
-            "成分股權重與明細來自 VanEck 官方持股下載（見 holdings_source_url，"
-            "as of holdings_as_of，非 yfinance 前十大）。每檔成分股的 EPS 修正取 "
-            "yfinance Ticker.eps_trend 的「明年度」(+1y) 估計，比較目前值與 7／30／"
-            "60／90 天前值的百分比變動；ETF 加權 EPS 變動＝當期有資料成分股的"
-            "權重重新正規化後加權平均（無資料或 EPS≤0 者見 excluded 清單，不進分子分母）。"
-            "股價變動用 ETF 自身 yfinance 收盤價，取最接近錨點日期（不晚於當日）的收盤。"
-            "隱含本益比變動＝(1+股價變動)/(1+EPS變動)−1。加權遠期本益比用調和平均"
-            "（1/Σw·(EPS/股價)），非美元報表或非美元掛牌的成分股（本組合為 ASML"
-            "〈EUR 報表〉與 SK Hynix〈韓股 000660.KS，KRW 掛牌＋KRW 報表〉）"
-            "先用當日美元匯率把 EPS 與股價分別換算成美元再算比值，EPS修正%本身"
-            "不需要換算（同幣別比較）。SK Hynix 在 VanEck 持股欄位標的是境外 ADR"
-            "（SKHYV），yfinance 查無該 ADR 報價，改用南韓交易所掛牌股 000660.KS "
-            "取代（見 build_etf_dash.py TICKER_ALIAS）——EPS 與股價都是同一檔韓股"
-            "本身的原始數字，不是 ADR 換股比例調整過的，避免股數基礎不一致。"
-            "Exhibit 2 畫的 EPS 指數來自 docs/dd-screener/latest.json 的 git 歷史"
-            "（scripts/etf_dash/dd_eps_history.py），從 2026-05-19 起、每個有資料"
-            "的交易日一個點，比 yfinance eps_trend 只記得 90 天長得多。權重固定用"
-            "今天的持股權重，指數在第一個資料日訂為 100；股價同一天也 rebase 成 "
-            "100，兩條線才能疊在同一個座標軸上比誰漲得快。SKHYV／SNPS／MCHP／ENTG "
-            "不在 dd-screener 母體裡，長線覆蓋率因此低於 100%（見 coverage_weight_pct），"
-            "缺的那部分不計入分子分母，不是當作沒漲跌。"
-            "Koyfin 的預估資料是月頻更新，兩次更新之間同一個數字連著好幾週不變，"
-            "所以這條線本來就該長得像階梯，不是平滑曲線。"
-            "串接每一步都要過濾兩種假訊號：一是財年輪替——公司的財年結束後，"
-            "「明年度」這個標籤指的年份會往後挪一年，若不處理，eps_fy_next 會"
-            "無端跳一大截；判斷方式是看這一步的 eps_fy_next 是否落在前一天 "
-            "eps_fy3（後年度估計）的 3% 以內，是的話用 eps_fy3 接續，不是財年輪替"
-            "才用前一天的 eps_fy_next 當基準（見 classify_eps_step()）。二是原始資料"
-            "本身的異常——本組合的 105 天歷史裡抓到兩次，兩次都已對過帳、找到"
-            "根因：KLA（KLAC）於 2026-06-12 執行一股拆十股的股票分割，"
-            "Koyfin 延遲到 07-16 才在預估欄位反映，eps_fy_next 與 eps_fy3 同步"
-            "除以約 9.7-10；台積電（TSM）09-16 是 dd-screener 管線當天開始對 "
-            "TSM 套用 ADR 換股比例，兩個欄位同步乘以約 4.9。兩者都是兩個欄位"
-            "同步跳了幾乎一樣的倍數，不是分析師修正，判定為資料異常，整步跳過"
-            "不計入指數。另有一次台積電在 05-20 單步變動逾 45%，但當時 "
-            "eps_fy3 欄位還沒上線、無從比對根因，同樣保守排除（逐筆記錄見 "
-            "chart.long_eps_index.anomaly_events，含 explanation 欄位）。"
-            "非美元報表股票（本組合為台積電 TWD、ASML EUR）在串接每一步時都用"
-            "當天匯率換算，避免匯率波動被算成 EPS 修正，做法與上一段相同，"
-            "重用 scripts/eps_fx_normalize.py，沒有另外寫一套。"
-            "舊版兩條 EPS 線（bootstrap／history，用 yfinance 資料）保留在 "
-            "chart.eps_index_bootstrap／eps_index_history 供查核，但不畫進 "
-            "Exhibit 2——同一張圖擺兩條定義不同的 EPS 線只會讓人看不懂哪條才是"
-            "真的。"
-        ),
+        "methods_note_zh": build_methods_note_zh(cfg, constituents, non_equity, long_eps,
+                                                  len(stock_dash_universe)),
     }
 
 
@@ -864,7 +1201,8 @@ def build_long_eps_index(holdings: list[dict], dd_days: dict, fx_cache: dict, rc
     coverage_weight_pct = round(sum(weight_by_ticker[tk] for tk in covered_tickers) / total_weight * 100, 2)
     if not covered_tickers:
         return {"start_date": None, "series": [], "rollover_events": [], "anomaly_events": [],
-                "covered_tickers": [], "coverage_weight_pct": 0.0, "weight_basis": "today"}
+                "covered_tickers": [], "coverage_weight_pct": 0.0, "weight_basis": "today",
+                "currency_by_ticker": {}, "uncovered_tickers": sorted(tickers)}
 
     per_ticker_map = {tk: {d: (n, f) for d, n, f in per_ticker_points[tk]} for tk in covered_tickers}
 
@@ -936,6 +1274,8 @@ def build_long_eps_index(holdings: list[dict], dd_days: dict, fx_cache: dict, rc
         "covered_tickers": covered_tickers,
         "coverage_weight_pct": coverage_weight_pct,
         "weight_basis": "today",
+        "currency_by_ticker": currency_by_ticker,  # 只含非空值的 ticker；build_methods_note_zh() 用來組非美元報表段落
+        "uncovered_tickers": sorted(set(tickers) - set(covered_tickers)),  # 有權重但不在 dd-screener 母體裡的名字
     }
 
 
