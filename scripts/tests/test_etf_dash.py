@@ -490,6 +490,76 @@ def test_decide_mode_malformed_eps_as_of_forces_full():
     assert "格式壞掉" in reason
 
 
+# ── decide_mode() full_refresh="monthly" — 2026-09-25 持有人拍板：TOPIX（日股
+#    持股與 EPS 預估變動慢）FULL 只需要每月第一個週六，不是每週六；其餘六檔
+#    沒有 full_refresh 鍵，decide_mode() 預設 "weekly"，行為與上面既有測試
+#    完全不變。────────────────────────────────────────────────────────────
+
+def test_is_first_saturday_of_month():
+    assert m.is_first_saturday_of_month(datetime(2026, 9, 5).date()) is True   # 2026-09 的第一個週六
+    assert m.is_first_saturday_of_month(datetime(2026, 9, 12).date()) is False  # 第二個週六
+    assert m.is_first_saturday_of_month(datetime(2026, 10, 3).date()) is True   # 2026-10 的第一個週六
+
+
+def test_decide_mode_monthly_first_saturday_forces_full():
+    first_saturday = datetime(2026, 9, 5)
+    assert first_saturday.weekday() == 5
+    fresh_cache = {"eps_as_of": "2026-08-01"}  # 也可以是完全過期，這裡確認「第一個週六」本身就足夠
+    mode, reason = m.decide_mode("auto", fresh_cache, first_saturday, "monthly")
+    assert mode == "full"
+    assert "本月第一個週六" in reason
+
+
+def test_decide_mode_monthly_non_first_saturday_is_price_if_fresh():
+    second_saturday = datetime(2026, 9, 12)
+    assert second_saturday.weekday() == 5
+    fresh_cache = {"eps_as_of": "2026-09-05"}  # 7 天前，遠低於 35 天門檻
+    mode, reason = m.decide_mode("auto", fresh_cache, second_saturday, "monthly")
+    assert mode == "price"
+    assert "非本月第一個週六" in reason
+
+
+def test_decide_mode_monthly_non_saturday_weekday_is_price_if_fresh():
+    wednesday = datetime(2026, 9, 16)
+    assert wednesday.weekday() == 2
+    fresh_cache = {"eps_as_of": "2026-09-05"}
+    mode, _ = m.decide_mode("auto", fresh_cache, wednesday, "monthly")
+    assert mode == "price"
+
+
+def test_decide_mode_monthly_stale_over_35_days_forces_full():
+    day = datetime(2026, 9, 16)  # 非週六
+    stale_cache = {"eps_as_of": "2026-08-01"}  # 46 天前，超過 35 天門檻
+    mode, reason = m.decide_mode("auto", stale_cache, day, "monthly")
+    assert mode == "full"
+    assert "35 天門檻" in reason
+
+
+def test_decide_mode_monthly_exactly_35_days_still_price():
+    day = datetime(2026, 9, 16)  # 非週六
+    cache = {"eps_as_of": "2026-08-12"}  # 恰好 35 天前
+    mode, _ = m.decide_mode("auto", cache, day, "monthly")
+    assert mode == "price"
+
+
+def test_decide_mode_monthly_missing_cache_forces_full_even_off_saturday():
+    wednesday = datetime(2026, 9, 16)
+    mode, reason = m.decide_mode("auto", None, wednesday, "monthly")
+    assert mode == "full"
+    assert "沒有 EPS 快取" in reason
+
+
+def test_decide_mode_default_full_refresh_is_weekly():
+    # 沒傳 full_refresh 參數（其餘六檔的呼叫方式）維持舊版每週六行為，跟明示
+    # full_refresh="weekly" 結果一致。
+    first_saturday = datetime(2026, 9, 5)
+    fresh_cache = {"eps_as_of": "2026-09-05"}
+    assert m.decide_mode("auto", fresh_cache, first_saturday) == \
+        m.decide_mode("auto", fresh_cache, first_saturday, "weekly")
+    second_saturday = datetime(2026, 9, 12)
+    assert m.decide_mode("auto", fresh_cache, second_saturday)[0] == "full"  # 每週六都 full，不是只有第一個
+
+
 # ── EPS cache round-trip — load_eps_cache()/save_eps_cache() ────────────────
 
 def test_eps_cache_round_trip(tmp_path, monkeypatch):
@@ -858,3 +928,150 @@ def test_parse_yuanta_0050_holdings_node_missing_raises(monkeypatch):
     monkeypatch.setattr(m.shutil, "which", lambda name: None)
     with pytest.raises(RuntimeError, match="node executable not found"):
         m.parse_yuanta_0050_holdings(_yuanta_nuxt_fixture_html())
+
+
+# ── iShares Japan (TOPIX, 1475.T) holdings CSV — 2026-09-25: BlackRock Japan's
+#    .ajax endpoint returns plain CSV (utf-8 BOM), first line "基準日,\"YYYY年
+#    M月D日\"", second line a lone \xa0, real header on the third line. Asset
+#    Class is "株式" for equity and anything else (cash/futures/collateral) is
+#    excluded — mirrors the real 2026-09-25 response shape (see scratchpad
+#    curl test), not a black-list of known non-equity labels. ─────────────────
+
+def _ishares_jp_csv_bytes(as_of_zh: str, extra_rows: list[list[str]]) -> bytes:
+    header = ["Ticker", "Name", "Sector", "Asset Class", "Market Value", "Weight (%)",
+              "Notional Value", "Shares", "Price", "Location", "Exchange", "Currency", "FX Rate",
+              "Market Currency"]
+    lines = [f'基準日,"{as_of_zh}"', "\xa0", ",".join(header)]
+    for row in extra_rows:
+        lines.append(",".join(f'"{c}"' if isinstance(c, str) and "," not in c else str(c) for c in row))
+    text = "\n".join(lines) + "\n"
+    return text.encode("utf-8-sig")
+
+
+def _ishares_jp_fixture_bytes() -> bytes:
+    return _ishares_jp_csv_bytes("2026年9月23日", [
+        ["8306", "三菱UFJﾌｨﾅﾝｼｬﾙG", "銀行業", "株式", "116649432000.00", "3.93",
+         "116649432000.00", "32223600.00", "3620.00", "日本", "東京証券取引所", "JPY", "1.00", "JPY"],
+        ["285A", "SOME NEW LISTING", "サービス業", "株式", "5640000.00", "0.01",
+         "5640000.00", "18800.00", "300.00", "日本", "東京証券取引所", "JPY", "1.00", "JPY"],
+        ["JPY", "JPY CASH", "その他", "キャッシュ", "6910209525.00", "0.23",
+         "6910209525.00", "6910209525.00", "100.00", "日本", "-", "JPY", "1.00", "JPY"],
+        ["MARGIN_JPY", "FUTURES JPY MARGIN BALANCE", "その他", "Cash Collateral and Margins",
+         "3677468.00", "0.00", "3677468.00", "3677468.00", "100.00", "日本", "-", "JPY", "1.00", "JPY"],
+        ["TPZ6", "TOPIX INDEX DEC 26", "その他", "Futures", "0.00", "0.00",
+         "7267740000.00", "178.00", "4083.00", "-", "Osaka Securities Exchange", "JPY", "1.00", "JPY"],
+    ])
+
+
+def test_parse_ishares_jp_holdings_csv_basic():
+    as_of, rows, non_equity = m.parse_ishares_jp_holdings_csv(_ishares_jp_fixture_bytes())
+    assert as_of == "2026-09-23"
+    assert [r["ticker"] for r in rows] == ["8306.T", "285A.T"]  # 4-digit and post-2024 alphanumeric codes both -> {code}.T
+    assert rows[0]["weight_pct"] == pytest.approx(3.93)
+    assert rows[0]["raw_ticker_field"] == "8306"
+    assert len(non_equity) == 3
+    reasons = {e["ticker"]: e["reason"] for e in non_equity}
+    assert "キャッシュ" in reasons["JPY"]
+    assert "Cash Collateral and Margins" in reasons["MARGIN_JPY"]
+    assert "Futures" in reasons["TPZ6"]
+
+
+def test_parse_ishares_jp_holdings_csv_tolerates_blank_nbsp_line():
+    # 真實檔案第 2 列是單獨一個 \xa0（見 _ishares_jp_csv_bytes 固定寫死那一
+    # 行）——確認 csv.reader 對這種短列不會撞 IndexError，而是被當空白列跳過。
+    as_of, rows, non_equity = m.parse_ishares_jp_holdings_csv(_ishares_jp_fixture_bytes())
+    assert as_of is not None
+    assert len(rows) == 2
+
+
+def test_parse_ishares_jp_holdings_csv_missing_header_raises():
+    bad = 'not,a,holdings,csv\n"no ticker column here"\n'.encode("utf-8-sig")
+    with pytest.raises(RuntimeError, match="as-of date or header row"):
+        m.parse_ishares_jp_holdings_csv(bad)
+
+
+def test_parse_ishares_jp_holdings_csv_no_equity_rows_raises():
+    raw = _ishares_jp_csv_bytes("2026年9月23日", [
+        ["JPY", "JPY CASH", "その他", "キャッシュ", "100.00", "0.23", "100.00", "100.00", "100.00",
+         "日本", "-", "JPY", "1.00", "JPY"],
+    ])
+    with pytest.raises(RuntimeError, match="parsed 0 equity holdings"):
+        m.parse_ishares_jp_holdings_csv(raw)
+
+
+# ── EPS scope cutoff (TOPIX ~1,700 holdings — only fetch eps_trend for the
+#    largest names reaching the configured cumulative weight) ───────────────
+
+def test_select_eps_scope_tickers_stops_once_cutoff_reached():
+    holdings = [
+        {"ticker": "A", "weight_pct": 50.0},
+        {"ticker": "B", "weight_pct": 30.0},
+        {"ticker": "C", "weight_pct": 15.0},
+        {"ticker": "D", "weight_pct": 5.0},
+    ]
+    assert m.select_eps_scope_tickers(holdings, 80.0) == {"A", "B"}
+    assert m.select_eps_scope_tickers(holdings, 95.0) == {"A", "B", "C"}
+    assert m.select_eps_scope_tickers(holdings, 100.0) == {"A", "B", "C", "D"}
+
+
+def test_select_eps_scope_tickers_aggregates_duplicate_tickers():
+    holdings = [{"ticker": "A", "weight_pct": 40.0}, {"ticker": "A", "weight_pct": 40.0},
+                {"ticker": "B", "weight_pct": 20.0}]
+    assert m.select_eps_scope_tickers(holdings, 70.0) == {"A"}
+
+
+def test_build_eps_scope_note_zh_none_when_cutoff_not_configured():
+    assert m.build_eps_scope_note_zh({"label_zh": "x"}, [], None) is None
+
+
+def test_build_eps_scope_note_zh_reports_n_and_weight():
+    cfg = {"label_zh": "TOPIX（1475）", "eps_scope_cutoff_pct": 90.0}
+    holdings = [{"ticker": "A", "weight_pct": 60.0}, {"ticker": "B", "weight_pct": 30.0},
+                {"ticker": "C", "weight_pct": 10.0}]
+    scoped = {"A", "B"}
+    note = m.build_eps_scope_note_zh(cfg, holdings, scoped)
+    assert "3 檔" in note
+    assert "90%" in note
+    assert "前 2 檔" in note
+    assert "90.00%" in note  # 實際累計權重 A+B=90.00
+
+
+# ── Long EPS-index line suppression when dd-screener coverage is too low
+#    (2026-09-25, TOPIX: dd-screener universe is overwhelmingly US names, so
+#    Japan coverage is expected to be near-zero — don't draw a near-empty
+#    line, show a note instead) ───────────────────────────────────────────
+
+def test_build_long_chart_series_no_data_returns_empty_no_note():
+    long_eps = {"series": [], "coverage_weight_pct": 0.0, "start_date": None}
+    series, note = m.build_long_chart_series(long_eps, [{"date": "2026-09-20", "close": 100.0}])
+    assert series == []
+    assert note is None
+
+
+def test_build_long_chart_series_below_threshold_suppressed_with_note():
+    long_eps = {
+        "series": [{"date": "2026-09-01", "eps_index": 100.0, "coverage_pct": 5.0},
+                   {"date": "2026-09-20", "eps_index": 101.0, "coverage_pct": 5.0}],
+        "coverage_weight_pct": 5.0,
+        "start_date": "2026-09-01",
+    }
+    price_series = [{"date": "2026-09-01", "close": 100.0}, {"date": "2026-09-20", "close": 105.0}]
+    series, note = m.build_long_chart_series(long_eps, price_series)
+    assert series == []
+    assert note is not None
+    assert "5.0%" in note
+
+
+def test_build_long_chart_series_at_or_above_threshold_is_drawn():
+    long_eps = {
+        "series": [{"date": "2026-09-01", "eps_index": 100.0, "coverage_pct": 40.0},
+                   {"date": "2026-09-20", "eps_index": 101.0, "coverage_pct": 40.0}],
+        "coverage_weight_pct": 40.0,
+        "start_date": "2026-09-01",
+    }
+    price_series = [{"date": "2026-09-01", "close": 100.0}, {"date": "2026-09-20", "close": 105.0}]
+    series, note = m.build_long_chart_series(long_eps, price_series)
+    assert note is None
+    assert len(series) == 2
+    assert series[0]["price_index"] == pytest.approx(100.0)
+    assert series[1]["price_index"] == pytest.approx(105.0)

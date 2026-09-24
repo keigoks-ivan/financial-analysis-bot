@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ETF 儀表板 — InvestMQuest Research</title>
-<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計（SMH／QQQ／SPY／台灣加權指數／元大台灣50）。">
+<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計（SMH／QQQ／SPY／台灣加權指數／元大台灣50／TOPIX）。">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -255,7 +255,8 @@ var FUND_LIST = [
   {key:'QQQ', label:'QQQ'},
   {key:'SPY', label:'SPY'},
   {key:'TAIEX', label:'台灣加權指數'},
-  {key:'0050', label:'元大台灣50'}
+  {key:'0050', label:'元大台灣50'},
+  {key:'TOPIX', label:'TOPIX（1475）'}
 ];
 var FUND_KEYS = FUND_LIST.map(function(f){return f.key;});
 
@@ -312,16 +313,20 @@ function renderInfoStrip(d){
 
 var PERIOD_LABEL_ZH = {};
 
-// 2026-09-24 tiered update：Exhibit 1 的期間表格（periodsTable）現在整週不變
-// （EPS 快取只在週六重抓，見 methods note），這行是唯一每天更新的東西——
-// EPS 預估更新的日期、那之後股價變動了多少、跟用今天股價換算出的目前預估
-// 本益比。FULL 模式當天 price_since_eps_as_of_pct 是 0（eps_as_of 就是今天）。
+// 2026-09-24 tiered update：Exhibit 1 的期間表格（periodsTable）現在在兩次
+// FULL 之間不變（EPS 快取只在 FULL 那天重抓，見 methods note），這行是唯一
+// 每天更新的東西——EPS 預估更新的日期、那之後股價變動了多少、跟用今天股價
+// 換算出的目前預估本益比。FULL 模式當天 price_since_eps_as_of_pct 是 0
+// （eps_as_of 就是今天）。2026-09-25 加 TOPIX：full_refresh="monthly" 的
+// 基金 FULL 頻率是每月第一個週六，不是每週六（見 build_etf_dash.py
+// decide_mode() full_refresh 分支），這裡文字跟著 d.full_refresh 動態決定。
 function renderDailyUpdateLine(d){
   var el = document.getElementById('dailyUpdateLine');
   if(!el) return;
   var pe = d.weighted_forward_pe && d.weighted_forward_pe.value;
   var priceChg = d.price_since_eps_as_of_pct;
-  var bits = ['<b>EPS 預估更新於 '+esc(d.eps_as_of||'無資料')+'</b>（每週六）'];
+  var cadence = d.full_refresh === 'monthly' ? '（每月第一個週六）' : '（每週六）';
+  var bits = ['<b>EPS 預估更新於 '+esc(d.eps_as_of||'無資料')+'</b>'+cadence];
   if(priceChg != null){
     var sign = priceChg >= 0 ? '+' : '';
     bits.push('之後股價 '+sign+priceChg.toFixed(2)+'%');
@@ -494,7 +499,7 @@ function renderChart(d){
   var lei = (d.chart && d.chart.long_eps_index) || {};
   var series = lei.series || [];
   var canvas = document.getElementById('chartMain');
-  if(!series.length){ noData(canvas.parentElement, '無長線 EPS 指數資料'); return; }
+  if(!series.length){ noData(canvas.parentElement, lei.suppressed_note || '無長線 EPS 指數資料'); return; }
   var labels = series.map(function(p){return p.date;});
   var priceData = series.map(function(p){return p.price_index;});
   var epsData = series.map(function(p){return p.eps_index;});

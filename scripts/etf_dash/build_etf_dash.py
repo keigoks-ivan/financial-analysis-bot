@@ -52,6 +52,7 @@ only skips that fund and keeps going (see main()).
 from __future__ import annotations
 
 import argparse
+import csv
 import html
 import io
 import json
@@ -97,7 +98,11 @@ PREVIEW_DIR = Path("/private/tmp/claude-501/-Users-ivanchang/etf_dash_preview")
 DD_SCREENER_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 
 TAIPEI_TZ = ZoneInfo("Asia/Taipei")
-EPS_CACHE_MAX_AGE_DAYS = 7  # 超過這麼多天沒更新，即使不是週六也強制 FULL
+EPS_CACHE_MAX_AGE_DAYS = 7  # 超過這麼多天沒更新，即使不是週六也強制 FULL（"weekly" 基金）
+# 2026-09-25 持有人拍板：TOPIX（日股持股／EPS 預估變動慢）FULL 改成每月一次
+# （見 FUND_REGISTRY["TOPIX"]["full_refresh"]="monthly"），過期保護門檻同步
+# 拉長——見 decide_mode() 的 full_refresh 分支。
+EPS_CACHE_MAX_AGE_DAYS_MONTHLY = 35
 
 
 def load_stock_dash_universe() -> set[str]:
@@ -229,6 +234,42 @@ FUND_REGISTRY = {
         "holdings_issuer_zh": "元大投信官方持股頁（SSR 內嵌資料）",
         "holdings_url": "https://www.yuantaetfs.com/product/detail/0050/ratio",
         "holdings_page_url": "https://www.yuantaetfs.com/product/detail/0050/ratio",
+        "other_listings": [],
+    },
+    # 2026-09-25 加的日股基金——iShares Core TOPIX ETF（1475，東京證交所，
+    # BlackRock Japan）。選它而非 NEXT FUNDS TOPIX（1306，野村）或 MAXIS
+    # TOPIX（1348）：三檔的完整持股（~1,700 檔）都能純 requests.get() 拿到
+    # （1475 是 .ajax CSV 端點、1306 是野村官網一支 .xlsx，都不需要 cookie／
+    # 瀏覽器——見 fetch_ishares_jp_holdings_csv() 上方註解），但 1475 成分股數
+    # 與 as-of 日期直接寫在檔案第一列（"基準日","YYYY年M月D日"），格式最好
+    # 機械解析、且是三檔裡規模最大最具代表性的一檔，故選 1475。TOPIX 本身不
+    # 是可交易標的，只能用追蹤它的 ETF 當持股與價格代理。
+    "TOPIX": {
+        "label_zh": "TOPIX（1475，iシェアーズ・コア TOPIX ETF，東京證交所）",
+        "label_en": "iShares Core TOPIX ETF (1475, TSE, tracking TOPIX)",
+        "yf_ticker": "1475.T",
+        "isin": None,
+        "source": "ishares_jp",
+        "pe_basis_currency": "JPY",
+        # 2026-09-25 持有人拍板：TOPIX 只有這一檔用 "monthly"——日股持股與
+        # EPS 預估變動慢，不需要每週整套重抓（見 decide_mode() full_refresh
+        # 分支）；股價（ETF／成分股／加權遠期本益比／圖表股價線）仍是每天
+        # PRICE 模式更新，不受影響。其餘六檔沒有這個鍵，decide_mode() 用
+        # cfg.get("full_refresh", "weekly") 取預設值，行為完全不變。
+        "full_refresh": "monthly",
+        # 2026-09-25 實測：完整持股 ~1,635 檔股票，逐檔抓 yfinance eps_trend
+        # 在時間（見 TICKER_FETCH_PACING_S）與限速風險上都不現實——只對依權重
+        # 排序、累計達此門檻的最大權重成分股抓 EPS（見
+        # select_eps_scope_tickers()／build_eps_scope_note_zh()），其餘成分股
+        # 仍列在完整持股明細，但 excluded 标记為「EPS 涵蓋門檻外」，不計入任何
+        # EPS 相關計算。實測 90% 門檻約需 370 檔（見本次 run 的
+        # methods_note_zh 記錄實際數字）；如果全部 7 檔基金 FULL 總時間超出
+        # ~35 分鐘，改低到 85%（約 248 檔）。
+        "eps_scope_cutoff_pct": 90.0,
+        "holdings_issuer_zh": "iShares（BlackRock Japan）官方持股下載",
+        "holdings_url": "https://www.blackrock.com/jp/individual/ja/products/279438/fund/1480664184455.ajax"
+                        "?fileType=csv&fileName=1475_holdings&dataType=fund",
+        "holdings_page_url": "https://www.blackrock.com/jp/individual/ja/products/279438/ishares-core-topix-etf",
         "other_listings": [],
     },
 }
@@ -402,22 +443,49 @@ def save_eps_cache(etf_key: str, data: dict) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def decide_mode(cli_mode: str, eps_cache: dict | None, now_taipei: datetime) -> tuple[str, str]:
+def is_first_saturday_of_month(d) -> bool:
+    """d 是 date（或 datetime）——每月只有一個週六的 day <= 7（週六彼此間隔 7
+    天，同月第二個週六 day 必定 >= 8），不需要另外算「這個月第一天是星期
+    幾」。呼叫端要自己先確認 d 是週六（這裡不重複檢查 weekday，見 decide_mode
+    的呼叫方式），單獨呼叫這個函式對非週六的日期沒有意義但不會噴錯。"""
+    return d.day <= 7
+
+
+def decide_mode(cli_mode: str, eps_cache: dict | None, now_taipei: datetime,
+                 full_refresh: str = "weekly") -> tuple[str, str]:
     """純函式（不碰檔案／網路——是否讀得到快取由呼叫端先讀好傳進來)：決定這次
     要跑 FULL 還是 PRICE，回傳 (mode, reason)。
 
-    規則（cli_mode 明示 full／price 時最優先；"auto" 才照以下順序判斷）：
-      1. 台北時區今天是週六 -> full。
-      2. 完全沒有 EPS 快取（第一次跑、或快取被清掉）-> full。
-      3. 快取的 eps_as_of 超過 EPS_CACHE_MAX_AGE_DAYS 天沒更新（保護：萬一連
-         續幾個週六都因為 Invesco 406／假期跳過，不能無限期沿用舊 EPS）-> full。
-      4. 快取的 eps_as_of 格式壞掉、讀不出日期 -> full（保守，壞資料不硬撐）。
-      5. 以上都不是 -> price。
+    full_refresh（見 FUND_REGISTRY cfg["full_refresh"]，預設 "weekly"）：
+      - "weekly"（多數基金）：規則同舊版——
+          1. 台北時區今天是週六 -> full。
+          2. 完全沒有 EPS 快取（第一次跑、或快取被清掉）-> full。
+          3. 快取的 eps_as_of 超過 EPS_CACHE_MAX_AGE_DAYS 天沒更新（保護：萬一
+             連續幾個週六都因為 Invesco 406／假期跳過，不能無限期沿用舊
+             EPS）-> full。
+          4. 快取的 eps_as_of 格式壞掉、讀不出日期 -> full（保守，壞資料不硬撐）。
+          5. 以上都不是 -> price。
+      - "monthly"（2026-09-25 起 TOPIX：日股持股與 EPS 預估變動慢，不需要
+        每週整套重抓）：規則同上，但條件 1 改成「台北時區今天是本月第一個
+        週六」（is_first_saturday_of_month()），條件 3 的過期門檻改用
+        EPS_CACHE_MAX_AGE_DAYS_MONTHLY（35 天，涵蓋月與月之間偶爾錯過第一個
+        週六——例如那天剛好撞到 Invesco 式的暫時性抓取失敗——的緩衝）。
+        兩種 full_refresh 的股價（ETF 本身、成分股、加權遠期本益比、圖表股價
+        線）都不受影響，PRICE 模式每天照跑，只有「整套重抓」的頻率不同。
     """
     if cli_mode in ("full", "price"):
         return cli_mode, f"--mode {cli_mode}（明示）"
-    if now_taipei.weekday() == 5:  # Monday=0 .. Saturday=5 .. Sunday=6
-        return "full", "台北時區今天是週六"
+    is_saturday = now_taipei.weekday() == 5  # Monday=0 .. Saturday=5 .. Sunday=6
+    if full_refresh == "monthly":
+        if is_saturday and is_first_saturday_of_month(now_taipei.date()):
+            return "full", "台北時區今天是本月第一個週六（TOPIX 每月更新一次）"
+        max_age_days = EPS_CACHE_MAX_AGE_DAYS_MONTHLY
+        freshness_suffix = "且非本月第一個週六"
+    else:
+        if is_saturday:
+            return "full", "台北時區今天是週六"
+        max_age_days = EPS_CACHE_MAX_AGE_DAYS
+        freshness_suffix = "且非週六"
     if eps_cache is None:
         return "full", "沒有 EPS 快取（第一次跑或快取遺失）"
     eps_as_of = eps_cache.get("eps_as_of")
@@ -425,9 +493,9 @@ def decide_mode(cli_mode: str, eps_cache: dict | None, now_taipei: datetime) -> 
         age_days = (now_taipei.date() - datetime.strptime(eps_as_of, "%Y-%m-%d").date()).days
     except (TypeError, ValueError):
         return "full", f"EPS 快取的 eps_as_of 格式壞掉（{eps_as_of!r}）"
-    if age_days > EPS_CACHE_MAX_AGE_DAYS:
-        return "full", f"EPS 快取已 {age_days} 天沒更新（> {EPS_CACHE_MAX_AGE_DAYS} 天門檻）"
-    return "price", f"EPS 快取新鮮（{age_days} 天前，as of {eps_as_of}）且非週六"
+    if age_days > max_age_days:
+        return "full", f"EPS 快取已 {age_days} 天沒更新（> {max_age_days} 天門檻）"
+    return "price", f"EPS 快取新鮮（{age_days} 天前，as of {eps_as_of}）{freshness_suffix}"
 
 
 # ---------------------------------------------------------------------------
@@ -908,12 +976,104 @@ def parse_yuanta_0050_holdings(html_text: str) -> tuple[str, list[dict], list[di
     return as_of, holdings, non_equity
 
 
+# ---------------------------------------------------------------------------
+# TOPIX (iShares Core TOPIX ETF, 1475.T) — BlackRock Japan 的 holdings .ajax
+# 端點直接回傳 CSV（純 requests.get()，不需要 cookie／disclaimer 閘門，跟
+# VanEck 的美國／愛爾蘭站不同；2026-09-25 實測見 FUND_REGISTRY["TOPIX"] 上方
+# 註解）。檔案格式：第 1 列 `基準日,"YYYY年M月D日"`、第 2 列空白（一個
+# \xa0）、第 3 列起才是真正表頭（Ticker,Name,Sector,Asset Class,Market
+# Value,Weight (%),...）；股票代碼是 TSE 4 碼（多數是數字，少數 2024 年後新
+# 上市股用「3 位數字+英文字母」如 "285A"，一律用 `{code}.T` 對應 yfinance）。
+# Asset Class 只有普通股是「株式」，其餘（キャッシュ／Cash Collateral and
+# Margins／Futures）都不是個股——這裡用白名單（只認「株式」為股票，其他一律
+# 歸類 non_equity）而不是黑名單列舉，理由：新出現、目前沒看過的 Asset Class
+# 值（例如未來若把 REIT 另立分類）預設也會被排除，不會被誤當成股票算進 EPS
+# ——TOPIX 本身編製規則也不含 J-REIT（那是獨立的 REIT 指數，這份持股清單裡
+# 「不動産業」Sector 底下的名字是一般不動產開發／仲介公司，不是 REIT 信託，
+# 不需要另外排除）。
+# ---------------------------------------------------------------------------
+
+ISHARES_JP_EQUITY_ASSET_CLASS = "株式"
+
+
+def fetch_ishares_jp_holdings_csv(cfg: dict) -> bytes:
+    r = requests.get(cfg["holdings_url"], headers={"User-Agent": UA}, timeout=30, allow_redirects=True)
+    r.raise_for_status()
+    ct = r.headers.get("content-type", "")
+    if "csv" not in ct.lower():
+        raise RuntimeError(f"unexpected content-type {ct!r} (body len={len(r.content)}) from "
+                            f"{cfg['holdings_url']} — iShares Japan page/API format may have changed, "
+                            f"or this now needs a browser session")
+    if len(r.content) < 500:
+        raise RuntimeError(f"suspiciously small response ({len(r.content)} bytes) from {cfg['holdings_url']}")
+    return r.content
+
+
+def parse_ishares_jp_holdings_csv(raw: bytes) -> tuple[str, list[dict], list[dict]]:
+    text = raw.decode("utf-8-sig")
+    lines = text.splitlines()
+
+    as_of = None
+    for line in lines[:6]:
+        m = re.search(r"(\d{4})年(\d{1,2})月(\d{1,2})日", line)
+        if m:
+            as_of = f"{int(m.group(1)):04d}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+            break
+
+    header_row_idx = None
+    for i in range(min(8, len(lines))):
+        try:
+            probe = next(csv.reader([lines[i]]))
+        except StopIteration:
+            continue
+        if "Ticker" in probe and "Weight (%)" in probe and "Asset Class" in probe:
+            header_row_idx = i
+            break
+    if as_of is None or header_row_idx is None:
+        raise RuntimeError(f"could not locate as-of date or header row ('Ticker'/'Weight (%)'/'Asset Class' "
+                            f"columns) in iShares Japan holdings CSV (as_of={as_of!r})")
+
+    body_rows = list(csv.reader(lines[header_row_idx:]))
+    cols = body_rows[0]
+    try:
+        ticker_i, name_i = cols.index("Ticker"), cols.index("Name")
+        asset_class_i, weight_i = cols.index("Asset Class"), cols.index("Weight (%)")
+    except ValueError as e:
+        raise RuntimeError(f"iShares Japan holdings CSV missing expected columns; got {cols!r}") from e
+
+    rows, non_equity = [], []
+    need = max(ticker_i, name_i, asset_class_i, weight_i)
+    for r in body_rows[1:]:
+        if len(r) <= need:
+            continue  # 空白／過短列（例如檔案裡單獨一個 \xa0 的那一行），不是資料列
+        ticker_raw = r[ticker_i].strip()
+        name = r[name_i].strip()
+        if not ticker_raw or not name:
+            continue
+        asset_class = r[asset_class_i].strip()
+        try:
+            weight_pct = float(r[weight_i])
+        except (TypeError, ValueError):
+            weight_pct = None
+        if asset_class != ISHARES_JP_EQUITY_ASSET_CLASS:
+            non_equity.append({"ticker": ticker_raw, "name": name, "weight_pct": weight_pct,
+                                "reason": f"非普通股（Asset Class「{asset_class}」），不計入 EPS"})
+            continue
+        rows.append({"ticker": f"{ticker_raw}.T", "raw_ticker_field": ticker_raw, "name": name,
+                     "weight_pct": weight_pct})
+
+    if not rows:
+        raise RuntimeError(f"parsed 0 equity holdings from iShares Japan holdings CSV (as_of={as_of!r})")
+    return as_of, rows, non_equity
+
+
 HOLDINGS_SOURCES = {
     "vaneck": (fetch_holdings_xlsx, lambda raw: (*parse_holdings_xlsx(raw), [])),
     "ssga": (fetch_ssga_holdings_xlsx, parse_ssga_holdings_xlsx),
     "invesco": (fetch_invesco_holdings_json, parse_invesco_holdings_json),
     "twse": (fetch_twse_taiex_universe, parse_twse_taiex_universe),
     "yuanta": (fetch_yuanta_holdings_page, parse_yuanta_0050_holdings),
+    "ishares_jp": (fetch_ishares_jp_holdings_csv, parse_ishares_jp_holdings_csv),
 }
 
 
@@ -1141,25 +1301,80 @@ def build_weight_methodology_note_zh(cfg: dict, holdings: list[dict]) -> str | N
     return None
 
 
+# ---------------------------------------------------------------------------
+# EPS scope cutoff — 2026-09-25 加 TOPIX：~1,700 檔持股逐檔抓 yfinance
+# eps_trend 不現實（時間、限速兩者都撐不住），只對依權重排序、累計達
+# cfg["eps_scope_cutoff_pct"] 的最大權重成分股抓 EPS，見 FUND_REGISTRY["TOPIX"]
+# 上方註解。cfg 沒有這個鍵的基金（其餘六檔）不受影響——select_eps_scope_tickers
+# 只在 build_fund_full() 判斷 cfg.get("eps_scope_cutoff_pct") 為真值時才呼叫。
+# ---------------------------------------------------------------------------
+
+
+def select_eps_scope_tickers(holdings: list[dict], cutoff_pct: float) -> set[str]:
+    """純函式：holdings 依權重由大到小排序後累加，回傳累計達 cutoff_pct（百分比，
+    例如 90.0）所需的最小 ticker 集合。同一 ticker 若出現多次先加總權重再排序
+    （目前各資料源的 holdings 本身 ticker 已經不重複，這裡多做一層聚合純粹是
+    防禦性寫法，不依賴呼叫端先去重）。"""
+    by_ticker: dict[str, float] = {}
+    for h in holdings:
+        by_ticker[h["ticker"]] = by_ticker.get(h["ticker"], 0.0) + (h["weight_pct"] or 0.0)
+    ordered = sorted(by_ticker.items(), key=lambda kv: -kv[1])
+    scoped: set[str] = set()
+    cum = 0.0
+    for tk, w in ordered:
+        if cum >= cutoff_pct:
+            break
+        scoped.add(tk)
+        cum += w
+    return scoped
+
+
+def build_eps_scope_note_zh(cfg: dict, holdings: list[dict], eps_scope_tickers: set[str] | None) -> str | None:
+    """cfg 沒有設 eps_scope_cutoff_pct 時回傳 None（其餘六檔基金不受影響）。"""
+    cutoff_pct = cfg.get("eps_scope_cutoff_pct")
+    if not cutoff_pct or eps_scope_tickers is None:
+        return None
+    unique_tickers = {h["ticker"] for h in holdings}
+    n_total = len(unique_tickers)
+    scoped_weight = sum(h["weight_pct"] or 0 for h in holdings if h["ticker"] in eps_scope_tickers)
+    return (
+        f"{cfg['label_zh']}成分股達 {n_total} 檔，逐檔抓 yfinance EPS 預估在時間與 API 限速上都不現實"
+        f"——本頁只對依權重排序、累計達 {cutoff_pct:.0f}% 的前 {len(eps_scope_tickers)} 檔抓 EPS"
+        f"（實際累計權重 {scoped_weight:.2f}%），其餘 {n_total - len(eps_scope_tickers)} 檔較小權重成分股"
+        "不進任何 EPS 相關計算（加權 EPS 修正、加權遠期本益比都只用涵蓋範圍內的名字，"
+        "權重照原比例重新正規化——沿用既有 revisions_pct 覆蓋率邏輯，不是額外一套）；完整持股明細仍"
+        "列出全部成分股，這些名字在下表「備註」欄標示「EPS 涵蓋門檻外」，可查但不計入計算。"
+    )
+
+
 def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[dict],
                            long_eps: dict, dd_universe_size: int, periods: list[dict],
                            mode: str, eps_as_of: str, mode_reason: str,
-                           weight_methodology_note_zh: str | None = None) -> str:
+                           weight_methodology_note_zh: str | None = None,
+                           eps_scope_note_zh: str | None = None) -> str:
     """組 methods_note_zh——2026-09-24 加 QQQ／SPY 之前這段是寫死給 SMH／
     SMH_UCITS 看的（硬編「VanEck」「ASML」「SK Hynix」）。四檔基金共用同一個
     build_fund()，持股來源、非美元成分股、TICKER_ALIAS 用到哪些、長線指數
     覆蓋率與異常事件都因基金而異，所以這裡全部改成從當次算好的資料動態組，
     不對其他基金硬猜。"""
     mode_zh = "完整更新（FULL：重抓持股與每檔 EPS 估計）" if mode == "full" else "只更新股價（PRICE：EPS 沿用快取）"
+    full_refresh = cfg.get("full_refresh", "weekly")
+    # 2026-09-25 持有人拍板：TOPIX 改成每月第一個週六才 FULL（其餘六檔仍是
+    # 每週六）——見 decide_mode() full_refresh 分支；這裡的文字跟著 cfg 動態
+    # 產生，不是寫死「每週六」。
+    cadence_zh = "每月第一個週六" if full_refresh == "monthly" else "每週六"
+    cadence_period_zh = "兩次 FULL 之間" if full_refresh == "monthly" else "整週"
     parts = [
-        f"本頁分層更新：每週六（台北時區）完整重抓一次持股與每檔明年度 EPS 估計"
-        f"（現在的 EPS 估計 as of {eps_as_of}），其餘六天只抓股價，跟週六存的 EPS "
+        f"本頁分層更新：{cadence_zh}（台北時區）完整重抓一次持股與每檔明年度 EPS 估計"
+        f"（現在的 EPS 估計 as of {eps_as_of}），其餘日子只抓股價，跟上次 FULL 存的 EPS "
         "快取重新配對算「今日加權遠期本益比」——Exhibit 1 的期間表格（EPS 修正％／"
-        "股價漲跌／隱含本益比）因此整週不變，只有本益比跟「EPS 預估更新於...」那行"
+        f"股價漲跌／隱含本益比）因此{cadence_period_zh}不變，只有本益比跟「EPS 預估更新於...」那行"
         f"每天更新。這次是{mode_zh}（{mode_reason}）。",
     ]
     if weight_methodology_note_zh:
         parts.append(weight_methodology_note_zh)
+    if eps_scope_note_zh:
+        parts.append(eps_scope_note_zh)
     parts += [
         f"成分股權重與明細來自{cfg['holdings_issuer_zh']}（見 holdings_source_url，"
         "as of holdings_as_of，非 yfinance 前十大）。每檔成分股的 EPS 修正取 "
@@ -1335,6 +1550,41 @@ def convert_to_basis_currency(value_local: float | None, local_ccy: str | None, 
     return value_local / rate_local * rate_basis, True
 
 
+# 2026-09-25 加 TOPIX：dd-screener 母體目前幾乎全是美股（近期才加台股大型
+# 股），日股在裡面的覆蓋率天生就很低——長線 EPS 指數（Exhibit 2）如果覆蓋率
+# 太低，畫出來的線其實是少數幾檔的雜訊，不是真正的成分股加權訊號，容易誤讀。
+# 覆蓋率（權重）低於此門檻就不畫線，前端改顯示一則說明（見
+# build_long_chart_series() 與 docs/etf-dash/index.html::renderChart()）——
+# 這個門檻對所有基金一體適用，不是只有 TOPIX 特殊處理，只是目前只有 TOPIX 會
+# 踩到。
+LONG_EPS_LINE_MIN_COVERAGE_PCT = 30.0
+
+
+def build_long_chart_series(long_eps: dict, price_series: list[dict]) -> tuple[list[dict], str | None]:
+    """把 long_eps["series"]（純 EPS 指數點）配上同一天的 ETF 股價指數，回傳
+    (chart_series, suppressed_note)。覆蓋率（權重）低於 LONG_EPS_LINE_MIN_COVERAGE_PCT
+    時不畫線：回傳空列表＋一則可讀的說明字串，讓呼叫端放進 JSON／前端顯示，
+    跟「完全沒有資料」（chart_series 空、suppressed_note 也是 None）區分開——
+    後者前端維持既有的「無長線 EPS 指數資料」文字。"""
+    if not long_eps["series"]:
+        return [], None
+    coverage = long_eps.get("coverage_weight_pct") or 0.0
+    if coverage < LONG_EPS_LINE_MIN_COVERAGE_PCT:
+        return [], (f"dd-screener 名單內符合本基金的成分股覆蓋率（權重）僅 {coverage:.1f}%，"
+                     f"低於 {LONG_EPS_LINE_MIN_COVERAGE_PCT:.0f}% 門檻，不畫長線——覆蓋率太低時"
+                     "這條線其實是少數幾檔的雜訊，不是真正的成分股加權訊號。")
+    start_pt = _closest_close_on_or_before(price_series, long_eps["start_date"])
+    start_price = start_pt["close"] if start_pt else None
+    out = []
+    for pt in long_eps["series"]:
+        price_pt = _closest_close_on_or_before(price_series, pt["date"])
+        price_index = (round(price_pt["close"] / start_price * 100, 4)
+                        if (price_pt and start_price) else None)
+        out.append({"date": pt["date"], "eps_index": pt["eps_index"],
+                    "price_index": price_index, "coverage_pct": pt["coverage_pct"]})
+    return out, None
+
+
 def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
                      dd_days: dict, today: datetime, stock_dash_universe: set[str],
                      mode_reason: str) -> dict:
@@ -1346,7 +1596,16 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     as_of_holdings, holdings, non_equity, source_url, used_stale = get_holdings_with_fallback(etf_key, cfg)
     weight_methodology_note_zh = build_weight_methodology_note_zh(cfg, holdings)
 
-    unique_tickers = sorted({h["ticker"] for h in holdings})
+    # 2026-09-25 加 TOPIX 的 EPS 涵蓋門檻——見 select_eps_scope_tickers() 與
+    # FUND_REGISTRY["TOPIX"]["eps_scope_cutoff_pct"] 上方註解。cfg 沒有這個鍵
+    # 的基金 eps_scope_tickers 是 None，下面兩處判斷都維持原行為（抓全部持股）。
+    eps_scope_cutoff_pct = cfg.get("eps_scope_cutoff_pct")
+    eps_scope_tickers = (select_eps_scope_tickers(holdings, eps_scope_cutoff_pct)
+                         if eps_scope_cutoff_pct else None)
+    eps_scope_note_zh = build_eps_scope_note_zh(cfg, holdings, eps_scope_tickers)
+
+    unique_tickers = sorted(eps_scope_tickers if eps_scope_tickers is not None
+                            else {h["ticker"] for h in holdings})
     n_new_fetches = 0
     for tk in unique_tickers:
         if tk not in ticker_cache:
@@ -1376,11 +1635,19 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     period_exclusions = {key: [] for key, *_ in PERIOD_DEFS}
     period_capped = {key: [] for key, *_ in PERIOD_DEFS}
     for h in holdings:
-        info = ticker_cache[h["ticker"]]
         rec = {
             "ticker": h["ticker"], "name": h["name"], "weight_pct": h["weight_pct"],
             "has_stock_dash": h["ticker"] in stock_dash_universe,
         }
+        if eps_scope_tickers is not None and h["ticker"] not in eps_scope_tickers:
+            # 權重排在 EPS 涵蓋門檻之外，本來就沒抓（不在 unique_tickers 裡，
+            # ticker_cache 沒有這一筆）——跟「抓了但沒資料」的 no_eps_data 分開，
+            # 不查 ticker_cache（沒有這個 key）。
+            rec["status"] = "out_of_eps_scope"
+            rec["reason"] = f"權重排序在 EPS 涵蓋門檻（累計 {eps_scope_cutoff_pct:.0f}%）之外，未抓 EPS"
+            excluded.append(rec)
+            continue
+        info = ticker_cache[h["ticker"]]
         if info["status"] != "ok":
             rec["status"] = info["status"]
             rec["reason"] = info.get("reason")
@@ -1533,18 +1800,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     # docstring）。用今天的持股權重固定，股價同步 rebase 到同一個起點＝100，
     # 兩條線才能疊在同一個座標軸上直接比「估計漲得比股價快還慢」。
     long_eps = build_long_eps_index(holdings, dd_days, fx_cache, rc_cache)
-    long_chart_series = []
-    if long_eps["series"]:
-        start_pt = _closest_close_on_or_before(price_series, long_eps["start_date"])
-        start_price = start_pt["close"] if start_pt else None
-        for pt in long_eps["series"]:
-            price_pt = _closest_close_on_or_before(price_series, pt["date"])
-            price_index = (round(price_pt["close"] / start_price * 100, 4)
-                            if (price_pt and start_price) else None)
-            long_chart_series.append({
-                "date": pt["date"], "eps_index": pt["eps_index"],
-                "price_index": price_index, "coverage_pct": pt["coverage_pct"],
-            })
+    long_chart_series, long_eps_suppressed_note = build_long_chart_series(long_eps, price_series)
 
     excluded_weight = sum(e["weight_pct"] or 0 for e in excluded)
     non_equity_weight = sum(e["weight_pct"] or 0 for e in non_equity)
@@ -1607,6 +1863,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         "as_of": today_str,
         "mode": "full",
         "mode_reason": mode_reason,
+        "full_refresh": cfg.get("full_refresh", "weekly"),
         "eps_as_of": today_str,
         "price_since_eps_as_of_pct": 0.0,  # FULL 跑當天，eps_as_of 就是今天，定義上還沒有變動
         "holdings_as_of": as_of_holdings,
@@ -1641,6 +1898,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
                 "rollover_events": long_eps["rollover_events"],
                 "anomaly_events": long_eps["anomaly_events"],
                 "weight_basis": long_eps["weight_basis"],
+                "suppressed_note": long_eps_suppressed_note,
             },
         },
         "long_eps_index_summary": {
@@ -1653,7 +1911,8 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         "methods_note_zh": build_methods_note_zh(cfg, constituents, non_equity, long_eps,
                                                   len(stock_dash_universe), periods,
                                                   "full", today_str, mode_reason,
-                                                  weight_methodology_note_zh=weight_methodology_note_zh),
+                                                  weight_methodology_note_zh=weight_methodology_note_zh,
+                                                  eps_scope_note_zh=eps_scope_note_zh),
     }
 
 
@@ -1674,6 +1933,13 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
     cached_tickers = eps_cache["tickers"]
     total_weight = sum(h["weight_pct"] or 0 for h in holdings)
     weight_methodology_note_zh = build_weight_methodology_note_zh(cfg, holdings)
+    # PRICE 模式不重新選 EPS 涵蓋範圍（FULL 模式已經決定過、cached_tickers 裡
+    # out_of_eps_scope 的狀態已經凍結），這裡只是純函式重算同一份門檻集合
+    # 給方法論文字用（holdings／cutoff 都沒變，結果必然跟 FULL 那次相同）。
+    eps_scope_cutoff_pct = cfg.get("eps_scope_cutoff_pct")
+    eps_scope_tickers = (select_eps_scope_tickers(holdings, eps_scope_cutoff_pct)
+                         if eps_scope_cutoff_pct else None)
+    eps_scope_note_zh = build_eps_scope_note_zh(cfg, holdings, eps_scope_tickers)
 
     ok_yf_tickers = sorted({info.get("yf_ticker_used", tk) for tk, info in cached_tickers.items()
                              if info.get("status") == "ok"})
@@ -1766,18 +2032,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
     chart_price_series = etf_series[-130:]
 
     long_eps = build_long_eps_index(holdings, dd_days, fx_cache, rc_cache)
-    long_chart_series = []
-    if long_eps["series"]:
-        start_pt = _closest_close_on_or_before(etf_series, long_eps["start_date"])
-        start_price = start_pt["close"] if start_pt else None
-        for pt in long_eps["series"]:
-            price_pt = _closest_close_on_or_before(etf_series, pt["date"])
-            price_index = (round(price_pt["close"] / start_price * 100, 4)
-                            if (price_pt and start_price) else None)
-            long_chart_series.append({
-                "date": pt["date"], "eps_index": pt["eps_index"],
-                "price_index": price_index, "coverage_pct": pt["coverage_pct"],
-            })
+    long_chart_series, long_eps_suppressed_note = build_long_chart_series(long_eps, etf_series)
 
     excluded_weight = sum(e["weight_pct"] or 0 for e in excluded)
     non_equity_weight = sum(e["weight_pct"] or 0 for e in non_equity)
@@ -1804,6 +2059,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         "as_of": today_str,
         "mode": "price",
         "mode_reason": mode_reason,
+        "full_refresh": cfg.get("full_refresh", "weekly"),
         "eps_as_of": eps_as_of,
         "price_since_eps_as_of_pct": price_since_eps_as_of_pct,
         "holdings_as_of": eps_cache.get("holdings_as_of"),
@@ -1838,6 +2094,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
                 "rollover_events": long_eps["rollover_events"],
                 "anomaly_events": long_eps["anomaly_events"],
                 "weight_basis": long_eps["weight_basis"],
+                "suppressed_note": long_eps_suppressed_note,
             },
         },
         "long_eps_index_summary": {
@@ -1849,7 +2106,8 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         },
         "methods_note_zh": build_methods_note_zh(cfg, constituents, non_equity, long_eps,
                                                   0, periods, "price", eps_as_of, mode_reason,
-                                                  weight_methodology_note_zh=weight_methodology_note_zh),
+                                                  weight_methodology_note_zh=weight_methodology_note_zh,
+                                                  eps_scope_note_zh=eps_scope_note_zh),
     }
 
 
@@ -1861,7 +2119,7 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
     要 FULL——這正是我們要的：第一次跑一定要有真資料才能建立快取），比在
     main() 算一次全域 mode 更貼近實際狀態。"""
     eps_cache = load_eps_cache(etf_key)
-    mode, mode_reason = decide_mode(cli_mode, eps_cache, taipei_now())
+    mode, mode_reason = decide_mode(cli_mode, eps_cache, taipei_now(), cfg.get("full_refresh", "weekly"))
     print(f"[etf_dash] {etf_key}: mode={mode} ({mode_reason})", file=sys.stderr)
     if mode == "price":
         try:

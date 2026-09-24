@@ -128,8 +128,11 @@ jobs:
     # 光 QQQ+SPY 的股票聯集就有 ~520 檔（本機實測，見 build_etf_dash.py 的
     # TICKER_FETCH_PACING_S），逐檔 yfinance eps_trend+fast_info 加上節流本機
     # 跑完整套約 15-20 分鐘；GitHub runner 網路與 yfinance 限速狀況不定，30
-    # 分鐘的舊上限太緊，拉高到 45 分鐘。
-    timeout-minutes: 45
+    # 分鐘的舊上限太緊，拉高到 45 分鐘。2026-09-25 加 TOPIX：~1,635 檔持股裡
+    # 只對達 EPS 涵蓋門檻（90%，見 FUND_REGISTRY["TOPIX"]["eps_scope_cutoff_pct"]）
+    # 的前 ~370 檔抓 EPS，本機實測 FULL 這一檔另外要 ~10-12 分鐘，七檔合計
+    # FULL 上看 ~35 分鐘，45 分鐘上限已經偏緊，拉高到 60 分鐘。
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -142,7 +145,7 @@ jobs:
       - name: Install dependencies
         run: pip install "yfinance>=0.2.40" pandas numpy requests openpyxl
 
-      - name: Build ETF dashboard data (SMH + SMH_UCITS + QQQ + SPY + TAIEX + 0050)
+      - name: Build ETF dashboard data (SMH + SMH_UCITS + QQQ + SPY + TAIEX + 0050 + TOPIX)
         # 個別 ETF 失敗（持股來源格式改版、被擋、yfinance 掛了一整輪重試後仍
         # 失敗）只會讓 build_etf_dash.py 略過那一檔、其餘照跑；只有全部失敗它
         # 才會 non-zero exit——那種情況本步驟紅燈，後面的 commit 步驟仍會跑
@@ -158,7 +161,7 @@ jobs:
         id: build
         env:
           MODE_INPUT: ${{ github.event.inputs.mode || 'auto' }}
-        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --etf TAIEX --etf 0050 --mode "$MODE_INPUT"
+        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --etf TAIEX --etf 0050 --etf TOPIX --mode "$MODE_INPUT"
 
       - name: Fail loudly if the build step errored
         if: steps.build.outcome == 'failure'
@@ -177,7 +180,7 @@ jobs:
             echo "No changes to commit"
           else
             DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
-            git commit -m "data: ETF dashboard snapshot ${DATE} (SMH + SMH_UCITS + QQQ + SPY + TAIEX + 0050)
+            git commit -m "data: ETF dashboard snapshot ${DATE} (SMH + SMH_UCITS + QQQ + SPY + TAIEX + 0050 + TOPIX)
 
             Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
             for i in 1 2 3 4 5 6; do
