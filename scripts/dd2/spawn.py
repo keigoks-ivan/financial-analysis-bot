@@ -273,6 +273,7 @@ def oneshot_stream(prompt_path, model, out_json, cwd, *, thinking_cap=None, budg
         "thinking_tokens": sum((v.get("thinkingTokens") or 0) for v in mu.values() if isinstance(v, dict)),
         "haiku_input_tokens": sum((v.get("inputTokens") or 0) for k, v in mu.items() if "haiku" in k and isinstance(v, dict)),
         "over_budget": bool(budget_cache_read and (usage.get("cache_read_input_tokens") or 0) > budget_cache_read),
+        "by_model": mu,  # 2026-09-24：finish 的全帳按模型分桶讀這欄，漏了會印 fable/opus/sonnet 全 $0.00
         "raw_path": str(out_json), "returncode": proc.returncode,
         "stderr_tail": (proc.stderr or "")[-500:],
     }

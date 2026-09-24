@@ -100,4 +100,43 @@ def test_program_drift_reserves_decision_fields_when_decision_out_has_no_verdict
     run._current_price = lambda c: 110
     obj = {"decision_out": {"exec_line": "分批"}, "counter_evidence": {"contradictions": []}}
     obj, _ = run.program_drift_entries(ctx, obj, decision_out=None)
-    assert {"dca_verdict", "dca_role"} <= set(obj["counter_evidence"]["contradictions"][0]["prior_field"])
+    reserved = [e for e in obj["counter_evidence"]["contradictions"] if "dca_verdict" in e["prior_field"]]
+    assert reserved and {"dca_verdict", "dca_role"} <= set(reserved[0]["prior_field"])
+
+
+def test_program_drift_counterfactual_picks_val_for_verdict(tmp_path, monkeypatch):
+    import json, types
+    (tmp_path / "parts").mkdir()
+    (tmp_path / "parts" / "prior.json").write_text(json.dumps({"prior_dd": {
+        "dca_verdict": "進場", "dca_role": "核心", "price_at_dd": 100,
+        "prior_meta": {"ma": "✅", "val": "🟡", "signal": "A"}}}))
+    (tmp_path / "judgment_view.json").write_text(json.dumps({"decision_inputs": {"ma": "🟡", "val": "🟠", "signal": "A"}}))
+    ctx = types.SimpleNamespace(run_dir=tmp_path, ticker="T", date="20260924")
+    monkeypatch.setattr(run, "_ma_label", lambda c: "🟡")
+    monkeypatch.setattr(run, "_current_price", lambda c: 110)
+    import dd_decision
+    monkeypatch.setattr(dd_decision, "evaluate",
+                        lambda x: {"verdict": "進場" if x.get("val") == "🟡" else "進場·條件式", "role": "衛星"})
+    obj = {"counter_evidence": {"contradictions": [
+        {"axis": "判斷者", "cause": "價格變動", "prior_field": ["dca_verdict", "val"]}]}}
+    obj, log = run.program_drift_entries(ctx, obj, decision_out={"verdict": "進場·條件式", "role": "衛星"})
+    ents = {tuple(e["prior_field"]): e for e in obj["counter_evidence"]["contradictions"]}
+    assert ents[("dca_verdict",)]["cause"] == "價格變動"
+    # 角色沒有單一輸入能還原；變的只有 ma、val 兩個程式欄 → 多欄共同，含 val 記價格變動
+    assert ents[("dca_role",)]["cause"] == "價格變動" and "多欄共同" in ents[("dca_role",)]["ruling"]
+    assert ents[("val",)]["prior_field"] == ["val"]  # 判斷者條目的 dca_verdict 被拆掉
+
+
+def test_qc49_fill_window(tmp_path):
+    import json, types
+    (tmp_path / "parts").mkdir()
+    (tmp_path / "parts" / "prior.json").write_text(json.dumps({"prior_dd": {
+        "date": "20260907", "dca_verdict": "進場", "dca_role": "核心", "prior_meta": {}}}))
+    ctx = types.SimpleNamespace(run_dir=tmp_path, ticker="T", date="20260924")
+    obj = {"decision_inputs": {"qc49_inherit_prior": True, "prior_verdict": "亂填"}}
+    run._qc49_fill(ctx, obj)
+    assert obj["decision_inputs"]["prior_verdict"] == "進場" and obj["decision_inputs"]["prior_role"] == "核心"
+    ctx.date = "20261231"
+    obj = {"decision_inputs": {"qc49_inherit_prior": True}}
+    run._qc49_fill(ctx, obj)
+    assert obj["decision_inputs"]["qc49_inherit_prior"] is None and "prior_verdict" not in obj["decision_inputs"]

@@ -132,7 +132,8 @@ def _usage_record(label, r, extra=None):
            "output_tokens": r.get("output_tokens"), "cache_read": r.get("cache_read"),
            "cache_creation": r.get("cache_creation"), "cost_usd": r.get("cost_usd"),
            "duration_ms": r.get("duration_ms"), "over_budget": r.get("over_budget"),
-           "thinking_tokens": r.get("thinking_tokens"), "haiku_input_tokens": r.get("haiku_input_tokens")}
+           "thinking_tokens": r.get("thinking_tokens"), "haiku_input_tokens": r.get("haiku_input_tokens"),
+           "by_model": r.get("by_model")}  # finish 全帳按模型分桶（2026-09-24 前漏帶 → 各模型 $0.00）
     if extra:
         rec.update(extra)
     return rec
@@ -570,6 +571,36 @@ def do_facts(ctx):
 # judged：opus 單輪無工具；回覆即 JSON。形狀錯 normalize 一次，仍錯就停。
 # ---------------------------------------------------------------------------
 
+QC49_WINDOW_DAYS = 90
+
+
+def _qc49_fill(ctx, obj):
+    """QC-49：判斷者只答 qc49_inherit_prior（前份觸發器是否全沒發火）；前次裁決／角色由程式從 prior.json 帶，
+    判斷者填的一律覆寫。前份超過 90 天或沒有前份 → 不承繼（清成 null）。回 note 或 None。"""
+    di = obj.setdefault("decision_inputs", {})
+    ans = di.get("qc49_inherit_prior")
+    pp = ctx.run_dir / "parts" / "prior.json"
+    pd_ = ((_load_json(pp) if pp.exists() else {}) or {}).get("prior_dd") or {}
+    pm = _prior_meta(ctx)
+    age = None
+    try:
+        d0 = _dt.datetime.strptime(str(pd_.get("date")), "%Y%m%d").date()
+        age = (_dt.datetime.strptime(ctx.date, "%Y%m%d").date() - d0).days
+    except (TypeError, ValueError):
+        pass
+    for k in ("prior_verdict", "prior_role"):
+        di.pop(k, None)
+    if ans is not True:
+        return None
+    if age is None or age > QC49_WINDOW_DAYS or not pm.get("dca_verdict"):
+        di["qc49_inherit_prior"] = None
+        return "qc49_inherit_prior=true 但前份 {0} 天前或缺裁決，不承繼".format(age)
+    di["prior_verdict"] = pm.get("dca_verdict")
+    di["prior_role"] = pm.get("dca_role")
+    return "qc49：前份 {0} 天前，帶入 prior_verdict={1}／prior_role={2}".format(
+        age, pm.get("dca_verdict"), pm.get("dca_role"))
+
+
 def _write_judgment(ctx, obj):
     meta = obj.setdefault("meta", {})
     meta.setdefault("ticker", ctx.ticker)
@@ -588,10 +619,12 @@ def _write_judgment(ctx, obj):
                 ctx.manifest.setdefault("mechanical_overrides", []).append(
                     {"path": "$.decision_inputs.ma", "judge": di.get("ma"), "program": label})
                 di["ma"] = label
+    qc49_note = _qc49_fill(ctx, obj)
     obj, drift_log = program_drift_entries(ctx, obj, decision_out=None)
     st = ctx.manifest.get("stages", {}).get("judged")
     if isinstance(st, dict):
         st["program_drift"] = drift_log
+        st["qc49"] = qc49_note
         st["oneliner_role_words"] = _oneliner_role_warn(obj)
     path = ctx.run_dir / "judgment.json"
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -640,14 +673,67 @@ def _mk_entry(cause, fields, axis, side_a, side_b, ruling):
             "evidence_level": "程式計算", "settle_metric": "—", "if_then": [], "evidence_refs": []}
 
 
+# 裁決／角色是 dd_decision.py 的機械輸出，判斷者寫稿時看不到，變動原因由程式反事實歸因：
+# 把本次與前份不同的矩陣輸入逐一改回前份值重算，單獨改回就能還原前份裁決（或角色）的欄＝直接原因。
+# 2026-09-24 TXN：舊版一律歸給 ma，實驗顯示是 val（價格）改的裁決、角色是多欄共同。
+DRIFT_CF_FIELDS = ("signal", "val", "ma", "trap", "moat_trend", "runway_post_y5")
+DRIFT_CF_CAUSE = {"ma": "方法變動", "val": "價格變動"}  # 其餘＝判斷者欄 → 新證據
+DRIFT_CF_LABEL = {"signal": "訊號", "val": "估值燈", "ma": "均線", "trap": "陷阱燈",
+                  "moat_trend": "護城河趨勢", "runway_post_y5": "五年後跑道"}
+
+
+def _decision_counterfactual(ctx, pm, decision_out):
+    """回 {dca_verdict|dca_role: {"prev","now","causes":[欄],"changed":{欄:(前,今)}}}，只列有變的。"""
+    import dd_decision
+    view = ctx.run_dir / "judgment_view.json"
+    di = ((_load_json(view) if view.exists() else {}) or {}).get("decision_inputs") or {}
+    changed = {k: (pm.get(k), di.get(k)) for k in DRIFT_CF_FIELDS
+               if pm.get(k) is not None and di.get(k) is not None and pm.get(k) != di.get(k)}
+    out = {}
+    for fld, key in (("dca_verdict", "verdict"), ("dca_role", "role")):
+        prev, now = pm.get(fld), decision_out.get(key)
+        if prev is None or not now or prev == now:
+            continue
+        causes = []
+        for k, (old, _new) in changed.items():
+            x = dict(di)
+            x[k] = old
+            try:
+                if dd_decision.evaluate(x).get(key) == prev:
+                    causes.append(k)
+            except Exception:  # 反事實算不出來就不列，落到「多欄共同」
+                pass
+        out[fld] = {"prev": prev, "now": now, "causes": causes, "changed": changed}
+    return out
+
+
+def _cf_entry(fld, info):
+    label = "裁決" if fld == "dca_verdict" else "角色"
+    ch = info["changed"]
+    fmt = lambda ks: "、".join("{0} {1}→{2}".format(DRIFT_CF_LABEL.get(k, k), ch[k][0], ch[k][1]) for k in ks)
+    if info["causes"]:
+        ks = info["causes"]
+        detail = "單獨改回前份值即還原前份{0}：{1}".format(label, fmt(ks))
+    else:
+        ks = list(ch)
+        detail = "沒有單一輸入能還原，屬多欄共同：{0}".format(fmt(ks)) if ks else "矩陣輸入無可比對的前份值"
+    causes = {DRIFT_CF_CAUSE.get(k, "新證據") for k in ks}
+    cause = "新證據" if "新證據" in causes else ("價格變動" if "價格變動" in causes else "方法變動")
+    axis = "{0}由 dd_decision.py 機械路由：前份 {1} → 本次 {2}".format(label, info["prev"], info["now"])
+    ruling = ("{0}是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。{1}。"
+              .format(label, detail))
+    return _mk_entry(cause, [fld], axis, "前份 {0}={1}".format(fld, info["prev"]),
+                     "本次 {0}={1}".format(fld, info["now"]), ruling)
+
+
 def program_drift_entries(ctx, obj, decision_out=None):
-    """回 (obj, log)。把程式欄位從判斷者條目拆掉，前插程式條目。decision_out 有值時（judge check 之後）
-    才把裁決／角色變動併進 ma 那條。可重複呼叫（先移除舊的程式條目再重建）。"""
+    """回 (obj, log)。把程式欄位（ma、price_at_dd、裁決、角色）從判斷者條目拆掉，前插程式條目。
+    decision_out 還沒有 verdict 時（judge check 之前）先預留裁決／角色欄讓漂移對帳過得了；
+    有 verdict 後改寫成反事實歸因。可重複呼叫（先移除舊的程式條目再重建）。"""
     log = []
     pm = _prior_meta(ctx)
     decision_out = decision_out or obj.get("decision_out") or None
-    # 判斷者自己也會寫 decision_out（exec_line／rearm_trigger），不代表裁決已算出；
-    # 以有沒有 verdict 判定（2026-09-24 TXN：只看非空 → 沒預留裁決欄、phase 2 也跑不到 → 漂移未歸因 FAIL）
+    # 判斷者自己也會寫 decision_out（exec_line／rearm_trigger），不代表裁決已算出；以有沒有 verdict 判定
     if not (isinstance(decision_out, dict) and decision_out.get("verdict")):
         decision_out = None
     ce = obj.setdefault("counter_evidence", {})
@@ -656,9 +742,9 @@ def program_drift_entries(ctx, obj, decision_out=None):
     ma_now, ma_prev = _ma_label(ctx), pm.get("ma")
     price_now, price_prev = _current_price(ctx), pm.get("price_at_dd")
     ma_changed = bool(ma_now) and ma_prev is not None and ma_now != ma_prev
-    program_fields = set(PROGRAM_DRIFT_FIELDS_MA) | set(PROGRAM_DRIFT_FIELDS_PRICE)
+    program_fields = set(PROGRAM_DRIFT_FIELDS_MA) | set(PROGRAM_DRIFT_FIELDS_PRICE) | set(DECISION_FIELDS)
 
-    # 1. 拆判斷者條目裡的程式欄；掛在「價格變動」下的裁決／角色也拆
+    # 1. 拆判斷者條目裡的程式欄
     for e in entries:
         pf = e.get("prior_field")
         if isinstance(pf, str):
@@ -670,45 +756,18 @@ def program_drift_entries(ctx, obj, decision_out=None):
             if f in program_fields:
                 log.append("拆掉判斷者條目 prior_field '{0}'（程式欄）".format(f))
                 continue
-            # 裁決／角色掛在「價格變動」下：只有程式會接手歸因（ma 變動）時才拆，否則留給閘審
-            # （MU 2026-09-17：ma 沒變卻拆掉，變成沒人歸因 → 驗證 FAIL）
-            if f in DECISION_FIELDS and e.get("cause") == "價格變動" and ma_changed:
-                log.append("拆掉判斷者條目 prior_field '{0}'（裁決變更不得併入價格原因，改由程式歸因於 ma）".format(f))
-                continue
             keep.append(f)
         e["prior_field"] = keep
 
     # 2. 程式條目
     new_entries = []
     if ma_now is not None:
-        fields = list(PROGRAM_DRIFT_FIELDS_MA)
         axis = "週線均線六態由程式算（timing-appendix §F）：前份 {0} → 本次 {1}".format(ma_prev, ma_now)
         ruling = "均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；" + (
             "此欄變動屬方法變動，不是基本面新證據。" if ma_changed else "與前份相同。")
-        if ma_changed and not decision_out:
-            # 裁決還沒算：先預留兩欄，讓 validate 的漂移對帳過得了；phase 2 再依實際裁決改寫
-            fields += list(DECISION_FIELDS)
-            axis += "；裁決／角色若因此被矩陣改列，直接原因為本欄（待 dd_decision.py 算出後補實際值）"
-        if decision_out and ma_changed:
-            v_prev, r_prev = pm.get("dca_verdict"), pm.get("dca_role")
-            v_now, r_now = decision_out.get("verdict"), decision_out.get("role")
-            moved = []
-            if v_prev is not None and v_now and v_now != v_prev:
-                moved.append("dca_verdict")
-            if r_prev is not None and r_now and r_now != r_prev:
-                moved.append("dca_role")
-            if moved:
-                fields += moved
-                parts = []
-                if "dca_verdict" in moved:
-                    parts.append("裁決 {0}→{1}".format(v_prev, v_now))
-                if "dca_role" in moved:
-                    parts.append("角色 {0}→{1}".format(r_prev, r_now))
-                axis += "；矩陣落第 {0} 列，{1} 隨之改變".format(decision_out.get("row_hit"), "、".join(parts))
-                ruling += " 裁決與角色由 dd_decision.py 依 decision_inputs 機械路由，本次變動的直接原因是 ma 這一欄（{0}→{1}）；基本面欄位的變動另見判斷者條目。".format(ma_prev, ma_now)
-        new_entries.append(_mk_entry("方法變動", fields, axis,
+        new_entries.append(_mk_entry("方法變動", list(PROGRAM_DRIFT_FIELDS_MA), axis,
                                      "前份 ma={0}".format(ma_prev), "本次 ma={0}".format(ma_now), ruling))
-        log.append("程式條目：ma（方法變動）" + ("＋" + "/".join(fields[1:]) if len(fields) > 1 else ""))
+        log.append("程式條目：ma（方法變動）")
     if price_now is not None:
         try:
             chg = (float(price_now) / float(price_prev) - 1.0) * 100.0 if price_prev else None
@@ -720,6 +779,18 @@ def program_drift_entries(ctx, obj, decision_out=None):
                                      "前份 price_at_dd={0}".format(price_prev), "本次 price_at_dd={0}".format(price_now),
                                      "現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。"))
         log.append("程式條目：price_at_dd（價格變動）")
+    if pm.get("dca_verdict") is not None or pm.get("dca_role") is not None:
+        if decision_out is None:
+            new_entries.append(_mk_entry("方法變動", list(DECISION_FIELDS),
+                                         "裁決／角色由 dd_decision.py 機械路由（待算出後以反事實歸因改寫）",
+                                         "前份 {0}／{1}".format(pm.get("dca_verdict"), pm.get("dca_role")), "待算",
+                                         "預留：裁決與角色是矩陣輸出，judge check 算出後由程式逐欄反事實歸因。"))
+            log.append("程式條目：裁決／角色預留")
+        else:
+            for fld, info in _decision_counterfactual(ctx, pm, decision_out).items():
+                new_entries.append(_cf_entry(fld, info))
+                log.append("程式條目：{0} 反事實歸因 → {1}".format(
+                    fld, "、".join(info["causes"]) or "多欄共同"))
     ce["contradictions"] = new_entries + entries
     return obj, log
 
@@ -982,7 +1053,19 @@ def _gate_patch(ctx, st, clean, idx):
     ctx.save()
     if errors:
         return False, "patch 驗證未過（原檔未動）：\n" + "\n".join(str(e)[:200] for e in errors[:10])
+    # patch 可能改了 qc49_inherit_prior；前次裁決／角色與程式歸因條目照 judged 段同一套重建
+    jpath = ctx.run_dir / "judgment.json"
+    cur = _load_json(jpath)
+    st["qc49_after_patch"] = _qc49_fill(ctx, cur)
+    (cur.get("decision_out") or {}).pop("verdict", None)  # 舊裁決作廢：先預留，judge check 重算後再歸因
+    cur, _ = program_drift_entries(ctx, cur, decision_out=None)
+    jpath.write_text(json.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
     ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
+    if ok:
+        cur = _load_json(jpath)
+        cur, _ = program_drift_entries(ctx, cur, decision_out=cur.get("decision_out") or {})
+        jpath.write_text(json.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
+        ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
     (ctx.run_dir / "judge_check.txt").write_text(report, encoding="utf-8")
     return ok, "patch 套用 {0} 筆，judge check {1}".format(applied, "PASS" if ok else "FAIL")
 
@@ -1353,8 +1436,14 @@ def report(ctx):
     print("\n===== dd2 v20 回報 {0} {1} =====".format(ctx.ticker, ctx.date))
     print("報告：", (stages.get("prose") or {}).get("out_path") or (stages.get("brief") or {}).get("out_path") or "-")
     print("裁決：{0}｜{1}".format(verdict, role))
+    max_dd = nums.get("max_dd_pct")
+    if max_dd is None:  # scenario_meta 不存 Max DD；判斷的 scenario_inputs.max_dd.lo 才是（dd-meta 也取這個）
+        try:
+            max_dd = ((_load_json(ctx.run_dir / "judgment.json").get("scenario_inputs") or {}).get("max_dd") or {}).get("lo")
+        except Exception:
+            max_dd = None
     print("數字：5Y EV {0}｜IRR base {1}｜Max DD {2}".format(
-        nums.get("ev5y_pct", "?"), nums.get("irr_base_pct", "?"), nums.get("max_dd_pct", "?")))
+        nums.get("ev5y_pct", "?"), nums.get("irr_base_pct", "?"), "?" if max_dd is None else max_dd))
     print("帳：spawns {0}｜cache_write {1:,}｜output {2:,}｜cache_read {3:,}｜cost ${4:.2f}".format(
         n_spawn, tot_in, tot_out, tot_cr, cost))
     print("閘：🔴 {0} 🟡 {1}｜fallback 段數 0（v20 無修補輪）".format(g.get("red", "-"), g.get("yellow", "-")))
