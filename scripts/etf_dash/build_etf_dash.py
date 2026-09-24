@@ -1,0 +1,1050 @@
+#!/usr/bin/env python3
+"""build_etf_dash.py — ETF 股價 vs 成分股 EPS 預估修正儀表板（prototype）。
+
+背景：SMH 兩個版本比較——美國掛牌 VanEck Semiconductor ETF（NASDAQ: SMH）
+vs 愛爾蘭 UCITS 版 VanEck Semiconductor UCITS ETF（ISIN IE00BMC38736；LSE
+美元計價 ticker 也叫 SMH，GBP 計價叫 SMGB.L，Xetra 歐元計價叫 VVSM.DE）。
+兩者持股／權重不同（UCITS 有集中度上限），這是本頁要呈現的重點。
+
+Pipeline：
+  1. 抓 VanEck 官方完整持股下載（US／IE 兩個 fund 頁面的 "Download All
+     Holdings" 連結，實測是純 GET + 一組 cookie，回傳 .xlsx，不需要瀏覽器／
+     JS——見 fetch_holdings_xlsx()）。失敗就退回上次成功抓到的快取
+     （data/etf_dash/holdings_cache/{ETF}.json），絕不用空資料覆蓋好資料。
+  2. 每檔成分股用 yfinance Ticker.eps_trend 抓 0y／+1y 的 current／7d／30d／
+     60d／90d 前 EPS 估計（見該欄位自帶的 currency：多數 ADR 是 USD，但
+     ASML 這類「美股掛牌、歐洲報表」的名字 eps_trend 是 EUR——這是
+     scripts/eps_fx_normalize.py 修過的同一類 bug，這裡重用該模組的
+     get_fx_rate() 只在算「加權遠期本益比」這條需要美元 EPS 的地方做 FX
+     轉換；EPS 修正 % 本身是同幣別比較，不需要）。
+  3. ETF 本身的股價走勢用 yfinance 直接抓（SMH／SMH.L 皆為美元計價）。
+  4. 算出：分期間（7d／30d／60d／90d 對齊 eps_trend 的四個錨點）的成分股
+     加權 EPS 修正、ETF 股價漲跌、隱含本益比變動；當期加權遠期本益比
+     （harmonic mean）；前五大貢獻者；覆蓋率。
+  5. 寫每日快照 data/etf_dash/snapshots/{ETF}/{YYYY-MM-DD}.json（同日重跑
+     覆寫同一檔，冪等），供圖表隨時間自然長出歷史線（見
+     build_eps_index_series()）。
+  6. 輸出 docs/etf-dash/data/{ETF}.json（正式頁讀取）＋一份自含資料的
+     preview HTML。
+
+Usage:
+    python3.12 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS
+    python3.12 scripts/etf_dash/build_etf_dash.py --etf SMH --preview-only
+
+Exit code non-zero if BOTH funds failed outright (holdings fetch failed AND
+no cache to fall back on); a single fund failing that way only skips that
+fund and keeps going (see main()).
+"""
+from __future__ import annotations
+
+import argparse
+import io
+import json
+import re
+import sys
+import time
+import warnings
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+warnings.filterwarnings("ignore")
+
+import pandas as pd
+import requests
+
+ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+from eps_fx_normalize import (  # noqa: E402
+    load_fx_daily_cache, save_fx_daily_cache, get_fx_rate,
+    load_reporting_currency_cache, save_reporting_currency_cache, get_reporting_currency,
+    compute_fx_normalized_revision,
+)
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # scripts/etf_dash/ itself, for dd_eps_history
+import dd_eps_history  # noqa: E402
+
+try:
+    import yfinance as yf
+except ImportError:  # pragma: no cover
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "yfinance>=0.2.40", "-q"])
+    import yfinance as yf
+
+SNAP_DIR = ROOT / "data" / "etf_dash" / "snapshots"
+HOLDINGS_CACHE_DIR = ROOT / "data" / "etf_dash" / "holdings_cache"
+OUT_DIR = ROOT / "docs" / "etf-dash" / "data"
+PREVIEW_DIR = Path("/private/tmp/claude-501/-Users-ivanchang/etf_dash_preview")
+DD_SCREENER_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
+
+
+def load_stock_dash_universe() -> set[str]:
+    """/stock-dash/ 只給 docs/dd-screener/latest.json stocks[] 裡的 ticker 建頁
+    （見 scripts/build_stock_dash_all.py docstring）。用這份集合判斷成分股列
+    要不要連到 /stock-dash/?t=，讀不到就回空集合（頁面全部退化成純文字，不連結，
+    不當掉）。"""
+    try:
+        d = json.loads(DD_SCREENER_LATEST.read_text(encoding="utf-8"))
+        return {s["ticker"] for s in d.get("stocks", []) if s.get("ticker")}
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING could not load {DD_SCREENER_LATEST} for stock-dash link check: {e}",
+              file=sys.stderr)
+        return set()
+
+UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/128.0 Safari/537.36")
+
+# 2026-09-24 實測：VanEck fund 頁本身要投資人類型/國家 disclaimer 才會顯示
+# holdings 表（JS 渲染的 <ve-holdingsblock> custom element），但「Download
+# All Holdings」連結背後的 XHR 端點本身只認一個 disclaimer cookie（伺服器
+# 302 重導向到 ...?cken=true 時已經在 Set-Cookie 裡示範了這個 cookie 的完整
+# 格式——見 CI 測試 notes），純 requests.get() 帶這組 cookie 就能拿到 .xlsx，
+# 不需要瀏覽器/JS。
+FUND_REGISTRY = {
+    "SMH": {
+        "label_zh": "VanEck 半導體 ETF（SMH，那斯達克，美國掛牌）",
+        "label_en": "VanEck Semiconductor ETF (SMH, NASDAQ)",
+        "yf_ticker": "SMH",
+        "isin": None,
+        "holdings_url": "https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/downloads/holdings/",
+        "holdings_page_url": "https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/holdings/",
+        "holdings_cookies": {
+            "ve-country-us": "iso%3Dus%26investortype%3Dretail%26language%3Den%26disclaimer%3Dtrue"
+                              "%26foreigntax%3Dfalse%26foreigntaxdisclaimer%3Dfalse",
+            "visitortype": "user",
+            "sitelanguage": "en",
+            "ve-country": "current%3Dus%26previous%3D",
+        },
+        "other_listings": [],
+    },
+    "SMH_UCITS": {
+        "label_zh": "VanEck 半導體 UCITS ETF（愛爾蘭掛牌，ISIN IE00BMC38736；LSE 美元計價 ticker 同名 SMH）",
+        "label_en": "VanEck Semiconductor UCITS ETF (IE00BMC38736; LSE SMH, USD)",
+        "yf_ticker": "SMH.L",
+        "isin": "IE00BMC38736",
+        "holdings_url": "https://www.vaneck.com/ie/en/investments/semiconductor-etf/downloads/holdings/",
+        "holdings_page_url": "https://www.vaneck.com/ie/en/investments/semiconductor-etf/holdings/",
+        "holdings_cookies": {
+            "ve-country-ie": "iso%3Die%26investortype%3Dretail%26language%3Den%26disclaimer%3Dtrue"
+                              "%26foreigntax%3Dfalse%26foreigntaxdisclaimer%3Dfalse",
+            "visitortype": "user",
+            "sitelanguage": "en",
+            "ve-country": "current%3Die%26previous%3D",
+        },
+        # 同一檔基金的其他掛牌／計價幣別——本頁不抓這些，只記錄供讀者對照。
+        "other_listings": [
+            {"exchange": "LSE", "ticker": "SMGB.L", "currency": "GBP"},
+            {"exchange": "Xetra", "ticker": "VVSM.DE", "currency": "EUR"},
+        ],
+    },
+}
+
+# 2026-09-24 持有人拍板：SK Hynix 在 VanEck 持股欄位裡標的 ticker「SKHYV」是
+# 境外 Reg-S ADR，yfinance 查無報價（Quote not found）——原本整檔排除，但它是
+# 兩檔基金裡數一數二大的權重（UCITS 9.16%／US 4.67%），排除會讓 ETF 加權 EPS
+# 變動有偏誤（它很可能是修正幅度最大的名字之一）。改用一個顯式別名表，把
+# 「VanEck 持股欄位的 ticker」映射到「yfinance 實際查得到報價與 EPS 的 ticker」
+# ——SK Hynix 用南韓交易所掛牌股 000660.KS（KRW 計價）。eps_trend／fast_info
+# 抓到的 EPS 與股價都是這檔韓股本身的（同一份股票、同一個股數基礎），不是
+# ADR 換股比例調整過的數字，兩者一起用不會有股數比例造成的單位不一致
+# （revisions_pct／price_usd 都用同一檔 000660.KS 的原始 KRW 數字算，FX 換算
+# 只在需要美元基準的地方做——見 build_fund() 裡對 eps_fy_next_usd／price_usd
+# 兩處的 FX 轉換，兩者都走同一個 get_fx_rate() 快取）。未來遇到類似查無報價
+# 的成分股，往這裡加一行 alias 即可，不需要改其他邏輯。
+TICKER_ALIAS = {
+    "SKHYV": "000660.KS",
+}
+
+# 2026-09-24 持有人對帳確認的兩個 build_long_eps_index() anomaly_events 根因
+# （見該函式與 classify_eps_step()）：
+#   - KLAC 07-16：KLAC 於 2026-06-12 執行 10:1 股票分割，Koyfin 延遲到 07-16
+#     才在預估欄位反映，eps_fy_next／eps_fy3 才會同步除以約 9.7-10。
+#   - TSM 09-16：dd-screener 管線當天開始對 TSM 套用 ADR 換股比例，讓
+#     eps_fy_next／eps_fy3 同步乘以約 4.9（此前呈現的是換算前的基礎）。
+# 只註記已經對過帳、有明確根因的事件；沒對過帳的（例如 05-20 那筆，當時
+# eps_fy3 欄位還沒上線）維持不猜測根因，只留「排除」的事實。
+KNOWN_ANOMALY_EXPLANATIONS = {
+    ("KLAC", "2026-07-16"): "KLAC 於 2026-06-12 執行 10:1 股票分割，Koyfin 延遲到 07-16 才反映在預估欄位，"
+                             "eps_fy_next／eps_fy3 同步除以約 9.7-10，不是分析師修正。",
+    ("TSM", "2026-09-16"): "dd-screener 管線當天開始對 TSM 套用 ADR 換股比例，eps_fy_next／eps_fy3 同步"
+                            "乘以約 4.9（此前呈現的是換算前的基礎），不是分析師修正。",
+}
+
+PERIOD_DEFS = [  # (key, yfinance eps_trend 欄名, 中文標籤, 概略天數)
+    ("7d", "7daysAgo", "近 7 天", 7),
+    ("30d", "30daysAgo", "近一個月", 30),
+    ("60d", "60daysAgo", "近二個月", 60),
+    ("90d", "90daysAgo", "近三個月", 90),
+]
+
+RATE_LIMIT_BACKOFFS_S = [20, 45, 90]  # yfinance YFRateLimitError 重試等待秒數
+
+
+def _is_rate_limited(exc: Exception) -> bool:
+    name = type(exc).__name__
+    msg = str(exc)
+    return "YFRateLimitError" in name or ("rate" in msg.lower() and "limit" in msg.lower()) or "429" in msg
+
+
+def yf_call_with_backoff(fn, *, label: str = ""):
+    """跑一個 yfinance 存取（lambda），YFRateLimitError 時照 RATE_LIMIT_BACKOFFS_S
+    等待重試；其他例外直接往外拋（呼叫端決定是整檔跳過還是整體失敗）。"""
+    last_exc = None
+    for attempt, wait_s in enumerate([0] + RATE_LIMIT_BACKOFFS_S):
+        if wait_s:
+            print(f"[etf_dash] rate-limited on {label}; sleeping {wait_s}s before retry "
+                  f"{attempt}/{len(RATE_LIMIT_BACKOFFS_S)}", file=sys.stderr)
+            time.sleep(wait_s)
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001
+            last_exc = e
+            if not _is_rate_limited(e):
+                raise
+    raise last_exc
+
+
+# ---------------------------------------------------------------------------
+# VanEck holdings — fetch + parse + cache fallback
+# ---------------------------------------------------------------------------
+
+
+def fetch_holdings_xlsx(cfg: dict) -> bytes:
+    r = requests.get(cfg["holdings_url"], headers={"User-Agent": UA}, cookies=cfg["holdings_cookies"],
+                      timeout=30, allow_redirects=True)
+    r.raise_for_status()
+    ct = r.headers.get("content-type", "")
+    if "spreadsheet" not in ct and "excel" not in ct and "octet-stream" not in ct:
+        raise RuntimeError(f"unexpected content-type {ct!r} (body len={len(r.content)}) from "
+                            f"{cfg['holdings_url']} — VanEck page format may have changed, or this "
+                            f"now needs a browser session (disclaimer gate cookie stopped working)")
+    if len(r.content) < 500:
+        raise RuntimeError(f"suspiciously small response ({len(r.content)} bytes) from {cfg['holdings_url']}")
+    return r.content
+
+
+def parse_holdings_xlsx(raw: bytes) -> tuple[str, list[dict]]:
+    df = pd.read_excel(io.BytesIO(raw), header=None)
+    header_row_idx = None
+    for i in range(min(6, len(df))):
+        row_vals = [str(v).strip() for v in df.iloc[i].tolist()]
+        if "Number" in row_vals:
+            header_row_idx = i
+            break
+    if header_row_idx is None:
+        raise RuntimeError("could not locate header row ('Number' column) in holdings sheet")
+
+    title = str(df.iloc[0, 0]) if len(df) else ""
+    m = re.search(r"(\d{2})/(\d{2})/(\d{4})", title)
+    as_of = f"{m.group(3)}-{m.group(1)}-{m.group(2)}" if m else None
+
+    cols = [str(c).strip() for c in df.iloc[header_row_idx].tolist()]
+    body = df.iloc[header_row_idx + 1:].copy()
+    body.columns = cols
+
+    def _find_col(*needles):
+        for c in cols:
+            if all(n.lower() in c.lower() for n in needles):
+                return c
+        return None
+
+    number_col = _find_col("Number")
+    ticker_col = _find_col("Ticker")
+    name_col = _find_col("Holding Name")
+    weight_col = _find_col("% of Net Assets")
+    if not all([number_col, ticker_col, name_col, weight_col]):
+        raise RuntimeError(f"holdings sheet missing expected columns; got {cols!r}")
+
+    rows = []
+    for _, row in body.iterrows():
+        n = row[number_col]
+        try:
+            int(n)
+        except (TypeError, ValueError):
+            break  # 撞到 footer 免責聲明列，資料列結束
+        ticker_raw = str(row[ticker_col]).strip() if pd.notna(row[ticker_col]) else ""
+        name = str(row[name_col]).strip() if pd.notna(row[name_col]) else ""
+        w_raw = row[weight_col]
+        try:
+            weight_pct = float(str(w_raw).replace("%", "").strip())
+        except (TypeError, ValueError):
+            weight_pct = None
+        if not ticker_raw or ticker_raw in ("--", "nan") or name in ("Other/Cash",) or "CASH" in ticker_raw.upper():
+            continue  # 現金／餘額列，不是個股
+        yf_ticker = ticker_raw.split()[0]  # "AMD US" -> "AMD"；"NVDA" -> "NVDA"
+        rows.append({"ticker": yf_ticker, "raw_ticker_field": ticker_raw, "name": name, "weight_pct": weight_pct})
+
+    if as_of is None or not rows:
+        raise RuntimeError(f"parsed 0 holdings or missing as-of date (as_of={as_of!r}, n_rows={len(rows)})")
+    return as_of, rows
+
+
+def get_holdings_with_fallback(etf_key: str, cfg: dict) -> tuple[str, list[dict], str, bool]:
+    """回傳 (as_of, holdings, source_url, used_stale_cache)。
+
+    抓取失敗（含格式改版、被擋、需要瀏覽器）一律退回上次成功快取，並清楚
+    標記 used_stale_cache=True——絕不用空資料覆蓋 data/etf_dash/holdings_cache/
+    裡的好資料（快取檔只在成功解析時才寫入）。兩者都沒有才整檔失敗。"""
+    cache_path = HOLDINGS_CACHE_DIR / f"{etf_key}.json"
+    try:
+        raw = fetch_holdings_xlsx(cfg)
+        as_of, rows = parse_holdings_xlsx(raw)
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(json.dumps({
+            "as_of": as_of, "holdings": rows, "source_url": cfg["holdings_url"],
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
+        return as_of, rows, cfg["holdings_url"], False
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING holdings fetch failed for {etf_key}: {e}", file=sys.stderr)
+        if cache_path.exists():
+            cached = json.loads(cache_path.read_text(encoding="utf-8"))
+            print(f"[etf_dash] WARNING falling back to cached holdings for {etf_key} "
+                  f"(as_of={cached['as_of']}, fetched_at={cached.get('fetched_at')})", file=sys.stderr)
+            return cached["as_of"], cached["holdings"], cached.get("source_url", cfg["holdings_url"]), True
+        raise RuntimeError(f"{etf_key}: holdings fetch failed and no cached fallback exists ({e})") from e
+
+
+# ---------------------------------------------------------------------------
+# yfinance — per-ticker EPS trend + last price (cached once per run, shared
+# across both funds so overlapping constituents — NVDA/TSM/AMD/... — are
+# only fetched once).
+# ---------------------------------------------------------------------------
+
+
+def fetch_ticker_eps_and_price(ticker: str) -> dict:
+    result = {"ticker": ticker, "status": "ok", "reason": None}
+    try:
+        t = yf.Ticker(ticker)
+        eps_trend = yf_call_with_backoff(lambda: t.eps_trend, label=f"{ticker}.eps_trend")
+    except Exception as e:  # noqa: BLE001
+        result["status"] = "no_eps_data"
+        result["reason"] = f"eps_trend fetch failed: {e}"
+        return result
+    if eps_trend is None or eps_trend.empty or "+1y" not in eps_trend.index:
+        result["status"] = "no_eps_data"
+        result["reason"] = "no +1y row in eps_trend"
+        return result
+    row = eps_trend.loc["+1y"]
+    currency = None
+    if "currency" in eps_trend.columns:
+        cur_val = row.get("currency")
+        currency = str(cur_val).upper() if cur_val is not None and not pd.isna(cur_val) else None
+    currency = currency or "USD"
+    current = row.get("current")
+    if current is None or pd.isna(current):
+        result["status"] = "no_eps_data"
+        result["reason"] = "+1y current estimate missing"
+        return result
+    current = float(current)
+    if current <= 0:
+        result["status"] = "negative_or_zero_eps"
+        result["reason"] = f"+1y EPS estimate is {current:.4f} {currency} (<=0)"
+        result["eps_fy_next_local"] = current
+        result["eps_currency"] = currency
+        return result
+
+    anchors = {}
+    for key, col, _label, _days in PERIOD_DEFS:
+        v = row.get(col)
+        anchors[key] = None if v is None or pd.isna(v) else float(v)
+
+    price = None
+    price_currency = None
+    try:
+        fi = yf_call_with_backoff(lambda: t.fast_info, label=f"{ticker}.fast_info")
+        price = fi.get("lastPrice") if hasattr(fi, "get") else getattr(fi, "last_price", None)
+        if price is not None:
+            price = float(price)
+        # fast_info.currency 是這檔股票自己掛牌的計價幣別——多數持股是美股/ADR
+        # 所以是 USD，但像 000660.KS 這類非美元掛牌股（SK Hynix 別名指過去的
+        # 那一檔）是 KRW。價格幣別跟 eps_currency 未必相同來源但通常一致（同一
+        # 家公司同一個掛牌），這裡分開存是為了不假設兩者一定相等。
+        pc = fi.get("currency") if hasattr(fi, "get") else getattr(fi, "currency", None)
+        price_currency = str(pc).upper() if pc else None
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING fast_info failed for {ticker}: {e}", file=sys.stderr)
+
+    result.update({
+        "eps_fy_next_local": current,
+        "eps_currency": currency,
+        "eps_fy_next_anchors_local": anchors,  # {7d,30d,60d,90d}: EPS N days ago (local currency)
+        "price": price,
+        "price_currency": price_currency or "USD",
+    })
+    return result
+
+
+# ---------------------------------------------------------------------------
+# ETF price history
+# ---------------------------------------------------------------------------
+
+
+def fetch_etf_price_history(yf_ticker: str, calendar_days: int = 200) -> list[dict]:
+    t = yf.Ticker(yf_ticker)
+    hist = yf_call_with_backoff(
+        lambda: t.history(start=(datetime.now() - timedelta(days=calendar_days)).strftime("%Y-%m-%d")),
+        label=f"{yf_ticker}.history",
+    )
+    if hist is None or hist.empty:
+        raise RuntimeError(f"no price history returned for {yf_ticker}")
+    out = []
+    for idx, r in hist.iterrows():
+        out.append({"date": idx.strftime("%Y-%m-%d"), "close": round(float(r["Close"]), 4)})
+    return out
+
+
+def _closest_close_on_or_before(price_series: list[dict], target_date: str):
+    candidates = [p for p in price_series if p["date"] <= target_date]
+    return candidates[-1] if candidates else None
+
+
+# ---------------------------------------------------------------------------
+# Core computation
+# ---------------------------------------------------------------------------
+
+
+def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
+               dd_days: dict, today: datetime, stock_dash_universe: set[str]) -> dict:
+    today_str = today.strftime("%Y-%m-%d")
+    as_of_holdings, holdings, source_url, used_stale = get_holdings_with_fallback(etf_key, cfg)
+
+    unique_tickers = sorted({h["ticker"] for h in holdings})
+    for tk in unique_tickers:
+        if tk not in ticker_cache:
+            yf_tk = TICKER_ALIAS.get(tk, tk)  # 例：SKHYV -> 000660.KS
+            info = fetch_ticker_eps_and_price(yf_tk)
+            info["yf_ticker_used"] = yf_tk
+            ticker_cache[tk] = info
+
+    constituents = []
+    excluded = []
+    total_weight = sum(h["weight_pct"] or 0 for h in holdings)
+    for h in holdings:
+        info = ticker_cache[h["ticker"]]
+        rec = {
+            "ticker": h["ticker"], "name": h["name"], "weight_pct": h["weight_pct"],
+            "has_stock_dash": h["ticker"] in stock_dash_universe,
+        }
+        if info["status"] != "ok":
+            rec["status"] = info["status"]
+            rec["reason"] = info.get("reason")
+            excluded.append(rec)
+            continue
+        currency = info["eps_currency"]
+        eps_local = info["eps_fy_next_local"]
+        fx_normalized = True
+        fx_rate = 1.0
+        if currency != "USD":
+            fx_rate = get_fx_rate(currency, today_str, fx_cache)
+            if not fx_rate:
+                fx_normalized = False
+                fx_rate = None
+        eps_usd = (eps_local / fx_rate) if fx_rate else None
+
+        # 股價也要換成美元——不能預設 info["price"] 就是美元：多數成分股是美股/
+        # ADR（fast_info.currency=='USD'，no-op），但走 TICKER_ALIAS 查到的名字
+        # （目前只有 SK Hynix -> 000660.KS）本身用 KRW 掛牌。這裡用同一個
+        # get_fx_rate() 快取換算，價格與 EPS 都換到美元後再算比率，就不會出現
+        # 「美元 EPS 除以韓元股價」這種分子分母不同幣別的錯誤。
+        price_local = info.get("price")
+        price_currency = (info.get("price_currency") or "USD").upper()
+        price_usd = None
+        price_fx_normalized = True
+        if price_local is not None:
+            if price_currency == "USD":
+                price_usd = price_local
+            else:
+                price_fx_rate = get_fx_rate(price_currency, today_str, fx_cache)
+                if price_fx_rate:
+                    price_usd = price_local / price_fx_rate
+                else:
+                    price_fx_normalized = False
+
+        anchors_local = info["eps_fy_next_anchors_local"]
+        revisions_pct = {}
+        for key, _col, _label, _days in PERIOD_DEFS:
+            base = anchors_local.get(key)
+            revisions_pct[key] = None if not base or base == 0 else round((eps_local / base - 1) * 100, 4)
+
+        rec.update({
+            "status": "ok",
+            "yf_ticker_used": info.get("yf_ticker_used", h["ticker"]),
+            "eps_currency": currency,
+            "eps_fy_next_local": round(eps_local, 4),
+            "eps_fy_next_usd": round(eps_usd, 4) if eps_usd is not None else None,
+            "fx_normalized": fx_normalized,
+            "revisions_pct": revisions_pct,
+            "price_local": round(price_local, 4) if price_local is not None else None,
+            "price_currency": price_currency,
+            "price_usd": round(price_usd, 4) if price_usd is not None else None,
+            "price_fx_normalized": price_fx_normalized,
+        })
+        constituents.append(rec)
+
+    # ---- periods: weighted EPS revision, ETF price change, implied P/E chg
+    price_series = fetch_etf_price_history(cfg["yf_ticker"])
+    price_series.sort(key=lambda p: p["date"])
+    today_price_pt = price_series[-1]
+
+    periods = []
+    contributions_by_period = {}
+    for key, _col, label, days in PERIOD_DEFS:
+        covered = [c for c in constituents if c["revisions_pct"].get(key) is not None]
+        covered_weight = sum(c["weight_pct"] or 0 for c in covered)
+        eps_chg_pct = None
+        contribs = []
+        if covered_weight > 0:
+            acc = 0.0
+            for c in covered:
+                w_renorm = (c["weight_pct"] or 0) / covered_weight
+                contrib = w_renorm * c["revisions_pct"][key]
+                acc += contrib
+                contribs.append({"ticker": c["ticker"], "name": c["name"], "weight_pct": c["weight_pct"],
+                                  "revision_pct": c["revisions_pct"][key],
+                                  "contribution_pct": round(contrib, 4)})
+            eps_chg_pct = round(acc, 4)
+            contribs.sort(key=lambda x: abs(x["contribution_pct"]), reverse=True)
+        contributions_by_period[key] = contribs[:5]
+
+        anchor_date = (today - timedelta(days=days)).strftime("%Y-%m-%d")
+        anchor_pt = _closest_close_on_or_before(price_series, anchor_date)
+        price_chg_pct = None
+        if anchor_pt and anchor_pt["close"]:
+            price_chg_pct = round((today_price_pt["close"] / anchor_pt["close"] - 1) * 100, 4)
+
+        implied_pe_chg_pct = None
+        if eps_chg_pct is not None and price_chg_pct is not None:
+            eps_factor = 1 + eps_chg_pct / 100
+            if eps_factor != 0:
+                implied_pe_chg_pct = round(((1 + price_chg_pct / 100) / eps_factor - 1) * 100, 4)
+
+        periods.append({
+            "key": key, "label": label, "days": days,
+            "base_date": anchor_pt["date"] if anchor_pt else None,
+            "eps_chg_pct": eps_chg_pct, "price_chg_pct": price_chg_pct,
+            "implied_pe_chg_pct": implied_pe_chg_pct,
+            "coverage_pct": round(covered_weight / total_weight * 100, 2) if total_weight else None,
+            "n_covered": len(covered), "n_total": len(constituents),
+        })
+
+    # ---- weighted forward P/E (harmonic mean): 1 / Σ w_i * (EPS_i/price_i)
+    pe_covered = [c for c in constituents if c["eps_fy_next_usd"] and c["price_usd"]]
+    pe_covered_weight = sum(c["weight_pct"] or 0 for c in pe_covered)
+    weighted_fwd_pe = None
+    if pe_covered_weight > 0:
+        yield_sum = sum((c["weight_pct"] / pe_covered_weight) * (c["eps_fy_next_usd"] / c["price_usd"])
+                         for c in pe_covered)
+        weighted_fwd_pe = round(1 / yield_sum, 2) if yield_sum > 0 else None
+
+    # ---- daily snapshot (idempotent per day)
+    snap_dir = SNAP_DIR / etf_key
+    snap_dir.mkdir(parents=True, exist_ok=True)
+    snapshot = {
+        "date": today_str,
+        "holdings_as_of": as_of_holdings,
+        "etf_price_close": today_price_pt["close"],
+        "etf_price_date": today_price_pt["date"],
+        "constituents": [
+            {"ticker": c["ticker"], "weight_pct": c["weight_pct"], "eps_fy_next_local": c["eps_fy_next_local"],
+             "eps_currency": c["eps_currency"], "eps_fy_next_usd": c["eps_fy_next_usd"]}
+            for c in constituents
+        ],
+    }
+    (snap_dir / f"{today_str}.json").write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    eps_index_history = build_eps_index_series(snap_dir, constituents)
+    eps_index_bootstrap = build_eps_index_bootstrap(constituents, today, today_price_pt)
+
+    chart_price_series = price_series[-130:]
+
+    # 長線 EPS 指數（2026-05-19 起，見 dd_eps_history.py／build_long_eps_index()
+    # docstring）。用今天的持股權重固定，股價同步 rebase 到同一個起點＝100，
+    # 兩條線才能疊在同一個座標軸上直接比「估計漲得比股價快還慢」。
+    long_eps = build_long_eps_index(holdings, dd_days, fx_cache, rc_cache)
+    long_chart_series = []
+    if long_eps["series"]:
+        start_pt = _closest_close_on_or_before(price_series, long_eps["start_date"])
+        start_price = start_pt["close"] if start_pt else None
+        for pt in long_eps["series"]:
+            price_pt = _closest_close_on_or_before(price_series, pt["date"])
+            price_index = (round(price_pt["close"] / start_price * 100, 4)
+                            if (price_pt and start_price) else None)
+            long_chart_series.append({
+                "date": pt["date"], "eps_index": pt["eps_index"],
+                "price_index": price_index, "coverage_pct": pt["coverage_pct"],
+            })
+
+    excluded_weight = sum(e["weight_pct"] or 0 for e in excluded)
+
+    # 對帳：長線指數的近 90 天變動，應該跟 Exhibit 1 用 yfinance 算出來的「近三個月」
+    # 落在同一個量級——兩條線資料來源、期間定義都不同（長線是每天 as-of 的
+    # dd-screener 快照鏈，Exhibit 1 是 yfinance eps_trend 記得的「90 天前」單點），
+    # 對不上不代表錯，但差太多要交代原因（見回傳的 long_eps_index_summary）。
+    long_full_period_pct = None
+    long_last_90d_pct = None
+    if long_chart_series:
+        long_full_period_pct = round(long_chart_series[-1]["eps_index"] - 100, 4)
+        cutoff_90d = (today - timedelta(days=90)).strftime("%Y-%m-%d")
+        base_pt = next((p for p in long_chart_series if p["date"] >= cutoff_90d), long_chart_series[0])
+        if base_pt["eps_index"]:
+            long_last_90d_pct = round(long_chart_series[-1]["eps_index"] / base_pt["eps_index"] * 100 - 100, 4)
+    yfinance_90d_pct = next((p["eps_chg_pct"] for p in periods if p["key"] == "90d"), None)
+
+    return {
+        "schema": "etf-dash-v1",
+        "etf_key": etf_key,
+        "label_zh": cfg["label_zh"],
+        "label_en": cfg["label_en"],
+        "yf_ticker": cfg["yf_ticker"],
+        "isin": cfg["isin"],
+        "other_listings": cfg["other_listings"],
+        "as_of": today_str,
+        "holdings_as_of": as_of_holdings,
+        "holdings_source_url": source_url,
+        "holdings_stale": used_stale,
+        "n_holdings": len(constituents) + len(excluded),
+        "n_holdings_covered": len(constituents),
+        "price": {"close": today_price_pt["close"], "date": today_price_pt["date"], "currency": "USD"},
+        "periods": periods,
+        "weighted_forward_pe": {
+            "value": weighted_fwd_pe,
+            "coverage_pct": round(pe_covered_weight / total_weight * 100, 2) if total_weight else None,
+            "method": "harmonic mean 1/Σw_i·(EPS_i/price_i)；非美元報表(如 ASML)的 EPS 先用當日 FX 換算成美元",
+        },
+        "constituents": constituents,
+        "excluded": excluded,
+        "excluded_weight_pct": round(excluded_weight, 2),
+        "contributions": contributions_by_period,
+        "chart": {
+            "price_series": chart_price_series,
+            "eps_index_bootstrap": eps_index_bootstrap,
+            "eps_index_history": eps_index_history,
+            "long_eps_index": {
+                "start_date": long_eps["start_date"],
+                "series": long_chart_series,
+                "coverage_weight_pct": long_eps["coverage_weight_pct"],
+                "covered_tickers": long_eps["covered_tickers"],
+                "rollover_events": long_eps["rollover_events"],
+                "anomaly_events": long_eps["anomaly_events"],
+                "weight_basis": long_eps["weight_basis"],
+            },
+        },
+        "long_eps_index_summary": {
+            "full_period_pct": long_full_period_pct,
+            "last_90d_pct": long_last_90d_pct,
+            "yfinance_90d_pct": yfinance_90d_pct,
+            "note": "長線（dd-screener 快照鏈）與 yfinance 90 天單點理論上量級相近但不必相等"
+                    "——資料源、取樣頻率、fiscal-year 對齊方式都不同。",
+        },
+        "methods_note_zh": (
+            "成分股權重與明細來自 VanEck 官方持股下載（見 holdings_source_url，"
+            "as of holdings_as_of，非 yfinance 前十大）。每檔成分股的 EPS 修正取 "
+            "yfinance Ticker.eps_trend 的「明年度」(+1y) 估計，比較目前值與 7／30／"
+            "60／90 天前值的百分比變動；ETF 加權 EPS 變動＝當期有資料成分股的"
+            "權重重新正規化後加權平均（無資料或 EPS≤0 者見 excluded 清單，不進分子分母）。"
+            "股價變動用 ETF 自身 yfinance 收盤價，取最接近錨點日期（不晚於當日）的收盤。"
+            "隱含本益比變動＝(1+股價變動)/(1+EPS變動)−1。加權遠期本益比用調和平均"
+            "（1/Σw·(EPS/股價)），非美元報表或非美元掛牌的成分股（本組合為 ASML"
+            "〈EUR 報表〉與 SK Hynix〈韓股 000660.KS，KRW 掛牌＋KRW 報表〉）"
+            "先用當日美元匯率把 EPS 與股價分別換算成美元再算比值，EPS修正%本身"
+            "不需要換算（同幣別比較）。SK Hynix 在 VanEck 持股欄位標的是境外 ADR"
+            "（SKHYV），yfinance 查無該 ADR 報價，改用南韓交易所掛牌股 000660.KS "
+            "取代（見 build_etf_dash.py TICKER_ALIAS）——EPS 與股價都是同一檔韓股"
+            "本身的原始數字，不是 ADR 換股比例調整過的，避免股數基礎不一致。"
+            "Exhibit 2 畫的 EPS 指數來自 docs/dd-screener/latest.json 的 git 歷史"
+            "（scripts/etf_dash/dd_eps_history.py），從 2026-05-19 起、每個有資料"
+            "的交易日一個點，比 yfinance eps_trend 只記得 90 天長得多。權重固定用"
+            "今天的持股權重，指數在第一個資料日訂為 100；股價同一天也 rebase 成 "
+            "100，兩條線才能疊在同一個座標軸上比誰漲得快。SKHYV／SNPS／MCHP／ENTG "
+            "不在 dd-screener 母體裡，長線覆蓋率因此低於 100%（見 coverage_weight_pct），"
+            "缺的那部分不計入分子分母，不是當作沒漲跌。"
+            "Koyfin 的預估資料是月頻更新，兩次更新之間同一個數字連著好幾週不變，"
+            "所以這條線本來就該長得像階梯，不是平滑曲線。"
+            "串接每一步都要過濾兩種假訊號：一是財年輪替——公司的財年結束後，"
+            "「明年度」這個標籤指的年份會往後挪一年，若不處理，eps_fy_next 會"
+            "無端跳一大截；判斷方式是看這一步的 eps_fy_next 是否落在前一天 "
+            "eps_fy3（後年度估計）的 3% 以內，是的話用 eps_fy3 接續，不是財年輪替"
+            "才用前一天的 eps_fy_next 當基準（見 classify_eps_step()）。二是原始資料"
+            "本身的異常——本組合的 105 天歷史裡抓到兩次，兩次都已對過帳、找到"
+            "根因：KLA（KLAC）於 2026-06-12 執行一股拆十股的股票分割，"
+            "Koyfin 延遲到 07-16 才在預估欄位反映，eps_fy_next 與 eps_fy3 同步"
+            "除以約 9.7-10；台積電（TSM）09-16 是 dd-screener 管線當天開始對 "
+            "TSM 套用 ADR 換股比例，兩個欄位同步乘以約 4.9。兩者都是兩個欄位"
+            "同步跳了幾乎一樣的倍數，不是分析師修正，判定為資料異常，整步跳過"
+            "不計入指數。另有一次台積電在 05-20 單步變動逾 45%，但當時 "
+            "eps_fy3 欄位還沒上線、無從比對根因，同樣保守排除（逐筆記錄見 "
+            "chart.long_eps_index.anomaly_events，含 explanation 欄位）。"
+            "非美元報表股票（本組合為台積電 TWD、ASML EUR）在串接每一步時都用"
+            "當天匯率換算，避免匯率波動被算成 EPS 修正，做法與上一段相同，"
+            "重用 scripts/eps_fx_normalize.py，沒有另外寫一套。"
+            "舊版兩條 EPS 線（bootstrap／history，用 yfinance 資料）保留在 "
+            "chart.eps_index_bootstrap／eps_index_history 供查核，但不畫進 "
+            "Exhibit 2——同一張圖擺兩條定義不同的 EPS 線只會讓人看不懂哪條才是"
+            "真的。"
+        ),
+    }
+
+
+def build_eps_index_series(snap_dir: Path, today_constituents: list[dict]) -> list[dict]:
+    """用「今天的權重」＋「每天快照裡的 EPS」重建加權 EPS 指數時間序列。
+    某天快照缺某檔（例如那天 yfinance 抓不到）就用當天有資料的成分股權重
+    重新正規化——覆蓋率會隨之在 coverage_pct 欄位裡看得到。"""
+    today_weights = {c["ticker"]: c["weight_pct"] for c in today_constituents}
+    total_today_weight = sum(today_weights.values()) or 1.0
+    series = []
+    if not snap_dir.exists():
+        return series
+    for f in sorted(snap_dir.glob("*.json")):
+        try:
+            snap = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        acc = 0.0
+        covered_w = 0.0
+        for c in snap.get("constituents", []):
+            tk = c.get("ticker")
+            eps_usd = c.get("eps_fy_next_usd")
+            if tk not in today_weights or eps_usd is None:
+                continue
+            w = today_weights[tk]
+            acc += w * eps_usd
+            covered_w += w
+        if covered_w <= 0:
+            continue
+        # 用當天實際有資料的成分股權重正規化（覆蓋率不足 100% 時的加權平均 EPS，$/share）
+        weighted_eps = acc / covered_w
+        series.append({
+            "date": snap.get("date"),
+            "weighted_eps_usd": round(weighted_eps, 4),
+            "coverage_pct": round(covered_w / total_today_weight * 100, 2),
+            "etf_price_close": snap.get("etf_price_close"),
+        })
+    return series
+
+
+def build_eps_index_bootstrap(constituents: list[dict], today: datetime, today_price_pt: dict) -> list[dict]:
+    """用 eps_trend 自帶的 4 個歷史錨點（90/60/30/7 天前）＋今天，配「今天的
+    權重」重建加權 EPS——只有第一次跑、還沒有每日快照歷史時才需要靠這個，
+    之後 build_eps_index_series() 的每日快照序列會愈來愈長，蓋過這裡。"""
+    total_weight = sum(c["weight_pct"] or 0 for c in constituents) or 1.0
+    points = []
+    anchor_specs = [("90d", 90), ("60d", 60), ("30d", 30), ("7d", 7)]
+    for key, days in anchor_specs:
+        acc = 0.0
+        covered_w = 0.0
+        for c in constituents:
+            anchors_local = None
+            # 重新從 revisions_pct 反推需要原始 anchors；為避免重算 FX，這裡只用
+            # 已經在 constituents 內算好的 eps_fy_next_usd 與 revisions_pct 還原：
+            # anchor_usd = current_usd / (1 + revision%/100)
+            rev = c["revisions_pct"].get(key)
+            cur_usd = c.get("eps_fy_next_usd")
+            if rev is None or cur_usd is None:
+                continue
+            anchor_usd = cur_usd / (1 + rev / 100)
+            w = c["weight_pct"] or 0
+            acc += w * anchor_usd
+            covered_w += w
+        if covered_w <= 0:
+            continue
+        date_label = (today - timedelta(days=days)).strftime("%Y-%m-%d")
+        points.append({"date": date_label, "label": f"{days} 天前", "weighted_eps_usd": round(acc / covered_w, 4),
+                        "coverage_pct": round(covered_w / total_weight * 100, 2)})
+    # 今天
+    acc = sum((c["weight_pct"] or 0) * c["eps_fy_next_usd"] for c in constituents if c.get("eps_fy_next_usd"))
+    covered_w = sum((c["weight_pct"] or 0) for c in constituents if c.get("eps_fy_next_usd"))
+    if covered_w > 0:
+        points.append({"date": today.strftime("%Y-%m-%d"), "label": "今天",
+                        "weighted_eps_usd": round(acc / covered_w, 4),
+                        "coverage_pct": round(covered_w / total_weight * 100, 2)})
+    return points
+
+
+# ---------------------------------------------------------------------------
+# Long-history EPS index — reconstructed from docs/dd-screener/latest.json's
+# git history (2026-05-19 onward, ~105 distinct commit days as of 2026-09-24),
+# via dd_eps_history.py's cache. Far longer than yfinance eps_trend's 90-day
+# memory, but two things make the raw day-over-day series unsafe to chain
+# blindly:
+#   (1) fiscal-year rollover — a company's "eps_fy_next" means a different
+#       fiscal year once that FY closes, so eps_fy_next can jump structurally
+#       without any real analyst revision.
+#   (2) upstream data artifacts found while building this (see report to
+#       coordinator, 2026-09-24) — TSM's eps_fy_next flips between an
+#       ADR-share basis and what looks like a /5 (per-local-share) basis at
+#       least twice in this window, and KLAC shows a ~9.7x single-day drop in
+#       BOTH eps_fy_next and eps_fy3 together on 2026-07-16 (a scale/rebase
+#       artifact, not 25 companies each reporting a stock split that day).
+#       eps_display_currency stays "USD" through all of this — it is NOT a
+#       currency bug, so eps_fx_normalize alone would not catch it.
+# classify_eps_step() below handles both. See its docstring for the exact
+# decision rule and thresholds.
+# ---------------------------------------------------------------------------
+
+ROLLOVER_FY3_TOL = 0.03            # eps_fy_next(t) vs eps_fy3(t-1) 在 3% 以內 → 財年輪替
+SCALE_ANOMALY_RATIO_TOL = 0.05     # eps_fy_next 與 eps_fy3 的單步變動比例要多接近才算「同步縮放」
+SCALE_ANOMALY_BAND = (0.7, 1.43)   # 縮放比例落在此區間內視為正常（约±30%），區間外才觸發
+UNCONFIRMED_JUMP_THRESHOLD = 0.45  # 沒有 eps_fy3 可佐證時，單步變動超過這個比例就保守排除
+STEP_SCRUTINY_THRESHOLD = 0.08     # 單步變動小於這個比例，不值得跑下面的判定，直接當正常修正
+
+
+def classify_eps_step(p_nxt: float | None, p_fy3: float | None,
+                       cur_nxt: float | None, cur_fy3: float | None) -> tuple[str, float | None]:
+    """判斷相鄰兩個 dd-screener 快照日之間，一檔股票的 eps_fy_next 這一步該
+    怎麼用。純函式（不碰快取／網路），回傳 (step_type, baseline_for_revision)：
+
+      - "normal"：一般分析師修正，用 cur_nxt 對 p_nxt 算修正%。
+      - "rollover"：財年輪替——cur_nxt 實際上接的是 p_fy3（去年講的「後年度」
+        變成今年的「明年度」），不是 p_nxt 的延續。用 p_fy3 當基準算修正%
+        （殘差通常很小，因為判定門檻本身就是 3% 以內）。
+      - "scale_anomaly"：eps_fy_next 與 eps_fy3 同一天同步跳了幾乎一樣的倍數
+        （像股數基礎或單位換算被誤改，不是真實修正也不是財年輪替——兩個
+        欄位不該同步移動一樣的比例）。整步排除，不計入指數也不計入覆蓋率。
+      - "unconfirmed_anomaly"：單步變動超過 45%，但不符合上面兩種判定的條件
+        （沒有 eps_fy3 可比對，或比對了也不像財年輪替／同步縮放），保守排除。
+
+    2026-09-24 用本組合 105 天實測：命中 0 次 rollover、2 次 scale_anomaly
+    （TSM 2026-09-16、KLAC 2026-07-16）、1 次 unconfirmed_anomaly（TSM
+    2026-05-20，當時 eps_fy3 欄位還沒上線）。
+    """
+    if not p_nxt or not cur_nxt or p_nxt <= 0 or cur_nxt <= 0:
+        return "normal", p_nxt
+    ratio_next = cur_nxt / p_nxt
+    if abs(ratio_next - 1) <= STEP_SCRUTINY_THRESHOLD:
+        return "normal", p_nxt
+    if p_fy3 and p_fy3 > 0 and abs(cur_nxt / p_fy3 - 1) <= ROLLOVER_FY3_TOL:
+        return "rollover", p_fy3
+    if p_fy3 and p_fy3 > 0 and cur_fy3 and cur_fy3 > 0:
+        ratio_fy3 = cur_fy3 / p_fy3
+        in_band = SCALE_ANOMALY_BAND[0] <= ratio_next <= SCALE_ANOMALY_BAND[1]
+        if abs(ratio_next - ratio_fy3) <= SCALE_ANOMALY_RATIO_TOL and not in_band:
+            return "scale_anomaly", None
+    # 保底：不管有沒有 fy3，只要單步變動大到不像真實修正，又沒被上面兩種更
+    # specific 的判定接住，一律保守排除——不要讓「兩個判定條件都差一點沒踩到」
+    # 的邊界案例被默默當成正常修正吃進指數。
+    if abs(ratio_next - 1) > UNCONFIRMED_JUMP_THRESHOLD:
+        return "unconfirmed_anomaly", None
+    return "normal", p_nxt
+
+
+def build_long_eps_index(holdings: list[dict], dd_days: dict, fx_cache: dict, rc_cache: dict) -> dict:
+    """把 dd_eps_history 快取（dd_days = {"date": {"tickers": {...}}}）鏈接成
+    一條加權 EPS 指數，index=100 在第一個有資料的日期。權重固定用今天的持股
+    權重（disclosed，見回傳的 weight_basis）；某天缺資料的成分股當天不計入
+    covered weight、其餘成分股權重重新正規化——見各步驟內的 coverage_pct。"""
+    weight_by_ticker = {h["ticker"]: (h["weight_pct"] or 0) for h in holdings}
+    tickers = sorted(weight_by_ticker.keys())
+    total_weight = sum(weight_by_ticker.values()) or 1.0
+    dates = sorted(dd_days.keys())
+
+    # 只有 dd-screener 母體裡的名字才有歷史可用；SKHYV／SNPS／MCHP／ENTG 這類
+    # 不在母體的名字，下面 per_ticker_points 會是空列表，自然被排除、拉低
+    # coverage_weight_pct，不特別報錯。
+    currency_by_ticker: dict[str, str] = {}
+    per_ticker_points: dict[str, list[tuple[str, float, float | None]]] = {}
+    for tk in tickers:
+        pts = []
+        for d in dates:
+            rec = dd_days[d]["tickers"].get(tk)
+            if rec is None:
+                continue
+            nxt = dd_eps_history.get_usd_value(rec, "eps_fy_next")
+            fy3 = dd_eps_history.get_usd_value(rec, "eps_fy3")
+            if nxt is None or nxt <= 0:
+                continue
+            pts.append((d, nxt, fy3))
+        if not pts:
+            continue
+        per_ticker_points[tk] = pts
+        yf_tk = TICKER_ALIAS.get(tk, tk)
+        ccy = get_reporting_currency(tk, yf_tk, rc_cache)
+        currency_by_ticker[tk] = (ccy or "USD").upper()
+
+    covered_tickers = sorted(per_ticker_points.keys())
+    coverage_weight_pct = round(sum(weight_by_ticker[tk] for tk in covered_tickers) / total_weight * 100, 2)
+    if not covered_tickers:
+        return {"start_date": None, "series": [], "rollover_events": [], "anomaly_events": [],
+                "covered_tickers": [], "coverage_weight_pct": 0.0, "weight_basis": "today"}
+
+    per_ticker_map = {tk: {d: (n, f) for d, n, f in per_ticker_points[tk]} for tk in covered_tickers}
+
+    start_date = None
+    for d in dates:
+        if any(d in per_ticker_map[tk] for tk in covered_tickers):
+            start_date = d
+            break
+    grid_dates = [d for d in dates if d >= start_date]
+
+    rollover_events: list[dict] = []
+    anomaly_events: list[dict] = []
+
+    prev_vals: dict[str, tuple[str, float, float | None]] = {}
+    for tk in covered_tickers:
+        v = per_ticker_map[tk].get(start_date)
+        if v:
+            prev_vals[tk] = (start_date, v[0], v[1])
+
+    cov0_w = sum(weight_by_ticker[tk] for tk in prev_vals)
+    index = 100.0
+    series = [{"date": start_date, "eps_index": 100.0,
+               "coverage_pct": round(cov0_w / total_weight * 100, 2)}]
+
+    for d in grid_dates[1:]:
+        step_contribs = []  # (weight, step_pct)
+        cov_today_w = 0.0
+        for tk in covered_tickers:
+            cur = per_ticker_map[tk].get(d)
+            if cur is None:
+                continue  # 這檔這天沒資料（暫時掉出 dd-screener 母體），跳過，prev_vals 不變
+            cov_today_w += weight_by_ticker[tk]
+            cur_nxt, cur_fy3 = cur
+            if tk not in prev_vals:
+                prev_vals[tk] = (d, cur_nxt, cur_fy3)  # 這檔第一次出現，這步不算修正
+                continue
+            p_date, p_nxt, p_fy3 = prev_vals[tk]
+            if p_date == d:
+                continue
+            step_type, baseline = classify_eps_step(p_nxt, p_fy3, cur_nxt, cur_fy3)
+            prev_vals[tk] = (d, cur_nxt, cur_fy3)
+            if step_type == "rollover":
+                rollover_events.append({"ticker": tk, "date": d, "prev_date": p_date,
+                                         "prev_eps_fy3_usd": round(p_fy3, 4), "curr_eps_fy_next_usd": round(cur_nxt, 4)})
+            elif step_type in ("scale_anomaly", "unconfirmed_anomaly"):
+                anomaly_events.append({"ticker": tk, "date": d, "prev_date": p_date, "type": step_type,
+                                        "prev_eps_fy_next_usd": round(p_nxt, 4) if p_nxt else None,
+                                        "curr_eps_fy_next_usd": round(cur_nxt, 4),
+                                        "explanation": KNOWN_ANOMALY_EXPLANATIONS.get((tk, d))})
+                continue  # 不信任這一步：不進 index，也不計入 covered weight
+            currency = currency_by_ticker[tk]
+            fx_cur = 1.0 if currency == "USD" else get_fx_rate(currency, d, fx_cache)
+            fx_base = 1.0 if currency == "USD" else get_fx_rate(currency, p_date, fx_cache)
+            step_pct, _fx_ok = compute_fx_normalized_revision(cur_nxt, baseline, currency, fx_cur, fx_base)
+            if step_pct is not None:
+                step_contribs.append((weight_by_ticker[tk], step_pct))
+
+        step_covered_w = sum(w for w, _ in step_contribs)
+        weighted_step = (sum(w * r for w, r in step_contribs) / step_covered_w) if step_covered_w > 0 else 0.0
+        index *= (1 + weighted_step / 100)
+        series.append({"date": d, "eps_index": round(index, 4),
+                        "coverage_pct": round(cov_today_w / total_weight * 100, 2)})
+
+    return {
+        "start_date": start_date,
+        "series": series,
+        "rollover_events": rollover_events,
+        "anomaly_events": anomaly_events,
+        "covered_tickers": covered_tickers,
+        "coverage_weight_pct": coverage_weight_pct,
+        "weight_basis": "today",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Preview HTML (self-contained, data inlined)
+# ---------------------------------------------------------------------------
+
+
+def render_preview_html(data: dict) -> str:
+    payload = json.dumps(data, ensure_ascii=False)
+    # 版面沿用 docs/etf-dash/index.html 的同一份 JS render()；preview 差別有二：
+    # (1) 資料用 inline <script> 塞進去，不用 fetch，方便單檔打開檢視；
+    # (2) imq-base.css 用絕對路徑 /assets/imq-base.css——正式站沒問題，但 preview
+    #     是丟在 /private/tmp/ 底下單檔打開／或非站根 http server 測試，絕對路徑會
+    #     404、整頁沒有 CSS token 變成沒樣式。這裡直接把該檔內容 inline 成
+    #     <style>，讓 preview 真正自含（不依賴任何本機/線上路徑）。
+    prod_template_path = ROOT / "docs" / "etf-dash" / "index.html"
+    template = prod_template_path.read_text(encoding="utf-8")
+    base_css_path = ROOT / "docs" / "assets" / "imq-base.css"
+    base_css = base_css_path.read_text(encoding="utf-8") if base_css_path.exists() else ""
+    template = template.replace(
+        '<link rel="stylesheet" href="/assets/imq-base.css">',
+        f"<style>{base_css}</style>",
+    )
+    marker = "/*__ETF_DASH_DATA__*/"
+    inline = f"var ETF_DASH_INLINE_DATA = {payload};\n"
+    if marker in template:
+        template = template.replace(marker, inline)
+    else:
+        template = template.replace("<script>", f"<script>{inline}", 1)
+    return template
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--etf", action="append", required=True, choices=list(FUND_REGISTRY.keys()),
+                    help="可重複給多次；例：--etf SMH --etf SMH_UCITS")
+    ap.add_argument("--preview-only", action="store_true", help="只重算 preview HTML，不重抓資料（需已有 docs/etf-dash/data/{ETF}.json）")
+    args = ap.parse_args()
+
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
+    HOLDINGS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    if args.preview_only:
+        for etf_key in args.etf:
+            out_path = OUT_DIR / f"{etf_key}.json"
+            if not out_path.exists():
+                print(f"[etf_dash] ERROR {out_path} missing, cannot do --preview-only", file=sys.stderr)
+                return 1
+            data = json.loads(out_path.read_text(encoding="utf-8"))
+            (PREVIEW_DIR / f"{etf_key}.html").write_text(render_preview_html(data), encoding="utf-8")
+            print(f"[etf_dash] wrote preview {PREVIEW_DIR / f'{etf_key}.html'}")
+        return 0
+
+    today = datetime.now()
+    ticker_cache: dict = {}
+    fx_cache = load_fx_daily_cache()
+    rc_cache = load_reporting_currency_cache()
+    stock_dash_universe = load_stock_dash_universe()
+
+    # 長線 EPS 指數的資料源：先把「今天」併入 dd_eps_history.jsonl（append-only，
+    # 只寫今天這一行；純讀 checkout 出來的 latest.json，不需要 git——shallow
+    # clone 的 CI 也能跑），再讀出全部已知天數餵給 build_long_eps_index()。
+    # 檔案本身的成長（git 完整歷史的一次性 backfill）另外用
+    # `python3 scripts/etf_dash/dd_eps_history.py --backfill` 手動跑，見該檔
+    # docstring；backfill 只需要跑一次，之後每次 build 都只是 append 一行。
+    dd_eps_history.append_today(date_str=today.strftime("%Y-%m-%d"))
+    dd_days = dd_eps_history.load_days()
+    print(f"[etf_dash] dd_eps_history: {len(dd_days)} day(s) "
+          f"({min(dd_days) if dd_days else '—'} .. {max(dd_days) if dd_days else '—'}), "
+          f"{dd_eps_history.JSONL_PATH.stat().st_size if dd_eps_history.JSONL_PATH.exists() else 0} bytes")
+
+    n_ok = 0
+    n_fail = 0
+    for etf_key in args.etf:
+        cfg = FUND_REGISTRY[etf_key]
+        print(f"[etf_dash] building {etf_key} ({cfg['label_en']}) ...")
+        try:
+            data = build_fund(etf_key, cfg, ticker_cache, fx_cache, rc_cache, dd_days, today, stock_dash_universe)
+        except Exception as e:  # noqa: BLE001
+            print(f"[etf_dash] ERROR {etf_key} failed: {e}", file=sys.stderr)
+            n_fail += 1
+            continue
+        out_path = OUT_DIR / f"{etf_key}.json"
+        out_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"[etf_dash] wrote {out_path} "
+              f"(holdings {data['n_holdings']}, covered {data['n_holdings_covered']}, "
+              f"stale_holdings={data['holdings_stale']})")
+        preview_path = PREVIEW_DIR / f"{etf_key}.html"
+        preview_path.write_text(render_preview_html(data), encoding="utf-8")
+        print(f"[etf_dash] wrote preview {preview_path}")
+        n_ok += 1
+
+    save_fx_daily_cache(fx_cache)
+    save_reporting_currency_cache(rc_cache)
+
+    if n_ok == 0:
+        print("[etf_dash] ERROR all requested funds failed", file=sys.stderr)
+        return 1
+    if n_fail:
+        print(f"[etf_dash] WARNING {n_fail} fund(s) failed, {n_ok} succeeded", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

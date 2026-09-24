@@ -98,6 +98,10 @@ Change log:
         (id) 之後、「Tier Matrix」(tier) 之前；PREFIX_ACTIVE 新增 ideas/ 前綴映射
         到 ("research", "ideas")。外部 3 repo synced literal 同步（v7-backtest／
         morning-briefing／minervini-quality-backtest，見 site-composition.md）。
+    2026-09-24：研究 ▾ 下拉新增「ETF 儀表板」("etfd", /etf-dash/)，緊接在「個股
+        儀表板」(sdash) 之後；PREFIX_ACTIVE 新增 etf-dash/ 前綴映射到 ("research",
+        "etfd")。外部 3 repo synced literal 尚未同步（見 site-composition.md，
+        待這批 ETF 儀表板原型驗收後再一併處理）。
 """
 
 import re
@@ -167,6 +171,7 @@ MENU = {
     "research": [
         ("thub", "/t/", "個股研究"),
         ("sdash", "/stock-dash/", "個股儀表板"),
+        ("etfd", "/etf-dash/", "ETF 儀表板"),
         ("id", "/id/", "產業研究"),
         ("ideas", "/ideas/", "投資想法"),
         ("tier", "/id/tier_matrix.html", "Tier Matrix"),
@@ -329,6 +334,7 @@ PREFIX_ACTIVE = [
     # 對應下拉項與群一起高亮，不退化成純群高亮。
     ("t/", ("research", "thub")),  # 個股研究（2026-07-11 新增；2026-08-20 改名）
     ("stock-dash/", ("research", "sdash")),  # 個股儀表板（2026-09-23 新增）
+    ("etf-dash/", ("research", "etfd")),  # ETF 儀表板（2026-09-24 新增）
     ("ideas/", ("research", "ideas")),  # 投資想法（2026-09-23 新增）
     ("research/synthesis/", ("research", "thub")),
     ("research/", ("research", "thub")),

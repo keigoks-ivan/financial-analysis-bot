@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ETF 儀表板 — InvestMQuest Research</title>
+<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，VanEck 官方完整持股＋yfinance 分析師估計。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{
+  --x-navy:#0d2244; --x-navy-2:#173564; --x-blue:#3f6a9c; --x-sky:#8fb0cf;
+  --x-teal:#3d7a70; --x-grey:#9aa7b8; --x-rule:var(--gold-deep);
+}
+*{box-sizing:border-box;min-width:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.6;font-size:14px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px 60px}
+table{overflow-wrap:break-word}
+.imq-table td, .imq-table th{overflow-wrap:break-word;word-break:break-word}
+.x-pos{color:var(--pos)} .x-neg{color:var(--neg)}
+
+.cover{background:linear-gradient(135deg,var(--x-navy) 0%,var(--x-navy-2) 100%);padding:22px 28px;margin-bottom:0}
+.cover-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.cover-left .tk{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:#fff}
+.cover-left .nm{font-size:13px;color:rgba(255,255,255,.7);display:block;margin-top:2px}
+.cover-left .px{font-family:var(--mono);font-size:1.9rem;font-weight:700;color:#fff;display:block;margin-top:6px}
+.cover-left .chg{font-family:var(--mono);font-size:1rem;font-weight:600;margin-left:10px}
+.cover-left .chg.pos{color:#5fd08a} .cover-left .chg.neg{color:#ff8f87}
+.switcher{display:flex;gap:6px;flex-wrap:wrap}
+.switcher a{font-family:var(--mono);font-size:11.5px;font-weight:600;padding:.4rem .7rem;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.82);text-decoration:none;white-space:nowrap}
+.switcher a.active{background:var(--gold-deep);border-color:var(--gold-deep);color:#fff}
+.switcher a:hover{border-color:#fff;color:#fff}
+
+.exhibit{margin:18px 0 4px}
+.ex-label{font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.06em;color:var(--x-navy)}
+.ex-title{font-family:var(--sans);font-size:.95rem;font-weight:700;color:var(--ink);margin:1px 0 2px}
+.ex-sub{font-size:11.5px;color:var(--sec);margin-bottom:8px}
+.chart-box{width:100%;position:relative}
+.ex-src{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:5px}
+.conclusion{font-size:13px;color:var(--body);line-height:1.7;padding:11px 13px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-top:8px}
+
+.imq-table{border-collapse:collapse;font-size:.82rem;background:var(--card);width:100%;max-width:100%}
+.imq-table th{font-family:var(--mono);font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--x-navy);text-align:left;padding:.5rem .7rem;border-bottom:2px solid var(--x-navy);white-space:nowrap}
+.imq-table td{padding:.44rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);line-height:1.5}
+.imq-table td.num,.imq-table th.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;width:1%;white-space:nowrap}
+.imq-table tbody tr:nth-child(even) td{background:#f5f6f8}
+.imq-table td.k{color:var(--sec);white-space:nowrap}
+.tbl-wrap{overflow-x:auto}
+#periodsTable th{white-space:normal}
+#periodsTable td:first-child{white-space:nowrap}
+.base-date{display:block;font-size:9.5px;color:var(--muted);margin-top:1px}
+
+.stat-row{display:flex;flex-wrap:wrap;gap:14px;margin:10px 0}
+.imq-stat{display:inline-flex;flex-direction:column;gap:.1rem}
+.imq-stat .v{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--ink)}
+.imq-stat .k{font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+
+.info-strip{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:11.5px;color:var(--sec);margin:10px 2px 4px}
+.info-strip b{color:var(--ink)}
+.stale-flag{color:var(--warn);font-weight:600}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:800px){.two-col{grid-template-columns:1fr}}
+
+.nodata{font-size:11.5px;color:var(--warn);background:var(--gold-bg);border:1px solid var(--gold-soft);border-radius:6px;padding:6px 10px}
+.chapter-head{background:var(--x-navy);border-bottom:2px solid var(--x-rule);padding:7px 12px;margin:26px 0 14px}
+.chapter-head .ch-title{font-family:var(--serif);font-size:1rem;font-weight:700;color:#fff}
+.methods-note{font-size:11.5px;color:var(--sec);line-height:1.75;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-top:8px}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/" class="active">ETF 儀表板</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/simulation/">模擬</a>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<header class="cover">
+  <div class="cover-inner">
+    <div class="cover-left" id="coverLeft"></div>
+    <div class="switcher" id="switcher"></div>
+  </div>
+</header>
+<div class="wrap">
+<div id="loadError"></div>
+<div class="info-strip" id="infoStrip"></div>
+
+<section class="exhibit" id="exhibit1">
+  <div class="ex-label">EXHIBIT 1</div>
+  <div class="ex-title">成分股加權 EPS 預估變動 vs ETF 股價漲跌</div>
+  <div class="ex-sub">各回顧期間比較成分股加權「明年度」EPS 預估變動、ETF 股價漲跌與隱含本益比變動</div>
+  <div class="tbl-wrap"><table class="imq-table" id="periodsTable"></table></div>
+  <div class="conclusion" id="periodsSentence"></div>
+  <div class="ex-src">資料來源：VanEck 官方持股下載 + yfinance Ticker.eps_trend + yfinance ETF 日收盤</div>
+</section>
+
+<section class="exhibit" id="exhibit2">
+  <div class="ex-label">EXHIBIT 2</div>
+  <div class="ex-title">股價走勢 vs 加權 EPS 指數</div>
+  <div class="ex-sub" id="chartSub">股價與成分股加權明年度 EPS 預估，同一天起算都訂為 100，兩條線可以直接比誰漲得快</div>
+  <div class="chart-box" style="height:260px"><canvas id="chartMain"></canvas></div>
+  <div class="ex-src" id="chartSrc"></div>
+  <div class="ex-src" id="chartNote"></div>
+</section>
+
+<div class="stat-row" id="statRow"></div>
+
+<section class="chapter">
+  <div class="chapter-head"><span class="ch-title">貢獻分解</span></div>
+  <div class="ex-sub">加權 EPS 變動 = Σ (成分股權重 × 該股 EPS 修正%)；以下列出貢獻度（權重×修正%）最大的前五名</div>
+  <div class="two-col">
+    <div>
+      <div class="ex-title" style="font-size:.85rem">近一個月最大貢獻者</div>
+      <div class="tbl-wrap"><table class="imq-table" id="contrib30"></table></div>
+    </div>
+    <div>
+      <div class="ex-title" style="font-size:.85rem">近三個月最大貢獻者</div>
+      <div class="tbl-wrap"><table class="imq-table" id="contrib90"></table></div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-head"><span class="ch-title">完整持股明細</span></div>
+  <div class="ex-sub" id="holdingsSub"></div>
+  <div class="tbl-wrap"><table class="imq-table" id="holdingsTable"></table></div>
+</section>
+
+<section class="chapter">
+  <div class="chapter-head"><span class="ch-title">方法論與備註</span></div>
+  <div class="methods-note" id="methodsNote"></div>
+</section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+/*__ETF_DASH_DATA__*/
+(function(){
+"use strict";
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+var COL = {
+  pos: cssVar('--pos')||'#15803d', neg: cssVar('--neg')||'#b91c1c',
+  navy: cssVar('--x-navy')||'#0d2244', gold: cssVar('--gold-deep')||'#8f6d2c',
+  line: cssVar('--line')||'#e5dfd0', sec: cssVar('--sec')||'#6b7a92', muted: cssVar('--muted')||'#9aa7b8'
+};
+
+function fmtNum(v, nd){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  return Number(v).toLocaleString('en-US',{minimumFractionDigits:nd||0,maximumFractionDigits:nd||0});
+}
+function fmtPct(v, nd){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  var s = v>=0?'+':'';
+  return s+v.toFixed(nd===undefined?2:nd)+'%';
+}
+function fmtPctColored(v, nd){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  var cls = v>=0 ? 'x-pos' : 'x-neg';
+  return '<span class="'+cls+'">'+fmtPct(v,nd)+'</span>';
+}
+function fmtPctParen(v, nd){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  var n = v.toFixed(nd===undefined?2:nd);
+  return v<0 ? '('+Math.abs(v).toFixed(nd===undefined?2:nd)+'%)' : '+'+n+'%';
+}
+function noData(el, reason){ if(el) el.innerHTML = '<div class="nodata">無資料'+(reason?'：'+reason:'')+'</div>'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+var FUND_LIST = [
+  {key:'SMH', label:'SMH（美國）'},
+  {key:'SMH_UCITS', label:'SMH UCITS（愛爾蘭）'}
+];
+
+function tickerCell(c){
+  var label = esc(c.ticker)+(c.name?'　'+esc(c.name):'');
+  if(c.has_stock_dash){
+    return '<a href="/stock-dash/?t='+encodeURIComponent(c.ticker)+'">'+label+'</a>';
+  }
+  return label;
+}
+
+function renderCover(d){
+  var ps = (d.chart && d.chart.price_series) || [];
+  var last = ps.length ? ps[ps.length-1] : null;
+  var prev = ps.length>1 ? ps[ps.length-2] : null;
+  var chgHtml = '';
+  if(last && prev && prev.close){
+    var chg = last.close - prev.close, chgPct = chg/prev.close*100;
+    var cls = chg>=0?'pos':'neg', sign = chg>=0?'+':'';
+    chgHtml = '<span class="chg '+cls+'">'+sign+chg.toFixed(2)+'（'+sign+chgPct.toFixed(2)+'%）</span>';
+  }
+  document.getElementById('coverLeft').innerHTML =
+    '<span class="tk">'+esc(d.yf_ticker)+'</span><span class="nm">'+esc(d.label_zh)+'</span>'+
+    '<span class="px">'+(d.price&&d.price.close!=null?d.price.close.toFixed(2):'—')+chgHtml+'</span>';
+
+  document.getElementById('switcher').innerHTML = FUND_LIST.map(function(f){
+    var cls = f.key===d.etf_key ? 'active' : '';
+    return '<a class="'+cls+'" href="?etf='+f.key+'">'+f.label+'</a>';
+  }).join('');
+}
+
+function renderInfoStrip(d){
+  var bits = [
+    '<span><b>持股 as of</b> '+esc(d.holdings_as_of||'無資料')+'</span>',
+    '<span><b>成分股數</b> '+d.n_holdings+'（EPS 有資料 '+d.n_holdings_covered+'）</span>',
+    '<span><b>ISIN</b> '+esc(d.isin||'—')+'</span>'
+  ];
+  if(d.holdings_stale){
+    bits.push('<span class="stale-flag">⚠ 今日持股抓取失敗，沿用上次成功快取（as of 上述日期）</span>');
+  }
+  if(d.other_listings && d.other_listings.length){
+    bits.push('<span>其他掛牌：'+d.other_listings.map(function(l){return esc(l.exchange)+' '+esc(l.ticker)+'（'+esc(l.currency)+'）';}).join('、')+'</span>');
+  }
+  document.getElementById('infoStrip').innerHTML = bits.join('');
+}
+
+var PERIOD_LABEL_ZH = {};
+
+function renderPeriodsTable(d){
+  var tbl = document.getElementById('periodsTable'), sent = document.getElementById('periodsSentence');
+  var periods = d.periods || [];
+  if(!periods.length){ noData(tbl,'無期間資料'); sent.innerHTML=''; return; }
+  tbl.innerHTML =
+    '<thead><tr><th>期間</th><th class="num">成分股加權 EPS<br>預估變動</th><th class="num">股價漲跌</th><th class="num">隱含本益比<br>變動</th><th class="num">覆蓋率</th></tr></thead><tbody>'+
+    periods.map(function(p){
+      return '<tr><td>'+esc(p.label)+'<span class="base-date">基準：'+esc(p.base_date||'無資料')+'</span></td>'+
+        '<td class="num">'+fmtPctColored(p.eps_chg_pct)+'</td>'+
+        '<td class="num">'+fmtPctColored(p.price_chg_pct)+'</td>'+
+        '<td class="num">'+fmtPctParen(p.implied_pe_chg_pct)+'</td>'+
+        '<td class="num">'+(p.coverage_pct!=null?p.coverage_pct.toFixed(0)+'%':'—')+'</td></tr>';
+    }).join('')+'</tbody>';
+
+  // 機械句：優先選「近三個月」，缺資料才退到近一個月。
+  var pick = periods.filter(function(p){return p.key==='90d';})[0] || periods.filter(function(p){return p.key==='30d';})[0];
+  if(!pick || pick.eps_chg_pct==null || pick.price_chg_pct==null){
+    sent.innerHTML = '無資料：主要回顧期間缺 EPS 或股價數字';
+    return;
+  }
+  function w(v, up, down){ return (v>=0?up:down)+' '+Math.abs(v).toFixed(2)+'%'; }
+  sent.innerHTML = esc(pick.label)+'成分股加權明年度 EPS 預估'+w(pick.eps_chg_pct,'上修','下修')+
+    '，'+esc(d.yf_ticker)+'股價'+w(pick.price_chg_pct,'漲','跌')+
+    (pick.implied_pe_chg_pct!=null ? '，隱含本益比'+w(pick.implied_pe_chg_pct,'上升','下降') : '')+
+    '（EPS 覆蓋率 '+(pick.coverage_pct!=null?pick.coverage_pct.toFixed(0)+'%':'無資料')+'）。';
+}
+
+function renderStatRow(d){
+  var fpe = d.weighted_forward_pe || {};
+  var items = [
+    ['加權遠期本益比', fpe.value!=null?fmtNum(fpe.value,1)+'x':'無資料'],
+    ['本益比覆蓋率', fpe.coverage_pct!=null?fpe.coverage_pct.toFixed(0)+'%':'無資料'],
+    ['排除權重合計', d.excluded_weight_pct!=null?d.excluded_weight_pct.toFixed(2)+'%':'無資料'],
+    ['ETF 收盤日', esc(d.price&&d.price.date||'無資料')]
+  ];
+  document.getElementById('statRow').innerHTML = items.map(function(it){
+    return '<div class="imq-stat"><span class="v">'+it[1]+'</span><span class="k">'+it[0]+'</span></div>';
+  }).join('');
+}
+
+function renderContribTable(elId, list){
+  var el = document.getElementById(elId);
+  if(!list || !list.length){ noData(el, '無資料'); return; }
+  el.innerHTML = '<thead><tr><th>成分股</th><th class="num">權重</th><th class="num">EPS 修正</th><th class="num">貢獻度</th></tr></thead><tbody>'+
+    list.map(function(c){
+      return '<tr><td>'+esc(c.ticker)+'</td>'+
+        '<td class="num">'+(c.weight_pct!=null?c.weight_pct.toFixed(2)+'%':'—')+'</td>'+
+        '<td class="num">'+fmtPctColored(c.revision_pct)+'</td>'+
+        '<td class="num">'+fmtPctColored(c.contribution_pct)+'</td></tr>';
+    }).join('')+'</tbody>';
+}
+
+function renderHoldingsTable(d){
+  document.getElementById('holdingsSub').innerHTML =
+    '共 '+d.n_holdings+' 檔成分股（不含現金／餘額列），依權重排序；ticker 有連結者表示 /stock-dash/ 已有該股個股儀表板。';
+  var all = (d.constituents||[]).concat((d.excluded||[]).map(function(c){ return Object.assign({}, c, {is_excluded:true}); }));
+  all.sort(function(a,b){ return (b.weight_pct||0)-(a.weight_pct||0); });
+  var tbl = document.getElementById('holdingsTable');
+  if(!all.length){ noData(tbl,'無持股資料'); return; }
+  tbl.innerHTML = '<thead><tr><th>成分股</th><th class="num">權重</th><th class="num">明年度 EPS<br>(當地幣別)</th><th>幣別</th>'+
+    '<th class="num">修正%（1個月）</th><th class="num">修正%（3個月）</th><th>備註</th></tr></thead><tbody>'+
+    all.map(function(c){
+      var rev30 = c.revisions_pct ? c.revisions_pct['30d'] : null;
+      var rev90 = c.revisions_pct ? c.revisions_pct['90d'] : null;
+      var note = c.is_excluded ? ('排除：'+(c.reason||c.status||'無資料')) : '';
+      return '<tr><td>'+tickerCell(c)+'</td>'+
+        '<td class="num">'+(c.weight_pct!=null?c.weight_pct.toFixed(2)+'%':'—')+'</td>'+
+        '<td class="num">'+(c.eps_fy_next_local!=null?fmtNum(c.eps_fy_next_local,2):'—')+'</td>'+
+        '<td>'+esc(c.eps_currency||'—')+'</td>'+
+        '<td class="num">'+fmtPctColored(rev30)+'</td>'+
+        '<td class="num">'+fmtPctColored(rev90)+'</td>'+
+        '<td style="font-size:11px;color:var(--sec)">'+esc(note)+'</td></tr>';
+    }).join('')+'</tbody>';
+}
+
+function renderMethodsNote(d){
+  document.getElementById('methodsNote').innerHTML = esc(d.methods_note_zh||'').replace(/\n/g,'<br>')+
+    '<br><br>資料來源連結：<a href="'+esc(d.holdings_source_url||'#')+'" target="_blank" rel="noopener">'+esc(d.holdings_source_url||'—')+'</a>';
+}
+
+var chartInstance = null;
+function renderChart(d){
+  // Exhibit 2 畫的是長線 EPS 指數（dd-screener 快照鏈，2026-05-19 起，見
+  // build_etf_dash.py build_long_eps_index() 與 methods_note_zh）——資料點比
+  // yfinance eps_trend 的 90 天記憶長得多。舊版兩條 yfinance-based 線
+  // （chart.eps_index_bootstrap／eps_index_history）還在 JSON 裡供查核，但
+  // 不畫在這裡：同一張圖擺兩條定義不同的 EPS 線只會讓人看不懂哪條才是真的。
+  var lei = (d.chart && d.chart.long_eps_index) || {};
+  var series = lei.series || [];
+  var canvas = document.getElementById('chartMain');
+  if(!series.length){ noData(canvas.parentElement, '無長線 EPS 指數資料'); return; }
+  var labels = series.map(function(p){return p.date;});
+  var priceData = series.map(function(p){return p.price_index;});
+  var epsData = series.map(function(p){return p.eps_index;});
+
+  var nEvents = (lei.rollover_events||[]).length + (lei.anomaly_events||[]).length;
+  document.getElementById('chartSrc').textContent =
+    '資料來源：docs/dd-screener/latest.json 的 git 歷史（scripts/etf_dash/dd_eps_history.py），'+
+    esc(lei.start_date)+' 起共 '+series.length+' 個交易日；權重固定用今天持股，兩條線都在起始日訂為 100';
+  document.getElementById('chartNote').textContent =
+    'EPS 覆蓋率（權重）'+(lei.coverage_weight_pct!=null?lei.coverage_weight_pct.toFixed(1)+'%':'無資料')+
+    '（不在 dd-screener 母體的成分股不計入）；串接過程排除 '+nEvents+' 個異常/財年輪替步驟'+
+    (nEvents>0 ? '（詳見方法論段落）' : '') + '。';
+
+  if(chartInstance){ chartInstance.destroy(); }
+  chartInstance = new Chart(canvas, {
+    type:'line',
+    data:{labels:labels, datasets:[
+      {label:'ETF 股價指數（起始=100）', data:priceData, yAxisID:'y', borderColor:COL.navy, pointRadius:0, borderWidth:1.6, spanGaps:true},
+      {label:'成分股加權明年度 EPS 指數（起始=100）', data:epsData, yAxisID:'y', borderColor:COL.gold, pointRadius:0, borderWidth:1.6, spanGaps:true}
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.muted,font:{size:8},maxTicksLimit:6}, grid:{display:false}},
+              y:{position:'left', ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}},
+      plugins:{legend:{position:'bottom', labels:{color:COL.sec, font:{size:10}, boxWidth:12}}}
+    }
+  });
+}
+
+function render(d){
+  renderCover(d);
+  renderInfoStrip(d);
+  renderPeriodsTable(d);
+  renderStatRow(d);
+  renderChart(d);
+  var contrib = d.contributions || {};
+  renderContribTable('contrib30', contrib['30d']);
+  renderContribTable('contrib90', contrib['90d']);
+  renderHoldingsTable(d);
+  renderMethodsNote(d);
+}
+
+var params = new URLSearchParams(location.search);
+var ETF = (params.get('etf') || 'SMH').toUpperCase();
+if(ETF !== 'SMH' && ETF !== 'SMH_UCITS') ETF = 'SMH';
+
+if(typeof ETF_DASH_INLINE_DATA !== 'undefined'){
+  render(ETF_DASH_INLINE_DATA);
+} else {
+  fetch('data/' + ETF + '.json').then(function(r){
+    if(!r.ok) throw new Error('http ' + r.status);
+    return r.json();
+  }).then(render).catch(function(err){
+    document.getElementById('coverLeft').innerHTML =
+      '<span class="nm">找不到 ' + ETF + ' 的資料（' + err.message + '）。' +
+      '請先執行 <code>python3.12 scripts/etf_dash/build_etf_dash.py --etf ' + ETF + '</code>。</span>';
+    document.getElementById('switcher').innerHTML = FUND_LIST.map(function(f){
+      var cls = f.key===ETF ? 'active' : '';
+      return '<a class="'+cls+'" href="?etf='+f.key+'">'+f.label+'</a>';
+    }).join('');
+  });
+}
+})();
+</script>
+</body>
+</html>

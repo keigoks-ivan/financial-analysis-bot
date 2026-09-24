@@ -1,0 +1,118 @@
+name: ETF Dashboard Daily Data
+
+# ETF 股價 vs 成分股 EPS 預估修正儀表板（/etf-dash/）每日資料管線。
+#
+# 跑 scripts/etf_dash/build_etf_dash.py 兩檔（SMH 美國掛牌 + SMH_UCITS 愛爾蘭
+# 掛牌），輸出：
+#   - docs/etf-dash/data/{ETF}.json          正式頁 /etf-dash/?etf= 讀取的資料
+#   - data/etf_dash/snapshots/{ETF}/{date}.json  每日快照（舊版 yfinance-based
+#     EPS 指數用，見 build_etf_dash.py::build_eps_index_series；現行 Exhibit 2
+#     已改用下面的 dd_eps_history.jsonl 長線，這份快照保留供查核）
+#   - data/etf_dash/holdings_cache/{ETF}.json    VanEck 持股下載失敗時的退回快取
+#   - data/etf_dash/dd_eps_history.jsonl     Exhibit 2 長線 EPS 指數的資料源
+#     （scripts/etf_dash/dd_eps_history.py）——append-only JSONL，2026-05-19 起
+#     docs/dd-screener/latest.json 每個 commit 日一行的窄化記錄。2026-09-24
+#     從單一 dict-of-dict JSON（每次都整檔重寫，公開 repo 上單檔天天整份改
+#     會讓 git 歷史膨脹）改成這個格式——正常情況每天只 append 一行，只有
+#     「同一天重跑且 latest.json 內容變了」才會改動最後一行，其餘行不動。
+#     本檔案一次性 backfill 需要完整 git 歷史（此 workflow 的 shallow checkout
+#     沒有），所以刻意設計成「只累加今天」（append_today()，純讀 checkout
+#     出來的 latest.json，不呼叫 git）——backfill 只在本機跑過一次、結果已經
+#     進這份被 commit 的檔案，之後每次 workflow 執行只需要把當天併進去即可，
+#     不需要 fetch-depth: 0。
+#
+# 這四類檔案都很小（單檔 JSON，非 stock-dash 那種 ~61MB 逐檔資料），所以刻意
+# 直接進 git（不像 stock-dash 用 artifact + deploy-pages 下載那一套）——但這裡
+# 的 commit 用預設 GITHUB_TOKEN push，不會觸發 deploy-pages.yml 的 push 事件
+# （GitHub 反遞迴機制），故 deploy-pages.yml 的 workflow_run 清單已加入本
+# workflow 名稱（"ETF Dashboard Daily Data"），跑完立即觸發重部署。
+#
+# 排程：Tue-Sat 01:30 UTC（美股收盤後，約 09:30 台北）+ workflow_dispatch 手動。
+#
+# Push 迴圈與 rebase 衝突處理照 scripts/ci/ 共用腳本（見 d7995ec63 導入的全站
+# pattern，monthly-eps-snapshot.yml 同款）：push 失敗就 rebase_or_flag.sh，內容
+# 衝突就 retrigger_once.sh 從最新 main 重跑一次（retry=1），再撞就 ::error:: 結束
+# 不再重試，避免無窮迴圈。
+
+on:
+  schedule:
+    - cron: "30 1 * * 2-6"  # Tue-Sat 01:30 UTC = Tue-Sat 09:30 Taipei（美股收盤後）
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy requests openpyxl
+
+      - name: Build ETF dashboard data (SMH + SMH_UCITS)
+        # 個別 ETF 失敗（VanEck 持股格式改版、yfinance 掛了一整輪重試後仍失敗）
+        # 只會讓 build_etf_dash.py 略過那一檔、其餘照跑；只有兩檔都失敗它才會
+        # non-zero exit——那種情況本步驟紅燈，後面的 commit 步驟仍會跑（用
+        # continue-on-error 讓「有部分資料」也能是 no-op 或部分更新，而不是整個
+        # job 卡死），但至少一檔失敗時這步驟本身會在 job 摘要留紅色 warning。
+        continue-on-error: true
+        id: build
+        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS
+
+      - name: Fail loudly if the build step errored
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "::warning::build_etf_dash.py exited non-zero — see previous step's log. Continuing to commit whatever data/holdings-cache state exists (never worse than before this run)."
+
+      - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+            git commit -m "data: ETF dashboard snapshot ${DATE} (SMH + SMH_UCITS)
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            for i in 1 2 3 4 5 6; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+              bash scripts/ci/rebase_or_flag.sh || exit 1
+              sleep $((RANDOM % 20 + 5))
+            done
+            echo "Push failed after 6 attempts"
+            exit 1
+          fi
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
