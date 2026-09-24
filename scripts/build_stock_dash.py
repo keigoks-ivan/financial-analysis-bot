@@ -1841,8 +1841,26 @@ def _fx_pair(ticker, current_date, baseline_date):
     return ccy, get_fx_rate(ccy, current_date, _fx_cache), get_fx_rate(ccy, baseline_date, _fx_cache)
 
 
-def _fy_revision_pct_from_snapshot(current_val, snapshot, ticker, fy_key, current_date=None):
-    if snapshot is None or current_val is None:
+def _fx_rate_on(ccy, date_str):
+    """單一日期的本地貨幣兌 1 美元匯率，供 build_eps_snapshot_timeseries() 把每份月度
+    快照（Koyfin 原始美元口徑）換成 latest.json 現值同一種本地貨幣。跟 _fx_pair 一樣
+    只讀共用快取＋必要時抓，不寫回 data/ 快取檔。"""
+    global _fx_cache
+    if not ccy or ccy == "USD" or not date_str:
+        return None
+    from eps_fx_normalize import get_fx_rate, load_fx_daily_cache
+    if _fx_cache is None:
+        _fx_cache = load_fx_daily_cache()
+    return get_fx_rate(ccy, date_str, _fx_cache)
+
+
+def _fy_revision_pct_from_snapshot(current_val_usd, snapshot, ticker, fy_key, current_date=None):
+    """current_val_usd 必須是美元口徑（v1.8.5 外幣顯示轉換前的原始值，latest.json 的
+    `{fy_key}_usd_orig` 欄；沒有轉換過的 ticker 就直接是 latest.json 現值本身，本來就是
+    美元），才能跟快照裡同樣美元口徑的 base 相減／相除。呼叫端傳本地貨幣現值（如 2330.TW
+    的 142.85 TWD）進來會被 compute_fx_normalized_revision 誤當美元再乘一次匯率，算出離
+    譜的修正率（2026-09-24 bug：2330.TW 顯示 +3577%）。"""
+    if snapshot is None or current_val_usd is None:
         return None
     trow = (snapshot.get("tickers") or {}).get(ticker)
     if not trow:
@@ -1853,16 +1871,26 @@ def _fy_revision_pct_from_snapshot(current_val, snapshot, ticker, fy_key, curren
     from eps_fx_normalize import compute_fx_normalized_revision
     base_date = str(snapshot.get("snapshot_date") or "")[:10]
     ccy, fx_cur, fx_base = _fx_pair(ticker, current_date, base_date) if current_date else (None, None, None)
-    pct, _ = compute_fx_normalized_revision(current_val, base, ccy, fx_cur, fx_base)
+    pct, _ = compute_fx_normalized_revision(current_val_usd, base, ccy, fx_cur, fx_base)
     return pct
 
 
 def build_eps_snapshot_timeseries(ticker):
     """全部 7 份月度快照裡，這檔的 明年度／後年度 EPS 估計，依快照日期排序 —— 給
     第②格「股價 vs EPS 估值」疊圖用。同一天有兩個檔案（如 2026-05.json /
-    2026-05-25.json 都是 2026-05-26）時，用檔名排序較後者覆蓋（較新流程產出）。"""
+    2026-05-25.json 都是 2026-05-26）時，用檔名排序較後者覆蓋（較新流程產出）。
+
+    快照檔一律是 Koyfin 原始美元口徑；latest.json 的現值對 .TW/.T/.HK/.KS 等外幣掛牌
+    已被 build_dd_screener.py v1.8.5 換成本地貨幣（見 eps_display_currency 欄）。兩者
+    直接同圖會出現「6 個美元點＋1 個本地貨幣點」的單位不一致（2026-09-24 bug：2330.TW
+    的圖被最後一點 142.85 TWD 拉爆座標軸）。這裡改成：latest.json 現值是本地貨幣時，
+    把每份歷史快照也用「快照當天」的匯率換算成同一種本地貨幣（reuse eps_fx_normalize
+    的日匯率快取），查不到當天匯率的點寧可捨棄也不要混單位畫圖。"""
     if not EPS_SNAPSHOT_DIR.exists():
         return {"status": "no_data", "reason": "docs/dd-screener/eps-estimates-snapshots/ 目錄不存在"}
+    row, dd = find_dd_screener_row(ticker)
+    local_ccy = row.get("eps_display_currency") if row else None
+    convert_to_local = bool(local_ccy and local_ccy != "USD")
     dedup = {}
     for f in sorted(EPS_SNAPSHOT_DIR.glob("*.json")):
         try:
@@ -1874,9 +1902,16 @@ def build_eps_snapshot_timeseries(ticker):
         if not sd or not trow:
             continue
         adj = _snapshot_eps_adr(ticker, trow)
-        dedup[sd] = {"snapshot_date": sd, "eps_fy_next": adj.get("eps_fy_next"), "eps_fy3": adj.get("eps_fy3")}
-    # 最後一點＝latest.json 目前值（快照目錄只存過去的基準，不含當期）
-    row, dd = find_dd_screener_row(ticker)
+        eps_next, eps_fy3 = adj.get("eps_fy_next"), adj.get("eps_fy3")
+        if convert_to_local:
+            fx = _fx_rate_on(local_ccy, sd)
+            if fx is None:
+                continue  # 這個快照日的匯率查不到，捨棄而不是混美元原值進本地貨幣的線
+            eps_next = round(eps_next * fx, 2) if eps_next is not None else None
+            eps_fy3 = round(eps_fy3 * fx, 2) if eps_fy3 is not None else None
+        dedup[sd] = {"snapshot_date": sd, "eps_fy_next": eps_next, "eps_fy3": eps_fy3}
+    # 最後一點＝latest.json 目前值（快照目錄只存過去的基準，不含當期；現值本身已經是
+    # 本地貨幣，不用再換算）
     if row is not None and dd.get("as_of"):
         dedup[str(dd["as_of"])[:10]] = {"snapshot_date": str(dd["as_of"])[:10],
                                         "eps_fy_next": row.get("eps_fy_next"), "eps_fy3": row.get("eps_fy3")}
@@ -2048,19 +2083,44 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
     table_rows = []
     for name, fk, revk in zip(fy_names, fy_keys, revision_pct_keys):
         cur_val = row.get(fk)
+        # 2026-09-24 fix: 外幣掛牌（.TW 等）的 row.get(fk) 是 v1.8.5 換算過的本地貨幣顯示值
+        # （如 2330.TW 142.85 TWD），不能直接餵給 _fy_revision_pct_from_snapshot —— 它跟快照
+        # 一樣要美元口徑才能正確 FX 正規化。有轉換過的 ticker 用 latest.json 存的美元原值
+        # （`{fk}_usd_orig`）；沒轉換過的 ticker（USD 本身、或轉換失敗）該欄是 None，退回
+        # cur_val 本身（本來就是美元）。
+        cur_val_usd = row.get(f"{fk}_usd_orig")
+        if cur_val_usd is None:
+            cur_val_usd = cur_val
         table_rows.append({
             "fy": name,
             "current_estimate": r2(cur_val, 2),
             "vs_last_month_pct": r2(row.get(revk), 2),
-            "vs_3m_ago_pct": r2(_fy_revision_pct_from_snapshot(cur_val, snap_3m, ticker, fk, dd_as_of), 2),
-            "vs_since_earnings_pct": r2(_fy_revision_pct_from_snapshot(cur_val, snap_since, ticker, fk, dd_as_of), 2),
+            "vs_3m_ago_pct": r2(_fy_revision_pct_from_snapshot(cur_val_usd, snap_3m, ticker, fk, dd_as_of), 2),
+            "vs_since_earnings_pct": r2(_fy_revision_pct_from_snapshot(cur_val_usd, snap_since, ticker, fk, dd_as_of), 2),
         })
+
+    # eps_path_chart（下方）把「目前共識」（row.get(fk)，外幣掛牌是本地貨幣）跟兩份歷史
+    # 快照畫在同一張圖同一軸，快照值也要換成同一種本地貨幣，否則同一支 .TW 股票會出現
+    # 「目前 142.85 TWD」對「上月 4.49 美元」同軸失真（2026-09-24 bug，跟 eps_price_overlay
+    # 同一類）。local_ccy/convert_to_local 沿用 row 的 eps_display_currency 判斷。
+    local_ccy = row.get("eps_display_currency")
+    convert_to_local = bool(local_ccy and local_ccy != "USD")
 
     def _snap_val(snap, fk):
         if not snap:
             return None
         trow = snap.get("tickers", {}).get(ticker)
-        return r2(_snapshot_eps_adr(ticker, trow).get(fk), 2) if trow else None
+        if not trow:
+            return None
+        val = _snapshot_eps_adr(ticker, trow).get(fk)
+        if val is None:
+            return None
+        if convert_to_local:
+            fx = _fx_rate_on(local_ccy, str(snap.get("snapshot_date") or "")[:10])
+            if fx is None:
+                return None  # 這份快照日的匯率查不到，寧可缺資料也不要混單位
+            val = val * fx
+        return r2(val, 2)
 
     eps_path_chart = {
         "fy_labels": fy_names,
