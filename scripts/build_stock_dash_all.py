@@ -70,8 +70,37 @@ RATE_LIMIT_BACKOFFS_S = [60, 120, 240]  # wait before each retry pass over YFRat
 FAIL_THRESHOLD_PCT = 10      # exit non-zero (job goes red) if more than this % of tickers still
                               # failed after retries — see main() for why this is safe for deploy.
 
+# 2026-09-25 (observability): yfinance's crumb-authenticated endpoints (Ticker.info,
+# earnings_estimate, eps_revisions, insider_transactions, option_chain, …) return
+# EMPTY (no exception, no non-zero exit) when the GitHub Actions runner's IP gets
+# 429/401'd — a *successful* ticker build (exit 0) can still be silently missing
+# whole sections. yfinance itself prints a warning line to stderr for each blocked
+# call (e.g. "$NVDA: possibly delisted; ... 429 Client Error" / "... Invalid Crumb").
+# We now scan stderr of EVERY build (success or failure, not just failures) for
+# these substrings and count them, so a day where every ticker "succeeds" but half
+# the sections are silently empty shows up in _build_report.json instead of hiding.
+CRUMB_WARNING_PATTERNS = {
+    "429": "429",
+    "401": "401",
+    "invalid_crumb": "Invalid Crumb",
+    "too_many_requests": "Too Many Requests",
+}
+
 sys.path.insert(0, str(SCRIPTS_DIR))
 import build_stock_dash as bsd  # noqa: E402  (needs sys.path set up first)
+
+
+def _count_crumb_warnings(stderr_text):
+    """Substring counts of the yfinance crumb-block warning patterns in one
+    ticker's stderr. Returns {} when none found (keeps report/JSON small)."""
+    if not stderr_text:
+        return {}
+    counts = {}
+    for key, pattern in CRUMB_WARNING_PATTERNS.items():
+        n = stderr_text.count(pattern)
+        if n:
+            counts[key] = n
+    return counts
 
 
 def load_tickers():
@@ -141,14 +170,19 @@ def build_one(python_bin, ticker, timeout, env, extra_args):
                 # so its class name always lands in the traceback build_stock_dash.py prints
                 # to stderr on the way to its exit-1 — cheap, reliable signal to retry on.
                 "rate_limited": "YFRateLimitError" in stderr_tail,
+                "crumb_warnings": _count_crumb_warnings(proc.stderr),
             }
-        return {"ticker": ticker, "ok": True, "seconds": round(dt, 1)}
+        # 2026-09-25: capture + scan stderr of SUCCESSFUL builds too — see
+        # CRUMB_WARNING_PATTERNS comment above. Not stored in full (would bloat the
+        # report across 339 tickers); only the pattern counts are kept.
+        return {"ticker": ticker, "ok": True, "seconds": round(dt, 1),
+                "crumb_warnings": _count_crumb_warnings(proc.stderr)}
     except subprocess.TimeoutExpired:
         return {"ticker": ticker, "ok": False, "seconds": round(time.time() - t0, 1),
-                 "error": f"timeout after {timeout}s", "rate_limited": False}
+                 "error": f"timeout after {timeout}s", "rate_limited": False, "crumb_warnings": {}}
     except Exception as e:  # noqa: BLE001
         return {"ticker": ticker, "ok": False, "seconds": round(time.time() - t0, 1),
-                 "error": str(e), "rate_limited": False}
+                 "error": str(e), "rate_limited": False, "crumb_warnings": {}}
 
 
 def run_batch(tickers, python_bin, timeout, env, extra_args, workers, stagger):
@@ -259,6 +293,19 @@ def main():
                  "stderr_tail": r.get("stderr_tail", "")} for r in results_list if not r["ok"]]
     n_ok = len(results_list) - len(failures)
 
+    # 2026-09-25 (observability): aggregate the per-ticker crumb-warning counts
+    # (see CRUMB_WARNING_PATTERNS / _count_crumb_warnings above) across every
+    # ticker — success or failure — so a run where every ticker "succeeds" but
+    # yfinance quietly blocked most of its calls is visible in the report.
+    crumb_pattern_totals = {}
+    crumb_affected_tickers = []
+    for r in results_list:
+        cw = r.get("crumb_warnings") or {}
+        if cw:
+            crumb_affected_tickers.append(r["ticker"])
+            for k, v in cw.items():
+                crumb_pattern_totals[k] = crumb_pattern_totals.get(k, 0) + v
+
     def pct(p):
         if not seconds_list:
             return None
@@ -286,6 +333,17 @@ def main():
         "shared_files": shared_status,
         "retry_passes": retry_passes,
         "failures": failures,
+        # 2026-09-25 (observability): counts of yfinance crumb-block warning
+        # substrings ("429"/"401"/"Invalid Crumb"/"Too Many Requests") seen in
+        # stderr across ALL tickers (success or failure) — see
+        # CRUMB_WARNING_PATTERNS above. n_tickers_affected can be > 0 even when
+        # n_failed == 0: a ticker can "succeed" (exit 0) with several sections
+        # silently empty because yfinance swallowed the block instead of raising.
+        "yfinance_crumb_warnings": {
+            "n_tickers_affected": len(crumb_affected_tickers),
+            "counts": crumb_pattern_totals,
+            "affected_tickers": crumb_affected_tickers,
+        },
     }
     BUILD_REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
 
@@ -295,6 +353,11 @@ def main():
     print(f"[build_stock_dash_all] report written to {BUILD_REPORT_PATH}")
     if failures:
         print(f"[build_stock_dash_all] failed tickers: {', '.join(f['ticker'] for f in failures)}")
+    if crumb_affected_tickers:
+        print(f"[build_stock_dash_all] yfinance crumb warnings: {len(crumb_affected_tickers)}/{len(tickers)} "
+              f"ticker(s) affected — {crumb_pattern_totals}")
+    else:
+        print("[build_stock_dash_all] no yfinance crumb warnings detected in stderr")
     # A handful of individual ticker failures never fail the batch (that's the whole
     # point of this script) — but if more than --fail-threshold-pct still failed even
     # after the rate-limit retries above, something is systemically wrong (e.g. the

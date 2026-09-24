@@ -3717,6 +3717,11 @@ def enrich_ticker(
         "eps_fy_curr": eps_curr_val,
         "eps_fy_next": eps_next_val,
         "eps_trailing": _lfy.get("trailing_eps"),
+        # v1.6 (2026-09-25, additive): 前一財年實際 EPS（yfinance earnings_estimate
+        # 0y.yearAgoEps，跟 eps_fy_curr 同一路 _fetch_live_fy_eps() 抓的欄位，一直有
+        # 算，只是先前沒寫出來）。給 build_stock_dash.py 用，取代它自己重複呼叫
+        # Ticker.earnings_estimate（GitHub Actions runner 會被 Yahoo crumb 擋掉）。
+        "eps_year_ago": _lfy.get("eps_year_ago"),
         # v1.8: Excel-derived FY3 + growth/CAGR columns + provenance
         "eps_fy3": _lfy.get("eps_fy3"),
         "eps_fy3_yoy_pct": _lfy.get("growth_fy2_fy3_pct"),

@@ -128,7 +128,7 @@ function buildVM(D, M){
       '，ROIC '+fmtNum(duS.roic_ltm_pct,2)+'%'+(duS.roic_5y_avg_pct!=null?'（五年平均 '+fmtNum(duS.roic_5y_avg_pct,2)+'%）':'')+'。');
   }
 
-  // 財務預估摘要表：FY27/FY28/FY29（用 c1.fy_labels），列＝EPS／EPS成長／以該年EPS算本益比／3個月修正／毛利率
+  // 財務預估摘要表：FY27/FY28/FY29（用 c1.fy_labels），列＝EPS／EPS成長／以該年EPS算本益比／PEG／3個月修正／毛利率
   var finTable = null;
   if(c1.status==='ok'){
     var fyKeys = ['curr','next','fy3'];
@@ -143,10 +143,20 @@ function buildVM(D, M){
     });
     var prevNote = prevEps ? ('對 '+prevFy.fy+' 實際 EPS '+fmtNum(prevEps,2)) : null;
     var peRow = epsRow.map(function(v){ return v ? D.quote.close/v : null; });
+    // 2026-09-25：PEG＝該欄本益比 ÷ 該欄 EPS 成長（%），跟 §2「即時 PEG」（live_peg＝
+    // NTM 本益比 ÷ 2 年遠期 EPS CAGR）是不同定義、不同輸入，這裡是單年、逐欄各自算。
+    // 成長缺資料（growthRow[i]==null，通常是第一欄沒有前一財年基準）沿用成長列的
+    // 同一句「無前一年基準」；成長 ≤ 0 或本益比缺資料／為負，PEG 沒有意義，標「不適用」。
+    var pegRow = fyKeys.map(function(k,i){
+      var g = growthRow[i], p = peRow[i];
+      if(g==null) return {value:null, reason:'growth_missing'};
+      if(!(g>0) || p==null || !(p>0)) return {value:null, reason:'not_applicable'};
+      return {value:p/g, reason:null};
+    });
     var rev3mRow = c1.table.map(function(r){return r.vs_3m_ago_pct;});
     var gm = c4.status==='ok' ? c4.gross_margin_line : {};
     var gmRow = [gm.fy1, gm.fy2, gm.fy3];
-    finTable = {labels:labels, eps:epsRow, growth:growthRow, pe:peRow, rev3m:rev3mRow, gm:gmRow, prevNote:prevNote};
+    finTable = {labels:labels, eps:epsRow, growth:growthRow, pe:peRow, peg:pegRow, rev3m:rev3mRow, gm:gmRow, prevNote:prevNote};
   }
 
   return {

@@ -322,6 +322,15 @@ same currency on both sides — only when Koyfin's value is `null`.
 stays network-free (only ever sets `"koyfin"` or `null`); the fallback lives
 in `enrich_ticker()`.
 
+v1.6 (2026-09-25, additive): new per-stock field `eps_year_ago` — the prior
+fiscal year's actual EPS (yfinance `Ticker.earnings_estimate` row `0y`'s
+`yearAgoEps`, same-basis companion to `eps_fy_curr`/`eps_fy_next`; already
+computed internally by `_fetch_live_fy_eps()`/used for `eps2y_live_method=
+"yearago"`, just not previously surfaced). Added so `build_stock_dash.py` can
+read it from `latest.json` instead of calling `Ticker.earnings_estimate`
+itself per-ticker (that call gets 429/401'd from the GitHub Actions runner
+IP). `null` when yfinance had no `0y` row or no `yearAgoEps`.
+
 **護城河不進排序（2026-09-22 最終定案）**：launch day 前後試了三版護城河層
 設計——3-chain percentile + 80%-coverage gate、single-source absolute-tier +
 `FUNNEL_V2_MOAT_JUDGMENT_ENABLED` transition switch、最後是純顯示連結

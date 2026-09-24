@@ -1940,62 +1940,49 @@ def _price_pct_change_since(df_full, since_date_str, current_price):
 
 
 # ── ①獲利預估與修正 ──────────────────────────────────────────────────────────
-def fetch_analyst_revision_counts(ticker_obj, as_of_date, window_days=30):
-    """EPS 預估修正家數（yfinance Ticker.eps_revisions）：今年度 0y、明年度 +1y
-    各自近 7／30 天上修與下修的分析師家數。不是評等調升／調降。"""
-    try:
-        er = ticker_obj.eps_revisions
-    except Exception as e:  # noqa: BLE001
-        return {"status": "no_data", "reason": f"yfinance eps_revisions 例外：{e}"}
-    if er is None or er.empty:
-        return {"status": "no_data", "reason": "yfinance 未回傳 eps_revisions"}
-
-    def _i(row, col):
-        v = row.get(col)
-        return int(v) if v is not None and not pd.isna(v) else None
-
-    periods = {}
-    for key in ("0y", "+1y"):
-        if key not in er.index:
-            continue
-        row = er.loc[key]
-        periods[key] = {
-            "up_7d": _i(row, "upLast7days"), "up_30d": _i(row, "upLast30days"),
-            "down_7d": _i(row, "downLast7Days"), "down_30d": _i(row, "downLast30days"),
-        }
-    if not periods:
-        return {"status": "no_data", "reason": "eps_revisions 沒有 0y／+1y 列"}
-    return {
-        "status": "ok",
-        "window_days": window_days,
-        "periods": periods,
-        "method": ("yfinance Ticker.eps_revisions：今年度（0y）與明年度（+1y）EPS 預估，"
-                   "近 7／30 天上修與下修的分析師家數。只算獲利預估的修正方向，不是評等異動或目標價。"),
-    }
+# 2026-09-25：EPS 預估修正家數（原本呼叫 yfinance Ticker.eps_revisions）在 GitHub
+# Actions runner 上會被 Yahoo crumb 驗證擋掉（429/401），全數回傳空值，已從頁面移除
+# （§1 的 EPS 修正表本身已經涵蓋上修／下修方向）。不再呼叫 yfinance，固定回 no_data；
+# build_card_eps_revision() 的 analyst_rev 參數／analyst_revisions_30d 欄位保留原樣
+# （測試與呼叫端相容），只是內容固定是這個 no_data dict。
+ANALYST_REVISIONS_30D_NO_DATA = {
+    "status": "no_data",
+    "reason": "yfinance eps_revisions 在 GitHub Actions runner 上會被 Yahoo crumb 驗證擋掉，已停用；"
+              "方向請看上面「較上月／近3個月／自上次財報以來」修正表。",
+}
 
 
-def fetch_prev_fy_actual_eps(ticker_obj, card1):
-    """前一財年實際 EPS（yfinance earnings_estimate 的 0y.yearAgoEps，跟分析師預估同口徑；
-    dd-screener 內部也用同一欄算成長，但沒寫進 latest.json）。只在 yfinance 的 0y 預估跟
-    本頁今年度預估差 3% 以內時採用，避免財年標籤錯位。刻意不放進 eps_revision（判斷層，
-    沒觸發不改版），獨立成 judgment_core.eps_prev_fy，每次 build 都更新。"""
-    try:
-        cur = card1["table"][0]["current_estimate"] if card1.get("status") == "ok" and card1.get("table") else None
-        curr_label = (card1.get("fy_labels") or {}).get("curr") or ""
-        ee = ticker_obj.earnings_estimate
-        if ee is None or "0y" not in ee.index:
-            return {"status": "no_data", "reason": "yfinance 沒有 0y 預估"}
-        avg, yag = ee.loc["0y"].get("avg"), ee.loc["0y"].get("yearAgoEps")
-        if yag is None or pd.isna(yag) or not yag:
-            return {"status": "no_data", "reason": "yfinance 沒有前一年實際 EPS"}
-        if cur is None or avg is None or pd.isna(avg) or abs(float(avg) / cur - 1) > 0.03:
-            return {"status": "no_data", "reason": f"yfinance 今年度預估 {avg} 跟本頁 {cur} 對不上，財年可能錯位，不採用"}
-        m = re.match(r"FY(\d+)", curr_label)
-        prev_label = f"FY{int(m.group(1)) - 1:02d}" if m else "前一年"
-        return {"status": "ok", "fy": prev_label, "actual_eps": round(float(yag), 4),
-                "method": "yfinance Ticker.earnings_estimate 的 0y.yearAgoEps（前一財年實際，與預估同口徑）"}
-    except Exception as e:  # noqa: BLE001
-        return {"status": "no_data", "reason": f"yfinance earnings_estimate 例外：{e}"}
+def fetch_prev_fy_actual_eps(row, card1):
+    """前一財年實際 EPS。2026-09-25 起改讀 docs/dd-screener/latest.json 的
+    eps_year_ago（build_dd_screener.py 用 yfinance Ticker.earnings_estimate 的
+    0y.yearAgoEps 算好、寫進 latest.json 的既有欄位——跟 eps_fy_curr 同一次
+    _fetch_live_fy_eps() 呼叫抓的，本頁不再自己呼叫 yfinance；那支 API 在
+    GitHub Actions runner 上會被 Yahoo crumb 驗證擋掉，全部 339 檔回傳空值）。
+    只在 latest.json 的 eps_year_ago 跟本頁「今年度」估計（row.eps_fy_curr，
+    跟 card1 的 current_estimate 同一個值）差在合理範圍內才採用，避免財年標籤
+    跟 yfinance 內部列索引對不齊（沿用原本 3% 檢查的精神；因為兩個數字不再是
+    同一次 fetch 的同列，改用較寬的量級檢查——3% 對「今年 vs 去年」這種本來就
+    會有正常成長／衰退的比較太緊）。刻意不放進 eps_revision（判斷層，沒觸發不
+    改版），獨立成 judgment_core.eps_prev_fy，每次 build 都更新。"""
+    if row is None:
+        return {"status": "no_data", "reason": "不在 dd-screener 名單（339 檔），latest.json 沒有 eps_year_ago"}
+    year_ago = row.get("eps_year_ago")
+    if year_ago is None:
+        return {"status": "no_data", "reason": "latest.json 沒有前一年實際 EPS（eps_year_ago）"}
+    curr_label = (card1.get("fy_labels") or {}).get("curr") or ""
+    cur_screener = row.get("eps_fy_curr")
+    # 量級檢查：去年實際值跟今年估計要同號、量級接近（0.2x–5x），抓明顯的財年
+    # 標籤錯位（如 yfinance 列位移導致抓到兩年前或今年的值），不擋正常的成長／衰退。
+    if (cur_screener is None or not cur_screener or year_ago == 0
+            or (cur_screener > 0) != (year_ago > 0)
+            or not (0.2 <= abs(float(year_ago) / float(cur_screener)) <= 5.0)):
+        return {"status": "no_data",
+                "reason": f"latest.json 前一年實際 EPS {year_ago} 跟本頁今年度估計 {cur_screener} 量級對不上，財年可能錯位，不採用"}
+    m = re.match(r"FY(\d+)", curr_label)
+    prev_label = f"FY{int(m.group(1)) - 1:02d}" if m else "前一年"
+    return {"status": "ok", "fy": prev_label, "actual_eps": round(float(year_ago), 4),
+            "method": ("docs/dd-screener/latest.json 的 eps_year_ago（yfinance Ticker.earnings_estimate 的 "
+                       "0y.yearAgoEps，跟本頁今年度估計同口徑），build_dd_screener.py 算好、本頁不再自己呼叫 yfinance。")}
 
 
 def build_cockpit_status(ticker):
@@ -2018,22 +2005,26 @@ def build_cockpit_status(ticker):
     return out
 
 
-def build_analyst_targets(info, price):
-    """分析師目標價與 52 週區間，每次 build 都用 yfinance Ticker.info 重新計算。刻意不放
-    進 judgment_core／JUDGMENT_SECTIONS：舊的 dd_screener_fields 價格尺（空頭價／DD 時股價／
-    多頭價…）來自寫報告當下的 dd-screener 快照，沒觸發版本條件就不會換版；這裡的目標價與
-    52 週區間本質上是每天都可能變的行情層資料，所以跟 cockpit／eps_prev_fy 一樣放在
-    full 頂層，永遠用最新一次 fetch 的 info 重算，缺欄位就回 None，不沿用舊值。"""
-    target_low = info.get("targetLowPrice")
-    target_median = info.get("targetMedianPrice")
-    target_mean = info.get("targetMeanPrice")
-    target_high = info.get("targetHighPrice")
-    num_analysts = info.get("numberOfAnalystOpinions")
-    week52_low = info.get("fiftyTwoWeekLow")
-    week52_high = info.get("fiftyTwoWeekHigh")
+def build_analyst_targets(dd_row, dd_as_of, price, week52_low, week52_high):
+    """分析師目標價與 52 週區間。2026-09-25 起不再呼叫 yfinance Ticker.info（GitHub
+    Actions runner 上會被 Yahoo crumb 驗證擋掉，全數回傳空值）。目標價低／高／平均改讀
+    docs/dd-screener/latest.json 的 fund.target_low／target_high／target_avg（Koyfin，
+    跟 dd-screener 表格同一份資料，as_of 見 latest.json 的 as_of，不是本頁重算）；
+    Koyfin 沒有中位數、分析師人數對應欄位，維持 None，頁面對應格不顯示。52 週高低
+    改用本頁已經抓到的股價歷史（跟封面／首屏同一份 price_history 逐日 High／Low 的
+    最大最小值），不再依賴 yfinance 的 fiftyTwoWeekHigh/Low。刻意不放進 judgment_core／
+    JUDGMENT_SECTIONS：這裡本質上是每天都可能變的行情層資料，所以跟 cockpit／
+    eps_prev_fy 一樣放在 full 頂層，永遠用最新一次 build 重算，缺欄位就回 None，
+    不沿用舊值。"""
+    fund = (dd_row.get("fund") if dd_row else None) or {}
+    target_low = fund.get("target_low")
+    target_mean = fund.get("target_avg")
+    target_high = fund.get("target_high")
+    target_median = None   # Koyfin fund 沒有中位數欄位
+    num_analysts = None    # Koyfin fund 沒有分析師人數欄位
 
-    if all(v is None for v in (target_low, target_median, target_mean, target_high, week52_low, week52_high)):
-        return {"status": "no_data", "reason": "yfinance info 未回傳分析師目標價／52 週區間欄位"}
+    if all(v is None for v in (target_low, target_mean, target_high, week52_low, week52_high)):
+        return {"status": "no_data", "reason": "latest.json 沒有 Koyfin 目標價，股價歷史也不足以算 52 週區間"}
 
     upside_to_mean_pct = r2((target_mean / price - 1) * 100, 2) if target_mean and price else None
     pct_in_52w_range = (
@@ -2043,24 +2034,25 @@ def build_analyst_targets(info, price):
 
     return {
         "status": "ok",
-        "target_low": r2(target_low), "target_median": r2(target_median),
+        "target_low": r2(target_low), "target_median": target_median,
         "target_mean": r2(target_mean), "target_high": r2(target_high),
         "num_analysts": num_analysts,
         "week52_low": r2(week52_low), "week52_high": r2(week52_high),
         "upside_to_mean_pct": upside_to_mean_pct,
         "pct_in_52w_range": pct_in_52w_range,
+        "as_of": dd_as_of,  # 目標價的資料日期（Koyfin，latest.json 的 as_of）；52 週區間用本頁當天股價歷史，沒有獨立日期
         "price_ruler": [
             {"label": "52週低", "value": r2(week52_low)},
             {"label": "目標價低", "value": r2(target_low)},
             {"label": "目前股價", "value": r2(price)},
-            {"label": "目標價中位數", "value": r2(target_median)},
             {"label": "目標價平均", "value": r2(target_mean)},
             {"label": "目標價高", "value": r2(target_high)},
             {"label": "52週高", "value": r2(week52_high)},
         ],
-        "method": ("yfinance Ticker.info：targetLowPrice／targetMedianPrice／targetMeanPrice／"
-                   "targetHighPrice／numberOfAnalystOpinions／fiftyTwoWeekLow／fiftyTwoWeekHigh，"
-                   "每次 build 都重抓，不進判斷層版本控制。"),
+        "method": ("目標價低／平均／高：docs/dd-screener/latest.json 的 fund.target_low／target_avg／"
+                   f"target_high（Koyfin，資料日 {dd_as_of or '無資料'}）；52 週高／低：本頁股價歷史"
+                   "（近一年交易日 High／Low 的最大最小值）；中位數、分析師人數 Koyfin 無對應欄位，無資料。"
+                   "2026-09-25 起不再呼叫 yfinance Ticker.info（GitHub Actions runner IP 被 Yahoo 擋掉）。"),
     }
 
 
@@ -3591,20 +3583,28 @@ def build(ticker, refresh_universe=False, state_dir=None, force_version=False, d
 
     range_proj = compute_range_projection(df_full, atr_pct=atr_pct_now)
 
+    # dd-screener/Koyfin row 提前查（原本在下面「研判核心」才查），因為
+    # short_interest_info／analyst_targets 現在也要用它，不再各自叫 yfinance。
+    dd_row, dd_meta = find_dd_screener_row(ticker)
+    dd_as_of = dd_meta.get("as_of") if dd_meta.get("status") == "ok" else None
+
     short_vol_block = fetch_short_volume(df_full, ticker)
+    # 2026-09-25：放空佔流通股比例改讀 docs/dd-screener/latest.json 的
+    # fund.short_interest_pct_float（Koyfin）。yfinance Ticker.info 的
+    # shortRatio／sharesShort／sharesShortPriorMonth／dateShortInterest 在
+    # GitHub Actions runner 上會被 Yahoo crumb 驗證擋掉，Koyfin 沒有對應欄位，
+    # 維持 no_data，不硬湊。
+    _short_fund = (dd_row.get("fund") if dd_row else None) or {}
+    _short_pct = _short_fund.get("short_interest_pct_float")
     short_interest_info = {
-        "shortPercentOfFloat_pct": r2(info.get("shortPercentOfFloat") * 100, 2)
-        if info.get("shortPercentOfFloat") is not None else None,
-        "shortRatio_days_to_cover": r2(info.get("shortRatio"), 2),
-        "sharesShort": info.get("sharesShort"),
-        "sharesShortPriorMonth": info.get("sharesShortPriorMonth"),
-        "dateShortInterest": (
-            datetime.fromtimestamp(info["dateShortInterest"], tz=timezone.utc).strftime("%Y-%m-%d")
-            if info.get("dateShortInterest") else None
-        ),
+        "shortPercentOfFloat_pct": r2(_short_pct, 2) if _short_pct is not None else None,
+        "shortRatio_days_to_cover": None,
+        "sharesShort": None,
+        "sharesShortPriorMonth": None,
+        "dateShortInterest": dd_as_of if _short_pct is not None else None,
     }
-    if not any(v is not None for v in short_interest_info.values()):
-        short_interest_info = {"status": "no_data", "reason": "yfinance info 未回傳放空相關欄位"}
+    if short_interest_info["shortPercentOfFloat_pct"] is None:
+        short_interest_info = {"status": "no_data", "reason": "latest.json 沒有 short_interest_pct_float（Koyfin）"}
 
     insiders = fetch_insiders(t, as_of)
 
@@ -3653,19 +3653,22 @@ def build(ticker, refresh_universe=False, state_dir=None, force_version=False, d
     data_reliability = compute_data_reliability(as_of.strftime("%Y-%m-%d"), short_vol_block, insiders, options, dim_states)
 
     # ── 研判核心 (judgment core, Phase 7) ──
-    dd_row, dd_meta = find_dd_screener_row(ticker)
+    # dd_row／dd_meta 已在上面（short_interest_info 之前）查過，這裡沿用。
     dd_stocks = dd_meta.get("stocks", []) if dd_meta.get("status") == "ok" else []
-    analyst_rev = fetch_analyst_revision_counts(t, as_of)
-    jc_card1 = build_card_eps_revision(ticker, dd_row, info, analyst_rev)
+    jc_card1 = build_card_eps_revision(ticker, dd_row, info, ANALYST_REVISIONS_30D_NO_DATA)
     jc_card2 = build_card_price_vs_eps(ticker, dd_row, df_full, price, jc_card1)
     jc_card3 = build_card_earnings_surprise(ticker, dd_row, t, df_full, spy_full, price, as_of)
     jc_card4 = build_card_roic_decomposition(dd_row)
     jc_card5 = build_card_insider(ticker, dd_row, t, as_of)
     jc_card6 = build_card_dd_screener_fields(dd_row, as_of, price)
     jc_card7 = build_card_funnel_rank(dd_row, dd_stocks)
-    eps_prev_fy = fetch_prev_fy_actual_eps(t, jc_card1)
+    eps_prev_fy = fetch_prev_fy_actual_eps(dd_row, jc_card1)
     cockpit = build_cockpit_status(ticker)
-    analyst_targets = build_analyst_targets(info, price)
+    # 52 週高低：跟封面／首屏同一份 price_history 視窗（display，近 DISPLAY_DAYS 個交易日）
+    # 逐日 High／Low 取最大最小，不再用 yfinance info 的 fiftyTwoWeekHigh/Low。
+    week52_low = float(display["Low"].min())
+    week52_high = float(display["High"].max())
+    analyst_targets = build_analyst_targets(dd_row, dd_as_of, price, week52_low, week52_high)
     moat, moat_changes, moat_rivals = build_card_moat(ticker, dd_row, dd_stocks)
     moat_footprint = build_moat_footprint(ticker, dd_row, dd_stocks)
     judgment_core = {
@@ -3714,7 +3717,9 @@ def build(ticker, refresh_universe=False, state_dir=None, force_version=False, d
             "options": "yfinance Ticker.option_chain",
             "market_env": "docs/market/data/state.json + read.json (summarized into data/_market.json, fetched client-side) + yfinance SPY history",
             "scores": "docs/screener/latest.json universe + yfinance 2y history (summarized into data/_universe_dist.json, shared across tickers)",
-            "judgment_core": "docs/dd-screener/latest.json (339 檔既有欄位，presentation-only，不重算) + docs/dd-screener/eps-estimates-snapshots/ + yfinance (earnings surprises / analyst revisions / insider transactions) + ~/v7-backtest/results/pead/pead_events.csv (summarized into data/_sue_breaks.json)",
+            "judgment_core": "docs/dd-screener/latest.json (339 檔既有欄位，presentation-only，不重算，含 eps_year_ago／target_high/low/avg／short_interest_pct_float／insider_net_buy_3m／insider_signal 等 Koyfin 欄位) + docs/dd-screener/eps-estimates-snapshots/ + yfinance (earnings surprises / insider transactions) + ~/v7-backtest/results/pead/pead_events.csv (summarized into data/_sue_breaks.json)",
+            "analyst_targets": "docs/dd-screener/latest.json fund.target_low／target_avg／target_high（Koyfin）+ 本頁股價歷史（52 週高低）",
+            "short_interest_info": "docs/dd-screener/latest.json fund.short_interest_pct_float（Koyfin，放空佔流通股比例）",
         },
         "quote": {
             "name": info.get("longName") or info.get("shortName") or ticker,

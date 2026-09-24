@@ -96,6 +96,10 @@ function renderFirstScreen(vm){
       '<tr><td class="k">EPS</td>'+ft.eps.map(function(v){return '<td class="num">'+fmtNum(v,2)+'</td>';}).join('')+'</tr>'+
       '<tr><td class="k">EPS 成長</td>'+ft.growth.map(function(v,i){return '<td class="num"'+(i===0&&ft.prevNote?' title="'+ft.prevNote+'"':'')+'>'+(v==null?'無前一年基準':fmtPctParen(v,1))+'</td>';}).join('')+'</tr>'+
       '<tr><td class="k">該年 EPS 本益比</td>'+ft.pe.map(function(v){return '<td class="num">'+(v!=null?fmtNum(v,1)+'x':'無資料')+'</td>';}).join('')+'</tr>'+
+      '<tr><td class="k">PEG</td>'+ft.peg.map(function(p){
+        var txt = p.reason==='growth_missing' ? '無前一年基準' : (p.reason==='not_applicable' ? '不適用' : fmtNum(p.value,2));
+        return '<td class="num">'+txt+'</td>';
+      }).join('')+'</tr>'+
       '<tr><td class="k">3 個月修正</td>'+ft.rev3m.map(function(v){return '<td class="num">'+fmtPctColored(v)+'</td>';}).join('')+'</tr>'+
       '<tr><td class="k">毛利率</td>'+ft.gm.map(function(v){return '<td class="num">'+fmtNum(v,1)+'%</td>';}).join('')+'</tr>'+
       '</tbody>';
@@ -112,21 +116,11 @@ function renderSec1(vm){
         '<td class="num">'+fmtPctColored(r.vs_last_month_pct)+'</td><td class="num">'+fmtPctColored(r.vs_3m_ago_pct)+'</td>'+
         '<td class="num">'+fmtPctColored(r.vs_since_earnings_pct)+'</td></tr>';
     }).join('')+'</tbody>';
-  var rev30 = c.analyst_revisions_30d;
-  var rev30Stats = '';
-  if(rev30.status==='ok'){
-    ['next','curr'].forEach(function(k){
-      var p = rev30.periods[k==='next'?'+1y':'0y'];
-      var lbl = (c.fy_labels && c.fy_labels[k]) || (k==='next'?'明年度':'今年度');
-      if(p && p.up_30d!=null && p.down_30d!=null){
-        rev30Stats += '<div class="imq-stat"><div class="v">'+p.up_30d+' / '+p.down_30d+'</div><div class="k">'+lbl+' EPS估計近30天上修／下修家數</div></div>';
-      }
-    });
-  }
+  // 2026-09-25：近30天上修／下修家數（analyst_revisions_30d，yfinance eps_revisions）
+  // 在雲端會被 Yahoo crumb 驗證擋掉、全數無資料，已移除——上面的修正表本身已經涵蓋方向。
   document.getElementById('s1Stats').innerHTML =
     '<div class="imq-stat"><div class="v">'+fmtPct(c.cagr_3y.eps_cagr_3y_pct)+'</div><div class="k">共識3年EPS年複合</div></div>'+
-    '<div class="imq-stat"><div class="v">'+fmtPct(c.cagr_3y.rev_cagr_3y_pct)+'</div><div class="k">共識3年營收年複合</div></div>'+
-    rev30Stats;
+    '<div class="imq-stat"><div class="v">'+fmtPct(c.cagr_3y.rev_cagr_3y_pct)+'</div><div class="k">共識3年營收年複合</div></div>';
   buildEpsPathChart(document.getElementById('chartS1Eps'), vm);
   buildRevYoyChart(document.getElementById('chartS1Rev'), vm);
 }
@@ -138,10 +132,10 @@ function renderSec2(vm){
   if(at && at.status==='ok'){
     document.getElementById('s2Table2').innerHTML =
       '<tbody>'+
-      '<tr><td class="k">目標價（低／中位數／平均／高）</td><td class="v">'+fmtNum(at.target_low,2)+' / '+fmtNum(at.target_median,2)+' / '+fmtNum(at.target_mean,2)+' / '+fmtNum(at.target_high,2)+'</td></tr>'+
-      '<tr><td class="k">分析師人數</td><td class="v">'+fmtNum(at.num_analysts,0)+'</td></tr>'+
+      '<tr><td class="k">目標價（低／平均／高）</td><td class="v">'+fmtNum(at.target_low,2)+' / '+fmtNum(at.target_mean,2)+' / '+fmtNum(at.target_high,2)+'</td></tr>'+
       '<tr><td class="k">到平均目標價的空間</td><td class="v">'+fmtPct(at.upside_to_mean_pct)+'</td></tr>'+
       '<tr><td class="k">現價在52週區間的位置</td><td class="v">'+(at.pct_in_52w_range!=null?fmtNum(at.pct_in_52w_range,0)+'%':'無資料')+'</td></tr>'+
+      '<tr><td class="k">目標價資料日期（Koyfin）</td><td class="v">'+(at.as_of||'無資料')+'</td></tr>'+
       '</tbody>';
   } else { noData(document.getElementById('s2Table2'), at && at.reason); }
 }
@@ -189,11 +183,12 @@ function renderSec6(vm){
     '<tr><td class="k">ATR%（近一年百分位）</td><td class="v">'+fmtNum(D.status_summary.atr_pct,2)+'%（'+fmtNum(D.status_summary.atr_pct_percentile_1y,0)+'百分位）</td></tr>'+
     (opt.status==='ok'?'<tr><td class="k">20日已實現波動</td><td class="v">'+fmtNum(opt.aggregate.hv20_pct,1)+'%</td></tr>':'')+
     '<tr><td class="k">Beta（一年期）</td><td class="v">'+(mb?fmtNum(mb.beta,2)+'（相關係數'+fmtNum(mb.correlation,2)+'）':'無資料')+'</td></tr>'+
-    '<tr><td class="k">空單佔流通股比例</td><td class="v">'+fmtNum(sii&&sii.shortPercentOfFloat_pct,2)+'%</td></tr>'+
-    '<tr><td class="k">回補天數</td><td class="v">'+fmtNum(sii&&sii.shortRatio_days_to_cover,2)+' 天</td></tr>'+
+    '<tr><td class="k">空單佔流通股比例</td><td class="v">'+(sii&&sii.shortPercentOfFloat_pct!=null?fmtNum(sii.shortPercentOfFloat_pct,2)+'%':'無資料')+'</td></tr>'+
+    '<tr><td class="k">回補天數</td><td class="v">'+(sii&&sii.shortRatio_days_to_cover!=null?fmtNum(sii.shortRatio_days_to_cover,2)+' 天':'無資料')+'</td></tr>'+
+    '<tr><td class="k">空單資料日期（Koyfin）</td><td class="v">'+((sii&&sii.dateShortInterest)||'無資料')+'</td></tr>'+
     '<tr><td class="k">放空量30日 z 值</td><td class="v">'+(sv&&sv.z_score_recent30_vs_60!=null?fmtNum(sv.z_score_recent30_vs_60,2):'無資料')+'</td></tr>'+
-    '<tr><td class="k">內部人群聚買進</td><td class="v">'+(vm.c5.cluster_buy.status==='ok'?(vm.c5.cluster_buy.cluster_buy_condition_met?'條件目前成立':'條件目前不成立')+'（近90天'+vm.c5.cluster_buy.n_distinct_buyers+'位買進）':'無資料')+'</td></tr>'+
-    '<tr><td class="k">dd-screener近3個月淨買超</td><td class="v">'+fmtUsdM(vm.c5.dd_screener_net_buy_3m_usd)+'</td></tr>'+
+    '<tr><td class="k">內部人群聚買進</td><td class="v">'+(vm.c5.cluster_buy.status==='ok'?(vm.c5.cluster_buy.cluster_buy_condition_met?'條件目前成立':'條件目前不成立')+'（近90天'+vm.c5.cluster_buy.n_distinct_buyers+'位買進）':'無資料（見下方 dd-screener 備援訊號）')+'</td></tr>'+
+    '<tr><td class="k">dd-screener近3個月淨買超</td><td class="v">'+fmtUsdM(vm.c5.dd_screener_net_buy_3m_usd)+(vm.c5.dd_screener_insider_signal?'（訊號：'+vm.c5.dd_screener_insider_signal+'）':'')+'</td></tr>'+
     '</tbody>';
   if(opt.status==='ok'){
     document.getElementById('s6OptTable').innerHTML =
