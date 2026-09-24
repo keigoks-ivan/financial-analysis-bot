@@ -33,7 +33,7 @@ as_of 必須是今天（台北）。同源指標不當多份獨立證據；沒�
 - `python3 scripts/market_refresh.py accept --candidate <run_dir>/candidate.json --write`（保存新判讀、快照與發布包；status 應為 ok 或 degraded）
 - `python3 scripts/qc.py` 必須 PASS。
 
-⑦ `docs/market/data/read_status.json` 寫 {"as_of": 今天, "status": "ok", "stage": "auto", "reasons": []}；任一關卡失敗則不改 read.json、不落帳，寫 status failed 與 stage、reasons，只 stage 這一個檔並單獨 commit push。
+⑦ `docs/market/data/read_status.json` 寫 {"as_of": "<今天>", "status": "ok", "stage": "auto", "reasons": []}；任一關卡失敗則不改 read.json、不落帳，寫 status failed 與 stage、reasons，只 stage 這一個檔並單獨 commit push。
 
 ⑧ 成功時只 stage：docs/market/data/read.json、read_history.jsonl、read_status.json、refresh.json、docs/market/data/snapshots/、docs/market/data/releases/、knowledge/forecasts.jsonl（不得 git add -A）。`git config user.name "github-actions[bot]"`、`git config user.email "github-actions[bot]@users.noreply.github.com"`，commit 訊息 `market-read 自動判讀 {as_of}：{thesis 前 30 字}`，結尾 `Co-Authored-By: Claude <noreply@anthropic.com>`；`git pull --rebase origin main` 後 `git push origin main`，失敗重試 3 次。推送前若 read.json 已被更新（refresh.json 的 snapshot_id 改變），重新 prepare 與驗證，不覆蓋較新成果。
 
