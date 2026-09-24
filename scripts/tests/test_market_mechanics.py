@@ -69,6 +69,13 @@ def test_future_date_is_stale_and_frequency_windows_are_explicit():
     assert market.classify_stale("2026-09-14", date(2026, 9, 13), "daily") == (True, "stale")
     assert market.classify_stale("2026-09-07", date(2026, 9, 13), "weekly") == (False, "ok")
     assert market.classify_stale("2026-08-01", date(2026, 9, 13), "monthly") == (False, "ok")
+    # 2026-09-24 週更、月頻加發布時滯緩衝
+    assert market.classify_stale("2026-09-15", date(2026, 9, 27), "weekly") == (False, "ok")      # 12 天
+    assert market.classify_stale("2026-09-15", date(2026, 9, 28), "weekly") == (False, "warn")    # 13 天
+    assert market.classify_stale("2026-09-15", date(2026, 10, 2), "weekly") == (True, "stale")    # 17 天
+    assert market.classify_stale("2026-08", date(2026, 10, 20), "monthly") == (False, "ok")       # 50 天
+    assert market.classify_stale("2026-08", date(2026, 10, 21), "monthly") == (False, "warn")     # 51 天
+    assert market.classify_stale("2026-07", date(2026, 9, 30), "monthly") == (True, "stale")      # 61 天
     assert internals.yoy_series([(f"2025-{m:02d}-01", 100.0) for m in range(1, 13)] +
                                 [("2026-01-01", 103.0)])[-1][1] == 3.0
     assert monitor.S["tp10y"]["ticker"] == "THREEFYTP10"

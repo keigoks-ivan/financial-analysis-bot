@@ -185,12 +185,21 @@ def fmt_val(x, unit):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 新鮮度判定（§1：日更 >4 天／週更 >10 天／月頻 >45 天／regime >30 天 → stale；
+# 新鮮度判定（§1 原稿：日更 >4 天／週更 >10 天／月頻 >45 天／regime >30 天 → stale；
+# 2026-09-24 持有人同意週更改 >16、月頻改 >60，理由見 STALE_LIMIT 上方註解；
 # ok/warn/stale 三態：warn 為 stale 門檻一半處的內插緩衝區，凍結稿只明文 stale
 # 硬門檻，warn 界線為本檔補的合理內插，非凍結稿逐字規定，orchestrator 可調）
 # ═══════════════════════════════════════════════════════════════════════════
 
-STALE_LIMIT = {"daily": 4, "weekly": 10, "monthly": 45, "regime": 30}
+# 2026-09-24 持有人同意改：週更、月頻加上來源本身的發布時滯。
+#   週更：COT 週五才公布上週二的部位、週日排程才抓，健康時 as_of 落後 5～12 天；
+#         原本 >7 warn、>10 stale 會讓正常的 regime／crowding 每週五、週六被判 stale。
+#         改 >12 warn、>16 stale：漏跑一週，隔天就 warn、再四天 stale。
+#   月頻：總經時鐘以月底起算，M 月資料要到 M+1 月中（CPI）才齊，下一個月的資料要到
+#         M+2 月中，健康時落後 15～52 天；原本 >22.5 warn、>45 stale 每月後半都誤報。
+#         改 >50 warn、>60 stale。日更、regime 不變。
+STALE_LIMIT = {"daily": 4, "weekly": 16, "monthly": 60, "regime": 30}
+WARN_AFTER = {"weekly": 12, "monthly": 50}
 CADENCE_LABEL = {"daily": "日更", "weekly": "週更", "monthly": "月頻", "regime": "不定期"}
 
 
@@ -228,7 +237,7 @@ def classify_stale(as_of_str, today, cadence):
     n = max(0, n)
     if n > limit:
         return True, "stale"
-    warn_after = 7 if cadence == "weekly" else limit / 2.0
+    warn_after = WARN_AFTER.get(cadence, limit / 2.0)
     if n > warn_after:
         return False, "warn"
     return False, "ok"
