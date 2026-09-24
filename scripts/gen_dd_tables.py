@@ -150,7 +150,10 @@ def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
         "peg_fy2": aa.get("peg_fy2"),
         "upside_short_pct": _aa("upside_short_pct", val.get("upside_short_pct")),
         "upside_mid_pct": _aa("upside_mid_pct", val.get("upside_mid_pct")),
-        "stress": aa.get("stress"),
+        # 2026-09-24 LULU：判斷者交 {"pass": null, "total": null}（schema 允許），原樣放進 dd-meta 會讓
+        # validate_dd_meta 以 None 比大小崩潰；兩欄都是整數才帶，否則視同沒填。
+        "stress": (aa.get("stress") if isinstance(aa.get("stress"), dict)
+                   and all(isinstance(aa["stress"].get(k), int) for k in ("pass", "total")) else None),
         "moat_score": moat.get("score"),
         "growth_durability": aa.get("growth_durability"),
         "quality_score": aa.get("quality_score"),
@@ -184,6 +187,13 @@ def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
         meta["catalysts"] = j["catalysts"]
     if eps_meta.get("base_eps_path"):
         meta["base_eps_path"] = eps_meta["base_eps_path"]
+        # 2026-09-24 LULU：FY1→FY2 共識 EPS 負成長時 PEG 無定義，判斷者留 null → dd-meta 缺必填欄擋發布。
+        # 沿用既有慣例 -1（CRWV／MSTR／NBIS 已用；aggregate_dd_stats 只取 peg>0，自動排除）。
+        if meta.get("peg_fy2") is None:
+            fwd = [v for k, v in sorted(eps_meta["base_eps_path"].items())
+                   if isinstance(k, str) and not k.strip().endswith("A") and isinstance(v, (int, float))]
+            if len(fwd) >= 2 and fwd[1] <= fwd[0]:
+                meta["peg_fy2"] = -1
     if eps_meta.get("fy_end_month") is not None:
         meta["fy_end_month"] = eps_meta["fy_end_month"]
     if eps_meta.get("eps_basis"):

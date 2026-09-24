@@ -39,3 +39,12 @@ def test_appb_cjk_halfwidth_punct_converted():
                                   "as_of": "2026-09-01"}]}
     out = gen_dd_tables.render_v19_appB_html(facts)
     assert "新聞稿， https://x.com/a.b" in out and "強勁。" in out
+
+
+def test_dd_meta_peg_negative_growth_and_empty_stress():
+    import gen_dd_tables
+    j = {"meta": {"ticker": "X", "date": "2026-09-24"},
+         "appendix_a": {"peg_fy2": None, "stress": {"pass": None, "total": None}},
+         "eps_meta": {"base_eps_path": {"FY2025A": 13.26, "FY2026E": 9.39, "FY2027E": 8.78, "FY2028E": 9.78}}}
+    m = gen_dd_tables.build_dd_meta(j, None)
+    assert m["peg_fy2"] == -1 and "stress" not in m

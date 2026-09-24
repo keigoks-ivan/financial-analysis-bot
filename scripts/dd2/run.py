@@ -1356,6 +1356,39 @@ def _prose_prepare_v20(ctx):
     return True, out[-1200:]
 
 
+PROSE_FIX_MARGIN = 1.2  # 補寫目標＝下限 ×1.2，留餘裕
+
+
+def _prose_fix_spawn(ctx, sids):
+    """一通 sonnet 補寫：沿用前半散文 prompt（散文卡、白名單、判斷投影視圖都在裡面），尾端加覆蓋指示，
+    只重寫篇幅不足的章節，寫到 prose_fix.html（_do_prose_split 會讓它蓋掉同 sid）。"""
+    base = (ctx.run_dir / "prompts" / "prose_A.md")
+    base_text = base.read_text(encoding="utf-8") if base.exists() else ""
+    lines = ["", "---", "", "## ⑨ 補寫任務（本段優先，取代上面任務頭與寫入指示）", "",
+             "上一輪散文已寫好，只有下列章節篇幅不足、被硬閘擋下。**只重寫這幾章**，其他章節一個字都不要寫。", ""]
+    for sid in sids:
+        f = ctx.run_dir / "prose" / (sid + ".html")
+        cur = f.stat().st_size if f.exists() else 0
+        floor = PROSE_SECTION_FLOOR.get(sid, 0)
+        lines.append("- `{0}`：現在 {1:,}B，下限 {2:,}B，**目標 ≥ {3:,}B**".format(sid, cur, floor, int(floor * PROSE_FIX_MARGIN)))
+    lines += ["",
+              "做法：保留現稿的論點與結論，補的是深度——用上面 judgment 投影視圖裡已有、但現稿沒寫到的內容"
+              "（機制、證據、同業對照、反證）。不得灌水重複、不得出現白名單以外的數字、不得心算衍生數字。"
+              "格式同散文卡 §6：每章前一行 `<!-- SID:sX -->`，緊接完整的 `<section>`（`<h2>`／`<p class=\"lead\">`／`<ul class=\"pts\">`），"
+              "表格注入標記照現稿保留。", "",
+              "一次 Write 到 `{0}`，寫完即停。".format(ctx.run_dir / "prose_fix.html"), "", "現稿："]
+    for sid in sids:
+        f = ctx.run_dir / "prose" / (sid + ".html")
+        lines += ["", "```html", "<!-- SID:{0} -->".format(sid), f.read_text(encoding="utf-8") if f.exists() else "", "```"]
+    prompt = ctx.run_dir / "prompts" / "prose_fix.md"
+    prompt.write_text(base_text + "\n".join(lines), encoding="utf-8")
+    out = ctx.run_dir / "agents" / "prose_fix.json"
+    spec = {"id": "prose_fix", "model": "sonnet", "prompt": str(prompt), "out": str(out), "tools": ["Write"],
+            "max_turns": 3, "budget_cache_read": PROSE_BUDGET, "run_dir": str(ctx.run_dir)}
+    r = dd_headless.spawn_many([spec], max_parallel=1)[0]
+    return _enrich_from_raw(r or {"ok": False}, out)
+
+
 def do_prose(ctx):
     prev_usage_all = list((ctx.manifest.get("stages", {}).get("prose") or {}).get("agent_usage") or [])
     st = ctx.stage_begin("prose")
@@ -1390,6 +1423,18 @@ def do_prose(ctx):
     written, errors = ddreport._do_prose_split(ctx.ticker, ctx.date)
     st["sids"] = written
     ok, findings, warns = _gates_v20(ctx)
+    # 2026-09-24 持有人拍板：只有「章節篇幅不足」擋下時，允許一通補寫（只重寫短的那幾章，最多一次）。
+    # LULU s5 連兩次 2.8–2.9KB（下限 3KB），判斷物護城河材料有 7KB，屬寫得太精簡而非缺料。
+    short = [s for s, why in findings if str(why).startswith("篇幅")]
+    if not ok and not errors and short and len(short) == len(findings) and not st.get("prose_fix"):
+        st["prose_fix"] = short
+        r = _prose_fix_spawn(ctx, short)
+        st["agent_usage"].append(_usage_record("prose_fix", r))
+        ctx.save()
+        if (ctx.run_dir / "prose_fix.html").exists():
+            written, errors = ddreport._do_prose_split(ctx.ticker, ctx.date)
+            st["sids"] = written
+            ok, findings, warns = _gates_v20(ctx)
     st["zh_warns"] = ["{0}：{1}".format(a, b) for a, b in warns]
     for a, b in warns:
         print("  [warn] {0}：{1}".format(a, b))

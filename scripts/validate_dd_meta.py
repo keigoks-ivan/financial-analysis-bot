@@ -41,7 +41,7 @@ IN_SCOPE_VERSIONS = ("v12", "v13", "v14", "v15")
 # Required fields with their expected Python types (after json.loads).
 # Keys present here MUST appear in every v12 dd-meta block.
 # 可缺席的必填欄（資料源本身不可用時；值仍不得為 null，要缺就整欄不寫）
-OMITTABLE_FIELDS = {"pct_5y"}
+OMITTABLE_FIELDS = {"pct_5y", "stress"}  # stress：2026-09-24 LULU 判斷者未跑壓力測試；update_dd_index 讀法已 None-safe
 
 REQUIRED_FIELDS = {
     "ticker": str,
@@ -317,7 +317,7 @@ def validate_meta(meta: dict):
                 errs.append(
                     f"stress.{k}: must be int, got {type(stress[k]).__name__}"
                 )
-        if "pass" in stress and "total" in stress:
+        if isinstance(stress.get("pass"), int) and isinstance(stress.get("total"), int):  # 非整數上面已報錯，別再比大小崩潰
             if stress["total"] <= 0:
                 errs.append(f"stress.total: must be > 0, got {stress['total']}")
             if stress["pass"] < 0 or (
