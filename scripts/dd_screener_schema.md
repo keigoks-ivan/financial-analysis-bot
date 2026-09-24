@@ -330,6 +330,7 @@ computed internally by `_fetch_live_fy_eps()`/used for `eps2y_live_method=
 read it from `latest.json` instead of calling `Ticker.earnings_estimate`
 itself per-ticker (that call gets 429/401'd from the GitHub Actions runner
 IP). `null` when yfinance had no `0y` row or no `yearAgoEps`.
+Also `eps_year_ago_0y_avg`: yfinance's own 0y consensus (before the Excel override), same row and currency as `eps_year_ago`; consumers use it to confirm fiscal year and currency match before using `eps_year_ago`.
 
 **護城河不進排序（2026-09-22 最終定案）**：launch day 前後試了三版護城河層
 設計——3-chain percentile + 80%-coverage gate、single-source absolute-tier +

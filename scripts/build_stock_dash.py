@@ -1958,11 +1958,8 @@ def fetch_prev_fy_actual_eps(row, card1):
     0y.yearAgoEps 算好、寫進 latest.json 的既有欄位——跟 eps_fy_curr 同一次
     _fetch_live_fy_eps() 呼叫抓的，本頁不再自己呼叫 yfinance；那支 API 在
     GitHub Actions runner 上會被 Yahoo crumb 驗證擋掉，全部 339 檔回傳空值）。
-    只在 latest.json 的 eps_year_ago 跟本頁「今年度」估計（row.eps_fy_curr，
-    跟 card1 的 current_estimate 同一個值）差在合理範圍內才採用，避免財年標籤
-    跟 yfinance 內部列索引對不齊（沿用原本 3% 檢查的精神；因為兩個數字不再是
-    同一次 fetch 的同列，改用較寬的量級檢查——3% 對「今年 vs 去年」這種本來就
-    會有正常成長／衰退的比較太緊）。刻意不放進 eps_revision（判斷層，沒觸發不
+    同列的 yfinance 0y 預估（eps_year_ago_0y_avg）跟本頁今年度估計差 3% 內才採用（財年、幣別都要對上）。
+    刻意不放進 eps_revision（判斷層，沒觸發不
     改版），獨立成 judgment_core.eps_prev_fy，每次 build 都更新。"""
     if row is None:
         return {"status": "no_data", "reason": "不在 dd-screener 名單（339 檔），latest.json 沒有 eps_year_ago"}
@@ -1970,14 +1967,14 @@ def fetch_prev_fy_actual_eps(row, card1):
     if year_ago is None:
         return {"status": "no_data", "reason": "latest.json 沒有前一年實際 EPS（eps_year_ago）"}
     curr_label = (card1.get("fy_labels") or {}).get("curr") or ""
-    cur_screener = row.get("eps_fy_curr")
-    # 量級檢查：去年實際值跟今年估計要同號、量級接近（0.2x–5x），抓明顯的財年
-    # 標籤錯位（如 yfinance 列位移導致抓到兩年前或今年的值），不擋正常的成長／衰退。
-    if (cur_screener is None or not cur_screener or year_ago == 0
-            or (cur_screener > 0) != (year_ago > 0)
-            or not (0.2 <= abs(float(year_ago) / float(cur_screener)) <= 5.0)):
+    # 財年／幣別核對：eps_year_ago 是 yfinance 0y 列的 yearAgoEps，同列的 0y 預估
+    # （eps_year_ago_0y_avg）要跟本頁今年度估計差 3% 內才採用——跟改源前同一條規則，
+    # 同時擋住財年錯位與幣別不同（例如 yfinance 報 EUR／TWD、Koyfin 報 USD）。
+    cur = card1["table"][0]["current_estimate"] if card1.get("status") == "ok" and card1.get("table") else None
+    avg = row.get("eps_year_ago_0y_avg")
+    if not cur or not avg or abs(float(avg) / cur - 1) > 0.03:
         return {"status": "no_data",
-                "reason": f"latest.json 前一年實際 EPS {year_ago} 跟本頁今年度估計 {cur_screener} 量級對不上，財年可能錯位，不採用"}
+                "reason": f"yfinance 今年度預估 {avg} 跟本頁 {cur} 對不上，財年或幣別可能錯位，不採用"}
     m = re.match(r"FY(\d+)", curr_label)
     prev_label = f"FY{int(m.group(1)) - 1:02d}" if m else "前一年"
     return {"status": "ok", "fy": prev_label, "actual_eps": round(float(year_ago), 4),

@@ -1734,6 +1734,9 @@ def _fetch_live_fy_eps(
                     yag = ee.loc["0y"].get("yearAgoEps")
                     if yag is not None and float(yag) > 0:
                         out["eps_year_ago"] = round(float(yag), 4)
+                        # v1.6 (2026-09-25): yfinance 自己的 0y 預估（Excel 覆寫前），
+                        # 跟 eps_year_ago 同列同幣別；stock-dash 用它核對財年與幣別。
+                        out["eps_year_ago_0y_avg"] = yf_eps_0y
             except Exception:
                 pass
 
@@ -3722,6 +3725,7 @@ def enrich_ticker(
         # 算，只是先前沒寫出來）。給 build_stock_dash.py 用，取代它自己重複呼叫
         # Ticker.earnings_estimate（GitHub Actions runner 會被 Yahoo crumb 擋掉）。
         "eps_year_ago": _lfy.get("eps_year_ago"),
+        "eps_year_ago_0y_avg": _lfy.get("eps_year_ago_0y_avg"),
         # v1.8: Excel-derived FY3 + growth/CAGR columns + provenance
         "eps_fy3": _lfy.get("eps_fy3"),
         "eps_fy3_yoy_pct": _lfy.get("growth_fy2_fy3_pct"),
