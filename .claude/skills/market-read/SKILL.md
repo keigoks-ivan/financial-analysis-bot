@@ -57,6 +57,8 @@ description: market-read — 市況主控台判讀層（週頻＋事件觸發）
 
 ## Auto 模式（2026-09-03 全自動化；雲端 routine `market-read-auto`）
 
+**2026-09-24 起 routine 實際執行的指令在同目錄 `AUTO_ROUTINE.md`**（routine prompt 只叫 session 讀該檔照做）；下面的步驟是 09-03 版設計紀錄，兩者不一致時以 `AUTO_ROUTINE.md` 為準。
+
 **定位**：以上步驟 1–6 是手動模式（orchestrator 對話中執行）。Auto 模式是同一套判讀邏輯搬進雲端 routine：每天固定時間喚醒、自己判斷要不要跑、跑完自己 commit push、寄 email 摘要。兩種模式記分同一個 source（`market-read`），SPRT 判紅時一起降級。設計稿：`notes/site-internal/root/_market_read_design_20260903.md` §5。**判讀本身的骨架、憲法、白話關卡與手動模式完全相同**——auto 模式只是「誰喚醒、誰審、失敗怎麼辦」不同，不是另一套判讀邏輯。
 
 ### 步驟（比照設計稿 §5.1／§5.4）
