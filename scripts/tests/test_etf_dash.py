@@ -11,6 +11,7 @@ network access. No network, no dependency on docs/dd-screener/latest.json.
 from __future__ import annotations
 
 import io
+from datetime import datetime
 from pathlib import Path
 import sys
 
@@ -425,3 +426,211 @@ def test_get_usd_value_prefers_usd_orig_field():
 def test_get_usd_value_falls_back_to_raw_field_pre_v185():
     rec = {"eps_fy_next": 21.9, "eps_fy_next_usd_orig": None}
     assert ddh.get_usd_value(rec, "eps_fy_next") == 21.9
+
+
+# ── decide_mode() — tiered update FULL vs PRICE decision ────────────────────
+# 2026-09-24：SPY 規模到 ~500 檔，每天整套重抓 eps_trend 沒必要（EPS 估計本
+# 來就是月頻更新）。FULL（持股下載＋逐檔 eps_trend）只在週六（台北時區）、
+# 或 EPS 快取遺失／過舊、或明示 --mode full 時才跑；其餘日子用 PRICE（只抓
+# 股價，EPS 沿用快取）。
+
+def test_decide_mode_explicit_cli_mode_wins_over_everything():
+    # 就算是週六、快取也新鮮，--mode price 明示還是照做
+    saturday = datetime(2026, 9, 26)  # 2026-09-26 是台北時區的週六
+    fresh_cache = {"eps_as_of": "2026-09-26"}
+    assert m.decide_mode("price", fresh_cache, saturday)[0] == "price"
+    assert m.decide_mode("full", fresh_cache, datetime(2026, 9, 21))[0] == "full"
+
+
+def test_decide_mode_saturday_forces_full():
+    saturday = datetime(2026, 9, 26)
+    assert saturday.weekday() == 5
+    fresh_cache = {"eps_as_of": "2026-09-26"}
+    mode, reason = m.decide_mode("auto", fresh_cache, saturday)
+    assert mode == "full"
+    assert "週六" in reason
+
+
+def test_decide_mode_missing_cache_forces_full():
+    sunday = datetime(2026, 9, 27)
+    mode, reason = m.decide_mode("auto", None, sunday)
+    assert mode == "full"
+    assert "沒有 EPS 快取" in reason
+
+
+def test_decide_mode_stale_cache_forces_full():
+    sunday = datetime(2026, 9, 27)
+    stale_cache = {"eps_as_of": "2026-09-12"}  # 15 天前，超過 7 天門檻
+    mode, reason = m.decide_mode("auto", stale_cache, sunday)
+    assert mode == "full"
+    assert "天沒更新" in reason
+
+
+def test_decide_mode_fresh_cache_non_saturday_is_price():
+    sunday = datetime(2026, 9, 27)
+    fresh_cache = {"eps_as_of": "2026-09-26"}  # 昨天，1 天前
+    mode, reason = m.decide_mode("auto", fresh_cache, sunday)
+    assert mode == "price"
+
+
+def test_decide_mode_cache_exactly_at_boundary_still_price():
+    # 恰好 7 天門檻本身不算超過（> 7，不是 >=7）
+    day = datetime(2026, 9, 27)
+    cache = {"eps_as_of": "2026-09-20"}  # 恰好 7 天前
+    mode, _ = m.decide_mode("auto", cache, day)
+    assert mode == "price"
+
+
+def test_decide_mode_malformed_eps_as_of_forces_full():
+    sunday = datetime(2026, 9, 27)
+    bad_cache = {"eps_as_of": "not-a-date"}
+    mode, reason = m.decide_mode("auto", bad_cache, sunday)
+    assert mode == "full"
+    assert "格式壞掉" in reason
+
+
+# ── EPS cache round-trip — load_eps_cache()/save_eps_cache() ────────────────
+
+def test_eps_cache_round_trip(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "EPS_CACHE_DIR", tmp_path)
+    payload = {
+        "eps_as_of": "2026-09-20",
+        "holdings": [{"ticker": "AAA", "name": "Alpha", "weight_pct": 100.0}],
+        "non_equity": [],
+        "tickers": {"AAA": {"status": "ok", "eps_fy_next_local": 5.0,
+                             "revisions_pct": {"30d": 1.0, "60d": 2.0, "90d": 3.0}}},
+        "periods": [{"key": "30d", "eps_chg_pct": 1.0}],
+        "contributions": {"30d": {"top": [], "bottom": []}},
+    }
+    m.save_eps_cache("FAKE", payload)
+    loaded = m.load_eps_cache("FAKE")
+    assert loaded == payload  # 逐層結構（含 nested revisions_pct）原封不動
+
+
+def test_load_eps_cache_missing_file_returns_none(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "EPS_CACHE_DIR", tmp_path)
+    assert m.load_eps_cache("NOPE") is None
+
+
+def test_load_eps_cache_corrupt_json_returns_none_not_raise(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "EPS_CACHE_DIR", tmp_path)
+    (tmp_path / "BROKEN.json").write_text("{not valid json", encoding="utf-8")
+    assert m.load_eps_cache("BROKEN") is None
+
+
+# ── build_fund_price() — table window anchored at eps_as_of, not "today", ──
+# and makes zero eps_trend calls (all EPS reused verbatim from eps_cache) ────
+
+def _fake_eps_cache():
+    return {
+        "eps_as_of": "2026-09-20",
+        "holdings_as_of": "2026-09-19",
+        "holdings_source_url": "https://example.com/holdings.xlsx",
+        "holdings": [
+            {"ticker": "AAA", "name": "Alpha Corp", "weight_pct": 60.0},
+            {"ticker": "BBB", "name": "Beta Corp", "weight_pct": 40.0},
+        ],
+        "non_equity": [],
+        "tickers": {
+            "AAA": {"status": "ok", "reason": None, "yf_ticker_used": "AAA", "eps_currency": "USD",
+                    "eps_fy_next_local": 5.0, "price_currency": "USD", "has_stock_dash": False,
+                    "revisions_pct": {"30d": 2.0, "60d": 3.0, "90d": 4.0}},
+            "BBB": {"status": "ok", "reason": None, "yf_ticker_used": "BBB", "eps_currency": "USD",
+                    "eps_fy_next_local": 2.0, "price_currency": "USD", "has_stock_dash": False,
+                    "revisions_pct": {"30d": -1.0, "60d": -2.0, "90d": -3.0}},
+        },
+        # frozen table — anchored at eps_as_of (2026-09-20), NOT at "today" (2026-09-24)
+        "periods": [
+            {"key": "30d", "label": "近一個月", "days": 30, "base_date": "2026-08-21",
+             "eps_chg_pct": 0.8, "price_chg_pct": 1.5, "implied_pe_chg_pct": 0.7,
+             "coverage_pct": 100.0, "n_covered": 2, "n_total": 2,
+             "period_exclusions": [], "period_capped": []},
+        ],
+        "contributions": {"30d": {"top": [], "bottom": []}},
+    }
+
+
+def _fake_cfg():
+    return {
+        "label_zh": "測試基金", "label_en": "Test Fund", "yf_ticker": "TESTETF",
+        "isin": None, "other_listings": [], "holdings_issuer_zh": "測試官方持股下載",
+    }
+
+
+def test_build_fund_price_reuses_frozen_periods_and_makes_zero_eps_trend_calls(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "SNAP_DIR", tmp_path / "snapshots")
+    eps_cache = _fake_eps_cache()
+    fake_prices = {
+        "TESTETF": [{"date": "2026-09-18", "close": 100.0}, {"date": "2026-09-20", "close": 102.0},
+                    {"date": "2026-09-24", "close": 105.0}],
+        "AAA": [{"date": "2026-09-24", "close": 50.0}],
+        "BBB": [{"date": "2026-09-24", "close": 20.0}],
+    }
+    monkeypatch.setattr(m, "fetch_prices_batch", lambda tickers, **kw: fake_prices)
+
+    calls_before = m.EPS_TREND_CALL_COUNT
+    result = m.build_fund_price("TESTETF", _fake_cfg(), eps_cache, {}, {}, {},
+                                 datetime(2026, 9, 24), "test forced price")
+
+    # zero eps_trend calls — fetch_ticker_eps_and_price() (the only caller of
+    # .eps_trend) is never on build_fund_price()'s call path.
+    assert m.EPS_TREND_CALL_COUNT == calls_before
+
+    assert result["mode"] == "price"
+    assert result["eps_as_of"] == "2026-09-20"
+    # the Exhibit 1 table is reused byte-for-byte from the FULL run, not
+    # recomputed against "today" — this is what keeps the 近一個月/近二個月/
+    # 近三個月 window anchored at eps_as_of all week.
+    assert result["periods"] is eps_cache["periods"]
+    assert result["contributions"] is eps_cache["contributions"]
+
+
+def test_build_fund_price_computes_price_since_eps_as_of(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "SNAP_DIR", tmp_path / "snapshots")
+    eps_cache = _fake_eps_cache()
+    fake_prices = {
+        "TESTETF": [{"date": "2026-09-20", "close": 102.0}, {"date": "2026-09-24", "close": 105.0}],
+        "AAA": [{"date": "2026-09-24", "close": 50.0}],
+        "BBB": [{"date": "2026-09-24", "close": 20.0}],
+    }
+    monkeypatch.setattr(m, "fetch_prices_batch", lambda tickers, **kw: fake_prices)
+    result = m.build_fund_price("TESTETF", _fake_cfg(), eps_cache, {}, {}, {},
+                                 datetime(2026, 9, 24), "test forced price")
+    assert result["price_since_eps_as_of_pct"] == pytest.approx((105.0 / 102.0 - 1) * 100, abs=0.01)
+    assert result["price"]["close"] == 105.0
+
+
+def test_build_fund_price_weighted_fwd_pe_uses_todays_price_and_cached_eps(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "SNAP_DIR", tmp_path / "snapshots")
+    eps_cache = _fake_eps_cache()
+    # AAA: eps=5.0 price=50.0 -> yield 0.10 (weight 60%); BBB: eps=2.0 price=20.0 -> yield 0.10 (weight 40%)
+    # both yields equal -> weighted harmonic mean P/E = 1/0.10 = 10.0
+    fake_prices = {
+        "TESTETF": [{"date": "2026-09-20", "close": 102.0}, {"date": "2026-09-24", "close": 105.0}],
+        "AAA": [{"date": "2026-09-24", "close": 50.0}],
+        "BBB": [{"date": "2026-09-24", "close": 20.0}],
+    }
+    monkeypatch.setattr(m, "fetch_prices_batch", lambda tickers, **kw: fake_prices)
+    result = m.build_fund_price("TESTETF", _fake_cfg(), eps_cache, {}, {}, {},
+                                 datetime(2026, 9, 24), "test forced price")
+    assert result["weighted_forward_pe"]["value"] == pytest.approx(10.0, abs=0.01)
+    assert result["weighted_forward_pe"]["coverage_pct"] == pytest.approx(100.0, abs=0.01)
+
+
+def test_build_fund_price_ticker_missing_from_batch_gets_null_price(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "SNAP_DIR", tmp_path / "snapshots")
+    eps_cache = _fake_eps_cache()
+    fake_prices = {
+        "TESTETF": [{"date": "2026-09-20", "close": 102.0}, {"date": "2026-09-24", "close": 105.0}],
+        "AAA": [{"date": "2026-09-24", "close": 50.0}],
+        # BBB deliberately missing — simulates a delisted/no-data ticker
+    }
+    monkeypatch.setattr(m, "fetch_prices_batch", lambda tickers, **kw: fake_prices)
+    result = m.build_fund_price("TESTETF", _fake_cfg(), eps_cache, {}, {}, {},
+                                 datetime(2026, 9, 24), "test forced price")
+    bbb = next(c for c in result["constituents"] if c["ticker"] == "BBB")
+    assert bbb["price_local"] is None
+    assert bbb["price_usd"] is None
+    # AAA still contributes to weighted_forward_pe alone
+    aaa = next(c for c in result["constituents"] if c["ticker"] == "AAA")
+    assert aaa["price_usd"] == 50.0

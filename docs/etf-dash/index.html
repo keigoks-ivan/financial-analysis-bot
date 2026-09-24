@@ -42,6 +42,8 @@ table{overflow-wrap:break-word}
 .chart-box{width:100%;position:relative}
 .ex-src{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:5px}
 .conclusion{font-size:13px;color:var(--body);line-height:1.7;padding:11px 13px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-top:8px}
+.daily-line{font-size:12.5px;color:var(--body);line-height:1.6;padding:8px 12px;background:var(--gold-bg);border:1px solid var(--gold-soft);border-left:3px solid var(--gold-deep);border-radius:var(--r);margin-bottom:8px}
+.daily-line b{color:var(--ink)}
 
 .imq-table{border-collapse:collapse;font-size:.82rem;background:var(--card);width:100%;max-width:100%}
 .imq-table th{font-family:var(--mono);font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--x-navy);text-align:left;padding:.5rem .7rem;border-bottom:2px solid var(--x-navy);white-space:nowrap}
@@ -166,6 +168,7 @@ table{overflow-wrap:break-word}
   <div class="ex-label">EXHIBIT 1</div>
   <div class="ex-title">成分股加權 EPS 預估變動 vs ETF 股價漲跌</div>
   <div class="ex-sub">各回顧期間比較成分股加權「明年度」EPS 預估變動、ETF 股價漲跌與隱含本益比變動</div>
+  <div class="daily-line" id="dailyUpdateLine"></div>
   <div class="tbl-wrap"><table class="imq-table" id="periodsTable"></table></div>
   <div class="conclusion" id="periodsSentence"></div>
   <div class="methods-note" id="periodsQualityNote" style="display:none"></div>
@@ -291,6 +294,11 @@ function renderInfoStrip(d){
   if(d.holdings_stale){
     bits.push('<span class="stale-flag">⚠ 今日持股抓取失敗，沿用上次成功快取（as of 上述日期）</span>');
   }
+  if(d.mode === 'price'){
+    bits.push('<span><b>更新模式</b> PRICE（只更新股價，持股與 EPS 沿用 '+esc(d.eps_as_of||'—')+' 的快取）</span>');
+  } else if(d.mode === 'full'){
+    bits.push('<span><b>更新模式</b> FULL（今天重抓持股與每檔 EPS 估計）</span>');
+  }
   if(d.non_equity_weight_pct){
     bits.push('<span>現金／期貨／特殊有價證券合計 '+d.non_equity_weight_pct.toFixed(2)+'%（不計入 EPS，見完整持股明細）</span>');
   }
@@ -301,6 +309,24 @@ function renderInfoStrip(d){
 }
 
 var PERIOD_LABEL_ZH = {};
+
+// 2026-09-24 tiered update：Exhibit 1 的期間表格（periodsTable）現在整週不變
+// （EPS 快取只在週六重抓，見 methods note），這行是唯一每天更新的東西——
+// EPS 預估更新的日期、那之後股價變動了多少、跟用今天股價換算出的目前預估
+// 本益比。FULL 模式當天 price_since_eps_as_of_pct 是 0（eps_as_of 就是今天）。
+function renderDailyUpdateLine(d){
+  var el = document.getElementById('dailyUpdateLine');
+  if(!el) return;
+  var pe = d.weighted_forward_pe && d.weighted_forward_pe.value;
+  var priceChg = d.price_since_eps_as_of_pct;
+  var bits = ['<b>EPS 預估更新於 '+esc(d.eps_as_of||'無資料')+'</b>（每週六）'];
+  if(priceChg != null){
+    var sign = priceChg >= 0 ? '+' : '';
+    bits.push('之後股價 '+sign+priceChg.toFixed(2)+'%');
+  }
+  bits.push('目前預估本益比 '+(pe!=null?fmtNum(pe,1)+'x':'無資料'));
+  el.innerHTML = bits.join('；')+'。';
+}
 
 function renderPeriodsTable(d){
   var tbl = document.getElementById('periodsTable'), sent = document.getElementById('periodsSentence');
@@ -500,6 +526,7 @@ function render(d){
   renderInfoStrip(d);
   document.getElementById('ex1Src').textContent =
     '資料來源：'+(d.holdings_issuer_zh||'基金官方持股下載')+' + yfinance Ticker.eps_trend + yfinance ETF 日收盤';
+  renderDailyUpdateLine(d);
   renderPeriodsTable(d);
   renderPeriodsQualityNote(d);
   renderStatRow(d);

@@ -61,6 +61,7 @@ import time
 import warnings
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 warnings.filterwarnings("ignore")
 
@@ -87,9 +88,13 @@ except ImportError:  # pragma: no cover
 
 SNAP_DIR = ROOT / "data" / "etf_dash" / "snapshots"
 HOLDINGS_CACHE_DIR = ROOT / "data" / "etf_dash" / "holdings_cache"
+EPS_CACHE_DIR = ROOT / "data" / "etf_dash" / "eps_cache"
 OUT_DIR = ROOT / "docs" / "etf-dash" / "data"
 PREVIEW_DIR = Path("/private/tmp/claude-501/-Users-ivanchang/etf_dash_preview")
 DD_SCREENER_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
+
+TAIPEI_TZ = ZoneInfo("Asia/Taipei")
+EPS_CACHE_MAX_AGE_DAYS = 7  # 超過這麼多天沒更新，即使不是週六也強制 FULL
 
 
 def load_stock_dash_universe() -> set[str]:
@@ -230,7 +235,9 @@ KNOWN_ANOMALY_EXPLANATIONS = {
 }
 
 PERIOD_DEFS = [  # (key, yfinance eps_trend 欄名, 中文標籤, 概略天數)
-    ("7d", "7daysAgo", "近 7 天", 7),
+    # 2026-09-24 拿掉「近 7 天」列——tiered update 上線後 Exhibit 1 整份表格
+    # 錨定在 eps_as_of（週頻），7 天窗口太短、又跟「EPS 預估更新於...」那行
+    # daily 資訊重疊，容易讓人誤讀成每天在動。
     ("30d", "30daysAgo", "近一個月", 30),
     ("60d", "60daysAgo", "近二個月", 60),
     ("90d", "90daysAgo", "近三個月", 90),
@@ -309,6 +316,82 @@ def yf_call_with_backoff(fn, *, label: str = ""):
             if not _is_rate_limited(e):
                 raise
     raise last_exc
+
+
+# ---------------------------------------------------------------------------
+# Tiered update — FULL（持股下載＋逐檔 eps_trend）vs PRICE（只抓股價，EPS 沿用
+# 上次 FULL 存的快取）。2026-09-24 持有人拍板：SPY 規模到 ~500 檔，每天都整套
+# 重抓 eps_trend 一來耗時（~10-15 分鐘）二來持續增加 yfinance 限速／Invesco
+# 406 的風險，但成分股「明年度 EPS」預估本來就是月頻更新的資料（見
+# dd_eps_history.py 同樣的觀察），沒必要每天重抓。改成：
+#   - FULL：週六（台北時區）、或 EPS 快取遺失／超過 EPS_CACHE_MAX_AGE_DAYS 天沒
+#     更新、或 --mode full 明示——完整跑一次（持股下載＋每檔 eps_trend），
+#     跑完把「這次算出來的東西」存進 data/etf_dash/eps_cache/{ETF}.json（見
+#     save_eps_cache()）：持股、非個股清單、每檔的 EPS 現值與幣別、已經算好
+#     且凍結的 periods／contributions 表格。
+#   - PRICE：其他日子——完全不下載持股、不呼叫 eps_trend，只用一次（視規模
+#     chunk 幾次）batched yf.download 抓 ETF 加所有成分股「今天」的收盤價
+#     （見 fetch_prices_batch()），拿去跟快取的 EPS 重新配對算「今日加權遠期
+#     本益比」；Exhibit 1 的期間表格（EPS 修正％／股價漲跌／隱含本益比）整份
+#     沿用快取，不重算——這樣才符合「同一個 N 天窗口內，EPS 變動跟股價變動要
+#     配對」的要求（都是以 eps_as_of 為錨點，不是以「今天」為錨點，否則兩者
+#     窗口對不齊、隱含本益比會是假訊號）。
+# 兩種模式輸出的 JSON 仍是同一個 "etf-dash-v1" schema，只是多了 mode／
+# eps_as_of／price_since_eps_as_of_pct 幾個欄位（見 build_fund_full()／
+# build_fund_price() 尾端）——頁面／下游都不需要分兩套邏輯。
+# ---------------------------------------------------------------------------
+
+
+def taipei_now() -> datetime:
+    return datetime.now(TAIPEI_TZ)
+
+
+def load_eps_cache(etf_key: str) -> dict | None:
+    """讀 data/etf_dash/eps_cache/{ETF}.json；不存在或壞掉都回 None（呼叫端
+    決定要不要因此強制 FULL），不拋例外——EPS 快取只是加速用，壞了不該讓整個
+    build 掛掉。"""
+    path = EPS_CACHE_DIR / f"{etf_key}.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        print(f"[etf_dash] WARNING could not read EPS cache {path}: {e}", file=sys.stderr)
+        return None
+
+
+def save_eps_cache(etf_key: str, data: dict) -> None:
+    EPS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    path = EPS_CACHE_DIR / f"{etf_key}.json"
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def decide_mode(cli_mode: str, eps_cache: dict | None, now_taipei: datetime) -> tuple[str, str]:
+    """純函式（不碰檔案／網路——是否讀得到快取由呼叫端先讀好傳進來)：決定這次
+    要跑 FULL 還是 PRICE，回傳 (mode, reason)。
+
+    規則（cli_mode 明示 full／price 時最優先；"auto" 才照以下順序判斷）：
+      1. 台北時區今天是週六 -> full。
+      2. 完全沒有 EPS 快取（第一次跑、或快取被清掉）-> full。
+      3. 快取的 eps_as_of 超過 EPS_CACHE_MAX_AGE_DAYS 天沒更新（保護：萬一連
+         續幾個週六都因為 Invesco 406／假期跳過，不能無限期沿用舊 EPS）-> full。
+      4. 快取的 eps_as_of 格式壞掉、讀不出日期 -> full（保守，壞資料不硬撐）。
+      5. 以上都不是 -> price。
+    """
+    if cli_mode in ("full", "price"):
+        return cli_mode, f"--mode {cli_mode}（明示）"
+    if now_taipei.weekday() == 5:  # Monday=0 .. Saturday=5 .. Sunday=6
+        return "full", "台北時區今天是週六"
+    if eps_cache is None:
+        return "full", "沒有 EPS 快取（第一次跑或快取遺失）"
+    eps_as_of = eps_cache.get("eps_as_of")
+    try:
+        age_days = (now_taipei.date() - datetime.strptime(eps_as_of, "%Y-%m-%d").date()).days
+    except (TypeError, ValueError):
+        return "full", f"EPS 快取的 eps_as_of 格式壞掉（{eps_as_of!r}）"
+    if age_days > EPS_CACHE_MAX_AGE_DAYS:
+        return "full", f"EPS 快取已 {age_days} 天沒更新（> {EPS_CACHE_MAX_AGE_DAYS} 天門檻）"
+    return "price", f"EPS 快取新鮮（{age_days} 天前，as of {eps_as_of}）且非週六"
 
 
 # ---------------------------------------------------------------------------
@@ -606,10 +689,15 @@ def get_holdings_with_fallback(etf_key: str, cfg: dict) -> tuple[str, list[dict]
 # ---------------------------------------------------------------------------
 
 
+EPS_TREND_CALL_COUNT = 0  # 只在 FULL 模式的 fetch_ticker_eps_and_price() 裡加一，main() 結束時印出來稽核
+
+
 def fetch_ticker_eps_and_price(ticker: str) -> dict:
+    global EPS_TREND_CALL_COUNT
     result = {"ticker": ticker, "status": "ok", "reason": None}
     try:
         t = yf.Ticker(ticker)
+        EPS_TREND_CALL_COUNT += 1
         eps_trend = yf_call_with_backoff(lambda: t.eps_trend, label=f"{ticker}.eps_trend")
     except Exception as e:  # noqa: BLE001
         result["status"] = "no_eps_data"
@@ -693,14 +781,74 @@ def _closest_close_on_or_before(price_series: list[dict], target_date: str):
     return candidates[-1] if candidates else None
 
 
+PRICE_BATCH_CHUNK_SIZE = 150  # 「chunk if needed」——單次 yf.download 帶太多檔容易逾時／被限速
+PRICE_BATCH_PACING_S = 1.0    # 批次之間的節流（跟逐檔的 TICKER_FETCH_PACING_S 分開）
+
+
+def fetch_prices_batch(tickers: list[str], calendar_days: int = 200) -> dict[str, list[dict]]:
+    """PRICE 模式專用：一次（規模大就分幾批）用 yf.download 抓多檔股票的股價
+    歷史，取代 FULL 模式逐檔 fetch_ticker_eps_and_price() 裡的 fast_info 呼叫
+    ——後者對幾百檔要打幾百次個別請求，這裡合併成幾次批次請求，不只快，也
+    比較不會觸發 yfinance 限速。這個函式本身完全不呼叫 eps_trend（不產生任何
+    EPS 相關的 yfinance 呼叫），呼叫端（build_fund_price()）會記錄實際呼叫
+    次數＝0 以供稽核。
+
+    回傳 {ticker: [{"date","close"}, ...]}（依日期升冪排序）——沒抓到資料的
+    ticker 直接不在回傳的 dict 裡（呼叫端要自己判斷缺席＝沒資料，不是回傳
+    None／空列表）。"""
+    uniq = sorted(set(tickers))
+    start = (datetime.now() - timedelta(days=calendar_days)).strftime("%Y-%m-%d")
+    out: dict[str, list[dict]] = {}
+    chunks = [uniq[i:i + PRICE_BATCH_CHUNK_SIZE] for i in range(0, len(uniq), PRICE_BATCH_CHUNK_SIZE)]
+    for i, chunk in enumerate(chunks):
+        if i:
+            time.sleep(PRICE_BATCH_PACING_S)
+        df = yf_call_with_backoff(
+            lambda chunk=chunk: yf.download(chunk, start=start, group_by="ticker", progress=False,
+                                             auto_adjust=False, threads=True),
+            label=f"batch price download chunk {i + 1}/{len(chunks)} ({len(chunk)} tickers)",
+        )
+        if df is None or df.empty:
+            continue
+        if len(chunk) == 1 or not isinstance(df.columns, pd.MultiIndex):
+            # yf.download 對單一 ticker（即使傳的是長度 1 的 list）有時仍回傳
+            # 非 MultiIndex 欄位，這裡當成「這個 chunk 只有一檔」處理。
+            tk = chunk[0]
+            if "Close" in df.columns:
+                pts = [{"date": idx.strftime("%Y-%m-%d"), "close": round(float(v), 4)}
+                       for idx, v in df["Close"].items() if pd.notna(v)]
+                if pts:
+                    out[tk] = pts
+            continue
+        top_level = set(df.columns.get_level_values(0))
+        for tk in chunk:
+            if tk not in top_level:
+                continue
+            sub = df[tk]
+            if "Close" not in sub.columns:
+                continue
+            pts = [{"date": idx.strftime("%Y-%m-%d"), "close": round(float(v), 4)}
+                   for idx, v in sub["Close"].items() if pd.notna(v)]
+            if pts:
+                out[tk] = pts
+    return out
+
+
 def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[dict],
-                           long_eps: dict, dd_universe_size: int, periods: list[dict]) -> str:
+                           long_eps: dict, dd_universe_size: int, periods: list[dict],
+                           mode: str, eps_as_of: str, mode_reason: str) -> str:
     """組 methods_note_zh——2026-09-24 加 QQQ／SPY 之前這段是寫死給 SMH／
     SMH_UCITS 看的（硬編「VanEck」「ASML」「SK Hynix」）。四檔基金共用同一個
     build_fund()，持股來源、非美元成分股、TICKER_ALIAS 用到哪些、長線指數
     覆蓋率與異常事件都因基金而異，所以這裡全部改成從當次算好的資料動態組，
     不對其他基金硬猜。"""
+    mode_zh = "完整更新（FULL：重抓持股與每檔 EPS 估計）" if mode == "full" else "只更新股價（PRICE：EPS 沿用快取）"
     parts = [
+        f"本頁分層更新：每週六（台北時區）完整重抓一次持股與每檔明年度 EPS 估計"
+        f"（現在的 EPS 估計 as of {eps_as_of}），其餘六天只抓股價，跟週六存的 EPS "
+        "快取重新配對算「今日加權遠期本益比」——Exhibit 1 的期間表格（EPS 修正％／"
+        "股價漲跌／隱含本益比）因此整週不變，只有本益比跟「EPS 預估更新於...」那行"
+        f"每天更新。這次是{mode_zh}（{mode_reason}）。",
         f"成分股權重與明細來自{cfg['holdings_issuer_zh']}（見 holdings_source_url，"
         "as of holdings_as_of，非 yfinance 前十大）。每檔成分股的 EPS 修正取 "
         "yfinance Ticker.eps_trend 的「明年度」(+1y) 估計，比較目前值與 7／30／"
@@ -837,8 +985,13 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
 # ---------------------------------------------------------------------------
 
 
-def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
-               dd_days: dict, today: datetime, stock_dash_universe: set[str]) -> dict:
+def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
+                     dd_days: dict, today: datetime, stock_dash_universe: set[str],
+                     mode_reason: str) -> dict:
+    """FULL 模式：持股下載＋每檔 eps_trend，這是 tiered update 之前唯一的路徑
+    （見模組開頭「Tiered update」段落）。跑完會把這次算出來的東西存進
+    data/etf_dash/eps_cache/{ETF}.json（見 save_eps_cache()），PRICE 模式
+    （build_fund_price()）整週沿用，不重抓。"""
     today_str = today.strftime("%Y-%m-%d")
     as_of_holdings, holdings, non_equity, source_url, used_stale = get_holdings_with_fallback(etf_key, cfg)
 
@@ -1017,6 +1170,8 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
     snap_dir.mkdir(parents=True, exist_ok=True)
     snapshot = {
         "date": today_str,
+        "mode": "full",
+        "eps_as_of": today_str,
         "holdings_as_of": as_of_holdings,
         "etf_price_close": today_price_pt["close"],
         "etf_price_date": today_price_pt["date"],
@@ -1067,6 +1222,39 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
             long_last_90d_pct = round(long_chart_series[-1]["eps_index"] / base_pt["eps_index"] * 100 - 100, 4)
     yfinance_90d_pct = next((p["eps_chg_pct"] for p in periods if p["key"] == "90d"), None)
 
+    # 2026-09-24 tiered update：這次算出來的東西存進 EPS 快取，PRICE 模式整週
+    # 沿用，不重抓 eps_trend。快取只留「重建這份輸出所需的最小集合」——每檔
+    # 的 eps_trend anchors 不用存（已經用掉、算進凍結的 periods/contributions
+    # 裡了），存的是 status／幣別／現值 EPS 這些 PRICE 模式當天還要用的欄位。
+    # tickers 字典從已經算好的 constituents／excluded 建，不是從 ticker_cache
+    # 直接搬——constituents 裡的 rec 才有 revisions_pct（PRICE 模式的持股明細表
+    # 要沿用這個，不能整週都空著）。
+    cached_tickers = {}
+    for c in constituents:
+        cached_tickers[c["ticker"]] = {
+            "status": "ok", "reason": None, "yf_ticker_used": c["yf_ticker_used"],
+            "eps_currency": c["eps_currency"], "eps_fy_next_local": c["eps_fy_next_local"],
+            "price_currency": c["price_currency"], "has_stock_dash": c["has_stock_dash"],
+            "revisions_pct": c["revisions_pct"],
+        }
+    for e in excluded:
+        cached_tickers[e["ticker"]] = {
+            "status": e["status"], "reason": e.get("reason"), "yf_ticker_used": e["ticker"],
+            "eps_currency": None, "eps_fy_next_local": None, "price_currency": None,
+            "has_stock_dash": e["has_stock_dash"], "revisions_pct": None,
+        }
+    eps_cache_payload = {
+        "eps_as_of": today_str,
+        "holdings_as_of": as_of_holdings,
+        "holdings_source_url": source_url,
+        "holdings": holdings,
+        "non_equity": non_equity,
+        "tickers": cached_tickers,
+        "periods": periods,
+        "contributions": contributions_by_period,
+    }
+    save_eps_cache(etf_key, eps_cache_payload)
+
     return {
         "schema": "etf-dash-v1",
         "etf_key": etf_key,
@@ -1076,6 +1264,10 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
         "isin": cfg["isin"],
         "other_listings": cfg["other_listings"],
         "as_of": today_str,
+        "mode": "full",
+        "mode_reason": mode_reason,
+        "eps_as_of": today_str,
+        "price_since_eps_as_of_pct": 0.0,  # FULL 跑當天，eps_as_of 就是今天，定義上還沒有變動
         "holdings_as_of": as_of_holdings,
         "holdings_source_url": source_url,
         "holdings_issuer_zh": cfg["holdings_issuer_zh"],
@@ -1117,8 +1309,241 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
                     "——資料源、取樣頻率、fiscal-year 對齊方式都不同。",
         },
         "methods_note_zh": build_methods_note_zh(cfg, constituents, non_equity, long_eps,
-                                                  len(stock_dash_universe), periods),
+                                                  len(stock_dash_universe), periods,
+                                                  "full", today_str, mode_reason),
     }
+
+
+def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, rc_cache: dict,
+                      dd_days: dict, today: datetime, mode_reason: str) -> dict:
+    """PRICE 模式：不下載持股、不呼叫 eps_trend（fetch_prices_batch() 完全是
+    另一條路徑，見該函式），只批次抓 ETF 加所有成分股「今天」的收盤價，跟
+    eps_cache（上次 FULL 存的，見 build_fund_full()）重新配對算「今日加權
+    遠期本益比」與「EPS 預估更新後股價變動了多少」。Exhibit 1 的期間表格
+    （periods）／貢獻分解（contributions）整份沿用 eps_cache 裡凍結的版本，
+    不重算——這樣「近一個月／近二個月／近三個月」的 EPS 修正％跟股價漲跌才是
+    同一個窗口算出來的，不會因為每天都用「今天」當窗口終點而互相對不齊（見
+    模組開頭「Tiered update」的說明）。"""
+    today_str = today.strftime("%Y-%m-%d")
+    eps_as_of = eps_cache["eps_as_of"]
+    holdings = eps_cache["holdings"]
+    non_equity = eps_cache.get("non_equity", [])
+    cached_tickers = eps_cache["tickers"]
+    total_weight = sum(h["weight_pct"] or 0 for h in holdings)
+
+    ok_yf_tickers = sorted({info.get("yf_ticker_used", tk) for tk, info in cached_tickers.items()
+                             if info.get("status") == "ok"})
+    batch = fetch_prices_batch([cfg["yf_ticker"]] + ok_yf_tickers)
+
+    etf_series = batch.get(cfg["yf_ticker"])
+    if not etf_series:
+        raise RuntimeError(f"{etf_key}: batched price fetch returned no data for ETF ticker "
+                            f"{cfg['yf_ticker']!r} (PRICE mode)")
+    etf_series = sorted(etf_series, key=lambda p: p["date"])
+    today_price_pt = etf_series[-1]
+    eps_as_of_price_pt = _closest_close_on_or_before(etf_series, eps_as_of)
+    price_since_eps_as_of_pct = None
+    if eps_as_of_price_pt and eps_as_of_price_pt["close"]:
+        price_since_eps_as_of_pct = round((today_price_pt["close"] / eps_as_of_price_pt["close"] - 1) * 100, 4)
+
+    constituents = []
+    excluded = []
+    for h in holdings:
+        info = cached_tickers.get(h["ticker"])
+        rec = {
+            "ticker": h["ticker"], "name": h["name"], "weight_pct": h["weight_pct"],
+            "has_stock_dash": bool(info.get("has_stock_dash")) if info else False,
+        }
+        if not info or info.get("status") != "ok":
+            rec["status"] = (info or {}).get("status") or "no_eps_data"
+            rec["reason"] = (info or {}).get("reason")
+            excluded.append(rec)
+            continue
+        currency = info["eps_currency"]
+        eps_local = info["eps_fy_next_local"]
+        fx_rate = 1.0
+        fx_normalized = True
+        if currency != "USD":
+            fx_rate = get_fx_rate(currency, today_str, fx_cache)
+            if not fx_rate:
+                fx_normalized = False
+                fx_rate = None
+        eps_usd = (eps_local / fx_rate) if fx_rate else None
+
+        yf_tk = info.get("yf_ticker_used", h["ticker"])
+        price_series_c = batch.get(yf_tk)
+        price_local = price_series_c[-1]["close"] if price_series_c else None
+        price_currency = (info.get("price_currency") or "USD").upper()
+        price_usd = None
+        price_fx_normalized = True
+        if price_local is not None:
+            if price_currency == "USD":
+                price_usd = price_local
+            else:
+                price_fx_rate = get_fx_rate(price_currency, today_str, fx_cache)
+                if price_fx_rate:
+                    price_usd = price_local / price_fx_rate
+                else:
+                    price_fx_normalized = False
+
+        rec.update({
+            "status": "ok",
+            "yf_ticker_used": yf_tk,
+            "eps_currency": currency,
+            "eps_fy_next_local": round(eps_local, 4) if eps_local is not None else None,
+            "eps_fy_next_usd": round(eps_usd, 4) if eps_usd is not None else None,
+            "fx_normalized": fx_normalized,
+            "revisions_pct": info.get("revisions_pct"),  # 凍結（來自上次 FULL），PRICE 模式不重算
+            "price_local": round(price_local, 4) if price_local is not None else None,
+            "price_currency": price_currency,
+            "price_usd": round(price_usd, 4) if price_usd is not None else None,
+            "price_fx_normalized": price_fx_normalized,
+        })
+        constituents.append(rec)
+
+    # ---- 今日加權遠期本益比：今天的價格 × 快取的 EPS（跟 FULL 模式同一個調和平均公式）
+    pe_covered = [c for c in constituents if c["eps_fy_next_usd"] and c["price_usd"]]
+    pe_covered_weight = sum(c["weight_pct"] or 0 for c in pe_covered)
+    weighted_fwd_pe = None
+    if pe_covered_weight > 0:
+        yield_sum = sum((c["weight_pct"] / pe_covered_weight) * (c["eps_fy_next_usd"] / c["price_usd"])
+                         for c in pe_covered)
+        weighted_fwd_pe = round(1 / yield_sum, 2) if yield_sum > 0 else None
+
+    # ---- daily snapshot（跟 FULL 模式同一個檔案序列，長線 EPS 指數的稽核／
+    # legacy chart 都靠這個累積歷史——PRICE 模式的 constituents 裡的
+    # eps_fy_next_usd 是「凍結的 EPS × 今天的 FX」，不是「凍結的 EPS × eps_as_of
+    # 那天的 FX」，這樣才能跟同一天的 price_usd 用同一組匯率，避免分子分母
+    # 匯率基準不一致）。
+    snap_dir = SNAP_DIR / etf_key
+    snap_dir.mkdir(parents=True, exist_ok=True)
+    snapshot = {
+        "date": today_str,
+        "mode": "price",
+        "eps_as_of": eps_as_of,
+        "holdings_as_of": eps_cache.get("holdings_as_of"),
+        "etf_price_close": today_price_pt["close"],
+        "etf_price_date": today_price_pt["date"],
+        "constituents": [
+            {"ticker": c["ticker"], "weight_pct": c["weight_pct"], "eps_fy_next_local": c["eps_fy_next_local"],
+             "eps_currency": c["eps_currency"], "eps_fy_next_usd": c["eps_fy_next_usd"]}
+            for c in constituents
+        ],
+    }
+    (snap_dir / f"{today_str}.json").write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    eps_index_history = build_eps_index_series(snap_dir, constituents)
+    eps_index_bootstrap = build_eps_index_bootstrap(constituents, today, today_price_pt)
+    chart_price_series = etf_series[-130:]
+
+    long_eps = build_long_eps_index(holdings, dd_days, fx_cache, rc_cache)
+    long_chart_series = []
+    if long_eps["series"]:
+        start_pt = _closest_close_on_or_before(etf_series, long_eps["start_date"])
+        start_price = start_pt["close"] if start_pt else None
+        for pt in long_eps["series"]:
+            price_pt = _closest_close_on_or_before(etf_series, pt["date"])
+            price_index = (round(price_pt["close"] / start_price * 100, 4)
+                            if (price_pt and start_price) else None)
+            long_chart_series.append({
+                "date": pt["date"], "eps_index": pt["eps_index"],
+                "price_index": price_index, "coverage_pct": pt["coverage_pct"],
+            })
+
+    excluded_weight = sum(e["weight_pct"] or 0 for e in excluded)
+    non_equity_weight = sum(e["weight_pct"] or 0 for e in non_equity)
+
+    long_full_period_pct = None
+    long_last_90d_pct = None
+    if long_chart_series:
+        long_full_period_pct = round(long_chart_series[-1]["eps_index"] - 100, 4)
+        cutoff_90d = (today - timedelta(days=90)).strftime("%Y-%m-%d")
+        base_pt = next((p for p in long_chart_series if p["date"] >= cutoff_90d), long_chart_series[0])
+        if base_pt["eps_index"]:
+            long_last_90d_pct = round(long_chart_series[-1]["eps_index"] / base_pt["eps_index"] * 100 - 100, 4)
+    periods = eps_cache["periods"]  # 凍結，整週不變——見本函式 docstring
+    yfinance_90d_pct = next((p["eps_chg_pct"] for p in periods if p["key"] == "90d"), None)
+
+    return {
+        "schema": "etf-dash-v1",
+        "etf_key": etf_key,
+        "label_zh": cfg["label_zh"],
+        "label_en": cfg["label_en"],
+        "yf_ticker": cfg["yf_ticker"],
+        "isin": cfg["isin"],
+        "other_listings": cfg["other_listings"],
+        "as_of": today_str,
+        "mode": "price",
+        "mode_reason": mode_reason,
+        "eps_as_of": eps_as_of,
+        "price_since_eps_as_of_pct": price_since_eps_as_of_pct,
+        "holdings_as_of": eps_cache.get("holdings_as_of"),
+        "holdings_source_url": eps_cache.get("holdings_source_url"),
+        "holdings_issuer_zh": cfg["holdings_issuer_zh"],
+        "holdings_stale": False,  # 不是抓取失敗，是設計上這週沒重抓——見 mode／methods_note_zh
+        "n_holdings": len(constituents) + len(excluded),
+        "n_holdings_covered": len(constituents),
+        "price": {"close": today_price_pt["close"], "date": today_price_pt["date"], "currency": "USD"},
+        "periods": periods,
+        "weighted_forward_pe": {
+            "value": weighted_fwd_pe,
+            "coverage_pct": round(pe_covered_weight / total_weight * 100, 2) if total_weight else None,
+            "method": "harmonic mean 1/Σw_i·(EPS_i/price_i)；EPS 沿用 eps_as_of 快取，股價是今天批次抓的，"
+                      "兩者都用今天的美元匯率換算，非美元報表(如 ASML)一樣先換算成美元",
+        },
+        "constituents": constituents,
+        "excluded": excluded,
+        "excluded_weight_pct": round(excluded_weight, 2),
+        "non_equity": non_equity,
+        "non_equity_weight_pct": round(non_equity_weight, 2),
+        "contributions": eps_cache["contributions"],  # 凍結，整週不變
+        "chart": {
+            "price_series": chart_price_series,
+            "eps_index_bootstrap": eps_index_bootstrap,
+            "eps_index_history": eps_index_history,
+            "long_eps_index": {
+                "start_date": long_eps["start_date"],
+                "series": long_chart_series,
+                "coverage_weight_pct": long_eps["coverage_weight_pct"],
+                "covered_tickers": long_eps["covered_tickers"],
+                "rollover_events": long_eps["rollover_events"],
+                "anomaly_events": long_eps["anomaly_events"],
+                "weight_basis": long_eps["weight_basis"],
+            },
+        },
+        "long_eps_index_summary": {
+            "full_period_pct": long_full_period_pct,
+            "last_90d_pct": long_last_90d_pct,
+            "yfinance_90d_pct": yfinance_90d_pct,
+            "note": "長線（dd-screener 快照鏈）與 yfinance 90 天單點理論上量級相近但不必相等"
+                    "——資料源、取樣頻率、fiscal-year 對齊方式都不同。",
+        },
+        "methods_note_zh": build_methods_note_zh(cfg, constituents, non_equity, long_eps,
+                                                  0, periods, "price", eps_as_of, mode_reason),
+    }
+
+
+def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
+               dd_days: dict, today: datetime, stock_dash_universe: set[str], cli_mode: str) -> dict:
+    """FULL／PRICE 分派——見模組開頭「Tiered update」說明。decide_mode() 在這裡
+    評估一次（不是在 main() 裡對整個 run 評估一次）：每檔基金各自的 EPS 快取
+    新鮮度不同（例如 QQQ／SPY 剛上線那週還沒有快取，即使不是週六也會被判定
+    要 FULL——這正是我們要的：第一次跑一定要有真資料才能建立快取），比在
+    main() 算一次全域 mode 更貼近實際狀態。"""
+    eps_cache = load_eps_cache(etf_key)
+    mode, mode_reason = decide_mode(cli_mode, eps_cache, taipei_now())
+    print(f"[etf_dash] {etf_key}: mode={mode} ({mode_reason})", file=sys.stderr)
+    if mode == "price":
+        try:
+            return build_fund_price(etf_key, cfg, eps_cache, fx_cache, rc_cache, dd_days, today, mode_reason)
+        except Exception as e:  # noqa: BLE001
+            # PRICE 模式本身失敗（批次下載掛了之類）不代表 FULL 模式也會失敗
+            # ——退回 FULL 跑一次，好過整檔直接沒資料（跟 holdings fetch 的
+            # cache-fallback 哲學一致：能有資料就不要沒資料）。
+            print(f"[etf_dash] WARNING {etf_key}: PRICE mode failed ({e}), falling back to FULL", file=sys.stderr)
+            mode_reason = f"PRICE 模式失敗退回 FULL（{e}）"
+    return build_fund_full(etf_key, cfg, ticker_cache, fx_cache, rc_cache, dd_days, today,
+                            stock_dash_universe, mode_reason)
 
 
 def build_eps_index_series(snap_dir: Path, today_constituents: list[dict]) -> list[dict]:
@@ -1164,7 +1589,7 @@ def build_eps_index_bootstrap(constituents: list[dict], today: datetime, today_p
     之後 build_eps_index_series() 的每日快照序列會愈來愈長，蓋過這裡。"""
     total_weight = sum(c["weight_pct"] or 0 for c in constituents) or 1.0
     points = []
-    anchor_specs = [("90d", 90), ("60d", 60), ("30d", 30), ("7d", 7)]
+    anchor_specs = [("90d", 90), ("60d", 60), ("30d", 30)]  # 7d 已拿掉，見 PERIOD_DEFS 說明
     for key, days in anchor_specs:
         acc = 0.0
         covered_w = 0.0
@@ -1418,11 +1843,15 @@ def main() -> int:
     ap.add_argument("--etf", action="append", required=True, choices=list(FUND_REGISTRY.keys()),
                     help="可重複給多次；例：--etf SMH --etf SMH_UCITS")
     ap.add_argument("--preview-only", action="store_true", help="只重算 preview HTML，不重抓資料（需已有 docs/etf-dash/data/{ETF}.json）")
+    ap.add_argument("--mode", choices=["auto", "full", "price"], default="auto",
+                     help="auto（預設）＝每檔基金各自照 decide_mode() 規則判斷；"
+                          "full／price＝對這次跑的每一檔基金強制指定，跳過判斷")
     args = ap.parse_args()
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
     HOLDINGS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    EPS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
     if args.preview_only:
         for etf_key in args.etf:
@@ -1459,7 +1888,8 @@ def main() -> int:
         cfg = FUND_REGISTRY[etf_key]
         print(f"[etf_dash] building {etf_key} ({cfg['label_en']}) ...")
         try:
-            data = build_fund(etf_key, cfg, ticker_cache, fx_cache, rc_cache, dd_days, today, stock_dash_universe)
+            data = build_fund(etf_key, cfg, ticker_cache, fx_cache, rc_cache, dd_days, today,
+                               stock_dash_universe, args.mode)
         except Exception as e:  # noqa: BLE001
             print(f"[etf_dash] ERROR {etf_key} failed: {e}", file=sys.stderr)
             n_fail += 1
@@ -1467,7 +1897,7 @@ def main() -> int:
         out_path = OUT_DIR / f"{etf_key}.json"
         out_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[etf_dash] wrote {out_path} "
-              f"(holdings {data['n_holdings']}, covered {data['n_holdings_covered']}, "
+              f"(mode={data.get('mode')}, holdings {data['n_holdings']}, covered {data['n_holdings_covered']}, "
               f"stale_holdings={data['holdings_stale']})")
         preview_path = PREVIEW_DIR / f"{etf_key}.html"
         preview_path.write_text(render_preview_html(data), encoding="utf-8")
@@ -1476,6 +1906,11 @@ def main() -> int:
 
     save_fx_daily_cache(fx_cache)
     save_reporting_currency_cache(rc_cache)
+
+    # 稽核用：PRICE 模式這次 run 應該是 0——fetch_ticker_eps_and_price()（唯一
+    # 會碰 eps_trend 的函式）只在 build_fund_full() 的逐檔迴圈裡被呼叫，
+    # build_fund_price() 完全不會走到那條路徑。
+    print(f"[etf_dash] eps_trend calls this run: {EPS_TREND_CALL_COUNT}")
 
     if n_ok == 0:
         print("[etf_dash] ERROR all requested funds failed", file=sys.stderr)

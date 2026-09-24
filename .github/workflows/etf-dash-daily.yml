@@ -3,11 +3,22 @@ name: ETF Dashboard Daily Data
 # ETF 股價 vs 成分股 EPS 預估修正儀表板（/etf-dash/）每日資料管線。
 #
 # 跑 scripts/etf_dash/build_etf_dash.py 四檔（SMH 美國掛牌 + SMH_UCITS 愛爾蘭
-# 掛牌 + QQQ 那斯達克 100 + SPY 標普 500，2026-09-24 加 QQQ／SPY），輸出：
+# 掛牌 + QQQ 那斯達克 100 + SPY 標普 500，2026-09-24 加 QQQ／SPY）。
+#
+# 2026-09-24 加上 tiered update（見 build_etf_dash.py 模組開頭「Tiered
+# update」說明）：預設 --mode auto，每檔基金各自判斷要 FULL（持股下載＋逐檔
+# eps_trend，只在台北時區週六、或 EPS 快取遺失／超過 7 天沒更新時跑）還是
+# PRICE（其他六天，不下載持股、不呼叫 eps_trend，只批次抓股價跟 EPS 快取
+# 重新配對）。SPY 規模到 ~500 檔，PRICE 模式把每天的 runtime 從 ~15 分鐘壓到
+# 幾分鐘，也大幅降低 yfinance 限速／Invesco 406 的風險。
+#
+# 輸出：
 #   - docs/etf-dash/data/{ETF}.json          正式頁 /etf-dash/?etf= 讀取的資料
-#   - data/etf_dash/snapshots/{ETF}/{date}.json  每日快照（舊版 yfinance-based
-#     EPS 指數用，見 build_etf_dash.py::build_eps_index_series；現行 Exhibit 2
-#     已改用下面的 dd_eps_history.jsonl 長線，這份快照保留供查核）
+#   - data/etf_dash/snapshots/{ETF}/{date}.json  每日快照（含 mode／eps_as_of；
+#     舊版 yfinance-based EPS 指數用，見 build_etf_dash.py::build_eps_index_series；
+#     現行 Exhibit 2 已改用下面的 dd_eps_history.jsonl 長線，這份快照保留供查核）
+#   - data/etf_dash/eps_cache/{ETF}.json     FULL 模式存的 EPS／持股快取，PRICE
+#     模式整週沿用不重抓（見 build_fund_full()／build_fund_price()）
 #   - data/etf_dash/holdings_cache/{ETF}.json    VanEck 持股下載失敗時的退回快取
 #   - data/etf_dash/dd_eps_history.jsonl     Exhibit 2 長線 EPS 指數的資料源
 #     （scripts/etf_dash/dd_eps_history.py）——append-only JSONL，2026-05-19 起
@@ -51,6 +62,12 @@ on:
         required: false
         default: "0"
         type: string
+      mode:
+        description: "auto（預設）＝每檔基金各自照週六／EPS 快取新鮮度判斷 FULL 或 PRICE；full／price＝對這次全部強制指定"
+        required: false
+        default: "auto"
+        type: choice
+        options: ["auto", "full", "price"]
 
 permissions:
   contents: write
@@ -124,9 +141,16 @@ jobs:
         # （用 continue-on-error 讓「有部分資料」也能是 no-op 或部分更新，而
         # 不是整個 job 卡死），但至少一檔失敗時這步驟本身會在 job 摘要留紅色
         # warning。
+        # 2026-09-24 tiered update（見 build_etf_dash.py 模組開頭「Tiered
+        # update」說明）：--mode auto（預設，workflow_run／schedule 觸發都吃
+        # 這個）讓每檔基金各自判斷 FULL（週六或 EPS 快取遺失／過舊）還是
+        # PRICE（其他日子，只抓股價，EPS 沿用快取）；手動觸發可用
+        # workflow_dispatch 的 mode 輸入強制全部 full 或 price。
         continue-on-error: true
         id: build
-        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY
+        env:
+          MODE_INPUT: ${{ github.event.inputs.mode || 'auto' }}
+        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --mode "$MODE_INPUT"
 
       - name: Fail loudly if the build step errored
         if: steps.build.outcome == 'failure'
@@ -140,7 +164,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/
+          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/eps_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
