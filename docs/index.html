@@ -267,6 +267,24 @@ footer a{color:var(--muted)}
 .learn-strip .ls-arrow{margin-left:auto;font-size:1.15rem;flex-shrink:0}
 @media(max-width:600px){.learn-strip a{font-size:.82rem;padding:.75rem 1rem}.learn-strip .ls-tag{display:none}}
 
+/* CEO 關注清單入口（2026-09-24）：橫條＋「今天先看」前三件 */
+.horizon-strip{padding:1.1rem 0 0}
+.horizon-strip .hz-head{display:flex;align-items:center;gap:.75rem;background:var(--accent);color:#fff;
+                        border-radius:10px 10px 0 0;padding:.85rem 1.3rem;font-weight:600;font-size:.92rem;
+                        box-shadow:var(--shadow-sm);transition:all .18s ease}
+.horizon-strip .hz-head:hover{background:var(--accent-hover);color:#fff;text-decoration:none}
+.horizon-strip .hz-tag{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.14em;
+                       background:rgba(255,255,255,.16);padding:.2rem .55rem;border-radius:5px;flex-shrink:0}
+.horizon-strip .hz-arrow{margin-left:auto;font-size:1.15rem;flex-shrink:0}
+.horizon-strip .hz-top{margin:0;padding:.7rem 1.3rem .8rem 2.6rem;background:var(--card);border:1px solid var(--border);
+                       border-top:0;border-radius:0 0 10px 10px;font-size:.86rem}
+.horizon-strip .hz-top li{margin:.2rem 0}
+.horizon-strip .hz-top a{color:var(--text)}
+.horizon-strip .hz-top a:hover{color:var(--accent)}
+.horizon-strip .hz-head.solo{border-radius:10px}
+@media(max-width:600px){.horizon-strip .hz-head{font-size:.82rem;padding:.75rem 1rem}.horizon-strip .hz-tag{display:none}
+  .horizon-strip .hz-top{padding:.6rem 1rem .7rem 2rem}}
+
 /* 雙欄儀表：左 2/3 風險大圖・右 1/3 市場脈動 */
 .dash-wrap{padding:2.2rem 0 0}
 .dash-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:1rem;align-items:start}
@@ -411,6 +429,31 @@ footer a{color:var(--muted)}
     </div>
   </div>
 </section>
+
+<!-- CEO 關注清單入口（2026-09-24）：JS 讀 /horizon/data/horizon.json 的「今天先看」前三件；讀不到只留入口橫條 -->
+<section class="horizon-strip">
+  <div class="container">
+    <a class="hz-head solo" id="hzHead" href="/horizon/">
+      <span class="hz-tag">CEO 關注清單</span>
+      <span>公司該看的事，照時間遠近排好：未來 2–5 年、60 天內、今天要處理</span>
+      <span class="hz-arrow">&rarr;</span>
+    </a>
+    <ol class="hz-top" id="hzTop" hidden></ol>
+  </div>
+</section>
+<script>
+(function(){
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+  fetch('/horizon/data/horizon.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+    if(!d.top||!d.top.length)return;
+    var ol=document.getElementById('hzTop');
+    ol.innerHTML=d.top.slice(0,3).map(function(t){
+      return '<li><a href="'+esc(t.link||('/horizon/'+t.anchor))+'">'+esc(t.text)+'</a></li>'}).join('');
+    ol.hidden=false;
+    document.getElementById('hzHead').classList.remove('solo');
+  }).catch(function(){});
+})();
+</script>
 
 <!-- 大道至簡 banner strip -->
 <section class="simplicity-strip">

@@ -1,0 +1,69 @@
+name: Horizon Daily
+
+# CEO 關注清單（/horizon/）日更。scripts/build_horizon.py 只讀既有 CI 產物
+# （dd-screener、intel、market state、monitor、engine、實單、track-record）
+# 加 yfinance 價格，不呼叫模型。history.json 與 evidence_log.json 每天累積。
+# 排程：市況合成層（Market State Daily）成功後接著跑；另留一班定時補漏。
+on:
+  workflow_run:
+    workflows: ["Market State Daily"]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: "0 10 * * *"   # 18:00 台北，補漏
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: horizon-daily
+  cancel-in-progress: false
+
+jobs:
+  build-horizon:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas
+
+      - name: Build horizon
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/build_horizon.py
+
+      - name: Commit and push if changed
+        run: |
+          PATHS="docs/horizon/data"
+          if git status --porcelain $PATHS | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d %H:%M")
+          git commit -m "horizon: daily refresh ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
