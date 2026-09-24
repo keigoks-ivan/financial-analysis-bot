@@ -59,6 +59,7 @@ import bisect
 import json
 import os
 import sys
+import time
 from datetime import date, datetime, timedelta, timezone
 from itertools import combinations
 
@@ -279,6 +280,31 @@ def build_price_cache(skip_fetch):
                 fetched.update(got)
             info(f"prices {label}: requested {len(batch)}, got "
                  f"{sum(1 for t in batch if t in fetched)}")
+        # 2026-09-24：觀察到 topup 批次抓取會逐檔層級卡在前一交易日（非整批被
+        # 擋——2026-09-23 那次 SPY/TLT/11 SPDR sector/^VIX3M 全部卡 09-21，同
+        # 批次抓的 ^VIX 卻抓到 09-22/09-23），舊邏輯只要 got 非空就視為成功、
+        # 不再重試，會把卡住的舊資料直接寫入快取。對「這次沒有比既有快取新」的
+        # 既有 ticker 做單檔重抓，最多 2 次，救回批次抓漏但單檔可抓到的情況。
+        for t in existing:
+            old_last = series[t][-1][0] if series.get(t) else None
+            if old_last is None:
+                continue
+            new_rows = fetched.get(t) or []
+            new_last = new_rows[-1][0] if new_rows else None
+            if new_last is not None and new_last != old_last:
+                continue  # 已有進展，不需重抓
+            for attempt in range(2):
+                time.sleep(0.3)
+                try:
+                    retried = _yf_daily([t], period="10d")
+                except Exception as e:
+                    warn(f"single-ticker refetch for {t} attempt {attempt+1} failed: {e}")
+                    continue
+                r = retried.get(t)
+                if r and r[-1][0] != old_last:
+                    fetched[t] = r
+                    info(f"prices single-ticker refetch recovered {t}: {old_last} -> {r[-1][0]}")
+                    break
         for t in STATLAB_SYMBOLS:
             if t in fetched or series.get(t):
                 continue
