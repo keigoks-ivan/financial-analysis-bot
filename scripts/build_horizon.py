@@ -700,9 +700,10 @@ def main():
                   "statlab": "/statlab/", "regime": "/regime/", "crowding": "/crowding/",
                   "總經時鐘": "/macro/", "intel": "/intel/"}
     for f in state.get("freshness", []):
-        # 週更來源天生落後約一週（COT 週五才公布上週二的部位），只在真正 stale 才列；
-        # 日更、月頻的 warn 照列（2026-09-24 flowmap／statlab 就是靠 warn 抓到的）
-        if f.get("status") == "warn" and f.get("cadence") == "週更":
+        # 週更、月頻來源天生有發布時滯（COT 週五才公布上週二的部位；月資料下個月中才出），
+        # 健康時也常落在 warn，只在真正 stale 才列。日更的 warn 照列（2026-09-24 flowmap／
+        # statlab 卡在 9/21 就是靠 warn 抓到的）；總經時鐘卡在 7 月時已是 stale，照樣會列。
+        if f.get("status") == "warn" and f.get("cadence") in ("週更", "月頻"):
             continue
         if f.get("status") not in ("ok", None):
             link = next((v for k, v in fresh_link.items() if k in f["pipeline"]), "/market/")
