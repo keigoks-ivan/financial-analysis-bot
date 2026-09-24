@@ -168,6 +168,7 @@ table{overflow-wrap:break-word}
   <div class="ex-sub">各回顧期間比較成分股加權「明年度」EPS 預估變動、ETF 股價漲跌與隱含本益比變動</div>
   <div class="tbl-wrap"><table class="imq-table" id="periodsTable"></table></div>
   <div class="conclusion" id="periodsSentence"></div>
+  <div class="methods-note" id="periodsQualityNote" style="display:none"></div>
   <div class="ex-src" id="ex1Src"></div>
 </section>
 
@@ -328,6 +329,40 @@ function renderPeriodsTable(d){
     '（EPS 覆蓋率 '+(pick.coverage_pct!=null?pick.coverage_pct.toFixed(0)+'%':'無資料')+'）。';
 }
 
+// 2026-09-24：持有人擋下第一版上線，因為 QQQ 近三個月加權 EPS 變動 -17.1%
+// 是異常值拉出來的（SPCX 基期翻負號、HON 拆分造成分母跳動）。build_fund()
+// 現在按期間分兩層處理：基期為負／過小的整筆排除（period_exclusions），
+// 排除後仍超過 ±50% 的封頂（period_capped，保留原始值不丟棄）——這裡把兩份
+// 名單攤開給人查核，不是悄悄改數字。
+function renderPeriodsQualityNote(d){
+  var el = document.getElementById('periodsQualityNote');
+  var periods = d.periods || [];
+  var lines = [];
+  periods.forEach(function(p){
+    var excl = p.period_exclusions || [], capped = p.period_capped || [];
+    if(!excl.length && !capped.length) return;
+    var bits = [];
+    if(excl.length){
+      bits.push('排除（基期為負或過小）'+excl.length+' 檔：'+excl.slice(0,8).map(function(e){
+        return esc(e.ticker||e.name)+'（權重'+(e.weight_pct!=null?e.weight_pct.toFixed(2)+'%':'—')+'）';
+      }).join('、')+(excl.length>8?' 等':''));
+    }
+    if(capped.length){
+      bits.push('封頂 ±50% '+capped.length+' 檔：'+capped.slice(0,8).map(function(c){
+        return esc(c.ticker||c.name)+'（原始 '+fmtPct(c.raw_pct)+' → 封頂 '+fmtPct(c.capped_pct)+'）';
+      }).join('、')+(capped.length>8?' 等':''));
+    }
+    lines.push('<div><b>'+esc(p.label)+'</b>：'+bits.join('；')+'。</div>');
+  });
+  if(!lines.length){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display = '';
+  el.innerHTML = '<div style="font-weight:600;margin-bottom:4px">EPS 修正%資料品質（基期異常排除／單筆封頂）</div>'+
+    '<div style="font-size:11px;line-height:1.7">'+lines.join('')+
+    '基期（N 天前 EPS 估計）為負、或相對現值過小（&lt;20%）時比值不穩定，整筆不進加權平均；'+
+    '排除後單筆修正仍超過 ±50% 的，封頂在 ±50% 才拿去加權（原始值保留在上方，不丟棄）。'+
+    '完整名單見 JSON 各期間的 period_exclusions／period_capped 欄位。</div>';
+}
+
 function renderStatRow(d){
   var fpe = d.weighted_forward_pe || {};
   var items = [
@@ -466,6 +501,7 @@ function render(d){
   document.getElementById('ex1Src').textContent =
     '資料來源：'+(d.holdings_issuer_zh||'基金官方持股下載')+' + yfinance Ticker.eps_trend + yfinance ETF 日收盤';
   renderPeriodsTable(d);
+  renderPeriodsQualityNote(d);
   renderStatRow(d);
   renderChart(d);
   var contrib = d.contributions || {};

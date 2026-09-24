@@ -236,6 +236,53 @@ PERIOD_DEFS = [  # (key, yfinance eps_trend 欄名, 中文標籤, 概略天數)
     ("90d", "90daysAgo", "近三個月", 90),
 ]
 
+# 2026-09-24 持有人擋下第一版 QQQ/SPY 上線：QQQ「近三個月」EPS 加權變動
+# -17.1% 是異常值拉出來的，不是真實修正——SPCX（2.66% 權重）90d 修正 -889%
+# （60d 卻是 +185%），根因是基期（N 天前）估計值趨近 0 甚至翻負號，除出來的
+# 比值本身就不穩定；HON -56.6% 是拆分／企業行動造成分母跳動，不是分析師
+# 調升調降；SPY 更誇張，ECHO 單筆 -20038%。這三檔都不是「EPS 真的變了
+# 這麼多」，是分母壞掉。REVISION_BASE_MIN_RATIO／REVISION_CAP_PCT 兩道閘：
+# 先剔除分母壞掉的（見 classify_revision()「invalid_base」），剩下的合理但
+# 單筆仍可能是極端值（真實的巨幅修正，如虧轉盈附近的成長股）——這種不剔除
+# （會漏掉真實訊號），改封頂在 ±50%，兩份名單都進 JSON／頁面讓人查核，不是
+# 悄悄改數字。
+REVISION_BASE_MIN_RATIO = 0.2   # |base(N天前 EPS)| < 此比例 × |current(今日 EPS)| → 比值不穩定，整筆排除
+REVISION_CAP_PCT = 50.0         # 排除異常基期後，單筆修正 % 仍封頂在 ±50%（保留原始值供稽核，不丟棄）
+
+
+def classify_revision(base: float | None, current: float | None) -> tuple[str, str | None, float | None, float | None]:
+    """純函式（不碰快取／網路）：判斷一筆「N 天前 EPS → 今日 EPS」修正% 該怎麼用。
+    回傳 (status, reason, raw_pct, capped_pct)：
+
+      - "no_base"：base 缺值（那個時間點 yfinance 根本沒抓到資料）——不是異常，
+        只是覆蓋率不足，raw_pct/capped_pct/reason 都是 None，沿用既有行為
+        （這筆不進任何加總，也不進 period_exclusions——那份名單只記「有資料
+        但資料壞掉」的情況，跟「沒資料」分開，語意才清楚）。
+      - "invalid_base"：current<=0，或 base<=0，或 |base| 相對 current 過小
+        （REVISION_BASE_MIN_RATIO 門檻——SPCX／ECHO／HON 這類基期趨近 0 或
+        翻負號、企業行動造成分母跳動的案例）。整筆排除，不進任何加總
+        （raw_pct/capped_pct 為 None），reason 說明原因，呼叫端要記進
+        period_exclusions。
+      - "capped"：比值本身站得住腳，但單筆修正 % 超過 ±REVISION_CAP_PCT，
+        封頂後才拿去加權——raw_pct 保留原始值供稽核，capped_pct 是實際加權
+        用的值，呼叫端要記進 period_capped。
+      - "ok"：正常，raw_pct == capped_pct。
+    """
+    if base is None or base == 0:
+        return "no_base", None, None, None
+    if current is None or current <= 0:
+        return "invalid_base", "明年度 EPS 現值 ≤ 0", None, None
+    if base <= 0:
+        return "invalid_base", f"基期 EPS 估計 ≤ 0（{base:.4f}）", None, None
+    if abs(base) < REVISION_BASE_MIN_RATIO * abs(current):
+        return ("invalid_base",
+                f"基期 EPS 估計相對現值過小（|{base:.4f}| < {REVISION_BASE_MIN_RATIO}×|{current:.4f}|），比值不穩定",
+                None, None)
+    raw_pct = (current / base - 1) * 100
+    capped_pct = max(-REVISION_CAP_PCT, min(REVISION_CAP_PCT, raw_pct))
+    status = "capped" if abs(raw_pct - capped_pct) > 1e-9 else "ok"
+    return status, None, round(raw_pct, 4), round(capped_pct, 4)
+
 RATE_LIMIT_BACKOFFS_S = [20, 45, 90]  # yfinance YFRateLimitError 重試等待秒數
 TICKER_FETCH_PACING_S = 0.4  # 每檔新 ticker（快取沒有才算）之間的固定間隔秒數，見 build_fund()
 
@@ -647,7 +694,7 @@ def _closest_close_on_or_before(price_series: list[dict], target_date: str):
 
 
 def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[dict],
-                           long_eps: dict, dd_universe_size: int) -> str:
+                           long_eps: dict, dd_universe_size: int, periods: list[dict]) -> str:
     """組 methods_note_zh——2026-09-24 加 QQQ／SPY 之前這段是寫死給 SMH／
     SMH_UCITS 看的（硬編「VanEck」「ASML」「SK Hynix」）。四檔基金共用同一個
     build_fund()，持股來源、非美元成分股、TICKER_ALIAS 用到哪些、長線指數
@@ -663,6 +710,33 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
         "隱含本益比變動＝(1+股價變動)/(1+EPS變動)−1。加權遠期本益比用調和平均"
         "（1/Σw·(EPS/股價)）。"
     ]
+
+    # 2026-09-24：持有人擋下第一版上線，因為某期間的加權 EPS 變動被異常值拉走
+    # （基期估計翻負號或趨近 0，比值本身就不穩定；見 classify_revision() 上方
+    # 的 SPCX／ECHO／HON 案例說明）。這裡把每個期間各自的排除／封頂名單彙總
+    # 成一段話，跟 Exhibit 1 底下的 periodsQualityNote 是同一份資料（見
+    # period_exclusions／period_capped），只是這裡是文字版。
+    total_excl = sum(len(p.get("period_exclusions") or []) for p in periods)
+    total_capped = sum(len(p.get("period_capped") or []) for p in periods)
+    if total_excl or total_capped:
+        bits = []
+        if total_excl:
+            excl_examples = sorted(
+                {e["ticker"] or e["name"] for p in periods for e in (p.get("period_exclusions") or [])})
+            bits.append(f"基期（N 天前 EPS 估計）為負或相對現值過小（<{REVISION_BASE_MIN_RATIO:.0%}）"
+                        f"的整筆排除，各期間合計 {total_excl} 筆（{'、'.join(excl_examples[:10])}"
+                        f"{'等' if len(excl_examples) > 10 else ''}），比值不穩定不代表真實修正這麼多")
+        if total_capped:
+            capped_examples = sorted(
+                {e["ticker"] or e["name"] for p in periods for e in (p.get("period_capped") or [])})
+            bits.append(f"排除後單筆修正仍超過 ±{REVISION_CAP_PCT:.0f}% 的封頂在 ±{REVISION_CAP_PCT:.0f}%"
+                        f"才拿去加權（原始值不丟棄），各期間合計 {total_capped} 筆"
+                        f"（{'、'.join(capped_examples[:10])}{'等' if len(capped_examples) > 10 else ''}）")
+        parts.append(
+            "各期間成分股加權 EPS 變動先過濾兩層資料品質問題才加總：" + "；".join(bits) +
+            "。逐筆明細（ticker、原始值、處理後的值、原因）見各期間 periods[].period_exclusions／"
+            "periods[].period_capped 欄位，頁面 Exhibit 1 下方也有同一份摘要。"
+        )
 
     non_equity_w = round(sum(e["weight_pct"] or 0 for e in non_equity), 2)
     if non_equity:
@@ -788,6 +862,11 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
     constituents = []
     excluded = []
     total_weight = sum(h["weight_pct"] or 0 for h in holdings)
+    # 見 classify_revision() 上方 2026-09-24 的說明——按期間分開累積，兩份名單
+    # 都會整份進 JSON（period_exclusions／period_capped，見 periods.append()
+    # 下方），頁面也會顯示。
+    period_exclusions = {key: [] for key, *_ in PERIOD_DEFS}
+    period_capped = {key: [] for key, *_ in PERIOD_DEFS}
     for h in holdings:
         info = ticker_cache[h["ticker"]]
         rec = {
@@ -833,7 +912,23 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
         revisions_pct = {}
         for key, _col, _label, _days in PERIOD_DEFS:
             base = anchors_local.get(key)
-            revisions_pct[key] = None if not base or base == 0 else round((eps_local / base - 1) * 100, 4)
+            status, reason, raw_pct, capped_pct = classify_revision(base, eps_local)
+            if status == "no_base":
+                revisions_pct[key] = None
+            elif status == "invalid_base":
+                revisions_pct[key] = None
+                period_exclusions[key].append({
+                    "ticker": h["ticker"], "name": h["name"], "weight_pct": h["weight_pct"],
+                    "base_eps": round(base, 4) if base is not None else None,
+                    "current_eps": round(eps_local, 4), "reason": reason,
+                })
+            else:  # "ok" or "capped"
+                revisions_pct[key] = capped_pct
+                if status == "capped":
+                    period_capped[key].append({
+                        "ticker": h["ticker"], "name": h["name"], "weight_pct": h["weight_pct"],
+                        "raw_pct": raw_pct, "capped_pct": capped_pct,
+                    })
 
         rec.update({
             "status": "ok",
@@ -895,6 +990,8 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
             if eps_factor != 0:
                 implied_pe_chg_pct = round(((1 + price_chg_pct / 100) / eps_factor - 1) * 100, 4)
 
+        excl_sorted = sorted(period_exclusions[key], key=lambda x: x["weight_pct"] or 0, reverse=True)
+        capped_sorted = sorted(period_capped[key], key=lambda x: abs(x["weight_pct"] or 0), reverse=True)
         periods.append({
             "key": key, "label": label, "days": days,
             "base_date": anchor_pt["date"] if anchor_pt else None,
@@ -902,6 +999,8 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
             "implied_pe_chg_pct": implied_pe_chg_pct,
             "coverage_pct": round(covered_weight / total_weight * 100, 2) if total_weight else None,
             "n_covered": len(covered), "n_total": len(constituents),
+            "period_exclusions": excl_sorted,
+            "period_capped": capped_sorted,
         })
 
     # ---- weighted forward P/E (harmonic mean): 1 / Σ w_i * (EPS_i/price_i)
@@ -1018,7 +1117,7 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
                     "——資料源、取樣頻率、fiscal-year 對齊方式都不同。",
         },
         "methods_note_zh": build_methods_note_zh(cfg, constituents, non_equity, long_eps,
-                                                  len(stock_dash_universe)),
+                                                  len(stock_dash_universe), periods),
     }
 
 

@@ -216,6 +216,91 @@ def test_is_rate_limited_false_for_unrelated_error():
     assert m._is_rate_limited(ValueError("bad ticker")) is False
 
 
+# ── classify_revision() — per-constituent-period EPS revision% validity/cap ──
+# 2026-09-24: persisted holdings backed out these real base EPS values from the
+# QQQ/SPY build that shipped -17.1%/absurd numbers (coordinator caught it
+# before it went live):
+#   - ECHO (SPY) 60d/90d: current=22.73, base≈-0.114 (negative) -> raw ≈ -20039%
+#     — a genuine sign-flip/near-zero base, not a real revision. Must exclude.
+#   - SPCX (QQQ) 90d: current=1.8627, base≈-0.236 (negative) -> raw ≈ -889%
+#     — same negative-base pattern. Must exclude.
+#   - SPCX (QQQ) 60d: current=1.8627, base≈0.653 -> raw ≈ +185%. Base is
+#     positive and not "tiny" by the 0.2× ratio (0.653/1.8627≈0.35 ≥ 0.2), so
+#     rule 1 does NOT exclude it — it's rule 2's job to cap it to +50%.
+#   - HON (QQQ) 90d: current=9.939, base≈22.891 -> raw ≈ -56.58%. Base is
+#     larger than current (a real, large EPS-estimate drop, from Honeywell's
+#     spin-off restating the "next FY" number) — not caught by the tiny-base
+#     rule either, so it's also rule 2's job: capped to -50%, not excluded.
+
+def test_classify_revision_no_base_is_not_an_error():
+    assert m.classify_revision(None, 10.0) == ("no_base", None, None, None)
+    assert m.classify_revision(0.0, 10.0) == ("no_base", None, None, None)
+
+
+def test_classify_revision_excludes_negative_base_echo_style():
+    status, reason, raw_pct, capped_pct = m.classify_revision(-0.114, 22.73)
+    assert status == "invalid_base"
+    assert reason is not None
+    assert raw_pct is None and capped_pct is None
+
+
+def test_classify_revision_excludes_negative_base_spcx_90d_style():
+    status, reason, raw_pct, capped_pct = m.classify_revision(-0.236, 1.8627)
+    assert status == "invalid_base"
+    assert raw_pct is None and capped_pct is None
+
+
+def test_classify_revision_excludes_tiny_positive_base():
+    # base is positive but far below the 0.2x(current) floor -> still unstable
+    status, reason, raw_pct, capped_pct = m.classify_revision(0.05, 2.0)
+    assert status == "invalid_base"
+    assert "過小" in reason
+    assert raw_pct is None and capped_pct is None
+
+
+def test_classify_revision_excludes_current_le_zero():
+    status, reason, raw_pct, capped_pct = m.classify_revision(10.0, 0.0)
+    assert status == "invalid_base"
+    assert raw_pct is None and capped_pct is None
+
+
+def test_classify_revision_caps_large_positive_spcx_60d_style():
+    # base=0.653 is NOT "tiny" relative to current=1.8627 (ratio ≈0.35 ≥ 0.2)
+    # -> not excluded, but the +185% raw move gets capped to +50%.
+    status, reason, raw_pct, capped_pct = m.classify_revision(0.65307, 1.8627)
+    assert status == "capped"
+    assert raw_pct == pytest.approx(185.2, abs=0.5)
+    assert capped_pct == 50.0
+
+
+def test_classify_revision_caps_large_negative_hon_90d_style():
+    # base=22.891 is LARGER than current=9.939 (ratio well above 0.2) -> not
+    # excluded by the tiny-base rule, but -56.6% still gets capped to -50%.
+    status, reason, raw_pct, capped_pct = m.classify_revision(22.891, 9.939)
+    assert status == "capped"
+    assert raw_pct == pytest.approx(-56.6, abs=0.5)
+    assert capped_pct == -50.0
+
+
+def test_classify_revision_ok_normal_move_not_capped():
+    status, reason, raw_pct, capped_pct = m.classify_revision(10.0, 10.5)
+    assert status == "ok"
+    assert raw_pct == capped_pct == 5.0
+
+
+def test_classify_revision_boundary_exactly_50_not_capped():
+    status, _, raw_pct, capped_pct = m.classify_revision(10.0, 15.0)  # exactly +50%
+    assert status == "ok"
+    assert raw_pct == capped_pct == 50.0
+
+
+def test_classify_revision_boundary_ratio_exactly_0_2_not_excluded():
+    # |base| == 0.2 * |current| is the boundary — spec says "< 0.2x" excludes,
+    # so exactly-equal must NOT be excluded (still subject to capping if large).
+    status, _, raw_pct, capped_pct = m.classify_revision(2.0, 10.0)
+    assert status in ("ok", "capped")  # not "invalid_base"
+
+
 # ── classify_eps_step() — long-history EPS index rollover/anomaly detector ──
 # Real fixtures pulled from data/etf_dash/dd_eps_history.jsonl during the
 # 2026-09-24 build (see build_etf_dash.py's classify_eps_step docstring and
