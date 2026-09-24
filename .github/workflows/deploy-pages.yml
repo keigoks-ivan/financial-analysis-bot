@@ -97,29 +97,45 @@ jobs:
 
       # 2026-09-22：個股儀表板逐檔資料（docs/stock-dash/data/，~61MB）刻意不進 git
       # （見 .gitignore），改由 stock-dash-daily.yml 每日建置後上傳成 artifact，
-      # 這裡在組 Pages artifact 前下載進 docs/stock-dash/data/。Fail-safe：找不到
-      # 上一次成功 run、或下載失敗，都只是 warning，其餘部署照常進行——這一步絕不
-      # 能卡住全站部署（continue-on-error + 腳本自身也一律 exit 0）。
-      - name: Download latest stock-dash data (fail-safe, never blocks deploy)
-        continue-on-error: true
+      # 這裡在組 Pages artifact 前下載進 docs/stock-dash/data/。
+      # 2026-09-25 改：原本「下載失敗也照部署」——09-24 一次 GitHub API 503 讓部署
+      # 不帶資料上線，全站儀表板 404。現在查詢與下載各重試 3 次；仍失敗就讓這次
+      # 部署失敗（Pages 保留上一版，資料不會消失），等下一次部署。只有「確定沒有
+      # 未過期 artifact」（查詢成功但回空）才照舊不帶資料部署。
+      - name: Download latest stock-dash data (retry; fail deploy rather than ship without it)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set +e
           mkdir -p docs/stock-dash/data
           # 取最新一份未過期的 stock-dash-data artifact（gate 跳過的 run 沒有 artifact，不能只看 success）
-          RUN_ID=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=stock-dash-data&per_page=1" \
-            -q '.artifacts[0] | select(.expired == false) | .workflow_run.id' 2>/dev/null)
+          for i in 1 2 3; do
+            RUN_ID=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=stock-dash-data&per_page=1" \
+              -q '.artifacts[0] | select(.expired == false) | .workflow_run.id')
+            API_RC=$?
+            [ $API_RC -eq 0 ] && break
+            echo "::warning::artifact lookup failed (attempt $i/3), retrying..."
+            sleep $((i * 20))
+          done
+          if [ $API_RC -ne 0 ]; then
+            echo "::error::Could not query stock-dash-data artifacts — failing this deploy so the live site keeps its data."
+            exit 1
+          fi
           if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
-            echo "No successful Stock Dashboard Daily Data run found yet — deploying without stock-dash data."
+            echo "::warning::No unexpired stock-dash-data artifact — deploying without stock-dash data."
             exit 0
           fi
-          if gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" -n stock-dash-data -D docs/stock-dash/data; then
-            echo "Downloaded stock-dash data from run $RUN_ID"
-          else
-            echo "::warning::Failed to download stock-dash-data artifact (run $RUN_ID) — deploying without it."
-          fi
-          exit 0
+          for i in 1 2 3; do
+            rm -rf docs/stock-dash/data && mkdir -p docs/stock-dash/data
+            if gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" -n stock-dash-data -D docs/stock-dash/data; then
+              echo "Downloaded stock-dash data from run $RUN_ID"
+              exit 0
+            fi
+            echo "::warning::download of run $RUN_ID failed (attempt $i/3), retrying..."
+            sleep $((i * 20))
+          done
+          echo "::error::Failed to download stock-dash-data (run $RUN_ID) after 3 attempts — failing this deploy so the live site keeps its data."
+          exit 1
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
