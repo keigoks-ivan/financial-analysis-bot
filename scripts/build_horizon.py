@@ -75,7 +75,7 @@ def fetch_prices(symbols: list[str]):
         return {}
     out = {}
     try:
-        df = yf.download(symbols, period="3y", interval="1d", auto_adjust=True,
+        df = yf.download(symbols, period="7y", interval="1d", auto_adjust=True,
                          progress=False, group_by="ticker", threads=True)
     except Exception as e:  # noqa: BLE001
         gaps.append(f"yfinance 下載失敗：{e}")
@@ -123,6 +123,9 @@ def basket_metrics(tickers, screener, prices, snaps):
         "n_total": len(tickers),
         "n_eps": sum(1 for r in rows if isinstance(r.get("eps_rev_3m_pct"), (int, float))),
         "eps_rev_3m": med([r.get("eps_rev_3m_pct") for r in rows]),
+        # 自有資金撐得起的成長＝增量 ROIC × 再投資率（build_dd_screener 的 implied_growth_pct）
+        "self_funded": med([r.get("implied_growth_pct") for r in rows]),
+        "n_self": sum(1 for r in rows if isinstance(r.get("implied_growth_pct"), (int, float))),
     }
     # 相對強弱：個股報酬 − SPY 報酬，取中位數
     for key, days, off in (("rs_26w", 182, 0), ("rs_52w", 365, 0), ("rs_52w_prev", 365, 28)):
@@ -227,6 +230,151 @@ def match_threads(q, threads):
     return hits
 
 
+def lean_of(q, metrics):
+    """市場目前站哪邊：三個訊號（EPS 上修、三年成長月變、一年對大盤；成對題用差）多數決。"""
+    if q["kind"] == "industry":
+        g = metrics.get("gain") or {}
+        sig = [g.get("eps_rev_3m"), g.get("growth_3y_chg"), g.get("rs_52w")]
+        yes, no = "偏是", "偏否"
+    elif q["kind"] == "pair":
+        sp = metrics.get("spread") or {}
+        sig = [sp.get("eps_rev_3m"), sp.get("rs_52w"), sp.get("rs_26w")]
+        yes, no = f"偏{q['gain']['label']}", f"偏{q['lose']['label']}"
+    else:
+        return None
+    vals = [v for v in sig if v is not None]
+    if len(vals) < 2:
+        return {"text": "資料不足", "n_pos": None, "n": len(vals)}
+    pos = sum(1 for v in vals if v > 0)
+    text = yes if pos * 2 > len(vals) else (no if pos * 2 < len(vals) else "分歧")
+    return {"text": text, "n_pos": pos, "n": len(vals)}
+
+
+BASE_DATE = "2026-01-02"  # 籃子指數基期；回頭對帳用兩個日期的比值，基期本身不影響結果
+
+
+def basket_px(tickers, prices):
+    vals = []
+    for t in tickers:
+        s = prices.get(yf_sym(t))
+        if s is None:
+            continue
+        b = s[s.index <= BASE_DATE]
+        if not b.empty:
+            vals.append(float(s.iloc[-1]) / float(b.iloc[-1]))
+    return round(sum(vals) / len(vals), 4) if vals else None
+
+
+def weekly_basket(tickers, prices, weeks=104):
+    """等權籃子的週報酬（近兩年）。"""
+    import pandas as pd
+    cols = {t: prices[yf_sym(t)] for t in tickers if yf_sym(t) in prices}
+    if not cols:
+        return None
+    df = pd.DataFrame(cols).resample("W-FRI").last().pct_change(fill_method=None).tail(weeks)
+    return df.mean(axis=1, skipna=True)
+
+
+def question_series(q, prices):
+    if q["kind"] == "industry":
+        return weekly_basket(q["gain"]["tickers"], prices)
+    if q["kind"] == "pair":
+        a, b = weekly_basket(q["gain"]["tickers"], prices), weekly_basket(q["lose"]["tickers"], prices)
+        return a - b if a is not None and b is not None else None
+    s = (q.get("series") or [{}])[0]
+    ser = prices.get(s.get("sym")) if s.get("sym") else None
+    if ser is None:
+        return None
+    w = ser.resample("W-FRI").last()
+    # 殖利率看週變化（百分點），其他看週報酬
+    return (w.diff() if s.get("unit") == "%" else w.pct_change(fill_method=None)).tail(104)
+
+
+def real_bets(questions, prices, seats_by_q, threshold=0.6, show=0.4):
+    """用近兩年週報酬相關係數，把一起動的題目併成同一個押注。"""
+    import pandas as pd
+    ser = {q["id"]: question_series(q, prices) for q in questions}
+    ser = {k: v for k, v in ser.items() if v is not None and v.dropna().size > 40}
+    if len(ser) < 2:
+        return [], {}
+    corr = pd.DataFrame(ser).corr(min_periods=40)
+    ids = list(corr.columns)
+    parent = {i: i for i in ids}
+
+    def find(x):
+        while parent[x] != x:
+            x = parent[x]
+        return x
+    moves_with = {i: [] for i in ids}
+    for i_, a in enumerate(ids):
+        for b in ids[i_ + 1:]:
+            c = corr.loc[a, b]
+            if pd.isna(c):
+                continue
+            if abs(c) >= show:
+                moves_with[a].append({"id": b, "corr": round(float(c), 2)})
+                moves_with[b].append({"id": a, "corr": round(float(c), 2)})
+            if abs(c) >= threshold:
+                parent[find(a)] = find(b)
+    groups = {}
+    for i in ids:
+        groups.setdefault(find(i), []).append(i)
+    qmap = {q["id"]: q for q in questions}
+    bets = []
+    for members in groups.values():
+        pairs = [abs(float(corr.loc[a, b])) for n, a in enumerate(members) for b in members[n + 1:]]
+        seats = sorted({t for m in members for t in seats_by_q.get(m, [])})
+        bets.append({"qids": members, "labels": [qmap[m]["q"] for m in members],
+                     "avg_corr": round(sum(pairs) / len(pairs), 2) if pairs else None,
+                     "seats": seats})
+    bets.sort(key=lambda b: (-len(b["seats"]), -len(b["qids"])))
+    for v in moves_with.values():
+        v.sort(key=lambda x: -abs(x["corr"]))
+    no_series = [q["id"] for q in questions if q["id"] not in ser]
+    return bets, {"moves_with": moves_with, "no_series": no_series}
+
+
+SCENARIOS = [
+    {"key": "2022", "label": "2022 升息與科技股修正", "start": "2022-01-03", "end": "2022-10-14"},
+    {"key": "2020", "label": "2020 疫情急跌", "start": "2020-02-19", "end": "2020-03-23"},
+    {"key": "2024", "label": "2024 年 7 月 AI 股急修正", "start": "2024-07-10", "end": "2024-08-07"},
+]
+
+
+def window_ret(series, start, end):
+    if series is None:
+        return None
+    a = series[series.index >= start]
+    b = series[series.index <= end]
+    if a.empty or b.empty or a.index[0] > b.index[-1]:
+        return None
+    return (float(b.iloc[-1]) / float(a.iloc[0]) - 1) * 100
+
+
+def sim_live(hist, legs, px, start, end):
+    """用實單主系統當時的權重（含回測期）重算區間報酬；權重隔天生效。"""
+    w = {h["date"]: {t: (v.get("final_pct") or 0) / 100 for t, v in h["tickers"].items()} for h in hist}
+    if not w or min(w) > start:
+        return None
+    dates = [d for d in px[legs[0]].index if start <= str(d.date()) <= end]
+    nav, last_w = 1.0, None
+    earlier = [k for k in w if k < start]
+    last_w = w[max(earlier)] if earlier else None
+    for d in dates:
+        if last_w is not None:
+            r = 0.0
+            for l in legs:
+                s = px[l]
+                prev = s[s.index < d]
+                if d in s.index and not prev.empty:
+                    r += last_w.get(l, 0) * (float(s[d]) / float(prev.iloc[-1]) - 1)
+            nav *= 1 + r
+        ds = str(d.date())
+        if ds in w:
+            last_w = w[ds]
+    return round((nav - 1) * 100, 1)
+
+
 # ───────────────────────── 主流程 ─────────────────────────
 
 def main():
@@ -308,6 +456,9 @@ def main():
             "series_def": q.get("series"), "alarm_def": q.get("alarm"),
             "baseline": q.get("baseline", []), "metrics": metrics, "alarm": alarm,
             "my_seats": my_seats,
+            "lean": lean_of(q, metrics),
+            "px": {"gain": basket_px(q["gain"]["tickers"], prices) if q.get("gain") else None,
+                   "lose": basket_px(q["lose"]["tickers"], prices) if q.get("lose") else None},
             "threads_now": [{"title": t["title_zh"], "heat": t.get("heat"), "status": t.get("status"),
                              "last_seen": t.get("last_seen")} for t in
                             sorted(hits, key=lambda x: x.get("last_seen", ""), reverse=True)[:5]],
@@ -328,6 +479,25 @@ def main():
         mine = [e for e in ev["entries"].values() if e["qid"] == f["id"]]
         f["evidence_total"] = len(mine)
         f["evidence_recent"] = sorted(mine, key=lambda e: e.get("last_seen") or "", reverse=True)[:6]
+
+    # ── 連動：哪幾題其實是同一個押注 ──
+    bets, link_info = ([], {}) if not prices else real_bets(
+        questions, prices, {f["id"]: f["my_seats"] for f in far})
+    for f in far:
+        f["moves_with"] = (link_info.get("moves_with") or {}).get(f["id"], [])
+
+    # ── 盲點：還在追、但九題都沒涵蓋的故事線 ──
+    matched = {e["thread_id"] for e in ev["entries"].values()}
+    seen_titles = set()
+    blind = []
+    for th in sorted(threads, key=lambda t: (t.get("heat") != "up", -len(t.get("daily_counts") or {}))):
+        if th["id"] in matched or th.get("status") != "active" or th["title_zh"] in seen_titles:
+            continue
+        seen_titles.add(th["title_zh"])
+        blind.append({"title": th["title_zh"], "category": th.get("category"), "heat": th.get("heat"),
+                      "days": len(th.get("daily_counts") or {}), "first_seen": th.get("first_seen"),
+                      "last_seen": th.get("last_seen")})
+    n_active = sum(1 for t in threads if t.get("status") == "active")
 
     # ── 遠方：公司（策略還有效嗎） ──
     strategy = []
@@ -428,6 +598,44 @@ def main():
         "threads": [t["title_zh"] for t in geo[:4]],
         "link": "/intel/threads.html",
     })
+
+    # ── 壓力測試：歷史上三次大跌重演一次 ──
+    stress = []
+    if prices:
+        px_live = {l: prices.get(yf_sym(l)) for l in ("QQQ", "SMH", "0050", "2330")}
+        last_us = ((live.get("history_us") or [{}])[-1]).get("tickers", {})
+        last_tw = ((live.get("history_tw") or [{}])[-1]).get("tickers", {})
+        for sc in SCENARIOS:
+            a, b = sc["start"], sc["end"]
+            r = {l: window_ret(px_live[l], a, b) for l in px_live}
+
+            def hold(last, legs):
+                if any(r[l] is None for l in legs):
+                    return None
+                return round(sum((last.get(l, {}).get("final_pct") or 0) / 100 * r[l] for l in legs), 1)
+            seat_r, proxied = [], []
+            for t in seats:
+                x = window_ret(prices.get(yf_sym(t)), a, b)
+                if x is None:
+                    x = r["SMH"]
+                    proxied.append(t)
+                if x is not None:
+                    seat_r.append(x)
+            ok_us = all(px_live[l] is not None for l in ("QQQ", "SMH"))
+            ok_tw = all(px_live[l] is not None for l in ("0050", "2330"))
+            stress.append({
+                **sc,
+                "spy": round(window_ret(prices.get("SPY"), a, b) or 0, 1),
+                "smh": round(r["SMH"], 1) if r["SMH"] is not None else None,
+                "live_us_hold": hold(last_us, ["QQQ", "SMH"]),
+                "live_tw_hold": hold(last_tw, ["0050", "2330"]),
+                "live_us_rule": sim_live(live.get("history_us") or [], ["QQQ", "SMH"],
+                                         {l: px_live[l] for l in ("QQQ", "SMH")}, a, b) if ok_us else None,
+                "live_tw_rule": sim_live(live.get("history_tw") or [], ["0050", "2330"],
+                                         {l: px_live[l] for l in ("0050", "2330")}, a, b) if ok_tw else None,
+                "seats": round(sum(seat_r) / len(seat_r), 1) if seat_r else None,
+                "seats_proxied": proxied,
+            })
 
     # ── 60 天內 ──
     horizon_end = TODAY + timedelta(days=60)
@@ -590,7 +798,11 @@ def main():
             "growth3y": (m.get("gain") or {}).get("growth_3y"),
             **{k: v for k, v in (m.get("series") or {}).items() if not k.endswith(("_as_of", "_prev"))},
             "alarm": (f["alarm"] or {}).get("hit"),
+            "lean": (f.get("lean") or {}).get("text"),
+            "gain_px": f["px"]["gain"],
+            "lose_px": f["px"]["lose"],
         }.items() if v is not None}
+    row["_spy_px"] = basket_px(["SPY"], prices) if prices else None
     hist["rows"][str(TODAY)] = row
     # 一個月前的 EPS 上修，給箭頭用
     past = [d for d in hist["rows"] if parse_date(d) and parse_date(d) <= TODAY - timedelta(days=28)]
@@ -598,6 +810,32 @@ def main():
     for f in far:
         f["eps_prev_month"] = (ref.get(f["id"]) or {}).get("gain_eps")
     first_day = min(hist["rows"])
+
+    # ── 自己考自己：30／90 天前市場站哪邊，後來籃子有沒有贏 ──
+    review = []
+    for f in far:
+        if f["kind"] == "macro":
+            continue
+        for days in (30, 90):
+            olds = [d for d in hist["rows"] if parse_date(d) <= TODAY - timedelta(days=days)
+                    and (hist["rows"][d].get(f["id"]) or {}).get("lean")]
+            if not olds:
+                continue
+            d0 = max(olds)
+            then, now_row = hist["rows"][d0][f["id"]], row.get(f["id"]) or {}
+            if f["kind"] == "pair":
+                a0, a1, b0, b1 = then.get("gain_px"), now_row.get("gain_px"), then.get("lose_px"), now_row.get("lose_px")
+                vs = "對照籃"
+            else:
+                a0, a1 = then.get("gain_px"), now_row.get("gain_px")
+                b0, b1 = hist["rows"][d0].get("_spy_px"), row.get("_spy_px")
+                vs = "SPY"
+            if None in (a0, a1, b0, b1):
+                continue
+            diff = round(((a1 / a0) - (b1 / b0)) * 100, 1)
+            review.append({"id": f["id"], "q": f["q"], "days": days, "date": d0, "lean_then": then["lean"],
+                           "diff": diff, "vs": vs, "alarm_then": then.get("alarm")})
+    first_review = str(parse_date(first_day) + timedelta(days=30))
 
     out = {
         "schema": "horizon-v1",
@@ -607,6 +845,14 @@ def main():
         "top": top,
         "far": far,
         "strategy": strategy,
+        "bets": bets,
+        "no_series": link_info.get("no_series", []),
+        "blind_spots": blind[:8],
+        "blind_total": len(blind),
+        "threads_active": n_active,
+        "stress": stress,
+        "review": review,
+        "first_review": first_review,
         "risks": risks,
         "upcoming": upcoming,
         "fires_out": fires_out,
