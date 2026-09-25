@@ -262,8 +262,8 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div class="ex-title">跨基金一致行動（consensus moves）</div>
   <div class="ex-sub">統計本週/本月哪些個股被多檔主動式 ETF 同向加碼或減碼——機械計數，不代表建議；每列「淨買超基金數」＝加碼/新進檔數 − 減碼/出清檔數</div>
   <div id="ovMovesTabs" style="display:flex;gap:6px;margin-bottom:8px">
-    <button type="button" class="imq-dd-btn ov-moves-tab active" data-w="week" style="background:var(--x-navy);color:#fff;border:0;border-radius:var(--r);padding:.35rem .8rem;font-size:12px;cursor:pointer">本週</button>
-    <button type="button" class="imq-dd-btn ov-moves-tab" data-w="month" style="background:var(--card);color:var(--body);border:1px solid var(--line);border-radius:var(--r);padding:.35rem .8rem;font-size:12px;cursor:pointer">本月</button>
+    <button type="button" class="ov-moves-tab active" data-w="week" style="background:var(--x-navy);color:#fff;border:0;border-radius:var(--r);padding:.35rem .8rem;font-size:12px;cursor:pointer">本週</button>
+    <button type="button" class="ov-moves-tab" data-w="month" style="background:var(--card);color:var(--body);border:1px solid var(--line);border-radius:var(--r);padding:.35rem .8rem;font-size:12px;cursor:pointer">本月</button>
   </div>
   <div class="two-col">
     <div>
@@ -312,8 +312,8 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div class="chapter-head"><span class="ch-title">經理人異動</span></div>
   <div class="ex-sub" id="movesSub"></div>
   <div id="movesTabs" style="display:flex;gap:6px;margin-bottom:8px">
-    <button type="button" class="imq-dd-btn moves-tab active" data-w="week" style="background:var(--x-navy);color:#fff;border:0;border-radius:var(--r);padding:.35rem .8rem;font-size:12px;cursor:pointer">本週</button>
-    <button type="button" class="imq-dd-btn moves-tab" data-w="month" style="background:var(--card);color:var(--body);border:1px solid var(--line);border-radius:var(--r);padding:.35rem .8rem;font-size:12px;cursor:pointer">本月</button>
+    <button type="button" class="moves-tab active" data-w="week" style="background:var(--x-navy);color:#fff;border:0;border-radius:var(--r);padding:.35rem .8rem;font-size:12px;cursor:pointer">本週</button>
+    <button type="button" class="moves-tab" data-w="month" style="background:var(--card);color:var(--body);border:1px solid var(--line);border-radius:var(--r);padding:.35rem .8rem;font-size:12px;cursor:pointer">本月</button>
   </div>
   <div class="tbl-wrap"><table class="imq-table" id="movesTable"></table></div>
 </section>
@@ -402,8 +402,8 @@ function renderNav(activeKey, groups){
 
 function tickerCell(c){
   var label = c.ticker ? (esc(c.ticker)+(c.name?'　'+esc(c.name):'')) : esc(c.name||'—');
-  if(c.has_stock_dash){
-    return '<a href="/stock-dash/?t='+encodeURIComponent(c.ticker)+'">'+label+'</a>';
+  if(c.stock_dash_ticker){
+    return '<a href="/stock-dash/?t='+encodeURIComponent(c.stock_dash_ticker)+'">'+label+'</a>';
   }
   return label;
 }
@@ -524,6 +524,7 @@ function holdingsRowHtml(c){
   var rev90 = c.revisions_pct ? c.revisions_pct['90d'] : null;
   return '<tr><td>'+tickerCell(c)+'</td>'+
     '<td class="num">'+(c.weight_pct!=null?c.weight_pct.toFixed(2)+'%':'—')+'</td>'+
+    '<td class="num">'+(c.weight_change_pp!=null?((c.weight_change_pp>0?'+':'')+c.weight_change_pp.toFixed(2)+'pp'):'—')+'</td>'+
     '<td class="num">'+(c.eps_fy_next_local!=null?fmtNum(c.eps_fy_next_local,2):'—')+'</td>'+
     '<td class="num">'+fmtPctColored(rev90)+'</td></tr>';
 }
@@ -552,7 +553,7 @@ function renderHoldingsTable(d){
   var tbl = document.getElementById('holdingsTable');
   if(!all.length){ noData(tbl,'無持股資料'); document.getElementById('holdingsToggle').innerHTML=''; return; }
   holdingsState = {all: all, expanded: false};
-  tbl.innerHTML = '<thead><tr><th>持股</th><th class="num">權重</th><th class="num">明年度 EPS<br>(TWD)</th>'+
+  tbl.innerHTML = '<thead><tr><th>持股</th><th class="num">權重</th><th class="num">權重變動<br>'+(d.weight_change_base_date?'（vs '+esc(d.weight_change_base_date)+'）':'')+'</th><th class="num">明年度 EPS<br>(TWD)</th>'+
     '<th class="num">修正%（3個月）</th></tr></thead><tbody id="holdingsTableBody"></tbody>';
   renderHoldingsRows();
 }
@@ -899,7 +900,7 @@ window.addEventListener('resize', function(){
 // ── consensus moves 面板 ──────────────────────────────────────────────
 function consensusRowHtml(r, side){
   var scoreHtml = fmtNum(r.sum_weight_change_pp,2)+'pp（AUM 加權 '+fmtNum(r.aum_weighted_score,0)+'）';
-  return '<tr><td>'+esc(r.ticker)+'</td>'+
+  return '<tr><td>'+tickerCell(r)+'</td>'+
     '<td class="num">'+(side==='buy'?r.n_funds_buy:r.n_funds_sell)+'</td>'+
     '<td class="num">'+r.net_funds+'</td>'+
     '<td style="font-size:11px;color:var(--sec)">'+scoreHtml+'</td></tr>';

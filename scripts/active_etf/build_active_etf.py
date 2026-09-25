@@ -134,6 +134,26 @@ def get_eps_for_ticker(ticker, mode, eps_as_of_today, pace_sec=None):
     return data
 
 
+# ── /stock-dash/ 連結 ────────────────────────────────────────────────────
+# /stock-dash/ 只給 docs/dd-screener/latest.json 裡的 ticker 建頁(沿用 etf_dash 的
+# load_stock_dash_universe())。dd-screener 對部分上櫃股用 .TW 後綴(如 5274.TW),
+# 我們的持股依 TPEx 清單標 .TWO——兩種後綴都比對,連結用 dd-screener 那一種。
+_STOCK_DASH = None
+
+
+def stock_dash_ticker(ticker):
+    global _STOCK_DASH
+    if _STOCK_DASH is None:
+        _STOCK_DASH = etfdash.load_stock_dash_universe()
+    if ticker in _STOCK_DASH:
+        return ticker
+    base = ticker.rsplit(".", 1)[0]
+    for alt in (base + ".TW", base + ".TWO"):
+        if alt in _STOCK_DASH:
+            return alt
+    return None
+
+
 # ── 經理人異動(manager moves) ────────────────────────────────────────────
 def compute_manager_moves(current_snap, past_snap):
     """比較兩個 jsonl 快照(compact schema,見 fetch_holdings.py 模組 docstring)
@@ -343,11 +363,31 @@ def build_fund(code, mode, bench_0050_weights, aum_by_code, pace_sec):
 
     aum_row = aum_by_code.get(code) or {}
 
+    # 持股明細表要的逐檔欄位:EPS 現值/3 個月修正%(從 constituents 帶回,原本只
+    # 進加總沒進 JSON,頁面整欄顯示無資料)+ 相對「約一個月前」快照的權重變動
+    # (pp;沒有一個月前的快照就退回最早一筆,基準日一併寫出)。
+    by_ticker = {c["ticker"]: c for c in constituents}
+    ref_snap = (snapshot_near(snapshots[:-1], (datetime.date.fromisoformat(today_iso)
+                                               - datetime.timedelta(days=30)).isoformat())
+                or (snapshots[0] if len(snapshots) > 1 else None))
+    ref_w = {r[0]: r[2] for r in ref_snap["holdings"]} if ref_snap else None
+    holdings_out = []
+    for h in holdings:
+        c = by_ticker.get(h["ticker"], {})
+        rev = c.get("revisions_pct") or {}
+        holdings_out.append(dict(
+            h, eps_fy_next_local=c.get("eps_fy_next_local"),
+            revisions_pct={"30d": rev.get("30d"), "90d": rev.get("90d")},
+            weight_change_pp=(round(h["weight_pct"] - ref_w.get(h["ticker"], 0.0), 4)
+                              if ref_w is not None else None),
+            stock_dash_ticker=stock_dash_ticker(h["ticker"])))
+
     return {
         "code": code, "name": info["name"], "issuer": info["issuer"], "yf_ticker": yf_ticker,
         "as_of": today_iso, "mode": mode,
         "holdings_as_of": today_iso, "n_holdings": len(holdings),
-        "holdings": holdings, "other": other,
+        "holdings": holdings_out, "other": other,
+        "weight_change_base_date": ref_snap["as_of"] if ref_snap else None,
         "nav": current.get("nav") or {}, "weight_band_note": current.get("weight_band_note"),
         "source_url": current.get("source_url"),
         "twse_aum": {"aum_100m_twd": aum_row.get("aum_100m_twd"),
@@ -467,10 +507,16 @@ def build_overview(fund_results):
         })
     funds.sort(key=lambda f: f.get("aum_100m_twd") or 0, reverse=True)
     funds.extend(load_benchmark_rows())
+    names = json.loads(fh.NAMES_PATH.read_text(encoding="utf-8")) if fh.NAMES_PATH.exists() else {}
+    consensus = {w: build_consensus(fund_results, w) for w in ("week", "month")}
+    for c in consensus.values():
+        for r in c["bought"] + c["sold"]:
+            r["name"] = names.get(r["ticker"])
+            r["stock_dash_ticker"] = stock_dash_ticker(r["ticker"])
     return {
         "funds": funds,
-        "consensus_week": build_consensus(fund_results, "week"),
-        "consensus_month": build_consensus(fund_results, "month"),
+        "consensus_week": consensus["week"],
+        "consensus_month": consensus["month"],
         "as_of": max((f["as_of"] for f in fund_results), default=None),
         "generated_at": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
     }
