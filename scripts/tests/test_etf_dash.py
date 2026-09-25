@@ -1369,3 +1369,138 @@ def test_build_overview_json_summary_sentence_none_without_sector_data(tmp_path,
     _write_fund_json(tmp_path, "SPY", eps_90d=1.0, price_90d=2.0, pe_chg_90d=1.0, label_zh="SPY")
     overview = m.build_overview_json()
     assert overview["summary_sentence_zh"] is None
+
+
+# ── 2026-09-25 "blocking issue" fix — PGR-style forward-P/E outliers and a ──
+# symmetric revision-leg unit-glitch check ───────────────────────────────────
+#
+# Real numbers from the 2026-09-25 FULL run (docs/etf-dash/data/XLF.json,
+# SPY.json, RSP.json): PGR has yfinance eps_fy_next=1012.0, price=202.17
+# (individual forward P/E ≈0.1998x — Progressive's real FY EPS is order
+# $15-20, this is a Yahoo data anomaly). PGR's own eps_trend 30d/60d/90d
+# anchors were all None that run (confirmed by reading the built JSON) —
+# i.e. classify_revision() already returns "no_base" for PGR at every
+# period, so the *revision* leg was never actually corrupted by PGR; only
+# the *forward P/E* leg (a different computation, harmonic mean of
+# price/eps across constituents) was dragged down. That's why the fix has
+# two independent parts tested separately below.
+
+def test_classify_revision_unit_glitch_large_drop_excluded():
+    # base=1000, current=50 -> ratio 0.05 < 0.1 floor; base is NOT "tiny
+    # relative to current" (old REVISION_BASE_MIN_RATIO check requires
+    # base < 0.2*current = 10, and 1000 is not < 10), so this exercises the
+    # new, independent ratio check rather than the pre-existing one.
+    status, reason, raw_pct, capped_pct = m.classify_revision(1000.0, 50.0)
+    assert status == "invalid_base"
+    assert "比值" in reason
+    assert raw_pct is None and capped_pct is None
+
+
+def test_classify_revision_unit_glitch_boundary_exactly_0_1_not_excluded():
+    # ratio == 0.1 exactly is the boundary — spec says "< 0.1x" excludes,
+    # so exactly-equal must NOT be excluded by the new check (still subject
+    # to the existing -50% cap since the raw move is -90%).
+    status, _, raw_pct, capped_pct = m.classify_revision(100.0, 10.0)
+    assert status == "capped"
+    assert raw_pct == pytest.approx(-90.0)
+    assert capped_pct == -50.0
+
+
+def test_classify_revision_large_upward_jump_pgr_scale_still_excluded():
+    # A PGR-scale jump (base=100, current=1012 -> ratio ~10.1x) is already
+    # caught by the pre-existing REVISION_BASE_MIN_RATIO check (base=100 <
+    # 0.2*1012=202.4), so it's excluded regardless of which check fires
+    # first — documenting that the >10x direction is (by construction)
+    # never reachable as "new" behavior: any ratio > 5x already trips the
+    # older tiny-base check first.
+    status, reason, raw_pct, capped_pct = m.classify_revision(100.0, 1012.0)
+    assert status == "invalid_base"
+    assert raw_pct is None and capped_pct is None
+
+
+def test_classify_revision_pgr_real_case_has_no_base_not_invalid_base():
+    # Empirical: PGR's actual 2026-09-25 eps_trend anchors (30d/60d/90d) were
+    # all missing (yfinance returned no historical value), not merely
+    # "small" or "glitchy" — classify_revision(None, 1012.0) must be
+    # "no_base" (uncounted, not flagged as data-quality invalid_base). This
+    # is why PGR never appeared in any period's period_exclusions/
+    # period_capped despite its extreme eps_fy_next value — the revision
+    # leg's coverage calc simply never saw a base for it.
+    assert m.classify_revision(None, 1012.0) == ("no_base", None, None, None)
+
+
+# ── compute_weighted_forward_pe() — PGR-style individual-P/E outlier filter ─
+
+def _pe_constituent(ticker, weight_pct, eps_fy_next_usd, price_usd, name=None):
+    return {"ticker": ticker, "name": name or ticker, "weight_pct": weight_pct,
+            "eps_fy_next_usd": eps_fy_next_usd, "price_usd": price_usd}
+
+
+def test_compute_weighted_forward_pe_excludes_pgr_style_low_pe_outlier():
+    constituents = [
+        _pe_constituent("PGR", 1.53, 1012.0, 202.17, name="Progressive"),  # pe ~0.1998x -> excluded
+        _pe_constituent("AAA", 50.0, 5.0, 100.0),   # pe 20x
+        _pe_constituent("BBB", 48.47, 2.0, 40.0),   # pe 20x
+    ]
+    value, coverage_pct, pe_excluded = m.compute_weighted_forward_pe(constituents, total_weight=100.0)
+    assert value == pytest.approx(20.0, abs=0.01)  # PGR's bogus 0.2x no longer drags the average down
+    assert coverage_pct == pytest.approx(98.47, abs=0.01)
+    assert len(pe_excluded) == 1
+    assert pe_excluded[0]["ticker"] == "PGR"
+    assert pe_excluded[0]["pe"] == pytest.approx(0.1998, abs=0.001)
+    assert pe_excluded[0]["eps_fy_next_usd"] == 1012.0
+    assert pe_excluded[0]["price_usd"] == 202.17
+    assert "資料異常" in pe_excluded[0]["reason"]
+
+
+def test_compute_weighted_forward_pe_excludes_high_pe_outlier():
+    constituents = [
+        _pe_constituent("ZZZ", 2.0, 0.01, 50.0),   # pe = 5000x -> excluded (>300x)
+        _pe_constituent("AAA", 98.0, 5.0, 100.0),  # pe 20x
+    ]
+    value, coverage_pct, pe_excluded = m.compute_weighted_forward_pe(constituents, total_weight=100.0)
+    assert value == pytest.approx(20.0, abs=0.01)
+    assert len(pe_excluded) == 1
+    assert pe_excluded[0]["ticker"] == "ZZZ"
+    assert pe_excluded[0]["pe"] == pytest.approx(5000.0, abs=1.0)
+
+
+def test_compute_weighted_forward_pe_boundary_values_not_excluded():
+    # pe exactly at pe_min/pe_max (3x / 300x by default) must NOT be excluded
+    # — the spec is "< 3x or > 300x", strict inequalities.
+    constituents = [
+        _pe_constituent("LOW", 50.0, 10.0, 30.0),    # pe = 3.0x exactly
+        _pe_constituent("HIGH", 50.0, 1.0, 300.0),   # pe = 300.0x exactly
+    ]
+    value, coverage_pct, pe_excluded = m.compute_weighted_forward_pe(constituents, total_weight=100.0)
+    assert pe_excluded == []
+    assert coverage_pct == pytest.approx(100.0)
+
+
+def test_compute_weighted_forward_pe_no_outliers_matches_plain_harmonic_mean():
+    constituents = [
+        _pe_constituent("AAA", 60.0, 5.0, 50.0),  # pe 10x
+        _pe_constituent("BBB", 40.0, 2.0, 20.0),  # pe 10x
+    ]
+    value, coverage_pct, pe_excluded = m.compute_weighted_forward_pe(constituents, total_weight=100.0)
+    assert value == pytest.approx(10.0, abs=0.01)
+    assert coverage_pct == pytest.approx(100.0)
+    assert pe_excluded == []
+
+
+def test_compute_weighted_forward_pe_excluded_list_sorted_by_weight_desc():
+    constituents = [
+        _pe_constituent("SMALL", 0.5, 1012.0, 202.17),
+        _pe_constituent("BIG", 3.0, 500.0, 1.0),   # pe = 0.002x, also excluded, bigger weight
+        _pe_constituent("AAA", 96.5, 5.0, 50.0),
+    ]
+    value, coverage_pct, pe_excluded = m.compute_weighted_forward_pe(constituents, total_weight=100.0)
+    assert [e["ticker"] for e in pe_excluded] == ["BIG", "SMALL"]
+
+
+def test_compute_weighted_forward_pe_custom_thresholds():
+    constituents = [_pe_constituent("AAA", 100.0, 5.0, 20.0)]  # pe = 4x
+    value, coverage_pct, pe_excluded = m.compute_weighted_forward_pe(
+        constituents, total_weight=100.0, pe_min=5.0, pe_max=300.0)
+    assert pe_excluded[0]["ticker"] == "AAA"  # excluded under a stricter custom pe_min
+    assert value is None  # nothing left covered

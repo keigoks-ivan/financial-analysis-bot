@@ -458,6 +458,23 @@ ANCHOR_LINE_DEFS = [  # (key, yfinance eps_trend 欄名, 概略天數)
 REVISION_BASE_MIN_RATIO = 0.2   # |base(N天前 EPS)| < 此比例 × |current(今日 EPS)| → 比值不穩定，整筆排除
 REVISION_CAP_PCT = 50.0         # 排除異常基期後，單筆修正 % 仍封頂在 ±50%（保留原始值供稽核，不丟棄）
 
+# 2026-09-25 持有人擋下 XLF／RSP／SPY 的加權遠期本益比：PGR 的 yfinance
+# eps_fy_next=1012.0（實際 Progressive FY EPS 量級應在 $15-20，這是 Yahoo
+# 資料異常，不是單位換算——見下方 PE_EXCLUDE_MIN_X／PE_EXCLUDE_MAX_X 修
+# weighted_forward_pe 那條腿）。這裡另外補一道 EPS 修正% 那條腿的檢查：
+# REVISION_BASE_MIN_RATIO 只抓「base 相對 current 過小」（current/base 過大，
+# 即巨幅上修）的情況，沒有對稱抓「current 相對 base 過小」（巨幅下修，
+# current/base 過小）的情況——例如 base 本身就是異常值時，比值可能小於
+# 0.1x。REVISION_UNIT_GLITCH_MIN_RATIO／MAX_RATIO 補這個對稱檢查，抓 10 倍
+# 量級的比值跳動（常見的單位/資料異常特徵），跟 REVISION_BASE_MIN_RATIO
+# 分開判斷、不互相取代。經查核：PGR 這次 run 的 30d/60d/90d 三個錨點
+# （eps_trend 的 "30daysAgo"/"60daysAgo"/"90daysAgo" 欄）全部是 None（yfinance
+# 沒有回傳歷史值，不是異常值），落在既有 "no_base" 分支，不受這裡影響——
+# PGR 對加權遠期本益比的拖累完全是本益比那條腿的問題，這個新檢查目前對
+# PGR 本身沒有作用，是為了未來出現「有 base 但比值跳 10 倍」的案例補的閘。
+REVISION_UNIT_GLITCH_MAX_RATIO = 10.0   # current/base > 此值 → 疑似單位或資料異常，整筆排除
+REVISION_UNIT_GLITCH_MIN_RATIO = 0.1    # current/base < 此值 → 同上
+
 
 def classify_revision(base: float | None, current: float | None) -> tuple[str, str | None, float | None, float | None]:
     """純函式（不碰快取／網路）：判斷一筆「N 天前 EPS → 今日 EPS」修正% 該怎麼用。
@@ -469,9 +486,10 @@ def classify_revision(base: float | None, current: float | None) -> tuple[str, s
         但資料壞掉」的情況，跟「沒資料」分開，語意才清楚）。
       - "invalid_base"：current<=0，或 base<=0，或 |base| 相對 current 過小
         （REVISION_BASE_MIN_RATIO 門檻——SPCX／ECHO／HON 這類基期趨近 0 或
-        翻負號、企業行動造成分母跳動的案例）。整筆排除，不進任何加總
-        （raw_pct/capped_pct 為 None），reason 說明原因，呼叫端要記進
-        period_exclusions。
+        翻負號、企業行動造成分母跳動的案例），或 current/base 比值超出
+        [REVISION_UNIT_GLITCH_MIN_RATIO, REVISION_UNIT_GLITCH_MAX_RATIO]
+        區間（疑似單位或資料異常）。整筆排除，不進任何加總（raw_pct/
+        capped_pct 為 None），reason 說明原因，呼叫端要記進 period_exclusions。
       - "capped"：比值本身站得住腳，但單筆修正 % 超過 ±REVISION_CAP_PCT，
         封頂後才拿去加權——raw_pct 保留原始值供稽核，capped_pct 是實際加權
         用的值，呼叫端要記進 period_capped。
@@ -486,6 +504,12 @@ def classify_revision(base: float | None, current: float | None) -> tuple[str, s
     if abs(base) < REVISION_BASE_MIN_RATIO * abs(current):
         return ("invalid_base",
                 f"基期 EPS 估計相對現值過小（|{base:.4f}| < {REVISION_BASE_MIN_RATIO}×|{current:.4f}|），比值不穩定",
+                None, None)
+    ratio = current / base
+    if ratio > REVISION_UNIT_GLITCH_MAX_RATIO or ratio < REVISION_UNIT_GLITCH_MIN_RATIO:
+        return ("invalid_base",
+                f"現值／基期比值 {ratio:.2f}x 超出合理區間 [{REVISION_UNIT_GLITCH_MIN_RATIO}x, "
+                f"{REVISION_UNIT_GLITCH_MAX_RATIO}x]，疑似單位或資料異常",
                 None, None)
     raw_pct = (current / base - 1) * 100
     capped_pct = max(-REVISION_CAP_PCT, min(REVISION_CAP_PCT, raw_pct))
@@ -1529,7 +1553,8 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
                            weight_methodology_note_zh: str | None = None,
                            eps_scope_note_zh: str | None = None,
                            anchor_label_zh: str | None = None,
-                           holdings_approximation_zh: str | None = None) -> str:
+                           holdings_approximation_zh: str | None = None,
+                           pe_excluded: list[dict] | None = None) -> str:
     """組 methods_note_zh——2026-09-24 加 QQQ／SPY 之前這段是寫死給 SMH／
     SMH_UCITS 看的（硬編「VanEck」「ASML」「SK Hynix」）。四檔基金共用同一個
     build_fund()，持股來源、非美元成分股、TICKER_ALIAS 用到哪些、長線指數
@@ -1595,6 +1620,21 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
             "各期間成分股加權 EPS 變動先過濾兩層資料品質問題才加總：" + "；".join(bits) +
             "。逐筆明細（ticker、原始值、處理後的值、原因）見各期間 periods[].period_exclusions／"
             "periods[].period_capped 欄位，頁面 Exhibit 1 下方也有同一份摘要。"
+        )
+
+    # 2026-09-25 加：加權遠期本益比那條腿獨立的資料品質過濾（見
+    # compute_weighted_forward_pe() 上方模組註解的 PGR 案例——PGR 的
+    # eps_fy_next=1012、price=202.17，個股本益比 0.2x，把 XLF／RSP／SPY 的
+    # 加權遠期本益比拖到不合理的個位數）。跟上面 EPS 修正% 那段是兩件不同的
+    # 事：這裡管「當下這個估值站不站得住」，不是「這次比上次變動多少」。
+    if pe_excluded:
+        pe_examples = sorted({e["ticker"] or e["name"] for e in pe_excluded})
+        parts.append(
+            f"加權遠期本益比只用個股本益比（股價／明年度 EPS）落在 [{PE_EXCLUDE_MIN_X:g}x, "
+            f"{PE_EXCLUDE_MAX_X:g}x] 區間內的成分股，區間外整檔排除、權重重新正規化——本次排除 "
+            f"{len(pe_excluded)} 檔（{'、'.join(pe_examples[:10])}{'等' if len(pe_examples) > 10 else ''}），"
+            "多半是 yfinance eps_fy_next 資料異常（如個股 EPS 估計偏離實際量級一個數量級以上），"
+            "不代表真實估值。逐筆明細見 weighted_forward_pe.pe_excluded 欄位。"
         )
 
     non_equity_w = round(sum(e["weight_pct"] or 0 for e in non_equity), 2)
@@ -1898,6 +1938,53 @@ def apply_anchor_fallback(long_eps_suppressed_note: str | None, etf_key: str,
     return long_eps_suppressed_note, [], None
 
 
+# 2026-09-25 持有人擋下上線：XLF 加權遠期本益比 6.82x 是 PGR 一檔拖出來的——
+# PGR 的 yfinance eps_fy_next=1012.0、price=202.17，個股本益比 0.1998x，是
+# Yahoo 資料異常（Progressive 實際 FY EPS 量級應在 $15-20），不是真的估值。
+# 這條腿（加權遠期本益比）獨立做一層「個股本益比合理區間」檢查——跟 EPS
+# 修正% 那條腿的 classify_revision() 完全分開（後者管「這次比上次」的比值，
+# 這裡管「當下這個估值本身」站不站得住），任何一檔個股本益比 <PE_EXCLUDE_MIN_X
+# 或 >PE_EXCLUDE_MAX_X 整筆排除、權重重新正規化，明細記進 pe_excluded 供稽核
+# （不悄悄改數字）。FULL／PRICE 兩個模式共用同一個函式，避免兩處各寫一次
+# 分岔（過去兩處各自 inline 算過一次，這次順手收斂）。
+PE_EXCLUDE_MIN_X = 3.0     # 個股遠期本益比 < 此值 → 疑似資料異常，排除出加權遠期本益比分子分母
+PE_EXCLUDE_MAX_X = 300.0   # 個股遠期本益比 > 此值 → 同上（多半是 EPS 趨近 0 造成的雜訊，不是真實估值）
+
+
+def compute_weighted_forward_pe(constituents: list[dict], total_weight: float,
+                                 pe_min: float = PE_EXCLUDE_MIN_X,
+                                 pe_max: float = PE_EXCLUDE_MAX_X) -> tuple[float | None, float | None, list[dict]]:
+    """純函式：harmonic-mean 加權遠期本益比 = 1 / Σ w_i·(EPS_i/price_i)，先過濾
+    個股本益比不在 [pe_min, pe_max] 區間的成分股（見上方模組註解的 PGR 案例）。
+    回傳 (weighted_fwd_pe, coverage_pct, pe_excluded)：coverage_pct 是「排除
+    本益比異常值後」實際用進分子分母的權重佔 total_weight 的比例；pe_excluded
+    依權重降冪排序，每筆含 ticker/name/weight_pct/eps_fy_next_usd/price_usd/
+    pe/reason，供 JSON／頁面查核用（不是悄悄丟棄）。"""
+    candidates = [c for c in constituents if c.get("eps_fy_next_usd") and c.get("price_usd")]
+    pe_covered, pe_excluded = [], []
+    for c in candidates:
+        pe = c["price_usd"] / c["eps_fy_next_usd"]
+        if pe < pe_min or pe > pe_max:
+            pe_excluded.append({
+                "ticker": c["ticker"], "name": c.get("name"), "weight_pct": c.get("weight_pct"),
+                "eps_fy_next_usd": c["eps_fy_next_usd"], "price_usd": c["price_usd"],
+                "pe": round(pe, 4),
+                "reason": f"個股遠期本益比 {pe:.2f}x 超出合理區間 [{pe_min:g}x, {pe_max:g}x]"
+                          "（EPS 或股價疑似資料異常，非真實估值）",
+            })
+            continue
+        pe_covered.append(c)
+    pe_covered_weight = sum(c["weight_pct"] or 0 for c in pe_covered)
+    weighted_fwd_pe = None
+    if pe_covered_weight > 0:
+        yield_sum = sum((c["weight_pct"] / pe_covered_weight) * (c["eps_fy_next_usd"] / c["price_usd"])
+                         for c in pe_covered)
+        weighted_fwd_pe = round(1 / yield_sum, 2) if yield_sum > 0 else None
+    coverage_pct = round(pe_covered_weight / total_weight * 100, 2) if total_weight else None
+    pe_excluded.sort(key=lambda e: abs(e["weight_pct"] or 0), reverse=True)
+    return weighted_fwd_pe, coverage_pct, pe_excluded
+
+
 def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
                      dd_days: dict, today: datetime, stock_dash_universe: set[str],
                      mode_reason: str) -> dict:
@@ -2094,14 +2181,10 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             "period_capped": capped_sorted,
         })
 
-    # ---- weighted forward P/E (harmonic mean): 1 / Σ w_i * (EPS_i/price_i)
-    pe_covered = [c for c in constituents if c["eps_fy_next_usd"] and c["price_usd"]]
-    pe_covered_weight = sum(c["weight_pct"] or 0 for c in pe_covered)
-    weighted_fwd_pe = None
-    if pe_covered_weight > 0:
-        yield_sum = sum((c["weight_pct"] / pe_covered_weight) * (c["eps_fy_next_usd"] / c["price_usd"])
-                         for c in pe_covered)
-        weighted_fwd_pe = round(1 / yield_sum, 2) if yield_sum > 0 else None
+    # ---- weighted forward P/E (harmonic mean): 1 / Σ w_i * (EPS_i/price_i)，
+    # 個股本益比不在合理區間的先排除（見 compute_weighted_forward_pe() 上方
+    # 模組註解的 PGR 案例）。
+    weighted_fwd_pe, pe_coverage_pct, pe_excluded = compute_weighted_forward_pe(constituents, total_weight)
 
     # ---- daily snapshot (idempotent per day)
     snap_dir = SNAP_DIR / etf_key
@@ -2214,9 +2297,11 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         "periods": periods,
         "weighted_forward_pe": {
             "value": weighted_fwd_pe,
-            "coverage_pct": round(pe_covered_weight / total_weight * 100, 2) if total_weight else None,
+            "coverage_pct": pe_coverage_pct,
             "method": f"harmonic mean 1/Σw_i·(EPS_i/price_i)；基準幣別 {pe_basis_ccy}，非{pe_basis_ccy}報表"
-                      f"(如 ASML)的成分股先用當日 FX 換算成{pe_basis_ccy}",
+                      f"(如 ASML)的成分股先用當日 FX 換算成{pe_basis_ccy}；個股本益比 <"
+                      f"{PE_EXCLUDE_MIN_X:g}x 或 >{PE_EXCLUDE_MAX_X:g}x 視為資料異常，排除見 pe_excluded",
+            "pe_excluded": pe_excluded,
         },
         "constituents": constituents,
         "excluded": excluded,
@@ -2256,7 +2341,8 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
                                                   weight_methodology_note_zh=weight_methodology_note_zh,
                                                   eps_scope_note_zh=eps_scope_note_zh,
                                                   anchor_label_zh=anchor_label_zh,
-                                                  holdings_approximation_zh=holdings_approximation_zh),
+                                                  holdings_approximation_zh=holdings_approximation_zh,
+                                                  pe_excluded=pe_excluded),
     }
 
 
@@ -2340,14 +2426,9 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         })
         constituents.append(rec)
 
-    # ---- 今日加權遠期本益比：今天的價格 × 快取的 EPS（跟 FULL 模式同一個調和平均公式）
-    pe_covered = [c for c in constituents if c["eps_fy_next_usd"] and c["price_usd"]]
-    pe_covered_weight = sum(c["weight_pct"] or 0 for c in pe_covered)
-    weighted_fwd_pe = None
-    if pe_covered_weight > 0:
-        yield_sum = sum((c["weight_pct"] / pe_covered_weight) * (c["eps_fy_next_usd"] / c["price_usd"])
-                         for c in pe_covered)
-        weighted_fwd_pe = round(1 / yield_sum, 2) if yield_sum > 0 else None
+    # ---- 今日加權遠期本益比：今天的價格 × 快取的 EPS（跟 FULL 模式同一個
+    # compute_weighted_forward_pe()，含個股本益比合理區間過濾）
+    weighted_fwd_pe, pe_coverage_pct, pe_excluded = compute_weighted_forward_pe(constituents, total_weight)
 
     # ---- daily snapshot（跟 FULL 模式同一個檔案序列，長線 EPS 指數的稽核／
     # legacy chart 都靠這個累積歷史——PRICE 模式的 constituents 裡的
@@ -2424,9 +2505,11 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         "periods": periods,
         "weighted_forward_pe": {
             "value": weighted_fwd_pe,
-            "coverage_pct": round(pe_covered_weight / total_weight * 100, 2) if total_weight else None,
+            "coverage_pct": pe_coverage_pct,
             "method": f"harmonic mean 1/Σw_i·(EPS_i/price_i)；EPS 沿用 eps_as_of 快取，股價是今天批次抓的，"
-                      f"兩者都用今天的匯率換算成{pe_basis_ccy}，非{pe_basis_ccy}報表(如 ASML)一樣先換算",
+                      f"兩者都用今天的匯率換算成{pe_basis_ccy}，非{pe_basis_ccy}報表(如 ASML)一樣先換算；"
+                      f"個股本益比 <{PE_EXCLUDE_MIN_X:g}x 或 >{PE_EXCLUDE_MAX_X:g}x 視為資料異常，排除見 pe_excluded",
+            "pe_excluded": pe_excluded,
         },
         "constituents": constituents,
         "excluded": excluded,
@@ -2465,7 +2548,8 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
                                                   weight_methodology_note_zh=weight_methodology_note_zh,
                                                   eps_scope_note_zh=eps_scope_note_zh,
                                                   anchor_label_zh=anchor_label_zh,
-                                                  holdings_approximation_zh=eps_cache.get("holdings_approximation_zh")),
+                                                  holdings_approximation_zh=eps_cache.get("holdings_approximation_zh"),
+                                                  pe_excluded=pe_excluded),
     }
 
 

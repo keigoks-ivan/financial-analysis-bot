@@ -478,13 +478,40 @@ function renderPeriodsQualityNote(d){
     }
     lines.push('<div><b>'+esc(p.label)+'</b>：'+bits.join('；')+'。</div>');
   });
-  if(!lines.length){ el.style.display='none'; el.innerHTML=''; return; }
+
+  // 2026-09-25 加：加權遠期本益比那條腿另外一種資料品質問題（個股本益比本身
+  // 站不住，不是「這次比上次」的修正比值問題）——見 build_etf_dash.py
+  // compute_weighted_forward_pe() 的 PGR 案例（eps_fy_next=1012、price=202.17，
+  // 個股本益比 0.2x）。跟上面 EPS 修正% 的 period_exclusions/period_capped
+  // 分開一段，放進同一個「資料品質」說明框，不是另開一個獨立元素。
+  var peExcluded = (d.weighted_forward_pe && d.weighted_forward_pe.pe_excluded) || [];
+  var peLines = [];
+  if(peExcluded.length){
+    peLines.push('<div><b>加權遠期本益比</b>：個股本益比超出合理區間排除 '+peExcluded.length+' 檔：'+
+      peExcluded.slice(0, 8).map(function(e){
+        return esc(e.ticker||e.name)+'（本益比 '+fmtNum(e.pe, 2)+'x，權重'+
+          (e.weight_pct!=null?e.weight_pct.toFixed(2)+'%':'—')+'）';
+      }).join('、')+(peExcluded.length>8?' 等':'')+'。</div>');
+  }
+
+  if(!lines.length && !peLines.length){ el.style.display='none'; el.innerHTML=''; return; }
   el.style.display = '';
-  el.innerHTML = '<div style="font-weight:600;margin-bottom:4px">EPS 修正%資料品質（基期異常排除／單筆封頂）</div>'+
-    '<div style="font-size:11px;line-height:1.7">'+lines.join('')+
-    '基期（N 天前 EPS 估計）為負、或相對現值過小（&lt;20%）時比值不穩定，整筆不進加權平均；'+
-    '排除後單筆修正仍超過 ±50% 的，封頂在 ±50% 才拿去加權（原始值保留在上方，不丟棄）。'+
-    '完整名單見 JSON 各期間的 period_exclusions／period_capped 欄位。</div>';
+  var html = '<div style="font-weight:600;margin-bottom:4px">資料品質（基期異常排除／單筆封頂／本益比異常排除）</div>'+
+    '<div style="font-size:11px;line-height:1.7">';
+  if(lines.length){
+    html += lines.join('') +
+      '基期（N 天前 EPS 估計）為負、或相對現值過小（&lt;20%）、或現值／基期比值超出 0.1x–10x 區間'+
+      '（疑似單位或資料異常）時比值不穩定，整筆不進加權平均；排除後單筆修正仍超過 ±50% 的，封頂在 '+
+      '±50% 才拿去加權（原始值保留在上方，不丟棄）。完整名單見 JSON 各期間的 period_exclusions／'+
+      'period_capped 欄位。<br>';
+  }
+  if(peLines.length){
+    html += peLines.join('') +
+      '個股遠期本益比（股價／明年度 EPS）低於 3x 或高於 300x 視為 EPS 或股價資料異常，整檔排除、'+
+      '權重重新正規化後才算加權遠期本益比——完整名單見 JSON weighted_forward_pe.pe_excluded 欄位。';
+  }
+  html += '</div>';
+  el.innerHTML = html;
 }
 
 function renderStatRow(d){
