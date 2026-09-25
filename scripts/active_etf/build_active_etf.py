@@ -43,6 +43,9 @@ sys.path.insert(0, str(REPO_ROOT / "scripts" / "active_etf"))
 
 import build_etf_dash as etfdash  # noqa: E402  — 見模組 docstring,重用其 EPS/股價機械
 import fetch_holdings as fh  # noqa: E402       — FUND_REGISTRY / read_fund_jsonl / expand_holdings
+import analytics as an  # noqa: E402            — 五個分析模組(經理人功力/擁擠度/資金流/風格/操作習慣)
+import prices as pr  # noqa: E402               — 股價+成交量快取(data/active_etf/prices.jsonl)
+import security_meta as sm  # noqa: E402        — 已發行股數+產業別快取(data/active_etf/security_meta.json)
 
 DATA_DIR = REPO_ROOT / "docs" / "active-etf" / "data"
 EPS_CACHE_DIR = REPO_ROOT / "data" / "active_etf" / "eps_cache"
@@ -269,7 +272,9 @@ def active_share(fund_weights, bench_weights):
 
 
 # ── 單一基金組裝 ──────────────────────────────────────────────────────────
-def build_fund(code, mode, bench_0050_weights, aum_by_code, pace_sec):
+def build_fund(code, mode, bench_0050_weights, aum_by_code, pace_sec,
+                price_history, ticker_series_by_t, security_meta,
+                bench_periods, bench_fwd_pe, taiex_series, taiex_dates, held_universe_tickers):
     info = fh.FUND_REGISTRY[code]
     snapshots = fh.read_fund_jsonl(code)
     if not snapshots:
@@ -387,6 +392,25 @@ def build_fund(code, mode, bench_0050_weights, aum_by_code, pace_sec):
                               if ref_w is not None else None),
             stock_dash_ticker=stock_dash_ticker(h["ticker"])))
 
+    # ── 新增五個分析模組:M1(經理人功力)/M3(資金流)/M4(風格與偏好)/M5(操作習慣)。
+    # M2(擁擠度)是 overview 層級,在 build_overview() 算,這裡不算。
+    manager_return_attr = an.manager_skill_return_attribution(snapshots, price_history, bench_0050_weights, yf_ticker)
+    manager_post_trade = an.post_trade_performance(code, snapshots, ticker_series_by_t, taiex_series, taiex_dates,
+                                                    compute_manager_moves)
+    flows = an.compute_fund_flows(snapshots)
+    operations = an.compute_operations(code, snapshots, price_history)
+    latest_close_by_t = {t: s[-1][1] for t, s in ticker_series_by_t.items() if s}
+    bench_p90 = (bench_periods or {}).get("90d", {})
+    style = an.compute_style_tilts(
+        holdings, bench_0050_weights, security_meta, latest_close_by_t,
+        fund_periods_90d=p90.get("eps_chg_pct"), bench_periods_90d=bench_p90.get("eps_chg_pct"),
+        fund_fwd_pe=weighted_fwd_pe, bench_fwd_pe=bench_fwd_pe,
+        held_universe_tickers=held_universe_tickers)
+    fund_price_90d, bench_price_90d = p90.get("price_chg_pct"), bench_p90.get("price_chg_pct")
+    style["momentum_90d_tilt_pp"] = (round(fund_price_90d - bench_price_90d, 4)
+                                      if (fund_price_90d is not None and bench_price_90d is not None) else None)
+    style_trend = an.style_snapshot_trend(snapshots, security_meta)
+
     return {
         "code": code, "name": info["name"], "issuer": info["issuer"], "yf_ticker": yf_ticker,
         "as_of": today_iso, "mode": mode,
@@ -409,6 +433,9 @@ def build_fund(code, mode, bench_0050_weights, aum_by_code, pace_sec):
         "tsmc_weight_pct": tsmc["weight_pct"] if tsmc else 0.0,
         "active_share_vs_0050_pct": ashare,
         "moves": moves,
+        "manager_skill": {"return_attribution": manager_return_attr, "post_trade": manager_post_trade},
+        "style_tilts": style, "style_trend": style_trend,
+        "operations": operations, "flows": flows,
         "n_snapshots_stored": len(snapshots), "earliest_stored_date": snapshots[0]["as_of"],
         "methods_note_zh": (
             "股票持股與資料日一律取自基金官方 PCF/持股揭露頁(見 source_url),不依賴任何第三方彙整站。"
@@ -418,6 +445,12 @@ def build_fund(code, mode, bench_0050_weights, aum_by_code, pace_sec):
             "縮放),兩邊快照缺 nav.units 才退回權重(weight_pct)差值——本檔 moves.week/month 的 "
             "method 欄位會標示實際用了哪一種。active share 為 ½Σ|本基金權重-元大台灣50權重|(聯集),"
             "元大台灣50權重讀 /etf-dash/ 資料,若當天缺資料則為 null。"
+            "經理人功力(持股法主動報酬)全程用單一份「目前」0050 權重回推,不是逐日真實 0050 權重;"
+            "異動後績效只算「往後 20/60 個交易日都有資料」的事件,20/60 為交易日數非日曆天。"
+            "資金流的價格效果/淨申贖由連續兩筆官方快照的受益權單位數與淨值推回,缺 nav.units 的快照"
+            "區間會跳過不計入。風格與偏好的市值分位母體是 22 檔基金史上曾持有過的個股,不是全市場排名"
+            "(見 style_tilts.size_note_zh)。操作習慣的平均持有期間以「最後一次確認持有」的快照日估計"
+            "出場日,是下限估計,非精確出場日。"
         ),
         "generated_at": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
     }, None
@@ -495,14 +528,19 @@ def load_benchmark_rows():
             "weighted_forward_pe": (d.get("weighted_forward_pe") or {}).get("value"),
             "aum_100m_twd": None, "holders_10k_people": None,
             "top10_concentration_pct": None, "tsmc_weight_pct": None, "active_share_vs_0050_pct": None,
+            "active_return_3m_pct": None, "post_trade_hit_rate_60d_pct": None, "post_trade_n_60d": None,
+            "monthly_turnover_pct": None, "cumulative_net_flow_100m": None,
             "is_benchmark": True,
         })
     return rows
 
 
-def build_overview(fund_results):
+def build_overview(fund_results, security_meta, ticker_series_by_t):
     funds = []
     for f in fund_results:
+        attr_3m = ((f.get("manager_skill") or {}).get("return_attribution") or {}).get("3m") or {}
+        pt_60 = ((((f.get("manager_skill") or {}).get("post_trade") or {}).get("buys") or {}).get(60)) or {}
+        turnover_series = (f.get("operations") or {}).get("monthly_turnover") or []
         funds.append({
             "code": f["code"], "name": f["name"], "issuer": f["issuer"],
             "as_of": f["as_of"], "n_holdings": f["n_holdings"],
@@ -513,6 +551,11 @@ def build_overview(fund_results):
             "holders_10k_people": (f.get("twse_aum") or {}).get("holders_10k_people"),
             "top10_concentration_pct": f["top10_concentration_pct"], "tsmc_weight_pct": f["tsmc_weight_pct"],
             "active_share_vs_0050_pct": f["active_share_vs_0050_pct"], "is_benchmark": False,
+            # 新增四個可排序欄位(見 spec):近三月主動報酬(持股法)/買進後60日命中率(n)/月週轉率/累計淨流入
+            "active_return_3m_pct": attr_3m.get("total_active_return_pct"),
+            "post_trade_hit_rate_60d_pct": pt_60.get("hit_rate_pct"), "post_trade_n_60d": pt_60.get("n_events"),
+            "monthly_turnover_pct": turnover_series[-1]["turnover_pct"] if turnover_series else None,
+            "cumulative_net_flow_100m": (f.get("flows") or {}).get("cumulative_net_flow_100m"),
         })
     funds.sort(key=lambda f: f.get("aum_100m_twd") or 0, reverse=True)
     funds.extend(load_benchmark_rows())
@@ -522,10 +565,16 @@ def build_overview(fund_results):
         for r in c["bought"] + c["sold"]:
             r["name"] = names.get(r["ticker"])
             r["stock_dash_ticker"] = stock_dash_ticker(r["ticker"])
+    crowding = an.compute_crowding(fund_results, security_meta, ticker_series_by_t)
+    flows_by_code = {f["code"]: f["flows"] for f in fund_results if f.get("flows")}
+    fund_names = {f["code"]: f["name"] for f in fund_results}
+    flows_overview = an.compute_overview_flows(flows_by_code, fund_names)
     return {
         "funds": funds,
         "consensus_week": consensus["week"],
         "consensus_month": consensus["month"],
+        "crowding": crowding,
+        "flows": flows_overview,
         "as_of": max((f["as_of"] for f in fund_results), default=None),
         "generated_at": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
     }
@@ -572,13 +621,42 @@ def main():
         print("warm-started {} tickers from etf-dash eps_cache".format(n))
 
     bench_weights, bench_as_of = load_0050_weights()
+    bench_periods, bench_fwd_pe = an.load_benchmark_extras()
     aum_by_code = load_aum_latest()
+
+    # ── 五個分析模組共用的個股基本資料 + 股價快取(security_meta.py / prices.py) ──
+    security_meta, sec_errors = sm.update_security_meta(mode)
+    if sec_errors:
+        print("security_meta warnings: {}".format(sec_errors), file=sys.stderr)
+    print("security_meta: {} tickers cached".format(len(security_meta)))
+
+    held_universe_tickers = set()
+    earliest_snapshot_date = None
+    for code in codes:
+        snaps = fh.read_fund_jsonl(code)
+        if not snaps:
+            continue
+        earliest_snapshot_date = (snaps[0]["as_of"] if earliest_snapshot_date is None
+                                   else min(earliest_snapshot_date, snaps[0]["as_of"]))
+        for s in snaps:
+            for row in s["holdings"]:
+                held_universe_tickers.add(row[0])
+    fund_own_tickers = {c + ".TW" for c in codes}  # 22 檔基金自己的股價(M1a 算 actual_fund_return_pct 要用)
+    price_tickers = sorted(held_universe_tickers | fund_own_tickers | {pr.BENCH_0050, pr.BENCH_TAIEX})
+    price_history = pr.update_prices(price_tickers, mode, earliest_needed=earliest_snapshot_date)
+    ticker_series_by_t = pr.build_ticker_series(price_history)
+    print("prices: {} trading days cached, {} tickers covered".format(len(price_history), len(ticker_series_by_t)))
+    taiex_series = ticker_series_by_t.get(pr.BENCH_TAIEX, [])
+    taiex_dates = an.dates_of(taiex_series)
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     results = []
     for code in codes:
         try:
-            fund, err = build_fund(code, mode, bench_weights, aum_by_code, args.pace)
+            fund, err = build_fund(code, mode, bench_weights, aum_by_code, args.pace,
+                                    price_history, ticker_series_by_t, security_meta,
+                                    bench_periods, bench_fwd_pe, taiex_series, taiex_dates,
+                                    held_universe_tickers)
         except Exception as e:  # noqa: BLE001 — 單檔失敗不能讓整批掛掉
             fund, err = None, str(e)
         if err:
@@ -599,7 +677,7 @@ def main():
         print("no funds built successfully", file=sys.stderr)
         return 1
 
-    overview = build_overview(results)
+    overview = build_overview(results, security_meta, ticker_series_by_t)
     (DATA_DIR / "overview.json").write_text(
         json.dumps(overview, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
