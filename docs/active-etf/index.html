@@ -483,25 +483,25 @@ function moveRowsHtml(moves){
   if(!moves) return '';
   var rows = [];
   (moves.new||[]).forEach(function(m){
-    rows.push({pill:'<span class="move-pill new">新進</span>', ticker:m.ticker, detail:'權重 '+fmtNum(m.weight_pct,2)+'%', sortv:m.weight_pct||0});
+    rows.push({pill:'<span class="move-pill new">新進</span>', m:m, detail:'權重 '+fmtNum(m.weight_pct,2)+'%', sortv:m.weight_pct||0});
   });
   (moves.increase||[]).forEach(function(m){
     var d = m.shares_per_unit_change_pct!=null ? '股數/單位比 '+fmtPct(m.shares_per_unit_change_pct)+'（權重 '+fmtNum(m.weight_pct_before,2)+'%→'+fmtNum(m.weight_pct,2)+'%）'
       : '權重 '+fmtNum(m.weight_pct_before,2)+'%→'+fmtNum(m.weight_pct,2)+'%（'+fmtPct(m.weight_pct_change_pp)+'pp）';
-    rows.push({pill:'<span class="move-pill inc">加碼</span>', ticker:m.ticker, detail:d, sortv:Math.abs(m.shares_per_unit_change_pct!=null?m.shares_per_unit_change_pct:(m.weight_pct_change_pp||0))});
+    rows.push({pill:'<span class="move-pill inc">加碼</span>', m:m, detail:d, sortv:Math.abs(m.shares_per_unit_change_pct!=null?m.shares_per_unit_change_pct:(m.weight_pct_change_pp||0))});
   });
   (moves.decrease||[]).forEach(function(m){
     var d = m.shares_per_unit_change_pct!=null ? '股數/單位比 '+fmtPct(m.shares_per_unit_change_pct)+'（權重 '+fmtNum(m.weight_pct_before,2)+'%→'+fmtNum(m.weight_pct,2)+'%）'
       : '權重 '+fmtNum(m.weight_pct_before,2)+'%→'+fmtNum(m.weight_pct,2)+'%（'+fmtPct(m.weight_pct_change_pp)+'pp）';
-    rows.push({pill:'<span class="move-pill dec">減碼</span>', ticker:m.ticker, detail:d, sortv:Math.abs(m.shares_per_unit_change_pct!=null?m.shares_per_unit_change_pct:(m.weight_pct_change_pp||0))});
+    rows.push({pill:'<span class="move-pill dec">減碼</span>', m:m, detail:d, sortv:Math.abs(m.shares_per_unit_change_pct!=null?m.shares_per_unit_change_pct:(m.weight_pct_change_pp||0))});
   });
   (moves.exit||[]).forEach(function(m){
-    rows.push({pill:'<span class="move-pill exit">出清</span>', ticker:m.ticker, detail:'原權重 '+fmtNum(m.weight_pct_before,2)+'%', sortv:m.weight_pct_before||0});
+    rows.push({pill:'<span class="move-pill exit">出清</span>', m:m, detail:'原權重 '+fmtNum(m.weight_pct_before,2)+'%', sortv:m.weight_pct_before||0});
   });
   rows.sort(function(a,b){return b.sortv-a.sortv;});
   if(!rows.length) return '<tr><td colspan="3" style="color:var(--muted)">此期間無達門檻的持股異動</td></tr>';
   return rows.map(function(r){
-    return '<tr><td>'+r.pill+'</td><td>'+esc(r.ticker)+'</td><td style="font-size:12px;color:var(--sec)">'+r.detail+'</td></tr>';
+    return '<tr><td>'+r.pill+'</td><td>'+tickerCell(r.m)+'</td><td style="font-size:12px;color:var(--sec)">'+r.detail+'</td></tr>';
   }).join('');
 }
 

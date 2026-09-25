@@ -355,6 +355,11 @@ def build_fund(code, mode, bench_0050_weights, aum_by_code, pace_sec):
         chart_points.append({"date": today_iso, "eps_index": 100.0, "price_index": 100.0})
 
     moves = fund_moves(code, snapshots)
+    for w in ("week", "month", "since_earliest"):
+        for kind in ("new", "exit", "increase", "decrease"):
+            for rec in (moves.get(w) or {}).get(kind, []):
+                rec["name"] = names.get(rec["ticker"])
+                rec["stock_dash_ticker"] = stock_dash_ticker(rec["ticker"])
     top10 = sorted(holdings, key=lambda h: h["weight_pct"], reverse=True)[:10]
     top10_pct = round(sum(h["weight_pct"] for h in top10), 2)
     tsmc = next((h for h in holdings if h["ticker"] == "2330.TW"), None)
