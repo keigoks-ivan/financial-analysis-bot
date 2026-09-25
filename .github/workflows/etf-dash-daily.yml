@@ -2,10 +2,15 @@ name: ETF Dashboard Daily Data
 
 # ETF 股價 vs 成分股 EPS 預估修正儀表板（/etf-dash/）每日資料管線。
 #
-# 跑 scripts/etf_dash/build_etf_dash.py 六檔（SMH 美國掛牌 + SMH_UCITS 愛爾蘭
-# 掛牌 + QQQ 那斯達克 100 + SPY 標普 500，2026-09-24 加 QQQ／SPY；2026-09-25
-# 再加 TAIEX 台灣加權指數〈TWSE 公開資料機械估算近似持股〉+ 0050 元大台灣50
-# 〈元大投信官方持股頁〉——見 build_etf_dash.py 對應段落的方法論註解）。
+# 跑 scripts/etf_dash/build_etf_dash.py，現在共 17 檔（SMH 美國掛牌 + SMH_UCITS
+# 愛爾蘭掛牌 + QQQ 那斯達克 100 + SPY 標普 500，2026-09-24 加 QQQ／SPY；
+# 2026-09-25 再加 TAIEX 台灣加權指數〈TWSE 公開資料機械估算近似持股〉+ 0050
+# 元大台灣50〈元大投信官方持股頁〉+ TOPIX（1475）+ 9 檔 SPDR 產業 ETF（XLK／
+# XLF／XLE／XLV／XLI／XLY／XLP／XLC／XLB，跟 SPY 同一套 SSGA xlsx 格式）+
+# RSP（Invesco 標普 500 等權重 ETF，跟 QQQ 同一套 Invesco JSON API，失敗且無
+# 自身快取時退回 SPY 成分股等權重近似）——見 build_etf_dash.py 對應段落的
+# 方法論註解）。9 檔產業 ETF＋RSP 的成分股全是 SPY 500 檔的子集合，跟 SPY 同
+# 一個 run 共用 ticker_cache 幾乎不增加新的 eps_trend 呼叫。
 #
 # 2026-09-25 加 TAIEX／0050 後 0050 的 FULL 模式抓取需要 node（parse
 # Yuanta 頁面內嵌的 Nuxt SSR payload，見 build_etf_dash.py::fetch_yuanta_holdings_page
@@ -132,7 +137,18 @@ jobs:
     # 只對達 EPS 涵蓋門檻（90%，見 FUND_REGISTRY["TOPIX"]["eps_scope_cutoff_pct"]）
     # 的前 ~370 檔抓 EPS，本機實測 FULL 這一檔另外要 ~10-12 分鐘，七檔合計
     # FULL 上看 ~35 分鐘，45 分鐘上限已經偏緊，拉高到 60 分鐘。
-    timeout-minutes: 60
+    # 2026-09-25 再加 9 檔產業 ETF＋RSP：本機實測 FULL（SPY + 9 檔產業 ETF +
+    # RSP，逼 --mode full）共 14m05s——9 檔產業 ETF 的成分股全是 SPY 500 檔的
+    # 子集合，跟 SPY 共用同一份 ticker_cache 幾乎零額外 eps_trend 呼叫（該次
+    # run 全部 503 次呼叫，跟 SPY 單獨跑一樣），時間主要花在 SPY 自己的
+    # 503 檔逐檔抓取＋RSP 的 Invesco 406 重試（INVESCO_406_RETRY_BACKOFFS_S
+    # 全部撞到時 worst case 10+30+60+90=190 秒，這次本機測試就是撞到全部
+    # 重試失敗才退回 SPY 等權重近似）。相對於既有 7 檔基金合計 FULL 上看
+    # ~35 分鐘的估計，9 檔產業 ETF＋RSP 這條路徑增加的時間 worst case 約
+    # 4-5 分鐘（RSP 重試 backoff 為主），PRICE 模式全 17 檔本機實測僅 2m10s。
+    # 60 分鐘上限仍有餘裕，但為了給 GitHub runner 網路變異＋Invesco 持續
+    # 節流的情況多一點緩衝，拉高到 75 分鐘。
+    timeout-minutes: 75
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -145,7 +161,7 @@ jobs:
       - name: Install dependencies
         run: pip install "yfinance>=0.2.40" pandas numpy requests openpyxl
 
-      - name: Build ETF dashboard data (SMH + SMH_UCITS + QQQ + SPY + TAIEX + 0050 + TOPIX)
+      - name: Build ETF dashboard data (17 funds)
         # 個別 ETF 失敗（持股來源格式改版、被擋、yfinance 掛了一整輪重試後仍
         # 失敗）只會讓 build_etf_dash.py 略過那一檔、其餘照跑；只有全部失敗它
         # 才會 non-zero exit——那種情況本步驟紅燈，後面的 commit 步驟仍會跑
@@ -161,7 +177,7 @@ jobs:
         id: build
         env:
           MODE_INPUT: ${{ github.event.inputs.mode || 'auto' }}
-        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --etf TAIEX --etf 0050 --etf TOPIX --mode "$MODE_INPUT"
+        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --etf RSP --etf XLK --etf XLF --etf XLE --etf XLV --etf XLI --etf XLY --etf XLP --etf XLC --etf XLB --etf TAIEX --etf 0050 --etf TOPIX --mode "$MODE_INPUT"
 
       - name: Fail loudly if the build step errored
         if: steps.build.outcome == 'failure'
@@ -180,7 +196,7 @@ jobs:
             echo "No changes to commit"
           else
             DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
-            git commit -m "data: ETF dashboard snapshot ${DATE} (SMH + SMH_UCITS + QQQ + SPY + TAIEX + 0050 + TOPIX)
+            git commit -m "data: ETF dashboard snapshot ${DATE} (17 funds)
 
             Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
             for i in 1 2 3 4 5 6; do

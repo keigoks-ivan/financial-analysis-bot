@@ -1200,3 +1200,172 @@ def test_apply_anchor_fallback_clears_suppressed_note_when_anchor_history_availa
     assert note is None
     assert series == fake_series
     assert label == "anchor label"
+
+
+# ── 2026-09-25 加 9 檔 SPDR 產業 ETF + RSP — registry wiring, RSP's SPY ──────
+# equal-weight fallback, and the /etf-dash/?view=overview builder ───────────
+
+SECTOR_TICKERS = ["XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLC", "XLB"]
+
+
+def test_sector_etfs_use_ssga_source_and_correct_holdings_url():
+    for tk in SECTOR_TICKERS:
+        cfg = m.FUND_REGISTRY[tk]
+        assert cfg["source"] == "ssga"
+        assert cfg["holdings_url"] == (
+            "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/"
+            f"holdings-daily-us-en-{tk.lower()}.xlsx"
+        )
+        assert cfg["yf_ticker"] == tk
+
+
+def test_sector_etfs_skip_xlre_and_xlu():
+    assert "XLRE" not in m.FUND_REGISTRY
+    assert "XLU" not in m.FUND_REGISTRY
+
+
+def test_rsp_registered_with_invesco_source_and_params():
+    cfg = m.FUND_REGISTRY["RSP"]
+    assert cfg["source"] == "invesco"
+    assert cfg["yf_ticker"] == "RSP"
+    assert "RSP" in cfg["holdings_url"]
+    assert cfg["holdings_params"] == {"idType": "ticker", "interval": "monthly", "productType": "ETF"}
+
+
+def _write_spy_holdings_cache(cache_dir: Path, holdings: list[dict]):
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    (cache_dir / "SPY.json").write_text(m.json.dumps({
+        "as_of": "2026-09-24", "holdings": holdings, "non_equity": [],
+        "source_url": "https://example.com/spy-holdings.xlsx",
+        "fetched_at": "2026-09-24T00:00:00+00:00",
+    }, ensure_ascii=False), encoding="utf-8")
+
+
+def test_build_rsp_equal_weight_fallback_uses_spy_cache(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
+    holdings = [{"ticker": "AAA", "raw_ticker_field": "AAA", "name": "Alpha", "weight_pct": 7.1},
+                {"ticker": "BBB", "raw_ticker_field": "BBB", "name": "Beta", "weight_pct": 0.01},
+                {"ticker": "CCC", "raw_ticker_field": "CCC", "name": "Gamma", "weight_pct": 3.3}]
+    _write_spy_holdings_cache(tmp_path, holdings)
+    as_of, rows, non_equity, source_note = m.build_rsp_equal_weight_fallback()
+    assert as_of == "2026-09-24"
+    assert non_equity == []
+    assert len(rows) == 3
+    # equal-weight, not SPY's real weights
+    assert all(r["weight_pct"] == pytest.approx(100.0 / 3, abs=0.01) for r in rows)
+    assert {r["ticker"] for r in rows} == {"AAA", "BBB", "CCC"}
+    assert source_note
+
+
+def test_build_rsp_equal_weight_fallback_raises_without_spy_cache(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
+    with pytest.raises(RuntimeError, match="no RSP holdings cache and no SPY"):
+        m.build_rsp_equal_weight_fallback()
+
+
+def test_get_holdings_with_fallback_rsp_falls_back_to_spy_equal_weight_when_no_rsp_cache(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
+    holdings = [{"ticker": "AAA", "raw_ticker_field": "AAA", "name": "Alpha", "weight_pct": 60.0},
+                {"ticker": "BBB", "raw_ticker_field": "BBB", "name": "Beta", "weight_pct": 40.0}]
+    _write_spy_holdings_cache(tmp_path, holdings)
+
+    def _boom(cfg):
+        raise RuntimeError("406 from Invesco")
+    monkeypatch.setitem(m.HOLDINGS_SOURCES, "invesco", (_boom, m.parse_invesco_holdings_json))
+
+    as_of, rows, non_equity, source_url, used_stale, approx_note = m.get_holdings_with_fallback(
+        "RSP", m.FUND_REGISTRY["RSP"])
+    assert len(rows) == 2
+    assert all(r["weight_pct"] == pytest.approx(50.0) for r in rows)
+    assert used_stale is False  # fresh SPY-derived fallback, not "stale cache"
+    assert approx_note == m.RSP_APPROXIMATION_NOTE_ZH
+    # written back into RSP's own holdings_cache so a second failure re-reads it
+    assert (tmp_path / "RSP.json").exists()
+    cached = m.json.loads((tmp_path / "RSP.json").read_text(encoding="utf-8"))
+    assert cached["approximation_note_zh"] == m.RSP_APPROXIMATION_NOTE_ZH
+
+
+def test_get_holdings_with_fallback_rsp_reuses_own_cached_approximation_on_next_failure(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
+    (tmp_path / "RSP.json").write_text(m.json.dumps({
+        "as_of": "2026-09-20", "holdings": [{"ticker": "AAA", "weight_pct": 100.0}], "non_equity": [],
+        "source_url": "spy fallback", "fetched_at": "2026-09-20T00:00:00+00:00",
+        "approximation_note_zh": m.RSP_APPROXIMATION_NOTE_ZH,
+    }, ensure_ascii=False), encoding="utf-8")
+
+    def _boom(cfg):
+        raise RuntimeError("still 406")
+    monkeypatch.setitem(m.HOLDINGS_SOURCES, "invesco", (_boom, m.parse_invesco_holdings_json))
+
+    as_of, rows, non_equity, source_url, used_stale, approx_note = m.get_holdings_with_fallback(
+        "RSP", m.FUND_REGISTRY["RSP"])
+    assert as_of == "2026-09-20"
+    assert used_stale is True  # this time it's a real cache hit
+    assert approx_note == m.RSP_APPROXIMATION_NOTE_ZH
+
+
+def test_get_holdings_with_fallback_non_rsp_fund_unaffected_by_rsp_branch(tmp_path, monkeypatch):
+    # sanity: the RSP-only third fallback tier must not fire for any other fund
+    monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
+
+    def _boom(cfg):
+        raise RuntimeError("boom")
+    monkeypatch.setitem(m.HOLDINGS_SOURCES, "ssga", (_boom, m.parse_ssga_holdings_xlsx))
+    with pytest.raises(RuntimeError, match="holdings fetch failed and no cached fallback exists"):
+        m.get_holdings_with_fallback("XLK", m.FUND_REGISTRY["XLK"])
+
+
+# ── build_overview_json() — /etf-dash/?view=overview data file ──────────────
+
+def _write_fund_json(out_dir: Path, etf_key: str, *, eps_90d, price_90d, pe_chg_90d, label_zh="Test"):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / f"{etf_key}.json").write_text(m.json.dumps({
+        "schema": "etf-dash-v1", "etf_key": etf_key, "label_zh": label_zh, "yf_ticker": etf_key,
+        "as_of": "2026-09-25", "mode": "full", "eps_as_of": "2026-09-25", "holdings_stale": False,
+        "periods": [
+            {"key": "30d", "eps_chg_pct": eps_90d / 3 if eps_90d is not None else None,
+             "price_chg_pct": None, "implied_pe_chg_pct": None},
+            {"key": "90d", "eps_chg_pct": eps_90d, "price_chg_pct": price_90d,
+             "implied_pe_chg_pct": pe_chg_90d},
+        ],
+        "weighted_forward_pe": {"value": 25.0},
+    }, ensure_ascii=False), encoding="utf-8")
+
+
+def test_build_overview_json_skips_funds_with_no_output_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "OUT_DIR", tmp_path)
+    overview = m.build_overview_json()
+    assert overview["schema"] == "etf-dash-overview-v1"
+    assert overview["funds"] == []
+    assert overview["summary_sentence_zh"] is None
+
+
+def test_build_overview_json_reads_existing_per_fund_files_regardless_of_this_runs_scope(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "OUT_DIR", tmp_path)
+    _write_fund_json(tmp_path, "SPY", eps_90d=1.0, price_90d=2.0, pe_chg_90d=1.0, label_zh="SPY")
+    _write_fund_json(tmp_path, "XLK", eps_90d=5.0, price_90d=10.0, pe_chg_90d=4.5, label_zh="XLK 科技")
+    overview = m.build_overview_json()
+    keys = {f["etf_key"] for f in overview["funds"]}
+    assert keys == {"SPY", "XLK"}
+    xlk = next(f for f in overview["funds"] if f["etf_key"] == "XLK")
+    assert xlk["eps_chg_pct_90d"] == 5.0
+    assert xlk["weighted_forward_pe"] == 25.0
+
+
+def test_build_overview_json_summary_sentence_picks_largest_sector_eps_upgrade(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "OUT_DIR", tmp_path)
+    _write_fund_json(tmp_path, "XLK", eps_90d=1.5, price_90d=3.0, pe_chg_90d=1.5, label_zh="科技類股 SPDR 基金（XLK）")
+    _write_fund_json(tmp_path, "XLE", eps_90d=8.2, price_90d=-1.0, pe_chg_90d=-8.6, label_zh="能源類股 SPDR 基金（XLE）")
+    _write_fund_json(tmp_path, "XLF", eps_90d=-2.0, price_90d=1.0, pe_chg_90d=3.1, label_zh="金融類股 SPDR 基金（XLF）")
+    overview = m.build_overview_json()
+    assert overview["summary_sentence_zh"] is not None
+    assert "XLE" in overview["summary_sentence_zh"]
+    assert "8.20%" in overview["summary_sentence_zh"]
+    assert "-8.60%" in overview["summary_sentence_zh"]
+
+
+def test_build_overview_json_summary_sentence_none_without_sector_data(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "OUT_DIR", tmp_path)
+    _write_fund_json(tmp_path, "SPY", eps_90d=1.0, price_90d=2.0, pe_chg_90d=1.0, label_zh="SPY")
+    overview = m.build_overview_json()
+    assert overview["summary_sentence_zh"] is None

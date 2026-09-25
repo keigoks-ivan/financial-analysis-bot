@@ -204,6 +204,114 @@ FUND_REGISTRY = {
         "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy",
         "other_listings": [],
     },
+    # 2026-09-25 加的 9 檔 SPDR 產業 ETF（SPDR Select Sector Fund 系列，State
+    # Street 發行）——跟 SPY 同一個發行商、同一套持股 xlsx 格式，只是網址裡的
+    # ticker 換成小寫（holdings-daily-us-en-{ticker}.xlsx），source 沿用既有的
+    # "ssga"（fetch_ssga_holdings_xlsx／parse_ssga_holdings_xlsx，不需要另外
+    # 寫 parser）——9 檔網址都已個別 curl 實測回 200＋正確 content-type。成分股
+    # 全部是 SPY 500 檔的子集合，跟 SPY 同一個 run 共用 ticker_cache 幾乎不會
+    # 產生新的 eps_trend 呼叫（見 main() 的共用快取設計）。只加 9 個（略過
+    # XLRE 房地產／XLU 公用事業，持有人拍板不需要）。
+    "XLK": {
+        "label_zh": "科技類股 SPDR 基金（XLK，S&P 科技產業，美國掛牌）",
+        "label_en": "Technology Select Sector SPDR Fund (XLK)",
+        "yf_ticker": "XLK", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlk.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/technology-select-sector-spdr-fund-xlk",
+        "other_listings": [],
+    },
+    "XLF": {
+        "label_zh": "金融類股 SPDR 基金（XLF，S&P 金融產業，美國掛牌）",
+        "label_en": "Financial Select Sector SPDR Fund (XLF)",
+        "yf_ticker": "XLF", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlf.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/financial-select-sector-spdr-fund-xlf",
+        "other_listings": [],
+    },
+    "XLE": {
+        "label_zh": "能源類股 SPDR 基金（XLE，S&P 能源產業，美國掛牌）",
+        "label_en": "Energy Select Sector SPDR Fund (XLE)",
+        "yf_ticker": "XLE", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xle.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/energy-select-sector-spdr-fund-xle",
+        "other_listings": [],
+    },
+    "XLV": {
+        "label_zh": "醫療保健類股 SPDR 基金（XLV，S&P 醫療保健產業，美國掛牌）",
+        "label_en": "Health Care Select Sector SPDR Fund (XLV)",
+        "yf_ticker": "XLV", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlv.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/health-care-select-sector-spdr-fund-xlv",
+        "other_listings": [],
+    },
+    "XLI": {
+        "label_zh": "工業類股 SPDR 基金（XLI，S&P 工業產業，美國掛牌）",
+        "label_en": "Industrial Select Sector SPDR Fund (XLI)",
+        "yf_ticker": "XLI", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xli.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/industrial-select-sector-spdr-fund-xli",
+        "other_listings": [],
+    },
+    "XLY": {
+        "label_zh": "非必需消費類股 SPDR 基金（XLY，S&P 非必需消費產業，美國掛牌）",
+        "label_en": "Consumer Discretionary Select Sector SPDR Fund (XLY)",
+        "yf_ticker": "XLY", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xly.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/consumer-discretionary-select-sector-spdr-fund-xly",
+        "other_listings": [],
+    },
+    "XLP": {
+        "label_zh": "必需消費類股 SPDR 基金（XLP，S&P 必需消費產業，美國掛牌）",
+        "label_en": "Consumer Staples Select Sector SPDR Fund (XLP)",
+        "yf_ticker": "XLP", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlp.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/consumer-staples-select-sector-spdr-fund-xlp",
+        "other_listings": [],
+    },
+    "XLC": {
+        "label_zh": "通訊服務類股 SPDR 基金（XLC，S&P 通訊服務產業，美國掛牌）",
+        "label_en": "Communication Services Select Sector SPDR Fund (XLC)",
+        "yf_ticker": "XLC", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlc.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/communication-services-select-sector-spdr-fund-xlc",
+        "other_listings": [],
+    },
+    "XLB": {
+        "label_zh": "原物料類股 SPDR 基金（XLB，S&P 原物料產業，美國掛牌）",
+        "label_en": "Materials Select Sector SPDR Fund (XLB)",
+        "yf_ticker": "XLB", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlb.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/materials-select-sector-spdr-fund-xlb",
+        "other_listings": [],
+    },
+    # 2026-09-25 加的 RSP（Invesco S&P 500 等權重 ETF）——跟 QQQ 同一個發行商、
+    # 同一套 JSON API 格式，source 沿用既有的 "invesco"（fetch_invesco_holdings_json／
+    # parse_invesco_holdings_json）。這檔的特別之處是它有第三層 fallback：
+    # Invesco API 若失敗、且本地也沒有 RSP 自己的 holdings_cache（例如上線第一次
+    # 就撞到 406），改用同一次 run 裡 SPY 的成分股清單做等權重近似（見
+    # get_holdings_with_fallback() 裡的 etf_key == "RSP" 分支與
+    # build_rsp_equal_weight_fallback()）——RSP 本身定義就是「S&P 500 成分股
+    # 等權重」，這是失去官方持股時最貼近實際持股結構的近似，清楚標記
+    # holdings_approximation_zh 不是真實持股。
+    "RSP": {
+        "label_zh": "Invesco 標普 500 等權重 ETF（RSP，紐約證交所，美國掛牌）",
+        "label_en": "Invesco S&P 500 Equal Weight ETF (RSP)",
+        "yf_ticker": "RSP", "isin": None, "source": "invesco",
+        "holdings_issuer_zh": "Invesco 官方持股 API",
+        "holdings_url": "https://dng-api.invesco.com/cache/v1/accounts/en_US/shareclasses/RSP/holdings/fund",
+        "holdings_page_url": "https://www.invesco.com/us/financial-products/etfs/product-detail?audienceType=Investor&ticker=RSP",
+        "holdings_params": {"idType": "ticker", "interval": "monthly", "productType": "ETF"},
+        "other_listings": [],
+    },
     # 2026-09-24 加的兩檔台股基金——見本檔下方「TAIEX (台灣加權指數)」與
     # 「0050 (元大台灣卓越50基金)」兩段的 fetch/parse 函式與其上的方法論註解。
     # 兩者都用 pe_basis_currency="TWD"：本益比／股價換算的基準幣別不是預設的
@@ -1094,12 +1202,44 @@ HOLDINGS_SOURCES = {
 }
 
 
-def get_holdings_with_fallback(etf_key: str, cfg: dict) -> tuple[str, list[dict], list[dict], str, bool]:
-    """回傳 (as_of, holdings, non_equity, source_url, used_stale_cache)。
+def build_rsp_equal_weight_fallback() -> tuple[str, list[dict], list[dict], str]:
+    """RSP 的第三層 fallback（見 get_holdings_with_fallback() 的 etf_key=="RSP"
+    分支）——Invesco API 抓取失敗、且本地沒有 RSP 自己的 holdings_cache 時，讀
+    SPY 的 holdings_cache（data/etf_dash/holdings_cache/SPY.json；SPY 每次
+    build 成功都會寫這個檔，且 SPY 本來就跟 RSP 同一個 run 一起跑，見 workflow）
+    對 SPY 目前的成分股清單做等權重近似——RSP 本身定義就是「S&P 500 成分股
+    等權重」，這是失去官方持股資料時最貼近實際持股結構的近似。回傳
+    (as_of, holdings, non_equity=[], source_note)；SPY 快取也沒有就直接失敗，
+    呼叫端負責標記這是近似值（不是真實持股）。"""
+    spy_cache_path = HOLDINGS_CACHE_DIR / "SPY.json"
+    if not spy_cache_path.exists():
+        raise RuntimeError("no RSP holdings cache and no SPY holdings cache to build an equal-weight fallback from")
+    spy_cached = json.loads(spy_cache_path.read_text(encoding="utf-8"))
+    spy_holdings = spy_cached.get("holdings") or []
+    if not spy_holdings:
+        raise RuntimeError("SPY holdings cache exists but has no holdings")
+    n = len(spy_holdings)
+    w = 100.0 / n
+    holdings = [{"ticker": h["ticker"], "raw_ticker_field": h.get("raw_ticker_field", h["ticker"]),
+                 "name": h["name"], "weight_pct": round(w, 4)} for h in spy_holdings]
+    as_of = spy_cached.get("as_of")
+    if not as_of:
+        raise RuntimeError("SPY holdings cache has no as_of date")
+    return as_of, holdings, [], spy_cached.get("source_url") or "SPY holdings cache (equal-weight approximation)"
+
+
+RSP_APPROXIMATION_NOTE_ZH = "近似：以 SPY 成分股等權重計算（Invesco RSP 持股 API 抓取失敗，且無 RSP 自身持股快取）"
+
+
+def get_holdings_with_fallback(etf_key: str, cfg: dict) -> tuple[str, list[dict], list[dict], str, bool, str | None]:
+    """回傳 (as_of, holdings, non_equity, source_url, used_stale_cache, approximation_note_zh)。
 
     抓取失敗（含格式改版、被擋、需要瀏覽器）一律退回上次成功快取，並清楚
     標記 used_stale_cache=True——絕不用空資料覆蓋 data/etf_dash/holdings_cache/
-    裡的好資料（快取檔只在成功解析時才寫入）。兩者都沒有才整檔失敗。"""
+    裡的好資料（快取檔只在成功解析時才寫入）。兩者都沒有才整檔失敗——除了
+    RSP：見 build_rsp_equal_weight_fallback()，RSP 在前兩層都失敗時還有第三層
+    （SPY 成分股等權重近似），approximation_note_zh 非 None 時呼叫端要把這句話
+    清楚標在 JSON／頁面上，不能讓讀者誤以為是官方持股。"""
     cache_path = HOLDINGS_CACHE_DIR / f"{etf_key}.json"
     fetch_fn, parse_fn = HOLDINGS_SOURCES[cfg["source"]]
     try:
@@ -1110,7 +1250,7 @@ def get_holdings_with_fallback(etf_key: str, cfg: dict) -> tuple[str, list[dict]
             "as_of": as_of, "holdings": rows, "non_equity": non_equity, "source_url": cfg["holdings_url"],
             "fetched_at": datetime.now(timezone.utc).isoformat(),
         }, ensure_ascii=False, indent=2), encoding="utf-8")
-        return as_of, rows, non_equity, cfg["holdings_url"], False
+        return as_of, rows, non_equity, cfg["holdings_url"], False, None
     except Exception as e:  # noqa: BLE001
         print(f"[etf_dash] WARNING holdings fetch failed for {etf_key}: {e}", file=sys.stderr)
         if cache_path.exists():
@@ -1118,7 +1258,22 @@ def get_holdings_with_fallback(etf_key: str, cfg: dict) -> tuple[str, list[dict]
             print(f"[etf_dash] WARNING falling back to cached holdings for {etf_key} "
                   f"(as_of={cached['as_of']}, fetched_at={cached.get('fetched_at')})", file=sys.stderr)
             return (cached["as_of"], cached["holdings"], cached.get("non_equity", []),
-                    cached.get("source_url", cfg["holdings_url"]), True)
+                    cached.get("source_url", cfg["holdings_url"]), True, cached.get("approximation_note_zh"))
+        if etf_key == "RSP":
+            try:
+                as_of, rows, non_equity, spy_src = build_rsp_equal_weight_fallback()
+            except Exception as e2:  # noqa: BLE001
+                raise RuntimeError(f"RSP: holdings fetch failed ({e}) and SPY equal-weight fallback "
+                                    f"also failed ({e2})") from e2
+            print(f"[etf_dash] WARNING RSP: no cache, falling back to SPY equal-weight approximation "
+                  f"(as_of={as_of}, n={len(rows)})", file=sys.stderr)
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_text(json.dumps({
+                "as_of": as_of, "holdings": rows, "non_equity": non_equity, "source_url": spy_src,
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                "approximation_note_zh": RSP_APPROXIMATION_NOTE_ZH,
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
+            return as_of, rows, non_equity, spy_src, False, RSP_APPROXIMATION_NOTE_ZH
         raise RuntimeError(f"{etf_key}: holdings fetch failed and no cached fallback exists ({e})") from e
 
 
@@ -1373,7 +1528,8 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
                            mode: str, eps_as_of: str, mode_reason: str,
                            weight_methodology_note_zh: str | None = None,
                            eps_scope_note_zh: str | None = None,
-                           anchor_label_zh: str | None = None) -> str:
+                           anchor_label_zh: str | None = None,
+                           holdings_approximation_zh: str | None = None) -> str:
     """組 methods_note_zh——2026-09-24 加 QQQ／SPY 之前這段是寫死給 SMH／
     SMH_UCITS 看的（硬編「VanEck」「ASML」「SK Hynix」）。四檔基金共用同一個
     build_fund()，持股來源、非美元成分股、TICKER_ALIAS 用到哪些、長線指數
@@ -1393,6 +1549,12 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
         f"股價漲跌／隱含本益比）因此{cadence_period_zh}不變，只有本益比跟「EPS 預估更新於...」那行"
         f"每天更新。這次是{mode_zh}（{mode_reason}）。",
     ]
+    if holdings_approximation_zh:
+        parts.append(
+            f"{holdings_approximation_zh}——不是官方持股，權重是把 SPY 目前成分股平均分配（1/N），"
+            "只在 Invesco 持股 API 失敗且本地也沒有 RSP 自身快取時才會用到這條路徑，"
+            "見 build_etf_dash.py::build_rsp_equal_weight_fallback()。"
+        )
     if weight_methodology_note_zh:
         parts.append(weight_methodology_note_zh)
     if eps_scope_note_zh:
@@ -1744,7 +1906,8 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     data/etf_dash/eps_cache/{ETF}.json（見 save_eps_cache()），PRICE 模式
     （build_fund_price()）整週沿用，不重抓。"""
     today_str = today.strftime("%Y-%m-%d")
-    as_of_holdings, holdings, non_equity, source_url, used_stale = get_holdings_with_fallback(etf_key, cfg)
+    as_of_holdings, holdings, non_equity, source_url, used_stale, holdings_approximation_zh = \
+        get_holdings_with_fallback(etf_key, cfg)
     weight_methodology_note_zh = build_weight_methodology_note_zh(cfg, holdings)
 
     # 2026-09-25 加 TOPIX 的 EPS 涵蓋門檻——見 select_eps_scope_tickers() 與
@@ -2017,6 +2180,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         "eps_as_of": today_str,
         "holdings_as_of": as_of_holdings,
         "holdings_source_url": source_url,
+        "holdings_approximation_zh": holdings_approximation_zh,
         "holdings": holdings,
         "non_equity": non_equity,
         "tickers": cached_tickers,
@@ -2043,6 +2207,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         "holdings_source_url": source_url,
         "holdings_issuer_zh": cfg["holdings_issuer_zh"],
         "holdings_stale": used_stale,
+        "holdings_approximation_zh": holdings_approximation_zh,
         "n_holdings": len(constituents) + len(excluded),
         "n_holdings_covered": len(constituents),
         "price": {"close": today_price_pt["close"], "date": today_price_pt["date"], "currency": pe_basis_ccy},
@@ -2090,7 +2255,8 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
                                                   "full", today_str, mode_reason,
                                                   weight_methodology_note_zh=weight_methodology_note_zh,
                                                   eps_scope_note_zh=eps_scope_note_zh,
-                                                  anchor_label_zh=anchor_label_zh),
+                                                  anchor_label_zh=anchor_label_zh,
+                                                  holdings_approximation_zh=holdings_approximation_zh),
     }
 
 
@@ -2251,6 +2417,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         "holdings_source_url": eps_cache.get("holdings_source_url"),
         "holdings_issuer_zh": cfg["holdings_issuer_zh"],
         "holdings_stale": False,  # 不是抓取失敗，是設計上這週沒重抓——見 mode／methods_note_zh
+        "holdings_approximation_zh": eps_cache.get("holdings_approximation_zh"),
         "n_holdings": len(constituents) + len(excluded),
         "n_holdings_covered": len(constituents),
         "price": {"close": today_price_pt["close"], "date": today_price_pt["date"], "currency": pe_basis_ccy},
@@ -2297,7 +2464,8 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
                                                   0, periods, "price", eps_as_of, mode_reason,
                                                   weight_methodology_note_zh=weight_methodology_note_zh,
                                                   eps_scope_note_zh=eps_scope_note_zh,
-                                                  anchor_label_zh=anchor_label_zh),
+                                                  anchor_label_zh=anchor_label_zh,
+                                                  holdings_approximation_zh=eps_cache.get("holdings_approximation_zh")),
     }
 
 
@@ -2612,6 +2780,81 @@ def render_preview_html(data: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Overview — 2026-09-25 加 9 檔產業 ETF＋RSP 到 17 檔後，/etf-dash/?view=overview
+# 一頁看全部基金（見 docs/etf-dash/index.html renderOverview()）。這裡把每檔
+# 基金已經寫好的 docs/etf-dash/data/{ETF}.json 摘出幾個欄位彙總成一個小檔——
+# 頁面只 fetch 這一個檔，不用對 17 檔各發一次 request。
+# ---------------------------------------------------------------------------
+
+SECTOR_ETF_KEYS = {"XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLC", "XLB"}
+
+
+def build_overview_json() -> dict:
+    """掃 docs/etf-dash/data/{ETF}.json（FUND_REGISTRY 目前已知的全部 key），
+    不是只看這次 run 有沒有重建——單次 run 常常只更新一部分基金（例如只跑
+    FULL 的那幾檔＋PRICE 的其他檔分開跑，或某檔基金這次抓取失敗被跳過），
+    總覽頁要能看到「目前 docs/ 下最新的狀態」，不是「這次 run 動到的那幾檔」。
+    分組（美股大盤／美股產業／半導體／亞洲）與短標籤是頁面呈現層的事，交給
+    docs/etf-dash/index.html 的 FUND_GROUPS（唯一負責分組的地方）決定，這裡
+    只給 flat 陣列＋etf_key。summary_sentence_zh 是純機械句（見下方，只挑最大值
+    報數字，不下判斷字眼），9 檔美股產業 ETF 都有 90d 資料才會產生。"""
+    funds = []
+    for etf_key in FUND_REGISTRY:
+        path = OUT_DIR / f"{etf_key}.json"
+        if not path.exists():
+            continue
+        try:
+            d = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            print(f"[etf_dash] WARNING overview: could not read {path}: {e}", file=sys.stderr)
+            continue
+        periods_by_key = {p.get("key"): p for p in (d.get("periods") or [])}
+        p30, p90 = periods_by_key.get("30d") or {}, periods_by_key.get("90d") or {}
+        fpe = d.get("weighted_forward_pe") or {}
+        funds.append({
+            "etf_key": etf_key,
+            "label_zh": d.get("label_zh"),
+            "yf_ticker": d.get("yf_ticker"),
+            "eps_chg_pct_30d": p30.get("eps_chg_pct"),
+            "eps_chg_pct_90d": p90.get("eps_chg_pct"),
+            "price_chg_pct_30d": p30.get("price_chg_pct"),
+            "price_chg_pct_90d": p90.get("price_chg_pct"),
+            "implied_pe_chg_pct_30d": p30.get("implied_pe_chg_pct"),
+            "implied_pe_chg_pct_90d": p90.get("implied_pe_chg_pct"),
+            "weighted_forward_pe": fpe.get("value"),
+            "eps_as_of": d.get("eps_as_of"),
+            "as_of": d.get("as_of"),
+            "mode": d.get("mode"),
+            "holdings_stale": bool(d.get("holdings_stale")),
+            "holdings_approximation_zh": d.get("holdings_approximation_zh"),
+        })
+    funds.sort(key=lambda f: f["etf_key"])
+
+    sector_funds = [f for f in funds if f["etf_key"] in SECTOR_ETF_KEYS and f["eps_chg_pct_90d"] is not None]
+    summary_sentence_zh = None
+    if sector_funds:
+        top = max(sector_funds, key=lambda f: f["eps_chg_pct_90d"])
+        # label_zh 本身已經帶一層括號（如「科技類股 SPDR 基金（XLK，S&P 科技產業，
+        # 美國掛牌）」），這句還要再接一層百分比括號——括號套括號可讀性差，這裡
+        # 只取 label_zh 第一個括號前的短名＋ticker，不整段照搬。
+        name = (top["label_zh"] or top["etf_key"]).split("（")[0].strip() + f"（{top['etf_key']}）"
+        pe_chg = top.get("implied_pe_chg_pct_90d")
+        summary_sentence_zh = (
+            f"{len(sector_funds)} 檔美股產業 ETF 中，近三個月成分股加權明年度 EPS 預估上修幅度最大的是"
+            f"{name}（{top['eps_chg_pct_90d']:+.2f}%）"
+        )
+        summary_sentence_zh += (f"，隱含本益比變動 {pe_chg:+.2f}%。" if pe_chg is not None else "。")
+
+    return {
+        "schema": "etf-dash-overview-v1",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "as_of": taipei_now().strftime("%Y-%m-%d"),
+        "funds": funds,
+        "summary_sentence_zh": summary_sentence_zh,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -2684,6 +2927,14 @@ def main() -> int:
 
     save_fx_daily_cache(fx_cache)
     save_reporting_currency_cache(rc_cache)
+
+    # 總覽頁（/etf-dash/?view=overview）的小檔——見 build_overview_json()
+    # docstring：一律重掃 OUT_DIR 目前已有的全部基金 JSON，不是只看這次 run
+    # 動到的那幾檔，所以即使這次只跑一部分基金也要做（不需要 n_ok>0 才做，
+    # 只要 OUT_DIR 裡有任何既有 JSON 就能生出一份有意義的總覽）。
+    overview_path = OUT_DIR / "overview.json"
+    overview_path.write_text(json.dumps(build_overview_json(), ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"[etf_dash] wrote {overview_path}")
 
     # 稽核用：PRICE 模式這次 run 應該是 0——fetch_ticker_eps_and_price()（唯一
     # 會碰 eps_trend 的函式）只在 build_fund_full() 的逐檔迴圈裡被呼叫，

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ETF 儀表板 — InvestMQuest Research</title>
-<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計（SMH／QQQ／SPY／台灣加權指數／元大台灣50／TOPIX）。">
+<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計，共 17 檔（美股大盤 SPY／RSP／QQQ、9 檔美股產業 SPDR、SMH 兩版本、台灣加權指數／元大台灣50／TOPIX），含總覽頁。">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,10 +30,27 @@ table{overflow-wrap:break-word}
 .cover-left .px{font-family:var(--mono);font-size:1.9rem;font-weight:700;color:#fff;display:block;margin-top:6px}
 .cover-left .chg{font-family:var(--mono);font-size:1rem;font-weight:600;margin-left:10px}
 .cover-left .chg.pos{color:#5fd08a} .cover-left .chg.neg{color:#ff8f87}
-.switcher{display:flex;gap:6px;flex-wrap:wrap}
+.switcher{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.sw-group{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.sw-group-label{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.05em;color:rgba(255,255,255,.5);margin-right:2px;white-space:nowrap}
 .switcher a{font-family:var(--mono);font-size:11.5px;font-weight:600;padding:.4rem .7rem;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.82);text-decoration:none;white-space:nowrap}
 .switcher a.active{background:var(--gold-deep);border-color:var(--gold-deep);color:#fff}
 .switcher a:hover{border-color:#fff;color:#fff}
+.switcher a.ov-pill{border-color:var(--gold-deep);color:#fff;font-weight:700}
+.mobile-fund-select{display:none}
+.mobile-fund-select select{width:100%;font-family:var(--mono);font-size:13px;font-weight:600;padding:.55rem .7rem;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);background:#0d2244;color:#fff}
+@media(max-width:680px){
+  .switcher{display:none}
+  .mobile-fund-select{display:block;margin-top:10px}
+}
+.ov-link-row{margin:14px 20px 0}
+.ov-link{display:inline-block;font-family:var(--mono);font-size:12px;font-weight:700;padding:.35rem .8rem;border-radius:var(--r);background:var(--gold-deep);color:#fff;text-decoration:none}
+.ov-link:hover{opacity:.88}
+.ov-th-sort{cursor:pointer;user-select:none}
+.ov-th-sort:hover{background:var(--x-navy-2)}
+.ov-th-sort .arrow{opacity:.55;margin-left:3px;font-size:9px}
+.ov-group-row td{background:var(--x-navy) !important;color:#fff;font-size:11px;font-weight:600;padding:.35rem .7rem}
+.ov-flag{color:var(--warn);font-size:10px;margin-left:4px;cursor:help}
 
 .exhibit{margin:18px 0 4px}
 .ex-label{font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.06em;color:var(--x-navy)}
@@ -54,6 +71,13 @@ table{overflow-wrap:break-word}
 .tbl-wrap{overflow-x:auto}
 #periodsTable th{white-space:normal}
 #periodsTable td:first-child{white-space:nowrap}
+/* 總覽表 7 欄，跟 periodsTable 同一個問題：表頭若強制不換行，長標籤（如「隱含
+   本益比變動（3個月）」）會把每個數字欄撐到最寬，擠壓第一欄（基金名稱）到
+   幾乎 0px，逼得瀏覽器逐字換行（見 2026-09-25 render check 抓到的手機版
+   bug）。沿用 periodsTable 同一套修法：表頭允許換行，只有第一欄（基金名稱，
+   本來就短）維持不換行。 */
+#ovTable th{white-space:normal}
+#ovTable td:first-child{white-space:nowrap}
 .base-date{display:block;font-size:9.5px;color:var(--muted);margin-top:1px}
 
 .stat-row{display:flex;flex-wrap:wrap;gap:14px;margin:10px 0}
@@ -157,11 +181,28 @@ table{overflow-wrap:break-word}
 <header class="cover">
   <div class="cover-inner">
     <div class="cover-left" id="coverLeft"></div>
-    <div class="switcher" id="switcher"></div>
+    <div>
+      <div class="switcher" id="switcher"></div>
+      <div class="mobile-fund-select"><select id="fundSelect" aria-label="選擇基金"></select></div>
+    </div>
   </div>
 </header>
 <div class="wrap">
 <div id="loadError"></div>
+
+<div id="overviewView" style="display:none">
+<section class="exhibit" id="ovExhibit">
+  <div class="ex-label">總覽</div>
+  <div class="ex-title">17 檔基金一覽</div>
+  <div class="ex-sub">依「美股大盤／美股產業／半導體／亞洲」分組；點欄位標題可排序（分組內排序，分組順序不變）</div>
+  <div class="conclusion" id="ovSummarySentence"></div>
+  <div class="tbl-wrap"><table class="imq-table" id="ovTable"></table></div>
+  <div class="ex-src" id="ovSrc"></div>
+</section>
+</div>
+
+<div id="fundView" style="display:none">
+<div class="ov-link-row"><a class="ov-link" href="?view=overview">&larr; 回總覽</a></div>
 <div class="info-strip" id="infoStrip"></div>
 
 <section class="exhibit" id="exhibit1">
@@ -214,6 +255,7 @@ table{overflow-wrap:break-word}
 </section>
 
 </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
@@ -249,16 +291,67 @@ function fmtPctParen(v, nd){
 function noData(el, reason){ if(el) el.innerHTML = '<div class="nodata">無資料'+(reason?'：'+reason:'')+'</div>'; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
-var FUND_LIST = [
-  {key:'SMH', label:'SMH（美國）'},
-  {key:'SMH_UCITS', label:'SMH（愛爾蘭）'},
-  {key:'QQQ', label:'QQQ'},
-  {key:'SPY', label:'SPY'},
-  {key:'TAIEX', label:'台灣加權指數'},
-  {key:'0050', label:'元大台灣50'},
-  {key:'TOPIX', label:'TOPIX（1475）'}
+// 2026-09-25 加 9 檔產業 ETF＋RSP 到 17 檔——分組是頁面呈現層唯一負責的事
+// （build_overview_json() 只給 flat 陣列＋etf_key，見該函式 docstring），這裡
+// 是分組的唯一定義來源，桌面版分組 pill 導覽、手機版 <select><optgroup>、
+// 總覽表格的分組列都讀這份。
+var FUND_GROUPS = [
+  {label:'美股大盤', funds:[
+    {key:'SPY', label:'SPY'},
+    {key:'RSP', label:'RSP（等權重）'},
+    {key:'QQQ', label:'QQQ'}
+  ]},
+  {label:'美股產業', funds:[
+    {key:'XLK', label:'科技 XLK'},
+    {key:'XLF', label:'金融 XLF'},
+    {key:'XLE', label:'能源 XLE'},
+    {key:'XLV', label:'醫療保健 XLV'},
+    {key:'XLI', label:'工業 XLI'},
+    {key:'XLY', label:'非必需消費 XLY'},
+    {key:'XLP', label:'必需消費 XLP'},
+    {key:'XLC', label:'通訊服務 XLC'},
+    {key:'XLB', label:'原物料 XLB'}
+  ]},
+  {label:'半導體', funds:[
+    {key:'SMH', label:'SMH（美國）'},
+    {key:'SMH_UCITS', label:'SMH（愛爾蘭）'}
+  ]},
+  {label:'亞洲', funds:[
+    {key:'TAIEX', label:'台灣加權指數'},
+    {key:'0050', label:'元大台灣50'},
+    {key:'TOPIX', label:'TOPIX（1475）'}
+  ]}
 ];
+var FUND_LIST = FUND_GROUPS.reduce(function(acc, g){ return acc.concat(g.funds); }, []);
 var FUND_KEYS = FUND_LIST.map(function(f){return f.key;});
+var FUND_LABEL_BY_KEY = {};
+FUND_LIST.forEach(function(f){ FUND_LABEL_BY_KEY[f.key] = f.label; });
+
+// activeKey：'OVERVIEW' 或某個 FUND_KEYS 裡的 etf_key——桌面 pill 導覽與手機
+// select 都由這裡畫，兩套 UI 用 CSS media query 互斥顯示（見 .mobile-fund-select）。
+function renderNav(activeKey){
+  var switcherHtml = '<a class="ov-pill'+(activeKey==='OVERVIEW'?' active':'')+'" href="?view=overview">總覽</a>' +
+    FUND_GROUPS.map(function(g){
+      return '<div class="sw-group"><span class="sw-group-label">'+esc(g.label)+'</span>' +
+        g.funds.map(function(f){
+          var cls = f.key===activeKey ? ' active' : '';
+          return '<a class="'+cls.trim()+'" href="?etf='+encodeURIComponent(f.key)+'">'+esc(f.label)+'</a>';
+        }).join('') + '</div>';
+    }).join('');
+  document.getElementById('switcher').innerHTML = switcherHtml;
+
+  var selectHtml = '<option value="OVERVIEW"'+(activeKey==='OVERVIEW'?' selected':'')+'>總覽</option>' +
+    FUND_GROUPS.map(function(g){
+      return '<optgroup label="'+esc(g.label)+'">' + g.funds.map(function(f){
+        return '<option value="'+esc(f.key)+'"'+(f.key===activeKey?' selected':'')+'>'+esc(f.label)+'</option>';
+      }).join('') + '</optgroup>';
+    }).join('');
+  var sel = document.getElementById('fundSelect');
+  sel.innerHTML = selectHtml;
+  sel.onchange = function(){
+    location.href = sel.value === 'OVERVIEW' ? '?view=overview' : '?etf='+encodeURIComponent(sel.value);
+  };
+}
 
 function tickerCell(c){
   var label = c.ticker ? (esc(c.ticker)+(c.name?'　'+esc(c.name):'')) : esc(c.name||'—');
@@ -281,11 +374,6 @@ function renderCover(d){
   document.getElementById('coverLeft').innerHTML =
     '<span class="tk">'+esc(d.yf_ticker)+'</span><span class="nm">'+esc(d.label_zh)+'</span>'+
     '<span class="px">'+(d.price&&d.price.close!=null?d.price.close.toFixed(2):'—')+chgHtml+'</span>';
-
-  document.getElementById('switcher').innerHTML = FUND_LIST.map(function(f){
-    var cls = f.key===d.etf_key ? 'active' : '';
-    return '<a class="'+cls+'" href="?etf='+f.key+'">'+f.label+'</a>';
-  }).join('');
 }
 
 function renderInfoStrip(d){
@@ -296,6 +384,9 @@ function renderInfoStrip(d){
   ];
   if(d.holdings_stale){
     bits.push('<span class="stale-flag">⚠ 今日持股抓取失敗，沿用上次成功快取（as of 上述日期）</span>');
+  }
+  if(d.holdings_approximation_zh){
+    bits.push('<span class="stale-flag">⚠ '+esc(d.holdings_approximation_zh)+'</span>');
   }
   if(d.mode === 'price'){
     bits.push('<span><b>更新模式</b> PRICE（只更新股價，持股與 EPS 沿用 '+esc(d.eps_as_of||'—')+' 的快取）</span>');
@@ -561,25 +652,169 @@ function render(d){
   renderMethodsNote(d);
 }
 
-var params = new URLSearchParams(location.search);
-var ETF = (params.get('etf') || 'SMH').toUpperCase();
-if(FUND_KEYS.indexOf(ETF) === -1) ETF = 'SMH';
+// ── 總覽（/etf-dash/?view=overview）——讀 data/overview.json 一個檔，17 檔基金
+// 依 FUND_GROUPS 分組列出，點欄位標題排序（同分組內排序，分組順序不變，見
+// OV_COLUMNS 與 sortOverviewGroups()）。────────────────────────────────────
 
-if(typeof ETF_DASH_INLINE_DATA !== 'undefined'){
-  render(ETF_DASH_INLINE_DATA);
-} else {
-  fetch('data/' + ETF + '.json').then(function(r){
+var OV_COLUMNS = [
+  {key:'label', label:'基金', numeric:false, sortable:false},
+  {key:'eps_chg_pct_30d', label:'EPS 變動<br>（1個月）', numeric:true},
+  {key:'eps_chg_pct_90d', label:'EPS 變動<br>（3個月）', numeric:true},
+  {key:'price_chg_pct_90d', label:'股價漲跌<br>（3個月）', numeric:true},
+  {key:'implied_pe_chg_pct_90d', label:'隱含本益比變動<br>（3個月）', numeric:true},
+  {key:'weighted_forward_pe', label:'目前預估<br>本益比', numeric:true},
+  {key:'eps_as_of', label:'EPS 更新日', numeric:false}
+];
+var ovState = {groups:null, sortKey:null, sortDir:1};
+
+function ovRowHtml(row){
+  var flags = '';
+  if(row.holdings_stale) flags += '<span class="ov-flag" title="今日持股抓取失敗，沿用上次成功快取">⚠</span>';
+  if(row.holdings_approximation_zh) flags += '<span class="ov-flag" title="'+esc(row.holdings_approximation_zh)+'">⚠</span>';
+  var nameCell = row.found
+    ? '<a href="?etf='+encodeURIComponent(row.etf_key)+'">'+esc(row.label)+'</a>'+flags
+    : esc(row.label)+'<span style="color:var(--muted)">（尚無資料）</span>';
+  return '<tr><td>'+nameCell+'</td>'+
+    '<td class="num">'+fmtPctColored(row.eps_chg_pct_30d)+'</td>'+
+    '<td class="num">'+fmtPctColored(row.eps_chg_pct_90d)+'</td>'+
+    '<td class="num">'+fmtPctColored(row.price_chg_pct_90d)+'</td>'+
+    '<td class="num">'+fmtPctParen(row.implied_pe_chg_pct_90d)+'</td>'+
+    '<td class="num">'+(row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—')+'</td>'+
+    '<td>'+esc(row.eps_as_of||'—')+'</td></tr>';
+}
+
+function renderOverviewTbody(){
+  var body = document.getElementById('ovTableBody');
+  if(!body) return;
+  var html = '';
+  ovState.groups.forEach(function(g){
+    html += '<tr class="ov-group-row"><td colspan="'+OV_COLUMNS.length+'">'+esc(g.label)+'</td></tr>';
+    html += g.rows.map(ovRowHtml).join('');
+  });
+  body.innerHTML = html;
+}
+
+function sortOverviewGroups(key){
+  if(!OV_COLUMNS.find(function(c){return c.key===key && c.sortable!==false;})) return;
+  ovState.sortDir = (ovState.sortKey === key) ? -ovState.sortDir : 1;
+  ovState.sortKey = key;
+  ovState.groups.forEach(function(g){
+    g.rows.sort(function(a, b){
+      var av = a[key], bv = b[key];
+      if(av==null && bv==null) return 0;
+      if(av==null) return 1;   // nulls always sort last regardless of direction
+      if(bv==null) return -1;
+      if(av < bv) return -1 * ovState.sortDir;
+      if(av > bv) return 1 * ovState.sortDir;
+      return 0;
+    });
+  });
+  // renderOverviewHeader() rebuilds the whole <table> innerHTML (thead + a
+  // fresh empty tbody, so it can re-wire the .ov-th-sort click listeners with
+  // updated arrows) — it must run BEFORE renderOverviewTbody() or it wipes
+  // out the rows renderOverviewTbody() just wrote. Same order as the initial
+  // renderOverview() call below.
+  renderOverviewHeader();
+  renderOverviewTbody();
+}
+
+function renderOverviewHeader(){
+  var thead = '<thead><tr>' + OV_COLUMNS.map(function(c){
+    var cls = c.numeric ? ' num' : '';
+    if(c.sortable === false) return '<th class="'+cls.trim()+'">'+c.label+'</th>';
+    var arrow = ovState.sortKey === c.key ? (ovState.sortDir>0?'▲':'▼') : '';
+    return '<th class="ov-th-sort'+cls+'" data-key="'+c.key+'">'+c.label+'<span class="arrow">'+arrow+'</span></th>';
+  }).join('') + '</tr></thead>';
+  var tbl = document.getElementById('ovTable');
+  var existingBody = document.getElementById('ovTableBody');
+  tbl.innerHTML = thead + '<tbody id="ovTableBody"></tbody>';
+  tbl.querySelectorAll('.ov-th-sort').forEach(function(th){
+    th.addEventListener('click', function(){ sortOverviewGroups(th.getAttribute('data-key')); });
+  });
+}
+
+function renderOverview(ov){
+  document.getElementById('coverLeft').innerHTML =
+    '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · 17 檔基金一覽</span>';
+
+  var byKey = {};
+  (ov.funds||[]).forEach(function(f){ byKey[f.etf_key] = f; });
+  ovState.groups = FUND_GROUPS.map(function(g){
+    return {
+      label: g.label,
+      rows: g.funds.map(function(f){
+        var found = byKey[f.key];
+        return Object.assign({etf_key:f.key, label:f.label, found:!!found}, found || {});
+      })
+    };
+  });
+  ovState.sortKey = null;
+  ovState.sortDir = 1;
+  renderOverviewHeader();
+  renderOverviewTbody();
+
+  var sentEl = document.getElementById('ovSummarySentence');
+  sentEl.innerHTML = ov.summary_sentence_zh ? esc(ov.summary_sentence_zh) : '無資料：9 檔美股產業 ETF 尚未有近三個月 EPS 修正資料';
+
+  document.getElementById('ovSrc').textContent =
+    '資料來源：docs/etf-dash/data/{ETF}.json 彙總（scripts/etf_dash/build_etf_dash.py::build_overview_json）；'+
+    'as of ' + (ov.as_of || '無資料') + '，產生於 ' + (ov.generated_at || '無資料');
+}
+
+function loadOverview(){
+  fetch('data/overview.json').then(function(r){
+    if(!r.ok) throw new Error('http ' + r.status);
+    return r.json();
+  }).then(renderOverview).catch(function(err){
+    document.getElementById('coverLeft').innerHTML =
+      '<span class="nm">找不到總覽資料（' + esc(err.message) + '）。' +
+      '請先執行 <code>python3.12 scripts/etf_dash/build_etf_dash.py --etf SPY ...</code>。</span>';
+  });
+}
+
+function loadFund(etf){
+  if(typeof ETF_DASH_INLINE_DATA !== 'undefined'){
+    render(ETF_DASH_INLINE_DATA);
+    return;
+  }
+  fetch('data/' + etf + '.json').then(function(r){
     if(!r.ok) throw new Error('http ' + r.status);
     return r.json();
   }).then(render).catch(function(err){
     document.getElementById('coverLeft').innerHTML =
-      '<span class="nm">找不到 ' + ETF + ' 的資料（' + err.message + '）。' +
-      '請先執行 <code>python3.12 scripts/etf_dash/build_etf_dash.py --etf ' + ETF + '</code>。</span>';
-    document.getElementById('switcher').innerHTML = FUND_LIST.map(function(f){
-      var cls = f.key===ETF ? 'active' : '';
-      return '<a class="'+cls+'" href="?etf='+f.key+'">'+f.label+'</a>';
-    }).join('');
+      '<span class="nm">找不到 ' + esc(etf) + ' 的資料（' + esc(err.message) + '）。' +
+      '請先執行 <code>python3.12 scripts/etf_dash/build_etf_dash.py --etf ' + esc(etf) + '</code>。</span>';
   });
+}
+
+// 進頁決定 view：有 ?etf= 就是該基金的明細頁；沒有（含只給 ?view=overview 或
+// 完全沒有參數）一律當總覽——總覽是沒指定基金時的預設頁。preview-only HTML
+// （render_preview_html() 內嵌 ETF_DASH_INLINE_DATA，單檔打開通常沒有查詢
+// 字串）一律強制當該基金的明細頁，不受網址參數影響。
+var params = new URLSearchParams(location.search);
+var etfParam = params.get('etf');
+var VIEW, ETF;
+if(typeof ETF_DASH_INLINE_DATA !== 'undefined'){
+  VIEW = 'fund';
+  ETF = ETF_DASH_INLINE_DATA.etf_key;
+} else {
+  VIEW = etfParam ? 'fund' : 'overview';
+  ETF = null;
+  if(VIEW === 'fund'){
+    ETF = etfParam.toUpperCase();
+    if(FUND_KEYS.indexOf(ETF) === -1) ETF = 'SMH';  // 不合法的 etf 參數保留舊行為，退回 SMH 明細頁
+  }
+}
+
+renderNav(VIEW === 'overview' ? 'OVERVIEW' : ETF);
+if(VIEW === 'overview'){
+  document.getElementById('fundView').style.display = 'none';
+  document.getElementById('overviewView').style.display = '';
+  loadOverview();
+} else {
+  document.getElementById('overviewView').style.display = 'none';
+  document.getElementById('fundView').style.display = '';
+  loadFund(ETF);
 }
 })();
 </script>
