@@ -101,11 +101,21 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .divbar-fill.neg{right:50%;background:#e34948}
 .divbar-val{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--body);min-width:50px;text-align:right}
 
-/* 2026-09-25 加：總覽表 ≤560px 收斂低優先欄（EPS 1個月／EPS 更新日），保留基金／
-   EPS 3個月／股價 3個月／本益比變動 3個月／預估本益比；.tbl-wrap 的 overflow-x:auto
-   仍是兜底，兩種手法並用（見需求：允許表格自己捲動「或」收斂低優先欄）。 */
+/* 2026-09-25 加：基金欄兩種寬度的名稱，預設顯示完整名稱、藏 ticker-only 版本；
+   ≤560px 反過來（見下方 media query）。 */
+.ov-fund-short{display:none}
+
+/* 2026-09-25 二次修（coordinator 回饋 #6）：總覽表 ≤560px 只留 基金／EPS 3個月／
+   股價 3個月／本益比變動 3個月 四欄——原本留 5 欄＋inline bar 在 ~350px 版寬仍塞不下
+   （量出來要 521px），現在額外收斂「預估本益比」（改標 ov-col-lo，見 OV_COLUMNS）、
+   隱藏 bar track 只留數字、基金欄改顯示 ticker-only，四欄合計 ~300px 內可以不捲動。 */
 @media(max-width:560px){
   #ovTable .ov-col-lo{display:none}
+  #ovTable .divbar-track{display:none}
+  #ovTable .divbar-cell{gap:0}
+  #ovTable .divbar-val{min-width:0}
+  #ovTable .ov-fund-full{display:none}
+  #ovTable .ov-fund-short{display:inline}
 }
 
 /* 2026-09-25：總覽摘要句從「純文字框」升級成 callout（左側深藍 accent bar，跟
@@ -113,17 +123,25 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
    KPI 三格（最大 EPS 上修／本益比壓縮／本益比擴張，皆從 overview.json 機械算出）。 */
 .conclusion{font-size:13px;color:var(--body);line-height:1.7;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--x-navy);border-radius:var(--r);margin-top:8px}
 .callout-tiles{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft)}
-.callout-tile{display:flex;flex-direction:column;gap:2px;min-width:150px}
-.callout-tile .ct-k{font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.callout-tile .ct-v{font-size:.92rem;font-weight:700;color:var(--ink)}
-.callout-tile .ct-v .ct-fund{color:var(--accent)}
-.callout-tile .ct-v .ct-num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.callout-tile{display:flex;flex-direction:column;gap:1px;min-width:140px}
+.callout-tile .ct-k{font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px}
+/* 2026-09-25：ticker 放大在前、完整名稱縮小在後（見 coordinator 回饋 #7），避免長
+   名稱（如「VanEck 半導體 UCITS ETF」）把 tile 撐成兩行、跟其他 tile 高度不齊。 */
+.callout-tile .ct-top{display:flex;align-items:baseline;gap:8px}
+.callout-tile .ct-ticker{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--accent)}
+.callout-tile .ct-num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.88rem;font-weight:700;color:var(--ink)}
+.callout-tile .ct-name{font-size:.72rem;color:var(--sec)}
 
 /* 2026-09-25 加：象限散佈圖（Exhibit 0，總覽表格上方）——x=EPS 3個月變動%，
    y=股價 3個月變動%，一檔一點，依分組上色（4 組，見 SCATTER_GROUP_COLOR，通過
    dataviz skill validate_palette.js --pairs all 驗證，見 commit 說明）。表格本身是
    無障礙備援，散佈圖只補視覺，不重複的數字都留在下面的表格。 */
 .scatter-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px 10px;margin-top:8px;position:relative}
+/* 2026-09-25 二次修（coordinator 回饋 #2）：viewBox 改成「直接量出來的容器實際
+   px 寬」（見 renderOvScatter 的 W=wrap.clientWidth），1 viewBox 單位＝1 CSS px，
+   svg 不再因為 width:100% 把 viewBox 等比放大——原本 viewBox 固定 380 但桌面容器
+   ~1000px 寬，文字被放大到 ~2.7 倍（9px 變 ~24px）。現在字級直接寫「螢幕上真正要
+   多大」。 */
 .scatter-svg{width:100%;height:auto;display:block;overflow:visible}
 .scatter-legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:11px;color:var(--sec);margin-top:6px}
 .scatter-legend .lg-item{display:inline-flex;align-items:center;gap:5px}
@@ -134,11 +152,14 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .scatter-tooltip .tt-fund{font-weight:700;display:block;margin-bottom:3px;color:#fff}
 .scatter-tooltip .tt-row{color:rgba(255,255,255,.85)}
 .scatter-dot{cursor:pointer}
-.scatter-label{font-family:var(--sans);font-size:9px;fill:var(--body)}
+.scatter-label{font-family:var(--sans);font-size:12px;fill:var(--ink)}
+.scatter-leader{stroke:var(--muted);stroke-width:.75;opacity:.8}
+.scatter-grid{stroke:var(--line);stroke-width:.75}
 .scatter-refline{stroke:var(--sec);stroke-width:1;stroke-dasharray:4 3;opacity:.6}
-.scatter-zeroline{stroke:var(--line);stroke-width:1}
-.scatter-axis-label{font-family:var(--mono);font-size:9px;fill:var(--muted)}
-.scatter-quad-label{font-family:var(--sans);font-size:9px;fill:var(--muted)}
+.scatter-zeroline{stroke:var(--sec);stroke-width:1;opacity:.7}
+.scatter-tick-label{font-family:var(--mono);font-size:9.5px;fill:var(--muted)}
+.scatter-axis-label{font-family:var(--mono);font-size:12px;font-weight:600;fill:var(--sec)}
+.scatter-quad-label{font-family:var(--sans);font-size:11px;fill:var(--muted)}
 
 .stat-row{display:flex;flex-wrap:wrap;gap:14px;margin:10px 0}
 .imq-stat{display:inline-flex;flex-direction:column;gap:.1rem}
@@ -360,11 +381,6 @@ function fmtPctColored(v, nd){
   var cls = v>=0 ? 'x-pos' : 'x-neg';
   return '<span class="'+cls+'">'+fmtPct(v,nd)+'</span>';
 }
-function fmtPctParen(v, nd){
-  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
-  var n = v.toFixed(nd===undefined?2:nd);
-  return v<0 ? '('+Math.abs(v).toFixed(nd===undefined?2:nd)+'%)' : '+'+n+'%';
-}
 function noData(el, reason){ if(el) el.innerHTML = '<div class="nodata">無資料'+(reason?'：'+reason:'')+'</div>'; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
@@ -513,7 +529,7 @@ function renderPeriodsTable(d){
       return '<tr><td>'+esc(p.label)+'<span class="base-date">基準：'+esc(p.base_date||'無資料')+'</span></td>'+
         '<td class="num">'+fmtPctColored(p.eps_chg_pct)+'</td>'+
         '<td class="num">'+fmtPctColored(p.price_chg_pct)+'</td>'+
-        '<td class="num">'+fmtPctParen(p.implied_pe_chg_pct)+'</td>'+
+        '<td class="num">'+fmtPct(p.implied_pe_chg_pct)+'</td>'+
         '<td class="num">'+(p.coverage_pct!=null?p.coverage_pct.toFixed(0)+'%':'—')+'</td></tr>';
     }).join('')+'</tbody>';
 
@@ -762,14 +778,16 @@ function render(d){
 
 // 2026-09-25：欄位標題改短標籤＋abbr[title] 掛全名（900px 寬 7 欄不換行、不橫向捲動的
 // 唯一辦法，見 #ovTable th abbr CSS）；lo:true 是 ≤560px 收斂的低優先欄（見 .ov-col-lo
-// media query）；bar:true 兩欄改畫 inline diverging bar（見 divBarHtml）。
+// media query）；bar:true 兩欄改畫 inline diverging bar（見 divBarHtml）。2026-09-25
+// 二次修：預估本益比也標 lo（原本只藏 EPS 1M／EPS 更新，≤560px 仍塞不下 5 欄+bar，
+// 見 coordinator 回饋），≤560px 只留 基金／EPS 3M／股價 3M／本益比變動 3M 四欄。
 var OV_COLUMNS = [
   {key:'label', label:'基金', numeric:false, sortable:false},
   {key:'eps_chg_pct_30d', label:'EPS 1M', full:'EPS 變動（1個月）', numeric:true, lo:true},
   {key:'eps_chg_pct_90d', label:'EPS 3M', full:'EPS 變動（3個月）', numeric:true, bar:true},
   {key:'price_chg_pct_90d', label:'股價 3M', full:'股價漲跌（3個月）', numeric:true},
   {key:'implied_pe_chg_pct_90d', label:'本益比變動 3M', full:'隱含本益比變動（3個月）', numeric:true, bar:true},
-  {key:'weighted_forward_pe', label:'預估本益比', full:'目前預估本益比', numeric:true},
+  {key:'weighted_forward_pe', label:'預估本益比', full:'目前預估本益比', numeric:true, lo:true},
   {key:'eps_as_of', label:'EPS 更新', full:'EPS 預估更新日', numeric:false, lo:true}
 ];
 var ovState = {groups:null, sortKey:null, sortDir:1};
@@ -786,9 +804,12 @@ function computeBarScale(ov){
   OV_BAR_SCALE = {eps_chg_pct_90d: maxEps || null, implied_pe_chg_pct_90d: maxPe || null};
 }
 // dataviz skill diverging pair（blue<->red，palette.md 已驗證值，不是紅綠好壞語意，只
-// 標極性）；bar 本身是唯一上色元素，數字文字維持 ink/mono，不跟著上色。
+// 標極性）；bar 本身是唯一上色元素，數字文字維持 ink/mono，不跟著上色。2026-09-25：
+// 數字格式跟全站其他欄位一致改負號（原本用括號 fmtPctParen，跟其他欄不一致，已移除
+// 該函式，全部改 fmtPct）；bar track 在 ≤560px 用 CSS 隱藏（見 .divbar-track media
+// query），這裡照樣輸出，CSS 負責藏。
 function divBarHtml(value, scaleKey){
-  var txt = scaleKey === 'implied_pe_chg_pct_90d' ? fmtPctParen(value) : fmtPct(value);
+  var txt = fmtPct(value);
   var max = OV_BAR_SCALE[scaleKey];
   if(value==null || !max) return '<span class="divbar-cell"><span class="divbar-val">'+(value==null?'無資料':txt)+'</span></span>';
   var halfPct = Math.min(1, Math.abs(value) / max) * 50;
@@ -796,19 +817,25 @@ function divBarHtml(value, scaleKey){
   return '<span class="divbar-cell"><span class="divbar-track">'+fill+'</span><span class="divbar-val">'+txt+'</span></span>';
 }
 
+// 2026-09-25 加：基金欄在 ≤560px 只顯示 ticker（.ov-fund-short），完整名稱
+// （.ov-fund-full）藏起來——四欄塞進 ~350px 版寬唯一辦法（見 coordinator 回饋 #6）。
+function ovFundLabelHtml(fullLabel, ticker){
+  return '<span class="ov-fund-full">'+esc(fullLabel)+'</span><span class="ov-fund-short">'+esc(ticker)+'</span>';
+}
+
 function ovRowHtml(row){
   var flags = '';
   if(row.holdings_stale) flags += '<span class="ov-flag" title="今日持股抓取失敗，沿用上次成功快取">⚠</span>';
   if(row.holdings_approximation_zh) flags += '<span class="ov-flag" title="'+esc(row.holdings_approximation_zh)+'">⚠</span>';
   var nameCell = row.found
-    ? '<a href="?etf='+encodeURIComponent(row.etf_key)+'">'+esc(row.label)+'</a>'+flags
-    : esc(row.label)+'<span style="color:var(--muted)">（尚無資料）</span>';
+    ? '<a href="?etf='+encodeURIComponent(row.etf_key)+'">'+ovFundLabelHtml(row.label, row.etf_key)+'</a>'+flags
+    : ovFundLabelHtml(row.label, row.etf_key)+'<span style="color:var(--muted)">（尚無資料）</span>';
   return '<tr><td>'+nameCell+'</td>'+
     '<td class="num ov-col-lo">'+fmtPctColored(row.eps_chg_pct_30d)+'</td>'+
     '<td class="num">'+divBarHtml(row.eps_chg_pct_90d,'eps_chg_pct_90d')+'</td>'+
     '<td class="num">'+fmtPctColored(row.price_chg_pct_90d)+'</td>'+
     '<td class="num">'+divBarHtml(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d')+'</td>'+
-    '<td class="num">'+(row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—')+'</td>'+
+    '<td class="num ov-col-lo">'+(row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—')+'</td>'+
     '<td class="ov-col-lo">'+esc(row.eps_as_of||'—')+'</td></tr>';
 }
 
@@ -865,8 +892,10 @@ function renderOverviewHeader(){
 
 // 2026-09-25 加：KPI 三格，純機械（只挑 overview.json 裡的最大/最小值，不下判斷字眼），
 // 掃全部 17 檔（summary_sentence_zh 只看 9 檔美股產業 ETF，這裡刻意放大範圍，避免跟句子
-// 完全重複）。
-function shortFundName(f){ return (f.label_zh||f.etf_key||'').split('（')[0].trim()+'（'+f.etf_key+'）'; }
+// 完全重複）。2026-09-25 二次修：ticker 放大在前、完整名稱縮小在後（見 coordinator
+// 回饋 #7）——原本完整名稱＋ticker 擠在同一行，長名稱（如「VanEck 半導體 UCITS ETF
+// （SMH_UCITS）」）會換成兩行，版面不齊。
+function fundShortName(f){ return (f.label_zh||f.etf_key||'').split('（')[0].trim(); }
 function renderOvTiles(ov){
   var el = document.getElementById('ovTiles');
   var epsFunds = (ov.funds||[]).filter(function(f){return f.eps_chg_pct_90d!=null;});
@@ -874,17 +903,18 @@ function renderOvTiles(ov){
   var tiles = [];
   if(epsFunds.length){
     var topEps = epsFunds.reduce(function(a,b){ return b.eps_chg_pct_90d>a.eps_chg_pct_90d?b:a; });
-    tiles.push(['近三個月 EPS 上修幅度最大', shortFundName(topEps), fmtPct(topEps.eps_chg_pct_90d)]);
+    tiles.push(['近三個月 EPS 上修幅度最大', topEps.etf_key, fundShortName(topEps), fmtPct(topEps.eps_chg_pct_90d)]);
   }
   if(peFunds.length){
     var compPe = peFunds.reduce(function(a,b){ return b.implied_pe_chg_pct_90d<a.implied_pe_chg_pct_90d?b:a; });
-    tiles.push(['近三個月隱含本益比壓縮幅度最大', shortFundName(compPe), fmtPctParen(compPe.implied_pe_chg_pct_90d)]);
+    tiles.push(['近三個月隱含本益比壓縮幅度最大', compPe.etf_key, fundShortName(compPe), fmtPct(compPe.implied_pe_chg_pct_90d)]);
     var expPe = peFunds.reduce(function(a,b){ return b.implied_pe_chg_pct_90d>a.implied_pe_chg_pct_90d?b:a; });
-    tiles.push(['近三個月隱含本益比擴張幅度最大', shortFundName(expPe), fmtPctParen(expPe.implied_pe_chg_pct_90d)]);
+    tiles.push(['近三個月隱含本益比擴張幅度最大', expPe.etf_key, fundShortName(expPe), fmtPct(expPe.implied_pe_chg_pct_90d)]);
   }
   el.innerHTML = tiles.map(function(t){
     return '<div class="callout-tile"><span class="ct-k">'+esc(t[0])+'</span>'+
-      '<span class="ct-v"><span class="ct-fund">'+esc(t[1])+'</span>　<span class="ct-num">'+esc(t[2])+'</span></span></div>';
+      '<span class="ct-top"><span class="ct-ticker">'+esc(t[1])+'</span><span class="ct-num">'+esc(t[3])+'</span></span>'+
+      '<span class="ct-name">'+esc(t[2])+'</span></div>';
   }).join('');
 }
 
@@ -906,6 +936,26 @@ function buildScatterPoints(){
   return pts;
 }
 
+// 2026-09-25 加：軸範圍「貼資料＋留白」，上下限再收斂到 5 的倍數，這樣刻度可以
+// 每 5% 一條、兩端都留一點呼吸空間，不會逼出「資料只佔左下一小塊」的正方形滿版
+// （見 coordinator 回饋 #4）。x／y 各自獨立算，不再強制對稱正方形。
+function niceAxisDomain(min, max, step){
+  step = step || 5;
+  if(min===max){ min -= step; max += step; }
+  var range = max - min;
+  var pad = Math.max(range*0.12, step*0.6);
+  var lo = Math.floor((min-pad)/step)*step;
+  var hi = Math.ceil((max+pad)/step)*step;
+  if(hi<=lo) hi = lo+step;
+  return [lo,hi];
+}
+function axisTicks(domain, step){
+  step = step || 5;
+  var out=[];
+  for(var t=Math.ceil(domain[0]/step)*step; t<=domain[1]+1e-9; t+=step) out.push(Math.round(t*100)/100);
+  return out;
+}
+
 function renderOvScatter(){
   var pts = buildScatterPoints();
   var wrap = document.getElementById('ovScatterWrap');
@@ -917,49 +967,106 @@ function renderOvScatter(){
     return;
   }
 
-  var W=380, H=360, ML=44, MT=34, MR=14, MB=32;
+  // 2026-09-25 二次修（coordinator 回饋 #2）：viewBox 寬度＝容器實際 px 寬（量
+  // wrap.clientWidth，量不到就退回 340），1 viewBox 單位＝1 CSS px，文字字級不再
+  // 被等比放大。高度用「寬 × 0.42」夾在 300～460px 之間，橫向長方形（不是桌面版
+  // 之前接近正方形的 ~800px 高）。
+  var W = wrap.clientWidth || 340;
+  var H = Math.max(300, Math.min(460, Math.round(W*0.42)));
+  var ML=46, MT=34, MR=16, MB=40;
   var plotW=W-ML-MR, plotH=H-MT-MB;
-  var maxAbs = Math.max.apply(null, pts.map(function(p){return Math.max(Math.abs(p.x),Math.abs(p.y));})) * 1.18 || 1;
-  function sx(v){ return ML + (v+maxAbs)/(2*maxAbs)*plotW; }
-  function sy(v){ return MT + (maxAbs-v)/(2*maxAbs)*plotH; }
-  var zeroX=sx(0), zeroY=sy(0);
 
-  // 直接標籤（僅 ticker）碰撞閃避：依序嘗試幾個候選偏移，選第一個跟已放置標籤方框
-  // 不重疊的；17 點規模下這個簡單貪婪法足夠（見 interaction.md「when end-labels
-  // collide, don't stack them」）。
-  var placed = [];
-  var candidates = [[7,-7],[7,11],[-8,-7],[-8,11],[7,21],[-8,21]];
+  var xVals = pts.map(function(p){return p.x;}), yVals = pts.map(function(p){return p.y;});
+  var xDomain = niceAxisDomain(Math.min.apply(null,xVals), Math.max.apply(null,xVals));
+  var yDomain = niceAxisDomain(Math.min.apply(null,yVals), Math.max.apply(null,yVals));
+  function sx(v){ return ML + (v-xDomain[0])/(xDomain[1]-xDomain[0])*plotW; }
+  function sy(v){ return MT + (yDomain[1]-v)/(yDomain[1]-yDomain[0])*plotH; }
+  var xTicks = axisTicks(xDomain), yTicks = axisTicks(yDomain);
+
+  // y=x 參考線只畫在兩軸範圍都涵蓋到的區間內（見 coordinator 回饋 #3「only within
+  // the plotted range」），x／y 軸範圍現在不對稱，不能再假設整條對角線都在圖內。
+  var diagLo = Math.max(xDomain[0], yDomain[0]), diagHi = Math.min(xDomain[1], yDomain[1]);
+
+  // 2026-09-25 二次修（coordinator 回饋 #1）：標籤碰撞閃避改成「以資料點為圓心、
+  // 由近到遠找 4 圈候選方向」，且候選必須同時滿足（a）跟已放置的標籤框不重疊、
+  // （b）不壓到任何一個資料點的圓（含自己），避免像舊版「XLK 標籤跑去黏在別的點
+  // 旁邊」這種誤植；找不到乾淨候選時取最後一圈、改畫細 leader line 連回自己的點，
+  // 讓歸屬永遠清楚。
+  var DOT_R = 5, DOT_CLEAR = DOT_R + 4;
+  var RADII = [11, 18, 26, 36];
+  var DIRS = [[0.86,-0.5],[0.86,0.5],[-0.86,-0.5],[-0.86,0.5],[1,0],[-1,0],[0,-1],[0,1]];
   function labelBox(cx,cy,text,dx,dy){
-    var w=text.length*5.6+4, h=10;
-    return {x:cx+dx+(dx<0?-w:0), y:cy+dy-8, w:w, h:h};
+    var w = text.length*6.4+4, h = 12;
+    var x = cx+dx - (dx<0 ? w : (dx===0?w/2:0));
+    return {x:x, y:cy+dy-h/2, w:w, h:h};
   }
-  function overlaps(a,b){ return !(a.x+a.w<b.x || b.x+b.w<a.x || a.y+a.h<b.y || b.y+b.h<a.y); }
-  var pr = pts.map(function(p){
-    var cx=sx(p.x), cy=sy(p.y), chosen=candidates[0], box=null;
-    for(var i=0;i<candidates.length;i++){
-      var b = labelBox(cx,cy,p.key,candidates[i][0],candidates[i][1]);
-      if(i===candidates.length-1 || !placed.some(function(pl){return overlaps(pl,b);})){ chosen=candidates[i]; box=b; break; }
+  function boxOverlap(a,b){ return !(a.x+a.w<b.x || b.x+b.w<a.x || a.y+a.h<b.y || b.y+b.h<a.y); }
+  function boxCircleOverlap(b, ccx, ccy, r){
+    var nx = Math.max(b.x, Math.min(ccx, b.x+b.w));
+    var ny = Math.max(b.y, Math.min(ccy, b.y+b.h));
+    var dx = ccx-nx, dy = ccy-ny;
+    return (dx*dx+dy*dy) < r*r;
+  }
+  var placedBoxes = [];
+  var centers = pts.map(function(p){ return {cx:sx(p.x), cy:sy(p.y)}; });
+  var pr = pts.map(function(p, idx){
+    var cx=centers[idx].cx, cy=centers[idx].cy;
+    var best=null, bestRadiusIdx=0;
+    outer:
+    for(var ri=0; ri<RADII.length; ri++){
+      var r = RADII[ri];
+      for(var di=0; di<DIRS.length; di++){
+        var dx = DIRS[di][0]*r, dy = DIRS[di][1]*r;
+        var box = labelBox(cx,cy,p.key,dx,dy);
+        var badLabel = placedBoxes.some(function(pl){ return boxOverlap(pl,box); });
+        var badDot = centers.some(function(c){ return boxCircleOverlap(box, c.cx, c.cy, DOT_CLEAR); });
+        if(!badLabel && !badDot){ best = {dx:dx,dy:dy,box:box}; bestRadiusIdx=ri; break outer; }
+        if(!best) best = {dx:dx,dy:dy,box:box}; // 保底：至少存一個候選，防止全部圈都撞到時沒有結果
+      }
     }
-    placed.push(box);
-    return {p:p, cx:cx, cy:cy, dx:chosen[0], dy:chosen[1], color:SCATTER_GROUP_COLOR[p.group]||'#6b7a92'};
+    placedBoxes.push(best.box);
+    return {p:p, cx:cx, cy:cy, dx:best.dx, dy:best.dy, ringIdx: bestRadiusIdx, color:SCATTER_GROUP_COLOR[p.group]||'#6b7a92'};
   });
 
+  var gridSvg = xTicks.map(function(t){
+    if(Math.abs(t)<1e-9) return '';
+    return '<line class="scatter-grid" x1="'+sx(t)+'" y1="'+MT+'" x2="'+sx(t)+'" y2="'+(H-MB)+'"/>';
+  }).join('') + yTicks.map(function(t){
+    if(Math.abs(t)<1e-9) return '';
+    return '<line class="scatter-grid" x1="'+ML+'" y1="'+sy(t)+'" x2="'+(W-MR)+'" y2="'+sy(t)+'"/>';
+  }).join('');
+  var tickLabelSvg = xTicks.map(function(t){
+    return '<text class="scatter-tick-label" x="'+sx(t)+'" y="'+(H-MB+14)+'" text-anchor="middle">'+(t>0?'+':'')+t+'%</text>';
+  }).join('') + yTicks.map(function(t){
+    return '<text class="scatter-tick-label" x="'+(ML-6)+'" y="'+(sy(t)+3)+'" text-anchor="end">'+(t>0?'+':'')+t+'%</text>';
+  }).join('');
+  var zeroSvg = '';
+  if(xDomain[0]<=0 && 0<=xDomain[1]) zeroSvg += '<line class="scatter-zeroline" x1="'+sx(0)+'" y1="'+MT+'" x2="'+sx(0)+'" y2="'+(H-MB)+'"/>';
+  if(yDomain[0]<=0 && 0<=yDomain[1]) zeroSvg += '<line class="scatter-zeroline" x1="'+ML+'" y1="'+sy(0)+'" x2="'+(W-MR)+'" y2="'+sy(0)+'"/>';
+  var refSvg = diagLo<diagHi ? '<line class="scatter-refline" x1="'+sx(diagLo)+'" y1="'+sy(diagLo)+'" x2="'+sx(diagHi)+'" y2="'+sy(diagHi)+'"/>' : '';
+
+  var dotsSvg = pr.map(function(d){
+    var anchor = d.dx<0 ? ' text-anchor="end"' : (d.dx===0 ? ' text-anchor="middle"' : '');
+    var leader = '';
+    if(d.ringIdx>0){
+      var edgeX = d.cx + (d.dx/Math.hypot(d.dx,d.dy))*(DOT_R+2), edgeY = d.cy + (d.dy/Math.hypot(d.dx,d.dy))*(DOT_R+2);
+      var toX = d.cx + d.dx*0.82, toY = d.cy + d.dy*0.82;
+      leader = '<line class="scatter-leader" x1="'+edgeX+'" y1="'+edgeY+'" x2="'+toX+'" y2="'+toY+'"/>';
+    }
+    return leader+'<g class="scatter-dot" data-key="'+esc(d.p.key)+'" tabindex="0" role="button" aria-label="'+esc(d.p.label)+'">'+
+      '<circle cx="'+d.cx+'" cy="'+d.cy+'" r="14" fill="transparent"/>'+
+      '<circle cx="'+d.cx+'" cy="'+d.cy+'" r="'+DOT_R+'" fill="'+d.color+'" stroke="#fff" stroke-width="1.5"/>'+
+      '<text class="scatter-label" x="'+(d.cx+d.dx)+'" y="'+(d.cy+d.dy+4)+'"'+anchor+'>'+esc(d.p.key)+'</text>'+
+    '</g>';
+  }).join('');
+
   var svg = '<svg class="scatter-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="EPS 修正 vs 股價漲跌象限圖，完整數字見下方表格">'+
-    '<line class="scatter-zeroline" x1="'+ML+'" y1="'+zeroY+'" x2="'+(W-MR)+'" y2="'+zeroY+'"/>'+
-    '<line class="scatter-zeroline" x1="'+zeroX+'" y1="'+MT+'" x2="'+zeroX+'" y2="'+(H-MB)+'"/>'+
-    '<line class="scatter-refline" x1="'+sx(-maxAbs)+'" y1="'+sy(-maxAbs)+'" x2="'+sx(maxAbs)+'" y2="'+sy(maxAbs)+'"/>'+
-    '<text class="scatter-axis-label" x="'+(W-MR)+'" y="'+(H-MB+13)+'" text-anchor="end">EPS 3M %</text>'+
-    '<text class="scatter-axis-label" x="'+(ML-8)+'" y="12" text-anchor="start">股價 3M %</text>'+
-    '<text class="scatter-quad-label" x="'+(ML+4)+'" y="'+(MT-4)+'">股價漲幅＞EPS 漲幅（本益比上升）</text>'+
+    gridSvg + zeroSvg + refSvg + tickLabelSvg +
+    '<text class="scatter-axis-label" x="'+(W-MR)+'" y="'+(H-MB+28)+'" text-anchor="end">EPS 3M %</text>'+
+    '<text class="scatter-axis-label" x="'+(ML-8)+'" y="14" text-anchor="start">股價 3M %</text>'+
+    '<text class="scatter-quad-label" x="'+(ML+4)+'" y="'+(MT-6)+'">股價漲幅＞EPS 漲幅（本益比上升）</text>'+
     '<text class="scatter-quad-label" x="'+(W-MR-4)+'" y="'+(H-MB-8)+'" text-anchor="end">EPS 漲幅＞股價漲幅（本益比下降）</text>'+
-    pr.map(function(d){
-      var anchor = d.dx<0 ? ' text-anchor="end"' : '';
-      return '<g class="scatter-dot" data-key="'+esc(d.p.key)+'" tabindex="0" role="button" aria-label="'+esc(d.p.label)+'">'+
-        '<circle cx="'+d.cx+'" cy="'+d.cy+'" r="14" fill="transparent"/>'+
-        '<circle cx="'+d.cx+'" cy="'+d.cy+'" r="5" fill="'+d.color+'" stroke="#fff" stroke-width="1.5"/>'+
-        '<text class="scatter-label" x="'+(d.cx+d.dx)+'" y="'+(d.cy+d.dy)+'"'+anchor+'>'+esc(d.p.key)+'</text>'+
-      '</g>';
-    }).join('') +
+    dotsSvg +
   '</svg><div class="scatter-tooltip" id="ovScatterTooltip"></div>';
   wrap.innerHTML = svg;
 
@@ -969,7 +1076,7 @@ function renderOvScatter(){
   legendEl.innerHTML = groupsPresent.map(function(l){
     return '<span class="lg-item"><span class="lg-dot" style="background:'+(SCATTER_GROUP_COLOR[l]||'#6b7a92')+'"></span>'+esc(l)+'</span>';
   }).join('');
-  capEl.textContent = '灰色零軸＝EPS／股價各自的 0% 線；虛線＝y=x 45° 參考線。標籤只顯示 ticker，完整基金名稱與四項數字見游標提示與下方表格。';
+  capEl.textContent = '淺灰格線每 5% 一條；深一階的十字線＝EPS／股價各自的 0% 線；虛線＝y=x 45° 參考線（僅畫在兩軸都涵蓋到的範圍內）。標籤只顯示 ticker，跟資料點距離較遠時會加一條細線連回去；完整基金名稱與四項數字見游標提示與下方表格。';
 
   var tip = document.getElementById('ovScatterTooltip');
   var svgEl = wrap.querySelector('svg');
@@ -978,7 +1085,7 @@ function renderOvScatter(){
     tip.innerHTML = '<span class="tt-fund">'+esc(d.p.label)+'</span>'+
       '<span class="tt-row">EPS 3M　'+fmtPct(d.p.x)+'</span><br>'+
       '<span class="tt-row">股價 3M　'+fmtPct(d.p.y)+'</span><br>'+
-      '<span class="tt-row">本益比變動 3M　'+fmtPctParen(d.p.pe)+'</span><br>'+
+      '<span class="tt-row">本益比變動 3M　'+fmtPct(d.p.pe)+'</span><br>'+
       '<span class="tt-row">預估本益比　'+(d.p.fpe!=null?fmtNum(d.p.fpe,1)+'x':'無資料')+'</span>';
     var svgRect = svgEl.getBoundingClientRect(), cardRect = card.getBoundingClientRect();
     var scaleX = svgRect.width/W, scaleY = svgRect.height/H;
@@ -996,6 +1103,17 @@ function renderOvScatter(){
     g.addEventListener('blur', hideTip);
   });
 }
+
+// 2026-09-25 加：散佈圖依容器實際 px 寬定字級／版面（見 renderOvScatter），視窗
+// 寬度變了（例如轉橫向、拉視窗）要重算，不然字級/版面會跟新寬度對不上。debounce
+// 150ms，只在總覽畫面且資料已載入時重畫。
+var ovScatterResizeTimer = null;
+window.addEventListener('resize', function(){
+  if(!ovState.groups) return;
+  if(document.getElementById('overviewView').style.display === 'none') return;
+  clearTimeout(ovScatterResizeTimer);
+  ovScatterResizeTimer = setTimeout(renderOvScatter, 150);
+});
 
 function renderOverview(ov){
   document.getElementById('coverLeft').innerHTML =
