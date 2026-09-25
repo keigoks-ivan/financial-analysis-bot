@@ -6,6 +6,7 @@ third-party aggregator's data or code.
 """
 from __future__ import annotations
 
+import datetime
 import io
 import json
 import sys
@@ -376,21 +377,121 @@ def test_normalize_fund_rejects_too_few_holdings():
         m.normalize_fund("00980A", raw, set(), set())
 
 
-def test_save_snapshot_idempotent(tmp_path, monkeypatch):
+def test_append_snapshot_idempotent(tmp_path, monkeypatch):
     monkeypatch.setattr(m, "HOLDINGS_DIR", tmp_path / "holdings")
+    monkeypatch.setattr(m, "NAMES_PATH", tmp_path / "ticker_names.json")
     normalized = {"code": "00980A", "name": "x", "issuer": "野村", "as_of": "2026-09-24",
                   "holdings": [{"ticker": "2330.TW", "name": "台積電", "shares": 1, "weight_pct": 1.0}],
-                  "other": [], "nav": {}, "source_url": "u", "fetched_at": "2026-09-24T09:00:00+08:00"}
-    status1, path1 = m.save_snapshot(normalized)
+                  "other": [], "nav": {}, "source_url": "u", "weight_band_note": None,
+                  "fetched_at": "2026-09-24T09:00:00+08:00"}
+    status1, path1 = m.append_snapshot(normalized)
     assert status1 == "written"
     assert path1.exists()
-    # 同內容、不同 fetched_at(模擬同日重跑)→ 應判定 unchanged,不改寫檔案
+    assert path1.name == "00980A.jsonl"
+    # 同內容、不同 fetched_at(模擬同日重跑)→ 應判定 unchanged,不新增行
     normalized2 = dict(normalized, fetched_at="2026-09-24T18:00:00+08:00")
-    status2, path2 = m.save_snapshot(normalized2)
+    status2, path2 = m.append_snapshot(normalized2)
     assert status2 == "unchanged"
     assert path2 == path1
-    # 內容真的變了(新增一檔持股)→ 應改寫
-    normalized3 = dict(normalized, holdings=normalized["holdings"] + [
+    assert len(path1.read_text(encoding="utf-8").splitlines()) == 1
+    # 內容真的變了(新增一檔持股,as_of 也是新的一天)→ 應新增一行
+    normalized3 = dict(normalized, as_of="2026-09-25", holdings=normalized["holdings"] + [
         {"ticker": "2454.TW", "name": "聯發科", "shares": 1, "weight_pct": 1.0}])
-    status3, _ = m.save_snapshot(normalized3)
+    status3, _ = m.append_snapshot(normalized3)
     assert status3 == "written"
+    assert len(path1.read_text(encoding="utf-8").splitlines()) == 2
+
+
+# ── 個別基金權重容許帶 ───────────────────────────────────────────────────
+def test_weight_band_for_special_funds():
+    assert m.weight_band_for("00985A")[:2] == (85.0, 101.0)
+    assert m.weight_band_for("00406A")[:2] == (60.0, 101.0)
+    assert m.weight_band_for("00985A")[2] is not None  # note 有值
+    assert m.weight_band_for("00980A") == (m.WEIGHT_SUM_MIN, m.WEIGHT_SUM_MAX, None)  # 其餘用全域預設
+
+
+def test_validate_holdings_uses_per_fund_band():
+    # 00406A 帶下限 60%,89.74% 的 00985A 若套用它自己的帶(85%)應通過
+    holdings = [_h(str(1000 + i), 8.974) for i in range(10)]  # 合計 89.74%
+    m.validate_holdings("00985A", holdings, [])  # 不拋錯(85-101 範圍內)
+    with pytest.raises(m.FetchError):
+        m.validate_holdings("00980A", holdings, [])  # 全域帶 90-101,89.74% 應失敗
+
+
+# ── compact/expand 往返 ──────────────────────────────────────────────────
+def test_compact_expand_holdings_roundtrip():
+    holdings = [{"ticker": "2330.TW", "name": "台積電", "shares": 90000, "weight_pct": 8.05}]
+    rows = m.compact_holdings(holdings)
+    assert rows == [["2330.TW", 90000, 8.05]]
+    expanded = m.expand_holdings(rows, {"2330.TW": "台積電"})
+    assert expanded == holdings
+
+
+def test_compact_expand_other_roundtrip():
+    other = [{"type": "cash", "name": "現金", "weight_pct": 1.2}]
+    rows = m.compact_other(other)
+    assert rows == [["cash", "現金", 1.2]]
+    assert m.expand_other(rows) == other
+
+
+def test_read_fund_jsonl_missing_file_returns_empty(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "HOLDINGS_DIR", tmp_path / "holdings")
+    assert m.read_fund_jsonl("00980A") == []
+
+
+def test_update_ticker_names_merges_and_persists(tmp_path, monkeypatch):
+    names_path = tmp_path / "ticker_names.json"
+    monkeypatch.setattr(m, "NAMES_PATH", names_path)
+    m.update_ticker_names([{"ticker": "2330.TW", "name": "台積電"}])
+    assert json.loads(names_path.read_text(encoding="utf-8")) == {"2330.TW": "台積電"}
+    m.update_ticker_names([{"ticker": "2454.TW", "name": "聯發科"}])
+    d = json.loads(names_path.read_text(encoding="utf-8"))
+    assert d == {"2330.TW": "台積電", "2454.TW": "聯發科"}  # 舊值保留,新值併入
+
+
+# ── 遷移(migrate_legacy_holdings)──────────────────────────────────────────
+def test_migrate_legacy_holdings(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "HOLDINGS_DIR", tmp_path / "holdings")
+    monkeypatch.setattr(m, "NAMES_PATH", tmp_path / "ticker_names.json")
+    day_dir = tmp_path / "holdings" / "2026-09-24"
+    day_dir.mkdir(parents=True)
+    old = {"code": "00980A", "name": "主動野村臺灣優選", "issuer": "野村", "as_of": "2026-09-24",
+           "holdings": [{"ticker": "2330.TW", "name": "台積電", "shares": 1, "weight_pct": 95.0}],
+           "other": [], "nav": {}, "source_url": "u", "fetched_at": "2026-09-24T09:00:00+08:00"}
+    (day_dir / "00980A.json").write_text(json.dumps(old, ensure_ascii=False), encoding="utf-8")
+    migrated = m.migrate_legacy_holdings()
+    assert migrated == [("00980A", "2026-09-24")]
+    assert not day_dir.exists()  # 舊目錄遷移完應被刪除
+    rows = m.read_fund_jsonl("00980A")
+    assert len(rows) == 1 and rows[0]["as_of"] == "2026-09-24"
+
+
+# ── 回補歷史(backfill_fund)──────────────────────────────────────────────
+def test_backfill_fund_unsupported_adapter_is_noop(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "HOLDINGS_DIR", tmp_path / "holdings")
+    n, earliest = m.backfill_fund("00982A", pace_sec=0)  # capital,不在 BACKFILL_SUPPORTED
+    assert (n, earliest) == (0, None)
+
+
+def test_backfill_fund_walks_back_until_miss(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "HOLDINGS_DIR", tmp_path / "holdings")
+    monkeypatch.setattr(m, "NAMES_PATH", tmp_path / "ticker_names.json")
+    monkeypatch.setattr(m, "load_market_codes", lambda: ({"2330"}, set()))
+    today = datetime.date.today()
+    good_dates = {(today - datetime.timedelta(days=d)).isoformat() for d in range(1, 4)}
+
+    def fake_fetch(code, target_date=None):
+        if target_date not in good_dates:
+            return None
+        # 每天權重故意不同,確保 3 天的內容互不相同(才會各自 append 成一行——
+        # backfill_fund 跟 append_snapshot 用同一套「內容不變就不重複寫」邏輯)。
+        base = list(good_dates).index(target_date) * 0.01
+        holdings = [{"code": str(1000 + i), "name": "x", "shares": 1, "weight_pct": 9.5 + base} for i in range(10)]
+        return {"as_of": target_date, "holdings": holdings, "other": [], "nav": {}, "source_url": "u"}
+
+    monkeypatch.setitem(m.ADAPTERS, "nomura", fake_fetch)
+    n, earliest = m.backfill_fund("00980A", pace_sec=0, max_consecutive_miss=2)
+    assert n == 3
+    rows = m.read_fund_jsonl("00980A")
+    assert len(rows) == 3
+    assert earliest == min(good_dates)

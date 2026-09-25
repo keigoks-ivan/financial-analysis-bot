@@ -45,6 +45,7 @@ import io
 import json
 import math
 import re
+import shutil
 import sys
 import time
 import zipfile
@@ -58,10 +59,32 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOLDINGS_DIR = REPO_ROOT / "data" / "active_etf" / "holdings"
 AUM_DIR = REPO_ROOT / "data" / "active_etf" / "aum"
+NAMES_PATH = REPO_ROOT / "data" / "active_etf" / "ticker_names.json"
 
 WEIGHT_SUM_MIN = 90.0
 WEIGHT_SUM_MAX = 101.0
 MIN_HOLDINGS = 10
+
+# ── 個別基金的股票權重合計容許帶(取代單一全域下限) ───────────────────────────
+# 大多數基金用全域 90-101% 就夠;但兩檔基金的策略設計本來就會讓股票權重合計
+# 落在 90% 以下,不是解析錯誤(2026-09-25 逐一核對原始回應確認,不是誤判):
+#   00985A 野村台灣50:追蹤台灣50強化指數,現金緩衝部位較大,實測 89.74%
+#   00406A 中信台灣收益:選擇權/期貨收益策略,股票是核心但非唯一曝險來源,
+#           實測股票僅 87.77%,另有台股期貨 22.6%+保證金 8.13%-選擇權 22.2%
+# 值一律 (min, max, note);note 會原樣寫進輸出 json 的 weight_band_note,供頁面
+# 顯示「這檔為什麼股票權重比較低」,不是靜默放寬驗證。
+FUND_WEIGHT_BANDS = {
+    "00985A": (85.0, 101.0, "追蹤台灣50強化指數,持有較大現金緩衝部位,股票權重常態低於90%"),
+    "00406A": (60.0, 101.0, "選擇權/期貨收益策略,股票為核心持倉但非唯一曝險來源,"
+                             "另有台股期貨與選擇權部位,股票權重常態低於90%"),
+}
+
+
+def weight_band_for(code):
+    """回傳 (min, max, note);note 為 None 代表用全域預設,沒有特殊原因。"""
+    if code in FUND_WEIGHT_BANDS:
+        return FUND_WEIGHT_BANDS[code]
+    return (WEIGHT_SUM_MIN, WEIGHT_SUM_MAX, None)
 
 
 class FetchError(Exception):
@@ -123,6 +146,11 @@ def _request(method, url, **kw):
     for attempt in range(3):
         try:
             r = s.request(method, url, **kw)
+            if 400 <= r.status_code < 500:
+                # 4xx 是伺服器明確拒絕(常見於回填時查詢超出歷史範圍的日期,如摩根對
+                # 查不到的日期回 404),重試沒有意義、只會拖慢回填;直接拋錯讓呼叫端
+                # 當「這個日期沒有資料」處理。5xx/連線錯誤才值得重試。
+                raise FetchError("{} 抓取失敗: HTTP {}".format(url, r.status_code))
             r.raise_for_status()
             return r
         except requests.RequestException as e:
@@ -217,6 +245,11 @@ def ticker_for(code, twse_codes, tpex_codes):
 # 合計驗證,90-101% 這個窄範圍會誤殺這種合法的槓桿 overlay,所以驗證範圍只套用在
 # 股票持股本身——這與 nctuwanglin/active-etf 參考碼的驗證設計(只驗 holdings,
 # 不含 other)一致,只是我們把範圍收更窄(90-101 vs 對方的 50-105)。
+#
+# 權重合計的容許帶改成「每檔基金各自的帶」(見 FUND_WEIGHT_BANDS),不再是單一
+# 全域下限——00985A/00406A 的低股票權重是策略設計使然,驗證的目的是抓解析錯誤
+# (權重尺度錯置、整批漏列),不是評斷策略。仍然 fail loudly:真的解析出問題
+# (代號重複、股數/權重非數值、持股太少)一律照樣拋錯,不因為有 band 就放寬。
 def validate_holdings(code, holdings, other):
     if len(holdings) < MIN_HOLDINGS:
         raise FetchError("{}: 持股僅 {} 檔,少於下限 {}".format(code, len(holdings), MIN_HOLDINGS))
@@ -230,9 +263,10 @@ def validate_holdings(code, holdings, other):
         if not (math.isfinite(h["shares"]) and math.isfinite(h["weight_pct"])):
             raise FetchError("{}: {} 股數/權重非有限數值".format(code, h["code"]))
     total = sum(h["weight_pct"] for h in holdings)
-    if not (WEIGHT_SUM_MIN <= total <= WEIGHT_SUM_MAX):
+    band_min, band_max, _note = weight_band_for(code)
+    if not (band_min <= total <= band_max):
         raise FetchError("{}: 股票持股權重合計 {:.2f}% 超出 {}-{}% 範圍"
-                          .format(code, total, WEIGHT_SUM_MIN, WEIGHT_SUM_MAX))
+                          .format(code, total, band_min, band_max))
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -263,10 +297,16 @@ def parse_nomura_entries(entries, code):
     }
 
 
-def fetch_nomura(code):
-    day = datetime.date.today()
-    for back in range(8):
-        q = (day - datetime.timedelta(days=back)).strftime("%Y-%m-%d")
+def fetch_nomura(code, target_date=None):
+    """target_date(YYYY-MM-DD)給定時只查那一天,查無資料回 None(供 backfill 用,
+    不是全部 8 天都試——backfill 呼叫端自己逐日往回掃)。不給則沿用「往回試 8 天
+    找最新一份」的原行為。"""
+    if target_date:
+        dates = [target_date]
+    else:
+        day = datetime.date.today()
+        dates = [(day - datetime.timedelta(days=back)).strftime("%Y-%m-%d") for back in range(8)]
+    for q in dates:
         r = http_post(NOMURA_TRADEINFO, json={"Type": 1, "Keyword": "", "FundNo": code, "Date": q},
                       headers={"Content-Type": "application/json"})
         if is_bot_challenge(r):
@@ -279,6 +319,8 @@ def fetch_nomura(code):
         if parsed:
             parsed["source_url"] = NOMURA_TRADEINFO
             return parsed
+    if target_date:
+        return None
     raise FetchError("nomura: {} 連續 8 日無持股資料".format(code))
 
 
@@ -356,14 +398,17 @@ def parse_allianz_entries(entries, code):
     }
 
 
-def fetch_allianz(code):
+def fetch_allianz(code, target_date=None):
     fund_map = _allianz_fund_map_load()
     fund_no = fund_map.get(code)
     if not fund_no:
         raise FetchError("allianz: {} 不在基金清單".format(code))
-    day = datetime.date.today()
-    for back in range(8):
-        q = (day - datetime.timedelta(days=back)).strftime("%Y-%m-%d")
+    if target_date:
+        dates = [target_date]
+    else:
+        day = datetime.date.today()
+        dates = [(day - datetime.timedelta(days=back)).strftime("%Y-%m-%d") for back in range(8)]
+    for q in dates:
         r = http_post(ALLIANZ_TRADEINFO, headers=_allianz_headers(),
                       json={"Type": 1, "Keyword": "", "FundNo": fund_no, "Date": q})
         try:
@@ -374,6 +419,8 @@ def fetch_allianz(code):
         if parsed:
             parsed["source_url"] = ALLIANZ_TRADEINFO
             return parsed
+    if target_date:
+        return None
     raise FetchError("allianz: {} 連續 8 日無持股資料".format(code))
 
 
@@ -421,21 +468,33 @@ def parse_president_pcf(d, code):
     }
 
 
-def fetch_president(code):
+def fetch_president(code, target_date=None):
+    """target_date 給定時走 specificDate=True 查歷史(該端點文件式參數,見模組頂
+    docstring);查無資料回 None。不給則沿用原行為(specificDate=False 查最新)。"""
     global _president_fund_map
     if _president_fund_map is None:
         _president_fund_map = parse_president_fund_map(http_get(PRESIDENT_PCF_PAGE).text)
     if code not in _president_fund_map:
         raise FetchError("president: {} 不在 fundList".format(code))
-    query_date = roc_date(datetime.date.today() + datetime.timedelta(days=3))
+    if target_date:
+        query_date = roc_date(datetime.date.fromisoformat(target_date))
+        specific = True
+    else:
+        query_date = roc_date(datetime.date.today() + datetime.timedelta(days=3))
+        specific = False
     r = http_post(PRESIDENT_GETPCF, json={"fundCode": _president_fund_map[code], "date": query_date,
-                                           "specificDate": False},
+                                           "specificDate": specific},
                   headers={"Referer": PRESIDENT_PCF_PAGE})
     try:
         d = r.json()
     except ValueError:
         raise FetchError("president: {} GetPCF 回非 JSON".format(code))
-    parsed = parse_president_pcf(d, code)
+    try:
+        parsed = parse_president_pcf(d, code)
+    except FetchError:
+        if target_date:
+            return None
+        raise
     parsed["source_url"] = PRESIDENT_GETPCF
     return parsed
 
@@ -579,7 +638,7 @@ def parse_fuhhwa_assets(d, code):
     }
 
 
-def fetch_fuhhwa(code):
+def fetch_fuhhwa(code, target_date=None):
     global _fuhhwa_fund_map
     if _fuhhwa_fund_map is None:
         _fuhhwa_fund_map = {(f.get("etf002") or "").strip(): f["fundID"]
@@ -587,14 +646,19 @@ def fetch_fuhhwa(code):
     if code not in _fuhhwa_fund_map:
         raise FetchError("fuhhwa: {} 不在 fundList".format(code))
     fund_id = _fuhhwa_fund_map[code]
-    day = datetime.date.today()
-    for back in range(8):
-        q = (day - datetime.timedelta(days=back)).strftime("%Y/%m/%d")
+    if target_date:
+        dates = [datetime.date.fromisoformat(target_date).strftime("%Y/%m/%d")]
+    else:
+        day = datetime.date.today()
+        dates = [(day - datetime.timedelta(days=back)).strftime("%Y/%m/%d") for back in range(8)]
+    for q in dates:
         d = http_get(FUHHWA_ASSETS, params={"fundID": fund_id, "qDate": q}).json()
         parsed = parse_fuhhwa_assets(d, code)
         if parsed:
             parsed["source_url"] = FUHHWA_ASSETS
             return parsed
+    if target_date:
+        return None
     raise FetchError("fuhhwa: {} 連續 8 日無持股資料".format(code))
 
 
@@ -613,7 +677,7 @@ def _ctbc_decode(resp):
     return json.loads(d) if isinstance(d, str) else d
 
 
-def fetch_ctbc(code):
+def fetch_ctbc(code, target_date=None):
     global _ctbc_token, _ctbc_fund_map
     if _ctbc_token is None:
         d = _ctbc_decode(http_post(CTBC_AUTH, params={"token": "www.ctbcinvestments.com"}, json={}))
@@ -625,14 +689,19 @@ def fetch_ctbc(code):
     if code not in _ctbc_fund_map:
         raise FetchError("ctbc: {} 不在 ETFList".format(code))
     fid = _ctbc_fund_map[code]
-    day = datetime.date.today()
-    for back in range(8):
-        q = (day - datetime.timedelta(days=back)).strftime("%Y/%m/%d")
+    if target_date:
+        dates = [datetime.date.fromisoformat(target_date).strftime("%Y/%m/%d")]
+    else:
+        day = datetime.date.today()
+        dates = [(day - datetime.timedelta(days=back)).strftime("%Y/%m/%d") for back in range(8)]
+    for q in dates:
         d = _ctbc_decode(http_post(CTBC_HOLDING, params={"token": _ctbc_token}, json={"FID": fid, "StartDate": q}))
         parsed = parse_ctbc_holding(d, code)
         if parsed:
             parsed["source_url"] = CTBC_HOLDING
             return parsed
+    if target_date:
+        return None
     raise FetchError("ctbc: {} 連續 8 日無持股資料".format(code))
 
 
@@ -873,9 +942,26 @@ def parse_ab_holdings(payload, code):
     return as_of, holdings, other
 
 
-def fetch_ab(code):
+def fetch_ab(code, target_date=None):
+    """target_date(YYYY-MM-DD)給定時直接查 holdings(略過 basket,因為 basket 只
+    回「最新一份」、沒有歷史查詢);2026-09-25 實測 holdings 端點接受 date 參數且
+    格式須為 MM/DD/YYYY(與正常流程用 basket.asOfDate 的 YYYY-MM-DD 不同),約
+    60-90 天內可查到。查無資料回 None。target_date 這條路徑沒有 basket,故
+    nav 留空(歷史快照本就沒有官方同日淨值可核對,不冒充)。"""
     isin = isin_for(code)
     base = AB_BASE.format(isin)
+    if target_date:
+        q = datetime.date.fromisoformat(target_date).strftime("%m/%d/%Y")
+        try:
+            payload = http_get(base + "/holdings", params={"date": q}).json()
+        except (ValueError, FetchError):
+            return None
+        try:
+            as_of, holdings, other = parse_ab_holdings(payload, code)
+        except FetchError:
+            return None
+        return {"as_of": as_of, "holdings": holdings, "other": other, "nav": {},
+                "source_url": base + "/holdings"}
     try:
         basket = http_get(base + "/basket").json()
     except ValueError:
@@ -988,10 +1074,17 @@ def _jpmorgan_download(isin, kind, date):
     return r.content
 
 
-def fetch_jpmorgan(code):
+def fetch_jpmorgan(code, target_date=None):
     isin = isin_for(code)
     today = datetime.date.today()
     holdings = as_of = None
+    if target_date:
+        try:
+            as_of, holdings = parse_jpmorgan_holdings_xlsx(
+                read_xlsx(_jpmorgan_download(isin, "holding_pcf", target_date)), code)
+        except FetchError:
+            return None
+        return {"as_of": as_of, "holdings": holdings, "other": [], "nav": {}, "source_url": JPMORGAN_EXCEL}
     for back in range(8):
         d = (today - datetime.timedelta(days=back)).strftime("%Y-%m-%d")
         try:
@@ -1040,9 +1133,21 @@ def _fubon_pcf_value(page_html, label):
     return to_num(m.group(1)) if m else None
 
 
-def fetch_fubon(code):
-    r = http_get(FUBON_ASSETS_URL, params={"stkId": code, "lan": "TW"})
-    as_of, holdings = parse_fubon_assets(r.text, code)
+def fetch_fubon(code, target_date=None):
+    """target_date 給定時帶 ddate 參數查歷史(2026-09-25 實測可用,約 90 天內;
+    超過範圍回 200 但無資料列,回 None 供 backfill 判斷「這天查不到」)。"""
+    params = {"stkId": code, "lan": "TW"}
+    if target_date:
+        params["ddate"] = datetime.date.fromisoformat(target_date).strftime("%Y/%m/%d")
+    r = http_get(FUBON_ASSETS_URL, params=params)
+    try:
+        as_of, holdings = parse_fubon_assets(r.text, code)
+    except FetchError:
+        if target_date:
+            return None
+        raise
+    if target_date:
+        return {"as_of": as_of, "holdings": holdings, "other": [], "nav": {}, "source_url": FUBON_ASSETS_URL}
     try:
         pcf_html = http_get(FUBON_PCF_URL, params={"stkId": code, "lan": "TW"}).text
         nav = {"scale": _fubon_pcf_value(pcf_html, "基金淨資產價值"),
@@ -1163,13 +1268,19 @@ def parse_firstsec_meta(rows):
             "nav_per_unit": pick("每受益權單位淨資產價值"), "holders": None}
 
 
-def fetch_firstsec(code):
+def fetch_firstsec(code, target_date=None):
     fund_id = FIRSTSEC_FUND_IDS.get(code)
     if not fund_id:
         raise FetchError("firstsec: {} 無已知 fund_id(需到 FundDetail.aspx 查出並補進 FIRSTSEC_FUND_IDS)".format(code))
-    as_of, holdings, other = parse_firstsec_hd(_firstsec_call("Get_hd", fund_id), code)
+    date_param = target_date or ""
     try:
-        meta = parse_firstsec_meta(_firstsec_call("Get_BuySellA", fund_id))
+        as_of, holdings, other = parse_firstsec_hd(_firstsec_call("Get_hd", fund_id, date_param), code)
+    except FetchError:
+        if target_date:
+            return None
+        raise
+    try:
+        meta = parse_firstsec_meta(_firstsec_call("Get_BuySellA", fund_id, date_param))
     except FetchError:
         meta = {}
     return {"as_of": as_of, "holdings": holdings, "other": other, "nav": meta,
@@ -1238,7 +1349,6 @@ ADAPTERS = {
     "firstsec": fetch_firstsec, "sinopac": fetch_sinopac,
 }
 
-
 # ── 正規化 + 儲存 ─────────────────────────────────────────────────────────────
 def normalize_fund(code, raw, twse_codes, tpex_codes):
     """raw(各 fetch_* 回傳)→ 任務規格的正規化 schema,並驗證。"""
@@ -1255,29 +1365,107 @@ def normalize_fund(code, raw, twse_codes, tpex_codes):
     if not other and stock_sum < 99.5:
         other = [{"type": "unclassified", "name": "現金/期貨/其他(來源未逐項揭露)",
                    "weight_pct": round(100.0 - stock_sum, 4)}]
+    _, _, note = weight_band_for(code)
     return {
         "code": code, "name": info["name"], "issuer": info["issuer"],
         "as_of": raw["as_of"], "holdings": holdings, "other": other,
         "nav": raw.get("nav") or {}, "source_url": raw.get("source_url"),
+        "weight_band_note": note,
         "fetched_at": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
     }
 
 
-def save_snapshot(normalized):
-    """存到 data/active_etf/holdings/{as_of}/{code}.json;內容與已存檔案相同就跳過(idempotent)。"""
-    day_dir = HOLDINGS_DIR / normalized["as_of"]
-    day_dir.mkdir(parents=True, exist_ok=True)
-    path = day_dir / "{}.json".format(normalized["code"])
-    comparable = {k: v for k, v in normalized.items() if k != "fetched_at"}
-    if path.exists():
+# ── 儲存:每檔一個 append-only JSONL(data/active_etf/holdings/{code}.jsonl) ──
+# public repo 要精簡,不用「每天一個目錄、每檔一個完整 JSON」(phase 1 的做法,
+# 22 檔 × 250 個交易日/年會膨脹成數千個小檔)。改成單一 append-only 檔案,一行一個
+# as_of 快照,持股與 other 都壓成緊湊陣列(拿掉逐列重複的鍵名與公司名稱):
+#   holdings: [[ticker, shares, weight_pct], ...]
+#   other:    [[type, name, weight_pct], ...]
+# 公司名稱不逐行重複存——另外維護 data/active_etf/ticker_names.json(ticker→最新
+# 已知中文名稱,全站共用一份、只存最新值,不是時序)供頁面顯示用,見
+# update_ticker_names()。只有「持股組成」(holdings/other 的內容,不含 nav/
+# source_url/fetched_at)相對上一行真的變了才 append 一行——同一天重跑、或連續
+# 幾天持股不變,都不會產生新行,這是「only write a line when holdings changed」
+# 的字面實作。nav/AUM 的每日時序改用 data/active_etf/aum/{date}.json(TWSE 官方
+# 數字)追蹤,不在這裡重複記。
+def compact_holdings(holdings):
+    return [[h["ticker"], h["shares"], h["weight_pct"]] for h in holdings]
+
+
+def compact_other(other):
+    return [[o["type"], o["name"], o["weight_pct"]] for o in other]
+
+
+def expand_holdings(rows, names=None):
+    """compact [[ticker,shares,weight_pct],...] → [{ticker,shares,weight_pct,name}]。
+
+    names(ticker→name dict)可選;沒給就 name 留 None,供只需要數字的呼叫端用。"""
+    names = names or {}
+    return [{"ticker": r[0], "shares": r[1], "weight_pct": r[2], "name": names.get(r[0])}
+            for r in rows]
+
+
+def expand_other(rows):
+    return [{"type": r[0], "name": r[1], "weight_pct": r[2]} for r in rows]
+
+
+def _fund_jsonl_path(code):
+    return HOLDINGS_DIR / "{}.jsonl".format(code)
+
+
+def read_fund_jsonl(code):
+    """讀 {code}.jsonl 全部快照(已按檔案順序=時間順序),每行 parse 成 dict。檔案不存在回空列表。"""
+    path = _fund_jsonl_path(code)
+    if not path.exists():
+        return []
+    out = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            out.append(json.loads(line))
+    return out
+
+
+def update_ticker_names(holdings):
+    """把這次抓到的 {ticker: name} 併入 data/active_etf/ticker_names.json(只存最新值)。"""
+    names = {}
+    if NAMES_PATH.exists():
         try:
-            existing = json.loads(path.read_text(encoding="utf-8"))
-            existing_comparable = {k: v for k, v in existing.items() if k != "fetched_at"}
-            if existing_comparable == comparable:
-                return "unchanged", path
+            names = json.loads(NAMES_PATH.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
-            pass
-    path.write_text(json.dumps(normalized, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            names = {}
+    changed = False
+    for h in holdings:
+        if h["name"] and names.get(h["ticker"]) != h["name"]:
+            names[h["ticker"]] = h["name"]
+            changed = True
+    if changed:
+        NAMES_PATH.parent.mkdir(parents=True, exist_ok=True)
+        NAMES_PATH.write_text(
+            json.dumps(dict(sorted(names.items())), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def append_snapshot(normalized):
+    """比對 {code}.jsonl 最後一行的持股組成;沒變就跳過,變了(或檔案是空的)才 append 一行。
+
+    回傳 (status, path);status 為 'written'（含首次寫入）或 'unchanged'。"""
+    code = normalized["code"]
+    path = _fund_jsonl_path(code)
+    compact = {"as_of": normalized["as_of"],
+               "holdings": compact_holdings(normalized["holdings"]),
+               "other": compact_other(normalized["other"])}
+    existing = read_fund_jsonl(code)
+    if existing:
+        last = existing[-1]
+        if last.get("holdings") == compact["holdings"] and last.get("other") == compact["other"]:
+            update_ticker_names(normalized["holdings"])  # 名稱表仍可能有新股票改名,照更新
+            return "unchanged", path
+    record = dict(compact, nav=normalized.get("nav") or {}, source_url=normalized.get("source_url"),
+                  weight_band_note=normalized.get("weight_band_note"), fetched_at=normalized["fetched_at"])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    update_ticker_names(normalized["holdings"])
     return "written", path
 
 
@@ -1317,7 +1505,7 @@ def run(codes=None, skip_aum=False, pace_sec=1.5):
         try:
             raw = adapter(code)
             normalized = normalize_fund(code, raw, twse_codes, tpex_codes)
-            status, path = save_snapshot(normalized)
+            status, path = append_snapshot(normalized)
             stock_sum = sum(h["weight_pct"] for h in normalized["holdings"])
             other_sum = sum(o["weight_pct"] for o in normalized["other"])
             results.append({
@@ -1352,16 +1540,154 @@ def run(codes=None, skip_aum=False, pace_sec=1.5):
     return results
 
 
+# ── 遷移:舊版「每天一個目錄」→ 新版 append-only jsonl(一次性,遷移完刪舊目錄)──
+def migrate_legacy_holdings():
+    """把 phase 1 的 data/active_etf/holdings/{date}/{code}.json 逐檔併入
+    data/active_etf/holdings/{code}.jsonl(按 as_of 由舊到新 append),然後刪掉
+    舊的逐日目錄。冪等:jsonl 已有同內容的最後一行就不重複寫(沿用 append_snapshot
+    的比對邏輯)。回傳遷移的 (code, as_of) 清單。"""
+    by_code = {}
+    if not HOLDINGS_DIR.exists():
+        return []
+    for day_dir in sorted(p for p in HOLDINGS_DIR.iterdir() if p.is_dir()):
+        for f in sorted(day_dir.glob("*.json")):
+            code = f.stem
+            old = json.loads(f.read_text(encoding="utf-8"))
+            by_code.setdefault(code, []).append(old)
+    migrated = []
+    for code, snapshots in by_code.items():
+        snapshots.sort(key=lambda d: d["as_of"])
+        for old in snapshots:
+            _, _, note = weight_band_for(code)
+            normalized = {
+                "code": old["code"], "name": old.get("name"), "issuer": old.get("issuer"),
+                "as_of": old["as_of"], "holdings": old["holdings"], "other": old.get("other", []),
+                "nav": old.get("nav") or {}, "source_url": old.get("source_url"),
+                "weight_band_note": note, "fetched_at": old.get("fetched_at", ""),
+            }
+            status, _ = append_snapshot(normalized)
+            if status == "written":
+                migrated.append((code, old["as_of"]))
+    for day_dir in sorted(p for p in HOLDINGS_DIR.iterdir() if p.is_dir()):
+        shutil.rmtree(day_dir)
+    return migrated
+
+
+# ── 回補歷史(backfill)──────────────────────────────────────────────────────
+# 只有接受單日查詢參數的投信才支援(見各 fetch_* 的 target_date 參數);其餘(群益/
+# 台新/兆豐/國泰/聯博/凱基/永豐)官方端點只給「最新一份」,無法回補,原樣跳過。
+# 國泰的 GetIndexStockWeights 沒有日期參數(權重恆為最新),若硬用歷史 SearchDate
+# 配最新權重會把股票清單與權重錯配,寧可不做也不要生出錯的歷史資料。
+BACKFILL_SUPPORTED = {"nomura", "allianz", "president", "fuhhwa", "ctbc", "firstsec", "jpmorgan", "fubon"}
+
+
+def backfill_fund(code, pace_sec=1.2, max_days=560, max_consecutive_miss=10, verbose=True):
+    """從目前 jsonl 最早的 as_of 往回逐日查,直到連續 max_consecutive_miss 天查無
+    資料(視為到達來源保留期的邊界,不是碰到假日——正常假日/週末最長連續無資料
+    是農曆春節,約 9-10 天,故門檻抓 10 天)或碰到 max_days 硬上限。
+
+    回傳 (n_new_snapshots, earliest_date_after)。對不支援回補的投信直接回 (0, None)。"""
+    info = FUND_REGISTRY[code]
+    adapter_name = info["adapter"]
+    if adapter_name not in BACKFILL_SUPPORTED:
+        return 0, None
+    fetch_fn = ADAPTERS[adapter_name]
+    existing = read_fund_jsonl(code)
+    twse_codes, tpex_codes = load_market_codes()
+    cursor = (datetime.date.fromisoformat(existing[0]["as_of"]) if existing
+              else datetime.date.today()) - datetime.timedelta(days=1)
+    hard_floor = datetime.date.today() - datetime.timedelta(days=max_days)
+    new_records = []
+    consecutive_miss = 0
+    tried = 0
+    while cursor >= hard_floor and consecutive_miss < max_consecutive_miss and tried < max_days:
+        tried += 1
+        q = cursor.strftime("%Y-%m-%d")
+        try:
+            raw = fetch_fn(code, target_date=q)
+        except FetchError as e:
+            if verbose:
+                print("backfill {} {}: 錯誤(略過,不計入連續無資料) {}".format(code, q, e), file=sys.stderr)
+            raw = "error"  # 網路/格式錯誤不當作「到達邊界」,但也不重試,直接往前一天
+        time.sleep(pace_sec)
+        if raw and raw != "error":
+            try:
+                holdings = [{"ticker": ticker_for(h["code"], twse_codes, tpex_codes), "name": h["name"],
+                             "shares": h["shares"], "weight_pct": round(h["weight_pct"], 4)}
+                            for h in raw["holdings"]]
+                other = [{"type": o["type"], "name": o["name"], "weight_pct": round(o["weight_pct"], 4)}
+                         for o in raw.get("other", [])]
+                validate_holdings(code, raw["holdings"], raw.get("other", []))
+                stock_sum = sum(h["weight_pct"] for h in holdings)
+                if not other and stock_sum < 99.5:
+                    other = [{"type": "unclassified", "name": "現金/期貨/其他(來源未逐項揭露)",
+                              "weight_pct": round(100.0 - stock_sum, 4)}]
+                new_records.append({"as_of": raw["as_of"], "holdings": compact_holdings(holdings),
+                                     "other": compact_other(other), "nav": raw.get("nav") or {},
+                                     "source_url": raw.get("source_url"), "fetched_at": None})
+                update_ticker_names(holdings)
+                consecutive_miss = 0
+            except FetchError as e:
+                if verbose:
+                    print("backfill {} {}: 驗證失敗(略過) {}".format(code, q, e), file=sys.stderr)
+                consecutive_miss = 0  # 有回應但沒過驗證,不算「查無資料」,不推進邊界計數
+        elif raw is None:
+            consecutive_miss += 1
+        cursor -= datetime.timedelta(days=1)
+
+    if not new_records:
+        return 0, (existing[0]["as_of"] if existing else None)
+
+    merged = new_records[::-1] + existing  # new_records 是新到舊蒐集的,反轉成舊到新再接原本的
+    merged.sort(key=lambda r: r["as_of"])
+    deduped = []
+    for r in merged:
+        if deduped and deduped[-1]["holdings"] == r["holdings"] and deduped[-1]["other"] == r["other"]:
+            continue
+        deduped.append(r)
+    _, _, note = weight_band_for(code)
+    path = _fund_jsonl_path(code)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        for r in deduped:
+            r = dict(r, weight_band_note=note)
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    if verbose:
+        print("backfill {}: +{} 筆(嘗試 {} 天),回補到 {}".format(
+            code, len(deduped) - len(existing), tried, deduped[0]["as_of"]))
+    return len(deduped) - len(existing), deduped[0]["as_of"]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--only", help="逗號分隔的代號子集,如 00980A,00981A")
     ap.add_argument("--skip-aum", action="store_true", help="跳過 TWSE AUM/受益人數抓取")
+    ap.add_argument("--migrate-legacy", action="store_true", help="一次性遷移 phase1 逐日目錄成 jsonl,然後結束")
+    ap.add_argument("--backfill", action="store_true", help="對支援單日查詢的投信回補歷史,然後結束(不抓「今日」)")
+    ap.add_argument("--backfill-max-days", type=int, default=560)
+    ap.add_argument("--backfill-pace", type=float, default=1.2)
     args = ap.parse_args()
     codes = [c.strip() for c in args.only.split(",")] if args.only else None
     if codes:
         for c in codes:
             if c not in FUND_REGISTRY:
                 ap.error("未知代號: {}".format(c))
+
+    if args.migrate_legacy:
+        migrated = migrate_legacy_holdings()
+        print("遷移完成: {} 筆快照併入 jsonl".format(len(migrated)))
+        return 0
+
+    if args.backfill:
+        n_fail = 0
+        for code in (codes or list(FUND_REGISTRY)):
+            try:
+                backfill_fund(code, pace_sec=args.backfill_pace, max_days=args.backfill_max_days)
+            except Exception as e:  # noqa: BLE001 — backfill 不該讓一檔的例外中斷整批
+                n_fail += 1
+                print("backfill {} 失敗: {}".format(code, e), file=sys.stderr)
+        return 1 if n_fail else 0
+
     results = run(codes=codes, skip_aum=args.skip_aum)
     n_ok = sum(1 for r in results if r["status"] in ("written", "unchanged"))
     n_fail = sum(1 for r in results if r["status"] == "failed")

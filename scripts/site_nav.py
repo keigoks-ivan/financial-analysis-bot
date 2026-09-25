@@ -172,6 +172,7 @@ MENU = {
         ("thub", "/t/", "個股研究"),
         ("sdash", "/stock-dash/", "個股儀表板"),
         ("etfd", "/etf-dash/", "ETF 儀表板"),
+        ("aetf", "/active-etf/", "主動式 ETF"),  # 2026-09-25 新增，緊接 ETF 儀表板之後
         ("id", "/id/", "產業研究"),
         ("ideas", "/ideas/", "投資想法"),
         ("tier", "/id/tier_matrix.html", "Tier Matrix"),
@@ -335,6 +336,7 @@ PREFIX_ACTIVE = [
     ("t/", ("research", "thub")),  # 個股研究（2026-07-11 新增；2026-08-20 改名）
     ("stock-dash/", ("research", "sdash")),  # 個股儀表板（2026-09-23 新增）
     ("etf-dash/", ("research", "etfd")),  # ETF 儀表板（2026-09-24 新增）
+    ("active-etf/", ("research", "aetf")),  # 主動式 ETF（2026-09-25 新增）
     ("ideas/", ("research", "ideas")),  # 投資想法（2026-09-23 新增）
     ("research/synthesis/", ("research", "thub")),
     ("research/", ("research", "thub")),
