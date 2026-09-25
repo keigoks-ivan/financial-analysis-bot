@@ -463,7 +463,11 @@ def build_consensus(fund_results, window_key):
         r["net_funds"] = r["n_funds_buy"] - r["n_funds_sell"]
     bought = sorted([r for r in rows if r["net_funds"] > 0], key=lambda r: (r["net_funds"], r["aum_weighted_score"]), reverse=True)
     sold = sorted([r for r in rows if r["net_funds"] < 0], key=lambda r: (r["net_funds"], -r["aum_weighted_score"]))
-    return {"bought": bought[:20], "sold": sold[:20]}
+    # 覆蓋率:這個 window 有足夠歷史快照可比較(moves[window_key] 非 None)的基金數,
+    # 供頁面告知讀者「這批 consensus 數字是幾檔基金算出來的」,不是全部 22 檔。
+    n_with_history = sum(1 for f in fund_results if (f.get("moves") or {}).get(window_key))
+    return {"bought": bought[:20], "sold": sold[:20],
+            "n_funds_with_history": n_with_history, "n_funds_total": len(fund_results)}
 
 
 # ── overview + main ───────────────────────────────────────────────────────

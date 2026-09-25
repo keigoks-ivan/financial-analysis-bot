@@ -146,7 +146,7 @@ def test_build_consensus_sold_bucket_for_net_negative():
 def test_build_consensus_skips_funds_with_no_moves_for_window():
     f1 = _fund_result("00980A", 200.0, None)
     out = bae.build_consensus([f1], "week")
-    assert out == {"bought": [], "sold": []}
+    assert out == {"bought": [], "sold": [], "n_funds_with_history": 0, "n_funds_total": 1}
 
 
 # ── load_0050_weights / benchmark rows: file-missing graceful behavior ────

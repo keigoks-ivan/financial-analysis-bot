@@ -28,18 +28,20 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .cover-left .px{font-family:var(--mono);font-size:1.9rem;font-weight:700;color:#fff;display:block;margin-top:6px}
 .cover-left .chg{font-family:var(--mono);font-size:1rem;font-weight:600;margin-left:10px}
 .cover-left .chg.pos{color:#5fd08a} .cover-left .chg.neg{color:#ff8f87}
-.switcher{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-.sw-group{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
-.sw-group-label{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.05em;color:rgba(255,255,255,.5);margin-right:2px;white-space:nowrap}
-.switcher a{font-family:var(--mono);font-size:11.5px;font-weight:600;padding:.4rem .7rem;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.82);text-decoration:none;white-space:nowrap}
-.switcher a.active{background:var(--gold-deep);border-color:var(--gold-deep);color:#fff}
-.switcher a:hover{border-color:#fff;color:#fff}
-.switcher a.ov-pill{border-color:var(--gold-deep);color:#fff;font-weight:700}
-.mobile-fund-select{display:none}
-.mobile-fund-select select{width:100%;font-family:var(--mono);font-size:13px;font-weight:600;padding:.55rem .7rem;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);background:#0d2244;color:#fff}
+/* 2026-09-25:22 檔基金分 15 家投信,原本一投信一行的 pill switcher 疊出 ~700px
+   高度(見任務記錄)。改成單一緊湊控制:一列「總覽 + AUM 前5大」quick-link pill
+   (可能同時觸及的基金,一眼看到)+ 一個依投信 optgroup 分組的 <select> 涵蓋全部
+   22 檔——select 在所有寬度都顯示,不再是「手機專用」。 */
+.switcher-compact{display:flex;flex-direction:column;gap:8px;align-items:flex-end;width:100%;max-width:380px}
+.quick-links{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.quick-links a{font-family:var(--mono);font-size:11.5px;font-weight:600;padding:.4rem .7rem;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.82);text-decoration:none;white-space:nowrap}
+.quick-links a.active{background:var(--gold-deep);border-color:var(--gold-deep);color:#fff}
+.quick-links a:hover{border-color:#fff;color:#fff}
+.quick-links a.ov-pill{border-color:var(--gold-deep);color:#fff;font-weight:700}
+#fundSelect{width:100%;font-family:var(--mono);font-size:13px;font-weight:600;padding:.55rem .7rem;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);background:#0d2244;color:#fff}
 @media(max-width:680px){
-  .switcher{display:none}
-  .mobile-fund-select{display:block;margin-top:10px}
+  .switcher-compact{align-items:stretch;max-width:none}
+  .quick-links{justify-content:flex-start}
 }
 .ov-link-row{margin:14px 20px 0}
 .ov-link{display:inline-block;font-family:var(--mono);font-size:12px;font-weight:700;padding:.35rem .8rem;border-radius:var(--r);background:var(--gold-deep);color:#fff;text-decoration:none}
@@ -47,7 +49,6 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .ov-th-sort{cursor:pointer;user-select:none}
 .ov-th-sort:hover{background:var(--x-navy-2)}
 .ov-th-sort .arrow{opacity:.55;margin-left:3px;font-size:9px}
-.ov-group-row td{background:var(--x-navy) !important;color:#fff !important;font-size:11px;font-weight:600;padding:.35rem .7rem}
 .ov-flag{color:var(--warn);font-size:10px;margin-left:4px;cursor:help}
 .ov-bench-row td{background:#efe6d2 !important;font-weight:600}
 
@@ -224,13 +225,12 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   </div>
 </header>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
-<div class="wrap" style="padding-top:0"></div>
 <header class="cover">
   <div class="cover-inner">
     <div class="cover-left" id="coverLeft"></div>
-    <div>
-      <div class="switcher" id="switcher"></div>
-      <div class="mobile-fund-select"><select id="fundSelect" aria-label="選擇基金"></select></div>
+    <div class="switcher-compact">
+      <div class="quick-links" id="quickLinks"></div>
+      <select id="fundSelect" aria-label="選擇基金"></select>
     </div>
   </div>
 </header>
@@ -241,7 +241,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 <section class="exhibit" id="ovExhibit">
   <div class="ex-label">總覽</div>
   <div class="ex-title">22 檔台股主動式 ETF + 2 檔基準</div>
-  <div class="ex-sub">依投信分組；點欄位標題可排序（分組內排序，分組順序不變）；元大台灣50／台灣加權指數兩列基準不參與經理人異動統計</div>
+  <div class="ex-sub">依資產規模（AUM）由大到小排序；點欄位標題可重新排序；元大台灣50／台灣加權指數兩列基準固定在表格最下方（底色區分），不參與排序與經理人異動統計</div>
   <div class="conclusion" id="ovSummarySentence"></div>
   <div class="callout-tiles" id="ovTiles"></div>
 </section>
@@ -260,7 +260,8 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 <section class="exhibit" id="ovMovesExhibit">
   <div class="ex-label">EXHIBIT 0.5</div>
   <div class="ex-title">跨基金一致行動（consensus moves）</div>
-  <div class="ex-sub">統計本週/本月哪些個股被多檔主動式 ETF 同向加碼或減碼——機械計數，不代表建議；每列「淨買超基金數」＝加碼/新進檔數 − 減碼/出清檔數</div>
+  <div class="ex-sub">統計本週/本月哪些個股被多檔主動式 ETF 同向加碼或減碼——機械計數，不代表建議；每列「淨買超基金數」＝加碼/新進檔數 − 減碼/出清檔數。加碼/減碼判斷優先用「股數 ÷ 已發行受益權單位數」比值（見方法論），是股數方向，不是權重方向——股價劇烈波動時，權重(weight_pct)看起來的漲跌可能跟股數增減方向相反</div>
+  <div class="daily-line" id="ovMovesCoverage"></div>
   <div id="ovMovesTabs" style="display:flex;gap:6px;margin-bottom:8px">
     <button type="button" class="ov-moves-tab active" data-w="week" style="background:var(--x-navy);color:#fff;border:0;border-radius:var(--r);padding:.35rem .8rem;font-size:12px;cursor:pointer">本週</button>
     <button type="button" class="ov-moves-tab" data-w="month" style="background:var(--card);color:var(--body);border:1px solid var(--line);border-radius:var(--r);padding:.35rem .8rem;font-size:12px;cursor:pointer">本月</button>
@@ -342,6 +343,7 @@ function cssVar(name){ return getComputedStyle(document.documentElement).getProp
 var COL = {
   pos: cssVar('--pos')||'#15803d', neg: cssVar('--neg')||'#b91c1c',
   navy: cssVar('--x-navy')||'#0d2244', gold: cssVar('--gold-deep')||'#8f6d2c',
+  blue: cssVar('--x-blue')||'#3f6a9c',
   line: cssVar('--line')||'#e5dfd0', sec: cssVar('--sec')||'#6b7a92', muted: cssVar('--muted')||'#9aa7b8'
 };
 
@@ -376,16 +378,18 @@ function groupsFromOverview(ov){
   return order.map(function(issuer){ return {label:issuer, funds:byIssuer[issuer]}; });
 }
 
-function renderNav(activeKey, groups){
-  var switcherHtml = '<a class="ov-pill'+(activeKey==='OVERVIEW'?' active':'')+'" href="?view=overview">總覽</a>' +
-    groups.map(function(g){
-      return '<div class="sw-group"><span class="sw-group-label">'+esc(g.label)+'</span>' +
-        g.funds.map(function(f){
-          var cls = f.key===activeKey ? ' active' : '';
-          return '<a class="'+cls.trim()+'" href="?etf='+encodeURIComponent(f.key)+'">'+esc(f.label)+'</a>';
-        }).join('') + '</div>';
+function renderNav(activeKey, ov){
+  var groups = groupsFromOverview(ov);
+  // quick-link 列:總覽 + AUM 前 5 大基金(ov.funds 本身已由 build_active_etf.py
+  // 依 aum_100m_twd 降冪排序,這裡再保守排一次不依賴呼叫端順序)。
+  var top5 = (ov.funds||[]).filter(function(f){return !f.is_benchmark;})
+    .slice().sort(function(a,b){return (b.aum_100m_twd||0)-(a.aum_100m_twd||0);}).slice(0,5);
+  var quickHtml = '<a class="ov-pill'+(activeKey==='OVERVIEW'?' active':'')+'" href="?view=overview">總覽</a>' +
+    top5.map(function(f){
+      var cls = f.code===activeKey ? ' active' : '';
+      return '<a class="'+cls.trim()+'" href="?etf='+encodeURIComponent(f.code)+'" title="'+esc(f.name)+'">'+esc(f.code)+'</a>';
     }).join('');
-  document.getElementById('switcher').innerHTML = switcherHtml;
+  document.getElementById('quickLinks').innerHTML = quickHtml;
 
   var selectHtml = '<option value="OVERVIEW"'+(activeKey==='OVERVIEW'?' selected':'')+'>總覽</option>' +
     groups.map(function(g){
@@ -610,6 +614,7 @@ function render(d){
 // ── 總覽 ─────────────────────────────────────────────────────────────────
 var OV_COLUMNS = [
   {key:'label', label:'基金', numeric:false, sortable:false},
+  {key:'issuer', label:'投信', numeric:false, lo:true},
   {key:'eps_chg_pct_30d', label:'EPS 1M', full:'EPS 變動（1個月）', numeric:true, lo:true},
   {key:'eps_chg_pct_90d', label:'EPS 3M', full:'EPS 變動（3個月）', numeric:true, bar:true},
   {key:'price_chg_pct_90d', label:'股價 3M', full:'股價漲跌（3個月）', numeric:true},
@@ -618,7 +623,12 @@ var OV_COLUMNS = [
   {key:'aum_100m_twd', label:'AUM(億)', full:'資產規模（億元）', numeric:true, lo:true},
   {key:'active_share_vs_0050_pct', label:'Active Share', full:'Active Share vs 元大台灣50', numeric:true, lo:true}
 ];
-var ovState = {groups:null, sortKey:null, sortDir:1};
+// 2026-09-25:22 檔分 15 家投信,原本依投信分組(每組 1-3 檔)表格太高——改成
+// 單一 flat list,預設依 AUM 降冪(ov.funds 本身已由 build_active_etf.py 排好,
+// 這裡防禦性再排一次);投信改成一個可排序欄位(見 OV_COLUMNS)。0050/台灣加權
+// 指數兩檔基準永遠釘在最下面、視覺上加底色區分(.ov-bench-row),不參與排序、
+// 不受點欄位排序影響。
+var ovState = {rows:null, benchRows:null, sortKey:null, sortDir:1};
 var OV_BAR_SCALE = {};
 function computeBarScale(ov){
   var maxEps = 0, maxPe = 0;
@@ -645,6 +655,7 @@ function ovRowHtml(row){
     ? ovFundLabelHtml(row.name, row.code)
     : '<a href="?etf='+encodeURIComponent(row.code)+'">'+ovFundLabelHtml(row.name, row.code)+'</a>';
   return '<tr class="'+(isBench?'ov-bench-row':'')+'"><td>'+nameCell+'</td>'+
+    '<td class="ov-col-lo">'+esc(isBench?'—':(row.issuer||'—'))+'</td>'+
     '<td class="num ov-col-lo">'+fmtPctColored(row.eps_chg_pct_30d)+'</td>'+
     '<td class="num">'+divBarHtml(row.eps_chg_pct_90d,'eps_chg_pct_90d')+'</td>'+
     '<td class="num">'+fmtPctColored(row.price_chg_pct_90d)+'</td>'+
@@ -656,27 +667,21 @@ function ovRowHtml(row){
 function renderOverviewTbody(){
   var body = document.getElementById('ovTableBody');
   if(!body) return;
-  var html = '';
-  ovState.groups.forEach(function(g){
-    html += '<tr class="ov-group-row"><td colspan="'+OV_COLUMNS.length+'">'+esc(g.label)+'</td></tr>';
-    html += g.rows.map(ovRowHtml).join('');
-  });
-  body.innerHTML = html;
+  body.innerHTML = ovState.rows.map(ovRowHtml).join('') + ovState.benchRows.map(ovRowHtml).join('');
 }
-function sortOverviewGroups(key){
+function sortOverview(key){
   if(!OV_COLUMNS.find(function(c){return c.key===key && c.sortable!==false;})) return;
   ovState.sortDir = (ovState.sortKey === key) ? -ovState.sortDir : 1;
   ovState.sortKey = key;
-  ovState.groups.forEach(function(g){
-    g.rows.sort(function(a, b){
-      var av = a[key], bv = b[key];
-      if(av==null && bv==null) return 0;
-      if(av==null) return 1;
-      if(bv==null) return -1;
-      if(av < bv) return -1 * ovState.sortDir;
-      if(av > bv) return 1 * ovState.sortDir;
-      return 0;
-    });
+  // 只排真正的基金列;兩列基準永遠釘在最下面、不參與排序(見 ovState 註解)。
+  ovState.rows.sort(function(a, b){
+    var av = a[key], bv = b[key];
+    if(av==null && bv==null) return 0;
+    if(av==null) return 1;
+    if(bv==null) return -1;
+    if(av < bv) return -1 * ovState.sortDir;
+    if(av > bv) return 1 * ovState.sortDir;
+    return 0;
   });
   renderOverviewHeader();
   renderOverviewTbody();
@@ -692,7 +697,7 @@ function renderOverviewHeader(){
   var tbl = document.getElementById('ovTable');
   tbl.innerHTML = thead + '<tbody id="ovTableBody"></tbody>';
   tbl.querySelectorAll('.ov-th-sort').forEach(function(th){
-    th.addEventListener('click', function(){ sortOverviewGroups(th.getAttribute('data-key')); });
+    th.addEventListener('click', function(){ sortOverview(th.getAttribute('data-key')); });
   });
 }
 function fundShortName(f){ return (f.name||f.code||'').replace(/^主動/,'').trim(); }
@@ -722,24 +727,17 @@ function renderOvTiles(ov){
   }).join('');
 }
 
-var SCATTER_ISSUER_PALETTE = ['#2a78d6','#eb6834','#1baf7a','#4a3aa7','#c2478a','#c99a2e','#3d8b8b','#8a5a2b',
-  '#6b5b95','#2e7d32','#b0413e','#4568a8','#8e6c8a','#5a7a4a','#a0522d'];
-var SCATTER_ISSUER_COLOR = {};
-function issuerColor(issuer){
-  if(!SCATTER_ISSUER_COLOR[issuer]){
-    var idx = Object.keys(SCATTER_ISSUER_COLOR).length % SCATTER_ISSUER_PALETTE.length;
-    SCATTER_ISSUER_COLOR[issuer] = SCATTER_ISSUER_PALETTE[idx];
-  }
-  return SCATTER_ISSUER_COLOR[issuer];
-}
+// 2026-09-25:15 家投信分色違反 dataviz skill 的類別色上限(~8 色);改成一律
+// 中性單色代表 22 檔基金,兩檔基準(0050/台灣加權指數)用第二色(金色,呼應
+// weight_band_note 等既有金色警示語意)標出——見 renderOvScatter() 的 d.color。
+var SCATTER_FUND_COLOR = null;   // 首次用時從 CSS 變數讀,見 renderOvScatter()
+var SCATTER_BENCH_COLOR = '#8f6d2c';
 function buildScatterPoints(){
   var pts = [];
-  ovState.groups.forEach(function(g){
-    g.rows.forEach(function(r){
-      if(r.eps_chg_pct_90d==null || r.price_chg_pct_90d==null) return;
-      pts.push({key:r.code, label:r.name, group:g.label, x:r.eps_chg_pct_90d, y:r.price_chg_pct_90d,
-                pe:r.implied_pe_chg_pct_90d, fpe:r.weighted_forward_pe, isBench: r.is_benchmark});
-    });
+  ovState.rows.concat(ovState.benchRows).forEach(function(r){
+    if(r.eps_chg_pct_90d==null || r.price_chg_pct_90d==null) return;
+    pts.push({key:r.code, label:r.name, x:r.eps_chg_pct_90d, y:r.price_chg_pct_90d,
+              pe:r.implied_pe_chg_pct_90d, fpe:r.weighted_forward_pe, isBench: r.is_benchmark});
   });
   return pts;
 }
@@ -760,6 +758,7 @@ function axisTicks(domain, step){
   return out;
 }
 function renderOvScatter(){
+  if(!SCATTER_FUND_COLOR) SCATTER_FUND_COLOR = COL.blue;
   var pts = buildScatterPoints();
   var wrap = document.getElementById('ovScatterWrap');
   var legendEl = document.getElementById('ovScatterLegend');
@@ -770,7 +769,12 @@ function renderOvScatter(){
     return;
   }
   var W = wrap.clientWidth || 340;
-  var H = Math.max(320, Math.min(520, Math.round(W*0.48)));
+  // 窄螢幕(手機)橫向受限但直向捲動不值錢——縮圖高度的下限拉高,讓 24 個點
+  // (22 檔+2 基準)在小圖時也有夠多垂直空間放標籤,不然 label 會疊在一起
+  // (2026-09-25:390px 實測 RADII 搜尋半徑不夠,見下方 RADII/DIRS 註解)。
+  var narrow = W < 480;
+  var H = narrow ? Math.max(420, Math.round(W*0.95)) : Math.max(320, Math.min(520, Math.round(W*0.48)));
+  var LABEL_FONT = narrow ? 10 : 12;
   var ML=46, MT=34, MR=16, MB=40;
   var plotW=W-ML-MR, plotH=H-MT-MB;
   var xVals = pts.map(function(p){return p.x;}), yVals = pts.map(function(p){return p.y;});
@@ -782,10 +786,14 @@ function renderOvScatter(){
   var diagLo = Math.max(xDomain[0], yDomain[0]), diagHi = Math.min(xDomain[1], yDomain[1]);
 
   var DOT_R = 4.5, DOT_CLEAR = DOT_R + 4;
-  var RADII = [10, 16, 24, 34];
-  var DIRS = [[0.86,-0.5],[0.86,0.5],[-0.86,-0.5],[-0.86,0.5],[1,0],[-1,0],[0,-1],[0,1]];
+  // 2026-09-25:22 檔基金+2 基準在窄圖(390px)點很密,原本只搜 4 圈×8 方向常常
+  // 找不到不重疊的位置——加一圈更遠的搜尋半徑+12 方向(細一點的角度解析度),
+  // 讓碰撞迴避演算法有更多機會找到真的不重疊的格子。
+  var RADII = [10, 16, 24, 34, 48];
+  var DIRS = [[1,0],[0.87,-0.5],[0.87,0.5],[0.5,-0.87],[0.5,0.87],[0,-1],[0,1],
+              [-0.5,-0.87],[-0.5,0.87],[-0.87,-0.5],[-0.87,0.5],[-1,0]];
   function labelBox(cx,cy,text,dx,dy){
-    var w = text.length*6+4, h = 11;
+    var w = text.length*(LABEL_FONT*0.52)+4, h = LABEL_FONT-1;
     var x = cx+dx - (dx<0 ? w : (dx===0?w/2:0));
     return {x:x, y:cy+dy-h/2, w:w, h:h};
   }
@@ -814,7 +822,7 @@ function renderOvScatter(){
       }
     }
     placedBoxes.push(best.box);
-    return {p:p, cx:cx, cy:cy, dx:best.dx, dy:best.dy, color: p.isBench ? '#8f6d2c' : issuerColor(p.group)};
+    return {p:p, cx:cx, cy:cy, dx:best.dx, dy:best.dy, color: p.isBench ? SCATTER_BENCH_COLOR : SCATTER_FUND_COLOR};
   });
 
   var gridSvg = xTicks.map(function(t){
@@ -845,7 +853,7 @@ function renderOvScatter(){
     return leader+'<g class="scatter-dot" data-key="'+esc(d.p.key)+'" tabindex="0" role="button" aria-label="'+esc(d.p.label)+'">'+
       '<circle cx="'+d.cx+'" cy="'+d.cy+'" r="14" fill="transparent"/>'+
       '<circle cx="'+d.cx+'" cy="'+d.cy+'" r="'+DOT_R+'" fill="'+d.color+'" stroke="#fff" stroke-width="1.5"/>'+
-      '<text class="scatter-label" x="'+(d.cx+d.dx)+'" y="'+(d.cy+d.dy+4)+'"'+anchor+'>'+esc(d.p.key)+'</text>'+
+      '<text class="scatter-label" style="font-size:'+LABEL_FONT+'px" x="'+(d.cx+d.dx)+'" y="'+(d.cy+d.dy+4)+'"'+anchor+'>'+esc(d.p.key)+'</text>'+
     '</g>';
   }).join('');
 
@@ -857,11 +865,9 @@ function renderOvScatter(){
   '</svg><div class="scatter-tooltip" id="ovScatterTooltip"></div>';
   wrap.innerHTML = svg;
 
-  var groupsPresent = Array.from(new Set(pr.map(function(d){return d.p.group;})));
-  legendEl.innerHTML = groupsPresent.map(function(l){
-    var col = pr.find(function(d){return d.p.group===l;}).color;
-    return '<span class="lg-item"><span class="lg-dot" style="background:'+col+'"></span>'+esc(l)+'</span>';
-  }).join('');
+  legendEl.innerHTML =
+    '<span class="lg-item"><span class="lg-dot" style="background:'+SCATTER_FUND_COLOR+'"></span>主動式 ETF（22 檔）</span>' +
+    '<span class="lg-item"><span class="lg-dot" style="background:'+SCATTER_BENCH_COLOR+'"></span>基準（元大台灣50／台灣加權指數）</span>';
   capEl.textContent = '淺灰格線每 5% 一條；深一階十字線＝EPS／股價各自的 0% 線；虛線＝y=x 45° 參考線；金色點＝基準（元大台灣50／台灣加權指數）。標籤只顯示代號，完整名稱與四項數字見游標提示與下方表格。';
 
   var tip = document.getElementById('ovScatterTooltip');
@@ -891,7 +897,7 @@ function renderOvScatter(){
 }
 var ovScatterResizeTimer = null;
 window.addEventListener('resize', function(){
-  if(!ovState.groups) return;
+  if(!ovState.rows) return;
   if(document.getElementById('overviewView').style.display === 'none') return;
   clearTimeout(ovScatterResizeTimer);
   ovScatterResizeTimer = setTimeout(renderOvScatter, 150);
@@ -904,6 +910,14 @@ function consensusRowHtml(r, side){
     '<td class="num">'+(side==='buy'?r.n_funds_buy:r.n_funds_sell)+'</td>'+
     '<td class="num">'+r.net_funds+'</td>'+
     '<td style="font-size:11px;color:var(--sec)">'+scoreHtml+'</td></tr>';
+}
+function renderConsensusCoverage(ov){
+  var el = document.getElementById('ovMovesCoverage');
+  if(!el) return;
+  var wk = ov.consensus_week || {}, mo = ov.consensus_month || {};
+  el.innerHTML = '本週：<b>'+(wk.n_funds_with_history!=null?wk.n_funds_with_history:'—')+'</b> 檔有可比持股（歷史快照足以比對一週前）；' +
+    '本月：<b>'+(mo.n_funds_with_history!=null?mo.n_funds_with_history:'—')+'</b> 檔' +
+    '（分母皆為 '+(wk.n_funds_total||mo.n_funds_total||22)+' 檔主動式 ETF，未達門檻的基金不計入上方 consensus 統計）';
 }
 function renderConsensusTables(ov, w){
   var c = w==='week' ? ov.consensus_week : ov.consensus_month;
@@ -919,16 +933,12 @@ function renderOverview(ov){
   document.getElementById('coverLeft').innerHTML =
     '<span class="tk">總覽</span><span class="nm">主動式 ETF · 22 檔基金 + 2 檔基準</span>';
 
-  var groups = groupsFromOverview(ov);
-  var byIssuer = {};
-  (ov.funds||[]).forEach(function(f){
-    var g = f.is_benchmark ? 'Benchmark' : f.issuer;
-    if(!byIssuer[g]) byIssuer[g]=[];
-    byIssuer[g].push(Object.assign({}, f, {label:f.name}));
-  });
-  var order = groups.map(function(g){return g.label;});
-  if(byIssuer['Benchmark']) order.push('Benchmark');
-  ovState.groups = order.map(function(issuer){ return {label:issuer, rows: byIssuer[issuer]||[]}; });
+  var allRows = (ov.funds||[]).map(function(f){ return Object.assign({}, f, {label:f.name}); });
+  // flat list,預設依 AUM 降冪(ov.funds 本身已排好,這裡防禦性再排一次);
+  // 兩檔基準永遠釘在最下面、不進排序(見 ovState 宣告處註解)。
+  ovState.rows = allRows.filter(function(r){return !r.is_benchmark;})
+    .sort(function(a,b){return (b.aum_100m_twd||0)-(a.aum_100m_twd||0);});
+  ovState.benchRows = allRows.filter(function(r){return r.is_benchmark;});
   ovState.sortKey = null;
   ovState.sortDir = 1;
   computeBarScale(ov);
@@ -936,6 +946,7 @@ function renderOverview(ov){
   renderOverviewTbody();
   renderOvTiles(ov);
   renderOvScatter();
+  renderConsensusCoverage(ov);
   renderConsensusTables(ov, 'week');
   document.querySelectorAll('.ov-moves-tab').forEach(function(btn){
     btn.addEventListener('click', function(){
@@ -965,7 +976,7 @@ function loadOverview(){
     if(!r.ok) throw new Error('http ' + r.status);
     return r.json();
   }).then(function(ov){
-    renderNav('OVERVIEW', groupsFromOverview(ov));
+    renderNav('OVERVIEW', ov);
     renderOverview(ov);
   }).catch(function(err){
     document.getElementById('coverLeft').innerHTML =
@@ -976,7 +987,7 @@ function loadOverview(){
 
 function loadFund(etf){
   fetch('data/overview.json').then(function(r){ return r.ok ? r.json() : {funds:[]}; }).then(function(ov){
-    renderNav(etf, groupsFromOverview(ov));
+    renderNav(etf, ov);
   });
   fetch('data/' + etf + '.json').then(function(r){
     if(!r.ok) throw new Error('http ' + r.status);
