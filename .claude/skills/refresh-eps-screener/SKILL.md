@@ -173,7 +173,7 @@ dd-screener: ${yyyymmdd} Excel + EPS revision baseline ${prior_date}
   NVDA +6.68% / TSM +0.65% / RL +12.61% / MSFT -0.24% ✓
 - TW tickers TWD-converted (fx ≈ 31.5)
 
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 git push origin main

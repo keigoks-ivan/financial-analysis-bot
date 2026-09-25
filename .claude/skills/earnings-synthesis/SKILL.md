@@ -212,7 +212,7 @@ git commit -m "Add earnings synthesis: window YYYY-MM-DD → YYYY-MM-DD
 本地深度日報 N 份 + 缺失日 M 個 (web 補 K 家) → 萃 T 條跨產業 trend，
 PM imply 含 X 檔 add / Y 檔 cut / Z 檔 hold-watch。
 
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
+Co-Authored-By: Claude <noreply@anthropic.com>"
 git push origin main
 ```
 

@@ -221,7 +221,7 @@ Past patches integrated into native chapters:
 §0 banner cleared to v2 marker. id-meta.id_version bumped.
 Audit manifest at docs/id/_consolidation_{Theme}_{date}.md (local only).
 
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 push 到 main（直接 push，不開 PR）。
@@ -637,7 +637,7 @@ Reports:
 - notes/site-internal/id/_critic_{Theme}_{date}.md (Pass 1)
 - notes/site-internal/id/_critic_pass2_{Theme}_{date}.md (Pass 2)
 
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 push 到 main（直接 push，不開 PR — 與既有 stock-analyst / industry-analyst 一致）。

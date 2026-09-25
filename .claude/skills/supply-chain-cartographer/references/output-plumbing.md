@@ -100,7 +100,7 @@ Tickers without DD coverage (candidates for future DD work): <list>
 
 Flipped {topic}.active=true in topics.json.
 
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 

@@ -124,14 +124,9 @@ done
 
 commit & push 之後、Step 8 回報用戶之前，跑 **inline 自我反思**。讀自己剛寫的 HTML 全文，對下列五題用 contrarian 角度回答：
 
-### 8.5.A. 「如果這次 synthesis 有大錯，最可能錯在哪？」
+### 8.5.A. Top-20 ticker 覆蓋與跨章節編號，回頭確認 5.5.C／5.5.E 真的過了
 
-從用戶角度想：「我點開這份 HTML，第一個會挑剔的是什麼？」常見錯誤類型：
-- **遺漏關鍵 ticker**：top-20 mkt cap 公司在 window 內報了 earnings 但沒被覆蓋（NVDA day-內盲點是 v1.0 翻車的真實案例）
-- **虛構未來日期**：§7 catalyst calendar 寫了「~5/30 NVDA Q2」這類 hallucinate
-- **Trend 主訊號數字找不到 source**：印象記憶寫的 +XX% 但 grep 不到原始引用
-- **§6 add 名單沒有業務背景**：§4 對應產業段找不到敘述支撐
-- **§0 TL;DR 與 §3 trends 編號不一致**
+5.5.C（top-20 mkt cap grep）與 5.5.E（§0/§3/§6/§7 跨章節一致）已經機械或逐條核對過；這裡只需確認那兩步真的做完、沒有跳過，不必重新用印象再判斷一次。
 
 ### 8.5.B. 「我的 ADD 名單反向想：如果其中 3 檔是錯的，可能的理由是什麼？」
 
@@ -149,9 +144,9 @@ commit & push 之後、Step 8 回報用戶之前，跑 **inline 自我反思**�
 - §3 trend confirm list 有明確區分本地 vs webfill
 - §6 confidence-note 真的有點明「web 補料不入主 add/cut」
 
-### 8.5.D. 「§7 Watchlist 的每個 catalyst 都有真實 source 嗎？」
+### 8.5.D. §7 catalyst 日期，回頭確認 5.5.B 真的過了
 
-特別檢查日期 — 用 contrarian 心態假設「這個日期是我亂編的」，去找 source 反證。如找不到精確 source，立即改為含糊表述。
+5.5.B 已逐一反查 §7 日期對應的 source URL；這裡只需確認 5.5.B 真的做完，不必重新猜測日期是否可疑。
 
 ### 8.5.E. 「最重要：我有沒有過度自信？」
 

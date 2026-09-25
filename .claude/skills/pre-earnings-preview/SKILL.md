@@ -119,7 +119,7 @@ python3 scripts/snapshot_consensus.py {TICKER}
   - `docs/catalyst/snapshots/preview_{TICKER}_{YYYYMMDD}.json`
   - `docs/earnings/index.html` 與 `docs/catalyst/index.html`（由 `build_catalyst_page.py` 自動重建，一併 add）
 - commit 訊息：`Add {TICKER} 財報前瞻 (pre-earnings preview) + frozen consensus snapshot`，
-  結尾 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`。
+  結尾 `Co-Authored-By: Claude <noreply@anthropic.com>`。
 - **push 前先 `git pull --rebase origin main`**（並行 cron 常推），rebase 後重查卡片 + snapshot 都在，再 push。
 
 ---

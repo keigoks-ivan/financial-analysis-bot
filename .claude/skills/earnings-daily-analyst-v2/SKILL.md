@@ -3,167 +3,9 @@ name: earnings-daily-analyst-v2
 description: "分析美股指定日期的財報和 earnings call，自動產出 HTML 報告。當用戶提及「分析 X月X日的財報」、「分析 XX 美股財報」、「財報日分析」、「earnings analysis」、「today's earnings」、「本週財報」時必須觸發此技能。"
 ---
 
-美股每日財報深度分析 Skill v2.2
+美股每日財報深度分析 Skill v2.7
 
-v2.7 變更（2026-08-28）— 版式改外資券商研究報告風（持有人回饋：更明顯易懂）：
-
-① 每張 company-card 新增「速覽列（stat-strip）」— 券商 note 的標準化數據列
-卡片標頭下方固定一排四格晶片，順序永遠是 EPS → 營收 → 指引 → 股價，
-讀者眼睛掃同一個位置就能比較所有公司：
-`<div class="stat-strip">` 內放四個 `<span class="stat-chip {good|bad|mid|na}">`，
-每格 `<span class="k">{標籤}</span>{值}`。值要極短（BEAT +3.7%／RAISE／收 -1.39%）。
-顏色：good＝綠（beat/raise）、bad＝紅（miss/lower/股價跌）、mid＝黃（inline/maintain）、
-na＝灰（未取得二源確認時寫「未確認」）。
-股價晶片取代原 meta-right 的 stock-move（避免同一數字寫兩處，v2.6 精簡紀律）；
-meta-right 只留市值＋盤前/盤後＋季度，詳細價格與時間標注仍在 Stock Reaction 段。
-
-② 每張 company-card 新增「重點（bottom-line）」— 券商 note 的 Bottom line 一句話
-stat-strip 之後、數據表之前，一句話講清楚「這份財報最後為什麼漲/跌、關鍵變數是哪個」：
-`<div class="bottom-line"><strong>重點</strong>{一句話，≤60 中文字}</div>`。
-這是結論不是摘要——必須點名單一關鍵變數（例：「毛利率財測季減 90bp 蓋過 Google $120B 協議」），
-禁止「表現亮眼」「值得關注」這類無資訊量句。與 lede 條目可同方向但不得逐字重複。
-
-③ 「關鍵細節」bullet 改粗體導語式（券商 note 的 bold lead-in）
-每條開頭 2-6 字粗體主題詞＋全形冒號：`<li><strong>毛利率：</strong>…</li>`。
-讀者先掃粗體詞決定要不要讀整條。主題詞須是名詞（毛利率／Google 協議／資本回饋），
-不是評語（亮點／警訊）。其他段落（Call 重點／Stock Reaction／分析師觀點）本已有
-固定導語結構，不變。
-
-④ 新增 CSS（完整樣式表章節已同步）：.stat-strip / .stat-chip(.good/.bad/.mid/.na)
-/ .stat-chip .k / .bottom-line。範例見 earnings_2026-08-27.html（v2.7 首個套用版）。
-
-⑥ DD 快篩追蹤名單（持有人 2026-08-28 指定：<$50B 但在 dd-screener 名單者也要納入）
-每次執行讀 repo 內 docs/dd-screener/latest.json 的 stocks[].ticker（排除 .TW/.DE 等非美股後綴），
-當日發財報者不論市值一律納入分析，標注「（DD 快篩名單）」。細則見 Step 4。
-
-⑤ §2 六要素改結構化列表（持有人回饋：§2 全擠在同一段）
-每個子產業段禁止再用單一 <p> 把六要素串成一大段。固定格式：
-<h3>{子產業標題}</h3>
-<ul class="trend-list">
-  <li><span class="tl">趨勢</span>{內容}</li>
-  <li><span class="tl">細節</span>{內容}</li>
-  <li><span class="tl">跨日比較</span>{內容}</li>
-  <li><span class="tl">上下游</span>{內容}</li>
-  <li><span class="tl">可證偽</span>{內容}</li>
-  <li class="impl"><span class="tl">Implication</span>{內容}</li>
-</ul>
-標籤固定六個、順序固定、標籤後不加冒號（晶片本身就是分隔）。
-非共識觀察（.noncon）同樣拆為兩條：<span class="tl">觀察</span>＋<span class="tl">可證偽</span>。
-CSS（完整樣式表章節已同步）：.trend-list / .tl / .trend-list li.impl .tl。
-
-v2.6 變更（2026-08-28）— 兩項精簡修正（持有人回饋：內容更精簡、資訊量不下降）：
-
-① report-lede（核心發現）改條列式
-舊格式是 3-5 句長句，實跑產出的單句常塞 5+ 個數字與多層括號補充（8/26 NVDA 日報
-lede 單句破百字），可掃讀性差。改為 4-6 條 `<ul class="lede-list">` bullet：
-一條一重點、每條 ≤2 個數字錨、細節用（§N）指路不展開、禁止多家公司塞同一長句。
-
-② 精簡紀律（全報告適用）
-精簡＝砍重複與贅語，不是砍資訊。同一數字全報告只完整出現一次（表格為權威），
-散文只留結論與最短錨；已在 §1 卡片的整組數據不得在 lede/§2 複述。
-與既有「防壓縮指令」不衝突：防壓縮禁止刪資訊點，本條禁止同一資訊寫兩遍。
-
-③ lede 與 §5 分工（防同一 takeaway 寫兩遍）
-lede＝當日事實層（誰交卷、關鍵數字、股價反應）；§5 第一塊＝跨公司推論結論層。
-同一條內容不得同時出現在兩處；§5 的條目必須是 cross-company 推論，不是單一公司戰報。
-
-④ 中文全形標點硬規則（8/26 雲端實跑產出 132 處半形標點，qc.py 全數警告）
-中文字之後一律全形標點（，。：；）；數字/英文與單位間照原樣。寫完 HTML 後自查一輪。
-
-④-b 繁體中文硬規則（2026-08-28 持有人回饋：8/27 報告混入簡體字）
-全文一律台灣繁體中文，禁止任何簡體字（涨/转/负/现/货/与/兑/确/样/后/发…）。
-生成 HTML 後必須用腳本掃一輪簡體字（非肉眼），常見混入源是長段落打字時
-簡繁飄移（「premarket 上涨」「由涨转跌」）。多對一映射注意台灣用字：發/髮、後、裡。
-
-⑤ §2 字數帶防注水
-「每段 150-350 字」是帶不是目標：六要素寫完即停，禁止為湊下限加空話；
-超過 350 字通常代表複述了 §1 的數據，先砍重複再考慮保留。
-
-v2.5 變更（2026-07-23）— 六項精進，把單日報告工具升級為財報季追蹤系統：
-
-① 覆核模式（Phase R）— 閉環機制
-用戶固定在台灣早上執行，此時美股未收盤，「最終判決 %」永遠是空的。新增覆核觸發詞
-（「覆核 7/22」等），只補數據不重跑分析（5-10 次搜尋）：抓次日收盤 %、抓財報後券商
-rating/target 更新（財報後 24-48 小時是券商動作最密集的窗口，初次報告永遠拿不到）、
-用 str_replace 精準更新、統計初步反應 vs 最終判決的反轉家數。
-
-② 財報季狀態檔（Phase 2.5 讀 / Phase 4 寫）— 跨 session 記憶
-cross-day 比較過去完全依賴同一對話的 context，換 session 就全斷。新增
-earnings_season_state.json：存 patterns_confirmed、patterns_challenged、
-pending_verification（今天的推論變成明天的檢查清單），不存原始數據。
-
-③ 搜尋預算分層策略 — 解決數學矛盾
-v2.3 強制全數納入後，15 家 × 4-6 次 = 60-90 次 vs 上限 50 次根本不成立，實跑靠臨場
-合併查詢硬擠。現在明文化三層策略：前 5 大獨立查詢、中段兩家合併、尾部三家合併，
-合計約 35-42 次，另留 8-10 次補漏。含合併查詢的品質控管條款。
-
-④ 共識數據源統一 + GAAP/adj 防錯 — 防止 GOOGL 型錯誤重演
-7/22 初版把 GAAP EPS $9.11 對 GAAP 共識 $2.91 稱「beat +213%」，但其中 $99B 是持股
-mark-to-market，真實 adj. EPS $2.85 其實 miss $2.89。新增四條規則：每個預期數字標注
-共識來源、GAAP 與 adj. 落差 >50% 強制追查一次性項目、beat/miss 必須同類比同類且以
-adj. 為主、一次性項目金額必須量化。
-
-⑤ §5 重定義 — 消除與加深後 §2 的重複
-v2.4 加深 §2 後，舊 §5 淪為 §2 的縮寫。改為兩塊：5 條嚴格一行的 takeaway +
-「驗證點日曆」三欄表（本日推論 → 驗證事件 → 預定日期，至少 4 個且必須可證偽），
-與 state JSON 的 pending_verification 一一對應。
-
-⑥ Quote page 流程寫死 — 消除合規假象
-v2.2 列為第一優先但實跑三次全沒用到（需先搜再 fetch，時間壓力下必被跳過）。現在限縮
-適用範圍為前 5 大公司、固定兩步流程、並新增誠實降級條款（fetch 失敗須在報告中註明
-「未取得 quote page 確認」，不可假裝執行）。
-
-v2.4 變更（2026-07-23）：
-
-§2 產業與子產業趨勢大幅擴充 — §2 是全報告最有 alpha 的章節，篇幅應為最長
-① 子產業數量：至少 5 個；當日公司 ≥10 家時至少 7 個；每段 150-350 字
-② 每段從四要素增為六要素：新增「上下游一致性檢查」與「可證偽條件／下一個驗證點」
-③ 每份報告至少 1 個「⚠️ 非共識觀察」段落（市場敘事 vs 實際數據的落差）
-④ 新增 AI capex 鏈條固定追蹤（上游設備→代工→晶片→hyperscaler capex→電力→能源→實體工程→企業軟體），重點在找出「誰花錢、誰收錢、市場獎勵誰」的錯配
-⑤ Implication 禁止以「值得關注」這類無資訊量的話收尾
-
-§3 贏家與輸家大幅簡化 — §3 僅為計分板，不做分析
-① 格式固定為一行一家：{TICKER} — {股價 % + 時間} — {一句話原因，20 字內}
-② 三分類：贏家／輸家／未分類（股價未達二源確認者）
-③ 禁止超過一句話的說明、禁止重複 §1 數據、禁止在此做 cross-company 推論
-④ HTML 用簡單 ul 列表或兩欄表格，不用多行段落
-
-v2.3 變更（2026-07-23）：
-
-完整性硬規則（Step 5 清單鎖定）— 修正實際發生的錯誤：7/22 報告只做了 6 家核心 megacap，卻略過 PM、SAN、T、EQNR、CSX、CME、MCO、KMI、URI、TEL 共 10 家 $50B+ 公司，理由是「聚焦核心」。此為不合規略過。
-① Step 5 清單一經展示即鎖定，每一家都必須有 company-card
-② 明文禁止「聚焦核心／次要 reporter／市值較小／context 不足」等略過理由
-③ 資源不足時只能降深度（完整／精簡／最低三級規格），不得減家數
-④ 查不到數據的公司仍須保留卡片說明「未取得二源確認」，不得從報告消失
-⑤ 生成 HTML 前強制對帳：Step 5 清單家數必須等於 company-card 家數
-⑥ 最終摘要須明寫「本報告分析 N 家：$50B+ M 家 + 用戶指定 K 家」
-
-v2.2 變更（2026-07-23）：
-
-股價即時性強化（三項）—
-① 新增「分析時點判定」（Step 0）：若分析日晚於財報日且已經過至少一個完整交易日，必須同時報告「盤後初步反應 %」與「次日正式交易日收盤 %」，並以後者為市場最終判決（解決盤前跌收盤漲的誤判，如 GE 盤前 -3% 收盤 +1.87%）
-② Quote page 直接 fetch 升為第一優先 source：先 web_search 讓 stockanalysis.com / Yahoo Finance quote page URL 出現在結果中，再 web_fetch 該頁讀取帶 timestamp 的 after-hours / close 報價；新聞文章內 % 降為第二優先
-③ 所有股價必須標注時間戳：「盤後 -4.2%（截至 7/22 6:05 PM ET）」或「次日收盤 -8.1%（7/22）」；禁止無時間標注的 %
-
-Earnings Call 深度強化 — 前 5 大 market cap 公司必須 web_fetch 完整 transcript 頁（Motley Fool / Investing.com / Seeking Alpha），不得只依賴 search snippet；每家至少 4 條引述：CEO 開場定調、CFO guidance rationale、≥2 組分析師 Q&A（含分析師姓名+所屬券商+管理層回應原話）
-
-分析師觀點新增為必要段落 — 每家公司 company-card 新增「(e) 分析師觀點」：至少 2-3 家券商的 rating / price target 變動 + 具體評論引述（來源：Benzinga analyst ratings、TipRanks、MarketBeat、新聞引述的券商 note）；找不到時寫「財報後券商更新未取得」，禁止自編
-
-搜尋預算調整 — 每家公司 4-6 次（原 3-5 次；新增 transcript fetch 與 analyst search）；總預算上限從 40 次放寬至 50 次
-
-v2.1 變更（2026-05-06）：
-
-股價 2-source 強制一致規則 — 盤後股價必須 ≥2 個 source 方向一致才能寫入 HTML；若矛盾則自動追加第三次搜尋以 2 out of 3 多數決；不需用戶介入確認
-Source 優先級明確化 — Benzinga Pro > Seeking Alpha > Yahoo Finance after-hours > CNBC；禁用 Motley Fool 文章 %（intraday 易混淆）和 Quiver Quantitative（滯後）
-Intraday vs After-Hours 嚴格區分 — 盤前公司取當日收盤 %，盤後公司取延伸交易 %，禁止混用
-
-v2.0 變更（2026-04-28）：
-
-$50B+ 篩選硬性化 — 不到 $50B 的公司禁止進入分析，除非用戶明確指定 ticker
-股價數據強制實搜 — 每家公司必須查到實際盤後/盤中 % 和收盤價，禁止用「待確認」「強勁反應」「正面」等模糊措辭
-Earnings call 引述實搜 — 必須從 transcript 找實際管理層原話，禁止「典型解讀」「市場應該認為」這類自編內容
-「市場解讀」段落格式重新定義 — 必須是：實際股價反應 + 從新聞/分析師報告引述的具體理由，不是 Claude 的推測
-
+各版變更與理由見 `references/changelog.md`。
 
 
 【觸發方式】
@@ -546,29 +388,10 @@ Step 2.5b：把狀態檔內容用於 §2 的 cross-day 比較
     那麼 7/29 當天必須在 §2 明確回答這個問題）
   - 本日是否產生新的 pattern 或新的待驗證點？
 
-Phase 3：靜默生成 HTML
-⛔ 禁止在對話框輸出任何分析章節文字。 所有分析直接寫入 HTML。
-對話框唯一允許的輸出：
+Phase 3：生成 HTML
+分析內容只寫進 HTML，不在對話框整段重貼一次（§1-§5 文字、數據表格都留在檔案裡）。搜尋期間可以簡短報告目前在做什麼（例：「掃描 {DATE} earnings，找到 N 家 $50B+ 公司」「搜尋 N 家公司數據中」），不必逐字照抄固定句。
 
-「Phase 1: 掃描 {DATE} earnings...找到 N 家 $50B+ 公司」
-「Phase 2: 搜尋 N 家公司數據中â¦â¦」
-「搜尋完成，正在生成 HTML 報告â¦â¦」
-Present file link + 簡短摘要（3-5 行核心發現）
-
-⛔ 強制靜默輸出規則（最高優先級）
-嚴禁在對話框輸出：
-
-任何 §1-§5 的分析文字
-任何數據表格
-任何「正在分析â¦â¦」的過渡描述
-
-唯一正確流程：
-
-執行所有 web_search / web_fetch
-輸出一行：「搜尋完成，正在生成 HTML 報告â¦â¦」
-立即 create_file 生成完整 HTML
-present_files 提供下載
-簡短摘要（核心發現 3-5 行 + 部署指令）
+流程：執行所有 web_search / web_fetch → 進度簡述 → create_file 生成完整 HTML → present_files 提供下載 → 簡短摘要（核心發現 3-5 行 + 部署指令）
 
 防壓縮指令
 禁止以「節省篇幅」為由縮短任何章節。 若單一 create_file 無法容納全部內容，先輸出前半部分，用 str_replace 追加剩餘章節。寧可分段追加，絕不壓縮。
@@ -1151,56 +974,14 @@ Organic growth 是照妖鏡 — 永遠要 peel 到 organic layer
 Earnings call 必須引述實際 transcript — v2.0 新增：禁止自編「市場應該認為」「典型訊號」
 
 
-【品質 Checklist（生成 HTML 前自我檢查）】
-v2.3 強化版檢查清單：
+【生成 HTML 前檢查】
+生成前只核對下列可以數、可以用腳本掃的項目：
 
- ⛔【最優先】Step 5 清單對帳：清單上每一家（$50B+ 全部 + DD 快篩名單當日 reporter + 用戶指定）都有 company-card？家數完全相符？（v2.3 新增強制／v2.7 擴充）
- 已讀取 docs/dd-screener/latest.json 並比對當日 reporter？DD 名單納入者有標注「（DD 快篩名單）」？讀取失敗有聲明？（v2.7 強制）
- ⛔ 每個「預期」數字都標注共識來源（LSEG/FactSet/Zacks/Visible Alpha）？（v2.5 新增強制）
- ⛔ 有 GAAP vs adj. 落差 >50% 的公司？若有，是否已追查一次性項目、量化金額、並以 adj. 為 beat/miss 判定基準？（v2.5 新增強制）
- 前 5 大公司是否執行 quote page fetch？失敗者是否誠實註記「未取得 quote page 確認」？（v2.5 新增強制）
- §5 是否為兩塊結構（5 條一行 takeaway + 驗證點日曆）？沒有變成 §2 的縮寫版？（v2.5 新增強制）
- §5 驗證點日曆至少 4 項，且每項都可證偽（寫得出什麼數字代表推論錯誤）？（v2.5 新增強制）
- 是否已讀取 earnings_season_state.json 並用於 §2 的 cross-day 比較？（v2.5 新增強制）
- 是否已寫入／更新 earnings_season_state.json，且 pending_verification 與 §5 日曆一致？（v2.5 新增強制）
- 搜尋是否依三層預算策略執行？合併查詢中無結果的公司是否已用補漏預算獨立查詢？（v2.5 新增強制）
- ⛔【最優先】沒有任何公司以「聚焦核心／次要 reporter／市值較小／context 不足」為由被略過？（v2.3 新增強制）
- 查不到數據的公司仍有卡片說明「未取得二源確認」，而非從報告中消失？（v2.3 新增強制）
- 最終摘要有明寫「本報告分析 N 家：$50B+ M 家 + DD 名單 J 家 + 用戶指定 K 家」且 N = Step 5 清單家數？（v2.3 新增強制／v2.7 擴充）
- 分析時點判定（情境 A/B/C）已完成？情境 C 有抓次日收盤 %？（v2.2 新增強制）
- 每家公司都通過 $50B+ 篩選？或是用戶明確指定？
- 每家公司都有完整數據表（EPS/Revenue/Key segments/Guidance）？
- 每家公司的 stock reaction 都有實際 % 和收盤/盤後價？（v2.0 強制）
- 每個 % 都有時間標注（日期 + 盤前/盤中/盤後/收盤）？（v2.2 新增強制）
- 每家公司的股價 % 都有 ≥2 個 source 方向一致確認？（v2.1 強制）
- 情境 C 的贏家/輸家分類是用「次日收盤最終判決」而非盤後初步 %？（v2.2 新增強制）
- 沒有任何 company-card 寫「盤後待確認」「強勁 BEAT」這類模糊措辭？（v2.0 強制）
- 沒有使用 Motley Fool 文章 % 或 Quiver Quantitative 作為股價 source？（v2.1 強制）
- 盤前/盤後公司的 % 類型有正確區分（intraday vs after-hours vs 次日收盤）？（v2.1/v2.2 強制）
- 前 5 大公司都有 fetch transcript 全文？Earnings Call 段落有 ≥4 條引述（CEO+CFO+2 組 Q&A 含分析師姓名/券商）？（v2.2 新增強制）
- 每家公司都有「分析師觀點」段落？前 5 大有 ≥2-3 個券商 data points（rating/target/引述）？（v2.2 新增強制）
- 沒有自編「市場應該 forgive」「典型訊號」「分析師普遍認為」這類推測？（v2.0/v2.2 強制）
- §2 有至少 5 個子產業段落（公司 ≥10 家時至少 7 個）？每段 150-350 字？（v2.4 新增強制）
- §2 每段都有完整六要素（趨勢／細節／cross-day／上下游一致性／可證偽條件／implication）？（v2.4 新增強制）
- §2 有至少 1 個「⚠️ 非共識觀察」段落？（v2.4 新增強制）
- §2 有 AI capex 鏈條追蹤（當日有相關公司時）？點出誰花錢、誰收錢、市場獎勵誰？（v2.4 新增強制）
- §2 的 Implication 沒有以「值得關注」這類無資訊量的話收尾？（v2.4 新增強制）
- §3 是三欄式簡單列表（ticker／股價／一句話原因 20 字內）？（v2.4 新增強制）
- §3 沒有重複 §1 的數據表內容、沒有做 cross-company 推論？（v2.4 新增強制）
- §3 分類包含「Sell the News」案例（beat + raise 但跌）與「未分類」？
- §4 至少 5 個矛盾，每個都有 → Implication？（可含：初步 vs 最終反轉、分析師 vs 市場分歧）
- §5 至少 5 條核心發現，每條都有 cross-company evidence？
- report-lede 是 4-6 條條列式（lede-list）？每條一行一重點、≤2 個數字錨、含公司名+股價%、細節用（§N）指路？沒有多家公司塞同一長句？（v2.6 強制）
- 中文字後全是全形標點（，。：；）？沒有「字,」「點:」這類半形殘留？（v2.6 強制）
- 已用腳本掃過全文無任何簡體字（涨/转/负/现/货/与/兑/确/样/后/发…）？（v2.7 強制）
- §5 第一塊與 lede 沒有重複條目？§5 每條都是 cross-company 推論？（v2.6 強制）
- 每張 company-card 都有 stat-strip（四格固定順序 EPS→營收→指引→股價）＋ bottom-line 一句話？未確認的格用 na？（v2.7 強制）
- bottom-line 有點名單一關鍵變數、≤60 字、無「表現亮眼」類空話？股價數字沒有同時出現在 meta-right 與晶片兩處？（v2.7 強制）
- 關鍵細節每條 bullet 都是粗體名詞導語開頭（<strong>主題詞：</strong>）？（v2.7 強制）
- §2 每個子產業段都是 trend-list 一行一要素＋標籤晶片？沒有任何子產業用單一 <p> 塞六要素？noncon 也拆為 觀察／可證偽 兩條？（v2.7 強制）
- Navigation / breadcrumb / disclaimer / footer 都完整？
- 所有 CSS classes 都正確？Tag colors 對應 beat/miss/raise/lower？
- Mobile responsive 有 @media 720px？
- 白話呈現條款（2026-09-01 持有人拍板，全站適用）：所有輸出給讀者的顯示文字遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——①白話為主、術語為輔（對照表已定白話主名的詞一律用白話主名，原代號降小字或首現括號）；②新造術語前先查表，表上沒有的要先照鐵律③讀機制查證、定白話名並回寫對照表；③解釋深入淺出：每個承重判斷用讀者能懂的話講一遍，不堆行話？
+ Step 5 清單對帳：$50B+ 全部 + DD 快篩名單當日 reporter + 用戶指定，家數與 company-card 數完全相符？
+ GAAP vs adj. 落差 >50% 的公司，是否已追查一次性項目並以 adj. 為判定基準？
+ §5 驗證點日曆 ≥4 項，且每項可證偽？
+ §2 子產業段落數（公司 ≥10 家時 ≥7 個）達標？
+ 全文已用腳本掃過無簡體字、中文字後皆全形標點？
+ Navigation / breadcrumb / disclaimer / footer 完整？CSS classes 對應正確？
 
 任一項目未通過 → 回到 Phase 2 補搜，不可勉強生成。
