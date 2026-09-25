@@ -1075,3 +1075,128 @@ def test_build_long_chart_series_at_or_above_threshold_is_drawn():
     assert len(series) == 2
     assert series[0]["price_index"] == pytest.approx(100.0)
     assert series[1]["price_index"] == pytest.approx(105.0)
+
+
+# ── Anchor line fallback (2026-09-25) — build_anchor_line_point() /
+#    build_anchor_chart_series() / apply_anchor_fallback(). See
+#    scripts/etf_dash/anchor_history.py for the splice/chain-link logic
+#    itself (tested separately in test_anchor_history.py); these tests cover
+#    build_etf_dash.py's half: turning one FULL run's per-constituent
+#    eps_trend anchors into a 5-point ETF-level snapshot (reusing
+#    classify_revision()'s outlier rules), and the threshold-switch wiring.
+
+def test_build_anchor_line_point_weighted_ratio_and_today_is_100():
+    anchors_for_line = {
+        "AAA": {"current": 10.0, "weight_pct": 60.0,
+                "anchors": {"7d": 9.9, "30d": 9.5, "60d": 9.0, "90d": 8.0}},
+        "BBB": {"current": 5.0, "weight_pct": 40.0,
+                "anchors": {"7d": 5.0, "30d": 4.9, "60d": 4.8, "90d": 4.5}},
+    }
+    today = datetime(2026, 9, 25)
+    run = m.build_anchor_line_point(anchors_for_line, 100.0, today)
+    assert run["eps_as_of"] == "2026-09-25"
+    by_date = {p["date"]: p for p in run["points"]}
+    assert [p["date"] for p in run["points"]] == sorted(p["date"] for p in run["points"])  # oldest->newest
+    assert by_date["2026-06-27"]["level"] == pytest.approx(84.0)     # -90d
+    assert by_date["2026-07-27"]["level"] == pytest.approx(92.4)     # -60d
+    assert by_date["2026-08-26"]["level"] == pytest.approx(96.2)     # -30d
+    assert by_date["2026-09-18"]["level"] == pytest.approx(99.4)     # -7d
+    assert by_date["2026-09-25"]["level"] == 100.0                    # eps_as_of itself
+    assert by_date["2026-09-25"]["coverage_pct"] == 100.0
+
+
+def test_build_anchor_line_point_excludes_invalid_base_and_caps_extreme_move():
+    # Mirrors classify_revision()'s existing outlier rules (see
+    # test_classify_revision_* above): a base near zero relative to current
+    # is excluded outright; a huge-but-valid move is capped at ±50%.
+    anchors_for_line = {
+        "AAA": {"current": 10.0, "weight_pct": 50.0, "anchors": {"90d": 8.0}},       # normal, raw +25%
+        "BAD": {"current": 10.0, "weight_pct": 30.0, "anchors": {"90d": 0.5}},       # |0.5| < 0.2*10 -> excluded
+        "EXTREME": {"current": 10.0, "weight_pct": 20.0, "anchors": {"90d": 3.0}},   # raw +233% -> capped to +50%
+    }
+    today = datetime(2026, 9, 25)
+    run = m.build_anchor_line_point(anchors_for_line, 100.0, today)
+    pt_90d = next(p for p in run["points"] if p["date"] == "2026-06-27")
+    # covered weight = 50 (AAA) + 20 (EXTREME) = 70; BAD's 30 dropped entirely.
+    assert pt_90d["coverage_pct"] == pytest.approx(70.0)
+    ratio_aaa = 1 / 1.25       # capped_pct = +25%
+    ratio_extreme = 1 / 1.5    # capped_pct capped to +50% (raw was +233.3%)
+    expected_level = round((50 * ratio_aaa + 20 * ratio_extreme) / 70 * 100, 4)
+    assert pt_90d["level"] == pytest.approx(expected_level)
+
+
+def test_build_anchor_line_point_no_coverage_at_an_anchor_is_null_not_zero():
+    anchors_for_line = {"AAA": {"current": 10.0, "weight_pct": 100.0, "anchors": {"90d": None}}}
+    today = datetime(2026, 9, 25)
+    run = m.build_anchor_line_point(anchors_for_line, 100.0, today)
+    pt_90d = next(p for p in run["points"] if p["date"] == "2026-06-27")
+    assert pt_90d["level"] is None
+    assert pt_90d["coverage_pct"] == 0.0
+
+
+@pytest.fixture()
+def tmp_anchor_history_dir(tmp_path, monkeypatch):
+    monkeypatch.setattr(m.anchor_history, "ANCHOR_HISTORY_DIR", tmp_path)
+    return tmp_path
+
+
+def test_build_anchor_chart_series_no_history_returns_empty_and_no_label(tmp_anchor_history_dir):
+    series, label = m.build_anchor_chart_series("TOPIX", [{"date": "2026-09-25", "close": 100.0}])
+    assert series == []
+    assert label is None
+
+
+def test_build_anchor_chart_series_pairs_with_price_and_rebases_both_to_100(tmp_anchor_history_dir):
+    run = {
+        "eps_as_of": "2026-09-25",
+        "points": [
+            {"date": "2026-06-27", "level": 80.0, "coverage_pct": 70.0},
+            {"date": "2026-07-27", "level": 85.0, "coverage_pct": 72.0},
+            {"date": "2026-08-26", "level": 90.0, "coverage_pct": 75.0},
+            {"date": "2026-09-18", "level": 95.0, "coverage_pct": 78.0},
+            {"date": "2026-09-25", "level": 100.0, "coverage_pct": 80.0},
+        ],
+    }
+    m.anchor_history.append_run("TOPIX", run)
+    price_series = [
+        {"date": "2026-06-27", "close": 50.0}, {"date": "2026-07-27", "close": 55.0},
+        {"date": "2026-08-26", "close": 60.0}, {"date": "2026-09-18", "close": 65.0},
+        {"date": "2026-09-25", "close": 70.0},
+    ]
+    series, label = m.build_anchor_chart_series("TOPIX", price_series)
+    assert label is not None and "Yahoo 分析師預估" in label
+    assert len(series) == 5
+    # EPS side rebased to the run's own first point (80.0) = 100.
+    eps_expected = [100.0, 106.25, 112.5, 118.75, 125.0]
+    assert [p["eps_index"] for p in series] == [pytest.approx(v) for v in eps_expected]
+    # Price side independently rebased to 100 at the same start date (50.0).
+    price_expected = [100.0, 110.0, 120.0, 130.0, 140.0]
+    assert [p["price_index"] for p in series] == [pytest.approx(v) for v in price_expected]
+    assert [p["coverage_pct"] for p in series] == [70.0, 72.0, 75.0, 78.0, 80.0]
+
+
+def test_apply_anchor_fallback_short_circuits_when_not_suppressed(monkeypatch):
+    def _boom(*a, **kw):
+        raise AssertionError("build_anchor_chart_series should not be called when dd-screener line isn't suppressed")
+    monkeypatch.setattr(m, "build_anchor_chart_series", _boom)
+    note, series, label = m.apply_anchor_fallback(None, "TOPIX", [])
+    assert note is None
+    assert series == []
+    assert label is None
+
+
+def test_apply_anchor_fallback_keeps_suppressed_note_when_no_anchor_history(monkeypatch):
+    monkeypatch.setattr(m, "build_anchor_chart_series", lambda etf_key, price_series: ([], None))
+    note, series, label = m.apply_anchor_fallback("覆蓋率太低，不畫長線", "TOPIX", [])
+    assert note == "覆蓋率太低，不畫長線"
+    assert series == []
+    assert label is None
+
+
+def test_apply_anchor_fallback_clears_suppressed_note_when_anchor_history_available(monkeypatch):
+    fake_series = [{"date": "2026-09-25", "eps_index": 100.0, "price_index": 100.0, "coverage_pct": 90.0}]
+    monkeypatch.setattr(m, "build_anchor_chart_series", lambda etf_key, price_series: (fake_series, "anchor label"))
+    note, series, label = m.apply_anchor_fallback("覆蓋率太低，不畫長線", "TOPIX", [])
+    assert note is None
+    assert series == fake_series
+    assert label == "anchor label"

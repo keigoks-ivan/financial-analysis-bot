@@ -496,29 +496,45 @@ function renderChart(d){
   // yfinance eps_trend 的 90 天記憶長得多。舊版兩條 yfinance-based 線
   // （chart.eps_index_bootstrap／eps_index_history）還在 JSON 裡供查核，但
   // 不畫在這裡：同一張圖擺兩條定義不同的 EPS 線只會讓人看不懂哪條才是真的。
+  //
+  // 2026-09-25 加 anchor line fallback（見 build_etf_dash.py
+  // build_anchor_chart_series()／scripts/etf_dash/anchor_history.py）：
+  // dd-screener 覆蓋率太低（今天：TOPIX）時 long_eps_index.series 會是空的，
+  // 改畫 chart.anchor_eps_index.series（同一個點格式 {date,eps_index,
+  // price_index,coverage_pct}，來源與方法論不同，見 anchor_eps_index.label_zh
+  // ／methods_note_zh），兩者一律擇一顯示，不會同時畫兩條 EPS 線。
   var lei = (d.chart && d.chart.long_eps_index) || {};
-  var series = lei.series || [];
+  var aei = (d.chart && d.chart.anchor_eps_index) || {};
+  var usingAnchor = !(lei.series||[]).length && (aei.series||[]).length > 0;
+  var series = usingAnchor ? aei.series : (lei.series || []);
   var canvas = document.getElementById('chartMain');
   if(!series.length){ noData(canvas.parentElement, lei.suppressed_note || '無長線 EPS 指數資料'); return; }
   var labels = series.map(function(p){return p.date;});
   var priceData = series.map(function(p){return p.price_index;});
   var epsData = series.map(function(p){return p.eps_index;});
 
-  var nEvents = (lei.rollover_events||[]).length + (lei.anomaly_events||[]).length;
-  document.getElementById('chartSrc').textContent =
-    '資料來源：docs/dd-screener/latest.json 的 git 歷史（scripts/etf_dash/dd_eps_history.py），'+
-    esc(lei.start_date)+' 起共 '+series.length+' 個交易日；權重固定用今天持股，兩條線都在起始日訂為 100';
-  document.getElementById('chartNote').textContent =
-    'EPS 覆蓋率（權重）'+(lei.coverage_weight_pct!=null?lei.coverage_weight_pct.toFixed(1)+'%':'無資料')+
-    '（不在 dd-screener 母體的成分股不計入）；串接過程排除 '+nEvents+' 個異常/財年輪替步驟'+
-    (nEvents>0 ? '（詳見方法論段落）' : '') + '。';
+  if(usingAnchor){
+    document.getElementById('chartSrc').textContent =
+      '資料來源：yfinance Ticker.eps_trend 的 90／60／30／7 天前紀錄（scripts/etf_dash/anchor_history.py），'+
+      labels[0]+' 起共 '+series.length+' 個錨點；兩條線都在起始日訂為 100';
+    document.getElementById('chartNote').textContent = esc(aei.label_zh || '');
+  } else {
+    var nEvents = (lei.rollover_events||[]).length + (lei.anomaly_events||[]).length;
+    document.getElementById('chartSrc').textContent =
+      '資料來源：docs/dd-screener/latest.json 的 git 歷史（scripts/etf_dash/dd_eps_history.py），'+
+      esc(lei.start_date)+' 起共 '+series.length+' 個交易日；權重固定用今天持股，兩條線都在起始日訂為 100';
+    document.getElementById('chartNote').textContent =
+      'EPS 覆蓋率（權重）'+(lei.coverage_weight_pct!=null?lei.coverage_weight_pct.toFixed(1)+'%':'無資料')+
+      '（不在 dd-screener 母體的成分股不計入）；串接過程排除 '+nEvents+' 個異常/財年輪替步驟'+
+      (nEvents>0 ? '（詳見方法論段落）' : '') + '。';
+  }
 
   if(chartInstance){ chartInstance.destroy(); }
   chartInstance = new Chart(canvas, {
     type:'line',
     data:{labels:labels, datasets:[
       {label:'ETF 股價指數（起始=100）', data:priceData, yAxisID:'y', borderColor:COL.navy, pointRadius:0, borderWidth:1.6, spanGaps:true},
-      {label:'成分股加權明年度 EPS 指數（起始=100）', data:epsData, yAxisID:'y', borderColor:COL.gold, pointRadius:0, borderWidth:1.6, spanGaps:true}
+      {label:'成分股加權明年度 EPS 指數（起始=100'+(usingAnchor?'，Yahoo 分析師預估錨點':'')+'）', data:epsData, yAxisID:'y', borderColor:COL.gold, pointRadius:0, borderWidth:1.6, spanGaps:true}
     ]},
     options:{responsive:true, maintainAspectRatio:false,
       scales:{x:{ticks:{color:COL.muted,font:{size:8},maxTicksLimit:6}, grid:{display:false}},

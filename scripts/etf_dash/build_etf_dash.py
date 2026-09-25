@@ -82,6 +82,7 @@ from eps_fx_normalize import (  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # scripts/etf_dash/ itself, for dd_eps_history
 import dd_eps_history  # noqa: E402
+import anchor_history  # noqa: E402
 
 try:
     import yfinance as yf
@@ -318,6 +319,22 @@ PERIOD_DEFS = [  # (key, yfinance eps_trend 欄名, 中文標籤, 概略天數)
     ("30d", "30daysAgo", "近一個月", 30),
     ("60d", "60daysAgo", "近二個月", 60),
     ("90d", "90daysAgo", "近三個月", 90),
+]
+
+# 2026-09-25 加的 anchor-line fallback（見 scripts/etf_dash/anchor_history.py
+# 模組開頭 docstring）用的錨點集合——跟 PERIOD_DEFS 分開的獨立常數：Exhibit 1
+# 的期間表格 2026-09-24 故意拿掉「近 7 天」（太短、跟 daily 更新資訊重疊，見
+# PERIOD_DEFS 上方註解），但 anchor line 需要完整 5 個 yfinance eps_trend 錨點
+# （含 7 天前）才能在覆蓋率不足 dd-screener 長線的基金上補一條線——兩者用途不
+# 同，合併會讓「7d 要不要進 Exhibit 1」跟「anchor line 用幾個錨點」被綁在一起。
+# fetch_ticker_eps_and_price() 的 anchors_local 改抓這份（是 PERIOD_DEFS 的
+# superset，同樣的欄名），PERIOD_DEFS 驅動的 revisions_pct 計算不受影響（它
+# 只迭代 PERIOD_DEFS 的三個 key，anchors_local 多出的 "7d" 不會被用到那裡）。
+ANCHOR_LINE_DEFS = [  # (key, yfinance eps_trend 欄名, 概略天數)
+    ("7d", "7daysAgo", 7),
+    ("30d", "30daysAgo", 30),
+    ("60d", "60daysAgo", 60),
+    ("90d", "90daysAgo", 90),
 ]
 
 # 2026-09-24 持有人擋下第一版 QQQ/SPY 上線：QQQ「近三個月」EPS 加權變動
@@ -1149,8 +1166,12 @@ def fetch_ticker_eps_and_price(ticker: str) -> dict:
         result["eps_currency"] = currency
         return result
 
+    # 抓 ANCHOR_LINE_DEFS（PERIOD_DEFS 的 superset，多一個 "7d"）而不是只抓
+    # PERIOD_DEFS——這裡是唯一一個真的呼叫 eps_trend 的地方，anchor line
+    # fallback（見 anchor_history.py）需要的 7 天前錨點要在這裡一次拿到，不
+    # 能事後回頭再抓一次（PRICE 模式完全不呼叫 eps_trend）。
     anchors = {}
-    for key, col, _label, _days in PERIOD_DEFS:
+    for key, col, _days in ANCHOR_LINE_DEFS:
         v = row.get(col)
         anchors[key] = None if v is None or pd.isna(v) else float(v)
 
@@ -1351,7 +1372,8 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
                            long_eps: dict, dd_universe_size: int, periods: list[dict],
                            mode: str, eps_as_of: str, mode_reason: str,
                            weight_methodology_note_zh: str | None = None,
-                           eps_scope_note_zh: str | None = None) -> str:
+                           eps_scope_note_zh: str | None = None,
+                           anchor_label_zh: str | None = None) -> str:
     """組 methods_note_zh——2026-09-24 加 QQQ／SPY 之前這段是寫死給 SMH／
     SMH_UCITS 看的（硬編「VanEck」「ASML」「SK Hynix」）。四檔基金共用同一個
     build_fund()，持股來源、非美元成分股、TICKER_ALIAS 用到哪些、長線指數
@@ -1476,6 +1498,17 @@ def build_methods_note_zh(cfg: dict, constituents: list[dict], non_equity: list[
             f"長線覆蓋率因此低於 100%（見 coverage_weight_pct，本基金 "
             f"{long_eps.get('coverage_weight_pct', 0):.1f}%），缺的那部分不計入分子分母，不是當作沒漲跌。"
         )
+    if anchor_label_zh:
+        parts.append(
+            f"本基金 dd-screener 覆蓋率低於 {LONG_EPS_LINE_MIN_COVERAGE_PCT:.0f}% 門檻，Exhibit 2 改畫"
+            f"anchor line（見 scripts/etf_dash/anchor_history.py）：每次 FULL 完整更新（{cadence_zh}）"
+            "都會用這次抓到的 yfinance eps_trend 90／60／30／7 天前紀錄，算出一個 ETF 級 EPS 相對水準的 5 點快照"
+            "（不需要額外呼叫 API——Exhibit 1 本來就要抓這些資料）；多次 FULL run 的快照再串接（chain-link：找"
+            "新一次 run 裡日期不晚於上次存檔日期、最接近的錨點，用比例對齊上次存的水準）成一條連續的線，兩次 "
+            "run 相距超過 90 天銜接不上時另起一段，只顯示斷點之後最新一段。過去每個點的水準都是「當次 FULL run "
+            "當下的持股權重」算出來的，不是今天的權重回頭套用——這是跟 dd-screener 長線（固定用今天權重）唯一"
+            f"的方法論差異。{anchor_label_zh}"
+        )
     parts.append(
         "Koyfin 的預估資料是月頻更新，兩次更新之間同一個數字連著好幾週不變，"
         "所以這條線本來就該長得像階梯，不是平滑曲線。"
@@ -1585,6 +1618,124 @@ def build_long_chart_series(long_eps: dict, price_series: list[dict]) -> tuple[l
     return out, None
 
 
+# ---------------------------------------------------------------------------
+# Anchor line — fallback long-EPS-line for funds whose dd-screener coverage
+# is below LONG_EPS_LINE_MIN_COVERAGE_PCT (today: TOPIX). See
+# scripts/etf_dash/anchor_history.py module docstring for the full design;
+# the two functions below are build_etf_dash.py's half of it: computing one
+# FULL run's 5-point snapshot (build_anchor_line_point(), uses data already
+# fetched for Exhibit 1 — no extra API calls) and turning the spliced,
+# multi-run history into a chart series paired with ETF price
+# (build_anchor_chart_series(), called from both FULL and PRICE mode so the
+# price side stays current daily even though the EPS side only grows on
+# FULL runs).
+# ---------------------------------------------------------------------------
+
+
+def build_anchor_line_point(anchors_for_line: dict, total_weight: float, today: datetime) -> dict:
+    """單次 FULL run 算出的 ETF 級 EPS 相對水準快照——5 個錨點（eps_as_of 本身
+    ＋7／30／60／90 天前），以 eps_as_of＝100 為準。
+
+    anchors_for_line：{ticker: {"current": eps_fy_next_local, "anchors":
+    {"7d"/"30d"/"60d"/"90d": eps_N天前_local 或 None}, "weight_pct": ...}}
+    ——只放這次 run 裡 EPS 狀態＝ok 的成分股（呼叫端在 build_fund_full() 的
+    constituents 迴圈裡建，只用當地幣別：同一檔股票、同一個時間點比較用同一
+    幣別，不需要 FX 轉換——跟 revisions_pct 的既有作法一致，見模組開頭
+    docstring「EPS 修正 % 本身是同幣別比較，不需要」那段）。
+
+    每個錨點：各成分股的 base/current 比值（= 1/(1+修正%/100)，修正% 套用跟
+    Exhibit 1 完全一樣的 classify_revision() 離群值排除／封頂規則——基期 ≤0
+    或相對現值過小整筆排除，封頂 ±REVISION_CAP_PCT%）先算出來，再用「這次
+    run 的持股權重」加權平均，只在有效成分股集合內重新正規化（renormalize，
+    跟 build_fund_full() 的 periods 計算同一個做法）。今天（0 天前）定義上是
+    100，覆蓋率＝有算出 current 的成分股權重佔全部持股權重的比例。
+
+    回傳 {"eps_as_of": "YYYY-MM-DD", "points": [{"date","level","coverage_pct"},
+    ...]}（5 個點，依日期由舊到新）——直接餵給 anchor_history.append_run()。"""
+    today_str = today.strftime("%Y-%m-%d")
+    total_weight = total_weight or 1.0
+    points = []
+    for key, _col, days in ANCHOR_LINE_DEFS:
+        acc = 0.0
+        covered_w = 0.0
+        for info in anchors_for_line.values():
+            base = (info.get("anchors") or {}).get(key)
+            current = info.get("current")
+            status, _reason, _raw_pct, capped_pct = classify_revision(base, current)
+            if status not in ("ok", "capped"):
+                continue
+            ratio = 1.0 / (1 + capped_pct / 100)  # base/current，同幣別故不需 FX
+            w = info.get("weight_pct") or 0
+            acc += w * ratio
+            covered_w += w
+        date_label = (today - timedelta(days=days)).strftime("%Y-%m-%d")
+        level = round(acc / covered_w * 100, 4) if covered_w > 0 else None
+        coverage_pct = round(covered_w / total_weight * 100, 2)
+        points.append({"date": date_label, "level": level, "coverage_pct": coverage_pct})
+
+    today_w = sum(info.get("weight_pct") or 0 for info in anchors_for_line.values()
+                  if info.get("current") is not None)
+    points.append({"date": today_str, "level": 100.0, "coverage_pct": round(today_w / total_weight * 100, 2)})
+    points.sort(key=lambda p: p["date"])
+    return {"eps_as_of": today_str, "points": points}
+
+
+def build_anchor_chart_series(etf_key: str, price_series: list[dict]) -> tuple[list[dict], str | None]:
+    """讀 data/etf_dash/anchor_history/{ETF}.jsonl（見 anchor_history.py），把
+    所有已存的 FULL run 快照串接（anchor_history.splice_runs()）成一條連續的
+    EPS 相對水準序列，只取最新一段（anchor_history.build_display_points()）
+    配上同一天的 ETF 股價——兩者都在序列第一個點 rebase 成 100，跟
+    build_long_chart_series() 的既有設計（EPS 線與股價線同一起點＝100）一致，
+    畫在同一張圖上才能直接比較。
+
+    只有 dd-screener 長線覆蓋率不足（呼叫端在 build_long_chart_series() 判定
+    suppressed）時才會被呼叫並顯示——見 build_fund_full()／build_fund_price()
+    尾端「anchor line fallback」段落。回傳 (chart_series, label_zh)：目前這檔
+    基金還沒有任何 anchor_history 資料（例如還沒跑過一次 FULL）時回傳
+    ([], None)，呼叫端維持既有的「不畫長線」訊息，不是靜默顯示空圖。"""
+    runs = anchor_history.load_runs(etf_key)
+    spliced, segment_notes = anchor_history.splice_runs(runs)
+    display_points = anchor_history.build_display_points(spliced)
+    if not display_points:
+        return [], None
+    start_date = display_points[0]["date"]
+    start_pt = _closest_close_on_or_before(price_series, start_date)
+    start_price = start_pt["close"] if start_pt else None
+    out = []
+    for pt in display_points:
+        price_pt = _closest_close_on_or_before(price_series, pt["date"])
+        price_index = (round(price_pt["close"] / start_price * 100, 4)
+                        if (price_pt and start_price) else None)
+        out.append({"date": pt["date"], "eps_index": pt["level"],
+                    "price_index": price_index, "coverage_pct": pt["coverage_pct"]})
+    label_zh = ("EPS 線來源：Yahoo 分析師預估的 90／60／30／7 天前紀錄（每次全面更新補一段；"
+                "過去點位用當次權重）——dd-screener 名單內符合本基金的成分股覆蓋率太低，改用這條線。")
+    if segment_notes:
+        latest_note = segment_notes[-1]
+        label_zh += (f"這條線在 {latest_note['prev_date']} 之前有一段斷點未接續（相距 "
+                     f"{latest_note['gap_days']} 天，超過 {anchor_history.GAP_SEGMENT_THRESHOLD_DAYS} 天門檻），"
+                     "只顯示斷點之後最新一段。")
+    return out, label_zh
+
+
+def apply_anchor_fallback(long_eps_suppressed_note: str | None, etf_key: str,
+                           price_series: list[dict]) -> tuple[str | None, list[dict], str | None]:
+    """Threshold switch，FULL／PRICE 兩個模式共用（見 build_fund_full()／
+    build_fund_price() 呼叫處）：只有 dd-screener 長線被 build_long_chart_series()
+    抑制（long_eps_suppressed_note 不是 None，也就是覆蓋率低於
+    LONG_EPS_LINE_MIN_COVERAGE_PCT）才嘗試 anchor line fallback；找到資料就把
+    suppressed_note 清成 None（改顯示 anchor line，不是兩則訊息一起顯示——見
+    Exhibit 2「移除『不畫長線』說明」的既有要求），這檔基金還沒有任何
+    anchor_history（例如還沒跑過一次 FULL）就維持原本的抑制說明，不是靜默
+    顯示空圖。回傳 (更新後的 suppressed_note, anchor_chart_series, anchor_label_zh)。"""
+    if long_eps_suppressed_note is None:
+        return None, [], None
+    anchor_chart_series, anchor_label_zh = build_anchor_chart_series(etf_key, price_series)
+    if anchor_chart_series:
+        return None, anchor_chart_series, anchor_label_zh
+    return long_eps_suppressed_note, [], None
+
+
 def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
                      dd_days: dict, today: datetime, stock_dash_universe: set[str],
                      mode_reason: str) -> dict:
@@ -1634,6 +1785,13 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     # 下方），頁面也會顯示。
     period_exclusions = {key: [] for key, *_ in PERIOD_DEFS}
     period_capped = {key: [] for key, *_ in PERIOD_DEFS}
+    # anchor line fallback（見 anchor_history.py）用——只存這次 run 的原始
+    # anchors_local／current（當地幣別，不需要 FX，見 build_anchor_line_point()
+    # docstring），跟 rec／constituents 分開，不進 eps_cache 也不進公開 JSON
+    # （既有設計本來就不持久化每檔的 eps_trend anchors，見 build_fund_full()
+    # 下方 eps_cache_payload 附近的既有註解——這裡沿用同一個原則，只是多算一份
+    # 給 anchor_history 用，用完即丟）。
+    anchors_for_line: dict[str, dict] = {}
     for h in holdings:
         rec = {
             "ticker": h["ticker"], "name": h["name"], "weight_pct": h["weight_pct"],
@@ -1670,6 +1828,8 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             price_local, price_currency, pe_basis_ccy, today_str, fx_cache)
 
         anchors_local = info["eps_fy_next_anchors_local"]
+        anchors_for_line[h["ticker"]] = {"current": eps_local, "anchors": anchors_local,
+                                          "weight_pct": h["weight_pct"]}
         revisions_pct = {}
         for key, _col, _label, _days in PERIOD_DEFS:
             base = anchors_local.get(key)
@@ -1705,6 +1865,13 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             "price_fx_normalized": price_fx_normalized,
         })
         constituents.append(rec)
+
+    # anchor line fallback：這次 FULL run 的 5 點快照，fund-agnostic——每檔
+    # 基金每次 FULL 都算、都存（見 anchor_history.py 模組開頭 docstring），
+    # 用不用得到（是否低於 LONG_EPS_LINE_MIN_COVERAGE_PCT 門檻）在下面拿到
+    # long_eps 的覆蓋率之後才判斷，這裡先把資料存起來，不管這次用不用得到。
+    anchor_run = build_anchor_line_point(anchors_for_line, total_weight, today)
+    anchor_history.append_run(etf_key, anchor_run)
 
     # ---- periods: weighted EPS revision, ETF price change, implied P/E chg
     price_series = fetch_etf_price_history(cfg["yf_ticker"])
@@ -1801,6 +1968,12 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     # 兩條線才能疊在同一個座標軸上直接比「估計漲得比股價快還慢」。
     long_eps = build_long_eps_index(holdings, dd_days, fx_cache, rc_cache)
     long_chart_series, long_eps_suppressed_note = build_long_chart_series(long_eps, price_series)
+
+    # anchor line fallback（見 apply_anchor_fallback()／anchor_history.py）——
+    # fund-agnostic：用不用得到只看這次算出來的 suppressed_note 是不是
+    # None，跟基金是誰無關（見 build_anchor_line_point() 上方註解）。
+    long_eps_suppressed_note, anchor_chart_series, anchor_label_zh = apply_anchor_fallback(
+        long_eps_suppressed_note, etf_key, price_series)
 
     excluded_weight = sum(e["weight_pct"] or 0 for e in excluded)
     non_equity_weight = sum(e["weight_pct"] or 0 for e in non_equity)
@@ -1900,6 +2073,10 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
                 "weight_basis": long_eps["weight_basis"],
                 "suppressed_note": long_eps_suppressed_note,
             },
+            "anchor_eps_index": {
+                "series": anchor_chart_series,
+                "label_zh": anchor_label_zh,
+            },
         },
         "long_eps_index_summary": {
             "full_period_pct": long_full_period_pct,
@@ -1912,7 +2089,8 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
                                                   len(stock_dash_universe), periods,
                                                   "full", today_str, mode_reason,
                                                   weight_methodology_note_zh=weight_methodology_note_zh,
-                                                  eps_scope_note_zh=eps_scope_note_zh),
+                                                  eps_scope_note_zh=eps_scope_note_zh,
+                                                  anchor_label_zh=anchor_label_zh),
     }
 
 
@@ -2034,6 +2212,13 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
     long_eps = build_long_eps_index(holdings, dd_days, fx_cache, rc_cache)
     long_chart_series, long_eps_suppressed_note = build_long_chart_series(long_eps, etf_series)
 
+    # anchor line fallback（見 apply_anchor_fallback()／build_fund_full() 同一
+    # 段註解）——PRICE 模式不會有新的 FULL run 快照可存，只是把上次 FULL 存下來
+    # 的 anchor_history 讀出來，配上今天批次抓到的最新股價，讓股價那一側每天
+    # 都跟著更新（跟 long_eps_index 現有行為一致）。
+    long_eps_suppressed_note, anchor_chart_series, anchor_label_zh = apply_anchor_fallback(
+        long_eps_suppressed_note, etf_key, etf_series)
+
     excluded_weight = sum(e["weight_pct"] or 0 for e in excluded)
     non_equity_weight = sum(e["weight_pct"] or 0 for e in non_equity)
 
@@ -2096,6 +2281,10 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
                 "weight_basis": long_eps["weight_basis"],
                 "suppressed_note": long_eps_suppressed_note,
             },
+            "anchor_eps_index": {
+                "series": anchor_chart_series,
+                "label_zh": anchor_label_zh,
+            },
         },
         "long_eps_index_summary": {
             "full_period_pct": long_full_period_pct,
@@ -2107,7 +2296,8 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         "methods_note_zh": build_methods_note_zh(cfg, constituents, non_equity, long_eps,
                                                   0, periods, "price", eps_as_of, mode_reason,
                                                   weight_methodology_note_zh=weight_methodology_note_zh,
-                                                  eps_scope_note_zh=eps_scope_note_zh),
+                                                  eps_scope_note_zh=eps_scope_note_zh,
+                                                  anchor_label_zh=anchor_label_zh),
     }
 
 
