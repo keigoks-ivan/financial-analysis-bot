@@ -142,6 +142,18 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .move-pill.exit{background:#f5e6e3;color:#8a3b2d}
 .move-pill.inc{background:#e3edf9;color:#1d4e89}
 .move-pill.dec{background:#f5e6e3;color:#8a3b2d}
+
+/* 擁擠度熱力圖(overlap matrix)——單一色相(藍)循序漸層,越深＝重疊權重越高;
+   不用發散色階(這不是正負對比資料),文字一律深色不隨底色上色語意 */
+.heat-table{border-collapse:collapse;font-size:10.5px}
+.heat-table th{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--sec);padding:2px 4px;text-align:center;white-space:nowrap}
+.heat-table th.rowhead{text-align:right;padding-right:6px}
+.heat-table td{width:22px;height:20px;text-align:center;font-family:var(--mono);font-size:9px;color:var(--ink);border:1px solid rgba(255,255,255,.6)}
+.heat-legend{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-top:6px}
+.heat-legend .heat-swatch{width:14px;height:10px;display:inline-block;border:1px solid var(--line)}
+
+.stat-note{font-size:11px;color:var(--muted);margin-top:2px}
+.n-flag{font-size:10px;color:var(--warn);font-weight:600}
 </style>
 </head>
 <body>
@@ -284,6 +296,43 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div class="tbl-wrap"><table class="imq-table" id="ovTable"></table></div>
   <div class="ex-src" id="ovSrc"></div>
 </section>
+
+<section class="exhibit" id="ovCrowdingExhibit">
+  <div class="ex-label">EXHIBIT C</div>
+  <div class="ex-title">擁擠度（22 檔基金合併持股）</div>
+  <div class="ex-sub">把 22 檔主動式 ETF 的持股股數加總，對比個股已發行股數與近 20 日均量——機械計算，數字本身不代表建議</div>
+  <div class="daily-line" id="ovCrowdingCoverage"></div>
+  <div class="two-col">
+    <div>
+      <div class="ex-title" style="font-size:.85rem">合併持股占已發行股數比重最高（前20）</div>
+      <div class="tbl-wrap"><table class="imq-table" id="ovCrowdShareTable"></table></div>
+    </div>
+    <div>
+      <div class="ex-title" style="font-size:.85rem">估計清倉所需交易日數最長（前20）</div>
+      <div class="ex-sub" style="margin-bottom:4px">＝合併持股股數 ÷ 近20日均量；假設用當日全部成交量出清，非實際可行速度</div>
+      <div class="tbl-wrap"><table class="imq-table" id="ovCrowdDtlTable"></table></div>
+    </div>
+  </div>
+  <div class="ex-title" style="font-size:.85rem;margin-top:16px">22 檔基金持股重疊熱力圖</div>
+  <div class="ex-sub" id="ovHeatmapSub">每一格＝Σmin(基金i權重、基金j權重)（百分點），對角線＝基金自身股票權重合計</div>
+  <div class="tbl-wrap" id="ovHeatmapWrap"></div>
+  <div class="heat-legend" id="ovHeatmapLegend"></div>
+</section>
+
+<section class="exhibit" id="ovFlowsExhibit">
+  <div class="ex-label">EXHIBIT F</div>
+  <div class="ex-title">資金流（淨申贖，22 檔合併）</div>
+  <div class="ex-sub">週淨流入＝Σ各基金(受益權單位數變動 × 淨值)，非市場買賣力道，是申購/買回造成的資金進出；正負以 0 為中線呈現，不代表好壞</div>
+  <div class="chart-box" style="height:220px"><canvas id="ovFlowsChart"></canvas></div>
+  <div class="ex-title" style="font-size:.85rem;margin-top:14px">逐基金淨流入</div>
+  <div class="tbl-wrap"><table class="imq-table" id="ovFlowsTable"></table></div>
+  <div class="ex-src" id="ovFlowsSrc"></div>
+</section>
+
+<section class="chapter" id="ovMethodsExhibit">
+  <div class="chapter-head"><span class="ch-title">方法論與限制（五個分析模組）</span></div>
+  <div class="methods-note" id="ovMethodsNote"></div>
+</section>
 </div>
 
 <div id="fundView" style="display:none">
@@ -324,6 +373,69 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div class="ex-sub" id="holdingsSub"></div>
   <div class="tbl-wrap"><table class="imq-table" id="holdingsTable"></table></div>
   <div id="holdingsToggle" style="text-align:center"></div>
+</section>
+
+<section class="chapter" id="mgrSkillExhibit">
+  <div class="chapter-head"><span class="ch-title">經理人功力</span></div>
+  <div class="conclusion" id="mgrSkillSummary"></div>
+  <div class="ex-sub" style="margin-top:12px">持股法主動報酬歸因 vs 元大台灣50（機械分解，數字本身不代表操作優劣）</div>
+  <div class="tbl-wrap"><table class="imq-table" id="mgrAttrTable"></table></div>
+  <div class="two-col" style="margin-top:10px">
+    <div>
+      <div class="ex-title" style="font-size:.85rem">近三個月個股累計貢獻最高前五</div>
+      <div class="tbl-wrap"><table class="imq-table" id="mgrTopPosTable"></table></div>
+    </div>
+    <div>
+      <div class="ex-title" style="font-size:.85rem">近三個月個股累計貢獻最低前五</div>
+      <div class="tbl-wrap"><table class="imq-table" id="mgrTopNegTable"></table></div>
+    </div>
+  </div>
+  <div class="ex-sub" style="margin-top:14px">加碼/新進 vs 減碼/出清後的個股表現（相對台灣加權指數，只計算「往後交易日數已滿」的事件）</div>
+  <div class="tbl-wrap"><table class="imq-table" id="mgrPostTradeTable"></table></div>
+  <div class="ex-src">資料來源：本頁既有持股快照序列（連續兩筆快照為一組事件）+ yfinance 個股/台灣加權指數日收盤</div>
+</section>
+
+<section class="chapter" id="styleExhibit">
+  <div class="chapter-head"><span class="ch-title">風格與偏好</span></div>
+  <div class="conclusion" id="styleSummary"></div>
+  <div class="stat-row" id="styleStatRow"></div>
+  <div class="two-col" style="margin-top:10px">
+    <div>
+      <div class="ex-title" style="font-size:.85rem">產業超配前五（vs 元大台灣50）</div>
+      <div class="tbl-wrap"><table class="imq-table" id="styleOverTable"></table></div>
+    </div>
+    <div>
+      <div class="ex-title" style="font-size:.85rem">產業低配前五（vs 元大台灣50）</div>
+      <div class="tbl-wrap"><table class="imq-table" id="styleUnderTable"></table></div>
+    </div>
+  </div>
+  <div class="ex-sub" id="styleSizeNote" style="margin-top:10px"></div>
+  <div class="ex-title" style="font-size:.85rem;margin-top:14px">近月產業權重（前三大產業，月頻）</div>
+  <div class="tbl-wrap"><table class="imq-table" id="styleTrendTable"></table></div>
+</section>
+
+<section class="chapter" id="opsExhibit">
+  <div class="chapter-head"><span class="ch-title">操作習慣</span></div>
+  <div class="conclusion" id="opsSummary"></div>
+  <div class="two-col">
+    <div>
+      <div class="ex-title" style="font-size:.85rem">月週轉率</div>
+      <div class="chart-box" style="height:180px"><canvas id="opsTurnoverChart"></canvas></div>
+    </div>
+    <div>
+      <div class="ex-title" style="font-size:.85rem">檔數／前十大集中度／股票部位</div>
+      <div class="chart-box" style="height:180px"><canvas id="opsSeriesChart"></canvas></div>
+    </div>
+  </div>
+  <div class="ex-sub" id="opsHoldingPeriodNote" style="margin-top:10px"></div>
+  <div class="ex-src" id="opsSrc"></div>
+</section>
+
+<section class="chapter" id="flowsExhibit">
+  <div class="chapter-head"><span class="ch-title">資金流</span></div>
+  <div class="conclusion" id="flowsSummary"></div>
+  <div class="chart-box" style="height:180px"><canvas id="flowsChart"></canvas></div>
+  <div class="ex-src" id="flowsSrc"></div>
 </section>
 
 <section class="chapter">
@@ -590,6 +702,165 @@ function renderChart(d){
   });
 }
 
+// ── 經理人功力(M1) ───────────────────────────────────────────────────────
+function attrRowHtml(key, label, a){
+  if(!a || a.status!=='ok'){
+    return '<tr><td>'+label+'</td><td colspan="5" style="color:var(--muted)">'+(a&&a.status==='insufficient_trading_days'?'交易日資料不足（n='+(a.n_trading_days_used||0)+'）':'無資料')+'</td></tr>';
+  }
+  return '<tr><td>'+label+'<span class="base-date">'+esc(a.start_date)+' → '+esc(a.end_date)+'（n='+a.n_trading_days_used+' 個交易日）</span></td>'+
+    '<td class="num">'+fmtPct(a.total_active_return_pct)+'</td>'+
+    '<td class="num">'+fmtPct(a.actual_fund_return_pct)+'</td>'+
+    '<td class="num">'+fmtPct(a.bench_return_pct)+'</td>'+
+    '<td class="num">'+fmtPct(a.residual_pct)+'</td></tr>';
+}
+function contribRowHtml(c){
+  return '<tr><td>'+tickerCell(c)+'</td><td class="num">'+fmtPct(c.contribution_pct)+'</td></tr>';
+}
+function postTradeRowHtml(label, side){
+  var h20 = (side&&side[20])||{}, h60 = (side&&side[60])||{};
+  function cell(h){
+    if(!h.n_events) return '<td class="num" colspan="2" style="color:var(--muted)">無事件</td>';
+    var flag = h.sample_sufficient ? '' : ' <span class="n-flag">樣本不足</span>';
+    return '<td class="num">'+(h.hit_rate_pct!=null?h.hit_rate_pct.toFixed(1)+'%':'—')+' <span style="color:var(--muted)">(n='+h.n_events+')</span>'+flag+'</td>'+
+      '<td class="num">'+fmtPct(h.median_excess_return_pct)+'</td>';
+  }
+  return '<tr><td>'+label+'</td>'+cell(h20)+cell(h60)+'</tr>';
+}
+function renderManagerSkill(d){
+  var ms = d.manager_skill || {};
+  var attr = ms.return_attribution || {};
+  var tbl = document.getElementById('mgrAttrTable');
+  tbl.innerHTML = '<thead><tr><th>期間</th><th class="num">持股法主動報酬</th><th class="num">ETF 實際報酬</th>'+
+    '<th class="num">元大台灣50同期</th><th class="num">殘差(交易/費用/現金)</th></tr></thead><tbody>'+
+    attrRowHtml('1個月', '1個月', attr['1m'])+attrRowHtml('3個月', '3個月', attr['3m'])+attrRowHtml('資料回補以來', '資料回補以來', attr.since_available)+
+    '</tbody>';
+  var a3 = attr['3m'];
+  var summary = document.getElementById('mgrSkillSummary');
+  if(a3 && a3.status==='ok'){
+    summary.innerHTML = '近三個月持股法計算的主動報酬為 '+fmtPct(a3.total_active_return_pct)+'（vs 元大台灣50，n='+a3.n_trading_days_used+' 個交易日）；'+
+      'ETF 實際報酬 '+fmtPct(a3.actual_fund_return_pct)+'，元大台灣50同期 '+fmtPct(a3.bench_return_pct)+'，殘差(交易成本/費用/現金緩衝等未歸因部分) '+fmtPct(a3.residual_pct)+'。';
+  } else {
+    summary.innerHTML = '無資料：近三個月交易日或權重歷史不足以計算主動報酬歸因。';
+  }
+  var posTbl = document.getElementById('mgrTopPosTable'), negTbl = document.getElementById('mgrTopNegTable');
+  var posRows = (a3&&a3.top_positive)||[], negRows = (a3&&a3.top_negative)||[];
+  var contribHead = '<thead><tr><th>個股</th><th class="num">累計貢獻</th></tr></thead>';
+  posTbl.innerHTML = contribHead+'<tbody>'+(posRows.length?posRows.map(contribRowHtml).join(''):'<tr><td colspan="2" style="color:var(--muted)">無資料</td></tr>')+'</tbody>';
+  negTbl.innerHTML = contribHead+'<tbody>'+(negRows.length?negRows.map(contribRowHtml).join(''):'<tr><td colspan="2" style="color:var(--muted)">無資料</td></tr>')+'</tbody>';
+
+  var pt = ms.post_trade || {};
+  var ptTbl = document.getElementById('mgrPostTradeTable');
+  ptTbl.innerHTML = '<thead><tr><th>事件類型</th><th class="num" colspan="2">往後20個交易日</th><th class="num" colspan="2">往後60個交易日</th></tr>'+
+    '<tr><th></th><th class="num">命中率(贏台灣加權指數)</th><th class="num">中位數超額報酬</th><th class="num">命中率(贏台灣加權指數)</th><th class="num">中位數超額報酬</th></tr></thead><tbody>'+
+    postTradeRowHtml('加碼/新進（n='+(pt.n_events_total||0)+' 含賣出）', pt.buys)+postTradeRowHtml('減碼/出清', pt.sells)+'</tbody>';
+}
+
+// ── 風格與偏好(M4) ───────────────────────────────────────────────────────
+function tiltRowHtml(r){
+  return '<tr><td>'+esc(r.industry)+'</td><td class="num">'+r.fund_weight_pct.toFixed(2)+'%</td>'+
+    '<td class="num">'+r.bench_weight_pct.toFixed(2)+'%</td><td class="num">'+fmtPct(r.diff_pp)+'pp</td></tr>';
+}
+function renderStyleTilts(d){
+  var st = d.style_tilts || {};
+  var over = st.industry_top_overweight||[], under = st.industry_top_underweight||[];
+  var head = '<thead><tr><th>產業別</th><th class="num">本基金</th><th class="num">元大台灣50</th><th class="num">差異</th></tr></thead>';
+  document.getElementById('styleOverTable').innerHTML = head+'<tbody>'+(over.length?over.map(tiltRowHtml).join(''):'<tr><td colspan="4" style="color:var(--muted)">無資料</td></tr>')+'</tbody>';
+  document.getElementById('styleUnderTable').innerHTML = head+'<tbody>'+(under.length?under.map(tiltRowHtml).join(''):'<tr><td colspan="4" style="color:var(--muted)">無資料</td></tr>')+'</tbody>';
+
+  var items = [
+    ['加權遠期本益比差', st.fwd_pe_diff!=null?(st.fwd_pe_diff>=0?'+':'')+st.fwd_pe_diff.toFixed(2)+'x':'無資料'],
+    ['EPS修正 3M 傾斜', fmtPct(st.eps_revision_90d_tilt_pp)+'pp'],
+    ['動能 3M 傾斜', fmtPct(st.momentum_90d_tilt_pp)+'pp'],
+    ['加權中位數市值(億)', st.weighted_median_market_cap_100m_twd!=null?fmtNum(st.weighted_median_market_cap_100m_twd,0):'無資料'],
+    ['大/中/小型股權重', st.size_bucket_share_pct ? (st.size_bucket_share_pct.large||0).toFixed(0)+'/'+(st.size_bucket_share_pct.mid||0).toFixed(0)+'/'+(st.size_bucket_share_pct.small||0).toFixed(0)+'%' : '無資料']
+  ];
+  document.getElementById('styleStatRow').innerHTML = items.map(function(it){
+    return '<div class="imq-stat"><span class="v">'+it[1]+'</span><span class="k">'+it[0]+'</span></div>';
+  }).join('');
+  document.getElementById('styleSizeNote').textContent = st.size_note_zh || '';
+
+  var topOver = over[0], topUnder = under[0];
+  document.getElementById('styleSummary').innerHTML =
+    (topOver ? '產業最超配 '+esc(topOver.industry)+'（+'+topOver.diff_pp.toFixed(1)+'pp）' : '無明顯產業超配資料') +
+    (topUnder ? '；最低配 '+esc(topUnder.industry)+'（'+topUnder.diff_pp.toFixed(1)+'pp）' : '') +
+    '，皆相對元大台灣50。加權遠期本益比'+(st.fwd_pe_diff!=null?(st.fwd_pe_diff>=0?'高於':'低於')+'元大台灣50 '+Math.abs(st.fwd_pe_diff).toFixed(2)+'x':'無資料')+'。';
+
+  var trend = d.style_trend || [];
+  var trendTbl = document.getElementById('styleTrendTable');
+  if(!trend.length){ noData(trendTbl, '快照歷史不足以算月度產業權重趨勢'); return; }
+  trendTbl.innerHTML = '<thead><tr><th>月份</th><th>前三大產業（權重）</th></tr></thead><tbody>'+
+    trend.map(function(t){
+      return '<tr><td>'+esc(t.month)+'</td><td>'+(t.top_industries||[]).map(function(i){return esc(i.industry)+' '+i.weight_pct.toFixed(1)+'%';}).join('、')+'</td></tr>';
+    }).join('')+'</tbody>';
+}
+
+// ── 操作習慣(M5) ─────────────────────────────────────────────────────────
+var opsTurnoverChartInstance = null, opsSeriesChartInstance = null;
+function renderOperations(d){
+  var ops = d.operations || {};
+  var turnover = ops.monthly_turnover || [];
+  var c1 = document.getElementById('opsTurnoverChart');
+  if(opsTurnoverChartInstance){ opsTurnoverChartInstance.destroy(); opsTurnoverChartInstance = null; }
+  if(turnover.length){
+    opsTurnoverChartInstance = new Chart(c1, {type:'bar',
+      data:{labels:turnover.map(function(t){return t.month;}), datasets:[{label:'月週轉率(%)', data:turnover.map(function(t){return t.turnover_pct;}), backgroundColor:COL.blue}]},
+      options:{responsive:true, maintainAspectRatio:false,
+        scales:{x:{ticks:{color:COL.muted,font:{size:9}}, grid:{display:false}}, y:{ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}},
+        plugins:{legend:{display:false}}}});
+  } else { noData(c1.parentElement, '快照歷史不足以算月週轉率'); }
+
+  var n = ops.n_holdings_over_time||[], top10 = ops.top10_concentration_over_time||[], sw = ops.stock_weight_over_time||[];
+  var c2 = document.getElementById('opsSeriesChart');
+  if(opsSeriesChartInstance){ opsSeriesChartInstance.destroy(); opsSeriesChartInstance = null; }
+  if(n.length){
+    opsSeriesChartInstance = new Chart(c2, {type:'line',
+      data:{labels:n.map(function(x){return x.date;}), datasets:[
+        {label:'檔數', data:n.map(function(x){return x.n_holdings;}), yAxisID:'y1', borderColor:COL.navy, pointRadius:0, borderWidth:1.4},
+        {label:'前十大集中度(%)', data:top10.map(function(x){return x.top10_pct;}), yAxisID:'y2', borderColor:COL.gold, pointRadius:0, borderWidth:1.4},
+        {label:'股票部位(%)', data:sw.map(function(x){return x.stock_weight_pct;}), yAxisID:'y2', borderColor:COL.blue, pointRadius:0, borderWidth:1.4}
+      ]},
+      options:{responsive:true, maintainAspectRatio:false,
+        scales:{x:{ticks:{color:COL.muted,font:{size:8}}, grid:{display:false}},
+                y1:{position:'left', ticks:{color:COL.muted,font:{size:9}}, grid:{display:false}},
+                y2:{position:'right', ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}},
+        plugins:{legend:{position:'bottom', labels:{color:COL.sec, font:{size:9}, boxWidth:10}}}}});
+  } else { noData(c2.parentElement, '快照歷史不足以畫趨勢圖'); }
+
+  var lowEquityDays = sw.filter(function(x){return x.low_equity;}).length;
+  var hp = ops.holding_period || {};
+  document.getElementById('opsHoldingPeriodNote').innerHTML =
+    '已平倉部位平均持有期間 '+(hp.avg_days!=null?hp.avg_days.toFixed(0)+' 天（下限估計，n='+hp.n_closed_positions+' 檔）':'無資料（尚無已平倉部位）')+
+    '；股票權重合計低於常態下限（'+(ops.weight_band_min_pct!=null?ops.weight_band_min_pct.toFixed(0):'90')+'%）的快照天數：'+lowEquityDays+' / '+sw.length+'。';
+  document.getElementById('opsSummary').innerHTML =
+    (turnover.length ? '最近一個月週轉率 '+fmtPct(turnover[turnover.length-1].turnover_pct)+'。' : '') +
+    (hp.avg_days!=null ? '已平倉部位平均持有 '+hp.avg_days.toFixed(0)+' 天。' : '');
+  document.getElementById('opsSrc').textContent = '資料來源：本頁持股快照序列的股數/權重變動 + yfinance 個股收盤價';
+}
+
+// ── 資金流(M3,單一基金) ─────────────────────────────────────────────────
+var flowsChartInstance = null;
+function renderFundFlows(d){
+  var f = d.flows || {};
+  var events = f.events || [];
+  var canvas = document.getElementById('flowsChart');
+  if(flowsChartInstance){ flowsChartInstance.destroy(); flowsChartInstance = null; }
+  if(!events.length){ noData(canvas.parentElement, '快照歷史不足（缺 nav.units）以計算資金流'); }
+  else {
+    flowsChartInstance = new Chart(canvas, {type:'bar',
+      data:{labels:events.map(function(e){return e.date;}), datasets:[
+        {label:'淨申贖(億元)', data:events.map(function(e){return e.net_flow_100m;}), backgroundColor:COL.blue},
+        {label:'價格效果(億元)', data:events.map(function(e){return e.price_effect_100m;}), backgroundColor:COL.gold}
+      ]},
+      options:{responsive:true, maintainAspectRatio:false,
+        scales:{x:{ticks:{color:COL.muted,font:{size:7}}, grid:{display:false}}, y:{ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}},
+        plugins:{legend:{position:'bottom', labels:{color:COL.sec, font:{size:9}, boxWidth:10}}}}});
+  }
+  document.getElementById('flowsSummary').innerHTML =
+    '累計淨申贖 '+(f.cumulative_net_flow_100m!=null?fmtNum(f.cumulative_net_flow_100m,1)+' 億元':'無資料')+
+    '（'+f.n_events_with_units+' / '+f.n_snapshots+' 組相鄰快照有完整受益權單位數資料可推算）。';
+  document.getElementById('flowsSrc').textContent = '資料來源：本基金官方快照 nav.units × nav.nav_per_unit（連續兩筆推回）';
+}
+
 function render(d){
   renderCover(d);
   renderInfoStrip(d);
@@ -608,6 +879,10 @@ function render(d){
     });
   });
   renderHoldingsTable(d);
+  renderManagerSkill(d);
+  renderStyleTilts(d);
+  renderOperations(d);
+  renderFundFlows(d);
   renderMethodsNote(d);
 }
 
@@ -621,7 +896,11 @@ var OV_COLUMNS = [
   {key:'implied_pe_chg_pct_90d', label:'本益比變動 3M', full:'隱含本益比變動（3個月）', numeric:true, bar:true},
   {key:'weighted_forward_pe', label:'預估本益比', full:'目前預估本益比', numeric:true, lo:true},
   {key:'aum_100m_twd', label:'AUM(億)', full:'資產規模（億元）', numeric:true, lo:true},
-  {key:'active_share_vs_0050_pct', label:'Active Share', full:'Active Share vs 元大台灣50', numeric:true, lo:true}
+  {key:'active_share_vs_0050_pct', label:'Active Share', full:'Active Share vs 元大台灣50', numeric:true, lo:true},
+  {key:'active_return_3m_pct', label:'主動報酬 3M', full:'近三月主動報酬（持股法，vs 元大台灣50）', numeric:true, lo:true},
+  {key:'post_trade_hit_rate_60d_pct', label:'買進後命中率', full:'加碼/新進後 60 交易日贏台灣加權指數的比率（n=事件數）', numeric:true, lo:true},
+  {key:'monthly_turnover_pct', label:'月週轉率', full:'最近一個月週轉率（股數變動的交易金額 ÷ AUM ÷ 2）', numeric:true, lo:true},
+  {key:'cumulative_net_flow_100m', label:'累計淨流入', full:'累計淨申贖（億元，資料回補以來）', numeric:true, lo:true}
 ];
 // 2026-09-25:22 檔分 15 家投信,原本依投信分組(每組 1-3 檔)表格太高——改成
 // 單一 flat list,預設依 AUM 降冪(ov.funds 本身已由 build_active_etf.py 排好,
@@ -662,7 +941,12 @@ function ovRowHtml(row){
     '<td class="num">'+divBarHtml(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d')+'</td>'+
     '<td class="num ov-col-lo">'+(row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—')+'</td>'+
     '<td class="num ov-col-lo">'+(row.aum_100m_twd!=null?fmtNum(row.aum_100m_twd,1):'—')+'</td>'+
-    '<td class="num ov-col-lo">'+(row.active_share_vs_0050_pct!=null?row.active_share_vs_0050_pct.toFixed(1)+'%':'—')+'</td></tr>';
+    '<td class="num ov-col-lo">'+(row.active_share_vs_0050_pct!=null?row.active_share_vs_0050_pct.toFixed(1)+'%':'—')+'</td>'+
+    '<td class="num ov-col-lo">'+fmtPct(row.active_return_3m_pct)+'</td>'+
+    '<td class="num ov-col-lo">'+(row.post_trade_hit_rate_60d_pct!=null?row.post_trade_hit_rate_60d_pct.toFixed(1)+'%'+
+      (row.post_trade_n_60d!=null?' <span style="color:var(--muted)">(n='+row.post_trade_n_60d+')</span>':''):'—')+'</td>'+
+    '<td class="num ov-col-lo">'+fmtPct(row.monthly_turnover_pct)+'</td>'+
+    '<td class="num ov-col-lo">'+(row.cumulative_net_flow_100m!=null?fmtNum(row.cumulative_net_flow_100m,1):'—')+'</td></tr>';
 }
 function renderOverviewTbody(){
   var body = document.getElementById('ovTableBody');
@@ -928,6 +1212,105 @@ function renderConsensusTables(ov, w){
   soldTbl.innerHTML = head + '<tbody>'+(sold.length?sold.map(function(r){return consensusRowHtml(r,'sell');}).join(''):'<tr><td colspan="4" style="color:var(--muted)">此期間無資料</td></tr>')+'</tbody>';
 }
 
+// ── 擁擠度(M2) ───────────────────────────────────────────────────────────
+function crowdRowHtml(r, valueHtml){
+  return '<tr><td>'+tickerCell(r)+'</td><td class="num">'+r.n_funds_holding+'</td><td class="num">'+valueHtml+'</td></tr>';
+}
+function renderCrowding(ov){
+  var c = ov.crowding || {};
+  var cov = document.getElementById('ovCrowdingCoverage');
+  if(cov){
+    cov.innerHTML = '合併持股共 <b>'+(c.n_stocks_total||0)+'</b> 檔個股；'+
+      '<b>'+(c.n_stocks_with_shares_outstanding||0)+'</b> 檔有已發行股數資料（TWSE/TPEx OpenAPI）、'+
+      '<b>'+(c.n_stocks_with_adv20||0)+'</b> 檔有近20日均量資料，其餘個股該欄位顯示無資料。';
+  }
+  var shareTbl = document.getElementById('ovCrowdShareTable'), dtlTbl = document.getElementById('ovCrowdDtlTable');
+  var shareHead = '<thead><tr><th>個股</th><th class="num">幾檔基金</th><th class="num">占已發行股數</th></tr></thead>';
+  var dtlHead = '<thead><tr><th>個股</th><th class="num">幾檔基金</th><th class="num">估計清倉天數</th></tr></thead>';
+  var shareRows = (c.top_by_pct_shares_outstanding||[]);
+  var dtlRows = (c.top_by_days_to_liquidate||[]);
+  shareTbl.innerHTML = shareHead+'<tbody>'+(shareRows.length?shareRows.map(function(r){return crowdRowHtml(r, r.pct_of_shares_outstanding.toFixed(2)+'%');}).join(''):'<tr><td colspan="3" style="color:var(--muted)">無資料</td></tr>')+'</tbody>';
+  dtlTbl.innerHTML = dtlHead+'<tbody>'+(dtlRows.length?dtlRows.map(function(r){return crowdRowHtml(r, fmtNum(r.days_to_liquidate,1)+' 日');}).join(''):'<tr><td colspan="3" style="color:var(--muted)">無資料</td></tr>')+'</tbody>';
+  renderOverlapHeatmap(c.overlap_matrix);
+}
+function heatColor(v, max){
+  // 單一色相(藍)循序漸層:0 -> 近白,max -> 深藍。文字不隨底色變色(dataviz skill:
+  // text never wears the data color)。
+  var t = max>0 ? Math.min(1, v/max) : 0;
+  var r = Math.round(235 - t*(235-13)), g = Math.round(240 - t*(240-46)), b = Math.round(247 - t*(247-84));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function renderOverlapHeatmap(m){
+  var wrap = document.getElementById('ovHeatmapWrap');
+  if(!m || !m.codes || !m.codes.length){ noData(wrap, '無重疊矩陣資料'); return; }
+  var codes = m.codes, mat = m.matrix;
+  var maxOff = 0;  // 對角線(自身)不參與色階(否則對角線100%會把非對角線全部壓成淺色)
+  for(var i=0;i<codes.length;i++) for(var j=0;j<codes.length;j++) if(i!==j) maxOff = Math.max(maxOff, mat[i][j]);
+  var html = '<table class="heat-table"><thead><tr><th></th>'+codes.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>';
+  for(var r=0;r<codes.length;r++){
+    html += '<tr><th class="rowhead">'+esc(codes[r])+'</th>' + codes.map(function(c,ci){
+      var v = mat[r][ci];
+      var bg = ci===r ? '#d8dee8' : heatColor(v, maxOff);
+      return '<td style="background:'+bg+'" title="'+esc(codes[r])+' × '+esc(c)+'：'+v.toFixed(1)+'pp">'+v.toFixed(0)+'</td>';
+    }).join('') + '</tr>';
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+  var legend = document.getElementById('ovHeatmapLegend');
+  if(legend){
+    legend.innerHTML = '<span>重疊權重(百分點)：</span>' +
+      [0, maxOff*0.33, maxOff*0.66, maxOff].map(function(v){
+        return '<span class="heat-swatch" style="background:'+heatColor(v,maxOff)+'"></span><span>'+v.toFixed(0)+'</span>';
+      }).join('') + '<span style="margin-left:10px">對角線(灰)＝基金自身股票權重合計</span>';
+  }
+}
+
+// ── 資金流(M3,overview 彙總) ────────────────────────────────────────────
+var ovFlowsChartInstance = null;
+function renderOverviewFlows(ov){
+  var f = ov.flows || {};
+  var weekly = f.weekly_net_flow_100m || [];
+  var canvas = document.getElementById('ovFlowsChart');
+  if(ovFlowsChartInstance){ ovFlowsChartInstance.destroy(); ovFlowsChartInstance = null; }
+  if(!weekly.length){ noData(canvas.parentElement, '無週淨流入資料'); }
+  else {
+    ovFlowsChartInstance = new Chart(canvas, {
+      type:'bar',
+      data:{labels:weekly.map(function(w){return w.week;}), datasets:[{
+        label:'22 檔合併週淨流入（億元）', data:weekly.map(function(w){return w.net_flow_100m;}),
+        backgroundColor:COL.blue
+      }]},
+      options:{responsive:true, maintainAspectRatio:false,
+        scales:{x:{ticks:{color:COL.muted,font:{size:8}}, grid:{display:false}},
+                y:{ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}},
+        plugins:{legend:{display:false}}}
+    });
+  }
+  var tbl = document.getElementById('ovFlowsTable');
+  var rows = f.by_fund || [];
+  tbl.innerHTML = '<thead><tr><th>基金</th><th class="num">累計淨流入(億)</th><th class="num">近30天淨流入(億)</th><th class="num">可比事件數</th></tr></thead><tbody>'+
+    (rows.length ? rows.map(function(r){
+      return '<tr><td><a href="?etf='+encodeURIComponent(r.code)+'">'+esc(r.code)+' '+esc((r.name||'').replace(/^主動/,''))+'</a></td>'+
+        '<td class="num">'+(r.cumulative_net_flow_100m!=null?fmtNum(r.cumulative_net_flow_100m,1):'—')+'</td>'+
+        '<td class="num">'+(r.net_flow_last30d_100m!=null?fmtNum(r.net_flow_last30d_100m,1):'—')+'</td>'+
+        '<td class="num">'+r.n_events_with_units+'</td></tr>';
+    }).join('') : '<tr><td colspan="4" style="color:var(--muted)">無資料</td></tr>')+'</tbody>';
+  document.getElementById('ovFlowsSrc').textContent =
+    '資料來源：各基金官方快照 nav.units × nav.nav_per_unit 連續兩筆推回；單位：億元(100M TWD)';
+}
+
+function renderOverviewMethods(ov){
+  var el = document.getElementById('ovMethodsNote');
+  if(!el) return;
+  el.innerHTML =
+    '<b>經理人功力</b>：持股法主動報酬＝逐日 Σ(基金權重−元大台灣50權重)×個股報酬，全程只用「目前」一份0050權重回推(無逐日歷史)，期間越長失真越大；異動後績效只計「往後20/60個交易日資料齊全」的事件，樣本數 n<20 時請視為樣本不足。<br>'+
+    '<b>擁擠度</b>：股數對已發行股數比重、估計清倉天數(股數÷近20日均量)皆為機械比率，不是實際可執行的出場速度；重疊熱力圖對角線為基金自身股票權重合計。<br>'+
+    '<b>資金流</b>：淨申贖由連續兩筆官方快照的受益權單位數與淨值反推，缺 nav.units 的基金/期間無法計算(見逐基金表「可比事件數」)。<br>'+
+    '<b>風格與偏好</b>：市值分位母體為22檔基金史上曾持有過的個股，非全市場排名；產業別/已發行股數來自證交所 t187ap03_L、櫃買中心 mopsfin_t187ap03_O。<br>'+
+    '<b>操作習慣</b>：月週轉率＝股數變動的交易金額÷AUM÷2；平均持有期間以「最後一次確認持有」的快照日估計出場日，是下限估計。<br>'+
+    '以上機械計算皆為敘述性統計，不構成建議，數字旁盡量標示樣本數 n。';
+}
+
 function renderOverview(ov){
   ovIndex = ov;
   document.getElementById('coverLeft').innerHTML =
@@ -948,6 +1331,9 @@ function renderOverview(ov){
   renderOvScatter();
   renderConsensusCoverage(ov);
   renderConsensusTables(ov, 'week');
+  renderCrowding(ov);
+  renderOverviewFlows(ov);
+  renderOverviewMethods(ov);
   document.querySelectorAll('.ov-moves-tab').forEach(function(btn){
     btn.addEventListener('click', function(){
       document.querySelectorAll('.ov-moves-tab').forEach(function(b){b.classList.remove('active'); b.style.background='var(--card)'; b.style.color='var(--body)'; b.style.border='1px solid var(--line)';});
