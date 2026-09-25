@@ -274,6 +274,47 @@ def post_trade_performance(code, snapshots, ticker_series_by_t, taiex_series, ta
     return out
 
 
+# ── 持股明細表輔助:近期已出清(權重 0 / 從清單消失)的個股 ────────────────────
+def recent_exited_holdings(snapshots, window_days=30):
+    """完整持股明細只該顯示「目前真的持有」(weight_pct>0)的個股(見
+    build_active_etf.py build_fund() 的過濾)——這裡另外算一份「最近 window_days
+    天內出清」的清單給頁面的收合區塊用:出清日 = 該檔股票最後一次 weight_pct>0
+    的快照日(下限估計,真正出清發生在那天跟下一筆快照之間,無法精確得知)。
+    涵蓋兩種情況:(a) 目前快照裡權重已掛 0 但股票代號還留在清單上,(b) 股票
+    代號整個從目前快照的清單消失。從未在任何一筆快照裡出現過 weight_pct>0 的
+    代號(純占位列、從未真正持有過)不算「出清」,不列入。回傳依出清天數升冪
+    排序的 [{ticker, last_weight_date, days_since}]。"""
+    if not snapshots:
+        return []
+    cur = snapshots[-1]
+    today = datetime.date.fromisoformat(cur["as_of"])
+    cur_w = {r[0]: r[2] for r in cur["holdings"]}
+    cutoff = (today - datetime.timedelta(days=window_days)).isoformat()
+    candidates = {t for t, w in cur_w.items() if not w}  # 目前掛 0(或缺值)
+    for s in snapshots:
+        if s["as_of"] < cutoff:
+            continue
+        for row in s["holdings"]:
+            if row[0] not in cur_w:
+                candidates.add(row[0])  # 目前快照完全沒有這檔(整個從清單消失)
+
+    out = []
+    for t in candidates:
+        last_nonzero = None
+        for s in snapshots:
+            w = {r[0]: r[2] for r in s["holdings"]}
+            if w.get(t, 0):
+                last_nonzero = s["as_of"]
+        if last_nonzero is None:
+            continue  # 從未真正持有過(純占位列),不算出清
+        days = (today - datetime.date.fromisoformat(last_nonzero)).days
+        if days > window_days:
+            continue
+        out.append({"ticker": t, "last_weight_date": last_nonzero, "days_since": days})
+    out.sort(key=lambda r: r["days_since"])
+    return out
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # M2 — 擁擠度(overview,22 檔合併)
 # ══════════════════════════════════════════════════════════════════════════
@@ -281,13 +322,21 @@ def compute_crowding(fund_results, security_meta, ticker_series_by_t):
     """fund_results:build_fund() 回傳的 list(要有 code/holdings 兩個欄位)。
     回傳 total_shares_held、pct_of_shares_outstanding、n_funds_holding、
     days_to_liquidate(=總持股股數 / 20 日均量)逐檔明細 + top20 x2 + overlap
-    matrix(22x22,Σmin(w_i,w_j),百分點)。"""
+    matrix(22x22,Σmin(w_i,w_j),百分點)。
+
+    只計入 weight_pct>0 的持股列——部分投信的 PCF 會把已出清的股票留在清單裡、
+    權重長期掛 0%(股數則是一個不具意義的最低量,如 1000 股占位),這種列不是
+    真的持有,計進 n_funds_holding/total_shares_held 會虛增擁擠度(見
+    build_active_etf.py build_fund() 的 holdings_out 已先過濾掉這類列,這裡
+    再防禦性判斷一次,不依賴呼叫端一定有做)。"""
     total_shares = defaultdict(float)
     n_funds = defaultdict(int)
     fund_weights = {}
     for f in fund_results:
         w = {}
         for h in f.get("holdings", []):
+            if not h.get("weight_pct"):
+                continue  # 權重 0(或缺值)＝非真實持有,見上方 docstring
             t = h["ticker"]
             total_shares[t] += h.get("shares") or 0
             n_funds[t] += 1
@@ -357,11 +406,18 @@ def compute_fund_flows(snapshots):
         events.append({"date": cur["as_of"], "price_effect_100m": round(price_effect / 1e8, 4),
                         "net_flow_100m": round(net_flow / 1e8, 4)})
     cumulative = round(sum(e["net_flow_100m"] for e in events), 4) if events else None
-    return {"events": events, "cumulative_net_flow_100m": cumulative,
+    weekly_net = _bucket_weekly(events, "net_flow_100m")
+    weekly_price = {r["week"]: r["value_100m"] for r in _bucket_weekly(events, "price_effect_100m")}
+    weekly = [{"week": r["week"], "net_flow_100m": r["value_100m"],
+               "price_effect_100m": weekly_price.get(r["week"])} for r in weekly_net]
+    return {"events": events, "weekly": weekly, "cumulative_net_flow_100m": cumulative,
             "n_events_with_units": len(events), "n_snapshots": len(snapshots)}
 
 
 def _bucket_weekly(events, value_key):
+    # 2026-09-25：單一基金的資金流圖表改成週彙總(見 build_fund 的 flows.weekly)
+    # ——連續 7 個月每日/每次快照事件的長條圖太密看不清楚,跟 overview 的週淨流入
+    # 圖表(build_overview_flows() 本來就是週彙總)一致。
     buckets = defaultdict(float)
     for e in events:
         d = datetime.date.fromisoformat(e["date"])

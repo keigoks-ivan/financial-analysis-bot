@@ -93,6 +93,41 @@ def test_post_trade_performance_counts_buy_and_sell_events():
     assert 20 in out["buys"] and 20 in out["sells"]
 
 
+# ── holdings display helper: recent exits ──────────────────────────────────
+def test_recent_exited_holdings_covers_faded_to_zero_and_fully_removed():
+    snaps = [
+        _snap("2026-08-01", {"AAA.TW": (1000, 5.0), "BBB.TW": (1000, 3.0), "CCC.TW": (1000, 2.0)}),
+        _snap("2026-08-15", {"AAA.TW": (1000, 0.0), "BBB.TW": (1000, 3.0)}),  # AAA faded to 0 but still listed; CCC fully gone
+        _snap("2026-08-20", {"AAA.TW": (1000, 0.0), "BBB.TW": (1000, 3.0)}),
+    ]
+    out = an.recent_exited_holdings(snaps, window_days=30)
+    tickers = {r["ticker"] for r in out}
+    assert tickers == {"AAA.TW", "CCC.TW"}
+    aaa = next(r for r in out if r["ticker"] == "AAA.TW")
+    assert aaa["last_weight_date"] == "2026-08-01"
+    assert aaa["days_since"] == 19
+
+
+def test_recent_exited_holdings_excludes_never_held_placeholder():
+    snaps = [
+        _snap("2026-01-01", {"ZZZ.TW": (1000, 0.0)}),  # placeholder row, never actually >0
+        _snap("2026-01-08", {"ZZZ.TW": (1000, 0.0)}),
+    ]
+    out = an.recent_exited_holdings(snaps, window_days=30)
+    assert out == []  # ZZZ.TW never had weight>0 -> not a real exit
+
+
+def test_recent_exited_holdings_excludes_exits_outside_window():
+    # OLD.TW exited (last weight>0 on 2026-01-01) far more than 30 days before the
+    # latest snapshot (2026-09-24) -> outside the "recent" window, not returned.
+    snaps = [
+        _snap("2026-01-01", {"OLD.TW": (1000, 5.0)}),
+        _snap("2026-09-24", {}),
+    ]
+    out = an.recent_exited_holdings(snaps, window_days=30)
+    assert out == []
+
+
 # ── M2: crowding ────────────────────────────────────────────────────────────
 def test_compute_crowding_overlap_and_top_lists():
     fund_results = [
@@ -128,6 +163,17 @@ def test_compute_fund_flows_price_effect_and_net_flow():
     assert ev["price_effect_100m"] == 0.01
     # net_flow = (1,100,000-1,000,000)*11 = 1,100,000 TWD = 0.011 億元
     assert ev["net_flow_100m"] == 0.011
+
+
+def test_compute_fund_flows_includes_weekly_aggregation():
+    snaps = [
+        _snap("2026-01-01", {"AAA.TW": (1000, 10.0)}, units=1_000_000, nav_per_unit=10.0),
+        _snap("2026-01-05", {"AAA.TW": (1000, 10.0)}, units=1_100_000, nav_per_unit=11.0),  # event date falls in ISO week 2
+        _snap("2026-01-12", {"AAA.TW": (1000, 10.0)}, units=1_050_000, nav_per_unit=11.0),  # event date falls in ISO week 3
+    ]
+    out = an.compute_fund_flows(snaps)
+    assert len(out["weekly"]) == 2  # two distinct ISO weeks
+    assert "net_flow_100m" in out["weekly"][0] and "price_effect_100m" in out["weekly"][0]
 
 
 def test_compute_fund_flows_skips_missing_units():

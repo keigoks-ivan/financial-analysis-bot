@@ -381,20 +381,33 @@ def build_fund(code, mode, bench_0050_weights, aum_by_code, pace_sec,
                                                - datetime.timedelta(days=30)).isoformat())
                 or (snapshots[0] if len(snapshots) > 1 else None))
     ref_w = {r[0]: r[2] for r in ref_snap["holdings"]} if ref_snap else None
-    holdings_out = []
+    holdings_out_all = []
     for h in holdings:
         c = by_ticker.get(h["ticker"], {})
         rev = c.get("revisions_pct") or {}
-        holdings_out.append(dict(
+        holdings_out_all.append(dict(
             h, eps_fy_next_local=c.get("eps_fy_next_local"),
             revisions_pct={"30d": rev.get("30d"), "90d": rev.get("90d")},
             weight_change_pp=(round(h["weight_pct"] - ref_w.get(h["ticker"], 0.0), 4)
                               if ref_w is not None else None),
             stock_dash_ticker=stock_dash_ticker(h["ticker"])))
+    # 部分投信的 PCF 會把已出清的股票留在清單裡、權重長期掛 0%(股數則是不具意義
+    # 的占位量,如 1000 股)——完整持股明細只顯示「目前真的持有」(weight_pct>0)
+    # 的列,這類 0% 占位列改進「近期已出清」收合區塊(見 an.recent_exited_holdings)。
+    holdings_out = [h for h in holdings_out_all if (h.get("weight_pct") or 0) > 0]
+    recent_exits = an.recent_exited_holdings(snapshots)  # names 沿用上面 expand_holdings() 已讀的那份
+    for r in recent_exits:
+        r["name"] = names.get(r["ticker"])
+        r["stock_dash_ticker"] = stock_dash_ticker(r["ticker"])
 
     # ── 新增五個分析模組:M1(經理人功力)/M3(資金流)/M4(風格與偏好)/M5(操作習慣)。
     # M2(擁擠度)是 overview 層級,在 build_overview() 算,這裡不算。
     manager_return_attr = an.manager_skill_return_attribution(snapshots, price_history, bench_0050_weights, yf_ticker)
+    for window in manager_return_attr.values():
+        for side in ("top_positive", "top_negative"):
+            for rec in window.get(side, []):
+                rec["name"] = names.get(rec["ticker"])
+                rec["stock_dash_ticker"] = stock_dash_ticker(rec["ticker"])
     manager_post_trade = an.post_trade_performance(code, snapshots, ticker_series_by_t, taiex_series, taiex_dates,
                                                     compute_manager_moves)
     flows = an.compute_fund_flows(snapshots)
@@ -414,8 +427,8 @@ def build_fund(code, mode, bench_0050_weights, aum_by_code, pace_sec,
     return {
         "code": code, "name": info["name"], "issuer": info["issuer"], "yf_ticker": yf_ticker,
         "as_of": today_iso, "mode": mode,
-        "holdings_as_of": today_iso, "n_holdings": len(holdings),
-        "holdings": holdings_out, "other": other,
+        "holdings_as_of": today_iso, "n_holdings": len(holdings_out),
+        "holdings": holdings_out, "recent_exits": recent_exits, "other": other,
         "weight_change_base_date": ref_snap["as_of"] if ref_snap else None,
         "nav": current.get("nav") or {}, "weight_band_note": current.get("weight_band_note"),
         "source_url": current.get("source_url"),
@@ -566,6 +579,8 @@ def build_overview(fund_results, security_meta, ticker_series_by_t):
             r["name"] = names.get(r["ticker"])
             r["stock_dash_ticker"] = stock_dash_ticker(r["ticker"])
     crowding = an.compute_crowding(fund_results, security_meta, ticker_series_by_t)
+    for r in crowding.get("top_by_pct_shares_outstanding", []) + crowding.get("top_by_days_to_liquidate", []):
+        r["stock_dash_ticker"] = stock_dash_ticker(r["ticker"])
     flows_by_code = {f["code"]: f["flows"] for f in fund_results if f.get("flows")}
     fund_names = {f["code"]: f["name"] for f in fund_results}
     flows_overview = an.compute_overview_flows(flows_by_code, fund_names)
