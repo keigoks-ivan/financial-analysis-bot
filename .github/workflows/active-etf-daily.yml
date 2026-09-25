@@ -1,0 +1,169 @@
+name: Active ETF Daily Data
+
+# 台股 22 檔主動式 ETF（/active-etf/）每日資料管線：
+#   1. scripts/active_etf/fetch_holdings.py  — 抓 22 檔官方 PCF/持股 + TWSE AUM/受益人數，
+#      append 進 data/active_etf/holdings/{code}.jsonl（只在持股真的變動時才寫新的一行）。
+#   2. scripts/active_etf/build_active_etf.py --mode auto — 組出 docs/active-etf/data/
+#      {code}.json + overview.json；FULL(重抓每檔成分股 EPS)/PRICE(只重抓股價、EPS 沿用
+#      快取)的判斷交給 build_etf_dash.decide_mode()（台北時區週六 FULL，其餘 PRICE），
+#      跟 /etf-dash/ 用同一套規則，不在這個 workflow 另外決定。
+#
+# 排程：台股各投信 PCF 多半在 16:30–18:00 台北公告，19:17 台北（非整點、避開其他排程的
+# 整點/半點尖峰）是主要班次；07:20 台北隔天早上是備援班次（前一晚班次沒跑成、或投信
+# 公告延遲時補跑），gate 用「今天(台北)的 as_of 是否已存在多數基金的 jsonl 最後一行」
+# 判斷要不要真的跑，避免備援班次重複打一輪 22 家官網。
+#
+# 個別基金失敗不算 job 失敗（見 fetch/build 兩步的 continue-on-error）——只有失敗檔數
+# 超過 5 檔（22 檔的 ~1/5，超過代表可能是共用邏輯壞了，不是單一投信改版的個案）才讓
+# job 標紅，方便從 Actions 頁一眼看出「這是系統性問題」而不是某家投信又改版了。
+#
+# Push 迴圈與 rebase 衝突處理照 scripts/ci/ 共用腳本（見 etf-dash-daily.yml 同款）。
+
+on:
+  schedule:
+    - cron: "17 11 * * 1-5"  # 主要班次：19:17 台北（週一至週五，投信 PCF 公告後的離峰時段）
+    - cron: "20 23 * * 1-5"  # 備援班次：隔天 07:20 台北（週二至週六 UTC 日期，補跑公告延遲/主班次失敗的情況）
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+      mode:
+        description: "auto（預設）＝跟 /etf-dash/ 同一套規則判斷 FULL／PRICE；full／price＝強制指定"
+        required: false
+        default: "auto"
+        type: choice
+        options: ["auto", "full", "price"]
+      force:
+        description: "true＝略過 gate，強制跑（今天 as_of 已存在也照跑）"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            data/active_etf/holdings
+          sparse-checkout-cone-mode: false
+
+      - id: decide
+        env:
+          FORCE: ${{ github.event.inputs.force || 'false' }}
+        run: |
+          if [ "$FORCE" = "true" ]; then
+            echo "force=true — skip gate"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          today=$(TZ=Asia/Taipei date +%F)
+          total=0
+          fresh=0
+          for f in data/active_etf/holdings/*.jsonl; do
+            [ -f "$f" ] || continue
+            total=$((total+1))
+            last_date=$(tail -n1 "$f" | python3 -c "import json,sys; print(json.load(sys.stdin).get('as_of',''))" 2>/dev/null || echo "")
+            [ "$last_date" = "$today" ] && fresh=$((fresh+1))
+          done
+          echo "today(Taipei)=$today fresh=$fresh/$total"
+          # 多數基金(>2/3)今天的 as_of 已經存在 → 這次不用再跑一輪(備援班次最常見的跳過情境)
+          if [ "$total" -gt 0 ] && [ "$fresh" -ge $(( (total * 2 + 2) / 3 )) ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests "yfinance>=0.2.40" pandas numpy openpyxl
+
+      - name: Fetch official holdings + TWSE AUM (22 funds)
+        id: fetch
+        continue-on-error: true
+        run: |
+          set +e
+          python3 scripts/active_etf/fetch_holdings.py 2>&1 | tee /tmp/fetch.log
+          n_fail=$(grep -c '^FAIL ' /tmp/fetch.log || true)
+          echo "n_fail=${n_fail:-0}" >> "$GITHUB_OUTPUT"
+          echo "fetch step finished, n_fail=${n_fail:-0}"
+
+      - name: Build analysis JSON (docs/active-etf/data/)
+        id: build
+        continue-on-error: true
+        env:
+          MODE_INPUT: ${{ github.event.inputs.mode || 'auto' }}
+        run: python3 scripts/active_etf/build_active_etf.py --mode "$MODE_INPUT"
+
+      - name: Publish ticker name lookup for the page
+        run: |
+          mkdir -p docs/active-etf/data
+          cp data/active_etf/ticker_names.json docs/active-etf/data/ticker_names.json
+
+      - name: Fail the job if too many funds failed
+        if: steps.fetch.outputs.n_fail > 5 || steps.build.outcome == 'failure'
+        run: |
+          echo "::error::${{ steps.fetch.outputs.n_fail }} fund(s) failed to fetch (>5), or the build step itself errored — see previous steps' logs. This looks systemic, not a single issuer's site changing shape."
+          exit 1
+
+      - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/active_etf/ docs/active-etf/data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+            git commit -m "data: active ETF holdings/AUM/analysis snapshot ${DATE} (22 funds)
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            for i in 1 2 3 4 5 6; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+              bash scripts/ci/rebase_or_flag.sh || exit 1
+              sleep $((RANDOM % 20 + 5))
+            done
+            echo "Push failed after 6 attempts"
+            exit 1
+          fi
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh

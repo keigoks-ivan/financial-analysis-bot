@@ -404,18 +404,21 @@ def test_append_snapshot_idempotent(tmp_path, monkeypatch):
 
 # ── 個別基金權重容許帶 ───────────────────────────────────────────────────
 def test_weight_band_for_special_funds():
-    assert m.weight_band_for("00985A")[:2] == (85.0, 101.0)
+    assert m.weight_band_for("00985A")[:2] == (80.0, 101.0)
     assert m.weight_band_for("00406A")[:2] == (60.0, 101.0)
+    assert m.weight_band_for("00980A")[:2] == (75.0, 101.0)
+    assert m.weight_band_for("00999A")[:2] == (75.0, 101.0)
     assert m.weight_band_for("00985A")[2] is not None  # note 有值
-    assert m.weight_band_for("00980A") == (m.WEIGHT_SUM_MIN, m.WEIGHT_SUM_MAX, None)  # 其餘用全域預設
+    # 00981A 不在特例表中 → 用全域預設
+    assert m.weight_band_for("00981A") == (m.WEIGHT_SUM_MIN, m.WEIGHT_SUM_MAX, None)
 
 
 def test_validate_holdings_uses_per_fund_band():
-    # 00406A 帶下限 60%,89.74% 的 00985A 若套用它自己的帶(85%)應通過
+    # 00406A 帶下限 60%,89.74% 的 00985A 若套用它自己的帶(80%)應通過
     holdings = [_h(str(1000 + i), 8.974) for i in range(10)]  # 合計 89.74%
-    m.validate_holdings("00985A", holdings, [])  # 不拋錯(85-101 範圍內)
+    m.validate_holdings("00985A", holdings, [])  # 不拋錯(80-101 範圍內)
     with pytest.raises(m.FetchError):
-        m.validate_holdings("00980A", holdings, [])  # 全域帶 90-101,89.74% 應失敗
+        m.validate_holdings("00981A", holdings, [])  # 全域帶 90-101,89.74% 應失敗
 
 
 # ── compact/expand 往返 ──────────────────────────────────────────────────
