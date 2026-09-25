@@ -66,7 +66,9 @@ def _h(code, weight, shares=1000):
 
 def test_validate_holdings_ok():
     holdings = [_h(str(1000 + i), 5.0) for i in range(19)] + [_h("9999", 5.0)]
-    m.validate_holdings("TEST", holdings, [])  # 20*5=100%,不拋錯
+    stock_pct, low_equity = m.validate_holdings("TEST", holdings, [])  # 20*5=100%,不拋錯
+    assert stock_pct == 100.0
+    assert low_equity is False
 
 
 def test_validate_holdings_too_few():
@@ -75,10 +77,28 @@ def test_validate_holdings_too_few():
 
 
 def test_validate_holdings_weight_out_of_range():
-    # 股票權重合計 40% < 90% 下限
+    # 股票權重合計 40% < 90% 下限,strict=True(預設,daily run 用)一樣硬性失敗
     holdings = [_h(str(1000 + i), 4.0) for i in range(10)]
     with pytest.raises(m.FetchError, match="超出"):
         m.validate_holdings("TEST", holdings, [])
+
+
+def test_validate_holdings_low_equity_warns_only_when_not_strict():
+    """2026-09 回填時發現的真實現金緩衝低點(00980A/00984A/00991A/00993A/00981A
+    Feb-Aug 2026,股票權重 82-89%)不該被 backfill 當成解析錯誤丟掉——strict=False
+    (backfill_fund 專用)只回傳 low_equity=True,不拋錯;still 存檔。"""
+    holdings = [_h(str(1000 + i), 4.0) for i in range(10)]  # 40%,遠低於任何合理下限
+    stock_pct, low_equity = m.validate_holdings("TEST", holdings, [], strict=False)
+    assert stock_pct == 40.0
+    assert low_equity is True
+
+
+def test_validate_holdings_ceiling_still_hard_fails_when_not_strict():
+    # 上限(band_max)永遠是硬性失敗,不受 strict 影響——這代表資料真的壞了
+    # (weights sum > 101%),不是合法的現金緩衝狀態。
+    holdings = [_h(str(1000 + i), 15.0) for i in range(10)]  # 150%
+    with pytest.raises(m.FetchError, match="上限"):
+        m.validate_holdings("TEST", holdings, [], strict=False)
 
 
 def test_validate_holdings_ignores_other_overlay():

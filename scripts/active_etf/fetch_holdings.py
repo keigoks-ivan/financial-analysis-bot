@@ -32,8 +32,10 @@
 儲存:data/active_etf/holdings/{as_of}/{code}.json——以 PCF 自己的基準日為目錄,
 同一天重跑內容不變就不改寫(idempotent)。
 
-驗證:validate_holdings() 檔股數 ≥10、(持股+其他)權重合計落在 90-101%,任何一檔
-失敗只讓該檔標記 failed,不中斷其他 21 檔(see main())。
+驗證:validate_holdings() 檔股數 ≥10、股票權重合計不超過上限(預設 101%,個別
+基金見 FUND_WEIGHT_BANDS);任何一檔失敗只讓該檔標記 failed,不中斷其他 21 檔
+(see main())。下限(現金緩衝低點)在 daily run 仍是硬性失敗,但 backfill_fund()
+呼叫時降為 low_equity 警示旗標,回填仍會存檔(見 validate_holdings() docstring)。
 """
 from __future__ import annotations
 
@@ -269,7 +271,18 @@ def ticker_for(code, twse_codes, tpex_codes):
 # 都放過),改成每次 backfill 發現新的合法低點,就把該檔基金加進
 # FUND_WEIGHT_BANDS、附上實測日期與數字(見 00980A/00999A 兩筆),band 仍然是
 # 「這檔基金該有的範圍」而不是全站通用的寬鬆值。
-def validate_holdings(code, holdings, other):
+def validate_holdings(code, holdings, other, strict=True):
+    """結構性檢查(檔數/重複/空白/負值/非有限數值/上限)永遠是硬性失敗,不受
+    strict 影響——這些代表解析壞掉,不是合法的基金狀態。股票權重合計「下限」
+    (band_min,見 weight_band_for)則分兩種待遇:
+      strict=True(daily run 預設,呼叫端 normalize_fund):跟舊行為一樣,低於
+        下限直接拋 FetchError。
+      strict=False(backfill_fund 專用):不拋錯,只回傳 low_equity=True——
+        2026-09 回填時核對到 00980A/00984A/00991A/00993A/00981A 過去確實有
+        82-89% 的合法現金緩衝低點(見 FUND_WEIGHT_BANDS 註解與任務記錄),硬性
+        擋下限會把真實歷史資料當解析錯誤丟掉。上限(band_max,預設 101%)+
+        <10 檔+重複/空白代號+負值或超界/非有限數值,不論 strict 一律硬性失敗。
+    回傳 (stock_weight_pct, low_equity)。"""
     if len(holdings) < MIN_HOLDINGS:
         raise FetchError("{}: 持股僅 {} 檔,少於下限 {}".format(code, len(holdings), MIN_HOLDINGS))
     seen = set()
@@ -283,9 +296,13 @@ def validate_holdings(code, holdings, other):
             raise FetchError("{}: {} 股數/權重非有限數值".format(code, h["code"]))
     total = sum(h["weight_pct"] for h in holdings)
     band_min, band_max, _note = weight_band_for(code)
-    if not (band_min <= total <= band_max):
+    if total > band_max:
+        raise FetchError("{}: 股票持股權重合計 {:.2f}% 超出上限 {}%".format(code, total, band_max))
+    low_equity = total < band_min
+    if low_equity and strict:
         raise FetchError("{}: 股票持股權重合計 {:.2f}% 超出 {}-{}% 範圍"
                           .format(code, total, band_min, band_max))
+    return round(total, 2), low_equity
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -1377,7 +1394,7 @@ def normalize_fund(code, raw, twse_codes, tpex_codes):
                 for h in raw["holdings"]]
     other = [{"type": o["type"], "name": o["name"], "weight_pct": round(o["weight_pct"], 4)}
              for o in raw.get("other", [])]
-    validate_holdings(code, raw["holdings"], raw.get("other", []))
+    stock_weight_pct, low_equity = validate_holdings(code, raw["holdings"], raw.get("other", []))
     # 來源沒拆出現金/期貨的(other 為空)且股票權重合計未滿 99.5%,補一筆「implied
     # unclassified」讓 100% 分解一致;不是官方公告的細項,只是「還沒被拆出來的那塊」。
     stock_sum = sum(h["weight_pct"] for h in holdings)
@@ -1389,7 +1406,7 @@ def normalize_fund(code, raw, twse_codes, tpex_codes):
         "code": code, "name": info["name"], "issuer": info["issuer"],
         "as_of": raw["as_of"], "holdings": holdings, "other": other,
         "nav": raw.get("nav") or {}, "source_url": raw.get("source_url"),
-        "weight_band_note": note,
+        "weight_band_note": note, "stock_weight_pct": stock_weight_pct, "low_equity": low_equity,
         "fetched_at": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
     }
 
@@ -1480,7 +1497,9 @@ def append_snapshot(normalized):
             update_ticker_names(normalized["holdings"])  # 名稱表仍可能有新股票改名,照更新
             return "unchanged", path
     record = dict(compact, nav=normalized.get("nav") or {}, source_url=normalized.get("source_url"),
-                  weight_band_note=normalized.get("weight_band_note"), fetched_at=normalized["fetched_at"])
+                  weight_band_note=normalized.get("weight_band_note"),
+                  stock_weight_pct=normalized.get("stock_weight_pct"), low_equity=normalized.get("low_equity"),
+                  fetched_at=normalized["fetched_at"])
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -1636,14 +1655,18 @@ def backfill_fund(code, pace_sec=1.2, max_days=560, max_consecutive_miss=10, ver
                             for h in raw["holdings"]]
                 other = [{"type": o["type"], "name": o["name"], "weight_pct": round(o["weight_pct"], 4)}
                          for o in raw.get("other", [])]
-                validate_holdings(code, raw["holdings"], raw.get("other", []))
+                # strict=False:backfill 專用,現金緩衝低點(low_equity)只記旗標、
+                # 不擋存檔——歷史上這些低點是真的(見 validate_holdings() docstring)。
+                stock_weight_pct, low_equity = validate_holdings(code, raw["holdings"], raw.get("other", []),
+                                                                  strict=False)
                 stock_sum = sum(h["weight_pct"] for h in holdings)
                 if not other and stock_sum < 99.5:
                     other = [{"type": "unclassified", "name": "現金/期貨/其他(來源未逐項揭露)",
                               "weight_pct": round(100.0 - stock_sum, 4)}]
                 new_records.append({"as_of": raw["as_of"], "holdings": compact_holdings(holdings),
                                      "other": compact_other(other), "nav": raw.get("nav") or {},
-                                     "source_url": raw.get("source_url"), "fetched_at": None})
+                                     "source_url": raw.get("source_url"), "fetched_at": None,
+                                     "stock_weight_pct": stock_weight_pct, "low_equity": low_equity})
                 update_ticker_names(holdings)
                 consecutive_miss = 0
             except FetchError as e:
@@ -1677,6 +1700,93 @@ def backfill_fund(code, pace_sec=1.2, max_days=560, max_consecutive_miss=10, ver
     return len(deduped) - len(existing), deduped[0]["as_of"]
 
 
+# ── 回補「內部空隙」(2026-09 發現的 backfill 缺口修復)────────────────────────
+# backfill_fund() 只從目前最早一筆繼續往回走,不會回頭補「已存資料中間」的缺口。
+# 2026-09 稽核發現 00980A/00984A/00991A/00993A/00981A 的 jsonl 內部有多段
+# 連續快照間隔 >3 天的空隙,其中最大的幾段(如 Feb-11→Feb-23、Jul-28→Aug-05)
+# 明顯超過一般週末/單一國定假日長度——核對是舊版 validate_holdings() 把這幾檔
+# 現金緩衝部位較大時期(股票權重合計 82-89%)的真實交易日當「解析錯誤」硬性
+# 擋下,根本沒存檔造成的,不是來源真的沒公告(見任務記錄與 validate_holdings()
+# docstring)。這個函式專門補那些內部空隙:逐一掃已存快照間隔,超過門檻的區段
+# 才逐日補抓(strict=False,現金緩衝低點只記 low_equity 旗標不擋存檔);間隔在
+# 門檻以內的正常週末/單日假期不打擾,省掉大半無謂查詢。
+def backfill_gaps(code, pace_sec=1.2, min_gap_days=4, verbose=True):
+    """回傳補進的筆數。對不支援單日查詢的投信直接回 0。"""
+    info = FUND_REGISTRY[code]
+    adapter_name = info["adapter"]
+    if adapter_name not in BACKFILL_SUPPORTED:
+        return 0
+    fetch_fn = ADAPTERS[adapter_name]
+    existing = read_fund_jsonl(code)
+    if len(existing) < 2:
+        return 0
+    twse_codes, tpex_codes = load_market_codes()
+    new_records = []
+    for i in range(1, len(existing)):
+        prev_date = datetime.date.fromisoformat(existing[i - 1]["as_of"])
+        cur_date = datetime.date.fromisoformat(existing[i]["as_of"])
+        if (cur_date - prev_date).days < min_gap_days:
+            continue
+        if verbose:
+            print("gap-fill {} {} -> {}({} 天)嘗試補內部空隙".format(
+                code, prev_date, cur_date, (cur_date - prev_date).days))
+        d = prev_date + datetime.timedelta(days=1)
+        while d < cur_date:
+            q = d.strftime("%Y-%m-%d")
+            try:
+                raw = fetch_fn(code, target_date=q)
+            except FetchError as e:
+                if verbose:
+                    print("gap-fill {} {}: 錯誤(略過) {}".format(code, q, e), file=sys.stderr)
+                raw = None
+            time.sleep(pace_sec)
+            if raw:
+                try:
+                    holdings = [{"ticker": ticker_for(h["code"], twse_codes, tpex_codes), "name": h["name"],
+                                 "shares": h["shares"], "weight_pct": round(h["weight_pct"], 4)}
+                                for h in raw["holdings"]]
+                    other = [{"type": o["type"], "name": o["name"], "weight_pct": round(o["weight_pct"], 4)}
+                             for o in raw.get("other", [])]
+                    stock_weight_pct, low_equity = validate_holdings(
+                        code, raw["holdings"], raw.get("other", []), strict=False)
+                    stock_sum = sum(h["weight_pct"] for h in holdings)
+                    if not other and stock_sum < 99.5:
+                        other = [{"type": "unclassified", "name": "現金/期貨/其他(來源未逐項揭露)",
+                                  "weight_pct": round(100.0 - stock_sum, 4)}]
+                    new_records.append({"as_of": raw["as_of"], "holdings": compact_holdings(holdings),
+                                         "other": compact_other(other), "nav": raw.get("nav") or {},
+                                         "source_url": raw.get("source_url"), "fetched_at": None,
+                                         "stock_weight_pct": stock_weight_pct, "low_equity": low_equity})
+                    update_ticker_names(holdings)
+                    if verbose and low_equity:
+                        print("gap-fill {} {}: 補回(low_equity,股票權重 {:.2f}%)".format(
+                            code, q, stock_weight_pct))
+                except FetchError as e:
+                    if verbose:
+                        print("gap-fill {} {}: 驗證失敗(略過) {}".format(code, q, e), file=sys.stderr)
+            d += datetime.timedelta(days=1)
+
+    if not new_records:
+        return 0
+    merged = existing + new_records
+    merged.sort(key=lambda r: r["as_of"])
+    deduped = []
+    for r in merged:
+        if deduped and deduped[-1]["holdings"] == r["holdings"] and deduped[-1]["other"] == r["other"]:
+            continue
+        deduped.append(r)
+    _, _, note = weight_band_for(code)
+    path = _fund_jsonl_path(code)
+    with path.open("w", encoding="utf-8") as f:
+        for r in deduped:
+            r = dict(r, weight_band_note=note)
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    n_added = len(deduped) - len(existing)
+    if verbose:
+        print("gap-fill {}: +{} 筆".format(code, n_added))
+    return n_added
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--only", help="逗號分隔的代號子集,如 00980A,00981A")
@@ -1685,6 +1795,9 @@ def main():
     ap.add_argument("--backfill", action="store_true", help="對支援單日查詢的投信回補歷史,然後結束(不抓「今日」)")
     ap.add_argument("--backfill-max-days", type=int, default=560)
     ap.add_argument("--backfill-pace", type=float, default=1.2)
+    ap.add_argument("--backfill-gaps", action="store_true",
+                     help="補已存 jsonl 內部空隙(見 backfill_gaps() docstring),然後結束")
+    ap.add_argument("--backfill-gaps-min-days", type=int, default=4)
     args = ap.parse_args()
     codes = [c.strip() for c in args.only.split(",")] if args.only else None
     if codes:
@@ -1705,6 +1818,16 @@ def main():
             except Exception as e:  # noqa: BLE001 — backfill 不該讓一檔的例外中斷整批
                 n_fail += 1
                 print("backfill {} 失敗: {}".format(code, e), file=sys.stderr)
+        return 1 if n_fail else 0
+
+    if args.backfill_gaps:
+        n_fail = 0
+        for code in (codes or list(FUND_REGISTRY)):
+            try:
+                backfill_gaps(code, pace_sec=args.backfill_pace, min_gap_days=args.backfill_gaps_min_days)
+            except Exception as e:  # noqa: BLE001 — 一檔失敗不中斷整批
+                n_fail += 1
+                print("backfill-gaps {} 失敗: {}".format(code, e), file=sys.stderr)
         return 1 if n_fail else 0
 
     results = run(codes=codes, skip_aum=args.skip_aum)
