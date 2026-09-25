@@ -154,6 +154,13 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 
 .stat-note{font-size:11px;color:var(--muted);margin-top:2px}
 .n-flag{font-size:10px;color:var(--warn);font-weight:600}
+
+/* 小圖表(small multiples)——每張圖只有一個縱軸,不用雙軸疊圖(dataviz 規則) */
+.small-multiples-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.small-multiples-3 .sm-label{font-size:10.5px;color:var(--sec);margin-bottom:2px;text-align:center}
+@media(max-width:680px){.small-multiples-3{grid-template-columns:1fr}}
+
+details#recentExitsBox summary::marker{color:var(--sec)}
 </style>
 </head>
 <body>
@@ -373,6 +380,10 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div class="ex-sub" id="holdingsSub"></div>
   <div class="tbl-wrap"><table class="imq-table" id="holdingsTable"></table></div>
   <div id="holdingsToggle" style="text-align:center"></div>
+  <details id="recentExitsBox" style="margin-top:12px">
+    <summary id="recentExitsSummary" style="cursor:pointer;font-size:12px;color:var(--sec)">近一個月已出清</summary>
+    <div class="tbl-wrap" style="margin-top:6px"><table class="imq-table" id="recentExitsTable"></table></div>
+  </details>
 </section>
 
 <section class="chapter" id="mgrSkillExhibit">
@@ -392,6 +403,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   </div>
   <div class="ex-sub" style="margin-top:14px">加碼/新進 vs 減碼/出清後的個股表現（相對台灣加權指數，只計算「往後交易日數已滿」的事件）</div>
   <div class="tbl-wrap"><table class="imq-table" id="mgrPostTradeTable"></table></div>
+  <div class="stat-note" id="mgrPostTradeNote"></div>
   <div class="ex-src">資料來源：本頁既有持股快照序列（連續兩筆快照為一組事件）+ yfinance 個股/台灣加權指數日收盤</div>
 </section>
 
@@ -417,15 +429,13 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 <section class="chapter" id="opsExhibit">
   <div class="chapter-head"><span class="ch-title">操作習慣</span></div>
   <div class="conclusion" id="opsSummary"></div>
-  <div class="two-col">
-    <div>
-      <div class="ex-title" style="font-size:.85rem">月週轉率</div>
-      <div class="chart-box" style="height:180px"><canvas id="opsTurnoverChart"></canvas></div>
-    </div>
-    <div>
-      <div class="ex-title" style="font-size:.85rem">檔數／前十大集中度／股票部位</div>
-      <div class="chart-box" style="height:180px"><canvas id="opsSeriesChart"></canvas></div>
-    </div>
+  <div class="ex-title" style="font-size:.85rem;margin-top:8px">月週轉率</div>
+  <div class="chart-box" style="height:160px"><canvas id="opsTurnoverChart"></canvas></div>
+  <div class="ex-title" style="font-size:.85rem;margin-top:14px">檔數／前十大集中度／股票部位（小圖，共用 x 軸，各自單一縱軸）</div>
+  <div class="small-multiples-3">
+    <div><div class="sm-label">檔數</div><div class="chart-box" style="height:130px"><canvas id="opsNCanvas"></canvas></div></div>
+    <div><div class="sm-label">前十大集中度(%)</div><div class="chart-box" style="height:130px"><canvas id="opsTop10Canvas"></canvas></div></div>
+    <div><div class="sm-label">股票部位(%)</div><div class="chart-box" style="height:130px"><canvas id="opsStockWCanvas"></canvas></div></div>
   </div>
   <div class="ex-sub" id="opsHoldingPeriodNote" style="margin-top:10px"></div>
   <div class="ex-src" id="opsSrc"></div>
@@ -674,6 +684,20 @@ function renderHoldingsTable(d){
   renderHoldingsRows();
 }
 
+function renderRecentExits(d){
+  var box = document.getElementById('recentExitsBox');
+  var rows = d.recent_exits || [];
+  var summary = document.getElementById('recentExitsSummary');
+  if(summary) summary.textContent = '近一個月已出清（'+rows.length+' 檔）';
+  var tbl = document.getElementById('recentExitsTable');
+  if(!rows.length){ if(box) box.style.display = 'none'; return; }
+  if(box) box.style.display = '';
+  tbl.innerHTML = '<thead><tr><th>個股</th><th class="num">最後一次有權重日期</th><th class="num">距今天數（下限估計）</th></tr></thead><tbody>'+
+    rows.map(function(r){
+      return '<tr><td>'+tickerCell(r)+'</td><td class="num">'+esc(r.last_weight_date)+'</td><td class="num">'+r.days_since+' 天</td></tr>';
+    }).join('')+'</tbody>';
+}
+
 function renderMethodsNote(d){
   document.getElementById('methodsNote').innerHTML = esc(d.methods_note_zh||'').replace(/\n/g,'<br>')+
     '<br><br>資料來源連結：<a href="'+esc(d.source_url||'#')+'" target="_blank" rel="noopener">'+esc(d.source_url||'—')+'</a>';
@@ -752,7 +776,9 @@ function renderManagerSkill(d){
   var ptTbl = document.getElementById('mgrPostTradeTable');
   ptTbl.innerHTML = '<thead><tr><th>事件類型</th><th class="num" colspan="2">往後20個交易日</th><th class="num" colspan="2">往後60個交易日</th></tr>'+
     '<tr><th></th><th class="num">命中率(贏台灣加權指數)</th><th class="num">中位數超額報酬</th><th class="num">命中率(贏台灣加權指數)</th><th class="num">中位數超額報酬</th></tr></thead><tbody>'+
-    postTradeRowHtml('加碼/新進（n='+(pt.n_events_total||0)+' 含賣出）', pt.buys)+postTradeRowHtml('減碼/出清', pt.sells)+'</tbody>';
+    postTradeRowHtml('加碼／新進', pt.buys)+postTradeRowHtml('減碼／出清', pt.sells)+'</tbody>';
+  var ptNote = document.getElementById('mgrPostTradeNote');
+  if(ptNote) ptNote.textContent = '事件總數（連續兩筆快照比對出的加碼/新進+減碼/出清，含往後窗口不足未列入下表者）：n='+(pt.n_events_total||0)+'；下表每一格另外標示該格實際可計算超額報酬的事件數。';
 }
 
 // ── 風格與偏好(M4) ───────────────────────────────────────────────────────
@@ -795,7 +821,18 @@ function renderStyleTilts(d){
 }
 
 // ── 操作習慣(M5) ─────────────────────────────────────────────────────────
-var opsTurnoverChartInstance = null, opsSeriesChartInstance = null;
+var opsTurnoverChartInstance = null;
+var opsSmallChartInstances = {n:null, top10:null, stockw:null};
+function singleAxisLineChart(canvasId, instKey, labels, data, color, label){
+  var canvas = document.getElementById(canvasId);
+  if(opsSmallChartInstances[instKey]){ opsSmallChartInstances[instKey].destroy(); opsSmallChartInstances[instKey] = null; }
+  if(!data.length){ noData(canvas.parentElement, '快照歷史不足'); return; }
+  opsSmallChartInstances[instKey] = new Chart(canvas, {type:'line',
+    data:{labels:labels, datasets:[{label:label, data:data, borderColor:color, pointRadius:0, borderWidth:1.4}]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{display:false}, grid:{display:false}}, y:{ticks:{color:COL.muted,font:{size:8}}, grid:{color:COL.line}}},
+      plugins:{legend:{display:false}}}});
+}
 function renderOperations(d){
   var ops = d.operations || {};
   var turnover = ops.monthly_turnover || [];
@@ -809,22 +846,13 @@ function renderOperations(d){
         plugins:{legend:{display:false}}}});
   } else { noData(c1.parentElement, '快照歷史不足以算月週轉率'); }
 
+  // 2026-09-25：拿掉「檔數/前十大集中度/股票部位」雙軸疊圖(dataviz 規則：
+  // never dual-axis)，改成三張小圖(small multiples)，各自單一縱軸、共用 x 軸
+  // 的視覺節奏(時間範圍相同，並排比較)。
   var n = ops.n_holdings_over_time||[], top10 = ops.top10_concentration_over_time||[], sw = ops.stock_weight_over_time||[];
-  var c2 = document.getElementById('opsSeriesChart');
-  if(opsSeriesChartInstance){ opsSeriesChartInstance.destroy(); opsSeriesChartInstance = null; }
-  if(n.length){
-    opsSeriesChartInstance = new Chart(c2, {type:'line',
-      data:{labels:n.map(function(x){return x.date;}), datasets:[
-        {label:'檔數', data:n.map(function(x){return x.n_holdings;}), yAxisID:'y1', borderColor:COL.navy, pointRadius:0, borderWidth:1.4},
-        {label:'前十大集中度(%)', data:top10.map(function(x){return x.top10_pct;}), yAxisID:'y2', borderColor:COL.gold, pointRadius:0, borderWidth:1.4},
-        {label:'股票部位(%)', data:sw.map(function(x){return x.stock_weight_pct;}), yAxisID:'y2', borderColor:COL.blue, pointRadius:0, borderWidth:1.4}
-      ]},
-      options:{responsive:true, maintainAspectRatio:false,
-        scales:{x:{ticks:{color:COL.muted,font:{size:8}}, grid:{display:false}},
-                y1:{position:'left', ticks:{color:COL.muted,font:{size:9}}, grid:{display:false}},
-                y2:{position:'right', ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}},
-        plugins:{legend:{position:'bottom', labels:{color:COL.sec, font:{size:9}, boxWidth:10}}}}});
-  } else { noData(c2.parentElement, '快照歷史不足以畫趨勢圖'); }
+  singleAxisLineChart('opsNCanvas', 'n', n.map(function(x){return x.date;}), n.map(function(x){return x.n_holdings;}), COL.navy, '檔數');
+  singleAxisLineChart('opsTop10Canvas', 'top10', top10.map(function(x){return x.date;}), top10.map(function(x){return x.top10_pct;}), COL.gold, '前十大集中度(%)');
+  singleAxisLineChart('opsStockWCanvas', 'stockw', sw.map(function(x){return x.date;}), sw.map(function(x){return x.stock_weight_pct;}), COL.blue, '股票部位(%)');
 
   var lowEquityDays = sw.filter(function(x){return x.low_equity;}).length;
   var hp = ops.holding_period || {};
@@ -838,18 +866,21 @@ function renderOperations(d){
 }
 
 // ── 資金流(M3,單一基金) ─────────────────────────────────────────────────
+// 2026-09-25：改成週彙總長條圖(原本逐快照事件的日頻長條在 7 個月的區間太密看
+// 不清楚)，跟 overview 的週淨流入圖一致；淨申贖/價格效果並排(grouped)不疊加，
+// 正負值以 0 為中線，符號不會被蓋掉。
 var flowsChartInstance = null;
 function renderFundFlows(d){
   var f = d.flows || {};
-  var events = f.events || [];
+  var weekly = f.weekly || [];
   var canvas = document.getElementById('flowsChart');
   if(flowsChartInstance){ flowsChartInstance.destroy(); flowsChartInstance = null; }
-  if(!events.length){ noData(canvas.parentElement, '快照歷史不足（缺 nav.units）以計算資金流'); }
+  if(!weekly.length){ noData(canvas.parentElement, '快照歷史不足（缺 nav.units）以計算資金流'); }
   else {
     flowsChartInstance = new Chart(canvas, {type:'bar',
-      data:{labels:events.map(function(e){return e.date;}), datasets:[
-        {label:'淨申贖(億元)', data:events.map(function(e){return e.net_flow_100m;}), backgroundColor:COL.blue},
-        {label:'價格效果(億元)', data:events.map(function(e){return e.price_effect_100m;}), backgroundColor:COL.gold}
+      data:{labels:weekly.map(function(w){return w.week;}), datasets:[
+        {label:'淨申贖(億元)', data:weekly.map(function(w){return w.net_flow_100m;}), backgroundColor:COL.blue},
+        {label:'價格效果(億元)', data:weekly.map(function(w){return w.price_effect_100m;}), backgroundColor:COL.gold}
       ]},
       options:{responsive:true, maintainAspectRatio:false,
         scales:{x:{ticks:{color:COL.muted,font:{size:7}}, grid:{display:false}}, y:{ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}}},
@@ -879,6 +910,7 @@ function render(d){
     });
   });
   renderHoldingsTable(d);
+  renderRecentExits(d);
   renderManagerSkill(d);
   renderStyleTilts(d);
   renderOperations(d);
