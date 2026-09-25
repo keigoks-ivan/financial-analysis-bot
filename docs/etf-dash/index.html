@@ -19,8 +19,6 @@
 html,body{max-width:100%;overflow-x:hidden}
 body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.6;font-size:14px}
 .wrap{max-width:1100px;margin:0 auto;padding:0 20px 60px}
-table{overflow-wrap:break-word}
-.imq-table td, .imq-table th{overflow-wrap:break-word;word-break:break-word}
 .x-pos{color:var(--pos)} .x-neg{color:var(--neg)}
 
 .cover{background:linear-gradient(135deg,var(--x-navy) 0%,var(--x-navy-2) 100%);padding:22px 28px;margin-bottom:0}
@@ -49,7 +47,7 @@ table{overflow-wrap:break-word}
 .ov-th-sort{cursor:pointer;user-select:none}
 .ov-th-sort:hover{background:var(--x-navy-2)}
 .ov-th-sort .arrow{opacity:.55;margin-left:3px;font-size:9px}
-.ov-group-row td{background:var(--x-navy) !important;color:#fff;font-size:11px;font-weight:600;padding:.35rem .7rem}
+.ov-group-row td{background:var(--x-navy) !important;color:#fff !important;font-size:11px;font-weight:600;padding:.35rem .7rem}
 .ov-flag{color:var(--warn);font-size:10px;margin-left:4px;cursor:help}
 
 .exhibit{margin:18px 0 4px}
@@ -64,7 +62,13 @@ table{overflow-wrap:break-word}
 
 .imq-table{border-collapse:collapse;font-size:.82rem;background:var(--card);width:100%;max-width:100%}
 .imq-table th{font-family:var(--mono);font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--x-navy);text-align:left;padding:.5rem .7rem;border-bottom:2px solid var(--x-navy);white-space:nowrap}
-.imq-table td{padding:.44rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);line-height:1.5}
+/* 2026-09-25 修列高 bug 根因：舊版 `.imq-table td, .imq-table th{overflow-wrap:break-word;
+   word-break:break-word}`（已移除）疊加 auto table layout，欄位被其他欄擠到只剩幾十 px 時，
+   會把「2026-09-25」「NVIDIA CORP」這種沒有自然斷點的短字串強制逐字換行，單列高度衝到
+   ~200px（見總覽 SPY 列、持股明細列）。改法：td 預設整列不換行（.tbl-wrap 已有
+   overflow-x:auto 兜底，寧可橫向捲動也不要逐字炸高），只有 holdingsRowHtml 的「備註」欄
+   （本來就是不定長描述文字）自己加 inline white-space:normal 選擇性換行。 */
+.imq-table td{padding:.44rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);line-height:1.5;white-space:nowrap}
 .imq-table td.num,.imq-table th.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;width:1%;white-space:nowrap}
 .imq-table tbody tr:nth-child(even) td{background:#f5f6f8}
 .imq-table td.k{color:var(--sec);white-space:nowrap}
@@ -79,6 +83,62 @@ table{overflow-wrap:break-word}
 #ovTable th{white-space:normal}
 #ovTable td:first-child{white-space:nowrap}
 .base-date{display:block;font-size:9.5px;color:var(--muted);margin-top:1px}
+
+/* 2026-09-25 表頭縮寫（「EPS 1M」「EPS 3M」…）配 abbr[title] 放全名，取代原本
+   <br> 兩行標籤——900px 寬要塞進 7 欄不換行、不橫向捲動，短標籤是唯一辦法。 */
+#ovTable th abbr{text-decoration:underline dotted;text-decoration-color:rgba(255,255,255,.55);text-underline-offset:2px;cursor:help}
+
+/* 2026-09-25 加：EPS 3M／本益比變動 3M 兩欄的 inline diverging bar，置中於 0，正值往右、
+   負值往左，同欄共用刻度（每欄各自的 max|value|，見 renderDivBar）。顏色取 dataviz skill
+   documented 的 diverging pair blue<->red（palette.md，不是紅綠好壞語意，只標示正負極性），
+   數字文字維持 ink/mono token、不跟 bar 上色（見 marks-and-anatomy.md「text never wears the
+   data color」）。 */
+.divbar-cell{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;white-space:nowrap}
+.divbar-track{position:relative;width:40px;height:8px;flex:0 0 auto;background:var(--line-soft);border-radius:2px}
+.divbar-track::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--sec);opacity:.5}
+.divbar-fill{position:absolute;top:1px;height:6px;border-radius:2px}
+.divbar-fill.pos{left:50%;background:#2a78d6}
+.divbar-fill.neg{right:50%;background:#e34948}
+.divbar-val{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--body);min-width:50px;text-align:right}
+
+/* 2026-09-25 加：總覽表 ≤560px 收斂低優先欄（EPS 1個月／EPS 更新日），保留基金／
+   EPS 3個月／股價 3個月／本益比變動 3個月／預估本益比；.tbl-wrap 的 overflow-x:auto
+   仍是兜底，兩種手法並用（見需求：允許表格自己捲動「或」收斂低優先欄）。 */
+@media(max-width:560px){
+  #ovTable .ov-col-lo{display:none}
+}
+
+/* 2026-09-25：總覽摘要句從「純文字框」升級成 callout（左側深藍 accent bar，跟
+   .daily-line 的金色 accent 區隔語意——金=每日更新時間戳，深藍=機械摘要／統計）＋
+   KPI 三格（最大 EPS 上修／本益比壓縮／本益比擴張，皆從 overview.json 機械算出）。 */
+.conclusion{font-size:13px;color:var(--body);line-height:1.7;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--x-navy);border-radius:var(--r);margin-top:8px}
+.callout-tiles{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft)}
+.callout-tile{display:flex;flex-direction:column;gap:2px;min-width:150px}
+.callout-tile .ct-k{font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.callout-tile .ct-v{font-size:.92rem;font-weight:700;color:var(--ink)}
+.callout-tile .ct-v .ct-fund{color:var(--accent)}
+.callout-tile .ct-v .ct-num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* 2026-09-25 加：象限散佈圖（Exhibit 0，總覽表格上方）——x=EPS 3個月變動%，
+   y=股價 3個月變動%，一檔一點，依分組上色（4 組，見 SCATTER_GROUP_COLOR，通過
+   dataviz skill validate_palette.js --pairs all 驗證，見 commit 說明）。表格本身是
+   無障礙備援，散佈圖只補視覺，不重複的數字都留在下面的表格。 */
+.scatter-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px 10px;margin-top:8px;position:relative}
+.scatter-svg{width:100%;height:auto;display:block;overflow:visible}
+.scatter-legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:11px;color:var(--sec);margin-top:6px}
+.scatter-legend .lg-item{display:inline-flex;align-items:center;gap:5px}
+.scatter-legend .lg-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.scatter-caption{font-size:10.5px;color:var(--muted);margin-top:2px}
+.scatter-tooltip{position:absolute;pointer-events:none;background:var(--x-navy);color:#fff;font-size:11px;line-height:1.65;padding:7px 10px;border-radius:6px;box-shadow:var(--sh-2);opacity:0;transform:translate(-50%,-100%);transition:opacity .1s;z-index:20;white-space:nowrap}
+.scatter-tooltip.show{opacity:1}
+.scatter-tooltip .tt-fund{font-weight:700;display:block;margin-bottom:3px;color:#fff}
+.scatter-tooltip .tt-row{color:rgba(255,255,255,.85)}
+.scatter-dot{cursor:pointer}
+.scatter-label{font-family:var(--sans);font-size:9px;fill:var(--body)}
+.scatter-refline{stroke:var(--sec);stroke-width:1;stroke-dasharray:4 3;opacity:.6}
+.scatter-zeroline{stroke:var(--line);stroke-width:1}
+.scatter-axis-label{font-family:var(--mono);font-size:9px;fill:var(--muted)}
+.scatter-quad-label{font-family:var(--sans);font-size:9px;fill:var(--muted)}
 
 .stat-row{display:flex;flex-wrap:wrap;gap:14px;margin:10px 0}
 .imq-stat{display:inline-flex;flex-direction:column;gap:.1rem}
@@ -196,6 +256,23 @@ table{overflow-wrap:break-word}
   <div class="ex-title">17 檔基金一覽</div>
   <div class="ex-sub">依「美股大盤／美股產業／半導體／亞洲」分組；點欄位標題可排序（分組內排序，分組順序不變）</div>
   <div class="conclusion" id="ovSummarySentence"></div>
+  <div class="callout-tiles" id="ovTiles"></div>
+</section>
+
+<section class="exhibit" id="ovScatterExhibit">
+  <div class="ex-label">EXHIBIT 0</div>
+  <div class="ex-title">EPS 修正 vs 股價漲跌象限圖（近三個月）</div>
+  <div class="ex-sub">x 軸＝成分股加權明年度 EPS 預估變動，y 軸＝ETF 股價漲跌；45° 參考線 y=x，線下方代表 EPS 漲幅大於股價漲幅（隱含本益比下降）；下方表格為完整數字備援</div>
+  <div class="scatter-card">
+    <div id="ovScatterWrap"></div>
+    <div class="scatter-legend" id="ovScatterLegend"></div>
+    <div class="scatter-caption" id="ovScatterCaption"></div>
+  </div>
+</section>
+
+<section class="exhibit" id="ovTableExhibit">
+  <div class="ex-label">總覽表</div>
+  <div class="ex-title">17 檔基金完整數字</div>
   <div class="tbl-wrap"><table class="imq-table" id="ovTable"></table></div>
   <div class="ex-src" id="ovSrc"></div>
 </section>
@@ -562,7 +639,7 @@ function holdingsRowHtml(c){
     '<td>'+esc(c.eps_currency||'—')+'</td>'+
     '<td class="num">'+fmtPctColored(rev30)+'</td>'+
     '<td class="num">'+fmtPctColored(rev90)+'</td>'+
-    '<td style="font-size:11px;color:var(--sec)">'+esc(note)+'</td></tr>';
+    '<td style="font-size:11px;color:var(--sec);white-space:normal;max-width:200px">'+esc(note)+'</td></tr>';
 }
 
 function renderHoldingsRows(){
@@ -683,16 +760,41 @@ function render(d){
 // 依 FUND_GROUPS 分組列出，點欄位標題排序（同分組內排序，分組順序不變，見
 // OV_COLUMNS 與 sortOverviewGroups()）。────────────────────────────────────
 
+// 2026-09-25：欄位標題改短標籤＋abbr[title] 掛全名（900px 寬 7 欄不換行、不橫向捲動的
+// 唯一辦法，見 #ovTable th abbr CSS）；lo:true 是 ≤560px 收斂的低優先欄（見 .ov-col-lo
+// media query）；bar:true 兩欄改畫 inline diverging bar（見 divBarHtml）。
 var OV_COLUMNS = [
   {key:'label', label:'基金', numeric:false, sortable:false},
-  {key:'eps_chg_pct_30d', label:'EPS 變動<br>（1個月）', numeric:true},
-  {key:'eps_chg_pct_90d', label:'EPS 變動<br>（3個月）', numeric:true},
-  {key:'price_chg_pct_90d', label:'股價漲跌<br>（3個月）', numeric:true},
-  {key:'implied_pe_chg_pct_90d', label:'隱含本益比變動<br>（3個月）', numeric:true},
-  {key:'weighted_forward_pe', label:'目前預估<br>本益比', numeric:true},
-  {key:'eps_as_of', label:'EPS 更新日', numeric:false}
+  {key:'eps_chg_pct_30d', label:'EPS 1M', full:'EPS 變動（1個月）', numeric:true, lo:true},
+  {key:'eps_chg_pct_90d', label:'EPS 3M', full:'EPS 變動（3個月）', numeric:true, bar:true},
+  {key:'price_chg_pct_90d', label:'股價 3M', full:'股價漲跌（3個月）', numeric:true},
+  {key:'implied_pe_chg_pct_90d', label:'本益比變動 3M', full:'隱含本益比變動（3個月）', numeric:true, bar:true},
+  {key:'weighted_forward_pe', label:'預估本益比', full:'目前預估本益比', numeric:true},
+  {key:'eps_as_of', label:'EPS 更新', full:'EPS 預估更新日', numeric:false, lo:true}
 ];
 var ovState = {groups:null, sortKey:null, sortDir:1};
+
+// 2026-09-25 加：EPS 3M／本益比變動 3M 兩欄 diverging bar 共用刻度（同欄所有基金的
+// max|value|），renderOverview() 裡 computeBarScale() 算好存這裡，divBarHtml() 讀。
+var OV_BAR_SCALE = {};
+function computeBarScale(ov){
+  var maxEps = 0, maxPe = 0;
+  (ov.funds||[]).forEach(function(f){
+    if(f.eps_chg_pct_90d!=null) maxEps = Math.max(maxEps, Math.abs(f.eps_chg_pct_90d));
+    if(f.implied_pe_chg_pct_90d!=null) maxPe = Math.max(maxPe, Math.abs(f.implied_pe_chg_pct_90d));
+  });
+  OV_BAR_SCALE = {eps_chg_pct_90d: maxEps || null, implied_pe_chg_pct_90d: maxPe || null};
+}
+// dataviz skill diverging pair（blue<->red，palette.md 已驗證值，不是紅綠好壞語意，只
+// 標極性）；bar 本身是唯一上色元素，數字文字維持 ink/mono，不跟著上色。
+function divBarHtml(value, scaleKey){
+  var txt = scaleKey === 'implied_pe_chg_pct_90d' ? fmtPctParen(value) : fmtPct(value);
+  var max = OV_BAR_SCALE[scaleKey];
+  if(value==null || !max) return '<span class="divbar-cell"><span class="divbar-val">'+(value==null?'無資料':txt)+'</span></span>';
+  var halfPct = Math.min(1, Math.abs(value) / max) * 50;
+  var fill = '<span class="divbar-fill '+(value>=0?'pos':'neg')+'" style="width:'+halfPct.toFixed(1)+'%"></span>';
+  return '<span class="divbar-cell"><span class="divbar-track">'+fill+'</span><span class="divbar-val">'+txt+'</span></span>';
+}
 
 function ovRowHtml(row){
   var flags = '';
@@ -702,12 +804,12 @@ function ovRowHtml(row){
     ? '<a href="?etf='+encodeURIComponent(row.etf_key)+'">'+esc(row.label)+'</a>'+flags
     : esc(row.label)+'<span style="color:var(--muted)">（尚無資料）</span>';
   return '<tr><td>'+nameCell+'</td>'+
-    '<td class="num">'+fmtPctColored(row.eps_chg_pct_30d)+'</td>'+
-    '<td class="num">'+fmtPctColored(row.eps_chg_pct_90d)+'</td>'+
+    '<td class="num ov-col-lo">'+fmtPctColored(row.eps_chg_pct_30d)+'</td>'+
+    '<td class="num">'+divBarHtml(row.eps_chg_pct_90d,'eps_chg_pct_90d')+'</td>'+
     '<td class="num">'+fmtPctColored(row.price_chg_pct_90d)+'</td>'+
-    '<td class="num">'+fmtPctParen(row.implied_pe_chg_pct_90d)+'</td>'+
+    '<td class="num">'+divBarHtml(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d')+'</td>'+
     '<td class="num">'+(row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—')+'</td>'+
-    '<td>'+esc(row.eps_as_of||'—')+'</td></tr>';
+    '<td class="ov-col-lo">'+esc(row.eps_as_of||'—')+'</td></tr>';
 }
 
 function renderOverviewTbody(){
@@ -747,16 +849,151 @@ function sortOverviewGroups(key){
 
 function renderOverviewHeader(){
   var thead = '<thead><tr>' + OV_COLUMNS.map(function(c){
-    var cls = c.numeric ? ' num' : '';
-    if(c.sortable === false) return '<th class="'+cls.trim()+'">'+c.label+'</th>';
+    var cls = (c.numeric ? ' num' : '') + (c.lo ? ' ov-col-lo' : '');
+    var labelHtml = c.full ? '<abbr title="'+esc(c.full)+'">'+esc(c.label)+'</abbr>' : esc(c.label);
+    if(c.sortable === false) return '<th class="'+cls.trim()+'">'+labelHtml+'</th>';
     var arrow = ovState.sortKey === c.key ? (ovState.sortDir>0?'▲':'▼') : '';
-    return '<th class="ov-th-sort'+cls+'" data-key="'+c.key+'">'+c.label+'<span class="arrow">'+arrow+'</span></th>';
+    return '<th class="ov-th-sort'+cls+'" data-key="'+c.key+'">'+labelHtml+'<span class="arrow">'+arrow+'</span></th>';
   }).join('') + '</tr></thead>';
   var tbl = document.getElementById('ovTable');
   var existingBody = document.getElementById('ovTableBody');
   tbl.innerHTML = thead + '<tbody id="ovTableBody"></tbody>';
   tbl.querySelectorAll('.ov-th-sort').forEach(function(th){
     th.addEventListener('click', function(){ sortOverviewGroups(th.getAttribute('data-key')); });
+  });
+}
+
+// 2026-09-25 加：KPI 三格，純機械（只挑 overview.json 裡的最大/最小值，不下判斷字眼），
+// 掃全部 17 檔（summary_sentence_zh 只看 9 檔美股產業 ETF，這裡刻意放大範圍，避免跟句子
+// 完全重複）。
+function shortFundName(f){ return (f.label_zh||f.etf_key||'').split('（')[0].trim()+'（'+f.etf_key+'）'; }
+function renderOvTiles(ov){
+  var el = document.getElementById('ovTiles');
+  var epsFunds = (ov.funds||[]).filter(function(f){return f.eps_chg_pct_90d!=null;});
+  var peFunds = (ov.funds||[]).filter(function(f){return f.implied_pe_chg_pct_90d!=null;});
+  var tiles = [];
+  if(epsFunds.length){
+    var topEps = epsFunds.reduce(function(a,b){ return b.eps_chg_pct_90d>a.eps_chg_pct_90d?b:a; });
+    tiles.push(['近三個月 EPS 上修幅度最大', shortFundName(topEps), fmtPct(topEps.eps_chg_pct_90d)]);
+  }
+  if(peFunds.length){
+    var compPe = peFunds.reduce(function(a,b){ return b.implied_pe_chg_pct_90d<a.implied_pe_chg_pct_90d?b:a; });
+    tiles.push(['近三個月隱含本益比壓縮幅度最大', shortFundName(compPe), fmtPctParen(compPe.implied_pe_chg_pct_90d)]);
+    var expPe = peFunds.reduce(function(a,b){ return b.implied_pe_chg_pct_90d>a.implied_pe_chg_pct_90d?b:a; });
+    tiles.push(['近三個月隱含本益比擴張幅度最大', shortFundName(expPe), fmtPctParen(expPe.implied_pe_chg_pct_90d)]);
+  }
+  el.innerHTML = tiles.map(function(t){
+    return '<div class="callout-tile"><span class="ct-k">'+esc(t[0])+'</span>'+
+      '<span class="ct-v"><span class="ct-fund">'+esc(t[1])+'</span>　<span class="ct-num">'+esc(t[2])+'</span></span></div>';
+  }).join('');
+}
+
+// 2026-09-25 加：Exhibit 0 象限散佈圖。四組分類色通過 dataviz skill
+// validate_palette.js --pairs all 驗證（散佈圖任兩點都可能相鄰，用 all-pairs 而非
+// adjacent 門檻）：blue/orange/aqua/violet 這組合在 light 模式下 CVD 全部 PASS
+// （worst ΔE 9.2，normal-vision floor 16.3），只有 aqua 對白底 contrast 落在
+// WARN（2.82:1）——用直接標籤（ticker）當 relief channel 滿足門檻要求的次要編碼。
+var SCATTER_GROUP_COLOR = {'美股大盤':'#2a78d6','美股產業':'#eb6834','半導體':'#1baf7a','亞洲':'#4a3aa7'};
+
+function buildScatterPoints(){
+  var pts = [];
+  ovState.groups.forEach(function(g){
+    g.rows.forEach(function(r){
+      if(!r.found || r.eps_chg_pct_90d==null || r.price_chg_pct_90d==null) return;
+      pts.push({key:r.etf_key, label:r.label, group:g.label, x:r.eps_chg_pct_90d, y:r.price_chg_pct_90d, pe:r.implied_pe_chg_pct_90d, fpe:r.weighted_forward_pe});
+    });
+  });
+  return pts;
+}
+
+function renderOvScatter(){
+  var pts = buildScatterPoints();
+  var wrap = document.getElementById('ovScatterWrap');
+  var legendEl = document.getElementById('ovScatterLegend');
+  var capEl = document.getElementById('ovScatterCaption');
+  if(!pts.length){
+    noData(wrap, '目前沒有基金同時有 EPS 3個月與股價 3個月數字');
+    legendEl.innerHTML = ''; capEl.textContent = '';
+    return;
+  }
+
+  var W=380, H=360, ML=44, MT=34, MR=14, MB=32;
+  var plotW=W-ML-MR, plotH=H-MT-MB;
+  var maxAbs = Math.max.apply(null, pts.map(function(p){return Math.max(Math.abs(p.x),Math.abs(p.y));})) * 1.18 || 1;
+  function sx(v){ return ML + (v+maxAbs)/(2*maxAbs)*plotW; }
+  function sy(v){ return MT + (maxAbs-v)/(2*maxAbs)*plotH; }
+  var zeroX=sx(0), zeroY=sy(0);
+
+  // 直接標籤（僅 ticker）碰撞閃避：依序嘗試幾個候選偏移，選第一個跟已放置標籤方框
+  // 不重疊的；17 點規模下這個簡單貪婪法足夠（見 interaction.md「when end-labels
+  // collide, don't stack them」）。
+  var placed = [];
+  var candidates = [[7,-7],[7,11],[-8,-7],[-8,11],[7,21],[-8,21]];
+  function labelBox(cx,cy,text,dx,dy){
+    var w=text.length*5.6+4, h=10;
+    return {x:cx+dx+(dx<0?-w:0), y:cy+dy-8, w:w, h:h};
+  }
+  function overlaps(a,b){ return !(a.x+a.w<b.x || b.x+b.w<a.x || a.y+a.h<b.y || b.y+b.h<a.y); }
+  var pr = pts.map(function(p){
+    var cx=sx(p.x), cy=sy(p.y), chosen=candidates[0], box=null;
+    for(var i=0;i<candidates.length;i++){
+      var b = labelBox(cx,cy,p.key,candidates[i][0],candidates[i][1]);
+      if(i===candidates.length-1 || !placed.some(function(pl){return overlaps(pl,b);})){ chosen=candidates[i]; box=b; break; }
+    }
+    placed.push(box);
+    return {p:p, cx:cx, cy:cy, dx:chosen[0], dy:chosen[1], color:SCATTER_GROUP_COLOR[p.group]||'#6b7a92'};
+  });
+
+  var svg = '<svg class="scatter-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="EPS 修正 vs 股價漲跌象限圖，完整數字見下方表格">'+
+    '<line class="scatter-zeroline" x1="'+ML+'" y1="'+zeroY+'" x2="'+(W-MR)+'" y2="'+zeroY+'"/>'+
+    '<line class="scatter-zeroline" x1="'+zeroX+'" y1="'+MT+'" x2="'+zeroX+'" y2="'+(H-MB)+'"/>'+
+    '<line class="scatter-refline" x1="'+sx(-maxAbs)+'" y1="'+sy(-maxAbs)+'" x2="'+sx(maxAbs)+'" y2="'+sy(maxAbs)+'"/>'+
+    '<text class="scatter-axis-label" x="'+(W-MR)+'" y="'+(H-MB+13)+'" text-anchor="end">EPS 3M %</text>'+
+    '<text class="scatter-axis-label" x="'+(ML-8)+'" y="12" text-anchor="start">股價 3M %</text>'+
+    '<text class="scatter-quad-label" x="'+(ML+4)+'" y="'+(MT-4)+'">股價漲幅＞EPS 漲幅（本益比上升）</text>'+
+    '<text class="scatter-quad-label" x="'+(W-MR-4)+'" y="'+(H-MB-8)+'" text-anchor="end">EPS 漲幅＞股價漲幅（本益比下降）</text>'+
+    pr.map(function(d){
+      var anchor = d.dx<0 ? ' text-anchor="end"' : '';
+      return '<g class="scatter-dot" data-key="'+esc(d.p.key)+'" tabindex="0" role="button" aria-label="'+esc(d.p.label)+'">'+
+        '<circle cx="'+d.cx+'" cy="'+d.cy+'" r="14" fill="transparent"/>'+
+        '<circle cx="'+d.cx+'" cy="'+d.cy+'" r="5" fill="'+d.color+'" stroke="#fff" stroke-width="1.5"/>'+
+        '<text class="scatter-label" x="'+(d.cx+d.dx)+'" y="'+(d.cy+d.dy)+'"'+anchor+'>'+esc(d.p.key)+'</text>'+
+      '</g>';
+    }).join('') +
+  '</svg><div class="scatter-tooltip" id="ovScatterTooltip"></div>';
+  wrap.innerHTML = svg;
+
+  var groupsPresent = FUND_GROUPS.map(function(g){return g.label;}).filter(function(l){
+    return pr.some(function(d){return d.p.group===l;});
+  });
+  legendEl.innerHTML = groupsPresent.map(function(l){
+    return '<span class="lg-item"><span class="lg-dot" style="background:'+(SCATTER_GROUP_COLOR[l]||'#6b7a92')+'"></span>'+esc(l)+'</span>';
+  }).join('');
+  capEl.textContent = '灰色零軸＝EPS／股價各自的 0% 線；虛線＝y=x 45° 參考線。標籤只顯示 ticker，完整基金名稱與四項數字見游標提示與下方表格。';
+
+  var tip = document.getElementById('ovScatterTooltip');
+  var svgEl = wrap.querySelector('svg');
+  var card = wrap.closest('.scatter-card');
+  function showTip(d){
+    tip.innerHTML = '<span class="tt-fund">'+esc(d.p.label)+'</span>'+
+      '<span class="tt-row">EPS 3M　'+fmtPct(d.p.x)+'</span><br>'+
+      '<span class="tt-row">股價 3M　'+fmtPct(d.p.y)+'</span><br>'+
+      '<span class="tt-row">本益比變動 3M　'+fmtPctParen(d.p.pe)+'</span><br>'+
+      '<span class="tt-row">預估本益比　'+(d.p.fpe!=null?fmtNum(d.p.fpe,1)+'x':'無資料')+'</span>';
+    var svgRect = svgEl.getBoundingClientRect(), cardRect = card.getBoundingClientRect();
+    var scaleX = svgRect.width/W, scaleY = svgRect.height/H;
+    tip.style.left = ((svgRect.left-cardRect.left) + d.cx*scaleX) + 'px';
+    tip.style.top = ((svgRect.top-cardRect.top) + d.cy*scaleY - 8) + 'px';
+    tip.classList.add('show');
+  }
+  function hideTip(){ tip.classList.remove('show'); }
+  wrap.querySelectorAll('.scatter-dot').forEach(function(g){
+    var d = pr.filter(function(x){return x.p.key===g.getAttribute('data-key');})[0];
+    g.addEventListener('pointerenter', function(){ showTip(d); });
+    g.addEventListener('pointermove', function(){ showTip(d); });
+    g.addEventListener('pointerleave', hideTip);
+    g.addEventListener('focus', function(){ showTip(d); });
+    g.addEventListener('blur', hideTip);
   });
 }
 
@@ -777,8 +1014,11 @@ function renderOverview(ov){
   });
   ovState.sortKey = null;
   ovState.sortDir = 1;
+  computeBarScale(ov);
   renderOverviewHeader();
   renderOverviewTbody();
+  renderOvTiles(ov);
+  renderOvScatter();
 
   var sentEl = document.getElementById('ovSummarySentence');
   sentEl.innerHTML = ov.summary_sentence_zh ? esc(ov.summary_sentence_zh) : '無資料：9 檔美股產業 ETF 尚未有近三個月 EPS 修正資料';
