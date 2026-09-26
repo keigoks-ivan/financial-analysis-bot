@@ -59,6 +59,13 @@ name: ETF Dashboard Daily Data
 # 修正廣度／風格快照本身不落地成獨立檔案（存在 eps_cache／docs 輸出 JSON
 # 裡，已被既有的 data/etf_dash/eps_cache/ 與 docs/etf-dash/data/ 路徑覆蓋）。
 #
+# 同一次覆盤也補上一個既有缺口：data/etf_dash/anchor_history/ 是 git 追蹤的
+# 目錄（scripts/etf_dash/anchor_history.py，Exhibit 2 長線 EPS 指數的
+# anchor-line fallback，TOPIX 目前就靠這個），但先前這裡的 git add 清單漏了
+# 它——本機跑會寫進這個目錄，但雲端 CI 跑完從來沒 commit 過，等於雲端每次
+# FULL run 都在累積一份「只存在那次 job 容器裡、跑完就消失」的歷史，永遠不
+# 會跨 run 累積。現在補上。
+#
 # 這四類檔案都很小（單檔 JSON，非 stock-dash 那種 ~61MB 逐檔資料），所以刻意
 # 直接進 git（不像 stock-dash 用 artifact + deploy-pages 下載那一套）——但這裡
 # 的 commit 用預設 GITHUB_TOKEN push，不會觸發 deploy-pages.yml 的 push 事件
@@ -205,7 +212,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/eps_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/ data/etf_dash/prices.jsonl data/etf_dash/flows/ data/etf_dash/tw_industry_map.json
+          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/eps_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/ data/etf_dash/prices.jsonl data/etf_dash/flows/ data/etf_dash/tw_industry_map.json data/etf_dash/anchor_history/
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
