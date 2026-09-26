@@ -392,7 +392,10 @@ def build_findings_digest(evidence) -> list:
                     "direction": f.get("direction"),
                     "claim": f.get("claim"),
                     "source": f.get("source"),
+                    "url": f.get("url"),
+                    "excerpt": f.get("excerpt"),
                     "as_of": f.get("as_of"),
+                    "retrieved_at": f.get("retrieved_at") or evidence.get("date"),
                     "affects": f.get("affects") or [],
                     "status": "ok",
                 })

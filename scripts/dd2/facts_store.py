@@ -215,6 +215,11 @@ class FactsStore(object):
             "findings": clean.get("findings") or [],
             "note": clean.get("note"),
         }
+        # 逐條補抓取日（retrieved_at）：as_of 是來源發布日，retrieved_at 是我們讀到它的那天。
+        # 已有值的不覆寫（沿用舊 finding 時保留原抓取日）。
+        for finding in record["findings"]:
+            if isinstance(finding, dict) and not finding.get("retrieved_at"):
+                finding["retrieved_at"] = fetched_at_s
         meta = axis_meta if axis_meta is not None else self._axis_meta(run_id, axis_id)
         if meta is not None:
             record["axis_meta"] = meta

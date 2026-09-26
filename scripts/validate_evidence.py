@@ -299,6 +299,17 @@ def check_axis(axis_id, axis_obj, matrix):
             d = parse_date(f["as_of"])
             if d is None:
                 fails.append(f"[{axis_id}] findings[{i}].as_of={f['as_of']!r} 無法解析為日期")
+            # 2026-09-26 原始證據欄（選填，舊檔沒有；只做形狀檢查，一律 (info) 不擋 --strict）
+            url = f.get("url")
+            if url is not None and not (isinstance(url, str) and url.startswith(("http://", "https://"))):
+                warns.append(f"(info) [{axis_id}] findings[{i}].url={url!r} 不是 http(s) 網址")
+            ex = f.get("excerpt")
+            if ex is not None and not isinstance(ex, str):
+                warns.append(f"(info) [{axis_id}] findings[{i}].excerpt 須為字串或 null")
+            elif isinstance(ex, str) and len(ex) > 600:
+                warns.append(f"(info) [{axis_id}] findings[{i}].excerpt {len(ex)} 字，超過 600（原文摘錄應只取支撐 claim 的段落）")
+            if f.get("excerpt_from") not in (None, "snippet", "page"):
+                warns.append(f"(info) [{axis_id}] findings[{i}].excerpt_from={f.get('excerpt_from')!r} 須為 snippet／page")
 
     elif status == "none":
         # 2026-09-10（B8 規則精簡）：撤「每軸 ≥2 條獨立查詢」的湊數下限——同一次搜尋
