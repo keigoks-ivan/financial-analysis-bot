@@ -59,6 +59,106 @@ def test_isin_for_matches_known_values():
     assert m.isin_for("00404A") == "TW00000404A5"
 
 
+# ── HTTP 共用層(headers / 403 重試 / 雙向掃描)───────────────────────────
+def test_get_session_sends_browser_like_headers(monkeypatch):
+    monkeypatch.setattr(m, "_session", None)
+    s = m._get_session()
+    assert s.headers["User-Agent"] == m.UA
+    assert "zh-TW" in s.headers["Accept-Language"]
+
+
+class _FakeResp:
+    def __init__(self, status_code=200, json_data=None, content=b"{}"):
+        self.status_code = status_code
+        self._json = json_data
+        self.content = content
+
+    def json(self):
+        return self._json
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise m.requests.HTTPError("HTTP {}".format(self.status_code))
+
+
+class _FakeSession:
+    """依序回傳 responses 清單,每呼叫一次 request() 吐一個。"""
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls = 0
+
+    def request(self, method, url, **kw):
+        r = self.responses[min(self.calls, len(self.responses) - 1)]
+        self.calls += 1
+        return r
+
+
+def test_request_retries_403_then_succeeds(monkeypatch):
+    # 403 常見於暫時性 WAF 擋一次,值得退避重試(而非像其他 4xx 立即當「這天真的
+    # 沒資料」放棄)——見 _request() 對 403 的特別處理。
+    fake = _FakeSession([_FakeResp(403), _FakeResp(200, json_data={"ok": True})])
+    monkeypatch.setattr(m, "_get_session", lambda: fake)
+    monkeypatch.setattr(m.time, "sleep", lambda *_a, **_k: None)
+    r = m.http_get("https://example.test/x")
+    assert r.json() == {"ok": True}
+    assert fake.calls == 2
+
+
+def test_request_403_exhausted_raises_fetch_error(monkeypatch):
+    fake = _FakeSession([_FakeResp(403)] * 4)
+    monkeypatch.setattr(m, "_get_session", lambda: fake)
+    monkeypatch.setattr(m.time, "sleep", lambda *_a, **_k: None)
+    with pytest.raises(m.FetchError, match="403"):
+        m.http_get("https://example.test/x")
+
+
+def test_request_404_fails_immediately_without_retry(monkeypatch):
+    # 其他 4xx(如摩根對查不到的歷史日期回 404)維持原行為:立即拋錯、不重試——
+    # 這代表「這個查詢真的沒有」,不是暫時性擋一次,重試只會拖慢 backfill。
+    fake = _FakeSession([_FakeResp(404)] * 4)
+    monkeypatch.setattr(m, "_get_session", lambda: fake)
+    monkeypatch.setattr(m.time, "sleep", lambda *_a, **_k: None)
+    with pytest.raises(m.FetchError, match="404"):
+        m.http_get("https://example.test/x")
+    assert fake.calls == 1
+
+
+# ── _scan_latest(雙向掃描,取基準日最新一筆)────────────────────────────
+def test_scan_latest_finds_freshest_across_holiday_gap():
+    """2026-09-26(週六,中秋+教師節連假中)實測:野村/安聯只往回找只能拿到基準
+    日 09-23,但下一個有效交易日(09-29)這個 key 已經提前生成好基準日 09-24 的
+    資料——只往回掃會漏掉這筆更新的,兩個方向都要掃才拿得到真正最新的。"""
+    data = {
+        "2026-09-23": {"as_of": "2026-09-22"},
+        "2026-09-24": {"as_of": "2026-09-23"},
+        "2026-09-29": {"as_of": "2026-09-24"},
+    }
+    best = m._scan_latest(lambda q: data.get(q), today=datetime.date(2026, 9, 26))
+    assert best["as_of"] == "2026-09-24"
+
+
+def test_scan_latest_normal_day_no_gap():
+    data = {"2026-09-22": {"as_of": "2026-09-21"}}
+    best = m._scan_latest(lambda q: data.get(q), today=datetime.date(2026, 9, 22))
+    assert best["as_of"] == "2026-09-21"
+
+
+def test_scan_latest_no_hits_returns_none():
+    assert m._scan_latest(lambda q: None, today=datetime.date(2026, 9, 26)) is None
+
+
+def test_scan_latest_prefers_already_published_next_key_over_stale_today():
+    """深夜重跑的情境:「今天」這個 key 昨晚就已經生成(基準日=前一天),但如果
+    今天收盤後、當下已經過了公告時間,「下一個有效交易日」這個 key 可能也已經
+    生成(基準日=今天)——比「今天」這個 key 還新,不能只取掃描到的第一筆。"""
+    data = {
+        "2026-09-22": {"as_of": "2026-09-21"},  # 今天:昨晚已生成,基準日=昨天
+        "2026-09-23": {"as_of": "2026-09-22"},  # 明天:今晚已生成,基準日=今天(更新)
+    }
+    best = m._scan_latest(lambda q: data.get(q), today=datetime.date(2026, 9, 22))
+    assert best["as_of"] == "2026-09-22"
+
+
 # ── validate_holdings ────────────────────────────────────────────────────
 def _h(code, weight, shares=1000):
     return {"code": code, "name": "測試", "shares": shares, "weight_pct": weight}
@@ -120,6 +220,7 @@ def test_parse_nomura():
     d = load_json("nomura_tradeinfo.json")
     parsed = m.parse_nomura_entries(d["Entries"], "00980A")
     assert parsed["as_of"] == d["Entries"]["CNavDtStr"].replace("/", "-")
+    assert parsed["pcf_date"] == d["Entries"]["CPcfdate"][:10]  # 公告生效日(T+1),僅供對照
     assert len(parsed["holdings"]) == 5
     h0 = parsed["holdings"][0]
     assert h0["code"] and h0["shares"] > 0 and 0 < h0["weight_pct"] < 100
@@ -136,6 +237,7 @@ def test_parse_allianz():
     d = load_json("allianz_tradeinfo.json")
     parsed = m.parse_allianz_entries(d["Entries"], "00984A")
     assert parsed["as_of"] == d["Entries"]["CNavDt"][:10]
+    assert parsed["pcf_date"] == d["Entries"]["CPcfdate"][:10]  # 公告生效日(T+1),僅供對照
     assert len(parsed["holdings"]) == 4
     for h in parsed["holdings"]:
         assert h["shares"] > 0 and 0 < h["weight_pct"] < 100
@@ -162,6 +264,7 @@ def test_parse_capital_buyback():
     d = load_json("capital_buyback.json")
     parsed = m.parse_capital_buyback(d, "00982A")
     assert parsed["as_of"] == d["data"]["pcf"]["date2"]
+    assert parsed["pcf_date"] == d["data"]["pcf"]["date1"]  # 公告生效日,僅供對照
     assert len(parsed["holdings"]) == 5
     assert parsed["nav"]["holders"] == d["data"]["pcf"]["numberPeople"]
 
@@ -178,6 +281,24 @@ def test_parse_taishin_detail():
 def test_taishin_normalize_code_keeps_foreign_suffix():
     assert m._taishin_normalize_code("2330 TT") == "2330"
     assert m._taishin_normalize_code("MU US") == "MU US"
+
+
+def test_parse_taishin_detail_extracts_pub_date_as_pcf_date():
+    # fixture 本身沒有 PUB_DATE(2026-09-24/25 抓取時網頁上未必帶出這欄),用真實
+    # 頁面會有的 hidden input 格式補一段驗證抽取邏輯——PUB_DATE 是公告生效日
+    # (T+1),NAV_DATE 才是基準日,兩者不可互換(見模組頂 docstring 表格)。
+    html_with_pub_date = load_text("taishin_detail.html").replace(
+        'id="NAV_DATE" value="2026/9/23 上午 12:00:00"',
+        'id="NAV_DATE" value="2026/9/23 上午 12:00:00" /><input type="hidden" '
+        'id="PUB_DATE" value="2026-09-24"')
+    parsed = m.parse_taishin_detail(html_with_pub_date, "00987A")
+    assert parsed["as_of"] == "2026-09-23"
+    assert parsed["pcf_date"] == "2026-09-24"
+
+
+def test_parse_taishin_detail_pcf_date_none_when_pub_date_absent():
+    parsed = m.parse_taishin_detail(load_text("taishin_detail.html"), "00987A")
+    assert parsed["pcf_date"] is None
 
 
 # ── 復華 ─────────────────────────────────────────────────────────────────
@@ -219,6 +340,7 @@ def test_parse_megafunds_result():
     parsed = m.parse_megafunds_result(load_text("megafunds_result.html"), "00996A")
     # 查詢日期(2026/09/29)是公告生效日,其後第一個日期(2026/09/24)才是持股基準日
     assert parsed["as_of"] == "2026-09-24"
+    assert parsed["pcf_date"] == "2026-09-29"
     assert len(parsed["holdings"]) == 5
 
 
@@ -373,6 +495,7 @@ def test_normalize_fund_and_implied_other():
     m.FUND_REGISTRY.setdefault("00980A", {"name": "主動野村臺灣優選", "issuer": "野村", "adapter": "nomura"})
     raw = {
         "as_of": "2026-09-24",
+        "pcf_date": "2026-09-29",
         "holdings": [{"code": "2330", "name": "台積電", "shares": 90000, "weight_pct": 92.0},
                      {"code": "6223", "name": "旺矽", "shares": 1000, "weight_pct": 3.0}]
                     + [{"code": str(3000 + i), "name": "x", "shares": 100, "weight_pct": 0.1} for i in range(10)],
@@ -385,8 +508,20 @@ def test_normalize_fund_and_implied_other():
     assert normalized["holdings"][0]["ticker"] == "2330.TW"
     assert normalized["holdings"][1]["ticker"] == "6223.TWO"
     assert normalized["other"][0]["type"] == "unclassified"
+    assert normalized["pcf_date"] == "2026-09-29"  # 公告生效日隨 raw 帶入,不影響 as_of(基準日)
     stock_sum = sum(h["weight_pct"] for h in normalized["holdings"])
     assert abs(normalized["other"][0]["weight_pct"] - (100.0 - stock_sum)) < 1e-6
+
+
+def test_normalize_fund_pcf_date_defaults_none_when_source_lacks_it():
+    """摩根等來源只有一個日期欄位(見模組頂 docstring 表格)——raw 沒帶 pcf_date
+    時 normalize_fund 不應報錯,留 None(不是缺漏,是該來源本來就沒有這欄)。"""
+    m.FUND_REGISTRY.setdefault("00980A", {"name": "主動野村臺灣優選", "issuer": "野村", "adapter": "nomura"})
+    raw = {"as_of": "2026-09-24",
+           "holdings": [{"code": str(1000 + i), "name": "x", "shares": 1, "weight_pct": 9.0} for i in range(11)],
+           "other": [], "nav": {}, "source_url": "u"}
+    normalized = m.normalize_fund("00980A", raw, set(), set())
+    assert normalized["pcf_date"] is None
 
 
 def test_normalize_fund_rejects_too_few_holdings():
@@ -408,6 +543,10 @@ def test_append_snapshot_idempotent(tmp_path, monkeypatch):
     assert status1 == "written"
     assert path1.exists()
     assert path1.name == "00980A.jsonl"
+    # normalized 沒帶 pcf_date(舊呼叫端/來源沒有這欄)→ 存檔應是 None,不報錯,
+    # 向下相容(見 append_snapshot 對 normalized.get("pcf_date") 的處理)。
+    first_line = json.loads(path1.read_text(encoding="utf-8").splitlines()[0])
+    assert first_line["pcf_date"] is None
     # 同內容、不同 fetched_at(模擬同日重跑)→ 應判定 unchanged,不新增行
     normalized2 = dict(normalized, fetched_at="2026-09-24T18:00:00+08:00")
     status2, path2 = m.append_snapshot(normalized2)
@@ -460,6 +599,20 @@ def test_compact_expand_other_roundtrip():
 def test_read_fund_jsonl_missing_file_returns_empty(tmp_path, monkeypatch):
     monkeypatch.setattr(m, "HOLDINGS_DIR", tmp_path / "holdings")
     assert m.read_fund_jsonl("00980A") == []
+
+
+def test_read_fund_jsonl_backward_compatible_with_old_lines_missing_pcf_date(tmp_path, monkeypatch):
+    """既有 jsonl(在加 pcf_date 欄位之前寫的)沒有這個 key,讀取不該報錯——
+    只是額外一個 key,舊行沒有就是沒有,呼叫端用 .get("pcf_date") 拿 None。"""
+    monkeypatch.setattr(m, "HOLDINGS_DIR", tmp_path / "holdings")
+    path = m._fund_jsonl_path("00980A")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    old_line = {"as_of": "2026-08-01", "holdings": [["2330.TW", 1, 1.0]], "other": [],
+                "nav": {}, "source_url": "u", "fetched_at": "2026-08-01T09:00:00+08:00"}
+    path.write_text(json.dumps(old_line, ensure_ascii=False) + "\n", encoding="utf-8")
+    rows = m.read_fund_jsonl("00980A")
+    assert len(rows) == 1
+    assert rows[0].get("pcf_date") is None
 
 
 def test_update_ticker_names_merges_and_persists(tmp_path, monkeypatch):

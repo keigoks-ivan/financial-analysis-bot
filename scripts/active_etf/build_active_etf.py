@@ -427,7 +427,11 @@ def build_fund(code, mode, bench_0050_weights, aum_by_code, pace_sec,
     return {
         "code": code, "name": info["name"], "issuer": info["issuer"], "yf_ticker": yf_ticker,
         "as_of": today_iso, "mode": mode,
-        "holdings_as_of": today_iso, "n_holdings": len(holdings_out),
+        # holdings_as_of = 持股基準日(頁面顯示用);pcf_date = 該份 PCF 的公告/
+        # 生效日,僅在來源有明確拆出獨立欄位時才有值(見 fetch_holdings.py 模組頂
+        # docstring 的欄位對照表與各 parse_* 函式的 pcf_date 註解),其餘來源留
+        # None——不是缺漏,是該來源本來就只有一個日期欄位可用。
+        "holdings_as_of": today_iso, "pcf_date": current.get("pcf_date"), "n_holdings": len(holdings_out),
         "holdings": holdings_out, "recent_exits": recent_exits, "other": other,
         "weight_change_base_date": ref_snap["as_of"] if ref_snap else None,
         "nav": current.get("nav") or {}, "weight_band_note": current.get("weight_band_note"),

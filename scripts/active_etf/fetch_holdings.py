@@ -9,21 +9,35 @@
 投信官方到底有哪個端點」,沒有引用或依賴它的程式或資料。
 
 各投信「資料日」取自哪個欄位——這張表最容易踩坑,改 fetcher 前先看:
-    野村/安聯    CNavDtStr / CNavDt          基準日(CPcfdate 是公告日,勿用)
+    野村/安聯    CNavDtStr / CNavDt          基準日(CPcfdate 是公告日,見下方 pcf_date)
     統一        pcf[0].TranDate             基準日
-    群益        data.pcf.date2              基準日(date1 是公告日,勿用)
+    群益        data.pcf.date2              基準日(date1 是公告日,見下方 pcf_date)
     中信        FundAssets[0].資料日期        基準日
     復華        result[0].dDate             基準日
-    國泰        BuySale.preDateC            基準日(date 是公告生效日 T+1,勿用)
-    兆豐        查詢日期之後那個日期          基準日(查詢日期本身是公告生效日)
+    國泰        BuySale.preDateC            基準日(date 是公告生效日 T+1,見下方 pcf_date)
+    兆豐        查詢日期之後那個日期          基準日(查詢日期本身是公告生效日,見下方 pcf_date)
     第一金      sdate                       基準日
     聯博        holdings 的 asOfDate        基準日(先取 basket.asOfDate 再帶入查詢)
     摩根        xlsx 表頭 (YYYY-MM-DD)       公告日;無獨立基準日欄位
-    台新        NAV_DATE                    基準日(PUB_DATE 是公告生效日 T+1,勿用)
+    台新        NAV_DATE                    基準日(PUB_DATE 是公告生效日 T+1,見下方 pcf_date)
     富邦/永豐/凱基  頁面「資料日期/持股比重(日期)」  基準日
 
+as_of 一律是「基準日」(holdings_as_of,持股實際反映的日期,頁面顯示用),不是
+公告日——這點所有 fetcher 一致,不受下面 pcf_date 有沒有值影響。pcf_date(公告
+/生效日)只在來源明確拆出獨立欄位時才有值(野村/安聯/群益/國泰/兆豐/台新,即
+上表「見下方 pcf_date」那幾家),其餘來源(統一/中信/復華/第一金/聯博/摩根/
+富邦/永豐/凱基)只有一個日期欄位可用,pcf_date 留 None——不是缺漏,單純該來源
+沒有第二個日期可拆。
+
+野村/安聯的 GetFundTradeInfo 是「查詢日期 D → 回傳基準日 D-1」這種端點:2026-
+09-26(中秋+教師節連假期間)實測發現,只往回掃「今天~今天-8 天」會漏掉已經提
+前生成好的下一筆——遇到連假,官方系統在最近一次真正收盤後就把「下一個有效交
+易日」這個 key 提前生成好,其基準日已經比任何往回查得到的都新。fetch_nomura/
+fetch_allianz 的「不給 target_date」路徑改成雙向掃描(見 _scan_latest()),兩個
+方向都試、取基準日最新的一筆,不是「掃到第一筆就回傳」。
+
 輸出正規化 schema(每檔一份):
-    {code, name, issuer, as_of,
+    {code, name, issuer, as_of, pcf_date,
      holdings: [{ticker, name, shares, weight_pct}],   # ticker = "{代號}.TW"/".TWO"
      other: [{type, name, weight_pct}],                # 現金/期貨/其他,能拆出來的才拆
      nav: {scale, units, nav_per_unit, holders},        # 缺漏給 None
@@ -141,7 +155,15 @@ def _get_session():
     global _session
     if _session is None:
         _session = requests.Session()
-        _session.headers.update({"User-Agent": UA})
+        # 15 家投信網站共用同一組「像真的瀏覽器」標頭——不只 UA:部分站(如兆豐)
+        # 從雲端 runner IP 打會 403,雖然主因是 IP/機房層擋(見 2026-09-26 任務
+        # 記錄,標頭補了仍擋),但這組標頭讓其餘 14 家在任何環境下都更不容易被
+        # WAF/機器人偵測誤判,屬防禦性一致化,不是針對單一投信的 workaround。
+        _session.headers.update({
+            "User-Agent": UA,
+            "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Accept": "*/*",
+        })
     return _session
 
 
@@ -157,19 +179,30 @@ def _request(method, url, **kw):
     s = _get_session()
     kw.setdefault("timeout", 30)
     last = None
-    for attempt in range(3):
+    max_attempts = 4
+    for attempt in range(max_attempts):
         try:
             r = s.request(method, url, **kw)
-            if 400 <= r.status_code < 500:
-                # 4xx 是伺服器明確拒絕(常見於回填時查詢超出歷史範圍的日期,如摩根對
-                # 查不到的日期回 404),重試沒有意義、只會拖慢回填;直接拋錯讓呼叫端
-                # 當「這個日期沒有資料」處理。5xx/連線錯誤才值得重試。
-                raise FetchError("{} 抓取失敗: HTTP {}".format(url, r.status_code))
-            r.raise_for_status()
-            return r
         except requests.RequestException as e:
             last = e
             time.sleep(1.5 * (attempt + 1))
+            continue
+        if r.status_code == 403 and attempt < max_attempts - 1:
+            # 403 常見於暫時性 WAF/機器人驗證擋一次(而非查詢日期本身沒有資料),
+            # 值得退避重試;其餘 4xx(如摩根對查不到的歷史日期回 404)維持原行為
+            # 立即拋錯——那代表「這個日期真的沒有」,重試沒有意義、只會拖慢回填。
+            last = FetchError("{} 抓取失敗: HTTP 403".format(url))
+            time.sleep(2.0 * (attempt + 1))
+            continue
+        if 400 <= r.status_code < 500:
+            raise FetchError("{} 抓取失敗: HTTP {}".format(url, r.status_code))
+        try:
+            r.raise_for_status()
+        except requests.RequestException as e:
+            last = e
+            time.sleep(1.5 * (attempt + 1))
+            continue
+        return r
     raise FetchError("{} 抓取失敗: {}".format(url, last))
 
 
@@ -177,6 +210,27 @@ def is_bot_challenge(resp):
     """回應是圖片(而非預期的 JSON/HTML 資料)→ 站方的機器人驗證挑戰。"""
     body = resp.content[:8]
     return any(body.startswith(m) for m in _IMAGE_MAGIC)
+
+
+def _scan_latest(query, today=None, back_days=8, fwd_days=10):
+    """給定 query(date_str)->parsed_dict_or_None,掃「往前 back_days 天~往後
+    fwd_days 天」的查詢日期,回傳其中基準日(as_of)最新的一筆(全部查無資料回
+    None)。用於「Date=D 回傳 D-1 基準日」這種端點(野村/安聯):只往回找永遠
+    會漏掉已經提前生成好的下一筆——2026-09-26(中秋+教師節連假)實測,往回最多
+    只能拿到基準日 09-23,但往後查到 2026-09-29 這個 key 時,裡面已經是基準日
+    09-24 的資料(官方系統在最近一次真正收盤後,就把「下一個有效交易日」這個
+    key 提前生成好,不受連假拖多久影響)。兩個方向都要掃,以 as_of 字串最大值
+    (ISO 格式可直接比較)判斷「最新」,不是以掃描順序判斷「最先命中」——避免
+    深夜重跑(前一天已收盤、下一個有效交易日的資料已提前生成)時,只抓到「今天」
+    這個較舊的 key,漏掉已經存在的更新一筆。"""
+    today = today or datetime.date.today()
+    best = None
+    for offset in range(-back_days, fwd_days + 1):
+        q = (today + datetime.timedelta(days=offset)).strftime("%Y-%m-%d")
+        parsed = query(q)
+        if parsed and (best is None or parsed["as_of"] > best["as_of"]):
+            best = parsed
+    return best
 
 
 def to_num(v):
@@ -322,8 +376,10 @@ def parse_nomura_entries(entries, code):
     holdings = [{"code": str(r["CStockCode"]).strip(), "name": str(r["CStockName"]).strip(),
                  "shares": int(r["CQuantity"]), "weight_pct": float(r["CWeightsPct"])}
                 for r in rows]
+    cpcfdate = entries.get("CPcfdate")
     return {
         "as_of": entries["CNavDtStr"].replace("/", "-"),
+        "pcf_date": cpcfdate[:10] if cpcfdate else None,  # 公告生效日(T+1),僅供對照,不做基準日用
         "holdings": holdings,
         "other": [],  # 端點未拆出現金/期貨,見 normalize_fund() 的 implied-other 補算
         "nav": {"scale": to_num(entries.get("CAnceTotalAv")),
@@ -335,14 +391,12 @@ def parse_nomura_entries(entries, code):
 
 def fetch_nomura(code, target_date=None):
     """target_date(YYYY-MM-DD)給定時只查那一天,查無資料回 None(供 backfill 用,
-    不是全部 8 天都試——backfill 呼叫端自己逐日往回掃)。不給則沿用「往回試 8 天
-    找最新一份」的原行為。"""
-    if target_date:
-        dates = [target_date]
-    else:
-        day = datetime.date.today()
-        dates = [(day - datetime.timedelta(days=back)).strftime("%Y-%m-%d") for back in range(8)]
-    for q in dates:
+    不是掃整個視窗——backfill 呼叫端自己逐日往回掃)。不給則掃「往前 8 天~往後
+    10 天」取基準日最新的一筆(見 _scan_latest docstring)——只往回找在遇到連續
+    假期(如中秋+教師節、農曆春節)時會漏掉已經提前生成好的更新一筆
+    (2026-09-26 實測:往回最多只拿到基準日 09-23,往後查 2026-09-29 這個 key
+    已經有基準日 09-24)。"""
+    def query(q):
         r = http_post(NOMURA_TRADEINFO, json={"Type": 1, "Keyword": "", "FundNo": code, "Date": q},
                       headers={"Content-Type": "application/json"})
         if is_bot_challenge(r):
@@ -351,13 +405,15 @@ def fetch_nomura(code, target_date=None):
             d = r.json()
         except ValueError:
             raise FetchError("nomura: {} 回非 JSON(改版?)".format(code))
-        parsed = parse_nomura_entries(d.get("Entries"), code)
-        if parsed:
-            parsed["source_url"] = NOMURA_TRADEINFO
-            return parsed
+        return parse_nomura_entries(d.get("Entries"), code)
+
     if target_date:
-        return None
-    raise FetchError("nomura: {} 連續 8 日無持股資料".format(code))
+        return query(target_date)
+    best = _scan_latest(query)
+    if best:
+        best["source_url"] = NOMURA_TRADEINFO
+        return best
+    raise FetchError("nomura: {} 連續 8 天以上(往前 8 往後 10)查無持股資料".format(code))
 
 
 # ── 安聯:同野村供應商,但 base path 不同、需 anti-forgery token、持股在
@@ -423,8 +479,10 @@ def parse_allianz_entries(entries, code):
                 other.append({"type": kind, "name": str(name).strip(), "weight_pct": weight})
     if not holdings:
         return None
+    cpcfdate = entries.get("CPcfdate")
     return {
         "as_of": entries["CNavDt"][:10],
+        "pcf_date": cpcfdate[:10] if cpcfdate else None,  # 公告生效日(T+1),僅供對照,不做基準日用
         "holdings": holdings,
         "other": other,
         "nav": {"scale": to_num(entries.get("CAnceTotalAv")),
@@ -435,29 +493,30 @@ def parse_allianz_entries(entries, code):
 
 
 def fetch_allianz(code, target_date=None):
+    """target_date 給定時只查那一天(供 backfill 用)。不給則掃「往前 8 天~往後
+    10 天」取基準日最新的一筆——理由與 fetch_nomura 相同(同一套供應商,見
+    _scan_latest docstring)。"""
     fund_map = _allianz_fund_map_load()
     fund_no = fund_map.get(code)
     if not fund_no:
         raise FetchError("allianz: {} 不在基金清單".format(code))
-    if target_date:
-        dates = [target_date]
-    else:
-        day = datetime.date.today()
-        dates = [(day - datetime.timedelta(days=back)).strftime("%Y-%m-%d") for back in range(8)]
-    for q in dates:
+
+    def query(q):
         r = http_post(ALLIANZ_TRADEINFO, headers=_allianz_headers(),
                       json={"Type": 1, "Keyword": "", "FundNo": fund_no, "Date": q})
         try:
             d = r.json()
         except ValueError:
             raise FetchError("allianz: {} 回非 JSON(改版?)".format(code))
-        parsed = parse_allianz_entries(d.get("Entries"), code)
-        if parsed:
-            parsed["source_url"] = ALLIANZ_TRADEINFO
-            return parsed
+        return parse_allianz_entries(d.get("Entries"), code)
+
     if target_date:
-        return None
-    raise FetchError("allianz: {} 連續 8 日無持股資料".format(code))
+        return query(target_date)
+    best = _scan_latest(query)
+    if best:
+        best["source_url"] = ALLIANZ_TRADEINFO
+        return best
+    raise FetchError("allianz: {} 連續 8 天以上(往前 8 往後 10)查無持股資料".format(code))
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -554,6 +613,7 @@ def parse_capital_buyback(d, code):
                 for x in stocks]
     return {
         "as_of": pcf["date2"],
+        "pcf_date": pcf.get("date1"),  # 公告生效日,僅供對照,不做基準日用
         "holdings": holdings,
         "other": [],
         "nav": {"scale": to_num(pcf.get("nav")), "units": to_num(pcf.get("totUnit")),
@@ -592,6 +652,7 @@ TAISHIN_ROW_RE = re.compile(
     r"<tr>\s*<td>\s*([0-9A-Z]{1,8}(?:\s+[A-Z]{2})?)\s*</td>\s*<td>\s*([^<]+?)\s*</td>"
     r"\s*<td>\s*([\d,]+)\s*</td>\s*<td>\s*([\d.]+)%\s*</td>")
 TAISHIN_NAV_DATE_RE = re.compile(r'id="NAV_DATE"[^>]*value="([^"]+)"')
+TAISHIN_PUB_DATE_RE = re.compile(r'id="PUB_DATE"[^>]*value="([^"]+)"')
 
 
 def _taishin_normalize_code(raw):
@@ -620,8 +681,10 @@ def parse_taishin_detail(page_html, code):
                  "shares": int(s.replace(",", "")), "weight_pct": float(w)}
                 for c, n, s, w in TAISHIN_ROW_RE.findall(seg)]
     plain = re.sub(r"<[^>]+>", " ", t)
+    pub_m = TAISHIN_PUB_DATE_RE.search(t)
     return {
         "as_of": as_of,
+        "pcf_date": pub_m.group(1)[:10] if pub_m else None,  # 公告生效日(T+1),僅供對照,不做基準日用
         "holdings": holdings,
         "other": [],  # 期貨表格式與股票表不同(口數非股數),暫不併入,詳見上方註解
         "nav": {"scale": _taishin_meta_value(plain, "基金淨資產價值(元)"),
@@ -775,6 +838,19 @@ def parse_ctbc_holding(d, code):
 
 # ═════════════════════════════════════════════════════════════════════════════
 # 兆豐(megafunds.com.tw)—ASP.NET WebForms,基金切換是 POST 回原頁(viewstate)。
+#
+# 2026-09-26 已知問題:GitHub Actions hosted runner(ubuntu-latest)的 IP 打這
+# 個網域會被擋回 HTTP 403,本機/家用網路正常(本檔在本機重現過本可正常拿到
+# 200)。排查過:(1)沒有 Cloudflare/常見 WAF 的識別標頭,回應本身是站方
+# ASP.NET 直接吐 403,疑似 IP 層(機房/國別)過濾,不是機器人指紋偵測,補瀏覽器
+# 標頭(見 _get_session)沒有用;(2)頁面純 server-rendered WebForms postback,
+# 沒有另外的 JSON/ASMX 端點可繞;(3)TWSE openapi 沒有主動式 ETF 的 PCF 揭露
+# (openapi.twse.com.tw 的 swagger 只有 /ETFReport/ETFRank,沒有 PCF),MOPS 也
+# 不揭露個別基金 PCF——沒找到官方替代來源。目前對策:_request() 對 403 加了
+# 退避重試(見上方),雲端跑到時至少多試幾次;若持續被擋,main() 只會把這檔標
+# failed、不寫新的 jsonl 行,舊資料(cache)原樣保留在 {code}.jsonl 最後一行,
+# 不會讓頁面顯示空白或錯誤資料,只是這檔當天沒更新——建置/CI log 會印
+# "FAIL 00996A ... HTTP 403",不會被靜默吞掉。
 # ═════════════════════════════════════════════════════════════════════════════
 MEGAFUNDS_URL = "https://www.megafunds.com.tw/MEGA/etf/trade_pcf.aspx"
 MEGAFUNDS_PREFIX = "ctl00$ContentPlaceHolder1$"
@@ -817,6 +893,7 @@ def parse_megafunds_result(page_html, code):
 
     return {
         "as_of": as_of,
+        "pcf_date": m.group(1).replace("/", "-"),  # 查詢日期=公告生效日,僅供對照,不做基準日用
         "holdings": holdings,
         "other": [],
         "nav": {"scale": val("基金淨資產價值(元)"), "units": val("已發行受益權單位總數"),
@@ -914,6 +991,7 @@ def fetch_cathay(code):
         raise FetchError("{}: 國泰取不到基準日".format(code))
     return {
         "as_of": as_of,
+        "pcf_date": (bs.get("date") or "").replace("/", "-") or None,  # 公告生效日(T+1),僅供對照
         "holdings": holdings,
         "other": [],
         "nav": {"scale": to_num(bs.get("aum")), "units": tot, "nav_per_unit": to_num(bs.get("nav")),
@@ -1404,7 +1482,11 @@ def normalize_fund(code, raw, twse_codes, tpex_codes):
     _, _, note = weight_band_for(code)
     return {
         "code": code, "name": info["name"], "issuer": info["issuer"],
-        "as_of": raw["as_of"], "holdings": holdings, "other": other,
+        # as_of = 持股基準日(holdings_as_of,頁面顯示用);pcf_date = 該份 PCF 的
+        # 公告/生效日,僅在來源有明確拆出獨立欄位時才有值(見各 parse_* 函式頭
+        # 的 pcf_date 註解),其餘來源留 None——不是缺漏,是該來源本來就只有一個
+        # 日期欄位可用(見模組頂 docstring 的欄位對照表)。
+        "as_of": raw["as_of"], "pcf_date": raw.get("pcf_date"), "holdings": holdings, "other": other,
         "nav": raw.get("nav") or {}, "source_url": raw.get("source_url"),
         "weight_band_note": note, "stock_weight_pct": stock_weight_pct, "low_equity": low_equity,
         "fetched_at": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -1496,7 +1578,8 @@ def append_snapshot(normalized):
         if last.get("holdings") == compact["holdings"] and last.get("other") == compact["other"]:
             update_ticker_names(normalized["holdings"])  # 名稱表仍可能有新股票改名,照更新
             return "unchanged", path
-    record = dict(compact, nav=normalized.get("nav") or {}, source_url=normalized.get("source_url"),
+    record = dict(compact, pcf_date=normalized.get("pcf_date"), nav=normalized.get("nav") or {},
+                  source_url=normalized.get("source_url"),
                   weight_band_note=normalized.get("weight_band_note"),
                   stock_weight_pct=normalized.get("stock_weight_pct"), low_equity=normalized.get("low_equity"),
                   fetched_at=normalized["fetched_at"])
@@ -1663,7 +1746,8 @@ def backfill_fund(code, pace_sec=1.2, max_days=560, max_consecutive_miss=10, ver
                 if not other and stock_sum < 99.5:
                     other = [{"type": "unclassified", "name": "現金/期貨/其他(來源未逐項揭露)",
                               "weight_pct": round(100.0 - stock_sum, 4)}]
-                new_records.append({"as_of": raw["as_of"], "holdings": compact_holdings(holdings),
+                new_records.append({"as_of": raw["as_of"], "pcf_date": raw.get("pcf_date"),
+                                     "holdings": compact_holdings(holdings),
                                      "other": compact_other(other), "nav": raw.get("nav") or {},
                                      "source_url": raw.get("source_url"), "fetched_at": None,
                                      "stock_weight_pct": stock_weight_pct, "low_equity": low_equity})
@@ -1753,7 +1837,8 @@ def backfill_gaps(code, pace_sec=1.2, min_gap_days=4, verbose=True):
                     if not other and stock_sum < 99.5:
                         other = [{"type": "unclassified", "name": "現金/期貨/其他(來源未逐項揭露)",
                                   "weight_pct": round(100.0 - stock_sum, 4)}]
-                    new_records.append({"as_of": raw["as_of"], "holdings": compact_holdings(holdings),
+                    new_records.append({"as_of": raw["as_of"], "pcf_date": raw.get("pcf_date"),
+                                         "holdings": compact_holdings(holdings),
                                          "other": compact_other(other), "nav": raw.get("nav") or {},
                                          "source_url": raw.get("source_url"), "fetched_at": None,
                                          "stock_weight_pct": stock_weight_pct, "low_equity": low_equity})
