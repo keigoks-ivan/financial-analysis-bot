@@ -1071,21 +1071,61 @@ def get_tw_industry_map() -> dict[str, str]:
 # parser 沒抓到），沒有其他免費、可機械讀取的個股 GICS 分類來源，這 9 檔
 # ETF 的持股清單本身就是「屬於這個類股的股票名單」，拿來反查最省成本
 # （見 build_us_sector_lookup()）——SPY／RSP／QQQ 的風格快照／報酬貢獻產業
-# 分解都靠這份反查表，覆蓋率受限於這 9 檔的持股總和（不含 XLRE／XLU，見
-# FUND_REGISTRY 上方 2026-09-25 註解），非重疊的成分股歸「未分類（不在追蹤
-# 的 9 檔美股產業 ETF 內）」。
+# 分解都靠這份反查表，覆蓋率受限於這 9 檔＋XLRE／XLU（2026-09-26 加，見下方
+# SECTOR_LOOKUP_ONLY_LABEL_ZH——這兩檔本身不當顯示用基金，見 FUND_REGISTRY
+# 上方 2026-09-25 註解，只為了反查表額外抓持股）的持股總和，非重疊的成分股
+# 歸「未分類」。
 SECTOR_ETF_LABEL_ZH = {
     "XLK": "科技", "XLF": "金融", "XLE": "能源", "XLV": "醫療保健", "XLI": "工業",
     "XLY": "非必需消費", "XLP": "必需消費", "XLC": "通訊服務", "XLB": "原物料",
 }
 
+# 2026-09-26 coordinator 回饋：XLRE（不動產）／XLU（公用事業）不當成顯示用的
+# 基金（不進 FUND_REGISTRY、不出現在導覽／總覽，任務原本的 9 檔美股產業 ETF
+# 拍板刻意跳過這兩檔），但只為了 ticker→sector 反查表而抓它們的持股，能讓
+# SPY／RSP／QQQ 的 REITs／公用事業成分股不再全部落進「未分類」——跟 9 檔
+# 顯示用的產業 ETF 同一套 SSGA 持股 xlsx 格式，直接重用
+# fetch_ssga_holdings_xlsx()／parse_ssga_holdings_xlsx()，只是傳一個不在
+# FUND_REGISTRY 裡的最小 cfg dict 進去；持股快取仍然寫進
+# data/etf_dash/holdings_cache/{XLRE,XLU}.json（跟其他基金同一個目錄，同一套
+# 「抓不到就退回上次快取」邏輯），但兩者永遠不會出現在 docs/etf-dash/data/
+# 或總覽頁——build_fund()／main() 的主迴圈只處理 FUND_REGISTRY 裡的 key。
+SECTOR_LOOKUP_ONLY_LABEL_ZH = {"XLRE": "不動產", "XLU": "公用事業"}
+SECTOR_LOOKUP_ONLY_CFG = {
+    "XLRE": {"source": "ssga",
+             "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlre.xlsx"},
+    "XLU": {"source": "ssga",
+            "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlu.xlsx"},
+}
+
+
+def refresh_sector_lookup_only_holdings() -> None:
+    """每次 run 都嘗試重抓 XLRE／XLU 持股（純粹為了下面 build_us_sector_lookup()
+    的反查表，見上方註解）——失敗（xlsx 格式改版、被擋）不拋例外，直接跳過
+    那一檔，沿用上次寫進 holdings_cache 的版本（若有）；兩者都沒抓過也沒有
+    快取，反查表就是少這兩檔的資料，不影響其他任何功能。"""
+    for etf_key, cfg in SECTOR_LOOKUP_ONLY_CFG.items():
+        try:
+            raw = fetch_ssga_holdings_xlsx(cfg)
+            as_of, rows, non_equity = parse_ssga_holdings_xlsx(raw)
+            cache_path = HOLDINGS_CACHE_DIR / f"{etf_key}.json"
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_text(json.dumps({
+                "as_of": as_of, "holdings": rows, "non_equity": non_equity,
+                "source_url": cfg["holdings_url"], "fetched_at": datetime.now(timezone.utc).isoformat(),
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception as e:  # noqa: BLE001
+            print(f"[etf_dash] WARNING refresh_sector_lookup_only_holdings: {etf_key} failed ({e}), "
+                  f"sector lookup falls back to any existing cache for it", file=sys.stderr)
+
 
 def build_us_sector_lookup() -> dict[str, str]:
-    """讀 9 檔 SPDR 產業 ETF 各自的 holdings_cache（見上方註解），回傳
-    {ticker: 中文類股標籤}。某檔快取不存在／壞掉就跳過那一檔（不讓整個查找
-    表失敗），這是「盡量湊」的查找表，不是權威資料源。"""
+    """讀 9 檔 SPDR 產業 ETF ＋ XLRE／XLU（僅供反查，見上方註解）各自的
+    holdings_cache，回傳 {ticker: 中文類股標籤}。某檔快取不存在／壞掉就跳過
+    那一檔（不讓整個查找表失敗），這是「盡量湊」的查找表，不是權威資料源。"""
     lookup: dict[str, str] = {}
-    for etf_key, label in SECTOR_ETF_LABEL_ZH.items():
+    all_labels = {**SECTOR_ETF_LABEL_ZH, **SECTOR_LOOKUP_ONLY_LABEL_ZH}
+    for etf_key, label in all_labels.items():
         path = HOLDINGS_CACHE_DIR / f"{etf_key}.json"
         if not path.exists():
             continue
@@ -1666,6 +1706,65 @@ def fetch_prices_batch(tickers: list[str], calendar_days: int = 200) -> dict[str
             if pts:
                 out[tk] = pts
     return out
+
+
+def _all_known_constituent_tickers() -> set[str]:
+    """回填用——蒐集「目前 eps_cache 裡已知的全部基金」的全部成分股 ticker
+    （每檔基金讀 data/etf_dash/eps_cache/{ETF}.json 的 "tickers" 字典，取
+    status=="ok" 的那些，即 constituents 實際會用到的 ticker），外加每檔
+    基金自己的 ETF ticker（cfg["yf_ticker"]）。刻意讀「目前已知的全部 17 檔」
+    而不是只看這次 run 的 --etf 參數——回填的目的是讓 prices.jsonl 一次涵蓋
+    全站，不是只涵蓋今天剛好跑到的那幾檔（見 backfill_price_history_if_needed()
+    docstring）。某檔基金還沒有 eps_cache（例如全新加入、從沒 FULL 過）就
+    跳過它的成分股，不讓整個回填失敗。"""
+    tickers: set[str] = set()
+    for etf_key, cfg in FUND_REGISTRY.items():
+        tickers.add(cfg["yf_ticker"])
+        cache_path = EPS_CACHE_DIR / f"{etf_key}.json"
+        if not cache_path.exists():
+            continue
+        try:
+            eps_cache = json.loads(cache_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for tk, info in (eps_cache.get("tickers") or {}).items():
+            if info.get("status") == "ok":
+                tickers.add(info.get("yf_ticker_used") or tk)
+    return tickers
+
+
+def backfill_price_history_if_needed(price_days: dict) -> dict:
+    """2026-09-26 self-heal（coordinator 回饋：報酬貢獻不該乾等 ~3 個月讓
+    prices.jsonl 自然累積到有用的覆蓋率）——price_days 現有天數不足
+    price_history.MIN_TRADING_DAYS 天，就用一次批次 yfinance 下載（重用
+    fetch_prices_batch()，跟 PRICE 模式每天已經在用的同一支函式，不是新的
+    抓取路徑）把全站（目前 eps_cache 已知的 17 檔基金＋各自成分股＋各基金
+    自己的 ETF ticker，見 _all_known_constituent_tickers()）一次補進
+    ~100 個曆日的收盤價，寫回 data/etf_dash/prices.jsonl。已經有足夠天數
+    （例如日常累積到門檻之後）就直接回傳原本傳進來的 price_days，不做任何
+    事——這個函式在 main() 迴圈開始前呼叫一次，回傳值取代呼叫端手上的
+    price_days（讓這次 run 馬上就能用回填到的歷史算報酬貢獻，不用等明天）。
+    批次下載本身失敗（網路問題等）不拋例外，印警告後原樣回傳 price_days，
+    跟其他一次性抓取失敗時的既有哲學一致（缺資料就是缺資料，不讓整個
+    build 掛掉）。"""
+    if not price_history.needs_backfill(price_days):
+        return price_days
+    tickers = sorted(_all_known_constituent_tickers())
+    print(f"[etf_dash] price_history: only {len(price_days)} day(s) on file "
+          f"(< {price_history.MIN_TRADING_DAYS}) — backfilling ~100 calendar days for "
+          f"{len(tickers)} ticker(s) in one batched download", file=sys.stderr)
+    try:
+        batch = fetch_prices_batch(tickers, calendar_days=100)
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING price_history backfill failed ({e}); contribution stays at low "
+              f"coverage until it accumulates day-by-day", file=sys.stderr)
+        return price_days
+    merged = price_history.merge_ticker_series(price_days, batch)
+    price_history.save_days(merged)
+    n_new_days = len(merged) - len(price_days)
+    print(f"[etf_dash] price_history: backfill done — {len(merged)} day(s) on file now "
+          f"(+{n_new_days}), {sum(len(v) for v in batch.values())} ticker-day close(s) fetched", file=sys.stderr)
+    return merged
 
 
 def build_weight_methodology_note_zh(cfg: dict, holdings: list[dict]) -> str | None:
@@ -2976,27 +3075,77 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
 
 TAIEX_NO_FLOWS_NOTE_ZH = "TAIEX 是指數，不是可申購／贖回的基金，沒有受益權單位數或 NAV 概念——指數無資金流，不追蹤。"
 
+# 2026-09-26 資金流來源分級（見 flows.py 模組開頭 docstring 的完整調查記錄）：
+#   "ssga_navhist"          — SSGA 官方逐日 NAV／份額歷史（SPY＋9 檔產業 ETF）
+#   "vaneck_navhist"        — VanEck 官方逐日 NAV／AUM 歷史，推算份額（僅美國
+#                              掛牌 SMH；愛爾蘭 UCITS 版該檔沒有 AUM 欄，見
+#                              flows.py 註解，維持 yfinance）
+#   "invesco_direct"        — Invesco fundDetails API 單日快照（QQQ／RSP；
+#                              RSP 實測不穩定，失敗會落到 yfinance）
+#   "yfinance"（預設，未列在此表視同這個）— 其餘（SMH_UCITS／TOPIX／0050），
+#                              以及上述來源這次 run 失敗時的 fallback。
+FLOWS_SOURCE_TIER = {
+    "SPY": "ssga_navhist", "XLK": "ssga_navhist", "XLF": "ssga_navhist", "XLE": "ssga_navhist",
+    "XLV": "ssga_navhist", "XLI": "ssga_navhist", "XLY": "ssga_navhist", "XLP": "ssga_navhist",
+    "XLC": "ssga_navhist", "XLB": "ssga_navhist",
+    "SMH": "vaneck_navhist",
+    "QQQ": "invesco_direct", "RSP": "invesco_direct",
+}
+
+
+def _attach_flows_tier1_history(etf_key: str, cfg: dict, tier: str) -> bool:
+    """Tier 1（官方逐日歷史檔）——回傳 True 代表這次成功合併了一批歷史進
+    data/etf_dash/flows/{ETF}.jsonl（見 flows.merge_history()），呼叫端接著
+    照樣讀 flows.load_rows() 算 compute_flow_series()，不需要另外處理。"""
+    if tier == "ssga_navhist":
+        rows = flows.fetch_ssga_navhist_rows(cfg["yf_ticker"])
+    elif tier == "vaneck_navhist":
+        history_url = cfg["holdings_url"].replace("/downloads/holdings/", "/downloads/fundhistoprices/")
+        rows = flows.fetch_vaneck_navhist_rows(history_url, cfg["holdings_cookies"])
+    else:
+        raise ValueError(f"unknown tier1 source {tier!r}")
+    flows.merge_history(etf_key, rows)
+    return True
+
 
 def attach_flows(etf_key: str, cfg: dict, result: dict, today_str: str) -> None:
     """就地把 "flows" 鍵寫進 result（呼叫端傳進來的、build_fund_full／
-    build_fund_price 剛回傳的那個 dict）。失敗（yfinance get_info() 掛掉等）
-    不讓整個 build_fund() 失敗——資金流是這次任務新加的資料，缺一天不該讓
-    既有的 EPS／股價功能連坐失敗，見 flows.fetch_shares_snapshot() 的
-    source=None 設計。"""
+    build_fund_price 剛回傳的那個 dict）。失敗不讓整個 build_fund() 失敗——
+    資金流缺一天不該讓既有的 EPS／股價功能連坐失敗。依 FLOWS_SOURCE_TIER
+    決定這檔基金的主要來源，官方來源這次 run 失敗（或這檔基金沒有官方來源）
+    一律 fallback 到 yfinance（見 flows.fetch_shares_snapshot_yfinance()），
+    不會因為官方來源失效就整天沒有資金流數字。"""
     if etf_key == "TAIEX":
         result["flows"] = {"skipped": True, "reason_zh": TAIEX_NO_FLOWS_NOTE_ZH}
         return
-    try:
-        snap = flows.fetch_shares_snapshot(yf, cfg["yf_ticker"])
+    tier = FLOWS_SOURCE_TIER.get(etf_key)
+    used_tier1 = False
+    if tier in ("ssga_navhist", "vaneck_navhist"):
+        try:
+            used_tier1 = _attach_flows_tier1_history(etf_key, cfg, tier)
+        except Exception as e:  # noqa: BLE001
+            print(f"[etf_dash] WARNING {etf_key}: flows tier1 ({tier}) fetch failed ({e}), "
+                  f"falling back to yfinance for today", file=sys.stderr)
+    snap = None
+    if not used_tier1:
+        if tier == "invesco_direct":
+            snap = flows.fetch_shares_snapshot_invesco(cfg["yf_ticker"])
+            if not snap.get("source"):
+                print(f"[etf_dash] WARNING {etf_key}: Invesco fundDetails unusable today "
+                      f"({snap.get('reason')}), falling back to yfinance", file=sys.stderr)
+                snap = None
+        if snap is None:
+            snap = flows.fetch_shares_snapshot_yfinance(yf, cfg["yf_ticker"])
         if snap.get("source"):
             flows.append_today(etf_key, {"date": today_str, **snap})
         else:
             print(f"[etf_dash] WARNING {etf_key}: flows snapshot has no usable source today "
                   f"({snap.get('reason')})", file=sys.stderr)
+    try:
         rows = flows.load_rows(etf_key)
         series = flows.compute_flow_series(rows)
         series["skipped"] = False
-        series["today_snapshot"] = snap
+        series["today_snapshot"] = snap if snap is not None else (rows[-1] if rows and rows[-1].get("date") == today_str else None)
         result["flows"] = series
     except Exception as e:  # noqa: BLE001
         print(f"[etf_dash] WARNING {etf_key}: attach_flows failed ({e})", file=sys.stderr)
@@ -3503,6 +3652,8 @@ def main() -> int:
     # 前建好一次（跟 dd_days／stock_dash_universe 同一個既有慣例），不是每檔
     # 基金各自重算一次。
     price_days = price_history.load_days()
+    price_days = backfill_price_history_if_needed(price_days)  # self-heal — 見該函式 docstring
+    refresh_sector_lookup_only_holdings()  # XLRE／XLU，僅供下一行的反查表用，見該函式註解
     us_sector_lookup = build_us_sector_lookup()
     tw_industry_map = get_tw_industry_map()
     price_today_closes: dict[str, float] = {}

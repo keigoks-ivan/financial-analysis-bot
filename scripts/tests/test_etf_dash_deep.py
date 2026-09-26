@@ -8,6 +8,7 @@ any disk paths).
 """
 from __future__ import annotations
 
+import io
 import json
 from pathlib import Path
 import sys
@@ -214,6 +215,50 @@ def test_build_us_sector_lookup_missing_cache_files_skipped(tmp_path, monkeypatc
     assert m.build_us_sector_lookup() == {}
 
 
+def test_build_us_sector_lookup_includes_lookup_only_xlre_xlu(tmp_path, monkeypatch):
+    # 2026-09-26 coordinator 回饋：XLRE/XLU 只為了反查表抓，不是顯示用基金
+    # （不在 FUND_REGISTRY），但它們的持股快取格式跟其他基金一樣，
+    # build_us_sector_lookup() 應該一視同仁讀進來。
+    monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
+    (tmp_path / "XLRE.json").write_text(json.dumps({
+        "holdings": [{"ticker": "PLD", "name": "Prologis", "weight_pct": 10}]
+    }), encoding="utf-8")
+    (tmp_path / "XLU.json").write_text(json.dumps({
+        "holdings": [{"ticker": "NEE", "name": "NextEra Energy", "weight_pct": 12}]
+    }), encoding="utf-8")
+    lookup = m.build_us_sector_lookup()
+    assert lookup["PLD"] == "不動產"
+    assert lookup["NEE"] == "公用事業"
+
+
+def test_refresh_sector_lookup_only_holdings_writes_cache_on_success(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
+
+    def fake_fetch(cfg):
+        return b"fake xlsx bytes"
+
+    def fake_parse(raw):
+        return ("2026-09-26", [{"ticker": "PLD", "name": "Prologis", "weight_pct": 10.0}], [])
+
+    monkeypatch.setattr(m, "fetch_ssga_holdings_xlsx", fake_fetch)
+    monkeypatch.setattr(m, "parse_ssga_holdings_xlsx", fake_parse)
+    m.refresh_sector_lookup_only_holdings()
+    d = json.loads((tmp_path / "XLRE.json").read_text(encoding="utf-8"))
+    assert d["holdings"][0]["ticker"] == "PLD"
+    d2 = json.loads((tmp_path / "XLU.json").read_text(encoding="utf-8"))
+    assert d2["as_of"] == "2026-09-26"
+
+
+def test_refresh_sector_lookup_only_holdings_failure_does_not_raise(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
+
+    def _boom(cfg):
+        raise RuntimeError("blocked")
+    monkeypatch.setattr(m, "fetch_ssga_holdings_xlsx", _boom)
+    m.refresh_sector_lookup_only_holdings()  # must not raise
+    assert not (tmp_path / "XLRE.json").exists()
+
+
 # ── price_history.py ─────────────────────────────────────────────────────────
 
 def test_price_history_append_and_load_roundtrip(tmp_path, monkeypatch):
@@ -258,6 +303,96 @@ def test_price_history_closest_close_on_or_before_no_data_before_target_returns_
 def test_price_history_closest_close_on_or_before_missing_ticker_returns_none():
     days = {"2026-09-10": {"BBB": 12.0}}
     assert ph.closest_close_on_or_before(days, "AAA", "2026-09-15") is None
+
+
+# ── price_history.py self-heal backfill (2026-09-26 coordinator review) ────
+
+def test_price_history_needs_backfill_below_threshold():
+    days = {f"2026-09-{i:02d}": {} for i in range(1, 10)}
+    assert ph.needs_backfill(days, min_trading_days=70) is True
+
+
+def test_price_history_needs_backfill_at_or_above_threshold():
+    days = {f"2026-{(i//28)+1:02d}-{(i%28)+1:02d}": {} for i in range(80)}
+    assert ph.needs_backfill(days, min_trading_days=70) is False
+
+
+def test_price_history_merge_ticker_series_adds_new_dates_and_tickers():
+    existing = {"2026-09-10": {"AAA": 10.0}}
+    batch = {"AAA": [{"date": "2026-09-08", "close": 9.5}, {"date": "2026-09-09", "close": 9.8}],
+             "BBB": [{"date": "2026-09-10", "close": 20.0}]}
+    merged = ph.merge_ticker_series(existing, batch)
+    assert merged["2026-09-08"]["AAA"] == 9.5
+    assert merged["2026-09-09"]["AAA"] == 9.8
+    assert merged["2026-09-10"] == {"AAA": 10.0, "BBB": 20.0}
+
+
+def test_price_history_merge_ticker_series_does_not_mutate_input():
+    existing = {"2026-09-10": {"AAA": 10.0}}
+    ph.merge_ticker_series(existing, {"AAA": [{"date": "2026-09-10", "close": 999.0}]})
+    assert existing["2026-09-10"]["AAA"] == 10.0  # original dict untouched
+
+
+def test_price_history_merge_ticker_series_skips_points_missing_date_or_close():
+    existing = {}
+    batch = {"AAA": [{"date": None, "close": 1.0}, {"date": "2026-09-10", "close": None},
+                      {"date": "2026-09-11", "close": 5.0}]}
+    merged = ph.merge_ticker_series(existing, batch)
+    assert list(merged.keys()) == ["2026-09-11"]
+
+
+def test_price_history_save_days_prunes_to_max_rows(tmp_path, monkeypatch):
+    monkeypatch.setattr(ph, "PRICES_JSONL_PATH", tmp_path / "prices.jsonl")
+    monkeypatch.setattr(ph, "MAX_ROWS", 2)
+    ph.save_days({"2026-09-10": {"A": 1}, "2026-09-11": {"A": 2}, "2026-09-12": {"A": 3}})
+    days = ph.load_days()
+    assert sorted(days.keys()) == ["2026-09-11", "2026-09-12"]
+
+
+# ── build_etf_dash.backfill_price_history_if_needed() orchestration ────────
+
+def test_all_known_constituent_tickers_reads_eps_caches(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "EPS_CACHE_DIR", tmp_path)
+    (tmp_path / "SMH.json").write_text(json.dumps({
+        "tickers": {
+            "NVDA": {"status": "ok", "yf_ticker_used": "NVDA"},
+            "BADCO": {"status": "no_eps_data"},
+        }
+    }), encoding="utf-8")
+    tickers = m._all_known_constituent_tickers()
+    assert "NVDA" in tickers
+    assert "BADCO" not in tickers
+    assert m.FUND_REGISTRY["SMH"]["yf_ticker"] in tickers  # every fund's own ETF ticker always included
+
+
+def test_backfill_price_history_if_needed_skips_when_coverage_sufficient(monkeypatch):
+    called = []
+    monkeypatch.setattr(m, "fetch_prices_batch", lambda *a, **k: called.append(1))
+    price_days = {f"2026-09-{i:02d}": {} for i in range(1, 30)}
+    monkeypatch.setattr(m.price_history, "needs_backfill", lambda days: False)
+    out = m.backfill_price_history_if_needed(price_days)
+    assert out is price_days
+    assert not called
+
+
+def test_backfill_price_history_if_needed_merges_and_saves_on_success(tmp_path, monkeypatch):
+    monkeypatch.setattr(m.price_history, "PRICES_JSONL_PATH", tmp_path / "prices.jsonl")
+    monkeypatch.setattr(m, "EPS_CACHE_DIR", tmp_path)
+    monkeypatch.setattr(m, "fetch_prices_batch",
+                         lambda tickers, calendar_days=100: {"NVDA": [{"date": "2026-08-01", "close": 100.0}]})
+    out = m.backfill_price_history_if_needed({})
+    assert out["2026-08-01"]["NVDA"] == 100.0
+    on_disk = m.price_history.load_days()
+    assert on_disk["2026-08-01"]["NVDA"] == 100.0
+
+
+def test_backfill_price_history_if_needed_network_failure_returns_original(monkeypatch):
+    def _boom(tickers, calendar_days=100):
+        raise RuntimeError("network down")
+    monkeypatch.setattr(m, "fetch_prices_batch", _boom)
+    price_days = {}
+    out = m.backfill_price_history_if_needed(price_days)
+    assert out is price_days
 
 
 # ── flows.py ─────────────────────────────────────────────────────────────────
@@ -319,7 +454,7 @@ def test_flows_fetch_shares_snapshot_direct_source(monkeypatch):
             return FakeTicker()
 
     out = flows.fetch_shares_snapshot(FakeYF(), "SPY")
-    assert out["source"] == "direct"
+    assert out["source"] == "yfinance_direct"
     assert out["shares_outstanding"] == 1000
     assert out["nav"] == 20.0
 
@@ -334,7 +469,7 @@ def test_flows_fetch_shares_snapshot_derives_from_aum_nav_when_shares_missing(mo
             return FakeTicker()
 
     out = flows.fetch_shares_snapshot(FakeYF(), "1475.T")
-    assert out["source"] == "derived"
+    assert out["source"] == "yfinance_derived"
     assert out["shares_outstanding"] == 500
 
 
@@ -364,6 +499,207 @@ def test_flows_fetch_shares_snapshot_get_info_raises_is_caught(monkeypatch):
     out = flows.fetch_shares_snapshot(FakeYF(), "XXX")
     assert out["source"] is None
     assert "boom" in out["reason"]
+
+
+# ── flows.py tier-1 official history parsers (2026-09-26 coordinator review:
+#    yfinance sharesOutstanding is often stale for ETFs) ────────────────────
+
+def _xlsx_bytes(rows: list[list]) -> bytes:
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    for row in rows:
+        ws.append(row)
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def test_parse_ssga_navhist_xlsx_extracts_date_nav_shares():
+    raw = _xlsx_bytes([
+        ["Fund Name:", "State Street SPDR S&P 500 ETF Trust"],
+        ["Ticker Symbol:", "SPY"],
+        [None],
+        ["Date", "NAV", "Shares Outstanding", "Total Net Assets"],
+        ["24-Sep-2026", 767.436258, 1066782116, 818687275737.58],
+        ["23-Sep-2026", 767.610247, 1047332116, 803942864100.41],
+        ["Before investing in a fund..."],
+    ])
+    rows = flows.parse_ssga_navhist_xlsx(raw)
+    assert [r["date"] for r in rows] == ["2026-09-23", "2026-09-24"]
+    assert rows[1]["shares_outstanding"] == 1066782116
+    assert rows[1]["nav"] == pytest.approx(767.436258)
+    assert rows[1]["source"] == "ssga_navhist"
+
+
+def test_parse_ssga_navhist_xlsx_trailing_blank_rows_do_not_crash():
+    # 2026-09-26 real-world regression: SSGA's real navhist file has many
+    # fully-blank rows after the last data row before EOF (not immediately
+    # followed by footer text) — pd.to_datetime(NaN, errors="raise") does
+    # NOT raise (NaN is treated as a valid "missing" input), it silently
+    # returns NaT, and NaT.strftime() then raises "NaTType does not support
+    # strftime" if not explicitly checked. This must terminate parsing
+    # cleanly instead of crashing.
+    raw = _xlsx_bytes([
+        ["Fund Name:", "State Street SPDR S&P 500 ETF Trust"],
+        ["Ticker Symbol:", "SPY"],
+        [None],
+        ["Date", "NAV", "Shares Outstanding", "Total Net Assets"],
+        ["24-Sep-2026", 767.436258, 1066782116, 818687275737.58],
+        [None, None, None, None],
+        [None, None, None, None],
+        [None, None, None, None],
+    ])
+    rows = flows.parse_ssga_navhist_xlsx(raw)
+    assert len(rows) == 1
+    assert rows[0]["date"] == "2026-09-24"
+
+
+def test_parse_ssga_navhist_xlsx_missing_header_raises():
+    raw = _xlsx_bytes([["not", "a", "navhist", "sheet"]])
+    with pytest.raises(RuntimeError, match="could not locate header row"):
+        flows.parse_ssga_navhist_xlsx(raw)
+
+
+def test_parse_ssga_navhist_xlsx_caps_to_max_days():
+    header = ["Date", "NAV", "Shares Outstanding", "Total Net Assets"]
+    body = [[f"{(i%28)+1:02d}-Jan-2026", 100.0 + i, 1000000 + i, 1e11] for i in range(10)]
+    raw = _xlsx_bytes([header] + body)
+    rows = flows.parse_ssga_navhist_xlsx(raw, max_days=3)
+    assert len(rows) == 3
+
+
+def test_parse_vaneck_navhist_xlsx_derives_shares_from_aum_nav():
+    raw = _xlsx_bytes([
+        ["VanEck Semiconductor ETF - SMH"],
+        ["Date", "NAV", "Change", "% Change", "Last Trade", "Volume", "Premium/Discount",
+         "% Premium/Discount", "AUM", "Index Level"],
+        ["09/25/2026", 606.6694, 5.92, 0.99, 606.56, 4590985, -0.11, -0.02, "74,615,404,127.24", 24849.82],
+        ["09/24/2026", 600.7447, -0.24, -0.04, 600.52, 5626938, -0.22, -0.04, "74,157,053,155.62", 24606.62],
+    ])
+    rows = flows.parse_vaneck_navhist_xlsx(raw)
+    assert [r["date"] for r in rows] == ["2026-09-24", "2026-09-25"]
+    assert rows[0]["source"] == "vaneck_navhist_derived"
+    assert rows[0]["shares_outstanding"] == pytest.approx(74157053155.62 / 600.7447, rel=1e-6)
+
+
+def test_parse_vaneck_navhist_xlsx_missing_aum_column_raises():
+    # Mirrors the real Irish UCITS share class's history file, which has no
+    # AUM column (see flows.py module docstring) — must raise, not silently
+    # produce zero rows, so the caller falls back to yfinance loudly.
+    raw = _xlsx_bytes([
+        ["VanEck Semiconductor UCITS ETF - SMH"],
+        ["Date", "NAV", "Change", "% Change"],
+        ["25/09/2026", 114.472, 0.89, 0.78],
+    ])
+    with pytest.raises(RuntimeError, match="could not locate header row"):
+        flows.parse_vaneck_navhist_xlsx(raw)
+
+
+def test_merge_history_overwrites_same_date_keeps_others(tmp_path, monkeypatch):
+    monkeypatch.setattr(flows, "FLOWS_DIR", tmp_path)
+    flows.append_today("SPY", {"date": "2026-09-20", "shares_outstanding": 100, "nav": 10.0, "source": "ssga_navhist"})
+    flows.merge_history("SPY", [
+        {"date": "2026-09-20", "shares_outstanding": 999, "nav": 10.0, "source": "ssga_navhist"},
+        {"date": "2026-09-21", "shares_outstanding": 105, "nav": 10.1, "source": "ssga_navhist"},
+    ])
+    rows = {r["date"]: r for r in flows.load_rows("SPY")}
+    assert rows["2026-09-20"]["shares_outstanding"] == 999  # overwritten by the refetched history
+    assert rows["2026-09-21"]["shares_outstanding"] == 105
+
+
+def test_merge_history_prunes_to_max_history_days(tmp_path, monkeypatch):
+    monkeypatch.setattr(flows, "FLOWS_DIR", tmp_path)
+    monkeypatch.setattr(flows, "MAX_HISTORY_DAYS", 3)
+    rows = [{"date": f"2026-01-{i:02d}", "shares_outstanding": i, "nav": 10.0, "source": "ssga_navhist"}
+            for i in range(1, 11)]
+    flows.merge_history("SPY", rows)
+    assert len(flows.load_rows("SPY")) == 3
+
+
+def test_fetch_invesco_fund_details_parses_shares_and_nav(monkeypatch):
+    def fake_get(url, params=None, headers=None, timeout=None):
+        class R:
+            status_code = 200
+            text = '{"sharesOutstanding": 675750000, "nav": 741.315461, "currencyCode": "USD"}'
+
+            def json(self):
+                return {"sharesOutstanding": 675750000, "nav": 741.315461, "currencyCode": "USD"}
+        return R()
+    monkeypatch.setattr(flows.requests, "get", fake_get)
+    out = flows.fetch_shares_snapshot_invesco("QQQ")
+    assert out["source"] == "invesco_direct"
+    assert out["shares_outstanding"] == 675750000
+
+
+def test_fetch_invesco_fund_details_empty_body_retries_then_fails(monkeypatch):
+    calls = []
+
+    def fake_get(url, params=None, headers=None, timeout=None):
+        calls.append(1)
+        class R:
+            status_code = 200
+            text = '""'
+
+            def json(self):
+                return ""
+        return R()
+    monkeypatch.setattr(flows.requests, "get", fake_get)
+    monkeypatch.setattr(flows.time, "sleep", lambda s: None)
+    monkeypatch.setattr(flows, "INVESCO_FUND_DETAILS_RETRY_BACKOFFS_S", [0, 0])
+    out = flows.fetch_shares_snapshot_invesco("RSP")
+    assert out["source"] is None
+    assert len(calls) == 3  # initial + 2 retries
+    assert "unusable" in out["reason"]
+
+
+# ── staleness detection (yfinance tier only) ────────────────────────────────
+
+def _yf_row(date, shares, nav, source="yfinance_direct"):
+    return {"date": date, "shares_outstanding": shares, "nav": nav, "source": source}
+
+
+def test_detect_staleness_flags_identical_shares_with_moving_nav():
+    rows = [_yf_row(f"2026-09-{d:02d}", 1000, nav) for d, nav in
+            zip(range(10, 20), [100, 101, 99, 102, 98, 103, 97, 104, 96, 110])]
+    assert flows.detect_staleness(rows) is True
+
+
+def test_detect_staleness_not_flagged_when_shares_actually_change():
+    rows = [_yf_row(f"2026-09-{d:02d}", 1000 + d, 100 + d) for d in range(10, 20)]
+    assert flows.detect_staleness(rows) is False
+
+
+def test_detect_staleness_not_flagged_when_nav_also_flat():
+    # identical shares AND flat NAV -> plausibly a genuinely quiet fund, not
+    # evidence of a stale feed (see STALE_NAV_CHANGE_PCT threshold).
+    rows = [_yf_row(f"2026-09-{d:02d}", 1000, 100.0) for d in range(10, 20)]
+    assert flows.detect_staleness(rows) is False
+
+
+def test_detect_staleness_ignores_official_tier1_sources():
+    rows = [_yf_row(f"2026-09-{d:02d}", 1000, nav, source="ssga_navhist") for d, nav in
+            zip(range(10, 20), [100, 101, 99, 102, 98, 103, 97, 104, 96, 110])]
+    assert flows.detect_staleness(rows) is False
+
+
+def test_detect_staleness_insufficient_rows_returns_false():
+    assert flows.detect_staleness([_yf_row("2026-09-10", 1000, 100.0)]) is False
+
+
+def test_compute_flow_series_surfaces_stale_flag_and_note():
+    rows = [_yf_row(f"2026-09-{d:02d}", 1000, nav) for d, nav in
+            zip(range(10, 20), [100, 101, 99, 102, 98, 103, 97, 104, 96, 110])]
+    out = flows.compute_flow_series(rows)
+    assert out["stale_shares_flag"] is True
+    assert "不規律" in out["quality_note_zh"]
+
+
+def test_compute_flow_series_no_stale_flag_for_clean_data():
+    rows = [_yf_row(f"2026-09-{d:02d}", 1000 + d, 100 + d, source="ssga_navhist") for d in range(10, 20)]
+    out = flows.compute_flow_series(rows)
+    assert out["stale_shares_flag"] is False
+    assert out["quality_note_zh"] is None
 
 
 # ── TWSE industry map (fetch_tw_industry_map parsing logic, no network) ────

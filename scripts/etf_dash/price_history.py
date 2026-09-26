@@ -35,6 +35,17 @@ pruned to the most recent MAX_ROWS calendar-day rows on every write — this is
 "~70 trading days" of memory (see build_etf_dash.py's 報酬貢獻 lookback of 30
 and 90 calendar days; a 100-calendar-day window comfortably covers both with
 margin for weekends/holidays without the file growing unbounded).
+
+2026-09-26 self-heal backfill (coordinator review — "don't wait 3 months for
+coverage to accumulate"): needs_backfill() flags when fewer than
+MIN_TRADING_DAYS rows are on file; the caller (see build_etf_dash.py's
+backfill_price_history_if_needed()) then does ONE batched yfinance download
+covering every constituent of every fund plus the ETFs themselves (reusing
+fetch_prices_batch(), the same batched call PRICE mode already uses daily)
+and merges the whole multi-day result in via merge_ticker_series() — a
+pure function, easy to test, that takes fetch_prices_batch()'s own
+{ticker: [{"date","close"}, ...]} return shape directly, no reshaping needed
+at the call site.
 """
 from __future__ import annotations
 
@@ -46,6 +57,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 PRICES_JSONL_PATH = ROOT / "data" / "etf_dash" / "prices.jsonl"
 
 MAX_ROWS = 100  # calendar-day rows retained (~70 trading days + weekend/holiday margin)
+MIN_TRADING_DAYS = 70  # fewer rows on file than this -> needs_backfill() is True
 
 
 def load_days() -> dict[str, dict[str, float]]:
@@ -68,17 +80,10 @@ def load_days() -> dict[str, dict[str, float]]:
     return out
 
 
-def append_today(date_str: str, closes: dict[str, float]) -> None:
-    """把今天蒐集到的收盤價（可能是這次 run 涵蓋的多檔基金合併起來的聯集）
-    併入既有序列——同一天重跑合併（新值覆寫舊值，不會的 ticker 保留舊值），
-    再裁到最近 MAX_ROWS 天，整份寫回（規模天生很小：MAX_ROWS 天 × 全站
+def save_days(days: dict[str, dict[str, float]]) -> None:
+    """裁到最近 MAX_ROWS 天，整份寫回（規模天生很小：MAX_ROWS 天 × 全站
     ~1000 檔獨立 ticker，仍是幾百 KB 量級，跟 dd_eps_history.py 一樣「整份讀
     出、必要時改最後一行、整份寫回」不會有效能問題）。"""
-    days = load_days()
-    if date_str in days:
-        days[date_str] = {**days[date_str], **closes}
-    else:
-        days[date_str] = dict(closes)
     ordered_dates = sorted(days.keys())[-MAX_ROWS:]
     PRICES_JSONL_PATH.parent.mkdir(parents=True, exist_ok=True)
     PRICES_JSONL_PATH.write_text(
@@ -88,6 +93,43 @@ def append_today(date_str: str, closes: dict[str, float]) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def append_today(date_str: str, closes: dict[str, float]) -> None:
+    """把今天蒐集到的收盤價（可能是這次 run 涵蓋的多檔基金合併起來的聯集）
+    併入既有序列——同一天重跑合併（新值覆寫舊值，不會的 ticker 保留舊值）。"""
+    days = load_days()
+    if date_str in days:
+        days[date_str] = {**days[date_str], **closes}
+    else:
+        days[date_str] = dict(closes)
+    save_days(days)
+
+
+def needs_backfill(days: dict[str, dict[str, float]], min_trading_days: int = MIN_TRADING_DAYS) -> bool:
+    """純函式：目前存的天數 < min_trading_days 就需要回填——見模組開頭
+    2026-09-26 self-heal 段落。"""
+    return len(days) < min_trading_days
+
+
+def merge_ticker_series(days: dict[str, dict[str, float]],
+                         ticker_series: dict[str, list[dict]]) -> dict[str, dict[str, float]]:
+    """純函式（不寫檔）：把 fetch_prices_batch() 原始回傳的
+    {ticker: [{"date","close"}, ...]} 併入既有的 {date: {ticker: close}}
+    cross-section——每個 ticker 的每一天各自寫進對應日期那一列，同一天同一
+    ticker 若兩邊都有值，以 ticker_series（新抓的）為準（回填的目的就是要
+    補正／補齊，信任新抓到的版本）。回傳新的 dict（不修改傳入的 days），
+    呼叫端自己決定要不要 save_days()（見 build_etf_dash.py
+    backfill_price_history_if_needed()，回填一次抓完所有基金才存一次）。"""
+    merged = {d: dict(v) for d, v in days.items()}
+    for ticker, points in ticker_series.items():
+        for p in points:
+            d = p.get("date")
+            close = p.get("close")
+            if d is None or close is None:
+                continue
+            merged.setdefault(d, {})[ticker] = close
+    return merged
 
 
 def closest_close_on_or_before(days: dict[str, dict[str, float]], ticker: str, target_date: str) -> tuple[str, float] | None:
