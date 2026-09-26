@@ -873,6 +873,21 @@ function renderPriceContribution(d){
 }
 
 // ── 資金流 ──────────────────────────────────────────────────────────────
+// 2026-09-26 二次修（coordinator 回饋）：份額來源分三級，見
+// scripts/etf_dash/flows.py 模組開頭 docstring 的完整調查記錄——tier 1
+// （ssga_navhist／vaneck_navhist_derived）是發行商官方逐日歷史，一次就有
+// 數月資料；tier 2（invesco_direct）是發行商官方即時單日快照；tier 3
+// （yfinance_direct／yfinance_derived）是 Yahoo Finance，已知偶爾會連續多天
+// 卡住不動（見 stale_shares_flag／quality_note_zh）。
+var FLOWS_SOURCE_LABEL_ZH = {
+  ssga_navhist: 'SSGA 發行商官方逐日 NAV／份額歷史',
+  vaneck_navhist_derived: 'VanEck 發行商官方逐日 NAV／AUM 歷史推算',
+  invesco_direct: 'Invesco 發行商官方即時份額（單日快照，非歷史）',
+  yfinance_direct: 'Yahoo Finance 提供的份額數字',
+  yfinance_derived: 'Yahoo Finance AUM／NAV 推算值（非發行商直接公布）'
+};
+var FLOWS_HISTORY_SOURCES = {ssga_navhist:1, vaneck_navhist_derived:1};
+
 function renderFlows(d){
   var f = d.flows || {};
   var sub = document.getElementById('flowsSub');
@@ -884,10 +899,14 @@ function renderFlows(d){
     return;
   }
   var snap = f.today_snapshot || {};
-  var sourceNote = snap.source === 'derived'
-    ? '今日份額估計為推算值（AUM／NAV 推算，非發行商直接公布，見方法論）'
-    : (snap.source === 'direct' ? '今日份額為 Yahoo Finance 直接提供的數字' : '今日份額快取失敗');
-  sub.innerHTML = '資金流 = Δ受益權份額 × NAV；'+sourceNote+'；自 '+esc(f.start_date||'—')+' 起累積追蹤（無回填歷史，見方法論）';
+  var srcKey = snap.source || f.latest_source;
+  var sourceNote = FLOWS_SOURCE_LABEL_ZH[srcKey] || '份額來源快取失敗';
+  var historyNote = FLOWS_HISTORY_SOURCES[f.latest_source]
+    ? '官方逐日歷史，回溯至 '+esc(f.start_date||'—')
+    : '無官方回填歷史，自 '+esc(f.start_date||'—')+' 起累積追蹤（見方法論）';
+  var staleNote = f.stale_shares_flag
+    ? '<br><span style="color:var(--warn);font-weight:600">⚠ '+esc(f.quality_note_zh||'')+'</span>' : '';
+  sub.innerHTML = '資金流 = Δ受益權份額 × NAV；份額來源：'+esc(sourceNote)+'；'+historyNote+'。'+staleNote;
   var weekly = f.weekly || [];
   if(weekly.length < 2){
     weeklyWrap.innerHTML = '<div class="nodata">無資料：週流量至少要累積 2 週才有意義的比較（目前 '+weekly.length+' 週）</div>';
