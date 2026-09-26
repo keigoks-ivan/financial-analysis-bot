@@ -2511,6 +2511,8 @@ def build_card_catalyst_track(ticker, as_of):
             days_away = (datetime.strptime(e["date"], "%Y-%m-%d").date() - as_of).days
         except (ValueError, KeyError, TypeError):
             pass
+        if days_away is not None and days_away < 0:
+            continue  # 日曆每週重建，兩次重建之間已過的事件不算「接下來」
         upcoming.append({
             "date": e.get("date"), "days_away": days_away, "type": e.get("type"),
             "event": e.get("event"), "impact": e.get("impact"), "watch": e.get("watch"),
@@ -2559,6 +2561,7 @@ def build_card_catalyst_track(ticker, as_of):
 
     return {
         "status": "ok",
+        "calendar_generated_at": cal.get("generated_at"),
         "upcoming": upcoming,
         "past": past,
         "drift_now": drift_now,
@@ -2870,7 +2873,7 @@ def build_card_pattern_quality(row):
             "rsi14": "14 日相對強弱指標，>70 通常視為短線過熱。",
             "return_6m_pct": "近 6 個月報酬率。",
             "short_squeeze_flag": "融券占流通股比偏高的機械旗標，純描述，不是資格閘。",
-            "breakout_watch": "現價逼近近期整理區間上緣的機械觀察旗標。",
+            "breakout_watch": "回檔觀察旗標：以現價重算的上下檔風險報酬比 ≥ 4，且研究報告的成長跑道為綠燈、護城河沒在變窄時亮起。是觀察提醒，不是買進指令。",
             "asym_flag": "正不對稱三級標記（◆／★★／★），描述現價下風險報酬結構，不是加倉指令。",
             "vcp_score": "VCP（Volatility Contraction Pattern）型態分數：拉回次數收斂、量能萎縮程度綜合分。",
             "vcp_pullback_count": "整理區間內的拉回次數。",
@@ -2998,6 +3001,7 @@ def _build_funnel_v2_block(row):
         })
     return {
         "layers": layers,
+        "tiers_raw": list(tiers) if tiers else None,
         "median": row.get("funnel_v2_median"),
         "top_tier_count": row.get("funnel_v2_top_tier_count"),
         "veto": row.get("funnel_v2_veto") or [],
@@ -3659,6 +3663,8 @@ def compute_version_snapshot(out):
         "dca_role": c6.get("dca_role") if c6.get("status") == "ok" else None,
         "funnel_rank": c7.get("funnel_rank") if c7.get("status") == "ok" else None,
         "funnel_vetoes": sorted(c7.get("vetoes_and_caps") or []) if c7.get("status") == "ok" else None,
+        "funnel_v2_tiers": list((c7.get("funnel_v2") or {}).get("tiers_raw") or []) or None if c7.get("status") == "ok" else None,
+        "funnel_v2_veto": sorted((c7.get("funnel_v2") or {}).get("veto") or []) if c7.get("status") == "ok" else None,
         "trend_state_code": (out.get("trend_state") or {}).get("state"),
         "cluster_buy_condition_met": (c5.get("cluster_buy") or {}).get("cluster_buy_condition_met"),
         "quality_veto_level": roic.get("quality_veto_level") if roic.get("status") == "ok" else None,
@@ -3704,6 +3710,12 @@ def check_version_triggers(new_snap, old_snap):
                       "before": "、".join(old_snap.get("funnel_vetoes") or []) or "無",
                       "after": "、".join(new_snap.get("funnel_vetoes") or []) or "無"})
 
+    # v2 四層級距或硬否決改變才算（名次每天隨母體浮動，不當觸發）。舊快照沒有這兩個
+    # 欄位時跳過，避免上線當天全部 339 檔一起誤觸發。
+    for key, label in [("funnel_v2_tiers", "FunnelRank v2 四層級距"), ("funnel_v2_veto", "FunnelRank v2 硬否決")]:
+        if key in old_snap and new_snap.get(key) != old_snap.get(key):
+            fired.append({"id": "T4", "desc_zh": f"{label}改變", "before": old_snap.get(key), "after": new_snap.get(key)})
+
     if new_snap.get("trend_state_code") != old_snap.get("trend_state_code"):
         fired.append({"id": "T5", "desc_zh": "趨勢狀態切換",
                       "before": old_snap.get("trend_state_code"), "after": new_snap.get("trend_state_code")})
@@ -3738,6 +3750,19 @@ def save_version_state(state, state_dir):
     _state_path(state["ticker"], state_dir).write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
+# 版本化卡片裡的即時子區塊：(判斷層小節, 子欄位)。每次 build 都用新值覆蓋。
+LIVE_SUBBLOCKS = [("eps_revision", "eps2y"), ("funnel_rank", "funnel_v2")]
+
+
+def _overlay_live_subblocks(judgment, new_judgment):
+    judgment = dict(judgment)
+    for sec, key in LIVE_SUBBLOCKS:
+        old_card, new_card = judgment.get(sec), (new_judgment or {}).get(sec)
+        if isinstance(old_card, dict) and isinstance(new_card, dict) and key in new_card:
+            judgment[sec] = {**old_card, key: new_card[key]}
+    return judgment
+
+
 def apply_versioning(ticker, out, state_dir=None, force=False, dry_run=False):
     """判斷層版本化主流程：有觸發才改版，沒觸發就沿用舊版判斷層內容，只有行情層照
     新算的值走。就地修改並回傳 out（已經套用版本化的判斷層），加上版本中繼資料。"""
@@ -3770,6 +3795,9 @@ def apply_versioning(ticker, out, state_dir=None, force=False, dry_run=False):
             snapshot = old_state.get("snapshot") or new_snapshot
             section_versions = old_state.get("section_versions") or {}
             changelog = list(old_state.get("changelog") or [])
+            # 沿用舊版判斷層時，把「照抄 dd-screener 的即時子區塊」換成這次新算的值——
+            # 它們不是判斷，凍結在舊版只會讓頁面停在過期數字（新欄位也永遠出不來）。
+            judgment = _overlay_live_subblocks(judgment, new_judgment)
 
     version_date = next((e["date"] for e in changelog if e["version"] == version),
                          old_state.get("version_date") if old_state else today)
