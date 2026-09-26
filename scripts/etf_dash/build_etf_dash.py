@@ -83,6 +83,8 @@ from eps_fx_normalize import (  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # scripts/etf_dash/ itself, for dd_eps_history
 import dd_eps_history  # noqa: E402
 import anchor_history  # noqa: E402
+import price_history  # noqa: E402
+import flows  # noqa: E402
 
 try:
     import yfinance as yf
@@ -516,6 +518,76 @@ def classify_revision(base: float | None, current: float | None) -> tuple[str, s
     status = "capped" if abs(raw_pct - capped_pct) > 1e-9 else "ok"
     return status, None, round(raw_pct, 4), round(capped_pct, 4)
 
+
+# ---------------------------------------------------------------------------
+# EPS 修正廣度 (breadth) — 2026-09-26 加。純粹從已經算好的 constituents（每檔
+# 都帶 revisions_pct，FULL／PRICE 兩種模式回傳的形狀完全一樣，見
+# build_fund_full()／build_fund_price()）分類，不呼叫任何額外的 yfinance——
+# 跟 classify_revision() 算出來的 revisions_pct 是同一份資料，只是換一種
+# 彙總角度（「修正了多少」→「有幾檔、多少權重朝哪個方向修正」）。
+# ---------------------------------------------------------------------------
+
+BREADTH_DEAD_BAND_PCT = 0.5  # |revision_pct| < 此值 -> 算「持平」，見 compute_eps_breadth()
+
+
+def _weighted_median(pairs: list[tuple[float, float]]) -> float | None:
+    """pairs = [(value, weight), ...]，weight 需為正數。標準加權中位數：依
+    value 排序後找「累積權重跨過總權重一半」的那個 value。"""
+    items = [(v, w) for v, w in pairs if w and w > 0]
+    if not items:
+        return None
+    items.sort(key=lambda x: x[0])
+    total = sum(w for _, w in items)
+    half = total / 2
+    acc = 0.0
+    for v, w in items:
+        acc += w
+        if acc >= half:
+            return v
+    return items[-1][0]
+
+
+def compute_eps_breadth(constituents: list[dict]) -> dict:
+    """回傳 {period_key: {...}}——每個 PERIOD_DEFS 期間各自算一份「修正廣度」：
+    有 revisions_pct 值的成分股依 BREADTH_DEAD_BAND_PCT 死區分成上修／持平／
+    下修三類，各自算檔數與（相對於「有值那些」的覆蓋權重重新正規化的）權重
+    佔比，外加加權中位數修正%（用原始 revisions_pct，不是三分類後的標籤）。
+    跟 periods[].eps_chg_pct 用同一個「相對覆蓋權重重新正規化」慣例
+    （見 build_fund_full() 的 covered_weight 那段），這樣「上修/持平/下修
+    權重佔比」三者才會剛好加總 100%。"""
+    out = {}
+    for key, _col, label, _days in PERIOD_DEFS:
+        up, flat, down = [], [], []
+        for c in constituents:
+            rev = (c.get("revisions_pct") or {}).get(key)
+            if rev is None:
+                continue
+            w = c.get("weight_pct") or 0
+            item = {"ticker": c["ticker"], "name": c.get("name"), "weight_pct": w, "revision_pct": rev}
+            if abs(rev) < BREADTH_DEAD_BAND_PCT:
+                flat.append(item)
+            elif rev > 0:
+                up.append(item)
+            else:
+                down.append(item)
+        n_covered = len(up) + len(flat) + len(down)
+        covered_weight = sum(i["weight_pct"] for i in (up + flat + down))
+        med = _weighted_median([(i["revision_pct"], i["weight_pct"]) for i in (up + flat + down)])
+
+        def _wpct(bucket):
+            return round(sum(i["weight_pct"] for i in bucket) / covered_weight * 100, 2) if covered_weight else None
+
+        out[key] = {
+            "key": key, "label": label,
+            "n_up": len(up), "n_flat": len(flat), "n_down": len(down), "n_covered": n_covered,
+            "n_total": len(constituents),
+            "up_weight_pct": _wpct(up), "flat_weight_pct": _wpct(flat), "down_weight_pct": _wpct(down),
+            "weighted_median_revision_pct": round(med, 4) if med is not None else None,
+            "dead_band_pct": BREADTH_DEAD_BAND_PCT,
+        }
+    return out
+
+
 RATE_LIMIT_BACKOFFS_S = [20, 45, 90]  # yfinance YFRateLimitError 重試等待秒數
 TICKER_FETCH_PACING_S = 0.4  # 每檔新 ticker（快取沒有才算）之間的固定間隔秒數，見 build_fund()
 
@@ -927,6 +999,123 @@ TWSE_COMPANY_LIST_URL = "https://openapi.twse.com.tw/v1/opendata/t187ap03_L"
 TWSE_STOCK_DAY_ALL_URL = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
 TAIEX_TOP_N = 150  # 2026-09-24 實測涵蓋全市場總市值約 92%；實際數字每次 FULL 動態算出，見 LAST_TAIEX_UNIVERSE_STATS
 
+# ---------------------------------------------------------------------------
+# 風格快照／報酬貢獻的產業分解 — 2026-09-26 加。台股（TAIEX／0050）用 TWSE
+# 官方「產業別」代碼（跟 scripts/active_etf/security_meta.py 同一組 TWSE
+# OpenAPI／同一套代碼表，但依本任務指示在 etf_dash 這邊重新實作、不 import
+# active_etf——兩邊各自維護一份小小的靜態表，代碼表本身是 TWSE 官方標準，
+# 不會因為兩邊分開放而產生分歧風險）。這份表就是
+# scripts/build_price_momentum_tw.py::SECTOR_MAP 的內容（TWSE／證交所公告的
+# 標準產業別代碼，公開穩定的對照表，不是需要另外驗證的私有資料）。
+# ---------------------------------------------------------------------------
+
+TWSE_SECTOR_MAP = {
+    "01": "水泥", "02": "食品", "03": "塑膠", "04": "紡織纖維", "05": "電機機械",
+    "06": "電器電纜", "08": "玻璃陶瓷", "09": "造紙", "10": "鋼鐵", "11": "橡膠",
+    "12": "汽車", "14": "建材營造", "15": "航運", "16": "觀光餐旅", "17": "金融保險",
+    "18": "貿易百貨", "19": "綜合", "20": "其他", "21": "化學", "22": "生技醫療",
+    "23": "油電燃氣", "24": "半導體", "25": "電腦及週邊設備", "26": "光電",
+    "27": "通信網路", "28": "電子零組件", "29": "電子通路", "30": "資訊服務",
+    "31": "其他電子", "32": "文化創意", "33": "農業科技", "34": "電子商務",
+    "35": "綠能環保", "36": "數位雲端", "37": "運動休閒", "38": "居家生活",
+}
+
+TW_INDUSTRY_MAP_CACHE = ROOT / "data" / "etf_dash" / "tw_industry_map.json"
+
+
+def fetch_tw_industry_map() -> dict[str, str]:
+    """單獨一次 requests.get()（跟 fetch_twse_taiex_universe() 抓的是同一個
+    端點 t187ap03_L，但這裡獨立呼叫，不依賴 TAIEX 這次 run 有沒有一起跑）——
+    回傳 {4 位數公司代號: 產業別中文名稱}。失敗時呼叫端（get_tw_industry_map()）
+    會退回磁碟快取，跟其他持股來源同一套 fallback 哲學。"""
+    r = requests.get(TWSE_COMPANY_LIST_URL, headers={"User-Agent": UA}, timeout=30)
+    r.raise_for_status()
+    companies = r.json()
+    if not isinstance(companies, list) or not companies:
+        raise RuntimeError(f"unexpected/empty response from {TWSE_COMPANY_LIST_URL}")
+    out = {}
+    for c in companies:
+        code = str(c.get("公司代號", "")).strip()
+        if len(code) != 4 or not code.isdigit():
+            continue
+        ind_code = str(c.get("產業別", "")).strip()
+        out[code] = TWSE_SECTOR_MAP.get(ind_code, "未分類")
+    if not out:
+        raise RuntimeError("parsed 0 rows from TWSE company list")
+    return out
+
+
+def get_tw_industry_map() -> dict[str, str]:
+    """FULL 模式週期性重抓＋磁碟快取，跟 EPS 快取同一個「抓不到就用上次成功
+    的」設計——這份資料（公司的 TWSE 產業別）本來就變動很慢，不需要每天都
+    打這個端點。"""
+    try:
+        m = fetch_tw_industry_map()
+        TW_INDUSTRY_MAP_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        TW_INDUSTRY_MAP_CACHE.write_text(json.dumps(m, ensure_ascii=False, indent=2), encoding="utf-8")
+        return m
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING fetch_tw_industry_map failed ({e}), falling back to cache", file=sys.stderr)
+        if TW_INDUSTRY_MAP_CACHE.exists():
+            try:
+                return json.loads(TW_INDUSTRY_MAP_CACHE.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                pass
+        return {}
+
+
+# SPDR 9 檔美股產業 ETF 各自對應的中文短標籤——用它們各自的官方持股清單
+# （data/etf_dash/holdings_cache/{ETF}.json，這 9 檔本身就是每週或更頻繁重抓
+# 一次）當「這檔股票屬於哪個 GICS 類股」的免費副產品：SSGA 持股表本身的
+# "Sector" 欄實測對 SPY／各產業 ETF 都是空值「-」（2026-09-26 實測，不是
+# parser 沒抓到），沒有其他免費、可機械讀取的個股 GICS 分類來源，這 9 檔
+# ETF 的持股清單本身就是「屬於這個類股的股票名單」，拿來反查最省成本
+# （見 build_us_sector_lookup()）——SPY／RSP／QQQ 的風格快照／報酬貢獻產業
+# 分解都靠這份反查表，覆蓋率受限於這 9 檔的持股總和（不含 XLRE／XLU，見
+# FUND_REGISTRY 上方 2026-09-25 註解），非重疊的成分股歸「未分類（不在追蹤
+# 的 9 檔美股產業 ETF 內）」。
+SECTOR_ETF_LABEL_ZH = {
+    "XLK": "科技", "XLF": "金融", "XLE": "能源", "XLV": "醫療保健", "XLI": "工業",
+    "XLY": "非必需消費", "XLP": "必需消費", "XLC": "通訊服務", "XLB": "原物料",
+}
+
+
+def build_us_sector_lookup() -> dict[str, str]:
+    """讀 9 檔 SPDR 產業 ETF 各自的 holdings_cache（見上方註解），回傳
+    {ticker: 中文類股標籤}。某檔快取不存在／壞掉就跳過那一檔（不讓整個查找
+    表失敗），這是「盡量湊」的查找表，不是權威資料源。"""
+    lookup: dict[str, str] = {}
+    for etf_key, label in SECTOR_ETF_LABEL_ZH.items():
+        path = HOLDINGS_CACHE_DIR / f"{etf_key}.json"
+        if not path.exists():
+            continue
+        try:
+            d = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for h in d.get("holdings") or []:
+            tk = h.get("ticker")
+            if tk:
+                lookup[tk] = label
+    return lookup
+
+
+def resolve_sector(ticker: str, raw_sector_field: str | None, us_sector_lookup: dict[str, str],
+                    tw_industry_map: dict[str, str]) -> str | None:
+    """單一入口把一檔成分股歸類到一個產業標籤，供報酬貢獻的產業彙總／風格
+    快照共用：
+      1. holdings 列自帶的 sector（目前只有 TOPIX／iShares JP CSV 有，見
+         parse_ishares_jp_holdings_csv()）——直接用，不重新分類。
+      2. 台股（ticker 以 .TW／.TWO 結尾）：用 4 位數代碼查 tw_industry_map。
+      3. 其餘：用 build_us_sector_lookup() 建的 9 檔 SPDR 產業 ETF 反查表。
+      查不到都回 None（呼叫端把 None 歸進「未分類」，不是排除）。"""
+    if raw_sector_field:
+        return raw_sector_field
+    if ticker and (ticker.endswith(".TW") or ticker.endswith(".TWO")):
+        code = ticker.split(".")[0]
+        return tw_industry_map.get(code)
+    return us_sector_lookup.get(ticker)
+
 # parse_twse_taiex_universe() 側寫的全市場統計（TAIEX 方法論段落用，見
 # build_methods_note_zh）。只有這次 run 真的重抓（非 cache fallback）才有值；
 # main() 對每檔基金依序（非併發）呼叫 build_fund，讀取的時序安全。
@@ -1189,6 +1378,11 @@ def parse_ishares_jp_holdings_csv(raw: bytes) -> tuple[str, list[dict], list[dic
         asset_class_i, weight_i = cols.index("Asset Class"), cols.index("Weight (%)")
     except ValueError as e:
         raise RuntimeError(f"iShares Japan holdings CSV missing expected columns; got {cols!r}") from e
+    # 2026-09-26 加：風格快照／報酬貢獻的產業分解要用——這份 CSV 本來就有
+    # "Sector" 欄（見本檔上方 2026-09-25 註解），只是先前沒有欄位需要它，
+    # 之前沒有解析出來。缺這欄不當錯誤（沿用既有的「找不到就是 None」慣例），
+    # 只是那批持股的產業分解會缺值。
+    sector_i = cols.index("Sector") if "Sector" in cols else None
 
     rows, non_equity = [], []
     need = max(ticker_i, name_i, asset_class_i, weight_i)
@@ -1208,8 +1402,9 @@ def parse_ishares_jp_holdings_csv(raw: bytes) -> tuple[str, list[dict], list[dic
             non_equity.append({"ticker": ticker_raw, "name": name, "weight_pct": weight_pct,
                                 "reason": f"非普通股（Asset Class「{asset_class}」），不計入 EPS"})
             continue
+        sector = r[sector_i].strip() if sector_i is not None and len(r) > sector_i and r[sector_i].strip() else None
         rows.append({"ticker": f"{ticker_raw}.T", "raw_ticker_field": ticker_raw, "name": name,
-                     "weight_pct": weight_pct})
+                     "weight_pct": weight_pct, "sector": sector})
 
     if not rows:
         raise RuntimeError(f"parsed 0 equity holdings from iShares Japan holdings CSV (as_of={as_of!r})")
@@ -1356,11 +1551,17 @@ def fetch_ticker_eps_and_price(ticker: str) -> dict:
 
     price = None
     price_currency = None
+    market_cap = None
     try:
         fi = yf_call_with_backoff(lambda: t.fast_info, label=f"{ticker}.fast_info")
         price = fi.get("lastPrice") if hasattr(fi, "get") else getattr(fi, "last_price", None)
         if price is not None:
             price = float(price)
+        # 2026-09-26 加：風格快照的市值分位數要用——fast_info 本身已經帶
+        # marketCap（不需要另一次 API 呼叫），這裡只是多存一個既有欄位。
+        mc = fi.get("marketCap") if hasattr(fi, "get") else getattr(fi, "market_cap", None)
+        if mc is not None:
+            market_cap = float(mc)
         # fast_info.currency 是這檔股票自己掛牌的計價幣別——多數持股是美股/ADR
         # 所以是 USD，但像 000660.KS 這類非美元掛牌股（SK Hynix 別名指過去的
         # 那一檔）是 KRW。價格幣別跟 eps_currency 未必相同來源但通常一致（同一
@@ -1376,6 +1577,7 @@ def fetch_ticker_eps_and_price(ticker: str) -> dict:
         "eps_fy_next_anchors_local": anchors,  # {7d,30d,60d,90d}: EPS N days ago (local currency)
         "price": price,
         "price_currency": price_currency or "USD",
+        "market_cap": market_cap,  # local currency，units 未統一（多數 USD），風格快照只用它排序取中位數
     })
     return result
 
@@ -1985,14 +2187,184 @@ def compute_weighted_forward_pe(constituents: list[dict], total_weight: float,
     return weighted_fwd_pe, coverage_pct, pe_excluded
 
 
+# ---------------------------------------------------------------------------
+# 報酬貢獻 (price-return contribution) — 2026-09-26 加。contribution_pct =
+# 目前權重 × 個股報酬%（見模組層 CONTRIB_PERIOD_DEFS）——用「目前權重」不是
+# 期間起點的權重（那份資料我們沒有，見 price_history.py／本任務指示的
+# 「use current weights, say so」），跨期間比較時要留意這點，methods_note_zh
+# 會交代。個股報酬用同一個 ticker 自己的計價幣別前後比（不做 FX 轉換），
+# 這樣才不會把「匯率變動」跟「股價變動」混在一起算成報酬（FX 對這個指標本來
+# 就不是重點，是本任務容許的簡化）。
+# ---------------------------------------------------------------------------
+
+CONTRIB_PERIOD_DEFS = [("1M", 30, "近一個月"), ("3M", 90, "近三個月")]
+
+# 有現貨產業分解資料的基金（見 resolve_sector()／build_us_sector_lookup()／
+# get_tw_industry_map()）——task 指定的六檔：SPY／RSP／QQQ 靠 9 檔 SPDR
+# 產業 ETF 持股反查，TAIEX／0050 靠 TWSE 產業別代碼，TOPIX 靠 iShares JP CSV
+# 自帶的 Sector 欄。
+SECTOR_CONTRIB_ETF_KEYS = {"SPY", "RSP", "QQQ", "TAIEX", "0050", "TOPIX"}
+
+
+def compute_price_contribution(etf_key: str, constituents: list[dict], total_weight: float,
+                                price_days: dict[str, dict[str, float]], today_date_str: str,
+                                us_sector_lookup: dict[str, str], tw_industry_map: dict[str, str]) -> dict:
+    """回傳 {period_key: {...}}——見模組上方註解。缺乏 30／90 天前收盤價的
+    成分股（price_history.jsonl 累積不足，或該檔股票當時不在追蹤名單裡）
+    直接跳過（不計入 n_covered／coverage），隨著 prices.jsonl 每天累積，
+    覆蓋率會自然上升——上線第一週覆蓋率可能是 0（見 price_history.py 模組
+    docstring 的 no-backfill 說明），這是設計上允許的，methods_note_zh 會
+    交代。"""
+    has_sector = etf_key in SECTOR_CONTRIB_ETF_KEYS
+    out = {}
+    for key, days, label in CONTRIB_PERIOD_DEFS:
+        target_date = (datetime.strptime(today_date_str, "%Y-%m-%d") - timedelta(days=days)).strftime("%Y-%m-%d")
+        rows = []
+        for c in constituents:
+            today_close = c.get("price_local")
+            ticker = c.get("ticker")
+            if today_close is None or not ticker:
+                continue
+            found = price_history.closest_close_on_or_before(price_days, ticker, target_date)
+            if not found or not found[1]:
+                continue
+            base_date, base_close = found
+            if base_close <= 0:
+                continue
+            return_pct = (today_close / base_close - 1) * 100
+            w = c.get("weight_pct") or 0
+            contribution_pct = w / 100 * return_pct
+            rows.append({
+                "ticker": ticker, "name": c.get("name"), "weight_pct": w,
+                "return_pct": round(return_pct, 4), "contribution_pct": round(contribution_pct, 4),
+                "base_date": base_date,
+                "sector": resolve_sector(ticker, c.get("sector"), us_sector_lookup, tw_industry_map),
+            })
+        covered_weight = sum(r["weight_pct"] for r in rows)
+        rows_sorted = sorted(rows, key=lambda r: r["contribution_pct"], reverse=True)
+
+        sector_rows = None
+        if has_sector:
+            by_sector: dict[str, float] = {}
+            sector_weight: dict[str, float] = {}
+            for r in rows:
+                s = r["sector"] or "未分類"
+                by_sector[s] = by_sector.get(s, 0.0) + r["contribution_pct"]
+                sector_weight[s] = sector_weight.get(s, 0.0) + r["weight_pct"]
+            sector_rows = sorted(
+                [{"sector": s, "contribution_pct": round(v, 4), "weight_pct": round(sector_weight[s], 4)}
+                 for s, v in by_sector.items()],
+                key=lambda r: r["contribution_pct"], reverse=True,
+            )
+
+        out[key] = {
+            "key": key, "label": label, "target_date": target_date,
+            "n_covered": len(rows), "n_total": len(constituents),
+            "coverage_pct": round(covered_weight / total_weight * 100, 2) if total_weight else None,
+            "top10": rows_sorted[:10],
+            "bottom10": list(reversed(rows_sorted[-10:])) if rows_sorted else [],
+            "sector_contribution": sector_rows,
+        }
+    return out
+
+
+# ---------------------------------------------------------------------------
+# 風格快照 (style snapshot) — 2026-09-26 加。Snapshot only（不補歷史，見任務
+# 指示）——只在 FULL 模式算一次（見 build_fund_full() 呼叫處），PRICE 模式
+# 沿用 eps_cache 裡存的上一份（跟 periods／contributions 同一個「凍結到下次
+# FULL」慣例），不是每天重算（市值分位數／本益比四分位這類統計本來就不需要
+# 每天更新，且市值分位數需要的 market_cap_local 只有 FULL 模式的
+# fetch_ticker_eps_and_price() 才會抓，見該函式 2026-09-26 新增的欄位）。
+# ---------------------------------------------------------------------------
+
+
+def _weighted_quantile(pairs: list[tuple[float, float]], q: float) -> float | None:
+    """加權分位數（linear interpolation between weighted-CDF steps）。
+    pairs = [(value, weight), ...]，q in [0,1]。"""
+    items = [(v, w) for v, w in pairs if w and w > 0 and v is not None]
+    if not items:
+        return None
+    items.sort(key=lambda x: x[0])
+    total = sum(w for _, w in items)
+    if total <= 0:
+        return None
+    cum = 0.0
+    target = q * total
+    prev_v, prev_cum = items[0][0], 0.0
+    for v, w in items:
+        cum += w
+        if cum >= target:
+            if cum == prev_cum:
+                return v
+            # 線性內插：在這一步跨過 target 的地方，按累積權重比例內插數值。
+            frac = (target - prev_cum) / (cum - prev_cum) if cum > prev_cum else 0.0
+            return prev_v + frac * (v - prev_v)
+        prev_v, prev_cum = v, cum
+    return items[-1][0]
+
+
+def compute_style_snapshot(etf_key: str, constituents: list[dict], total_weight: float,
+                            us_sector_lookup: dict[str, str], tw_industry_map: dict[str, str]) -> dict:
+    """回傳 {sector_weights, size, pe_dispersion}——見模組上方註解與各欄位。"""
+    has_sector = etf_key in SECTOR_CONTRIB_ETF_KEYS
+    sector_weights = None
+    if has_sector:
+        by_sector: dict[str, float] = {}
+        for c in constituents:
+            s = resolve_sector(c.get("ticker"), c.get("sector"), us_sector_lookup, tw_industry_map) or "未分類"
+            by_sector[s] = by_sector.get(s, 0.0) + (c.get("weight_pct") or 0)
+        sector_weights = sorted(
+            [{"sector": s, "weight_pct": round(w, 4)} for s, w in by_sector.items()],
+            key=lambda r: r["weight_pct"], reverse=True,
+        )
+
+    mc_pairs = [(c.get("market_cap_local"), c.get("weight_pct") or 0) for c in constituents
+                if c.get("market_cap_local")]
+    size = {
+        "weighted_median_market_cap": _weighted_quantile(mc_pairs, 0.5),
+        "weighted_p25_market_cap": _weighted_quantile(mc_pairs, 0.25),
+        "weighted_p75_market_cap": _weighted_quantile(mc_pairs, 0.75),
+        "n_covered": len(mc_pairs), "n_total": len(constituents),
+        "note_zh": "市值為個股自身掛牌幣別（多數為 USD；未做 FX 統一換算——分位數本身是"
+                    "「相對哪個量級」的排序統計，不是加總金額，混幣別對排序位置影響有限，"
+                    "但跨基準幣別基金（如台股／日股基金）不宜直接跟美股基金的數字並列比較）。",
+    }
+
+    pe_pairs = [(c["price_usd"] / c["eps_fy_next_usd"], c.get("weight_pct") or 0) for c in constituents
+                if c.get("eps_fy_next_usd") and c.get("price_usd")
+                and PE_EXCLUDE_MIN_X <= c["price_usd"] / c["eps_fy_next_usd"] <= PE_EXCLUDE_MAX_X]
+    pe_dispersion = {
+        "weighted_p25": round(_weighted_quantile(pe_pairs, 0.25), 2) if pe_pairs else None,
+        "weighted_median": round(_weighted_quantile(pe_pairs, 0.5), 2) if pe_pairs else None,
+        "weighted_p75": round(_weighted_quantile(pe_pairs, 0.75), 2) if pe_pairs else None,
+        "n_covered": len(pe_pairs), "n_total": len(constituents),
+        "note_zh": f"個股遠期本益比先套用跟加權遠期本益比同一道 [{PE_EXCLUDE_MIN_X:g}x, "
+                    f"{PE_EXCLUDE_MAX_X:g}x] 合理區間篩選（見 compute_weighted_forward_pe()），"
+                    "四分位數以權重加權（大權重個股對分位數的影響大於小權重個股）。",
+    }
+    return {"sector_weights": sector_weights, "size": size, "pe_dispersion": pe_dispersion}
+
+
 def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
                      dd_days: dict, today: datetime, stock_dash_universe: set[str],
-                     mode_reason: str) -> dict:
+                     mode_reason: str, price_days: dict | None = None, us_sector_lookup: dict | None = None,
+                     tw_industry_map: dict | None = None, price_today_closes: dict | None = None) -> dict:
     """FULL 模式：持股下載＋每檔 eps_trend，這是 tiered update 之前唯一的路徑
     （見模組開頭「Tiered update」段落）。跑完會把這次算出來的東西存進
     data/etf_dash/eps_cache/{ETF}.json（見 save_eps_cache()），PRICE 模式
-    （build_fund_price()）整週沿用，不重抓。"""
+    （build_fund_price()）整週沿用，不重抓。
+
+    2026-09-26 加的四個可選參數（皆有預設值，供既有呼叫端／測試不受影響）：
+    price_days／us_sector_lookup／tw_industry_map 是報酬貢獻與風格快照要用
+    的唯讀查找表（見 compute_price_contribution()／compute_style_snapshot()／
+    resolve_sector()，main() 在跑迴圈前建好一次）；price_today_closes 是
+    「這次 run 蒐集到的今日收盤價」累加用的輸出字典（呼叫端傳同一個 dict
+    給所有基金，main() 最後統一寫進 price_history.jsonl，見該函式 docstring）
+    ——都是 None 也能跑（報酬貢獻／風格快照的產業分解退化成沒有查找表可用）。"""
     today_str = today.strftime("%Y-%m-%d")
+    price_days = price_days if price_days is not None else {}
+    us_sector_lookup = us_sector_lookup if us_sector_lookup is not None else {}
+    tw_industry_map = tw_industry_map if tw_industry_map is not None else {}
     as_of_holdings, holdings, non_equity, source_url, used_stale, holdings_approximation_zh = \
         get_holdings_with_fallback(etf_key, cfg)
     weight_methodology_note_zh = build_weight_methodology_note_zh(cfg, holdings)
@@ -2046,6 +2418,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         rec = {
             "ticker": h["ticker"], "name": h["name"], "weight_pct": h["weight_pct"],
             "has_stock_dash": h["ticker"] in stock_dash_universe,
+            "sector": h.get("sector"),  # 目前只有 TOPIX（iShares JP CSV）持股列自帶，見 resolve_sector()
         }
         if eps_scope_tickers is not None and h["ticker"] not in eps_scope_tickers:
             # 權重排在 EPS 涵蓋門檻之外，本來就沒抓（不在 unique_tickers 裡，
@@ -2113,6 +2486,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             "price_currency": price_currency,
             "price_usd": round(price_usd, 4) if price_usd is not None else None,
             "price_fx_normalized": price_fx_normalized,
+            "market_cap_local": info.get("market_cap"),  # 風格快照市值分位數用，見 fetch_ticker_eps_and_price()
         })
         constituents.append(rec)
 
@@ -2238,6 +2612,18 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             long_last_90d_pct = round(long_chart_series[-1]["eps_index"] / base_pt["eps_index"] * 100 - 100, 4)
     yfinance_90d_pct = next((p["eps_chg_pct"] for p in periods if p["key"] == "90d"), None)
 
+    # 2026-09-26 加的三項——見各自函式上方模組註解。breadth／price_contribution
+    # 每次 build（FULL／PRICE 都一樣）都重算，style_snapshot 只在 FULL 算一次
+    # （凍結進 eps_cache，PRICE 模式沿用，見 build_fund_price()）。
+    breadth = compute_eps_breadth(constituents)
+    if price_today_closes is not None:
+        for c in constituents:
+            if c.get("price_local") is not None:
+                price_today_closes[c["ticker"]] = c["price_local"]
+    price_contribution = compute_price_contribution(etf_key, constituents, total_weight, price_days, today_str,
+                                                      us_sector_lookup, tw_industry_map)
+    style_snapshot = compute_style_snapshot(etf_key, constituents, total_weight, us_sector_lookup, tw_industry_map)
+
     # 2026-09-24 tiered update：這次算出來的東西存進 EPS 快取，PRICE 模式整週
     # 沿用，不重抓 eps_trend。快取只留「重建這份輸出所需的最小集合」——每檔
     # 的 eps_trend anchors 不用存（已經用掉、算進凍結的 periods/contributions
@@ -2269,6 +2655,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         "tickers": cached_tickers,
         "periods": periods,
         "contributions": contributions_by_period,
+        "style_snapshot": style_snapshot,
     }
     save_eps_cache(etf_key, eps_cache_payload)
 
@@ -2309,6 +2696,9 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         "non_equity": non_equity,
         "non_equity_weight_pct": round(non_equity_weight, 2),
         "contributions": contributions_by_period,
+        "breadth": breadth,
+        "price_contribution": price_contribution,
+        "style_snapshot": style_snapshot,
         "chart": {
             "price_series": chart_price_series,
             "eps_index_bootstrap": eps_index_bootstrap,
@@ -2347,7 +2737,9 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
 
 
 def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, rc_cache: dict,
-                      dd_days: dict, today: datetime, mode_reason: str) -> dict:
+                      dd_days: dict, today: datetime, mode_reason: str, price_days: dict | None = None,
+                      us_sector_lookup: dict | None = None, tw_industry_map: dict | None = None,
+                      price_today_closes: dict | None = None) -> dict:
     """PRICE 模式：不下載持股、不呼叫 eps_trend（fetch_prices_batch() 完全是
     另一條路徑，見該函式），只批次抓 ETF 加所有成分股「今天」的收盤價，跟
     eps_cache（上次 FULL 存的，見 build_fund_full()）重新配對算「今日加權
@@ -2355,8 +2747,16 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
     （periods）／貢獻分解（contributions）整份沿用 eps_cache 裡凍結的版本，
     不重算——這樣「近一個月／近二個月／近三個月」的 EPS 修正％跟股價漲跌才是
     同一個窗口算出來的，不會因為每天都用「今天」當窗口終點而互相對不齊（見
-    模組開頭「Tiered update」的說明）。"""
+    模組開頭「Tiered update」的說明）。
+
+    2026-09-26 加的四個可選參數：跟 build_fund_full() 同一組（見該函式
+    docstring）——breadth／price_contribution 這裡仍每天重算（用今天批次抓
+    到的股價），style_snapshot 則直接沿用 eps_cache 裡凍結的那份（不重算，
+    見 build_fund_full() 的 style_snapshot 只在 FULL 算一次的說明）。"""
     today_str = today.strftime("%Y-%m-%d")
+    price_days = price_days if price_days is not None else {}
+    us_sector_lookup = us_sector_lookup if us_sector_lookup is not None else {}
+    tw_industry_map = tw_industry_map if tw_industry_map is not None else {}
     eps_as_of = eps_cache["eps_as_of"]
     holdings = eps_cache["holdings"]
     non_equity = eps_cache.get("non_equity", [])
@@ -2394,6 +2794,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         rec = {
             "ticker": h["ticker"], "name": h["name"], "weight_pct": h["weight_pct"],
             "has_stock_dash": bool(info.get("has_stock_dash")) if info else False,
+            "sector": h.get("sector"),
         }
         if not info or info.get("status") != "ok":
             rec["status"] = (info or {}).get("status") or "no_eps_data"
@@ -2480,6 +2881,15 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
     periods = eps_cache["periods"]  # 凍結，整週不變——見本函式 docstring
     yfinance_90d_pct = next((p["eps_chg_pct"] for p in periods if p["key"] == "90d"), None)
 
+    breadth = compute_eps_breadth(constituents)
+    if price_today_closes is not None:
+        for c in constituents:
+            if c.get("price_local") is not None:
+                price_today_closes[c["ticker"]] = c["price_local"]
+    price_contribution = compute_price_contribution(etf_key, constituents, total_weight, price_days, today_str,
+                                                      us_sector_lookup, tw_industry_map)
+    style_snapshot = eps_cache.get("style_snapshot")  # 凍結，沿用上次 FULL 算的——見本函式 docstring
+
     return {
         "schema": "etf-dash-v1",
         "etf_key": etf_key,
@@ -2517,6 +2927,9 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         "non_equity": non_equity,
         "non_equity_weight_pct": round(non_equity_weight, 2),
         "contributions": eps_cache["contributions"],  # 凍結，整週不變
+        "breadth": breadth,
+        "price_contribution": price_contribution,
+        "style_snapshot": style_snapshot,
         "chart": {
             "price_series": chart_price_series,
             "eps_index_bootstrap": eps_index_bootstrap,
@@ -2553,8 +2966,47 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
     }
 
 
+# ---------------------------------------------------------------------------
+# 資金流 (flows) — 2026-09-26 加。跟 FULL／PRICE 模式無關（每天都跑，見
+# flows.py 模組 docstring），所以放在 build_fund() 這個分派層而不是
+# build_fund_full()／build_fund_price() 內部——不管今天是哪種模式，都要記一筆
+# 今天的 shares_outstanding／NAV 快照。TAIEX 是指數不是基金，沒有受益權
+# 單位數／NAV 概念，整段跳過（不寫入 data/etf_dash/flows/TAIEX.jsonl）。
+# ---------------------------------------------------------------------------
+
+TAIEX_NO_FLOWS_NOTE_ZH = "TAIEX 是指數，不是可申購／贖回的基金，沒有受益權單位數或 NAV 概念——指數無資金流，不追蹤。"
+
+
+def attach_flows(etf_key: str, cfg: dict, result: dict, today_str: str) -> None:
+    """就地把 "flows" 鍵寫進 result（呼叫端傳進來的、build_fund_full／
+    build_fund_price 剛回傳的那個 dict）。失敗（yfinance get_info() 掛掉等）
+    不讓整個 build_fund() 失敗——資金流是這次任務新加的資料，缺一天不該讓
+    既有的 EPS／股價功能連坐失敗，見 flows.fetch_shares_snapshot() 的
+    source=None 設計。"""
+    if etf_key == "TAIEX":
+        result["flows"] = {"skipped": True, "reason_zh": TAIEX_NO_FLOWS_NOTE_ZH}
+        return
+    try:
+        snap = flows.fetch_shares_snapshot(yf, cfg["yf_ticker"])
+        if snap.get("source"):
+            flows.append_today(etf_key, {"date": today_str, **snap})
+        else:
+            print(f"[etf_dash] WARNING {etf_key}: flows snapshot has no usable source today "
+                  f"({snap.get('reason')})", file=sys.stderr)
+        rows = flows.load_rows(etf_key)
+        series = flows.compute_flow_series(rows)
+        series["skipped"] = False
+        series["today_snapshot"] = snap
+        result["flows"] = series
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING {etf_key}: attach_flows failed ({e})", file=sys.stderr)
+        result["flows"] = {"skipped": True, "reason_zh": f"這次 run 資金流快照失敗：{e}"}
+
+
 def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_cache: dict,
-               dd_days: dict, today: datetime, stock_dash_universe: set[str], cli_mode: str) -> dict:
+               dd_days: dict, today: datetime, stock_dash_universe: set[str], cli_mode: str,
+               price_days: dict | None = None, us_sector_lookup: dict | None = None,
+               tw_industry_map: dict | None = None, price_today_closes: dict | None = None) -> dict:
     """FULL／PRICE 分派——見模組開頭「Tiered update」說明。decide_mode() 在這裡
     評估一次（不是在 main() 裡對整個 run 評估一次）：每檔基金各自的 EPS 快取
     新鮮度不同（例如 QQQ／SPY 剛上線那週還沒有快取，即使不是週六也會被判定
@@ -2565,15 +3017,21 @@ def build_fund(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict, rc_c
     print(f"[etf_dash] {etf_key}: mode={mode} ({mode_reason})", file=sys.stderr)
     if mode == "price":
         try:
-            return build_fund_price(etf_key, cfg, eps_cache, fx_cache, rc_cache, dd_days, today, mode_reason)
+            result = build_fund_price(etf_key, cfg, eps_cache, fx_cache, rc_cache, dd_days, today, mode_reason,
+                                       price_days, us_sector_lookup, tw_industry_map, price_today_closes)
+            attach_flows(etf_key, cfg, result, today.strftime("%Y-%m-%d"))
+            return result
         except Exception as e:  # noqa: BLE001
             # PRICE 模式本身失敗（批次下載掛了之類）不代表 FULL 模式也會失敗
             # ——退回 FULL 跑一次，好過整檔直接沒資料（跟 holdings fetch 的
             # cache-fallback 哲學一致：能有資料就不要沒資料）。
             print(f"[etf_dash] WARNING {etf_key}: PRICE mode failed ({e}), falling back to FULL", file=sys.stderr)
             mode_reason = f"PRICE 模式失敗退回 FULL（{e}）"
-    return build_fund_full(etf_key, cfg, ticker_cache, fx_cache, rc_cache, dd_days, today,
-                            stock_dash_universe, mode_reason)
+    result = build_fund_full(etf_key, cfg, ticker_cache, fx_cache, rc_cache, dd_days, today,
+                              stock_dash_universe, mode_reason, price_days, us_sector_lookup,
+                              tw_industry_map, price_today_closes)
+    attach_flows(etf_key, cfg, result, today.strftime("%Y-%m-%d"))
+    return result
 
 
 def build_eps_index_series(snap_dir: Path, today_constituents: list[dict]) -> list[dict]:
@@ -2873,6 +3331,22 @@ def render_preview_html(data: dict) -> str:
 SECTOR_ETF_KEYS = {"XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLC", "XLB"}
 
 
+def _flow_amount_since(flows_data: dict | None, days: int, today_str: str) -> float | None:
+    """把 flows.compute_flow_series() 存的逐日 flow_amount 加總「最近 N 天」
+    （以最新一筆快照日期為基準，不是以「今天」為基準——資金流快照可能因為
+    某天 attach_flows() 失敗而缺一天，見該函式）。沒有任何 daily 紀錄（剛
+    上線、只有一天快照，還沒有 Δ 可算）回傳 None。"""
+    if not flows_data or flows_data.get("skipped"):
+        return None
+    daily = flows_data.get("daily") or []
+    if not daily:
+        return None
+    latest_date = flows_data.get("latest_date") or today_str
+    cutoff = (datetime.strptime(latest_date, "%Y-%m-%d") - timedelta(days=days)).strftime("%Y-%m-%d")
+    amt = sum(d["flow_amount"] for d in daily if d["date"] > cutoff)
+    return round(amt, 2)
+
+
 def build_overview_json() -> dict:
     """掃 docs/etf-dash/data/{ETF}.json（FUND_REGISTRY 目前已知的全部 key），
     不是只看這次 run 有沒有重建——單次 run 常常只更新一部分基金（例如只跑
@@ -2895,6 +3369,8 @@ def build_overview_json() -> dict:
         periods_by_key = {p.get("key"): p for p in (d.get("periods") or [])}
         p30, p90 = periods_by_key.get("30d") or {}, periods_by_key.get("90d") or {}
         fpe = d.get("weighted_forward_pe") or {}
+        breadth_90d = (d.get("breadth") or {}).get("90d") or {}
+        flows_data = d.get("flows") or {}
         funds.append({
             "etf_key": etf_key,
             "label_zh": d.get("label_zh"),
@@ -2911,8 +3387,42 @@ def build_overview_json() -> dict:
             "mode": d.get("mode"),
             "holdings_stale": bool(d.get("holdings_stale")),
             "holdings_approximation_zh": d.get("holdings_approximation_zh"),
+            # 2026-09-26 加：總覽表的修正廣度欄（stacked mini-bar）＋資金流欄。
+            "breadth_90d": {
+                "up_weight_pct": breadth_90d.get("up_weight_pct"),
+                "flat_weight_pct": breadth_90d.get("flat_weight_pct"),
+                "down_weight_pct": breadth_90d.get("down_weight_pct"),
+                "n_covered": breadth_90d.get("n_covered"),
+            },
+            "flow_1m_net": _flow_amount_since(flows_data, 30, d.get("as_of") or ""),
+            "flow_nav_currency": flows_data.get("nav_currency"),
+            "flows_skipped": bool(flows_data.get("skipped")),
         })
     funds.sort(key=lambda f: f["etf_key"])
+
+    # 產業資金流——9 檔 SPDR 產業 ETF 的最新一週／近一個月淨流量並排（見任務
+    # 指示的 overview「產業資金流」圖），資料完全來自各基金已經寫好的 flows
+    # 區塊，不重算。剛上線（daily 紀錄不足一週）某些基金這裡會是 None，頁面
+    # 端要能處理（見 docs/etf-dash/index.html renderSectorFlows()）。
+    sector_flows = []
+    for etf_key in sorted(SECTOR_ETF_KEYS):
+        path = OUT_DIR / f"{etf_key}.json"
+        if not path.exists():
+            continue
+        try:
+            d = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        flows_data = d.get("flows") or {}
+        weekly = flows_data.get("weekly") or []
+        sector_flows.append({
+            "etf_key": etf_key,
+            "label_zh": SECTOR_ETF_LABEL_ZH.get(etf_key, etf_key),
+            "latest_week_flow": weekly[-1]["flow_amount"] if weekly else None,
+            "flow_1m_net": _flow_amount_since(flows_data, 30, d.get("as_of") or ""),
+            "nav_currency": flows_data.get("nav_currency"),
+            "skipped": bool(flows_data.get("skipped")),
+        })
 
     sector_funds = [f for f in funds if f["etf_key"] in SECTOR_ETF_KEYS and f["eps_chg_pct_90d"] is not None]
     summary_sentence_zh = None
@@ -2935,6 +3445,7 @@ def build_overview_json() -> dict:
         "as_of": taipei_now().strftime("%Y-%m-%d"),
         "funds": funds,
         "summary_sentence_zh": summary_sentence_zh,
+        "sector_flows": sector_flows,
     }
 
 
@@ -2987,6 +3498,18 @@ def main() -> int:
           f"({min(dd_days) if dd_days else '—'} .. {max(dd_days) if dd_days else '—'}), "
           f"{dd_eps_history.JSONL_PATH.stat().st_size if dd_eps_history.JSONL_PATH.exists() else 0} bytes")
 
+    # 2026-09-26 加的三個唯讀查找表／一個輸出累加器——見各自模組
+    # docstring／resolve_sector()／build_fund_full() 的參數說明。都在迴圈開始
+    # 前建好一次（跟 dd_days／stock_dash_universe 同一個既有慣例），不是每檔
+    # 基金各自重算一次。
+    price_days = price_history.load_days()
+    us_sector_lookup = build_us_sector_lookup()
+    tw_industry_map = get_tw_industry_map()
+    price_today_closes: dict[str, float] = {}
+    print(f"[etf_dash] price_history: {len(price_days)} day(s) on file; "
+          f"us_sector_lookup covers {len(us_sector_lookup)} ticker(s); "
+          f"tw_industry_map covers {len(tw_industry_map)} code(s)")
+
     n_ok = 0
     n_fail = 0
     for etf_key in args.etf:
@@ -2994,7 +3517,8 @@ def main() -> int:
         print(f"[etf_dash] building {etf_key} ({cfg['label_en']}) ...")
         try:
             data = build_fund(etf_key, cfg, ticker_cache, fx_cache, rc_cache, dd_days, today,
-                               stock_dash_universe, args.mode)
+                               stock_dash_universe, args.mode, price_days, us_sector_lookup,
+                               tw_industry_map, price_today_closes)
         except Exception as e:  # noqa: BLE001
             print(f"[etf_dash] ERROR {etf_key} failed: {e}", file=sys.stderr)
             n_fail += 1
@@ -3011,6 +3535,14 @@ def main() -> int:
 
     save_fx_daily_cache(fx_cache)
     save_reporting_currency_cache(rc_cache)
+
+    # 報酬貢獻的價格歷史——見 price_history.py 模組 docstring：這次 run 蒐集到
+    # 的每檔 ticker「今天」收盤價（跨所有這次跑的基金聯集），併入既有序列，
+    # 裁到最近 MAX_ROWS 天。今天完全沒有任何基金成功建置（price_today_closes
+    # 是空的）就不寫這一行——不要用空字典覆蓋掉已有的資料。
+    if price_today_closes:
+        price_history.append_today(today.strftime("%Y-%m-%d"), price_today_closes)
+        print(f"[etf_dash] price_history: recorded {len(price_today_closes)} ticker close(s) for today")
 
     # 總覽頁（/etf-dash/?view=overview）的小檔——見 build_overview_json()
     # docstring：一律重掃 OUT_DIR 目前已有的全部基金 JSON，不是只看這次 run
