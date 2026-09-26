@@ -1686,6 +1686,13 @@ PEAD_EVENTS_CSV = Path.home() / "v7-backtest" / "results" / "pead" / "pead_event
 INSIDER_CLUSTER_WINDOW_DAYS = 90
 DD_DIR = ROOT / "docs" / "dd"  # read-only source（不含 docs/dd/brief/，檔名前綴不同天生排除）
 
+# 催化劑追蹤（2026-09-26 新增，§3 附掛）：全部唯讀，scripts/build_catalyst_calendar.py
+# 是這四份檔案的 owner，本檔不寫入、不重算。
+CATALYST_CALENDAR_PATH = ROOT / "docs" / "catalyst" / "calendar.json"
+CATALYST_VARIANCE_PATH = ROOT / "docs" / "catalyst" / "variance.json"
+CATALYST_VARIANCE_HISTORY_PATH = ROOT / "docs" / "catalyst" / "variance_history.json"
+CATALYST_ARCHIVE_PATH = ROOT / "docs" / "catalyst" / "archive.json"
+
 # FunnelRank 常數 —— 唯讀抄自 scripts/build_dd_screener.py（不 import、不重算），
 # 只用來把 latest.json 已存的分數拆解顯示。若上游調整權重／門檻，這裡要跟著更新。
 FUNNEL_WEIGHTS = {"quality": 0.40, "moat": 0.30, "revision": 0.30}
@@ -1699,6 +1706,24 @@ FUNNEL_DE_REFERENCE_DISPLAY = {"key": "de", "label": "D/E≤0.7x（僅參考，�
 FUNNEL_MOAT_TREND_MULT_DISPLAY = {"↑": 1.10, "→": 1.00, "↓": 0.80}
 FUNNEL_REVISION_THRESHOLD = 0.5
 FUNNEL_REVISION_FY_WEIGHTS_DISPLAY = {"fy1": 0.2, "fy2": 0.3, "fy3": 0.5}
+
+
+# ── 催化劑四檔 loader（cached, read-only, 每個 process 各只讀一次）───────────
+_catalyst_json_cache = {}
+
+
+def _load_catalyst_json(path):
+    key = str(path)
+    if key in _catalyst_json_cache:
+        return _catalyst_json_cache[key]
+    if not path.exists():
+        _catalyst_json_cache[key] = None
+        return None
+    try:
+        _catalyst_json_cache[key] = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        _catalyst_json_cache[key] = None
+    return _catalyst_json_cache[key]
 
 
 # ── dd-screener loader (cached; ~2.85MB, read once per process) ─────────────
@@ -2153,6 +2178,20 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
             "rev_cagr_3y_pct": r2(fund.get("est_rev_cagr_3y_pct"), 2),
         },
         "analyst_revisions_30d": analyst_rev,
+        # 2026-09-26 新增：2 年期 EPS 修正，放在既有 1 年期修正（上面 table 的「近3個月／
+        # 自上次財報以來」）旁邊比對。row 的頂層欄位（不是 fund 底下），直接抄
+        # dd-screener 已算好的值，不重算；eps_source／eps_basis 是這組數字的來源與口徑
+        # 小字說明（"xlsx"＝券商 Excel、"yfinance"＝yfinance 預設）。
+        "eps2y": {
+            "eps2y_live": row.get("eps2y_live"),
+            "eps2y_live_method": row.get("eps2y_live_method"),
+            "eps2y_revision_pp": row.get("eps2y_revision_pp"),
+            "eps2y_revision_dir": row.get("eps2y_revision_dir"),
+            "eps2y_prev_month": row.get("eps2y_prev_month"),
+            "eps2y_prev_month_date": row.get("eps2y_prev_month_date"),
+            "eps_source": row.get("eps_source"),
+            "eps_basis": row.get("eps_basis"),
+        },
     }
 
 
@@ -2230,6 +2269,15 @@ def build_card_price_vs_eps(ticker, row, df_full, current_price, card1):
             "pe_ntm_5y_avg_x": fund.get("pe_ntm_5y_avg_x"),
             "pct_5y": row.get("pct_5y"),
             "live_peg": row.get("live_peg"),
+        },
+        # 2026-09-26 新增：現值對自己 5 年歷史區間的位置——本益比、股價淨值比各一組，
+        # 加上分析師目標價的離散度（target_range_x＝目標高／目標低）。flag 全部抄
+        # dd-screener 算好的布林值，不重算門檻；true＝比歷史均值貴、或目標價分歧大，
+        # 純粹描述現況，不是買賣建議。
+        "vs_own_history": {
+            "pe_vs_5y_x": row.get("pe_vs_5y_x"), "pe_vs_5y_flag": row.get("pe_vs_5y_flag"),
+            "pb_vs_5y_x": row.get("pb_vs_5y_x"), "pb_vs_5y_flag": row.get("pb_vs_5y_flag"),
+            "target_range_x": row.get("target_range_x"), "target_range_flag": row.get("target_range_flag"),
         },
         "eps_price_overlay": {
             "eps_points": eps_ts.get("points") if eps_ts.get("status") == "ok" else [],
@@ -2437,6 +2485,92 @@ def build_card_earnings_surprise(ticker, row, ticker_obj, df_full, spy_full, cur
         "price_vs_spy_since_earnings_pct": price_vs_spy_since_pct,
         "next_earnings_date": next_earnings_date,
         "days_to_next_earnings": days_to_next,
+    }
+
+
+# ── ③b 催化劑追蹤（2026-09-26 新增，掛在§3下方，跟上面的「財報驚喜」是兩件事）─
+# 「財報驚喜」是已公布財報的實際 EPS 對分析師預估（yfinance），這裡是：①未來事件
+# 日曆（docs/catalyst/calendar.json，含財報、產業事件、法規進度等）②DD 自己當初
+# 假設的 EPS 路徑（base_eps）跟目前分析師共識（consensus_eps）的落差追蹤，追的是
+# 「市場預期有沒有偏離 DD 原始假設」，不是「這季有沒有超乎預期」③過去事件回填
+# （docs/catalyst/archive.json，多數 outcome 尚未回填，如實顯示「尚無回填結果」，
+# 不要假裝已經確認）。三份資料全部唯讀，本檔不寫入、不重算，每次 build 都直接
+# 重讀重算——不是「判斷」，是機械資料展示，因此不進 JUDGMENT_SECTIONS 版本凍結。
+def build_card_catalyst_track(ticker, as_of):
+    cal = _load_catalyst_json(CATALYST_CALENDAR_PATH) or {}
+    var = _load_catalyst_json(CATALYST_VARIANCE_PATH) or {}
+    var_hist = _load_catalyst_json(CATALYST_VARIANCE_HISTORY_PATH) or {}
+    arc = _load_catalyst_json(CATALYST_ARCHIVE_PATH) or {}
+
+    upcoming = []
+    for e in (cal.get("events") or []):
+        if e.get("ticker") != ticker:
+            continue
+        days_away = None
+        try:
+            days_away = (datetime.strptime(e["date"], "%Y-%m-%d").date() - as_of).days
+        except (ValueError, KeyError, TypeError):
+            pass
+        upcoming.append({
+            "date": e.get("date"), "days_away": days_away, "type": e.get("type"),
+            "event": e.get("event"), "impact": e.get("impact"), "watch": e.get("watch"),
+        })
+    upcoming.sort(key=lambda x: x.get("date") or "9999-99-99")
+
+    past = []
+    for e in (arc.get("events") or []):
+        if e.get("ticker") != ticker:
+            continue
+        past.append({
+            "date": e.get("date"), "type": e.get("type"), "event": e.get("event"),
+            "outcome": e.get("outcome"), "outcome_note": e.get("outcome_note"),
+        })
+    past.sort(key=lambda x: x.get("date") or "", reverse=True)
+
+    drift_now = []
+    for r in (var.get("rows") or []):
+        if r.get("ticker") != ticker:
+            continue
+        drift_now.append({
+            "fy_label": r.get("fy_label"), "fy_end": r.get("fy_end"),
+            "base_eps": r.get("base_eps"), "consensus_eps": r.get("consensus_eps"),
+            "drift_pct": r.get("drift_pct"), "flag": r.get("flag"),
+            "basis_mismatch": r.get("basis_mismatch"), "dd_file": r.get("dd_file"),
+        })
+    drift_now.sort(key=lambda x: x.get("fy_label") or "")
+
+    drift_trend = []
+    for snap in (var_hist.get("snapshots") or []):
+        rows_by_fy = (snap.get("rows") or {}).get(ticker)
+        if not rows_by_fy:
+            continue
+        drift_trend.append({
+            "as_of": snap.get("as_of"),
+            "by_fy": {fy: v.get("drift_pct") for fy, v in rows_by_fy.items()},
+        })
+    drift_trend.sort(key=lambda x: x.get("as_of") or "")
+
+    if not upcoming and not past and not drift_now:
+        return {
+            "status": "no_data",
+            "reason": f"這檔不在催化劑追蹤名單（目前 {cal.get('universe_count') or '—'} 檔）",
+            "upcoming": [], "past": [], "drift_now": [], "drift_trend": [],
+        }
+
+    return {
+        "status": "ok",
+        "upcoming": upcoming,
+        "past": past,
+        "drift_now": drift_now,
+        "drift_trend": drift_trend,
+        "method": (
+            "上方事件表：docs/catalyst/calendar.json 逐檔未來事件，天數＝事件日期減今日；"
+            "「DD 假設 vs 分析師共識」：DD 報告寫作當時假設的 EPS 路徑（base_eps）對比"
+            "目前分析師共識（consensus_eps）的落差百分比，追蹤的是市場預期有沒有偏離 DD 原始"
+            "假設，跟上面「財報驚喜」卡比較的是完全不同的兩件事（那張卡比的是已公布實際 EPS "
+            "vs 分析師預估）；下方過去事件取自 docs/catalyst/archive.json，outcome 尚未人工"
+            "回填的一律顯示「尚無回填結果」，不假設已驗證。"
+        ),
     }
 
 
@@ -2689,6 +2823,69 @@ def build_card_dd_screener_fields(row, as_of, current_price):
     }
 
 
+# 2026-09-26 新增：型態與體質機械指標——全部是 dd-screener 已算好的值，這裡只是
+# 原樣帶出＋配中文一句話解釋，不重算、不加判斷。純機械資料，不進 JUDGMENT_SECTIONS
+# （跟 price_vs_eps／moat_footprint 一樣每次建置都重算，不用等版本觸發）。
+def build_card_pattern_quality(row):
+    if row is None:
+        return {"status": "no_data", "reason": "不在 dd-screener 名單（339 檔）"}
+
+    vcp_scope = row.get("vcp_scope")
+    vcp = {
+        "scope": vcp_scope,
+        "scope_label": {
+            "computed": "已計算", "far_from_ath": "現價離歷史高點太遠，不適用",
+            "insufficient_bars": "價格資料天數不足，無法計算", None: "尚未計算",
+        }.get(vcp_scope, vcp_scope),
+        "gate": row.get("vcp_gate"), "score": row.get("vcp_score"),
+        "pullback_count": row.get("vcp_pullback_count"),
+        "last_pullback_pct": row.get("vcp_last_pullback_pct"),
+        "vol_dryup_ratio": row.get("vcp_vol_dryup_ratio"),
+        "base_age_days": row.get("vcp_base_age_days"),
+        "tight": row.get("vcp_tight"),
+    }
+
+    return {
+        "status": "ok",
+        "pattern": {
+            "rsi14": row.get("rsi14"), "rsi_overheated": row.get("rsi_overheated"),
+            "return_6m_pct": row.get("return_6m_pct"),
+            "short_squeeze_flag": row.get("short_squeeze_flag"),
+            "short_interest_pct_float": row.get("short_interest_pct_float"),
+            "breakout_watch": row.get("breakout_watch"),
+            "asym_flag": row.get("asym_flag"),
+            "vcp": vcp,
+        },
+        "quality": {
+            "quality_score": row.get("quality_score"),
+            "growth_durability": row.get("growth_durability"),
+            "rule_of_40": row.get("rule_of_40"), "rule_of_40_flag": row.get("rule_of_40_flag"),
+            "cash_runway_months": row.get("cash_runway_months"),
+            "cash_runway_flag": row.get("cash_runway_flag"),
+            "ol_divergence_pp": row.get("ol_divergence_pp"),
+            "ol_divergence_label": row.get("ol_divergence_label"),
+            "gm_yoy_pp": row.get("gm_yoy_pp"), "gm_trigger": row.get("gm_trigger"),
+        },
+        "explain": {
+            "rsi14": "14 日相對強弱指標，>70 通常視為短線過熱。",
+            "return_6m_pct": "近 6 個月報酬率。",
+            "short_squeeze_flag": "融券占流通股比偏高的機械旗標，純描述，不是資格閘。",
+            "breakout_watch": "現價逼近近期整理區間上緣的機械觀察旗標。",
+            "asym_flag": "正不對稱三級標記（◆／★★／★），描述現價下風險報酬結構，不是加倉指令。",
+            "vcp_score": "VCP（Volatility Contraction Pattern）型態分數：拉回次數收斂、量能萎縮程度綜合分。",
+            "vcp_pullback_count": "整理區間內的拉回次數。",
+            "vcp_vol_dryup_ratio": "近期量能相對前段的萎縮比率，越低代表籌碼越安定。",
+            "vcp_base_age_days": "目前整理區間已經走了幾天。",
+            "quality_score": "研究報告給的整體體質分（1-10），非機械重算。",
+            "growth_durability": "研究報告給的成長持續力分（1-10），非機械重算。",
+            "rule_of_40": "營收成長率＋FCF 利潤率，只對尚未獲利的公司計算；<20 觸發旗標。",
+            "cash_runway_months": "以目前燒錢速度估的現金可撐月數，只對尚未獲利的公司計算；<12 個月觸發旗標。",
+            "ol_divergence_pp": "營收成長與 EBIT 成長的差（operating leverage divergence），正值代表利潤率被壓縮。",
+            "gm_yoy_pp": "毛利率年變化（百分點），< -1.5pp 觸發旗標。",
+        },
+    }
+
+
 # ── ⑦dd-screener 分數（FunnelRank，presentation-only；不重算）───────────────
 def build_card_funnel_rank(row, dd_stocks):
     if row is None:
@@ -2773,10 +2970,45 @@ def build_card_funnel_rank(row, dd_stocks):
         "moat_trend_mult": FUNNEL_MOAT_TREND_MULT_DISPLAY.get(row.get("moat_trend")),
         "moat_score_raw": row.get("moat_score"),
         "footnote": (
-            "FunnelRank ＝ 0.40×品質關卡 + 0.30×護城河（依趨勢調整）+ 0.30×獲利修正動能，"
-            "另外四道否決／封頂規則不進加權公式、直接處置。這是 investmquest.com/dd-screener/ "
-            "現在使用中的排序分（2026-07-03、2026-09-17 拍板），品質和護城河反映的是已經發生的體質，"
-            "獲利修正動能抓的是分析師剛改變的看法，抓得比較即時。公式與門檻詳見 /dd-screener/。"
+            "FunnelRank v1（此卡舊版沿用）＝ 0.40×品質關卡 + 0.30×護城河（依趨勢調整）"
+            "+ 0.30×獲利修正動能的加權合成分。dd-screener 頁面已於 2026-09-22 改用 v2"
+            "（見下方 funnel_v2）當主排序鍵，v1 保留在此當對照，下一版會拿掉。"
+        ),
+        "funnel_v2": _build_funnel_v2_block(row),
+    }
+
+
+# 2026-09-26 新增：FunnelRank v2（四層側寫逐層排序法）已是 dd-screener 頁面的
+# 預設排序鍵（見 build_dd_screener.py compute_funnel_v2()），v1 加權合成分只是
+# 對照保留。這裡把 v2 的機械欄位原樣帶出，不重算——四層 tier/百分位、否決旗標、
+# 資料不足說明全部照抄 dd-screener 已算好的值。
+FUNNEL_V2_LAYER_LABELS = {"quality": "事業品質", "engine": "再投資引擎", "gap": "期望落差", "price": "價格"}
+_FUNNEL_V2_LAYER_ORDER = ("quality", "engine", "gap", "price")
+
+
+def _build_funnel_v2_block(row):
+    profile = row.get("funnel_v2_profile")
+    tiers = row.get("funnel_v2_tiers")
+    layers = []
+    for i, key in enumerate(_FUNNEL_V2_LAYER_ORDER):
+        layers.append({
+            "key": key, "label": FUNNEL_V2_LAYER_LABELS[key],
+            "percentile": (profile[i] if profile and i < len(profile) else None),
+            "tier": (tiers[i] if tiers and i < len(tiers) else None),
+        })
+    return {
+        "layers": layers,
+        "median": row.get("funnel_v2_median"),
+        "top_tier_count": row.get("funnel_v2_top_tier_count"),
+        "veto": row.get("funnel_v2_veto") or [],
+        "rank": row.get("funnel_v2_rank"),
+        "note": row.get("funnel_v2_note"),
+        "footnote": (
+            "FunnelRank v2 不是加權合成分，是四層（事業品質／再投資引擎／期望落差／價格，"
+            "各自在全母體的百分位換成 0-4 級距、-1＝缺資料）逐層排序：先比四層裡最弱的那一"
+            "層，同分再比次弱層，全部打平才比中位數。命中硬否決或四層裡有效層數 < 3 的，"
+            "名次記為缺值並沉在最後。這是 investmquest.com/dd-screener/ 現在使用中的排序法"
+            "（2026-09-22 拍板取代 v1），公式與門檻詳見 /dd-screener/。"
         ),
     }
 
@@ -3231,14 +3463,24 @@ def build_moat_footprint(ticker, row, dd_stocks):
     fund = (row.get("fund") if row else None) or {}
     out = {"status": "ok" if row else "no_row", "gm_ltm_pct": r2(fund.get("gm_ltm_pct"), 2),
            "rev_yoy_fq0_pct": r2(fund.get("rev_yoy_fq0_pct"), 2),
-           "rivals": [], "rival_source": None, "peer_median_gm_pct": None, "research": None}
+           "rivals": [], "rival_source": None, "peer_median_gm_pct": None, "research": None,
+           "peer_revision_breadth": None,
+           # 2026-09-26 新增：不管解析成不成功，只要 dd-screener 有登記 dd_path 就先記下來，
+           # 讓頁面在「解析失敗／對手表沒抓到」時仍能連到研究報告本體，不會誤報成「這檔還
+           # 沒有研究報告」（那句話應該只保留給真的沒有 dd_path 的情況）。
+           "dd_path_raw": None, "parse_status": "no_dd_path"}
     rival_tickers = []
     dd_path = (row or {}).get("dd_path")
     if dd_path:
+        out["dd_path_raw"] = dd_path
+        out["parse_status"] = "failed"
         f = ROOT / "docs" / dd_path.lstrip("/")
+        if not f.exists():
+            out["parse_status"] = "file_missing"
         if f.exists():
             try:
                 parsed = parse_dd_moat_section(f.read_text(encoding="utf-8"), dd_path)
+                out["parse_status"] = "ok"
                 out["research"] = {"path": dd_path, "moat_anchor": parsed.get("section_anchor"),
                                    "date": (row or {}).get("dd_date")}
                 rival_tickers = _rival_tickers_from_table(parsed.get("rival_table"), ticker)
@@ -3253,18 +3495,53 @@ def build_moat_footprint(ticker, row, dd_stocks):
             out["rival_source"] = "同產業分類前三檔"
     by_t = {x.get("ticker"): x for x in (dd_stocks or [])}
     gms = []
+
+    def _rev_dir(v):
+        if v is None:
+            return None
+        if v >= FUNNEL_REVISION_THRESHOLD:
+            return "上修"
+        if v <= -FUNNEL_REVISION_THRESHOLD:
+            return "下修"
+        return "持平"
+
     for rt in rival_tickers[:5]:
         rr = by_t.get(rt)
         rf = (rr.get("fund") if rr else None) or {}
         gm = r2(rf.get("gm_ltm_pct"), 1)
         if gm is not None:
             gms.append(gm)
+        rev_pct = rr.get("eps_fy_next_revision_pct") if rr else None  # 頂層欄位，不在 fund 底下
         out["rivals"].append({"ticker": rt, "gm_ltm_pct": gm, "roic": r2(rr.get("roic"), 1) if rr else None,
-                              "rev_yoy_fq0_pct": r2(rf.get("rev_yoy_fq0_pct"), 1), "pe_ntm_x": r2(rf.get("pe_ntm_x"), 1)})
+                              "rev_yoy_fq0_pct": r2(rf.get("rev_yoy_fq0_pct"), 1), "pe_ntm_x": r2(rf.get("pe_ntm_x"), 1),
+                              "eps_fy_next_revision_pct": r2(rev_pct, 2) if rev_pct is not None else None,
+                              "revision_dir": _rev_dir(rev_pct), "in_universe": rr is not None})
     if gms:
         gms.sort()
         n = len(gms)
         out["peer_median_gm_pct"] = r2(gms[n // 2] if n % 2 else (gms[n // 2 - 1] + gms[n // 2]) / 2, 2)
+
+    # 2026-09-26 新增：同儕修正廣度——本股明年度 EPS 修正方向對照對手，逐檔比較
+    # 「跟大家同向」還是「跟大家不同向」。不在名單的對手保留「無資料」不刪除
+    # （task 明講：missing rivals 要列出，不能悄悄拿掉）。
+    if rival_tickers:
+        self_rev_pct = (row or {}).get("eps_fy_next_revision_pct")  # 頂層欄位，不在 fund 底下
+        self_dir = _rev_dir(self_rev_pct)
+        up = sum(1 for r in out["rivals"] if r["revision_dir"] == "上修")
+        down = sum(1 for r in out["rivals"] if r["revision_dir"] == "下修")
+        flat = sum(1 for r in out["rivals"] if r["revision_dir"] == "持平")
+        no_data = sum(1 for r in out["rivals"] if r["revision_dir"] is None)
+        with_or_against = None
+        if self_dir in ("上修", "下修"):
+            majority_dir = "上修" if up > down else ("下修" if down > up else None)
+            if majority_dir is not None:
+                with_or_against = "與同儕同向" if self_dir == majority_dir else "與同儕反向"
+        out["peer_revision_breadth"] = {
+            "self_eps_fy_next_revision_pct": r2(self_rev_pct, 2) if self_rev_pct is not None else None,
+            "self_direction": self_dir,
+            "peer_up": up, "peer_down": down, "peer_flat": flat, "peer_no_data": no_data,
+            "with_or_against_peers": with_or_against,
+        }
     return out
 
 
@@ -3668,6 +3945,8 @@ def build(ticker, refresh_universe=False, state_dir=None, force_version=False, d
     analyst_targets = build_analyst_targets(dd_row, dd_as_of, price, week52_low, week52_high)
     moat, moat_changes, moat_rivals = build_card_moat(ticker, dd_row, dd_stocks)
     moat_footprint = build_moat_footprint(ticker, dd_row, dd_stocks)
+    catalyst_track = build_card_catalyst_track(ticker, as_of)
+    pattern_quality = build_card_pattern_quality(dd_row)
     judgment_core = {
         "in_dd_screener": dd_row is not None,
         "eps_revision": jc_card1,
@@ -3699,6 +3978,8 @@ def build(ticker, refresh_universe=False, state_dir=None, force_version=False, d
         "moat_footprint": moat_footprint,  # 護城河章實際顯示的內容（機械數字）；上面三個是舊判斷檔資料，頁面不再顯示
         "cockpit": cockpit,  # 主控台陣容狀態，每次 build 都更新
         "analyst_targets": analyst_targets,  # 分析師目標價／52週區間，每次 build 都更新
+        "catalyst_track": catalyst_track,  # 催化劑日曆＋DD 假設 EPS 對照共識的漂移，每次 build 都更新
+        "pattern_quality": pattern_quality,  # 型態與體質機械指標（RSI／VCP／不對稱標記／品質旗標），每次 build 都更新
     }
 
     out = {
@@ -3717,6 +3998,8 @@ def build(ticker, refresh_universe=False, state_dir=None, force_version=False, d
             "judgment_core": "docs/dd-screener/latest.json (339 檔既有欄位，presentation-only，不重算，含 eps_year_ago／target_high/low/avg／short_interest_pct_float／insider_net_buy_3m／insider_signal 等 Koyfin 欄位) + docs/dd-screener/eps-estimates-snapshots/ + yfinance (earnings surprises / insider transactions) + ~/v7-backtest/results/pead/pead_events.csv (summarized into data/_sue_breaks.json)",
             "analyst_targets": "docs/dd-screener/latest.json fund.target_low／target_avg／target_high（Koyfin）+ 本頁股價歷史（52 週高低）",
             "short_interest_info": "docs/dd-screener/latest.json fund.short_interest_pct_float（Koyfin，放空佔流通股比例）",
+            "catalyst_track": "docs/catalyst/calendar.json + variance.json + variance_history.json + archive.json（scripts/build_catalyst_calendar.py 產出，唯讀不重算）",
+            "pattern_quality": "docs/dd-screener/latest.json（rsi14／vcp_*／asym_flag／quality_score／growth_durability／rule_of_40／cash_runway_months／ol_divergence_pp／gm_yoy_pp 等既有欄位，presentation-only）",
         },
         "quote": {
             "name": info.get("longName") or info.get("shortName") or ticker,

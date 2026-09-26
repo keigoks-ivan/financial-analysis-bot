@@ -308,6 +308,9 @@ footer{margin-top:40px;padding:16px 0;border-top:1px solid var(--gold);text-alig
         <div class="ex-src">資料來源：dd-screener latest.json + eps-estimates-snapshots</div>
       </div>
       <div class="stat-row" id="s1Stats"></div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">2 年期 EPS 修正（FY+2）</div>
+        <div id="s1Eps2y"></div>
+      </div>
     </div>
     <div>
       <div class="exhibit"><div class="ex-label"></div><div class="ex-title">EPS 估計走勢</div>
@@ -337,6 +340,9 @@ footer{margin-top:40px;padding:16px 0;border-top:1px solid var(--gold);text-alig
         <div class="ex-src">資料來源：docs/dd-screener/latest.json fund.target_low／target_avg／target_high（Koyfin，目標價資料日見下表）＋本頁股價歷史（52 週高低），每次 build 都重新計算，不隨判斷層版本凍結</div>
       </div>
       <div class="tbl-wrap"><table class="imq-table" id="s2Table2"></table></div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">現值對自己 5 年歷史區間</div>
+        <div id="s2OwnHistory"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -353,6 +359,15 @@ footer{margin-top:40px;padding:16px 0;border-top:1px solid var(--gold);text-alig
     <div>
       <div class="stat-row" id="s3Stats"></div>
       <div class="tbl-wrap"><table class="imq-table" id="s3Table"></table></div>
+    </div>
+  </div>
+  <div class="chapter-body single">
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">催化劑追蹤與 DD 假設對照共識</div>
+        <div class="ex-sub">跟上面「財報驚喜」比的是完全不同的兩件事：這裡追蹤的是 DD 報告寫作當時假設的 EPS 路徑，有沒有偏離現在的分析師共識</div>
+        <div id="catalystTrackBody"></div>
+        <div class="ex-src">資料來源：docs/catalyst/calendar.json + variance.json + variance_history.json + archive.json</div>
+      </div>
     </div>
   </div>
 </section>
@@ -373,6 +388,10 @@ footer{margin-top:40px;padding:16px 0;border-top:1px solid var(--gold);text-alig
       <div class="exhibit"><div class="ex-label"></div><div class="ex-title">對手對照（現在值）</div>
         <div class="tbl-wrap"><table class="imq-table" id="moatRivalTable"></table></div>
         <div class="ex-src" id="moatRivalSrc"></div>
+      </div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">同儕修正廣度</div>
+        <div class="ex-sub">本股明年度 EPS 修正方向，對照同表對手</div>
+        <div id="moatPeerRevisionBody"></div>
       </div>
     </div>
   </div>
@@ -397,6 +416,20 @@ footer{margin-top:40px;padding:16px 0;border-top:1px solid var(--gold);text-alig
         <div class="ex-src">資料來源：yfinance 日 K 線計算的移動平均</div>
       </div>
       <div class="stat-row" id="s5Stats"></div>
+    </div>
+  </div>
+  <div class="chapter-body">
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">型態機械指標（VCP／動能）</div>
+        <div class="tbl-wrap"><table class="imq-table" id="s5PatternTable"></table></div>
+        <div class="ex-src">資料來源：docs/dd-screener/latest.json（rsi14／vcp_*／breakout_watch／asym_flag，逐次 build 重算）</div>
+      </div>
+    </div>
+    <div>
+      <div class="exhibit"><div class="ex-label"></div><div class="ex-title">體質旗標</div>
+        <div class="tbl-wrap"><table class="imq-table" id="s5QualityTable"></table></div>
+        <div class="ex-src">資料來源：docs/dd-screener/latest.json（quality_score／growth_durability／rule_of_40／cash_runway_months／ol_divergence_pp／gm_yoy_pp）</div>
+      </div>
     </div>
   </div>
 </section>
@@ -432,13 +465,13 @@ footer{margin-top:40px;padding:16px 0;border-top:1px solid var(--gold);text-alig
 
 <section class="appendix" id="appendix">
   <div class="chapter-head"><span class="ch-title">附錄</span></div>
-  <div class="exhibit"><div class="ex-label"></div><div class="ex-title">FunnelRank 組成拆解</div>
+  <div class="exhibit"><div class="ex-label"></div><div class="ex-title">FunnelRank v1 組成拆解（舊版加權合成分，僅供對照）</div>
     <div class="chart-box" style="height:110px"><canvas id="chartApxFunnel"></canvas></div>
   </div>
   <div id="appendixBody"></div>
 </section>
 
-<footer>NVDA 個股儀表板原型 A（券商報告式）· 僅供內部樣式評估，非正式發布頁 · 描述器紀律：不含買賣建議</footer>
+<footer id="pageFooter">個股儀表板（券商報告式）· 全部機械計算，判斷層只在觸發時改版 · 描述器紀律：不含買賣建議</footer>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
@@ -497,6 +530,9 @@ function abbrevNum(v){
   return sign+String(Math.round(abs));
 }
 function noData(el, reason){ if(el) el.innerHTML = '<div class="nodata">無資料'+(reason?'：'+reason:'')+'</div>'; }
+// 2026-09-26 新增：跟 noData 分開——這個專指「資料來源這次抓取失敗」（yfinance 逾時／擋掉等），
+// 不是「這檔本來就沒有這項資料」，讓讀者知道下次自動更新可能就有了，不用去別的地方找。
+function noDataSourceFail(el, reason){ if(el) el.innerHTML = '<div class="nodata">資料暫缺（來源失敗，下次更新重試）'+(reason?'：'+reason:'')+'</div>'; }
 // dd-screener 燈號轉文字（不猜測欄位精確語意，一律轉三段式中性詞）
 var TIER_TXT = {'🟢':'低', '🟡':'中', '🔴':'高'};
 function tierText(v){ return TIER_TXT[v] || v || '無資料'; }
@@ -610,6 +646,7 @@ function buildVM(D, M){
     D:D, M:M, jc:jc, c1:c1, c2:c2, c3:c3, c4:c4, c5:c5, c6:c6, c7:c7,
     moat:moat, moatCurrent:moatCurrent, moatChanges:moatChanges, moatRivals:moatRivals, moatFootprint:D.full.moat_footprint,
     analystTargets:analystTargets,
+    catalystTrack: D.full.catalyst_track, patternQuality: D.full.pattern_quality,
     nextEarn:nextEarn, daysEarn:daysEarn, keyData:keyData, summaryBullets:summaryBullets, finTable:finTable,
     judgmentVersion: D.judgment_version, judgmentVersionDate: D.judgment_version_date,
     latestChanges: D.latest_changes || [], changelog: D.changelog || [], sectionVersions: D.section_versions || {}
@@ -776,7 +813,7 @@ function buildEpsPriceOverlayChart(canvas, vm){
 }
 
 function buildSurpriseChart(canvas, vm){
-  var s = vm.c3.surprises; if(s.status!=='ok') return noData(canvas.parentElement, s.reason);
+  var s = vm.c3.surprises; if(s.status!=='ok') return noDataSourceFail(canvas.parentElement, s.reason);
   new Chart(canvas, {
     type:'bar',
     data:{labels:s.quarters.map(function(q){return q.date;}), datasets:[{data:s.quarters.map(function(q){return q.surprise_pct;}), backgroundColor:COL.navy+'88'}]},
@@ -979,7 +1016,8 @@ function renderAppendix(container, vm){
     ['財報驚喜（SUE）', (c3.sue&&c3.sue.status==='ok'?c3.sue.method:'') + '　' + (c3.sue_breaks&&c3.sue_breaks.status!=='no_data'?c3.sue_breaks.method:'')],
     ['ROIC 拆解', c4.status==='ok'?c4.dupont.note:''],
     ['內部人群聚買進', c5.cluster_buy&&c5.cluster_buy.status==='ok'?c5.cluster_buy.method:''],
-    ['FunnelRank', c7.status==='ok'?c7.footnote:'']
+    ['FunnelRank v2（現行）', c7.status==='ok'&&c7.funnel_v2?c7.funnel_v2.footnote:''],
+    ['FunnelRank v1（對照，將移除）', c7.status==='ok'?c7.footnote:'']
   ];
 
   var whyRows = [
@@ -989,11 +1027,28 @@ function renderAppendix(container, vm){
 
   var funnelHtml = '';
   if(c7.status==='ok'){
-    funnelHtml = '<div class="apx-funnel">' +
-      '<p style="font-size:11.5px;color:var(--sec);margin:0 0 8px">這裡的排名把護城河分數算進去，權重 30%。'+
-      '護城河分數來自既有研究報告，不會隨每次 build 更新，名次僅供參考。</p>'+
+    var v2 = c7.funnel_v2;
+    var v2Html = '';
+    if(v2){
+      v2Html = '<div class="apx-funnel">' +
+        '<p style="font-size:11.5px;color:var(--sec);margin:0 0 8px">dd-screener 現在的預設排序法：四層各自在全母體的百分位，逐層比較最弱的那層，不是加權合成分。</p>'+
+        '<div class="apx-stat-row">' +
+          '<div class="imq-stat"><div class="v">'+(v2.rank!=null?v2.rank:'—')+'</div><div class="k">名次</div></div>'+
+          '<div class="imq-stat"><div class="v">'+fmtNum(v2.median,1)+'</div><div class="k">四層中位數</div></div>'+
+          '<div class="imq-stat"><div class="v">'+v2.top_tier_count+'</div><div class="k">頂層(tier4)層數</div></div>'+
+        '</div>'+
+        '<div class="tbl-wrap"><table class="imq-table apx-tbl"><thead><tr><th>層</th><th class="num">百分位</th><th class="num">Tier(0-4，-1=缺)</th></tr></thead><tbody>'+
+        v2.layers.map(function(l){
+          return '<tr><td>'+l.label+'</td><td class="num">'+(l.percentile!=null?fmtNum(l.percentile,1):'無資料')+'</td><td class="num">'+l.tier+'</td></tr>';
+        }).join('')+'</tbody></table></div>'+
+        (v2.veto.length?'<div class="apx-veto"><b>否決：</b>'+v2.veto.join('；')+'</div>':'')+
+        (v2.note?'<div class="apx-veto"><b>備註：</b>'+v2.note+'</div>':'')+
+        '</div>';
+    }
+    var v1Html = '<div class="apx-funnel" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)">' +
+      '<p style="font-size:11px;color:var(--muted);margin:0 0 8px"><b>v1（舊版加權合成分，僅供對照，下一版移除）</b>——把護城河分數算進去，權重 30%，護城河分數來自既有研究報告，不會隨每次 build 更新。</p>'+
       '<div class="apx-stat-row">' +
-        '<div class="imq-stat"><div class="v">'+fmtNum(c7.funnel_rank,3)+'</div><div class="k">FunnelRank</div></div>'+
+        '<div class="imq-stat"><div class="v">'+fmtNum(c7.funnel_rank,3)+'</div><div class="k">FunnelRank v1</div></div>'+
         '<div class="imq-stat"><div class="v">'+c7.rank+' / '+c7.total+'</div><div class="k">名次</div></div>'+
         '<div class="imq-stat"><div class="v">'+fmtNum(c7.percentile,1)+'%</div><div class="k">百分位</div></div>'+
       '</div>'+
@@ -1009,6 +1064,7 @@ function renderAppendix(container, vm){
       }).join('')+'</tbody></table></div>'+
       '<div class="apx-veto"><b>否決／封頂：</b>'+(c7.vetoes_and_caps.length?c7.vetoes_and_caps.join('；'):'無')+'</div>'+
       '</div>';
+    funnelHtml = v2Html + v1Html;
   }
 
   var changelogRows = (vm.changelog || []).map(function(e){
@@ -1046,12 +1102,19 @@ function renderMoatChapter(vm){
   var fp = vm.moatFootprint || {}, c4 = vm.c4 || {};
   var research = fp.research;
 
+  var moatNote;
+  if(research && research.moat_anchor){
+    moatNote = '護城河的完整分析見<a href="'+moatEsc(research.moat_anchor)+'">研究報告的護城河章節</a>'+(research.date?'（'+moatEsc(research.date)+'）':'')+'。';
+  } else if(research && research.path){
+    moatNote = '完整分析見<a href="'+moatEsc(research.path)+'">研究報告</a>。';
+  } else if(fp.dd_path_raw){
+    moatNote = '這檔有<a href="'+moatEsc(fp.dd_path_raw)+'">研究報告</a>，但護城河對手表這次沒能自動解析出來（'+
+      (fp.parse_status==='file_missing'?'報告檔案讀不到':'解析失敗')+'），下面對手對照改用同產業分類代替，完整分析請直接看報告。';
+  } else {
+    moatNote = '這檔還沒有研究報告。';
+  }
   document.getElementById('moatHead').innerHTML =
-    '<div class="moat-meta">這一章只放數字，不放模型寫的判斷。'+
-    (research && research.moat_anchor
-      ? '護城河的完整分析見<a href="'+moatEsc(research.moat_anchor)+'">研究報告的護城河章節</a>'+(research.date?'（'+moatEsc(research.date)+'）':'')+'。'
-      : (research && research.path ? '完整分析見<a href="'+moatEsc(research.path)+'">研究報告</a>。' : '這檔還沒有研究報告。'))+
-    '</div>';
+    '<div class="moat-meta">這一章只放數字，不放模型寫的判斷。'+moatNote+'</div>';
 
   // ── 本公司的數字 ──
   var du = (c4.status==='ok' && c4.durability) || {}, inc = (c4.status==='ok' && c4.incremental) || {};
@@ -1083,13 +1146,28 @@ function renderMoatChapter(vm){
   // ── 對手對照 ──
   var rv = fp.rivals || [];
   document.getElementById('moatRivalTable').innerHTML = rv.length ?
-    '<thead><tr><th>對手</th><th class="num">毛利率</th><th class="num">ROIC</th><th class="num">營收年增</th><th class="num">NTM本益比</th></tr></thead><tbody>'+
+    '<thead><tr><th>對手</th><th class="num">毛利率</th><th class="num">ROIC</th><th class="num">營收年增</th><th class="num">NTM本益比</th><th class="num">明年度EPS修正</th></tr></thead><tbody>'+
     rv.map(function(r){
-      return '<tr><td>'+moatEsc(r.ticker)+'</td><td class="num">'+(r.gm_ltm_pct!=null?r.gm_ltm_pct+'%':'無資料')+'</td>'+
+      return '<tr><td>'+moatEsc(r.ticker)+(r.in_universe===false?'（不在名單）':'')+'</td><td class="num">'+(r.gm_ltm_pct!=null?r.gm_ltm_pct+'%':'無資料')+'</td>'+
         '<td class="num">'+(r.roic!=null?r.roic+'%':'無資料')+'</td><td class="num">'+(r.rev_yoy_fq0_pct!=null?r.rev_yoy_fq0_pct+'%':'無資料')+'</td>'+
-        '<td class="num">'+(r.pe_ntm_x!=null?r.pe_ntm_x+'x':'無資料')+'</td></tr>';
+        '<td class="num">'+(r.pe_ntm_x!=null?r.pe_ntm_x+'x':'無資料')+'</td>'+
+        '<td class="num">'+(r.eps_fy_next_revision_pct!=null?fmtPctColored(r.eps_fy_next_revision_pct)+'（'+r.revision_dir+'）':'無資料')+'</td></tr>';
     }).join('')+'</tbody>' : '<tbody><tr><td>沒有可比對手資料</td></tr></tbody>';
   document.getElementById('moatRivalSrc').textContent = fp.rival_source ? '對手來源：'+fp.rival_source : '';
+
+  // ── 同儕修正廣度 ──
+  var prb = fp.peer_revision_breadth;
+  var prbEl = document.getElementById('moatPeerRevisionBody');
+  if(!rv.length){
+    noData(prbEl, '沒有可比對手資料');
+  } else if(!prb){
+    noData(prbEl, '本股無明年度 EPS 修正資料，或對手全數不在名單');
+  } else {
+    prbEl.innerHTML =
+      '<div class="imq-stat"><div class="v">'+(prb.self_direction||'無資料')+'</div><div class="k">本股方向（'+(prb.self_eps_fy_next_revision_pct!=null?fmtPct(prb.self_eps_fy_next_revision_pct):'無資料')+'）</div></div> '+
+      '<div class="imq-stat"><div class="v">'+prb.peer_up+' 上修／'+prb.peer_down+' 下修／'+prb.peer_flat+' 持平'+(prb.peer_no_data?'／'+prb.peer_no_data+' 無資料':'')+'</div><div class="k">對手分布</div></div>'+
+      (prb.with_or_against_peers?'<div style="font-size:12px;color:var(--body);margin-top:6px">'+prb.with_or_against_peers+'</div>':'');
+  }
 }
 
 function assignExhibitNumbers(){
@@ -1217,6 +1295,19 @@ function renderSec1(vm){
     '<div class="imq-stat"><div class="v">'+fmtPct(c.cagr_3y.rev_cagr_3y_pct)+'</div><div class="k">共識3年營收年複合</div></div>';
   buildEpsPathChart(document.getElementById('chartS1Eps'), vm);
   buildRevYoyChart(document.getElementById('chartS1Rev'), vm);
+  renderEps2y(vm);
+}
+
+function renderEps2y(vm){
+  var el = document.getElementById('s1Eps2y');
+  var e2 = vm.c1.status==='ok' ? vm.c1.eps2y : null;
+  if(!e2 || e2.eps2y_live==null){ noData(el, '無 2 年期 EPS 估計'); return; }
+  var srcTxt = [e2.eps_source, e2.eps_basis].filter(function(x){return x;}).join('／');
+  el.innerHTML =
+    '<div class="imq-stat"><div class="v">'+fmtNum(e2.eps2y_live,2)+'</div><div class="k">FY+2 目前估計</div></div> '+
+    '<div class="imq-stat"><div class="v">'+fmtPctColored(e2.eps2y_revision_pp)+'</div><div class="k">較上月修正（'+(e2.eps2y_revision_dir||'無資料')+'）</div></div>'+
+    (e2.eps2y_prev_month!=null?'<div style="font-size:11px;color:var(--sec);margin-top:4px">上月估計 '+fmtNum(e2.eps2y_prev_month,2)+(e2.eps2y_prev_month_date?'（'+e2.eps2y_prev_month_date+'）':'')+'</div>':'')+
+    (srcTxt?'<div style="font-size:10px;color:var(--muted);margin-top:2px">來源／口徑：'+srcTxt+'</div>':'');
 }
 
 function renderSec2(vm){
@@ -1232,6 +1323,23 @@ function renderSec2(vm){
       '<tr><td class="k">目標價資料日期（Koyfin）</td><td class="v">'+(at.as_of||'無資料')+'</td></tr>'+
       '</tbody>';
   } else { noData(document.getElementById('s2Table2'), at && at.reason); }
+  renderOwnHistory(vm);
+}
+
+function renderOwnHistory(vm){
+  var el = document.getElementById('s2OwnHistory');
+  var c2 = vm.c2;
+  var vh = c2.status==='ok' ? c2.vs_own_history : null;
+  if(!vh){ noData(el, c2.reason); return; }
+  function row(label, x, flag, flagTxt){
+    if(x==null) return '<tr><td class="k">'+label+'</td><td class="v">無資料</td></tr>';
+    return '<tr><td class="k">'+label+'</td><td class="v">'+fmtNum(x,2)+'x'+(flag?' <span style="color:var(--warn)">'+flagTxt+'</span>':'')+'</td></tr>';
+  }
+  el.innerHTML = '<table class="imq-table"><tbody>'+
+    row('本益比 vs 5年均值', vh.pe_vs_5y_x, vh.pe_vs_5y_flag, '偏高於歷史均值') +
+    row('股價淨值比 vs 5年均值', vh.pb_vs_5y_x, vh.pb_vs_5y_flag, '偏高於歷史均值') +
+    row('目標價高低倍數（高／低）', vh.target_range_x, vh.target_range_flag, '分析師目標價分歧偏大') +
+    '</tbody></table>';
 }
 
 function renderSec3(vm){
@@ -1249,6 +1357,49 @@ function renderSec3(vm){
     '<tr><td class="k">下次財報日</td><td class="v">'+(c.next_earnings_date||'無資料')+(c.days_to_next_earnings!=null?'（'+c.days_to_next_earnings+' 天後）':'')+'</td></tr>'+
     (breaks.status!=='no_data'?'<tr><td class="k">分組切點(20/40/60/80百分位)</td><td class="v">'+breaks.percentile_20+' / '+breaks.percentile_40+' / '+breaks.percentile_60+' / '+breaks.percentile_80+'</td></tr>':'')+
     '</tbody>';
+  renderCatalystTrack(vm);
+}
+
+function renderCatalystTrack(vm){
+  var el = document.getElementById('catalystTrackBody');
+  var ct = vm.catalystTrack;
+  if(!ct || ct.status!=='ok'){ noData(el, ct && ct.reason); return; }
+  var html = '';
+  // 未來事件
+  html += '<div class="apx-h3" style="margin-top:0;padding-top:0;border-top:none">未來事件</div>';
+  if(ct.upcoming.length){
+    html += '<div class="tbl-wrap"><table class="imq-table"><thead><tr><th>日期</th><th class="num">天數</th><th>類型</th><th>事件</th><th>影響</th></tr></thead><tbody>'+
+      ct.upcoming.map(function(e){
+        return '<tr><td>'+(e.date||'無資料')+'</td><td class="num">'+(e.days_away!=null?e.days_away+' 天':'無資料')+'</td>'+
+          '<td>'+(e.type||'無資料')+'</td><td>'+(e.event||'無資料')+'</td><td>'+(e.impact||'無資料')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  } else {
+    html += '<div class="nodata">無資料：目前沒有排定中的未來事件</div>';
+  }
+  // DD 假設 vs 分析師共識
+  html += '<div class="apx-h3">DD 假設 EPS vs 分析師共識（漂移）</div>';
+  if(ct.drift_now.length){
+    html += '<div class="tbl-wrap"><table class="imq-table"><thead><tr><th>財年</th><th class="num">DD 假設 EPS</th><th class="num">目前共識 EPS</th><th class="num">漂移%</th><th>旗標</th></tr></thead><tbody>'+
+      ct.drift_now.map(function(r){
+        return '<tr><td>'+(r.fy_label||'無資料')+'</td><td class="num">'+fmtNum(r.base_eps,2)+'</td><td class="num">'+fmtNum(r.consensus_eps,2)+'</td>'+
+          '<td class="num">'+fmtPctColored(r.drift_pct)+'</td><td>'+(r.flag||'—')+(r.basis_mismatch?'（口徑不一致）':'')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  } else {
+    html += '<div class="nodata">無資料：這檔沒有 DD 假設 EPS 對照紀錄</div>';
+  }
+  // 過去事件
+  html += '<div class="apx-h3">過去事件</div>';
+  if(ct.past.length){
+    html += '<div class="tbl-wrap"><table class="imq-table"><thead><tr><th>日期</th><th>類型</th><th>事件</th><th>結果回填</th></tr></thead><tbody>'+
+      ct.past.slice(0,8).map(function(e){
+        return '<tr><td>'+(e.date||'無資料')+'</td><td>'+(e.type||'無資料')+'</td><td>'+(e.event||'無資料')+'</td>'+
+          '<td>'+(e.outcome!=null?e.outcome+(e.outcome_note?'（'+e.outcome_note+'）':''):'尚無回填結果')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  } else {
+    html += '<div class="nodata">無資料：這檔沒有過去事件紀錄</div>';
+  }
+  html += '<div style="font-size:10.5px;color:var(--muted);margin-top:8px">'+ct.method+'</div>';
+  el.innerHTML = html;
 }
 
 
@@ -1268,6 +1419,43 @@ function renderSec5(vm){
     '<div class="imq-stat"><div class="v">'+fmtPct(ss.dist_52w_high_pct)+'</div><div class="k">距52週高點</div></div>'+
     '<div class="imq-stat"><div class="v">'+fmtNum(ss.support,2)+' / '+fmtNum(ss.resistance,2)+'</div><div class="k">支撐／壓力</div></div>'+
     '<div class="imq-stat"><div class="v">'+fmtPctColored(ss.rel_strength_vs_spy['3m'])+' / '+fmtPctColored(ss.rel_strength_vs_spy['6m'])+' / '+fmtPctColored(ss.rel_strength_vs_spy['12m'])+'</div><div class="k">對SPY 3M／6M／12M超額</div></div>';
+  renderPatternQuality(vm);
+}
+
+function renderPatternQuality(vm){
+  var pq = vm.patternQuality;
+  var patEl = document.getElementById('s5PatternTable'), qEl = document.getElementById('s5QualityTable');
+  if(!pq || pq.status!=='ok'){ noData(patEl, pq && pq.reason); noData(qEl, pq && pq.reason); return; }
+  var p = pq.pattern, ex = pq.explain;
+  function ex_row(label, val, explain){
+    return '<tr><td class="k">'+label+'</td><td class="v">'+val+'</td></tr>'+
+      (explain?'<tr><td colspan="2" style="font-size:10px;color:var(--muted);padding-top:0;border-bottom:1px solid var(--line-soft)">'+explain+'</td></tr>':'');
+  }
+  var vcp = p.vcp;
+  patEl.innerHTML = '<tbody>'+
+    ex_row('RSI(14)', p.rsi14!=null?(fmtNum(p.rsi14,1)+(p.rsi_overheated?'（過熱）':'')):'無資料', ex.rsi14) +
+    ex_row('近6個月報酬', fmtPct(p.return_6m_pct), ex.return_6m_pct) +
+    ex_row('融券擁擠旗標', p.short_squeeze_flag==null?'無資料':(p.short_squeeze_flag?('是（'+fmtNum(p.short_interest_pct_float,1)+'%）'):'否'), ex.short_squeeze_flag) +
+    ex_row('突破觀察', p.breakout_watch==null?'無資料':(p.breakout_watch?'是':'否'), ex.breakout_watch) +
+    ex_row('正不對稱標記', p.asym_flag || '無', ex.asym_flag) +
+    ex_row('VCP 狀態', vcp.scope_label, null) +
+    (vcp.scope==='computed' ? (
+      ex_row('VCP 分數', fmtNum(vcp.score,1)+(vcp.tight?'（收斂）':''), ex.vcp_score) +
+      ex_row('拉回次數', vcp.pullback_count!=null?vcp.pullback_count:'無資料', ex.vcp_pullback_count) +
+      ex_row('量能萎縮比率', fmtNum(vcp.vol_dryup_ratio,2), ex.vcp_vol_dryup_ratio) +
+      ex_row('整理天數', vcp.base_age_days!=null?vcp.base_age_days+' 天':'無資料', ex.vcp_base_age_days)
+    ) : '') +
+    '</tbody>';
+
+  var q = pq.quality;
+  qEl.innerHTML = '<tbody>'+
+    ex_row('研究報告體質分（1-10）', q.quality_score!=null?q.quality_score:'無資料', ex.quality_score) +
+    ex_row('研究報告成長持續力分（1-10）', q.growth_durability!=null?q.growth_durability:'無資料', ex.growth_durability) +
+    ex_row('Rule of 40（未獲利公司適用）', q.rule_of_40!=null?(fmtNum(q.rule_of_40,1)+(q.rule_of_40_flag?'（低於20）':'')):'不適用（已獲利或無資料）', ex.rule_of_40) +
+    ex_row('現金可撐月數（未獲利公司適用）', q.cash_runway_months!=null?(fmtNum(q.cash_runway_months,1)+' 個月'+(q.cash_runway_flag?'（低於12個月）':'')):'不適用（已獲利或無資料）', ex.cash_runway_months) +
+    ex_row('營收/EBIT成長背離', q.ol_divergence_pp!=null?(fmtNum(q.ol_divergence_pp,1)+'pp（'+(q.ol_divergence_label||'—')+'）'):'無資料', ex.ol_divergence_pp) +
+    ex_row('毛利率年變化', q.gm_yoy_pp!=null?(fmtNum(q.gm_yoy_pp,2)+'pp'+(q.gm_trigger?'（觸發旗標）':'')):'無資料', ex.gm_yoy_pp) +
+    '</tbody>';
 }
 
 function renderSec6(vm){
@@ -1281,7 +1469,7 @@ function renderSec6(vm){
     '<tr><td class="k">回補天數</td><td class="v">'+(sii&&sii.shortRatio_days_to_cover!=null?fmtNum(sii.shortRatio_days_to_cover,2)+' 天':'無資料')+'</td></tr>'+
     '<tr><td class="k">空單資料日期（Koyfin）</td><td class="v">'+((sii&&sii.dateShortInterest)||'無資料')+'</td></tr>'+
     '<tr><td class="k">放空量30日 z 值</td><td class="v">'+(sv&&sv.z_score_recent30_vs_60!=null?fmtNum(sv.z_score_recent30_vs_60,2):'無資料')+'</td></tr>'+
-    '<tr><td class="k">內部人群聚買進</td><td class="v">'+(vm.c5.cluster_buy.status==='ok'?(vm.c5.cluster_buy.cluster_buy_condition_met?'條件目前成立':'條件目前不成立')+'（近90天'+vm.c5.cluster_buy.n_distinct_buyers+'位買進）':'無資料（見下方 dd-screener 備援訊號）')+'</td></tr>'+
+    '<tr><td class="k">內部人群聚買進</td><td class="v">'+(vm.c5.cluster_buy.status==='ok'?(vm.c5.cluster_buy.cluster_buy_condition_met?'條件目前成立':'條件目前不成立')+'（近90天'+vm.c5.cluster_buy.n_distinct_buyers+'位買進）':'資料暫缺（來源失敗，下次更新重試）・見下方 dd-screener 備援訊號')+'</td></tr>'+
     '<tr><td class="k">dd-screener近3個月淨買超</td><td class="v">'+fmtUsdM(vm.c5.dd_screener_net_buy_3m_usd)+(vm.c5.dd_screener_insider_signal?'（訊號：'+vm.c5.dd_screener_insider_signal+'）':'')+'</td></tr>'+
     '</tbody>';
   if(opt.status==='ok'){
@@ -1294,7 +1482,7 @@ function renderSec6(vm){
       '<tr><td colspan="2" class="k">彙總（30日ATM）</td><td class="num">'+fmtNum(opt.aggregate.call_volume_total)+'</td><td class="num">'+fmtNum(opt.aggregate.put_volume_total)+'</td>'+
       '<td class="num">'+fmtNum(opt.aggregate.pc_ratio_volume,2)+'</td><td class="num">'+fmtNum(opt.aggregate.atm_iv_30d_pct*100,1)+'%</td></tr>'+
       '</tbody>';
-  } else { noData(document.getElementById('s6OptTable'), opt.reason); }
+  } else { noDataSourceFail(document.getElementById('s6OptTable'), opt.reason); }
 }
 
 var TONE_ZH = {good:'正向', warn:'留意', neutral:'中性', bad:'負向'};
@@ -1337,6 +1525,8 @@ function render(D, M){
   renderSec1(vm); renderSec2(vm); renderSec3(vm); renderMoatChapter(vm); renderSec5(vm); renderSec6(vm); renderSec7(vm);
   buildFunnelBreakdownChart(document.getElementById('chartApxFunnel'), vm);
   renderAppendix(document.getElementById('appendixBody'), vm);
+  var footerEl = document.getElementById('pageFooter');
+  if(footerEl) footerEl.textContent = D.ticker + ' 個股儀表板（券商報告式）· 全部機械計算，判斷層只在觸發時改版 · 描述器紀律：不含買賣建議';
 }
 
 var params = new URLSearchParams(location.search);
