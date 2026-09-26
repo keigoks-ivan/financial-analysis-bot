@@ -45,6 +45,20 @@ name: ETF Dashboard Daily Data
 #     進這份被 commit 的檔案，之後每次 workflow 執行只需要把當天併進去即可，
 #     不需要 fetch-depth: 0。
 #
+# 2026-09-26 加的四項（EPS 修正廣度／報酬貢獻／資金流／風格快照，見
+# build_etf_dash.py 對應段落）新增三個持久化路徑，都是append-only、規模天生
+# 很小：
+#   - data/etf_dash/prices.jsonl             報酬貢獻用的成分股收盤價跨基金
+#     共用歷史（scripts/etf_dash/price_history.py），裁到最近 ~100 個曆日，
+#     不會無限成長。
+#   - data/etf_dash/flows/{ETF}.jsonl        資金流用的逐日 shares
+#     outstanding／NAV 快照（scripts/etf_dash/flows.py），無回填，自本功能
+#     上線那天起累積。
+#   - data/etf_dash/tw_industry_map.json     台股（TAIEX／0050）產業分解用的
+#     TWSE 產業別代碼表快取，FULL 模式週期性重抓，單一小檔（非 append-only）。
+# 修正廣度／風格快照本身不落地成獨立檔案（存在 eps_cache／docs 輸出 JSON
+# 裡，已被既有的 data/etf_dash/eps_cache/ 與 docs/etf-dash/data/ 路徑覆蓋）。
+#
 # 這四類檔案都很小（單檔 JSON，非 stock-dash 那種 ~61MB 逐檔資料），所以刻意
 # 直接進 git（不像 stock-dash 用 artifact + deploy-pages 下載那一套）——但這裡
 # 的 commit 用預設 GITHUB_TOKEN push，不會觸發 deploy-pages.yml 的 push 事件
@@ -191,7 +205,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/eps_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/
+          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/eps_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/ data/etf_dash/prices.jsonl data/etf_dash/flows/ data/etf_dash/tw_industry_map.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
