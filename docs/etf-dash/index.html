@@ -177,6 +177,39 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .chapter-head{background:var(--x-navy);border-bottom:2px solid var(--x-rule);padding:7px 12px;margin:26px 0 14px}
 .chapter-head .ch-title{font-family:var(--serif);font-size:1rem;font-weight:700;color:#fff}
 .methods-note{font-size:11.5px;color:var(--sec);line-height:1.75;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-top:8px}
+
+/* 2026-09-26 加：EPS 修正廣度／資金流／風格快照四個新章節共用的小元件——
+   沿用既有 divbar 的 diverging pair（blue<->red，見上方 2026-09-25 註解，
+   polarity 不是好壞語意），只多一個「持平」中性色（灰，非上色語意，見
+   dataviz skill 診斷面板色－status palette 之外的第三態）。 */
+.stack100{display:flex;height:16px;border-radius:3px;overflow:hidden;width:100%;background:var(--line-soft)}
+.stack100.mini{height:8px;width:60px}
+.ov-breadth-cell{display:inline-flex;align-items:center;gap:0}
+.stack100 .seg{height:100%}
+.stack100 .seg.up{background:#2a78d6}
+.stack100 .seg.flat{background:var(--muted)}
+.stack100 .seg.down{background:#e34948}
+.stack100-row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.stack100-label{font-size:11px;color:var(--sec);display:flex;justify-content:space-between}
+.stack100-legend{display:flex;gap:14px;font-size:10.5px;color:var(--muted);margin-top:8px}
+.stack100-legend .lg{display:inline-flex;align-items:center;gap:4px}
+.stack100-legend .sw{width:9px;height:9px;border-radius:2px;display:inline-block}
+.stack100-legend .sw.up{background:#2a78d6} .stack100-legend .sw.flat{background:var(--muted)} .stack100-legend .sw.down{background:#e34948}
+
+.hbar-list{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.hbar-row{display:grid;grid-template-columns:120px 1fr 90px;align-items:center;gap:8px;font-size:11.5px}
+.hbar-track{position:relative;height:14px;background:var(--line-soft);border-radius:3px}
+.hbar-track::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--sec);opacity:.5}
+.hbar-fill{position:absolute;top:1px;height:12px;border-radius:2px}
+.hbar-fill.pos{left:50%;background:#2a78d6}
+.hbar-fill.neg{right:50%;background:#e34948}
+.hbar-name{color:var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbar-val{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;color:var(--ink)}
+
+.section-collapsible .chapter-head{cursor:pointer;user-select:none}
+.section-collapsible .chapter-head .ch-toggle{float:right;font-size:11px;color:rgba(255,255,255,.7);font-weight:400}
+.section-collapsible .chapter-body{display:none}
+.section-collapsible.open .chapter-body{display:block}
 </style>
 </head>
 <body>
@@ -292,6 +325,14 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   </div>
 </section>
 
+<section class="exhibit" id="ovSectorFlowsExhibit">
+  <div class="ex-label">產業資金流</div>
+  <div class="ex-title">9 檔美股產業 SPDR 資金流（最新一週／近一個月淨額）</div>
+  <div class="ex-sub">資金流 = Δ受益權份額 × NAV；依近一個月淨額排序，正值＝淨流入、負值＝淨流出（不是漲跌好壞，只標方向）</div>
+  <div id="ovSectorFlowsWrap"></div>
+  <div class="tbl-wrap"><table class="imq-table" id="ovSectorFlowsTable"></table></div>
+</section>
+
 <section class="exhibit" id="ovTableExhibit">
   <div class="ex-label">總覽表</div>
   <div class="ex-title">17 檔基金完整數字</div>
@@ -348,6 +389,52 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div id="holdingsToggle" style="text-align:center"></div>
 </section>
 
+<section class="chapter section-collapsible" id="breadthChapter">
+  <div class="chapter-head" data-toggle><span class="ch-title">EPS 修正廣度</span><span class="ch-toggle">展開 ▾</span></div>
+  <div class="chapter-body">
+    <div class="ex-sub">依成分股權重計算：各期間修正 % 在 ±0.5% 內算持平，其餘依正負分為上修／下修檔數與權重佔比（皆為「有 EPS 修正資料的成分股」內部重新正規化，三者加總 100%）</div>
+    <div id="breadthBars"></div>
+    <div class="tbl-wrap"><table class="imq-table" id="breadthTable"></table></div>
+  </div>
+</section>
+
+<section class="chapter section-collapsible" id="priceContribChapter">
+  <div class="chapter-head" data-toggle><span class="ch-title">報酬貢獻</span><span class="ch-toggle">展開 ▾</span></div>
+  <div class="chapter-body">
+    <div class="ex-sub" id="priceContribSub">報酬貢獻 = 目前成分股權重 × 該股股價報酬%（用目前權重，不是期間起點的權重，見方法論）；以下分列貢獻度最大的正貢獻 Top 10 與負貢獻 Bottom 10</div>
+    <div class="two-col">
+      <div>
+        <div class="ex-title" style="font-size:.85rem">近一個月</div>
+        <div class="tbl-wrap"><table class="imq-table" id="priceContrib1M"></table></div>
+      </div>
+      <div>
+        <div class="ex-title" style="font-size:.85rem">近三個月</div>
+        <div class="tbl-wrap"><table class="imq-table" id="priceContrib3M"></table></div>
+      </div>
+    </div>
+    <div id="sectorContribWrap" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<section class="chapter section-collapsible" id="flowsChapter">
+  <div class="chapter-head" data-toggle><span class="ch-title">資金流</span><span class="ch-toggle">展開 ▾</span></div>
+  <div class="chapter-body">
+    <div class="ex-sub" id="flowsSub"></div>
+    <div id="flowsWeeklyWrap"></div>
+    <div class="stat-row" id="flowsStatRow"></div>
+  </div>
+</section>
+
+<section class="chapter section-collapsible" id="styleChapter">
+  <div class="chapter-head" data-toggle><span class="ch-title">風格快照</span><span class="ch-toggle">展開 ▾</span></div>
+  <div class="chapter-body">
+    <div class="ex-sub">產業權重、市值分位數（加權中位數／P25／P75）、遠期本益比四分位數——皆為單一時間點快照，不補歷史</div>
+    <div id="styleSectorWrap"></div>
+    <div class="stat-row" id="styleStatRow"></div>
+    <div class="methods-note" id="styleNote"></div>
+  </div>
+</section>
+
 <section class="chapter">
   <div class="chapter-head"><span class="ch-title">方法論與備註</span></div>
   <div class="methods-note" id="methodsNote"></div>
@@ -383,6 +470,15 @@ function fmtPctColored(v, nd){
   return '<span class="'+cls+'">'+fmtPct(v,nd)+'</span>';
 }
 function noData(el, reason){ if(el) el.innerHTML = '<div class="nodata">無資料'+(reason?'：'+reason:'')+'</div>'; }
+// 2026-09-26 加：資金流／市值用——大數字縮成 B/M（十億/百萬），符號＋幣別後綴，
+// 供 stat tile／hbar 數字欄用（不是 fmtNum 的替代，欄位數字量級差太多才用這個）。
+function fmtMoney(v, ccy){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  var sign = v>=0?'+':'-', abs = Math.abs(v);
+  var s = abs>=1e12 ? (abs/1e12).toFixed(2)+'T' : abs>=1e9 ? (abs/1e9).toFixed(2)+'B' :
+    abs>=1e6 ? (abs/1e6).toFixed(1)+'M' : abs.toFixed(0);
+  return sign+s+(ccy?(' '+ccy):'');
+}
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
 // 2026-09-25 加 9 檔產業 ETF＋RSP 到 17 檔——分組是頁面呈現層唯一負責的事
@@ -701,6 +797,163 @@ function renderMethodsNote(d){
     '<br><br>資料來源連結：<a href="'+esc(d.holdings_source_url||'#')+'" target="_blank" rel="noopener">'+esc(d.holdings_source_url||'—')+'</a>';
 }
 
+// ── EPS 修正廣度 ────────────────────────────────────────────────────────
+var BREADTH_PERIOD_ORDER = ['30d','60d','90d'];
+function stack100Html(b){
+  if(!b || !b.n_covered) return '<div class="nodata">無資料：這個期間沒有成分股有 EPS 修正資料</div>';
+  return '<div class="stack100-row"><div class="stack100-label"><span>'+esc(b.label)+'（覆蓋 '+b.n_covered+'／'+b.n_total+' 檔）</span>'+
+    '<span>加權中位數修正 '+fmtPct(b.weighted_median_revision_pct)+'</span></div>'+
+    '<div class="stack100"><span class="seg up" style="width:'+(b.up_weight_pct||0)+'%" title="上修 '+fmtNum(b.n_up)+' 檔"></span>'+
+    '<span class="seg flat" style="width:'+(b.flat_weight_pct||0)+'%" title="持平 '+fmtNum(b.n_flat)+' 檔"></span>'+
+    '<span class="seg down" style="width:'+(b.down_weight_pct||0)+'%" title="下修 '+fmtNum(b.n_down)+' 檔"></span></div></div>';
+}
+function renderBreadth(d){
+  var breadth = d.breadth || {};
+  var barsEl = document.getElementById('breadthBars');
+  barsEl.innerHTML = BREADTH_PERIOD_ORDER.map(function(k){ return stack100Html(breadth[k]); }).join('') +
+    '<div class="stack100-legend"><span class="lg"><span class="sw up"></span>上修</span>'+
+    '<span class="lg"><span class="sw flat"></span>持平（&lt;'+((breadth['30d']||{}).dead_band_pct||0.5)+'%）</span>'+
+    '<span class="lg"><span class="sw down"></span>下修</span></div>';
+  var tbl = document.getElementById('breadthTable');
+  var rows = BREADTH_PERIOD_ORDER.map(function(k){ return breadth[k]; }).filter(Boolean);
+  if(!rows.length){ noData(tbl,'無修正廣度資料'); return; }
+  tbl.innerHTML = '<thead><tr><th>期間</th><th class="num">上修檔數</th><th class="num">上修權重</th>'+
+    '<th class="num">持平檔數</th><th class="num">持平權重</th><th class="num">下修檔數</th><th class="num">下修權重</th>'+
+    '<th class="num">加權中位數修正</th></tr></thead><tbody>'+
+    rows.map(function(b){
+      return '<tr><td>'+esc(b.label)+'</td><td class="num">'+fmtNum(b.n_up)+'</td><td class="num">'+fmtPct(b.up_weight_pct)+'</td>'+
+        '<td class="num">'+fmtNum(b.n_flat)+'</td><td class="num">'+fmtPct(b.flat_weight_pct)+'</td>'+
+        '<td class="num">'+fmtNum(b.n_down)+'</td><td class="num">'+fmtPct(b.down_weight_pct)+'</td>'+
+        '<td class="num">'+fmtPct(b.weighted_median_revision_pct)+'</td></tr>';
+    }).join('')+'</tbody>';
+}
+
+// ── 報酬貢獻 ────────────────────────────────────────────────────────────
+function priceContribRowsHtml(list){
+  return (list||[]).map(function(c){
+    return '<tr><td>'+esc(c.ticker)+'</td>'+
+      '<td class="num">'+(c.weight_pct!=null?c.weight_pct.toFixed(2)+'%':'—')+'</td>'+
+      '<td class="num">'+fmtPctColored(c.return_pct)+'</td>'+
+      '<td class="num">'+fmtPctColored(c.contribution_pct)+'</td></tr>';
+  }).join('');
+}
+function renderPriceContribTable(elId, data){
+  var el = document.getElementById(elId);
+  var top = (data && data.top10) || [], bottom = (data && data.bottom10) || [];
+  if(!top.length && !bottom.length){
+    noData(el, data ? '覆蓋率 0%（報酬貢獻需要 30/90 天前的收盤價，資料累積中，見方法論）' : '無資料');
+    return;
+  }
+  var head = '<thead><tr><th>成分股</th><th class="num">目前權重</th><th class="num">股價報酬</th><th class="num">貢獻度</th></tr></thead>';
+  var groupRow = function(label){ return '<tr><td colspan="4" style="background:var(--x-navy);color:#fff;font-size:11px;font-weight:600;padding:.3rem .7rem">'+esc(label)+'</td></tr>'; };
+  var body = '<tbody>';
+  if(top.length) body += groupRow('正貢獻 Top '+top.length) + priceContribRowsHtml(top);
+  if(bottom.length) body += groupRow('負貢獻 Bottom '+bottom.length) + priceContribRowsHtml(bottom);
+  body += '</tbody>';
+  el.innerHTML = head + body;
+}
+function hbarRowHtml(name, value, maxAbs, valText){
+  var halfPct = maxAbs ? Math.min(1, Math.abs(value)/maxAbs)*50 : 0;
+  var fill = '<span class="hbar-fill '+(value>=0?'pos':'neg')+'" style="width:'+halfPct.toFixed(1)+'%"></span>';
+  return '<div class="hbar-row"><span class="hbar-name">'+esc(name)+'</span>'+
+    '<span class="hbar-track">'+fill+'</span><span class="hbar-val">'+valText+'</span></div>';
+}
+function renderPriceContribution(d){
+  var pc = d.price_contribution || {};
+  renderPriceContribTable('priceContrib1M', pc['1M']);
+  renderPriceContribTable('priceContrib3M', pc['3M']);
+  var wrap = document.getElementById('sectorContribWrap');
+  var sc = (pc['3M'] && pc['3M'].sector_contribution) || (pc['1M'] && pc['1M'].sector_contribution);
+  if(!sc || !sc.length){ wrap.innerHTML = ''; return; }
+  var maxAbs = Math.max.apply(null, sc.map(function(r){ return Math.abs(r.contribution_pct||0); })) || 1;
+  wrap.innerHTML = '<div class="ex-title" style="font-size:.85rem">產業貢獻分解（近三個月，缺資料退近一個月）</div>'+
+    '<div class="hbar-list">'+sc.map(function(r){
+      return hbarRowHtml(r.sector, r.contribution_pct||0, maxAbs, fmtPct(r.contribution_pct));
+    }).join('')+'</div>';
+}
+
+// ── 資金流 ──────────────────────────────────────────────────────────────
+function renderFlows(d){
+  var f = d.flows || {};
+  var sub = document.getElementById('flowsSub');
+  var weeklyWrap = document.getElementById('flowsWeeklyWrap');
+  var statRow = document.getElementById('flowsStatRow');
+  if(f.skipped){
+    sub.innerHTML = esc(f.reason_zh || '無資金流資料');
+    weeklyWrap.innerHTML = ''; statRow.innerHTML = '';
+    return;
+  }
+  var snap = f.today_snapshot || {};
+  var sourceNote = snap.source === 'derived'
+    ? '今日份額估計為推算值（AUM／NAV 推算，非發行商直接公布，見方法論）'
+    : (snap.source === 'direct' ? '今日份額為 Yahoo Finance 直接提供的數字' : '今日份額快取失敗');
+  sub.innerHTML = '資金流 = Δ受益權份額 × NAV；'+sourceNote+'；自 '+esc(f.start_date||'—')+' 起累積追蹤（無回填歷史，見方法論）';
+  var weekly = f.weekly || [];
+  if(weekly.length < 2){
+    weeklyWrap.innerHTML = '<div class="nodata">無資料：週流量至少要累積 2 週才有意義的比較（目前 '+weekly.length+' 週）</div>';
+  } else {
+    var maxAbs = Math.max.apply(null, weekly.map(function(w){ return Math.abs(w.flow_amount||0); })) || 1;
+    weeklyWrap.innerHTML = '<div class="ex-title" style="font-size:.85rem">週流量（'+esc(f.nav_currency||'')+'）</div>'+
+      '<div class="hbar-list">'+weekly.slice(-12).map(function(w){
+        return hbarRowHtml(w.week_end_date, w.flow_amount||0, maxAbs, fmtMoney(w.flow_amount));
+      }).join('')+'</div>';
+  }
+  var items = [
+    ['快照筆數', fmtNum(f.n_snapshots)],
+    ['追蹤起始', esc(f.start_date||'—')],
+    ['最新快照', esc(f.latest_date||'—')],
+    ['累計淨流量（追蹤以來）', f.cumulative_since_start!=null ? fmtMoney(f.cumulative_since_start, f.nav_currency) : '無資料（快照不足 2 筆）']
+  ];
+  statRow.innerHTML = items.map(function(it){
+    return '<div class="imq-stat"><span class="v">'+it[1]+'</span><span class="k">'+it[0]+'</span></div>';
+  }).join('');
+}
+
+// ── 風格快照 ────────────────────────────────────────────────────────────
+function renderStyleSnapshot(d){
+  var s = d.style_snapshot || {};
+  var sectorWrap = document.getElementById('styleSectorWrap');
+  var sw = s.sector_weights;
+  if(sw && sw.length){
+    var maxW = Math.max.apply(null, sw.map(function(r){ return r.weight_pct||0; })) || 1;
+    sectorWrap.innerHTML = '<div class="ex-title" style="font-size:.85rem">產業權重</div>'+
+      '<div class="hbar-list">'+sw.map(function(r){
+        return '<div class="hbar-row"><span class="hbar-name">'+esc(r.sector)+'</span>'+
+          '<span class="hbar-track"><span class="hbar-fill pos" style="left:0;width:'+Math.min(100,r.weight_pct/maxW*100).toFixed(1)+'%"></span></span>'+
+          '<span class="hbar-val">'+r.weight_pct.toFixed(2)+'%</span></div>';
+      }).join('')+'</div>';
+  } else {
+    sectorWrap.innerHTML = '<div class="nodata">無產業權重資料（本基金不在有產業分解資料的清單內，見方法論）</div>';
+  }
+  var size = s.size || {}, pe = s.pe_dispersion || {};
+  function mcapFmt(v){ return v!=null ? fmtMoney(v).replace(/^\+/,'') : '無資料'; }
+  var items = [
+    ['市值加權中位數', mcapFmt(size.weighted_median_market_cap)],
+    ['市值 P25 / P75', mcapFmt(size.weighted_p25_market_cap)+' / '+mcapFmt(size.weighted_p75_market_cap)],
+    ['遠期本益比中位數', pe.weighted_median!=null?fmtNum(pe.weighted_median,1)+'x':'無資料'],
+    ['遠期本益比 P25 / P75', (pe.weighted_p25!=null?fmtNum(pe.weighted_p25,1)+'x':'—')+' / '+(pe.weighted_p75!=null?fmtNum(pe.weighted_p75,1)+'x':'—')]
+  ];
+  document.getElementById('styleStatRow').innerHTML = items.map(function(it){
+    return '<div class="imq-stat"><span class="v">'+it[1]+'</span><span class="k">'+it[0]+'</span></div>';
+  }).join('');
+  document.getElementById('styleNote').innerHTML = esc(size.note_zh||'')+'<br>'+esc(pe.note_zh||'');
+}
+
+// 四個新章節預設收合，點 chapter-head 展開/收合——只在第一次呼叫時掛
+// listener（用 dataset 旗標避免每次 render() 重複掛）。
+function wireCollapsibleSections(){
+  document.querySelectorAll('.section-collapsible > .chapter-head[data-toggle]').forEach(function(head){
+    if(head.dataset.wired) return;
+    head.dataset.wired = '1';
+    head.addEventListener('click', function(){
+      var section = head.closest('.section-collapsible');
+      section.classList.toggle('open');
+      var toggle = head.querySelector('.ch-toggle');
+      if(toggle) toggle.textContent = section.classList.contains('open') ? '收合 ▴' : '展開 ▾';
+    });
+  });
+}
+
 var chartInstance = null;
 function renderChart(d){
   // Exhibit 2 畫的是長線 EPS 指數（dd-screener 快照鏈，2026-05-19 起，見
@@ -770,7 +1023,12 @@ function render(d){
   renderContribTable('contrib30', contrib['30d']);
   renderContribTable('contrib90', contrib['90d']);
   renderHoldingsTable(d);
+  renderBreadth(d);
+  renderPriceContribution(d);
+  renderFlows(d);
+  renderStyleSnapshot(d);
   renderMethodsNote(d);
+  wireCollapsibleSections();
 }
 
 // ── 總覽（/etf-dash/?view=overview）——讀 data/overview.json 一個檔，17 檔基金
@@ -782,6 +1040,9 @@ function render(d){
 // media query）；bar:true 兩欄改畫 inline diverging bar（見 divBarHtml）。2026-09-25
 // 二次修：預估本益比也標 lo（原本只藏 EPS 1M／EPS 更新，≤560px 仍塞不下 5 欄+bar，
 // 見 coordinator 回饋），≤560px 只留 基金／EPS 3M／股價 3M／本益比變動 3M 四欄。
+// 2026-09-26 加兩欄：breadth_90d（修正廣度 mini stacked bar，不可排序——三個數字
+// 排序語意不明確，改成點進基金頁看完整表格）／flow_1m_net（近一個月資金流淨額，
+// 可排序；沿用既有 lo 慣例，≤560px 版寬先藏，跟本益比變動 3M 等既有欄一致）。
 var OV_COLUMNS = [
   {key:'label', label:'基金', numeric:false, sortable:false},
   {key:'eps_chg_pct_30d', label:'EPS 1M', full:'EPS 變動（1個月）', numeric:true, lo:true},
@@ -789,7 +1050,9 @@ var OV_COLUMNS = [
   {key:'price_chg_pct_90d', label:'股價 3M', full:'股價漲跌（3個月）', numeric:true},
   {key:'implied_pe_chg_pct_90d', label:'本益比變動 3M', full:'隱含本益比變動（3個月）', numeric:true, bar:true},
   {key:'weighted_forward_pe', label:'預估本益比', full:'目前預估本益比', numeric:true, lo:true},
-  {key:'eps_as_of', label:'EPS 更新', full:'EPS 預估更新日', numeric:false, lo:true}
+  {key:'eps_as_of', label:'EPS 更新', full:'EPS 預估更新日', numeric:false, lo:true},
+  {key:'breadth_90d', label:'修正廣度 3M', full:'EPS 修正廣度（近三個月，上修/持平/下修權重佔比）', numeric:false, lo:true, sortable:false},
+  {key:'flow_1m_net', label:'資金流 1M', full:'資金流淨額（近一個月，Δ受益權份額×NAV）', numeric:true, lo:true}
 ];
 var ovState = {groups:null, sortKey:null, sortDir:1};
 
@@ -824,6 +1087,16 @@ function ovFundLabelHtml(fullLabel, ticker){
   return '<span class="ov-fund-full">'+esc(fullLabel)+'</span><span class="ov-fund-short">'+esc(ticker)+'</span>';
 }
 
+// 2026-09-26 加：總覽表修正廣度 mini bar——跟 breadthBars（基金頁）同一個
+// up/flat/down 三段配色，只是縮成 60×8px、沒有數字標籤（hover title 補）。
+function ovBreadthCellHtml(b){
+  if(!b || b.n_covered==null) return '<span style="color:var(--muted)">—</span>';
+  var title = '上修 '+fmtPct(b.up_weight_pct)+'／持平 '+fmtPct(b.flat_weight_pct)+'／下修 '+fmtPct(b.down_weight_pct)+'（覆蓋 '+b.n_covered+' 檔）';
+  return '<span class="ov-breadth-cell" title="'+esc(title)+'"><span class="stack100 mini">'+
+    '<span class="seg up" style="width:'+(b.up_weight_pct||0)+'%"></span>'+
+    '<span class="seg flat" style="width:'+(b.flat_weight_pct||0)+'%"></span>'+
+    '<span class="seg down" style="width:'+(b.down_weight_pct||0)+'%"></span></span></span>';
+}
 function ovRowHtml(row){
   var flags = '';
   if(row.holdings_stale) flags += '<span class="ov-flag" title="今日持股抓取失敗，沿用上次成功快取">⚠</span>';
@@ -837,7 +1110,9 @@ function ovRowHtml(row){
     '<td class="num">'+fmtPctColored(row.price_chg_pct_90d)+'</td>'+
     '<td class="num">'+divBarHtml(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d')+'</td>'+
     '<td class="num ov-col-lo">'+(row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—')+'</td>'+
-    '<td class="ov-col-lo">'+esc(row.eps_as_of||'—')+'</td></tr>';
+    '<td class="ov-col-lo">'+esc(row.eps_as_of||'—')+'</td>'+
+    '<td class="ov-col-lo">'+ovBreadthCellHtml(row.breadth_90d)+'</td>'+
+    '<td class="num ov-col-lo">'+(row.flows_skipped?'<span style="color:var(--muted)">指數無資金流</span>':(row.flow_1m_net!=null?fmtMoney(row.flow_1m_net,row.flow_nav_currency):'累積中'))+'</td></tr>';
 }
 
 function renderOverviewTbody(){
@@ -1116,6 +1391,37 @@ window.addEventListener('resize', function(){
   ovScatterResizeTimer = setTimeout(renderOvScatter, 150);
 });
 
+// 2026-09-26 加：產業資金流——9 檔 SPDR 產業 ETF 最新一週／近一個月淨額並排
+// 橫向 diverging bar（依近一個月排序），資料完全來自 build_overview_json()
+// 的 sector_flows（不重算，見該函式）。上線初期（daily 紀錄不足一週）多數
+// 會是「累積中」，頁面要能誠實顯示，不是留白裝作沒這個功能。
+function renderSectorFlows(ov){
+  var rows = (ov.sector_flows || []).slice();
+  var wrap = document.getElementById('ovSectorFlowsWrap');
+  var tbl = document.getElementById('ovSectorFlowsTable');
+  if(!rows.length){ noData(wrap,'無產業資金流資料'); tbl.innerHTML=''; return; }
+  rows.sort(function(a,b){
+    var av = a.flow_1m_net, bv = b.flow_1m_net;
+    if(av==null && bv==null) return 0;
+    if(av==null) return 1;
+    if(bv==null) return -1;
+    return bv - av;
+  });
+  var withData = rows.filter(function(r){ return r.flow_1m_net!=null; });
+  var maxAbs = withData.length ? Math.max.apply(null, withData.map(function(r){ return Math.abs(r.flow_1m_net); })) : 0;
+  wrap.innerHTML = '<div class="hbar-list">'+rows.map(function(r){
+    if(r.flow_1m_net==null) return '<div class="hbar-row"><span class="hbar-name">'+esc(r.label_zh)+'</span>'+
+      '<span class="hbar-track"></span><span class="hbar-val" style="color:var(--muted)">累積中</span></div>';
+    return hbarRowHtml(r.label_zh, r.flow_1m_net, maxAbs, fmtMoney(r.flow_1m_net, r.nav_currency));
+  }).join('')+'</div>';
+  tbl.innerHTML = '<thead><tr><th>基金</th><th class="num">最新一週淨額</th><th class="num">近一個月淨額</th></tr></thead><tbody>'+
+    rows.map(function(r){
+      return '<tr><td><a href="?etf='+encodeURIComponent(r.etf_key)+'">'+esc(r.label_zh)+'（'+esc(r.etf_key)+'）</a></td>'+
+        '<td class="num">'+(r.latest_week_flow!=null?fmtMoney(r.latest_week_flow,r.nav_currency):'累積中')+'</td>'+
+        '<td class="num">'+(r.flow_1m_net!=null?fmtMoney(r.flow_1m_net,r.nav_currency):'累積中')+'</td></tr>';
+    }).join('')+'</tbody>';
+}
+
 function renderOverview(ov){
   document.getElementById('coverLeft').innerHTML =
     '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · 17 檔基金一覽</span>';
@@ -1138,6 +1444,7 @@ function renderOverview(ov){
   renderOverviewTbody();
   renderOvTiles(ov);
   renderOvScatter();
+  renderSectorFlows(ov);
 
   var sentEl = document.getElementById('ovSummarySentence');
   sentEl.innerHTML = ov.summary_sentence_zh ? esc(ov.summary_sentence_zh) : '無資料：9 檔美股產業 ETF 尚未有近三個月 EPS 修正資料';
