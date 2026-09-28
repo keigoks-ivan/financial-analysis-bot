@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>財報好、股價跌，該買嗎？ | InvestMQuest Research</title>
+<meta name="description" content="用 S&P 500 point-in-time 母體 2008–2026 共 29,387 次財報，驗「財報打敗預期但股價沒漲」這格之後是不是最有勝算。練習期（2008–2017）6 個月後多賺 +1.05%，但把規則原封不動搬到考試期（2018–2026）變成 -0.45%，勝率兩格從頭到尾都差不多，優勢沒有跨期撐住。">
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e;
+      --s1:#1a56db;--s2:#ea580c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1080px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:.55rem .65rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.72rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{white-space:nowrap;font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+tr.mine td{background:var(--brand-light)}
+td .t{color:var(--muted);font-size:.72rem}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;background:#1a56db;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:62rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hero-stats .hs-value{font-size:1.4rem;font-weight:800;letter-spacing:-.02em}
+.takeaway{font-size:.87rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b{color:#12213a}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.quad{display:grid;grid-template-columns:auto 1fr 1fr;gap:1px;background:var(--border);
+      border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:.82rem;margin:.9rem 0}
+.quad>div{background:var(--card);padding:.6rem .75rem}
+.quad .hd{background:#f9fafb;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em}
+.quad .cell b{display:block;font-size:.88rem}
+.quad .cell span{color:var(--muted);font-size:.76rem}
+.quad .cell.mine{background:var(--brand-light)}
+.chart-wrap{position:relative}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  table{font-size:.76rem}th,td{padding:.4rem .45rem}
+  .quad{font-size:.74rem}.quad>div{padding:.5rem .55rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/simulation/">模擬</a>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')});});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 財報打敗但沒漲</div>
+    <h1>財報好、股價跌，該買嗎？</h1>
+    <div class="sub">S&amp;P 500 point-in-time 母體・2008–2026・29,387 次財報事件・訓練期／測試期各跑一次，事後不回頭調規則</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">期貨趨勢</div><div class="bt-subnav-pills"><a href="/backtest/txf_daily/">台指期日線・20 日通道<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txf_hourly/">台指期60分K・趨勢與通道<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/yield_curve/">殖利率倒掛與衰退<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/yc_equity/">倒掛之後股票該賣嗎<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/sahm_rule/">Sahm 法則跨國<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/first_cut/">第一次降息後的股市<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead_reaction/" class="bt-on">財報打敗但沒漲，之後贏面大嗎<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/profitability/">美股獲利能力因子<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/asset_growth/">美股資產成長異象<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/index_inclusion/">指數納入效應<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insider/">內部人買賣叢集買進<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・跨標的驗證</div><div class="bt-subnav-pills"><a href="/backtest/live_system_evidence/">證據總覽（先看這頁）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insurance_premium/">深熊保險的價格<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/regime_bootstrap/">保留 regime 的 bootstrap<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/combined_account/">美台合併帳戶層<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_base_rate/">慢熊的 base rate<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_onset/">慢熊：起點認得出來嗎？<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/f_portfolio/">F 組合：疊兩種保險<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/a0_d1_comfort/">A0＋D1 舒服度<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/f_comfort/">F 組合舒服度<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/comfort_tournament/">舒服度錦標賽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/cross_sectional_trend/">橫斷面版趨勢<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/a0_proposal/">A0 提案（10 月回顧點）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/futures_leg/" class="bt-dead">F70 換 CTA 腿<span class="bt-tag bt-tag-dead">否決</span></a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">頭條判斷</span>
+    <h2>不是——「打敗預期但股價沒漲」這格，練習期看起來多賺一點，考試期優勢就不見了</h2>
+    <p>四格分組：財報打敗預期或落後 × 財報後股價贏過或輸給 SPY。練習期（2008–2017）「打敗＋沒漲」比「打敗＋漲」6 個月後多賺 +1.05%（t=1.9，差一點才到顯著門檻）；
+    把同一套規則原封不動搬到考試期（2018–2026），這個差距變成 -0.45%（t=-0.8，純雜訊）。贏過 SPY 的機率兩格從頭到尾都差不多，練習期都是 52.5%，
+    考試期 44.8% 對 44.3%——「沒漲」不是隱藏的加分項。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">練習期 6 個月價差</div><div class="hs-value">+1.05%</div></div>
+    <div><div class="hs-label">練習期 t 值</div><div class="hs-value">1.9</div></div>
+    <div><div class="hs-label">考試期 6 個月價差</div><div class="hs-value">-0.45%</div></div>
+    <div><div class="hs-label">考試期 t 值</div><div class="hs-value">-0.8</div></div>
+  </div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">一、怎麼驗的</h2>
+<div class="takeaway"><b>用 Yahoo 免費資料，看 S&amp;P 500 從 2008 年到 2026 年 9 月、共 29,387 次財報。方法先寫死，測試期只跑一次。</b>
+訓練期（用來設計、校準訊號的那段歷史資料）與測試期（訓練期完全沒看過的資料，拿來做真實測試）的切分、分組定義、統計口徑在跑訓練期前就已凍結，測試期跑完不回頭調整。</div>
+<ul style="padding-left:1.2rem;font-size:.87rem;line-height:1.85;color:#374151">
+  <li><b>誰</b>：財報當天是 S&amp;P 500 成分股的公司，用當年的 point-in-time（用「當時真的看得到」的名單，不是今天的名單，避免倖存者偏差）名單判斷。</li>
+  <li><b>財報好不好</b>：實際 EPS 高於分析師預期＝打敗（beat），低於＝落後（miss）。剛好一樣的另外算，不強塞進打敗或落後。</li>
+  <li><b>股價有沒有漲</b>：公布前一天收盤，到市場反應完的隔天收盤，扣掉同期 SPY（還原價）的報酬，得到超額反應報酬。</li>
+  <li><b>之後表現</b>：再往後 1、3、6 個月（20、60、120 個交易日），一樣扣掉同期 SPY。</li>
+  <li><b>訓練期和測試期</b>：2008–2017 是訓練期。2018 到 2026 年 9 月是測試期，規則不改、只跑一次。</li>
+</ul>
+
+<div class="quad" role="table" aria-label="四格分組與事件數">
+  <div class="hd" role="columnheader"></div>
+  <div class="hd" role="columnheader">股價漲（贏 SPY）</div>
+  <div class="hd" role="columnheader">股價沒漲（輸 SPY）</div>
+  <div class="hd" role="rowheader">財報打敗預期</div>
+  <div class="cell"><b>打敗＋漲</b><span>練習 5,304 次 · 考試 6,583 次</span></div>
+  <div class="cell mine"><b>打敗＋沒漲（目標格）</b><span>練習 3,762 次 · 考試 5,564 次</span></div>
+  <div class="hd" role="rowheader">財報落後預期</div>
+  <div class="cell"><b>落後＋漲</b><span>練習 888 次 · 考試 1,001 次</span></div>
+  <div class="cell"><b>落後＋跌</b><span>練習 2,073 次 · 考試 1,948 次</span></div>
+</div>
+<p style="font-size:.8rem;color:var(--muted)">另有「剛好符合預期」練習 1,490 次、考試 774 次，單獨報告，不放進四格比較。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">二、目標格有沒有比較會賺</h2>
+<div class="takeaway"><b>「打敗＋沒漲」減「打敗＋漲」：6 個月後，練習期多賺 +1.05%，考試期變成 -0.45%。優勢在考試期消失。</b>
+練習期的 t 值 1.9，差一點才到 2（統計上常用的顯著門檻，粗略說絕對值要大於 2 才算「不太像運氣」），本來就不算確定；考試期 t 值 -0.8，就是雜訊。</div>
+
+<div id="chart-wrap" class="chart-wrap" style="height:300px;margin-top:1.1rem">
+<canvas id="chart-a"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：「打敗＋沒漲」減「打敗＋漲」的超額報酬差，練習期（2008–2017）vs 考試期（2018–2026），1／3／6 個月三個窗口。</p>
+
+<div class="scroll" style="margin-top:1rem"><table><thead><tr><th>窗口</th><th class="num">練習期價差</th><th class="num">練習期 t 值</th><th class="num">考試期價差</th><th class="num">考試期 t 值</th></tr></thead><tbody>
+<tr><td class="lbl">1 個月（20 日）</td><td class="num">-0.02%</td><td class="num">-0.11</td><td class="num">+0.10%</td><td class="num">0.48</td></tr>
+<tr><td class="lbl">3 個月（60 日）</td><td class="num">+0.87%</td><td class="num">1.84</td><td class="num">+0.06%</td><td class="num">0.10</td></tr>
+<tr><td class="lbl">6 個月（120 日）</td><td class="num">+1.05%</td><td class="num">1.91</td><td class="num">-0.45%</td><td class="num">-0.83</td></tr>
+</tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三、勝算</h2>
+<div class="takeaway"><b>贏的機率兩格幾乎一樣。6 個月後打敗 SPY 的比例：練習期都是 52.5%，考試期 44.8% 對 44.3%。</b>
+第一個月，目標格反而比較常輸——打敗 SPY 的機率少約 2 個百分點，練習期和考試期都一樣（練習期 z=-1.8、考試期 z=-2.2，z 值：兩組比例差是不是巧合的檢定，跟 t 值意義相近）。</div>
+
+<div class="scroll"><table><thead>
+<tr><th></th><th colspan="3" style="text-align:center">練習期 2008–2017</th><th colspan="3" style="text-align:center">考試期 2018–2026</th></tr>
+<tr><th>打敗 SPY 的比例</th><th class="num">1 個月</th><th class="num">3 個月</th><th class="num">6 個月</th><th class="num">1 個月</th><th class="num">3 個月</th><th class="num">6 個月</th></tr>
+</thead><tbody>
+<tr class="mine"><td class="lbl">打敗＋沒漲</td><td class="num">50.8%</td><td class="num">52.6%</td><td class="num">52.5%</td><td class="num">47.8%</td><td class="num">46.3%</td><td class="num">44.8%</td></tr>
+<tr><td class="lbl">打敗＋漲</td><td class="num">52.8%</td><td class="num">52.1%</td><td class="num">52.5%</td><td class="num">49.8%</td><td class="num">46.4%</td><td class="num">44.3%</td></tr>
+<tr><td class="lbl">全部財報</td><td class="num">50.7%</td><td class="num">51.9%</td><td class="num">51.4%</td><td class="num">48.4%</td><td class="num">45.9%</td><td class="num">44.2%</td></tr>
+</tbody></table></div>
+<p style="font-size:.87rem;color:#374151;margin-top:1rem">考試期每一格都不到 50%。這段 SPY 被幾檔超大型股撐起來，一般股票平均就輸大盤，跟財報無關。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四、財報好有沒有加分</h2>
+<div class="takeaway"><b>股價跌的時候，財報打敗或落後預期，之後的表現算不出差別。財報好沒有多給什麼。</b></div>
+<p style="font-size:.9rem;color:#374151">「打敗＋跌」減「落後＋跌」，6 個月後：練習期 <b class="num">+0.26%</b>（t=0.2），考試期 <b class="num">+1.05%</b>（t=1.2）。兩段都不到 2。
+所以就算目標格偶爾賺，多半是「跌深會反彈」，不是財報本身的功勞。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">五、四格全表——跟全部財報的平均比</h2>
+<div class="takeaway"><b>跟「全部財報的平均」比，沒有一格在練習期和考試期都穩定贏。</b>
+（跟平均比、不跟 0 比，是因為練習期全部財報平均 6 個月贏 SPY +1.62%，考試期輸 -1.45%——那是整段行情的效果，不是訊號，要先扣掉。）</div>
+
+<div class="scroll"><table><thead>
+<tr><th></th><th colspan="2" style="text-align:center">練習期 2008–2017</th><th colspan="2" style="text-align:center">考試期 2018–2026</th></tr>
+<tr><th>比全部平均多賺（t 值）</th><th class="num">3 個月</th><th class="num">6 個月</th><th class="num">3 個月</th><th class="num">6 個月</th></tr>
+</thead><tbody>
+<tr class="mine"><td class="lbl">打敗＋沒漲</td><td class="num">+0.45% <span class="t">(1.2)</span></td><td class="num">+0.59% <span class="t">(1.4)</span></td><td class="num">+0.26% <span class="t">(0.8)</span></td><td class="num">+0.10% <span class="t">(0.3)</span></td></tr>
+<tr><td class="lbl">打敗＋漲</td><td class="num">-0.42% <span class="t">(-1.7)</span></td><td class="num">-0.46% <span class="t">(-1.0)</span></td><td class="num">+0.20% <span class="t">(0.8)</span></td><td class="num" style="font-weight:700">+0.56% <span class="t">(2.2)</span></td></tr>
+<tr><td class="lbl">落後＋漲</td><td class="num">+1.14% <span class="t">(1.3)</span></td><td class="num">-0.25% <span class="t">(-0.2)</span></td><td class="num">-1.32% <span class="t">(-1.4)</span></td><td class="num">-1.81% <span class="t">(-1.3)</span></td></tr>
+<tr><td class="lbl">落後＋跌</td><td class="num">+0.36% <span class="t">(0.6)</span></td><td class="num">+0.25% <span class="t">(0.2)</span></td><td class="num">-0.32% <span class="t">(-0.6)</span></td><td class="num">-0.88% <span class="t">(-1.3)</span></td></tr>
+<tr><td class="lbl">符合預期</td><td class="num">-0.21% <span class="t">(-0.4)</span></td><td class="num">+0.54% <span class="t">(0.6)</span></td><td class="num">+0.39% <span class="t">(0.5)</span></td><td class="num">+0.29% <span class="t">(0.2)</span></td></tr>
+</tbody></table></div>
+<p style="font-size:.87rem;color:#374151;margin-top:1rem">全表只有一格 t 值過 2：考試期「打敗＋漲」6 個月（+0.56%，t=2.2）。但它在練習期是負的（-0.46%），方向前後相反，不算數。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">六、要打折的地方</h2>
+<div class="takeaway"><b>最大的缺口：這次驗的是「財報打敗預期」，不是分析師一路上修 EPS 預估的訊號。</b>兩者是相關但不同的問題形狀，結論不能直接互換。</div>
+<div class="card"><ul style="padding-left:1.2rem;font-size:.87rem;line-height:1.85;color:#374151">
+<li><b>題目跟分析師預估修正訊號不完全一樣。</b>分析師一路上修的長歷史要付費（Zacks、FactSet 這類），免費資料源只記得 90 天內的預估，本測改用「財報公布當下的驚喜」（EPS 打敗／落後預期）當訊號。</li>
+<li><b>下市公司缺資料，越早年份缺越多。</b>當年成分股裡，資料源抓得到財報事件的比例，2008 年約 58%、2017 年約 77%、2026 年約 97%——這是倖存者偏差的量化證據，不是順便看看。</li>
+<li><b>EPS 是調整後數字，偶爾有錯。</b>明顯異常的事件（驚喜幅度或 EPS 數值本身超出合理範圍）已在跑訓練期前用寫死規則剔除，規則不看結果決定去留。</li>
+<li><b>沒扣交易成本。</b>這是事件研究，不是每月換手的持續部位，先報毛報酬；扣了成本只會更差，不會更好。</li>
+<li><b>盤前、盤後的時間戳判斷已檢查過。</b>反應最大的那一天，就是程式認定的反應日，沒有觀察到系統性誤判。</li>
+</ul></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">延伸閱讀</h2>
+<div class="card" style="font-size:.87rem;line-height:1.9">
+<a href="/backtest/pead/">美股財報驚喜後漂移（PEAD）</a> —— 同一族問題的另一個切法：用季節隨機漫步（SUE）定義驚喜，驗財報後 60 個交易日的事件研究漂移，全樣本也只是勉強站上顯著門檻。<br>
+<a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值</a> —— 同一套資料層的起點研究：長期報酬靠獲利、短期靠估值。<br>
+<a href="/backtest/index_inclusion/">指數納入效應</a> —— 同系列因子研究：一個真的活到考試期還顯著的例外。
+</div>
+</div>
+
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 財報打敗但沒漲之後贏面大嗎（研究頁，不構成投資建議）
+    &middot; 資料：Yahoo Finance（yfinance）財報紀錄與還原股價，S&amp;P 500 point-in-time 歷史成分表（GitHub fja05680/sp500），日曆時間組合＋Newey-West t 檢定
+    &middot; 頁面生成 2026-09-28 &middot; 僅供研究參考，不構成投資建議
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('chart-a'), {
+  type: 'bar',
+  data: {
+    labels: ["1 個月後", "3 個月後", "6 個月後"],
+    datasets: [
+      {label: '練習 2008–2017', data: [-0.02, 0.87, 1.05], backgroundColor: '#1a56db'},
+      {label: '考試 2018–2026', data: [0.10, 0.06, -0.45], backgroundColor: '#ea580c'}
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'目標格減「打敗＋漲」的超額報酬差 (%)'} } },
+    plugins: { legend: { position: 'top' },
+      tooltip: { callbacks: { label: function(ctx){ return ctx.dataset.label + '：' + (ctx.raw>0?'+':'') + ctx.raw.toFixed(2) + '%'; } } } }
+  }
+});
+</script>
+</body>
+</html>

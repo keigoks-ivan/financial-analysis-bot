@@ -13,8 +13,8 @@ Every backtest page header renders the same groups via make_toggle(active):
                   | ma_dynband | ma_squeeze | smh_vcrash
     研究・總經：  housing_gdp
     研究・可轉債：tw_cb
-    研究・因子：  return_driver | pead | accruals | share_issuance | profitability
-                  | asset_growth | index_inclusion | insider
+    研究・因子：  return_driver | pead | pead_reaction | accruals | share_issuance
+                  | profitability | asset_growth | index_inclusion | insider
     研究・跨標的驗證： w52_oos | ins_prem | adopt_boot | regime_boot | comb_acct | slow_bear | slow_bear_onset
                   | cross_sec_trend
 
@@ -209,6 +209,7 @@ RESEARCH_OOS_LINKS = [
 RESEARCH_FACTOR_LINKS = [
     ("/backtest/return_driver/", "美股漲跌歸因：獲利與估值", "return_driver", "研究"),
     ("/backtest/pead/", "美股財報驚喜後漂移", "pead", "研究"),
+    ("/backtest/pead_reaction/", "財報打敗但沒漲，之後贏面大嗎", "pead_reaction", "研究"),
     ("/backtest/accruals/", "美股獲利品質（應計項目）", "accruals", "研究"),
     ("/backtest/share_issuance/", "美股股數增減（發行與回購）", "share_issuance", "研究"),
     ("/backtest/profitability/", "美股獲利能力因子", "profitability", "研究"),
