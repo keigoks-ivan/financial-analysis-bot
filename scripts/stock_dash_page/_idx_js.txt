@@ -331,6 +331,75 @@ function renderSec7(vm){
   document.getElementById('s7Triggers').innerHTML = '<b>觸發水位：</b>'+(M.triggers||[]).map(function(t){return t.label+' '+t.level;}).join('　');
 }
 
+// 2026-09-29：個股研究總覽（原 /t/{T}.html）併入本頁「本站研究」章節——資料獨立
+// fetch docs/t/data/{T}.json（build_ticker_hubs.py 輸出，與該 ticker hub 頁同源），
+// 找不到就顯示一行「這檔還沒有本站研究。」不擋主頁其餘章節渲染。
+var CKPT_STATUS_ZH = {ok:'正常', warning:'警示', triggered:'已觸發', unknown:'未知'};
+function renderResearchChapter(container, data){
+  if(!container) return;
+  if(!data){ container.innerHTML = '<div class="nodata">這檔還沒有本站研究。</div>'; return; }
+
+  var parts = [];
+  var ckpt = data.checkpoint || {};
+  var km = ckpt.kill_metrics || [], cats = ckpt.catalysts || [], rearm = ckpt.rearm_trigger || '';
+  if(km.length){
+    parts.push('<div class="exhibit"><div class="ex-title">證偽觸發器</div>'+
+      '<div class="tbl-wrap"><table class="imq-table"><thead><tr><th>指標</th><th>空頭門檻</th><th>窗口</th><th>狀態</th></tr></thead><tbody>'+
+      km.map(function(k){
+        return '<tr><td>'+moatEsc(k.metric||'—')+'</td><td>'+moatEsc(k.bear_threshold||'—')+'</td>'+
+          '<td>'+moatEsc(k.window||'—')+'</td><td>'+moatEsc(CKPT_STATUS_ZH[k.status]||k.status||'—')+'</td></tr>';
+      }).join('')+'</tbody></table></div></div>');
+  }
+  if(cats.length){
+    var today = new Date().toISOString().slice(0,10);
+    var sortedCats = cats.slice().sort(function(a,b){ return (a.date||'') < (b.date||'') ? -1 : 1; });
+    parts.push('<div class="exhibit"><div class="ex-title">催化劑</div>'+
+      '<div class="tbl-wrap"><table class="imq-table"><thead><tr><th>日期</th><th>事件</th><th>影響</th></tr></thead><tbody>'+
+      sortedCats.map(function(c){
+        var past = c.date && c.date < today;
+        return '<tr'+(past?' style="opacity:.55"':'')+'><td>'+moatEsc(c.date||'—')+
+          (past?'（已過）':'')+'</td><td>'+moatEsc(c.event||'—')+'</td><td>'+moatEsc(c.impact||'')+'</td></tr>';
+      }).join('')+'</tbody></table></div></div>');
+  }
+  if(rearm){
+    parts.push('<div class="exhibit"><div class="ex-title">再武裝條件</div>'+
+      '<p style="font-size:12.5px;color:var(--body)">'+moatEsc(rearm)+'</p></div>');
+  }
+
+  var lists = data.lists || {};
+  function listBlock(title, rows, cols, rowFn){
+    if(!rows || !rows.length) return '';
+    return '<div class="exhibit"><div class="ex-title">'+title+'（'+rows.length+' 筆）</div>'+
+      '<div class="tbl-wrap"><table class="imq-table"><thead><tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr></thead><tbody>'+
+      rows.map(rowFn).join('')+'</tbody></table></div></div>';
+  }
+  parts.push(listBlock('個股研究', lists.dd, ['日期','報告','裁決'], function(r){
+    return '<tr><td>'+moatEsc(r.date||'—')+'</td><td><a href="'+moatEsc(r.path)+'">'+
+      (r.brief?'DD 快速版':'DD 報告')+'</a>'+(r.era?'　'+moatEsc(r.era):'')+'</td><td>'+
+      moatEsc(r.verdict&&r.verdict!=='—'?r.verdict:'—')+'</td></tr>';
+  }));
+  parts.push(listBlock('所屬產業研究', lists.id, ['日期','主題','供需 / 時鐘'], function(r){
+    var sub = [];
+    if(r.sd_verdict) sub.push('供需 '+r.sd_verdict);
+    if(r.clock_phase) sub.push('時鐘 '+r.clock_phase);
+    return '<tr><td>'+moatEsc(r.date||'—')+'</td><td><a href="'+moatEsc(r.path)+'">'+moatEsc(r.theme)+'</a></td><td>'+moatEsc(sub.join(' · '))+'</td></tr>';
+  }));
+  parts.push(listBlock('供應鏈位置', lists.supply_chain, ['主題','節點'], function(r){
+    return '<tr><td><a href="'+moatEsc(r.path)+'">'+moatEsc(r.title)+'</a></td><td>'+moatEsc((r.nodes||[]).slice(0,6).join('、'))+'</td></tr>';
+  }));
+  parts.push(listBlock('對比研究', lists.comparisons, ['日期','對比'], function(r){
+    var others = (r.tickers||[]).filter(function(t){ return t!==data.ticker; }).join('、');
+    return '<tr><td>'+moatEsc(r.date||'—')+'</td><td><a href="'+moatEsc(r.path)+'">多股對比'+(others?'（vs '+moatEsc(others)+'）':'')+'</a></td></tr>';
+  }));
+  parts.push(listBlock('期望落差綜合', lists.synthesis, ['日期','報告'], function(r){
+    return '<tr><td>'+moatEsc(r.date||'—')+'</td><td><a href="'+moatEsc(r.path)+'">期望落差綜合研判</a></td></tr>';
+  }));
+
+  var html = parts.join('');
+  if(!html){ container.innerHTML = '<div class="nodata">這檔還沒有本站研究。</div>'; return; }
+  container.innerHTML = html + '<div class="ex-src">資料來源：/t/data/'+moatEsc(data.ticker)+'.json（個股 DD／所屬產業 ID／供應鏈位置／對比研究／期望落差綜合研判聚合）</div>';
+}
+
 // 2026-09-29 持有人拍板接回研究報告（選 A）：首屏右欄一個小框，只放研究當天的判斷
 // ＋連結。資料來自 judgment_core.dd_screener_fields（dd-screener latest.json 原樣帶出）。
 // ev5y_pct 在 dd-screener 是五年期望報酬換算成每年（研究報告本身寫五年累計），所以標「每年」。
@@ -411,4 +480,15 @@ Promise.all([
   document.getElementById('coverLeft').innerHTML =
     '<span class="nm">找不到 ' + TICKER + ' 的資料（' + err.message + '）。' +
     '請先執行 <code>python3.12 scripts/build_stock_dash.py ' + TICKER + '</code>。</span>';
+});
+
+// 「本站研究」獨立 fetch——與主頁資料源不同（/t/data/ 是 build_ticker_hubs.py 輸出），
+// 不進上面的 Promise.all，缺資料或抓取失敗都不擋主頁其餘章節。
+fetch('/t/data/' + TICKER + '.json').then(function(r){
+  if(!r.ok) throw new Error('http '+r.status);
+  return r.json();
+}).then(function(d){
+  renderResearchChapter(document.getElementById('researchBody'), d);
+}).catch(function(){
+  renderResearchChapter(document.getElementById('researchBody'), null);
 });

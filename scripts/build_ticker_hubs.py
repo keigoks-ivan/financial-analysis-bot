@@ -489,6 +489,96 @@ def normalize_punct(text):
     return _CJK_HALF_PUNCT.sub(lambda m: m.group(1) + _PUNCT_MAP[m.group(2)], text)
 
 
+def build_ticker_data(ticker, dd_rows, cur, ids, sc, comps, syns):
+    """`docs/t/data/{T}.json`——與 render_ticker_page 同一批來源，結構化輸出供
+    /stock-dash/ 的「本站研究」章節 fetch。與頁面內容同源、每次重生皆決定性。"""
+    verdict = None
+    oneliner = ""
+    kill_metrics, catalysts, rearm = [], [], ""
+    if cur:
+        verdict = {"verdict": cur["verdict"], "era": cur["era"],
+                   "date": cur["date"], "path": cur["path"]}
+        meta = cur["meta"] or {}
+        oneliner = normalize_punct(meta.get("oneliner") or "")
+        for km in (meta.get("kill_metrics") or []):
+            kill_metrics.append({
+                "metric": km.get("metric") or "",
+                "bear_threshold": km.get("bear_threshold") or "",
+                "window": km.get("window") or "",
+                "status": km.get("last_status") or "",
+            })
+        for c in (meta.get("catalysts") or []):
+            catalysts.append({
+                "date": c.get("date") or "",
+                "event": c.get("event") or "",
+                "impact": c.get("impact") or "",
+            })
+        rearm = normalize_punct((meta.get("rearm_trigger") or "").strip())
+
+    return {
+        "ticker": ticker,
+        "oneliner": oneliner,
+        "verdict": verdict,
+        "checkpoint": {
+            "kill_metrics": kill_metrics,
+            "catalysts": catalysts,
+            "rearm_trigger": rearm,
+        },
+        "lists": {
+            "dd": [
+                {"date": r["date"], "path": r["path"], "verdict": r["verdict"],
+                 "era": r["era"], "brief": bool(r.get("brief"))}
+                for r in dd_rows
+            ],
+            "id": [
+                {"date": r["date"], "theme": r["theme"], "path": r["path"],
+                 "sd_verdict": r.get("sd_verdict"), "clock_phase": r.get("clock_phase")}
+                for r in ids
+            ],
+            "supply_chain": [
+                {"topic_id": r["topic_id"], "title": r["title"],
+                 "path": "/supply-chain/{0}.html".format(r["topic_id"]), "nodes": r["nodes"]}
+                for r in sc
+            ],
+            "comparisons": [
+                {"date": r["date"], "path": r["path"], "tickers": r["tickers"]}
+                for r in comps
+            ],
+            "synthesis": [
+                {"date": r["date"], "path": r["path"]}
+                for r in syns
+            ],
+        },
+    }
+
+
+def render_redirect_stub(ticker):
+    """個股研究併入 /stock-dash/ 後，in-universe ticker 的 docs/t/{T}.html 只留
+    導轉樁（保留既有 URL，見 ~670 份 DD 頁與站內 nav／search index 的外部連結）。"""
+    target = "/stock-dash/?t={0}#research".format(ticker)
+    return """<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="0; url={target}">
+<link rel="canonical" href="{target}">
+<title>{ticker} 個股研究總覽 — InvestMQuest Research</title>
+<meta name="description" content="{ticker} 的個股研究總覽已併入個股儀表板「本站研究」章節。">
+<meta name="robots" content="noindex">
+<script>
+(function(){{
+  location.replace({target_js});
+}})();
+</script>
+</head>
+<body>
+<p>這一頁已經併入 <a href="{target}">個股儀表板</a>，正在自動跳轉…</p>
+</body>
+</html>
+""".format(target=esc(target), ticker=esc(ticker), target_js=json.dumps(target))
+
+
 def render_ticker_page(ticker, dd_rows, cur, ids, sc, comps, syns, stock, as_of):
     oneliner = ""
     if cur and cur["meta"]:
@@ -588,9 +678,11 @@ def render_ticker_page(ticker, dd_rows, cur, ids, sc, comps, syns, stock, as_of)
     return "\n".join(parts) + "\n"
 
 
-def render_overview_body(universe_sorted, dd_by_ticker, cur_by_ticker):
+def render_overview_body(universe_sorted, dd_by_ticker, cur_by_ticker, dash_universe):
     """總覽分頁本體（filterable ticker grid）— 2026-08-20 起做為 /t/ 主控台
-    Tab 1（總覽）內嵌內容；獨立、不含 page_head/FOOTER，方便被 console 殼包住。"""
+    Tab 1（總覽）內嵌內容；獨立、不含 page_head/FOOTER，方便被 console 殼包住。
+    2026-09-29：dash_universe 內的 ticker（已併入 stock-dash）卡片直連
+    /stock-dash/?t={T}#research，不再連 /t/{T}.html（該頁只剩導轉樁）。"""
     total_reports = sum(len(dd_by_ticker[t]) for t in universe_sorted)
     n_verdict = sum(1 for t in universe_sorted
                     if cur_by_ticker.get(t) and cur_by_ticker[t]["era"] == "裁決")
@@ -619,8 +711,9 @@ def render_overview_body(universe_sorted, dd_by_ticker, cur_by_ticker):
             chip = verdict_chip(cur["verdict"], "")
         else:
             chip = '<span class="chip muted">—</span>'
+        href = f"/stock-dash/?t={esc(t)}#research" if t in dash_universe else f"/t/{esc(t)}.html"
         cards.append(
-            f'<a class="tcard" data-tk="{esc(t.upper())}" href="/t/{esc(t)}.html">'
+            f'<a class="tcard" data-tk="{esc(t.upper())}" href="{href}">'
             f'<div class="tk">{esc(t)}</div>'
             f'<div class="meta">{chip}<span class="rc">{n} 份</span></div></a>'
         )
@@ -727,14 +820,14 @@ CONSOLE_JS = """
 """
 
 
-def render_index(universe_sorted, dd_by_ticker, cur_by_ticker, cov_counts):
+def render_index(universe_sorted, dd_by_ticker, cur_by_ticker, cov_counts, dash_universe):
     """個股研究主控台（/t/index.html）— 4 分頁：總覽（inline）／DD 清單／多股對比／
     期望落差（三者皆 iframe 嵌入對應 _body.html 分頁片段）。2026-08-20 研究區整併第一階段。"""
     head = page_head(
         "個股研究主控台 — InvestMQuest Research",
         "按 ticker 聚合 InvestMQuest 站內全部個股研究：總覽／DD 清單／多股對比／期望落差綜合研判，四分頁單一入口。",
     )
-    overview_body = render_overview_body(universe_sorted, dd_by_ticker, cur_by_ticker)
+    overview_body = render_overview_body(universe_sorted, dd_by_ticker, cur_by_ticker, dash_universe)
 
     parts = [head]
     parts.append(f'<style>{CONSOLE_CSS}</style>')
@@ -783,29 +876,61 @@ def main():
     cur_by_ticker = universe_meta  # newest-with-meta row per ticker
     universe_sorted = sorted(universe, key=lambda s: s.upper())
 
+    # 2026-09-29：個股研究併入 /stock-dash/——hub ticker 若在 dd-screener 母體
+    # （stock-dash 每日資料管線的母體）內，/t/{T}.html 降為導轉樁；不在母體的
+    # ticker（尚無 stock-dash 資料）維持原本完整 hub 頁不動。先印出集合差異，
+    # 人工核對有沒有拼字/大小寫這類需要另外處理的落差。
+    dash_universe = set(stocks.keys())
+    hub_not_in_dash = sorted(universe - dash_universe)
+    print(f"hub tickers        : {len(universe_sorted)}")
+    print(f"dash universe      : {len(dash_universe)} (docs/dd-screener/latest.json stocks[])")
+    print(f"hub tickers kept full (not in dash universe): {len(hub_not_in_dash)}")
+    if hub_not_in_dash:
+        print("  " + ", ".join(hub_not_in_dash))
+    else:
+        print("  (none — 全部 hub ticker 都在 dash 母體內，無拼字/大小寫落差需處理)")
+
     # clean regenerate of docs/t/
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True, exist_ok=True)
+    DATA_DIR = OUT / "data"
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+    redirected, kept = 0, 0
     for t in universe_sorted:
-        html_str = render_ticker_page(
-            t, dd_by_ticker[t], cur_by_ticker.get(t),
-            ids.get(t, []), sc.get(t, []), comps.get(t, []), syns.get(t, []),
-            stocks.get(t), as_of,
+        dd_rows, cur = dd_by_ticker[t], cur_by_ticker.get(t)
+        t_ids, t_sc, t_comps, t_syns = ids.get(t, []), sc.get(t, []), comps.get(t, []), syns.get(t, [])
+
+        data = build_ticker_data(t, dd_rows, cur, t_ids, t_sc, t_comps, t_syns)
+        (DATA_DIR / f"{t}.json").write_text(
+            json.dumps(data, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
         )
+
+        if t in dash_universe:
+            html_str = render_redirect_stub(t)
+            redirected += 1
+        else:
+            html_str = render_ticker_page(
+                t, dd_rows, cur, t_ids, t_sc, t_comps, t_syns, stocks.get(t), as_of,
+            )
+            kept += 1
         (OUT / f"{t}.html").write_text(html_str, encoding="utf-8")
 
     cov_counts = {}
     (OUT / "index.html").write_text(
-        render_index(universe_sorted, dd_by_ticker, cur_by_ticker, cov_counts),
+        render_index(universe_sorted, dd_by_ticker, cur_by_ticker, cov_counts, dash_universe),
         encoding="utf-8",
     )
 
     total_bytes = sum(f.stat().st_size for f in OUT.glob("*.html"))
+    data_bytes = sum(f.stat().st_size for f in DATA_DIR.glob("*.json"))
     print(f"tickers            : {len(universe_sorted)}")
     print(f"pages (incl index) : {len(universe_sorted) + 1}")
+    print(f"  redirect stubs (in dash universe) : {redirected}")
+    print(f"  full hub pages (not in dash universe): {kept}")
     print(f"docs/t total size  : {total_bytes/1024:.1f} KB")
+    print(f"docs/t/data total size: {data_bytes/1024:.1f} KB")
     print(f"ids covered        : {len(ids)} tickers have >=1 ID theme")
     print(f"supply-chain covered: {len(sc)} tickers appear in a map")
     print(f"comparisons covered: {len(comps)} tickers")
@@ -816,7 +941,8 @@ def main():
     for ex in ("NVDA", "TSM", "2330.TW"):
         if ex in universe:
             print(f"  [{ex}] DD={len(dd_by_ticker[ex])} ID={len(ids.get(ex,[]))} "
-                  f"SC={len(sc.get(ex,[]))} CMP={len(comps.get(ex,[]))} SYN={len(syns.get(ex,[]))}")
+                  f"SC={len(sc.get(ex,[]))} CMP={len(comps.get(ex,[]))} SYN={len(syns.get(ex,[]))} "
+                  f"in_dash={ex in dash_universe}")
         else:
             print(f"  [{ex}] not in universe")
 

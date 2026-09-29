@@ -4980,6 +4980,8 @@ def _finish_file_set(ticker, date, file_cell, include_sync=True):
             PICKS_CANDIDATES_PATH,
             TICKER_HUB_DIR / "{0}.html".format(ticker),
             TICKER_HUB_DIR / "index.html",
+            # 2026-09-29：/stock-dash/「本站研究」章節讀的資料檔，與 ticker hub 頁同批重生
+            TICKER_HUB_DIR / "data" / "{0}.json".format(ticker),
         ])
     return files
 
@@ -5922,6 +5924,7 @@ def _sync_batch_site(rows, date, no_push=False, skip_dd_screener=False):
     if not skip_dd_screener:
         files.append(DD_SCREENER_LATEST_PATH)
     files.extend(TICKER_HUB_DIR / "{0}.html".format(t) for t in tickers)
+    files.extend(TICKER_HUB_DIR / "data" / "{0}.json".format(t) for t in tickers)
     existing_files = [f for f in files if Path(f).exists()]
     add_r = _git(["add"] + [str(f) for f in existing_files])
     if add_r.returncode != 0:

@@ -4,7 +4,8 @@
 只測本輪新增的東西：
 - `index-row`：從一份含 dd-meta＋`<p class="sub…">` 的 HTML 生出 INDEX.md 八欄一列。
 - append 冪等：同一份檔名（file_cell）重複 append 不重複。
-- `finish` 的 commit 檔案集白名單：只 stage 七類白名單檔（含 docs/t/ 樞紐頁）（`_git` 全程 monkeypatch，
+- `finish` 的 commit 檔案集白名單：只 stage 八類白名單檔（含 docs/t/ 樞紐頁與 docs/t/data/ 資料檔，
+  2026-09-29 個股研究併入 /stock-dash/ 後新增）（`_git` 全程 monkeypatch，
   不碰真實 git）。
 - 遠端領先時 `finish` 回傳 exit code 2、且不呼叫 push。
 
@@ -339,6 +340,45 @@ def test_finish_commit_file_whitelist_and_push(tmp_path, monkeypatch):
 
     # update_dd_index.py 有被呼叫（透過假 subprocess.run）
     assert any("update_dd_index.py" in " ".join(c) for c in sub_calls)
+
+
+def test_finish_commit_stages_ticker_hub_data_json_when_present(tmp_path, monkeypatch):
+    """2026-09-29：個股研究併入 /stock-dash/ 後，build_ticker_hubs.py 額外輸出
+    docs/t/data/{T}.json（該頁「本站研究」章節讀的資料檔）。這份跟 docs/t/{T}.html
+    是同一批重生，假 repo 內先模擬 build_ticker_hubs.py 已經跑過並落了這兩個檔，
+    `finish` 的白名單必須把它們一起 stage，不能只 stage html 漏掉 json。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    _make_run_dir(paths, ticker, date, html_path)
+
+    hub_html = paths["hub_dir"] / "{0}.html".format(ticker)
+    hub_html.write_text("<div>redirect stub</div>", encoding="utf-8")
+    hub_data_dir = paths["hub_dir"] / "data"
+    hub_data_dir.mkdir(parents=True)
+    hub_data_json = hub_data_dir / "{0}.json".format(ticker)
+    hub_data_json.write_text("{}", encoding="utf-8")
+
+    git_calls = []
+
+    def _fake_git(args, cwd=None):
+        git_calls.append(list(args))
+        return _FakeCompleted(0, "", "")
+
+    monkeypatch.setattr(ddreport, "_git", _fake_git)
+    monkeypatch.setattr(ddreport, "_git_ahead_behind", lambda: (0, 0))
+    monkeypatch.setattr(
+        ddreport.subprocess, "run", lambda cmd, *a, **k: _FakeCompleted(0, "", ""))
+
+    rc = ddreport._do_finish(ticker, date)
+    assert rc == 0
+
+    add_calls = [c for c in git_calls if c[0] == "add"]
+    assert len(add_calls) == 1
+    staged = set(add_calls[0][1:])
+    assert str(hub_html) in staged
+    assert str(hub_data_json) in staged
 
 
 def test_finish_sync_later_commits_report_without_rebuilding_site(tmp_path, monkeypatch):
