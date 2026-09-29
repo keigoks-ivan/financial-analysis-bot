@@ -283,33 +283,40 @@ def build_html(data, result):
     lines = ['<div class="sec-irr">', "<table>", (
         "<tr><th>情境</th><th>終端 EPS</th><th>終端倍數</th><th>5Y 目標價</th>"
         "<th>5Y%</th><th>不含息 IRR</th><th>EPS 貢獻</th><th>re-rate</th>"
-        "<th>股息回購</th><th>含息合計</th><th>機率</th><th>依據</th></tr>"
+        "<th>股息回購</th><th>含息合計</th><th>機率</th></tr>"
     )]
+    # 2026-09-29：「依據」長文字移到表下條列——v19 版面表格是 table-layout:fixed
+    # 等寬欄，一大段文字塞進 120px 欄會把整列撐到四百多 px 高（MRK／LULU 截圖）。
+    basis_items = []
     for k, label in (("bull", "Bull"), ("base", "Base"), ("bear", "Bear")):
         r = rows[k]
         basis = html_lib.escape(str(r.get("basis", "")))
+        if basis:
+            basis_items.append("<li><strong>{0}</strong>：{1}</li>".format(label, basis))
         lines.append(
             "<tr><td>{label}</td><td>{eps:.2f}（{term}）</td><td>{pe:.1f}x</td>"
             "<td>{price}</td><td>{p5y}</td><td>{irr}</td><td>{eps_c}</td>"
-            "<td>{rr}</td><td>{yld}</td><td>{incl}</td><td>{p}%</td><td>{basis}</td></tr>".format(
+            "<td>{rr}</td><td>{yld}</td><td>{incl}</td><td>{p}%</td></tr>".format(
                 label=label, eps=r["terminal_eps"], term=terminal_label,
                 pe=r["terminal_pe"], price=_fmt_price(r["terminal_price"]),
                 p5y=_fmt_pct(r["five_y_pct"]), irr=_fmt_pct(r["irr_ex_div"], "/yr"),
                 eps_c=_fmt_pct(r["eps_contrib"], "/yr"), rr=_fmt_pct(r["rerate_contrib"], "/yr"),
                 yld=_fmt_pct(r["yield_total"], "/yr"), incl=_fmt_pct(r["incl_div_total"], "/yr"),
-                p=r["p"], basis=basis,
+                p=r["p"],
             )
         )
     ar_str = f"{result['ar']:.1f}" if result["ar"] is not None else "N/A"
     lines.append(
         "<tr><td><strong>機率加權</strong></td><td></td><td></td><td></td>"
         "<td><strong>EV {ev}</strong></td><td><strong>{ann}</strong></td>"
-        "<td></td><td></td><td></td><td></td><td>100%</td>"
-        "<td>AR={ar}</td></tr>".format(
-            ev=_fmt_pct(result["ev5y_pct"]), ann=_fmt_pct(result["ev_annualized_pct"], "/yr"), ar=ar_str,
+        "<td></td><td></td><td></td><td></td><td>100%</td></tr>".format(
+            ev=_fmt_pct(result["ev5y_pct"]), ann=_fmt_pct(result["ev_annualized_pct"], "/yr"),
         )
     )
     lines.append("</table>")
+    lines.append('<p class="mach">AR={0}</p>'.format(ar_str))
+    if basis_items:
+        lines.append('<ul class="pts">' + "".join(basis_items) + "</ul>")
     if result["ten_y"]:
         lines.append("<table>")
         lines.append("<tr><th>情境（10Y）</th><th>第二段 CAGR</th><th>EPS10</th><th>10Y 倍數</th><th>10Y IRR</th></tr>")

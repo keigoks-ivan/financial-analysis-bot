@@ -52,6 +52,9 @@ MARKER_BLOCK_RE = re.compile(
 )
 
 NAV_HEADER_RE = re.compile(r'<header class="imq-nav-root"[^>]*>.*?</header>', re.S)
+# v19 版面（側欄目錄＋正文兩欄）：導讀塊放正文欄最上方，跟內文對齊；放在
+# 導覽列後面會落在兩欄框外、自己置中，跟正文錯開（2026-09-29 持有人截圖）。
+V19_MAIN_RE = re.compile(r'<main class="page">', re.S)
 BODY_TAG_RE = re.compile(r"<body[^>]*>", re.S)
 HEAD_CLOSE_RE = re.compile(r"</head>", re.S)
 FIRST_STYLE_CLOSE_RE = re.compile(r"</style>", re.S)
@@ -186,6 +189,9 @@ FAMILIES = {
 
 def find_anchor(html: str):
     """回傳 (insert_pos, anchor_kind) 或 (None, None)。"""
+    m = V19_MAIN_RE.search(html)
+    if m:
+        return m.end(), "v19-main"
     m = NAV_HEADER_RE.search(html)
     if m:
         return m.end(), "nav-header"
@@ -212,6 +218,15 @@ def process_file(path: Path, family: str, template_fn, dry_run: bool):
     full_block = MARKER_START + "\n" + block + "\n" + MARKER_END + "\n"
 
     existing = MARKER_BLOCK_RE.search(html)
+    v19_main = V19_MAIN_RE.search(html)
+    if existing and v19_main and existing.start() < v19_main.start():
+        # 舊位置在正文欄外：拿掉後改插到正文欄最上方
+        html_wo = html[: existing.start()] + html[existing.end() :]
+        pos, anchor_kind = find_anchor(html_wo)
+        new_html = html_wo[:pos] + "\n" + full_block + html_wo[pos:]
+        if not dry_run:
+            path.write_text(new_html, encoding="utf-8")
+        return "reinject", "moved-into-v19-main"
     if existing:
         new_html = html[: existing.start()] + full_block + html[existing.end() :]
         if new_html == html:
