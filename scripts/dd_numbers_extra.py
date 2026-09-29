@@ -8,6 +8,9 @@
   numbers.valuation_history      — trailing P/E／P/S／EV/S 五年高低點與現值分位（誠實口徑：
                                     yfinance 免費層無歷史 fwd 共識，能算的一律標「trailing 口徑」；
                                     另用本地 data/eps-estimates/ 快照archive 算一段短窗真 fwd PE）
+  numbers.financial_history      — 近 3-4 個會計年度真序列（營收／營收年增%／毛利率%／營益率%／
+                                    淨利／稀釋EPS／FCF／FCF利潤率%，舊到新），幣別＝財報申報幣別
+                                    （2026-09-29 H2-6 新增；供 §7 e9b 財務歷史表用，不是估值倍數）
   numbers.momentum_26w           — 13w／26w 報酬、相對大盤超額、RSI14、rsi14_usable（52週新高
                                     3% 以內為 false）、距 52 週高低點 %
   numbers.consensus_revision     — 用 data/eps-estimates/ 最新與前一份（及約 90 天前）快照
@@ -242,6 +245,115 @@ def compute_valuation_history(ticker, date_dt):
 
     except Exception as e:
         out["note"] = ((out["note"] + "；") if out.get("note") else "") + f"整體計算失敗：{e}"
+    return out
+
+
+# ---------------------------------------------------------------------------
+# numbers.financial_history（2026-09-29 H2-6 重做：真年度財務序列，供 §7 e9b
+# 財務歷史表用；與 valuation_history 的估值倍數／_ttm_financials 的 TTM 利潤率
+# 是不同的東西，不互相取代——前者是「過去幾年財報長什麼樣」，本區塊是「過去
+# 幾年財報長什麼樣」的正確位置，valuation_history 只該回答估值倍數貴不貴）。
+# ---------------------------------------------------------------------------
+
+_FIN_HISTORY_MAX_YEARS = 4
+
+
+def compute_financial_history(ticker, date_dt, max_years=_FIN_HISTORY_MAX_YEARS):
+    """近 max_years 個會計年度的財務歷史（年度 income_stmt／cashflow，非 TTM、
+    非估值倍數）：營收、營收年增%、毛利率%、營益率%、淨利、稀釋每股盈餘、
+    自由現金流（營業現金流 − capex）、FCF 利潤率%，舊到新排列。
+
+    幣別＝該公司財報申報幣別（yfinance info.financialCurrency）；ADR（如 TSM
+    以 TWD 申報）逐檔記錄在 currency 欄，render 端會標註，不與美元股價/估值
+    倍數混用。任何一年任何一欄算不出來就是 None，不補算、不用其他年度插值；
+    整體抓取失敗時 years=[] 並在 note 說明原因。"""
+    out = {
+        "ticker": ticker,
+        "currency": None,
+        "years": [],
+        "method": (
+            f"年度財報（yfinance annual income_stmt／cashflow，非 TTM），最近 "
+            f"{max_years} 個會計年度、舊到新排列；FCF＝Operating Cash Flow + "
+            "Capital Expenditure（yfinance 的 Capital Expenditure 本身已為負值，"
+            "相加即等於「營業現金流−資本支出」）。"
+        ),
+        "source": "yfinance income_stmt／cashflow（annual）",
+        "note": None,
+    }
+    try:
+        np, pd, yf = _lazy_imports()
+        t = yf.Ticker(ticker)
+        try:
+            info = t.info or {}
+        except Exception:
+            info = {}
+        out["currency"] = info.get("financialCurrency")
+
+        ais = None
+        cf = None
+        try:
+            ais = t.income_stmt
+        except Exception:
+            pass
+        try:
+            cf = t.cashflow
+        except Exception:
+            pass
+
+        if ais is None or ais.empty or "Total Revenue" not in ais.index:
+            out["note"] = "income_stmt 無 Total Revenue，無法建立年度序列"
+            return out
+
+        def _row(df, name, col):
+            if df is None or df.empty or name not in df.index or col not in df.columns:
+                return None
+            v = df.loc[name, col]
+            if v is None or (hasattr(v, "__float__") and pd.isna(v)):
+                return None
+            return float(v)
+
+        # ais.columns 由 yfinance 回傳時已是新到舊排序；只挑「Total Revenue 有值」
+        # 的年度，避免最後一欄常見的全 NaN 佔位年度混進序列。
+        cols_desc = [c for c in ais.columns if _row(ais, "Total Revenue", c) is not None]
+        cols_chrono = list(reversed(cols_desc[:max_years]))  # 舊到新
+
+        years = []
+        prev_rev = None
+        for col in cols_chrono:
+            rev = _row(ais, "Total Revenue", col)
+            gp = _row(ais, "Gross Profit", col)
+            opinc = _row(ais, "Operating Income", col)
+            ni = _row(ais, "Net Income", col)
+            eps = _row(ais, "Diluted EPS", col)
+            ocf = _row(cf, "Operating Cash Flow", col)
+            capex = _row(cf, "Capital Expenditure", col)
+            fcf = (ocf + capex) if (ocf is not None and capex is not None) else None
+
+            yoy = None
+            if rev is not None and prev_rev not in (None, 0):
+                yoy = round((rev / prev_rev - 1) * 100, 2)
+
+            years.append({
+                "fiscal_year_end": col.strftime("%Y-%m-%d"),
+                "revenue": rev,
+                "revenue_yoy_pct": yoy,
+                "gross_margin_pct": round(gp / rev * 100, 2) if (rev and gp is not None) else None,
+                "operating_margin_pct": round(opinc / rev * 100, 2) if (rev and opinc is not None) else None,
+                "net_income": ni,
+                "diluted_eps": eps,
+                "free_cash_flow": fcf,
+                "fcf_margin_pct": round(fcf / rev * 100, 2) if (rev and fcf is not None) else None,
+            })
+            if rev is not None:
+                prev_rev = rev
+
+        out["years"] = years
+        if not years:
+            out["note"] = "Total Revenue 各年度皆缺失，無法建立序列"
+        elif len(years) < 3:
+            out["note"] = f"僅 {len(years)} 個會計年度可得（yfinance 免費層通常回溯 4-5 年）"
+    except Exception as e:
+        out["note"] = f"擷取失敗：{e}"
     return out
 
 
@@ -847,6 +959,9 @@ def main(argv):
 
     print("  -> valuation_history ...", file=sys.stderr)
     numbers["valuation_history"] = compute_valuation_history(args.ticker, date_dt)
+
+    print("  -> financial_history ...", file=sys.stderr)
+    numbers["financial_history"] = compute_financial_history(args.ticker, date_dt)
 
     print("  -> momentum_26w ...", file=sys.stderr)
     idx_benchmark = None

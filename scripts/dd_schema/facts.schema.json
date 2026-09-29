@@ -116,6 +116,40 @@
       }
     },
 
+    "financial_history": {
+      "type": "object",
+      "description": "2026-09-29（H2-6 重做）：§7 e9b 的三到四年財務歷史（真年度序列，不是估值倍數／TTM 利潤率）。scripts/dd_numbers_extra.py::compute_financial_history() 讀 yfinance 年度 income_stmt／cashflow 算好 evidence.numbers.financial_history；dd_facts.py::build_financial_history() 原樣搬進來，逐年附 source ref。currency＝財報申報幣別（yfinance info.financialCurrency；ADR 如 TSM 可能非美元，render 端會在表尾註明，不與美元股價/估值倍數混用）。沒有序列時不寫這個鍵（呼叫端印資料缺口）。",
+      "required": ["years"],
+      "properties": {
+        "ticker": {"type": ["string", "null"]},
+        "currency": {"type": ["string", "null"], "description": "財報申報幣別（如 USD／TWD），非市場報價幣別。"},
+        "method": {"type": ["string", "null"]},
+        "source": {"type": ["string", "null"]},
+        "note": {"type": ["string", "null"]},
+        "years": {
+          "type": "array",
+          "minItems": 1,
+          "description": "舊到新排列，每筆一個會計年度。",
+          "items": {
+            "type": "object",
+            "required": ["fiscal_year_end", "source"],
+            "properties": {
+              "fiscal_year_end": {"type": "string"},
+              "revenue": {"type": ["number", "null"]},
+              "revenue_yoy_pct": {"type": ["number", "null"]},
+              "gross_margin_pct": {"type": ["number", "null"]},
+              "operating_margin_pct": {"type": ["number", "null"]},
+              "net_income": {"type": ["number", "null"]},
+              "diluted_eps": {"type": ["number", "null"]},
+              "free_cash_flow": {"type": ["number", "null"]},
+              "fcf_margin_pct": {"type": ["number", "null"]},
+              "source": {"$ref": "#/definitions/source"}
+            }
+          }
+        }
+      }
+    },
+
     "gaps": {
       "type": "array",
       "description": "整份查不到、但判斷需要的東西（軸級或題級皆可）。缺口要被看見，不得以「未提及」帶過。",

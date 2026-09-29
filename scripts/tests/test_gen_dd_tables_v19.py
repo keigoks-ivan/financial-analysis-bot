@@ -232,6 +232,110 @@ def test_legacy_e7_e8_are_empty_for_v19_shape_documenting_the_gap(view):
 
 
 # ---------------------------------------------------------------------------
+# §7 財務歷史表（e9b）：判斷者 quality.three_year 優先，缺席時機械後備讀
+# facts.financial_history（真年度序列——營收/毛利率/營益率/淨利/EPS/FCF，
+# 2026-09-29 H2-6 重做，見 gen_dd_tables._v19_financials_from_history 的說明。
+# 第一版曾用估值倍數＋TTM 利潤率頂替，因「不是財務歷史、且高低點與現值不同
+# 基期會互相矛盾」被打回，故改讀 dd_numbers_extra.compute_financial_history()
+# 算好、經 dd_facts.build_financial_history() 原樣搬進 facts.json 的年度序列）
+# ---------------------------------------------------------------------------
+
+def test_financials_uses_judgment_three_year_when_present(view):
+    """判斷者有給 quality.three_year 時照舊渲染，不受 facts 是否存在影響——
+    FIX fixture 的 three_year 帶 Q2_2025/Q2_2026/FY2022/FY2025 動態欄。"""
+    html = gdt.render_v19_financials_html(view)
+    assert 'id="e9b"' in html
+    assert "Q2_2026" in html
+    assert "資料缺口" not in html
+
+
+def _fh_fixture(currency="USD"):
+    # 營收/淨利/自由現金流用真實量級（原始美元），驗證表格會換算成「億」
+    # 而不是印一串不可讀的千分位原始數字（2026-09-29 可讀性修正）。
+    return {"financial_history": {
+        "ticker": "TEST", "currency": currency,
+        "source": "yfinance income_stmt／cashflow（annual）",
+        "years": [
+            {"fiscal_year_end": "2023-12-31", "revenue": 100_000_000_000.0, "revenue_yoy_pct": None,
+             "gross_margin_pct": 60.0, "operating_margin_pct": 20.0, "net_income": 15_000_000_000.0,
+             "diluted_eps": 1.5, "free_cash_flow": 12_000_000_000.0, "fcf_margin_pct": 12.0,
+             "source": {"ref": "numbers.financial_history.years[0]"}},
+            {"fiscal_year_end": "2024-12-31", "revenue": 110_000_000_000.0, "revenue_yoy_pct": 10.0,
+             "gross_margin_pct": 61.0, "operating_margin_pct": 21.0, "net_income": 18_000_000_000.0,
+             "diluted_eps": 1.8, "free_cash_flow": 14_000_000_000.0, "fcf_margin_pct": 12.73,
+             "source": {"ref": "numbers.financial_history.years[1]"}},
+        ],
+    }}
+
+
+def test_financials_fallback_from_facts_financial_history_real_series():
+    """quality.three_year 缺席（v19 判斷檔常態）時，改讀 facts.financial_history
+    的年度序列（年份當欄、指標當列，舊到新）——這是真的多年度財報數字，不是
+    估值倍數，且現值與『高低點』不會出現矛盾（本表根本沒有高低點欄）。"""
+    j = {"quality": {}}
+    html = gdt.render_v19_financials_html(j, _fh_fixture())
+    assert 'id="e9b"' in html
+    assert "資料缺口" not in html
+    # 年份當欄：兩個會計年度都出現在表頭。
+    assert "2023-12-31" in html and "2024-12-31" in html
+    # 指標當列，數字對得上 fixture——營收/淨利/FCF 換算成「億」一位小數
+    # （1,000億／1,100億營收；150億／180億淨利；120億／140億FCF），不是原始
+    # 1,000億→100,000,000,000 那種不可讀千分位。
+    assert "1,000.0" in html and "1,100.0" in html  # 營收（億）
+    assert "150.0" in html and "180.0" in html  # 淨利（億）
+    assert "120.0" in html and "140.0" in html  # 自由現金流（億）
+    assert "60.00%" in html and "61.00%" in html  # 毛利率（不換算）
+    assert "1.50" in html and "1.80" in html  # 稀釋每股盈餘（不換算）
+    # 幣別＋金額單位進了表尾備註（既有 source-note 慣例），不與估值倍數混用、
+    # 不逐格重複印單位。
+    assert "金額單位：億 USD" in html
+    assert "numbers.financial_history" not in html  # 表身不需逐格印 ref，備註已夠
+
+
+def test_financials_fallback_notes_non_usd_currency_for_adr():
+    """ADR（如 TSM）財報幣別非美元時，備註要清楚標示幣別＋金額單位，不能悄悄
+    跟美元股價/估值倍數混用——這是被打回的第一版真正出錯的地方。"""
+    html = gdt.render_v19_financials_html({"quality": {}}, _fh_fixture(currency="TWD"))
+    assert "金額單位：億 TWD" in html
+    i = html.rfind("<tr>")
+    assert "TWD" in html[i:]
+
+
+def test_financials_fallback_marks_missing_years_with_em_dash():
+    """某個指標在某一年缺值（None）時印「—」，不跳過該列、不補算、不用其他
+    年度插值——沿用既有『動態收集出現過的欄位當表頭，缺格印「—」』慣例。"""
+    fh = _fh_fixture()
+    fh["financial_history"]["years"][0]["diluted_eps"] = None
+    html = gdt.render_v19_financials_html({"quality": {}}, fh)
+    i = html.find("稀釋每股盈餘")
+    row = html[i:html.find("</tr>", i)]
+    assert "<td class=\"num\">—</td>" in row
+    assert "1.80" in row  # 另一年仍有值
+
+
+def test_financials_fallback_skips_metric_entirely_null_across_all_years():
+    """指標整個序列都是 None（如某公司財報從不單獨揭露）時，不印一整列的
+    「—」假裝有這個指標，直接不出現該列——不捏造。"""
+    fh = _fh_fixture()
+    for y in fh["financial_history"]["years"]:
+        y["diluted_eps"] = None
+    html = gdt.render_v19_financials_html({"quality": {}}, fh)
+    # 表尾備註本身會提到「稀釋每股盈餘與百分比未換算」，所以不能整頁找字串；
+    # 檢查的是表身沒有這一列（<td>稀釋每股盈餘</td>）。
+    assert "<td>稀釋每股盈餘</td>" not in html
+
+
+def test_financials_placeholder_when_neither_judgment_nor_facts_have_data():
+    """判斷者沒給、facts 也沒有年度財務序列時，維持既有『資料缺口』列
+    （id 仍是 e9b，不讓 verify_dd_math 誤報表格缺席）。"""
+    html = gdt.render_v19_financials_html({"quality": {}}, None)
+    assert 'id="e9b"' in html
+    assert "資料缺口" in html
+    html2 = gdt.render_v19_financials_html({"quality": {}}, {"financial_history": {"years": []}})
+    assert "資料缺口" in html2
+
+
+# ---------------------------------------------------------------------------
 # v19 附錄 A/B/C：appA 一律輸出，appB/appC 條件式
 # ---------------------------------------------------------------------------
 

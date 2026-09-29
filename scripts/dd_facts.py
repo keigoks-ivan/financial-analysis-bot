@@ -353,6 +353,43 @@ def build_peer_comparison(numbers, subject=None) -> dict:
     return out
 
 
+# ---------------------------------------------------------------------------
+# 2026-09-29（H2-6 重做）：三到四年財務歷史序列（真年度序列，不是估值倍數）。
+# `scripts/dd_numbers_extra.py::compute_financial_history()` 讀 yfinance 年度
+# income_stmt／cashflow 算好 evidence.numbers.financial_history；這裡只原樣
+# 搬進 facts（逐年附 source ref），judge 與 e9b 表讀同一份數字不會兩邊各說各話。
+# ---------------------------------------------------------------------------
+
+def build_financial_history(numbers) -> dict:
+    """evidence.numbers.financial_history → facts.financial_history。
+
+    只搬年度序列＋來源，不加判讀、不換算幣別。沒有序列時回空 dict（呼叫端不寫
+    這個鍵，render 端印資料缺口，不假裝有表）。"""
+    fh = numbers.get("financial_history") or {}
+    years = fh.get("years") or []
+    if not years:
+        return {}
+    out_years = []
+    for i, y in enumerate(years):
+        if not isinstance(y, dict) or not y.get("fiscal_year_end"):
+            continue
+        entry = dict(y)
+        entry["source"] = _src(
+            "evidence_numbers", "numbers.financial_history.years[{0}]".format(i),
+            as_of=y.get("fiscal_year_end"), citation=fh.get("method"))
+        out_years.append(entry)
+    if not out_years:
+        return {}
+    return {
+        "ticker": fh.get("ticker"),
+        "currency": fh.get("currency"),
+        "method": fh.get("method"),
+        "source": fh.get("source"),
+        "note": fh.get("note"),
+        "years": out_years,
+    }
+
+
 def _recency_fact(numbers, buckets):
     rec = numbers.get("earnings_recency") or {}
     if rec.get("last_earnings_date"):
@@ -462,6 +499,18 @@ def extract(evidence, digest=None, evidence_ref=None, digest_ref=None, date=None
             "why": "evidence.numbers.peer_financials 無資料，護城河同業數字整張缺——"
                    "事實表 agent 須補，補不到時判斷者要在 moat.peer_na_reason 說明為何沒有可比同業。",
             "tried": ["evidence.numbers.peer_financials"],
+        })
+    # 2026-09-29（H2-6 重做）：三到四年財務歷史序列（§7 e9b 表用）。
+    financial_history = build_financial_history(numbers)
+    if financial_history:
+        facts["financial_history"] = financial_history
+    else:
+        facts["gaps"].append({
+            "topic": "三到四年財務歷史序列",
+            "question": "q4_capital",
+            "why": "evidence.numbers.financial_history 無資料（yfinance 年度財報抓取失敗或缺此欄），"
+                   "§7 財務歷史表（e9b）缺此塊時印資料缺口，不得由判斷者用其他口徑頂替。",
+            "tried": ["evidence.numbers.financial_history"],
         })
     if digest:
         flags = digest.get("qa_flags") or []

@@ -1350,33 +1350,110 @@ def render_v19_dashboard_html(j: dict, meta: dict, facts: dict | None) -> str:
 
 # ---- 免費資料區：§7 三到四年財務表 + ROE 拆解 -----------------------------
 
-def render_v19_financials_html(j: dict) -> str | None:
+_V19_FIN_HISTORY_METRICS = (
+    ("revenue", "營收", "yi"),
+    ("revenue_yoy_pct", "營收年增", "%"),
+    ("gross_margin_pct", "毛利率", "%"),
+    ("operating_margin_pct", "營業利益率", "%"),
+    ("net_income", "淨利", "yi"),
+    ("diluted_eps", "稀釋每股盈餘", None),
+    ("free_cash_flow", "自由現金流", "yi"),
+    ("fcf_margin_pct", "FCF 利潤率", "%"),
+)
+
+_V19_FIN_HISTORY_YI = 1e8  # 億＝1e8；營收/淨利/自由現金流換算成「億{幣別}」，一位小數
+
+
+def _v19_fin_history_cell(value, unit):
+    if value is None:
+        return "—"
+    if unit == "%":
+        return f"{value:.2f}%"
+    if unit == "yi":
+        # 2026-09-29（可讀性修正）：原始量級（可能是兆）直接印千分位不可讀，
+        # 換算成「億{幣別}」一位小數；單位本身寫在表尾備註，不重複印在每格。
+        return f"{value / _V19_FIN_HISTORY_YI:,.1f}"
+    return f"{value:,.2f}"  # 稀釋每股盈餘：小數，不換算
+
+
+def _v19_financials_from_history(fh: dict | None):
+    """把 `facts.financial_history`（facts.json 頂層鍵，年度序列）轉成 (cols, rows)。
+
+    2026-09-29（H2-6 重做）：第一版曾用估值倍數＋TTM 利潤率頂替，被指出「不是
+    財務歷史、且高低點標籤跟現值不同基期會互相矛盾」，故整段改讀真正的年度
+    財務序列——`scripts/dd_numbers_extra.py::compute_financial_history()` 讀
+    yfinance 年度 income_stmt／cashflow（近 3-4 個會計年度，非 TTM 非估值倍數），
+    `dd_facts.py::build_financial_history()` 原樣搬進 `facts.json` 的
+    `financial_history`（零 LLM，逐欄核對）。年份當欄（舊到新），指標當列；
+    欄位缺值印「—」，不補算。facts 沒有這塊（或年度序列是空的）回 None，
+    呼叫端印資料缺口列。
+
+    2026-09-29（可讀性修正）：營收／淨利／自由現金流原始量級（可能是兆）直接
+    印千分位不可讀，改換算成「億{財報幣別}」一位小數（`_V19_FIN_HISTORY_YI`）；
+    稀釋每股盈餘與百分比欄不換算。單位寫在表尾備註，不逐格重複。"""
+    if not fh or not fh.get("years"):
+        return None
+    years = fh["years"]
+    cols = [y.get("fiscal_year_end") for y in years]
+    rows = []
+    for key, label, unit in _V19_FIN_HISTORY_METRICS:
+        if all(y.get(key) is None for y in years):
+            continue
+        row = {"metric": label}
+        for col, y in zip(cols, years):
+            row[col] = _v19_fin_history_cell(y.get(key), unit)
+        rows.append(row)
+    if not rows:
+        return None
+    currency = fh.get("currency") or "幣別未知"
+    note = "{0}；金額單位：億 {1}（僅營收/淨利/自由現金流換算，稀釋每股盈餘與百分比未換算）；幣別＝{1}（財報申報幣別，非美元股價/估值倍數，不互相混用）".format(
+        fh.get("source") or "yfinance 年度財報", currency)
+    return cols, rows, note
+
+
+def render_v19_financials_html(j: dict, facts: dict | None = None) -> str | None:
     """quality.three_year[] 欄位隨列變動（毛利率/營益率用 Q2_2025/Q2_2026，
     trailing P/E 用 FY2022/FY2025）；動態收集出現過的欄位當表頭，缺格印「—」，
-    不補算。"""
+    不補算。判斷者沒給 quality.three_year 時改讀 facts 的頂層鍵
+    `financial_history`（見 `_v19_financials_from_history()`：近 3-4 年會計
+    年度的營收/毛利率/營益率/淨利/EPS/FCF 真序列，非估值倍數）；兩邊都沒有
+    才印資料缺口列。"""
     rows_data = (j.get("quality") or {}).get("three_year") or []
-    if not rows_data:
-        # 2026-09-11 FIX v19 首跑：v19 判斷檔不擁有 quality.three_year、facts 抽取器
-        # 也尚未建多年度序列（H2-6 待補）。表不能憑空生，但也不能讓讀者看不到缺口、
-        # 讓 verify_dd_math 誤報「必交表缺席」——印一列資料缺口，id 仍是 e9b。
-        return ('<table id="e9b">\n<tr><th>指標</th><th class="num">說明</th></tr>\n'
-                '<tr><td>三到四年財務表</td><td class="num">資料缺口：事實表未含多年度序列'
-                '（v19 抽取器待補，見 H2-6）</td></tr>\n</table>\n')
-    cols: list = []
-    for r in rows_data:
-        if not isinstance(r, dict):
-            continue
-        for k in r:
-            if k != "metric" and k not in cols:
-                cols.append(k)
-    header = "<tr><th>指標</th>" + "".join(f'<th class="num">{esc(c)}</th>' for c in cols) + "</tr>"
-    rows = []
-    for r in rows_data:
-        if not isinstance(r, dict):
-            continue
-        cells = "".join(f'<td class="num">{esc(r[c]) if c in r else "—"}</td>' for c in cols)
-        rows.append(f"<tr><td>{esc(r.get('metric'))}</td>{cells}</tr>")
-    return '<table id="e9b">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+    if rows_data:
+        cols: list = []
+        for r in rows_data:
+            if not isinstance(r, dict):
+                continue
+            for k in r:
+                if k != "metric" and k not in cols:
+                    cols.append(k)
+        header = "<tr><th>指標</th>" + "".join(f'<th class="num">{esc(c)}</th>' for c in cols) + "</tr>"
+        rows = []
+        for r in rows_data:
+            if not isinstance(r, dict):
+                continue
+            cells = "".join(f'<td class="num">{esc(r[c]) if c in r else "—"}</td>' for c in cols)
+            rows.append(f"<tr><td>{esc(r.get('metric'))}</td>{cells}</tr>")
+        return '<table id="e9b">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+    fh = (facts or {}).get("financial_history")
+    fallback = _v19_financials_from_history(fh)
+    if fallback:
+        cols, rows, note = fallback
+        header = "<tr><th>指標</th>" + "".join(f'<th class="num">{esc(c)}</th>' for c in cols) + "</tr>"
+        body = []
+        for r in rows:
+            cells = "".join(f'<td class="num">{esc(r[c]) if c in r else "—"}</td>' for c in cols)
+            body.append(f"<tr><td>{esc(r.get('metric'))}</td>{cells}</tr>")
+        note_row = f'<tr><td colspan="{len(cols) + 1}">{esc(note)}</td></tr>'
+        return '<table id="e9b">\n' + header + "\n" + "\n".join(body) + "\n" + note_row + "\n</table>\n"
+
+    # 2026-09-11 FIX v19 首跑：v19 判斷檔不擁有 quality.three_year，facts 也沒有
+    # 年度財務序列。表不能憑空生，但也不能讓讀者看不到缺口、讓 verify_dd_math
+    # 誤報「必交表缺席」——印一列資料缺口，id 仍是 e9b。
+    return ('<table id="e9b">\n<tr><th>指標</th><th class="num">說明</th></tr>\n'
+            '<tr><td>三到四年財務表</td><td class="num">資料缺口：事實表未含多年度序列'
+            '（v19 抽取器待補，見 H2-6）</td></tr>\n</table>\n')
 
 
 def render_v19_roe_html(j: dict) -> str | None:
@@ -1742,7 +1819,7 @@ def main():
             ("v19-threats.html", render_v19_threats_html(j)),
             ("v19-roic.html", render_v19_roic_checkpoints_html(j)),
             ("v19-segs.html", render_v19_segments_html(j)),
-            ("v19-e9b.html", render_v19_financials_html(j)),
+            ("v19-e9b.html", render_v19_financials_html(j, facts)),
             ("v19-roe.html", render_v19_roe_html(j)),
             ("v19-quotes.html", render_v19_quotes_html(facts)),
             ("v19-stree.html", render_v19_scenario_tree_html(scenario_meta)),
