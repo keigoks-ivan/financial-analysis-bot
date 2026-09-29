@@ -59,6 +59,10 @@ table{overflow-wrap:break-word}
 .kd-table{border-collapse:collapse;font-size:12.5px}
 .kd-table td{padding:4px 8px 4px 0;border-bottom:1px solid var(--line-soft)}
 .kd-table td.k{color:var(--sec)} .kd-table td.v{font-family:var(--mono);font-weight:600;text-align:right;color:var(--ink)}
+.fs-right h3.dd-h3{margin-top:0}
+.dd-box{margin:0 0 14px}
+.dd-box .dd-note{font-size:11.5px;color:var(--sec);margin:6px 0 0}
+.dd-box .dd-link{font-size:12.5px;font-weight:600;margin:6px 0 0}
 @media(max-width:900px){.firstscreen{grid-template-columns:1fr}}
 
 /* Exhibit 元件 */
@@ -293,6 +297,8 @@ footer{margin-top:40px;padding:16px 0;border-top:1px solid var(--gold);text-alig
     </div>
   </div>
   <div class="fs-right">
+    <h3 class="dd-h3">研究報告</h3>
+    <div id="ddBox"></div>
     <div class="tbl-wrap"><table class="kd-table" id="kdTable"></table></div>
     <h3>財務預估摘要</h3>
     <div class="tbl-wrap"><table class="imq-table" id="finTable"></table></div>
@@ -1503,6 +1509,36 @@ function renderSec7(vm){
   document.getElementById('s7Triggers').innerHTML = '<b>觸發水位：</b>'+(M.triggers||[]).map(function(t){return t.label+' '+t.level;}).join('　');
 }
 
+// 2026-09-29 持有人拍板接回研究報告（選 A）：首屏右欄一個小框，只放研究當天的判斷
+// ＋連結。資料來自 judgment_core.dd_screener_fields（dd-screener latest.json 原樣帶出）。
+// ev5y_pct 在 dd-screener 是五年期望報酬換算成每年（研究報告本身寫五年累計），所以標「每年」。
+// 價格尺維持分析師目標價，不放研究報告的五年多空價（不隨行情更新，放進即時圖表容易誤讀）。
+function renderDdBox(vm){
+  var el = document.getElementById('ddBox');
+  if(!el) return;
+  var c = vm.c6 || {};
+  if(c.status!=='ok' || !c.dd_path){
+    el.innerHTML = '<div class="dd-box"><div class="dd-note">這檔還沒有研究報告。</div></div>';
+    return;
+  }
+  var verdict = c.dca_verdict ? moatEsc(c.dca_verdict)+(c.dca_role?'｜'+moatEsc(c.dca_role):'') : '舊版報告未標裁決';
+  var dateTxt = c.dd_date ? moatEsc(c.dd_date)+(c.dd_days_ago>0?'（'+c.dd_days_ago+' 天前）':'') : '無資料';
+  var rows = [
+    ['裁決', verdict],
+    ['研究日', dateTxt],
+    ['研究日股價', c.price_at_dd!=null ? fmtNum(c.price_at_dd,2) : '無資料'],
+    ['研究日至今', fmtPctColored(c.price_chg_since_dd_pct)],
+    ['五年多頭價', c.bull_5y_price!=null ? fmtNum(c.bull_5y_price,2)+(c.p_bull_pct!=null?'（機率 '+c.p_bull_pct+'%）':'') : '無資料'],
+    ['五年空頭價', c.bear_5y_price!=null ? fmtNum(c.bear_5y_price,2)+(c.p_bear_pct!=null?'（機率 '+c.p_bear_pct+'%）':'') : '無資料'],
+    ['五年期望報酬', c.ev5y_pct!=null ? '每年 '+fmtPct(c.ev5y_pct,2) : '無資料']
+  ];
+  el.innerHTML = '<div class="dd-box"><div class="tbl-wrap"><table class="kd-table">'+
+    rows.map(function(r){return '<tr><td class="k">'+r[0]+'</td><td class="v">'+r[1]+'</td></tr>';}).join('')+
+    '</table></div>'+
+    '<div class="dd-link"><a href="'+moatEsc(c.dd_path)+'">看完整研究報告 →</a></div>'+
+    '<div class="dd-note">以上是研究當天的判斷，不隨每日行情更新。</div></div>';
+}
+
 // 站上目前只服務 dd-screener 339 檔名單；不在名單裡的股票預設沒有既有研究報告，
 // EPS 修正、本益比 vs 5 年均值、護城河這幾格會是無資料——在最上面先講一次，
 // 不用讓讀者逐格自己發現。
@@ -1522,6 +1558,7 @@ function render(D, M){
   assignExhibitNumbers();
   renderCover(vm);
   renderOutOfListNotice(vm);
+  renderDdBox(vm);
   renderFirstScreen(vm);
   renderSec1(vm); renderSec2(vm); renderSec3(vm); renderMoatChapter(vm); renderSec5(vm); renderSec6(vm); renderSec7(vm);
   buildFunnelBreakdownChart(document.getElementById('chartApxFunnel'), vm);
