@@ -165,7 +165,7 @@ bundle 依序包含：`gate_card.md`（①–⑧ checklist 全文與 🔴／🟡
   - 來源：Beveridge & Diamond (bdlaw.com) - Solar's Momentum At Mid-2026 Will Help It Overcome Snags（as_of 2026-02-06）｜affects：moat_trend、thesis.R、decision_inputs.bear
 - `reg_tariff_export#1`（reg_tariff_export｜方向 -｜狀態 ok）：中國自2025年2月起收緊含碲（tellurium）等五項關鍵礦物的出口管制，出口商須向中國商務部申請許可；碲是 First Solar CdTe 模組的主要原料之一，中國佔2024年全球精煉碲產量約76.53%。First Solar 10-K/10-Q 揭露已組建跨部門小組監控此風險、申請出口許可並尋求替代供應商。
   - 來源：pv-magazine-india.com — 'China adds export restrictions for minerals used in thin-film solar'; First Solar SEC filings (10-K/10-Q risk factors, 搜尋摘要)（as_of 2025-02-11）｜affects：thesis.R、decision_inputs.bear、moat_trend
-- `geo_supply_chain#1`（geo_supply_chain｜方向 -｜狀態 ok）：First Solar 的關鍵原料碲(tellurium)是煉銅的副產品,供應量跟著銅需求走;公司只跟少數幾家供應商採購,換供應商要走很長的資格審查,萬一斷供不容易及時補上
+- `geo_supply_chain#1`（geo_supply_chain｜方向 -｜狀態 ok）：First Solar 的關鍵原料碲(tellurium)是煉銅的副產品，供應量跟著銅需求走；公司只跟少數幾家供應商採購，換供應商要走很長的資格審查，萬一斷供不容易及時補上
   - 來源：First Solar 10-K (FY2015) 風險因子章節（as_of 2015-12-31）｜affects：thesis.R、decision_inputs.bear
 - `end_markets#3`（end_markets｜方向 -｜狀態 ok）：印度市場：Q1'26 新簽 0.8 GW、均價僅 $0.20/W，明顯低於美國 utility-scale 的 $0.35/W，反映印度段定價力較弱、屬較低毛利的地區市場。
   - 來源：First Solar Q1'26 earnings coverage aggregation（as_of 2026-04-30）｜affects：thesis.H、decision_inputs.bear、valuation
