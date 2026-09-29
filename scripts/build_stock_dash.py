@@ -43,6 +43,9 @@ MARKET_DATA_DIR = ROOT / "docs" / "market" / "data"      # read-only source (own
 MARKET_CONTEXT_PATH = OUT_DIR / "_market.json"           # shared summary this script writes, one per day
 SCREENER_LATEST_PATH = ROOT / "docs" / "screener" / "latest.json"  # read-only source (RS+VCP screener universe)
 UNIVERSE_DIST_PATH = OUT_DIR / "_universe_dist.json"     # shared percentile-cut file this script writes
+# 公司全名備援表（ticker → 名稱）。GitHub Actions 拿不到 yfinance Ticker.info，頁首會退成
+# 只顯示代號；本機跑 scripts/refresh_stock_dash_names.py 更新這份表，CI 讀它。
+NAME_CACHE_PATH = ROOT / "data" / "stock_dash_names.json"
 
 # Disk cache dirs for data that is identical across every ticker built on the same
 # calendar day (a batch run building all 339 dd-screener tickers would otherwise
@@ -3048,6 +3051,19 @@ def emoji_to_text(s):
     return out
 
 
+_name_cache = None
+
+
+def _cached_name(ticker):
+    global _name_cache
+    if _name_cache is None:
+        try:
+            _name_cache = json.loads(NAME_CACHE_PATH.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            _name_cache = {}
+    return _name_cache.get(ticker)
+
+
 def find_dd_files(ticker):
     """docs/dd/DD_{ticker}_*.html，依檔名（內含日期）排序。docs/dd/brief/ 底下的快速版
     檔名前綴是 BRIEF_、目錄也不同，這個 glob 天生就掃不到，不用另外排除。"""
@@ -4030,7 +4046,7 @@ def build(ticker, refresh_universe=False, state_dir=None, force_version=False, d
             "pattern_quality": "docs/dd-screener/latest.json（rsi14／vcp_*／asym_flag／quality_score／growth_durability／rule_of_40／cash_runway_months／ol_divergence_pp／gm_yoy_pp 等既有欄位，presentation-only）",
         },
         "quote": {
-            "name": info.get("longName") or info.get("shortName") or ticker,
+            "name": info.get("longName") or info.get("shortName") or _cached_name(ticker) or ticker,
             "close": r2(price),
             "change": r2(change),
             "change_pct": r2(change_pct),
