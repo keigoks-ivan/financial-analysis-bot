@@ -102,6 +102,9 @@ Change log:
         儀表板」(sdash) 之後；PREFIX_ACTIVE 新增 etf-dash/ 前綴映射到 ("research",
         "etfd")。外部 3 repo synced literal 尚未同步（見 site-composition.md，
         待這批 ETF 儀表板原型驗收後再一併處理）。
+    2026-09-30：「個股研究」(thub, /t/) 改名「研究清單」——個股內容已併入個股儀表板
+        （/t/{T}.html 改轉址樁），/t/ 改預設開 DD 清單分頁。/t/ 轉址樁不注入 nav。
+        外部 3 repo synced literal 尚未同步（見 site-composition.md）。
 """
 
 import re
@@ -169,7 +172,7 @@ MENU = {
     # 個股 DD／供應鏈地圖／多股對比／期望落差綜合研判四條目已在第一階段收進
     # /t/ 或 /id/ 分頁，故選單只留三個真實頂層目的地；下拉形態不變。
     "research": [
-        ("thub", "/t/", "個股研究"),
+        ("thub", "/t/", "研究清單"),  # 2026-09-30 持有人選 A：個股內容已併入個股儀表板，此頁改為報告清單入口
         ("sdash", "/stock-dash/", "個股儀表板"),
         ("etfd", "/etf-dash/", "ETF 儀表板"),
         ("aetf", "/active-etf/", "主動式 ETF"),  # 2026-09-25 新增，緊接 ETF 儀表板之後
@@ -512,6 +515,11 @@ def process(path: Path, check=False):
         text = path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
         return "non-utf8"
+    # 2026-09-29 起 /t/{T}.html 多數改成轉址樁（→ /stock-dash/?t={T}#research，由
+    # build_ticker_hubs.py 產出），同 stock-dash/full.html 理由不注入 nav，免得兩支腳本互相改寫。
+    # 名單外仍保留完整頁的 ticker 不是轉址樁，照常注入。
+    if rel.startswith("t/") and 'http-equiv="refresh"' in text[:1500]:
+        return "skip"
     m = BODY_RE.search(text)
     if not m:
         return "no-body"

@@ -792,7 +792,7 @@ CONSOLE_JS = """
   }
 
   function activate(tab){
-    if(TABS.indexOf(tab) < 0) tab = 'overview';
+    if(TABS.indexOf(tab) < 0) tab = 'dd';
     document.querySelectorAll('.console-tab-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-ctab') === tab);
     });
@@ -810,10 +810,11 @@ CONSOLE_JS = """
     });
   });
   window.addEventListener('hashchange', function(){
-    activate((location.hash || '#overview').replace('#',''));
+    activate((location.hash || '#dd').replace('#',''));
   });
 
-  var initial = (location.hash || '#overview').replace('#','');
+  // 2026-09-30 持有人選 A：選單改名「研究清單」，預設開 DD 清單（個股看儀表板）
+  var initial = (location.hash || '#dd').replace('#','');
   activate(initial);
 })();
 </script>
@@ -824,8 +825,8 @@ def render_index(universe_sorted, dd_by_ticker, cur_by_ticker, cov_counts, dash_
     """個股研究主控台（/t/index.html）— 4 分頁：總覽（inline）／DD 清單／多股對比／
     期望落差（三者皆 iframe 嵌入對應 _body.html 分頁片段）。2026-08-20 研究區整併第一階段。"""
     head = page_head(
-        "個股研究主控台 — InvestMQuest Research",
-        "按 ticker 聚合 InvestMQuest 站內全部個股研究：總覽／DD 清單／多股對比／期望落差綜合研判，四分頁單一入口。",
+        "研究清單 — InvestMQuest Research",
+        "InvestMQuest 站內個股研究清單：DD 報告總表／多股對比／期望落差綜合研判／個股總覽，四分頁單一入口。",
     )
     overview_body = render_overview_body(universe_sorted, dd_by_ticker, cur_by_ticker, dash_universe)
 
@@ -833,10 +834,10 @@ def render_index(universe_sorted, dd_by_ticker, cur_by_ticker, cov_counts, dash_
     parts.append(f'<style>{CONSOLE_CSS}</style>')
     parts.append('<main class="wrap">')
     parts.append("""<div class="console-tabbar" role="tablist">
-  <button type="button" class="console-tab-btn" data-ctab="overview" role="tab">總覽</button>
   <button type="button" class="console-tab-btn" data-ctab="dd" role="tab">DD 清單</button>
   <button type="button" class="console-tab-btn" data-ctab="compare" role="tab">多股對比</button>
   <button type="button" class="console-tab-btn" data-ctab="synthesis" role="tab">期望落差</button>
+  <button type="button" class="console-tab-btn" data-ctab="overview" role="tab">個股總覽</button>
 </div>""")
     parts.append(f'<div class="console-tab-panel" id="panel-overview">{overview_body}</div>')
     parts.append(
