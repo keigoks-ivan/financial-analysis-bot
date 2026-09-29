@@ -88,7 +88,7 @@ facts    dd_facts.py extract --run-dir → facts.json；dd_facts.py check（零 
 judged   bundle.build_judge → oneshot(fable, thinking_cap=32000) → 剝 code fence → json.loads → 寫 judgment.json（縮排）
          → ddreport._judge_check(T, D)；FAIL → `dd_project.py normalize --write` 一次 → 再 check；仍 FAIL → stage FAIL，停
 gated    bundle.build_gate → oneshot(opus) → json.loads 陣列 → gate_result.json ＋ gate_audit.md（人讀版）；任一 🔴 → FAIL，停
-brief    ddreport._do_brief(T, D, do_full=True, manifest)
+brief    ddreport._do_brief(T, D, do_full=True, manifest, publish=False)  （2026-09-29 起停產上站，只渲染供 finish 的 brief-PASS 前提，HTML 留在 run 目錄）
 prose    ddreport._do_prose_prepare(T, D) → bundle.build_prose → agentic(sonnet, tools=["Write"], max_turns=6)
          → ddreport._do_prose_split(T, D) → ddreport._run_gates(run_dir, T, D) ＋ _prose_depth_findings；FAIL → 停
 finish   python3 scripts/ddreport.py finish T D [--no-push]

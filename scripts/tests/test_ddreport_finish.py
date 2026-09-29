@@ -1313,5 +1313,66 @@ def test_batch_row_max_dd_uses_min_lo_hi_not_raw_lo(tmp_path, monkeypatch):
     assert row["max_dd_pct"] != (judgment["premortem"]["max_dd"]["lo"])
 
 
+# ---------------------------------------------------------------------------
+# 2026-09-29：dd2 v20 起快速版停產上站——`_do_brief(..., publish=False)` 只渲染
+# 供 finish 的 brief-PASS 前提續用，HTML 不得落在 docs/dd/brief/。
+# ---------------------------------------------------------------------------
+
+def test_do_brief_publish_false_writes_run_dir_not_docs_brief(tmp_path, monkeypatch):
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZBRIEF", "20260929"
+    run_dir = paths["runs_dir"] / "{0}_{1}".format(ticker, date)
+    run_dir.mkdir(parents=True)
+
+    captured = {}
+
+    def _fake_subprocess_run(cmd, *a, **k):
+        out_path = Path(cmd[cmd.index("--out") + 1])
+        captured["out_path"] = out_path
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text("<html>fake brief</html>", encoding="utf-8")
+        return _FakeCompleted(0, "", "")
+
+    monkeypatch.setattr(ddreport.subprocess, "run", _fake_subprocess_run)
+
+    manifest = {"ticker": ticker, "date": date, "stages": {}}
+    rc = ddreport._do_brief(ticker, date, True, manifest, dry_run=False, publish=False)
+
+    assert rc == 0
+    assert captured["out_path"] == run_dir / "brief.html"
+    docs_brief_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    assert not docs_brief_path.exists()
+    assert manifest["stages"]["brief"]["state"] == "PASS"
+    assert manifest["stages"]["brief"]["out_path"] == str(run_dir / "brief.html")
+
+
+def test_do_brief_default_publish_true_unchanged_for_old_chain(tmp_path, monkeypatch):
+    """舊鏈（`ddreport.py run`／獨立 `brief` 子命令）不傳 `publish`，行為必須
+    與 2026-09-29 之前一致：寫進 `docs/dd/brief/BRIEF_{T}_{D}.html`。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZBRIEF2", "20260929"
+    run_dir = paths["runs_dir"] / "{0}_{1}".format(ticker, date)
+    run_dir.mkdir(parents=True)
+
+    captured = {}
+
+    def _fake_subprocess_run(cmd, *a, **k):
+        out_path = Path(cmd[cmd.index("--out") + 1])
+        captured["out_path"] = out_path
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text("<html>fake brief</html>", encoding="utf-8")
+        return _FakeCompleted(0, "", "")
+
+    monkeypatch.setattr(ddreport.subprocess, "run", _fake_subprocess_run)
+
+    manifest = {"ticker": ticker, "date": date, "stages": {}}
+    rc = ddreport._do_brief(ticker, date, True, manifest, dry_run=False)
+
+    assert rc == 0
+    docs_brief_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    assert captured["out_path"] == docs_brief_path
+    assert docs_brief_path.exists()
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

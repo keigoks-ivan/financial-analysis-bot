@@ -1123,11 +1123,14 @@ def do_gated(ctx):
 
 
 # ---------------------------------------------------------------------------
-# brief：零 LLM 快速版（沿用舊鏈）
+# brief：零 LLM 快速版（沿用舊鏈渲染，但 2026-09-29 起持有人拍板停產快速版——
+# 只跑渲染供下游 finish 的 brief-PASS 前提續用，HTML 不發布到 docs/dd/brief/，
+# 只留在 run 目錄；上站永遠只有 prose 段產出的完整版）
 # ---------------------------------------------------------------------------
 
 def do_brief(ctx):
-    rc = ddreport._do_brief(ctx.ticker, ctx.date, True, ctx.manifest, dry_run=ctx.args.dry_run)
+    rc = ddreport._do_brief(ctx.ticker, ctx.date, True, ctx.manifest, dry_run=ctx.args.dry_run,
+                             publish=False)
     ctx.load_manifest()  # _do_brief 自己寫了 manifest
     return rc == 0
 

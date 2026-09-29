@@ -3727,7 +3727,12 @@ def _resume_gate_stage(ticker, date, judgment_model, replay_dir, accept_over_bud
 # 2026-09-07：快速版為必經產物，renderer 缺失須 fail-closed。
 # ---------------------------------------------------------------------------
 
-def _do_brief(ticker, date, do_full, manifest, dry_run=False):
+def _do_brief(ticker, date, do_full, manifest, dry_run=False, publish=True):
+    """`publish=False`（2026-09-29，dd2 v20 起使用）：快速版停產上站——只跑零 LLM
+    渲染供 `_finish_required_stages` 的 brief PASS 前提續用，HTML 寫進 run 目錄
+    （不寫 `docs/dd/brief/`，`finish` 的白名單只認實際存在的檔，自然不會發布）。
+    舊鏈（`ddreport.py run`／獨立 `brief` 子命令）不傳這個參數，預設 `True` 維持
+    現行行為不變。"""
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
     dd_brief_path = SCRIPTS_DIR / "dd_brief.py"
@@ -3752,7 +3757,8 @@ def _do_brief(ticker, date, do_full, manifest, dry_run=False):
         py = _pick_python()
         # WP7a #6：--dry-run 時輸出到 run 目錄內的 brief.html，不寫
         # docs/dd/brief/（避免 dry-run 汙染會上站/被 git 追蹤的目錄）。
-        if dry_run:
+        # 2026-09-29：`publish=False`（dd2 v20）比照同一理由，也落在 run 目錄。
+        if dry_run or not publish:
             out_path = run_dir / "brief.html"
         else:
             out_path = REPO_ROOT / "docs" / "dd" / "brief" / "BRIEF_{0}_{1}.html".format(ticker, date)
