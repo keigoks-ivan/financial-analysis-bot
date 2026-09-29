@@ -263,6 +263,17 @@ def _valuation_facts(numbers, buckets):
                  as_of=last.get("snapshot_date")),
         ))
 
+    div = numbers.get("dividend_yield_ttm") or {}
+    if div.get("value_pct") is not None:
+        q5.append(_fact(
+            "f_dividend_yield_ttm", "trailing 12個月股息殖利率", div.get("value_pct"),
+            div.get("as_of"), "%",
+            div.get("method") or "近365天股息加總 ÷ 判斷日股價 × 100",
+            "realized",
+            _src("evidence_numbers", "numbers.dividend_yield_ttm.value_pct", as_of=div.get("as_of")),
+            note=div.get("note"),
+        ))
+
 
 def _peer_facts(numbers, buckets):
     peers = numbers.get("peer_financials") or {}

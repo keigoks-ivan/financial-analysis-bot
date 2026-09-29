@@ -791,12 +791,23 @@ def scenario_input_from_v19(raw: dict, facts: dict | None) -> dict:
         if isinstance(value, (int, float)):
             consensus[f"fy{i}"] = value
 
+    # 程式擁有的欄（比照 price_at_dd／decision_inputs.ma）：dividend 殖利率由
+    # dd_numbers_extra.py::compute_dividend_yield_ttm 機械算出、經 dd_facts.py
+    # 落成 f_dividend_yield_ttm，這裡有值就覆寫判斷者填的 yield_pct.dividend——
+    # 2026-09-29 MRK 教訓：判斷者查無資料留 null，dd_scenario.py 把 null 當 0
+    # 算，配息股含息報酬被低估。查不到（fact 缺）就沿用判斷者原答案，不補 0。
+    # net_buyback 仍全權交判斷者（回購時機與規模是判斷不是機械事實）。
+    yield_pct = dict(si.get("yield_pct") or {})
+    dividend_fact = _fact_value(fact_idx, "f_dividend_yield_ttm")
+    if dividend_fact is not None:
+        yield_pct["dividend"] = dividend_fact
+
     out = {
         "ticker": meta.get("ticker"),
         "date": meta.get("date"),
         "price": _fact_value(fact_idx, "f_price_at_dd"),
         "start": si.get("start") or {},
-        "yield_pct": si.get("yield_pct") or {},
+        "yield_pct": yield_pct,
         "terminal_label": si.get("terminal_label"),
         "scenarios": {},
     }

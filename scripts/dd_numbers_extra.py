@@ -335,6 +335,57 @@ def compute_price_and_earnings_recency(ticker, date_dt):
 
 
 # ---------------------------------------------------------------------------
+# numbers.dividend_yield_ttm（2026-09-29 MRK：情境樹 yield_pct.dividend 若判斷者
+# 查無資料會留 null，dd_scenario.py 把 null 當 0 算——配息股的含息報酬因此被低估。
+# 比照 price_at_dd／decision_inputs.ma 的「程式擁有的欄」慣例：這裡機械算出
+# trailing 12 個月殖利率，後面在 dd_project.py::scenario_input_from_v19 覆寫
+# judge 填的 yield_pct.dividend。）
+# ---------------------------------------------------------------------------
+
+def compute_dividend_yield_ttm(ticker, date_dt, price_at_dd):
+    """trailing 12 個月股息殖利率：近 365 天內除息的股息加總 ÷ price_at_dd × 100。
+    非配息股／近一年無發放紀錄 → 0.0（有 note 說明，非捏造，是真實的『沒有』）；
+    缺 price_at_dd 或查詢失敗 → null＋note，不得捏造。"""
+    out = {
+        "value_pct": None,
+        "as_of": date_dt.strftime("%Y-%m-%d"),
+        "source": "yfinance Ticker.dividends（近365天除息日加總 ÷ price_at_dd）",
+        "method": "trailing 12個月股息（依除息日加總，非發放日）÷ 判斷日股價 × 100",
+        "note": None,
+    }
+    if price_at_dd is None or price_at_dd <= 0:
+        out["note"] = "缺 price_at_dd，無法算殖利率"
+        return out
+    try:
+        np, pd, yf = _lazy_imports()
+        t = yf.Ticker(ticker)
+        divs = t.dividends
+        if divs is None or divs.empty:
+            out["value_pct"] = 0.0
+            out["note"] = "近一年查無股息紀錄（非配息股，或 yfinance 無資料）"
+            return out
+        cutoff_date = date_dt.date()
+        start_date = cutoff_date - timedelta(days=365)
+        window_total = 0.0
+        n_payments = 0
+        for ts, amt in divs.items():
+            d = ts.date() if hasattr(ts, "date") else ts
+            if start_date < d <= cutoff_date:
+                window_total += float(amt)
+                n_payments += 1
+        if n_payments == 0:
+            out["value_pct"] = 0.0
+            out["note"] = "近365天無股息除息紀錄（可能為新掛牌配息股或已停止配息）"
+            return out
+        out["value_pct"] = round(window_total / price_at_dd * 100, 3)
+        out["n_payments"] = n_payments
+    except Exception as e:
+        out["note"] = f"股息資料擷取失敗：{e}"
+        out["value_pct"] = None
+    return out
+
+
+# ---------------------------------------------------------------------------
 # numbers.momentum_26w
 # ---------------------------------------------------------------------------
 
@@ -789,6 +840,9 @@ def main(argv):
     numbers["price_at_dd"] = price_at_dd
     numbers["price_as_of"] = price_as_of
     numbers["earnings_recency"] = earnings_recency
+
+    print("  -> dividend_yield_ttm ...", file=sys.stderr)
+    numbers["dividend_yield_ttm"] = compute_dividend_yield_ttm(args.ticker, date_dt, price_at_dd)
 
     print("  -> valuation_history ...", file=sys.stderr)
     numbers["valuation_history"] = compute_valuation_history(args.ticker, date_dt)
