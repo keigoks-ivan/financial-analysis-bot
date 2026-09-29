@@ -72,7 +72,7 @@ def compute_one(price, start, yield_pct, key, s):
     irr_ex_div = cagr_pct(1.0 + five_y_pct / 100.0)
     eps_contrib = cagr_pct(terminal_eps / start["eps"])
     rerate_contrib = cagr_pct(terminal_pe / start["pe"])
-    yield_total = (yield_pct or {}).get("dividend", 0.0) + (yield_pct or {}).get("net_buyback", 0.0)
+    yield_total = ((yield_pct or {}).get("dividend") or 0.0) + ((yield_pct or {}).get("net_buyback") or 0.0)
     ex_div_total = ((1.0 + eps_contrib / 100.0) * (1.0 + rerate_contrib / 100.0) - 1.0) * 100.0
     incl_div_total = ex_div_total + yield_total
     return {

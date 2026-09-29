@@ -1528,9 +1528,12 @@ def render_v19_segments_html(j: dict) -> str | None:
     rows_data = (j.get("growth") or {}).get("segments") or []
     if not rows_data:
         return None
+    header = '<tr><th>分部</th><th class="num">占比</th><th>驅動</th><th>備註</th></tr>'
+    skipped = _unexpanded_table("segs", rows_data, header)
+    if skipped:
+        return skipped
     if _is_item_value_shape(rows_data, "segment"):
         return _render_item_value_table("segs", rows_data)
-    header = '<tr><th>分部</th><th class="num">占比</th><th>驅動</th><th>備註</th></tr>'
     rows = [
         '<tr><td>{seg}</td><td class="num">{share}</td><td>{drv}</td><td>{note}</td></tr>'.format(
             seg=esc(r.get("segment")), share=esc(r.get("share")) or "—",
