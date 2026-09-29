@@ -20,7 +20,8 @@ function renderAppendix(container, vm){
     ['財報驚喜（SUE）', (c3.sue&&c3.sue.status==='ok'?c3.sue.method:'') + '　' + (c3.sue_breaks&&c3.sue_breaks.status!=='no_data'?c3.sue_breaks.method:'')],
     ['ROIC 拆解', c4.status==='ok'?c4.dupont.note:''],
     ['內部人群聚買進', c5.cluster_buy&&c5.cluster_buy.status==='ok'?c5.cluster_buy.method:''],
-    ['FunnelRank', c7.status==='ok'?c7.footnote:'']
+    ['FunnelRank v2（現行）', c7.status==='ok'&&c7.funnel_v2?c7.funnel_v2.footnote:''],
+    ['FunnelRank v1（對照，將移除）', c7.status==='ok'?c7.footnote:'']
   ];
 
   var whyRows = [
@@ -30,11 +31,28 @@ function renderAppendix(container, vm){
 
   var funnelHtml = '';
   if(c7.status==='ok'){
-    funnelHtml = '<div class="apx-funnel">' +
-      '<p style="font-size:11.5px;color:var(--sec);margin:0 0 8px">這裡的排名把護城河分數算進去，權重 30%。'+
-      '護城河分數來自既有研究報告，不會隨每次 build 更新，名次僅供參考。</p>'+
+    var v2 = c7.funnel_v2;
+    var v2Html = '';
+    if(v2){
+      v2Html = '<div class="apx-funnel">' +
+        '<p style="font-size:11.5px;color:var(--sec);margin:0 0 8px">dd-screener 現在的預設排序法：四層各自在全母體的百分位，逐層比較最弱的那層，不是加權合成分。</p>'+
+        '<div class="apx-stat-row">' +
+          '<div class="imq-stat"><div class="v">'+(v2.rank!=null?v2.rank:'—')+'</div><div class="k">名次</div></div>'+
+          '<div class="imq-stat"><div class="v">'+fmtNum(v2.median,1)+'</div><div class="k">四層中位數</div></div>'+
+          '<div class="imq-stat"><div class="v">'+v2.top_tier_count+'</div><div class="k">頂層(tier4)層數</div></div>'+
+        '</div>'+
+        '<div class="tbl-wrap"><table class="imq-table apx-tbl"><thead><tr><th>層</th><th class="num">百分位</th><th class="num">Tier(0-4，-1=缺)</th></tr></thead><tbody>'+
+        v2.layers.map(function(l){
+          return '<tr><td>'+l.label+'</td><td class="num">'+(l.percentile!=null?fmtNum(l.percentile,1):'無資料')+'</td><td class="num">'+l.tier+'</td></tr>';
+        }).join('')+'</tbody></table></div>'+
+        (v2.veto.length?'<div class="apx-veto"><b>否決：</b>'+v2.veto.join('；')+'</div>':'')+
+        (v2.note?'<div class="apx-veto"><b>備註：</b>'+v2.note+'</div>':'')+
+        '</div>';
+    }
+    var v1Html = '<div class="apx-funnel" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)">' +
+      '<p style="font-size:11px;color:var(--muted);margin:0 0 8px"><b>v1（舊版加權合成分，僅供對照，下一版移除）</b>——把護城河分數算進去，權重 30%，護城河分數來自既有研究報告，不會隨每次 build 更新。</p>'+
       '<div class="apx-stat-row">' +
-        '<div class="imq-stat"><div class="v">'+fmtNum(c7.funnel_rank,3)+'</div><div class="k">FunnelRank</div></div>'+
+        '<div class="imq-stat"><div class="v">'+fmtNum(c7.funnel_rank,3)+'</div><div class="k">FunnelRank v1</div></div>'+
         '<div class="imq-stat"><div class="v">'+c7.rank+' / '+c7.total+'</div><div class="k">名次</div></div>'+
         '<div class="imq-stat"><div class="v">'+fmtNum(c7.percentile,1)+'%</div><div class="k">百分位</div></div>'+
       '</div>'+
@@ -50,6 +68,7 @@ function renderAppendix(container, vm){
       }).join('')+'</tbody></table></div>'+
       '<div class="apx-veto"><b>否決／封頂：</b>'+(c7.vetoes_and_caps.length?c7.vetoes_and_caps.join('；'):'無')+'</div>'+
       '</div>';
+    funnelHtml = v2Html + v1Html;
   }
 
   var changelogRows = (vm.changelog || []).map(function(e){

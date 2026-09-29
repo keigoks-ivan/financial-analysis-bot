@@ -50,6 +50,9 @@ function abbrevNum(v){
   return sign+String(Math.round(abs));
 }
 function noData(el, reason){ if(el) el.innerHTML = '<div class="nodata">無資料'+(reason?'：'+reason:'')+'</div>'; }
+// 2026-09-26 新增：跟 noData 分開——這個專指「資料來源這次抓取失敗」（yfinance 逾時／擋掉等），
+// 不是「這檔本來就沒有這項資料」，讓讀者知道下次自動更新可能就有了，不用去別的地方找。
+function noDataSourceFail(el, reason){ if(el) el.innerHTML = '<div class="nodata">資料暫缺（來源失敗，下次更新重試）'+(reason?'：'+reason:'')+'</div>'; }
 // dd-screener 燈號轉文字（不猜測欄位精確語意，一律轉三段式中性詞）
 var TIER_TXT = {'🟢':'低', '🟡':'中', '🔴':'高'};
 function tierText(v){ return TIER_TXT[v] || v || '無資料'; }
@@ -163,6 +166,7 @@ function buildVM(D, M){
     D:D, M:M, jc:jc, c1:c1, c2:c2, c3:c3, c4:c4, c5:c5, c6:c6, c7:c7,
     moat:moat, moatCurrent:moatCurrent, moatChanges:moatChanges, moatRivals:moatRivals, moatFootprint:D.full.moat_footprint,
     analystTargets:analystTargets,
+    catalystTrack: D.full.catalyst_track, patternQuality: D.full.pattern_quality,
     nextEarn:nextEarn, daysEarn:daysEarn, keyData:keyData, summaryBullets:summaryBullets, finTable:finTable,
     judgmentVersion: D.judgment_version, judgmentVersionDate: D.judgment_version_date,
     latestChanges: D.latest_changes || [], changelog: D.changelog || [], sectionVersions: D.section_versions || {}

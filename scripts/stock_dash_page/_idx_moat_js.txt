@@ -6,12 +6,19 @@ function renderMoatChapter(vm){
   var fp = vm.moatFootprint || {}, c4 = vm.c4 || {};
   var research = fp.research;
 
+  var moatNote;
+  if(research && research.moat_anchor){
+    moatNote = '護城河的完整分析見<a href="'+moatEsc(research.moat_anchor)+'">研究報告的護城河章節</a>'+(research.date?'（'+moatEsc(research.date)+'）':'')+'。';
+  } else if(research && research.path){
+    moatNote = '完整分析見<a href="'+moatEsc(research.path)+'">研究報告</a>。';
+  } else if(fp.dd_path_raw){
+    moatNote = '這檔有<a href="'+moatEsc(fp.dd_path_raw)+'">研究報告</a>，但護城河對手表這次沒能自動解析出來（'+
+      (fp.parse_status==='file_missing'?'報告檔案讀不到':'解析失敗')+'），下面對手對照改用同產業分類代替，完整分析請直接看報告。';
+  } else {
+    moatNote = '這檔還沒有研究報告。';
+  }
   document.getElementById('moatHead').innerHTML =
-    '<div class="moat-meta">這一章只放數字，不放模型寫的判斷。'+
-    (research && research.moat_anchor
-      ? '護城河的完整分析見<a href="'+moatEsc(research.moat_anchor)+'">研究報告的護城河章節</a>'+(research.date?'（'+moatEsc(research.date)+'）':'')+'。'
-      : (research && research.path ? '完整分析見<a href="'+moatEsc(research.path)+'">研究報告</a>。' : '這檔還沒有研究報告。'))+
-    '</div>';
+    '<div class="moat-meta">這一章只放數字，不放模型寫的判斷。'+moatNote+'</div>';
 
   // ── 本公司的數字 ──
   var du = (c4.status==='ok' && c4.durability) || {}, inc = (c4.status==='ok' && c4.incremental) || {};
@@ -43,11 +50,26 @@ function renderMoatChapter(vm){
   // ── 對手對照 ──
   var rv = fp.rivals || [];
   document.getElementById('moatRivalTable').innerHTML = rv.length ?
-    '<thead><tr><th>對手</th><th class="num">毛利率</th><th class="num">ROIC</th><th class="num">營收年增</th><th class="num">NTM本益比</th></tr></thead><tbody>'+
+    '<thead><tr><th>對手</th><th class="num">毛利率</th><th class="num">ROIC</th><th class="num">營收年增</th><th class="num">NTM本益比</th><th class="num">明年度EPS修正</th></tr></thead><tbody>'+
     rv.map(function(r){
-      return '<tr><td>'+moatEsc(r.ticker)+'</td><td class="num">'+(r.gm_ltm_pct!=null?r.gm_ltm_pct+'%':'無資料')+'</td>'+
+      return '<tr><td>'+moatEsc(r.ticker)+(r.in_universe===false?'（不在名單）':'')+'</td><td class="num">'+(r.gm_ltm_pct!=null?r.gm_ltm_pct+'%':'無資料')+'</td>'+
         '<td class="num">'+(r.roic!=null?r.roic+'%':'無資料')+'</td><td class="num">'+(r.rev_yoy_fq0_pct!=null?r.rev_yoy_fq0_pct+'%':'無資料')+'</td>'+
-        '<td class="num">'+(r.pe_ntm_x!=null?r.pe_ntm_x+'x':'無資料')+'</td></tr>';
+        '<td class="num">'+(r.pe_ntm_x!=null?r.pe_ntm_x+'x':'無資料')+'</td>'+
+        '<td class="num">'+(r.eps_fy_next_revision_pct!=null?fmtPctColored(r.eps_fy_next_revision_pct)+'（'+r.revision_dir+'）':'無資料')+'</td></tr>';
     }).join('')+'</tbody>' : '<tbody><tr><td>沒有可比對手資料</td></tr></tbody>';
   document.getElementById('moatRivalSrc').textContent = fp.rival_source ? '對手來源：'+fp.rival_source : '';
+
+  // ── 同儕修正廣度 ──
+  var prb = fp.peer_revision_breadth;
+  var prbEl = document.getElementById('moatPeerRevisionBody');
+  if(!rv.length){
+    noData(prbEl, '沒有可比對手資料');
+  } else if(!prb){
+    noData(prbEl, '本股無明年度 EPS 修正資料，或對手全數不在名單');
+  } else {
+    prbEl.innerHTML =
+      '<div class="imq-stat"><div class="v">'+(prb.self_direction||'無資料')+'</div><div class="k">本股方向（'+(prb.self_eps_fy_next_revision_pct!=null?fmtPct(prb.self_eps_fy_next_revision_pct):'無資料')+'）</div></div> '+
+      '<div class="imq-stat"><div class="v">'+prb.peer_up+' 上修／'+prb.peer_down+' 下修／'+prb.peer_flat+' 持平'+(prb.peer_no_data?'／'+prb.peer_no_data+' 無資料':'')+'</div><div class="k">對手分布</div></div>'+
+      (prb.with_or_against_peers?'<div style="font-size:12px;color:var(--body);margin-top:6px">'+prb.with_or_against_peers+'</div>':'');
+  }
 }
