@@ -8,7 +8,7 @@ dd_scenario.py 把 null 當 0 算（見 aeb3cdb8c），配息股含息報酬因�
 3. dd_project.py::scenario_input_from_v19 用這個事實覆寫判斷者填的
    scenario_inputs.yield_pct.dividend（net_buyback 仍交判斷者，不動）。
 
-本檔覆蓋：配息股（真算出殖利率）、非配息股（0.0，非 null）、查不到資料的 null
+本檔覆蓋：配息股（真算出殖利率）、股息歷史全空（null，不覆寫判斷者）、查不到資料的 null
 案例、以及覆寫本身（有 fact 就覆寫／無 fact 沿用判斷者原答案）。全程無網路：
 yfinance 一律經 monkeypatch `dd_numbers_extra._lazy_imports` 假冒。
 
@@ -71,13 +71,13 @@ def test_dividend_yield_payer_computes_trailing_pct(monkeypatch):
     assert out["note"] is None
 
 
-def test_dividend_yield_non_payer_is_zero_not_null(monkeypatch):
-    """非配息股：0.0（真實的『沒有』），不是 null——與『查不到資料』的 null
-    案例分開，才不會被下游誤判成缺資料。"""
+def test_dividend_yield_empty_history_is_null(monkeypatch):
+    """整段股息歷史都空：分不出非配息股還是代號／資料缺漏，記 null（不覆寫判斷者），
+    不寫 0.0——寫 0 會把代號沒對上的配息股含息報酬蓋成 0。"""
     empty = pd.Series([], dtype=float)
     _patch_yf(monkeypatch, {"GOOG": _FakeTicker(empty)})
     out = dne.compute_dividend_yield_ttm("GOOG", datetime(2026, 9, 29), 200.0)
-    assert out["value_pct"] == 0.0
+    assert out["value_pct"] is None
     assert out["note"]
 
 

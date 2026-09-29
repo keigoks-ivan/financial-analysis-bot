@@ -361,8 +361,9 @@ def compute_dividend_yield_ttm(ticker, date_dt, price_at_dd):
         t = yf.Ticker(ticker)
         divs = t.dividends
         if divs is None or divs.empty:
-            out["value_pct"] = 0.0
-            out["note"] = "近一年查無股息紀錄（非配息股，或 yfinance 無資料）"
+            # 整段股息歷史都空：分不出「從不配息」還是「代號沒對上／yfinance 缺資料」，
+            # 記 null 不覆寫判斷者的值（寫 0 會把配息股的含息報酬蓋成 0）。
+            out["note"] = "yfinance 查無任何股息歷史（非配息股，或代號／資料缺漏），不覆寫判斷者的值"
             return out
         cutoff_date = date_dt.date()
         start_date = cutoff_date - timedelta(days=365)
