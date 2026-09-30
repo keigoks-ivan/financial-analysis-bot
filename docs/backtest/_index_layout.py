@@ -118,7 +118,8 @@ BLOCKS = [
             ("/long-track-adaptive-vt/", "自適應美台總覽（歸檔）", None, False),
         ]),
         ("實單證據", None, _conv(navc.RESEARCH_OOS_LINKS)),
-        ("研究・因子", None, _conv(navc.RESEARCH_FACTOR_LINKS)),
+        # 2026-10-01：revmom（台股月營收動能）掛在 pill 的「研究・因子」群，但在總覽放台股區
+        ("研究・因子", None, [x for x in _conv(navc.RESEARCH_FACTOR_LINKS) if x[0] != "/backtest/revmom/"]),
         ("研究・主動式ETF", None, [
             ("/backtest/us_active_etf/", "美股主動式ETF", "研究", False),
         ]),
@@ -150,6 +151,9 @@ BLOCKS = [
         ("期貨趨勢", None, _conv(navc.FUTURES_DAILY_LINKS)),
         ("日內", None, _conv(navc.INTRADAY_LINKS)),
         ("可轉債", None, _conv(navc.TW_CB_LINKS)),
+        ("研究・選股", None, [
+            ("/backtest/revmom/", "月營收動能選股", "研究", False),
+        ]),
         ("實單追蹤", None, [
             ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
             ("/long-track-tw-vt/", "0050+2330 固定 σ（歸檔）", None, False),

@@ -14,7 +14,7 @@ Every backtest page header renders the same groups via make_toggle(active):
     研究・總經：  housing_gdp
     研究・可轉債：tw_cb
     研究・因子：  return_driver | pead | pead_reaction | accruals | share_issuance
-                  | profitability | asset_growth | index_inclusion | insider
+                  | profitability | asset_growth | index_inclusion | insider | revmom
     研究・跨標的驗證： w52_oos | ins_prem | adopt_boot | regime_boot | comb_acct | slow_bear | slow_bear_onset
                   | cross_sec_trend
 
@@ -216,6 +216,7 @@ RESEARCH_FACTOR_LINKS = [
     ("/backtest/asset_growth/", "美股資產成長異象", "asset_growth", "研究"),
     ("/backtest/index_inclusion/", "指數納入效應", "index_inclusion", "研究"),
     ("/backtest/insider/", "內部人買賣叢集買進", "insider", "研究"),
+    ("/backtest/revmom/", "台股月營收動能選股", "revmom", "研究"),
 ]
 
 # 向後相容：舊名保留為五群之串接，供外部引用者使用。
