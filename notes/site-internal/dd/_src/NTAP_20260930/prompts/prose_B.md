@@ -1,0 +1,404 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 NTAP（2026-09-30）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**後半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/NTAP_20260930/prose_B.html`，依序含 s8、s9、s10、s11、s12、decision（s85 若觸發併入）。前半（s1–s7）由另一通同時在寫，你不要碰；s1 的結論與 decision 段的裁決都以 judgment 投影視圖為準，不需對照前半。
+
+每章 3–6 條，每條 100–200 字；s10（估值與三種未來）與 s12（最可能怎麼賠）至少 1,500 bytes，把情境輸入、終端倍數、反證三視角的裁定鋪開。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：NTAP　日期：2026-09-30　archetype：None　前份裁決：2026-05-18　B 觀望偏進場·thesis 完整等估值或時機修復（Q4 5/28 法說催化）｜　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（2020B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（719B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（999B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1501B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1226B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（618B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（902B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2276B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（3517B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2550B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（281B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        2020           3486-4980      5 條（2–6 內）  
+s3                  8000         719           5097-7281      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3726          7892-11274      5 條（2–6 內）  
+s6                 11000         618          7267-10382      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         902           1819-2598      5 條（2–6 內）  
+s10                 5000        2276           1907-2724      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2550           2000-2450      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         281            853-1219      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=5324B；至少需散文≈39.68KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−55%
+−55
+−51%
+−50%
+−42%
+−40%
+−36%
+−35
+−35%
+−7.6
+0
+0.75
+0.99
+1
+1.02
+1.12
+1.13
+1.4
+1.46
+1.5%
+1.7
+1.9
+2
+02
+2.00
+2%
+2.06
+2.7
+03
+3
+3%
+3.02
+3.9%
+4%
+04
+4
+4.01
+4.3%
+4.8%
+5
+05
+5%
+5.03
+5.42
+5.56
+6
+06
+6.1
+6.35
+6.7
+7%
+7
+07
+7.20
+8
+8%
+08
+8.1
+8.10
+8.1%
+8.5
+8.6
+8.8
+8.85
+09
+9
+9%
+9.1
+9.4%
+9.4
+9.7
+9.87
+9.88
+10%
+10
+10.01
+10.3
+10.5
+10.8
+11%
+11
+11.12
+11.4
+11.6
+11.7
+12%
+12
+12.36
+12.5%
+12.6
+12.76
+13
+13.09
+13.5
+14%
+14
+14.6
+15%
+15
+16.3
+17
+17%
+18
+18.2
+18.69
+18.8
+19%
+19.4
+20
+20%
+20.25
+20.9
+21
+21.6%
+21.75
+22%
+22
+22.7%
+23.9%
+24
+25
+25%
+26
+26%
+27
+28%
+28
+28.9
+29%
+30%
+30
+30.3
+31
+31%
+31.3%
+31.9%
+32%
+33%
+35
+35.7%
+36
+36.6%
+40%
+42
+42%
+43%
+47%
+48%
+48.5
+49
+49%
+50
+50%
+51%
+52%
+52
+53%
+54.6%
+56%
+56.5
+60%
+61.6%
+65%
+67
+68%
+68.1
+69.1%
+70%
+70
+70.2
+70.6%
+70.7%
+71%
+74%
+74.4%
+75%
+79.75
+80
+80%
+83%
+85%
+86.4%
+90
+92
+93%
+93.2%
+100
+100%
+102
+104
+105.97
+106%
+110
+118%
+119.93
+120
+125
+130
+134
+150%
+150
+170
+190.69
+195.79
+200
+209.18
+225
+230
+250
+300
+301
+350
+353
+500
+000660
+2025
+2026
+2027
+2028
+005930
+20260930
+6,500
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"NTAP","date":"2026-09-30","schema":"v15.2","contract":"v19","company_name":"NetApp, Inc."},"oneliner":"NetApp 生意變好是真的，但 FY27 盈餘墊了多一週、漲價轉嫁和提前採購；股價半年翻倍、遠期 20.9 倍已先反映，等回到 17 倍附近再談。","thesis":{"H":[{"id":"H1","text":"AI 與資料基礎設施現代化帶來的需求是結構性的，不只是提前採購和漲價：扣掉多一週與漲價成分後，營收仍維持中高個位數以上成長。","2y":"FY27 下半年兩季營收年增皆 ≥8%（管理層隱含約 9–10%）；FY28 首次財測營收中點年增 ≥5%","5y":null,"10y":null,"threshold":"FY27 Q3、Q4 營收年增 ≥8%；FY28 營收財測中點年增 ≥5%","source":"公司季報新聞稿與法說（Q2 約 2026-12 初、Q3 約 2027-03 初、Q4 與 FY28 財測約 2027-06 初）","drift_rule":"兩年期：營收 TTM 較本次 Base 路徑連兩季偏離 ≥5% 為削弱、連三季 ≥10% 為反轉"},{"id":"H2","text":"零組件漲價大致轉嫁得掉：產品毛利率守在 50% 中段，整體 non-GAAP 營益率 ≥30%。","2y":"FY27 各季產品毛利率 ≥52%、全年 non-GAAP 營益率落在 30.3–31.3% 財測內；FY28 non-GAAP 營益率 ≥30%","5y":null,"10y":null,"threshold":"產品毛利率單季 ≥52%；non-GAAP 營益率年度 ≥30%","source":"公司季報新聞稿、CFO 法說毛利率拆解","drift_rule":"兩年期：產品毛利率較 54.6% 起點連兩季偏離 ≥5%（約 2.7 個百分點）為削弱、連三季 ≥10% 為反轉"},{"id":"H3","text":"全快閃與雲端原生服務的份額持續往上：全快閃成長快於市場，Public Cloud 維持高十位數成長，IDC 外接式儲存排名守在前三。","2y":null,"5y":"FY27–FY31 全快閃營收年增高於 IDC 外接式儲存市場成長；Public Cloud 年增（剔除多一週）≥15%；全快閃占裝機基礎由 48% 升到 ≥65%","10y":null,"threshold":"全快閃年增 ≥ IDC 市場成長；Public Cloud 年增 ≥15%；IDC 排名前三","source":"公司季報、IDC 季度企業儲存追蹤（Blocks & Files 轉述）、法說裝機基礎揭露","drift_rule":"五年期：兩項指標連四季偏離門檻 ≥5% 為削弱、連六季 ≥10% 為反轉"}],"R":[{"id":"R1","text":"提前採購與漲價墊高的營收在下半年回吐：Q2 營收低於財測下緣或全年財測下修。","h_ref":"H1","clock":"⚡","threshold":"Q2 FY27 營收低於 20.25 億美元，或 FY27 營收財測下修；連兩季低於財測中點即減碼","evidence_refs":[]},{"id":"R2","text":"上游 NAND 寡占、企業級 SSD 合約價長期偏高，漲價轉嫁跟不上成本，產品毛利率滑到 50% 以下，價值鏈利潤繼續往記憶體廠移。","h_ref":"H2","clock":"🔥","threshold":"產品毛利率連兩季低於 52% 減碼；連四季低於 52% 才大動作","evidence_refs":["supply_demand_durability#0","supply_demand_durability#1","geo_supply_chain#3","reg_tariff_export#2"]},{"id":"R3","text":"競爭與替代：Dell 重奪全快閃第一，專注快閃與鎖定 AI 的新進者在高階場景搶單，超大型雲自建檔案服務（AWS S3 加入檔案存取）並在缺貨時認證新供應商。","h_ref":"H3","clock":"🔥","threshold":"全快閃年增連兩季低於 IDC 市場成長，或 Public Cloud 年增（剔除多一週）連兩季低於 12%","evidence_refs":["competitive_share_entrants#4","competitive_share_entrants#5","end_markets#3","end_markets#7","substitute_technology#0","substitute_technology#1"]},{"id":"R4","text":"地緣與關稅：製造外包、關鍵零組件依賴台灣與亞洲供應鏈；Section 301 關稅與中台緊張可能推高成本或斷供。","h_ref":"H2","clock":"🐢","threshold":"因供給或關稅下修營收財測，或產品毛利率單季因關稅下滑 ≥200bp","evidence_refs":["geo_supply_chain#0","geo_supply_chain#1","reg_tariff_export#0","reg_tariff_export#2"]},{"id":"R5","text":"通路集中：兩家經銷商合計約占營收 43%，任一家信用或合作變動會打斷出貨。","h_ref":"H1","clock":"🐢","threshold":"單一經銷商占比升破 30%，或應收帳款天數年增 ≥15 天（10-K／10-Q）","evidence_refs":["customer_concentration_credit#0"]}],"single_thing":{"description":"FY28 首次全年財測（預計 2027 年 5 月底至 6 月初的 Q4 FY27 法說）營收中點低於 FY27 實際營收，等於管理層承認這一輪是提前採購加漲價的頂點。","why_fatal":"現價以 FY27 約 10 美元 EPS 當新起點、再年增 11%；若 FY28 營收轉負，EPS 回到 8.5–9 美元，倍數同時由約 21 倍回到 13–15 倍，兩頭一起打，股價可能回到 110–130 美元（約 −40%），是情境樹裡敏感度最大的一項。","if_happens":"持有者清倉；未持有者取消重新進場條件，等 FY28 上半年營收觸底再重跑研究。","how_monitor":"Q2（約 2026-12 初）與 Q3（約 2027-03 初）的產品營收年增與存貨週轉；企業級 SSD 合約價走勢；管理層對提前採購比重的說法是否改口。","probability":"約 25%（12–24 個月）"}},"appendix_a":{"growth_durability":6,"quality_score":9,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":18.8,"peg_fy2":1.7,"stress":{"pass":null,"total":null}},"eps_meta":{"base_eps_path":{"FY2026A":8.1,"FY2027E":10.01,"FY2028E":11.12,"FY2029E":12.36},"fy_end_month":4,"eps_basis":"non-GAAP 稀釋 EPS；FY2026A 8.10 由 Q1 FY27 法說「FY27 中點 9.88 對應年增 22%」反推（事實表未直接收錄 FY26 non-GAAP EPS，GAAP 稀釋 EPS 為 6.35）；共識取 Koyfin 2026-09-26 快照，家數事實表未涵蓋"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/NTAP_20260930/scenario.json","archetype":{"primary":"品質複利成長","secondary":"循環/商品","confidence":"中","fingerprint":"高毛利儲存平台加支援年費，當期盈餘站在 NAND 漲價與 AI 換機週期上"},"industry":{"clock_phase":"II","sd_verdict_source":"週期性將反轉：上游 NAND 吃緊預計延續到 2027–2028（StorageSwiss、NAND Research），但 TrendForce 指 2027 年 NAND 供給趨緩；NetApp 營收裡的漲價與提前採購成分會隨上游鬆動回吐，AI 與現代化需求的持久部分尚未證實。","bargaining":{"up":"上游 NAND 三家集中、企業級 SSD 合約價大漲，NetApp 用商品化 SSD、無自有快閃，只能部分轉嫁（CEO：無法一對一抵銷）。","down":"兩家經銷商約占營收 43%，屬通路；最終客戶分散，以美元編預算，漲價後會改買混合快閃或延後低優先專案。","geo":"製造外包，10-K 點名中台緊張可能影響關鍵零組件取得，進口關稅變動可能造成重大不利影響。"},"profit_pool_dir":"利潤池目前往上游記憶體廠移：SNDK、SK hynix 營益率 60% 以上，NetApp 26%；系統廠靠轉嫁守住毛利率，沒有多分到。","tam_table":[{"item":"外接式企業儲存市場（2025）","value":"353 億美元，年增 4.3%（IDC，經 Blocks & Files）；另一聚合來源稱 3.9%"},{"item":"2026 Q1 市場","value":"92 億美元，年增 22.7%，高階系統年增逾 60%（聚合站轉述 IDC）"},{"item":"NetApp 份額","value":"2025 全年 8.1% 排第三；2025 Q3 9.4%；2026 Q1 升至第二；2026 Q2 年增 35.7%，成長第三快"},{"item":"段 CAGR（5 年）","value":"事實表未涵蓋"},{"item":"營業利益池占比 5 年前到現在","value":"事實表未涵蓋；當期上游記憶體廠營益率 60% 以上、NetApp 26%，方向往上游移"}]},"moat":{"mechanism":"ONTAP 統一儲存作業系統加資料管理服務，同一套軟體跑在自家硬體與 AWS、Azure、Google 第一方服務上；轉換成本來自資料搬遷、複寫架構、認證與人員訓練。","execution":8,"pricing":6,"grade":"B","trend":"→","trend_evidence":"執行力擴大：IDC 2026 Q1 升到外接式儲存第二，Q2 年增 35.7% 且份額領先 Everpure。定價權持平偏弱：產品毛利率季減 150bp，漲價無法一對一轉嫁，但整體毛利率三年守在 70–71%。兩者合併為持平。","peer_na_reason":"事實表同業列為 NAND 供應商（SNDK、SK hynix、三星），不是儲存系統同業；Everpure（PSTG）無財報資料。同業報酬率差距無法比，改用 IDC 份額軸。","threats":[{"level":"🟡","text":"AWS 2026-04 為 S3 加入檔案存取，被報導對標 NetApp；雲端合作夥伴自建同類服務，點對點威脅雲端檔案服務的低階工作負載。","p":30,"evidence_refs":["end_markets#7"]},{"level":"🟡","text":"超大型雲業者缺貨時更願意認證新供應商，可能替新進者打開缺口；證據只有搜尋摘要轉述，未讀原頁。","p":30,"evidence_refs":["competitive_share_entrants#5"]},{"level":"🟡","text":"Dell 2025 Q2 重奪全快閃第一；專注快閃的新公司與鎖定 AI 的新進者在高階搶單，技術變化快、新舊產品交替有風險。","p":35,"evidence_refs":["end_markets#3","competitive_share_entrants#4","substitute_technology#0","substitute_technology#1"]}],"roic_durability":{"quadrant":"推定高利益率×高周轉：營益率 24–32%、資本支出約占營收 5%、淨現金；投入資本口徑事實表未涵蓋，無法算數值","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者是應用與資料團隊、決策者是基礎設施主管、付款者是 IT 預算，三環都成立；儲存是需要不是想要。但當期水位被急迫性墊高：CEO 說部分大客戶把多季建置擠到一季、同時延後低優先專案；客戶以美元編預算，漲價後會改買混合快閃。急迫性不等於持久性。讀數：下半年隱含年增約 9–10%，AI 案件數由約 500 降到約 350 筆。"},{"item":"決策層級","level":"🟢","text":"替代在工作負載層衡量：換掉 ONTAP 要搬資料、重建異地複寫與備援、重新認證（AFX 客戶需走認證流程）、重訓人員。讀數：RPO 56.5 億美元年增 14%、支援毛利率 93.2%；客戶在漲價時改買 NetApp 自家的混合快閃，而不是換廠商。"},{"item":"價值鏈分配","level":"🟡","text":"這一輪價值往上游移：NAND 三家寡占、產能給 HBM，SNDK 與 SK hynix 營益率 60% 以上，NetApp 26%；NetApp 用商品化 SSD、無自有快閃，只能靠漲價轉嫁，產品毛利率季減 150bp。整體毛利率仍守 70%，靠的是支援與雲端這兩段高毛利、難取代的環節。"},{"item":"社會容忍度","level":"🟢","text":"企業 IT 採購，無監管定價上限、不依賴授權；實際上限是客戶的美元預算，不是社會或政治壓力。關稅屬政策成本，不屬價格容忍問題。"}],"roiic":"事實表未涵蓋（缺投入資本口徑）","reinvest_rate":"低：事實表缺折舊攤銷與三筆併購金額；Q1 資本支出 1.02 億美元約占營收 5%，公司承諾最多把 100% 自由現金流還給股東","endo_ceiling":null,"formula_note":"內生成長率＝增量 ROIC × 再投資率；再投資率＝（資本支出−折舊攤銷＋營運資金變動＋收購淨額）÷稅後營業利益。事實表缺投入資本、折舊攤銷與併購金額，數值無法算。方向判讀：公司幾乎全數配發自由現金流，再投資率低，內生天花板偏低；共識成長主要靠市場成長、營益率擴張、漲價轉嫁與回購，不是靠新投入的資本。"},"combined":7.0,"score":7.0,"spread_table":[{"metric":"毛利率","NTAP":70.63,"SNDK":71.47,"000660.KS":76.27,"005930.KS":57.48,"PSTG":null,"unit":"%"},{"metric":"營業利益率","NTAP":26.03,"SNDK":61.58,"000660.KS":68.04,"005930.KS":36.88,"PSTG":null,"unit":"%"},{"metric":"FCF 利潤率","NTAP":22.32,"SNDK":56.77,"000660.KS":47.8,"005930.KS":28.95,"PSTG":null,"unit":"%"},{"metric":"研發密度","NTAP":13.84,"SNDK":6.56,"000660.KS":4.93,"005930.KS":9.7,"PSTG":null,"unit":"%"}],"competitors":[{"name":"SNDK","gm":71.47,"om":61.58,"fcf_margin":56.77,"rd_intensity":6.56,"strategy_note":"上游 NAND 供應商，不是直接對手；營益率 61.6% 對 NetApp 26%，代表這一輪漲價的利潤多半落在上游。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"000660.KS","gm":76.27,"om":68.04,"fcf_margin":47.8,"rd_intensity":4.93,"strategy_note":"記憶體龍頭，營益率 68%；產能優先給 HBM，企業級 SSD 吃緊延續，是 NetApp 產品毛利率的成本端。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"005930.KS","gm":57.48,"om":36.88,"fcf_margin":28.95,"rd_intensity":9.7,"strategy_note":"記憶體加系統的綜合廠，同時是 NetApp 客戶（Q1 簽下 EDA 與 AI 中心合約），供應商與客戶兩重身分。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"PSTG（Everpure）","gm":null,"om":null,"fcf_margin":null,"rd_intensity":null,"strategy_note":"專注全快閃的主要對手，2025 Q3 成長快於 NetApp；2026 年 IDC 份額趨勢 NetApp 仍領先。事實表無其財報數字。"}]},"growth":{"driver_mix":"量價併進：產品營收年增 51% 含零組件漲價轉嫁與提前採購（價）、AI 與資料湖現代化新單（量）；每股盈餘另有每年約 1.5% 淨回購；三筆併購為小型補強，貢獻可忽略。","runway_years":"約 5–6 年：全快閃占裝機基礎 48%，每季約升 1 個百分點，升到 70% 約需 5–6 年","runway_post_y5":"🟡","endo_ceiling_basis":"引護城河段再投資推導：投入資本與折舊資料缺，數值無法算；公司幾乎全數配發自由現金流，內生天花板判定低於共識三年 EPS 年增約 15%（FY26 約 8.10 到 FY29E 12.36）。缺口歸因：營益率擴張、每年約 1.5% 淨回購、零組件漲價轉嫁，可歸因。","segments":[{"item":"Hybrid Cloud 產品","value":"9.87 億美元，年增 51%，產品毛利率 54.6%，占營收 49%（去年 42%）"},{"item":"支援","value":"7.20 億美元，年增 11%（剔除多一週約 4%），毛利率 93.2%"},{"item":"專業服務（含 Keystone）","value":"1.12 億美元，年增 15%，毛利率 36.6%"},{"item":"Public Cloud","value":"2.06 億美元，年增 28%（剔除多一週約 19%），毛利率 86.4%"},{"item":"全快閃陣列（跨產品與服務口徑）","value":"13.09 億美元，年增 47%"}],"decay_signals":[{"item":"毛利率連兩季年減","lit":true,"note":"Q1 毛利率 70.6% 年減 50bp，Q2 財測 67–68%、全年 68.1–69.1% 低於 FY26 70.7%；主因產品占比升高"},{"item":"核心市占近 12 個月縮減","lit":false,"note":"IDC 2026 Q1 升到第二、Q2 年增 35.7% 快於市場"},{"item":"主力產品提價後銷量下滑","lit":false,"note":"漲價後部分客戶改買混合快閃、延後低優先專案，總量仍成長；監測"},{"item":"EPS 成長高於營收成長超過 5 個百分點","lit":false,"note":"FY27 財測 EPS 年增 22%、營收 17%，差 5 個百分點，貼線未亮"},{"item":"自由現金流÷淨利連兩年低於 0.75","lit":false,"note":"FY26 1.46 倍、FY25 1.13 倍"},{"item":"SBC 占營收超過 5% 且逐年上升","lit":false,"note":"Q1 4.8%；逐年趨勢事實表未涵蓋"},{"item":"TAM 萎縮或被替代技術壓縮","lit":false,"note":"外接式儲存 2026 Q1 年增 22.7%"},{"item":"產業估值倍數近三年系統性下移","lit":false,"note":"NetApp 倍數在四個年度端點中最高"},{"item":"維護性資本支出占自由現金流超過 60%","lit":false,"note":"Q1 資本支出 1.02 億美元、自由現金流 4.01 億美元"},{"item":"停止投資新產能且營收三年內下滑","lit":false,"note":"持續補強併購，營收成長中"}],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購撐：三筆為小型技術補強，現金去向以回購與股息為主；近三年現金去向細項事實表未涵蓋"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"三筆小型補強併購（DataPelago 2026-07、JetStream 2026-08、PEAK:AIO 待交割）金額未揭露，CFO 稱 small tuck-ins，無法算已實現報酬","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"回購均價與十年期殖利率事實表未涵蓋；參考前份判斷時（2026-05）遠期本益比 14–15 倍，盈餘收益率約 6.7–7%；現價 20.9 倍約 4.8%","grade":"不過"},{"year":"—","action":"sbc_dilution","rationale":"SBC 占營收 4.8%，但回購抵銷後稀釋股數年減 1.5%，淨稀釋為負","grade":"過"}]},"valuation":{"basis":"遠期本益比（FY1 共識 non-GAAP EPS）加 PEG；對照自身歷史倍數","peers":{"expanded":false,"reason":"事實表同業列為 NAND 供應商而非儲存系統同業，Everpure（PSTG）無資料；缺同層級同業倍數，無法做同業對照"},"fwd_pe":20.9,"peg":1.4,"percentile_5y":null,"val_light":"🟠","val_light_derivation":"遠期 20.9 倍高於自身 5 年平均約 19.4 倍，且分母 FY27 EPS 含多一週與漲價轉嫁；trailing 本益比、P/S、EV/S 在四個年度端點全在頂端（事實表只有四個年度端點，非五年連續分位）；PEG 1.4–1.9；股價高於賣方平均目標價 6–9%。偏貴，但盈餘仍在上修，不到極貴。","upside_short_pct":-7.6,"upside_mid_pct":9.7},"trap_analysis":{"verdict":"🟡","label":"週期墊高的分母"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"管理層 2026-05-28 與 2026-09-02 兩度承認提前採購，9/2 CEO 說部分大客戶把四座資料中心中的兩座提前到今年；存貨季增近一倍、週轉由 12 次降到 6 次；下半年隱含年增約 9–10%；TrendForce 指 2027 年 NAND 供給趨緩。","assumption":"提前採購只占很小比例，AI 與現代化需求撐得住下一年。","consequence":"FY28 營收年減、營益率回到 28% 左右、EPS 回到 8.5–9 美元，倍數回到 13 倍，股價約 110–125 美元；再疊上 Dell 或 AI 原生廠搶單，才會到 −50%。","ruling":"採納為空頭主路徑，機率 30%；與 Single Thing 是同一件事，不另立。","watch":"Q2、Q3 營收年增與產品營收年增、存貨週轉、FY28 首次財測。","evidence_refs":["competitive_share_entrants#4","end_markets#3"],"fact_refs":["f_kpi11_inventory_turns","f_kpi6_guidance_fy27"]},{"view":"論點成功但股東經濟變差","evidence":"NAND 三家寡占、產能轉向 HBM，企業級 SSD 合約價大漲、短缺可能延續到 2027–2028；IT 硬體成本 2026 年上升 15–30%（產業層）；上游 SNDK、SK hynix 營益率 60% 以上對 NetApp 26%；Q1 產品毛利率季減 150bp，CEO 承認無法一對一轉嫁。","assumption":"需求持久時，漲價轉嫁得掉，產品毛利率守在 50% 中段。","consequence":"營收照長，但產品毛利率跌到 50% 以下，營益率卡在 28–29%，每股盈餘成長低於營收成長。","ruling":"部分反駁：目前整體毛利率下滑主要來自產品占比（CFO 稱全年毛利率下修 solely driven by 產品組合），產品毛利率本身比 90 天前預期好；但價值鏈利潤往上游移是事實，列監測。","watch":"產品毛利率連兩季低於 52% 即減碼。","evidence_refs":["supply_demand_durability#0","supply_demand_durability#1","geo_supply_chain#3","reg_tariff_export#2"],"fact_refs":["f_kpi10_product_gross_margin_non","f_peer_sndk_operating_margin_pct","f_peer_000660_ks_operating_margin_pct"]},{"view":"價格已反映太多","evidence":"26 週漲 106%；遠期本益比 20.9 倍，高於自身 5 年平均約 19.4 倍，已達前份多頭情境 FY30 才要到的 18–22 倍；trailing 本益比、P/S、EV/S 在四個年度端點都最高；賣方平均目標價 190.69–195.79 美元，低於現價。","assumption":"FY27 約 10 美元 EPS 是新起點，之後每年再長 11%，倍數維持 20 倍左右。","consequence":"即使 Base 路徑成真，倍數回到 17 倍，5 年年化只剩約 3%（含股息）。","ruling":"採納，這是本次觀望的唯一約束。","watch":"遠期本益比回到 17 倍以下。","evidence_refs":[],"fact_refs":["f_fwd_pe_latest","f_week26_return_pct","f_pe_percentile","f_ps_percentile"]},{"view":"論點失敗","evidence":"財報風險揭露點名專注快閃的新公司與鎖定 AI 的新進者；超大型雲業者缺貨時更願意認證新供應商（搜尋摘要轉述，未讀原頁）；Dell 2025 Q2 重奪全快閃第一；AWS 2026-04 為 S3 加入檔案存取，被報導對標 NetApp；10-K 提到技術變化快、新舊產品交替有風險。","assumption":"ONTAP 平台與三大雲第一方地位讓份額守得住。","consequence":"全快閃成長落後市場、Public Cloud 成長掉到 10% 左右，護城河方向轉弱。","ruling":"目前反駁：2026 Q1 IDC 排名升到第二、Q2 年增 35.7% 為第三快且份額領先 Everpure；Public Cloud 剔除多一週仍年增 19%、毛利率 86.4%。超大型雲認證新供應商一條只有搜尋摘要，證據力弱。列監測，不扣分。","watch":"全快閃年增減 IDC 市場成長、Public Cloud 年增。","evidence_refs":["competitive_share_entrants#4","competitive_share_entrants#5","end_markets#3","end_markets#7","substitute_technology#0","substitute_technology#1"]},{"view":"論點失敗","evidence":"10-K：不直接控制製造，代工與供應商遍布各地；中台緊張可能影響關鍵零組件取得；進口關稅變動可能造成重大不利影響；IEEPA 關稅被否決後改課 10–12.5% Section 301 關稅（產業層）；兩家經銷商約占營收 43%。","assumption":"供給與通路穩定，關稅轉嫁得掉。","consequence":"斷供或關稅吃掉產品毛利率，或單一經銷商出狀況打斷出貨。","ruling":"不做預測，設損益層的吸收失敗判定線：因供給或關稅下修營收財測，或產品毛利率單季因關稅下滑 200bp 以上。2026-09-27 美中同意對 300 億美元商品降關稅，方向略偏正面。經銷商集中屬通路，不是最終客戶集中，信用風險分散。","watch":"財測下修原因、產品毛利率、10-Q 經銷商占比。","evidence_refs":["geo_supply_chain#0","geo_supply_chain#1","reg_tariff_export#0","reg_tariff_export#2","customer_concentration_credit#0"]}],"max_dd":{"lo":-55,"hi":-35,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 🟡 → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=🟡","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 119.93 → 本次 209.18（+74.4%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=119.93","side_b":"本次 price_at_dd=209.18","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"估值與評等","cause":"價格變動","prior_field":["signal","val"],"side_a":"前份 2026-05-18：股價 119.93 美元、遠期本益比約 14–15 倍，估值中性，結論觀望偏進場，等 5/28 法說。","side_b":"本次：股價 209.18 美元（+74%），遠期本益比 20.9 倍，估值轉偏貴；同期 FY27 EPS 財測中點由 8.85 上修到 9.88（+12%），股價漲幅遠大於盈餘上修，結論維持觀望。","ruling":"翻面理由：前份觀望後股價漲 74%，錯在低估 5/28 與 9/2 兩次財測上修的幅度，等的是價格修復而不是證據，錯過了盈餘上修加倍數擴張的雙重推升。本次不翻成進場：上修有一大半已被倍數吸收，而上修來源含多一週、漲價轉嫁與提前採購，分母不乾淨。估值由中性轉偏貴純屬價格變動，基本面評等不變。","evidence_level":"事實表數字","settle_metric":"遠期本益比與 FY1 共識","if_then":["若遠期本益比回到 17 倍以下且 FY27 財測未下修，則首倉 2%","若股價續漲而 Q2 財報沒有再上修，則不追"],"evidence_refs":[]},{"axis":"價值陷阱與護城河方向","cause":"新證據","prior_field":["trap","moat_trend"],"side_a":"前份：價值陷阱風險低、護城河方向持平。","side_b":"本次：陷阱風險升為中等，護城河方向仍持平。新證據：Q1 毛利率年減 50bp，Q2 與全年財測續降（產品占比推升）；管理層 5 月與 9 月兩度承認提前採購；存貨週轉由 12 次降到 6 次；產品毛利率季減 150bp、漲價無法一對一轉嫁。護城河一邊是 2026 年 IDC 份額回升到第二，一邊是上游記憶體廠拿走更多利潤，兩相抵銷。","ruling":"陷阱風險上調採納：衰退信號亮一個、分母含週期成分。護城河方向維持持平。","evidence_level":"公司法說＋IDC 轉述","settle_metric":"產品毛利率、營收年增、IDC 份額","if_then":["若產品毛利率連兩季低於 52%，則減碼一半","若 IDC 份額連兩季下滑，則護城河方向改判轉弱"],"evidence_refs":["end_markets#3","supply_demand_durability#0"]},{"axis":"舊版未產出欄位","cause":"方法變動","prior_field":["runway_post_y5","archetype","cycle_position","max_dd_pct","p_bull_pct","p_bear_pct","asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份為舊版格式，這些欄位未填（空值）。","side_b":"本次補上：五年後跑道中等；生意類型判為品質型成長兼具循環成分；景氣位置晚循環；最大回撤 −35%～−55%；情境機率多頭 20%、基本 50%、空頭 30%；多空 5 年價格、報酬不對稱比、基本情境年化報酬與 5 年期望值由程式從情境樹算出；定期定額裁決與角色由程式另判，本次不填。","ruling":"純屬方法變動，舊值不存在，無從比較，以本次為基準。","evidence_level":"方法","settle_metric":null,"if_then":[],"evidence_refs":[]},{"axis":"重新進場條件","cause":"方法變動","prior_field":["rearm_trigger"],"side_a":"前份未設重新進場條件（空值），只寫等估值或時機修復。","side_b":"重新進場（首倉 2%）：遠期本益比回到 17 倍以下（以 FY1 共識 10.01 計約 170 美元）且 FY27 營收財測未下修、最近一季產品毛利率 ≥52%。","ruling":"前份用模糊的等修復觀望；本次點名唯一約束是價格，重新進場條件寫成該約束的否定，並加兩條基本面守門。","evidence_level":"方法","settle_metric":"遠期本益比、FY27 財測、產品毛利率","if_then":["若三條同時成立，則首倉 2%","若價格到了但財測下修，則不進場"],"evidence_refs":[]},{"axis":"減碼與清倉門檻","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設（空值）；舊風險表門檻為 Public Cloud 毛利率連兩季下滑、Hybrid Cloud 連四季年增失速。","side_b":"減碼：產品毛利率連兩季低於 52%；全快閃年增連兩季低於 IDC 市場成長；Public Cloud 年增（剔除多一週）連兩季低於 12%。清倉：FY28 首次財測營收中點低於 FY27 實際。","ruling":"舊門檻未寫具體數字，改成可量化版本；指標與資料來源保留，Public Cloud 毛利率一條因連三季高於長期區間上緣而退休。","evidence_level":"方法","settle_metric":"季報各項門檻","if_then":["若任一減碼門檻觸發，則減碼一半","若清倉門檻觸發，則清倉"],"evidence_refs":[]},{"axis":"Single Thing","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未設唯一致命點（空值）。","side_b":"Single Thing：FY28 首次全年財測（約 2027-06 初）營收中點低於 FY27 實際營收。","ruling":"選這一項，因為它同時打到 EPS 與倍數，是情境樹裡敏感度最大的單一事件。","evidence_level":"方法","settle_metric":"FY28 營收財測中點 vs FY27 實際營收","if_then":["若 FY28 財測中點低於 FY27 實際，則清倉"],"evidence_refs":[]},{"axis":"前份風險門檻處置","cause":"新證據","prior_field":["thesis.R","thesis.H"],"side_a":"前份風險：R2 Public Cloud 毛利率可能由 83% 壓到 70–75%；R1 超大型雲把 NetApp 由第一方降為第二方；R3 Hybrid Cloud 成長失速、VAST／WEKA／DDN 侵蝕 AI 訓練架構。前份假設 H3：遠期本益比由 14–15 倍重估到 18–22 倍。","side_b":"Public Cloud 毛利率 86.4%，連三季高於 80–85% 長期區間上緣，R2 退休；R1、R3 併入本次競爭風險，門檻改為 Public Cloud 年增（剔除多一週）連兩季低於 12% 減碼、全快閃年增連兩季低於 IDC 市場成長減碼；Hybrid Cloud 年增 30%，失速未觸發。H3 已在四個月內達成（20.9 倍），由上行來源改為風險來源。","ruling":"R2 確實不成立才退休，理由是連三季毛利率在長期區間上緣之上；其餘門檻保留指標與資料來源，改成可量化版本。","evidence_level":"公司法說","settle_metric":"Public Cloud 年增與毛利率、全快閃年增","if_then":["若 Public Cloud 毛利率跌回 80% 以下，則 R2 復活"],"evidence_refs":[]},{"axis":"需求性質：結構性還是提前採購加漲價","cause":null,"prior_field":null,"side_a":"管理層（2026-09-02 CEO）：需求跨客戶規模、地區、產業全面走強，底層需求結構性改善；有能力提前採購的只是很小比例的客戶。2026-09-08 Citi 會議 CFO：通路沒有塞貨。","side_b":"同一場 CEO 承認部分大客戶把多季建置擠到一季、漲價帶來收益；2026-05-28 CEO 已說 probably some pull forward；AI 案件數由約 500 筆降到約 350 筆；下半年隱含年增只剩約 9–10%；漲價占營收、長約鎖定比例、AI 占營收三題都拒答。","ruling":"可調和（程度差異）：兩者同時存在，比例不明。管理層的一次性歸因不採信也不否定，標為未證、監測。預先登記證偽條件：FY27 Q3、Q4 營收年增任一季低於 5%，則「提前採購占比很小」的說法視為不成立。","evidence_level":"法說原話，比例無量化","settle_metric":"FY27 Q3、Q4 營收年增","if_then":["若 Q3、Q4 營收年增皆 ≥8%，則需求持久性成立，重新進場條件保留","若任一季低於 5%，則取消重新進場，等 FY28 財測"],"evidence_refs":[]},{"axis":"產品毛利率底部說法前後不一","cause":null,"prior_field":null,"side_a":"2026-05-28 CFO：7 月季（Q1）大致是產品毛利率底部，之後逐步改善；長期目標 50% 中段到高段不變。","side_b":"2026-09-02 CFO：Q1 產品毛利率 54.6% 超預期（有利組合幫忙），Q2 到 Q4 隱含比 90 天前預期的 50% 低段略好，等於後三季低於 Q1；2026-09-08 高盛會議 CEO 承認無法一對一轉嫁。","ruling":"可調和：Q1 是組合帶來的意外高點，不是底部說法被推翻；但原本的逐步改善路徑變成先回落。以 52% 為守門線，連兩季低於它代表轉嫁失靈。","evidence_level":"法說原話","settle_metric":"產品毛利率（單季）","if_then":["若 Q2、Q3 產品毛利率 ≥53%，則轉嫁有效","若連兩季低於 52%，則減碼一半"],"evidence_refs":[]},{"axis":"上游 NAND 供需：2027 年吃緊延續還是趨緩","cause":null,"prior_field":null,"side_a":"StorageSwiss：記憶體與快閃價格到 2027 都不回落；NAND Research：新產能 2027–2028 才出，Micron 新加坡廠 2028 下半年出貨；三家寡占、產能轉向 HBM。","side_b":"TrendForce（2026-07-30）標題：2027 年 DRAM 仍緊、NAND 供給趨緩。","ruling":"可調和（時點差異），2027 上半年合約價出來之前不可裁決。對 NetApp 兩頭都有代價：吃緊延續，產品毛利率受壓；趨緩，營收裡的漲價成分回吐。不論哪邊，FY27 都是條件最有利的一年，所以用 FY27 EPS 當起點的倍數要打折。","evidence_level":"產業研究（部分為標題層級）","settle_metric":"企業級 SSD 合約價、NetApp 產品毛利率與產品營收年增","if_then":["若 2027 上半年合約價轉跌且 NetApp 產品營收年增低於 5%，則空頭機率上調到 40%","若合約價續漲且產品毛利率連兩季低於 52%，則減碼一半"],"evidence_refs":["supply_demand_durability#0","supply_demand_durability#1","geo_supply_chain#3"]},{"axis":"現在買的最強論證 vs 觀望","cause":null,"prior_field":null,"side_a":"現在就買：盈餘上修還在跑（FY1 共識 3 個月上修 12.5%、Zacks 30 天上修 21.6%、八升零降）；IDC 份額回升；下半年財測也比 90 天前高；FY2 本益比約 18.8 倍、PEG 約 1.7，對一家淨現金、自由現金流率 22% 的公司不算離譜；上修期倍數通常撐得住。","side_b":"觀望：分母含多一週、漲價轉嫁與提前採購；Base 路徑倍數回到 17 倍時，5 年年化只剩約 3%；賣方平均目標價低於現價 6–9%；26 週漲 106%。","ruling":"性質：方向相反的裁決題（不是論點矛盾）。選觀望。依據：Base 情境 5 年價格約 230 美元，只比現價高約 10%，報酬要靠機率 20% 的多頭情境。硬數據點：遠期本益比 20.9 倍對自身 5 年平均約 19.4 倍，FY27 EPS 分母含非常態成分。","evidence_level":"事實表數字＋法說","settle_metric":"遠期本益比、Q2 營收與全年財測","if_then":["若遠期本益比 ≤17 倍且財測未下修，則首倉 2%","若 Q2 營收 ≥21.75 億美元且全年財測再上修、FY1 共識升到 10.5 美元以上，則重新進場價位上移到 17 倍乘新共識，仍不追價","反向：若 Q2 營收低於 20.25 億美元或產品毛利率低於 52%，則取消重新進場，等 FY28 財測"],"evidence_refs":[]},{"axis":"產業態勢（競爭／結構／其他）","cause":null,"prior_field":null,"side_a":"結構轉好：外接式企業儲存 2026 Q1 年增 22.7%（2025 全年約 4%）、高階系統年增逾 60%；AI 推動資料基礎設施現代化；NetApp 2026 Q2 年增 35.7%。","side_b":"競爭與其他結構變數：Dell 2025 Q2 重奪全快閃第一、AI 原生新進者與 AWS 自建檔案服務；上游 NAND 寡占拿走利潤；Section 301 關稅與中台風險。","ruling":"雙向拉鋸：需求結構轉好有來源佐證，但持久性未證；競爭尚未造成份額流失（2026 年份額回升）；上游與關稅是成本端壓力。","evidence_level":"IDC 轉述＋10-K","settle_metric":"IDC 份額、產品毛利率","if_then":["若 IDC 份額連兩季下滑，則改判競爭惡化中"],"evidence_refs":["end_markets#3","end_markets#7","reg_tariff_export#2","competitive_share_entrants#4"]}],"triggers":[{"n":1,"text":"Q2 FY27 財報：營收達財測區間且全年財測維持或上修，H1 過第一關","type":"假設驗證","maps_to":"H1","metric":"Q2 FY27 營收、FY27 全年營收財測","threshold":"營收 ≥20.25 億美元且 FY27 財測下緣 ≥79.75 億美元","action":"維持觀望，不追；重新進場價位隨 FY1 共識上移","source_freq":"公司季報，每季","date":"2026-12"},{"n":2,"text":"下半年營收回吐提前採購","type":"風險","maps_to":"R1","metric":"季營收 vs 財測","threshold":"Q2 營收低於 20.25 億美元，或全年財測下修","action":"取消重新進場；持有者減碼一半","source_freq":"公司季報，每季","date":"2026-12"},{"n":3,"text":"產品毛利率連兩季跌破 52%，漲價轉嫁失效","type":"風險","maps_to":"R2","metric":"產品毛利率（non-GAAP，單季）","threshold":"連兩季低於 52%","action":"減碼一半；未持有則取消重新進場","source_freq":"公司季報，每季","date":"2027-03","evidence_refs":["supply_demand_durability#0","supply_demand_durability#1","geo_supply_chain#3"]},{"n":4,"text":"Single Thing：FY28 首次財測營收中點低於 FY27 實際","type":"Single Thing","maps_to":"Single Thing","metric":"FY28 營收財測中點 vs FY27 實際營收","threshold":"中點低於 FY27 實際","action":"清倉","source_freq":"Q4 FY27 法說，一次","date":"2027-06"},{"n":5,"text":"估值回到可接受區間且基本面未破，重新進場","type":"估值rearm","maps_to":"H1","metric":"遠期本益比（FY1 共識）","threshold":"≤17 倍（以 FY1 10.01 計約 170 美元）且 FY27 營收財測未下修、最近一季產品毛利率 ≥52%","action":"首倉 2%","source_freq":"每週收盤＋季報","date":null},{"n":6,"text":"首倉後 Q3 營收年增 ≥8%、產品毛利率 ≥53%，需求持久性第二次確認","type":"加碼","maps_to":"H1","metric":"Q3 FY27 營收年增、產品毛利率","threshold":"營收年增 ≥8% 且產品毛利率 ≥53%","action":"加碼到 4%","source_freq":"公司季報","date":"2027-03"},{"n":7,"text":"份額回吐：全快閃成長連兩季落後市場，或雲端成長明顯放慢","type":"減碼","maps_to":"R3","metric":"全快閃營收年增減 IDC 外接式儲存市場成長；Public Cloud 年增（剔除多一週）","threshold":"前者連兩季為負，或後者連兩季低於 12%","action":"減碼一半","source_freq":"公司季報＋IDC 季度追蹤","date":null,"evidence_refs":["end_markets#3","end_markets#7","competitive_share_entrants#5","competitive_share_entrants#4"]},{"n":8,"text":"供給或關稅衝擊吃進損益","type":"風險","maps_to":"R4","metric":"營收財測下修原因、產品毛利率","threshold":"因供給或關稅下修營收財測，或產品毛利率單季因關稅下滑 ≥200bp","action":"減碼一半","source_freq":"公司季報與法說","date":null,"evidence_refs":["geo_supply_chain#0","geo_supply_chain#1","reg_tariff_export#0","reg_tariff_export#2"]},{"n":9,"text":"Q2 財報後複審","type":"複審日期","maps_to":"H1","metric":"全部門檻","threshold":"Q2 FY27 財報公布後","action":"重跑判斷","source_freq":"一次","date":"2026-12"}],"kill_metrics":[{"metric":"產品毛利率（non-GAAP，單季）","bear_threshold":"連兩季低於 52%","window":"FY27 Q2 起滾動兩季","source":"公司季報新聞稿與法說","last_status":"ok"},{"metric":"FY28 首次全年營收財測中點 vs FY27 實際營收","bear_threshold":"中點低於 FY27 實際（清倉）","window":"約 2027-06 初 Q4 FY27 法說","source":"公司 Q4 FY27 新聞稿與法說","last_status":"unknown"},{"metric":"季營收年增率（剔除多一週）","bear_threshold":"FY27 Q3 或 Q4 低於 +5%","window":"2026-12 至 2027-06","source":"公司季報新聞稿","last_status":"ok"},{"metric":"全快閃營收年增減 IDC 外接式儲存市場成長","bear_threshold":"連兩季為負","window":"滾動兩季","source":"公司季報＋IDC 季度企業儲存追蹤","last_status":"ok"},{"metric":"Public Cloud 營收年增（剔除多一週）","bear_threshold":"連兩季低於 12%","window":"滾動兩季","source":"公司季報新聞稿","last_status":"ok"}],"evidence_dismissed":[],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8(val爭議)","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"輸入缺(momentum_overheated=null)，依保守方向處理：不視為觸發","input_gap":["momentum_overheated"]},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟠', moat_trend='→', week26=105.97, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position='晚循環', moat='B', moat_trend='→', cycle_gates_pass=False"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈機械讀數判定不可用，baseline rows 8/9/9b/10 的估值條件視為不可判 → 落 row8 觀望（保守方向）","hit":true,"basis":"val_denominator_disputed=True, val(機械讀數)='🟠'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":"4%（循環成分與深回撤可能，上限低於一般品質股）","requires_critic":[],"rearm_trigger":"遠期本益比回到 17 倍以下（以 FY1 共識 10.01 計約 170 美元）且 FY27 營收財測未下修、最近一季產品毛利率 ≥52%","exec_line":"三條同時成立才建首倉 2%；Q3 FY27 營收年增 ≥8% 且產品毛利率 ≥53% 加到 4%；股價先漲而證據未到則不追；股價跌但門檻未破則分批買回，不停損；FY28 財測營收中點低於 FY27 實際則清倉。"},"reasoning":{"industry":"Q1 FY27（季末 2026-07-31）營收 20.25 億美元，年增 30%，剔除多一週約 26%。non-GAAP 營益率 31.9%，GAAP 23.9%。分部：Hybrid Cloud 18.2 億美元，其中產品 9.87 億（年增 51%）、支援 7.20 億（毛利率 93.2%）、專業服務 1.12 億；Public Cloud 2.06 億美元，毛利率 86.4%。產品占營收 49%，去年同期 42%，所以整體毛利率 70.6% 反而年減 50bp。錢卡在「企業資料放在誰的作業系統上」這一節點：ONTAP 裝機基礎帶來支援年費與雲端原生服務，硬體是入口。兩家經銷商約占營收 43%，屬通路集中，不是最終客戶集中。景氣階段判為擴張期：外接式儲存市場 2026 Q1 年增 22.7%（2025 全年約 4%），高階系統年增逾 60%；但 NetApp 自己的訂單已出現提前採購、零組件漲價轉嫁與存貨翻倍，屬擴張後段。上游 NAND 由三家寡占、產能優先給 HBM，這一輪漲價的利潤多數落在記憶體廠。","moat":"機制：ONTAP 統一儲存作業系統加資料管理（快照、異地複寫、網路安全），同一套軟體跑在自家硬體與 AWS、Azure、Google 第一方服務上；換掉要搬資料、重建複寫、重新認證、重訓人員。黏著度讀數：RPO 56.5 億美元年增 14%，支援毛利率 93.2%，FY24–FY26 整體毛利率守在 70.2–70.7%。方向：同業報酬率差距無法比（事實表同業列是 NAND 供應商，Everpure 無資料），改用份額軸。IDC 2025 全年份額 8.1% 排第三，2026 Q1 升到第二，Q2 年增 35.7% 為第三快，份額趨勢仍領先 Everpure。執行力 8 分：份額回升，Q1 每項財測都超過上緣。定價權 6 分：產品毛利率季減 150bp，管理層承認漲價無法一對一抵銷成本；上游記憶體廠營益率 60% 以上，NetApp 26%。合併 7 分，B 級。執行力擴大、定價權持平偏弱，合併判持平。","growth":"成長組成：Q1 產品營收年增 51%，裡面有三塊——AI 與資料湖約 350 筆新單（前季約 500 筆，管理層稱單筆變大但不量化）、全面的基礎設施現代化、零組件漲價轉嫁與部分大客戶提前採購。管理層隱含下半年年增約 9–10%，全年 17%。共識 EPS：FY27 10.01、FY28 11.12、FY29 12.36 美元；以 FY26 non-GAAP 約 8.10 美元為基期，三年年增約 15%；FY27 之後兩年約 11%。內生天花板偏低（見護城河段的再投資推導），缺口可歸因：營益率擴張（Q1 non-GAAP 營益率年增 6.1 個百分點到 31.9%）、每年約 1.5% 淨回購、漲價轉嫁；不屬無法歸因。跑道：全快閃占裝機基礎 48%，每季約升 1 個百分點，落在 35–70% 中段；Keystone、AFX 與雲端服務是候選第二曲線，但 AFX 仍在客戶認證、Keystone 認列在 1.12 億美元的專業服務裡，規模還小，不足以認定為下一條 S 曲線。衰退信號亮一個：毛利率連續年減（產品占比推動）。","governance":"FY26 自由現金流 18.69 億美元、淨利 12.76 億美元，轉換率 1.46 倍（FY25 1.13 倍）。Q1 FY27 自由現金流 4.01 億美元（營運現金流 5.03 億、資本支出 1.02 億）。Q1 還給股東 3.02 億美元（回購 2.00 億、股息 1.02 億），稀釋股數 2.00 億股、年減 1.5%；5 月加碼回購授權 10 億美元，並承諾最多把 100% 自由現金流還給股東。SBC 占營收 4.8%。淨現金 11 億美元（現金與短投 36 億、總負債 25 億）。存貨季增近一倍、週轉由 12 次降到 6 次，屬策略性備料，佔用營運資金。三筆併購（DataPelago、JetStream、PEAK:AIO）CFO 稱小型補強，金額未揭露。近三年現金去向四分、債務到期結構與回購均價事實表未涵蓋。","valuation":"現價 209.18 美元：遠期本益比 20.9 倍（FY1 10.01）、FY2 約 18.8 倍；trailing 本益比 28.9 倍、P/S 5.56 倍、EV/S 5.42 倍，在四個年度端點裡全是最高。前份（2026-05-18，119.93 美元）遠期本益比 14–15 倍、5 年平均約 19.4 倍；前份多頭情境要 FY30 才到的 18–22 倍，四個月就到了。PEG：以 FY26 基期三年年增約 15% 算約 1.4；剔除 FY27 週期跳升、用 FY27 到 FY29 年增 11% 算約 1.9。賣方共識評等持有，平均目標價 190.69–195.79 美元，比現價低 6–9%，最高 225 美元；現價已走在賣方前面，支持觀望。反方最強論點：FY1 共識 3 個月上修 12.5%、Zacks 30 天上修 21.6% 且八升零降，上修期倍數通常撐得住。同業遠期倍數事實表未涵蓋。","premortem":"管理層 5 月與 9 月兩次承認提前採購，並拒絕量化漲價占營收多少、長約鎖定多少 NAND、AI 占營收多少（前季與本季法說加兩場投資人會議，問答共 12 次迴避）；存貨翻倍、週轉降到 6 次。股價距 52 週均線約 +56%、距 104 週均線約 +74%、距 250 週均線約 +118%，26 週漲 106%，回撤路徑長。訴訟、監管、召回、SEC 調查事實表查無。歷史最大回撤、空方最強數字事實表未涵蓋。價值陷阱風險中等：衰退信號亮一個（毛利率連續年減，產品占比推動）。"},"plain":{"six":{"how_it_makes_money":"賺企業資料基礎設施的錢：賣硬體加 ONTAP 軟體當入口，再收 93% 毛利的支援年費與雲端原生服務；這一年營收被零組件漲價與提前採購墊高，利潤池正往上游記憶體廠移。","moat":"護城河 B 級、方向持平：ONTAP 平台與三大雲第一方服務的轉換成本守住客戶，2026 年份額回升，但這一輪漲價的利潤多半被上游記憶體廠拿走，定價權沒有變強。","growth":"五年後跑道中等：全快閃占裝機基礎 48%，還有空間，但 AFX、Keystone 這些候選第二曲線還沒長到能單獨撐成長；這一年的高成長大半是漲價、提前採購和 AI 換機，管理層自己給的下半年增速只剩約 9–10%。","capital":"資本配置穩健：自由現金流高於淨利、承諾最多 100% 還給股東、股數年減約 1.5%；三筆 AI 與雲端小併購金額未揭露，報酬還看不出來；現價回購的報酬率已明顯變低。","valuation":"現價要求 FY27 約 10 美元 EPS 是新起點、之後每年再長 11% 以上、倍數維持 20 倍左右；我不信這個分母是乾淨的——多一週、漲價轉嫁與提前採購都墊高了它。估值偏貴。","how_wrong":"最可能看錯在分母：把漲價與提前採購墊高的一年當成新常態。一旦 2027 年 NAND 鬆動、客戶消化提前買的量，EPS 回落、倍數也回落，兩頭一起打。"}},"decision_inputs":{"signal":"B","ma":"🟡","cycle_position":"晚循環","cycle_verdict":"等回踩","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":null,"cycle_gates_pass":false,"qc49_inherit_prior":null,"trap":"🟡","val":"🟠","moat":"B","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"品質複利成長","price_at_dd":209.18,"week26_return_pct":105.97,"consensus_rev_3m_pct":12.47,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"FY27 EPS 約 10 美元含三個非常態成分：Q1 多一週（約 6,500 萬美元營收）、零組件漲價轉嫁、部分大客戶提前採購（管理層兩度承認、不量化）。以常態化 EPS 計，實際倍數高於 20.9 倍，便宜論證不成立。"},"catalysts":[{"date":"2026-12","date_precision":"month","type":"guidance","event":"FY27 Q2 財報與財測更新","impact":"高","watch":"營收是否 ≥20.25 億美元、產品毛利率、存貨週轉、全年財測"},{"date":"2027-03","date_precision":"month","type":"guidance","event":"FY27 Q3 財報，下半年減速的第一季","impact":"高","watch":"營收年增是否 ≥8%、提前採購回吐跡象"},{"date":"2027-06","date_precision":"month","type":"guidance","event":"FY27 Q4 財報與 FY28 首次全年財測","impact":"高","watch":"FY28 營收財測中點是否高於 FY27 實際"},{"date":"2027-Q1","date_precision":"quarter","type":"macro","event":"NAND 合約價方向（TrendForce 指 2027 年 NAND 供給趨緩）","impact":"中","watch":"企業級 SSD 合約價由漲轉平或轉跌"},{"date":"2026-Q4","date_precision":"quarter","type":"other","event":"PEAK:AIO 收購交割（金額未揭露，需監管核准）","impact":"低","watch":"是否揭露金額與整合進 AFX 的時程"}],"_projected_from":"v19"}
+```
