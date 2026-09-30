@@ -289,6 +289,19 @@ E3 2330/0050 能到 0.85,<b>領先全來自加入 2330</b>(台積電集中度),�
 </div>
 </div>
 
+<!-- 選股 -->
+<div class="section">
+<h2 class="section-title" style="border-bottom-color:#1a56db">台股選股</h2>
+<div class="section-sub">每月依上市櫃公司公布的月營收挑股，和上方的指數波段系統、日內交易是不同類型。規則由 FinLab 公開；本站用 2007 年起的證交所、櫃買、公開資訊觀測站官方資料重測，重點在 FinLab 沒用過的 2008–2014 年。 <a href="/backtest/revmom/">→ 詳細頁</a></div>
+<div class="card" style="overflow-x:auto">
+<table><thead><tr><th>策略</th><th>本質</th><th>判定</th><th>Headline</th></tr></thead>
+<tbody>
+<tr><td><a href="/backtest/revmom/" style="font-weight:600">月營收動能選股</a><br><span style="font-size:.72rem;color:var(--muted)">營收加溫＋股價站上均線 · 每月 11 日後換 10 檔 · 2008–2026</span></td><td>月營收動能</td><td><span style="background:#fffbeb;color:#d97706;border:1px solid #fde68a;padding:.08rem .4rem;border-radius:4px;font-size:.72rem;font-weight:600">繼續驗證</span></td><td>2008–2014 CAGR 19.9%（0050 5.0%）・全期 35.2%、MDD −42.9%</td></tr>
+</tbody></table>
+</div>
+<div class="section-sub" style="margin-top:.6rem">領先有一大塊來自 2008 年少跌；去掉 2008 年後，風險調整後報酬和加權報酬指數相近。換股晚一天報酬就降，要準時。</div>
+</div>
+
 <!-- 選擇權 -->
 <div class="section">
 <h2 class="section-title" style="border-bottom-color:#0891b2">台股選擇權專區</h2>
