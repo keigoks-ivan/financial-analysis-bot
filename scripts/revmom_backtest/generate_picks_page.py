@@ -41,9 +41,13 @@ def color(x):
 
 
 def next_signal_guess(sig: str) -> str:
-    """First weekday on/after the 11th of the following month (holidays not known yet)."""
+    """Next month's signal day assuming weekends are the only closures: the weekday after the deadline
+    (the 10th, or the first weekday after it). National holidays (e.g. 10/10) can push it later."""
     p = pd.Period(sig, "M") + 1
-    d = pd.Timestamp(p.year, p.month, 11)
+    d = pd.Timestamp(p.year, p.month, 10)
+    while d.weekday() >= 5:
+        d += pd.Timedelta(days=1)
+    d += pd.Timedelta(days=1)
     while d.weekday() >= 5:
         d += pd.Timedelta(days=1)
     return str(d.date())
@@ -171,7 +175,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / <a href="/cockpit/">選股主控台</a> / 台股月營收動能名單</div>
     <h1>台股月營收動能名單<span class="badge">對照組</span></h1>
-    <div class="sub">回測規則機械產生的名單 · 每月 11 日後換股 · 資料到 %DATA%，每個交易日自動更新</div>
+    <div class="sub">回測規則機械產生的名單 · 每月營收截止日的下一個交易日換股 · 資料到 %DATA%，每個交易日自動更新</div>
   </div>
 </div>
 
@@ -209,7 +213,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <h2 class="section-title">規則</h2>
 <div class="card">
 <ul class="rules">
-<li>每月第一個 11 日以後的交易日收盤後判斷，隔天開盤換股。上市櫃公司的月營收要在每月 10 日前公布；下次換股用 %NEXTREV% 營收，等營收公布後名單才會產生。</li>
+<li>每月營收截止日（10 日；遇休市順延到下一個交易日）的下一個交易日收盤後判斷，隔天開盤換股。等截止日過了才判斷，才能確定所有公司都已公布；下次換股用 %NEXTREV% 營收，等營收公布後名單才會產生。</li>
 <li>母體：上市、上櫃 4 位數普通股，近 20 個交易日平均成交金額 1,000 萬元以上，不含臺灣創新板。</li>
 <li>條件：近 3 個月平均營收高於近 12 個月平均；股價用還原權息價格（股利加回去）計算，要高於 20、60、120 日平均，且比 5 個交易日前高。</li>
 <li>排序：營收比值由大到小取前 10 檔，每檔 10%，不足 10 檔的部分留現金。</li>

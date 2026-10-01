@@ -118,7 +118,7 @@ def main(asof=None):
            "revenue_last_month": str(pn.rev.index[-1]), "signal_day": str(sig.date()),
            "revenue_month_used": str(pd.Period(sig, "M") - 1), "buy_day": str(ex.date()) if ex is not None else None,
            "weight_each": 0.10, "n_universe": diag["n_universe"], "n_pass": diag["n_pass"],
-           "next_signal": f"{nxt_month} 月第一個 11 日以後的交易日（用 {pd.Period(sig, 'M')} 營收）",
+           "next_signal": f"{nxt_month} 月營收截止日（10 日，遇休市順延）的下一個交易日（用 {pd.Period(sig, 'M')} 營收）",
            "next_list": f"待 {pd.Period(sig, 'M')} 營收公布後" if pn.rev.index[-1] < pd.Period(sig, "M") else "可計算",
            "picks": picks, "alternates": alts}
     OUT.mkdir(parents=True, exist_ok=True)

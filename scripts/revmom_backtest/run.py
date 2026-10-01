@@ -87,7 +87,7 @@ def ledger_metrics(nav, a, b=None):
     return metrics_from_returns(r.tolist(), 252)
 
 
-def main(log=False, log_innov=False):
+def main(log=False, log_innov=False, log_deadline=False):
     OUT.mkdir(parents=True, exist_ok=True)
     pn = D.load("2007-01-01")
     pre = S.precompute(pn)
@@ -120,6 +120,10 @@ def main(log=False, log_innov=False):
             case(f"V1a_{cn}", variants["V1a"], cost)
     sels_inn, _ = S.selections(pn, pre, SIG0, end, "V1a", innovation=True)   # before the 2026-10-01 amendment
     case("V1a_incl_innovation", sels_inn, COSTS["base"])
+    sels_d11, _ = S.selections(pn, pre, SIG0, end, "V1a", day=11)              # before the 2026-10-01 deadline fix
+    case("V1a_signal_day11", sels_d11, COSTS["base"])
+    res["deadline_shift_months"] = sum(1 for d in S.signal_days(pn.dates, SIG0, end)
+                                       if d not in set(S.signal_days(pn.dates, SIG0, end, day=11)))
     res["innovation_picks_removed"] = sum(len(set(sels_inn[d]) - set(variants["V1a"][d])) for d in variants["V1a"])
     res["innovation_removed_list"] = [[str(d.date()), c] for d in variants["V1a"]
                                       for c in sorted(set(sels_inn[d]) - set(variants["V1a"][d]))]
@@ -149,6 +153,8 @@ def main(log=False, log_innov=False):
         log_trials(navs)
     if log_innov:
         log_innovation_amendment(navs)
+    if log_deadline:
+        log_deadline_fix(navs)
     print(json.dumps({k: {"cagr": round(v["full"]["cagr"], 4), "mdd": round(v["full"]["mdd"], 4)}
                       for k, v in res["cases"].items()}, ensure_ascii=False))
 
@@ -200,9 +206,22 @@ def log_innovation_amendment(navs):
                      note="看過全部結果後由用戶提出；其餘版本一併改用新母體重跑，但不另記試驗")
 
 
+def log_deadline_fix(navs):
+    from src import experiment_ledger as L
+    L.log_experiment("REVMOM", {"rank": "rev3/rev12", "n": 10, "liq": 1e7, "signal": "trading day after revenue deadline",
+                                "tech": True, "exclude": "innovation_board"},
+                     "修正偷看未來：營收截止日 10 日遇休市順延，原規則（11 日後第一個交易日）在 226 個月裡有 80 個月"
+                     "剛好落在截止日當天；改為截止日的下一個交易日", "human", True,
+                     is_metrics=ledger_metrics(navs["V1a_base"], "2015-01-01", "2025-12-31"),
+                     oos_metrics=ledger_metrics(navs["V1a_base"], "2008-01-01", "2014-12-31"),
+                     changed="signal day: first trading day >= 11th -> trading day after the effective deadline",
+                     prereg_ref="docs/RevMom_Backtest_Spec.md", note="用戶指出假日延後截止日；正確性修正，不是調參")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--log", action="store_true")
     ap.add_argument("--log-innov", action="store_true")
+    ap.add_argument("--log-deadline", action="store_true")
     a = ap.parse_args()
-    main(a.log, a.log_innov)
+    main(a.log, a.log_innov, a.log_deadline)

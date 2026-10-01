@@ -97,7 +97,7 @@ def main(out=DEFAULT_OUTPUT):
                 ("base", "同上，滑價 10 bp（主要結果）"), ("slip30", "同上，滑價 30 bp"),
                 ("fullfee_slip30", "手續費不打折＋證交稅 0.3%＋滑價 30 bp")]
     cost_rows = "".join(row(l, (a if k == "base" else C[f"V1a_{k}"])["full"], hl=(k == "base")) for k, l in cost_lab)
-    sens_lab = [("V1a_base", "原設定：前 10 檔、流動性 1,000 萬、11 日後換股", None),
+    sens_lab = [("V1a_base", "原設定：前 10 檔、流動性 1,000 萬、截止日隔天換股", None),
                 ("sens_n5", "只取前 5 檔", "事前"), ("sens_n20", "取前 20 檔", "事前"),
                 ("sens_liq5m", "流動性門檻 500 萬", "事前"), ("sens_liq30m", "流動性門檻 3,000 萬", "事前"),
                 ("sens_day15", "15 日後換股", "事前"), ("sens_notech", "拿掉股價條件", "事前"),
@@ -125,6 +125,7 @@ def main(out=DEFAULT_OUTPUT):
 
     cap = V["capacity_ntd_10pct_rule_p10"]
     inc = C["V1a_incl_innovation"]
+    d11 = C["V1a_signal_day11"]
     removed = R["innovation_removed_list"]
     rm_years = sorted({d[:4] for d, _ in removed})
     n_saw = sum(1 for t in trials.values() if t["saw_oos_before_change"])
@@ -138,6 +139,8 @@ def main(out=DEFAULT_OUTPUT):
         "%B_OOS%": pct(boos["cagr"]), "%B_OOS_MDD%": pct(boos["mdd"]), "%B_OOS_CAL%": f'{boos["calmar"]:.2f}',
         "%Y08%": pct(a["yearly"]["2008"], sign=True), "%B_Y08%": pct(b["yearly"]["2008"], sign=True),
         "%S09%": pct(sl["V1a"]["cagr"]), "%S09_CAL%": f'{sl["V1a"]["calmar"]:.2f}',
+        "%S09_WORD%": ("略高" if sl["V1a"]["calmar"] - sl["taiex_tr"]["calmar"] > 0.02 else
+                       "略低" if sl["taiex_tr"]["calmar"] - sl["V1a"]["calmar"] > 0.02 else "差不多"),
         "%T09%": pct(sl["taiex_tr"]["cagr"]), "%T09_CAL%": f'{sl["taiex_tr"]["calmar"]:.2f}',
         "%POST%": pct(a["periods"]["post_finlab"]["cagr"]), "%B_POST%": pct(b["periods"]["post_finlab"]["cagr"]),
         "%DELAY1%": pct(C["sens_delay1"]["full"]["cagr"]), "%DAY13%": pct(C["sens_day13"]["full"]["cagr"]),
@@ -151,6 +154,8 @@ def main(out=DEFAULT_OUTPUT):
         "%NT%": str(rep["n_trials"]), "%NPOST%": str(n_saw), "%NHUMAN%": str(n_human),
         "%INC_CAGR%": pct(inc["full"]["cagr"]), "%INC_POST%": pct(inc["periods"]["post_finlab"]["cagr"]),
         "%NREM%": str(len(removed)), "%REM_YEARS%": "、".join(rm_years),
+        "%D11_CAGR%": pct(d11["full"]["cagr"]), "%D11_OOS%": pct(d11["periods"]["oos_2008_2014"]["cagr"]),
+        "%NSHIFT%": str(R["deadline_shift_months"]),
         "%BEST%": best_name, "%BEST_IS%": f'{rep["best"]["is_sharpe_ann"]:.2f}',
         "%LUCK%": f'{rep["best"]["luck_threshold_sharpe_ann"]:.2f}', "%DSR%": pct(rep["best"]["dsr"], 1),
         "%V1A_IS%": f'{t1["is"]["sharpe_ann"]:.2f}', "%V1A_OOS%": f'{t1["oos"]["sharpe_ann"]:.2f}',
@@ -249,7 +254,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 月營收動能選股</div>
     <h1>月營收動能選股（FinLab 規則）</h1>
-    <div class="sub">台股上市櫃普通股（不含創新板）· 每月 11 日後換股、持有 10 檔 · 2008-01 ~ %END% · 證交所、櫃買、公開資訊觀測站官方資料</div>
+    <div class="sub">台股上市櫃普通股（不含創新板）· 每月營收截止日隔天換股、持有 10 檔 · 2008-01 ~ %END% · 證交所、櫃買、公開資訊觀測站官方資料</div>
   </div>
 </div>
 
@@ -260,7 +265,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
     <span class="verdict-tag">值得繼續驗證</span>
     <h2>規則沒用過的七年仍贏 0050，領先多半來自 2008 年少跌</h2>
     <p>規則由 FinLab 公開：每月挑營收加溫、股價也走強的 10 檔股票。FinLab 用 2015 年以後的資料設計這套規則，所以 2015 年以後的成績不能拿來證明它有效。我們把官方資料往前補到 2007 年，拿它沒用過的 2008–2014 年重測。</p>
-    <p>2008–2014 扣成本後 CAGR（年化報酬，每年平均的複利報酬）%OOS%，同期 0050 %B_OOS%；Calmar（年化報酬 ÷ 最大回撤）%OOS_CAL% 對 %B_OOS_CAL%。領先有一大塊來自 2008 年：策略 %Y08%，0050 %B_Y08%。只看 2009–2014，CAGR %S09% 對加權股價報酬指數 %T09%，Calmar %S09_CAL% 對 %T09_CAL%，差不多。</p>
+    <p>2008–2014 扣成本後 CAGR（年化報酬，每年平均的複利報酬）%OOS%，同期 0050 %B_OOS%；Calmar（年化報酬 ÷ 最大回撤）%OOS_CAL% 對 %B_OOS_CAL%。領先有一大塊來自 2008 年：策略 %Y08%，0050 %B_Y08%。只看 2009–2014，CAGR %S09% 對加權股價報酬指數 %T09%，但 Calmar %S09_CAL% 對 %T09_CAL%，%S09_WORD%。</p>
   </div>
   <div class="hero-stats">
     <div><div class="hs-label">CAGR 2008–2014</div><div class="hs-value" style="color:var(--brand)">%OOS%</div><div class="hs-sub">0050 %B_OOS%</div></div>
@@ -291,7 +296,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <thead><tr><th>期間</th><th>月營收動能 CAGR</th><th>MDD</th><th>Calmar</th><th>0050 CAGR</th><th>MDD</th><th>Calmar</th></tr></thead>
 <tbody>%PERIOD_ROWS%</tbody>
 </table>
-<div class="takeaway">事前寫好的判準：2008–2014 的 CAGR 與 Calmar 都要高於 0050。兩項都過，所以判定「值得繼續驗證」。但去掉 2008 年後，風險調整後的報酬和大盤相近。FinLab 發表後的 8 個多月，年化 %POST%，低於 0050 的 %B_POST%。</div>
+<div class="takeaway">事前寫好的判準：2008–2014 的 CAGR 與 Calmar 都要高於 0050。兩項都過，所以判定「值得繼續驗證」。但去掉 2008 年後，Calmar %S09_CAL% 對加權股價報酬指數 %T09_CAL%，%S09_WORD%。FinLab 發表後的 8 個多月，年化 %POST%，低於 0050 的 %B_POST%。</div>
 </div>
 </div>
 
@@ -369,11 +374,18 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <h2 class="section-title">方法論與查核</h2>
 <details open><summary>選股規則</summary><div class="d-body">
 <ul class="issue-list">
-<li><b>換股時點：</b>每月第一個 11 日以後的交易日收盤後判斷，隔天開盤成交。上市櫃公司的月營收要在每月 10 日前公布。</li>
+<li><b>換股時點：</b>每月營收截止日（10 日；遇休市順延到下一個交易日）的下一個交易日收盤後判斷，隔天開盤成交。</li>
 <li><b>母體：</b>上市、上櫃 4 位數代號普通股，近 20 個交易日平均成交金額 1,000 萬元以上，不含臺灣創新板（一般投資人不一定能買）。已下市股票也在資料裡。</li>
 <li><b>條件：</b>近 3 個月平均營收高於近 12 個月平均；股價（把股利加回去算）高於 20、60、120 日平均，且比 5 個交易日前高。</li>
 <li><b>排序：</b>近 3 個月平均營收 ÷ 近 12 個月平均營收，取前 10 檔，每檔 10%，不足 10 檔留現金。排序方式 FinLab 未公開，在看任何結果前選定。</li>
 <li><b>出處：</b><a href="https://finlab.finance/blog/monthly-revenue-momentum" rel="noopener">FinLab〈月營收動能〉</a>（2026-01-12）。</li>
+</ul>
+</div></details>
+<details open><summary>2026-10-01 修訂：判斷日改到營收截止日的隔天</summary><div class="d-body">
+<ul class="issue-list">
+<li>月營收的截止日是 10 日，遇到休市順延到下一個上班日。原本的規則是「11 日以後第一個交易日」判斷；當 10 日休市時，這一天剛好就是截止日，有些公司當晚才公布，回測卻已經用到完整營收，等於偷看未來。</li>
+<li>現在改成截止日的下一個交易日判斷。2007-12 以來有 %NSHIFT% 個月的判斷日因此往後一天。這項修正由站主指出，記在實驗帳本裡。</li>
+<li>影響：全期 CAGR 從 %D11_CAGR% 變成 %CAGR%；2008–2014 從 %D11_OOS% 變成 %OOS%。</li>
 </ul>
 </div></details>
 <details open><summary>2026-10-01 修訂：排除創新板</summary><div class="d-body">

@@ -39,7 +39,7 @@ def main():
     sels, _ = S.selections(pn, pre, SIG0, end, "V1a")
     # 1. same accounting, universe and end date as the research weights engine -> same numbers
     x_end = pd.Timestamp("2026-09-29")
-    sx, _ = S.selections(pn, pre, SIG0, x_end, "V1a", innovation=True)
+    sx, _ = S.selections(pn, pre, SIG0, x_end, "V1a", innovation=True, day=11)   # research version's rules
     d, _ = E.run(pn, sx, START, x_end, E.Cost(fee=0.001425, tax=0.003, slip=0.0), lock=False)
     yrs = (d.index[-1] - d.index[0]).days / 365.25
     res["research_crosscheck"] = {"site_engine": {"cagr": float(d.nav.iloc[-1] ** (1 / yrs) - 1),

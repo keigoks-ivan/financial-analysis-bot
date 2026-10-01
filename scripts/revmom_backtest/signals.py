@@ -8,11 +8,28 @@ N_PICK = 10
 VALUE_MIN = 10_000_000.0
 
 
-def signal_days(dates: pd.DatetimeIndex, start, end, day: int = 11) -> list:
-    """First trading day on or after the `day`-th of each month (revenue for the prior month is due by the 10th)."""
+def signal_days(dates: pd.DatetimeIndex, start, end, day: int | None = None) -> list:
+    """Signal day of each month.
+
+    day=None (the rule, spec §3 as amended 2026-10-01): the trading day AFTER the revenue deadline. Revenue for the
+    prior month is due by the 10th; when the 10th is a market holiday the deadline moves to the next business day,
+    taken here as the first trading day on/after the 10th. Signalling on the deadline day itself would use revenue
+    that some companies file only that evening.
+    day=N (sensitivity checks only): the first trading day on/after the N-th.
+    """
     s = pd.Series(dates, index=dates)
-    s = s[(s.index >= pd.Timestamp(start)) & (s.index <= pd.Timestamp(end)) & (s.index.day >= day)]
-    return list(s.groupby([s.index.year, s.index.month]).min())
+    if day is not None:
+        s = s[(s.index >= pd.Timestamp(start)) & (s.index <= pd.Timestamp(end)) & (s.index.day >= day)]
+        return list(s.groupby([s.index.year, s.index.month]).min())
+    out = []
+    for (y, m), g in s.groupby([s.index.year, s.index.month]):
+        after10 = g[g.index.day >= 10]
+        if len(after10) < 2:
+            continue                                    # deadline or the day after it not reached yet
+        d = after10.index[1]
+        if pd.Timestamp(start) <= d <= pd.Timestamp(end):
+            out.append(d)
+    return out
 
 
 def precompute(pn) -> dict:
@@ -68,7 +85,7 @@ def select(pn, pre: dict, d: pd.Timestamp, variant: str = "V1a", n_pick: int = N
     return picks, {"date": str(d.date()), "n_universe": int(base.sum()), "n_pass": int(cond.sum()), "picks": picks}
 
 
-def selections(pn, pre: dict, start, end, variant: str = "V1a", day: int = 11, **kw) -> tuple:
+def selections(pn, pre: dict, start, end, variant: str = "V1a", day: int | None = None, **kw) -> tuple:
     sels, diags = {}, []
     for d in signal_days(pn.dates, start, end, day):
         p, g = select(pn, pre, d, variant, **kw)
