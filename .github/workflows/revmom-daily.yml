@@ -1,0 +1,167 @@
+name: RevMom Daily
+
+# 台股月營收動能（/revmom-picks/ 名單頁、/backtest/revmom/ 回測頁）每日更新，2026-10-01 從 Mac 的
+# launchd（v7-backtest src/revmom_backtest/monthly_job.sh）搬到這裡，Mac 關機也會跑。
+#
+#   下載資料（Release revmom-data 的 revmom-data.tar.gz）→ update_data（證交所／櫃買／公開資訊觀測站官方檔）
+#   → 有新資料才：run → verify（截斷測試等檢查不乾淨就停）→ picks → 兩頁 → commit → qc.py → push
+#   → 上傳資料回 Release → 觸發 Pages 部署
+#
+# 程式是 v7-backtest src/revmom_backtest/ 的同步副本（scripts/revmom_backtest/，同步方式見該資料夾 README.md）。
+# 資料約 150MB，不進 git，放在 Release asset；只有 push 成功才覆蓋上傳，push 失敗時下次會從舊資料重抓。
+# 任何一步失敗：不 push 頁面、不上傳資料，job 標紅（GitHub 會寄排程失敗通知），摘要寫在 step summary。
+# 名單本身每月只換一次（11 日以後第一個交易日），其他交易日只更新報酬數字。
+
+on:
+  schedule:
+    - cron: "50 10 * * 1-5"  # 18:50 台北，週一至週五（櫃買與除權息資料約 15:00 前公布）
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+      force:
+        description: "true＝沒有新資料也重跑回測與兩頁"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  TZ: Asia/Taipei
+  PYTHONWARNINGS: ignore
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "pandas==2.3.3" "numpy<2.5" pyarrow requests lxml
+
+      - name: Download pipeline data (Release revmom-data)
+        run: |
+          for i in 1 2 3; do
+            gh release download revmom-data -p revmom-data.tar.gz -D /tmp --clobber && break
+            echo "::warning::release download failed (attempt $i/3)"; sleep $((i * 20))
+          done
+          test -s /tmp/revmom-data.tar.gz
+          tar xzf /tmp/revmom-data.tar.gz
+          python -c "import json; m=json.load(open('data/revmom/meta.json')); print('data to', m['last_date'], 'revenue to', m['revenue_months'][1])"
+
+      - name: Update official data
+        id: update
+        env:
+          FORCE: ${{ github.event.inputs.force || 'false' }}
+        run: |
+          OUT=$(python -m scripts.revmom_backtest.update_data | tail -1)
+          echo "$OUT"
+          echo "json=$OUT" >> "$GITHUB_OUTPUT"
+          if echo "$OUT" | grep -q '"changed": true' || [ "$FORCE" = "true" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "no new data; nothing to publish"
+          fi
+
+      - name: Backtest, checks, pick list, pages
+        id: build
+        if: steps.update.outputs.go == 'true'
+        run: |
+          python -m scripts.revmom_backtest.run > /tmp/run.log
+          python -m scripts.revmom_backtest.verify > /tmp/verify.log
+          python -c "import json,sys; v=json.load(open('results/revmom/verify.json')); \
+          ok=all(all(x.values()) for x in v['truncation_identical'].values()) and not v['held_at_end_not_trading'] and not v['beyond_limit_moves_while_held']; \
+          sys.exit(0 if ok else 1)" || { echo "::error::verify checks not clean (results/revmom/verify.json)"; exit 1; }
+          python -m scripts.revmom_backtest.picks > /tmp/picks_full.log
+          head -1 /tmp/picks_full.log | tee /tmp/picks.log
+          python -m scripts.revmom_backtest.generate_page
+          python -m scripts.revmom_backtest.generate_picks_page
+
+      - name: Commit and push pages
+        id: commit_and_push
+        if: steps.update.outputs.go == 'true'
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/backtest/revmom/index.html docs/revmom-picks/index.html
+          if git diff --cached --quiet; then
+            echo "pages unchanged"
+            exit 0
+          fi
+          LAST=$(python -c "import json; print(json.load(open('data/revmom/meta.json'))['last_date'])")
+          git commit -m "revmom：月營收動能名單與回測頁自動更新（資料到 ${LAST}）
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          python3 scripts/qc.py
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Save pipeline data (Release revmom-data)
+        if: steps.update.outputs.go == 'true'
+        run: |
+          tar czf /tmp/revmom-data.tar.gz --exclude=.gitignore --exclude=ledger_revmom.json \
+            --exclude='revenue_pubdates*.csv' --exclude=job.log data/revmom data/revmom_raw results/revmom
+          ls -l /tmp/revmom-data.tar.gz
+          gh release upload revmom-data /tmp/revmom-data.tar.gz --clobber
+
+      - name: Deploy Pages now
+        if: steps.commit_and_push.outputs.pushed == 'true'
+        run: gh workflow run deploy-pages.yml --ref main
+
+      - name: Step summary
+        if: always()
+        env:
+          UPDATE_JSON: ${{ steps.update.outputs.json }}
+          BUILD: ${{ steps.build.outcome }}
+          PUSHED: ${{ steps.commit_and_push.outputs.pushed || 'no' }}
+          STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "## RevMom Daily"
+            echo "- update_data: \`${UPDATE_JSON:-（沒跑到）}\`"
+            echo "- build: ${BUILD:-skipped}；push: ${PUSHED}"
+            [ -s /tmp/picks.log ] && echo "- picks: \`$(cut -c1-400 /tmp/picks.log)\`"
+            [ "$STATUS" != "success" ] && echo "- **失敗：頁面沒有 push，資料沒有上傳。**看上面失敗的 step log。"
+          } >> "$GITHUB_STEP_SUMMARY"
+          true
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh

@@ -1,0 +1,96 @@
+name: RevMom Revenue Pubdates
+
+# 記錄每家公司月營收「最晚在什麼時間以前已經公布」（2026-10-01 起）。
+# 每天兩次抓公開資訊觀測站的上個月營收彙總頁（上市／上櫃 × 國內／國外公司），第一次看到某家公司的
+# 營收就把抓取時間（台北）記下來；數字之後被改也另記一列。只追加、不改舊列。
+#   data/revmom/revenue_pubdates.csv       每家公司每月一列（改數字另加一列）
+#   data/revmom/revenue_pubdates_runs.csv  每次抓取一列：頁面上幾家、新增幾家
+# 抓取時間是上限：真正公布可能更早，兩次抓取之間最多差約 14 小時。程式見 scripts/revmom_backtest/pubdates.py。
+
+on:
+  schedule:
+    - cron: "5 0 * * *"    # 08:05 台北
+    - cron: "35 10 * * *"  # 18:35 台北
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  TZ: Asia/Taipei
+  PYTHONWARNINGS: ignore
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "pandas==2.3.3" "numpy<2.5" pyarrow requests lxml
+
+      - name: Fetch MOPS summary pages and append
+        id: rec
+        run: |
+          python -m scripts.revmom_backtest.pubdates | tee /tmp/rec.log
+          echo "line=$(tail -1 /tmp/rec.log)" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/revmom/revenue_pubdates.csv data/revmom/revenue_pubdates_runs.csv
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "revmom：月營收公布時間紀錄 $(date '+%Y-%m-%d %H:%M')
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Step summary
+        if: always()
+        env:
+          LINE: ${{ steps.rec.outputs.line }}
+        run: echo "## RevMom Revenue Pubdates"$'\n'"- ${LINE:-（沒跑到）}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
