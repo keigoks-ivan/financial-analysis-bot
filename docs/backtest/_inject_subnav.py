@@ -29,7 +29,9 @@ import _nav_common as NC  # noqa: E402
 START = '<style id="bt-subnav-style">'
 GROUPS = ["COMPARISON", "INDIVIDUAL", "MULTI", "TAIWAN", "OPTIONS", "INTRADAY",
           "RESEARCH_ETF", "RESEARCH_FREQ", "RESEARCH_MA", "RESEARCH_CRASH",
-          "RESEARCH_MACRO", "TW_CB", "RESEARCH_FACTOR"]
+          "RESEARCH_MACRO", "TW_CB", "RESEARCH_FACTOR", "FUTURES_DAILY", "RESEARCH_OOS", "VENDOR"]
+# 2026-10-01 補：FUTURES_DAILY、RESEARCH_OOS 一直漏在這份清單外（--check 報 16 頁「該連結已不在
+# _nav_common」，那些頁的 pill-bar 不會被更新）；同批加入新的 VENDOR（商用策略專區）。
 # 2026-08-29 補：TW_CB 補進來——2026-08-15 新增 TW_CB_LINKS 時漏了同步加進這份
 # GROUPS 清單，導致 tw_cb/ 頁自己的 active key 一直無法被 valid_keys()/url_to_key()
 # 解析（--check 會報「無法反解 active key」）。同批順手補上新加的 RESEARCH_FACTOR。

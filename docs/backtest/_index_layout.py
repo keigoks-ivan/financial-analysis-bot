@@ -150,6 +150,8 @@ BLOCKS = [
         # 2026-09-10：台指期趨勢研究按日線與 60 分 K 兩個時間框架列示，與日內策略分開。
         ("期貨趨勢", None, _conv(navc.FUTURES_DAILY_LINKS)),
         ("日內", None, _conv(navc.INTRADAY_LINKS)),
+        # 2026-10-01：商用策略專區（目前以台指期為主）
+        ("商用策略", None, _conv(navc.VENDOR_LINKS)),
         ("可轉債", None, _conv(navc.TW_CB_LINKS)),
         ("研究・選股", None, [
             ("/backtest/revmom/", "月營收動能選股", "研究", False),
