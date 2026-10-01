@@ -123,9 +123,9 @@ FUTURES_DAILY_LINKS = [
     ("/backtest/txf_hourly/", "台指期60分K・趨勢與通道", "txf_hourly", "研究"),
 ]
 
-# 2026-10-01：商用策略專區——賣家公開策略照文字重建、只看賣家截止日後的成績，並與實單並排比較。
+# 2026-10-01：外部策略檢驗（原名商用策略專區，同日改名；網址不變）——賣家公開策略照文字重建、只看賣家沒看過的資料，並與實單並排比較。
 VENDOR_LINKS = [
-    ("/backtest/vendor/", "商用策略專區", "vendor", "專區"),
+    ("/backtest/vendor/", "外部策略檢驗", "vendor", "專區"),
 ]
 
 INTRADAY_LINKS = [
@@ -297,7 +297,7 @@ def make_toggle(active: str) -> str:
             + _row("台股選擇權", OPTIONS_LINKS, active)
             + _row("期貨趨勢", FUTURES_DAILY_LINKS, active)
             + _row("日內交易", INTRADAY_LINKS, active)
-            + _row("商用策略", VENDOR_LINKS, active)
+            + _row("外部策略", VENDOR_LINKS, active)
             + _row("研究・主動式ETF", RESEARCH_ETF_LINKS, active)
             + _row("研究・頻率", RESEARCH_FREQ_LINKS, active)
             + _row("研究・均線", RESEARCH_MA_LINKS, active)
