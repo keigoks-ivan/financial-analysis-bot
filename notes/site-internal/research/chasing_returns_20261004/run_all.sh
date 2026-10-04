@@ -33,4 +33,7 @@ python3 f6.py; python3 f6b.py; python3 f6c.py
 python3 tw_analysis.py; python3 tw_monthly.py; python3 tw_sector.py
 python3 frags_f.py; python3 frags_tw.py
 python3 page_f.py             # -> followups.html
-echo "done: chasing.html followups.html"
+# --- merged page (chasing.html / followups.html above stay as archive)
+python3 frags_merged.py
+python3 page_merged.py        # -> merged.html (needs merged/*.html templates)
+echo "done: chasing.html followups.html merged.html"

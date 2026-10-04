@@ -176,9 +176,8 @@ RESEARCH_MACRO_LINKS = [
     ("/backtest/yc_equity/", "倒掛之後股票該賣嗎", "yc_equity", "研究"),
     ("/backtest/sahm_rule/", "Sahm 法則跨國", "sahm_rule", "研究"),
     ("/backtest/first_cut/", "第一次降息後的股市", "first_cut", "研究"),
-    # 2026-10-04：追漲四問（美股／產業／避險基金／台股的追高回測），主報告＋續篇兩頁。
-    ("/backtest/chasing_returns/", "追漲四問", "chasing_returns", "研究"),
-    ("/backtest/chasing_returns/followups.html", "追漲四問・七個追問", "chasing_returns_f", "研究"),
+    # 2026-10-04：漲多了還能追嗎（美股／產業／避險基金／台股的追高回測；原主報告＋續篇合併為一頁）。
+    ("/backtest/chasing_returns/", "漲多了還能追嗎", "chasing_returns", "研究"),
 ]
 
 # 2026-08-15 新增：台股可轉債（CB）研究專區——五個獨立回測（折價組合/停止轉換/

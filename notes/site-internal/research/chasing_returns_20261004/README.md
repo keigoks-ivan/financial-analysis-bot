@@ -11,7 +11,11 @@
 
 之後又追加七個追問：漲幅來源、結構性估值、漲勢寬度、領先類股何時結束、「熱＋貴」訊號太早的代價、樣本外檢驗、台股是否適用。
 
-## 報告
+## 合併頁
+
+網站上的頁面是 `merged.html`（《漲多了還能追嗎》），由 `merged/00_top.html … 08_method.html` 九個章節樣板加資料片段組成。樣板裡的 `{{key}}` 由 `frags_merged.py` 產生的 `frags_merged.json` 填入（key 清單見 `merged/CATALOG.md`），`page_merged.py` 負責組裝並檢查每個 key 恰好用一次；`check_merged.py` 檢查數字、禁用詞、標點與錨點。樣式在 `merged_css.txt`。重建網站頁：`python3 frags_merged.py && python3 page_merged.py && python3 check_merged.py && python3 ../../../scripts/build_chasing_returns.py`。`chasing.html`、`followups.html` 留作舊版存檔，舊網址 `followups.html` 在網站上是轉址頁。
+
+## 報告（舊版存檔）
 
 | 檔案 | 內容 | 網站 |
 |---|---|---|
