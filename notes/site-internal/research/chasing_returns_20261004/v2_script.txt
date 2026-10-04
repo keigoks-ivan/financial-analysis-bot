@@ -1,0 +1,14 @@
+<script>
+(function(){
+  var tip=document.createElement('div');tip.className='tip';tip.hidden=true;tip.setAttribute('role','status');document.body.appendChild(tip);
+  function place(x,y){var w=tip.offsetWidth,h=tip.offsetHeight,vw=window.innerWidth,vh=window.innerHeight;
+    var l=x+14,t=y+14;if(l+w>vw-8)l=Math.max(8,x-w-14);if(t+h>vh-8)t=Math.max(8,y-h-14);tip.style.left=l+'px';tip.style.top=t+'px';}
+  document.addEventListener('pointermove',function(e){var el=e.target.closest&&e.target.closest('[data-tip]');
+    if(!el){tip.hidden=true;return;}tip.textContent=el.getAttribute('data-tip');tip.hidden=false;place(e.clientX,e.clientY);});
+  document.addEventListener('pointerleave',function(){tip.hidden=true;});
+  document.addEventListener('focusin',function(e){var el=e.target.closest&&e.target.closest('[data-tip]');
+    if(!el){tip.hidden=true;return;}var r=el.getBoundingClientRect();tip.textContent=el.getAttribute('data-tip');tip.hidden=false;place(r.right,r.top);});
+  document.addEventListener('focusout',function(){tip.hidden=true;});
+  window.addEventListener('scroll',function(){tip.hidden=true;},{passive:true});
+})();
+</script>
