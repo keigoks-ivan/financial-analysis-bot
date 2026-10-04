@@ -1,6 +1,6 @@
 # 追漲四問：歷史回測（2026-10-04）
 
-追逐過去的高報酬有沒有用？這個資料夾是完整的回測程式、結果與兩份報告頁，資料截至 2026 年 9 月。不屬於網站產線，`docs/` 沒有任何檔案被改動。
+追逐過去的高報酬有沒有用？這個資料夾是完整的回測程式、結果與兩份報告頁，資料截至 2026 年 9 月。網站版在 https://research.investmquest.com/backtest/chasing_returns/ ，由 `scripts/build_chasing_returns.py` 把這裡的兩個 HTML 包進網站外框後寫到 `docs/backtest/chasing_returns/`。
 
 ## 四個問題
 
@@ -13,10 +13,10 @@
 
 ## 報告
 
-| 檔案 | 內容 | 線上版 |
+| 檔案 | 內容 | 網站 |
 |---|---|---|
-| `chasing.html` | 主報告：四題，每題 6–9 個面向，分時期比較 | https://claude.ai/artifact/BB2ajiy5edyV4dHsAHnpQt |
-| `followups.html` | 續篇：七個追問 | https://claude.ai/artifact/36p9Uiz9WRhATeypLy2QhN |
+| `chasing.html` | 主報告：四題，每題 6–9 個面向，分時期比較 | `/backtest/chasing_returns/` |
+| `followups.html` | 續篇：七個追問 | `/backtest/chasing_returns/followups.html` |
 
 兩個 HTML 是 Artifact 頁面的原始檔（沒有 `<html>`／`<head>` 外框），直接用瀏覽器開也能看。
 
@@ -38,7 +38,7 @@ pip install pandas numpy scipy xlrd openpyxl
 bash run_all.sh        # 約 2 分鐘，需要網路
 ```
 
-`run_all.sh` 會先跑 `fetch_data.py` 下載所有公開資料，再依序重建結果 JSON 與兩份報告。2026-10-04 在乾淨資料夾重跑過一次：兩份 HTML 與原版逐位元相同，數值只有 Yahoo 調整價造成的百萬分之一級差異。Shiller、Ken French 與 Yahoo 的資料每月更新，日後重跑的數字會略有不同；報告中「現在」的文字是手寫的，日後重跑不會自動更新。
+`run_all.sh` 會先跑 `fetch_data.py` 下載所有公開資料，再依序重建結果 JSON 與兩份報告。重建後要更新網站版，在 repo 根目錄跑 `python3 scripts/build_chasing_returns.py`。2026-10-04 在乾淨資料夾重跑過一次：兩份 HTML 與原版逐位元相同，數值只有 Yahoo 調整價造成的百萬分之一級差異。Shiller、Ken French 與 Yahoo 的資料每月更新，日後重跑的數字會略有不同；報告中「現在」的文字是手寫的，日後重跑不會自動更新。
 
 ## 檔案
 

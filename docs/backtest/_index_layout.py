@@ -272,6 +272,11 @@ BLOCKS = [
             ("/backtest/sahm_rule/", "Sahm 法則跨國適用嗎：失業率認衰退", "研究", False),
             ("/backtest/first_cut/", "第一次降息之後股市是漲是跌：有無衰退分兩組", "研究", False),
         ]),
+        # 2026-10-04：追漲四問（主報告＋續篇），資料與程式在 notes/site-internal/research/chasing_returns_20261004/
+        ("追高", "chase", [
+            ("/backtest/chasing_returns/", "追漲四問：高報酬之後、長期起點、追最強類股與避險策略", "研究", False),
+            ("/backtest/chasing_returns/followups.html", "七個追問：漲幅來源、漲勢寬度、太早的代價、台股", "研究", False),
+        ]),
     ]),
 ]
 

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>追漲四問續篇：七個追問 | InvestMQuest Research</title>
+<meta name="description" content="追漲四問的七個追問：近三年漲幅來自盈餘還是本益比、高 CAPE 有多少是結構性的、漲勢寬度、長期領先類股何時結束、熱且貴訊號太早的代價、樣本外檢驗，以及台股是否適用。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<style>
+/* Layout: one reading column (~46em) with full-column charts; answers first, evidence per question, method last. */
+:root{
+  --ground:#f2f4f1; --surface:#fbfcfa; --ink:#14191c; --ink-2:#4a545b; --muted:#6f7980;
+  --rule:#d8ded9; --grid:#e3e7e3; --axis:#bcc4bf; --accent:#1d4f91; --wash:#e4ebf4; --neg:#a3342c;
+  --s1:#2a78d6; --s2:#eb6834;
+  --f-display:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+
+
+body{background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.page{max-width:48rem;margin:0 auto;padding-inline:20px;padding-block:40px 72px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(2.2rem,6vw,3.2rem);letter-spacing:.02em}
+h2{font-size:1.55rem;margin-top:.2rem}
+h3{font-size:1.1rem;font-family:var(--f-body);font-weight:700}
+p{margin:0}
+.eyebrow{font-family:var(--f-data);font-size:.78rem;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.lede{color:var(--ink-2);font-size:1.06rem;max-width:40em}
+.page>header{display:grid;gap:14px}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.9rem}
+nav.toc a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+nav.toc a:hover,nav.toc a:focus-visible{border-bottom-color:var(--accent)}
+a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.now{margin-top:28px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding-block:16px;display:grid;gap:10px}
+.now-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:12px 16px}
+.now-grid div{display:grid;gap:2px}
+.now-grid b{font-family:var(--f-data);font-weight:500;font-size:1.35rem;letter-spacing:-.01em}
+.now-grid span{font-size:.82rem;color:var(--muted)}
+.now small{font-size:.8rem;color:var(--muted)}
+.answers{margin-top:36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));gap:14px}
+.ans{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:18px 18px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.ans .qn{font-family:var(--f-data);font-size:.75rem;color:var(--muted);letter-spacing:.06em}
+.ans .qq{font-size:.92rem;color:var(--ink-2)}
+.ans .verdict{font-family:var(--f-display);font-size:1.18rem;font-weight:700;line-height:1.45}
+.ans .ev{font-size:.88rem;color:var(--ink-2);line-height:1.65}
+.ans a{font-size:.85rem;color:var(--accent);text-decoration:none}
+section.q{margin-top:64px;display:grid;gap:18px}
+section.q>header{gap:6px}
+.how{font-size:.93rem;color:var(--ink-2);background:var(--wash);border-radius:6px;padding:12px 16px}
+ul.find{margin:0;padding-left:1.2em;display:grid;gap:10px}
+ul.find li::marker{color:var(--muted)}
+ul.find b{font-weight:700}
+figure{margin:0;display:grid;gap:8px;min-width:0}
+figcaption{font-size:.86rem;color:var(--muted)}
+figcaption b{color:var(--ink);font-weight:500;font-size:.95rem;display:block}
+.chart-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:10px 6px 4px}
+.chart{display:block;width:100%;min-width:560px;height:auto;font-family:var(--f-body)}
+.chart .grid{stroke:var(--grid);stroke-width:1}
+.chart .base{stroke:var(--axis);stroke-width:1}
+.chart .ref{stroke:var(--ink-2);stroke-width:1.5}
+.chart .tick{fill:var(--muted);font-size:12px;font-family:var(--f-data)}
+.chart .cat{fill:var(--ink-2);font-size:13px}
+.chart .axl{fill:var(--muted);font-size:12px}
+.chart .val{fill:var(--ink);font-size:11px;font-family:var(--f-data)}
+.chart .reflab{fill:var(--ink-2);font-size:12px}
+.chart .mark{cursor:default}
+.chart .mark:hover,.chart .mark:focus{opacity:.78;outline:none}
+.chart .dot{fill:var(--s1);stroke:var(--surface);stroke-width:2;fill-opacity:.85}
+.chart .dot.hl{fill:var(--s2);fill-opacity:1}
+.chart .dot:hover,.chart .dot:focus{stroke:var(--ink);outline:none}
+.chart .line{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chart .enddot{stroke:var(--surface);stroke-width:2}
+.chart .hit{fill:transparent}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.legend i.dotkey{border-radius:50%}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;font-variant-numeric:tabular-nums;min-width:560px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap}
+thead th{font-weight:500;color:var(--muted);font-size:.78rem;vertical-align:bottom;white-space:normal;line-height:1.4}
+tbody th{text-align:left;font-weight:500;color:var(--ink)}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+td.neg{color:var(--neg)}
+td:not(:first-child){font-family:var(--f-data);font-size:.82rem}
+details{border-top:1px solid var(--rule);padding-top:10px}
+details summary{cursor:pointer;color:var(--accent);font-size:.92rem}
+details[open] summary{margin-bottom:10px}
+.read{border-left:3px solid var(--accent);padding:4px 0 4px 16px;display:grid;gap:6px}
+.read h3{font-size:.95rem;color:var(--accent)}
+.read p{font-size:.96rem}
+.note{font-size:.86rem;color:var(--muted)}
+.synth{margin-top:72px;background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:24px 22px;display:grid;gap:14px}
+.synth ol{margin:0;padding-left:1.3em;display:grid;gap:10px}
+.method{margin-top:56px;display:grid;gap:10px;font-size:.88rem;color:var(--ink-2)}
+.method h2{font-size:1.15rem}
+.method ul{margin:0;padding-left:1.2em;display:grid;gap:6px}
+.method a{color:var(--accent)}
+footer{margin-top:40px;font-size:.8rem;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px}
+.tip{position:fixed;z-index:10;max-width:min(320px,calc(100vw - 24px));background:var(--ink);color:var(--ground);font-size:.82rem;line-height:1.5;padding:8px 10px;border-radius:5px;pointer-events:none}
+@media (prefers-reduced-motion:no-preference){.chart .mark,.chart .dot{transition:opacity .12s}}
+</style><style>
+td .t{display:block;font-size:.68rem;color:var(--muted);line-height:1.2}
+.angle{display:grid;gap:12px;padding-top:22px;border-top:1px solid var(--rule)}
+.angle h3{font-size:1.02rem}
+.oneline{font-family:var(--f-display);font-size:1.18rem;line-height:1.6;font-weight:600}
+.effect{display:grid;grid-template-columns:max-content 1fr;gap:10px 14px;align-items:baseline;background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:14px 16px}
+.effect p{font-size:.95rem}
+.chip{display:inline-block;font-size:.76rem;font-weight:700;letter-spacing:.04em;padding:2px 9px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.chip.fix{color:var(--accent)} .chip.up{color:var(--neg)} .chip.down{color:var(--muted)} .chip.new{color:var(--ink-2)}
+.ans .chip{justify-self:start}
+.pos{border:1px solid var(--rule);border-radius:8px;background:var(--surface);overflow-x:auto}
+.pos table{min-width:560px}
+.meter{position:relative;height:8px;background:var(--grid);border-radius:4px;min-width:120px}
+.meter i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--s2)}
+.meter b{position:absolute;top:-3px;width:2px;height:14px;background:var(--ink)}
+.pos td.m{width:40%}
+</style>
+<style id="chasing-shell">
+.bt-shell{max-width:1120px;margin:0 auto;padding:1rem 20px 0}
+.bt-shell .crumb{font-size:.82rem;color:#6b7280}
+.bt-shell .crumb a{color:#6b7280;text-decoration:none}
+.bt-shell .crumb a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/simulation/">模擬</a>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="bt-shell">
+  <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 追漲四問續篇</div>
+  <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">期貨趨勢</div><div class="bt-subnav-pills"><a href="/backtest/txf_daily/">台指期日線・20 日通道<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txf_hourly/">台指期60分K・趨勢與通道<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">外部策略</div><div class="bt-subnav-pills"><a href="/backtest/vendor/">外部策略檢驗<span class="bt-tag bt-tag-watch">專區</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/yield_curve/">殖利率倒掛與衰退<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/yc_equity/">倒掛之後股票該賣嗎<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/sahm_rule/">Sahm 法則跨國<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/first_cut/">第一次降息後的股市<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/chasing_returns/">追漲四問<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/chasing_returns/followups.html" class="bt-on">追漲四問・七個追問<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead_reaction/">財報打敗但沒漲，之後贏面大嗎<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/profitability/">美股獲利能力因子<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/asset_growth/">美股資產成長異象<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/index_inclusion/">指數納入效應<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insider/">內部人買賣叢集買進<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/revmom/">台股月營收動能選股<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・跨標的驗證</div><div class="bt-subnav-pills"><a href="/backtest/live_system_evidence/">證據總覽（先看這頁）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insurance_premium/">深熊保險的價格<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/regime_bootstrap/">保留 regime 的 bootstrap<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/combined_account/">美台合併帳戶層<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_base_rate/">慢熊的 base rate<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_onset/">慢熊：起點認得出來嗎？<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/f_portfolio/">F 組合：疊兩種保險<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/a0_d1_comfort/">A0＋D1 舒服度<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/f_comfort/">F 組合舒服度<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/comfort_tournament/">舒服度錦標賽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/cross_sectional_trend/">橫斷面版趨勢<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/a0_proposal/">A0 提案（10 月回顧點）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/futures_leg/" class="bt-dead">F70 換 CTA 腿<span class="bt-tag bt-tag-dead">否決</span></a></div></div></nav>
+</div>
+
+<div class="page">
+<header>
+  <p class="eyebrow">歷史回測筆記 · 續篇 · 資料截至 2026 年 9 月</p>
+  <h1>七個追問</h1>
+  <p class="lede">第一輪回測（<a href="/backtest/chasing_returns/">追漲四問</a>）留下七個沒回答的問題。這一篇逐一回測，並標出每個答案讓原本的結論變強、變弱，還是需要修正。</p>
+  <nav class="toc" aria-label="章節"><a href="#pos">現在在哪裡</a><a href="#f1">1 漲幅來源</a><a href="#f2">2 結構性估值</a><a href="#f3">3 漲勢寬度</a><a href="#f4">4 領先類股</a><a href="#f5">5 太早的代價</a><a href="#f6">6 樣本外檢驗</a><a href="#f7">7 台股</a><a href="#update">更新後的結論</a></nav>
+</header>
+
+<section class="big" id="pos" style="margin-top:30px;display:grid;gap:12px">
+  <h2 style="font-size:1.3rem">現在在歷史中的位置</h2>
+  <p>把七個追問用到的指標放在一起看。大多數指標都在歷史的前 20%，但程度不一：CAPE 和盈餘位置最極端，經利率或時代調整後的估值較溫和。</p>
+<div class="pos"><table><thead><tr><th scope="col" style="text-align:left">指標（現值）</th><th scope="col">歷史百分位</th><th scope="col" style="text-align:left">位置</th><th scope="col">資料月份</th></tr></thead><tbody><tr><th scope='row'>近 3 年報酬（年化 20.9%）</th><td>87</td><td class='m'><div class="meter" aria-hidden="true"><i style="width:87%"></i></div></td><td>2026-08</td></tr><tr><th scope='row'>CAPE（40.6）</th><td>99</td><td class='m'><div class="meter" aria-hidden="true"><i style="width:99%"></i></div></td><td>2026-09</td></tr><tr><th scope='row'>超額 CAPE 殖利率（1.0%，越低越貴）</th><td>81</td><td class='m'><div class="meter" aria-hidden="true"><i style="width:81%"></i></div></td><td>2026-09</td></tr><tr><th scope='row'>CAPE 相對近 30 年中位數（1.47 倍）</th><td>83</td><td class='m'><div class="meter" aria-hidden="true"><i style="width:83%"></i></div></td><td>2026-09</td></tr><tr><th scope='row'>實質盈餘相對 10 年平均（1.58 倍）</th><td>98</td><td class='m'><div class="meter" aria-hidden="true"><i style="width:98%"></i></div></td><td>2026-06</td></tr><tr><th scope='row'>漲勢集中度（市值加權領先等權 10.0 個百分點）</th><td>94</td><td class='m'><div class="meter" aria-hidden="true"><i style="width:94%"></i></div></td><td>2026-08</td></tr><tr><th scope='row'>科技業相對估值（淨值市價比 0.51，越低越貴）</th><td>74</td><td class='m'><div class="meter" aria-hidden="true"><i style="width:74%"></i></div></td><td>2026</td></tr><tr><th scope="row">科技業佔美股市值（42%）</th><td>最高</td><td class="m"><div class="meter" aria-hidden="true"><i style="width:100%"></i></div></td><td>2025 年底</td></tr></tbody></table></div><p class="note">百分位＝歷史上比現在「更便宜／更低」的時間比例，越接近 100 代表越極端。</p>
+</section>
+
+<div class="answers">
+  <article class="ans"><span class="qn">追問 1</span><p class="qq">近三年的漲幅是盈餘撐起來的，還是本益比？</p><span class="chip fix">修正</span>
+    <p class="verdict">主要是盈餘；但盈餘本身在歷史高檔。</p><p class="ev">股價每年 +19.7%，其中盈餘 +17.7%、本益比 +1.7%。實質盈餘是 10 年平均的 1.58 倍（第 98 百分位）。</p><a href="#f1">看細節</a></article>
+  <article class="ans"><span class="qn">追問 2</span><p class="qq">高 CAPE 有多少是結構性的？</p><span class="chip fix">修正</span>
+    <p class="verdict">一部分。調整利率後從第 99 降到第 81 百分位，仍在最貴的 20%。</p><p class="ev">這一組歷史上之後 10 年，股票贏公債的機率只有 57%。</p><a href="#f2">看細節</a></article>
+  <article class="ans"><span class="qn">追問 3</span><p class="qq">這次熱行情是窄還是寬？</p><span class="chip up">強化</span>
+    <p class="verdict">很窄，而窄的熱行情之後最差。</p><p class="ev">窄的熱行情之後 5 年年化 2.1%。現在市值加權每年領先等權 10 個百分點，第 94 百分位。</p><a href="#f3">看細節</a></article>
+  <article class="ans"><span class="qn">追問 4</span><p class="qq">領先多年的類股何時結束？</p><span class="chip new">新發現</span>
+    <p class="verdict">3–5 年看，長期贏家平均會落後；估值只在短期有區辨力。</p><p class="ev">過去 10 年最強的產業，之後 5 年每年落後大盤 1.4–3.2 個百分點。科技業佔市值 42%，創新高。</p><a href="#f4">看細節</a></article>
+  <article class="ans"><span class="qn">追問 5</span><p class="qq">「熱＋貴」訊號太早的代價？</p><span class="chip fix">修正</span>
+    <p class="verdict">很高。通常還會再漲，而且多數時候不會給更低的買回點。</p><p class="ev">訊號後 3 年內中位數再漲 39%；8 次中只有 2 次跌到明顯低於訊號當時。</p><a href="#f5">看細節</a></article>
+  <article class="ans"><span class="qn">追問 6</span><p class="qq">結果是不是事後挑出來的？</p><span class="chip down">弱化第 2 題</span>
+    <p class="verdict">第 1、3 題樣本外方向成立；第 2 題的統計證據比看起來弱。</p><p class="ev">第 3 題產業動能在後半段 16 種設定全為正；第 2 題切半後 p 值 0.10 與 0.49。</p><a href="#f6">看細節</a></article>
+  <article class="ans"><span class="qn">追問 7</span><p class="qq">台股適用嗎？</p><span class="chip fix">部分成立</span><p class="verdict">第 1、3 題成立，短期反轉比美國更明顯；第 2 題在台股看不到。</p><p class="ev">過去 12 個月漲超過 40% 後，之後 12 個月平均 −5.8%。現在台股近 12 個月 +86%、近 3 年年化 43%，是 1990 年以來最高。</p><a href="#f7">看細節</a></article>
+  <article class="ans"><span class="qn">總結</span><p class="qq">七個追問改變了什麼？</p>
+    <p class="verdict">第 1、3、4 題維持；第 2 題降級；「現在」的描述更細。</p><p class="ev">現在的熱行情是盈餘推動、但非常窄；估值調整後仍在最貴的 20%。</p><a href="#update">看更新後的結論</a></article>
+</div>
+<section class="q" id="f1">
+  <header><p class="eyebrow">追問 1</p><h2>近三年的漲幅，是盈餘成長撐起來的，還是本益比被推高？</h2></header>
+  <p class="oneline">主要是盈餘。這次不像 1999 年靠本益比擴張；但盈餘本身已在歷史高檔，風險從「估值擴張」換到「盈餘能否維持」。</p>
+  <p class="how">做法：用 Shiller 的 S&amp;P 500 過去 12 個月盈餘，把每段 3 年的股價變化拆成「每股盈餘成長」和「本益比變化」。也用 CAPE（以 10 年平均盈餘計算的本益比）的上升速度，把歷史上的熱行情（近 3 年報酬最熱的 20%）分成三組。</p>
+  <div class="angle"><h3>現在：漲幅約九成來自盈餘</h3><p>2023 年 6 月到 2026 年 6 月，S&amp;P 500 股價每年 +19.7%。其中每股盈餘每年 +17.7%，本益比只從 24.0 倍升到 25.2 倍（每年 +1.7%），約九成漲幅來自盈餘成長。</p></div><div class="angle"><h3>歷史：CAPE 漲得越快的熱行情，之後越差</h3><p>CAPE 上升最快的三分之一（每年超過 14.5%，共 9 段，包括 1920 年代末、1997–2000）之後 5 年年化 −2.7%，只有 33% 為正，36 個月內平均最大回撤 −41%。CAPE 上升最慢的三分之一之後 5 年 12.3%，全部為正。現在 CAPE 每年上升約 10%，落在中間組（之後 5 年 8.9%，89% 為正）。用一般本益比區分也是同方向，但差距較小。</p><figure><figcaption><b>熱行情依 CAPE 上升速度分組，之後 5 年的年化報酬</b>橫線為全部月份的平均（9.6%）</figcaption><div class="chart-wrap"><svg viewBox="0 0 680 240" class="chart" role="img" aria-label="熱行情依 CAPE 上升速度分組的之後 5 年報酬"><line x1="40" x2="668" y1="200.0" y2="200.0" class="grid"/><text x="34" y="204.0" class="tick" text-anchor="end">-5%</text><line x1="40" x2="668" y1="155.5" y2="155.5" class="base"/><text x="34" y="159.5" class="tick" text-anchor="end">0%</text><line x1="40" x2="668" y1="111.0" y2="111.0" class="grid"/><text x="34" y="115.0" class="tick" text-anchor="end">5%</text><line x1="40" x2="668" y1="66.5" y2="66.5" class="grid"/><text x="34" y="70.5" class="tick" text-anchor="end">10%</text><line x1="40" x2="668" y1="22.0" y2="22.0" class="grid"/><text x="34" y="26.0" class="tick" text-anchor="end">15%</text><path d="M132.7,155.5 V50.0 Q132.7,46.0 136.7,46.0 H152.7 Q156.7,46.0 156.7,50.0 V155.5 Z" style="fill:var(--s1)" class="mark" tabindex="0" data-tip="CAPE 小升或下降（每年 -7.3%～9.1%）｜之後 5 年年化 12.3%，5 年後為正 100%，18 段"/><text x="144.7" y="40.0" class="val" text-anchor="middle">+12.3%</text><text x="144.7" y="218" class="cat" text-anchor="middle">CAPE 小升或下降</text><path d="M342.0,155.5 V80.3 Q342.0,76.3 346.0,76.3 H362.0 Q366.0,76.3 366.0,80.3 V155.5 Z" style="fill:var(--s1)" class="mark" tabindex="0" data-tip="CAPE 中度上升（每年 9.1%～14.5%）｜之後 5 年年化 8.9%，5 年後為正 89%，18 段"/><text x="354.0" y="70.3" class="val" text-anchor="middle">+8.9%</text><text x="354.0" y="218" class="cat" text-anchor="middle">CAPE 中度上升</text><path d="M551.3,155.5 V175.5 Q551.3,179.5 555.3,179.5 H571.3 Q575.3,179.5 575.3,175.5 V155.5 Z" style="fill:var(--s1)" class="mark" tabindex="0" data-tip="CAPE 大幅上升（每年 14.5%～32.5%）｜之後 5 年年化 -2.7%，5 年後為正 33%，9 段"/><text x="563.3" y="193.5" class="val" text-anchor="middle">-2.7%</text><text x="563.3" y="218" class="cat" text-anchor="middle">CAPE 大幅上升</text><line x1="40" x2="668" y1="70.1" y2="70.1" class="ref"/></svg></div></figure><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">熱行情的成因</th><th scope="col">CAPE 每年上升幅度</th><th scope="col">月數／段數</th><th scope="col">之後 12 個月</th><th scope="col">之後 5 年年化</th><th scope="col">5 年後為正</th><th scope="col">36 個月內平均最大回撤</th></tr></thead><tbody><tr><th scope='row'>CAPE 小升或下降</th><td>-7.3%～9.1%</td><td>111／18</td><td>6.4%</td><td>12.3%</td><td>100%</td><td class="neg">-15.9%</td></tr><tr><th scope='row'>CAPE 中度上升</th><td>9.1%～14.5%</td><td>110／18</td><td>10.1%</td><td>8.9%</td><td>89%</td><td class="neg">-22.2%</td></tr><tr><th scope='row'>CAPE 大幅上升</th><td>14.5%～32.5%</td><td>111／9</td><td>10.6%</td><td class="neg">-2.7%</td><td>33%</td><td class="neg">-41.1%</td></tr><tr><th scope='row'>以本益比區分｜盈餘驅動</th><td>—</td><td>187／6</td><td>8.7%</td><td>6.7%</td><td>84%</td><td class="neg">-21.4%</td></tr><tr><th scope='row'>以本益比區分｜估值驅動</th><td>—</td><td>178／7</td><td>9.5%</td><td>4.7%</td><td>67%</td><td class="neg">-29.9%</td></tr></tbody></table></div></div><div class="angle"><h3>但盈餘本身在高檔</h3><p>2026 年 6 月，實質盈餘是過去 10 年平均的 1.58 倍，歷史第 98 百分位，和 1929、2007、2021 年相近。這也是 CAPE（41 倍）遠高於一般本益比（25 倍）的原因：CAPE 用 10 年平均盈餘，等於假設盈餘會回到長期水準。歷史上盈餘超過 10 年平均 1.5 倍的 8 段時期，之後 3 年實質盈餘平均下降 33%，94% 的情況是下降。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">當時的盈餘位置</th><th scope="col">月數</th><th scope="col">之後 3 年實質盈餘變化</th><th scope="col">3 年後盈餘較低的機率</th><th scope="col">之後 5 年實質盈餘變化</th><th scope="col">股票之後 5 年年化</th></tr></thead><tbody><tr><th scope='row'>實質盈餘 ≥ 10 年平均的 1.5 倍</th><td>82</td><td class="neg">-32.6%</td><td>94%</td><td class="neg">-21.2%</td><td>4.2%</td></tr><tr><th scope='row'>1.2～1.5 倍</th><td>603</td><td class="neg">-3.6%</td><td>55%</td><td class="neg">-3.0%</td><td>8.0%</td></tr><tr><th scope='row'>低於 1.2 倍</th><td>1062</td><td>30.9%</td><td>35%</td><td>39.5%</td><td>10.7%</td></tr></tbody></table></div><p class="note">盈餘為 S&amp;P 公布的 GAAP 盈餘，最近幾個月含 Shiller 的估計值。8 段中有幾段（1916–17、1929–30）盈餘下降與戰爭、大蕭條有關。</p></div>
+  <div class="effect"><span class="chip fix">修正</span><p>這次的熱行情主要由盈餘推動，依歷史分組屬於中性，不是 1999 年那種估值型。需要注意的風險換了位置：盈餘已遠高於長期趨勢，它能不能維持，比估值是否繼續擴張更關鍵。</p></div>
+</section><section class="q" id="f2">
+  <header><p class="eyebrow">追問 2</p><h2>現在的高 CAPE，有多少是結構性的？</h2></header>
+  <p class="oneline">有一部分。用利率或時代調整後，現在從「史上第二貴」降到「歷史最貴的 20% 左右」，但仍在最貴的那一組。</p>
+  <p class="how">做法：兩種調整。超額 CAPE 殖利率（Shiller 提出）：以 CAPE 換算的盈餘殖利率，減去 10 年期實質公債殖利率，衡量股票相對公債的便宜程度。相對 CAPE：CAPE 除以前 30 年的中位數，衡量相對於當代標準有多貴。</p>
+  <div class="angle"><h3>調整後沒那麼極端，但仍偏貴</h3><p>CAPE 本身在第 99 百分位，只有 1999–2000 年比現在高。超額 CAPE 殖利率是 1.0%，比歷史上 81% 的時間貴；相對 CAPE 是 1.47 倍，在第 83 百分位。</p></div><div class="angle"><h3>三種指標的預測力相近，各有長處</h3><p>表中數值已轉成同方向，越高代表「越便宜，之後報酬越高」的關係越強。預測之後 10 年報酬時，三者相近（0.46–0.51）；1982 年以後相對 CAPE 最強（0.88）。預測「股票減公債」的超額報酬時，超額 CAPE 殖利率最好。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">估值指標</th><th scope="col">→之後 10 年報酬（全期間）</th><th scope="col">→之後 10 年報酬（1982 以後）</th><th scope="col">→10 年股減債（全期間）</th><th scope="col">→10 年股減債（1982 以後）</th><th scope="col">→之後 20 年報酬</th></tr></thead><tbody><tr><th scope='row'>CAPE（取對數，符號反向）</th><td style="background:color-mix(in srgb, var(--s1) 19%, transparent)">+0.46</td><td style="background:color-mix(in srgb, var(--s1) 31%, transparent)">+0.72</td><td style="background:color-mix(in srgb, var(--s1) 13%, transparent)">+0.31</td><td style="background:color-mix(in srgb, var(--s1) 12%, transparent)">+0.29</td><td style="background:color-mix(in srgb, var(--s1) 22%, transparent)">+0.53</td></tr><tr><th scope='row'>超額 CAPE 殖利率</th><td style="background:color-mix(in srgb, var(--s1) 21%, transparent)">+0.51</td><td style="background:color-mix(in srgb, var(--s1) 28%, transparent)">+0.67</td><td style="background:color-mix(in srgb, var(--s1) 17%, transparent)">+0.41</td><td style="background:color-mix(in srgb, var(--s1) 20%, transparent)">+0.47</td><td style="background:color-mix(in srgb, var(--s1) 18%, transparent)">+0.42</td></tr><tr><th scope='row'>CAPE 相對近 30 年中位數（符號反向）</th><td style="background:color-mix(in srgb, var(--s1) 20%, transparent)">+0.47</td><td style="background:color-mix(in srgb, var(--s1) 37%, transparent)">+0.88</td><td style="background:color-mix(in srgb, var(--s1) 16%, transparent)">+0.38</td><td style="background:color-mix(in srgb, var(--s1) 28%, transparent)">+0.66</td><td style="background:color-mix(in srgb, var(--s1) 18%, transparent)">+0.43</td></tr></tbody></table></div></div><div class="angle"><h3>現在落在最貴的五分之一</h3><p>超額 CAPE 殖利率最低的 20%（≤1.1%）之後 10 年實質年化 4.2%，10 年內股票贏公債的機率只有 57%，其他各組是 84%–95%。這一組的成員包括 1880–90 年代（之後報酬不差）、1929、1960 年代末、1997–2002 和 2006–07。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">依超額 CAPE 殖利率分組</th><th scope="col">區間</th><th scope="col">之後 10 年實質年化</th><th scope="col">之後 10 年股票減公債</th><th scope="col">10 年股贏債的機率</th><th scope="col">之後 20 年實質年化</th></tr></thead><tbody><tr><th scope='row'>最貴 20%</th><td>-2.6%～1.1%</td><td>4.2%</td><td>1.0%</td><td>57%</td><td>5.4%</td></tr><tr><th scope='row'>次貴</th><td>1.1%～2.5%</td><td>4.4%</td><td>2.7%</td><td>84%</td><td>5.3%</td></tr><tr><th scope='row'>中間</th><td>2.5%～4.4%</td><td>6.6%</td><td>5.9%</td><td>95%</td><td>5.1%</td></tr><tr><th scope='row'>次便宜</th><td>4.4%～7.6%</td><td>6.4%</td><td>5.0%</td><td>95%</td><td>6.5%</td></tr><tr><th scope='row'>最便宜 20%</th><td>7.6%～23.5%</td><td>11.0%</td><td>8.0%</td><td>90%</td><td>8.9%</td></tr></tbody></table></div></div>
+  <div class="effect"><span class="chip fix">修正</span><p>把利率和時代標準納入之後，現在的估值沒有 CAPE 單獨看起來那麼極端，「史上第二貴」的說法誇大了。但換成任何一種調整，現在仍在最貴的 20%，第一版的方向不變。</p></div>
+</section><section class="q" id="f3">
+  <header><p class="eyebrow">追問 3</p><h2>這次熱行情是少數大型股帶動的嗎？窄和寬的熱行情之後有差嗎？</h2></header>
+  <p class="oneline">這次非常窄，而窄的熱行情是三組中之後表現最差的一組。</p>
+  <p class="how">做法：用 Ken French 49 個產業的等權報酬與公司家數，重建「全市場等權」報酬，和市值加權大盤比較。過去 36 個月市值加權比等權多賺越多，代表漲勢越集中在大型股。2003 年以後另用 SPY 對 RSP（S&amp;P 500 等權 ETF）驗證。</p>
+  <div class="angle"><h3>窄的熱行情之後最差</h3><p>熱行情依寬度分三組。窄的一組（市值加權每年領先等權 3 到 17 個百分點）之後 5 年年化 2.1%，只有 55% 為正，36 個月內平均最大回撤 −34%。中間組 13.4%，寬的一組 7.6%。窄的熱行情共 6 段：1929–30、1954、1956、1985–87、1996–2000、2025–26。</p><figure><figcaption><b>熱行情依寬度分組，之後 5 年的年化報酬</b>橫線為全部月份的平均（9.6%）</figcaption><div class="chart-wrap"><svg viewBox="0 0 680 230" class="chart" role="img" aria-label="熱行情依寬度分組的之後 5 年報酬"><line x1="40" x2="668" y1="190.0" y2="190.0" class="base"/><text x="34" y="194.0" class="tick" text-anchor="end">0%</text><line x1="40" x2="668" y1="134.0" y2="134.0" class="grid"/><text x="34" y="138.0" class="tick" text-anchor="end">5%</text><line x1="40" x2="668" y1="78.0" y2="78.0" class="grid"/><text x="34" y="82.0" class="tick" text-anchor="end">10%</text><line x1="40" x2="668" y1="22.0" y2="22.0" class="grid"/><text x="34" y="26.0" class="tick" text-anchor="end">15%</text><path d="M132.7,190.0 V108.9 Q132.7,104.9 136.7,104.9 H152.7 Q156.7,104.9 156.7,108.9 V190.0 Z" style="fill:var(--s1)" class="mark" tabindex="0" data-tip="寬（等權跟上或領先）｜市值加權減等權每年 -39.7%～-3.2%｜之後 5 年年化 7.6%，11 段"/><text x="144.7" y="98.9" class="val" text-anchor="middle">+7.6%</text><text x="144.7" y="208" class="cat" text-anchor="middle">寬</text><path d="M342.0,190.0 V43.9 Q342.0,39.9 346.0,39.9 H362.0 Q366.0,39.9 366.0,43.9 V190.0 Z" style="fill:var(--s1)" class="mark" tabindex="0" data-tip="中間｜市值加權減等權每年 -2.4%～3.0%｜之後 5 年年化 13.4%，8 段"/><text x="354.0" y="33.9" class="val" text-anchor="middle">+13.4%</text><text x="354.0" y="208" class="cat" text-anchor="middle">中間</text><path d="M551.3,190.0 V170.5 Q551.3,166.5 555.3,166.5 H571.3 Q575.3,166.5 575.3,170.5 V190.0 Z" style="fill:var(--s1)" class="mark" tabindex="0" data-tip="窄（市值加權大幅領先）｜市值加權減等權每年 3.0%～16.7%｜之後 5 年年化 2.1%，6 段"/><text x="563.3" y="160.5" class="val" text-anchor="middle">+2.1%</text><text x="563.3" y="208" class="cat" text-anchor="middle">窄</text><line x1="40" x2="668" y1="82.5" y2="82.5" class="ref"/></svg></div></figure><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">熱行情的寬度</th><th scope="col">市值加權減等權（每年，百分點）</th><th scope="col">月數／段數</th><th scope="col">之後 12 個月</th><th scope="col">之後 3 年年化</th><th scope="col">之後 5 年年化</th><th scope="col">5 年後為正</th><th scope="col">36 個月內平均最大回撤</th></tr></thead><tbody><tr><th scope='row'>寬（等權跟上或領先）</th><td>-39.7～-3.2</td><td>87／11</td><td>5.7%</td><td>5.5%</td><td>7.6%</td><td>78%</td><td class="neg">-28.1%</td></tr><tr><th scope='row'>中間</th><td>-2.4～+3.0</td><td>87／8</td><td>8.3%</td><td>13.7%</td><td>13.4%</td><td>100%</td><td class="neg">-14.6%</td></tr><tr><th scope='row'>窄（市值加權大幅領先）</th><td>+3.0～+16.7</td><td>87／6</td><td>6.8%</td><td>0.8%</td><td>2.1%</td><td>55%</td><td class="neg">-34.4%</td></tr></tbody></table></div></div><div class="angle"><h3>現在：歷史上最窄的幾次之一</h3><p>到 2026 年 8 月的 36 個月，市值加權年化 20.9%，等權只有 10.9%，相差 10.0 個百分點，第 94 百分位。最窄的紀錄是 2024 年 6 月（相差 18.0 個百分點），超過 1999 年（16.5）。SPY 對 RSP 也一樣：近 3 年 22.8% 對 15.5%，相差 7.2 個百分點，是 2006 年以來第 96 百分位。</p></div>
+  <div class="effect"><span class="chip up">強化</span><p>窄的熱行情是三組中之後最差的一組，而現在屬於這一組，這加強了第一版對現況偏弱的描述。要注意等權報酬包含大量小型股，寬度的量法會受小型股表現影響；樣本也只有 6 段。</p></div>
+</section><section class="q" id="f4">
+  <header><p class="eyebrow">追問 4</p><h2>領先多年的類股（現在是科技）什麼時候會結束？相對估值能提前看出來嗎？</h2></header>
+  <p class="oneline">以 3–5 年來看，長期贏家平均會落後大盤；相對估值只在「隔年」有區辨力。科技業目前相對偏貴、權重創紀錄，但估值沒有 1968 或 2000 年那麼極端。</p>
+  <p class="how">做法：Ken French 的產業資料提供每個產業的淨值市價比（B/M，越低代表越貴）。用產業 B/M 除以全市場 B/M 得到相對估值，看「長期領先、而且相對很貴」的產業之後表現。也單獨檢查 10 大產業中的科技業。</p>
+  <div class="angle"><h3>長期贏家平均會回吐，估值幫助有限</h3><p>49 細產業中，過去 10 年相對報酬前 20% 的產業，之後 5 年每年落後大盤 1.4 到 3.2 個百分點，只有 36%–45% 贏大盤。最貴和最便宜的長期贏家，之後的表現差不多。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">49 細產業｜過去 10 年相對報酬</th><th scope="col">當時最貴 20%</th><th scope="col">中間 60%</th><th scope="col">最便宜 20%</th></tr></thead><tbody><tr><th scope='row'>過去 10 年前 20%</th><td style="background:color-mix(in srgb, var(--s2) 13%, transparent)">-1.4<span class='t'>贏 41%</span></td><td style="background:color-mix(in srgb, var(--s2) 28%, transparent)">-2.9<span class='t'>贏 35%</span></td><td style="background:color-mix(in srgb, var(--s2) 31%, transparent)">-3.2<span class='t'>贏 37%</span></td></tr><tr><th scope='row'>其餘</th><td style="background:color-mix(in srgb, var(--s2) 5%, transparent)">-0.6<span class='t'>贏 49%</span></td><td style="background:color-mix(in srgb, var(--s1) 2%, transparent)">+0.2<span class='t'>贏 53%</span></td><td style="background:color-mix(in srgb, var(--s1) 6%, transparent)">+0.7<span class='t'>贏 54%</span></td></tr></tbody></table></div></div><div class="angle"><h3>短期例外：最貴的近 5 年冠軍，隔年最差</h3><p>每年的「近 5 年冠軍產業」依當時相對估值分三組。最貴的一組隔年平均落後大盤 4.0（10 大產業）與 7.8（49 細產業）個百分點，是三組中最差的。但以 3 年來看，三組都大多落後大盤。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">近 5 年冠軍產業｜當時相對估值</th><th scope="col">隔年相對大盤</th><th scope="col">隔年贏大盤的機率</th><th scope="col">之後 3 年相對大盤（每年）</th><th scope="col">3 年贏大盤的機率</th><th scope="col">年數</th></tr></thead><tbody><tr><th scope='row'>10 大產業｜最貴三分之一</th><td class="neg">-4.0%</td><td>47%</td><td class="neg">-4.4%</td><td>28%</td><td>32</td></tr><tr><th scope='row'>10 大產業｜中間</th><td class="neg">-1.4%</td><td>55%</td><td>0.6%</td><td>52%</td><td>31</td></tr><tr><th scope='row'>10 大產業｜最便宜三分之一</th><td>1.3%</td><td>55%</td><td class="neg">-1.4%</td><td>31%</td><td>32</td></tr><tr><th scope='row'>49 細產業｜最貴三分之一</th><td class="neg">-7.8%</td><td>47%</td><td class="neg">-6.5%</td><td>39%</td><td>32</td></tr><tr><th scope='row'>49 細產業｜中間</th><td class="neg">-3.8%</td><td>39%</td><td>0.3%</td><td>45%</td><td>31</td></tr><tr><th scope='row'>49 細產業｜最便宜三分之一</th><td>2.0%</td><td>45%</td><td class="neg">-1.2%</td><td>27%</td><td>32</td></tr></tbody></table></div></div><div class="angle"><h3>科技業本身</h3><p>科技業相對 B/M 最貴的 25% 年份（≤0.50），之後 3 年每年落後大盤 2.5 個百分點；最便宜的 25% 之後每年領先 2.6。2026 年科技業的相對 B/M 是 0.51，剛好在最貴 25% 的門檻上，但沒有 1968（0.37）和 2000 年（0.39）那麼極端。科技業佔美股市值 42%（2025 年底），是 1926 年以來最高，1999 年是 27%。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">科技業相對淨值市價比（越低越貴）</th><th scope="col">區間</th><th scope="col">之後 3 年相對大盤（每年）</th><th scope="col">之後 5 年相對大盤（每年）</th><th scope="col">年數</th></tr></thead><tbody><tr><th scope='row'>最貴 25%</th><td>0.37～0.50</td><td class="neg">-2.5%</td><td class="neg">-1.7%</td><td>23</td></tr><tr><th scope='row'>次貴</th><td>0.51～0.59</td><td>2.1%</td><td>0.2%</td><td>24</td></tr><tr><th scope='row'>次便宜</th><td>0.59～0.67</td><td>1.5%</td><td>0.6%</td><td>24</td></tr><tr><th scope='row'>最便宜 25%</th><td>0.69～1.03</td><td>2.6%</td><td>3.6%</td><td>25</td></tr></tbody></table></div><p class="note">10 大產業的「科技」包含電腦、軟體、半導體與電子設備；淨值市價比對軟體等輕資產產業會系統性偏低。</p></div>
+  <div class="effect"><span class="chip new">新發現</span><p>第一版發現現代的長期領先者延續得比過去久（以隔年來看）。這裡補上另一面：以 3–5 年來看，長期贏家平均會落後，這在歷史上相當一致。這份資料無法告訴你科技的長週期何時結束，只能說它目前偏貴、權重前所未見。</p></div>
+</section><section class="q" id="f5">
+  <header><p class="eyebrow">追問 5</p><h2>「熱＋貴」的訊號出現後，太早行動的代價有多大？</h2></header>
+  <p class="oneline">很高。訊號出現後，市場通常還會再漲一段，而且多數時候不會跌到比訊號當時更低的位置。</p>
+  <p class="how">做法：定義兩種訊號，每次第一次出現（與前一次相隔超過 12 個月）記一筆。S1：近 3 年年化 ≥20% 且 CAPE ≥30（嚴格版）。S2：近 3 年報酬在歷史最熱的 20%，且 CAPE 高於「當時已知歷史」的第 80 百分位（不使用未來資料）。看訊號後 5 年的走勢，並和改買公債比較。</p>
+  <div class="angle"><h3>S2：9 次訊號，多數太早</h3><p>8 次已有 5 年結果。訊號後 3 年內，股市的中位數還會再漲 39%，到高點的中位數是第 35 個月。5 年後股票贏公債 6 次、輸 2 次（1928、2005）。只有這 2 次跌到明顯低於訊號當時的位置（−77%、−35%）；其他 6 次最多只跌到訊號水準下方 0–16%。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">訊號首次出現</th><th scope="col">CAPE</th><th scope="col">之後 3 年內最多再漲</th><th scope="col">幾個月後到高點</th><th scope="col">5 年內最低點（相對訊號當時）</th><th scope="col">之後 1 年</th><th scope="col">之後 5 年（股票）</th><th scope="col">之後 5 年（公債）</th></tr></thead><tbody><tr><th scope='row'>1928-09</th><td>23.0</td><td>+43.9%</td><td>11</td><td class="neg">-76.5%</td><td>+36.5%</td><td class="neg">-45.4%</td><td>+22.3%</td></tr><tr><th scope='row'>1961-03</th><td>19.8</td><td>+28.7%</td><td>36</td><td class="neg">-14.2%</td><td>+9.2%</td><td>+58.0%</td><td>+13.5%</td></tr><tr><th scope='row'>1965-06</th><td>22.4</td><td>+41.5%</td><td>36</td><td class="neg">-3.3%</td><td>+6.6%</td><td>+4.4%</td><td>+3.6%</td></tr><tr><th scope='row'>1993-08</th><td>20.8</td><td>+55.2%</td><td>33</td><td class="neg">-2.8%</td><td>+4.6%</td><td>+112.5%</td><td>+43.1%</td></tr><tr><th scope='row'>1996-11</th><td>27.6</td><td>+86.6%</td><td>36</td><td class="neg">-1.2%</td><td>+27.3%</td><td>+55.6%</td><td>+44.9%</td></tr><tr><th scope='row'>2005-09</th><td>25.7</td><td>+31.3%</td><td>25</td><td class="neg">-34.8%</td><td>+10.0%</td><td>+6.8%</td><td>+42.5%</td></tr><tr><th scope='row'>2013-06</th><td>22.9</td><td>+36.6%</td><td>35</td><td>0.0%</td><td>+25.1%</td><td>+89.7%</td><td>+9.1%</td></tr><tr><th scope='row'>2021-04</th><td>36.7</td><td>+24.5%</td><td>35</td><td class="neg">-16.3%</td><td class="neg">-4.7%</td><td>+74.8%</td><td class="neg">-6.9%</td></tr><tr><th scope='row'>2025-06</th><td>36.1</td><td>+25.3%</td><td>14</td><td>0.0%</td><td>+22.2%</td><td>—</td><td>—</td></tr></tbody></table></div></div><div class="angle"><h3>S1：只有 4 次，結果兩極</h3><p>1929 年隔月就開始崩跌。1997 年之後還漲了 81%，33 個月後才見頂，5 年後仍輸公債。2021 年之後一年 −17.5%，三年後 +24%。2025 年 9 月的訊號目前仍在進行中，11 個月後的高點比訊號時高 15.5%。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">訊號首次出現</th><th scope="col">CAPE</th><th scope="col">之後 3 年內最多再漲</th><th scope="col">幾個月後到高點</th><th scope="col">5 年內最低點（相對訊號當時）</th><th scope="col">之後 1 年</th><th scope="col">之後 5 年（股票）</th><th scope="col">之後 5 年（公債）</th></tr></thead><tbody><tr><th scope='row'>1929-08</th><td>31.5</td><td>+0.0%</td><td>0</td><td class="neg">-83.7%</td><td class="neg">-32.4%</td><td class="neg">-62.3%</td><td>+23.2%</td></tr><tr><th scope='row'>1997-06</th><td>31.3</td><td>+80.7%</td><td>33</td><td>0.0%</td><td>+29.4%</td><td>+19.7%</td><td>+47.8%</td></tr><tr><th scope='row'>2021-10</th><td>37.3</td><td>+24.8%</td><td>35</td><td class="neg">-23.6%</td><td class="neg">-17.5%</td><td>—</td><td>—</td></tr><tr><th scope='row'>2025-09</th><td>38.6</td><td>+15.5%</td><td>11</td><td class="neg">-2.1%</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div></div>
+  <div class="effect"><span class="chip fix">修正</span><p>「熱＋貴」之後長期平均偏弱是事實，但拿來當行動訊號的成本很高：通常太早，而且多數時候不會給更低的價格買回來。這支持第一版「下修預期、不擇時」的用法。</p></div>
+</section><section class="q" id="f6">
+  <header><p class="eyebrow">追問 6</p><h2>這些規則是不是事後挑出來的？用樣本外檢驗重新確認</h2></header>
+  <p class="oneline">第 3 題（產業動能）最穩健；第 1 題方向成立但後半段的幅度小很多；第 2 題的統計證據比第一版呈現的弱。</p>
+  <p class="how">做法：把資料切成兩半。在前半段找出效果最好的規則，原封不動拿到後半段驗證，也反過來做。另外把報酬順序完全打亂、重抽 1,000 次，計算「沒有任何預測力時」重疊窗口自然會產生多大的差距或相關係數，得到 p 值（越小越不像巧合）。</p>
+  <div class="angle"><h3>第 1 題：方向成立，幅度不穩</h3><p>前半段（1871–1950）找到的最佳規則是「過去 60 個月年化 ≥18.1%」，之後 5 年報酬比其他時候低 13.4 個百分點；拿到後半段只剩 3.9，p 值 0.18，單獨看後半段不顯著。12 種規則中有 9 種在後半段同方向。反過來做，12 種全部同方向，p 值 0.003。全期間的主結果（36 個月年化 &gt;20%）差距 6.4 個百分點，隨機情況下 95% 的時候不超過 3.8，p 值小於 0.001。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">第 1 題：熱行情之後 5 年報酬的差距</th><th scope="col">找到的最佳規則</th><th scope="col">找規則期間的差距（百分點）</th><th scope="col">驗證期間的差距</th><th scope="col">驗證期間 p 值</th><th scope="col">12 種規則在驗證期同方向</th></tr></thead><tbody><tr><th scope='row'>1871–1950 找規則 → 1951–2026 驗證</th><td>過去 60 個月 ≥18.1%</td><td>+13.4</td><td>+3.9</td><td>0.18</td><td>9／12</td></tr><tr><th scope='row'>1951–2026 找規則 → 1871–1950 驗證</th><td>過去 60 個月 ≥19.2%</td><td>+5.7</td><td>+14.4</td><td>&lt;0.01</td><td>12／12</td></tr></tbody></table></div></div><div class="angle"><h3>第 2 題：最弱的一環</h3><p>即使報酬完全隨機，因為 10–20 年的窗口在 150 年裡只有少數幾段，「之前」和「之後」的相關係數平均也會是 −0.08 到 −0.14，有 5% 的機率低到 −0.41 到 −0.51。全期間的實際值是 −0.34 到 −0.60，p 值 0.01 到 0.09，只算邊緣顯著；切成兩半後，p 值是 0.10 和 0.49。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">第 2 題：起點之前與之後報酬的相關係數</th><th scope="col">選到的回看期</th><th scope="col">找規則期間</th><th scope="col">驗證期間（或全期間）</th><th scope="col">完全隨機時的 5% 門檻</th><th scope="col">p 值</th></tr></thead><tbody><tr><th scope='row'>1871–1950 → 1951–2026</th><td>前 15 年</td><td>-0.46</td><td>-0.64</td><td>-0.72</td><td>0.10</td></tr><tr><th scope='row'>1951–2026 → 1871–1950</th><td>前 20 年</td><td>-0.78</td><td>-0.36</td><td>-0.72</td><td>0.49</td></tr><tr><th scope='row'>全期間｜前 10 年 → 後 10 年</th><td>—</td><td>—</td><td>-0.34</td><td>-0.41</td><td>0.09</td></tr><tr><th scope='row'>全期間｜前 10 年 → 後 20 年</th><td>—</td><td>—</td><td>-0.55</td><td>-0.51</td><td>0.03</td></tr><tr><th scope='row'>全期間｜前 15 年 → 後 15 年</th><td>—</td><td>—</td><td>-0.60</td><td>-0.50</td><td>0.01</td></tr></tbody></table></div></div><div class="angle"><h3>第 3 題：產業動能最穩健</h3><p>1927–1975 年選出的最佳設定（49 細產業、看過去 12 個月、持有 1 個月），在 1976–2026 年仍每年多 6.5 個百分點（t 值 3.5），16 種設定在後半段全部為正。打亂時間順序後，隨機情況幾乎不會出現這個結果（p 值小於 0.01）。第一版提到 2010 年後效果減弱，這個減弱發生在後半段的末端。</p></div><div class="angle"><h3>第 4 題：已用兩套獨立資料驗證</h3><p>EDHEC 和 Credit Suisse 兩套避險基金指數挑出的冠軍只有 14／24 年相同，但兩套的結論一致：追逐都落後平均。</p></div>
+  <div class="effect"><span class="chip down">弱化第 2 題</span><p>第 2 題的方向在美國前後兩段、16 國中的 15 國都一致，但統計可信度比第一版呈現的低。比較準確的說法是：「冷起點較好」的證據一致但不強，幅度不要當成精確數字。第 1、3 題的結論維持。</p></div>
+</section><section class="q" id="f7">
+  <header><p class="eyebrow">追問 7</p><h2>台股適用嗎？</h2></header>
+  <p class="oneline">部分適用。高報酬之後轉弱在台股更明顯，而且來得更快；追最強類股同樣贏不了大盤；但「冷起點長期較好」在台股看不到。</p>
+  <p class="how">做法：臺灣證券交易所發行量加權股價指數（價格指數，不含股息）年資料 1967–2025、月資料 1990–2026；28 個類股指數 2009–2025（排除綜合類與 2023 年新設類股）。2003 年起的報酬指數顯示，股息每年約貢獻 3.7%，所以表中的報酬都比含息報酬低約 3–4 個百分點。找不到可用的台灣 CPI，第 2 題改用名目報酬。資料品質：1967–1989 年取自 Wikipedia，未經證交所核對；證交所的數字是透過網頁讀取工具轉錄，已和 Yahoo、臺灣指數公司等來源交叉核對。</p>
+  <div class="angle"><h3>第 1 題（年資料）：一年大漲沒差，三年大漲之後轉弱</h3><p>前一年漲超過 30% 的 12 個年份，下一年平均仍有 19.8%；但之後 3 年年化只有 2.0%，全部年份是 11.9%。前三年年化超過 30% 的只有 1973、1977、1987–89 年，之後 5 年年化平均 1.3%。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">條件（年底，價格指數）</th><th scope="col">年數</th><th scope="col">下一年平均</th><th scope="col">中位數</th><th scope="col">上漲機率</th><th scope="col">之後 3 年年化</th><th scope="col">之後 5 年年化</th></tr></thead><tbody><tr><th scope='row'>全部年份</th><td>58</td><td>16.8%</td><td>11.8%</td><td>74%</td><td>11.9%</td><td>10.7%</td></tr><tr><th scope='row'>前 1 年 >30%</th><td>12</td><td>19.8%</td><td>11.4%</td><td>75%</td><td>2.0%</td><td>5.6%</td></tr><tr><th scope='row'>前 1 年 >50%</th><td>9</td><td>28.9%</td><td>12.8%</td><td>78%</td><td>2.9%</td><td>9.2%</td></tr><tr><th scope='row'>連 2 年 >20%</th><td>8</td><td>17.1%</td><td>23.7%</td><td>57%</td><td class="neg">-0.4%</td><td>4.2%</td></tr><tr><th scope='row'>前 3 年年化 >20%</th><td>10</td><td>25.8%</td><td>18.2%</td><td>67%</td><td>11.6%</td><td>8.0%</td></tr><tr><th scope='row'>前 3 年年化 >30%</th><td>5</td><td>22.2%</td><td>18.2%</td><td>60%</td><td class="neg">-2.0%</td><td>1.3%</td></tr><tr><th scope='row'>前 3 年年化 <0%</th><td>10</td><td>27.4%</td><td>19.1%</td><td>80%</td><td>11.4%</td><td>12.6%</td></tr></tbody></table></div></div>
+  <div class="angle"><h3>第 1 題（月資料）：台股的反轉來得更快</h3><p>和美國不同，台股過去 12 個月漲超過 40% 之後，接下來 12 個月平均 −5.8%，上漲機率只有 45%，12 個月內跌 20% 以上的機率是 48%（全部月份 28%）。過去 36 個月最熱的 20% 之後 5 年年化只有 1.9%。台股波動大，大漲後的回吐也更快。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">條件（月底，1993–2026）</th><th scope="col">月數／段數</th><th scope="col">之後 12 個月</th><th scope="col">上漲機率</th><th scope="col">之後 3 年年化</th><th scope="col">之後 5 年年化</th><th scope="col">12 個月內跌 ≥20%</th></tr></thead><tbody><tr><th scope='row'>全部月份</th><td>405／—</td><td>10.0%</td><td>68%</td><td>5.8%</td><td>4.8%</td><td>28%</td></tr><tr><th scope='row'>過去 12 個月 >40%</th><td>41／9</td><td class="neg">-5.8%</td><td>45%</td><td>2.1%</td><td>1.3%</td><td>48%</td></tr><tr><th scope='row'>過去 36 個月年化 >20%</th><td>20／4</td><td>2.8%</td><td>38%</td><td>6.4%</td><td>4.4%</td><td>50%</td></tr><tr><th scope='row'>過去 36 個月最熱 20%</th><td>81／6</td><td>3.9%</td><td>48%</td><td>4.5%</td><td>1.9%</td><td>46%</td></tr><tr><th scope='row'>過去 36 個月年化 <0%</th><td>78／6</td><td>15.4%</td><td>78%</td><td>7.1%</td><td>7.9%</td><td>38%</td></tr></tbody></table></div></div>
+  <div class="angle"><h3>第 2 題：台股看不到長期的起點效應</h3><p>台股前 10 年報酬和後 10 年報酬的相關係數是 +0.03，幾乎為零；前 3 年對後 3 年是 −0.19。依前 10 年報酬分三組，之後 10 年反而是中間組最好、最冷組最差。台股只有 59 年資料，10 年窗口能形成的獨立樣本不到 6 個，這一題在台股無法得出結論。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">起點之前 10 年（名目，價格）</th><th scope="col">年化區間</th><th scope="col">之後 5 年年化</th><th scope="col">之後 10 年年化</th><th scope="col">10 年樣本數</th></tr></thead><tbody><tr><th scope='row'>最冷三分之一</th><td>-3.3%～3.9%</td><td>4.7%</td><td>4.5%</td><td>15</td></tr><tr><th scope='row'>中間</th><td>3.9%～13.3%</td><td>18.3%</td><td>13.5%</td><td>8</td></tr><tr><th scope='row'>最熱三分之一</th><td>15.1%～33.1%</td><td>8.4%</td><td>10.5%</td><td>16</td></tr></tbody></table></div></div>
+  <div class="angle"><h3>第 3 題：追去年最強類股輸給加權指數</h3><p>每年年底換到去年最強的類股，2011–2025 年化 3.9%，加權指數 8.1%，15 年只贏 6 年。改成前 3 名或近 3 年最強，同樣落後。不過加權指數由半導體（台積電）主導，半導體在 16 年中有 13 年贏過大盤；和 28 個類股的等權平均（4.1%）相比，追逐大約打平。反向買去年最差的類股最差，年化 −8.9%。類股名次的年度相關係數是 0.03，幾乎沒有延續性。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">做法（28 個類股，每年年底換）</th><th scope="col">期間</th><th scope="col">策略年化</th><th scope="col">加權指數年化</th><th scope="col">類股等權年化</th><th scope="col">贏加權指數的年份</th><th scope="col">t 值</th></tr></thead><tbody><tr><th scope='row'>去年第 1 名</th><td>2011–2025</td><td>3.9%</td><td>8.1%</td><td>4.1%</td><td>40%</td><td>-0.7</td></tr><tr><th scope='row'>去年前 3 名</th><td>2011–2025</td><td>6.3%</td><td>8.1%</td><td>4.1%</td><td>33%</td><td>-0.5</td></tr><tr><th scope='row'>近 3 年第 1 名</th><td>2013–2025</td><td>6.5%</td><td>10.7%</td><td>5.6%</td><td>38%</td><td>-0.4</td></tr><tr><th scope='row'>近 3 年前 3 名</th><td>2013–2025</td><td>5.9%</td><td>10.7%</td><td>5.6%</td><td>31%</td><td>-0.6</td></tr><tr><th scope='row'>反向：去年最後 1 名</th><td>2011–2025</td><td class="neg">-8.9%</td><td>8.1%</td><td>4.1%</td><td>33%</td><td>-2.2</td></tr></tbody></table></div>
+    <details><summary>逐年結果：去年最強類股在下一年的表現</summary><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">持有年度</th><th scope="col">去年最強類股</th><th scope="col">去年報酬</th><th scope="col">當年報酬</th><th scope="col">加權指數</th><th scope="col">當年名次</th></tr></thead><tbody><tr><th scope='row'>2011</th><td>貿易百貨</td><td>52.4%</td><td class="neg">-4.2%</td><td class="neg">-21.2%</td><td>5 / 28</td></tr><tr><th scope='row'>2012</th><td>橡膠</td><td>10.2%</td><td>18.3%</td><td>8.9%</td><td>7 / 28</td></tr><tr><th scope='row'>2013</th><td>其他</td><td>36.8%</td><td>28.8%</td><td>11.8%</td><td>5 / 28</td></tr><tr><th scope='row'>2014</th><td>汽車</td><td>48.2%</td><td class="neg">-0.4%</td><td>8.1%</td><td>13 / 28</td></tr><tr><th scope='row'>2015</th><td>半導體</td><td>29.6%</td><td class="neg">-10.4%</td><td class="neg">-10.4%</td><td>11 / 28</td></tr><tr><th scope='row'>2016</th><td>油電燃氣</td><td>13.4%</td><td>39.4%</td><td>11.0%</td><td>1 / 28</td></tr><tr><th scope='row'>2017</th><td>油電燃氣</td><td>39.4%</td><td>3.3%</td><td>15.0%</td><td>24 / 28</td></tr><tr><th scope='row'>2018</th><td>造紙</td><td>61.0%</td><td class="neg">-31.7%</td><td class="neg">-8.6%</td><td>27 / 28</td></tr><tr><th scope='row'>2019</th><td>水泥</td><td>10.0%</td><td>34.0%</td><td>23.3%</td><td>4 / 28</td></tr><tr><th scope='row'>2020</th><td>汽車</td><td>78.5%</td><td class="neg">-1.0%</td><td>22.8%</td><td>23 / 28</td></tr><tr><th scope='row'>2021</th><td>造紙</td><td>77.2%</td><td>19.3%</td><td>23.7%</td><td>13 / 28</td></tr><tr><th scope='row'>2022</th><td>航運</td><td>168.6%</td><td class="neg">-39.9%</td><td class="neg">-22.4%</td><td>28 / 28</td></tr><tr><th scope='row'>2023</th><td>電器電纜</td><td>28.9%</td><td>0.2%</td><td>26.8%</td><td>24 / 28</td></tr><tr><th scope='row'>2024</th><td>電腦及週邊設備</td><td>99.9%</td><td>12.0%</td><td>28.5%</td><td>10 / 28</td></tr><tr><th scope='row'>2025</th><td>其他電子</td><td>63.6%</td><td>29.2%</td><td>25.7%</td><td>6 / 28</td></tr></tbody></table></div></details>
+    <p class="note">2025 年最強的玻璃陶瓷類，2026 年前 9 個月 +70%，加權指數 +66%，在 28 個類股中排第 6。</p></div>
+  <div class="angle"><h3>現在的台股在歷史中的位置</h3><p>到 2026 年 9 月，加權指數近 12 個月 +86%（1990 年以來第 99 百分位），近 36 個月年化 43%，是 1990 年以來最高。2026 年前 9 個月上漲 66%。用年資料看，前 3 年年化比現在更高的只有 1973 年與 1987–89 年泡沫期。1987 年之後還漲了一年（+119%），1989 年之後一年 −53%；這四個年份之後 5 年年化介於 −6% 到 +8%。</p><div class="tbl"><table><thead><tr><th scope="col" style="text-align:left">年底</th><th scope="col">當年</th><th scope="col">前 3 年年化</th><th scope="col">下一年</th><th scope="col">之後 3 年年化</th><th scope="col">之後 5 年年化</th></tr></thead><tbody><tr><th scope='row'>1973</th><td>117.3%</td><td>58.9%</td><td class="neg">-61.0%</td><td class="neg">-9.1%</td><td>1.5%</td></tr><tr><th scope='row'>1987</th><td>125.2%</td><td>40.8%</td><td>118.8%</td><td>24.6%</td><td>7.6%</td></tr><tr><th scope='row'>1988</th><td>118.8%</td><td>83.0%</td><td>88.0%</td><td class="neg">-3.5%</td><td>3.5%</td></tr><tr><th scope='row'>1989</th><td>88.0%</td><td>110.0%</td><td class="neg">-52.9%</td><td class="neg">-29.5%</td><td class="neg">-5.8%</td></tr></tbody></table></div></div>
+  <div class="effect"><span class="chip fix">部分成立</span><p>第 1 題在台股成立，而且大漲之後的回吐來得更快、更深。第 3 題成立，不過要注意加權指數由半導體主導，「追類股」天生很難贏它。第 2 題在台股沒有證據，部分原因是資料太短。</p></div>
+</section>
+<section class="synth" id="update">
+  <h2>更新後的結論</h2>
+  <ol>
+    <li><b>第 1 題維持，但要加兩個條件。</b>連續多年高報酬之後，未來幾年平均偏低，這在樣本外同方向、全期間顯著。差異主要出現在「CAPE 快速上升」和「漲勢很窄」的熱行情。現在的熱行情是盈餘推動、但非常窄。</li>
+    <li><b>第 2 題降級。</b>冷起點較好的方向一致（美國兩段、16 國中 15 國），但統計上只算邊緣顯著。</li>
+    <li><b>第 3 題維持，而且產業動能是七個追問中最穩健的發現。</b>每年換「去年冠軍大類股」仍然無效；以 3–5 年看，長期贏家平均會落後。</li>
+    <li><b>第 4 題不變。</b></li>
+    <li><b>關於現在：</b>估值、盈餘位置、漲勢集中度都在歷史前 20%，經利率或時代調整後較溫和。歷史上，這類訊號出現後通常還有一段漲幅，而且多數時候不會給更低的買回點。這些是描述歷史基準的結果，不是擇時訊號。</li>
+  </ol>
+</section>
+
+<section class="method" id="method">
+  <h2>資料與方法</h2>
+  <ul>
+    <li><b>美股與估值：</b>Shiller 最新版資料（至 2026 年 9 月；盈餘至 2026 年 6 月，近月含估計值）；CRSP 美國全市場報酬（Ken French 資料庫）。超額 CAPE 殖利率直接採用 Shiller 檔案中的欄位。</li>
+    <li><b>寬度：</b>以 Ken French 49 產業的等權報酬，依各產業公司家數加權，重建全市場等權報酬；SPY 與 RSP 為 Yahoo Finance 含息調整價。</li>
+    <li><b>產業估值：</b>Ken French 產業資料的「市值加權平均 BE/ME」，年度、6 月更新；全市場 B/M 以前一年 12 月各產業市值加權。</li>
+    <li><b>樣本外與 p 值：</b>前後兩段為 1871–1950、1951–2026（產業動能為 1927–1975、1976–2026）。p 值以 1,000 次（第 2 題 500 次、第 3 題 300 次）獨立重抽或打亂時間順序計算，比一般 t 值更能反映重疊窗口的問題。</li>
+    <li><b>限制：</b>熱行情、窄行情、訊號等條件的獨立段數多在 4–18 段之間，任何一組的平均值都可能被一兩段主導。所有回測未計交易成本與稅。</li>
+  </ul>
+</section>
+<footer>由 Claude 依公開資料回測整理，2026-10-04。內容是歷史基準的描述，不是投資建議。</footer>
+</div>
+<script>
+(function(){
+  var tip=document.createElement('div');tip.className='tip';tip.hidden=true;tip.setAttribute('role','status');document.body.appendChild(tip);
+  function place(x,y){var w=tip.offsetWidth,h=tip.offsetHeight,vw=window.innerWidth,vh=window.innerHeight;
+    var l=x+14,t=y+14;if(l+w>vw-8)l=Math.max(8,x-w-14);if(t+h>vh-8)t=Math.max(8,y-h-14);tip.style.left=l+'px';tip.style.top=t+'px';}
+  document.addEventListener('pointermove',function(e){var el=e.target.closest&&e.target.closest('[data-tip]');
+    if(!el){tip.hidden=true;return;}tip.textContent=el.getAttribute('data-tip');tip.hidden=false;place(e.clientX,e.clientY);});
+  document.addEventListener('pointerleave',function(){tip.hidden=true;});
+  document.addEventListener('focusin',function(e){var el=e.target.closest&&e.target.closest('[data-tip]');
+    if(!el){tip.hidden=true;return;}var r=el.getBoundingClientRect();tip.textContent=el.getAttribute('data-tip');tip.hidden=false;place(r.right,r.top);});
+  document.addEventListener('focusout',function(){tip.hidden=true;});
+  window.addEventListener('scroll',function(){tip.hidden=true;},{passive:true});
+})();
+</script>
+</body>
+</html>
