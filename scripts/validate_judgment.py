@@ -1021,6 +1021,18 @@ def val_denominator_note_checks(data: dict) -> list:
     return fails
 
 
+def wait_for_price_checks(data: dict) -> list:
+    """2026-10-05：wait_for_price=true 必須寫明在等什麼，否則觀望沒有出場條件。"""
+    di = data.get("decision_inputs") or {}
+    if di.get("wait_for_price") is not True:
+        return []
+    cond = di.get("wait_for_price_condition")
+    if not isinstance(cond, str) or not cond.strip():
+        return ["$.decision_inputs.wait_for_price_condition: wait_for_price=true 但沒寫在等什麼"
+                "——填等待的價位或事件（例：股價回到 X 以下／下一季財報毛利率年增）"]
+    return []
+
+
 # ---------------------------------------------------------------------------
 # layer 4: drift-vs-prior attribution check (--evidence, 選配)
 #
@@ -1462,10 +1474,11 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
     j6_fails, j6_warns = threshold_drift_checks(data, evidence_path)  # WP-G 修 #2：行動門檻變動必須有理由
     trap_warns = trap_analysis_redundancy_checks(data)  # WP-G 修 #4：反向引用
     val_note_fails = val_denominator_note_checks(data)  # WP-G 修 #5：分母爭議欄需附一句依據
+    wait_fails = wait_for_price_checks(data)  # 2026-10-05：要等就要寫等什麼
 
     fails = (v19_fails + struct_errs + cross_fails + pair_fails + leak_fails + expand_fails
              + premortem_fails + drift_fails + j2_fails + j1_fails + j5_fails + j6_fails
-             + val_note_fails)
+             + val_note_fails + wait_fails)
     warns = (v19_warns + cross_warns + drift_warns + j2_warns + j1_warns + j4_warns
              + j5_warns + j6_warns + trap_warns)
     return fails, warns

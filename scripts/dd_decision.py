@@ -378,6 +378,21 @@ def _evaluate_matrix(inputs: dict) -> dict:
     _audit(audit_rows, "10", "無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場", row10_hit,
            f"signal={signal!r}, val={val!r}, ma={ma!r}")
 
+    # 2026-10-05 持有人拍板：判斷者可宣告「價格合理但要等」，只往保守方向（進場→觀望），
+    # 不碰 8a/8b 條件式路徑。登記 knowledge/rule_ledger.md「wait_for_price」列。
+    wait_for_price = inputs.get("wait_for_price") is True
+    if wait_for_price and (row10_hit or row9_hit or row9b_hit):
+        entry_row = "10" if row10_hit else ("9" if row9_hit else "9b")
+        _audit(audit_rows, "8w", "判斷者宣告 wait_for_price（價格合理但要等）→ 原 row"
+               + entry_row + " 進場改觀望（等價格）", True,
+               f"wait_for_price=True, 等待條件={inputs.get('wait_for_price_condition')!r}")
+        return {
+            "verdict": "觀望", "role": role_hint if role_hint else "追蹤",
+            "row_hit": "8w(原" + entry_row + ")",
+            "pacing": pacing, "holding_cap": holding_cap,
+            "requires_critic": requires_critic, "audit_rows": audit_rows,
+        }
+
     if row10_hit or row9_hit:
         # row9/10 皆映射 dd-meta dca_verdict=「進場」（plain，enum 無 baseline 條件式變體）
         chosen = "10" if row10_hit else "9"
@@ -599,7 +614,7 @@ NON_DD_META_KEYS = (
     "consensus_rev_3m_pct", "role_hint",
     # 2026-09 coordinator 追加（矩陣「之前/之後」的覆寫層，見 evaluate() docstring）：
     "val_denominator_disputed", "qc49_inherit_prior", "prior_verdict", "prior_role",
-    "held_now",
+    "held_now", "wait_for_price", "wait_for_price_condition",
 )
 
 

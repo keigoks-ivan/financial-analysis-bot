@@ -90,6 +90,7 @@ JUDGE_OWNED_DECISION_INPUT_KEYS = (
 # 覆寫層（選填，判斷者或 orchestrator 給）。
 OVERLAY_DECISION_INPUT_KEYS = (
     "role_hint", "qc49_inherit_prior", "prior_verdict", "prior_role", "held_now",
+    "wait_for_price", "wait_for_price_condition",
 )
 
 # 事實欄 → facts.json 的 fact id（P-20）。

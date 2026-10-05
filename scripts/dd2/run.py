@@ -467,6 +467,14 @@ def do_stage0(ctx):
         if ok:
             rc, out = _sub([py, SCRIPTS_DIR / "validate_evidence.py", "--part", part])
             ok = rc == 0
+        if not ok and part.exists():
+            # 2026-10-05：沒有可解析 as_of 的 finding 依 validate_evidence 規則本來就不能用——
+            # 拿掉那幾條再驗一次，不要整軸記缺口（TPR／SEZL／3017 同日連三次為此 FAIL）
+            dropped = _drop_undated_findings(part)
+            if dropped:
+                rc, out = _sub([py, SCRIPTS_DIR / "validate_evidence.py", "--part", part])
+                ok = rc == 0
+                st.setdefault("dropped_undated", {})[s["axis_id"]] = dropped
         if not ok:
             incomplete.append(s["axis_id"])
             if part.exists():  # 不合格原檔留一份查原因（2026-09-23 AMD 首跑被蓋掉查不到）
@@ -668,6 +676,36 @@ DECISION_FIELDS = ("dca_verdict", "dca_role")
 _PROGRAM_TAG = "[程式歸因]"
 
 
+def _drop_undated_findings(part):
+    """拿掉 as_of 缺或無法解析的 finding；空了的 found 改 none。回拿掉條數，原檔另存 .predrop。"""
+    from validate_evidence import parse_date
+    d = _load_json(part)
+    if not isinstance(d, dict):
+        return 0
+    n = 0
+    for key in ("coverage", "events"):
+        block = d.get(key)
+        if not isinstance(block, dict):
+            continue
+        for v in block.values():
+            if not isinstance(v, dict):
+                continue
+            fs = v.get("findings") or []
+            keep = [f for f in fs if isinstance(f, dict) and parse_date(f.get("as_of")) is not None]
+            if len(keep) == len(fs):
+                continue
+            n += len(fs) - len(keep)
+            v["findings"] = keep
+            v["note"] = (v.get("note") or "") + "｜dd2：無可解析 as_of 的 finding 自動移除 {0} 條".format(
+                len(fs) - len(keep))
+            if not keep and v.get("status") == "found":
+                v["status"] = "none"
+    if n:
+        part.with_name(part.name + ".predrop").write_text(part.read_text(encoding="utf-8"), encoding="utf-8")
+        _atomic_write_json(part, d)
+    return n
+
+
 def _prior_meta(ctx):
     pp = ctx.run_dir / "parts" / "prior.json"
     if not pp.exists():
@@ -703,7 +741,7 @@ def _mk_entry(cause, fields, axis, side_a, side_b, ruling):
 # 2026-09-24 TXN：舊版一律歸給 ma，實驗顯示是 val（價格）改的裁決、角色是多欄共同。
 DRIFT_CF_FIELDS = ("signal", "val", "ma", "trap", "moat_trend", "runway_post_y5")
 DRIFT_CF_CAUSE = {"ma": "方法變動", "val": "價格變動"}  # 其餘＝判斷者欄 → 新證據
-DRIFT_CF_LABEL = {"signal": "訊號", "val": "估值燈", "ma": "均線", "trap": "陷阱燈",
+DRIFT_CF_LABEL = {"signal": "訊號", "val": "估值", "ma": "均線", "trap": "陷阱燈",
                   "moat_trend": "護城河趨勢", "runway_post_y5": "五年後跑道"}
 
 
@@ -1447,6 +1485,21 @@ def do_prose(ctx):
     out_path = (ctx.run_dir / "DD_full_preview.html") if ctx.args.dry_run \
         else (ddreport.DD_DIR / "DD_{0}_{1}.html".format(ctx.ticker, ctx.date))
     ok2, findings2, _ = _gates_v20(ctx, out_html=out_path, postprocess=not ctx.args.dry_run)
+    # 2026-10-05 TPR：後處理後才短（s5 2,654B）時同一條補寫規則也適用（仍最多一次）。
+    short2 = [s for s, why in findings2 if str(why).startswith("篇幅")]
+    if not ok2 and short2 and len(short2) == len(findings2) and not st.get("prose_fix"):
+        st["prose_fix"] = short2
+        r = _prose_fix_spawn(ctx, short2)
+        st["agent_usage"].append(_usage_record("prose_fix", r))
+        ctx.save()
+        if (ctx.run_dir / "prose_fix.html").exists():
+            written, errors = ddreport._do_prose_split(ctx.ticker, ctx.date)
+            st["sids"] = written
+            ok, findings, _ = _gates_v20(ctx)
+            if errors or not ok:
+                note = "\n".join(["[split] " + e for e in errors] + ["- {0}：{1}".format(s, why) for s, why in findings])
+                return ctx.stage_end("prose", False, note or "gates FAIL")
+            ok2, findings2, _ = _gates_v20(ctx, out_html=out_path, postprocess=not ctx.args.dry_run)
     st["out_path"] = str(out_path)
     if not ok2:
         return ctx.stage_end("prose", False, "\n".join("- {0}：{1}".format(s, w) for s, w in findings2))
