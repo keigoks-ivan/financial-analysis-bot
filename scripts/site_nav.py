@@ -105,6 +105,11 @@ Change log:
     2026-09-30：「個股研究」(thub, /t/) 改名「研究清單」——個股內容已併入個股儀表板
         （/t/{T}.html 改轉址樁），/t/ 改預設開 DD 清單分頁。/t/ 轉址樁不注入 nav。
         外部 3 repo synced literal 尚未同步（見 site-composition.md）。
+    2026-10-05：研究 ▾ 下拉加回「DD Screener」("dds", /dd-screener/)，緊接「研究清單」
+        (thub) 之後（2026-08-20 曾移出改由 /cockpit/ 想法四路連結，持有人要求加回）；
+        PREFIX_ACTIVE 的 dd-screener/ 由 ("pick", None) 改 ("research", "dds")。
+        外部 3 repo synced literal 同步（v7-backtest／morning-briefing／
+        minervini-quality-backtest，見 site-composition.md）。
 """
 
 import re
@@ -173,6 +178,7 @@ MENU = {
     # /t/ 或 /id/ 分頁，故選單只留三個真實頂層目的地；下拉形態不變。
     "research": [
         ("thub", "/t/", "研究清單"),  # 2026-09-30 持有人選 A：個股內容已併入個股儀表板，此頁改為報告清單入口
+        ("dds", "/dd-screener/", "DD Screener"),  # 2026-10-05 持有人要求加回（08-20 曾移出），緊接研究清單之後
         ("sdash", "/stock-dash/", "個股儀表板"),
         ("etfd", "/etf-dash/", "ETF 儀表板"),
         ("aetf", "/active-etf/", "主動式 ETF"),  # 2026-09-25 新增，緊接 ETF 儀表板之後
@@ -314,7 +320,7 @@ PREFIX_ACTIVE = [
     # 但 PREFIX_ACTIVE 當時漏改，殘留指向不存在的下拉項（active_for() 永遠
     # 比對不到，等同無聲退化成無高亮）。統一改 ("pick", None)：頁面仍歸
     # 選股群高亮，不再假裝有對應下拉項。
-    ("dd-screener/", ("pick", None)),
+    ("dd-screener/", ("research", "dds")),  # 2026-10-05 隨 DD Screener 掛回研究 ▾ 下拉，改歸研究群
     ("engine/", ("pick", None)),
     ("research/momentum-5/", ("pick", None)),
     ("research/momentum-5-short/", ("pick", None)),
