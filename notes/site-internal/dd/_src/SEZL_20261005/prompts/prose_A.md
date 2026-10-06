@@ -1,0 +1,412 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 SEZL（2026-10-05）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/SEZL_20261005/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：SEZL　日期：2026-10-05　archetype：None　前份裁決：2026-07-10　觀望｜核心　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（2288B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（662B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（873B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（902B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1035B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（361B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（630B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2039B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（4490B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（3047B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（280B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        2288           3298-4712      3 條（2–6 內）  
+s3                  8000         662           5137-7338      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        2810          8533-12190      5 條（2–6 內）  
+s6                 11000         361          7447-10639      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         630           2009-2870      5 條（2–6 內）  
+s10                 5000        2039           2073-2961      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        3047           2000-2000      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         280            854-1220      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=4094B；至少需散文≈40.91KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−70%
+−70
+−65%
+−55%
+−55
+−51%
+−37.4%
+−37%
+−23%
+0
+0.2%
+0.5
+0.6
+0.73
+0.75
+0.92
+1
+1.2%
+1.3
+1.3313
+1.38
+1.404
+1.497
+1.5%
+1.56
+1.65
+1.79
+1.8
+1.85
+1.9
+2
+02
+2.0%
+2.05
+2.5%
+2.5
+3%
+03
+3.0%
+3
+3.1%
+3.15%
+3.3%
+3.5%
+3.72
+04
+4
+5
+5%
+05
+5.10
+5.2
+5.25
+5.26
+5.3
+5.6
+06
+6.00
+6
+6.0%
+6.1
+6.5
+6.50
+6.65
+6.9
+07
+7.0
+7
+7.1
+7.2
+7.6
+7.95
+8%
+08
+8
+8.5
+8.6
+09
+9%
+9
+9.55
+10%
+10
+10.2
+10.4
+10.40
+10.5%
+11%
+11
+11.4%
+11.4
+11.7%
+11.9%
+12
+13%
+13
+13.8
+13.80
+13.9%
+14
+14.4
+14.4%
+14.7%
+15%
+15
+16.2%
+16.67
+16.7
+17
+18%
+18
+18.4%
+19%
+19.3%
+19.5
+20
+20%
+20.4%
+21
+21.07
+21.1
+22.9%
+23%
+23.3%
+24
+24.3
+25
+25%
+25.3%
+26
+27.2%
+28%
+28.8%
+29%
+29
+30%
+30
+31
+31%
+34
+35%
+36.2%
+36.7%
+37%
+37.6
+37.8%
+37.9%
+39
+39.4
+40%
+40.7
+40.7%
+41%
+42
+45
+45.8%
+49
+50%
+51.1%
+51.7%
+52
+54
+55%
+58%
+60%
+63.5%
+68%
+68.46
+68.5%
+70
+72.4%
+74%
+76%
+76.4%
+83
+85.4
+90
+91.9%
+95
+95.35
+97.2%
+100%
+100
+110.85
+120
+126.8
+130
+$130
+140
+146.5
+150
+150%
+156
+171.6
+177
+177.08
+196
+239
+240
+265
+276
+340
+388
+413
+537
+680
+2020
+2021
+2023
+2024
+2025
+2026
+2027
+2028
+2030
+2031
+20261005
+1,116
+1,248
+1,567
+1,940
+2,480
+3,520
+4,000
+4,080
+5,400
+5,461
+5,500
+5,800
+7,852
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"SEZL","date":"2026-10-05","schema":"v15.2","contract":"v19","company_name":"Sezzle Inc."},"oneliner":"交易量與訂閱戶仍在高速成長，股價三個月跌 37% 後 FY2 本益比約 17 倍；真正的考題是下半年新客湧入後的信用損失，等第三季提列守住全年 3% 再進場","thesis":{"H":[{"id":"H1","text":"新客湧入下信用品質守得住：全年提列落在管理層 2.5–3% 區間、淨交易利潤率守在 55% 以上","2y":"FY2026–2027 全年提列／GMV ≤3.0%，淨交易利潤率 ≥55%","5y":null,"10y":null,"threshold":"第二季淨交易利潤率 63.5%；全年提列指引 2.5–3% of GMV；警戒＝TTM 提列／GMV 高於 3.0% 或淨交易利潤率低於 55%","source":"季度財報新聞稿、法說簡報（提列與淨交易利潤率）","drift_rule":"TTM 提列／GMV 連 2 季高於 3.15% → 削弱；連 3 季高於 3.3% 或淨交易利潤率跌破 55% → 反轉；提列年增率連 2 季超前交易量年增率 10pp 以上 → 列為領先警訊"},{"id":"H2","text":"訂閱飛輪：用戶數與使用頻率同時上升，每位變現用戶營收持續成長","2y":null,"5y":"2030 年前活躍訂閱戶維持雙位數年增、季購買頻率 ≥7 次、每位變現用戶季營收年增為正","10y":null,"threshold":"第二季活躍訂閱戶 85.4 萬（+76.4%）、購買頻率 7.2 次、每位變現用戶季營收 +16.2%、回購用戶訂單占 97.2%；警戒＝訂閱戶年增低於 20%","source":"季度財報新聞稿與法說簡報（訂閱戶、購買頻率、每位變現用戶季營收）","drift_rule":"訂閱戶年增連 4 季低於 19%（20% 門檻下偏 5%）→ 削弱；連 6 季低於 18% 或出現季減 → 反轉"},{"id":"H3","text":"第二曲線：國家銀行執照＋非結帳產品（SezzleCash、Sezzle Send）把 Sezzle 從結帳工具變成日常理財入口，並把銀行夥伴的變動成本轉為固定成本","2y":null,"5y":"2028 年前取得國家銀行執照（含 FDIC、Fed 核准），2027 年底前存款帳戶上線（CEO 第一季承諾）；新產品貢獻進入財測","10y":null,"threshold":"第二季法說：計畫本季送件，總時程 12–18 個月；新產品目前未計入或極少計入財測；Sezzle Send 等候名單約 10 萬人；約一成新訂閱戶首筆交易是 SezzleCash","source":"OCC 公開申請紀錄、8-K、季度法說","drift_rule":"2026 年底仍未送件 → 削弱；送件後 24 個月未獲有條件核准、撤件或被拒 → 反轉；此假設是選擇權，不進基準情境"}],"R":[{"id":"R1","text":"信用正常化：創紀錄新客、Pay-in-5 與 SezzleCash 的初期損失率較高，下半年提列季節性上升可能超出指引","h_ref":"H1","clock":"⚡","threshold":"TTM 提列／GMV 高於 3.0% 連兩季或單季高於 3.5%；淨交易利潤率低於 55%；30 天以上逾期率高於 5%（事實表未涵蓋，資料缺口）"},{"id":"R2","text":"競爭與集中：企業商家費率壓力、大型電商平台與 Target 集中、銀行與大型科技內嵌分期","h_ref":"H2","clock":"🔥","threshold":"全年收益率低於 10.5%（2025 年 11.4% 下滑約 1pp）；Target 導入第二家或任一大平台終止合作；營收年增連兩季低於 20%","evidence_refs":["competitive_share_entrants#4","supply_demand_durability#2","geo_supply_chain#2","substitute_technology#0","customer_second_source#0"]},{"id":"R3","text":"監管與發卡夥伴：州級削弱銀行夥伴模式、發卡銀行可終止、消費者端收費被訴","h_ref":"H1+H3","clock":"🔥","threshold":"發卡銀行夥伴終止且 90 天內無替代；州法或聯邦規則把訂閱費、現金預支費納入利率上限，或紐約州規則定稿把訂閱費實質納入年利率且兩個以上大州跟進（本輪事實表未涵蓋紐約規則進度，資料缺口）；消費者集體訴訟正式起訴","evidence_refs":["geo_supply_chain#0","regulatory_antitrust#2"]},{"id":"R4","text":"治理升級：董事以治理分歧辭職後，證券詐欺調查轉成正式訴訟或監管行動","h_ref":"H1+H2","clock":"🐢","threshold":"證券集體訴訟正式起訴並通過駁回動議或取得集體認證；SEC 正式調查或財報重編；再有獨立董事或財務長離職；股價觸及 CEO 質押保證金追繳（質押水位事實表未涵蓋，資料缺口）","evidence_refs":["major_events#1","major_events#2","regulatory_antitrust#3","lawsuit_class_action#0"]},{"id":"R5","text":"成長減速超出基期效果：下半年營收減速不只是收益率回落，而是交易量真的放緩","h_ref":"H2","clock":"⚡","threshold":"2026 全年營收成長低於 30%（財測 35%）；第三季交易量年增低於 25%","evidence_refs":["competitive_share_entrants#3"]}],"single_thing":{"description":"管理層在季報把全年提列區間從 2.5–3% of GMV 上調到 3% 以上（單一離散事件）","why_fatal":"提列每多 1pp GMV，稅前少約 5,400 萬美元（2026 年交易量約 54 億＝2025 年 39.4 億×1.38），稅後約 4,000 萬（以第二季淨利÷營業利益 74% 換算），約占 2026 調整後淨利指引 1.85 億的兩成；這是 EPS 路徑上最大的單一敏感項，區間一旦上調，市場會同時下修 EPS 與倍數","if_happens":"持有則減碼至半倉，未持有則不進場；淨交易利潤率同時跌破 55% 則清倉，等兩季新客損失數據再重跑判斷","how_monitor":"每季財報的提列／GMV、淨交易利潤率與全年提列指引；下一個檢查點是 2026 年 11 月第三季財報","probability":"15%（12–24 個月）：管理層已預告下半年提列上升、單季可能超過 3%，新客創紀錄且兩項新放款產品剛上線；但兩季法說都稱未見消費者壓力"}},"appendix_a":{"growth_durability":6,"quality_score":9,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":16.67,"peg_fy2":0.73,"stress":{"pass":3,"total":4}},"eps_meta":{"base_eps_path":{"FY2025A":3.72,"FY2026E":5.26,"FY2027E":6.65,"FY2028E":7.95},"fy_end_month":12,"eps_basis":"共識為調整後稀釋 EPS（Koyfin 2026-09-26；公司調整後淨利與 GAAP 淨利差距小）；FY2025A 用 GAAP 稀釋 EPS 3.72，調整後值事實表未涵蓋"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/SEZL_20261005/scenario.json","archetype":{"primary":"品質複利成長","secondary":"金融","confidence":"中","fingerprint":"高利潤率＋短天期消費信貸，盈餘品質跟信用週期連動"},"industry":{"clock_phase":"II","sd_verdict_source":"美國先買後付市場 2026 年 1,116 億美元（+14.7%）、2027 年 1,248 億美元（+11.9%），成長率自 2025 年 20.4% 逐年放緩（eMarketer 彙整）","bargaining":{"up":"上游是發卡銀行夥伴（非獨家、特定事件可終止）、新的 3 億美元信用額度、支付處理與雲端供應商；銀行執照若取得可把銀行夥伴的變動成本轉為固定","down":"商家可同時上架多家先買後付，企業商家壓費率（Klarna 拿下 Walmart 獨家為例）；消費者端靠訂閱綁住，回購用戶占訂單 97.2%","geo":"以美國為主，加拿大約占一成交易量（第一季法說）"},"profit_pool_dir":"CEO 稱份額主要從區域銀行與信用合作社拿，而非同業；屬管理層說法，事實表沒有獨立份額數據","tam_table":[{"item":"美國先買後付市場 2026E","value":"1,116 億美元，年增 14.7%（eMarketer 彙整）"},{"item":"美國先買後付市場 2027E","value":"1,248 億美元，年增 11.9%"},{"item":"2025 年六大業者放款總額","value":"1,567 億美元；Afterpay 537 億、Affirm 413 億、PayPal 265 億、Klarna 239 億、Sezzle 39 億（約 2.5%）"},{"item":"口徑提醒","value":"放款總額含較長天期貸款，與市場規模口徑不同，兩組數字不能直接相除算滲透率"},{"item":"利潤池占比 5 年前→現","value":"事實表未涵蓋"}]},"moat":{"mechanism":"訂閱綁定（每月付費＋信用額度隨使用累積）＋短天期承保資料＋低成本營運","execution":8,"pricing":6,"grade":"B","trend":"→","trend_evidence":"執行擴大：活躍訂閱戶 85.4 萬（+76.4%）、季購買頻率 7.2 次（去年 6.1）、新增 Poshmark、Gymshark、Debenhams 等企業商家；定價受壓：全年收益率預估持平 11.4%、企業商家費率競爭、新產品收益率較低。未見最大客戶份額下滑的證據（Target 續約、導入第二家或自建的報導都查無）","peer_na_reason":"同業 ROIC 與投入資本事實表未涵蓋；Klarna、Afterpay 無利潤率資料，只以放款規模對照","threats":[{"level":"🟡","text":"大型電商平台集中：10-K 稱相當比重交易量集中在少數大平台，任一平台終止或改投對手會不成比例衝擊；Sezzle 控告 Shopify 壟斷說明平台擠壓已發生。訂閱與虛擬卡讓依賴下降，CFO 稱特約商戶已成次要的獲客管道","p":"25%","evidence_refs":["geo_supply_chain#2"]},{"level":"🟡","text":"銀行、卡網與大型科技把分期內嵌進信用卡與錢包，品牌與規模較強，可能逼 Sezzle 降商家費率或加碼誘因；屬破壞性競爭，機率取下限 30%","p":"30%","evidence_refs":["competitive_share_entrants#4","substitute_technology#0"]},{"level":"🟡","text":"企業商家費率競爭：Klarna 拿下 Walmart 獨家；Sezzle 以較低價格爭取企業商家，收益率承壓","p":"35%","evidence_refs":["supply_demand_durability#2"]},{"level":"🟡","text":"最大商家集中：信用額度合約允許 Target 應收占比達 35%，Target 若導入第二家或自建分期，交易量與應收同時受衝擊；目前查無相關報導","p":"10%","evidence_refs":["customer_second_source#0"]}],"roic_durability":{"quadrant":"高利益率×高周轉（營益率 37.8%；投入資本事實表未涵蓋，周轉率未量化，短天期應收結構支持高周轉）","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者與付款者分開看：消費者付訂閱與服務費、商家付交易費，兩端都在付錢。需求是把支出攤平的現金流需要，屬「需要」而非「想要」；購買頻率 7.2 次、回購訂單占 97.2%、約一成新訂閱戶第一筆就用 SezzleCash，代理變數都指向持續使用。急迫性不等於持久性——景氣轉弱時需求更高、還款能力卻更差"},{"item":"決策層級","level":"🟡","text":"替代性要看消費者這一層：同時下載幾家先買後付很容易，轉換摩擦主要是月訂閱與累積的信用額度；商家層已改成多家並列，總裁稱企業商家過去只選一家、現在加第二第三家。漲價後流失率、分客群訂閱續訂率事實表未涵蓋"},{"item":"價值鏈分配","level":"🟡","text":"淨交易利潤率 63.5% 說明 Sezzle 目前留下大部分價值，但關鍵互補環節集中：發卡銀行夥伴非獨家且可終止、資金端靠信用額度、大平台握有結帳入口（Shopify 訴訟即為例）。國家銀行執照若在 12–18 個月內取得，可把銀行夥伴環節收回自己手上"},{"item":"社會容忍度","level":"🟡","text":"客群是重視價格、資金吃緊的消費者，產品正從購物分期擴到現金預支（SezzleCash）與點對點轉帳分期，這類收費最容易被監管與訴訟盯上：有律所調查是否誤導逾期費與真實成本，CFPB 已向六大業者取得資料，CEO 也說部分州在削弱銀行夥伴模式。CFPB 撤回限制性規則讓壓力暫緩，所以判黃不判紅；依賴授權的部分要看銀行執照與州法走向"}],"roiic":"事實表未涵蓋（投入資本、應收帳款餘額未收錄）；二手轉述 ROE 91.9% 只作方向參考","reinvest_rate":"事實表未涵蓋（應收帳款擴張的現金流分類、回購總額皆未收錄）","endo_ceiling":null,"formula_note":"內生成長率＝增量 ROIC×再投資率；兩個輸入都缺，不推估。替代觀察：2024→2025 淨利增加 5,461 萬美元（7,852 萬→1.3313 億），同期營收增加 1.79 億，增量淨利率約 30%，顯示新增業務的報酬沒有被稀釋"},"combined":7.0,"score":7.0,"spread_table":[{"metric":"毛利率","SEZL":72.36,"AFRM":68.07,"PYPL":45.75,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"營業利益率","SEZL":37.78,"AFRM":20.44,"PYPL":18.41,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"FCF 利潤率","SEZL":51.12,"AFRM":23.3,"PYPL":19.3,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"研發密度","SEZL":null,"AFRM":null,"PYPL":9.51,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"}],"competitors":[{"name":"AFRM","gm":68.07,"om":20.44,"fcf_margin":23.3,"rd_intensity":null,"strategy_note":"2025 年放款 413 億美元，規模約 Sezzle 十倍；營業利益率 20.4% 約為 Sezzle 一半，跟 Sezzle 正面交鋒在企業商家通路","period":"TTM ending 2026-06-30（4季加總）"},{"name":"PYPL","gm":45.75,"om":18.41,"fcf_margin":19.3,"rd_intensity":9.51,"strategy_note":"Pay in 4 內建在錢包裡，2025 年放款 265 億美元；毛利率 45.8%，靠錢包分發取勝，是結帳端與錢包端的主要對手","period":"TTM ending 2026-06-30（4季加總）"}]},"growth":{"driver_mix":"量為主（訂閱戶、購買頻率）、價為輔（每位變現用戶季營收 +16.2%）；無併購、回購小","runway_years":"事實表未涵蓋（滲透率資料缺）","runway_post_y5":"🟡","endo_ceiling_basis":"投入資本、應收帳款餘額與再投資率事實表未涵蓋，內生上界不推估；替代觀察為 2024→2025 增量淨利率約 30%（淨利增 5,461 萬÷營收增 1.79 億）","segments":{"expanded":false,"reason":"公司不揭露營收分部，營收以交易量×收益率呈現；訂閱與隨選的拆分事實表未涵蓋，無法展開"},"decay_signals":[{"signal":"EPS 成長顯著高於營收成長（差逾 5pp）","lit":true,"evidence":"2026 年共識 EPS +41%（3.72→5.26）對營收財測 +35%"},{"signal":"毛利率連兩季年減","lit":false,"evidence":"第二季淨交易利潤率年增 240bp 至 63.5%"},{"signal":"FCF／淨利低於 0.75 連兩年","lit":false,"evidence":"2024 年 1.65 倍、2025 年 1.56 倍（現金流分類未驗證）"},{"signal":"SBC／營收高於 5% 且上升","lit":false,"evidence":"上半年 SBC 340 萬美元，僅第二季營收就有 1.497 億"},{"signal":"TAM 萎縮或被替代","lit":false,"evidence":"美國市場仍 +11.9%～+14.7%，放緩但未萎縮"},{"signal":"核心市占近 12 個月縮減","lit":null,"evidence":"事實表未涵蓋份額時間序列"},{"signal":"產業估值倍數三年系統性下移","lit":null,"evidence":"事實表未涵蓋"}]},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長來自自有放款與訂閱，沒有併購；回購金額小（第一季 2,480 萬美元），不承重"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"無併購","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"第一季回購 2,480 萬美元；回購均價與十年期殖利率事實表未涵蓋","grade":"不過"},{"year":"—","action":"sbc_dilution","rationale":"上半年 SBC 340 萬美元，年化對市值約 0.2%，遠低於 1.5%","grade":"過"}]},"valuation":{"basis":"FY1／FY2 本益比與 PEG，並給消費金融折價","peers":{"expanded":false,"reason":"事實表同業對照只含利潤率，未含同業本益比，不以 AFRM、PYPL 倍數當錨"},"fwd_pe":21.07,"peg":0.73,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"FY1 本益比 21.1 倍（110.85÷5.26）、FY2 16.7 倍；PEG 0.73 屬便宜區。但 trailing 本益比、市銷率都在年度端點最高位置，盈餘來自信用損失偏低的順風期、未經壓力測試，給消費金融折價後判合理。五年分位無法計算：事實表只有 3–4 個年度端點，不外推。一年上檔：FY2027E 基準 EPS 6.50×19.5 倍＝126.8 美元，+14.4%；五年上檔：FY2031E 基準 EPS 10.40×15 倍＝156 美元，+40.7%","upside_short_pct":14.4,"upside_mid_pct":40.7},"trap_analysis":{"verdict":"🟡","label":"信用週期未經壓力測試＋治理雜音"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"第二季淨增 14 萬訂閱戶創紀錄，CFO 說新客損失率較高、單季提列可能超過 3%；第一季 CFO 說 Pay-in-5 初期損失率略高；SezzleCash 現金預支與 Sezzle Send 對非訂閱戶放款剛上線；發卡銀行夥伴非獨家、特定事件可終止","assumption":"管理層 2.5–3% 的全年提列區間已把新客與新產品效應算進去","consequence":"5 年後虧 50% 最可能的故事：2026 下半年到 2027 年的新客 cohort 遇上景氣轉弱，提列走到 4–5%，發卡夥伴或州法同時收緊，EPS 停滯、本益比掉到個位數，對應空頭情境 54 美元、−51%","ruling":"採納為最大風險，與唯一致命點是同一件事（撞上，不另立）；目前沒有已發生的證據，兩季法說都稱未見消費者壓力","watch":"每季提列／GMV、淨交易利潤率、全年提列指引","evidence_refs":["geo_supply_chain#0"],"fact_refs":["f_kpi7_active_subscribers","f_kpi6_full_year_2026_guidance"]},{"view":"論點成功但股東經濟變差","evidence":"企業商家費率競爭激烈，Klarna 取代 Affirm 成為 Walmart 獨家；CFO 說 SezzleCash 與 Pagaya 會拉低收益率；Target 在信用額度合約中可占應收 35%，議價力在大商家手上；銀行與科技公司內嵌分期","assumption":"訂閱與交易量照計畫成長，收益率守在 11% 以上","consequence":"量長、錢被分走：收益率往 10% 掉、淨交易利潤率從 63.5% 回到目標中值 60%，加上銀行執照的資本與合規成本，營收成長但 EPS 落後共識","ruling":"部分採納：全年收益率持平的財測已反映一部分，但 63.5% 在目標區間上緣，向中值回歸是常態，已放進基準情境（FY2027–2028 略低於共識）","watch":"收益率低於 10.5%、淨交易利潤率低於 58%","evidence_refs":["supply_demand_durability#2","customer_second_source#0","competitive_share_entrants#4"],"fact_refs":["f_kpi0_total_revenue_gaap"]},{"view":"價格已反映太多","evidence":"trailing 本益比 24.3 倍、市銷率 7.0 倍、EV／營收 7.1 倍都在年度端點最高位置；盈餘來自信用損失偏低的順風期","assumption":"FY1 21 倍的分母可以延續","consequence":"若提列比指引上緣 3% 再多 0.5pp，以每 1pp GMV 約占淨利兩成換算，FY1 EPS 約少 11%，實際本益比從 21 倍升到約 24 倍，便宜論證打折","ruling":"部分反駁：股價已從 7 月 177 美元跌到 110.85 美元，FY2 16.7 倍、PEG 0.73；年度端點只有 3–4 個樣本，不代表五年位置；賣方平均目標價全在現價之上。但分母敏感度是真的，所以只判合理不判便宜","watch":"FY2 共識是否下修、提列指引","evidence_refs":[],"fact_refs":["f_pe_current","f_pe_percentile","f_ps_percentile","f_fwd_pe_latest","f_consensus_eps_fy2"]},{"view":"論點失敗","evidence":"審計與風險委員會成員 Karen Webster 以治理分歧立即辭職（2026-04-09）；2026-04-30 起多家律所公告調查證券詐欺，尚未見正式起訴","assumption":"治理雜音停在調查階段","consequence":"若正式起訴並揭露內控或揭露問題，信任折價會讓倍數長期壓低，訴訟也分散管理層精力","ruling":"列為監測：辭職是實質警訊，律所公告屬股價大跌後的招攬性質、尚無起訴；倉位上限先打折","watch":"法院案卷、10-K 審計意見、董事會人事","evidence_refs":["major_events#2","major_events#1","regulatory_antitrust#3","lawsuit_class_action#0"],"fact_refs":[]},{"view":"論點失敗","evidence":"有律所調查 Sezzle 是否就逾期費、付款時點、透支風險或分期真實成本誤導消費者；CEO 第一季說部分州在削弱銀行夥伴模式；產品往現金預支延伸","assumption":"CFPB 撤回限制性規則後，聯邦監管壓力暫緩","consequence":"州級把訂閱費或預支費視為利息，或銀行夥伴模式在關鍵州被限制，訂閱引擎的收費基礎直接受損","ruling":"採納為中期風險，但目前只有律所調查、沒有政府行動；紐約州規則進度本輪事實表未涵蓋，列資料缺口","watch":"州監管公告、消費者集體訴訟、銀行執照進度","evidence_refs":["regulatory_antitrust#2","geo_supply_chain#0"],"fact_refs":[]}],"max_dd":{"lo":-70,"hi":-55,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 - → 本次 -","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=-","side_b":"本次 ma=-","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 177.08 → 本次 110.85（-37.4%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=177.08","side_b":"本次 price_at_dd=110.85","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]角色由 dd_decision.py 機械路由：前份 核心 → 本次 追蹤","cause":"價格變動","prior_field":["dca_role"],"side_a":"前份 dca_role=核心","side_b":"本次 dca_role=追蹤","ruling":"角色是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。沒有單一輸入能還原，屬多欄共同：估值 🟠→🟡。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"管理層承諾兌現（一致判斷）","cause":null,"prior_field":null,"side_a":"第一季法說（2026-05-06）：營收成長財測 30–35%、調整後淨利 1.8 億、EPS 5.10；現金流管理產品幾個月內推出；信用額度明年四月到期、正在再融資；提列 2.5–3%；支票帳戶產品幾個月內推出","side_b":"第二季法說（2026-08-06）：營收成長瞄準 35% 上緣、調整後淨利上修到 1.85 億、EPS 5.25；SezzleCash 六月上線；新的 3 億美元信用額度到位；提列區間不變。支票帳戶產品本季未再提","ruling":"一致：財測與產品承諾大多兌現，支票帳戶產品進度列為待查","evidence_level":"公司新聞稿與兩季逐字稿","settle_metric":"第三季法說是否交代支票帳戶產品與銀行執照送件","if_then":["若第三季仍未提支票帳戶產品且銀行執照未送件 → 第二曲線假設降權，不動基準情境"],"evidence_refs":[]},{"axis":"成長敘事與下半年財測","cause":null,"prior_field":null,"side_a":"CEO：成長曲線像 2020–2021 年，五月交易量就超過十二月旺季","side_b":"全年營收成長 35% 意味下半年約 30%，遠低於第二季 51.7%；財報後盤前跌 23%","ruling":"可調和（程度差異）：第二季營收成長有收益率低基期加持（去年約 10% 出頭、今年 11.7%），CFO 在第一季就預告；交易量 +37.9% 才是需求的真實速度，下半年 30% 左右的營收成長與此相容","evidence_level":"兩季逐字稿＋第二季新聞稿","settle_metric":"第三季交易量年增率與營收年增率","if_then":["若第三季交易量年增 ≥30% 且營收年增 ≥28% → 減速屬基期效果，維持判斷","若第三季交易量年增低於 25% → 需求確實放緩，基準情境下修並啟動減碼條件"],"evidence_refs":["competitive_share_entrants#3"]},{"axis":"行銷支出說法改口","cause":null,"prior_field":null,"side_a":"第一季法說 CEO：行銷支出預期逐季上升","side_b":"第二季法說 CEO：第二季 1,940 萬美元是刻意測試、不是新常態，第三季核心行銷會降；但新產品需要知名度支出","ruling":"可調和：第二季確實衝高，第三季降溫是測試後收手。風險在於管理層用「回收期低於 6 個月」自我授權加碼，而回收期只有公司自述；若第三季行銷仍高、淨增訂閱戶卻放緩，代表邊際回收在變差","evidence_level":"兩季逐字稿","settle_metric":"第三季行銷支出與淨增訂閱戶","if_then":["若第三季行銷支出高於 1,940 萬美元而淨增訂閱戶低於 10 萬 → 視為獲客效率下滑，暫停加碼"],"evidence_refs":[]},{"axis":"治理：公司說法與董事辭職、律所調查","cause":null,"prior_field":null,"side_a":"CFO：損益表調整項極少，是同業中最乾淨之一；本輪事實表查無 SEC 調查或財報重編","side_b":"2026-04-09 董事 Karen Webster（審計與風險、薪酬、提名委員會成員）以「與管理層在公司方向、關鍵決策與治理上看法分歧」立即辭職；2026-04-30 起多家律所公告調查證券詐欺，尚未正式起訴","ruling":"可調和（不同命題）：調整項乾淨講的是會計口徑，董事辭職講的是治理決策，兩者不直接衝突。審計委員會成員因治理分歧離開是實質警訊，但律所公告屬招攬性質，沒有起訴就沒有可裁決的事實；裁定未證、監測，倉位上限先打折","evidence_level":"8-K 與律所新聞稿（二手、招攬性質）","settle_metric":"法院案卷是否出現正式起訴；10-K 審計意見；後續董事會人事","if_then":["若集體訴訟正式起訴並通過駁回動議 → 減碼至半倉","若 SEC 正式調查或財報重編 → 清倉","反向：若 2027-06 前仍無起訴且年報審計意見無保留 → 解除倉位上限折扣"],"evidence_refs":["major_events#2","major_events#1","regulatory_antitrust#3","lawsuit_class_action#0"]},{"axis":"現在就買的最強論證","cause":null,"prior_field":null,"side_a":"等第三季：新客與新放款產品把提列推高的風險還沒驗證","side_b":"現在就買：股價已跌破前份設定的進場價（130–140 美元），FY2 16.7 倍、PEG 0.73；獲利財測兩季連升、FY1 共識三個月上修 3.1%；提列上升已被管理層預告、市場已知；等財報可能錯過財報後的反彈","ruling":"維持等待：基準情境年化報酬只有 7–8%，不夠補償提列上調時的下檔（空頭終點 −51%）；等一個月換到最大敏感項的第一手數據，代價可接受","evidence_level":"事實表估值數據＋法說指引","settle_metric":"第三季提列／GMV 與淨交易利潤率","if_then":["若第三季提列守在指引內 → 進場首倉，即使股價已反彈也照做","若股價先跌破 95 美元而信用指標未惡化 → 不等財報，分批反買"],"evidence_refs":[]},{"axis":"股價下跌帶動的估值與報酬重算","cause":"價格變動","prior_field":["val","asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"前份 2026-07-10 股價 177.08 美元，以現行共識回算 FY1 本益比約 34 倍，估值偏貴；裁決觀望；基準年化報酬 6.0%、五年期望 +29%、多空比 1.9","side_b":"現價 110.85 美元（−37%），FY1 21.1 倍、FY2 16.7 倍，估值改判合理；報酬類數字由程式依新價與新情境樹重算，裁決與角色由程式依新輸入重新路由","ruling":"估值結論由偏貴改為合理，主因是價格下跌而非基本面轉好；同期獲利財測反而上修","evidence_level":"事實表股價與共識","settle_metric":"FY1／FY2 本益比","if_then":["若股價回到 140 美元以上而共識未上修 → 估值回到偏貴區，不追"],"evidence_refs":[]},{"axis":"情境樹終端倍數與回撤區間重設","cause":"方法變動","prior_field":["bull_5y_price","bear_5y_price","max_dd_pct"],"side_a":"前份多頭五年價 388 美元、空頭 83 美元、最大回撤 −65%（單點）","side_b":"本次多頭 FY2031E EPS 13.80×20 倍＝276 美元、空頭 6.00×9 倍＝54 美元；回撤改填區間 −55%～−70%","ruling":"多頭終端倍數以現值 FY1 21 倍為上限，不給高於現值的倍數；空頭改用信用壓力下的消費金融倍數 9 倍並讓 EPS 在 2028 年下滑，下檔比前份深；回撤由單點改區間，中值與前份相近","evidence_level":"方法調整，無新外部證據","settle_metric":"不適用（方法變動）","if_then":["若取得同業倍數資料顯示信用壓力期消費金融本益比高於 12 倍 → 空頭倍數上修"],"evidence_refs":[]},{"axis":"第二季新證據檢視後維持的欄位","cause":"新證據","prior_field":["signal","trap","moat_trend","runway_post_y5","archetype","cycle_position","p_bull_pct","p_bear_pct"],"side_a":"前份：綜合訊號 B、價值陷阱風險中（🟡）、護城河方向穩定（→）、長期跑道中等（🟡）、品質複利成長型、未判景氣位置、多頭機率 25%、空頭 30%","side_b":"本次全部維持：訂閱戶 +76.4%、購買頻率 7.2 次支持護城河執行面，但收益率持平、企業商家壓費率抵銷；市場放緩、第二曲線未進財測，跑道維持中等；信用週期未經壓力測試＋董事辭職，陷阱風險維持中；非景氣循環股，不判景氣位置；新客 cohort 風險與獲利上修相抵，多空機率不變","ruling":"新證據兩面都有，淨方向不足以改判","evidence_level":"第二季新聞稿與逐字稿","settle_metric":"第三季提列與淨增訂閱戶","if_then":["若第三季訂閱戶年增仍 ≥50% 且提列守住 → 多頭機率上調至 30%","若提列區間上調 → 空頭機率上調至 40%"],"evidence_refs":[]},{"axis":"進場條件改寫（前份估值腿已觸發）","cause":"新證據","prior_field":["rearm_trigger"],"side_a":"估值回落至 Fwd PE ~20x（$130-140），或治理與監管明朗（集體訴訟撤銷＋NY BNPL 規則以可承受形式定稿＋Utah ILC 正式送件）","side_b":"第三季財報提列／GMV 守在全年 2.5–3% 指引內且淨交易利潤率 ≥55% → 進場首倉；股價先跌破 95 美元而信用指標未惡化 → 分批反買","ruling":"前份進場條件的估值腿已觸發（股價 110.85 美元低於 130–140 美元），本次即觸發後重跑。價格下跌伴隨新證據——下半年營收減速財測、第二季行銷衝高帶來的創紀錄新客將在下半年墊高提列——把卡住進場的條件從估值換成信用驗證；治理與監管腿保留為監測，不再當進場前提","evidence_level":"事實表股價＋第二季逐字稿","settle_metric":"第三季提列／GMV、淨交易利潤率","if_then":["若第三季兩項都過關 → 進場首倉（半倉）","若提列區間上調 → 不進場，等兩季數據"],"evidence_refs":["competitive_share_entrants#3"]},{"axis":"Single Thing 唯一致命點新設","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未設唯一致命點（空白）","side_b":"管理層在季報把全年提列區間從 2.5–3% of GMV 上調到 3% 以上（單一離散事件）；發生則減碼至半倉，淨交易利潤率同時跌破 55% 則清倉","ruling":"補上前份缺漏：提列率是 EPS 最大單一敏感項（每 1pp GMV 約占調整後淨利兩成），用管理層自己給的區間當離散觸發點","evidence_level":"第二季法說提列指引","settle_metric":"每季全年提列指引","if_then":["若指引上緣上調 → 減碼至半倉"],"evidence_refs":[]},{"axis":"清倉與減碼指標新設","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設清倉指標（空白）","side_b":"淨交易利潤率低於 55% 連兩季 → 清倉；TTM 提列／GMV 高於 3.5% 連兩季或指引上調 → 減碼；訂閱戶年增低於 20% → 減碼；發卡夥伴終止無替代 → 清倉；集體訴訟通過駁回動議 → 減碼","ruling":"把前份散在風險表裡的警戒線收斂成可執行的清倉與減碼清單，門檻對齊管理層公開指引","evidence_level":"方法調整","settle_metric":"每季財報","if_then":["任一清倉條件成立 → 清倉，不等複審"],"evidence_refs":[]},{"axis":"信用門檻重新校準（前份 2.0% 警戒線）","cause":"方法變動","prior_field":["thesis.H1","thesis.R1"],"side_a":"連 2 季 TTM provision/GMV ≥ 2.0% → 削弱；連 3 季 ≥ 3.0% 或撥備增速連 2 季超前 GMV 增速 → 反轉；單季 ≥ 3.0%、30+ DPD > 5% 警戒","side_b":"TTM 提列／GMV 連 2 季高於 3.15% → 削弱；連 3 季高於 3.3% 或淨交易利潤率跌破 55% → 反轉；單季高於 3.5%、提列年增率連 2 季超前交易量年增率 10pp 以上、30 天以上逾期率高於 5% 列風險","ruling":"前份 2.0% 以第一季（全年最低點 1.2%）為基準，但管理層兩季都指引全年 2.5–3%，第一季本就是季節低點，2.0% 會被季節性機械觸發、不代表信用轉壞，改用 TTM 口徑並對齊區間上緣；撥備增速超前的領先警訊保留並加上 10pp 幅度。第二季單季提列率事實表未涵蓋，前份單季 3.0% 警戒線是否已觸發無法確認，CFO 說單季可以超過 3%，第三季需逐季核對；逾期率仍是資料缺口","evidence_level":"兩季逐字稿","settle_metric":"TTM 提列／GMV","if_then":["若第三季 TTM 提列／GMV 高於 3.0% → 停止加碼並開始削弱計數"],"evidence_refs":[]},{"axis":"第二曲線路徑改變：州 ILC 改為國家銀行執照","cause":"新證據","prior_field":["thesis.H3"],"side_a":"前份：Utah ILC 銀行牌照，2026 正式向 Utah DFI 送件；FY28-29 獲批","side_b":"第二季法說：計畫本季（2026 第三季）送出國家銀行執照申請，OCC 約 120 天作出有條件決定，再加 FDIC、Fed 核准，總時程 12–18 個月；第一季原說年中送件，進度略延","ruling":"路徑改走聯邦、時程比前份短，但仍未確認送件，CFO 第一季也說不保證成功；維持為選擇權，不進基準情境","evidence_level":"兩季逐字稿","settle_metric":"送件公告與 OCC 公開紀錄","if_then":["若 2026 年底前未送件 → 第二曲線降為更遠期選擇權","若取得有條件核准 → 多頭機率上調至 30%"],"evidence_refs":[]}],"triggers":[{"n":1,"text":"第三季財報檢查信用：提列季節性上升的幅度","type":"假設驗證","maps_to":"H1","metric":"第三季提列／GMV、淨交易利潤率、全年提列指引","threshold":"全年提列仍守 2.5–3% 指引且淨交易利潤率 ≥55%","action":"兩項過關 → 進場首倉（半倉）；未過 → 不追，續看第四季","source_freq":"季報（每季）","date":"2026-11"},{"n":2,"text":"管理層把全年提列區間上調到 3% 以上","type":"Single Thing","maps_to":"R1","metric":"全年提列／GMV 指引上緣","threshold":"高於 3.0%","action":"持有則減碼至半倉；未持有則不進場，等兩季新客損失數據","source_freq":"季報與法說","date":null},{"n":3,"text":"首倉後訂閱與信用雙雙過關再補足","type":"加碼","maps_to":"H2","metric":"活躍訂閱戶年增率＋全年提列／GMV","threshold":"訂閱戶年增 ≥30% 且 2026 全年提列 ≤3.0%","action":"加碼至目標倉位","source_freq":"季報","date":"2027-02"},{"n":4,"text":"信用失守","type":"清倉","maps_to":"R1","metric":"淨交易利潤率","threshold":"低於 55% 連兩季","action":"清倉","source_freq":"季報","date":null},{"n":5,"text":"成長減速超出基期解釋","type":"減碼","maps_to":"R5","metric":"營收年增率與交易量年增率","threshold":"營收年增連兩季低於 20%，或第三季交易量年增低於 25%","action":"減碼至半倉","source_freq":"季報","date":null,"evidence_refs":["competitive_share_entrants#3"]},{"n":6,"text":"證券訴訟從調查變成正式起訴","type":"風險","maps_to":"R4","metric":"法院案卷、SEC 動作","threshold":"集體訴訟正式起訴並通過駁回動議；SEC 正式調查或財報重編","action":"起訴 → 停止加碼；通過駁回動議 → 減碼至半倉；SEC 介入或重編 → 清倉","source_freq":"持續（8-K、案卷）","date":null,"evidence_refs":["major_events#1","lawsuit_class_action#0","regulatory_antitrust#3","major_events#2"]},{"n":7,"text":"發卡夥伴或州法規收緊","type":"風險","maps_to":"R3","metric":"發卡銀行合約、州級規則、消費者訴訟","threshold":"發卡夥伴終止且 90 天內無替代；州法把訂閱費或預支費納入利率上限；消費者集體訴訟正式起訴","action":"規則收緊或消費者訴訟 → 減碼；發卡夥伴終止且無替代 → 清倉","source_freq":"8-K、州監管公告","date":null,"evidence_refs":["geo_supply_chain#0","regulatory_antitrust#2"]},{"n":8,"text":"大商家與平台集中風險","type":"風險","maps_to":"R2","metric":"Target 與大型電商平台合作狀態、收益率","threshold":"Target 導入第二家或終止合作；任一大平台終止合作；全年收益率低於 10.5%","action":"停止加碼並重估情境樹","source_freq":"8-K、季報","date":null,"evidence_refs":["customer_second_source#0","geo_supply_chain#2","supply_demand_durability#2","competitive_share_entrants#4","substitute_technology#0"]},{"n":9,"text":"國家銀行執照送件","type":"假設驗證","maps_to":"H3","metric":"送件公告","threshold":"2026-12-31 前送件","action":"未送件 → 第二曲線降為更遠期選擇權，不動倉位","source_freq":"8-K、OCC 公開紀錄","date":"2026-12"},{"n":10,"text":"股價先跌、信用未惡化時分批反買","type":"估值rearm","maps_to":null,"metric":"股價＋提列指引","threshold":"股價低於 95 美元（FY2 約 14 倍，接近 52 週均線 95.35 美元）且提列仍在指引內","action":"分批反買首倉","source_freq":"每日股價、季報","date":null},{"n":11,"text":"第四季財報複審","type":"複審日期","maps_to":null,"metric":"2026 全年提列實績、2027 財測","threshold":"財報公布即複審","action":"重跑完整判斷","source_freq":"年報","date":"2027-02"}],"kill_metrics":[{"metric":"淨交易利潤率（營收減交易相關成本占營收）","bear_threshold":"低於 55% 連兩季 → 清倉","window":"每季，2026Q3 起","source":"季度財報新聞稿與法說簡報","last_status":"ok"},{"metric":"TTM 提列／GMV 與全年提列指引","bear_threshold":"高於 3.5% 連兩季，或指引上緣調到 3% 以上 → 減碼至半倉","window":"每季，2026Q3–2027Q4","source":"季度財報與法說","last_status":"ok"},{"metric":"活躍訂閱戶年增率","bear_threshold":"低於 20% → 減碼","window":"每季至 2027 年底","source":"季度財報新聞稿","last_status":"ok"},{"metric":"發卡銀行夥伴關係","bear_threshold":"終止或不續約且 90 天內無替代 → 清倉","window":"持續","source":"8-K 與 10-Q 風險揭露","last_status":"ok"},{"metric":"證券集體訴訟與 SEC 動作","bear_threshold":"起訴並通過駁回動議 → 減碼；SEC 正式調查或重編 → 清倉","window":"至 2027 年底","source":"法院案卷、8-K、律所公告","last_status":"warning"}],"evidence_dismissed":[{"ref":"geo_supply_chain#1","reason":"10-K 通用風險因子樣板，未附任何實際中斷事件、發生頻率或影響金額，也沒有可監測的指標，無法轉成論點變數"}],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8w(原9b)","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='-'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把下半年營收減速當成需求放緩，但減速主要是第二季收益率低基期消退，交易量仍 +37.9%、獲利財測連兩季上修；信用面市場的擔心可能是對的，要等第三季驗證"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟡', moat_trend='→', week26=68.46, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position=None, moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":false,"basis":"signal='B', val='🟡'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='B', val='🟡', ma='-'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":true,"basis":"signal='B', val='🟡', ma='-'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟡', ma='-'"},{"row":"8w","condition":"判斷者宣告 wait_for_price（價格合理但要等）→ 原 row9b 進場改觀望（等價格）","hit":true,"basis":"wait_for_price=True, 等待條件='等 2026 年 11 月第三季財報：提列／GMV 守在全年 2.5–3% 指引內、淨交易利潤率 ≥55%；或股價先跌破 95 美元（FY2 約 14 倍）而信用指標未惡化'"},{"row":"QC-49","condition":"qc49_inherit_prior=False，不套用","hit":false,"basis":"qc49_inherit_prior=False"},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":null,"requires_critic":[],"rearm_trigger":"第三季財報提列／GMV 守在全年 2.5–3% 指引內且淨交易利潤率 ≥55% 即進場首倉；股價先跌破 95 美元而信用未惡化則分批反買","exec_line":"現在不追；第三季財報（2026-11）兩項信用指標過關 → 首倉半倉；第四季財報（2027-02）訂閱戶年增 ≥30% 且全年提列 ≤3.0% → 補足；提列指引上調 → 減碼至半倉；淨交易利潤率低於 55% 連兩季 → 清倉；股價先跌破 95 美元而信用未惡化 → 分批反買"},"reasoning":{"industry":"第二季（2026-06 季末）營收 1.497 億美元（年增 51.7%）、GAAP 營業利益 5,500 萬（營益率 36.7%）、淨利 4,080 萬（27.2%）、調整後 EBITDA 5,800 萬；交易量 13 億美元（年增 37.9%），活躍訂閱戶 85.4 萬（年增 76.4%）。TTM 毛利率 72.4%、營益率 37.8%。收益率（營收÷交易量）11.7%，公司預估全年回到 2025 年的 11.4%，第四季是季節低點。公司不揭露營收分部，訂閱與隨選的營收拆分事實表未涵蓋。單點依賴：2025、2024 年無單一對象占營收 10% 以上，但 2026-05 信用額度合約把 Target 的應收上限訂在 35%、其他單一商家 15%，Target 是最大商家集中點；發卡銀行夥伴非獨家且特定事件可終止，是另一個單點。產業時鐘判在擴張期（II）：美國先買後付市場 2026 年預估 +14.7%、2027 年 +11.9%，仍有雙位數成長但逐年放緩，來源稱放緩來自成熟而非景氣。供需持久性：需求面結構性持久（資金吃緊的消費者需要把支出攤平），但信用供給可逆性高——承保一收緊交易量就會掉，這是空頭機率的來源。","moat":"機制：訂閱制把一次性結帳工具變成每月付費的關係，加上短天期承保資料與低成本營運。可證方向：同業 ROIC 事實表未涵蓋，改用利潤率對照——TTM 營業利益率 Sezzle 37.8% 對 Affirm 20.4%、PayPal 18.4%，FCF 利潤率 51.1% 對 23.3%、19.3%；自身營益率從 2023 年 13.9%、2024 年 25.3%、2025 年 36.2% 升到 TTM 37.8%，但同業歷史值事實表未涵蓋，無法判斷差距是否擴大。執行力 8 分：產品節奏快（SezzleCash 六月分階段上線、Sezzle Send 預定八月上線，後者大部分由 AI 寫成），AI 客服分流 68% 消費者進線。定價力 6 分：全年收益率持平於 11.4%，管理層用隨選方案給薄利企業商家較低價格換取上架，新產品收益率較低。產業態勢判雙向拉鋸：競爭面 Klarna 取得 Walmart 獨家、銀行與大型科技把分期內嵌進卡片與錢包；結構面商家改為多家並列（總裁 Paradis 稱過去兩三年開始和其他業者並列上架），訂閱讓 Sezzle 往開放式支付走、對單一平台依賴下降；其他面 Shopify 反壟斷案核心主張續行、證據開示到 2027 年，州級監管在削弱銀行夥伴模式。威脅都在點對點層級，不扣分。","growth":"成長主要靠量：交易量年增 37.9%、訂閱戶年增 76.4%；價為輔：每位變現用戶季營收年增 16.2%。分析師拆算第二季營收成長約三分之二來自用戶數、三分之一來自單用戶營收，CEO 未否認但說不看這個拆法。回購貢獻小（第一季 2,480 萬美元）。共識 EPS：FY2026E 5.26、FY2027E 6.65、FY2028E 7.95，以 2025 年 GAAP 稀釋 EPS 3.72 為基期，三年年複合 28.8%（7.95÷3.72 開三次方減 1）；Koyfin 共識家數事實表未載，評等端約 6–7 位分析師。內生上界算不出（投入資本與再投資率事實表未涵蓋），缺口無法歸因，依規則標為依賴重估、長期信心上限中；但基準情境終端倍數低於現值，報酬不靠倍數擴張。2026 年 EPS +41% 對營收 +35%，差 6pp，亮起一個衰退信號（來自利潤率擴張與回購）。下半年營收成長從第二季 51.7% 降到約 30%，CFO 歸因於第二季收益率低基期，交易量增速才是需求的真實速度。跑道年數：先買後付占電商支付的滲透率事實表未涵蓋，無法算到 30% 的年數。","governance":"現金轉換：2024 年 FCF／淨利 1.65 倍、2025 年 1.56 倍，上半年 FCF 1.404 億美元；但 FCF 口徑是否已扣除應收帳款擴張事實表未涵蓋，不拿來當再投資證據。SBC 上半年 340 萬美元，年化約 680 萬，對約 39 億美元市值（110.85 美元×約 3,520 萬股，股數由調整後淨利 1.85 億÷EPS 5.25 推得）約 0.2%，稀釋過關。回購：第一季買回 2,480 萬美元（第一季法說 CFO），回購均價與十年期殖利率事實表未涵蓋，效益無法判定。併購：無。資產負債：季末流動性逾 2.05 億美元（現金＋新的 3 億美元信用額度可用額度），總負債÷TTM 調整後 EBITDA 0.5 倍、負債÷股東權益 0.5 倍；舊額度原訂 2027 年 4 月到期，已換成新額度。現金去向四分的三年數字事實表未涵蓋。","valuation":"現價 110.85 美元，FY1 本益比 21.1 倍、FY2 16.7 倍、trailing 24.3 倍，市銷率 7.0 倍、EV／營收 7.1 倍；trailing 本益比與市銷率都在 3–4 個年度端點的最高位置，但樣本太少，不代表五年分位。PEG 0.73（21.1 倍÷28.8%），改用 FY1→FY3 共識年複合 22.9% 算為 0.92，兩種算法都低於 1。FY1 共識近三個月上修 3.1%，最近兩份快照之間持平。賣方平均目標價各站 146.5–171.6 美元（日期不一），現價低於全部區間，方向上不支持更悲觀的看法；最高最低比 196÷150＝1.3 倍，不需下調信心。26 週報酬 +68.5%、RSI 37.6，動能不過熱。分母口徑：淨利與調整後淨利差距小，分母不是爭點，但分母對提列率很敏感。同業倍數事實表未涵蓋，終端倍數改以自身現值錨定。","premortem":"反證都寫在反證紀錄：論點失敗看信用與治理、股東經濟變差看收益率與費率、價格已反映看盈餘分母。第一季法說有三處沒正面回答：信用損失優於預期有無上行空間（只重申 2.5–3%）、銀行執照能新增哪些產品（CEO 回答不一定，改談監管防禦）、低收入客群面對油價壓力的即時數據（CEO 自稱只是推測），三題都指向同一件事——管理層對信用與監管的說法缺少可驗證數字。價值陷阱風險判中：衰退信號只亮一個，但信用週期未經壓力測試、審計委員會成員以治理分歧辭職。"},"plain":{"six":{"how_it_makes_money":"向商家收交易費、向消費者收訂閱費與服務費；錢卡在承保這一節——營收扣掉交易成本、信用損失與利息後還剩 63.5%，賺多賺少取決於新客的損失率","moat":"護城河方向穩定（→）：執行面在擴大，訂閱戶年增 76%、購買頻率 7.2 次；定價面持平偏受壓，全年收益率持平、企業商家壓費率，兩者相抵判穩定","growth":"長期跑道中等（🟡）：美國先買後付市場成熟放緩、Sezzle 份額約 2.5%，第二曲線（SezzleCash、Sezzle Send、銀行執照）方向明確但財測完全沒算進去，還不能當成下一條成長曲線","capital":"資本配置中等：股權稀釋很低是唯一可判定的加分，回購效益資料不足、無併購","valuation":"現價要求 2027–2028 年 EPS 大致照共識走（6.65、7.95）且終端倍數不低於 15 倍，才有年化 7–8% 的報酬；我信成長，但不信目前的信用損失率能原封不動延續，所以判合理、不便宜","how_wrong":"最可能看錯在信用：下半年創紀錄的新客與兩項新放款產品把提列推出全年 2.5–3% 區間；其次是治理雜音從律所調查變成正式訴訟"}},"decision_inputs":{"signal":"B","ma":"-","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把下半年營收減速當成需求放緩，但減速主要是第二季收益率低基期消退，交易量仍 +37.9%、獲利財測連兩季上修；信用面市場的擔心可能是對的，要等第三季驗證","momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":false,"wait_for_price":true,"wait_for_price_condition":"等 2026 年 11 月第三季財報：提列／GMV 守在全年 2.5–3% 指引內、淨交易利潤率 ≥55%；或股價先跌破 95 美元（FY2 約 14 倍）而信用指標未惡化","trap":"🟡","val":"🟡","moat":"B","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"品質複利成長","price_at_dd":110.85,"week26_return_pct":68.46,"consensus_rev_3m_pct":3.14,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":false,"val_denominator_note":"淨利與調整後淨利差距小（CFO 稱主要是個別稅項），分母口徑不構成爭點；但提列每多 1pp GMV 約吃掉兩成淨利，分母對信用週期高度敏感"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"guidance","event":"第三季財報：提列季節性上升幅度、全年提列指引、行銷支出回落程度","impact":"高","watch":"提列／GMV、淨交易利潤率、淨增訂閱戶"},{"date":"2026-11","date_precision":"month","type":"regulatory","event":"確認國家銀行執照申請是否已送出（原定 2026 第三季）","impact":"中","watch":"OCC 公開紀錄或 8-K"},{"date":"2026-12","date_precision":"quarter","type":"product","event":"Sezzle Send 上線後的使用與拉新成效、SezzleCash 開始對外行銷","impact":"中","watch":"等候名單轉換、非訂閱戶轉訂閱"},{"date":"2027-02","date_precision":"month","type":"guidance","event":"第四季財報與 2027 年財測","impact":"高","watch":"全年提列實績、2027 EPS 指引對共識 6.65"},{"date":"2027-12","date_precision":"quarter","type":"regulatory","event":"Shopify 反壟斷案證據開示預計持續到 2027 年","impact":"低","watch":"和解或簡易判決動議"}],"_projected_from":"v19"}
+```

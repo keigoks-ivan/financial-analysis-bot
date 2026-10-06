@@ -240,3 +240,5 @@
 | **`decision_inputs.wait_for_price`＝true 時，baseline row 9／9b／10 的進場改觀望（row_hit `8w(原N)`）**；只往保守方向，不碰 8a／8b 條件式路徑、不能把觀望升進場；必須同填 `wait_for_price_condition`（等哪個價位或哪件事），缺則 `validate_judgment.py` FAIL（`dd_decision.py`、`dd_project.py` 覆寫層、`judge_card.md`、`gate_card.md` §④） | v20 (2026-10-05) | TPR 2026-10-05：判斷者寫「估值合理不算便宜、條件不成立就不追、等 Q1」，但 signal B＋val 🟡＋MA 🟡 機械命中 row 9 → 進場；矩陣沒有任何輸入能表達「價格合理但要等」，結論與理由互斥，閘 ④ 判紅、patch 後仍紅，報告無法發布 | ①下次裁決校準時，被本條由進場壓成觀望的名字，判斷日後 6 個月報酬中位數 ≥ 同期 row 9／10 進場組（等待沒有換到更好價格，只是少賺）；②判斷者在 val 🟢 名字上也頻繁勾選（≥ 勾選總數三成），代表被當成逃避下結論的出口 | — |
 
 加一提刪一（本次提名候刪審查）：QC-49 裁決 hysteresis（`qc49_inherit_prior`）——TPR 同日閘 ⑧ 紅燈即源於此欄語意模糊（判斷者寫「前份重新進場條件已觸發」並填 false，閘認為矛盾），欄位定義誰都讀不一致時，承繼與否實際由誰說了算不可審。
+
+追記（2026-10-06，持有人拍板）：**QC-49 不得把 wait_for_price 的觀望承繼回進場**（`dd_decision.py` `evaluate()` QC-49 段）。3017 案：判斷者寫「不追、等 2,900 元以下」並填 wait_for_price＝true，矩陣出觀望，QC-49 以前份 07-11 進場（86 天）承繼翻回進場，閘 ④ 兩輪皆紅。QC-49 仍可承繼其他方向；kill condition 併入上列 wait_for_price 列。

@@ -514,6 +514,13 @@ def evaluate(inputs: dict) -> dict:
                 audit_rows, "QC-49", "qc49_inherit_prior=True 但前次裁決與矩陣機械輸出方向相同，無需承繼",
                 False, f"prior_verdict={prior_verdict!r}, 矩陣機械輸出={out['verdict']!r}",
             )
+        elif inputs.get("wait_for_price") is True and _bucket(prior_verdict) == "進場":
+            # 2026-10-06 持有人拍板（3017 案）：wait_for_price 只往保守方向，QC-49 不得把它承繼回進場。
+            _audit(
+                audit_rows, "QC-49",
+                "qc49_inherit_prior=True 但判斷者宣告 wait_for_price：不得把觀望承繼回進場（只往保守方向）",
+                False, f"wait_for_price=True, prior_verdict={prior_verdict!r}, 矩陣機械輸出={out['verdict']!r}",
+            )
         else:
             _audit(
                 audit_rows, "QC-49",
