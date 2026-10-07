@@ -534,7 +534,8 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
       <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
       <tbody>
         <tr><td class="f">schema</td><td class="ty">string</td><td>"detective-v2"</td></tr>
-        <tr><td class="f">alert_level</td><td class="ty">object</td><td>綜合警戒度：as_of／band／band_label／score／drivers[]（label+points 拆解分數怎麼來）</td></tr>
+        <tr><td class="f">alert_level</td><td class="ty">object</td><td>警戒度（0-100）：as_of／band／band_label／score／drivers[]（label+points 拆解分數怎麼來）。2026-10-06 起只算「有東西在壞」的壓力面訊號與壓力面複合規則（R1-R5、R8），同一條底層序列只算一次；擁擠、動能、急漲這類過熱面訊號與研究報告的否證指標都不在分數裡。權重與 5 檔分段沒變，歷史分數已用新算法重算</td></tr>
+        <tr><td class="f">heat_level</td><td class="ty">object</td><td>熱度（2026-10-06 新增）：count（漲太熱、大家擠在同一邊的訊號，去重後亮了幾盞）／composites_fired（已成立的過熱面複合規則 id：R6、R7、R9）／as_of。只計數，沒有分數、沒有權重；「平常大約幾盞」由讀取端取 <code>alert_history.json</code> 第 5 欄的中位數</td></tr>
         <tr><td class="f">counts</td><td class="ty">object</td><td>訊號計數：active／cooling／escalated／new／red／yellow／total</td></tr>
         <tr><td class="f">composites</td><td class="ty">array</td><td>跨訊號複合規則（多條件同時成立才觸發）</td></tr>
         <tr><td class="f">signals</td><td class="ty">array</td><td>逐條訊號（見下）</td></tr>

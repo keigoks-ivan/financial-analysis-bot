@@ -142,6 +142,46 @@ def get_current(ds, monitor, internals):
     return None, None, f"unknown data_source type {typ!r}"
 
 
+def _series_spark(ds, monitor, internals):
+    """回傳 (spark, frequency)；取不到回 (None, None)。只用於估速度，不影響狀態。"""
+    typ, key = ds.get("type"), ds.get("key")
+    if typ not in ("monitor", "internals") or "/" not in (key or ""):
+        return None, None
+    cat, skey = key.split("/", 1)
+    it = _series_from(monitor if typ == "monitor" else internals, cat, skey)
+    if not it:
+        return None, None
+    return it.get("spark"), it.get("frequency")
+
+
+# 一個 spark 步長折算幾個日曆天（日頻＝交易日，約 7/5 個日曆天）
+STEP_DAYS = {"daily": 1.4, "weekly": 7.0, "monthly": 30.4}
+PACE_MIN_POINTS = 8   # spark 少於此數不估
+
+
+def estimate_days_to_line(spark, frequency, cur, value, status):
+    """照該序列平常的步幅，隨機漫步走到警戒線大約要幾個日曆天。
+    σ＝spark 相鄰差分的標準差；days ≈ (距離 / σ)² × 步長天數（隨機漫步走完
+    距離 d 的典型步數 ≈ (d/σ)²）。已越線＝0；算不出（無 spark／點數太少／σ=0／
+    頻率未知）＝None。純描述，不改 status 判定。"""
+    if status == "breached":
+        return 0.0
+    step = STEP_DAYS.get(frequency or "")
+    if step is None or not isinstance(spark, list):
+        return None
+    xs = [float(x) for x in spark if isinstance(x, (int, float))]
+    if len(xs) < PACE_MIN_POINTS:
+        return None
+    diffs = [b - a for a, b in zip(xs, xs[1:])]
+    m = sum(diffs) / len(diffs)
+    var = sum((d - m) ** 2 for d in diffs) / (len(diffs) - 1)
+    sigma = var ** 0.5
+    if sigma <= 0:
+        return None
+    dist = abs(cur - value)
+    return round((dist / sigma) ** 2 * step, 1)
+
+
 def _fetch_fred(series_id):
     """FRED CSV（免 key，不帶自訂 UA——FRED 會 stall 偽瀏覽器 UA）。抄 build_monitor。"""
     try:
@@ -255,6 +295,8 @@ def build(dry_run=False):
         row["status"] = st
         row["current"] = round(cur, 6)
         row["value_as_of"] = val_asof
+        spark, freq = _series_spark(p["data_source"], monitor, internals)
+        row["days_to_line"] = estimate_days_to_line(spark, freq, cur, p["value"], st)
         items.append(row)
         if st == "breached":
             breached.append(rid)

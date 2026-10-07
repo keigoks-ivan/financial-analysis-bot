@@ -30,6 +30,10 @@ state.json 帶 notify 帳（keys.*.notify.{last_immediate,mute_until}）但只�
 平常大約幾分」；複合規則條件只取 detective_rules.py 每個 desc 最後一組全形括號裡的
 白話（_gloss）；週報家族標籤改「東西＋發生什麼事」（_family_label），不再印偵測器
 名稱；信裡出現「複合規則」「否證指標」時附一行名詞解釋（GLOSSARY）。
+2026-10-06 第四輪（警戒度拆分）：警戒度只數「有東西在壞」，一分鐘版依序是
+警戒度、熱度（`_heat_sentence`，亮幾盞、平常幾盞）、報告要重看（`_kill_minute_sentence`，
+否證指標已移出分數，另附照平常速度多久碰線）、最接近成立的複合規則（已成立的排除）。
+黃燈名單依底層序列去重（`_dedupe_series`），不再有「×2＝兩個偵測器」。
 鎖在 scripts/tests/test_notify_render_plainlang.py。
 
 描述器紀律：body 全中文全形標點、純文字、只陳述事實，不判斷不擇時不給買賣指令；
@@ -53,10 +57,14 @@ import html as html_lib
 import json
 import os
 import re
+import statistics
 from collections import Counter
 from datetime import date, timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+import build_detective as bd  # noqa: E402  序列去重鍵與分面沿用機械層，不在這裡重寫
+
 DATA_DIR = os.path.join(ROOT, "docs", "detective", "data")
 DEFAULT_LATEST = os.path.join(DATA_DIR, "latest.json")
 DEFAULT_STATE = os.path.join(DATA_DIR, "state.json")
@@ -653,8 +661,10 @@ def _digest_compute(latest, state):
 
     stale = latest.get("sources_stale") or []
     trivial = (n_red == 0 and n_comp_fired == 0 and new_count == 0)
+    # 已成立的規則 proximity 恆為 1.0，不排除就永遠被當成「最接近成立」
+    not_fired = [c for c in composites_all if not c.get("fired")]
     closest_composite = (
-        max(composites_all, key=lambda c: c.get("proximity", 0)) if composites_all else None
+        max(not_fired, key=lambda c: c.get("proximity", 0)) if not_fired else None
     )
 
     return dict(
@@ -687,6 +697,8 @@ _ZH_ORD = ["一", "二", "三", "四", "五"]
 
 # 讀者第一次看到這兩個站內用語時要知道意思；只在信裡真的出現時才附上。
 GLOSSARY = (
+    ("警戒度", "警戒度＝只算「有東西在壞」的訊號，例如股市重挫、信用變差、波動升高。漲太熱、大家擠在同一邊的不算，另外看熱度。"),
+    ("熱度", "熱度＝「漲太熱、大家擠在同一邊」的訊號亮了幾盞，只計數，不算進警戒度。"),
     ("複合規則", "複合規則＝要好幾個條件同時成立才算數的警訊。"),
     # 報告的證偽表同時收「推翻判斷」與「判斷升級」兩種門檻（例：財政赤字報告的
     # 期限溢價 >1.0% 方向是「逆風升級」），所以不能寫成「碰到就代表看錯」。
@@ -709,7 +721,7 @@ def _glossary_lines(text):
 
 
 def _alert_history_points(path=None):
-    """alert_history.json 的 points（[date, score, band, spx]）；缺檔 fail-soft 回 []。"""
+    """alert_history.json 的 points（[date, score, band, spx, heat_count]）；缺檔 fail-soft 回 []。"""
     try:
         with open(path or DEFAULT_ALERT_HISTORY, encoding="utf-8") as f:
             return (json.load(f) or {}).get("points") or []
@@ -736,6 +748,36 @@ def _alert_facts(latest, points=None):
         "median": (vals[len(vals) // 2] if vals else None),
         "drivers": [d.get("label") for d in (al.get("drivers") or []) if d.get("label")],
     }
+
+
+HEAT_MIN_HISTORY = 5   # 熱度歷史少於這麼多天就不講「平常大約幾盞」
+
+
+def _heat_facts(latest, points=None):
+    """熱度（latest.json 的 heat_level）＋歷史第 5 欄中位數；沒有 heat_level 回 None。"""
+    hl = (latest or {}).get("heat_level") or {}
+    n = hl.get("count")
+    if not isinstance(n, (int, float)):
+        return None
+    pts = _alert_history_points() if points is None else points
+    vals = [p[4] for p in pts
+            if len(p) >= 5 and isinstance(p[4], (int, float)) and not isinstance(p[4], bool)]
+    median = int(statistics.median(vals) + 0.5) if len(vals) >= HEAT_MIN_HISTORY else None
+    names = {c.get("id"): c.get("name") for c in (latest.get("composites") or [])
+             if isinstance(c, dict)}
+    fired = [names.get(i) or i for i in (hl.get("composites_fired") or [])]
+    return {"count": int(n), "median": median, "fired": fired}
+
+
+def _heat_sentence(facts):
+    """熱度白話：亮幾盞、平常大約幾盞；有過熱面的複合規則已成立就點名。"""
+    if not facts:
+        return None
+    out = f"熱度：亮 {facts['count']} 盞"
+    out += (f"，平常大約 {facts['median']} 盞。" if facts["median"] is not None else "。")
+    if facts["fired"]:
+        out += "已成立的過熱類複合規則：" + "、".join(facts["fired"]) + "。"
+    return out
 
 
 def _alert_sentence(facts):
@@ -775,12 +817,24 @@ def _alert_drivers_sentence(facts):
     return "分數主要來自：" + "、".join(facts["drivers"][:4]) + "。"
 
 
-def _red_sentence(n_red, top_fact=None):
-    """紅燈一句話；沒有紅燈也要明講，讀者才知道今天沒有最嚴重的事。"""
+def _red_sentence(n_red, top_fact=None, n_stress=None):
+    """紅燈一句話；沒有紅燈也要明講，讀者才知道今天沒有最嚴重的事。
+
+    n_stress＝紅燈裡屬壓力面（算進警戒度）的條數。拆分後紅燈可能不在警戒度裡
+    （單一商品大跌、否證指標越線），不講清楚會跟「警戒度 平靜」那句互相打架。"""
     if not n_red:
         return "今天沒有任何訊號亮紅燈。紅燈是最嚴重的一級。"
     out = f"有 {n_red} 條訊號亮紅燈，紅燈是最嚴重的一級。"
+    if n_stress is not None and n_stress < n_red:
+        if n_stress == 0:
+            out += "這幾條都沒算進警戒度，因為警戒度只算「市場有東西在壞」那一類。"
+        else:
+            out += f"其中 {n_stress} 條算進警戒度，另外 {n_red - n_stress} 條不算。"
     return out + (f"最嚴重的是：{top_fact}" if top_fact else "")
+
+
+def _n_red_stress(active_red):
+    return sum(1 for s in (active_red or []) if bd._signal_side(s) == "stress")
 
 
 def _gloss(desc):
@@ -796,6 +850,8 @@ def _composite_gap_sentence(c):
     """最接近成立的複合規則，一句白話：要幾件事、發生了哪些、還沒發生哪些。"""
     if not c:
         return None
+    if c.get("fired"):
+        return f"複合規則「{c.get('name') or c.get('id') or ''}」已成立。"
     met, need = c.get("met_count", 0), c.get("min_true", 0)
     members = c.get("members") or []
     done = [_gloss(m.get("desc")) for m in members if m.get("met")]
@@ -860,8 +916,21 @@ _DIM_ZH = {
 }
 
 
+def _dedupe_series(signals):
+    """同一條底層序列（例如 monitor 與 reversal 都抓到香港恆生）只留一條，
+    取最嚴重者；順序照第一次出現。沒有 key 的條目不去重。"""
+    groups, order = {}, []
+    for i, s in enumerate(signals or []):
+        k = bd._series_key(s) if s.get("key") else f"#{i}"
+        if k not in groups:
+            order.append(k)
+        groups.setdefault(k, []).append(s)
+    return [bd._series_rep(groups[k]) for k in order]
+
+
 def _dedupe_names(names):
-    """同一個標的常被兩個偵測器各抓一次；合併成「XLE 能源 ×2」，保留原順序。"""
+    """名字完全相同的兩條訊號合併成「XLE 能源 ×2」，保留原順序。
+    同一條序列已先由 _dedupe_series 合併，所以 ×N 只剩「兩條不同訊號剛好同名」。"""
     names = [n for n in names if n]
     count = Counter(names)
     return [f"{n} ×{count[n]}" if count[n] > 1 else n for n in dict.fromkeys(names)]
@@ -895,25 +964,96 @@ def _fmt_level(x, unit=""):
 KILL_NEAR_NOTE = "碰線就要回頭檢查那份報告的判斷。"
 
 
-def _kill_near_lines(kill_watch):
-    """離警戒線不到兩成的否證指標，一條一句：哪份報告、哪個數字、現在多少、到多少要回頭檢查。"""
-    if not kill_watch:
-        return []
-    items = {it.get("id"): it for it in (kill_watch.get("items") or []) if isinstance(it, dict)}
-    out = []
-    for nid in kill_watch.get("near") or []:
+PACE_NOTE = "「照平常的速度」是照這個數字最近 30 個資料點的平常波動估的，只是粗估，不是預測。"
+
+
+def _pace_phrase(days):
+    """走到警戒線的粗估日曆天數 → 白話；估不出來回空字串。"""
+    if days is None:
+        return ""
+    if days <= 14:
+        return "照平常的速度，幾天內就可能碰到"
+    if days <= 60:
+        return "照平常的速度，大約要幾週才會碰到"
+    if days <= 365:
+        return "照平常的速度，大約要幾個月才會碰到"
+    if days <= 3 * 365:
+        return "照平常的速度，大約要一兩年才會碰到"
+    return "照平常的速度，要好幾年才會碰到"
+
+
+def _kill_group_lines(kill_watch, ids, breached=False):
+    """一批否證指標 → 每條一句，依「照平常速度多久碰線」由近到遠排；
+    同一個數字、同一條線被兩份報告各列一次（例：美元 ≥102）合併成一句並點名兩份報告。"""
+    items = {it.get("id"): it for it in (kill_watch or {}).get("items", []) if isinstance(it, dict)}
+    rows = []
+    for nid in ids or []:
         it = items.get(nid) or {}
         title = _doc_title(it.get("doc")) or it.get("theme") or ""
-        metric = it.get("metric_text") or nid
+        ds = it.get("data_source") or {}
+        gkey = (ds.get("type"), ds.get("key"), it.get("op"), it.get("value")) if ds else (nid,)
+        rows.append((gkey, nid, title, it))
+    merged, order = {}, []
+    for gkey, nid, title, it in rows:
+        if gkey not in merged:
+            order.append(gkey)
+            merged[gkey] = {"titles": [], "it": it, "nid": nid}
+        if title and title not in merged[gkey]["titles"]:
+            merged[gkey]["titles"].append(title)
+
+    def days_of(g):
+        d = merged[g]["it"].get("days_to_line")
+        return d if isinstance(d, (int, float)) else float("inf")
+
+    out = []
+    for g in sorted(order, key=days_of):
+        it, title = merged[g]["it"], "、".join(merged[g]["titles"])
+        metric = it.get("metric_text") or merged[g]["nid"]
         head = f"{title}：{metric}" if title else metric
         cur, val = it.get("current"), it.get("value")
         if cur is None or val is None:
             out.append(head + "。")
             continue
         unit = it.get("unit") or ""
+        if breached:
+            out.append(f"{head}，現在 {_fmt_level(cur, unit)}，已經越過 {_fmt_level(val, unit)}")
+            continue
         verb = "跌到" if it.get("op") in ("<", "<=") else "升到"
-        out.append(f"{head}，現在 {_fmt_level(cur, unit)}，"
-                   f"{verb} {_fmt_level(val, unit)} 就碰線")
+        line = (f"{head}，現在 {_fmt_level(cur, unit)}，"
+                f"{verb} {_fmt_level(val, unit)} 就碰線")
+        pace = _pace_phrase(it.get("days_to_line"))
+        out.append(line + (f"；{pace}" if pace else ""))
+    return out
+
+
+def _kill_near_lines(kill_watch):
+    """離警戒線不到兩成的否證指標：哪份報告、哪個數字、現在多少、到多少碰線、照平常速度多久。"""
+    if not kill_watch:
+        return []
+    return _kill_group_lines(kill_watch, kill_watch.get("near"))
+
+
+def _kill_breached_lines(kill_watch):
+    if not kill_watch:
+        return []
+    return _kill_group_lines(kill_watch, kill_watch.get("breached"), breached=True)
+
+
+def _kill_minute_sentence(kill_watch):
+    """一分鐘版「報告要重看」一行：幾條已越線，另外還有幾條在兩成內、最快的一條多久會碰。
+    否證指標已移出警戒度，這行是它唯一的一分鐘版出口。"""
+    if not kill_watch:
+        return None
+    n_b = len(kill_watch.get("breached") or [])
+    near = kill_watch.get("near") or []
+    items = {it.get("id"): it for it in kill_watch.get("items", []) if isinstance(it, dict)}
+    out = (f"報告要重看：{n_b} 條否證指標已越線。" if n_b
+           else "報告要重看：目前沒有否證指標越線。")
+    if near:
+        days = [items.get(i, {}).get("days_to_line") for i in near]
+        days = [d for d in days if isinstance(d, (int, float))]
+        out += f"另有 {len(near)} 條離警戒線不到兩成"
+        out += (f"，其中最快的一條，{_pace_phrase(min(days))}。" if days else "。")
     return out
 
 
@@ -941,7 +1081,7 @@ def _near_composite_lines(composites):
 
 def _escalated_names_and_note(signals):
     """今天確認持續或加重的訊號名字；若全是「黃燈連亮沒退」要講明，免得被當成變嚴重。"""
-    es = [s for s in (signals or []) if s.get("state") == "escalated"]
+    es = _dedupe_series([s for s in (signals or []) if s.get("state") == "escalated"])
     names = _dedupe_names([s.get("label") or s.get("key") for s in es])
     kinds = {((s.get("escalations") or [{}])[-1] or {}).get("type") for s in es}
     note = ""
@@ -954,7 +1094,7 @@ def _escalated_names_and_note(signals):
 def _yellow_by_dim(signals):
     """黃燈依大類分組：[(大類中文, 條數, [名字])]，條數多的在前。"""
     groups = {}
-    for s in signals or []:
+    for s in _dedupe_series(signals):
         if s.get("sev") == "red":
             continue
         groups.setdefault(s.get("dim") or "other", []).append(s.get("label") or s.get("key"))
@@ -963,13 +1103,27 @@ def _yellow_by_dim(signals):
     return sorted(rows, key=lambda r: -r[1])
 
 
+def _kill_blocks(kill_watch):
+    """「這些數字是哪些」的否證指標兩塊：已越線、不到兩成（都依碰線快慢排序）。"""
+    blocks = []
+    n_b = len((kill_watch or {}).get("breached") or [])
+    n_n = len((kill_watch or {}).get("near") or [])
+    b_lines = _kill_breached_lines(kill_watch)
+    n_lines = _kill_near_lines(kill_watch)
+    merge_note = "同一個數字被兩份報告各列一次的，合併成一行。"
+    if b_lines:
+        blocks.append((f"已越線的否證指標（{n_b} 條）", b_lines,
+                       KILL_NEAR_NOTE + (merge_note if len(b_lines) < n_b else "")))
+    if n_lines:
+        blocks.append((f"離警戒線不到兩成的否證指標（{n_n} 條）", n_lines,
+                       KILL_NEAR_NOTE + (merge_note if len(n_lines) < n_n else "") + PACE_NOTE))
+    return blocks
+
+
 def _which_ones_digest(latest, composites_all, kill_watch):
     """每日信「這些數字是哪些」：回傳 [(小標題, [條目], 補充句或 "")]。"""
     blocks = []
-    near_kill = _kill_near_lines(kill_watch)
-    if near_kill:
-        blocks.append((f"離警戒線不到兩成的否證指標（{len(near_kill)} 條）", near_kill,
-                       KILL_NEAR_NOTE))
+    blocks += _kill_blocks(kill_watch)
     n_comp = len(composites_all or [])
     near_c = _near_composite_lines(composites_all)
     if n_comp:
@@ -978,25 +1132,25 @@ def _which_ones_digest(latest, composites_all, kill_watch):
                        "" if near_c else f"{n_comp} 組都還差兩件以上。"))
     names, note = _escalated_names_and_note(latest.get("signals"))
     if names:
-        n_es = sum(1 for s in latest.get("signals") or [] if s.get("state") == "escalated")
+        n_es = len(_dedupe_series([s for s in latest.get("signals") or []
+                                   if s.get("state") == "escalated"]))
         blocks.append((f"今天確認還在持續或加重的訊號（{n_es} 條）", ["、".join(names) + "。"], note))
     dims = _yellow_by_dim(latest.get("signals"))
     if dims:
         n_y = sum(r[1] for r in dims)
         blocks.append((f"{n_y} 條黃燈分在哪裡",
                        [f"{name}（{n} 條）：{'、'.join(labels)}" for name, n, labels in dims],
-                       "同一個標的被兩個偵測器各抓到一次，會標成 ×2。"
-                       if any("×" in "、".join(r[2]) for r in dims) else ""))
+                       "同一個標的只列一次，所以這裡的條數會比上面的黃燈總數少。"
+                       "標 ×2 的是兩條不同訊號剛好同名。"
+                       if any("×" in "、".join(r[2]) for r in dims)
+                       else "同一個標的只列一次，所以這裡的條數會比上面的黃燈總數少。"))
     return blocks
 
 
 def _which_ones_weekly(d):
     """週報「這些數字是哪些」：否證指標接近的是哪些、連亮沒退的黃燈是哪些。"""
     blocks = []
-    near_kill = _kill_near_lines(d.get("kill_watch"))
-    if near_kill:
-        blocks.append((f"離警戒線不到兩成的否證指標（{len(near_kill)} 條）", near_kill,
-                       KILL_NEAR_NOTE))
+    blocks += _kill_blocks(d.get("kill_watch"))
     keys = d.get("sustained_keys") or []
     if keys:
         names = _dedupe_names([
@@ -1058,15 +1212,21 @@ def render_digest(latest, state, force=False):
         quiet = _alert_sentence(_alert_facts(latest))
         if quiet:
             lines.append(quiet)
+        quiet_heat = _heat_sentence(_heat_facts(latest))
+        if quiet_heat:
+            lines.append(quiet_heat)
         lines.append(f"今天沒有紅燈，也沒有新訊號。黃燈有 {len(d['transitions'])} 條小變化，詳見網頁。")
         lines += _footer(has_active_red=False)
         return "\n".join(lines)
 
     facts = _alert_facts(latest)
-    for sentence in (_alert_sentence(facts), _alert_drivers_sentence(facts)):
+    for sentence in (_alert_sentence(facts), _alert_drivers_sentence(facts),
+                     _heat_sentence(_heat_facts(latest)),
+                     _kill_minute_sentence(load_json(DEFAULT_KILL_WATCH)),
+                     _composite_gap_sentence(d["closest_composite"])):
         if sentence:
             lines.append(sentence)
-    lines.append(_red_sentence(d["n_red"]))
+    lines.append(_red_sentence(d["n_red"], n_stress=_n_red_stress(d["active_red"])))
     lines.append(
         f"追蹤中 {d['n_total']} 條訊號，紅燈 {d['n_red']} 條、黃燈 {d['n_yellow']} 條。"
         f"今天新增 {d['new_count']} 條、確認持續或加重 {d['n_esc_total']} 條、"
@@ -1168,6 +1328,7 @@ def render_digest_html(latest, state, force=False):
         body = (
             f'<div style="font-size:14px;color:{_C_TEXT};">'
             f'{_alert_sentence_html(_alert_facts(latest)) or ""}'
+            f'{_h(_heat_sentence(_heat_facts(latest)) or "")}'
             f'今天沒有紅燈，也沒有新訊號。黃燈有 {len(d["transitions"])} 條小變化，詳見網頁。</div>'
         )
         return _html_doc(
@@ -1181,7 +1342,9 @@ def render_digest_html(latest, state, force=False):
     # ── 一分鐘版：先給機械層算好的結論（警戒度），再給理由，再給最接近成立的規則
     facts = _alert_facts(latest)
     bullets = []
-    for sentence in (_alert_sentence_html(facts), _alert_drivers_sentence(facts)):
+    for sentence in (_alert_sentence_html(facts), _alert_drivers_sentence(facts),
+                     _heat_sentence(_heat_facts(latest)),
+                     _kill_minute_sentence(load_json(DEFAULT_KILL_WATCH))):
         if sentence:
             bullets.append(sentence if sentence.startswith("警戒度") else _h(sentence))
     new_keys_today = d["new_keys_today"]
@@ -1189,10 +1352,10 @@ def render_digest_html(latest, state, force=False):
     if active_red:
         top_red = sorted(active_red, key=lambda s: -s.get("score", 0))[0]
         top_fact = top_red.get("fact") or top_red.get("label", "")
-    bullets.append(_h(_red_sentence(d["n_red"], top_fact)))
     gap = _composite_gap_sentence(d["closest_composite"])
     if gap:
         bullets.append(_h(gap))
+    bullets.append(_h(_red_sentence(d["n_red"], top_fact, _n_red_stress(active_red))))
 
     parts = [_minute_version(bullets), _glossary_html(" ".join(bullets))]
 
@@ -1413,6 +1576,9 @@ def render_weekly(latest, state):
     sentence = _alert_sentence(facts)
     if sentence:
         lines.append(sentence)
+    heat_line = _heat_sentence(_heat_facts(latest))
+    if heat_line:
+        lines.append(heat_line)
     lines.append(
         ("這週沒有新的紅燈。" if not d["new_red_this_week"]
          else f"這週新增 {len(d['new_red_this_week'])} 條紅燈。")
@@ -1518,6 +1684,9 @@ def render_weekly_html(latest, state):
     alert_html = _alert_sentence_html(facts)
     if alert_html:
         bullets.append(alert_html)
+    heat_line = _heat_sentence(_heat_facts(latest))
+    if heat_line:
+        bullets.append(_h(heat_line))
     bullets.append(
         ("這週沒有新的紅燈。" if not d["new_red_this_week"]
          else f"這週新增 <b>{len(d['new_red_this_week'])}</b> 條紅燈。")

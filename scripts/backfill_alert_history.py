@@ -8,7 +8,11 @@ docs/detective/data/alert_history_backfill.json（schema detective-alert-backfil
 與實盤線（docs/detective/data/alert_history.json，2026-07-15 起累積）不重疊：
 回測 end 固定 2026-07-14。
 
-points 元素＝[date, score, band, spx_close]（2026-07-16 新增第 4 欄）；
+2026-10-06 警戒度拆分（只數壓力面、否證指標移出計分，見 build_detective.
+compute_alert_level）後本檔重跑：points 元素＝[date, score, band, spx_close,
+heat_count]，heat_count 一律 null（crowding／rotation 在回測不可重建，熱度面
+缺最大宗來源，不給假數字）。
+points 元素原為 [date, score, band, spx_close]（2026-07-16 新增第 4 欄）；
 spx_close 為 ^GSPC 當日真實歷史收盤（raw_full["sp500"]，yfinance 全史直取，
 非重建近似），供頁面趨勢圖疊 SPY 對照線，取不到給 null、不影響分數計算
 （分數邏輯零改動，僅多此一欄）。
@@ -482,8 +486,8 @@ def run_backtest(raw, verbose_anchors):
 
         composites_out = bd.build_composites_output(rule_evals, state, D)
         signals = bd.render_signals(state)
-        # kw={} → kill 成分不計分（誠實排除，見上）
-        alert_level = bd.compute_alert_level(signals, composites_out, {}, D)
+        # 2026-10-06 起 compute_alert_level 本身不計 kill（移出分數），上方 kw 只供報告
+        alert_level = bd.compute_alert_level(signals, composites_out, D)
 
         if not recording:
             continue
@@ -491,7 +495,7 @@ def run_backtest(raw, verbose_anchors):
         # spx_close：^GSPC 真實歷史收盤（raw_full["sp500"]，yfinance 全史，非重建/估算），
         # 供頁面疊圖對照；_last_leq 與 kill_asof／monitor_asof 同一 as-of 語意（<=D 最後一筆）。
         spx_close = _last_leq(raw_full.get("sp500"), D)
-        points.append([D, alert_level["score"], band, spx_close])
+        points.append([D, alert_level["score"], band, spx_close, None])
         band_counts[band] = band_counts.get(band, 0) + 1
 
         if D in anchor_set or D in calm_probe:
@@ -517,17 +521,17 @@ def run_backtest(raw, verbose_anchors):
 
 def make_output(points, r9_since, kill_track):
     excluded = [
-        {"name": "variance", "why": "歷史財測共識不可重建（DD 基準 × 逐期共識快照無歷史）"},
-        {"name": "crowding", "why": "COT 5 年分位與主題擁擠需 8 年 CFTC 檔案工程，本輪排除"},
-        {"name": "rotation", "why": "RRG 120 日象限逐日重放工程大，本輪排除"},
-        {"name": "regime", "why": "大類資產 regime composite 無逐日歷史快照"},
-        {"name": "macro_clock", "why": "總經時鐘象限逐月序列未保存歷史"},
-        {"name": "composite_R6", "why": "成員為 crowding×rotation join，來源排除 → 全窗 dormant"},
-        {"name": "composite_R8", "why": "成員含 macro_clock 象限，來源排除 → 全窗 dormant"},
-        {"name": "sector_rotation_quadrant", "why": "us_sectors RRG 象限翻轉需 radar 歷史，排除；sector 單日 z 分歧仍納入"},
-        {"name": "fear_and_greed", "why": "CNN F&G 無公開歷史序列，結構事件此支排除"},
-        {"name": "internals_breadth_naaim_finra", "why": "只影響 internals 異常，不進 detective 主鏈，無需重建"},
-        {"name": "kill_mechanical",
+        {"name": "variance", "in_score": False, "why": "歷史財測共識不可重建（DD 基準 × 逐期共識快照無歷史）"},
+        {"name": "crowding", "in_score": False, "why": "COT 5 年分位與主題擁擠需 8 年 CFTC 檔案工程，本輪排除"},
+        {"name": "rotation", "in_score": False, "why": "RRG 120 日象限逐日重放工程大，本輪排除"},
+        {"name": "regime", "in_score": False, "why": "大類資產 regime composite 無逐日歷史快照"},
+        {"name": "macro_clock", "in_score": True, "why": "總經時鐘象限逐月序列未保存歷史"},
+        {"name": "composite_R6", "in_score": False, "why": "成員為 crowding×rotation join，來源排除 → 全窗 dormant"},
+        {"name": "composite_R8", "in_score": True, "why": "成員含 macro_clock 象限，來源排除 → 全窗 dormant"},
+        {"name": "sector_rotation_quadrant", "in_score": False, "why": "us_sectors RRG 象限翻轉需 radar 歷史，排除；sector 單日 z 分歧仍納入"},
+        {"name": "fear_and_greed", "in_score": True, "why": "CNN F&G 無公開歷史序列，結構事件此支排除"},
+        {"name": "internals_breadth_naaim_finra", "in_score": False, "why": "只影響 internals 異常，不進 detective 主鏈，無需重建"},
+        {"name": "kill_mechanical", "in_score": False,
          "why": ("刻意排除計分（雖機械可算）：12 條門檻為 as-of-2026 的 level/regime "
                  "觸發（DXY≥102／USDCNY>7.2／核心PCE≥3.5／DGS30≥5.5／HY OAS≥3.5…），"
                  "非平穩。套用於 2023-2025（當時 DXY 常>102、CNY 常>7.2、2023 PCE 高）"
@@ -537,9 +541,9 @@ def make_output(points, r9_since, kill_track):
                  "抽樣見 kill_reconstructed_monthly（僅供對照，未計分）。")},
     ]
     fidelity_notes = [
-        "回測分數為下界近似：缺 variance／crowding／rotation／regime／macro_clock／F&G／kill "
-        "等黃燈與紅燈源；惟 yellow_signal 硬封頂 18，繁忙日封頂飽和時缺源不影響分數，"
-        "平靜/留意日才是真正的下界。",
+        "回測分數為下界近似：2026-10-06 拆分後警戒度只數壓力面，排除源裡真正會少算的只有"
+        "macro_clock（移入滯脹）、R8 與 F&G 極端恐懼（components_excluded 標 in_score=true）；"
+        "variance／crowding／rotation／regime／kill 等本來就不進新分數，缺了不影響。",
         "kill 機械對帳刻意不計分（門檻非平穩、歷史套用會時代錯置，見 components_excluded）；"
         "auct_dealer 用 TreasuryDirect 標售全史、core_pce_yoy／payems_3m／bei10y 用 FRED "
         "全史，逐日可算，但因上述理由不進分數，只在 kill_reconstructed_monthly 供對照。",
@@ -551,13 +555,14 @@ def make_output(points, r9_since, kill_track):
         f"狀態機自記錄起點前 {STATE_WARMUP_DAYS} 交易日空跑暖機，使 days_active／escalated／"
         "sustained 在記錄起點已有前史（避免 cold-start 低估持續與升級成分）。",
         "權重與公式零複製：全程呼叫 build_detective.compute_alert_level 與 ALERT_WEIGHTS"
-        "（PREREG 凍結至 2026-10 校準），僅餵入可重建的成分（kw 傳空 dict 使 kill 不計分）。",
+        "（PREREG 凍結至 2026-10 校準），僅餵入可重建的成分。2026-10-06 拆分後分數只數壓力面"
+        "訊號與 R1-R5／R8 composite（見 _signal_side），過熱面不計分；heat_count 欄一律 null。",
     ]
     return {
         "schema": "detective-alert-backfill-v1",
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "method": ("同一 ALERT_WEIGHTS 對可重建成分逐日重算；狀態機逐日回放"
-                   "（build_detective 函數直用）；kill 成分刻意不計分"),
+                   "（build_detective 函數直用）；只數壓力面，kill 不計分"),
         "start": points[0][0], "end": points[-1][0],
         "components_included": ["monitor_z_pctile", "monitor_structural",
                                 "reversal", "sector_single_day_divergence",

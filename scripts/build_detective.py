@@ -40,9 +40,11 @@ workflow_run 重複觸發因此安全。
   · docs/detective/data/latest.json — schema detective-v2（頁面渲染）
   · docs/detective/data/state.json  — schema detective-state-v1（狀態機真相源）
   · docs/detective/data/alert_history.json — schema detective-alert-history-v1
-    （警戒度歷史軌跡，[date, score, band, spx_close] 逐點累積，供頁面趨勢圖
-    疊圖 S&P 500 對照；spx_close 取不到為 null；從落地當日起累積，不回填
-    過去——見 update_alert_history docstring）
+    （警戒度歷史軌跡，[date, score, band, spx_close, heat_count] 逐點累積，供頁面
+    趨勢圖疊圖 S&P 500 對照；spx_close 取不到為 null；heat_count 是 2026-10-06
+    警戒度拆分起的熱度亮燈數；從落地當日起累積，不回填過去——見
+    update_alert_history docstring；2026-10-06 拆分時另以一次性腳本
+    recompute_alert_history_split.py 用新算法重算既有實盤點）
   · detective_alert.txt（未 commit）— 紅燈級＋今日新增＋今日升級（扣除 mute），
     供 GitHub Actions email 步驟
 
@@ -148,15 +150,16 @@ COMPOSITE_BONUS = 1.0         # composite 成員加成（Phase 3 掛鉤）
 # compute_alert_level docstring）。權重集中於此，PREREG 凍結至下輪校準
 # （2026-10）；校準時只在此調 pts／cap，公式結構不動。
 # 每成分＝命中數 × pts，各自封頂 cap，加總後 clamp 0-100。黃燈 cap 是關鍵：
-# 今日 26 條黃燈也只計 18 分，多黃燈**不得單獨把指針頂到緊張/警戒**。
+# 黃燈再多也只計 18 分，多黃燈**不得單獨把指針頂到緊張/警戒**。
+# 2026-10-06 拆分：警戒度只數「壓力面」（見 _signal_side）的訊號與 composite，
+# 「熱度」（擁擠／過熱）另列 heat_level、不計分；否證指標（kill）整組移出計分、
+# 另行呈現（kill_watch.json）。pts／cap 數值一個都沒動，只是不再計 kill 兩項。
 ALERT_WEIGHTS = {
     "red_signal":       {"pts": 8.0,  "cap": 30.0},   # 紅燈 signal（重）
     "yellow_signal":    {"pts": 0.7,  "cap": 18.0},   # 黃燈 signal（輕＋硬封頂）
     "composite_red":    {"pts": 12.0, "cap": 36.0},   # composite fired 紅（重）
     "composite_yellow": {"pts": 6.0,  "cap": 18.0},   # composite fired 黃
     "composite_near":   {"pts": 6.0,  "cap": 15.0},   # near-fire（met==min_true−1，中）
-    "kill_breached":    {"pts": 14.0, "cap": 42.0},   # kill breached（很重）
-    "kill_near":        {"pts": 2.5,  "cap": 15.0},   # kill near（輕）
     "escalated":        {"pts": 4.0,  "cap": 16.0},   # 今日升級狀態數
     "sustained":        {"pts": 2.0,  "cap": 12.0},   # 持續紅燈（days_active 高）
 }
@@ -174,8 +177,6 @@ ALERT_DRIVER_LABELS = {
     "composite_red":    lambda n: f"{n} 組複合規則成立（紅）",
     "composite_yellow": lambda n: f"{n} 組複合規則成立（黃）",
     "composite_near":   lambda n: f"{n} 組複合規則只差一個條件就成立",
-    "kill_breached":    lambda n: f"{n} 條否證指標已越過警戒線",
-    "kill_near":        lambda n: f"{n} 條否證指標離警戒線不到兩成",   # near＝距閾值 20% 內
     # escalated 狀態含三種：sev_jump（黃→紅）、composite（併入成立規則）、
     # sustained（黃燈連 5 交易日且仍在峰值 8 成，黃→黃）。2026-09-18 的 9 條全是
     # sustained，寫「升級」會讓讀者以為變嚴重，故用涵蓋三種的說法。
@@ -363,8 +364,16 @@ def crowding_signals(crowd):
             (f"{e.get('label')}（{e.get('ticker')}）動能分位 {_fmt(mp)}"
              f"、偏離分位 {_fmt(e.get('deviation_pctile', 0) or 0)}"),
             "yellow", abs(mp - 50) / 10.0))
-    themes = sorted((t for t in crowd.get("themes", []) if t.get("score")),
-                    key=lambda t: -t["score"])[:3]
+    # 主題名正規化（去空白／連字號、轉小寫）後合併同名主題，保留較高分者
+    # （上游 "Advanced Packaging" 與 "AdvancedPackaging" 是同一主題；上游不動）
+    merged = {}
+    for t in crowd.get("themes", []):
+        if not t.get("score"):
+            continue
+        nk = _norm_theme(t.get("name", ""))
+        if nk not in merged or t["score"] > merged[nk]["score"]:
+            merged[nk] = t
+    themes = sorted(merged.values(), key=lambda t: -t["score"])[:3]
     for t in themes:
         if t["score"] < 70:
             continue
@@ -878,31 +887,216 @@ def _alert_band(score):
     return "alert", "警戒"
 
 
-def compute_alert_level(signals, composites, kw, as_of):
-    """警戒度 0-100 描述器（環境溫度計，非擇時訊號、非決策閘）.
+# ── 訊號分面：壓力面（stress）／過熱面（heat）／其他（other）─────────────────
+# 2026-10-06 拆分：舊警戒度把「市場漲太熱」（擁擠、動能、過熱）和「有東西在壞」
+# 混成一個數字，58 個實盤日與過去 5 日 S&P 報酬相關 +0.37（市場漲、分數也漲）。
+# 分面只看訊號「量的是什麼」，不看分完之後分數好不好看；拿不準的一律歸 other
+# （仍列在 email、不計任何分數）。
+_SIDE_RISK_ASSETS = frozenset({
+    # 股市指數（monitor indices）
+    "sp500", "ndx", "djia", "rut", "sox", "twii", "n225", "kospi", "hsi",
+    "dax", "stoxx", "ftse", "vt", "eem",
+    # 美股產業（monitor sectors）
+    "xlk", "xlf", "xle", "xlv", "xli", "xly", "xlp", "xlu", "xlb", "xlre",
+    "xlc", "xbi",
+    # 股票籃子型因子 ETF：量的是一籃股票的價格，與產業 ETF 同類
+    "mtum", "fngs", "arkk",
+})
+_SIDE_VOL_GAUGES = frozenset({"vix", "vix9d", "vvix", "move"})   # 波動壓力計（MOVE＝債券版 VIX）
+_SIDE_FIN_GAUGES = frozenset({"stlfsi", "nfci", "sofr_iorb"})    # 金融壓力／資金壓力
+_SIDE_CREDIT_SPREADS = frozenset({"hy_oas", "ig_oas", "ccc_oas"})  # 信用利差
+_SIDE_CREDIT_PRICES = frozenset({"hyg", "bkln", "hyg_lqd"})      # 利差驅動的信用價格
+_SIDE_STRESS_GAUGES = _SIDE_VOL_GAUGES | _SIDE_FIN_GAUGES | _SIDE_CREDIT_SPREADS
+# 複合規則分面（detective_rules R1-R9）
+STRESS_COMPOSITES = frozenset({"R1", "R2", "R3", "R4", "R5", "R8"})
+HEAT_COMPOSITES = frozenset({"R6", "R7", "R9"})
 
-    把警報網當前狀態聚合成單一總覽數字，餵頁面半圓威脅指針。純機械、確定性、
-    冪等（同 state／同 kw 重跑同分；signals 由 state 導出，故 replay 不變）。
+
+def _monitor_kind(fact):
+    """從 monitor 訊號的 fact 文字判斷規則種類與方向（key 的 :up/:down 會被
+    同一 series 的不同規則共用，fact 才是該鍵最後一次寫入的規則）。
+    回傳 (kind, dir)：kind ∈ curve_flip／vix_inv／credit_div／fg／lo52／lvl／
+    streak／move／None。"""
+    f = fact or ""
+    if "利差正負翻轉" in f:
+        return "curve_flip", None
+    if "短天期比長天期貴" in f:
+        return "vix_inv", None
+    if "股市漲但信用市場不買單" in f:
+        return "credit_div", None
+    if "Fear & Greed" in f:
+        return "fg", "fear" if "極端恐懼" in f else ("greed" if "極端貪婪" in f else None)
+    if "觸及一年新低" in f:
+        return "lo52", "down"
+    # 水位型：現行寫「進入一年歷史高位前／落到一年歷史低位後」，早期快照寫
+    # 「進入一年水位前／落到一年水位後」，兩種都要認
+    if "進入一年" in f:
+        return "lvl", "hi"
+    if "落到一年" in f:
+        return "lvl", "lo"
+    if "連續" in f and "日上漲" in f:
+        return "streak", "up"
+    if "連續" in f and "日下跌" in f:
+        return "streak", "down"
+    if "漲幅" in f and ("單日" in f or "單期" in f):
+        return "move", "up"
+    if "跌幅" in f and ("單日" in f or "單期" in f):
+        return "move", "down"
+    return None, None
+
+
+def _monitor_side(series, fact):
+    kind, d = _monitor_kind(fact)
+    risk = series in _SIDE_RISK_ASSETS
+    if kind == "curve_flip":
+        return "stress" if series == "t10y2y" else "other"
+    if kind in ("vix_inv", "credit_div"):
+        return "stress"
+    if kind == "fg":
+        return {"fear": "stress", "greed": "heat"}.get(d, "other")
+    if kind == "lo52":
+        return "stress" if risk else "other"
+    if kind == "move":
+        if risk:
+            return "stress" if d == "down" else "heat"     # z ≤ −2 重挫／z ≥ +2 急漲
+        if series in _SIDE_STRESS_GAUGES:
+            return "stress" if d == "up" else "other"        # 壓力計急升；急降＝解壓，歸 other
+        if series in _SIDE_CREDIT_PRICES:
+            return "stress" if d == "down" else "other"
+        return "other"
+    if kind == "lvl":
+        if d == "hi":
+            if risk:
+                return "heat"
+            return "stress" if series in _SIDE_STRESS_GAUGES else "other"
+        if d == "lo":
+            if risk or series in _SIDE_CREDIT_PRICES:
+                return "stress"
+            return "heat" if series in _SIDE_STRESS_GAUGES else "other"   # 壓力計極低＝自滿
+        return "other"
+    if kind == "streak":
+        return "heat" if (risk and d == "up") else "other"   # 連跌歸 other（見分類表）
+    return "other"
+
+
+def _signal_side(sig):
+    """訊號分面：回傳 "stress"（有東西在壞）／"heat"（漲太熱、大家擠一邊）／
+    "other"（只列示、不計分）。只看訊號量的是什麼。
+
+    stress：風險資產（股指、產業）單日重挫（z ≤ −2）／一年新低／水位分位 ≤ 2；
+      壓力計升高（VIX／VVIX／MOVE／VIX 期限倒掛、信用利差走寬、HYG／BKLN／HYG-LQD 走弱、
+      股漲信用不買單、STLFSI／NFCI／SOFR−IORB）；10Y−2Y 翻轉；Fear & Greed ≤ 10；
+      產業下跌分歧與叢集；總經時鐘移入滯脹。
+    heat：所有 crowding（COT 極端、ETF 動能極端、主題擁擠）；風險資產水位分位 ≥ 98、
+      連漲 ≥ 5 日、單日急漲；壓力計極低（自滿）；Fear & Greed ≥ 90；產業上漲分歧。
+    other：商品／外匯／利率單日波動、reversal 三點翻折、rotation／產業象限翻轉、
+      regime 轉換、variance（EPS 漂移）、kill 否證指標、連跌 streak、因子比值、
+      加密資產、SKEW／實質利率／期限溢價／通膨預期／初領失業金，以及一切拿不準的。"""
+    key = sig.get("key", "")
+    parts = key.split(":")
+    src = parts[0] if parts else ""
+    fact = sig.get("fact", "")
+    if src == "crowding":
+        return "heat"
+    if src == "sector":
+        sub = parts[1] if len(parts) > 1 else ""
+        if sub == "diverge":
+            d = parts[-1]
+            return "stress" if d == "down" else ("heat" if d == "up" else "other")
+        if sub == "cluster":
+            return "stress"
+        return "other"                      # sector:rotation 象限翻轉
+    if src == "macro_clock":
+        return "stress" if "移至「滯脹」" in fact else "other"
+    if src == "monitor" and len(parts) >= 3:
+        return _monitor_side(parts[2], fact)
+    return "other"                          # reversal／rotation／regime／variance／kill
+
+
+def _norm_theme(name):
+    return re.sub(r"[\s\-_]+", "", str(name).lower())
+
+
+def _series_key(sig):
+    """底層序列鍵：同一條序列在不同源／不同方向的訊號歸同一鍵（每面只算一次）。
+    monitor／reversal／sector:diverge 同指一個 monitor series（如 hsi）；
+    rotation:quadrant 與 sector:rotation 同指雷達 ticker（up／down 同一條）；
+    crowding 主題名去空白連字號後比對（AdvancedPackaging＝Advanced Packaging）。"""
+    key = sig.get("key", "")
+    parts = key.split(":")
+    src = parts[0] if parts else ""
+    if src in ("monitor", "reversal") and len(parts) >= 3:
+        return "m:" + parts[2].lower()
+    if src == "sector" and len(parts) >= 3:
+        if parts[1] == "diverge":
+            return "m:" + parts[2].lower()
+        if parts[1] == "rotation":
+            return "q:" + parts[2].upper()
+        return "sector:" + parts[1]
+    if src == "rotation" and len(parts) >= 3:
+        return "q:" + parts[2].upper()
+    if src == "crowding" and len(parts) >= 3:
+        if parts[1] == "theme":
+            return "crowd:theme:" + _norm_theme(":".join(parts[2:]))
+        return f"crowd:{parts[1]}:" + ":".join(parts[2:]).lower()
+    return key
+
+
+def _side_series(signals, side):
+    """某一面的訊號依 _series_key 去重：回傳 {series_key: [成員 signal…]}。"""
+    groups = {}
+    for s in (signals or []):
+        if _signal_side(s) == side:
+            groups.setdefault(_series_key(s), []).append(s)
+    return groups
+
+
+def _series_rep(members):
+    """同一序列取最嚴重、其次分數最高者代表。"""
+    return max(members, key=lambda m: (m.get("sev") == "red",
+                                       m.get("score") or 0,
+                                       m.get("days_active") or 0))
+
+
+def compute_heat_level(signals, composites, as_of):
+    """熱度（heat_level）：「漲太熱、大家擠一邊」亮了幾盞。
+    count＝過熱面（_signal_side == heat）不同底層序列的數目（去重同警戒度）；
+    composites_fired＝已成立的過熱面複合規則（R6／R7／R9）。不計分、不加權；
+    「平常大約幾盞」由讀取端用 alert_history 第 5 欄中位數算。"""
+    groups = _side_series(signals, "heat")
+    fired = sorted(c["id"] for c in (composites or [])
+                   if c.get("fired") and c.get("id") in HEAT_COMPOSITES)
+    return {"count": len(groups), "composites_fired": fired, "as_of": as_of}
+
+
+def compute_alert_level(signals, composites, as_of):
+    """警戒度 0-100 描述器（「有東西在壞」溫度計，非擇時訊號、非決策閘）.
+
+    把警報網當前**壓力面**狀態聚合成單一總覽數字，餵頁面半圓威脅指針。純機械、
+    確定性、冪等（同 state 重跑同分；signals 由 state 導出，故 replay 不變）。
     **是 describer 不是 signal**：不預測轉折時點、不給買賣指令、不改任何裁決；
     band_label 一律用環境溫度語言（平靜/留意/升溫/緊張/警戒），drivers 是事實
     陳述（「X 條紅燈」「N 項複合規則距觸發差 1 成員」）非建議。因此不登記
     rule_ledger（它不是 veto/gate/救援/hysteresis 這類判斷類閘）。
 
-    公式（權重集中於模組頂部 ALERT_WEIGHTS，PREREG 凍結至 2026-10 校準）：
-      score = clamp_0_100( Σ min(命中數 × pts, cap) )，各成分：
-        · red_signal      紅燈 signal 數（重）
-        · yellow_signal   黃燈 signal 數（輕，**硬封頂 18**——今日 26 條黃燈
-                          也只計 18 分，多黃燈不得單獨把指針頂到緊張/警戒）
-        · composite_red / composite_yellow  composite fired（重／中）
-        · composite_near  near-fire＝met_count==min_true−1 且 active 未 fire（中）
-        · kill_breached   kill 越線（很重）／ kill_near  接近閾值（輕）
-        · escalated       今日升級狀態數 ／ sustained  紅燈 days_active≥5（持續）
-    band 對映：calm 0-20 / watch 20-40 / warming 40-60 / tense 60-80 /
-    alert 80-100（下界含、上界不含）。缺檔／缺欄的成分 fail-soft 給 0、不炸。
+    2026-10-06 拆分（擁有者核可）：只數壓力面——_signal_side(sig)=="stress" 的
+    訊號與 STRESS_COMPOSITES（R1-R5、R8）；過熱面（擁擠／動能／急漲）改由
+    compute_heat_level 另列、不進分數；否證指標（kill）整組移出（另行呈現，
+    不再計 kill_breached／kill_near）。每面每條底層序列只算一次（_series_key）。
 
-    校準錨（as_of 2026-07-14 真實資料：1 紅 26 黃、9 composite 全未 fire（R7
-    near）、kill 0 breached 6 near）刻意落在 warming 中段（約 47 分）——這是
-    「有東西在動但沒觸發」的典型日常態，指針該指中間而非警戒。
+    公式（權重集中於模組頂部 ALERT_WEIGHTS，PREREG 凍結至 2026-10 校準，
+    pts／cap 與拆分前完全相同）：
+      score = clamp_0_100( Σ min(命中數 × pts, cap) )，各成分：
+        · red_signal      壓力面紅燈序列數（重）
+        · yellow_signal   壓力面黃燈序列數（輕，**硬封頂 18**）
+        · composite_red / composite_yellow  壓力面 composite fired（重／中）
+        · composite_near  壓力面 near-fire＝met_count==min_true−1 且 active 未 fire
+        · escalated       壓力面今日升級狀態數 ／ sustained  紅燈 days_active≥5
+    band 對映：calm 0-20 / watch 20-40 / warming 40-60 / tense 60-80 /
+    alert 80-100（下界含、上界不含）。缺欄的成分 fail-soft 給 0、不炸。
+
+    舊校準錨（2026-07-14：1 紅 26 黃、kill 6 near、約 47 分）是拆分前公式的數字，
+    已作廢；拆分後同日只剩壓力面成分，分數低得多，屬預期。
     """
     w = ALERT_WEIGHTS
     comps = {}                              # 成分名 -> (命中數, 加總分)
@@ -912,15 +1106,24 @@ def compute_alert_level(signals, composites, kw, as_of):
         comps[name] = (hits, round(pts, 2))
         return pts
 
-    signals = signals or []
-    n_red = sum(1 for s in signals if s.get("sev") == "red")
-    n_yellow = sum(1 for s in signals if s.get("sev") != "red")
-    n_esc = sum(1 for s in signals if s.get("state") == "escalated")
-    n_sustained = sum(1 for s in signals if s.get("sev") == "red"
-                      and (s.get("days_active") or 0) >= ALERT_SUSTAINED_DAYS)
+    groups = _side_series(signals, "stress")
+    n_red = n_yellow = n_esc = n_sustained = 0
+    for members in groups.values():
+        rep = _series_rep(members)
+        if rep.get("sev") == "red":
+            n_red += 1
+        else:
+            n_yellow += 1
+        if any(m.get("state") == "escalated" for m in members):
+            n_esc += 1
+        if any(m.get("sev") == "red" and (m.get("days_active") or 0) >= ALERT_SUSTAINED_DAYS
+               for m in members):
+            n_sustained += 1
 
     c_red = c_yellow = c_near = 0
     for c in (composites or []):
+        if c.get("id") not in STRESS_COMPOSITES:
+            continue
         if c.get("fired"):
             if c.get("sev") == "red":
                 c_red += 1
@@ -930,18 +1133,12 @@ def compute_alert_level(signals, composites, kw, as_of):
               and c.get("met_count", 0) == (c.get("min_true") or 0) - 1):
             c_near += 1
 
-    kw = kw or {}
-    n_kill_breached = len(kw.get("breached") or [])
-    n_kill_near = len(kw.get("near") or [])
-
     score = 0.0
     score += add("red_signal", n_red)
     score += add("yellow_signal", n_yellow)
     score += add("composite_red", c_red)
     score += add("composite_yellow", c_yellow)
     score += add("composite_near", c_near)
-    score += add("kill_breached", n_kill_breached)
-    score += add("kill_near", n_kill_near)
     score += add("escalated", n_esc)
     score += add("sustained", n_sustained)
     score_i = max(0, min(100, int(round(score))))
@@ -980,14 +1177,14 @@ def spx_close_now(latest):
     return round(v, 4) if v == v else None  # v==v 排除 NaN
 
 
-def update_alert_history(as_of, alert_level, spx_close=None):
-    """把當日 alert_level 壓成 [date, score, band, spx_close] 累加進
+def update_alert_history(as_of, alert_level, spx_close=None, heat_count=None):
+    """把當日 alert_level 壓成 [date, score, band, spx_close, heat_count] 累加進
     alert_history.json，供頁面威脅指針下方的歷史趨勢圖（含 SPY 疊圖對照）。
 
     第 4 元素 spx_close＝當日 S&P 500 收盤（float，取不到給 None/null，
-    JSON 序列化為 null）。**向後相容**：既有舊點（3 元素，落地於加 SPY 欄位
-    之前）不回改——只有本次新寫入／覆寫的點帶第 4 元素；前端讀取需容忍
-    len(point)==3 的舊點（spx 視為 null）。
+    JSON 序列化為 null）。第 5 元素 heat_count＝當日熱度亮燈數（2026-10-06 拆分
+    起，compute_heat_level.count）。**向後相容**：只增不改——讀取端用 p[1..3]，
+    需容忍 len(point)==3／4 的舊點（缺的欄視為 null）。
 
     冪等規則（精確對齊 build_monitor.py 零 churn 協議）：
       · 檔不存在／schema 不符 → 視為空、建立新檔（今天首跑即 seed 第 1 點）
@@ -1006,7 +1203,8 @@ def update_alert_history(as_of, alert_level, spx_close=None):
     if not hist or hist.get("schema") != ALERT_HISTORY_SCHEMA:
         hist = {"schema": ALERT_HISTORY_SCHEMA, "points": []}
     points = list(hist.get("points") or [])
-    point = [as_of, alert_level.get("score"), alert_level.get("band"), spx_close]
+    point = [as_of, alert_level.get("score"), alert_level.get("band"), spx_close,
+             heat_count]
     if points and points[-1][0] == as_of:
         points[-1] = point
     elif points and points[-1][0] > as_of:
@@ -1087,15 +1285,18 @@ def main():
     stale = source_staleness(as_of, sources)
     gen = radar.get("generated_at") or latest.get("generated_at")
 
-    alert_level = compute_alert_level(signals, composites_out, kw, as_of)
+    alert_level = compute_alert_level(signals, composites_out, as_of)
+    heat_level = compute_heat_level(signals, composites_out, as_of)
     spx_close = spx_close_now(latest)
-    ch_history = update_alert_history(as_of, alert_level, spx_close)
+    ch_history = update_alert_history(as_of, alert_level, spx_close,
+                                      heat_level["count"])
 
     out = {
         "schema": "detective-v2",
         "as_of": as_of,
         "generated_at": gen,
         "alert_level": alert_level,
+        "heat_level": heat_level,
         "counts": {"total": len(signals), "red": len(sev_red),
                    "yellow": len(signals) - len(sev_red),
                    "new": by_state["new"], "active": by_state["active"],

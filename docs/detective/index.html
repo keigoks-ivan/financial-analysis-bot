@@ -122,8 +122,7 @@ a:hover{color:var(--accent-hover)}
 .gauge-band-chip.b-tense{color:var(--tense);background:var(--tense-bg)}
 .gauge-band-chip.b-alert{color:var(--neg);background:var(--neg-bg)}
 .gauge-meta{margin-top:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--text-muted);line-height:1.7}
-.gauge-fallback-note{margin-top:.6rem;font-size:.74rem;color:var(--warn);background:var(--warn-bg);
-                     padding:.5rem .75rem;border-radius:6px;max-width:520px;line-height:1.6}
+.gauge-heat{margin-top:.1rem;color:var(--text-secondary)}
 .gauge-drivers{margin-top:1.1rem}
 .gauge-drivers h3{font-family:var(--serif);font-size:.86rem;font-weight:700;color:var(--text);margin-bottom:.5rem}
 .gauge-drivers ul{list-style:none;display:flex;flex-direction:column;gap:.35rem}
@@ -652,7 +651,7 @@ footer.imq-foot a{color:var(--accent)}
 <div class="section" id="detective-gauge">
   <div class="container">
     <h2 class="section-title">威脅指針 · 當日警戒度</h2>
-    <p class="section-note">指針位置＝機械層 alert_level 分數（0-100），5 檔刻度平靜／留意／升溫／緊張／警戒；下方列出當日推高分數的具體事實。分數本身仍是描述器，不代表擇時或買賣建議。</p>
+    <p class="section-note">指針位置＝機械層 alert_level 分數（0-100），5 檔刻度平靜／留意／升溫／緊張／警戒。分數只算「有東西在壞」的訊號（股市重挫、信用變差、波動升高這類）；漲太熱、大家擠在同一邊的另列為熱度，不計分；研究報告的否證指標也不在分數裡，見 ④。下方列出當日推高分數的具體事實。分數本身仍是描述器，不代表擇時或買賣建議。</p>
     <div class="gauge-panel">
       <div class="gauge-wrap">
         <div class="gauge-visual" id="gaugeSvgWrap"></div>
@@ -662,7 +661,7 @@ footer.imq-foot a{color:var(--accent)}
             <span class="gauge-band-chip" id="gaugeBandChip">載入中</span>
           </div>
           <div class="gauge-meta" id="gaugeMeta">載入中…</div>
-          <div class="gauge-fallback-note" id="gaugeFallbackNote" hidden></div>
+          <div class="gauge-meta gauge-heat" id="gaugeHeat">熱度：—</div>
           <div class="gauge-drivers">
             <h3>推高原因</h3>
             <ul id="gaugeDrivers"><li class="empty">載入中…</li></ul>
@@ -970,21 +969,6 @@ footer.imq-foot a{color:var(--accent)}
     });
     return n;
   }
-  function computeFallbackAlertLevel(det){
-    var c=(det&&det.counts)||{};
-    var red=c.red||0, yellow=c.yellow||0;
-    var nearFire=countNearFire((det&&det.composites)||[]);
-    var score=red*8+Math.min(yellow,20)+nearFire*5;
-    score=Math.max(0,Math.min(100,score));
-    var band=bandOfScore(score);
-    var drivers=[];
-    if(red)drivers.push({label:red+' 條紅燈訊號',points:red*8});
-    if(yellow)drivers.push({label:yellow+' 條黃燈訊號（採計上限 20 分）',points:Math.min(yellow,20)});
-    if(nearFire)drivers.push({label:nearFire+' 條組合規則近觸發（差一項成立）',points:nearFire*5});
-    if(!drivers.length)drivers.push({label:'目前無顯著推高原因',points:0});
-    return {score:score,band:band,band_label:BAND_LABEL_ZH[band],drivers:drivers,as_of:det&&det.as_of,_fallback:true};
-  }
-
   // 半圓威脅指針 SVG（5 色段背景弧＋指針三角形＋樞紐圓）
   function buildGaugeSVG(score,band){
     score=(typeof score==='number'&&!isNaN(score))?Math.max(0,Math.min(100,score)):0;
@@ -1053,7 +1037,28 @@ footer.imq-foot a{color:var(--accent)}
     }).join('');
   }
 
-  function renderGauge(det){
+  // 熱度（latest.json heat_level）：「漲太熱、大家擠一邊」亮了幾盞；平常幾盞＝實盤歷史
+  // 第 5 欄（p[4]）的中位數（少於 5 天不講）。不計分，只顯示。
+  function renderHeat(det,hist){
+    var el=document.getElementById('gaugeHeat');
+    var h=det&&det.heat_level;
+    if(!h||typeof h.count!=='number'){el.textContent='熱度：—';return;}
+    var vals=((hist&&hist.points)||[]).map(function(p){return p[4];})
+      .filter(function(v){return typeof v==='number'&&!isNaN(v);}).sort(function(a,b){return a-b;});
+    var txt='熱度：亮 '+h.count+' 盞';
+    if(vals.length>=5){
+      var m=vals.length%2?vals[(vals.length-1)/2]:(vals[vals.length/2-1]+vals[vals.length/2])/2;
+      txt+='，平常大約 '+Math.floor(m+0.5)+' 盞';
+    }
+    var names=(h.composites_fired||[]).map(function(id){
+      var c=((det&&det.composites)||[]).filter(function(x){return x&&x.id===id;})[0];
+      return c&&c.name?c.name:id;
+    });
+    if(names.length)txt+='；已成立的過熱類複合規則：'+names.join('、');
+    el.textContent=txt+'（漲太熱、大家擠在同一邊，不計入警戒度）';
+  }
+
+  function renderGauge(det,hist){
     var svgHost=document.getElementById('gaugeSvgWrap');
     var chip=document.getElementById('gaugeBandChip');
     if(!det||!det.signals){
@@ -1062,15 +1067,21 @@ footer.imq-foot a{color:var(--accent)}
       chip.className='gauge-band-chip';
       chip.textContent='資料暫缺';
       document.getElementById('gaugeMeta').textContent='偵測層資料暫時無法載入，指針顯示為預設狀態。';
+      document.getElementById('gaugeHeat').textContent='熱度：—';
       document.getElementById('gaugeDrivers').innerHTML='<li class="empty">—</li>';
-      document.getElementById('gaugeFallbackNote').hidden=true;
       return;
     }
+    renderHeat(det,hist);
     var al=det.alert_level;
-    var fallback=false;
     if(!al||typeof al.score!=='number'){
-      al=computeFallbackAlertLevel(det);
-      fallback=true;
+      // 機械層沒給警戒度就不在前端自己湊一個，顯示「—」
+      svgHost.innerHTML=buildGaugeSVG(0,'calm');
+      document.getElementById('gaugeScoreNum').textContent='—';
+      chip.className='gauge-band-chip';
+      chip.textContent='資料暫缺';
+      document.getElementById('gaugeMeta').textContent='機械層尚未產出警戒度。';
+      document.getElementById('gaugeDrivers').innerHTML='<li class="empty">—</li>';
+      return;
     }
     var band=al.band||bandOfScore(al.score);
     var bandLabel=al.band_label||BAND_LABEL_ZH[band]||band;
@@ -1082,15 +1093,8 @@ footer.imq-foot a{color:var(--accent)}
     var yellowN=(det.counts&&det.counts.yellow)!=null?det.counts.yellow:0;
     var nearFireN=countNearFire(det.composites);
     document.getElementById('gaugeMeta').textContent=
-      '紅燈 '+redN+' 條 · 黃燈 '+yellowN+' 條 · 組合規則近觸發 '+nearFireN+' 條'+(al.as_of?(' · as-of '+al.as_of):'');
+      '全部訊號：紅燈 '+redN+' 條 · 黃燈 '+yellowN+' 條 · 組合規則近觸發 '+nearFireN+' 條'+(al.as_of?(' · as-of '+al.as_of):'');
     document.getElementById('gaugeDrivers').innerHTML=renderGaugeDrivers(al.drivers);
-    var note=document.getElementById('gaugeFallbackNote');
-    if(fallback){
-      note.hidden=false;
-      note.textContent='註：alert_level 尚未由機械層產出，以上為前端暫用紅／黃燈數與組合規則近觸發數粗算的警戒度估計，非機械正式分數，僅供頁面先行可用。';
-    }else{
-      note.hidden=true;
-    }
   }
 
   // ── 警戒度歷史趨勢圖（威脅指針卡內、drivers 下方）── 2026-07-16 改雙軌渲染：
@@ -1203,7 +1207,10 @@ footer.imq-foot a{color:var(--accent)}
   }
   function buildExcludedNote(bf){
     if(!bf)return '';
-    var names=(bf.components_excluded||[]).map(function(c){return c&&c.name;}).filter(Boolean).map(excludedLabelOf);
+    // 2026-10-06 拆分後只列會讓警戒度少算的排除源（in_score!==false）；擁擠、輪動、
+    // 財測落差、否證指標等本來就不進新分數，列出來會誤導成「回測少算了它們」。
+    var names=(bf.components_excluded||[]).filter(function(c){return c&&c.in_score!==false;})
+      .map(function(c){return c.name;}).filter(Boolean).map(excludedLabelOf);
     if(!names.length)return '回測線分數為下界近似（部分成分不可重建）。';
     return '回測線未含'+esc(names.join('、'))+'成分，分數為下界近似。';
   }
@@ -2494,7 +2501,7 @@ footer.imq-foot a{color:var(--accent)}
       document.getElementById('loadingMsg').hidden=true;
       if(!det||!det.signals){
         document.getElementById('legacyListDetails').hidden=true;
-        try{renderGauge(null);}catch(e){}
+        try{renderGauge(null,alertHistory);}catch(e){}
         try{renderGaugeTrend(alertHistory,alertBackfill);}catch(e){}
         try{renderHeatWall(null);}catch(e){}
         // 全景磚牆讀原始 monitor/internals series，不依賴 det 是否可用——det 掛掉時
@@ -2559,7 +2566,7 @@ footer.imq-foot a{color:var(--accent)}
       }
 
       // ① 威脅指針
-      try{renderGauge(det);}catch(e){
+      try{renderGauge(det,alertHistory);}catch(e){
         document.getElementById('gaugeMeta').textContent='指針資料格式異常，暫無法渲染。';
       }
       try{renderGaugeTrend(alertHistory,alertBackfill);}catch(e){
