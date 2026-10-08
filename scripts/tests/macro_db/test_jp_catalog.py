@@ -13,15 +13,20 @@ CATALOG = Path(__file__).resolve().parents[2] / "macro_db" / "catalog" / "jp.jso
 REQUIRED = ["sid", "label_zh", "source", "freq", "unit", "sa", "license", "display", "axis"]
 # 每個 fetcher 的 params 至少要有的鍵（kind 為 None 代表沒有 kind）
 PARAM_KEYS = {
-    "jp_boj": {None: {"db", "code", "url"}, "cpirev": {"url", "cols", "col_label"}},
+    "jp_boj": {None: {"db", "code", "url"}, "cpirev": {"url", "cols", "col_label"},
+                "reri": {"sheet", "col", "col_check"}},
     "jp_esri": {"gdp": {"table", "col", "col_check", "url"}, "ci": {"col", "col_check", "url"},
-                "watcher": {"sheet", "col_label", "url"}, "machinery": {"sheet", "col", "col_check", "url"}},
+                "watcher": {"sheet", "col_label", "url"}, "watcher_sa": {"sheet", "col_label", "url"},
+                "machinery": {"sheet", "col", "col_check", "url"}},
     "jp_stat": {None: {"item", "files", "url"}},
     "jp_estat_file": {"lfs": {"sheet", "col", "col_check", "url"}, "wage": {"expect", "url"},
                       "iip": {"sheet", "item", "url"}},
-    "jp_mof": {"jgb": {"url", "recent_url", "tenor"}, "reserves": {"url", "col", "col_check", "scale"}},
+    "jp_mof": {"jgb": {"url", "recent_url", "tenor"}, "reserves": {"url", "col", "col_check", "scale"},
+               "securities": {"url", "col"}, "ssc_pct": {"url", "col", "col_check"},
+               "ssc_level": {"url", "col", "col_check"}, "tax": {"url", "col", "col_check"}},
     "jp_customs": {None: {"url", "col_name", "scale"}},
     "jp_misc": {"jnto": {"page"}, "mlit": {"page", "sheet", "col", "col_check"}},
+    "intl_bis": {None: {"dataflow", "key", "probe_url"}},
     "fred": {None: {"id"}},
 }
 
@@ -40,7 +45,7 @@ def all_series(cat):
 
 def test_catalog_top_level(cat):
     assert cat["country"] == "jp"
-    assert len(cat["categories"]) == 8
+    assert len(cat["categories"]) == 11
     for rec in cat["todo"]:
         assert rec["reason"] and rec["chart"]
     for rec in cat["unavailable"]:

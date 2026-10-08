@@ -5,9 +5,13 @@ kind=gdp      GDP 速報統計表 CSV（Shift_JIS）。網址含發布代碼（q
               params: table（ritu-jg / nritu-jk / ritu-jk / gaku-jk / gaku-mk / gaku-jg / kiyo-jg / kiyo-jk）,
                       col（0 起算）, col_check（該欄表頭應含的英文字串，偵測欄位改版）, url
 kind=ci       景氣動向指數 Excel（檔名 MMDDci.xlsx 每月變）：先抓 di.html 解析連結。
-              params: col（0 起算）, col_check, url
-kind=watcher  景氣觀察調查 watcher3.xls（固定網址，每月原地更新）。
+              params: col（0 起算）, col_check, url, file（選填：ci＝綜合指數檔〔預設〕、
+              ci1／ci2／ci3＝先行／一致／遲行各構成系列檔，檔名 MMDDci1.xlsx…）
+kind=watcher  景氣觀察調查 watcher3.xls（原數值，未季調；固定網址，每月原地更新）。
               params: sheet（工作表名開頭）, col_label（表頭文字，找欄）, url
+kind=watcher_sa 景氣觀察調查 watcher5.xls（官方季節調整值；內閣府新聞稿的 DI 指的就是這份）。
+              工作表「分野別（現状）」「分野別（先行き）」，表頭在第 3、4 列，年份在第 1 欄（「2002年」）、
+              月份在第 2 欄。params: sheet, col_label, url
 kind=machinery 機械訂單長期系列 Excel（檔名 YYMMchouki-1.xlsx 每月變）：先抓 juchu.html 解析連結。
               params: sheet, col, col_check, url
 """
@@ -23,6 +27,7 @@ GDP_TOP = "https://www.esri.cao.go.jp/jp/sna/sokuhou/sokuhou_top.html"
 CI_PAGE = "https://www.esri.cao.go.jp/jp/stat/di/di.html"
 JUCHU_PAGE = "https://www.esri.cao.go.jp/jp/stat/juchu/juchu.html"
 WATCHER = "https://www5.cao.go.jp/keizai3/watcher/watcher3.xls"
+WATCHER_SA = "https://www5.cao.go.jp/keizai3/watcher/watcher5.xls"
 
 
 # ---------- GDP 速報 ----------
@@ -94,11 +99,14 @@ def ci_obs(rows, col, col_check=None, what="") -> list:
 def fetch_ci(specs):
     cache = Cache()
     html = get(CI_PAGE)
-    url = find_link(html, r"\d{4}ci\.xlsx", CI_PAGE)
+    urls: dict = {}
 
     def one(s):
         p = s["params"]
-        sheets = sheets_any(cache.get_url(url))
+        f = p.get("file", "ci")
+        if f not in urls:
+            urls[f] = find_link(html, r"\d{4}%s\.xlsx" % f, CI_PAGE)
+        sheets = sheets_any(cache.get_url(urls[f]))
         rows = list(sheets.values())[0]
         return ci_obs(rows, p["col"], p.get("col_check"), s["sid"])
     return run_specs(specs, one)
@@ -147,6 +155,45 @@ def fetch_watcher(specs):
     return run_specs(specs, one)
 
 
+def watcher_sa_obs(rows, col_label: str) -> list:
+    col = None
+    for hr in (3, 4):
+        for c, x in enumerate(rows[hr]):
+            if x not in ("", None) and compact(x) == compact(col_label):
+                col = c
+                break
+        if col is not None:
+            break
+    if col is None:
+        raise ValueError("找不到表頭「%s」" % col_label)
+    out = []
+    year = None
+    for r in rows[5:]:
+        m = re.match(r"^(\d{4})年$", compact(r[1])) if len(r) > 1 and r[1] not in ("", None) else None
+        if m:
+            year = int(m.group(1))
+        if year is None or len(r) <= col:
+            continue
+        mon = month_of(r[2]) if len(r) > 2 else None
+        v = num(r[col])
+        if mon and v is not None:
+            out.append((d_month(year, mon), v))
+    return out
+
+
+def fetch_watcher_sa(specs):
+    cache = Cache()
+
+    def one(s):
+        p = s["params"]
+        sheets = sheets_any(cache.get_url(p.get("url") or WATCHER_SA))
+        name = next((n for n in sheets if compact(n).startswith(compact(p["sheet"]))), None)
+        if name is None:
+            raise ValueError("找不到工作表 %s*" % p["sheet"])
+        return watcher_sa_obs(sheets[name], p["col_label"])
+    return run_specs(specs, one)
+
+
 # ---------- 機械訂單 ----------
 
 def machinery_obs(rows, col, col_check=None, what="") -> list:
@@ -180,7 +227,8 @@ def fetch(specs):
     groups: dict = {}
     for s in specs:
         groups.setdefault(s["params"].get("kind"), []).append(s)
-    fns = {"gdp": fetch_gdp, "ci": fetch_ci, "watcher": fetch_watcher, "machinery": fetch_machinery}
+    fns = {"gdp": fetch_gdp, "ci": fetch_ci, "watcher": fetch_watcher, "watcher_sa": fetch_watcher_sa,
+           "machinery": fetch_machinery}
     res = {}
     for kind, group in groups.items():
         try:

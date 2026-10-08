@@ -6,7 +6,8 @@ statInfId 是固定編號：官方每次發布會把同一個檔案原地更新�
 
 kind=lfs     勞動力調查長期時系列表（xlsx）。params: sheet（工作表名開頭）, col, col_check, url
 kind=wage    每月勤勞統計長期時系列表（xls，sheet TL）。同一張表上段是指數、下段是「對前年同月增減率」，
-             依標題列切段，這裡取下段（官方公布的年增率）。params: expect（表頭應含的字串清單）, url
+             依標題列切段，這裡取下段（官方公布的年增率）。同一個檔的工作表 TL＝全產業、C～R＝各產業。
+             params: expect（表頭應含的字串清單）, sheet（選填，預設 TL）, url
 kind=iip     鉱工業指數 時系列表（xlsx）。params: sheet, item（品目番號，鉱工業總合＝1000000000）, url
 """
 from __future__ import annotations
@@ -99,7 +100,7 @@ def fetch_wage(specs):
     def one(s):
         p = s["params"]
         sheets = sheets_any(cache.get_url(p["url"]))
-        return wage_obs(sheets["TL"], p["expect"])
+        return wage_obs(sheets[p.get("sheet", "TL")], p["expect"])
     return run_specs(specs, one)
 
 
