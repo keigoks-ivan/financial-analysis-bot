@@ -40,9 +40,9 @@ def hspace(s):
 
 # ---------- 格式化 ----------
 def auto_nd(v):
-    """fnum 預設的小數位數；整數值（例如景氣分數 41）不帶小數。"""
+    """fnum 預設的小數位數；整數值（例如景氣分數 41）與剛好是 0（例如核能停機後的發電量）不帶小數。"""
     a = abs(v)
-    if a >= 1000 or (a >= 1 and float(v).is_integer()):
+    if a == 0 or a >= 1000 or (a >= 1 and float(v).is_integer()):
         return 0
     if a >= 100:
         return 1
