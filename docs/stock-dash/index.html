@@ -284,7 +284,7 @@ footer{margin-top:40px;padding:16px 0;border-top:1px solid var(--gold);text-alig
     <div class="exhibit">
       <div class="ex-label"></div>
       <div class="ex-title">EPS 預估修正 vs 股價</div>
-      <div class="ex-sub">三個回顧期間比較明年度 EPS 預估變動、股價漲跌與隱含本益比變動</div>
+      <div class="ex-sub">三個回顧期間比較同一日曆年的 EPS 預估變動、股價漲跌與隱含本益比變動</div>
       <div class="tbl-wrap"><table class="imq-table" id="revVsPriceTable"></table></div>
       <div class="conclusion" id="revVsPriceSentence"></div>
       <div class="ex-src">資料來源：dd-screener latest.json + eps-estimates-snapshots + yfinance 日收盤</div>
@@ -292,7 +292,7 @@ footer{margin-top:40px;padding:16px 0;border-top:1px solid var(--gold);text-alig
     <div class="exhibit">
       <div class="ex-label"></div>
       <div class="ex-title">股價 vs EPS 預估</div>
-      <div class="ex-sub">股價（左軸）與明年度／後年度 EPS 估計（右軸），自最早一份估值快照起</div>
+      <div class="ex-sub">股價（左軸）與今年、明年、後年三個日曆年的 EPS 估計（右軸）；財年落在大部分月份所在的那一年</div>
       <div class="chart-box" style="height:230px"><canvas id="chartFsOverlay"></canvas></div>
       <div class="ex-src">資料來源：yfinance 日收盤 + docs/dd-screener/eps-estimates-snapshots/</div>
     </div>
@@ -509,6 +509,11 @@ function fmtNum(v, nd){
   if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
   return Number(v).toLocaleString('en-US',{minimumFractionDigits:nd||0,maximumFractionDigits:nd||0});
 }
+// 數字＋單位；沒有值時只回「無資料」，不補單位
+function fmtU(v, nd, unit){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  return fmtNum(v,nd)+unit;
+}
 function fmtPct(v, nd){
   if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
   var s = v>=0?'+':'';
@@ -589,30 +594,36 @@ function buildVM(D, M){
   };
 
   // 投資摘要：4 條機械組句，數字全部取自既有欄位，下次財報天數固定用 dd-screener 口徑
-  var fyNext = c1.status==='ok' ? c1.table[1] : null;
+  var cy = c1.status==='ok' ? (c1.cy_revision||{}) : {};
+  // 舊版逐檔資料（沒有 cy_revision）：沿用明年度那一列，等每日重建後自動換成日曆年
+  if(c1.status==='ok' && !c1.cy_revision && c1.table && c1.table[1]){
+    var t1 = c1.table[1];
+    cy = {col:2, year:c1.fy_labels.next, vs_last_month_pct:t1.vs_last_month_pct, vs_3m_ago_pct:t1.vs_3m_ago_pct, vs_since_earnings_pct:t1.vs_since_earnings_pct, legacy:true};
+  }
   var summaryBullets = [];
   if(c1.status==='ok'){
     summaryBullets.push(
-      c1.fy_labels.next+' EPS 估計較上月 '+fmtPct(fyNext.vs_last_month_pct)+'，近 3 個月 '+fmtPct(fyNext.vs_3m_ago_pct)+
-      '，自上次財報以來 '+fmtPct(fyNext.vs_since_earnings_pct)+'。'
+      cy.col ? (cy.year+(cy.legacy?'':' 年')+' EPS 估計較上月 '+fmtPct(cy.vs_last_month_pct)+'，近 3 個月 '+fmtPct(cy.vs_3m_ago_pct)+
+                '，自上次財報以來 '+fmtPct(cy.vs_since_earnings_pct)+'。')
+             : ((cy.year||'')+' 年 EPS 估計變動：無資料（'+(cy.reason||'無法對到日曆年')+'）。')
     );
   }
   if(c2.status==='ok'){
     var b = c2.pe_bullet;
     summaryBullets.push(
-      '目前 NTM 本益比 '+fmtNum(b.pe_ntm_x,1)+'x，5 年均值 '+fmtNum(b.pe_ntm_5y_avg_x,1)+'x，現價於 5 年區間第 '+fmtNum(b.pct_5y,0)+' 百分位，即時 PEG '+fmtNum(b.live_peg,2)+'。'
+      '目前 NTM 本益比 '+fmtU(b.pe_ntm_x,1,'x')+'，5 年均值 '+fmtU(b.pe_ntm_5y_avg_x,1,'x')+'，現價於 5 年區間'+(b.pct_5y!=null?'第 '+fmtNum(b.pct_5y,0)+' 百分位':'分位無資料')+'，即時 PEG '+fmtNum(b.live_peg,2)+'。'
     );
   }
   if(c4.status==='ok'){
     var inc = c4.incremental, gp = inc.consensus_compare;
     summaryBullets.push(
-      '增量 ROIC '+fmtNum(inc.incremental_roic_pct,1)+'%×再投資率 '+fmtNum(inc.reinvest_rate_pct,1)+'%＝隱含內生成長 '+fmtNum(inc.implied_growth_pct,1)+
-      '%，共識 3 年 EPS 年複合 '+fmtNum(gp.est_eps_cagr_3y_pct,1)+'%'+(gp.gap_vs_eps_cagr_pct!=null?'，相差 '+fmtNum(Math.abs(gp.gap_vs_eps_cagr_pct),1)+' 個百分點':'')+'。'
+      '增量 ROIC '+fmtU(inc.incremental_roic_pct,1,'%')+'×再投資率 '+fmtU(inc.reinvest_rate_pct,1,'%')+'＝隱含內生成長 '+fmtU(inc.implied_growth_pct,1,'%')+
+      '，共識 3 年 EPS 年複合 '+fmtU(gp.est_eps_cagr_3y_pct,1,'%')+(gp.gap_vs_eps_cagr_pct!=null?'，相差 '+fmtNum(Math.abs(gp.gap_vs_eps_cagr_pct),1)+' 個百分點':'')+'。'
     );
   }
   var tt = D.scores.trend_template, rel = D.scores.relative_strength_detail, vol = D.scores.volume_detail;
   summaryBullets.push(
-    '趨勢模板通過 '+tt.pass_count+'/'+tt.of+'，相對強度第 '+fmtNum(rel.percentile,0)+' 百分位，量能比值 '+fmtNum(vol.ratio,2)+
+    '趨勢模板通過 '+tt.pass_count+'/'+tt.of+'，相對強度'+(rel.percentile!=null?'第 '+fmtNum(rel.percentile,0)+' 百分位':'無資料')+'，量能比值 '+fmtNum(vol.ratio,2)+
     '，距 52 週高點 '+fmtPct(D.status_summary.dist_52w_high_pct)+'，距下次財報 '+(daysEarn!=null?daysEarn+' 天':'無資料')+'。'
   );
   // 護城河：只放機械數字（2026-09-22 起不放模型判斷）
@@ -809,13 +820,34 @@ function buildEpsPriceOverlayChart(canvas, vm){
     });
     return arr;
   }
+  var fl = (vm.c1 && vm.c1.status==='ok' && vm.c1.fy_labels) ? vm.c1.fy_labels : {};
+  var yrs = ov.years || [], ycols = ov.year_cols || {}, colKey = {1:'curr',2:'next',3:'fy3'};
+  // 三條線＝今年／明年／後年三個日曆年；公司財年代號與日曆年不同時（如 1 月結帳）才在圖例補註
+  function yrLabel(i){
+    var y = yrs[i], lab = fl[colKey[ycols[String(y)]]] || '';
+    var parts = [];
+    if(i===0) parts.push('今年');
+    if(/^FY/.test(lab) && lab.slice(-2)!==String(y).slice(-2)) parts.push(lab);
+    return y+' 年'+(parts.length?'（'+parts.join('，')+'）EPS 估計':' EPS 估計');
+  }
+  // null＝該快照的三個預估財年不含該年，不畫點；spanGaps 只用來連接稀疏的快照點，null 不會當成 0
+  function epsLine(i, key, color, dash){
+    return {label:yrLabel(i), data:alignSeries(ov.eps_points,key), yAxisID:'y1', borderColor:color, backgroundColor:color, spanGaps:true, pointRadius:4, borderWidth:1.4, borderDash:dash};
+  }
+  // 2026-10-08 前建置的逐檔資料只有明年度／後年度欄位：沿用舊的兩條線，等每日重建後自動換成三個日曆年
+  var legacyPts = !ov.years && (ov.eps_points||[]).some(function(p){ return p.eps_fy_next!==undefined; });
   new Chart(canvas, {
     type:'line',
     data:{labels:labels, datasets:[
       {label:'股價', data:ov.price_series.map(function(p){return p.close;}), yAxisID:'y', borderColor:COL.navy, pointRadius:0, borderWidth:1.6},
+    ].concat(legacyPts ? [
       {label:'明年度EPS估計', data:alignSeries(ov.eps_points,'eps_fy_next'), yAxisID:'y1', borderColor:COL.gold, backgroundColor:COL.gold, spanGaps:true, pointRadius:4, borderWidth:1.4, borderDash:[4,3]},
       {label:'後年度EPS估計', data:alignSeries(ov.eps_points,'eps_fy3'), yAxisID:'y1', borderColor:COL.teal, backgroundColor:COL.teal, spanGaps:true, pointRadius:4, borderWidth:1.4, borderDash:[2,2]}
-    ]},
+    ] : [
+      epsLine(0,'eps_y0',COL.blue,[6,3]),
+      epsLine(1,'eps_y1',COL.gold,[4,3]),
+      epsLine(2,'eps_y2',COL.teal,[2,2])
+    ])},
     options:{responsive:true, maintainAspectRatio:false,
       scales:{x:{ticks:{color:COL.muted,font:{size:8},maxTicksLimit:6}, grid:{display:false}},
               y:{position:'left', ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}},
@@ -1235,24 +1267,29 @@ function renderRevVsPrice(vm){
   var tblEl = document.getElementById('revVsPriceTable'), sentEl = document.getElementById('revVsPriceSentence');
   if(c.status!=='ok'){ noData(tblEl, c.reason); if(sentEl) sentEl.innerHTML=''; return; }
   var periods = c.periods || [];
+  // 2026-10-08 前建置的逐檔資料沒有日曆年欄位：沿用明年度欄位顯示，等每日重建後自動換成日曆年
+  var legacy = periods.length>0 && periods[0].eps_cy_chg_pct===undefined && periods[0].eps_fy_next_chg_pct!==undefined;
+  if(legacy) periods.forEach(function(p){ p.eps_cy_chg_pct = p.eps_fy_next_chg_pct; });
+  var cyYear = legacy ? '明年度' : (periods[0]&&periods[0].eps_cy_year)? periods[0].eps_cy_year+' 年' : '篩選年度';
+  var cyReason = (periods[0]&&periods[0].eps_cy_reason)||null;
   tblEl.innerHTML =
-    '<thead><tr><th>期間</th><th class="num">明年度 EPS<br>預估變動</th><th class="num">股價漲跌</th><th class="num">隱含本益比<br>變動</th></tr></thead><tbody>'+
+    '<thead><tr><th>期間</th><th class="num">'+cyYear+' EPS<br>預估變動</th><th class="num">股價漲跌</th><th class="num">隱含本益比<br>變動</th></tr></thead><tbody>'+
     periods.map(function(p){
       var lbl = PERIOD_ZH[p.label] || p.label;
       return '<tr><td>'+lbl+'<span class="base-date">基準：'+(p.base_date||'無資料')+'</span></td>'+
-        '<td class="num">'+fmtPctColored(p.eps_fy_next_chg_pct)+'</td>'+
+        '<td class="num">'+(p.eps_cy_chg_pct==null&&cyReason?'無資料<span class="base-date">'+cyReason+'</span>':fmtPctColored(p.eps_cy_chg_pct))+'</td>'+
         '<td class="num">'+fmtPctColored(p.price_chg_pct)+'</td>'+
         '<td class="num">'+fmtPctParen(p.implied_ntm_pe_chg_pct)+'</td></tr>';
     }).join('')+'</tbody>';
 
   // 機械句：只用上表數字，選基準日最早（涵蓋期間最長）且三個數字都有資料的一格。
   var complete = periods.filter(function(p){
-    return p.base_date && p.eps_fy_next_chg_pct!=null && p.price_chg_pct!=null && p.implied_ntm_pe_chg_pct!=null;
+    return p.base_date && p.eps_cy_chg_pct!=null && p.price_chg_pct!=null && p.implied_ntm_pe_chg_pct!=null;
   }).sort(function(a,b){ return a.base_date<b.base_date?-1:(a.base_date>b.base_date?1:0); });
   if(!sentEl) return;
   if(!complete.length){ sentEl.innerHTML = '無資料：三個期間都缺基準日或估值資料'; return; }
   var p = complete[0], lbl = PERIOD_ZH[p.label] || p.label;
-  sentEl.innerHTML = lbl+'明年度 EPS 預估'+pctWord(p.eps_fy_next_chg_pct,'上修','下修')+
+  sentEl.innerHTML = lbl+' '+cyYear+' EPS 預估'+pctWord(p.eps_cy_chg_pct,'上修','下修')+
     '，股價'+pctWord(p.price_chg_pct,'漲','跌')+
     '，隱含本益比'+pctWord(p.implied_ntm_pe_chg_pct,'上升','下降')+'。';
 }

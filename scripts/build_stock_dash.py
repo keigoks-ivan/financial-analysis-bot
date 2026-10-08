@@ -1911,22 +1911,66 @@ def _fy_revision_pct_from_snapshot(current_val_usd, snapshot, ticker, fy_key, cu
     return pct
 
 
-def build_eps_snapshot_timeseries(ticker):
-    """全部 7 份月度快照裡，這檔的 明年度／後年度 EPS 估計，依快照日期排序 —— 給
-    第②格「股價 vs EPS 估值」疊圖用。同一天有兩個檔案（如 2026-05.json /
-    2026-05-25.json 都是 2026-05-26）時，用檔名排序較後者覆蓋（較新流程產出）。
+def _fy_shift_ctx(row, info):
+    """fy_shift 的共用輸入：(last FYE, 上次財報日, EPS 估值本身的抓取日)。
+    last FYE 優先用 latest.json 的 fiscal_year_end，沒有再退回 yfinance info 的 lastFiscalYearEnd。
+    「現在」這一側用 EPS 估值的抓取日（每週一次），不是 latest.json 的 as_of（每天）：
+    兩次抓取之間公布年報時，估值還沒滾動，用 as_of 會誤判成已滾動。與 dd-screener 一致。"""
+    dd = load_dd_screener()
+    dd_as_of = str(dd.get("as_of") or "")[:10] or None
+    fye = row.get("fiscal_year_end")
+    if not fye and info and info.get("lastFiscalYearEnd"):
+        try:
+            fye = datetime.fromtimestamp(int(info["lastFiscalYearEnd"]), tz=timezone.utc).date().isoformat()
+        except (TypeError, ValueError, OSError):
+            fye = None
+    cur_date = (dd.get("eps_estimates_source") or {}).get("snapshot_date") or dd_as_of
+    return fye, row.get("last_earnings_date"), cur_date
+
+
+_COL_TO_FK = {1: "eps_fy_curr", 2: "eps_fy_next", 3: "eps_fy3"}
+
+
+def _cal_year_ctx(row, info):
+    """日曆年基準的共用輸入（所有公司同一組年份，見 eps_fy_shift 底部說明）。
+    回傳 dict：fye, le, cur_date, display_years, condition_years, cur_fy1_end。
+    cur_date＝EPS 估值抓取日（與 _fy_shift_ctx 同一個）。"""
+    from eps_fy_shift import (condition_calendar_years, display_calendar_years,
+                              snapshot_fy1_end)
+    fye, le, cur_date = _fy_shift_ctx(row, info)
+    cur_fy1_end = snapshot_fy1_end(fye, cur_date, row.get("past_earnings_dates"),
+                                   row.get("eps_source"), le) if cur_date else None
+    return {"fye": fye, "le": le, "cur_date": cur_date,
+            "display_years": display_calendar_years(cur_date),
+            "condition_years": condition_calendar_years(cur_date),
+            "cur_fy1_end": cur_fy1_end}
+
+
+def build_eps_snapshot_timeseries(ticker, info=None):
+    """全部月度快照裡，這檔在「今年／明年／後年」（所有公司同一組日曆年）的 EPS 估計，
+    依快照日期排序 —— 給第②格「股價 vs EPS 估值」疊圖用。同一天有兩個檔案（如
+    2026-05.json / 2026-05-25.json 都是 2026-05-26）時，用檔名排序較後者覆蓋。
+
+    每份快照先用 snapshot_fy1_end 判斷它的 FY1 欄指向哪一個財年，再用 calendar_year_columns
+    把日曆年對到 FY1／FY2／FY3 欄；對不到的年份該點為 None（斷線，不畫成 0）。
 
     快照檔一律是 Koyfin 原始美元口徑；latest.json 的現值對 .TW/.T/.HK/.KS 等外幣掛牌
-    已被 build_dd_screener.py v1.8.5 換成本地貨幣（見 eps_display_currency 欄）。兩者
-    直接同圖會出現「6 個美元點＋1 個本地貨幣點」的單位不一致（2026-09-24 bug：2330.TW
-    的圖被最後一點 142.85 TWD 拉爆座標軸）。這裡改成：latest.json 現值是本地貨幣時，
-    把每份歷史快照也用「快照當天」的匯率換算成同一種本地貨幣（reuse eps_fx_normalize
-    的日匯率快取），查不到當天匯率的點寧可捨棄也不要混單位畫圖。"""
+    已被 build_dd_screener.py v1.8.5 換成本地貨幣（見 eps_display_currency 欄）。
+    latest.json 現值是本地貨幣時，每份歷史快照用「快照當天」的匯率換成同一種本地貨幣，
+    查不到匯率的點寧可捨棄也不要混單位畫圖（2026-09-24 2330.TW bug）。"""
     if not EPS_SNAPSHOT_DIR.exists():
         return {"status": "no_data", "reason": "docs/dd-screener/eps-estimates-snapshots/ 目錄不存在"}
     row, dd = find_dd_screener_row(ticker)
-    local_ccy = row.get("eps_display_currency") if row else None
+    if row is None:
+        return {"status": "no_data", "reason": f"{ticker} 不在 dd-screener 名單"}
+    local_ccy = row.get("eps_display_currency")
     convert_to_local = bool(local_ccy and local_ccy != "USD")
+    from eps_fy_shift import calendar_year_columns, snapshot_fy1_end
+    ctx = _cal_year_ctx(row, info)
+    years = ctx["display_years"]
+    if not years or not ctx["fye"]:
+        return {"status": "no_data", "reason": "缺會計年度結束日，無法對齊到日曆年"}
+    keys = ["eps_y0", "eps_y1", "eps_y2"]
     dedup = {}
     for f in sorted(EPS_SNAPSHOT_DIR.glob("*.json")):
         try:
@@ -1938,23 +1982,36 @@ def build_eps_snapshot_timeseries(ticker):
         if not sd or not trow:
             continue
         adj = _snapshot_eps_adr(ticker, trow)
-        eps_next, eps_fy3 = adj.get("eps_fy_next"), adj.get("eps_fy3")
+        fy1_end = snapshot_fy1_end(ctx["fye"], sd, row.get("past_earnings_dates"),
+                                   trow.get("source"), ctx["le"])
+        cols = calendar_year_columns(fy1_end, years)
+        fx = None
         if convert_to_local:
             fx = _fx_rate_on(local_ccy, sd)
             if fx is None:
                 continue  # 這個快照日的匯率查不到，捨棄而不是混美元原值進本地貨幣的線
-            eps_next = round(eps_next * fx, 2) if eps_next is not None else None
-            eps_fy3 = round(eps_fy3 * fx, 2) if eps_fy3 is not None else None
-        dedup[sd] = {"snapshot_date": sd, "eps_fy_next": eps_next, "eps_fy3": eps_fy3}
+        pt = {"snapshot_date": sd}
+        for key, y in zip(keys, years):
+            k = cols.get(y)
+            v = adj.get(_COL_TO_FK[k]) if k else None
+            if v is not None and fx is not None:
+                v = round(v * fx, 2)
+            pt[key] = v
+        dedup[sd] = pt
     # 最後一點＝latest.json 目前值（快照目錄只存過去的基準，不含當期；現值本身已經是
     # 本地貨幣，不用再換算）
-    if row is not None and dd.get("as_of"):
-        dedup[str(dd["as_of"])[:10]] = {"snapshot_date": str(dd["as_of"])[:10],
-                                        "eps_fy_next": row.get("eps_fy_next"), "eps_fy3": row.get("eps_fy3")}
+    if dd.get("as_of"):
+        cur_cols = calendar_year_columns(ctx["cur_fy1_end"], years)
+        pt = {"snapshot_date": str(dd["as_of"])[:10]}
+        for key, y in zip(keys, years):
+            k = cur_cols.get(y)
+            pt[key] = row.get(_COL_TO_FK[k]) if k else None
+        dedup[pt["snapshot_date"]] = pt
     points = sorted(dedup.values(), key=lambda p: p["snapshot_date"])
     if not points:
         return {"status": "no_data", "reason": f"{ticker} 不在任何月度 EPS 估值快照檔案中"}
-    return {"status": "ok", "points": points}
+    return {"status": "ok", "points": points, "years": list(years),
+            "year_cols": {str(y): k for y, k in calendar_year_columns(ctx["cur_fy1_end"], years).items()}}
 
 
 def _price_pct_change_since(df_full, since_date_str, current_price):
@@ -2105,20 +2162,9 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
     snap_3m = load_eps_snapshot_by_date(row.get("eps_rev_3m_baseline_date"))
     snap_since = load_eps_snapshot_by_date(row.get("eps_rev_since_earnings_baseline_date"))
 
-    # 2026-10-08：財年滾動偵測（與 dd-screener 同一個 eps_fy_shift.fy_shift）。last FYE 優先用
-    # latest.json 匯出的 fiscal_year_end，沒有再退回 yfinance info 的 lastFiscalYearEnd。
+    # 2026-10-08：財年滾動偵測（與 dd-screener 同一個 eps_fy_shift.fy_shift）。
     from eps_fy_shift import fy_shift
-    _fye = row.get("fiscal_year_end")
-    if not _fye and info and info.get("lastFiscalYearEnd"):
-        try:
-            _fye = datetime.fromtimestamp(int(info["lastFiscalYearEnd"]), tz=timezone.utc).date().isoformat()
-        except (TypeError, ValueError, OSError):
-            _fye = None
-    _le = row.get("last_earnings_date")
-    # 「現在」這一側要用 EPS 估值本身的抓取日（每週一次），不是 latest.json 的 as_of（每天）：
-    # 兩次抓取之間公布年報時，估值還沒滾動，用 as_of 會誤判成已滾動。與 dd-screener 一致。
-    _eps_cur_date = ((load_dd_screener().get("eps_estimates_source") or {}).get("snapshot_date")
-                     or dd_as_of)
+    _fye, _le, _eps_cur_date = _fy_shift_ctx(row, info)
 
     def _shift_for(snap):
         if not snap:
@@ -2130,6 +2176,31 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
 
     shift_3m = _shift_for(snap_3m)
     shift_since = _shift_for(snap_since)
+
+    # 2026-10-08：日曆年基準。篩選年 T1（今年 6 月起 = 明年）對到「現在」的第 k 欄，
+    # 與基準快照「同一個財年」比（沿用上面的 shift，k 欄在基準快照的位置由 shift 換算）。
+    from eps_fy_shift import calendar_year_columns
+    _ctx = _cal_year_ctx(row, info)
+    cy_revision = {"year": None, "col": None, "reason": "缺會計年度結束日，無法對到日曆年"}
+    if _ctx["condition_years"]:
+        _t1 = _ctx["condition_years"][0]
+        _k = calendar_year_columns(_ctx["cur_fy1_end"], [_t1]).get(_t1) if _ctx["cur_fy1_end"] else None
+        cy_revision = {"year": _t1, "col": _k, "reason": None if _k else
+                       ("缺會計年度結束日，無法對到日曆年" if not _ctx["cur_fy1_end"]
+                        else f"{_t1} 年不在目前三個預估財年內")}
+        if _k:
+            _fk = fy_keys[_k - 1]
+            _usd = row.get(f"{_fk}_usd_orig")
+            if _usd is None:
+                _usd = row.get(_fk)
+            snap_1m_shift = _shift_for(snap_1m)
+            cy_revision.update({
+                "fy_label": fy_names[_k - 1],
+                "current_estimate": r2(row.get(_fk), 2),
+                "vs_last_month_pct": r2(_fy_revision_pct_from_snapshot(_usd, snap_1m, ticker, _fk, dd_as_of, shift=snap_1m_shift), 2),
+                "vs_3m_ago_pct": r2(_fy_revision_pct_from_snapshot(_usd, snap_3m, ticker, _fk, dd_as_of, shift=shift_3m), 2),
+                "vs_since_earnings_pct": r2(_fy_revision_pct_from_snapshot(_usd, snap_since, ticker, _fk, dd_as_of, shift=shift_since), 2),
+            })
 
     table_rows = []
     for name, fk, revk in zip(fy_names, fy_keys, revision_pct_keys):
@@ -2194,6 +2265,7 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
     return {
         "status": "ok",
         "fy_labels": fy_labels,
+        "cy_revision": cy_revision,
         "table": table_rows,
         "table_baseline_dates": {
             "vs_last_month": row.get("eps_revision_baseline_date"),
@@ -2234,14 +2306,15 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
 
 
 # ── ②股價趨勢×獲利（含原「趨勢狀態」內容合併）────────────────────────────────
-def build_card_price_vs_eps(ticker, row, df_full, current_price, card1):
+def build_card_price_vs_eps(ticker, row, df_full, current_price, card1, info=None):
     if row is None:
         return {"status": "no_data", "reason": "不在 dd-screener 名單（339 檔），股價 vs 獲利估值比較無法進行"}
 
     fund = row.get("fund") or {}
-    fy_next_row = {}
-    if card1.get("status") == "ok" and len(card1.get("table", [])) > 1:
-        fy_next_row = card1["table"][1]
+    # 2026-10-08：EPS 變動改用日曆年 T1（目前 2027）的修正，不再用各公司自己的「明年度」。
+    cy = (card1.get("cy_revision") or {}) if card1.get("status") == "ok" else {}
+    cy_year = cy.get("year")
+    cy_reason = None if cy.get("col") else (cy.get("reason") or "無法對到日曆年")
 
     # 股價起點＝EPS 基準快照日（dd-screener 取財報前最後一次快照），兩邊同一個起點，
     # 推出來的本益比變化才不會混到兩段不同期間。
@@ -2257,9 +2330,9 @@ def build_card_price_vs_eps(ticker, row, df_full, current_price, card1):
             return None
         return ((1 + price_chg / 100.0) / (1 + eps_chg / 100.0) - 1) * 100.0
 
-    eps_chg_since_earn = fy_next_row.get("vs_since_earnings_pct")
-    eps_chg_1m = fy_next_row.get("vs_last_month_pct")
-    eps_chg_3m = fy_next_row.get("vs_3m_ago_pct")
+    eps_chg_since_earn = cy.get("vs_since_earnings_pct")
+    eps_chg_1m = cy.get("vs_last_month_pct")
+    eps_chg_3m = cy.get("vs_3m_ago_pct")
 
     periods = [
         {
@@ -2267,26 +2340,32 @@ def build_card_price_vs_eps(ticker, row, df_full, current_price, card1):
             "earnings_date": row.get("last_earnings_date"),
             "base_date": since_earn_base_date or row.get("last_earnings_date"),
             "price_chg_pct": r2(price_chg_since_earn, 2),
-            "eps_fy_next_chg_pct": eps_chg_since_earn,
+            "eps_cy_chg_pct": eps_chg_since_earn,
+            "eps_cy_year": cy_year,
+            "eps_cy_reason": cy_reason,
             "implied_ntm_pe_chg_pct": r2(_implied_pe_chg(price_chg_since_earn, eps_chg_since_earn), 2),
         },
         {
             "label": "近1個月",
             "base_date": base_1m_date or row.get("eps_revision_baseline_date"),
             "price_chg_pct": r2(price_chg_1m, 2),
-            "eps_fy_next_chg_pct": eps_chg_1m,
+            "eps_cy_chg_pct": eps_chg_1m,
+            "eps_cy_year": cy_year,
+            "eps_cy_reason": cy_reason,
             "implied_ntm_pe_chg_pct": r2(_implied_pe_chg(price_chg_1m, eps_chg_1m), 2),
         },
         {
             "label": "近3個月",
             "base_date": base_3m_date or row.get("eps_rev_3m_baseline_date"),
             "price_chg_pct": r2(price_chg_3m, 2),
-            "eps_fy_next_chg_pct": eps_chg_3m,
+            "eps_cy_chg_pct": eps_chg_3m,
+            "eps_cy_year": cy_year,
+            "eps_cy_reason": cy_reason,
             "implied_ntm_pe_chg_pct": r2(_implied_pe_chg(price_chg_3m, eps_chg_3m), 2),
         },
     ]
 
-    eps_ts = build_eps_snapshot_timeseries(ticker)
+    eps_ts = build_eps_snapshot_timeseries(ticker, info)
     price_series = None
     if eps_ts.get("status") == "ok" and eps_ts["points"]:
         start = pd.Timestamp(eps_ts["points"][0]["snapshot_date"])
@@ -2297,8 +2376,8 @@ def build_card_price_vs_eps(ticker, row, df_full, current_price, card1):
         "status": "ok",
         "periods": periods,
         "period_method": (
-            "股價漲跌用 yfinance 收盤價，自比較基準日後第一個交易日算到現在；獲利估值變動用明年度"
-            "（NTM 代理）EPS 估計的變動，算法跟第①格「較上月／近3個月／自上次財報以來」一樣；隱含本益比變動"
+            "股價漲跌用 yfinance 收盤價，自比較基準日後第一個交易日算到現在；獲利估值變動用篩選年度"
+            f"（目前為 {cy_year} 日曆年）EPS 估計的變動，算法跟第①格「較上月／近3個月／自上次財報以來」一樣；隱含本益比變動"
             "≈ (1+股價漲跌%)÷(1+EPS估值變動%)−1，股價漲幅大於獲利估值漲幅代表隱含本益比同步擴張，"
             "反之則收斂，這只是算術換算，不是重新估值。"
         ),
@@ -2320,9 +2399,11 @@ def build_card_price_vs_eps(ticker, row, df_full, current_price, card1):
         "eps_price_overlay": {
             "eps_points": eps_ts.get("points") if eps_ts.get("status") == "ok" else [],
             "eps_status": eps_ts.get("status"), "eps_reason": eps_ts.get("reason"),
+            "years": eps_ts.get("years"), "year_cols": eps_ts.get("year_cols"),
             "price_series": price_series or [],
-            "method": ("EPS 點：每份月度估值快照的明年度／後年度 EPS 值，依快照日期繪製；股價：yfinance 日"
-                       "收盤價，從第一份快照的日期開始，雙軸疊圖，同一張圖時間軸對齊。"),
+            "method": ("三條線是今年、明年、後年三個日曆年（所有公司同一組年份）；財年落在哪一年，"
+                       "看它大部分月份落在哪一年；線中斷代表該快照的三個預估財年不含該年。"
+                       "股價：yfinance 日收盤價，從第一份快照的日期開始。"),
         },
         "dist_ath_pct": row.get("ma", {}).get("dist_ath_pct") if isinstance(row.get("ma"), dict) else None,
         "dist_ath_source": "dd-screener latest.json 的 ma.dist_ath_pct（近似歷史新高，非本頁自算）",
@@ -4009,7 +4090,7 @@ def build(ticker, refresh_universe=False, state_dir=None, force_version=False, d
     # dd_row／dd_meta 已在上面（short_interest_info 之前）查過，這裡沿用。
     dd_stocks = dd_meta.get("stocks", []) if dd_meta.get("status") == "ok" else []
     jc_card1 = build_card_eps_revision(ticker, dd_row, info, ANALYST_REVISIONS_30D_NO_DATA)
-    jc_card2 = build_card_price_vs_eps(ticker, dd_row, df_full, price, jc_card1)
+    jc_card2 = build_card_price_vs_eps(ticker, dd_row, df_full, price, jc_card1, info)
     jc_card3 = build_card_earnings_surprise(ticker, dd_row, t, df_full, spy_full, price, as_of)
     jc_card4 = build_card_roic_decomposition(dd_row)
     jc_card5 = build_card_insider(ticker, dd_row, t, as_of)

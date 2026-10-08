@@ -138,13 +138,14 @@ def test_build_eps_snapshot_timeseries_converts_historical_points_to_local_curre
     monkeypatch.setattr(bsd, "_snapshot_eps_adr", lambda ticker, trow: trow)
     monkeypatch.setattr(bsd, "_fx_rate_on", lambda ccy, date_str: 31.20)
 
-    row = {"eps_display_currency": "TWD", "eps_fy_next": 142.85, "eps_fy3": 181.66}
-    dd = {"as_of": "2026-09-24"}
+    row = {"eps_display_currency": "TWD", "eps_fy_next": 142.85, "eps_fy3": 181.66, "fiscal_year_end": "2025-12-31"}
+    dd = {"as_of": "2026-09-24", "eps_estimates_source": {"snapshot_date": "2026-09-24"}}
+    monkeypatch.setattr(bsd, "load_dd_screener", lambda: dd)
     monkeypatch.setattr(bsd, "find_dd_screener_row", lambda t: (row, dd))
 
     result = bsd.build_eps_snapshot_timeseries("2330.TW")
     assert result["status"] == "ok"
-    pts = {p["snapshot_date"]: p["eps_fy_next"] for p in result["points"]}
+    pts = {p["snapshot_date"]: p["eps_y1"] for p in result["points"]}  # 2027 日曆年＝12 月結帳的 FY2 欄
     # historical USD point (3.89) converted to TWD via the snapshot date's FX rate
     assert pts["2026-06-23"] == pytest.approx(3.89 * 31.20, abs=0.01)
     # current point is latest.json's own local-currency value, untouched
@@ -171,12 +172,13 @@ def test_build_eps_snapshot_timeseries_usd_ticker_no_conversion(tmp_path, monkey
 
     monkeypatch.setattr(bsd, "_fx_rate_on", _fail_fx)
 
-    row = {"eps_display_currency": "USD", "eps_fy_next": 22.45, "eps_fy3": 28.55}
-    dd = {"as_of": "2026-09-24"}
+    row = {"eps_display_currency": "USD", "eps_fy_next": 22.45, "eps_fy3": 28.55, "fiscal_year_end": "2025-12-31"}
+    dd = {"as_of": "2026-09-24", "eps_estimates_source": {"snapshot_date": "2026-09-24"}}
+    monkeypatch.setattr(bsd, "load_dd_screener", lambda: dd)
     monkeypatch.setattr(bsd, "find_dd_screener_row", lambda t: (row, dd))
 
     result = bsd.build_eps_snapshot_timeseries("TSM")
     assert result["status"] == "ok"
-    pts = {p["snapshot_date"]: p["eps_fy_next"] for p in result["points"]}
+    pts = {p["snapshot_date"]: p["eps_y1"] for p in result["points"]}  # 2027 日曆年＝12 月結帳的 FY2 欄
     assert pts["2026-06-23"] == 19.45  # unconverted
     assert pts["2026-09-24"] == 22.45

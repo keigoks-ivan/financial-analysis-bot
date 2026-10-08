@@ -142,13 +142,34 @@ function buildEpsPriceOverlayChart(canvas, vm){
     });
     return arr;
   }
+  var fl = (vm.c1 && vm.c1.status==='ok' && vm.c1.fy_labels) ? vm.c1.fy_labels : {};
+  var yrs = ov.years || [], ycols = ov.year_cols || {}, colKey = {1:'curr',2:'next',3:'fy3'};
+  // 三條線＝今年／明年／後年三個日曆年；公司財年代號與日曆年不同時（如 1 月結帳）才在圖例補註
+  function yrLabel(i){
+    var y = yrs[i], lab = fl[colKey[ycols[String(y)]]] || '';
+    var parts = [];
+    if(i===0) parts.push('今年');
+    if(/^FY/.test(lab) && lab.slice(-2)!==String(y).slice(-2)) parts.push(lab);
+    return y+' 年'+(parts.length?'（'+parts.join('，')+'）EPS 估計':' EPS 估計');
+  }
+  // null＝該快照的三個預估財年不含該年，不畫點；spanGaps 只用來連接稀疏的快照點，null 不會當成 0
+  function epsLine(i, key, color, dash){
+    return {label:yrLabel(i), data:alignSeries(ov.eps_points,key), yAxisID:'y1', borderColor:color, backgroundColor:color, spanGaps:true, pointRadius:4, borderWidth:1.4, borderDash:dash};
+  }
+  // 2026-10-08 前建置的逐檔資料只有明年度／後年度欄位：沿用舊的兩條線，等每日重建後自動換成三個日曆年
+  var legacyPts = !ov.years && (ov.eps_points||[]).some(function(p){ return p.eps_fy_next!==undefined; });
   new Chart(canvas, {
     type:'line',
     data:{labels:labels, datasets:[
       {label:'股價', data:ov.price_series.map(function(p){return p.close;}), yAxisID:'y', borderColor:COL.navy, pointRadius:0, borderWidth:1.6},
+    ].concat(legacyPts ? [
       {label:'明年度EPS估計', data:alignSeries(ov.eps_points,'eps_fy_next'), yAxisID:'y1', borderColor:COL.gold, backgroundColor:COL.gold, spanGaps:true, pointRadius:4, borderWidth:1.4, borderDash:[4,3]},
       {label:'後年度EPS估計', data:alignSeries(ov.eps_points,'eps_fy3'), yAxisID:'y1', borderColor:COL.teal, backgroundColor:COL.teal, spanGaps:true, pointRadius:4, borderWidth:1.4, borderDash:[2,2]}
-    ]},
+    ] : [
+      epsLine(0,'eps_y0',COL.blue,[6,3]),
+      epsLine(1,'eps_y1',COL.gold,[4,3]),
+      epsLine(2,'eps_y2',COL.teal,[2,2])
+    ])},
     options:{responsive:true, maintainAspectRatio:false,
       scales:{x:{ticks:{color:COL.muted,font:{size:8},maxTicksLimit:6}, grid:{display:false}},
               y:{position:'left', ticks:{color:COL.muted,font:{size:9}}, grid:{color:COL.line}},

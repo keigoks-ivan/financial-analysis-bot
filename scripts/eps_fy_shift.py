@@ -281,3 +281,75 @@ def get_last_fye(dd_ticker: str, yf_ticker: str, cache: dict) -> str | None:
     with _fye_lock:
         cache[dd_ticker] = {"last_fye": fye, "checked": today.isoformat()}
     return fye
+
+
+# ---------------------------------------------------------------------------
+# Calendar-year basis (2026-10-08): every company compared on the same years
+# ---------------------------------------------------------------------------
+# A fiscal year belongs to the calendar year holding most of its months; one
+# ending in June (6/6 split) counts as the year it ends. Display years are this
+# calendar year + the next two (switch on Jan 1). The two years used for
+# screening switch on June 1: by then every fiscal-year pattern (Dec, Jan, Mar,
+# Sep, ...) has published its annual report, so all companies carry both years.
+CONDITION_YEAR_SWITCH_MONTH = 6
+
+
+def calendar_year_of_fy(fy_end) -> int | None:
+    d = _to_date(fy_end)
+    if d is None:
+        return None
+    return d.year if d.month >= 6 else d.year - 1
+
+
+def display_calendar_years(as_of) -> tuple[int, int, int] | None:
+    d = _to_date(as_of)
+    return None if d is None else (d.year, d.year + 1, d.year + 2)
+
+
+def condition_calendar_years(as_of) -> tuple[int, int] | None:
+    d = _to_date(as_of)
+    if d is None:
+        return None
+    y = d.year + (1 if d.month >= CONDITION_YEAR_SWITCH_MONTH else 0)
+    return y, y + 1
+
+
+def snapshot_fy1_end(last_fye, snapshot_date, past_earnings_dates=None,
+                     source=None, last_earnings_date=None) -> date | None:
+    """End date of the fiscal year a snapshot's FY1 column points at. Same
+    rolled rule as fy_shift(): yfinance rolls at the FYE, Koyfin (xlsx) after
+    the annual report A (first reported date in (FYE, FYE+120d]); with no A,
+    assumed rolled once past FYE+120d. None when undecidable."""
+    fye, d = _to_date(last_fye), _to_date(snapshot_date)
+    if fye is None or d is None:
+        return None
+    while fye > d:                      # snapshot older than the cached FYE
+        fye = _add_years(fye, -1)
+    fye = roll_fye_forward(fye, d)
+    nxt = _add_years(fye, 1)
+    if _norm_src(source) == "yfinance":
+        return nxt if d > fye else fye
+    window_end = fye + timedelta(days=ANNUAL_REPORT_MAX_LAG_DAYS)
+    past = sorted(x for x in (_to_date(v) for v in (past_earnings_dates or [])) if x)
+    if past:
+        a = next((x for x in past if x > fye), None)
+    else:
+        le = _to_date(last_earnings_date)
+        a = le if le is not None and le > fye else None
+        if a is None and d <= window_end:
+            return None                 # no dates list, inside the window: unknown
+    if a is not None and a > window_end:
+        a = None
+    if a is not None:
+        return nxt if a < d else fye
+    return nxt if d > window_end else fye
+
+
+def calendar_year_columns(fy1_end, years) -> dict:
+    """{calendar year: FY column 1..3, or None if outside the 3 columns}."""
+    base = calendar_year_of_fy(fy1_end)
+    out = {}
+    for y in years or ():
+        k = None if base is None else y - base + 1
+        out[y] = k if k in (1, 2, 3) else None
+    return out

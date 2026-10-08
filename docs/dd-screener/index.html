@@ -293,6 +293,11 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
       <span class="chip" data-filter="timing" data-value="qichi" title="起漲點：距ATH ∈ [-7%, 0%] ∩ ma50 ∈ [0%, +5%] ∩ RS ≥ 80">[起漲點]</span>
       <span class="chip" data-filter="timing" data-value="pullback" title="回調帶：距ATH ∈ [-15%, -7%] ∩ MA 燈號 🟢 ∩ ma50 ∈ [-3%, +5%]（創過高、正回測、長趨勢未壞）">[回調帶]</span>
     </div>
+    <div class="filter-group">
+      <span class="filter-label">EPS 上修</span>
+      <span class="chip active" data-filter="pec" data-value="off">[Any]</span>
+      <span class="chip" id="pec-chip" data-filter="pec" data-value="on" title="所有公司用同一組日曆年比較：條件年的 EPS 預估都上修 ≥ 5%，且同期股價落後使本益比下降 ≥ 10%。啟用後不套用 Moat、Direction、ROIC 來源和時機篩選">[EPS 上修・本益比壓縮]</span>
+    </div>
     <div class="filter-group" style="margin-left:auto">
       <span class="filter-label">查 ticker</span>
       <input type="text" id="search-ticker" placeholder="例：NVDA / V (空白=精準) / NVDA TSM AVGO" autocomplete="off"
@@ -353,6 +358,11 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
   <!-- 回調帶 banner — shows when 回調帶 timing chip is active -->
   <div class="qichi-banner hidden" id="pullback-banner" style="background:#fbf3df;border-color:var(--line);color:var(--warn)">
     🟡 <b>回調帶 模式</b>：距ATH ∈ [-15%, -7%] ∩ MA 燈號 🟢 ∩ 距50DMA ∈ [-3%, +5%]。語意：創過新高、正在回測、長期趨勢未壞 —— 與 Entry State Machine 的 <code>PULLBACK_WATCH</code> 同構的<b>日線版</b>（週線版 Entry State Machine 已於 2026-07-07 封存）。非美股無 timing 資料自動排除。
+  </div>
+
+  <!-- EPS 上修・本益比壓縮 banner — shows when pec chip is active -->
+  <div class="qichi-banner hidden" id="pec-banner" style="background:#eef3fb;border-color:var(--line);color:var(--ink)">
+    <b>EPS 上修・本益比壓縮 模式</b>：所有公司用同一組日曆年比較，欄位顯示 <span class="pec-y" data-k="d0">今年</span>、<span class="pec-y" data-k="d1">明年</span>、<span class="pec-y" data-k="d2">後年</span> 三年，條件看 <span class="pec-y" data-k="c0">條件第一年</span> 與 <span class="pec-y" data-k="c1">條件第二年</span> 兩年。這兩年的 EPS 預估都上修 ≥ 5%，且同期股價落後使本益比下降 ≥ 10%，財報後或近 3 個月任一窗口達標即列入。這個模式不套用 Moat、Direction、ROIC 來源和時機篩選，也不限 MLB 分頁，直接列出全部符合的個股。
   </div>
 
   <!-- v1.8: EPS 估算 source banner — populated by JS from eps_estimates_source -->
@@ -606,6 +616,16 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
         <br><em>非美股：</em>TW/JP/EU 無 timing 資料者在起漲點 / 回調帶模式自動排除。
       </li>
 
+      <li><strong>EPS 上修・本益比壓縮（chip，啟用後多出 4 欄）</strong>：找「分析師把 <span class="pec-y" data-k="c0">條件第一年</span> 與 <span class="pec-y" data-k="c1">條件第二年</span> 的 EPS 預估都調高，股價卻沒跟上」的個股。這是研究清單，不是買進訊號。
+        <br><em>統一日曆年：</em>所有公司都用同一組日曆年比較，不用各自的明年度與後年度。每個財年算進它大部分月份所在的那一年，剛好各半的（6 月底結帳）算結束那年。例如 MU 的財年到 9 月初結束，FY27 算 2027 年；NVDA 的財年到 1 月底結束，FY28 算 2027 年。欄位顯示 <span class="pec-y" data-k="d0">今年</span>、<span class="pec-y" data-k="d1">明年</span>、<span class="pec-y" data-k="d2">後年</span> 三年。某一年的財年已經結束，或超出預估範圍，顯示「—」。
+        <br><em>條件年何時換：</em>條件年每年 6 月 1 日切換。到 6 月，各種結帳月份的公司都已公布年報，兩個條件年都有預估可比。1 到 5 月條件看今年與明年，6 月起改看明年與後年，目前是 <span class="pec-y" data-k="c0">條件第一年</span> 與 <span class="pec-y" data-k="c1">條件第二年</span>。
+        <br><em>兩個條件：</em>①<span class="pec-y" data-k="c0">條件第一年</span> 與 <span class="pec-y" data-k="c1">條件第二年</span> 的 EPS 預估相對基準日都上修 ≥ 5%；②同期股價落後使預估本益比下降 ≥ 10%（本益比變動 ＝ (1 + 股價變動) ÷ (1 + <span class="pec-y" data-k="c0">條件第一年</span> EPS 修正) − 1）。兩個條件同時成立才算達標。
+        <br><em>兩個窗口：</em>財報後（基準日為上次財報前最後一次共識快照）與近 3 個月（約 90 天前的快照），任一窗口達標即列入；兩邊都達標的證據較強。股價從基準日後第一個交易日算到最新收盤。
+        <br><em>財年已轉的個股：</em>公司公布年報後，資料來源會把第一欄往後挪一年。程式先把基準日與現在對齊到同一個財年，再歸到日曆年。財年是否已轉無法判斷者，該窗口不評分。
+        <br><em>為什麼景氣循環股常出現：</em>市場預期盈餘已在高峰，會先給較低的本益比，股價因此不跟著預估上調。本益比下降可能是便宜，也可能是市場正確預見盈餘即將下滑，需回頭看個股報告判斷。
+        <br><em>參考欄：</em>本益比／5 年均是目前預估本益比除以 5 年平均，只供參考，不是條件。警示標籤只提醒資料可能失真，不排除個股：變動極大（條件年修正 ≥ 100%，基期可能接近零）、財報日異常（缺漏或超過 200 天）、5 年比偏離（比值 &lt; 0.3 或 &gt; 3）。
+      </li>
+
       <li><strong>vs 50DMA（距 50 日均線）</strong>：當前股價相對 50 日 SMA 的百分比偏離。正值 = 股價在均線上方。
         <br><em>來源：</em>同「距 ATH」— screener <code>ma50_pct</code> 優先；fallback yfinance 批量抓 300d 日線，取末 50 根收盤均值計算
         <br><em>顏色：</em>🟢 sweet <code>[0%, +5%]</code> 剛收復均線、未過熱 / 🟡 warm <code>[+5%, +15%]</code> 延伸但可控 / 🟠 hot <code>&gt; +15%</code> 過熱 / ⚪ cool <code>&lt; 0%</code> 跌破 50 日均線（趨勢受壓）
@@ -647,6 +667,8 @@ var state = {
   quadrant: 'All',   // All | HH | HL | LH | LL — ROIC 分解四象限（2026-09-16）
   preset:  'MLB',    // MLB | Custom
   timing:  'any',    // any | qichi (起漲點) | pullback (回調帶)
+  pec:     'off',    // off | on — EPS 上修・本益比壓縮（獨立模式，略過其他 chip）
+  pecPrevTab: null,  // 進入 pec 模式前的分頁，退出時還原
   customThresholds: { fcf: 10, roic: 15, eps2y: 15, peg: 2.0, de: 0.7 },
   customSOnly: true,
   // 2026-09-22: default sort 改為 FunnelRank v2 名次升序（1 = 最佳）。原欄位排序
@@ -793,6 +815,9 @@ function applyFilters(stocks) {
   // Custom S-Only is a separate score-based override (>=9.5) used only in
   // Custom preset; the Moat chip is ignored in that mode for clarity.
   var customSOnly = state.preset === 'Custom' && state.customSOnly;
+  if (state.pec === 'on') {
+    return stocks.filter(function(s) { return !!(s.pe_compression && s.pe_compression.match); });
+  }
   return stocks.filter(function(s) {
     if (customSOnly) {
       var score = typeof s.moat_score === 'number' ? s.moat_score : 0;
@@ -924,7 +949,17 @@ function _thSortable(label, key, opts) {
   return '<th class="' + cls + '" data-sort-key="' + key + '"' + titleAttr + '>' + label + ind + '</th>';
 }
 
+function _pecMin(stock) {
+  // 兩個窗口中本益比降幅最大者（越負越前）；兩窗皆無值回 undefined（排序時沉底）
+  var pc = stock.pe_compression;
+  if (!pc) return undefined;
+  var v = [pc.since_earnings && pc.since_earnings.pe_chg_pct, pc['3m'] && pc['3m'].pe_chg_pct]
+    .filter(function(x) { return typeof x === 'number'; });
+  return v.length ? Math.min.apply(null, v) : undefined;
+}
+
 function _pluck(stock, key) {
+  if (key === 'pec_min') return _pecMin(stock);
   // Support dotted paths (e.g. "timing.dist_52w_high_pct") so the new v1.1
   // timing columns can sort without flattening the nested block.
   if (key.indexOf('.') === -1) return stock[key];
@@ -1637,6 +1672,84 @@ function _renderAdvisoryCritCell(s, c) {
     : '<td style="color:var(--sec)" title="D/E ' + deDisp + '（advisory，不計入通過條件）">' + deDisp + '</td>';
 }
 
+// ── EPS 上修・本益比壓縮欄位（pe_compression，僅 pec 模式顯示）─────────────
+var PEC_FLAG_LABEL = {
+  big_move:          ['變動極大', '某個財年的 EPS 預估修正幅度 ≥ 100%，基期可能接近零，百分比失真'],
+  earnings_date_odd: ['財報日異常', '最近財報日缺漏或已超過 200 天，財報後窗口的基準日可能不準'],
+  pe5y_gap:          ['5 年比偏離', '目前本益比與 5 年平均的比值低於 0.3 或高於 3，5 年平均可能失真']
+};
+function _pecPct(v, digits) {
+  if (typeof v !== 'number') return '—';
+  return (v > 0 ? '+' : '') + v.toFixed(digits === undefined ? 0 : digits) + '%';
+}
+function _pecWin(w, label, build) {
+  // 單一窗口一行；該窗口達標以綠字標示，未達標灰字，無法判斷顯示 —
+  if (!w) return '';
+  var txt = build(w);
+  var color = w.pass ? 'var(--pos)' : 'var(--sec)';
+  return '<div style="color:' + color + (w.pass ? ';font-weight:600' : '') + '"><span style="color:var(--muted);font-size:10px">' + label + '</span> ' + txt + '</div>';
+}
+function _pecYears() {
+  // 年份取自 latest.json 第一檔有 pe_compression.display_years 的個股
+  var st = (DATA && DATA.stocks) || [];
+  for (var i = 0; i < st.length; i++) {
+    var p = st[i].pe_compression;
+    if (p && p.display_years && p.condition_years) return {d: p.display_years, c: p.condition_years};
+  }
+  return null;
+}
+function pecFillYears() {
+  var y = _pecYears();
+  if (!y) return;
+  var m = {d0: y.d[0], d1: y.d[1], d2: y.d[2], c0: y.c[0], c1: y.c[1]};
+  document.querySelectorAll('.pec-y').forEach(function(el) { var v = m[el.getAttribute('data-k')]; if (v) el.textContent = v; });
+}
+function _pecRevWin(w, label, dy, cy) {
+  if (!w) return '';
+  var parts = dy.map(function(y) {
+    var v = (w.revs || {})[String(y)];
+    var txt = _pecPct(v, 1);
+    if (cy.indexOf(y) < 0) return '<span style="color:var(--muted)">' + txt + '</span>';
+    return '<b style="color:' + (w.pass ? 'var(--pos)' : 'var(--sec)') + '">' + txt + '</b>';
+  });
+  return '<div style="color:var(--muted)"><span style="font-size:10px">' + label + '</span> ' + parts.join(' / ') + '</div>';
+}
+function _renderPecRevCell(s) {
+  var pc = s.pe_compression || {};
+  var se = pc.since_earnings, m3 = pc['3m'];
+  var dy = pc.display_years || [], cy = pc.condition_years || [];
+  var codes = dy.map(function(y) {
+    var c = (pc.fy_codes || {})[String(y)];
+    return y + '＝' + (c || (y === dy[0] ? '無（年度已結束）' : '無'));
+  }).join('、');
+  var tip = '粗體為條件年（' + cy.join('＋') + '），該窗口達標時顯示綠字。各年對應財年：' + codes
+    + '｜財報後基準日 ' + ((se && se.base_date) || '—') + '；近 3 個月基準日 ' + ((m3 && m3.base_date) || '—');
+  return '<td title="' + tip.replace(/"/g, '&quot;') + '" style="font-size:11px;line-height:1.5">'
+    + _pecRevWin(se, '財報後', dy, cy) + _pecRevWin(m3, '近 3 月', dy, cy) + '</td>';
+}
+function _renderPecPeCell(s) {
+  var pc = s.pe_compression || {};
+  var se = pc.since_earnings, m3 = pc['3m'];
+  function f(w) { return _pecPct(w.pe_chg_pct, 1); }
+  var tip = '本益比變動 ＝ (1 + 股價變動) ÷ (1 + 第一個條件年的 EPS 修正) − 1，用 ' + ((pc.condition_years || [])[0] || '—') + ' 年的修正計算。股價變動自基準日起算：財報後 '
+    + _pecPct(se && se.price_chg_pct, 1) + '，近 3 個月 ' + _pecPct(m3 && m3.price_chg_pct, 1);
+  return '<td title="' + tip + '" style="font-size:11px;line-height:1.5">'
+    + _pecWin(se, '財報後', f) + _pecWin(m3, '近 3 月', f) + '</td>';
+}
+function _renderPecRatioCell(s) {
+  var r = (s.pe_compression || {}).pe_vs_5y_ratio;
+  if (typeof r !== 'number') return '<td style="color:var(--muted)">—</td>';
+  return '<td title="預估本益比 ÷ 過去 5 年平均預估本益比。僅供參考，不是入選條件" style="color:var(--sec)">' + r.toFixed(2) + 'x</td>';
+}
+function _renderPecFlagCell(s) {
+  var flags = (s.pe_compression || {}).flags || [];
+  if (!flags.length) return '<td style="color:var(--muted)">—</td>';
+  return '<td style="text-align:left">' + flags.map(function(f) {
+    var d = PEC_FLAG_LABEL[f] || [f, f];
+    return '<span title="' + d[1] + '" style="display:inline-block;margin:1px 3px 1px 0;padding:1px 6px;border-radius:99px;background:#fbf3df;color:var(--warn);font-size:10px;font-weight:600;cursor:help">' + d[0] + '</span>';
+  }).join('') + '</td>';
+}
+
 function buildTable(stocks) {
   if (!stocks.length) return '<p style="padding:20px;color:var(--muted);font-size:12px">（無符合資料）</p>';
 
@@ -1713,6 +1826,7 @@ function buildTable(stocks) {
   // sortable header row + row-renderer td sequence below.
   var COLUMN_GROUPS = [
     {label: '身分', span: 4},
+    {label: 'EPS 上修・本益比', span: 4, pec: true},
     {label: '獲利', span: 9},
     {label: '成長', span: 6},
     {label: '估值', span: 4},
@@ -1720,6 +1834,17 @@ function buildTable(stocks) {
     {label: '時機', span: 5},
     {label: '其他', span: 1},
   ];
+  var pecOn = state.pec === 'on';
+  COLUMN_GROUPS = COLUMN_GROUPS.filter(function(g) { return !g.pec || pecOn; });
+  var thPec = pecOn
+    ? _thSortable((function() { var y = _pecYears() || {d: ['今年', '明年', '後年'], c: []};
+          return y.d.map(function(v, k) { var u = y.c.indexOf(v) >= 0; return (u ? '<u>' + v + '</u>' : v) + (k === 0 ? '（今年）' : ''); }).join('／') + ' EPS 上修'
+            + (y.c.length ? '<br><span style="font-weight:400;font-size:10px">條件：' + y.c.join('＋') + '</span>' : ''); })(),
+        'pe_compression.since_earnings.eps_cond1_chg', {title: '各日曆年 EPS 預估相對基準日的修正幅度，上行為財報後、下行為近 3 個月；粗體為條件年，綠字代表該窗口達標。依財報後第一個條件年的修正排序'})
+      + _thSortable('本益比變動', 'pec_min', {title: '同期本益比變動，上行為財報後、下行為近 3 個月；依兩窗口中降幅較大者排序（越負越前）'})
+      + _thSortable('本益比／5 年均', 'pe_compression.pe_vs_5y_ratio', {title: '預估本益比 ÷ 5 年平均預估本益比，僅供參考'})
+      + '<th title="警示標籤只提醒資料可能失真，不會排除個股">警示</th>'
+    : '';
   var groupRow = '<tr class="th-group">' + COLUMN_GROUPS.map(function(g) {
     return '<th colspan="' + g.span + '">' + g.label + '</th>';
   }).join('') + '</tr>';
@@ -1730,6 +1855,7 @@ function buildTable(stocks) {
     _thSortable('v2 名次', 'funnel_v2_rank', {left: true, title: 'FunnelRank v2 — 事業品質／再投資引擎／期望落差／價格四層逐層比較排序，不是加權合成分（護城河不進排序；名次格右側另有「儀表板」連結）。預設排序鍵（名次 1 = 最佳）。hover 看四層拆解。'}) +
     _thSortable('裁決', 'dca_verdict', {left: true, title: 'DD §13 統一裁決（進場/觀望/迴避）— 只讀 v13/v14 合併報告的決策層 metadata；v12 舊報告顯示 —，DD 重跑後自動補上。點擊跳 #decision 錨點。'}) +
     _thSortable('Moat', 'moat_score', {left: true, title: '依護城河評等分數排序'}) +
+    thPec +
     // 獲利
     thFcf + thRoic + thRoicSource + thRoicTrend + thIncrementalRoic + thReinvestRate
       + thImpliedGrowth + thOlDivergence + thDe +
@@ -1865,6 +1991,7 @@ function buildTable(stocks) {
       _renderFunnelCell(s) +
       verdictHtml +
       '<td class="left"' + moatTitle + ' style="font-size:11px">' + moatHtml + '</td>' +
+      (pecOn ? _renderPecRevCell(s) + _renderPecPeCell(s) + _renderPecRatioCell(s) + _renderPecFlagCell(s) : '') +
       // 獲利
       tdFcf + tdRoic + tdRoicSatellites + tdOlDivergence + tdDe +
       // 成長
@@ -1939,6 +2066,10 @@ function renderEpsSourceBanner() {
 
 function renderAll() {
   if (!DATA) return;
+  pecFillYears();
+  var _pc = document.getElementById('pec-chip');
+  var _y = _pecYears();
+  if (_pc && _y) _pc.title = '所有公司用同一組日曆年比較：' + _y.c.join('＋') + ' 年的 EPS 預估都上修 ≥ 5%，且同期股價落後使本益比下降 ≥ 10%。啟用後不套用 Moat、Direction、ROIC 來源和時機篩選';
 
   var stocks = DATA.stocks || [];
 
@@ -2112,6 +2243,7 @@ document.querySelectorAll('.chip[data-filter]').forEach(function(chip) {
     if (filterName === 'quadrant') state.quadrant = val;
     if (filterName === 'preset')   state.preset   = val;
     if (filterName === 'timing')   state.timing   = val;
+    if (filterName === 'pec')      state.pec      = val;
 
     // Show/hide custom panel
     var panel = document.getElementById('custom-panel');
@@ -2129,6 +2261,22 @@ document.querySelectorAll('.chip[data-filter]').forEach(function(chip) {
       var pBanner = document.getElementById('pullback-banner');
       if (qBanner) qBanner.classList.toggle('hidden', val !== 'qichi');
       if (pBanner) pBanner.classList.toggle('hidden', val !== 'pullback');
+    }
+
+    // EPS 上修・本益比壓縮：獨立模式。啟用時切到「全部」分頁並以本益比降幅排序，退出時還原
+    if (filterName === 'pec') {
+      var pBn = document.getElementById('pec-banner');
+      if (pBn) pBn.classList.toggle('hidden', val !== 'on');
+      var tabBtns = document.querySelectorAll('.tab-btn');
+      if (val === 'on') {
+        var cur = document.querySelector('.tab-btn.active');
+        state.pecPrevTab = cur ? cur.getAttribute('data-tab') : null;
+        state.sortKey = 'pec_min'; state.sortDir = 'asc';
+        tabBtns.forEach(function(b) { if (b.getAttribute('data-tab') === 'tab-all') b.click(); });
+      } else {
+        state.sortKey = 'funnel_v2_rank'; state.sortDir = 'asc';
+        if (state.pecPrevTab) tabBtns.forEach(function(b) { if (b.getAttribute('data-tab') === state.pecPrevTab) b.click(); });
+      }
     }
 
     if (DATA) renderAll();

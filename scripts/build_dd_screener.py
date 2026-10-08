@@ -128,7 +128,11 @@ from eps_fx_normalize import (  # noqa: E402
 
 from eps_fy_shift import (  # noqa: E402
     SHIFTED_BASELINE_KEY,
+    calendar_year_columns,
     check_numbers_agree,
+    condition_calendar_years,
+    display_calendar_years,
+    snapshot_fy1_end,
     fy_shift,
     get_last_fye,
     load_fye_cache,
@@ -2700,6 +2704,13 @@ def _fold_eps_rev_fy_weighted(rev: dict) -> float | None:
     return round(sum(parts) / weight_sum, 2) if weight_sum > 0 else None
 
 
+def _fy_triplet(rev: dict) -> list:
+    """Per-FY revision %s [FY1, FY2, FY3] from _compute_fy_eps_revision() output
+    (private key, consumed and popped by compute_pe_compression())."""
+    return [rev.get("eps_fy_curr_revision_pct"), rev.get("eps_fy_next_revision_pct"),
+            rev.get("eps_fy3_revision_pct")]
+
+
 def _compute_eps_rev_3m(ticker: str, yf_ticker: str, eps_curr: float | None,
                          eps_next: float | None, eps_fy3: float | None,
                          baseline_snapshot: dict, current_snapshot_date: str | None,
@@ -2732,6 +2743,7 @@ def _compute_eps_rev_3m(ticker: str, yf_ticker: str, eps_curr: float | None,
         "eps_rev_3m_fx_normalized": rev.get("eps_revision_fx_normalized"),
         "eps_rev_3m_fy_shift": rev.get("eps_revision_fy_shift"),
         "eps_rev_3m_fy_shift_status": rev.get("eps_revision_fy_shift_status"),
+        "_eps_rev_3m_fy": _fy_triplet(rev),
     }
 
 
@@ -2798,6 +2810,7 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
             "eps_rev_since_earnings_days": _days_since(baseline_date),
             "eps_rev_since_earnings_fy_shift": eps_rev_3m_result.get("eps_rev_3m_fy_shift"),
             "eps_rev_since_earnings_fy_shift_status": eps_rev_3m_result.get("eps_rev_3m_fy_shift_status"),
+            "_eps_rev_since_earnings_fy": eps_rev_3m_result.get("_eps_rev_3m_fy"),
         }
     rev = _compute_fy_eps_revision(
         ticker, yf_ticker, eps_curr, eps_next, eps_fy3, baseline,
@@ -2813,6 +2826,7 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
         "eps_rev_since_earnings_days": _days_since(baseline_date),
         "eps_rev_since_earnings_fy_shift": rev.get("eps_revision_fy_shift"),
         "eps_rev_since_earnings_fy_shift_status": rev.get("eps_revision_fy_shift_status"),
+        "_eps_rev_since_earnings_fy": _fy_triplet(rev),
     }
 
 
@@ -3398,6 +3412,131 @@ def _target_upside_yfinance_fallback(yf_ticker: str) -> float | None:
     except Exception:
         pass
     return None
+
+
+# ── EPS 上修 × 本益比壓縮（2026-10-08）──────────────────────────────────────
+# 研究清單，不是買進訊號。所有公司用同一組日曆年比較（非各自的明年度／後年度）：
+# 條件年（每年 6/1 換）的 EPS 預估兩年都上修 >= 5%，且同一段期間股價落後使
+# 隱含本益比下降 >= 10%。兩個窗口（財報後／近 3 個月）各自判斷。
+# 門檻由持有人核定，不隨結果調整。
+PE_COMPRESS_MIN_REV = 5.0
+PE_COMPRESS_MAX_PE_CHG = -10.0
+PE_COMPRESS_BIG_MOVE = 100.0
+PE_COMPRESS_EARN_STALE_DAYS = 200
+PE_COMPRESS_PE5Y_LO, PE_COMPRESS_PE5Y_HI = 0.3, 3.0
+_PE_UNJUDGEABLE_STATUS = ("unknown", "ambiguous")
+
+
+def pe_compress_pe_chg(price_chg, eps_chg):
+    if price_chg is None or eps_chg is None or eps_chg <= -99.9:
+        return None
+    return ((1 + price_chg / 100.0) / (1 + eps_chg / 100.0) - 1) * 100.0
+
+
+def pe_compress_price_chg(close, base_date, current_price=None):
+    """Same convention as build_stock_dash._price_pct_change_since: base = first
+    close on/after base_date; current = latest close. Returns pct or None."""
+    if close is None or not base_date or len(close) == 0:
+        return None
+    try:
+        since = pd.Timestamp(base_date)
+        idx = close.index
+        if getattr(idx, "tz", None) is not None:
+            since = since.tz_localize(idx.tz)
+        sub = close[idx >= since]
+        if sub.empty:
+            return None
+        base = float(sub.iloc[0])
+        cur = float(close.iloc[-1]) if current_price is None else float(current_price)
+    except Exception:  # noqa: BLE001
+        return None
+    if base == 0:
+        return None
+    return (cur / base - 1) * 100.0
+
+
+def pe_compress_window(fy, shift, status, base_date, close, cols,
+                       display_years, condition_years) -> dict:
+    """One window on the calendar basis. fy = [FY1, FY2, FY3] revision % already
+    re-paired across a rollover (fy_shift); cols = {year: column 1..3 | None}.
+    Unknown/ambiguous status, shift outside (0, 1), or a missing triplet -> not
+    judgeable (all revs None)."""
+    ok_fy = bool(fy) and len(fy) >= 3 and shift in (0, 1) \
+        and (status or "") not in _PE_UNJUDGEABLE_STATUS
+    revs = {}
+    for y in display_years:
+        col = cols.get(y)
+        revs[str(y)] = fy[col - 1] if (ok_fy and col) else None
+    cond = [revs[str(y)] for y in condition_years]
+    eps_cond1 = cond[0]
+    price = pe_compress_price_chg(close, base_date) if any(v is not None for v in revs.values()) else None
+    pe = pe_compress_pe_chg(price, eps_cond1)
+    ok = (all(v is not None and v >= PE_COMPRESS_MIN_REV for v in cond)
+          and pe is not None and pe <= PE_COMPRESS_MAX_PE_CHG)
+    r = lambda v: None if v is None else round(v, 2)
+    return {"base_date": base_date, "revs": {k: r(v) for k, v in revs.items()},
+            "eps_cond1_chg": r(eps_cond1), "price_chg_pct": r(price),
+            "pe_chg_pct": r(pe), "pass": bool(ok)}
+
+
+def pe_compress_flags(windows: dict, last_earnings_date, ratio, today=None,
+                      condition_years=None) -> list:
+    flags = []
+    if any(abs(v) >= PE_COMPRESS_BIG_MOVE for w in windows.values()
+           for k, v in (w.get("revs") or {}).items()
+           if v is not None and (condition_years is None or int(k) in condition_years)):
+        flags.append("big_move")
+    stale = True
+    if last_earnings_date:
+        try:
+            today = today or datetime.now(timezone(timedelta(hours=8))).date()
+            d = datetime.strptime(str(last_earnings_date)[:10], "%Y-%m-%d").date()
+            stale = (today - d).days > PE_COMPRESS_EARN_STALE_DAYS
+        except ValueError:
+            stale = True
+    if stale:
+        flags.append("earnings_date_odd")
+    if ratio is not None and (ratio < PE_COMPRESS_PE5Y_LO or ratio > PE_COMPRESS_PE5Y_HI):
+        flags.append("pe5y_gap")
+    return flags
+
+
+def compute_pe_compression(row: dict, close, as_of) -> dict:
+    """Build row['pe_compression'] on the calendar basis; pops the private
+    per-FY triplets. as_of = current EPS snapshot date (not wall-clock)."""
+    fy_se = row.pop("_eps_rev_since_earnings_fy", None)
+    fy_3m = row.pop("_eps_rev_3m_fy", None)
+    dy = display_calendar_years(as_of)
+    cy = condition_calendar_years(as_of)
+    if dy is None or cy is None:
+        raise ValueError("pe_compression needs the EPS snapshot date")
+    fy1_end = snapshot_fy1_end(row.get("fiscal_year_end"), as_of,
+                               row.get("past_earnings_dates"), row.get("eps_source"),
+                               row.get("last_earnings_date"))
+    cols = calendar_year_columns(fy1_end, dy)
+    fy_codes = {str(y): (f"FY{(fy1_end.year + cols[y] - 1) % 100:02d}" if cols[y] else None)
+                for y in dy}
+    se = pe_compress_window(fy_se, row.get("eps_rev_since_earnings_fy_shift"),
+                            row.get("eps_rev_since_earnings_fy_shift_status"),
+                            row.get("eps_rev_since_earnings_baseline_date"), close,
+                            cols, dy, cy)
+    m3 = pe_compress_window(fy_3m, row.get("eps_rev_3m_fy_shift"),
+                            row.get("eps_rev_3m_fy_shift_status"),
+                            row.get("eps_rev_3m_baseline_date"), close,
+                            cols, dy, cy)
+    fund = row.get("fund") or {}
+    pe, pe5 = fund.get("pe_ntm_x"), fund.get("pe_ntm_5y_avg_x")
+    ratio = round(pe / pe5, 3) if isinstance(pe, (int, float)) and isinstance(pe5, (int, float)) and pe5 > 0 else None
+    wins = {"since_earnings": se, "3m": m3}
+    mw = [k for k, w in wins.items() if w["pass"]]
+    row["pe_compression"] = {
+        "display_years": list(dy), "condition_years": list(cy), "fy_codes": fy_codes,
+        "since_earnings": se, "3m": m3, "match": bool(mw), "match_windows": mw,
+        "pe_vs_5y_ratio": ratio,
+        "flags": pe_compress_flags(wins, row.get("last_earnings_date"), ratio,
+                                   condition_years=set(cy)),
+    }
+    return row["pe_compression"]
 
 
 def enrich_ticker(
@@ -4258,6 +4397,22 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
           f"far_from_ath {vcp_scope_counts.get('far_from_ath', 0)}／"
           f"insufficient_bars {vcp_scope_counts.get('insufficient_bars', 0)}／"
           f"no_ath_data {vcp_scope_counts.get(None, 0)}")
+
+    # Step 4.58: EPS 上修 × 本益比壓縮（研究清單）。沿用 Step 3.5 同一批 5 年日線
+    # 收盤價（ohlcv_map，auto_adjust），不另抓；skip_ma 時價格為空，只留 EPS 欄位。
+    pec_n = Counter()
+    for row in enriched:
+        try:
+            pc = compute_pe_compression(
+                row, (vcp_ohlcv_map.get(row.get("ticker")) or {}).get("close"),
+                excel_snapshot.snapshot_date if excel_snapshot else None)
+        except Exception as exc:   # noqa: BLE001 — additive, never abort the build
+            print(f"  WARN: pe_compression failed for {row.get('ticker')} (non-fatal): {exc}", file=sys.stderr)
+            row.pop("_eps_rev_since_earnings_fy", None); row.pop("_eps_rev_3m_fy", None)
+            continue
+        if pc["match"]:
+            pec_n["/".join(pc["match_windows"])] += 1
+    print(f"  Step 4.58 PE compression match: {dict(pec_n)}")
 
     # Step 4.6 (v1.9, v14.3 F4): AR Live — recompute the §11.5 asymmetry ratio
     # at today's price for reports that emit bull/bear targets + probabilities.

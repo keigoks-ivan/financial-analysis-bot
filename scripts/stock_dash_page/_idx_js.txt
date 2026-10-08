@@ -51,24 +51,29 @@ function renderRevVsPrice(vm){
   var tblEl = document.getElementById('revVsPriceTable'), sentEl = document.getElementById('revVsPriceSentence');
   if(c.status!=='ok'){ noData(tblEl, c.reason); if(sentEl) sentEl.innerHTML=''; return; }
   var periods = c.periods || [];
+  // 2026-10-08 前建置的逐檔資料沒有日曆年欄位：沿用明年度欄位顯示，等每日重建後自動換成日曆年
+  var legacy = periods.length>0 && periods[0].eps_cy_chg_pct===undefined && periods[0].eps_fy_next_chg_pct!==undefined;
+  if(legacy) periods.forEach(function(p){ p.eps_cy_chg_pct = p.eps_fy_next_chg_pct; });
+  var cyYear = legacy ? '明年度' : (periods[0]&&periods[0].eps_cy_year)? periods[0].eps_cy_year+' 年' : '篩選年度';
+  var cyReason = (periods[0]&&periods[0].eps_cy_reason)||null;
   tblEl.innerHTML =
-    '<thead><tr><th>期間</th><th class="num">明年度 EPS<br>預估變動</th><th class="num">股價漲跌</th><th class="num">隱含本益比<br>變動</th></tr></thead><tbody>'+
+    '<thead><tr><th>期間</th><th class="num">'+cyYear+' EPS<br>預估變動</th><th class="num">股價漲跌</th><th class="num">隱含本益比<br>變動</th></tr></thead><tbody>'+
     periods.map(function(p){
       var lbl = PERIOD_ZH[p.label] || p.label;
       return '<tr><td>'+lbl+'<span class="base-date">基準：'+(p.base_date||'無資料')+'</span></td>'+
-        '<td class="num">'+fmtPctColored(p.eps_fy_next_chg_pct)+'</td>'+
+        '<td class="num">'+(p.eps_cy_chg_pct==null&&cyReason?'無資料<span class="base-date">'+cyReason+'</span>':fmtPctColored(p.eps_cy_chg_pct))+'</td>'+
         '<td class="num">'+fmtPctColored(p.price_chg_pct)+'</td>'+
         '<td class="num">'+fmtPctParen(p.implied_ntm_pe_chg_pct)+'</td></tr>';
     }).join('')+'</tbody>';
 
   // 機械句：只用上表數字，選基準日最早（涵蓋期間最長）且三個數字都有資料的一格。
   var complete = periods.filter(function(p){
-    return p.base_date && p.eps_fy_next_chg_pct!=null && p.price_chg_pct!=null && p.implied_ntm_pe_chg_pct!=null;
+    return p.base_date && p.eps_cy_chg_pct!=null && p.price_chg_pct!=null && p.implied_ntm_pe_chg_pct!=null;
   }).sort(function(a,b){ return a.base_date<b.base_date?-1:(a.base_date>b.base_date?1:0); });
   if(!sentEl) return;
   if(!complete.length){ sentEl.innerHTML = '無資料：三個期間都缺基準日或估值資料'; return; }
   var p = complete[0], lbl = PERIOD_ZH[p.label] || p.label;
-  sentEl.innerHTML = lbl+'明年度 EPS 預估'+pctWord(p.eps_fy_next_chg_pct,'上修','下修')+
+  sentEl.innerHTML = lbl+' '+cyYear+' EPS 預估'+pctWord(p.eps_cy_chg_pct,'上修','下修')+
     '，股價'+pctWord(p.price_chg_pct,'漲','跌')+
     '，隱含本益比'+pctWord(p.implied_ntm_pe_chg_pct,'上升','下降')+'。';
 }
