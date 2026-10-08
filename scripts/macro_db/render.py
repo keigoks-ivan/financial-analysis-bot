@@ -158,10 +158,12 @@ def measure_label(spec):
     d = spec.get("display", "level")
     f = spec.get("freq", "M")
     base = spec["label_zh"]
+    # 標籤本身已經寫了「年增率」「月增率」的就不再加，免得出現「年增率 年增率」
     if d == "mom":
-        base += {"M": " 月增率", "Q": " 季增率", "W": " 週增率"}.get(f, " 變動率")
+        suf = {"M": " 月增率", "Q": " 季增率", "W": " 週增率"}.get(f, " 變動率")
+        base += "" if suf.strip() in base else suf
     elif d == "yoy":
-        base += " 年增率"
+        base += "" if "年增率" in base else " 年增率"
     elif d == "diff":
         base += " 月變動" if f == "M" else " 變動"
     elif d == "ratio" and spec.get("unit_out"):
