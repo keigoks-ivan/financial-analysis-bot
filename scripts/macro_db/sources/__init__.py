@@ -28,6 +28,13 @@ REGISTRY = {
     "tw_twse": "macro_db.sources.tw_twse",
     "tw_tpex": "macro_db.sources.tw_tpex",
     # --- JP（第二波：只在此區塊加 jp_ 開頭的行）---
+    "jp_boj": "macro_db.sources.jp_boj",
+    "jp_esri": "macro_db.sources.jp_esri",
+    "jp_stat": "macro_db.sources.jp_stat",
+    "jp_estat_file": "macro_db.sources.jp_estat_file",
+    "jp_mof": "macro_db.sources.jp_mof",
+    "jp_customs": "macro_db.sources.jp_customs",
+    "jp_misc": "macro_db.sources.jp_misc",
     # --- CN（第二波：只在此區塊加 cn_ 開頭的行）---
     # --- EU（第二波：只在此區塊加 eu_ 開頭的行）---
     # --- AN（第二波：只在此區塊加 an_ 開頭的行）---
