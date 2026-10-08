@@ -110,6 +110,9 @@ Change log:
         PREFIX_ACTIVE 的 dd-screener/ 由 ("pick", None) 改 ("research", "dds")。
         外部 3 repo synced literal 同步（v7-backtest／morning-briefing／
         minervini-quality-backtest，見 site-composition.md）。
+    2026-10-08：市場 ▾ 下拉新增「總經資料庫」("macrodb", /macro/db/)，緊接「總經深度報告」
+        (macro) 之後；PREFIX_ACTIVE 新增 macro/db/ 前綴（須排在 macro/ 之前，否則被
+        macro/ 吃掉）。外部 3 repo synced literal 同步。
 """
 
 import re
@@ -202,6 +205,7 @@ MENU = {
         ("brief", "/briefing/", "每日簡報"),  # 2026-08-17 日報恢復（週一至週六 06:15），重新掛回頁首
         ("radar", "/rotation/radar.html", "資產輪動雷達"),
         ("macro", "/macro/", "總經深度報告"),
+        ("macrodb", "/macro/db/", "總經資料庫"),  # 2026-10-08 美台總經數據庫（官方原始數據、每日更新）
         ("earn", "/earnings/", "財報分析"),
         ("markets", "/markets.html", "Markets"),
         ("sectors", "/sectors.html", "Sectors"),
@@ -373,6 +377,7 @@ PREFIX_ACTIVE = [
     ("rotation/radar.html", ("market", "radar")),  # 資產輪動雷達（2026-07-11 新增）
     ("rotation/", ("market", None)),
     ("regime/", ("market", None)),
+    ("macro/db/", ("market", "macrodb")),  # 總經資料庫（2026-10-08）；須排在 macro/ 之前
     ("macro/", ("market", "macro")),  # 總經深度報告（2026-07-09），nav 已掛項目
     ("weekly/", ("market", "week")),
     ("briefing/", ("market", "brief")),  # 2026-08-17 恢復更新，nav 項目已掛回

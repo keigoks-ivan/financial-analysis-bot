@@ -16,7 +16,6 @@ ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs" / "macro" / "db"
 CATALOG_DIR = Path(__file__).resolve().parent / "catalog"
 WEB_DIR = Path(__file__).resolve().parent / "web"
-NAV_SRC = ROOT / "docs" / "macro" / "index.html"
 
 COUNTRY_NAME = {"us": "美國", "tw": "台灣"}
 WD = "一二三四五六日"
@@ -379,11 +378,10 @@ def card_html(country, chart, visible, sums, series_json, ctx):
 
 # ---------- 頁面外框 ----------
 def nav_block():
+    """全站選單從 scripts/site_nav.py 產生，高亮「市場 ▾ 總經資料庫」；與 site_nav.py 重注入的結果逐字相同。"""
     try:
-        t = NAV_SRC.read_text(encoding="utf-8")
-        a = t.index('<style id="imq-nav-style">')
-        b = t.index("</script>", t.index("</header>")) + len("</script>")
-        return t[a:b]
+        import site_nav
+        return site_nav.full_nav_block("market", "macrodb")
     except Exception:  # noqa: BLE001
         return ""
 
@@ -396,6 +394,10 @@ def page(title, body, base, extra_head="", scripts=""):
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
 <link rel="stylesheet" href="{base}db.css">
 {extra_head}
 </head>
@@ -435,6 +437,7 @@ def category_page(country, cat, cats, ctx, all_cats_present):
     n = len(charts)
     body = (f'<div class="crumb"><a href="/">首頁</a> / <a href="/macro/">總經</a> / <a href="/macro/db/">資料庫</a> / '
             f'<a href="/macro/db/#{country}">{COUNTRY_NAME[country]}</a> / {esc(cat["name_zh"])}</div>'
+            f'<div class="overline">Macro Database · {country.upper()}</div>'
             f'<h1>{COUNTRY_NAME[country]}　{esc(cat["name_zh"])}</h1>'
             f'<p class="sub">{n} 張圖。資料每日自官方來源更新，歷史完整保存；數字都標了期間與單位，年增率按日期對齊去年同期。</p>'
             f'<div class="pills">{pills}</div>' + "\n".join(cards))
@@ -469,6 +472,7 @@ def overview(countries, built, ctx):
     for c in ("us", "tw"):
         tabs += f'<button type="button" data-c="{c}" class="{"on" if c == "us" else ""}{"" if c in built else " off"}">{COUNTRY_NAME[c]}</button>'
     body = ('<div class="crumb"><a href="/">首頁</a> / <a href="/macro/">總經</a> / 資料庫</div>'
+            '<div class="overline">Macro Database</div>'
             '<h1>總經資料庫</h1>'
             '<p class="sub">美國與台灣的總體經濟數據，全部取自官方原始來源，完整歷史保存，每日自動更新。只提供看圖，不提供下載。</p>'
             f'<div class="seg">{tabs}</div>' + "".join(secs))

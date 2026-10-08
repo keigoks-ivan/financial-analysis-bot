@@ -118,6 +118,21 @@ def probe(specs_by_sid, log=print):
         log("probe %-34s %s  (%.1fs)" % (host, code, time.time() - t))
 
 
+def write_run_stamp(n_series, n_ok, n_failed, docs=None):
+    """首頁「自動更新檢查清單」讀這個檔判斷今天排程有沒有跑（只在完整抓取後寫，本機補抓不算）。"""
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+    rec = {
+        "generated_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "as_of": (now + timedelta(hours=8)).strftime("%Y-%m-%d"),
+        "n_series": n_series, "n_ok": n_ok, "n_failed": n_failed,
+    }
+    docs = Path(docs) if docs else _here.parents[1] / "docs" / "macro" / "db"
+    path = docs / "data" / "run.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(rec, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", choices=COUNTRIES)
@@ -160,6 +175,8 @@ def main(argv=None):
         if specs and not ok:
             print("全部來源都失敗")
             rc = 1
+        if not a.only and not a.local_only:
+            write_run_stamp(len(specs), len(ok), len(failed))
     if not a.no_render:
         from macro_db import render
         render.render_all(countries)
