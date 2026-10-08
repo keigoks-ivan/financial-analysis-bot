@@ -29,6 +29,11 @@ REGISTRY = {
     "tw_tpex": "macro_db.sources.tw_tpex",
     # --- JP（第二波：只在此區塊加 jp_ 開頭的行）---
     # --- CN（第二波：只在此區塊加 cn_ 開頭的行）---
+    "cn_nbs": "macro_db.sources.cn_nbs",
+    "cn_pbc": "macro_db.sources.cn_pbc",
+    "cn_chinamoney": "macro_db.sources.cn_chinamoney",
+    "cn_chinabond": "macro_db.sources.cn_chinabond",
+    "cn_csindex": "macro_db.sources.cn_csindex",
     # --- EU（第二波：只在此區塊加 eu_ 開頭的行）---
     # --- AN（第二波：只在此區塊加 an_ 開頭的行）---
     "an_singstat": "macro_db.sources.an_singstat",
