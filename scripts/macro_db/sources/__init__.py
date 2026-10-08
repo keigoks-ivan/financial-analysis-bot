@@ -31,7 +31,12 @@ REGISTRY = {
     # --- CN（第二波：只在此區塊加 cn_ 開頭的行）---
     # --- EU（第二波：只在此區塊加 eu_ 開頭的行）---
     # --- AN（第二波：只在此區塊加 an_ 開頭的行）---
+    "an_singstat": "macro_db.sources.an_singstat",
+    "an_opendosm": "macro_db.sources.an_opendosm",
     # --- 跨國共用（IMF／BIS／OECD 等國際機構 API，第二波）---
+    "intl_imf": "macro_db.sources.intl_imf",
+    "intl_bis": "macro_db.sources.intl_bis",
+    "intl_worldbank": "macro_db.sources.intl_worldbank",
 }
 
 
