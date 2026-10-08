@@ -200,3 +200,11 @@ def test_us_catalog_consistent():
                     assert seen[s["sid"]] == s["fetcher"]
                 if s.get("display") == "ratio":
                     assert s["denominator"]
+
+
+def test_yoy_from_source_forms():
+    # 中國國統局「上年同月＝100」指數：年增率＝值−100；官方直接公布的年增率照用，不再自算
+    obs = [("2026-07-01", 100.5), ("2026-08-01", 100.8)]
+    got = transform.apply_display(obs, {"display": "yoy", "freq": "M", "yoy_from": "idx100"}, None)
+    assert [(d, round(v, 6)) for d, v in got] == [("2026-07-01", 0.5), ("2026-08-01", 0.8)]
+    assert transform.apply_display(obs, {"display": "yoy", "freq": "M", "yoy_from": "pct"}, None) == obs

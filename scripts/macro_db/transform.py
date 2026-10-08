@@ -170,6 +170,12 @@ def apply_display(obs, spec, get_series):
     disp = spec.get("display", "level")
     freq = spec.get("freq", "M")
     if disp == "yoy":
+        # 來源本身已是年增率形式時不再自算：idx100＝「上年同期＝100」指數（中國國統局），pct＝官方直接公布的年增率（%）
+        src = spec.get("yoy_from")
+        if src == "idx100":
+            return [(d, v - 100.0) for d, v in obs]
+        if src == "pct":
+            return list(obs)
         return yoy(obs, freq)
     if disp == "mom":
         return mom(obs, freq)
