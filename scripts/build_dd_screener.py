@@ -136,6 +136,8 @@ from eps_fy_shift import (  # noqa: E402
     fy_shift,
     get_last_fye,
     load_fye_cache,
+    roll_fye_forward,
+    _to_date as _fye_to_date,
     save_fye_cache,
 )
 
@@ -3539,6 +3541,114 @@ def compute_pe_compression(row: dict, close, as_of) -> dict:
     return row["pe_compression"]
 
 
+# 2026-10-08: 前一財年實際 EPS（eps_year_ago）— 全宇宙抓取＋失敗時沿用上次
+# ---------------------------------------------------------------------------
+# yfinance 的 0y 在財年「結束日」換年，所以 yearAgoEps 對應的財年末日 =
+# roll_fye_forward(last_fye, today)。沿用舊值只在同一財年末日成立。
+_PREV_YEAR_AGO: dict[str, dict] = {}
+
+
+def load_prev_year_ago(path: Path) -> dict[str, dict]:
+    """Previous latest.json's eps_year_ago rows (+ as_of / fiscal_year_end for
+    deriving the fye of rows written before eps_year_ago_fye existed)."""
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    as_of = data.get("as_of")
+    out: dict[str, dict] = {}
+    for s in data.get("stocks", []) or []:
+        t = s.get("ticker")
+        if t and s.get("eps_year_ago") is not None:
+            out[t] = {
+                "eps_year_ago": s.get("eps_year_ago"),
+                "eps_year_ago_0y_avg": s.get("eps_year_ago_0y_avg"),
+                "eps_year_ago_fye": s.get("eps_year_ago_fye"),
+                "fiscal_year_end": s.get("fiscal_year_end"),
+                "as_of": as_of,
+            }
+    return out
+
+
+def year_ago_fye(last_fye, today) -> str | None:
+    """Fiscal-year-end the yfinance 0y.yearAgoEps actual belongs to."""
+    fye, cur = _fye_to_date(last_fye), _fye_to_date(today)
+    if fye is None or cur is None:
+        return None
+    return roll_fye_forward(fye, cur).isoformat()
+
+
+def decide_year_ago_carry(prev_row: dict | None, cur_fye: str | None) -> dict | None:
+    """Carry-forward decision. Returns {eps_year_ago, eps_year_ago_0y_avg,
+    eps_year_ago_fye} when prev_row refers to the same fiscal year as cur_fye,
+    else None (missing prev, unknown fye, or fiscal year rolled)."""
+    if not prev_row or prev_row.get("eps_year_ago") is None or not cur_fye:
+        return None
+    prev_fye = prev_row.get("eps_year_ago_fye") or year_ago_fye(
+        prev_row.get("fiscal_year_end"), prev_row.get("as_of"))
+    if not prev_fye or prev_fye != cur_fye:
+        return None
+    return {"eps_year_ago": prev_row["eps_year_ago"],
+            "eps_year_ago_0y_avg": prev_row.get("eps_year_ago_0y_avg"),
+            "eps_year_ago_fye": cur_fye}
+
+
+_YA_LOCK = threading.Lock()
+_YA_LAST = [0.0]
+_YA_MIN_GAP = 0.5  # seconds between light fetches (all workers share one pace)
+
+
+def _fetch_year_ago_light(yf_ticker: str, retries: int = 4) -> dict:
+    """earnings_estimate only (no .info): {eps_year_ago, eps_year_ago_0y_avg}
+    or {} when yfinance has nothing / keeps failing. Calls are serialised and
+    paced (the main enrichment already hammers yfinance with 8 workers, and an
+    un-paced extra call per ticker got the whole run rate-limited)."""
+    delays = (4.0, 10.0, 25.0)
+    for attempt in range(retries):
+        with _YA_LOCK:
+            wait = _YA_MIN_GAP - (time.time() - _YA_LAST[0])
+            if wait > 0:
+                time.sleep(wait)
+            try:
+                ee = yf.Ticker(yf_ticker).earnings_estimate
+                if ee is not None and not getattr(ee, "empty", True) and "0y" in ee.index:
+                    yag = ee.loc["0y"].get("yearAgoEps")
+                    if yag is not None and float(yag) > 0:
+                        avg = ee.loc["0y"].get("avg")
+                        return {"eps_year_ago": round(float(yag), 4),
+                                "eps_year_ago_0y_avg": round(float(avg), 4)
+                                if avg is not None and float(avg) > 0 else None}
+                    return {}  # answered, but no yearAgoEps: retrying won't help
+            except Exception:
+                pass
+            finally:
+                _YA_LAST[0] = time.time()
+        if attempt < retries - 1:
+            time.sleep(delays[min(attempt, len(delays) - 1)])
+    return {}
+
+
+def resolve_year_ago(t: str, yf_ticker: str, lfy: dict, last_fye, today=None) -> dict:
+    """Final eps_year_ago fields for a row: value from the DD live fetch if
+    present, else a light fetch, else carried from previous latest.json."""
+    from eps_fy_shift import _taipei_today
+    today = today or _taipei_today()
+    cur_fye = year_ago_fye(last_fye, today)
+    got = {"eps_year_ago": lfy.get("eps_year_ago"),
+           "eps_year_ago_0y_avg": lfy.get("eps_year_ago_0y_avg")}
+    if got["eps_year_ago"] is None:
+        got = _fetch_year_ago_light(yf_ticker) or got
+    if got.get("eps_year_ago") is not None:
+        return {**got, "eps_year_ago_fye": cur_fye, "eps_year_ago_source": "yfinance"}
+    carried = decide_year_ago_carry(_PREV_YEAR_AGO.get(t), cur_fye)
+    if carried:
+        return {**carried, "eps_year_ago_source": "carried"}
+    return {"eps_year_ago": None, "eps_year_ago_0y_avg": None,
+            "eps_year_ago_fye": cur_fye, "eps_year_ago_source": None}
+
+
 def enrich_ticker(
     entry: dict,
     qgm_index: dict,
@@ -3850,6 +3960,7 @@ def enrich_ticker(
     # 2026-10-08 fiscal-year rollover (see eps_fy_shift.py): needs the ticker's
     # last FYE + last earnings date BEFORE any of the three revision windows run.
     last_fye = get_last_fye(t, _yf_ticker_for_ma(t), fye_cache)
+    _ya = resolve_year_ago(t, _yf_ticker_for_ma(t), _lfy, last_fye)
     fy_revision = _compute_fy_eps_revision(
         t, _yf_ticker_for_ma(t), _rev_curr, _rev_next, _rev_fy3, prev_snapshot or {},
         excel_snapshot.snapshot_date if excel_snapshot else None,
@@ -3973,8 +4084,10 @@ def enrich_ticker(
         # 0y.yearAgoEps，跟 eps_fy_curr 同一路 _fetch_live_fy_eps() 抓的欄位，一直有
         # 算，只是先前沒寫出來）。給 build_stock_dash.py 用，取代它自己重複呼叫
         # Ticker.earnings_estimate（GitHub Actions runner 會被 Yahoo crumb 擋掉）。
-        "eps_year_ago": _lfy.get("eps_year_ago"),
-        "eps_year_ago_0y_avg": _lfy.get("eps_year_ago_0y_avg"),
+        "eps_year_ago": _ya["eps_year_ago"],
+        "eps_year_ago_0y_avg": _ya["eps_year_ago_0y_avg"],
+        "eps_year_ago_fye": _ya["eps_year_ago_fye"],
+        "eps_year_ago_source": _ya["eps_year_ago_source"],
         # v1.8: Excel-derived FY3 + growth/CAGR columns + provenance
         "eps_fy3": _lfy.get("eps_fy3"),
         "eps_fy3_yoy_pct": _lfy.get("growth_fy2_fy3_pct"),
@@ -4099,6 +4212,8 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     # Step 0b: v1.5 — load previous latest.json's quality fields as fallback
     # cache for yfinance-source rows (sister to MA cache, same rate-limit cause)
     quality_cache = load_quality_cache(_output_path())
+    _PREV_YEAR_AGO.clear()
+    _PREV_YEAR_AGO.update(load_prev_year_ago(_output_path()))
     print(f"  Step 0    quality cache from prev latest.json: {len(quality_cache)} yfinance tickers")
 
     # Step 1-2
@@ -4335,6 +4450,21 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
             save_fye_cache(fye_cache)
         except Exception as exc:
             print(f"  WARN: failed to save fiscal-year-end cache: {exc}", file=sys.stderr)
+
+    # Second chance for rows that came back empty (mostly rate-limit casualties
+    # of the parallel pass): single-threaded, after the load has died down.
+    _ya_miss = [r for r in enriched if r.get("eps_year_ago_source") is None]
+    if _ya_miss:
+        time.sleep(20)
+        for r in _ya_miss:
+            got = _fetch_year_ago_light(_yf_ticker_for_ma(r["ticker"]))
+            if got.get("eps_year_ago") is not None:
+                r.update(got)
+                r["eps_year_ago_source"] = "yfinance"
+    _ya_src = [r.get("eps_year_ago_source") for r in enriched]
+    print(f"  [eps_year_ago] fetched {_ya_src.count('yfinance')}, "
+          f"carried {_ya_src.count('carried')}, missing {_ya_src.count(None)} "
+          f"(of {len(enriched)})")
 
     # 2026-10-08: fiscal-year rollover summary per revision window.
     for _pfx, _label in (("eps_revision", "1m"), ("eps_rev_3m", "3m"),

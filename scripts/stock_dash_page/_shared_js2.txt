@@ -171,6 +171,53 @@ function buildVM(D, M){
     var gm = c4.status==='ok' ? c4.gross_margin_line : {};
     var gmRow = [gm.fy1, gm.fy2, gm.fy3];
     finTable = {labels:labels, eps:epsRow, growth:growthRow, pe:peRow, peg:pegRow, rev3m:rev3mRow, gm:gmRow, prevNote:prevNote};
+
+    // 2026-10-08：有 years／year_cols（日曆年版逐檔資料）就改成三個日曆年欄，跟 Exhibit 1/2 同一組年份；
+    // 舊版逐檔資料沒有這兩欄，維持上面的公司財年欄（等每日重建後自動換成日曆年）
+    var ovF = ((D.full.judgment_core.price_vs_eps||{}).eps_price_overlay)||{};
+    if(ovF.years && ovF.year_cols){
+      var cKey = {1:'curr',2:'next',3:'fy3'}, gmKey = {1:'fy1',2:'fy2',3:'fy3'};
+      var YC = ovF.year_cols, YS = ovF.years;
+      var cols = YS.map(function(y,i){
+        var col = YC[String(y)];
+        var c = {year:y, col:col, kind:'na', head:String(y)+(i===0?'（今年）':''), fy:null, eps:null, rev3m:null, gm:null, tip:null};
+        if(col>=1 && col<=3){
+          var r = c1.table[col-1];
+          var fyl = c1.fy_labels[cKey[col]] || '';
+          c.kind = 'est'; c.eps = r ? r.current_estimate : null; c.rev3m = r ? r.vs_3m_ago_pct : null;
+          c.gm = gm[gmKey[col]];
+          if(/^FY/.test(fyl) && fyl.slice(-2)!==String(y).slice(-2)) c.fy = fyl;
+          if(c.eps==null) c.tip = '尚無預估';
+        } else if(col==null && YC[String(y+1)]===1){
+          // FY1 所屬日曆年的前一年：財年已結束，放實際 EPS（judgment_core.eps_prev_fy 已核對口徑）
+          if(prevEps!=null){ c.kind = 'act'; c.eps = prevEps; c.fy = prevFy.fy; c.tip = '前一財年（'+prevFy.fy+'）實際 EPS'; }
+          else { c.kind = 'na'; c.tip = '前一年實際 EPS 暫缺：'+((prevFy&&prevFy.reason)||'無資料'); }
+        } else if(col>3){
+          c.tip = '尚無預估';
+        } else { c.tip = '無資料'; }
+        return c;
+      });
+      cols.forEach(function(c,i){
+        var base = null, why = null;
+        if(c.kind==='act'){ why = '實際值，前一年基準未取得'; }
+        else if(c.eps==null){ why = c.tip || '無資料'; }
+        else if(i===0){
+          if(c.col===1){ base = prevEps; if(base==null) why = '前一財年實際 EPS 暫缺：'+((prevFy&&prevFy.reason)||'無資料'); }
+          else why = '無前一年欄位可比';
+        } else {
+          base = cols[i-1].eps;
+          if(base==null) why = '前一欄（'+cols[i-1].year+'）無 EPS 可比';
+        }
+        c.growth = (base!=null && base!==0 && c.eps!=null) ? (c.eps/base-1)*100 : null;
+        if(c.growth==null && !why) why = '前一年基準為 0';
+        c.growthWhy = c.growth==null ? why : (i===0 && prevFy && prevFy.status==='ok' ? ('對 '+prevFy.fy+' 實際 EPS '+fmtNum(prevEps,2)) : null);
+        c.pe = c.eps ? D.quote.close/c.eps : null;
+        if(c.growth==null) c.peg = {value:null, reason:'growth_missing'};
+        else if(!(c.growth>0) || c.pe==null || !(c.pe>0)) c.peg = {value:null, reason:'not_applicable'};
+        else c.peg = {value:c.pe/c.growth, reason:null};
+      });
+      finTable.cal = cols;
+    }
   }
 
   return {
