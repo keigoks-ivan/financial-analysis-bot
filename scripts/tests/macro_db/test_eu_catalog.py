@@ -7,20 +7,24 @@ from pathlib import Path
 
 import pytest
 
+from macro_db import catalog_io
 from macro_db.sources import REGISTRY
 
-CATALOG = Path(__file__).resolve().parents[2] / "macro_db" / "catalog" / "eu.json"
+CATALOG_DIR = Path(__file__).resolve().parents[2] / "macro_db" / "catalog"
 REQUIRED = ["sid", "label_zh", "source", "freq", "unit", "sa", "license", "display", "axis", "fetcher", "params"]
 PARAM_KEYS = {
     "eu_eurostat": {"dataset", "key", "url"},
     "eu_ecb": {"dataset", "key", "url"},
     "eu_smard": {"filter", "region", "resolution", "url"},
+    "eu_comext": {"reporter", "partner", "flow", "product", "url"},
+    "eu_insee": {"idbank", "url"},
+    "eu_ine": {"cod", "url"},
 }
 
 
 @pytest.fixture(scope="module")
 def cat():
-    return json.loads(CATALOG.read_text(encoding="utf-8"))
+    return catalog_io.load_catalog("eu", CATALOG_DIR)
 
 
 def all_series(cat):
@@ -32,7 +36,8 @@ def all_series(cat):
 
 def test_catalog_top_level(cat):
     assert cat["country"] == "eu"
-    assert len(cat["categories"]) == 8
+    assert cat["parts"] == ["de", "fr", "it", "es"]
+    assert len([c for c in cat["categories"] if c["group"] == "歐元區"]) == 8
     for rec in cat["todo"]:
         assert rec["reason"] and rec["chart"]
     for rec in cat["unavailable"]:
@@ -42,6 +47,8 @@ def test_catalog_top_level(cat):
 def test_every_series_has_required_fields(cat):
     for _, ch, s in all_series(cat):
         for k in REQUIRED:
+            if s.get("derived") and k in ("fetcher", "params"):
+                continue
             assert k in s, (s.get("sid"), k)
         assert s["sid"].startswith("eu.")
         assert s["freq"] in {"D", "W", "M", "Q", "A"}
@@ -50,11 +57,37 @@ def test_every_series_has_required_fields(cat):
         assert s["axis"] in {"L", "R"}
 
 
-def test_same_sid_means_same_source(cat):
+def test_same_sid_means_same_spec(cat):
     seen = {}
     for _, ch, s in all_series(cat):
-        key = (s["fetcher"], json.dumps(s["params"], sort_keys=True), s["freq"], s["unit"], s["display"])
+        key = json.dumps({k: v for k, v in s.items() if k != "axis"}, sort_keys=True)
         assert seen.setdefault(s["sid"], key) == key, s["sid"]
+
+
+def test_country_parts(cat):
+    names = {"de": "德國", "fr": "法國", "it": "義大利", "es": "西班牙"}
+    for part, name in names.items():
+        cats = [c for c in cat["categories"] if c.get("part") == part]
+        assert cats and cats[0]["key"] == part + "-gdp", part
+        assert all(c["key"].startswith(part + "-") and c["group"] == name for c in cats)
+        assert all(len(c["charts"]) >= 3 for c in cats), part
+        for c in cats:
+            for ch in c["charts"]:
+                assert ch["title_zh"].startswith(name), ch["title_zh"]
+    for c in cat["categories"]:
+        if not c.get("part"):
+            for ch in c["charts"]:
+                if ch["key"].startswith("ea-"):
+                    assert ch["title_zh"].startswith("歐元區"), ch["title_zh"]
+    chart_keys = [ch["key"] for c in cat["categories"] for ch in c["charts"]]
+    assert len(chart_keys) == len(set(chart_keys))
+
+
+def test_derived_sources_exist(cat):
+    sids = {s["sid"] for _, _, s in all_series(cat)}
+    for _, _, s in all_series(cat):
+        for x in (s.get("derived") or {}).get("sids", []):
+            assert x in sids, (s["sid"], x)
 
 
 def test_chart_keys_unique_and_composites_are_plain_charts(cat):
@@ -69,6 +102,8 @@ def test_chart_keys_unique_and_composites_are_plain_charts(cat):
 
 def test_fetchers_registered_and_params_complete(cat):
     for _, ch, s in all_series(cat):
+        if s.get("derived"):
+            continue
         f = s["fetcher"]
         assert f.startswith("eu_") and f in REGISTRY, f
         missing = PARAM_KEYS[f] - set(s["params"])
@@ -84,7 +119,7 @@ def test_registered_modules_expose_fetch():
 
 def test_hicp_uses_new_dataset_only(cat):
     for _, _, s in all_series(cat):
-        if s["fetcher"] == "eu_eurostat":
+        if s.get("fetcher") == "eu_eurostat":
             assert s["params"]["dataset"] not in ("prc_hicp_manr", "prc_hicp_midx")
     hicp = next(s for _, _, s in all_series(cat) if s["sid"] == "eu.hicp")
     assert hicp["params"]["dataset"] == "prc_hicp_minr" and hicp["display"] == "yoy"
@@ -93,13 +128,13 @@ def test_hicp_uses_new_dataset_only(cat):
 def test_retail_is_seasonally_adjusted(cat):
     """sts_trtu_m 的 CA 只調日數、沒調季節，月變動會跳 ±40%；一律用 SCA。"""
     for _, _, s in all_series(cat):
-        if s["params"].get("dataset") == "sts_trtu_m":
+        if s.get("params", {}).get("dataset") == "sts_trtu_m":
             assert ".SCA." in s["params"]["key"] and s["sa"] == "SA", s["sid"]
 
 
 def test_changing_composition_series_say_so(cat):
     for _, _, s in all_series(cat):
-        if s["fetcher"] == "eu_ecb" and s["params"]["dataset"] in ("BSI", "YC", "BLS", "ILM"):
+        if s.get("fetcher") == "eu_ecb" and s["params"]["dataset"] in ("BSI", "YC", "BLS", "ILM") and ".U2." in s["params"]["key"]:
             assert "歐元區成員逐年增加" in s["history_note"] and s.get("notes"), s["sid"]
 
 
@@ -119,13 +154,13 @@ def test_de_orders_moved_to_unavailable(cat):
 
 
 def test_spf_only_long_term_collected(cat):
-    spf = [s for _, _, s in all_series(cat) if s["params"].get("dataset") == "SPF"]
+    spf = [s for _, _, s in all_series(cat) if s.get("params", {}).get("dataset") == "SPF"]
     assert spf and all(".LT." in s["params"]["key"] for s in spf)
     assert any("SPF" in t["title_zh"] for t in cat["todo"])
 
 
 def test_no_uk_series(cat):
-    assert not [s for _, _, s in all_series(cat) if "英國" in s["label_zh"]]
+    assert not [s for _, _, s in all_series(cat) if "英國" in s["label_zh"] and not s["label_zh"].startswith(("對英國", "自英國"))]
 
 
 def test_labels_use_fullwidth_punctuation(cat):

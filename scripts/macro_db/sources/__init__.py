@@ -53,6 +53,9 @@ REGISTRY = {
     "eu_eurostat": "macro_db.sources.eu_eurostat",
     "eu_ecb": "macro_db.sources.eu_ecb",
     "eu_smard": "macro_db.sources.eu_smard",
+    "eu_comext": "macro_db.sources.eu_comext",
+    "eu_insee": "macro_db.sources.eu_insee",
+    "eu_ine": "macro_db.sources.eu_ine",
     # --- AN（第二波：只在此區塊加 an_ 開頭的行）---
     "an_singstat": "macro_db.sources.an_singstat",
     "an_opendosm": "macro_db.sources.an_opendosm",
