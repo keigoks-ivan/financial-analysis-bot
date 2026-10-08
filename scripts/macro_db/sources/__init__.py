@@ -55,6 +55,7 @@ REGISTRY = {
     # --- AN-TH（泰國 builder 只在這行與下一行之間加 an_th_ 開頭的行）---
     # --- AN-TH 結束 ---
     # --- AN-ID（印尼 builder 只在這行與下一行之間加 an_id_ 開頭的行）---
+    "an_id_seki": "macro_db.sources.an_id_seki",
     # --- AN-ID 結束 ---
     # --- AN-SG（新加坡 builder 只在這行與下一行之間加 an_sg_ 開頭的行）---
     # --- AN-SG 結束 ---
@@ -62,6 +63,7 @@ REGISTRY = {
     "intl_imf": "macro_db.sources.intl_imf",
     "intl_bis": "macro_db.sources.intl_bis",
     "intl_worldbank": "macro_db.sources.intl_worldbank",
+    "intl_oecd": "macro_db.sources.intl_oecd",
 }
 
 
