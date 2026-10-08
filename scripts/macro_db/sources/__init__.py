@@ -54,6 +54,9 @@ REGISTRY = {
     "an_my_bnm": "macro_db.sources.an_my_bnm",
     # --- AN-MY 結束 ---
     # --- AN-TH（泰國 builder 只在這行與下一行之間加 an_th_ 開頭的行）---
+    "an_th_bot": "macro_db.sources.an_th_bot",
+    "an_th_tpso": "macro_db.sources.an_th_tpso",
+    "an_th_oie": "macro_db.sources.an_th_oie",
     # --- AN-TH 結束 ---
     # --- AN-ID（印尼 builder 只在這行與下一行之間加 an_id_ 開頭的行）---
     "an_id_seki": "macro_db.sources.an_id_seki",
