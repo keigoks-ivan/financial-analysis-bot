@@ -61,6 +61,12 @@ def run_group(name, specs):
     return res
 
 
+def run_group_timed(name, specs):
+    """run_group＋耗時秒數（CI 紀錄用，看哪個來源慢）。"""
+    t = time.time()
+    return run_group(name, specs), time.time() - t
+
+
 def fetch_all(specs_by_sid, data_dir=None, workers=4, log=print):
     """抓取並合併寫檔。回傳 (成功 sid 清單, {失敗 sid: 原因})。"""
     groups = {}
@@ -70,12 +76,12 @@ def fetch_all(specs_by_sid, data_dir=None, workers=4, log=print):
     ok, failed = [], {}
     results = {}
     with cf.ThreadPoolExecutor(max_workers=workers) as ex:
-        futs = {ex.submit(run_group, name, sp): name for name, sp in groups.items()}
+        futs = {ex.submit(run_group_timed, name, sp): name for name, sp in groups.items()}
         for f in cf.as_completed(futs):
             name = futs[f]
-            results[name] = f.result()
+            results[name], secs = f.result()
             n_err = sum(1 for v in results[name].values() if "error" in v)
-            log("  %-14s %d 條，失敗 %d" % (name, len(results[name]), n_err))
+            log("  %-14s %d 條，失敗 %d，%d 秒" % (name, len(results[name]), n_err, secs))
     now = store.now_iso()
     for name, res in results.items():
         for sid, r in res.items():
