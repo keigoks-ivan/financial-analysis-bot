@@ -87,7 +87,7 @@ def test_boj_daily_monthly_and_bad_status():
     with pytest.raises(ValueError, match="STATUS=400"):
         jp_boj.parse("STATUS,400\nMESSAGE,bad\n")
     with pytest.raises(ValueError, match="不支援"):
-        jp_boj.to_date("ANNUAL", "2026")
+        jp_boj.to_date("SEMIANNUAL", "2026")
 
 
 def test_boj_fetch_merges_codes_and_scale(monkeypatch):

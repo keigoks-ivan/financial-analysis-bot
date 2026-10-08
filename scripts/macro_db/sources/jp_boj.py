@@ -14,7 +14,11 @@ params: db, code, scale（選填，乘上去；預設 1）, url（只給 probe �
   DAILY      YYYYMMDD -> 該日
   MONTHLY    YYYYMM   -> 當月 1 日
   QUARTERLY  YYYYQQ   -> 季首月 1 日（短觀：01=3 月調查、02=6 月、03=9 月、04=12 月，都落在對應日曆季）
-  其他頻率（年、半年）不支援，會回報錯誤。
+  ANNUAL(MAR)  YYYY    -> 該年 4 月 1 日（會計年度；短觀年度計畫）；其他年頻（曆年）-> 1 月 1 日
+  其他頻率（半年）不支援，會回報錯誤。
+另有 kind=reri：日銀「實質輸出入」rs_reri.xlsx（Data1＝總額、Data2＝地區別與財別）。
+  params: url, sheet, col（0 起算）, col_check（1～5 列表頭應含的字串）
+請求分組：BOJ API 同一次請求混入不同頻率（季度＋年度）會整批 HTTP 400，所以按（db, 頻率）分組。
 """
 from __future__ import annotations
 
@@ -25,7 +29,7 @@ import time
 import datetime as dt
 
 from ._http import get
-from .jp_common import Cache, compact, d_month, d_quarter, num, run_specs, xlsx_sheets
+from .jp_common import Cache, check_header, compact, d_month, d_quarter, num, run_specs, xlsx_sheets
 
 API = "https://www.stat-search.boj.or.jp/api/v1/getDataCode"
 MAX_CODES = 250
@@ -40,6 +44,8 @@ def to_date(code_freq: str, s: str) -> str:
         return d_month(s[:4], s[4:6])
     if f.startswith("QUARTERLY") and len(s) == 6:
         return d_quarter(s[:4], s[4:6])
+    if f.startswith("ANNUAL") and len(s) == 4:
+        return "%s-04-01" % s if "MAR" in f else "%s-01-01" % s
     raise ValueError("不支援的頻率／日期格式：%s %s" % (code_freq, s))
 
 
@@ -119,16 +125,41 @@ def fetch_cpirev(specs):
     return run_specs(specs, one)
 
 
+RERI = "https://www.boj.or.jp/en/research/research_data/reri/rs_reri.xlsx"
+
+
+def reri_obs(rows, col, col_check) -> list:
+    check_header(rows, col, range(1, 6), col_check, "reri")
+    out = []
+    for r in rows:
+        if len(r) > col and isinstance(r[0], (dt.datetime, dt.date)):
+            v = num(r[col])
+            if v is not None:
+                out.append((d_month(r[0].year, r[0].month), v))
+    return out
+
+
+def fetch_reri(specs):
+    cache = Cache()
+
+    def one(s):
+        p = s["params"]
+        sheets = xlsx_sheets(cache.get_url(p.get("url") or RERI))
+        return reri_obs(sheets[p["sheet"]], p["col"], p["col_check"])
+    return run_specs(specs, one)
+
+
 def fetch(specs):
     result = {}
-    special = [s for s in specs if s["params"].get("kind") == "cpirev"]
-    if special:
-        result.update(fetch_cpirev(special))
-    specs = [s for s in specs if s["params"].get("kind") != "cpirev"]
+    for kind, fn in (("cpirev", fetch_cpirev), ("reri", fetch_reri)):
+        special = [s for s in specs if s["params"].get("kind") == kind]
+        if special:
+            result.update(fn(special))
+    specs = [s for s in specs if s["params"].get("kind") not in ("cpirev", "reri")]
     by_db: dict = {}
     for s in specs:
-        by_db.setdefault(s["params"]["db"], []).append(s)
-    for db, group in by_db.items():
+        by_db.setdefault((s["params"]["db"], s.get("freq", "")), []).append(s)
+    for (db, _freq), group in by_db.items():
         codes = sorted({s["params"]["code"] for s in group})
         data: dict = {}
         err = None
