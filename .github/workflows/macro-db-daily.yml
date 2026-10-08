@@ -1,0 +1,92 @@
+name: Macro DB Daily
+
+# 總經資料庫（/macro/db/）：自官方來源抓美國＋台灣數據，存完整歷史，重畫網頁。
+# 台北 17:30（台灣多在 16:00 公布）、美東 10:45（涵蓋 8:30／10:00 公布）。週一另更新美國公布日行事曆。
+on:
+  schedule:
+    - cron: "30 9 * * *"
+    - cron: "45 14 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: >-
+          內部用：由本 workflow 自己在 rebase 衝突後重觸發時帶 1，
+          防止無限重觸發迴圈。手動觸發請留 0。
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: macro-db-daily
+  cancel-in-progress: false
+
+jobs:
+  macro-db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install requests pandas openpyxl xlrd beautifulsoup4 lxml
+          # 內政部住宅價格指數只有 PDF，tw_moi 用 pdftotext 解析
+          sudo apt-get install -y poppler-utils
+
+      - name: Probe Taiwan source domains (HTTP status from GitHub IP)
+        continue-on-error: true
+        run: python scripts/macro_db/run.py --only tw --probe
+
+      - name: Update US release calendar (Mondays)
+        continue-on-error: true
+        run: |
+          if [ "$(date -u +%u)" = "1" ] || [ ! -f data/macro_db/release_calendar.json ]; then
+            python scripts/macro_db/calendar.py
+          fi
+
+      - name: Fetch, merge and render
+        run: python scripts/macro_db/run.py
+
+      - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          PATHS="data/macro_db docs/macro/db"
+          if git status --porcelain $PATHS | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d %H:%M")
+          git commit -m "macro-db: daily refresh ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
