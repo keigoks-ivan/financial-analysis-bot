@@ -51,6 +51,7 @@ REGISTRY = {
     # --- AN-VN（越南 builder 只在這行與下一行之間加 an_vn_ 開頭的行）---
     # --- AN-VN 結束 ---
     # --- AN-MY（馬來西亞 builder 只在這行與下一行之間加 an_my_ 開頭的行）---
+    "an_my_bnm": "macro_db.sources.an_my_bnm",
     # --- AN-MY 結束 ---
     # --- AN-TH（泰國 builder 只在這行與下一行之間加 an_th_ 開頭的行）---
     # --- AN-TH 結束 ---
