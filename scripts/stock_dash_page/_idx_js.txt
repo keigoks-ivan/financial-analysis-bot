@@ -95,7 +95,38 @@ function renderFirstScreen(vm){
   ].map(function(r){return '<tr><td class="k">'+r[0]+'</td><td class="v">'+r[1]+'</td></tr>';}).join('');
 
   var ft = vm.finTable;
-  if(ft){
+  if(ft && ft.cal){
+    var cs = ft.cal;
+    function tdT(c, inner, tip, cls){ return '<td class="num'+(cls?' '+cls:'')+'"'+(tip?' title="'+tip+'"':'')+'>'+inner+'</td>'; }
+    var dash = '—';
+    document.getElementById('finTable').innerHTML =
+      '<thead><tr><th></th>'+cs.map(function(c){
+        return '<th class="num">'+c.head+(c.fy&&c.kind==='est'?'<div class="ft-sub">'+c.fy+'</div>':'')+'</th>';}).join('')+'</tr></thead><tbody>'+
+      '<tr><td class="k">EPS</td>'+cs.map(function(c){
+        if(c.eps==null) return tdT(c, dash, c.tip);
+        return tdT(c, fmtNum(c.eps,2)+(c.kind==='act'?'<div class="ft-sub">實際（'+c.fy+'）</div>':''), c.tip);
+      }).join('')+'</tr>'+
+      '<tr><td class="k">EPS 成長</td>'+cs.map(function(c){
+        return c.growth==null ? tdT(c, dash, c.growthWhy) : tdT(c, fmtPctParen(c.growth,1), c.growthWhy);
+      }).join('')+'</tr>'+
+      '<tr><td class="k">該年 EPS 本益比</td>'+cs.map(function(c){
+        return c.pe!=null ? tdT(c, fmtNum(c.pe,1)+'x') : tdT(c, dash, c.tip);
+      }).join('')+'</tr>'+
+      '<tr><td class="k">PEG</td>'+cs.map(function(c){
+        var p = c.peg;
+        if(p.reason==='growth_missing') return tdT(c, dash, c.growthWhy);
+        return tdT(c, p.reason==='not_applicable' ? '不適用' : fmtNum(p.value,2));
+      }).join('')+'</tr>'+
+      '<tr><td class="k">3 個月修正</td>'+cs.map(function(c){
+        return c.kind==='est' && c.rev3m!=null ? tdT(c, fmtPctColored(c.rev3m)) : tdT(c, dash, c.kind==='act'?'實際值，不適用':c.tip);
+      }).join('')+'</tr>'+
+      '<tr><td class="k">毛利率</td>'+cs.map(function(c){
+        return c.kind==='est' && c.gm!=null ? tdT(c, fmtNum(c.gm,1)+'%') : tdT(c, dash, c.kind==='act'?'實際值，不適用':c.tip);
+      }).join('')+'</tr>'+
+      '</tbody>';
+    document.getElementById('finNote').textContent = '欄位為日曆年；財年落在大部分月份所在的那一年（6 月底結帳算結束那年）。標「實際」的是已結束財年的實際 EPS，其餘為分析師預估。';
+  } else if(ft){
+    document.getElementById('finNote').textContent = '';
     document.getElementById('finTable').innerHTML =
       '<thead><tr><th></th>'+ft.labels.map(function(l){return '<th class="num">'+l+'</th>';}).join('')+'</tr></thead><tbody>'+
       '<tr><td class="k">EPS</td>'+ft.eps.map(function(v){return '<td class="num">'+fmtNum(v,2)+'</td>';}).join('')+'</tr>'+
