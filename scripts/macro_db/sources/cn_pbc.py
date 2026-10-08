@@ -12,6 +12,8 @@ params：
   kind    "horiz"（橫向：label 為列名的正規式）或 "vert"（縱向：col 為欄名）
   label   kind=horiz：項目列名的正規式（比對時已去掉全部空白）
   col     kind=vert：欄名（去空白後完全相等）
+  nth     選填，預設 1。horiz：第 n 個符合 label 的列（住戶與企業兩側的列名相同時用）；
+          vert：表頭列中第 n 個同名欄（債券表的「余额」依政府、央票、金融債…各出現一次）
   scale   選填，乘以此數
   since   選填，回補起始年，預設 2016
   probe_url 完整網址（CI probe 用）
@@ -99,7 +101,7 @@ def label_of(row: list) -> str:
     return ""
 
 
-def parse_horiz(rows: list, label_rx: str) -> list:
+def parse_horiz(rows: list, label_rx: str, nth: int = 1) -> list:
     """月份在欄：找月份標題列（至少 6 個月份格）→ 比對項目列 → 逐欄取值。"""
     hdr = None
     for i, r in enumerate(rows):
@@ -114,8 +116,12 @@ def parse_horiz(rows: list, label_rx: str) -> list:
     if hdr is None:
         raise ValueError("找不到月份標題列")
     rx = re.compile(label_rx)
+    seen = 0
     for r in rows[hdr + 1:]:
         if rx.search(label_of(r)):
+            seen += 1
+            if seen < nth:
+                continue
             out = []
             for j, d in mcols.items():
                 if j < len(r):
@@ -123,19 +129,20 @@ def parse_horiz(rows: list, label_rx: str) -> list:
                     if x is not None:
                         out.append((d, x))
             return out
-    raise ValueError("找不到項目列 %s" % label_rx)
+    raise ValueError("找不到項目列 %s（第 %d 個）" % (label_rx, nth))
 
 
-def parse_vert(rows: list, col: str) -> list:
+def parse_vert(rows: list, col: str, nth: int = 1) -> list:
     """月份在列：找出欄名列（某一格去空白後等於 col），其後第一格為月份的列逐列取值。"""
     hdr = None
     for i, r in enumerate(rows):
         names = [C.clean(c) for c in r]
-        if col in names:
-            hdr, j = i, names.index(col)
+        hits = [k for k, n in enumerate(names) if n == col]
+        if len(hits) >= nth:
+            hdr, j = i, hits[nth - 1]
             break
     if hdr is None:
-        raise ValueError("找不到欄 %s" % col)
+        raise ValueError("找不到欄 %s（第 %d 個）" % (col, nth))
     out, seen = [], {}
     for r in rows[hdr + 1:]:
         if r and month_of(r[0]):
@@ -185,7 +192,8 @@ def parse_one(cache: _Cache, year: int, p: dict) -> list:
     for title, links in cache.section(sec_url):
         if want in title and links:
             rows = cache.file(links[0])
-            return parse_horiz(rows, p["label"]) if p["kind"] == "horiz" else parse_vert(rows, p["col"])
+            nth = int(p.get("nth", 1))
+            return parse_horiz(rows, p["label"], nth) if p["kind"] == "horiz" else parse_vert(rows, p["col"], nth)
     raise ValueError("%d 年「%s」頁沒有「%s」的 Excel" % (year, p["sec"], p["table"]))
 
 

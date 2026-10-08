@@ -20,7 +20,7 @@ except ImportError:  # 直接以腳本方式載入時
     import store
 
 __all__ = ["Blocked", "throttle", "session", "http", "http_json", "need_backfill", "clean", "to_float",
-           "first_date_in_store"]
+           "first_date_in_store", "http_backoff", "backfill_mode"]
 
 GAP = 1.0   # 同一網站相鄰兩次請求至少隔幾秒
 _LAST: dict = {}
@@ -63,6 +63,37 @@ def http(s: requests.Session, method: str, url: str, *, retries: int = 2, sleep:
             if i < retries:
                 time.sleep(sleep)
     raise RuntimeError("%s：%s" % (url[:90], last))
+
+
+RETRY_STATUS = (429, 500, 502, 503, 504)
+
+
+def http_backoff(s: requests.Session, method: str, url: str, *, retries: int = 3, base: float = 4.0, cap: float = 120.0,
+                 gap: float = GAP, **kw) -> requests.Response:
+    """429／5xx／連線錯誤時退避重試（間隔 base、2×base、4×base 秒，最多 retries 次）；
+    404、403 等其他狀態碼不重試，直接丟 RuntimeError。cap 為單次等待上限。每次請求前都先過 throttle（同站至少隔 gap 秒）。"""
+    kw.setdefault("timeout", TIMEOUT)
+    last = None
+    for i in range(retries + 1):
+        throttle(url, gap)
+        try:
+            r = s.request(method, url, **kw)
+            if r.status_code == 200:
+                return r
+            last = RuntimeError("HTTP %s" % r.status_code)
+            if r.status_code not in RETRY_STATUS:
+                break
+        except requests.RequestException as e:
+            last = e
+        if i < retries:
+            time.sleep(min(cap, base * (2 ** i)))
+    raise RuntimeError("%s：%s" % (url[:90], last))
+
+
+def backfill_mode() -> bool:
+    """MACRO_DB_BACKFILL=1 時為回補模式（來源只給當期、沒有歷史檔的 fetcher 才用）。"""
+    import os
+    return os.environ.get("MACRO_DB_BACKFILL") == "1"
 
 
 def http_json(s, method, url, **kw):

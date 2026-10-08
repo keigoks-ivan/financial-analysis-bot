@@ -50,6 +50,9 @@ REGISTRY = {
     "cn_chinamoney": "macro_db.sources.cn_chinamoney",
     "cn_chinabond": "macro_db.sources.cn_chinabond",
     "cn_csindex": "macro_db.sources.cn_csindex",
+    "cn_nbs_hp70": "macro_db.sources.cn_nbs_hp70",
+    "cn_safe": "macro_db.sources.cn_safe",
+    "cn_mof": "macro_db.sources.cn_mof",
     # --- EU（第二波：只在此區塊加 eu_ 開頭的行）---
     "eu_eurostat": "macro_db.sources.eu_eurostat",
     "eu_ecb": "macro_db.sources.eu_ecb",

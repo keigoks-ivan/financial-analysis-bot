@@ -202,7 +202,8 @@ def stale_info(spec, ctx):
     e = ctx.status.get(sid)
     base = spec.get("base_sid")
     if spec.get("derived"):
-        msgs = [stale_info({"sid": x, "freq": spec.get("freq", "M")}, ctx) for x in spec["derived"]["sids"]]
+        msgs = [stale_info({"sid": x, "freq": spec.get("freq", "M"), "stale_days": spec.get("stale_days")}, ctx)
+                for x in spec["derived"]["sids"]]
         for s, m in msgs:
             if s:
                 return True, m

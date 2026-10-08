@@ -9,6 +9,10 @@ params：
   cid + name  單一來源；name 為平台上的指標名稱（簡體，空白不拘）
   parts     [{"cid":…, "name":…}, …] 依基期拆表的序列（CPI），排在前面的優先；日期重疊時取前者
   scale     選填，乘以此數後再存
+  offset    選填，乘完 scale 後再加上此數（環比指數「上月＝100」用 -100，直接存成漲跌幅 %）
+  （指標 id 提示：cn_nbs_ids.ID_HINTS 記著 (cid, 指標名稱) -> id，同一 cid 的名稱都有提示時略過「指標清單」那次請求，
+   直接 POST；POST 沒回該指標的值就退回依名稱比對。平台限制同站每秒一次請求，這樣每天從約 4.3 分鐘降到約 2 分鐘。
+   新增 cn_nbs 序列後，用 build_hints(specs) 重產 cn_nbs_ids.py。）
   overlay   選填：平台落後時，用較新的官方來源補在平台最後一個月之後。{"pbc": "m2_level"}（人行貨幣供應量表）或
             {"nbs_pmi": {"sheet": "制造业", "col": "PMI"}}（統計局 PMI 新聞稿附件）
   probe_url 完整網址（CI probe 用，fetcher 不讀）
@@ -19,8 +23,10 @@ import re
 
 try:
     from . import cn_common as C
+    from .cn_nbs_ids import ID_HINTS
 except ImportError:
     import cn_common as C
+    from cn_nbs_ids import ID_HINTS
 
 B = "https://data.stats.gov.cn/dg/website/publicrelease/web/external"
 ROOT_FALLBACK = {"M": "fc982599aa684be7969d7b90b1bd0e84", "Q": "a94b8b7365a94874968cabbe392cf679"}
@@ -79,6 +85,32 @@ def merge_parts(chunks: list) -> list:
     return sorted(d.items())
 
 
+def _post(s, cid: str, t: str, ids: dict, root: str) -> dict:
+    """POST esData：ids {名稱: 指標 id} -> {指標 id: [(date, float)]}。"""
+    body = {"cid": cid, "indicatorIds": sorted(set(ids.values())), "daCatalogId": "",
+            "das": [{"text": "全国", "value": "000000000000"}], "showType": "1",
+            "dts": [DTS[t]], "rootId": root}
+    j = C.http_json(s, "POST", B + "/stream/esData", json=body)
+    return parse_rows(j["data"], ids)
+
+
+def build_hints(specs: list, s=None) -> dict:
+    """重產 cn_nbs_ids.ID_HINTS 用：對每個 (cid, 名稱) 查指標清單、依名稱唯一比對，回傳 {(cid, name): id}。
+    用法：python3.12 -c "import sys,pprint;sys.path.insert(0,'scripts');from macro_db import run;from macro_db.sources import cn_nbs;
+    sp=[s for s in run.unique_specs(run.load_catalog('cn')).values() if s['fetcher']=='cn_nbs'];pprint.pprint(cn_nbs.build_hints(sp))" """
+    s = s or C.session()
+    out, lists = {}, {}
+    for sp in specs:
+        for part in parts_of(sp["params"]):
+            cid, name = part["cid"], part["name"]
+            if cid not in lists:
+                lists[cid] = C.http_json(s, "GET", "%s/new/queryIndicatorsByCid?cid=%s&dt=&name=" % (B, cid))["data"]["list"]
+            i = match_indicator(lists[cid], name)
+            if i:
+                out[(cid, name)] = i
+    return out
+
+
 def fetch(specs: list[dict]) -> dict:
     res: dict = {}
     if not specs:
@@ -105,17 +137,37 @@ def fetch(specs: list[dict]) -> dict:
                 need.setdefault((part["cid"], t), set()).add(part["name"])
         got: dict = {}   # (cid, name) -> {"obs":…} 或 {"error":…}
         for (cid, t), names in sorted(need.items()):
+            names = sorted(names)
+            # 快速路徑：每個名稱都有 id 提示 -> 不查指標清單，直接 POST；沒回值的名稱再退回依名稱比對
+            pending = names
+            hinted = {n: ID_HINTS.get((cid, n)) for n in names}
+            if all(hinted.values()):
+                ok_ids = {}
+                try:
+                    parsed = _post(s, cid, t, hinted, roots[t])
+                    for n, i in hinted.items():
+                        if parsed[i]:
+                            got[(cid, n)] = {"obs": parsed[i]}
+                        else:
+                            ok_ids[n] = i
+                    pending = sorted(ok_ids)
+                except C.Blocked:
+                    raise
+                except Exception:  # noqa: BLE001  提示失效或暫時性錯誤：整個 cid 走名稱比對
+                    pending = names
+            if not pending:
+                continue
             try:
                 j = C.http_json(s, "GET", "%s/new/queryIndicatorsByCid?cid=%s&dt=&name=" % (B, cid))
                 lst = j["data"]["list"]
             except C.Blocked:
                 raise
             except Exception as e:  # noqa: BLE001
-                for n in names:
+                for n in pending:
                     got[(cid, n)] = {"error": "指標清單取得失敗：%s" % str(e)[:120]}
                 continue
             ids = {}
-            for n in sorted(names):
+            for n in pending:
                 i = match_indicator(lst, n)
                 if i is None:
                     got[(cid, n)] = {"error": "指標清單裡找不到名稱「%s」（cid %s…）" % (n, cid[:6])}
@@ -124,11 +176,7 @@ def fetch(specs: list[dict]) -> dict:
             if not ids:
                 continue
             try:
-                body = {"cid": cid, "indicatorIds": sorted(set(ids.values())), "daCatalogId": "",
-                        "das": [{"text": "全国", "value": "000000000000"}], "showType": "1",
-                        "dts": [DTS[t]], "rootId": roots[t]}
-                j = C.http_json(s, "POST", B + "/stream/esData", json=body)
-                parsed = parse_rows(j["data"], ids)
+                parsed = _post(s, cid, t, ids, roots[t])
                 for n, i in ids.items():
                     got[(cid, n)] = {"obs": parsed[i]} if parsed[i] else {"error": "平台沒有回傳這個指標的數值（%s）" % n}
             except C.Blocked:
@@ -162,6 +210,8 @@ def fetch(specs: list[dict]) -> dict:
         sc = p.get("scale")
         if sc:
             obs = [(k, v * sc) for k, v in obs]
+        if p.get("offset"):
+            obs = [(k, v + p["offset"]) for k, v in obs]
         res[sp["sid"]] = {"obs": obs}
     return res
 
