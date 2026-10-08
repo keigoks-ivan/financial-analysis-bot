@@ -1,0 +1,95 @@
+"""東南亞目錄（catalog/an.json）完整性檢查：離線。"""
+from __future__ import annotations
+
+import importlib
+import json
+from pathlib import Path
+
+import pytest
+
+from macro_db.sources import REGISTRY
+
+CATALOG = Path(__file__).resolve().parents[2] / "macro_db" / "catalog" / "an.json"
+REQUIRED = ["sid", "label_zh", "source", "freq", "unit", "sa", "license", "display", "axis", "fetcher", "params"]
+PARAM_KEYS = {
+    "intl_imf": {"dataflow", "key"},
+    "intl_bis": {"dataflow", "key"},
+    "intl_worldbank": {"indicator", "country"},
+    "an_singstat": {"table_id", "row"},
+    "an_opendosm": {"id", "field"},
+}
+
+
+@pytest.fixture(scope="module")
+def cat():
+    return json.loads(CATALOG.read_text(encoding="utf-8"))
+
+
+def all_series(cat):
+    for c in cat["categories"]:
+        for ch in c["charts"]:
+            for s in ch["series"]:
+                yield c["key"], ch, s
+
+
+def test_top_level(cat):
+    assert cat["country"] == "an"
+    assert [c["key"] for c in cat["categories"]] == ["asean", "vn", "my", "th", "id", "sg", "tradewar"]
+    assert cat["categories"][0]["name_zh"] == "東南亞總覽"
+    for rec in cat["todo"]:
+        assert rec["reason"] and rec["chart"] and rec["priority"] in (2, 3)
+    for rec in cat["unavailable"]:
+        assert rec["reason"]
+
+
+def test_series_fields_and_probe_url(cat):
+    for _, ch, s in all_series(cat):
+        for k in REQUIRED:
+            assert k in s, (s.get("sid"), k)
+        assert s["sid"].startswith("an.")
+        assert s["freq"] in {"D", "W", "M", "Q", "A"}
+        assert s["sa"] in {"SA", "NSA", "SAAR", "n/a"}
+        assert s["license"] == "public" or s["license"].startswith("copyright:")
+        assert s["axis"] in {"L", "R"}
+        assert s["params"]["probe_url"].startswith("http")
+        assert "ref_sids" not in ch
+
+
+def test_same_sid_same_spec_everywhere(cat):
+    seen = {}
+    for _, ch, s in all_series(cat):
+        key = {k: v for k, v in s.items() if k != "axis"}
+        assert seen.setdefault(s["sid"], key) == key, s["sid"]
+
+
+def test_fetchers_registered_and_params_complete(cat):
+    for _, ch, s in all_series(cat):
+        f = s["fetcher"]
+        assert f in REGISTRY and (f.startswith("an_") or f.startswith("intl_")), f
+        assert PARAM_KEYS[f] <= set(s["params"]), s["sid"]
+        assert callable(importlib.import_module(REGISTRY[f]).fetch)
+
+
+def test_no_philippines(cat):
+    assert all(not s["sid"].endswith("_ph") and s["fetcher"] != "an_psa" for _, _, s in all_series(cat))
+    assert any(t["category"] == "ph" and "菲律賓之後再加" in t["reason"] for t in cat["todo"])
+
+
+def test_no_needs_key_series_collected(cat):
+    sids = {s["sid"] for _, _, s in all_series(cat)}
+    for gone in ("an.th_mpi", "an.id_ip", "an.th_money", "an.vn_gdp_q_gso", "an.my_money_bm"):
+        assert gone not in sids
+    texts = " ".join(u["reason"] for u in cat["unavailable"])
+    assert "apiportal.bot.or.th" in texts and "webapi.bps.go.id" in texts
+
+
+def test_slow_series_have_stale_days(cat):
+    for _, _, s in all_series(cat):
+        if s["sid"] in ("an.th_exports", "an.th_imports", "an.id_exports", "an.id_imports", "an.reserves_th"):
+            assert s.get("stale_days"), s["sid"]
+
+
+def test_stale_has_reason(cat):
+    for _, _, s in all_series(cat):
+        if s.get("stale_days"):
+            assert s.get("stale_reason"), s["sid"]
