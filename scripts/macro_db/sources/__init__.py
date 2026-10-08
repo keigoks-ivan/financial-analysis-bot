@@ -49,6 +49,7 @@ REGISTRY = {
     "an_singstat": "macro_db.sources.an_singstat",
     "an_opendosm": "macro_db.sources.an_opendosm",
     # --- AN-VN（越南 builder 只在這行與下一行之間加 an_vn_ 開頭的行）---
+    "an_vn_nso": "macro_db.sources.an_vn_nso",
     # --- AN-VN 結束 ---
     # --- AN-MY（馬來西亞 builder 只在這行與下一行之間加 an_my_ 開頭的行）---
     # --- AN-MY 結束 ---
