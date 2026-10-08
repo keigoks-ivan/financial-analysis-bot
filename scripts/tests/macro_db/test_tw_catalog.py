@@ -15,14 +15,16 @@ REQUIRED = ["sid", "label_zh", "source", "freq", "unit", "sa", "license", "displ
 # 每個 fetcher 的 params 至少要有的鍵
 PARAM_KEYS = {
     "tw_dgbas": {"long": {"file", "item", "url"}, "wide": {"file", "col", "url"}},
-    "tw_cbc": {"cpx": {"file", "col"}, "fsi_csv": {"url", "col"}},
+    "tw_cbc": {"cpx": {"file", "col"}, "fsi_csv": {"url", "col"}, "fsi_csv_ym": {"url", "col"}},
     "tw_ndc": {"zip": {"member", "col", "url"}, "csv": {"col", "url"}},
     "tw_mof": {"njswww": {"url", "col"}, "u2010": {"url", "col"}},
     "tw_moea": {None: {"file", "value"}},
     "tw_energy": {None: {"set_id", "col"}},
     "tw_moi": {"statis": {"url", "label", "col"}, "hpi_pdf": {"url", "col"}},
     "tw_jcic": {None: {"url", "group", "value"}},
-    "tw_twse": {"fmtqik": {"col"}, "bfi82u": {"row", "col"}, "margn": {"row", "col"}},
+    "tw_twse": {"fmtqik": {"col"}, "bfi82u": {"row", "col"}, "margn": {"row", "col"},
+                "mi_index_ind": {"row"}, "mfi94u": set(), "twtb4u": {"col"}},
+    "tw_taifex": {"inst_futures": {"contract", "item", "field", "url"}, "pcr": {"field", "url"}},
     "tw_tpex": {"inx": {"col"}, "trading": {"col"}, "insti": {"row", "col"}, "margin": {"row", "col"}},
 }
 
@@ -41,7 +43,10 @@ def all_series(cat):
 
 def test_catalog_top_level(cat):
     assert cat["country"] == "tw"
-    assert len(cat["categories"]) == 9
+    assert [c["key"] for c in cat["categories"]] == [
+        "gdp", "signal", "price", "employ", "trade", "bop", "housing", "industry", "market", "credit", "energy"]
+    for c in cat["categories"]:
+        assert len(c["charts"]) >= 3, c["key"]
     for rec in cat["todo"]:
         assert rec["reason"] and rec["chart"]
     for rec in cat["unavailable"]:
@@ -94,7 +99,7 @@ def test_denominators_exist(cat):
 
 def test_daily_series_say_history_starts_late(cat):
     for _, _, s in all_series(cat):
-        if s["freq"] == "D" and s["fetcher"] in ("tw_twse", "tw_tpex"):
+        if s["freq"] == "D" and s["fetcher"] in ("tw_twse", "tw_tpex", "tw_taifex"):
             assert s.get("history_note"), s["sid"]
 
 
@@ -138,3 +143,10 @@ def test_requests_always_verify_with_bundled_intermediate(monkeypatch):
     assert "BEGIN CERTIFICATE" in text
     pem = (C._EXTRA_CA_DIR / "twca_secure_ssl_ca_2023g3.pem").read_text().strip()
     assert pem in text
+
+
+def test_new_market_series_have_probe_url(cat):
+    """CI 的 --probe 靠 params 裡的完整網址測網域：證交所與期交所的序列一定要有。"""
+    for _, _, s in all_series(cat):
+        if s["fetcher"] in ("tw_twse", "tw_taifex") and s["params"].get("kind") in ("mi_index_ind", "mfi94u", "twtb4u", "inst_futures", "pcr"):
+            assert any(str(s["params"].get(k, "")).startswith("https://") for k in ("url", "probe_url")), s["sid"]
