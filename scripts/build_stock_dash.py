@@ -1882,7 +1882,8 @@ def _fx_rate_on(ccy, date_str):
     return get_fx_rate(ccy, date_str, _fx_cache)
 
 
-def _fy_revision_pct_from_snapshot(current_val_usd, snapshot, ticker, fy_key, current_date=None):
+def _fy_revision_pct_from_snapshot(current_val_usd, snapshot, ticker, fy_key, current_date=None,
+                                   shift=0):
     """current_val_usd 必須是美元口徑（v1.8.5 外幣顯示轉換前的原始值，latest.json 的
     `{fy_key}_usd_orig` 欄；沒有轉換過的 ticker 就直接是 latest.json 現值本身，本來就是
     美元），才能跟快照裡同樣美元口徑的 base 相減／相除。呼叫端傳本地貨幣現值（如 2330.TW
@@ -1893,6 +1894,13 @@ def _fy_revision_pct_from_snapshot(current_val_usd, snapshot, ticker, fy_key, cu
     trow = (snapshot.get("tickers") or {}).get(ticker)
     if not trow:
         return None
+    # 2026-10-08：財年在基準快照到現在之間滾動過（shift=1，見 eps_fy_shift.py）時，現在的
+    # FY1 對的是快照的 FY2、FY2 對 FY3、FY3 沒有基準（None），否則會拿不同財年比出假修正。
+    if shift:
+        from eps_fy_shift import SHIFTED_BACK_BASELINE_KEY, SHIFTED_BASELINE_KEY
+        fy_key = (SHIFTED_BASELINE_KEY if shift > 0 else SHIFTED_BACK_BASELINE_KEY).get(fy_key)
+        if fy_key is None:
+            return None
     base = _snapshot_eps_adr(ticker, trow).get(fy_key)
     if base in (None, 0):
         return None
@@ -2097,6 +2105,32 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
     snap_3m = load_eps_snapshot_by_date(row.get("eps_rev_3m_baseline_date"))
     snap_since = load_eps_snapshot_by_date(row.get("eps_rev_since_earnings_baseline_date"))
 
+    # 2026-10-08：財年滾動偵測（與 dd-screener 同一個 eps_fy_shift.fy_shift）。last FYE 優先用
+    # latest.json 匯出的 fiscal_year_end，沒有再退回 yfinance info 的 lastFiscalYearEnd。
+    from eps_fy_shift import fy_shift
+    _fye = row.get("fiscal_year_end")
+    if not _fye and info and info.get("lastFiscalYearEnd"):
+        try:
+            _fye = datetime.fromtimestamp(int(info["lastFiscalYearEnd"]), tz=timezone.utc).date().isoformat()
+        except (TypeError, ValueError, OSError):
+            _fye = None
+    _le = row.get("last_earnings_date")
+    # 「現在」這一側要用 EPS 估值本身的抓取日（每週一次），不是 latest.json 的 as_of（每天）：
+    # 兩次抓取之間公布年報時，估值還沒滾動，用 as_of 會誤判成已滾動。與 dd-screener 一致。
+    _eps_cur_date = ((load_dd_screener().get("eps_estimates_source") or {}).get("snapshot_date")
+                     or dd_as_of)
+
+    def _shift_for(snap):
+        if not snap:
+            return 0
+        # 來源感知：yfinance 快照在財年結束日就滾動，Koyfin（xlsx）要等年報
+        _bsrc = ((snap.get("tickers") or {}).get(ticker) or {}).get("source")
+        return fy_shift(_fye, _le, snap.get("snapshot_date"), _eps_cur_date,
+                        row.get("past_earnings_dates"), _bsrc, row.get("eps_source"))[0]
+
+    shift_3m = _shift_for(snap_3m)
+    shift_since = _shift_for(snap_since)
+
     table_rows = []
     for name, fk, revk in zip(fy_names, fy_keys, revision_pct_keys):
         cur_val = row.get(fk)
@@ -2112,8 +2146,8 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
             "fy": name,
             "current_estimate": r2(cur_val, 2),
             "vs_last_month_pct": r2(row.get(revk), 2),
-            "vs_3m_ago_pct": r2(_fy_revision_pct_from_snapshot(cur_val_usd, snap_3m, ticker, fk, dd_as_of), 2),
-            "vs_since_earnings_pct": r2(_fy_revision_pct_from_snapshot(cur_val_usd, snap_since, ticker, fk, dd_as_of), 2),
+            "vs_3m_ago_pct": r2(_fy_revision_pct_from_snapshot(cur_val_usd, snap_3m, ticker, fk, dd_as_of, shift=shift_3m), 2),
+            "vs_since_earnings_pct": r2(_fy_revision_pct_from_snapshot(cur_val_usd, snap_since, ticker, fk, dd_as_of, shift=shift_since), 2),
         })
 
     # eps_path_chart（下方）把「目前共識」（row.get(fk)，外幣掛牌是本地貨幣）跟兩份歷史
@@ -2168,6 +2202,7 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
             "since_earnings_anchor": row.get("eps_rev_anchor"),
             "since_earnings_days": row.get("eps_rev_since_earnings_days"),
         },
+        "table_fy_shift": {"vs_3m_ago": shift_3m, "vs_since_earnings": shift_since},
         "table_method": (
             "「較上月」直接用 dd-screener 已經算好的逐財年修正百分比；「近 3 個月」與「自上次財報以來」"
             "改用當時的月度 EPS 估值快照（docs/dd-screener/eps-estimates-snapshots/）比對現在的估值，"
