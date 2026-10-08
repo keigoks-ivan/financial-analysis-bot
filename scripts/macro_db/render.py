@@ -128,7 +128,7 @@ def period_txt(date_s, freq):
     return date_s
 
 
-def change_txt(latest, prev, spec):
+def change_txt(latest, prev, spec, signed=False):
     d = spec.get("display", "level")
     u = unit_of(spec)
     pct_like = d in ("yoy", "mom", "ratio") or u.startswith("%") or u.startswith("百分點")
@@ -145,7 +145,8 @@ def change_txt(latest, prev, spec):
     sign = "+" if diff > 0 else ("−" if diff < 0 else "")
     unit_s = "" if is_index_unit(u) else short_unit(u)
     s = f"{sign}{fnum(abs(diff), nd)} {unit_s}".strip()
-    if d == "level" and prev not in (0, None) and latest > 0 and prev > 0:
+    # 會正負翻轉的序列（貿易差額、經常帳等）百分比變動沒有意義，不附
+    if d == "level" and not signed and prev not in (0, None) and latest > 0 and prev > 0:
         s += f"（{'+' if diff >= 0 else '−'}{abs(diff / prev * 100):.1f}%）"
     return s
 
@@ -298,7 +299,7 @@ def summary(spec, obs, stale, smsg, ctx, idx, chart):
     out.update(latest=v, latest_date=d, latest_txt=vtxt(v, spec), period=period_txt(d, freq))
     if len(obs) >= 2:
         pd_, pv = obs[-2]
-        out.update(prev_txt=vtxt(pv, spec), prev_period=period_txt(pd_, freq), change=change_txt(v, pv, spec))
+        out.update(prev_txt=vtxt(pv, spec), prev_period=period_txt(pd_, freq), change=change_txt(v, pv, spec, signed=any(x < 0 for _, x in obs)))
     return out
 
 
