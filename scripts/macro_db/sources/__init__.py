@@ -35,6 +35,7 @@ REGISTRY = {
     "tw_jcic": "macro_db.sources.tw_jcic",
     "tw_twse": "macro_db.sources.tw_twse",
     "tw_tpex": "macro_db.sources.tw_tpex",
+    "tw_taifex": "macro_db.sources.tw_taifex",
     # --- JP（第二波：只在此區塊加 jp_ 開頭的行）---
     "jp_boj": "macro_db.sources.jp_boj",
     "jp_esri": "macro_db.sources.jp_esri",

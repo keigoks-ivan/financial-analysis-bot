@@ -6,6 +6,8 @@ kind=cpx（預設）：cpx.cbc.gov.tw/api/dataapi/Get?FileName=<file>
   期間：YYYYMmm（月）／YYYYMMDD（日）。
 kind=fsi_csv：cbc.gov.tw 開放資料 CSV（金融健全指標-不動產市場），年資料、民國年。
   params: url, col（0 起算，0＝民國年）
+kind=fsi_csv_ym：同上開放資料 CSV，但第 0 欄是民國年月（9103＝民國 91 年 3 月＝2002-03；11503＝2026-03），季資料。
+  params: url, col（0 起算）
 """
 from __future__ import annotations
 
@@ -51,11 +53,28 @@ def fsi_obs(text: str, col: int) -> list:
     return C.clean_obs(rows)
 
 
+def fsi_ym_obs(text: str, col: int) -> list:
+    """第 0 欄民國年月 YYYMM（季資料，月份 03/06/09/12）-> 該季首月 1 日（與全庫季資料口徑一致）。"""
+    rows = []
+    for r in csv.reader(io.StringIO(text)):
+        if not r or not re.match(r"^\d{4,5}$", r[0].strip()):
+            continue
+        d = C.roc_ym_to_date(r[0])
+        if d is None or col >= len(r):
+            continue
+        y, m = int(d[:4]), int(d[5:7])
+        rows.append((C.d_quarter(y, (m - 1) // 3 + 1), r[col]))
+    return C.clean_obs(rows)
+
+
 def fetch(specs: list[dict]) -> dict:
     cache: dict = {}
 
     def one(s: dict):
         p = C.params(s)
+        if p.get("kind", "cpx") == "fsi_csv_ym":
+            text = C.http_get_cached(cache, p["url"]).decode("utf-8-sig", errors="replace")
+            return fsi_ym_obs(text, int(p["col"]))
         if p.get("kind", "cpx") == "fsi_csv":
             text = C.http_get_cached(cache, p["url"]).decode("utf-8-sig", errors="replace")
             return fsi_obs(text, int(p["col"]))
