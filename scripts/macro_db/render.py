@@ -18,7 +18,7 @@ CATALOG_DIR = Path(__file__).resolve().parent / "catalog"
 WEB_DIR = Path(__file__).resolve().parent / "web"
 
 # 國家／區域的顯示名稱與順序（總覽分頁照這個順序）；沒有 catalog/<代碼>.json 的會自動略過
-COUNTRY_NAME = {"us": "美國", "tw": "台灣", "jp": "日本", "cn": "中國", "eu": "歐洲"}
+COUNTRY_NAME = {"us": "美國", "tw": "台灣", "jp": "日本", "cn": "中國", "eu": "歐洲", "an": "東南亞"}
 WD = "一二三四五六日"
 STALE_DAYS = {"D": 12, "W": 20, "M": 110, "Q": 230, "A": 820}   # 從資料期間的起日算；年資料 Y 年的值要到 Y+1 年才公布
 BAR_DISPLAYS = ("diff", "mom")

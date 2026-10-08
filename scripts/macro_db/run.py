@@ -29,7 +29,7 @@ from macro_db import store  # noqa: E402
 from macro_db.sources import REGISTRY, get_fetcher  # noqa: E402
 
 CATALOG_DIR = _here / "catalog"
-COUNTRIES = ("us", "tw", "jp", "cn", "eu")   # 沒有 catalog/<代碼>.json 的自動略過；順序同 render.COUNTRY_NAME
+COUNTRIES = ("us", "tw", "jp", "cn", "eu", "an")   # 沒有 catalog/<代碼>.json 的自動略過；順序同 render.COUNTRY_NAME
 
 
 def load_catalog(country):
