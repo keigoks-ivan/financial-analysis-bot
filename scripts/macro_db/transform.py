@@ -141,6 +141,18 @@ def combine(op, a, b=None, *more):
     return out
 
 
+def rolling_sum(obs, freq="M"):
+    """近 12 個月合計（季資料＝近 4 季）。視窗內缺期就不算，免得少加一期。"""
+    n = 4 if freq == "Q" else 12
+    span = 9 if freq == "Q" else 11          # 視窗頭尾相差的月數
+    out = []
+    for i in range(n - 1, len(obs)):
+        a, z = _ymd(obs[i - n + 1][0]), _ymd(obs[i][0])
+        if (z.year - a.year) * 12 + z.month - a.month == span:
+            out.append((obs[i][0], sum(v for _, v in obs[i - n + 1:i + 1])))
+    return out
+
+
 def clip_to(obs, last_date):
     return [(k, v) for k, v in obs if k <= last_date]
 
@@ -183,4 +195,6 @@ def apply_display(obs, spec, get_series):
         return diff(obs, freq)
     if disp == "ratio":
         return ratio(obs, get_series(spec["denominator"]), spec.get("num_scale", 1.0))
+    if disp == "sum12m":
+        return rolling_sum(obs, freq)
     return list(obs)  # level / stack / qoq_saar（來源本身已是年化季增率）

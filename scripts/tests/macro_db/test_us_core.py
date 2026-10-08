@@ -208,3 +208,13 @@ def test_yoy_from_source_forms():
     got = transform.apply_display(obs, {"display": "yoy", "freq": "M", "yoy_from": "idx100"}, None)
     assert [(d, round(v, 6)) for d, v in got] == [("2026-07-01", 0.5), ("2026-08-01", 0.8)]
     assert transform.apply_display(obs, {"display": "yoy", "freq": "M", "yoy_from": "pct"}, None) == obs
+
+
+def test_rolling_sum_needs_full_window():
+    from macro_db import transform as T
+    obs = [("2025-%02d-01" % m, 1.0) for m in range(1, 13)] + [("2026-01-01", 2.0), ("2026-03-01", 3.0)]
+    out = T.rolling_sum(obs, "M")
+    assert out == [("2025-12-01", 12.0), ("2026-01-01", 13.0)]   # 2026-03 的視窗缺 2 月，不算
+    q = [("2025-01-01", 1.0), ("2025-04-01", 2.0), ("2025-07-01", 3.0), ("2025-10-01", 4.0)]
+    assert T.rolling_sum(q, "Q") == [("2025-10-01", 10.0)]
+    assert T.apply_display(q, {"display": "sum12m", "freq": "Q"}, None) == [("2025-10-01", 10.0)]

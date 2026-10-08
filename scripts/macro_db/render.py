@@ -172,6 +172,8 @@ def measure_label(spec):
         base += "" if "年增率" in base else " 年增率"
     elif d == "diff":
         base += " 月變動" if f == "M" else " 變動"
+    elif d == "sum12m":
+        base += " 近4季合計" if f == "Q" else " 近12個月合計"
     elif d == "ratio" and spec.get("unit_out"):
         pass
     return base
