@@ -65,7 +65,9 @@ def is_light(spec):
 
 
 def unit_nd(spec):
-    """依單位固定小數位：利差等「百分點」2 位、擴散指數 1 位；其他回 None（依數值大小）。"""
+    """依單位固定小數位：利差等「百分點」2 位、擴散指數 1 位；catalog 可用 nd 指定（例如人民幣中間價 4 位）；其他回 None（依數值大小）。"""
+    if spec.get("nd") is not None:
+        return spec["nd"]
     u = unit_of(spec)
     if u.startswith("百分點"):
         return 2
@@ -146,7 +148,8 @@ def change_txt(latest, prev, spec, signed=False):
     unit_s = "" if is_index_unit(u) else short_unit(u)
     s = f"{sign}{fnum(abs(diff), nd)} {unit_s}".strip()
     # 會正負翻轉的序列（貿易差額、經常帳等）百分比變動沒有意義，不附
-    if d == "level" and not signed and prev not in (0, None) and latest > 0 and prev > 0:
+    # 未季調的季、月水準值（例如中國單季現價 GDP）跟上一期比會混進季節波動，catalog 標 pct_change: false 就不附
+    if d == "level" and not signed and spec.get("pct_change", True) and prev not in (0, None) and latest > 0 and prev > 0:
         s += f"（{'+' if diff >= 0 else '−'}{abs(diff / prev * 100):.1f}%）"
     return s
 
