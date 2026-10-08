@@ -33,6 +33,8 @@ class FetchError(Exception):
 # 台灣政府網站（例如 ws.dgbas.gov.tw）送出的憑證鏈缺中繼憑證（TWCA Secure SSL CA），瀏覽器與 macOS curl
 # 會自動補，Python／OpenSSL 不會。做法：certifi 根憑證＋repo 內附的中繼憑證合成一份 bundle，照常完整驗證。
 # 中繼憑證來源：葉憑證 AIA 欄位 http://sslserver.twca.com.tw/cacert/secure_sha2_2023G3.crt（2030-10-16 到期）。
+# 2026-10-07 主計總處換成 TWCA SSL Certification Authority 簽發的葉憑證，又補一張：
+# http://sslserver.twca.com.tw/cacert/Cyber_SSL_2023.crt（上層 TWCA CYBER Root CA，在 certifi 內；2033-02-23 到期）。
 _EXTRA_CA_DIR = Path(__file__).resolve().parent.parent / "certs"
 _CA_BUNDLE: str | None = None
 
