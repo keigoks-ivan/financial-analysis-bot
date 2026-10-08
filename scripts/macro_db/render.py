@@ -17,7 +17,8 @@ DOCS = ROOT / "docs" / "macro" / "db"
 CATALOG_DIR = Path(__file__).resolve().parent / "catalog"
 WEB_DIR = Path(__file__).resolve().parent / "web"
 
-COUNTRY_NAME = {"us": "美國", "tw": "台灣"}
+# 國家／區域的顯示名稱與順序（總覽分頁照這個順序）；沒有 catalog/<代碼>.json 的會自動略過
+COUNTRY_NAME = {"us": "美國", "tw": "台灣", "jp": "日本", "cn": "中國", "eu": "歐洲"}
 WD = "一二三四五六日"
 STALE_DAYS = {"D": 12, "W": 20, "M": 110, "Q": 230, "A": 820}   # 從資料期間的起日算；年資料 Y 年的值要到 Y+1 年才公布
 BAR_DISPLAYS = ("diff", "mom")
@@ -447,9 +448,14 @@ def category_page(country, cat, cats, ctx, all_cats_present):
 
 
 # ---------- 總覽 ----------
+def area_names(built):
+    names = [COUNTRY_NAME[c] for c in COUNTRY_NAME if c in built]
+    return names[0] if len(names) == 1 else "、".join(names[:-1]) + "與" + names[-1]
+
+
 def overview(countries, built, ctx):
     secs = []
-    for c in ("us", "tw"):
+    for c in COUNTRY_NAME:
         if c not in built:
             continue
         cat = built[c]["cat"]
@@ -469,12 +475,12 @@ def overview(countries, built, ctx):
         secs.append(f'<div data-sec="{c}" class="{"hide" if c != "us" else ""}"><div class="grid">{"".join(grid)}</div>'
                     f'{recent_html(c, built[c], ctx)}{upcoming_html(c, ctx)}{stale_html(c, built[c], ctx)}</div>')
     tabs = ""
-    for c in ("us", "tw"):
+    for c in (c for c in COUNTRY_NAME if c in built):
         tabs += f'<button type="button" data-c="{c}" class="{"on" if c == "us" else ""}{"" if c in built else " off"}">{COUNTRY_NAME[c]}</button>'
     body = ('<div class="crumb"><a href="/">首頁</a> / <a href="/macro/">總經</a> / 資料庫</div>'
             '<div class="overline">Macro Database</div>'
             '<h1>總經資料庫</h1>'
-            '<p class="sub">美國與台灣的總體經濟數據，全部取自官方原始來源，完整歷史保存，每日自動更新。只提供看圖，不提供下載。</p>'
+            f'<p class="sub">{area_names(built)}的總體經濟數據，全部取自官方原始來源，完整歷史保存，每日自動更新。只提供看圖，不提供下載。</p>'
             f'<div class="seg">{tabs}</div>' + "".join(secs))
     scripts = '<script src="db.js"></script>\n<script>MacroDB.country();</script>'
     return page("總經資料庫 — InvestMQuest Research", body, "", scripts=scripts)
@@ -506,7 +512,7 @@ def recent_html(c, b, ctx):
 
 def upcoming_html(c, ctx):
     if c != "us":
-        return '<h2>即將公布</h2><div class="panel note">台灣的公布日行事曆還沒有建置。</div>'
+        return f'<h2>即將公布</h2><div class="panel note">{COUNTRY_NAME[c]}的公布日行事曆還沒有建置。</div>'
     if not ctx.cal:
         return ""
     today = ctx.today
@@ -555,7 +561,7 @@ def write_if_changed(path, text):
     return True
 
 
-def render_all(countries=("us", "tw"), ctx=None, docs=None):
+def render_all(countries=tuple(COUNTRY_NAME), ctx=None, docs=None):
     global DOCS
     docs = Path(docs) if docs else DOCS
     ctx = ctx or Ctx()

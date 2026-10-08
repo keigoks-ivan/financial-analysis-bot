@@ -27,6 +27,11 @@ REGISTRY = {
     "tw_jcic": "macro_db.sources.tw_jcic",
     "tw_twse": "macro_db.sources.tw_twse",
     "tw_tpex": "macro_db.sources.tw_tpex",
+    # --- JP（第二波：只在此區塊加 jp_ 開頭的行）---
+    # --- CN（第二波：只在此區塊加 cn_ 開頭的行）---
+    # --- EU（第二波：只在此區塊加 eu_ 開頭的行）---
+    # --- AN（第二波：只在此區塊加 an_ 開頭的行）---
+    # --- 跨國共用（IMF／BIS／OECD 等國際機構 API，第二波）---
 }
 
 

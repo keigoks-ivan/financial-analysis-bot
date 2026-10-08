@@ -146,5 +146,5 @@ window.MacroDB={start:function(jsonUrl){
   function show(c){secs.forEach(function(s){s.classList.toggle('hide',s.getAttribute('data-sec')!==c)});tabs.forEach(function(t){t.classList.toggle('on',t.getAttribute('data-c')===c)});try{history.replaceState(null,'','#'+c)}catch(e){}
    try{window.dispatchEvent(new Event('resize'))}catch(e){}}
   tabs.forEach(function(t){t.addEventListener('click',function(){if(!t.classList.contains('off'))show(t.getAttribute('data-c'))})});
-  var h=(location.hash||'').slice(1);show(h==='tw'&&document.querySelector('[data-sec=tw]')?'tw':'us')}};
+  var h=(location.hash||'').slice(1);show(/^[a-z]{2}$/.test(h)&&document.querySelector('[data-sec='+h+']')?h:'us')}};
 })();
