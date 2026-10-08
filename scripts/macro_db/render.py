@@ -51,10 +51,16 @@ def auto_nd(v):
     return 3
 
 
+def _z(v, nd):
+    """四捨五入後是 0 的負數（例如 −0.004）當成 0，免得顯示「−0.0%」。"""
+    return 0.0 if round(v, nd) == 0 else v
+
+
 def fnum(v, nd=None):
     if v is None:
         return "–"
-    return f"{v:,.{auto_nd(v) if nd is None else nd}f}"
+    nd = auto_nd(v) if nd is None else nd
+    return f"{_z(v, nd):,.{nd}f}"
 
 
 LIGHTS = {1: "藍燈", 2: "黃藍燈", 3: "綠燈", 4: "黃紅燈", 5: "紅燈"}
@@ -100,11 +106,11 @@ def vtxt(v, spec):
     if is_light(spec):
         return LIGHTS.get(int(round(v)), fnum(v))
     if d == "yoy":
-        return f"{v:.1f}%".replace("-", "−")
+        return f"{_z(v, 1):.1f}%".replace("-", "−")
     if d == "mom":
-        return f"{v:.2f}%".replace("-", "−")
+        return f"{_z(v, 2):.2f}%".replace("-", "−")
     if d == "ratio":
-        return f"{v:.2f}%".replace("-", "−")
+        return f"{_z(v, 2):.2f}%".replace("-", "−")
     if d == "diff":
         return (f"{fnum(v, 0 if abs(v) >= 10 else 1)} {short_unit(u)}".strip()).replace("-", "−", 1)
     if u.startswith("%"):
