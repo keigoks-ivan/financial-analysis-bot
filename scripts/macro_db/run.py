@@ -9,6 +9,7 @@
 一條序列或一個來源失敗：保留舊資料、寫進 status.json、頁面標過期，其他照常更新。
 只有「全部來源都失敗」才回非 0。
 """
+import os
 import sys
 from pathlib import Path
 
@@ -97,6 +98,7 @@ def fetch_all(specs_by_sid, data_dir=None, workers=4, log=print):
 def probe(specs_by_sid, log=print):
     """對每個網域的第一個網址做一次 GET，印 HTTP 狀態（看 GitHub 的美國 IP 會不會被擋）。"""
     import requests
+    from macro_db.sources.tw_common import _ca_bundle   # 含台灣政府站缺的中繼憑證
     seen = {}
     for s in specs_by_sid.values():
         urls = [v for v in list(s.values()) + list((s.get("params") or {}).values())
@@ -107,7 +109,7 @@ def probe(specs_by_sid, log=print):
     for host, u in sorted(seen.items()):
         t = time.time()
         try:
-            r = requests.get(u, timeout=30, stream=True,
+            r = requests.get(u, timeout=30, stream=True, verify=_ca_bundle(),
                              headers={"User-Agent": "investmquest-research/1.0 (+https://research.investmquest.com/macro/db/)"})
             code = r.status_code
             r.close()
@@ -123,6 +125,8 @@ def main(argv=None):
     ap.add_argument("--calendar", action="store_true")
     ap.add_argument("--render-only", action="store_true")
     ap.add_argument("--no-render", action="store_true")
+    ap.add_argument("--local-only", action="store_true",
+                    help="只抓標 local_only 的序列（GitHub 的美國 IP 被擋，要在本機跑）")
     a = ap.parse_args(argv)
     countries = [a.only] if a.only else list(COUNTRIES)
     cats = {c: load_catalog(c) for c in countries}
@@ -130,6 +134,15 @@ def main(argv=None):
     specs = {}
     for c, cat in cats.items():
         specs.update(unique_specs(cat))
+    if a.local_only:
+        specs = {k: v for k, v in specs.items() if v.get("local_only")}
+    elif os.environ.get("GITHUB_ACTIONS") == "true":
+        # 這些來源擋 GitHub 的美國 IP（例如內政部房價 PDF 回傳網頁）：CI 不抓、不寫失敗，沿用舊資料，
+        # 由本機 `python3.12 scripts/macro_db/run.py --local-only` 更新。
+        skipped = sorted(k for k, v in specs.items() if v.get("local_only"))
+        specs = {k: v for k, v in specs.items() if not v.get("local_only")}
+        if skipped:
+            print("略過 %d 條只能在本機抓的序列：%s" % (len(skipped), "、".join(skipped)))
 
     if a.calendar:
         from macro_db import calendar as relcal
