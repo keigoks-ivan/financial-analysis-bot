@@ -1,4 +1,4 @@
-"""東南亞目錄（catalog/an.json）完整性檢查：離線。"""
+"""東南亞目錄（catalog/an.json＋各國分檔 an_<國碼>.json）完整性檢查：離線。"""
 from __future__ import annotations
 
 import importlib
@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from macro_db import catalog_io
 from macro_db.sources import REGISTRY
 
 CATALOG = Path(__file__).resolve().parents[2] / "macro_db" / "catalog" / "an.json"
@@ -20,9 +21,17 @@ PARAM_KEYS = {
 }
 
 
+PARTS = ["vn", "my", "th", "id", "sg"]
+
+
+@pytest.fixture(scope="module")
+def main():
+    return json.loads(CATALOG.read_text(encoding="utf-8"))
+
+
 @pytest.fixture(scope="module")
 def cat():
-    return json.loads(CATALOG.read_text(encoding="utf-8"))
+    return catalog_io.load_catalog("an")
 
 
 def all_series(cat):
@@ -32,10 +41,17 @@ def all_series(cat):
                 yield c["key"], ch, s
 
 
-def test_top_level(cat):
-    assert cat["country"] == "an"
-    assert [c["key"] for c in cat["categories"]] == ["asean", "vn", "my", "th", "id", "sg", "tradewar"]
-    assert cat["categories"][0]["name_zh"] == "東南亞總覽"
+def test_top_level(main, cat):
+    assert main["country"] == "an"
+    assert [c["key"] for c in main["categories"]] == ["asean", "tradewar"]
+    assert main["categories"][0]["name_zh"] == "東南亞總覽"
+    assert all(c["group"] == "五國對照" for c in main["categories"])
+    assert main["parts"] == PARTS
+    keys = {c["key"] for c in cat["categories"]}
+    for old, new in main["redirects"].items():
+        assert old in PARTS and new == old + "-gdp"
+        if (CATALOG.parent / f"an_{old}.json").exists():
+            assert new in keys, new
     for rec in cat["todo"]:
         assert rec["reason"] and rec["chart"] and rec["priority"] in (2, 3)
     for rec in cat["unavailable"]:
@@ -46,13 +62,22 @@ def test_series_fields_and_probe_url(cat):
     for _, ch, s in all_series(cat):
         for k in REQUIRED:
             assert k in s, (s.get("sid"), k)
-        assert s["sid"].startswith("an.")
         assert s["freq"] in {"D", "W", "M", "Q", "A"}
         assert s["sa"] in {"SA", "NSA", "SAAR", "n/a"}
         assert s["license"] == "public" or s["license"].startswith("copyright:")
         assert s["axis"] in {"L", "R"}
         assert s["params"]["probe_url"].startswith("http")
         assert "ref_sids" not in ch
+
+
+def test_sid_prefix_and_part_keys(cat):
+    for c in cat["categories"]:
+        part = c.get("part")
+        if part:
+            assert c["key"].startswith(part + "-"), c["key"]
+        for ch in c["charts"]:
+            for s in ch["series"]:
+                assert s["sid"].startswith("an.") or (part and s["sid"].startswith(part + ".")), s["sid"]
 
 
 def test_same_sid_same_spec_everywhere(cat):
@@ -66,7 +91,7 @@ def test_fetchers_registered_and_params_complete(cat):
     for _, ch, s in all_series(cat):
         f = s["fetcher"]
         assert f in REGISTRY and (f.startswith("an_") or f.startswith("intl_")), f
-        assert PARAM_KEYS[f] <= set(s["params"]), s["sid"]
+        assert PARAM_KEYS.get(f, set()) <= set(s["params"]), s["sid"]
         assert callable(importlib.import_module(REGISTRY[f]).fetch)
 
 

@@ -25,7 +25,7 @@ import json  # noqa: E402
 import time  # noqa: E402
 from urllib.parse import urlparse  # noqa: E402
 
-from macro_db import store  # noqa: E402
+from macro_db import catalog_io, store  # noqa: E402
 from macro_db.sources import REGISTRY, get_fetcher  # noqa: E402
 
 CATALOG_DIR = _here / "catalog"
@@ -33,10 +33,7 @@ COUNTRIES = ("us", "tw", "jp", "cn", "eu", "an")   # 沒有 catalog/<代碼>.jso
 
 
 def load_catalog(country):
-    p = CATALOG_DIR / (country + ".json")
-    if not p.exists():
-        return None
-    return json.loads(p.read_text(encoding="utf-8"))
+    return catalog_io.load_catalog(country, CATALOG_DIR)
 
 
 def unique_specs(cat):

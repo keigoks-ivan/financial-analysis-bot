@@ -48,6 +48,16 @@ REGISTRY = {
     # --- AN（第二波：只在此區塊加 an_ 開頭的行）---
     "an_singstat": "macro_db.sources.an_singstat",
     "an_opendosm": "macro_db.sources.an_opendosm",
+    # --- AN-VN（越南 builder 只在這行與下一行之間加 an_vn_ 開頭的行）---
+    # --- AN-VN 結束 ---
+    # --- AN-MY（馬來西亞 builder 只在這行與下一行之間加 an_my_ 開頭的行）---
+    # --- AN-MY 結束 ---
+    # --- AN-TH（泰國 builder 只在這行與下一行之間加 an_th_ 開頭的行）---
+    # --- AN-TH 結束 ---
+    # --- AN-ID（印尼 builder 只在這行與下一行之間加 an_id_ 開頭的行）---
+    # --- AN-ID 結束 ---
+    # --- AN-SG（新加坡 builder 只在這行與下一行之間加 an_sg_ 開頭的行）---
+    # --- AN-SG 結束 ---
     # --- 跨國共用（IMF／BIS／OECD 等國際機構 API，第二波）---
     "intl_imf": "macro_db.sources.intl_imf",
     "intl_bis": "macro_db.sources.intl_bis",

@@ -9,7 +9,7 @@ import json
 import shutil
 from pathlib import Path
 
-from macro_db import store, transform
+from macro_db import catalog_io, store, transform
 from macro_db import calendar as relcal
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -437,17 +437,30 @@ def category_page(country, cat, cats, ctx, all_cats_present):
         jdata[ch["key"]] = jd
         cards.append(card)
         sums_all.append((ch, sums))
+    grp = cat.get("group")
+    shown = [c for c in cats if c["charts"] and c.get("group") == grp]
     pills = "".join(f'<a class="{"on" if c["key"] == cat["key"] else ""}" href="/macro/db/{country}/{c["key"]}.html">{esc(c["name_zh"])}</a>'
-                    for c in cats if c["charts"])
+                    for c in shown)
+    pills = f'<div class="pills">{pills}</div>'
+    if grp:
+        # 一區有好幾國（東南亞）：上排選國家（連到該國第一類），下排是這一國的大類
+        firsts = {}
+        for c in cats:
+            if c["charts"] and c.get("group"):
+                firsts.setdefault(c["group"], c["key"])
+        grow = "".join(f'<a class="{"on" if g == grp else ""}" href="/macro/db/{country}/{k}.html">{esc(g)}</a>' for g, k in firsts.items())
+        pills = f'<div class="pills grp">{grow}</div>' + pills
+    place = grp if cat.get("part") else COUNTRY_NAME[country]
+    mid = f'{esc(grp)} / ' if cat.get("part") else ""
     n = len(charts)
     body = (f'<div class="crumb"><a href="/">首頁</a> / <a href="/macro/">總經</a> / <a href="/macro/db/">資料庫</a> / '
-            f'<a href="/macro/db/#{country}">{COUNTRY_NAME[country]}</a> / {esc(cat["name_zh"])}</div>'
+            f'<a href="/macro/db/#{country}">{COUNTRY_NAME[country]}</a> / {mid}{esc(cat["name_zh"])}</div>'
             f'<div class="overline">Macro Database · {country.upper()}</div>'
-            f'<h1>{COUNTRY_NAME[country]}　{esc(cat["name_zh"])}</h1>'
+            f'<h1>{esc(place)}　{esc(cat["name_zh"])}</h1>'
             f'<p class="sub">{n} 張圖。資料每日自官方來源更新，歷史完整保存；數字都標了期間與單位，年增率按日期對齊去年同期。</p>'
-            f'<div class="pills">{pills}</div>' + "\n".join(cards))
+            f'{pills}' + "\n".join(cards))
     scripts = f'<script src="../db.js"></script>\n<script>MacroDB.start("../data/{country}/{cat["key"]}.json");</script>'
-    return (page(f"{COUNTRY_NAME[country]}　{cat['name_zh']} — 總經資料庫", body, "../", scripts=scripts),
+    return (page(f"{place}　{cat['name_zh']} — 總經資料庫", body, "../", scripts=scripts),
             {"asof": ctx.today.isoformat(), "charts": jdata}, sums_all)
 
 
@@ -464,7 +477,7 @@ def overview(countries, built, ctx):
             continue
         cat = built[c]["cat"]
         sums_by_cat = built[c]["sums"]
-        grid = []
+        grid, groups = [], {}
         for k in cat["categories"]:
             if not k["charts"]:
                 continue
@@ -474,9 +487,16 @@ def overview(countries, built, ctx):
                 if s:
                     rows.append(f'<div class="kv"><span>{esc(hspace(s["label"]))}</span><b>{esc(s["latest_txt"])}<br>'
                                 f'<small class="note">{esc(hspace(s["period"]))}</small></b></div>')
-            grid.append(f'<a class="cat" href="/macro/db/{c}/{k["key"]}.html"><div class="t">{esc(k["name_zh"])}</div>'
-                        f'<div class="n">{len(k["charts"])} 張圖</div>{"".join(rows)}</a>')
-        secs.append(f'<div data-sec="{c}" class="{"hide" if c != "us" else ""}"><div class="grid">{"".join(grid)}</div>'
+            card = (f'<a class="cat" href="/macro/db/{c}/{k["key"]}.html"><div class="t">{esc(k["name_zh"])}</div>'
+                    f'<div class="n">{len(k["charts"])} 張圖</div>{"".join(rows)}</a>')
+            if k.get("group"):
+                groups.setdefault(k["group"], []).append(card)
+            else:
+                grid.append(card)
+        blocks = f'<div class="grid">{"".join(grid)}</div>' if grid else ""
+        # 有分國家的區（東南亞）：每國一段，標題是國名
+        blocks += "".join(f'<h2 class="grph">{esc(g)}</h2><div class="grid">{"".join(cs)}</div>' for g, cs in groups.items())
+        secs.append(f'<div data-sec="{c}" class="{"hide" if c != "us" else ""}">{blocks}'
                     f'{recent_html(c, built[c], ctx)}{upcoming_html(c, ctx)}{stale_html(c, built[c], ctx)}</div>')
     tabs = ""
     for c in (c for c in COUNTRY_NAME if c in built):
@@ -553,8 +573,15 @@ def stale_html(c, b, ctx):
 
 # ---------- 主流程 ----------
 def load_catalog(country):
-    p = CATALOG_DIR / (country + ".json")
-    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+    return catalog_io.load_catalog(country, CATALOG_DIR)
+
+
+def redirect_page(country, new_key):
+    """舊網址（大類改名或拆開後）轉到新頁。"""
+    u = f"/macro/db/{country}/{new_key}.html"
+    return ('<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
+            f'<meta http-equiv="refresh" content="0; url={u}"><link rel="canonical" href="https://research.investmquest.com{u}">'
+            f'<title>此頁已搬家 — 總經資料庫</title></head><body><p>此頁已搬到 <a href="{u}">新位置</a>。</p></body></html>\n')
 
 
 def write_if_changed(path, text):
@@ -582,6 +609,8 @@ def render_all(countries=tuple(COUNTRY_NAME), ctx=None, docs=None):
             write_if_changed(docs / c / (k["key"] + ".html"), html_)
             write_if_changed(docs / "data" / c / (k["key"] + ".json"), json.dumps(jdata, ensure_ascii=False, separators=(",", ":")))
             sums_by_cat[k["key"]] = sums
+        for old, new in cat.get("redirects", {}).items():
+            write_if_changed(docs / c / (old + ".html"), redirect_page(c, new))
         built[c] = {"cat": cat, "sums": sums_by_cat}
     for name in ("db.css", "db.js"):
         write_if_changed(docs / name, (WEB_DIR / name).read_text(encoding="utf-8"))
