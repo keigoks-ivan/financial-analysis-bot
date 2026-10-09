@@ -99,6 +99,9 @@ section.block{padding:1.1rem 0}
 .roster-table tr.rgroup td{background:var(--border-soft);color:var(--muted);font-family:'IBM Plex Mono',monospace;
   font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.42rem .9rem;border-bottom:1px solid var(--border)}
 .roster-table td .imq-badge{margin:0 .15rem .15rem 0}
+.lp{display:inline-block;font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.68rem;font-weight:600;
+  border-radius:5px;padding:1px 6px;white-space:nowrap;background:color-mix(in srgb,currentColor 12%,transparent)}
+.lp-up{color:var(--pos)}.lp-dn{color:var(--neg)}.lp-accent{color:var(--warn)}.lp-sec,.lp-mut{color:var(--muted)}.lp-accent-muted{color:var(--pos)}
 .card-title{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.06em;
   color:var(--muted);text-transform:uppercase;padding:.65rem .9rem;border-bottom:1px solid var(--border)}
 .board{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.45;
@@ -439,7 +442,8 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     dd:      '/dd-screener/tw/latest.json',
     qgm:     '/qgm-tw/latest.json',
     rs:      '/screener/tw_latest.json',
-    p10:     '/research/price-momentum-tw/track.json'
+    p10:     '/research/price-momentum-tw/track.json',
+    lamp:    '/stages/data/lamp_tw.json'
   };
   var S = {};
   var pending = Object.keys(sources).map(function(k){
@@ -458,6 +462,17 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     var v = r.dca_verdict || '已做 DD';
     var cls = v==='進場'||v==='加碼'?'v-in':(v==='迴避'||v==='出場'?'v-avoid':'v-watch');
     return r.dd_path ? '<a class="'+cls+'" href="'+esc(r.dd_path)+'">'+esc(v)+'</a>' : '<span class="'+cls+'">'+esc(v)+'</span>';
+  }
+  var LAMP_LABEL = {S0:'弱勢',S1:'轉強',S2:'築底',S5:'高檔整理',S3:'收縮完成',S4:'領先',S9:'過渡'};
+  var LAMP_CLS = {S0:'dn',S1:'accent',S2:'sec',S5:'accent-muted',S3:'up',S4:'up',S9:'mut'};
+  function lampCell(t){
+    var c = S.lamp && S.lamp.lamp ? S.lamp.lamp[t] : null;
+    if(!c || !LAMP_LABEL[c]) return '<span class="muted">—</span>';
+    return '<span class="lp lp-'+(LAMP_CLS[c]||'mut')+'">'+LAMP_LABEL[c]+'</span>';
+  }
+  function lampNote(){
+    if(!S.lamp || !S.lamp.lamp) return '階段：台股階段燈資料暫缺。';
+    return '階段：跟美股<a href="/stages/">個股階段雷達</a>同一套判定，比較基準換成 0050 還原權息，流動性門檻是近 20 日平均成交值 500 萬美元以上，相對強弱的百分位跟 0050、0051、00714 成分股加台股池一起排。成交值不到門檻或上市未滿一年的，一律標「過渡」。資料日 '+esc(S.lamp.as_of||'')+'。';
   }
   function priceOf(r){return num(r.price)?r.price:(r.ma&&num(r.ma.price)?r.ma.price:null);}
   function dist52(r){return r.timing && num(r.timing.dist_52w_high_pct) ? r.timing.dist_52w_high_pct : null;}
@@ -535,6 +550,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
         '<td class="num">'+pct(r.eps2y,1)+'</td>'+
         '<td class="num">'+pct(r.roic,1)+'</td>'+
         '<td class="num">'+pct(dist52(r),1)+'</td>'+
+        '<td>'+lampCell(r.ticker)+'</td>'+
         '<td>'+ddCell(r)+'</td></tr>';
     }).join('');
     var notes = ['資料日 '+esc(String(S.dd.as_of||'').slice(0,10))+'，母體 '+((S.dd.stocks||[]).length)+' 檔。'];
@@ -543,8 +559,9 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       .map(function(r){return code(r.ticker)+' '+(nameOf(r.ticker)||'');});
     if(noEps.length) notes.push(noEps.join('、')+' 在 Koyfin 沒有分析師預估，名次只看品質和股價。');
     if(noRevision()) notes.push('台股池還沒有上修資料，要累積兩個月的 EPS 快照才算得出來，在那之前排序少了這一塊。');
+    notes.push(lampNote());
     $('roster-mount').innerHTML = '<div class="card"><table class="roster-table"><thead><tr>'+
-      '<th class="num">名次</th><th>股票</th><th class="num">股價</th><th class="num">EPS 明年成長</th><th class="num">ROIC</th><th class="num">距 52 週高</th><th>DD 裁決</th>'+
+      '<th class="num">名次</th><th>股票</th><th class="num">股價</th><th class="num">EPS 明年成長</th><th class="num">ROIC</th><th class="num">距 52 週高</th><th>階段</th><th>DD 裁決</th>'+
       '</tr></thead><tbody>'+body+'</tbody></table></div>'+
       '<p class="roster-note">'+notes.join(' ')+' <a href="/dd-screener/tw/">完整台股池 →</a></p>';
   }
@@ -583,12 +600,12 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
         '<td class="num" title="'+esc(fails?('未過：'+fails):'')+'">'+(num(r.pass_count)?r.pass_count+'/4':'—')+'</td>'+
         '<td class="num" title="自由現金流利潤率 '+pct(r.fcf,1)+'，資本支出占營收 '+pct(r.capex_pct_sales,1)+'">'+pct(r.ocf,1)+'</td><td class="num">'+pct(r.roic,1)+'</td>'+
         '<td class="num">'+pct(r.eps2y,1)+'</td><td class="num">'+(num(r.peg)?fmt(r.peg,2):'—')+'</td>'+
-        '<td class="num">'+pct(dist52(r),1)+'</td><td class="num">'+fmt(rsOf(r),0)+'</td><td>'+ddCell(r)+'</td></tr>';
+        '<td class="num">'+pct(dist52(r),1)+'</td><td class="num">'+fmt(rsOf(r),0)+'</td><td>'+lampCell(r.ticker)+'</td><td>'+ddCell(r)+'</td></tr>';
     }).join('');
     $('pool-mount').innerHTML = '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
-      '<th class="num">名次</th><th>股票</th><th class="num">四條件</th><th class="num">營業現金流利潤率</th><th class="num">ROIC</th><th class="num">EPS 明年成長</th><th class="num">PEG</th><th class="num">距 52 週高</th><th class="num">RS</th><th>DD 裁決</th>'+
+      '<th class="num">名次</th><th>股票</th><th class="num">四條件</th><th class="num">營業現金流利潤率</th><th class="num">ROIC</th><th class="num">EPS 明年成長</th><th class="num">PEG</th><th class="num">距 52 週高</th><th class="num">RS</th><th>階段</th><th>DD 裁決</th>'+
       '</tr></thead><tbody>'+body+'</tbody></table></div>'+
-      '<p class="roster-note">RS：跟台股 RS 雷達同一套算法，跟雷達的掃描名單一起排百分位，0 到 100。滑過「四條件」可看沒過的條件，滑過營業現金流利潤率可看自由現金流利潤率與資本支出占營收。</p>';
+      '<p class="roster-note">RS：跟台股 RS 雷達同一套算法，跟雷達的掃描名單一起排百分位，0 到 100。滑過「四條件」可看沒過的條件，滑過營業現金流利潤率可看自由現金流利潤率與資本支出占營收。'+lampNote()+'</p>';
   }
 
   /* 發現層：QGM 台股 */
