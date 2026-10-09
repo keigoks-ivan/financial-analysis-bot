@@ -83,7 +83,7 @@ def test_sid_prefix_and_part_keys(cat):
 def test_same_sid_same_spec_everywhere(cat):
     seen = {}
     for _, ch, s in all_series(cat):
-        key = {k: v for k, v in s.items() if k != "axis"}
+        key = {k: v for k, v in s.items() if k not in ("axis", "display")}   # 同一序列可在同圖以水準值與年增率各用一次
         assert seen.setdefault(s["sid"], key) == key, s["sid"]
 
 

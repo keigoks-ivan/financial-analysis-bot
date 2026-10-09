@@ -58,7 +58,8 @@ def test_shared_an_sids_match_an_json(my):
     assert {s["sid"] for s in used} >= {"an.my_gdp_real", "an.cbpol_my", "an.reserves_my", "an.my_exports",
                                          "an.spp_my", "an.xru_my", "an.tw_exp_us_my"}
     for s in used:
-        assert s == ref[s["sid"]], s["sid"]
+        assert {k: v for k, v in s.items() if k not in ("axis", "display")} == \
+            {k: v for k, v in ref[s["sid"]].items() if k not in ("axis", "display")}, s["sid"]
 
 
 def test_special_cases(my):

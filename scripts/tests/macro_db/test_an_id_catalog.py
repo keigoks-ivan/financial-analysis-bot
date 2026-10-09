@@ -50,9 +50,9 @@ def test_chart_titles_start_with_country_and_keys_unique(part):
 
 
 def test_sids_unique_and_prefixed(part):
-    sids = [s["sid"] for _, _, s in series(part)]
-    assert len(sids) == len(set(sids))
-    for sid in sids:
+    pairs = [(s["sid"], s["display"]) for _, _, s in series(part)]
+    assert len(pairs) == len(set(pairs))      # 同一 sid 可在同圖以水準值與年增率各用一次，但同一種顯示不重複
+    for sid, _ in pairs:
         assert sid.startswith("id.") or sid.startswith("an."), sid
 
 
@@ -62,7 +62,8 @@ def test_reused_an_sids_identical_to_an_json(part):
     reused = [s for _, _, s in series(part) if s["sid"] in ref]
     assert {s["sid"] for s in reused} >= {"an.id_gdp_real", "an.id_exports", "an.cbpol_id", "an.spp_id", "an.xru_id"}
     for s in reused:
-        assert s == ref[s["sid"]], s["sid"]
+        assert {k: v for k, v in s.items() if k not in ("axis", "display")} == \
+            {k: v for k, v in ref[s["sid"]].items() if k not in ("axis", "display")}, s["sid"]
 
 
 def test_fields_and_fetchers(part):

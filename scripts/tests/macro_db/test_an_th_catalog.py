@@ -61,9 +61,9 @@ def test_series_fields_probe_and_titles(cat):
             assert "年增率" not in s["label_zh"], s["sid"]       # render 會自己加「年增率」
         if s.get("stale_days"):
             assert s.get("stale_reason"), s["sid"]
-        sids.add(s["sid"])
+        sids.add((s["sid"], s["display"]))
     n = sum(1 for _ in all_series(cat))
-    assert n == len(sids)                                           # 全檔 sid 唯一
+    assert n == len(sids)                                           # 全檔 (sid, 顯示方式) 唯一；同圖可以水準值與年增率各用一次
 
 
 def test_fetchers_registered_and_params_complete(cat):
