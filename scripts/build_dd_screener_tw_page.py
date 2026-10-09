@@ -16,6 +16,9 @@ on every run instead of being a hand-kept fork:
   * when tw/latest.json scores cash flow as OCF (criteria key "ocf"), the
     three JS spots that hard-code the FCF criterion are pointed at it
     (CASH_PATCHES), each with an exact-count check;
+  * when tw/latest.json scores EPS growth as FY+1→FY+2 (the TW criterion label),
+    the growth column is pointed at eps2y and its FY+1→FY+3 revision chip is
+    dropped (GROWTH_PATCHES), with the same exact-count check;
   * the site nav is re-injected with site_nav.process(), so the page gets the
     research/dds highlight and the DD Screener sub-nav like its siblings.
 
@@ -63,6 +66,25 @@ CASH_PATCHES = (
      "    ocf:   parseFloat(document.getElementById('cust-fcf').value)   || 10,\n", 1),
     ("<label>FCF ≥ (%)</label>", "<label>OCF ≥ (%)</label>", 1),
 )
+# 2026-10-09: the TW pool scores EPS growth as Koyfin FY+1→FY+2
+# (build_dd_screener.py TW_EPS_GROWTH_LABEL / EPS_GROWTH_SPAN), stored in eps2y.
+# The main page's growth column shows eps_fy1_fy3_cagr_pct under the criterion
+# label, with a month-on-month chip that compares FY+1→FY+3 CAGRs. These patches
+# make the TW column show and sort by eps2y and drop that chip, since it measures
+# a different span. Applied only when tw/latest.json carries the TW label.
+TW_GROWTH_LABEL = "FY+1→FY+2 成長≥15%"
+GROWTH_PATCHES = (
+    ("  var cagr = s.eps_fy1_fy3_cagr_pct;\n", "  var cagr = s.eps2y;\n", 1),
+    ("  var revPp = s.eps2y_revision_pp;\n", "  var revPp = null;\n", 1),
+    ("  var revDir = s.eps2y_revision_dir;\n", "  var revDir = null;\n", 1),
+    ("'Excel FY+1→FY+3 forward CAGR ' + cagr.toFixed(1)",
+     "'Koyfin FY+1→FY+2 EPS 成長 ' + cagr.toFixed(1)", 1),
+    ("'修正動能 baseline 累積中（首月 snapshot 尚未對照）'",
+     "'台股池此欄不顯示月修正（月快照比的是 FY+1→FY+3 年化成長）'", 1),
+    ("_thSortable(critByKey.eps2y.label, 'eps_fy1_fy3_cagr_pct', {title: 'Excel FY+1→FY+3 forward 2Y CAGR — "
+     "buy-side consensus，覆蓋隨 Koyfin watchlist 動態變動'})",
+     "_thSortable(critByKey.eps2y.label, 'eps2y', {title: 'Koyfin FY+1→FY+2 EPS 成長率（今年到明年），台股池的成長條件'})", 1),
+)
 
 
 def esc(s) -> str:
@@ -99,6 +121,10 @@ def facts() -> dict:
     fcf_low = [r for r in rows if r.get("fcf") is not None and r["fcf"] < 10]
     return {
         "ocf_mode": any(c.get("key") == "ocf" for c in tw.get("criteria") or []),
+        "growth_mode": any(c.get("key") == "eps2y" and c.get("label") == TW_GROWTH_LABEL
+                           for c in tw.get("criteria") or []),
+        "n_fy2": sum(1 for r in rows if r.get("eps_fy_curr") is not None and r.get("eps_fy_next") is not None),
+        "n_fy3": sum(1 for r in rows if r.get("eps_fy_curr") is not None and r.get("eps_fy3") is not None),
         "n_fcf_low": len(fcf_low),
         "n_ocf_ok": sum(1 for r in fcf_low if r.get("ocf") is not None and r["ocf"] >= 10),
         "as_of": as_of or "—",
@@ -153,6 +179,14 @@ def notice_html(f: dict) -> str:
                      '台股不少公司正在擴產，資本支出壓低了自由現金流。資本支出值不值得，交給 ROIC 那一條判斷。'
                      f'池內 {f["n_fcf_low"]} 檔自由現金流利潤率不到 10%，其中 {f["n_ocf_ok"]} 檔營業現金流利潤率在 10% 以上。'
                      '排序的品質面向也改用營業現金流。')
+    if f["growth_mode"]:
+        items.insert(1 if f["ocf_mode"] else 0,
+                     '<b>成長條件</b>：EPS 成長一條，台股池看 Koyfin 分析師預估的今年到明年（FY+1→FY+2）'
+                     'EPS 成長率，15% 以上算過。美股主頁看的是今年到後年（FY+1→FY+3）的年化成長。'
+                     f'池內 {f["n"]} 檔有明年預估的 {f["n_fy2"]} 檔，有後年預估的只有 {f["n_fy3"]} 檔，'
+                     '所以台股只看到明年。Koyfin 沒有預估的，這一條算不過。'
+                     '月修正比的是今年到後年的年化成長，跟這一條不同，所以成長欄不顯示月修正。'
+                     '名次排序裡的成長面向仍用今年到後年的年化成長，沒有後年預估的少這一項。')
     if f["has_baseline"]:
         items.append('<b>上修</b>：每月 2 日存一次 EPS 快照，「上修」欄是跟上月快照比。')
     else:
@@ -206,6 +240,14 @@ def main() -> int:
             got = new.count(old)
             if got != want:
                 print(f"ERROR: OCF patch anchor {old[:40]!r} found {got}x, expected {want}x; "
+                      f"{OUT} left unchanged", file=sys.stderr)
+                return 1
+            new = new.replace(old, rep)
+    if f["growth_mode"]:
+        for old, rep, want in GROWTH_PATCHES:
+            got = new.count(old)
+            if got != want:
+                print(f"ERROR: growth patch anchor {old[:40]!r} found {got}x, expected {want}x; "
                       f"{OUT} left unchanged", file=sys.stderr)
                 return 1
             new = new.replace(old, rep)

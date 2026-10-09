@@ -805,6 +805,41 @@ def _apply_tw_cash_criteria() -> None:
                                          for name, getter, inv in FUNNEL_V2_LAYER_FIELDS["quality"]]
 
 
+# 2026-10-09 EPS 成長條件改由 Koyfin EPS 直接算。Koyfin 從 2026-06-23 的匯出起，
+# 預先算好的三個成長欄（FY1→FY2、FY2→FY3、FY1→FY3 CAGR）整欄空白，v1.9 的 eps2y
+# 覆寫因此一直沒生效：條件實際讀的是 yfinance「上一財年實際 → FY+1」兩年年化，
+# 跟條件名稱、頁面顯示的 Koyfin FY+1→FY+3 CAGR 都不同。欄位空白時改用 FY1／FY2／FY3
+# 自己算（公式同 _fetch_live_fy_eps() 與 snapshot_eps_estimates.py 的 fallback）。
+#   * 美股各池：FY+1→FY+3 年化，跟條件名稱一致；缺 FY3 時照 v1.9 原樣退回 yfinance。
+#   * 台股池（持有人 2026-10-09 決定）：FY+1→FY+2 單年成長，只用 Koyfin，缺值就是缺值。
+#     2026-10-09 台股 69 檔有 FY2 的 53 檔、有 FY3 的只有 45 檔。
+EPS_GROWTH_SPAN = "fy1_fy3"
+TW_EPS_GROWTH_LABEL = "FY+1→FY+2 成長≥15%"
+
+
+def _koyfin_eps_growth(rec: dict, span: str):
+    """Koyfin 記錄的 EPS 成長率（%）。span＝"fy1_fy3"（年化）或 "fy1_fy2"（單年）。"""
+    if span == "fy1_fy2":
+        v = rec.get("growth_fy1_fy2_pct")
+        f1, f2 = rec.get("fy1"), rec.get("fy2")
+        if v is None and f1 is not None and f2 is not None and f1 > 0:
+            v = (f2 / f1 - 1) * 100
+    else:
+        v = rec.get("cagr_fy1_fy3_pct")
+        f1, f3 = rec.get("fy1"), rec.get("fy3")
+        if v is None and f1 and f3 and f1 > 0 and f3 > 0:
+            v = ((f3 / f1) ** 0.5 - 1) * 100
+    return round(float(v), 2) if v is not None else None
+
+
+def _apply_tw_growth_criterion() -> None:
+    """--universe tw：EPS 成長條件改看 FY+1→FY+2（見 EPS_GROWTH_SPAN 上方註解）。"""
+    global CRITERIA, SCORED_CRITERIA, EPS_GROWTH_SPAN
+    EPS_GROWTH_SPAN = "fy1_fy2"
+    CRITERIA = [dict(c, label=TW_EPS_GROWTH_LABEL) if c["key"] == "eps2y" else c for c in CRITERIA]
+    SCORED_CRITERIA = [c for c in CRITERIA if not c.get("advisory")]
+
+
 def _percentile_rank(raw: dict, invert: bool = False) -> dict:
     """Rank-based percentile 0–100 for each key's value among all present
     (non-None) values in `raw`. Ties share the same percentile (average-rank
@@ -3945,11 +3980,13 @@ def enrich_ticker(
     # evaluate_criteria, so the QGM "EPS 2Y CAGR ≥ 15%" rule (now labelled
     # "FY+1→FY+3 CAGR ≥ 15%") anchors on Excel buy-side pure forward consensus
     # instead of yfinance YearAgo→FY+1 mixed window.
+    # 2026-10-09：Koyfin 預算欄空白時由 FY1／FY2／FY3 自己算；台股池看 FY+1→FY+2、
+    # 只用 Koyfin（見 EPS_GROWTH_SPAN 上方註解）。
     _excel_record_for_eps2y = excel_snapshot.get(t) if excel_snapshot else None
     if _excel_record_for_eps2y is not None:
-        _excel_cagr = _excel_record_for_eps2y.get("cagr_fy1_fy3_pct")
-        if _excel_cagr is not None:
-            quality["eps2y"] = round(float(_excel_cagr), 2)
+        _koyfin_growth = _koyfin_eps_growth(_excel_record_for_eps2y, EPS_GROWTH_SPAN)
+        if _koyfin_growth is not None or UNIVERSE_MODE == "tw":
+            quality["eps2y"] = _koyfin_growth
 
     # 2026-09-09: Koyfin-scraped ROIC / FCF Margin override (refresh-eps-
     # screener-web §1/§6, load_eps_estimates_xlsx.py roic_pct/fcf_margin_pct).
@@ -5054,6 +5091,7 @@ def main() -> None:
     UNIVERSE_MODE = args.universe
     if UNIVERSE_MODE == "tw":
         _apply_tw_cash_criteria()
+        _apply_tw_growth_criterion()
     build(top_n=args.top, skip_ma=args.no_ma, dry_run=args.dry_run, workers=args.workers,
           include_non_dd=args.include_non_dd)
 
