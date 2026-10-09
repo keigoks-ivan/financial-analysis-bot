@@ -227,6 +227,7 @@ _EXPLICIT_ALIASES = {
     "5398.KL": "GAMUDA",   # Gamuda Berhad
     "6139.KL": "TAKAFUL",  # Syarikat Takaful Malaysia Keluarga Berhad
     "AAON":    "AAO",      # AAON, Inc. — Koyfin ticker cell renders "AAO"
+    "ABB":     "ABBN",     # ABB Ltd (SIX) — Koyfin "ABB" is Volatus Aerospace, see SKIP_TICKERS
 }
 
 # Excel rows to drop on load (treated as if not present → consumers fall back
@@ -235,11 +236,16 @@ _EXPLICIT_ALIASES = {
 # downstream consensus. Single source of truth — both snapshot + build see
 # the same skip set. Public so build_dd_screener.py can distinguish "known
 # bad Excel row" from "genuine naming mismatch" in the coverage banner.
-SKIP_TICKERS: set[str] = set()
+SKIP_TICKERS: set[str] = {"ABB"}
 # 2026-05-26 update: ABB Koyfin export now returns valid FY data (was all-None),
 # SU resolved via _EXPLICIT_ALIASES mapping to "SU.FR" (Euronext Paris primary).
 # Both removed from skip-list. Re-add here if a future Koyfin export reverts to
 # bad data.
+# 2026-10-09: ABB re-added. By the 2026-09-26 export the dd_screener row keyed
+# "ABB" had become Volatus Aerospace (Germany listing, FY1 EPS -0.02, ROIC -21%),
+# not ABB Ltd. The watchlist now holds ABBN (ABB Ltd, SIX) instead; the "ABB"
+# entry in _EXPLICIT_ALIASES picks that row up. The skip stops any older xlsx
+# (20260926/20261008) from feeding Volatus numbers to DD ticker ABB.
 
 
 def _alias_keys(ticker: str) -> list[str]:

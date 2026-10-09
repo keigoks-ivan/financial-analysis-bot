@@ -3883,7 +3883,12 @@ def save_version_state(state, state_dir):
 
 
 # 版本化卡片裡的即時子區塊：(判斷層小節, 子欄位)。每次 build 都用新值覆蓋。
-LIVE_SUBBLOCKS = [("eps_revision", "eps2y"), ("funnel_rank", "funnel_v2")]
+# 2026-10-09：FunnelRank 卡的四條件拆解（含通過數與 D/E 參考）也改成即時——
+# 成長條件改讀 Koyfin 後，數字變了但過／不過沒變的名字不會觸發 T4，卡上會一直停在
+# 舊的 yfinance 數字（持有人同日決定）。
+LIVE_SUBBLOCKS = [("eps_revision", "eps2y"), ("funnel_rank", "funnel_v2"),
+                  ("funnel_rank", "quality_criteria"), ("funnel_rank", "quality_pass_count"),
+                  ("funnel_rank", "de_reference")]
 
 
 def _overlay_live_subblocks(judgment, new_judgment):

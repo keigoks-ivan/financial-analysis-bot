@@ -65,6 +65,10 @@ CASH_PATCHES = (
      "    fcf:   parseFloat(document.getElementById('cust-fcf').value)   || 10,\n"
      "    ocf:   parseFloat(document.getElementById('cust-fcf').value)   || 10,\n", 1),
     ("<label>FCF ≥ (%)</label>", "<label>OCF ≥ (%)</label>", 1),
+    # The quality veto's cash/NI item and the decline signal "FCF 遜於淨利" are
+    # computed on OCF in the TW pool too (build_dd_screener.py CASH_BASIS).
+    ("FCF對淨利率偏低", "營業現金流對淨利率偏低", 1),
+    ("FCF 遜於淨利", "營業現金流遜於淨利", 1),
 )
 # 2026-10-09: the TW pool scores EPS growth as Koyfin FY+1→FY+2
 # (build_dd_screener.py TW_EPS_GROWTH_LABEL / EPS_GROWTH_SPAN), stored in eps2y.
@@ -151,7 +155,7 @@ def hero_html(f: dict) -> str:
     return (
         '\n      <div class="hero-h1">DD Screener 台股池</div>\n'
         '      <div class="hero-sub">母體是 Koyfin 的台股篩選：市值 10 億美元以上、'
-        'ROIC（投入資本報酬率）15% 以上、自由現金流為正，'
+        'ROIC（投入資本報酬率）15% 以上，'
         f'目前 {f["n"]} 檔，其中上櫃 {f["tpex"]} 檔。'
         '評分與排序規則跟美股主頁相同，資料各自獨立。</div>\n'
         '      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">'
@@ -178,7 +182,7 @@ def notice_html(f: dict) -> str:
                      '扣資本支出之前的現金流占營收）10% 以上，不看自由現金流利潤率。'
                      '台股不少公司正在擴產，資本支出壓低了自由現金流。資本支出值不值得，交給 ROIC 那一條判斷。'
                      f'池內 {f["n_fcf_low"]} 檔自由現金流利潤率不到 10%，其中 {f["n_ocf_ok"]} 檔營業現金流利潤率在 10% 以上。'
-                     '排序的品質面向也改用營業現金流。')
+                     '排序的品質面向，以及體質、衰退訊號裡跟淨利比的那一項，也改用營業現金流。')
     if f["growth_mode"]:
         items.insert(1 if f["ocf_mode"] else 0,
                      '<b>成長條件</b>：EPS 成長一條，台股池看 Koyfin 分析師預估的今年到明年（FY+1→FY+2）'

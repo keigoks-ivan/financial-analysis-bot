@@ -555,7 +555,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
       </li>
 
       <li><strong>FY+1→FY+3 CAGR</strong>：Excel buy-side forward 2Y CAGR（%）— <strong>v1.9 起改用 Excel snapshot</strong>。
-        <br><em>來源：</em>Excel <code>cagr_fy1_fy3_pct</code>（FY+1 → FY+3 純前瞻 2 年期複合成長率，目前約 219/241 ticker 覆蓋，動態隨 Koyfin watchlist 增刪）；少數 yfinance-only ticker（6146.T / 6857.T 等無 Excel 資料）fallback yfinance「+1y / +2y」row；SU / ABB 因 Koyfin export 資料異常於 <code>scripts/load_eps_estimates_xlsx.py</code> <code>_SKIP_TICKERS</code> 名單中略過。
+        <br><em>來源：</em>Koyfin 的 FY+1 與 FY+3 EPS 預估，由 build 自己算年化（xlsx 的 <code>cagr_fy1_fy3_pct</code> 欄自 2026-06-23 起空白）。Koyfin 算不出的（沒有 FY+3 預估、FY+1 是虧損、或完全沒有預估），這一條算不過，2026-10-09 起不再退回 yfinance。
         <br><em>窗口語意：</em>跟舊版「yearAgo → FY+1」(含 1 個過去實際 EPS) 不同；現在是 2 個前瞻 estimate (FY+1 vs FY+3) — buy-side 對未來 2 年的純前瞻 expectation。
         <br><em>修正動能：</em>右方小字 <span style="color:var(--pos);font-weight:600">↑+X.X% (vs 5/26)</span>（綠 = 上修）/ <span style="color:var(--neg);font-weight:600">↓-X.X% (vs 4/30)</span>（紅 = 下修）= 本份 Excel CAGR vs 上一份 Excel snapshot 差值（絕對 pp 差，標 % 為視覺一致）；尾段 <code>(vs M/D)</code> 是**比較基準的日期**（hover 看距今幾天）；|diff| &lt; 0.5 視為持平；「新」chip = 此 ticker 上份 baseline 未收錄。詳見上方「EPS 修正動能」callout。
         <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>（顏色基於 Excel forward CAGR；server 端 <code>pass_count</code> 同一欄位 — v1.9 已與 UI 顯示對齊）

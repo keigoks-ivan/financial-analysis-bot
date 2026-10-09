@@ -7,6 +7,8 @@ knowledge/rule_ledger.md「台股池現金流條件改看營業現金流」列�
    FunnelRank v2 quality 層換成 ocf／ocf_ni_ratio。沒呼叫時（美股預設）一律是 FCF。
 3. evaluate_criteria()：擴產股（FCF 低、OCF 高）在台股模式過現金流條件，
    在預設模式照舊不過。
+4. compute_fundamental_gates()：體質 veto 的現金對淨利一項與衰退訊號「FCF 遜於淨利」
+   在台股模式改看營業現金流（CASH_BASIS），fcf_ni_ratio 輸出欄仍是 FCF／淨利。
 
 No network, no xlsx.
 """
@@ -33,6 +35,8 @@ def tw_mode(monkeypatch):
     monkeypatch.setattr(bds, "CRITERIA", bds.CRITERIA)
     monkeypatch.setattr(bds, "SCORED_CRITERIA", bds.SCORED_CRITERIA)
     monkeypatch.setattr(bds, "PRESETS", bds.PRESETS)
+    monkeypatch.setattr(bds, "CASH_BASIS", bds.CASH_BASIS)
+    monkeypatch.setattr(bds, "QUALITY_VETO_LABELS", bds.QUALITY_VETO_LABELS)
     monkeypatch.setitem(bds.FUNNEL_V2_LAYER_FIELDS, "quality",
                         list(bds.FUNNEL_V2_LAYER_FIELDS["quality"]))
     bds._apply_tw_cash_criteria()
@@ -88,3 +92,40 @@ def test_ocf_ni_ratio_capped_like_fcf_ni():
     assert bds._funnel_v2_ocf_ni_capped({"ocf_ni_ratio": 1.5}) == bds.FUNNEL_V2_FCF_NI_CAP
     assert bds._funnel_v2_ocf_ni_capped({"ocf_ni_ratio": 0.5}) == 0.5
     assert bds._funnel_v2_ocf_ni_capped({}) is None
+
+
+# Capex-heavy record (USD m): FCF margin 2.6%, capex 24.8% of sales, NI margin 15%.
+# FCF/NI 0.17 fails both cash checks; OCF/NI (2.6+24.8)/15 = 1.83 passes both.
+GATES_CAPEX_HEAVY = {"fcf_margin_pct": 2.6, "ni_margin_ltm_pct": 15.0,
+                     "capex_ltm": -248.0, "sales_ltm": 1000.0}
+# Weak conversion even before capex: OCF 3.0% vs NI 15% fails in either mode.
+GATES_WEAK_CASH = {"fcf_margin_pct": 2.0, "ni_margin_ltm_pct": 15.0,
+                   "capex_ltm": -10.0, "sales_ltm": 1000.0}
+
+
+def test_gates_default_mode_uses_fcf():
+    out = bds.compute_fundamental_gates(GATES_CAPEX_HEAVY, None, None)
+    assert out["fcf_ni"] == "fail"
+    assert "FCF/淨利" in out["quality_veto_fails"]
+    assert "FCF 遜於淨利" in out["decline_signals"]
+    assert out["fcf_ni_ratio"] == 0.17
+
+
+def test_gates_tw_mode_uses_ocf(tw_mode):
+    out = bds.compute_fundamental_gates(GATES_CAPEX_HEAVY, None, None)
+    assert out["fcf_ni"] == "pass"
+    assert out["quality_veto_fails"] == []
+    assert not any("淨利" in s for s in out["decline_signals"])
+    assert out["fcf_ni_ratio"] == 0.17  # output field stays FCF/NI
+
+
+def test_gates_tw_mode_still_flags_weak_cash(tw_mode):
+    out = bds.compute_fundamental_gates(GATES_WEAK_CASH, None, None)
+    assert out["fcf_ni"] == "fail"
+    assert "OCF/淨利" in out["quality_veto_fails"]
+    assert bds.TW_DECLINE_CASH_LABEL in out["decline_signals"]
+
+
+def test_gates_tw_mode_capex_missing_falls_back_to_fcf(tw_mode):
+    rec = {"fcf_margin_pct": 2.6, "ni_margin_ltm_pct": 15.0, "sales_ltm": 1000.0}
+    assert bds.compute_fundamental_gates(rec, None, None)["fcf_ni"] == "fail"

@@ -60,7 +60,7 @@ FAMILIES = {
         "url": "https://app.koyfin.com/myw/b56fc646-d1b8-41f7-b4d1-438744598421",
         "xlsx_family": "DD_tw_EPS_estimates_",
         "universe_note": (
-            "dd_tw watchlist (screen dd_tw_v1: TW, >=$1B, ROIC>=15, FCF>0)"
+            "dd_tw watchlist (screen dd_tw_v1: TW, >=$1B, ROIC>=15; FCF>0 removed 2026-10-09)"
         ),
     },
 }

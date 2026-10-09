@@ -51,7 +51,7 @@ def test_precomputed_column_wins():
 
 
 def test_missing_or_non_positive_inputs():
-    # No FY3: no FY1→FY3 figure (US then keeps the yfinance fallback).
+    # No FY3: no FY1→FY3 figure, so the criterion fails (no yfinance fallback since 2026-10-09).
     assert bds._koyfin_eps_growth(dict(TSMC, fy3=None), "fy1_fy3") is None
     # Loss in FY1: growth undefined either way.
     assert bds._koyfin_eps_growth(dict(TSMC, fy1=-0.5), "fy1_fy2") is None

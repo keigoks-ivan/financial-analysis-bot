@@ -748,12 +748,16 @@ FUNNEL_V2_LAYER_FIELDS = {
 #     也就是扣資本支出之前的現金流。門檻數字不變；資本支出划不划算交給 ROIC≥15%。
 #   * FunnelRank v2 quality 層的 fcf／fcf_ni_ratio 同步換成 ocf／ocf_ni_ratio
 #     （封頂沿用 FUNNEL_V2_FCF_NI_CAP：只懲罰現金轉換差的，不獎勵高的）。
-#   * 體質 veto 的 fcf_ni、衰退訊號「FCF 遜於淨利」「資本支出侵蝕 FCF」照舊用 FCF：
-#     它們是如實描述，只當警示，不進 pass_count，也不觸發 v2 硬否決。
+#   * 體質 veto 的現金對淨利一項（key 仍叫 fcf_ni）與衰退訊號「FCF 遜於淨利」也改看
+#     營業現金流（持有人同日第二次決定，CASH_BASIS）：照 FCF 算會對擴產股重複扣分。
+#     門檻 0.7／0.75 不變，標籤改成「OCF/淨利」「營業現金流遜於淨利」。輸出欄
+#     fcf_ni_ratio 仍是 FCF／淨利。「資本支出侵蝕 FCF」照舊，它描述的就是資本支出本身。
 # 為什麼不直接降 FCF 門檻：2026-10-09 台股池 69 檔有 21 檔 FCF<10%，其中 17 檔
 # OCF≥10%（聯亞、嘉澤、金像電等擴產名字）。降門檻會先救到不是資本支出造成的
 # （創意、旭隼），擴產最重的反而仍然不過。
 TW_OCF_CRITERION = {"key": "ocf", "label": "OCF≥10%", "threshold": 10.0, "invert": False, "unit": "%"}
+CASH_BASIS = "fcf"  # compute_fundamental_gates() 的現金對淨利口徑；台股池為 "ocf"
+TW_DECLINE_CASH_LABEL = "營業現金流遜於淨利"
 
 
 def _funnel_v2_ocf_ni_capped(row: dict):
@@ -795,7 +799,9 @@ def _tw_cash_fields(rec: dict, fcf_margin) -> dict:
 
 def _apply_tw_cash_criteria() -> None:
     """--universe tw：把 FCF 條件換成 OCF 條件（見 TW_OCF_CRITERION 上方註解）。"""
-    global CRITERIA, SCORED_CRITERIA, PRESETS
+    global CRITERIA, SCORED_CRITERIA, PRESETS, CASH_BASIS, QUALITY_VETO_LABELS
+    CASH_BASIS = "ocf"
+    QUALITY_VETO_LABELS = {**QUALITY_VETO_LABELS, "fcf_ni": "OCF/淨利"}
     CRITERIA = [dict(TW_OCF_CRITERION) if c["key"] == "fcf" else c for c in CRITERIA]
     SCORED_CRITERIA = [c for c in CRITERIA if not c.get("advisory")]
     PRESETS = {name: {**p, "ocf": p["fcf"]} for name, p in PRESETS.items()}
@@ -810,7 +816,9 @@ def _apply_tw_cash_criteria() -> None:
 # 覆寫因此一直沒生效：條件實際讀的是 yfinance「上一財年實際 → FY+1」兩年年化，
 # 跟條件名稱、頁面顯示的 Koyfin FY+1→FY+3 CAGR 都不同。欄位空白時改用 FY1／FY2／FY3
 # 自己算（公式同 _fetch_live_fy_eps() 與 snapshot_eps_estimates.py 的 fallback）。
-#   * 美股各池：FY+1→FY+3 年化，跟條件名稱一致；缺 FY3 時照 v1.9 原樣退回 yfinance。
+#   * 美股各池：FY+1→FY+3 年化，跟條件名稱一致。原本缺 FY3 時退回 yfinance，持有人
+#     2026-10-09 決定刪掉這條退路：Koyfin 算不出就是缺值，這一條算不過（主檔 21 檔、
+#     小市值池 25 檔）。整份 xlsx 讀不到時（excel_snapshot 為 None）仍用 yfinance。
 #   * 台股池（持有人 2026-10-09 決定）：FY+1→FY+2 單年成長，只用 Koyfin，缺值就是缺值。
 #     2026-10-09 台股 69 檔有 FY2 的 53 檔、有 FY3 的只有 45 檔。
 EPS_GROWTH_SPAN = "fy1_fy3"
@@ -3407,7 +3415,13 @@ def compute_fundamental_gates(record: dict | None, roic_quadrant_code: str | Non
     fcf_ni_ratio = None
     if fcf_margin is not None and ni_margin is not None and ni_margin > 0:
         fcf_ni_ratio = fcf_margin / ni_margin
-        veto["fcf_ni"] = "fail" if fcf_ni_ratio < 0.7 else "pass"
+    # 台股池（CASH_BASIS == "ocf"）：veto 與衰退訊號改看營業現金流／淨利，資本支出
+    # 缺值時退回 FCF（同 _tw_cash_fields()）。
+    cash_ni_ratio = fcf_ni_ratio
+    if CASH_BASIS == "ocf" and fcf_ni_ratio is not None and capex_ltm is not None and sales_ltm and sales_ltm > 0:
+        cash_ni_ratio = (fcf_margin + abs(capex_ltm) / sales_ltm * 100) / ni_margin
+    if cash_ni_ratio is not None:
+        veto["fcf_ni"] = "fail" if cash_ni_ratio < 0.7 else "pass"
     else:
         veto["fcf_ni"] = None
 
@@ -3524,7 +3538,8 @@ def compute_fundamental_gates(record: dict | None, roic_quadrant_code: str | Non
     decline_checks = (
         (gm_2y_known, gm_2y_known and gm_ltm < gm_fy1 and gm_fy1 < gm_fy2, "毛利連兩年降"),
         (eps_engineer_known, eps_engineer_known and (est_eps_cagr - est_rev_cagr) > 5, "EPS 成長靠財務工程"),
-        (fcf_ni_ratio is not None, fcf_ni_ratio is not None and fcf_ni_ratio < 0.75, "FCF 遜於淨利"),
+        (cash_ni_ratio is not None, cash_ni_ratio is not None and cash_ni_ratio < 0.75,
+         TW_DECLINE_CASH_LABEL if CASH_BASIS == "ocf" else "FCF 遜於淨利"),
         (sbc_pct_rev is not None, sbc_pct_rev is not None and sbc_pct_rev > 5, "SBC 佔營收偏高"),
         (capex_fcf_pct is not None, capex_fcf_pct is not None and capex_fcf_pct > 60, "資本支出侵蝕 FCF"),
         (veto["rev_4q_negative"] is not None, veto["rev_4q_negative"] == "fail", "營收連四季負"),
@@ -3980,13 +3995,12 @@ def enrich_ticker(
     # evaluate_criteria, so the QGM "EPS 2Y CAGR ≥ 15%" rule (now labelled
     # "FY+1→FY+3 CAGR ≥ 15%") anchors on Excel buy-side pure forward consensus
     # instead of yfinance YearAgo→FY+1 mixed window.
-    # 2026-10-09：Koyfin 預算欄空白時由 FY1／FY2／FY3 自己算；台股池看 FY+1→FY+2、
-    # 只用 Koyfin（見 EPS_GROWTH_SPAN 上方註解）。
+    # 2026-10-09：Koyfin 預算欄空白時由 FY1／FY2／FY3 自己算；台股池看 FY+1→FY+2。
+    # 各池都只用 Koyfin，算不出就是缺值（見 EPS_GROWTH_SPAN 上方註解）。
     _excel_record_for_eps2y = excel_snapshot.get(t) if excel_snapshot else None
-    if _excel_record_for_eps2y is not None:
-        _koyfin_growth = _koyfin_eps_growth(_excel_record_for_eps2y, EPS_GROWTH_SPAN)
-        if _koyfin_growth is not None or UNIVERSE_MODE == "tw":
-            quality["eps2y"] = _koyfin_growth
+    if excel_snapshot:
+        quality["eps2y"] = (_koyfin_eps_growth(_excel_record_for_eps2y, EPS_GROWTH_SPAN)
+                            if _excel_record_for_eps2y is not None else None)
 
     # 2026-09-09: Koyfin-scraped ROIC / FCF Margin override (refresh-eps-
     # screener-web §1/§6, load_eps_estimates_xlsx.py roic_pct/fcf_margin_pct).
