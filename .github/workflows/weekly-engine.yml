@@ -28,7 +28,7 @@ on:
         type: string
       prev_arena_ref:
         description: >-
-          週報 email 的「上週陣容」改取這個 commit 的 docs/engine/arena.json（留空＝HEAD）。
+          週報 email 的「上週陣容」改取這個 commit（寫完整 40 位 SHA）的 docs/engine/arena.json（留空＝HEAD）。
           用途：席位在排程外被手動改過（如 2026-10-09 v5.2 首跑）時補寄換席信。
         required: false
         default: ""
@@ -134,6 +134,8 @@ jobs:
           PREV_ARENA_REF: ${{ github.event.inputs.prev_arena_ref || '' }}
         run: |
           if [ -n "$PREV_ARENA_REF" ]; then
+            # checkout 是淺層（預設 fetch-depth 1），舊 commit 不在本地：先按完整 SHA 單獨抓進來
+            git fetch --depth=1 origin "$PREV_ARENA_REF"
             git show "$PREV_ARENA_REF:docs/engine/arena.json" > /tmp/prev_arena.json
             export PREV_ARENA_JSON=/tmp/prev_arena.json
             echo "weekly mail: prev arena from $PREV_ARENA_REF"
