@@ -41,7 +41,8 @@ def test_structure(sg):
 
 def test_sids_unique_and_prefixed(sg):
     sids = [s["sid"] for _, _, s in series(sg)]
-    assert len(sids) == len(set(sids))
+    keys = [(s["sid"], s["display"]) for _, _, s in series(sg)]   # 同一 sid 可用不同 display 畫兩次
+    assert len(keys) == len(set(keys))
     assert all(x.startswith(("sg.", "an.")) for x in sids)
 
 
@@ -74,7 +75,7 @@ def test_shared_with_an_json_identical(full):
         for ch in c["charts"]:
             for s in ch["series"]:
                 if s["sid"] in ("an.sg_gdp_real", "an.sg_exports", "an.xru_sg"):
-                    seen.setdefault(s["sid"], []).append({k: v for k, v in s.items() if k != "axis"})
+                    seen.setdefault(s["sid"], []).append({k: v for k, v in s.items() if k not in ("axis", "label_zh", "display")})
     assert set(seen) == {"an.sg_gdp_real", "an.sg_exports", "an.xru_sg"}
     for v in seen.values():
         assert all(x == v[0] for x in v)

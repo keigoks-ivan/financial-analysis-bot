@@ -54,8 +54,8 @@ def test_reused_an_sids_match_an_json():
     ref = {s["sid"]: s for c in an["categories"] for ch in c["charts"] for s in ch["series"]}
     for _, _, s in series():
         if s["sid"] in ref:
-            a = {k: v for k, v in ref[s["sid"]].items() if k != "axis"}
-            b = {k: v for k, v in s.items() if k != "axis"}
+            a = {k: v for k, v in ref[s["sid"]].items() if k not in ("axis", "label_zh", "display")}
+            b = {k: v for k, v in s.items() if k not in ("axis", "label_zh", "display")}
             assert a == b, s["sid"]
 
 

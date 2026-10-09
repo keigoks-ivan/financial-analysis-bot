@@ -43,12 +43,14 @@ def all_series(cat):
 
 def test_top_level(main, cat):
     assert main["country"] == "an"
-    assert [c["key"] for c in main["categories"]] == ["asean", "tradewar"]
+    assert [c["key"] for c in main["categories"]] == ["asean"]
     assert main["categories"][0]["name_zh"] == "東南亞總覽"
     assert all(c["group"] == "五國對照" for c in main["categories"])
     assert main["parts"] == PARTS
     keys = {c["key"] for c in cat["categories"]}
-    for old, new in main["redirects"].items():
+    redirects = dict(main["redirects"])   # 複製一份，不改到 module 共用的 fixture
+    assert redirects.pop("tradewar") == "asean"   # 對美出口已併入東南亞總覽
+    for old, new in redirects.items():
         assert old in PARTS and new == old + "-gdp"
         if (CATALOG.parent / f"an_{old}.json").exists():
             assert new in keys, new
@@ -77,13 +79,13 @@ def test_sid_prefix_and_part_keys(cat):
             assert c["key"].startswith(part + "-"), c["key"]
         for ch in c["charts"]:
             for s in ch["series"]:
-                assert s["sid"].startswith("an.") or (part and s["sid"].startswith(part + ".")), s["sid"]
+                assert s["sid"].startswith("an.") or s["sid"].split(".")[0] in PARTS, s["sid"]   # 總覽可重用分檔的 sid
 
 
 def test_same_sid_same_spec_everywhere(cat):
     seen = {}
     for _, ch, s in all_series(cat):
-        key = {k: v for k, v in s.items() if k != "axis"}
+        key = {k: v for k, v in s.items() if k not in ("axis", "label_zh", "display")}
         assert seen.setdefault(s["sid"], key) == key, s["sid"]
 
 
