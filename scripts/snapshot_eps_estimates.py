@@ -23,6 +23,11 @@ Top-level keys:
 Output: docs/dd-screener/eps-estimates-snapshots/{YYYY-MM}.json
   Month key is derived from the Excel snapshot_date (NOT wall-clock), so re-
   running with the same Excel always overwrites the same monthly file.
+  2026-10-10: a month file that already holds a DIFFERENT snapshot_date is
+  never overwritten — the new snapshot goes to {YYYY-MM-DD}.json instead
+  (see _output_path()). The month file is the only baseline the earnings-
+  anchored revision reads, so overwriting it with a late-month export would
+  drop the last pre-report baseline (e.g. TW 10-09 before TSMC's 10/15).
 
 Usage:
   python3 scripts/snapshot_eps_estimates.py              # use latest Excel
@@ -189,6 +194,25 @@ def load_universe() -> list[str]:
     return tickers
 
 
+def _output_path(month_key: str, snapshot_date: str) -> Path:
+    """{month_key}.json unless it already holds another snapshot date; then
+    {YYYY-MM-DD}.json (the dated name _load_prev_month_snapshot() reads as an
+    intra-month baseline). Same date → overwrite (re-run of the same Excel)."""
+    canonical = OUTPUT_DIR / f"{month_key}.json"
+    if not canonical.exists():
+        return canonical
+    try:
+        existing = str(json.loads(canonical.read_text(encoding="utf-8")).get("snapshot_date") or "")[:10]
+    except Exception as exc:  # noqa: BLE001
+        print(f"  WARN: unreadable {canonical.name} ({exc}) — overwriting", file=sys.stderr)
+        return canonical
+    new = str(snapshot_date)[:10]
+    if not existing or existing == new:
+        return canonical
+    print(f"  {canonical.name} holds {existing} — keeping it, writing {new}.json")
+    return OUTPUT_DIR / f"{new}.json"
+
+
 def snapshot_from_excel(
     excel: ExcelSnapshot,
     universe: list[str],
@@ -344,11 +368,11 @@ def snapshot_from_excel(
         "tickers": results,
     }
 
+    out_path = _output_path(month_key, excel.snapshot_date)
     if dry_run:
-        print(f"\n  (dry-run) skipping write to {OUTPUT_DIR / (month_key + '.json')}")
+        print(f"\n  (dry-run) skipping write to {out_path}")
     else:
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        out_path = OUTPUT_DIR / f"{month_key}.json"
         out_path.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"  ✓ Wrote {out_path} ({out_path.stat().st_size:,} bytes)")
 
