@@ -144,9 +144,6 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
 .cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
 .cmp-card .roster-table{font-size:.84rem}
 .cmp-note{padding:0 .9rem .7rem}
-.notbuilt{padding:1rem 1.3rem}
-.notbuilt .nb-title{font-weight:700;font-size:.98rem;margin-bottom:.45rem}
-.notbuilt ul{margin:0;padding-left:1.1rem;font-size:.84rem;color:var(--text-sec);line-height:1.75}
 @media(max-width:720px){.cmp-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -238,12 +235,12 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <div class="eyebrow">Stock-Selection Console · 台股</div>
     <div class="mkt-switch" role="navigation" aria-label="市場切換"><a href="/cockpit/">美股</a><span class="on">台股</span></div>
     <h1>台股選股主控台</h1>
-    <p class="sub">這一版把站上現有的台股資料收在一頁：大盤與實單曝險、DD Screener 台股池、品質動能篩選、技術雷達，以及兩條動能對照組。美股主控台的席位引擎還沒有台股版，「席位排序」分頁先空著。</p>
+    <p class="sub">這一版把站上現有的台股資料收在一頁：大盤與實單曝險、DD Screener 台股池、品質動能篩選、技術雷達，以及兩條動能對照組。「席位排序」分頁用美股核心席的同一套規則跑台股池。台股還沒有上修數字，核心席暫時空著，先列候補。</p>
   </div>
 
   <div class="tabbar" role="tablist">
     <button type="button" class="tab-btn" data-tab="overview" role="tab">總覽<span class="tb-sub">天氣·陣容</span></button>
-    <button type="button" class="tab-btn" data-tab="seats" role="tab">席位排序<span class="tb-sub">未建</span></button>
+    <button type="button" class="tab-btn" data-tab="seats" role="tab">席位排序<span class="tb-sub">核心席·候補</span></button>
     <button type="button" class="tab-btn" data-tab="pipeline" role="tab">流程板機<span class="tb-sub">台股池漏斗</span></button>
     <button type="button" class="tab-btn" data-tab="discovery" role="tab">發現層<span class="tb-sub">品質·技術·對照組</span></button>
   </div>
@@ -310,18 +307,11 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   </section>
   </div>
 
-  <!-- ═══ 分頁 2：席位排序（v1 未建） ═══ -->
+  <!-- ═══ 分頁 2：席位排序（scripts/build_seats_tw.py 產出的看板片段） ═══ -->
   <div class="tab-panel" id="panel-seats">
     <section class="block">
-      <div class="card notbuilt">
-        <div class="nb-title">台股版席位引擎尚未建立</div>
-        <ul>
-          <li>美股的核心席分兩步選：先用品質條件和分析師上修幅度排出一個池，再取池內燈號亮起的前 5 名。席位每週六重算。</li>
-          <li>台股池的 EPS 快照從 <span id="tw-first-snap">2026-10</span> 開始存。上修要拿兩個月的快照相比，第一筆要等下一份快照。在那之前，台股沒有排序席位的依據。</li>
-          <li>美股席位頁的「雷達」（全市場時機掃描）同樣還沒有台股版。台股的技術面掃描請看「發現層」分頁的 RS 雷達。</li>
-        </ul>
-        <p class="roster-note">美股席位排序在 <a href="/cockpit/#seats">美股主控台</a>。</p>
-      </div>
+      <div id="seats-mount"><div class="placeholder">載入中…</div></div>
+      <p class="roster-note">美股席位排序在 <a href="/cockpit/#seats">美股主控台</a>。美股席位頁的「雷達」（全市場時機掃描）還沒有台股版，台股的技術面掃描請看「發現層」分頁的 RS 雷達。</p>
     </section>
   </div>
 
@@ -449,6 +439,9 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   var pending = Object.keys(sources).map(function(k){
     return getJSON(sources[k]).then(function(d){S[k]=d;}).catch(function(){S[k]=null;});
   });
+  pending.push(fetch('/cockpit-tw/data/_seats_tw_body.html',{cache:'no-store'}).then(function(r){
+    if(!r.ok)throw new Error(r.status);return r.text();
+  }).then(function(t){S.seatsHtml=t;}).catch(function(){S.seatsHtml=null;}));
 
   var NAMES = {};
   function nameOf(t){return NAMES[t] || NAMES[code(t)] || '';}
@@ -495,7 +488,13 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     safe(renderQgm, 'qgm-mount', 'QGM 台股資料暫缺');
     safe(renderRs, 'rs-mount', 'RS 雷達資料暫缺');
     safe(renderP10, 'p10-mount', 'P10 台股資料暫缺');
+    safe(renderSeats, 'seats-mount', '台股席位資料暫缺');
   });
+
+  /* 席位排序：看板片段（含自己的 <style>）直接掛上 */
+  function renderSeats(){
+    $('seats-mount').innerHTML = S.seatsHtml || ph('台股席位資料暫缺');
+  }
 
   /* ① 天氣 */
   function renderEnv(){

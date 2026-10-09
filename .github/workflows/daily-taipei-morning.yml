@@ -114,6 +114,17 @@ jobs:
         run: python scripts/build_dd_screener_tw_page.py || echo "::warning::tw dd-screener page build failed"
         continue-on-error: true
 
+      # 台股核心席（2026-10-10，見 knowledge/rule_ledger.md「台股核心席」列）：讀 Step 2a-tw
+      # 剛寫的 tw/latest.json，跑美股核心席同一套規則（import scripts/engine，不改它）。
+      # 週六（台北）這班依週五收盤重選席位並記帳（--ledger），其餘日子只更新時機燈。
+      # 寫 docs/cockpit-tw/data/，失敗只 warning。
+      - name: "[non-fundamental] Step 2a-tw-seats — TW core seats"
+        run: |
+          ARGS=""
+          [ "$(TZ=Asia/Taipei date +%u)" = 6 ] && ARGS="--ledger"
+          python scripts/build_seats_tw.py $ARGS || echo "::warning::tw seats build failed"
+        continue-on-error: true
+
       # 精選榜「十倍」組 v5 小市值池（2026-09-17 持有人拍板「精選榜改版」，見
       # knowledge/rule_ledger.md「精選榜改版：爆發組退役、十倍組改 v5 小市值池」列）：
       # 與上面 Arena daily refresh 讀同一份剛更新的 dd-screener latest.json，跑同一套
@@ -188,6 +199,7 @@ jobs:
             docs/dd-screener/latest.json \
             docs/dd-screener/smallcap/ \
             docs/dd-screener/tw/ \
+            docs/cockpit-tw/data/ \
             docs/dd-screener/quality-entry.html \
             docs/dd-screener/quality-entry.json \
             docs/dd-screener/quality-entry-snapshots/ \
