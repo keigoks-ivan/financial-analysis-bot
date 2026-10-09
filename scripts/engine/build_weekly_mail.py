@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -55,6 +56,9 @@ OUT_SUBJECT = ROOT / "engine_weekly_mail_subject.txt"
 # diff/render 機制不變（等待池churn 本來就會比舊制衛星 5 席更頻繁，屬預期行為，
 # 未特別壓縮顯示，見任務報告「沒做/未驗證」）。
 TRACK_LABEL = {"core": "核心", "sat": "等待池"}
+LIT_LAMP_CODES = ("green", "hot", "yellow")   # v5.2（2026-10-09）核心席＝池內亮燈者，同 build_arena.LIT_LAMP_CODES
+LAMP_TXT = {"green": "🟢 綠（突破新高）", "hot": "🟠 橘（過熱）", "yellow": "🟡 黃（接近新高）",
+            "red": "🔴 紅", "out": "⚫ 出局"}
 P_LABEL_TXT = {"breakout": "突破帶", "pullback": "回踩", "in_trend": "趨勢內",
                "overheated": "過熱"}
 P_LABEL_DOT = {"breakout": "🟢", "pullback": "🟢", "in_trend": "🟡", "overheated": "🟠"}
@@ -148,10 +152,26 @@ def seat_threshold(arena: dict, track: str) -> tuple[float | None, str | None]:
     return last.get("score"), last.get("ticker")
 
 
+def board_down_reason(ticker: str) -> str | None:
+    try:
+        txt = BOARD_TXT.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    m = re.search(rf"^\s*DOWN\s+{re.escape(ticker)}\s*：(.+)$", txt, flags=re.M)
+    return m.group(1).strip() if m else None
+
+
 def exit_reason(ticker: str, track: str, arena: dict) -> str:
     """v5（2026-09-17）：DD 裁決只剩「迴避」會否決資格，「觀望」不影響資格與排序——
     只有 verdict==迴避 才可歸因於 DD；其餘非核心原因一律是排序（上修）或其他資格閘落敗，
     見 knowledge/rule_ledger.md「v5 席位引擎」列／grp.py grp_score()。"""
+    # v5.2（2026-10-09）：build_arena 已在 board.txt 核心席段落寫下每個下席者的機械原因
+    # （「  DOWN <ticker>：<why>」，來源＝grp.why／時機燈），連不在 arena.json 任何清單的
+    # 名字（如估值閘紅、不進 own_board 的）都有；先讀它，讀不到再走下面的推導。
+    if track == "core":
+        down = board_down_reason(ticker)
+        if down:
+            return down
     pool = build_pool(arena)
     row = pool.get(ticker)
     if row is not None:
@@ -162,6 +182,10 @@ def exit_reason(ticker: str, track: str, arena: dict) -> str:
         verdict = row.get("verdict")
         if verdict == "迴避":
             return "DD 裁決轉迴避，觸發否決失去資格"
+        # v5.2（2026-10-09）核心席＝池內亮燈者：還在池、資格全過、但時機燈紅 → 紅燈下席
+        lamp = row.get("lamp") or {}
+        if track == "core" and lamp.get("code") not in LIT_LAMP_CODES:
+            return f"時機燈轉紅，依 v5.2 亮燈選席下席——{lamp.get('why') or '距歷史新高 <−10% 或跌破 200 日線'}"
         # grp.pass=true 且非迴避（含觀望／進場／無裁決），但未坐席 → 分數被擠下
         thresh, thresh_ticker = seat_threshold(arena, track)
         score = row.get("score")
@@ -198,7 +222,7 @@ def timing_txt(p_label) -> str:
 
 
 # ── 換入 / 全陣容 入選原因 ─────────────────────────────────────────────
-def entry_reason(row: dict, seat_no: int) -> str:
+def entry_reason(row: dict, seat_no: int, track: str = "core") -> str:
     """v5（2026-09-17）：核心席不再要求 DD 裁決＝進場（DD 只做迴避否決／角色標籤），
     上修否決改看財報後錨定（缺值退回三個月），故改讀 grp['rev_used_pct']／['rev_anchor']
     取代舊 r_fy1；排序也改為上修單一變數，score 欄改標「v4 對照分」（own_score_v4，非本輪
@@ -211,9 +235,14 @@ def entry_reason(row: dict, seat_no: int) -> str:
     anchor_txt = "財報後" if grp.get("rev_anchor") == "earnings" else "三月"
     p_label = P_LABEL_TXT.get(ol["p_label"], "52 週線下或缺")
     score_txt = f"{ol['score']:.2f}" if isinstance(ol['score'], (int, float)) else "—"
+    lamp = row.get("lamp") or {}
+    lamp_txt = LAMP_TXT.get(lamp.get("code"), "—")
     return (f"{row.get('route_why') or '護城河資料缺'}。"
             f"資格：成長 {g_txt}／{anchor_txt}上修 {rev_txt}／位置 {p_label}。"
-            f"本輪核心第 {seat_no} 名（依上修排序；v4 對照分 {score_txt}）。")
+            f"時機燈 {lamp_txt}（{lamp.get('why') or '—'}）。"
+            + (f"本輪核心第 {seat_no} 名（池內亮燈者依上修排序，v5.2；v4 對照分 {score_txt}）。"
+               if track == "core" else
+               f"等待池第 {seat_no} 名（依上修排序；核心席待時機燈亮；v4 對照分 {score_txt}）。"))
 
 
 # ── 前後週差異 ──────────────────────────────────────────────────────────
@@ -535,7 +564,7 @@ def main() -> int:
                 parts.append(render_alert_box(
                     "in", "新進",
                     f'<strong>{escape(row["ticker"])}</strong>（{escape(label)}）入選：'
-                    f'{escape(entry_reason(row, seat_no))}'))
+                    f'{escape(entry_reason(row, seat_no, track))}'))
             for t in outs:
                 parts.append(render_alert_box(
                     "out", "離席",

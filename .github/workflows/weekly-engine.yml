@@ -26,6 +26,13 @@ on:
         required: false
         default: "0"
         type: string
+      prev_arena_ref:
+        description: >-
+          週報 email 的「上週陣容」改取這個 commit 的 docs/engine/arena.json（留空＝HEAD）。
+          用途：席位在排程外被手動改過（如 2026-10-09 v5.2 首跑）時補寄換席信。
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -123,7 +130,14 @@ jobs:
       - name: Weekly seat-arena mail (build)
         id: weekly_mail
         continue-on-error: true
+        env:
+          PREV_ARENA_REF: ${{ github.event.inputs.prev_arena_ref || '' }}
         run: |
+          if [ -n "$PREV_ARENA_REF" ]; then
+            git show "$PREV_ARENA_REF:docs/engine/arena.json" > /tmp/prev_arena.json
+            export PREV_ARENA_JSON=/tmp/prev_arena.json
+            echo "weekly mail: prev arena from $PREV_ARENA_REF"
+          fi
           python scripts/engine/build_weekly_mail.py
           if [ -f engine_weekly_mail_subject.txt ]; then
             {
