@@ -56,10 +56,14 @@ def test_grp_gates():
     ok(g["pass"] and g["p_label"] == "pullback", "基準樣本全過、回踩帶標籤")
     ok(not grp_score(_stock(eps_fy1_fy3_cagr_pct=14.9, durable_5y=False))["pass"],
        "非耐久 G 14.9 < 15 → fail")
-    ok(grp_score(_stock(eps_fy1_fy3_cagr_pct=12.0, durable_5y=True))["pass"],
-       "v4：durable_5y=True 放寬成長門檻至 10%，12% 應過")
+    ok(not grp_score(_stock(eps_fy1_fy3_cagr_pct=12.0, durable_5y=True))["pass"],
+       "2026-10-09 統一 15%：durable_5y=True 的 12% 也不過（v4 放寬至 10% 已取消）")
     ok(not grp_score(_stock(eps_fy1_fy3_cagr_pct=12.0, durable_5y=False))["pass"],
        "同一個 12%，非耐久仍卡在 15% 門檻")
+    ok(grp_score(_stock(durable_5y=False))["pass"] and grp_score(_stock(durable_5y=None))["pass"],
+       "2026-10-09：耐久降為旗標——durable_5y=False／None 皆不擋資格")
+    ok(not any("耐久" in w for w in grp_score(_stock(durable_5y=False))["why"]),
+       "2026-10-09：耐久不再寫進 why（落榜理由）")
     g = grp_score(_stock(eps_fy1_fy3_cagr_pct=None, eps2y=40.0, durable_5y=True))
     ok(not g["pass"], "v4：成長閘硬性要求三年期 Koyfin CAGR，單年 fallback 不算資格")
     # v4：三月上修否決取代 FY+1 單月否決
@@ -210,7 +214,13 @@ def test_site_consistency():
        "席位全數過閘，或為月頻輪動沿用中的現任席（v4 寬限期：非硬否決不下席）")
     ok(all(r.get("cap_ok") for r in seats if "cap_ok" in r),
        "席位全數通過市值門檻")
-    ok(all(r["route"] == "core" for r in arena["core_seats"]), "核心席全為 core 路由")
+    # 2026-10-09 耐久降為顯示旗標：route（core／satellite＝耐久與否）不再限制核心席。
+    # v5.2 改驗：核心席全數時機燈亮著（席位＝週五收盤亮燈者；日跑沿用可能週中轉紅，故
+    # 只在席位更新日＝時機更新日時檢查），且不超過 5 席。
+    ok(len(arena["core_seats"]) <= 5, "核心席不超過 5 席（v5.2 可空席）")
+    if arena.get("lamp_last_rotation_date") == arena.get("lamp_as_of"):
+        ok(all((r.get("lamp") or {}).get("code") in ("green", "hot", "yellow") for r in arena["core_seats"]),
+           "席位更新日核心席全為亮燈者（v5.2）")
     # v3 席位資格修復（2026-09-09）：衛星席公開競爭——route=="core"（耐久達標）但沒卡進
     # 核心前 5 名的名字會跟 route=="satellite" 名字一起按 own_score 搶衛星席，故衛星席
     # 的 route 不再限定 satellite；改驗證核心／衛星席無重複 ticker（沒人同時坐兩席）。

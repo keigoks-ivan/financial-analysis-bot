@@ -8,13 +8,16 @@ name: Weekly Decision Engine
 #                            2026-09-09——手動重跑此腳本不帶旗標＝唯讀，遲滯時鐘只認這個排程的跑次）
 #   - build_index.py      → 總覽頁活數字
 #
-# 跑 Sun 20:00 UTC = Mon 04:00 Taipei — 排在 weekly-fundamental-refresh（18:00 UTC）
-# 之後，錯開 yfinance 額度與 push 時段。
+# 跑 Sat 03:00 UTC = Sat 11:00 Taipei（2026-10-09 持有人拍板：週六先跑，週末有時間研究）——
+# 排在 daily-taipei-morning（Sat 01:00 UTC，刷週五美股收盤進 dd-screener latest.json）之後，
+# 讓 v5.2 週頻亮燈選席（build_arena --ledger）吃到週五收盤。weekly-fundamental-refresh
+# （Sun 18:00 UTC）改為在本跑之後，基本面欄位是月更級，晚一天無妨。
+# 原排程 Sun 20:00 UTC = Mon 04:00 Taipei（2026-09-09～2026-10-09）。
 # Fail-safe 慣例：每步 continue-on-error；build 只在成功結尾寫檔，失敗保留上週版本。
 
 on:
   schedule:
-    - cron: "0 20 * * 0"  # Sun 20:00 UTC = Mon 04:00 Taipei
+    - cron: "0 3 * * 6"  # Sat 03:00 UTC = Sat 11:00 Taipei（週五美股收盤後，接在 daily-taipei-morning 之後）
   workflow_dispatch:
     inputs:
       retry:

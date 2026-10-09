@@ -194,3 +194,43 @@ def test_rotate_roster_daily_rerun_without_ledger_is_idempotent_pure_function():
     r2 = rotate_roster("2026-09", "2026-09", ["A", "B"], pool, {},
                        core_slots=2, all_by_ticker=all_by_ticker)
     assert r1 == r2
+
+
+# ── v5.2（2026-10-09）：亮燈選席取代月頻輪動（select_lit_roster_v52，見 rule_ledger 同日列）──
+from engine.build_arena import select_lit_roster_v52  # noqa: E402
+
+
+def _lit_row(t, code):
+    return {"ticker": t, "lamp": {"code": code}, "grp": {}}
+
+
+def test_lit_roster_takes_only_lit_lamps_in_pool_order():
+    pool = [_lit_row("A", "red"), _lit_row("B", "green"), _lit_row("C", "yellow"),
+            _lit_row("D", "hot"), _lit_row("E", "red"), _lit_row("F", "green")]
+    out = select_lit_roster_v52(pool, None, core_slots=5)
+    assert out["core"] == ["B", "C", "D", "F"]       # 池序保留、紅燈跳過
+    assert out["rotated"] is False
+
+
+def test_lit_roster_leaves_seats_empty_instead_of_filling_with_red():
+    pool = [_lit_row("A", "red"), _lit_row("B", "red"), _lit_row("C", "green")]
+    assert select_lit_roster_v52(pool, None)["core"] == ["C"]
+    assert select_lit_roster_v52([_lit_row("A", "red")], None)["core"] == []
+
+
+def test_lit_roster_caps_at_core_slots():
+    pool = [_lit_row(t, "green") for t in "ABCDEFG"]
+    assert select_lit_roster_v52(pool, None, core_slots=5)["core"] == list("ABCDE")
+
+
+def test_lit_roster_removed_and_filled_relative_to_prev():
+    pool = [_lit_row("A", "red"), _lit_row("B", "green"), _lit_row("C", "green")]
+    out = select_lit_roster_v52(pool, ["A", "B", "Z"])
+    assert dict(out["removed"])["A"].startswith("時機燈轉紅")
+    assert dict(out["removed"])["Z"].startswith("出池")
+    assert out["filled"] == [("core", "C")]
+
+
+def test_lit_roster_is_stateless_and_idempotent():
+    pool = [_lit_row("A", "green"), _lit_row("B", "yellow")]
+    assert select_lit_roster_v52(pool, ["A", "B"])["core"] == select_lit_roster_v52(pool, None)["core"]

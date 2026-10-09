@@ -33,6 +33,7 @@ vs SPY +1.2%、首批 B&H +1.0%、10 週 23 檔坐過 10 席——換手率過�
 「保護」雜訊而非訊號）——五項改動：
   1. 成長閘：三年期 Koyfin CAGR 仍是硬性必備（單年 fallback 不算），門檻 15%，但
      durable_5y 為 True 者放寬到 10%（複利股基期已高，成長速度本來就該慢下來）。
+     （2026-10-09 持有人拍板：放寬取消，耐久與否一律 15%，見 rule_ledger 同日列。）
   2. 上修否決：改看三個月（FY 加權 0.2/0.3/0.5）EPS 上修 eps_rev_3m_pct ≤ −5% 才否決，
      取代原本 FY+1 單月 ≤ −10%；後者只在前者缺值時當 fallback。
   3. 過熱不再是資格閘：12-1 個月動能 mom_12_1_pct > 150%（缺值 fallback 26 週漲幅
@@ -92,6 +93,7 @@ notes/site-internal/root/_seat_engine_v5_20260917.md）——品質＝資格、�
      一次性獲利把五年均值撐高但三年/現值已經退燒的名字不再算耐久。耐久改列為
      資格閘本體的一部分（v4 只用耐久決定核心 vs 衛星軌別，不影響整體資格）：
      不耐久＝不進母體，沒有衛星席可以退（v5 沒有衛星軌）。
+     （2026-10-09 持有人拍板：耐久降為顯示旗標，不再擋資格；判準本身不變，仍算、仍顯示。）
   2. 融券高（short_interest_pct_float >10%）從「只排除核心候選」升級為「整體
      資格閘排除」——同理，沒有衛星軌可以收留融券高的名字。
   3. 排序徹底簡化為單一變數：上修（財報後錨定優先，缺值退回三月）降冪，
@@ -119,6 +121,18 @@ _seat_engine_v5_1_20260918.md §1／knowledge/rule_ledger.md「v5.1 估值閘」
 （valuation_gate()）；紅燈整體排除、不進池，兩者皆缺不算否決（標 ⚪ 缺值）。是
 入池／月頻換席的資格閘，**不是**月中硬否決——不進 build_arena.hard_veto_v5() 的
 七項之列，核心席不因估值轉紅在月中被踢（下次月頻整批重選才會反映）。
+
+v5.2（2026-10-09 持有人拍板，見 knowledge/rule_ledger.md 同日三列）——
+  1. 成長閘統一 15%：取消 v4 對 durable_5y 放寬至 10%。
+  2. 耐久降為顯示旗標：durable_5y 照算照顯示，不再進 grp_score() 的 all_pass／why。
+     依據 v7-backtest 兩段式突破時點回看（results/two_stage_breakout/）：耐久零貢獻。
+  3. 核心席不必選滿：核心＝池內時機燈亮著（green／hot／yellow）的名字依池序取前 5，
+     每週六（台北）依週五收盤無狀態重算（--ledger 跑）、亮燈不足就空席（build_arena.
+     select_lit_roster_v52()）；--daily 跑沿用帳本席位只刷燈——席位＝週收盤決策、燈號
+     ＝每日倉位。月頻輪動
+     rotate_roster()／hard_veto_v5() 保留不呼叫。原因：排名制下席位永遠填滿，2026-10-08
+     核心四席距新高 −21～−35% 全紅燈零倉——席位是排名不是決策；觸發是市場給的，
+     沒訊號的月份就該空著。
 """
 from __future__ import annotations
 
@@ -126,7 +140,7 @@ import json
 from pathlib import Path
 
 G_MIN_CAGR = 15.0        # G 閘：FY1→FY3 EPS CAGR（非耐久）
-G_MIN_CAGR_DURABLE = 10.0  # v4：durable_5y=True 者放寬門檻（複利股基期高、成長本該慢）
+G_MIN_CAGR_DURABLE = 15.0  # 2026-10-09 持有人拍板統一 15%（v4 曾對 durable_5y 放寬至 10%，與「找未來成長」目標相反；常數保留供 build_arena 匯入）
 # 擁有層（v2）：品質閘與排序鍵常數
 Q_ROIC_MIN = 15.0        # 品質閘：ROIC ≥15%
 Q_FCF_MIN = 10.0         # 品質閘：FCF margin ≥10%
@@ -660,11 +674,11 @@ def grp_score(s: dict) -> dict:
     # 核心 vs 衛星軌別」升級為資格閘本體——不耐久＝不進母體，沒有衛星席可以退。
     # durable_5y 由呼叫端（build_dd_screener.enrich_ticker，透過 durable_5y_v5()）
     # 先算好，本函式只讀不算。
+    # 2026-10-09 持有人拍板（見 rule_ledger 同日列）：耐久降為顯示旗標，不再擋資格——
+    # v7-backtest 兩段式突破時點回看顯示耐久條件對結果零貢獻（拿掉後 CAGR 14.6% vs
+    # 14.5%），且它偏好的正是低成長消費股，與「找未來成長」目標相反。durable_5y 仍由
+    # 呼叫端算好、仍進 why 以外的輸出欄位供 UI 顯示 ✓／—，只是不再進 why、不再進 all_pass。
     durable = s.get("durable_5y")
-    if not durable:
-        why.append("耐久未達標，不進池（v5 資格：QGM 五年穩定度 ≥75%，或 Koyfin 五年"
-                    "平均∧三年平均∧現值三者皆 ≥15%）" if durable is False
-                    else "耐久資料缺，不進池（v5 資格必備，見 grp.durable_5y_v5()）")
 
     # 估值閘（v5.1，2026-09-18 持有人拍板，見檔頭 v5.1 段／grp.valuation_gate()／
     # rule_ledger.md「v5.1 估值閘」列）：PEG >2.0 或 PE NTM 相對五年均倍數 >1.75x，
@@ -675,8 +689,8 @@ def grp_score(s: dict) -> dict:
     if veto_valuation:
         why.append(valuation["why"])
 
-    all_pass_ex_valuation = (g_pass and (not veto) and p_pass and bool(durable)
-                             and (not high_short_interest))
+    all_pass_ex_valuation = (g_pass and (not veto) and p_pass
+                             and (not high_short_interest))   # 耐久 2026-10-09 起不在此
     all_pass = all_pass_ex_valuation and (not veto_valuation)
     if not r_pass and not r_veto:
         why = [w for w in why if not w.startswith("上修閘未過")]
