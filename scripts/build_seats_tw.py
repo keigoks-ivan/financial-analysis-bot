@@ -48,6 +48,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'scripts'))
 from engine import build_arena as ba  # noqa: E402
 from engine import grp  # noqa: E402
+import tw_filing_calendar  # noqa: E402
 
 TW_POOL_JSON = ROOT / 'docs' / 'dd-screener' / 'tw' / 'latest.json'
 LAMP_TW_JSON = ROOT / 'docs' / 'stages' / 'data' / 'lamp_tw.json'
@@ -59,7 +60,7 @@ LEDGER_JSON = OUT_DIR / 'seats_tw_ledger.json'
 TPE = timezone(timedelta(hours=8))
 CORE_SLOTS = ba.CORE_SLOTS
 # 證券交易法第 36 條：年報 3/31、第一季 5/15、第二季 8/14、第三季 11/14。
-TW_DEADLINES = ((3, 31, '年報'), (5, 15, '第一季'), (8, 14, '第二季'), (11, 14, '第三季'))
+TW_DEADLINES = tw_filing_calendar.DEADLINES
 
 
 def _warn(msg):
@@ -172,6 +173,10 @@ def _cells(v, lamp_map):
     label = f"{tk} {escape(v['name'])}" if v.get('name') else tk
     link = (f'<a href="{escape(v["dd_path"])}#decision">{label}</a>' if v.get('dd_path') else label)
     cells[0] = f'<td class="bw-l"><strong>{link}</strong></td>'
+    if v.get('rev_anchor') == 'quarter_end':
+        # 缺財報日（build_dd_screener.tw_quarter_anchor_date()）：US 共用 tooltip 沒有這個錨定。
+        title = escape(f"錨定：缺財報日，取該季季底前的快照｜基準快照 {v.get('rev_baseline_date') or '—'}")
+        cells[1] = f'<td title="{title}">{ba._num(v.get("rev_used_pct"), 1)}</td>'
     if v.get('next_earn_fallback'):
         days = v['days_to_next_earnings']
         title = escape(f"公司未公告日期，依{v['next_earn_fallback']}推算，可能提前公布")

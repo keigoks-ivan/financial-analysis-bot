@@ -1499,8 +1499,12 @@ def _row_cells(v: dict, lamp_map: dict) -> list[str]:
     tk = v["ticker"]
     # 財報錨定上修（2026-09-17）＋ v5 對照（2026-09-17）：上修欄 tooltip 併入基準快照日、
     # 錨定方式（財報／日曆）與 v4 對照排名分（own_score_v4 五百分位平均，僅供對照）。
-    rev_anchor_txt = {"earnings": "財報後", "calendar_3m": "日曆三個月（缺財報錨定）"}.get(
-        v.get("rev_anchor"), "—")
+    # 財報空窗（2026-10-10，見 rule_ledger「財報空窗」列）：earnings_pending＝已公布新財報、
+    # 但最新 Koyfin 匯出早於財報日，暫時沿用上一季財報後上修，欄內另標「待財報後匯出」。
+    rev_anchor_txt = {"earnings": "財報後", "earnings_pending": "待財報後匯出（沿用上一季財報後上修）",
+                      "calendar_3m": "日曆三個月（缺財報錨定）"}.get(v.get("rev_anchor"), "—")
+    rev_pending = (' <span class="bw-pill bw-pill-warn">待財報後匯出</span>'
+                   if v.get("rev_anchor") == "earnings_pending" else "")
     rev_title = (f"錨定：{rev_anchor_txt}｜基準快照 {v.get('rev_baseline_date') or '—'}｜"
                  f"v4 對照排名分（僅供對照，v5 不用於排序）：{_num(v.get('score'), 1)}｜"
                  f"implied_growth {_num(v.get('implied_growth_pct'), 1)}%｜"
@@ -1534,7 +1538,7 @@ def _row_cells(v: dict, lamp_map: dict) -> list[str]:
     lamp_cell = f'<span class="bw-pill" title="{escape(lamp_title)}">{escape(lamp.get("label", "—"))}</span>'
     return [
         f'<td class="bw-l"><strong>{_tk_link(v)}</strong></td>',
-        f'<td title="{escape(rev_title)}">{_num(v.get("rev_used_pct"), 1)}</td>',
+        f'<td title="{escape(rev_title)}">{_num(v.get("rev_used_pct"), 1)}{rev_pending}</td>',
         f'<td title="{escape(dist_ath_title)}">{_num(v.get("dist_ath_pct"), 1)}</td>',
         f'<td class="bw-l">{next_earn_cell}</td>',
         f'<td class="bw-l">{durable_cell}</td>',
@@ -1958,7 +1962,8 @@ def hard_veto_v5(r: dict, w52_fail_streak: int = 0) -> str | None:
     if g.get("veto_decline"):
         return "衰退 ⛔"
     if g.get("veto_revision"):
-        return "財報後上修 ≤ −5" if g.get("rev_anchor") == "earnings" else "三月上修 ≤ −5"
+        return ("財報後上修 ≤ −5" if g.get("rev_anchor") in ("earnings", "earnings_pending")
+                else "三月上修 ≤ −5")
     if g.get("veto_high_short_interest"):
         return "融券占流通股比 >10%"
     if not r.get("cap_ok", True):

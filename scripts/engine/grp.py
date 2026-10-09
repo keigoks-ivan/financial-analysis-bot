@@ -262,8 +262,10 @@ def _revision_anchor(s: dict) -> tuple:
     fallback layer is purely a back-compat safety net).
 
     Returns (value, anchor, baseline_date):
-      anchor — "earnings" | "calendar_3m" | None (None only when both fields
-                are missing).
+      anchor — the screener's eps_rev_anchor passed through ("earnings" |
+                "earnings_pending" | "quarter_end" | "calendar_3m", see
+                _compute_eps_rev_since_earnings()), "calendar_3m" on the
+                back-compat path, None only when both fields are missing.
     """
     since = _f(s.get("eps_rev_since_earnings_pct"))
     if since is not None:

@@ -157,3 +157,11 @@ def test_reselect_retry_on_same_date_is_idempotent(paths):
     assert [s['date'] for s in second['snapshots']] == ['2026-10-16', '2026-10-23']
     assert second['snapshots'][-1]['filled'] == [['core', '2000.TW']]
     assert second['roster']['core'] == ['2000.TW', '1000.TW']
+
+
+def test_quarter_end_anchor_gets_its_own_tooltip():
+    s = _stock('1111.TW', eps_rev_since_earnings_pct=8.0,
+               eps_rev_since_earnings_baseline_date='2026-09-26', eps_rev_anchor='quarter_end')
+    v = tw.flat(tw.tw_row(s), date(2026, 11, 20))
+    cell = tw._cells(v, {})[1]
+    assert '缺財報日' in cell and '2026-09-26' in cell and '8.0' in cell

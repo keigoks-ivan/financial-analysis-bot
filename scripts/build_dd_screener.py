@@ -140,6 +140,7 @@ from eps_fy_shift import (  # noqa: E402
     _to_date as _fye_to_date,
     save_fye_cache,
 )
+from tw_filing_calendar import latest_due_quarter_start  # noqa: E402
 
 OUTPUT_DIR = ROOT / "docs" / "dd-screener"
 OUTPUT_PATH = OUTPUT_DIR / "latest.json"
@@ -2993,7 +2994,8 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
                                      monthly_snapshots: dict | None = None,
                                      last_fye: str | None = None,
                                      past_earnings_dates: list | None = None,
-                                     current_source: str | None = None) -> dict:
+                                     current_source: str | None = None,
+                                     quarter_anchor_date: str | None = None) -> dict:
     """v4 席位引擎財報錨定上修 (2026-09-17 owner decision — see
     knowledge/rule_ledger.md「上修改為財報後錨定」列 for the calendar-window
     unfairness this fixes): like _compute_eps_rev_3m(), but the baseline
@@ -3014,7 +3016,24 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
       eps_rev_since_earnings_pct           — the FY-weighted revision % (or
                                               the calendar-3m fallback value)
       eps_rev_since_earnings_baseline_date — snapshot_date actually used
-      eps_rev_anchor                       — "earnings" | "calendar_3m"
+      eps_rev_anchor                       — "earnings" | "earnings_pending" |
+                                              "quarter_end" | "calendar_3m"
+      eps_rev_since_earnings_anchor_date   — the date the baseline was picked
+                                              against (None on calendar_3m)
+
+    財報空窗（2026-10-10 owner decision, rule_ledger「財報空窗」row):
+      earnings_pending — the latest Koyfin import (current_snapshot_date) is
+        on or before last_earnings_date, so it can't contain this report's
+        revisions yet. Measuring against the pre-report snapshot would read
+        ~0 and drop the name from the pool for a reason that is only export
+        timing. Instead keep the previous report: anchor on the latest
+        past_earnings_dates entry strictly before the import date. The first
+        import dated after the report switches it back to "earnings".
+        Not applied when current_source == "yfinance" (live numbers).
+      quarter_end — TW only, set by the caller via `quarter_anchor_date`
+        when yfinance has no usable earnings date (see
+        tw_quarter_anchor_date()): baseline is the snapshot before the
+        quarter's earliest possible report date.
       eps_rev_since_earnings_days          — days between the baseline
                                               snapshot actually used and
                                               TODAY (how stale the anchor is,
@@ -3037,13 +3056,29 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
         except ValueError:
             return None
 
-    baseline = pick_strictly_before_baseline(monthly_snapshots, last_earnings_date)
+    def _d(s):
+        try:
+            return datetime.strptime(s[:10], "%Y-%m-%d").date() if s else None
+        except ValueError:
+            return None
+
+    anchor_date, anchor = last_earnings_date, "earnings"
+    cur_d, last_d = _d(current_snapshot_date), _d(last_earnings_date)
+    if quarter_anchor_date:
+        anchor_date, anchor = quarter_anchor_date, "quarter_end"
+    elif current_source != "yfinance" and cur_d and last_d and cur_d <= last_d:
+        prior = sorted(d for d in (_d(x) for x in (past_earnings_dates or [])) if d and d < cur_d)
+        anchor_date = prior[-1].isoformat() if prior else None
+        anchor = "earnings_pending"
+
+    baseline = pick_strictly_before_baseline(monthly_snapshots, anchor_date)
     if baseline is None:
         baseline_date = eps_rev_3m_result.get("eps_rev_3m_baseline_date")
         return {
             "eps_rev_since_earnings_pct": eps_rev_3m_result.get("eps_rev_3m_pct"),
             "eps_rev_since_earnings_baseline_date": baseline_date,
             "eps_rev_anchor": "calendar_3m",
+            "eps_rev_since_earnings_anchor_date": None,
             "eps_rev_since_earnings_days": _days_since(baseline_date),
             "eps_rev_since_earnings_fy_shift": eps_rev_3m_result.get("eps_rev_3m_fy_shift"),
             "eps_rev_since_earnings_fy_shift_status": eps_rev_3m_result.get("eps_rev_3m_fy_shift_status"),
@@ -3059,12 +3094,40 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
     return {
         "eps_rev_since_earnings_pct": _fold_eps_rev_fy_weighted(rev),
         "eps_rev_since_earnings_baseline_date": baseline_date,
-        "eps_rev_anchor": "earnings",
+        "eps_rev_anchor": anchor,
+        "eps_rev_since_earnings_anchor_date": anchor_date,
         "eps_rev_since_earnings_days": _days_since(baseline_date),
         "eps_rev_since_earnings_fy_shift": rev.get("eps_revision_fy_shift"),
         "eps_rev_since_earnings_fy_shift_status": rev.get("eps_revision_fy_shift_status"),
         "_eps_rev_since_earnings_fy": _fy_triplet(rev),
     }
+
+
+def tw_quarter_anchor_date(import_date: str | None, last_earnings_date: str | None) -> str | None:
+    """台股缺財報日（2026-10-10 owner decision, rule_ledger「財報空窗」row):
+    the earnings anchor for a TW name whose yfinance last_earnings_date is
+    missing or older than the latest quarter whose filing deadline has
+    passed by the import date. Returns that quarter's day-after-quarter-end
+    (earliest possible report date, e.g. Q3 -> 10-01, so the baseline is the
+    September snapshot), or None when the real date is usable.
+
+    The quarter only advances once its statutory deadline (tw_filing_calendar)
+    is before the import, so the import surely contains the report and the
+    previous quarter's revision is not dropped early — same idea as
+    "earnings_pending" for names that do have a date."""
+    try:
+        imp = datetime.strptime(import_date[:10], "%Y-%m-%d").date() if import_date else None
+    except ValueError:
+        imp = None
+    start = latest_due_quarter_start(imp) if imp else None
+    if start is None:
+        return None
+    try:
+        last = (datetime.strptime(last_earnings_date[:10], "%Y-%m-%d").date()
+                if last_earnings_date else None)
+    except ValueError:
+        last = None
+    return start.isoformat() if last is None or last < start else None
 
 
 # 2026-09-16: default effective tax rate used whenever the xlsx "Tax Rate %"
@@ -4236,6 +4299,9 @@ def enrich_ticker(
         reporting_ccy_cache, fx_cache, eps_rev_3m, last_fye=last_fye,
         past_earnings_dates=past_earnings_dates,
         current_source=_lfy.get("eps_source"),
+        quarter_anchor_date=(tw_quarter_anchor_date(
+            excel_snapshot.snapshot_date if excel_snapshot else None, last_earnings_date)
+            if UNIVERSE_MODE == "tw" else None),
     )
 
     # 2026-09-17: fundamental gates — DD 技能既有機械規則搬進 screener (see

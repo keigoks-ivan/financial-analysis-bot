@@ -232,7 +232,8 @@ def entry_reason(row: dict, seat_no: int, track: str = "core") -> str:
     grp = row.get("grp") or {}
     rev = grp.get("rev_used_pct")
     rev_txt = f"{rev:+.1f}%" if isinstance(rev, (int, float)) else "—"
-    anchor_txt = "財報後" if grp.get("rev_anchor") == "earnings" else "三月"
+    anchor_txt = {"earnings": "財報後", "earnings_pending": "財報後（待財報後匯出）"}.get(
+        grp.get("rev_anchor"), "三月")
     p_label = P_LABEL_TXT.get(ol["p_label"], "52 週線下或缺")
     score_txt = f"{ol['score']:.2f}" if isinstance(ol['score'], (int, float)) else "—"
     lamp = row.get("lamp") or {}

@@ -231,7 +231,8 @@ def render_card(c: dict, *, open_default: bool) -> str:
                 return '<span class="tag tag-dn">⛔ 下修否決</span>'
             return '<span class="tag tag-up">✅</span>' if ok else '<span class="tag tag-dn">❌</span>'
         dist = f'（距高 {g["dist_hi"]:+.0f}%）' if g["dist_hi"] is not None else ""
-        anchor_label = {"earnings": "財報後", "calendar_3m": "三月"}.get(rev_anchor, "—")
+        anchor_label = {"earnings": "財報後", "earnings_pending": "財報後（待財報後匯出）",
+                        "calendar_3m": "三月"}.get(rev_anchor, "—")
         # v5（2026-09-17，見 rule_ledger「v5 席位引擎」列）：上修否決改看財報後錨定上修
         # （grp["rev_used_pct"]，缺財報錨定退回三個月），R_VETO_FY1（FY+1 單月 ≤−10%）
         # 只在兩者皆缺值時當 fallback；此表原先誤顯示 r_fy1／r_2y 與舊 −10% 門檻，v5 起改讀
