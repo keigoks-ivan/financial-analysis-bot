@@ -14,7 +14,8 @@
   "my": "my-gdp",
   "th": "th-gdp",
   "id": "id-gdp",
-  "sg": "sg-gdp"
+  "sg": "sg-gdp",
+  "tradewar": "asean"
  },
  "categories": [
   {
@@ -125,71 +126,6 @@
      "definition": "各國季度實質GDP年增率；越南只有世界銀行的年資料。泰國取與 NESDC 新聞稿公布數字一致的序列。"
     },
     {
-     "key": "asean-policy-rate",
-     "title_zh": "東南亞基準利率（主要國家）",
-     "priority": 1,
-     "series": [
-      {
-       "sid": "an.cbpol_th",
-       "label_zh": "泰國政策利率（1日RP）",
-       "source": "泰國銀行（BOT），經國際清算銀行（BIS）",
-       "freq": "M",
-       "unit": "%",
-       "sa": "NSA",
-       "license": "public",
-       "display": "level",
-       "axis": "L",
-       "source_id": "WS_CBPOL / M.TH",
-       "fetcher": "intl_bis",
-       "params": {
-        "dataflow": "WS_CBPOL",
-        "key": "M.TH",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_CBPOL/M.TH?format=csv"
-       },
-       "notes": "月底值。"
-      },
-      {
-       "sid": "an.cbpol_id",
-       "label_zh": "印尼政策利率（BI 7日逆回購）",
-       "source": "印尼銀行（BI），經國際清算銀行（BIS）",
-       "freq": "M",
-       "unit": "%",
-       "sa": "NSA",
-       "license": "public",
-       "display": "level",
-       "axis": "L",
-       "source_id": "WS_CBPOL / M.ID",
-       "fetcher": "intl_bis",
-       "params": {
-        "dataflow": "WS_CBPOL",
-        "key": "M.ID",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_CBPOL/M.ID?format=csv"
-       },
-       "notes": "2016 年 8 月前為 BI Rate，定義換過。"
-      },
-      {
-       "sid": "an.cbpol_my",
-       "label_zh": "馬來西亞隔夜政策利率（OPR）",
-       "source": "馬來西亞國家銀行（BNM），經國際清算銀行（BIS）",
-       "freq": "M",
-       "unit": "%",
-       "sa": "NSA",
-       "license": "public",
-       "display": "level",
-       "axis": "L",
-       "source_id": "WS_CBPOL / M.MY",
-       "fetcher": "intl_bis",
-       "params": {
-        "dataflow": "WS_CBPOL",
-        "key": "M.MY",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_CBPOL/M.MY?format=csv"
-       },
-       "notes": "月底值。"
-      }
-     ],
-     "definition": "越南的政策利率沒有可程式讀取的來源；新加坡不以利率為政策工具，不列入。"
-    },
-    {
      "key": "asean-cpi-yoy",
      "title_zh": "東南亞消費者物價（年增率）",
      "priority": 1,
@@ -293,94 +229,489 @@
      "definition": "各國CPI年增率。由 IMF 轉載各國統計機關，落後各國原公布約 1～2 個月。"
     },
     {
-     "key": "asean-reserves",
-     "title_zh": "東南亞外匯存底",
+     "key": "asean-cpi-core",
+     "title_zh": "東南亞核心通膨（年增率）",
+     "priority": 2,
+     "series": [
+      {
+       "sid": "vn.cpi_core_yoy",
+       "label_zh": "越南核心通膨年增率（官方公布）",
+       "source": "越南國家統計局（NSO，前身統計總局 GSO）月／季社經報告附表",
+       "freq": "M",
+       "unit": "%",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "月報附表 Consumer price index 表",
+       "fetcher": "an_vn_nso",
+       "params": {
+        "kind": "report",
+        "table": "cpi",
+        "row": "core",
+        "probe_url": "https://www.nso.gov.vn/en/monthly-report/"
+       },
+       "notes": "NSO 月報附表「CPI」：對上年同月的指數減 100。IMF 越南 CPI 分項在 2025 年 11 月換基期處有接合斷點，所以除總指數與食品、住宅外的分項都改用 NSO 附表。",
+       "history_note": "2020 年 9 月起（逐期社經報告附表回補）。2024 年 8 月因 NSO 附表總指數貼錯月份（與 IMF 對不上）整月不採用。"
+      },
+      {
+       "sid": "an.my_cpi_core",
+       "label_zh": "馬來西亞核心CPI",
+       "source": "馬來西亞統計局（DOSM）",
+       "freq": "M",
+       "unit": "指數",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "OpenDOSM：cpi_core（欄位 index）",
+       "fetcher": "an_opendosm",
+       "params": {
+        "id": "cpi_core",
+        "field": "index",
+        "probe_url": "https://api.data.gov.my/data-catalogue/?id=cpi_core&limit=100000&sort=date&filter=overall@division",
+        "filter": "overall@division"
+       },
+       "history_note": "核心 CPI 從 2018 年起，年增率從 2019 年起。"
+      },
+      {
+       "sid": "th.cpi_core",
+       "label_zh": "泰國核心CPI",
+       "source": "泰國商務部貿易政策與策略辦公室（TPSO）",
+       "source_id": "index-api.tpso.go.th OpenApi/Cpig/Month type=TG commodity=93000",
+       "freq": "M",
+       "unit": "指數（2023=100）",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "fetcher": "an_th_tpso",
+       "params": {
+        "api": "cpig",
+        "type": "TG",
+        "code": "93000",
+        "year_base": 2566,
+        "probe_url": "https://index.tpso.go.th/"
+       },
+       "notes": "TPSO 稱「基本物價指數」，代碼 93000＝不含生鮮食品與能源；2026 年 8 月年增 1.44%（BOT 新聞稿同值）。"
+      },
+      {
+       "sid": "an.sg_cpi_core_mas",
+       "label_zh": "新加坡MAS核心通膨",
+       "source": "新加坡統計局（SingStat）",
+       "freq": "M",
+       "unit": "指數（2024=100）",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "M213891 / MAS Core Inflation Measure",
+       "fetcher": "an_singstat",
+       "params": {
+        "table_id": "M213891",
+        "row": "MAS Core Inflation Measure",
+        "probe_url": "https://tablebuilder.singstat.gov.sg/api/table/tabledata/M213891?limit=2000"
+       },
+       "notes": "用核心 CPI 指數自算年增率；M213891 內另有一列「年增率」與官方不符，不使用。"
+      }
+     ],
+     "definition": "各國核心CPI年增率。越南、新加坡、馬來西亞、泰國都有；印尼本資料庫沒有收錄核心CPI，不列入。四國口徑不同：泰國是不含生鮮食品與能源，新加坡用金融管理局（MAS）核心指數（不含住宿與私人運輸），馬來西亞用統計局核心CPI，越南用統計總局公布的核心通膨。馬來西亞、泰國、新加坡由指數自行計算年增率，越南直接採官方公布的年增率。"
+    },
+    {
+     "key": "asean-policy-rate",
+     "title_zh": "東南亞基準利率（主要國家）",
      "priority": 1,
      "series": [
       {
-       "sid": "an.reserves_th",
-       "label_zh": "泰國官方準備資產",
-       "source": "泰國銀行（BOT），經國際貨幣基金（IMF）",
+       "sid": "an.cbpol_th",
+       "label_zh": "泰國政策利率（1日RP）",
+       "source": "泰國銀行（BOT），經國際清算銀行（BIS）",
        "freq": "M",
-       "unit": "百萬美元",
+       "unit": "%",
        "sa": "NSA",
        "license": "public",
        "display": "level",
        "axis": "L",
-       "source_id": "IMF.STA:IRFCL / THA.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
-       "fetcher": "intl_imf",
+       "source_id": "WS_CBPOL / M.TH",
+       "fetcher": "intl_bis",
        "params": {
-        "dataflow": "IRFCL",
-        "key": "THA.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
-        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IRFCL/+/THA.IRFCLDT1_IRFCL65_USD.S1XS1311.M?attributes=none",
-        "scale": 1e-06
+        "dataflow": "WS_CBPOL",
+        "key": "M.TH",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_CBPOL/M.TH?format=csv"
        },
-       "notes": "IMF 國際準備與外幣流動性（IRFCL）第 I.A 項官方準備資產；原值為美元，已換算成百萬美元。",
-       "stale_days": 160,
-       "stale_reason": "IMF 轉載各國資料，約落後四個月"
+       "notes": "月底值。"
       },
       {
-       "sid": "an.reserves_id",
-       "label_zh": "印尼官方準備資產",
-       "source": "印尼銀行（BI），經國際貨幣基金（IMF）",
+       "sid": "an.cbpol_id",
+       "label_zh": "印尼政策利率（BI 7日逆回購）",
+       "source": "印尼銀行（BI），經國際清算銀行（BIS）",
        "freq": "M",
-       "unit": "百萬美元",
+       "unit": "%",
        "sa": "NSA",
        "license": "public",
        "display": "level",
        "axis": "L",
-       "source_id": "IMF.STA:IRFCL / IDN.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
-       "fetcher": "intl_imf",
+       "source_id": "WS_CBPOL / M.ID",
+       "fetcher": "intl_bis",
        "params": {
-        "dataflow": "IRFCL",
-        "key": "IDN.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
-        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IRFCL/+/IDN.IRFCLDT1_IRFCL65_USD.S1XS1311.M?attributes=none",
-        "scale": 1e-06
+        "dataflow": "WS_CBPOL",
+        "key": "M.ID",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_CBPOL/M.ID?format=csv"
        },
-       "notes": "同上。"
+       "notes": "2016 年 8 月前為 BI Rate，定義換過。"
       },
       {
-       "sid": "an.reserves_my",
-       "label_zh": "馬來西亞官方準備資產",
-       "source": "馬來西亞國家銀行（BNM），經國際貨幣基金（IMF）",
+       "sid": "an.cbpol_my",
+       "label_zh": "馬來西亞隔夜政策利率（OPR）",
+       "source": "馬來西亞國家銀行（BNM），經國際清算銀行（BIS）",
        "freq": "M",
-       "unit": "百萬美元",
+       "unit": "%",
        "sa": "NSA",
        "license": "public",
        "display": "level",
        "axis": "L",
-       "source_id": "IMF.STA:IRFCL / MYS.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
-       "fetcher": "intl_imf",
+       "source_id": "WS_CBPOL / M.MY",
+       "fetcher": "intl_bis",
        "params": {
-        "dataflow": "IRFCL",
-        "key": "MYS.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
-        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IRFCL/+/MYS.IRFCLDT1_IRFCL65_USD.S1XS1311.M?attributes=none",
-        "scale": 1e-06
+        "dataflow": "WS_CBPOL",
+        "key": "M.MY",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_CBPOL/M.MY?format=csv"
        },
-       "notes": "同上。"
-      },
-      {
-       "sid": "an.reserves_sg",
-       "label_zh": "新加坡官方準備資產",
-       "source": "新加坡金融管理局（MAS），經國際貨幣基金（IMF）",
-       "freq": "M",
-       "unit": "百萬美元",
-       "sa": "NSA",
-       "license": "public",
-       "display": "level",
-       "axis": "L",
-       "source_id": "IMF.STA:IRFCL / SGP.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
-       "fetcher": "intl_imf",
-       "params": {
-        "dataflow": "IRFCL",
-        "key": "SGP.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
-        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IRFCL/+/SGP.IRFCLDT1_IRFCL65_USD.S1XS1311.M?attributes=none",
-        "scale": 1e-06
-       },
-       "notes": "同上。"
+       "notes": "月底值。"
       }
      ],
-     "definition": "IMF 國際準備與外幣流動性統計中的官方準備資產；越南未向 IMF 申報此表，不列入。"
+     "definition": "越南的政策利率沒有可程式讀取的來源；新加坡不以利率為政策工具，不列入。"
+    },
+    {
+     "key": "asean-m2",
+     "title_zh": "東南亞廣義貨幣M2（年增率）",
+     "priority": 2,
+     "series": [
+      {
+       "sid": "id.m2",
+       "label_zh": "印尼M2",
+       "source": "印尼銀行（BI）SEKI 表",
+       "source_id": "SEKI TABEL1_1 項次 1",
+       "fetcher": "an_id_seki",
+       "params": {
+        "table": "TABEL1_1",
+        "item": 1,
+        "probe_url": "https://www.bi.go.id/SEKI/tabel/TABEL1_1.xls"
+       },
+       "freq": "M",
+       "unit": "十億印尼盾",
+       "sa": "NSA",
+       "display": "yoy",
+       "axis": "L",
+       "license": "public",
+       "notes": "BI SEKI 表 I.1（貨幣體系資產負債）。 SEKI 最近 1～3 個月為暫定值（表上標 *），BI 事後會修，每天重抓會自動覆蓋舊值。"
+      },
+      {
+       "sid": "my.m2",
+       "label_zh": "馬來西亞M2",
+       "source": "馬來西亞統計局（DOSM）",
+       "source_id": "OpenDOSM：monetary_aggregates（欄位 value；filter m2_total@measure）",
+       "fetcher": "an_opendosm",
+       "params": {
+        "id": "monetary_aggregates",
+        "field": "value",
+        "filter": "m2_total@measure",
+        "probe_url": "https://api.data.gov.my/data-catalogue/?id=monetary_aggregates&limit=100000&sort=date&filter=m2_total@measure"
+       },
+       "freq": "M",
+       "unit": "百萬令吉",
+       "sa": "NSA",
+       "display": "yoy",
+       "axis": "L",
+       "license": "public",
+       "stale_days": 160,
+       "stale_reason": "OpenDOSM 的這組資料比資料月份晚約三至四個月才更新"
+      },
+      {
+       "sid": "th.m2",
+       "label_zh": "泰國M2",
+       "source": "泰國銀行（BOT）統計資料庫（原始：BOT 貨幣統計）",
+       "source_id": "BOTWEBSTAT reportID=7 列1「Broad Money (1+2)」",
+       "freq": "M",
+       "unit": "百萬泰銖",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "fetcher": "an_th_bot",
+       "params": {
+        "report_id": 7,
+        "row_no": 1,
+        "row_label": "Broad Money (1+2)",
+        "probe_url": "https://app.bot.or.th/BTWS_STAT/statistics/BOTWEBSTAT.aspx?reportID=7&language=ENG"
+       },
+       "notes": "1997 年 1 月起；2026 年 8 月 28,204,115 百萬泰銖。"
+      },
+      {
+       "sid": "an.sg_m2",
+       "label_zh": "新加坡M2",
+       "source": "新加坡金融管理局（MAS），經新加坡統計局（SingStat）",
+       "freq": "M",
+       "unit": "百萬新幣",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "M701111 / M2",
+       "fetcher": "an_singstat",
+       "params": {
+        "table_id": "M701111",
+        "row": "M2",
+        "probe_url": "https://tablebuilder.singstat.gov.sg/api/table/tabledata/M701111?limit=2000"
+       },
+       "history_note": "新版貨幣供給表只從 2021-07 起（MAS 修訂口徑後重編），2021-06 以前的舊表口徑不同，不能接，所以年增率從 2022-07 起。"
+      }
+     ],
+     "definition": "各國M2年增率，由月底餘額自行計算。越南的貨幣統計沒有可機器讀取的來源，不列入。馬來西亞最新到 2026 年 6 月，其餘到 8 月。各國M2涵蓋範圍略有差異，水準不宜直接比，看方向與相對速度。"
+    },
+    {
+     "key": "asean-loans",
+     "title_zh": "東南亞銀行放款（年增率）",
+     "priority": 2,
+     "series": [
+      {
+       "sid": "id.loans_priv",
+       "label_zh": "印尼對民間部門放款",
+       "source": "印尼銀行（BI）SEKI 表",
+       "source_id": "SEKI TABEL1_1 項次 34",
+       "fetcher": "an_id_seki",
+       "params": {
+        "table": "TABEL1_1",
+        "item": 34,
+        "probe_url": "https://www.bi.go.id/SEKI/tabel/TABEL1_1.xls"
+       },
+       "freq": "M",
+       "unit": "十億印尼盾",
+       "sa": "NSA",
+       "display": "yoy",
+       "axis": "L",
+       "license": "public",
+       "notes": "BI SEKI 表 I.1（貨幣體系資產負債）。 SEKI 最近 1～3 個月為暫定值（表上標 *），BI 事後會修，每天重抓會自動覆蓋舊值。"
+      },
+      {
+       "sid": "my.loan_total",
+       "label_zh": "馬來西亞銀行放款合計",
+       "source": "馬來西亞國家銀行（BNM）月度統計",
+       "source_id": "BNM Monthly Highlights & Statistics 表 2.18（欄位位置 2，0 起算）",
+       "fetcher": "an_my_bnm",
+       "params": {
+        "table": "2.18",
+        "layout": "ym",
+        "col": 2,
+        "url": "https://www.bnm.gov.my/documents/20124/23200938/2.18.xlsx",
+        "probe_url": "https://www.bnm.gov.my/documents/20124/23200938/2.18.xlsx"
+       },
+       "freq": "M",
+       "unit": "百萬令吉",
+       "sa": "NSA",
+       "display": "yoy",
+       "axis": "L",
+       "license": "public",
+       "history_note": "BNM 月表只提供 2021 年 7 月起的資料，年增率自 2022 年 7 月起。"
+      },
+      {
+       "sid": "th.bank_credit",
+       "label_zh": "泰國商業銀行放款",
+       "source": "泰國銀行（BOT）統計資料庫（原始：BOT 金融機構統計）",
+       "source_id": "BOTWEBSTAT reportID=155 列13「Credits」",
+       "freq": "M",
+       "unit": "百萬泰銖",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "fetcher": "an_th_bot",
+       "params": {
+        "report_id": 155,
+        "row_no": 13,
+        "row_label": "Credits",
+        "probe_url": "https://app.bot.or.th/BTWS_STAT/statistics/BOTWEBSTAT.aspx?reportID=155&language=ENG"
+       },
+       "notes": "「All Commercial Banks」段，含銀行同業放款；2007 年起。",
+       "stale_days": 140,
+       "stale_reason": "BOT 該表約落後兩個月"
+      }
+     ],
+     "definition": "銀行體系放款餘額的年增率。三國口徑不同：印尼是貨幣體系對民間部門放款，馬來西亞是銀行體系家庭加企業放款合計，泰國是全體商業銀行放款（含銀行同業放款）。越南、新加坡沒有可比的免費月資料，不列入。泰國口徑含銀行同業放款，與另兩國不完全可比，看方向為主。"
+    },
+    {
+     "key": "asean-unemployment",
+     "title_zh": "東南亞失業率",
+     "priority": 2,
+     "series": [
+      {
+       "sid": "vn.unemp_q",
+       "label_zh": "越南失業率（季）",
+       "source": "越南國家統計局（NSO，前身統計總局 GSO）月／季社經報告附表",
+       "freq": "Q",
+       "unit": "%",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "季報附表 Unemployment rate and underemployment rate（General）",
+       "fetcher": "an_vn_nso",
+       "params": {
+        "kind": "report",
+        "table": "unemp",
+        "row": "general",
+        "probe_url": "https://www.nso.gov.vn/en/monthly-report/"
+       },
+       "notes": "NSO 季報附表（勞動力調查）：每季一份附表，歷史由逐期附表回補。",
+       "history_note": "2020 年第 1 季起（逐期季報附表回補）。"
+      },
+      {
+       "sid": "an.my_unemp",
+       "label_zh": "馬來西亞失業率（月）",
+       "source": "馬來西亞統計局（DOSM）",
+       "freq": "M",
+       "unit": "%",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "OpenDOSM：lfs_month（欄位 u_rate）",
+       "fetcher": "an_opendosm",
+       "params": {
+        "id": "lfs_month",
+        "field": "u_rate",
+        "probe_url": "https://api.data.gov.my/data-catalogue/?id=lfs_month&limit=100000&sort=date"
+       }
+      },
+      {
+       "sid": "th.unemp_rate",
+       "label_zh": "泰國失業率（月）",
+       "source": "泰國銀行（BOT）統計資料庫（原始：國家統計局 NSO 勞動力調查）",
+       "source_id": "BOTWEBSTAT reportID=638 列30「(rate  of  unemployment)」",
+       "freq": "M",
+       "unit": "%",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "fetcher": "an_th_bot",
+       "params": {
+        "report_id": 638,
+        "row_no": 30,
+        "row_label": "(rate  of  unemployment)",
+        "probe_url": "https://app.bot.or.th/BTWS_STAT/statistics/BOTWEBSTAT.aspx?reportID=638&language=ENG"
+       },
+       "notes": "月度、未經季節調整；2026 年 8 月 1.18%。"
+      },
+      {
+       "sid": "an.sg_unemp",
+       "label_zh": "新加坡總失業率（季，未季調）",
+       "source": "新加坡人力部（MOM），經新加坡統計局（SingStat）",
+       "freq": "Q",
+       "unit": "%",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "M182341 / Total Unemployment Rate",
+       "fetcher": "an_singstat",
+       "params": {
+        "table_id": "M182341",
+        "row": "Total Unemployment Rate",
+        "probe_url": "https://tablebuilder.singstat.gov.sg/api/table/tabledata/M182341?limit=2000"
+       },
+       "pct_change": false,
+       "notes": "SingStat 後設資料把此表（M182341）標成季調，實際是未季調；季調版為 M182342，與 MOM 公布的數字對得上。"
+      }
+     ],
+     "definition": "越南與新加坡是季資料（最新到 2026 年第 2 季，圖上標在季初 4 月），馬來西亞與泰國是月資料。越南為 15 歲以上勞動年齡，新加坡用總失業率未季調，各國調查口徑略有差異。印尼的失業率每年只公布兩次，本資料庫沒有收錄，不列入。"
+    },
+    {
+     "key": "asean-ipi",
+     "title_zh": "東南亞工業生產（年增率）",
+     "priority": 2,
+     "series": [
+      {
+       "sid": "vn.iip_yoy_m",
+       "label_zh": "越南工業生產指數年增率（官方公布）",
+       "source": "越南國家統計局（NSO，前身統計總局 GSO）月／季社經報告附表",
+       "freq": "M",
+       "unit": "%",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "月報附表 IIP（Whole industry）／單月 IIP 附表",
+       "fetcher": "an_vn_nso",
+       "params": {
+        "kind": "report",
+        "table": "iip",
+        "row": "whole",
+        "probe_url": "https://www.nso.gov.vn/en/monthly-report/",
+        "iip_file": true
+       },
+       "notes": "NSO 月報附表 IIP：當月對上年同月的指數減 100。不同月份的附表，同一個月的指數水準彼此不一致（基期調整與修正），所以只取每份附表「當月」的年增率，不拼指數水準。",
+       "history_note": "2020 年 9 月起（逐期社經報告附表回補）；最新一個月另讀 NSO 單月 IIP 附表（比社經報告早約 1 週）。"
+      },
+      {
+       "sid": "an.my_ipi",
+       "label_zh": "馬來西亞工業生產指數",
+       "source": "馬來西亞統計局（DOSM）",
+       "freq": "M",
+       "unit": "指數（2015=100）",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "OpenDOSM：ipi（欄位 index）",
+       "fetcher": "an_opendosm",
+       "params": {
+        "id": "ipi",
+        "field": "index",
+        "probe_url": "https://api.data.gov.my/data-catalogue/?id=ipi&limit=100000&sort=date&filter=abs@series",
+        "filter": "abs@series"
+       }
+      },
+      {
+       "sid": "th.mpi_nsa",
+       "label_zh": "泰國製造業生產指數",
+       "source": "泰國工業經濟辦公室（OIE，工業部）",
+       "source_id": "Prodidx1_E.xlsx 列「Integrated Index (Not seasonally adjusted)」",
+       "freq": "M",
+       "unit": "指數（2021=100）",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "fetcher": "an_th_oie",
+       "params": {
+        "file": "Prodidx1_E",
+        "row_label": "Integrated Index (Not seasonally adjusted)",
+        "probe_url": "https://www.oie.go.th/assets/portals/1/fileups/2/files/Industrial%20index/indexes_eng/month/Prodidx1_E.xlsx"
+       },
+       "notes": "2026 年 8 月 103.43、年增 4.44%，與 OIE 發布一致（BOT 8 月新聞稿附表 NSA 年增 4.4%）。",
+       "history_note": "OIE 的工業指數檔只提供 2021 年 1 月起的資料（基期 2021=100）。"
+      },
+      {
+       "sid": "an.sg_ipi",
+       "label_zh": "新加坡工業生產指數",
+       "source": "新加坡經濟發展局（EDB），經新加坡統計局（SingStat）",
+       "freq": "M",
+       "unit": "指數（2025=100）",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "M355351 / Total",
+       "fetcher": "an_singstat",
+       "params": {
+        "table_id": "M355351",
+        "row": "Total",
+        "probe_url": "https://tablebuilder.singstat.gov.sg/api/table/tabledata/M355351?limit=2000"
+       }
+      }
+     ],
+     "definition": "各國工業生產指數年增率。涵蓋範圍不同：泰國只有製造業生產指數，新加坡的工業生產指數以製造業為主，馬來西亞含製造、礦業與電力，越南含礦業、製造與水電。越南直接採官方公布的年增率，其餘由指數自行計算。印尼的工業生產指數本資料庫沒有可用來源，不列入。"
     },
     {
      "key": "asean-exports",
@@ -493,176 +824,115 @@
      "definition": "各國以本國統計機關或 IMF 轉載的商品出口總額計算年增率，口徑與公布時間不完全一致。"
     },
     {
-     "key": "asean-property",
-     "title_zh": "東南亞房價（BIS 名目住宅價格指數）",
+     "key": "asean-imports",
+     "title_zh": "東南亞進口（年增率）",
      "priority": 2,
      "series": [
       {
-       "sid": "an.spp_th",
-       "label_zh": "泰國名目住宅價格指數",
-       "source": "泰國銀行（BOT），經國際清算銀行（BIS）",
-       "freq": "Q",
-       "unit": "指數",
+       "sid": "an.vn_imports",
+       "label_zh": "越南進口（CIF）",
+       "source": "越南海關總署／統計總局，經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
        "sa": "NSA",
        "license": "public",
        "display": "yoy",
        "axis": "L",
-       "source_id": "WS_SPP / Q.TH.N.628",
-       "fetcher": "intl_bis",
+       "source_id": "IMF.STA:ITG / VNM.MG.CIF_USD.M",
+       "fetcher": "intl_imf",
        "params": {
-        "dataflow": "WS_SPP",
-        "key": "Q.TH.N.628",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_SPP/Q.TH.N.628?format=csv"
+        "dataflow": "ITG",
+        "key": "VNM.MG.CIF_USD.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/ITG/+/VNM.MG.CIF_USD.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "IMF 轉載，落後各國原公布約 1～4 個月",
+       "stale_days": 160,
+       "stale_reason": "IMF 轉載各國資料，約落後四個月"
+      },
+      {
+       "sid": "an.id_imports",
+       "label_zh": "印尼進口（CIF）",
+       "source": "印尼統計局（BPS），經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "IMF.STA:ITG / IDN.MG.CIF_USD.M",
+       "fetcher": "intl_imf",
+       "params": {
+        "dataflow": "ITG",
+        "key": "IDN.MG.CIF_USD.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/ITG/+/IDN.MG.CIF_USD.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "IMF 轉載，落後各國原公布約 1～4 個月",
+       "stale_days": 200,
+       "stale_reason": "IMF 轉載各國資料，進口比出口再晚一個月左右"
+      },
+      {
+       "sid": "an.my_imports",
+       "label_zh": "馬來西亞進口總額",
+       "source": "馬來西亞統計局（DOSM）",
+       "freq": "M",
+       "unit": "百萬令吉",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "OpenDOSM：trade_headline（欄位 imports）",
+       "fetcher": "an_opendosm",
+       "params": {
+        "id": "trade_headline",
+        "field": "imports",
+        "probe_url": "https://api.data.gov.my/data-catalogue/?id=trade_headline&limit=100000&sort=date&filter=abs@series",
+        "filter": "abs@series",
+        "scale": 1e-06
        }
       },
       {
-       "sid": "an.spp_id",
-       "label_zh": "印尼名目住宅價格指數",
-       "source": "印尼銀行（BI），經國際清算銀行（BIS）",
-       "freq": "Q",
-       "unit": "指數",
+       "sid": "th.imp_total",
+       "label_zh": "泰國進口總額（海關口徑）",
+       "source": "泰國銀行（BOT）統計資料庫（原始：海關）",
+       "source_id": "BOTWEBSTAT reportID=977 列65「Total Imports (Customs basis)」",
+       "freq": "M",
+       "unit": "百萬美元",
        "sa": "NSA",
        "license": "public",
        "display": "yoy",
        "axis": "L",
-       "source_id": "WS_SPP / Q.ID.N.628",
-       "fetcher": "intl_bis",
+       "fetcher": "an_th_bot",
        "params": {
-        "dataflow": "WS_SPP",
-        "key": "Q.ID.N.628",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_SPP/Q.ID.N.628?format=csv"
-       }
+        "report_id": 977,
+        "row_no": 65,
+        "row_label": "Total Imports (Customs basis)",
+        "probe_url": "https://app.bot.or.th/BTWS_STAT/statistics/BOTWEBSTAT.aspx?reportID=977&language=ENG"
+       },
+       "notes": "海關口徑進口總額（含非貨幣用黃金），美元計價。"
       },
       {
-       "sid": "an.spp_my",
-       "label_zh": "馬來西亞名目住宅價格指數",
-       "source": "馬來西亞財政部評價及產業服務局（NAPIC），經國際清算銀行（BIS）",
-       "freq": "Q",
-       "unit": "指數",
+       "sid": "an.sg_imports",
+       "label_zh": "新加坡商品進口總額",
+       "source": "新加坡企業發展局（Enterprise Singapore），經新加坡統計局（SingStat）",
+       "freq": "M",
+       "unit": "千新幣",
        "sa": "NSA",
        "license": "public",
        "display": "yoy",
        "axis": "L",
-       "source_id": "WS_SPP / Q.MY.N.628",
-       "fetcher": "intl_bis",
+       "source_id": "M451021 / Total Merchandise Imports",
+       "fetcher": "an_singstat",
        "params": {
-        "dataflow": "WS_SPP",
-        "key": "Q.MY.N.628",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_SPP/Q.MY.N.628?format=csv"
-       }
-      },
-      {
-       "sid": "an.spp_sg",
-       "label_zh": "新加坡名目住宅價格指數",
-       "source": "新加坡都市重建局（URA），經國際清算銀行（BIS）",
-       "freq": "Q",
-       "unit": "指數",
-       "sa": "NSA",
-       "license": "public",
-       "display": "yoy",
-       "axis": "L",
-       "source_id": "WS_SPP / Q.SG.N.628",
-       "fetcher": "intl_bis",
-       "params": {
-        "dataflow": "WS_SPP",
-        "key": "Q.SG.N.628",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_SPP/Q.SG.N.628?format=csv"
+        "table_id": "M451021",
+        "row": "Total Merchandise Imports",
+        "probe_url": "https://tablebuilder.singstat.gov.sg/api/table/tabledata/M451021?limit=2000"
        }
       }
      ],
-     "definition": "越南不在 BIS 的住宅價格統計內。"
+     "definition": "各國商品進口總額年增率，口徑與公布時間不完全一致。越南與印尼是經 IMF 轉載的 CIF 進口，落後原公布約 1～4 個月（印尼最新到 2026 年 5 月，越南到 6 月）；泰國用海關口徑，馬來西亞與新加坡直接取自本國統計機關。各國以本國貨幣或美元計價不同，年增率受匯率影響。"
     },
-    {
-     "key": "asean-fx-usd",
-     "title_zh": "東南亞各國對美元匯率（日）",
-     "priority": 2,
-     "series": [
-      {
-       "sid": "an.xru_th",
-       "label_zh": "美元兌泰銖（日）",
-       "source": "國際清算銀行（BIS）",
-       "freq": "D",
-       "unit": "泰銖／美元",
-       "sa": "NSA",
-       "license": "public",
-       "display": "level",
-       "axis": "L",
-       "source_id": "WS_XRU / D.TH",
-       "fetcher": "intl_bis",
-       "params": {
-        "dataflow": "WS_XRU",
-        "key": "D.TH",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_XRU/D.TH?format=csv"
-       },
-       "history_note": "BIS 彙編的日均匯率，約落後一週。"
-      },
-      {
-       "sid": "an.xru_id",
-       "label_zh": "美元兌印尼盾（日）",
-       "source": "國際清算銀行（BIS）",
-       "freq": "D",
-       "unit": "印尼盾／美元",
-       "sa": "NSA",
-       "license": "public",
-       "display": "level",
-       "axis": "L",
-       "source_id": "WS_XRU / D.ID",
-       "fetcher": "intl_bis",
-       "params": {
-        "dataflow": "WS_XRU",
-        "key": "D.ID",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_XRU/D.ID?format=csv"
-       },
-       "history_note": "BIS 彙編的日均匯率，約落後一週。"
-      },
-      {
-       "sid": "an.xru_my",
-       "label_zh": "美元兌令吉（日）",
-       "source": "國際清算銀行（BIS）",
-       "freq": "D",
-       "unit": "令吉／美元",
-       "sa": "NSA",
-       "license": "public",
-       "display": "level",
-       "axis": "L",
-       "source_id": "WS_XRU / D.MY",
-       "fetcher": "intl_bis",
-       "params": {
-        "dataflow": "WS_XRU",
-        "key": "D.MY",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_XRU/D.MY?format=csv"
-       },
-       "history_note": "BIS 彙編的日均匯率，約落後一週。"
-      },
-      {
-       "sid": "an.xru_sg",
-       "label_zh": "美元兌新幣（日）",
-       "source": "國際清算銀行（BIS）",
-       "freq": "D",
-       "unit": "新幣／美元",
-       "sa": "NSA",
-       "license": "public",
-       "display": "level",
-       "axis": "L",
-       "source_id": "WS_XRU / D.SG",
-       "fetcher": "intl_bis",
-       "params": {
-        "dataflow": "WS_XRU",
-        "key": "D.SG",
-        "probe_url": "https://stats.bis.org/api/v1/data/WS_XRU/D.SG?format=csv"
-       },
-       "history_note": "BIS 彙編的日均匯率，約落後一週。"
-      }
-     ],
-     "definition": "越南不在 BIS 匯率統計內。"
-    }
-   ],
-   "group": "五國對照"
-  },
-  {
-   "key": "tradewar",
-   "name_zh": "對美出口",
-   "charts": [
     {
      "key": "tw-exports-us",
      "title_zh": "東南亞各國對美國出口（年增率）",
@@ -758,19 +1028,465 @@
       }
      ],
      "definition": "IMF 分夥伴國貿易統計；新加坡未列入。"
+    },
+    {
+     "key": "tw-exports-cn",
+     "title_zh": "東南亞各國對中國出口（年增率）",
+     "priority": 2,
+     "series": [
+      {
+       "sid": "an.tw_exp_cn_vn",
+       "label_zh": "越南對中國出口（FOB）",
+       "source": "越南海關總署／統計總局，經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "IMF.STA:IMTS / VNM.XG_FOB_USD.CHN.M",
+       "fetcher": "intl_imf",
+       "params": {
+        "dataflow": "IMTS",
+        "key": "VNM.XG_FOB_USD.CHN.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IMTS/+/VNM.XG_FOB_USD.CHN.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "IMF 分夥伴國貿易（IMTS）。落後約 2～4 個月；部分國家的對中國出口可能含以進口國資料推算的鏡像值，與本國公布值略有差異。",
+       "stale_days": 160,
+       "stale_reason": "IMF 轉載各國資料，約落後四個月"
+      },
+      {
+       "sid": "an.tw_exp_cn_my",
+       "label_zh": "馬來西亞對中國出口（FOB）",
+       "source": "馬來西亞統計局（DOSM），經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "IMF.STA:IMTS / MYS.XG_FOB_USD.CHN.M",
+       "fetcher": "intl_imf",
+       "params": {
+        "dataflow": "IMTS",
+        "key": "MYS.XG_FOB_USD.CHN.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IMTS/+/MYS.XG_FOB_USD.CHN.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "IMF 分夥伴國貿易（IMTS）。落後約 2～4 個月；部分國家的對中國出口可能含以進口國資料推算的鏡像值，與本國公布值略有差異。",
+       "stale_days": 160,
+       "stale_reason": "IMF 轉載各國資料，約落後四個月"
+      },
+      {
+       "sid": "an.tw_exp_cn_th",
+       "label_zh": "泰國對中國出口（FOB）",
+       "source": "泰國銀行（BOT）／商務部，經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "IMF.STA:IMTS / THA.XG_FOB_USD.CHN.M",
+       "fetcher": "intl_imf",
+       "params": {
+        "dataflow": "IMTS",
+        "key": "THA.XG_FOB_USD.CHN.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IMTS/+/THA.XG_FOB_USD.CHN.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "IMF 分夥伴國貿易（IMTS）。落後約 2～4 個月；部分國家的對中國出口可能含以進口國資料推算的鏡像值，與本國公布值略有差異。",
+       "stale_days": 160,
+       "stale_reason": "IMF 轉載各國資料，約落後四個月"
+      },
+      {
+       "sid": "an.tw_exp_cn_id",
+       "label_zh": "印尼對中國出口（FOB）",
+       "source": "印尼統計局（BPS），經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "IMF.STA:IMTS / IDN.XG_FOB_USD.CHN.M",
+       "fetcher": "intl_imf",
+       "params": {
+        "dataflow": "IMTS",
+        "key": "IDN.XG_FOB_USD.CHN.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IMTS/+/IDN.XG_FOB_USD.CHN.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "IMF 分夥伴國貿易（IMTS）。落後約 2～4 個月；部分國家的對中國出口可能含以進口國資料推算的鏡像值，與本國公布值略有差異。",
+       "stale_days": 160,
+       "stale_reason": "IMF 轉載各國資料，約落後四個月"
+      },
+      {
+       "sid": "an.tw_exp_cn_sg",
+       "label_zh": "新加坡對中國出口（FOB）",
+       "source": "新加坡企業發展局（Enterprise Singapore），經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "IMF.STA:IMTS / SGP.XG_FOB_USD.CHN.M",
+       "fetcher": "intl_imf",
+       "params": {
+        "dataflow": "IMTS",
+        "key": "SGP.XG_FOB_USD.CHN.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IMTS/+/SGP.XG_FOB_USD.CHN.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "IMF 分夥伴國貿易（IMTS）。落後約 2～4 個月；部分國家的對中國出口可能含以進口國資料推算的鏡像值，與本國公布值略有差異。",
+       "stale_days": 160,
+       "stale_reason": "IMF 轉載各國資料，約落後四個月"
+      }
+     ],
+     "definition": "IMF 分夥伴國貿易統計（IMTS）的對中國出口，以美元計價，五國都最新到 2026 年 6 月，落後約 3 個月。部分國家的資料可能含以中國進口數字推算的鏡像值，與本國公布值略有差異。"
+    },
+    {
+     "key": "asean-reserves",
+     "title_zh": "東南亞外匯存底",
+     "priority": 1,
+     "series": [
+      {
+       "sid": "an.reserves_th",
+       "label_zh": "泰國官方準備資產",
+       "source": "泰國銀行（BOT），經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "IMF.STA:IRFCL / THA.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
+       "fetcher": "intl_imf",
+       "params": {
+        "dataflow": "IRFCL",
+        "key": "THA.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IRFCL/+/THA.IRFCLDT1_IRFCL65_USD.S1XS1311.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "IMF 國際準備與外幣流動性（IRFCL）第 I.A 項官方準備資產；原值為美元，已換算成百萬美元。",
+       "stale_days": 160,
+       "stale_reason": "IMF 轉載各國資料，約落後四個月"
+      },
+      {
+       "sid": "an.reserves_id",
+       "label_zh": "印尼官方準備資產",
+       "source": "印尼銀行（BI），經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "IMF.STA:IRFCL / IDN.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
+       "fetcher": "intl_imf",
+       "params": {
+        "dataflow": "IRFCL",
+        "key": "IDN.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IRFCL/+/IDN.IRFCLDT1_IRFCL65_USD.S1XS1311.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "同上。"
+      },
+      {
+       "sid": "an.reserves_my",
+       "label_zh": "馬來西亞官方準備資產",
+       "source": "馬來西亞國家銀行（BNM），經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "IMF.STA:IRFCL / MYS.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
+       "fetcher": "intl_imf",
+       "params": {
+        "dataflow": "IRFCL",
+        "key": "MYS.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IRFCL/+/MYS.IRFCLDT1_IRFCL65_USD.S1XS1311.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "同上。"
+      },
+      {
+       "sid": "an.reserves_sg",
+       "label_zh": "新加坡官方準備資產",
+       "source": "新加坡金融管理局（MAS），經國際貨幣基金（IMF）",
+       "freq": "M",
+       "unit": "百萬美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "IMF.STA:IRFCL / SGP.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
+       "fetcher": "intl_imf",
+       "params": {
+        "dataflow": "IRFCL",
+        "key": "SGP.IRFCLDT1_IRFCL65_USD.S1XS1311.M",
+        "probe_url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/IRFCL/+/SGP.IRFCLDT1_IRFCL65_USD.S1XS1311.M?attributes=none",
+        "scale": 1e-06
+       },
+       "notes": "同上。"
+      }
+     ],
+     "definition": "IMF 國際準備與外幣流動性統計中的官方準備資產；越南未向 IMF 申報此表，不列入。"
+    },
+    {
+     "key": "asean-fx-usd",
+     "title_zh": "東南亞各國對美元匯率（日）",
+     "priority": 2,
+     "series": [
+      {
+       "sid": "an.xru_th",
+       "label_zh": "美元兌泰銖（日）",
+       "source": "國際清算銀行（BIS）",
+       "freq": "D",
+       "unit": "泰銖／美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "WS_XRU / D.TH",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_XRU",
+        "key": "D.TH",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_XRU/D.TH?format=csv"
+       },
+       "history_note": "BIS 彙編的日均匯率，約落後一週。"
+      },
+      {
+       "sid": "an.xru_id",
+       "label_zh": "美元兌印尼盾（日）",
+       "source": "國際清算銀行（BIS）",
+       "freq": "D",
+       "unit": "印尼盾／美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "WS_XRU / D.ID",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_XRU",
+        "key": "D.ID",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_XRU/D.ID?format=csv"
+       },
+       "history_note": "BIS 彙編的日均匯率，約落後一週。"
+      },
+      {
+       "sid": "an.xru_my",
+       "label_zh": "美元兌令吉（日）",
+       "source": "國際清算銀行（BIS）",
+       "freq": "D",
+       "unit": "令吉／美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "WS_XRU / D.MY",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_XRU",
+        "key": "D.MY",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_XRU/D.MY?format=csv"
+       },
+       "history_note": "BIS 彙編的日均匯率，約落後一週。"
+      },
+      {
+       "sid": "an.xru_sg",
+       "label_zh": "美元兌新幣（日）",
+       "source": "國際清算銀行（BIS）",
+       "freq": "D",
+       "unit": "新幣／美元",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "WS_XRU / D.SG",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_XRU",
+        "key": "D.SG",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_XRU/D.SG?format=csv"
+       },
+       "history_note": "BIS 彙編的日均匯率，約落後一週。"
+      }
+     ],
+     "definition": "越南不在 BIS 匯率統計內。"
+    },
+    {
+     "key": "asean-reer",
+     "title_zh": "東南亞實質有效匯率（BIS 廣義）",
+     "priority": 2,
+     "series": [
+      {
+       "sid": "id.reer",
+       "label_zh": "印尼盾實質有效匯率",
+       "source": "國際清算銀行（BIS）",
+       "source_id": "WS_EER / M.R.B.ID",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_EER",
+        "key": "M.R.B.ID",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_EER/M.R.B.ID?format=csv"
+       },
+       "freq": "M",
+       "unit": "指數（2020=100）",
+       "sa": "NSA",
+       "display": "level",
+       "axis": "L",
+       "license": "public",
+       "notes": "BIS 實測可抓；落後約 1 個月。"
+      },
+      {
+       "sid": "my.reer",
+       "label_zh": "馬來西亞令吉實質有效匯率",
+       "source": "國際清算銀行（BIS）",
+       "source_id": "WS_EER / M.R.B.MY",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_EER",
+        "key": "M.R.B.MY",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_EER/M.R.B.MY?format=csv"
+       },
+       "freq": "M",
+       "unit": "指數（2020=100）",
+       "sa": "NSA",
+       "display": "level",
+       "axis": "L",
+       "license": "public"
+      },
+      {
+       "sid": "th.bis_reer",
+       "label_zh": "泰銖實質有效匯率",
+       "source": "國際清算銀行（BIS）",
+       "source_id": "WS_EER / M.R.B.TH",
+       "freq": "M",
+       "unit": "指數（2020=100）",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_EER",
+        "key": "M.R.B.TH",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_EER/M.R.B.TH?format=csv"
+       }
+      },
+      {
+       "sid": "sg.reer_bis",
+       "label_zh": "新加坡幣實質有效匯率",
+       "source": "國際清算銀行（BIS）",
+       "freq": "M",
+       "unit": "指數",
+       "sa": "NSA",
+       "license": "public",
+       "display": "level",
+       "axis": "L",
+       "source_id": "WS_EER / M.R.B.SG",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_EER",
+        "key": "M.R.B.SG",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_EER/M.R.B.SG?format=csv"
+       }
+      }
+     ],
+     "definition": "BIS 廣義實質有效匯率指數（2020 年 = 100），指數上升代表該國貨幣相對貿易夥伴升值。越南不在 BIS 有效匯率統計內，不列入。各國最新都到 2026 年 8 月。"
+    },
+    {
+     "key": "asean-property",
+     "title_zh": "東南亞房價（BIS 名目住宅價格指數）",
+     "priority": 2,
+     "series": [
+      {
+       "sid": "an.spp_th",
+       "label_zh": "泰國名目住宅價格指數",
+       "source": "泰國銀行（BOT），經國際清算銀行（BIS）",
+       "freq": "Q",
+       "unit": "指數",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "WS_SPP / Q.TH.N.628",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_SPP",
+        "key": "Q.TH.N.628",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_SPP/Q.TH.N.628?format=csv"
+       }
+      },
+      {
+       "sid": "an.spp_id",
+       "label_zh": "印尼名目住宅價格指數",
+       "source": "印尼銀行（BI），經國際清算銀行（BIS）",
+       "freq": "Q",
+       "unit": "指數",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "WS_SPP / Q.ID.N.628",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_SPP",
+        "key": "Q.ID.N.628",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_SPP/Q.ID.N.628?format=csv"
+       }
+      },
+      {
+       "sid": "an.spp_my",
+       "label_zh": "馬來西亞名目住宅價格指數",
+       "source": "馬來西亞財政部評價及產業服務局（NAPIC），經國際清算銀行（BIS）",
+       "freq": "Q",
+       "unit": "指數",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "WS_SPP / Q.MY.N.628",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_SPP",
+        "key": "Q.MY.N.628",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_SPP/Q.MY.N.628?format=csv"
+       }
+      },
+      {
+       "sid": "an.spp_sg",
+       "label_zh": "新加坡名目住宅價格指數",
+       "source": "新加坡都市重建局（URA），經國際清算銀行（BIS）",
+       "freq": "Q",
+       "unit": "指數",
+       "sa": "NSA",
+       "license": "public",
+       "display": "yoy",
+       "axis": "L",
+       "source_id": "WS_SPP / Q.SG.N.628",
+       "fetcher": "intl_bis",
+       "params": {
+        "dataflow": "WS_SPP",
+        "key": "Q.SG.N.628",
+        "probe_url": "https://stats.bis.org/api/v1/data/WS_SPP/Q.SG.N.628?format=csv"
+       }
+      }
+     ],
+     "definition": "越南不在 BIS 的住宅價格統計內。"
     }
    ],
    "group": "五國對照"
   }
  ],
  "todo": [
-  {
-   "chart": "asean-reer",
-   "category": "asean",
-   "title_zh": "東南亞實質有效匯率（BIS 廣義）",
-   "priority": 3,
-   "reason": "priority 3，第一版不收；BIS WS_EER（M.R.B.<國碼>）五國已實測可抓，fetcher 現成，加進目錄即可。"
-  },
   {
    "chart": "my-fdi",
    "category": "my",
@@ -791,13 +1507,6 @@
    "title_zh": "新加坡名目GDP年增率與細項",
    "priority": 3,
    "reason": "priority 3，第一版不收；SingStat M015631 已實測可抓，表內另有各產業年增率。"
-  },
-  {
-   "chart": "tw-exports-cn",
-   "category": "tradewar",
-   "title_zh": "東南亞各國對中國出口",
-   "priority": 3,
-   "reason": "priority 3，第一版不收；IMF IMTS 五國對中國（CHN）出口已實測可抓，fetcher 現成。"
   },
   {
    "chart": "ph-*（菲律賓整類，9 張圖；另東南亞總覽與中美貿易戰複合圖的菲律賓線）",

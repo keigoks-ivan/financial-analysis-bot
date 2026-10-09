@@ -50,10 +50,15 @@ def test_chart_titles_start_with_country_and_keys_unique(part):
 
 
 def test_sids_unique_and_prefixed(part):
-    pairs = [(s["sid"], s["display"]) for _, _, s in series(part)]
-    assert len(pairs) == len(set(pairs))      # 同一 sid 可在同圖以水準值與年增率各用一次，但同一種顯示不重複
-    for sid, _ in pairs:
+    sids = [s["sid"] for _, _, s in series(part)]
+    keys = [(s["sid"], s["display"]) for _, _, s in series(part)]   # 同一 sid 可用不同 display 畫兩次（房價：水準值＋年增率）
+    assert len(keys) == len(set(keys))
+    for sid in sids:
         assert sid.startswith("id.") or sid.startswith("an."), sid
+
+
+def _core(s):
+    return {k: v for k, v in s.items() if k not in ("axis", "label_zh", "display")}
 
 
 def test_reused_an_sids_identical_to_an_json(part):
@@ -62,8 +67,7 @@ def test_reused_an_sids_identical_to_an_json(part):
     reused = [s for _, _, s in series(part) if s["sid"] in ref]
     assert {s["sid"] for s in reused} >= {"an.id_gdp_real", "an.id_exports", "an.cbpol_id", "an.spp_id", "an.xru_id"}
     for s in reused:
-        assert {k: v for k, v in s.items() if k not in ("axis", "display")} == \
-            {k: v for k, v in ref[s["sid"]].items() if k not in ("axis", "display")}, s["sid"]
+        assert _core(s) == _core(ref[s["sid"]]), s["sid"]
 
 
 def test_fields_and_fetchers(part):

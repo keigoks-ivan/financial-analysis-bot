@@ -58,7 +58,7 @@ Chart.prototype.draw=function(){
   if(lo<=hi)ax[side].push([lo,hi])});
  var scale={};['L','R'].forEach(function(sd){if(!ax[sd].length)return;
   var lo=Math.min.apply(null,ax[sd].map(function(x){return x[0]})),hi=Math.max.apply(null,ax[sd].map(function(x){return x[1]}));
-  var pad=(hi-lo)*0.04||1;scale[sd]=nice(lo-(lo===0?0:pad),hi+(hi===0?0:pad),5)});
+  var pad=(hi-lo)*0.04||1;scale[sd]=nice(lo>=0?Math.max(0,lo-pad):lo-pad,hi+(hi===0?0:pad),5)});
  var svg=el('svg',{viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'xMidYMid meet'});
  function X(d){return ML+(d-t0)/Math.max(1,(t1-t0))*pw}
  function Y(sd,v){var s=scale[sd];return MT+ph-(v-s.lo)/(s.hi-s.lo)*ph}
