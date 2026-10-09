@@ -1,0 +1,2397 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD Screener 台股池 — InvestMQuest Research</title>
+<meta name="color-scheme" content="light">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);color:var(--ink)}
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+.hero{background:var(--card);border-bottom:1px solid var(--line);padding:28px 32px 22px}
+.hero-inner{max-width:min(1400px,96vw);margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hero-h1{font-family:var(--serif);font-size:24px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin-bottom:6px}
+.hero-sub{font-size:13px;color:var(--sec);line-height:1.65;max-width:680px}
+.hero-badge{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--sec);white-space:nowrap;align-self:flex-start;margin-top:4px}
+.hero-badge strong{color:var(--ink)}
+.filter-row{background:var(--card);border-bottom:1px solid var(--line);padding:10px 32px}
+.filter-inner{max-width:min(1400px,96vw);margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.filter-group{display:flex;align-items:center;gap:6px}
+.filter-label{font-size:11px;color:var(--sec);font-weight:600;margin-right:2px}
+.chip{padding:4px 11px;border:1px solid var(--line);border-radius:999px;font-size:11px;cursor:pointer;background:var(--card);color:var(--sec);user-select:none}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+#search-ticker{padding:3px 9px;border:1px solid var(--line);border-radius:6px;font-size:11px;width:240px;font-family:inherit;color:var(--ink);outline:none}
+#search-ticker:focus{border-color:var(--accent)}
+#search-clear{padding:3px 7px;border:1px solid var(--line);border-radius:6px;font-size:10px;background:var(--card);color:var(--muted);cursor:pointer;font-family:inherit}
+#search-clear:hover{color:var(--ink);border-color:var(--muted)}
+.search-panel{background:var(--card);border:1px solid var(--accent);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.search-panel-head{background:var(--accent);color:#fff;padding:6px 14px;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.search-panel-head .badge-bypass{background:rgba(255,255,255,.18);border-radius:4px;padding:1px 7px;font-size:9px;font-weight:500}
+.search-panel-body{overflow-x:auto}
+.search-panel.hidden{display:none}
+/* Custom preset panel */
+.custom-panel{background:var(--paper);border:1px solid var(--line);border-top:none;padding:12px 32px}
+.custom-panel.hidden{display:none}
+.custom-inner{max-width:min(1400px,96vw);margin:0 auto;display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap}
+.custom-field{display:flex;flex-direction:column;gap:4px;min-width:110px}
+.custom-field label{font-size:10px;color:var(--sec);font-weight:600}
+.custom-field input[type=number]{width:80px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;font-size:12px;color:var(--ink);background:var(--card)}
+.custom-toggle{display:flex;flex-direction:column;gap:4px}
+.custom-toggle label{font-size:10px;color:var(--sec);font-weight:600}
+.custom-toggle-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink)}
+.section{max-width:min(1400px,96vw);margin:0 auto;padding:24px 32px}
+/* Tabs */
+.tab-bar-wrap{background:var(--card);border:1px solid var(--line);border-radius:12px 12px 0 0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab-bar{display:flex;border-bottom:1px solid var(--line);min-width:max-content}
+.tab-btn{padding:10px 16px;font-size:12px;font-weight:600;color:var(--sec);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit;transition:color .15s,border-color .15s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--ink)}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--ink)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+/* Table */
+.compare-wrap{background:var(--card);border:1px solid var(--line);border-top:none;border-radius:0 0 12px 12px;overflow-x:auto;margin-bottom:24px}
+.tbl{width:100%;border-collapse:collapse;table-layout:auto}
+.tbl thead{position:sticky;top:0;z-index:3}
+.tbl th{background:var(--card);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--sec);font-weight:600;padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:normal;line-height:1.3;vertical-align:middle;max-width:90px}
+.tbl th.left{text-align:left}
+.tbl tr.th-group th{text-align:center;cursor:default;background:var(--line-soft);border-bottom:1px solid var(--line)}
+.tbl td{vertical-align:middle}
+.tbl th.sortable{cursor:pointer;user-select:none}
+.tbl th.sortable:hover{background:var(--line-soft);color:var(--ink)}
+.tbl th.sortable .sort-ind{display:inline;font-size:9px;color:var(--ink);white-space:nowrap}
+.tbl th.sortable.sort-active{color:var(--ink)}
+.tbl td{padding:8px 12px;font-size:12px;border-bottom:1px solid var(--paper);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+.tbl td.left{text-align:left;font-weight:600}
+.tbl tr:hover td{background:#fbf8f1}
+.pass-55{display:inline-block;padding:2px 8px;border-radius:5px;background:#eafaef;color:var(--pos);font-weight:800;font-size:11px}
+.pass-45{display:inline-block;padding:2px 8px;border-radius:5px;background:#fbf3df;color:var(--warn);font-weight:700;font-size:11px}
+.pass-35{display:inline-block;padding:2px 8px;border-radius:5px;background:#fbf3df;color:var(--warn);font-weight:700;font-size:11px}
+.pass-lt3{display:inline-block;padding:2px 8px;border-radius:5px;background:#fbeceb;color:var(--neg);font-weight:700;font-size:11px}
+.dd-link{font-size:10px;color:var(--accent);text-decoration:none;padding:2px 6px;border:1px solid var(--line-soft);border-radius:4px;background:var(--line-soft);margin:1px;display:inline-block}
+.dd-link:hover{background:var(--line-soft)}
+.ticker-nm{font-size:13px;font-weight:700;color:var(--ink)}
+.sector-mini{font-size:9px;color:var(--sec);font-weight:400;display:block;margin-top:1px}
+.upside-green{color:var(--pos);font-weight:700}
+.upside-na{color:var(--muted)}
+/* Source badges */
+.src-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;margin-left:3px;vertical-align:middle}
+.src-qgm-us{background:var(--line-soft);color:var(--accent)}
+.src-qgm-tw{background:#eafaef;color:var(--pos)}
+.src-yfinance{background:var(--line-soft);color:var(--sec)}
+.src-yfinance-eu{background:#fbf3df;color:var(--warn)}
+.src-koyfin{background:#eaf3fb;color:#0369a1}
+.src-pending-dd{background:#fdf0e0;color:#b45309}
+/* MA badges */
+.ma-badge{font-size:9px;font-weight:600;display:block;margin-top:2px;white-space:nowrap}
+/* Timing cells (v1.1 — joined from screener/latest.json) */
+.tmg-sweet{background:#eafaef;color:var(--pos);font-weight:700}
+.tmg-warm{background:#fbf3df;color:var(--warn);font-weight:600}
+.tmg-cool{background:var(--line-soft);color:var(--sec)}
+.tmg-hot{background:#fbf3df;color:var(--warn);font-weight:700}
+.tmg-na{background:var(--paper);color:var(--muted)}
+.tmg-bull-strong{color:var(--pos);font-weight:700}
+.tmg-bull{color:var(--pos);font-weight:600}
+.tmg-mid{color:var(--sec)}
+.tmg-weak{color:var(--muted)}
+.ath-spotlight{background:#eafaef;border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:0 20px 12px;font-size:11.5px;color:var(--pos);display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ath-spotlight .ath-label{font-weight:700;color:var(--pos);margin-right:4px;white-space:nowrap}
+.ath-spotlight .ath-empty{color:var(--muted);font-style:italic}
+.ath-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:11px;font-weight:600;color:var(--pos);cursor:pointer;font-family:inherit;line-height:1.4;transition:background .12s,border-color .12s}
+.ath-chip:hover{background:#eafaef;border-color:var(--pos)}
+.ath-chip.at-high{background:var(--pos);border-color:var(--pos);color:#fff}
+.ath-chip.at-high:hover{background:var(--pos)}
+.ath-chip.selected{box-shadow:0 0 0 2px var(--accent) inset;background:var(--accent);border-color:var(--accent);color:#fff}
+.ath-chip.selected:hover{background:var(--accent-ink)}
+.ath-chip.selected .ath-meta{color:#eafaef}
+.ath-chip .ath-meta{font-size:9px;font-weight:500;opacity:.85;font-variant-numeric:tabular-nums}
+.qichi-banner{background:#fbf3df;border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin:0 0 12px 0;font-size:11px;color:var(--warn);display:flex;align-items:center;gap:8px}
+/* Column footnote */
+.col-footnote{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:20px 24px;margin-top:24px}
+.col-footnote h3{font-size:12px;font-weight:700;color:var(--sec);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+.col-footnote ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.col-footnote li{font-size:11px;color:var(--sec);line-height:1.65;padding-left:12px;border-left:2px solid var(--line)}
+.col-footnote li strong{color:var(--ink);font-weight:700}
+.col-footnote li em{font-style:normal;color:var(--sec);font-weight:600}
+.col-footnote li code{background:var(--paper);border:1px solid var(--line);border-radius:3px;padding:1px 4px;font-family:monospace;font-size:10px;color:var(--ink)}
+.qichi-banner.hidden{display:none}
+.qichi-banner b{font-weight:700}
+/* Takeaway card */
+/* Loading / error states */
+.state-msg{padding:40px 24px;text-align:center;color:var(--muted);font-size:13px;line-height:1.8}
+.state-msg code{background:var(--paper);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:11px}
+@media(max-width:768px){
+  .hero{padding:16px}
+  .hero-h1{font-size:18px}
+  .filter-row{padding:10px 16px}
+  .custom-panel{padding:12px 16px}
+  .section{padding:16px}
+  .tab-bar-wrap{overflow-x:auto}
+  .compare-wrap{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/" class="active">DD Screener</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/simulation/">模擬</a>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<div class="imq-subnav"><div class="imq-subnav-inner"><a href="/dd-screener/">總覽</a><a href="/dd-screener/tw/">台股池</a><a href="/dd-screener/pipeline.html">Pipeline</a><a href="/dd-screener/quality-entry.html">Quality-Entry</a><a href="/dd-screener/cyclical-track.html">衛星·循環軌</a><a href="/dd-screener/sop-funnel.html">SOP Funnel</a><a href="/dd-screener/sop-funnel-backtest.html">SOP 回測</a></div></div>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-h1">DD Screener 台股池</div>
+      <div class="hero-sub">母體是 Koyfin 的台股篩選：市值 10 億美元以上、ROIC（投入資本報酬率）15% 以上、自由現金流為正，目前 69 檔，其中上櫃 14 檔。評分與排序規則跟美股主頁相同，資料各自獨立。</div>
+      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><a href="/dd-screener/" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--line-soft);color:var(--accent);border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">← 美股主頁</a><a href="/cockpit-tw/" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--line-soft);color:var(--accent);border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">台股選股主控台 →</a></div>
+    </div>
+    <div class="hero-badge" id="hero-badge"><strong>載入中...</strong></div>
+  </div>
+</div>
+
+<section id="tw-pool-note" style="margin:12px 20px"><div style="background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:12px 16px;font-size:12.5px;line-height:1.75;color:var(--ink)"><div style="font-weight:700;margin-bottom:4px">台股池跟美股主頁的差別（資料日 2026-10-09）</div><ul style="margin:0;padding-left:18px"><li><b>幣別</b>：股價與目標價是新台幣。EPS 原本是 Koyfin 的美元數字，這裡按 1 美元兌 31.91 元（2026-10-09）換回新台幣，滑過 EPS 可看美元原值。有 DD 報告的其中 7 檔沿用美股主頁的換算，數字跟主頁一致。</li><li><b>時機欄</b>：距 52 週高點、RS（相對強弱，近 1、4、13 週漲幅在一群股票裡的百分位）是跟台股 RS 雷達的 191 檔比，不跟美股比。</li><li><b>上修</b>：「上修」是本月 EPS 預估跟上月快照比。台股池第一份快照是 2026-10，要到下個月才有第一筆上修數字，在那之前上修欄是空的，排序也少了這一塊。</li><li><b>沒有分析師預估</b>：創見、光聖、德律、勝一、櫻花建、中再保、晶豪科、3595.TWO 等 15 檔在 Koyfin 沒有 EPS 預估。它們的名次只看品質和股價，沒有成長預估可比，參考價值較低。</li><li><b>DD 報告</b>：池內 9 檔有 DD 報告（聯發科、奇鋐、智邦、台積電、金像電、台達電、信驊、健策、創意），裁決與護城河分數沿用美股主頁。</li><li>另有 7 檔台股 DD 不符合本池篩選（2327、2383、3661、3037、3231、2317、8299），只列在<a href="/dd-screener/">美股主頁</a>。</li><li>下方各欄說明文字沿用美股主頁，跟本框有出入時以本框為準。</li></ul></div></section>
+<section class="ath-spotlight" id="ath-spotlight" aria-label="近 ATH 個股快速導航">
+  <span class="ath-label">近 5Y 新高（日線 ≥ −2% · ≤ 10D）：</span>
+  <span class="ath-empty" id="ath-empty-placeholder" style="display:none">暫無 ticker 觸頂</span>
+</section>
+
+<div class="filter-row">
+  <div class="filter-inner">
+    <div class="filter-group">
+      <span class="filter-label">Moat</span>
+      <span class="chip" data-filter="moat" data-value="S" title="護城河評等：頂級（≥9.5）">[S]</span>
+      <span class="chip" data-filter="moat" data-value="A" title="護城河評等：優良（≥8）">[A]</span>
+      <span class="chip" data-filter="moat" data-value="B" title="護城河評等：中等（≥6）">[B]</span>
+      <span class="chip" data-filter="moat" data-value="C" title="護城河評等：薄弱（≥4）">[C]</span>
+      <span class="chip active" data-filter="moat" data-value="All" title="不限護城河評等">[All]</span>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Direction</span>
+      <span class="chip active" data-filter="dir" data-value="updown">[↑ + →]</span>
+      <span class="chip" data-filter="dir" data-value="up">[↑ only]</span>
+      <span class="chip" data-filter="dir" data-value="any">[Any]</span>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">ROIC 來源</span>
+      <span class="chip active" data-filter="quadrant" data-value="All" title="不限 ROIC 拆解型態">[All]</span>
+      <span class="chip" data-filter="quadrant" data-value="HH" title="利厚轉快：NOPAT 利潤率 ≥15% ＋ 投入資本周轉率 ≥1.0x">[利厚轉快]</span>
+      <span class="chip" data-filter="quadrant" data-value="HL" title="利厚轉慢：NOPAT 利潤率 ≥15%，周轉率 <1.0x">[利厚轉慢]</span>
+      <span class="chip" data-filter="quadrant" data-value="LH" title="利薄轉快：NOPAT 利潤率 <15%，周轉率 ≥1.0x">[利薄轉快]</span>
+      <span class="chip" data-filter="quadrant" data-value="LL" title="利薄轉慢：NOPAT 利潤率 <15%，周轉率 <1.0x">[利薄轉慢]</span>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Preset</span>
+      <span class="chip active" data-filter="preset" data-value="MLB">[QGM MLB]</span>
+      <span class="chip" data-filter="preset" data-value="Custom">[Custom]</span>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">時機</span>
+      <span class="chip active" data-filter="timing" data-value="any">[Any]</span>
+      <span class="chip" data-filter="timing" data-value="qichi" title="起漲點：距ATH ∈ [-7%, 0%] ∩ ma50 ∈ [0%, +5%] ∩ RS ≥ 80">[起漲點]</span>
+      <span class="chip" data-filter="timing" data-value="pullback" title="回調帶：距ATH ∈ [-15%, -7%] ∩ MA 燈號 🟢 ∩ ma50 ∈ [-3%, +5%]（創過高、正回測、長趨勢未壞）">[回調帶]</span>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">EPS 上修</span>
+      <span class="chip active" data-filter="pec" data-value="off">[Any]</span>
+      <span class="chip" id="pec-chip" data-filter="pec" data-value="on" title="所有公司用同一組日曆年比較：條件年的 EPS 預估都上修 ≥ 5%，且同期股價落後使本益比下降 ≥ 10%。啟用後不套用 Moat、Direction、ROIC 來源和時機篩選">[EPS 上修・本益比壓縮]</span>
+    </div>
+    <div class="filter-group" style="margin-left:auto">
+      <span class="filter-label">查 ticker</span>
+      <input type="text" id="search-ticker" placeholder="例：NVDA / V (空白=精準) / NVDA TSM AVGO" autocomplete="off"
+        title="輸入單檔或多檔，以空白 / 逗號分隔。結果依輸入順序顯示，不受其他 chip 篩選影響" />
+      <button type="button" id="search-clear" title="清除">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom preset panel (hidden by default) -->
+<div class="custom-panel hidden" id="custom-panel">
+  <div class="custom-inner">
+    <div class="custom-field">
+      <label>FCF ≥ (%)</label>
+      <input type="number" id="cust-fcf" step="0.5" min="0" max="100" value="10">
+    </div>
+    <div class="custom-field">
+      <label>ROIC ≥ (%)</label>
+      <input type="number" id="cust-roic" step="0.5" min="0" max="100" value="15">
+    </div>
+    <div class="custom-field">
+      <label>EPS 2Y ≥ (%)</label>
+      <input type="number" id="cust-eps2y" step="0.5" min="0" max="200" value="15">
+    </div>
+    <div class="custom-field">
+      <label>PEG ≤ (x)</label>
+      <input type="number" id="cust-peg" step="0.1" min="0" max="10" value="2.0">
+    </div>
+    <div class="custom-field">
+      <label>D/E ≤ (x)</label>
+      <input type="number" id="cust-de" step="0.05" min="0" max="10" value="0.7">
+    </div>
+    <div class="custom-toggle">
+      <label>S 級護城河</label>
+      <div class="custom-toggle-row">
+        <input type="checkbox" id="cust-s-only" checked>
+        <span>僅顯示 S 級（≥9.5）</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <!-- Search panel — hidden until user types; bypasses all chip filters -->
+  <div class="search-panel hidden" id="search-panel">
+    <div class="search-panel-head">
+      <span><span id="search-count">0</span> 筆查詢結果</span>
+      <span class="badge-bypass">不受 Moat / Direction / Preset / Tab 影響</span>
+    </div>
+    <div class="search-panel-body" id="search-panel-body"></div>
+  </div>
+
+  <!-- 起漲點 banner — shows when timing chip is active -->
+  <div class="qichi-banner hidden" id="qichi-banner">
+    <b>起漲點 模式</b>：距ATH ∈ [-7%, 0%] ∩ 距50DMA ∈ [0%, +5%] ∩ RS ≥ 80。資料源 <code>/screener/latest.json</code>（每日 06:00 TPE 更新，與 Flow ATH Hunter 同源）。非美股（TW/JP/EU）無 timing 資料自動排除。
+  </div>
+
+  <!-- 回調帶 banner — shows when 回調帶 timing chip is active -->
+  <div class="qichi-banner hidden" id="pullback-banner" style="background:#fbf3df;border-color:var(--line);color:var(--warn)">
+    🟡 <b>回調帶 模式</b>：距ATH ∈ [-15%, -7%] ∩ MA 燈號 🟢 ∩ 距50DMA ∈ [-3%, +5%]。語意：創過新高、正在回測、長期趨勢未壞 —— 與 Entry State Machine 的 <code>PULLBACK_WATCH</code> 同構的<b>日線版</b>（週線版 Entry State Machine 已於 2026-07-07 封存）。非美股無 timing 資料自動排除。
+  </div>
+
+  <!-- EPS 上修・本益比壓縮 banner — shows when pec chip is active -->
+  <div class="qichi-banner hidden" id="pec-banner" style="background:#eef3fb;border-color:var(--line);color:var(--ink)">
+    <b>EPS 上修・本益比壓縮 模式</b>：所有公司用同一組日曆年比較，欄位顯示 <span class="pec-y" data-k="d0">今年</span>、<span class="pec-y" data-k="d1">明年</span>、<span class="pec-y" data-k="d2">後年</span> 三年，條件看 <span class="pec-y" data-k="c0">條件第一年</span> 與 <span class="pec-y" data-k="c1">條件第二年</span> 兩年。這兩年的 EPS 預估都上修 ≥ 5%，且同期股價落後使本益比下降 ≥ 10%，財報後或近 3 個月任一窗口達標即列入。這個模式不套用 Moat、Direction、ROIC 來源和時機篩選，也不限 MLB 分頁，直接列出全部符合的個股。
+  </div>
+
+  <!-- v1.8: EPS 估算 source banner — populated by JS from eps_estimates_source -->
+  <div id="eps-source-banner" style="display:none;margin:0 0 12px 0;padding:10px 14px;border-radius:8px;font-size:11.5px;line-height:1.6"></div>
+
+  <div class="tab-bar-wrap">
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="tab-5">完全符合 (<span id="cnt-5">—</span>)</button>
+      <button class="tab-btn" data-tab="tab-4">差一條 (<span id="cnt-4">—</span>)</button>
+      <button class="tab-btn" data-tab="tab-3">差兩條 (<span id="cnt-3">—</span>)</button>
+      <button class="tab-btn" data-tab="tab-all">全部 (<span id="cnt-all">—</span>)</button>
+    </div>
+  </div>
+
+  <div class="compare-wrap">
+    <div id="tab-5" class="tab-content active"><p class="state-msg">載入中...</p></div>
+    <div id="tab-4" class="tab-content"><p class="state-msg">載入中...</p></div>
+    <div id="tab-3" class="tab-content"><p class="state-msg">載入中...</p></div>
+    <div id="tab-all" class="tab-content"><p class="state-msg">載入中...</p></div>
+  </div>
+
+  <!-- ══ Column Documentation Footnote ══════════════════════════════════════
+       Placed outside .compare-wrap so JS table re-renders never move it.
+  ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="col-footnote">
+    <h3>表格欄位說明</h3>
+
+    <!-- 選股方法論總覽：多倍股發現漏斗（四段）。放在欄位說明最前，作為整頁框架。 -->
+    <div style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin-bottom:18px;font-size:11.5px;line-height:1.75;color:var(--body)">
+      <strong style="color:var(--ink);display:block;margin-bottom:4px;font-size:13.5px;letter-spacing:.02em">現行選股方法論 — 多倍股發現漏斗</strong>
+      <p style="margin:0 0 14px;color:var(--sec)">目標是找出<strong style="color:var(--ink)">營運可能爆發、報酬可能數倍的標的</strong>。結構是<strong style="color:var(--ink)">一個橫切雷達 + 一條縱向管線</strong>：雷達（形狀掃描）標示現在哪些股票動能正在加速、市場關注度集中於何處，管線（候選池 → DD → 掛單）追蹤單一標的的研究進度，全程資料驅動、不依賴人工翻閱報告或記憶。</p>
+
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--line-soft);border-left:3px solid var(--accent);border-radius:6px">
+          <div><strong style="color:var(--ink)">形狀掃描 — 橫切雷達（找候選）</strong>（明細已移駐 <a href="/dd-screener/pipeline.html">Pipeline</a> 發現層）<br>
+          <span style="color:var(--sec)"><strong style="color:var(--ink)">這是「找多倍股」的核心表格。</strong>用形狀過濾（不用覆蓋、不用市值過濾）：系統性掃全市場（美股主板自訂條件 screen，非當日漲幅榜）撈「營收成長加速（+20% 以上）+ 股價轉強 + 毛利穩定」的股票——過去多倍股起漲的長相。trailing 之上疊<strong style="color:var(--ink)">前瞻確認</strong>：多倍股的本質是「市場尚未 price in 的持續成長」，所以用分析師預估（universe 內 Koyfin FY1→FY3 EPS CAGR 與主表同源；外用 FY+1 營收預估）標 🟢續強/🔴反轉/⚪無預估，<strong style="color:var(--ink)">排序取 min(trailing, 前瞻)</strong>——trailing 數據強勁但前瞻反轉的基期效應/週期頂自動沉底。再加<strong style="color:var(--ink)">加速度（📈 營運槓桿點火中）、覆蓋狀態（🔭盲區/🟡有ID/✅有DD）、市值級距、連續在榜週數</strong>四層標籤而非剔除。大型股照樣翻倍（NVDA $300B→$3T、MU 記憶體循環），只是靠週期/重定價而非「尚未被發現」。<em style="color:var(--sec);font-style:normal">用途：這是候選清單——📈×🟢×✅有DD 疊加是最強訊號；尚未覆蓋者（尤其🔭盲區）列為建 DD 優先順序。它找的是「候選」不是「確定多倍股」，是否進場由 DD 判斷。</em></span></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--line-soft);border-left:3px solid var(--accent);border-radius:6px">
+          <div><strong style="color:var(--warn)">管線① 多倍候選池 — ID 已見、未建 DD</strong>（縱向管線起點｜明細已移駐 <a href="/dd-screener/pipeline.html">Pipeline</a> 發現層）<br>
+          <span style="color:var(--sec)">產業報告 §9 標為 <strong style="color:var(--ink)">🔴 核心受益</strong>、但還沒做個股 DD 的名單。排序刻意<strong style="color:var(--ink)">按市值（小 / 中優先）× 純度 × 5 年需求倍數</strong>，不按「被幾份 ID 提到」——後者量的是研究注意力重疊，與未被發現的多倍股反相關。<em style="color:var(--sec);font-style:normal">用途：決定下一份 DD 的研究預算配置對象。</em></span></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--paper);border-left:3px solid var(--accent);border-radius:6px">
+          <div><strong style="color:var(--ink)">管線② 主表 — 已建 DD 的名字</strong>（裁決層｜下方各欄位即本表）<br>
+          <span style="color:var(--sec)">有個股深度報告（DD）的名字才進主表。<strong style="color:var(--ink)">v2 名次</strong>（事業品質 × 再投資引擎 × 期望落差 × 價格四個面向逐層排序，FunnelRank v2；護城河不進排序，每列另有「儀表板」連結可看該檔機械數字）排序 ＋ <strong style="color:var(--ink)">五條基本門檻</strong>（FCF/ROIC/EPS CAGR/PEG/D-E）＋ 每份 DD 的<strong style="color:var(--ink)">統一裁決（進場 / 觀望 / 迴避）</strong>。這是判斷層——爆發候選路徑會在此判斷該價位是否仍有不對稱 upside。<em style="color:var(--sec);font-style:normal">用途：判斷該不該進、扮演什麼角色。</em></span></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--line-soft);border-left:3px solid var(--muted);border-radius:6px">
+          <div><strong style="color:var(--warn)">管線③ AR Live watch —（已退役 2026-07-07）</strong><br>          <span style="color:var(--sec)">原機制＝觀望股回檔使 <code>AR ≥ 4</code> 時自動亮進 watch。上線期間實檔零命中，已將 AR 降為參考資訊；「等回檔」改由 DD §13 裁決層的 26 週位置閘、以及 SOP 漏斗子頁的「冷卻後再武裝」流程管理。<em style="color:var(--sec);font-style:normal">AR 數值仍在主表欄位供參考，不再作為掛單觸發。</em></span></div>
+        </div>
+      </div>
+
+      <p style="margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--line);color:var(--sec)">
+        <strong style="color:var(--ink)">雷達與主表對應兩套不同的篩選邏輯</strong>：主表的品質框架（綜合評分 / 五條基本門檻）選「證明過自己的存活者」——ROIC、FCF、估值合理，<strong style="color:var(--ink)">優先降低誤判買進</strong>（低 false positive 優先）；形狀掃描選「正在證明自己的轉折者」——營收爆發 + 前瞻續強 + 股價剛轉強，<strong style="color:var(--ink)">優先降低錯失機會</strong>（低 false negative 優先，錯失 NVDA 的代價遠大於看錯三檔小票），因此刻意不設估值與獲利品質閘。兩者篩選的標的族群本就不同、重疊本來就少：MU/SNDK 這種循環股在雷達名列前茅、卻過不了五條基本門檻；COST/V 這種品質模範生則不會出現在雷達。兩者是<strong style="color:var(--ink)">互補而非互斥</strong>——雷達以寬鬆條件產生候選，品質框架在管線②（DD 裁決層）執行淘汰把關；核心（品質複利）與衛星（爆發候選）的配比屬於組合管理層的決策，非 screener 層的職責。<br>
+        <strong style="color:var(--ink)">上方分頁</strong>另有 Quality-Entry（品質切入）、衛星·循環軌與 SOP Funnel（板機執行）三個現役子頁，各自負責主表 universe 的<strong style="color:var(--ink)">進場時機側</strong>；其餘 5 月世代 timing 子頁（觸底反轉 / 突破動能 / EPS 加速 / 進場狀態機 / Alpha 排名）已於 2026-07-07 封存。<br>
+        <strong style="color:var(--warn)">重要：</strong>雷達與管線產出的都是<strong style="color:var(--ink)">「該研究 / 該盯」的排序</strong>，不是買入清單。最終進場由個股 DD 的 §13 裁決 ＋ 時機共同決定；名單只負責把注意力放對地方。
+      </p>
+    </div>
+
+    <div style="background:#eafaef;border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin-bottom:14px;font-size:11px;line-height:1.7;color:var(--pos)">
+      <strong style="color:var(--pos);display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">近 5Y 新高 spotlight — 表格上方 chip 列</strong>
+      hero 與 filter 之間的綠色橫條列出當下 <strong>站在或極近 5 年高點</strong>的 ticker — 表格主流量之上的快速導航 chip。
+      <br>• <strong>篩選邏輯：</strong><code>is_full_5y === true ∩ dist_5y_high_daily_pct ≥ −2% ∩ days_since_5y_high ≤ 10</code>；資料來自 <code>build_dd_screener.py compute_daily_5y_highs()</code>，每次 build batch 抓 yfinance 5y 日線（不是週線 — 週線會壓平 intraweek 峰值造成 NVDA / AVGO / COST 看似在 ATH 但實際已回檔的問題）。
+      <br>• <strong>排序：</strong>距 ATH 最近的先（dist desc），同距時間最近的先（days_since asc）。cap 25 chip 避免一行爆版。
+      <br>• <strong>顏色：</strong>白底綠邊 = dist ∈ <code>[−2%, 0%)</code>；實心綠 = <code>dist === 0</code>（today 創高）；深綠內凹 = 被選中。
+      <br>• <strong>多選比較：</strong>點 chip 累加 ticker 到下方查 ticker 搜尋欄，自動加 trailing space 觸發 exact match（V → 只剩 Visa，不會列出 V/VIK/VRT）。再點同個 chip = toggle 移除。點 ✕ 可清空並取消所有 chip 選取。
+      <br>• <strong>「暫無 ticker 觸頂」placeholder：</strong>當天條件 0 命中（罕見，大盤普跌時可能發生）。
+    </div>
+
+    <div style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:11px;line-height:1.7;color:var(--body)">
+      <strong style="color:var(--ink);display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">EPS 修正動能 — v1.10 動態 baseline + FY3 加入</strong>
+      <strong>FY+1→FY+3 CAGR</strong> 欄右方的 <span style="color:var(--pos);font-weight:600">↑+X.X% (vs 5/26)</span> / <span style="color:var(--neg);font-weight:600">↓-X.X% (vs 4/30)</span> 小字，是「本份 Excel forward CAGR」對照「上一份 Excel snapshot」的差值；尾段 <code>(vs M/D)</code> 是**比較基準的日期**（不是資料新鮮度 — 主數字永遠是最新一份 Excel）。<strong>Curr / Next / FY+3 EPS</strong> 三欄底下也都有同樣 chip — FY1 / FY2 / FY3 各自獨立 vs baseline。hover tooltip 另列 baseline 距今幾天。
+      <br>• <strong>上修（綠）</strong>：分析師對未來 EPS 估算往上調 — 業界已知 alpha factor（Womack 1996 + Bloomberg / FactSet 同名指標），上修股票後續 6-12 個月傾向 outperform
+      <br>• <strong>下修（紅）</strong>：估算往下調，常為基本面領先指標壞訊號
+      <br>• <strong>持平</strong>（|diff| &lt; 0.5%）：不顯示箭頭，避免雜訊
+      <br>• <strong>「新」chip（灰）</strong>：此 ticker 上一份 snapshot 還不在 universe（新加 DD / 新 cover），無對照
+      <br>• <strong>無顯示</strong>：首份 baseline 累積中（snapshot 還沒有 prior）— hover 看 tooltip 確認
+      <br><strong>CAGR 數字單位細節</strong>：CAGR chip 顯示的是「兩個 CAGR % 的絕對差」（兩個百分點之差），但為了視覺與 FY1/FY2/FY3 EPS chip 一致，後綴用 <code>%</code> 而非 <code>pp</code>。tooltip 會標註絕對差語意。
+      <br>baseline 來源優先順序：(1) 同月內較早的 <code>{YYYY-MM}-DD.json</code>（intra-month 5/20→5/25 這種短期 refresh），(2) 1-2 個月前的月度 snapshot。每月 2 號 09:00 Taipei 自動 snapshot（<code>.github/workflows/monthly-eps-snapshot.yml</code> → <code>scripts/snapshot_eps_estimates.py</code>），存於 <code>docs/dd-screener/eps-estimates-snapshots/YYYY-MM.json</code>。
+    </div>
+
+    <div style="background:var(--line-soft);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:11px;line-height:1.7;color:var(--ink)">
+      <strong style="color:var(--ink);display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">v2 名次 — FunnelRank v2 四層側寫逐層排序法（2026-09-22 起預設排序鍵）</strong>
+      每檔在四個獨立面向上分別打分，排序時先比最弱的那個面向，同一級再比下一個面向，不是把四個分數加權平均成一個總分——某一層真正頂尖的名字，不會因為另一項普通的財務指標被拉到跟該層普通的名字同一個名次區間。時機（進場點）仍不進這個排序，維持獨立 filter。
+      <br>• <strong>護城河不進排序</strong>：護城河是判斷不是可排序的分數，不進本頁任何排序計算。每列名次格右側另有「儀表板」連結，點進去看該檔每日更新的機械數字（<a href="/stock-dash/">/stock-dash/</a>）。
+      <br>• <strong>事業品質（母體百分位）</strong>：5 年 ROIC 均值、FCF 利潤率、FCF／淨利比（封頂 0.8，超過一律打平，不再加分）、淨利率四個欄位的百分位平均。FCF／淨利比封頂是因為分母是 GAAP 淨利，SBC 或一次性費用把淨利壓得很小的公司這一項會虛高，封頂後只罰偏低、不獎偏高。
+      <br>• <strong>再投資引擎（母體百分位）</strong>：機械算出的內生成長率（增量 ROIC × 再投資率）、增量 ROIC、FY1→FY3 EPS CAGR 三個欄位的百分位平均（增量 ROIC 若被極端值哨兵夾住或標記「資本縮減」，該欄不參與）。
+      <br>• <strong>期望落差（母體百分位）</strong>：近 3 個月上修 %、財報後上修 %、內生成長率減共識三年 CAGR 三個欄位的百分位平均——這一項回答「分析師的預估，還沒跟上機械算出的成長速度」。
+      <br>• <strong>價格（母體百分位）</strong>：本益比對五年均值倍數、PEG 兩個反向計分欄位（原始值越低、百分位越高，越便宜排名越高），加目標價上行空間 % 正向計分。目標價 Koyfin 抓不到時（例如 ADR 與原股兩邊資料各缺一半），改用 yfinance 的分析師目標價與現價算。
+      <br>• <strong>五分位 tier</strong>：事業品質／再投資引擎／期望落差／價格四層各自切五級（<code>80–100→4</code> … <code>0–20→0</code>），缺值面向記 <code>-1</code>，排序時當作中性值 2（不加分也不扣分）。排序先比四層裡最弱的一層，打平再比次弱的一層，以此類推；四層全部打平才比四層百分位的中位數，再打平比 ticker 字母序。
+      <br>• <strong>硬否決（沿用既有旗標，不新增判準）</strong>：<code>quality_veto_level=="拒絕"</code>（體質五項機械閘 4-5 項不合格）、<code>decline_signal_light=="⛔"</code>（衰退訊號六項機械指標命中 ≥5 項）、<code>veto_all_downgrade</code>（FY1/FY2/FY3 三欄全部下修）——命中任一即不排名、沉底，ticker 旁顯示 <span style="color:var(--neg)">⛔</span>。
+      <br>• <strong>資料不足</strong>：四個面向少於 3 個有效（tier ≠ -1）→ 不排名、沉底，標示「資料不足」。
+      <br>權重與欄位清單寫在 <code>scripts/build_dd_screener.py</code> 檔頭常數（<code>FUNNEL_V2_*</code>），server 端 build 時算好寫進 <code>latest.json</code>；設計依據見 <code>notes/site-internal/root/_funnel_v2_design_20260922.md</code>。表頭「v2 名次」欄 hover 看四個面向的分數與 tier 拆解。
+    </div>
+
+    <details style="background:var(--paper);border:1px solid var(--line);border-radius:8px;margin-bottom:18px;font-size:11px;line-height:1.7;color:var(--ink)">
+      <summary style="cursor:pointer;padding:14px 18px;font-weight:700;color:var(--sec);font-size:12px;letter-spacing:.02em">舊版 v1（保留一版）— 漏斗基本面三層合成分（原稱 FunnelRank，v1.3）</summary>
+      <div style="padding:0 18px 14px">
+      v2 上線後這一版<strong>不再是預設排序鍵</strong>，欄位仍照算保留一版供對照（下一版將移除）。把「QGM 4/4 → 護城河 → 修正動能 → 時機」四層人工漏斗的<strong>前三層（基本面）</strong>固化成一個 0–1 排序鍵。時機（第四層）<strong>不進排序分</strong>，維持 filter。
+      <br><code style="display:inline-block;margin:4px 0;padding:3px 6px">綜合評分 = 0.40·財務品質分 + 0.30·護城河分 + 0.30·上修動能分</code>
+      <br>• <strong>財務品質分（QualityGate，0–1）</strong>：帶「可原諒條件」的品質閘（4 條件計分：FCF / ROIC / EPS CAGR / PEG；<strong>2026-07-03 起 D/E 退出計分、降為 ⚠ advisory</strong>）—— <code>4/4</code> → 1.00；<code>3/4</code> 唯一 fail 在 <strong>PEG</strong>（估值，非品質本體）→ 0.85；<code>3/4</code> fail 在 <strong>FCF / ROIC / EPS CAGR</strong>（品質本體缺陷）→ 0.50；<code>2/4</code> → 0.30；<code>≤1/4</code> → 0.10。任一條件無資料（灰色）→ 該條退出分母、按比例換算後套同一映射，並標 <code>quality_gate_partial</code>。
+      <br>• <strong>護城河分（MoatScore，0–1）</strong>：<code>moat_score/10</code> × 趨勢乘數（<code>↑ ×1.10 / → ×1.00 / ↓ ×0.80</code>），封頂 1.0。無 moat 資料 → 0.50。
+      <br>• <strong>上修動能分（RevisionScore，0–1）</strong>：FY1/FY2/FY3 各自上修（diff ≥ +0.5%）= +1 / 持平 = 0 / 下修（≤ −0.5%）= −1；<code>raw = 0.2·FY1 + 0.3·FY2 + 0.5·FY3</code>（<strong>FY3 權重最大 = 成長曲線後段</strong>），<code>上修動能分 = (raw+1)/2</code>。FY3 上修幅度 &gt; FY1 上修幅度（後段變陡）再 +0.05。「新」chip / 無 baseline → 0.50 中性，標 <code>revision_no_baseline</code>。
+      <br>• <strong>四道不進公式的直接處置（2026-09-17 起，依嚴重度：兩個歸零 → 兩個封頂）</strong>：① FY1/FY2/FY3 <strong>三欄全部下修</strong> → 綜合評分強制歸 0、該列沉底 + <span style="color:var(--neg)">⛔</span>（下修是領先指標、品質分是落後指標，兩者衝突時以下修訊號為準）；② <strong>衰退訊號</strong>達 <span style="color:var(--neg)">⛔</span>（體質衰退訊號 6 項機械指標命中 ≥5 項）→ 綜合評分同樣強制歸 0（衰退訊號同屬領先指標，一樣壓過落後的品質分）；③ 護城河趨勢 <code>↓</code> 且<strong>非四條件全過</strong>（<code>pass_count &lt; 4</code>）→ 綜合評分封頂 0.50；④ <strong>體質五項 veto</strong> 命中<code>拒絕</code>（4-5 項不合格）→ 封頂 0.30、命中<code>降一級</code>（3 項不合格）→ 封頂 0.60——但當 FY1/FY2/FY3 <strong>三欄全部上修</strong>（各 ≥ +0.5%）時此封頂不生效（上修同屬領先指標，一樣壓過落後的體質評等）。同一列若同時符合多個條件，一律取最保守（最低）的分數，歸零的兩條優先權最高。FY1/FY2/FY3 修正 % 一律以公司財報幣別計算（非原始 USD），避免非美元公司在兩次匯出之間單純因匯率變動就被誤判全下修否決或誤觸發上修覆蓋；查不到財報幣別或當日匯率時才退回 USD 對比，個股欄位 hover 會標「未排除匯率」。<strong>v2 起，③④兩條封頂已停用</strong>——護城河與品質在 v2 是各自獨立的層，轉弱會直接反映在該層的 tier 上，不需要再用封頂模擬同樣的效果；③④對應的判準本身（護城河 ↓、體質五項 veto）仍在，只是不再拿來壓 v1 這個舊分數。
+      <br>權重與映射值寫在 <code>scripts/build_dd_screener.py</code> 檔頭常數（<code>FUNNEL_*</code>），server 端 build 時算好寫進 <code>latest.json</code>（<code>funnel_rank</code> + 三個子分 + 各 flag）。
+      </div>
+    </details>
+
+    <ul>
+
+      <li><strong>Ticker</strong>：股票代碼（正規格式）。
+        <br><em>來源：</em><code>dd-meta JSON</code> → <code>scripts/dd_screener_dd_loader.py</code>
+        <br><em>格式：</em>美股 <code>NVDA</code> / 台股 <code>2330.TW</code> / 日股 <code>6857.T</code> / 歐股 <code>RMS</code>（帶交易所後綴的 EU 用內部 suffix map 轉換，DD 名稱保留無後綴形式）
+        <br><em>⛔ 標記：</em>FY1/FY2/FY3 三欄全下修的否決列，ticker 旁顯示 ⛔、整列降透明度並沉底（v1 綜合評分 = 0；v2 名次為空）。
+      </li>
+
+      <li><strong>v2 名次（FunnelRank v2，四層側寫逐層排序）</strong>：<strong>表格預設排序鍵</strong>（升序，1 = 最佳）。詳見上方「v2 名次」說明。
+        <br><em>排序法：</em>事業品質、再投資引擎、期望落差、價格四個面向各自算百分位，先比四層裡最弱的一層，打平再比次弱的一層，以此類推（不是加權合成），全部打平才比四層中位數。護城河不參與（2026-09-22 定案）。
+        <br><em>來源：</em>事業品質／再投資引擎／期望落差／價格四層各自的欄位清單見上方說明，<code>scripts/build_dd_screener.py</code> build 時算好寫進 <code>latest.json</code>。
+        <br><em>顯示：</em>名次數字 ＋ 四格迷你側寫（灰色小橫條，最弱面向淡橘底）＋「儀表板」小連結（純顯示，連到該檔的 /stock-dash/）；hover 看四個面向的百分位與 tier 拆解，尾端附 v1 舊制分數對照。點表頭可改回任一欄位排序（原排序選項全保留）。
+      </li>
+
+      <li><strong>裁決（DD §13 統一裁決）</strong>：每份 v13/v14 合併報告決策層收斂出的單一裁決 —
+        <span style="background:#eafaef;color:var(--pos);padding:0 6px;border-radius:99px;font-weight:700">進場</span>
+        <span style="background:#fbf3df;color:var(--warn);padding:0 6px;border-radius:99px;font-weight:700">觀望</span>
+        <span style="background:#fbeceb;color:var(--neg);padding:0 6px;border-radius:99px;font-weight:700">迴避</span>。點擊跳該 DD 的 <code>#decision</code> 錨點。
+        <br><em>來源：</em>v13/v14 <code>dd-meta</code> 的 <code>dca_verdict</code>（欄位名沿用舊稱，資料是合併報告 Part II 決策層，非已退役的獨立 DCA 檔）；hover 看裁決日期與倉位角色（<code>dca_role</code>）。
+        <br><em>三詞制：</em>裁決只有<strong>進場／觀望／迴避</strong>三態，不含第四種。<strong>倉位角色</strong>是獨立的第二維（<code>核心</code>／<code>衛星</code>／<code>追蹤</code>／<code>不持有</code>，hover 於裁決 badge 上可見）——同一個「進場」可能扮演核心複利或衛星爆發，角色由 DD 決定、不改變裁決本身。過去的「條件式」不再是裁決狀態；條件進場的門檻與執行語意改由報告 §14a 的執行語承載。
+        <br><em>顯示 —：</em>v12 舊 schema 報告無決策層 metadata，該 ticker 重跑 v14 DD 後自動補上；不 fallback 讀 legacy DCA（2026-07 起 DCA 不再作為裁決來源）。
+        <br><em>注意：</em>裁決是<strong>寫報告當下</strong>的判斷，凍結於 DD 日期——股價漂移後宜搭配 5 年期望報酬率（live 回推）與 26 週位置閘判讀，過舊的裁決以重跑 DD 為準。
+      </li>
+
+      <li><strong>正不對稱三級標記（<span style="color:#B8860B;font-weight:700">◆</span> 好球帶／<span style="color:#475569;font-weight:700;letter-spacing:-1px">★★</span>／<span style="color:#64748B;font-weight:700">★</span>）</strong>：緊貼裁決 badge 的一枚描述器標記，衡量<strong>現價下</strong>的正不對稱程度。全部從既有欄位機械計算（<strong>現價重算值優先</strong>），取最高符合級；判定欄位缺任一即無標記。
+        <br><span style="color:#B8860B;font-weight:700">◆ 好球帶·重壓複審候選</span>：<code>AR_live ≥ 9</code> 且 <code>liveIRR ≥ 13%</code> 且陷阱 🟢 且護城河非收窄 且裁決＝進場 且報告齡 ≤ 90 天 — 稀有訊號·現價驅動·<strong>非加倉指令</strong>（只提示值得重新複審，不代表買賣動作）。
+        <br><span style="color:#475569;font-weight:700;letter-spacing:-1px">★★ 乾淨不對稱</span>：<code>AR_live ≥ 6</code> 且 <code>liveIRR ≥ 12%</code> 且陷阱 🟢 且護城河非收窄。
+        <br><span style="color:#64748B;font-weight:700">★ 不對稱但陷阱疑慮未決</span>：<code>AR_live ≥ 4</code> 且 <code>liveIRR ≥ 10%</code> 且陷阱非 🔴 且護城河非收窄。
+        <br><em>來源：</em><code>scripts/build_dd_screener.py</code> 的 <code>compute_asym_flag()</code>（單一權威實作）build 時算好寫進 <code>latest.json</code> 的 <code>asym_flag</code> 欄；<code>AR_live</code> ＝ 現價重算的不對稱比、<code>liveIRR</code> ＝ 現價重算的 5Y 年化報酬。hover 看兩者數值。門檻自 2026-07 起 PREREG 凍結至下次校準。
+      </li>
+
+      <li><strong>護城河評等（Moat，等級 + 分數 + 趨勢）</strong>：格式 <code>等級 分數 趨勢</code>，例如 <code>頂級 S 9.8 ↑</code>（字母為原始等級代碼，降為小字備查）。
+        <br><em>來源：</em><code>dd-meta JSON</code>（<code>moat_grade</code> / <code>moat_score</code>）；趨勢箭頭 v13/v14 以 <code>dd-meta</code> 的 <code>moat_trend</code> 為權威，v12 legacy 過渡期間 fallback 舊 DCA Phase A1 箭頭（<code>collect_dca_moat_trend_map()</code>），兩者皆無時 fallback <code>→</code>（保守假設：穩定）
+        <br><em>等級：</em>頂級 <code>S</code>（≥ 9.5）/ 優良 <code>A</code>（≥ 8）/ 中等 <code>B</code>（≥ 6）/ 薄弱 <code>C</code>（≥ 4）/ 無 <code>X</code>（護城河存疑）
+        <br><em>趨勢：</em><code>↑</code> 轉強 / <code>→</code> 持平 / <code>↓</code> 轉弱
+      </li>
+
+      <li><strong>FCF（FCF Margin）</strong>：TTM 自由現金流 / 營收，百分比。
+        <br><em>來源優先順序（2026-09-09 起）：</em>(1) Koyfin watchlist 頁面欄位（<code>refresh-eps-screener-web</code> 掃入 Excel 的 <code>FCF Margin %</code> 欄，經 <code>load_eps_estimates_xlsx.py</code> 解析為 <code>fcf_margin_pct</code>）— 有值即優先採用；(2) <code>docs/qgm/latest.json</code> 或 <code>docs/qgm-tw/latest.json</code>（<code>hard_filter_details.fcf_margin.value</code>）；(3) 前兩者皆無資料的 ticker 走 <code>scripts/dd_screener_quality.py</code> → <code>fundamentals_us.calc_fcf_margin()</code>（yfinance）。目前 Koyfin 欄位尚無實際資料，全數走 (2)/(3)。
+        <br><em>QGM MLB 門檻：</em><code>≥ 10%</code>（綠色通過 / 紅色不過 / 灰色無資料）
+      </li>
+
+      <li><strong>ROIC</strong>：NOPAT / Invested Capital，百分比。
+        <br><em>來源優先順序：</em>同 FCF — (1) Koyfin watchlist 頁面 <code>ROIC %</code> 欄（優先）；(2) QGM <code>hard_filter_details.roic.value</code>；(3) fallback <code>fundamentals_us.calc_roic()</code>（yfinance）。任一欄位命中 Koyfin 來源時，來源 badge 顯示為「Koyfin」，兩欄（FCF／ROIC）各自獨立判斷是否採用。
+        <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>
+      </li>
+
+      <li><strong>ROIC 拆解與存續力（ROIC 來源 / ROIC 走勢 / 增量 ROIC / 再投資率 / 隱含成長，2026-09-16）</strong>：緊接在 ROIC 欄後的 5 個純資訊欄，回答「這個 ROIC 從哪來、能不能撐住、新投的錢還賺不賺」。全部選填——只有 Koyfin xlsx 有帶這批欄位（<code>EBIT Margin %</code> / <code>ROIC 3Y Avg %</code> / <code>Tax Rate %</code> / <code>Revenue FY(-3)</code> / <code>EBIT FY(-3)</code> / <code>Invested Capital FY(-3)</code>）的名字才有值，其餘顯示 <code>—</code>。
+        <br><em>ROIC 來源（四象限）：</em><strong>利厚轉快</strong>＝NOPAT 利潤率 ≥15% 且投入資本周轉率 ≥1.0x；<strong>利厚轉慢</strong>＝利潤率高、周轉慢；<strong>利薄轉快</strong>＝利潤率低、周轉快；<strong>利薄轉慢</strong>＝兩者皆低。NOPAT 利潤率 = EBIT 利潤率 ×（1 − 有效稅率）；周轉率 = 營收 / 投入資本。hover 看實際利潤率與周轉率數字。
+        <br><em>ROIC 走勢：</em>現在 ROIC ÷ 過去 5 年平均 ROIC —— <code>≥1.10</code> 上升／<code>≤0.90</code> 下滑／其餘持平，判斷高 ROIC 是不是曇花一現。hover 看比值與 3 年平均 ROIC。
+        <br><em>增量 ROIC：</em>近 3 個財年 <code>(今年 NOPAT − 3 年前 NOPAT) ÷ 新增投入資本</code>——新增的一塊錢資本賺到多少報酬，比「總 ROIC」更能看出<strong>新成長是否值錢</strong>。若這 3 年投入資本不增反減（如大舉買回庫藏股），顯示<code>資本縮減</code>——此時「增量報酬率」沒有意義，不是缺資料。極端值會限縮顯示範圍（避免除以極小分母噴出失真的天文數字）。
+        <br><em>再投資率：</em>近 3 年新增投入資本 ÷ 期間年化 NOPAT——公司把多少獲利拿去繼續投資擴張，可以是負值（投入資本減少）。
+        <br><em>隱含成長：</em>增量 ROIC × 再投資率——機械推算的<strong>內生成長率上限</strong>，是描述器不是預測，也不是買賣建議。
+        <br><em>有效稅率：</em>取 Excel <code>Tax Rate %</code>，超出 <code>[0, 50%]</code> 合理區間（空白／負值／異常值）一律視為缺資料，改用 21% 預設稅率。
+        <br><em>資料來源：</em><code>scripts/load_eps_estimates_xlsx.py</code> 解析 Koyfin xlsx 選填欄位 → <code>scripts/build_dd_screener.py</code> 的 <code>compute_roic_decomposition()</code> 純函式計算，寫入 <code>latest.json</code> 每檔的對應欄位；上方 chip 列「ROIC 來源」可依四象限篩選。
+      </li>
+
+      <li><strong>體質</strong>：DD 技能既有的<strong>體質五項 veto</strong>——毛利連降 / FCF對淨利率偏低 / 營收連四季負 / 槓桿(淨負債/EBITDA>3x) / FY1 連三個月下修，逐字搬進 screener，不新創門檻。數字＝不合格項數；<code>0-2</code> 項＝維持評等、<code>3</code> 項＝降一級、<code>4-5</code> 項＝拒絕（顏色對應）。hover 看命中哪幾項。
+        <br><em>來源：</em><code>scripts/build_dd_screener.py</code> 的 <code>compute_fundamental_gates()</code>；FY1 連三月下修那一項另需 <code>docs/dd-screener/eps-estimates-snapshots/</code> 三份月度 baseline + 匯率／ADR 正規化，任一步查無資料即顯示未知（不計入不合格）。全部選填，未覆蓋的名字顯示 <code>—</code>。
+      </li>
+
+      <li><strong>衰退訊號</strong>：6 項機械指標（毛利連兩年降 / EPS 成長靠財務工程 / FCF 遜於淨利 / SBC 佔營收偏高 / 資本支出侵蝕 FCF / 營收連四季負）命中幾項的燈號 + 計數——<code>🟢 0</code> 項／<code>🟡 1-2</code> 項／<code>🔴 3-4</code> 項／<code>⛔ ≥5</code> 項。hover 看命中哪幾項。
+        <br><em>來源：</em><code>compute_fundamental_gates()</code>，每項獨立判斷缺資料則不計入（不會虛報全綠）。
+      </li>
+
+      <li><strong>營運槓桿</strong>：營收成長% − 營業利益成長%（僅營業利益為正時計算）——負值＝<strong>利潤率擴張</strong>（成本控制優於營收成長）；<code>0-3pp</code>＝<strong>接近平衡</strong>；<code>3-7pp</code>＝<strong>壓縮</strong>；<code>&gt;7pp</code>＝<strong>嚴重壓縮</strong>（成本吃掉營收成長）。hover 看實際 pp 差。
+      </li>
+
+      <li><strong>資本配置</strong>：機械版 2-of-3 評等（<strong>不是</strong> DD 報告內 LLM 質性評等）——股數稀釋率年化 ≤1.5%（庫藏股使其為負）、庫藏股佔 FCF ≤80%（或無庫藏股）、槓桿過關（同「體質」欄槓桿項）三項各自過關與否，<code>3</code> 項過關＝<code>A</code>、<code>2</code> 項＝<code>B</code>、<code>≤1</code> 項＝<code>C</code>；已知項 &lt;2 顯示 <code>—</code>。hover 看稀釋率／庫藏股佔FCF／SBC佔營收三個數字。
+      </li>
+
+      <li><strong>籌碼</strong>：融券占流通股比（Short Interest % of Float）＋近 3 個月內部人淨買賣方向——<code>&gt;10%</code> 標紅（軋空風險偏高；同一數字也讓該股在 GRP 席位引擎排序中只能列衛星、不進核心候選，但這裡的顯示本身不是資格閘）；旁邊 ▲買／▼賣 badge 為近 3 個月內部人淨買賣方向（淨股數 <code>&gt;0</code> 為買、<code>&lt;0</code> 為賣、<code>=0</code> 或缺值不顯示）。兩者皆為描述器，不進入綜合評分公式。全部選填，未覆蓋的名字顯示 <code>—</code>。
+        <br><em>來源：</em>Koyfin「Short Interest &gt; % Of Shares Outstanding」與「Insider Transactions, Shares (Net) - 3M」，經 <code>scripts/load_eps_estimates_xlsx.py</code> 解析 → <code>compute_fundamental_gates()</code> §L 算出 <code>short_squeeze_flag</code>／<code>insider_signal</code>。
+      </li>
+
+      <li><strong>估值 vs 5Y</strong>：NTM 本益比 ÷ 過去 5 年平均本益比——<code>&gt;1.5x</code> 標紅，代表目前估值明顯貴於自身歷史區間（非同業比較）。hover 另附 PB 對 5 年均值倍數（<code>&gt;2.0x</code> 視為偏貴）。
+      </li>
+
+      <li><strong>目標價</strong>：分析師目標價平均 ÷ 現價 − 1（%）——皆為當地掛牌貨幣（如台股用 TWD），僅供比率使用，不與美股價格混算。hover 看目標價區間（最高/最低）與高低比（<code>&gt;2.5x</code> 代表分析師分歧偏大，數字參考價值降低）。
+      </li>
+
+      <li><strong>動能</strong>：<code>RSI(14) / 近 6 個月報酬率</code>——RSI 右上標 <code>*</code> 代表 &gt;70 過熱；6 個月報酬門檻 <code>&lt;100%</code> 放行／<code>100-150%</code> 邊界／<code>&gt;150%</code> 擋下（顏色對應）。hover 標註 RSI 是否可信——距 52 週高點 &lt;3% 時 RSI 容易失真，不宜單獨引用。
+      </li>
+
+      <li><strong>FY+1→FY+3 CAGR</strong>：Excel buy-side forward 2Y CAGR（%）— <strong>v1.9 起改用 Excel snapshot</strong>。
+        <br><em>來源：</em>Excel <code>cagr_fy1_fy3_pct</code>（FY+1 → FY+3 純前瞻 2 年期複合成長率，目前約 219/241 ticker 覆蓋，動態隨 Koyfin watchlist 增刪）；少數 yfinance-only ticker（6146.T / 6857.T 等無 Excel 資料）fallback yfinance「+1y / +2y」row；SU / ABB 因 Koyfin export 資料異常於 <code>scripts/load_eps_estimates_xlsx.py</code> <code>_SKIP_TICKERS</code> 名單中略過。
+        <br><em>窗口語意：</em>跟舊版「yearAgo → FY+1」(含 1 個過去實際 EPS) 不同；現在是 2 個前瞻 estimate (FY+1 vs FY+3) — buy-side 對未來 2 年的純前瞻 expectation。
+        <br><em>修正動能：</em>右方小字 <span style="color:var(--pos);font-weight:600">↑+X.X% (vs 5/26)</span>（綠 = 上修）/ <span style="color:var(--neg);font-weight:600">↓-X.X% (vs 4/30)</span>（紅 = 下修）= 本份 Excel CAGR vs 上一份 Excel snapshot 差值（絕對 pp 差，標 % 為視覺一致）；尾段 <code>(vs M/D)</code> 是**比較基準的日期**（hover 看距今幾天）；|diff| &lt; 0.5 視為持平；「新」chip = 此 ticker 上份 baseline 未收錄。詳見上方「EPS 修正動能」callout。
+        <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>（顏色基於 Excel forward CAGR；server 端 <code>pass_count</code> 同一欄位 — v1.9 已與 UI 顯示對齊）
+      </li>
+
+      <li><strong>Curr FY / Next FY / FY+3 EPS</strong>：當前 / 下一 / 兩年後會計年度 consensus EPS（純資訊欄無 pass/fail）— <strong>v1.8 起 Excel buy-side 為主，yfinance fallback；v1.10 加 FY+3 revision chip + 動態 baseline 間距標籤</strong>。
+        <br><em>來源優先順序：</em>(1) Koyfin Excel <code>FY1E / FY2E / FY3E</code> consensus mean — 主路徑，約 219/241 ticker；(2) yfinance <code>.earnings_estimate</code> <code>0y / +1y / +2y</code> row — fallback（JP 股、SU/ABB、Excel 缺值）。<code>eps_source</code> 欄記載每個 ticker 走哪一路。
+        <br><em>對應曆年：</em>多數 US Dec-FY 公司：Curr FY ≈ 本曆年、Next FY ≈ 下個曆年；非 Dec-FY 例外（NVDA Jan：Curr = FY27 / Next = FY28；JP 公司 Mar：差約半年）。
+        <br><em>每欄底下修正動能 chip：</em><span style="color:var(--pos);font-weight:600">↑+X.X% (vs 5/26)</span> / <span style="color:var(--neg);font-weight:600">↓-X.X% (vs 4/30)</span> = 此 FY EPS vs 上一份 Excel snapshot 的相對變動 %；<code>(vs M/D)</code> 是**比較基準的日期**（即上一份 Excel snapshot 日；hover tooltip 列距今天數）。「新」chip = 此 ticker 在 prior snapshot 還不在 universe（新加入）。詳見上方「EPS 修正動能」callout。
+        <br><em>非美股 native currency 顯示：</em><code>.TW / .T / .HK / .KS / .SS / .SZ</code> 後綴的 ticker 自動 back-compute FX（從 yfinance financialCurrency vs Excel USD），表格直接顯示 TWD / JPY / HKD / KRW / CNY 數字 + 後綴 chip；hover 看 USD 原值與 FX rate。
+        <br><em>用途：</em>驗證 forward CAGR 公式（<code>((FY+3 / FY+1)^0.5 − 1) × 100</code>，Excel 直接給）；觀察上修/下修方向強弱對比（FY1 與 FY3 上修幅度差很大 = 成長曲線位移）。
+      </li>
+
+      <li><strong>PEG</strong>：即時前瞻 PEG = <code>live FwdPE / Excel FY+1→FY+3 CAGR</code> — <strong>v1.10 起分母改用 Excel forward CAGR，與主欄「FY+1→FY+3 CAGR」一致</strong>。之前用 yfinance YearAgo→FY+1 anchored CAGR，對 SBC 重的 SaaS（GAAP TTM 被 SBC 壓低）造成 fake-low PEG（CDNS 0.77 → 修正後 2.32；DDOG 4.42 → 3.79）。當 Excel CAGR 缺值（FY1 負如 NBIS / CRWV / NVTS、或 yfinance-only ticker 如 6857.T）會 fallback 回 yfinance CAGR。
+        <br><em>來源（live）：</em>純 derive — 分子分母都用 live，所以價格動 + 分析師修正都會反映在這欄。
+        <br><em>規則：</em>frozen DD PEG 進 tooltip（hover 看 DD 對比）；live 任一邊失敗時 fallback 顯示 frozen DD 並標 <code>DD</code>。
+        <br><em>QGM MLB 門檻：</em><code>≤ 2.0x</code>（顏色基於 live 值）
+      </li>
+
+      <li><strong>2Y P/E</strong>：即時 FY+2 Forward P/E — <strong>v1.7.3 簡化為只顯示最新數字</strong>。
+        <br><em>來源（live）：</em>每日 <code>scripts/build_dd_screener.py</code>，主路徑用 yfinance FY EPS 估算（<code>live_fpe_method = 'eps'</code>）；EPS 抓不到時 fallback 用 <code>fpe_fy2 × price_now/price_at_dd</code> 漂移推算（標 <code>*</code>，<code>live_fpe_method = 'drift'</code>，假設 EPS 未 revise — 半年以上會高估「變貴」程度）。
+        <br><em>規則：</em>純資訊欄，不參與 pass_count；無配色 / 無 DD 對照 — 想知 DD 寫入時的對比請看 <code>/research/</code> 表格的 <code>data-pe2y</code> 欄位。
+      </li>
+
+      <li><strong>D/E（Debt/Equity）</strong>：Total Debt / Stockholders Equity。<strong>2026-07-03 起降為 advisory（不計入通過條件、不擋閘）</strong> —— 持有人拍板的質量條件本無 D/E，此欄過去在 AVGO / LLY / APP / SEZL / STX 等槓桿型贏家造成誤殺。
+        <br><em>來源：</em>QGM <code>hard_filter_details.debt_to_equity.value</code> 優先；QGM 有 D/E 缺口（如 ANET 零負債）時補抓 yfinance balance sheet；Negative equity（如 FICO / DELL / SBUX）回傳 <code>null</code>（負值無意義），顯示「—」
+        <br><em>顯示規則：</em>值 <code>&gt; 0.7x</code> 顯示 <span style="background:#fbf3df;color:var(--warn);font-weight:600;padding:0 5px;border-radius:4px">⚠</span> 高槓桿警示 badge（只提醒、不擋）；<code>≤ 0.7x</code> 中性顯示。門檻可由 Custom preset 的 D/E slider 調整（只影響 ⚠ 觸發線，不影響 pass_count）。
+      </li>
+
+      <li><strong>通過（Pass Count）</strong>：4 條基本門檻（FCF / ROIC / EPS / PEG）通過的數量。<strong>第五條「護城河」（grade∉{C,X} 且 trend≠↓）以否決形式在 sop-funnel 板機層把守，不併入此計數</strong> —— 完整閘＝「4 條件＋護城河否決」。D/E 為 advisory，不計入。
+        <br><em>計算：</em>client-side 即時計算，隨 Custom preset 的 slider 數值同步更新
+        <br><em>顏色：</em><code>4/4</code> 深綠 / <code>3/4</code> 黃棕 / <code>2/4</code> 淡黃 / <code>&lt; 2</code> 紅
+        <br><em>Tab 分組：</em>完全符合（4/4）/ 差一條（3/4）/ 差兩條（2/4）/ 全部
+      </li>
+
+      <li><strong>5 年期望報酬率</strong>：即時 5 年期年化期望報酬率（%，原稱 5Y IRR）— <strong>v1.7.3 簡化為只顯示最新數字（heuristic 推算）</strong>。
+        <br><em>來源（live）：</em>從 DD 決策層 frozen 值用 <code>(price_at_dd / price_now)</code> 回推：
+        <br><code style="display:inline-block;margin:4px 0;padding:3px 6px">live_ev5y = ((1 + ev5y/100) × (price_at_dd / price_now)^0.2 − 1) × 100</code>
+        <br>直覺：股價跌 → 起點變便宜 → 同樣 5 年 terminal → 期望報酬率變高（合理）。標 <code>*</code> 提醒是推算非實算。
+        <br><em>Caveat（重要）：</em><strong>假設 DD 寫入時的 terminal value（5 年後目標價）未變</strong>。如果 thesis broke（基本面惡化、target 砍半），此 live 期望報酬率會誤導你以為「跌很多 = 更便宜的機會」。建議搭配最新 DD 決策層（§13）判讀，不要單看此欄就加倉。
+        <br><em>顏色：</em>≥ <code>12%/yr</code> 深綠 / <code>8–12%</code> 中綠 / <code>0–8%</code> 琥珀 / &lt; <code>0%</code> 紅（依數值上色，不是對比 DD）
+        <br><em>frozen 原始來源：</em><code>collect_dca_ev_map()</code>（<code>scripts/update_dd_index.py</code>）— v13/v14 以 <code>dd-meta</code> 的 <code>ev5y_pct</code> 為權威，v12 legacy 過渡期間 fallback 解析舊 DCA HTML §4 EV
+      </li>
+
+      <li><strong>MA（長期均線健康度）</strong>：股價相對一年線（W52）與五年線（W250）週均線的位置與斜率。
+        <br><em>來源：</em><code>scripts/dd_screener_ma.py</code> → yfinance 抓 5Y 週線資料（<code>1wk</code> interval）
+        <br><em>計算：</em><code>w52</code>（一年線）= 52 週 SMA / <code>w250</code>（五年線）= 250 週 SMA / <code>slope_w250_pct</code> = 五年線現值 vs 4 週前的漲幅% / <code>drift_4w_pct</code> = 股價 4 週漲跌%
+        <br><em>燈號：</em>🟢 健康（一年線 ↑ ∩ 五年線 ↑ ∩ slope > 0）/ 🟡 普通（一年線 ↑ ∩ 五年線 ↑，slope 平或負）/ 🔴 走弱（跌破任一均線）/ ⚪ 無資料（歷史不足，如 ARM / NU / VIK / SNDK 上市 &lt; 5 年，改依一年線判斷並標示五年線無資料）
+      </li>
+
+      <li><strong>距 ATH（距 52 週高點）</strong>：當前股價離 52 週調整後收盤最高點的百分比距離。0% = 站在 52 週高；負值 = 低於高點。
+        <br><em>來源：</em>美股 — <code>docs/screener/latest.json</code> <code>dist_52w_high_pct</code>（每日 06:00 TPE 更新，與 Flow ATH Hunter 同源）；非美股及不在 screener universe 的 DD ticker — <code>build_dd_screener.py</code> <code>compute_yfinance_timing_fallback()</code> 批量抓 300d 日線計算（<code>timing_source: "yfinance_fallback"</code>）；TW / JP / EU 若 fallback 也無法取得則顯示「—」
+        <br><em>顏色：</em>🟢 sweet <code>[-7%, 0%]</code> 起漲點甜區 / 🟡 warm <code>[-15%, -7%]</code> base 築底（<strong>回調帶</strong> preset 的 distATH 區間）/ ⚪ cool <code>&lt; -15%</code> 深度回調 / 🟠 hot <code>&gt; +2%</code> extended 已突破延伸
+      </li>
+
+      <li><strong>時機 preset（Any / 起漲點 / 回調帶）</strong>：在基本面綜合評分排序之上，疊加日線時機篩選（與排序分相互獨立）。
+        <br><em>起漲點：</em>距ATH ∈ <code>[-7%, 0%]</code> ∩ 距50DMA ∈ <code>[0%, +5%]</code> ∩ RS ≥ 80 —— 剛突破、未延伸。
+        <br><em>回調帶（v1.3 新增）：</em>距ATH ∈ <code>[-15%, -7%]</code> ∩ <strong>MA 燈號 🟢</strong>（一年線↑ ∩ 五年線↑ ∩ slope&gt;0，或 &lt;5y 上市以一年線↑ 判斷）∩ 距50DMA ∈ <code>[-3%, +5%]</code> —— 創過新高、正在回測、長期趨勢未壞。語意與 Entry State Machine 的 <code>PULLBACK_WATCH</code> 同構（<strong>日線版</strong>；週線版 Entry State Machine 已於 2026-07-07 封存）。
+        <br><em>非美股：</em>TW/JP/EU 無 timing 資料者在起漲點 / 回調帶模式自動排除。
+      </li>
+
+      <li><strong>EPS 上修・本益比壓縮（chip，啟用後多出 4 欄）</strong>：找「分析師把 <span class="pec-y" data-k="c0">條件第一年</span> 與 <span class="pec-y" data-k="c1">條件第二年</span> 的 EPS 預估都調高，股價卻沒跟上」的個股。這是研究清單，不是買進訊號。
+        <br><em>統一日曆年：</em>所有公司都用同一組日曆年比較，不用各自的明年度與後年度。每個財年算進它大部分月份所在的那一年，剛好各半的（6 月底結帳）算結束那年。例如 MU 的財年到 9 月初結束，FY27 算 2027 年；NVDA 的財年到 1 月底結束，FY28 算 2027 年。欄位顯示 <span class="pec-y" data-k="d0">今年</span>、<span class="pec-y" data-k="d1">明年</span>、<span class="pec-y" data-k="d2">後年</span> 三年。某一年的財年已經結束，或超出預估範圍，顯示「—」。
+        <br><em>條件年何時換：</em>條件年每年 6 月 1 日切換。到 6 月，各種結帳月份的公司都已公布年報，兩個條件年都有預估可比。1 到 5 月條件看今年與明年，6 月起改看明年與後年，目前是 <span class="pec-y" data-k="c0">條件第一年</span> 與 <span class="pec-y" data-k="c1">條件第二年</span>。
+        <br><em>兩個條件：</em>①<span class="pec-y" data-k="c0">條件第一年</span> 與 <span class="pec-y" data-k="c1">條件第二年</span> 的 EPS 預估相對基準日都上修 ≥ 5%；②同期股價落後使預估本益比下降 ≥ 10%（本益比變動 ＝ (1 + 股價變動) ÷ (1 + <span class="pec-y" data-k="c0">條件第一年</span> EPS 修正) − 1）。兩個條件同時成立才算達標。
+        <br><em>兩個窗口：</em>財報後（基準日為上次財報前最後一次共識快照）與近 3 個月（約 90 天前的快照），任一窗口達標即列入；兩邊都達標的證據較強。股價從基準日後第一個交易日算到最新收盤。
+        <br><em>財年已轉的個股：</em>公司公布年報後，資料來源會把第一欄往後挪一年。程式先把基準日與現在對齊到同一個財年，再歸到日曆年。財年是否已轉無法判斷者，該窗口不評分。
+        <br><em>為什麼景氣循環股常出現：</em>市場預期盈餘已在高峰，會先給較低的本益比，股價因此不跟著預估上調。本益比下降可能是便宜，也可能是市場正確預見盈餘即將下滑，需回頭看個股報告判斷。
+        <br><em>參考欄：</em>本益比／5 年均是目前預估本益比除以 5 年平均，只供參考，不是條件。警示標籤只提醒資料可能失真，不排除個股：變動極大（條件年修正 ≥ 100%，基期可能接近零）、財報日異常（缺漏或超過 200 天）、5 年比偏離（比值 &lt; 0.3 或 &gt; 3）。
+      </li>
+
+      <li><strong>vs 50DMA（距 50 日均線）</strong>：當前股價相對 50 日 SMA 的百分比偏離。正值 = 股價在均線上方。
+        <br><em>來源：</em>同「距 ATH」— screener <code>ma50_pct</code> 優先；fallback yfinance 批量抓 300d 日線，取末 50 根收盤均值計算
+        <br><em>顏色：</em>🟢 sweet <code>[0%, +5%]</code> 剛收復均線、未過熱 / 🟡 warm <code>[+5%, +15%]</code> 延伸但可控 / 🟠 hot <code>&gt; +15%</code> 過熱 / ⚪ cool <code>&lt; 0%</code> 跌破 50 日均線（趨勢受壓）
+      </li>
+
+      <li><strong>RS（Relative Strength Score）</strong>：相對強度評分 0–100，相對 S&amp;P500 全體成份股的百分位排名（多時間框架加權）。
+        <br><em>來源：</em>美股在 screener universe — <code>docs/screener/latest.json</code> <code>rs_score</code>（EMA 平滑的 1w/4w/13w 加權複合分數，與 Flow ATH Hunter 同源）；不在 screener universe 的 DD ticker — fallback 批量抓 300d 日線，計算原始 1w/4w/13w 報酬率，對全 screener universe（~511 股）做百分位排名後加權（公式：<code>r1w×0.2 + r4w×0.3 + r13w×0.5 + trend_bonus ±5</code>）；TW / JP 本地上市股對同一美股 universe 排名（跨幣種，方法上有 FX 雜訊，以一致性優先）
+        <br><em>顏色：</em>深綠 <code>≥ 80</code> 強勢 / 中綠 <code>60–79</code> OK / 灰 <code>40–59</code> 中性 / 淺灰 <code>&lt; 40</code> 弱勢
+        <br><em>起漲點門檻：</em><code>≥ 80</code>
+      </li>
+
+      <li><strong>Links（DD / 定見）</strong>：快速連結。
+        <br><em>DD：</em>連到 <code>docs/dd/DD_{TICKER}_{YYYYMMDD}.html</code>（最新版，路徑來自 <code>dd-meta</code>）
+        <br><em>定見：</em>v13/v14 合併報告直接跳該 DD 的 <code>#decision</code> 錨點（§13 統一裁決）；v12 舊報告無此連結。legacy <code>/dca/</code> 連結已移除（DCA 退役，凍結檔案仍在站上可從 /research/ 進入）
+      </li>
+
+      <li><strong>資料來源 badge（Koyfin / QGM-US / QGM-TW / YF / YF-EU）</strong>：顯示在 Ticker 旁，標示 QGM-MLB 質量欄位（FCF / ROIC / EPS / PEG，＋ advisory 的 D/E）的實際資料來源。
+        <br><em>🔷 Koyfin：</em>ROIC／FCF Margin 兩欄任一命中 Koyfin watchlist 頁面掃入的 Excel 欄位（<code>refresh-eps-screener-web</code>）即顯示此 badge；其餘欄位（PEG／EPS CAGR／D/E）仍照各自原有來源顯示，不受此欄影響。2026-09-09 上線，尚無實際資料進來。
+        <br><em>🔵 QGM-US：</em><code>docs/qgm/latest.json</code>（每週 GitHub Actions 跑 QGM 美股宇宙，~511 股）
+        <br><em>🟢 QGM-TW：</em><code>docs/qgm-tw/latest.json</code>（台股宇宙）
+        <br><em>⚪ YF：</em>yfinance 臨時抓取（不在 QGM 宇宙的美股、日股等）
+        <br><em>🟠 YF-EU：</em>yfinance + EU 交易所後綴（如 <code>RMS.PA</code> / <code>AENA.MC</code> / <code>BESI.AS</code>）
+      </li>
+
+    </ul>
+  </div><!-- /.col-footnote -->
+
+</div>
+
+<script>
+// 護城河評等白話對照（字母代碼降小字，主名用等第詞）— 對應 moat_grade / moat_trend。
+var MOAT_GRADE_WORD = {S:'頂級', A:'優良', B:'中等', C:'薄弱', X:'無'};
+var MOAT_TREND_WORD = {'↑':'轉強', '→':'持平', '↓':'轉弱'};
+
+// ── State ──────────────────────────────────────────────────────────────────
+var state = {
+  moat:    'All',      // S | A | B | C | All
+  dir:     'updown', // updown | up | any
+  quadrant: 'All',   // All | HH | HL | LH | LL — ROIC 分解四象限（2026-09-16）
+  preset:  'MLB',    // MLB | Custom
+  timing:  'any',    // any | qichi (起漲點) | pullback (回調帶)
+  pec:     'off',    // off | on — EPS 上修・本益比壓縮（獨立模式，略過其他 chip）
+  pecPrevTab: null,  // 進入 pec 模式前的分頁，退出時還原
+  customThresholds: { fcf: 10, roic: 15, eps2y: 15, peg: 2.0, de: 0.7 },
+  customSOnly: true,
+  // 2026-09-22: default sort 改為 FunnelRank v2 名次升序（1 = 最佳）。原欄位排序
+  // 皆保留 — 點任一可排序表頭即切換。server 端 latest.json 也已 pre-sort by
+  // funnel_v2_rank。v1 綜合分（funnel_rank）欄位仍照算保留一版，見 hover 拆解。
+  sortKey: 'funnel_v2_rank',
+  sortDir: 'asc',   // 'asc' | 'desc'
+  searchQuery: ''    // ticker substring lookup; bypasses chip filters
+};
+
+// 起漲點 thresholds (v1 骨感版 — 上線一週後依名單長度調整)
+var QICHI_THRESHOLDS = {
+  dist_52w_high_min: -7,  // dist_52w_high_pct ∈ [-7, 0]
+  dist_52w_high_max: 0,
+  ma50_min: 0,            // ma50_pct ∈ [0, +5]
+  ma50_max: 5,
+  rs_min: 80              // rs_score ≥ 80
+};
+
+// 回調帶 thresholds (v1.3) — 日線版 PULLBACK_WATCH：創過高、正回測、長趨勢未壞。
+var PULLBACK_THRESHOLDS = {
+  dist_52w_high_min: -15,  // dist_52w_high_pct ∈ [-15, -7]（warm 築底帶）
+  dist_52w_high_max: -7,
+  ma50_min: -3,            // ma50_pct ∈ [-3, +5]（在 50DMA 附近震盪）
+  ma50_max: 5
+  // 加上 MA 燈號 = 🟢（長期週均線健康）— 見 maIsGreen()
+};
+
+// Raw data from latest.json
+var DATA = null; // populated after fetch
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function getThresholds() {
+  if (state.preset === 'Custom') return state.customThresholds;
+  if (!DATA) return { fcf: 10, roic: 15, eps2y: 15, peg: 2.0, de: 0.7 };
+  var p = DATA.presets && DATA.presets[state.preset];
+  return p || DATA.presets['MLB'] || { fcf: 10, roic: 15, eps2y: 15, peg: 2.0, de: 0.7 };
+}
+
+function getCriteria() {
+  if (!DATA || !DATA.criteria) {
+    // fallback defaults
+    return [
+      {key:'fcf',   label:'FCF',  threshold:10,   invert:false, unit:'%'},
+      {key:'roic',  label:'ROIC', threshold:15,   invert:false, unit:'%'},
+      {key:'eps2y', label:'EPS',  threshold:15,   invert:false, unit:'%'},
+      {key:'peg',   label:'PEG',  threshold:2.0,  invert:true,  unit:'x'},
+      {key:'de',    label:'D/E',  threshold:0.7,  invert:true,  unit:'x', advisory:true}
+    ];
+  }
+  return DATA.criteria;
+}
+
+// 2026-07-03: 只計分的條件（排除 advisory 的 D/E）。pass_count 母數 = 這些條件。
+function getScoredCriteria() {
+  return getCriteria().filter(function(c) { return !c.advisory; });
+}
+function scoredCount() {
+  return getScoredCriteria().length;  // 現為 4（FCF / ROIC / EPS / PEG）
+}
+
+function computePassCount(stock) {
+  // Always recompute client-side via active thresholds (preset or custom).
+  // For MLB this matches the server's pre-computed pass_count; for Custom
+  // this yields a different count so the tabs actually reshuffle.
+  // 2026-07-03: D/E 為 advisory，退出 pass_count 計分（只當 ⚠ badge 顯示）。
+  var t = getThresholds();
+  return getScoredCriteria().filter(function(c) {
+    var v = stock[c.key];
+    if (v === null || v === undefined) return false;
+    var thr = t[c.key];
+    if (thr === undefined) thr = c.threshold;
+    return c.invert ? v <= thr : v >= thr;
+  }).length;
+}
+
+function passFlag(stock, criterion) {
+  var v = stock[criterion.key];
+  if (v === null || v === undefined) return null; // null = no data
+  var t = getThresholds()[criterion.key];
+  if (t === undefined) t = criterion.threshold;
+  return criterion.invert ? v <= t : v >= t;
+}
+
+function moatChipPass(stock) {
+  // Exact grade-letter match (e.g. [A] = only moat_grade==="A").
+  // [All] passes everything. moat_grade '?' / null is treated as no match
+  // for specific letters and only shows under [All].
+  if (state.moat === 'All') return true;
+  return (stock.moat_grade || '') === state.moat;
+}
+
+function quadrantChipPass(stock) {
+  // 2026-09-16: ROIC 分解四象限 chip — exact code match (HH/HL/LH/LL);
+  // [All] passes everything, incl. stocks with no quadrant (missing inputs).
+  if (state.quadrant === 'All') return true;
+  return (stock.roic_quadrant_code || '') === state.quadrant;
+}
+
+function dirFilter(stock) {
+  var trend = stock.moat_trend || '→';
+  if (state.dir === 'up')     return trend === '↑';
+  if (state.dir === 'updown') return trend === '↑' || trend === '→';
+  return true; // any
+}
+
+function qichiPass(stock) {
+  // 起漲點 = 距ATH ∈ [-7, 0] ∩ 距50DMA ∈ [0, +5] ∩ RS ≥ 80.
+  // Tickers with no timing block (non-US: TW/JP/EU) are filtered out — we
+  // can't claim a 起漲點 without screener data.
+  var t = stock.timing;
+  if (!t) return false;
+  var d = t.dist_52w_high_pct, m = t.ma50_pct, r = t.rs_score;
+  if (d === null || d === undefined) return false;
+  if (m === null || m === undefined) return false;
+  if (r === null || r === undefined) return false;
+  if (d < QICHI_THRESHOLDS.dist_52w_high_min || d > QICHI_THRESHOLDS.dist_52w_high_max) return false;
+  if (m < QICHI_THRESHOLDS.ma50_min || m > QICHI_THRESHOLDS.ma50_max) return false;
+  if (r < QICHI_THRESHOLDS.rs_min) return false;
+  return true;
+}
+
+function pullbackPass(stock) {
+  // 回調帶 = 距ATH ∈ [-15, -7] ∩ MA 燈號 🟢 ∩ 距50DMA ∈ [-3, +5].
+  // 日線版 PULLBACK_WATCH。非美股無 timing 資料者排除（沿用起漲點既有行為）。
+  var t = stock.timing;
+  if (!t) return false;
+  var d = t.dist_52w_high_pct, m = t.ma50_pct;
+  if (d === null || d === undefined) return false;
+  if (m === null || m === undefined) return false;
+  if (d < PULLBACK_THRESHOLDS.dist_52w_high_min || d > PULLBACK_THRESHOLDS.dist_52w_high_max) return false;
+  if (m < PULLBACK_THRESHOLDS.ma50_min || m > PULLBACK_THRESHOLDS.ma50_max) return false;
+  if (!maIsGreen(stock.ma)) return false;
+  return true;
+}
+
+function timingPass(stock) {
+  if (state.timing === 'qichi')    return qichiPass(stock);
+  if (state.timing === 'pullback') return pullbackPass(stock);
+  return true; // any
+}
+
+function applyFilters(stocks) {
+  // Custom S-Only is a separate score-based override (>=9.5) used only in
+  // Custom preset; the Moat chip is ignored in that mode for clarity.
+  var customSOnly = state.preset === 'Custom' && state.customSOnly;
+  if (state.pec === 'on') {
+    return stocks.filter(function(s) { return !!(s.pe_compression && s.pe_compression.match); });
+  }
+  return stocks.filter(function(s) {
+    if (customSOnly) {
+      var score = typeof s.moat_score === 'number' ? s.moat_score : 0;
+      if (score < 9.5) return false;
+    } else if (!moatChipPass(s)) {
+      return false;
+    }
+    if (!dirFilter(s)) return false;
+    if (!timingPass(s)) return false;
+    if (!quadrantChipPass(s)) return false;
+    return true;
+  });
+}
+
+// ── Rendering ──────────────────────────────────────────────────────────────
+function sourceBadge(src) {
+  var cls = 'src-yfinance', label = src || '—';
+  if (src === 'koyfin-xlsx') { cls = 'src-koyfin';      label = 'Koyfin'; }
+  else if (src === 'qgm-us')      { cls = 'src-qgm-us';      label = 'QGM-US'; }
+  else if (src === 'qgm-tw') { cls = 'src-qgm-tw';      label = 'QGM-TW'; }
+  else if (src === 'yfinance-eu') { cls = 'src-yfinance-eu'; label = 'YF-EU'; }
+  else if (src === 'yfinance') { cls = 'src-yfinance';   label = 'YF'; }
+  return '<span class="src-badge ' + cls + '">' + label + '</span>';
+}
+
+function maBadge(ma) {
+  // null = data unavailable (insufficient history for younger IPOs like ARM /
+  // NU / VIK / SNDK lacking 250-week / 5-year close history). Treat distinctly
+  // from "below MA" — don't conflate missing data with bearish.
+  if (!ma || (ma.above_w52 === null && ma.above_w250 === null)) {
+    return '<span class="ma-badge" style="color:#94a3b8">— 無資料</span>';
+  }
+  // Newer listing: W250 unknown but W52 available — judge by W52 alone with a
+  // marker so the user knows the long-term MA is missing on purpose.
+  if (ma.above_w250 === null && ma.above_w52 !== null) {
+    if (ma.above_w52) {
+      return '<span class="ma-badge" style="color:#15803D" title="五年線資料不足（&lt; 5y 上市），依一年線判斷">&#x1F7E2; 一年線↑・五年線無資料</span>';
+    }
+    return '<span class="ma-badge" style="color:#dc2626" title="五年線資料不足，依一年線判斷">&#x1F534; 一年線↓・五年線無資料</span>';
+  }
+  // Full history available — original three-band logic
+  if (ma.above_w52 && ma.above_w250 && ma.slope_w250_pct > 0) {
+    return '<span class="ma-badge" style="color:#16a34a">&#x1F7E2; 健康</span>';
+  }
+  if (ma.above_w52 && ma.above_w250) {
+    return '<span class="ma-badge" style="color:#ca8a04">&#x1F7E1; 普通</span>';
+  }
+  return '<span class="ma-badge" style="color:#dc2626">&#x1F534; 走弱</span>';
+}
+
+function maIsGreen(ma) {
+  // 🟢 燈號 = maBadge 會渲染綠色的兩種情形（與 maBadge 邏輯保持一致）：
+  //   (1) full history: above_w52 && above_w250 && slope_w250_pct > 0  → healthy
+  //   (2) younger listing (< 5y): above_w250===null but above_w52===true → "W52↑ · W250 N/A"
+  // 黃(mixed) / 紅(weak) / 灰(n/a) 都不算綠。用於回調帶 timing 篩選。
+  if (!ma) return false;
+  if (ma.above_w250 === null && ma.above_w52 === true) return true;
+  return !!(ma.above_w52 && ma.above_w250 && ma.slope_w250_pct > 0);
+}
+
+function cellStyle(flag) {
+  if (flag === null) return 'background:var(--line-soft);color:var(--muted)';
+  return flag ? 'background:#eafaef;color:var(--pos)' : 'background:#fbeceb;color:var(--neg)';
+}
+
+// Timing cell formatters (v1.1) — colour bands aligned with 起漲點 sweet spots.
+// distATH: 0 = at high; negative = below. Sweet spot [-7, 0]; cool [-15, -7];
+//          deep [-∞, -15] = grey; above ATH = orange (extended).
+function fmtDistAth(v) {
+  if (v === null || v === undefined) return '<td class="tmg-na">—</td>';
+  var cls;
+  if (v > 2) cls = 'tmg-hot';
+  else if (v >= -7) cls = 'tmg-sweet';
+  else if (v >= -15) cls = 'tmg-warm';
+  else cls = 'tmg-cool';
+  var sign = v > 0 ? '+' : (v < 0 ? '−' : '');
+  return '<td class="' + cls + '">' + sign + Math.abs(v).toFixed(1) + '%</td>';
+}
+// ma50_pct: 0 = on MA; positive = above. Sweet spot [0, +5]; ok [+5, +15];
+//           extended [+15, ∞]; below 50DMA = grey (broken trend).
+function fmtMa50(v) {
+  if (v === null || v === undefined) return '<td class="tmg-na">—</td>';
+  var cls;
+  if (v < 0) cls = 'tmg-cool';
+  else if (v <= 5) cls = 'tmg-sweet';
+  else if (v <= 15) cls = 'tmg-warm';
+  else cls = 'tmg-hot';
+  var sign = v > 0 ? '+' : (v < 0 ? '−' : '');
+  return '<td class="' + cls + '">' + sign + Math.abs(v).toFixed(1) + '%</td>';
+}
+// rs_score: 0-100 percentile rank vs SPY. ≥80 strong; ≥60 ok; <60 weak.
+function fmtRs(v) {
+  if (v === null || v === undefined) return '<td class="tmg-na">—</td>';
+  var cls;
+  if (v >= 80) cls = 'tmg-bull-strong';
+  else if (v >= 60) cls = 'tmg-bull';
+  else if (v >= 40) cls = 'tmg-mid';
+  else cls = 'tmg-weak';
+  return '<td class="' + cls + '">' + v.toFixed(0) + '</td>';
+}
+
+function fmtVal(v, unit, decimals) {
+  if (v === null || v === undefined) return '—';
+  var d = typeof decimals === 'number' ? decimals : 1;
+  return v.toFixed(d) + (unit || '');
+}
+
+function passLabel(pc) {
+  // 2026-07-03: 母數改為 scoredCount()（D/E 退出計分後 = 4）。配色以「全過 / 差一 /
+  // 差二 / 更差」相對分級，不再硬編 5。
+  var n = scoredCount();
+  var cls = pc >= n ? 'pass-55' : pc === n - 1 ? 'pass-45' : pc === n - 2 ? 'pass-35' : 'pass-lt3';
+  return '<span class="' + cls + '">' + pc + '/' + n + '</span>';
+}
+
+function _thSortable(label, key, opts) {
+  opts = opts || {};
+  var cls = 'sortable';
+  if (opts.left) cls += ' left';
+  // Show indicator only when this column is the active sort key — idle ▾
+  // markers were noisy and forced wrapped headers into a 3rd line.
+  // Use NBSP so the symbol stays glued to the last word's line.
+  var ind = '';
+  if (state.sortKey === key) {
+    cls += ' sort-active';
+    ind = ' <span class="sort-ind">' + (state.sortDir === 'asc' ? '▲' : '▼') + '</span>';
+  }
+  var titleAttr = opts.title ? ' title="' + opts.title.replace(/"/g, '&quot;') + '"' : '';
+  return '<th class="' + cls + '" data-sort-key="' + key + '"' + titleAttr + '>' + label + ind + '</th>';
+}
+
+function _pecMin(stock) {
+  // 兩個窗口中本益比降幅最大者（越負越前）；兩窗皆無值回 undefined（排序時沉底）
+  var pc = stock.pe_compression;
+  if (!pc) return undefined;
+  var v = [pc.since_earnings && pc.since_earnings.pe_chg_pct, pc['3m'] && pc['3m'].pe_chg_pct]
+    .filter(function(x) { return typeof x === 'number'; });
+  return v.length ? Math.min.apply(null, v) : undefined;
+}
+
+function _pluck(stock, key) {
+  if (key === 'pec_min') return _pecMin(stock);
+  // Support dotted paths (e.g. "timing.dist_52w_high_pct") so the new v1.1
+  // timing columns can sort without flattening the nested block.
+  if (key.indexOf('.') === -1) return stock[key];
+  var parts = key.split('.');
+  var v = stock;
+  for (var i = 0; i < parts.length; i++) {
+    if (v === null || v === undefined) return undefined;
+    v = v[parts[i]];
+  }
+  return v;
+}
+
+function _sortStocks(stocks) {
+  if (!state.sortKey) return stocks;  // honour caller's default order
+  var key = state.sortKey;
+  var dir = state.sortDir === 'asc' ? 1 : -1;
+  return stocks.slice().sort(function(a, b) {
+    var av = _pluck(a, key);
+    var bv = _pluck(b, key);
+    // null/undefined always sink to bottom regardless of direction
+    var aNull = av === null || av === undefined;
+    var bNull = bv === null || bv === undefined;
+    if (aNull && bNull) return 0;
+    if (aNull) return 1;
+    if (bNull) return -1;
+    if (typeof av === 'string') return dir * av.localeCompare(bv);
+    return dir * (av - bv);
+  });
+}
+
+// ── Live cell render helpers (v1.7) ─────────────────────────────────────────
+// Pattern: live primary + frozen DD value 進 tooltip + drift/revision 小字附註
+// 適用 4 個 cell：2Y P/E、PEG、FY+1→FY+3 CAGR、5Y IRR。
+// 配色規則：drift / revision 對「品質」的影響方向決定顏色：
+//   PE / PEG: live 變便宜（更低）= 綠；變貴 = 橘 / 紅
+//   IRR:      live 變高 = 綠；變低 = 橘
+//   EPS rev:  上修 = 綠；下修 = 紅
+// 缺資料 fallback：live 為 null 時退回 frozen DD 值 + 小灰字 "DD" 標記。
+function _renderLivePECell(s) {
+  // v1.7.3: 簡化為「只顯示最新數字」— 拿掉 drift % 小字 + 配色 + DD 對照
+  // tooltip。live 缺值時 fallback 顯示 frozen DD 值（無 label）。
+  // heuristic method (`drift` fallback) 仍標 `*` 提醒非 yfinance real EPS 算出。
+  var live = s.live_fpe_est;
+  var pe = s.fpe_fy2;
+  var v = (live !== null && live !== undefined) ? live : pe;
+  if (v === null || v === undefined) return '<td>—</td>';
+  var method = s.live_fpe_method;
+  var mark = (method === 'drift')
+    ? '<sup style="font-size:8px;color:var(--muted)" title="yfinance EPS 未取得，用 price-drift 推算">*</sup>'
+    : '';
+  return '<td style="font-variant-numeric:tabular-nums">' + v.toFixed(1) + mark + '</td>';
+}
+
+function _renderLivePEGCell(s, flag) {
+  var peg = s.peg;
+  var live = s.live_peg;
+  if ((peg === null || peg === undefined) && (live === null || live === undefined)) {
+    return '<td>—</td>';
+  }
+  var display, tip;
+  if (live === null || live === undefined) {
+    display = peg.toFixed(2) + 'x<span style="font-size:9px;color:var(--muted);margin-left:3px">DD</span>';
+    tip = ' title="Live PEG 估算失敗，暫顯示 DD frozen ' + peg.toFixed(2) + 'x"';
+  } else {
+    display = '<strong>' + live.toFixed(2) + 'x</strong>';
+    var parts = ['Live PEG ' + live.toFixed(2) + 'x (live FwdPE / live EPS CAGR)'];
+    if (peg !== null && peg !== undefined) parts.push('DD frozen ' + peg.toFixed(2) + 'x');
+    tip = ' title="' + parts.join('; ') + '"';
+  }
+  // v1.3: peg_fallback marker — frozen PEG 來自 yfinance 手動 forwardPE/CAGR
+  // fallback，分母 (YearAgo→FY+1 CAGR) 與主流前瞻 consensus 不可比。pass/fail
+  // 照算（不改 QualityGate），僅標註 provenance。
+  var fbMark = s.peg_fallback
+    ? '<sup style="font-size:8px;color:var(--warn)" title="PEG 分母與主流不可比：來自 yfinance YearAgo→FY+1 CAGR fallback">‡</sup>'
+    : '';
+  // Color flag re-evaluated against live value if available (live primary semantics)
+  var pegForFlag = (live !== null && live !== undefined) ? live : peg;
+  // BOOLEAN for cellStyle() (not 'pass'/'fail' string — a string is always
+  // truthy → PEG > 2.0 wrongly rendered green). null → grey (no data).
+  var liveFlag = pegForFlag == null ? null : (pegForFlag <= 2.0);
+  return '<td' + tip + ' style="' + cellStyle(liveFlag) + '">' + display + fbMark + '</td>';
+}
+
+// ── ATH spotlight (rendered once at load; independent of tier/filter state) ──
+// v1.1: switched from weekly 250w high → DAILY 5y high. Weekly bars compress
+// intraweek peaks out and were up to 7 days stale during the week. The daily
+// fields (ma.high_5y_daily_price / ma.dist_5y_high_daily_pct / ma.days_since_5y_high)
+// come from build_dd_screener.compute_daily_5y_highs() — fresh every build.
+// Filter: dist ≥ −2% ∩ days_since ≤ 10 (~2 trading weeks). Gate is_full_5y
+// from weekly path stays — same signal: ticker has ≥ 5y of history. Click
+// chip → pipe into search input, surface full row below.
+function renderAthSpotlight(stocks) {
+  var section = document.getElementById('ath-spotlight');
+  var placeholder = document.getElementById('ath-empty-placeholder');
+  if (!section || !Array.isArray(stocks)) return;
+  var prevChips = section.querySelectorAll('.ath-chip');
+  for (var i = 0; i < prevChips.length; i++) prevChips[i].remove();
+  var hits = stocks.filter(function(s) {
+    var m = s && s.ma;
+    if (!m || m.is_full_5y !== true) return false;
+    var d = m.dist_5y_high_daily_pct, ds = m.days_since_5y_high;
+    return d !== null && d !== undefined && d >= -2
+        && ds !== null && ds !== undefined && ds <= 10;
+  });
+  hits.sort(function(a, b) {
+    var da = a.ma.dist_5y_high_daily_pct, db = b.ma.dist_5y_high_daily_pct;
+    if (db !== da) return db - da;
+    return a.ma.days_since_5y_high - b.ma.days_since_5y_high;
+  });
+  hits = hits.slice(0, 25);
+  if (hits.length === 0) {
+    if (placeholder) placeholder.style.display = '';
+    return;
+  }
+  if (placeholder) placeholder.style.display = 'none';
+  hits.forEach(function(s) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    var m = s.ma;
+    var dist = m.dist_5y_high_daily_pct;
+    var days = m.days_since_5y_high;
+    btn.className = 'ath-chip' + (dist === 0 ? ' at-high' : '');
+    btn.setAttribute('data-ticker', s.ticker);
+    btn.setAttribute('title',
+      s.ticker + ' · 距 5Y 日線高 ' + dist.toFixed(2) + '% · 創高 ' + days
+        + ' 個交易日前 · 5Y 高 $' + (m.high_5y_daily_price !== undefined && m.high_5y_daily_price !== null ? m.high_5y_daily_price.toFixed(2) : '?')
+        + ' · 點擊在下方搜尋');
+    btn.innerHTML = '<span>' + s.ticker + '</span>'
+      + '<span class="ath-meta">' + (dist > 0 ? '+' : '') + dist.toFixed(1) + '% D' + days + '</span>';
+    btn.addEventListener('click', function() {
+      var input = document.getElementById('search-ticker');
+      if (!input) return;
+      // Multi-select toggle: append ticker if absent, remove if present.
+      // Trailing space ensures every token is parsed as exact match (renderSearch
+      // v1.9.1 rule: token followed by delimiter → exact, no prefix expansion).
+      // Without trailing space, last token would prefix-match ("V" → V/VIK/VRT).
+      var current = (input.value || '').trim();
+      var tokens = current ? current.split(/[\s,/]+/).filter(Boolean) : [];
+      // Case-insensitive matching for dedup (input might have lowercase from typing)
+      var tickerUC = s.ticker.toUpperCase();
+      var idx = tokens.findIndex(function(t) { return t.toUpperCase() === tickerUC; });
+      if (idx >= 0) {
+        tokens.splice(idx, 1);
+      } else {
+        tokens.push(s.ticker);
+      }
+      input.value = tokens.length ? (tokens.join(' ') + ' ') : '';
+      input.dispatchEvent(new Event('input', {bubbles: true}));
+      syncAthChipSelection();
+      if (tokens.length === 1) {
+        // First selection → scroll into view so user sees the search panel
+        input.scrollIntoView({behavior: 'smooth', block: 'center'});
+      }
+    });
+    section.appendChild(btn);
+  });
+  syncAthChipSelection();
+}
+
+// Reflect search input state onto ATH chips (.selected class). Called after
+// chip click (toggle) and from the search input listener (clear button / type).
+function syncAthChipSelection() {
+  var input = document.getElementById('search-ticker');
+  if (!input) return;
+  var raw = (input.value || '').trim();
+  var tokensUC = raw ? raw.split(/[\s,/]+/).filter(Boolean).map(function(t) { return t.toUpperCase(); }) : [];
+  var setUC = {};
+  tokensUC.forEach(function(t) { setUC[t] = true; });
+  var chips = document.querySelectorAll('.ath-chip');
+  for (var i = 0; i < chips.length; i++) {
+    var t = (chips[i].getAttribute('data-ticker') || '').toUpperCase();
+    chips[i].classList.toggle('selected', !!setUC[t]);
+  }
+}
+
+// Dynamic baseline-age label: "5D" / "12D" / "1M" / "2M" based on
+// elapsed days between as_of and eps_revision_baseline_date. Replaces the
+// hard-coded "1M" (originally month-over-month) so intra-month refreshes
+// show their actual age ("5D" when baseline is 5 days old, etc.).
+var __AS_OF_GLOBAL = null;
+function _baselineAgeLabel(baselineDate) {
+  if (!baselineDate || !__AS_OF_GLOBAL) return '';
+  var b = String(baselineDate);
+  // baselineDate may be "YYYY-MM-DD" or fallback "YYYY-MM" — pad to first day
+  if (/^\d{4}-\d{2}$/.test(b)) b = b + '-01';
+  var bd = new Date(b);
+  var asOfStr = String(__AS_OF_GLOBAL);
+  if (/^\d{4}-\d{2}$/.test(asOfStr)) asOfStr = asOfStr + '-01';
+  var ao = new Date(asOfStr);
+  if (isNaN(bd) || isNaN(ao)) return '';
+  var days = Math.round((ao - bd) / 86400000);
+  if (days <= 0) return '0D';
+  if (days <= 21) return days + 'D';
+  var months = Math.round(days / 30);
+  return months + 'M';
+}
+
+// Short baseline date "M/D" for the chip suffix (e.g. "5/26"). Anchored to the
+// start of the string so a dirty snapshot_date like
+// "2026-05-26 (incremental updates over 2026-05-25 base)" still yields 5/26
+// (NOT the 5/25 embedded in the parenthetical). Falls back to "M月" for a
+// YYYY-MM-only baseline. The chip shows the baseline DATE (what it's compared
+// against) instead of an age count, which reads as data-staleness to users.
+function _baselineDateShort(baselineDate) {
+  if (!baselineDate) return '';
+  var b = String(baselineDate);
+  var m = b.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return parseInt(m[2], 10) + '/' + parseInt(m[3], 10);
+  var m2 = b.match(/^(\d{4})-(\d{2})/);
+  if (m2) return parseInt(m2[2], 10) + '月';
+  return '';
+}
+
+// Clean ISO date "YYYY-MM-DD" (or "YYYY-MM") stripped of any descriptive
+// suffix, for tooltips. Keeps tooltips from rendering the raw dirty string.
+function _baselineDateClean(baselineDate) {
+  if (!baselineDate) return '';
+  var b = String(baselineDate);
+  var m = b.match(/^\d{4}-\d{2}-\d{2}/) || b.match(/^\d{4}-\d{2}/);
+  return m ? m[0] : b;
+}
+
+function _renderLiveEPSCell(s, flag) {
+  // v1.9: 顯示 Excel FY+1→FY+3 forward CAGR (eps_fy1_fy3_cagr_pct) 取代舊
+  // yfinance YearAgo→FY+1 mixed-window CAGR (eps2y_live)。MoM revision delta
+  // (eps2y_revision_pp/dir) 仍由 build_dd_screener.py 寫入，但 source 改為
+  // Excel CAGR 月差，semantic 一致。
+  var cagr = s.eps_fy1_fy3_cagr_pct;
+  var revPp = s.eps2y_revision_pp;
+  var revDir = s.eps2y_revision_dir;
+  var prevVal = s.eps2y_prev_month;
+  var prevDate = s.eps2y_prev_month_date;
+  if (cagr === null || cagr === undefined) {
+    return '<td>—</td>';
+  }
+  var display = '<strong>' + cagr.toFixed(1) + '%</strong>';
+  // CAGR baseline age label — uses eps_revision_baseline_date when present
+  // (per-FY revision baseline; intra-month aware), falls back to eps2y prev_date.
+  var cagrBaselineDate = s.eps_revision_baseline_date || prevDate;
+  var cagrAgeLabel = _baselineAgeLabel(cagrBaselineDate);
+  var cagrDateShort = _baselineDateShort(cagrBaselineDate);
+  // Chip suffix shows the baseline DATE ("vs 5/26") — unambiguous vs the old
+  // age count ("10D") which read as data staleness. Age stays in the tooltip.
+  var cagrAgeSuffix = cagrDateShort ? (' (vs ' + cagrDateShort + ')') : '';
+  if (revDir === '上修' || revDir === '下修') {
+    var revColor = revDir === '上修' ? 'var(--pos)' : 'var(--neg)';
+    var arrow = revDir === '上修' ? '↑' : '↓';
+    var revSign = revPp > 0 ? '+' : '';
+    // v1.11: chip renders on a NEW LINE below the CAGR % (block <div> with
+    // margin-top) to match the EPS chip layout in _renderRawEpsCell.
+    // Math unchanged — still absolute pp delta of two CAGR percentages,
+    // suffix kept as "%" for visual consistency with the EPS revision chip.
+    display += '<div style="font-size:9px;color:' + revColor + ';margin-top:1px;font-weight:600">' + arrow + revSign + revPp.toFixed(1) + '%' + cagrAgeSuffix + '</div>';
+  } else if (revDir === '新增') {
+    display += '<div style="font-size:9px;color:var(--muted);margin-top:1px">新</div>';
+  }
+  // tooltip
+  var parts = ['Excel FY+1→FY+3 forward CAGR ' + cagr.toFixed(1) + '%'];
+  var cagrBaseTip = cagrBaselineDate ? ('baseline ' + _baselineDateClean(cagrBaselineDate) + (cagrAgeLabel ? ' · ' + cagrAgeLabel + ' 前' : '')) : 'baseline';
+  if (revPp !== null && prevVal !== null) {
+    parts.push(cagrBaseTip + ' ' + prevVal.toFixed(1) + '%');
+    parts.push('修正 ' + (revPp > 0 ? '+' : '') + revPp.toFixed(1) + 'pp (絕對差) · ' + revDir);
+  } else if (revDir === '新增') {
+    parts.push('baseline 無此 ticker（新加入 universe）');
+  } else {
+    parts.push('修正動能 baseline 累積中（首月 snapshot 尚未對照）');
+  }
+  // 財報錨定上修 (2026-09-17，見 knowledge/rule_ledger.md「上修改為財報後錨定」列)：
+  // eps_rev_since_earnings_pct 是以該股自己最近一次財報日前最新月度 snapshot 為
+  // 基準的 FY 加權上修（缺財報錨定時等於舊制 eps_rev_3m_pct）——只加進 tooltip，
+  // 不新增欄位，見 build_dd_screener.py enrich_ticker()。
+  if (s.eps_rev_since_earnings_pct !== null && s.eps_rev_since_earnings_pct !== undefined) {
+    var revSinceSign = s.eps_rev_since_earnings_pct > 0 ? '+' : '';
+    var revSinceBase = s.eps_rev_since_earnings_baseline_date
+      ? _baselineDateClean(s.eps_rev_since_earnings_baseline_date) : '?';
+    parts.push('財報後 ' + revSinceSign + s.eps_rev_since_earnings_pct.toFixed(1) + '%（基準 ' + revSinceBase + '）');
+  }
+  if (s.days_to_next_earnings !== null && s.days_to_next_earnings !== undefined) {
+    parts.push('下次財報 ' + s.days_to_next_earnings + ' 天');
+  }
+  var tip = ' title="' + parts.join('; ') + '"';
+  // cellStyle() wants a BOOLEAN (truthy→green / falsy→red / null→grey). A
+  // 'pass'/'fail' STRING is always truthy → fails wrongly rendered green
+  // (e.g. CAGR 9.7% showed green despite the ≥15% gate). Use a real boolean.
+  var flagFinal = cagr >= 15;
+  return '<td' + tip + ' style="' + cellStyle(flagFinal) + '">' + display + '</td>';
+}
+
+function _renderRawEpsCell(s, field) {
+  // v1.7.2: raw EPS estimate（純資訊欄，無 pass/fail color）
+  // v1.8: Excel-primary（135 美股/ADR）+ yfinance fallback（12 檔含 .TW/.T 與 4 檔
+  // 命名 mismatch）。Curr FY / Next FY 額外掛 1M revision chip 顯示 vs 上月 Excel
+  // snapshot 的修正方向。
+  // v1.8.5: 台股 .TW / 日股 .T 等 foreign listing 顯示 native currency (TWD/JPY),
+  // tooltip 列 USD 原值。eps_display_currency = "TWD"/"JPY"/"USD" 三選一。
+  var v = s[field];
+  if (v === null || v === undefined) {
+    return '<td style="color:var(--muted)">—</td>';
+  }
+  var src = s.eps_source || 'yfinance';
+  var ccy = s.eps_display_currency || 'USD';
+  var ccySuffix = (ccy === 'USD') ? '' : (' ' + ccy);
+  var labelMap = {
+    'eps_fy_curr': (src === 'xlsx' ? 'Excel FY1E (current FY consensus avg)' : 'yfinance 0y row — current FY consensus EPS'),
+    'eps_fy_next': (src === 'xlsx' ? 'Excel FY2E (next FY consensus avg)' : 'yfinance +1y row — next FY consensus EPS'),
+    'eps_fy3':     (src === 'xlsx' ? 'Excel FY3E (2 fiscal years out, consensus avg)' : 'yfinance +2y row — FY+2 consensus EPS'),
+    'eps_trailing': 'info.trailingEps — TTM 實際 EPS (yfinance fallback path 計算 CAGR 用；Excel 主路徑不再用 TTM)'
+  };
+  var tipBase = (labelMap[field] || field) + ': ' + v.toFixed(2) + ccySuffix;
+  // v1.8.5: append USD reference for foreign listings
+  if (ccy !== 'USD' && s.eps_fx_rate) {
+    var usdField = field === 'eps_fy_curr' ? 'eps_fy_curr_usd_orig'
+                  : field === 'eps_fy_next' ? 'eps_fy_next_usd_orig'
+                  : field === 'eps_fy3' ? 'eps_fy3_usd_orig'
+                  : null;
+    var usdOrig = usdField ? s[usdField] : null;
+    if (usdOrig !== null && usdOrig !== undefined) {
+      tipBase += ' (USD ' + usdOrig.toFixed(2) + ' × FX ' + s.eps_fx_rate.toFixed(2) + ')';
+    }
+  }
+  var chip = '';
+  // v1.10: per-FY revision chip for FY1 / FY2 / FY3 (Excel-vs-prev-snapshot).
+  // Age suffix now dynamic — "5D" / "1M" / "{N}D" derived from baseline date.
+  var revField = (field === 'eps_fy_curr') ? 'eps_fy_curr_revision_pct'
+              : (field === 'eps_fy_next') ? 'eps_fy_next_revision_pct'
+              : (field === 'eps_fy3') ? 'eps_fy3_revision_pct'
+              : null;
+  if (revField) {
+    var rev = s[revField];
+    var baseDate = s.eps_revision_baseline_date;
+    var ageLabel = _baselineAgeLabel(baseDate);
+    var dateShort = _baselineDateShort(baseDate);
+    var ageSuffix = dateShort ? (' (vs ' + dateShort + ')') : '';
+    var baseTipName = baseDate ? (_baselineDateClean(baseDate) + (ageLabel ? ' / ' + ageLabel + ' 前' : '')) : '?';
+    if (rev === null || rev === undefined) {
+      chip = '<div style="font-size:9px;color:var(--muted);margin-top:1px">新</div>';
+      tipBase += ' | baseline 無此 ticker 或首次部署';
+    } else if (Math.abs(rev) < 0.5) {
+      // 持平 — 不顯示箭頭
+      chip = '<div style="font-size:9px;color:var(--muted);margin-top:1px">±0%' + ageSuffix + '</div>';
+      tipBase += ' | vs ' + baseTipName + ' 持平';
+    } else {
+      var up = rev > 0;
+      var color = up ? 'var(--pos)' : 'var(--neg)';
+      var arrow = up ? '↑' : '↓';
+      var sign = up ? '+' : '';
+      chip = '<div style="font-size:9px;color:' + color + ';font-weight:600;margin-top:1px">'
+           + arrow + sign + rev.toFixed(1) + '%' + ageSuffix + '</div>';
+      tipBase += ' | vs ' + baseTipName + ' ' + (up ? '上修' : '下修') + ' ' + sign + rev.toFixed(1) + '%';
+    }
+    // 2026-09-17: 修正動能一律以公司財報幣別計算（非原始 USD），排除兩次
+    // 匯出之間純匯率變動造成的假修正（見 eps_fx_normalize.py）；查不到幣別
+    // 或匯率時退回 USD 對比並標「未排除匯率」，避免誤讀為真上修/下修。
+    if (s.eps_revision_currency && s.eps_revision_currency !== 'USD') {
+      tipBase += s.eps_revision_fx_normalized
+        ? (' | 以 ' + s.eps_revision_currency + ' 計算，已排除匯率')
+        : ' | 未排除匯率';
+    }
+  }
+  var tip = ' title="' + tipBase + '"';
+  // v1.8.5: append tiny currency tag inline for foreign listings (TWD/JPY/etc.)
+  var ccyTag = (ccy !== 'USD')
+    ? '<span style="font-size:9px;color:var(--muted);margin-left:2px">' + ccy + '</span>'
+    : '';
+  return '<td' + tip + ' style="font-variant-numeric:tabular-nums;color:var(--sec)">'
+       + v.toFixed(2) + ccyTag + chip + '</td>';
+}
+
+function _renderGrowthCell(s, field, source) {
+  // v1.8: render Excel-derived growth/CAGR (FY3 YoY% / FY1→FY3 CAGR) using same
+  // color rules as FY+1→FY+3 CAGR: ≥15% 綠 / <0% 紅 / 其他 灰。Sort-null sinks
+  // automatically via _sortStocks.
+  var v = s[field];
+  if (v === null || v === undefined) {
+    return '<td style="color:var(--muted)">—</td>';
+  }
+  var color, weight;
+  if (v >= 15)      { color = 'var(--pos)'; weight = '600'; }
+  else if (v >= 0)  { color = 'var(--sec)'; weight = '400'; }
+  else              { color = 'var(--neg)'; weight = '600'; }
+  var labelMap = {
+    'eps_fy1_fy3_cagr_pct': 'Excel FY1→FY3 forward 2Y CAGR',
+    'eps_fy3_yoy_pct': 'Excel FY2→FY3 YoY growth %'
+  };
+  var tip = ' title="' + (labelMap[field] || field) + ': ' + v.toFixed(2)
+          + '% (來源 ' + (source || s.eps_source || 'xlsx') + ')"';
+  return '<td' + tip + ' style="font-variant-numeric:tabular-nums;color:' + color
+       + ';font-weight:' + weight + '">' + v.toFixed(1) + '%</td>';
+}
+
+// 2026-09-16: ROIC 分解 / 存續力 / 增量 ROIC×再投資率 —— 純資訊欄（無 pass/fail
+// 配色），資料全部來自 build_dd_screener.compute_roic_decomposition()。缺資料
+// （None，多半是舊 xlsx 沒有這批選填欄位）一律顯示 "—"。
+function _renderRoicQuadrantCell(s) {
+  var q = s.roic_quadrant;
+  if (!q) return '<td style="color:var(--muted)">—</td>';
+  var nm = s.nopat_margin_pct, tv = s.ic_turnover_x;
+  var nmT = (typeof nm === 'number') ? nm.toFixed(1) + '%' : '—';
+  var tvT = (typeof tv === 'number') ? tv.toFixed(2) + 'x' : '—';
+  var tip = 'NOPAT 利潤率 ' + nmT + '｜投入資本周轉率 ' + tvT + '（' + (s.roic_quadrant_code || '') + '）';
+  return '<td title="' + tip + '" style="font-size:11px;white-space:nowrap">' + q + '</td>';
+}
+
+function _renderRoicTrendCell(s) {
+  var t = s.roic_trend_5y;
+  if (!t) return '<td style="color:var(--muted)">—</td>';
+  var ratio = s.roic_vs_5y_x;
+  var ratioT = (typeof ratio === 'number') ? ratio.toFixed(2) + 'x' : '—';
+  var r3y = s.roic_3y_avg_pct;
+  var r3yT = (typeof r3y === 'number') ? r3y.toFixed(1) + '%' : '—';
+  var color = (t === '上升') ? 'var(--pos)' : (t === '下滑') ? 'var(--neg)' : 'var(--sec)';
+  var tip = '現在 ROIC ÷ 過去 5 年平均 = ' + ratioT + '｜3 年平均 ROIC ' + r3yT;
+  return '<td title="' + tip + '" style="color:' + color + ';font-weight:600">' + t + '</td>';
+}
+
+// 原始財務數字（百萬美元）hover 明細 — Revenue / EBIT / Invested Capital 的
+// FY vs FY-3 對照，供增量 ROIC / 再投資率兩欄的 tooltip 附掛（後端 "capital"
+// 子物件，見 compute_roic_decomposition()）。任一組數字缺值就整組跳過。
+function _capitalTipSuffix(s) {
+  var cap = s.capital;
+  if (!cap) return '';
+  function pair(label, fy, fy3) {
+    if (fy === null || fy === undefined || fy3 === null || fy3 === undefined) return '';
+    return '｜' + label + ' $' + fy.toLocaleString() + 'M（3 年前 $' + fy3.toLocaleString() + 'M）';
+  }
+  return pair('營收', cap.rev_fy, cap.rev_fy3)
+       + pair('EBIT', cap.ebit_fy, cap.ebit_fy3)
+       + pair('投入資本', cap.ic_fy, cap.ic_fy3);
+}
+
+function _renderIncrementalRoicCell(s) {
+  var v = s.incremental_roic_pct;
+  var capTip = _capitalTipSuffix(s);
+  if (v !== null && v !== undefined) {
+    var color = (v >= 15) ? 'var(--pos)' : (v < 0) ? 'var(--neg)' : 'var(--sec)';
+    var clampNote = s.incremental_roic_clamped ? '（數值極端，已限縮顯示範圍）' : '';
+    return '<td title="近 3 個財年新增投入資本的報酬率' + clampNote + capTip + '" style="color:' + color + '">'
+         + v.toFixed(1) + '%</td>';
+  }
+  if (s.incremental_roic_note) {
+    return '<td style="color:var(--muted)" title="近 3 年投入資本不增反減（如買回庫藏股），無法定義新增資本的報酬率' + capTip + '">'
+         + s.incremental_roic_note + '</td>';
+  }
+  return '<td style="color:var(--muted)">—</td>';
+}
+
+function _renderReinvestRateCell(s) {
+  var v = s.reinvest_rate_pct;
+  if (v === null || v === undefined) return '<td style="color:var(--muted)">—</td>';
+  return '<td title="近 3 年新增投入資本 ÷ 期間年化 NOPAT' + _capitalTipSuffix(s) + '">' + v.toFixed(1) + '%</td>';
+}
+
+function _renderImpliedGrowthCell(s) {
+  var v = s.implied_growth_pct;
+  if (v === null || v === undefined) return '<td style="color:var(--muted)">—</td>';
+  var color = (v >= 10) ? 'var(--pos)' : (v < 0) ? 'var(--neg)' : 'var(--sec)';
+  return '<td title="增量 ROIC × 再投資率 —— 機械推算的內生成長率上限，描述器非預測" style="color:' + color + ';font-weight:600">'
+       + v.toFixed(1) + '%</td>';
+}
+
+// 2026-09-17: 體質五項 veto + 6 組機械化 gate —— 全部從 build_dd_screener.py
+// compute_fundamental_gates() 衍生（見其 docstring），資料來源是 35 個新增選填
+// Koyfin xlsx 欄位（scripts/load_eps_estimates_xlsx.py 2026-09-17 段）。與 ROIC
+// 拆解一樣，全部選填 —— 舊 xlsx 或 Koyfin 未覆蓋的名字，s.fund 全 None，一律顯示 —。
+function _fundHasAnyData(s) {
+  var f = s.fund;
+  if (!f) return false;
+  for (var k in f) {
+    if (Object.prototype.hasOwnProperty.call(f, k) && f[k] !== null && f[k] !== undefined) return true;
+  }
+  return false;
+}
+
+function _renderQualityVetoCell(s) {
+  // quality_veto_level is null when none of the 5 veto items could be
+  // evaluated at all (not just "no fund data") — treat the same as —.
+  if (!_fundHasAnyData(s) || !s.quality_veto_level) return '<td style="color:var(--muted)">—</td>';
+  var n = s.quality_veto_fail_count || 0;
+  var level = s.quality_veto_level;
+  var fails = s.quality_veto_fails || [];
+  var color = (level === '拒絕') ? 'var(--neg)' : (level === '降一級') ? 'var(--warn)' : 'var(--sec)';
+  var tip = 'DD 體質五項 veto（毛利連降／FCF對淨利率／營收連四季負／槓桿／FY1連三月下修）：'
+    + level + '，' + n + ' 項不合格' + (fails.length ? '（' + fails.join('、') + '）' : '（五項皆合格或未知）');
+  return '<td title="' + tip + '" style="color:' + color + ';font-weight:600">' + n + '</td>';
+}
+
+function _renderDeclineSignalCell(s) {
+  if (!_fundHasAnyData(s)) return '<td style="color:var(--muted)">—</td>';
+  var light = s.decline_signal_light || '🟢';
+  var n = s.decline_signal_count || 0;
+  var signals = s.decline_signals || [];
+  var tip = '衰退訊號（6 項機械指標命中幾項）：' + n + ' 項' + (signals.length ? '：' + signals.join('、') : '（無命中）');
+  return '<td title="' + tip + '">' + light + ' ' + n + '</td>';
+}
+
+function _renderOlDivergenceCell(s) {
+  var label = s.ol_divergence_label;
+  if (!label) return '<td style="color:var(--muted)">—</td>';
+  var pp = s.ol_divergence_pp;
+  var color = (label === '嚴重壓縮') ? 'var(--neg)' : (label === '壓縮') ? 'var(--warn)'
+            : (label === '利潤率擴張') ? 'var(--pos)' : 'var(--sec)';
+  var ppT = (typeof pp === 'number') ? pp.toFixed(2) + 'pp' : '—';
+  return '<td title="營收成長% − 營業利益成長% = ' + ppT + '（僅營業利益為正時計算）" style="color:' + color + '">' + label + '</td>';
+}
+
+function _renderCapallocCell(s) {
+  var grade = s.capalloc_mech_grade;
+  if (!grade) return '<td style="color:var(--muted)">—</td>';
+  var color = (grade === 'A') ? 'var(--pos)' : (grade === 'B') ? 'var(--sec)' : 'var(--neg)';
+  var dil = s.sbc_dilution_pct_yr, bb = s.buyback_fcf_pct, sbc = s.sbc_pct_rev;
+  var dilT = (typeof dil === 'number') ? dil.toFixed(2) + '%/yr' : '—';
+  var bbT = (typeof bb === 'number') ? bb.toFixed(1) + '%' : '—（無庫藏股或FCF為負）';
+  var sbcT = (typeof sbc === 'number') ? sbc.toFixed(1) + '%' : '—';
+  var tip = '資本配置機械版（與 DD 報告 LLM 資本配置評等是不同東西）｜股數稀釋率(年化) ' + dilT
+    + '｜庫藏股佔FCF ' + bbT + '｜SBC佔營收 ' + sbcT;
+  return '<td title="' + tip + '" style="color:' + color + ';font-weight:600">' + grade + '</td>';
+}
+
+// 2026-09-17（第二次同日更新）：籌碼面——融券占流通股比 + 內部人淨買賣方向，全部選填，
+// 見 compute_fundamental_gates() §L。純描述器，不進 funnel_rank 公式。
+function _renderChipsCell(s) {
+  var si = s.short_interest_pct_float;
+  var ins = s.insider_net_buy_3m;
+  var sig = s.insider_signal;
+  if ((si === null || si === undefined) && (ins === null || ins === undefined)) {
+    return '<td style="color:var(--muted)">—</td>';
+  }
+  var siT = (typeof si === 'number') ? si.toFixed(1) + '%' : '—';
+  var siColor = s.short_squeeze_flag ? 'var(--neg)' : 'var(--sec)';
+  var insT = (typeof ins === 'number') ? (ins > 0 ? '+' : '') + Math.round(ins).toLocaleString() + ' 股' : '—';
+  var badge = '';
+  if (sig === '買') {
+    badge = '<span style="color:var(--pos);margin-left:4px;font-weight:600" title="近 3 個月內部人淨買超 ' + insT + '">▲買</span>';
+  } else if (sig === '賣') {
+    badge = '<span style="color:var(--neg);margin-left:4px;font-weight:600" title="近 3 個月內部人淨賣超 ' + insT + '">▼賣</span>';
+  }
+  var tip = '融券占流通股比 ' + siT + (s.short_squeeze_flag ? '（>10%，軋空風險偏高，GRP 席位排序中只能列衛星）' : '')
+    + '｜內部人近 3 個月淨買賣 ' + insT;
+  return '<td title="' + tip + '" style="color:' + siColor + (s.short_squeeze_flag ? ';font-weight:600' : '') + '">' + siT + badge + '</td>';
+}
+
+function _renderValuationVs5yCell(s) {
+  var v = s.pe_vs_5y_x;
+  if (v === null || v === undefined) return '<td style="color:var(--muted)">—</td>';
+  var flag = s.pe_vs_5y_flag;
+  var color = flag ? 'var(--neg)' : 'var(--sec)';
+  var pbv = s.pb_vs_5y_x;
+  var pbT = (typeof pbv === 'number') ? pbv.toFixed(2) + 'x' : '—';
+  var tip = 'NTM 本益比 ÷ 過去 5 年平均本益比' + (flag ? '（> 1.5x，貴於自身歷史）' : '') + '｜PB 對 5 年均值 ' + pbT;
+  return '<td title="' + tip + '" style="color:' + color + (flag ? ';font-weight:600' : '') + '">' + v.toFixed(2) + 'x</td>';
+}
+
+function _renderTargetUpsideCell(s) {
+  var v = s.target_upside_pct;
+  if (v === null || v === undefined) return '<td style="color:var(--muted)">—</td>';
+  var color = (v >= 0) ? 'var(--pos)' : 'var(--neg)';
+  var rangeX = s.target_range_x;
+  var rangeT = (typeof rangeX === 'number') ? rangeX.toFixed(2) + 'x' : '—';
+  var f = s.fund || {};
+  var hi = (typeof f.target_high === 'number') ? f.target_high.toFixed(2) : '—';
+  var lo = (typeof f.target_low === 'number') ? f.target_low.toFixed(2) : '—';
+  var flagNote = s.target_range_flag ? '（分歧偏大 >2.5x）' : '';
+  var tip = '分析師目標價平均 vs 現價（皆當地掛牌貨幣，僅供比率使用）｜目標價區間 ' + lo + ' ~ ' + hi
+    + '（高/低比 ' + rangeT + flagNote + '）';
+  var sign = v > 0 ? '+' : '';
+  return '<td title="' + tip + '" style="color:' + color + '">' + sign + v.toFixed(1) + '%</td>';
+}
+
+function _renderMomentumCell(s) {
+  var rsi = s.rsi14, ret = s.return_6m_pct;
+  if ((rsi === null || rsi === undefined) && (ret === null || ret === undefined)) {
+    return '<td style="color:var(--muted)">—</td>';
+  }
+  var gate = s.return_6m_gate;
+  var gateColor = (gate === '擋下') ? 'var(--neg)' : (gate === '邊界') ? 'var(--warn)' : 'var(--sec)';
+  var rsiT = (typeof rsi === 'number') ? rsi.toFixed(1) : '—';
+  var retT = (typeof ret === 'number') ? (ret > 0 ? '+' : '') + ret.toFixed(1) + '%' : '—';
+  var rsiMark = s.rsi_overheated ? '<sup style="color:var(--neg)" title="RSI(14) > 70 過熱">*</sup>' : '';
+  var usableNote = (s.rsi_usable === false) ? '｜距 52 週高點 <3%，RSI 易失真不可信' : '';
+  var tip = '近 6 個月報酬率門檻：' + (gate || '—') + '（<100% 放行／100-150% 邊界／>150% 擋下）' + usableNote;
+  return '<td title="' + tip + '" style="color:' + gateColor + '">' + rsiT + rsiMark + ' / ' + retT + '</td>';
+}
+
+function _renderLiveIRRInner(s) {
+  // v1.7.3: 簡化為「只顯示最新數字」+ IRR 區間配色 — 拿掉 DD 對照 sub-line + 比較 tooltip
+  // live 缺值時 fallback 顯示 frozen DD 值（無 label）；heuristic 標 `*`。
+  var live = s.live_ev5y_pct;
+  var irr = s.ev5y_pct;
+  var shown = (live !== null && live !== undefined) ? live : irr;
+  if (shown === null || shown === undefined) {
+    return '<span class="upside-na">—</span>';
+  }
+  var color;
+  if (shown >= 12)      color = 'var(--pos)';
+  else if (shown >= 8)  color = 'var(--pos)';
+  else if (shown >= 0)  color = 'var(--warn)';
+  else                  color = 'var(--neg)';
+  var sign = shown > 0 ? '+' : (shown < 0 ? '−' : '');
+  var heurMark = ((live !== null && live !== undefined) && s.live_ev5y_method === 'heur')
+    ? '<sup style="font-size:8px;color:var(--muted)" title="heuristic — 用 (price_at_dd/price_now) 回推，假設 DD 決策層 terminal value 不變">*</sup>'
+    : '';
+  return '<span style="color:' + color + ';font-weight:600">' + sign + Math.abs(shown).toFixed(1) + '%/yr</span>' + heurMark;
+}
+
+// FunnelRank v2 cell (2026-09-22 最終定案：護城河不進排序) — v2 名次 + 四格
+// 迷你側寫（事業品質/再投資引擎/期望落差/價格，皆母體百分位同量級）+ 每列
+// 一個「儀表板」小連結（連到 /stock-dash/?t={T}，該檔的個股儀表板）。護城河
+// 三題制已於 2026-09-22 同日放棄，不再有任何護城河顯示欄位。逐層法排序，
+// 非加權合成分——見 notes/site-internal/root/_funnel_v2_design_20260922.md。
+// v1 綜合分（funnel_rank）仍照算保留一版，方法論全文移至頁面下方「舊版 v1」
+// 折疊區，這裡的 tooltip 只帶一行 v1 分數供對照。
+var FUNNEL_V2_LAYER_LABELS = ['事業品質', '再投資引擎', '期望落差', '價格'];
+
+function _renderFunnelCell(s) {
+  var rank = s.funnel_v2_rank;
+  var tiers = s.funnel_v2_tiers || [];
+  var profile = s.funnel_v2_profile || [];
+  var fmt1 = function(x){ return (x === null || x === undefined) ? '—' : x.toFixed(1); };
+
+  var minTier = null;
+  for (var i = 0; i < FUNNEL_V2_LAYER_LABELS.length; i++) {
+    var tv = (tiers[i] !== undefined) ? tiers[i] : -1;
+    if (minTier === null || tv < minTier) minTier = tv;
+  }
+
+  // 四格迷你側寫：中性灰色小橫條（高度＝百分位），最弱層（tier 最低者，可能
+  // 不只一層並列）加淡橘底標記。無資料層畫一個極短、半透明的條。
+  var bars = FUNNEL_V2_LAYER_LABELS.map(function(label, i) {
+    var val = profile[i];
+    var tier = (tiers[i] !== undefined) ? tiers[i] : -1;
+    var hasData = val !== null && val !== undefined;
+    var h = hasData ? Math.max(2, Math.round(val / 100 * 12)) : 2;
+    var weak = (minTier !== null && tier === minTier);
+    var wrap = 'display:inline-flex;align-items:flex-end;justify-content:center;width:8px;height:13px;'
+      + (weak ? 'background:#fdf1e7;border-radius:2px' : '');
+    return '<span style="' + wrap + '"><span style="display:block;width:4px;height:' + h
+      + 'px;background:var(--sec);border-radius:1px;opacity:' + (hasData ? '0.85' : '0.30') + '"></span></span>';
+  }).join('');
+
+  // 個股儀表板連結（純顯示，不影響排序）。
+  var dashLink = '<a href="/stock-dash/?t=' + encodeURIComponent(s.ticker) + '" target="_blank" style="font-size:8.5px;color:var(--accent);text-decoration:none" title="個股儀表板（每日更新的機械數字）">儀表板</a>';
+
+  var parts = [
+    'FunnelRank v2 名次 ' + ((rank !== null && rank !== undefined) ? ('#' + rank) : '未排名')
+  ];
+  FUNNEL_V2_LAYER_LABELS.forEach(function(label, i) {
+    var val = profile[i];
+    var tier = (tiers[i] !== undefined) ? tiers[i] : -1;
+    parts.push(label + ' 百分位 ' + fmt1(val) + (tier >= 0 ? '（tier ' + tier + '）' : '（缺）'));
+  });
+  if (s.funnel_v2_median !== null && s.funnel_v2_median !== undefined) {
+    parts.push('四層中位數 ' + fmt1(s.funnel_v2_median));
+  }
+  if (s.funnel_v2_veto && s.funnel_v2_veto.length) {
+    parts.push('⛔ 硬否決命中：' + s.funnel_v2_veto.join('、') + ' → 不排名、沉底');
+  }
+  if (s.funnel_v2_note) parts.push('⚠ ' + s.funnel_v2_note + ' → 不排名、沉底');
+  if (typeof s.funnel_rank === 'number') {
+    parts.push('（v1 舊制綜合分 ' + s.funnel_rank.toFixed(3) + '，v1 legacy，下一版移除——方法論見頁面下方「舊版 v1」折疊區）');
+  }
+  var tip = ' title="' + parts.join('; ').replace(/"/g, '&quot;') + '"';
+
+  var rankDisplay;
+  if (rank !== null && rank !== undefined) {
+    rankDisplay = '#' + rank;
+  } else if (s.funnel_v2_veto && s.funnel_v2_veto.length) {
+    rankDisplay = '<span style="color:var(--neg)">⛔</span>';
+  } else {
+    rankDisplay = '<span style="color:var(--muted)">缺</span>';
+  }
+
+  return '<td class="left"' + tip + ' style="font-variant-numeric:tabular-nums">'
+    + '<div style="display:flex;align-items:center;gap:5px">'
+    + '<span style="font-weight:700;min-width:22px">' + rankDisplay + '</span>'
+    + '<span style="display:inline-flex;gap:1px">' + bars + '</span>'
+    + dashLink
+    + '</div></td>';
+}
+
+// 2026-09-17: column-group reorder — plain pass/fail criterion cell (FCF /
+// ROIC), unchanged rendering logic, just extracted so buildTable() can place
+// FCF/ROIC/D-E in different column groups instead of one contiguous run.
+function _renderPlainCritCell(s, c) {
+  var flag = passFlag(s, c);
+  var v = s[c.key];
+  var display;
+  if (v === null || v === undefined) {
+    display = '—';
+  } else {
+    var decimals = (c.unit === 'x') ? 2 : 1;
+    display = v.toFixed(decimals) + c.unit;
+  }
+  return '<td style="' + cellStyle(flag) + '">' + display + '</td>';
+}
+
+// D/E — advisory, unchanged rendering logic (see criteriaHtml history).
+function _renderAdvisoryCritCell(s, c) {
+  var dv = s[c.key];
+  var thr = getThresholds()[c.key];
+  if (thr === undefined) thr = c.threshold;
+  if (dv === null || dv === undefined) {
+    return '<td style="color:var(--muted)" title="無 D/E 資料（如負權益）">—</td>';
+  }
+  var warn = dv > thr;
+  var deDisp = dv.toFixed(2) + c.unit;
+  return warn
+    ? '<td style="background:#fbf3df;color:var(--warn);font-weight:600" ' +
+      'title="D/E ' + deDisp + ' > ' + thr + ' — 高槓桿警示（advisory，不計入通過條件、不擋閘）">' +
+      '⚠ ' + deDisp + '</td>'
+    : '<td style="color:var(--sec)" title="D/E ' + deDisp + '（advisory，不計入通過條件）">' + deDisp + '</td>';
+}
+
+// ── EPS 上修・本益比壓縮欄位（pe_compression，僅 pec 模式顯示）─────────────
+var PEC_FLAG_LABEL = {
+  big_move:          ['變動極大', '某個財年的 EPS 預估修正幅度 ≥ 100%，基期可能接近零，百分比失真'],
+  earnings_date_odd: ['財報日異常', '最近財報日缺漏或已超過 200 天，財報後窗口的基準日可能不準'],
+  pe5y_gap:          ['5 年比偏離', '目前本益比與 5 年平均的比值低於 0.3 或高於 3，5 年平均可能失真']
+};
+function _pecPct(v, digits) {
+  if (typeof v !== 'number') return '—';
+  return (v > 0 ? '+' : '') + v.toFixed(digits === undefined ? 0 : digits) + '%';
+}
+function _pecWin(w, label, build) {
+  // 單一窗口一行；該窗口達標以綠字標示，未達標灰字，無法判斷顯示 —
+  if (!w) return '';
+  var txt = build(w);
+  var color = w.pass ? 'var(--pos)' : 'var(--sec)';
+  return '<div style="color:' + color + (w.pass ? ';font-weight:600' : '') + '"><span style="color:var(--muted);font-size:10px">' + label + '</span> ' + txt + '</div>';
+}
+function _pecYears() {
+  // 年份取自 latest.json 第一檔有 pe_compression.display_years 的個股
+  var st = (DATA && DATA.stocks) || [];
+  for (var i = 0; i < st.length; i++) {
+    var p = st[i].pe_compression;
+    if (p && p.display_years && p.condition_years) return {d: p.display_years, c: p.condition_years};
+  }
+  return null;
+}
+function pecFillYears() {
+  var y = _pecYears();
+  if (!y) return;
+  var m = {d0: y.d[0], d1: y.d[1], d2: y.d[2], c0: y.c[0], c1: y.c[1]};
+  document.querySelectorAll('.pec-y').forEach(function(el) { var v = m[el.getAttribute('data-k')]; if (v) el.textContent = v; });
+}
+function _pecRevWin(w, label, dy, cy) {
+  if (!w) return '';
+  var parts = dy.map(function(y) {
+    var v = (w.revs || {})[String(y)];
+    var txt = _pecPct(v, 1);
+    if (cy.indexOf(y) < 0) return '<span style="color:var(--muted)">' + txt + '</span>';
+    return '<b style="color:' + (w.pass ? 'var(--pos)' : 'var(--sec)') + '">' + txt + '</b>';
+  });
+  return '<div style="color:var(--muted)"><span style="font-size:10px">' + label + '</span> ' + parts.join(' / ') + '</div>';
+}
+function _renderPecRevCell(s) {
+  var pc = s.pe_compression || {};
+  var se = pc.since_earnings, m3 = pc['3m'];
+  var dy = pc.display_years || [], cy = pc.condition_years || [];
+  var codes = dy.map(function(y) {
+    var c = (pc.fy_codes || {})[String(y)];
+    return y + '＝' + (c || (y === dy[0] ? '無（年度已結束）' : '無'));
+  }).join('、');
+  var tip = '粗體為條件年（' + cy.join('＋') + '），該窗口達標時顯示綠字。各年對應財年：' + codes
+    + '｜財報後基準日 ' + ((se && se.base_date) || '—') + '；近 3 個月基準日 ' + ((m3 && m3.base_date) || '—');
+  return '<td title="' + tip.replace(/"/g, '&quot;') + '" style="font-size:11px;line-height:1.5">'
+    + _pecRevWin(se, '財報後', dy, cy) + _pecRevWin(m3, '近 3 月', dy, cy) + '</td>';
+}
+function _renderPecPeCell(s) {
+  var pc = s.pe_compression || {};
+  var se = pc.since_earnings, m3 = pc['3m'];
+  function f(w) { return _pecPct(w.pe_chg_pct, 1); }
+  var tip = '本益比變動 ＝ (1 + 股價變動) ÷ (1 + 第一個條件年的 EPS 修正) − 1，用 ' + ((pc.condition_years || [])[0] || '—') + ' 年的修正計算。股價變動自基準日起算：財報後 '
+    + _pecPct(se && se.price_chg_pct, 1) + '，近 3 個月 ' + _pecPct(m3 && m3.price_chg_pct, 1);
+  return '<td title="' + tip + '" style="font-size:11px;line-height:1.5">'
+    + _pecWin(se, '財報後', f) + _pecWin(m3, '近 3 月', f) + '</td>';
+}
+function _renderPecRatioCell(s) {
+  var r = (s.pe_compression || {}).pe_vs_5y_ratio;
+  if (typeof r !== 'number') return '<td style="color:var(--muted)">—</td>';
+  return '<td title="預估本益比 ÷ 過去 5 年平均預估本益比。僅供參考，不是入選條件" style="color:var(--sec)">' + r.toFixed(2) + 'x</td>';
+}
+function _renderPecFlagCell(s) {
+  var flags = (s.pe_compression || {}).flags || [];
+  if (!flags.length) return '<td style="color:var(--muted)">—</td>';
+  return '<td style="text-align:left">' + flags.map(function(f) {
+    var d = PEC_FLAG_LABEL[f] || [f, f];
+    return '<span title="' + d[1] + '" style="display:inline-block;margin:1px 3px 1px 0;padding:1px 6px;border-radius:99px;background:#fbf3df;color:var(--warn);font-size:10px;font-weight:600;cursor:help">' + d[0] + '</span>';
+  }).join('') + '</td>';
+}
+
+function buildTable(stocks) {
+  if (!stocks.length) return '<p style="padding:20px;color:var(--muted);font-size:12px">（無符合資料）</p>';
+
+  var criteria = getCriteria();
+  var critByKey = {};
+  criteria.forEach(function(c) { critByKey[c.key] = c; });
+  stocks = _sortStocks(stocks);
+
+  // 2026-09-17（owner：「獲利的部分放在比較前面，同類型的排在附近」）— column
+  // groups: 身分 / 獲利 / 成長 / 估值 / 體質 / 時機 / 其他。Every column below
+  // keeps its pre-existing sort key / tooltip / renderer / filter behaviour —
+  // this section only changes WHERE each <th>/<td> sits, not what it does.
+  // The old single `criteria.map()` loop bundled FCF/ROIC/EPS/PEG/D-E plus a
+  // dozen unrelated satellite columns (體質/衰退訊號/資本配置/估值vs5Y/目標價/
+  // 動能) into one contiguous run keyed off c.key === 'roic'; those satellites
+  // are pulled out here into their correct groups instead.
+
+  // v1.7: header sort keys now point to LIVE fields where available.
+  // 2Y P/E / PEG / 5Y IRR / FY+1→FY+3 CAGR 都改成 live primary、frozen 進 tooltip。
+  // 排序時 null 自動沉底（_sortStocks），所以 live 缺失的 ticker 排在後面。
+  // v1.9: eps2y column 改顯示 Excel forward CAGR，sort key 也改 eps_fy1_fy3_cagr_pct
+
+  // ---- 獲利 group: FCF | ROIC | ROIC 來源 | ROIC 走勢 | 增量 ROIC | 再投資率 | 隱含成長 | 營運槓桿 | D/E ----
+  var thFcf = _thSortable(critByKey.fcf.label, critByKey.fcf.key);
+  var thRoic = _thSortable(critByKey.roic.label, critByKey.roic.key);
+  // 2026-09-16: ROIC 分解 / 存續力 / 增量 ROIC×再投資率 —— 三個機械模組，全部
+  // derive 自 Koyfin xlsx 選填欄位（EBIT Margin % / ROIC 3Y Avg % / Tax Rate % /
+  // Revenue／EBIT／Invested Capital FY(-3)）。見 build_dd_screener.
+  // compute_roic_decomposition() 與 dd-screener build 規格。
+  var thRoicSource = _thSortable('ROIC 來源', 'roic_quadrant_code', {title: 'ROIC 拆解 = NOPAT 利潤率 × 投入資本周轉率，四象限標示獲利厚薄與資本周轉快慢（利厚：NOPAT 利潤率 ≥15%；轉快：周轉率 ≥1.0x）'});
+  var thRoicTrend = _thSortable('ROIC 走勢', 'roic_vs_5y_x', {title: '現在 ROIC ÷ 過去 5 年平均 ROIC —— ≥1.10 上升／≤0.90 下滑／其餘持平'});
+  var thIncrementalRoic = _thSortable('增量 ROIC', 'incremental_roic_pct', {title: '近 3 個財年：(今年 NOPAT − 3 年前 NOPAT) ÷ 新增投入資本 —— 新增的一塊錢資本賺到多少報酬，判斷成長是否值得繼續投'});
+  var thReinvestRate = _thSortable('再投資率', 'reinvest_rate_pct', {title: '近 3 年新增投入資本 ÷ 期間年化 NOPAT —— 公司把多少獲利拿去繼續投資擴張'});
+  var thImpliedGrowth = _thSortable('隱含成長', 'implied_growth_pct', {title: '增量 ROIC × 再投資率 —— 機械推算的內生成長率上限，描述器非預測'});
+  var thOlDivergence = _thSortable('營運槓桿', 'ol_divergence_pp', {title: '營收成長% − 營業利益成長%（僅營業利益為正時計算）—— 負值代表利潤率擴張，正值越大代表成本吃掉營收成長越嚴重'});
+  var thDe = _thSortable(critByKey.de.label, critByKey.de.key);
+
+  // ---- 成長 group: EPS CAGR (+ revision-related satellites) | 目標價 ----
+  var thEps = _thSortable(critByKey.eps2y.label, 'eps_fy1_fy3_cagr_pct', {title: 'Excel FY+1→FY+3 forward 2Y CAGR — buy-side consensus，覆蓋隨 Koyfin watchlist 動態變動'});
+  // v1.9: 拿掉重複的 FY1→FY3 CAGR side column（主 EPS column 已改顯示同一個
+  // Excel forward CAGR）。保留 FY3 YoY% (單年 YoY，與 forward 2Y CAGR 不同)
+  // 及三個 raw EPS column (Curr FY / Next FY / FY3) — 皆帶 vs 上月 revision% chip。
+  var thEpsFy3Yoy = _thSortable('FY3 YoY%', 'eps_fy3_yoy_pct', {title: 'Excel FY+2 → FY+3 consensus EPS YoY growth %'});
+  var thEpsCurrFy = _thSortable('Curr FY', 'eps_fy_curr', {title: 'Current FY EPS consensus — Excel FY1E；yfinance fallback: 0y row。下方 chip = vs 上月 1M revision%'});
+  var thEpsNextFy = _thSortable('Next FY', 'eps_fy_next', {title: 'Next FY EPS consensus — Excel FY2E；yfinance fallback: +1y row。下方 chip = vs 上月 1M revision%'});
+  var thEpsFy3 = _thSortable('FY3 EPS', 'eps_fy3', {title: 'FY+3 EPS consensus — Excel FY3E；yfinance fallback: +2y row（多數 ticker 缺）'});
+  var thTargetUpside = _thSortable('目標價', 'target_upside_pct', {title: '分析師目標價平均 ÷ 現價 − 1（皆當地掛牌貨幣，僅供比率使用）；hover 看目標價區間與最高/最低'});
+
+  // ---- 估值 group: PEG | 2Y P/E | 估值 vs 5Y | 5Y期望 ----
+  var thPeg = _thSortable(critByKey.peg.label, 'live_peg', {title: '即時 PEG = live FwdPE / live EPS CAGR — sort 按 live 數值'});
+  var thLivePe = _thSortable('2Y P/E', 'live_fpe_est', {title: '即時 FY+2 Forward P/E — yfinance 每日抓 FY EPS 重算；hover 看 DD frozen 對比與漂移幅度'});
+  var thValuationVs5y = _thSortable('估值 vs 5Y', 'pe_vs_5y_x', {title: 'NTM 本益比 ÷ 過去 5 年平均本益比 —— 高於 1.5x 代表估值明顯貴於自身歷史'});
+  var th5yExpect = _thSortable('5Y期望', 'live_ev5y_pct', {title: '即時 5 年期望報酬率（原稱 5Y IRR）— 由 DD 決策層 frozen 值用「price_at_dd / price_now」回推（heuristic，假設 terminal value 不變）；hover 看 DD 對比'});
+
+  // ---- 體質 group: 通過 | 體質 | 衰退訊號 | 資本配置 ----
+  // 2026-09-17: 體質五項 veto + 6 組機械化 gate —— 見 compute_fundamental_gates()。
+  var thPassCount = _thSortable('通過', 'pass_count');
+  var thQualityVeto = _thSortable('體質', 'quality_veto_fail_count', {title: 'DD 體質五項 veto：毛利連降／FCF對淨利率／營收連四季負／槓桿／FY1連三月下修 —— 0-2 項不合格維持評等、3 項降一級、4-5 項拒絕，hover 看命中哪幾項'});
+  var thDeclineSignal = _thSortable('衰退訊號', 'decline_signal_count', {title: '衰退訊號計數（6 項機械指標）：🟢 0 項／🟡 1-2 項／🔴 3-4 項／⛔ ≥5 項，hover 看命中哪幾項'});
+  var thCapAlloc = _thSortable('資本配置', 'capalloc_mech_grade', {title: '資本配置機械版評等（股數稀釋率≤1.5%/yr、庫藏股佔FCF≤80%、槓桿過關，三項符合幾項）—— 與 DD 報告內 LLM 資本配置評等是不同東西'});
+  var thChips = _thSortable('籌碼', 'short_interest_pct_float', {title: '融券占流通股比（Short Interest % of Float）——>10% 標紅（軋空風險偏高，同時使該股在 GRP 席位排序中只能列衛星）＋近 3 個月內部人淨買賣方向（▲買／▼賣）。兩者皆為描述器，非資格閘、不進綜合評分'});
+
+  // ---- 時機 group: MA | 距ATH | vs50DMA | RS | 動能 ----
+  var thMa = '<th>MA</th>';
+  var thDistAth = _thSortable('距ATH', 'timing.dist_52w_high_pct', {title: '距 52w high (還原權息) — 起漲點 sweet spot ∈ [-7%, 0%]'});
+  var thVs50dma = _thSortable('vs50DMA', 'timing.ma50_pct', {title: '距 50DMA — 起漲點 sweet spot ∈ [0%, +5%]'});
+  var thRs = _thSortable('RS', 'timing.rs_score', {title: 'RS rating vs SPY (0-100 percentile) — 起漲點 門檻 ≥ 80'});
+  var thMomentum = _thSortable('動能', 'rsi14', {title: 'RSI(14) ＋ 近 6 個月報酬率 —— RSI>70 過熱；6 個月報酬 <100% 放行／100-150% 邊界／>150% 擋下；hover 看 RSI 是否可信（距 52 週高點 <3% 時 RSI 易失真）'});
+
+  // ---- 其他 group: Links ----
+  var thLinks = '<th>Links</th>';
+
+  // Group label row (colspan) — column counts must stay in sync with the
+  // sortable header row + row-renderer td sequence below.
+  var COLUMN_GROUPS = [
+    {label: '身分', span: 4},
+    {label: 'EPS 上修・本益比', span: 4, pec: true},
+    {label: '獲利', span: 9},
+    {label: '成長', span: 6},
+    {label: '估值', span: 4},
+    {label: '體質', span: 5},
+    {label: '時機', span: 5},
+    {label: '其他', span: 1},
+  ];
+  var pecOn = state.pec === 'on';
+  COLUMN_GROUPS = COLUMN_GROUPS.filter(function(g) { return !g.pec || pecOn; });
+  var thPec = pecOn
+    ? _thSortable((function() { var y = _pecYears() || {d: ['今年', '明年', '後年'], c: []};
+          return y.d.map(function(v, k) { var u = y.c.indexOf(v) >= 0; return (u ? '<u>' + v + '</u>' : v) + (k === 0 ? '（今年）' : ''); }).join('／') + ' EPS 上修'
+            + (y.c.length ? '<br><span style="font-weight:400;font-size:10px">條件：' + y.c.join('＋') + '</span>' : ''); })(),
+        'pe_compression.since_earnings.eps_cond1_chg', {title: '各日曆年 EPS 預估相對基準日的修正幅度，上行為財報後、下行為近 3 個月；粗體為條件年，綠字代表該窗口達標。依財報後第一個條件年的修正排序'})
+      + _thSortable('本益比變動', 'pec_min', {title: '同期本益比變動，上行為財報後、下行為近 3 個月；依兩窗口中降幅較大者排序（越負越前）'})
+      + _thSortable('本益比／5 年均', 'pe_compression.pe_vs_5y_ratio', {title: '預估本益比 ÷ 5 年平均預估本益比，僅供參考'})
+      + '<th title="警示標籤只提醒資料可能失真，不會排除個股">警示</th>'
+    : '';
+  var groupRow = '<tr class="th-group">' + COLUMN_GROUPS.map(function(g) {
+    return '<th colspan="' + g.span + '">' + g.label + '</th>';
+  }).join('') + '</tr>';
+
+  var thead = '<table class="tbl"><thead>' + groupRow + '<tr>' +
+    // 身分
+    _thSortable('Ticker', 'ticker', {left: true}) +
+    _thSortable('v2 名次', 'funnel_v2_rank', {left: true, title: 'FunnelRank v2 — 事業品質／再投資引擎／期望落差／價格四層逐層比較排序，不是加權合成分（護城河不進排序；名次格右側另有「儀表板」連結）。預設排序鍵（名次 1 = 最佳）。hover 看四層拆解。'}) +
+    _thSortable('裁決', 'dca_verdict', {left: true, title: 'DD §13 統一裁決（進場/觀望/迴避）— 只讀 v13/v14 合併報告的決策層 metadata；v12 舊報告顯示 —，DD 重跑後自動補上。點擊跳 #decision 錨點。'}) +
+    _thSortable('Moat', 'moat_score', {left: true, title: '依護城河評等分數排序'}) +
+    thPec +
+    // 獲利
+    thFcf + thRoic + thRoicSource + thRoicTrend + thIncrementalRoic + thReinvestRate
+      + thImpliedGrowth + thOlDivergence + thDe +
+    // 成長
+    thEps + thEpsFy3Yoy + thEpsCurrFy + thEpsNextFy + thEpsFy3 + thTargetUpside +
+    // 估值
+    thPeg + thLivePe + thValuationVs5y + th5yExpect +
+    // 體質
+    thPassCount + thQualityVeto + thDeclineSignal + thCapAlloc + thChips +
+    // 時機
+    thMa + thDistAth + thVs50dma + thRs + thMomentum +
+    // 其他
+    thLinks +
+    '</tr></thead><tbody>';
+
+  var rows = stocks.map(function(s) {
+    var pc = computePassCount(s);
+    // v1.7: criteria render dispatches to live helpers for EPS / PEG;
+    // 其他 column (FCF / ROIC / D/E) 仍用 frozen 值 (跟股價無關)。
+
+    // 獲利
+    var tdFcf = _renderPlainCritCell(s, critByKey.fcf);
+    var tdRoic = _renderPlainCritCell(s, critByKey.roic);
+    var tdRoicSatellites = _renderRoicQuadrantCell(s) + _renderRoicTrendCell(s)
+      + _renderIncrementalRoicCell(s) + _renderReinvestRateCell(s) + _renderImpliedGrowthCell(s);
+    var tdOlDivergence = _renderOlDivergenceCell(s);
+    var tdDe = _renderAdvisoryCritCell(s, critByKey.de);
+
+    // 成長
+    var tdEps = _renderLiveEPSCell(s, passFlag(s, critByKey.eps2y));
+    // v1.9: 拿掉重複的 FY1→FY3 CAGR cell（主 EPS column 已用同一個 Excel
+    // forward CAGR）。保留 FY3 YoY% + Curr FY / Next FY / FY3 raw EPS。
+    var tdEpsSatellites = _renderGrowthCell(s, 'eps_fy3_yoy_pct') + _renderRawEpsCell(s, 'eps_fy_curr')
+      + _renderRawEpsCell(s, 'eps_fy_next') + _renderRawEpsCell(s, 'eps_fy3');
+    var tdTargetUpside = _renderTargetUpsideCell(s);
+
+    // 估值
+    var tdPeg = _renderLivePEGCell(s, passFlag(s, critByKey.peg));
+    var tdLivePe = _renderLivePECell(s);
+    var tdValuationVs5y = _renderValuationVs5yCell(s);
+    // 5Y IRR — v1.7 改 live primary (heuristic 回推)
+    var td5yExpect = '<td>' + _renderLiveIRRInner(s) + '</td>';
+
+    // 體質
+    var tdPassCount = '<td>' + passLabel(pc) + '</td>';
+    var tdQualityVeto = _renderQualityVetoCell(s);
+    var tdDeclineSignal = _renderDeclineSignalCell(s);
+    var tdCapAlloc = _renderCapallocCell(s);
+    var tdChips = _renderChipsCell(s);
+
+    // 時機
+    var tmg = s.timing || {};
+    var tdMa = '<td>' + maBadge(s.ma) + '</td>';
+    var tdDistAth = fmtDistAth(tmg.dist_52w_high_pct);
+    var tdVs50dma = fmtMa50(tmg.ma50_pct);
+    var tdRs = fmtRs(tmg.rs_score);
+    var tdMomentum = _renderMomentumCell(s);
+
+    // Links — DD + 定見錨點。v13/v14 的 dca_path 是 DD 自身的 #decision 錨點；
+    // legacy /dca/ 連結不再顯示（DCA 已退役，2026-07 起不作為裁決來源）。
+    var ddLink = s.dd_path
+      ? '<a href="' + s.dd_path + '" class="dd-link" target="_blank">DD</a>'
+      : '';
+    var dcaLink = (s.dca_path && s.dca_path.indexOf('#decision') !== -1)
+      ? '<a href="' + s.dca_path + '" class="dd-link" target="_blank">定見</a>'
+      : '';
+    var tdLinks = '<td>' + ddLink + dcaLink + '</td>';
+
+    // 裁決 cell — v13/v14 dd-meta 的統一裁決；v12-only ticker 留 — 待重跑補上
+    var VERDICT_STYLE = {'進場': ['#eafaef', 'var(--pos)'], '觀望': ['#fbf3df', 'var(--warn)'], '迴避': ['#fbeceb', 'var(--neg)']};
+    // 正不對稱三級標記（◆/★★/★）— 純機械描述器，非加倉指令。緊貼裁決 badge。
+    // 金色 ◆、深灰 ★（沿用 design token 低調 accent）。
+    var ASYM_LABEL = {'◆': '好球帶·重壓複審候選——描述器非加倉指令', '★★': '乾淨不對稱', '★': '不對稱但陷阱疑慮未決'};
+    var ASYM_STYLE = {'◆': 'color:#B8860B', '★★': 'color:#475569;letter-spacing:-1px', '★': 'color:#64748B'};
+    var asymHtml = '';
+    if (s.asym_flag) {
+      var af = s.asym_flag;
+      var arT = (typeof s.ar_live === 'number') ? s.ar_live.toFixed(1) : '—';
+      var irrT = (typeof s.live_ev5y_pct === 'number') ? s.live_ev5y_pct.toFixed(1) + '%' : '—';
+      var aTitle = af + ' ' + (ASYM_LABEL[af] || '') + '｜AR_live ' + arT + '／liveIRR ' + irrT;
+      asymHtml = '<span class="asym-flag" style="margin-left:4px;font-size:11px;cursor:help;' + (ASYM_STYLE[af] || '') + '" title="' + aTitle.replace(/"/g, '&quot;') + '">' + af + ' ' + arT + (irrT !== '—' ? '·' + irrT : '') + '</span>';
+    }
+    var verdictHtml;
+    if (s.dca_verdict) {
+      var vc = VERDICT_STYLE[s.dca_verdict] || ['var(--line-soft)', 'var(--sec)'];
+      // P1: overlay_extracted＝機器抽取自 v12 舊 DD 報告結論文字（非 v13/v14 決策層原生），
+      // 標「※抽取」小記；medium/low 信心屬待人工複審。dd_meta 原生無此標記。
+      var isOverlay = s.dca_verdict_source === 'overlay_extracted';
+      var vTitle;
+      if (isOverlay) {
+        vTitle = '※機器抽取自 v12 舊 DD 報告自身結論（' + (s.dca_date || '') + '，信心 '
+          + (s.dca_verdict_confidence || '—') + '）｜非 v13/v14 決策層原生，medium/low 信心待人工複審'
+          + (s.dca_role ? '｜角色: ' + s.dca_role : '');
+      } else {
+        vTitle = 'DD §13 統一裁決（' + (s.dca_date || '') + '）' + (s.dca_role ? '｜角色: ' + s.dca_role : '');
+      }
+      var overlayMark = isOverlay
+        ? '<span style="margin-left:3px;font-size:9px;color:var(--muted);cursor:help" title="機器抽取自 v12 舊報告結論，非 v13/v14 決策層原生；medium/low 信心待人工複審">※抽取</span>'
+        : '';
+      verdictHtml = '<td class="left"><a href="' + (s.dca_path || s.dd_path) + '" target="_blank" style="text-decoration:none" title="' + vTitle.replace(/"/g, '&quot;') + '">' +
+        '<span style="background:' + vc[0] + ';color:' + vc[1] + ';padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap">' + s.dca_verdict + '</span></a>' + overlayMark + asymHtml + '</td>';
+    } else {
+      var noVerdictTitle = s.dd_status === 'none'
+        ? 'QGM 品質池名字，尚未做 DD——DD 是選配，做了才會有裁決'
+        : 'v12 舊報告無決策層 metadata — DD 重跑 v14 後自動補上';
+      verdictHtml = '<td class="left" style="color:var(--muted)" title="' + noVerdictTitle + '">—' + asymHtml + '</td>';
+    }
+
+    // Moat cell — 護城河評等：字母代碼降小字，主名用白話等第詞（頂級/優良/中等/薄弱/無）。
+    var moatGrade = s.moat_grade || '—';   // 無 DD 列不得預設為 S
+    var moatScore = typeof s.moat_score === 'number' ? s.moat_score : '—';
+    var moatTrend = s.moat_trend || '→';
+    var moatWord = MOAT_GRADE_WORD[moatGrade] || moatGrade;
+    var moatTrendWord = MOAT_TREND_WORD[moatTrend] || '';
+    var moatHtml = moatWord + '<sup style="font-size:8px;color:var(--muted)">' + moatGrade + '</sup> ' + moatScore + ' ' + moatTrend;
+    var moatTitle = ' title="護城河評等：' + moatWord + '（' + moatGrade + ' 級，分數 ' + moatScore + '）｜趨勢：' + moatTrendWord + '"';
+
+    // ⛔ 否決列：整列降透明度 + ticker 旁 ⛔（FY1/FY2/FY3 全下修，已沉底）。
+    var rowStyle = s.veto_all_downgrade ? ' style="opacity:.45"' : '';
+    var vetoMark = s.veto_all_downgrade
+      ? ' <span style="color:var(--neg)" title="FY1/FY2/FY3 全下修 → 綜合評分歸 0、沉底">⛔</span>'
+      : '';
+    // 選股系統 v3：dd_status="none" = QGM 品質池名字，還沒做 DD。DD 是選配，
+    // 這裡標一枚小 pill 讓讀者一眼看出這列沒有護城河評等／裁決可看。
+    var pendingDdMark = s.dd_status === 'none'
+      ? ' <span class="src-badge src-pending-dd" title="QGM 品質池名字，尚未做 DD——一樣有 Koyfin 三年成長與品質數字，可以競爭席位；DD 是選配">待 DD</span>'
+      : '';
+    return '<tr' + rowStyle + '>' +
+      // 身分
+      '<td class="left">' +
+        '<span class="ticker-nm">' + s.ticker + '</span>' + vetoMark + pendingDdMark +
+      '</td>' +
+      _renderFunnelCell(s) +
+      verdictHtml +
+      '<td class="left"' + moatTitle + ' style="font-size:11px">' + moatHtml + '</td>' +
+      (pecOn ? _renderPecRevCell(s) + _renderPecPeCell(s) + _renderPecRatioCell(s) + _renderPecFlagCell(s) : '') +
+      // 獲利
+      tdFcf + tdRoic + tdRoicSatellites + tdOlDivergence + tdDe +
+      // 成長
+      tdEps + tdEpsSatellites + tdTargetUpside +
+      // 估值
+      tdPeg + tdLivePe + tdValuationVs5y + td5yExpect +
+      // 體質
+      tdPassCount + tdQualityVeto + tdDeclineSignal + tdCapAlloc + tdChips +
+      // 時機
+      tdMa + tdDistAth + tdVs50dma + tdRs + tdMomentum +
+      // 其他
+      tdLinks +
+      '</tr>';
+  }).join('');
+
+  return thead + rows + '</tbody></table>';
+}
+
+function renderEpsSourceBanner() {
+  // v1.8: surface Excel snapshot date + age + diff列表。每月更新提醒。
+  var src = DATA && DATA.eps_estimates_source;
+  var el = document.getElementById('eps-source-banner');
+  if (!el) return;
+  if (!src || !src.snapshot_date) {
+    // Excel 缺檔 — 顯示警告（全 universe 走 yfinance fallback）
+    el.style.display = 'block';
+    el.style.background = '#fbeceb';
+    el.style.border = '1px solid var(--line)';
+    el.style.color = 'var(--neg)';
+    el.innerHTML = '<strong>⚠ EPS 預估資料源缺：</strong>找不到 <code>data/eps-estimates/DD_universe_EPS_estimates_*.xlsx</code>，'
+                 + '全部 ' + (src ? src.fallback_yfinance_tickers.length : '?')
+                 + ' 檔暫走 yfinance fallback（GAAP/non-GAAP 風險）。請補 Excel。';
+    return;
+  }
+  var days = Math.floor((Date.now() - new Date(src.snapshot_date).getTime()) / 86400000);
+  // Threshold: ≤30 info（藍）/ 31-35 warning（橘）/ >35 alert（紅）
+  var bg, border, color, extraMsg = '';
+  if (days > 35) {
+    bg = '#fbeceb'; border = 'var(--line)'; color = 'var(--neg)';
+    extraMsg = ' <strong>請更新 EPS Excel</strong>（距上次 ' + days + ' 天 > 35 天門檻）。';
+  } else if (days > 30) {
+    bg = '#fbf3df'; border = 'var(--line)'; color = 'var(--warn)';
+    extraMsg = ' 距上次 ' + days + ' 天，本月應更新。';
+  } else {
+    bg = '#e8eef5'; border = 'var(--line)'; color = 'var(--accent-ink)';
+    extraMsg = ' (' + days + ' 天前)';
+  }
+  el.style.display = 'block';
+  el.style.background = bg;
+  el.style.border = '1px solid ' + border;
+  el.style.color = color;
+  var missingHtml = '';
+  if (src.missing_us_adr_tickers && src.missing_us_adr_tickers.length) {
+    missingHtml = ' <span style="color:var(--neg)">Excel 未收錄（已從 watchlist 移除或命名不符，走 yfinance）：'
+                + src.missing_us_adr_tickers.map(function(t){return '<code>' + t + '</code>';}).join('、')
+                + '</span>';
+  }
+  var fallbackHtml = '';
+  if (src.fallback_yfinance_tickers && src.fallback_yfinance_tickers.length) {
+    var tickerList = src.fallback_yfinance_tickers.map(function(t){return '<code>' + t + '</code>';}).join('、');
+    fallbackHtml = ' 未覆蓋 (' + src.fallback_yfinance_tickers.length + ' 檔)，沿用 yfinance：' + tickerList;
+  }
+  el.innerHTML = 'ⓘ <strong>EPS 預估資料：</strong>Excel <code>' + src.snapshot_date + '</code> snapshot'
+              + extraMsg
+              + ' 覆蓋 ' + src.coverage_count + ' 檔。' + fallbackHtml + missingHtml;
+}
+
+// 2026-09-22 最終定案：護城河不進排序，已無「判斷層覆蓋率／開關狀態」可顯示
+// ——renderMoatRubricCoverageNote()/renderMoatJudgmentStatusNote() 這條說明
+// banner 隨兩版舊設計一併移除。護城河三題制已於同日放棄，不再有任何護城河
+// 顯示欄位；名次格改為每列一個「儀表板」小連結，見 _renderFunnelCell()。
+
+function renderAll() {
+  if (!DATA) return;
+  pecFillYears();
+  var _pc = document.getElementById('pec-chip');
+  var _y = _pecYears();
+  if (_pc && _y) _pc.title = '所有公司用同一組日曆年比較：' + _y.c.join('＋') + ' 年的 EPS 預估都上修 ≥ 5%，且同期股價落後使本益比下降 ≥ 10%。啟用後不套用 Moat、Direction、ROIC 來源和時機篩選';
+
+  var stocks = DATA.stocks || [];
+
+  // Apply moat + direction filters
+  var filtered = applyFilters(stocks);
+
+  // Recompute pass_count for each stock in filtered set (respects preset)
+  // Then group by computed pass_count.
+  // 2026-07-03: 母數 = scoredCount()（D/E 退出後 = 4）。tab 語義為「完全符合 /
+  // 差一條 / 差兩條」，用相對母數分組，不再硬編 5/4/3。
+  var nScored = scoredCount();
+  var s5   = filtered.filter(function(s) { return computePassCount(s) === nScored; });
+  var s4   = filtered.filter(function(s) { return computePassCount(s) === nScored - 1; });
+  var s3   = filtered.filter(function(s) { return computePassCount(s) === nScored - 2; });
+  var sAll = filtered.slice().sort(function(a,b) { return computePassCount(b) - computePassCount(a); });
+
+  document.getElementById('tab-5').innerHTML   = buildTable(s5);
+  document.getElementById('tab-4').innerHTML   = buildTable(s4);
+  document.getElementById('tab-3').innerHTML   = buildTable(s3);
+  document.getElementById('tab-all').innerHTML = buildTable(sAll);
+
+  // Update tab counts
+  document.getElementById('cnt-5').textContent   = s5.length;
+  document.getElementById('cnt-4').textContent   = s4.length;
+  document.getElementById('cnt-3').textContent   = s3.length;
+  document.getElementById('cnt-all').textContent = sAll.length;
+
+  // Search panel rendered separately (bypasses all filters)
+  renderSearch();
+}
+
+// ── Search panel (ticker lookup, bypasses all chip filters & tabs) ─────────
+// ── Cross-link 落點（/research/ 主表 → 本頁 #t=TICKER）───────────────────────
+// 進頁（或 hash 變更）時把 ticker 填入搜尋框（exact-match 格式「TICKER 」），
+// 借既有搜尋面板渲染——繞過所有 chip filter 與 tab，目標 ticker 保證可見。
+function applyHashTicker() {
+  var m = (window.location.hash || '').match(/^#t=([A-Za-z0-9.\-]+)$/);
+  if (!m) return;
+  var input = document.getElementById('search-ticker');
+  if (!input) return;
+  input.value = m[1].toUpperCase() + ' ';
+  state.searchQuery = input.value;
+  if (DATA) renderSearch();
+  var panel = document.getElementById('search-panel');
+  if (panel && !panel.classList.contains('hidden')) {
+    panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+}
+window.addEventListener('hashchange', applyHashTicker);
+
+function renderSearch() {
+  var panel = document.getElementById('search-panel');
+  var body  = document.getElementById('search-panel-body');
+  var count = document.getElementById('search-count');
+  if (!panel || !body) return;
+
+  var raw = state.searchQuery || '';
+  var q = raw.trim().toUpperCase();
+  if (!q || !DATA) {
+    panel.classList.add('hidden');
+    return;
+  }
+
+  // v1.9.1: 「打完 ticker 加空白 = exact match only」behaviour.
+  //   "V"   → prefix match → V, VIK, VRT
+  //   "V "  → exact match → just Visa
+  //   "NV"  → prefix → NVDA, NVMI
+  //   "V AAPL" → V exact (followed by space delimiter) + AAPL prefix
+  //   "V AAPL " → both exact (both followed by delimiter)
+  // Token "2330" still resolves to "2330.TW" via suffix-tolerant exact match.
+  var endsWithDelim = /[\s,/]$/.test(raw);
+  var tokens = q.split(/[\s,/]+/).filter(function(t) { return t.length > 0; });
+  var seen = {};
+  var hits = [];
+  tokens.forEach(function(tok, i) {
+    var isLast = (i === tokens.length - 1);
+    // Non-last tokens are "complete" (followed by delimiter).
+    // Last token is "complete" only when input ends with a delimiter.
+    var isComplete = !isLast || endsWithDelim;
+    // Pass 1: exact match — also tolerate ".TW"/".T"/".JP"/".HK"/".KS" suffix
+    // so typing "2330 " exact-matches 2330.TW
+    var exactHit = null;
+    (DATA.stocks || []).forEach(function(s) {
+      var t = (s.ticker || '').toUpperCase();
+      if (exactHit) return;
+      if (t === tok || t === tok + '.TW' || t === tok + '.T' ||
+          t === tok + '.JP' || t === tok + '.HK' || t === tok + '.KS') {
+        exactHit = s;
+      }
+    });
+    if (exactHit && !seen[(exactHit.ticker || '').toUpperCase()]) {
+      seen[(exactHit.ticker || '').toUpperCase()] = true;
+      hits.push(exactHit);
+    }
+    // Pass 2: prefix matches — skip when (a) token is "complete" (user typed
+    // trailing delimiter) AND (b) exact hit succeeded. If exact failed, still
+    // fall back to prefix so "NV " doesn't return empty.
+    if (!isComplete || !exactHit) {
+      var prefixHits = (DATA.stocks || []).filter(function(s) {
+        var t = (s.ticker || '').toUpperCase();
+        return t.indexOf(tok) === 0 && !seen[t];
+      }).sort(function(a, b) {
+        return (a.ticker || '').localeCompare(b.ticker || '');
+      });
+      prefixHits.forEach(function(s) {
+        seen[(s.ticker || '').toUpperCase()] = true;
+        hits.push(s);
+      });
+    }
+  });
+
+  count.textContent = hits.length;
+  panel.classList.remove('hidden');
+
+  if (!hits.length) {
+    body.innerHTML = '<p style="padding:20px;color:var(--muted);font-size:12px">查無此 ticker。<br>'
+                   + '• 字首比對：<code>V</code> → V/VIK/VRT；<code>NV</code> → NVDA/NVMI<br>'
+                   + '• 精準比對：<code>V&nbsp;</code>（後加空白）→ 只 Visa；<code>2330&nbsp;</code> → 只 2330.TW<br>'
+                   + '• 多檔：<code>NVDA TSM AVGO</code>（空白分隔，前面自動精準、最後一檔字首）</p>';
+    return;
+  }
+
+  // Render via buildTable but force MLB thresholds + default sort so the
+  // numbers in the search result reflect the universe baseline, not the
+  // user's Custom panel or active column sort.
+  var saved = { preset: state.preset, sortKey: state.sortKey, sortDir: state.sortDir };
+  state.preset  = 'MLB';
+  state.sortKey = null;
+  body.innerHTML = buildTable(hits);
+  state.preset  = saved.preset;
+  state.sortKey = saved.sortKey;
+  state.sortDir = saved.sortDir;
+}
+
+function updateHeroBadge() {
+  if (!DATA) return;
+  var badge = document.getElementById('hero-badge');
+  if (!badge) return;
+  // Build "最後更新 YYYY-MM-DD HH:MM (台北)" from run_timestamp; fall back to as_of date
+  var stamp = DATA.as_of || '';
+  if (DATA.run_timestamp) {
+    var m = String(DATA.run_timestamp).match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+    if (m) stamp = m[1] + ' ' + m[2];
+  }
+  badge.innerHTML = '<strong>最後更新 ' + stamp + ' (台北)</strong>';
+}
+
+function showError(msg) {
+  var errHtml = '<p class="state-msg">' + msg + '</p>';
+  ['tab-5','tab-4','tab-3','tab-all'].forEach(function(id) {
+    document.getElementById(id).innerHTML = errHtml;
+  });
+  document.getElementById('hero-badge').innerHTML = '<strong>資料未就緒</strong>';
+}
+
+// ── Filter chip interactions ───────────────────────────────────────────────
+document.querySelectorAll('.chip[data-filter]').forEach(function(chip) {
+  chip.addEventListener('click', function() {
+    var filterName = chip.getAttribute('data-filter');
+    var val = chip.getAttribute('data-value');
+
+    // Deactivate siblings
+    document.querySelectorAll('.chip[data-filter="' + filterName + '"]').forEach(function(c) {
+      c.classList.remove('active');
+    });
+    chip.classList.add('active');
+
+    // Update state
+    if (filterName === 'moat')     state.moat     = val;
+    if (filterName === 'dir')      state.dir      = val;
+    if (filterName === 'quadrant') state.quadrant = val;
+    if (filterName === 'preset')   state.preset   = val;
+    if (filterName === 'timing')   state.timing   = val;
+    if (filterName === 'pec')      state.pec      = val;
+
+    // Show/hide custom panel
+    var panel = document.getElementById('custom-panel');
+    if (filterName === 'preset') {
+      if (val === 'Custom') {
+        panel.classList.remove('hidden');
+      } else {
+        panel.classList.add('hidden');
+      }
+    }
+
+    // Show/hide 起漲點 / 回調帶 banners (mutually exclusive timing modes)
+    if (filterName === 'timing') {
+      var qBanner = document.getElementById('qichi-banner');
+      var pBanner = document.getElementById('pullback-banner');
+      if (qBanner) qBanner.classList.toggle('hidden', val !== 'qichi');
+      if (pBanner) pBanner.classList.toggle('hidden', val !== 'pullback');
+    }
+
+    // EPS 上修・本益比壓縮：獨立模式。啟用時切到「全部」分頁並以本益比降幅排序，退出時還原
+    if (filterName === 'pec') {
+      var pBn = document.getElementById('pec-banner');
+      if (pBn) pBn.classList.toggle('hidden', val !== 'on');
+      var tabBtns = document.querySelectorAll('.tab-btn');
+      if (val === 'on') {
+        var cur = document.querySelector('.tab-btn.active');
+        state.pecPrevTab = cur ? cur.getAttribute('data-tab') : null;
+        state.sortKey = 'pec_min'; state.sortDir = 'asc';
+        tabBtns.forEach(function(b) { if (b.getAttribute('data-tab') === 'tab-all') b.click(); });
+      } else {
+        state.sortKey = 'funnel_v2_rank'; state.sortDir = 'asc';
+        if (state.pecPrevTab) tabBtns.forEach(function(b) { if (b.getAttribute('data-tab') === state.pecPrevTab) b.click(); });
+      }
+    }
+
+    if (DATA) renderAll();
+  });
+});
+
+// ── Custom panel inputs ────────────────────────────────────────────────────
+function readCustomThresholds() {
+  state.customThresholds = {
+    fcf:   parseFloat(document.getElementById('cust-fcf').value)   || 10,
+    roic:  parseFloat(document.getElementById('cust-roic').value)  || 15,
+    eps2y: parseFloat(document.getElementById('cust-eps2y').value) || 15,
+    peg:   parseFloat(document.getElementById('cust-peg').value)   || 2.0,
+    de:    parseFloat(document.getElementById('cust-de').value)    || 0.7
+  };
+  state.customSOnly = document.getElementById('cust-s-only').checked;
+}
+
+['cust-fcf','cust-roic','cust-eps2y','cust-peg','cust-de','cust-s-only'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('input', function() {
+    readCustomThresholds();
+    if (DATA && state.preset === 'Custom') renderAll();
+  });
+});
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+    btn.classList.add('active');
+    var target = btn.getAttribute('data-tab');
+    document.getElementById(target).classList.add('active');
+  });
+});
+
+// ── Search input (ticker lookup) ───────────────────────────────────────────
+(function() {
+  var input = document.getElementById('search-ticker');
+  var clear = document.getElementById('search-clear');
+  if (!input || !clear) return;
+  input.addEventListener('input', function() {
+    state.searchQuery = input.value;
+    if (DATA) renderSearch();
+    syncAthChipSelection();
+  });
+  clear.addEventListener('click', function() {
+    input.value = '';
+    state.searchQuery = '';
+    if (DATA) renderSearch();
+    syncAthChipSelection();
+    input.focus();
+  });
+})();
+
+// ── Sortable headers (event delegation — survives table re-renders) ────────
+document.addEventListener('click', function(e) {
+  var th = e.target.closest('th.sortable');
+  if (!th) return;
+  if (!e.target.closest('.compare-wrap')) return; // limit to main tabs (not search panel)
+  var key = th.getAttribute('data-sort-key');
+  if (!key) return;
+  if (state.sortKey === key) {
+    state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    state.sortKey = key;
+    // Sensible default per column: ticker / funnel_v2_rank ascending (rank 1 =
+    // best); everything else descending.
+    state.sortDir = (key === 'ticker' || key === 'funnel_v2_rank') ? 'asc' : 'desc';
+  }
+  if (DATA) renderAll();
+});
+
+// ── Data fetch ────────────────────────────────────────────────────────────
+fetch('./latest.json')
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(data) {
+    DATA = data;
+    __AS_OF_GLOBAL = data.as_of || null;
+
+    // Seed custom thresholds from MLB preset
+    if (data.presets && data.presets['MLB']) {
+      var mlb = data.presets['MLB'];
+      state.customThresholds = {
+        fcf:   mlb.fcf   != null ? mlb.fcf   : 10,
+        roic:  mlb.roic  != null ? mlb.roic  : 15,
+        eps2y: mlb.eps2y != null ? mlb.eps2y : 15,
+        peg:   mlb.peg   != null ? mlb.peg   : 2.0,
+        de:    mlb.de    != null ? mlb.de    : 0.7
+      };
+      // Reflect in inputs
+      document.getElementById('cust-fcf').value   = state.customThresholds.fcf;
+      document.getElementById('cust-roic').value  = state.customThresholds.roic;
+      document.getElementById('cust-eps2y').value = state.customThresholds.eps2y;
+      document.getElementById('cust-peg').value   = state.customThresholds.peg;
+      document.getElementById('cust-de').value    = state.customThresholds.de;
+    }
+
+    updateHeroBadge();
+    renderAthSpotlight(data.stocks || []);
+    renderEpsSourceBanner();
+    renderAll();
+    applyHashTicker();
+  })
+  .catch(function(err) {
+    showError(
+      '資料尚未產出。執行 <code>python3 scripts/build_dd_screener.py</code> 以建立 latest.json。'
+    );
+  });
+
+</script>
+</body>
+</html>

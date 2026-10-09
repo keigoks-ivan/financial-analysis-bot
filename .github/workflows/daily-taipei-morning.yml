@@ -97,6 +97,23 @@ jobs:
         run: python scripts/build_dd_screener.py --universe smallcap || echo "::warning::smallcap dd-screener build failed"
         continue-on-error: true
 
+      # TW 池第四個 Koyfin 母體（2026-10-09，見 notes/site-internal/root/
+      # _koyfin_tw_watchlist_20261009.md）：dd_tw watchlist 自己的 xlsx family
+      # （DD_tw_EPS_estimates_*），寫 docs/dd-screener/tw/latest.json，跟主檔、
+      # smallcap 都隔離，不進 tenbagger／arena。時機排名對台股 screener
+      # （docs/screener/tw_latest.json），不對美股。失敗只 warning。
+      - name: "[non-fundamental] Step 2a-tw — DD Screener TW pool latest.json"
+        run: python scripts/build_dd_screener.py --universe tw || echo "::warning::tw dd-screener build failed"
+        timeout-minutes: 20
+        continue-on-error: true
+
+      # 台股池頁 docs/dd-screener/tw/index.html 由主頁衍生（只換標題、hero、加說明框），
+      # 說明框的檔數／DD 數取自上一步剛寫的 tw/latest.json，所以緊接在後重生。
+      # 主頁錨點移動時腳本 exit 1、舊頁保留，只 warning。
+      - name: "[non-fundamental] Step 2a-tw-page — DD Screener TW pool page"
+        run: python scripts/build_dd_screener_tw_page.py || echo "::warning::tw dd-screener page build failed"
+        continue-on-error: true
+
       # 精選榜「十倍」組 v5 小市值池（2026-09-17 持有人拍板「精選榜改版」，見
       # knowledge/rule_ledger.md「精選榜改版：爆發組退役、十倍組改 v5 小市值池」列）：
       # 與上面 Arena daily refresh 讀同一份剛更新的 dd-screener latest.json，跑同一套
@@ -170,6 +187,7 @@ jobs:
             data/weekly_cache/ \
             docs/dd-screener/latest.json \
             docs/dd-screener/smallcap/ \
+            docs/dd-screener/tw/ \
             docs/dd-screener/quality-entry.html \
             docs/dd-screener/quality-entry.json \
             docs/dd-screener/quality-entry-snapshots/ \

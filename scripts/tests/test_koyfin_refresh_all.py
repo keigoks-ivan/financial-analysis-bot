@@ -93,7 +93,7 @@ def test_find_raw_file_success():
 # ---------------------------------------------------------------------------
 
 def test_family_order_and_keys():
-    assert FAMILY_ORDER == ["screener", "smallcap", "largecap"]
+    assert FAMILY_ORDER == ["screener", "smallcap", "largecap", "tw"]
     assert set(FAMILIES.keys()) == set(FAMILY_ORDER)
 
 
@@ -112,6 +112,11 @@ def test_family_mapping_values():
     assert FAMILIES["largecap"]["xlsx_family"] == "DD_largecap_EPS_estimates_"
     assert FAMILIES["largecap"]["watchlist_tab"] == "dd_largecap"
     assert "dd_largecap_v5" in FAMILIES["largecap"]["universe_note"]
+
+    assert FAMILIES["tw"]["url"] == "https://app.koyfin.com/myw/b56fc646-d1b8-41f7-b4d1-438744598421"
+    assert FAMILIES["tw"]["xlsx_family"] == "DD_tw_EPS_estimates_"
+    assert FAMILIES["tw"]["watchlist_tab"] == "dd_tw_80col"
+    assert "dd_tw_v1" in FAMILIES["tw"]["universe_note"]
 
 
 def test_raw_txt_name_matches_existing_convention():

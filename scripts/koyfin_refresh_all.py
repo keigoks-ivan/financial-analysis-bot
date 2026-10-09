@@ -24,13 +24,17 @@ Pipeline per family (screener / smallcap / largecap, see scripts/koyfin_families
      built, no downstream command runs, until a human resolves it (see the
      note file this task also produces for the recovery procedure).
   5. build the xlsx via `python3 scripts/koyfin_xlsx_from_raw.py`
-Then, once every requested family is done: the four downstream commands in
-the order the task brief gives them (note the last one uses `python3`, not
+Then, once every requested family is done: the six downstream commands in
+the order the task brief gives them (note build_arena uses `python3`, not
 python3.12 — copied verbatim, not a typo):
   python3.12 scripts/build_dd_screener.py --include-non-dd
   python3.12 scripts/build_dd_screener.py --universe smallcap
   python3.12 scripts/build_tenbagger.py
   python3 scripts/engine/build_arena.py
+  python3.12 scripts/build_dd_screener.py --universe tw      (2026-10-09 TW pool)
+  python3.12 scripts/build_dd_screener_tw_page.py            (2026-10-09 TW pool page)
+The two TW commands run last because the chain stops at the first failure,
+and a TW problem must not keep tenbagger / arena from running.
 Then a final summary (universe sizes, largecap rows, arena core/waiting/buyable line).
 
 --commit stages the built xlsx + the docs/ outputs the downstream commands
@@ -236,11 +240,16 @@ DOWNSTREAM_CMDS = [
     ["{PY312}", "scripts/build_dd_screener.py", "--universe", "smallcap"],
     ["{PY312}", "scripts/build_tenbagger.py"],
     ["python3", "scripts/engine/build_arena.py"],
+    # 2026-10-09 TW pool: isolated output (docs/dd-screener/tw/), read by no
+    # US consumer. Last in the chain so a TW failure cannot stop the US steps
+    # above (run_downstream stops at the first failure).
+    ["{PY312}", "scripts/build_dd_screener.py", "--universe", "tw"],
+    ["{PY312}", "scripts/build_dd_screener_tw_page.py"],
 ]
 
 
 def run_downstream() -> tuple[bool, str]:
-    """Runs the four downstream commands in order. Stops at the first
+    """Runs the six downstream commands in order. Stops at the first
     failure. Returns (all_ok, arena_summary_line)."""
     arena_line = ""
     for tpl in DOWNSTREAM_CMDS:
@@ -309,6 +318,8 @@ def git_commit(built: list[dict], push: bool) -> int:
     doc_paths = [
         "docs/dd-screener/latest.json", "docs/dd-screener/index.html",
         "docs/dd-screener/smallcap/latest.json",
+        "docs/dd-screener/tw/latest.json",
+        "docs/dd-screener/tw/index.html",
         "docs/engine/arena.json", "docs/engine/board.txt", "docs/engine/_arena_body.html",
     ]
     doc_paths = [p for p in doc_paths if (ROOT / p).exists()]
@@ -449,6 +460,10 @@ def main() -> int:
     if smallcap_latest.exists():
         d = json.loads(smallcap_latest.read_text(encoding="utf-8"))
         print(f"  dd-screener smallcap universe_size: {d.get('universe_size')}")
+    tw_latest = DOCS_DIR / "dd-screener" / "tw" / "latest.json"
+    if tw_latest.exists():
+        d = json.loads(tw_latest.read_text(encoding="utf-8"))
+        print(f"  dd-screener tw universe_size: {d.get('universe_size')}")
     if arena_line:
         print(f"  {arena_line}")
 

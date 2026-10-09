@@ -203,7 +203,10 @@ def apply_adr_ratio(ticker, record, ratios=None):
 # Foreign exchange suffix → bare TW/JP/etc. base used in Excel.
 # Excel exports use bare numeric codes (2330, 6857) while the DD universe uses
 # yfinance-style suffixed tickers (2330.TW, 6857.T). Strip the suffix on lookup.
-_SUFFIX_STRIPS = (".TW", ".T", ".JP", ".HK", ".KS", ".KQ", ".SS", ".SZ", ".AX", ".SW")
+# ".TWO" (TPEx 上櫃) added 2026-10-09 for the TW Koyfin pool, whose rows are
+# keyed "5274.TWO" (build_dd_screener.py --universe tw). It cannot change any
+# existing match: no ".TWO" ticker ends with ".TW" or ".T".
+_SUFFIX_STRIPS = (".TW", ".T", ".JP", ".HK", ".KS", ".KQ", ".SS", ".SZ", ".AX", ".SW", ".TWO")
 
 # Explicit ticker aliases for cases where the DD-universe ticker doesn't match
 # the Excel/Koyfin code via suffix-strip alone — typically ADRs whose Koyfin

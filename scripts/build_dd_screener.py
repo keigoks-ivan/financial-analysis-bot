@@ -158,12 +158,26 @@ SCREENER_LATEST = ROOT / "docs" / "screener" / "latest.json"
 # unchanged by enrich_ticker()'s per-ticker thread workers — widening a dozen
 # call signatures to carry an explicit mode param would be far more invasive
 # than one global consulted by a handful of path-resolving helpers.
-UNIVERSE_MODE = "dd"  # "dd" | "smallcap"
+UNIVERSE_MODE = "dd"  # "dd" | "smallcap" | "tw"
 SMALLCAP_XLSX_FAMILY = "DD_smallcap_EPS_estimates_"
 SMALLCAP_OUTPUT_DIR = OUTPUT_DIR / "smallcap"
 SMALLCAP_OUTPUT_PATH = SMALLCAP_OUTPUT_DIR / "latest.json"
 _DD_SNAPSHOT_DIR = OUTPUT_DIR / "eps-estimates-snapshots"
 SMALLCAP_SNAPSHOT_DIR = SMALLCAP_OUTPUT_DIR / "eps-estimates-snapshots"
+
+# TW pool (2026-10-09, fourth Koyfin universe — see notes/site-internal/root/
+# _koyfin_tw_watchlist_20261009.md): `--universe tw` is a second isolated mode
+# on the smallcap pattern (own xlsx family / output dir / snapshot dir), so the
+# main dd-universe build and the US engine never see these rows. Koyfin
+# exports bare codes ("2330"); tw_listing_suffix.resolve_tw_codes() turns them
+# into yfinance tickers (.TW 上市 / .TWO 上櫃) before anything touches
+# yfinance. Timing is ranked against the TW screener (docs/screener/
+# tw_latest.json), not the US one.
+TW_XLSX_FAMILY = "DD_tw_EPS_estimates_"
+TW_OUTPUT_DIR = OUTPUT_DIR / "tw"
+TW_OUTPUT_PATH = TW_OUTPUT_DIR / "latest.json"
+TW_SNAPSHOT_DIR = TW_OUTPUT_DIR / "eps-estimates-snapshots"
+TW_SCREENER_LATEST = ROOT / "docs" / "screener" / "tw_latest.json"
 
 # v5.1 largecap pool (2026-09-18, third Koyfin universe — see notes/site-internal/
 # root/_seat_engine_v5_1_20260918.md §2 and notes/site-internal/root/
@@ -177,18 +191,26 @@ LARGECAP_XLSX_FAMILY = "DD_largecap_EPS_estimates_"
 
 
 def _output_dir() -> Path:
+    if UNIVERSE_MODE == "tw":
+        return TW_OUTPUT_DIR
     return SMALLCAP_OUTPUT_DIR if UNIVERSE_MODE == "smallcap" else OUTPUT_DIR
 
 
 def _output_path() -> Path:
+    if UNIVERSE_MODE == "tw":
+        return TW_OUTPUT_PATH
     return SMALLCAP_OUTPUT_PATH if UNIVERSE_MODE == "smallcap" else OUTPUT_PATH
 
 
 def _snapshot_dir() -> Path:
+    if UNIVERSE_MODE == "tw":
+        return TW_SNAPSHOT_DIR
     return SMALLCAP_SNAPSHOT_DIR if UNIVERSE_MODE == "smallcap" else _DD_SNAPSHOT_DIR
 
 
 def _excel_family() -> str:
+    if UNIVERSE_MODE == "tw":
+        return TW_XLSX_FAMILY
     return SMALLCAP_XLSX_FAMILY if UNIVERSE_MODE == "smallcap" else "DD_universe_EPS_estimates_"
 
 
@@ -229,6 +251,112 @@ def _smallcap_universe_entries(excel_snapshot, *, source: str = "smallcap-koyfin
         for t in sorted(excel_snapshot.tickers)
         if grp_market_ok(t) and (existing_tickers is None or t not in existing_tickers)
     ]
+
+
+_TW_LISTING_REPORT: dict = {}
+
+
+def _tw_universe_entries(excel_snapshot, resolved: dict[str, dict]) -> list[dict]:
+    """TW pool (2026-10-09): same non-DD row shape as _smallcap_universe_entries(),
+    but keyed by the resolved yfinance ticker ("2330.TW" / "5274.TWO") instead
+    of the xlsx's bare code, named from the TWSE/TPEx roster, and deliberately
+    NOT filtered through grp_market_ok() — that filter exists to keep .TW out
+    of the US engine, and this isolated pool is all-TW by construction. Codes
+    missing from `resolved` (see tw_listing_suffix.resolve_tw_codes) are
+    dropped by the caller's report, never passed through bare. Pure function,
+    no I/O."""
+    out = []
+    for code in sorted(excel_snapshot.tickers):
+        r = resolved.get(code)
+        if not r:
+            continue
+        out.append({
+            "ticker": r["ticker"], "name": r.get("name") or r["ticker"], "sector": "",
+            **{f: None for f in _DD_ONLY_FIELDS},
+            "dd_status": "none",
+            "universe_source": "tw-koyfin",
+            "tw_market": r.get("market"),
+            "qgm_seed": None,
+        })
+    return out
+
+
+def load_tw_timing_reference() -> dict[str, dict]:
+    """TW pool timing reference population: the TW screener's tickers
+    (docs/screener/tw_latest.json, 0050+0051+00714 constituents, .TW/.TWO).
+    compute_yfinance_timing_fallback() only reads the keys, so every TW-pool
+    name gets the same yfinance-computed fields, ranked against TW peers
+    instead of the US screener. tw_latest's own fields (dist_from_high_pct
+    has VCP semantics) are deliberately not joined."""
+    if not TW_SCREENER_LATEST.exists():
+        print(f"  WARN: {TW_SCREENER_LATEST} not found — TW rs_score ranks against pool only",
+              file=sys.stderr)
+        return {}
+    try:
+        data = json.loads(TW_SCREENER_LATEST.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        print(f"  WARN: failed to parse {TW_SCREENER_LATEST}: {exc}", file=sys.stderr)
+        return {}
+    return {r["ticker"]: {} for r in data.get("rankings", []) or [] if r.get("ticker")}
+
+
+def _tw_dd_overlay(universe: list[dict], main_rows: list[dict]) -> list[str]:
+    """TW pool: copy DD fields onto pool names that already have a DD report.
+
+    The main build (docs/dd-screener/latest.json) is where TW DD reports are
+    parsed. Its TW tickers are always ".TW", even for TPEx names (5274.TW,
+    8299.TW are mapped through TICKER_YF_OVERRIDE at fetch time), so the join
+    is by bare code. Only the DD-report fields plus dd_status move across;
+    prices, EPS and every computed column stay this build's own. Rows are not
+    added: a TW DD name outside the Koyfin screen stays on the main page only.
+    Mutates `universe` in place and returns the matched tickers. Pure: the
+    caller does the file read."""
+    dd_by_code = {}
+    for r in main_rows or []:
+        t = str(r.get("ticker") or "")
+        if r.get("dd_status") == "dd" and t.upper().endswith((".TW", ".TWO")):
+            dd_by_code[t.split(".")[0]] = r
+    matched = []
+    for e in universe:
+        src = dd_by_code.get(e["ticker"].split(".")[0])
+        if src is None:
+            continue
+        for f in _DD_ONLY_FIELDS:
+            e[f] = src.get(f)
+        if src.get("sector"):
+            e["sector"] = src["sector"]
+        e["dd_status"] = "dd"
+        e["dd_overlay_from"] = src.get("ticker")
+        matched.append(e["ticker"])
+    return matched
+
+
+def _tw_eps_to_local(rows: list[dict], local_per_usd: float | None) -> int:
+    """TW pool: show EPS in TWD, the way the main build already shows its TW
+    DD names (v1.8.5 path in the per-ticker EPS block, which non-DD rows skip).
+
+    Koyfin's USD toggle converts every TW name at one spot rate, so this uses
+    one rate (the xlsx date's TWD per USD) instead of the main path's
+    per-ticker implied rate. Runs after the revision math, which compares USD
+    with the USD snapshot; *_usd_orig keeps the Koyfin values. Growth and
+    CAGR percentages do not depend on currency and are left alone. Returns the
+    number of rows converted."""
+    if not local_per_usd or local_per_usd <= 0:
+        return 0
+    n = 0
+    for r in rows:
+        if r.get("eps_display_currency", "USD") != "USD":
+            continue
+        for f in ("eps_fy_curr", "eps_fy_next", "eps_fy3"):
+            v = r.get(f)
+            r[f + "_usd_orig"] = v
+            if v is not None:
+                r[f + "_local"] = round(v * local_per_usd, 2)
+                r[f] = r[f + "_local"]
+        r["eps_display_currency"] = "TWD"
+        r["eps_fx_rate"] = round(float(local_per_usd), 4)
+        n += 1
+    return n
 # P1: 機器抽取的 v12 舊 DD 裁決 overlay（僅補 dd-meta 沒有原生 dca_verdict 的 ticker）。
 # 缺檔／壞檔一律靜默降級（見 apply_verdict_overlay），screener 行為回到現狀。
 VERDICT_OVERLAY_PATH = ROOT / "docs" / "dd" / "verdict_overlay.json"
@@ -4242,6 +4370,47 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
               "overlay_loaded": 0, "overlay_stale_skipped": 0}
         print(f"  Step 1-2  verdict source: skipped (smallcap universe has no DD reports), "
               f"none={ov['none']}")
+    elif UNIVERSE_MODE == "tw":
+        # TW pool (2026-10-09): universe = the TW xlsx's own codes, resolved to
+        # .TW/.TWO. TW names with DD reports are parsed by the main build; this
+        # mode never loads the DD pool or the verdict overlay itself. Pool
+        # names that have a DD report get their DD fields copied from the main
+        # latest.json by bare code (_tw_dd_overlay). DD names outside the
+        # Koyfin screen are not added.
+        from tw_listing_suffix import resolve_tw_codes
+        _tw_excel = load_latest_excel(family=_excel_family())
+        if _tw_excel is None:
+            print(f"  Step 1-2  TW xlsx NOT FOUND (family={_excel_family()}) "
+                  "— empty universe", file=sys.stderr)
+            universe = []
+        else:
+            _tw_resolved, _tw_unresolved = resolve_tw_codes(_tw_excel.tickers)
+            _TW_LISTING_REPORT.update({
+                "unresolved": _tw_unresolved,
+                "probe": sorted(c for c, r in _tw_resolved.items() if r["market"] == "probe"),
+                "tpex": sorted(c for c, r in _tw_resolved.items() if r["market"] == "TPEx"),
+            })
+            universe = _tw_universe_entries(_tw_excel, _tw_resolved)
+            try:
+                _main_rows = json.loads(OUTPUT_PATH.read_text(encoding="utf-8")).get("stocks", [])
+            except Exception as exc:  # noqa: BLE001 — no DD overlay, pool still builds
+                print(f"  WARN: main {OUTPUT_PATH} unreadable ({exc}); TW DD overlay skipped",
+                      file=sys.stderr)
+                _main_rows = []
+            _TW_LISTING_REPORT["dd_overlay"] = _tw_dd_overlay(universe, _main_rows)
+            if _tw_unresolved:
+                print(f"  Step 1-2  TW codes with no .TW/.TWO listing (dropped): "
+                      f"{', '.join(_tw_unresolved)}", file=sys.stderr)
+        if top_n:
+            universe = universe[:top_n]
+        print(f"  Step 1-2  TW universe (xlsx family={_excel_family()}): "
+              f"{len(universe)} tickers "
+              f"({len(_TW_LISTING_REPORT.get('tpex', []))} TPEx, "
+              f"{len(_TW_LISTING_REPORT.get('probe', []))} via yfinance probe, "
+              f"{len(_TW_LISTING_REPORT.get('dd_overlay', []))} with DD from main build)")
+        _n_dd = len(_TW_LISTING_REPORT.get("dd_overlay", []))
+        ov = {"dd_meta": _n_dd, "overlay_extracted": 0, "none": len(universe) - _n_dd,
+              "overlay_loaded": 0, "overlay_stale_skipped": 0}
     else:
         universe = load_dd_universe()
         if top_n:
@@ -4311,8 +4480,16 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
 
     # Screener daily-cron timing snapshot — same source as flow/ath-hunter.html.
     # US tickers join here; TW/JP/EU stay null (screener is US-only).
-    screener_timing = load_screener_timing_map()
-    print(f"  Step 3    screener timing map: {len(screener_timing)} tickers (for 起漲點 detection)")
+    if UNIVERSE_MODE == "tw":
+        # TW pool: no join against the US screener; every name goes through
+        # the yfinance fallback, ranked against the TW screener's tickers.
+        screener_timing = {}
+        timing_reference = load_tw_timing_reference()
+        print(f"  Step 3    TW timing reference (tw_latest.json): {len(timing_reference)} tickers")
+    else:
+        screener_timing = load_screener_timing_map()
+        timing_reference = screener_timing
+        print(f"  Step 3    screener timing map: {len(screener_timing)} tickers (for 起漲點 detection)")
 
     # Identify DD tickers missing from the screener universe and compute their
     # timing fields via a yfinance batch fetch (fallback path).
@@ -4321,7 +4498,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     print(f"  Step 3    timing fallback needed: {len(missing_from_screener)} tickers not in screener universe")
     timing_fallback: dict[str, dict] = {}
     if missing_from_screener:
-        timing_fallback = compute_yfinance_timing_fallback(missing_from_screener, screener_timing)
+        timing_fallback = compute_yfinance_timing_fallback(missing_from_screener, timing_reference)
         fb_ok = sum(1 for v in timing_fallback.values() if v.get("dist_52w_high_pct") is not None)
         print(f"  Step 3    timing fallback: {fb_ok}/{len(missing_from_screener)} tickers backfilled")
 
@@ -4734,6 +4911,22 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         "funnel_gate_summary": funnel_gate_summary,
         "stocks": enriched,
     }
+    if UNIVERSE_MODE == "tw":
+        # TW pool: Koyfin EPS / money columns are USD, Last Price / targets are
+        # TWD. The revision math above ran in USD against the USD snapshot;
+        # EPS display fields now move to TWD at one rate (same date as the
+        # xlsx), with the Koyfin USD values kept in *_usd_orig.
+        _twd = get_fx_rate("TWD", excel_snapshot.snapshot_date, fx_cache) if excel_snapshot else None
+        _n_conv = _tw_eps_to_local(doc.get("stocks", []), _twd)
+        doc["universe_mode"] = "tw"
+        doc["display_fx"] = {
+            "currency": "TWD",
+            "local_per_usd": round(_twd, 4) if _twd else None,
+            "as_of": excel_snapshot.snapshot_date if excel_snapshot else None,
+            "applies_to": "eps_fy_curr / eps_fy_next / eps_fy3 converted from Koyfin USD; *_usd_orig keeps USD",
+            "rows_converted": _n_conv,
+        }
+        doc["tw_listing"] = dict(_TW_LISTING_REPORT)
     # v1.8: surface Excel provenance + diff for the FE banner
     if excel_snapshot is not None:
         doc["eps_estimates_source"] = {
@@ -4777,13 +4970,15 @@ def main() -> None:
                    help="選股系統 v2: also carry QGM quality-pool tickers with no DD "
                         "(dd_status=none). Default OFF — CI/prod behaviour unchanged "
                         "until deliberately flipped on.")
-    p.add_argument("--universe", choices=["dd", "smallcap"], default="dd",
+    p.add_argument("--universe", choices=["dd", "smallcap", "tw"], default="dd",
                    help="v5 smallcap pool (2026-09-17): 'smallcap' builds the second "
                         "Koyfin universe (dd_smallcap watchlist screen, $1-20B / "
                         "ROIC>=15 / FCF>=10) from its own xlsx family, with no DD pool "
                         "/ QGM assumptions, writing to docs/dd-screener/smallcap/ "
                         "instead of the main latest.json. Default 'dd' = unchanged "
-                        "behaviour (--include-non-dd still applies only to 'dd').")
+                        "behaviour (--include-non-dd still applies only to 'dd'). "
+                        "'tw' (2026-10-09) builds the TW Koyfin pool (dd_tw watchlist, "
+                        "DD_tw_EPS_estimates_ family) into docs/dd-screener/tw/.")
     args = p.parse_args()
     UNIVERSE_MODE = args.universe
     build(top_n=args.top, skip_ma=args.no_ma, dry_run=args.dry_run, workers=args.workers,
@@ -4795,7 +4990,7 @@ def main() -> None:
     # yfinance-failure 政策 — screener 主表永遠優先）。DD-report-only enrichment
     # (scans docs/dd/) — skip for the smallcap universe, which has no DD reports
     # and must never touch the main discovery_pool.json artifact.
-    if not args.dry_run and args.universe != "smallcap":
+    if not args.dry_run and args.universe == "dd":
         try:
             from list_breakout_candidates import write_pool
             pool_path = write_pool()

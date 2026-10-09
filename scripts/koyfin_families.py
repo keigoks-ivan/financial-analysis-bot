@@ -49,9 +49,23 @@ FAMILIES = {
             "ROIC>=15, FCF>0)"
         ),
     },
+    # 2026-10-09 TW pool (notes/site-internal/root/_koyfin_tw_watchlist_20261009.md).
+    # The tab label is "dd_tw_80col", not "dd_tw": the first "dd_tw" watchlist
+    # was created with Koyfin's default 8-column view and the 80-column
+    # dd_screener layout cannot be applied to an existing watchlist, so the
+    # full-layout copy is the one scraped. Koyfin shows TW names as bare codes;
+    # build_dd_screener.py --universe tw resolves them to .TW/.TWO.
+    "tw": {
+        "watchlist_tab": "dd_tw_80col",
+        "url": "https://app.koyfin.com/myw/b56fc646-d1b8-41f7-b4d1-438744598421",
+        "xlsx_family": "DD_tw_EPS_estimates_",
+        "universe_note": (
+            "dd_tw watchlist (screen dd_tw_v1: TW, >=$1B, ROIC>=15, FCF>0)"
+        ),
+    },
 }
 
-FAMILY_ORDER = ["screener", "smallcap", "largecap"]
+FAMILY_ORDER = ["screener", "smallcap", "largecap", "tw"]
 
 
 def raw_txt_name(family_key: str, date_str: str) -> str:

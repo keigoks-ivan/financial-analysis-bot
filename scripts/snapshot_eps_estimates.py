@@ -33,6 +33,10 @@ Usage:
       # pool (2026-09-17): DD_smallcap_EPS_estimates_ family, xlsx's own
       # tickers as universe, writes docs/dd-screener/smallcap/
       # eps-estimates-snapshots/ — see build_dd_screener.py --universe smallcap
+  python3 scripts/snapshot_eps_estimates.py --universe tw   # TW Koyfin pool
+      # (2026-10-09): DD_tw_EPS_estimates_ family, bare codes resolved to
+      # .TW/.TWO via tw_listing_suffix (same keys as build_dd_screener.py
+      # --universe tw), writes docs/dd-screener/tw/eps-estimates-snapshots/
 
 Pattern:
   ThreadPoolExecutor(max_workers=4) mirrors build_fundamentals_cache.py.
@@ -358,7 +362,7 @@ def main() -> None:
     p.add_argument("--max-workers", type=int, default=4)
     p.add_argument("--skip-trailing", action="store_true",
                    help="Skip yfinance trailingEps fetch (eps_cagr_2y will be null)")
-    p.add_argument("--universe", choices=["dd", "smallcap"], default="dd",
+    p.add_argument("--universe", choices=["dd", "smallcap", "tw"], default="dd",
                    help="v5 smallcap pool (2026-09-17): 'smallcap' snapshots the "
                         "DD_smallcap_EPS_estimates_ xlsx family with its own ticker "
                         "universe (from the xlsx itself, not latest.json) and writes "
@@ -368,7 +372,8 @@ def main() -> None:
 
     print(f"=== EPS Estimates Snapshot · {datetime.now(TAIPEI_TZ).isoformat(timespec='seconds')} ===\n")
 
-    family = "DD_smallcap_EPS_estimates_" if args.universe == "smallcap" else "DD_universe_EPS_estimates_"
+    family = {"smallcap": "DD_smallcap_EPS_estimates_",
+              "tw": "DD_tw_EPS_estimates_"}.get(args.universe, "DD_universe_EPS_estimates_")
     if args.month:
         path = find_excel_for_month(args.month, family=family)
         if path is None:
@@ -380,12 +385,21 @@ def main() -> None:
                              "place the xlsx there first")
 
     excel = load_excel(path)
+    global OUTPUT_DIR
     if args.universe == "smallcap":
         # No DD pool / QGM assumptions — universe is exactly the xlsx's own
         # tickers (see build_dd_screener.py --universe smallcap, same rule).
         universe = sorted(excel.tickers)
-        global OUTPUT_DIR
         OUTPUT_DIR = ROOT / "docs" / "dd-screener" / "smallcap" / "eps-estimates-snapshots"
+    elif args.universe == "tw":
+        # Must key rows exactly like build_dd_screener.py --universe tw does
+        # ("2330.TW" / "5274.TWO"), or its revision lookup never matches.
+        from tw_listing_suffix import resolve_tw_codes
+        _resolved, _unresolved = resolve_tw_codes(excel.tickers)
+        if _unresolved:
+            print(f"  TW codes with no .TW/.TWO listing (skipped): {', '.join(_unresolved)}")
+        universe = sorted(r["ticker"] for r in _resolved.values())
+        OUTPUT_DIR = ROOT / "docs" / "dd-screener" / "tw" / "eps-estimates-snapshots"
     else:
         universe = load_universe()
 

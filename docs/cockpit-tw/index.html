@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>台股選股主控台 — InvestMQuest Research</title>
+<meta name="description" content="台股選股的整合入口：大盤與實單曝險、DD Screener 台股池、QGM 台股、RS 雷達與兩條動能對照組。">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<link rel="stylesheet" href="/assets/imq-badge.css">
+<script src="/assets/imq-badge.js"></script>
+<style>
+:root{
+  --bg:var(--paper);--card:var(--card);--accent:#0d2244;--text:var(--ink);--text-sec:var(--body);--muted:var(--muted);
+  --border:var(--line);--border-soft:var(--line-soft);
+  /* 2026-07-08 設計系統 v1.1：分類色收斂為單一 accent；green/red/amber 僅保留供資料語意使用 */
+  --green:var(--pos);--red:var(--neg);--amber:var(--warn);--orange:var(--accent);--teal:var(--accent);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.mono{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+.hero{padding:2.2rem 0 1rem}
+.hero h1{font-family:'Playfair Display','Noto Serif TC',Georgia,'Times New Roman',serif;color:var(--text);font-size:1.7rem;font-weight:700;letter-spacing:-.01em;margin:0 0 .4rem}
+.hero .sub{font-size:.86rem;color:var(--text-sec);margin:0;max-width:820px}
+.hero .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;letter-spacing:.14em;
+  color:var(--gold-deep);text-transform:uppercase;display:inline-flex;align-items:center;gap:.4rem;margin-bottom:.55rem}
+.hero .eyebrow::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent)}
+section.block{padding:1.1rem 0}
+.sec-head{display:flex;align-items:baseline;gap:.7rem;margin-bottom:.85rem;flex-wrap:wrap}
+.sec-num{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:700;color:#fff;background:var(--accent);
+  width:1.55rem;height:1.55rem;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.sec-title{font-size:1.12rem;font-weight:700;margin:0;font-family:'Playfair Display','Noto Serif TC',Georgia,serif}
+.sec-desc{font-size:.76rem;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-1)}
+.placeholder{background:var(--card);border:1px dashed var(--border);border-radius:var(--r);padding:1rem 1.2rem;
+  color:var(--muted);font-size:.82rem}
+
+/* tabbar */
+.tabbar{display:flex;gap:.25rem;flex-wrap:wrap;border-bottom:1px solid var(--border);margin:.4rem 0 1.5rem;position:sticky;top:0;background:var(--bg);z-index:5}
+.tab-btn{appearance:none;background:none;border:0;font-family:inherit;cursor:pointer;
+  font-size:.94rem;font-weight:600;color:var(--text-sec);padding:.72rem 1.05rem;
+  border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.01em}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--gold-deep)}
+.tab-btn .tb-sub{display:block;font-size:.6rem;font-weight:500;color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;margin-top:.16rem}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+/* 席位排序第二層 sub-tab bar */
+.subtabbar{display:flex;gap:.2rem;flex-wrap:wrap;margin:.2rem 0 1rem}
+.subtab-btn{appearance:none;background:var(--border-soft);border:1px solid var(--border);
+  font-family:inherit;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--text-sec);
+  padding:.34rem .8rem;border-radius:6px;letter-spacing:.01em}
+.subtab-btn:hover{color:var(--text);border-color:var(--accent)}
+.subtab-btn.active{color:#fff;background:var(--accent);border-color:var(--accent)}
+/* 使用邊界摺疊（低頻說明，預設收合——大道至簡：首屏只留天氣與陣容） */
+.ref-fold{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:.6rem;box-shadow:var(--sh-1)}
+.ref-fold summary{cursor:pointer;padding:.75rem 1.1rem;font-size:.88rem;font-weight:600;color:var(--text-sec);list-style:none;display:flex;align-items:center;gap:.5rem}
+.ref-fold summary::-webkit-details-marker{display:none}
+.ref-fold summary::before{content:"▸";font-size:.72rem;color:var(--gold-deep);transition:transform .15s}
+.ref-fold[open] summary::before{transform:rotate(90deg)}
+.ref-fold[open] summary{border-bottom:1px solid var(--border-soft)}
+.ref-fold summary small{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:500;color:var(--muted)}
+.ref-fold .ref-body{padding:.9rem 1.1rem}
+.ref-body p{font-size:.82rem;color:var(--text-sec);line-height:1.7;margin:0 0 .7rem}
+.ref-body p:last-child{margin-bottom:0}
+.embed-frame{width:100%;border:0;display:block;min-height:70vh;background:transparent}
+.embed-note{font-size:.72rem;color:var(--muted);margin:0 0 .5rem;font-family:'IBM Plex Mono',monospace}
+.embed-note a{color:var(--accent)}
+@media(max-width:640px){.tab-btn{padding:.6rem .68rem;font-size:.82rem}.tab-btn .tb-sub{display:none}}
+
+/* ① 天氣 */
+.env-strip{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;overflow:hidden;padding:0}
+.env-cell{padding:.85rem 1.2rem;border-right:1px solid var(--border-soft);flex:1 1 auto;min-width:150px}
+.env-cell:last-child{border-right:0}
+.env-k{font-size:.66rem;font-weight:600;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin-bottom:.25rem}
+.env-v{font-size:1.15rem;font-weight:700;line-height:1.15}
+.env-v small{font-size:.72rem;font-weight:500;color:var(--muted)}
+.env-links{padding:.85rem 1.2rem;display:flex;flex-direction:column;gap:.25rem;justify-content:center;
+  background:var(--border-soft);font-size:.76rem;min-width:120px}
+
+/* ② 陣容——唯一的一張名單 */
+.roster-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.roster-table th{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:600;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;text-align:left;padding:.55rem .9rem;border-bottom:1px solid var(--border)}
+.roster-table td{padding:.55rem .9rem;border-bottom:1px solid var(--border-soft)}
+.roster-table tr:last-child td{border-bottom:0}
+.roster-seat{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);white-space:nowrap}
+.roster-tk{font-weight:700}
+.roster-tk .dash-lnk{font-weight:400;font-size:.7rem;color:var(--muted)}
+.roster-note{font-size:.74rem;color:var(--muted);margin-top:.55rem;line-height:1.7}
+.v-in{color:var(--green)}.v-watch{color:var(--amber)}.v-avoid{color:var(--red)}
+.roster-table td.num,.roster-table th.num{text-align:right;font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+.roster-table tr.rgroup td{background:var(--border-soft);color:var(--muted);font-family:'IBM Plex Mono',monospace;
+  font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.42rem .9rem;border-bottom:1px solid var(--border)}
+.roster-table td .imq-badge{margin:0 .15rem .15rem 0}
+.card-title{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.06em;
+  color:var(--muted);text-transform:uppercase;padding:.65rem .9rem;border-bottom:1px solid var(--border)}
+.board{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.45;
+  overflow-x:auto;white-space:pre;margin:0;padding:12px;background:var(--card);border:1px solid var(--border)}
+
+/* ③ 想法四路（發現層）——四欄純連結卡片 */
+.disc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem}
+.disc-col{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-1);padding:.9rem 1rem}
+.disc-col-title{font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--gold-deep);text-transform:uppercase;margin-bottom:.55rem}
+.disc-link{display:block;font-size:.86rem;font-weight:600;color:var(--text);text-decoration:none;padding:.4rem 0;border-bottom:1px solid var(--border-soft)}
+.disc-link:last-child{border-bottom:0}
+.disc-link:hover{color:var(--accent);text-decoration:none}
+.disc-link small{display:block;font-size:.7rem;font-weight:500;color:var(--muted);margin-top:.12rem}
+@media(max-width:820px){.disc-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.disc-grid{grid-template-columns:1fr}}
+
+footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:1.5rem}
+.foot .disc{font-size:.72rem;color:var(--muted);line-height:1.7}
+.imq-foot{margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--border);color:var(--muted);font-size:.72rem;line-height:1.8}
+.imq-foot a{color:var(--accent)}
+@media(max-width:720px){
+  .env-cell{border-right:0;border-bottom:1px solid var(--border-soft)}
+}
+
+/* ── 台股版新增（2026-10-09） ── */
+.mkt-switch{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;font-size:.76rem;font-weight:600;margin:0 0 .7rem .8rem;vertical-align:middle}
+.mkt-switch a,.mkt-switch span{padding:.22rem .75rem;text-decoration:none}
+.mkt-switch a{color:var(--text-sec)}
+.mkt-switch a:hover{background:var(--border-soft);text-decoration:none}
+.mkt-switch .on{background:var(--accent);color:#fff}
+.env-s{font-size:.72rem;color:var(--muted);margin-top:.2rem}
+.mk{font-size:.66rem;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:0 .3rem;white-space:nowrap}
+.muted{color:var(--muted)}
+.tbl-scroll{overflow-x:auto}
+.tbl-scroll .roster-table{min-width:760px}
+.chip-row{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:.8rem}
+.chip{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-1);padding:.55rem .9rem;min-width:96px}
+.chip-k{font-size:.68rem;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.chip-v{font-size:1.15rem;font-weight:700;font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.cmp-card .roster-table{font-size:.84rem}
+.cmp-note{padding:0 .9rem .7rem}
+.notbuilt{padding:1rem 1.3rem}
+.notbuilt .nb-title{font-weight:700;font-size:.98rem;margin-bottom:.45rem}
+.notbuilt ul{margin:0;padding-left:1.1rem;font-size:.84rem;color:var(--text-sec);line-height:1.75}
+@media(max-width:720px){.cmp-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/" class="active">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/simulation/">模擬</a>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">Stock-Selection Console · 台股</div>
+    <div class="mkt-switch" role="navigation" aria-label="市場切換"><a href="/cockpit/">美股</a><span class="on">台股</span></div>
+    <h1>台股選股主控台</h1>
+    <p class="sub">這一版把站上現有的台股資料收在一頁：大盤與實單曝險、DD Screener 台股池、品質動能篩選、技術雷達，以及兩條動能對照組。美股主控台的席位引擎還沒有台股版，「席位排序」分頁先空著。</p>
+  </div>
+
+  <div class="tabbar" role="tablist">
+    <button type="button" class="tab-btn" data-tab="overview" role="tab">總覽<span class="tb-sub">天氣·陣容</span></button>
+    <button type="button" class="tab-btn" data-tab="seats" role="tab">席位排序<span class="tb-sub">未建</span></button>
+    <button type="button" class="tab-btn" data-tab="pipeline" role="tab">流程板機<span class="tb-sub">台股池漏斗</span></button>
+    <button type="button" class="tab-btn" data-tab="discovery" role="tab">發現層<span class="tb-sub">品質·技術·對照組</span></button>
+  </div>
+
+  <!-- ═══ 分頁 1：總覽 ═══ -->
+  <div class="tab-panel" id="panel-overview">
+  <section class="block">
+    <div class="sec-head">
+      <span class="sec-num">1</span>
+      <h2 class="sec-title">天氣</h2>
+      <span class="sec-desc">加權指數的位置，加上實單台股指數部的曝險</span>
+    </div>
+    <div id="env-mount"><div class="placeholder">載入中⋯</div></div>
+    <p class="roster-note">曝險：台股指數部（0050、2330 各半）的持股占這部資金的比例，超過 100% 的部分用期貨。52 週線是過去 52 週收盤的平均，週收盤在線上才持有。現持跟目標差 20 個百分點以上才調整，所以兩者常有落差。百分位：今天收盤在過去一年交易日裡的位置，100 代表一年最高。</p>
+  </section>
+
+  <section class="block">
+    <div class="sec-head">
+      <span class="sec-num">2</span>
+      <h2 class="sec-title">陣容</h2>
+      <span class="sec-desc">DD Screener 台股池排名前 10。這是研究名單，不是持倉，也不是席位。</span>
+    </div>
+    <div id="roster-mount"><div class="placeholder">載入中⋯</div></div>
+  </section>
+
+  <section class="block" id="ideas">
+    <div class="sec-head">
+      <span class="sec-num">3</span>
+      <h2 class="sec-title">台股想法來源</h2>
+      <span class="sec-desc">名單只回答「看誰」。要不要買，一律走 DD 報告裁決。</span>
+    </div>
+    <div class="disc-grid">
+      <div class="disc-col">
+        <div class="disc-col-title">品質路</div>
+        <a class="disc-link" href="/dd-screener/tw/">DD Screener 台股池<small>Koyfin 台股品質篩選 × 美股同一套排序</small></a>
+        <a class="disc-link" href="/qgm-tw/">QGM 台股<small>品質 × 成長 × 趨勢，每日掃描</small></a>
+      </div>
+      <div class="disc-col">
+        <div class="disc-col-title">技術路</div>
+        <a class="disc-link" href="/screener-tw.html">台股 RS 雷達<small>相對強弱 × 波動收縮型態</small></a>
+      </div>
+      <div class="disc-col">
+        <div class="disc-col-title">動能對照組</div>
+        <a class="disc-link" href="/research/price-momentum-tw/">P10 台股 <span class="imq-badge" style="margin-left:.3rem">對照組</span><small>純價格動能，雙線紙上追蹤</small></a>
+        <a class="disc-link" href="/revmom-picks/">台股月營收動能 <span class="imq-badge" style="margin-left:.3rem">對照組</span><small>月營收加溫加上股價走強</small></a>
+      </div>
+      <div class="disc-col">
+        <div class="disc-col-title">實單與市況</div>
+        <a class="disc-link" href="/long-track/#live">實單主系統<small>52 週線 × 自適應波動率</small></a>
+        <a class="disc-link" href="/long-track-w52-adaptive/tw-semivol.html">台股半變異影子<small>只看下跌波動的對照版本</small></a>
+        <a class="disc-link" href="/market/">市況主控台<small>跨市場風險與資金狀態</small></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="reference">
+  <details class="ref-fold">
+    <summary>名單的使用邊界<small>名單只回答「看誰」</small></summary>
+    <div class="ref-body">
+    <p><b>同一檔在多個名單同時出現，代表值得優先研究；名單之間意見分歧，代表要排進研究隊列。</b>要不要買，一律看 DD 報告的裁決，再過流程板機。名單不回答「買不買」和「何時買」。</p>
+    <p>P10 台股和月營收動能是對照組：規則事先登記、上線後不改，用來檢驗方法本身。它們的名單不作為選股依據，本頁只列績效。本頁即時讀取既有系統的資料檔，沒有自己的資料管線。體系全文在 <a href="/flow/">投資流程</a>。</p>
+    </div>
+  </details>
+  </section>
+  </div>
+
+  <!-- ═══ 分頁 2：席位排序（v1 未建） ═══ -->
+  <div class="tab-panel" id="panel-seats">
+    <section class="block">
+      <div class="card notbuilt">
+        <div class="nb-title">台股版席位引擎尚未建立</div>
+        <ul>
+          <li>美股的核心席分兩步選：先用品質條件和分析師上修幅度排出一個池，再取池內燈號亮起的前 5 名。席位每週六重算。</li>
+          <li>台股池的 EPS 快照從 <span id="tw-first-snap">2026-10</span> 開始存。上修要拿兩個月的快照相比，第一筆要等下一份快照。在那之前，台股沒有排序席位的依據。</li>
+          <li>美股席位頁的「雷達」（全市場時機掃描）同樣還沒有台股版。台股的技術面掃描請看「發現層」分頁的 RS 雷達。</li>
+        </ul>
+        <p class="roster-note">美股席位排序在 <a href="/cockpit/#seats">美股主控台</a>。</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- ═══ 分頁 3：流程板機（台股池漏斗） ═══ -->
+  <div class="tab-panel" id="panel-pipeline">
+    <section class="block">
+      <div class="sec-head">
+        <span class="sec-num">1</span>
+        <h2 class="sec-title">台股池漏斗</h2>
+        <span class="sec-desc">品質四條件，加上四個面向的排序</span>
+      </div>
+      <div id="funnel-mount"><div class="placeholder">載入中⋯</div></div>
+      <p class="roster-note">四條件：自由現金流利潤率 10% 以上、ROIC（投入資本報酬率）15% 以上、EPS 三年年化成長 15% 以上、PEG（本益比除以成長率）2 倍以下。排序看四個面向：事業品質、再投資、預估落差（分析師預估跟機械算出的成長速度差多少）、股價便宜程度。先比最弱的一面，打平再比次弱的一面。資料不足三個面向的不排名。</p>
+    </section>
+    <section class="block">
+      <div class="sec-head">
+        <span class="sec-num">2</span>
+        <h2 class="sec-title">全部名單</h2>
+        <span class="sec-desc">依排名，不排名的放最後 · <a href="/dd-screener/tw/">完整欄位的台股池頁</a></span>
+      </div>
+      <div id="pool-mount"><div class="placeholder">載入中⋯</div></div>
+    </section>
+  </div>
+
+  <!-- ═══ 分頁 4：發現層 ═══ -->
+  <div class="tab-panel" id="panel-discovery">
+    <section class="block">
+      <div class="sec-head">
+        <span class="sec-num">1</span>
+        <h2 class="sec-title">QGM 台股</h2>
+        <span class="sec-desc">品質（Quality）× 成長（Growth）× 趨勢 · <a href="/qgm-tw/">完整頁</a></span>
+      </div>
+      <div id="qgm-mount"><div class="placeholder">載入中⋯</div></div>
+      <p class="roster-note">QGM 先用基本面分兩個池。品質池（MLB）要自由現金流利潤率 10% 以上、ROIC 15% 以上、EPS 兩年年化成長 15% 以上。加速池（3A）要 EPS 兩年年化成長 25% 以上，現金流和 ROIC 的門檻放寬。品質分是 QGM 的基本面合成分，滿分 80。RS 等級是相對強弱，越高代表近期漲得比多數股票多，品質池要 80 以上、加速池要 90 以上。趨勢樣板通過，代表股價處在上升趨勢。四項全過才進今日候選。</p>
+    </section>
+    <section class="block">
+      <div class="sec-head">
+        <span class="sec-num">2</span>
+        <h2 class="sec-title">台股 RS 雷達</h2>
+        <span class="sec-desc">0050、0051、00714 成分股的相對強弱 × 波動收縮 · <a href="/screener-tw.html">完整頁</a></span>
+      </div>
+      <div id="rs-mount"><div class="placeholder">載入中⋯</div></div>
+      <p class="roster-note">RS 分數：近 1、4、13 週漲幅在掃描名單裡的百分位，按 2：3：5 加權，再依走勢加減分，0 到 100。VCP（波動收縮型態）分數：回檔幅度一次比一次小、成交量跟著萎縮，分數就高。綜合分：RS 占六成、VCP 占四成。距高點：現價比近期高點低多少。</p>
+    </section>
+    <section class="block">
+      <div class="sec-head">
+        <span class="sec-num">3</span>
+        <h2 class="sec-title">動能對照組</h2>
+        <span class="sec-desc">只列績效，名單不作為選股依據</span>
+      </div>
+      <div class="cmp-grid">
+        <div class="card cmp-card"><div class="card-title">P10 台股 · 純價格動能</div><div id="p10-mount"><div class="placeholder">載入中⋯</div></div></div>
+        <div class="card cmp-card"><div class="card-title">台股月營收動能</div><div id="revmom-mount"><div class="placeholder">載入中⋯</div></div></div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="foot">
+    <p class="disc">本頁所有數字即時讀取既有系統的資料檔，各區塊隨來源系統的排程更新。台股池的 EPS 由 Koyfin 美元數字換回新台幣。</p>
+    <div class="imq-foot">
+      <div>© 2026 InvestMQuest Research</div>
+      <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* 分頁控制：hash 文法 #overview / #seats / #pipeline / #discovery（同美股 /cockpit/ 的頂層分頁，無 iframe） */
+(function(){
+  "use strict";
+  var TABS = ['overview','seats','pipeline','discovery'];
+  function activate(tab){
+    if(TABS.indexOf(tab) < 0) tab = 'overview';
+    document.querySelectorAll('.tab-btn').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+    });
+    document.querySelectorAll('.tab-panel').forEach(function(p){
+      p.classList.toggle('active', p.id === 'panel-' + tab);
+    });
+  }
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var t = b.getAttribute('data-tab');
+      if(('#' + t) !== location.hash){ location.hash = t; } else { activate(t); }
+    });
+  });
+  window.addEventListener('hashchange', function(){ activate((location.hash || '#overview').slice(1)); });
+  activate((location.hash || '#overview').slice(1));
+})();
+</script>
+
+<script>
+/* 資料源（全部是既有系統的輸出，本頁不寫任何檔）：
+   monitor  /monitor/data/latest.json                 加權指數（key=twii）
+   lt       /long-track-w52-adaptive/state.json       實單台股指數部曝險（0050／2330）
+   dd       /dd-screener/tw/latest.json               DD Screener 台股池
+   qgm      /qgm-tw/latest.json                       QGM 台股
+   rs       /screener/tw_latest.json                  台股 RS 雷達
+   p10      /research/price-momentum-tw/track.json    P10 台股（只讀 NAV，不列持股：PREREG 規定不進 cockpit 清單）
+   revmom   /revmom-picks/（HTML，無 JSON）            只解析「前進追蹤」表；解析失敗退回連結 */
+(function(){
+  "use strict";
+  var $ = function(id){return document.getElementById(id);};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function num(n){return n!=null && !isNaN(n);}
+  function fmt(n,d){if(!num(n))return '—';return Number(n).toLocaleString('en-US',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});}
+  function pct(n,d,sign){if(!num(n))return '—';var v=Number(n);return (sign&&v>0?'+':'')+v.toFixed(d==null?1:d)+'%';}
+  function tone(n){return !num(n)?'':(n>0?'v-in':(n<0?'v-avoid':''));}
+  function ph(msg){return '<div class="placeholder">'+esc(msg||'資料暫缺')+'</div>';}
+  function getJSON(url){return fetch(url,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();});}
+  function code(t){return String(t||'').split('.')[0];}
+  function mkt(t){return /\.TWO$/i.test(String(t||''))?'上櫃':'上市';}
+  function safe(fn, mount, msg){try{fn();}catch(e){if($(mount))$(mount).innerHTML=ph(msg);}}
+
+  var sources = {
+    monitor: '/monitor/data/latest.json',
+    lt:      '/long-track-w52-adaptive/state.json',
+    dd:      '/dd-screener/tw/latest.json',
+    qgm:     '/qgm-tw/latest.json',
+    rs:      '/screener/tw_latest.json',
+    p10:     '/research/price-momentum-tw/track.json'
+  };
+  var S = {};
+  var pending = Object.keys(sources).map(function(k){
+    return getJSON(sources[k]).then(function(d){S[k]=d;}).catch(function(){S[k]=null;});
+  });
+
+  var NAMES = {};
+  function nameOf(t){return NAMES[t] || NAMES[code(t)] || '';}
+  function stockCell(t, extra){
+    var n = nameOf(t);
+    return '<span class="roster-tk">'+esc(code(t))+'</span> '+esc(n)+
+      ' <span class="mk">'+mkt(t)+'</span>'+(extra||'');
+  }
+  function ddCell(r){
+    if(!r || r.dd_status !== 'dd') return '<span class="muted">—</span>';
+    var v = r.dca_verdict || '已做 DD';
+    var cls = v==='進場'||v==='加碼'?'v-in':(v==='迴避'||v==='出場'?'v-avoid':'v-watch');
+    return r.dd_path ? '<a class="'+cls+'" href="'+esc(r.dd_path)+'">'+esc(v)+'</a>' : '<span class="'+cls+'">'+esc(v)+'</span>';
+  }
+  function priceOf(r){return num(r.price)?r.price:(r.ma&&num(r.ma.price)?r.ma.price:null);}
+  function dist52(r){return r.timing && num(r.timing.dist_52w_high_pct) ? r.timing.dist_52w_high_pct : null;}
+  function rsOf(r){return r.timing && num(r.timing.rs_score) ? r.timing.rs_score : null;}
+  function isVeto(r){
+    var v = r.funnel_v2_veto;
+    if(!v) return false;
+    if(Array.isArray(v)) return v.length > 0;
+    if(typeof v === 'object') return !!(v.vetoed || v.veto || (v.reasons && v.reasons.length));
+    return !!v;
+  }
+
+  Promise.all(pending).then(function(){
+    if(S.rs && S.rs.rankings) S.rs.rankings.forEach(function(r){ if(r.name){NAMES[r.ticker]=r.name; NAMES[code(r.ticker)]=r.name;} });
+    if(S.dd && S.dd.stocks) S.dd.stocks.forEach(function(r){ if(r.name && r.name!==r.ticker){NAMES[r.ticker]=r.name; NAMES[code(r.ticker)]=r.name;} });
+    safe(renderEnv, 'env-mount', '天氣資料暫缺');
+    safe(renderRoster, 'roster-mount', '台股池資料暫缺');
+    safe(renderFunnel, 'funnel-mount', '台股池資料暫缺');
+    safe(renderPool, 'pool-mount', '台股池資料暫缺');
+    safe(renderQgm, 'qgm-mount', 'QGM 台股資料暫缺');
+    safe(renderRs, 'rs-mount', 'RS 雷達資料暫缺');
+    safe(renderP10, 'p10-mount', 'P10 台股資料暫缺');
+  });
+
+  /* ① 天氣 */
+  function renderEnv(){
+    var cells = '';
+    var tw = null;
+    ((S.monitor && S.monitor.categories) || []).forEach(function(c){
+      (c.items || []).forEach(function(it){ if(it.key === 'twii') tw = it; });
+    });
+    if(tw){
+      var up = tw.dir === 'pos';
+      cells += '<div class="env-cell"><div class="env-k">台灣加權</div>'+
+        '<div class="env-v num">'+esc(tw.val)+' <small class="'+(up?'v-in':'v-avoid')+'">'+esc(tw.chg||'')+'</small></div>'+
+        '<div class="env-s">近一年第 '+fmt(tw.pctile,0)+' 百分位 · '+esc(tw.date||'')+'</div></div>';
+    }
+    var lt = S.lt;
+    if(lt && lt.tickers){
+      var ex = 0, has = false;
+      Object.keys(lt.tickers).forEach(function(k){ var t = lt.tickers[k]; if(t.market === '台股' && num(t.executed_pct)){ ex += t.executed_pct; has = true; } });
+      cells += '<div class="env-cell"><div class="env-k">台股指數部曝險</div>'+
+        '<div class="env-v num">'+pct(lt.combined_exposure_tw_pct,1)+' <small>目標</small></div>'+
+        '<div class="env-s">現持 '+(has?pct(ex,1):'—')+' · 週線 '+esc(lt.data_date||'')+'</div></div>';
+      ['0050','2330'].forEach(function(k){
+        var t = lt.tickers[k]; if(!t) return;
+        var on = t.gate === true;
+        cells += '<div class="env-cell"><div class="env-k">'+k+'</div>'+
+          '<div class="env-v '+(on?'v-in':'v-avoid')+'">'+(on?'52 週線之上':'52 週線之下')+'</div>'+
+          '<div class="env-s">目標 '+pct(t.final_weight_pct,1)+' · 現持 '+pct(t.executed_pct,1)+'</div></div>';
+      });
+    }
+    if(!cells){ $('env-mount').innerHTML = ph('天氣資料暫缺'); return; }
+    var links = '<div class="env-links"><a href="/long-track/#live">實單主系統 →</a><a href="/market/">市況主控台 →</a></div>';
+    $('env-mount').innerHTML = '<div class="card env-strip">'+cells+links+'</div>';
+  }
+
+  function rankedRows(){
+    var rows = (S.dd && S.dd.stocks) || [];
+    return rows.filter(function(r){return num(r.funnel_v2_rank);})
+      .sort(function(a,b){return a.funnel_v2_rank - b.funnel_v2_rank;});
+  }
+  function noRevision(){
+    var rows = (S.dd && S.dd.stocks) || [];
+    return !rows.some(function(r){return num(r.eps_fy_curr_revision_pct) || num(r.eps_fy_next_revision_pct) || num(r.eps_fy3_revision_pct);});
+  }
+
+  /* ② 陣容：台股池前 10 */
+  function renderRoster(){
+    if(!S.dd || !S.dd.stocks){ $('roster-mount').innerHTML = ph('台股池資料暫缺'); return; }
+    var top = rankedRows().slice(0,10);
+    var body = top.map(function(r){
+      return '<tr><td class="num">'+r.funnel_v2_rank+'</td><td>'+stockCell(r.ticker)+'</td>'+
+        '<td class="num">'+fmt(priceOf(r),priceOf(r)<100?2:0)+'</td>'+
+        '<td class="num">'+pct(r.eps_fy1_fy3_cagr_pct,1)+'</td>'+
+        '<td class="num">'+pct(r.roic,1)+'</td>'+
+        '<td class="num">'+pct(dist52(r),1)+'</td>'+
+        '<td>'+ddCell(r)+'</td></tr>';
+    }).join('');
+    var notes = ['資料日 '+esc(String(S.dd.as_of||'').slice(0,10))+'，母體 '+((S.dd.stocks||[]).length)+' 檔。'];
+    notes.push('EPS 三年成長：分析師對今年到兩年後 EPS 的年化成長率。距 52 週高：現價比過去一年最高價低多少。');
+    var noEps = top.filter(function(r){return r.eps_fy_curr==null && r.eps_fy_next==null && r.eps_fy3==null;})
+      .map(function(r){return code(r.ticker)+' '+(nameOf(r.ticker)||'');});
+    if(noEps.length) notes.push(noEps.join('、')+' 在 Koyfin 沒有分析師預估，名次只看品質和股價。');
+    if(noRevision()) notes.push('台股池還沒有上修資料，要累積兩個月的 EPS 快照才算得出來，在那之前排序少了這一塊。');
+    $('roster-mount').innerHTML = '<div class="card"><table class="roster-table"><thead><tr>'+
+      '<th class="num">名次</th><th>股票</th><th class="num">股價</th><th class="num">EPS 三年成長</th><th class="num">ROIC</th><th class="num">距 52 週高</th><th>DD 裁決</th>'+
+      '</tr></thead><tbody>'+body+'</tbody></table></div>'+
+      '<p class="roster-note">'+notes.join(' ')+' <a href="/dd-screener/tw/">完整台股池 →</a></p>';
+  }
+
+  /* 流程板機：漏斗數字 */
+  function renderFunnel(){
+    var d = S.dd; if(!d){ $('funnel-mount').innerHTML = ph('台股池資料暫缺'); return; }
+    var s = d.summary || {}, v2 = d.funnel_v2_summary || {};
+    var n = (d.stocks||[]).length;
+    var all4 = (s.pass_4||0) + (s.pass_5||0);
+    var chips = [
+      ['母體', n],
+      ['四條件全過', all4],
+      ['過三條', s.pass_3],
+      ['兩條以下', s.pass_lt3],
+      ['有排名', v2.ranked_count],
+      ['資料不足', v2.insufficient_count],
+      ['否決', v2.veto_count]
+    ].map(function(c){return '<div class="chip"><div class="chip-k">'+c[0]+'</div><div class="chip-v num">'+fmt(c[1],0)+'</div></div>';}).join('');
+    $('funnel-mount').innerHTML = '<div class="chip-row">'+chips+'</div>';
+  }
+
+  /* 流程板機：全部名單 */
+  function renderPool(){
+    var rows = ((S.dd && S.dd.stocks) || []).slice();
+    if(!rows.length){ $('pool-mount').innerHTML = ph('台股池資料暫缺'); return; }
+    rows.sort(function(a,b){
+      var ra = num(a.funnel_v2_rank)?a.funnel_v2_rank:(isVeto(a)?1e6:2e6);
+      var rb = num(b.funnel_v2_rank)?b.funnel_v2_rank:(isVeto(b)?1e6:2e6);
+      return ra - rb || String(a.ticker).localeCompare(String(b.ticker));
+    });
+    var body = rows.map(function(r){
+      var rk = num(r.funnel_v2_rank) ? String(r.funnel_v2_rank) : (isVeto(r) ? '<span class="v-avoid">否決</span>' : '<span class="muted">資料不足</span>');
+      var fails = (r.fail_criteria||[]).join('、');
+      return '<tr><td class="num">'+rk+'</td><td>'+stockCell(r.ticker)+'</td>'+
+        '<td class="num" title="'+esc(fails?('未過：'+fails):'')+'">'+(num(r.pass_count)?r.pass_count+'/4':'—')+'</td>'+
+        '<td class="num">'+pct(r.fcf,1)+'</td><td class="num">'+pct(r.roic,1)+'</td>'+
+        '<td class="num">'+pct(r.eps_fy1_fy3_cagr_pct,1)+'</td><td class="num">'+(num(r.peg)?fmt(r.peg,2):'—')+'</td>'+
+        '<td class="num">'+pct(dist52(r),1)+'</td><td class="num">'+fmt(rsOf(r),0)+'</td><td>'+ddCell(r)+'</td></tr>';
+    }).join('');
+    $('pool-mount').innerHTML = '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
+      '<th class="num">名次</th><th>股票</th><th class="num">四條件</th><th class="num">FCF 利潤率</th><th class="num">ROIC</th><th class="num">EPS 三年成長</th><th class="num">PEG</th><th class="num">距 52 週高</th><th class="num">RS</th><th>DD 裁決</th>'+
+      '</tr></thead><tbody>'+body+'</tbody></table></div>'+
+      '<p class="roster-note">RS：跟台股 RS 雷達同一套算法，跟雷達的掃描名單一起排百分位，0 到 100。滑過「四條件」可看沒過的條件。</p>';
+  }
+
+  /* 發現層：QGM 台股 */
+  function renderQgm(){
+    var q = S.qgm; if(!q){ $('qgm-mount').innerHTML = ph('QGM 台股資料暫缺'); return; }
+    var s = q.summary || {};
+    var cand = q.candidates || [], watch = q.watch_list || [];
+    var head = '<div class="chip-row">'+
+      [['掃描檔數', q.universe_size], ['品質池', s.mlb], ['加速池', s['3a']], ['趨勢確認', (s.trend_confirmed_mlb||0)+(s.trend_confirmed_3a||0)], ['觀察名單', watch.length], ['今日候選', cand.length]]
+      .map(function(c){return '<div class="chip"><div class="chip-k">'+c[0]+'</div><div class="chip-v num">'+fmt(c[1],0)+'</div></div>';}).join('')+'</div>';
+    var list = cand.concat(watch);
+    var body = list.map(function(r){
+      var tt = r.trend_template && r.trend_template.all_pass;
+      return '<tr><td>'+stockCell(r.ticker)+'</td><td>'+(r.pool==='3A'?'加速池':'品質池')+'</td>'+
+        '<td class="num">'+fmt(r.quality_score,1)+'</td><td class="num">'+fmt(r.rs_rating,0)+'</td>'+
+        '<td>'+(tt?'<span class="v-in">通過</span>':'<span class="muted">未過</span>')+'</td>'+
+        '<td class="num">'+fmt(r.fy1_per,1)+' / '+fmt(r.fy2_per,1)+'</td></tr>';
+    }).join('');
+    var stamp = String(q.run_timestamp||'').slice(0,10);
+    $('qgm-mount').innerHTML = head + (list.length ? '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
+      '<th>股票</th><th>池</th><th class="num">品質分</th><th class="num">RS 等級</th><th>趨勢樣板</th><th class="num">本益比 '+esc(q.fy1_label||'')+' / '+esc(q.fy2_label||'')+'</th>'+
+      '</tr></thead><tbody>'+body+'</tbody></table></div>' : ph('今天沒有候選，也沒有觀察名單')) +
+      '<p class="roster-note">掃描日 '+esc(stamp)+'。'+(cand.length?'':'今天沒有候選（品質、趨勢、波動收縮、相對強弱四項全過），表內是觀察名單。')+'</p>';
+  }
+
+  /* 發現層：RS 雷達前 10 */
+  var TREND = {accelerating:'加速', steady:'穩升', fading:'轉弱', choppy:'盤整'};
+  function renderRs(){
+    var d = S.rs; if(!d || !d.rankings){ $('rs-mount').innerHTML = ph('RS 雷達資料暫缺'); return; }
+    var top = d.rankings.slice().sort(function(a,b){return (a.rank||999)-(b.rank||999);}).slice(0,10);
+    var body = top.map(function(r){
+      return '<tr><td class="num">'+esc(r.rank)+'</td><td>'+stockCell(r.ticker)+'</td>'+
+        '<td class="num">'+fmt(r.rs_score,1)+'</td><td>'+esc(TREND[r.rs_trend]||r.rs_trend||'—')+'</td>'+
+        '<td class="num">'+fmt(r.vcp_score,0)+'</td><td class="num">'+pct(r.dist_from_high_pct,1)+'</td>'+
+        '<td class="num">'+fmt(r.combined,1)+'</td></tr>';
+    }).join('');
+    var etf = (d.etf_ranking||[]).map(function(e){return esc(e.etf)+' '+fmt(e.avg_rs,1);}).join('、');
+    $('rs-mount').innerHTML = '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
+      '<th class="num">名次</th><th>股票</th><th class="num">RS 分數</th><th>RS 走勢</th><th class="num">VCP 分數</th><th class="num">距高點</th><th class="num">綜合分</th>'+
+      '</tr></thead><tbody>'+body+'</tbody></table></div>'+
+      '<p class="roster-note">資料日 '+esc(d.date||'')+'，掃描 '+fmt(d.total_stocks,0)+' 檔。各 ETF 成分股的平均 RS：'+etf+'。</p>';
+  }
+
+  /* 對照組：P10 台股（只讀 NAV） */
+  function renderP10(){
+    var m = S.p10; var ns = m && m.nav_series;
+    if(!ns || !ns.length){ $('p10-mount').innerHTML = ph('P10 台股資料暫缺'); return; }
+    var last = ns[ns.length-1];
+    var rows = [['L12（12 個月動能）', last.nav_L12], ['L6（6 個月動能）', last.nav_L6], ['0050', last.nav_bench]].map(function(x){
+      var r = num(x[1]) ? x[1]-100 : null;
+      return '<tr><td>'+x[0]+'</td><td class="num '+tone(r)+'">'+pct(r,1,true)+'</td></tr>';
+    }).join('');
+    $('p10-mount').innerHTML = '<table class="roster-table"><thead><tr><th>線</th><th class="num">累計報酬</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<p class="roster-note cmp-note">'+esc(m.inception_date||'')+' 起算，至 '+esc(last.date||'')+'。每月換股，買動能排名前 10，跌出前 40 才賣。<a href="/research/price-momentum-tw/">P10 台股 →</a></p>';
+  }
+
+  /* 對照組：月營收動能（解析 /revmom-picks/ 的「前進追蹤」表） */
+  fetch('/revmom-picks/',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.text();}).then(function(html){
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    var h = Array.prototype.find.call(doc.querySelectorAll('h2'), function(x){return /前進追蹤/.test(x.textContent);});
+    var el = h, tbl = null;
+    while(el && !tbl){ el = el.nextElementSibling; if(!el) break; tbl = el.tagName === 'TABLE' ? el : el.querySelector('table'); }
+    if(!tbl) throw new Error('no table');
+    var trs = tbl.querySelectorAll('tbody tr');
+    var rows = Array.prototype.map.call(trs, function(tr){
+      var td = tr.querySelectorAll('td'); if(td.length < 4) return '';
+      var cum = td[3].textContent.trim();
+      var cls = /^\+/.test(cum) && cum !== '+0.0%' ? 'v-in' : (/^[-−]/.test(cum) ? 'v-avoid' : '');
+      return '<tr><td>'+esc(td[0].textContent.trim())+'</td><td class="num '+cls+'">'+esc(cum)+'</td></tr>';
+    }).join('');
+    if(!rows) throw new Error('empty');
+    var td0 = trs[0].querySelectorAll('td');
+    $('revmom-mount').innerHTML = '<table class="roster-table"><thead><tr><th>線</th><th class="num">累計報酬</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<p class="roster-note cmp-note">'+esc(td0[1].textContent.trim())+' 收盤起算，至 '+esc(td0[2].textContent.trim())+'。每月營收公布截止日的下一個交易日換股。<a href="/revmom-picks/">月營收動能 →</a></p>';
+  }).catch(function(){
+    $('revmom-mount').innerHTML = '<p class="roster-note cmp-note">績效表暫時讀不到，請看 <a href="/revmom-picks/">月營收動能頁</a>。</p>';
+  });
+})();
+</script>
+</body>
+</html>

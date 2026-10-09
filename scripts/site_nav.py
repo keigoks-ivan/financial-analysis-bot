@@ -283,6 +283,9 @@ def full_nav_block(group=None, item=None, subnav=""):
 # 從子選單移除；見 notes/site-internal/root/_proposal_stock_pages_cleanup_20260707.md。
 DD_SCREENER_SUBNAV = [
     ("/dd-screener/", "總覽"),
+    # 2026-10-09 台股池（build_dd_screener.py --universe tw → tw/latest.json，
+    # 頁面由 build_dd_screener_tw_page.py 從主頁衍生），緊接總覽之後。
+    ("/dd-screener/tw/", "台股池"),
     ("/dd-screener/pipeline.html", "Pipeline"),
     ("/dd-screener/quality-entry.html", "Quality-Entry"),
     ("/dd-screener/cyclical-track.html", "衛星·循環軌"),
@@ -315,6 +318,8 @@ def build_subnav(links, current):
 PREFIX_ACTIVE = [
     # 選股群
     ("cockpit/", ("pick", "cockpit")),
+    # 2026-10-09 台股選股主控台：不另開選單項，頁內有美股／台股切換；歸選股群高亮。
+    ("cockpit-tw/", ("pick", None)),
     # picks/ · dd-screener/pipeline.html · engine/ 皆為 redirect stub / iframe 片段（全在 SKIP_FILES，
     # 不會被注入 nav）；保留前綴僅為「選股群高亮」的語意錨，不再對應下拉條目（item=None）。
     ("picks/", ("pick", None)),
