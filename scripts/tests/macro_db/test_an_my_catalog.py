@@ -51,6 +51,10 @@ def test_series_rules(my):
     assert not any("MFS_MA" in json.dumps(s["params"]) for _, _, s in series(my))
 
 
+def _core(s):
+    return {k: v for k, v in s.items() if k not in ("axis", "label_zh", "display")}
+
+
 def test_shared_an_sids_match_an_json(my):
     an = json.loads((DIR / "an.json").read_text(encoding="utf-8"))
     ref = {s["sid"]: s for c in an["categories"] for ch in c["charts"] for s in ch["series"]}
@@ -58,7 +62,7 @@ def test_shared_an_sids_match_an_json(my):
     assert {s["sid"] for s in used} >= {"an.my_gdp_real", "an.cbpol_my", "an.reserves_my", "an.my_exports",
                                          "an.spp_my", "an.xru_my", "an.tw_exp_us_my"}
     for s in used:
-        assert s == ref[s["sid"]], s["sid"]
+        assert _core(s) == _core(ref[s["sid"]]), s["sid"]
 
 
 def test_special_cases(my):

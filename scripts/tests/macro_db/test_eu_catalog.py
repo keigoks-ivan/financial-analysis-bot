@@ -60,7 +60,7 @@ def test_every_series_has_required_fields(cat):
 def test_same_sid_means_same_spec(cat):
     seen = {}
     for _, ch, s in all_series(cat):
-        key = json.dumps({k: v for k, v in s.items() if k != "axis"}, sort_keys=True)
+        key = json.dumps({k: v for k, v in s.items() if k not in ("axis", "display")}, sort_keys=True)
         assert seen.setdefault(s["sid"], key) == key, s["sid"]
 
 

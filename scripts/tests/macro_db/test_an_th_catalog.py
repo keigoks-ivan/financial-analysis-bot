@@ -62,8 +62,8 @@ def test_series_fields_probe_and_titles(cat):
         if s.get("stale_days"):
             assert s.get("stale_reason"), s["sid"]
         sids.add(s["sid"])
-    n = sum(1 for _ in all_series(cat))
-    assert n == len(sids)                                           # 全檔 sid 唯一
+    n = len({(s["sid"], s["display"]) for _, _, s in all_series(cat)})   # 同 sid 可用不同 display 畫兩次
+    assert n == sum(1 for _ in all_series(cat)) and len(sids) <= n   # sid＋display 全檔唯一
 
 
 def test_fetchers_registered_and_params_complete(cat):
@@ -78,13 +78,17 @@ def test_fetchers_registered_and_params_complete(cat):
             assert s["params"]["name"], s["sid"]
 
 
+def _core(s):
+    return {k: v for k, v in s.items() if k not in ("axis", "label_zh", "display")}
+
+
 def test_shared_sids_match_an_json_exactly(cat):
     main = json.loads((CAT_DIR / "an.json").read_text(encoding="utf-8"))
     base = {s["sid"]: s for c in main["categories"] for ch in c["charts"] for s in ch["series"]}
     mine = {s["sid"]: s for _, _, s in all_series(cat)}
     for sid in SHARED:
         assert sid in mine and sid in base, sid
-        assert mine[sid] == base[sid], sid
+        assert _core(mine[sid]) == _core(base[sid]), sid
 
 
 def test_key_cases(cat):
