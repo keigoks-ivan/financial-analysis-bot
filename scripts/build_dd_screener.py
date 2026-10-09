@@ -741,6 +741,70 @@ FUNNEL_V2_LAYER_FIELDS = {
 }
 
 
+# 2026-10-09 台股池現金流條件。持有人：「台股的很多是較重的資本投入，fcf margin
+# 應該要調整」。只在 --universe tw 生效（main() 呼叫 _apply_tw_cash_criteria()），
+# 美股主檔／smallcap／largecap 不受影響。
+#   * 四條件的 FCF≥10% 換成 OCF≥10%：營業現金流利潤率＝FCF 利潤率＋資本支出占營收，
+#     也就是扣資本支出之前的現金流。門檻數字不變；資本支出划不划算交給 ROIC≥15%。
+#   * FunnelRank v2 quality 層的 fcf／fcf_ni_ratio 同步換成 ocf／ocf_ni_ratio
+#     （封頂沿用 FUNNEL_V2_FCF_NI_CAP：只懲罰現金轉換差的，不獎勵高的）。
+#   * 體質 veto 的 fcf_ni、衰退訊號「FCF 遜於淨利」「資本支出侵蝕 FCF」照舊用 FCF：
+#     它們是如實描述，只當警示，不進 pass_count，也不觸發 v2 硬否決。
+# 為什麼不直接降 FCF 門檻：2026-10-09 台股池 69 檔有 21 檔 FCF<10%，其中 17 檔
+# OCF≥10%（聯亞、嘉澤、金像電等擴產名字）。降門檻會先救到不是資本支出造成的
+# （創意、旭隼），擴產最重的反而仍然不過。
+TW_OCF_CRITERION = {"key": "ocf", "label": "OCF≥10%", "threshold": 10.0, "invert": False, "unit": "%"}
+
+
+def _funnel_v2_ocf_ni_capped(row: dict):
+    """台股池 quality 層的 ocf_ni_ratio 輸入，封頂同 _funnel_v2_fcf_ni_capped()。"""
+    v = row.get("ocf_ni_ratio")
+    if v is None:
+        return None
+    return min(v, FUNNEL_V2_FCF_NI_CAP)
+
+
+def _tw_cash_fields(rec: dict, fcf_margin) -> dict:
+    """台股池的 ocf / capex_pct_sales / ocf_ni_ratio（皆為 %，比值除外）。
+
+    Koyfin 的 Capex LTM 是負數、與 Sales LTM 同為美元百萬，比值與幣別無關。
+    2026-10-09 驗算：69 檔 Koyfin FCF Margin % 與 FCF LTM / Sales LTM 差距全在
+    1pp 內，所以 OCF 利潤率直接用 FCF 利潤率＋資本支出占營收。資本支出缺值時
+    以 FCF 利潤率代替（ocf_basis="fcf"）：OCF ≥ FCF，所以只會低估、不會誤放行。
+    """
+    def _f(key):
+        v = rec.get(key)
+        return float(v) if isinstance(v, (int, float)) else None
+
+    capex, sales, ni = _f("capex_ltm"), _f("sales_ltm"), _f("ni_margin_ltm_pct")
+    capex_pct = abs(capex) / sales * 100 if capex is not None and sales and sales > 0 else None
+    if fcf_margin is None:
+        ocf, basis = None, None
+    elif capex_pct is None:
+        ocf, basis = fcf_margin, "fcf"
+    else:
+        ocf, basis = fcf_margin + capex_pct, "fcf+capex"
+    ocf_ni = ocf / ni if ocf is not None and ni is not None and ni > 0 else None
+
+    def _r2(x):
+        return round(x, 2) if x is not None else None
+
+    return {"ocf": _r2(ocf), "ocf_basis": basis, "capex_pct_sales": _r2(capex_pct),
+            "ocf_ni_ratio": _r2(ocf_ni)}
+
+
+def _apply_tw_cash_criteria() -> None:
+    """--universe tw：把 FCF 條件換成 OCF 條件（見 TW_OCF_CRITERION 上方註解）。"""
+    global CRITERIA, SCORED_CRITERIA, PRESETS
+    CRITERIA = [dict(TW_OCF_CRITERION) if c["key"] == "fcf" else c for c in CRITERIA]
+    SCORED_CRITERIA = [c for c in CRITERIA if not c.get("advisory")]
+    PRESETS = {name: {**p, "ocf": p["fcf"]} for name, p in PRESETS.items()}
+    swap = {"fcf": ("ocf", lambda r: r.get("ocf"), False),
+            "fcf_ni_ratio": ("ocf_ni_ratio", _funnel_v2_ocf_ni_capped, False)}
+    FUNNEL_V2_LAYER_FIELDS["quality"] = [swap.get(name, (name, getter, inv))
+                                         for name, getter, inv in FUNNEL_V2_LAYER_FIELDS["quality"]]
+
+
 def _percentile_rank(raw: dict, invert: bool = False) -> dict:
     """Rank-based percentile 0–100 for each key's value among all present
     (non-None) values in `raw`. Ties share the same percentile (average-rank
@@ -3912,6 +3976,12 @@ def enrich_ticker(
             source = "koyfin-xlsx"
             quality_koyfin_stamp = excel_snapshot.snapshot_date if excel_snapshot else None
 
+    # 2026-10-09 台股池：OCF 條件的輸入（見 TW_OCF_CRITERION 上方註解）。
+    tw_cash: dict = {}
+    if UNIVERSE_MODE == "tw" and _excel_record_for_eps2y is not None:
+        tw_cash = _tw_cash_fields(_excel_record_for_eps2y, quality.get("fcf"))
+        quality["ocf"] = tw_cash.pop("ocf")
+
     # durable_5y — pool-eligibility durability signal (v5 起是資格閘本體，不再只是
     # 核心/衛星軌別判準，見 engine/grp.py 檔頭 v5 段第 1 點). v3 (2026-09-09):
     # priority Koyfin roic_5y_avg_pct (>=15% -> True) then QGM
@@ -4163,6 +4233,7 @@ def enrich_ticker(
     return {
         **entry,
         **quality,
+        **tw_cash,
         "moat_trend": moat_trend,
         "pass_count": pass_count,
         "fail_criteria": fails,
@@ -4981,6 +5052,8 @@ def main() -> None:
                         "DD_tw_EPS_estimates_ family) into docs/dd-screener/tw/.")
     args = p.parse_args()
     UNIVERSE_MODE = args.universe
+    if UNIVERSE_MODE == "tw":
+        _apply_tw_cash_criteria()
     build(top_n=args.top, skip_ma=args.no_ma, dry_run=args.dry_run, workers=args.workers,
           include_non_dd=args.include_non_dd)
 

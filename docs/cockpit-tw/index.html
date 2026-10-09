@@ -331,7 +331,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
         <span class="sec-desc">品質四條件，加上四個面向的排序</span>
       </div>
       <div id="funnel-mount"><div class="placeholder">載入中⋯</div></div>
-      <p class="roster-note">四條件：自由現金流利潤率 10% 以上、ROIC（投入資本報酬率）15% 以上、EPS 三年年化成長 15% 以上、PEG（本益比除以成長率）2 倍以下。排序看四個面向：事業品質、再投資、預估落差（分析師預估跟機械算出的成長速度差多少）、股價便宜程度。先比最弱的一面，打平再比次弱的一面。資料不足三個面向的不排名。</p>
+      <p class="roster-note">四條件：營業現金流利潤率 10% 以上、ROIC（投入資本報酬率）15% 以上、EPS 三年年化成長 15% 以上、PEG（本益比除以成長率）2 倍以下。營業現金流利潤率是扣資本支出之前的現金流占營收。台股不少公司正在擴產，資本支出壓低了自由現金流，所以台股池不扣資本支出，資本支出值不值得交給 ROIC 那一條判斷。排序看四個面向：事業品質、再投資、預估落差（分析師預估跟機械算出的成長速度差多少）、股價便宜程度。先比最弱的一面，打平再比次弱的一面。資料不足三個面向的不排名。</p>
     </section>
     <section class="block">
       <div class="sec-head">
@@ -581,14 +581,14 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       var fails = (r.fail_criteria||[]).join('、');
       return '<tr><td class="num">'+rk+'</td><td>'+stockCell(r.ticker)+'</td>'+
         '<td class="num" title="'+esc(fails?('未過：'+fails):'')+'">'+(num(r.pass_count)?r.pass_count+'/4':'—')+'</td>'+
-        '<td class="num">'+pct(r.fcf,1)+'</td><td class="num">'+pct(r.roic,1)+'</td>'+
+        '<td class="num" title="自由現金流利潤率 '+pct(r.fcf,1)+'，資本支出占營收 '+pct(r.capex_pct_sales,1)+'">'+pct(r.ocf,1)+'</td><td class="num">'+pct(r.roic,1)+'</td>'+
         '<td class="num">'+pct(r.eps_fy1_fy3_cagr_pct,1)+'</td><td class="num">'+(num(r.peg)?fmt(r.peg,2):'—')+'</td>'+
         '<td class="num">'+pct(dist52(r),1)+'</td><td class="num">'+fmt(rsOf(r),0)+'</td><td>'+ddCell(r)+'</td></tr>';
     }).join('');
     $('pool-mount').innerHTML = '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
-      '<th class="num">名次</th><th>股票</th><th class="num">四條件</th><th class="num">FCF 利潤率</th><th class="num">ROIC</th><th class="num">EPS 三年成長</th><th class="num">PEG</th><th class="num">距 52 週高</th><th class="num">RS</th><th>DD 裁決</th>'+
+      '<th class="num">名次</th><th>股票</th><th class="num">四條件</th><th class="num">營業現金流利潤率</th><th class="num">ROIC</th><th class="num">EPS 三年成長</th><th class="num">PEG</th><th class="num">距 52 週高</th><th class="num">RS</th><th>DD 裁決</th>'+
       '</tr></thead><tbody>'+body+'</tbody></table></div>'+
-      '<p class="roster-note">RS：跟台股 RS 雷達同一套算法，跟雷達的掃描名單一起排百分位，0 到 100。滑過「四條件」可看沒過的條件。</p>';
+      '<p class="roster-note">RS：跟台股 RS 雷達同一套算法，跟雷達的掃描名單一起排百分位，0 到 100。滑過「四條件」可看沒過的條件，滑過營業現金流利潤率可看自由現金流利潤率與資本支出占營收。</p>';
   }
 
   /* 發現層：QGM 台股 */

@@ -10,9 +10,12 @@ on every run instead of being a hand-kept fork:
   * only the <title> and the hero's left column are replaced, the moat filter
     opens on [All] instead of [S] (only DD names carry a moat grade), and a TW notice
     box is inserted under the hero. The box carries what differs from the US
-    page: pool definition, TWD EPS, the TW timing reference, the revision
-    baseline, no-EPS names and DD coverage. Counts come from the JSONs at
+    page: the OCF cash-flow condition, pool definition, TWD EPS, the TW timing
+    reference, the revision baseline, no-EPS names and DD coverage. Counts come from the JSONs at
     generation time, so the workflow reruns this after each TW build;
+  * when tw/latest.json scores cash flow as OCF (criteria key "ocf"), the
+    three JS spots that hard-code the FCF criterion are pointed at it
+    (CASH_PATCHES), each with an exact-count check;
   * the site nav is re-injected with site_nav.process(), so the page gets the
     research/dds highlight and the DD Screener sub-nav like its siblings.
 
@@ -47,6 +50,19 @@ SPOTLIGHT_RE = re.compile(r'<section class="ath-spotlight"')
 MOAT_STATE_RE = re.compile(r"(\n\s*moat:\s*)'S'(,)")
 MOAT_CHIP_S = '<span class="chip active" data-filter="moat" data-value="S"'
 MOAT_CHIP_ALL = '<span class="chip" data-filter="moat" data-value="All"'
+# 2026-10-09: the TW pool scores cash flow as OCF≥10% instead of FCF≥10%
+# (build_dd_screener.py TW_OCF_CRITERION), so its criteria list carries the key
+# "ocf". The main page JS hard-codes critByKey.fcf three times (profit-group
+# header and cell) and the custom panel reads only the FCF box. These patches
+# point both at ocf. They are applied only when tw/latest.json really carries
+# the ocf criterion, so page and data never disagree.
+CASH_PATCHES = (
+    ("critByKey.fcf", "critByKey.ocf", 3),
+    ("    fcf:   parseFloat(document.getElementById('cust-fcf').value)   || 10,\n",
+     "    fcf:   parseFloat(document.getElementById('cust-fcf').value)   || 10,\n"
+     "    ocf:   parseFloat(document.getElementById('cust-fcf').value)   || 10,\n", 1),
+    ("<label>FCF ≥ (%)</label>", "<label>OCF ≥ (%)</label>", 1),
+)
 
 
 def esc(s) -> str:
@@ -80,7 +96,11 @@ def facts() -> dict:
                      if re.fullmatch(r"\d{4}-\d{2}", p.stem) and p.stem < month)
     fx = tw.get("display_fx") or {}
     listing = tw.get("tw_listing") or {}
+    fcf_low = [r for r in rows if r.get("fcf") is not None and r["fcf"] < 10]
     return {
+        "ocf_mode": any(c.get("key") == "ocf" for c in tw.get("criteria") or []),
+        "n_fcf_low": len(fcf_low),
+        "n_ocf_ok": sum(1 for r in fcf_low if r.get("ocf") is not None and r["ocf"] >= 10),
         "as_of": as_of or "—",
         "n": len(rows),
         "tpex": len(listing.get("tpex") or []),
@@ -127,6 +147,12 @@ def notice_html(f: dict) -> str:
         f'<b>時機欄</b>：距 52 週高點、RS（相對強弱，近 1、4、13 週漲幅在一群股票裡的百分位）'
         f'是跟台股 RS 雷達的 {f["tw_ref_n"] or "—"} 檔比，不跟美股比。',
     ]
+    if f["ocf_mode"]:
+        items.insert(0, '<b>現金流條件</b>：四條件裡的現金流一條，台股池看營業現金流利潤率（OCF，'
+                     '扣資本支出之前的現金流占營收）10% 以上，不看自由現金流利潤率。'
+                     '台股不少公司正在擴產，資本支出壓低了自由現金流。資本支出值不值得，交給 ROIC 那一條判斷。'
+                     f'池內 {f["n_fcf_low"]} 檔自由現金流利潤率不到 10%，其中 {f["n_ocf_ok"]} 檔營業現金流利潤率在 10% 以上。'
+                     '排序的品質面向也改用營業現金流。')
     if f["has_baseline"]:
         items.append('<b>上修</b>：每月 2 日存一次 EPS 快照，「上修」欄是跟上月快照比。')
     else:
@@ -175,6 +201,14 @@ def main() -> int:
         print(f"ERROR: main page anchors moved (title={n1} hero={n2} spotlight={n3} "
               f"moat_state={n4} moat_chips={n5}); {OUT} left unchanged", file=sys.stderr)
         return 1
+    if f["ocf_mode"]:
+        for old, rep, want in CASH_PATCHES:
+            got = new.count(old)
+            if got != want:
+                print(f"ERROR: OCF patch anchor {old[:40]!r} found {got}x, expected {want}x; "
+                      f"{OUT} left unchanged", file=sys.stderr)
+                return 1
+            new = new.replace(old, rep)
     if "fetch('./latest.json')" not in new:
         print("ERROR: main page no longer loads ./latest.json relatively; "
               f"{OUT} left unchanged", file=sys.stderr)
