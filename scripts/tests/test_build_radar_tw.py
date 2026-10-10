@@ -99,3 +99,20 @@ def test_too_few_scored_names_leaves_files_alone(monkeypatch, tmp_path):
     closes = {'A.TW': _flat_then_up(0.1), 'B.TW': _series([100.0] * 30), 'C.TW': _series([100.0] * 30)}
     assert rt.build(closes) is None
     assert not (tmp_path / 'radar_tw.json').exists()
+
+
+def test_financials_count_in_rs_but_are_not_listed(monkeypatch, tmp_path):
+    tickers = [f'{1000 + i}.TW' for i in range(10)] + ['2881.TW']
+    _patch(monkeypatch, tmp_path, tickers)
+    monkeypatch.setattr(rt, 'industries', lambda ts, stocks: {
+        t: ('金融保險業' if t == '2881.TW' else '半導體業') for t in ts})
+    # 2881 rises least; the best name ranks 10th of 11 (RS 90.9) only because
+    # 2881 is in the comparison group — out of 10 it would be 9th of 10 (90.0)
+    closes = {t: _flat_then_up(0.1 * (i + 2)) for i, t in enumerate(tickers[:10])}
+    closes['2881.TW'] = _flat_then_up(0.05)
+    payload = rt.build(closes)
+    assert payload['scored_n'] == 11 and payload['excluded_n'] == 1
+    mom = payload['shapes']['momentum_rerate']
+    assert [r['ticker'] for r in mom] == ['1009.TW'] and mom[0]['rs_pct'] == 90.9
+    html = (tmp_path / '_radar_tw_body.html').read_text(encoding='utf-8')
+    assert '金融保險業 1 檔算進 RS 的比較對象，但不列出' in html and '2881' not in html

@@ -9,7 +9,8 @@ definitions stay in step with the US page. What changes:
     (scripts/build_stages_tw.py) instead of ./data/latest.json / history.json;
   * text that is US-bound: title, hero, benchmark (QQQ/SPY → 0050), the
     liquidity floor (US$20M → US$5M in TWD), the universe paragraph and the
-    cross links; a 美股／台股 switch goes above the title;
+    cross links; the US page's 美股｜台股 switch is replaced by the TW one
+    (its CSS comes from the US page);
   * the 品質×時機 matrix and the per-ticker badges are dropped: imq-badge.js
     reads US-only files (arena, universe_board, lamp.json);
   * the list shows the Chinese name next to the code and the 20-day traded
@@ -34,11 +35,6 @@ US_PAGE = ROOT / "docs" / "stages" / "index.html"
 LATEST_TW = ROOT / "docs" / "stages" / "data" / "latest_tw.json"
 OUT = ROOT / "docs" / "stages" / "tw" / "index.html"
 
-SWITCH_CSS = (".mkt-switch{display:inline-flex;border:1px solid var(--line);border-radius:6px;"
-              "overflow:hidden;font-size:.76rem;font-weight:600;margin:0 0 .8rem}\n"
-              ".mkt-switch a,.mkt-switch span{padding:.22rem .75rem;text-decoration:none}\n"
-              ".mkt-switch a{color:var(--sec)}\n"
-              ".mkt-switch .on{background:var(--accent);color:#fff}\n")
 # same names as build_stages.STAGE_NAMES (test checks they match)
 STAGE_ZH = {"S0": "弱勢", "S1": "轉強", "S2": "築底", "S5": "高檔整理", "S3": "收縮完成", "S4": "領先"}
 
@@ -114,8 +110,6 @@ def patches(f: dict) -> list[tuple[str, str]]:
         ("<title>個股階段雷達（美股） | InvestMQuest Research</title>",
          "<title>個股階段雷達（台股） | InvestMQuest Research</title>"),
         ('<link rel="stylesheet" href="/assets/imq-badge.css">\n<script src="/assets/imq-badge.js"></script>\n', ""),
-        (".crosslinks a{color:var(--accent);font-weight:600}\n</style>",
-         ".crosslinks a{color:var(--accent);font-weight:600}\n" + SWITCH_CSS + "</style>"),
         ('<i style="background:var(--muted)"></i>QQQ（右軸）', '<i style="background:var(--muted)"></i>0050（右軸）'),
         ('  <div class="sec">\n    <div id="qt-matrix-mount"></div>\n  </div>\n\n', ""),
         ('<p class="explain-p">第 60 個交易日所在的階段，以及期間到過的最高階段；過去 250 個交易日回算，描述現況不預測。</p>',
@@ -141,7 +135,7 @@ def patches(f: dict) -> list[tuple[str, str]]:
 
 
 DESC_RE = re.compile(r'<meta name="description" content="[^"]*">')
-HERO_RE = re.compile(r"<h1>個股階段雷達（美股）</h1>\s*<p>.*?</p>", re.S)
+HERO_RE = re.compile(r'<div class="mkt-switch"[^>]*>.*?</div>\s*<h1>個股階段雷達（美股）</h1>\s*<p>.*?</p>', re.S)
 UNIVERSE_RE = re.compile(r"<p><b>母體</b>：.*?</p>", re.S)
 CROSSLINKS_RE = re.compile(r'<p class="crosslinks">.*?</p>', re.S)
 
@@ -163,6 +157,8 @@ def render(us_html: str, f: dict) -> tuple[str | None, list[str]]:
             problems.append(f"{old[:40]!r} x{got}")
             continue
         html = html.replace(old, new)
+    if html.count(".mkt-switch{") != 1 or html.count('class="mkt-switch"') != 1:
+        problems.append("market switch")
     rest = html.replace(hero_html(f), "")   # the TW hero names QQQ on purpose
     for leftover in ("QQQ", "SPY", "IMQBadge", "./data/latest.json"):
         if leftover in rest:

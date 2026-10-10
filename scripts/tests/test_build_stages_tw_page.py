@@ -59,3 +59,13 @@ def test_window_days_come_from_the_data():
     html = _render()
     assert "過去 250 個交易日" not in html
     assert "<h2>轉場基率：過去 233 個交易日" in html and "所以轉場基率只回算 233 個交易日" in html
+
+
+def test_us_page_switch_is_replaced_not_duplicated():
+    us = page.US_PAGE.read_text(encoding="utf-8")
+    assert '<span class="on">美股</span><a href="/stages/tw/">台股</a>' in us
+    html = _render()
+    assert html.count('class="mkt-switch"') == 1 and html.count(".mkt-switch{") == 1
+    assert '<a href="/stages/tw/">台股</a>' not in html
+    html, problems = page.render(us.replace('<div class="mkt-switch"', '<div class="mkt-x"'), FACTS)
+    assert html is None and problems

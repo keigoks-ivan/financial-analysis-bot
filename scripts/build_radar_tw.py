@@ -15,6 +15,12 @@ in the US radar carries over. What differs from the US radar:
     hot: the official classification has ~30 groups and several have one or
     two names here, where one stock's 13-week move would decide the median.
   * 主題下沉 uses 0051 (臺灣中型100) membership where the US uses S&P 400.
+  * 金融保險業 names are not listed and not counted in the hot-industry
+    ranking (owner decision 2026-10-10): the radar finds names for the TW
+    pool, and the pool excludes the same industries
+    (build_dd_screener.TW_EXCLUDED_INDUSTRIES). They stay in the RS
+    percentile, which measures a name against the whole universe (owner
+    decision, same day). The stages page keeps them everywhere.
   * No stage 2 (30-day yfinance EPS revision) and no 三閘主榜. The TW revision
     source is the Koyfin snapshots, which have no post-earnings baseline yet
     (the TW seats wait for the same data), and the TW market-cap floor is the
@@ -51,6 +57,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from engine import build_radar as br  # noqa: E402
 from engine.build_arena import _BOARD_CSS  # noqa: E402
 import build_stages_tw  # noqa: E402
+from build_dd_screener import TW_EXCLUDED_INDUSTRIES  # noqa: E402
 import screener_tw  # noqa: E402
 
 OUT_DIR = ROOT / 'docs' / 'cockpit-tw' / 'data'
@@ -195,6 +202,8 @@ def render(payload):
                      f'<div class="bw-sub">{escape(desc)}</div>'
                      + (_table(rows[:top]) if rows else '<div class="bw-note-line">這週沒有符合的名字。</div>'))
     hot = '、'.join(payload['hot_industries']) or '（無）'
+    excl = (f"{'、'.join(payload['excluded_industries'])} {payload['excluded_n']} 檔算進 RS 的比較對象，"
+            "但不列出、不參加熱產業排名，因為台股池不收。" if payload.get('excluded_n') else "")
     return (
         '<div class="board-wrap">' + _BOARD_CSS
         + f'<div class="bw-head">台股全市場雷達 · {escape(payload["as_of"])} 起那一週的週收盤 · '
@@ -203,7 +212,7 @@ def render(payload):
           '名單是用來找名字的，不是買進名單：池外的名字要先補 DD，進場仍看上面的時機燈。</div>'
         + f'<div class="bw-note-line">掃描範圍：0050、0051、006201 成分股加台股池，共 {payload["universe_n"]} 檔，'
           f'其中 {payload["scored_n"]} 檔有 56 週以上的週線可以算。高點取近 25 個月的最高週收盤。'
-          'RS 百分位是近 12 個月漲幅在這群名字裡贏過幾成，0 到 100。</div>'
+          f'RS 百分位是近 12 個月漲幅在這 {payload["scored_n"]} 檔裡贏過幾成，0 到 100。{excl}</div>'
         + '<div class="bw-note-line">跟美股雷達不同的地方：沒有分析師上修欄，也沒有「三閘主榜」，'
           '台股的上修數字要等第三季財報後的 Koyfin 快照。「主題下沉」用 0051 成分股代替美股的 S&amp;P 400 中型股。'
           f'產業用證交所／櫃買中心產業別，名單裡少於 {HOT_MIN_MEMBERS} 檔的產業不列入熱產業。</div>'
@@ -233,13 +242,17 @@ def build(closes=None):
         t = r['ticker']
         r.update(name=names.get(t), sector=ind.get(t) or '', tier=(wl.get(t) or {}).get('etf') or 'pool',
                  in_pool=t in pool)
-    shapes, hot = tag(rows)
+    # rs_pct is already set against every scored name; only listing and the
+    # hot-industry ranking drop the excluded industries
+    listed = [r for r in rows if r['sector'] not in TW_EXCLUDED_INDUSTRIES]
+    shapes, hot = tag(listed)
     counts = {k: len(v) for k, v in shapes.items()}
     payload = {
         'schema_version': 'radar-tw-1',
         'run_timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'as_of': as_of, 'as_of_note': 'yfinance labels a weekly bar with the Monday it starts',
         'universe_n': len(tickers), 'scored_n': len(rows), 'universe': sizes,
+        'excluded_industries': sorted(TW_EXCLUDED_INDUSTRIES), 'excluded_n': len(rows) - len(listed),
         'params': {**br.P, 'hot_min_members': HOT_MIN_MEMBERS, 'theme_tier': THEME_TIER},
         'hot_industries': hot, 'shape_counts': counts,
         'blind_total': len({r['ticker'] for v in shapes.values() for r in v if not r['in_pool']}),
