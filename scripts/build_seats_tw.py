@@ -110,6 +110,7 @@ def flat(r, today):
     # route_why says「只能衛星」; there is no satellite track and 耐久 has its own column.
     v['route_why'] = None
     v['next_earn_fallback'] = None
+    v['earnings_date_source'] = r.get('_earnings_date_source')
     if v.get('days_to_next_earnings') is None:
         dl, label = statutory_deadline(today, (r.get('_last_earnings_date')))
         if dl is not None:
@@ -165,6 +166,32 @@ def select(rows, prev_core, reselect, last_snap=None):
             'candidates': candidates, 'others': others}
 
 
+def concentration(sel, industry):
+    """Industry mix of the core seats, or of the candidates while the seats are
+    empty. Informational like the US 最大單一產業占席 (no cap, owner 2026-09-17);
+    industry = TWSE/TPEx official classification (latest.json tw_industry)."""
+    basis, rows = ('core', sel['core']) if sel['core'] else ('candidates', sel['candidates'])
+    counts = {}
+    for r in rows:
+        k = industry.get(r['ticker']) or '（未分類）'
+        counts[k] = counts.get(k, 0) + 1
+    ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    share = round(ranked[0][1] / len(rows) * 100) if rows else 0
+    return {'basis': basis, 'n': len(rows), 'rows': [{'industry': k, 'n': n} for k, n in ranked],
+            'max_share_pct': share}
+
+
+def _conc_html(conc):
+    if not conc['n']:
+        return ''
+    mix = '、'.join(f"{escape(r['industry'])} ×{r['n']}" for r in conc['rows'])
+    lead = ('核心席產業分布' if conc['basis'] == 'core'
+            else f"核心席空著，先看候補 {conc['n']} 檔的產業分布")
+    warn = (f"單一產業占 {conc['max_share_pct']}%，超過一半。產業不設上限（同美股），這行只是提示。"
+            if conc['max_share_pct'] > 50 else '')
+    return f'<div class="bw-note-line">{lead}（證交所／櫃買中心產業別）：{mix}。{warn}</div>'
+
+
 # ── HTML ──────────────────────────────────────────────────────────────────
 
 def _cells(v, lamp_map):
@@ -177,6 +204,9 @@ def _cells(v, lamp_map):
         # 缺財報日（build_dd_screener.tw_quarter_anchor_date()）：US 共用 tooltip 沒有這個錨定。
         title = escape(f"錨定：缺財報日，取該季季底前的快照｜基準快照 {v.get('rev_baseline_date') or '—'}")
         cells[1] = f'<td title="{title}">{ba._num(v.get("rev_used_pct"), 1)}</td>'
+    elif v.get('earnings_date_source') == 'mops_board':
+        # yfinance 沒有日期，財報日取自 MOPS（build_dd_screener / tw_mops_earnings.py）。
+        cells[1] = cells[1].replace('title="錨定：', 'title="財報日取自公開資訊觀測站的董事會通過日｜錨定：', 1)
     if v.get('next_earn_fallback'):
         days = v['days_to_next_earnings']
         title = escape(f"公司未公告日期，依{v['next_earn_fallback']}推算，可能提前公布")
@@ -206,7 +236,7 @@ def _legend():
     return """<details class="bw-fold" open><summary>怎麼讀這張表</summary>
 <div class="bw-note-line"><b>規則跟美股核心席相同</b>：先過資格，再依財報後上修排序，最後由時機燈決定倉位。核心席每週六（台北）依週五收盤重算：池內時機燈亮著的名字依上修取前 5，亮燈不足就空席。週中燈號只管倉位。這是研究名單，不是帳戶持倉。</div>
 <div class="bw-note-line"><b>資格</b>：三年成長、品質、站上 52 週線三項全過。三年成長＝Koyfin 今年到後年的每股盈餘年化成長 ≥15%，沒有第三年預估就不算過。品質＝投入資本報酬率（ROIC）≥15% 且營業現金流利潤率 ≥10%，或 ROIC ≥25% 且營業現金流為正。台股資本支出重，品質改看營業現金流，美股看自由現金流。另外五種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、財報後上修低於 −5%、估值閘紅燈（PEG &gt;2.0 或本益比相對五年均值 &gt;1.75 倍）。市值不另設門檻，台股池本身已是 10 億美元以上。</div>
-<div class="bw-note-line"><b>上修</b>：分析師對每股盈餘預估調高了幾 %，基準是這檔股票最近一次財報前的那份 Koyfin 快照。上修 ≥5% 才入池，池內依上修由高到低排。台股快照從 2026-10 開始存，第一筆上修要等第三季財報之後再匯出一次，在那之前核心席空著，過關且燈亮的名字列在「④ 候補」。</div>
+<div class="bw-note-line"><b>上修</b>：分析師對每股盈餘預估調高了幾 %，基準是這檔股票最近一次財報前的那份 Koyfin 快照。上修 ≥5% 才入池，池內依上修由高到低排。台股快照從 2026-10 開始存，第一筆上修要等第三季財報之後再匯出一次，在那之前核心席空著，過關且燈亮的名字列在「④ 候補」。yfinance 沒有財報日的名字，改用公開資訊觀測站上董事會通過財報的日期。</div>
 <div class="bw-note-line"><b>時機燈</b>：量的是距還原權息歷史新高多遠。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉。🟡 半倉＝差 3%～10%。🟠 過熱＝近 12 個月（扣最近一個月）漲幅 &gt;150%，半倉。🔴 等板機＝差超過 10% 或跌破 200 日線，零倉。⚫ 不合格＝未站上 52 週線。🟢🟡🟠 算亮燈。滑過燈號可看階段燈，階段燈不影響時機燈。</div>
 <div class="bw-note-line"><b>下次財報</b>：「≤N 天」是公司還沒公告日期，依法定期限推算（第一季 5/15、第二季 8/14、第三季 11/14、年報 3/31），實際可能更早。距財報 7 天內標橘色。</div>
 <div class="bw-note-line"><b>底部</b>：只在距歷史新高 10% 以內才算。回檔一次比一次小、量縮、離底部高點近算「緊」，否則算「鬆」。只排 ③ 等待池裡 🟡 組的順序，不改燈號或倉位。</div>
@@ -215,7 +245,7 @@ def _legend():
 
 
 def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_universe,
-                lamp_map):
+                lamp_map, conc=None):
     core_v = [views[r['ticker']] for r in sel['core']]
     rev_n = sum(1 for v in views.values() if v.get('rev_used_pct') is not None)
     head = f"台股核心席 · {as_of} · 台股池 {n_universe} 檔"
@@ -248,6 +278,7 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
           '的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。</div>'
         + fresh + status
         + _table(core_v, lamp_map, seat_prefix='C', empty_seats=CORE_SLOTS - len(core_v))
+        + (_conc_html(conc) if conc else '')
         + _legend() + ''.join(lines)
         + f'<h3 class="bw-sec">② 可買（{len(sel["buyable"])} 檔）</h3>'
         + '<div class="bw-sub">池內沒坐核心席、時機燈綠或橘的名字。</div>'
@@ -293,6 +324,7 @@ def build(reselect, today=None):
     for s in doc['stocks']:
         r = tw_row(s)
         r['_last_earnings_date'] = s.get('last_earnings_date')
+        r['_earnings_date_source'] = s.get('earnings_date_source')
         rows.append(r)
     ba.apply_own_score_v4(rows)   # v4 對照分，只進上修欄 tooltip（同美股）
 
@@ -308,6 +340,10 @@ def build(reselect, today=None):
         prev_core = (ledger.get('roster') or {}).get('core') or []
     sel = select(rows, prev_core, reselect, last_snap=snaps[-1] if snaps else None)
     views = {r['ticker']: flat(r, today) for r in rows}
+    industry = {s['ticker']: s.get('tw_industry') for s in doc['stocks']}
+    for t, v in views.items():
+        v['tw_industry'] = industry.get(t)
+    conc = concentration(sel, industry)
 
     last_rotation_date = ledger.get('last_rotation_date')
     if reselect:
@@ -320,7 +356,7 @@ def build(reselect, today=None):
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     BODY_HTML.write_text(render_html(as_of, rev_as_of, lamp_doc.get('as_of'), last_rotation_date,
-                                     sel, views, len(rows), lamp_map), encoding='utf-8')
+                                     sel, views, len(rows), lamp_map, conc), encoding='utf-8')
     pick = lambda key: [views[r['ticker']] for r in sel[key]]  # noqa: E731
     SEATS_JSON.write_text(json.dumps({
         'schema_version': 'tw-1.0',
@@ -329,6 +365,7 @@ def build(reselect, today=None):
         'counts': {'universe': len(rows), 'eligible': len(sel['eligible']), 'pool': len(sel['pool']),
                    'with_revision': sum(1 for v in views.values() if v.get('rev_used_pct') is not None),
                    'candidates': len(sel['candidates'])},
+        'concentration': conc,
         'core_seats': [views[r['ticker']] for r in sel['core']],
         'buyable': pick('buyable'), 'waiting': pick('waiting_rest'),
         'too_expensive': pick('too_expensive'), 'candidates': pick('candidates'),

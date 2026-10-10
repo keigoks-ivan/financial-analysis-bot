@@ -141,6 +141,7 @@ from eps_fy_shift import (  # noqa: E402
     save_fye_cache,
 )
 from tw_filing_calendar import latest_due_quarter_start  # noqa: E402
+import tw_mops_earnings  # noqa: E402
 
 OUTPUT_DIR = ROOT / "docs" / "dd-screener"
 OUTPUT_PATH = OUTPUT_DIR / "latest.json"
@@ -255,6 +256,9 @@ def _smallcap_universe_entries(excel_snapshot, *, source: str = "smallcap-koyfin
 
 
 _TW_LISTING_REPORT: dict = {}
+# 台股 code -> {"2026Q2": "2026-08-13", ...}: MOPS 董事會通過財報日, filled once in
+# Step 0 for TW names whose yfinance date is missing/stale (tw_mops_earnings.py).
+_TW_MOPS_APPROVALS: dict = {}
 
 
 def _tw_universe_entries(excel_snapshot, resolved: dict[str, dict]) -> list[dict]:
@@ -277,6 +281,7 @@ def _tw_universe_entries(excel_snapshot, resolved: dict[str, dict]) -> list[dict
             "dd_status": "none",
             "universe_source": "tw-koyfin",
             "tw_market": r.get("market"),
+            "tw_industry": r.get("industry"),   # TWSE/TPEx 官方產業別（2026-10-10）
             "qgm_seed": None,
         })
     return out
@@ -4257,6 +4262,11 @@ def enrich_ticker(
     # untouched, still used as the fallback when the earnings anchor can't be
     # resolved — see _compute_eps_rev_since_earnings() docstring).
     _earnings_cal = get_earnings_calendar(t, _yf_ticker_for_ma(t), earnings_calendar_cache)
+    if UNIVERSE_MODE == "tw":
+        # 2026-10-10: MOPS board-approval date when yfinance has none / a stale one.
+        _earnings_cal = tw_mops_earnings.merge(
+            _earnings_cal, _TW_MOPS_APPROVALS.get(t.split(".")[0]),
+            datetime.now(timezone(timedelta(hours=8))).date())
     last_earnings_date = _earnings_cal.get("last_earnings_date")
     past_earnings_dates = _earnings_cal.get("past_earnings_dates")
     next_earnings_date = _earnings_cal.get("next_earnings_date")
@@ -4422,6 +4432,8 @@ def enrich_ticker(
         "past_earnings_dates": past_earnings_dates,
         "next_earnings_date": next_earnings_date,
         "days_to_next_earnings": days_to_next_earnings,
+        **({"earnings_date_source": _earnings_cal["earnings_date_source"]}
+           if "earnings_date_source" in _earnings_cal else {}),   # TW only: yfinance / mops_board
         **eps_rev_since_earnings,  # eps_rev_since_earnings_pct, eps_rev_since_earnings_baseline_date,
                                    # eps_rev_anchor, eps_rev_since_earnings_days,
                                    # eps_rev_since_earnings_fy_shift(+_status)
@@ -4577,6 +4589,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
                 "unresolved": _tw_unresolved,
                 "probe": sorted(c for c, r in _tw_resolved.items() if r["market"] == "probe"),
                 "tpex": sorted(c for c, r in _tw_resolved.items() if r["market"] == "TPEx"),
+                "emerging": sorted(c for c, r in _tw_resolved.items() if r["market"] == "TPEx-emerging"),
             })
             universe = _tw_universe_entries(_tw_excel, _tw_resolved)
             try:
@@ -4594,6 +4607,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         print(f"  Step 1-2  TW universe (xlsx family={_excel_family()}): "
               f"{len(universe)} tickers "
               f"({len(_TW_LISTING_REPORT.get('tpex', []))} TPEx, "
+              f"{len(_TW_LISTING_REPORT.get('emerging', []))} TPEx emerging, "
               f"{len(_TW_LISTING_REPORT.get('probe', []))} via yfinance probe, "
               f"{len(_TW_LISTING_REPORT.get('dd_overlay', []))} with DD from main build)")
         _n_dd = len(_TW_LISTING_REPORT.get("dd_overlay", []))
@@ -4767,6 +4781,19 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     # in-threads/save-once convention as reporting_ccy_cache/fx_cache above.
     earnings_calendar_cache = load_earnings_calendar_cache()
     print(f"  Step 0    earnings-calendar cache: {len(earnings_calendar_cache)} tickers known")
+    if UNIVERSE_MODE == "tw":
+        # 2026-10-10: MOPS 董事會通過財報日 for TW names the yfinance cache has
+        # no current date for (tw_mops_earnings.py). Sequential, 1.2 s apart,
+        # 3-day cache; a network failure serves the cached dates.
+        _today_tpe = datetime.now(timezone(timedelta(hours=8))).date()
+        _need = [e["ticker"].split(".")[0] for e in universe
+                 if tw_mops_earnings.needs_fallback(
+                     (earnings_calendar_cache.get(e["ticker"]) or {}).get("last_earnings_date"), _today_tpe)]
+        _mops_cache = tw_mops_earnings.load_cache()
+        _TW_MOPS_APPROVALS.update(tw_mops_earnings.prefetch(_need, _mops_cache, _today_tpe))
+        tw_mops_earnings.save_cache(_mops_cache)
+        print(f"  Step 0    MOPS earnings dates: {len(_TW_MOPS_APPROVALS)}/{len(_need)} TW names "
+              "without a current yfinance date")
     # 2026-10-08: last fiscal-year-end cache (fiscal-year rollover detection).
     fye_cache = load_fye_cache()
     print(f"  Step 0    fiscal-year-end cache: {len(fye_cache)} tickers known")

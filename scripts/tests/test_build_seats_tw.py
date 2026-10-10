@@ -165,3 +165,44 @@ def test_quarter_end_anchor_gets_its_own_tooltip():
     v = tw.flat(tw.tw_row(s), date(2026, 11, 20))
     cell = tw._cells(v, {})[1]
     assert '缺財報日' in cell and '2026-09-26' in cell and '8.0' in cell
+
+
+# ── industry concentration (informational, 2026-10-10) ────────────────────
+
+def test_concentration_uses_candidates_while_seats_are_empty():
+    rows = _rows([_stock('1111.TW'), _stock('2222.TW'), _stock('3333.TW')])
+    sel = tw.select(rows, [], reselect=True)
+    conc = tw.concentration(sel, {'1111.TW': '半導體業', '2222.TW': '半導體業'})
+    assert conc['basis'] == 'candidates' and conc['n'] == 3
+    assert conc['rows'] == [{'industry': '半導體業', 'n': 2}, {'industry': '（未分類）', 'n': 1}]
+    assert conc['max_share_pct'] == 67
+    html = tw._conc_html(conc)
+    assert '候補 3 檔' in html and '超過一半' in html
+
+
+def test_concentration_switches_to_core_seats():
+    stocks = [_stock(f'{1000 + i}.TW', **_rev(30 - i)) for i in range(2)]
+    sel = tw.select(_rows(stocks), [], reselect=True)
+    conc = tw.concentration(sel, {'1000.TW': '半導體業', '1001.TW': '光電業'})
+    assert conc['basis'] == 'core' and conc['max_share_pct'] == 50
+    assert '超過一半' not in tw._conc_html(conc)
+
+
+def test_build_writes_industry_and_concentration(paths):
+    pool, out = paths
+    _write_pool(pool, [_stock('1111.TW', tw_industry='半導體業')], '2026-10-09')
+    tw.build(False, today=date(2026, 10, 10))
+    data = json.loads((out / 'seats_tw.json').read_text(encoding='utf-8'))
+    assert data['candidates'][0]['tw_industry'] == '半導體業'
+    assert data['concentration']['rows'] == [{'industry': '半導體業', 'n': 1}]
+    assert '證交所／櫃買中心產業別' in (out / '_seats_tw_body.html').read_text(encoding='utf-8')
+
+
+def test_mops_dated_name_says_so_in_the_revision_tooltip():
+    s = _stock('1111.TW', earnings_date_source='mops_board', **_rev(8.0))
+    r = tw.tw_row(s)
+    r['_earnings_date_source'] = s['earnings_date_source']
+    cell = tw._cells(tw.flat(r, date(2026, 10, 10)), {})[1]
+    assert '董事會通過日｜錨定：財報後' in cell
+    plain = tw._cells(tw.flat(tw.tw_row(_stock('2222.TW', **_rev(8.0))), date(2026, 10, 10)), {})[1]
+    assert '董事會通過日' not in plain

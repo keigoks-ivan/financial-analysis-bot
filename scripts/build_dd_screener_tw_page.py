@@ -134,6 +134,7 @@ def facts() -> dict:
         "as_of": as_of or "—",
         "n": len(rows),
         "tpex": len(listing.get("tpex") or []),
+        "emerging": len(listing.get("emerging") or []),
         "fx": fx.get("local_per_usd"),
         "fx_date": fx.get("as_of") or "—",
         # DD rows go through the main build's per-row conversion (rate backed
@@ -156,7 +157,8 @@ def hero_html(f: dict) -> str:
         '\n      <div class="hero-h1">DD Screener 台股池</div>\n'
         '      <div class="hero-sub">母體是 Koyfin 的台股篩選：市值 10 億美元以上、'
         'ROIC（投入資本報酬率）15% 以上，'
-        f'目前 {f["n"]} 檔，其中上櫃 {f["tpex"]} 檔。'
+        f'目前 {f["n"]} 檔，其中上櫃 {f["tpex"]} 檔'
+        + (f'、興櫃 {f["emerging"]} 檔' if f.get("emerging") else '') + '。'
         '評分與排序規則跟美股主頁相同，資料各自獨立。</div>\n'
         '      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">'
         '<a href="/dd-screener/" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;'
