@@ -35,7 +35,8 @@ universe.
 
 Weekly: daily-taipei-morning.yml runs it on Saturday (Taipei) after the Friday
 close. Writes only when at least MIN_SCORED_SHARE of the universe has 56+
-weekly bars; otherwise the previous files stay.
+weekly bars and every scored name has an official industry (a roster download
+is retried INDUSTRY_RETRIES times); otherwise the previous files stay.
 
 Usage:
   python3 scripts/build_radar_tw.py
@@ -45,6 +46,7 @@ from __future__ import annotations
 import bisect
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
@@ -67,6 +69,8 @@ TW_POOL_JSON = build_stages_tw.TW_POOL_JSON
 
 MIN_WEEKS = 56            # same as build_radar.stage1()
 MIN_SCORED_SHARE = 0.7    # fail-safe: below this share of the universe, keep the old files
+INDUSTRY_RETRIES = 3      # roster downloads; a name still without industry after these keeps the old files
+RETRY_WAIT_S = 20
 HOT_MIN_MEMBERS = 5
 THEME_TIER = '0051'
 TIER_LABEL = {'0050': '0050', '0051': '0051', '006201': '006201', 'pool': '池'}
@@ -149,7 +153,8 @@ def tag(rows):
 
 def industries(tickers, pool_stocks):
     """ticker → official industry. Pool names carry tw_industry; the rest go
-    through the TWSE/TPEx rosters (network; on failure they stay unclassified)."""
+    through the TWSE/TPEx rosters (network; on failure they stay unclassified,
+    see industries_complete)."""
     out = {s['ticker']: s.get('tw_industry') for s in pool_stocks if s.get('tw_industry')}
     missing = [t for t in tickers if t not in out]
     if missing:
@@ -163,6 +168,25 @@ def industries(tickers, pool_stocks):
         except Exception as e:  # noqa: BLE001 — industry is display + hot ranking only
             print(f"  WARN: industry lookup failed ({type(e).__name__}: {e})", file=sys.stderr)
     return out
+
+
+def industries_complete(tickers, pool_stocks):
+    """industries() retried for the names it missed. Returns (map, missing).
+
+    With both rosters downloaded every name in the universe has an industry
+    (all 216 on 2026-10-10). On 2026-10-10 the TPEx roster broke off mid-file
+    in CI: 31 OTC names lost their industry, which moved 電子零組件業 into the
+    hot list and added five names to 主題下沉."""
+    ind = industries(tickers, pool_stocks)
+    for attempt in range(1, INDUSTRY_RETRIES + 1):
+        missing = [t for t in tickers if not ind.get(t)]
+        if not missing:
+            break
+        print(f"  radar-tw: {len(missing)} name(s) without industry — retry {attempt}/{INDUSTRY_RETRIES}",
+              file=sys.stderr)
+        time.sleep(RETRY_WAIT_S)
+        ind.update({t: v for t, v in industries(missing, pool_stocks).items() if v})
+    return ind, [t for t in tickers if not ind.get(t)]
 
 
 def _pct(v):
@@ -237,7 +261,13 @@ def build(closes=None):
         print(f"  ✗ radar-tw: only {len(rows)}/{len(tickers)} names have {MIN_WEEKS}+ weekly bars "
               "— files left unchanged", file=sys.stderr)
         return None
-    ind = industries([r['ticker'] for r in rows], pool_stocks)
+    ind, missing = industries_complete([r['ticker'] for r in rows], pool_stocks)
+    if missing:
+        msg = (f"radar-tw: {len(missing)} name(s) still without an official industry after "
+               f"{INDUSTRY_RETRIES} retries (roster download failed?) — files left unchanged")
+        print(f"  ✗ {msg}", file=sys.stderr)
+        print(f"::warning::{msg}")
+        return None
     for r in rows:
         t = r['ticker']
         r.update(name=names.get(t), sector=ind.get(t) or '', tier=(wl.get(t) or {}).get('etf') or 'pool',

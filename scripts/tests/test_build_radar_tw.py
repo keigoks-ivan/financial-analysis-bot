@@ -116,3 +116,30 @@ def test_financials_count_in_rs_but_are_not_listed(monkeypatch, tmp_path):
     assert [r['ticker'] for r in mom] == ['1009.TW'] and mom[0]['rs_pct'] == 90.9
     html = (tmp_path / '_radar_tw_body.html').read_text(encoding='utf-8')
     assert '金融保險業 1 檔算進 RS 的比較對象，但不列出' in html and '2881' not in html
+
+
+def test_missing_industry_is_retried(monkeypatch, tmp_path):
+    tickers = [f'{1000 + i}.TW' for i in range(11)]
+    _patch(monkeypatch, tmp_path, tickers)
+    monkeypatch.setattr(rt, 'RETRY_WAIT_S', 0)
+    calls = []
+
+    def flaky(ts, stocks):                     # first call: roster cut off, last name missing
+        calls.append(list(ts))
+        return {t: '半導體業' for t in (ts[:-1] if len(calls) == 1 else ts)}
+    monkeypatch.setattr(rt, 'industries', flaky)
+    closes = {t: _flat_then_up(0.1 * (i + 1)) for i, t in enumerate(tickers)}
+    assert rt.build(closes) is not None
+    assert len(calls) == 2 and calls[1] == ['1010.TW']        # only the missing name is retried
+    assert (tmp_path / 'radar_tw.json').exists()
+
+
+def test_industry_still_missing_leaves_files_alone(monkeypatch, tmp_path, capsys):
+    tickers = [f'{1000 + i}.TW' for i in range(11)]
+    _patch(monkeypatch, tmp_path, tickers)
+    monkeypatch.setattr(rt, 'RETRY_WAIT_S', 0)
+    monkeypatch.setattr(rt, 'industries', lambda ts, stocks: {t: '半導體業' for t in ts if t != '1003.TW'})
+    closes = {t: _flat_then_up(0.1 * (i + 1)) for i, t in enumerate(tickers)}
+    assert rt.build(closes) is None
+    assert not (tmp_path / 'radar_tw.json').exists() and not (tmp_path / '_radar_tw_body.html').exists()
+    assert '::warning::radar-tw: 1 name(s) still without an official industry' in capsys.readouterr().out
