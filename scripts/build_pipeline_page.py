@@ -40,6 +40,7 @@ from site_nav import DD_SCREENER_SUBNAV, build_subnav, full_nav_block  # noqa: E
 # 歷史新高板機，own_score 在該側降為 v4 對照 tooltip、不再排序）——本頁核心軌仍沿用自己
 # 的 own_score（v2）獨立排序，兩邊不再「同源」，見下方文案。
 from engine.grp import grp_score, own_score, quality_gate  # noqa: E402
+from build_dd_screener import _yf_ticker_for_ma  # noqa: E402  weekly_cache file names
 
 # ── paths ─────────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
@@ -996,8 +997,12 @@ def build(dry_run: bool = False) -> int:
     rereview_rows = compute_rereview(stocks)
 
     # ── 回看鏡 ──
+    # 回看鏡的 ticker 是 weekly_cache 檔名＝yfinance 代號；主池的上櫃股記成 .TW、檔名是
+    # .TWO（5274、8299），要用寫檔端同一個轉換才對得到，否則有 DD 也被標成盲區（2026-10-10）
+    by_cache_name = {_yf_ticker_for_ma(s["ticker"]): s for s in stocks}
+
     def _cov(ticker: str):
-        s = by_ticker.get(ticker)
+        s = by_ticker.get(ticker) or by_cache_name.get(ticker)
         if s is None or not s.get("dd_path"):
             return "blind", None, None
         age = s.get("dd_age_days")

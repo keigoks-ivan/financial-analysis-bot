@@ -8,7 +8,7 @@
   (a) p_clim（pooled 無條件頻率，PREREG 凍結定義，設計稿 §5.4）——對
       data/weekly_cache/ 屬 **DD 池**的 ticker（2026-09-09 起：`docs/dd-screener/latest.json`
       之 `dd_status=="dd"`；排除 `--include-non-dd` 收進來的 QGM 等非 DD 名字，避免母體被
-      稀釋——latest.json 讀不到才 fallback 為全部檔案，見 `_load_non_dd_exclude_set()`），取
+      稀釋——latest.json 讀不到才 fallback 為全部檔案，見 `_load_dd_allow_set()`），取
       近 5 年（CLIM_WINDOW_YEARS）每個曆月「首個可得週線收盤」為取樣點，算「該取樣點起
       91／365 曆日後，該 ticker 報酬 > SPY 同窗報酬」的 pooled（跨全部 ticker、跨全部取樣
       月）無條件頻率。SPY 收盤自本檔**專用**日線快取 data/dd_verdict_base_rates_raw_cache.json
@@ -275,17 +275,19 @@ def _month_first_bars(dates, closes, start_bound, end_bound):
 # p_clim 母體：data/weekly_cache/ 限定 DD 池，排除非 DD 名字（QGM --include-non-dd 等）
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _load_non_dd_exclude_set():
-    """讀 docs/dd-screener/latest.json，回傳 dd_status != "dd" 的 ticker 集合（如
-    --include-non-dd 收進來的 QGM 品質池名字），用來把 p_clim 母體限定在 DD 池、不被非 DD
-    快取稀釋（設計稿 §5.4：p_clim 母體＝「DD 池」，不是「weekly_cache 目錄下全部檔案」——
-    後者原本等價，但 QGM 名字進駐 weekly_cache 後兩者已分岔）。
+def _load_dd_allow_set():
+    """讀 docs/dd-screener/latest.json，回傳 dd_status == "dd" 的 ticker 經
+    build_dd_screener._yf_ticker_for_ma() 轉成的快取檔名集合，用來把 p_clim 母體限定在
+    DD 池、不被非 DD 快取稀釋（設計稿 §5.4：p_clim 母體＝「DD 池」，不是「weekly_cache
+    目錄下全部檔案」——後者原本等價，但 QGM 名字進駐 weekly_cache 後兩者已分岔）。
 
-    用「排除非 DD ticker」而非「只收 DD ticker 白名單」，是因為國際 ADR／交易所後綴的別名
-    （如 latest.json 的 "ABB" ↔ weekly_cache 的 "ABBNY.json"、"5274.TW" ↔ "5274.TWO.json"）
-    會讓白名單字串比對誤刪本屬 DD 池的檔案；排除法不受這批別名影響（那些 ticker 從未出現在
-    非 DD 名單裡）。latest.json 讀不到時回傳 None，呼叫端 fallback 為「掃全部檔案」並印
-    ::warning::（寧可母體被稀釋也不要整包算不出來）。"""
+    2026-10-10 由「排除非 DD ticker」改為白名單：排除法只擋得住主池 latest.json 裡的非 DD
+    名字，擋不住其他模式寫進同一目錄的名字——小型股模式（2026-09-17 起約 194 檔）與台股池
+    （10-09～10-10 的 71 檔，已移除）都不在主池裡，會整批混進母體（當日驗算：排除法 447 檔、
+    白名單 253 檔，差額 194 檔全是小型股）。早先不用白名單是怕別名（"ABB" ↔ "ABBNY.json"、
+    "5274.TW" ↔ "5274.TWO.json"）字串比對誤刪 DD 檔；改用寫檔端同一個轉換函式後，253 檔
+    DD 名字全部對得到檔案。latest.json 讀不到時回傳 None，呼叫端 fallback 為「掃全部檔案」
+    並印 ::warning::（寧可母體被稀釋也不要整包算不出來）。"""
     if not DD_SCREENER_LATEST.exists():
         print(f"::warning::{DD_SCREENER_LATEST} 不存在，p_clim 母體 fallback 為 "
               f"data/weekly_cache/ 全部檔案（可能含非 DD 名字，母體被稀釋）")
@@ -296,8 +298,15 @@ def _load_non_dd_exclude_set():
         print(f"::warning::{DD_SCREENER_LATEST} 讀取失敗（{e}），p_clim 母體 fallback 為 "
               f"data/weekly_cache/ 全部檔案（可能含非 DD 名字，母體被稀釋）")
         return None
+    try:
+        from build_dd_screener import _yf_ticker_for_ma  # same file naming as the cache writer
+    except Exception as e:  # noqa: BLE001
+        print(f"::warning::載入 build_dd_screener 失敗（{e}），p_clim 母體 fallback 為 "
+              f"data/weekly_cache/ 全部檔案（可能含非 DD 名字，母體被稀釋）")
+        return None
     stocks = data.get("stocks") or []
-    return {s.get("ticker") for s in stocks if s.get("ticker") and s.get("dd_status") != "dd"}
+    return {_yf_ticker_for_ma(s["ticker"]) for s in stocks
+            if s.get("ticker") and s.get("dd_status") == "dd"}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -308,15 +317,15 @@ def compute_p_clim(spy_dates, spy_closes, today_str):
     start_bound = _minus_years(today_str, CLIM_WINDOW_YEARS)
     spy_last = spy_dates[-1] if spy_dates else None
     all_files = sorted(CACHE_DIR.glob("*.json"))
-    exclude_set = _load_non_dd_exclude_set()
-    if exclude_set is None:
+    allow_set = _load_dd_allow_set()
+    if allow_set is None:
         ticker_files = all_files
         n_excluded_non_dd = 0
     else:
-        ticker_files = [p for p in all_files if p.stem not in exclude_set]
+        ticker_files = [p for p in all_files if p.stem in allow_set]
         n_excluded_non_dd = len(all_files) - len(ticker_files)
         info(f"p_clim 母體：data/weekly_cache/ 共 {len(all_files)} 檔，排除 {n_excluded_non_dd} "
-             f"檔非 DD 名字（dd_status≠dd），實際掃描 {len(ticker_files)} 檔")
+             f"檔非 DD 名字（不在 dd_status==dd 名單），實際掃描 {len(ticker_files)} 檔")
 
     results = {}
     for template, horizon_days in HORIZONS.items():
