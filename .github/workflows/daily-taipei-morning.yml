@@ -125,6 +125,18 @@ jobs:
           python scripts/build_seats_tw.py $ARGS || echo "::warning::tw seats build failed"
         continue-on-error: true
 
+      # 台股全市場雷達（2026-10-10，見 knowledge/rule_ledger.md「台股全市場雷達」列）：美股雷達的
+      # 四種形狀跑台股階段雷達母體（0050／0051／006201 成分股＋台股池），只在週六（台北）這班
+      # 依週五收盤掃一次。自己下載週線，不寫 data/weekly_cache*；可算的名字不到七成就不寫檔。
+      - name: "[non-fundamental] Step 2a-tw-radar — TW radar (Saturday)"
+        run: |
+          if [ "$(TZ=Asia/Taipei date +%u)" = 6 ]; then
+            python scripts/build_radar_tw.py || echo "::warning::tw radar build failed"
+          else
+            echo "not Saturday (Taipei) — radar-tw skipped"
+          fi
+        continue-on-error: true
+
       # 精選榜「十倍」組 v5 小市值池（2026-09-17 持有人拍板「精選榜改版」，見
       # knowledge/rule_ledger.md「精選榜改版：爆發組退役、十倍組改 v5 小市值池」列）：
       # 與上面 Arena daily refresh 讀同一份剛更新的 dd-screener latest.json，跑同一套

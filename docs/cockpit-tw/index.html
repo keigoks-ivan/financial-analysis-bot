@@ -235,12 +235,12 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <div class="eyebrow">Stock-Selection Console · 台股</div>
     <div class="mkt-switch" role="navigation" aria-label="市場切換"><a href="/cockpit/">美股</a><span class="on">台股</span></div>
     <h1>台股選股主控台</h1>
-    <p class="sub">這一版把站上現有的台股資料收在一頁：大盤與實單曝險、DD Screener 台股池、品質動能篩選、技術雷達，以及兩條動能對照組。「席位排序」分頁用美股核心席的同一套規則跑台股池。台股還沒有上修數字，核心席暫時空著，先列候補。</p>
+    <p class="sub">這一版把站上現有的台股資料收在一頁：大盤與實單曝險、DD Screener 台股池、品質動能篩選、技術雷達，以及兩條動能對照組。「席位排序」分頁用美股核心席的同一套規則跑台股池，另附全母體看板與全市場雷達。台股還沒有上修數字，核心席暫時空著，先列候補。</p>
   </div>
 
   <div class="tabbar" role="tablist">
     <button type="button" class="tab-btn" data-tab="overview" role="tab">總覽<span class="tb-sub">天氣·陣容</span></button>
-    <button type="button" class="tab-btn" data-tab="seats" role="tab">席位排序<span class="tb-sub">核心席·候補</span></button>
+    <button type="button" class="tab-btn" data-tab="seats" role="tab">席位排序<span class="tb-sub">核心席·候補·雷達</span></button>
     <button type="button" class="tab-btn" data-tab="pipeline" role="tab">流程板機<span class="tb-sub">台股池漏斗</span></button>
     <button type="button" class="tab-btn" data-tab="discovery" role="tab">發現層<span class="tb-sub">品質·技術·對照組</span></button>
   </div>
@@ -281,6 +281,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       <div class="disc-col">
         <div class="disc-col-title">技術路</div>
         <a class="disc-link" href="/screener-tw.html">台股 RS 雷達<small>相對強弱 × 波動收縮型態</small></a>
+        <a class="disc-link" href="/stages/tw/">個股階段雷達（台股）<small>每檔在哪一段，附各段家數與轉場基率</small></a>
       </div>
       <div class="disc-col">
         <div class="disc-col-title">動能對照組</div>
@@ -311,7 +312,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   <div class="tab-panel" id="panel-seats">
     <section class="block">
       <div id="seats-mount"><div class="placeholder">載入中…</div></div>
-      <p class="roster-note">美股席位排序在 <a href="/cockpit/#seats">美股主控台</a>。美股席位頁的「雷達」（全市場時機掃描）還沒有台股版，台股的技術面掃描請看「發現層」分頁的 RS 雷達。</p>
+      <p class="roster-note">美股席位排序在 <a href="/cockpit/#seats">美股主控台</a>。下方是台股全市場雷達，每週六更新；每天的相對強弱掃描在「發現層」分頁的 RS 雷達。</p>
+    </section>
+    <section class="block">
+      <div id="radar-mount"><div class="placeholder">載入中…</div></div>
     </section>
   </div>
 
@@ -411,6 +415,8 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
    qgm      /qgm-tw/latest.json                       QGM 台股
    rs       /screener/tw_latest.json                  台股 RS 雷達
    p10      /research/price-momentum-tw/track.json    P10 台股（只讀 NAV，不列持股：PREREG 規定不進 cockpit 清單）
+   lamp     /stages/data/lamp_tw.json                 台股階段燈
+   席位／雷達 /cockpit-tw/data/_seats_tw_body.html、_radar_tw_body.html（HTML 片段，直接掛上）
    revmom   /revmom-picks/（HTML，無 JSON）            只解析「前進追蹤」表；解析失敗退回連結 */
 (function(){
   "use strict";
@@ -442,6 +448,9 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   pending.push(fetch('/cockpit-tw/data/_seats_tw_body.html',{cache:'no-store'}).then(function(r){
     if(!r.ok)throw new Error(r.status);return r.text();
   }).then(function(t){S.seatsHtml=t;}).catch(function(){S.seatsHtml=null;}));
+  pending.push(fetch('/cockpit-tw/data/_radar_tw_body.html',{cache:'no-store'}).then(function(r){
+    if(!r.ok)throw new Error(r.status);return r.text();
+  }).then(function(t){S.radarHtml=t;}).catch(function(){S.radarHtml=null;}));
 
   var NAMES = {};
   function nameOf(t){return NAMES[t] || NAMES[code(t)] || '';}
@@ -465,7 +474,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   }
   function lampNote(){
     if(!S.lamp || !S.lamp.lamp) return '階段：台股階段燈資料暫缺。';
-    return '階段：跟美股<a href="/stages/">個股階段雷達</a>同一套判定，比較基準換成 0050 還原權息，流動性門檻是近 20 日平均成交值 500 萬美元以上，相對強弱的百分位跟 0050、0051、006201 成分股加台股池一起排。成交值不到門檻或上市未滿一年的，一律標「過渡」。資料日 '+esc(S.lamp.as_of||'')+'。';
+    return '階段：<a href="/stages/tw/">個股階段雷達（台股）</a>，跟美股版同一套判定，比較基準換成 0050 還原權息，流動性門檻是近 20 日平均成交值 500 萬美元以上，相對強弱的百分位跟 0050、0051、006201 成分股加台股池一起排。成交值不到門檻或上市未滿一年的，一律標「過渡」。資料日 '+esc(S.lamp.as_of||'')+'。';
   }
   function priceOf(r){return num(r.price)?r.price:(r.ma&&num(r.ma.price)?r.ma.price:null);}
   function dist52(r){return r.timing && num(r.timing.dist_52w_high_pct) ? r.timing.dist_52w_high_pct : null;}
@@ -489,11 +498,15 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     safe(renderRs, 'rs-mount', 'RS 雷達資料暫缺');
     safe(renderP10, 'p10-mount', 'P10 台股資料暫缺');
     safe(renderSeats, 'seats-mount', '台股席位資料暫缺');
+    safe(renderRadar, 'radar-mount', '台股雷達資料暫缺');
   });
 
   /* 席位排序：看板片段（含自己的 <style>）直接掛上 */
   function renderSeats(){
     $('seats-mount').innerHTML = S.seatsHtml || ph('台股席位資料暫缺');
+  }
+  function renderRadar(){
+    $('radar-mount').innerHTML = S.radarHtml || ph('台股雷達資料暫缺');
   }
 
   /* ① 天氣 */

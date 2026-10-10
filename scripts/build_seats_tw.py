@@ -28,7 +28,7 @@ split as the US engine.
 
 Outputs:
   docs/cockpit-tw/data/_seats_tw_body.html  board fragment for cockpit-tw 席位排序
-  docs/cockpit-tw/data/seats_tw.json        seats / pool / candidates as data
+  docs/cockpit-tw/data/seats_tw.json        seats / pool / candidates / board as data
   docs/cockpit-tw/data/seats_tw_ledger.json roster state + weekly snapshots
 
 Usage:
@@ -244,8 +244,48 @@ def _legend():
 </details>"""
 
 
+BOARD_ROWS = 40
+
+
+def board_rows(rows):
+    """全母體看板：資格全過的名字依 v4 對照分降冪，前 40，同美股
+    build_arena.render_board_html()。分數算不出來的（五項百分位少於四項）
+    apply_own_score_v4() 已記成 0，排在最後。只供對照，不影響席位或候補。"""
+    return sorted((r for r in rows if r['grp'].get('pass')),
+                  key=lambda r: -(r.get('score') or 0))[:BOARD_ROWS]
+
+
+def _board_html(views, seat_code_map, lamp_map, n_eligible, rev_n):
+    """build_arena._own_board_section_html() with the TW cells (name, fallback
+    tooltips); the 席 column goes after the first 8 shared cells, as in _board_tr()."""
+    if not views:
+        return ''
+    thead_cells = ba._shared_thead_cells()
+    thead = ('<tr><th title="v4 對照分名次，只供對照，席位依上修排序">#</th>' + ''.join(thead_cells[:8])
+             + '<th class="bw-l" title="目前坐的核心席，空白＝沒坐席">席</th>' + ''.join(thead_cells[8:]) + '</tr>')
+    body = []
+    for i, v in enumerate(views, 1):
+        cells = _cells(v, lamp_map)
+        code = seat_code_map.get(v['ticker'])
+        seat = (f'<td class="bw-l">{escape(code)}</td>' if code
+                else '<td class="bw-l"><span class="bw-muted">—</span></td>')
+        cls = ' class="bw-seated"' if code else ''
+        body.append(f'<tr{cls}><td>{i}</td>' + ''.join(cells[:8]) + seat + ''.join(cells[8:]) + '</tr>')
+    scope = (f'資格全過的 {n_eligible} 檔' if n_eligible <= len(views)
+             else f'資格全過的 {n_eligible} 檔裡分數最高的 {len(views)} 檔')
+    rev_note = ('台股還沒有上修數字，目前的分數是其餘四項的平均。' if rev_n == 0
+                else '沒有上修數字的名字，分數是其餘四項的平均。')
+    return (f'<h3 class="bw-sec">全母體看板（v4 對照排序，{len(views)} 檔）</h3>'
+            f'<div class="bw-sub">{scope}，依 v4 對照分排列，比上面的表多一欄「席」。'
+            'v4 對照分是五項百分位的平均，百分位是在這群名字裡贏過幾成：上修、近 12 個月股價動能、'
+            f'成長、品質、盈餘殖利率。{rev_note}這張表只供對照：核心席依上修排序，候補不排名，'
+            '都不是從這張表挑的。欄位定義見上方「怎麼讀這張表」。</div>'
+            '<div class="bw-scroll"><table><thead>' + thead + '</thead><tbody>'
+            + ''.join(body) + '</tbody></table></div>')
+
+
 def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_universe,
-                lamp_map, conc=None):
+                lamp_map, conc=None, board=None):
     core_v = [views[r['ticker']] for r in sel['core']]
     rev_n = sum(1 for v in views.values() if v.get('rev_used_pct') is not None)
     head = f"台股核心席 · {as_of} · 台股池 {n_universe} 檔"
@@ -296,6 +336,8 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + f'<details class="bw-fold"><summary>⑤ 其他過關名字（{len(sel["others"])} 檔，點開）</summary>'
         + '<div class="bw-sub">資格全過，但上修未達 5%，或時機燈沒亮且還沒有上修數字。不進池、不佔席。</div>'
         + _table(v(sel['others']), lamp_map) + '</details>'
+        + _board_html(v(board or []), {r['ticker']: f"C{i}" for i, r in enumerate(sel['core'], 1)},
+                      lamp_map, len(sel['eligible']), rev_n)
         + '</div>'
     )
 
@@ -326,7 +368,7 @@ def build(reselect, today=None):
         r['_last_earnings_date'] = s.get('last_earnings_date')
         r['_earnings_date_source'] = s.get('earnings_date_source')
         rows.append(r)
-    ba.apply_own_score_v4(rows)   # v4 對照分，只進上修欄 tooltip（同美股）
+    ba.apply_own_score_v4(rows)   # v4 對照分：上修欄 tooltip 與全母體看板排序（同美股）
 
     ledger = _load_json(LEDGER_JSON, {'schema_version': 'tw-1.0', 'snapshots': []})
     snaps = sorted(ledger.get('snapshots') or [], key=lambda x: x.get('date') or '')
@@ -344,6 +386,8 @@ def build(reselect, today=None):
     for t, v in views.items():
         v['tw_industry'] = industry.get(t)
     conc = concentration(sel, industry)
+    board = board_rows(rows)
+    seat_code = {r['ticker']: f"C{i}" for i, r in enumerate(sel['core'], 1)}
 
     last_rotation_date = ledger.get('last_rotation_date')
     if reselect:
@@ -356,7 +400,7 @@ def build(reselect, today=None):
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     BODY_HTML.write_text(render_html(as_of, rev_as_of, lamp_doc.get('as_of'), last_rotation_date,
-                                     sel, views, len(rows), lamp_map, conc), encoding='utf-8')
+                                     sel, views, len(rows), lamp_map, conc, board), encoding='utf-8')
     pick = lambda key: [views[r['ticker']] for r in sel[key]]  # noqa: E731
     SEATS_JSON.write_text(json.dumps({
         'schema_version': 'tw-1.0',
@@ -370,6 +414,9 @@ def build(reselect, today=None):
         'buyable': pick('buyable'), 'waiting': pick('waiting_rest'),
         'too_expensive': pick('too_expensive'), 'candidates': pick('candidates'),
         'other_eligible': pick('others'),
+        'board_v4': [{'rank': i, 'ticker': r['ticker'], 'name': r.get('name'),
+                      'score_v4': (r['grp'].get('own') or {}).get('score'),
+                      'seat': seat_code.get(r['ticker'])} for i, r in enumerate(board, 1)],
     }, ensure_ascii=False, indent=1, default=str) + '\n', encoding='utf-8')
     if reselect:
         LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')

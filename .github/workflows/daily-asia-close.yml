@@ -77,6 +77,11 @@ jobs:
         run: python scripts/build_stages_tw.py
         continue-on-error: true
 
+      - name: "[stages-tw] Build TW stages page"
+        if: github.event.schedule == '0 8 * * 1-5' || github.event_name == 'workflow_dispatch'
+        run: python scripts/build_stages_tw_page.py
+        continue-on-error: true
+
       - name: "[screener-jp] Run JP screener"
         if: github.event.schedule == '0 8 * * 1-5' || github.event_name == 'workflow_dispatch'
         run: python scripts/screener_jp.py
@@ -103,6 +108,9 @@ jobs:
           for p in \
             docs/screener/ \
             docs/stages/data/lamp_tw.json \
+            docs/stages/data/history_tw.json \
+            docs/stages/data/latest_tw.json \
+            docs/stages/tw/ \
             docs/cache/prices-tw.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done

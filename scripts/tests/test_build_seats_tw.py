@@ -206,3 +206,33 @@ def test_mops_dated_name_says_so_in_the_revision_tooltip():
     assert '董事會通過日｜錨定：財報後' in cell
     plain = tw._cells(tw.flat(tw.tw_row(_stock('2222.TW', **_rev(8.0))), date(2026, 10, 10)), {})[1]
     assert '董事會通過日' not in plain
+
+
+# ── 全母體看板（v4 對照排序）──────────────────────────────────────────────
+
+def test_board_ranks_eligible_by_v4_score_and_marks_seats(paths):
+    pool, out = paths
+    stocks = [_stock('1000.TW', **_rev(10)), _stock('2000.TW', **_rev(20)),
+              _stock('3000.TW', cagr=5.0)]                             # fails three-year growth
+    _write_pool(pool, stocks, '2026-10-16')
+    tw.build(True, today=date(2026, 10, 17))
+    data = json.loads((out / 'seats_tw.json').read_text(encoding='utf-8'))
+    board = data['board_v4']
+    assert {b['ticker'] for b in board} == {'1000.TW', '2000.TW'}       # eligible only
+    scores = [b['score_v4'] or 0 for b in board]                      # None (< 4 items) ranks as 0
+    assert scores == sorted(scores, reverse=True)
+    seats = {b['ticker']: b['seat'] for b in board}
+    assert seats == {'2000.TW': 'C1', '1000.TW': 'C2'}
+    html = (out / '_seats_tw_body.html').read_text(encoding='utf-8')
+    assert '全母體看板（v4 對照排序，2 檔）' in html and 'class="bw-seated"' in html
+    assert '沒有上修數字的名字，分數是其餘四項的平均' in html
+
+
+def test_board_without_revision_says_score_uses_four_items(paths):
+    pool, out = paths
+    _write_pool(pool, [_stock('1111.TW')], '2026-10-09')
+    tw.build(False, today=date(2026, 10, 10))
+    html = (out / '_seats_tw_body.html').read_text(encoding='utf-8')
+    assert '台股還沒有上修數字，目前的分數是其餘四項的平均' in html
+    board_part = html.split('全母體看板')[1]
+    assert board_part.count('<tr><td>1</td>') == 1                     # 1 row, no seat
