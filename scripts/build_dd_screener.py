@@ -192,6 +192,15 @@ TW_SCREENER_LATEST = ROOT / "docs" / "screener" / "tw_latest.json"
 LARGECAP_XLSX_FAMILY = "DD_largecap_EPS_estimates_"
 
 
+def _ma_uses_cache() -> bool:
+    """data/weekly_cache is the US DD pool's weekly-bar store; two readers glob
+    the whole directory (build_pipeline_page 回看鏡, build_dd_verdict_base_rates
+    p_clim), so TW pool names must not be written there (2026-10-10). The TW
+    run pulls 5y from yfinance each time; on failure enrich_ticker falls back to
+    the previous latest.json MA as for any other outage."""
+    return UNIVERSE_MODE != "tw"
+
+
 def _output_dir() -> Path:
     if UNIVERSE_MODE == "tw":
         return TW_OUTPUT_DIR
@@ -4147,7 +4156,7 @@ def enrich_ticker(
         ma_from_cache = False
     else:
         try:
-            ma = compute_ma_snapshot(_yf_ticker_for_ma(t))
+            ma = compute_ma_snapshot(_yf_ticker_for_ma(t), use_cache=_ma_uses_cache())
         except Exception:
             ma = _empty_ma()
         # v1.4: 若 yfinance 抓不到（rate-limit / 網路 hiccup）就用上次 latest.json

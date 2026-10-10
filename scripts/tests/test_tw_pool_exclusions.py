@@ -50,3 +50,12 @@ def test_hero_names_what_was_left_out_and_why():
     assert "興櫃" not in only_fin
     none_out = page.hero_html({"n": 86, "tpex": 21})
     assert "不列入" not in none_out
+
+
+def test_tw_pool_does_not_write_the_us_weekly_cache(monkeypatch):
+    # data/weekly_cache is globbed by US readers (pipeline 回看鏡, DD base rates)
+    for mode, uses in (("dd", True), ("smallcap", True), ("tw", False)):
+        monkeypatch.setattr(bds, "UNIVERSE_MODE", mode)
+        assert bds._ma_uses_cache() is uses
+    src = Path(bds.__file__).read_text(encoding="utf-8")
+    assert "compute_ma_snapshot(_yf_ticker_for_ma(t), use_cache=_ma_uses_cache())" in src
