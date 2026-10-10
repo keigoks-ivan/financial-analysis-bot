@@ -259,6 +259,15 @@ _TW_LISTING_REPORT: dict = {}
 # 台股 code -> {"2026Q2": "2026-08-13", ...}: MOPS 董事會通過財報日, filled once in
 # Step 0 for TW names whose yfinance date is missing/stale (tw_mops_earnings.py).
 _TW_MOPS_APPROVALS: dict = {}
+# 2026-10-10 持有人決定：金融保險業不列入（營業現金流混著存放款與保費進出，
+# 品質閘的營業現金流利潤率對銀行、保險沒有意義）；興櫃不列入（沒有漲跌幅限制、
+# 成交量小，部分只出半年報）。興櫃轉上市或上櫃後名冊市場別會變，下次 build 自動納入。
+TW_EXCLUDED_INDUSTRIES = frozenset({"金融保險業"})
+TW_EXCLUDED_MARKETS = frozenset({"TPEx-emerging"})
+
+
+def _tw_excluded(r: dict) -> bool:
+    return r.get("industry") in TW_EXCLUDED_INDUSTRIES or r.get("market") in TW_EXCLUDED_MARKETS
 
 
 def _tw_universe_entries(excel_snapshot, resolved: dict[str, dict]) -> list[dict]:
@@ -268,12 +277,13 @@ def _tw_universe_entries(excel_snapshot, resolved: dict[str, dict]) -> list[dict
     NOT filtered through grp_market_ok() — that filter exists to keep .TW out
     of the US engine, and this isolated pool is all-TW by construction. Codes
     missing from `resolved` (see tw_listing_suffix.resolve_tw_codes) are
-    dropped by the caller's report, never passed through bare. Pure function,
-    no I/O."""
+    dropped by the caller's report, never passed through bare. Financials and
+    興櫃 names (_tw_excluded) are left out; the caller lists them. Pure
+    function, no I/O."""
     out = []
     for code in sorted(excel_snapshot.tickers):
         r = resolved.get(code)
-        if not r:
+        if not r or _tw_excluded(r):
             continue
         out.append({
             "ticker": r["ticker"], "name": r.get("name") or r["ticker"], "sector": "",
@@ -289,7 +299,7 @@ def _tw_universe_entries(excel_snapshot, resolved: dict[str, dict]) -> list[dict
 
 def load_tw_timing_reference() -> dict[str, dict]:
     """TW pool timing reference population: the TW screener's tickers
-    (docs/screener/tw_latest.json, 0050+0051+00714 constituents, .TW/.TWO).
+    (docs/screener/tw_latest.json, 0050+0051+006201 constituents, .TW/.TWO).
     compute_yfinance_timing_fallback() only reads the keys, so every TW-pool
     name gets the same yfinance-computed fields, ranked against TW peers
     instead of the US screener. tw_latest's own fields (dist_from_high_pct
@@ -4588,8 +4598,13 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
             _TW_LISTING_REPORT.update({
                 "unresolved": _tw_unresolved,
                 "probe": sorted(c for c, r in _tw_resolved.items() if r["market"] == "probe"),
-                "tpex": sorted(c for c, r in _tw_resolved.items() if r["market"] == "TPEx"),
-                "emerging": sorted(c for c, r in _tw_resolved.items() if r["market"] == "TPEx-emerging"),
+                "tpex": sorted(c for c, r in _tw_resolved.items()
+                               if r["market"] == "TPEx" and not _tw_excluded(r)),
+                # Koyfin names left out of the pool (TW_EXCLUDED_*), listed for the page.
+                "excluded_financial": sorted(c for c, r in _tw_resolved.items()
+                                             if r.get("industry") in TW_EXCLUDED_INDUSTRIES),
+                "excluded_emerging": sorted(c for c, r in _tw_resolved.items()
+                                            if r["market"] in TW_EXCLUDED_MARKETS),
             })
             universe = _tw_universe_entries(_tw_excel, _tw_resolved)
             try:
@@ -4607,7 +4622,8 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         print(f"  Step 1-2  TW universe (xlsx family={_excel_family()}): "
               f"{len(universe)} tickers "
               f"({len(_TW_LISTING_REPORT.get('tpex', []))} TPEx, "
-              f"{len(_TW_LISTING_REPORT.get('emerging', []))} TPEx emerging, "
+              f"{len(_TW_LISTING_REPORT.get('excluded_financial', []))} financials and "
+              f"{len(_TW_LISTING_REPORT.get('excluded_emerging', []))} TPEx emerging left out, "
               f"{len(_TW_LISTING_REPORT.get('probe', []))} via yfinance probe, "
               f"{len(_TW_LISTING_REPORT.get('dd_overlay', []))} with DD from main build)")
         _n_dd = len(_TW_LISTING_REPORT.get("dd_overlay", []))

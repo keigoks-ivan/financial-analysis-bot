@@ -11,7 +11,7 @@ no consumer is wired up yet — viewer page at /cache/ shows results.
 
 Universe per region:
   us: DD non-TW ∪ SP500+NQ100 extras (~560 tickers)
-  tw: DD TW ∪ ETF_0050+0051+00714 (~200 tickers)
+  tw: DD TW ∪ ETF_0050+0051+006201 (~200 tickers)
 
 Schema v1.0 — per ticker:
   currency: USD | TWD | EUR | JPY | ...
@@ -115,9 +115,9 @@ def _load_sp500_nq100() -> list[str]:
 
 
 def _load_twse_etfs() -> list[str]:
-    """Reuse screener_tw.py's ETF dicts (0050 + 0051 + 00714)."""
-    from screener_tw import ETF_0050, ETF_0051, ETF_00714  # noqa: E402
-    return sorted(set(ETF_0050.keys()) | set(ETF_0051.keys()) | set(ETF_00714.keys()))
+    """Reuse screener_tw.py's ETF dicts (0050 + 0051 + 006201)."""
+    from screener_tw import ETF_0050, ETF_0051, ETF_006201  # noqa: E402
+    return sorted(set(ETF_0050.keys()) | set(ETF_0051.keys()) | set(ETF_006201.keys()))
 
 
 def build_universe(region: str) -> list[str]:

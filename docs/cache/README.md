@@ -26,7 +26,7 @@ Viewer page:
 Each region's universe is the **union** of DD tickers + that region's market index list:
 
 - **US (`fundamentals-us.json` / `prices-us.json`)**: DD non-TW ∪ S&P 500 + NQ 100 extras = ~545 tickers
-- **TW (`fundamentals-tw.json` / `prices-tw.json`)**: DD TW ∪ TWSE 0050 + 0051 + 00714 = ~197 tickers
+- **TW (`fundamentals-tw.json` / `prices-tw.json`)**: DD TW ∪ TWSE 0050 + 0051 + 006201 = ~197 tickers
 
 **Bucket rule**: ticker ending `.TW` / `.TWO` OR bare 4-digit numeric (e.g. `2330`) → TW. Everything else (US, EU `.PA/.MC/.AS/.DE`, JP `.T`, HK `.HK`) → US.
 

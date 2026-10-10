@@ -134,7 +134,8 @@ def facts() -> dict:
         "as_of": as_of or "—",
         "n": len(rows),
         "tpex": len(listing.get("tpex") or []),
-        "emerging": len(listing.get("emerging") or []),
+        "excluded_financial": len(listing.get("excluded_financial") or []),
+        "excluded_emerging": len(listing.get("excluded_emerging") or []),
         "fx": fx.get("local_per_usd"),
         "fx_date": fx.get("as_of") or "—",
         # DD rows go through the main build's per-row conversion (rate backed
@@ -153,13 +154,20 @@ def facts() -> dict:
 
 
 def hero_html(f: dict) -> str:
+    left_out = [s for s in (
+        f'金融保險業 {f["excluded_financial"]} 檔' if f.get("excluded_financial") else '',
+        f'興櫃 {f["excluded_emerging"]} 檔' if f.get("excluded_emerging") else '') if s]
     return (
         '\n      <div class="hero-h1">DD Screener 台股池</div>\n'
         '      <div class="hero-sub">母體是 Koyfin 的台股篩選：市值 10 億美元以上、'
         'ROIC（投入資本報酬率）15% 以上，'
-        f'目前 {f["n"]} 檔，其中上櫃 {f["tpex"]} 檔'
-        + (f'、興櫃 {f["emerging"]} 檔' if f.get("emerging") else '') + '。'
-        '評分與排序規則跟美股主頁相同，資料各自獨立。</div>\n'
+        f'目前 {f["n"]} 檔，其中上櫃 {f["tpex"]} 檔。'
+        + (f'篩選結果另有{"、".join(left_out)}不列入。' if left_out else '')
+        + ('銀行和保險的營業現金流混著存放款與保費，品質條件對它們不適用。'
+           if f.get("excluded_financial") else '')
+        + ('興櫃沒有漲跌幅限制、成交量小，轉上市或上櫃後自動列入。'
+           if f.get("excluded_emerging") else '')
+        + '評分與排序規則跟美股主頁相同，資料各自獨立。</div>\n'
         '      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">'
         '<a href="/dd-screener/" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;'
         'background:var(--line-soft);color:var(--accent);border:1px solid var(--line);border-radius:6px;'

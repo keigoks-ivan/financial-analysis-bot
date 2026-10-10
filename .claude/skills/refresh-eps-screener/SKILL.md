@@ -87,7 +87,7 @@ cp "$new_xlsx" data/eps-estimates/
 python3 scripts/snapshot_eps_estimates.py
 ```
 
-這會寫 `docs/dd-screener/eps-estimates-snapshots/${yyyy_mm}.json`（**覆蓋** prior，但 §Step 2 已把 prior 另存為 `${yyyy_mm}-${prior_dd}.json` baseline，所以沒事）。
+這會寫新快照。月檔 `docs/dd-screener/eps-estimates-snapshots/${yyyy_mm}.json` 已存在、而且是別天的快照時**不覆蓋**，新的一份寫成 `${snapshot_date}.json`（2026-10-10 起，見 `snapshot_eps_estimates._output_path`）；月檔不存在、或同一天重跑，才寫月檔。
 
 snapshot script 會自動：
 - xlsx tickers → 直接讀 Excel FY1/FY2/FY3 + 算 `eps_cagr_2y = ((fy3/fy1)^0.5 - 1) × 100`
