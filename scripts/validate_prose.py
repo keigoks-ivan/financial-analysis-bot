@@ -74,9 +74,10 @@ import dd_sections  # noqa: E402
 # digits), and keeps date/range hyphens ("2026-09-03", "10-15%") from being
 # mis-read as a leading minus sign on the second number (a hyphen directly
 # after a digit is not a valid match-start position, so it's left
-# unconsumed and the next number starts clean).
+# unconsumed and the next number starts clean). 2026-10-11 2395.TW：百分比範圍
+# "86%–99%" 的連接號跟在 % 後面，同理不可當負號（原本收成 −99，正文寫 99 被判未覆蓋）。
 _NUM_TOKEN_RE = re.compile(
-    r"(?<![A-Za-z0-9§#.])"
+    r"(?<![A-Za-z0-9§#.%％])"
     r"[+\-−－–]?\$?\d[\d,]*(?:[.．]\d+)?(?:%|％)?"
 )
 
