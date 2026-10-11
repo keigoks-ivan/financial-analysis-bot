@@ -253,7 +253,9 @@ def _consensus_check(ctx):
     """開工前確認共識 EPS 已載入。沒有 FY1／FY2 共識，判斷者會留空 fpe_fy2／peg_fy2，
     要到最後 QC 才被 dd-meta 必填欄擋下（2026-10-11 八檔台股：台股池不在讀取家族，白燒判斷＋散文）。
     缺共識回錯誤字串（plan 段 FAIL）；--allow-no-consensus 放行；快照過期只警告。"""
-    rev = ((_load_json(ctx.run_dir / "evidence.json") or {}).get("numbers") or {}).get("consensus_revision") or {}
+    # plan 段的數字還在 parts/numbers_extra.json，stage0 才併進 evidence.json
+    rev = ((_load_json(ctx.run_dir / "parts" / "numbers_extra.json") or {}).get("numbers") or {}).get(
+        "consensus_revision") or {}
     latest = rev.get("latest_snapshot") or {}
     st = ctx.manifest["stages"]["plan"]
     st["consensus"] = {"file": latest.get("file"), "date": latest.get("date"), "fy1": latest.get("fy1"),

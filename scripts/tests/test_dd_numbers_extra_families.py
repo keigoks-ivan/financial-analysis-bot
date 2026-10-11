@@ -95,7 +95,8 @@ def test_dd_facts_tw_consensus_unit():
 
 
 def _plan_ctx(tmp_path, latest, allow=False, ticker="2395.TW"):
-    (tmp_path / "evidence.json").write_text(json.dumps(
+    (tmp_path / "parts").mkdir(exist_ok=True)
+    (tmp_path / "parts" / "numbers_extra.json").write_text(json.dumps(
         {"numbers": {"consensus_revision": {"latest_snapshot": latest, "note": "2395.TW 不在最新快照 X"}}},
         ensure_ascii=False), encoding="utf-8")
     return types.SimpleNamespace(run_dir=tmp_path, ticker=ticker, manifest={"stages": {"plan": {}}},
