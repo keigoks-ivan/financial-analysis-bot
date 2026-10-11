@@ -340,6 +340,14 @@ def main():
 
     judgment = json.loads(Path(args.judgment).read_text(encoding="utf-8"))
     ref_numbers = collect_numbers(judgment)
+    # 2026-10-11 6187.TWO：v19 判斷物的散文 agent 讀的是 dd_project 投影視圖，視圖裡程式算的衍生值
+    # （例：moat.combined 護城河綜合分 7.5）可由判斷物回溯，一併列入參照集合；投影失敗就退回只用判斷物。
+    if (judgment.get("meta") or {}).get("contract") == "v19":
+        try:
+            import dd_project
+            ref_numbers |= collect_numbers(dd_project.view_for(judgment, Path(args.judgment)))
+        except Exception as exc:  # noqa: BLE001
+            print(f"validate_prose: 投影視圖失敗，只用判斷物數字（{exc}）", file=sys.stderr)
 
     if args.evidence:
         evidence = json.loads(Path(args.evidence).read_text(encoding="utf-8"))
