@@ -306,7 +306,7 @@ def main():
     ap.add_argument("--json", action="store_true", help="輸出 JSON 而非人讀格式")
     ap.add_argument("--dump-numbers", metavar="JUDGMENT",
                      help="v16.2 新增：不跑覆蓋檢查，改把 JUDGMENT（+ --evidence）內"
-                          "可引用數字的原樣字串（含 $/%/− 符號慣例）列成白名單，"
+                          "可引用數字的原樣字串（含 $/%%/− 符號慣例）列成白名單，"
                           "供散文 agent 動筆前逐字複製引用（見 render-rules.md §0.2）")
     ap.add_argument("--out", help="--dump-numbers 模式的輸出檔路徑（省略則印 stdout）")
     args = ap.parse_args()

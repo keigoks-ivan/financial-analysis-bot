@@ -547,7 +547,7 @@ def compute_momentum_26w(ticker, idx_benchmark=None):
         out["return_13w_pct"] = round(r13, 2) if r13 is not None else None
         out["return_26w_pct"] = round(r26, 2) if r26 is not None else None
 
-        bench = idx_benchmark or ("^TWII" if ticker.upper().endswith(".TW") else "^GSPC")
+        bench = idx_benchmark or ("^TWII" if ticker.upper().endswith((".TW", ".TWO")) else "^GSPC")
         out["benchmark"] = bench
         try:
             bdaily = yf.download(bench, period="14mo", interval="1d", auto_adjust=True, progress=False)
