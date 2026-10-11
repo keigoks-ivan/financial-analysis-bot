@@ -201,3 +201,25 @@ def test_wdc_ev_uses_scenario_meta_even_inside_historical_tolerance():
     assert judgment["decision_inputs"]["ev5y_pct"] == 7
     assert scenario_meta["ev5y_pct"] == 6.8
     assert gen_dd_tables.build_dd_meta(judgment, scenario_meta)["ev5y_pct"] == 6.8
+
+
+def test_fy2_valuation_fallback_from_base_path():
+    """2026-10-11 2421.TW：判斷者留空 fpe_fy2／peg_fy2 → 用 Base 路徑機械補；有填不覆蓋。"""
+    meta = {
+        "price_at_dd": 168.0,
+        "base_eps_path": {"FY2026E": 10.75, "FY2027E": None},
+        "scenario_tree": {"terminal_label": "FY2031E",
+                          "eps": {"base": [12.0, 13.0, 12.3, 13.5, 14.5]}},
+    }
+    gen_dd_tables._fill_fy2_valuation_from_base(meta)
+    assert meta["fpe_fy2"] == 14.0          # 168 ÷ FY2027 Base 12.0
+    assert meta["peg_fy2"] == 1.2           # 14.0 ÷ (12.0/10.75−1)×100
+
+    shrink = dict(meta, fpe_fy2=None, peg_fy2=None,
+                  base_eps_path={"FY2026E": 13.0, "FY2027E": 12.0})
+    gen_dd_tables._fill_fy2_valuation_from_base(shrink)
+    assert shrink["peg_fy2"] == -1          # 成長 ≤0 沿用 LULU 慣例
+
+    kept = dict(meta, fpe_fy2=15.4, peg_fy2=2.9)
+    gen_dd_tables._fill_fy2_valuation_from_base(kept)
+    assert (kept["fpe_fy2"], kept["peg_fy2"]) == (15.4, 2.9)

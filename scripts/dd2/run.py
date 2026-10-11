@@ -1430,8 +1430,19 @@ def _prose_fix_spawn(ctx, sids):
     return _enrich_from_raw(r or {"ok": False}, out)
 
 
+def _length_only_short_sids(findings):
+    """findings 全是篇幅類（章節「篇幅…」＋ _depth 整檔／散文本體下限）時，回傳偏短章節的 sid；否則 None。
+    2026-10-11 持有人：整檔偏短多半是章節偏短的加總，同樣准那一次補寫（2421.TW s5／s7 短＋整檔 68.7KB，
+    舊條件要求全部 finding 都是「篇幅」開頭，_depth 一出現就跳過補寫）。補寫仍只重寫偏短章節。"""
+    short = [s for s, why in findings if str(why).startswith("篇幅")]
+    depth = [s for s, _ in findings if s == "_depth"]
+    if short and len(short) + len(depth) == len(findings):
+        return short
+    return None
+
+
 def do_prose(ctx):
-    prev_usage_all = list((ctx.manifest.get("stages", {}).get("prose") or {}).get("agent_usage") or [])
+    prev_usage_all =list((ctx.manifest.get("stages", {}).get("prose") or {}).get("agent_usage") or [])
     st = ctx.stage_begin("prose")
     st["agent_usage"] = prev_usage_all if ctx.args.reuse_prose else []
     agents_dir = ctx.run_dir / "agents"
@@ -1466,8 +1477,8 @@ def do_prose(ctx):
     ok, findings, warns = _gates_v20(ctx)
     # 2026-09-24 持有人拍板：只有「章節篇幅不足」擋下時，允許一通補寫（只重寫短的那幾章，最多一次）。
     # LULU s5 連兩次 2.8–2.9KB（下限 3KB），判斷物護城河材料有 7KB，屬寫得太精簡而非缺料。
-    short = [s for s, why in findings if str(why).startswith("篇幅")]
-    if not ok and not errors and short and len(short) == len(findings) and not st.get("prose_fix"):
+    short = _length_only_short_sids(findings)
+    if not ok and not errors and short and not st.get("prose_fix"):
         st["prose_fix"] = short
         r = _prose_fix_spawn(ctx, short)
         st["agent_usage"].append(_usage_record("prose_fix", r))
@@ -1486,8 +1497,8 @@ def do_prose(ctx):
         else (ddreport.DD_DIR / "DD_{0}_{1}.html".format(ctx.ticker, ctx.date))
     ok2, findings2, _ = _gates_v20(ctx, out_html=out_path, postprocess=not ctx.args.dry_run)
     # 2026-10-05 TPR：後處理後才短（s5 2,654B）時同一條補寫規則也適用（仍最多一次）。
-    short2 = [s for s, why in findings2 if str(why).startswith("篇幅")]
-    if not ok2 and short2 and len(short2) == len(findings2) and not st.get("prose_fix"):
+    short2 = _length_only_short_sids(findings2)
+    if not ok2 and short2 and not st.get("prose_fix"):
         st["prose_fix"] = short2
         r = _prose_fix_spawn(ctx, short2)
         st["agent_usage"].append(_usage_record("prose_fix", r))

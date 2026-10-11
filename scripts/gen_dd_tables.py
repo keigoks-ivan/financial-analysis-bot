@@ -110,6 +110,47 @@ def derive_kill_metrics_from_triggers(triggers: list) -> list:
     return out
 
 
+def _base_eps_by_year(meta: dict) -> dict:
+    """{財年: Base EPS}。scenario_tree.eps.base 依 terminal_label 年份倒推對位，
+    eps_meta.base_eps_path 的前瞻數值（非 A 年）覆蓋同年——判斷者明寫的路徑優先。"""
+    out = {}
+    tree = meta.get("scenario_tree") or {}
+    base = (tree.get("eps") or {}).get("base") or []
+    m = _FY_KEY_RE_V19.search(str(tree.get("terminal_label") or ""))
+    if m and base:
+        end = int(m.group(1))
+        for i, v in enumerate(base):
+            if isinstance(v, (int, float)):
+                out[end - (len(base) - 1 - i)] = float(v)
+    for k, v in (meta.get("base_eps_path") or {}).items():
+        mm = _FY_KEY_RE_V19.search(str(k))
+        if mm and not str(k).strip().endswith("A") and isinstance(v, (int, float)):
+            out[int(mm.group(1))] = float(v)
+    return out
+
+
+def _fill_fy2_valuation_from_base(meta: dict) -> None:
+    """判斷者留空 fpe_fy2／peg_fy2 時，用判斷物自己的 Base EPS 機械補。
+    FY1／FY2＝base_eps_path 前兩個前瞻財年（同 _fy2_label）；fpe_fy2＝現價 ÷ FY2 EPS；
+    peg_fy2＝fpe_fy2 ÷ FY1→FY2 成長（%），成長 ≤0 沿用 -1。缺現價或缺 FY2 EPS 就不補。"""
+    path = meta.get("base_eps_path") or {}
+    years = sorted(int(m.group(1)) for k in path
+                   if isinstance(k, str) and not k.strip().endswith("A")
+                   for m in [_FY_KEY_RE_V19.search(k)] if m)
+    price = meta.get("price_at_dd")
+    if len(years) < 2 or not isinstance(price, (int, float)) or price <= 0:
+        return
+    eps = _base_eps_by_year(meta)
+    e1, e2 = eps.get(years[0]), eps.get(years[1])
+    if not e2 or e2 <= 0:
+        return
+    if meta.get("fpe_fy2") is None:
+        meta["fpe_fy2"] = round(price / e2, 1)
+    if meta.get("peg_fy2") is None and e1 and e1 > 0:
+        g = (e2 / e1 - 1) * 100
+        meta["peg_fy2"] = round(meta["fpe_fy2"] / g, 2) if g > 0 else -1
+
+
 def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
     meta_top = j.get("meta") or {}
     di = j.get("decision_inputs") or {}
@@ -198,6 +239,11 @@ def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
         meta["fy_end_month"] = eps_meta["fy_end_month"]
     if eps_meta.get("eps_basis"):
         meta["eps_basis"] = eps_meta["eps_basis"]
+    # 2026-10-11 2421.TW：判斷卡沒要求 appendix_a.fpe_fy2／peg_fy2，小型台股又多半沒有 FY+2 共識，
+    # 判斷者留空 → dd-meta 缺必填欄、發布前 QC 擋下。持有人拍板：留空時用判斷物自己的 Base 路徑推算
+    # （漢唐判斷者 1,305÷85＝15.4 倍即此算法）；判斷者有填一律用判斷者的。
+    if meta.get("fpe_fy2") is None or meta.get("peg_fy2") is None:
+        _fill_fy2_valuation_from_base(meta)
 
     endo = (moat.get("roic_durability") or {}).get("endo_ceiling")
     if endo is not None:
