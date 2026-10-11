@@ -1108,6 +1108,7 @@ def do_judged(ctx):
     if changes:
         st["normalize_v20"] = changes
     jpath = _write_judgment(ctx, obj)
+    st["fy2_valuation_filled"] = _fy2_valuation_fill(ctx)  # 閘門前補：審核簽章綁整份 judgment.json
     st["judgment_bytes"] = jpath.stat().st_size
 
     ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
@@ -1250,6 +1251,7 @@ def _gate_patch(ctx, st, clean, idx):
     (cur.get("decision_out") or {}).pop("verdict", None)  # 舊裁決作廢：先預留，judge check 重算後再歸因
     cur, _ = program_drift_entries(ctx, cur, decision_out=None)
     jpath.write_text(json.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
+    _fy2_valuation_fill(ctx)
     ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
     if _valdep_override(ctx):
         ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
@@ -1493,6 +1495,7 @@ def _gates_v20(ctx, out_html=None, postprocess=False):
 
 def _fy2_valuation_fill(ctx, consensus=None, basis_suffix=""):
     """判斷者留空 appendix_a.fpe_fy2／peg_fy2 時，用 Koyfin 共識補（純算術，同 _valdep_override 由程式定值）。
+    必須在閘門之前跑（judged 段、patch 後）：審核簽章綁整份 judgment.json，閘門後改會在 finish 被 HOLD。
     判斷卡沒要求這兩欄，2026-10-11 八檔台股判斷者多半留空；持有人拍板改共識口徑。fpe_fy2＝現價 ÷ FY2 共識，
     peg_fy2 見 gen_dd_tables.fy2_peg。`consensus`＝{"price","fy1","fy2","fy3","date","file"}，不給就讀
     evidence.json；給了（事後補正）連判斷者已填的值也覆寫。補值與原值記 manifest.mechanical_overrides。回補了幾欄。"""
@@ -1543,7 +1546,6 @@ def _prose_prepare_v20(ctx):
     tables_dir = run_dir / "tables"
     tables_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "prose").mkdir(parents=True, exist_ok=True)
-    _fy2_valuation_fill(ctx)
     cmd = [_pick_python(), SCRIPTS_DIR / "gen_dd_tables.py", judgment_path, "--out", tables_dir,
            "--scenario-html", tables_dir / "e11.html"]
     if scenario_meta_path.exists():
