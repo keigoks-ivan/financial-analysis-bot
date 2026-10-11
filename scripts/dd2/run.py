@@ -679,7 +679,10 @@ _PROGRAM_TAG = "[程式歸因]"
 def _drop_undated_findings(part):
     """拿掉 as_of 缺或無法解析的 finding；空了的 found 改 none。回拿掉條數，原檔另存 .predrop。"""
     from validate_evidence import parse_date
-    d = _load_json(part)
+    try:
+        d = _load_json(part)
+    except ValueError:  # 2026-10-11 8996.TW：子 agent 寫出尾逗號 JSON → 交給下面記缺口，不讓整段崩潰
+        return 0
     if not isinstance(d, dict):
         return 0
     n = 0

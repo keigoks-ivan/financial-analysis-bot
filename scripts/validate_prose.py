@@ -286,6 +286,9 @@ def check_prose_dir(prose_dir: Path, ref_numbers: set):
     report = {}
     for f in sorted(prose_dir.glob("*.html")):
         chunk = f.read_text(encoding="utf-8")
+        # 2026-10-11 8996.TW：<h2>13　統一裁決</h2> 的章節號不是引用數字；1–12 靠 ≤12 容忍過關，
+        # 13 只在判斷物剛好也有 13 時才過——章節號一律先拿掉（標題內其他數字照驗）。
+        chunk = re.sub(r"(<h2[^>]*>)\s*\d+(?=[\s　])", r"\1", chunk)
         text = dd_sections.readable_text(chunk)
         misses = uncovered_in_text(text, ref_numbers)
         if misses:
