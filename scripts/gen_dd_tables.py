@@ -129,10 +129,19 @@ def _base_eps_by_year(meta: dict) -> dict:
     return out
 
 
+def fy2_peg(fpe, e1, e2, e3=None):
+    """PEG（FY2）＝fpe_fy2 ÷ FY1→FY3 EPS 年化成長（%）；缺 FY3 用 FY1→FY2 成長；成長 ≤0 沿用 -1。
+    2026-10-11 對照 31 份判斷者自填值：16 份與 FY1→FY3 年化相符、FY2→FY3 4 份、FY1→FY2 3 份，取多數口徑。"""
+    if fpe is None or not e1 or e1 <= 0 or not e2:
+        return None
+    g = ((e3 / e1) ** 0.5 - 1) * 100 if (e3 and e3 > 0) else (e2 / e1 - 1) * 100
+    return round(fpe / g, 2) if g > 0 else -1
+
+
 def _fill_fy2_valuation_from_base(meta: dict) -> None:
-    """判斷者留空 fpe_fy2／peg_fy2 時，用判斷物自己的 Base EPS 機械補。
-    FY1／FY2＝base_eps_path 前兩個前瞻財年（同 _fy2_label）；fpe_fy2＝現價 ÷ FY2 EPS；
-    peg_fy2＝fpe_fy2 ÷ FY1→FY2 成長（%），成長 ≤0 沿用 -1。缺現價或缺 FY2 EPS 就不補。"""
+    """判斷者留空 fpe_fy2／peg_fy2、又沒有共識可補（dd2 --allow-no-consensus）時，用判斷物自己的 Base EPS 機械補。
+    FY1／FY2／FY3＝base_eps_path 前三個前瞻財年（同 _fy2_label）；fpe_fy2＝現價 ÷ FY2 EPS；
+    peg_fy2 見 fy2_peg。缺現價或缺 FY2 EPS 就不補。"""
     path = meta.get("base_eps_path") or {}
     years = sorted(int(m.group(1)) for k in path
                    if isinstance(k, str) and not k.strip().endswith("A")
@@ -142,13 +151,13 @@ def _fill_fy2_valuation_from_base(meta: dict) -> None:
         return
     eps = _base_eps_by_year(meta)
     e1, e2 = eps.get(years[0]), eps.get(years[1])
+    e3 = eps.get(years[2]) if len(years) >= 3 else None
     if not e2 or e2 <= 0:
         return
     if meta.get("fpe_fy2") is None:
         meta["fpe_fy2"] = round(price / e2, 1)
-    if meta.get("peg_fy2") is None and e1 and e1 > 0:
-        g = (e2 / e1 - 1) * 100
-        meta["peg_fy2"] = round(meta["fpe_fy2"] / g, 2) if g > 0 else -1
+    if meta.get("peg_fy2") is None:
+        meta["peg_fy2"] = fy2_peg(meta["fpe_fy2"], e1, e2, e3)
 
 
 def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
@@ -1311,8 +1320,13 @@ def render_v19_grid_html(meta: dict, j: dict) -> str:
         _v19_cell("原型", esc(meta.get("archetype")) + (f'　<span class="vs">{esc(archetype_secondary)}</span>' if archetype_secondary else "") if meta.get("archetype") else "—"),
         _v19_cell("產業時鐘", esc(clock_label) + (f'　<span class="vs">{esc(meta.get("cycle_position"))}</span>' if meta.get("cycle_position") else "")),
     ]
+    # fpe／peg 不是判斷者填的就標來源：dd2 依 Koyfin 共識補（appendix_a.fy2_valuation_basis）或 Base EPS 備援
+    aa = j.get("appendix_a") or {}
+    fy2_basis = aa.get("fy2_valuation_basis") or (
+        "依判斷者 Base EPS 推算" if aa.get("fpe_fy2") is None and meta.get("fpe_fy2") is not None else None)
     row3 = [
-        _v19_cell(f"本益比（{esc(_fy2_label(meta))}）", num(meta.get("fpe_fy2"))),
+        _v19_cell(f"本益比（{esc(_fy2_label(meta))}）", num(meta.get("fpe_fy2"))
+                  + (f'　<span class="vs">{esc(fy2_basis)}</span>' if fy2_basis else "")),
         _v19_cell("PEG（FY2）", num(meta.get("peg_fy2"), nd=2, suffix="")),
         _v19_cell("五年分位", (esc(meta.get("pct_5y")) + "%　<span class=\"vs\">見 §10 估值口徑</span>") if meta.get("pct_5y") is not None else "—"),
         _v19_cell("一年合理價", f'{_v19_usd(tgt_1y)}　<span class="vs">由 {_v19_pct(up_1y, 1)} 推算</span>' if tgt_1y is not None else "—"),

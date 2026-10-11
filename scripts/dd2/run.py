@@ -1491,6 +1491,45 @@ def _gates_v20(ctx, out_html=None, postprocess=False):
     return not findings, findings, warns
 
 
+def _fy2_valuation_fill(ctx, consensus=None, basis_suffix=""):
+    """判斷者留空 appendix_a.fpe_fy2／peg_fy2 時，用 Koyfin 共識補（純算術，同 _valdep_override 由程式定值）。
+    判斷卡沒要求這兩欄，2026-10-11 八檔台股判斷者多半留空；持有人拍板改共識口徑。fpe_fy2＝現價 ÷ FY2 共識，
+    peg_fy2 見 gen_dd_tables.fy2_peg。`consensus`＝{"price","fy1","fy2","fy3","date","file"}，不給就讀
+    evidence.json；給了（事後補正）連判斷者已填的值也覆寫。補值與原值記 manifest.mechanical_overrides。回補了幾欄。"""
+    import gen_dd_tables
+    jpath = ctx.run_dir / "judgment.json"
+    j = _load_json(jpath) or {}
+    aa = j.setdefault("appendix_a", {})
+    force = consensus is not None
+    if not force:
+        if aa.get("fpe_fy2") is not None and aa.get("peg_fy2") is not None:
+            return 0
+        n = (_load_json(ctx.run_dir / "evidence.json") or {}).get("numbers") or {}
+        ls = (n.get("consensus_revision") or {}).get("latest_snapshot") or {}
+        consensus = dict(ls, price=n.get("price_at_dd"))
+    price, e1, e2, e3 = (consensus.get(k) for k in ("price", "fy1", "fy2", "fy3"))
+    if not (isinstance(price, (int, float)) and price > 0 and e2 and e2 > 0):
+        return 0
+    new = {}
+    if force or aa.get("fpe_fy2") is None:
+        new["fpe_fy2"] = round(price / e2, 1)
+    if force or aa.get("peg_fy2") is None:
+        peg = gen_dd_tables.fy2_peg(new.get("fpe_fy2", aa.get("fpe_fy2")), e1, e2, e3)
+        if peg is not None:
+            new["peg_fy2"] = peg
+    if not new:
+        return 0
+    for k, v in new.items():
+        ctx.manifest.setdefault("mechanical_overrides", []).append(
+            {"path": "$.appendix_a." + k, "judge": aa.get(k), "program": v, "source": consensus.get("file")})
+        aa[k] = v
+    aa["fy2_valuation_basis"] = "{0}依 Koyfin 共識（{1}）{2}".format(
+        "" if "fpe_fy2" in new else "PEG ", consensus.get("date"), basis_suffix)
+    jpath.write_text(json.dumps(j, ensure_ascii=False, indent=1), encoding="utf-8")
+    ctx.save()
+    return len(new)
+
+
 def _prose_prepare_v20(ctx):
     """v20 的散文準備：跑 gen_dd_tables（v19 分支同時產 v19-s14／appA／revlog 機械段），
     不呼叫舊鏈 `_do_prose_prepare`——它在 v19 判斷檔上會改走「判斷者直接寫給讀者」的
@@ -1504,6 +1543,7 @@ def _prose_prepare_v20(ctx):
     tables_dir = run_dir / "tables"
     tables_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "prose").mkdir(parents=True, exist_ok=True)
+    _fy2_valuation_fill(ctx)
     cmd = [_pick_python(), SCRIPTS_DIR / "gen_dd_tables.py", judgment_path, "--out", tables_dir,
            "--scenario-html", tables_dir / "e11.html"]
     if scenario_meta_path.exists():

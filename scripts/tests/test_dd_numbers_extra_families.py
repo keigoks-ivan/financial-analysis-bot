@@ -114,3 +114,58 @@ def test_plan_consensus_gate(tmp_path):
 
 def test_bare_numeric_ticker_stops():
     assert run.main(["3017", "--dry-run"]) == 2
+
+
+def test_fy2_peg_convention():
+    import gen_dd_tables
+    # TPR_20261005 判斷者自填 13.27／1.01：FY1→FY3 年化
+    assert gen_dd_tables.fy2_peg(13.27, 1.0, 1.117, 1.117 * 1.147) == 1.01
+    assert gen_dd_tables.fy2_peg(20.0, 2.0, 2.4) == 1.0  # 缺 FY3 → FY1→FY2
+    assert gen_dd_tables.fy2_peg(20.0, 2.0, 1.8, 1.6) == -1
+    assert gen_dd_tables.fy2_peg(20.0, None, 2.0) is None
+
+
+def _fill_ctx(tmp_path, aa, ls):
+    (tmp_path / "judgment.json").write_text(json.dumps({"appendix_a": aa}, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "evidence.json").write_text(json.dumps(
+        {"numbers": {"price_at_dd": 727.0, "consensus_revision": {"latest_snapshot": ls}}}), encoding="utf-8")
+    return types.SimpleNamespace(run_dir=tmp_path, manifest={}, save=lambda: None)
+
+
+def _aa(tmp_path):
+    return json.loads((tmp_path / "judgment.json").read_text(encoding="utf-8"))["appendix_a"]
+
+
+LS_2395 = {"file": "DD_tw_EPS_estimates_20261009.xlsx", "date": "2026-10-09", "fy1": 19.79, "fy2": 23.61, "fy3": 27.76}
+
+
+def test_fy2_fill_from_consensus_when_blank(tmp_path):
+    ctx = _fill_ctx(tmp_path, {"fpe_fy2": None, "peg_fy2": None}, LS_2395)
+    assert run._fy2_valuation_fill(ctx) == 2
+    aa = _aa(tmp_path)
+    assert aa["fpe_fy2"] == 30.8 and aa["peg_fy2"] == 1.67
+    assert aa["fy2_valuation_basis"] == "依 Koyfin 共識（2026-10-09）"
+    assert [o["path"] for o in ctx.manifest["mechanical_overrides"]] == ["$.appendix_a.fpe_fy2", "$.appendix_a.peg_fy2"]
+
+
+def test_fy2_fill_keeps_judge_values(tmp_path):
+    ctx = _fill_ctx(tmp_path, {"fpe_fy2": 16.7, "peg_fy2": 0.49}, LS_2395)
+    assert run._fy2_valuation_fill(ctx) == 0 and _aa(tmp_path)["fpe_fy2"] == 16.7
+    ctx = _fill_ctx(tmp_path, {"fpe_fy2": 31.0, "peg_fy2": None}, LS_2395)
+    assert run._fy2_valuation_fill(ctx) == 1
+    aa = _aa(tmp_path)
+    assert aa["fpe_fy2"] == 31.0 and aa["fy2_valuation_basis"].startswith("PEG 依")
+
+
+def test_fy2_fill_no_consensus_leaves_blank(tmp_path):
+    ctx = _fill_ctx(tmp_path, {"fpe_fy2": None, "peg_fy2": None}, None)
+    assert run._fy2_valuation_fill(ctx) == 0 and _aa(tmp_path)["fpe_fy2"] is None
+
+
+def test_fy2_fill_forced_overwrites(tmp_path):
+    ctx = _fill_ctx(tmp_path, {"fpe_fy2": 16.7, "peg_fy2": 0.49}, None)
+    cons = dict(LS_2395, price=727.0)
+    assert run._fy2_valuation_fill(ctx, consensus=cons, basis_suffix="；10-11 補正") == 2
+    aa = _aa(tmp_path)
+    assert aa["fpe_fy2"] == 30.8 and aa["fy2_valuation_basis"].endswith("；10-11 補正")
+    assert ctx.manifest["mechanical_overrides"][0]["judge"] == 16.7
