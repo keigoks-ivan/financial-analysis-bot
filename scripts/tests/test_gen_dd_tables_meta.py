@@ -223,3 +223,16 @@ def test_fy2_valuation_fallback_from_base_path():
     kept = dict(meta, fpe_fy2=15.4, peg_fy2=2.9)
     gen_dd_tables._fill_fy2_valuation_from_base(kept)
     assert (kept["fpe_fy2"], kept["peg_fy2"]) == (15.4, 2.9)
+
+
+def test_peg_fy2_prefers_valuation_peg_when_appendix_blank():
+    """2026-10-11 6805.TW：appendix_a 留空 → 先用估值段 PEG（1.8），不用 FY1→FY2 公式（0.73）。"""
+    j = {"decision_inputs": {"price_at_dd": 2370.0},
+         "valuation": {"peg": 1.8},
+         "eps_meta": {"base_eps_path": {"FY2026E": 66.17, "FY2027E": 90.0}}}
+    meta = gen_dd_tables.build_dd_meta(j, None)
+    assert meta["peg_fy2"] == 1.8
+    assert meta["fpe_fy2"] == 26.3
+
+    j["appendix_a"] = {"peg_fy2": 2.9}
+    assert gen_dd_tables.build_dd_meta(j, None)["peg_fy2"] == 2.9

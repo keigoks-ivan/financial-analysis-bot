@@ -207,6 +207,11 @@ def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
         "moat_trend": moat.get("trend"),
         "runway_post_y5": growth.get("runway_post_y5"),
     }
+    # 2026-10-11 持有人：appendix_a.peg_fy2 留空時先取判斷者估值段自己的 PEG，沒有才走下方公式退路
+    # （6805.TW 公式算出 0.73，正是正文寫明「低基期假便宜、不採用」的口徑；正文採 1.8）。
+    vpeg = val.get("peg")
+    if meta["peg_fy2"] is None and isinstance(vpeg, (int, float)) and not isinstance(vpeg, bool):
+        meta["peg_fy2"] = vpeg
 
     # 2026-09-07：四個呈現入口共用同一 resolver；scenario 有值時是權威，
     # judgment 的歷史非 null 值只參與既有容差警告。
