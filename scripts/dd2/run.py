@@ -522,6 +522,7 @@ def do_stage0(ctx):
 def _ma_state(ticker):
     import dd_screener_ma
     import build_quality_entry
+    import dd_facts
     snap = dd_screener_ma.compute_ma_snapshot(ticker, use_cache=True)
     label, _score = build_quality_entry.ma_state_label_and_score(snap or {})
     if label == "—":
@@ -548,7 +549,7 @@ def _inject_ma_facts(ctx, facts_path):
     for key, lab in (("w52", "52 週均線"), ("w104", "104 週均線"), ("w250", "250 週均線"), ("slope_w250_pct", "W250 13 週斜率")):
         if snap.get(key) is not None:
             arr.append({"id": "f_ma_" + key, "label": lab, "value": snap.get(key), "period": as_of,
-                        "unit": "%" if key.endswith("pct") else "USD", "basis": "週線收盤 SMA（yfinance auto_adjust）",
+                        "unit": "%" if key.endswith("pct") else dd_facts._price_unit(ctx.ticker), "basis": "週線收盤 SMA（yfinance auto_adjust）",
                         "kind": "realized", "source": src})
     _atomic_write_json(facts_path, facts)
     return label, snap

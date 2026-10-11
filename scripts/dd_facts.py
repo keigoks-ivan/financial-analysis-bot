@@ -152,13 +152,18 @@ def _kpi_facts(numbers, buckets):
         buckets[target]["facts"].append(fact)
 
 
-def _valuation_facts(numbers, buckets):
+def _price_unit(ticker):
+    """股價幣別：台股（.TW／.TWO）新台幣，其餘美元。2026-10-11 台股 DD 判斷者連兩檔註明「事實表單位標 USD，實為新台幣」。"""
+    return "TWD" if str(ticker or "").upper().endswith((".TW", ".TWO")) else "USD"
+
+
+def _valuation_facts(numbers, buckets, ticker=None):
     q5 = buckets["q5_valuation"]["facts"]
     price = numbers.get("price_at_dd")
     as_of = numbers.get("price_as_of")
     if price is not None:
         q5.append(_fact(
-            "f_price_at_dd", "判斷日股價", price, as_of, "USD",
+            "f_price_at_dd", "判斷日股價", price, as_of, _price_unit(ticker),
             "收盤價，與情境樹起點同源", "realized",
             _src("evidence_numbers", "numbers.price_at_dd", as_of=as_of),
         ))
@@ -456,7 +461,7 @@ def extract(evidence, digest=None, evidence_ref=None, digest_ref=None, date=None
         k: {"label": QUESTION_LABELS[k], "facts": []} for k in QUESTION_KEYS
     }
     _kpi_facts(numbers, buckets)
-    _valuation_facts(numbers, buckets)
+    _valuation_facts(numbers, buckets, ticker=evidence.get("ticker"))
     _peer_facts(numbers, buckets)
     _recency_fact(numbers, buckets)
 
