@@ -40,17 +40,17 @@ bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一�
 
 ## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
 
-- `e2.html`（1561B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
-- `e3.html`（700B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e2.html`（1651B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（850B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
 - `e5.html`（1144B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
-- `e6.html`（1434B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
-- `e7.html`（918B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
-- `e8.html`（437B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e6.html`（1471B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1341B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（690B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
 - `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
-- `e10.html`（748B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
-- `e11.html`（2151B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
-- `audit.html`（4244B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
-- `e12.html`（2058B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `e10.html`（620B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2224B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（4057B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2379B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
 - `appA-table.html`（282B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
 
 ---
@@ -60,25 +60,25 @@ bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一�
 ```
 段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
 s1                  4000           0           2800-4000      5 條（2–6 內）  
-s2                  7000        1561           3807-5439      5 條（2–6 內）  
-s3                  8000         700           5110-7300      5 條（2–6 內）  
+s2                  7000        1651           3744-5349      5 條（2–6 內）  
+s3                  8000         850           5005-7150      5 條（2–6 內）  
 s4                  5000           0           3500-5000      5 條（2–6 內）  
-s5                 15000        3496          8053-11504      5 條（2–6 內）  
-s6                 11000         437          7394-10563      5 條（2–6 內）  
+s5                 15000        3956          7731-11044      5 條（2–6 內）  
+s6                 11000         690          7217-10310      5 條（2–6 內）  
 s7                  5000         261           3317-4739      5 條（2–6 內）  
 s8                  3000           0           2100-3000      5 條（2–6 內）  
 s85                  無上限           0                   —               —  無上限
-s9                  3500         748           1926-2752      5 條（2–6 內）  
-s10                 5000        2151           1994-2849      3 條（2–6 內）  
+s9                  3500         620           2016-2880      5 條（2–6 內）  
+s10                 5000        2224           1943-2776      3 條（2–6 內）  
 s11                 3000           0           2100-3000      5 條（2–6 內）  
 s12                 2500           0           1750-2500      5 條（2–6 內）  
-decision       4000-5000        2058           2000-2942      3 條（2–6 內）  
+decision       4000-5000        2379           2000-2621      3 條（2–6 內）  
 s14                 2000           0           1400-2000      5 條（2–6 內）  
 appA                1500         282            853-1218      5 條（2–6 內）  
 revlog               無上限           0                   —               —  無上限
 sources              無上限           0                   —               —  無上限
 
-商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=4894B；至少需散文≈40.11KB
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=5757B；至少需散文≈39.24KB
 建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
 ```
 
@@ -88,167 +88,172 @@ sources              無上限           0                   —               �
 
 ```
 −72
-−72%
-−70%
-−65%
-−48%
 −45%
 −45
-−26%
-−25%
+−13.66%
 0%
 0
 0.22
-0.35
-0.4
-0.5%
-0.5
 0.527%
 0.53
+0.53%
+0.59
 0.7
 0.70
 0.75
 0.77
+0.83
+1%
 1
 1.6%
 1.62
-1.74
-1.8
-1.84
 2
-03
-3%
+2%
+2.5
 3
-3.9
+3%
+03
+3.4
+3.91
+4%
+04
 4
-4.7
-5%
+4.84
+05
 5
+5%
 5.6%
-5.64
-6
 06
+6
 7
-07
+7.42%
 08
 8
-8.49
 8.57
 8.9%
-09
+8.98
+9%
 9
-9.4
-9.7
-9.7%
+09
 9.93
-10
 10%
+10
+10.47%
 10.51
 10.61%
 11%
 11
-11.4%
 11.4
 12
 12.27
-12.37
 12.39
 13
-13%
+13.4
 14
-15%
+14.68%
 15
+15%
+15.3%
 15.62
-15.84
+16.3%
 16.42
-17.89
+17
+18
 19.2%
-20%
 20
-20.23%
+20%
+20.7%
 21.25
-22%
 22
-22.08
+22.31%
+22.5
+23
+23%
+23.56%
 24
+24.1%
 24.27%
-25%
 25
+25%
 25.6%
+25.8
 26
+26%
 26.34%
+27%
 27.82%
 28
 28%
+28.87%
 29.71
 29.71%
 30
 30%
-30.1
 30.38%
 30.98
-33%
+31.912
+32%
+33.06%
+33.9
 34%
 34.05%
-34.6
-35
 35%
-35.8
-36%
-36
+35
 37%
-37.40
+37
+37.32
+37.4
+37.7
+37.7%
 38%
+40%
 42
-44.1
-45%
+42.63%
+42.75%
 45
-46.72
-48.72
+46%
 49
-50
+49%
 50%
-50.7
-50.7%
+50
 50.73
-51.62%
-52
 54.49
 55.7%
 56
-58
-60
-62.64%
+62%
+63%
+63.5
+64
 66
-66.17
-66.52
-69
+66%
 70
 70%
 71%
-73%
-77%
-79.24
+73.5%
+78
+80%
 85%
 90
+98
 100
 100%
-106
-109%
+105
+105.31
 112
-114
-120
+122
+134.03
 138
+148
+150
 150%
-158
-172
-173
-250
+160
+178
+180%
+200%
+202
+222
 300
-680
-730
-780
-900
+910
 2022
 2023
 2024
@@ -265,19 +270,18 @@ sources              無上限           0                   —               �
 6805
 8996
 20261011
-1,220
-1,308
+1,000
+1,614
 1,700
-1,717
-1,750
 1,830
+1,900
+2,000
+2,214
 2,370
 2,391
-2,440
 2,594
 2,600
-2,640
-3,817
+3,226
 ```
 
 ---
@@ -369,7 +373,7 @@ AI痕跡(看到就改)：
 （以下 JSON 為緊湊格式（省空白），內容完整）
 
 ```json
-{"meta":{"ticker":"6805.TW","date":"2026-10-11","schema":"v15.0","contract":"v19","company_name":"富世達"},"oneliner":"富世達把鉸鏈工藝移植到 AI 伺服器滑軌與液冷快接頭，上半年伺服器已占營收 55.7%，2027 年產能倍增；但現價為 trailing 本益比 50.73 倍、約 FY2026 共識 EPS 的 36 倍，已貼近賣方平均目標價，Base 五年報酬約一成，等回落再談。","thesis":{"H":[{"id":"H1","text":"AI 伺服器滑軌與液冷快接頭撐起 2026 下半年：營收與毛利率高於上半年，全年 EPS 接近共識。","2y":"2026 下半年營收高於上半年 79.24 億元，全年 EPS≥60 元","5y":null,"10y":null,"threshold":"下半年營收＞79.24 億元；第三、四季毛利率≥33%；FY2026 EPS≥60 元（共識 66.17 元）","source":"公司季報與法說；FactSet 共識","drift_rule":"以 TTM 營收與毛利率對 Base 路徑的偏離計：連 2 季偏離≥5% 視為削弱，連 3 季≥10% 視為反轉。"},{"id":"H2","text":"2027 年產能倍增能轉成營收：AWS 自 2027 第一季增溫，驗證中的 ASIC 客戶至少一家量產。","2y":"2027 年營收年增≥30%，伺服器占比≥70%","5y":null,"10y":null,"threshold":"2027 年營收年增≥30%；伺服器占比≥70%；2027 年底前 AWS 以外至少一家 ASIC 客戶量產","source":"月營收、法說營收結構與客戶驗證進度","drift_rule":"連 2 季營收偏離 Base 路徑≥5% 視為削弱，連 3 季≥10% 視為反轉。"},{"id":"H3","text":"同業擴產後毛利率仍守在 30% 以上，代表賺到的是工藝與認證，不只是供給吃緊。","2y":null,"5y":"2027–2030 年度毛利率≥30%、營業利益率≥22%","10y":null,"threshold":"年度毛利率≥30%（TTM 30.38%）；營業利益率≥22%（TTM 24.27%）","source":"年報與季報","drift_rule":"連 4 季偏離門檻≥5% 視為削弱，連 6 季≥10% 視為反轉。"}],"R":[{"id":"R1","text":"新專案量產遞延：第三季起投產的 NVIDIA／ASIC 滑軌專案延後，下半年轉強落空。","h_ref":"H1","clock":"⚡","threshold":"第三季營收季增＜10% 或毛利率＜33%","evidence_refs":["end_markets#2"]},{"id":"R2","text":"折疊機鉸鏈份額持續流失：華為 Pure S 未承接、蘋果鉸鏈名單未列，加上大和點名的主要客戶市占率與折疊機滲透率不如預期。","h_ref":"H1","clock":"🔥","threshold":"折疊機營收連 2 季年減≥25%","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","channel_business_model_shift#2"]},{"id":"R3","text":"2028 年起雲端資本支出消化，滑軌與快接頭同業同步倍增產能，報價與毛利率下行。","h_ref":"H3","clock":"🐢","threshold":"年度毛利率＜28%，或月營收年增轉負連 3 個月","evidence_refs":["supply_demand_durability#3","competitive_share_entrants#3"]},{"id":"R4","text":"集中度只是換了對象：由陸系折疊機品牌（2025 年鉸鏈占營收約 85%）換成 AWS 與 NVIDIA 平台，單一平台換代落選的衝擊放大。","h_ref":"H2","clock":"🔥","threshold":"伺服器占比回落至 50% 以下，或 2027 年底前 AWS 以外 ASIC 客戶仍未量產","evidence_refs":["customer_concentration_credit#0","customer_second_source#0"]}],"single_thing":{"description":"2027 年主力 AI 機櫃平台（NVIDIA 下一代與 AWS ASIC 機櫃）換代時，公司未獲選為滑軌或液冷快接頭主要供應商。","why_fatal":"法人估第三季伺服器已占營收 8 成以上，2027 年產能倍增以新平台放量為前提；落選會讓 FY2027E EPS 由 Base 90 元落到 70 元以下，倍數同時由成長股收縮到零組件循環股，是股價對單一事件最大的敏感項。","if_happens":"清倉；未持有則停止追蹤並取消進場價。","how_monitor":"每季法說的新平台量產時程與客戶驗證進度、月營收年增率、越南廠稼動率、供應鏈報導的平台供應商名單。","probability":"約 20%（12–24 個月）"}},"appendix_a":{"growth_durability":5,"quality_score":9,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":null,"peg_fy2":null,"stress":{"pass":1,"total":3}},"eps_meta":{"base_eps_path":{"FY2025A":30.98,"FY2026E":66.17,"FY2027E":null,"FY2028E":null},"fy_end_month":12,"eps_basis":"IFRS 稀釋 EPS（新台幣）；FY2026E 為 FactSet 共識中位數（9 家，2026-07 報導）；FY2027E／FY2028E 共識事實表未涵蓋。"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/6805.TW_20261011/scenario.json","archetype":{"primary":"循環/商品","secondary":"品質複利成長","confidence":"中","fingerprint":"AI 資本支出與折疊機新機兩個產品週期疊加的精密機構件廠，擴產期毛利率與營業槓桿同步放大"},"industry":{"clock_phase":"II","sd_verdict_source":"供需持久性判為週期性：需求是雲端資本支出的衍生需求，供給端公司自身 2027 年產能倍增、滑軌三強同步擴產，供給可逆性高；依據為 2026 年 8 月法說產能規劃與滑軌擴產報導。","bargaining":{"up":"上游原物料與加工環節的議價事實表未涵蓋。","down":"下游是 NVIDIA 主導的 GPU／ASIC 平台與雲端業者，平台定案權在客戶手上，買方集中度高。","geo":"以中國生產為主，越南廠擴產滑軌與快接頭，目的之一是降低單一地區依賴。"},"profit_pool_dir":"利潤池由消費性折疊機轉向 AI 伺服器機構件，伺服器占比一年內由 19.2% 升至 55.7%。","tam_table":[{"item":"折疊機出貨（2025）","value":"約 1,830 萬支，占手機市場 1.6%"},{"item":"折疊機成長（Counterpoint，2026-09）","value":"全球累計出貨 2026 年底破 1 億支，2027 年出貨年增 37%，預期蘋果 2026 年占 25%"},{"item":"蘋果折疊 iPhone","value":"IDC 預估 2027 年逾 1,700 萬支；Mizuho 稱鉸鏈與面板設計未定，上市可能延至 2027；公司未列鉸鏈供應商"},{"item":"AI 伺服器滑軌與液冷快接頭的 TAM、滲透率與利潤池占比","value":"事實表未涵蓋；滑軌台灣三強為川湖、南俊、富世達，無權威市占統計"}]},"moat":{"mechanism":"精密機構件工藝由鉸鏈延伸到伺服器滑軌與液冷快接頭，加上每一代平台的認證資格與越南自動化產能；轉換成本只存在於單一平台生命週期內。","execution":7,"pricing":5,"grade":"C","trend":"→","trend_evidence":"執行面擴大：AWS 第二季起出貨、多項 NVIDIA／ASIC 滑軌專案第三季起投產、伺服器占比一年由 19.2% 升至 55.7%。定價面縮減：折疊機最大客戶的 Pure S 專案未承接、蘋果鉸鏈名單未列、滑軌僅排第三。最大客戶份額下滑，方向不能判擴大，兩邊相抵判 →。","peer_na_reason":"同業 ROIC 與投入資本事實表未涵蓋，改用份額方向與利潤率對照。","threats":[{"level":"🟡","text":"折疊機鉸鏈份額被新日興與 Amphenol 分走：華為 Pure S 未承接、蘋果折疊 iPhone 鉸鏈名單未列，折疊機最大增量不在手上。","p":0.5,"evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2"]},{"level":"🟡","text":"伺服器滑軌排第三，川湖與南俊同步擴產，2027 年後滑軌報價可能下修。","p":0.35,"evidence_refs":["competitive_share_entrants#3"]},{"level":"🟡","text":"液冷快接頭目前近滿載、毛利靠供給吃緊；公司自身 2027 年產能倍增，若其他液冷零組件廠跟進，單價與毛利率回落（快接頭市占統計事實表未涵蓋）。","p":0.4,"evidence_refs":["supply_demand_durability#0"]}],"roic_durability":{"quadrant":"高營業利益率（TTM 24.27%）×周轉率不明（投入資本事實表未涵蓋）","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者是資料中心機櫃，決策者是 GPU／ASIC 平台與伺服器設計團隊，付款者是雲端業者與代工廠，三者都成立；液冷機櫃一定要用滑軌與快接頭，屬需要而非想要。但這是雲端資本支出的衍生需求，急迫性高不等於持久，2028 年後的需求事實表未涵蓋。"},{"item":"決策層級","level":"🟡","text":"替代性在平台世代這個最小單位決定：每一代 NVIDIA／ASIC 平台都要重新驗證，AWS 第二季才開始出貨，其他 ASIC 客戶仍在驗證。滑軌有三家台廠可選，客戶多源採購，轉換成本只在單一平台生命週期內有效。"},{"item":"價值鏈分配","level":"🟡","text":"價值大部分落在 GPU 與 ASIC 端，滑軌與快接頭占機櫃成本的比例事實表未涵蓋；買方高度集中，客戶握有定案權。目前 34% 的毛利率靠快接頭近滿載的供給吃緊，產能倍增後分配可能回到買方。"},{"item":"社會容忍度","level":"🟢","text":"企業對企業的機構件，沒有消費者或政策對價格的容忍上限，也不依賴監管授權；外部約束主要是地緣，越南擴產用來降低中國單一地區依賴，關稅與出口管制未見相關報導。"}],"roiic":"事實表未涵蓋","reinvest_rate":"事實表未涵蓋（Q2 資本支出僅 0.22 億元、營業現金流 15.84 億元，淨再投資接近零，公式不適用）","endo_ceiling":null,"formula_note":"內生成長率＝增量 ROIC×再投資率；投入資本、折舊與營運資金變動事實表未涵蓋，無法計算。可觀察的代理：TTM 自由現金流利潤率 25.6% 高於營業利益率 24.27%，成長目前由內部現金支應。"},"combined":6.0,"score":6.0,"spread_table":[{"metric":"毛利率","6805.TW":30.38,"3017.TW":28.87,"3324.TWO":27.85,"3653.TW":42.63,"8996.TW":27.03,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"營業利益率","6805.TW":24.27,"3017.TW":23.56,"3324.TWO":15.3,"3653.TW":33.06,"8996.TW":16.3,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"FCF 利潤率","6805.TW":25.6,"3017.TW":24.1,"3324.TWO":-13.66,"3653.TW":15.18,"8996.TW":6.98,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"研發密度","6805.TW":4.6,"3017.TW":3.36,"3324.TWO":5.57,"3653.TW":3.61,"8996.TW":3.31,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"}],"competitors":[{"name":"3017.TW","gm":28.87,"om":23.56,"fcf_margin":24.1,"rd_intensity":3.36,"strategy_note":"毛利率與營業利益率和富世達相近，同屬吃液冷順風的台廠；對照表只能比利潤率，無法比快接頭份額。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"3324.TWO","gm":27.85,"om":15.3,"fcf_margin":-13.66,"rd_intensity":5.57,"strategy_note":"毛利率接近但自由現金流為負，擴產吃現金；富世達的現金轉換明顯較好。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"3653.TW","gm":42.63,"om":33.06,"fcf_margin":15.18,"rd_intensity":3.61,"strategy_note":"毛利率與營業利益率都高於富世達，是液冷相關零組件裡定價力較強的參照。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"8996.TW","gm":27.03,"om":16.3,"fcf_margin":6.98,"rd_intensity":3.31,"strategy_note":"營業利益率與自由現金流利潤率都低於富世達，規模化的散熱方案未轉成更高獲利。","period":"TTM ending 2026-06-30（4季加總）"}]},"growth":{"driver_mix":"量為主（伺服器滑軌與快接頭出貨、產能擴張），組合為輔（伺服器占比拉高毛利率）；無併購、無回購。","runway_years":"事實表未涵蓋（液冷與滑軌滲透率無資料，無法換算）","runway_post_y5":"🟡","endo_ceiling_basis":"內生天花板無法計算：增量 ROIC 與再投資率所需的投入資本、折舊、營運資金事實表未涵蓋。代理證據顯示成長由內部現金支應（Q2 營業現金流 15.84 億元、資本支出 0.22 億元），Base 路徑 FY2025A→FY2028E EPS 年化約 50.7% 主要來自產能擴張的量與組合；是否超過天花板無法裁定。","segments":[{"item":"伺服器（滑軌＋液冷快接頭）","value":"上半年占 55.7%（去年同期 19.2%），營收約為去年同期的 4.7 倍；法人估第三季占比升至 8 成以上"},{"item":"折疊機鉸鏈","value":"上半年占 38%（去年同期 71%），營收估年減約 13%"},{"item":"筆電","value":"上半年占 5.6%（去年同期 8.9%）"}],"decay_signals":[{"item":"核心市占近 12 個月縮減","lit":true,"note":"折疊機：華為 Pure S 未承接、蘋果鉸鏈名單未列，上半年折疊機營收估年減約 13%"},{"item":"EPS 成長顯著高於營收成長","lit":true,"note":"2025 年 EPS 年增約 73%（30.98 元對 17.89 元），營收年增 51.62%，差逾 5 個百分點，屬擴產期營業槓桿"},{"item":"毛利率連 2 季年減","lit":false,"note":"Q2 毛利率 34.05%，高於 2025 年全年 26.34%"},{"item":"自由現金流÷淨利＜0.75 連 2 年","lit":false,"note":"2024 年約 0.70、2025 年約 0.77，未連兩年；Q2 2026 約 1.84"},{"item":"SBC 占營收＞5% 且逐年上升","lit":false,"note":"約 0%"}],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長來自自有產能擴張而非併購，股東回報可見部分只有股息（殖利率約 0.5%），近三年現金去向事實表未涵蓋。"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"事件掃描未見併購紀錄，成長來自自有產能擴張","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"回購紀錄事實表未涵蓋；可見的股東回報只有股息，殖利率 0.527%","grade":"N/A"},{"year":"—","action":"sbc_dilution","rationale":"SBC 占營收約 0%（Q2 2026），Q1 僅約 250 萬元；稀釋 EPS 12.37 元對基本 12.39 元","grade":"過"}]},"valuation":{"basis":"trailing 本益比與 FY2026 共識前瞻本益比為主尺，PEG 輔助；循環屬性以獲利正常化後的終端倍數校驗。","peers":{"expanded":false,"reason":"同業本益比與目標價事實表未涵蓋，同業對照只有利潤率，無法當倍數錨；終端倍數改以成長降至 5～10% 的零組件廠倍數區間定錨，並標資料缺口。"},"fwd_pe":35.8,"peg":1.8,"percentile_5y":null,"val_light":"🟠","val_light_derivation":"三個倍數都在可得 4 個年度端點的最高（非連續五年序列，五年分位事實表未涵蓋）；前瞻本益比約 35.8 倍、PEG 約 1.8；現價距共識目標價約 +9.7%，Base 五年終值約 +11.4%。成長真實但價格已大致反映，判偏貴；未到最貴一級，是因為動能未過熱、且 8 月法說後法人調升獲利預估。","upside_short_pct":9.7,"upside_mid_pct":11.4},"trap_analysis":{"verdict":"🟡","label":"週期高點的獲利放大，非價值陷阱；風險在倍數收縮與折疊機份額流失"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"公司 2027 年滑軌與快接頭產能要比現在倍增，滑軌三強同時擴產（富世達由 7～8 萬套擴至 35 萬套）；需求全部來自雲端資本支出；大和點名主要客戶市占率不如預期是下行風險。","assumption":"雲端資本支出 2028 年仍成長，新增產能被吸收、報價守住。","consequence":"若 2028 年進入消化期，滑軌與快接頭報價下修，EPS 由 2027 年高點回落到 50～60 元、本益比收縮到 14～15 倍，五年後股價約 780～900 元，較現價虧六成以上。","ruling":"採納：Bear 機率給 30%，這是五年虧損過半最可能的路徑。與唯一致命事件部分重疊——致命事件是平台落選（離散），本條是整體報價下行（連續），兩者分開監測。","watch":"月營收年增率、單季毛利率、同業擴產公告","evidence_refs":["supply_demand_durability#3","competitive_share_entrants#3","channel_business_model_shift#2"],"fact_refs":["f_kpi8","f_kpi1"]},{"view":"論點失敗","evidence":"2026 第一季未承接華為 Pure S 鉸鏈；蘋果折疊 iPhone 鉸鏈由新日興主供、Amphenol 競爭；2025 年 4 月時鉸鏈占營收約 85%、高度依賴陸系品牌。","assumption":"華為三摺與左右摺新機能補回 Pure S 的缺口，折疊機維持現金流業務。","consequence":"折疊機營收年減擴大，伺服器以外沒有第二支腳，伺服器一旦換代失利就沒有緩衝。","ruling":"部分採納：上半年折疊機營收估年減約 13%，已計入 Base；蘋果名單未列，折疊機不再算成長來源。","watch":"每季折疊機營收年增率","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","customer_concentration_credit#0"],"fact_refs":["f_kpi9"]},{"view":"論點成功但股東經濟變差","evidence":"2024 年擴產期自由現金流只有淨利的 70%（8.57 億元÷12.27 億元），2025 年 77%；股息殖利率 0.527%，回購紀錄事實表未涵蓋。","assumption":"產能倍增不需要大額資本支出，成長紅利會以現金回到股東手上。","consequence":"若越南廠與 2027 年倍增轉為重資本，或客戶要求降價換量，EPS 成長了，但每股自由現金流與股東回報不成比例。","ruling":"暫不採納：Q2 營業現金流 15.84 億元、資本支出 0.22 億元，TTM 自由現金流利潤率高於營業利益率，目前沒有重資本跡象；保留監測。","watch":"自由現金流÷淨利連兩年低於 0.75；資本支出占營收比","evidence_refs":[],"fact_refs":["f_kpi5","f_peer_6805_tw_fcf_margin_pct","f_dividend_yield_ttm"]},{"view":"價格已反映太多","evidence":"trailing 本益比 50.73 倍、P/S 10.51 倍、EV/S 9.93 倍都在可得 4 個年度端點的最高；現價 2,370 元已落在賣方平均目標價約 2,391～2,594 元附近，FactSet 目標價 2,600 元只剩約 10%；FY2026 EPS 共識中位數由 66.52 元微降至 66.17 元。","assumption":"市場會一直用高成長年度的倍數評價，2027 年後倍數不回落。","consequence":"Base 路徑五年後約 2,640 元，只比現價高約 11%；要拿到一成年化報酬需要 FY2030E EPS 約 173 元，等同 Bull 路徑。","ruling":"採納：這是不追價的主因，也是唯一的約束條件。","watch":"股價相對 52 週均線 1,717 元的距離；FY2027 共識 EPS 上修幅度","evidence_refs":["capital_markets_pricing#0","capital_markets_pricing#2"],"fact_refs":["f_pe_current","f_pe_percentile","f_ps_current","f_ev_s_current","f_price_at_dd","f_ma_w52"]}],"max_dd":{"lo":-72,"hi":-45,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 None → 本次 ✅","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=None","side_b":"本次 ma=✅","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 None → 本次 2370.0","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=None","side_b":"本次 price_at_dd=2370.0","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"折疊機份額：公司說法對上客戶專案落選","cause":null,"prior_field":null,"side_a":"公司稱在中系與美系客戶皆為折疊機軸承主要供應商，訂單占比超過五成（2026-03）。","side_b":"2026 第一季未承接華為 Pure S 鉸鏈；蘋果折疊 iPhone 鉸鏈由新日興主供、Amphenol 競爭，未列富世達；上半年折疊機營收估年減約 13%（79.24 億元×38% 對上回推去年同期 48.72 億元×71%）。","ruling":"可調和，屬程度差異：既有中系客戶仍是主要供應商，但份額在流失，最大增量不在手上。採 B 側作為定價依據，折疊機視為逐年縮小的現金流業務，不計入成長。","evidence_level":"法說摘要與媒體供應鏈報導，非公司正式揭露","settle_metric":"每季法說營收結構中的折疊機營收年增率","if_then":["若 2026 下半年華為三摺與左右摺新機帶動折疊機營收年增轉正，則把折疊機由衰退改為不變並上調 Base FY2027E","若蘋果折疊機量產後折疊機營收仍連 2 季年減超過 25%，則下修 Base 並停止任何加碼"],"evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#1","competitive_share_entrants#2"]},{"axis":"客戶集中度：降低還是換對象","cause":null,"prior_field":null,"side_a":"2025 年 4 月報導鉸鏈占營收約 85%，為陸系品牌高階折疊機的關鍵供應商。","side_b":"2026 上半年伺服器占 55.7%，法人估第三季伺服器占比升至 8 成以上；AWS 第二季起出貨，其他 ASIC 客戶仍在驗證。","ruling":"可調和：舊數字已過時，但集中度沒有下降，只是從陸系手機品牌換到少數 AI 平台；風險性質由消費週期換成雲端資本支出週期與平台換代。","evidence_level":"媒體報導與法人說法","settle_metric":"AWS 以外 ASIC 客戶的量產時點；伺服器營收占比","if_then":["若 2027 年底前至少一家 AWS 以外的 ASIC 客戶量產，則把集中度風險由中期降為長期","若伺服器占比逾 8 成而第二家雲端客戶到 2027 年底仍未量產，則 Bear 機率由 30% 上調至 35%"],"evidence_refs":["customer_concentration_credit#0","customer_second_source#0","end_markets#4"]},{"axis":"賣方全面看多對上本研究不追價","cause":null,"prior_field":null,"side_a":"現在就買的最強論證：8 位分析師全為買進、FactSet 目標價 2,600 元；第三季伺服器占比衝上 8 成以上，第三、四季營收預期季增雙位數；2027 年產能倍增、AWS 自 2027 第一季放量、CPO 產品 2027 年貢獻營收；26 週漲 29.71% 但 RSI 只有 54.49，沒有過熱。","side_b":"現價 2,370 元已在平均目標價約 2,391～2,594 元附近，trailing 本益比 50.73 倍為可得年度端點最高；FY2026 EPS 共識中位數由 66.52 元微降至 66.17 元；Base 路徑五年報酬約 11%。","ruling":"不可調和（行動方向相反），採 B 側。依據：分歧在框架層，賣方以短期目標價對高成長年度獲利給高倍數，本研究以五年終值計入同業同步倍增產能後的倍數回落；現價要 Bull 路徑才換得到一成年化報酬。執行：不追價，等價格回落或等 2027 年共識上修。","evidence_level":"賣方共識快照（日期不明確）與年度端點估值","settle_metric":"股價對 52 週均線的距離；FY2027 共識 EPS","if_then":["若股價回落至 1,700 元附近（約 52 週均線）且最近一季毛利率≥30%，則重跑研究後分批建立首倉","若股價續漲但 2027 年新平台與 AWS 放量的營收證據未到，則不追","反向：若 2027 年共識 EPS 上修使現價前瞻本益比降到 25 倍以下且毛利率≥33%，則不等回落，改以現價分批建立首倉"],"evidence_refs":["capital_markets_pricing#0","capital_markets_pricing#1","capital_markets_pricing#2"]}],"triggers":[{"n":1,"text":"股價回落至 1,700 元附近且最近一季毛利率仍在 30% 以上，重跑研究後分批建立首倉","type":"估值rearm","maps_to":null,"metric":"股價；單季毛利率","threshold":"股價≤1,700 元且毛利率≥30%","action":"重跑研究後分批建立首倉","source_freq":"每日股價／每季財報","date":null},{"n":2,"text":"2026 第三季財報驗證下半年轉強","type":"假設驗證","maps_to":"H1","metric":"第三季營收季增率、毛利率","threshold":"營收季增≥10% 且毛利率≥33%","action":"未達則下修 Base FY2026E 至 60 元並把進場價下移","source_freq":"季報","date":"2026-11"},{"n":3,"text":"2027 上半年產能倍增轉成營收","type":"假設驗證","maps_to":"H2","metric":"2027 上半年營收年增率；伺服器占比","threshold":"營收年增≥30% 且伺服器占比≥70%","action":"達標則上調 Base FY2027E 並重估進場價；未達則維持觀望","source_freq":"月營收／法說","date":"2027-08"},{"n":4,"text":"折疊機份額流失擴大","type":"風險","maps_to":"R2","metric":"折疊機營收年增率","threshold":"連 2 季≤−25%","action":"下修 Base FY2027E 約 5%，停止任何加碼","source_freq":"每季法說營收結構","date":null,"evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","channel_business_model_shift#2"]},{"n":5,"text":"資本支出消化與同業擴產壓縮毛利","type":"風險","maps_to":"R3","metric":"單季毛利率；月營收年增率","threshold":"毛利率連 2 季＜30%，或月營收年增轉負連 3 個月","action":"取消進場價、改以 Bear 路徑重估；若已持有則減碼一半","source_freq":"季報／月營收","date":null,"evidence_refs":["supply_demand_durability#3"]},{"n":6,"text":"2027 年主力 AI 機櫃平台換代時未獲選為滑軌或快接頭主要供應商","type":"Single Thing","maps_to":"Single Thing","metric":"新平台量產供應商名單；伺服器營收年增率","threshold":"法說或供應鏈報導確認落選，或伺服器營收年增轉負","action":"清倉；未持有則停止追蹤","source_freq":"法說／供應鏈報導","date":"2027-06"},{"n":7,"text":"2026 年報與 2027 年法說後全面複審","type":"複審日期","maps_to":null,"metric":"FY2026 實際 EPS 對 Base 66 元","threshold":"偏離≥10%","action":"重跑完整研究","source_freq":"年報","date":"2027-03"}],"kill_metrics":[{"metric":"單季毛利率","bear_threshold":"連 2 季＜30%","window":"2026Q3–2027Q4","source":"公司季報","last_status":"ok"},{"metric":"折疊機營收年增率","bear_threshold":"連 2 季≤−25%","window":"2026Q3–2027Q4","source":"每季法說營收結構","last_status":"warning"},{"metric":"月營收年增率","bear_threshold":"轉負連 3 個月","window":"2026-10 至 2027-12","source":"公開資訊觀測站月營收","last_status":"unknown"},{"metric":"伺服器產品營收占比","bear_threshold":"回落至 50% 以下","window":"2027 全年","source":"法說營收結構","last_status":"ok"}],"evidence_dismissed":[],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='✅'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=賣方以短期目標價對高成長年度獲利給高倍數，未計入 2027 年同業同步倍增產能與 2028 年資本支出消化後的倍數回落；現價要 Bull 路徑才換得到一成年化報酬。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟠', moat_trend='→', week26=29.71, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='循環/商品', cycle_position='中循環', moat='C', moat_trend='→', cycle_gates_pass=False"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":true,"basis":"signal='B', val='🟠'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='✅'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='B', val='🟠', ma='✅'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='✅'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":null,"requires_critic":[],"rearm_trigger":"股價≤1,700 元（約 52 週均線）且最近一季毛利率≥30%；或 2027 共識 EPS 上修使前瞻本益比≤25 倍","exec_line":"不追價；觸發重啟條件後先重跑研究，再分批建立首倉；主力平台落選則停止追蹤。"},"reasoning":{"industry":"營收分部（2026 上半年）：伺服器（滑軌＋液冷快接頭）55.7%、折疊機鉸鏈 38%、筆電 5.6%，去年同期分別為 19.2%、71%、8.9%。以上半年營收 79.24 億元（年增 62.64%）回推去年同期約 48.72 億元，伺服器營收約 44.1 億元、約為去年同期 9.4 億元的 4.7 倍；折疊機約 30.1 億元，對去年同期約 34.6 億元年減約 13%。最新一季（Q2 2026）營收 37.40 億元、季減 10.61%，毛利率 34.05%、營業利益率 27.82%，EPS 12.39 元；營收下滑時毛利率仍季增 1.74 個百分點，說明伺服器組合在拉高毛利。錢卡在兩個節點：一是 NVIDIA 與 ASIC 平台換代時能否入選，二是產能能否到位（滑軌 35 萬組／月、快接頭 300 萬件／月且近滿載）。產業時鐘判 II（擴張）：快接頭近滿載、第三季起多項新專案投產、2027 年產能規劃倍增，依據是供需而非股價。單點依賴：集中度沒有消失，只是由陸系折疊機品牌換到 AWS 與 NVIDIA 主導的平台；法人估第三季伺服器占比升至 8 成以上，單一平台落選的衝擊因此放大。管理層指引只有定性（下半年營收與毛利率優於上半年、費用率下降），沒有數字區間；最新一季逐字稿未收錄，無法對照管理層前後說法。","moat":"機制：把折疊機鉸鏈的精密機構件工藝延伸到伺服器滑軌與液冷快接頭，靠平台認證與越南自動化產能卡位。對同業的 ROIC 利差無法計算（投入資本事實表未涵蓋），改看份額方向與利潤率：TTM 毛利率 30.38%、營業利益率 24.27%，毛利率高於 3017、3324、8996，低於 3653；FCF 利潤率 25.6% 為同業對照中最高。份額方向分兩邊：伺服器線擴大（AWS 第二季起出貨、NVIDIA／ASIC 多項滑軌專案第三季起投產）；折疊機線縮減（華為 Pure S 未承接、蘋果折疊 iPhone 鉸鏈由新日興主供、Amphenol 競爭，上半年折疊機營收估年減約 13%）。領先玩家在最大客戶的份額下滑，方向不能判擴大，兩邊相抵判 →。評分：執行力 7，一年內把伺服器占比由 19.2% 拉到 55.7%、滑軌產能由 7～8 萬套擴到 35 萬套，扣分在折疊機丟掉華為 Pure S；定價力 5，滑軌排第三、折疊機份額流失、快接頭毛利靠近滿載的供給吃緊撐住。合併約 6，等級 C。架構替代：浸沒式液冷建置成本高數倍、機構需重新設計，部分品牌廠偏好水循環，現有證據不支持列為架構替代；折疊機摺痕改善轉向 UTG 與面板堆疊的材料協同設計，不是替換鉸鏈本身。","growth":"成長來源是量與組合：AI 伺服器滑軌與快接頭出貨放量、產能擴張，毛利率隨伺服器占比上升；沒有併購，也沒有回購。三年共識 EPS 成長率無法計算：只有 FY2026 共識中位數 66.17 元（FactSet 9 家，2026-07 報導），FY2027／FY2028 共識事實表未涵蓋。Base 路徑 FY2025A 30.98 元→FY2028E 106 元，年化約 50.7%，主要來自 2026 至 2027 年的放量；FY2026E→FY2029E 年化約 20%。內生天花板缺投入資本資料無法量化，缺口無法計算，但成長可歸因於產能擴張的量與組合，不靠收購或回購；長期信心上限取中。跑道：折疊機滲透率 1.6% 很低，但最大增量（蘋果）不在手上、華為 Pure S 未承接；伺服器線滲透率事實表未涵蓋，管理層稱 2027 年成長最高的是快接頭，其次滑軌與手機；法人提到 CPO 產品 2027 年貢獻營收，未見規模數字，不算已證實的第二條曲線。衰退信號亮 2 個：折疊機核心份額縮減、EPS 成長顯著高於營收成長，長期成長性判黃燈。","governance":"自由現金流÷淨利：2022 年約 3.9（22.08 億元÷5.64 億元）、2023 年約 1.62、2024 年約 0.70（擴產期）、2025 年約 0.77（16.42 億元÷21.25 億元），Q2 2026 約 1.84（15.62 億元÷8.49 億元）。SBC 占營收約 0%，稀釋 EPS 12.37 元對基本 12.39 元，稀釋可忽略。EV/S 9.93 倍低於 P/S 10.51 倍，表示帳上為淨現金。營運槓桿為正：2025 年營業利益年增約 109%，高於營收年增 51.62%。近三年現金去向四分、債務結構與回購均價事實表未涵蓋；事件掃描未見併購。","valuation":"trailing 本益比 50.73 倍、P/S 10.51 倍、EV/S 9.93 倍，都在可得 4 個年度端點的最高位置；前瞻本益比約 35.8 倍（2,370 元÷FY2026 共識 66.17 元）。賣方：8 位分析師全為買進，平均目標價兩份快照約 2,391 元與 2,594 元，FactSet 目標價 2,600 元，現價只差約 9.7%。Base 五年終值約 2,640 元（120 元×22 倍），比現價高約 11.4%，年化不到 3%；反推一成年化報酬需要約 3,817 元，以 22 倍計要 FY2030E EPS 約 173 元。PEG 以 FY2026E→FY2029E 年化約 20% 計約 1.8；若用 FY2025A 低基期算三年成長會壓到約 0.7，那是週期高成長期的假便宜，不採用。26 週漲 29.71%，RSI 54.49 未過熱，股價在 52 週均線 1,717 元之上約 38%。","premortem":"陷阱判斷依據見反證紀錄：衰退信號亮 2 個（折疊機核心份額縮減、EPS 成長顯著高於營收成長），判黃燈，屬週期高點的獲利放大，不是價值陷阱。產業態勢三軸：競爭面惡化（折疊機鉸鏈份額被新日興與 Amphenol 分走，滑軌三強同步擴產）；結構面轉好（液冷滲透推升快接頭近滿載，伺服器占比一年升到近 3 倍）；其他結構變數以客戶結構為主（集中度由陸系品牌換到 AI 平台），裁決為雙向拉鋸。成長熄火壓力測試：Base 到 FY2028E 106 元後，若 FY2029 成長降到 15%／10%／5%，給 20／15／11 倍，價格約 2,440／1,750／1,220 元，對現價 +3%／−26%／−48%，三種只過一種。最大回撤：純倍數收縮回 28 倍即跌約 45%，Bear 路徑谷底可到約 −70%。事件面：併購、訴訟、召回、監管調查均未見。"},"plain":{"six":{"how_it_makes_money":"賺 AI 伺服器機櫃與折疊機品牌的精密機構件錢：滑軌、液冷快接頭與鉸鏈按件出貨，利潤卡在平台換代時能否被選進供應商名單、以及產能能否及時到位；伺服器已占上半年營收 55.7%，成為主引擎。","moat":"護城河方向不變（→）、等級 C：伺服器線的平台導入在擴大，折疊機在最大客戶與蘋果的份額在縮，滑軌只排第三；毛利率走高主要來自產品組合與快接頭供給吃緊，不是定價權。","growth":"五年後的跑道判黃燈（🟡）：折疊機滲透率只有 1.6%，但公司不在蘋果鉸鏈名單；伺服器線靠 2027 年產能倍增撐到 2028 年，之後看雲端資本支出，第二條曲線（CPO 產品）只有法人說法。","capital":"資本配置以自有現金擴產，不靠併購也沒有股權稀釋，現金轉換好；但回購與現金去向事實表未涵蓋，可見的股東回報只有約 0.5% 的股息。","valuation":"現價要求 FY2030E EPS 約 173 元、且屆時仍給 22 倍，才換得到一成年化報酬，等同 Bull 路徑；我信成長、不信倍數撐得住，結論是偏貴、等價格。","how_wrong":"最可能看錯在兩處：一是 2027 年產能倍增撞上同業同步擴產與資本支出消化，毛利率回落、倍數從 50 倍級收縮；二是低估 AI 平台導入的黏著度，伺服器成長一路延續到 2029 年，現價其實不貴。"}},"decision_inputs":{"signal":"B","ma":"✅","cycle_position":"中循環","cycle_verdict":"等回踩","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"賣方以短期目標價對高成長年度獲利給高倍數，未計入 2027 年同業同步倍增產能與 2028 年資本支出消化後的倍數回落；現價要 Bull 路徑才換得到一成年化報酬。","momentum_overheated":false,"cycle_gates_pass":false,"qc49_inherit_prior":null,"wait_for_price":true,"wait_for_price_condition":"等股價回落至 1,700 元附近（約 52 週均線）且最近一季毛利率維持 30% 以上；或 2027 年共識 EPS 上修，使同價位前瞻本益比降到 25 倍以下。","trap":"🟡","val":"🟠","moat":"C","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"循環/商品","price_at_dd":2370.0,"week26_return_pct":29.71,"consensus_rev_3m_pct":null,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":false,"val_denominator_note":"分母為 TTM 與 FY2026 共識 EPS，屬擴產期高成長獲利、非一次性；但以 FY2025A 低基期算成長會讓 PEG 失真，本結論以 FY2026E→FY2029E 成長率為準。"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"guidance","event":"2026 第三季財報與法說：驗證伺服器占比升至 8 成以上與毛利率","impact":"高","watch":"營收季增率是否≥10%、毛利率是否≥33%"},{"date":"2026-12","date_precision":"quarter","type":"product","event":"蘋果折疊機上市時點（Counterpoint 預期 2026 年，Mizuho 稱可能延至 2027）","impact":"中","watch":"公司是否打入鉸鏈或周邊機構件供應鏈；折疊機營收年增率"},{"date":"2027-03","date_precision":"quarter","type":"product","event":"AWS 滑軌出貨自 2027 第一季增溫（法人預估）","impact":"高","watch":"月營收年增率；AWS 以外 ASIC 客戶的驗證進度"},{"date":"2027-06","date_precision":"quarter","type":"capacity","event":"2027 年滑軌與液冷快接頭產能較現在倍增","impact":"中","watch":"稼動率與毛利率是否同步維持"}],"_projected_from":"v19"}
+{"meta":{"ticker":"6805.TW","date":"2026-10-11","schema":"v15.0","contract":"v19","company_name":"富世達"},"oneliner":"富世達由折疊機鉸鏈轉型為 AI 伺服器滑軌與水冷快接頭供應商，伺服器占上半年營收 55.7%、Q2 毛利率 34.05%；但折疊鉸鏈在華為與 Apple 兩個決策點失位，現價對 FY2027 共識約 22.5 倍、已貼近賣方目標價，等回到約 18 倍再進場。","thesis":{"H":[{"id":"H1","text":"AI 伺服器滑軌與水冷快接頭成為主引擎：產能倍增在 2027 年都有訂單，伺服器相關營收接棒折疊。","2y":"2026 下半年伺服器占營收 ≥70%；2027 年營收年增 ≥40%","5y":null,"10y":null,"threshold":"下半年伺服器占比 ≥70%（上半年 55.7%）；2027 年營收年增 ≥40%","source":"公司季報與法說營收結構、月營收","drift_rule":"TTM 營收對門檻路徑連 2 季偏離 ≥5%＝削弱；連 3 季偏離 ≥10%＝反轉"},{"id":"H2","text":"產品組合轉向伺服器，毛利率站穩 32% 以上、營業利益率 ≥25%。","2y":"單季毛利率 ≥32%、營業利益率 ≥25%","5y":null,"10y":null,"threshold":"單季毛利率 ≥32%（Q2 2026 為 34.05%）；營業利益率 ≥25%（Q2 為 27.82%）","source":"公司季報","drift_rule":"TTM 毛利率對門檻連 2 季偏離 ≥5%＝削弱；連 3 季偏離 ≥10%＝反轉"},{"id":"H3","text":"折疊鉸鏈練出的精密機構能力，能在多代、多客戶的伺服器平台取得持續份額，而不是只吃一代單一客戶。","2y":null,"5y":"量產中的伺服器客戶平台 ≥3 個，且在 NVIDIA 下一代平台與至少一家雲端業者 ASIC 機櫃持續供貨","10y":null,"threshold":"量產客戶平台 ≥3（目前 NVIDIA 平台、AWS 已出貨，其他 ASIC 驗證中）；單一客戶占營收 <40%（現值事實表未涵蓋）","source":"法說客戶專案、年報主要客戶揭露","drift_rule":"TTM 伺服器營收對門檻連 4 季偏離 ≥5%＝削弱；連 6 季偏離 ≥10%＝反轉"}],"R":[{"id":"R1","text":"2026 下半年斜率不足：年度共識需要下半年 EPS 比上半年多約 46%。","h_ref":"H1","clock":"⚡","threshold":"Q3 2026 單季 EPS <15 元","evidence_refs":["end_markets#2"]},{"id":"R2","text":"折疊鉸鏈在最大客戶與 Apple 首代失位，折疊營收萎縮速度快於伺服器補位。","h_ref":"H3","clock":"🔥","threshold":"折疊占營收 <25% 且金額年減 >20%","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","customer_concentration_credit#0","channel_business_model_shift#2"]},{"id":"R3","text":"AI 資本支出消化或滑軌三強價格競爭，使毛利率回到伺服器放量前的水準。","h_ref":"H2","clock":"🐢","threshold":"單季毛利率 <28%（2025 年全年 26.34%）","evidence_refs":["competitive_share_entrants#3"]},{"id":"R4","text":"產能倍增帶動資本支出上升，自由現金流轉換率由高點回落。","h_ref":"H2","clock":"🔥","threshold":"TTM 自由現金流利潤率 <10%（2024 年 10.47%）","evidence_refs":["supply_demand_durability#1"]}],"single_thing":{"description":"NVIDIA 下一代 GPU 平台與 AWS 下一代 ASIC 機櫃的滑軌與快接頭供應商名單都沒有富世達（平台換代重新招標時落選）。","why_fatal":"2027 年 EPS 共識年增約 66% 幾乎全靠伺服器放量，伺服器已占營收過半、Q3 預估逾 80%；換代落選等於產能倍增沒有訂單，營收與毛利率同時下修，是情境樹裡敏感度最大的單一變數。","if_happens":"2028 年 EPS 落到空頭路徑（70 元附近），倍數壓到 13 倍以下，股價下看 1,000 元。","how_monitor":"每季法說的客戶專案清單、供應鏈報導、月營收年增率；平台換代時點約在 2027 年下半年。","probability":"15%（12–24 個月）"}},"appendix_a":{"growth_durability":6,"quality_score":7,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":22.5,"peg_fy2":0.83,"stress":{"pass":1,"total":3}},"eps_meta":{"base_eps_path":{"FY2025A":30.98,"FY2026E":63.5,"FY2027E":105.31,"FY2028E":134.03},"fy_end_month":12,"eps_basis":"IFRS 稀釋 EPS（新台幣）；FY2026–2028 為 Koyfin 共識，原為美元，依 2026-10-09 匯率 31.912 換算"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/6805.TW_20261011/scenario.json","archetype":{"primary":"循環/商品","secondary":"品質複利成長","confidence":"中","fingerprint":"產品週期驅動的精密機構件：營收隨雲端資本支出與手機新機世代起伏，毛利率跟產品組合走，獲利高點集中在最近六季。"},"industry":{"clock_phase":"II","sd_verdict_source":"公司 2026-08-04 法說（媒體與 AI 摘要轉述）：快接頭產能近滿載、Q3 稼動率大升、2027 年產能倍增；屬管理層展望，沒有第三方供需統計。","bargaining":{"up":"上游為鋼材與精密加工件，供應商集中度事實表未涵蓋。","down":"下游是 NVIDIA 平台、雲端業者與其 ODM，以及中系與美系手機品牌，客戶規模遠大於公司，議價權在客戶端；滑軌有川湖、南俊可選，鉸鏈有新日興、Amphenol 可選。","geo":"越南廠擴產（快接頭與滑軌）用來降低對中國單一地區的依賴；關稅與出口管制事實表查無具體事件。"},"profit_pool_dir":"AI 伺服器機構件與液冷零件利潤池擴大；折疊鉸鏈利潤池隨折疊機滲透率上升而擴大，但份額向新日興等對手分流。","tam_table":[{"item":"折疊機出貨（2025 年）","value":"約 1,830 萬支，占手機市場 1.6%（鉅亨網，2026-03-06）"},{"item":"折疊機 2027 年出貨成長","value":"Counterpoint 預估年增 37%；IDC 預估 Apple 2027 年折疊 iPhone 逾 1,700 萬支；Mizuho 指 Apple 上市可能延至 2027 年，各來源分歧"},{"item":"公司折疊鉸鏈份額","value":"公司稱中系與美系客戶訂單占比超過五成（2026-03）；但 Apple 首代主供為新日興，華為 Pure S 未承接"},{"item":"伺服器滑軌與水冷快接頭市場規模","value":"事實表未涵蓋市場規模與市占統計；台灣滑軌三強中排名第三，規模小於川湖、南俊"},{"item":"營業利益池占比 5 年前→現在","value":"事實表未涵蓋"}]},"moat":{"mechanism":"精密機構件的設計驗證與量產良率：折疊鉸鏈練出的微型機構能力轉用到伺服器滑軌與水冷快接頭，靠平台驗證週期與產能卡位拿專案；轉換成本來自重新驗證，只鎖一代。","execution":8,"pricing":6,"grade":"B","trend":"→","trend_evidence":"執行面擴大：伺服器占比 19.2%→55.7%、AWS 第 2 季起出貨、多項 NVIDIA 與 ASIC 新專案 Q3 量產、毛利率由 2024 年 22.31% 升至 Q2 2026 的 34.05%。定價面縮減：折疊鉸鏈未承接華為 Pure S、Apple 首代主供為新日興，最大客戶份額下滑。兩者相抵判穩定。","peer_na_reason":"同業對照表只有利潤率，沒有 ROIC 與投入資本，無法算報酬率差距；直接對手川湖、南俊、新日興不在表內，改用利潤率與份額方向替代。","threats":[{"level":"🟡","text":"滑軌前兩大川湖、南俊規模大於本檔，新平台導入時可用價格或產能卡位壓縮本檔份額與毛利。","p":"35%","evidence_refs":["competitive_share_entrants#3"]},{"level":"🟡","text":"折疊鉸鏈在最大兩個新機決策點失位：華為 Pure S 未承接、Apple 首代主供為新日興與 Amphenol；大和也把主要客戶市占與折疊滲透率不如預期列為下行風險。","p":"50%","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","customer_concentration_credit#0","channel_business_model_shift#2"]},{"level":"🟡","text":"浸沒式液冷若普及會繞過水循環快接頭；現有證據是初期建置成本高數倍、伺服器須重新設計，多數品牌偏好水循環，屬遠期架構風險，普及跡象出現就升級。","p":"10%","evidence_refs":["substitute_technology#1"]}],"roic_durability":{"quadrant":"高利益率×周轉率未知（投入資本事實表未涵蓋；近四季資本支出極輕，產能倍增後周轉率會下降）","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者是伺服器與手機組裝廠、決策者是 NVIDIA 平台與雲端業者的機構設計團隊、付款者是 ODM 與品牌，三個角色都成立；每台機架式伺服器都要滑軌、每套水冷迴路都要快接頭，是需要不是想要。急迫性來自 AI 資本支出，持久性綁在雲端投資週期，這一點放進空頭機率處理。"},{"item":"決策層級","level":"🟡","text":"替代性的最小單位是單一平台的單一料號：平台換代時客戶重新招標，驗證週期只鎖住一代，華為 Pure S 未承接就是換代失位的實例。漲價後流失率、合約年限、重新認證週期事實表未涵蓋。"},{"item":"價值鏈分配","level":"🟡","text":"滑軌與快接頭占整台 AI 伺服器成本比例小，客戶在意可靠度多於單價，對定價有利；但買方是 NVIDIA、少數雲端業者與 ODM，高度集中，滑軌有川湖、南俊、鉸鏈有新日興與 Amphenol 可選，分配權在買方。各環節價值占比事實表未涵蓋。"},{"item":"社會容忍度","level":"🟢","text":"企業間機構零件，不是民生必需品，也不靠監管授權，社會對價格沒有敏感度；反壟斷、關稅與出口管制事實表查無事件。"}],"roiic":"無法計算：投入資本事實表未涵蓋。旁證：2025 年淨利增加約 8.98 億元，同期以淨利減自由現金流估的再投資額約 4.84 億元，表面增量報酬超過 180%，但大部分來自毛利率由 22.31% 升至 26.34% 與產能利用率，不能當可延續的增量報酬。","reinvest_rate":"粗估 2024 年約 30%、2025 年約 23%；TTM 自由現金流利潤率 25.6% 高於淨利率約 20.7%，近四季再投資率為負","endo_ceiling":null,"formula_note":"再投資率以（淨利−自由現金流）÷淨利粗估，等同（資本支出−折舊＋營運資金增加）÷淨利，以淨利代稅後營業利益：2024 年（12.27−8.57）÷12.27，2025 年（21.25−16.42）÷21.25，單位億元，取自年度財報（yfinance）。投入資本缺，內生成長天花板不定量。"},"combined":7.0,"score":7.0,"spread_table":[{"metric":"毛利率","6805.TW":30.38,"3017.TW":28.87,"3324.TWO":27.85,"3653.TW":42.63,"8996.TW":27.03,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"營業利益率","6805.TW":24.27,"3017.TW":23.56,"3324.TWO":15.3,"3653.TW":33.06,"8996.TW":16.3,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"FCF 利潤率","6805.TW":25.6,"3017.TW":24.1,"3324.TWO":-13.66,"3653.TW":15.18,"8996.TW":6.98,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"研發密度","6805.TW":4.6,"3017.TW":3.36,"3324.TWO":5.57,"3653.TW":3.61,"8996.TW":3.31,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"}],"competitors":[{"name":"3017.TW 奇鋐","gm":28.87,"om":23.56,"fcf_margin":24.1,"rd_intensity":3.36,"strategy_note":"散熱模組龍頭，TTM 營益率 23.56% 略低於本檔；與快接頭同屬液冷鏈，互補多於直接競爭。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"3324.TWO 雙鴻","gm":27.85,"om":15.3,"fcf_margin":-13.66,"rd_intensity":5.57,"strategy_note":"液冷模組廠，TTM FCF 利潤率 −13.66% 顯示擴產吃重資本；若模組廠自製或指定快接頭，議價會往模組廠移。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"3653.TW 健策","gm":42.63,"om":33.06,"fcf_margin":15.18,"rd_intensity":3.61,"strategy_note":"均熱片與液冷零件，TTM 毛利率 42.63%、營益率 33.06%，是機構零件能拿到的利潤上限參照。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"8996.TW 高力","gm":27.03,"om":16.3,"fcf_margin":6.98,"rd_intensity":3.31,"strategy_note":"液冷熱交換與 CDU，TTM 營益率 16.3%，系統型產品利潤率低於零件。","period":"TTM ending 2026-06-30（4季加總）"}]},"growth":{"driver_mix":"量為主（產能擴張：滑軌 35 萬組／月、快接頭 300 萬件／月近滿載，2027 年倍增）；組合與價格次之（伺服器占比升高帶動毛利率）；無併購、無回購。","runway_years":"伺服器液冷滲透率與滑軌市場規模事實表未涵蓋，無法推算","runway_post_y5":"🟡","endo_ceiling_basis":"投入資本缺，天花板不定量；以粗估再投資率 23–30% 反推，共識年化 63% 需增量報酬逾 200%，判共識超出內生天花板，缺口歸因毛利率擴張與營運槓桿。","segments":[{"item":"伺服器（滑軌＋水冷快接頭）","value":"上半年占 55.7%（去年同期 19.2%）；法人預估 Q3 逾 80%；公司稱 2027 年成長最高的是快接頭，其次滑軌"},{"item":"折疊機鉸鏈","value":"上半年占 38%（去年同期 71%）；未承接華為 Pure S；華為三摺與左右摺新品進展順利（無量化）"},{"item":"筆電轉軸","value":"上半年占 5.6%（去年同期 8.9%）"},{"item":"分部毛利率","value":"事實表未涵蓋；合併毛利率隨伺服器占比由 2025 年 26.34% 升至 Q2 2026 的 34.05%，推論伺服器毛利率高於折疊"}],"decay_signals":["核心市占近 12 個月縮減：折疊鉸鏈未承接華為 Pure S、Apple 首代不是主供（亮）","EPS 成長顯著高於營收：2022–2025 年 EPS 年化約 49%、營收約 35%，差約 14 個百分點，一段成長來自毛利率擴張（亮）","其餘八項未亮：毛利率未連降、SBC 為零、FCF／淨利 2024 年 0.70、2025 年 0.77 未連 2 年低於 0.75；替代技術、產業倍數、維持性資本支出等事實表未涵蓋或未見"],"trap_rating":"🟡（亮 2 項）"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長來自自建產能，查無併購；現金去向四分事實表未涵蓋，展開也只有缺口"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"事實表查無併購事件","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"事實表未涵蓋回購紀錄；股東回報以現金股利為主，殖利率 0.527%","grade":"N/A"},{"year":"—","action":"sbc_dilution","rationale":"SBC 占營收 0%（Q2 2026），Q1 僅 NT$2.5 百萬","grade":"過"}]},"valuation":{"basis":"遠期本益比（當年度與次年度共識 EPS）＋PEG；循環類優先的 P/B 與同業倍數事實表未涵蓋","tier":"AI 伺服器機構件與液冷零件","peers":{"expanded":false,"reason":"事實表同業對照只有利潤率、沒有倍數，直接對手川湖、南俊、新日興也不在表內，無法做同層級倍數對照"},"fwd_pe":37.32,"peg":0.59,"percentile_5y":100,"val_light":"🟠","val_light_derivation":"trailing 倍數在四個年度端點中最高（分位 100），對次年共識約 22.5 倍；一年 base 上檔約 3%（2027 年 EPS 98 元×25 倍），三年約 34%（2029 年 138 元×23 倍）；成長熄火三情境只有一個不賠；現價貼近賣方目標價。貴但有成長支撐，判偏貴而非極貴。","upside_short_pct":3.4,"upside_mid_pct":33.9},"trap_analysis":{"verdict":"🟡","label":"成長真實，但有一段來自毛利率跳升，折疊份額在流失"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"2024 年毛利率 22.31%、營益率 14.68%，現在的 34% 毛利率只維持兩季；滑軌排名第三、規模小於川湖與南俊；大和列主要客戶市占與折疊滲透率不如預期為下行風險；供給一年內可倍增。","assumption":"2027 年 AI 機櫃拉貨延續，新增產能都有訂單。","consequence":"2027 年後雲端資本支出進入消化期，產能倍增閒置、滑軌價格戰，毛利率回到 2025 年 26% 附近，EPS 回落至 70 元左右，倍數壓到 13 倍，五年後股價約 910 元，跌約六成。","ruling":"採納為空頭主路徑，機率 30%。與唯一致命點部分重疊：致命點是單一平台落選的事件版，本條是產業消化的漸進版，兩者分開監測。","watch":"月營收年增率連 3 個月低於 20%；單季毛利率連 2 季低於 30%。","evidence_refs":["channel_business_model_shift#2","competitive_share_entrants#3","supply_demand_durability#3"],"fact_refs":["f_kpi1","f_kpi9"]},{"view":"論點成功但股東經濟變差","evidence":"TTM 自由現金流利潤率 25.6% 建在 Q2 資本支出只有 0.22 億元的低基期上；2027 年產能倍增、越南廠擴產需要資本支出；2024 年 FCF／淨利曾低到 0.70；股息殖利率 0.53%。","assumption":"擴產主要靠既有資產與營運現金，自由現金流維持在淨利之上。","consequence":"EPS 照共識成長，但資本支出與存貨墊高，自由現金流轉換率回到 0.7 以下，股東實拿的現金成長落後 EPS，倍數撐不住。","ruling":"部分採納：不改 EPS 路徑，但 base 終端倍數取 22 倍而非現價的當年度 37 倍，已反映資本密集度上升。","watch":"單季資本支出；TTM 自由現金流利潤率低於 10%。","evidence_refs":["supply_demand_durability#1","geo_supply_chain#1"],"fact_refs":["f_kpi5","f_peer_6805_tw_fcf_margin_pct","f_dividend_yield_ttm"]},{"view":"價格已反映太多","evidence":"現價 2,370 元對 FY2027 共識約 22.5 倍、對 FY2026 為 37.32 倍，trailing 50.73 倍在四個年度端點最高；FactSet 共識目標價 2,600 元，Investing.com 兩份快照平均約 2,391 與 2,594 元。","assumption":"市場會一直給高成長期的倍數到 2028 年。","consequence":"即使 2027 年共識兌現，倍數由當年度 37 倍收斂到 20 多倍，一年上檔只剩個位數，五年 base 年化約 8–9%，不足以補償三成機率的六成跌幅。","ruling":"採納，這是本次觀望的約束條件：價格回到約 FY2027 共識 18 倍（1,900 元）以下才進場。","watch":"股價對 FY2027 共識 EPS 的倍數。","evidence_refs":["capital_markets_pricing#0","capital_markets_pricing#1"],"fact_refs":["f_price_at_dd","f_fwd_pe_latest","f_consensus_eps_fy2","f_pe_current"]}],"max_dd":{"lo":-72,"hi":-45,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 None → 本次 ✅","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=None","side_b":"本次 ma=✅","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 None → 本次 2370.0","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=None","side_b":"本次 price_at_dd=2370.0","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"折疊鉸鏈份額","cause":"新證據","prior_field":null,"side_a":"公司 2026-03 稱在中系與美系客戶皆為折疊鉸鏈主要供應商，訂單占比超過五成。","side_b":"2026-05 法說承認未承接華為 Pure S；Apple 首代折疊 iPhone 主供為新日興、次供 Amphenol，富世達未列名；折疊占營收由去年同期 73.5% 降至 37.7%；2025 年鉸鏈曾占營收約 85%、以陸系品牌為主。","ruling":"可調和，屬程度差異：公司說的美系客戶未必是 Apple，五成以上可能指既有機種；但方向是兩個最大的新機決策點都失位，採 B 側。折疊業務當作現金流來源，不再計入成長。","evidence_level":"公司說法（媒體轉述）對照供應鏈報導，兩側都不是一手資料","settle_metric":"2026 下半年折疊機營收占比與年增率；Apple 折疊機上市後的鉸鏈供應商拆解","if_then":["若 2026 下半年折疊營收年減逾 20% 且華為新品未貢獻：base 2027 年 EPS 再下修 5%，維持觀望不追","反向：若華為三摺與左右摺新品放量使折疊營收年增轉正，或 Apple 第二代納入富世達：折疊重新計入成長，bull 機率上調 5 個百分點"],"evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#1","competitive_share_entrants#2","customer_concentration_credit#0"]},{"axis":"2026 年共識與下半年斜率","cause":null,"prior_field":null,"side_a":"管理層：下半年營收與毛利率優於上半年，多項 NVIDIA 與 ASIC 滑軌新專案 Q3 量產；日系外資預期 Q3、Q4 營收季增雙位數。","side_b":"FY2026 共識 EPS 63.5 元需下半年 EPS 約 37.7 元；上半年約 25.8 元（Q2 12.39 元加上以純益季減 7.42% 回推的 Q1 約 13.4 元），下半年要比上半年多約 46%。若 Q3、Q4 EPS 各季增 15%，全年約 56 元，比共識低約 11%。","ruling":"可調和，屬幅度差異：營運槓桿會讓 EPS 增速高於營收，共識不是做不到，但需要兩季各季增約 30%。base 起點取偏保守，2027 年 EPS 98 元低於共識 105.31 元。","evidence_level":"季報實際數對照賣方共識","settle_metric":"Q3 2026 單季 EPS（11 月公布）","if_then":["若 Q3 EPS ≥17 元：base 2027 年 EPS 上修至共識 105 元，進場價位上移至約 2,000 元","若 Q3 EPS <15 元：不追，進場價位下修至 1,700 元"],"evidence_refs":["end_markets#2","capital_markets_pricing#1"]},{"axis":"現在就買的最強論證","cause":null,"prior_field":null,"side_a":"伺服器占比由 19.2% 升到 55.7%、法人預估 Q3 逾 80%；快接頭近滿載且 2027 年產能倍增；AWS 已出貨、多平台同步導入；SBC 為零、FCF 利潤率 25.6%；對 FY2027 共識只有 22.5 倍，三年共識 EPS 年化約 63%。","side_b":"這段成長來自單一 AI 資本支出週期與毛利率一次跳升，供給可快速倍增；滑軌排名第三、折疊份額失位；現價已貼近賣方目標價，五年 base 年化約 8–9%。","ruling":"採 B 側，觀望不追：買進論證都成立，但都已在共識裡，現價沒有給空頭情境的補償。","evidence_level":"季報與法說數字對照賣方目標價","settle_metric":"股價對 FY2027 共識 EPS 倍數；2027 年共識方向","if_then":["若股價回到 1,900 元以下且 FY2027 共識下修不超過 10%：分批建首倉 2%","若股價續漲但 Q3 財報未驗證下半年斜率：不追"],"evidence_refs":["end_markets#1","end_markets#4","supply_demand_durability#0","customer_second_source#1"]}],"triggers":[{"n":1,"text":"伺服器放量驗證：下半年伺服器相關營收占比與 2027 年營收成長","type":"假設驗證","maps_to":"H1","metric":"伺服器相關營收占比；年營收成長率","threshold":"2026 下半年占比 ≥70%；2027 年營收年增 ≥40%","action":"未達：base 機率下調 10 個百分點，不追","source_freq":"季報與法說；月營收每月 10 日前","date":"2026-11","evidence_refs":["end_markets#4","customer_second_source#0"]},{"n":2,"text":"毛利率守住伺服器組合帶來的高點","type":"假設驗證","maps_to":"H2","metric":"單季毛利率","threshold":"連 2 季 <32%","action":"不追；若已持有減碼一半","source_freq":"季報","date":"2027-03"},{"n":3,"text":"下半年斜率撐不起 2026 年共識","type":"風險","maps_to":"R1","metric":"Q3 2026 單季 EPS","threshold":"<15 元","action":"不追，進場價位下修至 1,700 元","source_freq":"季報","date":"2026-11"},{"n":4,"text":"折疊鉸鏈在主要客戶持續失位","type":"風險","maps_to":"R2","metric":"折疊機營收占比與年增率","threshold":"占比 <25% 且金額年減 >20%","action":"折疊業務改以零成長計入 base，2027 年 EPS 下修 5%","source_freq":"法說營收結構（每季）","date":"2027-03","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","channel_business_model_shift#2"]},{"n":5,"text":"下一代 AI 平台的滑軌或快接頭供應商名單沒有富世達","type":"Single Thing","maps_to":"single_thing","metric":"NVIDIA 下一代平台與 AWS 下一代 ASIC 機櫃的滑軌、快接頭供應商名單","threshold":"兩者皆未列入","action":"清倉（若持有），不建倉","source_freq":"法說客戶專案、供應鏈報導（每季）","date":"2027-06"},{"n":6,"text":"價格回到能補償空頭情境的位置","type":"估值rearm","maps_to":"rearm_trigger","metric":"股價；FY2027 共識 EPS","threshold":"股價 ≤1,900 元且 FY2027 共識較 105.31 元下修不超過 10%","action":"重跑研究後分批建首倉 2%，上限 4%","source_freq":"股價每日；共識每月","date":null},{"n":7,"text":"擴產吃掉自由現金流","type":"風險","maps_to":"R4","metric":"TTM 自由現金流利潤率","threshold":"<10%","action":"停止加碼，base 終端倍數下修 2 倍","source_freq":"季報現金流量表","date":"2027-08"},{"n":8,"text":"資本支出消化或滑軌價格競爭壓低毛利率","type":"減碼","maps_to":"R3","metric":"單季毛利率","threshold":"<28%","action":"若持有減碼至 1% 以下","source_freq":"季報","date":"2027-08"},{"n":9,"text":"第 3 季財報後複審","type":"複審日期","maps_to":null,"metric":"Q3 2026 營收結構、毛利率、EPS","threshold":"財報公布","action":"重跑研究","source_freq":"季報","date":"2026-11-30"}],"kill_metrics":[{"metric":"單季毛利率","bear_threshold":"連 2 季 <30%","window":"至 2027 年底","source":"公司季報","last_status":"ok"},{"metric":"伺服器相關營收占比","bear_threshold":"2026 下半年 <70%","window":"2026 Q3–Q4","source":"法說營收結構","last_status":"unknown"},{"metric":"FY2027 共識 EPS","bear_threshold":"較 105.31 元下修逾 15%","window":"未來 2 季","source":"Koyfin／FactSet 共識","last_status":"unknown"},{"metric":"TTM 自由現金流利潤率","bear_threshold":"<10%","window":"未來 4 季","source":"季報現金流量表","last_status":"ok"},{"metric":"折疊機營收占比","bear_threshold":"<25% 且金額年減 >20%","window":"未來 4 季","source":"法說營收結構","last_status":"warning"}],"evidence_dismissed":[],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='✅'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟠', moat_trend='→', week26=29.71, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='循環/商品', cycle_position='中循環', moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":true,"basis":"signal='B', val='🟠'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='✅'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='B', val='🟠', ma='✅'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='✅'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":"4%","requires_critic":[],"rearm_trigger":"股價回到 1,900 元以下（約 FY2027 共識 EPS 18 倍）且 FY2027 共識較 105.31 元下修不超過 10%","exec_line":"現在不追；觸發後分批：首倉 2%，第 4 季財報確認 2027 年產能與毛利率展望後加至 4%；若持有且單季毛利率連 2 季低於 30% 減碼一半。"},"reasoning":{"industry":"最新一季（Q2 2026）營收 NT$37.4 億，季減 10.61%（手機新舊機種交替）、年增 42.75%；毛利率 34.05%、營業利益率 27.82%，EPS 12.39 元。上半年營收結構：伺服器（滑軌＋水冷快接頭）55.7%（去年同期 19.2%）、折疊機鉸鏈 38%（71%）、筆電轉軸 5.6%（8.9%），伺服器已是主引擎。產業時鐘判第二階段擴張：快接頭產能近滿載、Q3 稼動率預期大升並已規劃擴產，2027 年滑軌與快接頭產能預計倍增，依據是產能利用率與擴產計畫，不是股價。供需持久性判週期性擴張而非結構性短缺：需求由 AI 資本支出驅動，供給一年內可倍增（公司滑軌產能由 2025 年 7–8 萬套擴至 35 萬套就是例子），供給可逆性高，這一點直接拉高空頭情境機率。單點依賴：伺服器專案依附 NVIDIA 平台與少數雲端業者，個別客戶占比事實表未涵蓋；折疊端 2025 年鉸鏈曾占營收約 85%、以陸系品牌為主，集中度已隨伺服器放量下降，但換成另一種集中——雲端資本支出週期。產業態勢判雙向拉鋸：伺服器端結構轉好（液冷滲透、多平台同步導入、越南廠分散地區風險），折疊端競爭惡化（Apple 首代鉸鏈主供為新日興、華為 Pure S 未承接）。證據品質提醒：最新一季逐字稿缺，管理層展望來自媒體與 AI 摘要的法說整理，數字以季報為準。","moat":"機制是精密機構件的設計驗證與量產良率：折疊鉸鏈累積的微型機構能力轉到伺服器滑軌與水冷快接頭，靠平台驗證週期與產能卡位拿專案，轉換成本來自重新驗證，沒有專利牆或網路效應。可證方向：同業對照只有利潤率、沒有投入資本，算不出 ROIC spread，改用利潤率與份額兩條可比軸。利潤率：TTM 毛利率 30.38%、營益率 24.27%、FCF 利潤率 25.6%，高於奇鋐（28.87%／23.56%／24.1%）、雙鴻（營益率 15.3%）、高力（16.3%），低於健策（42.63%／33.06%）；但對照組是散熱與液冷廠，直接對手川湖、南俊、新日興不在表內。份額：伺服器滑軌由第三名擴產到 35 萬套，取得 AWS 與多項 NVIDIA、ASIC 新專案，方向向上；折疊鉸鏈在最大客戶的新機（華為 Pure S）未承接、Apple 首代不是主供，最大客戶份額向下，因此不標上升。評分：執行力 8（兩年內把伺服器做到過半營收、毛利率升約 12 個百分點），定價力 6（三條產品線都有規模更大或卡位更早的對手，買方集中），合計對應 B 級。報酬持續期：當期營業利益率高，周轉率因缺投入資本無法判；四檢查點的弱點在決策層級與價值鏈分配（換代重搶、買方集中）。再投資：以淨利減自由現金流粗估的再投資率 2024 年約 30%、2025 年約 23%；TTM 淨利率約 20.7%（P/S 10.51 ÷ P/E 50.73）低於 FCF 利潤率 25.6%，近四季成長幾乎沒吃資本，來源是產能利用率與產品組合；產能倍增後這個比例會反轉。","growth":"成長來源以量為主：滑軌月產能 35 萬組、快接頭 300 萬件且近滿載，2027 年產能再倍增；價與組合次之，毛利率隨伺服器占比升高；沒有併購與回購。共識三年 EPS：FY2025A 30.98 元→FY2028E 134.03 元，年化約 63%（Koyfin 快照，家數未揭露；FactSet 7 月為 9 家）。內生上界：投入資本缺，天花板無法定量；但粗估再投資率只有 23–30%，要靠再投資撐出年化 63%，增量報酬需超過 200%，不合理，判共識超出內生天花板。缺口歸因：毛利率擴張（22.31%→34.05%）與營運槓桿（2022–2025 年 EPS 年化約 49%、營收約 35%），不是回購或併購，所以不是單靠倍數重估。跑道年數：伺服器液冷滲透率與滑軌市場規模事實表未涵蓋，算不出到 30% 滲透率的年數。五年後跑道不給寬：折疊機滲透率 1.6% 確實低，但公司在華為 Pure S 與 Apple 首代鉸鏈都不是主供；CPO 產品 2027 年貢獻營收只是單一外資說法，還不能當第二條成長曲線。衰退信號亮 2 項（核心市占縮減、EPS 成長顯著快於營收），長期成長性判中等。","governance":"FCF／淨利轉換率（年度財報，yfinance）：2022 年 3.91、2023 年 1.62、2024 年 0.70、2025 年 0.77；TTM 自由現金流利潤率 25.6% 高於淨利率約 20.7%。Q2 2026 自由現金流 15.62 億元，其中資本支出只有 0.22 億元，和「全力擴產、越南廠自動化產線」的說法對不太上，可能是擴產支出已在前期付清、以租賃承接，或資料源分類問題，事實表無法分辨，列為監測項。SBC 占營收 0%（Q1 僅 NT$2.5 百萬），稀釋可忽略。現金去向四分、債務到期與回購紀錄事實表未涵蓋。三項計分：併購報酬不適用（查無併購）；回購收益率查無資料；股權稀釋率 0% 通過。","valuation":"現價 2,370 元：trailing P/E 50.73 倍、P/S 10.51 倍、EV/S 9.93 倍，都在四個年度端點的最高位（不是連續五年序列）；對 FY2026 共識 63.5 元為 37.32 倍、對 FY2027 共識 105.31 元約 22.5 倍。PEG 以 FY2025A→FY2028E 共識年化約 63% 算約 0.59，看似便宜，但這段成長含毛利率一次跳升約 12 個百分點，循環股在擴張期的 PEG 會系統性偏低，不當便宜證據。循環類優先用 P/B，但事實表沒有資產負債表，改用遠期本益比並以成長熄火情境壓倍數：以 2028 年 EPS 122 元為起點，之後成長降到 15%／10%／5%，倍數約 20／15／12 倍，2030 年股價約 3,226／2,214／1,614 元，只有 15% 情境不賠。賣方：FactSet 9 家共識目標價 2,600 元（7 月），Investing.com 8 家全為買進、兩份快照平均約 2,391 與 2,594 元，現價距共識目標價只有 1–10%，對本裁決是中性偏反對追價。26 週漲 29.71%、RSI 54.49，動能不過熱。","premortem":"依據見反證紀錄三條：論點失敗（資本支出消化＋滑軌前兩大守住份額＋折疊失位）、論點成功但股東經濟變差（擴產吃掉自由現金流）、價格已反映太多（現價貼近目標價）。衰退信號亮 2 項，判中度陷阱風險。"},"plain":{"six":{"how_it_makes_money":"賺 AI 伺服器組裝鏈（NVIDIA 平台、AWS 等雲端業者）與中系折疊機品牌的錢；錢卡在「平台驗證＋量產良率」這一節點：拿到某一代平台的料號就有一代的訂單，換代時要重搶。","moat":"護城河方向判穩定：執行面在伺服器端擴大，定價面在折疊端縮減，兩者相抵，不標上升。","growth":"五年後跑道判中等：伺服器滑軌與水冷快接頭要看 2030 年後的 AI 資本支出，事實表沒有滲透率可推；折疊機滲透率雖只有 1.6%，但公司在兩個最大決策點失位，市場低滲透不等於公司的跑道。","capital":"資本配置以自建產能為主、股東回報薄：查無併購與回購，股權零稀釋，現金股利殖利率約 0.53%；產能倍增將拉高資本支出，自由現金流轉換率會從現在的高點回落。","valuation":"現價要求 2027 年 EPS 兌現約 105 元（年增約 66%）且 2028 年再成長約 27%，才撐得住對次年 22.5 倍；我信伺服器放量的方向，不信毛利率與倍數能同時守在高點，判偏貴。","how_wrong":"最可能看錯的是把一段資本支出擴張期的毛利率跳升當成常態：若 2027 年 AI 機櫃拉貨放緩，產能倍增會變成閒置，毛利率回到 26% 附近。"}},"decision_inputs":{"signal":"B","ma":"✅","cycle_position":"中循環","cycle_verdict":"等回踩","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":true,"wait_for_price_condition":"等股價回到 1,900 元以下（約 FY2027 共識 EPS 18 倍），且 FY2027 共識較 105.31 元下修不超過 10%","trap":"🟡","val":"🟠","moat":"B","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"循環/商品","price_at_dd":2370.0,"week26_return_pct":29.71,"consensus_rev_3m_pct":null,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":false,"val_denominator_note":"分母沒有一次性項目；爭點在 2026 下半年斜率與 2027 年共識能否兌現，已在情境樹處理。"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"guidance","event":"第 3 季財報與法說：驗證伺服器占比逾 80% 與下半年毛利率","impact":"高","watch":"單季 EPS ≥17 元或 <15 元"},{"date":"2027-03","date_precision":"quarter","type":"capacity","event":"AWS 滑軌出貨法人預期 2027 年第 1 季起明顯增溫","impact":"中","watch":"2027 年 1–3 月月營收年增率"},{"date":"2027-03","date_precision":"quarter","type":"guidance","event":"第 4 季財報與 2027 年展望：產能倍增進度與資本支出","impact":"高","watch":"2027 年資本支出規模、自由現金流利潤率"},{"date":"2027-09","date_precision":"quarter","type":"product","event":"Apple 折疊 iPhone 上市時點（各來源分歧，Mizuho 指可能延至 2027 年）與鉸鏈供應商確認","impact":"中","watch":"鉸鏈供應商名單是否含富世達"}],"_projected_from":"v19"}
 ```
 
 ---
@@ -378,7 +382,7 @@ AI痕跡(看到就改)：
 
 上一輪散文已寫好，只有下列章節篇幅不足、被硬閘擋下。**只重寫這幾章**，其他章節一個字都不要寫。
 
-- `s5`：現在 2,974B，下限 3,000B，**目標 ≥ 3,600B**
+- `s5`：現在 2,329B，下限 3,000B，**目標 ≥ 3,600B**
 
 做法：保留現稿的論點與結論，補的是深度——用上面 judgment 投影視圖裡已有、但現稿沒寫到的內容（機制、證據、同業對照、反證）。不得灌水重複、不得出現白名單以外的數字、不得心算衍生數字。格式同散文卡 §6：每章前一行 `<!-- SID:sX -->`，緊接完整的 `<section>`（`<h2>`／`<p class="lead">`／`<ul class="pts">`），表格注入標記照現稿保留。
 
@@ -388,15 +392,16 @@ AI痕跡(看到就改)：
 
 ```html
 <!-- SID:s5 -->
-<section id="s5"><h2>5　護城河與競爭</h2><p class="lead">護城河等級 C，伺服器線在擴大，折疊機線在縮小，方向持平。</p><ul class="pts">
-<li>護城河的機制是精密機構件工藝，由鉸鏈延伸到滑軌與液冷快接頭，加上每一代平台的認證資格與越南自動化產能。轉換成本只存在於單一平台生命週期內，因為每一代 NVIDIA 與 ASIC 平台都要重新驗證，滑軌有三家台廠可選，客戶多源採購。</li>
-<li>評分是執行力 7、定價力 5，合併約 6，等級 C。執行力給 7，因為一年內把伺服器占比由 19.2% 拉到 55.7%，滑軌產能由 7 萬到 8 萬套擴到 35 萬套。扣分在折疊機丟掉華為 Pure S。定價力給 5，因為滑軌排第三，折疊機份額流失，快接頭毛利靠近滿載的供給吃緊撐住。</li>
-<li>方向判持平。擴大的證據是 AWS 第二季起出貨，NVIDIA 與 ASIC 多項滑軌專案第三季起投產。縮小的證據是華為 Pure S 未承接，蘋果折疊 iPhone 鉸鏈由新日興主供，Amphenol 也在競爭。領先玩家在最大客戶的份額下滑，所以方向不能判擴大，兩邊相抵判持平。</li>
-<li>威脅有三條，都是黃燈。折疊機鉸鏈份額被新日興與 Amphenol 分走，機率 0.5。滑軌排第三，川湖與南俊同步擴產，2027 年後報價可能下修，機率 0.35。液冷快接頭目前近滿載，毛利靠供給吃緊，公司自身 2027 年產能倍增，若其他廠跟進，單價與毛利率回落，機率 0.4。</li>
-<li>同業對照只能比利潤率，因為同業 ROIC 與投入資本資料沒有涵蓋。富世達 TTM 毛利率 30.38%，營業利益率 24.27%，FCF 利潤率 25.6%。3017 為 28.87%、23.56%、24.1%，3324 為 27.85%、15.3% 與 −13.66%，3653 為 42.63%、33.06%、15.18%，8996 為 27.03%、16.3%、6.98%。</li>
-<li>解讀這張表有兩個重點。第一，富世達現金轉換在同業中最好，3324 擴產吃現金，自由現金流為負。第二，3653 的毛利率與營業利益率都明顯高於富世達，是液冷相關零組件中定價力較強的參照，富世達離那個水準還有距離。</li>
-<li>報酬持續期四個檢查點都沒有綠燈，只有社會容忍度亮綠。需求基礎值黃：資料中心機櫃一定要用滑軌與快接頭，屬需要而非想要，但這是雲端資本支出的衍生需求，2028 年後缺資料。決策層級黃：替代性在平台世代決定。價值鏈分配黃：價值大多落在 GPU 與 ASIC 端，客戶握有定案權，34% 的毛利率靠供給吃緊。</li>
-<li>內生成長率無法計算，投入資本、折舊與營運資金資料沒有涵蓋。可觀察的代理是 TTM 自由現金流利潤率 25.6% 高於營業利益率 24.27%，成長由內部現金支應。Q2 資本支出只有 0.22 億元，營業現金流 15.84 億元，淨再投資接近零，公式不適用。</li>
+<section id="s5"><h2>5　護城河：只鎖一代的驗證優勢</h2>
+<p class="lead">執行力很強，定價力普通，整體等級 B，方向持平。</p>
+<ul class="pts">
+<li>護城河的機制是設計驗證與量產良率。折疊鉸鏈累積的微型機構能力，轉用到伺服器滑軌與水冷快接頭，靠平台驗證週期與產能卡位拿專案。轉換成本來自重新驗證，只鎖住一代，沒有專利牆，也沒有網路效應。</li>
+<li>評分是執行力 8、定價力 6，合計 7，對應 B 級。執行力給高分，因為兩年內伺服器做到過半營收、毛利率升約 12 個百分點。定價力給 6，因為三條產品線都有規模更大或卡位更早的對手，買方又集中。</li>
+<li>同業對照只有利潤率，沒有投入資本，算不出 ROIC 差距。TTM 毛利率 30.38%、營業利益率 24.27%、FCF 利潤率 25.6%，高於奇鋐（28.87%、23.56%、24.1%）、雙鴻（營業利益率 15.3%）與高力（16.3%），低於健策（42.63%、33.06%）。</li>
+<li>這組對照有一個明顯限制：對照組是散熱與液冷廠，直接對手川湖、南俊、新日興不在表內。所以利潤率領先只能說在液冷鏈上不差，不能說贏過滑軌與鉸鏈的直接對手。雙鴻的 TTM FCF 利潤率是 −13.66%，也顯示液冷廠擴產很吃資本。</li>
+<li>份額方向兩邊不同。伺服器滑軌由第三名擴產到月產能 35 萬組，取得 AWS 與多項 NVIDIA、ASIC 新專案，方向向上。折疊鉸鏈在華為 Pure S 未承接、Apple 首代不是主供，方向向下。兩者相抵，護城河方向判持平，不標上升。</li>
+<li>三項主要威脅都是黃燈。滑軌前兩大廠用價格或產能卡位壓縮本檔，機率 35%。折疊鉸鏈在最大客戶持續失位，機率 50%。浸沒式液冷若普及會繞過水循環快接頭，機率 10%，目前初期建置成本高數倍，屬遠期風險，普及跡象出現就升級。</li>
+<li>報酬持續期的結論是：當期利益率高，周轉率因缺投入資本無法判。2025 年淨利增加約 8.98 億元，同期估的再投資額約 4.84 億元，表面增量報酬超過 180%，但大部分來自毛利率升到 26.34% 與產能利用率，不能當成可延續的增量報酬。</li>
 </ul>
 <!-- E5 -->
 <!-- E6 -->
