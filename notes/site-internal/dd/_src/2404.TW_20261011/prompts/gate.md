@@ -1,0 +1,219 @@
+你是 DD 管線 v20 的判斷層閘（gate），標的 2404.TW（20261011）。你未參與寫判斷，這是一次跨模型冷讀，單回合、無工具：bundle 全文已附在本訊息「===== BUNDLE =====」分隔線之後，讀完就直接作答，沒有第二輪，也不能查證 bundle 以外的任何資料。
+
+## 任務
+
+依 bundle 內 `gate_card.md` 的 ①–⑧ checklist 逐條複核 `judgment.json`，只揪判斷級的錯，不判斷寫得好不好。判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級問題（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡；無實質問題給 🟢。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：`gate_card.md`（①–⑧ checklist 全文與 🔴／🟡／🟢 口徑）、被引用事實與負向條目子集（核對 `fact_refs` 用）、`scenario_meta.json`（情境樹權威值，對帳 `decision_inputs.irr_base_pct`／`ev5y_pct` 用）、`judgment.json` 全文（被審對象，原樣）。
+
+## 禁
+
+- 禁 WebSearch／WebFetch、禁開 bundle 以外任何檔（包含 `docs/dd/`、`.dd_build/` 下的其他產物）。
+- 禁跑任何腳本（`validate_judgment.py`／`dd_decision.py`／`dd_scenario.py` 已在判斷端跑過，機械層不歸你）。
+- 禁提整段改寫判斷、禁自己動手修補 `judgment.json`——你只出稽核，修補是另一支流程的事。
+- 證據包裡沒有的東西不得臆測補白，只講證據包內找得到依據的話。
+
+
+===== BUNDLE =====
+
+## ① gate_card.md（判斷層閘卡）
+
+<!-- source: scripts/dd_prompts/gate_contract.md sha256:90928128665c694a; .claude/skills/stock-analyst/references/critic-gates.md sha256:8dff4ac45280acfd git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+你是 DD 管線 v20 的判斷層閘（gate），sonnet，單輪、無工具。你未參與寫判斷，這是一次跨模型冷讀。
+輸入：`judgment.json`（待審判斷物）＋ `facts.json`（事實表，每軸 finding 帶 source／as_of／direction）。
+任務只有一件：依下列 checklist 逐條複核 `judgment.json`，只揪**判斷級**的錯，不判斷寫得好不好。
+判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡。
+禁 WebSearch／WebFetch、禁讀輸入以外任何檔、禁改 `judgment.json`，只出稽核清單。
+
+## checklist（①–⑧ 全出，不得跳號、不得「同上」帶過）
+
+① 競爭惡化——份額流失／新進入者／客戶 second-source／大客戶轉單。查 facts.json 對應軸（competitive_share_entrants／customer_second_source／customer_concentration_credit）裡負向、或應被引用的 finding，核對 judgment.json 的 `moat.threats`／`moat.competitors`／`contradictions[]`／`decision_inputs.bear` 是否接住；被引用=N 卻是負向的 finding 即漏接。[gate_contract §①]
+
+② 供需 durability——緊缺或過剩是結構還是週期，供給可逆性是否寫進 bear 機率。facts.json 的 supply_demand_durability 軸負向 finding，若未被引用且未列 `evidence_dismissed`，須在 `premortem`／`decision_inputs.bear` 找到對應處理，找不到即 🔴。[gate_contract §②]
+
+③ 其他結構變數（開放軸）——法規／政策／關稅／反壟斷／補貼、通路重構、商業模式轉移、替代技術、客戶結構轉移。找 facts.json 覆蓋總覽裡「有 finding 卻沒人接住」的軸，對照 `contradictions[]`／`premortem.blind_spots`／`triggers[]`；閘禁搜尋，不重新查有沒有漏掉的產業變化。[gate_contract §③]
+
+④ priced-in——共識與賣方目標價 vs 現價，裁決是否只是把市場已知的事再說一次。看 `decision_inputs.market_wrong_reason_given` 是否有具體內容（非空泛套話），對照 facts.json 的 `latest_quarter_kpis[].vs_consensus` 與 `valuation_current`。判斷寫「不追／等價格」而裁決是進場、`decision_inputs.wait_for_price` 卻沒填 true ＝ 矛盾；填了 true 時裁決落觀望是規則結果，不算矛盾，只看 `wait_for_price_condition` 是否具體可驗。[gate_contract §④]
+
+⑤ 覆蓋面掃描（強制）——facts.json 逐軸點名 status="none"／"not_applicable" 的每一軸：理由站得住嗎？查詢是否切題且足以支撐該軸結論（不以查詢次數計）？**缺軸本身即 🔴，不需先證明結論錯**。[gate_contract §⑤]
+
+⑥ 量化模組完整性抽查（強制）——(i) `moat.roic_durability.reinvest_rate`／`.roiic` 有沒有 `.formula_note` 真算（寫「估計約 X%」無算式＝🔴）；`.endo_ceiling` 是否與共識 EPS CAGR（facts.json）交叉檢查，天花板 < CAGR 且 `reasoning` 未處理＝🔴。(ii) `scenario_inputs` 的 Bull/Base/Bear EPS 是否有實質價差（Bull 幾乎等於 Base、只靠倍數撐估值＝退化，🔴）。(iii) `decision_inputs.irr_base_pct`／`ev5y_pct`／`asym_ratio` 缺省或 null 合法（程式回填），但 ROIIC 缺輸入、口徑或算式仍為實質問題。[gate_contract §⑥]
+
+⑦ 數字新鮮度——`judgment.json` 引用的每個營運指標，是否不比 facts.json 的 `latest_quarter_kpis[].as_of` 對應項目舊？有一個更舊即 🔴。`decision_inputs.consensus_rev_3m_pct` 若依附 `stale=true` 來源，確認未被當唯一依據；引用摘要內容的欄位須標「來源：摘要」。[gate_contract §⑦]
+
+⑧ 前份漂移歸因（QC-49）——facts.json 的 `prior_dd` 存在時，`drift_watch` 20 欄中有變動的每一欄是否都映射到 `contradictions[]` 一個帶 `cause` 的條目（可多欄共用一條目）、且主因站得住；**裁決／核心假設／情境方法變更不得併入純價格原因**；漏欄或無歸因＝🔴；前份該欄本身空或缺欄者不計，給 🟡 或 🟢。無前份時填 🟢 並註「無前份」。[gate_contract §⑧]
+  - `axis` 以 `[程式歸因]` 開頭的條目是程式算的（均線、現價、裁決、角色）。裁決／角色條目是反事實結果（逐一把矩陣輸入改回前份值重算），視為已歸因；其中「價格變動」是反事實證明估值燈單獨改變了裁決，不適用上面「不得併入純價格原因」，不要為此給 🔴（2026-09-24）。
+  - QC-49 承繼（90 天內翻面須引前次已發火觸發器）只比方向：進場／觀望／迴避。「進場」與「進場·條件式」同方向，角色（核心／衛星）變動也不在 QC-49 範圍；判斷者答 `decision_inputs.qc49_inherit_prior`，前次裁決與角色由程式帶入。
+
+## (a)(b) 兩項強制職責（2026-08-06 拍板，不得因精簡拿掉）
+
+(a) 覆蓋面掃描：逐軸點名「哪一軸整個沒查」，做法同 checklist ⑤，缺軸本身即 🔴。
+(b) 量化模組完整性抽查：ROIC×再投資率真算與否、內生天花板對帳共識 CAGR、情境樹 Bull/Base/Bear EPS 價差是否實質、IRR 內部對帳，做法同 checklist ⑥。
+(c) 數字可回溯：判斷引用的歷史數字逐一核對 facts.json 原文的期間與單位；反證條目要查採納理由與後果是否成立，不能只因編號存在就算過。[gate.md.tmpl 2026-09-11 註腳]
+
+## 🔴／🟡／🟢 口徑
+
+判斷級 🔴 限下列三種形狀：
+
+1. **證據包已有而判斷未接**——證據包內存在的 finding／數字，判斷物完全沒接進 `contradictions`／`moat.threats`／`premortem`／`triggers`／`thesis.R`，也沒寫進 `evidence_dismissed[]`；
+2. **算術或機率防線失守**——推導不可複算、內部恆等式不對帳、情境樹退化、機率與其自身依據矛盾；
+3. **裁決與自身輸入矛盾**——`decision_inputs`／`scenario_meta`／`decision_out` 三者互斥，或裁決與判斷物自己寫下的理由相反。
+
+**資料級不算 🔴**（證據包本身缺料、來源不夠新、某軸查不到）——那是 Stage 0 的問題，最多給 🟡 並在附註點名。無實質問題給 🟢；有實質但不改裁決方向的給 🟡。
+
+## 輸出格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
+
+
+---
+
+## ②b 被引用的事實與負向條目（v19；閘要查數字時不必猜）
+
+### 判斷檔 `fact_refs` 引到的事實（29 條）
+- `f_kpi0_gaap`（q1_business）｜營收（GAAP，合併）＝260.8 億 TWD｜期間與口徑：Q2 2026（季末 2026-06-30，公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：yfinance quarterly_income_stmt（MOPS 合併財報）；月營收交叉 technews 4-6 月合計約 260.7 億（numbers.latest_quarter_kpis.items[0]，as_of Q2 2026（季末 2026-06-30，公告於 2026-08-12））
+  - 註記：查無
+- `f_kpi1_gaap`（q1_business）｜毛利率（GAAP）＝23.64 %｜期間與口徑：Q2 2026（季末 2026-06-30，公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：yfinance quarterly_income_stmt（毛利 61.65 億 ÷ 營收 260.80 億）（numbers.latest_quarter_kpis.items[1]，as_of Q2 2026（季末 2026-06-30，公告於 2026-08-12））
+  - 註記：查無
+- `f_kpi2_gaap_non_gaap_non_gaap`（q1_business）｜GAAP 營業利益／利益率（台股無 Non-GAAP 口徑，Non-GAAP 同略）＝52.11 億 TWD（營益率 19.98%）｜期間與口徑：Q2 2026（季末 2026-06-30，公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：yfinance quarterly_income_stmt（numbers.latest_quarter_kpis.items[2]，as_of Q2 2026（季末 2026-06-30，公告於 2026-08-12））
+  - 註記：查無
+- `f_kpi5_backlog`（q1_business）｜已簽約未認列在手訂單（backlog）＝1939.37 億 TWD｜期間與口徑：截至 2026-05 底（2026-06-11 法說會；Q2 季末值未取得）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：富果／時報報導 2026-06-11 法說會，blog.fugle.tw/post/earnings-call-2404-2026-06-11（numbers.latest_quarter_kpis.items[5]，as_of 截至 2026-05 底（2026-06-11 法說會；Q2 季末值未取得））
+  - 註記：不適用
+- `f_kpi6`（q1_business）｜管理層全年指引（定性）＝2026 年營收有機會再創新高；美國占比全年有機會過半 定性｜期間與口徑：2026-06-11 法說會（8 月法說內容未查得）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：guidance
+  - 來源：時報／富果報導 2026-06-11 法說會；無量化區間（numbers.latest_quarter_kpis.items[6]，as_of 2026-06-11 法說會（8 月法說內容未查得））
+  - 註記：不適用
+- `f_price_at_dd`（q5_valuation）｜判斷日股價＝1305.0 USD｜期間與口徑：2026-10-08（RTH 收盤，UTC）／收盤價，與情境樹起點同源｜kind：realized
+  - 來源：—（numbers.price_at_dd，as_of 2026-10-08（RTH 收盤，UTC））
+- `f_peer_2404_tw_gross_margin_pct`（q2_moat）｜2404.TW 毛利率＝21.25 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.2404.TW.gross_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_2404_tw_operating_margin_pct`（q2_moat）｜2404.TW 營業利益率＝17.7 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.2404.TW.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_2404_tw_fcf_margin_pct`（q2_moat）｜2404.TW FCF 利潤率＝33.49 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.2404.TW.fcf_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_6139_tw_gross_margin_pct`（q2_moat）｜6139.TW 毛利率＝19.47 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.6139.TW.gross_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_6139_tw_operating_margin_pct`（q2_moat）｜6139.TW 營業利益率＝17.25 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.6139.TW.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_6196_tw_gross_margin_pct`（q2_moat）｜6196.TW 毛利率＝12.33 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.6196.TW.gross_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_6196_tw_operating_margin_pct`（q2_moat）｜6196.TW 營業利益率＝6.41 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.6196.TW.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_5536_two_gross_margin_pct`（q2_moat）｜5536.TWO 毛利率＝21.1 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.5536.TWO.gross_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_5536_two_operating_margin_pct`（q2_moat）｜5536.TWO 營業利益率＝15.83 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.5536.TWO.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_6691_tw_operating_margin_pct`（q2_moat）｜6691.TW 營業利益率＝16.13 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.6691.TW.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_6691_tw_fcf_margin_pct`（q2_moat）｜6691.TW FCF 利潤率＝9.29 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.6691.TW.fcf_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_kpi4`（q4_capital）｜自由現金流（營業現金流−資本支出）＝67.66 億 TWD｜期間與口徑：Q2 2026（季末 2026-06-30，公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：yfinance quarterly_cashflow（OCF 67.73 億，capex 0.07 億）（numbers.latest_quarter_kpis.items[4]，as_of Q2 2026（季末 2026-06-30，公告於 2026-08-12））
+  - 註記：查無
+- `f_kpi3_eps`（q4_capital）｜稅後淨利（歸屬母公司）／稀釋 EPS＝19.84 TWD／股（淨利 37.63 億）｜期間與口徑：Q2 2026（季末 2026-06-30，公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：yfinance quarterly_income_stmt；搜尋聚合站列 EPS 19.92（基本 EPS 口徑，差異未驗）（numbers.latest_quarter_kpis.items[3]，as_of Q2 2026（季末 2026-06-30，公告於 2026-08-12））
+  - 註記：查無
+- `f_dividend_yield_ttm`（q5_valuation）｜trailing 12個月股息殖利率＝3.065 %｜期間與口徑：2026-10-11／trailing 12個月股息（依除息日加總，非發放日）÷ 判斷日股價 × 100｜kind：realized
+  - 來源：—（numbers.dividend_yield_ttm.value_pct，as_of 2026-10-11）
+- `f_pe_current`（q5_valuation）｜Trailing P/E（現值）＝19.81 x｜期間與口徑：2026-10-08（RTH 收盤，UTC）／4 個年度端點內的分位＝100.0｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.pe，as_of 2026-10-08（RTH 收盤，UTC））
+- `f_pe_percentile`（q5_valuation）｜Trailing P/E 年度端點分位＝100.0 %｜期間與口徑：2026-10-08（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.pe.current_percentile_within_annual_points，as_of 2026-10-08（RTH 收盤，UTC））
+- `f_ps_current`（q5_valuation）｜P/S（現值）＝2.86 x｜期間與口徑：2026-10-08（RTH 收盤，UTC）／4 個年度端點內的分位＝100.0｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.ps，as_of 2026-10-08（RTH 收盤，UTC））
+- `f_ps_percentile`（q5_valuation）｜P/S 年度端點分位＝100.0 %｜期間與口徑：2026-10-08（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.ps.current_percentile_within_annual_points，as_of 2026-10-08（RTH 收盤，UTC））
+- `f_ev_s_current`（q5_valuation）｜EV/S（現值）＝2.11 x｜期間與口徑：2026-10-08（RTH 收盤，UTC）／4 個年度端點內的分位＝93.7｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.ev_s，as_of 2026-10-08（RTH 收盤，UTC））
+- `f_ev_s_percentile`（q5_valuation）｜EV/S 年度端點分位＝93.7 %｜期間與口徑：2026-10-08（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.ev_s.current_percentile_within_annual_points，as_of 2026-10-08（RTH 收盤，UTC））
+- `f_week26_return_pct`（q5_valuation）｜26 週報酬＝48.5 %｜期間與口徑：2026-10-08（RTH 收盤，UTC）／含息前價格報酬，對照基準 ^TWII｜kind：realized
+  - 來源：—（numbers.momentum_26w.return_26w_pct，as_of 2026-10-08（RTH 收盤，UTC））
+- `f_ma_w52`（q5_valuation）｜52 週均線＝1009.33 USD｜期間與口徑：2026-10-11／週線收盤 SMA（yfinance auto_adjust）｜kind：realized
+  - 來源：程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）（ma_snapshot.json，as_of 2026-10-11）
+- `f_ma_w250`（q5_valuation）｜250 週均線＝445.63 USD｜期間與口徑：2026-10-11／週線收盤 SMA（yfinance auto_adjust）｜kind：realized
+  - 來源：程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）（ma_snapshot.json，as_of 2026-10-11）
+
+### findings_digest 中方向為負或來源衝突的條目（2 條）
+- `competitive_share_entrants#3`（competitive_share_entrants｜方向 -｜狀態 ok）：2025年6月工商時報：台灣五大機電與無塵室工程廠在手訂單逾5,000億元，亞翔逾2,000億元居首，漢唐逾千億元；對比2026年9月，漢唐1,939億與亞翔4,400億，亞翔訂單領先幅度擴大。
+  - 來源：工商時報 ctee（as_of 2025-06-24）｜affects：moat_trend、decision_inputs.bear
+- `geo_supply_chain#2`（geo_supply_chain｜方向 -｜狀態 ok）：2024 年法說會：美中貿易戰使海外客戶建廠意願低，海外營收比重降至 10% 以下
+  - 來源：搜尋結果摘要（漢唐法說相關報導，來源頁未能確認）（as_of 2024-12-31）｜affects：thesis.R、decision_inputs.bear
+
+---
+
+scenario_meta.json sidecar（判斷層情境樹權威，checklist ⑥(iii) 對帳用）
+
+（來源：/Users/ivanchang/financial-analysis-bot/.dd_build/runs/2404.TW_20261011/scenario_meta.json）
+（以下 JSON 為緊湊格式（省空白），內容完整）
+```json
+{"bull_5y_price":2500,"bear_5y_price":552,"p_bull_pct":25,"p_bear_pct":30,"upside_5y_pct":-5.7,"ev5y_pct":3.0,"irr_base_pct":-1.2,"asym_ratio":1.3,"scenario_tree":{"terminal_label":"FY2030E","start":{"eps":65.88,"pe":19.81,"basis":"TTM 至 2026-06-30 稀釋 EPS（股價 1,305 ÷ trailing 本益比 19.81 反推），終端倍數同用年度落後口徑"},"eps":{"bull":[80,95,108,118,125],"base":[77,85,91,90,82],"bear":[74,70,60,51,46]},"pe":{"bull":20,"base":15,"bear":12},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":3.065,"net_buyback":0},"second_stage":{"bull_cagr_pct":7,"base_cagr_pct":3},"valuation_dependent":false}}
+```
+
+---
+
+## ④b 舊逐字稿摘錄（前一季＋投資人日；對照管理層以前說過什麼）
+
+[本次無舊逐字稿摘錄]
+
+---
+
+| axis | status | n_findings | n_queries |
+|---|---|---|---|
+| competitive_share_entrants | found | 5 | 2 |
+| customer_second_source | none | 0 | 2 |
+| customer_concentration_credit | found | 2 | 3 |
+| supply_demand_durability | found | 4 | 2 |
+| regulatory_antitrust | none | 0 | 3 |
+| reg_tariff_export | found | 4 | 4 |
+| geo_supply_chain | found | 3 | 3 |
+| end_markets | found | 8 | 3 |
+| substitute_technology | none | 0 | 2 |
+| channel_business_model_shift | found | 2 | 3 |
+| capital_markets_pricing | found | 3 | 2 |
+| major_events | found | 2 | 4 |
+
+未涵蓋／不適用軸的查詢詞原文（供判相關性）：
+- **customer_second_source**（none）：漢唐 2404 最大客戶 台積電 自製 OR 第二供應商 2026；漢唐集成 客戶集中 台積電 營收占比 競爭 帆宣 2026
+- **regulatory_antitrust**（none）：漢唐 2404 公平會 OR 反壟斷 OR 調查 2026；United Integrated Services 2404 regulation OR regulatory scrutiny cleanroom engineering 2026；2404.TW 漢唐 DOJ OR FTC OR EU competition 2026
+- **substitute_technology**（none）：漢唐 2404 無塵室 機電工程 競爭 替代 技術 2026；Marketech 2404.TW technology obsolescence risk cleanroom turnkey fab construction modular alternative 2026
+
+---
+
+## 前份判斷摘要（含 drift_watch_prior 20 欄前份值；漂移歸因對帳用）
+
+```json
+{"status":"no_prior_dd"}
+```
+
+---
+
+## judgment.json 全文（被審對象，緊湊格式）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"2404.TW","date":"2026-10-11","schema":"v15.0","contract":"v19","company_name":"漢唐集成"},"oneliner":"台積電建廠潮的頭號無塵室承包商，在手訂單 1,939 億元撐住兩年多營收，但毛利率與本益比都在四年高點，好生意先等更好的價格。","facts_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/2404.TW_20261011/facts.json","scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/2404.TW_20261011/scenario.json","answers":{"q1_business":{"verdict":"賺晶圓廠建廠資本支出的錢，最大客戶是台積電；錢卡在「無塵室與機電統包的施工能量」這一節點，現在訂單不缺，缺的是人力與分包。","reasoning":"2026 年第二季營收 260.8 億元、毛利率 23.64%、營益率 19.98%，稅後淨利 37.63 億元。截至 2026 年 5 月底在手訂單 1,939.37 億元創新高，管理層預計 2 至 2.5 年內完工認列，等於兩年多營收已在手；收入屬專案制、逐案承攬，不是經常性收入。產品分部與客戶別營收占比事實表未涵蓋，只有地區結構：2026 年第一季美國 56%、台灣 40%、其他 4%（報導對這個 56% 是營收還是新接單說法不一），2025 年第三季美國才逾 25%。單點依賴：富果研究稱台積電 12 吋廠近八成無塵室由漢唐承包（承包比例，不是營收占比），台積電是最大客戶，這同時是護城河證據與集中度風險。產業處在擴張期：台積電 2026 年資本支出由年初 520–560 億美元上修到 600–640 億美元，外資預估 2027 年約 770 億、2028 年 860–900 億美元，SEMI 預估 2026 年晶圓廠設備支出年增 24%。供需持久度：週期性但能見度長，2028 年前有客戶支出預估撐腰，供給卡在施工人力、短期難擴；2029 年後沒有證據，而這門生意的反轉有前例（FY2024 營收年減 31.16%）。判斷日股價 1,305 元（事實表單位標 USD，實為新台幣）。","fact_refs":["f_kpi0_gaap","f_kpi1_gaap","f_kpi2_gaap_non_gaap_non_gaap","f_kpi5_backlog","f_kpi6","f_price_at_dd"],"verdict_values":{"revenue_quality":"專案制收入：在手訂單 1,939.37 億元、約 2–2.5 年認列，能見度高但不經常；新接單跟著客戶資本支出起落","unit_econ_note":"毛利率由 FY2023 的 10.93% 升到 2026 年第二季 23.64%，三年翻倍；客戶已對後續訂單施壓價格，公司只說毛利率目標維持現水準","archetype":{"primary":"循環/商品","secondary":"品質複利成長","confidence":"中","fingerprint":"營收 FY2024 年減 31.16%、FY2025 年增 39.37%，跟著客戶資本支出起落；但 EPS 連四年成長，資本支出近零、自由現金流隨在手訂單吞吐"},"industry":{"clock_phase":"II","sd_verdict_source":"週期性但能見度長：需求由晶圓廠資本支出決定，2028 年前有台積電指引與外資預估支撐，供給卡在人力不易擴；2029 年後屬資本支出週期自然反轉風險（來源：台積電法說、TrendForce 引述 Citi 與 GF 證券、SEMI、漢唐 2026 年 6 月法說）","bargaining":{"up":"上游施工人力與分包吃緊，對公司的議價力上升；管理層稱瓶頸在台灣人力與供應鏈","down":"下游買方集中於台積電，客戶已對後續訂單施壓價格","geo":"美國占比已過半，海外採在地化聘用；美台協議讓在美建廠設備免 232 關稅"},"profit_pool_dir":"利潤池暫時流向承包商（施工能量稀缺），人力瓶頸緩解或資本支出放緩時會回流客戶","tam_table":{"expanded":false,"reason":"TAM 與滲透率事實表未涵蓋；業務規模由客戶資本支出決定而非滲透率，改用台積電資本支出與 SEMI 晶圓廠設備支出預估當需求錨，已寫入論點與情境假設"}}}},"q2_moat":{"verdict":"護城河穩定（→）：台灣 12 吋廠承包經驗與跟著台積電赴美的執行力仍在，利潤率略勝同業；但主要對手訂單領先擴大、客戶開始壓價，看不到擴大證據，也還沒有縮減證據。","reasoning":"機制：客戶換承包商的代價是良率與工期風險，加上施工人力與分包網絡稀缺；產業估計漢唐在台灣 12 吋廠市占逾七成（計算方式未經查證）。方向證據：同業 ROIC 與投入資本事實表未涵蓋，改用利潤率與訂單規模。TTM 毛利率 21.25%、營益率 17.7%，對利潤率最接近的 6139.TW（19.47%／17.25%）只多 0.45–1.8 個百分點，對 5536.TWO（21.1%／15.83%）差距也小，只對 6196.TW（12.33%／6.41%）明顯領先，高毛利不是本公司獨有。訂單規模上，亞翔在手訂單由 2025 年 6 月逾 2,000 億（漢唐逾千億）擴大到 2026 年 9 月約 4,400 億（漢唐約 1,939 億），領先幅度擴大，但兩家客戶與工程範圍不同，不能直接當成台積電份額流失；台南案同一廠房由兩家分樓層承包，顯示客戶有現成替代。執行力 8 分：美國二期工程完成逾五成、營收一年增七成仍守住毛利率。定價力 6 分：毛利率三年翻倍主要是供不應求，客戶已對後續訂單壓價，公司目標只是持平。當期 ROIC 因缺投入資本無法計算；資本支出近零、自由現金流連兩年是淨利 2.8–3.2 倍，顯示營運資金是資金來源，報酬率極高但持續期綁在供給稀缺。","fact_refs":["f_peer_2404_tw_gross_margin_pct","f_peer_2404_tw_operating_margin_pct","f_peer_2404_tw_fcf_margin_pct","f_peer_6139_tw_gross_margin_pct","f_peer_6139_tw_operating_margin_pct","f_peer_6196_tw_gross_margin_pct","f_peer_6196_tw_operating_margin_pct","f_peer_5536_two_gross_margin_pct","f_peer_5536_two_operating_margin_pct","f_peer_6691_tw_operating_margin_pct","f_peer_6691_tw_fcf_margin_pct","f_kpi4"],"verdict_values":{"moat":{"mechanism":"台積電 12 吋廠無塵室承包經驗與良率工期紀錄（換人有風險）＋稀缺的施工人力與分包網絡＋跟著客戶到美國的組織能力","execution":8,"pricing":6,"grade":"B","trend":"→","trend_evidence":"執行力穩定（美國二期完成逾五成、營收年增七成仍守住毛利率，但對手接單更快）、定價力穩定（客戶壓價、公司目標毛利率持平）；對最接近同業營益率只多 0.45 個百分點，主要對手在手訂單領先幅度擴大，合併判穩定","competitor_notes":[{"name":"6139.TW","strategy_note":"利潤率與本公司最接近（毛利率 19.47%、營益率 17.25%），差距不到 2 個百分點，代表本公司的利潤率領先很薄；自由現金流利潤率 15.0% 不到本公司一半"},{"name":"6196.TW","strategy_note":"毛利率 12.33%、營益率 6.41%，利潤結構明顯較低，業務組合與本公司不同，不適合當定價力對照"},{"name":"5536.TWO","strategy_note":"毛利率 21.1% 與本公司相當、營益率 15.83% 略低，說明高毛利是全產業供不應求的結果"},{"name":"6691.TW","strategy_note":"營益率 16.13% 接近本公司，但自由現金流利潤率只有 9.29%，現金轉換弱；研發未單獨揭露"}],"peer_na_reason":"同業 ROIC 與投入資本事實表未涵蓋，改用營益率與在手訂單規模比對","threats":[{"level":"🟡","text":"主要對手亞翔在手訂單約 4,400 億、領先幅度較 2025 年中擴大；同一廠房已由兩家分樓層承包，客戶有現成替代","p":"30%","evidence_refs":["competitive_share_entrants#3","competitive_share_entrants#2"]},{"level":"🟡","text":"客戶對後續訂單施壓價格，23.6% 的毛利率缺乏結構支撐；6139.TW、5536.TWO 毛利率也在 19–21%，高毛利不是本公司獨有","p":"40%","evidence_refs":["end_markets#3"]},{"level":"🟡","text":"台灣施工人力與供應鏈短缺，是成長上限，也是工期延誤與成本超支風險","p":"30%","evidence_refs":["supply_demand_durability#1","end_markets#4"]}],"roic_durability":{"quadrant":"高利益率×高周轉（推定：資本支出近零、營運資金為淨來源；投入資本事實表未涵蓋）","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者、決策者、付款者都是晶圓廠本身，無塵室是建廠必要條件、不能延後；但需求量跟著資本支出走：台積電 2026 年資本支出上修到 600–640 億美元、外資預估 2028 年 860–900 億美元，而 FY2024 營收曾年減 31.16%，急迫但不持久"},{"item":"決策層級","level":"🟡","text":"替代性要在單一廠區、單一樓層衡量：台南案由漢唐做 3–6 層、亞翔做 1–2 層，客戶刻意在同一廠房內分包，可替代；但產業估計台灣 12 吋廠市占逾七成、台積電 12 吋廠近八成無塵室由漢唐承包，良率與工期風險讓客戶不輕易整案換人"},{"item":"價值鏈分配","level":"🟡","text":"買方高度集中於台積電（客戶別營收占比事實表未涵蓋），客戶已對後續訂單壓價；目前多拿的利潤來自人力與分包稀缺，瓶頸在供給不在訂單，稀缺一緩解利潤就會回到客戶手上"},{"item":"社會容忍度","level":"🟢","text":"不是消費必需品，沒有社會對漲價的天花板；政策面美台協議讓在美建廠設備免 232 關稅，屬順風；工安面 2026 年 5 月有一件職災補償民事裁定，金額未揭露，未見監管處分"}],"roiic":"事實表未涵蓋（缺投入資本；增量投入資本趨近零或為負，比率無意義）","reinvest_rate":"負值（2026 年第二季資本支出 0.07 億元；FY2024–FY2025 自由現金流比淨利多約 313 億元，推論主要是營運資金淨釋出，資產負債表事實表未涵蓋）","endo_ceiling":null,"formula_note":"內生成長＝增量 ROIC × 再投資率。本公司資本支出近零、營運資金在訂單擴張期淨釋出，再投資率為負、增量投入資本趨近零，公式失效；實際成長上限是施工人力與分包能量（管理層稱瓶頸在台灣人力與供應鏈），而非資本報酬。當期 ROIC 因資產負債表事實表未涵蓋無法計算。"}}}},"q3_growth":{"verdict":"延續性中等（🟡）：台灣 12 吋廠市占已逾七成（產業估計），本地空間有限；美國是有來源的第二條曲線，但仍是同一客戶、同一資本支出週期，第五年後成長要看下一輪建廠。","reasoning":"成長以量（客戶建廠數與規模）為主、價（毛利率擴張）為輔，無併購、無回購：2026 年 1–8 月營收 656.94 億元、年增 71.61%，8 月單月 93.92 億元。三年共識 EPS 與家數事實表未涵蓋，無法算共識成長率與內生上限的缺口；過去三年 EPS 年複合約 32%、營收約 11%，差額來自毛利率由 13.94% 升到 20.02%，屬利潤率擴張型成長，下一段不能再靠它。資本型內生成長公式在這家公司不適用（再投資率為負），真正的上限是施工人力。跑道：無滲透率資料，無法換算達 30% 滲透的年數；在手訂單蓋到 2028 年，管理層稱需求看到 2029 年，美國占比由 2025 年第三季逾 25% 升到 2026 年第一季 56%。衰退訊號亮 1 項、待證 1 項：EPS 成長顯著快於營收（亮）、主要對手訂單領先擴大（待證）。AI 是需求來源而不是替代者。","fact_refs":["f_kpi5_backlog","f_kpi6","f_kpi0_gaap","f_kpi1_gaap"],"verdict_values":{"growth":{"driver_mix":"量為主（客戶建廠數與規模）、價為輔（毛利率擴張）；無併購、無回購","runway_years":"事實表未涵蓋（無滲透率資料）","runway_post_y5":"🟡","endo_ceiling_basis":"資本型內生成長公式不適用：資本支出近零、營運資金隨訂單成長釋出現金，成長上限由施工人力與分包能量決定，非資本報酬","segments":{"expanded":false,"reason":"產品分部與客戶別營收事實表未涵蓋；只有地區占比（2026 年第一季美國 56%、台灣 40%、其他 4%），已用於美國第二曲線判斷，各地區利潤率未揭露"},"decay_signals":["EPS 成長顯著快於營收（亮）：FY2022–FY2025 EPS 年複合約 32%、營收約 11%，差逾 20 個百分點，來自毛利率由 13.94% 升到 20.02%","核心市占近 12 個月縮減（待證）：主要對手在手訂單領先幅度擴大，但未證實是台積電份額流失","毛利率連 2 季年減（未亮）：2026 年第一、二季 23.32%、23.64%，均高於 FY2025 全年 20.02%；去年同季數字事實表未涵蓋","自由現金流÷淨利 < 0.75 連 2 年（未亮）：FY2024 2.83 倍、FY2025 3.20 倍","維持性資本支出占自由現金流 > 60%（未亮）：資本支出近零","股權酬勞占營收 > 5%（資料缺口）：事實表未涵蓋，股數近四年未增加","產業估值倍數系統性下移（資料缺口）：同業倍數事實表未涵蓋","TAM 萎縮或被替代技術壓縮（未亮）：未見替代技術報導","主力產品提價後銷量下滑（不適用）：專案制逐案議價","停止投資新產能且收入 3 年內下滑（未亮）：1–8 月營收年增 71.61%"],"trap_rating":"🟡（亮 1 項、待證 1 項）"}}},"q4_capital":{"verdict":"現金轉換亮眼但靠客戶預收撐，股東回饋以配息為主，無併購、無稀釋。","reasoning":"自由現金流對淨利：FY2022 1.63 倍、FY2023 0.94 倍、FY2024 2.83 倍、FY2025 3.20 倍、2026 年第二季 1.80 倍（67.66 億÷37.63 億），資本支出幾乎為零（第二季 0.07 億元）；高於淨利的部分推論來自訂單擴張期的客戶預收，FY2023 已示範反轉時會低於淨利。股數由 FY2022 約 1.915 億股（淨利÷EPS）降到 2026 年第二季約 1.897 億股，無淨稀釋；股權酬勞金額事實表未涵蓋。近四年無併購，2026 年 1 月美國子公司以約 4,100 萬美元購入鳳凰城土地，屬不動產取得。回購紀錄、現金去向四分、配息率事實表未涵蓋，只有 TTM 殖利率 3.07%。營運槓桿：FY2025 營收年增 39.4%、營業利益年增約 60%，正向槓桿，未見壓縮。","fact_refs":["f_kpi4","f_kpi3_eps","f_peer_2404_tw_fcf_margin_pct","f_dividend_yield_ttm"],"verdict_values":{"capalloc":{"items":[{"name":"ma_roiic","applicable":false,"passed":null,"input":"近四年無併購；2026 年 1 月購地約 4,100 萬美元屬不動產取得"},{"name":"buyback_yield","applicable":false,"passed":null,"input":"回購紀錄事實表未涵蓋；股東回饋以現金股利為主（TTM 殖利率 3.07%）"},{"name":"sbc_dilution","applicable":true,"passed":true,"input":"股數約 1.915 億（FY2022，淨利÷EPS）→ 約 1.897 億（2026 年第二季），年均淨稀釋為負"}],"grade":null},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購；現金去向四分與配息率事實表未涵蓋，僅 TTM 殖利率 3.07%"}}}},"q5_valuation":{"verdict":"現價要求 2030 年 EPS 約 109 元、市場仍給 15 倍，才有年化 8%，等於假設高檔利潤率撐過下一次資本支出消化；2028 年前我信，2029 年後沒有證據，所以偏貴。","reasoning":"Trailing 本益比 19.81 倍（反推 TTM EPS 約 65.9 元）與股價營收比 2.86 倍都在四個年度端點的最高位，EV/S 2.11 倍位在 93.7 分位；這是四個年度端點的位置，五年分位事實表未涵蓋。以 Base 路徑 FY2026E 約 77 元計，前瞻本益比約 17 倍。反推：現價 1,305 元加每年約 40 元股息，要年化 8% 需 2030 年股價約 1,635 元，以 15 倍計需 EPS 約 109 元，介於 Base 82 元與 Bull 125 元之間、偏向 Bull。PEG 約 1.8（19.81 倍 ÷ TTM 到 FY2029E 約 11% 的 Base 年化成長）。成長熄火檢查：若未來三年 EPS 年增 15%、10%、5% 並配 18、14、11 倍，三年後股價約 2,100、1,435、980 元，三情境過二。同業倍數事實表未涵蓋，終端倍數只能以本公司現值 19.81 倍當上緣。分母：TTM 盈餘無一次性項目證據，但處在毛利率歷史高點，爭點是持續性而非口徑，已交給情境處理。","fact_refs":["f_price_at_dd","f_pe_current","f_pe_percentile","f_ps_current","f_ps_percentile","f_ev_s_current","f_ev_s_percentile","f_dividend_yield_ttm","f_week26_return_pct","f_ma_w52"],"verdict_values":{"valuation":{"basis":"Trailing 本益比為主（19.81 倍），以 Base FY2026E EPS 約 77 元交叉看前瞻約 17 倍；循環股輔看 EV/S 2.11 倍","peers":{"expanded":false,"reason":"同業倍數事實表未涵蓋，只有同業利潤率，已用於護城河判斷；無法做同級倍數對照"},"fwd_pe":null,"peg":1.8,"percentile_5y":null,"val_light":"🟠","val_light_derivation":"價格位置偏高（本益比與股價營收比在四個年度端點最高位）、Base 路徑含息報酬遠低於 8%、要達標需接近 Bull 的 EPS；但本益比在 20 倍以內、成長熄火三情境過二，未到泡沫，定為偏貴一級。12 個月上檔以 FY2027E 85 元 × 15 倍、中期以 FY2028E 91 元 × 15 倍計","upside_short_pct":-2.3,"upside_mid_pct":4.6,"denominator_disputed":false,"denominator_note":"TTM 盈餘無一次性項目證據；爭點在毛利率高檔能否延續，不在口徑，便宜與否改看前瞻情境"}}},"q6_how_wrong":{"verdict":"最可能看錯的地方是把循環高點的利潤率當常態，價值陷阱風險中等（🟡）。","reasoning":"依據見反證紀錄三條：資本支出 2028 年後消化使論點失敗、客戶壓價與預收款倒吐使股東經濟變差、價格已把 Base 計入。歷史最大回撤事實表未涵蓋；股價為 250 週均線 2.9 倍、比 52 週均線高約 29%，回撤估計 −35% 到 −62%。事件面：未見併購、集體訴訟、監管調查或重編財報，僅 2026 年 5 月一件職災補償民事裁定，金額未揭露。","fact_refs":["f_week26_return_pct","f_ma_w52","f_ma_w250","f_pe_percentile","f_kpi1_gaap"],"verdict_values":{"trap":{"verdict":"🟡","label":"循環高點利潤率被當成常態"}}}},"scenario_inputs":{"terminal_label":"FY2030E","start":{"eps":65.88,"pe":19.81,"basis":"TTM 至 2026-06-30 稀釋 EPS（股價 1,305 ÷ trailing 本益比 19.81 反推），終端倍數同用年度落後口徑"},"eps":{"bull":[80,95,108,118,125],"base":[77,85,91,90,82],"bear":[74,70,60,51,46]},"pe":{"bull":20,"base":15,"bear":12},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":3.07,"net_buyback":0},"second_stage":{"bull_cagr_pct":7,"base_cagr_pct":3},"max_dd":{"lo":-62,"hi":-35,"basis":"上緣 −35%：論點完好下的循環回檔，股價回到 52 與 104 週均線之間（1,009／787 元，距現價 −23% 至 −40%）；下緣 −62%：Bear 終點 46 元 × 12 倍約 552 元（−58%）再加超跌。基期偏高：股價為 250 週均線 2.9 倍、26 週已漲 48.5%；歷史最大回撤事實表未涵蓋","trigger_time":null},"basis":{"bull":"美國擴到台積電亞利桑那後續廠區並有新客戶加入，毛利率守在 23% 上下，2030 年營收約 1,580 億、淨利率約 15%；終端 20 倍約等於現值 19.81 倍","base":"2026 年營收約 1,000 億（1–8 月 656.94 億外推）、淨利率約 14%（第二季 37.63÷260.8）；2027–2028 隨在手訂單續增，2029 持平，2030 小幅回落、淨利率滑到 12.5%；股數約 1.897 億；15 倍為循環中段倍數，低於現值","bear":"2028 年起資本支出消化、新接單斷層，2030 年營收回到約 800 億、淨利率約 11%（介於 FY2022–FY2023 的 7–8% 與 FY2024–FY2025 的 13–14% 之間）；12 倍為成長熄火倍數。機率 30%：需求證據只蓋到 2028 年，且這門生意有營收單年減 31% 的前例"},"endo_ceiling_exceeded":null},"counter_evidence":{"blind_spots":[{"view":"論點失敗","evidence":"FY2024 營收年減 31.16%、FY2023 毛利率只有 10.93%；2024 年海外客戶受美中貿易戰影響建廠意願低，海外營收比重一度跌到 10% 以下","assumption":"台積電與其他晶圓廠資本支出在 2028 年後維持高檔，美國建廠政策不轉向","consequence":"新接單斷層後，在手訂單 2–2.5 年燒完，營收回到 800 億上下、淨利率回到約 11%，EPS 跌到 45 元左右，本益比壓到 12 倍，股價約 550 元","ruling":"採納：這是情境 Bear（30%）的主幹；管理層「看到 2029」與外資資本支出預估只蓋到 2028 年，2029 年後沒有證據。與唯一致命事件（台積電資本支出指引年減）重疊，後者是此故事的起點","watch":"台積電每年 1 月資本支出指引；漢唐半年度在手訂單與新接單","evidence_refs":["geo_supply_chain#2","supply_demand_durability#2"],"fact_refs":["f_kpi5_backlog"]},{"view":"論點成功但股東經濟變差","evidence":"客戶已對後續訂單施壓價格，公司只說毛利率目標維持現水準；亞翔在手訂單約 4,400 億、領先幅度擴大；自由現金流高於淨利來自預收，FY2023 曾低於淨利","assumption":"營收照 Base 成長時毛利率守在 23% 上下","consequence":"營收成長但毛利率回到 20% 以下，加上人力成本上升，EPS 成長落後營收；訂單增速放緩時預收倒吐，自由現金流掉到淨利以下，配息能力受壓","ruling":"部分採納：毛利率高檔缺乏結構證據（同業毛利率差距只有 0–2 個百分點），Base 已讓淨利率由 14% 滑到 12.5%；但沒有證據顯示對手搶走台積電份額，訂單規模差包含不同客戶與工程範圍","watch":"季毛利率；半年度漢唐÷亞翔在手訂單比","evidence_refs":["competitive_share_entrants#3","end_markets#3"],"fact_refs":["f_kpi1_gaap","f_peer_2404_tw_fcf_margin_pct","f_peer_6139_tw_gross_margin_pct"]},{"view":"價格已反映太多","evidence":"Trailing 本益比 19.81 倍與股價營收比 2.86 倍都在四個年度端點最高位；26 週漲 48.5%，股價比 52 週均線高約 29%，為 250 週均線 2.9 倍","assumption":"高檔利潤率延續，且市場願意在循環高點給約 20 倍","consequence":"Base 路徑下 2030 年股價約 1,230 元，五年價格報酬接近零，只剩約 3% 殖利率","ruling":"採納：好生意但價格已把 Base 計入，綁定約束是價格，等回到 1,010 元以下","watch":"股價與 52 週均線距離","evidence_refs":[],"fact_refs":["f_pe_current","f_pe_percentile","f_ps_percentile","f_week26_return_pct","f_ma_w52","f_ma_w250"]}],"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 None → 本次 ✅","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=None","side_b":"本次 ma=✅","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 None → 本次 1305.0","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=None","side_b":"本次 price_at_dd=1305.0","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"一致判斷","cause":null,"prior_field":null,"side_a":"需求面三方一致：在手訂單 1,939.37 億創高、管理層稱景氣看到 2029 年、台積電與 SEMI 支出預估上升到 2027–2028 年","side_b":"獲利面一致：營收、毛利率、營益率同步創高，EPS 連四年成長","ruling":"兩年內基本面沒有爭議，爭議全在 2029 年後與價格","evidence_level":"高","settle_metric":null,"if_then":[],"evidence_refs":["supply_demand_durability#0","supply_demand_durability#2","end_markets#5"]},{"axis":"能見度與價格","cause":null,"prior_field":null,"side_a":"現在就買的最強論證：兩年多營收已在手，台積電董事長說資本支出 2028 年起大幅加速，以 FY2026E 約 77 元算前瞻本益比約 17 倍，自由現金流利潤率逾三成又不需資本支出，盈餘可以長進倍數","side_b":"本益比與股價營收比在四個年度端點最高位，26 週漲 48.5%，Base 路徑 2030 年股價約 1,230 元低於現價，要年化 8% 需 EPS 約 109 元、接近 Bull","ruling":"程度差異、可調和：好生意但價格已計入 Base，綁定約束是價格；採後者，等價不追。依據是 Base 含息年化報酬遠低於 8%","evidence_level":"中","settle_metric":"股價相對 1,010 元；2027 年 1 月台積電資本支出指引","if_then":["若股價回落到 1,010 元以下且在手訂單 ≥ 1,800 億 → 首倉 2%","若股價續漲但沒有新的接單或毛利率證據 → 不追","若股價下跌而在手訂單與毛利率無損 → 分批反買，每跌 10% 加 1%，上限 5%","反向：若台積電資本支出指引年減 ≥ 10% → 不建倉，已持有者清倉"],"evidence_refs":["supply_demand_durability#3","capital_markets_pricing#1"]},{"axis":"競爭位置","cause":null,"prior_field":null,"side_a":"產業估計台灣 12 吋廠市占逾七成，台積電 12 吋廠近八成無塵室由漢唐承包，利潤率仍略高於同業","side_b":"亞翔在手訂單由 2025 年 6 月逾 2,000 億（漢唐逾千億）擴大到 2026 年 9 月約 4,400 億（漢唐約 1,939 億），比值由約 0.5 降到約 0.44；台南案同一廠房由兩家分樓層承包","ruling":"可調和：訂單規模包含不同客戶與工程範圍，不等於台積電份額流失，但足以否定護城河擴大；趨勢判穩定、不判上升","evidence_level":"中","settle_metric":"下次半年度揭露的漢唐÷亞翔在手訂單比","if_then":["若比值跌破 0.35 → 護城河趨勢改判下降，持股減碼一半","若比值回到 0.5 以上且毛利率守住 22% → 維持穩定判斷，可加碼至 4%"],"evidence_refs":["competitive_share_entrants#3","competitive_share_entrants#1","competitive_share_entrants#2"]},{"axis":"現金流品質","cause":null,"prior_field":null,"side_a":"TTM 自由現金流利潤率 33.49%，遠高於同業 9.29%–16.51%","side_b":"自由現金流連兩年是淨利 2.8–3.2 倍，差額推論是訂單擴張期的客戶預收；FY2023 自由現金流 43.8 億低於淨利 46.6 億，反轉時會倒吐","ruling":"採後者：不以自由現金流殖利率當估值依據，估值只用盈餘；預收倒吐列入 Bear","evidence_level":"中","settle_metric":"年度自由現金流÷淨利","if_then":["若年度自由現金流低於淨利且在手訂單下降 → 視為週期反轉早期訊號，減碼一半"],"evidence_refs":[]},{"axis":"美國第二曲線","cause":null,"prior_field":null,"side_a":"2026 年第一季美國占比 56%（報導口徑在營收與新接單間不一），美國二期工程完成逾五成，美國子公司購入鳳凰城土地","side_b":"2024 年海外客戶受美中貿易戰影響建廠意願低，海外營收比重一度跌到 10% 以下，海外需求可以在一年內蒸發","ruling":"可調和：美國是有來源的第二曲線，但仍綁同一客戶與貿易政策，延續性只給中等","evidence_level":"中","settle_metric":"年度美國營收占比","if_then":["若美國營收占比回落到 30% 以下 → 第二曲線論點削弱，倉位上限降到 3%"],"evidence_refs":["geo_supply_chain#2","geo_supply_chain#0","reg_tariff_export#2"]},{"axis":"產業態勢三軸","cause":null,"prior_field":null,"side_a":"競爭：主要對手訂單領先擴大、客戶壓價（偏壞）","side_b":"結構：客戶資本支出預估上升到 2028 年、施工人力瓶頸讓供給難擴（偏好）；其他：美台協議讓在美建廠設備免 232 關稅（中性偏好）","ruling":"雙向拉鋸：結構順風蓋過競爭逆風到 2028 年，之後無證據","evidence_level":"中","settle_metric":"半年度在手訂單與季毛利率","if_then":["若在手訂單續增但毛利率連 2 季低於 20% → 判定競爭惡化中，減碼一半"],"evidence_refs":["competitive_share_entrants#3","supply_demand_durability#2","reg_tariff_export#0"]}],"triggers":[{"n":1,"text":"股價回落到 1,010 元以下且最新在手訂單 ≥ 1,800 億元，首倉 2%","type":"估值rearm","maps_to":"H1","metric":"收盤價；在手訂單","threshold":"≤ 1,010 元；≥ 1,800 億元","action":"首倉 2%","source_freq":"每日股價；半年度法說","date":null},{"n":2,"text":"台積電年度資本支出指引年減 10% 以上，不建倉、已持有者清倉","type":"Single Thing","maps_to":"R3","metric":"台積電年度資本支出指引年增率","threshold":"≤ −10%","action":"清倉","source_freq":"每年 1 月台積電法說","date":"2027-01","evidence_refs":["supply_demand_durability#2"]},{"n":3,"text":"季毛利率連 2 季低於 20%，減碼一半","type":"風險","maps_to":"R1","metric":"季毛利率","threshold":"連 2 季 < 20%","action":"減碼一半","source_freq":"每季財報","date":null,"evidence_refs":["end_markets#3"]},{"n":4,"text":"漢唐÷亞翔在手訂單比跌破 0.35，減碼一半並把護城河趨勢改判下降","type":"風險","maps_to":"R2","metric":"漢唐÷亞翔在手訂單比","threshold":"< 0.35（2026 年 9 月約 0.44）","action":"減碼一半","source_freq":"半年","date":null,"evidence_refs":["competitive_share_entrants#3"]},{"n":5,"text":"在手訂單維持 ≥ 1,800 億元則第一個論點成立；跌破 1,500 億元清倉","type":"假設驗證","maps_to":"H1","metric":"在手訂單","threshold":"≥ 1,800 億元維持；< 1,500 億元清倉","action":"跌破 1,500 億元清倉","source_freq":"半年度法說","date":"2027-06"},{"n":6,"text":"2026 年全年美國營收占比 ≥ 50% 驗證第二曲線；低於 30% 則倉位上限降到 3%","type":"假設驗證","maps_to":"H2","metric":"年度美國營收占比","threshold":"≥ 50% 驗證；< 30% 削弱","action":"低於 30% 上限降到 3%","source_freq":"年報與法說","date":"2027-03","evidence_refs":["geo_supply_chain#2"]},{"n":7,"text":"季營益率低於 16%，視為人力成本吞噬利潤，停止加碼","type":"風險","maps_to":"R4","metric":"季營益率","threshold":"< 16%","action":"停止加碼","source_freq":"每季財報","date":null,"evidence_refs":["supply_demand_durability#1"]},{"n":8,"text":"持有後季毛利率 ≥ 22% 且在手訂單 ≥ 2,000 億元，加碼到 4%","type":"加碼","maps_to":"H3","metric":"季毛利率；在手訂單","threshold":"≥ 22%；≥ 2,000 億元","action":"加碼到 4%","source_freq":"每季；半年","date":null},{"n":9,"text":"2026 年報公布後複審全部論點","type":"複審日期","maps_to":null,"metric":null,"threshold":null,"action":"重跑研究","source_freq":"一次","date":"2027-03-31"}],"kill_metrics":[{"metric":"台積電年度資本支出指引年增率","bear_threshold":"年減 ≥ 10%","window":"每年 1 月台積電法說","source":"台積電法說會","last_status":"ok"},{"metric":"漢唐在手訂單","bear_threshold":"< 1,500 億元（2026 年 5 月底 1,939.37 億元）","window":"半年度法說","source":"漢唐法說會與財經媒體報導","last_status":"ok"},{"metric":"季毛利率","bear_threshold":"連 2 季 < 20%（2026 年第二季 23.64%）","window":"每季財報","source":"公開資訊觀測站季報","last_status":"ok"},{"metric":"滾動 3 個月月營收年增率","bear_threshold":"連 3 個月 < 0%","window":"每月","source":"公開資訊觀測站月營收","last_status":"ok"},{"metric":"漢唐÷亞翔在手訂單比","bear_threshold":"< 0.35（2026 年 9 月約 0.44）","window":"半年","source":"經濟日報、工商時報產業報導","last_status":"ok"}],"evidence_dismissed":[],"action_conditions":{"rearm_trigger":"股價回落到 1,010 元以下（約 52 週均線，Base 含息年化報酬回到約 8%）且最新在手訂單 ≥ 1,800 億元","exec_line":"首倉 2%；下一季毛利率 ≥ 20% 且在手訂單未降再加到 4%；上限 5%；台積電資本支出指引年減 ≥ 10% 即清倉","holding_cap":"5%（回撤可能超過 −50%，論點完好時不因波動砍倉，需有深回撤心理準備）"}},"decision_inputs":{"signal":"B","ma":"✅","cycle_position":"中循環","cycle_verdict":"等回踩","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":null,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":true,"wait_for_price_condition":"股價回落到 1,010 元以下（約 52 週均線）且最新在手訂單 ≥ 1,800 億元；續漲不追","asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null},"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='✅'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"輸入缺(momentum_overheated=null)，依保守方向處理：不視為觸發","input_gap":["momentum_overheated"]},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟠', moat_trend='→', week26=48.5, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='循環/商品', cycle_position='中循環', moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":true,"basis":"signal='B', val='🟠'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='✅'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='B', val='🟠', ma='✅'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='✅'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":null,"requires_critic":[]},"thesis":{"H":[{"id":"H1","text":"在手訂單兩年半內轉成營收，2027 年營收不低於 2026 年","2y":"FY2027 營收 ≥ FY2026；在手訂單維持 ≥ 1,800 億元","5y":null,"10y":null,"threshold":"在手訂單 ≥ 1,800 億元（2026 年 5 月底 1,939.37 億元）；滾動 12 個月營收年增 ≥ 0","source":"漢唐法說會在手訂單揭露（半年）、公開資訊觀測站月營收","drift_rule":"TTM 營收較 Base 路徑偏離連 2 季 ≥ 5% 為削弱、連 3 季 ≥ 10% 為反轉"},{"id":"H2","text":"美國成為第二條營收曲線，且合併利潤率不因海外占比上升而下滑","2y":null,"5y":"2030 年美國營收占比 ≥ 50%，合併毛利率 ≥ 20%","10y":null,"threshold":"美國占比 ≥ 50%（2026 年第一季 56%）且合併毛利率 ≥ 20%","source":"法說會地區占比、季報毛利率","drift_rule":"TTM 數值較門檻偏離連 4 季 ≥ 5% 為削弱、連 6 季 ≥ 10% 為反轉"},{"id":"H3","text":"利潤率體質已上移：下一個營收下行年營益率仍守住 14%","2y":null,"5y":"2027–2030 年間任一營收年減年度，營益率 ≥ 14%；前例是 FY2024 營收年減 31.16% 時營益率仍有 14.49%","10y":null,"threshold":"年度營益率 ≥ 14%（TTM 17.7%）","source":"年報（yfinance 年度財報）","drift_rule":"TTM 營益率連 4 季低於門檻 5% 以上為削弱、連 6 季低 10% 以上為反轉"}],"R":[{"id":"R1","text":"後續訂單價格壓力讓毛利率由 23% 高檔回落","h_ref":"H3","clock":"⚡","threshold":"季毛利率連 2 季 < 20%","evidence_refs":["end_markets#3"]},{"id":"R2","text":"主要對手接單領先擴大，台積電份額被分走","h_ref":"H1","clock":"🔥","threshold":"漢唐÷亞翔在手訂單比 < 0.35（2026 年 9 月約 0.44）","evidence_refs":["competitive_share_entrants#3"]},{"id":"R3","text":"晶圓廠資本支出 2028 年後消化，或海外建廠因貿易政策轉向停擺（2024 年海外比重曾跌到 10% 以下）","h_ref":"H2","clock":"🐢","threshold":"台積電資本支出指引年減 ≥ 10%，或美國營收占比回落到 30% 以下","evidence_refs":["geo_supply_chain#2","supply_demand_durability#2"]},{"id":"R4","text":"台灣施工人力與分包短缺造成工期延誤或成本超支","h_ref":"H3","clock":"🔥","threshold":"季營益率 < 16%","evidence_refs":["supply_demand_durability#1","end_markets#4"]}],"single_thing":{"description":"台積電公布的年度資本支出指引年減 10% 以上","why_fatal":"承包商營收落後接單 2–2.5 年，新接單一斷，1,939 億在手訂單燒完後營收與營業槓桿同步反轉，客戶預收倒吐使自由現金流掉到淨利以下；這是 EPS 路徑由 Base 轉 Bear 的最大單一敏感項，也是倍數由 15 倍壓到 12 倍的起點","if_happens":"不建倉；已持有者清倉，等新接單連兩個半年回升再重做研究","how_monitor":"每年 1 月台積電法說的資本支出指引；漢唐半年度在手訂單與新接單","probability":"12–24 個月內約 15%：2026 年指引剛上修到 600–640 億美元，外資預估 2027–2028 年續增，近兩年轉為年減的證據不足"}},"appendix_a":{"growth_durability":6,"quality_score":7,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":15.4,"peg_fy2":2.9,"stress":{"pass":2,"total":3}},"eps_meta":{"base_eps_path":{"FY2025A":47.73,"FY2026E":null,"FY2027E":null,"FY2028E":null},"fy_end_month":12,"eps_basis":"稀釋 EPS（新台幣）；賣方共識三年 EPS 與家數事實表未涵蓋，FY2026E–FY2028E 留空；情境 Base 為本判斷自估，不代表共識"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"other","event":"2026 年第三季財報","impact":"中","watch":"季毛利率是否守住 23% 上下、營益率是否 ≥ 19%"},{"date":"2027-01","date_precision":"month","type":"capacity","event":"台積電 2027 年資本支出指引","impact":"高","watch":"指引年增或年減；年減 ≥ 10% 即唯一致命事件"},{"date":"2027-03","date_precision":"month","type":"other","event":"2026 年報與股利","impact":"中","watch":"全年營收、美國占比是否過半、配息與自由現金流÷淨利"},{"date":"2027-06","date_precision":"month","type":"guidance","event":"年度法說會在手訂單更新","impact":"高","watch":"在手訂單是否 ≥ 1,800 億元、與主要對手的訂單比值"}]}
+```
+
+---
+
+## 尾段：回覆格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```json
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
