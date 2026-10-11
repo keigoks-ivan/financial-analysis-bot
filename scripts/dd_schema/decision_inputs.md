@@ -66,6 +66,7 @@
 | `prior_verdict` | str enum `進場`/`觀望`/`迴避` 或 `null` | 與 `qc49_inherit_prior` 搭配：`qc49_inherit_prior=true` 且 `prior_verdict` 與矩陣機械輸出方向不同時，最終 `verdict = prior_verdict`，`row_hit` 附註 `→QC-49(prior_verdict)` | `null` → 即使 `qc49_inherit_prior=true` 也不套用（無法承繼一個不存在的裁決），記 input_gap |
 | `prior_role` | str（`核心`/`衛星`/`追蹤`/`不持有`）或 `null` | 供 QC-49 覆寫與 held_now 例外共用：QC-49 生效時 `role = prior_role`（缺則退回 §3 啟發式，用**新** verdict 重算）；`held_now=true` 時 `role = prior_role`（缺則記 gap、維持預設） | `null` → QC-49 分支退回角色啟發式；held_now 分支維持預設角色並記 gap |
 | `held_now` | bool 或 `null` | 14a：「觀望 → 追蹤（既有持倉等觸發則衛星）」——最終 `verdict="觀望"` 時，若 `held_now=true` 則 `role` 沿用 `prior_role` 而非預設的「追蹤」（僅在未提供 `role_hint` 時生效） | `null` → 視為不觸發，`verdict="觀望"` 時 role 維持預設（追蹤，或 QC-49 已設定的角色） |
+| `qc48_result`／`qc48_note` | str enum `pass`/`fail`/`not_run` 或 `null`／str 或 `null` | QC-48 爆發候選 Bull 冷讀（critic-gates.md）：row 8a 資格全過時，`qc48_result` 非 `pass`（`fail`＝critic 判 Bull 依據不成立、`not_run`＝2 次 spawn 失敗或輸出無效）→ 8a 不放行、落 row 8，audit 記 `8a-QC48`（basis 帶 `qc48_note` 一句話結論）。**本腳本不跑 critic**，dd2 `run.py::_qc48_apply` 跑完寫入（2026-10-11 6187.TWO 案起） | `null` → 視為沒經過 critic 的呼叫端（舊鏈在寫稿流程自行跑 QC-48），8a 照矩陣機械輸出 |
 
 **已知不完整**：`held_now`/`prior_role` 機制只覆蓋「因既有持倉延續而給衛星/核心角色」這一種模式（`DD_MRVL_20260831.html` 案例）。backtest 中發現另一種**不同機制**也會讓觀望裁決得到衛星角色——`DD_TPR_20260806.html` 的衛星角色來自「§5.R 判定為現金產生器而非複利機器，不符核心持倉標準」的**候選品質分類**，與是否現持有無關，本次追加**不處理**這個模式（backtest 中仍是一個已知、文件化的 role mismatch，不影響 verdict 比對）。
 

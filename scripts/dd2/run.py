@@ -607,6 +607,93 @@ def _valdep_override(ctx):
     return True
 
 
+# QC-48（critic-gates.md）：row 8a 爆發候選是升級路徑，資格全過時必須由不同模型的 critic 冷讀 Bull 依據。
+# 2026-10-11 持有人拍板（6187.TWO：dd2 從未接 QC-48，矩陣直接放行 8a）。critic 任一項 🔴→fail；
+# 2 次 spawn 失敗或輸出無效→not_run；兩者都由 dd_decision.py 把 8a 落 row 8。
+QC48_TOOLS = ["WebSearch", "WebFetch"]
+QC48_MAX_TURNS = 10  # critic-gates.md：單獨 spawn ≤10 輪
+QC48_SPAWN_MAX = 2
+QC48_ITEMS = ("①", "②", "③")
+QC48_LIGHTS = ("🟢", "🟡", "🔴")
+QC48_NOT_RUN_NOTE = "爆發候選的 Bull 依據沒能完成獨立複核，不升級為進場"
+
+
+def _qc48_parse(text):
+    """critic 回覆 → (result, items, conclusion)；三項不齊、燈號不合法或缺結論 → None（視同失敗一次）。"""
+    obj, _ = sp.strip_json(text or "")
+    if not isinstance(obj, dict):
+        return None
+    items = {}
+    for it in obj.get("items") or []:
+        if not isinstance(it, dict) or it.get("item") not in QC48_ITEMS:
+            continue
+        light = next((x for x in QC48_LIGHTS if str(it.get("light") or "").startswith(x)), None)
+        if light is None:
+            return None
+        items[it["item"]] = {"item": it["item"], "light": light, "reason": str(it.get("reason") or ""),
+                             "evidence": str(it.get("evidence") or "")}
+    conclusion = str(obj.get("conclusion") or "").strip()
+    if set(items) != set(QC48_ITEMS) or not conclusion:
+        return None
+    ordered = [items[k] for k in QC48_ITEMS]
+    return ("fail" if any(x["light"] == "🔴" for x in ordered) else "pass"), ordered, conclusion
+
+
+def _qc48_eligible(cur):
+    """8a 資格全過（QC-48 放不放行之前）＝decision_out 的 audit row「8a」hit。"""
+    rows = (cur.get("decision_out") or {}).get("audit_rows") or []
+    return any(r.get("row") == "8a" and r.get("hit") for r in rows)
+
+
+def _qc48_apply(ctx, st):
+    """8a 資格全過時跑 QC-48 critic，結果寫 decision_inputs.qc48_result／qc48_note（程式擁有，判斷者或 patch
+    填的值一律蓋掉）；資格不成立就清掉舊值。回 True＝欄位有變，呼叫端要重跑 judge check。
+    同一份 prompt（雜湊相同）已有 pass／fail 結果就沿用不重花錢（--reuse-judgment 重跑時常見）；not_run 不沿用。"""
+    jpath = ctx.run_dir / "judgment.json"
+    cur = _load_json(jpath)
+    di = cur.setdefault("decision_inputs", {})
+    before = (di.get("qc48_result"), di.get("qc48_note"))
+    if not _qc48_eligible(cur):
+        if before == (None, None):
+            return False
+        di.pop("qc48_result", None)
+        di.pop("qc48_note", None)
+    else:
+        import hashlib as _hl
+        b = bundle.build_qc48(ctx.run_dir)
+        sha = _hl.sha256(Path(b["prompt_path"]).read_bytes()).hexdigest()
+        res_path = ctx.run_dir / "qc48_result.json"
+        prev = (_load_json(res_path) if res_path.exists() else None) or {}
+        if prev.get("prompt_sha256") == sha and prev.get("result") in ("pass", "fail"):
+            rec = dict(prev, reused=True)
+        else:
+            rec, attempts = None, []
+            for n in range(1, QC48_SPAWN_MAX + 1):
+                out = ctx.run_dir / "agents" / "qc48_{0}.json".format(n)
+                r = sp.agentic(b["prompt_path"], ctx.gate_model, out, ctx.run_dir, QC48_TOOLS, QC48_MAX_TURNS,
+                               budget_cache_read=COVERAGE_BUDGET)
+                st["agent_usage"].append(_usage_record("qc48_{0}".format(n), r))
+                ctx.save()
+                parsed = _qc48_parse(r.get("result_text")) if r.get("ok") else None
+                attempts.append({"n": n, "ok": bool(r.get("ok")), "valid": parsed is not None,
+                                 "num_turns": r.get("num_turns")})
+                if parsed:
+                    rec = {"result": parsed[0], "items": parsed[1], "conclusion": parsed[2]}
+                    break
+                (ctx.run_dir / "qc48_raw_{0}.txt".format(n)).write_text(r.get("result_text") or "", encoding="utf-8")
+            if rec is None:
+                rec = {"result": "not_run", "items": [], "conclusion": QC48_NOT_RUN_NOTE}
+            rec.update({"prompt_sha256": sha, "model": ctx.gate_model, "attempts": attempts, "at": _now()})
+            _atomic_write_json(res_path, rec)
+        st["qc48"] = {k: rec.get(k) for k in ("result", "conclusion", "model", "reused")}
+        di["qc48_result"], di["qc48_note"] = rec["result"], rec["conclusion"]
+    if (di.get("qc48_result"), di.get("qc48_note")) == before:
+        return False
+    jpath.write_text(json.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
+    ctx.save()
+    return True
+
+
 def _qc49_fill(ctx, obj):
     """QC-49：判斷者只答 qc49_inherit_prior（前份觸發器是否全沒發火）；前次裁決／角色由程式從 prior.json 帶，
     判斷者填的一律覆寫。前份超過 90 天或沒有前份 → 不承繼（清成 null）。回 note 或 None。"""
@@ -997,6 +1084,8 @@ def do_judged(ctx):
         rc, out = _sub([_pick_python(), SCRIPTS_DIR / "dd_project.py", "normalize", jpath, "--write"])
         st["normalize_note"] = out[-1500:]
         ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
+    if ok and _qc48_apply(ctx, st):  # 8a 資格全過 → critic 結果寫回後 dd_decision 重算
+        ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
     if ok:
         # phase 2：decision_out 已由 dd_decision.py 寫回 judgment.json，把因 ma 變動導致的裁決／角色變動併進程式條目
         cur = _load_json(jpath)
@@ -1130,6 +1219,8 @@ def _gate_patch(ctx, st, clean, idx):
     jpath.write_text(json.dumps(cur, ensure_ascii=False, indent=1), encoding="utf-8")
     ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
     if _valdep_override(ctx):
+        ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
+    if ok and _qc48_apply(ctx, st):  # patch 可能讓 8a 資格成立／消失，或改了 Bull 依據（prompt 雜湊變了就重派）
         ok, report = ddreport._judge_check(ctx.ticker, ctx.date)
     if ok:
         cur = _load_json(jpath)
@@ -1525,6 +1616,13 @@ def do_prose(ctx):
 # ---------------------------------------------------------------------------
 
 def do_finish(ctx):
+    # 最後防線：8a 爆發候選沒經 QC-48 放行不准上站（例：judged 段是本檢查上線前 PASS、用 --resume 跳過）
+    j = _load_json(ctx.run_dir / "judgment.json") or {}
+    if str((j.get("decision_out") or {}).get("row_hit") or "").startswith("8a") and \
+            (j.get("decision_inputs") or {}).get("qc48_result") != "pass":
+        print("[finish] 拒絕：row 8a 爆發候選未經 QC-48 放行（decision_inputs.qc48_result={0!r}），"
+              "請 --redo judged --reuse-judgment".format((j.get("decision_inputs") or {}).get("qc48_result")))
+        return 1
     cmd = [_pick_python(), SCRIPTS_DIR / "ddreport.py", "finish", ctx.ticker, ctx.date]
     if ctx.args.dry_run:
         cmd.append("--dry-run")

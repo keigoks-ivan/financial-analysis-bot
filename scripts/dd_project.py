@@ -91,6 +91,7 @@ JUDGE_OWNED_DECISION_INPUT_KEYS = (
 OVERLAY_DECISION_INPUT_KEYS = (
     "role_hint", "qc49_inherit_prior", "prior_verdict", "prior_role", "held_now",
     "wait_for_price", "wait_for_price_condition",
+    "qc48_result", "qc48_note",  # 2026-10-11：dd2 QC-48 critic 結果，由 run.py 寫入（判斷者不填）
 )
 
 # 事實欄 → facts.json 的 fact id（P-20）。

@@ -419,6 +419,55 @@ def build_gate(run_dir, *, cards_dir, extra_section=None) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# qc48：row 8a 爆發候選 Bull 冷讀（2026-10-11 6187.TWO 案起；critic-gates.md QC-48）
+# 只帶三項 checklist 要看的節選，不帶 decision_out（避免 critic 被裁決牽著走，也讓
+# prompt 不隨 qc48 結果本身變動——run.py 以 prompt 雜湊快取結果）。
+# ---------------------------------------------------------------------------
+
+_QC48_JUDGMENT_KEYS = ("oneliner", "scenario_inputs", "eps_meta", "counter_evidence")
+_QC48_ANSWER_KEYS = ("q1_business", "q3_growth", "q5_valuation")
+
+
+def _qc48_bull_section(run_dir: Path) -> str:
+    """Bull 隱含 5 年 IRR＝(bull_5y_price ÷ 起始價)^(1/5)−1，起始價＝start.eps × start.pe（同 dd_scenario 口徑）。"""
+    lines = ["## Bull 情境權威值（scenario_meta.json；IRR 由程式算）", ""]
+    p = run_dir / "scenario_meta.json"
+    sm = dd_bundle._load_json(p) if p.exists() else {}
+    tree = sm.get("scenario_tree") or {}
+    start = tree.get("start") or {}
+    lines.append("- 終端年：{0}；P_bull＝{1}%，P_bear＝{2}%".format(
+        tree.get("terminal_label"), sm.get("p_bull_pct"), sm.get("p_bear_pct")))
+    lines.append("- Bull EPS 路徑：{0}；Bull 終端倍數：{1}x；Bull 5 年目標價：{2}".format(
+        (tree.get("eps") or {}).get("bull"), (tree.get("pe") or {}).get("bull"), sm.get("bull_5y_price")))
+    try:
+        price = float(start["eps"]) * float(start["pe"])
+        irr = ((float(sm["bull_5y_price"]) / price) ** (1 / 5) - 1) * 100
+        lines.append("- 起始價（起始 EPS × 起始倍數）：{0:,.1f}；Bull 隱含 5 年 IRR（不含息）：{1:+.1f}%/yr".format(price, irr))
+    except (KeyError, TypeError, ValueError, ZeroDivisionError):
+        lines.append("- [算不出 Bull 隱含 IRR：scenario_meta 缺起始 EPS／倍數或 Bull 目標價]")
+    return "\n".join(lines)
+
+
+def build_qc48(run_dir) -> dict:
+    run_dir = Path(run_dir)
+    evidence = dd_bundle._load_json(run_dir / "evidence.json")
+    ticker, date = evidence.get("ticker"), evidence.get("date")
+    raw = dd_bundle._load_json(run_dir / "judgment.json")
+    facts_path = run_dir / "facts.json"
+    facts = dd_bundle._load_json(facts_path) if facts_path.exists() else None
+    answers = raw.get("answers") or {}
+    subset = {k: raw[k] for k in _QC48_JUDGMENT_KEYS if raw.get(k) is not None}
+    subset["answers"] = {k: answers[k] for k in _QC48_ANSWER_KEYS if k in answers}
+    named_parts = [
+        ("bull", _qc48_bull_section(run_dir)),
+        ("referenced_facts", dd_bundle._gate_referenced_facts_section(subset, facts)),
+        ("judgment_subset", "## 判斷物節選（怎麼賺錢／成長／估值三問、情境輸入、反證）\n\n" + dd_bundle._JSON_NOTE
+            + "\n\n```json\n" + json.dumps(subset, ensure_ascii=False, separators=(",", ":")) + "\n```"),
+    ]
+    return _assemble(run_dir, "qc48", ticker, date, named_parts)
+
+
+# ---------------------------------------------------------------------------
 # prose
 # ---------------------------------------------------------------------------
 

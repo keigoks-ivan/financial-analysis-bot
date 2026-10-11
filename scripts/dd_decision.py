@@ -256,6 +256,19 @@ def _evaluate_matrix(inputs: dict) -> dict:
         f"valuation_dependent={valuation_dependent!r}",
         gap=row8a_gaps or None,
     )
+    # 2026-10-11 持有人拍板（6187.TWO 案）：QC-48 獨立 critic 結果的既成事實輸入，本腳本不跑 critic。
+    # 非 pass（fail＝critic 判 Bull 依據不成立／not_run＝2 次 spawn 失敗）→ 落 row 8（升級路徑驗證失敗不得升級，
+    # critic-gates.md QC-48）。null＝沒經過 critic 的呼叫端（舊鏈自己在寫稿流程跑 QC-48）→ 行為不變。
+    qc48 = inputs.get("qc48_result")
+    if row8a_hit and qc48 is not None:
+        blocked = qc48 != "pass"
+        _audit(
+            audit_rows, "8a-QC48",
+            "row 8a 命中須經 QC-48 爆發候選 Bull 冷讀；critic 未放行（fail／not_run）→ 落 row 8",
+            blocked, f"qc48_result={qc48!r}, 結論={inputs.get('qc48_note')!r}",
+        )
+        if blocked:
+            row8a_hit = False
 
     if row8a_hit:
         verdict = "進場·條件式（爆發候選）"
@@ -622,6 +635,7 @@ NON_DD_META_KEYS = (
     # 2026-09 coordinator 追加（矩陣「之前/之後」的覆寫層，見 evaluate() docstring）：
     "val_denominator_disputed", "qc49_inherit_prior", "prior_verdict", "prior_role",
     "held_now", "wait_for_price", "wait_for_price_condition",
+    "qc48_result", "qc48_note",
 )
 
 
