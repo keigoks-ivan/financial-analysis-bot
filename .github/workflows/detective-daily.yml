@@ -164,6 +164,14 @@ jobs:
           mail_username: ${{ secrets.MAIL_USERNAME }}
           mail_password: ${{ secrets.MAIL_APP_PASSWORD }}
 
+      - name: Discord notify (detective immediate)
+        if: ${{ always() && hashFiles('detective_mail_immediate.txt') != '' }}
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_MARKET }}
+          NOTIFY_TITLE: "🕵️ 市場偵探 · 即時警報 ${{ steps.mode.outputs.force == 'true' && '【測試】' || '' }}"
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file detective_mail_immediate.txt --url https://research.investmquest.com/detective/
+
       - name: Send digest notification
         if: ${{ always() && hashFiles('detective_mail_digest.txt') != '' }}
         uses: ./.github/actions/send-notify
@@ -175,6 +183,14 @@ jobs:
           mail_username: ${{ secrets.MAIL_USERNAME }}
           mail_password: ${{ secrets.MAIL_APP_PASSWORD }}
 
+      - name: Discord notify (detective digest)
+        if: ${{ always() && hashFiles('detective_mail_digest.txt') != '' }}
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_MARKET }}
+          NOTIFY_TITLE: "🕵️ 市場偵探 · 每日摘要 ${{ steps.mode.outputs.force == 'true' && '【測試】' || '' }}"
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file detective_mail_digest.txt --url https://research.investmquest.com/detective/
+
       - name: Send weekly notification
         if: ${{ always() && hashFiles('detective_mail_weekly.txt') != '' }}
         uses: ./.github/actions/send-notify
@@ -185,3 +201,11 @@ jobs:
           tier: weekly
           mail_username: ${{ secrets.MAIL_USERNAME }}
           mail_password: ${{ secrets.MAIL_APP_PASSWORD }}
+
+      - name: Discord notify (detective weekly)
+        if: ${{ always() && hashFiles('detective_mail_weekly.txt') != '' }}
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_MARKET }}
+          NOTIFY_TITLE: "🕵️ 市場偵探 · 週報 ${{ steps.mode.outputs.force == 'true' && '【測試】' || '' }}"
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file detective_mail_weekly.txt --url https://research.investmquest.com/detective/

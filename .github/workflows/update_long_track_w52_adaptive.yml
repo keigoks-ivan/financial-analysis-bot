@@ -164,6 +164,15 @@ jobs:
             每交易日台股/美股收盤後自動檢查 · 可行動變化＝美/台任一腿最終權重與現持差 ≥ 20pp 或 F70 D1X 腿部位變化／月底再平衡
             退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_w52_adaptive.yml
 
+      - name: Discord notify (live system)
+        if: (steps.livealert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+          NOTIFY_TITLE: "⚡ 實單系統 可行動變化（美＋台＋F70）${{ steps.livealert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          NOTIFY_BODY: "${{ steps.livealert.outputs.changed == 'true' && steps.livealert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}"
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/long-track/#live
+
       - name: Commit and push
         id: commit_push
         env:

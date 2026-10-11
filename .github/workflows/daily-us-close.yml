@@ -241,6 +241,15 @@ jobs:
           html_body: file://cockpit_roster_mail.html
           body: ${{ steps.seat_alert.outputs.body }}
 
+      - name: Discord notify (cockpit roster)
+        if: steps.seat_alert.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_PICKS }}
+          NOTIFY_TITLE: "🧭 選股主控台名單變化 ${{ steps.seat_alert.outputs.date }}"
+          NOTIFY_BODY: ${{ steps.seat_alert.outputs.body }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/cockpit/
+
       # ── 收斂：單一 commit + push（路徑＝各原 workflow commit 路徑聯集）──
       - name: Commit and push if changed
         id: commit_and_push

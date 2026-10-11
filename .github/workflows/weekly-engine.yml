@@ -164,6 +164,14 @@ jobs:
           from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
           html_body: file://engine_weekly_mail.html
 
+      - name: Discord notify (weekly seat arena)
+        if: steps.weekly_mail.outcome == 'success'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_PICKS }}
+          NOTIFY_TITLE: ${{ steps.weekly_mail.outputs.subject }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --url https://research.investmquest.com/engine/arena.html
+
       - name: Commit and push if changed
         id: commit_push
         env:

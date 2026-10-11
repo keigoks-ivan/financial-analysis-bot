@@ -87,3 +87,12 @@ jobs:
             InvestMQuest · 美股財報後異常反應掃描（dd-screener 美股宇宙含 ADR）
             每美股交易日台北 07:00 檢查 · 異常＝|漲跌| ≥ max(5%, 2×60 日波動)
             退訂：停用 earnings-reaction-daily.yml 的 schedule
+
+      - name: Discord notify (earnings reaction)
+        if: (steps.alert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_PICKS }}
+          NOTIFY_TITLE: "📊 美股財報異常反應 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          NOTIFY_BODY: "${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — 財報異常反應 email 管線正常。昨日無異常反應。' }}"
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/earnings/

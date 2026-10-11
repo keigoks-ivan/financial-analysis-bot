@@ -64,3 +64,10 @@ jobs:
           from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
           html_body: file://market_read_mail.html
           body: file://market_read_mail.txt
+
+      - name: Discord notify (market read)
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_MARKET }}
+          NOTIFY_TITLE: ${{ steps.summary.outputs.subject }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file market_read_mail.txt --url https://research.investmquest.com/market/

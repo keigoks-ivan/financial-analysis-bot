@@ -98,6 +98,15 @@ jobs:
             每交易日美股收盤後自動檢查 · 可行動變化＝閘門翻轉或最終權重與現持差 ≥ 20pp
             退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_gld.yml
 
+      - name: Discord notify (GLD sleeve)
+        if: (steps.alert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_PICKS }}
+          NOTIFY_TITLE: "⚡ GLD 金 sleeve（前瞻 OOS 候選・非實單）可行動變化 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          NOTIFY_BODY: "${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}"
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/long-track-gld/
+
       - name: Commit and push
         id: commit_and_push
         env:

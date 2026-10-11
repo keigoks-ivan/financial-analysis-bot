@@ -199,6 +199,15 @@ jobs:
             —
             InvestMQuest · 每日收盤後自動掃描
 
+      - name: Discord notify (SOP funnel)
+        if: steps.sop_alert.outputs.triggered == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+          NOTIFY_TITLE: "🎯 SOP 漏斗板機 — 今日有通過全部 veto 的進場訊號"
+          NOTIFY_BODY: ${{ steps.sop_alert.outputs.body }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/dd-screener/sop-funnel.html
+
       # ── 收斂：單一 commit + push（路徑＝原 workflow commit 路徑）──
       - name: Commit and push if changed
         id: commit_and_push
