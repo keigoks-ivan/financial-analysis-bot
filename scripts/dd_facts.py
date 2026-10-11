@@ -200,14 +200,16 @@ def _valuation_facts(numbers, buckets, ticker=None):
     for fy in ("fy1", "fy2", "fy3"):
         if latest.get(fy) is None:
             continue
-        basis_text = (
-            "Koyfin 快照共識值；已依 data/adr_ratios.json 換算為 {0}".format(eps_basis_note)
-            if eps_basis_note else
-            "Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis"
-        )
+        if str(eps_basis_note or "").startswith("twd"):
+            # 台股：Koyfin 台股池的 EPS 是美元值，dd_numbers_extra 已依快照日匯率換成新台幣
+            basis_text = "Koyfin 快照共識值；原為美元，已依快照日匯率換算為新台幣（{0}）".format(eps_basis_note)
+        elif eps_basis_note:
+            basis_text = "Koyfin 快照共識值；已依 data/adr_ratios.json 換算為 {0}".format(eps_basis_note)
+        else:
+            basis_text = "Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis"
         q5.append(_fact(
             f"f_consensus_eps_{fy}", f"{fy.upper()} 共識 EPS", latest.get(fy),
-            latest.get("date"), "USD/share",
+            latest.get("date"), _price_unit(ticker) + "/share",
             basis_text, "estimate",
             _src("evidence_numbers", f"numbers.consensus_revision.latest_snapshot.{fy}",
                  as_of=latest.get("date"), citation=latest.get("file")),

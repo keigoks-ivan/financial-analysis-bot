@@ -241,7 +241,37 @@ def do_plan(ctx):
     st["disk_transcript_age_days"] = age
     st["seconds"] = int(time.time() - t0)
     ok = rc == 0 and (ctx.run_dir / "evidence.json").exists() and (ctx.run_dir / "axes.json").exists()
-    return ctx.stage_end("plan", ok, "rc={0} koyfin_fast={1} disk_age={2}d {3}s".format(rc, fast, age, st["seconds"]))
+    note = "rc={0} koyfin_fast={1} disk_age={2}d {3}s".format(rc, fast, age, st["seconds"])
+    if ok:
+        cons_err = _consensus_check(ctx)
+        if cons_err:
+            ok, note = False, cons_err + "；" + note
+    return ctx.stage_end("plan", ok, note)
+
+
+def _consensus_check(ctx):
+    """開工前確認共識 EPS 已載入。沒有 FY1／FY2 共識，判斷者會留空 fpe_fy2／peg_fy2，
+    要到最後 QC 才被 dd-meta 必填欄擋下（2026-10-11 八檔台股：台股池不在讀取家族，白燒判斷＋散文）。
+    缺共識回錯誤字串（plan 段 FAIL）；--allow-no-consensus 放行；快照過期只警告。"""
+    rev = ((_load_json(ctx.run_dir / "evidence.json") or {}).get("numbers") or {}).get("consensus_revision") or {}
+    latest = rev.get("latest_snapshot") or {}
+    st = ctx.manifest["stages"]["plan"]
+    st["consensus"] = {"file": latest.get("file"), "date": latest.get("date"), "fy1": latest.get("fy1"),
+                       "fy2": latest.get("fy2"), "eps_basis": rev.get("eps_basis"), "stale": rev.get("stale")}
+    if latest.get("fy1") is None or latest.get("fy2") is None:
+        msg = "共識 EPS 未載入（{0}）".format(rev.get("note") or "最新快照缺 FY1／FY2")
+        if ctx.args.allow_no_consensus:
+            print("[warn] {0}；--allow-no-consensus 放行，fpe_fy2／peg_fy2 會改用判斷者 Base EPS 推算".format(msg),
+                  file=sys.stderr)
+            return None
+        hint = ("台股要先把 Koyfin 台股池匯出成 data/eps-estimates/DD_tw_EPS_estimates_YYYYMMDD.xlsx"
+                if ctx.ticker.endswith((".TW", ".TWO")) else
+                "先確認這檔在 data/eps-estimates/DD_universe_EPS_estimates_*.xlsx")
+        print("[stop] {0}。{1}；確定要在沒有共識下跑，加 --allow-no-consensus".format(msg, hint), file=sys.stderr)
+        return msg
+    if rev.get("stale"):
+        print("[warn] 共識快照 {0} 已超過 21 天，判斷會用到舊共識".format(latest.get("file")), file=sys.stderr)
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -1720,6 +1750,8 @@ def main(argv=None):
                     help="閘紅燈仍往下做 brief／prose 預覽（只在 --dry-run 有效；manifest 記 FAIL，finish 拒絕）")
     ap.add_argument("--reuse-prose", action="store_true",
                     help="prose 段不 spawn，拿既有 prose_A/B.html 走 split＋gates（除錯／省錢用）")
+    ap.add_argument("--allow-no-consensus", action="store_true",
+                    help="plan 段讀不到 FY1／FY2 共識 EPS 時仍往下跑（預設停下）")
     ap.add_argument("--reuse-judgment", action="store_true",
                     help="judged 段不 spawn，拿既有 judgment.json 走 normalize＋check（除錯／省錢用）")
     args = ap.parse_args(argv)

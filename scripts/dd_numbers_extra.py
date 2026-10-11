@@ -52,6 +52,60 @@ from load_eps_estimates_xlsx import (  # noqa: E402
     DEFAULT_DATA_DIR, FILENAME_RE, apply_adr_ratio, load_excel,
 )
 
+# 2026-10-11 台股 DD：管線原本只讀 DD_universe_ 家族，Koyfin 另外三個池（smallcap／largecap 2026-09-17/18、
+# 台股池 2026-10-09）的成分股共識 EPS 全空 → 8 檔台股判斷者留空 fpe_fy2／peg_fy2。改依 koyfin_families
+# 的家族順序，取「最新快照含這檔」的第一個家族；universe 池成分股結果不變。台股池 EPS 是 Koyfin 美元
+# 切換匯出的值（價格欄是新台幣），比照 build_dd_screener._tw_eps_to_local 以快照日匯率換回新台幣。
+from koyfin_families import FAMILIES, FAMILY_ORDER  # noqa: E402
+
+_snap_cache = {}
+_fx_cache = None
+
+
+def _is_tw(ticker):
+    return str(ticker or "").upper().endswith((".TW", ".TWO"))
+
+
+def _load_snap(path):
+    if path not in _snap_cache:
+        _snap_cache[path] = load_excel(path)
+    return _snap_cache[path]
+
+
+def _family_files(prefix):
+    pat = re.compile(re.escape(prefix) + r"(\d{8})\.xlsx$")
+    return sorted(((q, m.group(1)) for q in DEFAULT_DATA_DIR.glob(prefix + "*.xlsx")
+                   for m in [pat.search(q.name)] if m), key=lambda x: x[1])
+
+
+def _eps_snapshot_files(ticker):
+    """(path, yyyymmdd) 由舊到新：最新快照含這檔的第一個 Koyfin 家族；都不含就回 universe 家族（照舊報「不在最新快照」）。"""
+    for key in FAMILY_ORDER:
+        files = _family_files(FAMILIES[key]["xlsx_family"])
+        if files and _load_snap(files[-1][0]).get(ticker) is not None:
+            return files
+    return _family_files(FAMILIES["screener"]["xlsx_family"])
+
+
+def _eps_record(ticker, snap):
+    """快照裡這檔的記錄：美股走 ADR 換算；台股美元 EPS ×快照日 TWD/USD，查不到匯率回 None（不混幣別）。"""
+    global _fx_cache
+    rec = snap.get(ticker)
+    if not _is_tw(ticker) or rec is None:
+        return apply_adr_ratio(ticker, rec)
+    from eps_fx_normalize import get_fx_rate, load_fx_daily_cache
+    if _fx_cache is None:
+        _fx_cache = load_fx_daily_cache()
+    rate = get_fx_rate("TWD", snap.snapshot_date, _fx_cache)
+    if not rate:
+        return None
+    out = dict(rec)
+    for k in ("fy1", "fy2", "fy3"):
+        if out.get(k) is not None:
+            out[k] = round(out[k] * rate, 2)
+    out["eps_basis"] = "twd (koyfin usd ×{0:.4f} @ {1})".format(rate, snap.snapshot_date)
+    return out
+
 CACHE_DIR = ROOT / ".dd_build" / "_cache"
 SEC_HEADERS = {"User-Agent": "financial-analysis-bot keigoks@gmail.com"}
 
@@ -202,20 +256,17 @@ def compute_valuation_history(ticker, date_dt):
 
         # fwd_recent_window：用本站月度快照 archive 算一段短窗真 fwd PE
         try:
-            files = sorted(
-                (p for p in DEFAULT_DATA_DIR.glob("DD_universe_EPS_estimates_*.xlsx") if FILENAME_RE.search(p.name)),
-                key=lambda p: FILENAME_RE.search(p.name).group(1),
-            )
+            files = _eps_snapshot_files(ticker)
             fwd_points = []
             fwd_eps_basis = None
-            for p in files:
-                snap = load_excel(p)
-                rec = apply_adr_ratio(ticker, snap.get(ticker))
+            for p, d in files:
+                snap = _load_snap(p)
+                rec = _eps_record(ticker, snap)
                 if not rec or rec.get("fy1") in (None, 0):
                     continue
                 if rec.get("eps_basis"):
                     fwd_eps_basis = rec["eps_basis"]
-                snap_dt = datetime.strptime(FILENAME_RE.search(p.name).group(1), "%Y%m%d")
+                snap_dt = datetime.strptime(d, "%Y%m%d")
                 pos = close.index.get_indexer([pd.Timestamp(snap_dt)], method="nearest")[0]
                 price = float(close.iloc[pos])
                 fwd_pe = price / rec["fy1"] if rec["fy1"] > 0 else None
@@ -604,18 +655,17 @@ def compute_consensus_revision(ticker, date_dt):
         "stale": None, "note": None,
     }
     try:
-        files = [p for p in DEFAULT_DATA_DIR.glob("DD_universe_EPS_estimates_*.xlsx") if FILENAME_RE.search(p.name)]
-        if not files:
+        valid = _eps_snapshot_files(ticker)
+        if not valid:
             result["note"] = "data/eps-estimates/ 無任何快照檔"
             return result
-        valid = sorted(((p, FILENAME_RE.search(p.name).group(1)) for p in files), key=lambda x: x[1])
         latest_path, latest_d = valid[-1]
         latest_dt = datetime.strptime(latest_d, "%Y%m%d")
         stale = (date_dt - latest_dt).days > 21
         result["stale"] = stale
 
-        latest_snap = load_excel(latest_path)
-        latest_rec = apply_adr_ratio(ticker, latest_snap.get(ticker))
+        latest_snap = _load_snap(latest_path)
+        latest_rec = _eps_record(ticker, latest_snap)
         if latest_rec is None:
             result["note"] = f"{ticker} 不在最新快照 {latest_path.name}"
             return result
@@ -630,8 +680,8 @@ def compute_consensus_revision(ticker, date_dt):
 
         if len(valid) >= 2:
             prev_path, prev_d = valid[-2]
-            prev_snap = load_excel(prev_path)
-            prev_rec = apply_adr_ratio(ticker, prev_snap.get(ticker))
+            prev_snap = _load_snap(prev_path)
+            prev_rec = _eps_record(ticker, prev_snap)
             if prev_rec is not None:
                 result["previous_snapshot"] = {
                     "file": prev_path.name, "date": prev_snap.snapshot_date,
@@ -657,8 +707,8 @@ def compute_consensus_revision(ticker, date_dt):
             best_path, best_d = min(candidates, key=lambda x: abs((datetime.strptime(x[1], "%Y%m%d") - target).days))
             best_dt = datetime.strptime(best_d, "%Y%m%d")
             if abs((best_dt - target).days) <= 35:
-                snap90 = load_excel(best_path)
-                rec90 = apply_adr_ratio(ticker, snap90.get(ticker))
+                snap90 = _load_snap(best_path)
+                rec90 = _eps_record(ticker, snap90)
                 if rec90 is not None:
                     result["snapshot_90d_prior"] = {
                         "file": best_path.name, "date": snap90.snapshot_date,
