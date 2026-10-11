@@ -109,3 +109,7 @@ def test_plan_consensus_gate(tmp_path):
     ctx = _plan_ctx(tmp_path, {"file": "f", "date": "2026-10-09", "fy1": 19.79, "fy2": 23.61})
     assert run._consensus_check(ctx) is None
     assert ctx.manifest["stages"]["plan"]["consensus"]["fy2"] == 23.61
+
+
+def test_bare_numeric_ticker_stops():
+    assert run.main(["3017", "--dry-run"]) == 2

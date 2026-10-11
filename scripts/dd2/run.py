@@ -1757,6 +1757,12 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     ticker = args.ticker.strip().upper()
+    if re.fullmatch(r"\d{4,6}", ticker):
+        # 2026-10-11：不帶尾碼的數字代號（例 3017_20261005）被當美股跑：股價新台幣、Koyfin 共識美元、
+        # 動能基準 ^GSPC。universe 池同時有日股（6857、6146），無法從代號本身判斷市場。
+        print("[stop] {0} 沒有交易所尾碼：台股上市用 {0}.TW、上櫃用 {0}.TWO，日股用 {0}.T".format(ticker),
+              file=sys.stderr)
+        return 2
     date = args.date or time.strftime("%Y%m%d")
     ctx = Ctx(ticker, date, args)
     ctx.load_manifest()
