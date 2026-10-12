@@ -68,6 +68,19 @@ def fill(text, values):
     return text
 
 
+_LEFTOVER_RE = re.compile(r"\{[A-Z_]+\}")
+
+
+def strip_unfilled(text):
+    """清掉殘留的 `{XXX}` 佔位符（取不到值時），並收掉多餘空白。回傳 (新文字, 殘留清單)。"""
+    left = _LEFTOVER_RE.findall(text or "")
+    if not left:
+        return text, []
+    out = _LEFTOVER_RE.sub("", text)
+    out = re.sub(r"[ \t]{2,}", " ", out).strip()
+    return out, left
+
+
 def resolve_axes(matrix, archetype, segments=None, values=None):
     """回傳展開後的軸清單（per_segment 展開、佔位符已替換若 values 提供）。"""
     values = values or {}
@@ -101,8 +114,8 @@ def resolve_axes(matrix, archetype, segments=None, values=None):
 
 def _apply_placeholders(axis, values):
     if values:
-        axis["question"] = fill(axis.get("question", ""), values)
-        axis["queries"] = [fill(q, values) for q in axis.get("queries", [])]
+        axis["question"] = strip_unfilled(fill(axis.get("question", ""), values))[0]
+        axis["queries"] = [strip_unfilled(fill(q, values))[0] for q in axis.get("queries", [])]
     return axis
 
 
