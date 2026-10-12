@@ -224,6 +224,22 @@ def _evaluate_matrix(inputs: dict) -> dict:
 
     has_soft_veto = len(soft_veto_rows) > 0
 
+    # 2026-10-05 持有人拍板：判斷者可宣告「價格合理但要等」，只往保守方向（進場→觀望）。
+    # 2026-10-12 持有人拍板（AMAT 案）：範圍從 row 9／9b／10 擴到 8a／8b 條件式進場——判斷者寫「等 440 美元」
+    # 而矩陣給爆發候選，閘 ④ 判裁決與理由互斥。登記 knowledge/rule_ledger.md「wait_for_price」列。
+    wait_for_price = inputs.get("wait_for_price") is True
+
+    def _wait_for_price_out(entry_row):
+        _audit(audit_rows, "8w", "判斷者宣告 wait_for_price（價格合理但要等）→ 原 row"
+               + entry_row + " 進場改觀望（等價格）", True,
+               f"wait_for_price=True, 等待條件={inputs.get('wait_for_price_condition')!r}")
+        return {
+            "verdict": "觀望", "role": role_hint if role_hint else "追蹤",
+            "row_hit": "8w(原" + entry_row + ")",
+            "pacing": pacing, "holding_cap": holding_cap,
+            "requires_critic": requires_critic, "audit_rows": audit_rows,
+        }
+
     # ---- Row 8a（Baseline·爆發候選；row6/7/7a soft veto 一律封鎖 8a） ----
     row8a_hit = False
     row8a_gaps = []
@@ -270,6 +286,8 @@ def _evaluate_matrix(inputs: dict) -> dict:
         if blocked:
             row8a_hit = False
 
+    if row8a_hit and wait_for_price:
+        return _wait_for_price_out("8a")
     if row8a_hit:
         verdict = "進場·條件式（爆發候選）"
         row_hit = "8a"
@@ -303,6 +321,8 @@ def _evaluate_matrix(inputs: dict) -> dict:
         gap=row8b_gaps or None,
     )
 
+    if row8b_hit and wait_for_price:
+        return _wait_for_price_out("8b")
     if row8b_hit:
         verdict = "進場·條件式（循環衛星）"
         row_hit = "8b"
@@ -391,20 +411,8 @@ def _evaluate_matrix(inputs: dict) -> dict:
     _audit(audit_rows, "10", "無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場", row10_hit,
            f"signal={signal!r}, val={val!r}, ma={ma!r}")
 
-    # 2026-10-05 持有人拍板：判斷者可宣告「價格合理但要等」，只往保守方向（進場→觀望），
-    # 不碰 8a/8b 條件式路徑。登記 knowledge/rule_ledger.md「wait_for_price」列。
-    wait_for_price = inputs.get("wait_for_price") is True
     if wait_for_price and (row10_hit or row9_hit or row9b_hit):
-        entry_row = "10" if row10_hit else ("9" if row9_hit else "9b")
-        _audit(audit_rows, "8w", "判斷者宣告 wait_for_price（價格合理但要等）→ 原 row"
-               + entry_row + " 進場改觀望（等價格）", True,
-               f"wait_for_price=True, 等待條件={inputs.get('wait_for_price_condition')!r}")
-        return {
-            "verdict": "觀望", "role": role_hint if role_hint else "追蹤",
-            "row_hit": "8w(原" + entry_row + ")",
-            "pacing": pacing, "holding_cap": holding_cap,
-            "requires_critic": requires_critic, "audit_rows": audit_rows,
-        }
+        return _wait_for_price_out("10" if row10_hit else ("9" if row9_hit else "9b"))
 
     if row10_hit or row9_hit:
         # row9/10 皆映射 dd-meta dca_verdict=「進場」（plain，enum 無 baseline 條件式變體）

@@ -19,18 +19,22 @@ DI_8A = {"signal": "B", "ma": "✅", "cycle_position": "中循環", "cycle_verdi
          "ev5y_pct": None, "val_denominator_disputed": True, "val_denominator_note": "分母爭議"}
 
 
+# QC-48 接線測試要看 8a 本身，關掉 wait_for_price（2026-10-12 起它會把 8a 改觀望，另有專測）
+DI_8A_GO = dict(DI_8A, wait_for_price=None, wait_for_price_condition=None)
+
+
 def _rows(out):
     return {r["row"]: r for r in out["audit_rows"]}
 
 
 def test_qc48_null_keeps_8a():  # 舊鏈（沒經 dd2 critic）行為不變
-    out = dd_decision.evaluate(dict(DI_8A))
+    out = dd_decision.evaluate(dict(DI_8A_GO))
     assert out["row_hit"] == "8a" and out["verdict"] == "進場·條件式（爆發候選）"
     assert "8a-QC48" not in _rows(out)
 
 
 def test_qc48_pass_keeps_8a():
-    out = dd_decision.evaluate(dict(DI_8A, qc48_result="pass", qc48_note="Bull 依據成立"))
+    out = dd_decision.evaluate(dict(DI_8A_GO, qc48_result="pass", qc48_note="Bull 依據成立"))
     assert out["row_hit"] == "8a"
     assert _rows(out)["8a-QC48"]["hit"] is False
 
@@ -43,6 +47,25 @@ def test_qc48_fail_and_not_run_fall_to_row8():
         rows = _rows(out)
         assert rows["8a"]["hit"] is True and rows["8a-QC48"]["hit"] is True  # 資格仍記錄為過，攔下的是 critic
         assert "QC-48" not in out["requires_critic"]
+
+
+def test_wait_for_price_turns_8a_to_watch():  # 2026-10-12 AMAT 案：判斷者要等價格，爆發候選改觀望
+    out = dd_decision.evaluate(dict(DI_8A, qc48_result="pass", qc48_note="Bull 依據成立"))
+    assert out["verdict"] == "觀望" and out["row_hit"] == "8w(原8a)" and out["role"] == "追蹤"
+    assert "QC-48" not in out["requires_critic"]
+    assert _rows(out)["8w"]["hit"] is True
+
+
+def test_wait_for_price_with_qc48_fail_still_row8():  # 6187.TWO 實際路徑：critic 先擋，落 row 8 不變
+    out = dd_decision.evaluate(dict(DI_8A, qc48_result="fail", qc48_note="結論"))
+    assert out["verdict"] == "觀望" and not str(out["row_hit"]).startswith("8w")
+
+
+def test_wait_for_price_turns_8b_to_watch():
+    di_8b = dict(DI_8A, val="🟡", cycle_position="早循環", cycle_gates_pass=True)
+    assert dd_decision.evaluate(dict(di_8b, wait_for_price=None))["row_hit"] == "8b"
+    out = dd_decision.evaluate(di_8b)
+    assert out["verdict"] == "觀望" and out["row_hit"] == "8w(原8b)"
 
 
 def _reply(lights, conclusion="結論一句"):

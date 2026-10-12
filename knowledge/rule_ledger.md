@@ -237,11 +237,15 @@
 
 | 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
 |---|---|---|---|---|
-| **`decision_inputs.wait_for_price`＝true 時，baseline row 9／9b／10 的進場改觀望（row_hit `8w(原N)`）**；只往保守方向，不碰 8a／8b 條件式路徑、不能把觀望升進場；必須同填 `wait_for_price_condition`（等哪個價位或哪件事），缺則 `validate_judgment.py` FAIL（`dd_decision.py`、`dd_project.py` 覆寫層、`judge_card.md`、`gate_card.md` §④） | v20 (2026-10-05) | TPR 2026-10-05：判斷者寫「估值合理不算便宜、條件不成立就不追、等 Q1」，但 signal B＋val 🟡＋MA 🟡 機械命中 row 9 → 進場；矩陣沒有任何輸入能表達「價格合理但要等」，結論與理由互斥，閘 ④ 判紅、patch 後仍紅，報告無法發布 | ①下次裁決校準時，被本條由進場壓成觀望的名字，判斷日後 6 個月報酬中位數 ≥ 同期 row 9／10 進場組（等待沒有換到更好價格，只是少賺）；②判斷者在 val 🟢 名字上也頻繁勾選（≥ 勾選總數三成），代表被當成逃避下結論的出口 | — |
+| **`decision_inputs.wait_for_price`＝true 時，baseline row 9／9b／10 的進場改觀望（row_hit `8w(原N)`）**；只往保守方向（2026-10-12 起含 8a／8b 條件式路徑，見下方追記）、不能把觀望升進場；必須同填 `wait_for_price_condition`（等哪個價位或哪件事），缺則 `validate_judgment.py` FAIL（`dd_decision.py`、`dd_project.py` 覆寫層、`judge_card.md`、`gate_card.md` §④） | v20 (2026-10-05) | TPR 2026-10-05：判斷者寫「估值合理不算便宜、條件不成立就不追、等 Q1」，但 signal B＋val 🟡＋MA 🟡 機械命中 row 9 → 進場；矩陣沒有任何輸入能表達「價格合理但要等」，結論與理由互斥，閘 ④ 判紅、patch 後仍紅，報告無法發布 | ①下次裁決校準時，被本條由進場壓成觀望的名字，判斷日後 6 個月報酬中位數 ≥ 同期 row 9／10 進場組（等待沒有換到更好價格，只是少賺）；②判斷者在 val 🟢 名字上也頻繁勾選（≥ 勾選總數三成），代表被當成逃避下結論的出口 | — |
 
 加一提刪一（本次提名候刪審查）：QC-49 裁決 hysteresis（`qc49_inherit_prior`）——TPR 同日閘 ⑧ 紅燈即源於此欄語意模糊（判斷者寫「前份重新進場條件已觸發」並填 false，閘認為矛盾），欄位定義誰都讀不一致時，承繼與否實際由誰說了算不可審。
 
 追記（2026-10-06，持有人拍板）：**QC-49 不得把 wait_for_price 的觀望承繼回進場**（`dd_decision.py` `evaluate()` QC-49 段）。3017 案：判斷者寫「不追、等 2,900 元以下」並填 wait_for_price＝true，矩陣出觀望，QC-49 以前份 07-11 進場（86 天）承繼翻回進場，閘 ④ 兩輪皆紅。QC-49 仍可承繼其他方向；kill condition 併入上列 wait_for_price 列。
+
+追記（2026-10-12，持有人拍板）：**wait_for_price＝true 時，row 8a（爆發候選）與 row 8b（循環衛星）的條件式進場也改觀望**（row_hit `8w(原8a)`／`8w(原8b)`；`dd_decision.py` 共用 `_wait_for_price_out`；8a 仍先過 QC-48，critic 不放行照舊落 row 8）。觸發事故：AMAT 2026-10-12 判斷者寫「等 440 美元附近再談」並填 wait_for_price＝true（基準年化 3.2%），矩陣 8a 資格全過、QC-48 pass → 進場·條件式（爆發候選）｜衛星；閘 ④ 判裁決與理由互斥，patch 想改 valuation_dependent（程式擁有欄）被 J2 擋，報告無法發布。6187.TWO 2026-10-11 是同一個矛盾（判斷者「等 900 元以下」），當時靠 QC-48 fail 碰巧落觀望。歷史 8a 命中僅 3 檔（BE、BWXT 2026-09-05，AMAT 2026-10-12），基準年化皆 < 7%，前兩檔早於 wait_for_price 欄位。回溯：25 份含完整投影輸入的 v20 run 以舊／新矩陣重算，只有 AMAT 一份改變（TXN 09-24 也命中 8a，但沒宣告等價格，不變）。kill condition 併入上列 wait_for_price 列，另加：③下次裁決校準時，被本條由 8a／8b 壓成觀望的名字，判斷日後 6 個月報酬中位數 ≥ 同期 8a／8b 進場組 → 範圍退回 row 9／9b／10。
+
+加一提刪一（本次提名候刪審查）：row 8a 26 週漲幅位置閘（<+100% 放行／>+150% 擋）——v14.6 上線以來 8a 只命中 3 次、三次 26 週漲幅都在 +100% 以下，校準時查它有沒有實際擋下過任何一檔；0 擋＝裝飾閘，依本表 KILL 規則處理。
 
 ## 2026-10-09：成長閘統一 15%（取消耐久者放寬至 10%）
 
