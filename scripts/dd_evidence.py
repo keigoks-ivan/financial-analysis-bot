@@ -276,6 +276,47 @@ def _add_finding_ids(coverage):
                 f["id"] = f"{axis_id}#{i}"
 
 
+_URL_KEYS = {"url", "href", "link"}
+
+
+def _fw_str(s):
+    """判準與對照表重用 qc.CJK_PUNCT_RE／validate_judgment._PUNCT_FULLWIDTH（同 _fullwidth_punct）；
+    另吃掉半形標點後的一個空格（「摘要: Applied」→「摘要：Applied」）。"""
+    import re
+    import qc
+    import validate_judgment
+    return re.sub(qc.CJK_PUNCT_RE.pattern + " ?",
+                  lambda m: m.group(0)[0] + validate_judgment._PUNCT_FULLWIDTH[m.group(0)[1]], s)
+
+
+def _fw_obj(obj):
+    """遞迴轉字串；鍵名 url／href／link 的值不動。回轉換的字串數。"""
+    n = 0
+    items = obj.items() if isinstance(obj, dict) else enumerate(obj) if isinstance(obj, list) else ()
+    for k, v in list(items):
+        if isinstance(obj, dict) and str(k).lower() in _URL_KEYS:
+            continue
+        if isinstance(v, str):
+            fixed = _fw_str(v)
+            if fixed != v:
+                obj[k] = fixed
+                n += 1
+        else:
+            n += _fw_obj(v)
+    return n
+
+
+def _fullwidth_findings(base):
+    """採證 agent 寫的來源字串常是「Reuters 摘要: Applied…」（2026-10-12 AMAT：歸檔後 pre-push qc.py 擋下）。
+    finalize 寫檔前，coverage／events 各軸 findings 的字串欄一律轉全形。回轉換的字串數。"""
+    n = 0
+    for block in ("coverage", "events"):
+        for axis in (base.get(block) or {}).values():
+            if isinstance(axis, dict):
+                n += _fw_obj(axis.get("findings") or [])
+    return n
+
+
 def _empty_evidence_skeleton():
     """finalize 找不到既有 evidence.json 骨架時的起點（頂層 key 齊全、值皆空，
     形狀比照 cmd_init 的輸出），避免純 --parts 模式下純粹因「key 不存在」洗出一堆
@@ -344,9 +385,12 @@ def cmd_finalize(args):
         merged.append(part_path.name)
 
     _add_finding_ids(base.get("coverage") or {})
+    n_fw = _fullwidth_findings(base)
     _atomic_write(out_path, base)
 
     print(f"finalize：合併 {len(merged)} 個 part → {out_path}")
+    if n_fw:
+        print(f"  半形標點轉全形：findings {n_fw} 個字串")
     for name in merged:
         print(f"  + {name}")
     if failed:
