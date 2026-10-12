@@ -258,7 +258,7 @@ def epoch_day(s):
 
 
 # ---------- 單張圖 ----------
-def build_chart(country, chart, ctx):
+def build_chart(country, chart, ctx, kick=""):
     """回傳 (json 內容, summaries, card html)。"""
     series_json, sums = [], []
     visible = [s for s in chart["series"] if not s.get("hidden")]
@@ -292,7 +292,7 @@ def build_chart(country, chart, ctx):
     jd = {"series": [s for s in series_json if s["d"]]}
     if scatter:
         jd["scatter"] = True
-    return jd, sums, card_html(country, chart, visible, sums, series_json, ctx)
+    return jd, sums, card_html(country, chart, visible, sums, series_json, ctx, kick)
 
 
 def summary(spec, obs, stale, smsg, ctx, idx, chart):
@@ -317,7 +317,8 @@ def summary(spec, obs, stale, smsg, ctx, idx, chart):
     return out
 
 
-PAL = ['#1e3a5f', '#b8924a', '#2a9d8f', '#c0392b', '#7c5cbf', '#4f8a3a', '#e07b39', '#5a7a9a', '#8c564b', '#17becf']
+# 與 web/db.js 的 PAL 同一組、同順序（色塊與圖上線色對應）
+PAL = ['#0d2244', '#b8924a', '#b91c1c', '#1d4ed8', '#15803d', '#a16207', '#6b7a92', '#d4b576', '#234a86', '#173564']
 
 
 def src_line(visible):
@@ -341,8 +342,11 @@ def weekday(date_s):
     return WD[dt.date.fromisoformat(date_s).weekday()]
 
 
-def card_html(country, chart, visible, sums, series_json, ctx):
-    h = [f'<section class="card" id="{esc(chart["key"])}">', f'<h3>{esc(hspace(chart["title_zh"]))}</h3>']
+def card_html(country, chart, visible, sums, series_json, ctx, kick=""):
+    h = [f'<section class="card" id="{esc(chart["key"])}">']
+    if kick:
+        h.append(f'<div class="kick">{esc(kick)}</div>')
+    h.append(f'<h3>{esc(hspace(chart["title_zh"]))}</h3>')
     if chart.get("definition"):
         h.append(f'<div class="def">{esc(hspace(chart["definition"]))}</div>')
     h.append('<div class="tools"><div class="rng">'
@@ -351,26 +355,31 @@ def card_html(country, chart, visible, sums, series_json, ctx):
              '<div class="legend"></div></div>')
     h.append(f'<div class="chart" data-key="{esc(chart["key"])}" data-range="5"></div>')
     h.append('<div class="srows">')
-    for i, (spec, sm) in enumerate(zip(visible, sums)):
-        col = PAL[i % len(PAL)]
+    # db.js 只畫有資料的序列、以其索引取色，這裡同樣略過無資料序列來計索引
+    ci = 0
+    for spec, sm in zip(visible, sums):
+        col = PAL[ci % len(PAL)]
+        if sm.get("latest") is not None:
+            ci += 1
         un = sm["unit"]
         note = spec.get("use_note")
-        nm = f'<i style="background:{col}"></i><b>{esc(hspace(sm["label"]))}</b>'
+        nm = f'<b>{esc(hspace(sm["label"]))}</b>'
         if un:
             nm += f'<span class="un">單位：{esc(un)}</span>'
         if note and not note.startswith(NO_NOTE_PREFIX):
             nm += f'<span class="un">（{esc(hspace(note))}）</span>'
-        vals = []
+        big = ""
+        subs = []
         if sm.get("latest") is None:
-            vals.append('<span class="k">尚無資料</span>')
+            subs.append('<span class="k">尚無資料</span>')
         else:
-            vals.append(f'<span><span class="k">最新</span> {esc(hspace(sm["period"]))}　<b>{esc(sm["latest_txt"])}</b></span>')
+            big = f'<div class="big"><b>{esc(sm["latest_txt"])}</b><span class="per">最新 · {esc(hspace(sm["period"]))}</span></div>'
             if sm.get("prev_txt"):
-                vals.append(f'<span><span class="k">前值</span> {esc(sm["prev_txt"])}（{esc(hspace(sm["prev_period"]))}）</span>')
-                vals.append(f'<span><span class="k">變動</span> {esc(hspace(sm["change"]))}</span>')
+                subs.append(f'<span><span class="k">前值</span> {esc(sm["prev_txt"])}（{esc(hspace(sm["prev_period"]))}）</span>')
+                subs.append(f'<span><span class="k">變動</span> {esc(hspace(sm["change"]))}</span>')
         if sm.get("next"):
-            vals.append(f'<span><span class="k">下次公布</span> {sm["next"]}（週{weekday(sm["next"])}）</span>')
-        row = f'<div class="srow"><div class="nm">{nm}</div><div class="vals">{"".join(vals)}</div>'
+            subs.append(f'<span><span class="k">下次公布</span> {sm["next"]}（週{weekday(sm["next"])}）</span>')
+        row = f'<div class="srow" style="border-left-color:{col}"><div class="nm">{nm}</div>{big}<div class="vals">{"".join(subs)}</div>'
         if sm["stale"]:
             row += f'<div class="stale">{esc(hspace(sm["stale_msg"]))}</div>'
         if spec.get("discontinued"):
@@ -443,8 +452,9 @@ def country_seg(country, active_on_index=False):
 def category_page(country, cat, cats, ctx, all_cats_present):
     charts = sorted(cat["charts"], key=lambda c: (c["priority"], cat["charts"].index(c)))
     cards, jdata, sums_all = [], {}, []
-    for ch in charts:
-        jd, sums, card = build_chart(country, ch, ctx)
+    kplace = cat.get("group") if cat.get("part") else COUNTRY_NAME[country]
+    for no, ch in enumerate(charts, 1):
+        jd, sums, card = build_chart(country, ch, ctx, f"圖 {no} · {kplace} · {cat['name_zh']}")
         jdata[ch["key"]] = jd
         cards.append(card)
         sums_all.append((ch, sums))
