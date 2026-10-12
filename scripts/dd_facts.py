@@ -140,8 +140,12 @@ def _kpi_facts(numbers, buckets):
         # 來的由事實表 agent 複核，程式不猜。
         kind = "guidance" if re.search(
             r"展望|指引|預估|預測|目標|guidance|outlook", metric, re.I) else "realized"
+        # 2026-10-12 NVMI：採集 agent 把財測區間寫成 {"low":2.7,"high":2.85}，check 只收純量／陣列。
+        value = item.get("value")
+        if isinstance(value, dict) and {"low", "high"} <= set(value):
+            value = "{0}～{1}".format(value["low"], value["high"])
         fact = _fact(
-            fid, metric, item.get("value"),
+            fid, metric, value,
             item.get("as_of") or quarter, item.get("unit"),
             "evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）",
             kind,
