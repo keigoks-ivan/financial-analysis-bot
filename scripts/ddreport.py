@@ -351,7 +351,31 @@ def _resolve_placeholders(ticker, prior, offline=False):
             print("[warn] placeholders：yfinance 取名稱／產業失敗（{0}），跳過".format(
                 str(e)[:120]), file=sys.stderr)
     values["COMPANY"] = _clean_company_name(values["COMPANY"])
+    # 2026-10-12：台股另填中文簡稱與純數字代號，供 coverage-axes 的 queries_tw 用。
+    tw = _tw_security_meta(ticker)
+    if tw:
+        values["COMPANY_ZH"], src["COMPANY_ZH"] = tw["name"], "security_meta"
+        values["CODE"] = tw["code"]
     return values, src
+
+
+def _tw_security_meta(ticker):
+    """台股代號（2360.TW／3324.TWO／純數字 3017）→ {"name": 中文簡稱, "code": "3017"}；
+    不是台股或 data/active_etf/security_meta.json 查不到就回 None。"""
+    m = re.fullmatch(r"(\d{4,6}[A-Z]?)(?:\.(TW|TWO))?", (ticker or "").strip().upper())
+    if not m:
+        return None
+    code = m.group(1)
+    try:
+        meta = _load_json(REPO_ROOT / "data" / "active_etf" / "security_meta.json")
+    except Exception:
+        return None
+    keys = [ticker.upper()] if m.group(2) else [code + ".TW", code + ".TWO"]
+    for k in keys:
+        name = ((meta.get(k) or {}).get("name") or "").strip()
+        if name:
+            return {"name": name, "code": code}
+    return None
 
 
 def _axis_block(axes):
@@ -371,6 +395,8 @@ def _axis_block(axes):
         a["queries"] = qs
         lines.append("[{0}] {1}".format(a.get("id"), a.get("name", "")))
         lines.append("Q: {0}".format(a.get("question", "")))
+        if a.get("hint"):
+            lines.append("來源提示: {0}".format(a["hint"]))
         for q in a.get("queries", []) or []:
             lines.append("  - {0}".format(q))
         if a.get("na_allowed"):
@@ -1224,6 +1250,8 @@ def cmd_plan(args):
         "--company", ph_values["COMPANY"], "--industry", ph_values["INDUSTRY"],
         "--customers", ph_values["CUSTOMERS"],
     ]
+    if ph_values.get("COMPANY_ZH"):
+        axes_cmd += ["--market", "tw", "--company-zh", ph_values["COMPANY_ZH"], "--code", ph_values["CODE"]]
     if args.segments:
         axes_cmd += ["--segments", args.segments]
     r = _run_subprocess(axes_cmd, manifest, "dd_evidence_axes")

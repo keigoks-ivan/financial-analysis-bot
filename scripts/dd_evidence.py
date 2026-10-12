@@ -44,7 +44,7 @@ BUILD_DIR = ROOT / ".dd_build"
 # 的行內反引號範例（如「` ```json `」這種說明文字）被誤判成 fenced block 起點。
 JSON_BLOCK_RE = re.compile(r"^```json\s*$\n(.*?)\n^```\s*$", re.M | re.S)
 
-PLACEHOLDER_KEYS = ["TICKER", "COMPANY", "INDUSTRY", "CUSTOMERS", "SEGMENT"]
+PLACEHOLDER_KEYS = ["TICKER", "COMPANY", "INDUSTRY", "CUSTOMERS", "SEGMENT", "COMPANY_ZH", "CODE"]
 
 
 def load_matrix(path=AXES_MD):
@@ -81,8 +81,10 @@ def strip_unfilled(text):
     return out, left
 
 
-def resolve_axes(matrix, archetype, segments=None, values=None):
-    """回傳展開後的軸清單（per_segment 展開、佔位符已替換若 values 提供）。"""
+def resolve_axes(matrix, archetype, segments=None, values=None, market=None):
+    """回傳展開後的軸清單（per_segment 展開、佔位符已替換若 values 提供）。
+    market="tw"（2026-10-12）：有 queries_tw 的軸改用台股中文查詢，並把頂層 tw_hint
+    ＋該軸 hint_tw 放進 axis["hint"]；queries_tw／hint_tw 本身不留在輸出。"""
     values = values or {}
     common = matrix.get("common", [])
     extra = matrix.get("by_archetype", {}).get(archetype)
@@ -91,6 +93,7 @@ def resolve_axes(matrix, archetype, segments=None, values=None):
         raise SystemExit(f"未知 archetype：{archetype!r}（已知：{known}）")
     resolved = []
     for axis in common + extra:
+        axis = _localize_axis(axis, matrix, market)
         if axis.get("per_segment"):
             segs = segments or []
             if not segs:
@@ -112,9 +115,24 @@ def resolve_axes(matrix, archetype, segments=None, values=None):
     return resolved
 
 
+def _localize_axis(axis, matrix, market):
+    axis = dict(axis)
+    qs_tw = axis.pop("queries_tw", None)
+    hint_tw = axis.pop("hint_tw", None)
+    if market == "tw":
+        if qs_tw:
+            axis["queries"] = list(qs_tw)
+        hint = " ".join(h for h in (matrix.get("tw_hint"), hint_tw) if h)
+        if hint:
+            axis["hint"] = hint
+    return axis
+
+
 def _apply_placeholders(axis, values):
     if values:
         axis["question"] = strip_unfilled(fill(axis.get("question", ""), values))[0]
+        if axis.get("hint"):
+            axis["hint"] = strip_unfilled(fill(axis["hint"], values))[0]
         axis["queries"] = [strip_unfilled(fill(q, values))[0] for q in axis.get("queries", [])]
     return axis
 
@@ -126,9 +144,11 @@ def cmd_axes(args):
         "COMPANY": args.company or "",
         "INDUSTRY": args.industry or "",
         "CUSTOMERS": args.customers or "",
+        "COMPANY_ZH": args.company_zh or "",
+        "CODE": args.code or "",
     }
     segments = [s.strip() for s in args.segments.split(",") if s.strip()] if args.segments else None
-    axes = resolve_axes(matrix, args.archetype, segments, values)
+    axes = resolve_axes(matrix, args.archetype, segments, values, market=args.market)
     if args.json:
         print(json.dumps(axes, ensure_ascii=False, indent=2))
         return 0
@@ -438,6 +458,9 @@ def main(argv):
     ax.add_argument("--company")
     ax.add_argument("--industry")
     ax.add_argument("--customers")
+    ax.add_argument("--market", choices=["tw"], help="tw＝改用 queries_tw 台股中文查詢＋台股來源提示")
+    ax.add_argument("--company-zh", help="台股中文簡稱，填 {COMPANY_ZH}")
+    ax.add_argument("--code", help="台股純數字代號，填 {CODE}")
     ax.add_argument("--json", action="store_true")
     ax.set_defaults(func=cmd_axes)
 
