@@ -236,3 +236,37 @@ def test_peg_fy2_prefers_valuation_peg_when_appendix_blank():
 
     j["appendix_a"] = {"peg_fy2": 2.9}
     assert gen_dd_tables.build_dd_meta(j, None)["peg_fy2"] == 2.9
+
+
+# ---------------------------------------------------------------------------
+# 2026-10-12 CRWV：sales_multiple 情境樹（虧損公司）沒有 base_eps_path、FY2 共識 EPS
+# 為負，fpe_fy2／peg_fy2 兩個必填欄原本留空 → dd-meta 驗證擋發布。沿用 -1 慣例。
+# ---------------------------------------------------------------------------
+
+def _sales_judgment(appendix_a=None):
+    return {
+        "meta": {"ticker": "ZLOSS", "date": "20261012", "schema": "v17"},
+        "decision_inputs": {"price_at_dd": 82.08},
+        "decision_out": {"verdict": "觀望", "role": "追蹤"},
+        "appendix_a": appendix_a or {"val": "🟡"},
+    }
+
+
+def test_sales_multiple_fills_fpe_peg_with_minus_one():
+    sm = {"ev5y_pct": 29.3, "scenario_tree": {"valuation_basis": "sales_multiple"}}
+    meta = gen_dd_tables.build_dd_meta(_sales_judgment(), sm)
+    assert meta["fpe_fy2"] == -1
+    assert meta["peg_fy2"] == -1
+
+
+def test_sales_multiple_keeps_judge_values():
+    sm = {"scenario_tree": {"valuation_basis": "sales_multiple"}}
+    meta = gen_dd_tables.build_dd_meta(_sales_judgment({"val": "🟡", "fpe_fy2": 45.0, "peg_fy2": 0.8}), sm)
+    assert meta["fpe_fy2"] == 45.0
+    assert meta["peg_fy2"] == 0.8
+
+
+def test_eps_pe_mode_does_not_get_minus_one():
+    meta = gen_dd_tables.build_dd_meta(_sales_judgment(), {"scenario_tree": {"valuation_basis": "eps_pe"}})
+    assert meta.get("fpe_fy2") is None
+    assert meta.get("peg_fy2") is None

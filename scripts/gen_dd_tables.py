@@ -258,6 +258,12 @@ def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
     # （漢唐判斷者 1,305÷85＝15.4 倍即此算法）；判斷者有填一律用判斷者的。
     if meta.get("fpe_fy2") is None or meta.get("peg_fy2") is None:
         _fill_fy2_valuation_from_base(meta)
+    # 2026-10-12 CRWV：sales_multiple 情境樹（虧損公司）沒有 base_eps_path、FY2 共識 EPS 又為負，
+    # 本益比與 PEG 無定義 → 沿用 -1 慣例（同上方 LULU 註；aggregate_dd_stats 只取 >0，自動排除）。
+    if ((scenario_meta or {}).get("scenario_tree") or {}).get("valuation_basis") == "sales_multiple":
+        for k in ("fpe_fy2", "peg_fy2"):
+            if meta.get(k) is None:
+                meta[k] = -1
 
     endo = (moat.get("roic_durability") or {}).get("endo_ceiling")
     if endo is not None:
