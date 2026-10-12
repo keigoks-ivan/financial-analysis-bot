@@ -179,7 +179,7 @@ bundle 依序包含：`gate_card.md`（①–⑧ checklist 全文與 🔴／🟡
 - `reg_tariff_export#2`（reg_tariff_export｜方向 -｜狀態 ok）：2026年2月報導 AMAT 就向中芯國際（SMIC）違規出口晶片設備達成約 2.52 億美元和解／罰款；設備經南韓子公司轉運，SMIC 於 2020年12月被列入實體清單之後出貨開始。
   - 來源：TrendForce News: US reportedly hits Applied Materials with $252M penalty for illegally sending chip equipment to SMIC（as_of 2026-02-12）｜affects：decision_inputs.bear、thesis.R
 - `reg_tariff_export#4`（reg_tariff_export｜方向 -｜狀態 ok）：中國占 AMAT 營收比重：聚合站稱 FY Q3 中國營收 25.1 億美元、占 28%（去年同期 35%）；CFO 稱限制影響相當於 FY2024 中國市場約 10%、FY2025 逾兩倍（次級聚合來源，未核對公司申報）。
-  - 來源：Yahoo Finance／Reuters 摘要: Applied Materials sees weaker China spending in 2026 on tighter US curbs（as_of 2025-11-13）｜affects：moat_trend、decision_inputs.bear
+  - 來源：Yahoo Finance／Reuters 摘要：Applied Materials sees weaker China spending in 2026 on tighter US curbs（as_of 2025-11-13）｜affects：moat_trend、decision_inputs.bear
 - `geo_supply_chain#0`（geo_supply_chain｜方向 -｜狀態 ok）：公司稱美國出口管制預計使 FY2026 營收減少約 6 億美元（Q4 減 1.1 億）；另有報導引述 7.1 億美元口徑
   - 來源：Reuters 經 Yahoo Finance：Applied Materials sees weaker China spending in 2026 on tighter US curbs（as_of 2025-11-13）｜affects：decision_inputs.bear、thesis.R
 - `geo_supply_chain#1`（geo_supply_chain｜方向 -｜狀態 ok）：中國營收占比由近 40% 降至 20% 中段；CEO 指非美系設備商不受同等限制，受限客戶可轉向對手（日期為推定，原文發布日未於摘要中確認）
