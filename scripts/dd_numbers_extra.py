@@ -647,6 +647,34 @@ def compute_momentum_26w(ticker, idx_benchmark=None):
 # numbers.consensus_revision
 # ---------------------------------------------------------------------------
 
+def _yf_consensus(ticker, date_dt):
+    """Koyfin 快照沒有這檔（或缺 FY1／FY2）時的後備：yfinance earnings_estimate 的 0y／+1y 平均。
+    幣別是 yfinance 報價幣別（台股為新台幣）。抓不到回 None。"""
+    try:
+        np, pd, yf = _lazy_imports()
+        est = yf.Ticker(ticker).earnings_estimate
+        if est is None or est.empty or "0y" not in est.index or "+1y" not in est.index:
+            return None
+
+        def _f(period, col):
+            v = est.loc[period].get(col)
+            return None if v is None or pd.isna(v) else float(v)
+
+        fy1, fy2 = _f("0y", "avg"), _f("+1y", "avg")
+        if fy1 is None or fy2 is None:
+            return None
+        n1, n2 = _f("0y", "numberOfAnalysts"), _f("+1y", "numberOfAnalysts")
+        return {
+            "file": "yfinance earnings_estimate", "date": date_dt.strftime("%Y-%m-%d"),
+            "fy1": round(fy1, 2), "fy2": round(fy2, 2), "fy3": None,
+            "analysts_fy1": int(n1) if n1 is not None else None,
+            "analysts_fy2": int(n2) if n2 is not None else None,
+            "eps_basis": "yfinance（報價幣別）",
+        }
+    except Exception:
+        return None
+
+
 def compute_consensus_revision(ticker, date_dt):
     result = {
         "latest_snapshot": None, "previous_snapshot": None, "snapshot_90d_prior": None,
@@ -666,8 +694,17 @@ def compute_consensus_revision(ticker, date_dt):
 
         latest_snap = _load_snap(latest_path)
         latest_rec = _eps_record(ticker, latest_snap)
-        if latest_rec is None:
-            result["note"] = f"{ticker} 不在最新快照 {latest_path.name}"
+        if latest_rec is None or latest_rec.get("fy1") is None or latest_rec.get("fy2") is None:
+            miss = (f"{ticker} 不在最新快照 {latest_path.name}" if latest_rec is None
+                    else f"{ticker} 在 {latest_path.name} 無 FY1／FY2 共識")
+            yf_snap = _yf_consensus(ticker, date_dt)
+            if yf_snap is None:
+                result["note"] = miss
+                return result
+            result["latest_snapshot"] = yf_snap
+            result["eps_basis"] = yf_snap["eps_basis"]
+            result["stale"] = False
+            result["note"] = miss + "；改用 yfinance earnings_estimate（0y／+1y）當 FY1／FY2，單一時點無修正%"
             return result
         result["latest_snapshot"] = {
             "file": latest_path.name, "date": latest_snap.snapshot_date,

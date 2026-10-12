@@ -204,7 +204,10 @@ def _valuation_facts(numbers, buckets, ticker=None):
     for fy in ("fy1", "fy2", "fy3"):
         if latest.get(fy) is None:
             continue
-        if str(eps_basis_note or "").startswith("twd"):
+        if str(eps_basis_note or "").startswith("yfinance"):
+            # Koyfin 快照沒有這檔時，dd_numbers_extra 改抓 yfinance earnings_estimate（0y／+1y）
+            basis_text = "yfinance 分析師共識平均（Koyfin 快照無此檔）；幣別同報價"
+        elif str(eps_basis_note or "").startswith("twd"):
             # 台股：Koyfin 台股池的 EPS 是美元值，dd_numbers_extra 已依快照日匯率換成新台幣
             basis_text = "Koyfin 快照共識值；原為美元，已依快照日匯率換算為新台幣（{0}）".format(eps_basis_note)
         elif eps_basis_note:
