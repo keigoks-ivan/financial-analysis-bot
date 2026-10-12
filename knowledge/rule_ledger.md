@@ -457,3 +457,11 @@
 |---|---|---|---|---|
 | **`build_dd_verdict_base_rates.py` 的 p_clim 母體改成白名單：只掃主池 `latest.json` 裡 `dd_status=="dd"` 的名字，代號經 `build_dd_screener._yf_ticker_for_ma()` 轉成快取檔名後比對**（`_load_dd_allow_set()`，取代 `_load_non_dd_exclude_set()`） | 2026-10-10 | 補六「已知未做」第一條。舊做法是排除主池裡的非 DD 名字，擋不到不在主池的名字：美股小型股模式 2026-09-17 起寫進約 194 檔。當天驗算：舊做法掃 447 檔，白名單掃 253 檔，差額 194 檔全是小型股；253 檔 DD 名字每一檔都對得到快取檔。早先不用白名單是怕 `5274.TW`↔`5274.TWO.json` 這類別名比不到，改用寫檔端同一個轉換函式後沒有這個問題。基率 2026-09-01 建、下次約 2026-11-25 重算，所以現行數字不受影響。持有人選這個做法，小型股照寫快取，回看鏡照舊列小型股 | 重算後 `n_files` 明顯少於主池 DD 檔數（代號轉換漏接），或 CI 印出「載入 build_dd_screener 失敗」→ 查轉換函式，不要退回排除法 | — |
 | **漏斗頁回看鏡判斷有沒有 DD 時，先用快取檔名查，查不到再用 `_yf_ticker_for_ma()` 轉過的主池代號查**（`build_pipeline_page.py` `by_cache_name`） | 2026-10-10 | 補六「已知未做」第二條。主池把 5274（信驊）、8299（群聯）記成 `.TW`，快取檔是 `.TWO`，兩檔有 DD 卻被標成「盲區·無 DD」。改完重跑，頁面只有這兩列變動，改標「DD 99 天」「DD 131 天」，超過 90 天仍留在複審清單 | 主池代號改成 `.TWO` 之後這條變成多餘，可刪 | — |
+
+## 2026-10-12：虧損公司情境樹改走營收 × 終端 EV/S（CRWV 案）
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **DD v20 的估值口徑由程式決定：事實表 `f_consensus_eps_fy1` ≤ 0 → `valuation_basis="sales_multiple"`，情境樹用營收路徑 × 終端 EV/S，終端價＝max(0,(營收×EV/S−淨負債)÷股數)；否則維持 EPS × 本益比。判斷者填的 valuation_basis 一律被覆寫並記 `mechanical_overrides`**（`scripts/dd2/run.py::decide_valuation_basis`、`scripts/dd_scenario.py`） | 2026-10-12 | CRWV（虧損、負債重）judged 段失敗：起點 EPS −3.94，`cagr_pct(終端 EPS÷起點 EPS)` 拋 ValueError；Bear 終端 EPS 為負、pe＝0（股權算零）`cagr_pct(0)` 也拋。規則卡 QC-45 早就寫虧損公司估值主錨＝EV/S，情境樹沒跟上，管線在最需要判斷的公司上直接停擺。持有人拍板：觸發由程式決定、判斷者不選，避免判斷者為了讓 EPS 路徑好算而自選口徑 | ①sales 模式啟用後 90 天內，用此模式出的 DD 有 ≥2 檔因 `net_debt_y5`／`shares_y5` 判斷者一律填 null（沿用目前值）而讓 Bear 價虛高，且閘未攔到 → 降級為必填；②FY1 EPS ≤ 0 但 FY2 EPS 已明顯轉正（EPS 路徑可用）的公司因此被迫走 EV/S 且判斷者反映失真 ≥2 例 → 觸發條件改看 FY2；③同一檔 eps_pe 與 sales 兩口徑結果方向級分歧時，不得互相證明 | — |
+
+加一提刪一：本次新增判斷類口徑切換規則，候刪審查對象為「未獲利高成長 archetype 的 trailing PE／PEG 拿掉」那條（`judge_addendum_archetype.md` QC-45）——兩條現在指向同一件事，審後保留（QC-45 管 gate-set，本條管情境樹算術）。

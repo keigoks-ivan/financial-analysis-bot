@@ -587,6 +587,53 @@ def _inject_ma_facts(ctx, facts_path):
     return label, snap
 
 
+def decide_valuation_basis(ctx):
+    """估值口徑由程式決定（2026-10-12 CRWV 案，持有人拍板）：事實表 f_consensus_eps_fy1 ≤ 0（虧損）→
+    "sales_multiple"（營收路徑 × 終端 EV/S），否則 "eps_pe"（現行行為完全不變）。判斷者不選。
+    在 judge bundle 產生前決定：寫 parts/valuation_basis.json 與 manifest["valuation_basis"]。
+    事實表缺 f_consensus_eps_fy1（無共識）→ eps_pe。回口徑字串。"""
+    facts_path = ctx.run_dir / "facts.json"
+    fy1 = None
+    if facts_path.exists():
+        dp = ddreport.dd_project
+        fy1 = dp._fact_value(dp._facts_index(_load_json(facts_path)), "f_consensus_eps_fy1")
+    basis = "sales_multiple" if (isinstance(fy1, (int, float)) and not isinstance(fy1, bool) and fy1 <= 0) else "eps_pe"
+    parts_dir = ctx.run_dir / "parts"
+    parts_dir.mkdir(exist_ok=True)
+    rec = {"valuation_basis": basis, "f_consensus_eps_fy1": fy1,
+           "rule": "f_consensus_eps_fy1 <= 0 -> sales_multiple; else eps_pe (2026-10-12)"}
+    if basis == "sales_multiple" and facts_path.exists():
+        # sales 模式的輸入事實缺任一個，判斷者就沒有可抄的起點／可沿用的目前值：標出來讓指揮者看到
+        idx = ddreport.dd_project._facts_index(_load_json(facts_path))
+        missing = [f for f in ("f_net_debt_m", "f_shares_diluted_m", "f_rev_consensus_fy1_m", "f_ev_s_fwd")
+                   if ddreport.dd_project._fact_value(idx, f) is None]
+        if missing:
+            rec["missing_sales_inputs"] = missing
+            ctx.manifest["valuation_basis_missing_inputs"] = missing
+            print("[warn] sales_multiple 缺輸入事實 {0}：先重跑 dd_numbers_extra 並重建 evidence／facts".format(missing),
+                  file=sys.stderr)
+    _atomic_write_json(parts_dir / "valuation_basis.json", rec)
+    ctx.manifest["valuation_basis"] = basis
+    ctx.save()
+    return basis
+
+
+def _valuation_basis_override(ctx, obj):
+    """判斷者填的 scenario_inputs.valuation_basis 一律被程式值覆寫並記 mechanical_overrides。
+    eps_pe 且判斷者沒填：不寫欄位（現行判斷檔形狀完全不變）。"""
+    si = obj.get("scenario_inputs")
+    if not isinstance(si, dict):
+        return
+    prog = decide_valuation_basis(ctx)
+    cur = si.get("valuation_basis")
+    if prog == "eps_pe" and cur is None:
+        return
+    if cur != prog:
+        ctx.manifest.setdefault("mechanical_overrides", []).append(
+            {"path": "$.scenario_inputs.valuation_basis", "judge": cur, "program": prog})
+        si["valuation_basis"] = prog
+
+
 def do_facts(ctx):
     st = ctx.stage_begin("facts")
     py = _pick_python()
@@ -603,6 +650,7 @@ def do_facts(ctx):
         st["ma_state_error"] = str(exc)[:300]
     rc2, o2 = _sub([py, SCRIPTS_DIR / "dd_facts.py", "check", out, "--report"])
     st["facts_bytes"] = out.stat().st_size
+    st["valuation_basis"] = decide_valuation_basis(ctx)
     if re.search(r"^\[FAIL\]", o2, re.M):
         return ctx.stage_end("facts", False, o1 + "\n" + o2)
     return ctx.stage_end("facts", True, o1 + "\n" + o2)
@@ -772,6 +820,7 @@ def _write_judgment(ctx, obj):
                 ctx.manifest.setdefault("mechanical_overrides", []).append(
                     {"path": "$.decision_inputs.ma", "judge": di.get("ma"), "program": label})
                 di["ma"] = label
+    _valuation_basis_override(ctx, obj)
     qc49_note = _qc49_fill(ctx, obj)
     obj, drift_log = program_drift_entries(ctx, obj, decision_out=None)
     st = ctx.manifest.get("stages", {}).get("judged")
@@ -1281,6 +1330,7 @@ def do_judged(ctx):
             obj = _load_json(jpath)
             st["reused_from"] = "judgment.json"
     else:
+        st["valuation_basis"] = decide_valuation_basis(ctx)  # bundle 產生前決定，尾段形狀依它切換
         b = bundle.build_judge(ctx.run_dir, cards_dir=CARDS_DIR)
         st["bundle_bytes"] = b.get("bytes")
         extra = ["--effort", ctx.args.judge_effort] if ctx.args.judge_effort else None
