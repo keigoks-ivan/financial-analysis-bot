@@ -1,0 +1,801 @@
+#!/usr/bin/env python3
+"""id2 run.py — 產業深度報告（ID）管線原型，仿 scripts/dd2。
+
+    python3.12 scripts/id2/run.py {Theme} [--date YYYYMMDD] [--until STAGE] [--resume] [--refresh]
+                                  [--dry-run] [--publish]
+
+段：plan → evidence → judge → gate → prose → check → (publish)
+LLM 只在 evidence（sonnet，每軸一通，平行，各自獨立 session）、judge（opus，單輪無工具）、
+gate（sonnet，單輪無工具；紅燈一通 patch map 再閘一次）、prose（sonnet，前後半平行，只有 Write）。
+其餘零 LLM。預設（含 --dry-run）只寫 .id_build/runs/{Theme}_{date}/，不碰 docs/；--publish 才發布。
+設計：notes/site-internal/id/_id2_design_20261013.md。dd2 與 dd_headless 一字不改，只 import。
+"""
+import argparse
+import copy
+import datetime as dt
+import glob
+import json
+import re
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent.parent
+SCRIPTS = ROOT / "scripts"
+for p in (str(SCRIPTS), str(SCRIPTS / "dd2")):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+import dd_headless  # noqa: E402
+import spawn as sp  # noqa: E402  dd2/spawn.py
+
+SKILL_DIR = ROOT / ".claude" / "skills" / "industry-analyst"
+BUILD = ROOT / ".id_build"
+STAGES = ["plan", "evidence", "judge", "gate", "prose", "check", "publish"]
+SKILL_VERSION = "v4.1"  # id2 產物；id-meta 三處同值
+
+AXES = ["A", "B", "C", "D", "E"]
+# 證據軸快取期限（天）：歷史慢、價格與庫存快
+AXIS_TTL = {"A": 180, "B": 30, "C": 30, "D": 14, "E": 30}
+EVID_MAX_TURNS = 32
+EVID_MAX_SEARCH, EVID_MAX_FETCH = 16, 8
+JUDGE_THINKING_CAP = 32_000
+GATE_MODEL, JUDGE_MODEL, PROSE_MODEL = "sonnet", "opus", "sonnet"
+SECTION_ZH = {"thesis": "核心判斷", "debates": "市場哪裡看錯", "mechanics": "機制與供需", "valuation": "現在貴不貴",
+              "risks": "我怎麼知道我錯了", "stocks": "誰受影響", "appendix": "背景與歷史", "base_rate": "核心判斷"}
+
+
+# ------------------------------------------------------------------ 小工具
+def now():
+    return dt.datetime.now().isoformat(timespec="seconds")
+
+
+def jload(p):
+    return json.loads(Path(p).read_text(encoding="utf-8"))
+
+
+def jdump(p, obj):
+    Path(p).parent.mkdir(parents=True, exist_ok=True)
+    tmp = Path(str(p) + ".tmp")
+    tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(p)
+
+
+def render(tmpl_path, mapping):
+    """單次掃描替換 {{KEY}}；值裡出現的 {{…}} 不再展開。"""
+    text = Path(tmpl_path).read_text(encoding="utf-8")
+    return re.sub(r"\{\{([A-Z0-9_]+)\}\}", lambda m: str(mapping.get(m.group(1), m.group(0))), text)
+
+
+def run(cmd, cwd=ROOT):
+    r = subprocess.run([str(c) for c in cmd], cwd=str(cwd), capture_output=True, text=True)
+    return r.returncode, (r.stdout or "") + (r.stderr or "")
+
+
+def usage(label, r, extra=None):
+    rec = {"id": label, "ok": r.get("ok"), "num_turns": r.get("num_turns"), "output_tokens": r.get("output_tokens"),
+           "cache_read": r.get("cache_read"), "cache_creation": r.get("cache_creation"),
+           "cost_usd": r.get("cost_usd"), "duration_ms": r.get("duration_ms"),
+           "thinking_tokens": r.get("thinking_tokens")}
+    if extra:
+        rec.update(extra)
+    return rec
+
+
+def enrich(r, out_json):
+    """spawn_many 的結果補 thinking token（讀落地的 raw JSON）。"""
+    r = dict(r or {"ok": False})
+    try:
+        mu = jload(out_json).get("modelUsage") or {}
+        r["thinking_tokens"] = sum((v.get("thinkingTokens") or 0) for v in mu.values() if isinstance(v, dict))
+    except Exception:
+        pass
+    return r
+
+
+class Ctx:
+    def __init__(self, a):
+        self.theme = a.theme
+        self.date = a.date or dt.date.today().strftime("%Y%m%d")
+        self.iso = "{0}-{1}-{2}".format(self.date[:4], self.date[4:6], self.date[6:])
+        self.a = a
+        self.dir = BUILD / "runs" / "{0}_{1}".format(self.theme, self.date)
+        self.dir.mkdir(parents=True, exist_ok=True)
+        self.mpath = self.dir / "manifest.json"
+        self.m = jload(self.mpath) if self.mpath.exists() else {"theme": self.theme, "date": self.date,
+                                                                 "pipeline": "id2", "stages": {}, "created": now()}
+
+    def save(self):
+        jdump(self.mpath, self.m)
+
+    def begin(self, name):
+        self.m["stages"][name] = {"state": "RUNNING", "started": now(), "agent_usage": []}
+        self.save()
+        return self.m["stages"][name]
+
+    def end(self, name, ok, note=""):
+        st = self.m["stages"][name]
+        st["state"] = "PASS" if ok else "FAIL"
+        st["ended"] = now()
+        if note:
+            st["note"] = note[-1500:]
+        self.save()
+        print("[{0}] {1} {2}".format(name, st["state"], note.splitlines()[-1] if note else ""))
+        return ok
+
+    def passed(self, name):
+        return self.m["stages"].get(name, {}).get("state") == "PASS"
+
+
+# ------------------------------------------------------------------ plan（零 LLM）
+META_RE = re.compile(r'<script\s+id="id-meta"\s+type="application/json"\s*>(.*?)</script>', re.S)
+
+
+def find_prior(theme):
+    files = [f for f in glob.glob(str(ROOT / "docs" / "id" / "ID_{0}_*.html".format(theme)))
+             if not f.endswith("_full.html")]
+    files.sort(key=lambda f: re.search(r"_(\d{8})", f).group(1) if re.search(r"_(\d{8})", f) else "")
+    return Path(files[-1]) if files else None
+
+
+def prior_brief(prior):
+    """只讀 id-meta＋kill 表＋分歧卡標題（防錨定）。回 (meta, markdown)。"""
+    if not prior:
+        return {}, "（無前版）"
+    html = prior.read_text(encoding="utf-8")
+    m = META_RE.search(html)
+    meta = json.loads(m.group(1)) if m else {}
+    lines = ["前版：{0}（skill {1}，發布 {2}）".format(prior.name, meta.get("skill_version"), meta.get("publish_date"))]
+    for k in ("oneliner", "now_state", "future_state", "action", "sd_verdict", "clock_phase", "conviction",
+              "priced_in", "demand_5y_multiple", "tam_usd_2030", "cagr_pct_5y", "mega", "sub_group"):
+        if meta.get(k) is not None:
+            lines.append("- {0}：{1}".format(k, meta[k]))
+    lines.append("- 關聯個股：" + "、".join("{0}{1}".format(t.get("ticker"), t.get("depth", "")) for t in meta.get("related_tickers", [])))
+    lines.append("\n前版 kill 指標：")
+    for k in meta.get("kill_metrics", []):
+        lines.append("- {0}｜{1}｜{2}".format(k.get("metric"), k.get("bear_threshold"), k.get("window")))
+    titles = re.findall(r'class="dt"[^>]*>(?:<span class="dn">[^<]*</span>)?([^<]+)<', html)
+    if titles:
+        lines.append("\n前版分歧卡標題：" + "；".join(t.strip() for t in titles))
+    return meta, "\n".join(lines)
+
+
+def weekly_return(ticker, today):
+    f = ROOT / "data" / "weekly_cache" / "{0}.json".format(ticker)
+    if not f.exists():
+        return None
+    bars = jload(f).get("weekly_bars") or []
+    if len(bars) < 28:
+        return None
+    last, old = bars[-1], bars[-27]
+    age = (today - dt.date.fromisoformat(last["week_end"])).days
+    return {"close": last["close"], "as_of": last["week_end"], "ret26w_pct": round((last["close"] / old["close"] - 1) * 100, 1),
+            "base_date": old["week_end"], "age_days": age}
+
+
+def priced_inputs(tickers, today):
+    """價格→26 週漲幅（weekly_cache）；Fwd P/E FY2 與 5Y 分位（dd-screener latest.json）。附來源、as-of、異常旗。"""
+    sc = jload(ROOT / "docs" / "dd-screener" / "latest.json")
+    rows = {r["ticker"]: r for r in sc.get("stocks", [])}
+    out = []
+    for t in tickers:
+        rec = {"ticker": t, "flags": []}
+        w = weekly_return(t, today)
+        if w:
+            rec.update(w)
+            rec["ret_source"] = "data/weekly_cache/{0}.json（週線收盤，auto_adjust）".format(t)
+            if abs(w["ret26w_pct"]) > 150:
+                rec["flags"].append("26 週漲跌幅 >150%，確認資料")
+            if w["age_days"] > 21:
+                rec["flags"].append("週線已 {0} 天未更新".format(w["age_days"]))
+        else:
+            rec["flags"].append("無本地週線")
+        r = rows.get(t)
+        if r:
+            rec["fpe_fy2"] = r.get("fpe_fy2")
+            rec["pct_5y"] = r.get("pct_5y")
+            rec["val_source"] = "docs/dd-screener/latest.json（as_of {0}）".format(sc.get("as_of"))
+            if r.get("fpe_fy2") is None:
+                rec["flags"].append("無 Fwd P/E")
+            elif r["fpe_fy2"] <= 0 or r["fpe_fy2"] > 100:
+                rec["flags"].append("Fwd P/E {0} 為離群值，不當估值錨".format(r["fpe_fy2"]))
+            if r.get("pct_5y") is None:
+                rec["flags"].append("無 5Y 分位")
+        else:
+            rec["flags"].append("不在 dd-screener 母體")
+        out.append(rec)
+    return out
+
+
+def priced_block(items):
+    lines = []
+    for r in items:
+        s = "- {0}：".format(r["ticker"])
+        if "ret26w_pct" in r:
+            s += "26 週 {0:+.1f}%（收盤 {1}，截至 {2}）；".format(r["ret26w_pct"], r["close"], r["as_of"])
+        s += "Fwd P/E(FY2) {0}；5Y 分位 {1}".format(r.get("fpe_fy2", "無"), r.get("pct_5y", "無"))
+        if r["flags"]:
+            s += "　⚠ " + "；".join(r["flags"])
+        lines.append(s)
+    lines.append("來源：週線 data/weekly_cache、倍數 docs/dd-screener/latest.json。標 ⚠ 的數字不得當承重證據。")
+    return "\n".join(lines)
+
+
+CELL_RE = re.compile(r"^- \('(\w+)', '(\w+)'\)：n=(\d+)(?: ⚠n<10)?｜超額中位 ([+-][\d.]+)%｜勝率 (\d+)/(\d+)", re.M)
+VERD_RE = re.compile(r"^- (\w+)：n=(\d+)(?: ⚠n<10)?｜超額中位 ([+-][\d.]+)%｜勝率 (\d+)/(\d+)", re.M)
+
+
+def base_rate(prior_meta, today_iso):
+    """id_autopsy（h91 成熟樣本）→ sd_verdict 與 sd_verdict×clock_phase 命中率。當日快取。"""
+    cache = BUILD / "base_rate_{0}.json".format(today_iso)
+    if cache.exists():
+        data = jload(cache)
+    else:
+        rc, out = run(["python3.12", ROOT / "knowledge" / "id_autopsy.py"])
+        if rc != 0:
+            return {"error": out[-300:]}, "（id_autopsy 失敗：{0}）".format(out[-200:])
+        m = re.search(r"### sd_verdict × clock_phase（h91）\n(.*?)\n\n", out, re.S)
+        v = re.search(r"### sd_verdict（h91）\n(.*?)\n\n", out, re.S)
+        data = {"cells": [{"verdict": a, "phase": b, "n": int(n), "median_excess_pct": float(e), "wins": int(w), "of": int(o)}
+                          for a, b, n, e, w, o in CELL_RE.findall(m.group(1))] if m else [],
+                "verdicts": [{"verdict": a, "n": int(n), "median_excess_pct": float(e), "wins": int(w), "of": int(o)}
+                             for a, n, e, w, o in VERD_RE.findall(v.group(1))] if v else [],
+                "source": "knowledge/id_autopsy.py，91 天成熟樣本，對基準超額；樣本含 2026-06-21 大批 backfill，非完全獨立"}
+        jdump(cache, data)
+    pv, pp = prior_meta.get("sd_verdict"), prior_meta.get("clock_phase")
+    lines = ["來源：" + data["source"], "各格（sd_verdict × clock_phase）："]
+    for c in data["cells"]:
+        mark = "　←前版所在格" if (c["verdict"], c["phase"]) == (pv, pp) else ""
+        thin = "（n<10，樣本薄）" if c["n"] < 10 else ""
+        lines.append("- {0} × {1}：n={2}，超額中位 {3:+.1f}%，勝率 {4}/{5}{6}{7}".format(
+            c["verdict"], c["phase"], c["n"], c["median_excess_pct"], c["wins"], c["of"], thin, mark))
+    lines.append("規則：若你的裁決落在 shortage × Phase II（或前版在該格），base_rate.required 必須為 true：原文引用該格命中率，"
+                 "並用證據包內的具體差異說明這次為何不同；說不出就降級（下調 conviction／改 sd_verdict 或 clock_phase，action=downgraded）。"
+                 "其他格 required=false、action=not_applicable。")
+    return data, "\n".join(lines)
+
+
+def do_plan(c):
+    st = c.begin("plan")
+    prior = find_prior(c.theme)
+    meta, brief = prior_brief(prior)
+    tick = [t["ticker"] for t in meta.get("related_tickers", []) if t.get("depth") in ("🔴", "🟡")][:12]
+    pin = priced_inputs(tick, dt.date.fromisoformat(c.iso))
+    br, brtext = base_rate(meta, c.iso)
+    tax = (ROOT / "docs" / "id" / "taxonomy.md").read_text(encoding="utf-8")
+    mm = re.search(r"\|\s*{0}\s*\|\s*(\w+)\s*\|\s*(\w+)\s*\|".format(re.escape(c.theme)), tax)
+    mega = meta.get("mega") or (mm.group(1) if mm else "")
+    sub = meta.get("sub_group") or (mm.group(2) if mm else "")
+    plan = {"theme": c.theme, "date": c.iso, "prior_file": prior.name if prior else None, "prior_meta": meta,
+            "mega": mega, "sub_group": sub, "tickers": tick, "priced": pin, "base_rate": br,
+            "sisters": meta.get("sister_ids", [])}
+    jdump(c.dir / "plan.json", plan)
+    (c.dir / "prior_brief.md").write_text(brief, encoding="utf-8")
+    (c.dir / "priced_block.md").write_text(priced_block(pin), encoding="utf-8")
+    (c.dir / "base_rate_block.md").write_text(brtext, encoding="utf-8")
+    note = "prior={0} mega={1}.{2} tickers={3} flagged={4}".format(plan["prior_file"], mega, sub, len(tick),
+                                                                   sum(1 for r in pin if r["flags"]))
+    return c.end("plan", bool(mega and sub), note if mega and sub else "分類缺失：請在 taxonomy.md 登記主題")
+
+
+# ------------------------------------------------------------------ evidence
+def axis_blocks():
+    text = (SKILL_DIR / "references" / "research-queries.md").read_text(encoding="utf-8")
+    parts = re.split(r"^## (?=Axis [A-E] )", text, flags=re.M)
+    blocks = {}
+    for p in parts[1:]:
+        blocks[p[5]] = "## " + p.split("\n## 回傳格式")[0].strip()
+    return blocks
+
+
+AXIS_EXTRA = {
+    "D": "本軸額外要求：①前版 kill 指標逐個查最新現值；②至少找 1 個市場撮合價（現貨價、運價、指數等）並給最新值；③資本週期三指標（capex／折舊、ROIC vs WACC、lead time）至少各嘗試一次；④各核心個股的 Fwd P/E 歷史帶（若查得到一手或可靠來源）。",
+    "E": "本軸額外要求：五條機械查詢不得因「顯然無關」跳過；查無實質威脅時也要在 findings 寫一條「已掃描，無一階威脅」並列出所搜詞，不要留白。",
+    "B": "本軸額外要求：對關鍵玩家直讀 IR 簡報／10-K／20-F；玩家矩陣數字須有年度或四季加總，禁 Q×4。",
+}
+
+
+def do_evidence(c):
+    st = c.begin("evidence")
+    plan = jload(c.dir / "plan.json")
+    blocks = axis_blocks()
+    prior_kills = "\n".join("- " + k.get("metric", "") for k in plan["prior_meta"].get("kill_metrics", [])) or "（無）"
+    fdir = BUILD / "facts" / c.theme
+    (c.dir / "evidence").mkdir(exist_ok=True)
+    (c.dir / "prompts").mkdir(exist_ok=True)
+    (c.dir / "agents").mkdir(exist_ok=True)
+    specs, reused = [], []
+    for ax in AXES:
+        part = c.dir / "evidence" / "{0}.json".format(ax)
+        cached = fdir / "{0}.json".format(ax)
+        if c.a.resume and part.exists():
+            reused.append(ax)
+            continue
+        if not c.a.refresh and cached.exists():
+            age = (time.time() - cached.stat().st_mtime) / 86400
+            if age <= AXIS_TTL[ax]:
+                part.write_text(cached.read_text(encoding="utf-8"), encoding="utf-8")
+                reused.append(ax + "(cache {0:.0f}d)".format(age))
+                continue
+        if part.exists():
+            part.unlink()
+        pp = c.dir / "prompts" / "evidence_{0}.md".format(ax)
+        pp.write_text(render(HERE / "prompts" / "evidence.md.tmpl", {
+            "THEME": c.theme, "TODAY": c.iso, "AXIS": ax, "AXIS_BLOCK": blocks[ax], "TICKERS": "、".join(plan["tickers"]),
+            "PRIOR_DATE": plan["prior_meta"].get("publish_date", "無"), "PRIOR_KILLS": prior_kills,
+            "AXIS_EXTRA": AXIS_EXTRA.get(ax, ""), "MAX_SEARCH": EVID_MAX_SEARCH, "MAX_FETCH": EVID_MAX_FETCH,
+            "PART_PATH": str(part)}), encoding="utf-8")
+        specs.append({"id": "ev_" + ax, "model": "sonnet", "prompt": str(pp), "out": str(c.dir / "agents" / "ev_{0}.json".format(ax)),
+                      "tools": ["WebSearch", "WebFetch", "Write"], "max_turns": EVID_MAX_TURNS, "run_dir": str(c.dir)})
+    st["reused"] = reused
+    c.save()
+    if specs:
+        for s, r in zip(specs, dd_headless.spawn_many(specs, max_parallel=5)):
+            st["agent_usage"].append(usage(s["id"], enrich(r, s["out"])))
+        c.save()
+    # 驗收、編號
+    merged, dropped, missing = [], 0, []
+    for ax in AXES:
+        part = c.dir / "evidence" / "{0}.json".format(ax)
+        if not part.exists():
+            missing.append(ax)
+            continue
+        try:
+            obj = jload(part)
+        except Exception:
+            obj, _ = sp.strip_json(part.read_text(encoding="utf-8"))
+        if not isinstance(obj, dict):
+            missing.append(ax)
+            continue
+        i = 0
+        for f in obj.get("findings", []):
+            if not (f.get("claim") and re.fullmatch(r"\d{4}(-\d{2}){0,2}", str(f.get("as_of") or "")) and (f.get("url") or f.get("source"))):
+                dropped += 1
+                continue
+            i += 1
+            f["id"] = "{0}{1}".format(ax, i)
+            f["axis"] = ax
+            merged.append(f)
+        fdir.mkdir(parents=True, exist_ok=True)
+        (fdir / "{0}.json".format(ax)).write_text(part.read_text(encoding="utf-8"), encoding="utf-8")
+        for nf in obj.get("not_found", []):
+            merged.append({"id": "NF-" + ax, "axis": ax, "claim": "查不到：" + str(nf), "tier": "-", "as_of": "-", "url": None, "not_found": True})
+    jdump(c.dir / "evidence.json", merged)
+    real = [f for f in merged if not f.get("not_found")]
+    t1 = sum(1 for f in real if str(f.get("tier", "")).startswith("T1"))
+    st["findings"], st["dropped_undated"], st["t1_share_pct"] = len(real), dropped, round(100 * t1 / max(1, len(real)))
+    ok = not missing and len(real) >= 25 and any(f["axis"] == "E" for f in real)
+    return c.end("evidence", ok, "findings={0} dropped={1} T1={2}% missing_axes={3}".format(len(real), dropped, st["t1_share_pct"], missing))
+
+
+def evidence_text(ev, with_url=False):
+    lines = []
+    for f in ev:
+        if f.get("not_found"):
+            lines.append("[{0}] {1}".format(f["id"], f["claim"]))
+            continue
+        s = "[{0}] {1}｜{2}｜{3}·{4}｜{5}".format(f["id"], f["claim"], f.get("value") or "-", f.get("source") or "-", f.get("tier"), f.get("as_of"))
+        if f.get("note"):
+            s += "｜註：" + f["note"]
+        lines.append(s)
+    return "\n".join(lines)
+
+
+# ------------------------------------------------------------------ judge / gate
+def collect_cites(obj, path="", out=None):
+    """依文件順序收集 cite／evidence_cite 內的證據編號。"""
+    out = [] if out is None else out
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k in ("cite", "evidence_cite") and isinstance(v, list):
+                for x in v:
+                    out.append((str(x), path.split(".")[0] or k))
+            else:
+                collect_cites(v, (path + "." + k) if path else k, out)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            collect_cites(v, "{0}[{1}]".format(path, i), out)
+    return out
+
+
+def get_path(obj, path):
+    cur = obj
+    for tok in re.findall(r"[^.\[\]]+|\[\d+\]", path):
+        cur = cur[int(tok[1:-1])] if tok.startswith("[") else cur[tok]
+    return cur
+
+
+def set_path(obj, path, value):
+    toks = re.findall(r"[^.\[\]]+|\[\d+\]", path)
+    cur = obj
+    for tok in toks[:-1]:
+        cur = cur[int(tok[1:-1])] if tok.startswith("[") else cur[tok]
+    last = toks[-1]
+    if last.startswith("["):
+        cur[int(last[1:-1])] = value
+    else:
+        cur[last] = value
+
+
+def stub_validate(j, c):
+    """用只含 id-meta 的 stub HTML 跑 validate_id_meta.py（最早的機械閘）。"""
+    (c.dir / "stub").mkdir(exist_ok=True)
+    stub = c.dir / "stub" / "ID_{0}_{1}.html".format(c.theme, c.date)  # 檔名不是 ID_*.html 會被 validator 當非 ID 跳過
+    stub.write_text('<html><head><script id="id-meta" type="application/json">{0}</script></head><body></body></html>'.format(
+        json.dumps(j.get("id_meta", {}), ensure_ascii=False)), encoding="utf-8")
+    rc, out = run(["python3.12", SCRIPTS / "validate_id_meta.py", stub])
+    return rc == 0, out[-600:]
+
+
+def mech_checks(j, ev, plan, c):
+    """零 LLM 機械檢查。回 [(severity, id, msg)]。"""
+    f = []
+    ids = {e["id"] for e in ev if not e.get("not_found")}
+    meta = j.get("id_meta", {})
+    ok, out = stub_validate(j, c)
+    if not ok:
+        f.append(("red", "meta", "id-meta 未過 validate_id_meta：" + out.strip().splitlines()[-1] if out.strip() else "validate fail"))
+    for cid, sec in collect_cites(j):
+        if cid not in ids:
+            f.append(("red", "cite", "{0} 段引用不存在的證據編號 {1}".format(sec, cid)))
+    deb = j.get("debates", [])
+    if not 3 <= len(deb) <= 5:
+        f.append(("red", "D7", "分歧卡 {0} 張，需 3–5".format(len(deb))))
+    if not any(d.get("external_threat") for d in deb):
+        f.append(("red", "D7", "缺替代威脅卡"))
+    kt = j.get("risks", {}).get("kill_table", [])
+    if len(kt) < 3:
+        f.append(("red", "D9", "kill 表 {0} 條，需 ≥3".format(len(kt))))
+    if not any(k.get("market_traded") for k in kt):
+        f.append(("red", "D9", "kill 表無市場撮合價"))
+    if len(kt) != len(meta.get("kill_metrics", [])):
+        f.append(("red", "D9", "kill 表 {0} 條與 id_meta.kill_metrics {1} 條不同步".format(len(kt), len(meta.get("kill_metrics", [])))))
+    if len(j.get("risks", {}).get("catalysts", [])) < 5:
+        f.append(("red", "D10", "催化劑 <5"))
+    tam = j.get("mechanics", {}).get("demand", {}).get("tam", {}).get("rows", [])
+    try:
+        if sum(float(r["weight"]) for r in tam) != 100:
+            f.append(("red", "D4", "TAM 三情境權重加總不是 100"))
+    except Exception:
+        f.append(("red", "D4", "TAM 權重缺或非數字"))
+    cc = j.get("mechanics", {}).get("verdict", {}).get("capital_cycle", [])
+    if len(cc) < 2:
+        f.append(("red", "D2", "資本週期指標 <2"))
+    if len(j.get("mechanics", {}).get("verdict", {}).get("gate_sufficient", [])) < 2:
+        f.append(("red", "D3", "換相充分條件需兩個獨立訊號"))
+    br = j.get("base_rate", {})
+    hot = (meta.get("sd_verdict"), meta.get("clock_phase")) == ("shortage", "II")
+    prior_hot = (plan["prior_meta"].get("sd_verdict"), plan["prior_meta"].get("clock_phase")) == ("shortage", "II")
+    if hot or prior_hot:
+        if not br.get("required"):
+            f.append(("red", "base_rate", "shortage×Phase II（本次或前版）但 base_rate.required 不是 true"))
+        elif br.get("action") == "kept" and not [d for d in br.get("differences", []) if d.get("evidence_cite")]:
+            f.append(("red", "base_rate", "維持 shortage×II 但沒有附證據的差異點"))
+        elif br.get("action") not in ("kept", "downgraded"):
+            f.append(("red", "base_rate", "base_rate.action 需為 kept 或 downgraded"))
+    pr = {r["ticker"]: r for r in plan["priced"]}
+    for row in j.get("valuation", {}).get("priced_rows", []):
+        if row.get("ticker") not in pr:
+            f.append(("yellow", "D8", "priced_rows 含程式輸入以外的 {0}".format(row.get("ticker"))))
+    if not j.get("valuation", {}).get("priced_rows"):
+        f.append(("red", "D8", "priced_rows 為空＝D8 未交"))
+    # T1 占比（被引用的來源）
+    cited = {x for x, _ in collect_cites(j)}
+    tiers = [e.get("tier", "") for e in ev if e["id"] in cited]
+    floor = 45 if meta.get("mega") in ("macro", "cloud", "space") else 60
+    if tiers and 100 * sum(1 for t in tiers if t.startswith("T1")) / len(tiers) < floor:
+        f.append(("red", "T1", "被引用來源 T1 占比 {0:.0f}% 低於 {1}%：承重數字改引證據包內的 T1 條目；沒有 T1 可引就是證據不足，須退回採集".format(
+            100 * sum(1 for t in tiers if t.startswith("T1")) / len(tiers), floor)))
+    for rt in meta.get("related_tickers", []):
+        if rt.get("depth") == "🔴" and (rt.get("purity_pct") is None or not rt.get("mcap_bucket")):
+            f.append(("red", "D11", "{0} 為 🔴 但缺 purity_pct 或 mcap_bucket".format(rt.get("ticker"))))
+    try:
+        if sum(float(h["weight"]) for h in j.get("mechanics", {}).get("verdict", {}).get("horizons", [])) != 100:
+            f.append(("red", "D4", "三視野權重（每窗一個數字）加總不是 100"))
+    except Exception:
+        f.append(("red", "D4", "三視野權重缺或非數字"))
+    if len(j.get("valuation", {}).get("derivations", [])) < 2 or not j.get("risks", {}).get("derivation"):
+        f.append(("red", "derive", "推導行不足：valuation.derivations 需 ≥2、risks.derivation 需 1"))
+    return f
+
+
+def judge_prompt(c, plan, ev):
+    schema = render(HERE / "prompts" / "schema.txt", {"TODAY_ISO": c.iso, "MEGA": plan["mega"], "SUB_GROUP": plan["sub_group"]})
+    return render(HERE / "prompts" / "judge.md.tmpl", {
+        "THEME": c.theme, "TODAY": c.iso,
+        "BASE_RATE_BLOCK": (c.dir / "base_rate_block.md").read_text(encoding="utf-8"),
+        "PRICED_BLOCK": (c.dir / "priced_block.md").read_text(encoding="utf-8"),
+        "PRIOR_BRIEF": (c.dir / "prior_brief.md").read_text(encoding="utf-8"),
+        "PLAYBOOK": (SKILL_DIR / "references" / "judgment-playbook.md").read_text(encoding="utf-8"),
+        "EVIDENCE": evidence_text(ev), "MEGA": plan["mega"], "SUB_GROUP": plan["sub_group"],
+        "TICKERS": "、".join(plan["tickers"]), "SISTERS": "、".join(plan["sisters"]) or "無", "SCHEMA": schema})
+
+
+def parse_json_result(r):
+    if r.get("structured_output"):
+        return r["structured_output"], None
+    return sp.strip_json(r.get("result_text"))
+
+
+def do_judge(c):
+    st = c.begin("judge")
+    plan, ev = jload(c.dir / "plan.json"), jload(c.dir / "evidence.json")
+    pp = c.dir / "prompts" / "judge.md"
+    pp.write_text(judge_prompt(c, plan, ev), encoding="utf-8")
+    r = sp.oneshot_stream(pp, JUDGE_MODEL, c.dir / "agents" / "judge_1.json", c.dir, thinking_cap=JUDGE_THINKING_CAP)
+    st["agent_usage"].append(usage("judge_1", r))
+    obj, err = parse_json_result(r)
+    if not isinstance(obj, dict):
+        return c.end("judge", False, "judge 輸出無法解析：{0}｜{1}".format(err, (r.get("stderr_tail") or "")[-200:]))
+    for rt in obj.get("id_meta", {}).get("related_tickers", []):
+        for k in [k for k, v in rt.items() if v is None]:
+            del rt[k]  # null 的選填欄（如 🟡 的 purity_pct）會被 validator 當型別錯
+    jdump(c.dir / "judgment.json", obj)
+    return c.end("judge", True, "judgment {0} 字；sd={1} phase={2}".format(
+        len(json.dumps(obj, ensure_ascii=False)), obj.get("id_meta", {}).get("sd_verdict"), obj.get("id_meta", {}).get("clock_phase")))
+
+
+def gate_once(c, plan, ev, j, idx, st):
+    mech = mech_checks(j, ev, plan, c)
+    mtext = "\n".join("- [{0}] {1}：{2}".format(s, i, m) for s, i, m in mech) or "（機械檢查全過）"
+    pp = c.dir / "prompts" / "gate_{0}.md".format(idx)
+    pp.write_text(render(HERE / "prompts" / "gate.md.tmpl", {
+        "MECH": mtext, "PRICED_BLOCK": (c.dir / "priced_block.md").read_text(encoding="utf-8"),
+        "BASE_RATE_BLOCK": (c.dir / "base_rate_block.md").read_text(encoding="utf-8"),
+        "EVIDENCE": evidence_text(ev), "JUDGMENT": json.dumps(j, ensure_ascii=False)}), encoding="utf-8")
+    r = sp.oneshot_stream(pp, GATE_MODEL, c.dir / "agents" / "gate_{0}.json".format(idx), c.dir)
+    st["agent_usage"].append(usage("gate_{0}".format(idx), r))
+    obj, err = parse_json_result(r)
+    findings = []
+    if isinstance(obj, dict):
+        findings = [dict(f) for f in obj.get("findings", [])]
+    else:
+        findings = [{"id": "gate", "severity": "red", "path": "", "issue": "閘輸出無法解析：{0}".format(err), "fix": "重跑"}]
+    for s, i, m in mech:
+        findings.append({"id": i, "severity": s, "path": "", "issue": m, "fix": "（機械檢查）"})
+    jdump(c.dir / "gate_{0}.json".format(idx), {"findings": findings, "verified": (obj or {}).get("verified_numbers") if isinstance(obj, dict) else None})
+    return findings
+
+
+def do_gate(c):
+    st = c.begin("gate")
+    plan, ev, j = jload(c.dir / "plan.json"), jload(c.dir / "evidence.json"), jload(c.dir / "judgment.json")
+    f1 = gate_once(c, plan, ev, j, 1, st)
+    red = [f for f in f1 if f["severity"] == "red"]
+    st["round1"] = {"red": len(red), "yellow": len(f1) - len(red)}
+    final = f1
+    if red:
+        pp = c.dir / "prompts" / "patch.md"
+        pp.write_text(render(HERE / "prompts" / "patch.md.tmpl", {
+            "FINDINGS": "\n".join("- [{0}] {1}｜{2}｜建議：{3}".format(f["id"], f.get("path"), f["issue"], f.get("fix")) for f in red),
+            "BASE_RATE_BLOCK": (c.dir / "base_rate_block.md").read_text(encoding="utf-8"),
+            "PRICED_BLOCK": (c.dir / "priced_block.md").read_text(encoding="utf-8"),
+            "EVIDENCE": evidence_text(ev), "JUDGMENT": json.dumps(j, ensure_ascii=False)}), encoding="utf-8")
+        r = sp.oneshot_stream(pp, JUDGE_MODEL, c.dir / "agents" / "patch_1.json", c.dir, thinking_cap=JUDGE_THINKING_CAP)
+        st["agent_usage"].append(usage("patch_1", r))
+        obj, err = parse_json_result(r)
+        applied, failed = 0, []
+        for p in (obj or {}).get("patches", []) if isinstance(obj, dict) else []:
+            try:
+                set_path(j, p["path"], p["value"])
+                applied += 1
+            except Exception as e:
+                failed.append("{0}:{1}".format(p.get("path"), e))
+        st["patches_applied"], st["patches_failed"] = applied, failed
+        jdump(c.dir / "judgment.json", j)
+        final = gate_once(c, plan, ev, j, 2, st)
+    red2 = [f for f in final if f["severity"] == "red"]
+    st["final"] = {"red": len(red2), "yellow": len(final) - len(red2)}
+    note = "紅 {0} 黃 {1}".format(len(red2), len(final) - len(red2))
+    if red2:
+        note += "｜仍紅，停下交人：" + "；".join("[{0}] {1}".format(f["id"], f["issue"][:60]) for f in red2[:5])
+    return c.end("gate", not red2, note)
+
+
+# ------------------------------------------------------------------ prose
+def prose_view(j, ev):
+    """cite → cite_nums；回 (view, sources_table)。"""
+    by_id = {e["id"]: e for e in ev}
+    order, first_sec = [], {}
+    for cid, sec in collect_cites(j):
+        if cid in by_id and cid not in first_sec:
+            first_sec[cid] = SECTION_ZH.get(sec, sec)
+            order.append(cid)
+    num = {cid: i + 1 for i, cid in enumerate(order)}
+    view = copy.deepcopy(j)
+
+    def conv(o):
+        if isinstance(o, dict):
+            for k in list(o.keys()):
+                if k in ("cite", "evidence_cite") and isinstance(o[k], list):
+                    o["cite_nums"] = sorted({num[x] for x in map(str, o.pop(k)) if x in num})
+                else:
+                    conv(o[k])
+        elif isinstance(o, list):
+            for v in o:
+                conv(v)
+    conv(view)
+    table = [{"n": num[cid], "section": first_sec[cid], "tier": by_id[cid].get("tier"),
+              "title": (by_id[cid].get("source") or by_id[cid].get("url") or "")[:80],
+              "url": by_id[cid].get("url"), "as_of": by_id[cid].get("as_of")} for cid in order]
+    view["sources_table"] = table
+    view["data_window"] = j.get("id_meta", {}).get("publish_date")
+    view["n_tickers"] = len(j.get("id_meta", {}).get("related_tickers", []))
+    return view, table
+
+
+def template_parts():
+    t = (SKILL_DIR / "templates" / "report_template.md").read_text(encoding="utf-8")
+    skel = t.split("```html", 1)[1].split("\n```\n", 1)[0]
+    i_a = skel.index("<!-- PAGE 1")
+    i_b = skel.index("<!-- 4 · 現在貴不貴")
+    i_end = skel.index("</div><!-- /report-sheet -->")
+    rules = "## Key Debates 硬規則" + t.split("## Key Debates 硬規則", 1)[1].split("## 站內 nav 注入區塊照抄規則", 1)[0]
+    rules += "## 其他硬規則" + t.split("## 其他硬規則", 1)[1]
+    rules = re.sub(r"- \*\*篇幅\*\*：.*", "- 篇幅：不設字數目標，HTML ≤55KB 為上界警告。", rules)
+    return skel[i_a:i_b], skel[i_b:i_end], rules
+
+
+def do_prose(c):
+    st = c.begin("prose")
+    ev, j = jload(c.dir / "evidence.json"), jload(c.dir / "judgment.json")
+    view, table = prose_view(j, ev)
+    jdump(c.dir / "prose_view.json", view)
+    skel_a, skel_b, rules = template_parts()
+    zh = (Path.home() / ".claude" / "skills" / "zh-analyst-prose" / "SKILL.md").read_text(encoding="utf-8")
+    zh = zh.split("---", 2)[-1]
+    halves = {
+        "A": ("第一頁決策卡（summary）、導覽列、核心判斷（thesis）、市場哪裡看錯（debates）、機制與供需（mechanics，含 3.1–3.4）。"
+              "從 `<header id=\"summary\"` 起寫到 mechanics 的 `</section>`；導覽列 `<nav class=\"toc-bar\">` 放在 header 之後。", skel_a),
+        "B": ("現在貴不貴（valuation）、我怎麼知道我錯了（risks）、誰受影響（stocks）、附錄（appendix，含來源總表 src-table，列由 JSON 的 sources_table 逐列渲染）、"
+              "結尾 pull-quote、「刻意不做的三件事」、Disclosures、colophon（版本號 {0}）、back-top。從 `<section id=\"valuation\"` 起寫到檔尾。".format(SKILL_VERSION), skel_b)}
+    specs = []
+    for k, (desc, skel) in halves.items():
+        out = c.dir / "prose_{0}.html".format(k)
+        if out.exists():
+            out.unlink()
+        pp = c.dir / "prompts" / "prose_{0}.md".format(k)
+        pp.write_text(render(HERE / "prompts" / "prose.md.tmpl", {
+            "HALF_DESC": desc, "OUT_PATH": str(out), "ZH_STYLE": zh, "SRC_NOTE": "共 {0} 筆來源，列於 sources_table。".format(len(table)),
+            "SKELETON": skel, "RULES": rules, "JUDGMENT": json.dumps(view, ensure_ascii=False)}), encoding="utf-8")
+        specs.append({"id": "prose_" + k, "model": PROSE_MODEL, "prompt": str(pp), "out": str(c.dir / "agents" / "prose_{0}.json".format(k)),
+                      "tools": ["Write"], "max_turns": 4, "run_dir": str(c.dir)})
+    for s, r in zip(specs, dd_headless.spawn_many(specs, max_parallel=2)):
+        st["agent_usage"].append(usage(s["id"], enrich(r, s["out"])))
+    miss = [k for k in halves if not (c.dir / "prose_{0}.html".format(k)).exists()]
+    return c.end("prose", not miss, "缺 " + ",".join(miss) if miss else "兩半皆交")
+
+
+def assemble(c, j):
+    from site_nav import full_nav_block
+    meta = j["id_meta"]
+    ttl = j.get("title", {})
+    a = (c.dir / "prose_A.html").read_text(encoding="utf-8")
+    b = (c.dir / "prose_B.html").read_text(encoding="utf-8")
+    head = ('<!DOCTYPE html>\n<html lang="zh-Hant">\n<head>\n<meta charset="UTF-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<meta name="robots" content="noindex,nofollow">\n'
+            '<meta name="color-scheme" content="only light">\n<title>{t} — {g} | InvestMQuest</title>\n'
+            '<meta name="id-skill-version" content="{v}">\n<meta name="id-theme" content="{th}">\n<meta name="id-publish-date" content="{d}">\n'
+            '<meta name="id-pipeline" content="id2">\n<script id="id-meta" type="application/json">\n{m}\n</script>\n'
+            '<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Noto+Serif+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">\n'
+            '<link rel="stylesheet" href="../assets/id-v4.css">\n</head>\n<body id="top">\n').format(
+        t=meta.get("theme"), g=ttl.get("tagline", ""), v=meta["skill_version"], th=meta.get("theme"), d=meta["publish_date"],
+        m=json.dumps(meta, ensure_ascii=False, indent=2))
+    html = (head + full_nav_block("research", "id") + '\n<div class="report-sheet">\n' + a + "\n" + b +
+            '\n</div><!-- /report-sheet -->\n\n<a class="back-top" href="#top">↑ TOP</a>\n\n</body>\n</html>\n')
+    out = c.dir / "ID_{0}_{1}.html".format(c.theme, c.date)
+    out.write_text(html, encoding="utf-8")
+    return out
+
+
+NUM_RE = re.compile(r"\d[\d,]*\.?\d*")
+
+
+def number_audit(html_path, j):
+    """表格與正文的數字若不在判斷 JSON 全文裡，列為疑似新增（警告，不擋）。"""
+    corpus = json.dumps(j, ensure_ascii=False)
+    corpus_nums = {n.rstrip(".").replace(",", "") for n in NUM_RE.findall(corpus)}
+    body = re.sub(r"<script.*?</script>|<style.*?</style>|<header class=\"imq-nav-root\".*?</header>", "", html_path.read_text(encoding="utf-8"), flags=re.S)
+    text = re.sub(r"<[^>]+>", " ", body)
+    text = re.sub(r"［#[\d, ]+］", " ", text)
+    extra = sorted({n.rstrip(".").replace(",", "") for n in NUM_RE.findall(text)
+                    if len(n.rstrip(".").replace(",", "")) >= 2} - corpus_nums)
+    return [n for n in extra if not re.fullmatch(r"20\d\d|\d{1,2}", n)]
+
+
+def do_check(c):
+    st = c.begin("check")
+    j = jload(c.dir / "judgment.json")
+    out = assemble(c, j)
+    rep, exc = c.dir / "check_report.md", c.dir / "check_excerpt.md"
+    rc1, o1 = run(["python3.12", SCRIPTS / "check_id.py", out, "--report", rep, "--excerpt", exc])
+    rc2, o2 = run(["python3.12", SCRIPTS / "validate_id_meta.py", out])
+    extra = number_audit(out, j)
+    kb = out.stat().st_size / 1024
+    st.update({"check_id_rc": rc1, "validate_rc": rc2, "html_kb": round(kb, 1), "numbers_not_in_judgment": extra[:40],
+               "numbers_not_in_judgment_n": len(extra)})
+    (c.dir / "check_stdout.txt").write_text(o1 + "\n---\n" + o2, encoding="utf-8")
+    return c.end("check", rc1 == 0 and rc2 == 0, "check_id rc={0} validate rc={1} {2:.0f}KB 疑似新增數字 {3} 個".format(rc1, rc2, kb, len(extra)))
+
+
+# ------------------------------------------------------------------ publish（只在 --publish；本階段未實跑）
+def do_publish(c):
+    st = c.begin("publish")
+    j = jload(c.dir / "judgment.json")
+    src = c.dir / "ID_{0}_{1}.html".format(c.theme, c.date)
+    dst = ROOT / "docs" / "id" / src.name
+    dst.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+    m = j["id_meta"]
+    row = "| {d} | {t} 🆕 id2 {v} | {n} | {r}🔴 / {y}🟡 / {g}🟢 | Phase {p} | — | tech:{d} 🟢 ｜ market:{d} 🟢 ｜ judgment:{d} 🟢 | {f} | id2 管線 |\n".format(
+        d=c.iso, t=m.get("theme"), v=SKILL_VERSION, n=len(m.get("related_tickers", [])),
+        r=sum(1 for t in m["related_tickers"] if t.get("depth") == "🔴"), y=sum(1 for t in m["related_tickers"] if t.get("depth") == "🟡"),
+        g=sum(1 for t in m["related_tickers"] if t.get("depth") == "🟢"), p=m.get("clock_phase"), f=dst.name)
+    with open(ROOT / "docs" / "id" / "INDEX.md", "a", encoding="utf-8") as fh:
+        fh.write(row)
+    log = []
+    for cmd in (["build_id_category_pages.py"], ["id_dd_mapping.py"], ["retrofit_dd_id_banner.py"],
+                ["check_tier_matrix.py", "--inject-html"], ["inject_report_primer.py", "--family", "id"], ["qc.py"]):
+        if (SCRIPTS / cmd[0]).exists():
+            rc, o = run(["python3.12", SCRIPTS / cmd[0]] + cmd[1:])
+            log.append("{0}: rc={1}".format(cmd[0], rc))
+    log.append("TODO 手動：docs/id/index.html 插卡片（找 subgroup-anchor）；id2 尚未自動化")
+    return c.end("publish", True, "\n".join(log))
+
+
+# ------------------------------------------------------------------ main
+def report(c):
+    tot_cost = tot_out = 0
+    print("\n== id2 {0} {1} ==".format(c.theme, c.date))
+    for name in STAGES:
+        st = c.m["stages"].get(name)
+        if not st:
+            continue
+        cost = sum((u.get("cost_usd") or 0) for u in st["agent_usage"])
+        outt = sum((u.get("output_tokens") or 0) for u in st["agent_usage"])
+        cr = sum((u.get("cache_read") or 0) for u in st["agent_usage"])
+        ms = max([(u.get("duration_ms") or 0) for u in st["agent_usage"]] or [0])
+        tot_cost += cost
+        tot_out += outt
+        print("{0:9s} {1:5s} agents={2} cost=${3:.2f} out={4:,} cache_read={5:,} 最長單通={6:.1f}分".format(
+            name, st["state"], len(st["agent_usage"]), cost, outt, cr, ms / 60000))
+    print("合計 cost=${0:.2f} output_tokens={1:,}".format(tot_cost, tot_out))
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("theme")
+    ap.add_argument("--date")
+    ap.add_argument("--until", choices=STAGES)
+    ap.add_argument("--resume", action="store_true", help="跳過已 PASS 的段；evidence 沿用 run dir 內已交的軸")
+    ap.add_argument("--refresh", action="store_true", help="忽略跨 run 證據快取")
+    ap.add_argument("--dry-run", action="store_true", help="預設即 dry run：只寫 .id_build/，與不帶旗標相同")
+    ap.add_argument("--publish", action="store_true")
+    ap.add_argument("--ignore-gate-red", action="store_true", help="僅供除錯：gate 已 FAIL 時不重閘、繼續 prose／check；產物不得發布")
+    a = ap.parse_args(argv)
+    c = Ctx(a)
+    fns = {"plan": do_plan, "evidence": do_evidence, "judge": do_judge, "gate": do_gate, "prose": do_prose, "check": do_check}
+    last = a.until or ("publish" if a.publish else "check")
+    if a.publish and a.ignore_gate_red:
+        sys.exit("--publish 與 --ignore-gate-red 不可併用")
+    for name in STAGES:
+        if name == "publish" and not a.publish:
+            break
+        if a.ignore_gate_red and name == "gate" and c.m["stages"].get("gate", {}).get("state") == "FAIL":
+            c.m["gate_red_ignored"] = True
+            c.save()
+            print("[gate] 仍紅但 --ignore-gate-red：繼續（除錯用，產物不得發布）")
+        elif a.resume and c.passed(name):
+            print("[{0}] 已 PASS，跳過".format(name))
+        elif not fns.get(name, do_publish)(c):
+            report(c)
+            return 1
+        if name == last:
+            break
+    report(c)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

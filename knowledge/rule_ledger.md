@@ -468,3 +468,11 @@
 | **DD v20 的估值口徑由程式決定：事實表 `f_consensus_eps_fy1` ≤ 0 → `valuation_basis="sales_multiple"`，情境樹用營收路徑 × 終端 EV/S，終端價＝max(0,(營收×EV/S−淨負債)÷股數)；否則維持 EPS × 本益比。判斷者填的 valuation_basis 一律被覆寫並記 `mechanical_overrides`**（`scripts/dd2/run.py::decide_valuation_basis`、`scripts/dd_scenario.py`） | 2026-10-12 | CRWV（虧損、負債重）judged 段失敗：起點 EPS −3.94，`cagr_pct(終端 EPS÷起點 EPS)` 拋 ValueError；Bear 終端 EPS 為負、pe＝0（股權算零）`cagr_pct(0)` 也拋。規則卡 QC-45 早就寫虧損公司估值主錨＝EV/S，情境樹沒跟上，管線在最需要判斷的公司上直接停擺。持有人拍板：觸發由程式決定、判斷者不選，避免判斷者為了讓 EPS 路徑好算而自選口徑 | ①sales 模式啟用後 90 天內，用此模式出的 DD 有 ≥2 檔因 `net_debt_y5`／`shares_y5` 判斷者一律填 null（沿用目前值）而讓 Bear 價虛高，且閘未攔到 → 降級為必填；②FY1 EPS ≤ 0 但 FY2 EPS 已明顯轉正（EPS 路徑可用）的公司因此被迫走 EV/S 且判斷者反映失真 ≥2 例 → 觸發條件改看 FY2；③同一檔 eps_pe 與 sales 兩口徑結果方向級分歧時，不得互相證明 | **2026-10-13 審計 INSUFFICIENT-DATA**：上線 <1 週；kill 看 90 天 |
 
 加一提刪一：本次新增判斷類口徑切換規則，候刪審查對象為「未獲利高成長 archetype 的 trailing PE／PEG 拿掉」那條（`judge_addendum_archetype.md` QC-45）——兩條現在指向同一件事，審後保留（QC-45 管 gate-set，本條管情境樹算術）。
+
+## 2026-10-13：ID 判斷步驟強制基準率作答（id2 管線）
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **id2 判斷步驟的基準率義務：裁決落在 shortage × Phase II（或前版在該格）時，判斷 JSON 的 `base_rate` 必須原文引用 `knowledge/id_autopsy.py` 該格歷史命中率，並以證據包內的具體差異說明這次為何不同，說不出就降級（`action=downgraded`）；程式（`scripts/id2/run.py::mech_checks`）把「該格但沒填／維持卻無附證據的差異點」直接判紅燈，gate 再抽查差異是否只是重述「這次不同」** | 2026-10-13 | 2026-10 校準輪重現 shortage × Phase II 91 天超額 −7.5%、勝率 7/24（七月 7/25），熱產業樂觀偏誤是 ID 唯一系統性失效格；v4 流程只在寫完後由 critic 抽查（J6），HBM 等案修補最貴 | ①下一輪校準（id2 產出的 ID 至少 6 份、含 ≥3 份 shortage × II 前版）shortage × Phase II 命中率與 v4 同期相比沒有改善（勝率差 <10pp）；②規則在 id2 產出中從未改變任何一份的裁決或信心（全部 `action=kept` 且差異點為套話，由 critic 判定）→ 兩者任一即 KILL，回到 v4 的 J6 事後抽查 | 新規則，上線 <1 週；kill 看下一輪校準 |
+
+加一提刪一：候刪審查對象為「ID conviction pill 公式（high 需 §9 ≥2 🔴 且 falsification >2σ）」那條（v2.x 舊制，與 high/mid/low 後續超額無單調關係的證據已在 2026-10 校準出現：conviction high 與 shortage × II 高度重疊，不是獨立訊號）——審後建議降級，由持有人在校準輪拍板。
