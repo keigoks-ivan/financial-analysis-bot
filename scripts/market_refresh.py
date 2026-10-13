@@ -458,7 +458,7 @@ def main():
             history.append({"as_of": read["as_of"], "snapshot_id": snapshot["snapshot_id"],
                             "thesis_zh": read["thesis_zh"], "path_zh": read["path_zh"],
                             "claim_ids": read["claim_ids"], "n_claims": len(read["claim_ids"]),
-                            **{"p_up_" + h["key"]: h["p_up"] for h in read["horizons"]}})
+                            **{"p_up_" + h["key"]: h["p_up"] for h in read["horizons"] if h.get("p_up") is not None}})
         if args.write:
             if errors:
                 print(encoded({"status": "blocked", "errors": errors, "warnings": warnings}))

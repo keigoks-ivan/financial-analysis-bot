@@ -455,6 +455,12 @@ def main():
         print(f"[ledger-from-editorial][ERROR] 無法讀取/解析 {file_path}：{e}", file=sys.stderr)
         sys.exit(2)
 
+    if args.source == "market-read":
+        # 2026-10-13：market-read SPRT 判紅（rule_ledger #137），判讀層降為評論，停止新增命題。
+        # 歷史命題留在帳簿照常結算；本來源不再落帳（無論檔內有無 forecasts[]）。
+        print("[ledger-from-editorial] market-read 已於 2026-10-13 降為評論，不再新增命題（歷史紀錄保留），略過。")
+        sys.exit(0)
+
     as_of = data.get("as_of") or data.get("date")
     if not as_of:
         as_of = date.today().isoformat()

@@ -301,8 +301,10 @@ def test_real_market_read_fixture_passes_existing_critic_and_new_binding_contrac
         "falsifiers_zh": "反證", "asset_implications_zh": "影響",
         "refs": ["monitor:sp500"],
     }]
+    # 2026-10-13 起已發布判讀為評論模式（無 forecasts）；有 forecasts 的舊版仍補 resolve_by。
     for index, horizon in enumerate(candidate["horizons"]):
-        horizon["resolve_by"] = (today + timedelta(days=candidate["forecasts"][index]["horizon_days"])).isoformat()
+        if index < len(candidate["forecasts"]):
+            horizon["resolve_by"] = (today + timedelta(days=candidate["forecasts"][index]["horizon_days"])).isoformat()
     candidate["observations"] = [
         {"ref": ref, "field": "num", "value": state["evidence"]["quotes"][ref]["num"],
          "as_of": state["evidence"]["quotes"][ref]["as_of"]}

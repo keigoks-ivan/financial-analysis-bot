@@ -95,10 +95,23 @@ def build_failure(status: dict):
 # 成功摘要（純文字）
 # ═══════════════════════════════════════════════════════════════════════════
 
-def build_horizons_lines(horizons):
+def _commentary(data) -> bool:
+    """2026-10-13 起判讀層降為評論：不顯示任何機率、不提帳簿（rule_ledger #137）。"""
+    return isinstance(data, dict) and data.get("mode") == "commentary"
+
+
+def _first_sentence(text) -> str:
+    text = str(text or "")
+    return text.split("。")[0] + "。" if "。" in text else text
+
+
+def build_horizons_lines(horizons, commentary=False):
     lines = []
     if not isinstance(horizons, list):
         return ["　（無三框架資料）"]
+    if commentary:
+        return [f"　－{h.get('label', h.get('key', '?'))}：{_first_sentence(h.get('logic_zh'))}"
+                for h in horizons if isinstance(h, dict)] or ["　（無三框架資料）"]
     for h in horizons:
         label = h.get("label", h.get("key", "?"))
         p_up = fmt_pct(h.get("p_up"))
@@ -192,7 +205,7 @@ def build_success(data: dict, state_data):
     lines.append(data.get("path_zh") or "（無）")
     lines.append("")
     lines.append("【三個時間框架】")
-    lines.extend(build_horizons_lines(data.get("horizons")))
+    lines.extend(build_horizons_lines(data.get("horizons"), commentary=_commentary(data)))
     lines.append("")
     lines.append("【三股力量】")
     lines.extend(build_forces_lines(data.get("forces")))
@@ -200,15 +213,17 @@ def build_success(data: dict, state_data):
     lines.append("【證偽表（前 5 條）】")
     lines.extend(build_falsifiers_lines(data.get("falsifiers"), state_data))
     lines.append("")
-    lines.append("【與帳簿表格的分歧】")
-    lines.append(build_deviations_summary(data.get("deviations_from_tables")))
-    lines.append("")
+    if not _commentary(data):
+        lines.append("【與帳簿表格的分歧】")
+        lines.append(build_deviations_summary(data.get("deviations_from_tables")))
+        lines.append("")
     lines.append("【冷讀結果】")
     lines.append(build_review_summary(data.get("review")))
     lines.append("")
-    claim_ids = data.get("claim_ids") or []
-    lines.append(f"【落帳編號】{claim_ids if claim_ids else '（無）'}")
-    lines.append("")
+    if not _commentary(data):
+        claim_ids = data.get("claim_ids") or []
+        lines.append(f"【落帳編號】{claim_ids if claim_ids else '（無）'}")
+        lines.append("")
     lines.append(f"連結：{PAGE_URL}")
     body = "\n".join(lines)
     return subject, body
@@ -406,6 +421,14 @@ def build_dd_caption_html(horizons) -> str:
     )
 
 
+def render_horizons_commentary_html(horizons) -> str:
+    rows = [[esc(str(h.get("label", h.get("key", "?"))).split("（")[0]), esc(_first_sentence(h.get("logic_zh")))]
+            for h in horizons or [] if isinstance(h, dict)]
+    if not rows:
+        return f'<div style="font-size:13px;color:{COLOR_GRAY};">（無三框架資料）</div>'
+    return render_table_html(["框架", "重點"], rows)
+
+
 def render_horizons_table_html(horizons) -> str:
     if not isinstance(horizons, list) or not horizons:
         return f'<div style="font-size:13px;color:{COLOR_GRAY};">（無三框架資料）</div>'
@@ -535,6 +558,19 @@ def render_email_shell_html(as_of: str, status_html: str, body_html: str) -> str
 
 def build_html_success(data: dict, state_data) -> str:
     as_of = data.get("as_of", "?")
+    if _commentary(data):
+        body_parts = [
+            render_one_minute_html(data, state_data),
+            section_header_html("THREE HORIZONS", "三個時間框架"),
+            render_horizons_commentary_html(data.get("horizons")),
+            section_header_html("THREE FORCES", "三股力量"),
+            render_forces_html(data.get("forces")),
+            section_header_html("WHAT WOULD CHANGE THIS", "什麼會改變判讀"),
+            render_falsifiers_table_html(data.get("falsifiers"), state_data),
+            section_header_html("COLD REVIEW", "冷讀結果"),
+            render_review_html(data.get("review")),
+        ]
+        return render_email_shell_html(as_of, "", "".join(body_parts))
     body_parts = [
         render_one_minute_html(data, state_data),
         render_tiles_html(data.get("horizons")),
