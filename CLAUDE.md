@@ -220,7 +220,7 @@ DS 觸發語現一律觸發 `industry-analyst`；legacy DS 維護走 `id-review 
 
 **Plumbing**：
 - `scripts/validate_supply_chain_meta.py`：驗 `docs/supply-chain/data/*.json`（pre-commit hook 會跑、staged-only；validator 自身變動時 full-sweep 全部 topic）
-- `scripts/build_supply_chain_dd_index.py`：scan docs/dd/ 重建 `dd_links.json`。**已掛 update_dd_index.py 自動鏈** — 跑 DD/DCA 同步時會自動 rebuild 一次，不需手動。
+- `scripts/build_supply_chain_dd_index.py`：scan docs/dd/ 重建 `dd_links.json`。**已掛 update_dd_index.py 自動鏈** — 跑 DD/DCA 同步時會自動 rebuild 一次，不需手動。 另 `.github/workflows/dd-downstream-sync.yml`（DD 推上 main 即觸發＋每日 20:37 台北兜底）會在 CI 重生並 commit `dd_links.json`、`search-index.json`＋首頁最新發布條、`rss.xml`、track-record 三檔（含 `data/track_record_prices.json`）；本機鏈跑出的這些檔不必再手動補 commit。
 - engine 完全抽離（`assets/engine.{css,js}`），新 topic 不需動 code
 
 **現況**：CoWoS（31 nodes 3 列）+ CPO（19 nodes 5 列）兩個 topic 上線；剩下 13 個 topic 在 manifest 中標 `active: false`（HBM / 先進製程 / 矽光子 / 面板級封裝 / IC 設計 / 半導體材料 / ASIC / IC 基板 / 電源散熱 / AI 伺服器 ODM / 機器人 / 低軌衛星 / 軍工國防）。
