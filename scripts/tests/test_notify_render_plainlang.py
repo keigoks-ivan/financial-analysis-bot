@@ -15,12 +15,16 @@
 黃燈清單與名詞解釋只留在週報；改版前用一個月實際資料回放，補上紅燈解除、黃級
 壓力面複合規則成立、類股急跌排序三個缺口。
 
+2026-10-13 第六版：持有人「我都要知道最重要的事情要強調出來」。每日摘要與週報開頭
+加一行粗體「最重要：…」（四層由重到輕取第一個有東西的層）；週報改成這週發生的事／
+還在持續／下週要盯三段。
+
 2026-10-06 第四版：警戒度拆成「有東西在壞」（警戒度，只數壓力面）與「漲太熱」
 （熱度，另列、不計分），否證指標移出分數、獨立成「報告要重看」一行並附
 「照平常的速度多久碰線」。closest_composite 不再選到已成立的規則；黃燈名單改依底層
 序列去重，不再需要「×2＝兩個偵測器」的說法。
 
-本檔鎖住五版的行為。真資料測試只斷言 notify_render 自己產的字，不斷言
+本檔鎖住六版的行為。真資料測試只斷言 notify_render 自己產的字，不斷言
 latest.json 裡由 build_detective 產的 driver 字——那些要等每日排程重算才會更新。
 """
 import json
@@ -94,15 +98,7 @@ def test_drivers_sentence():
         "分數主要來自：62 條訊號亮黃燈、2 組複合規則只差一個條件就成立。")
 
 
-# ── 紅燈、訊號進出、名詞解釋 ───────────────────────────────────────────
-@pytest.mark.parametrize("new,res,tail", [(32, 39, "總數少了 7 條"),
-                                          (40, 30, "總數多了 10 條"),
-                                          (5, 5, "總數沒變")])
-def test_net_change_sentence_gives_direction(new, res, tail):
-    s = nr._net_change_sentence(new, res)
-    assert f"新增 {new} 條、解除 {res} 條" in s and tail in s
-
-
+# ── 名詞解釋 ───────────────────────────────────────────
 def test_glossary_only_for_terms_present():
     assert nr._glossary_lines("沒有術語") == []
     both = nr._glossary_lines("3 組複合規則…7 條否證指標…")
@@ -137,20 +133,6 @@ def test_near_composites_only_one_short_and_unfired():
 
 
 # ── 否證指標 ───────────────────────────────────────────────────────────
-def test_kill_sentence_ties_near_to_the_machine_checked_ones():
-    kw = {"coverage": {"mechanical": 12, "total": 1009, "llm_only": 997}, "near": ["a"] * 7}
-    assert nr._kill_sentence(kw, []) == (
-        "否證指標沒有一條越過警戒線。機器能自動檢查的 12 條裡，有 7 條離警戒線不到兩成。"
-        "另外 997 條沒辦法自動檢查，要靠人看。")
-
-
-def test_kill_sentence_breached_and_quiet():
-    kw = {"coverage": {"mechanical": 12, "total": 20}, "near": []}
-    assert nr._kill_sentence(kw, ["x", "y"]).startswith("有 2 條否證指標已經越過警戒線。")
-    assert "都離警戒線還有兩成以上" in nr._kill_sentence(kw, [])
-    assert "另外 8 條沒辦法自動檢查" in nr._kill_sentence(kw, [])
-
-
 def test_near_wording_matches_the_20pct_rule():
     """build_kill_watch 的 near＝離門檻 20% 以內；字面不能比規則講得更近。"""
     import build_kill_watch as bkw
@@ -158,12 +140,6 @@ def test_near_wording_matches_the_20pct_rule():
     # 否證指標已移出警戒度計分，driver 標籤不該再有 kill 兩項
     assert "kill_near" not in bd.ALERT_DRIVER_LABELS
     assert "kill_breached" not in bd.ALERT_DRIVER_LABELS
-    one_min = nr._kill_sentence({"coverage": {"mechanical": 1}, "near": ["a"]}, [])
-    assert "不到兩成" in one_min and "快碰到" not in one_min
-
-
-def test_kill_sentence_none_without_table():
-    assert nr._kill_sentence(None, []) is None
 
 
 # ── 這些數字是哪些 ─────────────────────────────────────────────────────
@@ -185,7 +161,7 @@ def test_doc_title_takes_first_part_of_real_report_title():
     assert nr._doc_title(None) == ""
 
 
-def test_kill_near_lines_name_report_metric_now_and_line():
+def test_kill_lines_name_report_metric_now_and_line():
     kw = {"near": ["a", "b", "c"], "items": [
         {"id": "a", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html",
          "metric_text": "10Y/30Y 殖利率", "current": 5.29, "value": 5.5, "op": ">=", "unit": "%"},
@@ -193,19 +169,20 @@ def test_kill_near_lines_name_report_metric_now_and_line():
          "op": "<", "unit": ""},
         {"id": "c", "metric_text": "缺值"},
     ]}
-    lines = nr._kill_near_lines(kw)
+    lines = nr._kill_group_lines(kw, kw["near"])
     assert lines[0] == "美國財政赤字與利率上限：10Y/30Y 殖利率，現在 5.29%，升到 5.5% 就碰線"
     assert lines[1] == "Demo：某數，現在 12，跌到 10 就碰線"
     assert lines[2] == "缺值。"
-    assert nr._kill_near_lines(None) == []
+    assert nr._kill_group_lines(None, None) == []
 
 
-def test_kill_near_lines_never_claim_the_report_was_wrong():
+def test_kill_phrases_never_claim_the_report_was_wrong():
     """證偽表同時收「推翻」與「升級」門檻，碰線不等於看錯。"""
     kw = json.loads((DATA / "kill_watch.json").read_text(encoding="utf-8"))
-    text = "".join(nr._kill_near_lines(kw)) + nr.KILL_NEAR_NOTE + "".join(nr._glossary_lines("否證指標"))
+    text = ("".join(nr._kill_phrases(kw, kw.get("near"), "最快碰線", breached=False))
+            + "".join(nr._kill_phrases(kw, kw.get("breached"), "越線"))
+            + "".join(nr._glossary_lines("否證指標")))
     assert "看錯" not in text and "錯了" not in text
-    assert "回頭檢查" in nr.KILL_NEAR_NOTE
 
 
 # ── 家族標籤（週報新增／解除清單）────────────────────────────────────────
@@ -221,12 +198,6 @@ def test_kill_near_lines_never_claim_the_report_was_wrong():
 ])
 def test_family_label_is_thing_plus_what_happened(source, cat, direction, want):
     assert nr._family_label(source, cat, direction) == want
-
-
-def test_direction_of():
-    assert nr._direction_of(["a:x:up", "b:y:up"]) == "up"
-    assert nr._direction_of(["a:x:up", "b:y:down"]) == ""
-    assert nr._direction_of(["a:x"]) == ""
 
 
 # ── 上游顯示字（build_detective／detective_rules）──────────────────────
@@ -299,8 +270,9 @@ def test_real_html_has_no_internal_jargon(real, tier):
 def test_real_emails_lead_with_alert_and_define_terms(real, tier):
     body = (nr.render_digest(*real, force=True) if tier == "digest"
             else nr.render_weekly(*real))
-    first = [l for l in body.splitlines() if l.strip()][1]
-    assert first.startswith("警戒度 "), first
+    lines = [l for l in body.splitlines() if l.strip()]
+    assert lines[1].startswith("**最重要：") and lines[1].endswith("。**"), lines[1]
+    assert lines[2].startswith("警戒度 "), lines[2]
     if tier == "digest":   # 2026-10-13 每日只講重點，名詞解釋留給週報
         return
     if "複合規則" in body:
@@ -319,9 +291,11 @@ def test_real_digest_only_key_points(real):
     for gone in ("這些數字是哪些", "黃燈分在哪裡", "（源 MACRO_", "kill_watch", "thesis"):
         assert gone not in body and gone not in html, gone
     items = {it["id"]: it for it in kw.get("items", [])}
+    # 「最重要」那行刻意把最要緊的一條再講一次，其餘內文每條只講一次
+    rest = "\n".join(l for l in body.splitlines() if not l.startswith("**最重要："))
     for nid in kw.get("breached") or []:
         metric = items[nid]["metric_text"]
-        assert body.count(metric) <= 1, metric   # 同一數字兩份報告各列一次的，合併成一行
+        assert rest.count(metric) <= 1, metric   # 同一數字兩份報告各列一次的，合併成一行
     assert "要處理：" in body and nr.REST_ON_WEB in body
     new_lines = [l for l in body.splitlines() if l.startswith("・今天新增訊號裡最顯著的")]
     assert len(new_lines) <= 1
@@ -369,6 +343,91 @@ def test_resolved_red_is_reported():
     assert nr._resolved_red_line(dict(d, resolved_red_keys=[])) is None
 
 
+# ── 最重要的事（2026-10-13）────────────────────────────────────────────
+def test_headline_takes_first_non_empty_tier_and_names_all_in_it():
+    assert nr._headline([[], ["甲", "乙"], ["丙"]], "沒事。") == (2, "最重要：甲；乙。")
+    assert nr._headline([[], [], []], "沒事。") == (4, "最重要：沒事。")
+    assert nr._headline_text((1, "最重要：甲。")) == "**最重要：甲。**"
+    assert "#b3261e" in nr._headline_html((1, "最重要：甲。"))     # 第一層用紅框
+
+
+def _hd(active_red=(), fired=(), new_red=()):
+    return {"as_of": "2026-10-12", "new_red_keys": list(new_red), "esc_red_keys": [],
+            "active_red": list(active_red), "fired_composites": list(fired)}
+
+
+def test_digest_headline_big_band_jump_comes_first(monkeypatch):
+    monkeypatch.setattr(nr, "_alert_history_points",
+                        lambda path=None: [["2026-10-09", 30, "watch"], ["2026-10-12", 70, "tense"]])
+    latest = {"alert_level": {"score": 70, "band": "tense", "band_label": "緊張", "drivers": []}}
+    red = {"key": "monitor:x", "source": "monitor", "sev": "red", "fact": "某指數大跌", "days_active": 1}
+    tier, text = nr._digest_headline(latest, _hd([red]), {})
+    assert tier == 1 and text == "最重要：警戒度升到「緊張」，70 分；某指數大跌（今天亮紅燈）。"
+
+
+def test_digest_headline_small_band_jump_is_second_tier(monkeypatch):
+    monkeypatch.setattr(nr, "_alert_history_points",
+                        lambda path=None: [["2026-10-09", 10, "calm"], ["2026-10-12", 25, "watch"]])
+    latest = {"alert_level": {"score": 25, "band": "watch", "band_label": "留意", "drivers": []}}
+    assert nr._digest_headline(latest, _hd(), {}) == (2, "最重要：警戒度升到「留意」，25 分。")
+
+
+def test_digest_headline_names_reports_still_breached(monkeypatch):
+    monkeypatch.setattr(nr, "_alert_history_points", lambda path=None: [])
+    kw = {"breached": ["macro:A:0"], "items": [
+        {"id": "macro:A:0", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html", "metric_text": "M",
+         "current": 6, "value": 5, "op": ">=", "unit": "", "data_source": {"type": "monitor", "key": "a"}}]}
+    sig = {"key": "kill:A:0", "source": "kill", "sev": "red", "days_active": 6}
+    tier, text = nr._digest_headline({}, _hd([sig]), kw)
+    assert tier == 3
+    assert text == "最重要：美國財政赤字與利率上限的否證指標還在越線（最久第 6 天），要回頭檢查判斷。"
+    sig["days_active"] = 1
+    tier, text = nr._digest_headline({}, _hd([sig]), kw)
+    assert tier == 1 and "的否證指標今天越線：M，現在 6，已經越過 5" in text
+
+
+def test_kill_phrases_merge_same_report():
+    kw = {"items": [
+        {"id": "a", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html", "metric_text": "M1",
+         "current": 6, "value": 5, "op": ">=", "unit": "", "data_source": {"type": "monitor", "key": "a"}},
+        {"id": "b", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html", "metric_text": "M2",
+         "current": 3, "value": 2, "op": ">=", "unit": "", "data_source": {"type": "monitor", "key": "b"}}]}
+    assert nr._kill_phrases(kw, ["a", "b"], "越線") == [
+        "美國財政赤字與利率上限的否證指標越線：M1，現在 6，已經越過 5；M2，現在 3，已經越過 2"]
+
+
+def test_nearest_kill_line_is_only_the_fastest_one():
+    kw = {"near": ["slow", "dxy1", "dxy2", "fast"], "items": [
+        _kwi("slow", "docs/macro/MACRO_USEconomy_20260708.html", "慢的", 1, 9, 900, ds="a/x"),
+        _kwi("dxy1", "docs/macro/MACRO_DollarCycle_20260710.html", "DXY", 101.9, 102, 3.0),
+        _kwi("dxy2", "docs/macro/MACRO_GlobalLiquidity_20260708.html", "DXY 同線", 101.9, 102, 3.0),
+        _kwi("fast", "docs/macro/MACRO_USEconomy_20260708.html", "快的", 5, 6, 40, ds="b/y")]}
+    line = nr._nearest_kill_line(kw)
+    assert line.startswith("美元週期、全球流動性循環的否證指標最快碰線：DXY，現在 101.9")
+    assert "慢的" not in line and "快的" not in line
+    assert nr._nearest_kill_line({"near": []}) is None
+
+
+def test_alert_week_sentence():
+    pts = [["2026-10-05", 30, "watch"], ["2026-10-06", 20, "watch"], ["2026-10-08", 65, "tense"]]
+    assert nr._alert_week_sentence(pts, "2026-10-06", "2026-10-12") == "這週警戒度在 20～65 分之間，10/8 升到「緊張」。"
+    assert nr._alert_week_sentence(pts[:2], "2026-10-05", "2026-10-12") == "這週警戒度在 20～30 分之間，都在「留意」。"
+    assert nr._alert_week_sentence([], "2026-10-06", "2026-10-12") is None
+
+
+def test_real_weekly_three_sections_and_headline(real):
+    latest, state = real
+    body = nr.render_weekly(latest, state)
+    html = nr.render_weekly_html(latest, state)
+    assert "**最重要：" in body and "最重要：" in html
+    assert "這週發生的事：" in body and nr.WEEK_REST_ON_WEB in body
+    for gone in ("這些數字是哪些", "本週新增（", "本週解除（", "各資料來源的更新日期", "（無）", "kill_metric"):
+        assert gone not in body and gone not in html, gone
+    d = nr._weekly_compute(latest, state)
+    if d["sustained_keys"]:
+        assert f"連續亮 {nr.SUSTAINED_DAYS} 天以上、還沒退的黃燈：" in body
+
+
 def test_breached_kill_lines_say_new_or_day_count():
     kw = {"items": [
         {"id": "macro:A:0", "doc": "", "theme": "A", "metric_text": "M1", "current": 6, "value": 5,
@@ -383,15 +442,6 @@ def test_breached_kill_lines_say_new_or_day_count():
     assert lines[0].endswith("（今天剛越線）") and lines[1].endswith("（第 6 天）")
     # 週報沿用舊呼叫方式，不帶天數
     assert nr._kill_group_lines(kw, ["macro:A:0"], breached=True)[0].endswith("已經越過 5")
-
-
-def test_real_weekly_names_sustained_and_near_kill(real):
-    latest, state = real
-    d = nr._weekly_compute(latest, state)
-    assert len(d["sustained_keys"]) == d["sustained_count"]
-    body = nr.render_weekly(latest, state)
-    if d["sustained_count"]:
-        assert f"還沒退的黃燈（{d['sustained_count']} 條）" in body
 
 
 def test_real_html_digest_shows_alert_tile(real):
@@ -462,7 +512,7 @@ def test_kill_lines_sorted_by_pace_and_same_line_merged():
         _kwi("dxy2", "docs/macro/MACRO_GlobalLiquidity_20260708.html", "DXY 同線", 101.9, 102, 3.0),
         _kwi("fast", "docs/macro/MACRO_USFiscalDeficit_20260708.html", "快的", 5, 6, 40, ds="b/y"),
     ]}
-    lines = nr._kill_near_lines(kw)
+    lines = nr._kill_group_lines(kw, kw["near"])
     assert len(lines) == 3                                # 兩份報告同一條美元線合併成一行
     assert lines[0].startswith("美元週期、全球流動性循環：DXY，")     # 最快的在前、點名兩份報告
     assert "幾天內就可能碰到" in lines[0]
@@ -474,7 +524,7 @@ def test_kill_lines_without_pace_keep_old_wording():
     kw = {"near": ["a"], "items": [
         {"id": "a", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html",
          "metric_text": "10Y/30Y 殖利率", "current": 5.29, "value": 5.5, "op": ">=", "unit": "%"}]}
-    assert nr._kill_near_lines(kw) == [
+    assert nr._kill_group_lines(kw, kw["near"]) == [
         "美國財政赤字與利率上限：10Y/30Y 殖利率，現在 5.29%，升到 5.5% 就碰線"]
 
 
@@ -482,7 +532,7 @@ def test_kill_breached_lines_say_already_crossed():
     kw = {"breached": ["a"], "items": [
         {"id": "a", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html",
          "metric_text": "10Y/30Y 殖利率", "current": 5.63, "value": 5.5, "op": ">=", "unit": "%"}]}
-    assert nr._kill_breached_lines(kw) == [
+    assert nr._kill_group_lines(kw, kw["breached"], breached=True) == [
         "美國財政赤字與利率上限：10Y/30Y 殖利率，現在 5.63%，已經越過 5.5%"]
 
 
