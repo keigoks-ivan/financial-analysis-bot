@@ -266,6 +266,10 @@ DS 觸發語現一律觸發 `industry-analyst`；legacy DS 維護走 `id-review 
 
 **硬規則**：中文標點全形；T1（Fed/FRED/Treasury/BLS/IMF/BIS 一手）floor 45%；每數字帶來源＋as-of；**證偽表每條必附現值＋as-of**（v1.1，查不到現值不准上表）；**站內引用忠實性**（v1.1，原文的分歧／保留不得轉述為一致）；**數據紀律八條**（v1.2：轉引 T1 條款／T1 結構天花板聲明／T3 現值取捨／觸及紀錄與當局行動強制查證／證據新鮮度標籤／carry-forward 數字二次查證／質性 base rate 出口／衝突數字割捨）；寫稿後強制 cold-review critic（7 條 checklist＋數字抽查；writer 不得自任 critic）；判斷類規則已登記 rule_ledger（stance 反騎牆＋證偽表強制＋tool-level 90 天引用 kill）；git flow＝預設停下複審、用戶說 push 才 commit。
 
+## Workflow: 投資想法頁（/ideas/）
+
+寫新想法、整頁改寫或補舊頁時，照 `idea-writing` skill（`.claude/skills/idea-writing/`）：四個視角必走、五題必答、反方由 sonnet 獨立冷讀。寫完後的每日追蹤歸 `idea-watch`。此為寫作紀律非裁決閘，不適用 rule_ledger 登記。
+
 ## Report 篇幅預算（下界＝深度閘門，上界＝token 成本預算）
 
 DD 報告雙向 size budget：**下界＝深度閘門（擋 commit）；上界＝token 成本預算（只警告不硬擋——硬擋只會逼出寫完後的二次壓縮重寫，篇幅控制必須放在寫作指令裡，見 stock-analyst QC-38）**。達標正道＝真量化模組×sourced 數字，反灌水鐵律不變。
