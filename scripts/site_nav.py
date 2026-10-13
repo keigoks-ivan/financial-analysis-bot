@@ -527,6 +527,8 @@ def process(path: Path, check=False):
         return "skip-external"
     if rel in SKIP_FILES:
         return "skip"
+    if rel.startswith("dca/"):  # 2026-10-13 DCA 退役：整個目錄只剩 meta-refresh 轉址樁，不注入 nav
+        return "skip"
     try:
         text = path.read_text(encoding="utf-8")
     except UnicodeDecodeError:

@@ -24,7 +24,19 @@ from pathlib import Path
 
 DOCS = Path(__file__).parent.parent / "docs"
 DD_DIR = DOCS / "dd"
-DCA_DIR = DOCS / "dca"
+# 2026-10-13：docs/dca 退役（DCA 檔案封存於 _archived/dca，原址只剩轉址樁）。DCA_DIR 僅供
+# patch_dca_irr 等離線維護工具讀封存檔；collect_dca_* 不再掃描它，改讀 data/legacy_dca_frozen.json。
+DCA_DIR = DOCS.parent / "_archived" / "dca"
+LEGACY_DCA_FROZEN = DOCS.parent / "data" / "legacy_dca_frozen.json"
+
+
+@lru_cache(maxsize=1)
+def _legacy_dca_frozen() -> dict:
+    """2026-10-13 凍結的 legacy DCA 抽取結果 {ev5y_pct:{}, moat_trend:{}}（v13+ DD 的 dd-meta overlay 仍優先）。"""
+    try:
+        return json.loads(LEGACY_DCA_FROZEN.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
 INDEX_HTML = DOCS / "research" / "_body.html"  # 2026-08-20 研究區整併：/research/index.html 已改為轉址 stub -> /t/#dd，
 # 實際 DD 表格內容改寫入這個 nav-less 分頁片段（由 /t/ 主控台 iframe 嵌入）。
 INDEX_MD = DD_DIR / "INDEX.md"
@@ -35,26 +47,8 @@ DCA_FILENAME_RE = re.compile(r"^DCA_([A-Z0-9]+)_(\d{8})\.html$")
 
 
 def collect_dca_map() -> dict:
-    """Scan docs/dca/ for DCA_{TICKER}_{YYYYMMDD}.html and return
-    {ticker: latest_dca_href}. Same ticker → keep newest by date suffix.
-
-    href format mirrors DD: '/dca/DCA_TICKER_YYYYMMDD.html' (absolute path).
-    Returns empty dict if dca/ folder missing or empty (research page just
-    shows '—' for every row).
-    """
+    """{ticker: href} —— 只剩 v13+ DD 自己的 #decision 錨點（legacy /dca/ 連結已隨 DCA 退役移除）。"""
     out: dict = {}
-    if DCA_DIR.exists():
-        latest: dict[str, tuple[str, str]] = {}  # ticker -> (date_str, filename)
-        for path in DCA_DIR.glob("DCA_*.html"):
-            m = DCA_FILENAME_RE.match(path.name)
-            if not m:
-                continue
-            ticker, date_str = m.group(1), m.group(2)
-            prev = latest.get(ticker)
-            if prev is None or date_str > prev[0]:
-                latest[ticker] = (date_str, path.name)
-        out = {t: f"/dca/{fname}" for t, (_, fname) in latest.items()}
-    # v13 merged reports: 定見 points at the DD's own #decision anchor (v13 wins).
     for norm, fields in _v13_dca_overlay().items():
         out[norm] = fields["href"]
     return out
@@ -398,26 +392,8 @@ def extract_dca_moat_trend(dca_path) -> "str | None":
 
 
 def collect_dca_moat_trend_map() -> dict:
-    """Return {ticker: arrow} for each ticker's latest DCA.
-
-    arrow is one of '↑'/'→'/'↓'. Tickers where extraction fails are omitted.
-    Mirrors collect_dca_bear_maps() scan pattern but returns a single dict.
-    """
-    out: dict = {}
-    if DCA_DIR.exists():
-        latest: dict = {}
-        for path in DCA_DIR.glob("DCA_*.html"):
-            m = DCA_FILENAME_RE.match(path.name)
-            if not m:
-                continue
-            ticker, date_str = m.group(1), m.group(2)
-            prev = latest.get(ticker)
-            if prev is None or date_str > prev[0]:
-                latest[ticker] = (date_str, path)
-        for ticker, (_, path) in latest.items():
-            arrow = extract_dca_moat_trend(path)
-            if arrow is not None:
-                out[ticker] = arrow
+    """Return {ticker: arrow}：legacy 部分讀凍結檔，v13+ DD 的 dd-meta moat_trend 優先。"""
+    out: dict = dict(_legacy_dca_frozen().get("moat_trend", {}))
     # v13 merged reports: authoritative moat_trend comes from dd-meta (v13 wins).
     for norm, fields in _v13_dca_overlay().items():
         if fields["moat_trend"] is not None:
@@ -426,27 +402,12 @@ def collect_dca_moat_trend_map() -> dict:
 
 
 def collect_dca_ev_map() -> dict:
-    """Return {ticker: ev_5y_pct} parsed from each ticker's latest DCA file.
+    """Return {ticker: ev_5y_pct}：legacy 部分讀凍結檔，v13+ DD 的 dd-meta ev5y_pct 優先。
 
-    Tickers without a parseable §4 EV are omitted. Caller should treat
+    Tickers without a value are omitted. Caller should treat
     missing ticker as "no EV available" and render '—'.
     """
-    out: dict[str, float] = {}
-    if DCA_DIR.exists():
-        # Pick latest DCA per ticker (mirrors collect_dca_map logic).
-        latest: dict[str, tuple[str, Path]] = {}
-        for path in DCA_DIR.glob("DCA_*.html"):
-            m = DCA_FILENAME_RE.match(path.name)
-            if not m:
-                continue
-            ticker, date_str = m.group(1), m.group(2)
-            prev = latest.get(ticker)
-            if prev is None or date_str > prev[0]:
-                latest[ticker] = (date_str, path)
-        for ticker, (_, path) in latest.items():
-            ev = extract_dca_ev_5y(path)
-            if ev is not None:
-                out[ticker] = ev
+    out: dict = dict(_legacy_dca_frozen().get("ev5y_pct", {}))
     # v13 merged reports: 5Y EV comes from dd-meta ev5y_pct (v13 wins).
     for norm, fields in _v13_dca_overlay().items():
         if fields["ev5y"] is not None:
@@ -1896,7 +1857,7 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     if dca_href:
         dca_cell = (
             f'<td class="num-cell"><a href="{dca_href}" target="_blank" '
-            f'rel="noopener" title="投資決策層（DD 統一裁決 #decision / legacy 決策報告）" '
+            f'rel="noopener" title="投資決策層（DD 統一裁決 #decision）" '
             f'style="text-decoration:none">📋</a></td>'
         )
     else:

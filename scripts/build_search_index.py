@@ -34,7 +34,6 @@ T_MACRO = "總經"
 T_MS = "對比"
 T_SYN = "期望綜合"
 T_DS = "產業DS·legacy"
-T_DCA = "決策DCA·legacy"
 T_EARN = "財報"
 T_CROWD = "擁擠交易"
 T_ROT = "產業輪動"
@@ -172,15 +171,7 @@ def collect_inventory() -> list[dict]:
         ent.append({"u": f"/ds/{base}", "t": _trim(f"{slug} 產業敘述 DS"), "k": T_DS,
                     "s": [slug], "d": _fdate(ymd)})
 
-    # ── 決策 DCA（legacy）──
-    for f in glob.glob(os.path.join(DOCS, "dca", "DCA_*.html")):
-        base = os.path.basename(f)
-        m = re.match(r"^DCA_(.+)_(\d{8})\.html$", base)
-        if not m:
-            continue
-        ticker, ymd = m.group(1), m.group(2)
-        ent.append({"u": f"/dca/{base}", "t": _trim(f"{ticker} 決策 DCA"), "k": T_DCA,
-                    "s": [ticker], "d": _fdate(ymd)})
+    # 2026-10-13：決策 DCA（legacy）已自網站移除，不再收錄。
 
     # ── 財報（日報 + 統整）──
     for f in (glob.glob(os.path.join(DOCS, "earnings", "earnings_*.html"))

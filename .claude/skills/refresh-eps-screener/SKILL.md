@@ -179,7 +179,7 @@ EOF
 git push origin main
 ```
 
-**不需要跑 `update_dd_index.py`** — 此 workflow 不動 `docs/dd/` 或 `docs/dca/`。research 頁的 DD 組合快照與此更新無關。
+**不需要跑 `update_dd_index.py`** — 此 workflow 不動 `docs/dd/` 或 `_archived/dca/`。research 頁的 DD 組合快照與此更新無關。
 
 ## 關鍵 invariants（每次 run 都要 hold）
 
@@ -187,6 +187,6 @@ git push origin main
 2. **CAGR 公式 retrofit**：prior snapshot 若早於 2026-05-25 寫入，必跑 §Step 2.5 retrofit，否則 `eps2y_revision_pp` 是 apples-to-oranges。
 3. **Excel 一律假設 USD**：Koyfin export 規範如此（即使 reporting currency 不同，Koyfin 會 USD-translate）。FX pipeline 對 .TW/.T/.HK/.KS 從 yfinance back-compute local currency display；ADRs（如 LVMH→MC、AENA、BESI、RMS）留 USD（ADR 投資人本身就交易 USD）。
 4. **Spot-check 不能跳**：§Step 6 是唯一能抓出 Excel column 順序變 / Koyfin export 規範變 / FX pipeline 套錯的 gate。任何 ✗ 不要 commit。
-5. **Commit scope tight**：只 add §Step 8 列的 dd-screener bundle。**不要 add docs/dd/** 或 **docs/dca/** 新檔（那些是別 session 的成果，commit 規範另有流程）。
+5. **Commit scope tight**：只 add §Step 8 列的 dd-screener bundle。**不要 add docs/dd/** 或 **_archived/dca/** 新檔（那些是別 session 的成果，commit 規範另有流程）。
 6. **白話呈現條款（2026-09-01 持有人拍板，全站適用，極簡版）**：本 skill 為機械層資料管線，產出中若出現顯示 label（如 variant 頁欄位名），遵守 `notes/site-internal/root/_plainlang_styleguide.md` 對照表白話主名。
 7. **ROIC／FCF Margin／ROIC 5Y Avg 三欄選填（2026-09-09）**：若用戶提供的 Excel 在既有 7 欄之後多帶「ROIC %」「FCF Margin %」「ROIC 5Y Avg %」欄，`load_eps_estimates_xlsx.py` 會自動解析並在 build 時優先於 QGM／yfinance 採用（同姊妹 skill `refresh-eps-screener-web` §Step 6）；「ROIC 5Y Avg %」餵給 v3 席位資格的核心席耐久判定（`durable_5y`，≥15% 為 True，缺欄 fallback QGM 五年穩定度）。沒有這些欄的 Excel 完全照舊，不用手動處理。

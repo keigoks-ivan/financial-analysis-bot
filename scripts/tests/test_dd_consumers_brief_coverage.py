@@ -162,7 +162,7 @@ def test_aggregate_dd_stats_load_records_brief_path_prefix(tmp_path, monkeypatch
 def test_aggregate_dca_stats_overlay_brief_path_and_link(tmp_path, monkeypatch):
     dd_dir = _build_fixture_tree(tmp_path)
     monkeypatch.setattr(aggregate_dca_stats, "DD_DIR", dd_dir)
-    monkeypatch.setattr(aggregate_dca_stats, "DCA_DIR", tmp_path / "dca_empty")
+    monkeypatch.setattr(aggregate_dca_stats, "DCA_DIR", tmp_path / "dca_archive_empty")
 
     records = aggregate_dca_stats.load_dca_records()
     assert records["AAA"]["path"] == "brief/BRIEF_AAA_20260401.html"

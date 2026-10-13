@@ -162,7 +162,7 @@ Agent({
 - dd-meta v13：新增決策層欄位 `dca_verdict`/`dca_role`/`moat_trend`（權威）/`runway_post_y5`/`ev5y_pct`（+ 選填 `irr_base_pct`/`max_dd_pct`），下游聚合器直接讀
 - Research 頁同步：跑 `python scripts/update_dd_index.py` 後，「定見」欄連到該 ticker 報告的 `/dd/DD_X.html#decision` 錨點
 
-**Legacy**：343 份既有 `docs/dca/DCA_*.html` 凍結保留、仍在站上，下游以 dual-read 支援（v13 dd-meta 優先，讀不到才 fall back legacy DCA）。設計細節見 `docs/_handoff_v13_dd_design_20260621.md`。
+**Legacy（2026-10-13 起自網站移除）**：343 份既有 DCA 檔已搬到 `_archived/dca/`，原 `docs/dca/DCA_*.html` URL 改為 noindex meta-refresh 轉址樁（指向該 ticker 最新 DD 的 `#decision`，無 DD 則到 /research/）。下游不再讀檔：舊檔的 5Y EV 與護城河趨勢凍結在 `data/legacy_dca_frozen.json`（v13+ 的 dd-meta 仍優先疊加），數字與排名與移除前逐列相同；dd-meta 欄位 `dca_verdict`／`dca_role` 照舊不改名。設計細節見 `docs/_handoff_v13_dd_design_20260621.md`。
 
 ## Workflow: 產業 DS — 已退役（2026-06-11 併入 industry-analyst v2.0）
 

@@ -26,7 +26,7 @@ import dd_meta_reader  # 2026-09-07：latest-per-ticker 候選集合改走共用
 
 ROOT = Path(__file__).parent.parent
 DD_DIR = ROOT / "docs" / "dd"
-DCA_DIR = ROOT / "docs" / "dca"
+DCA_DIR = ROOT / "_archived" / "dca"  # 2026-10-13：docs/dca 退役，原檔封存於此
 DCA_MANIFEST = ROOT / "scripts" / "dca_verdict_manifest.json"
 RESEARCH_HTML = ROOT / "docs" / "research" / "index.html"
 META_RE = re.compile(r'<script id="dd-meta"[^>]*>(.*?)</script>', re.DOTALL)

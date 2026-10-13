@@ -36,7 +36,7 @@ def test_direct_research_page_preserves_screener_inputs(tmp_path, monkeypatch):
     html_path = dd_dir / "DD_FIX_20260911.html"
     html_path.write_text(page)
     meta = read_dd_meta(html_path)
-    rows = load_dd_universe(dd_dir, tmp_path / "dca")
+    rows = load_dd_universe(dd_dir, tmp_path / "dca_archive")  # docs/dca 已退役；封存目錄不存在也要能跑
     assert len(rows) == 1, "新報告不得被篩選器略過"
     row = rows[0]
     assert row["ticker"] == raw["meta"]["ticker"] == "FIX"

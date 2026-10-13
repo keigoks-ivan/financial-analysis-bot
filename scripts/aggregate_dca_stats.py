@@ -27,7 +27,7 @@ from typing import Optional
 import dd_meta_reader  # 2026-09-07：v13+ overlay 候選集合改走共用 iterator（含 brief/）
 
 ROOT = Path(__file__).parent.parent
-DCA_DIR = ROOT / "docs" / "dca"
+DCA_DIR = ROOT / "_archived" / "dca"  # 2026-10-13：docs/dca 退役，原檔封存於此
 DD_DIR = ROOT / "docs" / "dd"
 
 # Regex: handle both <th> and <td> label elements (DCA reports use <th>)

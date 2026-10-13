@@ -138,31 +138,21 @@ def _extract_date_from_dd_filename(filename: str) -> Optional[str]:
 
 
 def _find_latest_dca(dca_dir: Path, ticker: str) -> tuple[Optional[str], Optional[str]]:
-    """Return (dca_path, dca_date) for the latest DCA file for ticker.
+    """Return (dca_path, dca_date) —— 2026-10-13 起 docs/dca 已退役，不再輸出 /dca/ 連結。
 
-    DCA files follow DCA_{STEM}_{YYYYMMDD}.html where STEM = ticker with dots stripped.
-    Returns (None, None) if no DCA exists.
+    dca_path 一律 None（徽章連結改用 DD 本身）；dca_date 仍從封存目錄（_archived/dca）的
+    DCA_{STEM}_{YYYYMMDD}.html 檔名取日期，維持舊 v12 列的資料欄位不變。找不到回 (None, None)。
     """
     stem = _ticker_to_filename_stem(ticker)
     pattern = str(dca_dir / f"DCA_{stem}_*.html")
     matches = sorted(glob.glob(pattern))
     if not matches:
         return None, None
-
-    # Pick latest by filename date (lexicographic sort of YYYYMMDD is correct)
-    latest_path = Path(matches[-1])
-    filename = latest_path.name
-
-    # Parse date from filename: DCA_{STEM}_{YYYYMMDD}.html
-    date_re = re.compile(r"^DCA_.+?_(\d{8})\.html$")
-    dm = date_re.match(filename)
+    dm = re.match(r"^DCA_.+?_(\d{8})\.html$", Path(matches[-1]).name)
     if not dm:
         return None, None
-
     d = dm.group(1)
-    dca_date = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
-    dca_path = f"/dca/{filename}"
-    return dca_path, dca_date
+    return None, f"{d[:4]}-{d[4:6]}-{d[6:8]}"
 
 
 def _iter_dd_and_brief_metas(dd_dir: Path):
@@ -318,7 +308,7 @@ def load_non_dd_universe(existing_tickers: set) -> list[dict]:
 
 def load_dd_universe(
     dd_dir: str | Path = "docs/dd",
-    dca_dir: str | Path = "docs/dca",
+    dca_dir: str | Path = "_archived/dca",
 ) -> list[dict]:
     """Return one dict per unique ticker (latest DD per ticker), populated with
     the identity + DD-meta-sourced fields per scripts/dd_screener_schema.md.
@@ -424,7 +414,7 @@ def load_dd_universe(
 
         # ── DCA lookup ────────────────────────────────────────────────────
         # v13 merged report folds the decision layer into the DD itself, so the
-        # 定見 link is the DD's own #decision anchor (no separate /dca/ file).
+        # 定見 link is the DD's own #decision anchor (no separate DCA file).
         # 統一裁決（進場/觀望/迴避）只從 v13/v14 dd-meta 讀 — legacy DCA 檔已
         # 退役（2026-07 起不再作為裁決來源），v12-only ticker 留空待 DD 重跑補上。
         if str(meta.get("schema", "")).startswith(("v13", "v14", "v15")):
@@ -489,7 +479,7 @@ def main() -> None:
     # Resolve relative to repo root (one level above scripts/)
     repo_root = Path(__file__).parent.parent
     dd_dir = repo_root / "docs" / "dd"
-    dca_dir = repo_root / "docs" / "dca"
+    dca_dir = repo_root / "_archived" / "dca"
 
     universe = load_dd_universe(dd_dir, dca_dir)
 

@@ -44,7 +44,7 @@ description: "收到 2-5 檔個股 ticker 後,從本地 docs/dd/ 讀取每檔最
 
 ```bash
 REPO_ROOT="/Users/ivanchang/financial-analysis-bot"
-DCA_DIR="${REPO_ROOT}/docs/dca"      # 實測:DCA 在 docs/dca/,檔名 DCA_<TICKER>_<YYYYMMDD>.html
+DCA_DIR="${REPO_ROOT}/_archived/dca"      # 實測:DCA 在 _archived/dca/,檔名 DCA_<TICKER>_<YYYYMMDD>.html
 DD_DIR="${REPO_ROOT}/docs/dd"        # 實測:DD 在 docs/dd/,檔名 DD_<TICKER>_<YYYYMMDD>.html
 ID_DIR="${REPO_ROOT}/docs/id"        # 產業 ID(共同 beta 檢查用,v1.7)
 DD_SCREENER_JSON="${REPO_ROOT}/docs/dd-screener/latest.json"  # 統一 Koyfin consensus(估值同源基準,v1.7)
@@ -78,7 +78,7 @@ ls ${DD_DIR}/DD_${TICKER}_*${FILE_EXT} 2>/dev/null | sort -r | head -1
 ls ${DCA_DIR}/DCA_${TICKER}_*${FILE_EXT} 2>/dev/null | sort -r | head -1
 ```
 
-> **判斷 v13/v14 vs legacy**：讀到最新 DD 後，看其 `<script id="dd-meta">` 的 `"schema"` 或內文有無 `id="decision"`。`"schema":"v13`/`"v14`（或有 `#decision` 錨點）→ **v13/v14 單一報告，決策層在 DD 內，不需也不要找 DCA**；`"schema":"v12`（或無 dd-meta）→ legacy，決策層需補讀 `docs/dca/DCA_*.html`（若存在）。**「沒有獨立 DCA 檔」對 v13/v14 ticker 不是缺漏，禁止報「DCA 缺」。**
+> **判斷 v13/v14 vs legacy**：讀到最新 DD 後，看其 `<script id="dd-meta">` 的 `"schema"` 或內文有無 `id="decision"`。`"schema":"v13`/`"v14`（或有 `#decision` 錨點）→ **v13/v14 單一報告，決策層在 DD 內，不需也不要找 DCA**；`"schema":"v12`（或無 dd-meta）→ legacy，決策層需補讀 `_archived/dca/DCA_*.html`（若存在）。**「沒有獨立 DCA 檔」對 v13/v14 ticker 不是缺漏，禁止報「DCA 缺」。**
 
 **情境處理表（v1.8 DD-first）**:
 
@@ -430,7 +430,7 @@ skill 行為:
 | 角色 | Skill | 輸入 | 輸出 |
 |:---|:---|:---|:---|
 | 個股 DD(深度 + 決策層,v13/v14 單一報告) | `stock-analyst` | ticker | `docs/dd/DD_<TICKER>_<YYYYMMDD>.html` |
-| 個股 DCA(定見) | ~~`deep-conviction-analyst`~~（**已退役**，2026-06-22 併入 stock-analyst v13；觸發語改觸發 stock-analyst） | ticker | legacy `docs/dca/DCA_*.html`（凍結，不再新增） |
+| 個股 DCA(定見) | ~~`deep-conviction-analyst`~~（**已退役**，2026-06-22 併入 stock-analyst v13；觸發語改觸發 stock-analyst） | ticker | legacy `_archived/dca/DCA_*.html`（凍結，不再新增） |
 | 多股對比(本 skill) | `multi-stock-comparator-v1` | 2-5 tickers | `docs/comparisons/MS_<...>.html` |
 | 產業 ID | `industry-analyst` (v2.0，已併入舊 DS 敘述) | 產業主題 | `docs/id/` (legacy DS 凍結於 `docs/ds/`) |
 

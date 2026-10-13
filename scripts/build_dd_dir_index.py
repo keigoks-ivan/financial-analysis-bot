@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""build_dd_dir_index.py — 產生 docs/dd/index.html 與 docs/dca/index.html。
+"""build_dd_dir_index.py — 產生 docs/dd/index.html。
 
-這兩個目錄過去沒有目錄頁（直接訪問 /dd/ 或 /dca/ 是 404）。本腳本直接掃描
-目錄下的檔名（DD_{TICKER}_{YYYYMMDD}[.html] / DCA_{TICKER}_{YYYYMMDD}.html），
+本腳本直接掃描 docs/dd/ 目錄下的檔名（DD_{TICKER}_{YYYYMMDD}[.html]），
 不依賴 INDEX.md 的 markdown 表格解析（欄位內容含大量 markdown/HTML 特殊字元，
-直接掃檔名更穩定），產生「原始檔案目錄」清單頁：
+直接掃檔名更穩定），產生「原始檔案目錄」清單頁：說明本頁是原始檔案目錄，主要
+瀏覽入口是 /research/（DD 主表）與 /t/（個股總覽），下方按日期新到舊列出全部報告。
 
-- docs/dd/index.html：說明本頁是原始檔案目錄，主要瀏覽入口是 /research/（DD 主表）
-  與 /t/（個股總覽），下方按日期新到舊列出全部報告。
-- docs/dca/index.html：同上，但頁首標示 DCA 體系已於 2026-06-22 凍結封存，
-  深度定見層併入 DD v13+（見 /research/）。
+2026-10-13：docs/dca/ 已退役（原檔封存於 _archived/dca，原址只剩轉址樁，
+docs/dca/index.html 是手寫轉址樁），本腳本不再產生 DCA 目錄頁。
 
-可重複執行（idempotent）：直接覆寫兩個 index.html。
+可重複執行（idempotent）：直接覆寫 index.html。
 """
 from __future__ import annotations
 
@@ -21,7 +19,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DD_DIR = REPO_ROOT / "docs" / "dd"
-DCA_DIR = REPO_ROOT / "docs" / "dca"
 
 FILENAME_RE = re.compile(r"^(?P<prefix>DD|DCA)_(?P<rest>.+)\.html$")
 DATE_RE = re.compile(r"^\d{8}$")
@@ -282,9 +279,6 @@ def main() -> None:
     dd_reports = parse_reports(DD_DIR, "DD")
     dd_reports.sort(key=lambda r: (r["date"], r["ticker"]), reverse=True)
 
-    dca_reports = parse_reports(DCA_DIR, "DCA")
-    dca_reports.sort(key=lambda r: (r["date"], r["ticker"]), reverse=True)
-
     dd_html = render_page(
         title="DD 報告原始檔案目錄 — InvestMQuest Research",
         description=f"個股深度研究（DD）原始 HTML 檔案目錄，共 {len(dd_reports)} 份，按日期新到舊排列。主要瀏覽入口請見 /research/ 與 /t/。",
@@ -302,26 +296,6 @@ def main() -> None:
     )
     (DD_DIR / "index.html").write_text(dd_html, encoding="utf-8")
     print(f"wrote docs/dd/index.html ({len(dd_reports)} reports)")
-
-    dca_frozen = (
-        '<div class="frozen-banner">⚠ 本體系已於 2026-06-22 凍結封存——'
-        '深度定見層已併入 DD v13+（見 <a href="/research/">/research/</a>）。'
-        '以下清單為既有存量報告的原始檔案存檔，不再新增。</div>'
-    )
-    dca_html = render_page(
-        title="DCA 報告原始檔案目錄（已凍結） — InvestMQuest Research",
-        description=f"投資決策層（DCA）原始 HTML 檔案目錄，共 {len(dca_reports)} 份；體系已於 2026-06-22 凍結封存，深度定見層併入 DD v13+。",
-        eyebrow="Raw File Directory · Frozen",
-        h1="DCA 報告原始檔案目錄",
-        sub_html=(
-            "這裡是投資決策層（Deep Conviction Analysis）報告的<b>原始檔案存放目錄</b>，"
-            f"目前共 {len(dca_reports)} 份既有存量報告，按產出日期新到舊排列。"
-        ),
-        frozen_banner_html=dca_frozen,
-        reports=dca_reports,
-    )
-    (DCA_DIR / "index.html").write_text(dca_html, encoding="utf-8")
-    print(f"wrote docs/dca/index.html ({len(dca_reports)} reports)")
 
 
 if __name__ == "__main__":
