@@ -31,7 +31,8 @@ name: Daily Asia Close Band
 on:
   schedule:
     - cron: "0 8 * * 1-5"   # 台/日收盤後（台北 16:00 / 東京 17:00）
-    - cron: "0 11 * * 1-5"  # 馬股收盤後（吉隆坡 19:00）
+    # 2026-10-13 停用：11:00 班次只跑馬股 screener，頁面已退役
+    # - cron: "0 11 * * 1-5"  # 馬股收盤後（吉隆坡 19:00）
   workflow_dispatch:
     inputs:
       retry:
@@ -82,10 +83,11 @@ jobs:
         run: python scripts/build_stages_tw_page.py
         continue-on-error: true
 
-      - name: "[screener-jp] Run JP screener"
-        if: github.event.schedule == '0 8 * * 1-5' || github.event_name == 'workflow_dispatch'
-        run: python scripts/screener_jp.py
-        continue-on-error: true
+      # 2026-10-13 停跑：日股 RS 雷達頁已退役，docs/screener/jp_* 無其他消費者。
+      # - name: "[screener-jp] Run JP screener"
+      #   if: github.event.schedule == '0 8 * * 1-5' || github.event_name == 'workflow_dispatch'
+      #   run: python scripts/screener_jp.py
+      #   continue-on-error: true
 
       - name: "[prices-cache-tw] Build TW prices cache"
         if: github.event.schedule == '0 8 * * 1-5' || github.event_name == 'workflow_dispatch'
@@ -93,10 +95,11 @@ jobs:
         continue-on-error: true
 
       # ── 11:00 班次：馬股收盤 ──
-      - name: "[screener-my] Run MY screener"
-        if: github.event.schedule == '0 11 * * 1-5' || github.event_name == 'workflow_dispatch'
-        run: python scripts/screener_my.py
-        continue-on-error: true
+      # 2026-10-13 停跑：馬股 RS 雷達頁已退役，docs/screener/my_* 無其他消費者。
+      # - name: "[screener-my] Run MY screener"
+      #   if: github.event.schedule == '0 11 * * 1-5' || github.event_name == 'workflow_dispatch'
+      #   run: python scripts/screener_my.py
+      #   continue-on-error: true
 
       # ── 收斂：單一 commit + push（路徑＝各原 workflow commit 路徑聯集）──
       - name: Commit and push if changed
