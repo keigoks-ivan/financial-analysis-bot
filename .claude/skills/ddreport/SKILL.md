@@ -35,7 +35,7 @@ python3 scripts/dd2/run.py {T} --resume [--redo judged,gated,prose] [--reuse-jud
 ## 停下交人的情況（不要自己再開 LLM 修）
 
 - 閘兩輪後仍 🔴：把 `gate_audit.md` 的紅燈列給持有人，由持有人決定重判（`--redo judged --resume`）或改規則。
-- 判斷形狀錯 normalize 後仍 FAIL：貼 `judge_check.txt` 的 ✗ 行。
+- 判斷形狀錯 normalize 後仍 FAIL：貼 `judge_check.txt` 的 ✗ 行。**例外（2026-10-13 持有人拍板）**：✗ 只是說明欄缺漏（note／理由類），且內容可從同一份 `judgment.json` 已寫的文字直接取得 → 指揮者直接補該欄：`--reuse-judgment` 是從 `agents/judge_1.json` 的原始回覆重建（不讀 `judgment.json`），所以要補在 judge_1.json 回覆文字裡的對應欄位（如 `"denominator_note": null` 改成那句說明），先備份成 `agents/judge_1.before_manual_note.json`、在 run 目錄寫 `manual_patch_note.md`（補了哪欄、文字出處），再 `--resume --reuse-judgment` 續跑；缺的是判斷值（裁決、角色、數字、情境 EPS 等）仍交持有人，不得代填。
 - 散文篇幅或白名單 FAIL：貼 `stages.prose.note`；重跑 `--redo prose --resume --reuse-judgment`（不重花判斷）。
 
 ## 不做的事
