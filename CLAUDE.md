@@ -9,15 +9,15 @@
 | **Orchestrator（主線程大腦）** | **opus**（路由判斷、並行 session git 風險判讀、A/B 與衝突裁定；不因「只是跑 pipeline」降級） |
 | **DD 深度報告 writer（stock-analyst / ddreport）、多檔並行生產批** | **sonnet**（2026-08-08 起全面採用、無升 opus 例外，見下） |
 | **DD 寫稿後 critic（QC-41 / QC-48 / QC-50 / row 8b）** | **opus**＋強化職責書（見下） |
-| **v20 DD（2026-09-17 起預設，並行期一週）** | 入口 `scripts/dd2/run.py`（skill `ddreport` v5.1，2026-09-23 持有人改：Fable 太貴）：採證 **sonnet** 每軸一通／判斷 **opus** 單輪預設思考／閘 **sonnet** 單輪＋一通 patch map（AMD 實測判斷 $1.5／6.5 分、閘每輪 $0.5）／散文 **sonnet** 前後半並行；週線均線六態與程式欄漂移歸因由程式算；舊鏈 `ddreport.py run` 保留一週，任一檔出現舊鏈不會有的失敗即回退並記錄 |
-| **v17 DD（舊鏈，並行期保留）** | Stage 0／0e **sonnet**／判斷 **Fable**／閘 **opus**／快速版零 LLM／散文（`--full`）**sonnet**；orchestrator 只跑一條指令（**2026-09-06 持有人拍板維持**：opus 判斷 A/B（FIX 同證據包）思考 89K 對 Fable 22K、31 分對 13 分、$5.5 對 $5.6，還寫壞 JSON——判斷留 Fable、其餘便宜模型；指揮 session 用 opus，勿用 Fable，DD 批次用 `ddreport.py batch` 跑完只讀摘要） |
+| **v20 DD（2026-09-17 起預設；2026-10-13 舊鏈正式退役）** | 入口 `scripts/dd2/run.py`（skill `ddreport` v5.1，2026-09-23 持有人改：Fable 太貴）：採證 **sonnet** 每軸一通／判斷 **opus** 單輪預設思考／閘 **sonnet** 單輪＋一通 patch map（AMD 實測判斷 $1.5／6.5 分、閘每輪 $0.5）／散文 **sonnet** 前後半並行；週線均線六態與程式欄漂移歸因由程式算；9/17 起 42 份 DD 全走 v20、無回退紀錄，舊鏈於 2026-10-13 正式退役 |
+| **v17 DD（舊鏈，2026-10-13 已退役；以下為歷史紀錄）** | Stage 0／0e **sonnet**／判斷 **Fable**／閘 **opus**／快速版零 LLM／散文（`--full`）**sonnet**；orchestrator 只跑一條指令（**2026-09-06 持有人拍板維持**：opus 判斷 A/B（FIX 同證據包）思考 89K 對 Fable 22K、31 分對 13 分、$5.5 對 $5.6，還寫壞 JSON——判斷留 Fable、其餘便宜模型；指揮 session 用 opus，勿用 Fable，DD 批次用 `ddreport.py batch` 跑完只讀摘要） |
 | 產業 ID / 供應鏈 / macro 新報告寫稿（重研究、判斷密集） | opus（**維持不動**，DD 的證據不外推到此列） |
 | ID / macro / synthesis 的 cold-review critic（industry-thesis-critic、id-review） | sonnet（該列 writer 仍是 opus，故 critic 維持 sonnet） |
 | 報告可讀性打磨 / 中文改寫潤色（如 macro 打磨） | sonnet |
 | 大型 PDF 平行讀取拆 digest | sonnet |
 | 網站樣板 / 資料同步 / 機械層 script（無判斷） | sonnet |
 
-**註記**：v16.2 試點期間本表 DD writer／critic 兩列不適用於 `ddreport --v16`（該鏈流程內無 critic，判斷與呈現拆成兩個 agent；設計稿 `notes/site-internal/dd/_v16_design_spec_20260903.md` §13、§16）。 **2026-09-05 持有人拍板：任何 DD 觸發語（「跑 X dd report」「ddreport X」「X DD」「X 全套」）預設一律走 repo 內最新版管線（現為 v16.2 三步制），不需帶 `--v16` 旗標；ddreport／stock-analyst SKILL.md 的預設文字若落後，以本條為準。用戶明講「v15」「舊鏈」才走 v15.2。** 同日拍板 v17：預設產物快速版，完整版 `--full`；入口 `scripts/ddreport.py`；skill 合併為 `ddreport` v4.0。
+**註記**：v16.2 試點期間本表 DD writer／critic 兩列不適用於 `ddreport --v16`（該鏈流程內無 critic，判斷與呈現拆成兩個 agent；設計稿 `notes/site-internal/dd/_v16_design_spec_20260903.md` §13、§16）。 **2026-09-05 持有人拍板：任何 DD 觸發語（「跑 X dd report」「ddreport X」「X DD」「X 全套」）預設一律走 repo 內最新版管線（現為 v20，`scripts/dd2/run.py`），不需帶 `--v16` 旗標；ddreport／stock-analyst SKILL.md 的預設文字若落後，以本條為準。用戶明講「v15」「舊鏈」才走 v15.2。** 同日拍板 v17：預設產物快速版，完整版 `--full`；入口 `scripts/ddreport.py`；skill 合併為 `ddreport` v4.0。
 
 **v17 起本段僅適用 `--full` 散文段；判斷層＝Fable、閘＝opus，kill condition 見 rule_ledger「v17 Stage 1G」列。**
 
@@ -223,7 +223,7 @@ DS 觸發語現一律觸發 `industry-analyst`；legacy DS 維護走 `id-review 
 - `scripts/build_supply_chain_dd_index.py`：scan docs/dd/ 重建 `dd_links.json`。**已掛 update_dd_index.py 自動鏈** — 跑 DD/DCA 同步時會自動 rebuild 一次，不需手動。 另 `.github/workflows/dd-downstream-sync.yml`（DD 推上 main 即觸發＋每日 20:37 台北兜底）會在 CI 重生並 commit `dd_links.json`、`search-index.json`＋首頁最新發布條、`rss.xml`、track-record 三檔（含 `data/track_record_prices.json`）；本機鏈跑出的這些檔不必再手動補 commit。
 - engine 完全抽離（`assets/engine.{css,js}`），新 topic 不需動 code
 
-**現況**：CoWoS（31 nodes 3 列）+ CPO（19 nodes 5 列）兩個 topic 上線；剩下 13 個 topic 在 manifest 中標 `active: false`（HBM / 先進製程 / 矽光子 / 面板級封裝 / IC 設計 / 半導體材料 / ASIC / IC 基板 / 電源散熱 / AI 伺服器 ODM / 機器人 / 低軌衛星 / 軍工國防）。
+**現況**：manifest 共 40 個 topic，全部 `active: true` 上線（2026-10-13 核對）。
 
 ## Workflow: 擁擠交易監測（crowding monitor）
 

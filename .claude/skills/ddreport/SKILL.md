@@ -2,7 +2,7 @@
 name: ddreport
 version: v5.2
 released: 2026-09-23
-description: "任何 DD 觸發語 → `python3 scripts/dd2/run.py {T}`（v20 管線，2026-09-17 起預設；並行期一週，舊鏈 `scripts/ddreport.py run {T}` 保留可叫）。四通 LLM：sonnet 每軸一通採證 → opus 單輪判斷 → sonnet 單輪閘（紅燈一通 patch map 再閘一次，仍紅停下交人）→ sonnet 前後半並行散文；其餘零 LLM，完成自動 finish＋commit＋push。觸發：『{ticker} DD』『個股分析 {ticker}』『{ticker} 定見』『最終判斷 {ticker}』『該不該進場 {ticker}』『買不買 {ticker}』『conviction analysis {ticker}』『{ticker} dca』『{ticker} 全套』『{ticker} 走完整流程』『ddreport {ticker}』『/ddreport {ticker}』。裸 ticker 與『這檔如何／值不值得研究／先篩一下 {ticker}／{ticker} 快篩』仍走 stock-screen-v1。"
+description: "任何 DD 觸發語 → `python3 scripts/dd2/run.py {T}`（v20 管線，2026-09-17 起預設；舊鏈 `scripts/ddreport.py run`／`batch` 於 2026-10-13 退役）。四通 LLM：sonnet 每軸一通採證 → opus 單輪判斷 → sonnet 單輪閘（紅燈一通 patch map 再閘一次，仍紅停下交人）→ sonnet 前後半並行散文；其餘零 LLM，完成自動 finish＋commit＋push。觸發：『{ticker} DD』『個股分析 {ticker}』『{ticker} 定見』『最終判斷 {ticker}』『該不該進場 {ticker}』『買不買 {ticker}』『conviction analysis {ticker}』『{ticker} dca』『{ticker} 全套』『{ticker} 走完整流程』『ddreport {ticker}』『/ddreport {ticker}』。裸 ticker 與『這檔如何／值不值得研究／先篩一下 {ticker}／{ticker} 快篩』仍走 stock-screen-v1。"
 ---
 
 # ddreport v5.2（v20 管線，dd2）
@@ -18,7 +18,6 @@ python3 scripts/dd2/run.py {T} --archetype "循環/商品"       # 前份無 arc
 python3 scripts/dd2/run.py {T} --until gated                 # 只到閘就停
 python3 scripts/dd2/run.py {T} --dry-run                     # 產物留 run 目錄，不寫 docs/、不 commit
 python3 scripts/dd2/run.py {T} --resume [--redo judged,gated,prose] [--reuse-judgment] [--reuse-prose]
-python3 scripts/ddreport.py run {T}                          # 舊鏈（v17／v19），並行期一週內可叫
 ```
 
 一條指令跑完：plan（零 LLM，Koyfin 磁碟快路徑）→ stage0（sonnet，只查證據庫過期的軸，每軸一通、12 並行、不重試）→ facts（零 LLM 事實表，含程式算的週線均線六態 `f_ma_state`）→ judged（opus 單輪無工具，串流接回覆；形狀錯 normalize 一次即停）→ gated（sonnet 單輪；🔴 → 一通 patch map → 再閘；仍 🔴 停下交指揮者）→ brief（零 LLM）→ prose（sonnet 前後半兩通並行）→ finish（沿用 `ddreport.py finish`：update_dd_index 同步、archive、commit、push）。互動 session 只下這一行，再讀回報。
@@ -45,8 +44,8 @@ python3 scripts/ddreport.py run {T}                          # 舊鏈（v17／v1
 - 不重做分析、不改判斷（門檻與矩陣權威在 `references/`；均線 ✅/🟡 合併等規則變更走 rule_ledger）。
 - 不在鏈外另跑 critic（閘已在鏈內且跨模型）。
 
-## 並行期（2026-09-17 起一週）
+## 舊鏈退役（2026-10-13）
 
-每跑一檔記三樣：帳單、閘紅黃燈數、裁決是否與前份同向（`scripts/dd2/README.md` §8 系列表格）。任一檔出現舊鏈不會有的失敗，回 `python3 scripts/ddreport.py run {T}` 並記錄。設計稿 `notes/site-internal/dd/_dd_v20_clean_design_20260916.md`。
+並行期 9/17 起，42 份 DD 全部走 v20，沒有任何一檔回退舊鏈，舊鏈正式退役。`scripts/ddreport.py` 不刪：dd2 import 它的共用函式，`finish`／同步也沿用它；只是不再用 `run`／`batch` 產 DD。未結兩件：設計稿 §10 驗收 MU 閘剩 2 紅（`scripts/dd2/README.md`）；v20 的 90 天 kill condition（設計稿 `notes/site-internal/dd/_dd_v20_clean_design_20260916.md`）尚未登記 `knowledge/rule_ledger.md`，併入 2026-10 校準輪處理。
 
 **回退**：`git checkout dd-v16.2-final -- .claude/skills scripts`（舊鏈整套），或只改本檔指令行回 `scripts/ddreport.py run`。
