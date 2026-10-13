@@ -325,8 +325,8 @@ def test_real_digest_only_key_points(real):
     assert "要處理：" in body and nr.REST_ON_WEB in body
     new_lines = [l for l in body.splitlines() if l.startswith("・今天新增訊號裡最顯著的")]
     assert len(new_lines) <= 1
-    if new_lines:
-        assert new_lines[0].count("；") <= nr.TOP_NEW_SIGNALS - 1
+    # 訊號文字本身可能含「；」，所以直接數條數，不數分隔符
+    assert len(nr._top_new_facts(nr._digest_compute(latest, state))) <= nr.TOP_NEW_SIGNALS
 
 
 def test_composite_watch_line_names_shared_condition():
