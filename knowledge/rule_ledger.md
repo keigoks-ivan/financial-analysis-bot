@@ -476,3 +476,11 @@
 | **id2 判斷步驟的基準率義務：裁決落在 shortage × Phase II（或前版在該格）時，判斷 JSON 的 `base_rate` 必須原文引用 `knowledge/id_autopsy.py` 該格歷史命中率，並以證據包內的具體差異說明這次為何不同，說不出就降級（`action=downgraded`）；程式（`scripts/id2/run.py::mech_checks`）把「該格但沒填／維持卻無附證據的差異點」直接判紅燈，gate 再抽查差異是否只是重述「這次不同」** | 2026-10-13 | 2026-10 校準輪重現 shortage × Phase II 91 天超額 −7.5%、勝率 7/24（七月 7/25），熱產業樂觀偏誤是 ID 唯一系統性失效格；v4 流程只在寫完後由 critic 抽查（J6），HBM 等案修補最貴 | ①下一輪校準（id2 產出的 ID 至少 6 份、含 ≥3 份 shortage × II 前版）shortage × Phase II 命中率與 v4 同期相比沒有改善（勝率差 <10pp）；②規則在 id2 產出中從未改變任何一份的裁決或信心（全部 `action=kept` 且差異點為套話，由 critic 判定）→ 兩者任一即 KILL，回到 v4 的 J6 事後抽查 | 新規則，上線 <1 週；kill 看下一輪校準 |
 
 加一提刪一：候刪審查對象為「ID conviction pill 公式（high 需 §9 ≥2 🔴 且 falsification >2σ）」那條（v2.x 舊制，與 high/mid/low 後續超額無單調關係的證據已在 2026-10 校準出現：conviction high 與 shortage × II 高度重疊，不是獨立訊號）——審後建議降級，由持有人在校準輪拍板。
+
+## 2026-10-13（續）：id2 裁決格切換須表態
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **id2 gate 的裁決格切換表態：判斷 JSON 的 sd_verdict × clock_phase 與前版 id-meta 不同格時，程式把兩格的基準率（n、勝率、超額中位）並排寫進 gate 輸入，gate 必須輸出 `grid_switch.justified`，並說明換格是否由證據包內的基本面證據支持；未表態或 justified=false 即紅燈（`scripts/id2/run.py::grid_block`／`gate_once`）。不改任何門檻** | 2026-10-13 | AIStorage 乾跑：judge 把前版 shortage×II（n=24，勝率 7/24）改成 split×II（n=2，勝率 1/2），新格歷史數字較好看、樣本卻只有 2 筆，基準率義務因此可能被「換格」繞過 | ①id2 產出至少 6 份後，gate 對換格的 justified 判定與事後 critic 判定不一致 ≥3 份（閘形式化）；②規則從未擋下任何一份換格（全數 justified=true 且 critic 無異議）→ KILL，回到僅靠 base_rate 義務 | 新規則，上線 <1 週；kill 看下一輪校準 |
+
+加一提刪一：候刪審查對象為「QC-52 DD↔ID 對帳（Phase II 打折）」——v20 判斷卡已整段丟棄、規則實質停擺，2026-10 校準仍未決（KEEP 或恢復），建議在校準輪正式二選一，不再懸著。

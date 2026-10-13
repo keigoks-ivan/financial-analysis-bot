@@ -253,7 +253,7 @@ def base_rate(prior_meta, today_iso):
             c["verdict"], c["phase"], c["n"], c["median_excess_pct"], c["wins"], c["of"], thin, mark))
     lines.append("規則：若你的裁決落在 shortage × Phase II（或前版在該格），base_rate.required 必須為 true：原文引用該格命中率，"
                  "並用證據包內的具體差異說明這次為何不同；說不出就降級（下調 conviction／改 sd_verdict 或 clock_phase，action=downgraded）。"
-                 "其他格 required=false、action=not_applicable。")
+                 "其他格 required=false、action=not_applicable。\n若你的裁決格與前版不同：base_rate.differences 須說明換格由哪些證據支持（閘會並排兩格基準率並要求表態），不得因為新格歷史數字較好看而換。")
     return data, "\n".join(lines)
 
 
@@ -367,12 +367,76 @@ def do_evidence(c):
     t1 = sum(1 for f in real if str(f.get("tier", "")).startswith("T1"))
     st["findings"], st["dropped_undated"], st["t1_share_pct"] = len(real), dropped, round(100 * t1 / max(1, len(real)))
     ok = not missing and len(real) >= 25 and any(f["axis"] == "E" for f in real)
+    if ok:
+        merged = t1_supplement(c, plan, merged, st)
+        real = [f for f in merged if not f.get("not_found") and not f.get("superseded_by")]
+        t1 = sum(1 for f in real if str(f.get("tier", "")).startswith("T1"))
+        st["findings"], st["t1_share_pct"] = len(real), round(100 * t1 / max(1, len(real)))
+        jdump(c.dir / "evidence.json", merged)
     return c.end("evidence", ok, "findings={0} dropped={1} T1={2}% missing_axes={3}".format(len(real), dropped, st["t1_share_pct"], missing))
+
+
+def t1_floor(mega):
+    return 45 if mega in ("macro", "cloud", "space") else 60
+
+
+def t1_share(ev):
+    real = [f for f in ev if not f.get("not_found") and not f.get("superseded_by")]
+    return 100 * sum(1 for f in real if str(f.get("tier", "")).startswith("T1")) / max(1, len(real))
+
+
+def t1_supplement(c, plan, ev, st):
+    """T1 占比低於 floor 時補一輪（上限一輪）：只針對 T2/T3 背書的承重數字找一手來源。
+    成功的條目以新 id（S1…）加入，原條目標 superseded_by（不再給 judge 看）。"""
+    floor = t1_floor(plan["mega"])
+    before = t1_share(ev)
+    st["t1_before_pct"], st["t1_floor_pct"] = round(before, 1), floor
+    if before >= floor:
+        st["t1_after_pct"], st["supplement"] = round(before, 1), "skipped（已達 floor）"
+        return ev
+    # 承重＝有數值的非 T1 條目，A 軸（歷史）優先序最低
+    order = {"B": 0, "C": 1, "D": 2, "E": 3, "A": 4}
+    cand = sorted([f for f in ev if not f.get("not_found") and not str(f.get("tier", "")).startswith("T1") and f.get("value")],
+                  key=lambda f: order.get(f["axis"], 9))[:30]
+    targets = "\n".join("[{0}] {1}｜{2}｜現有來源 {3}·{4}｜{5}".format(f["id"], f["claim"], f.get("value"), f.get("source"), f.get("tier"), f.get("as_of")) for f in cand)
+    part = c.dir / "evidence" / "supplement.json"
+    if part.exists():
+        part.unlink()
+    pp = c.dir / "prompts" / "supplement.md"
+    pp.write_text(render(HERE / "prompts" / "supplement.md.tmpl", {
+        "THEME": c.theme, "TODAY": c.iso, "TARGETS": targets, "MAX_SEARCH": 14, "MAX_FETCH": 10, "PART_PATH": str(part)}), encoding="utf-8")
+    spec = {"id": "ev_supp", "model": "sonnet", "prompt": str(pp), "out": str(c.dir / "agents" / "ev_supp.json"),
+            "tools": ["WebSearch", "WebFetch", "Write"], "max_turns": 28, "run_dir": str(c.dir)}
+    r = enrich(dd_headless.spawn_many([spec], max_parallel=1)[0], spec["out"])
+    st["agent_usage"].append(usage("ev_supp", r))
+    n_up = 0
+    if part.exists():
+        try:
+            obj = jload(part)
+        except Exception:
+            obj, _ = sp.strip_json(part.read_text(encoding="utf-8"))
+        by_id = {f["id"]: f for f in ev}
+        for u in (obj or {}).get("upgrades", []) if isinstance(obj, dict) else []:
+            o = by_id.get(u.get("replaces"))
+            if not (o and str(u.get("tier", "")).startswith("T1") and u.get("url") and
+                    re.fullmatch(r"\d{4}(-\d{2}){0,2}", str(u.get("as_of") or "")) and u.get("claim")):
+                continue
+            n_up += 1
+            nid = "S{0}".format(n_up)
+            u2 = dict(u, id=nid, axis=o["axis"])
+            o["superseded_by"] = nid
+            ev.append(u2)
+    after = t1_share(ev)
+    st["t1_after_pct"], st["supplement"] = round(after, 1), "候選 {0} 條，升級 {1} 條".format(len(cand), n_up)
+    print("[evidence] T1 補抓：{0:.1f}% → {1:.1f}%（floor {2}%）".format(before, after, floor))
+    return ev
 
 
 def evidence_text(ev, with_url=False):
     lines = []
     for f in ev:
+        if f.get("superseded_by"):
+            continue
         if f.get("not_found"):
             lines.append("[{0}] {1}".format(f["id"], f["claim"]))
             continue
@@ -501,6 +565,24 @@ def mech_checks(j, ev, plan, c):
     return f
 
 
+def grid_block(plan, j):
+    """裁決格與前版不同時，並排兩格基準率；相同回 None。"""
+    pm = plan["prior_meta"]
+    pcell = (pm.get("sd_verdict"), pm.get("clock_phase"))
+    ncell = (j.get("id_meta", {}).get("sd_verdict"), j.get("id_meta", {}).get("clock_phase"))
+    if not pm or pcell == ncell:
+        return None
+    cells = {(x["verdict"], x["phase"]): x for x in plan["base_rate"].get("cells", [])}
+
+    def fmt(cell):
+        x = cells.get(cell)
+        if not x:
+            return "{0} × {1}：無樣本".format(*cell)
+        return "{0} × {1}：n={2}，勝率 {3}/{4}，超額中位 {5:+.1f}%{6}".format(
+            cell[0], cell[1], x["n"], x["wins"], x["of"], x["median_excess_pct"], "（n<10，樣本薄）" if x["n"] < 10 else "")
+    return "前版格　{0}\n本次格　{1}".format(fmt(pcell), fmt(ncell))
+
+
 def judge_prompt(c, plan, ev):
     schema = render(HERE / "prompts" / "schema.txt", {"TODAY_ISO": c.iso, "MEGA": plan["mega"], "SUB_GROUP": plan["sub_group"]})
     return render(HERE / "prompts" / "judge.md.tmpl", {
@@ -540,6 +622,11 @@ def do_judge(c):
 def gate_once(c, plan, ev, j, idx, st):
     mech = mech_checks(j, ev, plan, c)
     mtext = "\n".join("- [{0}] {1}：{2}".format(s, i, m) for s, i, m in mech) or "（機械檢查全過）"
+    gb = grid_block(plan, j)
+    if gb:
+        mtext += ("\n\n# 裁決格切換（前版與本次不同格，基準率並排）\n" + gb +
+                  "\n你必須在輸出 JSON 另加 \"grid_switch\":{\"justified\":true|false,\"reason\":\"…\"}：換格是否由證據包內的基本面證據支持，"
+                  "而不是因為新格的歷史數字比較好看或樣本太薄無從反駁。沒有證據支持＝justified:false。")
     pp = c.dir / "prompts" / "gate_{0}.md".format(idx)
     pp.write_text(render(HERE / "prompts" / "gate.md.tmpl", {
         "MECH": mtext, "PRICED_BLOCK": (c.dir / "priced_block.md").read_text(encoding="utf-8"),
@@ -555,6 +642,12 @@ def gate_once(c, plan, ev, j, idx, st):
         findings = [{"id": "gate", "severity": "red", "path": "", "issue": "閘輸出無法解析：{0}".format(err), "fix": "重跑"}]
     for s, i, m in mech:
         findings.append({"id": i, "severity": s, "path": "", "issue": m, "fix": "（機械檢查）"})
+    if gb:
+        gs = obj.get("grid_switch") if isinstance(obj, dict) else None
+        st.setdefault("grid_switch", []).append({"grids": gb, "verdict": gs})
+        if not isinstance(gs, dict) or gs.get("justified") is not True:
+            findings.append({"id": "grid", "severity": "red", "path": "base_rate", "issue": "裁決格切換未獲證據支持或閘未表態：" + str((gs or {}).get("reason", ""))[:200],
+                             "fix": "以證據包內的基本面證據重新論證換格；沒有就改回前版格或降低 conviction"})
     jdump(c.dir / "gate_{0}.json".format(idx), {"findings": findings, "verified": (obj or {}).get("verified_numbers") if isinstance(obj, dict) else None})
     return findings
 
