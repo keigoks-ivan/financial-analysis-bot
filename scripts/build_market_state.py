@@ -1775,8 +1775,18 @@ def build_positioning(quotes, flowmap_data, gaps):
         side = None
         if net is not None:
             side = "net_long" if net > 0 else ("net_short" if net < 0 else "flat")
+        # 分位是「淨部位（多減空）」在三年分布中的位置：高＝偏多端、低＝偏空端。
+        # 淨空搭配高分位代表空單是三年來最少，不是空單極端；寫成白話免得被讀反。
+        plain = None
+        if net is not None and net != 0:
+            high = pctile >= 90
+            if net < 0:
+                plain = "空單是三年來最少的一成" if high else "空單是三年來最多的一成"
+            else:
+                plain = "多單是三年來最多的一成" if high else "多單是三年來最少的一成"
         cot_extremes.append({
             "market": ref.split(":", 1)[1], "net_pct_oi": net, "pctile_3y": pctile, "side": side,
+            "plain": plain,
         })
     cot_extremes.sort(key=lambda r: r["market"])
 
