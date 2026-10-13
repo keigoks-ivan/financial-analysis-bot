@@ -97,7 +97,10 @@ SNAP_DIR = ROOT / "data" / "etf_dash" / "snapshots"
 HOLDINGS_CACHE_DIR = ROOT / "data" / "etf_dash" / "holdings_cache"
 EPS_CACHE_DIR = ROOT / "data" / "etf_dash" / "eps_cache"
 OUT_DIR = ROOT / "docs" / "etf-dash" / "data"
-PREVIEW_DIR = Path("/private/tmp/claude-501/-Users-ivanchang/etf_dash_preview")
+# preview 只是本機檢視用；CI（Linux）上這條路徑不存在，所以寫 preview 一律
+# best-effort（見 write_preview()），失敗不影響正式資料。可用環境變數改位置。
+PREVIEW_DIR = Path(os.environ.get("ETF_DASH_PREVIEW_DIR")
+                   or "/private/tmp/claude-501/-Users-ivanchang/etf_dash_preview")
 DD_SCREENER_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 
 TAIPEI_TZ = ZoneInfo("Asia/Taipei")
@@ -3603,6 +3606,16 @@ def build_overview_json() -> dict:
 # ---------------------------------------------------------------------------
 
 
+def write_preview(etf_key: str, data: dict) -> None:
+    try:
+        PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
+        preview_path = PREVIEW_DIR / f"{etf_key}.html"
+        preview_path.write_text(render_preview_html(data), encoding="utf-8")
+        print(f"[etf_dash] wrote preview {preview_path}")
+    except OSError as e:
+        print(f"[etf_dash] preview skipped ({e})")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--etf", action="append", required=True, choices=list(FUND_REGISTRY.keys()),
@@ -3614,7 +3627,6 @@ def main() -> int:
     args = ap.parse_args()
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
     HOLDINGS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     EPS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -3625,8 +3637,7 @@ def main() -> int:
                 print(f"[etf_dash] ERROR {out_path} missing, cannot do --preview-only", file=sys.stderr)
                 return 1
             data = json.loads(out_path.read_text(encoding="utf-8"))
-            (PREVIEW_DIR / f"{etf_key}.html").write_text(render_preview_html(data), encoding="utf-8")
-            print(f"[etf_dash] wrote preview {PREVIEW_DIR / f'{etf_key}.html'}")
+            write_preview(etf_key, data)
         return 0
 
     today = datetime.now()
@@ -3679,9 +3690,7 @@ def main() -> int:
         print(f"[etf_dash] wrote {out_path} "
               f"(mode={data.get('mode')}, holdings {data['n_holdings']}, covered {data['n_holdings_covered']}, "
               f"stale_holdings={data['holdings_stale']})")
-        preview_path = PREVIEW_DIR / f"{etf_key}.html"
-        preview_path.write_text(render_preview_html(data), encoding="utf-8")
-        print(f"[etf_dash] wrote preview {preview_path}")
+        write_preview(etf_key, data)
         n_ok += 1
 
     save_fx_daily_cache(fx_cache)
