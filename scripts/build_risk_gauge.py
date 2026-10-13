@@ -54,7 +54,7 @@ MARKER_START = '<!-- RISK_GAUGE:START -->'
 MARKER_END = '<!-- RISK_GAUGE:END -->'
 
 TICKERS = ['^GSPC', '^VIX', '^VIX3M', 'HYG', 'IEF', 'XLY', 'XLP',
-           'HG=F', 'GC=F', 'AUDJPY=X', '^NDX']
+           'HG=F', 'GC=F', 'AUDJPY=X', '^NDX', '^SOX']
 NFCI_URL = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=NFCI'
 
 LOOKBACK_63D = 63   # ~3 months of trading days
@@ -316,6 +316,7 @@ def main():
     wk_score = comp_daily.resample('W-FRI').last().dropna().round(3)
     wk_spx = px['^GSPC'].resample('W-FRI').last().reindex(wk_score.index).round(2)
     wk_ndx = px['^NDX'].resample('W-FRI').last().reindex(wk_score.index).round(2)
+    wk_sox = px['^SOX'].resample('W-FRI').last().reindex(wk_score.index).round(2)  # PHLX Semiconductor: homepage chart overlay only, not scored
     wk_vix = px['^VIX'].resample('W-FRI').last().reindex(wk_score.index).round(2)
     wk_vixhi = px['^VIX'].resample('W-FRI').max().reindex(wk_score.index).round(2)  # intraweek daily-close max, drives the >=40 panic-entry markers
     nfci = fetch_nfci()
@@ -339,6 +340,7 @@ def main():
         'score': _nan_to_none(wk_score),
         'spx': _nan_to_none(wk_spx),
         'ndx': _nan_to_none(wk_ndx),
+        'sox': _nan_to_none(wk_sox),
         'nfci': _nan_to_none(wk_nfci),
         'vix': _nan_to_none(wk_vix),
         'vixhi': _nan_to_none(wk_vixhi),
