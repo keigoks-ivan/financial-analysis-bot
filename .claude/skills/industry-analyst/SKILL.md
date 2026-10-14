@@ -187,7 +187,7 @@ thesis sketch＋id-meta 草稿 → appendix → mechanics → valuation → deba
 
 1. `python3 scripts/check_id.py docs/id/ID_{Theme}_{YYYYMMDD}.html`，exit 0 才可往下；非 0 用 `--report notes/site-internal/id/_check_{Theme}_{YYYYMMDD}.md` 存機器報告並回頭修。
 2. id-review critic（見上模板③，只餵摘錄）。
-3. 修：🔴 必修；旗艦級 0 🔴 才放行，標準級 ≥1 🔴 交持有人選 ship 或 fix。
+3. 修：🔴 必修；旗艦級 0 🔴 才放行，標準級 ≥1 🔴 交持有人選 ship 或 fix。修法照下方「錯一處只修一處」。
 4. `docs/id/INDEX.md` append 一行（欄位格式沿用既有）：
 
    ```
@@ -202,6 +202,16 @@ thesis sketch＋id-meta 草稿 → appendix → mechanics → valuation → deba
 9. `python3 scripts/inject_report_primer.py --family id`。
 10. `python3 scripts/qc.py`。
 11. **預設停下複審，持有人說 push 才 commit**（同一 commit 涵蓋 ID＋索引；commit 前 `git status` 確認沒掃到別的 session 留下的檔）。
+
+### 錯一處只修一處（2026-10-14 持有人拍板，DD／ID 通用）
+
+- 審稿、閘或持有人抓到的錯，只改錯的那一段，不整份重寫、不整份重判。
+- 不改結論的錯（過期數字、口徑不一、標籤錯、寫得比證據強）：先查證（證據包既有條目或一手來源，算術自己對一次），查實就直接改，事後列清單；查不實的不改。新數字補進證據包並掛引用。
+- 改到結論欄位的（例：估值數字錯，「已定價」燈號要換）：只依頁面自己的規則重定那一欄，連帶改相關文字，修完明列給持有人。
+- **整份重判只留在一種情況：供需或週期階段判斷所依據的證據本身錯了。**
+- 作法：id2 管線改 `.id_build/runs/{Theme}_{YYYYMMDD}/judgment.json`（先備份），`manifest.json` 刪掉要重跑的段（只改文字刪 prose／check；動到結論欄位連 gate 一起刪），再 `python3.12 scripts/id2/run.py {Theme} --date {YYYYMMDD} --resume`。手寫 v4 報告用 grep 定位後針對性 Edit，再跑 check_id。
+
+此為流程紀律非裁決閘，不適用 rule_ledger kill-condition 登記。
 
 **Terminal 摘要格式**（精簡，不複述報告內容）：
 
