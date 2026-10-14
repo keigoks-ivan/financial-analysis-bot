@@ -2144,6 +2144,37 @@ def _fetch_live_fy_eps(
     return out
 
 
+_SPLIT_FACTORS = (2, 3, 4, 5, 10, 1.5, 0.5, 1 / 3, 0.25, 0.2, 0.1, 20, 8, 6, 15)
+
+
+def _split_adjust_p_dd(yf_ticker: str, p_dd, dd_date) -> tuple:
+    """Return (p_dd_adj, factor). price_at_dd is the raw price on the DD date, but
+    ma["price"] comes from split-adjusted weekly_cache bars; after a split the two
+    are in different units (APH 2026-07: 150.31 vs ~86). Compare p_dd with the
+    cache close of the week containing dd_date: deviation > 25% can't be dividends,
+    so treat as a split, divide by the nearest common split factor (within 15%),
+    else fall back to the cache close. factor None = no adjustment (incl. cache
+    missing / bad input). No network calls."""
+    if not p_dd or p_dd <= 0 or not dd_date:
+        return p_dd, None
+    try:
+        from scripts.lib import weekly_cache as _wc
+        bars = (_wc.read_ticker_cache(yf_ticker) or {}).get("weekly_bars") or []
+        prior = [b for b in bars if b.get("week_end") and b["week_end"] <= dd_date
+                 and (b.get("close") or 0) > 0]
+        if not prior:
+            return p_dd, None
+        ratio = p_dd / prior[-1]["close"]
+        if 0.75 <= ratio <= 1.25:
+            return p_dd, None
+        best = min(_SPLIT_FACTORS, key=lambda f: abs(ratio / f - 1))
+        if abs(ratio / best - 1) <= 0.15:
+            return p_dd / best, round(best, 4)
+        return prior[-1]["close"], round(ratio, 4)
+    except Exception:
+        return p_dd, None
+
+
 def _compute_live_pe_drift(
     entry: dict, ma: dict, live_fy_result: dict | None = None
 ) -> dict:
@@ -2178,6 +2209,7 @@ def _compute_live_pe_drift(
         "live_fpe_method": None,
         "eps_revision_pct": None,
         "yf_fy_label": None,
+        "split_adj": None,
     }
     fpe = entry.get("fpe_fy2")
     p_dd = entry.get("price_at_dd")
@@ -2194,6 +2226,10 @@ def _compute_live_pe_drift(
 
     if fpe is None or p_dd is None or p_now is None or p_dd <= 0 or fpe <= 0:
         return out
+
+    # 拆股校正：p_dd 為原始價、p_now 為還原價，單位不同會造出假去評價（APH）
+    p_dd, out["split_adj"] = _split_adjust_p_dd(
+        _yf_ticker_for_ma(entry["ticker"]), p_dd, dd_date)
 
     # Primary: real EPS path — use pre-fetched result if provided (v1.7 no-dupe)
     real = live_fy_result if live_fy_result is not None else _fetch_live_fy_eps(
@@ -4195,6 +4231,8 @@ def enrich_ticker(
     excel_record = apply_adr_ratio(t, excel_snapshot.get(t)) if excel_snapshot else None
     live_fy_result: dict | None = None
     if fpe and p_dd and fpe > 0 and p_dd > 0:
+        # 拆股校正（同 _compute_live_pe_drift）：EPS 配對用還原後的 DD 日價
+        p_dd, _ = _split_adjust_p_dd(_yf_ticker_for_ma(t), p_dd, entry.get("dd_date"))
         live_fy_result = _fetch_live_fy_eps(
             _yf_ticker_for_ma(t), p_dd, fpe,
             excel_record=excel_record, dd_ticker=t,
