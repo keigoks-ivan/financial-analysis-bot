@@ -1723,7 +1723,10 @@ def _gates_v20(ctx, out_html=None, postprocess=False):
 
     total = out_path.stat().st_size
     text_total = sum(f.stat().st_size for f in prose_dir.glob("*.html") if f.stem not in _MECH_TABLE_SIDS)
-    if total < PROSE_TOTAL_FLOOR:
+    # 2026-10-12：整檔下限與 pre-commit 同值，pre-commit 量的是後處理後的成品，這裡也只量成品。
+    # --no-postprocess 的預覽少了後處理補上的區塊（2059.TW 預覽 66.5KB、成品 74.2KB），量它會誤擋。
+    # 章節與散文本體下限量 prose/ 檔，不受後處理影響，照舊每輪都量。
+    if postprocess and total < PROSE_TOTAL_FLOOR:
         findings.append(("_depth", "整檔 {0:,}B < 下限 {1:,}B".format(total, PROSE_TOTAL_FLOOR)))
     if text_total < PROSE_TEXT_FLOOR:
         findings.append(("_depth", "散文本體 {0:,}B < 下限 {1:,}B".format(text_total, PROSE_TEXT_FLOOR)))
