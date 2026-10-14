@@ -65,3 +65,19 @@ J2 cross-ID 對帳：最新同題 `ID_MemorySupercycle_20260905`（Phase II 末�
 ## 穩定度（判斷步驟重跑兩次；判定規則先於結果寫下）
 目的：第二輪 clock_phase 由 III 回到 II，無法分辨是補洞有效還是判斷本身不穩。做法：以第二輪 run 的同一份 plan、證據包、姊妹區塊、prompt（不重新採證、不改 prompt 與程式），只重跑 judge 兩次，與第二輪合計 3 筆。
 判定規則（2026-10-14，看結果前訂）：**STABLE＝3 筆的 sd_verdict 與 clock_phase 完全相同；任何其他情形＝UNSTABLE，停下回報，不開始 12 份更新。** conviction、priced_in、demand_5y_multiple、action 只記錄，不參與判定。
+
+穩定度結果（同 plan、同證據包、同 prompt，僅重跑 judge；judge 單通約 $2.3–2.5、15–17 分）：
+
+| 跑次 | sd_verdict | clock_phase | conviction | priced_in | demand_5y_multiple（TAM） | base_rate.action |
+|---|---|---|---|---|---|---|
+| 第二輪 | shortage | **II** | low | high | 3.7（130） | downgraded（conviction mid→low，維持 II，理由「換相雙閘只亮一個充分訊號」） |
+| 穩定度 1 | shortage | **III** | mid | high | 3.7（130） | downgraded（時鐘 II→III，conviction 維持 mid，行動改為三檔不新增） |
+| 穩定度 2 | shortage | **III** | low | high | 4.1（145） | downgraded（時鐘 II→III，conviction mid→low，行動改為三家不新進） |
+
+**判定：UNSTABLE**（sd_verdict 3/3 相同，clock_phase 為 II、III、III，不是 3/3 相同）。依事先規則停下，不開始 12 份更新。
+
+觀察（事實與推論分開）：
+- 事實：三筆 base_rate.action 全是 downgraded，降級的「方式」不同——第二輪降 conviction、時鐘不動；穩定度 1 降時鐘、conviction 不動；穩定度 2 兩者都降。conviction 也三筆各異（low／mid／low），demand_5y_multiple 有 3.7／3.7／4.1。
+- 事實：第一輪（補洞前）也判 III，故 III 出現 3 次、II 出現 1 次（共 4 次獨立判斷，其中第一輪的輸入少了姊妹區塊，不屬同一組）。
+- 推論（未驗證）：時鐘 II 與 III 在這份證據下相鄰、換相雙閘的充分條件模糊（兩個獨立訊號是否成立有判斷空間），所以 judge 在邊界上隨機落在兩側；第二輪回到 II 可能只是邊界上的一次抽樣，不能歸功於補洞。
+- 對 paired test 的含義：第二輪「方向同 v4」那項準則通過，帶有運氣成分；單次結果不足以說明 id2 的 clock_phase 可重現。
