@@ -250,14 +250,22 @@ def priced_inputs(tickers, today):
             rec["flags"].append("無本地週線")
         r = rows.get(t)
         if r:
-            rec["fpe_fy2"] = r.get("fpe_fy2")
-            rec["pct_5y"] = r.get("pct_5y")
+            # fpe_fy2／pct_5y 是 DD 日快照（price_at_dd），可能舊好幾個月；有現價估算值就用現值，DD 日值只當參考
+            live = r.get("live_fpe_est")
+            rec["fpe_fy2"] = live if live is not None else r.get("fpe_fy2")
+            rec["pct_5y"] = r.get("live_pct_5y_est") if live is not None else r.get("pct_5y")
+            rec["fpe_basis"] = "現價估算" if live is not None else "DD 日快照"
+            rec["fpe_at_dd"], rec["pct_at_dd"], rec["dd_date"] = r.get("fpe_fy2"), r.get("pct_5y"), r.get("dd_date")
             rec["val_source"] = "docs/dd-screener/latest.json（as_of {0}）".format(sc.get("as_of"))
-            if r.get("fpe_fy2") is None:
+            if live is None and r.get("dd_date"):
+                age = (today - dt.date.fromisoformat(str(r["dd_date"])[:10])).days
+                if age > 30:
+                    rec["flags"].append("倍數為 DD 日快照（{0}，{1} 天前）".format(r["dd_date"], age))
+            if rec["fpe_fy2"] is None:
                 rec["flags"].append("無 Fwd P/E")
-            elif r["fpe_fy2"] <= 0 or r["fpe_fy2"] > 100:
-                rec["flags"].append("Fwd P/E {0} 為離群值，不當估值錨".format(r["fpe_fy2"]))
-            if r.get("pct_5y") is None:
+            elif rec["fpe_fy2"] <= 0 or rec["fpe_fy2"] > 100:
+                rec["flags"].append("Fwd P/E {0} 為離群值，不當估值錨".format(rec["fpe_fy2"]))
+            if rec["pct_5y"] is None:
                 rec["flags"].append("無 5Y 分位")
         else:
             rec["flags"].append("不在 dd-screener 母體")
@@ -271,11 +279,12 @@ def priced_block(items):
         s = "- {0}：".format(r["ticker"])
         if "ret26w_pct" in r:
             s += "26 週 {0:+.1f}%（收盤 {1}，截至 {2}）；".format(r["ret26w_pct"], r["close"], r["as_of"])
-        s += "Fwd P/E(FY2) {0}；5Y 分位 {1}".format(r.get("fpe_fy2", "無"), r.get("pct_5y", "無"))
+        s += "Fwd P/E(FY2) {0}；5Y 分位 {1}（{2}".format(r.get("fpe_fy2", "無"), r.get("pct_5y", "無"), r.get("fpe_basis", "來源不明"))
+        s += "；DD 日 {0} 為 {1} 倍、分位 {2}）".format(r["dd_date"], r.get("fpe_at_dd"), r.get("pct_at_dd")) if r.get("dd_date") else "）"
         if r["flags"]:
             s += "　⚠ " + "；".join(r["flags"])
         lines.append(s)
-    lines.append("來源：週線 data/weekly_cache、倍數 docs/dd-screener/latest.json。標 ⚠ 的數字不得當承重證據。")
+    lines.append("來源：週線 data/weekly_cache、倍數 docs/dd-screener/latest.json。倍數與分位以現價估算值為準，DD 日值只供對照，不得當現值引用。標 ⚠ 的數字不得當承重證據。")
     return "\n".join(lines)
 
 
