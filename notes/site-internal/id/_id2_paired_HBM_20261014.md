@@ -61,3 +61,7 @@ J2 cross-ID 對帳：最新同題 `ID_MemorySupercycle_20260905`（Phase II 末�
 - 時鐘由 III 回到 II 的原因我未獨立查證：同一份 plan／證據上的兩次獨立跑結果不同，也可能只是 judge 隨機性。AIStorage 兩跑也出現過 Phase 變動。單看這兩輪，無法區分「補洞讓判斷更準」與「判斷本來就不穩」；若要確認，需要同設定多跑幾次看 Phase 分布。
 - demand_5y_multiple 3.7 對 v4 的 2.1 仍差很多，但這次 TAM derivation 明寫了原因（前版基期隱含約 520 億，本版改用 Micron 自報 350 億，同一個 1,300 億用舊基期只有 2.5 倍）；critic 仍對「2027 年 HBM 約 1,100 億把混合 ASP +121% 當純價格」給了 🟡，並指出估值證據只靠 MU 一檔（與上輪相同的缺口，000660.KS、005930.KS 無倍數）。
 - 疑似新增數字 6 個：3.1、3.2、3.3、3.4、99.1、424；前四個是小節號，後兩個未判定。
+
+## 穩定度（判斷步驟重跑兩次；判定規則先於結果寫下）
+目的：第二輪 clock_phase 由 III 回到 II，無法分辨是補洞有效還是判斷本身不穩。做法：以第二輪 run 的同一份 plan、證據包、姊妹區塊、prompt（不重新採證、不改 prompt 與程式），只重跑 judge 兩次，與第二輪合計 3 筆。
+判定規則（2026-10-14，看結果前訂）：**STABLE＝3 筆的 sd_verdict 與 clock_phase 完全相同；任何其他情形＝UNSTABLE，停下回報，不開始 12 份更新。** conviction、priced_in、demand_5y_multiple、action 只記錄，不參與判定。
