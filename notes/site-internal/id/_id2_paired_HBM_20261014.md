@@ -37,3 +37,27 @@ J2 cross-ID 對帳：最新同題 `ID_MemorySupercycle_20260905`（Phase II 末�
 - 準則 2 判不過是在這份樣本、這一次盲審；單一樣本，critic 計數有雜訊（兩個 critic 的 🟡 數也差 3）。不宜用它單獨下結論，但規格寫明三項缺一不可，故結論為「未通過」。
 - 若持有人要補救，最小改動是 plan 階段從 `docs/id/INDEX.md` 同 mega／sub_group 抓最新同題 ID 的 id-meta（只讀 sd_verdict、clock_phase、kill 表），餵 judge 與 gate；這會讓準則 2 的這項 🔴 變成程式可擋，但屬新增規則，須依規則治理登記 kill condition 與加一提刪一，本輪未做。
 - 另兩個觀察：id2 的 demand_5y_multiple 3.4 對 v4 的 2.1 差很大，兩份 TAM 基期不同，這個差值沒有被任何閘抓到；MU 以外的核心標的（000660.KS、005930.KS）缺倍數與週線，priced_in=high 只靠 MU 一檔（critic 黃燈）。
+
+## 第二輪（補姊妹報告缺口與 TAM 基期核對後重測，同日）
+改動：①plan 掃 `docs/id/` 的 id-meta，取同 mega/sub_group 或相關個股重疊 ≥2 的最新同題報告（本次 8 份），只把 sd_verdict、clock_phase、conviction、日期、demand_5y_multiple／TAM、kill 表交給 judge 與 gate；②judge 須在 `thesis.sister_reconcile` 調和方向衝突，gate 與機械檢查驗「同 sub_group 方向不同者必有理由」「`sister_ids` 為最新版」；③gate 清單加「TAM 基期核對」（倍數／基期與前版或姊妹有明顯差異而無理由＝紅燈），不設新門檻。①②是把既有 id-review J2 搬進 id2，非新增判斷類規則，不登記 rule_ledger。
+
+| 項目 | v4（0904，盲審 B） | id2 第一輪 | id2 第二輪 |
+|---|---|---|---|
+| sd_verdict／clock_phase | shortage／II | shortage／III | shortage／II |
+| conviction／priced_in | mid／high | mid／high | low／high |
+| demand_5y_multiple（tam_usd_2030） | 2.1（110） | 3.4（120） | 3.7（130） |
+| 盲審 critic 🔴／🟡／🟢 | 0／9／1 | 1／6／3 | 0／9／3（單一 critic，同提示、同遮蔽法） |
+| 成本 | jsonl ~37M token | $7.03；~2.18M token | $6.46；~2.15M token（output 0.34M、cache read 1.31M、cache creation 0.49M）；critic 另 $0.38 |
+| 牆鐘 | 約 2–4 小時（記錄） | 28 分 | 28 分 |
+| gate | — | 紅 0（途中紅 1 → patch） | 紅 0 黃 12（一次過，無 patch） |
+
+準則：
+1. 方向：通過。sd_verdict、clock_phase 都與 v4 相同（shortage／II）；conviction 由 mid 降為 low、priced_in 同為 high。
+2. 🔴 不高於 v4：通過（0 對 0）。注意 critic 有雜訊，上輪兩個 critic 的 🟡 就差 3；這輪是單一 critic 對上輪的 v4 結果，🔴 持平不等於品質相同。
+3. 較便宜：通過（$6.46 對 37M token；單位不同，仍以 token 面值對 token 面值計約 17 倍差）。
+
+說明與限制：
+- 時鐘回到 II 後，sister_reconcile 對 `ID_MemorySupercycle_20260905`（split／II）寫了一段理由，並對 EdgeAI 寫了「與 HBM 無交集」；`sister_ids` 改指向 20260905 與其他最新版。上輪被 critic 判 🔴 的缺口這次沒再被抓。
+- 時鐘由 III 回到 II 的原因我未獨立查證：同一份 plan／證據上的兩次獨立跑結果不同，也可能只是 judge 隨機性。AIStorage 兩跑也出現過 Phase 變動。單看這兩輪，無法區分「補洞讓判斷更準」與「判斷本來就不穩」；若要確認，需要同設定多跑幾次看 Phase 分布。
+- demand_5y_multiple 3.7 對 v4 的 2.1 仍差很多，但這次 TAM derivation 明寫了原因（前版基期隱含約 520 億，本版改用 Micron 自報 350 億，同一個 1,300 億用舊基期只有 2.5 倍）；critic 仍對「2027 年 HBM 約 1,100 億把混合 ASP +121% 當純價格」給了 🟡，並指出估值證據只靠 MU 一檔（與上輪相同的缺口，000660.KS、005930.KS 無倍數）。
+- 疑似新增數字 6 個：3.1、3.2、3.3、3.4、99.1、424；前四個是小節號，後兩個未判定。

@@ -162,6 +162,54 @@ def prior_brief(prior):
     return meta, "\n".join(lines)
 
 
+def find_sisters(theme, prior_meta, tickers, date_iso):
+    """同 mega/sub_group 或相關個股重疊 ≥2 的其他主題，每主題取最新一份 v4 以上 ID（掃 id-meta，不只信前版 sister_ids）。
+    只回 sd_verdict／clock_phase／日期／數值欄／kill 表。"""
+    latest = {}
+    for f in glob.glob(str(ROOT / "docs" / "id" / "ID_*.html")):
+        n = Path(f).name
+        mm = re.fullmatch(r"ID_(.+)_(\d{8})(?:_full)?\.html", n)
+        if not mm or n.endswith("_full.html") or mm.group(1) == theme:
+            continue
+        if mm.group(2) > date_iso.replace("-", ""):
+            continue
+        if mm.group(1) not in latest or mm.group(2) > latest[mm.group(1)][0]:
+            latest[mm.group(1)] = (mm.group(2), f)
+    mine = set(tickers)
+    out = []
+    for slug, (d, f) in latest.items():
+        m = META_RE.search(Path(f).read_text(encoding="utf-8"))
+        if not m:
+            continue
+        try:
+            meta = json.loads(m.group(1))
+        except Exception:
+            continue
+        if not meta.get("sd_verdict"):
+            continue
+        other = {x.get("ticker") for x in meta.get("related_tickers", []) if x.get("depth") in ("🔴", "🟡")}
+        same = prior_meta.get("mega") and (meta.get("mega"), meta.get("sub_group")) == (prior_meta.get("mega"), prior_meta.get("sub_group"))
+        ov = len(mine & other)
+        if not (same or ov >= 2):
+            continue
+        out.append({"file": Path(f).name, "slug": slug, "date": d, "sd_verdict": meta.get("sd_verdict"), "clock_phase": meta.get("clock_phase"),
+                    "conviction": meta.get("conviction"), "demand_5y_multiple": meta.get("demand_5y_multiple"),
+                    "tam_usd_2030": meta.get("tam_usd_2030"), "overlap": ov, "same_group": bool(same),
+                    "kill_metrics": [k.get("metric") + "｜" + str(k.get("bear_threshold")) for k in meta.get("kill_metrics", [])]})
+    out.sort(key=lambda x: (not x["same_group"], -x["overlap"], x["date"]), reverse=False)
+    return out[:8]
+
+
+def sisters_block(prior_meta, sisters):
+    lines = ["前版自己：sd_verdict={0} clock_phase={1} conviction={2} demand_5y_multiple={3} tam_usd_2030={4}".format(
+        prior_meta.get("sd_verdict"), prior_meta.get("clock_phase"), prior_meta.get("conviction"), prior_meta.get("demand_5y_multiple"), prior_meta.get("tam_usd_2030"))]
+    for s in sisters:
+        lines.append("- {0}（{1}）：sd_verdict={2} clock_phase={3} conviction={4} demand_5y_multiple={5} tam_usd_2030={6}｜{7}｜kill：{8}".format(
+            s["file"], s["date"], s["sd_verdict"], s["clock_phase"], s["conviction"], s["demand_5y_multiple"], s["tam_usd_2030"],
+            "同 mega/sub_group" if s["same_group"] else "相關個股重疊 {0}".format(s["overlap"]), "；".join(s["kill_metrics"][:4])))
+    return "\n".join(lines)
+
+
 def weekly_return(ticker, today):
     f = ROOT / "data" / "weekly_cache" / "{0}.json".format(ticker)
     if not f.exists():
@@ -268,7 +316,9 @@ def do_plan(c):
     mm = re.search(r"\|\s*{0}\s*\|\s*(\w+)\s*\|\s*(\w+)\s*\|".format(re.escape(c.theme)), tax)
     mega = meta.get("mega") or (mm.group(1) if mm else "")
     sub = meta.get("sub_group") or (mm.group(2) if mm else "")
-    plan = {"theme": c.theme, "date": c.iso, "prior_file": prior.name if prior else None, "prior_meta": meta,
+    sis = find_sisters(c.theme, dict(meta, mega=meta.get("mega") or mega, sub_group=meta.get("sub_group") or sub), tick, c.iso)
+    (c.dir / "sisters_block.md").write_text(sisters_block(meta, sis), encoding="utf-8")
+    plan = {"theme": c.theme, "sisters_latest": sis, "date": c.iso, "prior_file": prior.name if prior else None, "prior_meta": meta,
             "mega": mega, "sub_group": sub, "tickers": tick, "priced": pin, "base_rate": br,
             "sisters": meta.get("sister_ids", [])}
     jdump(c.dir / "plan.json", plan)
@@ -539,6 +589,19 @@ def mech_checks(j, ev, plan, c):
             f.append(("red", "base_rate", "維持 shortage×II 但沒有附證據的差異點"))
         elif br.get("action") not in ("kept", "downgraded"):
             f.append(("red", "base_rate", "base_rate.action 需為 kept 或 downgraded"))
+    # J2：姊妹報告方向衝突須在頁面調和；sister_ids 須指向最新版
+    sis = plan.get("sisters_latest", [])
+    rec = {str(x.get("id")): x for x in j.get("thesis", {}).get("sister_reconcile", []) or []}
+    for s in sis:
+        if s["same_group"] and (s["sd_verdict"], s["clock_phase"]) != (meta.get("sd_verdict"), meta.get("clock_phase")):
+            r_ = rec.get(s["file"]) or rec.get(s["slug"])
+            if not r_ or not r_.get("reason"):
+                f.append(("red", "J2", "與姊妹報告 {0}（{1}／{2}）方向不同，但 thesis.sister_reconcile 沒有調和說明".format(s["file"], s["sd_verdict"], s["clock_phase"])))
+    newest = {s["slug"]: s["file"] for s in sis}
+    for sid in meta.get("sister_ids", []):
+        mm = re.fullmatch(r"ID_(.+)_\d{8}\.html", str(sid))
+        if mm and mm.group(1) in newest and newest[mm.group(1)] != sid:
+            f.append(("red", "J2", "sister_ids 的 {0} 不是最新版 {1}".format(sid, newest[mm.group(1)])))
     pr = {r["ticker"]: r for r in plan["priced"]}
     for row in j.get("valuation", {}).get("priced_rows", []):
         if row.get("ticker") not in pr:
@@ -591,6 +654,7 @@ def judge_prompt(c, plan, ev):
         "PRICED_BLOCK": (c.dir / "priced_block.md").read_text(encoding="utf-8"),
         "PRIOR_BRIEF": (c.dir / "prior_brief.md").read_text(encoding="utf-8"),
         "PLAYBOOK": (SKILL_DIR / "references" / "judgment-playbook.md").read_text(encoding="utf-8"),
+        "SISTERS_BLOCK": (c.dir / "sisters_block.md").read_text(encoding="utf-8"),
         "EVIDENCE": evidence_text(ev), "MEGA": plan["mega"], "SUB_GROUP": plan["sub_group"],
         "TICKERS": "、".join(plan["tickers"]), "SISTERS": "、".join(plan["sisters"]) or "無", "SCHEMA": schema})
 
@@ -631,6 +695,7 @@ def gate_once(c, plan, ev, j, idx, st):
     pp.write_text(render(HERE / "prompts" / "gate.md.tmpl", {
         "MECH": mtext, "PRICED_BLOCK": (c.dir / "priced_block.md").read_text(encoding="utf-8"),
         "BASE_RATE_BLOCK": (c.dir / "base_rate_block.md").read_text(encoding="utf-8"),
+        "SISTERS_BLOCK": (c.dir / "sisters_block.md").read_text(encoding="utf-8"),
         "EVIDENCE": evidence_text(ev), "JUDGMENT": json.dumps(j, ensure_ascii=False)}), encoding="utf-8")
     r = sp.oneshot_stream(pp, GATE_MODEL, c.dir / "agents" / "gate_{0}.json".format(idx), c.dir)
     st["agent_usage"].append(usage("gate_{0}".format(idx), r))
