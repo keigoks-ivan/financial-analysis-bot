@@ -275,7 +275,8 @@ def fetch_fred(series_id: str, fname: str, today: date) -> int:
     last = pd.read_csv(path, parse_dates=["date"])["date"].max()
     cosd = (last - pd.Timedelta(days=45)).strftime("%Y-%m-%d")
     url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}&cosd={cosd}"
-    df = pd.read_csv(io.BytesIO(http_get(url)))
+    # FRED 對自訂 User-Agent 會擋到逾時（見 macro_db/sources/_http.py），必須用 requests 預設 UA
+    df = pd.read_csv(io.BytesIO(http_get(url, tries=2, timeout=40, headers={"User-Agent": "python-requests/2.32.3"})))
     df.columns = ["date", "value"]
     df["value"] = pd.to_numeric(df["value"], errors="coerce")
     df = df.dropna()
