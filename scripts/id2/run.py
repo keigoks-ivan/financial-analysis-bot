@@ -5,7 +5,7 @@
                                   [--dry-run] [--publish]
 
 段：plan → evidence → judge → gate → prose → check → (publish)
-LLM 只在 evidence（sonnet，每軸一通，平行，各自獨立 session）、judge（opus，單輪無工具）、
+LLM 只在 evidence（sonnet，每軸一通，平行，各自獨立 session）、judge（opus，單輪無工具，同 prompt 平行三次，sd_verdict／clock_phase 取多數，2:1 加交界標記）、
 gate（sonnet，單輪無工具；紅燈一通 patch map 再閘一次）、prose（sonnet，前後半平行，只有 Write）。
 其餘零 LLM。預設（含 --dry-run）只寫 .id_build/runs/{Theme}_{date}/，不碰 docs/；--publish 才發布。
 設計：notes/site-internal/id/_id2_design_20261013.md。dd2 與 dd_headless 一字不改，只 import。
@@ -15,10 +15,13 @@ import copy
 import datetime as dt
 import glob
 import json
+import os
 import re
 import subprocess
 import sys
 import time
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -42,6 +45,11 @@ AXIS_TTL = {"A": 180, "B": 30, "C": 30, "D": 14, "E": 30}
 EVID_MAX_TURNS = 32
 EVID_MAX_SEARCH, EVID_MAX_FETCH = 16, 8
 JUDGE_THINKING_CAP = 32_000
+JUDGE_RUNS = 3  # 2026-10-14 持有人拍板：判斷跑三次取多數（穩定度測試 clock_phase II／III／III）
+PHASE_ORDER = {"I": 1, "II": 2, "III": 3, "IV": 4}
+SD_ORDER = {"shortage": 1, "balanced": 2, "surplus": 3, "split": 4}
+BOUNDARY_ZH = {"I": "第一", "II": "第二", "III": "第三", "IV": "第四",
+               "shortage": "短缺", "balanced": "平衡", "surplus": "過剩", "split": "分裂"}
 GATE_MODEL, JUDGE_MODEL, PROSE_MODEL = "sonnet", "opus", "sonnet"
 SECTION_ZH = {"thesis": "核心判斷", "debates": "市場哪裡看錯", "mechanics": "機制與供需", "valuation": "現在貴不貴",
               "risks": "我怎麼知道我錯了", "stocks": "誰受影響", "appendix": "背景與歷史", "base_rate": "核心判斷"}
@@ -625,7 +633,25 @@ def mech_checks(j, ev, plan, c):
         f.append(("red", "D4", "三視野權重缺或非數字"))
     if len(j.get("valuation", {}).get("derivations", [])) < 2 or not j.get("risks", {}).get("derivation"):
         f.append(("red", "derive", "推導行不足：valuation.derivations 需 ≥2、risks.derivation 需 1"))
+    # 多數決：patch 只能在三次判斷出現過的值之間選，交界標記須與票數一致
+    vp = c.dir / "votes.json"
+    if vp.exists():
+        for fld, vals in (jload(vp).get("runs") or {}).items():
+            if meta.get(fld) not in vals:
+                f.append(("red", "votes", "{0}={1} 不在三次判斷的結果 {2} 內".format(fld, meta.get(fld), vals)))
+            if meta.get(fld + "_boundary") != boundary_value(fld, vals):
+                f.append(("red", "votes", "{0}_boundary={1} 與三次判斷 {2} 不符".format(fld, meta.get(fld + "_boundary"), vals)))
     return f
+
+
+def boundary_notes(meta):
+    """id_meta 的 *_boundary → 頁面要寫的白話（例「第二／第三階段交界」）。"""
+    out = {}
+    for fld, suffix in (("clock_phase", "階段交界"), ("sd_verdict", "交界")):
+        b = meta.get(fld + "_boundary")
+        if b:
+            out[fld] = "／".join(BOUNDARY_ZH.get(x, x) for x in b.split("/")) + suffix
+    return out
 
 
 def grid_block(plan, j):
@@ -665,27 +691,83 @@ def parse_json_result(r):
     return sp.strip_json(r.get("result_text"))
 
 
+def boundary_value(field, vals):
+    """2:1 時回「多數值/少數值」依自然順序排（例 II/III）；3:0 回 None。"""
+    order = PHASE_ORDER if field == "clock_phase" else SD_ORDER
+    uniq = sorted(set(vals), key=lambda v: order.get(v, 9))
+    return "/".join(uniq) if len(uniq) == 2 else None
+
+
 def do_judge(c):
+    """同 prompt 平行跑 JUDGE_RUNS 次，sd_verdict 與 clock_phase 各取多數；2:1 在 id_meta 加 *_boundary 標記。
+    代表判斷＝第一個與兩個多數值都相符的跑次（三取二時必存在）。1:1:1 無多數，停下交人。"""
     st = c.begin("judge")
     plan, ev = jload(c.dir / "plan.json"), jload(c.dir / "evidence.json")
     pp = c.dir / "prompts" / "judge.md"
     pp.write_text(judge_prompt(c, plan, ev), encoding="utf-8")
-    r = sp.oneshot_stream(pp, JUDGE_MODEL, c.dir / "agents" / "judge_1.json", c.dir, thinking_cap=JUDGE_THINKING_CAP)
-    st["agent_usage"].append(usage("judge_1", r))
-    obj, err = parse_json_result(r)
-    if not isinstance(obj, dict):
-        return c.end("judge", False, "judge 輸出無法解析：{0}｜{1}".format(err, (r.get("stderr_tail") or "")[-200:]))
-    for rt in obj.get("id_meta", {}).get("related_tickers", []):
-        for k in [k for k, v in rt.items() if v is None]:
-            del rt[k]  # null 的選填欄（如 🟡 的 purity_pct）會被 validator 當型別錯
+    ks = list(range(1, JUDGE_RUNS + 1))
+    if not c.a.resume:
+        for k in ks:
+            (c.dir / "judgment_{0}.json".format(k)).unlink(missing_ok=True)
+    todo = [k for k in ks if not (c.dir / "judgment_{0}.json".format(k)).exists()]
+    st["reused"] = [k for k in ks if k not in todo]
+
+    def one(k):
+        return k, sp.oneshot_stream(pp, JUDGE_MODEL, c.dir / "agents" / "judge_{0}.json".format(k), c.dir)
+
+    env_key = sp._MAX_THINKING_TOKENS_ENV  # 平行時由這裡統一設，不讓各執行緒互相還原
+    prev = os.environ.get(env_key)
+    os.environ[env_key] = str(JUDGE_THINKING_CAP)
+    try:
+        with ThreadPoolExecutor(max_workers=JUDGE_RUNS) as pool:
+            results = list(pool.map(one, todo))
+    finally:
+        if prev is None:
+            os.environ.pop(env_key, None)
+        else:
+            os.environ[env_key] = prev
+    bad = []
+    for k, r in results:
+        st["agent_usage"].append(usage("judge_{0}".format(k), r))
+        obj, err = parse_json_result(r)
+        if not isinstance(obj, dict):
+            bad.append("judge_{0}：{1}｜{2}".format(k, err, (r.get("stderr_tail") or "")[-150:]))
+            continue
+        for rt in obj.get("id_meta", {}).get("related_tickers", []):
+            for kk in [kk for kk, v in rt.items() if v is None]:
+                del rt[kk]  # null 的選填欄（如 🟡 的 purity_pct）會被 validator 當型別錯
+        jdump(c.dir / "judgment_{0}.json".format(k), obj)
+    c.save()
+    if bad:
+        return c.end("judge", False, "判斷輸出無法解析（--resume 只重跑失敗的那幾次）：" + "；".join(bad))
+    runs = [(k, jload(c.dir / "judgment_{0}.json".format(k))) for k in ks]
+    votes = {f: [j.get("id_meta", {}).get(f) for _, j in runs] for f in ("sd_verdict", "clock_phase")}
+    major = {}
+    for f, vals in votes.items():
+        v, n = Counter(vals).most_common(1)[0]
+        if n * 2 <= len(vals):
+            jdump(c.dir / "votes.json", {"runs": votes, "majority": None})
+            return c.end("judge", False, "{0} 三次各異 {1}，無多數，停下交人".format(f, vals))
+        major[f] = v
+    k0, obj = next((k, j) for k, j in runs if all(j.get("id_meta", {}).get(f) == major[f] for f in major))
+    for f, vals in votes.items():
+        b = boundary_value(f, vals)
+        if b:
+            obj["id_meta"][f + "_boundary"] = b
+    jdump(c.dir / "votes.json", {"runs": votes, "conviction": [j.get("id_meta", {}).get("conviction") for _, j in runs],
+                                 "majority": major, "chosen": k0})
+    st["votes"], st["chosen"] = votes, k0
     jdump(c.dir / "judgment.json", obj)
-    return c.end("judge", True, "judgment {0} 字；sd={1} phase={2}".format(
-        len(json.dumps(obj, ensure_ascii=False)), obj.get("id_meta", {}).get("sd_verdict"), obj.get("id_meta", {}).get("clock_phase")))
+    return c.end("judge", True, "三次 sd={0} phase={1}；取第 {2} 次（sd={3} phase={4}{5}）".format(
+        votes["sd_verdict"], votes["clock_phase"], k0, major["sd_verdict"], major["clock_phase"],
+        "".join("，{0}={1}".format(f + "_boundary", obj["id_meta"][f + "_boundary"]) for f in votes if obj["id_meta"].get(f + "_boundary"))))
 
 
 def gate_once(c, plan, ev, j, idx, st):
     mech = mech_checks(j, ev, plan, c)
     mtext = "\n".join("- [{0}] {1}：{2}".format(s, i, m) for s, i, m in mech) or "（機械檢查全過）"
+    if boundary_notes(j.get("id_meta", {})):
+        mtext += "\n\n註：id_meta 的 *_boundary 欄是程式依三次獨立判斷 2:1 加的交界標記，不是錯誤，不要求刪除或改寫。"
     gb = grid_block(plan, j)
     if gb:
         mtext += ("\n\n# 裁決格切換（前版與本次不同格，基準率並排）\n" + gb +
@@ -779,6 +861,9 @@ def prose_view(j, ev):
               "title": (by_id[cid].get("source") or by_id[cid].get("url") or "")[:80],
               "url": by_id[cid].get("url"), "as_of": by_id[cid].get("as_of")} for cid in order]
     view["sources_table"] = table
+    bn = boundary_notes(j.get("id_meta", {}))
+    if bn:
+        view["boundary_notes"] = bn
     view["data_window"] = j.get("id_meta", {}).get("publish_date")
     view["n_tickers"] = len(j.get("id_meta", {}).get("related_tickers", []))
     return view, table
@@ -872,10 +957,13 @@ def do_check(c):
     rc2, o2 = run(["python3.12", SCRIPTS / "validate_id_meta.py", out])
     extra = number_audit(out, j)
     kb = out.stat().st_size / 1024
+    html = out.read_text(encoding="utf-8")
+    miss_b = [t for t in boundary_notes(j.get("id_meta", {})).values() if t not in html]
     st.update({"check_id_rc": rc1, "validate_rc": rc2, "html_kb": round(kb, 1), "numbers_not_in_judgment": extra[:40],
-               "numbers_not_in_judgment_n": len(extra)})
+               "numbers_not_in_judgment_n": len(extra), "boundary_missing": miss_b})
     (c.dir / "check_stdout.txt").write_text(o1 + "\n---\n" + o2, encoding="utf-8")
-    return c.end("check", rc1 == 0 and rc2 == 0, "check_id rc={0} validate rc={1} {2:.0f}KB 疑似新增數字 {3} 個".format(rc1, rc2, kb, len(extra)))
+    return c.end("check", rc1 == 0 and rc2 == 0 and not miss_b, "check_id rc={0} validate rc={1} {2:.0f}KB 疑似新增數字 {3} 個{4}".format(
+        rc1, rc2, kb, len(extra), "｜頁面缺交界字樣：" + "、".join(miss_b) if miss_b else ""))
 
 
 # ------------------------------------------------------------------ publish（只在 --publish；本階段未實跑）

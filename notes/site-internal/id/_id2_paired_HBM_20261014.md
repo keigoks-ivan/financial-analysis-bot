@@ -81,3 +81,12 @@ J2 cross-ID 對帳：最新同題 `ID_MemorySupercycle_20260905`（Phase II 末�
 - 事實：第一輪（補洞前）也判 III，故 III 出現 3 次、II 出現 1 次（共 4 次獨立判斷，其中第一輪的輸入少了姊妹區塊，不屬同一組）。
 - 推論（未驗證）：時鐘 II 與 III 在這份證據下相鄰、換相雙閘的充分條件模糊（兩個獨立訊號是否成立有判斷空間），所以 judge 在邊界上隨機落在兩側；第二輪回到 II 可能只是邊界上的一次抽樣，不能歸功於補洞。
 - 對 paired test 的含義：第二輪「方向同 v4」那項準則通過，帶有運氣成分；單次結果不足以說明 id2 的 clock_phase 可重現。
+
+## 處置：判斷三次取多數（持有人 2026-10-14 拍板）與 HBM 驗證
+規則：judge 同 prompt 平行跑三次，sd_verdict 與 clock_phase 各取多數；2:1 時 id-meta 寫多數值並加 `*_boundary`（例 `clock_phase_boundary: "II/III"`），頁面寫「第二／第三階段交界」；1:1:1 停下交人；不另設保守取值規則。登記 rule_ledger（2026-10-14 列）。
+
+驗證（以上表三筆判斷當 judgment_1～3，不重跑判斷；gate／prose／check 實跑，$2.22）：
+- 多數決：sd_verdict shortage 3/3；clock_phase II／III／III → III，`clock_phase_boundary: "II/III"`，代表判斷取第 2 筆（穩定度 1，conviction mid）。
+- gate：前版 shortage×II → 本次 shortage×III，兩格基準率並排（II：n=24、勝率 7/24；III：n=2、勝率 1/2），兩輪皆 `justified: true`，但閘自己寫明「證據偏薄、有支持但不強」、新格 n=2 不可當 III 較好的證明。第一輪紅 1（TAM 倍數 2.1→3.7 而基期未交代），patch 一次後紅 0 黃 8。
+- check：check_id／validate_id_meta 皆過，71KB；燈號格 `data-value="III"`、註腳「第二／第三階段交界」，核心判斷段另寫一次；頁面交界字樣檢查通過。
+- 離線測試（假 spawn）：3:0 無標記、1:1:1 FAIL、單次解析失敗 FAIL 且 `--resume` 只補跑失敗那次、思考上限三通皆生效。

@@ -484,3 +484,11 @@
 | **id2 gate 的裁決格切換表態：判斷 JSON 的 sd_verdict × clock_phase 與前版 id-meta 不同格時，程式把兩格的基準率（n、勝率、超額中位）並排寫進 gate 輸入，gate 必須輸出 `grid_switch.justified`，並說明換格是否由證據包內的基本面證據支持；未表態或 justified=false 即紅燈（`scripts/id2/run.py::grid_block`／`gate_once`）。不改任何門檻** | 2026-10-13 | AIStorage 乾跑：judge 把前版 shortage×II（n=24，勝率 7/24）改成 split×II（n=2，勝率 1/2），新格歷史數字較好看、樣本卻只有 2 筆，基準率義務因此可能被「換格」繞過 | ①id2 產出至少 6 份後，gate 對換格的 justified 判定與事後 critic 判定不一致 ≥3 份（閘形式化）；②規則從未擋下任何一份換格（全數 justified=true 且 critic 無異議）→ KILL，回到僅靠 base_rate 義務 | 新規則，上線 <1 週；kill 看下一輪校準 |
 
 加一提刪一：候刪審查對象為「QC-52 DD↔ID 對帳（Phase II 打折）」——v20 判斷卡已整段丟棄、規則實質停擺，2026-10 校準仍未決（KEEP 或恢復），建議在校準輪正式二選一，不再懸著。
+
+## 2026-10-14：id2 判斷跑三次取多數，2:1 標「交界」（持有人拍板）
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **id2 判斷步驟同一 prompt 平行跑三次，sd_verdict 與 clock_phase 各取多數；2:1 時 id-meta 寫多數值並加 `sd_verdict_boundary`／`clock_phase_boundary`（例 `"II/III"`），頁面燈號註腳與核心判斷寫「第二／第三階段交界」；1:1:1 停下交人。代表判斷＝第一個兩欄都與多數相符的跑次，不另設保守取值規則；gate 的 patch 只能在三次出現過的值之間選（`scripts/id2/run.py::do_judge`／`mech_checks`／`boundary_notes`）** | 2026-10-14 | HBM 穩定度測試（同證據、同 prompt，只重跑判斷）：sd_verdict 3/3 相同，clock_phase II／III／III，單次判斷的週期階段不可重現（`notes/site-internal/id/_id2_paired_HBM_20261014.md`「穩定度」節） | ①id2 產出滿 12 份時三次判斷全部 3:0（零交界）→ 單次已穩，降回單次判斷省成本；②交界標記出現在半數以上報告 → 標記失去資訊量，改檢討換相雙閘的定義，不再靠投票；③1:1:1 出現 ≥2 份 → 判斷本身在該處不可用，停用本規則、重設計時鐘判準 | 新規則，上線 <1 週；kill 看 12 份跑完 |
+
+加一提刪一：候刪審查對象為「id-review V2-13 熱產業時鐘施壓」——id2 已有判斷步驟的基準率義務（2026-10-13）與本條時鐘多數決，V2-13 在寫完後再施壓一次同一件事，且 2026-10 審計 INSUFFICIENT-DATA（無逐條觸發日誌）；建議 12 份 id2 跑完後檢視 critic 記錄，V2-13 若從未產出 base_rate 義務之外的新發現即降為選做。
