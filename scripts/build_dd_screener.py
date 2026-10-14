@@ -2144,7 +2144,8 @@ def _fetch_live_fy_eps(
     return out
 
 
-_SPLIT_FACTORS = (2, 3, 4, 5, 10, 1.5, 0.5, 1 / 3, 0.25, 0.2, 0.1, 20, 8, 6, 15)
+# 不收 1.5／2/3：加幣、星幣等匯率比落在 1.35–1.45，會被誤當 3 拆 2（TD、BMO DD 價為加幣）
+_SPLIT_FACTORS = (2, 3, 4, 5, 10, 0.5, 1 / 3, 0.25, 0.2, 0.1, 20, 8, 6, 15)
 
 
 def _split_adjust_p_dd(yf_ticker: str, p_dd, dd_date) -> tuple:
@@ -2152,9 +2153,10 @@ def _split_adjust_p_dd(yf_ticker: str, p_dd, dd_date) -> tuple:
     ma["price"] comes from split-adjusted weekly_cache bars; after a split the two
     are in different units (APH 2026-07: 150.31 vs ~86). Compare p_dd with the
     cache close of the week containing dd_date: deviation > 25% can't be dividends,
-    so treat as a split, divide by the nearest common split factor (within 15%),
-    else fall back to the cache close. factor None = no adjustment (incl. cache
-    missing / bad input). No network calls."""
+    so treat as a split only if the ratio sits within 8% of a common split factor
+    (a real 35%+ move in a week must not be mistaken for a 3-for-2 split); otherwise
+    keep p_dd as is. factor None = no adjustment (incl. cache missing / bad input).
+    No network calls."""
     if not p_dd or p_dd <= 0 or not dd_date:
         return p_dd, None
     try:
@@ -2168,9 +2170,9 @@ def _split_adjust_p_dd(yf_ticker: str, p_dd, dd_date) -> tuple:
         if 0.75 <= ratio <= 1.25:
             return p_dd, None
         best = min(_SPLIT_FACTORS, key=lambda f: abs(ratio / f - 1))
-        if abs(ratio / best - 1) <= 0.15:
+        if abs(ratio / best - 1) <= 0.08:
             return p_dd / best, round(best, 4)
-        return prior[-1]["close"], round(ratio, 4)
+        return p_dd, None
     except Exception:
         return p_dd, None
 
