@@ -545,8 +545,10 @@ def stub_validate(j, c):
     """用只含 id-meta 的 stub HTML 跑 validate_id_meta.py（最早的機械閘）。"""
     (c.dir / "stub").mkdir(exist_ok=True)
     stub = c.dir / "stub" / "ID_{0}_{1}.html".format(c.theme, c.date)  # 檔名不是 ID_*.html 會被 validator 當非 ID 跳過
-    stub.write_text('<html><head><script id="id-meta" type="application/json">{0}</script></head><body></body></html>'.format(
-        json.dumps(j.get("id_meta", {}), ensure_ascii=False)), encoding="utf-8")
+    # 沒有 id-skill-version meta 會被 validator 當非 ID 跳過（2026-10-14 前此閘實際上從未生效）
+    stub.write_text('<html><head><meta name="id-skill-version" content="{0}">'
+                    '<script id="id-meta" type="application/json">{1}</script></head><body></body></html>'.format(
+                        SKILL_VERSION, json.dumps(j.get("id_meta", {}), ensure_ascii=False)), encoding="utf-8")
     rc, out = run(["python3.12", SCRIPTS / "validate_id_meta.py", stub])
     return rc == 0, out[-600:]
 
@@ -633,24 +635,47 @@ def mech_checks(j, ev, plan, c):
         f.append(("red", "D4", "三視野權重缺或非數字"))
     if len(j.get("valuation", {}).get("derivations", [])) < 2 or not j.get("risks", {}).get("derivation"):
         f.append(("red", "derive", "推導行不足：valuation.derivations 需 ≥2、risks.derivation 需 1"))
-    # 多數決：patch 只能在三次判斷出現過的值之間選，交界標記須與票數一致
+    # 多數決：patch 只能在三次判斷出現過的值或前版值（閘判換格證據不足時改回）之間選
     vp = c.dir / "votes.json"
     if vp.exists():
         for fld, vals in (jload(vp).get("runs") or {}).items():
-            if meta.get(fld) not in vals:
-                f.append(("red", "votes", "{0}={1} 不在三次判斷的結果 {2} 內".format(fld, meta.get(fld), vals)))
-            if meta.get(fld + "_boundary") != boundary_value(fld, vals):
-                f.append(("red", "votes", "{0}_boundary={1} 與三次判斷 {2} 不符".format(fld, meta.get(fld + "_boundary"), vals)))
+            if meta.get(fld) not in vals and meta.get(fld) != plan["prior_meta"].get(fld):
+                f.append(("red", "votes", "{0}={1} 不在三次判斷的結果 {2} 內，也不是前版值".format(fld, meta.get(fld), vals)))
     return f
 
 
+def normalize_votes(c, j):
+    """patch 之後依票數重設 *_boundary／*_gate_reverted（程式擁有，不交給 patch）。
+    值在票內：2:1 標交界；值不在票內（閘判換格證據不足、改回前版）：記下三次的票，頁面寫「維持原判」。"""
+    vp = c.dir / "votes.json"
+    if not vp.exists():
+        return
+    meta = j.get("id_meta", {})
+    for fld, vals in (jload(vp).get("runs") or {}).items():
+        meta.pop(fld + "_boundary", None)
+        meta.pop(fld + "_gate_reverted", None)
+        if meta.get(fld) in vals:
+            b = boundary_value(fld, vals)
+            if b:
+                meta[fld + "_boundary"] = b
+        else:
+            meta[fld + "_gate_reverted"] = "/".join(vals)
+
+
 def boundary_notes(meta):
-    """id_meta 的 *_boundary → 頁面要寫的白話（例「第二／第三階段交界」）。"""
+    """id_meta 的 *_boundary／*_gate_reverted → 頁面要寫的白話（例「第二／第三階段交界」）。"""
     out = {}
-    for fld, suffix in (("clock_phase", "階段交界"), ("sd_verdict", "交界")):
+    for fld, unit, suffix in (("clock_phase", "階段", "階段交界"), ("sd_verdict", "", "交界")):
         b = meta.get(fld + "_boundary")
         if b:
             out[fld] = "／".join(BOUNDARY_ZH.get(x, x) for x in b.split("/")) + suffix
+        r = meta.get(fld + "_gate_reverted")
+        if r:
+            vals = r.split("/")
+            top = Counter(vals).most_common(1)[0][0]
+            out[fld] = "三次判斷{0}判{1}{2}，換格證據不足，維持原判{3}{2}".format(
+                "皆" if len(set(vals)) == 1 else "多數", BOUNDARY_ZH.get(top, top), unit,
+                BOUNDARY_ZH.get(meta.get(fld), meta.get(fld)))
     return out
 
 
@@ -767,7 +792,8 @@ def gate_once(c, plan, ev, j, idx, st):
     mech = mech_checks(j, ev, plan, c)
     mtext = "\n".join("- [{0}] {1}：{2}".format(s, i, m) for s, i, m in mech) or "（機械檢查全過）"
     if boundary_notes(j.get("id_meta", {})):
-        mtext += "\n\n註：id_meta 的 *_boundary 欄是程式依三次獨立判斷 2:1 加的交界標記，不是錯誤，不要求刪除或改寫。"
+        mtext += ("\n\n註：id_meta 的 *_boundary 欄是程式依三次獨立判斷 2:1 加的交界標記；*_gate_reverted 欄表示三次判斷的票、"
+                  "閘判換格證據不足而改回前版值。兩者都由程式維護，不是錯誤，不要求刪除或改寫。")
     gb = grid_block(plan, j)
     if gb:
         mtext += ("\n\n# 裁決格切換（前版與本次不同格，基準率並排）\n" + gb +
@@ -824,6 +850,7 @@ def do_gate(c):
             except Exception as e:
                 failed.append("{0}:{1}".format(p.get("path"), e))
         st["patches_applied"], st["patches_failed"] = applied, failed
+        normalize_votes(c, j)
         jdump(c.dir / "judgment.json", j)
         final = gate_once(c, plan, ev, j, 2, st)
     red2 = [f for f in final if f["severity"] == "red"]
