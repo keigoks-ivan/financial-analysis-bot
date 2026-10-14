@@ -2178,7 +2178,8 @@ def _split_adjust_p_dd(yf_ticker: str, p_dd, dd_date) -> tuple:
 
 
 def _compute_live_pe_drift(
-    entry: dict, ma: dict, live_fy_result: dict | None = None
+    entry: dict, ma: dict, live_fy_result: dict | None = None,
+    reporting_ccy_cache: dict | None = None, fx_cache: dict | None = None,
 ) -> dict:
     """Compute live FwdPE — preferring fresh yfinance EPS over price-drift heuristic.
 
@@ -2212,6 +2213,7 @@ def _compute_live_pe_drift(
         "eps_revision_pct": None,
         "yf_fy_label": None,
         "split_adj": None,
+        "live_fpe_fx": None,
     }
     fpe = entry.get("fpe_fy2")
     p_dd = entry.get("price_at_dd")
@@ -2238,7 +2240,22 @@ def _compute_live_pe_drift(
         _yf_ticker_for_ma(entry["ticker"]), p_dd, fpe
     )
     if real["eps_now"] is not None and real["eps_now"] > 0:
-        out["live_fpe_est"] = round(p_now / real["eps_now"], 2)
+        eps_px = real["eps_now"]
+        # 美國掛牌、財報非美元（TD／BMO 加幣、ASML／SPOT／RACE 歐元、ONON 瑞郎）：
+        # yfinance 預估是財報幣別、p_now 是美元，倍數差一個匯率。只在 yfinance 對
+        # Excel（美元）同財年的比值貼近市場匯率（±10%）時換算——TSM 的 yfinance
+        # 已是每 ADR 美元、VALE 比值不像匯率，都不動；歐洲掛牌（.PA/.AS）價格本就是歐元。
+        yf_t = _yf_ticker_for_ma(entry["ticker"])
+        xl = real.get("eps_0y_raw") if real.get("yf_fy_label") == "0y" else real.get("eps_1y_raw")
+        if ("." not in yf_t and real.get("eps_source") == "xlsx" and xl and xl > 0
+                and reporting_ccy_cache is not None and fx_cache is not None):
+            ccy = get_reporting_currency(entry["ticker"], yf_t, reporting_ccy_cache)
+            if ccy and ccy != "USD":
+                fx = get_fx_rate(ccy, datetime.now().strftime("%Y-%m-%d"), fx_cache)
+                if fx and fx > 0 and abs(eps_px / xl / fx - 1) <= 0.10:
+                    eps_px = eps_px / fx
+                    out["live_fpe_fx"] = round(fx, 4)
+        out["live_fpe_est"] = round(p_now / eps_px, 2)
         out["pe_drift_pct"] = round((out["live_fpe_est"] / fpe - 1) * 100, 1)
         out["live_fpe_method"] = "eps"
         out["eps_revision_pct"] = real["eps_revision_pct"]
@@ -4281,7 +4298,8 @@ def enrich_ticker(
             "eps_basis": excel_record.get("eps_basis"),
         }
 
-    pe_drift = _compute_live_pe_drift(entry, ma, live_fy_result=live_fy_result)
+    pe_drift = _compute_live_pe_drift(entry, ma, live_fy_result=live_fy_result,
+                                      reporting_ccy_cache=reporting_ccy_cache, fx_cache=fx_cache)
 
     # v1.7: EPS 2Y CAGR live + revision momentum
     eps2y_live_result = _compute_live_eps_cagr(entry, live_fy_result or {})
