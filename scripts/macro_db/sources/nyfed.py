@@ -24,7 +24,10 @@ def parse_recprob(df):
         v = to_float(v)
         if v is None or d != d:
             continue
-        obs.append((month_first(str(d)[:10]), round(v * 100, 4)))
+        s = str(d).strip()
+        if re.fullmatch(r"\d{2}-[A-Za-z]{3}-\d{4}", s):  # 2026-10 起 Date 欄改成文字 '01-Apr-2026'
+            s = dt.datetime.strptime(s, "%d-%b-%Y").date().isoformat()
+        obs.append((month_first(s[:10]), round(v * 100, 4)))
     return obs
 
 
