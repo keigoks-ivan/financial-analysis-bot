@@ -1273,6 +1273,19 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
 </div>"""
 
 
+def _fear_greed_line() -> str:
+    """市場溫度一行（2026-10-14 加）：只讀 docs/fear-greed/data/latest.json 顯示，不影響任何計算；
+    檔案缺失或格式不對一律回空字串。"""
+    try:
+        us = json.loads((DOCS / "fear-greed" / "data" / "latest.json").read_text(encoding="utf-8"))["us"]
+        if us["score"] is None:
+            return ""
+        return ('<div class="status-date" style="text-align:center;margin-bottom:.5rem">市場溫度：'
+                f'<a href="/fear-greed/" target="_top">美股 {int(us["score"])} 分（{us["state_zh"]}）</a></div>')
+    except Exception:
+        return ""
+
+
 # ---------------------------------------------------------------------------
 # Full HTML
 # ---------------------------------------------------------------------------
@@ -1473,6 +1486,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </div>
 
 <div class="status-date" style="text-align:center;margin-bottom:.5rem">{data_asof_label} · 頁面更新 {now} 台北時間 · 兩組合各自獨立追蹤（各 100%）</div>
+{_fear_greed_line()}
 
 {change_html}
 

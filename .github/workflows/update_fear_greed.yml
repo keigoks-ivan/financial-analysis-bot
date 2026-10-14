@@ -1,0 +1,143 @@
+name: "Update Fear/Greed Thermometer (weekly reminder)"
+
+on:
+  schedule:
+    # 每週六 08:00 台北（= 週六 00:00 UTC）跑一次：美股週五收盤後、台股週五收盤後。
+    # 溫度計是提醒，不是交易規則；只在狀態改變時寄 email 與 Discord。
+    - cron: '0 0 * * 6'
+  workflow_dispatch:  # 手動觸發
+    inputs:
+      test_notify:
+        description: '寄一則標題含「測試」的測試信（email＋Discord），不比對狀態、不代表真實狀態改變'
+        type: boolean
+        default: false
+      no_notify:
+        description: '只更新資料與頁面，不寫通知檔（不寄 email／Discord）'
+        type: boolean
+        default: false
+      retry:
+        description: >-
+          內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'  # site_nav.py uses 3.12+ f-string syntax
+
+      - name: Install dependencies
+        # openpyxl：FINRA margin-statistics.xlsx；xlrd：Shiller ie_data.xls
+        run: pip install pandas numpy openpyxl xlrd
+
+      - name: Update fear/greed thermometer
+        # 抓最新材料（任一項失敗都沿用上期資料並在 latest.json 標 stale）→ 追加本週一列到
+        # history_us.csv／history_tw.csv → 重寫 latest.json 與 /fear-greed/ 頁。狀態改變時
+        # 才寫 fg_alert.txt／fg_title.txt／fg_mail.html（下面步驟讀它們寄信）。
+        env:
+          TEST_NOTIFY: ${{ inputs.test_notify }}
+          NO_NOTIFY: ${{ inputs.no_notify }}
+        run: |
+          ARGS=""
+          if [ "$TEST_NOTIFY" = "true" ]; then ARGS="--test-alert"; fi
+          if [ "$NO_NOTIFY" = "true" ]; then ARGS="$ARGS --no-notify"; fi
+          python scripts/update_fear_greed.py $ARGS
+
+      - name: Read alert
+        id: fgalert
+        run: |
+          if [ -f fg_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "title=$(head -n 1 fg_title.txt)" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<FGALERT_EOF"
+              awk 1 fg_alert.txt
+              echo "FGALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # SMTP secret 缺少時略過寄信，不讓 workflow 失敗（MAIL_USERNAME／MAIL_APP_PASSWORD
+      # 與 update_long_track_w52_adaptive.yml 共用，已設定）。
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email state change
+        if: steps.fgalert.outputs.changed == 'true' && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.fgalert.outputs.title }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://fg_mail.html
+          body: |
+            ${{ steps.fgalert.outputs.body }}
+
+            —
+            InvestMQuest · 市場溫度計每週提醒（只在狀態改變時寄出；不影響 70% W52 引擎）
+
+      - name: Discord notify
+        if: steps.fgalert.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+          NOTIFY_TITLE: ${{ steps.fgalert.outputs.title }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file fg_alert.txt --url https://research.investmquest.com/fear-greed/
+
+      - name: Commit and push
+        id: commit_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add docs/fear-greed/index.html docs/fear-greed/data
+          git diff --staged --quiet || git commit -m "Auto update fear/greed thermometer: $(date -u '+%Y-%m-%d')"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
