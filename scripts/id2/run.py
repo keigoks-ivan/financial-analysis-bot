@@ -250,11 +250,23 @@ def priced_inputs(tickers, today):
             rec["flags"].append("無本地週線")
         r = rows.get(t)
         if r:
-            # fpe_fy2／pct_5y 是 DD 日快照（price_at_dd），可能舊好幾個月；有現價估算值就用現值，DD 日值只當參考
+            # fpe_fy2／pct_5y 是 DD 日快照（price_at_dd），可能舊好幾個月；有現價估算值就用現值，DD 日值只當參考。
+            # live_pct_5y_est 不是真實分位：build_dd_screener 用 DD 日分位加「5 年區間寬 ±60%」假設推算，超出即夾成 0／100。
             live = r.get("live_fpe_est")
+            p_dd, fpe_dd = r.get("price_at_dd"), r.get("fpe_fy2")
+            if live is not None and p_dd and fpe_dd and rec.get("close"):
+                px_chg, pe_chg = rec["close"] / p_dd - 1, live / fpe_dd - 1
+                if r.get("live_fpe_method") == "eps" and abs(pe_chg - px_chg) > 0.30:
+                    rec["flags"].append("現價倍數待核：倍數較 DD 日 {0:+.0%}、股價 {1:+.0%}，疑每股盈餘年度錯配".format(pe_chg, px_chg))
+                    live = None
+                elif r.get("live_fpe_method") == "drift" and abs(px_chg) > 0.40:
+                    rec["flags"].append("現價倍數待核：股價較 DD 日 {0:+.0%}，疑股票分割或價格資料錯".format(px_chg))
+                    live = None
             rec["fpe_fy2"] = live if live is not None else r.get("fpe_fy2")
             rec["pct_5y"] = r.get("live_pct_5y_est") if live is not None else r.get("pct_5y")
-            rec["fpe_basis"] = "現價估算" if live is not None else "DD 日快照"
+            rec["fpe_basis"] = "現價估算；分位為推估" if live is not None else "DD 日快照"
+            if live is not None and rec["pct_5y"] in (0, 100):
+                rec["flags"].append("推估分位落在假設區間端點（{0}），只代表倍數已超出 DD 日區間，不是真實分位".format(rec["pct_5y"]))
             rec["fpe_at_dd"], rec["pct_at_dd"], rec["dd_date"] = r.get("fpe_fy2"), r.get("pct_5y"), r.get("dd_date")
             rec["val_source"] = "docs/dd-screener/latest.json（as_of {0}）".format(sc.get("as_of"))
             if live is None and r.get("dd_date"):
@@ -284,7 +296,7 @@ def priced_block(items):
         if r["flags"]:
             s += "　⚠ " + "；".join(r["flags"])
         lines.append(s)
-    lines.append("來源：週線 data/weekly_cache、倍數 docs/dd-screener/latest.json。倍數與分位以現價估算值為準，DD 日值只供對照，不得當現值引用。標 ⚠ 的數字不得當承重證據。")
+    lines.append("來源：週線 data/weekly_cache、倍數 docs/dd-screener/latest.json。倍數以現價估算值為準；現價分位是用 DD 日分位加「5 年區間寬 ±60%」假設推算的估計，引用時一律寫「估算分位」，0 或 100 只代表超出區間、不得寫成真實分位；DD 日值只供對照，不得當現值引用。標 ⚠ 的數字不得當承重證據。")
     return "\n".join(lines)
 
 
