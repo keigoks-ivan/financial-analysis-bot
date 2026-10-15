@@ -49,6 +49,11 @@ Exit 0＝全部通過（WARN 不算失敗，只有 FAIL 會擋 exit code）；Ex
      15 不得出現內部用語（命題、證偽表、參考點、序列…）與比喻詞；
      16 出處括號（媒體名＋日期）只能放句尾；
      17 data_gaps_zh ≤ 150 字。
+  18.（2026-10-15 持有人要求，10-05→10-14 費半領跌、判讀只看 SPY 而漏看）那斯達克與半導體段落
+     `sector = {body_zh, refs[]}`：refs ≥3，且至少各一條費半（monitor:sox／monitor:sox_ndx）、
+     那斯達克（monitor:ndx／internals:qqew_qqq／internals:qqq_dvol_z／cot:Nasdaq-100 E-mini）、
+     實盤部位（book:*）；body_zh 第一句照第 13 項標題句規則。as_of 早於 2026-10-16 的舊判讀
+     缺此段只 WARN。
 """
 from __future__ import annotations
 
@@ -147,6 +152,12 @@ def collect_refs(data: dict):
         ref = f.get("ref")
         if isinstance(ref, str):
             out.append((f"falsifiers[{i}].ref", ref))
+    sector = data.get("sector")
+    if isinstance(sector, dict):
+        for j, r in enumerate(sector.get("refs") or []):
+            ref = r.get("ref") if isinstance(r, dict) else None
+            if isinstance(ref, str):
+                out.append((f"sector.refs[{j}].ref", ref))
     return out
 
 
@@ -519,6 +530,9 @@ def headline_fields(data: dict):
     for i, h in enumerate(data.get("horizons") or []):
         if isinstance(h.get("logic_zh"), str):
             out.append((f"$.horizons[{i}].logic_zh", h["logic_zh"]))
+    sector = data.get("sector")
+    if isinstance(sector, dict) and isinstance(sector.get("body_zh"), str):
+        out.append(("$.sector.body_zh", sector["body_zh"]))
     return out
 
 
@@ -587,6 +601,42 @@ def check_data_gaps_len(data: dict):
     return PASS, f"data_gaps_zh {n} 字"
 
 
+SECTOR_REQUIRED_FROM = "2026-10-16"
+SECTOR_SEMIS_REFS = ("monitor:sox", "monitor:sox_ndx")
+SECTOR_NASDAQ_REFS = ("monitor:ndx", "internals:qqew_qqq", "internals:qqq_dvol_z", "cot:Nasdaq-100 E-mini")
+SECTOR_MIN_REFS = 3
+
+
+def check_sector(data: dict):
+    """18. 那斯達克與半導體段落（見模組 docstring 第 18 項）。"""
+    sector = data.get("sector")
+    if sector is None:
+        if str(data.get("as_of") or "") < SECTOR_REQUIRED_FROM:
+            return WARN, f"缺 sector（as_of 早於 {SECTOR_REQUIRED_FROM} 的舊判讀可接受）"
+        return FAIL, "缺 sector（那斯達克與半導體段落）"
+    if not isinstance(sector, dict):
+        return FAIL, "sector 必須是物件 {body_zh, refs}"
+    body = sector.get("body_zh")
+    if not isinstance(body, str) or not body.strip():
+        return FAIL, "sector.body_zh 空白"
+    refs = [r for r in (sector.get("refs") or []) if isinstance(r, dict)]
+    names = [r.get("ref") for r in refs if isinstance(r.get("ref"), str)]
+    problems = []
+    if len(names) < SECTOR_MIN_REFS:
+        problems.append(f"refs {len(names)} 條，需要 ≥{SECTOR_MIN_REFS}")
+    if any(not isinstance(r.get("why"), str) or not r.get("why").strip() for r in refs):
+        problems.append("每條 ref 都要附 why（為什麼看它）")
+    if not any(n in SECTOR_SEMIS_REFS for n in names):
+        problems.append("缺費半 ref（" + "／".join(SECTOR_SEMIS_REFS) + "）")
+    if not any(n in SECTOR_NASDAQ_REFS for n in names):
+        problems.append("缺那斯達克 ref（" + "／".join(SECTOR_NASDAQ_REFS) + "）")
+    if not any(n.startswith("book:") for n in names):
+        problems.append("缺實盤部位 ref（book:*）")
+    if problems:
+        return FAIL, "sector：" + "；".join(problems)
+    return PASS, f"sector 段落 refs={len(names)}，費半／那斯達克／實盤部位皆有引用"
+
+
 CHECKS = (
     ("schema_keys", check_schema_keys, False),
     ("refs_resolvable", check_refs_resolvable, True),
@@ -605,6 +655,7 @@ CHECKS = (
     ("plain_words", check_plain_words, False),
     ("source_position", check_source_position, False),
     ("data_gaps_len", check_data_gaps_len, False),
+    ("sector_semis", check_sector, False),
 )
 
 

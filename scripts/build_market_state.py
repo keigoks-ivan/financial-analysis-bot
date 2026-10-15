@@ -1538,13 +1538,84 @@ def _flow_quotes(flowmap_data, flows, gaps):
     return quotes
 
 
-def build_quotes(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data, flows, gaps):
+BOOK_MARKET_HISTORY = {"美股": "history_us", "台股": "history_tw"}
+THEME_TOP_N = 8
+
+
+def _book_quotes(long_track_data, gaps):
+    """2026-10-15：實盤指數部四條腿的現持曝險與離週線閘門的距離，給判讀的
+    「那斯達克與半導體」段落引用（持有人要求把市況判讀接到實際部位）。
+    現持曝險用 executed_pct（執行層，A2 門檻後才變），不用每日浮動的目標權重，
+    免得證據版本天天變、天天觸發重判。"""
+    quotes = {}
+    tickers = (long_track_data or {}).get("tickers") or {}
+    if not tickers:
+        gaps.append("long-track state.json 缺檔或無 tickers，book:* quotes 記為空")
+        return quotes
+    totals = {}
+    for sym, leg in tickers.items():
+        market = leg.get("market")
+        hist = (long_track_data.get(BOOK_MARKET_HISTORY.get(market, "")) or [])
+        as_of = hist[-1].get("date") if hist else None
+        exe = leg.get("executed_pct")
+        quotes[f"book:{sym}_exec"] = {
+            "label": f"實盤 {sym} 腿現持曝險（占{market}指數部）",
+            "val": (f"{exe:.1f}%" if exe is not None else None),
+            "num": exe, "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+        }
+        close, w52 = leg.get("wk_close"), leg.get("w52")
+        dist = round((close / w52 - 1) * 100, 1) if close and w52 else None
+        quotes[f"book:{sym}_w52_dist"] = {
+            "label": f"{sym} 收盤距週線閘門（52 週均線）",
+            "val": (f"{dist:+.1f}%" if dist is not None else None),
+            "num": dist, "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+        }
+        if exe is not None and market in BOOK_MARKET_HISTORY:
+            row = totals.setdefault(market, {"num": 0.0, "as_of": as_of})
+            row["num"] += exe
+    for market, key in (("美股", "us"), ("台股", "tw")):
+        row = totals.get(market)
+        if row is None:
+            continue
+        quotes[f"book:{key}_exec_total"] = {
+            "label": f"實盤{market}指數部合計現持曝險",
+            "val": f"{row['num']:.1f}%", "num": round(row["num"], 1),
+            "pctile": None, "chg30_pct": None, "z": None, "as_of": row["as_of"],
+        }
+    return quotes
+
+
+def _theme_quotes(crowding_data, gaps):
+    """2026-10-15：主題擁擠榜前 N 名（crowding 頁 5 維合成分數，0–100，主題間相對排名；
+    描述器非擇時）。ref 以主題名稱為鍵，數值為合成分數。"""
+    quotes = {}
+    themes = (crowding_data or {}).get("themes") or []
+    if not themes:
+        gaps.append("crowding latest.json 無 themes 清單，theme:* quotes 記為空")
+        return quotes
+    as_of = (crowding_data.get("generated_at") or "")[:10] or None
+    ranked = sorted((t for t in themes if t.get("rank") is not None and t.get("name")),
+                    key=lambda t: t["rank"])
+    for t in ranked[:THEME_TOP_N]:
+        score = t.get("score")
+        quotes[f"theme:{t['name']}"] = {
+            "label": f"主題擁擠度第 {t['rank']} 名：{t['name']}",
+            "val": (f"{score:.1f}" if score is not None else None),
+            "num": score, "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+        }
+    return quotes
+
+
+def build_quotes(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data, flows, gaps,
+                 long_track_data=None):
     quotes = {}
     quotes.update(_items_to_quotes(monitor_data, "monitor", gaps, "monitor latest.json"))
     quotes.update(_items_to_quotes(internals_data, "internals", gaps, "internals.json"))
     quotes.update(_stress_quotes(score_history_data, gaps))
     quotes.update(_cot_quotes(crowding_data, gaps))
     quotes.update(_flow_quotes(flowmap_data, flows, gaps))
+    quotes.update(_theme_quotes(crowding_data, gaps))
+    quotes.update(_book_quotes(long_track_data, gaps))
     # 2026-09-13：UI 直接讀這四個 provenance 欄位；舊 producer 未帶時由
     # namespace 與既有欄位補齊，保留原欄位以維持向後相容。
     for ref, quote in quotes.items():
@@ -1553,12 +1624,14 @@ def build_quotes(monitor_data, internals_data, score_history_data, crowding_data
             quote["source_id"] = ref
         if not quote.get("source_label"):
             quote["source_label"] = {"stress": "市場壓力分數", "cot": "CFTC COT",
-                                      "flow": "Flowmap"}.get(namespace, namespace)
+                                      "flow": "Flowmap", "theme": "主題擁擠度",
+                                      "book": "實單執行層"}.get(namespace, namespace)
         if not quote.get("unit"):
             quote["unit"] = "none"
         if not quote.get("frequency"):
             quote["frequency"] = {"stress": "daily", "cot": "weekly",
-                                   "flow": "daily"}.get(namespace, "unknown")
+                                   "flow": "daily", "theme": "weekly",
+                                   "book": "daily"}.get(namespace, "unknown")
         if not quote.get("status"):
             quote["status"] = "ok" if quote.get("as_of") else "unavailable"
         quote.setdefault("pctile_window", None)
@@ -1874,9 +1947,9 @@ def build_events(internals_data, macro_calendar_data, intel_data, today, gaps):
 
 
 def build_evidence(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data,
-                    macro_calendar_data, intel_data, flows, read_data, today, gaps):
+                    macro_calendar_data, intel_data, flows, read_data, today, gaps, long_track_data=None):
     quotes = build_quotes(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data,
-                           flows, gaps)
+                           flows, gaps, long_track_data)
     return {
         "quotes": quotes,
         "erp": build_erp(quotes, read_data, gaps),
@@ -1953,7 +2026,7 @@ def print_evidence_pack(evidence, source_research=None):
     lines = ["=== 市況判讀證據包（build_market_state.py --evidence-pack）==="]
     quotes = evidence.get("quotes") or {}
     lines.append("")
-    lines.append(f"── quotes（monitor／internals／stress／cot／flow，共 {len(quotes)} 筆）──")
+    lines.append(f"── quotes（monitor／internals／stress／cot／flow／theme／book，共 {len(quotes)} 筆）──")
     for ref in sorted(quotes.keys()):
         q = quotes.get(ref) or {}
         lines.append(
@@ -2060,7 +2133,8 @@ def main():
     # 原本在 fuses 前才算，這裡只是往前挪，內容邏輯不變，避免 --evidence-pack 也要跑一次 nowcast）
     flows = build_flows(flowmap_data, flowmap_prices_data, gaps)
     evidence = build_evidence(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data,
-                               macro_calendar_data, intel_data, flows, read_data, today, gaps)
+                               macro_calendar_data, intel_data, flows, read_data, today, gaps,
+                               long_track_data)
     source_research = attach_source_evidence(evidence, source_data, gaps)
     repair_cpi_yoy_from_official(evidence, source_data, gaps)
     read_headline, read_as_of = read_headline_fields(read_data, today)

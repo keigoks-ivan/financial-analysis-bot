@@ -397,6 +397,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       <a href="#sec-forces">主要力量</a>
       <a href="#sec-transmission">傳導</a>
       <a href="#sec-positioning">部位</a>
+      <a href="#sec-sector">半導體</a>
       <a href="#sec-analogs">類比</a>
       <a href="#sec-falsifiers">證偽</a>
       <a href="#sec-judgment-score">記分</a>
@@ -504,6 +505,13 @@ footer.imq-foot a{color:var(--text-secondary)}
     <p class="section-sub">目前機械讀數；下方文字是判讀日解釋。</p>
     <div class="grid g3eq" id="positioningGrid"></div>
     <p class="note" id="positioningJudgment"></p>
+  </section>
+
+  <section id="sec-sector">
+    <h2>那斯達克與半導體</h2>
+    <p class="section-sub">左邊是實盤指數部的現持部位，右邊是相關讀數，都是目前機械讀數；下方文字是判讀日解釋。</p>
+    <div class="grid g2" id="sectorGrid"></div>
+    <div class="note" id="sectorJudgment" style="margin-top:.6rem"></div>
   </section>
 
   <section id="sec-analogs">
@@ -1680,6 +1688,56 @@ footer.imq-foot a{color:var(--text-secondary)}
     $("#positioningJudgment").innerHTML = compactText((read && read.positioning_zh) || "—", 3);
   }
 
+  // ── 那斯達克與半導體（2026-10-15：判讀接到實盤部位＋費半／那斯達克）──
+  var SECTOR_BOOK_LEGS = [["美股", "QQQ"], ["美股", "SMH"], ["台股", "0050"], ["台股", "2330"]];
+  function sectorBookCard(state, currentAsOf) {
+    var rows = SECTOR_BOOK_LEGS.map(function (leg) {
+      var exe = resolveQuote(state, "book:" + leg[1] + "_exec");
+      var dist = resolveQuote(state, "book:" + leg[1] + "_w52_dist");
+      var hit = exe && exe.num != null ? fmtNum(-exe.num / 10, 1) + "%" : "—";
+      return "<tr><td>" + esc(leg[0] + " " + leg[1]) + quoteDateMeta(exe, currentAsOf) + "</td>" +
+        "<td class=\"num\">" + esc(exe && exe.val != null ? exe.val : "—") + "</td>" +
+        "<td class=\"num\">" + esc(hit) + "</td>" +
+        "<td class=\"num\">" + esc(dist && dist.val != null ? dist.val : "—") + "</td></tr>";
+    }).join("");
+    var totals = [["美股", "us"], ["台股", "tw"]].map(function (m) {
+      var q = resolveQuote(state, "book:" + m[1] + "_exec_total");
+      return m[0] + " " + (q && q.val != null ? q.val : "—");
+    }).join("、");
+    return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">實盤指數部的現持部位</div>' +
+      '<div class="tw"><table class="mt" style="margin-top:.5rem"><tr><th>標的</th><th>現持曝險</th><th>該標的跌 10%，指數部少</th><th>距週線閘門</th></tr>' +
+      rows + '</table></div>' +
+      '<p class="note" style="margin-top:.5rem">合計現持：' + esc(totals) + '。現持曝險是占該市場指數部的比例。週線閘門（52 週均線）：週收盤跌破時，該標的部位歸零。0050 的最大成分股是台積電，表中沒有另外拆算。</p></div>';
+  }
+  function sectorReadingsCard(state, currentAsOf) {
+    var specs = [["費城半導體指數", "monitor:sox"], ["費半對那斯達克 100 比值", "monitor:sox_ndx"],
+      ["那斯達克 100", "monitor:ndx"], ["QQQ 等權對市值權重比（低＝漲幅集中在大型股）", "internals:qqew_qqq"],
+      ["那斯達克期貨投機淨部位（COT，期貨持倉報告）", "cot:Nasdaq-100 E-mini"]];
+    var rows = specs.map(function (spec) {
+      var q = resolveQuote(state, spec[1]);
+      var val = q && q.val != null ? String(q.val) : "—";
+      if (q && q.pctile != null) val += "（分位 " + fmtNum(q.pctile, 0) + "）";
+      return '<b>' + esc(spec[0]) + '</b><span>' + esc(val) + quoteDateMeta(q, currentAsOf) + '</span>';
+    }).join("");
+    var quotes = (state && state.evidence && state.evidence.quotes) || {};
+    var themes = Object.keys(quotes).filter(function (k) { return k.indexOf("theme:") === 0; }).map(function (k) {
+      var q = quotes[k], m = /第 (\d+) 名/.exec(q.label || "");
+      return { rank: m ? Number(m[1]) : 99, name: k.slice(6), val: q.val, as_of: q.as_of };
+    }).sort(function (a, b) { return a.rank - b.rank; });
+    var themeHtml = themes.length ? '<p class="note" style="margin-top:.5rem">主題擁擠度前 ' + themes.length +
+      ' 名（0–100 分，主題之間的相對排名，不是擇時訊號；資料 ' + esc(themes[0].as_of || "日期未知") + '）：' +
+      themes.map(function (t) { return esc(t.name + " " + (t.val == null ? "—" : t.val)); }).join("、") + '</p>' : "";
+    return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">相關讀數</div>' +
+      '<div class="kv metric-kv" style="margin:.6rem 0">' + rows + '</div>' + themeHtml + '</div>';
+  }
+  function renderSector(read, state) {
+    var currentAsOf = state && state.as_of;
+    $("#sectorGrid").innerHTML = sectorBookCard(state, currentAsOf) + sectorReadingsCard(state, currentAsOf);
+    var sector = read && read.sector;
+    $("#sectorJudgment").innerHTML = sector && sector.body_zh ? compactText(sector.body_zh, 3) :
+      "本期判讀尚未包含這一段（2026-10-16 起每期必寫）。";
+  }
+
   // ── 歷史類比（block 6）──
   function renderAnalogs(read, state) {
     var host = $("#analogsGrid");
@@ -2376,6 +2434,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     renderForces(usableRead, data);
     renderTransmission(usableRead, data);
     renderPositioning(usableRead, data);
+    renderSector(usableRead, data);
     renderAnalogs(usableRead, data);
     renderScenarios(usableRead, data);
     renderFalsifiers(usableRead, data);

@@ -210,6 +210,11 @@ def build_success(data: dict, state_data):
     lines.append("【三股力量】")
     lines.extend(build_forces_lines(data.get("forces")))
     lines.append("")
+    sector = data.get("sector") if isinstance(data.get("sector"), dict) else None
+    if sector and sector.get("body_zh"):
+        lines.append("【那斯達克與半導體】")
+        lines.append(sector["body_zh"])
+        lines.append("")
     lines.append("【證偽表（前 5 條）】")
     lines.extend(build_falsifiers_lines(data.get("falsifiers"), state_data))
     lines.append("")
@@ -556,6 +561,16 @@ def render_email_shell_html(as_of: str, status_html: str, body_html: str) -> str
 </table>'''
 
 
+def render_sector_html(data) -> str:
+    """2026-10-15：那斯達克與半導體段落（read.sector.body_zh）；舊判讀沒有就不出這一節。"""
+    sector = data.get("sector") if isinstance(data.get("sector"), dict) else None
+    body = (sector or {}).get("body_zh")
+    if not body:
+        return ""
+    return (section_header_html("NASDAQ & SEMIS", "那斯達克與半導體") +
+            f'<div style="font-size:13px;color:{COLOR_GRAY};line-height:1.55;">{esc(body)}</div>')
+
+
 def build_html_success(data: dict, state_data) -> str:
     as_of = data.get("as_of", "?")
     if _commentary(data):
@@ -565,6 +580,7 @@ def build_html_success(data: dict, state_data) -> str:
             render_horizons_commentary_html(data.get("horizons")),
             section_header_html("THREE FORCES", "三股力量"),
             render_forces_html(data.get("forces")),
+            render_sector_html(data),
             section_header_html("WHAT WOULD CHANGE THIS", "什麼會改變判讀"),
             render_falsifiers_table_html(data.get("falsifiers"), state_data),
             section_header_html("COLD REVIEW", "冷讀結果"),

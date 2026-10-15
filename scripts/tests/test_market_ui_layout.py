@@ -118,7 +118,8 @@ def test_metric_cards_keep_values_readable_without_overflow():
     assert ".metric-kv>span{min-width:0;text-align:right;overflow-wrap:anywhere}" in html
     assert ".transmission-kv>span{white-space:nowrap}" in html
     assert ".transmission-kv .quote-meta{white-space:normal}" in html
-    assert html.count('class="kv metric-kv') == 3
+    # 2026-10-15：新增「那斯達克與半導體」相關讀數卡，3→4。
+    assert html.count('class="kv metric-kv') == 4
 
 
 # 2026-09-14：320px 視窗下類比與情境卡不得以固定最小寬度撐出頁面。

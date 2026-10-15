@@ -18,6 +18,7 @@
 - data_gaps_zh：只寫會影響本期判斷的缺口，≤ 150 字。request.json 的 warnings 逐條清單頁面已自動列出，不重抄。
 - observations[]：每個被引用的 ref 帶 field=num／pctile／chg30_pct、value 與 as_of，必須逐字等於 evidence.json 的 quotes 同欄位。
 - scenarios[]：基準／偏強／偏弱各含 name_zh、horizon、conditions_zh、falsifiers_zh、asset_implications_zh、refs。
+- sector（2026-10-15 起必寫）：{"body_zh", "refs":[{"ref","why"}]}，講費半與那斯達克的走勢與集中度、那斯達克期貨部位與主題擁擠、實盤指數部押在半導體的比例與離週線閘門多遠；refs ≥3，費半（monitor:sox／monitor:sox_ndx）、那斯達克（monitor:ndx／internals:qqew_qqq／internals:qqq_dvol_z／cot:Nasdaq-100 E-mini）、實盤部位（book:*）各至少一條。細則見 SKILL「sector」條。
 
 as_of 必須是今天（台北）。同源指標不當多份獨立證據。正文裡每一個數字（含週變動、日變動、差距）都必須在 evidence.json 或 request.json 的 history_context 逐字可查；查不到的數字一律不寫，不得用心算、外推或站內其他檔案補上。
 

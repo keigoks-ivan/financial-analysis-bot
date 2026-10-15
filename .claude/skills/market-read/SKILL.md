@@ -3,7 +3,7 @@ name: market-read
 description: market-read — 市況主控台判讀層（週頻＋事件觸發，2026-10-13 起降為文字評論）。orchestrator 讀證據包後寫 docs/market/data/read.json（三股力量／傳導／部位／類比／各期限文字判讀／證偽表；不寫機率、不落帳），機械 critic 過後頁面 /market/ 第一屏渲染。觸發：「跑市況判讀」「market read」「本週市況判讀」「更新市況主控台判讀」。
 ---
 
-# market-read v1.5（2026-10-13，降為評論）
+# market-read v1.6（2026-10-15，加那斯達克與半導體段落）
 
 **2026-10-13 降級（持有人拍板，rule_ledger #137 判紅）**：market-read 的序貫檢定（SPRT）已判紅（21 筆、累積證據分 −4.66、技巧分 −0.66），判讀層降為**文字評論**。從此：①`read.json` 不再寫任何機率與命題（`mode: "commentary"`，`forecasts`、`claim_ids`、`deviations_from_tables` 皆為空，`horizons[]` 只留 `key`／`label`／`logic_zh`）；②不再執行 `ledger_from_editorial.py --source market-read`（腳本已直接略過）；③頁面不顯示判讀機率；④歷史命題與記分保留在帳簿，照常結算。以下步驟中凡涉及機率、命題、落帳、與帳簿表格分歧的項目，一律以本段為準（跳過）。
 
@@ -21,7 +21,7 @@ description: market-read — 市況主控台判讀層（週頻＋事件觸發，
 - **同一件事全頁只講一次**：主張、路徑、相較前期不要各換一種說法重講同一個結論。
 - 寫完先跑 `python3 scripts/check_market_read.py --file <稿>`，第 13–17 項沒過就照訊息改寫再跑，改到過為止（最多 3 輪）；**這一步在冷讀之前做**，因為冷讀後改正文要重審。
 
-**憲法**：描述器紀律（只講條件與事實；不寫機率；禁「買／賣／加碼／減碼／避開／進場／出場／建議」）；不是收斂面；每個判斷句錨定一個 ref（`monitor:<key>`／`internals:<key>`／`stress:<欄>`／`cot:<市場>`／`flow:<欄>`）並帶 as_of；白話全形（`_plainlang_styleguide.md`）；不改任何機械層檔案。
+**憲法**：描述器紀律（只講條件與事實；不寫機率；禁「買／賣／加碼／減碼／避開／進場／出場／建議」）；不是收斂面；每個判斷句錨定一個 ref（`monitor:<key>`／`internals:<key>`／`stress:<欄>`／`cot:<市場>`／`flow:<欄>`／`theme:<主題>`／`book:<欄>`）並帶 as_of；白話全形（`_plainlang_styleguide.md`）；不改任何機械層檔案。
 
 ## 步驟
 
@@ -37,6 +37,7 @@ description: market-read — 市況主控台判讀層（週頻＋事件觸發，
    - `forces` 2–4 張，每張 refs ≥2、每個 ref 一句「為什麼看它」。
    - `transmission` 四格（erp／credit／split／liquidity）各一句判讀。
    - `positioning_zh`：機械賣家 vs 裁量避險、波動錯價。
+   - `sector`（2026-10-15 起每期必寫，`check_market_read.py` 第 18 項；起因：10/05–10/14 費半領跌、判讀只看 SPY 而漏看）：`{"body_zh": "…", "refs": [{"ref": "…", "why": "…"}]}`。`body_zh` 講三件事：①費半與那斯達克的走勢與集中度（`monitor:sox`／`monitor:sox_ndx`／`monitor:ndx`／`internals:qqew_qqq`）；②那斯達克期貨投機部位與主題擁擠（`cot:Nasdaq-100 E-mini`、`theme:*`）；③實盤指數部押在半導體的比例與離週線閘門多遠（`book:*`，例如 SMH 現持 50%、SMH 每跌 10% 美股指數部少 5%）。只描述集中程度與距離，不寫任何加減部位的話。refs ≥3，費半、那斯達克、實盤部位各至少一條；第一句是標題句（≤ 40 字、最多 1 個數字）；被引用的 ref 一樣要進 `observations`。
    - `analogs` 2–4 個：吻合特徵各附 today_ref，**必附不同之處**與當年結果。
    - `falsifiers` 6–10 條，**至少 2 條轉多**；可用 `field: "chg30_pct"` 對 30 天變化設門檻。
    - `deviations_from_tables`：固定 `[]`（不再有機率可比）。頂層加 `"mode": "commentary"`。
@@ -119,6 +120,7 @@ Agent({
 ```
 
 ## 版本
+- v1.6 2026-10-15：新增必寫段落 `sector`（那斯達克與半導體，`check_market_read.py` 第 18 項；as_of 2026-10-16 起缺段 FAIL）；證據包新增 `book:*`（實盤四條腿現持曝險、距週線閘門）與 `theme:*`（主題擁擠度前 8 名）。仍是文字評論，不寫機率。
 - v1.5 2026-10-13：市況判讀 SPRT 判紅（rule_ledger #137），降為文字評論：`mode: commentary`，不寫機率、不落帳；`check_market_read.py` 第 4、5、6、9 項改為「必須沒有」；`ledger_from_editorial.py --source market-read` 直接略過；頁面拿掉機率呈現。
 - v1.4 2026-09-24：新增「可讀性硬規則」（標題句 ≤ 40 字＋1 個數字、每句 ≤ 60 字＋3 個數字、內部用語與比喻詞禁用、出處放句尾、data_gaps_zh ≤ 150 字），`check_market_read.py` 第 13–17 項 FAIL 擋下；術語白話註解（第 11 項）由 WARN 升為 FAIL；vs_prior 首句上限 60→40 字。
 - v1.3 2026-09-17：`vs_prior_zh` 第一句必須是白話結論（頁面「本期重點」直接引用）；改判條件在首屏改為各取一條轉多與轉空門檻附現值。
