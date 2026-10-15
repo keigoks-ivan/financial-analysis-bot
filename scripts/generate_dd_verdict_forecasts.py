@@ -294,7 +294,17 @@ def build_draft(d, template, horizon_days, ts_str, base_rates, base_spy_date, ba
     return draft, None
 
 
+# 2026-10-13 校準輪處決（rule_ledger 該列 kill condition：SPRT accept_h0 → 砍）：
+# n_eff=78、LLR −2.91 < B −2.25、BSS −0.017。停止新增命題；既有命題（open 與已結算）原封保留、
+# 繼續由 settle_forecasts.py 結算，歷史紀錄不刪。要恢復須校準輪重設並在 rule_ledger 重新登記。
+KILLED_AT = "2026-10-13"
+
+
 def main():
+    if KILLED_AT:
+        print(f"[generate_dd_verdict_forecasts] producer 已於 {KILLED_AT} 處決（SPRT accept_h0），"
+              "不再新增命題；歷史紀錄保留。")
+        return
     if USE_EMPIRICAL_TABLE:
         raise SystemExit("USE_EMPIRICAL_TABLE=True 尚未實作——只有校準輪核准後才能翻此旗標並補"
                           "上讀 data/dd_verdict_base_rates.json empirical_table 的邏輯（見設計稿 "

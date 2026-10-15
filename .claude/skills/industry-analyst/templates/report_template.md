@@ -120,9 +120,9 @@
 
   <div class="section-no">三條要盯的否證指標</div>
   <ul class="kill-brief">
-    <li><strong>{{KILLBRIEF_1_METRIC}}</strong>　現值 {{KILLBRIEF_1_NOW}}（{{KILLBRIEF_1_ASOF}}）→ 破 {{KILLBRIEF_1_BEAR}} 論點作廢</li>
-    <li><strong>{{KILLBRIEF_2_METRIC}}</strong>　現值 {{KILLBRIEF_2_NOW}}（{{KILLBRIEF_2_ASOF}}）→ 破 {{KILLBRIEF_2_BEAR}} 論點作廢</li>
-    <li><strong>{{KILLBRIEF_3_METRIC}}</strong>　現值 {{KILLBRIEF_3_NOW}}（{{KILLBRIEF_3_ASOF}}）→ 破 {{KILLBRIEF_3_BEAR}} 論點作廢</li>
+    <li><strong>{{KILLBRIEF_1_METRIC}}</strong>　現值 {{KILLBRIEF_1_NOW}}（{{KILLBRIEF_1_ASOF}}）→ 破 {{KILLBRIEF_1_BEAR}}：{{KILLBRIEF_1_ACTION}}</li>
+    <li><strong>{{KILLBRIEF_2_METRIC}}</strong>　現值 {{KILLBRIEF_2_NOW}}（{{KILLBRIEF_2_ASOF}}）→ 破 {{KILLBRIEF_2_BEAR}}：{{KILLBRIEF_2_ACTION}}</li>
+    <li><strong>{{KILLBRIEF_3_METRIC}}</strong>　現值 {{KILLBRIEF_3_NOW}}（{{KILLBRIEF_3_ASOF}}）→ 破 {{KILLBRIEF_3_BEAR}}：{{KILLBRIEF_3_ACTION}}</li>
   </ul>
 
   <!-- judgment-card：全檔恰一次，只在這裡出現 -->
@@ -389,7 +389,7 @@
     <div class="exhibit-head">否證指標對帳表<small>Kill Metrics</small></div>
     <div class="exhibit-body">
       <table class="kill-table">
-        <thead><tr><th>指標</th><th>現值（as-of）</th><th>熊線（thesis 作廢點）</th><th>來源／頻率</th><th>領先幾季</th><th>可否操縱</th><th>破線後姿態</th></tr></thead>
+        <thead><tr><th>指標</th><th>現值（as-of）</th><th>破線點</th><th>來源／頻率</th><th>領先幾季</th><th>可否操縱</th><th>破線後姿態</th></tr></thead>
         <tbody>
           <tr><td>{{KILL_1_METRIC}}</td><td class="cv">{{KILL_1_NOW}}（{{KILL_1_ASOF}}）</td><td><strong>{{KILL_1_BEAR}}</strong></td><td>{{KILL_1_SRC_FREQ}}</td><td class="num">{{KILL_1_LEAD_Q}}</td><td>{{KILL_1_MANIPULABLE}}</td><td>{{KILL_1_POSTURE}}</td></tr>
           <tr><td>{{KILL_2_METRIC}}</td><td class="cv">{{KILL_2_NOW}}（{{KILL_2_ASOF}}）</td><td><strong>{{KILL_2_BEAR}}</strong></td><td>{{KILL_2_SRC_FREQ}}</td><td class="num">{{KILL_2_LEAD_Q}}</td><td>{{KILL_2_MANIPULABLE}}</td><td>{{KILL_2_POSTURE}}</td></tr>

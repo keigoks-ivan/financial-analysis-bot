@@ -34,6 +34,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import validate_judgment  # 2026-09-11：最終驗收直接讀實際檔案，不正規化或重寫。
+import dd_evidence  # noqa: E402  （2026-10-12：佔位符清理 helper）
 import dd_bundle  # noqa: E402  （WP-C：delta 判斷 prompt 沿用 `_transcript_section` 抓最新一季逐字稿，只 import 不改其內部）
 import dd_codex  # 2026-09-11：明選 Codex 才走直接回傳，不默默改供應商。
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
@@ -298,11 +299,104 @@ def _is_segmented_axis(axis):
     return bool(axis.get("per_segment"))
 
 
+_COMPANY_SUFFIX_RE = re.compile(
+    r"[,\s]+(inc\.?|incorporated|corp\.?|corporation|co\.?,?\s*ltd\.?|ltd\.?|limited|berhad|bhd\.?|plc|"
+    r"company|n\.v\.|s\.a\.|ag|se)\s*$", re.I)
+
+
+def _clean_company_name(name):
+    name = (name or "").strip()
+    for _ in range(3):
+        new = _COMPANY_SUFFIX_RE.sub("", name).strip(" ,")
+        if new == name or not new:
+            break
+        name = new
+    return name
+
+
+def _resolve_placeholders(ticker, prior, offline=False):
+    """解析 coverage-axes 查詢模板的佔位符值（2026-10-12：之前只換 TICKER，
+    {COMPANY}/{INDUSTRY} 等字面送進 stage0 搜尋）。回傳 (values, sources)；
+    取不到的值為空字串，由 dd_evidence.strip_unfilled 清掉殘留。"""
+    values = {"COMPANY": "", "INDUSTRY": "", "CUSTOMERS": "", "SEGMENT": ""}
+    src = {}
+    meta = ((prior or {}).get("prior_dd") or {}).get("prior_meta") or {}
+    name = (meta.get("name") or "").strip()
+    if name and name.upper() != ticker.upper():
+        values["COMPANY"], src["COMPANY"] = name, "prior_meta"
+    scr = {}
+    try:
+        for st in _load_json(REPO_ROOT / "docs" / "dd-screener" / "latest.json").get("stocks", []):
+            if str(st.get("ticker", "")).upper() == ticker.upper():
+                scr = st
+                break
+    except Exception:
+        pass
+    sname = (scr.get("name") or "").strip()
+    if not values["COMPANY"] and sname and sname.upper() != ticker.upper():
+        values["COMPANY"], src["COMPANY"] = sname, "screener"
+    if scr.get("sector"):
+        values["INDUSTRY"], src["INDUSTRY"] = str(scr["sector"]).strip(), "screener"
+    if not offline and (not values["COMPANY"] or not values["INDUSTRY"]):
+        try:
+            import yfinance as yf
+            info = yf.Ticker(ticker).info or {}
+            if not values["COMPANY"]:
+                nm = (info.get("longName") or info.get("shortName") or "").strip()
+                if nm:
+                    values["COMPANY"], src["COMPANY"] = nm, "yfinance"
+            if not values["INDUSTRY"] and info.get("industry"):
+                values["INDUSTRY"], src["INDUSTRY"] = str(info["industry"]).strip(), "yfinance"
+        except Exception as e:
+            print("[warn] placeholders：yfinance 取名稱／產業失敗（{0}），跳過".format(
+                str(e)[:120]), file=sys.stderr)
+    values["COMPANY"] = _clean_company_name(values["COMPANY"])
+    # 2026-10-12：台股另填中文簡稱與純數字代號，供 coverage-axes 的 queries_tw 用。
+    tw = _tw_security_meta(ticker)
+    if tw:
+        values["COMPANY_ZH"], src["COMPANY_ZH"] = tw["name"], "security_meta"
+        values["CODE"] = tw["code"]
+    return values, src
+
+
+def _tw_security_meta(ticker):
+    """台股代號（2360.TW／3324.TWO／純數字 3017）→ {"name": 中文簡稱, "code": "3017"}；
+    不是台股或 data/active_etf/security_meta.json 查不到就回 None。"""
+    m = re.fullmatch(r"(\d{4,6}[A-Z]?)(?:\.(TW|TWO))?", (ticker or "").strip().upper())
+    if not m:
+        return None
+    code = m.group(1)
+    try:
+        meta = _load_json(REPO_ROOT / "data" / "active_etf" / "security_meta.json")
+    except Exception:
+        return None
+    keys = [ticker.upper()] if m.group(2) else [code + ".TW", code + ".TWO"]
+    for k in keys:
+        name = ((meta.get(k) or {}).get("name") or "").strip()
+        if name:
+            return {"name": name, "code": code}
+    return None
+
+
 def _axis_block(axes):
     lines = []
     for a in axes:
+        a = dict(a)
+        for key in ("name", "question"):
+            a[key], left = dd_evidence.strip_unfilled(a.get(key, "") or "")
+            if left:
+                print("[warn] axis {0}.{1} 殘留佔位符 {2}，已清除".format(a.get("id"), key, left), file=sys.stderr)
+        qs = []
+        for q in a.get("queries", []) or []:
+            q2, left = dd_evidence.strip_unfilled(q)
+            if left:
+                print("[warn] axis {0} query 殘留佔位符 {1}，已清除".format(a.get("id"), left), file=sys.stderr)
+            qs.append(q2)
+        a["queries"] = qs
         lines.append("[{0}] {1}".format(a.get("id"), a.get("name", "")))
         lines.append("Q: {0}".format(a.get("question", "")))
+        if a.get("hint"):
+            lines.append("來源提示: {0}".format(a["hint"]))
         for q in a.get("queries", []) or []:
             lines.append("  - {0}".format(q))
         if a.get("na_allowed"):
@@ -1146,10 +1240,18 @@ def cmd_plan(args):
         evidence_dest.write_text(evidence_flat.read_text(encoding="utf-8"), encoding="utf-8")
 
     # 4. dd_evidence.py axes --json
+    ph_values, ph_src = _resolve_placeholders(ticker, prior, offline=bool(args.offline))
+    _atomic_write_json(parts_dir / "placeholders.json", {"values": ph_values, "sources": ph_src})
+    manifest["placeholders"] = ph_values
+    print("placeholders: " + " ".join("{0}={1!r}".format(k, v) for k, v in ph_values.items()))
     axes_cmd = [
         "python3", SCRIPTS_DIR / "dd_evidence.py", "axes",
         "--archetype", archetype, "--json", "--ticker", ticker,
+        "--company", ph_values["COMPANY"], "--industry", ph_values["INDUSTRY"],
+        "--customers", ph_values["CUSTOMERS"],
     ]
+    if ph_values.get("COMPANY_ZH"):
+        axes_cmd += ["--market", "tw", "--company-zh", ph_values["COMPANY_ZH"], "--code", ph_values["CODE"]]
     if args.segments:
         axes_cmd += ["--segments", args.segments]
     r = _run_subprocess(axes_cmd, manifest, "dd_evidence_axes")

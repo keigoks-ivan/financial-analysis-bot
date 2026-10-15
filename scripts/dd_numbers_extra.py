@@ -19,6 +19,8 @@
   numbers.edgar_concentrations   — 最新 10-Q（無則 10-K）Concentrations／customer concentration
                                     原文段落摘錄（≤3KB）
   numbers.latest_quarter_kpis    — 佔位符（腳本不算，留給採集 agent 填 items[]）
+  numbers.capital_structure      — 淨負債／稀釋股數／EV／共識營收 FY1・FY2（百萬，財報申報幣別；
+                                    2026-10-12 CRWV 案：虧損公司情境樹改走 EV/S，終端價需要這幾個輸入）
 
 規則：每個欄位都帶 as_of／source／method；算不出來一律 null＋note 說明原因，**不得捏造**；
 網路或 yfinance 失敗只影響該欄位，其餘欄位照常輸出。
@@ -498,6 +500,117 @@ def compute_price_and_earnings_recency(ticker, date_dt):
 
 
 # ---------------------------------------------------------------------------
+# numbers.capital_structure（2026-10-12 CRWV 案：虧損公司情境樹改走 EV/S，
+# 終端價＝(終端營收×終端 EV/S − 終端淨負債) ÷ 終端股數，起點需要目前淨負債、股數與共識營收。
+# compute_valuation_history 內部本來就用同一組 yfinance 欄位算 EV/S，只是沒輸出。）
+# 單位：百萬，幣別＝財報申報幣別（info.financialCurrency）；與報價幣別不同（ADR）時標 fx_mismatch。
+# ---------------------------------------------------------------------------
+
+def compute_capital_structure(ticker, date_dt):
+    out = {
+        "as_of": date_dt.strftime("%Y-%m-%d"),
+        "currency": None,            # 財報申報幣別（以下金額的幣別）
+        "price_currency": None,
+        "fx_mismatch": False,
+        "net_debt_m": None, "total_debt_m": None, "cash_m": None,
+        "shares_diluted_m": None, "shares_basis": None,
+        "market_cap_m": None, "ev_m": None,
+        "revenue_consensus": {"fy1": None, "fy2": None, "fy3": None},
+        "source": "yfinance Ticker.info（totalDebt／totalCash／marketCap／impliedSharesOutstanding）、"
+                  "quarterly_income_stmt（Diluted Average Shares）、revenue_estimate（0y／+1y avg）",
+        "note": None,
+    }
+    notes = []
+    try:
+        np, pd, yf = _lazy_imports()
+        t = yf.Ticker(ticker)
+        info = {}
+        for attempt in range(3):  # yfinance 偶發限流（Too Many Requests）：退避重試，三次都失敗才記 note
+            try:
+                info = t.info or {}
+                break
+            except Exception as e:
+                if attempt == 2:
+                    notes.append(f"info 讀取失敗：{e}")
+                else:
+                    time.sleep(5 * (attempt + 1))
+        out["currency"] = info.get("financialCurrency") or info.get("currency")
+        out["price_currency"] = info.get("currency")
+        out["fx_mismatch"] = bool(out["currency"] and out["price_currency"]
+                                  and out["currency"] != out["price_currency"])
+        if out["fx_mismatch"]:
+            notes.append(
+                f"財報幣別 {out['currency']} ≠ 報價幣別 {out['price_currency']}（ADR 或跨幣別）："
+                f"淨負債／營收是 {out['currency']}，股價是 {out['price_currency']}，"
+                f"每股價換算必須先對齊幣別與 ADR 比例，本欄不換算")
+
+        def _m(v):
+            return None if v is None or pd.isna(v) else round(float(v) / 1e6, 2)
+
+        debt, cash = _m(info.get("totalDebt")), _m(info.get("totalCash"))
+        if debt is None or cash is None:  # 後備：最新一季資產負債表
+            try:
+                qb = t.quarterly_balance_sheet
+                if qb is not None and not qb.empty:
+                    col = qb.columns[0]
+                    if debt is None and "Total Debt" in qb.index:
+                        debt = _m(qb.loc["Total Debt", col])
+                    if cash is None and "Cash Cash Equivalents And Short Term Investments" in qb.index:
+                        cash = _m(qb.loc["Cash Cash Equivalents And Short Term Investments", col])
+            except Exception as e:
+                notes.append(f"資產負債表後備失敗：{e}")
+        out["total_debt_m"], out["cash_m"] = debt, cash
+        if debt is not None and cash is not None:
+            out["net_debt_m"] = round(debt - cash, 2)
+        else:
+            notes.append("缺 totalDebt 或 totalCash，淨負債算不出")
+
+        shares = _m(info.get("impliedSharesOutstanding")) or _m(info.get("sharesOutstanding"))
+        if shares:
+            out["shares_basis"] = ("yfinance impliedSharesOutstanding（各類股合計）"
+                                   if info.get("impliedSharesOutstanding") else "yfinance sharesOutstanding")
+        else:
+            try:
+                qi = t.quarterly_income_stmt
+                if qi is not None and not qi.empty and "Diluted Average Shares" in qi.index:
+                    shares = _m(qi.loc["Diluted Average Shares", qi.columns[0]])
+                    out["shares_basis"] = "最新一季 Diluted Average Shares（季均）"
+            except Exception as e:
+                notes.append(f"稀釋股數後備失敗：{e}")
+        out["shares_diluted_m"] = shares
+        if shares:
+            notes.append("股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，"
+                         "終端股數的稀釋由判斷者在 shares_y5 自行反映")
+        out["market_cap_m"] = _m(info.get("marketCap"))
+        # 跨幣別（ADR）時市值是報價幣別、淨負債是財報幣別，相加無意義 → EV 留 null
+        if (out["market_cap_m"] is not None and out["net_debt_m"] is not None
+                and not out["fx_mismatch"]):
+            out["ev_m"] = round(out["market_cap_m"] + out["net_debt_m"], 2)
+
+        try:
+            est = t.revenue_estimate
+            if est is not None and not est.empty:
+                for key, idx in (("fy1", "0y"), ("fy2", "+1y")):
+                    if idx in est.index:
+                        avg = est.loc[idx].get("avg")
+                        n = est.loc[idx].get("numberOfAnalysts")
+                        if avg is not None and not pd.isna(avg):
+                            out["revenue_consensus"][key] = {
+                                "avg_m": _m(avg), "analysts": int(n) if n is not None and not pd.isna(n) else None,
+                                "yf_period": idx,
+                            }
+            else:
+                notes.append("revenue_estimate 為空")
+        except Exception as e:
+            notes.append(f"revenue_estimate 讀取失敗：{e}")
+        notes.append("共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null")
+    except Exception as e:
+        notes.append(f"capital_structure 擷取失敗：{e}")
+    out["note"] = "；".join(notes) if notes else None
+    return out
+
+
+# ---------------------------------------------------------------------------
 # numbers.dividend_yield_ttm（2026-09-29 MRK：情境樹 yield_pct.dividend 若判斷者
 # 查無資料會留 null，dd_scenario.py 把 null 當 0 算——配息股的含息報酬因此被低估。
 # 比照 price_at_dd／decision_inputs.ma 的「程式擁有的欄」慣例：這裡機械算出
@@ -647,6 +760,34 @@ def compute_momentum_26w(ticker, idx_benchmark=None):
 # numbers.consensus_revision
 # ---------------------------------------------------------------------------
 
+def _yf_consensus(ticker, date_dt):
+    """Koyfin 快照沒有這檔（或缺 FY1／FY2）時的後備：yfinance earnings_estimate 的 0y／+1y 平均。
+    幣別是 yfinance 報價幣別（台股為新台幣）。抓不到回 None。"""
+    try:
+        np, pd, yf = _lazy_imports()
+        est = yf.Ticker(ticker).earnings_estimate
+        if est is None or est.empty or "0y" not in est.index or "+1y" not in est.index:
+            return None
+
+        def _f(period, col):
+            v = est.loc[period].get(col)
+            return None if v is None or pd.isna(v) else float(v)
+
+        fy1, fy2 = _f("0y", "avg"), _f("+1y", "avg")
+        if fy1 is None or fy2 is None:
+            return None
+        n1, n2 = _f("0y", "numberOfAnalysts"), _f("+1y", "numberOfAnalysts")
+        return {
+            "file": "yfinance earnings_estimate", "date": date_dt.strftime("%Y-%m-%d"),
+            "fy1": round(fy1, 2), "fy2": round(fy2, 2), "fy3": None,
+            "analysts_fy1": int(n1) if n1 is not None else None,
+            "analysts_fy2": int(n2) if n2 is not None else None,
+            "eps_basis": "yfinance（報價幣別）",
+        }
+    except Exception:
+        return None
+
+
 def compute_consensus_revision(ticker, date_dt):
     result = {
         "latest_snapshot": None, "previous_snapshot": None, "snapshot_90d_prior": None,
@@ -666,8 +807,17 @@ def compute_consensus_revision(ticker, date_dt):
 
         latest_snap = _load_snap(latest_path)
         latest_rec = _eps_record(ticker, latest_snap)
-        if latest_rec is None:
-            result["note"] = f"{ticker} 不在最新快照 {latest_path.name}"
+        if latest_rec is None or latest_rec.get("fy1") is None or latest_rec.get("fy2") is None:
+            miss = (f"{ticker} 不在最新快照 {latest_path.name}" if latest_rec is None
+                    else f"{ticker} 在 {latest_path.name} 無 FY1／FY2 共識")
+            yf_snap = _yf_consensus(ticker, date_dt)
+            if yf_snap is None:
+                result["note"] = miss
+                return result
+            result["latest_snapshot"] = yf_snap
+            result["eps_basis"] = yf_snap["eps_basis"]
+            result["stale"] = False
+            result["note"] = miss + "；改用 yfinance earnings_estimate（0y／+1y）當 FY1／FY2，單一時點無修正%"
             return result
         result["latest_snapshot"] = {
             "file": latest_path.name, "date": latest_snap.snapshot_date,
@@ -979,12 +1129,28 @@ def main(argv):
     ap.add_argument("--peers", help="逗號分隔 ticker 清單；未給則嘗試從 --evidence 的 numbers.peer_valuation 取")
     ap.add_argument("--evidence", help="既有 evidence.json 路徑（供 peers 回退取值＋latest_quarter_kpis 季別）")
     ap.add_argument("--out", default=str(ROOT / ".dd_build" / "evidence_parts" / "numbers_extra.json"))
+    ap.add_argument("--only", choices=["capital_structure"],
+                    help="只重算這一個欄位並併進既有 --out（其餘欄位原樣保留）；2026-10-12 補跑舊 run 用，"
+                         "之後接 `dd_evidence.py finalize --run-dir` 與 `run.py --resume --redo facts,judged`")
     args = ap.parse_args(argv)
 
     try:
         date_dt = datetime.strptime(args.date, "%Y%m%d")
     except ValueError:
         raise SystemExit(f"date 格式須為 YYYYMMDD，收到：{args.date!r}")
+
+    if args.only:
+        out_path = Path(args.out)
+        payload = {"numbers": {}}
+        if out_path.exists():
+            payload = json.loads(out_path.read_text(encoding="utf-8"))
+            payload.setdefault("numbers", {})
+        print(f"[dd_numbers_extra] {args.ticker} {args.date} --only {args.only}", file=sys.stderr)
+        payload["numbers"]["capital_structure"] = compute_capital_structure(args.ticker, date_dt)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"寫入 {out_path}", file=sys.stderr)
+        return 0
 
     evidence = None
     if args.evidence:
@@ -1006,6 +1172,9 @@ def main(argv):
 
     print("  -> dividend_yield_ttm ...", file=sys.stderr)
     numbers["dividend_yield_ttm"] = compute_dividend_yield_ttm(args.ticker, date_dt, price_at_dd)
+
+    print("  -> capital_structure ...", file=sys.stderr)
+    numbers["capital_structure"] = compute_capital_structure(args.ticker, date_dt)
 
     print("  -> valuation_history ...", file=sys.stderr)
     numbers["valuation_history"] = compute_valuation_history(args.ticker, date_dt)

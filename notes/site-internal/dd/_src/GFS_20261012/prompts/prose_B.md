@@ -1,0 +1,431 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 GFS（2026-10-12）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**後半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/GFS_20261012/prose_B.html`，依序含 s8、s9、s10、s11、s12、decision（s85 若觸發併入）。前半（s1–s7）由另一通同時在寫，你不要碰；s1 的結論與 decision 段的裁決都以 judgment 投影視圖為準，不需對照前半。
+
+每章 3–6 條，每條 100–200 字；s10（估值與三種未來）與 s12（最可能怎麼賠）至少 1,500 bytes，把情境輸入、終端倍數、反證三視角的裁定鋪開。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：GFS　日期：2026-10-12　archetype：None　前份裁決：2026-07-10　觀望｜衛星　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（2429B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（835B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（1138B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（980B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1290B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（717B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（1273B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2284B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（3527B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2670B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（282B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        2429           3200-4571      3 條（2–6 內）  
+s3                  8000         835           5016-7165      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3408          8114-11592      5 條（2–6 內）  
+s6                 11000         717          7198-10283      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500        1273           1559-2227      3 條（2–6 內）  
+s10                 5000        2284           1901-2716      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2670           2000-2330      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         282            853-1218      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=5221B；至少需散文≈39.78KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−390
+−300
+−60%
+−60
+−55
+−45
+−36%
+−34%
+−31%
+−30.8%
+−10%
+−9%
+−6%
+−2.1%
+−1.02
+−1
+−0.7%
+0
+0.1
+0.11
+0.12
+0.31
+0.47
+0.5
+0.55
+0.6
+0.75
+0.76
+0.80
+0.8
+0.9
+1%
+1
+1.0
+1.1%
+1.14
+1.2
+1.4
+1.5%
+1.5
+1.59
+1.6
+1.75
+1.9
+1.96
+2
+2%
+02
+2.05
+2.1%
+2.1
+2.16
+2.3
+2.4
+2.55
+2.63
+2.7
+2.7%
+2.85
+3.0%
+03
+3.0
+3%
+3
+3.2%
+3.2
+3.25
+3.5
+3.56
+3.75
+3.78
+3.88
+3.9
+4%
+4
+4.05
+4.08
+4.2
+4.4
+4.55
+4.7
+4.8%
+4.8
+05
+5
+5%
+5.5%
+5.53
+5.56
+5.57
+5.6
+5.7%
+5.7
+6
+6%
+06
+6.3%
+6.9%
+07
+7.0
+7
+7.6%
+7.6
+8%
+08
+8
+8.5
+8.85
+9
+9%
+09
+9.35
+9.7%
+10
+10%
+10.09
+11
+11%
+11.4
+11.5%
+11.6%
+12
+12%
+13.6
+14
+14%
+15
+15%
+16%
+16
+16.7%
+17.86
+18
+18.3
+18.34
+18.85
+19%
+19
+20
+20%
+20.1%
+21
+21.3%
+21.3
+22%
+22
+23%
+23.6%
+24
+24.5%
+24.6
+24.61
+24.7%
+25
+25%
+26
+27
+27%
+27.1%
+27.6%
+28
+28.4%
+28.5%
+29
+29.5%
+29.9%
+30%
+30
+30.5%
+30.6%
+30.8%
+30.8
+31%
+32%
+33
+34%
+34.8%
+35
+35%
+36
+36%
+37%
+37.7
+38%
+40
+40%
+41.5%
+42
+43
+43.6
+45
+48
+48.24
+49%
+49
+49.4%
+50%
+50
+51
+$55
+56%
+56.1%
+58
+58.5
+60
+60%
+62%
+62.2
+62.5
+63
+66%
+67.9
+69.71
+70
+71%
+72.5
+73%
+74
+75
+80
+80%
+80.24
+81
+89%
+90%
+90
+95%
+100%
+100
+110
+118
+125
+143
+150%
+200
+232
+500
+2021
+2022
+2024
+2025
+2026
+2027
+2028
+2030
+2303
+2330
+005930
+20261012
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"GFS","date":"2026-10-12","schema":"v15.0","contract":"v19","company_name":"GLOBALFOUNDRIES Inc."},"oneliner":"成熟與特殊製程代工，資料中心光學（矽光子＋SiGe）帶動毛利率一年拉升近 5 點；股價三個月跌三成、FY2027E 本益比 18 倍，但扣回股權報酬約 22 倍，現價押的是 2027 漲價與組合讓毛利率站穩 30% 以上。","thesis":{"H":[{"id":"H1","text":"資料中心光學（矽光子＋SiGe）成為第二成長曲線，帶動通訊基建與資料中心段 2026 年增 50–60%，2027 起維持 30% 以上","2y":"2026 全年通訊基建與資料中心年增 ≥50%，矽光子營收翻倍以上；2027 年增 ≥30%","5y":"矽光子 2028 年底年化營收 ≥10 億美元，2030 年約 20 億美元","10y":null,"threshold":"通訊基建與資料中心年增：2026 全年 ≥50%、2027 每季 ≥30%；矽光子 2028 年底年化 ≥10 億美元","source":"季報終端市場揭露；2026-08-05 法說（CFO 上修至 50–60%，CEO 稱矽光子進度可能超前）；2026-05-07 投資人日目標","drift_rule":"2027 起季度年增低於 28.5%（偏離門檻 5%）連 2 季 → 削弱；低於 27%（偏離 10%）連 3 季，或管理層下修 2028 矽光子目標 → 反轉"},{"id":"H2","text":"毛利率結構性抬升：2026 全年約 30%，2028 年底走向 40%（組合轉移＋2027 漲價＋成本改善）","2y":"2027 全年 Non-IFRS 毛利率 ≥32%","5y":"2028 年底季度 Non-IFRS 毛利率 ≥38%（管理層目標 40%）","10y":null,"threshold":"季度 Non-IFRS 毛利率 ≥30% 且年增為正；2027 全年 ≥32%","source":"季報新聞稿；2026-05-07 投資人日毛利率橋接（組合 5–6 點、成本 1–2 點、折舊約 −1 點）；2026-08-05 CFO 稱 2027 起漲價入帳","drift_rule":"TTM 毛利率低於年度門檻 5% 以上（約 1.6 點）連 2 季 → 削弱；低於 10% 以上（約 3.2 點）連 3 季 → 反轉"},{"id":"H3","text":"重押資本支出拿得回報：2026–27 淨資本支出升至營收 20% 上下，同時調整後 FCF 利潤率維持約 10%，營益率 2028 年底走向 25%","2y":"2026、2027 調整後 FCF 利潤率 ≥8%；2027 Non-IFRS 營益率 ≥19%","5y":"2028 年底 Non-IFRS 營益率 ≥22%（目標約 25%）；稀釋股數不高於 5.6 億","10y":null,"threshold":"調整後 FCF 利潤率年度 ≥8%；Non-IFRS 營益率 2027 全年 ≥19%","source":"季報現金流量與營益率；2026-08-05 CFO（全年 FCF 利潤率約 10%，資本支出偏 15–20% 高端）；2026-09-08 CEO 稱 2027 資本支出再增","drift_rule":"5 年期：TTM 營益率偏離軌道 ≥5% 連 4 季 → 削弱，≥10% 連 6 季 → 反轉；FCF 利潤率年度低於 5% → 直接削弱"}],"R":[{"id":"R1","text":"成熟製程二次下行：中國 12 吋成熟擴產約占七成、晶合 28nm 平台完成，加上 2026 下半年消費電子提前備貨與庫存壓力，2027–28 稼動率與報價回落；公司 20-F 自承技術價格除極度缺貨期外會隨時間下跌","h_ref":"H2","clock":"🔥","threshold":"公司稼動率連 2 季 <80% 且 Non-IFRS 毛利率年減 >3 點（沿用前份）；或 2027 漲價入帳後毛利率仍未年增","evidence_refs":["supply_demand_durability#2","supply_demand_durability#3","supply_demand_durability#7","substitute_technology#1","substitute_technology#3","cyclical_supply_discipline_capacity#0","cyclical_inventory_price_position#1","cyclical_prior_downcycle_behavior#0","cyclical_prior_downcycle_behavior#1","cyclical_prior_downcycle_behavior#2"]},{"id":"R2","text":"手機與車用拖累稼動率：智慧行動（約 36%）2026 年減十幾 %，IDC 預期 2027 手機出貨再減 1.1%；車用 Q2 年減 10%，全年低雙位數成長押在 Q4","h_ref":"H2","clock":"⚡","threshold":"車用 2026 全年年增 <5%，或智慧行動 2027 上半年仍年減 >10%","evidence_refs":["supply_demand_durability#5","end_markets#2","end_markets#7"]},{"id":"R3","text":"矽光子份額與定價受攻擊：台積電 COUPE、Tower（自稱逾 80% 矽光子份額）擴產，客戶可多源；GF 純代工整體份額 2024Q4 約 5% → 2026Q1 約 3%","h_ref":"H1","clock":"🔥","threshold":"通訊基建與資料中心年增連 2 季 <30%；或前五大收發器客戶合作家數由 4 家降到 3 家以下；或 Counterpoint 份額跌破 3.0%（沿用前份）","evidence_refs":["competitive_share_entrants#0","end_markets#6"]},{"id":"R4","text":"客戶、供應與地緣集中：兩大客戶 FY2024 各占 16%、11%，前十大約占出貨三分之二；SOI 晶圓約 71% 來自單一供應商（二手摘要）；2021–22 曾向實體清單公司出貨，遭 BIS 處分；與中國的政治貿易緊張列為風險","h_ref":"H1+H2","clock":"🐢","threshold":"任一大客戶營收年減 >30% 或轉單 >30%（沿用前份）；或新的出口管制處分；或 SOI 供應中斷","evidence_refs":["customer_concentration_credit#0","customer_concentration_credit#1","geo_supply_chain#0","geo_supply_chain#1","regulatory_antitrust#2","reg_tariff_export#2"]},{"id":"R5","text":"資本支出翻倍遇上需求轉弱：2026 淨資本支出到營收 15–20% 高端，2027 再增；若需求回落，會形成閒置產能（2024 Q4 Malta 減損 9.35 億美元是前例），ROIC 長期低於資金成本","h_ref":"H3","clock":"🐢","threshold":"FY2026–28 連 3 年 ROIC <9%（沿用前份；投入資本事實表未涵蓋）；或調整後 FCF 利潤率連 2 年 <5%；或再認列產能減損","evidence_refs":["cyclical_prior_downcycle_behavior#4"]}],"single_thing":{"description":"2027 上半年任一季 Non-IFRS 毛利率低於 30%：漲價已入帳，毛利率仍無法年增","why_fatal":"共識 FY2028 EPS 3.56 美元的增量，幾乎全來自毛利率由 30% 往 40% 擴張。毛利率每 1 點約影響每股 0.11 美元（2026 推估營收約 74 億美元 × 1 點 × 稅後 ÷ 5.56 億股）。漲價入帳後仍跌破 30%，代表組合轉移被稼動率下滑抵銷，FY2028 EPS 將落在 2.7 美元以下，熊市情境成立","if_happens":"已持有者減碼至半倉以下並凍結加碼，同季稼動率也低於 80% 則清倉；未持有者撤銷進場計畫","how_monitor":"每季財報 Non-IFRS 毛利率與 CFO 對漲價入帳的說法；同業聯電季度毛利率與報價","probability":"約 20%（12–24 個月）：Q3 指引 30.5%±1 點已站上 30%，2027 漲價已談定；風險在於手機與消費電子若到 2027 上半年仍弱，會拖低稼動率"}},"appendix_a":{"growth_durability":6,"quality_score":6,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":18.34,"peg_fy2":0.6,"stress":{"pass":2,"total":3}},"eps_meta":{"base_eps_path":{"FY2025A":1.59,"FY2026E":1.96,"FY2027E":2.63,"FY2028E":3.56},"fy_end_month":12,"eps_basis":"共識（Koyfin 2026-10-08 快照）推定為 Non-IFRS 稀釋 EPS，估計家數事實表未涵蓋；FY2025A 1.59 取 yfinance GAAP 稀釋 EPS，FY2025 Non-IFRS 實際值事實表未涵蓋，基期口徑不一致會高估三年年化成長"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/GFS_20261012/scenario.json","archetype":{"primary":"循環/商品","secondary":null,"confidence":"中","fingerprint":"FY2024 GAAP 淨利為負、屬晶圓代工、2026 淨資本支出占營收 15–20%，三項命中商品型特徵；但營收不由商品報價驅動，另有資料中心光學的長期成長段"},"industry":{"clock_phase":"II","sd_verdict_source":"供需以週期性為主，帶結構性成分。台積電與三星削減 8 吋、8 吋產能負成長至 2027 上半年，屬結構性（TrendForce 2026-06-30、IDC 2026-03-30）；但 12 吋成熟擴產約七成來自中國，供給可逆性高，2027 下半年起轉鬆的風險實在。","bargaining":{"up":"上游：SOI 晶圓約 71% 來自單一供應商（二手摘要指為 Soitec，2025 年，未核申報原文），部分氣體與稀土亦為單一來源；GF 對上游議價弱","down":"下游：兩大匿名客戶 FY2024 各占 16%、11%，前十大約占出貨三分之二（2021）；特殊製程設計案 95% 單一來源，2027 漲價已與客戶談定，下游議價屬拉鋸","geo":"製造在美國（Malta、Vermont）、德國、新加坡；在地採購成為客戶規則是順風，美中緊張與關稅是風險"},"profit_pool_dir":"代工利潤池往先進製程與 AI 集中（台積電純代工份額 73%、營益率 56%）；GF 只在光學互連、SiGe、電源等利基分到增量","tam_table":[{"item":"GF 通訊基建與資料中心可服務市場（公司估）","value":"2030 年約 110 億美元（2026-03-10 分析師會，管理層說法）"},{"item":"光網路可服務市場年化成長（公司估）","value":"至 2030 年約 40%"},{"item":"矽光子代工現今可服務市場（公司估）","value":"約 10 億美元；GF 自稱第一，Tower 自稱逾 80%，管理層未回應落差"},{"item":"GF 矽光子營收目標","value":"2028 年底年化 10 億美元、2030 年 20 億美元"},{"item":"純晶圓代工份額（Counterpoint）","value":"2024Q4 約 5% → 2025 年 4% → 2026Q1 約 3%；產業年增 30% 主要由 AI 先進製程帶動"},{"item":"營業利益池占比五年變化","value":"事實表未涵蓋"}]},"moat":{"mechanism":"特殊製程平台（SiGe、矽光子、FDX、BCD、RF-SOI）的設計導入與多年認證轉換成本，加上美國在地可信賴代工資格","execution":7,"pricing":5,"grade":"C","trend":"→","trend_evidence":"執行力擴大：2025 年設計案 95% 單一來源，2026 Q1 設計案年增 50%，Q2 新增 7 件光網路設計案，矽光子客戶逾 40 家。定價力穩定：2027 漲價已談定，但 2022 缺貨高峰年度毛利率也只有 27.6%，TTM 27.1% 仍低於聯電 30.6%。Counterpoint 份額下降雖有 AI 分母效應，仍是有來源的下滑，不能標擴大。","peer_na_reason":"同業 ROIC 事實表未涵蓋，改以營業利益率與 FCF 利潤率比較","threats":[{"level":"🔴","text":"中國成熟製程擴產壓價：12 吋擴產約七成來自中國，晶合 28nm 完成，華虹無錫月增約 3 萬片；公司 20-F 自承技術價格除極度缺貨期外會隨時間下跌","p":35,"evidence_refs":["supply_demand_durability#2","cyclical_supply_discipline_capacity#0","substitute_technology#3","substitute_technology#1","cyclical_inventory_price_position#1"]},{"level":"🟡","text":"矽光子點對點競爭：台積電 COUPE、Tower 擴產，客戶可多源；GF 純代工整體份額 5% → 3%","p":30,"evidence_refs":["competitive_share_entrants#0","end_markets#6"]},{"level":"🟡","text":"上游 SOI 晶圓約 71% 集中單一供應商（二手摘要），替換需時甚長","p":15,"evidence_refs":["geo_supply_chain#0"]}],"roic_durability":{"quadrant":"低利益率×低周轉","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者是光模組與 XPU 系統，決策者是收發器廠與超大規模業者，付款者是晶片設計商，三者方向一致。銅線在每通道 200G 以上受限（2026-03-10 管理層），客戶要求鎖定 2027–28 產能，SiGe 超額認購至 2027。手機段需求是因記憶體漲價而延後，不是消失。"},{"item":"決策層級","level":"🟡","text":"設計導入以製程平台為單位，2025 年設計案 95% 單一來源，車用重新認證週期長；但矽光子客戶可多源。CEO 被問多源可行性時沒有給數據，只說客戶分散（逾 40 家）。資料缺口：客戶是否已替同一顆晶片建立第二代工來源，本輪兩次查證都沒找到第三方或申報資料。95% 單一來源是公司自述的設計案統計，只說明 GF 拿單時多為獨家，不證明客戶換廠的成本高。對判斷的處理：轉換成本只算到設計導入這一層，不當作下行保護，這是護城河維持 C、方向不標擴大的理由之一。熊市機率 30% 由成熟製程週期與中國擴產推得，原本就沒有因客戶綁定而調低，所以不另外上調。客戶轉向多源的風險已列在矽光子競爭威脅（機率 30%），追蹤兩條門檻：通訊基建與資料中心年增連 2 季低於 30%，前五大收發器客戶合作家數降到 3 家以下。若後續查到主要客戶已雙源量產，護城河方向與熊市機率重新評估。"},{"item":"價值鏈分配","level":"🟡","text":"光學鏈的錢主要落在 XPU 與光模組設計端；GF 即使在 2022 缺貨高峰，年度毛利率也只有 27.6%，TTM 27.1% 低於聯電 30.6%。上游 SOI 晶圓約 71% 集中單一供應商，下游兩大客戶各占 16%、11%；2027 漲價已被客戶接受，是改善跡象。"},{"item":"社會容忍度","level":"🟡","text":"美國在地產能是政策順風（矽光子 3 億美元意向書、量子 3.75 億美元補助、可信賴代工資格）。但這部分優勢依賴補助與在地採購規則，屬政策風險；晶片漲價未見社會反彈，Section 232 目前未涉及其業務。"}],"roiic":"事實表未涵蓋（投入資本、折舊未收）","reinvest_rate":"事實表未涵蓋；再投資強度：2026 淨資本支出約占營收 15–20%（CFO 稱偏高端），2025 年為 8%","endo_ceiling":null,"formula_note":"內生成長＝增量 ROIC × 再投資率。稅後營業利益約占營收 10%（TTM 營益率 11.6% 扣十幾 % 稅），淨資本支出約為其 1.5–2 倍；折舊未收，無法算淨再投資率。上界推演（假設值，非事實）：增量 ROIC 取 15%、再投資率取 100%，內生成長上限約 15%，低於共識三年 EPS 年化約 31%，差額要靠毛利率擴張補。資料缺口：投入資本、折舊、增量 ROIC 事實表都未涵蓋，內生上界不填正式值。判斷不拿這個假設值支撐估值；基準情境 FY2028 EPS 取 3.25 美元，低於共識 3.56 美元，這個差距就是對毛利率擴張打的折扣。"},"combined":6.0,"score":6.0,"spread_table":[{"metric":"毛利率","GFS":27.14,"2330.TW":64.23,"INTC":38.6,"005930.KS":57.48,"2303.TW":30.6,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"營業利益率","GFS":11.59,"2330.TW":56.1,"INTC":7.55,"005930.KS":36.88,"2303.TW":20.13,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"FCF 利潤率","GFS":11.47,"2330.TW":25.33,"INTC":4.96,"005930.KS":28.95,"2303.TW":23.64,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"},{"metric":"研發密度","GFS":8.11,"2330.TW":6.07,"INTC":23.13,"005930.KS":9.7,"2303.TW":7.53,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"}],"competitors":[{"name":"2330.TW","gm":64.23,"om":56.1,"fcf_margin":25.33,"rd_intensity":6.07,"period":"TTM ending 2026-06-30（4季加總）"},{"name":"INTC","gm":38.6,"om":7.55,"fcf_margin":4.96,"rd_intensity":23.13,"period":"TTM ending 2026-06-30（4季加總）"},{"name":"005930.KS","gm":57.48,"om":36.88,"fcf_margin":28.95,"rd_intensity":9.7,"period":"TTM ending 2026-06-30（4季加總）"},{"name":"2303.TW","gm":30.6,"om":20.13,"fcf_margin":23.64,"rd_intensity":7.53,"period":"TTM ending 2026-06-30（4季加總）"}]},"growth":{"driver_mix":"量＋組合為主，價格 2027 起入帳；併購約占 2026 營收 1.5%；淨回購可忽略","runway_years":"事實表未涵蓋（無滲透率資料）","runway_post_y5":"🟡","endo_ceiling_basis":"共識三年 EPS 年化約 31%（FY2025A GAAP 1.59 → FY2028E 3.56，口徑不一致）；內生上界在寬鬆假設下約 15%；缺口歸因毛利率擴張（管理層 30% → 40% 橋接）","segments":[{"item":"智慧行動裝置","value":"Q2 占營收約 36%，年減 6%；全年預期年減十幾 %（5 月原預期高個位數衰退）"},{"item":"車用","value":"約 19%，Q2 年減 10%（客戶出貨時點）；全年維持低雙位數成長，偏重 Q4"},{"item":"家用與工業 IoT","value":"約 19%，年增 10%；全年上修至 10–15%（原中個位數）"},{"item":"通訊基建與資料中心","value":"約 16%，年增 62%；全年上修至 50–60%（原高 30%）；SiGe 規模大於矽光子"},{"item":"技術服務","value":"約 11%，全年趨近 10–12% 區間高端，毛利率顯著高於公司平均"}],"decay_signals":[{"signal":"毛利率連 2 季年減","lit":false,"evidence":"Q1 年增逾 5 點，Q2 年增 4.7 點"},{"signal":"核心市占近 12 個月縮減","lit":true,"evidence":"Counterpoint 純代工份額 2025 年約 4% → 2026Q1 約 3%"},{"signal":"主力產品提價後銷量下滑","lit":false,"evidence":"漲價 2027 才入帳，尚無數據"},{"signal":"EPS 成長顯著高於營收成長（差 >5 點）","lit":true,"evidence":"共識三年 EPS 年化約 31%，2026 營收年增約 9%"},{"signal":"FCF／淨利 <0.75 連 2 年","lit":false,"evidence":"FY2025 約 1.14；2026 資本支出翻倍後有轉弱風險"},{"signal":"SBC／營收 >5% 且逐年上升","lit":false,"evidence":"Q2 約 4.8%，Q3 指引約 4%；逐年序列事實表未涵蓋"},{"signal":"TAM 萎縮或被替代技術壓縮","lit":false,"evidence":"手機出貨 2026 年減約 14%，屬記憶體漲價造成的週期性下修，非替代"},{"signal":"產業估值倍數近 3 年系統性下移","lit":null,"evidence":"事實表未涵蓋"},{"signal":"維護性資本支出占 FCF >60%","lit":null,"evidence":"事實表未涵蓋"},{"signal":"停止投資新產能且收入 3 年內下滑","lit":false,"evidence":"2026 資本支出加倍，德勒斯登擴產"}],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"併購貢獻 2026 營收約 1.0–1.2 億美元，占全年推估營收不到 2%；成長主體是晶圓量與組合，不靠併購撐"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"ARC 對價 4.55 億美元（含現金 4.4 億，2026-06 完成）；MIPS＋ARC 使 2026 技術服務增量由 0.6–1.0 億上修到 1.0–1.2 億美元。CFO 稱增量營收大致只抵銷新增研發，已實現增量營業利益接近零，報酬低於資金成本","grade":"不過"},{"year":"—","action":"buyback_yield","rationale":"Q1 回購 4 億美元，均價事實表未涵蓋。以 FY1 前瞻 24.6 倍推，買入收益率約 4%；以 Trailing 37.7 倍推，約 2.7%。門檻是 10 年期殖利率＋2 點；10 年期殖利率事實表未涵蓋，只要高於約 2.1%，門檻就高於 4%，判未過","grade":"不過"},{"year":"—","action":"sbc_dilution","rationale":"稀釋股數（淨利÷稀釋 EPS 推算）：FY2022 約 5.53 億、FY2023 約 5.57 億、FY2025 約 5.57 億，2026 Q2–Q3 約 5.56 億；四年淨變動不到 +1%，但要靠 Q1 4 億美元回購抵銷每季約 0.8 億美元股權報酬","grade":"過"}]},"valuation":{"basis":"FY2027E 共識前瞻本益比為主，PEG 對照；循環股輔以自身倍數區間","tier":"成熟／特殊製程代工","peers":{"expanded":false,"reason":"事實表同業對照只收毛利率、營益率、FCF 利潤率、研發密度，未涵蓋同業倍數，無法展開；終端倍數改以自身前瞻倍數與成長熄火情境錨定"},"fwd_pe":24.61,"peg":0.8,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"FY2027E 共識 18.3 倍已低於前份 22 倍重啟線，PEG 約 0.8。但扣回股權報酬後約 22 倍，Trailing 37.7 倍在自身年度端點最高，P/S 3.88 倍在年度端點 72.5 分位；情境基準年化約 7–8%，期望值為正但不寬，循環位置在中段。故判合理（🟡），而非便宜","upside_short_pct":5.7,"upside_mid_pct":21.3},"trap_analysis":{"verdict":"🟡","label":"兩項衰退訊號亮燈：核心份額縮減、EPS 成長遠快於營收"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"2024 年下行實例：營收 −9%，年度毛利率由 28.4% 降到 24.5%，季度調整後毛利率低到 24.7%；Q4 認列 Malta 減損 9.35 億美元，股價年初至 9 月 −36%。本輪中國 12 吋成熟擴產約占七成，晶合擴廠 51 億美元。","assumption":"資料中心光學（約 16%）與技術服務（約 11%）的成長，抵得過其餘約七成營收的週期下行","consequence":"FY2028 EPS 回到 1.75 美元左右，倍數 11–12 倍，股價落在 20 美元區（−55～−60%）","ruling":"部分採納：熊市機率給 30%，最大回撤給 −45～−60%。不全盤採納，因為台積電與三星正在削減 8 吋與部分 12 吋成熟產能，GF 2027 漲價已談定，SiGe 與矽光子供不應求","watch":"公司稼動率（Q2 高 80% 區）、季度 Non-IFRS 毛利率、聯電報價、中國新廠投產時程","evidence_refs":["cyclical_prior_downcycle_behavior#0","cyclical_prior_downcycle_behavior#1","cyclical_prior_downcycle_behavior#2","cyclical_prior_downcycle_behavior#3","cyclical_prior_downcycle_behavior#4","supply_demand_durability#2","cyclical_supply_discipline_capacity#0"],"fact_refs":["f_kpi1_non_ifrs"]},{"view":"論點失敗","evidence":"Tower 自稱逾 80% 矽光子份額、營收與 GF 相近，GF 管理層 2026-03-10 未回應落差；台積電推 COUPE；CEO 2026-08-05 承認對手積極進入矽光子","assumption":"GF 是矽光子最大代工，2028 年底年化 10 億美元目標可達","consequence":"矽光子目標延後，通訊基建與資料中心成長回落到 20% 以下，多頭情境失效","ruling":"暫不可裁決：雙方說法都沒有第三方份額數據可驗，ITC 專利案也尚無裁決；以通訊基建與資料中心年增 30% 作驗證門檻","watch":"通訊基建與資料中心季度年增、前五大收發器客戶合作家數、ITC 裁決","evidence_refs":["competitive_share_entrants#0","end_markets#6"],"fact_refs":[]},{"view":"論點成功但股東經濟變差","evidence":"光學成長兌現，但 2026 淨資本支出升至營收 20% 高端，Q2 調整後 FCF −300 萬美元；ARC 4.55 億美元併購的增量營收只夠抵銷研發；Q2 股權報酬約占 GAAP 營業利益 49%","assumption":"管理層所稱 FCF 利潤率約 10%，與回饋 50% 投資後 FCF，能同時成立","consequence":"每股 FCF 不隨營收成長，GAAP EPS 長期落後 Non-IFRS 約 0.5 美元","ruling":"採納：估值分母以扣回股權報酬後的 FY2027E 約 22 倍看待，不用 18 倍當便宜論證","watch":"調整後 FCF 利潤率、股權報酬占營收、稀釋股數","evidence_refs":[],"fact_refs":["f_kpi3","f_kpi4_non_ifrs","f_kpi5_sbc_gaap"]},{"view":"價格已反映太多","evidence":"Trailing 本益比 37.7 倍在自身年度端點最高；FY2028E 共識 3.56 美元已約為管理層 2028 年底 4 美元年化目標的 89%；Q3 營收指引公布後盤前跌約 5.5%（一說低於預期，一說較前次區間上調）","assumption":"市場已把 40% 毛利率路徑算進共識，現價只剩情境中位數的報酬","consequence":"即使論點兌現，基準年化也只有約 7–8%","ruling":"部分採納：價格已不貴（FY2027E 18 倍，扣回股權報酬約 22 倍），但也不便宜。從 5 月 74 美元跌到 48 美元，主要是投資人日後的倍數回吐，共識 EPS 同期上修 3.2%；價格沒有反映太多，也沒有給足安全邊際","watch":"Q3 財報後 FY2027E 共識是否下修，以及股價對應的 FY2027E 倍數","evidence_refs":["capital_markets_pricing#1","capital_markets_pricing#6"],"fact_refs":["f_pe_current","f_pe_percentile","f_fwd_pe_latest","f_consensus_rev_3m_fy1_pct"]}],"max_dd":{"lo":-60,"hi":-45,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 - → 本次 ❌","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=-","side_b":"本次 ma=❌","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 69.71 → 本次 48.24（-30.8%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=69.71","side_b":"本次 price_at_dd=48.24","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]角色由 dd_decision.py 機械路由：前份 衛星 → 本次 追蹤","cause":"價格變動","prior_field":["dca_role"],"side_a":"前份 dca_role=衛星","side_b":"本次 dca_role=追蹤","ruling":"角色是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。沒有單一輸入能還原，屬多欄共同：估值 🟠→🟡、均線 -→❌。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"一致判斷","cause":null,"prior_field":null,"side_a":"公司：通訊基建與資料中心 2026 年增 50–60%，SiGe 超額認購至 2027，CEO 稱未來兩年受供給限制","side_b":"第三方：TrendForce 估 8 吋稼動率近 90%、8 吋產能負成長至 2027 上半年；UBS 認為成熟製程進入上行週期","ruling":"兩側一致：資料中心光學與 8 吋成熟製程 2026–27 供給偏緊，這是本輪判斷的共同底","evidence_level":"公司揭露＋產業研究機構","settle_metric":"公司稼動率、通訊基建與資料中心年增","if_then":[],"evidence_refs":[]},{"axis":"估值與期望報酬重算：估值隨股價變動，期望報酬兼受情境樹重建影響","cause":"價格變動","prior_field":["val"],"side_a":"前份：股價 69.71 美元，估值結論偏貴（🟠），基準年化 6.3%，五年期望值 +31%，不對稱比 2.3，裁決觀望","side_b":"本次：股價 48.24 美元（−31%），同期 FY1 共識 EPS 上修 3.2%，FY2027E 本益比 18.3 倍，估值結論改為合理（🟡）。期望報酬與不對稱比的變動有兩個來源，方向相反。起點價下跌把它們往上推，屬價格變動。情境樹重建把多頭五年價由 143 美元降到約 118 美元、空頭由 43 美元降到約 29 美元，把它們往下拉，屬方法變動（見「情境樹重建」條）。新數值由程式依新情境重算","ruling":"拆開歸因。估值結論由偏貴改為合理，幾乎全來自價格下跌，共識並未下修。不對稱比、五年期望值、基準年化是價格與方法共同變動，拆量見「期望報酬拆解：情境樹重建」與「期望報酬拆解：股價下跌」兩條。Q3 營收指引的市場解讀分歧（盤前跌約 5.5%）。裁決不會只因價格下跌就轉為進場，要看毛利率路徑的證據","evidence_level":"價格與共識快照＋方法調整","settle_metric":"FY2027E 共識與 2026 Q3 毛利率","if_then":["若 2026 Q3 毛利率 ≥30% 且 Q4 指引 ≥31% → 重跑判斷後進場首倉 1.5%","若股價先漲回 60 美元以上而毛利率證據未到 → 不追","若股價續跌但毛利率路徑無損 → 分批反買，不視為停損訊號"],"evidence_refs":["capital_markets_pricing#6","capital_markets_pricing#1"]},{"axis":"期望報酬拆解：情境樹重建（股價固定在前份 69.71 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"前份情境、股價 69.71 美元：五年期望值 +31%，基準年化 6.3%，不對稱比 2.3","side_b":"本次情境、股價仍用 69.71 美元：五年期望值 −2.1%，基準年化 −0.7%，不對稱比 1.0","ruling":"先換情境、股價不動：多頭與空頭五年價同時下修，五年期望值少 33 個百分點，基準年化少 7.0 個百分點，不對稱比由 2.3 降到 1.0。情境樹重建本身讓期望報酬變差。","evidence_level":"程式計算","settle_metric":"FY2027E 共識與 2026 Q3 毛利率","if_then":[],"evidence_refs":[]},{"axis":"期望報酬拆解：股價下跌（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 69.71 美元：五年期望值 −2.1%，基準年化 −0.7%，不對稱比 1.0","side_b":"本次情境、股價 48.24 美元：五年期望值 +41.5%，基準年化 6.9%，不對稱比 3.0","ruling":"再換股價、情境不動：起點價跌 31%，五年期望值多 43.6 個百分點，基準年化多 7.6 個百分點，不對稱比由 1.0 升到 3.0。期望報酬比前份好，全部來自股價下跌，情境本身比前份差。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"FY2027E 共識與 2026 Q3 毛利率","if_then":[],"evidence_refs":[]},{"axis":"情境樹重建","cause":"方法變動","prior_field":["bull_5y_price","bear_5y_price","p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份：多頭五年價 143 美元，空頭 43 美元，機率多頭 25／空頭 30，最大回撤 −60%","side_b":"本次：重建 EPS 路徑。基準貼近共識 FY2026–27，FY2028 取 3.25（低於共識 3.56）；多頭 FY2030 5.6 美元 × 21 倍，約 118 美元；空頭 2.4 美元 × 12 倍，約 29 美元；機率維持 25／45／30；最大回撤區間 −45～−60%","ruling":"多頭價下修，是因不再把管理層長期 6 美元 EPS 配成長股倍數；空頭價下修，是納入中國 12 吋擴產與資本支出翻倍後的下行深度。機率不變，因新證據正反抵銷","evidence_level":"方法調整","settle_metric":"2027 全年 Non-IFRS 毛利率","if_then":["若 2027 全年毛利率 ≥34% → 多頭機率上調至 30%","若 2027 上半年毛利率年減 → 熊市機率上調至 35%"],"evidence_refs":[]},{"axis":"循環位置","cause":"新證據","prior_field":["cycle_position"],"side_a":"前份：早循環","side_b":"本次：中循環。Q2 Non-IFRS 毛利率 29.9% 創同季紀錄，Q3 指引 30.5%，稼動率高 80% 區，2027 漲價已談定，CEO 2026-09-08 稱處於追供給階段。商品型六訊號分歧：量增領先（出貨年增 8%）、賣方目標高於股價，偏買；毛利率高於自身年度區間上緣、存貨備抵由 0.9 億增至 1.4 億美元，偏賣；供給紀律分歧；市淨率事實表未涵蓋。反面：2026 全年營收推估約 74 億美元，仍低於 2022 年 81 億美元","ruling":"裁中循環。訊號分歧時不硬給進場姿態，對應持有不加；循環判讀只套約七成的週期性營收，資料中心光學段另計，不隨循環賣","evidence_level":"公司揭露＋產業研究機構","settle_metric":"公司稼動率與季度毛利率","if_then":["若稼動率升到 90% 以上且 2027 漲價入帳 → 改判晚循環，停止任何新建立","若稼動率連 2 季回落到 80% 以下 → 改判下行，等深谷訊號再評估進場"],"evidence_refs":["cyclical_inventory_price_position#1"]},{"axis":"綜合訊號與品質判斷維持","cause":"新證據","prior_field":["signal","trap","moat_trend","runway_post_y5","archetype"],"side_a":"前份：綜合訊號 B；價值陷阱 🟡；護城河方向持平；五年後跑道中等；循環/商品","side_b":"本次維持。正面新證據：設計案年增 50%、矽光子客戶逾 40 家、通訊基建與資料中心上修到 50–60%、2027 漲價已談定；負面新證據：Counterpoint 純代工份額 5% → 3%、手機全年年減十幾 %","ruling":"正反證據相抵，方向與等級不變。護城河不升為擴大，因有來源的份額下降；也不降，因設計案與客戶數擴大，漲價被客戶接受","evidence_level":"公司揭露＋產業研究機構","settle_metric":"通訊基建與資料中心年增、Counterpoint 份額","if_then":["若 Counterpoint 份額連 2 季低於 3.0% 且通訊基建與資料中心年增低於 30% → 護城河方向改判縮減"],"evidence_refs":["competitive_share_entrants#0","end_markets#6","end_markets#2"]},{"axis":"估值重啟條件改寫（進場）","cause":"新證據","prior_field":["rearm_trigger"],"side_a":"Fwd PE(FY+2) 回落至 ≤22x（約 $55-58）；或連 2 季 Non-IFRS GM ≥30% 且 SiPh 全年翻倍兌現；Section 232 Phase 2 若對進口類比/RF/功率 IC 課稅為額外上行催化","side_b":"2026 Q3 實績 Non-IFRS 毛利率 ≥30% 且 Q4 指引 ≥31%、通訊基建與資料中心全年年增 50% 以上維持 → 重跑判斷後進場首倉","ruling":"前份的價格條件已在 48.24 美元觸發（FY2027E 18.3 倍 ≤22 倍），毛利率條件尚未觸發（Q2 29.9%，差 0.1 點）。新證據顯示分母含每股稅前約 0.55 美元股權報酬，扣回後約 22 倍，價格條件的便宜判斷不成立。觀望的唯一約束改為毛利率路徑，因此重啟改用事件錨、不設價格線，觸發後重跑判斷再進場首倉","evidence_level":"公司揭露","settle_metric":"2026 Q3 Non-IFRS 毛利率與 Q4 指引","if_then":["若 Q3 毛利率 ≥30% 且 Q4 指引 ≥31% → 重跑判斷後進場首倉 1.5%","若 Q3 毛利率 <29.5% → 維持觀望，重啟條件延到 2027 Q1"],"evidence_refs":[]},{"axis":"清倉與減碼門檻新設","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設 kill_metrics；前份風險門檻為：連 2 季稼動率 <80% 且毛利率年減 >3 點；市佔跌破 3.0% 或任一大客戶轉單 >30%；FY26–28 連 3 年 ROIC <9%","side_b":"本次 kill_metrics 六條：沿用上述稼動率、市佔、ROIC 三條；新增 2027 上半年任一季毛利率 <30%（減碼）、通訊基建與資料中心連 2 季年增 <30%（減碼）、調整後 FCF 利潤率連 2 年 <5%；稼動率與毛利率雙破則清倉","ruling":"新增三條，是因本輪論點改以資料中心光學與毛利率路徑為核心。市佔門檻：Counterpoint 2026Q1 已在 3% 附近，列為警示但不單獨觸發減碼，因分母被 AI 先進製程膨脹（產業年增 30%）。ROIC 門檻沿用，但投入資本事實表未涵蓋，列資料缺口","evidence_level":"方法調整","settle_metric":"各 kill 指標","if_then":["若稼動率連 2 季 <80% 且毛利率年減 >3 點 → 清倉","若 2027 上半年任一季毛利率 <30% → 減碼至半倉以下"],"evidence_refs":[]},{"axis":"Single Thing 新設","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未設唯一致命點（空值）","side_b":"2027 上半年任一季 Non-IFRS 毛利率低於 30%（漲價已入帳仍無法讓毛利率年增）","ruling":"毛利率是數學上最大的單一敏感度：每 1 點約影響每股 0.11 美元，共識 FY2028 增量幾乎全來自毛利率擴張，故設為 Single Thing；發生時減碼至半倉以下，同季稼動率 <80% 則清倉","evidence_level":"方法調整","settle_metric":"2027 Q1–Q2 Non-IFRS 毛利率","if_then":["若發生 → 減碼至半倉以下並凍結加碼","若 2027 Q1 毛利率年增 ≥3 點 → 加碼至 3%"],"evidence_refs":[]},{"axis":"管理層手機展望改口","cause":null,"prior_field":null,"side_a":"2026-05-05 CFO：智慧行動 2026 高個位數衰退，略優於大盤；2026-05-07 投資人日 Hogan：大致持平","side_b":"2026-08-05 CFO：全年年減十幾 %（記憶體漲價與缺貨）","ruling":"可調和（程度差異）。三個月內兩次下修手機，但同季把通訊基建與資料中心上修到 50–60%、IoT 上修到 10–15%，Q3 營收指引仍高於 Q2；手機下修屬終端需求面，同季仍拿下 MediaTek 首個電源管理晶片設計案，不是份額流失。記入可信度扣分：手機展望已連續下修","evidence_level":"公司法說原話","settle_metric":"智慧行動季度年增","if_then":["若 2026 Q4 智慧行動年減 >15% → 熊市機率上調 5 點"],"evidence_refs":["end_markets#2","supply_demand_durability#5","end_markets#7"]},{"axis":"供需方向：追供給 vs 庫存與中國產能","cause":null,"prior_field":null,"side_a":"2026-09-08 CEO：處於追供給階段，未來兩年受供給限制而非需求；客戶要求鎖定 2027–28 產能","side_b":"TrendForce：2026 下半年電視與筆電提前備貨，有庫存疑慮；消費電子出貨承壓；成熟製程仍受庫存與中國競爭壓力","ruling":"可調和（分段差異）。供給吃緊集中在 SiGe、矽光子與 8 吋；消費性與 12 吋成熟製程（中國擴產區）偏鬆。GF 約 36% 營收在手機，兩邊都碰得到，以公司稼動率作裁決數據","evidence_level":"公司揭露 vs 產業研究機構","settle_metric":"公司稼動率與季度 Non-IFRS 毛利率","if_then":["若稼動率連 2 季 <80% 且毛利率年減 >3 點 → 清倉","若 2027 Q1 稼動率 ≥90% → 維持判斷，不因庫存新聞減碼"],"evidence_refs":["supply_demand_durability#7","cyclical_inventory_price_position#1","cyclical_supply_discipline_capacity#0"]},{"axis":"產業態勢三軸","cause":null,"prior_field":null,"side_a":"競爭惡化：中國 12 吋成熟擴產約占七成，晶合 28nm 平台完成並擴廠 51 億美元；Counterpoint 份額 5% → 3%","side_b":"結構轉好：台積電與三星削減 8 吋，台積電 2028 前削減 Fab14 成熟產能 15–20%，8 吋稼動率近 90%，2026 Q1→Q2 報價漲 5–15%。其他結構變數：在地採購成為客戶規則；Section 232 目前未涉 GF；對中國半導體關稅據報 2027-06 生效","ruling":"雙向拉鋸。8 吋與特殊製程結構轉好，12 吋成熟製程競爭惡化，兩者同時成立；GF 同時有 8 吋（Vermont SiGe）與 12 吋產能，惡化軸的時點落在 2027–28","evidence_level":"產業研究機構（TrendForce、IDC、Counterpoint）","settle_metric":"公司每季稼動率與 Non-IFRS 毛利率","if_then":["若 2027 上半年毛利率年增 <1 點 → 認定惡化軸佔上風，熊市機率上調至 35%"],"evidence_refs":["substitute_technology#3","cyclical_supply_discipline_capacity#0","competitive_share_entrants#0"]},{"axis":"現在就買的最強論證","cause":null,"prior_field":null,"side_a":"現在就買：前份重啟價格條件已觸發；FY2027E 18.3 倍，FY2028E 13.6 倍；Q2 營收與毛利率高於指引上緣，通訊基建與資料中心指引由高 30% 上修到 50–60%，2027 漲價已談定；賣方 21 位平均目標價 80 美元；共識 3 個月上修 3.2%，股價卻跌三成","side_b":"再等一季：扣回股權報酬後 FY2027E 約 22 倍；Q2 毛利率 29.9% 已高於 2022–25 任一年度（年度最高 28.4%，口徑略異），循環位置在中段；基準年化約 7–8%；Q3 財報 2026-11 即揭曉毛利率路徑","ruling":"採再等一季：等待成本是一季，錯判成本是買在毛利率高點。但若 Q3 達標，就不再以價格為由拖延","evidence_level":"公司揭露＋共識快照","settle_metric":"2026 Q3 Non-IFRS 毛利率與 Q4 指引","if_then":["若 Q3 毛利率 ≥30% 且 Q4 指引 ≥31% → 重跑判斷後進場首倉 1.5%","若 Q3 毛利率 <29.5% 或通訊基建與資料中心全年指引下修 → 維持觀望，基準 FY2027E 下修至 2.4 美元"],"evidence_refs":[]}],"triggers":[{"n":1,"text":"2026 Q3 財報確認毛利率路徑","type":"假設驗證","maps_to":"H2","metric":"季度 Non-IFRS 毛利率與 Q4 指引","threshold":"Q3 ≥30% 且 Q4 指引 ≥31%","action":"達標 → 重跑判斷後進場首倉 1.5%；Q3 <29.5% → 維持觀望，基準 FY2027E 下修至 2.4 美元","source_freq":"季報（每季）","date":"2026-11"},{"n":2,"text":"資料中心光學成長延續","type":"假設驗證","maps_to":"H1","metric":"通訊基建與資料中心營收年增","threshold":"2026 全年 ≥50%；2027 起每季 ≥30%","action":"連 2 季 <30% → 減碼至半倉，多頭機率降到 15%","source_freq":"季報終端市場揭露（每季）","date":"2027-05"},{"n":3,"text":"唯一致命點：漲價入帳後毛利率仍跌破 30%","type":"Single Thing","maps_to":"Single Thing","metric":"2027 上半年季度 Non-IFRS 毛利率","threshold":"任一季 <30%","action":"減碼至半倉以下並凍結加碼；同季稼動率 <80% 則清倉","source_freq":"季報（每季）","date":"2027-08"},{"n":4,"text":"成熟製程二次下行：稼動率與毛利率雙破","type":"風險","maps_to":"R1","metric":"公司稼動率與 Non-IFRS 毛利率年變動","threshold":"稼動率連 2 季 <80% 且毛利率年減 >3 點","action":"清倉","source_freq":"法說稼動率說法＋季報（每季）","date":null,"evidence_refs":["supply_demand_durability#2","cyclical_inventory_price_position#1"]},{"n":5,"text":"車用 Q4 補回失敗","type":"風險","maps_to":"R2","metric":"車用全年營收年增","threshold":"2026 全年 <5%（指引低雙位數）","action":"停止加碼，熊市機率上調 5 點","source_freq":"年度財報","date":"2027-02","evidence_refs":["supply_demand_durability#5"]},{"n":6,"text":"客戶、供應或出口管制出事","type":"風險","maps_to":"R4","metric":"前兩大客戶營收、出口管制處分、SOI 供應","threshold":"任一大客戶營收年減 >30%，或新的出口管制處分，或 SOI 供應中斷","action":"減碼至半倉","source_freq":"年報 20-F（每年）、BIS 公告（不定期）","date":"2027-03","evidence_refs":["customer_concentration_credit#0","geo_supply_chain#0"]},{"n":7,"text":"重啟進場條件","type":"估值rearm","maps_to":"估值重啟","metric":"2026 Q3 毛利率、Q4 指引、通訊基建與資料中心全年展望","threshold":"Q3 ≥30%、Q4 指引 ≥31%、通訊基建與資料中心全年 ≥50% 維持","action":"重跑判斷後進場首倉 1.5%","source_freq":"季報","date":"2026-11"},{"n":8,"text":"價格先走、毛利率未跟上","type":"減碼","maps_to":"H2","metric":"股價對應 FY2028E 共識本益比","threshold":"≥21 倍（約 75 美元）且 2027 毛利率仍 <32%","action":"減碼三分之一","source_freq":"每日股價＋每月共識快照","date":null},{"n":9,"text":"漲價首季入帳確認","type":"加碼","maps_to":"H2","metric":"2027 Q1 Non-IFRS 毛利率年增","threshold":"≥3 點且管理層確認漲價已入帳","action":"加碼至 3%","source_freq":"季報","date":"2027-05"},{"n":10,"text":"年度複審","type":"複審日期","maps_to":null,"metric":"FY2026 年報與 2027 全年展望","threshold":"財報公布","action":"重跑完整判斷","source_freq":"年度","date":"2027-02"}],"kill_metrics":[{"metric":"公司稼動率（法說揭露）","bear_threshold":"連 2 季 <80% 且 Non-IFRS 毛利率年減 >3 點","window":"連 2 季","source":"公司季度法說與新聞稿","last_status":"ok"},{"metric":"季度 Non-IFRS 毛利率","bear_threshold":"2027 上半年任一季 <30%","window":"2027 Q1–Q2","source":"公司季報新聞稿","last_status":"ok"},{"metric":"通訊基建與資料中心營收年增","bear_threshold":"連 2 季 <30%","window":"2027 起每季","source":"公司季報終端市場揭露","last_status":"ok"},{"metric":"全球純晶圓代工份額","bear_threshold":"跌破 3.0%（沿用前份）","window":"連 2 季","source":"Counterpoint Research 純代工份額季報","last_status":"warning"},{"metric":"ROIC（稅後營業利益÷投入資本）","bear_threshold":"FY2026–28 連 3 年 <9%（沿用前份）","window":"年度","source":"年報自算；投入資本事實表未涵蓋，資料缺口","last_status":"unknown"},{"metric":"調整後 FCF 利潤率","bear_threshold":"全年 <5% 連 2 年","window":"年度","source":"公司季報與年報","last_status":"ok"}],"evidence_dismissed":[{"ref":"competitive_share_entrants#5","reason":"Simply Wall St 社群使用者撰寫的敘事，不是公司或研究機構資料，未附任何數據；該則也自承未找到 2026 年針對 GF 的具名新進入者。可查證的部分已由 Counterpoint 份額與 TrendForce 中國擴產兩項機構證據涵蓋"}],"decision_out":{"role":"追蹤","row_hit":"8(val爭議)","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":true,"basis":"ma='❌'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟡', moat_trend='→', week26=-1.02, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='循環/商品', cycle_position='中循環', moat='C', moat_trend='→', cycle_gates_pass=False"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈機械讀數判定不可用，baseline rows 8/9/9b/10 的估值條件視為不可判 → 落 row8 觀望（保守方向）","hit":true,"basis":"val_denominator_disputed=True, val(機械讀數)='🟡'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":["row4：週線❌，進場節奏強制分批（starter 1/3＋趨勢確認後加碼），頁首掛「⚠️ 週線趨勢未確認，逢回分批勿接刀」"],"holding_cap":"3%","requires_critic":[],"verdict":"觀望","rearm_trigger":"2026 Q3 實績 Non-IFRS 毛利率 ≥30% 且 Q4 指引 ≥31%、通訊基建與資料中心全年年增 50% 以上維持 → 重跑判斷後進場首倉","exec_line":"觸發後首倉 1.5%；2027 Q1 漲價入帳、毛利率年增 ≥3 點再加到 3%。股價先跌但毛利率路徑無損，則分批反買，不停損；股價先漲而證據未到，則不追"},"reasoning":{"industry":"Q2 2026 營收 17.86 億美元（季增 9%、年增 6%），Non-IFRS 營益率 16.7%、GAAP 營益率 9.7%，Non-IFRS 毛利率 29.9%（年增 4.7 點）；Q3 營收指引 18.85 億美元，毛利率約 30.5%。收錢方式：製造服務約 89%（按晶圓計價，Q2 出貨約 62.5 萬片 12 吋約當，年增 8%），技術服務約 11%（IP、授權、光罩、工程服務，毛利率顯著高於公司平均）。終端市場（Q2 占比／年增）：智慧行動約 36%／−6%，車用約 19%／−10%，家用與工業 IoT 約 19%／+10%，通訊基建與資料中心約 16%／+62%。錢卡在特殊製程平台的產能與認證：SiGe 超額認購至 2027，矽光子供不應求，2027 起多條技術線的漲價入帳。這些都不在先進製程，所以 TTM 營益率 11.6% 約為台積電 56.1% 的五分之一。單點依賴：上游 SOI 晶圓約 71% 來自單一供應商（二手摘要，未核申報原文），這是集中度風險，不是護城河；下游兩大客戶 FY2024 各占 16%、11%，前十大約占出貨三分之二（2021），未見單一客戶超過四成。產業時鐘在擴張期：8 吋稼動率由 2025 年約 80% 升向 2026 年近 90%，2026 Q1→Q2 成熟製程報價漲 5–15%，GF 自身稼動率在高 80% 區，仍有約 10 點空間。","moat":"機制是特殊製程平台的設計導入與多年認證所形成的轉換成本，再加上美國在地可信賴代工資格。方向證據：2025 年 500 件設計案中 95% 為單一來源（2026-05-07 投資人日 CEO）；2026 Q1 設計案年增 50%；Q2 新增 7 件光網路設計案；矽光子客戶逾 40 家（2026-09-08 CEO）。但利潤率對照同業顯示定價力有限：GF 的 TTM 毛利率 27.1%、營益率 11.6%、FCF 利潤率 11.5%，聯電分別為 30.6%、20.1%、23.6%，台積電營益率 56.1%。同業 ROIC 未收，改以營益率差代替，GF 對聯電落後約 8.5 點。份額方面，Counterpoint 純代工份額 2024Q4 約 5% → 2026Q1 約 3%，主因是 AI 先進製程把產業規模拉高 30%，但這仍是有來源的份額下降，所以趨勢不標擴大。評分：執行力 7（Q2 營收與毛利率高於指引上緣，提前達成 30% 毛利率）；定價力 5（2027 漲價已談定，但 2022–25 缺貨高峰年度毛利率也不超過 28.4%）。當期報酬屬低利益率×低周轉：TTM 營益率 11.6%，稅率十幾 %，稅後營業利益約占營收 10%；投入資本事實表未涵蓋。","growth":"成長拆解：以量（Q2 晶圓出貨年增 8%）＋組合（資料中心光學與技術服務毛利率較高）為主；價格 2027 才入帳；併購（MIPS＋ARC）貢獻技術服務增量 1.0–1.2 億美元，約占 2026 營收 1.5%；回購在 Q1 4 億美元後，授權只剩約 1 億美元。共識 EPS：FY2026E 1.96、FY2027E 2.63、FY2028E 3.56（Koyfin 2026-10-08，近 3 個月 FY1 上修 3.2%）。以 FY2025A GAAP 稀釋 EPS 1.59 為基期，年化約 30.8%（口徑不一致，會高估）；以 FY2026E 起算，兩年年化約 34.8%。同期營收：2026 全年推估約 74 億美元（Q1 由 Q2 季增 9% 回推，Q4 依 CFO 認可的約一成季增推估），較 2025 年 67.9 億增約 9%。缺口：共識約 31% 減內生上界約 15%（假設值），約 16 點，歸因毛利率擴張。管理層的橋接是 2026 約 30% → 2028 年底 40%：組合 5–6 點、成本 1–2 點、折舊約 −1 點（2026-05-07 投資人日）。這可以歸因，不屬於依賴重新評價；但它是管理層目標，不是已實現。跑道：CEO 稱 2030 年資料中心光鏈約七成光學化，GF 估 2030 年通訊基建與資料中心可服務市場約 110 億美元、矽光子 2030 目標 20 億美元；滲透率數據事實表未涵蓋，跑道年數無法計算。衰退訊號亮 2 個：核心市占縮減、EPS 成長遠快於營收。","governance":"現金流：Q2 營業現金流 4.05 億美元，淨資本支出（扣政府補助）4.08 億美元，約占營收 23%，調整後 FCF −300 萬美元。CFO 維持 2026 全年調整後 FCF 利潤率約 10%，資本支出偏 15–20% 高端；CEO 稱 2027 再增。FCF／淨利：FY2025 約 1.14（10.09÷8.85 億美元）；FY2024 淨利為負，不適用；FY2023 約 0.31。股權報酬：Q2 占 GAAP 營業利益 49.4%，約營收 4.8%；Q3 指引約 0.76 億美元（約營收 4%）。2026 年迄今現金去向：資本支出、Q1 回購 4 億美元、ARC 併購 4.55 億美元（含現金 4.4 億）、7 月起季配 0.12 美元（年化約 2.7 億美元）。資產負債：現金與有價證券約 33 億美元，負債 11 億美元，10 億美元循環額度未動用。三項計分：併購已實現報酬未過，回購收益率未過，股數淨稀釋過。資本回饋框架是最多回饋 50% 投資後 FCF。","valuation":"現價 48.24 美元：FY2026E 24.6 倍，FY2027E 18.3 倍（48.24÷2.63），FY2028E 13.6 倍（÷3.56）。Trailing 37.7 倍是三個年度端點中最高；P/S 3.88 倍、EV/S 3.78 倍分別落在四個年度端點的 72.5 與 62.2 分位（非五年連續分位，五年分位事實表未涵蓋）。PEG：FY1 前瞻 24.6 倍 ÷ 三年 EPS 年化約 30.8，約 0.80；但這段成長來自毛利率而非量，分母又含股權報酬，不能當便宜依據。分母爭點：Q2 股權報酬約占 GAAP 營業利益 49%。以 Q3 指引約 0.76 億美元年化、5.56 億股計，每股稅前約 0.55 美元、稅後約 0.47 美元；扣回後 FY2027E 約 2.16 美元，本益比約 22 倍。短期（12 個月）：FY2027E 基準 2.55 美元 × 20 倍＝51 美元，+5.7%。中期（3 年）：FY2028E 基準 3.25 × 18 倍＝58.5 美元，+21.3%。賣方 21 位平均目標價 80.24 美元（高 125、低 60，全距約 2.1 倍），高於現價 66%，方向較樂觀；但各聚合站快照不一（Benzinga 平均 63），不作依據。共識近 3 個月 FY1 上修 3.2%，FY2、FY3 微幅上修，股價卻自 5 月 74 美元跌三成以上，屬投資人日後的倍數回吐，不是盈餘下修。","premortem":"看錯的三條路已寫進反證紀錄。一、2027–28 二次下行：2024 年營收 −9%、毛利率 −390bp、Malta 減損 9.35 億美元，是前例。二、成長兌現，卻被資本支出與股權報酬吃掉。三、30% 毛利率已高於 2022–25 任一年度，可能是週期高點而非新底。價值陷阱評估亮兩燈（核心份額縮減、EPS 遠快於營收），給 🟡。回撤參照：2024 年初至 9 月 −36%；2026-05 至 10 月約 −34%，期間共識未下修。"},"plain":{"six":{"how_it_makes_money":"賺晶片設計商外包製造的錢：約 89% 是按晶圓計價的製造服務，11% 是 IP 與工程服務。利潤卡在 SiGe、矽光子、FDX、BCD 這類特殊製程的產能與認證，不在先進製程。","moat":"護城河方向持平（→），等級 C。特殊製程設計案多為單一來源、光學與 SiGe 產能供不應求，這些是真的；但利潤率長期低於同為成熟製程的聯電，純代工份額也由 5% 降到 3%，不足以標擴大。","growth":"五年後跑道中等（🟡）。資料中心光學與技術服務是有來源的第二曲線，但合計占營收不到三成；共識三年 EPS 年化約 31%，大半靠毛利率由 30% 往 40% 擴張，而非再投資。","capital":"資本配置中等：股數四年大致持平，也開始配息；但 2026 資本支出翻倍到營收 15–20% 高端，ARC 併購的增量營收只夠抵銷新增研發，Q1 回購 4 億美元的買入收益率偏低。","valuation":"現價要求 FY2028 Non-IFRS EPS 約 3.5 美元兌現，毛利率 2027 起續升。我只部分相信：資料中心光學與漲價有來源，但 40% 毛利率仍是管理層目標，基準年化約 7–8%，價格合理，不便宜。","how_wrong":"最可能看錯在把週期高點的毛利率當成結構水準：2027–28 中國 12 吋成熟產能放量、手機持續疲弱時，資料中心光學這塊不到兩成的營收，撐不住整體稼動率。"}},"decision_inputs":{"signal":"B","ma":"❌","cycle_position":"中循環","cycle_verdict":"未觸發","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":false,"cycle_gates_pass":false,"qc49_inherit_prior":null,"wait_for_price":true,"wait_for_price_condition":"等 2026 Q3 實績（2026-11）確認 Non-IFRS 毛利率 ≥30% 與 Q4 指引 ≥31%；不設價格線，股價先漲回 60 美元以上而證據未到則不追","trap":"🟡","val":"🟡","moat":"C","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"循環/商品","price_at_dd":48.24,"week26_return_pct":-1.02,"consensus_rev_3m_pct":3.16,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"共識 EPS 推定為 Non-IFRS，排除股權報酬；Q2 股權報酬約占 GAAP 營業利益 49%，GAAP 營益率 9.7% 對 Non-IFRS 16.7%。以 Q3 指引約 0.76 億美元年化、5.56 億股計，每股稅前約 0.55 美元；扣回後 FY2027E 本益比由 18 倍升到約 22 倍，以 18 倍論證便宜不成立"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"guidance","event":"2026 Q3 財報與 Q4 指引","impact":"高","watch":"毛利率 ≥30%、通訊基建與資料中心全年 50–60% 是否維持、車用 Q4 是否補回"},{"date":"2027-02","date_precision":"month","type":"guidance","event":"FY2026 財報與 2027 展望","impact":"高","watch":"2027 毛利率展望、漲價幅度、資本支出占營收、FCF 利潤率"},{"date":"2027-05","date_precision":"month","type":"guidance","event":"2027 Q1 財報（漲價首季入帳）","impact":"高","watch":"毛利率年增幅度與稼動率"},{"date":"2027-06","date_precision":"month","type":"regulatory","event":"對中國半導體關稅據報生效（Wedbush 轉述，未核政府原文）","impact":"中","watch":"美國客戶轉向在地代工的訂單變化"},{"date":"2027","date_precision":null,"type":"product","event":"近封裝光學開始放量（CEO 時程）","impact":"中","watch":"SCALE 平台設計案轉量產的件數"},{"date":null,"date_precision":null,"type":"regulatory","event":"ITC 對 Tower 製晶片的專利侵權調查裁決","impact":"中","watch":"排除令是否成立"}],"_projected_from":"v19"}
+```

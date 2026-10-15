@@ -9,15 +9,15 @@
 | **Orchestrator（主線程大腦）** | **opus**（路由判斷、並行 session git 風險判讀、A/B 與衝突裁定；不因「只是跑 pipeline」降級） |
 | **DD 深度報告 writer（stock-analyst / ddreport）、多檔並行生產批** | **sonnet**（2026-08-08 起全面採用、無升 opus 例外，見下） |
 | **DD 寫稿後 critic（QC-41 / QC-48 / QC-50 / row 8b）** | **opus**＋強化職責書（見下） |
-| **v20 DD（2026-09-17 起預設，並行期一週）** | 入口 `scripts/dd2/run.py`（skill `ddreport` v5.1，2026-09-23 持有人改：Fable 太貴）：採證 **sonnet** 每軸一通／判斷 **opus** 單輪預設思考／閘 **sonnet** 單輪＋一通 patch map（AMD 實測判斷 $1.5／6.5 分、閘每輪 $0.5）／散文 **sonnet** 前後半並行；週線均線六態與程式欄漂移歸因由程式算；舊鏈 `ddreport.py run` 保留一週，任一檔出現舊鏈不會有的失敗即回退並記錄 |
-| **v17 DD（舊鏈，並行期保留）** | Stage 0／0e **sonnet**／判斷 **Fable**／閘 **opus**／快速版零 LLM／散文（`--full`）**sonnet**；orchestrator 只跑一條指令（**2026-09-06 持有人拍板維持**：opus 判斷 A/B（FIX 同證據包）思考 89K 對 Fable 22K、31 分對 13 分、$5.5 對 $5.6，還寫壞 JSON——判斷留 Fable、其餘便宜模型；指揮 session 用 opus，勿用 Fable，DD 批次用 `ddreport.py batch` 跑完只讀摘要） |
+| **v20 DD（2026-09-17 起預設；2026-10-13 舊鏈正式退役）** | 入口 `scripts/dd2/run.py`（skill `ddreport` v5.1，2026-09-23 持有人改：Fable 太貴）：採證 **sonnet** 每軸一通／判斷 **opus** 單輪預設思考／閘 **sonnet** 單輪＋一通 patch map（AMD 實測判斷 $1.5／6.5 分、閘每輪 $0.5）／散文 **sonnet** 前後半並行；週線均線六態與程式欄漂移歸因由程式算；9/17 起 42 份 DD 全走 v20、無回退紀錄，舊鏈於 2026-10-13 正式退役 |
+| **v17 DD（舊鏈，2026-10-13 已退役；以下為歷史紀錄）** | Stage 0／0e **sonnet**／判斷 **Fable**／閘 **opus**／快速版零 LLM／散文（`--full`）**sonnet**；orchestrator 只跑一條指令（**2026-09-06 持有人拍板維持**：opus 判斷 A/B（FIX 同證據包）思考 89K 對 Fable 22K、31 分對 13 分、$5.5 對 $5.6，還寫壞 JSON——判斷留 Fable、其餘便宜模型；指揮 session 用 opus，勿用 Fable，DD 批次用 `ddreport.py batch` 跑完只讀摘要） |
 | 產業 ID / 供應鏈 / macro 新報告寫稿（重研究、判斷密集） | opus（**維持不動**，DD 的證據不外推到此列） |
 | ID / macro / synthesis 的 cold-review critic（industry-thesis-critic、id-review） | sonnet（該列 writer 仍是 opus，故 critic 維持 sonnet） |
 | 報告可讀性打磨 / 中文改寫潤色（如 macro 打磨） | sonnet |
 | 大型 PDF 平行讀取拆 digest | sonnet |
 | 網站樣板 / 資料同步 / 機械層 script（無判斷） | sonnet |
 
-**註記**：v16.2 試點期間本表 DD writer／critic 兩列不適用於 `ddreport --v16`（該鏈流程內無 critic，判斷與呈現拆成兩個 agent；設計稿 `notes/site-internal/dd/_v16_design_spec_20260903.md` §13、§16）。 **2026-09-05 持有人拍板：任何 DD 觸發語（「跑 X dd report」「ddreport X」「X DD」「X 全套」）預設一律走 repo 內最新版管線（現為 v16.2 三步制），不需帶 `--v16` 旗標；ddreport／stock-analyst SKILL.md 的預設文字若落後，以本條為準。用戶明講「v15」「舊鏈」才走 v15.2。** 同日拍板 v17：預設產物快速版，完整版 `--full`；入口 `scripts/ddreport.py`；skill 合併為 `ddreport` v4.0。
+**註記**：v16.2 試點期間本表 DD writer／critic 兩列不適用於 `ddreport --v16`（該鏈流程內無 critic，判斷與呈現拆成兩個 agent；設計稿 `notes/site-internal/dd/_v16_design_spec_20260903.md` §13、§16）。 **2026-09-05 持有人拍板：任何 DD 觸發語（「跑 X dd report」「ddreport X」「X DD」「X 全套」）預設一律走 repo 內最新版管線（現為 v20，`scripts/dd2/run.py`），不需帶 `--v16` 旗標；ddreport／stock-analyst SKILL.md 的預設文字若落後，以本條為準。用戶明講「v15」「舊鏈」才走 v15.2。** 同日拍板 v17：預設產物快速版，完整版 `--full`；入口 `scripts/ddreport.py`；skill 合併為 `ddreport` v4.0。
 
 **v17 起本段僅適用 `--full` 散文段；判斷層＝Fable、閘＝opus，kill condition 見 rule_ledger「v17 Stage 1G」列。**
 
@@ -162,7 +162,7 @@ Agent({
 - dd-meta v13：新增決策層欄位 `dca_verdict`/`dca_role`/`moat_trend`（權威）/`runway_post_y5`/`ev5y_pct`（+ 選填 `irr_base_pct`/`max_dd_pct`），下游聚合器直接讀
 - Research 頁同步：跑 `python scripts/update_dd_index.py` 後，「定見」欄連到該 ticker 報告的 `/dd/DD_X.html#decision` 錨點
 
-**Legacy**：343 份既有 `docs/dca/DCA_*.html` 凍結保留、仍在站上，下游以 dual-read 支援（v13 dd-meta 優先，讀不到才 fall back legacy DCA）。設計細節見 `docs/_handoff_v13_dd_design_20260621.md`。
+**Legacy（2026-10-13 起自網站移除）**：343 份既有 DCA 檔已搬到 `_archived/dca/`，原 `docs/dca/DCA_*.html` URL 改為 noindex meta-refresh 轉址樁（指向該 ticker 最新 DD 的 `#decision`，無 DD 則到 /research/）。下游不再讀檔：舊檔的 5Y EV 與護城河趨勢凍結在 `data/legacy_dca_frozen.json`（v13+ 的 dd-meta 仍優先疊加），數字與排名與移除前逐列相同；dd-meta 欄位 `dca_verdict`／`dca_role` 照舊不改名。設計細節見 `docs/_handoff_v13_dd_design_20260621.md`。
 
 ## Workflow: 產業 DS — 已退役（2026-06-11 併入 industry-analyst v2.0）
 
@@ -220,10 +220,10 @@ DS 觸發語現一律觸發 `industry-analyst`；legacy DS 維護走 `id-review 
 
 **Plumbing**：
 - `scripts/validate_supply_chain_meta.py`：驗 `docs/supply-chain/data/*.json`（pre-commit hook 會跑、staged-only；validator 自身變動時 full-sweep 全部 topic）
-- `scripts/build_supply_chain_dd_index.py`：scan docs/dd/ 重建 `dd_links.json`。**已掛 update_dd_index.py 自動鏈** — 跑 DD/DCA 同步時會自動 rebuild 一次，不需手動。
+- `scripts/build_supply_chain_dd_index.py`：scan docs/dd/ 重建 `dd_links.json`。**已掛 update_dd_index.py 自動鏈** — 跑 DD/DCA 同步時會自動 rebuild 一次，不需手動。 另 `.github/workflows/dd-downstream-sync.yml`（DD 推上 main 即觸發＋每日 20:37 台北兜底）會在 CI 重生並 commit `dd_links.json`、`search-index.json`＋首頁最新發布條、`rss.xml`、track-record 三檔（含 `data/track_record_prices.json`）；本機鏈跑出的這些檔不必再手動補 commit。
 - engine 完全抽離（`assets/engine.{css,js}`），新 topic 不需動 code
 
-**現況**：CoWoS（31 nodes 3 列）+ CPO（19 nodes 5 列）兩個 topic 上線；剩下 13 個 topic 在 manifest 中標 `active: false`（HBM / 先進製程 / 矽光子 / 面板級封裝 / IC 設計 / 半導體材料 / ASIC / IC 基板 / 電源散熱 / AI 伺服器 ODM / 機器人 / 低軌衛星 / 軍工國防）。
+**現況**：manifest 共 40 個 topic，全部 `active: true` 上線（2026-10-13 核對）。
 
 ## Workflow: 擁擠交易監測（crowding monitor）
 
@@ -252,9 +252,9 @@ DS 觸發語現一律觸發 `industry-analyst`；legacy DS 維護走 `id-review 
 
 當用戶說「跑市況判讀」/「market read」/「本週市況判讀」/「更新市況主控台判讀」時，自動觸發 `market-read` skill（`.claude/skills/market-read/`）。
 
-**定位**：`/market/` 兩層＝機械證據層（`build_market_state.py` 日更零 LLM，含 `evidence` 塊）＋判讀層（本 skill）。**判讀由 orchestrator 自己寫（opus 級），不外包 sonnet、不上 cron**；週頻＋事件觸發（壓力分數週變動 ≥10／引信觸及／VIX ≥25／判讀過期 10 天）。輸出 `docs/market/data/read.json`（三股力量／傳導／部位／類比／三框架機率／證偽表／與表格分歧），機械 critic `scripts/check_market_read.py` 過後以 `ledger_from_editorial.py --source market-read` 落 5–8 張命題進帳簿（前四張型別凍結：3m／6m／12m 方向＋3m 回撤 10%），同尺 SPRT 記分、判紅降為評論。設計稿 `notes/site-internal/root/_market_read_design_20260903.md`。**2026-09-03 起另有全自動路徑**：雲端 routine `market-read-auto`（每日 08:00 台北，週一必跑、其餘日期由 `scripts/check_read_triggers.py` 事件觸發判定）依 skill 的「Auto 模式」跑完整判讀鏈並自行 commit push，判讀結果的 email 摘要由 `.github/workflows/market-read-notify.yml`（push 觸發、零 LLM）寄出。
+**定位**：`/market/` 兩層＝機械證據層（`build_market_state.py` 日更零 LLM，含 `evidence` 塊）＋判讀層（本 skill）。**判讀由 orchestrator 自己寫（opus 級），不外包 sonnet、不上 cron**；週頻＋事件觸發（壓力分數週變動 ≥10／引信觸及／VIX ≥25／判讀過期 10 天）。輸出 `docs/market/data/read.json`（三股力量／傳導／部位／類比／各期限文字判讀／證偽表），機械 critic `scripts/check_market_read.py` 過後即可。**2026-10-13 起已降為文字評論**（SPRT 判紅，`rule_ledger` #137）：不寫機率、不落帳（`mode: commentary`），歷史命題與記分保留。設計稿 `notes/site-internal/root/_market_read_design_20260903.md`。**2026-09-03 起另有全自動路徑**：雲端 routine `market-read-auto`（每日 08:00 台北，週一必跑、其餘日期由 `scripts/check_read_triggers.py` 事件觸發判定）依 skill 的「Auto 模式」跑完整判讀鏈並自行 commit push，判讀結果的 email 摘要由 `.github/workflows/market-read-notify.yml`（push 觸發、零 LLM）寄出。
 
-**硬規則**：描述器紀律（禁買賣指令語）；每個判斷句錨定 ref＋as_of；與帳簿表格分歧必寫；歷史類比必附不同之處；白話全形；不改機械層任何檔；git flow＝做完停下複審、用戶說 push 才 commit。
+**硬規則**：描述器紀律（禁買賣指令語）；每個判斷句錨定 ref＋as_of；歷史類比必附不同之處；白話全形；不改機械層任何檔；git flow＝做完停下複審、用戶說 push 才 commit。
 
 ## Workflow: 總經深度報告（macro-analyst）
 
@@ -265,6 +265,10 @@ DS 觸發語現一律觸發 `industry-analyst`；legacy DS 維護走 `id-review 
 **輸出**：`docs/macro/MACRO_{Slug}_{YYYYMMDD}.html`（macro-meta JSON schema=macro-v1）＋ `docs/macro/index.html` insert 卡片＋critic 報告 `notes/site-internal/macro/`；上站 `https://research.investmquest.com/macro/`。低頻深度層（每月 0-2 份，不做週期性自動產出）。
 
 **硬規則**：中文標點全形；T1（Fed/FRED/Treasury/BLS/IMF/BIS 一手）floor 45%；每數字帶來源＋as-of；**證偽表每條必附現值＋as-of**（v1.1，查不到現值不准上表）；**站內引用忠實性**（v1.1，原文的分歧／保留不得轉述為一致）；**數據紀律八條**（v1.2：轉引 T1 條款／T1 結構天花板聲明／T3 現值取捨／觸及紀錄與當局行動強制查證／證據新鮮度標籤／carry-forward 數字二次查證／質性 base rate 出口／衝突數字割捨）；寫稿後強制 cold-review critic（7 條 checklist＋數字抽查；writer 不得自任 critic）；判斷類規則已登記 rule_ledger（stance 反騎牆＋證偽表強制＋tool-level 90 天引用 kill）；git flow＝預設停下複審、用戶說 push 才 commit。
+
+## Workflow: 投資想法頁（/ideas/）
+
+寫新想法、整頁改寫或補舊頁時，照 `idea-writing` skill（`.claude/skills/idea-writing/`）：四個視角必走、五題必答、反方由 sonnet 獨立冷讀。寫完後的每日追蹤歸 `idea-watch`。此為寫作紀律非裁決閘，不適用 rule_ledger 登記。
 
 ## Report 篇幅預算（下界＝深度閘門，上界＝token 成本預算）
 

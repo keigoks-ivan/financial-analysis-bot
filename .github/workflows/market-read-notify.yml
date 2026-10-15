@@ -38,8 +38,33 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Skip if this read was already notified
+        id: dedupe
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # 只有 read.json 換了新一份判讀（generated_at 變）或 read_status.json
+          # 內容變了才寄；同一份判讀後來被手動修字的 push 不重寄。
+          # 抓不到上一版（首推、force push）就照寄。
+          key() { python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('generated_at',''))" "$1"; }
+          NEW="$(key docs/market/data/read.json)|$(cat docs/market/data/read_status.json)"
+          OLD=""
+          if git fetch -q --depth=1 origin "$BEFORE" 2>/dev/null; then
+            mkdir -p .prev
+            git show "$BEFORE:docs/market/data/read.json" > .prev/read.json 2>/dev/null \
+              && git show "$BEFORE:docs/market/data/read_status.json" > .prev/read_status.json 2>/dev/null \
+              && OLD="$(key .prev/read.json)|$(cat .prev/read_status.json)"
+          fi
+          if [ -n "$OLD" ] && [ "$OLD" = "$NEW" ]; then
+            echo "send=false" >> "$GITHUB_OUTPUT"
+            echo "Same read (generated_at + status unchanged) — skip email／Discord."
+          else
+            echo "send=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build market-read summary (HTML + text + subject)
         id: summary
+        if: steps.dedupe.outputs.send == 'true'
         run: |
           OUTPUT="$(python3 scripts/market_read_summary.py --html market_read_mail.html --text market_read_mail.txt)"
           SUBJECT="$(printf '%s\n' "$OUTPUT" | sed -n '1p')"
@@ -51,6 +76,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Email market-read summary
+        if: steps.dedupe.outputs.send == 'true'
         uses: dawidd6/action-send-mail@v3
         continue-on-error: true
         with:
@@ -66,6 +92,7 @@ jobs:
           body: file://market_read_mail.txt
 
       - name: Discord notify (market read)
+        if: steps.dedupe.outputs.send == 'true'
         continue-on-error: true
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_MARKET }}

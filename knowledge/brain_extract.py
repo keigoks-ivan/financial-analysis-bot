@@ -632,7 +632,7 @@ def discover():
     add("docs/dd/DD_*.html", "dd", ex_dd)
     # v17 快速版（同 dd-meta schema，多 "brief":true）——來源型別仍記 "dd"，帳本不分快慢。
     add("docs/dd/brief/BRIEF_*.html", "dd", ex_dd)
-    add("docs/dca/DCA_*.html", "dca", ex_dca)
+    add("_archived/dca/DCA_*.html", "dca", ex_dca)  # 2026-10-13 docs/dca 退役，封存於此
 
     id_files = sorted(glob.glob(str(REPO / "docs/id/ID_*.html")))
     id_names = {os.path.basename(f) for f in id_files}

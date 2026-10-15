@@ -60,6 +60,18 @@ def cagr_pct(ratio, years=YEARS):
     return (ratio ** (1.0 / years) - 1.0) * 100.0
 
 
+def _safe_cagr(ratio, years=YEARS):
+    """cagr_pct 的不拋例外版：基期比率不是正數（虧損起點、終端為零）時回 None。"""
+    if ratio is None or ratio <= 0:
+        return None
+    return cagr_pct(ratio, years)
+
+
+def is_sales_mode(data):
+    """2026-10-12（CRWV 案）：valuation_basis == "sales_multiple" 走 EV/S 情境樹，其餘一律現行 EPS×本益比。"""
+    return (data or {}).get("valuation_basis") == "sales_multiple"
+
+
 def compute_one(price, start, yield_pct, key, s):
     eps_path = s["eps_path"]
     if not eps_path:
@@ -67,13 +79,20 @@ def compute_one(price, start, yield_pct, key, s):
     terminal_eps = eps_path[-1]
     terminal_pe = s["terminal_pe"]
     p = s["p"]
-    terminal_price = terminal_eps * terminal_pe
+    # 2026-10-12：終端股權價值不為負（Bear 終端 EPS≤0／pe=0＝股權算零）。正值情境與改前逐位相同。
+    terminal_price = max(0.0, terminal_eps * terminal_pe)
     five_y_pct = (terminal_price / price - 1.0) * 100.0
-    irr_ex_div = cagr_pct(1.0 + five_y_pct / 100.0)
-    eps_contrib = cagr_pct(terminal_eps / start["eps"])
-    rerate_contrib = cagr_pct(terminal_pe / start["pe"])
+    irr_ex_div = -100.0 if terminal_price <= 0 else cagr_pct(1.0 + five_y_pct / 100.0)
+    if terminal_price <= 0:
+        eps_contrib = rerate_contrib = None
+    else:
+        eps_contrib = _safe_cagr(terminal_eps / start["eps"]) if start.get("eps") else None
+        rerate_contrib = _safe_cagr(terminal_pe / start["pe"]) if start.get("pe") else None
     yield_total = ((yield_pct or {}).get("dividend") or 0.0) + ((yield_pct or {}).get("net_buyback") or 0.0)
-    ex_div_total = ((1.0 + eps_contrib / 100.0) * (1.0 + rerate_contrib / 100.0) - 1.0) * 100.0
+    if eps_contrib is None or rerate_contrib is None:
+        ex_div_total = irr_ex_div  # 拆解不成立（終端為零／起點虧損）時以實際不含息 IRR 代表
+    else:
+        ex_div_total = ((1.0 + eps_contrib / 100.0) * (1.0 + rerate_contrib / 100.0) - 1.0) * 100.0
     incl_div_total = ex_div_total + yield_total
     return {
         "key": key,
@@ -93,18 +112,80 @@ def compute_one(price, start, yield_pct, key, s):
     }
 
 
+def compute_one_sales(price, start, yield_pct, key, s, net_debt_now, shares_now):
+    """sales_multiple 模式單一情境：終端價＝max(0,(終端營收×終端 EV/S − 終端淨負債)÷終端稀釋股數)。
+    net_debt_y5／shares_y5 為 None＝沿用目前值。"""
+    rev_path = s["rev_path"]
+    if not rev_path:
+        raise ValueError(f"{key} rev_path 為空")
+    terminal_rev = rev_path[-1]
+    ev_s = s["terminal_ev_s"]
+    nd = s.get("net_debt_y5")
+    if nd is None:
+        nd = net_debt_now
+    sh = s.get("shares_y5")
+    if sh is None:
+        sh = shares_now
+    if nd is None:
+        raise ValueError(f"{key} net_debt_y5 為 null 且事實表無目前淨負債（f_net_debt_m）可沿用")
+    if not sh or sh <= 0:
+        raise ValueError(f"{key} shares_y5 為 null／非正數且事實表無目前稀釋股數（f_shares_diluted_m）可沿用")
+    p = s["p"]
+    terminal_ev = terminal_rev * ev_s
+    terminal_equity = terminal_ev - nd
+    terminal_price = max(0.0, terminal_equity / sh)
+    five_y_pct = (terminal_price / price - 1.0) * 100.0
+    irr_ex_div = -100.0 if terminal_price <= 0 else cagr_pct(1.0 + five_y_pct / 100.0)
+    rev_contrib = multiple_contrib = None
+    if terminal_price > 0:
+        start_rev = start.get("rev")
+        if start_rev and shares_now:
+            rev_contrib = _safe_cagr((terminal_rev / sh) / (start_rev / shares_now))
+        if start.get("ev_s"):
+            multiple_contrib = _safe_cagr(ev_s / start["ev_s"])
+    yield_total = ((yield_pct or {}).get("dividend") or 0.0) + ((yield_pct or {}).get("net_buyback") or 0.0)
+    # 槓桿使「營收×倍數」恆等式不成立（淨負債吃掉股權）：不含息合計直接取實際 IRR，不做 GUARDRAIL。
+    ex_div_total = irr_ex_div
+    return {
+        "key": key,
+        "rev_path": rev_path,
+        "terminal_rev": terminal_rev,
+        "terminal_ev_s": ev_s,
+        "net_debt_y5": nd,
+        "shares_y5": sh,
+        "terminal_ev": terminal_ev,
+        "terminal_equity": terminal_equity,
+        "terminal_price": terminal_price,
+        "five_y_pct": five_y_pct,
+        "irr_ex_div": irr_ex_div,
+        "rev_contrib": rev_contrib,
+        "multiple_contrib": multiple_contrib,
+        "yield_total": yield_total,
+        "ex_div_total": ex_div_total,
+        "incl_div_total": ex_div_total + yield_total,
+        "p": p,
+        "basis": s.get("basis", ""),
+    }
+
+
 def compute(data):
     price = data["price"]
     start = data["start"]
     yield_pct = data.get("yield_pct", {"dividend": 0.0, "net_buyback": 0.0})
     scen = data["scenarios"]
-    rows = {k: compute_one(price, start, yield_pct, k, scen[k]) for k in ("bull", "base", "bear")}
+    sales = is_sales_mode(data)
+    if sales:
+        rows = {k: compute_one_sales(price, start, yield_pct, k, scen[k],
+                                     data.get("net_debt_now"), data.get("shares_now"))
+                for k in ("bull", "base", "bear")}
+    else:
+        rows = {k: compute_one(price, start, yield_pct, k, scen[k]) for k in ("bull", "base", "bear")}
 
     p_bull, p_base, p_bear = rows["bull"]["p"], rows["base"]["p"], rows["bear"]["p"]
     ev5y = (p_bull * rows["bull"]["five_y_pct"]
             + p_base * rows["base"]["five_y_pct"]
             + p_bear * rows["bear"]["five_y_pct"]) / 100.0
-    ev_annualized = cagr_pct(1.0 + ev5y / 100.0)
+    ev_annualized = cagr_pct(1.0 + ev5y / 100.0) if 1.0 + ev5y / 100.0 > 0 else -100.0
 
     bear_5y = rows["bear"]["five_y_pct"]
     if bear_5y >= 0 or not p_bear:
@@ -114,7 +195,7 @@ def compute(data):
 
     ten_y = {}
     ss = data.get("second_stage")
-    if ss:
+    if ss and not sales:  # sales 模式沒有 EPS 可延伸，二段停用
         for k in ("bull", "base"):
             g = ss.get(f"{k}_cagr_pct")
             if g is None:
@@ -134,12 +215,17 @@ def compute(data):
     val_dep = False
     # 2026-09-23 STX：re-rate −12.7%、合計 −4.8% 時比值 2.6 被誤標估值依賴——負負得正。
     # 規則本意是「報酬靠倍數擴張撐」，所以兩者都要是正的才算。
-    if base_row["ex_div_total"] > 0 and base_row["rerate_contrib"] > 0:
-        ratio = base_row["rerate_contrib"] / base_row["ex_div_total"]
+    # sales 模式同規則改看 multiple_contrib（終端 EV/S ÷ 起點 EV/S 的年化）。
+    rr_key = "multiple_contrib" if sales else "rerate_contrib"
+    if base_row["ex_div_total"] > 0 and base_row[rr_key] is not None and base_row[rr_key] > 0:
+        ratio = base_row[rr_key] / base_row["ex_div_total"]
         if ratio >= 0.40:
             val_dep = True
 
-    guardrail_diff = abs(base_row["ex_div_total"] - base_row["irr_ex_div"])
+    if sales or base_row["eps_contrib"] is None or base_row["rerate_contrib"] is None:
+        guardrail_diff = None
+    else:
+        guardrail_diff = abs(base_row["ex_div_total"] - base_row["irr_ex_div"])
 
     return {
         "rows": rows,
@@ -149,10 +235,64 @@ def compute(data):
         "ten_y": ten_y,
         "valuation_dependent": val_dep,
         "guardrail_diff_pp": guardrail_diff,
+        "valuation_basis": "sales_multiple" if sales else "eps_pe",
     }
 
 
+def validate_sales(data, result):
+    """sales_multiple 模式的驗證：現行 EPS 檢查的營收對應版（終端排序、機率、路徑長度、Bull 退化、價差門檻）。"""
+    fails, warns = [], []
+    rows = result["rows"]
+    bull, base, bear = rows["bull"], rows["base"], rows["bear"]
+    scen = data["scenarios"]
+
+    if not (bear["terminal_rev"] < base["terminal_rev"] < bull["terminal_rev"]):
+        fails.append(
+            f"終端營收排序不成立（須 Bear<Base<Bull）：Bear {bear['terminal_rev']} / "
+            f"Base {base['terminal_rev']} / Bull {bull['terminal_rev']}"
+        )
+
+    p_sum = bull["p"] + base["p"] + bear["p"]
+    if p_sum != 100:
+        fails.append(f"三情境機率加總 {p_sum} ≠ 100")
+    if bear["p"] < 20:
+        fails.append(f"p_bear {bear['p']} < 20")
+    if data.get("endo_ceiling_exceeded") and bear["p"] < 30:
+        fails.append(f"endo_ceiling_exceeded=true 但 p_bear {bear['p']} < 30")
+    if base["p"] > 50:
+        fails.append(f"p_base {base['p']} > 50")
+
+    for k in ("bull", "base", "bear"):
+        n = len(scen[k]["rev_path"])
+        if n != 5:
+            fails.append(f"{k} rev_path 長度 {n} ≠ 5")
+
+    bull_path, base_path = scen["bull"]["rev_path"], scen["base"]["rev_path"]
+    if len(bull_path) >= 2 and len(base_path) >= 2 and bull_path[0] == base_path[0] and bull_path[1] == base_path[1]:
+        fails.append(
+            "Bull 前兩年營收與 Base 相同＝情境退化，Bull 只靠終端倍數分岔；"
+            "Bull 路徑須自第 1 年起高於 Base"
+        )
+
+    if base["terminal_rev"]:
+        bull_over_base = bull["terminal_rev"] / base["terminal_rev"]
+        if bull_over_base < 1.15:
+            warns.append(
+                f"Bull 終端營收僅高於 Base {(bull_over_base - 1) * 100:.1f}%，"
+                f"價差主要來自倍數"
+            )
+
+    if base["irr_ex_div"] > 15:
+        warns.append(
+            f"base 不含息 IRR {base['irr_ex_div']:.1f}%/yr > 15%"
+            f"——罕見，須檢查機率分配是否過度樂觀"
+        )
+    return fails, warns
+
+
 def validate(data, result):
+    if is_sales_mode(data):
+        return validate_sales(data, result)
     fails, warns = [], []
     rows = result["rows"]
     bull, base, bear = rows["bull"], rows["base"], rows["bear"]
@@ -230,7 +370,40 @@ def _fmt_pct(x, suffix=""):
     return f"{x:+.1f}%{suffix}"
 
 
+def _fmt_pct_opt(x, suffix=""):
+    return "—" if x is None else _fmt_pct(x, suffix)
+
+
+def print_table_sales(data, result):
+    price = data["price"]
+    start = data["start"]
+    rows = result["rows"]
+    print(f"{data.get('ticker', '?')} 情境樹〔EV/S 模式〕（{data.get('date', '?')}，現價 {_fmt_price(price)}，"
+          f"起點營收 {start.get('rev')}（百萬）@ EV/S {start.get('ev_s')}x，"
+          f"終端年 {data.get('terminal_label', '')}）")
+    print("-" * 100)
+    for k in ("bull", "base", "bear"):
+        r = rows[k]
+        print(f"[{k.upper():5}] 終端營收={r['terminal_rev']:,.0f}  終端EV/S={r['terminal_ev_s']:.1f}x  "
+              f"終端EV={r['terminal_ev']:,.0f}  淨負債={r['net_debt_y5']:,.0f}  股數={r['shares_y5']:,.1f}  "
+              f"股權價值={r['terminal_equity']:,.0f}")
+        print(f"         5Y目標價={_fmt_price(r['terminal_price'])}  5Y%={_fmt_pct(r['five_y_pct'])}  "
+              f"不含息IRR={_fmt_pct(r['irr_ex_div'], '/yr')}  機率={r['p']}%")
+        print(f"         每股營收貢獻={_fmt_pct_opt(r['rev_contrib'], '/yr')}  "
+              f"倍數貢獻={_fmt_pct_opt(r['multiple_contrib'], '/yr')}  "
+              f"股息回購={_fmt_pct(r['yield_total'], '/yr')}  含息合計={_fmt_pct(r['incl_div_total'], '/yr')}")
+        if r.get("basis"):
+            print(f"         依據：{r['basis']}")
+    print("-" * 100)
+    ar_str = f"{result['ar']:.1f}" if result["ar"] is not None else "N/A（Bear 5Y%≥0）"
+    print(f"機率加權：EV5y={_fmt_pct(result['ev5y_pct'])}  年化={_fmt_pct(result['ev_annualized_pct'], '/yr')}  AR={ar_str}")
+    print(f"估值依賴型：{'是（倍數貢獻≥Base不含息合計40%）' if result['valuation_dependent'] else '否'}")
+    print("Guardrail：sales 模式不適用（槓桿使 營收×倍數 恆等式不成立）")
+
+
 def print_table(data, result):
+    if is_sales_mode(data):
+        return print_table_sales(data, result)
     price = data["price"]
     start = data["start"]
     rows = result["rows"]
@@ -254,7 +427,10 @@ def print_table(data, result):
     ar_str = f"{result['ar']:.1f}" if result["ar"] is not None else "N/A（Bear 5Y%≥0）"
     print(f"機率加權：EV5y={_fmt_pct(result['ev5y_pct'])}  年化={_fmt_pct(result['ev_annualized_pct'], '/yr')}  AR={ar_str}")
     print(f"估值依賴型：{'是（re-rate≥Base不含息合計40%）' if result['valuation_dependent'] else '否'}")
-    print(f"Guardrail 自洽差：{result['guardrail_diff_pp']:.2f}pp（(1+EPS)(1+re-rate)-1 vs 不含息IRR，≤0.1pp 為自洽）")
+    if result["guardrail_diff_pp"] is None:
+        print("Guardrail 自洽差：—（終端為零或起點虧損，拆解不成立）")
+    else:
+        print(f"Guardrail 自洽差：{result['guardrail_diff_pp']:.2f}pp（(1+EPS)(1+re-rate)-1 vs 不含息IRR，≤0.1pp 為自洽）")
     if result["ten_y"]:
         print("-" * 100)
         print("10Y 二段延伸：")
@@ -277,7 +453,61 @@ def print_validation(fails, warns):
         print(f"⚠ WARN：{w}")
 
 
+def build_html_sales(data, result):
+    rows = result["rows"]
+    terminal_label = html_lib.escape(str(data.get("terminal_label", "")))
+    start = data.get("start") or {}
+    lines = ['<div class="sec-irr">', "<table>", (
+        "<tr><th>情境</th><th>終端營收（百萬）</th><th>終端 EV/S</th><th>淨負債／股數（百萬）</th>"
+        "<th>終端每股價</th><th>5Y%</th><th>不含息 IRR</th><th>每股營收貢獻</th><th>倍數貢獻</th>"
+        "<th>含息合計</th><th>機率</th></tr>"
+    )]
+    if start:
+        lines.append(
+            "<tr><td>起點</td><td>{rev}</td><td>{evs}x</td><td></td><td>{price}</td>"
+            "<td></td><td></td><td></td><td></td><td></td><td></td></tr>".format(
+                rev=html_lib.escape(f"{start.get('rev'):,.0f}" if isinstance(start.get("rev"), (int, float)) else str(start.get("rev"))),
+                evs=html_lib.escape(str(start.get("ev_s"))), price=_fmt_price(data["price"]),
+            )
+        )
+    basis_items = []
+    for k, label in (("bull", "Bull"), ("base", "Base"), ("bear", "Bear")):
+        r = rows[k]
+        basis = html_lib.escape(str(r.get("basis", "")))
+        if basis:
+            basis_items.append("<li><strong>{0}</strong>：{1}</li>".format(label, basis))
+        path = " → ".join(f"{v:,.0f}" for v in r["rev_path"])
+        lines.append(
+            "<tr><td>{label}</td><td>{rev:,.0f}（{term}）<br><span class=\"mach\">{path}</span></td>"
+            "<td>{evs:.1f}x</td><td>{nd:,.0f} ／ {sh:,.1f}</td><td>{price}</td><td>{p5y}</td><td>{irr}</td>"
+            "<td>{rc}</td><td>{mc}</td><td>{incl}</td><td>{p}%</td></tr>".format(
+                label=label, rev=r["terminal_rev"], term=terminal_label, path=path,
+                evs=r["terminal_ev_s"], nd=r["net_debt_y5"], sh=r["shares_y5"],
+                price=_fmt_price(r["terminal_price"]), p5y=_fmt_pct(r["five_y_pct"]),
+                irr=_fmt_pct(r["irr_ex_div"], "/yr"), rc=_fmt_pct_opt(r["rev_contrib"], "/yr"),
+                mc=_fmt_pct_opt(r["multiple_contrib"], "/yr"), incl=_fmt_pct(r["incl_div_total"], "/yr"),
+                p=r["p"],
+            )
+        )
+    ar_str = f"{result['ar']:.1f}" if result["ar"] is not None else "N/A"
+    lines.append(
+        "<tr><td><strong>機率加權</strong></td><td></td><td></td><td></td><td></td>"
+        "<td><strong>EV {ev}</strong></td><td><strong>{ann}</strong></td>"
+        "<td></td><td></td><td></td><td>100%</td></tr>".format(
+            ev=_fmt_pct(result["ev5y_pct"]), ann=_fmt_pct(result["ev_annualized_pct"], "/yr"),
+        )
+    )
+    lines.append("</table>")
+    lines.append('<p class="mach">AR={0}；估值口徑＝EV/S（虧損公司，終端價＝(營收×EV/S－淨負債)÷股數，股權為負則歸零）</p>'.format(ar_str))
+    if basis_items:
+        lines.append('<ul class="pts">' + "".join(basis_items) + "</ul>")
+    lines.append("</div>")
+    return "\n".join(lines) + "\n"
+
+
 def build_html(data, result):
+    if is_sales_mode(data):
+        return build_html_sales(data, result)
     rows = result["rows"]
     terminal_label = html_lib.escape(str(data.get("terminal_label", "")))
     lines = ['<div class="sec-irr">', "<table>", (
@@ -300,7 +530,7 @@ def build_html(data, result):
                 label=label, eps=r["terminal_eps"], term=terminal_label,
                 pe=r["terminal_pe"], price=_fmt_price(r["terminal_price"]),
                 p5y=_fmt_pct(r["five_y_pct"]), irr=_fmt_pct(r["irr_ex_div"], "/yr"),
-                eps_c=_fmt_pct(r["eps_contrib"], "/yr"), rr=_fmt_pct(r["rerate_contrib"], "/yr"),
+                eps_c=_fmt_pct_opt(r["eps_contrib"], "/yr"), rr=_fmt_pct_opt(r["rerate_contrib"], "/yr"),
                 yld=_fmt_pct(r["yield_total"], "/yr"), incl=_fmt_pct(r["incl_div_total"], "/yr"),
                 p=r["p"],
             )
@@ -342,16 +572,33 @@ def _round1(x):
 
 def build_meta(data, result):
     rows = result["rows"]
-    scenario_tree = {
-        "terminal_label": data.get("terminal_label"),
-        "start": data["start"],
-        "eps": {k: rows[k]["eps_path"] for k in ("bull", "base", "bear")},
-        "pe": {k: rows[k]["terminal_pe"] for k in ("bull", "base", "bear")},
-        "p": {k: rows[k]["p"] for k in ("bull", "base", "bear")},
-        "yield_pct": data.get("yield_pct", {"dividend": 0.0, "net_buyback": 0.0}),
-        "second_stage": data.get("second_stage"),
-        "valuation_dependent": result["valuation_dependent"],
-    }
+    if is_sales_mode(data):
+        scenario_tree = {
+            "terminal_label": data.get("terminal_label"),
+            "valuation_basis": "sales_multiple",
+            "start": data["start"],
+            "rev": {k: rows[k]["rev_path"] for k in ("bull", "base", "bear")},
+            "ev_s": {k: rows[k]["terminal_ev_s"] for k in ("bull", "base", "bear")},
+            "net_debt_y5": {k: rows[k]["net_debt_y5"] for k in ("bull", "base", "bear")},
+            "shares_y5": {k: rows[k]["shares_y5"] for k in ("bull", "base", "bear")},
+            "net_debt_now": data.get("net_debt_now"),
+            "shares_now": data.get("shares_now"),
+            "p": {k: rows[k]["p"] for k in ("bull", "base", "bear")},
+            "yield_pct": data.get("yield_pct", {"dividend": 0.0, "net_buyback": 0.0}),
+            "second_stage": None,
+            "valuation_dependent": result["valuation_dependent"],
+        }
+    else:
+        scenario_tree = {
+            "terminal_label": data.get("terminal_label"),
+            "start": data["start"],
+            "eps": {k: rows[k]["eps_path"] for k in ("bull", "base", "bear")},
+            "pe": {k: rows[k]["terminal_pe"] for k in ("bull", "base", "bear")},
+            "p": {k: rows[k]["p"] for k in ("bull", "base", "bear")},
+            "yield_pct": data.get("yield_pct", {"dividend": 0.0, "net_buyback": 0.0}),
+            "second_stage": data.get("second_stage"),
+            "valuation_dependent": result["valuation_dependent"],
+        }
     meta = {
         "bull_5y_price": _round1(rows["bull"]["terminal_price"]),
         "bear_5y_price": _round1(rows["bear"]["terminal_price"]),
@@ -380,6 +627,85 @@ def _load_meta_from_html(html_text):
         return None
 
 
+def _compare_meta_fields(meta, rows, result, fails, warns):
+    checks = [
+        ("bull_5y_price", rows["bull"]["terminal_price"], "price"),
+        ("bear_5y_price", rows["bear"]["terminal_price"], "price"),
+        ("p_bull_pct", rows["bull"]["p"], "pct"),
+        ("p_bear_pct", rows["bear"]["p"], "pct"),
+        ("upside_5y_pct", rows["base"]["five_y_pct"], "pct"),
+        ("asym_ratio", result["ar"], "ar"),
+    ]
+    for key, calc, kind in checks:
+        meta_val = meta.get(key)
+        if calc is None:
+            if meta_val is not None:
+                fails.append(f"{key}：重算為 N/A（Bear 5Y%≥0）但 dd-meta 仍有值 {meta_val}——應省略此欄")
+            continue
+        if meta_val is None:
+            warns.append(f"{key}：dd-meta 缺此欄，無法比對（重算值 {calc:.2f}）")
+            continue
+        if kind == "price":
+            # 2026-09-07：dd-meta 的價格只存到小數 1 位，低價股（GRAB bear 重算
+            # 1.96、存成 2.0）會被 1% 相對容差判成不符——其實兩者四捨五入後同值。
+            # 先把重算值捨入到同精度再比，避免純顯示精度造成的假紅。
+            calc = _round1(calc)
+            tol = max(abs(calc), abs(meta_val), 1e-9) * PRICE_TOL_PCT
+            if abs(calc - meta_val) > tol:
+                fails.append(f"{key} 對不上：dd-meta {meta_val} vs 重算 {calc:.1f}（tol 1%）")
+        elif kind == "pct":
+            if abs(calc - meta_val) > PCT_TOL_PP:
+                fails.append(f"{key} 對不上：dd-meta {meta_val} vs 重算 {calc:.1f}（tol {PCT_TOL_PP}pp）")
+        elif kind == "ar":
+            if abs(calc - meta_val) > AR_TOL:
+                fails.append(f"{key} 對不上：dd-meta {meta_val} vs 重算 {calc:.2f}（tol {AR_TOL}）")
+
+
+def _check_meta_sales(meta, st, price, fails, warns):
+    """sales_multiple 模式的 dd-meta 重算比對：由 scenario_tree 的 rev／ev_s／net_debt_y5／shares_y5 重算。"""
+    try:
+        rebuilt = {
+            "price": price,
+            "valuation_basis": "sales_multiple",
+            "start": st["start"],
+            "terminal_label": st.get("terminal_label"),
+            "yield_pct": st.get("yield_pct", {"dividend": 0.0, "net_buyback": 0.0}),
+            "net_debt_now": st.get("net_debt_now"),
+            "shares_now": st.get("shares_now"),
+            "scenarios": {
+                k: {
+                    "rev_path": st["rev"][k],
+                    "terminal_ev_s": st["ev_s"][k],
+                    "net_debt_y5": (st.get("net_debt_y5") or {}).get(k),
+                    "shares_y5": (st.get("shares_y5") or {}).get(k),
+                    "p": st["p"][k],
+                }
+                for k in ("bull", "base", "bear")
+            },
+        }
+        result = compute(rebuilt)
+    except Exception as e:  # noqa: BLE001
+        fails.append(f"scenario_tree（sales_multiple）重算失敗：{e}")
+        return fails, warns
+
+    rows = result["rows"]
+    bull_path, base_path = st["rev"]["bull"], st["rev"]["base"]
+    if len(bull_path) >= 2 and len(base_path) >= 2 and bull_path[0] == base_path[0] and bull_path[1] == base_path[1]:
+        fails.append(
+            "Bull 前兩年營收與 Base 相同＝情境退化，Bull 只靠終端倍數分岔；"
+            "Bull 路徑須自第 1 年起高於 Base"
+        )
+    if rows["base"]["terminal_rev"]:
+        bull_over_base = rows["bull"]["terminal_rev"] / rows["base"]["terminal_rev"]
+        if bull_over_base < 1.15:
+            warns.append(
+                f"Bull 終端營收僅高於 Base {(bull_over_base - 1) * 100:.1f}%，"
+                f"價差主要來自倍數"
+            )
+    _compare_meta_fields(meta, rows, result, fails, warns)
+    return fails, warns
+
+
 def check_meta(meta):
     """從 dd-meta 的 scenario_tree 重算，比對 dd-meta 六個情境欄。
 
@@ -395,6 +721,9 @@ def check_meta(meta):
     if price is None:
         fails.append("dd-meta 缺 price_at_dd，無法重算 scenario_tree")
         return fails, warns
+
+    if st.get("valuation_basis") == "sales_multiple":
+        return _check_meta_sales(meta, st, price, fails, warns)
 
     try:
         rebuilt = {
@@ -433,37 +762,7 @@ def check_meta(meta):
                 f"價差主要來自倍數"
             )
 
-    checks = [
-        ("bull_5y_price", rows["bull"]["terminal_price"], "price"),
-        ("bear_5y_price", rows["bear"]["terminal_price"], "price"),
-        ("p_bull_pct", rows["bull"]["p"], "pct"),
-        ("p_bear_pct", rows["bear"]["p"], "pct"),
-        ("upside_5y_pct", rows["base"]["five_y_pct"], "pct"),
-        ("asym_ratio", result["ar"], "ar"),
-    ]
-    for key, calc, kind in checks:
-        meta_val = meta.get(key)
-        if calc is None:
-            if meta_val is not None:
-                fails.append(f"{key}：重算為 N/A（Bear 5Y%≥0）但 dd-meta 仍有值 {meta_val}——應省略此欄")
-            continue
-        if meta_val is None:
-            warns.append(f"{key}：dd-meta 缺此欄，無法比對（重算值 {calc:.2f}）")
-            continue
-        if kind == "price":
-            # 2026-09-07：dd-meta 的價格只存到小數 1 位，低價股（GRAB bear 重算
-            # 1.96、存成 2.0）會被 1% 相對容差判成不符——其實兩者四捨五入後同值。
-            # 先把重算值捨入到同精度再比，避免純顯示精度造成的假紅。
-            calc = _round1(calc)
-            tol = max(abs(calc), abs(meta_val), 1e-9) * PRICE_TOL_PCT
-            if abs(calc - meta_val) > tol:
-                fails.append(f"{key} 對不上：dd-meta {meta_val} vs 重算 {calc:.1f}（tol 1%）")
-        elif kind == "pct":
-            if abs(calc - meta_val) > PCT_TOL_PP:
-                fails.append(f"{key} 對不上：dd-meta {meta_val} vs 重算 {calc:.1f}（tol {PCT_TOL_PP}pp）")
-        elif kind == "ar":
-            if abs(calc - meta_val) > AR_TOL:
-                fails.append(f"{key} 對不上：dd-meta {meta_val} vs 重算 {calc:.2f}（tol {AR_TOL}）")
+    _compare_meta_fields(meta, rows, result, fails, warns)
 
     return fails, warns
 

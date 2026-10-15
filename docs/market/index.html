@@ -529,7 +529,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   <section id="sec-judgment-score">
     <h2>判讀記分</h2>
-    <p class="section-sub">本週判讀自己也要接受記分：寫下的機率會像下方其他模組一樣落帳（記進預測帳簿，之後要結算對錯），用序貫檢定（SPRT）追蹤長期是否優於基準，不是判讀者自己說了算。</p>
+    <p class="section-sub">2026-10-13 起，本頁判讀降為文字評論，不再給機率、也不再新增記分。原因：先前寫下的機率進了預測帳簿並用序貫檢定（SPRT）記分，累積結果顯示不優於基準。下方保留過去的記分與歷次判讀紀錄，供回頭核對。</p>
     <div class="scorecard-grid" id="judgmentScoreGrid"></div>
     <h3 class="scorecard-subhead">歷次判讀<span class="en">History</span></h3>
     <div id="judgmentHistoryHost"></div>
@@ -660,8 +660,8 @@ footer.imq-foot a{color:var(--text-secondary)}
     本頁為 InvestMQuest Research 內部研究文件，<strong>彙整層描述器，非投資建議</strong>。
     所有區塊的判定機制、信心度與資料延遲，皆已在各自來源頁標註；本頁不重算、不加權合成單一總分。
     「市況曝險規則」為模擬帳戶記分，在序貫檢定證明優於基準前不連任何實倉；判紅即撤，期間不因單一案例調整參數。
-    過往統計關係不保證未來重演。「本週判讀」同樣進帳簿以序貫檢定（SPRT）記分，若判定不優於基準，
-    判讀層即降為純文字評論，頁面拿掉機率呈現，只留證據層機械讀法。
+    過往統計關係不保證未來重演。「本週判讀」曾進帳簿以序貫檢定（SPRT）記分，2026-10-13 判定不優於基準，
+    已降為純文字評論：頁面不再呈現判讀機率，歷史記分保留供核對。
   </details>
 
   </div>
@@ -1247,6 +1247,21 @@ footer.imq-foot a{color:var(--text-secondary)}
       claimHost.innerHTML = "";
       return;
     }
+    if (read && read.mode === "commentary") {
+      // 2026-10-13：判讀層降為評論，不顯示任何機率；只留各期限的文字判讀。
+      host.innerHTML = "";
+      var legend = document.querySelector("#horizonCard .legend");
+      if (legend) legend.hidden = true;
+      var ctext = "<tr><th>期限</th><th>重點與完整推導</th></tr>";
+      horizons.forEach(function (h) {
+        ctext += "<tr><td>" + esc({"3m":"3 個月","6m":"6 個月","12m":"12 個月"}[h.key] || h.label || h.key) + "</td>" +
+          "<td style=\"max-width:520px\">" + compactText(h.logic_zh || "", 3) + "</td></tr>";
+      });
+      tableHost.innerHTML = ctext;
+      claimDetails.hidden = true;
+      claimHost.innerHTML = "";
+      return;
+    }
     host.innerHTML = renderHorizonDumbbell(horizons.map(function (h) {
       return { label: h.label || h.key, p: h.p_up, clim: h.p_clim_up };
     }));
@@ -1638,7 +1653,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     var rowsHtml = list.length ? list.map(function (c) {
       var q = resolveQuote(state, "cot:" + c.market);
       return "<tr><td title=\"" + esc(c.market) + "\">" + esc(COT_MARKET_ZH[c.market] || c.market) + quoteDateMeta(q, currentAsOf) + "</td><td class=\"num\">" + fmtSigned(c.net_pct_oi, 1) + "%</td>" +
-        "<td class=\"num\">" + fmtNum(c.pctile_3y, 0) + "</td><td>" + esc(COT_SIDE_ZH[c.side] || c.side || "") + "</td></tr>";
+        "<td class=\"num\">" + fmtNum(c.pctile_3y, 0) + "</td><td>" + esc((COT_SIDE_ZH[c.side] || c.side || "") + (c.plain ? "，" + c.plain : "")) + "</td></tr>";
     }).join("") : "<tr><td colspan=\"4\" class=\"loading\">尚無 COT 極端部位。</td></tr>";
     return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">COT（期貨持倉報告）部位極端表</div>' +
       '<div class="tw"><table class="mt" style="margin-top:.5rem"><tr><th>市場</th><th>淨部位（未平倉量%）</th><th>三年分位</th><th>方向</th></tr>' + rowsHtml + '</table></div></div>';
@@ -1721,9 +1736,10 @@ footer.imq-foot a{color:var(--text-secondary)}
     var list = (read && read.falsifiers) || [];
     var councilById = {};
     ((state && state.council) || []).forEach(function (c) { councilById[c.id] = c; });
-    var html = "<tr><th>方向</th><th>訊號</th><th>現值</th><th>門檻</th><th>距離</th><th>判讀</th><th>帳簿 p</th></tr>";
+    var commentary = !!(read && read.mode === "commentary");
+    var html = "<tr><th>方向</th><th>訊號</th><th>現值</th><th>門檻</th><th>距離</th><th>判讀</th>" + (commentary ? "" : "<th>帳簿 p</th>") + "</tr>";
     if (!list.length) {
-      html += "<tr><td colspan=\"7\" class=\"loading\">本期判讀尚無證偽表。</td></tr>";
+      html += "<tr><td colspan=\"" + (commentary ? 6 : 7) + "\" class=\"loading\">本期判讀尚無證偽表。</td></tr>";
     } else {
       list.forEach(function (f) {
         var q = resolveQuote(state, f.ref);
@@ -1747,12 +1763,18 @@ footer.imq-foot a{color:var(--text-secondary)}
           "<td class=\"num\">" + esc(f.op || "") + " " + esc(f.threshold) + esc(f.unit || "") + "</td>" +
           "<td class=\"num\">" + esc(distText) + "</td>" +
           "<td>" + compactText(f.read_zh, 3) + "</td>" +
-          "<td class=\"num\">" + (claim && claim.p != null ? Math.round(claim.p * 100) + "%" : "—") + "</td></tr>";
+          (commentary ? "" : "<td class=\"num\">" + (claim && claim.p != null ? Math.round(claim.p * 100) + "%" : "—") + "</td>") + "</tr>";
       });
     }
     $("#falsifiersTable").innerHTML = html;
   }
   function renderDeviations(read) {
+    if (read && read.mode === "commentary") {
+      var devHost = $("#deviationsTable");
+      var devDetails = devHost && devHost.closest("details");
+      if (devDetails) devDetails.hidden = true;
+      return;
+    }
     var list = (read && read.deviations_from_tables) || [];
     var html = "<tr><th>命題</th><th>表格 p</th><th>判讀 p</th><th>理由</th></tr>";
     if (!list.length) {

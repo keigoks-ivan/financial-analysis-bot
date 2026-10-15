@@ -822,7 +822,7 @@ def _links_html(row: dict) -> str:
     if dd:
         parts.append(f'<a href="{dd}">DD</a>')
     if dca:
-        parts.append(f'<a href="{dca}">DCA</a>')
+        parts.append(f'<a href="{dca}">定見</a>')
     return " · ".join(parts) if parts else "—"
 
 

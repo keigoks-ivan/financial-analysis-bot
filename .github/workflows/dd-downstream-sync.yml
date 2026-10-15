@@ -1,0 +1,102 @@
+name: DD Downstream Sync
+
+# DD 發布（scripts/ddreport.py _finish_file_set／scripts/dd2/run.py finish）只 commit
+# DD 本體、INDEX、/t/ 等；下列四支彙總腳本原本只在本機 update_dd_index 鏈跑、沒人 commit，
+# origin 會一直落後（2026-10-13 手動補到 10-12，d11ff32e4）。改由 CI 在每次 DD 推上 main 後重生：
+#   build_supply_chain_dd_index.py → docs/supply-chain/data/dd_links.json
+#   build_search_index.py          → docs/assets/search-index.json ＋ docs/index.html 首頁「最新發布」條
+#   build_rss.py                   → docs/rss.xml（不碰 feed.xml）
+#   build_track_record.py          → docs/track-record/data/latest.json、_body.html、data/track_record_prices.json
+# 為何用 CI 而不是塞進 finish：finish 在共用本機跑、常多檔平行發布，把彙總檔塞進去會增加 push 衝突。
+#
+# 觸發：
+#   - push main 且動到 DD 檔（docs/dd/DD_*.html、docs/dd/brief/**，即 iter_dd_paths 的候選集合）。
+#     本 workflow 的輸出檔都不在 docs/dd/ 底下，paths filter 本身就擋住自我循環；
+#     另外 GITHUB_TOKEN 推的 commit 依 GitHub 規則也不會再觸發 push workflow（雙重保險）。
+#   - schedule 12:37 UTC = 台北 20:37 每天一次（兜底：search-index 也掃 id／macro／ds／dca 等其他
+#     報告類型，那些不在 push 觸發範圍內，靠這班補；避開 10:43 etf-dash、11:17 active-etf、12:00 週日 crossasset）。
+#   - workflow_dispatch 手動。
+# Deploy Pages：GITHUB_TOKEN push 不觸發 deploy-pages.yml 的 push 事件，已把本 workflow 名稱加進
+# deploy-pages.yml 的 workflow_run 清單，跑完即部署（與 etf-dash／active-etf 同做法）。
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/dd/DD_*.html"
+      - "docs/dd/brief/**"
+  schedule:
+    - cron: "37 12 * * *"  # 20:37 Taipei
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+# 不取消進行中的 run，新 run 排隊（同時兩個 run 會互撞 push）
+concurrency:
+  group: dd-downstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # build_track_record.py 需要 yfinance（抓不到會自己 warn 並續跑）；其餘三支只用標準庫
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy requests
+
+      - name: Rebuild downstream files
+        run: |
+          set -e
+          python3 scripts/build_supply_chain_dd_index.py
+          python3 scripts/build_search_index.py
+          python3 scripts/build_rss.py
+          python3 scripts/build_track_record.py
+
+      - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/supply-chain/data/dd_links.json docs/assets/search-index.json docs/index.html docs/rss.xml docs/track-record/data/latest.json docs/track-record/_body.html data/track_record_prices.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+            git commit -m "data: DD downstream sync ${DATE} (dd_links／search-index／rss／首頁最新發布／track-record)
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            for i in 1 2 3 4 5 6; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+              bash scripts/ci/rebase_or_flag.sh || exit 1
+              sleep $((RANDOM % 20 + 5))
+            done
+            echo "Push failed after 6 attempts"
+            exit 1
+          fi
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh

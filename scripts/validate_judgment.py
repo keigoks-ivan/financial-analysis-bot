@@ -615,6 +615,16 @@ def j2_math_checks(data: dict, judgment_path: Path,
             "Bull 路徑須自第 1 年起高於 Base"
         )
 
+    # sales_multiple 模式（2026-10-12）：同款退化檢查改套營收路徑
+    rev_tree = scenario_tree.get("rev") or {}
+    bull_rev, base_rev = rev_tree.get("bull") or [], rev_tree.get("base") or []
+    if (len(bull_rev) >= 2 and len(base_rev) >= 2
+            and bull_rev[0] == base_rev[0] and bull_rev[1] == base_rev[1]):
+        fails.append(
+            "J2｜Bull 前兩年營收與 Base 相同＝情境退化，Bull 只靠終端倍數分岔；"
+            "Bull 路徑須自第 1 年起高於 Base"
+        )
+
     # scenario_meta.valuation_dependent 與 decision_inputs 同名欄一致性
     # （J3 --fix 不自動修此欄，不一致必須人工裁定）。WP-G 修：
     # dd_scenario.build_meta() 把這欄寫在 scenario_tree.valuation_dependent
@@ -1367,6 +1377,41 @@ def v19_required_items_checks(raw: dict, facts: dict | None) -> list:
     return fails
 
 
+def scenario_basis_checks(raw: dict) -> list:
+    """2026-10-12（CRWV 案）：scenario_inputs 依 valuation_basis 條件式必填。schema 子集直譯器不支援
+    if/then，所以 eps／pe（eps_pe 模式）與 start.rev／start.ev_s／rev／ev_s（sales_multiple 模式）
+    的必填在這裡擋。valuation_basis 由程式決定（run.py 在判斷檔落檔時覆寫），缺＝eps_pe。"""
+    si = raw.get("scenario_inputs")
+    if not isinstance(si, dict):
+        return []
+    fails = []
+    three = ("bull", "base", "bear")
+
+    def block(name, need_values=False):
+        node = si.get(name)
+        if not isinstance(node, dict):
+            fails.append(f"v19｜scenario_inputs 缺 {name}（valuation_basis={basis}）")
+            return
+        for k in three:
+            if k not in node:
+                fails.append(f"v19｜scenario_inputs.{name} 缺 {k}（valuation_basis={basis}）")
+            elif need_values and node[k] is None:
+                fails.append(f"v19｜scenario_inputs.{name}.{k} 不可為 null（valuation_basis={basis}）")
+
+    basis = si.get("valuation_basis") or "eps_pe"
+    if basis == "sales_multiple":
+        start = si.get("start") if isinstance(si.get("start"), dict) else {}
+        for key in ("rev", "ev_s"):
+            if not isinstance(start.get(key), (int, float)) or isinstance(start.get(key), bool):
+                fails.append(f"v19｜sales_multiple：scenario_inputs.start.{key} 須為數字")
+        block("rev")
+        block("ev_s", need_values=True)
+    else:
+        block("eps")
+        block("pe")
+    return fails
+
+
 def v19_contract_checks(raw: dict, schema: dict, facts: dict | None,
                         facts_path_found: bool,
                         facts_error: str | None = None) -> tuple[list, list]:
@@ -1421,6 +1466,7 @@ def v19_contract_checks(raw: dict, schema: dict, facts: dict | None,
                 )
 
     fails.extend(v19_required_items_checks(raw, facts))
+    fails.extend(scenario_basis_checks(raw))
 
     raw_di = raw.get("decision_inputs") or {}
     dirty = [k for k in dd_project.PROJECTED_DECISION_INPUT_KEYS

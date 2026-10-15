@@ -140,8 +140,12 @@ def _kpi_facts(numbers, buckets):
         # 來的由事實表 agent 複核，程式不猜。
         kind = "guidance" if re.search(
             r"展望|指引|預估|預測|目標|guidance|outlook", metric, re.I) else "realized"
+        # 2026-10-12 NVMI：採集 agent 把財測區間寫成 {"low":2.7,"high":2.85}，check 只收純量／陣列。
+        value = item.get("value")
+        if isinstance(value, dict) and {"low", "high"} <= set(value):
+            value = "{0}～{1}".format(value["low"], value["high"])
         fact = _fact(
-            fid, metric, item.get("value"),
+            fid, metric, value,
             item.get("as_of") or quarter, item.get("unit"),
             "evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）",
             kind,
@@ -200,7 +204,10 @@ def _valuation_facts(numbers, buckets, ticker=None):
     for fy in ("fy1", "fy2", "fy3"):
         if latest.get(fy) is None:
             continue
-        if str(eps_basis_note or "").startswith("twd"):
+        if str(eps_basis_note or "").startswith("yfinance"):
+            # Koyfin 快照沒有這檔時，dd_numbers_extra 改抓 yfinance earnings_estimate（0y／+1y）
+            basis_text = "yfinance 分析師共識平均（Koyfin 快照無此檔）；幣別同報價"
+        elif str(eps_basis_note or "").startswith("twd"):
             # 台股：Koyfin 台股池的 EPS 是美元值，dd_numbers_extra 已依快照日匯率換成新台幣
             basis_text = "Koyfin 快照共識值；原為美元，已依快照日匯率換算為新台幣（{0}）".format(eps_basis_note)
         elif eps_basis_note:
@@ -279,6 +286,61 @@ def _valuation_facts(numbers, buckets, ticker=None):
             "realized",
             _src("evidence_numbers", "numbers.dividend_yield_ttm.value_pct", as_of=div.get("as_of")),
             note=div.get("note"),
+        ))
+
+    # 2026-10-12（CRWV 案）：虧損公司情境樹改走 EV/S（valuation_basis="sales_multiple"）所需的輸入。
+    # 金額單位＝百萬，幣別＝財報申報幣別（與報價幣別不同時 note 會寫明，不換算）。
+    cs = numbers.get("capital_structure") or {}
+    ccy = cs.get("currency") or _price_unit(ticker)
+    cs_as_of = cs.get("as_of") or as_of
+    cs_note = cs.get("note")
+    if cs.get("net_debt_m") is not None:
+        q5.append(_fact(
+            "f_net_debt_m", "目前淨負債（總債務－現金及短投）", cs.get("net_debt_m"), cs_as_of, f"{ccy} m",
+            "yfinance 最新一季：總債務 {0}、現金 {1}（含租賃負債口徑）".format(
+                cs.get("total_debt_m"), cs.get("cash_m")),
+            "realized",
+            _src("evidence_numbers", "numbers.capital_structure.net_debt_m", as_of=cs_as_of),
+            note=cs_note,
+        ))
+    if cs.get("shares_diluted_m") is not None:
+        q5.append(_fact(
+            "f_shares_diluted_m", "目前股數（百萬股）", cs.get("shares_diluted_m"), cs_as_of, "m shares",
+            str(cs.get("shares_basis") or "yfinance"), "realized",
+            _src("evidence_numbers", "numbers.capital_structure.shares_diluted_m", as_of=cs_as_of),
+            note=cs_note,
+        ))
+    if cs.get("ev_m") is not None:
+        q5.append(_fact(
+            "f_ev_m", "目前企業價值 EV（市值＋淨負債）", cs.get("ev_m"), cs_as_of, f"{ccy} m",
+            "市值 {0} ＋ 淨負債 {1}".format(cs.get("market_cap_m"), cs.get("net_debt_m")), "realized",
+            _src("evidence_numbers", "numbers.capital_structure.ev_m", as_of=cs_as_of),
+            note=cs_note,
+        ))
+    rc = cs.get("revenue_consensus") or {}
+    for fy in ("fy1", "fy2", "fy3"):
+        node = rc.get(fy)
+        if not node or node.get("avg_m") is None:
+            continue
+        q5.append(_fact(
+            f"f_rev_consensus_{fy}_m", f"{fy.upper()} 共識營收（百萬）", node.get("avg_m"), cs_as_of,
+            f"{ccy} m",
+            "yfinance revenue_estimate {0} 平均（{1} 位分析師）；與 f_consensus_eps_{2} 同一財年".format(
+                node.get("yf_period"), node.get("analysts"), fy),
+            "estimate",
+            _src("evidence_numbers", f"numbers.capital_structure.revenue_consensus.{fy}.avg_m",
+                 as_of=cs_as_of),
+            note=cs_note,
+        ))
+    fy1_rev = (rc.get("fy1") or {}).get("avg_m")
+    if cs.get("ev_m") is not None and fy1_rev:
+        q5.append(_fact(
+            "f_ev_s_fwd", "EV/S（EV ÷ FY1 共識營收）", round(cs["ev_m"] / fy1_rev, 2), cs_as_of, "x",
+            "f_ev_m ÷ f_rev_consensus_fy1_m（前瞻口徑；f_ev_s_current 是 trailing 12 個月營收口徑）",
+            "estimate",
+            _src("evidence_numbers", "numbers.capital_structure.ev_m ÷ revenue_consensus.fy1.avg_m",
+                 as_of=cs_as_of),
+            note=cs_note,
         ))
 
 

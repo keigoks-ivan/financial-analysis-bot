@@ -2144,8 +2144,42 @@ def _fetch_live_fy_eps(
     return out
 
 
+# 不收 1.5／2/3：加幣、星幣等匯率比落在 1.35–1.45，會被誤當 3 拆 2（TD、BMO DD 價為加幣）
+_SPLIT_FACTORS = (2, 3, 4, 5, 10, 0.5, 1 / 3, 0.25, 0.2, 0.1, 20, 8, 6, 15)
+
+
+def _split_adjust_p_dd(yf_ticker: str, p_dd, dd_date) -> tuple:
+    """Return (p_dd_adj, factor). price_at_dd is the raw price on the DD date, but
+    ma["price"] comes from split-adjusted weekly_cache bars; after a split the two
+    are in different units (APH 2026-07: 150.31 vs ~86). Compare p_dd with the
+    cache close of the week containing dd_date: deviation > 25% can't be dividends,
+    so treat as a split only if the ratio sits within 8% of a common split factor
+    (a real 35%+ move in a week must not be mistaken for a 3-for-2 split); otherwise
+    keep p_dd as is. factor None = no adjustment (incl. cache missing / bad input).
+    No network calls."""
+    if not p_dd or p_dd <= 0 or not dd_date:
+        return p_dd, None
+    try:
+        from scripts.lib import weekly_cache as _wc
+        bars = (_wc.read_ticker_cache(yf_ticker) or {}).get("weekly_bars") or []
+        prior = [b for b in bars if b.get("week_end") and b["week_end"] <= dd_date
+                 and (b.get("close") or 0) > 0]
+        if not prior:
+            return p_dd, None
+        ratio = p_dd / prior[-1]["close"]
+        if 0.75 <= ratio <= 1.25:
+            return p_dd, None
+        best = min(_SPLIT_FACTORS, key=lambda f: abs(ratio / f - 1))
+        if abs(ratio / best - 1) <= 0.08:
+            return p_dd / best, round(best, 4)
+        return p_dd, None
+    except Exception:
+        return p_dd, None
+
+
 def _compute_live_pe_drift(
-    entry: dict, ma: dict, live_fy_result: dict | None = None
+    entry: dict, ma: dict, live_fy_result: dict | None = None,
+    reporting_ccy_cache: dict | None = None, fx_cache: dict | None = None,
 ) -> dict:
     """Compute live FwdPE — preferring fresh yfinance EPS over price-drift heuristic.
 
@@ -2178,6 +2212,8 @@ def _compute_live_pe_drift(
         "live_fpe_method": None,
         "eps_revision_pct": None,
         "yf_fy_label": None,
+        "split_adj": None,
+        "live_fpe_fx": None,
     }
     fpe = entry.get("fpe_fy2")
     p_dd = entry.get("price_at_dd")
@@ -2195,12 +2231,31 @@ def _compute_live_pe_drift(
     if fpe is None or p_dd is None or p_now is None or p_dd <= 0 or fpe <= 0:
         return out
 
+    # 拆股校正：p_dd 為原始價、p_now 為還原價，單位不同會造出假去評價（APH）
+    p_dd, out["split_adj"] = _split_adjust_p_dd(
+        _yf_ticker_for_ma(entry["ticker"]), p_dd, dd_date)
+
     # Primary: real EPS path — use pre-fetched result if provided (v1.7 no-dupe)
     real = live_fy_result if live_fy_result is not None else _fetch_live_fy_eps(
         _yf_ticker_for_ma(entry["ticker"]), p_dd, fpe
     )
     if real["eps_now"] is not None and real["eps_now"] > 0:
-        out["live_fpe_est"] = round(p_now / real["eps_now"], 2)
+        eps_px = real["eps_now"]
+        # 美國掛牌、財報非美元（TD／BMO 加幣、ASML／SPOT／RACE 歐元、ONON 瑞郎）：
+        # yfinance 預估是財報幣別、p_now 是美元，倍數差一個匯率。只在 yfinance 對
+        # Excel（美元）同財年的比值貼近市場匯率（±10%）時換算——TSM 的 yfinance
+        # 已是每 ADR 美元、VALE 比值不像匯率，都不動；歐洲掛牌（.PA/.AS）價格本就是歐元。
+        yf_t = _yf_ticker_for_ma(entry["ticker"])
+        xl = real.get("eps_0y_raw") if real.get("yf_fy_label") == "0y" else real.get("eps_1y_raw")
+        if ("." not in yf_t and real.get("eps_source") == "xlsx" and xl and xl > 0
+                and reporting_ccy_cache is not None and fx_cache is not None):
+            ccy = get_reporting_currency(entry["ticker"], yf_t, reporting_ccy_cache)
+            if ccy and ccy != "USD":
+                fx = get_fx_rate(ccy, datetime.now().strftime("%Y-%m-%d"), fx_cache)
+                if fx and fx > 0 and abs(eps_px / xl / fx - 1) <= 0.10:
+                    eps_px = eps_px / fx
+                    out["live_fpe_fx"] = round(fx, 4)
+        out["live_fpe_est"] = round(p_now / eps_px, 2)
         out["pe_drift_pct"] = round((out["live_fpe_est"] / fpe - 1) * 100, 1)
         out["live_fpe_method"] = "eps"
         out["eps_revision_pct"] = real["eps_revision_pct"]
@@ -4195,6 +4250,8 @@ def enrich_ticker(
     excel_record = apply_adr_ratio(t, excel_snapshot.get(t)) if excel_snapshot else None
     live_fy_result: dict | None = None
     if fpe and p_dd and fpe > 0 and p_dd > 0:
+        # 拆股校正（同 _compute_live_pe_drift）：EPS 配對用還原後的 DD 日價
+        p_dd, _ = _split_adjust_p_dd(_yf_ticker_for_ma(t), p_dd, entry.get("dd_date"))
         live_fy_result = _fetch_live_fy_eps(
             _yf_ticker_for_ma(t), p_dd, fpe,
             excel_record=excel_record, dd_ticker=t,
@@ -4241,7 +4298,8 @@ def enrich_ticker(
             "eps_basis": excel_record.get("eps_basis"),
         }
 
-    pe_drift = _compute_live_pe_drift(entry, ma, live_fy_result=live_fy_result)
+    pe_drift = _compute_live_pe_drift(entry, ma, live_fy_result=live_fy_result,
+                                      reporting_ccy_cache=reporting_ccy_cache, fx_cache=fx_cache)
 
     # v1.7: EPS 2Y CAGR live + revision momentum
     eps2y_live_result = _compute_live_eps_cagr(entry, live_fy_result or {})

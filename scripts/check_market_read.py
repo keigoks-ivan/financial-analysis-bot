@@ -206,10 +206,27 @@ def check_forces(data: dict):
     return PASS, f"forces={len(forces)}，每個皆有 ≥2 條 refs"
 
 
+def is_commentary(data: dict) -> bool:
+    """2026-10-13 起判讀層降為評論（市況判讀 SPRT 判紅，rule_ledger #137）：mode=commentary 時
+    不寫任何機率、不落帳；第 4、5、6、9 項改為「必須沒有」。"""
+    return data.get("mode") == "commentary"
+
+
+_PROB_KEYS = ("p_up", "p_dd10", "p_dd20", "p_clim_up", "p_clim_dd", "claim_ids")
+
+
 def check_horizons(data: dict):
     horizons = data.get("horizons")
     if not isinstance(horizons, list) or len(horizons) != 3:
         return FAIL, f"horizons 數量={len(horizons) if isinstance(horizons, list) else 'N/A'}，需恰好 3"
+    if is_commentary(data):
+        keys = [h.get("key") for h in horizons]
+        if keys != ["3m", "6m", "12m"]:
+            return FAIL, f"評論模式 horizons key 需依序為 3m／6m／12m，實際 {keys}"
+        leaked = [(h.get("key"), k) for h in horizons for k in _PROB_KEYS if h.get(k) not in (None, [])]
+        if leaked:
+            return FAIL, f"評論模式不得帶機率欄位：{leaked}"
+        return PASS, "評論模式：3 個 horizons，無機率欄位"
     bad = [(h.get("key"), h.get("p_up")) for h in horizons
            if not isinstance(h.get("p_up"), (int, float)) or not (0.2 <= h.get("p_up") <= 0.9)]
     if bad:
@@ -219,6 +236,10 @@ def check_horizons(data: dict):
 
 def check_forecasts_count(data: dict):
     forecasts = data.get("forecasts")
+    if is_commentary(data):
+        if forecasts or data.get("claim_ids"):
+            return FAIL, "評論模式 forecasts 與 claim_ids 必須為空（不再新增 market-read 命題）"
+        return PASS, "評論模式：forecasts／claim_ids 為空"
     n = len(forecasts) if isinstance(forecasts, list) else -1
     if not (5 <= n <= 8):
         return FAIL, f"forecasts 數量={n}，需要 5–8 筆"
@@ -236,6 +257,8 @@ _FIXED_TYPES = (
 
 def check_forecasts_first_four(data: dict):
     forecasts = data.get("forecasts")
+    if is_commentary(data):
+        return PASS, "評論模式：略過前四筆型別檢查"
     if not isinstance(forecasts, list) or len(forecasts) < 4:
         return FAIL, "forecasts 不足 4 筆，無法檢查前四筆固定型別"
     problems = []
@@ -314,6 +337,8 @@ def check_deviations(data: dict, ledger_path=FORECASTS):
     本檢查因此只做「群組級」判斷：對每個出現分歧（|p 差| ≥ 0.05）的 (series, 正規化 op) 群組，
     只要求至少申報過一筆分歧（deviations_from_tables 非空）；能否精準對應到該群組是 WARN
     等級的軟性文字比對，不做 FAIL（避免用不精確的關鍵字比對誤殺正確的判讀檔）。"""
+    if is_commentary(data):
+        return PASS, "評論模式：無機率，略過帳簿分歧比對"
     forecasts = data.get("forecasts") or []
     ledger_rows = _open_ledger_rows(ledger_path)
     if ledger_rows is None:

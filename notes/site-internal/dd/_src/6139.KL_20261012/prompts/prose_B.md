@@ -1,0 +1,353 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 6139.KL（2026-10-12）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**後半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/6139.KL_20261012/prose_B.html`，依序含 s8、s9、s10、s11、s12、decision（s85 若觸發併入）。前半（s1–s7）由另一通同時在寫，你不要碰；s1 的結論與 decision 段的裁決都以 judgment 投影視圖為準，不需對照前半。
+
+每章 3–6 條，每條 100–200 字；s10（估值與三種未來）與 s12（最可能怎麼賠）至少 1,500 bytes，把情境輸入、終端倍數、反證三視角的裁定鋪開。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：6139.KL　日期：2026-10-12　archetype：None　前份裁決：2026-08-12　觀望｜追蹤　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1325B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（517B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（403B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（900B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1081B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（438B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（765B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2179B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（4508B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2610B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（280B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1325           3972-5675      5 條（2–6 內）  
+s3                  8000         517           5238-7483      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        2384          8831-12616      5 條（2–6 內）  
+s6                 11000         438          7393-10562      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         765           1914-2735      5 條（2–6 內）  
+s10                 5000        2179           1975-2821      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2610           2000-2390      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         280            854-1220      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=3600B；至少需散文≈41.40KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−45%
+−40
+−40%
+−35%
+−32.5%
+−25%
+−25
+−20%
+−12.2
+−11.7%
+−5.37%
+0%
+0
+0.1%
+0.11
+0.12
+0.4
+0.41
+0.42
+0.4398
+0.44
+0.45
+0.4516
+0.47
+0.49
+0.5
+0.51
+0.53
+0.55
+0.6
+0.65
+0.7
+0.75
+0.8%
+0.9
+1
+01
+1.03
+1.2
+1.3
+1.5
+1.5%
+1.6
+1.7%
+1.7
+1.8
+1.82%
+2.0
+02
+2
+2.1
+2.18
+2.2
+2.51
+2.6
+2.88
+3%
+3
+03
+3.26
+3.4%
+3.65
+3.7%
+4%
+4
+4.3%
+4.3
+4.5
+4.5%
+4.8
+5%
+5
+5.26
+5.3
+5.4%
+5.9
+6%
+6.0%
+6
+6.3
+6.4%
+6.4
+6.42%
+6.5%
+6.7
+7
+7.5%
+7.8
+08
+8
+8.37
+8.71
+8.75
+9
+9%
+09
+9.2%
+9.4
+9.4%
+9.8
+10
+10%
+10.19
+11
+11.4
+11.6%
+11.7%
+12
+12%
+12.2%
+12.7%
+14%
+14
+14.1%
+15%
+15
+15.9
+16
+16%
+17
+17.7
+18
+18%
+19.0%
+20%
+20
+20.8%
+24
+25
+25%
+26
+28
+30%
+30
+31.7
+33%
+34
+35
+35%
+36.7%
+40%
+41%
+42
+44%
+45
+49
+50%
+59
+59%
+70%
+70
+100%
+100
+110
+112%
+130%
+150%
+161.5
+180%
+200%
+1163
+2022
+2023
+2024
+2025
+2026
+2027
+2028
+6139
+8621
+20261012
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"6139.KL","date":"2026-10-12","schema":"v15.2","contract":"v19","company_name":"Syarikat Takaful Malaysia Keluarga Bhd"},"oneliner":"馬來西亞 takaful 龍頭，ROE 約 16%、股價淨值比約 1 倍、殖利率 6.4%，現價低於最保守券商目標；成長已降到中個位數，報酬主要靠股息，最大風險是主要銀行通路把業務轉走","thesis":{"H":[{"id":"H1","text":"零售與定期繳費業務能補上信用相關業務放緩，家庭 takaful 總繳費維持成長","2y":"家庭 takaful 月均總繳費逾 RM200m、年增 ≥5%；零售市佔守住 ≥9%","5y":null,"10y":null,"threshold":"月均總繳費逾 RM200m 且年增 ≥5%","source":"公司季報與新聞稿、伊斯蘭保險協會零售市佔統計、HLIB／CIMB 報告","drift_rule":"偏離門檻連 2 季 ≥5% 削弱、連 3 季 ≥10% 反轉"},{"id":"H2","text":"獲利能力可延續：ROE 維持在股東要求報酬之上，配息不中斷","2y":null,"5y":"TTM ROE（歸屬母公司 EPS÷每股淨值）≥14%，稅前利潤年增中個位數","10y":null,"threshold":"TTM ROE ≥14%","source":"Bursa 季報","drift_rule":"偏離門檻連 4 季 ≥5% 削弱、連 6 季 ≥10% 反轉"},{"id":"H3","text":"takaful 在馬來西亞的結構性份額擴張未停，公司信用相關龍頭地位不被數位業者侵蝕","2y":null,"5y":null,"10y":"takaful 占新業務 ≥40%、公司信用相關市佔 ≥30%","threshold":"takaful 占新業務 ≥40% 且公司信用相關市佔 ≥30%","source":"馬來西亞 Takaful 協會、央行年報、券商報告","drift_rule":"跨 2 年度低於門檻削弱、跨 3 年度反轉"}],"R":[{"id":"R1","text":"理賠通膨（車險與人身傷害）侵蝕承保獲利，1Q takaful 服務業績已年減 33%","h_ref":"H2","clock":"⚡","threshold":"季度稅前利潤或 takaful 服務業績連 2 季年減","evidence_refs":["customer_concentration_credit#2","capital_markets_pricing#1"]},{"id":"R2","text":"銀行通路集中：信用相關業務約 35% 市佔經 18 家銀行取得，已有夥伴定期繳費業務轉移的報導","h_ref":"H3","clock":"🔥","threshold":"任一主要銀行夥伴終止或轉移業務；或信用相關市佔降至 30% 以下","evidence_refs":["customer_concentration_credit#0","geo_supply_chain#2"]},{"id":"R3","text":"醫療監管收緊：不得單方取消保單、10% 調價上限過渡措施 2026 年底到期後的規則未定","h_ref":"H2","clock":"🔥","threshold":"到期後監管再設上限且公司揭露醫療業務虧損","evidence_refs":["financial_capital_credit_cycle#1","regulatory_antitrust#0"]},{"id":"R4","text":"成長常態化：難複製 FY24／25 高成長，產業家庭 takaful 新業務 2026 持平","h_ref":"H1","clock":"🐢","threshold":"家庭總繳費連 4 季年增低於 5%","evidence_refs":["supply_demand_durability#0","end_markets#0"]},{"id":"R5","text":"數位保險業者牌照與 takaful 對傳統壽險份額下滑，削弱零售擴張","h_ref":"H3","clock":"🐢","threshold":"牌照核發後兩年內零售市佔停在 9% 以下，或產業 takaful 份額續降","evidence_refs":["substitute_technology#1","end_markets#3"]}],"single_thing":{"description":"主要銀行通路夥伴（報導點名 Bank Rakyat）把信用相關或定期繳費 takaful 業務轉給其他業者","why_fatal":"信用相關業務是獲利骨幹（約 35% 市佔、利潤率最高），入口由銀行掌握；失去一家大型夥伴等於直接拿走一段放款流量，無法靠價格或產品快速補回","if_happens":"發生即減碼一半；公司揭露受影響繳費逾家庭 takaful 15% 則清倉","how_monitor":"Bursa 公告、季報通路揭露、券商報告、bancatakaful 協議續約新聞，每季檢查","probability":"約 15–20%（12–24 個月）：HLIB 已點名定期繳費業務轉移，但證據為搜尋摘要轉述、未見公司公告"}},"appendix_a":{"growth_durability":5,"quality_score":6,"ai_risk":"🟡","long_term_confidence":"中","fpe_fy2":5.9,"peg_fy2":1.6,"stress":{"pass":null,"total":null}},"eps_meta":{"base_eps_path":{"FY2025A":0.44,"FY2026E":0.45,"FY2027E":0.49,"FY2028E":0.49},"fy_end_month":12,"eps_basis":"馬幣、每股、歸屬母公司（MFRS 17）。事實表共識 EPS（0.11／0.12／0.12）為美元口徑，與馬幣股價混用會得出 26 倍錯誤前瞻本益比，也會讓空頭終端 EPS 與共識比較失效，需修正共識幣別。FY2025A 取稀釋 EPS 0.4398；FY2026E 以 Kenanga 淨利預估 RM395m÷約 8.75 億股（FY2025 淨利 RM384.7m÷EPS 0.4398 推得）≈RM0.45；FY2027E／FY2028E 以美元共識逐年比率（0.12÷0.11、0.12÷0.12）套到馬幣基數，兩位小數捨入使比率誤差約 ±5%"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/6139.KL_20261012/scenario.json","archetype":{"primary":"金融","secondary":null,"confidence":"高","fingerprint":"保險（takaful 業者）：看 ROE、資本適足率、股價淨值比與股息，不看毛利率與自由現金流"},"industry":{"clock_phase":"IV","sd_verdict_source":"結構性持久但短期週期放緩：takaful 十年 CAGR 逾 10%、2024 年占新業務約 40%（馬來西亞 Takaful 協會）；RAM 預期 2026 年家庭 takaful 新業務持平、非壽險成長放緩至 5–6%，CIMB 預估公司家庭總繳費年增 5.4%–6.5%","bargaining":{"up":"上游為再保業者：FY25 淨再保費用 RM51.2m（FY24 RM59.1m），洪災後有重訂價壓力，但金額相對稅前利潤小","down":"下游銀行掌握借款人入口：RHB 與兩家業者簽 20 年獨家通路協議，通路費合計最高 RM1.6b；報導指另一銀行夥伴的定期繳費業務出現轉移","geo":"業務集中馬來西亞單一市場"},"profit_pool_dir":"利潤池由高利潤率的信用相關業務往零售與醫療移動，後者受監管限價與理賠通膨夾擊，利潤率較低","tam_table":{"expanded":false,"reason":"公司屬份額擴張型（零售市佔 0.8%→約 9%），照理應展開，但事實表沒有整體保險滲透率、各段市場規模與利潤池占比，只有 takaful 占新業務約 40% 一個點，展開只能靠無來源估算，列為資料缺口"}},"moat":{"mechanism":"信用相關 takaful 嵌在銀行放款流程（約 35% 市佔、18 家銀行通路），加上零售與數位直銷份額擴張","execution":7,"pricing":6,"grade":"C","trend":"→","trend_evidence":"執行擴大（零售市佔 0.8%→約 9%、新業務保費市佔 7.5%→14.1%）；定價縮減（醫療限價與不得單方取消保單、銀行通路要付費）；淨方向穩定。另一銀行夥伴定期繳費業務轉移的報導使方向不得上調","peer_na_reason":"事實表同業只有自由現金流利潤率，缺 ROE 與綜合成本率，無法計算報酬差距，改用份額方向","threats":[{"level":"🟡","text":"銀行通路夥伴把定期繳費或信用相關業務轉給其他業者（HLIB 點名，屬搜尋摘要轉述）","p":"20%","evidence_refs":["customer_concentration_credit#0","geo_supply_chain#2"]},{"level":"🟡","text":"央行數位保險業者牌照最多 5 張、申請至 2026 年底，可能以嵌入式保險切入零售直銷","p":"20%","evidence_refs":["substitute_technology#1"]},{"level":"🟡","text":"家庭 takaful 對傳統壽險份額 1H2024 由 44% 降至 40%、繳費僅 +0.1%（資料偏舊，2025 後未更新）","p":"15%","evidence_refs":["end_markets#3"]}],"roic_durability":{"quadrant":"不適用四象限（保險業改看 ROE）：ROE 約 16%，高於約 10% 股東要求報酬","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者與付款者是借款人、決策者常是放款銀行；信用相關保障隨放款搭售，延後購買代價高。takaful 十年 CAGR 逾 10%、2024 年占新業務約 40%；2026 家庭 takaful 新業務預期持平屬週期放緩，不是需求消失"},{"item":"決策層級","level":"🟡","text":"替代性要在銀行層級衡量：客戶很少自選 takaful 業者，是銀行挑合作業者。RHB 20 年獨家協議鎖住一條通路，但另一銀行定期繳費業務轉移的報導說明銀行可以換供應者；可觀察變數＝主要銀行協議年限、續約與通路家數（目前 18 家）"},{"item":"價值鏈分配","level":"🟡","text":"銀行握有客戶入口，RHB 協議通路費兩家業者合計最高 RM1.6b，價值鏈利潤有相當部分流向銀行；再保端 FY25 淨再保費用 RM51.2m 相對小。自建數位直銷 Kaotim 是降低銀行抽成的嘗試，用戶數與獲利未揭露"},{"item":"社會容忍度","level":"🟡","text":"醫療保障高必要也高敏感：2026 年 7 月起不得單方取消保單或因理賠拒絕續保，醫療調價有 10% 年度上限（過渡措施 2026 年底到期），政府 2027 年初推基本醫療方案。信用相關業務受影響較小，整體列中度；醫療業務占比事實表未涵蓋"}],"roiic":"事實表未涵蓋歷年權益與股利序列，無法精算增量報酬；淨利 2024 RM378.1m→2025 RM384.7m 僅增 1.7%，而權益持續累積，近一年增量報酬明顯低於整體 ROE","reinvest_rate":59,"endo_ceiling":9.4,"formula_note":"內生成長上限＝ROE 約 16%×再投資率約 59%≈9.4%。ROE＝TTM EPS 約 RM0.45（股價 RM2.88÷trailing 本益比 6.4）÷每股淨值 RM2.80；再投資率＝1−配息率，配息率＝殖利率 6.42%×RM2.88÷RM0.45≈41%。資本適足率逾 200%（監管目標 130%）代表部分留存資本閒置，實際增量報酬應低於此上限"},"combined":6.5,"score":6.5,"spread_table":[{"metric":"FCF 利潤率","6139.KL":-5.37,"1163.KL":1.82,"8621.KL":112.27,"period":"TTM ending 2026-06-30（4季加總）","unit":"%"}],"competitors":[{"name":"1163.KL","fcf_margin":1.82,"strategy_note":"一般保險為主的同業，自由現金流利潤率 1.82%；此口徑對保險業反映投資買賣時點，不能當報酬差距證據，ROE 與綜合成本率事實表未涵蓋","period":"TTM ending 2026-06-30（4季加總）"},{"name":"8621.KL","fcf_margin":112.27,"strategy_note":"自由現金流利潤率 112%，正好證明此口徑對保險業失真；可比的承保利潤與 ROE 事實表未涵蓋","period":"TTM ending 2026-06-30（4季加總）"}]},"growth":{"driver_mix":"量為主、價受限價上限壓住、無併購；2025 年股數約增 4.5%，股本面對每股成長為負","runway_years":"事實表未涵蓋（無整體保險滲透率序列）","runway_post_y5":"🟡","endo_ceiling_basis":"ROE 約 16%×再投資率約 59%≈9.4%；資本適足率逾 200% 代表留存資本部分閒置，實際上限偏低","segments":{"expanded":false,"reason":"mix 確實左右利潤（信用相關業務利潤率最高、上半年成長主要來自車險），但事實表沒有家庭與一般 takaful 的分部營收與獲利，無法展開，列為資料缺口"},"decay_signals":["核心市占：家庭 takaful 對傳統壽險份額 1H2024 由 44% 降至 40%（產業層、資料偏舊）——亮","估值倍數下移：trailing 本益比落在近 4 個年度端點最低（以自身代產業）——亮","自由現金流對淨利連 2 年低於 0.75：保險業不適用，營業現金流含投資資產買賣，同業 8621.KL 為 112% 可證失真——不計","每股盈餘成長顯著高於營收成長：2022–2025 營收年化 14.1%、每股盈餘 9.2%——未亮","毛利率連 2 季下滑：保險業不適用，綜合成本率事實表未涵蓋——無法判斷"],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購；歷年股利與回購序列事實表未涵蓋，只能由 trailing 殖利率與股數變化推得配息率約 41%、2025 年股數增約 4.5%"},"capalloc_grade":"C","scorecard":[{"year":"—","action":"ma_roiic","rationale":"近年無併購；RHB 20 年獨家通路協議屬通路採購，不算併購","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"證據包無回購紀錄","grade":"N/A"},{"year":"—","action":"sbc_dilution","rationale":"股數由 2024 年約 8.37 億升至 2025 年約 8.75 億（淨利÷稀釋 EPS 推得），年增約 4.5%，高於 1.5%；成因事實表未涵蓋","grade":"不過"}]},"valuation":{"basis":"保險業以股價淨值比對照合理股價淨值比為主錨，trailing 本益比與殖利率為輔；前瞻本益比因共識幣別錯置改用自算","peers":{"expanded":false,"reason":"事實表同業只有自由現金流利潤率，缺同業本益比與股價淨值比，無法當估值錨"},"peg":1.7,"percentile_5y":0.0,"val_light":"🟢","val_light_derivation":"股價淨值比 1.03 倍對合理值約 2.0 倍，折價約五成；即使 ROE 降至 12%、成長 3%，合理值約 1.3 倍仍高於現價。trailing 本益比 6.4 倍為 4 個年度端點最低（分位只有 4 個點，非五年）","upside_short_pct":11,"upside_mid_pct":34},"trap_analysis":{"verdict":"🟡","label":"低成長收息型，銀行通路集中待證"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"HLIB 把定期繳費業務轉移視為銀行通路集中風險；信用相關業務約 35% 市佔、經 18 家銀行；家庭 takaful 對傳統壽險份額 1H2024 由 44% 降至 40%","assumption":"銀行夥伴會留下，信用相關業務仍是穩定獲利骨幹","consequence":"最可能的大虧故事：一家大型夥伴轉走業務、醫療限價到期後理賠率上升，EPS 由 RM0.45 降至約 RM0.35，本益比壓到 4.5 倍，股價約 RM1.58（−45%）；加計五年股息累計約 −20%，要真正虧 50% 需股息同步腰斬","ruling":"部分採納：列為唯一致命點，以空頭機率 30% 定價；但 HLIB 判定非基本面受損，且公司在擴其他銀行與數位直銷，不採為主情境","watch":"Bursa 通路公告、季報家庭總繳費、主要銀行協議續約","evidence_refs":["customer_concentration_credit#0","geo_supply_chain#2","end_markets#3"],"fact_refs":["f_dividend_yield_ttm","f_pe_current"]},{"view":"論點成功但股東經濟變差","evidence":"2025 年股數約增 4.5%，稀釋 EPS 由 0.4516 降至 0.4398 而淨利仍增 1.7%；RHB 與兩家業者的 20 年獨家協議通路費合計最高 RM1.6b","assumption":"份額成長會轉成每股盈餘成長","consequence":"零售份額照計畫擴大，但通路費與股本擴張吃掉增量，每股盈餘停在 RM0.45 上下，總報酬只剩股息","ruling":"採納為監測項：稀釋項不及格，長期信心上限中等；股數增加若來自股息再投資，股價淨值比約 1 倍時對每股淨值約中性，不直接毀損價值","watch":"年報股數變動來源、每股盈餘對淨利成長差距","evidence_refs":["channel_business_model_shift#2"],"fact_refs":["f_kpi3_eps","f_kpi2_patami"]},{"view":"價格已反映太多","evidence":"trailing 本益比 6.4 倍為 4 個年度端點最低、股價淨值比 1.03 倍、殖利率 6.42%；26 週跌 12.2%、RSI 31.7","assumption":"現價已反映過多樂觀","consequence":"若 MFRS 17 盈餘含較多投資收益與合約服務邊際釋放，利率下行時盈餘基數可能被高估，6.4 倍不如表面便宜","ruling":"反駁：現價隱含長期 ROE 約 10%，遠低於現況 16%，價格反映的是悲觀而非樂觀；但淨投資收益占稅前利潤比重事實表未涵蓋，保留為資料缺口","watch":"季報淨投資收益與合約服務邊際釋放占比","evidence_refs":["capital_markets_pricing#0","financial_capital_credit_cycle#2"],"fact_refs":["f_pe_current","f_pe_percentile","f_dividend_yield_ttm","f_kpi4","f_week26_return_pct"]}],"max_dd":{"lo":-40,"hi":-25,"path_risk":"🟡"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 - → 本次 ❌","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=-","side_b":"本次 ma=❌","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 3.26 → 本次 2.88（-11.7%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=3.26","side_b":"本次 price_at_dd=2.88","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]裁決由 dd_decision.py 機械路由：前份 觀望 → 本次 進場","cause":"價格變動","prior_field":["dca_verdict"],"side_a":"前份 dca_verdict=觀望","side_b":"本次 dca_verdict=進場","ruling":"裁決是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。單獨改回前份值即還原前份裁決：估值 🟠→🟢。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]角色由 dd_decision.py 機械路由：前份 追蹤 → 本次 衛星","cause":"價格變動","prior_field":["dca_role"],"side_a":"前份 dca_role=追蹤","side_b":"本次 dca_role=衛星","ruling":"角色是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。單獨改回前份值即還原前份角色：估值 🟠→🟢。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 3.26重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 3.26：Bull 價 5.26、Bear 價 2.51，五年期望值 +19.0%，基準年化 4.3%，不對稱比 2.2","side_b":"本次情境、股價仍用 3.26：Bull 價 6.3、Bear 價 2.1，五年期望值 +20.8%，基準年化 3.4%，不對稱比 2.18","ruling":"先換情境、股價不動：五年期望值多 1.8 個百分點，基準年化少 0.9 個百分點。不對稱比由 2.2 變為 2.18。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變好。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 3.26：五年期望值 +20.8%，基準年化 3.4%，不對稱比 2.18","side_b":"本次情境、股價 2.88：五年期望值 +36.7%，基準年化 6.0%，不對稱比 3.65","ruling":"再換股價、情境不動：起點價下跌 11.7%，五年期望值多 15.9 個百分點，基準年化多 2.6 個百分點，不對稱比由 2.18 升到 3.65。合計五年期望值比前份多 17.7 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"前份漂移：估值結論與裁決（前份價格條件已觸發）","cause":"價格變動","prior_field":["val"],"side_a":"前份（2026-08-12，股價 RM3.26）：估值偏貴、觀望，等 CSM 回升或股價回到 RM3.00 附近","side_b":"本次股價 RM2.88（較前份 −11.7%），trailing 本益比 6.4 倍、股價淨值比 1.03 倍，估值改判便宜；前份進場條件的價格支線（RM3.00 附近）已成立，前份觸發器已發火","ruling":"估值轉便宜主要來自股價下跌，另一部分來自改用股價淨值比對照合理值作主錨。前份價格條件已觸發，本次依新證據重跑後只建半倉，不直接執行前份加碼至目標倉位的動作","evidence_level":"已實現價格","settle_metric":"Q3 FY2026 稅前利潤年增","if_then":["若 Q3 FY2026 稅前利潤年增 ≥5% 且無通路流失公告→加碼至目標倉位","反向：若稅前利潤年減且通路流失獲證實→減碼一半"],"evidence_refs":[]},{"axis":"前份漂移：品質、陷阱、護城河、跑道、類型、循環位置維持","cause":"新證據","prior_field":["signal","trap","moat_trend","runway_post_y5","archetype","cycle_position"],"side_a":"前份：品質中上、陷阱風險中度、護城河穩定、五年後跑道中等、金融類、無循環位置","side_b":"本次以上半年財報（稅前利潤 +6.5%）、零售市佔 0.8%→約 9%、HLIB 通路集中風險、CIMB 降評重檢，六項結論維持","ruling":"新證據正負相抵：份額擴張支持執行面，通路集中與醫療限價削弱定價面，淨方向不變；保險業不是循環股，不設循環位置","evidence_level":"券商報告與公司季報","settle_metric":"零售市佔與家庭總繳費年增","if_then":["若零售市佔連兩次統計下滑→護城河方向下調並停止加碼"],"evidence_refs":["channel_business_model_shift#1","customer_concentration_credit#0"]},{"axis":"前份漂移：情境機率與回撤","cause":"方法變動","prior_field":["p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份：多頭 25%、空頭 30%，最大回撤單點 −35%","side_b":"本次：多頭 25%、空頭 30% 不變；最大回撤改為區間 −25%～−40%","ruling":"機率不變：通路集中與理賠通膨的空方證據與前份同量級，上半年獲利續增抵銷 CIMB 下修。回撤改區間是方法要求，中點 −32.5% 與前份接近","evidence_level":"情境推導","settle_metric":"季度稅前利潤年增","if_then":["若 Q3 FY2026 稅前利潤年減→空頭機率上調至 35% 重算"],"evidence_refs":[]},{"axis":"進場與加碼門檻改寫","cause":"方法變動","prior_field":["rearm_trigger"],"side_a":"Q2FY26(約2026-08下旬公布)確認CSM單季年增回升至≥5%,或估值回落至Fwd PE≈6x／RM3.00附近增加安全邊際，任一成立即可升級進場並加碼至目標倉位","side_b":"股價≤RM3.00且最新一季稅前利潤年增≥0%即建半倉（已成立）；Q3 FY2026稅前利潤年增≥5%且無通路流失公告再加碼至目標倉位","ruling":"CSM 季度年增本次證據包沒有數字可監測，改用季報必揭露的稅前利潤；價格支線沿用 RM3.00 且已成立，所以加碼改綁 Q3 FY2026 的基本面確認","evidence_level":"方法調整","settle_metric":"Q3 FY2026 稅前利潤年增","if_then":["若 Q3 FY2026 稅前利潤年增 ≥5%→加碼至目標倉位","反向：若股價先漲回 RM3.50 以上而基本面證據未到→不追"],"evidence_refs":[]},{"axis":"出場門檻（減碼／清倉）新設","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設量化出場門檻","side_b":"新設：季度稅前利潤連 2 季年減逾 5%、TTM ROE 低於 12%、資本適足率低於 180%、月均家庭總繳費連 3 個月低於 RM200m 觸發減碼；主要銀行通路流失且受影響繳費逾家庭 takaful 15% 觸發清倉","ruling":"前份只有假設驗證點，沒有可執行的出場線，本次補上","evidence_level":"方法調整","settle_metric":"季報與公司公告","if_then":["任一減碼門檻觸發→減碼一半","通路流失受影響逾 15%→清倉"],"evidence_refs":[]},{"axis":"Single Thing 新設","cause":"新證據","prior_field":["single_thing"],"side_a":"前份未設唯一致命點（前份核心風險分散在 wakalah 費率與 RBC2 資本兩條假設）","side_b":"主要銀行通路夥伴（報導點名 Bank Rakyat）把信用相關或定期繳費 takaful 業務轉給其他業者","ruling":"前份兩條風險本次查證後變弱：資本適足率穩居 200% 以上、無需新股或 sukuk；費率證據包未涵蓋。數學上最大的單一敏感項是信用相關業務的銀行入口，2026-09 報導首次點名轉移","evidence_level":"券商報告（搜尋摘要轉述）","settle_metric":"Bursa 公告與季報通路揭露","if_then":["若公告轉移→減碼一半","若受影響繳費逾 15%→清倉"],"evidence_refs":["customer_concentration_credit#0","financial_regulatory_capital_rules#0"]},{"axis":"賣方分歧","cause":null,"side_a":"CIMB 降至 Hold、目標價 RM3.50，下修 FY26–28 盈餘 4.5%／7.5%／11.6%（理賠通膨、家庭繳費放緩）","side_b":"Kenanga 維持 Outperform、目標價 RM4.40；Bloomberg 8 家中 6 買 2 持有，均價 RM4.40；現價 RM2.88 低於最保守的 CIMB 目標約 18%","ruling":"可調和（程度差異）：雙方都同意成長放緩，分歧在倍數；現價比最悲觀券商還悲觀。現在就賣的最強論證：均價目標早於上半年財報與通路轉移報導，若其他券商跟進 CIMB 下修，地板會再下移——本次以空頭 30% 與首倉只建一半處理","evidence_level":"賣方報告（媒體轉述）","settle_metric":"Q3 FY2026 稅前利潤年增與賣方目標更新","if_then":["若 Q3 FY2026 稅前利潤年增 ≥5%→加碼至目標倉位","若兩家以上券商下修目標至 RM3.00 以下且稅前利潤年減→減碼一半"],"evidence_refs":["capital_markets_pricing#1","customer_concentration_credit#2","capital_markets_pricing#2","capital_markets_pricing#0"]},{"axis":"成長正常化對公司樂觀展望","cause":null,"side_a":"CIMB：難複製 FY24／25 高成長，家庭總繳費年增 5.4%–6.5%；RAM：2026 家庭 takaful 新業務持平","side_b":"公司稱月均家庭總繳費穩定逾 RM200m、展望正面；HLIB 預期定期繳費業務年增逾 30%；上半年營收 +7.5%","ruling":"可調和：產業新業務持平，公司靠零售份額擴張跑贏產業。主情境採 EPS 年增約 4%，介於兩者之間；定期繳費 30% 成長若兌現屬多頭情境","evidence_level":"券商報告與公司說法","settle_metric":"家庭總繳費年增","if_then":["若家庭總繳費連 4 季年增 <5%→停止加碼、終端倍數下調至 6 倍重算"],"evidence_refs":["supply_demand_durability#0","end_markets#0","channel_business_model_shift#1","supply_demand_durability#3"]},{"axis":"產業態勢三軸","cause":null,"side_a":"競爭：2026 年未見新進者搶單（takaful 業者家數少），但數位保險業者牌照最多 5 張、申請至 2026 年底","side_b":"結構：takaful 十年 CAGR 逾 10%、占新業務約 40%；其他結構變數：醫療限價與不得單方取消保單規則（2026 年 7 月）、RBC2 預定 2027 年生效","ruling":"雙向拉鋸：結構順風仍在，但監管（醫療限價）與通路（銀行集中、數位牌照）兩軸同時收緊，淨效果是成長從雙位數降到中個位數，不是競爭惡化","evidence_level":"產業評等機構與監管公告","settle_metric":"數位牌照核發與醫療過渡措施到期安排","if_then":["若數位牌照核發給大型銀行或科技平台→停止加碼並重檢零售市佔"],"evidence_refs":["competitive_share_entrants#1","substitute_technology#1","regulatory_antitrust#0","supply_demand_durability#2"]},{"axis":"自由現金流為負對獲利成長","cause":null,"side_a":"TTM 自由現金流利潤率 −5.37%；年度 2023 −RM1,110m、2024 −RM67m","side_b":"同期淨利 RM347m→RM385m 穩定成長","ruling":"不採用自由現金流判斷：保險業營業現金流含投資資產買賣，同業 8621.KL 為 112% 可證失真，改看 ROE 與資本適足率。反例：若負數來自理賠準備大增而非投資買賣就是警訊，分項現金流事實表未涵蓋","evidence_level":"年度財報","settle_metric":"年報現金流分項","if_then":["若年報顯示營業現金流轉負來自理賠支出→重跑研究並停止加碼"],"evidence_refs":[]}],"triggers":[{"n":1,"text":"家庭 takaful 繳費動能是否守住","type":"假設驗證","maps_to":"H1","metric":"家庭 takaful 月均總繳費與年增率","threshold":"月均逾 RM200m 且年增 ≥5%","action":"連 2 季低於門檻→停止加碼","source_freq":"公司季報與新聞稿，每季","date":"2026-11"},{"n":2,"text":"理賠通膨侵蝕承保獲利","type":"風險","maps_to":"R1","metric":"季度稅前利潤年增率","threshold":"連 2 季年減","action":"減碼一半","source_freq":"Bursa 季報，每季","date":"2027-02","evidence_refs":["customer_concentration_credit#2","capital_markets_pricing#1"]},{"n":3,"text":"主要銀行通路夥伴轉移業務","type":"Single Thing","maps_to":"single_thing","metric":"通路流失公告與受影響繳費占家庭 takaful 比重","threshold":"任一主要銀行夥伴終止或轉移；受影響繳費逾 15%","action":"發生即減碼一半；受影響逾 15% 清倉","source_freq":"Bursa 公告與券商報告，即時","date":null,"evidence_refs":["customer_concentration_credit#0","geo_supply_chain#2"]},{"n":4,"text":"醫療限價過渡措施到期後的理賠與調價","type":"風險","maps_to":"R3","metric":"醫療業務理賠或調價揭露、季度稅前利潤","threshold":"到期後監管再設上限且公司揭露醫療業務虧損","action":"減碼一半","source_freq":"央行公告與季報","date":"2027-02","evidence_refs":["financial_capital_credit_cycle#1","regulatory_antitrust#0"]},{"n":5,"text":"首倉條件","type":"估值rearm","maps_to":"H2","metric":"股價與最新一季稅前利潤年增","threshold":"股價 ≤RM3.00（本益比約 6.7 倍）且稅前利潤年增 ≥0%","action":"建目標倉位一半；2026-10-12 已成立","source_freq":"每日股價、每季季報","date":"2026-10-12"},{"n":6,"text":"基本面確認或價格錯殺","type":"加碼","maps_to":"H1","metric":"Q3 FY2026 稅前利潤年增、股價","threshold":"稅前利潤年增 ≥5% 且無通路流失公告；或股價 ≤RM2.40（約 5.3 倍）且基本面無損","action":"加碼至目標倉位（價格支線分批反買）","source_freq":"季報、每日股價","date":"2026-11"},{"n":7,"text":"估值回到賣方均價目標","type":"減碼","maps_to":"H2","metric":"股價對 FY2027E EPS 本益比","threshold":"股價 ≥RM4.40（約 9 倍 FY2027E RM0.49）","action":"減碼三分之一","source_freq":"每日","date":null},{"n":8,"text":"成長常態化幅度","type":"風險","maps_to":"R4","metric":"家庭總繳費年增率","threshold":"連 4 季低於 5%","action":"停止加碼、終端倍數下調至 6 倍重算","source_freq":"季報與新聞稿","date":"2027-08","evidence_refs":["supply_demand_durability#0","end_markets#0"]},{"n":9,"text":"數位保險業者牌照核發","type":"風險","maps_to":"R5","metric":"央行核發數位保險業者牌照數與獲牌者背景","threshold":"核發且獲牌者含大型銀行或科技平台","action":"停止加碼並重檢零售市佔","source_freq":"央行公告","date":"2027","evidence_refs":["substitute_technology#1","end_markets#3"]},{"n":10,"text":"全年財報複審","type":"複審日期","maps_to":"H3","metric":"FY2026 全年 ROE、資本適足率、股數","threshold":"ROE ≥14%、資本適足率 ≥180%、股數年增 ≤1.5%","action":"重跑完整研究","source_freq":"年報","date":"2027-03"}],"kill_metrics":[{"metric":"季度稅前利潤年增率","bear_threshold":"連 2 季年減逾 5%","window":"2026-11 至 2027-11","source":"Bursa 季報","last_status":"ok"},{"metric":"TTM ROE（歸屬母公司 EPS÷每股淨值）","bear_threshold":"低於 12%","window":"滾動 4 季","source":"Bursa 季報","last_status":"ok"},{"metric":"主要銀行通路夥伴流失","bear_threshold":"受影響繳費逾家庭 takaful 15%","window":"2026-10 至 2028-10","source":"Bursa 公告、券商報告","last_status":"warning"},{"metric":"資本適足率","bear_threshold":"低於 180%","window":"每季","source":"公司揭露、券商報告","last_status":"ok"},{"metric":"家庭 takaful 月均總繳費","bear_threshold":"連 3 個月低於 RM200m","window":"2026-11 至 2027-12","source":"公司新聞稿與季報","last_status":"ok"}],"decision_out":{"verdict":"進場","role":"衛星","row_hit":"9（MA❌例外）","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":true,"basis":"ma='❌'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把成長正常化（家庭總繳費年增 5–6%）與通路集中風險定價成 6.4 倍本益比、約 1 倍股價淨值比，隱含長期 ROE 約 10%；但現況 ROE 約 16%、資本適足率逾 200%、殖利率 6.4%，即使零成長合理股價淨值比仍約 1.6 倍"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":true,"basis":"capalloc_grade='C'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟢', moat_trend='→', week26=-12.2, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='金融', cycle_position=None, moat='C', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":false,"basis":"signal='B', val='🟢'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":true,"basis":"signal='B', val='🟢', ma='❌'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='B', val='🟢', ma='❌'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟢', ma='❌'"},{"row":"9-verdict","condition":"命中 row9 → 進場","hit":true,"basis":"MA=❌ 但 signal≥B 且 val≤🟡 且無 Veto：依「baseline rows 9/9b/10 的 MA 條件字面不含 ❌ 時，該組合不落空、不降觀望——按對應 val 燈 baseline row 裁決，MA❌ 僅作 row4 節奏調節」推論，verdict=進場（row4 pacing 已疊加，見上）"},{"row":"QC-49","condition":"qc49_inherit_prior=False，不套用","hit":false,"basis":"qc49_inherit_prior=False"}],"pacing":["row4：週線❌，進場節奏強制分批（starter 1/3＋趨勢確認後加碼），頁首掛「⚠️ 週線趨勢未確認，逢回分批勿接刀」"],"holding_cap":"中期 2-5 年","requires_critic":[],"rearm_trigger":"股價≤RM3.00且最新一季稅前利潤年增≥0%即建半倉（已成立）；Q3 FY2026稅前利潤年增≥5%且無通路流失公告再加碼至目標倉位","exec_line":"首筆建目標倉位一半；Q3 FY2026（約 2026-11 下旬）確認後補足；股價 ≤RM2.40 且基本面無損時分批反買；股價先漲回 RM3.50 以上而基本面證據未到則不追"},"reasoning":{"industry":"收錢方式分三塊：信用相關家庭 takaful（隨房貸與個人融資搭售，市佔約 35%，管理層稱是利潤率最高的獲利骨幹）、零售家庭 takaful（銀行通路加數位直銷 Kaotim）、一般 takaful（車險、火險）。最新一季（Q2 FY2026）總營收 RM1,161.5m、稅前利潤 RM147.4m（稅前利潤率約 12.7%）、歸屬母公司淨利 RM88.8m、基本 EPS 10.19 sen；上半年 takaful 營收約 RM1.99b（+7.5%）、稅前利潤 RM305.6m（+6.5%），報導指成長主要來自車險。分部營收與獲利占比事實表未涵蓋，無法確認哪一段超過營收 10%，毛利率與營益率對保險業不適用，綜合成本率事實表未涵蓋。單點依賴：通路集中在銀行，HLIB 已把定期繳費業務轉移視為通路集中風險，這是集中度風險，不是護城河證據。產業時鐘列收縮段：產業家庭 takaful 新業務 2025 小幅萎縮、2026 預期持平，非壽險成長放緩至 5–6%，依據是產業新業務數字而非股價。反例：公司自身營收仍年增 7.5%、零售份額快速上升，若 MediAsas 於 2027 年初上路帶進醫療新業務，產業可能直接轉入復甦段。","moat":"機制：信用相關 takaful 經 18 家銀行通路綁在放款流程，市佔約 35%；零售市佔由 2022 年 0.8% 升至 2026 年 6 月約 9%，年化新業務保費市佔由 2022 年 7.5% 升至 2025 年 14.1%，執行面擴大。定價面縮減：2026 年 7 月起不得單方取消醫療保單或因理賠拒絕續保，醫療調價受 10% 年度上限；通路要付費取得（RHB 協議兩家業者合計最高 RM1.6b），定價權被銀行與監管兩端夾住。報酬：ROE 約 16%（TTM EPS 約 RM0.45÷每股淨值 RM2.80）。同業對照只有自由現金流利潤率，保險業此口徑失真（8621.KL 為 112%、本公司 −5.37%，反映投資資產買賣時點），取不到同業 ROE 差距，改用份額軸判方向。評分：執行 7、定價 6，保險業以綜合分加說明處理，列 C。反例：份額上升有一部分是付費買通路換來，若通路費攤銷侵蝕利潤，份額成長不等於護城河變寬；另外家庭 takaful 對傳統壽險份額 1H2024 由 44% 降至 40%，雖是舊資料但方向為負。","growth":"成長拆解：以量（繳費成長）為主，價（醫療調價）受 10% 上限壓住，無併購，2025 年股數約增 4.5% 使每股盈餘成長落後淨利。共識三年 EPS：基期 FY2025A RM0.44→FY2028E 約 RM0.49，年化約 3.7%（推導見每股盈餘口徑說明，家數事實表未涵蓋；Bloomberg 6 月統計 8 家）。內生上限約 9.4%（見護城河一節），共識低於上限，無缺口需要歸因。跑道：takaful 占新業務約 40%，屬 35–70% 區間；第二曲線證據只有管理層對 MediAsas 的預期與 Kaotim 上線，用戶數與獲利都未揭露，不足以列寬跑道。衰退訊號亮 2 項。整體保險滲透率事實表未涵蓋，無法換算達 30% 滲透率的年數。反例：HLIB 預期定期繳費業務年增逾 30%，若兌現且零售市佔持續上升，跑道可能比此判斷寬。","governance":"現金轉換：自由現金流對保險業不適用（2023 年 −RM1,110m、2024 年 −RM67m、2025 年 RM60m，同期淨利 RM347m→RM385m），差異來自投資資產買賣，改看資本適足率與配發。配發：殖利率 6.42%×股價 RM2.88≈每股 RM0.185，約 TTM EPS 41%。稀釋：股數由 2024 年約 8.37 億升至 2025 年約 8.75 億（淨利÷稀釋 EPS 推得），年增約 4.5%；Q2 FY2026 淨利 RM88.8m÷EPS 10.19 sen 約 8.71 億股，2026 年未再增加。成因（股息再投資或其他）事實表未涵蓋；若為股息再投資，股價淨值比約 1 倍時發行對每股淨值約中性。資本：HLIB 稱資本適足率穩居 200% 以上，對比監管目標 130%，數位投資無需新股或 sukuk。現金去向四分、債務結構事實表未涵蓋。","valuation":"主錨：股價淨值比 1.03 倍（RM2.88÷每股淨值 RM2.80）對照合理值約 2.0 倍（ROE 16%、長期成長 4%、股東要求報酬 10%：(16−4)÷(10−4)）；零成長下合理值仍約 1.6 倍，現價隱含長期 ROE 約 10%（1.03 倍×10%）。輔助：trailing 本益比 6.4 倍、在 4 個年度端點中最低（不是五年分位）；殖利率 6.42%。前瞻本益比：事實表的 26 倍是幣別錯置，同幣別 FY2026E 約 6.4 倍、FY2027E 約 5.9 倍。本益比對成長比約 1.7（6.4÷共識三年 3.7%），屬合理區，對低成長保險股不是主要尺。賣方：CIMB 目標價 RM3.50（約 7.8 倍 FY2026E），Bloomberg 均價 RM4.40（約 9.8 倍），現價低於最保守目標約 18%。反例：若股東要求報酬升至 14%，合理值降至約 1.2 倍，仍高於現價；若 MFRS 17 盈餘中投資收益占比偏高、利率下行時基數縮水，便宜程度會打折，此占比事實表未涵蓋。","premortem":"陷阱風險中度：衰退訊號亮 2 項（產業份額對傳統壽險下滑、自身倍數落在近 4 年最低），自由現金流指標對保險業不計。最強三個反駁：一是銀行通路被搶（列為唯一致命點）；二是理賠通膨持續，Kenanga 指 1Q takaful 服務業績年減 33%、CIMB 下修 FY26–28 盈餘；三是賣方均價目標早於上半年財報，可能過時。三者都已計入空頭情境 30%。26 週跌 12.2%、RSI 31.7，未過熱；共識 EPS 近期修正 0%。依據見反證紀錄。"},"plain":{"six":{"how_it_makes_money":"賺馬來西亞借款人與零售客戶的保障費用；錢卡在銀行通路這一節點——信用相關 takaful 經 18 家銀行綁在放款流程上，公司要付通路費換入口","moat":"護城河穩定：零售與新業務份額上升代表執行面擴大，但醫療限價與付費銀行通路壓住定價權，兩相抵銷；ROE 約 16% 仍高於約 10% 股東要求報酬","growth":"五年後跑道中等：takaful 約占新業務 40%，落在中段；零售直銷與 MediAsas 是第二曲線候選但尚未證實。共識三年 EPS 年化約 3.7%，在內生上限約 9.4% 以內，不靠重估","capital":"資本配置偏弱：無回購紀錄、2025 年股數約增 4.5%，配息率約 41%、殖利率 6.4%；資本適足率逾 200%，有能力提高配發但未見","valuation":"現價只要求長期 ROE 守在約 10%、盈餘零成長就划算；我相信 ROE 會高於此，但成長已正常化，重估空間有限，報酬主要來自 6.4% 股息","how_wrong":"最可能看錯在通路：若主要銀行夥伴把信用相關業務轉給他家，獲利骨幹受損，便宜會變成價值陷阱"}},"decision_inputs":{"signal":"B","ma":"❌","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把成長正常化（家庭總繳費年增 5–6%）與通路集中風險定價成 6.4 倍本益比、約 1 倍股價淨值比，隱含長期 ROE 約 10%；但現況 ROE 約 16%、資本適足率逾 200%、殖利率 6.4%，即使零成長合理股價淨值比仍約 1.6 倍","momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":false,"wait_for_price":null,"wait_for_price_condition":null,"trap":"🟡","val":"🟢","moat":"C","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"C","archetype":"金融","price_at_dd":2.88,"week26_return_pct":-12.2,"consensus_rev_3m_pct":null,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":false,"val_denominator_note":"事實表的前瞻本益比 26 倍是馬幣股價 RM2.86 除以美元口徑共識 EPS 0.11，幣別不一致不可用（事實表股價單位也誤標為 USD）；同幣別下 FY2026E 約 RM0.45，前瞻本益比約 6.4 倍。便宜論證建立在同幣別的 trailing 本益比與股價淨值比，不依賴這個錯置分母"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"other","event":"Q3 FY2026 季報：稅前利潤年增、家庭總繳費、通路揭露","impact":"高","watch":"稅前利潤年增 ≥5%、月均家庭總繳費逾 RM200m"},{"date":"2026-12","date_precision":"month","type":"regulatory","event":"醫療保險 10% 年度調價上限等過渡措施到期","impact":"中","watch":"監管是否延長或改設新上限"},{"date":"2026-12","date_precision":"month","type":"regulatory","event":"數位保險業者牌照申請截止","impact":"低","watch":"申請者是否含大型銀行或科技平台"},{"date":"2027-01","date_precision":"month","type":"regulatory","event":"風險資本框架修訂（RBC2）預定生效","impact":"低","watch":"資本適足率是否仍逾 180%"},{"date":"2027-03","date_precision":"quarter","type":"regulatory","event":"政府基本醫療方案 MediAsas 預定推出","impact":"中","watch":"公司是否成為承保者及醫療新業務規模"}],"_projected_from":"v19"}
+```

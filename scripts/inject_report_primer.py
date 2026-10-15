@@ -10,7 +10,6 @@ inject_report_primer.py
 家族與 glob：
   dd          docs/dd/DD_*.html
   id          docs/id/ID_*.html
-  dca         docs/dca/DCA_*.html          （legacy 凍結格式）
   earnings    docs/earnings/earnings_*.html
   macro       docs/macro/MACRO_*.html
   comparisons docs/comparisons/MS_*.html
@@ -102,7 +101,7 @@ TEMPLATE_DD_NEW = _details(
 
 TEMPLATE_DD_LEGACY = _details(
     "這是一份「個股深度研究」（DD），從產業、商業模式、護城河到財務體質分析一家公司。",
-    "<strong>結論在哪：</strong>這是較舊格式，結論寫在報告後段（常見標題如「投資結論」），格式因報告年代而略有不同。如果同一檔股票另外找得到檔名開頭 DCA_ 的報告，那份才是獨立的「進場／觀望／迴避」決策層；2026 年中之後的新版報告已經把研究與決策合併成一份，最新結論請直接看 <a href=\"/research/\" style=\"color:#2563EB;text-decoration:underline\">/research/</a>。",
+    "<strong>結論在哪：</strong>這是較舊格式，結論寫在報告後段（常見標題如「投資結論」），格式因報告年代而略有不同。2026 年中之後的新版報告已經把研究與決策合併成一份（結論見報告內的「統一裁決」），最新結論請直接看 <a href=\"/research/\" style=\"color:#2563EB;text-decoration:underline\">/research/</a>。",
     "<strong>常見詞：</strong>「護城河評等」是公司競爭優勢的等第（S 最強、X 幾乎沒有）；「ROIC」是投入資本報酬率；「PEG」是本益成長比（本益比 ÷ 盈餘成長率），數字越低代表相對成長性越便宜。",
     "<strong>時效提醒：</strong>報告日期寫在檔名與開頭；這是「當時」的判斷，公司基本面與股價都可能已經改變。",
 )
@@ -114,12 +113,6 @@ TEMPLATE_ID = _details(
     "<strong>時效提醒：</strong>報告日期寫在檔名，產業情勢變化快；相關個股的最新結論請看個別 DD 報告或 <a href=\"/research/\" style=\"color:#2563EB;text-decoration:underline\">/research/</a>。",
 )
 
-TEMPLATE_DCA = _details(
-    "這是舊格式的「投資決策分析」（DCA），是 2026-06-22 併入 DD 報告之前獨立存在的決策層文件，內容已經凍結、不再更新。此格式已併入 DD，最新裁決見 <a href=\"/research/\" style=\"color:#2563EB;text-decoration:underline\">/research/</a>。",
-    "<strong>結論在哪：</strong>報告後段的「§7 決策」（Decision）段落。",
-    "<strong>常見詞：</strong>「不對稱報酬」是比較「猜對能賺多少」跟「猜錯會虧多少」哪邊比較划算；「Pre-mortem」是先假設投資已經失敗，倒推可能是哪裡出錯；「否證指標」是一旦觸發就代表論點可能不成立的監測門檻。",
-    "<strong>時效提醒：</strong>這個格式已經退役，最新裁決請直接看同一檔股票最新的 DD 報告，或 <a href=\"/research/\" style=\"color:#2563EB;text-decoration:underline\">/research/</a> 的即時清單——這份只留作歷史紀錄，不代表現在的判斷。",
-)
 
 TEMPLATE_EARNINGS = _details(
     "這是財報分析報告，整理公司公布財報當下的數字重點與市場反應。",
@@ -163,10 +156,6 @@ FAMILIES = {
     "id": {
         "glob": "docs/id/ID_*.html",
         "template": lambda html: TEMPLATE_ID,
-    },
-    "dca": {
-        "glob": "docs/dca/DCA_*.html",
-        "template": lambda html: TEMPLATE_DCA,
     },
     "earnings": {
         "glob": "docs/earnings/earnings_*.html",

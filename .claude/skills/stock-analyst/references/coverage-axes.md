@@ -32,6 +32,11 @@
 - **佔位符**：`queries` 模板用 `{TICKER}` `{COMPANY}` `{INDUSTRY}` `{CUSTOMERS}` `{SEGMENT}`（僅
   `end_markets` 展開後可用）——`dd_evidence.py axes --ticker --company --industry --customers` 會逐一
   替換；未提供的參數保留原樣佔位符，供子 agent 自行代入。
+- **台股版（2026-10-12）**：`queries_tw` 是台股用的起點查詢（中文為主、留一兩條英文補海外資料），
+  另有佔位符 `{COMPANY_ZH}`（中文簡稱）與 `{CODE}`（純數字代號）；`hint_tw` 是該軸的台股來源提示，
+  頂層 `tw_hint` 是每軸都附的通用提示。`ddreport plan` 從 `data/active_etf/security_meta.json`
+  查得到中文名時才換成台股版（`dd_evidence.py axes --market tw`），查不到就照用英文 `queries`。
+  沒寫 `queries_tw` 的軸（金融、未獲利、轉機、公用四類加項）沿用英文，靠 `tw_hint` 叫子 agent 自己改中文。
 - **`affects`**：這一軸的發現最終會回填哪些判斷欄位/裁決輸入（對齊 `judgment.json` 的
   `decision_inputs` / `thesis.H` / `thesis.R` / `moat.trend` / `valuation` / `triggers` 等 key 前綴），
   給 orchestrator 做「這軸缺了會擋哪個裁決欄位」的快速判斷，非強制 schema。
@@ -39,6 +44,7 @@
 ```json
 {
   "version": "v16-draft",
+  "tw_hint": "本標的是台股（{COMPANY_ZH}，代號 {CODE}）。中文查詢優先，英文只補國際客戶、對手與海外主管機關的資料。一手來源依序找：①公開資訊觀測站 mops.twse.com.tw（重大訊息、法說會簡報、年報、月營收）②公司投資人關係頁的法說簡報 PDF ③主管機關（公平會、金管會、證交所／櫃買中心、經濟部國際貿易署）④中文財經媒體（經濟日報、工商時報、MoneyDJ、鉅亨網、DIGITIMES）。excerpt 照中文原文逐字複製，不要翻譯。沒有中文起點查詢的軸，自己把英文查詢改成中文再搜。",
   "common": [
     {
       "id": "competitive_share_entrants",
@@ -49,6 +55,12 @@
         "{COMPANY} new entrant OR displace threat {INDUSTRY} 2026",
         "{TICKER} competitor design win 2026",
         "{COMPANY} vs {INDUSTRY} peers market share trend 2025 2026"
+      ],
+      "queries_tw": [
+        "{COMPANY_ZH} {CODE} 市占率 競爭對手 2026",
+        "{COMPANY_ZH} 法說會 競爭 OR 新進者 OR 搶單",
+        "{COMPANY_ZH} 對手 擴產 OR 殺價 2026",
+        "{TICKER} {COMPANY} market share competitor 2026"
       ],
       "affects": ["moat_trend", "thesis.H", "thesis.R"],
       "na_allowed": false,
@@ -64,6 +76,11 @@
         "{COMPANY} single-source risk customer diversify supplier",
         "{CUSTOMERS} in-house design OR insourcing {INDUSTRY} 2026"
       ],
+      "queries_tw": [
+        "{COMPANY_ZH} 大客戶 第二供應商 OR 轉單 2026",
+        "{COMPANY_ZH} 客戶 自製 OR 分散供應商",
+        "{TICKER} {COMPANY} largest customer second source OR in-house 2026"
+      ],
       "affects": ["moat_trend", "thesis.R", "decision_inputs.bear"],
       "na_allowed": false,
       "na_needs_reason": true
@@ -78,6 +95,13 @@
         "{COMPANY} customer concentration risk disclosure",
         "{CUSTOMERS} bankruptcy OR downgrade OR guidance cut 2026"
       ],
+      "queries_tw": [
+        "{COMPANY_ZH} 年報 主要客戶 銷貨 占比",
+        "{COMPANY_ZH} 前十大客戶 OR 客戶集中",
+        "{TICKER} {COMPANY} top customer revenue concentration 2026",
+        "{CUSTOMERS} credit rating OR guidance cut 2026"
+      ],
+      "hint_tw": "台股年報「主要銷貨客戶」表會列占營收 10% 以上的客戶（常匿名成甲／乙客戶），先找年報或法說簡報。",
       "affects": ["thesis.R", "decision_inputs.bear", "triggers"],
       "na_allowed": false,
       "na_needs_reason": true
@@ -92,6 +116,12 @@
         "{TICKER} {COMPANY} product demand durability structural 2026",
         "{INDUSTRY} demand outlook 2027 2028 consensus"
       ],
+      "queries_tw": [
+        "{COMPANY_ZH} 產品 需求 能見度 2026 2027",
+        "{COMPANY_ZH} 產能 滿載 OR 擴產 OR 供不應求",
+        "{COMPANY_ZH} 法說會 展望 需求",
+        "{INDUSTRY} shortage OR oversupply structural OR cyclical 2026 2027"
+      ],
       "affects": ["decision_inputs.bear", "valuation", "moat_trend"],
       "na_allowed": false,
       "na_needs_reason": true
@@ -105,6 +135,12 @@
         "{COMPANY} regulation OR regulatory scrutiny {INDUSTRY} 2026",
         "{TICKER} {COMPANY} DOJ OR FTC OR EU competition 2026"
       ],
+      "queries_tw": [
+        "{COMPANY_ZH} 公平會 結合 OR 處分 OR 調查",
+        "{COMPANY_ZH} 反壟斷 OR 反托拉斯 2026",
+        "{TICKER} {COMPANY} antitrust OR competition investigation 2026"
+      ],
+      "hint_tw": "台灣主管機關是公平交易委員會（ftc.gov.tw，處分書與結合申報）；客戶或產品在海外的，再查當地機關（美國 DOJ／FTC、歐盟、中國市場監管總局）。",
       "affects": ["thesis.R", "decision_inputs.bear"],
       "na_allowed": true,
       "na_needs_reason": true
@@ -119,6 +155,13 @@
         "{TICKER} {COMPANY} China tariff OR trade restriction 2026",
         "{INDUSTRY} tariff exposure supply chain 2026"
       ],
+      "queries_tw": [
+        "{COMPANY_ZH} 關稅 OR 232 影響 2026",
+        "{COMPANY_ZH} 出口管制 OR 實體清單 OR 國貿署",
+        "{COMPANY_ZH} 美國 關稅 轉嫁 OR 客戶 分攤",
+        "{TICKER} {COMPANY} tariff OR export control exposure 2026"
+      ],
+      "hint_tw": "台灣出口管制看經濟部國際貿易署（trade.gov.tw）公告；美國關稅與實體清單看美國商務部。",
       "affects": ["thesis.R", "decision_inputs.bear", "valuation"],
       "na_allowed": false,
       "na_needs_reason": true
@@ -133,6 +176,11 @@
         "{TICKER} {COMPANY} Taiwan OR China OR geopolitical exposure 2026",
         "{INDUSTRY} supply chain concentration risk 2026"
       ],
+      "queries_tw": [
+        "{COMPANY_ZH} 生產基地 台灣 中國 東南亞 比重",
+        "{COMPANY_ZH} 美國設廠 OR 墨西哥 OR 越南 OR 泰國 產能 2026",
+        "{COMPANY_ZH} 供應鏈 風險 OR 單一來源"
+      ],
       "affects": ["thesis.R", "decision_inputs.bear"],
       "na_allowed": false,
       "na_needs_reason": true
@@ -146,6 +194,12 @@
         "{SEGMENT} end market demand outlook 2026 2027",
         "{COMPANY} {SEGMENT} market share OR pricing trend 2026",
         "{SEGMENT} {INDUSTRY} TAM growth consensus"
+      ],
+      "queries_tw": [
+        "{COMPANY_ZH} {SEGMENT} 營收比重 成長 2026",
+        "{COMPANY_ZH} 法說會 {SEGMENT} 展望",
+        "{COMPANY_ZH} 月營收 年增 {SEGMENT}",
+        "{SEGMENT} end market demand outlook 2026 2027"
       ],
       "affects": ["thesis.H", "growth", "valuation"],
       "na_allowed": false,
@@ -162,6 +216,11 @@
         "{TICKER} {COMPANY} technology obsolescence risk",
         "{INDUSTRY} next-generation technology roadmap 2026"
       ],
+      "queries_tw": [
+        "{COMPANY_ZH} 替代技術 OR 新技術 威脅",
+        "{COMPANY_ZH} 技術 世代 轉換 2026 2027",
+        "{INDUSTRY} alternative technology disruption 2026"
+      ],
       "affects": ["moat_trend", "thesis.R"],
       "na_allowed": false,
       "na_needs_reason": true
@@ -175,6 +234,11 @@
         "{TICKER} {COMPANY} business model transition subscription OR platform 2026",
         "{INDUSTRY} channel disintermediation D2C 2026",
         "{COMPANY} go-to-market change 2026"
+      ],
+      "queries_tw": [
+        "{COMPANY_ZH} 商業模式 轉型 OR 通路 變化 2026",
+        "{COMPANY_ZH} 產品組合 轉變 法說會",
+        "{TICKER} {COMPANY} business model shift 2026"
       ],
       "affects": ["moat_trend", "thesis.H"],
       "na_allowed": false,
@@ -190,6 +254,13 @@
         "{TICKER} {COMPANY} guidance raise OR cut 2026",
         "{TICKER} sell-side estimate revision 2026"
       ],
+      "queries_tw": [
+        "{COMPANY_ZH} {CODE} 目標價 法人 2026",
+        "{COMPANY_ZH} 法說會 財測 OR 展望 毛利率",
+        "{COMPANY_ZH} 月營收 年增 公告",
+        "{COMPANY_ZH} 外資 調升 OR 調降 目標價"
+      ],
+      "hint_tw": "台股公司多半不給全年財測，只在法說會給下一季方向（營收、毛利率區間）；月營收每月 10 日前公告，可當最新實績。",
       "affects": ["valuation", "decision_inputs.signal"],
       "na_allowed": false,
       "na_needs_reason": true
@@ -205,6 +276,14 @@
         "{TICKER} {COMPANY} product launch recall warning letter",
         "{TICKER} {COMPANY} SEC investigation restatement"
       ],
+      "queries_tw": [
+        "{COMPANY_ZH} 併購 OR 合併 OR 公開收購 OR 私募 2025 2026",
+        "{COMPANY_ZH} 訴訟 OR 專利侵權 OR 投保中心",
+        "{COMPANY_ZH} 重大訊息 OR 食藥署 OR 藥證 2026",
+        "{COMPANY_ZH} 召回 OR 品質異常 OR 停產",
+        "{COMPANY_ZH} 金管會 OR 證交所 OR 櫃買中心 處分 OR 財報重編 OR 保留意見"
+      ],
+      "hint_tw": "五組在台股的對應：併購＝合併／公開收購／私募／公平會結合申報；訴訟＝投保中心團體訴訟、專利訴訟；clinical_fda＝衛福部食藥署（非藥品器材業務照規則填 none）；召回＝產品召回、品質異常、停工；sec_investigation_restatement＝金管會／證交所／櫃買中心處分、財報重編、會計師非無保留意見。鍵名照舊不改。",
       "affects": ["thesis.R", "decision_inputs", "triggers"],
       "na_allowed": false,
       "na_needs_reason": true
@@ -222,6 +301,11 @@
           "{INDUSTRY} supply discipline capex plan 2026",
           "{COMPANY} peers capacity expansion announcement 2026"
         ],
+        "queries_tw": [
+          "{COMPANY_ZH} 同業 擴產 新產能 2026 2027",
+          "{COMPANY_ZH} 資本支出 法說會 2026",
+          "{INDUSTRY} new capacity timeline 2026 2027"
+        ],
         "affects": ["decision_inputs.bear", "valuation"],
         "na_allowed": false,
         "na_needs_reason": true
@@ -235,6 +319,11 @@
           "{INDUSTRY} spot price OR contract price trend 2026",
           "{COMPANY} channel inventory level 2026"
         ],
+        "queries_tw": [
+          "{COMPANY_ZH} 庫存 去化 OR 回補 2026",
+          "{COMPANY_ZH} 報價 漲價 OR 跌價 2026",
+          "{INDUSTRY} spot price OR contract price trend 2026"
+        ],
         "affects": ["decision_inputs.bear", "valuation"],
         "na_allowed": false,
         "na_needs_reason": true
@@ -247,6 +336,11 @@
           "{INDUSTRY} previous downturn price decline history",
           "{COMPANY} margin trough previous cycle",
           "{INDUSTRY} cycle length historical pattern"
+        ],
+        "queries_tw": [
+          "{COMPANY_ZH} 毛利率 谷底 景氣下行",
+          "{COMPANY_ZH} 2023 OR 2019 衰退 毛利率",
+          "{INDUSTRY} previous downturn price decline history"
         ],
         "affects": ["decision_inputs.bear"],
         "na_allowed": false,
@@ -375,6 +469,11 @@
           "{COMPANY} capex plan new facility 2026",
           "{INDUSTRY} EMS ODM utilization trend 2026"
         ],
+        "queries_tw": [
+          "{COMPANY_ZH} 產能利用率 OR 稼動率 2026",
+          "{COMPANY_ZH} 資本支出 新廠 2026",
+          "{TICKER} {COMPANY} capacity utilization capex 2026"
+        ],
         "affects": ["decision_inputs.bear", "valuation"],
         "na_allowed": false,
         "na_needs_reason": true
@@ -387,6 +486,11 @@
           "{TICKER} {COMPANY} ROIC asset turnover peers comparison 2026",
           "{INDUSTRY} EMS ODM ROIC benchmark 2026",
           "{COMPANY} CCC cash conversion cycle 2026"
+        ],
+        "queries_tw": [
+          "{COMPANY_ZH} ROIC OR 資產週轉 同業",
+          "{COMPANY_ZH} 存貨天數 OR 現金轉換週期",
+          "{INDUSTRY} EMS ODM ROIC benchmark 2026"
         ],
         "affects": ["decision_inputs", "moat_trend"],
         "na_allowed": false,

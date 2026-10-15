@@ -396,6 +396,7 @@ PREFIX_ACTIVE = [
     ("pm/", ("system", "lthub")),  # 持倉週掃（2026-07-19 復活；2026-08-23 併入系統主控台）
     # 2026-08-23 voltrack 項移除，實單主系統與三個 vt 家族頁改掛 lthub。
     ("long-track-w52-adaptive/", ("system", "lthub")),
+    ("fear-greed/", ("system", "lthub")),  # 市場溫度計（2026-10-14 新增；提醒頁，掛追蹤總覽）
     ("long-track-qs-vt/", ("system", "lthub")),
     ("long-track-adaptive-vt/", ("system", "lthub")),
     ("long-track-tw-vt/", ("system", "lthub")),
@@ -526,6 +527,8 @@ def process(path: Path, check=False):
     if parts and parts[0] in EXTERNAL_TREES:
         return "skip-external"
     if rel in SKIP_FILES:
+        return "skip"
+    if rel.startswith("dca/"):  # 2026-10-13 DCA 退役：整個目錄只剩 meta-refresh 轉址樁，不注入 nav
         return "skip"
     try:
         text = path.read_text(encoding="utf-8")

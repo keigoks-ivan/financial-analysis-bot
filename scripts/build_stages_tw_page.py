@@ -81,7 +81,6 @@ def universe_html(f: dict) -> str:
 
 
 CROSSLINKS = ('<p class="crosslinks">相關頁面：<a href="/cockpit-tw/">台股主控台</a>（核心席與台股池）'
-              ' · <a href="/screener-tw.html">台股 RS 雷達</a>（相對強弱與波動收縮掃描）'
               ' · <a href="/stages/">美股版</a></p>')
 
 TW_SAMPLE_NOTE = ('<p class="explain-p">台股母體小，少見的段一年內的進場事件可能不到 20 筆。'

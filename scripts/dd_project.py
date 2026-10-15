@@ -813,9 +813,29 @@ def scenario_input_from_v19(raw: dict, facts: dict | None) -> dict:
         "terminal_label": si.get("terminal_label"),
         "scenarios": {},
     }
+    basis = si.get("basis") or {}
+    if si.get("valuation_basis") == "sales_multiple":
+        # 2026-10-12（CRWV 案）：虧損公司改走 EV/S。新欄位原樣搬；目前淨負債／股數由事實表帶入，
+        # 供 net_debt_y5／shares_y5 為 null 時沿用，以及每股營收貢獻的起點股數。
+        out["valuation_basis"] = "sales_multiple"
+        out["net_debt_now"] = _fact_value(fact_idx, "f_net_debt_m")
+        out["shares_now"] = _fact_value(fact_idx, "f_shares_diluted_m")
+        for key in ("bull", "base", "bear"):
+            node = {
+                "rev_path": (si.get("rev") or {}).get(key),
+                "terminal_ev_s": (si.get("ev_s") or {}).get(key),
+                "net_debt_y5": (si.get("net_debt_y5") or {}).get(key),
+                "shares_y5": (si.get("shares_y5") or {}).get(key),
+                "p": (si.get("p") or {}).get(key),
+            }
+            if basis.get(key):
+                node["basis"] = basis[key]
+            out["scenarios"][key] = node
+        if si.get("endo_ceiling_exceeded") is not None:
+            out["endo_ceiling_exceeded"] = si["endo_ceiling_exceeded"]
+        return out
     if consensus:
         out["consensus"] = consensus
-    basis = si.get("basis") or {}
     for key in ("bull", "base", "bear"):
         node = {
             "eps_path": (si.get("eps") or {}).get(key),

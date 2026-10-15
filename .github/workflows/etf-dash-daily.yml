@@ -237,3 +237,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/ci/retrigger_once.sh
+
+      # 2026-10-13：build 整支非零（全部基金失敗或一開始就崩）時，資料根本沒更新，
+      # 但 continue-on-error 讓 job 綠燈——9/26 起就這樣默默停了 17 天。commit
+      # 照跑之後在最後把 job 標紅，部分基金失敗（exit 0＋WARNING）不受影響。
+      - name: Mark job failed if the build step errored
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "::error::build_etf_dash.py exited non-zero — ETF dashboard data was not refreshed."
+          exit 1

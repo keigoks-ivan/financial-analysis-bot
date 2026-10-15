@@ -587,6 +587,53 @@ def _inject_ma_facts(ctx, facts_path):
     return label, snap
 
 
+def decide_valuation_basis(ctx):
+    """估值口徑由程式決定（2026-10-12 CRWV 案，持有人拍板）：事實表 f_consensus_eps_fy1 ≤ 0（虧損）→
+    "sales_multiple"（營收路徑 × 終端 EV/S），否則 "eps_pe"（現行行為完全不變）。判斷者不選。
+    在 judge bundle 產生前決定：寫 parts/valuation_basis.json 與 manifest["valuation_basis"]。
+    事實表缺 f_consensus_eps_fy1（無共識）→ eps_pe。回口徑字串。"""
+    facts_path = ctx.run_dir / "facts.json"
+    fy1 = None
+    if facts_path.exists():
+        dp = ddreport.dd_project
+        fy1 = dp._fact_value(dp._facts_index(_load_json(facts_path)), "f_consensus_eps_fy1")
+    basis = "sales_multiple" if (isinstance(fy1, (int, float)) and not isinstance(fy1, bool) and fy1 <= 0) else "eps_pe"
+    parts_dir = ctx.run_dir / "parts"
+    parts_dir.mkdir(exist_ok=True)
+    rec = {"valuation_basis": basis, "f_consensus_eps_fy1": fy1,
+           "rule": "f_consensus_eps_fy1 <= 0 -> sales_multiple; else eps_pe (2026-10-12)"}
+    if basis == "sales_multiple" and facts_path.exists():
+        # sales 模式的輸入事實缺任一個，判斷者就沒有可抄的起點／可沿用的目前值：標出來讓指揮者看到
+        idx = ddreport.dd_project._facts_index(_load_json(facts_path))
+        missing = [f for f in ("f_net_debt_m", "f_shares_diluted_m", "f_rev_consensus_fy1_m", "f_ev_s_fwd")
+                   if ddreport.dd_project._fact_value(idx, f) is None]
+        if missing:
+            rec["missing_sales_inputs"] = missing
+            ctx.manifest["valuation_basis_missing_inputs"] = missing
+            print("[warn] sales_multiple 缺輸入事實 {0}：先重跑 dd_numbers_extra 並重建 evidence／facts".format(missing),
+                  file=sys.stderr)
+    _atomic_write_json(parts_dir / "valuation_basis.json", rec)
+    ctx.manifest["valuation_basis"] = basis
+    ctx.save()
+    return basis
+
+
+def _valuation_basis_override(ctx, obj):
+    """判斷者填的 scenario_inputs.valuation_basis 一律被程式值覆寫並記 mechanical_overrides。
+    eps_pe 且判斷者沒填：不寫欄位（現行判斷檔形狀完全不變）。"""
+    si = obj.get("scenario_inputs")
+    if not isinstance(si, dict):
+        return
+    prog = decide_valuation_basis(ctx)
+    cur = si.get("valuation_basis")
+    if prog == "eps_pe" and cur is None:
+        return
+    if cur != prog:
+        ctx.manifest.setdefault("mechanical_overrides", []).append(
+            {"path": "$.scenario_inputs.valuation_basis", "judge": cur, "program": prog})
+        si["valuation_basis"] = prog
+
+
 def do_facts(ctx):
     st = ctx.stage_begin("facts")
     py = _pick_python()
@@ -603,6 +650,7 @@ def do_facts(ctx):
         st["ma_state_error"] = str(exc)[:300]
     rc2, o2 = _sub([py, SCRIPTS_DIR / "dd_facts.py", "check", out, "--report"])
     st["facts_bytes"] = out.stat().st_size
+    st["valuation_basis"] = decide_valuation_basis(ctx)
     if re.search(r"^\[FAIL\]", o2, re.M):
         return ctx.stage_end("facts", False, o1 + "\n" + o2)
     return ctx.stage_end("facts", True, o1 + "\n" + o2)
@@ -772,6 +820,7 @@ def _write_judgment(ctx, obj):
                 ctx.manifest.setdefault("mechanical_overrides", []).append(
                     {"path": "$.decision_inputs.ma", "judge": di.get("ma"), "program": label})
                 di["ma"] = label
+    _valuation_basis_override(ctx, obj)
     qc49_note = _qc49_fill(ctx, obj)
     obj, drift_log = program_drift_entries(ctx, obj, decision_out=None)
     st = ctx.manifest.get("stages", {}).get("judged")
@@ -912,6 +961,186 @@ def _cf_entry(fld, info):
                      "本次 {0}={1}".format(fld, info["now"]), ruling)
 
 
+# ---------------------------------------------------------------------------
+# 期望報酬漂移歸因（2026-10-12 GFS、AMAT 閘紅燈 ⑧）：asym_ratio／ev5y_pct／irr_base_pct 同時受
+# 「股價變了」與「情境樹重估了」影響，判斷模型常整筆標成價格變動。改由程式拆量：
+# 先換情境、股價不動（方法變動），再換股價、情境不動（價格變動）。bull／bear 價與現價無關，只放方法條。
+# ---------------------------------------------------------------------------
+
+RETURN_SPLIT_FIELDS = ("asym_ratio", "ev5y_pct", "irr_base_pct")
+RETURN_SPLIT_METHOD_ONLY = ("bull_5y_price", "bear_5y_price")
+RETURN_SPLIT_ALL = RETURN_SPLIT_FIELDS + RETURN_SPLIT_METHOD_ONLY
+_MINUS = "\u2212"
+
+
+def _num(x):
+    return float(x) if isinstance(x, (int, float)) and not isinstance(x, bool) else None
+
+
+def _f_pct(x, signed=False):
+    if x is None:
+        return "前份未列"
+    s = "{0:.1f}%".format(abs(x))
+    return (_MINUS if x < 0 else ("+" if signed else "")) + s
+
+
+def _f_ratio(x):
+    if x is None:
+        return "前份未列"
+    s = "{0:.2f}".format(x)
+    return s[:-1] if s.endswith("0") else s
+
+
+def _f_price(x):
+    if x is None:
+        return "前份未列"
+    s = "{0:,.2f}".format(x).rstrip("0").rstrip(".")
+    return s
+
+
+def _f_pp(x):
+    return "{0:.1f}".format(abs(x))
+
+
+def _return_metrics(data, price):
+    """用 dd_scenario.compute 在指定股價下重算，回 {ev5y_pct, irr_base_pct, asym_ratio, bull_5y_price, bear_5y_price}。"""
+    import dd_scenario
+    res = dd_scenario.compute(dict(data, price=price))
+    rows = res["rows"]
+    return {"ev5y_pct": res["ev5y_pct"], "irr_base_pct": rows["base"]["irr_ex_div"], "asym_ratio": res["ar"],
+            "bull_5y_price": rows["bull"]["terminal_price"], "bear_5y_price": rows["bear"]["terminal_price"]}
+
+
+def _scenario_data(ctx, obj):
+    """本次情境輸入（dd_scenario.compute 的 data）。優先由 obj 與事實表現算（judge check 前 scenario.json 可能
+    不存在或是舊稿）；算不出來退回 run_dir/scenario.json；都沒有回 None。"""
+    def ok(d):
+        try:
+            return (isinstance(d, dict) and _num(d.get("price")) and _num(d.get("price")) > 0
+                    and all(isinstance((d.get("scenarios") or {}).get(k), dict) for k in ("bull", "base", "bear"))
+                    and _return_metrics(d, d["price"]) is not None)
+        except Exception:
+            return False
+    try:
+        jp = ctx.run_dir / "judgment.json"
+        facts = ddreport.dd_project.load_facts(obj, str(jp), None)
+        d = ddreport.dd_project.scenario_input_from_v19(obj, facts)
+        if ok(d):
+            return d
+    except Exception:
+        pass
+    sp_ = ctx.run_dir / "scenario.json"
+    if sp_.exists():
+        try:
+            d = _load_json(sp_)
+            if ok(d):
+                return d
+        except Exception:
+            pass
+    return None
+
+
+def _price_unit(ticker):
+    t = str(ticker or "")
+    if "." not in t:
+        return "美元"
+    return "元" if t.rsplit(".", 1)[-1].upper() in ("TW", "TWO") else ""
+
+
+def return_split_entries(ctx, pm, obj):
+    """回 (entries, fields)。前份 price_at_dd 或本次情境拿不到、或情境與股價都沒變 → ([], set())。
+    拆解順序：先情境（股價固定前份）、後股價（情境固定本次）。"""
+    p_prev = _num(pm.get("price_at_dd"))
+    data = _scenario_data(ctx, obj)
+    if not p_prev or p_prev <= 0 or data is None:
+        return [], set()
+    p_now = float(data["price"])
+    try:
+        cf, now = _return_metrics(data, p_prev), _return_metrics(data, p_now)
+    except Exception:
+        return [], set()
+    prev = {k: _num(pm.get(k)) for k in RETURN_SPLIT_ALL}
+    unit = _price_unit(getattr(ctx, "ticker", ""))
+    px = lambda v: "{0}{1}".format(_f_price(v), (" " + unit) if unit else "")  # 句中接中文時由呼叫端補空格
+    r1 = lambda v: None if v is None else round(v, 1)
+    method_changed = any(prev[k] is not None and (r1(prev[k]) != r1(cf[k])) for k in RETURN_SPLIT_ALL) or \
+        any(prev[k] is None and cf[k] is not None for k in RETURN_SPLIT_ALL)
+    price_changed = round(p_now, 2) != round(p_prev, 2)
+    if not method_changed and not price_changed:
+        return [], set()
+    entries, fields = [], set()
+
+    def line(m, with_prices):
+        parts = []
+        if with_prices:
+            parts.append("Bull 價 {0}、Bear 價 {1}".format(_f_price(m["bull_5y_price"]), _f_price(m["bear_5y_price"])))
+        parts.append("五年期望值 {0}".format(_f_pct(m["ev5y_pct"], True)))
+        parts.append("基準年化 {0}".format(_f_pct(m["irr_base_pct"])))
+        parts.append("不對稱比 {0}".format(_f_ratio(m["asym_ratio"])) if m["asym_ratio"] is not None else "不對稱比不成立")
+        return "，".join(parts)
+
+    def prev_line():
+        parts = []
+        if prev["bull_5y_price"] is not None and prev["bear_5y_price"] is not None:
+            parts.append("Bull 價 {0}、Bear 價 {1}".format(_f_price(prev["bull_5y_price"]), _f_price(prev["bear_5y_price"])))
+        parts.append("五年期望值 {0}".format(_f_pct(prev["ev5y_pct"], True) if prev["ev5y_pct"] is not None else "前份未列"))
+        parts.append("基準年化 {0}".format(_f_pct(prev["irr_base_pct"]) if prev["irr_base_pct"] is not None else "前份未列"))
+        parts.append("不對稱比 {0}".format(_f_ratio(prev["asym_ratio"])) if prev["asym_ratio"] is not None else "前份未列不對稱比")
+        return "，".join(parts)
+
+    # 方法條
+    if method_changed:
+        d_ev = None if prev["ev5y_pct"] is None else cf["ev5y_pct"] - prev["ev5y_pct"]
+        d_irr = None if prev["irr_base_pct"] is None else cf["irr_base_pct"] - prev["irr_base_pct"]
+        segs = []
+        if d_ev is not None:
+            segs.append("五年期望值{0} {1} 個百分點".format("多" if d_ev > 0 else "少", _f_pp(d_ev)))
+        if d_irr is not None:
+            segs.append("基準年化{0} {1} 個百分點".format("多" if d_irr > 0 else "少", _f_pp(d_irr)))
+        asym_seg = ""
+        if cf["asym_ratio"] is not None:
+            asym_seg = ("不對稱比由 {0} 變為 {1}。".format(_f_ratio(prev["asym_ratio"]), _f_ratio(cf["asym_ratio"]))
+                        if prev["asym_ratio"] is not None else "前份未列不對稱比，本次為 {0}。".format(_f_ratio(cf["asym_ratio"])))
+        verdict = ""
+        if d_ev is not None:
+            verdict = "情境樹重建本身讓期望報酬{0}。".format("變好" if d_ev > 0 else "變差")
+        ruling = "先換情境、股價不動：{0}。{1}Bull、Bear 價位與股價無關，只受情境影響。{2}".format(
+            "，".join(segs) if segs else "五年期望值與基準年化前份未列，無法比較", asym_seg, verdict)
+        entries.append(_mk_entry(
+            "方法變動", list(RETURN_SPLIT_ALL),
+            "期望報酬拆解：情境樹重建（股價固定在前份 {0}重算）".format(px(p_prev)),
+            "前份情境、股價 {0}：{1}".format(px(p_prev), prev_line()),
+            "本次情境、股價仍用 {0}：{1}".format(px(p_prev), line(cf, True)),
+            ruling))
+        fields |= set(RETURN_SPLIT_ALL)
+    # 價格條
+    if price_changed:
+        chg = (p_now / p_prev - 1.0) * 100.0
+        d_ev = now["ev5y_pct"] - cf["ev5y_pct"]
+        d_irr = now["irr_base_pct"] - cf["irr_base_pct"]
+        asym_seg = ""
+        if now["asym_ratio"] is not None:
+            asym_seg = "，不對稱比由 {0} {1} {2}".format(
+                _f_ratio(cf["asym_ratio"]) if cf["asym_ratio"] is not None else "不成立",
+                "升到" if cf["asym_ratio"] is None or now["asym_ratio"] > cf["asym_ratio"] else "降到",
+                _f_ratio(now["asym_ratio"]))
+        total = ""
+        if prev["ev5y_pct"] is not None:
+            t = now["ev5y_pct"] - prev["ev5y_pct"]
+            total = "合計五年期望值比前份{0} {1} 個百分點。".format("多" if t > 0 else "少", _f_pp(t))
+        ruling = "再換股價、情境不動：起點價{0} {1}%，五年期望值{2} {3} 個百分點，基準年化{4} {5} 個百分點{6}。{7}拆解順序為先情境後股價。".format(
+            "上漲" if chg > 0 else "下跌", "{0:.1f}".format(abs(chg)),
+            "多" if d_ev > 0 else "少", _f_pp(d_ev), "多" if d_irr > 0 else "少", _f_pp(d_irr), asym_seg, total)
+        entries.append(_mk_entry(
+            "價格變動", list(RETURN_SPLIT_FIELDS),
+            "期望報酬拆解：股價變動（情境固定為本次重算）",
+            "本次情境、股價 {0}：{1}".format(px(p_prev), line(cf, False)),
+            "本次情境、股價 {0}：{1}".format(px(p_now), line(now, False)),
+            ruling))
+        fields |= set(RETURN_SPLIT_FIELDS)
+    return entries, fields
+
+
 def program_drift_entries(ctx, obj, decision_out=None):
     """回 (obj, log)。把程式欄位（ma、price_at_dd、裁決、角色）從判斷者條目拆掉，前插程式條目。
     decision_out 還沒有 verdict 時（judge check 之前）先預留裁決／角色欄讓漂移對帳過得了；
@@ -929,8 +1158,12 @@ def program_drift_entries(ctx, obj, decision_out=None):
     price_now, price_prev = _current_price(ctx), pm.get("price_at_dd")
     ma_changed = bool(ma_now) and ma_prev is not None and ma_now != ma_prev
     program_fields = set(PROGRAM_DRIFT_FIELDS_MA) | set(PROGRAM_DRIFT_FIELDS_PRICE) | set(DECISION_FIELDS)
+    split_entries, split_fields = return_split_entries(ctx, pm, obj)
+    program_fields |= split_fields
 
-    # 1. 拆判斷者條目裡的程式欄
+    # 1. 拆判斷者條目裡的程式欄（期望報酬五欄只在程式條目生成時才拆；剔除後 prior_field 可為空陣列，
+    #    條目文字不動，該條改列為一般矛盾條目，不進附錄 C）
+    mo = getattr(ctx, "manifest", None)
     for e in entries:
         pf = e.get("prior_field")
         if isinstance(pf, str):
@@ -941,6 +1174,12 @@ def program_drift_entries(ctx, obj, decision_out=None):
         for f in pf:
             if f in program_fields:
                 log.append("拆掉判斷者條目 prior_field '{0}'（程式欄）".format(f))
+                if f in split_fields and isinstance(mo, dict):
+                    rec = {"path": "$.counter_evidence.contradictions[axis={0}].prior_field".format(str(e.get("axis", ""))[:40]),
+                           "judge": f, "program": _PROGRAM_TAG + "期望報酬拆解"}
+                    lst = mo.setdefault("mechanical_overrides", [])
+                    if rec not in lst:
+                        lst.append(rec)
                 continue
             keep.append(f)
         e["prior_field"] = keep
@@ -977,6 +1216,9 @@ def program_drift_entries(ctx, obj, decision_out=None):
                 new_entries.append(_cf_entry(fld, info))
                 log.append("程式條目：{0} 反事實歸因 → {1}".format(
                     fld, "、".join(info["causes"]) or "多欄共同"))
+    if split_entries:
+        new_entries += split_entries
+        log.append("程式條目：期望報酬拆解（{0}）".format("＋".join(e["cause"] for e in split_entries)))
     ce["contradictions"] = new_entries + entries
     return obj, log
 
@@ -1088,6 +1330,7 @@ def do_judged(ctx):
             obj = _load_json(jpath)
             st["reused_from"] = "judgment.json"
     else:
+        st["valuation_basis"] = decide_valuation_basis(ctx)  # bundle 產生前決定，尾段形狀依它切換
         b = bundle.build_judge(ctx.run_dir, cards_dir=CARDS_DIR)
         st["bundle_bytes"] = b.get("bytes")
         extra = ["--effort", ctx.args.judge_effort] if ctx.args.judge_effort else None
@@ -1480,7 +1723,10 @@ def _gates_v20(ctx, out_html=None, postprocess=False):
 
     total = out_path.stat().st_size
     text_total = sum(f.stat().st_size for f in prose_dir.glob("*.html") if f.stem not in _MECH_TABLE_SIDS)
-    if total < PROSE_TOTAL_FLOOR:
+    # 2026-10-12：整檔下限與 pre-commit 同值，pre-commit 量的是後處理後的成品，這裡也只量成品。
+    # --no-postprocess 的預覽少了後處理補上的區塊（2059.TW 預覽 66.5KB、成品 74.2KB），量它會誤擋。
+    # 章節與散文本體下限量 prose/ 檔，不受後處理影響，照舊每輪都量。
+    if postprocess and total < PROSE_TOTAL_FLOOR:
         findings.append(("_depth", "整檔 {0:,}B < 下限 {1:,}B".format(total, PROSE_TOTAL_FLOOR)))
     if text_total < PROSE_TEXT_FLOOR:
         findings.append(("_depth", "散文本體 {0:,}B < 下限 {1:,}B".format(text_total, PROSE_TEXT_FLOOR)))

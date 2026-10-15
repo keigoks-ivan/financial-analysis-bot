@@ -221,12 +221,11 @@ def drift_rule_section(prior_summary_text: str) -> str:
     return (
         "## ⑦b 前份漂移歸因（機械閘逐欄對帳）\n\n"
         "上面前份摘要的 `drift_watch_prior` 列了 20 欄前份值。`counter_evidence.contradictions[]` 內必須有條目的 "
-        "`prior_field` 陣列**合起來涵蓋這 20 個欄名的每一個**（含程式稍後才會算的 asym_ratio／bull_5y_price／"
-        "bear_5y_price／p_bull_pct／p_bear_pct／ev5y_pct／irr_base_pct／max_dd_pct，把它們歸進 `cause`=`價格變動` 或 "
-        "`方法變動` 那條即可），每條 `cause` 三選一（`價格變動`／`新證據`／`方法變動`），漏一欄＝FAIL。"
+        "`prior_field` 陣列**合起來涵蓋這 20 個欄名中除程式欄以外的每一個**（程式稍後才會算的 p_bull_pct／p_bear_pct／"
+        "max_dd_pct，把它們歸進 `cause`=`價格變動` 或 `方法變動` 那條即可），每條 `cause` 三選一（`價格變動`／`新證據`／`方法變動`），漏一欄＝FAIL。"
         "`kill_metrics`／`rearm_trigger`／Single Thing 的門檻與前份不同時，另開一條 `cause`∈{`新證據`,`方法變動`}、"
         "`side_a`=舊門檻原文、`side_b`=新門檻原文，條目文字要含該動作名（如「清倉」「減碼」）；唯一致命點變動的那條文字要含「Single Thing」字樣，`side_a`=前份唯一致命點原文、`side_b`=本次原文。"
-        "\n\n`decision_inputs.ma`（週線均線六態）由程式從週線均線算出，值在事實表 `f_ma_state`：**照抄該值**，不得自判、不得填 ✅ 或「-」；程式落檔時會強制覆寫成事實表的值。**`ma`、`price_at_dd` 兩欄的漂移歸因由程式生成條目，你不要為它們開條目**；裁決／角色若因 ma 變動而被矩陣改列，也由程式歸因。你只歸因基本面欄位（signal／val／trap／moat_trend／runway／archetype／情境輸入／門檻）。`oneliner` 不寫倉位角色字樣（核心／衛星／追蹤），角色由程式事後算。"
+        "\n\n`decision_inputs.ma`（週線均線六態）由程式從週線均線算出，值在事實表 `f_ma_state`：**照抄該值**，不得自判、不得填 ✅ 或「-」；程式落檔時會強制覆寫成事實表的值。**`ma`、`price_at_dd` 兩欄的漂移歸因由程式生成條目，你不要為它們開條目**；`asym_ratio`／`ev5y_pct`／`irr_base_pct`／`bull_5y_price`／`bear_5y_price` 的漂移歸因同樣由程式生成條目（程式用本次情境、依先換情境後換股價的順序拆量），你不要為它們開條目；裁決／角色若因 ma 變動而被矩陣改列，也由程式歸因。你只歸因基本面欄位（signal／val／trap／moat_trend／runway／archetype／情境輸入／門檻）。`oneliner` 不寫倉位角色字樣（核心／衛星／追蹤），角色由程式事後算。"
         "\n\n**給讀者看的文字欄不准出現內部代號**：`thesis.H[]`／`thesis.R[]` 的各欄（信息來源／漂移觸發條件等）、"
         "`triggers[].text`、`counter_evidence.contradictions[]` 各欄、`answers.*.verdict`／`answers.*.reasoning` 這類文字，"
         "一律不得出現事實表 id（`f_` 開頭，如 `f_consensus_rev_3m_fy1_pct`）或軸／finding id（`軸名#n`，如 "
@@ -257,27 +256,88 @@ _SCENARIO_INPUTS_SHAPE = """{
 }"""
 
 
-def _judge_tail_section(judgment_path: Path, thinking_note=None) -> str:
-    lines = [
-        "## 尾段：scenario_inputs 形狀與回覆格式",
-        "",
-        "`scenario_inputs` 的鍵名與形狀必須完全照下面這份（不得增刪改名；程式據此"
-        "產生 `dd_scenario.py` 的輸入檔，寫錯鍵名就是整段判斷失效）：",
-        "",
-        "```json",
-        _SCENARIO_INPUTS_SHAPE,
-        "```",
-        "",
-        "（共識三年 EPS 寫在 `eps_meta`，不要在這裡再寫一份；現價與共識由程式從"
-        "事實表帶進 `scenario.json`。）",
-        "",
-        "`dd_scenario.py` 會擋：`eps` 各路徑長度 ≠ 5、終端 EPS 非 Bear＜Base＜Bull、"
-        "Bear 終端 EPS ＞ `consensus.fy2`、三機率加總 ≠ 100、`p.bear` ＜ 20、"
-        "`endo_ceiling_exceeded=true` 且 `p.bear` ＜ 30、`p.base` ＞ 50。另有機械閘："
-        "Bull 前兩年 EPS 不得與 Base 相同（情境退化）、`|max_dd.lo|` 不得小於任一"
-        "情境終點跌幅。機率與路徑是你的判斷，算術（IRR／三分量／AR／10Y）全由腳本"
-        "算，不要自己填結果欄。",
-        "",
+# 2026-10-12（CRWV 案，持有人拍板）：FY1 共識 EPS ≤ 0 的公司，情境樹改走「營收路徑 × 終端 EV/S」。
+# 觸發由程式決定（run.py::decide_valuation_basis，寫 parts/valuation_basis.json），判斷者不選。
+_SCENARIO_INPUTS_SHAPE_SALES = """{
+  "valuation_basis": "sales_multiple",
+  "terminal_label": "FY20XXE",
+  "start": {"rev": <FY+1 共識營收，百萬，報告幣別；抄事實表 f_rev_consensus_fy1_m>, "ev_s": <目前 EV/S（EV÷FY+1 共識營收）；抄事實表 f_ev_s_fwd>, "basis": "<起點口徑一句話：營收取哪一年、EV/S 的分母是哪一年，須與終端 EV/S 分母同口徑>"},
+  "rev": {"bull": [<Y1>, <Y2>, <Y3>, <Y4>, <Y5>], "base": [五個數], "bear": [五個數]},
+  "ev_s": {"bull": <終端 EV/S>, "base": <倍數>, "bear": <倍數>},
+  "net_debt_y5": {"bull": <終端年淨負債，百萬，或 null＝沿用目前>, "base": <…>, "bear": <…>},
+  "shares_y5": {"bull": <終端年稀釋股數，百萬股，或 null＝沿用目前>, "base": <…>, "bear": <…>},
+  "p": {"bull": <機率整數>, "base": <整數>, "bear": <整數>},
+  "yield_pct": {"dividend": <股息殖利率 %>, "net_buyback": <淨回購殖利率 %>},
+  "max_dd": {"lo": <負數 %>, "hi": <負數 %>, "basis": "<範圍怎麼推出來的，見判斷卡③情境樹假設段>", "trigger_time": null},
+  "basis": {"bull": "<這支路徑的假設一句>", "base": "…", "bear": "…"},
+  "endo_ceiling_exceeded": <true|false，共識 CAGR 是否超過 §5.R 內生天花板>
+}"""
+
+
+def valuation_basis_of(run_dir) -> str:
+    """parts/valuation_basis.json 的 valuation_basis；檔不在、壞掉一律 eps_pe（現行行為）。"""
+    p = Path(run_dir) / "parts" / "valuation_basis.json"
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "eps_pe"
+    return "sales_multiple" if (obj or {}).get("valuation_basis") == "sales_multiple" else "eps_pe"
+
+
+def _judge_tail_section(judgment_path: Path, thinking_note=None, valuation_basis="eps_pe") -> str:
+    if valuation_basis == "sales_multiple":
+        shape_lines = [
+            "## 尾段：scenario_inputs 形狀與回覆格式",
+            "",
+            "**本檔 FY1 共識 EPS ≤ 0（虧損），程式已把估值口徑定為 `sales_multiple`：情境樹用營收路徑 × "
+            "終端 EV/S，不用 EPS × 本益比。** 口徑由程式決定，你填什麼 `valuation_basis` 都會被覆寫。"
+            "`scenario_inputs` 的鍵名與形狀必須完全照下面這份（不得增刪改名；程式據此產生 "
+            "`dd_scenario.py` 的輸入檔，寫錯鍵名就是整段判斷失效）：",
+            "",
+            "```json",
+            _SCENARIO_INPUTS_SHAPE_SALES,
+            "```",
+            "",
+            "（**不要**填 `eps`、`pe`、`second_stage`、`peer_max_fpe`；`eps_meta` 仍照常寫共識三年 EPS。"
+            "現價、目前淨負債（`f_net_debt_m`）、目前股數（`f_shares_diluted_m`）由程式從事實表帶進 "
+            "`scenario.json`。）",
+            "",
+            "**終端每股價＝max(0, (終端營收 × 終端 EV/S − 終端淨負債) ÷ 終端股數)**，股權價值為負就是 0"
+            "（Bear 情境債務吃光股權時，要如實寫出讓它歸零，不要為了好看調高倍數）。"
+            "`net_debt_y5` 要反映該情境下的現金流與融資（虧損公司的淨負債通常會變大，不是沿用目前值）；"
+            "`shares_y5` 要反映該情境下的增資與稀釋；兩者填 null 才是沿用目前值，不是預設答案。"
+            "`ev_s` 是終端年 EV ÷ 終端年營收，須與 `start.ev_s` 同口徑（前瞻 vs trailing 不可混）。",
+            "",
+            "`dd_scenario.py` 會擋：`rev` 各路徑長度 ≠ 5、終端營收非 Bear＜Base＜Bull、三機率加總 ≠ 100、"
+            "`p.bear` ＜ 20、`endo_ceiling_exceeded=true` 且 `p.bear` ＜ 30、`p.base` ＞ 50。另有機械閘："
+            "Bull 前兩年營收不得與 Base 相同（情境退化）、`|max_dd.lo|` 不得小於任一"
+            "情境終點跌幅。機率與路徑是你的判斷，算術（IRR／倍數貢獻／AR）全由腳本"
+            "算，不要自己填結果欄。",
+            "",
+        ]
+    else:
+        shape_lines = [
+            "## 尾段：scenario_inputs 形狀與回覆格式",
+            "",
+            "`scenario_inputs` 的鍵名與形狀必須完全照下面這份（不得增刪改名；程式據此"
+            "產生 `dd_scenario.py` 的輸入檔，寫錯鍵名就是整段判斷失效）：",
+            "",
+            "```json",
+            _SCENARIO_INPUTS_SHAPE,
+            "```",
+            "",
+            "（共識三年 EPS 寫在 `eps_meta`，不要在這裡再寫一份；現價與共識由程式從"
+            "事實表帶進 `scenario.json`。）",
+            "",
+            "`dd_scenario.py` 會擋：`eps` 各路徑長度 ≠ 5、終端 EPS 非 Bear＜Base＜Bull、"
+            "Bear 終端 EPS ＞ `consensus.fy2`、三機率加總 ≠ 100、`p.bear` ＜ 20、"
+            "`endo_ceiling_exceeded=true` 且 `p.bear` ＜ 30、`p.base` ＞ 50。另有機械閘："
+            "Bull 前兩年 EPS 不得與 Base 相同（情境退化）、`|max_dd.lo|` 不得小於任一"
+            "情境終點跌幅。機率與路徑是你的判斷，算術（IRR／三分量／AR／10Y）全由腳本"
+            "算，不要自己填結果欄。",
+            "",
+        ]
+    lines = shape_lines + [
         "**回覆全文即 `judgment.json` 內容**：緊湊 JSON（`json.dumps(obj, "
         "separators=(\",\", \":\"))` 等效格式），陣列外不得有任何文字（不加前言、"
         "不加 markdown 圍欄、不加附註）。不寫 `scenario.json`（程式從 "
@@ -362,7 +422,8 @@ def build_judge(run_dir, *, cards_dir, judgment_path=None, thinking_note=None) -
         "## ⑦ 前份判斷摘要（緊湊 JSON，≤ {0} bytes）\n\n```json\n{1}\n```".format(
             PRIOR_SUMMARY_MAX_BYTES, prior_text)))
     named_parts.append(("drift_rule", drift_rule_section(prior_text)))
-    named_parts.append(("tail", _judge_tail_section(out_judgment_path, thinking_note)))
+    named_parts.append(("tail", _judge_tail_section(out_judgment_path, thinking_note,
+                                                    valuation_basis=valuation_basis_of(run_dir))))
 
     return _assemble(run_dir, "judge", ticker, date, named_parts)
 
@@ -437,6 +498,22 @@ def _qc48_bull_section(run_dir: Path) -> str:
     start = tree.get("start") or {}
     lines.append("- 終端年：{0}；P_bull＝{1}%，P_bear＝{2}%".format(
         tree.get("terminal_label"), sm.get("p_bull_pct"), sm.get("p_bear_pct")))
+    if tree.get("valuation_basis") == "sales_multiple":
+        # 2026-10-12：sales 模式沒有 start.eps × start.pe，起始價就是判斷日股價（scenario.json 的 price）
+        lines.append("- 估值口徑：sales_multiple（營收 × 終端 EV/S）。Bull 營收路徑（百萬）：{0}；終端 EV/S：{1}x；"
+                     "終端淨負債：{2}；終端股數：{3}；Bull 5 年目標價：{4}".format(
+                         (tree.get("rev") or {}).get("bull"), (tree.get("ev_s") or {}).get("bull"),
+                         (tree.get("net_debt_y5") or {}).get("bull"), (tree.get("shares_y5") or {}).get("bull"),
+                         sm.get("bull_5y_price")))
+        sc_p = run_dir / "scenario.json"
+        sc = dd_bundle._load_json(sc_p) if sc_p.exists() else {}
+        try:
+            price = float(sc["price"])
+            irr = ((float(sm["bull_5y_price"]) / price) ** (1 / 5) - 1) * 100
+            lines.append("- 起始價（判斷日股價）：{0:,.1f}；Bull 隱含 5 年 IRR（不含息）：{1:+.1f}%/yr".format(price, irr))
+        except (KeyError, TypeError, ValueError, ZeroDivisionError):
+            lines.append("- [算不出 Bull 隱含 IRR：scenario.json 缺 price 或 Bull 目標價]")
+        return "\n".join(lines)
     lines.append("- Bull EPS 路徑：{0}；Bull 終端倍數：{1}x；Bull 5 年目標價：{2}".format(
         (tree.get("eps") or {}).get("bull"), (tree.get("pe") or {}).get("bull"), sm.get("bull_5y_price")))
     try:

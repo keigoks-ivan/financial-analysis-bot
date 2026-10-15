@@ -258,6 +258,12 @@ def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
     # （漢唐判斷者 1,305÷85＝15.4 倍即此算法）；判斷者有填一律用判斷者的。
     if meta.get("fpe_fy2") is None or meta.get("peg_fy2") is None:
         _fill_fy2_valuation_from_base(meta)
+    # 2026-10-12 CRWV：sales_multiple 情境樹（虧損公司）沒有 base_eps_path、FY2 共識 EPS 又為負，
+    # 本益比與 PEG 無定義 → 沿用 -1 慣例（同上方 LULU 註；aggregate_dd_stats 只取 >0，自動排除）。
+    if ((scenario_meta or {}).get("scenario_tree") or {}).get("valuation_basis") == "sales_multiple":
+        for k in ("fpe_fy2", "peg_fy2"):
+            if meta.get(k) is None:
+                meta[k] = -1
 
     endo = (moat.get("roic_durability") or {}).get("endo_ceiling")
     if endo is not None:
@@ -1551,10 +1557,55 @@ def render_v19_quotes_html(facts: dict | None) -> str | None:
 
 # ---- 免費資料區：§10 情境樹逐項（scenario_meta.scenario_tree） -----------
 
+def _fmt_m(v) -> str:
+    """百萬單位數字：千分位、無小數；非數字原樣轉義。"""
+    return f"{v:,.0f}" if isinstance(v, (int, float)) and not isinstance(v, bool) else esc(v)
+
+
+def _render_v19_scenario_tree_sales(tree: dict) -> str:
+    """2026-10-12（CRWV 案）：sales_multiple 模式的情境樹逐項表——營收路徑（逐年）＋終端 EV/S＋
+    終端淨負債／股數。終端每股價由 e11 表與卡片另列，這裡不重複。"""
+    rev, ev_s, p = tree.get("rev") or {}, tree.get("ev_s") or {}, tree.get("p") or {}
+    nd, sh = tree.get("net_debt_y5") or {}, tree.get("shares_y5") or {}
+    start = tree.get("start") or {}
+    n_years = max((len(v) for v in rev.values() if isinstance(v, list)), default=0)
+    header = ("<tr><th>情境</th><th class=\"num\">機率</th>"
+              + "".join(f'<th class="num">營收 年{i + 1}</th>' for i in range(n_years))
+              + "<th class=\"num\">終端 EV/S</th><th class=\"num\">終端淨負債</th>"
+                "<th class=\"num\">終端股數</th></tr>")
+    label_map = {"bull": "牛", "base": "基本", "bear": "熊"}
+    rows = []
+    if start:  # 起點列：起點營收（FY1 共識）與目前 EV/S；其餘欄以「—」佔位
+        rows.append(
+            '<tr><td>起點</td><td class="num">—</td>'
+            f'<td class="num" colspan="{max(n_years, 1)}">起點營收 {_fmt_m(start.get("rev"))}（百萬）</td>'
+            f'<td class="num">{esc(start.get("ev_s"))}x</td>'
+              '<td class="num">—</td><td class="num">—</td></tr>'
+        )
+    for key in ("bull", "base", "bear"):
+        path = rev.get(key) or []
+        cells = "".join(f'<td class="num">{_fmt_m(v)}</td>' for v in path)
+        pad = "".join('<td class="num">—</td>' for _ in range(n_years - len(path)))
+        rows.append(
+            f'<tr><td>{label_map.get(key, key)}</td><td class="num">{esc(p.get(key))}%</td>'
+            f'{cells}{pad}<td class="num">{esc(ev_s.get(key))}x</td>'
+            f'<td class="num">{_fmt_m(nd.get(key))}</td><td class="num">{_fmt_m(sh.get(key))}</td></tr>'
+        )
+    note = ""
+    if start:
+        note = (f'<p class="mach">起點：營收 {_fmt_m(start.get("rev"))}（百萬）、'
+                f'EV/S {esc(start.get("ev_s"))}x（{esc(start.get("basis"))}）；'
+                f'營收、淨負債單位為百萬，股數為百萬股；終端每股價＝（營收×EV/S－淨負債）÷股數，'
+                f'股權價值為負時歸零</p>')
+    return '<table id="stree">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n" + note
+
+
 def render_v19_scenario_tree_html(scenario_meta: dict | None) -> str | None:
     tree = (scenario_meta or {}).get("scenario_tree")
     if not isinstance(tree, dict):
         return None
+    if tree.get("valuation_basis") == "sales_multiple":
+        return _render_v19_scenario_tree_sales(tree)
     eps, pe, p = tree.get("eps") or {}, tree.get("pe") or {}, tree.get("p") or {}
     start = tree.get("start") or {}
     n_years = max((len(v) for v in eps.values() if isinstance(v, list)), default=0)

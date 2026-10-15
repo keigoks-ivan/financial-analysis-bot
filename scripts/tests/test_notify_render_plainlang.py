@@ -11,12 +11,20 @@
 「接近」是離門檻 20% 以內，改寫「離警戒線不到兩成」；報告證偽表同時收「推翻」與
 「升級」門檻，改寫「碰線就要回頭檢查那份報告的判斷」，不寫「看錯了」。
 
+2026-10-13 第五版：持有人要「講重點」。每日摘要改成結論／要處理／要盯三段，
+黃燈清單與名詞解釋只留在週報；改版前用一個月實際資料回放，補上紅燈解除、黃級
+壓力面複合規則成立、類股急跌排序三個缺口。
+
+2026-10-13 第六版：持有人「我都要知道最重要的事情要強調出來」。每日摘要與週報開頭
+加一行粗體「最重要：…」（四層由重到輕取第一個有東西的層）；週報改成這週發生的事／
+還在持續／下週要盯三段。
+
 2026-10-06 第四版：警戒度拆成「有東西在壞」（警戒度，只數壓力面）與「漲太熱」
 （熱度，另列、不計分），否證指標移出分數、獨立成「報告要重看」一行並附
 「照平常的速度多久碰線」。closest_composite 不再選到已成立的規則；黃燈名單改依底層
 序列去重，不再需要「×2＝兩個偵測器」的說法。
 
-本檔鎖住四版的行為。真資料測試只斷言 notify_render 自己產的字，不斷言
+本檔鎖住六版的行為。真資料測試只斷言 notify_render 自己產的字，不斷言
 latest.json 裡由 build_detective 產的 driver 字——那些要等每日排程重算才會更新。
 """
 import json
@@ -90,29 +98,7 @@ def test_drivers_sentence():
         "分數主要來自：62 條訊號亮黃燈、2 組複合規則只差一個條件就成立。")
 
 
-# ── 紅燈、訊號進出、名詞解釋 ───────────────────────────────────────────
-def test_red_sentence_says_so_when_there_is_none():
-    assert nr._red_sentence(0) == "今天沒有任何訊號亮紅燈。紅燈是最嚴重的一級。"
-    s = nr._red_sentence(2, "某訊號大跌")
-    assert s.startswith("有 2 條訊號亮紅燈") and s.endswith("最嚴重的是：某訊號大跌")
-
-
-def test_red_sentence_says_when_reds_are_not_in_alert_score():
-    s = nr._red_sentence(4, None, 0)
-    assert "都沒算進警戒度" in s
-    s = nr._red_sentence(4, None, 1)
-    assert "其中 1 條算進警戒度，另外 3 條不算" in s
-    assert "警戒度" not in nr._red_sentence(2, None, 2)
-
-
-@pytest.mark.parametrize("new,res,tail", [(32, 39, "總數少了 7 條"),
-                                          (40, 30, "總數多了 10 條"),
-                                          (5, 5, "總數沒變")])
-def test_net_change_sentence_gives_direction(new, res, tail):
-    s = nr._net_change_sentence(new, res)
-    assert f"新增 {new} 條、解除 {res} 條" in s and tail in s
-
-
+# ── 名詞解釋 ───────────────────────────────────────────
 def test_glossary_only_for_terms_present():
     assert nr._glossary_lines("沒有術語") == []
     both = nr._glossary_lines("3 組複合規則…7 條否證指標…")
@@ -138,18 +124,6 @@ def test_gloss_takes_last_fullwidth_paren():
     assert nr._gloss(None) == ""
 
 
-def test_composite_sentence_uses_only_plain_words():
-    s = nr._composite_gap_sentence(COMPOSITE)
-    assert s == ("最接近成立的一組複合規則，要 3 件事同時發生，現在發生了 2 件："
-                 "指數在一年高點附近、大多數股票沒跟上指數。"
-                 "還沒發生的是：高風險公司債比優質公司債弱。")
-
-
-def test_composite_k_of_n_wording():
-    c = dict(COMPOSITE, min_true=2, met_count=1)
-    assert "3 件事裡要有 2 件同時發生" in nr._composite_gap_sentence(c)
-
-
 def test_near_composites_only_one_short_and_unfired():
     comps = [{"fired": False, "met_count": 2, "min_true": 3},   # 差一件 → 算
              {"fired": False, "met_count": 1, "min_true": 3},   # 差兩件 → 不算
@@ -158,25 +132,7 @@ def test_near_composites_only_one_short_and_unfired():
     assert nr._near_composites(comps) == [comps[0]]
 
 
-def test_composite_gap_sentence_none_for_missing_rule():
-    assert nr._composite_gap_sentence(None) is None
-
-
 # ── 否證指標 ───────────────────────────────────────────────────────────
-def test_kill_sentence_ties_near_to_the_machine_checked_ones():
-    kw = {"coverage": {"mechanical": 12, "total": 1009, "llm_only": 997}, "near": ["a"] * 7}
-    assert nr._kill_sentence(kw, []) == (
-        "否證指標沒有一條越過警戒線。機器能自動檢查的 12 條裡，有 7 條離警戒線不到兩成。"
-        "另外 997 條沒辦法自動檢查，要靠人看。")
-
-
-def test_kill_sentence_breached_and_quiet():
-    kw = {"coverage": {"mechanical": 12, "total": 20}, "near": []}
-    assert nr._kill_sentence(kw, ["x", "y"]).startswith("有 2 條否證指標已經越過警戒線。")
-    assert "都離警戒線還有兩成以上" in nr._kill_sentence(kw, [])
-    assert "另外 8 條沒辦法自動檢查" in nr._kill_sentence(kw, [])
-
-
 def test_near_wording_matches_the_20pct_rule():
     """build_kill_watch 的 near＝離門檻 20% 以內；字面不能比規則講得更近。"""
     import build_kill_watch as bkw
@@ -184,12 +140,6 @@ def test_near_wording_matches_the_20pct_rule():
     # 否證指標已移出警戒度計分，driver 標籤不該再有 kill 兩項
     assert "kill_near" not in bd.ALERT_DRIVER_LABELS
     assert "kill_breached" not in bd.ALERT_DRIVER_LABELS
-    one_min = nr._kill_minute_sentence({"breached": [], "near": ["a"], "items": []})
-    assert "不到兩成" in one_min and "快碰到" not in one_min
-
-
-def test_kill_sentence_none_without_table():
-    assert nr._kill_sentence(None, []) is None
 
 
 # ── 這些數字是哪些 ─────────────────────────────────────────────────────
@@ -211,7 +161,7 @@ def test_doc_title_takes_first_part_of_real_report_title():
     assert nr._doc_title(None) == ""
 
 
-def test_kill_near_lines_name_report_metric_now_and_line():
+def test_kill_lines_name_report_metric_now_and_line():
     kw = {"near": ["a", "b", "c"], "items": [
         {"id": "a", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html",
          "metric_text": "10Y/30Y 殖利率", "current": 5.29, "value": 5.5, "op": ">=", "unit": "%"},
@@ -219,53 +169,20 @@ def test_kill_near_lines_name_report_metric_now_and_line():
          "op": "<", "unit": ""},
         {"id": "c", "metric_text": "缺值"},
     ]}
-    lines = nr._kill_near_lines(kw)
+    lines = nr._kill_group_lines(kw, kw["near"])
     assert lines[0] == "美國財政赤字與利率上限：10Y/30Y 殖利率，現在 5.29%，升到 5.5% 就碰線"
     assert lines[1] == "Demo：某數，現在 12，跌到 10 就碰線"
     assert lines[2] == "缺值。"
-    assert nr._kill_near_lines(None) == []
+    assert nr._kill_group_lines(None, None) == []
 
 
-def test_kill_near_lines_never_claim_the_report_was_wrong():
+def test_kill_phrases_never_claim_the_report_was_wrong():
     """證偽表同時收「推翻」與「升級」門檻，碰線不等於看錯。"""
     kw = json.loads((DATA / "kill_watch.json").read_text(encoding="utf-8"))
-    text = "".join(nr._kill_near_lines(kw)) + nr.KILL_NEAR_NOTE + "".join(nr._glossary_lines("否證指標"))
+    text = ("".join(nr._kill_phrases(kw, kw.get("near"), "最快碰線", breached=False))
+            + "".join(nr._kill_phrases(kw, kw.get("breached"), "越線"))
+            + "".join(nr._glossary_lines("否證指標")))
     assert "看錯" not in text and "錯了" not in text
-    assert "回頭檢查" in nr.KILL_NEAR_NOTE
-
-
-def test_near_composite_lines():
-    assert nr._near_composite_lines([COMPOSITE]) == [
-        "已經發生：指數在一年高點附近、大多數股票沒跟上指數。還差：高風險公司債比優質公司債弱。"]
-    k_of_n = dict(COMPOSITE, min_true=2, met_count=1,
-                  members=[dict(COMPOSITE["members"][0], met=True),
-                           dict(COMPOSITE["members"][1], met=False),
-                           dict(COMPOSITE["members"][2], met=False)])
-    assert "還差其中一件：" in nr._near_composite_lines([k_of_n])[0]
-
-
-def _sig(label, state="active", sev="yellow", dim="credit", esc_type=None):
-    s = {"label": label, "state": state, "sev": sev, "dim": dim}
-    if esc_type:
-        s["escalations"] = [{"type": esc_type}]
-    return s
-
-
-def test_escalated_note_only_when_all_are_just_sustained():
-    sustained = [_sig("A", "escalated", esc_type="sustained"),
-                 _sig("B", "escalated", esc_type="sustained"), _sig("C")]
-    names, note = nr._escalated_names_and_note(sustained)
-    assert names == ["A", "B"]
-    assert "沒有一條變成紅燈" in note and f"連續亮 {nr.SUSTAINED_DAYS} 天" in note
-    mixed = [_sig("A", "escalated", esc_type="sustained"),
-             _sig("B", "escalated", esc_type="sev_jump")]
-    assert nr._escalated_names_and_note(mixed)[1] == ""
-
-
-def test_yellow_by_dim_groups_dedupes_and_skips_red():
-    sigs = [_sig("HYG", dim="credit"), _sig("LQD", dim="credit"), _sig("LQD", dim="credit"),
-            _sig("VIX", dim="vol_options"), _sig("紅的", sev="red", dim="credit")]
-    assert nr._yellow_by_dim(sigs) == [("公司債", 3, ["HYG", "LQD ×2"]), ("波動", 1, ["VIX"])]
 
 
 # ── 家族標籤（週報新增／解除清單）────────────────────────────────────────
@@ -281,12 +198,6 @@ def test_yellow_by_dim_groups_dedupes_and_skips_red():
 ])
 def test_family_label_is_thing_plus_what_happened(source, cat, direction, want):
     assert nr._family_label(source, cat, direction) == want
-
-
-def test_direction_of():
-    assert nr._direction_of(["a:x:up", "b:y:up"]) == "up"
-    assert nr._direction_of(["a:x:up", "b:y:down"]) == ""
-    assert nr._direction_of(["a:x"]) == ""
 
 
 # ── 上游顯示字（build_detective／detective_rules）──────────────────────
@@ -359,44 +270,178 @@ def test_real_html_has_no_internal_jargon(real, tier):
 def test_real_emails_lead_with_alert_and_define_terms(real, tier):
     body = (nr.render_digest(*real, force=True) if tier == "digest"
             else nr.render_weekly(*real))
-    first = [l for l in body.splitlines() if l.strip()][1]
-    assert first.startswith("警戒度 "), first
+    lines = [l for l in body.splitlines() if l.strip()]
+    assert lines[1].startswith("**最重要：") and lines[1].endswith("。**"), lines[1]
+    assert lines[2].startswith("警戒度 "), lines[2]
+    if tier == "digest":   # 2026-10-13 每日只講重點，名詞解釋留給週報
+        return
     if "複合規則" in body:
         assert "複合規則＝" in body
     if "否證指標" in body:
         assert "否證指標＝" in body
 
 
-def test_real_digest_names_what_is_behind_each_count(real):
+def test_real_digest_only_key_points(real):
+    """2026-10-13 持有人要「講重點」：越線的否證指標只講一次、不帶內部檔名，
+    黃燈不再逐條點名，新增訊號只取最顯著的幾條。"""
     latest, state = real
     kw = json.loads((DATA / "kill_watch.json").read_text(encoding="utf-8"))
-    blocks = nr._which_ones_digest(latest, latest.get("composites"), kw)
-    heads = [b[0] for b in blocks]
-    n_near = len(kw.get("near") or [])
-    if n_near:
-        head = f"離警戒線不到兩成的否證指標（{n_near} 條）"
-        assert head in heads
-        # 同一個數字被兩份報告各列一次會合併成一行，所以行數 ≤ 條數
-        assert 1 <= len(blocks[heads.index(head)][1]) <= n_near
-    n_b = len(kw.get("breached") or [])
-    if n_b:
-        assert f"已越線的否證指標（{n_b} 條）" in heads
-    n_comp_near = len(nr._near_composites(latest.get("composites")))
-    assert any(h.startswith(f"只差一件事就成立的複合規則（{n_comp_near} 組") for h in heads)
-    n_yellow = sum(1 for s in nr._dedupe_series(latest["signals"]) if s.get("sev") != "red")
-    assert f"{n_yellow} 條黃燈分在哪裡" in heads
     body = nr.render_digest(latest, state, force=True)
     html = nr.render_digest_html(latest, state, force=True)
-    assert "這些數字是哪些" in body and "這些數字是哪些" in html
+    for gone in ("這些數字是哪些", "黃燈分在哪裡", "（源 MACRO_", "kill_watch", "thesis"):
+        assert gone not in body and gone not in html, gone
+    items = {it["id"]: it for it in kw.get("items", [])}
+    # 「最重要」那行刻意把最要緊的一條再講一次，其餘內文每條只講一次
+    rest = "\n".join(l for l in body.splitlines() if not l.startswith("**最重要："))
+    for nid in kw.get("breached") or []:
+        metric = items[nid]["metric_text"]
+        assert rest.count(metric) <= 1, metric   # 同一數字兩份報告各列一次的，合併成一行
+    assert "要處理：" in body and nr.REST_ON_WEB in body
+    new_lines = [l for l in body.splitlines() if l.startswith("・今天新增訊號裡最顯著的")]
+    assert len(new_lines) <= 1
+    # 訊號文字本身可能含「；」，所以直接數條數，不數分隔符
+    assert len(nr._top_new_facts(nr._digest_compute(latest, state))) <= nr.TOP_NEW_SIGNALS
 
 
-def test_real_weekly_names_sustained_and_near_kill(real):
+def test_composite_watch_line_names_shared_condition():
+    def comp(pid, met, unmet, prox):
+        return {"id": pid, "fired": False, "min_true": len(met) + len(unmet),
+                "met_count": len(met), "proximity": prox,
+                "members": [{"desc": f"x（{g}）", "met": True} for g in met]
+                + [{"desc": f"x（{g}）", "met": False} for g in unmet]}
+    shared = [comp("A", ["甲"], ["乙"], 0.5), comp("B", ["丙"], ["乙"], 0.5)]
+    assert nr._composite_watch_line(shared) == "「乙」一旦發生，就有 2 組複合規則同時成立。"
+    alone = [comp("A", ["甲"], ["乙"], 0.5), comp("B", ["丙"], ["丁"], 0.9)]
+    assert nr._composite_watch_line(alone) == "最接近成立的複合規則，只差「丁」。"
+    assert nr._composite_watch_line([comp("A", [], ["乙", "丁"], 0.1)]) is None
+
+
+def test_new_signals_put_something_breaking_first(monkeypatch):
+    """單一類股急跌（壓力面）不能被分數較高的類股象限翻轉擠掉。"""
+    monkeypatch.setattr(nr.bd, "_signal_side", lambda s: s["side"])
+    sigs = {f"k{i}": {"key": f"k{i}", "state": "new", "sev": "yellow", "score": sc,
+                      "side": side, "fact": f"f{i}"}
+            for i, (sc, side) in enumerate([(9, "other"), (8, "other"), (7, "other"), (5, "stress")])}
+    monkeypatch.setattr(nr, "_dedupe_series", lambda xs: list(xs))
+    assert nr._top_new_facts({"sig_by_key": sigs}) == ["f3", "f0", "f1"]
+
+
+def test_fired_yellow_stress_composite_is_named_heat_ones_left_to_heat_line():
+    def c(cid, sev):
+        return {"id": cid, "fired": True, "sev": sev, "name": cid,
+                "members": [{"desc": "x（甲）", "met": True}, {"desc": "x（乙）", "met": True}]}
+    d = {"fired_composites": [c("R2", "yellow"), c("R6", "yellow"), c("R1", "red")]}
+    assert nr._fired_stress_composite_lines(d) == ["複合規則已成立（黃燈）：甲、乙，同時發生。"]
+
+
+def test_resolved_red_is_reported():
+    d = {"resolved_red_keys": ["monitor:vol:move:up"], "keys_state": {}, "sig_by_key": {},
+         "composite_by_key": {}, "history_by_key": {"monitor:vol:move:up":
+                                                    {"peak_sev": "red", "days_active": 3}}}
+    line = nr._resolved_red_line(d)
+    assert line.startswith("今天解除的紅燈：") and "MOVE" in line
+    assert nr._resolved_red_line(dict(d, resolved_red_keys=[])) is None
+
+
+# ── 最重要的事（2026-10-13）────────────────────────────────────────────
+def test_headline_takes_first_non_empty_tier_and_names_all_in_it():
+    assert nr._headline([[], ["甲", "乙"], ["丙"]], "沒事。") == (2, "最重要：甲；乙。")
+    assert nr._headline([[], [], []], "沒事。") == (4, "最重要：沒事。")
+    assert nr._headline_text((1, "最重要：甲。")) == "**最重要：甲。**"
+    assert "#b3261e" in nr._headline_html((1, "最重要：甲。"))     # 第一層用紅框
+
+
+def _hd(active_red=(), fired=(), new_red=()):
+    return {"as_of": "2026-10-12", "new_red_keys": list(new_red), "esc_red_keys": [],
+            "active_red": list(active_red), "fired_composites": list(fired)}
+
+
+def test_digest_headline_big_band_jump_comes_first(monkeypatch):
+    monkeypatch.setattr(nr, "_alert_history_points",
+                        lambda path=None: [["2026-10-09", 30, "watch"], ["2026-10-12", 70, "tense"]])
+    latest = {"alert_level": {"score": 70, "band": "tense", "band_label": "緊張", "drivers": []}}
+    red = {"key": "monitor:x", "source": "monitor", "sev": "red", "fact": "某指數大跌", "days_active": 1}
+    tier, text = nr._digest_headline(latest, _hd([red]), {})
+    assert tier == 1 and text == "最重要：警戒度升到「緊張」，70 分；某指數大跌（今天亮紅燈）。"
+
+
+def test_digest_headline_small_band_jump_is_second_tier(monkeypatch):
+    monkeypatch.setattr(nr, "_alert_history_points",
+                        lambda path=None: [["2026-10-09", 10, "calm"], ["2026-10-12", 25, "watch"]])
+    latest = {"alert_level": {"score": 25, "band": "watch", "band_label": "留意", "drivers": []}}
+    assert nr._digest_headline(latest, _hd(), {}) == (2, "最重要：警戒度升到「留意」，25 分。")
+
+
+def test_digest_headline_names_reports_still_breached(monkeypatch):
+    monkeypatch.setattr(nr, "_alert_history_points", lambda path=None: [])
+    kw = {"breached": ["macro:A:0"], "items": [
+        {"id": "macro:A:0", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html", "metric_text": "M",
+         "current": 6, "value": 5, "op": ">=", "unit": "", "data_source": {"type": "monitor", "key": "a"}}]}
+    sig = {"key": "kill:A:0", "source": "kill", "sev": "red", "days_active": 6}
+    tier, text = nr._digest_headline({}, _hd([sig]), kw)
+    assert tier == 3
+    assert text == "最重要：美國財政赤字與利率上限的否證指標還在越線（最久第 6 天），要回頭檢查判斷。"
+    sig["days_active"] = 1
+    tier, text = nr._digest_headline({}, _hd([sig]), kw)
+    assert tier == 1 and "的否證指標今天越線：M，現在 6，已經越過 5" in text
+
+
+def test_kill_phrases_merge_same_report():
+    kw = {"items": [
+        {"id": "a", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html", "metric_text": "M1",
+         "current": 6, "value": 5, "op": ">=", "unit": "", "data_source": {"type": "monitor", "key": "a"}},
+        {"id": "b", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html", "metric_text": "M2",
+         "current": 3, "value": 2, "op": ">=", "unit": "", "data_source": {"type": "monitor", "key": "b"}}]}
+    assert nr._kill_phrases(kw, ["a", "b"], "越線") == [
+        "美國財政赤字與利率上限的否證指標越線：M1，現在 6，已經越過 5；M2，現在 3，已經越過 2"]
+
+
+def test_nearest_kill_line_is_only_the_fastest_one():
+    kw = {"near": ["slow", "dxy1", "dxy2", "fast"], "items": [
+        _kwi("slow", "docs/macro/MACRO_USEconomy_20260708.html", "慢的", 1, 9, 900, ds="a/x"),
+        _kwi("dxy1", "docs/macro/MACRO_DollarCycle_20260710.html", "DXY", 101.9, 102, 3.0),
+        _kwi("dxy2", "docs/macro/MACRO_GlobalLiquidity_20260708.html", "DXY 同線", 101.9, 102, 3.0),
+        _kwi("fast", "docs/macro/MACRO_USEconomy_20260708.html", "快的", 5, 6, 40, ds="b/y")]}
+    line = nr._nearest_kill_line(kw)
+    assert line.startswith("美元週期、全球流動性循環的否證指標最快碰線：DXY，現在 101.9")
+    assert "慢的" not in line and "快的" not in line
+    assert nr._nearest_kill_line({"near": []}) is None
+
+
+def test_alert_week_sentence():
+    pts = [["2026-10-05", 30, "watch"], ["2026-10-06", 20, "watch"], ["2026-10-08", 65, "tense"]]
+    assert nr._alert_week_sentence(pts, "2026-10-06", "2026-10-12") == "這週警戒度在 20～65 分之間，10/8 升到「緊張」。"
+    assert nr._alert_week_sentence(pts[:2], "2026-10-05", "2026-10-12") == "這週警戒度在 20～30 分之間，都在「留意」。"
+    assert nr._alert_week_sentence([], "2026-10-06", "2026-10-12") is None
+
+
+def test_real_weekly_three_sections_and_headline(real):
     latest, state = real
-    d = nr._weekly_compute(latest, state)
-    assert len(d["sustained_keys"]) == d["sustained_count"]
     body = nr.render_weekly(latest, state)
-    if d["sustained_count"]:
-        assert f"還沒退的黃燈（{d['sustained_count']} 條）" in body
+    html = nr.render_weekly_html(latest, state)
+    assert "**最重要：" in body and "最重要：" in html
+    assert "這週發生的事：" in body and nr.WEEK_REST_ON_WEB in body
+    for gone in ("這些數字是哪些", "本週新增（", "本週解除（", "各資料來源的更新日期", "（無）", "kill_metric"):
+        assert gone not in body and gone not in html, gone
+    d = nr._weekly_compute(latest, state)
+    if d["sustained_keys"]:
+        assert f"連續亮 {nr.SUSTAINED_DAYS} 天以上、還沒退的黃燈：" in body
+
+
+def test_breached_kill_lines_say_new_or_day_count():
+    kw = {"items": [
+        {"id": "macro:A:0", "doc": "", "theme": "A", "metric_text": "M1", "current": 6, "value": 5,
+         "op": ">=", "unit": "", "days_to_line": 0.0, "data_source": {"type": "monitor", "key": "a"}},
+        {"id": "macro:B:1", "doc": "", "theme": "B", "metric_text": "M2", "current": 6, "value": 5,
+         "op": ">=", "unit": "", "days_to_line": 0.0, "data_source": {"type": "monitor", "key": "b"}}]}
+    sigs = [{"key": "kill:A:0", "source": "kill", "days_active": 1},
+            {"key": "kill:B:1", "source": "kill", "days_active": 6}]
+    days = nr._kill_days_by_id(kw, sigs)
+    assert days == {"macro:A:0": 1, "macro:B:1": 6}
+    lines = nr._kill_group_lines(kw, ["macro:A:0", "macro:B:1"], breached=True, days_by_id=days)
+    assert lines[0].endswith("（今天剛越線）") and lines[1].endswith("（第 6 天）")
+    # 週報沿用舊呼叫方式，不帶天數
+    assert nr._kill_group_lines(kw, ["macro:A:0"], breached=True)[0].endswith("已經越過 5")
 
 
 def test_real_html_digest_shows_alert_tile(real):
@@ -467,7 +512,7 @@ def test_kill_lines_sorted_by_pace_and_same_line_merged():
         _kwi("dxy2", "docs/macro/MACRO_GlobalLiquidity_20260708.html", "DXY 同線", 101.9, 102, 3.0),
         _kwi("fast", "docs/macro/MACRO_USFiscalDeficit_20260708.html", "快的", 5, 6, 40, ds="b/y"),
     ]}
-    lines = nr._kill_near_lines(kw)
+    lines = nr._kill_group_lines(kw, kw["near"])
     assert len(lines) == 3                                # 兩份報告同一條美元線合併成一行
     assert lines[0].startswith("美元週期、全球流動性循環：DXY，")     # 最快的在前、點名兩份報告
     assert "幾天內就可能碰到" in lines[0]
@@ -479,7 +524,7 @@ def test_kill_lines_without_pace_keep_old_wording():
     kw = {"near": ["a"], "items": [
         {"id": "a", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html",
          "metric_text": "10Y/30Y 殖利率", "current": 5.29, "value": 5.5, "op": ">=", "unit": "%"}]}
-    assert nr._kill_near_lines(kw) == [
+    assert nr._kill_group_lines(kw, kw["near"]) == [
         "美國財政赤字與利率上限：10Y/30Y 殖利率，現在 5.29%，升到 5.5% 就碰線"]
 
 
@@ -487,19 +532,8 @@ def test_kill_breached_lines_say_already_crossed():
     kw = {"breached": ["a"], "items": [
         {"id": "a", "doc": "docs/macro/MACRO_USFiscalDeficit_20260708.html",
          "metric_text": "10Y/30Y 殖利率", "current": 5.63, "value": 5.5, "op": ">=", "unit": "%"}]}
-    assert nr._kill_breached_lines(kw) == [
+    assert nr._kill_group_lines(kw, kw["breached"], breached=True) == [
         "美國財政赤字與利率上限：10Y/30Y 殖利率，現在 5.63%，已經越過 5.5%"]
-
-
-def test_kill_minute_sentence():
-    kw = {"breached": ["a", "b"], "near": ["c", "d"], "items": [
-        {"id": "c", "days_to_line": 400.0}, {"id": "d", "days_to_line": 9.0}]}
-    s = nr._kill_minute_sentence(kw)
-    assert s == ("報告要重看：2 條否證指標已越線。另有 2 條離警戒線不到兩成，"
-                 "其中最快的一條，照平常的速度，幾天內就可能碰到。")
-    assert nr._kill_minute_sentence({"breached": [], "near": [], "items": []}) == \
-        "報告要重看：目前沒有否證指標越線。"
-    assert nr._kill_minute_sentence(None) is None
 
 
 def test_estimate_days_to_line_random_walk():
@@ -514,39 +548,7 @@ def test_estimate_days_to_line_random_walk():
     assert bkw.estimate_days_to_line(None, "daily", 1, 2, "near") is None
 
 
-def _comp(cid, fired, prox, met=1, need=2):
-    return {"id": cid, "name": "規則" + cid, "status": "active", "fired": fired,
-            "proximity": prox, "met_count": met, "min_true": need, "members": [], "sev": "yellow"}
-
-
-def test_closest_composite_excludes_fired_ones():
-    latest = {"as_of": "d", "signals": [], "counts": {},
-              "composites": [_comp("R6", True, 1.0, 2, 2), _comp("R1", False, 0.67, 2, 3),
-                             _comp("R7", False, 0.5)]}
-    d = nr._digest_compute(latest, {"transitions_today": [], "keys": {}, "history": []})
-    assert d["closest_composite"]["id"] == "R1"
-    only_fired = dict(latest, composites=[_comp("R6", True, 1.0, 2, 2)])
-    d2 = nr._digest_compute(only_fired, {"transitions_today": [], "keys": {}, "history": []})
-    assert d2["closest_composite"] is None
-
-
-def test_gap_sentence_for_fired_rule_says_already_in_effect():
-    s = nr._composite_gap_sentence(_comp("R6", True, 1.0, 2, 2))
-    assert s == "複合規則「規則R6」已成立。" and "最接近" not in s
-
-
-def test_yellow_by_dim_dedupes_same_series_across_detectors():
-    def sg(key, label, **kw):
-        return dict({"key": key, "label": label, "sev": "yellow", "score": 6, "dim": "equity_structure"}, **kw)
-    sigs = [sg("monitor:indices:hsi:down", "香港恆生"), sg("reversal:indices:hsi:down", "香港恆生"),
-            sg("crowding:theme:advanced-packaging", "主題擁擠：Advanced Packaging", dim="positioning"),
-            sg("crowding:theme:advancedpackaging", "主題擁擠：AdvancedPackaging", dim="positioning")]
-    rows = nr._yellow_by_dim(sigs)
-    assert sum(r[1] for r in rows) == 2                    # 各只剩一條，不再出現 ×2
-    assert all("×" not in "".join(r[2]) for r in rows)
-
-
-def test_digest_one_minute_order_alert_heat_kill_composite(real, tmp_path, monkeypatch):
+def test_digest_order_conclusion_then_action_then_watch(real, tmp_path, monkeypatch):
     latest, state = real
     latest = dict(latest, heat_level={"count": 20, "composites_fired": [], "as_of": latest["as_of"]})
     kw = {"breached": ["a"], "near": [], "items": [
@@ -557,7 +559,10 @@ def test_digest_one_minute_order_alert_heat_kill_composite(real, tmp_path, monke
     monkeypatch.setattr(nr, "DEFAULT_KILL_WATCH", str(kwp))
     body = nr.render_digest(latest, state, force=True)
     i_alert, i_heat = body.index("警戒度 "), body.index("熱度：亮 20 盞")
-    i_kill, i_gap = body.index("報告要重看：1 條否證指標已越線"), body.index("最接近成立的一組複合規則")
-    assert i_alert < i_heat < i_kill < i_gap
+    i_act = body.index("要處理：1 份研究報告的否證指標越線")
+    i_line = body.index("・T：M，現在 6，已經越過 5")
+    assert i_alert < i_heat < i_act < i_line
+    if "要盯：" in body:
+        assert i_line < body.index("要盯：")
     html = nr.render_digest_html(latest, state, force=True)
-    assert html.index("熱度：亮 20 盞") < html.index("報告要重看") < html.index("最接近成立")
+    assert html.index("熱度：亮 20 盞") < html.index("要處理") < html.index("T：M，現在 6")
