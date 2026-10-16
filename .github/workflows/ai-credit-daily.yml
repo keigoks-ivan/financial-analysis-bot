@@ -1,0 +1,151 @@
+name: AI Credit Monitor Daily
+
+# AI 信用風險監測（/ai-credit/）每日資料管線。
+#
+# 跑 scripts/ai_credit/build_ai_credit.py：抓 SEC（companyfacts＋內嵌 XBRL）、Yahoo Finance、FRED，
+# 計算 12 條指標（門檻 2026-10-16 事前登記，寫在 scripts/ai_credit/aic_metrics.py），
+# 重寫 docs/ai-credit/ 頁面、append data/ai_credit/history.jsonl、更新融資事件紀錄。
+# 任一來源抓取失敗都沿用上次值並在頁面標資料日期，不補數字。
+#
+# 通知：任一條「越線／未越線」狀態改變才寫 aic_title.txt／aic_alert.txt／aic_mail.html，
+# 下面步驟讀檔寄信與發 Discord（首跑無舊狀態不發）。做法照 update_fear_greed.yml。
+#
+# 排程：每天台北 07:40（= 前一日 23:40 UTC），美股收盤之後。早報證據帳本約 07:45 才推進來，
+# 所以融資事件紀錄通常晚一天。GITHUB_TOKEN push 不觸發 deploy-pages 的 push 事件，
+# 故 deploy-pages.yml 的 workflow_run 清單已加入本 workflow 名稱。
+
+on:
+  schedule:
+    - cron: '40 23 * * *'
+  workflow_dispatch:
+    inputs:
+      test_notify:
+        description: '寄一則標題含「測試」的測試信（email＋Discord），不比對狀態、不代表真實狀態改變'
+        type: boolean
+        default: false
+      no_notify:
+        description: '只更新資料與頁面，不寫通知檔（不寄 email／Discord）'
+        type: boolean
+        default: false
+      retry:
+        description: >-
+          內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'  # site_nav.py uses 3.12+ f-string syntax
+
+      - name: Install dependencies
+        run: pip install requests "yfinance>=0.2.40" pandas numpy
+
+      - name: Build AI credit monitor
+        env:
+          TEST_NOTIFY: ${{ inputs.test_notify }}
+          NO_NOTIFY: ${{ inputs.no_notify }}
+        run: |
+          ARGS=""
+          if [ "$TEST_NOTIFY" = "true" ]; then ARGS="--test-alert"; fi
+          if [ "$NO_NOTIFY" = "true" ]; then ARGS="$ARGS --no-notify"; fi
+          python scripts/ai_credit/build_ai_credit.py $ARGS
+
+      - name: Read alert
+        id: aicalert
+        run: |
+          if [ -f aic_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "title=$(head -n 1 aic_title.txt)" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<AICALERT_EOF"
+              awk 1 aic_alert.txt
+              echo "AICALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # SMTP secret 缺少時略過寄信，不讓 workflow 失敗（MAIL_USERNAME／MAIL_APP_PASSWORD 與
+      # update_fear_greed.yml、update_long_track_w52_adaptive.yml 共用）。
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email state change
+        if: steps.aicalert.outputs.changed == 'true' && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.aicalert.outputs.title }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://aic_mail.html
+          body: |
+            ${{ steps.aicalert.outputs.body }}
+
+            —
+            InvestMQuest · AI 信用風險監測（只在越線狀態改變時寄出）
+
+      - name: Discord notify
+        if: steps.aicalert.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_MARKET }}
+          NOTIFY_TITLE: ${{ steps.aicalert.outputs.title }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file aic_alert.txt --url https://research.investmquest.com/ai-credit/
+
+      - name: Commit and push
+        id: commit_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add docs/ai-credit data/ai_credit
+          git diff --staged --quiet || git commit -m "Auto update AI credit monitor: $(date -u '+%Y-%m-%d')"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh

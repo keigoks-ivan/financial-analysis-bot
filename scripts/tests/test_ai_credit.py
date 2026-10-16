@@ -1,0 +1,455 @@
+"""scripts/ai_credit/ 的離線單元測試（不連網）。
+
+涵蓋：近四季累計相減（含缺零值季）、遲滯規則、12 條越線判斷、狀態改變才通知、首跑不通知、
+抓失敗沿用舊值與日期、事件去重與關鍵字、內嵌 XBRL 解析、頁面冒煙測試。
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(SCRIPTS_DIR))
+sys.path.insert(0, str(SCRIPTS_DIR / "ai_credit"))
+
+import aic_alerts as AL  # noqa: E402
+import aic_events as EV  # noqa: E402
+import aic_metrics as M  # noqa: E402
+import aic_page as PG  # noqa: E402
+import build_ai_credit as B  # noqa: E402
+import ixparse as IX  # noqa: E402
+import sec_facts as S  # noqa: E402
+from aic_sources import spread_stats  # noqa: E402
+
+
+# ---------------------------------------------------------------------------
+# 近四季累計相減
+# ---------------------------------------------------------------------------
+def R(start, end, val, form="10-Q", filed="2026-08-01"):
+    return {"start": start, "end": end, "val": val, "form": form, "filed": filed}
+
+
+def test_ttm_is_annual_minus_prior_ytd_plus_current_ytd():
+    rs = [
+        R("2025-01-01", "2025-12-31", 100.0, "10-K"),
+        R("2025-01-01", "2025-06-30", 40.0),
+        R("2026-01-01", "2026-06-30", 50.0),
+    ]
+    t = S.ttm_flow(rs)
+    assert t["value"] == 110.0 and t["end"] == "2026-06-30"
+    assert t["parts"] == {"A": 100.0, "P": 40.0, "C": 50.0}
+
+
+def test_ttm_without_newer_ytd_is_the_annual():
+    t = S.ttm_flow([R("2025-01-01", "2025-12-31", 100.0, "10-K")])
+    assert t["value"] == 100.0 and t["end"] == "2025-12-31"
+
+
+def test_ttm_missing_zero_quarter_is_not_filled_by_last_four():
+    """零值季常整筆缺漏：發債只在 2025 H2 有事實（20），2026 上半年與 2025 上半年都沒有。
+    正確的近四季是 20；若取最後四筆（含更早的別年資料）會錯。"""
+    main = [R("2025-01-01", "2025-12-31", 500.0, "10-K"), R("2025-01-01", "2025-06-30", 200.0), R("2026-01-01", "2026-06-30", 260.0)]
+    win = S.ttm_window(main)
+    issue = [R("2024-01-01", "2024-12-31", 90.0, "10-K"), R("2025-01-01", "2025-12-31", 20.0, "10-K")]
+    t = S.ttm_flow(issue, win, zero_ok=True)
+    assert t["value"] == 20.0
+    assert sorted(t["assumed_zero"]) == ["C", "P"]
+    # 不允許補零時，缺漏就是算不出來，而不是默默給一個錯數字
+    assert S.ttm_flow(issue, win, zero_ok=False) is None
+
+
+def test_ttm_second_tag_fills_a_period_but_tags_are_not_summed():
+    """Oracle 式換 tag：新 tag 有今年累計，舊 tag 有去年同期（0）。每個元件只取第一個有值的 tag。"""
+    main = [R("2025-06-01", "2026-05-31", 900.0, "10-K"), R("2026-06-01", "2026-08-31", 300.0), R("2025-06-01", "2025-08-31", 100.0)]
+    win = S.ttm_window(main)
+    new_tag = [R("2025-06-01", "2026-05-31", 46.0, "10-K")]
+    old_tag = [R("2025-06-01", "2025-08-31", 0.0)]
+    t = S.ttm_flow([new_tag, old_tag], win, zero_ok=True)
+    assert t["value"] == 46.0 and t["assumed_zero"] == ["C"]
+
+
+def test_single_quarters_derives_q4_and_missing_quarter():
+    rs = [
+        R("2025-01-01", "2025-03-31", 10.0),
+        R("2025-01-01", "2025-06-30", 25.0),          # Q2 = 15（沒有直接 3 個月事實）
+        R("2025-01-01", "2025-09-30", 45.0),          # Q3 = 20
+        R("2025-01-01", "2025-12-31", 70.0, "10-K"),  # Q4 = 25
+    ]
+    q = S.single_quarters(rs)
+    assert q == {"2025-03-31": 10.0, "2025-06-30": 15.0, "2025-09-30": 20.0, "2025-12-31": 25.0}
+
+
+def test_rows_filters_non_periodic_forms_and_dedups_latest_filing():
+    facts = {"facts": {"us-gaap": {"X": {"units": {"USD": [
+        {"start": "2025-01-01", "end": "2025-12-31", "val": 1, "form": "10-K", "filed": "2026-02-01"},
+        {"start": "2025-01-01", "end": "2025-12-31", "val": 2, "form": "10-K", "filed": "2026-03-01"},
+        {"start": "2025-01-01", "end": "2025-12-31", "val": 99, "form": "424B2", "filed": "2026-04-01"},
+    ]}}}}}
+    rs = S.rows(facts, "X")
+    assert len(rs) == 1 and rs[0]["val"] == 2
+
+
+# ---------------------------------------------------------------------------
+# 遲滯規則
+# ---------------------------------------------------------------------------
+def series(vals, start=1):
+    return [(f"2026-01-{i + start:02d}", v) for i, v in enumerate(vals)]
+
+
+def test_hysteresis_enter_exit_and_hold():
+    s = series([-5, -15, -20.0, -15, -10.0, -9.9, -15])
+    # -20 剛好等於進入線 → 進入；-15、-10 維持；-9.9 > -10 → 解除；-15 維持未越
+    state, tr = M.run_hysteresis(s)
+    assert [(t["date"], t["to"]) for t in tr] == [("2026-01-03", "in"), ("2026-01-06", "out")]
+    assert state is False
+
+
+def test_hysteresis_middle_zone_keeps_previous_state():
+    assert M.run_hysteresis(series([-15, -12, -18]))[0] is False          # 從沒進過 → 維持未越
+    assert M.run_hysteresis(series([-25, -15, -12]))[0] is True            # 進過 → 中間帶維持越線
+    assert M.run_hysteresis(series([-25, -15, -10.0]))[0] is True          # 恰好 -10 還不算解除
+    assert M.run_hysteresis(series([-25, -9.99]))[0] is False
+
+
+def test_hysteresis_continues_from_stored_state_and_skips_processed_days():
+    s = series([-25, -15, -12, -8])
+    st, tr = M.run_hysteresis(s, state=True, after="2026-01-03")   # 只處理 01-04 的 -8
+    assert st is False and tr[0]["date"] == "2026-01-04"
+    st2, tr2 = M.run_hysteresis(s, state=True, after="2026-01-04")
+    assert st2 is True and tr2 == []
+
+
+def test_bootstrap_runs_whole_history_from_unbreached():
+    s = series([0, -22, -30, -12, -8, -9, -3])
+    state, tr = M.run_hysteresis(s, state=None)
+    assert state is False and [t["to"] for t in tr] == ["in", "out"]
+
+
+def test_rel_series_is_pp_difference_of_63_day_returns():
+    dates = [f"d{i:03d}" for i in range(70)]
+    stock = [(d, 100.0 * (1.01 ** i)) for i, d in enumerate(dates)]
+    bench = [(d, 100.0 * (1.005 ** i)) for i, d in enumerate(dates)]
+    out = M.rel_series(stock, bench, 63)
+    assert len(out) == 7
+    expect = (1.01 ** 63 - 1) * 100 - (1.005 ** 63 - 1) * 100
+    assert out[0][1] == pytest.approx(expect)
+
+
+# ---------------------------------------------------------------------------
+# 12 條越線判斷
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("i,v,expected", [
+    (1, 1.0, False), (1, 1.0001, True),
+    (2, 2, False), (2, 3, True),
+    (3, 0.50, False), (3, 0.5001, True),
+    (4, 3.5, False), (4, 3.51, True),
+    (5, 1.5, False), (5, 1.49, True),
+    (6, 1.0, False), (6, 0.99, True),
+    (10, 0.85, False), (10, 0.8499, True),
+    (11, 9.99, False), (11, 10.0, True),
+    (12, 0.25, False), (12, 0.2501, True),
+])
+def test_breach_thresholds_and_boundaries(i, v, expected):
+    assert M.breach(i, v) is expected
+
+
+def test_breach_none_stays_none():
+    assert M.breach(1, None) is None
+
+
+def base_units():
+    """所有 12 條都「未越線」的合成資料。金額單位：美元。"""
+    B_ = 1e9
+    clouds = {}
+    for t in M.CLOUDS:
+        clouds[f"cloud:{t}"] = {"data": {"capex": 50 * B_, "ocf": 100 * B_, "issued": 20 * B_, "repaid": 5 * B_,
+                                         "end": "2026-06-30", "assumed_zero": []}, "fetched": "2026-10-16", "stale": False}
+    mk = {}
+    for t in M.REL_NAME:
+        mk[t] = {"rel_pp": 0.0, "asof": "2026-10-15", "ret_stock": 5.0, "ret_bench": 5.0, "dd1y_rel": -10.0,
+                 "flag": {"breached": False, "asof": "2026-10-15", "since": None}}
+    u = dict(clouds)
+    u["orcl"] = {"data": {"debt_current": 10 * B_, "debt_lt": 100 * B_, "debt_check": None, "cash": 30 * B_, "afs": 0.0,
+                          "fin_lease": 9 * B_, "oi": 20 * B_, "dep": 8 * B_, "amort": 2 * B_, "bs_end": "2026-08-31",
+                          "flow_end": "2026-08-31", "notes": []}, "stale": False}
+    u["crwv"] = {"data": {"oi": 0.0, "dda": 4 * B_, "interest": 1 * B_, "ocf": 6 * B_, "cash": 5 * B_, "maturities_12m": 6 * B_,
+                          "bs_end": "2026-06-30", "flow_end": "2026-06-30"}, "stale": False}
+    u["market"] = {"data": mk, "stale": False}
+    u["bdc_px"] = {"data": {t: {"price": 9.0, "asof": "2026-10-15"} for t in M.BDCS}, "stale": False}
+    for t in M.BDCS:
+        u[f"bdc_nav:{t}"] = {"data": {"nav": 10.0, "asof": "2026-06-30"}, "stale": False}
+    qs = [{"end": f"2025-{m:02d}-28", "rev": 50 * B_, "ar": 25 * B_, "dso": 45.5, "dio": 100.0} for m in range(1, 9)]
+    u["nvda_fin"] = {"data": {"quarters": qs, "rev_ttm": 300 * B_, "rev_end": "2026-07-26", "guarantee": 20 * B_,
+                              "guarantee_date": "2026-07-26"}, "stale": False}
+    u["nvda_commit"] = {"data": {"ai_cloud": 10 * B_, "equity": 10 * B_, "report_date": "2026-07-26"}, "stale": False}
+    return u
+
+
+def by_id(inds):
+    return {x["id"]: x for x in inds}
+
+
+def test_all_twelve_unbreached_baseline():
+    inds = M.compute_indicators(base_units())
+    assert len(inds) == 12
+    assert [x["breached"] for x in inds] == [False] * 12
+    assert M.summarize(inds) == {"n_breached": 0, "n_total": 12, "n_unknown": 0, "breached_ids": []}
+
+
+def test_each_indicator_can_breach_through_the_full_pipeline():
+    u = base_units()
+    # 1：資本支出 > 營運現金流
+    for t in M.CLOUDS:
+        u[f"cloud:{t}"]["data"]["capex"] = 120e9
+    inds = by_id(M.compute_indicators(u))
+    assert inds[1]["breached"] is True
+    assert inds[2]["breached"] is True            # 每家 FCF 都為負（5 家 ≥ 3）
+    assert inds[2]["value"] == 5
+    # 3：淨發債 / 資本支出 = (5×15) / (5×120) = 12.5% → 另行測
+    u = base_units()
+    for t in M.CLOUDS:
+        u[f"cloud:{t}"]["data"]["issued"] = 60e9
+    assert by_id(M.compute_indicators(u))[3]["breached"] is True   # (60-5)/50 = 110%
+    # 4
+    u = base_units()
+    u["orcl"]["data"]["debt_lt"] = 300e9
+    x = by_id(M.compute_indicators(u))[4]
+    assert x["breached"] is True and x["value"] == pytest.approx((310 - 30) / 30)
+    # 5
+    u = base_units()
+    u["crwv"]["data"]["interest"] = 3e9
+    assert by_id(M.compute_indicators(u))[5]["breached"] is True   # 4/3 = 1.33
+    # 6
+    u = base_units()
+    u["crwv"]["data"]["maturities_12m"] = 20e9
+    assert by_id(M.compute_indicators(u))[6]["breached"] is True   # 11/20
+    # 7–9：由遲滯旗標決定，不由當日值
+    u = base_units()
+    u["market"]["data"]["CRWV"]["flag"]["breached"] = True
+    u["market"]["data"]["CRWV"]["rel_pp"] = -15.0          # 在中間帶，維持越線
+    r = by_id(M.compute_indicators(u))
+    assert r[8]["breached"] is True and r[7]["breached"] is False and r[9]["breached"] is False
+    # 10
+    u = base_units()
+    u["bdc_px"]["data"]["OBDC"]["price"] = 5.0             # (0.9+0.5+0.9)/3 = 0.767
+    assert by_id(M.compute_indicators(u))[10]["breached"] is True
+    # 11：最新 56 天、前四季均 45.5 → +10.5
+    u = base_units()
+    u["nvda_fin"]["data"]["quarters"][-1]["dso"] = 56.0
+    x = by_id(M.compute_indicators(u))[11]
+    assert x["breached"] is True and x["value"] == pytest.approx(10.5)
+    # 12：(20+10+10)/300 = 13.3% → 保證放大到 80B：(80+20)/300 = 33%
+    u = base_units()
+    u["nvda_fin"]["data"]["guarantee"] = 80e9
+    assert by_id(M.compute_indicators(u))[12]["breached"] is True
+
+
+def test_missing_source_gives_unknown_not_zero():
+    u = base_units()
+    del u["cloud:ORCL"]
+    del u["crwv"]
+    inds = by_id(M.compute_indicators(u))
+    for i in (1, 2, 3, 5, 6):
+        assert inds[i]["breached"] is None and inds[i]["value"] is None
+    assert M.summarize(list(inds.values()))["n_unknown"] == 5
+
+
+# ---------------------------------------------------------------------------
+# 抓失敗沿用舊值與日期
+# ---------------------------------------------------------------------------
+def test_failed_fetch_reuses_previous_value_and_date():
+    prev = {"cloud:MSFT": {"data": {"capex": 1}, "fetched": "2026-10-10", "stale": False, "error": None}}
+    errors = {}
+
+    def boom():
+        raise RuntimeError("SEC 503")
+
+    u = B.run_unit("cloud:MSFT", boom, prev, "2026-10-16", errors)
+    assert u["data"] == {"capex": 1} and u["stale"] is True
+    assert u["fetched"] == "2026-10-10"                  # 保留原始抓取日期，不改成今天
+    assert "SEC 503" in errors["cloud:MSFT"]
+
+
+def test_failed_fetch_without_previous_gives_nothing_not_zero():
+    errors = {}
+    u = B.run_unit("orcl", lambda: 1 / 0, {}, "2026-10-16", errors)
+    assert u is None and "orcl" in errors
+
+
+def test_success_resets_stale():
+    prev = {"x": {"data": 1, "fetched": "2026-10-01", "stale": True, "error": "old"}}
+    u = B.run_unit("x", lambda: 2, prev, "2026-10-16", {})
+    assert u == {"data": 2, "fetched": "2026-10-16", "stale": False, "error": None}
+
+
+def test_stale_flag_reaches_the_indicator():
+    u = base_units()
+    u["cloud:MSFT"]["stale"] = True
+    inds = by_id(M.compute_indicators(u))
+    assert inds[1]["stale"] and inds[2]["stale"] and inds[3]["stale"] and not inds[4]["stale"]
+
+
+# ---------------------------------------------------------------------------
+# 通知：狀態改變才發、首跑不發
+# ---------------------------------------------------------------------------
+def make_inds(breached_by_id):
+    inds = M.compute_indicators(base_units())
+    for x in inds:
+        x["breached"] = breached_by_id.get(x["id"], False)
+    return inds
+
+
+def test_first_run_has_no_alert():
+    assert AL.build_alerts(None, make_inds({12: True})) == []
+
+
+def test_no_change_no_alert():
+    prev = {str(i): False for i in range(1, 13)}
+    assert AL.build_alerts(prev, make_inds({})) == []
+    prev["12"] = True
+    assert AL.build_alerts(prev, make_inds({12: True})) == []
+
+
+def test_unbreached_to_breached_and_back_both_alert():
+    prev = {str(i): False for i in range(1, 13)}
+    a = AL.build_alerts(prev, make_inds({4: True}))
+    assert [(x["id"], x["old"], x["new"]) for x in a] == [(4, False, True)]
+    prev["4"] = True
+    b = AL.build_alerts(prev, make_inds({}))
+    assert [(x["id"], x["old"], x["new"]) for x in b] == [(4, True, False)]
+
+
+def test_unknown_to_known_does_not_alert():
+    prev = {str(i): None for i in range(1, 13)}
+    assert AL.build_alerts(prev, make_inds({1: True})) == []
+
+
+def test_alert_files_content(tmp_path):
+    prev = {str(i): False for i in range(1, 13)}
+    inds = make_inds({6: True})
+    al = AL.build_alerts(prev, inds)
+    title = AL.write_alert_files(tmp_path, al, inds)
+    assert "第 6 條進入越線" in title and "12 條裡 1 條越線" in title
+    body = (tmp_path / "aic_alert.txt").read_text(encoding="utf-8")
+    assert "未越線 → 越線" in body and "門檻 < 1.0 倍" in body and "https://research.investmquest.com/ai-credit/" in body
+    assert (tmp_path / "aic_mail.html").exists()
+
+
+def test_test_alert_is_marked():
+    inds = make_inds({3: True})
+    al = AL.build_alerts(None, inds, test=True)
+    title, _ = AL.alert_text(al, inds, test=True)
+    assert title.startswith("【測試】")
+
+
+# ---------------------------------------------------------------------------
+# 歷史檔
+# ---------------------------------------------------------------------------
+def test_history_appends_and_same_day_rerun_overwrites(tmp_path):
+    p = tmp_path / "h.jsonl"
+    inds = M.compute_indicators(base_units())
+    B.write_history(p, B.history_row("2026-10-15", inds))
+    B.write_history(p, B.history_row("2026-10-16", inds))
+    B.write_history(p, B.history_row("2026-10-16", inds))
+    lines = p.read_text().splitlines()
+    assert [json.loads(x)["date"] for x in lines] == ["2026-10-15", "2026-10-16"]
+    row = json.loads(lines[-1])
+    assert set(row["v"]) == {str(i) for i in range(1, 13)} and set(row["b"]) == set(row["v"])
+
+
+# ---------------------------------------------------------------------------
+# 事件：關鍵字與去重
+# ---------------------------------------------------------------------------
+def test_event_keywords():
+    assert EV.match_event("Oracle-Blue Owl project delay ripples through AI financing")
+    assert EV.match_event("SoftBank prices record $11bn junk bond to fund OpenAI bet")
+    assert EV.match_event("Startup raises GPU-backed credit line")
+    assert EV.match_event("Nscale's data center contracts", "lenders arrange a $2B loan")        # 標題有基礎建設詞，摘要有融資詞
+    assert not EV.match_event("Apple unveils new iPhone", "")
+    assert not EV.match_event("Bank of Japan raises rates", "loans and bonds repriced")           # 沒有 AI 基礎建設或公司名
+    assert not EV.match_event("Company is releasing new AI models with OpenAI")                  # releasing 不是 leasing
+    assert not EV.match_event("Meta ships new feature", "data center mention only in passing but no finance words")
+
+
+def test_event_dedup_by_url_and_by_title():
+    existing = [{"date": "2026-10-01", "title": "CoreWeave bonds slide", "url": "https://x.com/a/?utm=1", "source": "S"}]
+    cands = [
+        {"date": "2026-10-02", "title": "Different title", "url": "https://X.com/a", "source": "T", "first_seen": "2026-10-02", "matched": []},       # 同網址
+        {"date": "2026-10-02", "title": "CoreWeave Bonds Slide!", "url": "https://y.com/b", "source": "T", "first_seen": "2026-10-02", "matched": []},  # 同標題
+        {"date": "2026-10-03", "title": "Oracle debt deal", "url": "https://y.com/c", "source": "T", "first_seen": "2026-10-03", "matched": []},
+        {"date": "2026-10-03", "title": "Oracle debt deal", "url": "", "source": "U", "first_seen": "2026-10-03", "matched": []},                   # 本批內同標題
+    ]
+    allv, added = EV.merge_events(existing, cands)
+    assert [a["title"] for a in added] == ["Oracle debt deal"] and len(allv) == 2
+
+
+def test_extract_candidates_from_ledger_ignores_seed_and_picks_a_link():
+    ledger = {"facts": [
+        {"origin": "seed", "claim": "Oracle data center financing", "detail": "", "sources": []},
+        {"origin": "briefing", "claim": "Oracle data center financing falters", "detail": "", "first_seen": "2026-10-02",
+         "sources": [{"source": "Bloomberg", "url": "", "published": "2026-10-01"}, {"source": "Reuters", "url": "https://r.com/x", "published": "2026-10-02"}]},
+        {"origin": "briefing", "claim": "Sunny weather", "detail": "", "sources": []},
+    ]}
+    c = EV.extract_candidates(ledger)
+    assert len(c) == 1 and c[0]["url"] == "https://r.com/x" and c[0]["date"] == "2026-10-01"
+
+
+def test_event_store_roundtrip_and_latest(tmp_path):
+    p = tmp_path / "e.jsonl"
+    EV.append_events(p, [{"date": f"2026-10-{d:02d}", "title": f"t{d}", "first_seen": "x"} for d in range(1, 6)])
+    ev = EV.load_events(p)
+    assert [e["title"] for e in EV.latest(ev, 3)] == ["t5", "t4", "t3"]
+
+
+# ---------------------------------------------------------------------------
+# 內嵌 XBRL
+# ---------------------------------------------------------------------------
+IXH = """
+<xbrli:context id="c1"><xbrli:entity/><xbrli:period><xbrli:instant>2026-06-30</xbrli:instant></xbrli:period></xbrli:context>
+<xbrli:context id="c2"><xbrli:entity><xbrli:segment><xbrldi:explicitMember dimension="us-gaap:OtherCommitmentsAxis">nvda:AICloudPartnershipCommitmentsMember</xbrldi:explicitMember></xbrli:segment></xbrli:entity><xbrli:period><xbrli:instant>2026-06-30</xbrli:instant></xbrli:period></xbrli:context>
+<xbrli:context id="c3"><xbrli:entity/><xbrli:period><xbrli:startDate>2026-04-01</xbrli:startDate><xbrli:endDate>2026-06-30</xbrli:endDate></xbrli:period></xbrli:context>
+<ix:nonFraction name="us-gaap:OtherCommitment" contextRef="c2" scale="9" decimals="-8">36</ix:nonFraction>
+<ix:nonFraction name="us-gaap:OtherCommitment" contextRef="c1" scale="9">100</ix:nonFraction>
+<ix:nonFraction name="x:Neg" contextRef="c1" scale="6" sign="-">1,234</ix:nonFraction>
+<ix:nonFraction name="x:Dash" contextRef="c3" scale="6">&#8212;</ix:nonFraction>
+<ix:nonFraction name="x:Pct" contextRef="c3" scale="-2">36</ix:nonFraction>
+"""
+
+
+def test_ix_facts_scale_sign_dash_and_dimensions():
+    fs = IX.facts(IXH, r"^(us-gaap:OtherCommitment|x:.*)$")
+    by = {}
+    for f in fs:
+        by.setdefault(f["name"], []).append(f)
+    assert IX.pick_instant(fs, "us-gaap:OtherCommitment", {"nvda:AICloudPartnershipCommitmentsMember"})["value"] == 36e9
+    assert IX.pick_instant(fs, "us-gaap:OtherCommitment", set())["value"] == 100e9           # 無維度
+    assert by["x:Neg"][0]["value"] == -1234e6
+    assert by["x:Dash"][0]["value"] == 0.0 and by["x:Dash"][0]["start"] == "2026-04-01"
+    assert by["x:Pct"][0]["value"] == pytest.approx(0.36)
+
+
+# ---------------------------------------------------------------------------
+# 背景利差與頁面
+# ---------------------------------------------------------------------------
+def test_spread_stats_position_and_year_ago():
+    s = [("2025-10-14", 3.0), ("2026-01-01", 5.0), ("2026-06-01", 1.0), ("2026-10-14", 4.0)]
+    st = spread_stats(s)
+    assert st["latest"] == 4.0 and st["year_ago"] == 3.0 and st["year_ago_date"] == "2025-10-14"
+    assert st["pos"] == pytest.approx(0.75)
+
+
+def test_page_smoke():
+    u = base_units()
+    inds = M.compute_indicators(u)
+    inds[11]["breached"] = True
+    summary = M.summarize(inds)
+    state = {"generated_at": "2026-10-16 07:40", "units": u}
+    html = PG.build_page(state, inds, summary, [{"date": "2026-10-15", "title": "A <b> title", "source": "Reuters", "url": "https://r.com/x"}], 1)
+    assert "12 條裡 <em>1</em> 條越線" in html
+    assert 'id="i12"' in html and "第一區" in html and "第二區" in html and "第三區" in html
+    assert "A &lt;b&gt; title" in html                      # 標題已跳脫
+    assert "事前登記" in html and "2026-10-16" in html
+    assert 'name="robots"' not in html                       # 公開、可收錄

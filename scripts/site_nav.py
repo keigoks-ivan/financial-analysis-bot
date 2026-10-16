@@ -113,6 +113,9 @@ Change log:
     2026-10-08：市場 ▾ 下拉新增「總經資料庫」("macrodb", /macro/db/)，緊接「總經深度報告」
         (macro) 之後；PREFIX_ACTIVE 新增 macro/db/ 前綴（須排在 macro/ 之前，否則被
         macro/ 吃掉）。外部 3 repo synced literal 同步。
+    2026-10-16：市場 ▾ 下拉新增「AI 信用監測」("aicredit", /ai-credit/)，緊接「總經資料庫」
+        (macrodb) 之後；PREFIX_ACTIVE 新增 ai-credit/ 前綴。外部 3 repo synced literal
+        尚未同步（見 site-composition.md）。
 """
 
 import re
@@ -206,6 +209,7 @@ MENU = {
         ("radar", "/rotation/radar.html", "資產輪動雷達"),
         ("macro", "/macro/", "總經深度報告"),
         ("macrodb", "/macro/db/", "總經資料庫"),  # 2026-10-08 美台總經數據庫（官方原始數據、每日更新）
+        ("aicredit", "/ai-credit/", "AI 信用監測"),  # 2026-10-16 AI 信用風險 12 條指標（每日更新、越線時通知）
         ("earn", "/earnings/", "財報分析"),
         ("markets", "/markets.html", "Markets"),
         ("sectors", "/sectors.html", "Sectors"),
@@ -383,6 +387,7 @@ PREFIX_ACTIVE = [
     ("rotation/", ("market", None)),
     ("regime/", ("market", None)),
     ("macro/db/", ("market", "macrodb")),  # 總經資料庫（2026-10-08）；須排在 macro/ 之前
+    ("ai-credit/", ("market", "aicredit")),  # AI 信用風險監測（2026-10-16 新增）
     ("macro/", ("market", "macro")),  # 總經深度報告（2026-07-09），nav 已掛項目
     ("weekly/", ("market", "week")),
     ("briefing/", ("market", "brief")),  # 2026-08-17 恢復更新，nav 項目已掛回
