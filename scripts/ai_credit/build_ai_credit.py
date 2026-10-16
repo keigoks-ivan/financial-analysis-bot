@@ -33,12 +33,14 @@ import aic_alerts as AL  # noqa: E402
 import aic_events as EV  # noqa: E402
 import aic_metrics as M  # noqa: E402
 import aic_page as PG  # noqa: E402
+import aic_round2 as R2  # noqa: E402
 
 TAIPEI = timezone(timedelta(hours=8))
 DATA = ROOT / "data" / "ai_credit"
 STATE = DATA / "state.json"
 HISTORY = DATA / "history.jsonl"
 EVENTS = DATA / "events.jsonl"
+GPU_PRICES = DATA / "gpu_prices.jsonl"
 DOCS = ROOT / "docs" / "ai-credit"
 PAGE = DOCS / "index.html"
 LATEST = DOCS / "data" / "latest.json"
@@ -97,6 +99,24 @@ def collect_all(prev_units: dict, today: str) -> tuple[dict, dict]:
         plan.append((f"bdc_nav:{t}", lambda t=t: SRC.collect_bdc_nav(t)))
     plan.append(("fred", SRC.collect_fred))
 
+    # 第二輪（只顯示，不計入 12 條）。申報檔類的來源以申報序號快取，只有新申報才會下載
+    import aic_sources2 as S2
+
+    plan.append(("filings", S2.collect_filings))
+    plan.append(("igv", S2.collect_igv))
+    for t in R2.BDC_ALL:
+        plan.append((f"pik:{t}", lambda t=t: S2.collect_pik(t, prev_data(f"pik:{t}"))))
+    for t in R2.SOFTWARE_MEMBERS.keys() | set(R2.NONACCRUAL_BDCS):
+        plan.append((f"bdcf:{t}", lambda t=t: S2.collect_bdc_filing(t, prev_data(f"bdcf:{t}"))))
+    for k in ("AWS", "GCP", "MSIC", "ORCL"):
+        plan.append((f"croi:{k}", lambda k=k: S2.collect_cloud_roi(k, prev_data(f"croi:{k}"))))
+    plan.append(("gpu_vast", S2.collect_gpu_vast))
+    plan.append(("gpu_shade", S2.collect_gpu_shade))
+    plan.append(("dep", lambda: S2.collect_dep(prev_data("dep"))))
+    plan.append(("avgo", lambda: S2.collect_avgo(prev_data("avgo"))))
+    for t in ("MSFT", "NVDA", "AMZN", "AMD", "CRWV", "ORCL", "AVGO"):
+        plan.append((f"oa:{t}", lambda t=t: S2.collect_openai(t, prev_data(f"oa:{t}"))))
+
     units, errors = {}, {}
     for name, fn in plan:
         u = run_unit(name, fn, prev_units, today, errors)
@@ -126,6 +146,30 @@ def write_history(path: Path, row: dict) -> None:
         lines = lines[:-1]
     lines.append(json.dumps(row, ensure_ascii=False))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def update_gpu_prices(units: dict, today: str, path: Path = GPU_PRICES) -> list[dict]:
+    """把今天的租價快照寫進 gpu_prices.jsonl（同一天覆寫），回傳全部列。抓取失敗（沿用上次值）的來源當天記 None。"""
+    def fresh(name):
+        u = units.get(name)
+        return u["data"] if u and not u.get("stale") and u.get("fetched") == today else None
+
+    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    v, sh = fresh("gpu_vast"), fresh("gpu_shade")
+    if v is not None or sh is not None:
+        lines = R2.upsert_gpu_rows(lines, R2.gpu_row(today, v, sh))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return [json.loads(x) for x in lines if x.strip()]
+
+
+def data_notices(units: dict, prior: dict | None) -> tuple[list[dict], dict]:
+    """第二輪的資料通知（抓取異常、折舊年限變動）與更新後的 notified。"""
+    bdcf = {t: sorted(((units.get(f"bdcf:{t}") or {}).get("data") or {}).get("filings", []), key=lambda f: f["report_date"], reverse=True)
+            for t in R2.NONACCRUAL_BDCS}
+    dep = (units.get("dep") or {}).get("data") or {}
+    changed = R2.dep_changed(R2.DEP_TABLE, dep.get("parsed", {}))
+    return R2.build_notices(bdcf, changed, (prior or {}).get("notified", {}))
 
 
 def update_events() -> tuple[list[dict], int]:
@@ -162,6 +206,10 @@ def main() -> int:
     inds = M.compute_indicators(units)
     summary = M.summarize(inds)
     recent, total = update_events()
+    notices, notified = data_notices(units, prior)
+    gpu_rows = update_gpu_prices(units, today) if not a.offline else (
+        [json.loads(x) for x in GPU_PRICES.read_text(encoding="utf-8").splitlines() if x.strip()] if GPU_PRICES.exists() else [])
+    events_all = EV.latest(EV.load_events(EVENTS), 100000)
 
     state = {
         "schema": SCHEMA, "generated_at": now.strftime("%Y-%m-%d %H:%M"), "registered_on": M.REGISTERED_ON,
@@ -169,12 +217,14 @@ def main() -> int:
         "breached": {str(x["id"]): x["breached"] for x in inds},
         "values": {str(x["id"]): x["value"] for x in inds},
         "summary": summary,
+        # 資料通知已發過的申報序號（同一份申報只通知一次）；--no-notify 與離線時不推進
+        "notified": (notified if (not a.no_notify and not a.offline and not a.test_alert) else (prior or {}).get("notified", {})),
     }
     DATA.mkdir(parents=True, exist_ok=True)
     DOCS.joinpath("data").mkdir(parents=True, exist_ok=True)
     STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     write_history(HISTORY, history_row(today, inds))
-    PAGE.write_text(PG.build_page(state, inds, summary, recent, total), encoding="utf-8")
+    PAGE.write_text(PG.build_page(state, inds, summary, recent, total, gpu_rows, events_all), encoding="utf-8")
     LATEST.write_text(json.dumps({
         "generated_at": now.strftime("%Y-%m-%dT%H:%M:%S+08:00"), "as_of": market_asof(units) or today,
         "n_breached": summary["n_breached"], "n_total": summary["n_total"], "breached_ids": summary["breached_ids"],
@@ -190,8 +240,10 @@ def main() -> int:
         print("TEST ALERT written:", t)
     elif not a.no_notify and not a.offline:
         al = AL.build_alerts(None if prior is None else prior.get("breached"), inds)
-        if al:
-            print("ALERT:", AL.write_alert_files(ROOT, al, inds))
+        if prior is None:
+            notices = []   # 首跑不發任何通知
+        if al or notices:
+            print("ALERT:", AL.write_alert_files(ROOT, al, inds, notices=notices))
         else:
             print("no state change — no alert" if prior is not None else "首跑：無舊狀態，不發通知")
     return 0

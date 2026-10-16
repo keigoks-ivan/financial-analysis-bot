@@ -115,7 +115,7 @@ Change log:
         macro/ 吃掉）。外部 3 repo synced literal 同步。
     2026-10-16：市場 ▾ 下拉新增「AI 信用監測」("aicredit", /ai-credit/)，緊接「總經資料庫」
         (macrodb) 之後；PREFIX_ACTIVE 新增 ai-credit/ 前綴。外部 3 repo synced literal
-        尚未同步（見 site-composition.md）。
+        已同步為各 repo 的 ai-credit-nav 分支（只 commit，未 push）。
 """
 
 import re

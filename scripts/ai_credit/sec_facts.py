@@ -17,6 +17,9 @@ SEC_UA = {"User-Agent": "financial-analysis-bot keigoks@gmail.com"}
 CIKS = {
     "MSFT": 789019, "GOOGL": 1652044, "AMZN": 1018724, "META": 1326801, "ORCL": 1341439,
     "CRWV": 1769628, "NVDA": 1045810, "ARCC": 1287750, "OBDC": 1655888, "BXSL": 1736035,
+    # 第二輪：BDC、Broadcom、AMD
+    "FSK": 1422183, "MAIN": 1396440, "GBDC": 1476765, "HTGC": 1280784, "OCSL": 1414932, "BBDC": 1379785,
+    "AVGO": 1730168, "AMD": 2488,
 }
 PERIODIC_FORMS = ("10-Q", "10-K", "10-K/A", "10-Q/A", "10-K405")
 

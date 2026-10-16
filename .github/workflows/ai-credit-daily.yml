@@ -6,9 +6,14 @@ name: AI Credit Monitor Daily
 # 計算 12 條指標（門檻 2026-10-16 事前登記，寫在 scripts/ai_credit/aic_metrics.py），
 # 重寫 docs/ai-credit/ 頁面、append data/ai_credit/history.jsonl、更新融資事件紀錄。
 # 任一來源抓取失敗都沿用上次值並在頁面標資料日期，不補數字。
+# 第二輪區塊（軟體股、BDC 實物付息／軟體占比／不計息貸款、雲端營收對資本支出、GPU 租價、
+# 折舊年限、Broadcom 與 OpenAI 曝險）只顯示，不計入 12 條；GPU 租價每日 append 到
+# data/ai_credit/gpu_prices.jsonl（vast.ai、Shadeform 公開端點，失敗不讓 workflow 失敗）。
 #
 # 通知：任一條「越線／未越線」狀態改變才寫 aic_title.txt／aic_alert.txt／aic_mail.html，
 # 下面步驟讀檔寄信與發 Discord（首跑無舊狀態不發）。做法照 update_fear_greed.yml。
+# 另有兩種資料通知，標題開頭分別是「資料抓取異常」（BDC 不計息貸款某份申報檔解析不到）與
+# 「資料變動」（新 10-K 的伺服器折舊年限與常數表不同），同一份申報只通知一次（記在 state.json 的 notified）。
 #
 # 排程：每天台北 07:40（= 前一日 23:40 UTC），美股收盤之後。早報證據帳本約 07:45 才推進來，
 # 所以融資事件紀錄通常晚一天。GITHUB_TOKEN push 不觸發 deploy-pages 的 push 事件，
@@ -114,7 +119,7 @@ jobs:
             ${{ steps.aicalert.outputs.body }}
 
             —
-            InvestMQuest · AI 信用風險監測（只在越線狀態改變時寄出）
+            InvestMQuest · AI 信用風險監測（只在越線狀態改變或有資料通知時寄出）
 
       - name: Discord notify
         if: steps.aicalert.outputs.changed == 'true'

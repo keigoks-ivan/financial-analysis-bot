@@ -110,3 +110,52 @@ def fetch_html(url: str, tries: int = 3, timeout: int = 180) -> str:
             err = e
             time.sleep(2 * (i + 1))
     raise RuntimeError(f"申報檔下載失敗 {url}：{err!r}")
+
+
+def periodics(ticker: str, n: int = 4) -> list[dict]:
+    """最近 n 份 10-Q／10-K（新到舊）的 {accession, form, report_date, filing_date, url}。"""
+    s = fetch_submissions(ticker)
+    f = s["filings"]["recent"]
+    cik = CIKS[ticker]
+    out = []
+    for i, form in enumerate(f["form"]):
+        if form in ("10-Q", "10-K"):
+            acc = f["accessionNumber"][i]
+            out.append({
+                "accession": acc, "form": form, "report_date": f["reportDate"][i], "filing_date": f["filingDate"][i],
+                "url": f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc.replace('-', '')}/{f['primaryDocument'][i]}",
+            })
+            if len(out) >= n:
+                break
+    return out
+
+
+def filing_text(h: str) -> str:
+    """申報檔 HTML → 純文字（去標籤、反跳脫、空白壓成單一空格）。"""
+    return _html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", h)))
+
+
+_NN_START = re.compile(r"<ix:nonNumeric([^>]*?)(?<!/)>", re.S)
+
+
+def non_numeric(h: str, name: str, ctxs: dict[str, dict] | None = None) -> list[dict]:
+    """ix:nonNumeric 事實（如期間型的耐用年限）：[{name, text, dims, start, end, instant}]。
+
+    目標事實常嵌在較大的文字區塊（textBlock）裡，所以逐一找起始標籤、取到下一個結束標籤為止，不做巢狀配對。
+    """
+    ctxs = ctxs if ctxs is not None else contexts(h)
+    out = []
+    for m in _NN_START.finditer(h):
+        a = m.group(1)
+        nm = re.search(r"name=\"([^\"]+)\"", a)
+        if not nm or nm.group(1) != name:
+            continue
+        cref = re.search(r"contextRef=\"([^\"]+)\"", a)
+        c = ctxs.get(cref.group(1)) if cref else None
+        if c is None:
+            continue
+        end = h.find("</ix:nonNumeric>", m.end())
+        body = h[m.end():end if end >= 0 else m.end() + 200]
+        out.append({"name": name, "text": re.sub(r"\s+", " ", _html.unescape(re.sub(r"<[^>]+>", "", body))).strip(),
+                    "dims": c["dims"], "start": c["start"], "end": c["end"], "instant": c["instant"]})
+    return out

@@ -36,8 +36,24 @@ def _state(b: bool) -> str:
     return "越線" if b else "未越線"
 
 
-def alert_text(alerts: list[dict], inds: list[dict], test: bool = False) -> tuple[str, str]:
+def notice_title(notices: list[dict]) -> str:
+    """資料通知標題：抓取異常以「資料抓取異常」開頭，口徑或年限變動以「資料變動」開頭。"""
+    kinds = {n["kind"] for n in notices}
+    prefix = "資料抓取異常" if kinds == {"fetch"} else ("資料變動" if kinds == {"change"} else "資料抓取異常／資料變動")
+    return f"{prefix}：" + "；".join(n["title"] for n in notices)
+
+
+def alert_text(alerts: list[dict], inds: list[dict], test: bool = False, notices: list[dict] | None = None) -> tuple[str, str]:
     n_b = sum(1 for x in inds if x["breached"] is True)
+    notices = notices or []
+    if notices and not alerts and not test:
+        lines = []
+        for n in notices:
+            lines.append(n["body"])
+            lines.append("")
+        lines.append(f"目前 12 條裡 {n_b} 條越線：" + ("、".join(f"第 {x['id']} 條" for x in inds if x["breached"] is True) or "無") + "。")
+        lines.append(f"完整頁面：{PAGE_URL}")
+        return notice_title(notices), "\n".join(lines)
     if test:
         title = f"【測試】AI 信用監測：12 條裡 {n_b} 條越線"
     else:
@@ -56,6 +72,12 @@ def alert_text(alerts: list[dict], inds: list[dict], test: bool = False) -> tupl
         lines.append(x["plain"])
         lines.append("")
     lines.append(f"目前 12 條裡 {n_b} 條越線：" + ("、".join(f"第 {x['id']} 條" for x in inds if x["breached"] is True) or "無") + "。")
+    if notices:
+        title += f"；另有 {len(notices)} 則資料通知"
+        lines.append("資料通知：")
+        for n in notices:
+            lines.append(n["body"])
+        lines.append("")
     lines.append(f"完整頁面：{PAGE_URL}")
     return title, "\n".join(lines)
 
@@ -76,8 +98,8 @@ def alert_mail_html(title: str, body: str) -> str:
 """
 
 
-def write_alert_files(root: Path, alerts: list[dict], inds: list[dict], test: bool = False) -> str:
-    title, body = alert_text(alerts, inds, test)
+def write_alert_files(root: Path, alerts: list[dict], inds: list[dict], test: bool = False, notices: list[dict] | None = None) -> str:
+    title, body = alert_text(alerts, inds, test, notices)
     if test:
         body = "這是測試訊息，不是真實狀態改變。\n\n" + body
     (root / "aic_title.txt").write_text(title + "\n", encoding="utf-8")

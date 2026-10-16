@@ -19,6 +19,8 @@ import aic_alerts as AL  # noqa: E402
 import aic_events as EV  # noqa: E402
 import aic_metrics as M  # noqa: E402
 import aic_page as PG  # noqa: E402
+import aic_page2 as P2  # noqa: E402
+import aic_round2 as R2  # noqa: E402
 import build_ai_credit as B  # noqa: E402
 import ixparse as IX  # noqa: E402
 import sec_facts as S  # noqa: E402
@@ -449,7 +451,201 @@ def test_page_smoke():
     state = {"generated_at": "2026-10-16 07:40", "units": u}
     html = PG.build_page(state, inds, summary, [{"date": "2026-10-15", "title": "A <b> title", "source": "Reuters", "url": "https://r.com/x"}], 1)
     assert "12 條裡 <em>1</em> 條越線" in html
-    assert 'id="i12"' in html and "第一區" in html and "第二區" in html and "第三區" in html
+    assert 'id="i12"' in html
+    for ch in ("一　借錢的人撐不撐得住", "二　市場怎麼定價", "三　錢怎麼繞回來", "四　AI 傷到借款人", "五　投資回不回得了本"):
+        assert ch in html
     assert "A &lt;b&gt; title" in html                      # 標題已跳脫
     assert "事前登記" in html and "2026-10-16" in html
     assert 'name="robots"' not in html                       # 公開、可收錄
+
+
+# ---------------------------------------------------------------------------
+# 第二輪：純函式
+# ---------------------------------------------------------------------------
+def test_pik_series_cf_adds_interest_and_dividend(monkeypatch):
+    gross = {"2026-03-31": 100.0, "2026-06-30": 120.0}
+    interest = {"2026-03-31": 10.0, "2026-06-30": 12.0}
+    div = {"2026-03-31": 2.0, "2026-06-30": 3.0}
+    table = {R2.GROSS_TAG: gross, R2.INT_PIK: interest, R2.DIV_PIK: div}
+    monkeypatch.setattr(R2.S, "rows", lambda facts, tag: tag)
+    monkeypatch.setattr(R2.S, "single_quarters", lambda tag: table.get(tag))
+    out = R2.pik_series_cf({}, R2.PIK_SPEC["ARCC"])
+    assert [round(x["pct"], 2) for x in out] == [12.0, 12.5]
+    out2 = R2.pik_series_cf({}, R2.PIK_SPEC["OBDC"])
+    assert [round(x["pct"], 2) for x in out2] == [10.0, 10.0]
+
+
+def test_pik_series_cf_requires_tags(monkeypatch):
+    monkeypatch.setattr(R2.S, "rows", lambda facts, tag: tag)
+    monkeypatch.setattr(R2.S, "single_quarters", lambda tag: None)
+    with pytest.raises(RuntimeError):
+        R2.pik_series_cf({}, R2.PIK_SPEC["ARCC"])
+
+
+def _conc(member, bench, v, dt="2026-06-30"):
+    return {"name": "us-gaap:ConcentrationRiskPercentage1", "value": v, "instant": dt, "end": dt,
+            "dims": [("us-gaap:EquitySecuritiesByIndustryAxis", "x:" + member), ("us-gaap:ConcentrationRiskByBenchmarkAxis", "us-gaap:" + bench)]}
+
+
+def test_software_share_uses_fair_value_and_latest_date():
+    facts = [_conc("SoftwareSectorMember", "InvestmentOwnedBalancePrincipalAmountMember", 0.5),
+             _conc("SoftwareSectorMember", "FairValueConcentrationRiskMember", 0.2),
+             _conc("OtherMember", "FairValueConcentrationRiskMember", 0.8),
+             _conc("SoftwareSectorMember", "FairValueConcentrationRiskMember", 0.9, "2026-03-31")]
+    r = R2.software_share(facts, ["SoftwareSectorMember"])
+    assert r["pct"] == pytest.approx(20.0) and r["asof"] == "2026-06-30" and r["n_industries"] == 2
+    assert r["total_pct"] == pytest.approx(100.0)
+    with pytest.raises(RuntimeError):
+        R2.software_share(facts, ["NoSuchMember"])
+
+
+@pytest.mark.parametrize("t,text,cost,fv", [
+    ("OBDC", "two of our portfolio companies are on non-accrual, which represents 0.8% of our portfolio at fair value", None, 0.8),
+    ("FSK", "% of Investments on Non-Accrual (based on fair value) 3.8% 3.1%", None, 3.8),
+    ("MAIN", "comprised 1.1% and 4.0% of our total Investment Portfolio at fair value and cost", 4.0, 1.1),
+    ("GBDC", "at cost and fair value were 2.9% and 1.9%", 2.9, 1.9),
+    ("ARCC", "non-accrual status represented 2.4% of the total investments at amortized cost (or 1.4% at fair value)", 2.4, 1.4),
+])
+def test_parse_nonaccrual_text(t, text, cost, fv):
+    r = R2.parse_nonaccrual(t, text)
+    assert r["cost"] == cost and r["fv"] == fv
+
+
+def test_parse_nonaccrual_arcc_xbrl_and_miss():
+    ix = [{"name": R2.ARCC_XBRL[0], "instant": "2026-06-30", "dims": [], "value": 0.024},
+          {"name": R2.ARCC_XBRL[1], "instant": "2026-06-30", "dims": [], "value": 0.014}]
+    r = R2.parse_nonaccrual("ARCC", "沒有相關文字", ix)
+    assert r["via"] == "XBRL" and r["cost"] == pytest.approx(2.4) and r["fv"] == pytest.approx(1.4)
+    assert R2.parse_nonaccrual("GBDC", "文字改版了，找不到") is None
+
+
+def _filing(acc, rd, na):
+    return {"accession": acc, "report_date": rd, "filing_date": rd, "url": "https://x/" + acc, "nonaccrual": na}
+
+
+def test_latest_nonaccrual_statuses():
+    ok = R2.latest_nonaccrual([_filing("a2", "2026-06-30", {"cost": 1, "fv": 1}), _filing("a1", "2026-03-31", {"cost": 2, "fv": 2})])
+    assert ok["status"] == "ok" and ok["accession"] == "a2"
+    miss = R2.latest_nonaccrual([_filing("a2", "2026-06-30", None), _filing("a1", "2026-03-31", {"cost": 2, "fv": 2})])
+    assert miss["status"] == "miss" and miss["report_date"] == "2026-03-31" and miss["miss_accession"] == "a2"
+    none = R2.latest_nonaccrual([_filing("a2", "2026-06-30", None)])
+    assert none["status"] == "none" and none["miss_accession"] == "a2"
+    assert R2.latest_nonaccrual([])["status"] == "none"
+
+
+def test_build_notices_once_per_filing_and_dep_change():
+    bdc = {t: [_filing(t + "2", "2026-06-30", {"cost": 1, "fv": 1})] for t in R2.NONACCRUAL_BDCS}
+    bdc["FSK"] = [_filing("fsk2", "2026-06-30", None), _filing("fsk1", "2026-03-31", {"cost": None, "fv": 3.0})]
+    n1, notified = R2.build_notices(bdc, [], {})
+    assert len(n1) == 1 and n1[0]["kind"] == "fetch" and "FSK" in n1[0]["title"] and notified["nonaccrual"] == {"fsk2": "FSK"}
+    n2, notified2 = R2.build_notices(bdc, [], notified)
+    assert n2 == [] and notified2 == notified                      # 同一份申報不重複通知
+    dep = [{"t": "META", "name": "Meta", "old": 5.5, "new": 5.0, "accession": "m1", "report_date": "2026-12-31"}]
+    n3, notified3 = R2.build_notices(bdc, dep, notified)
+    assert len(n3) == 1 and n3[0]["kind"] == "change" and "5.5" in n3[0]["title"] and notified3["dep"] == {"m1": "META"}
+    assert notified == {"nonaccrual": {"fsk2": "FSK"}}              # 不改動傳入的 notified
+
+
+def test_notice_title_prefixes_and_alert_text():
+    fetch = {"kind": "fetch", "title": "A 未抓到", "body": "內文 A"}
+    change = {"kind": "change", "title": "B 年限變動", "body": "內文 B"}
+    assert AL.notice_title([fetch]).startswith("資料抓取異常：")
+    assert AL.notice_title([change]).startswith("資料變動：")
+    assert AL.notice_title([fetch, change]).startswith("資料抓取異常／資料變動：")
+    inds = M.compute_indicators(base_units())
+    title, body = AL.alert_text([], inds, notices=[fetch])
+    assert title.startswith("資料抓取異常") and "內文 A" in body
+
+
+def test_cloud_ratio_table_matches_near_quarter_ends():
+    rev = {"2025-09-30": 10.0, "2025-12-31": 12.0, "2026-03-31": 14.0, "2026-06-30": 16.0}
+    capex = {"2025-09-29": 20.0, "2025-12-31": 24.0, "2026-03-30": 28.0, "2026-06-30": 32.0}
+    t = R2.cloud_ratio_table(rev, capex)
+    assert [round(r["ratio"], 2) for r in t["rows"]] == [0.5] * 4
+    assert t["ttm"] == pytest.approx(52.0 / 104.0) and t["ttm_rev"] == 52.0 and t["ttm_capex"] == 104.0
+    t2 = R2.cloud_ratio_table(rev, {"2026-06-30": 32.0})
+    assert t2["ttm"] is None and t2["rows"][0]["ratio"] is None
+
+
+def test_gpu_stats():
+    v = R2.vast_stats([{"dph_total": 8.0, "num_gpus": 4}, {"dph_total": 5.0, "num_gpus": 2}, {"dph_total": 3.0, "num_gpus": 1}],
+                      [{"dph_total": 16.0, "num_gpus": 4}])
+    assert v["rentable_median"] == pytest.approx(2.5) and v["rentable_n"] == 3 and v["all_n"] == 4 and v["all_median"] == pytest.approx(2.75)
+    assert R2.vast_stats([], []) is None
+    types = [{"gpu_type": "H100", "num_gpus": 8, "hourly_price": 1600, "availability": [{"available": True}]},
+             {"gpu_type": "H100", "num_gpus": 1, "hourly_price": 300, "availability": [{"available": False}]},
+             {"gpu_type": "B200", "num_gpus": 8, "hourly_price": 4000, "availability": []}]
+    sh = R2.shade_stats(types, ["H100"])
+    assert sh["all_n"] == 2 and sh["avail_n"] == 1 and sh["avail_median"] == pytest.approx(2.0) and sh["all_median"] == pytest.approx(2.5)
+    assert R2.shade_stats(types, ["A100"]) is None
+
+
+def test_upsert_gpu_rows_replaces_same_day_and_sorts():
+    lines = [json.dumps({"date": "2026-10-16", "vast": 1}), json.dumps({"date": "2026-10-15", "vast": 0})]
+    out = R2.upsert_gpu_rows(lines, R2.gpu_row("2026-10-16", {"H100": {}}, None))
+    rows = [json.loads(x) for x in out]
+    assert [r["date"] for r in rows] == ["2026-10-15", "2026-10-16"] and rows[1]["vast"] == {"H100": {}}
+
+
+@pytest.mark.parametrize("txt,y", [("P6Y", 6.0), ("P5Y6M", 5.5), ("six years", 6.0), ("5.5", 5.5), ("4 years", 4.0), ("abc", None)])
+def test_parse_years(txt, y):
+    assert R2.parse_years(txt) == y
+
+
+def test_server_life_and_dep_changed():
+    dims = lambda *ms: [("us-gaap:PropertyPlantAndEquipmentByTypeAxis", "x:" + m) for m in ms]  # noqa: E731
+    nn = [{"text": "P6Y", "dims": dims("ServerEquipmentMember"), "instant": "2025-12-31", "end": "2025-12-31"},
+          {"text": "P3Y", "dims": dims("ServerEquipmentMember", "MinimumMember"), "instant": "2025-12-31", "end": "2025-12-31"},
+          {"text": "P4Y", "dims": dims("ServerEquipmentMember"), "instant": "2024-12-31", "end": "2024-12-31"}]
+    assert R2.server_life(nn, ["ServerEquipmentMember"]) == {"years": 6.0, "asof": "2025-12-31"}
+    assert R2.server_life(nn, ["OtherMember"]) is None
+    table = [{"t": "AAA", "name": "A 公司", "years": 6.0}, {"t": "BBB", "name": "B 公司", "years": 5.5}]
+    ch = R2.dep_changed(table, {"AAA": {"years": 6.0, "accession": "a"}, "BBB": {"years": 5.0, "accession": "b", "report_date": "2026-12-31"}})
+    assert len(ch) == 1 and ch[0]["t"] == "BBB" and ch[0]["old"] == 5.5 and ch[0]["new"] == 5.0
+
+
+def test_weekly_index_and_drawdown():
+    stock = [(f"2026-01-{i:02d}", 100.0 + i) for i in range(1, 21)]
+    bench = [(d, 200.0) for d, _ in stock]
+    w = R2.weekly_index(stock, bench, window=20, step=5)
+    assert w[0] == ["2026-01-01", 100.0, 100.0] and w[-1][0] == "2026-01-20" and w[-1][2] == 100.0
+    assert R2.own_drawdown_1y([("a", 100.0), ("b", 80.0), ("c", 90.0)]) == pytest.approx(-10.0)
+    assert R2.own_drawdown_1y([("a", 1.0)]) is None
+
+
+def test_cn_date_helper():
+    assert P2._cn_date("May 31, 2031") == "2031-05-31"
+    assert P2._cn_date("October 2030") == "2030 年 10 月"
+    assert P2._cn_date("未知") == "未知"
+
+
+def test_every_threshold_has_type_and_why():
+    for i in range(1, 13):
+        typ, short, long = PG.THRESH_WHY[i]
+        assert typ in ("結構線", "經驗值") and short.strip() and long.strip()
+        assert i in PG.METHOD_ROWS
+    assert [PG.THRESH_WHY[i][0] for i in (1, 2, 3, 6)] == ["結構線"] * 4
+    assert [PG.THRESH_WHY[i][0] for i in (4, 5, 7, 8, 9, 10, 11, 12)] == ["經驗值"] * 8
+
+
+def test_page_round2_blocks_degrade_without_data():
+    """第二輪來源全部沒有資料時，頁面仍能產出，且每個區塊給出「尚無可用值」而不是丟例外。"""
+    u = base_units()
+    inds = M.compute_indicators(u)
+    html = PG.build_page({"generated_at": "2026-10-16 07:40", "units": u}, inds, M.summarize(inds), [], 0)
+    for key in ("軟體業股價（IGV）對 QQQ", "BDC 實物付息", "BDC 的軟體業占比", "BDC 不計息貸款", "雲端營收 ÷ 資本支出", "GPU 租價", "伺服器折舊年限", "OpenAI 曝險"):
+        assert key in html
+    assert "為什麼是這個數字" in html and "結構線" in html and "經驗值" in html
+    assert 'href="/market/"' in html
+
+
+def test_page_from_committed_state_has_links_and_blocks():
+    st = B.load_state()
+    if not st or "croi:AWS" not in st["units"]:
+        pytest.skip("尚無第二輪的 state")
+    inds = M.compute_indicators(st["units"])
+    html = PG.build_page(st, inds, M.summarize(inds), [], 0, [], [])
+    assert html.count("https://www.sec.gov/Archives/edgar/data/") >= 30         # 申報檔連結
+    assert "data.sec.gov/api/xbrl/companyfacts/" in html and "fred.stlouisfed.org/series/" in html
+    assert "Broadcom" in html and "尚未起租" in html and "CoreWeave 客戶集中度" in html
+    assert 'data-chart="igv"' in html and 'data-chart="cloud_roi"' in html
