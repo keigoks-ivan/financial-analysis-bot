@@ -54,6 +54,12 @@ jobs:
         # docs/Live_Scoreboard_Spec.md（v7-backtest）。
         run: python scripts/build_live_scoreboard.py
 
+      - name: Rebuild /long-track/ overview "today" strip
+        # 總覽分頁「今天」區塊只讀 state.json＋live_scoreboard.json、不重算；
+        # 先前沒接進排程，總覽停在 2026-09-18 的數字。失敗不擋實單更新。
+        continue-on-error: true
+        run: python scripts/build_long_track_index.py
+
       - name: Run F70 D1X alert (paper candidate)
         # F70 紙上候選（70% 系統 A ＋ 30% D1X／TLT/GLD/DBC）：D1X 三腿部位變化／
         # 月底再平衡提醒，date-keyed state 冪等；任何例外一律 exit 0 不寫檔
@@ -180,7 +186,7 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/long-track-w52-adaptive/noma.html docs/long-track-w52-adaptive/noma_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/f70_signal_state.json
+          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/long-track-w52-adaptive/noma.html docs/long-track-w52-adaptive/noma_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/f70_signal_state.json docs/long-track/index.html
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then
