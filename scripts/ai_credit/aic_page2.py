@@ -128,6 +128,82 @@ def _fmt_pct(x: float | None, nd: int = 1) -> str:
 
 
 # ---------------------------------------------------------------------------
+# 第一區補充：負債公允價值 ÷ 帳面價值
+# ---------------------------------------------------------------------------
+DFV_COLS = ["最新", "前 1 季", "前 2 季", "前 3 季", "前 4 季", "前 5 季", "前 6 季", "前 7 季"]
+DFV_COLOR = {"MSFT": "navy", "GOOGL": "blue", "AMZN": "teal", "META": "sky", "ORCL": "gold", "CRWV": "grey"}
+
+
+def _dfv_cell(r: dict | None, t: str, carried: dict | None = None) -> str:
+    """一格：比值（CoreWeave 兩位小數，其餘三位）加季末日期。carried：最新一季沒抓到時沿用的上一個值。"""
+    if r is None:
+        return "—"
+    nd = 2 if t == "CRWV" else 3
+    if r["ratio"] is not None:
+        return f'{r["ratio"]:.{nd}f}<br><span class="fine">{esc(r["end"])}</span>'
+    if carried and carried.get("carried"):
+        return f'{carried["value"]:.{nd}f}<br><span class="fine">{esc(carried["end"])} 沿用</span>'
+    word = "該季未揭露" if t == "CRWV" else "未抓到"
+    return f'<span class="fine">{word}<br>{esc(r["end"])}</span>'
+
+
+def dfv_sentence(views: dict[str, dict]) -> str:
+    """五家大公司最新一季：最低的一家與其餘幾家的區間（資料不足三家時回空字串）。views：{ticker: dfv_latest_view}。"""
+    have = [(v["value"], t, v["end"]) for t, v in views.items() if t in R.DFV_PEERS and v.get("value") is not None]
+    if len(have) < 3:
+        return ""
+    have.sort()
+    low = have[0]
+    rest = [x[0] for x in have[1:]]
+    return (f"最新一季，五家大公司裡比值最低的是 {esc(R.CO_SHORT[low[1]])}（{esc(low[2])}），{low[0]:.3f}；"
+            f"其餘 {len(rest)} 家在 {min(rest):.2f} 至 {max(rest):.2f} 之間。")
+
+
+def dfv_block(units: dict, charts: Charts) -> str:
+    rows, views, warn, labels_n = [], {}, [], 8
+    series = []
+    any_data = False
+    for t in R.DFV_ORDER:
+        u = units.get(f"dfv:{t}")
+        lines = ((u or {}).get("data") or {}).get("lines") or {}
+        for key, label in R.DFV_LINES[t]:
+            rs = lines.get(key) or []
+            if rs:
+                any_data = True
+            view = R.dfv_latest_view(rs)
+            if key == R.DFV_LINES[t][0][0]:
+                views[t] = view
+            rev = list(reversed(rs))
+            cells = [_dfv_cell(r, t, view if i == 0 else None) for i, r in enumerate(rev)]
+            cells += ["—"] * (len(DFV_COLS) - len(cells))
+            rows.append([esc(label)] + cells[:len(DFV_COLS)])
+            if rs and rs[-1]["ratio"] is None and view.get("carried"):
+                warn.append(f'<span class="imq-badge warn">{esc(label)} {esc(view["missing_end"])} 申報檔本期未抓到，顯示上次值（{esc(view["end"])}）</span>')
+            if key == R.DFV_LINES[t][0][0] and rs:
+                vals = [None if r["ratio"] is None else round(r["ratio"], 3) for r in rs]
+                series.append({"label": label, "data": [None] * (labels_n - len(vals)) + vals[-labels_n:], "color": DFV_COLOR[t], "dash": t == "CRWV", "points": True})
+    stale = "".join(_stale(units.get(f"dfv:{t}")) for t in R.DFV_ORDER)
+    if not any_data:
+        return f'<div class="imq-card blk"><h3>負債公允價值 ÷ 帳面價值（近 8 季）<span class="imq-badge">只顯示</span></h3>{stale}<p class="fine">資料尚無可用值。</p></div>'
+    tbl = _table(["公司"] + DFV_COLS, rows, set(range(1, 9)), raw=True, wrap=True)
+    chart = charts.add("dfv", list(reversed(DFV_COLS)), series, 220, ref=1.0) if series else ""
+    basis = _table(["公司", "分子、分母與資料來源"], [[esc(R.CO_SHORT[t]), esc(R.DFV_BASIS[t])] for t in R.DFV_ORDER], raw=True, wrap=True)
+    crwv = views.get("CRWV") or {}
+    crwv_txt = (f"CoreWeave 公布的是 {esc(crwv['end'])} 的值，之後的債價變動還沒進來。" if crwv.get("end") else "")
+    txt1 = ("公允價值是這些債如果照市價算值多少。比值低於 1，代表債券的市價低於帳面。比值下降有兩個原因：利率上升（所有固定利率債都會跌），"
+            "或市場對這家公司的信用要求更高。這張表分不開兩者，所以要跟同期其他公司比：同一季大家都跌，多半是利率；只有某家跌得特別多，才是信用。")
+    txt2 = (dfv_sentence(views) + "公司每季才公布一次，資料比市場晚約六週。" + crwv_txt +
+            "票面利率低的舊債天然低於面值，所以先看同一家自己的變化，再跟同期其他公司比。")
+    return (f'<div class="imq-card blk"><h3>負債公允價值 ÷ 帳面價值（近 8 季）<span class="imq-badge">只顯示，不計入越線條數</span></h3>{stale}{"".join(warn)}'
+            f'<p class="plain">{txt1}</p><p class="plain">{txt2}</p>{tbl}{chart}'
+            '<div class="ex-src">圖：比值，虛線為基準 1.0；各家財年不同，橫軸為相對季數，每格下方是該季季末日期。CoreWeave 只畫優先票據。</div>'
+            f'<details><summary>各家口徑與來源</summary>{basis}'
+            '<p class="fine">分子是公司在 10-Q／10-K 揭露的負債公允價值，多數屬第二層級（依可觀察的市場報價）；分母是帳面或面值，各家口徑不同，只比同一家自己的變化，跨家比較看方向。'
+            '抓不到某家某季時，最新一格沿用上次值並標日期，並通知；同一份申報只通知一次。</p>'
+            f'<p class="src">來源：{sec_sources(units, R.DFV_ORDER)}</p></details></div>')
+
+
+# ---------------------------------------------------------------------------
 # 第三區補充：Broadcom 與 Nvidia 並列、OpenAI 曝險表
 # ---------------------------------------------------------------------------
 def avgo_block(units: dict, inds: list[dict]) -> str:

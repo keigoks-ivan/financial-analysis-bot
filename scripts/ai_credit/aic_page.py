@@ -339,7 +339,7 @@ def build_page(state: dict, inds: list[dict], summary: dict, events: list[dict],
     def sec(n: str, title: str, sub: str) -> str:
         return f'<section><div class="chapter-head"><span class="ch-title">{n}　{esc(title)}</span></div><p class="ch-sub">{sub}</p>'
 
-    sec_a = "".join(_card(x, units) for x in by_group["A"])
+    sec_a = "".join(_card(x, units) for x in by_group["A"]) + P2.dfv_block(units, charts)
     sec_b = "".join(_card(x, units) for x in by_group["B"]) + _spreads((units.get("fred") or {}).get("data"), bool((units.get("fred") or {}).get("stale")))
     sec_c = ("".join(_card(x, units, _nvda_chart(units, charts) if x["id"] == 11 else "") for x in by_group["C"])
              + P2.avgo_block(units, inds) + P2.openai_block(units, ev_all) + _rpo(units, charts) + _leases(units) + _customers(units))
@@ -380,7 +380,7 @@ def build_page(state: dict, inds: list[dict], summary: dict, events: list[dict],
   <div>{none_line}{unknown}</div>
 </div>
 
-{sec("一", GROUPS["A"], "指標 1 至 6。看建設公司的本業現金、借款與償債能力，資料來自財報，每季更新。")}
+{sec("一", GROUPS["A"], "指標 1 至 6。看建設公司的本業現金、借款與償債能力，資料來自財報，每季更新。最後另有一張只顯示的負債公允價值表，不計入越線條數。")}
 {sec_a}</section>
 
 {sec("二", GROUPS["B"], "指標 7 至 10。看股價與折價，反映市場當下的擔心程度；資料每日更新，BDC 淨值每季更新。")}
@@ -407,7 +407,10 @@ def build_page(state: dict, inds: list[dict], summary: dict, events: list[dict],
 <div class="imq-card blk">{_method()}</div>
 <div class="imq-card blk prose">
 <h3>第二輪區塊（只顯示）</h3>
-<p>第四區與第五區，以及第三區的 Broadcom 並列、OpenAI 曝險表，都只顯示，尚未設門檻，不計入 12 條的越線條數。日後若設門檻，另行登記日期，不回頭改動已登記的 12 條。</p>
+<p>第四區與第五區，第三區的 Broadcom 並列、OpenAI 曝險表，以及第一區最後的負債公允價值表，都只顯示，尚未設門檻，不計入 12 條的越線條數。日後若設門檻，另行登記日期，不回頭改動已登記的 12 條。</p>
+<h3>為什麼沒有個別公司的 CDS 與債券價格</h3>
+<p>信用違約交換（CDS）和公司債的市場價格，能即時反映市場對個別公司信用的看法，但這些資料拿不到可以公開轉載的版本。單一公司 CDS 的成交資料，依證管會規定由存託信託與結算公司（DTCC）公開揭露，網站使用條款不允許轉載或公開發布；歐洲交易平台上的公司債報價，使用條款同樣不允許轉載。美國公司債的成交資料（FINRA TRACE）則需要付費授權。</p>
+<p>本頁因此不放任何個別公司的 CDS 與債券價格，只用公司財報揭露的負債公允價值，每季更新一次，當作債券市價的季度參考。</p>
 <h3>這一頁的限制</h3>
 <p>第 7 至 9 條用的是股價，不是信用本身。它是免費資料裡最弱的一環，股價反映的東西比信用多。</p>
 <p>最可能先出事的是不上市的 SPV 與 AI 實驗室，這兩類公開資料最少。這一頁抓到的，多半是第二波。</p>

@@ -413,12 +413,223 @@ def days_between(a: str, b: str) -> int:
 
 
 # ---------------------------------------------------------------------------
+# 區塊 A 補充：負債公允價值 ÷ 帳面價值（只顯示，不計入越線條數）
+# ---------------------------------------------------------------------------
+DFV_ORDER = ["MSFT", "GOOGL", "AMZN", "META", "ORCL", "CRWV"]
+DFV_PEERS = ["MSFT", "GOOGL", "AMZN", "META", "ORCL"]   # 五家投資等級的大公司；CoreWeave 是高收益債，另列、不放進同業區間
+DFV_LINES = {   # 公司 → [(列代號, 表上的名稱)]；CoreWeave 的優先票據與可轉債分列
+    "MSFT": [("main", "Microsoft")], "GOOGL": [("main", "Alphabet")], "AMZN": [("main", "Amazon")],
+    "META": [("main", "Meta")], "ORCL": [("main", "Oracle")],
+    "CRWV": [("senior", "CoreWeave 高收益優先票據"), ("conv", "CoreWeave 可轉換優先票據")],
+}
+DFV_BASIS = {   # 每家的分子分母口徑，寫在頁面上
+    "MSFT": "分子：長期債的公允價值；分母：長期債帳面金額（含一年內到期的部分）。資料取自 SEC 公開的標準化財報資料（companyfacts）。6 月財年，季別與日曆季末相同。",
+    "GOOGL": "分子：未償票據的公允價值；分母：長期債面值合計。2026 年的面值合計含少量非票據的其他長期債務（約 1.7%），2024 年各季只有票據。外幣票據按期末匯率換算。取自內嵌 XBRL。",
+    "AMZN": "分子：優先票據的公允價值；分母：長期債面值合計（含不到 1% 的其他長期債務）。取自內嵌 XBRL。",
+    "META": "分子：優先票據的公允價值；分母：票據本金。本金多數季度取自內嵌 XBRL，申報檔沒有標籤的季度，改由管理層討論的文字取。",
+    "ORCL": "分子：優先票據與其他借款的公允價值；分母：同一範圍的帳面金額。取自內嵌 XBRL。5 月財年，季末是 8、11、2、5 月底，與其他公司的日曆季末差約一個月。",
+    "CRWV": "只有部分季度揭露公允價值，缺的季度顯示「該季未揭露」。優先票據（高收益債）與可轉換優先票據分列：分子是申報檔揭露的公允價值，只給到 0.1 億美元，比值約有 ±0.5% 至 ±2.5% 的捨入誤差；"
+            "分母是各檔票據的本金（歐元票據按期末匯率換算）。可轉債的價格含股票選擇權，可能高於面值，不宜跟一般債比。取自內嵌 XBRL。",
+}
+DFV_NAME_RX = r"^us-gaap:(LongTermDebtFairValue|DebtInstrumentFairValue|LongTermDebt|DebtInstrumentCarryingAmount)$"
+DFV_SIG = "dfv1"            # 保留事實的規則或正規式改版時加一，讓快取的申報檔重新解析
+DFV_IGNORE_AXES = {"FairValueByMeasurementBasisAxis", "FairValueByFairValueHierarchyLevelAxis"}
+# Meta 的票據本金（MD&A 文字）：兩種寫法各一支，每份申報檔只會中一支
+META_PRINCIPAL_RX = (r"we had outstanding long-term debt in the form of senior unsecured notes for an aggregate principal amount of \$\s*([\d.,]+)\s*billion"
+                     r"|we had \$\s*([\d.,]+)\s*billion aggregate principal amount of Notes outstanding")
+
+
+# 內嵌 XBRL 事實只留算比值要用的：每家 [(tag, 允許的維度軸組合（扣掉公允價值層級軸之後）, 債別成員限制或 None)]
+_FV_AX = [{"LongtermDebtTypeAxis"}]
+DFV_KEEP_RULES = {
+    "AMZN": [("LongTermDebtFairValue", _FV_AX, None), ("LongTermDebt", [set()], None)],
+    "META": [("LongTermDebtFairValue", _FV_AX, None), ("DebtInstrumentCarryingAmount", [set()], None)],
+    "ORCL": [("DebtInstrumentFairValue", _FV_AX, None), ("DebtInstrumentCarryingAmount", _FV_AX, None)],
+    "GOOGL": [("LongTermDebtFairValue", [set()], None), ("DebtInstrumentCarryingAmount", [set(), {"DebtInstrumentAxis"}], None)],
+    "CRWV": [("DebtInstrumentFairValue", [{"LongtermDebtTypeAxis", "DebtInstrumentAxis"}, {"LongtermDebtTypeAxis"}], {"SeniorNotesMember"}),
+             ("DebtInstrumentCarryingAmount", [{"LongtermDebtTypeAxis", "DebtInstrumentAxis"}, {"LongtermDebtTypeAxis", "DebtInstrumentAxis", "RecourseStatusAxis"}],
+              {"SeniorNotesMember", "ConvertibleDebtMember"})],
+}
+
+
+def dfv_keep(t: str, f: dict) -> bool:
+    """內嵌 XBRL 事實裡哪些要存進 state：時點事實，且符合該公司的 DFV_KEEP_RULES。"""
+    if not f.get("instant"):
+        return False
+    ax = {a.split(":")[-1]: m.split(":")[-1] for a, m in f["dims"]}
+    key = {k for k in ax if k not in DFV_IGNORE_AXES}
+    for name, axes, types in DFV_KEEP_RULES.get(t, []):
+        if f["name"] == "us-gaap:" + name and key in axes and (types is None or ax.get("LongtermDebtTypeAxis") in types):
+            return True
+    return False
+
+
+def meta_principal(text: str) -> float | None:
+    """Meta MD&A 文字的票據本金（美元）；找不到回 None。"""
+    m = re.search(META_PRINCIPAL_RX, text)
+    if not m:
+        return None
+    return float((m.group(1) or m.group(2)).replace(",", "")) * 1e9
+
+
+def _axes(f: dict) -> dict[str, str]:
+    return {a.split(":")[-1]: m.split(":")[-1] for a, m in f["dims"]}
+
+
+def _dpick(fs: list[dict], name: str, want: dict[str, str]) -> float | None:
+    """某 tag 在扣掉公允價值層級軸之後、維度恰等於 want 的事實值；有多筆不同值時回 None（不猜）。"""
+    vals = set()
+    for f in fs:
+        if f["name"] != "us-gaap:" + name:
+            continue
+        ax = {k: v for k, v in _axes(f).items() if k not in DFV_IGNORE_AXES}
+        if ax == want:
+            vals.add(f["value"])
+    return vals.pop() if len(vals) == 1 else None
+
+
+def _x_amzn(fs: list[dict], tb: float | None) -> dict:
+    return {"main": (_dpick(fs, "LongTermDebtFairValue", {"LongtermDebtTypeAxis": "SeniorNotesMember"}), _dpick(fs, "LongTermDebt", {}), "XBRL")}
+
+
+def _x_meta(fs: list[dict], tb: float | None) -> dict:
+    fv = _dpick(fs, "LongTermDebtFairValue", {"LongtermDebtTypeAxis": "SeniorNotesMember"})
+    base, via = _dpick(fs, "DebtInstrumentCarryingAmount", {}), "XBRL"
+    if base is None and tb:
+        base, via = tb, "XBRL＋文字"
+    return {"main": (fv, base, via)}
+
+
+def _x_orcl(fs: list[dict], tb: float | None) -> dict:
+    return {"main": (_dpick(fs, "DebtInstrumentFairValue", {"LongtermDebtTypeAxis": "SeniorNotesAndOtherBorrowingsMember"}),
+                     _dpick(fs, "DebtInstrumentCarryingAmount", {"LongtermDebtTypeAxis": "SeniorNotesAndOtherLongTermBorrowingsMember"}), "XBRL")}
+
+
+def _x_googl(fs: list[dict], tb: float | None) -> dict:
+    fv = _dpick(fs, "LongTermDebtFairValue", {})
+    base = _dpick(fs, "DebtInstrumentCarryingAmount", {})
+    if base is None:   # 2024 年各季沒有合計標籤：各票據成員加總（當時債務只有票據）
+        mem = [f["value"] for f in fs if f["name"] == "us-gaap:DebtInstrumentCarryingAmount" and list(_axes(f)) == ["DebtInstrumentAxis"]]
+        base = sum(mem) if mem else None
+    return {"main": (fv, base, "XBRL")}
+
+
+def _x_crwv(fs: list[dict], tb: float | None) -> dict:
+    """優先票據與可轉換優先票據各一列。分子＝該類公允價值各筆加總；分母＝該類各檔票據本金加總
+    （同一檔同時有「追索」與無追索軸的事實時取追索那筆，避免歐元票據的歐元面額與美元換算值重複）。"""
+    fv = {"senior": None, "conv": None}
+    for f in fs:
+        if f["name"] != "us-gaap:DebtInstrumentFairValue":
+            continue
+        ax = {k: v for k, v in _axes(f).items() if k not in DFV_IGNORE_AXES}
+        if ax.get("LongtermDebtTypeAxis") != "SeniorNotesMember" or set(ax) - {"LongtermDebtTypeAxis", "DebtInstrumentAxis"}:
+            continue
+        k = "conv" if "Convertible" in ax.get("DebtInstrumentAxis", "") else "senior"
+        fv[k] = (fv[k] or 0.0) + f["value"]
+    per: dict[tuple, dict] = {}
+    for f in fs:
+        if f["name"] != "us-gaap:DebtInstrumentCarryingAmount":
+            continue
+        ax = _axes(f)
+        mem = ax.get("DebtInstrumentAxis", "")
+        if ax.get("LongtermDebtTypeAxis") not in ("SeniorNotesMember", "ConvertibleDebtMember") or set(ax) - {"LongtermDebtTypeAxis", "DebtInstrumentAxis", "RecourseStatusAxis"}:
+            continue
+        if ax.get("RecourseStatusAxis", "RecourseMember") != "RecourseMember":
+            continue
+        if "ConvertibleSeniorNotes" in mem:
+            kind = "conv"
+        elif mem.endswith("SeniorNotesMember") and "Convertible" not in mem:
+            kind = "senior"
+        else:
+            continue
+        per.setdefault((kind, mem), {})["rec" if "RecourseStatusAxis" in ax else "plain"] = f["value"]
+    base = {"senior": None, "conv": None}
+    for (kind, _mem), v in per.items():
+        base[kind] = (base[kind] or 0.0) + v.get("rec", v.get("plain", 0.0))
+    return {k: (fv[k], base[k], "XBRL") for k in ("senior", "conv")}
+
+
+DFV_EXTRACT = {"AMZN": _x_amzn, "META": _x_meta, "ORCL": _x_orcl, "GOOGL": _x_googl, "CRWV": _x_crwv}
+
+
+def _dfv_row(end: str, meta: dict, fv: float | None, base: float | None, via: str) -> dict:
+    ok = bool(fv) and bool(base) and base > 0
+    return {"end": end, "form": meta.get("form"), "accession": meta.get("accession"), "url": meta.get("url"),
+            "fv": fv if ok else None, "base": base if ok else None, "ratio": fv / base if ok else None, "via": via if ok else None}
+
+
+def dfv_lines(t: str, filings: list[dict], n: int = 8) -> dict[str, list[dict]]:
+    """內嵌 XBRL 公司的近 n 季。filings：各含 report_date、filing_date、facts（dfv_keep 留下的事實）、text_base（文字抓到的分母或 None）。
+
+    每個截止日先讀那一季自己的申報檔；分子或分母在自己的申報檔裡沒有時，才往後找較晚的申報檔（它們的上年同期欄）補，
+    補的時候分子、分母各自取自單一申報檔，不把不同申報檔的事實混加（成員名稱會隨申報改名，混加會重複計算）。
+    每個截止日對每一列產生一筆，抓不到的 ratio 是 None。
+    """
+    fn = DFV_EXTRACT[t]
+    ordered = sorted(filings, key=lambda x: x["filing_date"])
+    out: dict[str, list[dict]] = {k: [] for k, _ in DFV_LINES[t]}
+    for fl in sorted(filings, key=lambda x: x["report_date"])[-n:]:
+        end = fl["report_date"]
+        srcs = [fl] + [x for x in ordered if x is not fl and x["filing_date"] > fl["filing_date"]]
+        got = []
+        for x in srcs:
+            at = [f for f in x["facts"] if f["instant"] == end]
+            if at:
+                got.append(fn(at, x.get("text_base") if x is fl else None))
+        for key in out:
+            fv = next((g[key][0] for g in got if g.get(key) and g[key][0] is not None), None)
+            bs = next(((g[key][1], g[key][2]) for g in got if g.get(key) and g[key][1] is not None), (None, "XBRL"))
+            out[key].append(_dfv_row(end, fl, fv, bs[0], bs[1]))
+    return out
+
+
+def dfv_lines_cf(facts: dict, metas: list[dict], n: int = 8) -> dict[str, list[dict]]:
+    """Microsoft：companyfacts 的 LongTermDebtFairValue ÷ LongTermDebt（含一年內到期）。metas：periodics() 的申報清單。"""
+    out = []
+    for m in sorted(metas, key=lambda x: x["report_date"])[-n:]:
+        e = m["report_date"]
+        out.append(_dfv_row(e, m, S.instant_at(facts, "LongTermDebtFairValue", e), S.instant_at(facts, "LongTermDebt", e), "XBRL"))
+    return {"main": out}
+
+
+def dfv_misses(units: dict) -> list[dict]:
+    """最新一份申報檔所有列都沒有比值的公司（同一份申報通知一次用）。last 是該公司上一個有值的季末（沒有就 None）。"""
+    out = []
+    for t in DFV_ORDER:
+        d = (units.get(f"dfv:{t}") or {}).get("data") or {}
+        lines = d.get("lines") or {}
+        if not lines:
+            continue
+        newest = [rs[-1] for rs in lines.values() if rs]
+        if not newest or any(r["ratio"] is not None for r in newest):
+            continue
+        prev = [r["end"] for rs in lines.values() for r in rs if r["ratio"] is not None]
+        out.append({"t": t, "accession": newest[0]["accession"], "report_date": newest[0]["end"], "url": newest[0]["url"],
+                    "last": max(prev) if prev else None})
+    return out
+
+
+def dfv_latest_view(rows: list[dict]) -> dict:
+    """一列最新狀態：{value, end, carried}。最新一季沒有值時，沿用上一個有值的季末（carried=True）。"""
+    if not rows:
+        return {"value": None, "end": None, "carried": False}
+    if rows[-1]["ratio"] is not None:
+        return {"value": rows[-1]["ratio"], "end": rows[-1]["end"], "carried": False}
+    prev = [r for r in rows if r["ratio"] is not None]
+    if not prev:
+        return {"value": None, "end": rows[-1]["end"], "carried": False}
+    return {"value": prev[-1]["ratio"], "end": prev[-1]["end"], "carried": True, "missing_end": rows[-1]["end"]}
+
+
+# ---------------------------------------------------------------------------
 # 通知與每日快照（純函式，build_ai_credit.py 呼叫）
 # ---------------------------------------------------------------------------
 NONACCRUAL_BDCS = ["ARCC", "OBDC", "BXSL", "FSK", "MAIN", "GBDC"]
+CO_SHORT = {"MSFT": "Microsoft", "GOOGL": "Alphabet", "AMZN": "Amazon", "META": "Meta", "ORCL": "Oracle", "CRWV": "CoreWeave"}
 
 
-def build_notices(bdc_filings: dict[str, list[dict]], dep_rows: list[dict], notified: dict) -> tuple[list[dict], dict]:
+def build_notices(bdc_filings: dict[str, list[dict]], dep_rows: list[dict], notified: dict,
+                  dfv_miss: list[dict] | None = None) -> tuple[list[dict], dict]:
     """產生資料通知。同一份申報只通知一次（以申報序號記在 notified）。
 
     bdc_filings：{ticker: 新到舊的申報列}；dep_rows：dep_changed() 的結果。
@@ -446,6 +657,16 @@ def build_notices(bdc_filings: dict[str, list[dict]], dep_rows: list[dict], noti
                         "title": f"{c['name']} 伺服器耐用年限由 {c['old']:g} 年改為 {c['new']:g} 年",
                         "body": f"{c['name']} 最新 10-K（{c.get('report_date')}）的伺服器耐用年限為 {c['new']:g} 年，與頁面常數表的 {c['old']:g} 年不同。請核對申報檔並更新 DEP_TABLE。"})
         new.setdefault("dep", {})[acc] = c["t"]
+    for m in dfv_miss or []:
+        acc = m.get("accession")
+        if not acc or acc in new.get("dfv", {}):
+            continue
+        last = ("，頁面顯示上次值（%s 季末）" % m["last"]) if m.get("last") else "，目前沒有可顯示的上次值"
+        name = CO_SHORT.get(m["t"], m["t"])
+        notices.append({"kind": "fetch", "key": ("dfv", acc),
+                        "title": f"{name} 負債公允價值 {m['report_date']} 申報檔本期未抓到",
+                        "body": f"{name} {m['report_date']} 的申報檔解析不到負債公允價值或帳面金額{last}。申報檔：{m['url']}。可能是該季未揭露，或標籤與文字格式改了，需要調整解析規則。"})
+        new.setdefault("dfv", {})[acc] = m["t"]
     return notices, new
 
 

@@ -113,6 +113,8 @@ def collect_all(prev_units: dict, today: str) -> tuple[dict, dict]:
     plan.append(("gpu_vast", S2.collect_gpu_vast))
     plan.append(("gpu_shade", S2.collect_gpu_shade))
     plan.append(("dep", lambda: S2.collect_dep(prev_data("dep"))))
+    for t in R2.DFV_ORDER:
+        plan.append((f"dfv:{t}", lambda t=t: S2.collect_dfv(t, prev_data(f"dfv:{t}"))))
     plan.append(("avgo", lambda: S2.collect_avgo(prev_data("avgo"))))
     for t in ("MSFT", "NVDA", "AMZN", "AMD", "CRWV", "ORCL", "AVGO"):
         plan.append((f"oa:{t}", lambda t=t: S2.collect_openai(t, prev_data(f"oa:{t}"))))
@@ -164,12 +166,12 @@ def update_gpu_prices(units: dict, today: str, path: Path = GPU_PRICES) -> list[
 
 
 def data_notices(units: dict, prior: dict | None) -> tuple[list[dict], dict]:
-    """第二輪的資料通知（抓取異常、折舊年限變動）與更新後的 notified。"""
+    """第二輪的資料通知（抓取異常、折舊年限變動、負債公允價值本期未抓到）與更新後的 notified。"""
     bdcf = {t: sorted(((units.get(f"bdcf:{t}") or {}).get("data") or {}).get("filings", []), key=lambda f: f["report_date"], reverse=True)
             for t in R2.NONACCRUAL_BDCS}
     dep = (units.get("dep") or {}).get("data") or {}
     changed = R2.dep_changed(R2.DEP_TABLE, dep.get("parsed", {}))
-    return R2.build_notices(bdcf, changed, (prior or {}).get("notified", {}))
+    return R2.build_notices(bdcf, changed, (prior or {}).get("notified", {}), R2.dfv_misses(units))
 
 
 def update_events() -> tuple[list[dict], int]:

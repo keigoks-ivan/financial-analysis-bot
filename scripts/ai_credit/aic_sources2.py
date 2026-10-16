@@ -257,6 +257,51 @@ def collect_dep(prev: dict | None) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# 區塊 A 補充：負債公允價值 ÷ 帳面價值
+# ---------------------------------------------------------------------------
+def periodics_ext(t: str, n: int) -> list[dict]:
+    """最近 n 份 10-Q／10-K（新到舊）。近期清單不夠 n 份時（如上市不久、申報檔很多的 CoreWeave）再補讀 submissions 的舊分頁。"""
+    out = IX.periodics(t, n)
+    if len(out) >= n:
+        return out
+    s = S.fetch_submissions(t)
+    for fi in s["filings"].get("files", []):
+        r = requests.get("https://data.sec.gov/submissions/" + fi["name"], headers=UA_GENERIC, timeout=60)
+        r.raise_for_status()
+        f = r.json()
+        for i, form in enumerate(f["form"]):
+            if form in ("10-Q", "10-K"):
+                acc = f["accessionNumber"][i]
+                out.append({"accession": acc, "form": form, "report_date": f["reportDate"][i], "filing_date": f["filingDate"][i],
+                            "url": f"https://www.sec.gov/Archives/edgar/data/{S.CIKS[t]}/{acc.replace('-', '')}/{f['primaryDocument'][i]}"})
+        time.sleep(0.2)
+    out.sort(key=lambda m: m["filing_date"], reverse=True)
+    return out[:n]
+
+
+def collect_dfv(t: str, prev: dict | None, n: int = 8) -> dict:
+    """負債公允價值 ÷ 帳面價值，近 n 季。Microsoft 走 companyfacts；其餘解析內嵌 XBRL（Meta 另有一條文字正規式補本金）。
+    申報檔以申報序號快取在 state，同一份只下載解析一次；單一申報抓不到的欄位留 None，由頁面標示並通知。"""
+    metas = periodics_ext(t, n)
+    if t == "MSFT":
+        return {"lines": R.dfv_lines_cf(SRC.facts_for(t), metas, n), "source": "companyfacts"}
+    sig = R.DFV_SIG
+    old = {f["accession"]: f for f in (prev or {}).get("filings", []) if f.get("sig") == sig and f.get("ver") == PARSE_VER}
+    filings = []
+    for m in metas:
+        if m["accession"] in old:
+            filings.append(old[m["accession"]])
+            continue
+        h = IX.fetch_html(m["url"])
+        kept = [{"name": f["name"], "value": f["value"], "dims": [list(d) for d in f["dims"]], "start": f["start"], "end": f["end"],
+                 "instant": f["instant"]} for f in IX.facts(h, R.DFV_NAME_RX) if R.dfv_keep(t, f)]
+        tb = R.meta_principal(IX.filing_text(h)) if t == "META" else None
+        filings.append({**m, "sig": sig, "ver": PARSE_VER, "facts": kept, "text_base": tb})
+        time.sleep(0.4)
+    return {"lines": R.dfv_lines(t, filings, n), "source": "inline-xbrl", "filings": filings}
+
+
+# ---------------------------------------------------------------------------
 # 區塊 C 補充：Broadcom
 # ---------------------------------------------------------------------------
 def collect_avgo(prev: dict | None) -> dict:

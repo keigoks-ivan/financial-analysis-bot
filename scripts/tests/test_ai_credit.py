@@ -649,3 +649,178 @@ def test_page_from_committed_state_has_links_and_blocks():
     assert "data.sec.gov/api/xbrl/companyfacts/" in html and "fred.stlouisfed.org/series/" in html
     assert "Broadcom" in html and "尚未起租" in html and "CoreWeave 客戶集中度" in html
     assert 'data-chart="igv"' in html and 'data-chart="cloud_roi"' in html
+
+
+# ---------------------------------------------------------------------------
+# 負債公允價值 ÷ 帳面價值（第一區補充，只顯示）
+# ---------------------------------------------------------------------------
+def dfact(name, v, end, **axes):
+    """合成內嵌 XBRL 事實。axes：軸名=成員名（不含前綴）。"""
+    return {"name": "us-gaap:" + name, "value": float(v), "start": None, "end": None, "instant": end,
+            "dims": [["us-gaap:" + a, "x:" + m] for a, m in axes.items()]}
+
+
+def dfiling(acc, report, filed, facts, text_base=None, form="10-Q"):
+    return {"accession": acc, "form": form, "report_date": report, "filing_date": filed, "url": "https://sec/" + acc, "facts": facts, "text_base": text_base}
+
+
+def test_meta_principal_two_phrasings():
+    a = "As of June 30, 2025, we had outstanding long-term debt in the form of senior unsecured notes for an aggregate principal amount of $29.0 billion, which mature"
+    b = "As of June 30, 2026, we had $84.00 billion aggregate principal amount of Notes outstanding, which mature"
+    assert R2.meta_principal(a) == 29.0e9 and R2.meta_principal(b) == 84.0e9
+    assert R2.meta_principal("沒有這段文字") is None
+
+
+def test_dfv_keep_drops_unneeded_facts():
+    keep = lambda t, f: R2.dfv_keep(t, f)  # noqa: E731
+    assert keep("AMZN", dfact("LongTermDebt", 1, "2026-06-30"))
+    assert not keep("AMZN", dfact("LongTermDebt", 1, "2026-06-30", LongtermDebtTypeAxis="SeniorNotesMember", DebtInstrumentAxis="A2014"))
+    assert keep("META", dfact("LongTermDebtFairValue", 1, "2026-06-30", LongtermDebtTypeAxis="SeniorNotesMember",
+                              FairValueByMeasurementBasisAxis="E", FairValueByFairValueHierarchyLevelAxis="L2"))
+    assert not keep("CRWV", dfact("DebtInstrumentCarryingAmount", 1, "2026-06-30", LongtermDebtTypeAxis="LineOfCreditMember", DebtInstrumentAxis="DDTL"))
+    assert keep("CRWV", dfact("DebtInstrumentCarryingAmount", 1, "2026-06-30", LongtermDebtTypeAxis="SeniorNotesMember", DebtInstrumentAxis="A2030SeniorNotesMember"))
+    nf = dfact("LongTermDebt", 1, "2026-06-30")
+    nf["instant"] = None
+    assert not keep("AMZN", nf)                     # 期間事實不留
+
+
+def test_dfv_amzn_orcl_meta_googl_formulas():
+    sn = dict(LongtermDebtTypeAxis="SeniorNotesMember")
+    amzn = [dfiling("a1", "2026-06-30", "2026-07-31", [dfact("LongTermDebtFairValue", 123.8e9, "2026-06-30", **sn), dfact("LongTermDebt", 133.0e9, "2026-06-30"),
+                                                       dfact("LongTermDebt", 132.1e9, "2026-06-30", **sn)])]
+    r = R2.dfv_lines("AMZN", amzn)["main"][0]
+    assert r["ratio"] == pytest.approx(123.8 / 133.0) and r["via"] == "XBRL"            # 分母是無維度的長期債面值合計
+    orcl = [dfiling("o1", "2026-08-31", "2026-09-10", [
+        dfact("DebtInstrumentFairValue", 105.7e9, "2026-08-31", LongtermDebtTypeAxis="SeniorNotesAndOtherBorrowingsMember", FairValueByFairValueHierarchyLevelAxis="L2"),
+        dfact("DebtInstrumentCarryingAmount", 125.0e9, "2026-08-31", LongtermDebtTypeAxis="SeniorNotesAndOtherLongTermBorrowingsMember"),
+        dfact("DebtInstrumentCarryingAmount", 5.0e9, "2026-08-31", CreditFacilityAxis="CommercialPaperMember")])]
+    assert R2.dfv_lines("ORCL", orcl)["main"][0]["ratio"] == pytest.approx(105.7 / 125.0)
+    fvm = dfact("LongTermDebtFairValue", 55.94e9, "2026-03-31", LongtermDebtTypeAxis="SeniorNotesMember")
+    meta_x = [dfiling("m1", "2026-06-30", "2026-07-30", [dict(fvm, value=79.75e9, instant="2026-06-30"), dfact("DebtInstrumentCarryingAmount", 84e9, "2026-06-30")])]
+    meta_t = [dfiling("m2", "2026-03-31", "2026-04-30", [fvm], text_base=59.0e9)]
+    assert R2.dfv_lines("META", meta_x)["main"][0]["ratio"] == pytest.approx(79.75 / 84) and R2.dfv_lines("META", meta_x)["main"][0]["via"] == "XBRL"
+    rt = R2.dfv_lines("META", meta_t)["main"][0]
+    assert rt["ratio"] == pytest.approx(55.94 / 59.0) and rt["via"] == "XBRL＋文字"       # 沒有標籤的季度用文字補本金
+    g_tot = [dfiling("g1", "2026-06-30", "2026-07-23", [dfact("LongTermDebtFairValue", 94.9e9, "2026-06-30"), dfact("DebtInstrumentCarryingAmount", 101.085e9, "2026-06-30"),
+                                                        dfact("DebtInstrumentCarryingAmount", 2e9, "2026-06-30", DebtInstrumentAxis="A2016NotesMember")])]
+    assert R2.dfv_lines("GOOGL", g_tot)["main"][0]["ratio"] == pytest.approx(94.9 / 101.085)
+    g_mem = [dfiling("g0", "2024-09-30", "2024-10-30", [dfact("LongTermDebtFairValue", 9.5e9, "2024-09-30"),
+                                                        dfact("DebtInstrumentCarryingAmount", 12e9, "2024-09-30", DebtInstrumentAxis="A20162020NotesMember")])]
+    assert R2.dfv_lines("GOOGL", g_mem)["main"][0]["ratio"] == pytest.approx(9.5 / 12)   # 沒有合計標籤時加總各票據
+
+
+def test_dfv_missing_value_is_none_not_zero_and_never_guessed():
+    f = [dfiling("a1", "2026-06-30", "2026-07-31", [dfact("LongTermDebt", 133e9, "2026-06-30")])]      # 只有分母
+    r = R2.dfv_lines("AMZN", f)["main"][0]
+    assert r["ratio"] is None and r["fv"] is None and r["base"] is None
+    conflict = [dfiling("a1", "2026-06-30", "2026-07-31", [dfact("LongTermDebt", 133e9, "2026-06-30"), dfact("LongTermDebt", 134e9, "2026-06-30"),
+                                                           dfact("LongTermDebtFairValue", 120e9, "2026-06-30", LongtermDebtTypeAxis="SeniorNotesMember")])]
+    assert R2.dfv_lines("AMZN", conflict)["main"][0]["ratio"] is None           # 同一時點兩個不同值，不猜
+
+
+def test_dfv_prior_year_column_fills_a_missing_part_from_a_single_filing():
+    sn = dict(LongtermDebtTypeAxis="SeniorNotesMember")
+    k = dfiling("k", "2025-12-31", "2026-03-02", [
+        dfact("DebtInstrumentFairValue", 3.5e9, "2025-12-31", **sn),
+        dfact("DebtInstrumentFairValue", 2.5e9, "2025-12-31", DebtInstrumentAxis="A2031ConvertibleSeniorNotesMember", **sn),
+        dfact("DebtInstrumentCarryingAmount", 2.0e9, "2025-12-31", DebtInstrumentAxis="A2030SeniorNotesMember", **sn),
+        dfact("DebtInstrumentCarryingAmount", 1.75e9, "2025-12-31", DebtInstrumentAxis="A2031SeniorNotesMember", **sn)], form="10-K")
+    q = dfiling("q", "2026-06-30", "2026-08-12", [          # 上年底欄：2031 票據改了成員名稱，可轉債本金只在這份裡
+        dfact("DebtInstrumentCarryingAmount", 1.75e9, "2025-12-31", DebtInstrumentAxis="A20319.00SeniorNotesMember", **sn),
+        dfact("DebtInstrumentCarryingAmount", 2.588e9, "2025-12-31", DebtInstrumentAxis="A2031ConvertibleSeniorNotesMember", LongtermDebtTypeAxis="ConvertibleDebtMember"),
+        dfact("DebtInstrumentFairValue", 10.0e9, "2026-06-30", DebtInstrumentAxis="A20329.625SeniorNotesMember", **sn),
+        dfact("DebtInstrumentCarryingAmount", 2.0e9, "2026-06-30", DebtInstrumentAxis="A2030SeniorNotesMember", **sn),
+        dfact("DebtInstrumentCarryingAmount", 1.75e9, "2026-06-30", DebtInstrumentAxis="A20319.00SeniorNotesMember", **sn),
+        dfact("DebtInstrumentCarryingAmount", 2.75e9, "2026-06-30", DebtInstrumentAxis="A20319.75SeniorNotesMember", **sn),
+        dfact("DebtInstrumentCarryingAmount", 1.25e9, "2026-06-30", DebtInstrumentAxis="A20329.625SeniorNotesMember", **sn),
+        dfact("DebtInstrumentCarryingAmount", 2.0e9, "2026-06-30", DebtInstrumentAxis="A2032EURSeniorNotesMember", **sn),            # 歐元面額
+        dfact("DebtInstrumentCarryingAmount", 2.279e9, "2026-06-30", DebtInstrumentAxis="A2032EURSeniorNotesMember", RecourseStatusAxis="RecourseMember", **sn),
+        dfact("DebtInstrumentCarryingAmount", 0.171e9, "2026-06-30", DebtInstrumentAxis="ConvertiblePromissoryNotesMember", LongtermDebtTypeAxis="ConvertibleDebtMember"),
+    ])
+    lines = R2.dfv_lines("CRWV", [k, q])
+    ks, kc = lines["senior"][0], lines["conv"][0]
+    assert ks["ratio"] == pytest.approx(3.5 / 3.75)                    # 2031 票據只算自己那份申報的一次，不被上年底欄的新成員名稱重複計入
+    assert kc["ratio"] == pytest.approx(2.5 / 2.588)                   # 分子取自 10-K、分母取自較晚的 10-Q
+    qs = lines["senior"][1]
+    assert qs["base"] == pytest.approx(2.0e9 + 1.75e9 + 2.75e9 + 1.25e9 + 2.279e9)   # 歐元票據取美元換算值，不取歐元面額
+    assert qs["ratio"] == pytest.approx(10.0 / 10.029)
+    assert lines["conv"][1]["ratio"] is None                          # 該季沒有可轉債公允價值
+
+
+def test_dfv_lines_cf_uses_companyfacts_tags():
+    def rowsx(vals):
+        return {"units": {"USD": [{"end": e, "val": v, "form": "10-Q", "filed": "2026-08-01"} for e, v in vals]}}
+    facts = {"facts": {"us-gaap": {"LongTermDebtFairValue": rowsx([("2026-03-31", 36.6e9), ("2026-06-30", 36.5e9)]),
+                                   "LongTermDebt": rowsx([("2026-03-31", 40.262e9), ("2026-06-30", 40.294e9)])}}}
+    metas = [{"report_date": "2026-06-30", "form": "10-K", "accession": "m2", "url": "u2", "filing_date": "2026-07-29"},
+             {"report_date": "2026-03-31", "form": "10-Q", "accession": "m1", "url": "u1", "filing_date": "2026-04-29"},
+             {"report_date": "2025-12-31", "form": "10-Q", "accession": "m0", "url": "u0", "filing_date": "2026-01-28"}]
+    rows = R2.dfv_lines_cf(facts, metas)["main"]
+    assert [r["end"] for r in rows] == ["2025-12-31", "2026-03-31", "2026-06-30"]
+    assert rows[2]["ratio"] == pytest.approx(36.5 / 40.294) and rows[0]["ratio"] is None
+
+
+def _units_with_dfv(newest_missing=False):
+    def row(end, r, acc):
+        return {"end": end, "form": "10-Q", "accession": acc, "url": "https://sec/" + acc, "fv": None if r is None else r * 100, "base": None if r is None else 100.0,
+                "ratio": r, "via": None if r is None else "XBRL"}
+    u = {}
+    for t, rs in {"MSFT": [0.93, 0.92, 0.91], "GOOGL": [0.90, 0.93, 0.94], "AMZN": [0.89, 0.92, 0.93], "META": [0.97, 0.95, 0.95],
+                  "ORCL": [0.90, 0.89, None if newest_missing else 0.846]}.items():
+        u[f"dfv:{t}"] = {"data": {"lines": {"main": [row(f"2026-0{3 + 3 * i}-30", r, f"{t}{i}") for i, r in enumerate(rs)]}}, "fetched": "2026-10-16", "stale": False}
+    u["dfv:CRWV"] = {"data": {"lines": {"senior": [row("2026-03-31", None, "c0"), row("2026-06-30", 0.997, "c1")],
+                                        "conv": [row("2026-03-31", None, "c0"), row("2026-06-30", 1.138, "c1")]}}, "fetched": "2026-10-16", "stale": False}
+    return u
+
+
+def test_dfv_latest_view_carries_last_value_when_newest_missing():
+    ok = R2.dfv_latest_view([{"end": "a", "ratio": 0.9}, {"end": "b", "ratio": 0.8}])
+    assert ok == {"value": 0.8, "end": "b", "carried": False}
+    miss = R2.dfv_latest_view([{"end": "a", "ratio": 0.9}, {"end": "b", "ratio": None}])
+    assert miss["value"] == 0.9 and miss["end"] == "a" and miss["carried"] is True and miss["missing_end"] == "b"
+    assert R2.dfv_latest_view([{"end": "a", "ratio": None}])["value"] is None and R2.dfv_latest_view([])["value"] is None
+
+
+def test_dfv_misses_and_notice_once_per_filing():
+    assert R2.dfv_misses(_units_with_dfv()) == []                       # CoreWeave 2026-03 那季沒揭露，但最新一份有值，不通知
+    u = _units_with_dfv(newest_missing=True)
+    miss = R2.dfv_misses(u)
+    assert len(miss) == 1 and miss[0]["t"] == "ORCL" and miss[0]["accession"] == "ORCL2" and miss[0]["last"] == "2026-06-30"
+    bdc = {t: [_filing(t + "2", "2026-06-30", {"cost": 1, "fv": 1})] for t in R2.NONACCRUAL_BDCS}
+    n1, notified = R2.build_notices(bdc, [], {}, miss)
+    assert len(n1) == 1 and n1[0]["kind"] == "fetch" and "Oracle" in n1[0]["title"] and "負債公允價值" in n1[0]["title"] and notified["dfv"] == {"ORCL2": "ORCL"}
+    assert AL.notice_title(n1).startswith("資料抓取異常：")
+    n2, notified2 = R2.build_notices(bdc, [], notified, miss)
+    assert n2 == [] and notified2 == notified                           # 同一份申報檔只通知一次
+    assert R2.build_notices(bdc, [], {})[0] == []                       # 不傳第四個參數的舊呼叫方式照舊
+
+
+def test_dfv_sentence_picks_lowest_of_five_and_range_of_rest():
+    views = {t: R2.dfv_latest_view(((_units_with_dfv()[f"dfv:{t}"])["data"]["lines"]["main"])) for t in R2.DFV_PEERS}
+    s = P2.dfv_sentence(views)
+    assert "Oracle" in s and "0.846" in s and "0.91 至 0.95" in s and "4 家" in s
+    assert P2.dfv_sentence({"MSFT": views["MSFT"]}) == ""
+
+
+def test_dfv_block_renders_table_chart_and_carried_badge():
+    ch = P2.Charts()
+    html = P2.dfv_block(_units_with_dfv(), ch)
+    assert "負債公允價值 ÷ 帳面價值（近 8 季）" in html and "只顯示" in html and 'data-chart="dfv"' in html
+    assert "CoreWeave 高收益優先票據" in html and "CoreWeave 可轉換優先票據" in html and "該季未揭露" in html
+    assert "0.846" in html and "利率上升" in html and "信用要求更高" in html and "日 沿用" not in html and "-30 沿用" not in html
+    assert ch.data["dfv"]["ref"] == 1.0 and len(ch.data["dfv"]["series"]) == 6 and ch.data["dfv"]["labels"][-1] == "最新"
+    html2 = P2.dfv_block(_units_with_dfv(newest_missing=True), P2.Charts())
+    assert "申報檔本期未抓到，顯示上次值（2026-06-30）" in html2 and "2026-06-30 沿用" in html2
+    assert "資料尚無可用值" in P2.dfv_block({}, P2.Charts())
+
+
+def test_page_has_dfv_block_in_chapter_one_and_cds_note_without_numbers():
+    u = base_units()
+    u.update(_units_with_dfv())
+    inds = M.compute_indicators(u)
+    html = PG.build_page({"generated_at": "2026-10-16 07:40", "units": u}, inds, M.summarize(inds), [], 0)
+    a, b = html.index("負債公允價值 ÷ 帳面價值"), html.index("市場怎麼定價")
+    assert html.index("借錢的人撐不撐得住") < a < b                       # 在第一區裡、第二區之前
+    assert "為什麼沒有個別公司的 CDS 與債券價格" in html and "FINRA TRACE" in html and "DTCC" in html
+    assert "第一區最後的負債公允價值表" in html
+    assert "Blue Owl" not in html[a:b]                                 # 不放 Blue Owl
