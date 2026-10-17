@@ -344,8 +344,8 @@ def render(st: dict, bt: dict) -> str:
   <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>C1 影子對照｜實盤未採用，僅並排追蹤 | InvestMQuest Research</title>
-  <meta name="description" content="美股 C1 影子對照：股票部分 cap 1.0 不借錢，加 IEF／GLD 週線趨勢疊加；與實單主系統並排追蹤，實盤未採用。">
+  <title>債金版影子對照｜實盤未採用，僅並排追蹤 | InvestMQuest Research</title>
+  <meta name="description" content="美股債金版影子對照：股票部分 cap 1.0 不借錢，加 IEF／GLD 週線趨勢疊加；與實單主系統並排追蹤，實盤未採用。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
@@ -393,17 +393,17 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 {nav_html}
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">系統主控台</a> / <a href="/long-track-w52-adaptive/">實單主系統</a> / C1 影子對照</div>
-    <h1>C1 影子對照（美股）</h1>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">系統主控台</a> / <a href="/long-track-w52-adaptive/">實單主系統</a> / 債金版影子對照</div>
+    <h1>債金版影子對照（美股）</h1>
     <div class="sub">股票部分上限 100% 不借錢，另疊 IEF、GLD 週線趨勢 · 與實單主系統並排追蹤 · 無 email</div>
   </div>
 </div>
 <div class="container">
 
-<div class="banner"><b class="tag">實盤未採用</b>C1 只在這裡並排追蹤，實盤不動、不下單、不構成任何配置建議。數據截至 {last['date']}，頁面更新 {now} 台北時間。</div>
+<div class="banner"><b class="tag">實盤未採用</b>債金版只在這裡並排追蹤，實盤不動、不下單、不構成任何配置建議。數據截至 {last['date']}，頁面更新 {now} 台北時間。</div>
 
 <div class="card">
-<h2>C1 是什麼</h2>
+<h2>債金版是什麼</h2>
 <p>股票部分沿用現行引擎（週線 W52 閘門 × 自適應波動率 × 執行層），但曝險上限收回 100%，不借錢。另外各拿最多 20% 的資金配置 IEF（美國 7–10 年公債）與 GLD（黃金），每個資產看週線三個條件：週收盤高於 40 週均線、高於 52 週均線、高於 52 週前的價格。每成立一條，配置加三分之一，三條全成立才是 20%。條件成立與否在週五收盤判定，延後兩個交易日生效。</p>
 <p class="small" style="margin-top:.5rem">疊加部分以超額報酬計（資產報酬減短期利率），已扣 roll 成本與換手成本。定義全部照抄 v7-backtest 的研究程式（src/pain_reduction），沒有調任何參數。</p>
 </div>
@@ -412,28 +412,28 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 <p class="small">起點與實單主系統相同（淨值 100），三條線用同一套日報酬簿記與同一份實錄執行層算出，因此可以直接並排。下方回測是另一段口徑，不與這裡混看。</p>
 
 <div class="tiles">
-  <div class="tile"><div class="k">C1 累計報酬（{st['n_live_days']} 個交易日）</div><div class="v">{ret['c1']:+.1f}%</div><div class="s">實盤 {ret['main']:+.1f}% · cap 1.0 影子 {ret['cap10']:+.1f}%</div></div>
-  <div class="tile"><div class="k">目前自高點回撤</div><div class="v">{dd_now['c1']:.1f}%</div><div class="s">實盤 {dd_now['main']:.1f}% · 追蹤期最深 C1 {dd_min['c1']:.1f}% 對實盤 {dd_min['main']:.1f}%</div></div>
+  <div class="tile"><div class="k">債金版累計報酬（{st['n_live_days']} 個交易日）</div><div class="v">{ret['c1']:+.1f}%</div><div class="s">實盤 {ret['main']:+.1f}% · cap 1.0 影子 {ret['cap10']:+.1f}%</div></div>
+  <div class="tile"><div class="k">目前自高點回撤</div><div class="v">{dd_now['c1']:.1f}%</div><div class="s">實盤 {dd_now['main']:.1f}% · 追蹤期最深債金版 {dd_min['c1']:.1f}% 對實盤 {dd_min['main']:.1f}%</div></div>
   <div class="tile"><div class="k">IEF 條件數／今日權重</div><div class="v">{ief['n']}／3 · {ief['applied_w_pct']:.1f}%</div><div class="s">目標權重 {ief['target_w_pct']:.1f}%（週線截至 {ief['week_date']}）</div></div>
   <div class="tile"><div class="k">GLD 條件數／今日權重</div><div class="v">{gld['n']}／3 · {gld['applied_w_pct']:.1f}%</div><div class="s">目標權重 {gld['target_w_pct']:.1f}%（週線截至 {gld['week_date']}）</div></div>
 </div>
 
 <div class="card">
 <h3>淨值對照（起點 100）</h3>
-<div class="legend"><span><i style="border-color:#1d4ed8"></i>C1（cap 1.0 ＋ IEF／GLD）</span><span><i style="border-color:#0c1521"></i>實單主系統</span><span><i style="border-color:#d97706;border-top-style:dashed"></i>cap 1.0 影子（未疊加）</span></div>
+<div class="legend"><span><i style="border-color:#1d4ed8"></i>債金版（不借錢＋IEF／GLD）</span><span><i style="border-color:#0c1521"></i>實單主系統</span><span><i style="border-color:#d97706;border-top-style:dashed"></i>cap 1.0 影子（未疊加）</span></div>
 <div id="ch-live-nav" class="chart"></div>
-<div class="takeaway">到 {last['date']}，C1 為 {last['nav_c1']:.1f}，實單主系統為 {last['nav_main']:.1f}，只有股票部分的 cap 1.0 影子為 {last['nav_cap10']:.1f}。C1 與 cap 1.0 影子的差距（{ret['c1'] - ret['cap10']:+.1f}）就是 IEF、GLD 疊加累計貢獻的淨值點數。追蹤期很短，只能看運作是否如預期，不能據此比較優劣。</div>
+<div class="takeaway">到 {last['date']}，債金版為 {last['nav_c1']:.1f}，實單主系統為 {last['nav_main']:.1f}，只有股票部分的 cap 1.0 影子為 {last['nav_cap10']:.1f}。債金版與 cap 1.0 影子的差距（{ret['c1'] - ret['cap10']:+.1f}）就是 IEF、GLD 疊加累計貢獻的淨值點數。追蹤期很短，只能看運作是否如預期，不能據此比較優劣。</div>
 </div>
 
 <div class="grid2">
 <div class="card">
 <h3>回撤對照（自追蹤期高點）</h3>
-<div class="legend"><span><i style="border-color:#1d4ed8"></i>C1</span><span><i style="border-color:#0c1521"></i>實單主系統</span></div>
+<div class="legend"><span><i style="border-color:#1d4ed8"></i>債金版</span><span><i style="border-color:#0c1521"></i>實單主系統</span></div>
 <div id="ch-live-dd" class="chart-sm"></div>
 </div>
 <div class="card">
 <h3>股票曝險與債金權重（% 淨值）</h3>
-<div class="legend"><span><i style="border-color:#0c1521"></i>實單股票曝險</span><span><i style="border-color:#1d4ed8"></i>C1 股票曝險</span><span><i style="border-color:#15803d"></i>IEF 權重</span><span><i style="border-color:#d97706"></i>GLD 權重</span></div>
+<div class="legend"><span><i style="border-color:#0c1521"></i>實單股票曝險</span><span><i style="border-color:#1d4ed8"></i>債金版股票曝險</span><span><i style="border-color:#15803d"></i>IEF 權重</span><span><i style="border-color:#d97706"></i>GLD 權重</span></div>
 <div id="ch-live-expo" class="chart-sm"></div>
 </div>
 </div>
@@ -448,7 +448,7 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 
 <div class="card">
 <h3>回測淨值（起點 100，對數座標）</h3>
-<div class="legend"><span><i style="border-color:#1d4ed8"></i>C1</span><span><i style="border-color:#0c1521"></i>現行規則（cap 1.5 ＋ 均線層）</span><span><i style="border-color:#9aa7b8"></i>50/50 買進持有</span></div>
+<div class="legend"><span><i style="border-color:#1d4ed8"></i>債金版</span><span><i style="border-color:#0c1521"></i>現行規則（cap 1.5 ＋ 均線層）</span><span><i style="border-color:#9aa7b8"></i>50/50 買進持有</span></div>
 <div id="ch-bt-nav" class="chart"></div>
 </div>
 <div class="grid2">
@@ -468,27 +468,27 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 <div class="tablewrap"><table>
 <thead><tr><th>規則</th><th class="num">年化</th><th class="num">最大回撤</th><th class="num">Ulcer</th><th class="num">低於前高 10% 的時間</th></tr></thead>
 <tbody>
-{stats_row('C1（W-FRI 錨點，日頻）', s_bt['C1'], True)}
+{stats_row('債金版（W-FRI 錨點，日頻）', s_bt['C1'], True)}
 {stats_row('現行規則（W-FRI 錨點，日頻）', s_bt['C0'])}
 {stats_row('50/50 買進持有', s_bt['BH'])}
-{stats_row('C1（五個週線錨點中位數）', med['C1'])}
+{stats_row('債金版（五個週線錨點中位數）', med['C1'])}
 {stats_row('現行規則（五個週線錨點中位數）', med['C0'])}
 </tbody></table></div>
-<div class="takeaway">五個週線錨點（週一至週五收盤各算一次）的中位數：C1 年化 {med['C1']['cagr']:.1f}%、Ulcer {med['C1']['ulcer']:.1f}，現行規則年化 {med['C0']['cagr']:.1f}%、Ulcer {med['C0']['ulcer']:.1f}。Ulcer 是回撤深度與時間的綜合指標，數字越低代表持有過程越平順。</div>
+<div class="takeaway">五個週線錨點（週一至週五收盤各算一次）的中位數：債金版年化 {med['C1']['cagr']:.1f}%、Ulcer {med['C1']['ulcer']:.1f}，現行規則年化 {med['C0']['cagr']:.1f}%、Ulcer {med['C0']['ulcer']:.1f}。Ulcer 是回撤深度與時間的綜合指標，數字越低代表持有過程越平順。</div>
 </div>
 
 <div class="grid2">
 <div class="card">
 <h3>升息與壓力期（W-FRI 錨點）</h3>
 <div class="tablewrap"><table>
-<thead><tr><th>期間</th><th class="num">現行報酬</th><th class="num">C1 報酬</th><th class="num">現行回撤</th><th class="num">C1 回撤</th></tr></thead>
+<thead><tr><th>期間</th><th class="num">現行報酬</th><th class="num">債金版報酬</th><th class="num">現行回撤</th><th class="num">債金版回撤</th></tr></thead>
 <tbody>{stress_rows}</tbody></table></div>
-<div class="takeaway">2022 年 1 月至 2023 年 10 月的升息期，C1 報酬為 {bt['stress']['升息 2022-01～2023-10']['C1']['ret']:+.1f}%，現行規則為 {bt['stress']['升息 2022-01～2023-10']['C0']['ret']:+.1f}%。債券與股票同時下跌時，債金疊加沒有保護作用，這是 C1 最明確的弱點。</div>
+<div class="takeaway">2022 年 1 月至 2023 年 10 月的升息期，債金版報酬為 {bt['stress']['升息 2022-01～2023-10']['C1']['ret']:+.1f}%，現行規則為 {bt['stress']['升息 2022-01～2023-10']['C0']['ret']:+.1f}%。債券與股票同時下跌時，債金疊加沒有保護作用，這是債金版最明確的弱點。</div>
 </div>
 <div class="card">
 <h3>分期（W-FRI 錨點）</h3>
 <div class="tablewrap"><table>
-<thead><tr><th>期間</th><th class="num">現行 Ulcer</th><th class="num">C1 Ulcer</th><th class="num">現行年化</th><th class="num">C1 年化</th></tr></thead>
+<thead><tr><th>期間</th><th class="num">現行 Ulcer</th><th class="num">債金版 Ulcer</th><th class="num">現行年化</th><th class="num">債金版年化</th></tr></thead>
 <tbody>{era_rows}</tbody></table></div>
 </div>
 </div>
@@ -499,7 +499,7 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 <li>事前登記的六條判準全數通過（年化不低於現行 1pp、最大回撤不惡化超過 2pp、Ulcer 至少低 20%、低於前高 10% 的時間較短、五個分期至少三個不劣於現行、2022 年回撤不惡化超過 3pp）。</li>
 <li>W-FRI 錨點的全窗數字在門檻定案前已看過，所以那一欄不算新證據；新資訊來自五個錨點、分期、壓力期與單一資產拆解。</li>
 <li>債券與黃金在 2005 至 2026 年整體是順風，結論只在這段樣本內成立，也只測了美股。</li>
-<li>疊加部位的資金成本若比短期利率高 1.5%，C1 的年化仍比現行高約 0.3 個百分點（研究敏感度測試）。</li>
+<li>疊加部位的資金成本若比短期利率高 1.5%，債金版的年化仍比現行高約 0.3 個百分點（研究敏感度測試）。</li>
 <li>追蹤期只有 {st['n_live_days']} 個交易日，不足以判斷任何優劣；本頁只回答「並排看起來如何」。</li>
 </ul>
 <p class="small" style="margin-top:.6rem">資料：QQQ、SMH、IEF、GLD 為還原股價，現金利率用 ^IRX（yfinance）。自檢：本頁重算的實單與 cap 1.0 影子淨值，與記分板發布值最大差 {('%.4f' % sb.get('main_vs_scoreboard_max_abs', 0)) if sb else '—'}／{('%.4f' % sb.get('a10_vs_scoreboard_max_abs', 0)) if sb else '—'}（淨值點）。</p>
@@ -557,7 +557,7 @@ def main():
     OUT_STATE.write_text(json.dumps(st, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     last = st["daily"][-1]
     info(f"wrote {OUT_HTML.name} ({len(html):,} bytes), {OUT_STATE.name}；"
-         f"{last['date']} C1={last['nav_c1']} 實盤={last['nav_main']} cap1.0={last['nav_cap10']}；"
+         f"{last['date']} 債金版={last['nav_c1']} 實盤={last['nav_main']} cap1.0={last['nav_cap10']}；"
          f"IEF {st['latest']['ief']['n']}/3 GLD {st['latest']['gld']['n']}/3")
 
 
