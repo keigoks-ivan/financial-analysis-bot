@@ -648,11 +648,16 @@ def test_build_and_csv_with_batch2_series(tmp_path, monkeypatch):
 
 # ---------------------------------------------------------------- 預測檢定區塊（靜態 forecast.json）
 
+def by_f(f):
+    return [x for x in f["indicators"] if x["id"] == "F"][0]
+
+
 def test_forecast_json_static_result():
     """docs/tw-chips/data/forecast.json 是 v7 檢定結果的靜態轉存：五個指標都不通過，頁面照『不通過』版呈現。"""
     f = json.loads((Path(__file__).resolve().parents[2] / "docs" / "tw-chips" / "data" / "forecast.json").read_text(encoding="utf-8"))
     assert f["page_layer_pass"] is False and f["scoreboard"] is None
-    assert [x["id"] for x in f["indicators"]] == ["A", "B", "C", "D", "E"]
+    assert [x["id"] for x in f["indicators"]] == ["A", "B", "C", "D", "E", "F"]
+    assert by_f(f)["single_test"] is True and round(by_f(f)["p_placebo"], 4) == 0.1584
     assert not any(x["pass"] for x in f["indicators"])
     by = {x["id"]: x for x in f["indicators"]}
     assert by["A"]["insufficient"] is True and by["A"]["n_high"] == 18

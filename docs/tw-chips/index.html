@@ -730,20 +730,21 @@ function buildForecast(F){
   var lo = Math.round(Math.min.apply(null, indep)), hi = Math.round(Math.max.apply(null, indep));
   var rows = F.indicators.map(function(x){
     var good = x.d===1 ? '高組' : '低組';
-    var pcell = x.p_placebo.toFixed(4) + (x.insufficient ? '（不參與校正）' : '（需 ≤ '+x.holm_threshold.toFixed(4).replace(/0+$/,'').replace(/\.$/,'')+'）');
+    var pcell = x.p_placebo.toFixed(4) + (x.insufficient ? '（不參與校正）' : x.single_test ? '（需 ≤ 0.05，單獨檢定）' : '（需 ≤ '+x.holm_threshold.toFixed(4).replace(/0+$/,'').replace(/\.$/,'')+'）');
     return '<tr><td>'+x.name_zh+'</td><td>'+good+'</td><td class="num">'+pp(x.S_build_good)+'</td><td class="num">'+pp(x.S_test)+'</td><td class="num">'+pcell+'</td><td>'+(x.insufficient?'樣本不足，不判定':'不通過')+'</td></tr>';
   }).join('');
-  var B = byId.B, A = byId.A;
+  var B = byId.B, A = byId.A, Fi = byId.F;
   var thrB = (B.holm_threshold*100).toFixed(2).replace(/0$/,'');
   el.innerHTML =
     '<div class="sec-head"><span class="n">14</span><h2>籌碼能不能預測未來 3 個月？（已檢定）</h2></div>'+
-    '<p class="lead"><b>五個指標都沒有通過事先登記的判準，不要拿這些籌碼猜漲跌。</b></p>'+
+    '<p class="lead"><b>'+(F.indicators.length===6?'六':F.indicators.length)+'個指標都沒有通過事先登記的判準，不要拿這些籌碼猜漲跌。</b></p>'+
     '<p>測法：每天把指標放進過去三年的排名，排在最高 20% 的日子歸高組，最低 20% 歸低組，再比兩組之後 60 個交易日（約 3 個月）的加權指數報酬中位數。每個指標哪一端是好端，由 '+F.build[0]+' 至 '+F.build[1]+' 的資料決定，定下來就不再改。拿來檢驗的是設計規則時沒用過的 '+F.test_start+' 起的資料，最後一個走完 60 個交易日的訊號日是 '+F.last_r60_date+'。這段驗證期只約 '+Math.round(F.n_indep_est)+' 個不重疊的 60 日期間，除外資台指期淨未平倉比以外，高組和低組各約 '+lo+' 到 '+hi+' 段。規則與判準在看到任何結果之前就寫定（2026-10-17 事前登記）。</p>'+
     '<div class="tbl-wrap"><table><thead><tr><th>指標</th><th>好端（建立期決定）</th><th>建立期 好端減壞端</th><th>驗證期 好端減壞端</th><th>安慰劑 p 值</th><th>判定</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<p class="note">組間差單位為個百分點，是好端組比壞端組之後 60 日報酬中位數多多少（取對數報酬）；建立期的差一定為正，因為好端就是照建立期的結果選出來的；驗證期為負，代表好端組反而比壞端組差。安慰劑 p 值是把指標序列在時間軸上隨機平移 '+F.n_placebo.toLocaleString('en-US')+' 次、每次重做一遍分組與方向選擇後，隨機序列做到一樣好或更好的比例。多個指標同時檢定，所以過關門檻收緊到 0.0125 至 0.05。</p>'+
+    '<p class="note">組間差單位為個百分點，是好端組比壞端組之後 60 日報酬中位數多多少（取對數報酬）；建立期的差一定為正，因為好端就是照建立期的結果選出來的；驗證期為負，代表好端組反而比壞端組差。安慰劑 p 值是把指標序列在時間軸上隨機平移 '+F.n_placebo.toLocaleString('en-US')+' 次、每次重做一遍分組與方向選擇後，隨機序列做到一樣好或更好的比例。前五個指標同時檢定，所以過關門檻收緊到 0.0125 至 0.05；小台散戶多空比是另外登記的單一檢定，門檻 0.05。</p>'+
     '<p>融資餘額 60 日變化最接近過關：融資餘額增加快的日子，之後 60 日報酬中位數比增加慢的日子高 '+pb(B.S_test)+' 個百分點。但隨機序列有 '+(B.p_placebo*100).toFixed(1)+'% 做到一樣好或更好，過關要低於 '+thrB+'%。另外融資餘額高的 '+B.n_high_w52on+' 個交易日全都在 W52（週收盤高於 52 週均線）之上，W52 之上的低組只有 '+B.n_low_w52on+' 個交易日，看不出它在 W52 之外還有沒有多出來的資訊。外資現貨 60 日淨買占成交比、賣權買權未平倉比、大額交易人前十大淨部位比三個指標，驗證期的結果與建立期相反：原本當作壞端的高組，之後 60 日報酬反而較高。外資台指期淨未平倉比在驗證期只有 '+A.n_high+' 個交易日落在高組，樣本不足，不判定。</p>'+
-    '<p>這不代表籌碼沒有用，只代表用這五個指標、看 60 個交易日、在十年資料上，分不出來。獨立樣本只有約 '+Math.round(F.n_indep_est)+' 段，只有很強的訊號才看得見。上面各圖說的是現在的狀態，不是未來。</p>'+
-    '<p class="note">事前登記在研究倉庫 v7-backtest 的 docs/TW_Chips_Forecast_Prereg.md，完整結果在 results/tw_chips_forecast/（summary.json、forecast.json、report.md）。頁面層零個指標通過，所以沒有做引擎疊加。小台散戶多空比、期貨正逆價差、台指 VIX、當沖比率與上櫃籌碼不在這一輪檢定內；要測須另開事前登記，並把本輪五次檢定計入多重比較。</p>';
+    (Fi ? '<p>小台散戶多空比（三大法人以外的小台部位偏多或偏空）：散戶偏空的日子，之後 60 日報酬中位數比散戶偏多的日子高 '+pb(Fi.S_test)+' 個百分點，方向和建立期一致，在 W52 之上也還有 '+pb(Fi.S_w52)+' 個百分點。但隨機序列有 '+(Fi.p_placebo*100).toFixed(1)+'% 做到一樣好或更好，過關要低於 5%；若和前五個指標合在一起校正，門檻是 '+(Fi.holm6_threshold*100).toFixed(0)+'%。另外建立期裡散戶偏空的日子很少，方向主要由 2019 與 2020 年下半年兩小段決定。</p>' : '')+
+    '<p>這不代表籌碼沒有用，只代表用這'+(F.indicators.length===6?'六':'五')+'個指標、看 60 個交易日、在十年資料上，分不出來。獨立樣本只有約 '+Math.round(F.n_indep_est)+' 段，只有很強的訊號才看得見。上面各圖說的是現在的狀態，不是未來。</p>'+
+    '<p class="note">事前登記在研究倉庫 v7-backtest 的 docs/TW_Chips_Forecast_Prereg.md，完整結果在 results/tw_chips_forecast/（summary.json、forecast.json、report.md）。頁面層零個指標通過，所以沒有做引擎疊加。小台散戶多空比另有補充登記 docs/TW_Chips_Forecast_Prereg_F.md（小台資料進庫前寫定），結果在 docs/TW_Chips_Forecast_Results_F.md。期貨正逆價差、台指 VIX、當沖比率與上櫃籌碼不在檢定內；要測須另開事前登記，並把這六次檢定計入多重比較。</p>';
   el.hidden = false;
   window.__forecastReady = true;
 }
