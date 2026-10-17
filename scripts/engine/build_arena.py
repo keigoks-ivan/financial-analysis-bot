@@ -92,6 +92,14 @@ v5 席位引擎（2026-09-17 持有人拍板「品質派 ∩ 獲利上修 ∩ �
      沿用固定 5 席快照概念，資料源改接 `waiting_pool[:SAT_SLOTS]`（見 main() 內
      `sat_seats_m5` 變數），與 payload 真正的 v5 `sat_seats`（全量等待池）是兩件
      事，故獨立變數不共用，避免污染 M5 頁面既有的擂台/板凳文案。
+
+v5.3（2026-10-18 持有人拍板；只限美股看板，台股席位／十倍股頁不變）——黃燈倉位 0.5 → 1.0：
+  倉位對應 綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。依據 v7-backtest docs/SeatSizing_Results.md
+  （亮燈就滿倉 Calmar 高於黃燈半倉，97% 種子）與 docs/SeatSizing_Results_v2.md（同曝險比較，
+  滿倉按比例放現金 Calmar 0.37 對半倉 0.27，98% 種子；半倉只在 2018、2020 急殺淺約 3 個百分點），
+  2010～2026 品質大型股代理（缺上修排序）。登記判準形式上未過（同資料第二次檢驗）：持有人
+  依兩次回測決定改，非登記判準通過。實作：row_dict(s, yellow_full=False) 預設同舊版，只有
+  main() 兩處呼叫傳 True；build_tenbagger.py／build_seats_tw.py 呼叫 row_dict(s) 不變，仍黃燈半倉。
 """
 from __future__ import annotations
 
@@ -111,7 +119,7 @@ from engine.grp import (  # noqa: E402
     DD_FRESH_DAYS, G_MIN_CAGR, G_MIN_CAGR_DURABLE, LAMP_ACTION, MKTCAP_MIN, MOM_12_1_OVERHEAT,
     P_LABEL_HTML, PEAK_ROIC_X, POOL_REV_MIN, Q_FCF_MIN, Q_ROIC_MIN, R26_OVERHEAT_FALLBACK,
     R_VETO_FY1, VAL_PEG_MAX, VAL_PE_VS_5Y_MAX, cap_ok, fetch_caps, grp_route, grp_score, in_pool,
-    market_ok, own_score_v4, pool_sort_key, timing_lamp,
+    market_ok, own_score_v4, pool_sort_key, timing_lamp, lamp_action,
 )
 from dd_screener_quality import load_qgm_durability_index  # noqa: E402
 
@@ -402,7 +410,9 @@ def dd_tag(s: dict) -> str:
     return tag
 
 
-def row_dict(s: dict) -> dict:
+def row_dict(s: dict, yellow_full: bool = False) -> dict:
+    """yellow_full（v5.3，2026-10-18，只限美股看板）：True＝黃燈滿倉（見 grp.timing_lamp）；
+    預設 False 與舊版逐位元相同，台股席位／十倍股頁不傳。"""
     if "_r26" not in s:
         st = weekly_structure(s["ticker"])
         s["_r26"] = st.get("r26") if st else None
@@ -427,7 +437,7 @@ def row_dict(s: dict) -> dict:
     # v4 時機燈（grp.timing_lamp，pure）：s["_stage_code"] 由呼叫端（main()）注入，
     # s["_overheated"] 用本列剛算好的 g["overheated"]（同一份判定，不重算）。
     s["_overheated"] = g["overheated"]
-    lamp = timing_lamp(s)
+    lamp = timing_lamp(s, yellow_full=yellow_full)
     return {"ticker": s["ticker"], "verdict": s.get("dca_verdict"),
             "role": role, "route": route, "route_why": route_why, "core_candidate": core_candidate,
             "role_mismatch": mismatch, "dd_tag": dd_tag(s), "dd_age_days": age, "dd_fresh": fresh,
@@ -436,7 +446,7 @@ def row_dict(s: dict) -> dict:
             "durable_roic_5y_avg_pct": s.get("roic_5y_avg_pct"),
             "durable_qgm_pct": s.get("qgm_roic_5y_stability_pct"),
             "grp": g, "score": g["score"],
-            "lamp": lamp, "action": LAMP_ACTION.get(lamp["code"], "—"),
+            "lamp": lamp, "action": lamp_action(lamp, yellow_full),
             "roic": g["quality"].get("roic"), "fcf": g["quality"].get("fcf"),
             "peg": (s.get("live_peg") if s.get("live_peg") is not None else s.get("peg")),
             "r26": s.get("_r26"), "r52": s.get("_r52"),
@@ -593,6 +603,15 @@ W_TIMING, W_SEAT, W_DD, W_MOAT = 6, 4, 19, 4
 # 系（BRK/PB/TR/HOT/DN，全母體表沿用）刻意分開，語意不同不能共用一張表。
 LAMP_CODE_ASCII = {"green": "GRN", "yellow": "YLW", "hot": "HOT", "red": "RED", "out": "OUT"}
 ACTION_CODE_ASCII = {"green": "FULL", "yellow": "HALF", "hot": "HALF", "red": "ZERO", "out": "-"}
+
+
+def _act_ascii(lamp: dict) -> str:
+    """lamp → FULL/HALF/ZERO/-。v5.3 起黃燈在美股看板 size==1.0，須讀 size 而非只看 code；
+    size 為 0.5 的黃燈（台股路徑、資料缺 fallback）維持 HALF。"""
+    code = lamp.get("code")
+    if code == "yellow" and lamp.get("size") == 1.0:
+        return "FULL"
+    return ACTION_CODE_ASCII.get(code, "-")
 W_SEATCODE, W_RANK, W_REV3M, W_MOM12, W_DUR, W_LAMPCODE, W_ACTCODE = 4, 5, 6, 6, 3, 4, 4
 W_DISTATH = 7   # v5（2026-09-17）：距歷史新高% 欄寬，取代 v4 的 W_MOM12（12M 動能%欄，v5 排序不再用）
 # 財報錨定上修（2026-09-17）：「下次財報」欄寬——board.txt 席位表新增欄，見
@@ -767,7 +786,7 @@ def _own_board_ascii_row(i: int, v: dict, seat_code: dict) -> str:
         f"{_pad('Y' if v.get('durable_5y') else '-', W_DUR)} "
         f"{_pad(_val_ascii_cell(v.get('valuation')), W_VAL)} "
         f"{_pad(LAMP_CODE_ASCII.get(lamp.get('code'), '-'), W_LAMPCODE)} "
-        f"{_pad(ACTION_CODE_ASCII.get(lamp.get('code'), '-'), W_ACTCODE)} "
+        f"{_pad(_act_ascii(lamp), W_ACTCODE)} "
         f"{_pad(seat_code.get(v['ticker'], ''), W_SEATCODE)} "
         f"{_pad(dd_ascii(v)[:W_DD], W_DD)} "
         f"{_pad(_bottom_ascii_cell(v), W_BOTTOM)} {'；'.join(note_bits)}"
@@ -809,7 +828,7 @@ def _pool_ascii_row(label, r: dict) -> str:
         f"{_pad('Y' if r.get('durable_5y') else '-', W_DUR)} "
         f"{_pad(_val_ascii_cell(g.get('valuation')), W_VAL)} "
         f"{_pad(LAMP_CODE_ASCII.get(lamp.get('code'), '-'), W_LAMPCODE)} "
-        f"{_pad(ACTION_CODE_ASCII.get(lamp.get('code'), '-'), W_ACTCODE)} "
+        f"{_pad(_act_ascii(lamp), W_ACTCODE)} "
         f"{_pad(dd_ascii(r)[:W_DD], W_DD)} "
         f"{_pad(_bottom_ascii_cell(r), W_BOTTOM)} {'；'.join(note_bits)}"
     )
@@ -996,12 +1015,15 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     if price_as_of:
         freshness_bits.append(f"價格/距新高/時機燈 as_of {price_as_of}")
     freshness = "｜".join(freshness_bits)
-    L.append(f"選股看板 v5｜as_of {as_of}" + (f"｜{freshness}" if freshness else "")
+    L.append(f"選股看板 v5.3｜as_of {as_of}" + (f"｜{freshness}" if freshness else "")
              + f"｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
              "｜母體＝美股含 ADR；台股另建（.TW 不在本看板）")
     L.append("資格＝品質派（品質閘×三年成長×站上 52 週線；耐久 2026-10-09 起只當旗標）、排序＝上修"
              "（財報後錨定，缺值退回三月）、板機＝突破還原權息歷史新高。核心＝池內亮燈者，每週六（台北）重算、"
              "可空席（v5.2）；其餘每日重排；這是研究層陣容，不是帳戶持倉。")
+    L.append("倉位對應（v5.3，2026-10-18 起）：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。黃燈由半倉改滿倉，"
+             "依據 v7-backtest 兩份回測（SeatSizing_Results.md、SeatSizing_Results_v2.md，2010～2026 品質大型股"
+             "代理、缺上修排序）；登記判準形式上未過，是持有人依兩次回測決定改，非登記判準通過。")
     L.append("池＝資格全過的名字中，財報後上修 ≥5% 者；池內依上修降冪排序，"
              "同值 tie-break implied_growth_pct、再 tie-break 盈餘殖利率（own_score_v4 "
              "五百分位對照分保留一輪，見全母體對照表與各列 hover 的「v4 對照」，不參與"
@@ -1028,7 +1050,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
              "SHRT=資料不足、-=距新高超過 10% 未算；只排 🟡 組序、不改燈號和倉位）、"
              "note=備註（頂點/循環/循環守門/基期/內部人/財報前/新席）")
     L.append("lamp/act 代碼：GRN/FULL=可進·正常倉（距新高 ≥−3% 且站上 200 日線）、"
-             "YLW/HALF=半倉（距新高 −10%~−3%）、HOT/HALF=過熱·半倉（動能 >150% 但仍在"
+             "YLW/FULL=接近新高·正常倉（距新高 −10%~−3% 且站上 200 日線；距新高資料缺的 YLW 暫列 HALF）、HOT/HALF=過熱·半倉（動能 >150% 但仍在"
              "突破帶附近）、RED/ZERO=等板機·零倉（距新高 <−10% 或跌破 200 日線）、"
              "OUT/-=不合格·未站上 52 週線")
     L.append("dd 代碼：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，"
@@ -1671,7 +1693,8 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 <div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘、三年成長 15%、站上 52 週線。四項全過才有資格；耐久只是旗標（2026-10-09 起）。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
 <div class="bw-note-line"><b>耐久</b>：兩種算法擇一達標即可。QGM 五年 ROIC 穩定度 ≥75%；或 Koyfin 五年平均、三年平均、現值三者都 ≥15%。看的是一致性，不是單一年份。2026-10-09 起只當旗標，不擋資格：時點回看顯示它對結果零貢獻，而且它偏好的是低成長消費股。</div>
 <div class="bw-note-line"><b>第二關 排序</b>：只看財報後上修幅度。基準是該股最近一次財報日前的月度快照，缺財報錨定時退回三個月。上修 ≥5% 才入池，池內依上修由高到低排。同值先比 implied_growth_pct，再比盈餘殖利率。不看股價漲幅。own_score_v4 五百分位對照分只在「上修%（財報後）」欄 hover 顯示，不參與排序。</div>
-<div class="bw-note-line"><b>第三關 時機燈</b>：量的是距還原權息全歷史最高收盤價多遠，燈號直接對應倉位。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉／🟡 半倉＝差 3%~10%／🟠 過熱＝12-1 月動能 &gt;150% 但仍在突破帶附近，半倉／🔴 等板機＝差超過 10% 或跌破 200 日線，零倉／⚫ 不合格＝未站上 52 週線。過熱與頂點不擋資格，只影響燈號。RS 與生命週期階段只在 hover 顯示，不影響燈號。時機燈與倉位每日更新，不用等月頻換席。</div>
+<div class="bw-note-line"><b>第三關 時機燈</b>：量的是距還原權息全歷史最高收盤價多遠，燈號直接對應倉位。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉／🟡 接近＝差 3%~10% 且站上 200 日線，同樣正常倉（v5.3 起，原為半倉）／🟠 過熱＝12-1 月動能 &gt;150% 但仍在突破帶附近，半倉／🔴 等板機＝差超過 10% 或跌破 200 日線，零倉／⚫ 不合格＝未站上 52 週線。過熱與頂點不擋資格，只影響燈號。RS 與生命週期階段只在 hover 顯示，不影響燈號。時機燈與倉位每日更新，不用等月頻換席。</div>
+<div class="bw-note-line"><b>變更紀錄 v5.3（2026-10-18 起）</b>：倉位對應綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。黃燈由半倉改滿倉，依據是 v7-backtest 的兩份回測（SeatSizing_Results.md：亮燈就滿倉的 Calmar 高於黃燈半倉，97% 種子；SeatSizing_Results_v2.md：同曝險比較，滿倉按比例放現金 Calmar 0.37 對半倉 0.27，98% 種子，半倉只在 2018、2020 急殺淺約 3 個百分點）。樣本是 2010～2026 年的品質大型股代理，缺上修排序。登記判準形式上未過（同一份資料第二次檢驗），本次是持有人依兩次回測決定改，不是登記判準通過。橘燈維持半倉。</div>
 <div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內前 5，每月第一次排程整批重選一次；月中只有硬否決能換人，空位由池遞補。沒進核心的池成員全部叫等待池，依燈號分兩組：②可買＝今天綠燈或橘燈，板機已亮；③等待池＝其餘，再分 🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🔴 拉回中／⚫ 資料缺（這兩組依上修排序），衛星席已取消。</div>
 <div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。</div>
 <div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排③等待池裡 🟡 組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。</div>
@@ -1847,7 +1870,7 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     if price_as_of:
         freshness_bits.append(f"價格/距新高/時機燈 as_of {price_as_of}")
     freshness_line = " · ".join(freshness_bits)
-    head_line = (f"選股看板 v5 · as_of {as_of}" + (f" · {freshness_line}" if freshness_line else "")
+    head_line = (f"選股看板 v5.3 · as_of {as_of}" + (f" · {freshness_line}" if freshness_line else "")
                 + f" · 母體 {len(rows)}（美股含 ADR；台股另建）")
     rule_line = ("同一套三關一燈。先過資格：市值 200 億以上、品質閘、三年成長、站上 52 週線"
                  "（耐久只當旗標）。再依財報後上修排序，上修 ≥5% 入池。最後由時機燈決定倉位。"
@@ -1856,6 +1879,7 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
                  "核心＝池內亮燈者依上修取前 5，每週六（台北）重算、可空席；其餘為等待池。不設產業上限；內部人買賣只是備註。"
                  "細節見上方「怎麼讀這張表」。")
     timing_note = ("過熱（12-1 月動能 >150%）與頂點不擋資格，只影響時機燈（🟠 半倉）或純顯示。"
+                   "倉位對應（v5.3，2026-10-18 起）：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。"
                    "時機燈與倉位每日跟著 dd-screener 資料重算，不進排序。")
 
     return (
@@ -2170,7 +2194,8 @@ def main() -> int:
     lamp_map = load_lamp()
     for s in stocks + qgm_rows:
         s["_stage_code"] = lamp_map.get(s["ticker"])
-    universe_rows = [row_dict(s) for s in stocks] + [row_dict(s) for s in qgm_rows]
+    # v5.3（2026-10-18）：美股看板黃燈滿倉，只有這一處傳 yellow_full=True
+    universe_rows = [row_dict(s, yellow_full=True) for s in stocks] + [row_dict(s, yellow_full=True) for s in qgm_rows]
     # dedupe 修復（2026-09-09）：load_qgm_rows／load_light_rows 過去只各自對
     # stocks_map（dd-pool）去重，沒對過彼此——INCY 這類同時在 QGM 品質池與快審卡
     # 出現的名字會在 universe_rows 進兩列。first source wins: dd-pool > qgm > light。
@@ -2428,7 +2453,8 @@ def main() -> int:
                   "殖利率——池＝資格全過名字中上修 ≥5% 者，own_score_v4 五百分位對照分保留一輪僅供 "
                   "hover 對照、不參與排序。板機＝時機燈（距還原權息全歷史最高收盤價與 200 日線）：綠＝"
                   "距新高 ≥−3% 且站上 200 日線；黃＝−10%~−3%；紅＝距新高 <−10% 或跌破 200 日線；橘＝過熱"
-                  "（12-1 月動能 >150%）但仍在突破帶附近，倉位對應 1.0/0.5/0/0.5。核心＝池內亮燈者依上修取前 5，每週六（台北）重算、可空席（v5.2）"
+                  "（12-1 月動能 >150%）但仍在突破帶附近，倉位對應（v5.3，2026-10-18 起）綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0"
+                  "（黃燈由 0.5 改 1.0，依 v7-backtest SeatSizing_Results.md 與 SeatSizing_Results_v2.md；登記判準形式上未過，持有人依兩次回測決定改）。核心＝池內亮燈者依上修取前 5，每週六（台北）重算、可空席（v5.2）"
                   "（每月第一次排程整批重選一次，期間僅硬否決能換人、空位由池遞補）；衛星軌已取消，池扣掉"
                   "核心即「等待池」，依時機燈分②可買／③等待池顯示。無產業集中度上限；內部人買賣僅備註，"
                   "不進資格與排序。"),
@@ -2546,7 +2572,7 @@ def main() -> int:
     body = f"""<div class="hero">
 <h1>席位擂台 · 組合層</h1>
 <div class="hero-sub"><b>本頁「衛星席位」是 M5 對照組凍結下來的固定 {SAT_SLOTS} 檔快照（等待池前 {SAT_SLOTS} 檔，依上修排序）
-——v5 起真正的衛星軌已取消，等待池本身沒有固定席次。完整等待池、時機燈與核心輪動請看上方「選股看板 v5」；
+——v5 起真正的衛星軌已取消，等待池本身沒有固定席次。完整等待池、時機燈與核心輪動請看上方「選股看板 v5.3」；
 本頁只保留擂台配對／席位變動帳本／產業分布這些既有的凍結視圖，僅換殼不改文。</b></div>
 <div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星快照 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
@@ -2554,6 +2580,7 @@ def main() -> int:
 <b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%，耐久與否一律同門檻；且成長必須是三年期 Koyfin 數字——只有 FY1→FY2 單年 fallback 的名字不入池，改列「可選但先不入池」隊列）× <b>位置閘</b>（站上 52 週線）（<b>耐久</b>：QGM 五年穩定度 ≥75%，或 Koyfin 五年∧三年∧現值三者皆 ≥15%——2026-10-09 起只當旗標，不擋資格）× <b>財報後上修否決</b>（≤−5%，以該股自己最近一次財報日前最新月度 snapshot 為基準，缺財報錨定退回舊制近三個月日曆窗；FY+1 單月 ≤−10% 僅兩者皆缺值時 fallback）× 新硬否決（體質拒絕／衰退 ⛔／DD 迴避 180 天內／融券占流通股比 &gt;10%）——<b>融券高整體資格排除，v5 沒有衛星軌可以收留</b>。
 排序＝<b>上修單一變數</b>（財報後錨定，缺值退回三個月）降冪，同值 tie-break implied_growth_pct、再 tie-break 盈餘殖利率——資格全過者中，上修 ≥+5% 才進「池」，池即候選／候補的全部。舊 <b>own_score v4</b>（財報後上修、12-1 月動能、成長封頂 30、品質、盈餘殖利率五個百分位平均）保留一輪只做逐檔「v4 對照」，不參與本排序。成長遇<b>基期效應</b>（FY1→FY2 因低基期跳增 &gt;1.6x 且 FY2→FY3 成長 &lt;20%）改用 FY2→FY3 成長率取代（此項仍作用於成長閘本身）。
 <b>過熱／頂點不是資格閘</b>：12-1 月動能 &gt;150%（缺值 fallback 26 週漲幅 &gt;80%）＝過熱，只影響時機燈（🟠過熱，半倉），v5 起不再排除核心候選（核心純比池內排序前 5）；roic_vs_5y_x ≥1.3＝頂點，純顯示註記（⚠）。<b>內部人買賣</b>（近 3 個月淨股數）僅供備註，不進資格與排序。
+<b>倉位（v5.3，2026-10-18 起）</b>：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。黃燈由半倉改滿倉，依據 v7-backtest SeatSizing_Results.md 與 SeatSizing_Results_v2.md；登記判準形式上未過，是持有人依兩次回測決定改，非登記判準通過。
 <b>DD 選配</b>：不是入池前提，只做迴避否決（180 天內），觀望／進場僅供角色標籤參考（僅供顯示）。
 <b>每週亮燈選席（v5.2，2026-10-09 起取代月頻輪動）</b>：每週六（台北）依週五收盤，核心席＝池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字依上修取前 5；紅燈下席，亮燈不足就空席；週中燈號只管倉位。月頻輪動與七項硬否決的沿用機制停用（池本身已含硬否決）。
 <b>核心＝池內亮燈者前 5</b>（純比上修排序，不再有 DD 角色或護城河字母路由）；沒卡進核心的池成員全部叫「等待池」，本頁的「衛星席位」只是取其中前 {SAT_SLOTS} 檔當這個凍結實驗自己的固定快照，並非真的還有一個 {SAT_SLOTS} 席的衛星軌。
@@ -2561,9 +2588,9 @@ def main() -> int:
 <b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。無產業/主題集中度上限（2026-09-17 持有人拍板）。
 <b>快審卡</b>：等待池另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評），與三年成長閘、DD 皆無關。
 資格未過的進場票落板凳、寧缺勿濫。</div>
-<div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v5 品質派資格×上修排序×歷史新高板機 ｜ v5.2 每週亮燈選席</div>
+<div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v5 品質派資格×上修排序×歷史新高板機 ｜ v5.2 每週亮燈選席 ｜ v5.3 黃燈滿倉（2026-10-18）</div>
 </div>
-<div class="block"><h2>選股看板 v5</h2>
+<div class="block"><h2>選股看板 v5.3</h2>
 <div class="block-sub">上修排序（值不值得擁有）與時機燈（現在能不能買）分開讀；DD 只做迴避否決與角色標籤。</div>
 {board_html}</div>
 <div class="stat-row">

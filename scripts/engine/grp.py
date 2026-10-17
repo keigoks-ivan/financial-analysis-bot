@@ -133,6 +133,19 @@ v5.2（2026-10-09 持有人拍板，見 knowledge/rule_ledger.md 同日三列）
      rotate_roster()／hard_veto_v5() 保留不呼叫。原因：排名制下席位永遠填滿，2026-10-08
      核心四席距新高 −21～−35% 全紅燈零倉——席位是排名不是決策；觸發是市場給的，
      沒訊號的月份就該空著。
+
+v5.3（2026-10-18 持有人拍板；**只限美股看板 /cockpit/**）——黃燈倉位 0.5 → 1.0：
+  倉位對應綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。黃燈標籤由「🟡 半倉」改「🟡 接近」。
+  依據：v7-backtest docs/SeatSizing_Results.md（亮燈就滿倉的 Calmar 高於黃燈半倉，97%
+  種子）與 docs/SeatSizing_Results_v2.md（同曝險比較：滿倉按比例放現金 Calmar 0.37 對半倉
+  0.27，98% 種子；半倉只在 2018、2020 急殺淺約 3 個百分點），2010～2026 品質大型股代理
+  （缺上修排序）。**登記判準形式上未過**（同資料第二次檢驗），本次是持有人依兩次回測決定
+  改，不是登記判準通過。橘燈（過熱）維持 0.5（回測的滿倉對照組曾把橘也放 1.0，持有人只拍
+  板黃燈）。
+  實作：timing_lamp(s, yellow_full=False) 預設逐位元同舊版；只有美股看板（build_arena.main()
+  → row_dict(s, yellow_full=True)）傳 True。十倍股頁（build_tenbagger.py）與台股席位
+  （build_seats_tw.py）照舊呼叫 row_dict(s)，維持黃燈半倉。距歷史新高資料缺的 yellow
+  fallback 不屬於「−10%~−3% 且站上 200 日線」，v5.3 仍保守半倉（標「🟡 資料缺」）。
 """
 from __future__ import annotations
 
@@ -224,6 +237,17 @@ CYCLE_GUARD_PEG_MAX = 0.3      # 循環股守門：PEG 需 < 此值才觸發 gua
 CYCLE_GUARD_PCTL_CAP = 50.0    # guard 觸發時，own_score_v4 的 p_g／p_ey 百分位上限
 # v4 時機燈 action 對照（build_arena 倉位欄；v5 沿用同一份，位置大小不變，見檔頭 v5 段）
 LAMP_ACTION = {"green": "正常倉", "yellow": "半倉", "hot": "半倉", "red": "零倉・等板機", "out": "—"}
+# v5.3（2026-10-18，只限美股看板）：黃燈滿倉的 action 文字。台股／十倍股不用，維持 LAMP_ACTION。
+LAMP_ACTION_V53 = {**LAMP_ACTION, "yellow": "正常倉"}
+
+
+def lamp_action(lamp: dict, yellow_full: bool = False) -> str:
+    """timing_lamp() 輸出 → action 文字。yellow_full=False 時與舊 LAMP_ACTION.get(code, "—") 完全相同；
+    True（美股看板 v5.3）時只有「黃燈且 size==1.0」改「正常倉」，黃燈資料缺 fallback（size 0.5）仍「半倉」。"""
+    code = lamp.get("code")
+    if yellow_full and code == "yellow" and lamp.get("size") == 1.0:
+        return LAMP_ACTION_V53["yellow"]
+    return LAMP_ACTION.get(code, "—")
 # v5（2026-09-17，見檔頭 v5 段／rule_ledger「v5 席位引擎」列）——耐久一致性判準常數：
 DURABLE_QGM_STABILITY_MIN = 75.0   # QGM 五年 ROIC 穩定度 pct_above（0-100 尺度）≥ 此值
 DURABLE_ROIC_MIN = 15.0            # Koyfin 路徑：五年平均／三年平均／現值三者皆須 ≥ 此值
@@ -495,7 +519,7 @@ def own_score_v4(rows: list) -> list:
     return out
 
 
-def timing_lamp(s: dict) -> dict:
+def timing_lamp(s: dict, yellow_full: bool = False) -> dict:
     """v5 時機燈（pure，2026-09-17 owner thesis「突破還原權息歷史新高」，見檔頭 v5
     段第 5 點；取代 v4 以 52 週高/RS/生命週期階段為準的位置判定）——距歷史新高
     （ma.dist_ath_pct，還原權息全歷史，見 build_dd_screener.compute_ath_highs()）
@@ -508,7 +532,10 @@ def timing_lamp(s: dict) -> dict:
     hot（過熱，仍需滿足綠燈級距離，否則按原距離落 yellow）＞ green（距新高 ≥−3%
     且站上 200 日線，突破帶）＞ yellow（−10%~−3% 之間且站上 200 日線，或資料不足
     以判定）。倉位：green 1.0／yellow 0.5／hot 0.5／red 0／out 0（LAMP_ACTION，
-    沿用 v4 定義不變）。"""
+    沿用 v4 定義不變）。
+    yellow_full（v5.3，2026-10-18，只限美股看板）：True 時「−10%~−3% 且站上 200 日線」的
+    黃燈 size 改 1.0、label 改「🟡 接近」；預設 False＝與舊版逐位元相同。橘燈維持 0.5；
+    距新高資料缺的 yellow fallback 兩種模式都是 0.5（label 於 True 時標「🟡 資料缺」）。"""
     ma = s.get("ma") or {}
     timing = s.get("timing") or {}
     above_w52 = ma.get("above_w52")
@@ -554,13 +581,17 @@ def timing_lamp(s: dict) -> dict:
         bits = [f"距歷史新高 {dist_ath:+.1f}%（接近新高，未到突破帶）"]
         if vs200 is not None:
             bits.append(f"vs 200 日線 {vs200:+.1f}%")
+        if yellow_full:
+            return {"code": "yellow", "label": "🟡 接近", "size": 1.0, "trigger": None,
+                    "why": "、".join(bits)}
         return {"code": "yellow", "label": "🟡 半倉", "size": 0.5, "trigger": None,
                 "why": "、".join(bits)}
 
     bits = []
     if dist_ath is not None: bits.append(f"距歷史新高 {dist_ath:+.1f}%")
     if vs200 is not None: bits.append(f"vs 200 日線 {vs200:+.1f}%")
-    return {"code": "yellow", "label": "🟡 半倉", "size": 0.5, "trigger": None,
+    return {"code": "yellow", "label": "🟡 資料缺" if yellow_full else "🟡 半倉", "size": 0.5,
+            "trigger": None,
             "why": "、".join(bits) or "站上 52 週線但距歷史新高資料缺，暫列半倉"}
 
 
