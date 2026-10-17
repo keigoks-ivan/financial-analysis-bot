@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAN SLIM 選股名單 — InvestMQuest Research</title>
+<meta name="description" content="歐尼爾《笑傲股市》的 CAN SLIM，加上以 ROIC 與自由現金流取代 ROE 的品質關。美股大型股與中小型股每週六更新：全過名單、差一條名單、漏斗、全部檔數可搜尋表，以及這套方法目前有沒有回測證據。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{
+  --ok:#15803d; --ok-bg:#e6f3ea; --bad:#b91c1c; --bad-bg:#fbeaea; --na:#9aa7b8;
+  --warn-c:#a16207; --warn-bg:#fbf3df;
+  --c1:#173564; --c2:#a77c2a; --c3:#2f8577; --c4:#7a4fa3;
+  --chip-bg:#f1ece0; --bar-single:#d9cfb6; --on-accent:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#eef1f6; --body:#d3dae6; --sec:#a3afc2; --muted:#7f8ca0;
+    --paper:#0e1522; --card:#151e2f; --line:#2a364b; --line-soft:#1f2a3d;
+    --accent:#8fb0cf; --gold-deep:#d4b576; --gold-bg:#2a2414; --gold-soft:#4a3d1c;
+    --ok:#4cc38a; --ok-bg:#12301f; --bad:#ff7b72; --bad-bg:#3a1a1a; --na:#6f7f98;
+    --warn-c:#e0b95c; --warn-bg:#2a2414;
+    --c1:#8fb0cf; --c2:#e0b95c; --c3:#5fcab8; --c4:#b79ae0;
+    --chip-bg:#1c2639; --bar-single:#3a4560; --on-accent:#0e1522;
+  }
+}
+*{box-sizing:border-box;min-width:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.65;font-size:14px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px 60px}
+.page-head{padding:22px 0 6px}
+.page-head h1{margin:2px 0 6px;font-family:var(--serif);font-size:1.6rem;line-height:1.25;color:var(--ink)}
+.page-head p{margin:0;color:var(--sec);font-size:.9rem;line-height:1.75}
+.asof{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:6px}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.toc a{font-size:12px;padding:.2rem .6rem;border-radius:999px;background:var(--chip-bg);color:var(--body);text-decoration:none;border:1px solid transparent}
+.toc a:hover{border-color:var(--accent)}
+
+.sec{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin:16px 0;padding:16px 16px 14px;box-shadow:var(--sh-1);scroll-margin-top:70px}
+.sec > h2{margin:0 0 4px;font-family:var(--sans);font-size:1.05rem;font-weight:700;color:var(--ink);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.sec > h2 .n{font-family:var(--mono);font-size:.72rem;color:var(--gold-deep);font-weight:600}
+.lead{margin:0 0 10px;color:var(--sec);font-size:13px;line-height:1.75}
+.note{font-size:12px;color:var(--sec);margin:8px 0 0;line-height:1.75}
+.h3{font-size:.95rem;font-weight:700;color:var(--ink);margin:16px 0 6px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* 結論 */
+.concl{border-color:var(--gold-soft);background:linear-gradient(180deg,var(--gold-bg),var(--card) 70%)}
+.concl .big{font-family:var(--serif);font-size:1.5rem;line-height:1.3;color:var(--ink);margin:4px 0 6px}
+.concl .big .num{font-family:var(--mono);font-size:2rem;color:var(--gold-deep);margin-right:4px}
+.concl p{margin:4px 0;font-size:14px}
+.tk-chip{display:inline-block;font-family:var(--mono);font-weight:600;font-size:12.5px;padding:.05rem .5rem;border-radius:6px;background:var(--chip-bg);color:var(--ink);text-decoration:none;margin:0 2px;border:1px solid var(--line)}
+a.tk-chip:hover{border-color:var(--accent)}
+.mbox{display:flex;gap:10px;align-items:flex-start;margin:10px 0 2px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card)}
+.mbox .dot{flex:none;width:14px;height:14px;border-radius:50%;margin-top:5px}
+.mbox.red .dot{background:var(--bad)} .mbox.amber .dot{background:var(--warn-c)} .mbox.green .dot{background:var(--ok)}
+.mbox.red{border-color:var(--bad)} .mbox.amber{border-color:var(--warn-c)} .mbox.green{border-color:var(--ok)}
+.mbox .t{font-weight:700;color:var(--ink)}
+.mbox .s{font-size:13px;color:var(--body)}
+
+/* 表格 */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card);-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.04em;color:var(--sec);text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--card)}
+td{padding:.42rem .6rem;border-bottom:1px solid var(--line-soft);color:var(--body);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nw{white-space:nowrap}
+.ok{color:var(--ok)} .bad{color:var(--bad)} .na{color:var(--na)}
+td.cell-ok{background:var(--ok-bg)} td.cell-bad{background:transparent}
+.g{font-family:var(--mono);font-weight:700;margin-right:3px}
+.warnrow td{background:var(--warn-bg)}
+
+/* 大盤 */
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+.mchart{border:1px solid var(--line);border-radius:8px;padding:8px 8px 4px;background:var(--card)}
+.mchart h4{margin:0 0 2px;font-size:12.5px;color:var(--ink);display:flex;justify-content:space-between;gap:6px}
+.mchart h4 span{font-family:var(--mono);font-weight:400;color:var(--sec);font-size:11.5px}
+.cbox{position:relative;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin:4px 0 2px;font-size:11.5px;color:var(--sec)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.legend i.tri{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid var(--bad);background:none;border-radius:0;height:0}
+.ro{font-family:var(--mono);font-size:11px;color:var(--sec);min-height:16px;margin-top:2px}
+@media (max-width:860px){ .mgrid{grid-template-columns:1fr} }
+
+/* 全過名單卡 */
+.grp-title{font-weight:700;color:var(--ink);margin:14px 0 8px;font-size:.95rem}
+.grp-title small{font-weight:400;color:var(--sec);margin-left:6px}
+.pick{border:1px solid var(--line);border-radius:10px;background:var(--card);margin:0 0 12px;padding:12px 14px;scroll-margin-top:70px}
+.pick-head{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-bottom:8px}
+.pick-head .tk{font-family:var(--mono);font-size:1.15rem;font-weight:700;color:var(--ink)}
+.pick-head .co{font-size:.95rem;color:var(--ink);font-weight:600}
+.pick-head .tag{font-size:11.5px;color:var(--sec);background:var(--chip-bg);padding:.05rem .5rem;border-radius:999px}
+.pick-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.gl{list-style:none;margin:0;padding:0}
+.gl li{display:grid;grid-template-columns:3.4em 1fr;gap:6px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px}
+.gl li:last-child{border-bottom:0}
+.gl .gk{font-family:var(--mono);font-weight:700;color:var(--ink)}
+.gl .gk b{color:var(--ok);margin-right:2px}
+.gl .gv small{display:block;color:var(--sec);font-size:11.5px}
+.extra{margin-top:8px;font-size:12px;color:var(--sec);line-height:1.8}
+.extra b{color:var(--body);font-weight:600}
+@media (max-width:760px){ .pick-body{grid-template-columns:1fr} }
+.empty{padding:12px;border:1px dashed var(--line);border-radius:8px;color:var(--sec);font-size:13px}
+
+/* 漏斗 */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fbox{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--card)}
+.fbox h3{margin:0 0 8px;font-size:.95rem;color:var(--ink)}
+.frow{margin:0 0 10px}
+.frow .fl{font-size:12.5px;color:var(--ink);font-weight:600}
+.frow .fl small{display:block;font-weight:400;color:var(--sec);font-size:11px;line-height:1.5}
+.bar{position:relative;height:18px;margin-top:3px;background:var(--line-soft);border-radius:4px}
+.bar > span{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+.bar.cum > span{background:var(--accent)}
+.bar.single{height:12px}
+.bar.single > span{background:var(--bar-single)}
+.bar em{position:absolute;right:6px;top:0;font-style:normal;font-family:var(--mono);font-size:11px;line-height:18px;color:var(--body)}
+.bar.single em{line-height:12px;font-size:10.5px}
+.bar .in{left:6px;right:auto;color:var(--on-accent)}
+.flegend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--sec);margin:0 0 8px}
+.flegend i{display:inline-block;width:12px;height:8px;border-radius:2px;margin-right:4px}
+@media (max-width:860px){ .fgrid{grid-template-columns:1fr} }
+
+/* 全部表控制列 */
+.ctl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:8px 0 10px}
+.ctl input[type=search],.ctl select{font:inherit;font-size:13px;padding:.35rem .6rem;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--body)}
+.ctl input[type=search]{width:220px;max-width:100%}
+.ctl .cnt{font-size:12px;color:var(--sec);margin-left:auto}
+.ctl label{font-size:12px;color:var(--sec);display:inline-flex;gap:5px;align-items:center}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--ink)}
+th.sortable[aria-sort=ascending]::after{content:" ▲";font-size:9px}
+th.sortable[aria-sort=descending]::after{content:" ▼";font-size:9px}
+#alltbl td.tk,#alltbl th.tk{position:sticky;left:0;z-index:2;background:var(--card);box-shadow:1px 0 0 var(--line-soft)}
+.more{display:flex;gap:10px;justify-content:center;margin:10px 0 2px}
+.btn{font:inherit;font-size:12.5px;padding:.35rem .9rem;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--body);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+#alltbl{min-width:900px}
+
+/* 方法 */
+.custom{display:inline-block;font-size:10.5px;padding:0 .4rem;border-radius:4px;background:var(--gold-bg);color:var(--gold-deep);border:1px solid var(--gold-soft);margin:0 2px;font-weight:600;line-height:1.5}
+.mth td:first-child{font-family:var(--mono);font-weight:700;color:var(--ink);white-space:nowrap}
+.mth td{line-height:1.7}
+.mth{min-width:760px}
+@media (max-width:640px){
+  .mth{min-width:0}
+  .mth thead{display:none}
+  .mth,.mth tbody,.mth tr,.mth td{display:block;width:100%}
+  .mth tr{padding:8px 4px;border-bottom:1px solid var(--line)}
+  .mth td{border:0;padding:3px 8px}
+  .mth td[data-l]::before{content:attr(data-l);display:block;font-size:10.5px;color:var(--gold-deep);font-family:var(--mono);margin-bottom:1px}
+  #mth-wrap{border:0;background:transparent}
+}
+
+/* 證據、來源 */
+.ev .verdict{padding:10px 12px;border-left:3px solid var(--gold-deep);background:var(--gold-bg);color:var(--ink);font-size:14px;margin:6px 0 10px;border-radius:0 8px 8px 0}
+.ev ul,.srcl{margin:6px 0 0;padding-left:1.2rem}
+.ev li,.srcl li{margin:3px 0;line-height:1.75}
+.ev td{min-width:150px}
+.ev .evt{min-width:640px}
+.fine{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.8}
+.err{padding:14px;border:1px solid var(--bad);border-radius:var(--r);background:var(--bad-bg);color:var(--bad);font-size:13px}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/canslim/" class="active">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/simulation/">模擬</a>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<main class="wrap">
+  <div class="page-head">
+    <div class="t-overline">CAN SLIM</div>
+    <h1>CAN SLIM 選股名單：七個字母加品質關</h1>
+    <p>依歐尼爾《笑傲股市》的 CAN SLIM，加上本站用 ROIC 與自由現金流取代 ROE 的品質關，篩美股大型股與中小型股。每週六更新。</p>
+    <div class="asof" id="asof">資料載入中…</div>
+  </div>
+  <nav class="toc" aria-label="本頁段落">
+    <a href="#conclusion">結論</a><a href="#market">大盤 M</a><a href="#picks">全過名單</a><a href="#near">差一條</a><a href="#funnel">漏斗</a><a href="#all">全部檔數</a><a href="#overlap">看板重疊</a><a href="#method">方法</a><a href="#evidence">有沒有用</a><a href="#sources">資料與限制</a>
+  </nav>
+  <noscript><div class="err">本頁需要 JavaScript 才能顯示名單與圖表。</div></noscript>
+
+  <section class="sec concl" id="conclusion"><h2><span class="n">1</span>今天的結論</h2><div id="concl-body"></div></section>
+
+  <section class="sec" id="market"><h2><span class="n">2</span>大盤狀態（M）</h2>
+    <p class="lead">先看大盤，再看個股。下表用 SPY、QQQ、IJR 三檔 ETF 代表大型股、那斯達克與中小型股。</p>
+    <div id="m-body"></div>
+  </section>
+
+  <section class="sec" id="picks"><h2><span class="n">3</span>五關全過名單</h2>
+    <p class="lead">品質、C、A、N、L 五關都過。S 只顯示不擋，I 沒有做，M 在上一節。名單依 RS 由高到低排。</p>
+    <div id="picks-body"></div>
+  </section>
+
+  <section class="sec" id="near"><h2><span class="n">4</span>差一條就過</h2>
+    <p class="lead">只差一關的公司，列出沒過的那一關與差多少。</p>
+    <div id="near-body"></div>
+  </section>
+
+  <section class="sec" id="funnel"><h2><span class="n">5</span>漏斗：每一關過幾檔</h2>
+    <p class="lead">「單獨通過」是只看這一關，有多少檔過。「依序疊加」是照品質、C、A、N、L 的順序一關一關往下，每關後還剩幾檔。</p>
+    <div id="funnel-body"></div>
+  </section>
+
+  <section class="sec" id="all"><h2><span class="n">6</span>全部檔數</h2>
+    <p class="lead" id="all-lead">載入中…</p>
+    <div class="ctl">
+      <input type="search" id="q" placeholder="搜尋代號或公司名" aria-label="搜尋代號或公司名">
+      <label>母體 <select id="fg"><option value="">全部</option><option value="0">大型股</option><option value="1">中小型股</option></select></label>
+      <label>過關數 <select id="fp"><option value="0">全部</option><option value="5">5 關</option><option value="4">至少 4 關</option><option value="3">至少 3 關</option><option value="2">至少 2 關</option></select></label>
+      <span class="cnt" id="cnt"></span>
+    </div>
+    <div class="tbl-wrap"><table id="alltbl"><thead></thead><tbody></tbody></table></div>
+    <div class="more" id="more"></div>
+    <p class="note">綠底是這一關有過，✗ 是沒過；「—」是算不出來，一律算沒過。點欄位標題可排序。</p>
+  </section>
+
+  <section class="sec" id="overlap"><h2><span class="n">7</span>與選股看板等待池的重疊</h2>
+    <div id="ov-body">載入中…</div>
+  </section>
+
+  <section class="sec" id="method"><h2><span class="n">8</span>方法：七個字母與品質關</h2>
+    <p class="lead">每個字母各一列：書上怎麼說、本站版本改了什麼、為什麼。標「自訂」的數字，書裡沒有給。</p>
+    <div class="tbl-wrap" id="mth-wrap"><table class="mth"><thead><tr><th>字母</th><th>書上怎麼說</th><th>本站版本</th><th>為什麼</th></tr></thead><tbody>
+      <tr><td data-l="字母">品質關</td>
+        <td data-l="書上怎麼說">書中要求公司的股東權益報酬率（ROE）在 17% 以上。</td>
+        <td data-l="本站版本">取代 ROE：近四季投入資本報酬率（ROIC）≥15%，且近四季自由現金流 >0。<span class="custom">自訂</span></td>
+        <td data-l="為什麼">ROE 會被借錢和買回庫藏股墊高：負債多、淨值小，ROE 就高。ROIC 的分母同時算進股東與債權人的錢，比較難被槓桿墊高。自由現金流 >0 再確認賺的錢收得回來。</td></tr>
+      <tr><td data-l="字母">C　當季盈餘</td>
+        <td data-l="書上怎麼說">最近一季每股盈餘（EPS）比去年同季至少成長 18% 到 20%，強勢股常見 40% 以上。營收也要成長，約 25% 以上，或最近幾季加速。</td>
+        <td data-l="本站版本">EPS 年增 ≥25%（去年同季 EPS ≤0 不算）。營收年增 ≥25%，或最近三季營收年增率逐季上升。<span class="custom">自訂</span>（「逐季上升」的判斷方式）</td>
+        <td data-l="為什麼">EPS 門檻取書中偏嚴的一端，少濾進偶然的好季。營收條件擋掉靠壓低費用或一次性收益撐出來的 EPS。</td></tr>
+      <tr><td data-l="字母">A　年度盈餘</td>
+        <td data-l="書上怎麼說">最近三年每年 EPS 都成長，年複合成長率 25% 到 50% 以上。</td>
+        <td data-l="本站版本">最近 3 個完整會計年度，EPS 每年都高於前一年，且 3 年複合成長率 ≥25%。基期年或最新年 EPS ≤0 時無法計算，記為沒過。拆股一律調整到現行股本。</td>
+        <td data-l="為什麼">門檻直接取自書。基期為負時，複合成長率沒有意義，所以不算過關。</td></tr>
+      <tr><td data-l="字母">N　新高</td>
+        <td data-l="書上怎麼說">新產品、新管理階層、股價創新高。股價從整理型態往上突破時買進，離高點不遠。</td>
+        <td data-l="本站版本">收盤 ≥ 52 週高的 85%，也就是距高點不超過 15%。<span class="custom">自訂</span>另外顯示「近 5 日突破」：收盤高於前 20 日最高價，且當日成交量 ≥ 前 50 日均量的 1.4 倍。<span class="custom">自訂</span>突破只顯示，不擋個股。</td>
+        <td data-l="為什麼">書中的買點是整理型態的突破價，要看圖形才能判斷，程式難以完整還原。這裡只用距高點篩一道，突破另外標示。</td></tr>
+      <tr><td data-l="字母">S　供需</td>
+        <td data-l="書上怎麼說">流通股數少的股票漲起來更有彈性；公司買回庫藏股、減少流通股數是加分。</td>
+        <td data-l="本站版本">只顯示股數 1 年變化（最新一期流通股數對約一年前，皆換算成現行股本），不擋個股。</td>
+        <td data-l="為什麼">書沒有給數字門檻。股數減少表示有買回，增加表示增資或股權激勵稀釋，讀者自己判斷。</td></tr>
+      <tr><td data-l="字母">L　領先股</td>
+        <td data-l="書上怎麼說">買族群裡的領先股，不買落後股。以相對強度（RS）評等衡量，要求 80 以上。</td>
+        <td data-l="本站版本">RS 評分在同一組內排百分位 ≥80。評分是最近四個 63 個交易日區間的報酬，依 0.4、0.2、0.2、0.2 加權；大型股與中小型股各自排名。<span class="custom">自訂</span>（權重）</td>
+        <td data-l="為什麼">書中的 RS 評等來自付費資料庫，這裡自己算同一類指標。</td></tr>
+      <tr><td data-l="字母">I　法人持股</td>
+        <td data-l="書上怎麼說">要有幾家績效好的法人基金持有。</td>
+        <td data-l="本站版本">不做。</td>
+        <td data-l="為什麼">沒有免費的歷史法人持股資料，無法回測，也無法每週更新。</td></tr>
+      <tr><td data-l="字母">M　大盤</td>
+        <td data-l="書上怎麼說">先判斷大盤方向。大盤的出貨日累積到一定天數就不買新股，書中以 5 到 6 天以上為警訊。</td>
+        <td data-l="本站版本">只報狀態，不擋個股：SPY、QQQ、IJR 的 50、200 日線位置與近 25 日出貨日。出貨日是當日跌幅 ≥0.2% 且成交量大於前一日。</td>
+        <td data-l="為什麼">大盤差的時候名單會長期是空的。大盤與名單分開呈現，讓讀者自己決定要不要照書做。書中用指數成交量，這裡用 ETF 成交量代替。</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section class="sec ev" id="evidence"><h2><span class="n">9</span><span id="ev-title">這套方法有沒有用</span></h2><div id="ev-body">載入中…</div></section>
+
+  <section class="sec" id="sources"><h2><span class="n">10</span>資料來源與限制</h2><div id="src-body">載入中…</div></section>
+
+  <p class="fine">名單是研究輸出，不是買賣建議。本站內容僅供研究參考，不構成投資建議。</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+(function(){
+'use strict';
+var LWC = window.LightweightCharts;
+var D = {}, charts = [];
+
+/* ---------- 小工具 ---------- */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function pct(x,d,sign){ if(x==null) return '—'; d=(d==null?1:d); var v=(x*100).toFixed(d); return (sign&&x>0?'+':'')+v+'%'; }
+function num(x,d){ return x==null?'—':Number(x).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function theme(){ return {bg:css('--card'),text:css('--body'),grid:css('--line-soft'),border:css('--line'),c1:css('--c1'),c2:css('--c2'),c3:css('--c3'),c4:css('--c4'),bad:css('--bad')}; }
+function getJSON(name){ return fetch('data/'+name+'.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw new Error(name+'.json '+r.status); return r.json(); }); }
+function md(s){ return s.slice(5); }                 /* 2026-10-16 → 10-16 */
+var GN = {large:'大型股', midsmall:'中小型股'};
+
+/* ---------- 圖 ---------- */
+function mkChart(box, h, defs, markersFor, readout, fmt){
+  var T = theme();
+  var chart = LWC.createChart(box, {
+    width: box.clientWidth||300, height:h,
+    layout:{background:{type:'solid',color:T.bg}, textColor:T.text, fontFamily:"'Inter','Noto Sans TC',sans-serif", fontSize:11},
+    grid:{vertLines:{color:T.grid}, horzLines:{color:T.grid}},
+    rightPriceScale:{borderColor:T.border, scaleMargins:{top:0.1,bottom:0.1}},
+    leftPriceScale:{visible:false},
+    timeScale:{borderColor:T.border, timeVisible:false, fixLeftEdge:true, fixRightEdge:true, rightOffset:0},
+    crosshair:{mode:0},
+    localization:{locale:'zh-TW'},
+    handleScroll:{mouseWheel:false, pressedMouseMove:false, horzTouchDrag:false, vertTouchDrag:false},
+    handleScale:{mouseWheel:false, pinch:false, axisPressedMouseMove:false}
+  });
+  var item = {chart:chart, box:box, series:[]};
+  defs.forEach(function(d){
+    var s = chart.addLineSeries({color:T[d.col], lineWidth:d.w||1, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:!!d.main,
+      priceFormat:{type:'price',precision:2,minMove:0.01}});
+    var data = [];
+    d.t.forEach(function(t,i){ if(d.v[i]!=null) data.push({time:t,value:d.v[i]}); });
+    s.setData(data);
+    item.series.push({api:s,def:d});
+    if(d.main && markersFor && markersFor.length){
+      var have = {}; data.forEach(function(p){ have[p.time]=1; });
+      s.setMarkers(markersFor.filter(function(t){ return have[t]; }).sort().map(function(t){
+        return {time:t, position:'aboveBar', shape:'arrowDown', color:T.bad, size:1}; }));
+      item.markersFor = markersFor;
+    }
+  });
+  chart.timeScale().fitContent();
+  if(readout){
+    chart.subscribeCrosshairMove(function(p){
+      if(!p || !p.time){ readout.textContent=''; return; }
+      var parts = [p.time];
+      item.series.forEach(function(s){
+        var v = p.seriesData.get(s.api);
+        if(v && v.value!=null) parts.push(s.def.name+' '+num(v.value,2));
+      });
+      readout.textContent = parts.join('　');
+    });
+  }
+  if(typeof ResizeObserver!=='undefined'){
+    new ResizeObserver(function(){ var w=box.clientWidth; if(w>0){ chart.applyOptions({width:w}); chart.timeScale().fitContent(); } }).observe(box);
+  }
+  charts.push(item);
+  return item;
+}
+function reTheme(){
+  var T = theme();
+  charts.forEach(function(it){
+    it.chart.applyOptions({layout:{background:{type:'solid',color:T.bg},textColor:T.text}, grid:{vertLines:{color:T.grid},horzLines:{color:T.grid}},
+      rightPriceScale:{borderColor:T.border}, timeScale:{borderColor:T.border}});
+    it.series.forEach(function(s){ s.api.applyOptions({color:T[s.def.col]});
+      if(it.markersFor && s.def.main){
+        var have={}; s.api.data().forEach(function(p){ have[p.time]=1; });
+        s.api.setMarkers(it.markersFor.filter(function(t){return have[t];}).sort().map(function(t){ return {time:t,position:'aboveBar',shape:'arrowDown',color:T.bad,size:1}; }));
+      } });
+  });
+}
+function legendHTML(items, tri){
+  return '<div class="legend">'+items.map(function(i){ return '<span><i style="background:'+css(i[1])+'"></i>'+i[0]+'</span>'; }).join('')+(tri?'<span><i class="tri"></i>出貨日</span>':'')+'</div>';
+}
+
+/* ---------- 1 結論 ---------- */
+function chips(list){ return list.map(function(c){ return '<a class="tk-chip" href="#card-'+esc(c.ticker)+'">'+esc(c.ticker)+'</a>'; }).join(' '); }
+function renderConclusion(){
+  var f = D.picks.full, n = f.length, M = D.market;
+  var L = f.filter(function(c){return c.group==='large';}), S = f.filter(function(c){return c.group==='midsmall';});
+  var h = '';
+  if(n>0){
+    h += '<div class="big"><span class="num">'+n+'</span> 檔五關全過</div>';
+    var seg = [];
+    seg.push('大型股 '+L.length+' 檔'+(L.length?'（'+chips(L)+'）':''));
+    seg.push('中小型股 '+S.length+' 檔'+(S.length?'（'+chips(S)+'）':''));
+    h += '<p>'+seg.join('；')+'。另有 '+D.picks.near.length+' 檔只差一關，見<a href="#near">第 4 節</a>。</p>';
+  } else {
+    h += '<div class="big">今天沒有任何一檔五關全過</div><p>只差一關的有 '+D.picks.near.length+' 檔，見<a href="#near">第 4 節</a>。</p>';
+  }
+  var lab = {red:'紅燈', amber:'黃燈', green:'綠燈'}[M.light];
+  h += '<div class="mbox '+M.light+'"><span class="dot"></span><div><div class="t">大盤 M：'+lab+'</div><div class="s">'+esc(M.headline)+esc(M.trend)+'　<a href="#market">看第 2 節</a></div></div></div>';
+  h += '<p class="note">M 燈號是本頁的簡單讀法：三個指數近 25 日出貨日都在 '+M.threshold+' 天以上為紅燈，部分為黃燈，都沒有為綠燈。大盤狀態只報告，不會把個股從名單剔除。</p>';
+  $('concl-body').innerHTML = h;
+  var m = D.meta;
+  $('asof').textContent = '價格截至 '+m.price_asof+' 收盤　財報申報截至 '+m.filings_asof+'　每週六更新　本次產生 '+m.generated_at+'（台北）';
+}
+
+/* ---------- 2 大盤 ---------- */
+function renderMarket(){
+  var M = D.market, h = '';
+  h += '<div class="tbl-wrap"><table><thead><tr><th>指數 ETF</th><th class="num">收盤</th><th class="num">50 日線</th><th class="num">200 日線</th><th class="num">近 25 日出貨日</th><th class="num">扣掉到期日</th><th class="num">距 52 週高</th></tr></thead><tbody>';
+  M.rows.forEach(function(r){
+    h += '<tr'+(r.dist25>=M.threshold?' class="warnrow"':'')+'><td class="nw"><b>'+r.ticker+'</b></td><td class="num">'+num(r.close,2)+'</td>'
+      +'<td class="num">'+num(r.ma50,2)+'　<span class="'+(r.above50?'ok':'bad')+'">'+pct(r.pct50,1,true)+(r.above50?'　線上':'　線下')+'</span></td>'
+      +'<td class="num">'+num(r.ma200,2)+'　<span class="'+(r.above200?'ok':'bad')+'">'+pct(r.pct200,1,true)+(r.above200?'　線上':'　線下')+'</span></td>'
+      +'<td class="num"><b>'+r.dist25+'</b> 天</td><td class="num">'+r.dist25_ex_opex+' 天</td><td class="num">'+pct(r.off_hi52,1,true)+'</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  h += '<p class="note">出貨日日期：'+M.rows.map(function(r){ return '<b>'+r.ticker+'</b> '+r.dist_dates.map(md).join('、'); }).join('；')+'。</p>';
+  var note = '出貨日的算法：當日跌幅 ≥0.2% 且成交量大於前一日，往回數 25 個交易日。書中用指數成交量，這裡用 ETF 的成交量代替。';
+  if(M.opex_dates && M.opex_dates.length){
+    var xs = M.rows.map(function(r){ return r.ticker+' '+r.dist25_ex_opex+' 天'; }).join('、');
+    note += '其中 '+M.opex_dates.map(md).join('、')+' 是月選擇權到期日，到期部位會讓成交量偏大。把這些日子扣掉後（「扣掉到期日」欄），'+xs+'，'+(M.rows.every(function(r){return r.dist25_ex_opex>=M.threshold;})?'仍然都在 '+M.threshold+' 天以上。':'警訊的判斷可能改變。');
+  }
+  h += '<p class="note">'+esc(note)+'</p>';
+  if(M.chart_ok){
+    h += '<div class="mgrid">'+M.rows.map(function(r){ return '<div class="mchart"><h4>'+r.ticker+'<span>近 1 年收盤、50／200 日線</span></h4><div class="cbox" id="mc-'+r.ticker+'"></div><div class="ro" id="mr-'+r.ticker+'"></div></div>'; }).join('')+'</div>';
+    h += legendHTML([['收盤','--c1'],['50 日線','--c2'],['200 日線','--c4']], true);
+  } else {
+    h += '<p class="note">這一期的指數走勢圖資料沒有取到，只顯示上表。</p>';
+  }
+  $('m-body').innerHTML = h;
+  if(M.chart_ok && LWC){
+    M.rows.forEach(function(r){
+      var s = M.series[r.ticker];
+      mkChart($('mc-'+r.ticker), 200, [
+        {name:'收盤', t:s.t, v:s.c, col:'c1', w:2, main:true},
+        {name:'50 日', t:s.t, v:s.m50, col:'c2'},
+        {name:'200 日', t:s.t, v:s.m200, col:'c4'}], s.dist, $('mr-'+r.ticker));
+    });
+  }
+}
+
+/* ---------- 3 全過名單 ---------- */
+function pickCard(c){
+  var tag = [c.sector, c.industry].filter(Boolean).join(' · ');
+  var a = '';
+  if(c.a_eps && c.a_fy_end){
+    var y1 = +c.a_fy_end.slice(0,4);
+    a = '<small>'+(y1-3)+' 至 '+y1+' 會計年度 EPS：'+c.a_eps.map(function(v){ return num(v,2); }).join(' → ')+' 美元</small>';
+  }
+  var sh = '—';
+  if(c.sh_chg!=null) sh = pct(c.sh_chg,1,true)+(c.sh_chg<0?'（流通股數減少，有買回）':'（流通股數增加）')+(c.sh_src?'，取自'+esc(c.sh_src):'');
+  var h = '<article class="pick" id="card-'+esc(c.ticker)+'"><div class="pick-head"><span class="tk">'+esc(c.ticker)+'</span><span class="co">'+esc(c.name)+'</span>'+(tag?'<span class="tag">'+esc(tag)+'</span>':'')+'</div>';
+  h += '<div class="pick-body"><div><ul class="gl">'
+    + '<li><span class="gk"><b>✓</b>品質</span><span class="gv">ROIC '+pct(c.roic)+'；自由現金流 '+num(c.fcf_yi,1)+' 億美元<small>門檻：ROIC ≥15% 且自由現金流 >0</small></span></li>'
+    + '<li><span class="gk"><b>✓</b>C</span><span class="gv">EPS 年增 '+pct(c.e0,1,true)+'；營收年增 '+pct(c.g0,1,true)+'（'+esc(c.rev_path)+'；前兩季 '+pct(c.g1,1,true)+'、'+pct(c.g2,1,true)+'）<small>門檻：EPS 年增 ≥25%，營收年增 ≥25% 或連續三季加速</small></span></li>'
+    + '<li><span class="gk"><b>✓</b>A</span><span class="gv">3 年 EPS 複合成長 '+pct(c.a_cagr,1,true)+a+'</span></li>'
+    + '<li><span class="gk"><b>✓</b>N</span><span class="gv">還原收盤 '+num(c.close,2)+' 美元，距 52 週高 '+pct(c.off_high,1,true)+'<small>門檻：距 52 週高不超過 15%</small></span></li>'
+    + '<li><span class="gk"><b>✓</b>L</span><span class="gv">RS '+num(c.rs,1)+'（組內百分位）<small>門檻：≥80</small></span></li>'
+    + '</ul>'
+    + '<div class="extra"><b>S（只顯示）</b>股數 1 年變化 '+sh+'<br><b>近 5 日突破（自訂）</b>'+(c.bo5?'是（'+esc(c.bo_dates)+'）':'否')+'　<b>50 日均量</b> '+num(c.avgvol_wan,0)+' 萬股<br><b>最近一季</b>季末 '+esc(c.q_end)+'，'+esc(c.filed)+' 申報</div></div>'
+    + '<div><div class="cbox" id="pc-'+esc(c.ticker)+'"></div><div class="ro" id="pr-'+esc(c.ticker)+'"></div>'+legendHTML([['收盤（還原）','--c1'],['50 日','--c2'],['150 日','--c3'],['200 日','--c4']])+'</div></div></article>';
+  return h;
+}
+function renderPicks(){
+  var f = D.picks.full, h = '';
+  ['large','midsmall'].forEach(function(g){
+    var list = f.filter(function(c){ return c.group===g; });
+    h += '<div class="grp-title">'+GN[g]+'<small>母體 '+D.funnel.groups[g].n+' 檔，全過 '+list.length+' 檔</small></div>';
+    h += list.length ? list.map(pickCard).join('') : '<div class="empty">這個母體今天沒有五關全過的公司。</div>';
+  });
+  $('picks-body').innerHTML = h;
+  if(LWC) f.forEach(function(c){
+    if(!c.chart) { $('pc-'+c.ticker).innerHTML='<div class="empty">沒有價格資料</div>'; return; }
+    var s = c.chart;
+    mkChart($('pc-'+c.ticker), 220, [
+      {name:'收盤', t:s.t, v:s.c, col:'c1', w:2, main:true},
+      {name:'50 日', t:s.t, v:s.m50, col:'c2'},
+      {name:'150 日', t:s.t, v:s.m150, col:'c3'},
+      {name:'200 日', t:s.t, v:s.m200, col:'c4'}], null, $('pr-'+c.ticker));
+  });
+}
+
+/* ---------- 4 差一條 ---------- */
+function renderNear(){
+  var h = '';
+  ['large','midsmall'].forEach(function(g){
+    var list = D.picks.near.filter(function(c){ return c.group===g; });
+    h += '<div class="grp-title">'+GN[g]+'<small>'+list.length+' 檔</small></div>';
+    if(!list.length){ h += '<div class="empty">沒有只差一關的公司。</div>'; return; }
+    h += '<div class="tbl-wrap"><table><thead><tr><th>代號</th><th>公司</th><th>沒過的關</th><th>差多少</th><th class="num">ROIC</th><th class="num">EPS 季增</th><th class="num">3 年 EPS 複合</th><th class="num">距 52 週高</th><th class="num">RS</th></tr></thead><tbody>';
+    list.forEach(function(c){
+      h += '<tr><td class="nw"><b class="mono">'+esc(c.ticker)+'</b></td><td>'+esc(c.name)+(c.sector?'<br><small class="na">'+esc(c.sector)+'</small>':'')+'</td><td class="nw"><b>'+esc(c.gate_label)+'</b></td><td style="min-width:220px">'+esc(c.miss)+'</td>'
+        +'<td class="num">'+pct(c.roic)+'</td><td class="num">'+pct(c.e0,1,true)+'</td><td class="num">'+pct(c.a_cagr,1,true)+'</td><td class="num">'+pct(c.off_high,1,true)+'</td><td class="num">'+num(c.rs,1)+'</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  });
+  $('near-body').innerHTML = h;
+}
+
+/* ---------- 5 漏斗 ---------- */
+function renderFunnel(){
+  var h = '<div class="flegend"><span><i style="background:var(--accent)"></i>依序疊加剩</span><span><i style="background:var(--bar-single)"></i>單獨通過</span></div><div class="fgrid">';
+  ['large','midsmall'].forEach(function(g){
+    var f = D.funnel.groups[g], N = f.n;
+    h += '<div class="fbox"><h3>'+GN[g]+'　母體 '+N+' 檔</h3>';
+    h += '<div class="frow"><div class="fl">母體</div><div class="bar cum"><span style="width:100%"></span><em class="in">'+N+'</em></div></div>';
+    f.gates.forEach(function(x){
+      var wc = Math.max(x.cum/N*100, 0.4), ws = Math.max(x.single/N*100, 0.4);
+      var inC = wc > 8;
+      h += '<div class="frow"><div class="fl">'+esc(x.label)+'<small>'+esc(x.cond)+'</small></div>'
+        + '<div class="bar cum"><span style="width:'+wc+'%"></span><em class="'+(inC?'in':'')+'" '+(inC?'':'style="right:auto;left:calc('+wc+'% + 6px)"')+'>依序 '+x.cum+'</em></div>'
+        + '<div class="bar single"><span style="width:'+ws+'%"></span><em style="right:auto;left:calc('+ws+'% + 6px)">單獨 '+x.single+'</em></div></div>';
+    });
+    h += '<p class="note">C 關兩個子條件單獨過關：EPS 季增 '+f.c_eps+' 檔、營收條件 '+f.c_rev+' 檔。近 5 日突破（自訂，只顯示）'+f.bo5+' 檔。ROIC 算不出來 '+f.roic_na+' 檔，品質關一律算沒過。<br>過關數分布：'
+      + f.dist.map(function(n,k){ return k+' 關 '+n; }).reverse().join('、')+'。</p></div>';
+  });
+  h += '</div>';
+  $('funnel-body').innerHTML = h;
+}
+
+/* ---------- 6 全部表 ---------- */
+var COLS = [
+  {k:'t',   lab:'代號', cls:'tk', get:function(r){return r[0];}, text:true},
+  {k:'n',   lab:'公司', get:function(r){return r[1];}, text:true},
+  {k:'g',   lab:'母體', get:function(r){return r[2];}},
+  {k:'p',   lab:'過幾關', cls:'num', get:function(r){return r[3];}},
+  {k:'roic',lab:'品質（ROIC）', cls:'num', get:function(r){return r[5];}, ok:function(r){return r[4];}},
+  {k:'e0',  lab:'C　EPS 季增', cls:'num', get:function(r){return r[7];}, ok:function(r){return r[6];}, sgn:1},
+  {k:'g0',  lab:'C　營收季增', cls:'num', get:function(r){return r[9];}, ok:function(r){return r[8];}, sgn:1},
+  {k:'cagr',lab:'A　3 年 EPS 複合', cls:'num', get:function(r){return r[11];}, ok:function(r){return r[10];}, sgn:1},
+  {k:'off', lab:'N　距 52 週高', cls:'num', get:function(r){return r[13];}, ok:function(r){return r[12];}, sgn:1},
+  {k:'rs',  lab:'L　RS', cls:'num', get:function(r){return r[15];}, ok:function(r){return r[14];}, d1:1},
+  {k:'bo',  lab:'近 5 日突破', cls:'num', get:function(r){return r[16];}}
+];
+var T = {rows:[], view:[], sortKey:'p', sortDir:-1, limit:100};
+function cellHTML(col, r){
+  var v = col.get(r);
+  if(col.k==='t') return '<td class="tk mono"><b>'+esc(v)+'</b></td>';
+  if(col.k==='n') return '<td>'+esc(v)+'</td>';
+  if(col.k==='g') return '<td class="nw">'+(v===0?'大型':'中小型')+'</td>';
+  if(col.k==='p') return '<td class="num"><b>'+v+'</b> / 5</td>';
+  if(col.k==='bo') return '<td class="num">'+(v?'是':'否')+'</td>';
+  var txt = v==null ? '—' : (col.d1 ? num(v,1) : pct(v,1,!!col.sgn));
+  var ok = col.ok(r);
+  if(v==null) return '<td class="num na">—</td>';
+  return '<td class="num '+(ok?'cell-ok ok':'bad')+'"><span class="g">'+(ok?'✓':'✗')+'</span>'+txt+'</td>';
+}
+function applyFilter(){
+  var q = $('q').value.trim().toLowerCase(), g = $('fg').value, p = +$('fp').value;
+  var exact = (p===5);
+  T.view = T.rows.filter(function(r){
+    if(g!=='' && String(r[2])!==g) return false;
+    if(p){ if(exact ? r[3]!==5 : r[3]<p) return false; }
+    if(q && r[0].toLowerCase().indexOf(q)<0 && r[1].toLowerCase().indexOf(q)<0) return false;
+    return true;
+  });
+  var col = COLS.filter(function(c){return c.k===T.sortKey;})[0];
+  var dir = T.sortDir;
+  T.view.sort(function(a,b){
+    var x = col.get(a), y = col.get(b);
+    if(x==null && y==null) return 0; if(x==null) return 1; if(y==null) return -1;
+    if(col.text) return dir*String(x).localeCompare(String(y));
+    if(x===y){ var rs = (b[15]||0)-(a[15]||0); return rs; }
+    return dir*(x<y?-1:1);
+  });
+  T.limit = 100; drawRows();
+}
+function drawRows(){
+  var rows = T.view.slice(0, T.limit);
+  $('alltbl').tBodies[0].innerHTML = rows.map(function(r){ return '<tr>'+COLS.map(function(c){ return cellHTML(c,r); }).join('')+'</tr>'; }).join('')
+    || '<tr><td colspan="'+COLS.length+'" class="na" style="padding:14px">沒有符合條件的公司。</td></tr>';
+  $('cnt').textContent = '顯示 '+rows.length.toLocaleString('en-US')+' / 符合 '+T.view.length.toLocaleString('en-US')+' 檔（共 '+T.rows.length.toLocaleString('en-US')+' 檔）';
+  var more = $('more'); more.innerHTML = '';
+  if(T.view.length > T.limit){
+    var b1 = document.createElement('button'); b1.className='btn'; b1.textContent='再顯示 200 檔';
+    b1.onclick = function(){ T.limit += 200; drawRows(); };
+    var b2 = document.createElement('button'); b2.className='btn'; b2.textContent='全部顯示（'+T.view.length.toLocaleString('en-US')+' 檔）';
+    b2.onclick = function(){ T.limit = T.view.length; drawRows(); };
+    more.appendChild(b1); more.appendChild(b2);
+  }
+  [].forEach.call($('alltbl').tHead.querySelectorAll('th'), function(th){
+    th.setAttribute('aria-sort', th.dataset.k===T.sortKey ? (T.sortDir>0?'ascending':'descending') : 'none');
+  });
+}
+function renderTable(){
+  T.rows = D.table.rows;
+  $('all-lead').textContent = '大型股 '+D.meta.n_group.large+' 檔、中小型股 '+D.meta.n_group.midsmall+' 檔，合計 '+D.meta.n_total.toLocaleString('en-US')+' 檔。每檔列出五關的數字，可搜尋、排序、篩選。';
+  $('alltbl').tHead.innerHTML = '<tr>'+COLS.map(function(c){ return '<th class="sortable '+(c.cls||'')+'" data-k="'+c.k+'" tabindex="0" role="columnheader" aria-sort="none">'+c.lab+'</th>'; }).join('')+'</tr>';
+  [].forEach.call($('alltbl').tHead.querySelectorAll('th'), function(th){
+    function go(){ var k = th.dataset.k; if(T.sortKey===k) T.sortDir = -T.sortDir; else { T.sortKey=k; T.sortDir = (k==='t'||k==='n')?1:-1; } applyFilter(); }
+    th.addEventListener('click', go);
+    th.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+  });
+  ['q','fg','fp'].forEach(function(id){ $(id).addEventListener('input', applyFilter); $(id).addEventListener('change', applyFilter); });
+  applyFilter();
+}
+
+/* ---------- 7 重疊 ---------- */
+function renderOverlap(pool, asof){
+  var idx = {}; D.table.rows.forEach(function(r){ idx[r[0]] = r; });
+  var tickers = pool.map(function(x){ return x.ticker; });
+  var inU = tickers.filter(function(t){ return idx[t]; });
+  var full = inU.filter(function(t){ return idx[t][3]===5; });
+  var h = '<p class="lead">選股看板（資料日 '+esc(asof||'—')+'）的「等待池」是上修夠強、板機還沒亮的名字。下表把它們放進本頁的五關檢查：</p>';
+  h += '<p><b>等待池 '+tickers.length+' 檔，在本頁母體內 '+inU.length+' 檔，五關全過 '+full.length+' 檔。</b>'+(full.length?'五關全過的是：'+full.map(function(t){return '<span class="tk-chip">'+esc(t)+'</span>';}).join(' ')+'。':'等待池與本頁全過名單沒有交集。')+'</p>';
+  h += '<div class="tbl-wrap"><table><thead><tr><th>代號</th><th class="num">過幾關</th><th>品質</th><th>C</th><th>A</th><th>N</th><th>L</th><th>備註</th></tr></thead><tbody>';
+  function c(ok, txt){ return '<td class="nw '+(ok?'ok':'bad')+'"><span class="g">'+(ok?'✓':'✗')+'</span>'+txt+'</td>'; }
+  tickers.forEach(function(t){
+    var r = idx[t];
+    if(!r){ h += '<tr><td class="mono"><b>'+esc(t)+'</b></td><td class="num na">—</td><td colspan="5" class="na">不在本頁母體</td><td class="na">外國發行人申報 20-F，沒有可比的季報資料，或不在母體內</td></tr>'; return; }
+    h += '<tr><td class="mono"><b>'+esc(t)+'</b></td><td class="num"><b>'+r[3]+'</b> / 5</td>'
+      + c(r[4], 'ROIC '+pct(r[5]))
+      + c(r[6]&&r[8], 'EPS '+pct(r[7],0,true))
+      + c(r[10], r[11]==null?'基期 ≤0':pct(r[11],0,true))
+      + c(r[12], pct(r[13],0,true))
+      + c(r[14], 'RS '+num(r[15],0))
+      + '<td class="na">'+(r[2]===0?'大型股組':'中小型股組')+'</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  h += '<p class="note">等待池名單每次載入時直接讀站上看板，不是寫死的。看板的等待池與本頁是兩套獨立的篩法，重疊多少只是兩邊的對照，不代表任何一邊對。</p>';
+  $('ov-body').innerHTML = h;
+}
+function loadOverlap(){
+  fetch('/engine/arena.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(a){ renderOverlap(a.waiting_pool||[], a.lamp_as_of||a.price_as_of); })
+    .catch(function(e){ $('ov-body').innerHTML = '<div class="empty">選股看板的資料暫時讀不到（'+esc(e.message||e)+'），這一節稍後再看。</div>'; });
+}
+
+/* ---------- 9 證據 ---------- */
+function renderEvidence(){
+  var E = D.evidence, h = '';
+  $('ev-title').textContent = E.title || '這套方法有沒有用';
+  h += '<div class="verdict">'+esc(E.verdict||'')+'</div>';
+  (E.blocks||[]).forEach(function(b){
+    if(b.type==='h') h += '<div class="h3">'+esc(b.text)+'</div>';
+    else if(b.type==='p') h += '<p>'+esc(b.text)+'</p>';
+    else if(b.type==='ul') h += '<ul>'+b.items.map(function(i){ return '<li>'+esc(i)+'</li>'; }).join('')+'</ul>';
+    else if(b.type==='table'){
+      h += (b.caption?'<p class="note" style="margin:8px 0 4px"><b>'+esc(b.caption)+'</b></p>':'')+'<div class="tbl-wrap"><table class="evt"><thead><tr>'+b.head.map(function(x){ return '<th style="white-space:normal">'+esc(x)+'</th>'; }).join('')+'</tr></thead><tbody>'
+        + b.rows.map(function(r){ return '<tr>'+r.map(function(x,i){ return '<td'+(i===0?' class="nw"':'')+'>'+(i===0?'<b>'+esc(x)+'</b>':esc(x))+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>';
+    }
+  });
+  h += '<p class="note">本節更新於 '+esc(E.updated||'—')+'。</p>';
+  $('ev-body').innerHTML = h;
+}
+
+/* ---------- 10 來源 ---------- */
+function renderSources(){
+  var m = D.meta, f = D.funnel.groups, h = '<div class="h3" style="margin-top:0">資料來源</div><ul class="srcl">';
+  h += '<li>財報：美國證管會（SEC）EDGAR 的 companyfacts，也就是公司申報的 XBRL 財報資料。每週重抓，只用申報日當時已公開的數字。</li>';
+  h += '<li>價格：yfinance 的還原價（拆股與股息都已還原），所以小圖上的價格與券商報價會有差距。</li>';
+  h += '<li>大型股母體 '+m.n_group.large+' 檔，沿用「品質 × SEPA」回測的母體。';
+  h += '其中有些公司今天也是 S&amp;P 400／600 成分股，仍留在大型股組，不在中小型股重複計算。';
+  h += '</li>';
+  h += '<li>中小型股母體 '+m.n_group.midsmall+' 檔：S&amp;P 400、600 的成分股，由 iShares 的 IJH、IJR 持股申報重建，季頻。'+(m.midsmall_snapshot?'目前採用的快照是 '+esc(m.midsmall_snapshot)+'，之後的成分股調整看不到。':'')+'</li>';
+  h += '<li>大盤：SPY、QQQ、IJR 的日線（未還原），出貨日用 ETF 成交量計算。</li></ul>';
+  h += '<div class="h3">限制</div><ul class="srcl">';
+  var nb = m.roic_na_before || {};
+  if(m.version==='v2'){
+    h += '<li>ROIC 需要營業利益與資本支出才算得出來。部分公司沒有申報營業利益這個標籤，本頁改用「稅前利益加利息費用」代替；金融業不套用，因為利息對銀行與保險是營業成本。修補後仍算不出來的有：大型股 '+m.roic_na.large+' 檔、中小型股 '+m.roic_na.midsmall+' 檔'+(nb.large!=null?'（修補前分別是 '+nb.large+'、'+nb.midsmall+' 檔）':'')+'。這些公司的品質關一律算沒過，名單可能因此少算。</li>';
+  } else {
+    h += '<li>ROIC 需要營業利益與資本支出才算得出來。算不出來的有：大型股 '+m.roic_na.large+' 檔、中小型股 '+m.roic_na.midsmall+' 檔，包括銀行、保險、券商，以及沒有申報營業利益標籤的非金融股。這些公司的品質關一律算沒過，名單可能因此少算。</li>';
+  }
+  h += '<li>會計年度第 4 季沒有單季申報，單季 EPS 與營收用全年減前九個月推算，會受財報重編與拆股影響。例如 PCTY 的最近一季就是這樣算的。</li>';
+  h += '<li>最近一季的季末距今超過 200 天，品質關與成長關一律算沒過。</li>';
+  h += '<li>外國發行人申報 20-F，沒有可比的季報資料，不在母體內，ASML 就是這種情形。</li>';
+  h += '<li>大型股母體沿用回測時的名單，之後新上市的大型股不在其中。</li>';
+  h += '<li>名單是研究輸出，不是買賣建議。</li></ul>';
+  $('src-body').innerHTML = h;
+}
+
+/* ---------- 啟動 ---------- */
+Promise.all(['meta','market','funnel','picks','table','evidence'].map(getJSON)).then(function(res){
+  ['meta','market','funnel','picks','table','evidence'].forEach(function(k,i){ D[k]=res[i]; });
+  renderConclusion(); renderMarket(); renderPicks(); renderNear(); renderFunnel(); renderTable();
+  renderEvidence(); renderSources(); loadOverlap();
+  if(window.matchMedia){
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    (mq.addEventListener ? mq.addEventListener.bind(mq,'change') : mq.addListener.bind(mq))(reTheme);
+  }
+  window.__canslimReady = true;
+}).catch(function(e){
+  $('concl-body').innerHTML = '<div class="err">資料載入失敗：'+esc(e.message||e)+'。請稍後重新整理。</div>';
+  window.__canslimError = String(e.message||e);
+});
+})();
+</script>
+</body>
+</html>

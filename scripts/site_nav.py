@@ -185,6 +185,7 @@ MENU = {
     "research": [
         ("thub", "/t/", "研究清單"),  # 2026-09-30 持有人選 A：個股內容已併入個股儀表板，此頁改為報告清單入口
         ("dds", "/dd-screener/", "DD Screener"),  # 2026-10-05 持有人要求加回（08-20 曾移出），緊接研究清單之後
+        ("canslim", "/canslim/", "CAN SLIM 選股"),  # 2026-10-17 CAN SLIM × 品質關每週名單，緊接 DD Screener 之後
         ("sdash", "/stock-dash/", "個股儀表板"),
         ("etfd", "/etf-dash/", "ETF 儀表板"),
         ("aetf", "/active-etf/", "主動式 ETF"),  # 2026-09-25 新增，緊接 ETF 儀表板之後
@@ -361,6 +362,7 @@ PREFIX_ACTIVE = [
     ("etf-dash/", ("research", "etfd")),  # ETF 儀表板（2026-09-24 新增）
     ("active-etf/", ("research", "aetf")),  # 主動式 ETF（2026-09-25 新增）
     ("tw-chips/", ("market", "tchips")),  # 台股籌碼趨勢（2026-10-17 新增）
+    ("canslim/", ("research", "canslim")),  # CAN SLIM 選股名單（2026-10-17 新增）
     ("ideas/", ("research", "ideas")),  # 投資想法（2026-09-23 新增）
     ("research/synthesis/", ("research", "thub")),
     ("research/", ("research", "thub")),
