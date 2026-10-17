@@ -288,6 +288,7 @@ def continue_marks(prices, new_days, frames, ev, prev_next_ref):
     pos = cal.searchsorted(evm.date.to_numpy())
     evm = evm[(pos < len(cal)) & (evm.date > last_day)].copy()
     evm["date"] = cal[cal.searchsorted(evm.date.to_numpy())]
+    evm = evm[~(evm.ref <= 0)]                      # junk rows (TPEx 3454 2011-07-27: ref -2.3) must not win the dedup below
     evm = evm.sort_values(["date", "code"], kind="mergesort").drop_duplicates(["date", "code"], keep="last")
     ev_by = {(r.date, r.code): r.ref for r in evm.itertuples()}
     out = []

@@ -2,17 +2,17 @@
  "report": {
   "family": "REVMOM",
   "hypothesis": "台股月營收動能（FinLab 公開條件＋營收比值排序，前 10 檔、每月 11 日後換股）在 FinLab 沒用過的 2008～2014 年，扣成本後年化與年化÷最大回撤都高於 0050。",
-  "trials_logged": 15,
-  "distinct_params": 15,
+  "trials_logged": 17,
+  "distinct_params": 16,
   "prior_untracked_trials": 0,
-  "n_trials": 15,
+  "n_trials": 16,
   "n_is_lower_bound": false,
   "llm_changes_after_seeing_oos": 4,
   "best": {
    "exp_id": "REVMOM-005",
    "is_sharpe_ann": 1.5698111838312176,
-   "luck_threshold_sharpe_ann": 0.7603698345233615,
-   "dsr": 0.9943633964303874,
+   "luck_threshold_sharpe_ann": 0.7296719231664965,
+   "dsr": 0.9957335151899944,
    "oos": {
     "kurt": 4.768365622179131,
     "n_obs": 1742,
@@ -565,6 +565,81 @@
    "reason": "修正偷看未來：營收截止日 10 日遇休市順延，原規則（11 日後第一個交易日）在 226 個月裡有 80 個月剛好落在截止日當天；改為截止日的下一個交易日",
    "saw_oos_before_change": true,
    "ts": "2026-10-01T13:44:18+08:00"
+  },
+  "REVMOM-016": {
+   "changed": null,
+   "exp_id": "REVMOM-016",
+   "family": "REVMOM",
+   "git": "a600d73",
+   "is": {
+    "kurt": 5.204160841157283,
+    "n_obs": 2682,
+    "periods_per_year": 252,
+    "sharpe_ann": 1.1041356876171493,
+    "skew": -0.26635708968450433
+   },
+   "kind": "trial",
+   "note": "回答用戶問題，未採用；網站版帳戶慣例",
+   "oos": {
+    "kurt": 4.073643068762791,
+    "n_obs": 1742,
+    "periods_per_year": 252,
+    "sharpe_ann": 0.7210472214942966,
+    "skew": -0.17784707721267154
+   },
+   "params": {
+    "cap": 0.2,
+    "day": "deadline+1td",
+    "innovation": false,
+    "liq": 10000000.0,
+    "n": 5,
+    "rank": "rev3/rev12",
+    "tech": true
+   },
+   "params_hash": "70e91679957a",
+   "parent": "REVMOM-015",
+   "prereg_ref": "docs/RevMom_Backtest_Spec.md",
+   "proposed_by": "human",
+   "reason": "用戶問「只買前 5 名會不會比較好」：5 檔各 20%、滿倉（原 sens_n5 是各 10%、半倉現金）",
+   "saw_oos_before_change": true,
+   "ts": "2026-10-01T14:03:29+08:00"
+  },
+  "REVMOM-017": {
+   "changed": "data correction: 3454 ref on 2011-07-27 -2.3 -> 79.07 (TWSE TWT49U) + guard: drop event rows with ref <= 0 before the (date, code) dedup in update_data.continue_marks",
+   "exp_id": "REVMOM-017",
+   "family": "REVMOM",
+   "git": "037089b",
+   "is": {
+    "kurt": 5.76909517969981,
+    "n_obs": 2682,
+    "periods_per_year": 252,
+    "sharpe_ann": 1.3841545815462448,
+    "skew": -0.4320733856046386
+   },
+   "kind": "trial",
+   "note": "V1a 年化 32.636% -> 32.602%、V1b 38.476% -> 38.405%（資料到 2026-09-30）；V1a 2012-11-13 與 V1b 2012-01-11 的名單各多出 3454，目前名單不變。參數與 REVMOM-015 相同，不另計試驗次數",
+   "oos": {
+    "kurt": 4.5827535933616526,
+    "n_obs": 1742,
+    "periods_per_year": 252,
+    "sharpe_ann": 0.6863496745237958,
+    "skew": -0.34476830204374725
+   },
+   "params": {
+    "exclude": "innovation_board",
+    "liq": 10000000.0,
+    "n": 10,
+    "rank": "rev3/rev12",
+    "signal": "trading day after revenue deadline",
+    "tech": true
+   },
+   "params_hash": "d276d08fdc28",
+   "parent": "REVMOM-016",
+   "prereg_ref": "docs/RevMom_Backtest_Spec.md",
+   "proposed_by": "code",
+   "reason": "資料錯誤更正：3454 晶睿在 2011-07-27 的參考價誤為 -2.3（櫃買中心的垃圾紀錄蓋掉證交所的 79.07），改為 79.07；更新程式加防呆，參考價 ≤ 0 的除權息事件列在去重前丟棄。規則與參數沒有動",
+   "saw_oos_before_change": true,
+   "ts": "2026-10-17T14:12:13+08:00"
   }
  }
 }
