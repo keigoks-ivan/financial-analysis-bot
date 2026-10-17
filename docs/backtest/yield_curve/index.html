@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>殖利率倒掛與經濟衰退：八國回測 | InvestMQuest Research</title>
-<meta name="description" content="用 FRED 與台灣央行、主計總處資料對美/德/英/日/加/澳/韓/台套同一套定義回測 10Y-3M 利差倒掛：合併池 24 個月內命中率 43.2%、基率 26.5%、提升 1.6 倍，前置期中位數 10 個月。台灣併入主表，另跑國發會峰谷對照定義。另檢查信賴區間、精確率與召回率、深度與持續分桶、累積命中曲線、八國同步與美國曲線交叉檢驗、2000 年前後對照、換一種定義啞鈴圖。">
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>殖利率倒掛預示衰退嗎？倒掛之後股票該賣嗎？八國回測 | InvestMQuest Research</title>
+<meta content="用 FRED 與台灣央行、主計總處資料對美/德/英/日/加/澳/韓/台套同一套定義回測 10Y-3M 利差倒掛：合併池 24 個月內命中率 43.2%、基率 26.5%、提升 1.6 倍，前置期中位數 10 個月。台灣併入主表，另跑國發會峰谷對照定義。另檢查信賴區間、精確率與召回率、深度與持續分桶、累積命中曲線、八國同步與美國曲線交叉檢驗、2000 年前後對照、換一種定義啞鈴圖。" name="description"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
@@ -59,6 +60,89 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   table{font-size:.74rem}th,td{padding:.4rem .4rem}
 }
 </style>
+<style id="merge-style">
+.mchap{margin-top:2.4rem;padding-top:1.2rem;border-top:3px solid var(--brand,#1a56db)}
+.mchap-hd{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin-bottom:.35rem}
+.mchap-hd h2{font-size:1.28rem;font-weight:700;letter-spacing:-.01em;color:var(--text,#111827);margin:0}
+.mchap-sub{color:var(--muted,#6b7280);font-size:.82rem;margin-bottom:.9rem;line-height:1.6}
+.mchap-link{display:inline-block;margin:.9rem 0 .2rem;font-weight:600;font-size:.9rem}
+.mlead{margin:1.2rem 0 .6rem;padding:.9rem 1.1rem;background:var(--card,#fff);border:1px solid var(--border,#e5e7eb);border-left:4px solid var(--brand,#1a56db);border-radius:8px;font-size:.92rem;line-height:1.8}
+.mlead p+p{margin-top:.55rem}
+.mtoc{margin:.8rem 0 .4rem;padding:.7rem 1.1rem;background:var(--card,#fff);border:1px solid var(--border,#e5e7eb);border-radius:8px;font-size:.88rem}
+.mtoc-hd{font-size:.72rem;font-weight:700;color:var(--muted,#6b7280);letter-spacing:.04em;margin-bottom:.3rem}
+.mtoc ol{list-style:none;display:flex;flex-direction:column;gap:.15rem;padding:0;margin:0}
+.mtoc a{text-decoration:none}.mtoc a:hover{text-decoration:underline}
+.mchap-sum{margin-top:.4rem}
+@media(max-width:640px){
+  .mchap table{display:block !important;max-width:100%;min-width:0 !important;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .mchap code{white-space:normal;overflow-wrap:anywhere}
+  .mchap :where(div,section,article,details){min-width:0}
+  .mchap img,.mchap canvas,.mchap svg{max-width:100%}
+}
+#equity{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb}
+#equity *{box-sizing:border-box;margin:0;padding:0}
+#equity a{color:var(--brand);text-decoration:none}
+#equity a:hover{text-decoration:underline}
+#equity .container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+#equity .page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+#equity .page-hdr h1{font-size:1.55rem;font-weight:700;letter-spacing:-.03em}
+#equity .page-hdr .sub{color:var(--muted);font-size:.88rem;margin-top:.2rem}
+#equity .crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+#equity .crumb a{color:var(--muted)}
+#equity .section{padding:1.75rem 0 0}
+#equity .section-title{font-size:1.08rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+#equity .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+#equity table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+#equity th,#equity td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+#equity th{background:#f9fafb;font-weight:600;font-size:.68rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+#equity td{font-variant-numeric:tabular-nums;vertical-align:top}
+#equity td.num,#equity th.num{text-align:right}
+#equity td.lbl{white-space:nowrap;font-weight:500}
+#equity tbody tr:last-child td{border-bottom:0}
+#equity tr.dim{background:#f4f5f6;color:#8b93a1}
+#equity .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#equity .hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+#equity .hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+#equity .hero-top .verdict-tag{display:inline-block;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+#equity .hero-top h2{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+#equity .hero-top p{font-size:.9rem;color:#374151;max-width:64rem}
+#equity .hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+#equity .hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+#equity .hero-stats > div:last-child{border-right:none}
+#equity .hero-stats .hs-label{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+#equity .hero-stats .hs-value{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+#equity .takeaway{font-size:.86rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+#equity .takeaway b{color:#12213a}
+#equity .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.82rem;color:#92400e;margin:1rem 0}
+#equity .ok{color:#059669;font-weight:700}
+#equity .no{color:#dc2626;font-weight:700}
+#equity .chart-wrap{position:relative}
+#equity footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){#equity .hero-stats{grid-template-columns:repeat(2,1fr)}
+#equity table{font-size:.74rem}
+#equity th,#equity td{padding:.4rem .4rem}}</style><style id="bt-meta-style">
+.bt-meta{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.7rem 0 0;font-size:.82rem}
+.bt-st{display:inline-block;font-size:.78rem;font-weight:700;padding:.12rem .6rem;border-radius:999px;line-height:1.5;border:1px solid transparent}
+.bt-st-live{background:#fbf3df;color:#7a5a1a;border-color:#e6cf98}
+.bt-st-cand{background:#e8f0fb;color:#1d4ea0;border-color:#b9cdee}
+.bt-st-note{background:#eef1f4;color:#4b5563;border-color:#d7dce2}
+.bt-st-rej{background:#fbeceb;color:#b42318;border-color:#f0c4c0}
+.bt-st-ret{background:#f1f1f1;color:#6b7280;border-color:#d4d4d4}
+.bt-st-def{color:#6b7280;font-size:.8rem}
+.bt-banner{margin:.7rem 0 0;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;line-height:1.65;border:1px solid;border-left-width:4px}
+.bt-banner a{font-weight:600}
+.bt-banner-ref{background:#fffbeb;border-color:#fde68a;border-left-color:#d97706;color:#78350f}
+.bt-banner-ret{background:#f4f4f5;border-color:#d4d4d8;border-left-color:#71717a;color:#3f3f46}
+.bt-banner-member{background:#eff6ff;border-color:#bfdbfe;border-left-color:#1a56db;color:#1e3a5f}
+.mchap>.bt-banner{margin:.2rem 0 1rem}
+</style>
 </head>
 <body>
 <style id="imq-nav-style">
@@ -93,82 +177,74 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 }
 </style>
 <header class="imq-nav-root">
-  <div class="imq-nav-inner">
-    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
-    <nav class="imq-menu">
-      <a href="/">首頁</a>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/market/">市況主控台</a>
-          <a href="/intel/">情報監視器</a>
-          <a href="/briefing/">每日簡報</a>
-          <a href="/rotation/radar.html">資產輪動雷達</a>
-          <a href="/macro/">總經深度報告</a>
-          <a href="/earnings/">財報分析</a>
-          <a href="/markets.html">Markets</a>
-          <a href="/sectors.html">Sectors</a>
-        </div>
-      </div>
-      <a href="/cockpit/">選股</a>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/t/">個股研究</a>
-          <a href="/id/">產業研究</a>
-          <a href="/id/tier_matrix.html">Tier Matrix</a>
-        </div>
-      </div>
-      <a href="/mental-models/">心智模型</a>
-      <div class="imq-dd active">
-        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/long-track/">系統主控台</a>
-          <a href="/backtest/" class="active">量化回測</a>
-          <a href="/tools/">期貨部位計算機</a>
-          <a href="/data.html">公開資料</a>
-        </div>
-      </div>
-      <a href="/simulation/">模擬</a>
-      <a href="/flow/">投資流程</a>
-      <a href="/how-to.html">使用指南</a>
-      <a href="/search.html">搜尋</a>
-    </nav>
-  </div>
+<div class="imq-nav-inner">
+<a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+<nav class="imq-menu">
+<a href="/">首頁</a>
+<div class="imq-dd">
+<button class="imq-dd-btn" type="button">市場<span class="imq-caret">▾</span></button>
+<div class="imq-dd-menu">
+<a href="/market/">市況主控台</a>
+<a href="/intel/">情報監視器</a>
+<a href="/briefing/">每日簡報</a>
+<a href="/rotation/radar.html">資產輪動雷達</a>
+<a href="/macro/">總經深度報告</a>
+<a href="/earnings/">財報分析</a>
+<a href="/markets.html">Markets</a>
+<a href="/sectors.html">Sectors</a>
+</div>
+</div>
+<a href="/cockpit/">選股</a>
+<div class="imq-dd">
+<button class="imq-dd-btn" type="button">研究<span class="imq-caret">▾</span></button>
+<div class="imq-dd-menu">
+<a href="/t/">個股研究</a>
+<a href="/id/">產業研究</a>
+<a href="/id/tier_matrix.html">Tier Matrix</a>
+</div>
+</div>
+<a href="/mental-models/">心智模型</a>
+<div class="imq-dd active">
+<button class="imq-dd-btn" type="button">系統<span class="imq-caret">▾</span></button>
+<div class="imq-dd-menu">
+<a href="/long-track/">系統主控台</a>
+<a class="active" href="/backtest/">量化回測</a>
+<a href="/tools/">期貨部位計算機</a>
+<a href="/data.html">公開資料</a>
+</div>
+</div>
+<a href="/simulation/">模擬</a>
+<a href="/flow/">投資流程</a>
+<a href="/how-to.html">使用指南</a>
+<a href="/search.html">搜尋</a>
+</nav>
+</div>
 </header>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
-
 <div class="page-hdr">
-  <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 殖利率倒掛與衰退</div>
-    <h1>殖利率倒掛與經濟衰退：八國回測</h1>
-    <div class="sub">10Y-3M 利差倒掛能不能預示衰退、多久看到、八國是否一致・生成 2026-09-17</div>
-    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">期貨趨勢</div><div class="bt-subnav-pills"><a href="/backtest/txf_daily/">台指期日線・20 日通道<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txf_hourly/">台指期60分K・趨勢與通道<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">外部策略</div><div class="bt-subnav-pills"><a href="/backtest/vendor/">外部策略檢驗<span class="bt-tag bt-tag-watch">專區</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/yield_curve/" class="bt-on">殖利率倒掛與衰退<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/yc_equity/">倒掛之後股票該賣嗎<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/sahm_rule/">Sahm 法則跨國<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/first_cut/">第一次降息後的股市<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/chasing_returns/">漲多了還能追嗎<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead_reaction/">財報打敗但沒漲，之後贏面大嗎<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/profitability/">美股獲利能力因子<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/asset_growth/">美股資產成長異象<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/index_inclusion/">指數納入效應<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insider/">內部人買賣叢集買進<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/revmom/">台股月營收動能選股<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・跨標的驗證</div><div class="bt-subnav-pills"><a href="/backtest/live_system_evidence/">證據總覽（先看這頁）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insurance_premium/">深熊保險的價格<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/regime_bootstrap/">保留 regime 的 bootstrap<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/combined_account/">美台合併帳戶層<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_base_rate/">慢熊的 base rate<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_onset/">慢熊：起點認得出來嗎？<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/f_portfolio/">F 組合：疊兩種保險<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/a0_d1_comfort/">A0＋D1 舒服度<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/f_comfort/">F 組合舒服度<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/comfort_tournament/">舒服度錦標賽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/cross_sectional_trend/">橫斷面版趨勢<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/a0_proposal/">A0 提案（10 月回顧點）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/futures_leg/" class="bt-dead">F70 換 CTA 腿<span class="bt-tag bt-tag-dead">否決</span></a></div></div></nav>
-  </div>
-</div>
-
 <div class="container">
-
-
-<div class="hero">
-  <div class="hero-top">
-    <span class="verdict-tag" style="background:#d97706">倒掛提高衰退機率，但不是每次都準，八國答案也不一致</span>
-    <h2>倒掛真的預示衰退嗎？合併池命中率 43.2%，比不看訊號的基率 26.5% 高 1.6 倍，方向是真的，但各國強弱差很多。</h2>
-    <p>多久會看到衰退？前置期中位數 10 個月，最短 2 個月、最長 23 個月，要當一個範圍看，別當時間表。八國都適用嗎？各國答案不同。台灣併入主表。命中率差很多，也有國家的倒掛是衰退先到才出現。</p>
-    <p>倒掛之後要等到第 10 個月，累積命中率才明顯超過基率。同一年至少五國同時倒掛的情況出現過 13 次，集中在幾波全球循環，但美國曲線的優勢主要在精確率，召回率沒有一致比各國自己的曲線高。</p>
-  </div>
-  <div class="hero-stats">
-    <div><div class="hs-label">合併池命中率・24 個月內</div><div class="hs-value">43.2%</div></div>
-    <div><div class="hs-label">合併池基率・24 個月內</div><div class="hs-value">26.5%</div></div>
-    <div><div class="hs-label">提升倍數</div><div class="hs-value">1.6x</div></div>
-    <div><div class="hs-label">前置期中位數</div><div class="hs-value">10 月</div></div>
-  </div>
+<div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 殖利率倒掛</div>
+<h1>殖利率倒掛預示衰退嗎？倒掛之後股票該賣嗎？八國回測</h1>
+<div class="sub">八國、同一把尺 · 衰退預測與前向報酬</div><!--bt-meta--><div class="bt-meta"><span class="bt-st bt-st-note">筆記</span><span class="bt-st-def">研究紀錄或對照，沒有採用意圖。</span></div><!--/bt-meta-->
+<style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-tag-live{background:rgba(184,146,74,.2);color:#7a5a1a}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-live{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">① 實盤證據</div><div class="bt-subnav-pills"><a href="/backtest/live_system_evidence/">證據總覽<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/w52_adaptive_oos/">跨標的前瞻證偽<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/insurance_premium/">深熊保險價格<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/adopted_bootstrap/">打亂歷史重跑<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/combined_account/">美台合併帳戶<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/slow_bear_base_rate/">慢熊 base rate 與起點<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/f_comfort/">F70 抱得住度<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/a0_proposal/">A0 提案<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/f_portfolio/" class="bt-dead">疊兩種保險<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/futures_leg/" class="bt-dead">F70 換期貨腿<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/cross_sectional_trend/" class="bt-dead">只持最強幾檔<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">② 槓桿與保險</div><div class="bt-subnav-pills"><a href="/backtest/leverage/">槓桿三頁</a><a href="/backtest/vol_targeting/">波動率目標倉位</a><a href="/backtest/vol_targeting/adaptive.html">波動率變體·美股</a><a href="/backtest/vol_targeting/tw.html">波動率變體·台股</a><a href="/backtest/tw_vcrash/">V 型崩跌防禦</a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">③ 趨勢規則</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">週線長軌</a><a href="/backtest/daily_vs_weekly/">日線 vs 週線</a><a href="/backtest/tw_0050_compare/">0050 趨勢系統</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/slope_filter/">W52 斜率濾網</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a><a href="/backtest/ma_cross/" class="bt-dead">MA 交叉<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_deviation/" class="bt-dead">MA 乖離<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_dynband/" class="bt-dead">MA 動態帶<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_squeeze/" class="bt-dead">MA 擠壓<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/dual_track/" class="bt-dead">雙軌<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/six_state/" class="bt-dead">六狀態機存檔<span class="bt-tag bt-tag-dead">已退役</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">④ 台指期與短線</div><div class="bt-subnav-pills"><a href="/backtest/rsi2_mr/">RSI(2) 均值回歸<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/tw_options/">台股選擇權專區</a><a href="/backtest/txo_vol_seller/">台指選擇權賣方</a><a href="/backtest/txo_put_seller/">台指賣方下檔</a><a href="/backtest/txo_iron_condor/">台指雙賣</a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call</a><a href="/backtest/txo_tail_hedge/">台指尾端避險</a><a href="/backtest/txf_daily/">台指期日線與 60 分 K</a><a href="/backtest/txf_chips/">籌碼偏向</a><a href="/backtest/vendor/">外部策略檢驗</a><a href="/backtest/txf_intraday/" class="bt-dead">台指當沖<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ssf_xsec/" class="bt-dead">個股期橫斷面<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/covered_call/" class="bt-dead">美股選擇權疊加<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">⑤ 選股與因子</div><div class="bt-subnav-pills"><a href="/backtest/pead/">財報驚喜後漂移</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/revmom/">台股月營收動能選股</a><a href="/backtest/tw_cb/">台股可轉債專區</a><a href="/backtest/chasing_returns/">漲多了還能追嗎</a><a href="/backtest/country_scan/us.html">各國股市結構</a><a href="/backtest/accruals/">美股獲利品質（應計項目）</a><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/active_etf/">主動式 ETF 與基金</a><a href="/backtest/asset_growth/" class="bt-dead">美股資產成長異象<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/share_issuance/" class="bt-dead">美股股數增減（發行與回購）<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/profitability/" class="bt-dead">美股獲利能力因子<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/index_inclusion/" class="bt-dead">指數納入效應<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/insider/" class="bt-dead">內部人買賣叢集買進<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">⑥ 分散資產</div><div class="bt-subnav-pills"><a href="/backtest/nonequity/">非股票 sleeve<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/crossasset_defense/">跨資產防守<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/turtle/">海龜與商品 sleeve</a><a href="/backtest/clenow/">35 檔 ETF 趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/free_lunch/">分散與免費午餐</a><a href="/backtest/gem/" class="bt-dead">全球雙動能<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/reits/" class="bt-dead">REITs 延伸<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">⑦ 總經與房市</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">房價與所得</a><a href="/backtest/yield_curve/" class="bt-on">殖利率倒掛</a><a href="/backtest/sahm_rule/">Sahm 法則跨國</a><a href="/backtest/first_cut/">第一次降息後的股市</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">方法與術語</div><div class="bt-subnav-pills"><a href="/backtest/criteria/">評估標準</a><a href="/backtest/glossary/">術語對照表</a><a href="/backtest/10y/">近 10 年對照</a><a href="/backtest/tw/">台股總覽<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/multi/">多資產總覽</a></div></div></nav>
 </div>
-
-
+</div>
+<div class="container"><div class="mlead"><p>兩個相連的問題。第一：倒掛提高衰退機率，但不是每次都準，八國的答案也不一致。第二：倒掛之後股票該不該賣？倒掛不是清楚的賣出訊號。</p></div><nav aria-label="本頁章節" class="mtoc"><div class="mtoc-hd">本頁章節</div><ol><li><a href="#recession">一、倒掛預示衰退嗎</a></li><li><a href="#equity">二、倒掛之後股票該賣嗎</a></li></ol></nav><section class="mchap" id="recession"><div class="mchap-hd"><h2>一、倒掛預示衰退嗎</h2></div>
+<div class="hero">
+<div class="hero-top">
+<span class="verdict-tag" style="background:#d97706">倒掛提高衰退機率，但不是每次都準，八國答案也不一致</span>
+<h2>倒掛真的預示衰退嗎？合併池命中率 43.2%，比不看訊號的基率 26.5% 高 1.6 倍，方向是真的，但各國強弱差很多。</h2>
+<p>多久會看到衰退？前置期中位數 10 個月，最短 2 個月、最長 23 個月，要當一個範圍看，別當時間表。八國都適用嗎？各國答案不同。台灣併入主表。命中率差很多，也有國家的倒掛是衰退先到才出現。</p>
+<p>倒掛之後要等到第 10 個月，累積命中率才明顯超過基率。同一年至少五國同時倒掛的情況出現過 13 次，集中在幾波全球循環，但美國曲線的優勢主要在精確率，召回率沒有一致比各國自己的曲線高。</p>
+</div>
+<div class="hero-stats">
+<div><div class="hs-label">合併池命中率・24 個月內</div><div class="hs-value">43.2%</div></div>
+<div><div class="hs-label">合併池基率・24 個月內</div><div class="hs-value">26.5%</div></div>
+<div><div class="hs-label">提升倍數</div><div class="hs-value">1.6x</div></div>
+<div><div class="hs-label">前置期中位數</div><div class="hs-value">10 月</div></div>
+</div>
+</div>
 <div class="takeaway"><b>給沒有統計背景的讀者：</b>這頁做的事很單純。利差是 10 年期公債殖利率減 3 個月期利率，跌到 0 以下叫「倒掛」，歷史上市場常拿它當衰退警訊。我們把八個國家的利率與 GDP 資料全部拉出來，用同一套規則自動判定倒掛事件與衰退事件，算命中率、算多久看到、算跟不看訊號比有沒有比較準，再逐一檢查訊號的信賴區間、深淺長短、同步性與換一種定義後的穩健度。本頁不做「現在該不該擔心」的建議，也不預測下一次衰退什麼時候來，只回報歷史上這個訊號準不準、準多快、在哪些條件下會失真。</div>
-
-
 <div class="section">
 <h2 class="section-title">一、英國、日本、加拿大、澳洲、南韓、台灣的倒掛訊號，統計上和基率分不出來</h2>
 <div class="takeaway">合併池命中率 43.2%，基率 26.5%，提升 1.6 倍，方向上倒掛確實墊高衰退機率。但拆到國家層級，命中率從最低到最高差很多，這節用 95% 信賴區間（confidence interval）檢查每個國家的命中率是不是真的高於基率，不是只看點估計。</div>
@@ -178,7 +254,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <th class="num">事件數</th><th class="num">H=24 命中數</th><th class="num">命中率</th>
 <th class="num">命中率 95% CI</th><th class="num">基率</th><th class="num">提升倍數</th>
 <th class="num">反向召回率</th><th class="num">已在衰退中／事件數</th></tr></thead>
-<tbody><tr><td class='lbl'>美國</td><td>1953-04～2026-04</td><td class='num'>11</td><td class='num'>7</td><td class='num'>70.0%</td><td class='num'>40–89%</td><td class='num'>22.2%</td><td class='num'>3.2</td><td class='num'>77.8%</td><td class='num'>0／11</td></tr><tr><td class='lbl'>德國</td><td>1970-04～2026-04</td><td class='num'>12</td><td class='num'>8</td><td class='num'>80.0%</td><td class='num'>49–94%</td><td class='num'>43.1%</td><td class='num'>1.9</td><td class='num'>84.6%</td><td class='num'>2／12</td></tr><tr><td class='lbl'>英國</td><td>1960-01～2026-01</td><td class='num'>18</td><td class='num'>6</td><td class='num'>42.9%</td><td class='num'>21–67%</td><td class='num'>26.1%</td><td class='num'>1.6</td><td class='num'>88.9%</td><td class='num'>3／18</td></tr><tr><td class='lbl'>日本</td><td>2002-04～2026-04</td><td class='num'>3</td><td class='num'>0</td><td class='num'>0.0%</td><td class='num'>0–56%</td><td class='num'>34.0%</td><td class='num'>0.0</td><td class='num'>0.0%</td><td class='num'>0／3</td></tr><tr><td class='lbl'>加拿大</td><td>1961-04～2026-04</td><td class='num'>18</td><td class='num'>5</td><td class='num'>31.2%</td><td class='num'>14–56%</td><td class='num'>21.0%</td><td class='num'>1.5</td><td class='num'>85.7%</td><td class='num'>1／18</td></tr><tr><td class='lbl'>澳洲</td><td>1969-07～2026-04</td><td class='num'>18</td><td class='num'>4</td><td class='num'>25.0%</td><td class='num'>10–50%</td><td class='num'>23.2%</td><td class='num'>1.1</td><td class='num'>100.0%</td><td class='num'>2／18</td></tr><tr><td class='lbl'>南韓</td><td>2000-10～2026-04</td><td class='num'>5</td><td class='num'>1</td><td class='num'>25.0%</td><td class='num'>5–70%</td><td class='num'>8.5%</td><td class='num'>3.0</td><td class='num'>100.0%</td><td class='num'>0／5</td></tr><tr><td class='lbl'>台灣</td><td>2000-01～2026-04</td><td class='num'>4</td><td class='num'>1</td><td class='num'>100.0%</td><td class='num'>21–100%</td><td class='num'>36.0%</td><td class='num'>2.8</td><td class='num'>20.0%</td><td class='num'>2／4</td></tr><tr><td class='lbl'><b>合併池（不獨立）</b></td><td>—</td><td class='num'>—</td><td class='num'>32</td><td class='num'><b>43.2%</b></td><td class='num'>33–55%</td><td class='num'>26.5%</td><td class='num'>1.6</td><td class='num'>—</td><td class='num'>—</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">美國</td><td>1953-04～2026-04</td><td class="num">11</td><td class="num">7</td><td class="num">70.0%</td><td class="num">40–89%</td><td class="num">22.2%</td><td class="num">3.2</td><td class="num">77.8%</td><td class="num">0／11</td></tr><tr><td class="lbl">德國</td><td>1970-04～2026-04</td><td class="num">12</td><td class="num">8</td><td class="num">80.0%</td><td class="num">49–94%</td><td class="num">43.1%</td><td class="num">1.9</td><td class="num">84.6%</td><td class="num">2／12</td></tr><tr><td class="lbl">英國</td><td>1960-01～2026-01</td><td class="num">18</td><td class="num">6</td><td class="num">42.9%</td><td class="num">21–67%</td><td class="num">26.1%</td><td class="num">1.6</td><td class="num">88.9%</td><td class="num">3／18</td></tr><tr><td class="lbl">日本</td><td>2002-04～2026-04</td><td class="num">3</td><td class="num">0</td><td class="num">0.0%</td><td class="num">0–56%</td><td class="num">34.0%</td><td class="num">0.0</td><td class="num">0.0%</td><td class="num">0／3</td></tr><tr><td class="lbl">加拿大</td><td>1961-04～2026-04</td><td class="num">18</td><td class="num">5</td><td class="num">31.2%</td><td class="num">14–56%</td><td class="num">21.0%</td><td class="num">1.5</td><td class="num">85.7%</td><td class="num">1／18</td></tr><tr><td class="lbl">澳洲</td><td>1969-07～2026-04</td><td class="num">18</td><td class="num">4</td><td class="num">25.0%</td><td class="num">10–50%</td><td class="num">23.2%</td><td class="num">1.1</td><td class="num">100.0%</td><td class="num">2／18</td></tr><tr><td class="lbl">南韓</td><td>2000-10～2026-04</td><td class="num">5</td><td class="num">1</td><td class="num">25.0%</td><td class="num">5–70%</td><td class="num">8.5%</td><td class="num">3.0</td><td class="num">100.0%</td><td class="num">0／5</td></tr><tr><td class="lbl">台灣</td><td>2000-01～2026-04</td><td class="num">4</td><td class="num">1</td><td class="num">100.0%</td><td class="num">21–100%</td><td class="num">36.0%</td><td class="num">2.8</td><td class="num">20.0%</td><td class="num">2／4</td></tr><tr><td class="lbl"><b>合併池（不獨立）</b></td><td>—</td><td class="num">—</td><td class="num">32</td><td class="num"><b>43.2%</b></td><td class="num">33–55%</td><td class="num">26.5%</td><td class="num">1.6</td><td class="num">—</td><td class="num">—</td></tr></tbody></table></div>
 <div class="note">英國、日本、加拿大、澳洲、南韓、台灣的 95% 信賴區間跨回基率，樣本數不夠大，統計上還不能說這幾國的倒掛訊號比不看訊號準。日本、南韓、台灣事件數只有個位數，區間本來就寬，不宜對單一數字太認真。</div><script>
 
 const pointMarkerPlugin = {
@@ -270,14 +346,11 @@ new Chart(document.getElementById('chart1'), {
 });
 </script>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">二、日本、台灣沒出現倒掛時，衰退照樣來</h2>
 <div class="takeaway">精確率是「出現倒掛，衰退真的來」的比率（就是表 1 的命中率）。召回率是「衰退發生前，倒掛有沒有先出現過」（反向召回率）。合併池精確率 43.2%，召回率 74.6%，這節看兩者是不是同時高，還是只有一邊高。</div>
 <div class="chart-wrap" style="height:380px"><canvas id="chart2"></canvas></div>
 <div class="note">右上角代表精確率、召回率都高，訊號可靠又不太漏接。右下角代表出現倒掛通常真的衰退，但很多次衰退發生前倒掛沒先出現，訊號漏接率高。左邊代表出現倒掛不一定準。</div>
-
 <div class="note">英國、加拿大、澳洲、南韓落在精確率低、召回率不低的區域，出現倒掛不一定準，但衰退發生前多半出現過倒掛。日本、台灣召回率低於五成，代表這些國家一半以上的衰退發生前 24 個月內沒出現過倒掛，倒掛不是這些國家衰退的必要條件。</div><script>
 new Chart(document.getElementById('chart2'), {
   type:'scatter',
@@ -295,8 +368,6 @@ new Chart(document.getElementById('chart2'), {
 });
 </script>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">三、深倒掛命中率 45.8%、淺倒掛 38.5%，信賴區間重疊，深淺分不出命中與落空</h2>
 <div class="takeaway">合併池所有可判定事件（排除已在衰退中與未到期）共 74 筆，依最深利差（≤-0.5pp 為深）與倒掛月數（≥3 個月為長）分成 2×2 四格，這節直接看數字說什麼，不預設「越深越準」一定成立，也用信賴區間檢查差距是不是雜訊。</div>
@@ -305,7 +376,7 @@ new Chart(document.getElementById('chart2'), {
 <div class="scroll"><table><thead><tr><th>深度</th><th>持續</th>
 <th class="num">事件數</th><th class="num">命中數</th><th class="num">命中率</th>
 <th class="num">命中率 95% CI</th></tr></thead>
-<tbody><tr><td class='lbl'>深倒掛（≤-0.50pp）</td><td>長（≥3個月）</td><td class='num'>48</td><td class='num'>22</td><td class='num'>45.8%</td><td class='num'>33–60%</td></tr><tr><td class='lbl'>深倒掛（≤-0.50pp）</td><td>短（&lt;3個月）</td><td class='num'>0</td><td class='num'>0</td><td class='num'>—</td><td class='num'>—</td></tr><tr><td class='lbl'>淺倒掛（&gt;-0.50pp）</td><td>長（≥3個月）</td><td class='num'>18</td><td class='num'>6</td><td class='num'>33.3%</td><td class='num'>16–56%</td></tr><tr><td class='lbl'>淺倒掛（&gt;-0.50pp）</td><td>短（&lt;3個月）</td><td class='num'>8</td><td class='num'>4</td><td class='num'>50.0%</td><td class='num'>22–78%</td></tr><tr><td class='lbl'><b>深倒掛合計</b></td><td>—</td><td class='num'>48</td><td class='num'>22</td><td class='num'><b>45.8%</b></td><td class='num'>33–60%</td></tr><tr><td class='lbl'><b>淺倒掛合計</b></td><td>—</td><td class='num'>26</td><td class='num'>10</td><td class='num'><b>38.5%</b></td><td class='num'>22–57%</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">深倒掛（≤-0.50pp）</td><td>長（≥3個月）</td><td class="num">48</td><td class="num">22</td><td class="num">45.8%</td><td class="num">33–60%</td></tr><tr><td class="lbl">深倒掛（≤-0.50pp）</td><td>短（&lt;3個月）</td><td class="num">0</td><td class="num">0</td><td class="num">—</td><td class="num">—</td></tr><tr><td class="lbl">淺倒掛（&gt;-0.50pp）</td><td>長（≥3個月）</td><td class="num">18</td><td class="num">6</td><td class="num">33.3%</td><td class="num">16–56%</td></tr><tr><td class="lbl">淺倒掛（&gt;-0.50pp）</td><td>短（&lt;3個月）</td><td class="num">8</td><td class="num">4</td><td class="num">50.0%</td><td class="num">22–78%</td></tr><tr><td class="lbl"><b>深倒掛合計</b></td><td>—</td><td class="num">48</td><td class="num">22</td><td class="num"><b>45.8%</b></td><td class="num">33–60%</td></tr><tr><td class="lbl"><b>淺倒掛合計</b></td><td>—</td><td class="num">26</td><td class="num">10</td><td class="num"><b>38.5%</b></td><td class="num">22–57%</td></tr></tbody></table></div>
 <div class="note">深倒掛（48 筆）命中率 45.8%，95% 信賴區間是 33–60%。淺倒掛（26 筆）命中率 38.5%，95% 信賴區間是 22–57%，兩個區間大幅重疊，這個樣本數還不能斷言深倒掛比淺倒掛準。淺倒掛內部再拆長短（50.0% 對 33.3%）的樣本更小，分母只有 8 跟 18，差距同樣落在雜訊範圍，不當成論點。深度是事件當下就看得到的訊號，持續月數要等事件結束才知道，這兩件事本來就該分開看，不代表兩者現在測出顯著差異。</div><script>
 new Chart(document.getElementById('chart3'), {
   type:'scatter',
@@ -317,8 +388,6 @@ new Chart(document.getElementById('chart3'), {
 });
 </script>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">四、倒掛之後第 10 個月，累積命中率才明顯超過基率</h2>
 <div class="takeaway">累積命中曲線回答「等到第 k 個月，命中率累積到多少」，跟表 1 只報 24 個月內一個數字不同。合併池在第 24 個月累積命中率 42.5%（73 筆），第 36 個月累積命中率 46.6%（73 筆）。</div>
@@ -328,7 +397,7 @@ new Chart(document.getElementById('chart3'), {
 <div class="note">每個點是一次命中事件，x 軸是倒掛起點到衰退起點的月數。垂直虛線是合併池中位數（10 個月）。點越分散，代表前置期越不穩定，不能拿單一次經驗當時間表。</div>
 <div class="scroll"><table><thead><tr><th>視窗</th>
 <th class="num">合併池命中率</th><th class="num">合併池基率</th><th class="num">提升倍數</th></tr></thead>
-<tbody><tr><td class='lbl'>H=6</td><td class='num'>8.9%</td><td class='num'>7.0%</td><td class='num'>1.3</td></tr><tr><td class='lbl'>H=12</td><td class='num'>21.8%</td><td class='num'>14.0%</td><td class='num'>1.6</td></tr><tr><td class='lbl'>H=18</td><td class='num'>33.3%</td><td class='num'>20.6%</td><td class='num'>1.6</td></tr><tr><td class='lbl'>H=24</td><td class='num'>43.2%</td><td class='num'>26.5%</td><td class='num'>1.6</td></tr><tr><td class='lbl'>H=36</td><td class='num'>47.3%</td><td class='num'>37.1%</td><td class='num'>1.3</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">H=6</td><td class="num">8.9%</td><td class="num">7.0%</td><td class="num">1.3</td></tr><tr><td class="lbl">H=12</td><td class="num">21.8%</td><td class="num">14.0%</td><td class="num">1.6</td></tr><tr><td class="lbl">H=18</td><td class="num">33.3%</td><td class="num">20.6%</td><td class="num">1.6</td></tr><tr><td class="lbl">H=24</td><td class="num">43.2%</td><td class="num">26.5%</td><td class="num">1.6</td></tr><tr><td class="lbl">H=36</td><td class="num">47.3%</td><td class="num">37.1%</td><td class="num">1.3</td></tr></tbody></table></div>
 <div class="note">累積曲線在 24 到 36 個月之間已經接近打平，拉長窗口邊際貢獻有限。</div>
 <script>
 new Chart(document.getElementById('chart4'), {
@@ -352,8 +421,6 @@ new Chart(document.getElementById('chart5'), {
 });
 </script>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">五、美國曲線精確率比 6 個國家自己的曲線更高，召回率沒有一致更好</h2>
 <div class="takeaway">這節先看時間軸上倒掛事件是不是同時出現在多個國家，再直接測試：拿美國的利差曲線去預測其他七國的衰退，精確率與召回率會不會比該國自己的曲線更高。只比精確率會偏向美國（美國事件少、分母小，精確率天生容易高），所以兩個指標並列，才能判斷驅動這些國家倒掛的是不是同一個全球流動性循環。</div>
@@ -365,7 +432,7 @@ new Chart(document.getElementById('chart5'), {
 <th class="num">自己曲線 n</th><th class="num">自己曲線精確率</th>
 <th class="num">美國曲線 n</th><th class="num">美國曲線精確率</th><th class="num">精確率差</th>
 <th class="num">自己曲線召回率</th><th class="num">美國曲線召回率</th><th class="num">召回率差</th></tr></thead>
-<tbody><tr><td class='lbl'>德國</td><td class='num'>10</td><td class='num'>80.0%</td><td class='num'>7</td><td class='num'>100.0%</td><td class='num'>+0.20pp</td><td class='num'>84.6%</td><td class='num'>69.2%</td><td class='num'>-0.15pp</td></tr><tr><td class='lbl'>英國</td><td class='num'>14</td><td class='num'>42.9%</td><td class='num'>9</td><td class='num'>66.7%</td><td class='num'>+0.24pp</td><td class='num'>88.9%</td><td class='num'>77.8%</td><td class='num'>-0.11pp</td></tr><tr><td class='lbl'>日本</td><td class='num'>3</td><td class='num'>0.0%</td><td class='num'>3</td><td class='num'>66.7%</td><td class='num'>+0.67pp</td><td class='num'>0.0%</td><td class='num'>50.0%</td><td class='num'>+0.50pp</td></tr><tr><td class='lbl'>加拿大</td><td class='num'>16</td><td class='num'>31.2%</td><td class='num'>10</td><td class='num'>50.0%</td><td class='num'>+0.19pp</td><td class='num'>85.7%</td><td class='num'>85.7%</td><td class='num'>0.00pp</td></tr><tr><td class='lbl'>澳洲</td><td class='num'>16</td><td class='num'>25.0%</td><td class='num'>8</td><td class='num'>37.5%</td><td class='num'>+0.12pp</td><td class='num'>100.0%</td><td class='num'>85.7%</td><td class='num'>-0.14pp</td></tr><tr><td class='lbl'>南韓</td><td class='num'>4</td><td class='num'>25.0%</td><td class='num'>3</td><td class='num'>33.3%</td><td class='num'>+0.08pp</td><td class='num'>100.0%</td><td class='num'>100.0%</td><td class='num'>0.00pp</td></tr><tr><td class='lbl'>台灣</td><td class='num'>1</td><td class='num'>100.0%</td><td class='num'>3</td><td class='num'>100.0%</td><td class='num'>0.00pp</td><td class='num'>20.0%</td><td class='num'>60.0%</td><td class='num'>+0.40pp</td></tr><tr><td class='lbl'><b>合併池（不含美國）</b></td><td class='num'>64</td><td class='num'>39.1%</td><td class='num'>43</td><td class='num'>62.8%</td><td class='num'>+0.24pp</td><td class='num'>73.9%</td><td class='num'>73.9%</td><td class='num'>0.00pp</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">德國</td><td class="num">10</td><td class="num">80.0%</td><td class="num">7</td><td class="num">100.0%</td><td class="num">+0.20pp</td><td class="num">84.6%</td><td class="num">69.2%</td><td class="num">-0.15pp</td></tr><tr><td class="lbl">英國</td><td class="num">14</td><td class="num">42.9%</td><td class="num">9</td><td class="num">66.7%</td><td class="num">+0.24pp</td><td class="num">88.9%</td><td class="num">77.8%</td><td class="num">-0.11pp</td></tr><tr><td class="lbl">日本</td><td class="num">3</td><td class="num">0.0%</td><td class="num">3</td><td class="num">66.7%</td><td class="num">+0.67pp</td><td class="num">0.0%</td><td class="num">50.0%</td><td class="num">+0.50pp</td></tr><tr><td class="lbl">加拿大</td><td class="num">16</td><td class="num">31.2%</td><td class="num">10</td><td class="num">50.0%</td><td class="num">+0.19pp</td><td class="num">85.7%</td><td class="num">85.7%</td><td class="num">0.00pp</td></tr><tr><td class="lbl">澳洲</td><td class="num">16</td><td class="num">25.0%</td><td class="num">8</td><td class="num">37.5%</td><td class="num">+0.12pp</td><td class="num">100.0%</td><td class="num">85.7%</td><td class="num">-0.14pp</td></tr><tr><td class="lbl">南韓</td><td class="num">4</td><td class="num">25.0%</td><td class="num">3</td><td class="num">33.3%</td><td class="num">+0.08pp</td><td class="num">100.0%</td><td class="num">100.0%</td><td class="num">0.00pp</td></tr><tr><td class="lbl">台灣</td><td class="num">1</td><td class="num">100.0%</td><td class="num">3</td><td class="num">100.0%</td><td class="num">0.00pp</td><td class="num">20.0%</td><td class="num">60.0%</td><td class="num">+0.40pp</td></tr><tr><td class="lbl"><b>合併池（不含美國）</b></td><td class="num">64</td><td class="num">39.1%</td><td class="num">43</td><td class="num">62.8%</td><td class="num">+0.24pp</td><td class="num">73.9%</td><td class="num">73.9%</td><td class="num">0.00pp</td></tr></tbody></table></div>
 <div class="note">同一年至少五國同時處於倒掛事件中的情況出現過 13 次，集中在幾波全球循環：1970 年、1973 至 1974 年、1979 至 1980 年、1989 年、2000 至 2001 年、2007 年、2019 至 2020 年、2023 至 2024 年，不是平均分散在整段樣本期間。精確率上，德國、英國、日本、加拿大、澳洲、南韓用美國曲線比用自己的曲線高。召回率上，日本、台灣用美國曲線比用自己的曲線高，其餘國家用自己的曲線召回率更高或打平。</div>
 <script>
 new Chart(document.getElementById('chart6'), {
@@ -393,14 +460,11 @@ new Chart(document.getElementById('chart7'), {
 });
 </script>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">六、2000 年前後看不出訊號明顯變鈍，合併池信賴區間大幅重疊</h2>
 <div class="takeaway">合併池事件依起點分成 2000 年以前與以後兩組，各自算 24 個月內的命中率與同期基率，再用 95% 信賴區間檢查差距是不是雜訊。2000 年以前 42 筆，2000 年以後 32 筆，這節只報數字，QE 年代利差被壓低是常見的解釋，這裡不下因果結論。</div>
 <div class="chart-wrap" style="height:340px"><canvas id="chart8"></canvas></div>
 <div class="note">四條長條左半是合併池，右半是美國單獨算的，每組左邊命中率、右邊基率，2000 年以前對照 2000 年以後。看的是命中率降了多少、基率是不是同時也降了。</div>
-
 <div class="note">合併池 2000 年以前命中率 45.2%（95% 信賴區間 31–60%），2000 年以後 40.6%（95% 信賴區間 26–58%），兩個區間大幅重疊，這個樣本數看不出訊號明顯變鈍。美國 2000 年以前 6 筆、以後 4 筆，95% 信賴區間分別是 44–97% 與 15–85%，樣本只有個位數，區間寬到不能單獨拿美國的數字下結論。</div><script>
 new Chart(document.getElementById('chart8'), {
   type: 'bar',
@@ -417,8 +481,6 @@ new Chart(document.getElementById('chart8'), {
 });
 </script>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">七、2022 到 2023：八國一起倒掛，兩年後只有 1 國衰退、4 國落空</h2>
 <div class="takeaway">2022 年那一波，多數主要經濟體的利差都一度轉負，這節直接把同一時間點的訊號攤開來看實際結果，不用平均數字掩蓋分歧。</div>
@@ -426,7 +488,7 @@ new Chart(document.getElementById('chart8'), {
 <div class="note">每條線是一國的利差，起自 2021 年 1 月到最新一筆，黑色粗線是 0。跌破 0 代表倒掛，八國幾乎都在 2022 到 2023 年一起跌破，這節接下來看兩年後結果是不是也一樣一致。</div>
 <div class="scroll"><table><thead><tr><th>國家</th><th>倒掛起點</th>
 <th class="num">最深利差</th><th>之後衰退起點</th><th>結果</th></tr></thead>
-<tbody><tr><td class='lbl'>美國</td><td>2022-11</td><td class='num'>-1.71pp</td><td>—</td><td>沒衰退（目前看是落空）</td></tr><tr><td class='lbl'>德國</td><td>2023-01</td><td class='num'>-1.83pp</td><td>—</td><td>起點時已在衰退中</td></tr><tr><td class='lbl'>英國</td><td>2022-11</td><td class='num'>-1.36pp</td><td>2023-07</td><td>衰退了</td></tr><tr><td class='lbl'>加拿大</td><td>2022-08</td><td class='num'>-1.71pp</td><td>—</td><td>沒衰退（目前看是落空）</td></tr><tr><td class='lbl'>澳洲</td><td>2023-03</td><td class='num'>-0.50pp</td><td>—</td><td>沒衰退（目前看是落空）</td></tr><tr><td class='lbl'>南韓</td><td>2022-11</td><td class='num'>-0.51pp</td><td>—</td><td>沒衰退（目前看是落空）</td></tr><tr><td class='lbl'>台灣</td><td>2023-02</td><td class='num'>-0.19pp</td><td>—</td><td>起點時已在衰退中</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">美國</td><td>2022-11</td><td class="num">-1.71pp</td><td>—</td><td>沒衰退（目前看是落空）</td></tr><tr><td class="lbl">德國</td><td>2023-01</td><td class="num">-1.83pp</td><td>—</td><td>起點時已在衰退中</td></tr><tr><td class="lbl">英國</td><td>2022-11</td><td class="num">-1.36pp</td><td>2023-07</td><td>衰退了</td></tr><tr><td class="lbl">加拿大</td><td>2022-08</td><td class="num">-1.71pp</td><td>—</td><td>沒衰退（目前看是落空）</td></tr><tr><td class="lbl">澳洲</td><td>2023-03</td><td class="num">-0.50pp</td><td>—</td><td>沒衰退（目前看是落空）</td></tr><tr><td class="lbl">南韓</td><td>2022-11</td><td class="num">-0.51pp</td><td>—</td><td>沒衰退（目前看是落空）</td></tr><tr><td class="lbl">台灣</td><td>2023-02</td><td class="num">-0.19pp</td><td>—</td><td>起點時已在衰退中</td></tr></tbody></table></div>
 <div class="note">這張表只做訊號與結果的對帳，不解釋「為什麼有的國家躲過去了」，那要另外查財政刺激、就業市場緊俏程度這類傳導管道，這裡不做因果推論。</div><script>
 new Chart(document.getElementById('chart9'), {
   type: 'line',
@@ -437,19 +499,14 @@ new Chart(document.getElementById('chart9'), {
 });
 </script>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">八、台灣有 2／4 次倒掛是衰退先到才出現</h2>
 <div class="takeaway">每個國家的倒掛事件裡，有多少次是「事件起點當下已經在衰退中」，這種事件不算命中也不算落空，但對「倒掛能不能預示衰退」是負面訊息。曲線那時候已經跟著景氣走，不是先行指標。</div>
 <div class="scroll"><table><thead><tr><th>國家</th>
 <th class="num">已在衰退中次數</th><th class="num">事件總數</th><th class="num">比例</th></tr></thead>
-<tbody><tr><td class='lbl'>美國</td><td class='num'>0</td><td class='num'>11</td><td class='num'>0.0%</td></tr><tr><td class='lbl'>德國</td><td class='num'>2</td><td class='num'>12</td><td class='num'>16.7%</td></tr><tr><td class='lbl'>英國</td><td class='num'>3</td><td class='num'>18</td><td class='num'>16.7%</td></tr><tr><td class='lbl'>日本</td><td class='num'>0</td><td class='num'>3</td><td class='num'>0.0%</td></tr><tr><td class='lbl'>加拿大</td><td class='num'>1</td><td class='num'>18</td><td class='num'>5.6%</td></tr><tr><td class='lbl'>澳洲</td><td class='num'>2</td><td class='num'>18</td><td class='num'>11.1%</td></tr><tr><td class='lbl'>南韓</td><td class='num'>0</td><td class='num'>5</td><td class='num'>0.0%</td></tr><tr><td class='lbl'>台灣</td><td class='num'>2</td><td class='num'>4</td><td class='num'>50.0%</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">美國</td><td class="num">0</td><td class="num">11</td><td class="num">0.0%</td></tr><tr><td class="lbl">德國</td><td class="num">2</td><td class="num">12</td><td class="num">16.7%</td></tr><tr><td class="lbl">英國</td><td class="num">3</td><td class="num">18</td><td class="num">16.7%</td></tr><tr><td class="lbl">日本</td><td class="num">0</td><td class="num">3</td><td class="num">0.0%</td></tr><tr><td class="lbl">加拿大</td><td class="num">1</td><td class="num">18</td><td class="num">5.6%</td></tr><tr><td class="lbl">澳洲</td><td class="num">2</td><td class="num">18</td><td class="num">11.1%</td></tr><tr><td class="lbl">南韓</td><td class="num">0</td><td class="num">5</td><td class="num">0.0%</td></tr><tr><td class="lbl">台灣</td><td class="num">2</td><td class="num">4</td><td class="num">50.0%</td></tr></tbody></table></div>
 <div class="note">德國（2／12）、英國（3／18）、加拿大（1／18）、澳洲（2／18）、台灣（2／4）出現過起點時已在衰退中的事件，這幾個國家的倒掛訊號在這幾次是同時指標而非領先指標。</div>
-
 </div>
-
-
 <div class="section">
 <h2 class="section-title">九、換一種衰退定義後命中率全面上升，美國的提升倍數仍是八國第一，其餘排序不穩</h2>
 <div class="takeaway">主線用定義 A（技術性衰退），這節把每國換成對照定義（美國換 NBER、台灣換國發會峰谷、其餘六國換 OECD 指標）重算一次命中率與提升倍數（命中率÷該定義自己的基率），看的不只是命中率會不會變，還有換一種定義後國家之間的排序穩不穩。</div>
@@ -459,7 +516,7 @@ new Chart(document.getElementById('chart9'), {
 <th class="num">定義 A 提升倍數</th><th>對照定義</th><th class="num">對照定義命中率</th>
 <th class="num">對照定義提升倍數</th><th class="num">命中率差（對照−A）</th>
 <th class="num">提升倍數排名（A→對照）</th></tr></thead>
-<tbody><tr><td class='lbl'>美國</td><td class='num'>70.0%</td><td class='num'>3.16</td><td>定義 C（NBER）</td><td class='num'>80.0%</td><td class='num'>2.89</td><td class='num'>+0.10pp</td><td class='num'>1 → 1</td></tr><tr><td class='lbl'>德國</td><td class='num'>80.0%</td><td class='num'>1.85</td><td>定義 B（OECD）</td><td class='num'>100.0%</td><td class='num'>2.45</td><td class='num'>+0.20pp</td><td class='num'>4 → 2</td></tr><tr><td class='lbl'>英國</td><td class='num'>42.9%</td><td class='num'>1.64</td><td>定義 B（OECD）</td><td class='num'>77.8%</td><td class='num'>2.14</td><td class='num'>+0.35pp</td><td class='num'>5 → 4</td></tr><tr><td class='lbl'>日本</td><td class='num'>0.0%</td><td class='num'>0.00</td><td>定義 B（OECD）</td><td class='num'>100.0%</td><td class='num'>2.30</td><td class='num'>+1.00pp</td><td class='num'>8 → 3</td></tr><tr><td class='lbl'>加拿大</td><td class='num'>31.2%</td><td class='num'>1.49</td><td>定義 B（OECD）</td><td class='num'>90.0%</td><td class='num'>1.82</td><td class='num'>+0.59pp</td><td class='num'>6 → 7</td></tr><tr><td class='lbl'>澳洲</td><td class='num'>25.0%</td><td class='num'>1.08</td><td>定義 B（OECD）</td><td class='num'>81.8%</td><td class='num'>1.69</td><td class='num'>+0.57pp</td><td class='num'>7 → 8</td></tr><tr><td class='lbl'>南韓</td><td class='num'>25.0%</td><td class='num'>2.95</td><td>定義 B（OECD）</td><td class='num'>100.0%</td><td class='num'>2.03</td><td class='num'>+0.75pp</td><td class='num'>2 → 6</td></tr><tr><td class='lbl'>台灣</td><td class='num'>100.0%</td><td class='num'>2.78</td><td>定義 T（國發會峰谷）</td><td class='num'>100.0%</td><td class='num'>2.04</td><td class='num'>0.00pp</td><td class='num'>3 → 5</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">美國</td><td class="num">70.0%</td><td class="num">3.16</td><td>定義 C（NBER）</td><td class="num">80.0%</td><td class="num">2.89</td><td class="num">+0.10pp</td><td class="num">1 → 1</td></tr><tr><td class="lbl">德國</td><td class="num">80.0%</td><td class="num">1.85</td><td>定義 B（OECD）</td><td class="num">100.0%</td><td class="num">2.45</td><td class="num">+0.20pp</td><td class="num">4 → 2</td></tr><tr><td class="lbl">英國</td><td class="num">42.9%</td><td class="num">1.64</td><td>定義 B（OECD）</td><td class="num">77.8%</td><td class="num">2.14</td><td class="num">+0.35pp</td><td class="num">5 → 4</td></tr><tr><td class="lbl">日本</td><td class="num">0.0%</td><td class="num">0.00</td><td>定義 B（OECD）</td><td class="num">100.0%</td><td class="num">2.30</td><td class="num">+1.00pp</td><td class="num">8 → 3</td></tr><tr><td class="lbl">加拿大</td><td class="num">31.2%</td><td class="num">1.49</td><td>定義 B（OECD）</td><td class="num">90.0%</td><td class="num">1.82</td><td class="num">+0.59pp</td><td class="num">6 → 7</td></tr><tr><td class="lbl">澳洲</td><td class="num">25.0%</td><td class="num">1.08</td><td>定義 B（OECD）</td><td class="num">81.8%</td><td class="num">1.69</td><td class="num">+0.57pp</td><td class="num">7 → 8</td></tr><tr><td class="lbl">南韓</td><td class="num">25.0%</td><td class="num">2.95</td><td>定義 B（OECD）</td><td class="num">100.0%</td><td class="num">2.03</td><td class="num">+0.75pp</td><td class="num">2 → 6</td></tr><tr><td class="lbl">台灣</td><td class="num">100.0%</td><td class="num">2.78</td><td>定義 T（國發會峰谷）</td><td class="num">100.0%</td><td class="num">2.04</td><td class="num">0.00pp</td><td class="num">3 → 5</td></tr></tbody></table></div>
 <div class="note">八國換成對照定義後命中率沒有一個下降，六個 OECD 對照國的命中率普遍上升，因為官方指標抓的是景氣循環下行段，觸發得比技術性衰退頻繁，基率也跟著墊高。美國換成 NBER 之後提升倍數仍是八國最高，兩種定義排名都是第一，這個結論穩。其餘七國的提升倍數排名幾乎都跟著換定義變動，最大一次是日本，從第 8 名換到第 3 名，差別來自分母太小：日本定義 A 下的事件數只有 3 筆，樣本小到任何一種定義都可能把排名整個翻轉。南韓的事件數也只有個位數，同樣要打折看。台灣換成國發會峰谷後樣本窗更長，看到的事件不是同一組，命中率差不能直接相減比較，只能各自看提升倍數。</div><script>
 new Chart(document.getElementById('chart10'), {
   type: 'bar',
@@ -476,8 +533,6 @@ new Chart(document.getElementById('chart10'), {
 });
 </script>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">十、各國利差全史：灰底是技術性衰退</h2>
 <div class="takeaway">前九節都是統計摘要，這節把每個國家的利差原始序列整段畫出來，附錄性質，供對照查核，不對應單一論點。</div>
@@ -597,8 +652,6 @@ new Chart(document.getElementById('chart-tw'), {
 });
 </script>
 </div>
-
-
 <div class="section">
 <details>
 <summary style="cursor:pointer;font-weight:700;font-size:1.02rem;padding:.4rem 0">
@@ -608,48 +661,43 @@ new Chart(document.getElementById('chart-tw'), {
 <h4 style="font-size:.88rem;margin:1rem 0 .5rem">美國</h4>
 <div class="scroll"><table><thead><tr><th>起點</th><th class="num">最深利差</th>
 <th class="num">倒掛月數</th><th>之後衰退起點</th><th class="num">前置月數</th><th>判定</th></tr></thead>
-<tbody><tr><td>1966-01</td><td class='num'>-0.49pp</td><td class='num'>7</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1968-12</td><td class='num'>-0.51pp</td><td class='num'>13</td><td>1969-10</td><td class='num'>10</td><td>命中</td></tr><tr><td>1973-06</td><td class='num'>-1.59pp</td><td class='num'>16</td><td>1974-07</td><td class='num'>13</td><td>命中</td></tr><tr><td>1978-11</td><td class='num'>-3.28pp</td><td class='num'>20</td><td>1980-04</td><td class='num'>17</td><td>命中</td></tr><tr><td>1980-12</td><td class='num'>-3.51pp</td><td class='num'>10</td><td>1981-10</td><td class='num'>10</td><td>命中</td></tr><tr><td>1989-06</td><td class='num'>-0.16pp</td><td class='num'>5</td><td>1990-10</td><td class='num'>16</td><td>命中</td></tr><tr><td>2000-07</td><td class='num'>-0.70pp</td><td class='num'>7</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2006-08</td><td class='num'>-0.51pp</td><td class='num'>10</td><td>2008-07</td><td class='num'>23</td><td>命中</td></tr><tr><td>2019-06</td><td class='num'>-0.36pp</td><td class='num'>5</td><td>2020-01</td><td class='num'>7</td><td>命中</td></tr><tr><td>2022-11</td><td class='num'>-1.71pp</td><td class='num'>25</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2025-03</td><td class='num'>-0.03pp</td><td class='num'>2</td><td>—</td><td class='num'>—</td><td>未到期</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">德國</h4>
+<tbody><tr><td>1966-01</td><td class="num">-0.49pp</td><td class="num">7</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1968-12</td><td class="num">-0.51pp</td><td class="num">13</td><td>1969-10</td><td class="num">10</td><td>命中</td></tr><tr><td>1973-06</td><td class="num">-1.59pp</td><td class="num">16</td><td>1974-07</td><td class="num">13</td><td>命中</td></tr><tr><td>1978-11</td><td class="num">-3.28pp</td><td class="num">20</td><td>1980-04</td><td class="num">17</td><td>命中</td></tr><tr><td>1980-12</td><td class="num">-3.51pp</td><td class="num">10</td><td>1981-10</td><td class="num">10</td><td>命中</td></tr><tr><td>1989-06</td><td class="num">-0.16pp</td><td class="num">5</td><td>1990-10</td><td class="num">16</td><td>命中</td></tr><tr><td>2000-07</td><td class="num">-0.70pp</td><td class="num">7</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2006-08</td><td class="num">-0.51pp</td><td class="num">10</td><td>2008-07</td><td class="num">23</td><td>命中</td></tr><tr><td>2019-06</td><td class="num">-0.36pp</td><td class="num">5</td><td>2020-01</td><td class="num">7</td><td>命中</td></tr><tr><td>2022-11</td><td class="num">-1.71pp</td><td class="num">25</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2025-03</td><td class="num">-0.03pp</td><td class="num">2</td><td>—</td><td class="num">—</td><td>未到期</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">德國</h4>
 <div class="scroll"><table><thead><tr><th>起點</th><th class="num">最深利差</th>
 <th class="num">倒掛月數</th><th>之後衰退起點</th><th class="num">前置月數</th><th>判定</th></tr></thead>
-<tbody><tr><td>1970-04</td><td class='num'>-1.76pp</td><td class='num'>8</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1973-03</td><td class='num'>-4.79pp</td><td class='num'>13</td><td>1974-10</td><td class='num'>19</td><td>命中</td></tr><tr><td>1979-09</td><td class='num'>-3.40pp</td><td class='num'>25</td><td>1980-04</td><td class='num'>7</td><td>命中</td></tr><tr><td>1981-10</td><td class='num'>-1.58pp</td><td class='num'>10</td><td>1982-04</td><td class='num'>6</td><td>命中</td></tr><tr><td>1989-06</td><td class='num'>-0.93pp</td><td class='num'>15</td><td>1991-04</td><td class='num'>22</td><td>命中</td></tr><tr><td>1991-07</td><td class='num'>-1.85pp</td><td class='num'>25</td><td>—</td><td class='num'>—</td><td>已在衰退中</td></tr><tr><td>1993-08</td><td class='num'>-0.66pp</td><td class='num'>6</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2000-12</td><td class='num'>-0.05pp</td><td class='num'>2</td><td>2001-04</td><td class='num'>4</td><td>命中</td></tr><tr><td>2007-08</td><td class='num'>-1.23pp</td><td class='num'>17</td><td>2008-04</td><td class='num'>8</td><td>命中</td></tr><tr><td>2019-07</td><td class='num'>-0.24pp</td><td class='num'>16</td><td>2019-10</td><td class='num'>3</td><td>命中</td></tr><tr><td>2023-01</td><td class='num'>-1.83pp</td><td class='num'>25</td><td>—</td><td class='num'>—</td><td>已在衰退中</td></tr><tr><td>2025-02</td><td class='num'>-0.12pp</td><td class='num'>1</td><td>2025-04</td><td class='num'>2</td><td>命中</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">英國</h4>
+<tbody><tr><td>1970-04</td><td class="num">-1.76pp</td><td class="num">8</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1973-03</td><td class="num">-4.79pp</td><td class="num">13</td><td>1974-10</td><td class="num">19</td><td>命中</td></tr><tr><td>1979-09</td><td class="num">-3.40pp</td><td class="num">25</td><td>1980-04</td><td class="num">7</td><td>命中</td></tr><tr><td>1981-10</td><td class="num">-1.58pp</td><td class="num">10</td><td>1982-04</td><td class="num">6</td><td>命中</td></tr><tr><td>1989-06</td><td class="num">-0.93pp</td><td class="num">15</td><td>1991-04</td><td class="num">22</td><td>命中</td></tr><tr><td>1991-07</td><td class="num">-1.85pp</td><td class="num">25</td><td>—</td><td class="num">—</td><td>已在衰退中</td></tr><tr><td>1993-08</td><td class="num">-0.66pp</td><td class="num">6</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2000-12</td><td class="num">-0.05pp</td><td class="num">2</td><td>2001-04</td><td class="num">4</td><td>命中</td></tr><tr><td>2007-08</td><td class="num">-1.23pp</td><td class="num">17</td><td>2008-04</td><td class="num">8</td><td>命中</td></tr><tr><td>2019-07</td><td class="num">-0.24pp</td><td class="num">16</td><td>2019-10</td><td class="num">3</td><td>命中</td></tr><tr><td>2023-01</td><td class="num">-1.83pp</td><td class="num">25</td><td>—</td><td class="num">—</td><td>已在衰退中</td></tr><tr><td>2025-02</td><td class="num">-0.12pp</td><td class="num">1</td><td>2025-04</td><td class="num">2</td><td>命中</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">英國</h4>
 <div class="scroll"><table><thead><tr><th>起點</th><th class="num">最深利差</th>
 <th class="num">倒掛月數</th><th>之後衰退起點</th><th class="num">前置月數</th><th>判定</th></tr></thead>
-<tbody><tr><td>1961-08</td><td class='num'>-0.22pp</td><td class='num'>3</td><td>—</td><td class='num'>—</td><td>已在衰退中</td></tr><tr><td>1964-12</td><td class='num'>-0.49pp</td><td class='num'>10</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1967-01</td><td class='num'>-0.48pp</td><td class='num'>7</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1969-10</td><td class='num'>-0.19pp</td><td class='num'>3</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1973-02</td><td class='num'>-1.33pp</td><td class='num'>11</td><td>1973-07</td><td class='num'>5</td><td>命中</td></tr><tr><td>1979-04</td><td class='num'>-2.66pp</td><td class='num'>20</td><td>1980-01</td><td class='num'>9</td><td>命中</td></tr><tr><td>1985-02</td><td class='num'>-2.09pp</td><td class='num'>24</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1987-03</td><td class='num'>-3.34pp</td><td class='num'>13</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1989-04</td><td class='num'>-4.62pp</td><td class='num'>25</td><td>1990-07</td><td class='num'>15</td><td>命中</td></tr><tr><td>1991-05</td><td class='num'>-1.26pp</td><td class='num'>17</td><td>—</td><td class='num'>—</td><td>已在衰退中</td></tr><tr><td>1997-08</td><td class='num'>-2.32pp</td><td class='num'>23</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1999-10</td><td class='num'>-1.04pp</td><td class='num'>23</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2004-09</td><td class='num'>-0.56pp</td><td class='num'>25</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2006-10</td><td class='num'>-1.68pp</td><td class='num'>25</td><td>2008-04</td><td class='num'>18</td><td>命中</td></tr><tr><td>2008-11</td><td class='num'>-0.19pp</td><td class='num'>1</td><td>—</td><td class='num'>—</td><td>已在衰退中</td></tr><tr><td>2019-08</td><td class='num'>-0.29pp</td><td class='num'>9</td><td>2020-01</td><td class='num'>5</td><td>命中</td></tr><tr><td>2022-11</td><td class='num'>-1.36pp</td><td class='num'>25</td><td>2023-07</td><td class='num'>8</td><td>命中</td></tr><tr><td>2024-12</td><td class='num'>-0.21pp</td><td class='num'>1</td><td>—</td><td class='num'>—</td><td>未到期</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">日本</h4>
+<tbody><tr><td>1961-08</td><td class="num">-0.22pp</td><td class="num">3</td><td>—</td><td class="num">—</td><td>已在衰退中</td></tr><tr><td>1964-12</td><td class="num">-0.49pp</td><td class="num">10</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1967-01</td><td class="num">-0.48pp</td><td class="num">7</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1969-10</td><td class="num">-0.19pp</td><td class="num">3</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1973-02</td><td class="num">-1.33pp</td><td class="num">11</td><td>1973-07</td><td class="num">5</td><td>命中</td></tr><tr><td>1979-04</td><td class="num">-2.66pp</td><td class="num">20</td><td>1980-01</td><td class="num">9</td><td>命中</td></tr><tr><td>1985-02</td><td class="num">-2.09pp</td><td class="num">24</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1987-03</td><td class="num">-3.34pp</td><td class="num">13</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1989-04</td><td class="num">-4.62pp</td><td class="num">25</td><td>1990-07</td><td class="num">15</td><td>命中</td></tr><tr><td>1991-05</td><td class="num">-1.26pp</td><td class="num">17</td><td>—</td><td class="num">—</td><td>已在衰退中</td></tr><tr><td>1997-08</td><td class="num">-2.32pp</td><td class="num">23</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1999-10</td><td class="num">-1.04pp</td><td class="num">23</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2004-09</td><td class="num">-0.56pp</td><td class="num">25</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2006-10</td><td class="num">-1.68pp</td><td class="num">25</td><td>2008-04</td><td class="num">18</td><td>命中</td></tr><tr><td>2008-11</td><td class="num">-0.19pp</td><td class="num">1</td><td>—</td><td class="num">—</td><td>已在衰退中</td></tr><tr><td>2019-08</td><td class="num">-0.29pp</td><td class="num">9</td><td>2020-01</td><td class="num">5</td><td>命中</td></tr><tr><td>2022-11</td><td class="num">-1.36pp</td><td class="num">25</td><td>2023-07</td><td class="num">8</td><td>命中</td></tr><tr><td>2024-12</td><td class="num">-0.21pp</td><td class="num">1</td><td>—</td><td class="num">—</td><td>未到期</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">日本</h4>
 <div class="scroll"><table><thead><tr><th>起點</th><th class="num">最深利差</th>
 <th class="num">倒掛月數</th><th>之後衰退起點</th><th class="num">前置月數</th><th>判定</th></tr></thead>
-<tbody><tr><td>2016-01</td><td class='num'>-0.29pp</td><td class='num'>18</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2018-02</td><td class='num'>-0.29pp</td><td class='num'>21</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2020-03</td><td class='num'>-0.00pp</td><td class='num'>2</td><td>—</td><td class='num'>—</td><td>落空</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">加拿大</h4>
+<tbody><tr><td>2016-01</td><td class="num">-0.29pp</td><td class="num">18</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2018-02</td><td class="num">-0.29pp</td><td class="num">21</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2020-03</td><td class="num">-0.00pp</td><td class="num">2</td><td>—</td><td class="num">—</td><td>落空</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">加拿大</h4>
 <div class="scroll"><table><thead><tr><th>起點</th><th class="num">最深利差</th>
 <th class="num">倒掛月數</th><th>之後衰退起點</th><th class="num">前置月數</th><th>判定</th></tr></thead>
-<tbody><tr><td>1962-07</td><td class='num'>-0.29pp</td><td class='num'>3</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1965-11</td><td class='num'>-0.82pp</td><td class='num'>19</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1967-12</td><td class='num'>-0.84pp</td><td class='num'>16</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1970-01</td><td class='num'>-0.72pp</td><td class='num'>3</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1973-08</td><td class='num'>-2.91pp</td><td class='num'>18</td><td>1974-10</td><td class='num'>14</td><td>命中</td></tr><tr><td>1976-03</td><td class='num'>-0.40pp</td><td class='num'>8</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1978-09</td><td class='num'>-3.57pp</td><td class='num'>22</td><td>1980-04</td><td class='num'>19</td><td>命中</td></tr><tr><td>1980-11</td><td class='num'>-5.56pp</td><td class='num'>19</td><td>1981-07</td><td class='num'>8</td><td>命中</td></tr><tr><td>1986-01</td><td class='num'>-1.76pp</td><td class='num'>4</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1988-09</td><td class='num'>-3.08pp</td><td class='num'>25</td><td>1990-04</td><td class='num'>19</td><td>命中</td></tr><tr><td>1990-10</td><td class='num'>-1.80pp</td><td class='num'>7</td><td>—</td><td class='num'>—</td><td>已在衰退中</td></tr><tr><td>1992-12</td><td class='num'>-0.04pp</td><td class='num'>1</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1998-09</td><td class='num'>-0.37pp</td><td class='num'>4</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2000-12</td><td class='num'>-0.12pp</td><td class='num'>1</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2006-09</td><td class='num'>-0.19pp</td><td class='num'>7</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2019-05</td><td class='num'>-0.43pp</td><td class='num'>10</td><td>2020-01</td><td class='num'>8</td><td>命中</td></tr><tr><td>2022-08</td><td class='num'>-1.71pp</td><td class='num'>25</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2024-09</td><td class='num'>-1.10pp</td><td class='num'>4</td><td>—</td><td class='num'>—</td><td>未到期</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">澳洲</h4>
+<tbody><tr><td>1962-07</td><td class="num">-0.29pp</td><td class="num">3</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1965-11</td><td class="num">-0.82pp</td><td class="num">19</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1967-12</td><td class="num">-0.84pp</td><td class="num">16</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1970-01</td><td class="num">-0.72pp</td><td class="num">3</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1973-08</td><td class="num">-2.91pp</td><td class="num">18</td><td>1974-10</td><td class="num">14</td><td>命中</td></tr><tr><td>1976-03</td><td class="num">-0.40pp</td><td class="num">8</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1978-09</td><td class="num">-3.57pp</td><td class="num">22</td><td>1980-04</td><td class="num">19</td><td>命中</td></tr><tr><td>1980-11</td><td class="num">-5.56pp</td><td class="num">19</td><td>1981-07</td><td class="num">8</td><td>命中</td></tr><tr><td>1986-01</td><td class="num">-1.76pp</td><td class="num">4</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1988-09</td><td class="num">-3.08pp</td><td class="num">25</td><td>1990-04</td><td class="num">19</td><td>命中</td></tr><tr><td>1990-10</td><td class="num">-1.80pp</td><td class="num">7</td><td>—</td><td class="num">—</td><td>已在衰退中</td></tr><tr><td>1992-12</td><td class="num">-0.04pp</td><td class="num">1</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1998-09</td><td class="num">-0.37pp</td><td class="num">4</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2000-12</td><td class="num">-0.12pp</td><td class="num">1</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2006-09</td><td class="num">-0.19pp</td><td class="num">7</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2019-05</td><td class="num">-0.43pp</td><td class="num">10</td><td>2020-01</td><td class="num">8</td><td>命中</td></tr><tr><td>2022-08</td><td class="num">-1.71pp</td><td class="num">25</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2024-09</td><td class="num">-1.10pp</td><td class="num">4</td><td>—</td><td class="num">—</td><td>未到期</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">澳洲</h4>
 <div class="scroll"><table><thead><tr><th>起點</th><th class="num">最深利差</th>
 <th class="num">倒掛月數</th><th>之後衰退起點</th><th class="num">前置月數</th><th>判定</th></tr></thead>
-<tbody><tr><td>1969-08</td><td class='num'>-2.25pp</td><td class='num'>12</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1973-05</td><td class='num'>-13.30pp</td><td class='num'>18</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1976-05</td><td class='num'>-1.69pp</td><td class='num'>16</td><td>1977-07</td><td class='num'>14</td><td>命中</td></tr><tr><td>1978-06</td><td class='num'>-2.07pp</td><td class='num'>15</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1980-07</td><td class='num'>-6.19pp</td><td class='num'>18</td><td>1981-10</td><td class='num'>15</td><td>命中</td></tr><tr><td>1982-08</td><td class='num'>-0.86pp</td><td class='num'>6</td><td>—</td><td class='num'>—</td><td>已在衰退中</td></tr><tr><td>1985-01</td><td class='num'>-4.87pp</td><td class='num'>25</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1987-02</td><td class='num'>-2.96pp</td><td class='num'>15</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>1989-03</td><td class='num'>-5.15pp</td><td class='num'>23</td><td>1991-01</td><td class='num'>22</td><td>命中</td></tr><tr><td>1991-04</td><td class='num'>-0.38pp</td><td class='num'>1</td><td>—</td><td class='num'>—</td><td>已在衰退中</td></tr><tr><td>2000-06</td><td class='num'>-0.66pp</td><td class='num'>10</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2004-03</td><td class='num'>-0.52pp</td><td class='num'>20</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2006-04</td><td class='num'>-1.81pp</td><td class='num'>25</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2008-05</td><td class='num'>-1.62pp</td><td class='num'>7</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2011-08</td><td class='num'>-0.68pp</td><td class='num'>16</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2015-01</td><td class='num'>-0.08pp</td><td class='num'>1</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2019-08</td><td class='num'>-0.02pp</td><td class='num'>1</td><td>2020-01</td><td class='num'>5</td><td>命中</td></tr><tr><td>2023-03</td><td class='num'>-0.50pp</td><td class='num'>18</td><td>—</td><td class='num'>—</td><td>落空</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">南韓</h4>
+<tbody><tr><td>1969-08</td><td class="num">-2.25pp</td><td class="num">12</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1973-05</td><td class="num">-13.30pp</td><td class="num">18</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1976-05</td><td class="num">-1.69pp</td><td class="num">16</td><td>1977-07</td><td class="num">14</td><td>命中</td></tr><tr><td>1978-06</td><td class="num">-2.07pp</td><td class="num">15</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1980-07</td><td class="num">-6.19pp</td><td class="num">18</td><td>1981-10</td><td class="num">15</td><td>命中</td></tr><tr><td>1982-08</td><td class="num">-0.86pp</td><td class="num">6</td><td>—</td><td class="num">—</td><td>已在衰退中</td></tr><tr><td>1985-01</td><td class="num">-4.87pp</td><td class="num">25</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1987-02</td><td class="num">-2.96pp</td><td class="num">15</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>1989-03</td><td class="num">-5.15pp</td><td class="num">23</td><td>1991-01</td><td class="num">22</td><td>命中</td></tr><tr><td>1991-04</td><td class="num">-0.38pp</td><td class="num">1</td><td>—</td><td class="num">—</td><td>已在衰退中</td></tr><tr><td>2000-06</td><td class="num">-0.66pp</td><td class="num">10</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2004-03</td><td class="num">-0.52pp</td><td class="num">20</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2006-04</td><td class="num">-1.81pp</td><td class="num">25</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2008-05</td><td class="num">-1.62pp</td><td class="num">7</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2011-08</td><td class="num">-0.68pp</td><td class="num">16</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2015-01</td><td class="num">-0.08pp</td><td class="num">1</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2019-08</td><td class="num">-0.02pp</td><td class="num">1</td><td>2020-01</td><td class="num">5</td><td>命中</td></tr><tr><td>2023-03</td><td class="num">-0.50pp</td><td class="num">18</td><td>—</td><td class="num">—</td><td>落空</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">南韓</h4>
 <div class="scroll"><table><thead><tr><th>起點</th><th class="num">最深利差</th>
 <th class="num">倒掛月數</th><th>之後衰退起點</th><th class="num">前置月數</th><th>判定</th></tr></thead>
-<tbody><tr><td>2008-01</td><td class='num'>-0.50pp</td><td class='num'>3</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2012-07</td><td class='num'>-0.10pp</td><td class='num'>3</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2019-05</td><td class='num'>-0.24pp</td><td class='num'>5</td><td>2020-01</td><td class='num'>8</td><td>命中</td></tr><tr><td>2022-11</td><td class='num'>-0.51pp</td><td class='num'>21</td><td>—</td><td class='num'>—</td><td>落空</td></tr><tr><td>2024-12</td><td class='num'>-0.58pp</td><td class='num'>5</td><td>—</td><td class='num'>—</td><td>未到期</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">台灣</h4>
+<tbody><tr><td>2008-01</td><td class="num">-0.50pp</td><td class="num">3</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2012-07</td><td class="num">-0.10pp</td><td class="num">3</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2019-05</td><td class="num">-0.24pp</td><td class="num">5</td><td>2020-01</td><td class="num">8</td><td>命中</td></tr><tr><td>2022-11</td><td class="num">-0.51pp</td><td class="num">21</td><td>—</td><td class="num">—</td><td>落空</td></tr><tr><td>2024-12</td><td class="num">-0.58pp</td><td class="num">5</td><td>—</td><td class="num">—</td><td>未到期</td></tr></tbody></table></div><h4 style="font-size:.88rem;margin:1rem 0 .5rem">台灣</h4>
 <div class="scroll"><table><thead><tr><th>起點</th><th class="num">最深利差</th>
 <th class="num">倒掛月數</th><th>之後衰退起點</th><th class="num">前置月數</th><th>判定</th></tr></thead>
-<tbody><tr><td>2000-12</td><td class='num'>-0.25pp</td><td class='num'>3</td><td>—</td><td class='num'>—</td><td>已在衰退中</td></tr><tr><td>2020-11</td><td class='num'>-0.01pp</td><td class='num'>1</td><td>2022-10</td><td class='num'>23</td><td>命中</td></tr><tr><td>2023-02</td><td class='num'>-0.19pp</td><td class='num'>22</td><td>—</td><td class='num'>—</td><td>已在衰退中</td></tr><tr><td>2025-07</td><td class='num'>-0.21pp</td><td class='num'>10</td><td>—</td><td class='num'>—</td><td>未到期</td></tr></tbody></table></div>
+<tbody><tr><td>2000-12</td><td class="num">-0.25pp</td><td class="num">3</td><td>—</td><td class="num">—</td><td>已在衰退中</td></tr><tr><td>2020-11</td><td class="num">-0.01pp</td><td class="num">1</td><td>2022-10</td><td class="num">23</td><td>命中</td></tr><tr><td>2023-02</td><td class="num">-0.19pp</td><td class="num">22</td><td>—</td><td class="num">—</td><td>已在衰退中</td></tr><tr><td>2025-07</td><td class="num">-0.21pp</td><td class="num">10</td><td>—</td><td class="num">—</td><td>未到期</td></tr></tbody></table></div>
 </div>
 </details>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">十一、方法：怎麼定義「倒掛」與「衰退」</h2>
 <div class="takeaway">這頁的判定規則在跑資料前就定死，八個國家套同一套定義，中途不因某國結果好不好看而回頭調整。台灣的利率與 GDP 來自央行與主計總處官方資料庫，同樣跑技術性衰退這套定義。另外多跑一套國發會峰谷的對照定義，其餘定義維持一致。</div>
 <div class="card"><ul class="disc"><li>利差＝10Y 減 3M，單位百分點，月頻（日頻序列先取月均）。主線全部國家用 10Y−3M。美國另加 10Y−2Y（T10Y2Y 月均）作對照欄，不進主線計算。</li><li>美國的 3M 用 TB3MS（3 個月期公債），公債對公債，跟 10Y 公債殖利率口徑一致。德/英/日/加/澳/韓六國的 3M 用 IR3TIB（銀行同業拆款利率）。FRED 的 OECD 資料庫沒有這六國對應的公債 3M 序列可換，同業拆款利率含信用溢價，會讓這六國的利差水準整體偏低、倒掛事件偏多，跨國比較時要記住這個系統性偏差。台灣另外用商業本票，見下方說明。</li><li>TB3MS 原始報的是「貼現率」（discount basis），比債券等值殖利率（bond-equivalent yield）低，利率越高差越大，直接拿貼現率跟 10Y 公債殖利率相減會系統性偏高，把利差沒那麼深的倒掛事件洗掉。美國的利差先把 TB3MS 轉成債券等值殖利率再減：BEY ＝ 365 × d ／ (360 − d × 91)，d 是 TB3MS 除以 100 的小數，91 是 3 個月的天數，算完再乘回 100，這是 3 個月期以內公債的標準換算公式。</li><li>倒掛月＝該月利差小於 0。倒掛事件＝第一個倒掛月為事件起點，起點後 24 個月內的所有倒掛月都算同一事件（避免像 2019 年那種斷斷續續被拆成多次事件）。每個事件記錄起點、期間最深的利差、倒掛總月數。</li><li>衰退定義 A（主線，八國同一套定義）：技術性衰退＝實質 GDP 季增率連續兩季負成長。衰退起點＝第一個負成長季的第一個月，終點＝之後第一個正成長季的第一個月。</li><li>衰退定義 B（對照）：OECD 衰退指標等於 1 的期間，起點取指標由 0 轉 1 的月份。這條序列在 2022 年 9 月停更，樣本只到那裡。</li><li>衰退定義 C（僅美國）：NBER 認定的衰退期（USRECDM），這條序列持續更新到現在。</li><li>台灣的 3M 用商業本票次級市場利率（31-90 天），不是同業拆款也不是公債，含發行企業的信用溢價，偏差方向跟德/英/日/加/澳/韓六國的 IR3TIB 一樣，會讓利差系統性偏低、倒掛事件偏多。</li><li>台灣主線（定義 A）用技術性衰退，跟其餘七國同一套定義，GDP 季增率資料從 2000 年第 1 季開始。另外跑一套只有台灣用的對照定義（定義 T）：國發會「台灣景氣循環基準日期」峰到谷，峰的次月為衰退起點，谷月納入衰退期間。定義 T 的樣本窗從 1996 年 1 月起（台灣 10Y 公債序列 1995 年斷斷續續，1996 年才連續）。</li><li>命中＝事件起點後 H 個月內出現衰退起點，H 分別算 12、24、36 個月，主線報 24。事件起點當下若已經在衰退中，單獨標「已在衰退中」，不算命中也不算落空，但仍列出。H 個月的窗口還沒走完就先標「未到期」。</li><li>前置期＝衰退起點月減事件起點月，單位月。</li><li>反向召回＝每一次衰退，起點前 24 個月內是否曾出現倒掛月，算全部衰退中命中的比率。</li><li>無條件基率＝任一個月份起，未來 24 個月內出現衰退起點的比率，逐月滾動算過全樣本。提升倍數＝命中率除以基率。</li><li>樣本窗＝該國利差與 GDP 兩者都有資料的期間，起訖年份印在每張表上。</li></ul>
-
 <h3 style="font-size:.92rem;margin:1.4rem 0 .5rem">美國對照欄：3M 換不同利差定義</h3>
 <div class="scroll"><table><thead><tr><th>利差定義</th><th class="num">樣本期間</th>
 <th class="num">事件數</th><th class="num">H=24 命中率</th><th class="num">提升倍數</th></tr></thead>
-<tbody><tr><td class='lbl'>10Y−3M 公債（主線，TB3MS 轉債券等值）</td><td>1953-04 ～ 2026-04</td><td class='num'>11</td><td class='num'>70.0%</td><td class='num'>3.2</td></tr><tr><td class='lbl'>10Y−3M 同業拆款（IR3TIB，原主線）</td><td>1964-06 ～ 2026-04</td><td class='num'>14</td><td class='num'>50.0%</td><td class='num'>2.2</td></tr><tr><td class='lbl'>10Y−2Y（T10Y2Y 月均）</td><td>1976-06 ～ 2026-04</td><td class='num'>8</td><td class='num'>42.9%</td><td class='num'>2.2</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">10Y−3M 公債（主線，TB3MS 轉債券等值）</td><td>1953-04 ～ 2026-04</td><td class="num">11</td><td class="num">70.0%</td><td class="num">3.2</td></tr><tr><td class="lbl">10Y−3M 同業拆款（IR3TIB，原主線）</td><td>1964-06 ～ 2026-04</td><td class="num">14</td><td class="num">50.0%</td><td class="num">2.2</td></tr><tr><td class="lbl">10Y−2Y（T10Y2Y 月均）</td><td>1976-06 ～ 2026-04</td><td class="num">8</td><td class="num">42.9%</td><td class="num">2.2</td></tr></tbody></table></div>
 <div class="note">同業拆款利率（IR3TIB）含銀行間信用溢價，景氣正常時本來就會比公債利率高一截，拿它跟 10Y 公債殖利率相減，容易做出偏淺、偏早、不是公債曲線真的倒掛的假事件。美國主線改用 TB3MS（3 個月期公債），而且 TB3MS 本身是貼現率，還要轉成債券等值殖利率才能跟
 10Y 公債殖利率同口徑相減（換算公式見上方定義段），才是公債對公債的標準口徑。10Y−2Y 是市場最常引用的另一種倒掛口徑，短端換成 2 年期公債，事件切法也會跟著變，這兩欄只做對照，不進主表計算。德/英/日/加/澳/韓六國的 OECD 資料庫只提供同業拆款利率，台灣則用商業本票，都沒有對應的公債 3M 序列可換，所以這七國的利差水準整體會比公債對公債的美國偏低、倒掛事件偏多，這是跨國比較時要記住的系統性偏差，不是這七國真的比美國容易倒掛。</div>
 </div>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">十二、這頁沒有告訴你的事</h2>
 <div class="card"><ul class="disc">
@@ -664,17 +712,27 @@ new Chart(document.getElementById('chart-tw'), {
 <li>第三節把倒掛月數（持續）當成分桶條件之一，但持續月數要等事件走完才知道，不是事件起點當下就能用的訊號，深度（最深利差）才是起點當下就看得到的。這節只回報兩者分開後的命中率，不代表持續月數可以在起點當下拿來做判斷。</li>
 <li>全部序列都是官方統計事後定案的數字，跑資料當下離現在越近的月份，GDP 數字越可能之後被修正，這裡用的是抓取當下的最新公布值，不會回頭用修正後數字改寫已經定案的事件。</li>
 </ul>
-
 </div>
 </div>
-
-
+</section><section class="mchap" id="equity"><div class="mchap-hd"><h2>二、倒掛之後股票該賣嗎</h2></div><div class="mchap-sum"><div class="hero">
+<div class="hero-top">
+<span class="verdict-tag" style="background:#059669">倒掛不是清楚的賣出訊號，機械賣出讓多數國家的長期報酬變差</span>
+<h2>倒掛後 12 個月報酬中位數 +4.74%，無條件時期中位數 +7.70%，信賴區間互相重疊，8 國裡只有 1 國統計上真的分得出差異。</h2>
+<p>倒掛解除之後才危險是常見的說法，資料不支持：解除後 12 個月報酬中位數 +11.36%，24 個月 +19.70%，24 個月這段的信賴區間不含無條件時期的中位數，統計上真的比平常更好。</p>
+<p>倒掛有沒有交易價值，要看它事後有沒有真的命中衰退：命中組 12 個月報酬中位數 -1.92%，落空組 +3.92%，價值集中在真的命中的那些次，事前看不出來自己站在哪一組。</p>
+<p>8 國不一致：美國的差距最負（-14.99 個百分點），台灣最正（+13.55 個百分點），統計上站得住的只有 1 國，其餘 6 國分不出。台灣（4 次事件）的區間雖然也不含無條件中位數，但事件數太少，區間不可信，不算數。機械套用「倒掛就賣」規則，8 國裡只有 1 國的累積報酬贏過一路持有，美國規則的累積報酬只有一路持有的 82%。</p>
 </div>
-
+<div class="hero-stats">
+<div><div class="hs-label">事件後 12 個月報酬中位數</div><div class="hs-value">+4.74%</div></div>
+<div><div class="hs-label">無條件 12 個月報酬中位數</div><div class="hs-value">+7.70%</div></div>
+<div><div class="hs-label">統計上分得出差異的國家</div><div class="hs-value">1／8</div></div>
+<div><div class="hs-label">美國：規則／一路持有累積報酬</div><div class="hs-value">82%</div></div>
+</div>
+</div><div class="takeaway"><b>給沒有統計背景的讀者：</b>這頁接著 yield_curve 頁的問題往下問：知道殖利率倒掛之後，股票該不該賣？我們把 8 個國家已經判定好的倒掛事件，對照同一段時間的股價指數，算事件之後 6、12、24 個月的報酬，跟不看訊號、隨便挑一個月開始算的報酬比，看有沒有差、差多少、差得穩不穩。也試了一條最簡單的交易規則：倒掛就賣、解除一年後買回，看這樣操作划不划算。本頁不做「現在該不該賣」的建議，只回報歷史上這麼做的結果。</div></div><a class="mchap-link" href="/backtest/yc_equity/">看完整頁：殖利率倒掛之後的八國前向報酬完整頁 →</a></section></div>
 <footer>
-  <div class="container">
-    &copy; 2026 InvestMQuest Research &middot; 殖利率倒掛與經濟衰退：八國回測（研究頁，不構成投資建議）
-    &middot; 頁面生成 2026-09-17 &middot; 僅供研究參考，不構成投資建議
+<div class="container">
+    © 2026 InvestMQuest Research · 殖利率倒掛與經濟衰退：八國回測（研究頁，不構成投資建議）
+    · 頁面生成 2026-09-17 · 僅供研究參考，不構成投資建議
   </div>
 </footer>
 </body>

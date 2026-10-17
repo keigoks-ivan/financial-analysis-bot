@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>已採用系統的統計不確定性帶：cap1.5＋執行層 A2 的 Bootstrap 判準 | InvestMQuest Research</title>
-<meta name="description" content="用價格路徑 bootstrap（重跑完整規則鏈）與報酬流 bootstrap 兩種方法，量出美股／台股均線閘門×自適應波動率系統勝過買進持有的統計強度 p_B，回答『這個裁決有多少是運氣』。">
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>打亂歷史重跑一千次：實盤優勢是本事還是運氣？ | InvestMQuest Research</title>
+<meta content="用價格路徑 bootstrap（重跑完整規則鏈）與報酬流 bootstrap 兩種方法，量出美股／台股均線閘門×自適應波動率系統勝過買進持有的統計強度 p_B，回答『這個裁決有多少是運氣』。" name="description"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
@@ -60,6 +61,90 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   table{font-size:.74rem}th,td{padding:.4rem .4rem}
 }
 </style>
+<style id="merge-style">
+.mchap{margin-top:2.4rem;padding-top:1.2rem;border-top:3px solid var(--brand,#1a56db)}
+.mchap-hd{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin-bottom:.35rem}
+.mchap-hd h2{font-size:1.28rem;font-weight:700;letter-spacing:-.01em;color:var(--text,#111827);margin:0}
+.mchap-sub{color:var(--muted,#6b7280);font-size:.82rem;margin-bottom:.9rem;line-height:1.6}
+.mchap-link{display:inline-block;margin:.9rem 0 .2rem;font-weight:600;font-size:.9rem}
+.mlead{margin:1.2rem 0 .6rem;padding:.9rem 1.1rem;background:var(--card,#fff);border:1px solid var(--border,#e5e7eb);border-left:4px solid var(--brand,#1a56db);border-radius:8px;font-size:.92rem;line-height:1.8}
+.mlead p+p{margin-top:.55rem}
+.mtoc{margin:.8rem 0 .4rem;padding:.7rem 1.1rem;background:var(--card,#fff);border:1px solid var(--border,#e5e7eb);border-radius:8px;font-size:.88rem}
+.mtoc-hd{font-size:.72rem;font-weight:700;color:var(--muted,#6b7280);letter-spacing:.04em;margin-bottom:.3rem}
+.mtoc ol{list-style:none;display:flex;flex-direction:column;gap:.15rem;padding:0;margin:0}
+.mtoc a{text-decoration:none}.mtoc a:hover{text-decoration:underline}
+.mchap-sum{margin-top:.4rem}
+@media(max-width:640px){
+  .mchap table{display:block !important;max-width:100%;min-width:0 !important;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .mchap code{white-space:normal;overflow-wrap:anywhere}
+  .mchap :where(div,section,article,details){min-width:0}
+  .mchap img,.mchap canvas,.mchap svg{max-width:100%}
+}
+#regime{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb}
+#regime *{box-sizing:border-box;margin:0;padding:0}
+#regime a{color:var(--brand);text-decoration:none}
+#regime a:hover{text-decoration:underline}
+#regime .container{max-width:1180px;margin:0 auto;padding:0 1.5rem}
+#regime .page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+#regime .page-hdr h1{font-size:1.55rem;font-weight:700;letter-spacing:-.03em}
+#regime .page-hdr .sub{color:var(--muted);font-size:.88rem;margin-top:.2rem}
+#regime .crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+#regime .crumb a{color:var(--muted)}
+#regime .section{padding:1.75rem 0 0}
+#regime .section-title{font-size:1.08rem;font-weight:700;margin-bottom:.6rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+#regime .sub-h{font-size:.95rem;font-weight:700;margin:1rem 0 .5rem}
+#regime .sub-line{font-size:.84rem;color:var(--muted);margin-bottom:.8rem}
+#regime .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+#regime table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+#regime th,#regime td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+#regime th{background:#f9fafb;font-weight:600;font-size:.68rem;letter-spacing:.03em;color:var(--muted)}
+#regime td{font-variant-numeric:tabular-nums;vertical-align:top}
+#regime td.num,#regime th.num{text-align:right}
+#regime td.lbl{white-space:nowrap;font-weight:500}
+#regime tbody tr:last-child td{border-bottom:0}
+#regime .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#regime .hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+#regime .hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+#regime .hero-top .verdict-tag{display:inline-block;background:#1a56db;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+#regime .hero-top h2{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+#regime .hero-top p{font-size:.9rem;color:#374151;max-width:66rem}
+#regime .hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+#regime .hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+#regime .hero-stats > div:last-child{border-right:none}
+#regime .hero-stats .hs-label{font-size:.66rem;color:var(--muted);letter-spacing:.04em}
+#regime .hero-stats .hs-value{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+#regime .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.82rem;color:#92400e;margin:1rem 0}
+#regime .tiny{font-size:.72rem;color:var(--muted);font-weight:400}
+#regime .ok{color:#059669;font-weight:700}
+#regime .no{color:#dc2626;font-weight:700}
+#regime .disc{margin-left:1.1rem;font-size:.86rem}
+#regime .disc li{margin-bottom:.5rem}
+#regime details summary{cursor:pointer;font-size:.88rem}
+#regime .chart-wrap{position:relative;height:280px;margin:1rem 0}
+#regime footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){#regime .hero-stats{grid-template-columns:repeat(2,1fr)}
+#regime table{font-size:.74rem}
+#regime th,#regime td{padding:.4rem .4rem}}</style><style id="bt-meta-style">
+.bt-meta{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.7rem 0 0;font-size:.82rem}
+.bt-st{display:inline-block;font-size:.78rem;font-weight:700;padding:.12rem .6rem;border-radius:999px;line-height:1.5;border:1px solid transparent}
+.bt-st-live{background:#fbf3df;color:#7a5a1a;border-color:#e6cf98}
+.bt-st-cand{background:#e8f0fb;color:#1d4ea0;border-color:#b9cdee}
+.bt-st-note{background:#eef1f4;color:#4b5563;border-color:#d7dce2}
+.bt-st-rej{background:#fbeceb;color:#b42318;border-color:#f0c4c0}
+.bt-st-ret{background:#f1f1f1;color:#6b7280;border-color:#d4d4d4}
+.bt-st-def{color:#6b7280;font-size:.8rem}
+.bt-banner{margin:.7rem 0 0;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;line-height:1.65;border:1px solid;border-left-width:4px}
+.bt-banner a{font-weight:600}
+.bt-banner-ref{background:#fffbeb;border-color:#fde68a;border-left-color:#d97706;color:#78350f}
+.bt-banner-ret{background:#f4f4f5;border-color:#d4d4d8;border-left-color:#71717a;color:#3f3f46}
+.bt-banner-member{background:#eff6ff;border-color:#bfdbfe;border-left-color:#1a56db;color:#1e3a5f}
+.mchap>.bt-banner{margin:.2rem 0 1rem}
+</style>
 </head>
 <body>
 <style id="imq-nav-style">
@@ -94,71 +179,65 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 }
 </style>
 <header class="imq-nav-root">
-  <div class="imq-nav-inner">
-    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
-    <nav class="imq-menu">
-      <a href="/">首頁</a>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/market/">市況主控台</a>
-          <a href="/intel/">情報監視器</a>
-          <a href="/briefing/">每日簡報</a>
-          <a href="/rotation/radar.html">資產輪動雷達</a>
-          <a href="/macro/">總經深度報告</a>
-          <a href="/earnings/">財報分析</a>
-          <a href="/markets.html">Markets</a>
-          <a href="/sectors.html">Sectors</a>
-        </div>
-      </div>
-      <a href="/cockpit/">選股</a>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/t/">個股研究</a>
-          <a href="/id/">產業研究</a>
-          <a href="/id/tier_matrix.html">Tier Matrix</a>
-        </div>
-      </div>
-      <a href="/mental-models/">心智模型</a>
-      <div class="imq-dd active">
-        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/long-track/">系統主控台</a>
-          <a href="/backtest/" class="active">量化回測</a>
-          <a href="/tools/">期貨部位計算機</a>
-          <a href="/data.html">公開資料</a>
-        </div>
-      </div>
-      <a href="/simulation/">模擬</a>
-      <a href="/flow/">投資流程</a>
-      <a href="/how-to.html">使用指南</a>
-      <a href="/search.html">搜尋</a>
-    </nav>
-  </div>
+<div class="imq-nav-inner">
+<a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+<nav class="imq-menu">
+<a href="/">首頁</a>
+<div class="imq-dd">
+<button class="imq-dd-btn" type="button">市場<span class="imq-caret">▾</span></button>
+<div class="imq-dd-menu">
+<a href="/market/">市況主控台</a>
+<a href="/intel/">情報監視器</a>
+<a href="/briefing/">每日簡報</a>
+<a href="/rotation/radar.html">資產輪動雷達</a>
+<a href="/macro/">總經深度報告</a>
+<a href="/earnings/">財報分析</a>
+<a href="/markets.html">Markets</a>
+<a href="/sectors.html">Sectors</a>
+</div>
+</div>
+<a href="/cockpit/">選股</a>
+<div class="imq-dd">
+<button class="imq-dd-btn" type="button">研究<span class="imq-caret">▾</span></button>
+<div class="imq-dd-menu">
+<a href="/t/">個股研究</a>
+<a href="/id/">產業研究</a>
+<a href="/id/tier_matrix.html">Tier Matrix</a>
+</div>
+</div>
+<a href="/mental-models/">心智模型</a>
+<div class="imq-dd active">
+<button class="imq-dd-btn" type="button">系統<span class="imq-caret">▾</span></button>
+<div class="imq-dd-menu">
+<a href="/long-track/">系統主控台</a>
+<a class="active" href="/backtest/">量化回測</a>
+<a href="/tools/">期貨部位計算機</a>
+<a href="/data.html">公開資料</a>
+</div>
+</div>
+<a href="/simulation/">模擬</a>
+<a href="/flow/">投資流程</a>
+<a href="/how-to.html">使用指南</a>
+<a href="/search.html">搜尋</a>
+</nav>
+</div>
 </header>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
-
 <div class="page-hdr">
-  <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 已採用系統的統計不確定性帶</div>
-    <h1>已採用系統的統計不確定性帶：cap1.5＋執行層 A2 的 Bootstrap 判準</h1>
-    <div class="sub">量出既有裁決的統計強度，不是找更好的規則・
-    預註冊 docs/Adopted_System_Bootstrap_Spec.md（2026-09-05 凍結）・
-    頁面生成 2026-09-05 21:08，美股資料截至 2026-06-11、台股截至 2026-09-03</div>
-    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">期貨趨勢</div><div class="bt-subnav-pills"><a href="/backtest/txf_daily/">台指期日線・20 日通道<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txf_hourly/">台指期60分K・趨勢與通道<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">外部策略</div><div class="bt-subnav-pills"><a href="/backtest/vendor/">外部策略檢驗<span class="bt-tag bt-tag-watch">專區</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/yield_curve/">殖利率倒掛與衰退<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/yc_equity/">倒掛之後股票該賣嗎<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/sahm_rule/">Sahm 法則跨國<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/first_cut/">第一次降息後的股市<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/chasing_returns/">漲多了還能追嗎<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead_reaction/">財報打敗但沒漲，之後贏面大嗎<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/profitability/">美股獲利能力因子<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/asset_growth/">美股資產成長異象<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/index_inclusion/">指數納入效應<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insider/">內部人買賣叢集買進<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/revmom/">台股月營收動能選股<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・跨標的驗證</div><div class="bt-subnav-pills"><a href="/backtest/live_system_evidence/">證據總覽（先看這頁）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insurance_premium/">深熊保險的價格<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/adopted_bootstrap/" class="bt-on">已採用系統的統計不確定性帶<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/regime_bootstrap/">保留 regime 的 bootstrap<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/combined_account/">美台合併帳戶層<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_base_rate/">慢熊的 base rate<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_onset/">慢熊：起點認得出來嗎？<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/f_portfolio/">F 組合：疊兩種保險<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/a0_d1_comfort/">A0＋D1 舒服度<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/f_comfort/">F 組合舒服度<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/comfort_tournament/">舒服度錦標賽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/cross_sectional_trend/">橫斷面版趨勢<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/a0_proposal/">A0 提案（10 月回顧點）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/futures_leg/" class="bt-dead">F70 換 CTA 腿<span class="bt-tag bt-tag-dead">否決</span></a></div></div></nav>
-  </div>
-</div>
-
 <div class="container">
-
-
+<div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 打亂歷史重跑</div>
+<h1>打亂歷史重跑一千次：實盤優勢是本事還是運氣？</h1>
+<div class="sub">固定段長與整段牛熊兩種重抽方式 · 預註冊判準 · cap1.5＋執行層 A2</div><!--bt-meta--><div class="bt-meta"><span class="bt-st bt-st-live">實盤</span><span class="bt-st-def">描述或檢驗目前正在跑的實單系統。</span></div><!--/bt-meta-->
+<style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-tag-live{background:rgba(184,146,74,.2);color:#7a5a1a}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-live{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">① 實盤證據</div><div class="bt-subnav-pills"><a href="/backtest/live_system_evidence/">證據總覽<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/w52_adaptive_oos/">跨標的前瞻證偽<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/insurance_premium/">深熊保險價格<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/adopted_bootstrap/" class="bt-on">打亂歷史重跑<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/combined_account/">美台合併帳戶<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/slow_bear_base_rate/">慢熊 base rate 與起點<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/f_comfort/">F70 抱得住度<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/a0_proposal/">A0 提案<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/f_portfolio/" class="bt-dead">疊兩種保險<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/futures_leg/" class="bt-dead">F70 換期貨腿<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/cross_sectional_trend/" class="bt-dead">只持最強幾檔<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">② 槓桿與保險</div><div class="bt-subnav-pills"><a href="/backtest/leverage/">槓桿三頁</a><a href="/backtest/vol_targeting/">波動率目標倉位</a><a href="/backtest/vol_targeting/adaptive.html">波動率變體·美股</a><a href="/backtest/vol_targeting/tw.html">波動率變體·台股</a><a href="/backtest/tw_vcrash/">V 型崩跌防禦</a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">③ 趨勢規則</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">週線長軌</a><a href="/backtest/daily_vs_weekly/">日線 vs 週線</a><a href="/backtest/tw_0050_compare/">0050 趨勢系統</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/slope_filter/">W52 斜率濾網</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a><a href="/backtest/ma_cross/" class="bt-dead">MA 交叉<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_deviation/" class="bt-dead">MA 乖離<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_dynband/" class="bt-dead">MA 動態帶<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_squeeze/" class="bt-dead">MA 擠壓<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/dual_track/" class="bt-dead">雙軌<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/six_state/" class="bt-dead">六狀態機存檔<span class="bt-tag bt-tag-dead">已退役</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">④ 台指期與短線</div><div class="bt-subnav-pills"><a href="/backtest/rsi2_mr/">RSI(2) 均值回歸<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/tw_options/">台股選擇權專區</a><a href="/backtest/txo_vol_seller/">台指選擇權賣方</a><a href="/backtest/txo_put_seller/">台指賣方下檔</a><a href="/backtest/txo_iron_condor/">台指雙賣</a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call</a><a href="/backtest/txo_tail_hedge/">台指尾端避險</a><a href="/backtest/txf_daily/">台指期日線與 60 分 K</a><a href="/backtest/txf_chips/">籌碼偏向</a><a href="/backtest/vendor/">外部策略檢驗</a><a href="/backtest/txf_intraday/" class="bt-dead">台指當沖<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ssf_xsec/" class="bt-dead">個股期橫斷面<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/covered_call/" class="bt-dead">美股選擇權疊加<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">⑤ 選股與因子</div><div class="bt-subnav-pills"><a href="/backtest/pead/">財報驚喜後漂移</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/revmom/">台股月營收動能選股</a><a href="/backtest/tw_cb/">台股可轉債專區</a><a href="/backtest/chasing_returns/">漲多了還能追嗎</a><a href="/backtest/country_scan/us.html">各國股市結構</a><a href="/backtest/accruals/">美股獲利品質（應計項目）</a><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/active_etf/">主動式 ETF 與基金</a><a href="/backtest/asset_growth/" class="bt-dead">美股資產成長異象<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/share_issuance/" class="bt-dead">美股股數增減（發行與回購）<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/profitability/" class="bt-dead">美股獲利能力因子<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/index_inclusion/" class="bt-dead">指數納入效應<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/insider/" class="bt-dead">內部人買賣叢集買進<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">⑥ 分散資產</div><div class="bt-subnav-pills"><a href="/backtest/nonequity/">非股票 sleeve<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/crossasset_defense/">跨資產防守<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/turtle/">海龜與商品 sleeve</a><a href="/backtest/clenow/">35 檔 ETF 趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/free_lunch/">分散與免費午餐</a><a href="/backtest/gem/" class="bt-dead">全球雙動能<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/reits/" class="bt-dead">REITs 延伸<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">⑦ 總經與房市</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">房價與所得</a><a href="/backtest/yield_curve/">殖利率倒掛</a><a href="/backtest/sahm_rule/">Sahm 法則跨國</a><a href="/backtest/first_cut/">第一次降息後的股市</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">方法與術語</div><div class="bt-subnav-pills"><a href="/backtest/criteria/">評估標準</a><a href="/backtest/glossary/">術語對照表</a><a href="/backtest/10y/">近 10 年對照</a><a href="/backtest/tw/">台股總覽<span class="bt-tag bt-tag-live">實盤</span></a><a href="/backtest/multi/">多資產總覽</a></div></div></nav>
+</div>
+</div>
+<div class="container"><div class="mlead"><p>同一個問題，兩種重抽方式，結論相反。固定 63 日小段重排：美股贏的機率 p_B=0.514、台股 0.427，判定「過尺是運氣」。整段牛熊為單位重排：美股 0.955、台股 0.925，判定「穩健」。</p><p>差別在重排方式。固定 63 日的切法會把跌了一年半的慢熊剁成好幾小段，打散連續性，對需要撐好幾季才見效的趨勢規則不公平：段長越長，系統贏的機率越高（126 天 0.62、252 天 0.69、504 天 0.81）。整段牛熊重抽保留每段行情的內部結構，只打亂段與段的先後。第三節把兩個答案並排讀。</p></div><nav aria-label="本頁章節" class="mtoc"><div class="mtoc-hd">本頁章節</div><ol><li><a href="#fixed">一、固定 63 日段長重排：判定「過尺是運氣」</a></li><li><a href="#regime">二、整段牛熊為單位重抽：判定「穩健」</a></li><li><a href="#both">三、兩個答案並讀</a></li></ol></nav><section class="mchap" id="fixed"><div class="mchap-hd"><h2>一、固定 63 日段長重排：判定「過尺是運氣」</h2></div>
 <div class="hero">
-  <div class="hero-top">
-    <span class="verdict-tag">我們事前說好的及格線（預註冊（跑測試前先寫死、不能事後改的規則）、方法 B（重排歷史再重跑整套規則）、block 63）</span>
-    <h2>美股贏的機率 p_B（重排歷史後系統贏的比例）=0.514——<span style="color:#dc2626">過尺是運氣</span>；
+<div class="hero-top">
+<span class="verdict-tag">我們事前說好的及格線（預註冊（跑測試前先寫死、不能事後改的規則）、方法 B（重排歷史再重跑整套規則）、block 63）</span>
+<h2>美股贏的機率 p_B（重排歷史後系統贏的比例）=0.514——<span style="color:#dc2626">過尺是運氣</span>；
     台股贏的機率 p_B=0.427——<span style="color:#dc2626">過尺是運氣</span></h2>
-    <p>這一頁要回答一個很直白的問題：現在已經在用的兩套規則（美股、台股各一套，槓桿最高鎖在 1.5 倍、
+<p>這一頁要回答一個很直白的問題：現在已經在用的兩套規則（美股、台股各一套，槓桿最高鎖在 1.5 倍、
     再加一層把訊號轉成實際下單的執行層 A2——美股實際跑出來的 Calmar 比是 0.595、
     台股是 1.217，兩者都領先各自的買進持有對照組），贏過「單純買進持有」這件事，
     有多少是真本事、多少只是運氣好剛好遇到 20 年的歷史剛好那樣走。因為每日漲跌，
@@ -167,17 +246,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
     再算要壓多少槓桿、最後才落成實際下單），總共洗牌重跑
     1000.00 次。每一次都問一遍
     「這套規則贏了買進持有嗎」，算下來贏的次數佔比，就是 p_B。p_B 越高代表越像真本事；
-    p_B < 0.60 表示這次贏，運氣的成分比規則本身還大（下方「給沒有統計背景的讀者」段有更完整的說明）。</p>
-  </div>
-  <div class="hero-stats">
-    <div><div class="hs-label">美股贏的機率 p_B</div><div class="hs-value" style="color:#dc2626">0.514</div></div>
-    <div><div class="hs-label">台股贏的機率 p_B</div><div class="hs-value" style="color:#dc2626">0.427</div></div>
-    <div><div class="hs-label">美股：兩種洗牌方法算出來的差（規則本身會不會隨歷史改變決定）</div><div class="hs-value">+0.114</div></div>
-    <div><div class="hs-label">台股：兩種洗牌方法算出來的差（規則本身會不會隨歷史改變決定）</div><div class="hs-value">+0.280</div></div>
-  </div>
+    p_B &lt; 0.60 表示這次贏，運氣的成分比規則本身還大（下方「給沒有統計背景的讀者」段有更完整的說明）。</p>
 </div>
-
-
+<div class="hero-stats">
+<div><div class="hs-label">美股贏的機率 p_B</div><div class="hs-value" style="color:#dc2626">0.514</div></div>
+<div><div class="hs-label">台股贏的機率 p_B</div><div class="hs-value" style="color:#dc2626">0.427</div></div>
+<div><div class="hs-label">美股：兩種洗牌方法算出來的差（規則本身會不會隨歷史改變決定）</div><div class="hs-value">+0.114</div></div>
+<div><div class="hs-label">台股：兩種洗牌方法算出來的差（規則本身會不會隨歷史改變決定）</div><div class="hs-value">+0.280</div></div>
+</div>
+</div>
 <div class="takeaway">
 <b>給沒有統計背景的讀者：</b>
 這一頁問的是：如果把系統已經跑出來的歷史報酬順序打亂、重新排列很多次，系統贏過稀釋對照組
@@ -187,8 +264,6 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 買或該賣什麼——它只說明「用這個特定統計方法重排歷史」分不出系統跟稀釋版誰比較可靠，方法本身
 對趨勢型規則不利這件事，頁面內文另有說明。
 </div>
-
-
 <div class="section">
 <h2 class="section-title">一、我們事前說好的及格線（預註冊（跑測試前先寫死、不能事後改的規則），跑之前就鎖死不能改）</h2>
 <div class="sub-line">怎麼讀這張表：只看第一欄「贏的機率 p_B」落在哪一段區間，對應到中間欄的判定；
@@ -206,8 +281,6 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="note">這代表什麼：如果贏的機率落在上面表格「過尺穩健」那一段，代表把歷史重新洗牌幾乎每次規則都還是贏，
 比較不像運氣；如果落在「過尺是運氣」那一段，代表贏的次數跟丟銅板差不多，說不出規則有明顯優勢。</div>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">二、先確認算法對得上（跑重排之前的檢查關卡）</h2>
 <div class="sub-line">怎麼讀這張表：每一列是重新用程式跑一遍已經上線的規則，把算出來的數字拿去對站上原本發布過的數字。
@@ -216,14 +289,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="scroll"><table>
 <thead><tr><th>參賽者</th><th>窗</th><th class="num">CAGR%（年化報酬）</th><th class="num">MDD%（最大回撤）</th>
 <th class="num">Calmar（報酬÷最大回撤）</th><th>已發布的 CAGR／MDD／Calmar</th><th class="num">通過</th></tr></thead>
-<tbody><tr><td class='lbl'>A（US cap1.5＋執行層A2）</td><td>2005-01-03 ～ 2026-06-11</td><td class='num'>14.11</td><td class='num'>-23.7</td><td class='num'>0.596</td><td class='num'>14.1／-23.7／0.595</td><td class='num'><span class='ok'>✓</span></td></tr><tr><td class='lbl'>A（TW cap1.5＋執行層A2）</td><td>2014-01-02 ～ 2026-09-03</td><td class='num'>23.0</td><td class='num'>-18.9</td><td class='num'>1.219</td><td class='num'>22.98／-18.9／1.217</td><td class='num'><span class='ok'>✓</span></td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">A（US cap1.5＋執行層A2）</td><td>2005-01-03 ～ 2026-06-11</td><td class="num">14.11</td><td class="num">-23.7</td><td class="num">0.596</td><td class="num">14.1／-23.7／0.595</td><td class="num"><span class="ok">✓</span></td></tr><tr><td class="lbl">A（TW cap1.5＋執行層A2）</td><td>2014-01-02 ～ 2026-09-03</td><td class="num">23.0</td><td class="num">-18.9</td><td class="num">1.219</td><td class="num">22.98／-18.9／1.217</td><td class="num"><span class="ok">✓</span></td></tr></tbody></table></div>
 <div class="note">兩套算法（一套給向量化重抽用的快速版、一套是原本逐日累加的版本）在同一段真實歷史上算出來的
 最大差距：US 最大絕對誤差 0.00e+00、TW 最大絕對誤差 0.00e+00——這個差距小到可以忽略，代表兩套算法本質上是同一件事，通過檢查（原始命名 verification #2）。</div>
 <div class="note">這代表什麼：這張表全部打勾，代表接下來洗牌重排幾千次所依賴的計算引擎沒有問題，
 差一個小數點都會在幾千次重複裡被放大成誤導的結論，所以這一步必須先過。</div>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">三、把歷史換一種順序重來，系統還贏嗎？（美股（QQQ 50／SMH 50），主判準）</h2>
 <div class="sub-line">怎麼讀這張表：每一列是同一個指標，在很多次重排歷史之後算出來的一整組可能結果，
@@ -241,24 +312,22 @@ matched-cash 尺（把對照組現金稀釋到同報酬再比回撤）來看，�
 <thead><tr><th>分位數（由小到大排序取特定百分位的值）</th><th class="num">5%（運氣最差）</th><th class="num">25%</th><th class="num">50%（中位數）</th>
 <th class="num">75%</th><th class="num">95%（運氣最好）</th></tr></thead>
 <tbody>
-<tr><td class='lbl'>系統 CAGR（年化報酬）</td><td class='num'>5.74%</td><td class='num'>9.84%</td><td class='num'>13.06%</td><td class='num'>16.53%</td><td class='num'>21.39%</td></tr>
-<tr><td class='lbl'>系統 MDD（最大回撤）</td><td class='num'>-46.73%</td><td class='num'>-37.18%</td><td class='num'>-32.14%</td><td class='num'>-27.92%</td><td class='num'>-23.46%</td></tr>
-<tr><td class='lbl'>系統 Calmar（報酬÷最大回撤）</td><td class='num'>0.13</td><td class='num'>0.28</td><td class='num'>0.40</td><td class='num'>0.55</td><td class='num'>0.84</td></tr>
-<tr><td class='lbl'>系統 Martin（另一種算法的報酬÷回撤）</td><td class='num'>0.27</td><td class='num'>0.62</td><td class='num'>0.94</td><td class='num'>1.37</td><td class='num'>2.23</td></tr>
-<tr><td class='lbl'>買進持有 CAGR</td><td class='num'>8.44%</td><td class='num'>13.77%</td><td class='num'>17.76%</td><td class='num'>21.78%</td><td class='num'>27.13%</td></tr>
-<tr><td class='lbl'>買進持有 MDD</td><td class='num'>-64.65%</td><td class='num'>-53.75%</td><td class='num'>-47.13%</td><td class='num'>-37.74%</td><td class='num'>-30.81%</td></tr>
-<tr><td class='lbl'>買進持有 Calmar</td><td class='num'>0.14</td><td class='num'>0.27</td><td class='num'>0.38</td><td class='num'>0.55</td><td class='num'>0.82</td></tr>
-<tr><td class='lbl'>買進持有 Martin</td><td class='num'>0.33</td><td class='num'>0.78</td><td class='num'>1.24</td><td class='num'>1.96</td><td class='num'>3.12</td></tr>
-<tr><td class='lbl'>ΔCalmar（系統與對照組的Calmar比之差）（系統−買進持有）</td><td class='num'>-0.30</td><td class='num'>-0.10</td><td class='num'>0.01</td><td class='num'>0.12</td><td class='num'>0.31</td></tr>
+<tr><td class="lbl">系統 CAGR（年化報酬）</td><td class="num">5.74%</td><td class="num">9.84%</td><td class="num">13.06%</td><td class="num">16.53%</td><td class="num">21.39%</td></tr>
+<tr><td class="lbl">系統 MDD（最大回撤）</td><td class="num">-46.73%</td><td class="num">-37.18%</td><td class="num">-32.14%</td><td class="num">-27.92%</td><td class="num">-23.46%</td></tr>
+<tr><td class="lbl">系統 Calmar（報酬÷最大回撤）</td><td class="num">0.13</td><td class="num">0.28</td><td class="num">0.40</td><td class="num">0.55</td><td class="num">0.84</td></tr>
+<tr><td class="lbl">系統 Martin（另一種算法的報酬÷回撤）</td><td class="num">0.27</td><td class="num">0.62</td><td class="num">0.94</td><td class="num">1.37</td><td class="num">2.23</td></tr>
+<tr><td class="lbl">買進持有 CAGR</td><td class="num">8.44%</td><td class="num">13.77%</td><td class="num">17.76%</td><td class="num">21.78%</td><td class="num">27.13%</td></tr>
+<tr><td class="lbl">買進持有 MDD</td><td class="num">-64.65%</td><td class="num">-53.75%</td><td class="num">-47.13%</td><td class="num">-37.74%</td><td class="num">-30.81%</td></tr>
+<tr><td class="lbl">買進持有 Calmar</td><td class="num">0.14</td><td class="num">0.27</td><td class="num">0.38</td><td class="num">0.55</td><td class="num">0.82</td></tr>
+<tr><td class="lbl">買進持有 Martin</td><td class="num">0.33</td><td class="num">0.78</td><td class="num">1.24</td><td class="num">1.96</td><td class="num">3.12</td></tr>
+<tr><td class="lbl">ΔCalmar（系統與對照組的Calmar比之差）（系統−買進持有）</td><td class="num">-0.30</td><td class="num">-0.10</td><td class="num">0.01</td><td class="num">0.12</td><td class="num">0.31</td></tr>
 </tbody></table></div>
-<div class='note'>美股另外多算一個指標（原因見下方「這頁沒有告訴你的事」段的判斷紀錄）：系統最慘的連續 12 個月報酬，比買進持有最慘的連續 12 個月報酬還好的重排比例＝87.2%。</div>
+<div class="note">美股另外多算一個指標（原因見下方「這頁沒有告訴你的事」段的判斷紀錄）：系統最慘的連續 12 個月報酬，比買進持有最慘的連續 12 個月報酬還好的重排比例＝87.2%。</div>
 <div class="note">這代表什麼：把最後一列的每個數字看過去，如果大部分是正的，代表在多數重排出來的
 平行世界裡系統的 Calmar 比都贏過買進持有；如果一半正一半負，就代表這次真實歷史贏的結果，很可能只是
 剛好走到那一條比較幸運的路徑，而不是規則本身穩定的優勢。</div>
 </div>
-
 <div class="chart-wrap"><canvas id="chart-dcal-us"></canvas></div>
-
 <div class="section">
 <h2 class="section-title">三、把歷史換一種順序重來，系統還贏嗎？（台股（0050 50／2330 50），主判準）</h2>
 <div class="sub-line">怎麼讀這張表：每一列是同一個指標，在很多次重排歷史之後算出來的一整組可能結果，
@@ -276,24 +345,21 @@ matched-cash 尺（把對照組現金稀釋到同報酬再比回撤）來看，�
 <thead><tr><th>分位數（由小到大排序取特定百分位的值）</th><th class="num">5%（運氣最差）</th><th class="num">25%</th><th class="num">50%（中位數）</th>
 <th class="num">75%</th><th class="num">95%（運氣最好）</th></tr></thead>
 <tbody>
-<tr><td class='lbl'>系統 CAGR（年化報酬）</td><td class='num'>7.78%</td><td class='num'>15.87%</td><td class='num'>21.87%</td><td class='num'>28.12%</td><td class='num'>37.54%</td></tr>
-<tr><td class='lbl'>系統 MDD（最大回撤）</td><td class='num'>-39.08%</td><td class='num'>-30.93%</td><td class='num'>-26.98%</td><td class='num'>-23.71%</td><td class='num'>-19.74%</td></tr>
-<tr><td class='lbl'>系統 Calmar（報酬÷最大回撤）</td><td class='num'>0.24</td><td class='num'>0.54</td><td class='num'>0.81</td><td class='num'>1.12</td><td class='num'>1.70</td></tr>
-<tr><td class='lbl'>系統 Martin（另一種算法的報酬÷回撤）</td><td class='num'>0.48</td><td class='num'>1.22</td><td class='num'>1.92</td><td class='num'>2.90</td><td class='num'>4.98</td></tr>
-<tr><td class='lbl'>買進持有 CAGR</td><td class='num'>13.35%</td><td class='num'>21.63%</td><td class='num'>27.16%</td><td class='num'>33.22%</td><td class='num'>42.96%</td></tr>
-<tr><td class='lbl'>買進持有 MDD</td><td class='num'>-45.81%</td><td class='num'>-36.83%</td><td class='num'>-31.29%</td><td class='num'>-28.93%</td><td class='num'>-23.19%</td></tr>
-<tr><td class='lbl'>買進持有 Calmar</td><td class='num'>0.34</td><td class='num'>0.62</td><td class='num'>0.84</td><td class='num'>1.11</td><td class='num'>1.63</td></tr>
-<tr><td class='lbl'>買進持有 Martin</td><td class='num'>0.93</td><td class='num'>1.98</td><td class='num'>2.99</td><td class='num'>4.35</td><td class='num'>6.96</td></tr>
-<tr><td class='lbl'>ΔCalmar（系統與對照組的Calmar比之差）（系統−買進持有）</td><td class='num'>-0.43</td><td class='num'>-0.21</td><td class='num'>-0.05</td><td class='num'>0.14</td><td class='num'>0.45</td></tr>
+<tr><td class="lbl">系統 CAGR（年化報酬）</td><td class="num">7.78%</td><td class="num">15.87%</td><td class="num">21.87%</td><td class="num">28.12%</td><td class="num">37.54%</td></tr>
+<tr><td class="lbl">系統 MDD（最大回撤）</td><td class="num">-39.08%</td><td class="num">-30.93%</td><td class="num">-26.98%</td><td class="num">-23.71%</td><td class="num">-19.74%</td></tr>
+<tr><td class="lbl">系統 Calmar（報酬÷最大回撤）</td><td class="num">0.24</td><td class="num">0.54</td><td class="num">0.81</td><td class="num">1.12</td><td class="num">1.70</td></tr>
+<tr><td class="lbl">系統 Martin（另一種算法的報酬÷回撤）</td><td class="num">0.48</td><td class="num">1.22</td><td class="num">1.92</td><td class="num">2.90</td><td class="num">4.98</td></tr>
+<tr><td class="lbl">買進持有 CAGR</td><td class="num">13.35%</td><td class="num">21.63%</td><td class="num">27.16%</td><td class="num">33.22%</td><td class="num">42.96%</td></tr>
+<tr><td class="lbl">買進持有 MDD</td><td class="num">-45.81%</td><td class="num">-36.83%</td><td class="num">-31.29%</td><td class="num">-28.93%</td><td class="num">-23.19%</td></tr>
+<tr><td class="lbl">買進持有 Calmar</td><td class="num">0.34</td><td class="num">0.62</td><td class="num">0.84</td><td class="num">1.11</td><td class="num">1.63</td></tr>
+<tr><td class="lbl">買進持有 Martin</td><td class="num">0.93</td><td class="num">1.98</td><td class="num">2.99</td><td class="num">4.35</td><td class="num">6.96</td></tr>
+<tr><td class="lbl">ΔCalmar（系統與對照組的Calmar比之差）（系統−買進持有）</td><td class="num">-0.43</td><td class="num">-0.21</td><td class="num">-0.05</td><td class="num">0.14</td><td class="num">0.45</td></tr>
 </tbody></table></div>
-
 <div class="note">這代表什麼：把最後一列的每個數字看過去，如果大部分是正的，代表在多數重排出來的
 平行世界裡系統的 Calmar 比都贏過買進持有；如果一半正一半負，就代表這次真實歷史贏的結果，很可能只是
 剛好走到那一條比較幸運的路徑，而不是規則本身穩定的優勢。</div>
 </div>
-
 <div class="chart-wrap"><canvas id="chart-dcal-tw"></canvas></div>
-
 <div class="section">
 <h2 class="section-title">四、換一種比較保守的洗牌方法，結論會不一樣嗎？（對照用，不算入及格線）</h2>
 <div class="sub-line">怎麼讀這張表：這裡用另一種較簡化的洗牌方式（方法 A（只重排已完成的報酬序列），只重排系統跑完規則之後
@@ -303,37 +369,31 @@ matched-cash 尺（把對照組現金稀釋到同報酬再比回撤）來看，�
 每種區塊長度都重排 10,000 次。它先天上有個弱點（先誠實講在前面）：
 重排的是規則已經跑完之後留下的報酬，等於假設規則不管歷史用哪種順序重來，都會做出一模一樣的進出場決定——
 這會高估規則有多穩，因為真實世界裡歷史一旦重排，均線這類趨勢閘門很可能在不同時間點觸發、做出不同決定。</div>
-
 <div class="sub-h">美股（QQQ 50／SMH 50）</div>
 <div class="scroll"><table>
 <thead><tr><th>block（重抽時整段搬動保留前後關聯）長度 L（交易日）</th><th class="num">p(ΔCalmar&gt;0)（贏的機率）</th><th class="num">matched-cash 尺通過%</th>
 <th class="num">重排後 CAGR 均值</th><th class="num">真實歷史的原始 CAGR</th><th class="num">ΔCalmar 中位數</th></tr></thead>
-<tbody><tr><td class='lbl'>L=21</td><td class='num'>0.540</td><td class='num'>50.8%</td><td class='num'>14.13%</td><td class='num'>14.11%</td><td class='num'>0.015</td></tr><tr><td class='lbl'>L=63</td><td class='num'>0.628</td><td class='num'>60.3%</td><td class='num'>14.21%</td><td class='num'>14.11%</td><td class='num'>0.058</td></tr><tr><td class='lbl'>L=126</td><td class='num'>0.694</td><td class='num'>67.1%</td><td class='num'>14.16%</td><td class='num'>14.11%</td><td class='num'>0.093</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">L=21</td><td class="num">0.540</td><td class="num">50.8%</td><td class="num">14.13%</td><td class="num">14.11%</td><td class="num">0.015</td></tr><tr><td class="lbl">L=63</td><td class="num">0.628</td><td class="num">60.3%</td><td class="num">14.21%</td><td class="num">14.11%</td><td class="num">0.058</td></tr><tr><td class="lbl">L=126</td><td class="num">0.694</td><td class="num">67.1%</td><td class="num">14.16%</td><td class="num">14.11%</td><td class="num">0.093</td></tr></tbody></table></div>
 <div class="note">方法 A（只重排已完成的報酬序列）（L=63）對照方法 B（重排歷史再重跑整套規則）（L=63）：方法 A 算出來的贏的機率
 p_A=0.628，方法 B 算出來的 p_B=0.514，
 兩者差 +0.114——這個差距量出來的是「規則本身會不會隨歷史重排而改變決定」：
 方法 A 把系統已經做出的歷史報酬序列當成固定不變的東西直接重排，方法 B 則是在每一條重排出來的新歷史上，
 重新問一次「這一次均線閘門到底會不會觸發進場」，所以更接近真實情況。
 A 高估規則穩定性（重抽已跑完規則的報酬，不重跑規則鏈）；A 與 B 的 p 值差本身就是「規則路徑依賴性」的量測。</div>
-
-
 <div class="sub-h">台股（0050 50／2330 50）</div>
 <div class="scroll"><table>
 <thead><tr><th>block（重抽時整段搬動保留前後關聯）長度 L（交易日）</th><th class="num">p(ΔCalmar&gt;0)（贏的機率）</th><th class="num">matched-cash 尺通過%</th>
 <th class="num">重排後 CAGR 均值</th><th class="num">真實歷史的原始 CAGR</th><th class="num">ΔCalmar 中位數</th></tr></thead>
-<tbody><tr><td class='lbl'>L=21</td><td class='num'>0.608</td><td class='num'>62.5%</td><td class='num'>23.12%</td><td class='num'>23.00%</td><td class='num'>0.058</td></tr><tr><td class='lbl'>L=63</td><td class='num'>0.707</td><td class='num'>72.1%</td><td class='num'>23.12%</td><td class='num'>23.00%</td><td class='num'>0.117</td></tr><tr><td class='lbl'>L=126</td><td class='num'>0.788</td><td class='num'>80.1%</td><td class='num'>23.04%</td><td class='num'>23.00%</td><td class='num'>0.180</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">L=21</td><td class="num">0.608</td><td class="num">62.5%</td><td class="num">23.12%</td><td class="num">23.00%</td><td class="num">0.058</td></tr><tr><td class="lbl">L=63</td><td class="num">0.707</td><td class="num">72.1%</td><td class="num">23.12%</td><td class="num">23.00%</td><td class="num">0.117</td></tr><tr><td class="lbl">L=126</td><td class="num">0.788</td><td class="num">80.1%</td><td class="num">23.04%</td><td class="num">23.00%</td><td class="num">0.180</td></tr></tbody></table></div>
 <div class="note">方法 A（只重排已完成的報酬序列）（L=63）對照方法 B（重排歷史再重跑整套規則）（L=63）：方法 A 算出來的贏的機率
 p_A=0.707，方法 B 算出來的 p_B=0.427，
 兩者差 +0.280——這個差距量出來的是「規則本身會不會隨歷史重排而改變決定」：
 方法 A 把系統已經做出的歷史報酬序列當成固定不變的東西直接重排，方法 B 則是在每一條重排出來的新歷史上，
 重新問一次「這一次均線閘門到底會不會觸發進場」，所以更接近真實情況。
 A 高估規則穩定性（重抽已跑完規則的報酬，不重跑規則鏈）；A 與 B 的 p 值差本身就是「規則路徑依賴性」的量測。</div>
-
 <div class="note">這代表什麼：如果三種區塊長度得出的贏的機率都差不多，代表結論不受「搬動多長一段」這個
 技術選擇左右，比較站得住腳；如果差很多，代表結論本身對這個選擇很敏感，要謹慎看待。</div>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">如果保留的歷史區塊更長，結論會變嗎？（補充，不影響及格線）</h2>
 <div class="sub-line">怎麼讀這張表：判定只認第一列 L=63（第三節主表的那個數字，n=1,000）；
@@ -347,7 +407,7 @@ A 高估規則穩定性（重抽已跑完規則的報酬，不重跑規則鏈）
 <th class="num">系統 MDD 中位數</th><th class="num">買進持有 MDD 中位數</th>
 <th class="num">贏的機率 p(ΔCalmar&gt;0)</th><th class="num">matched-cash 尺通過比例</th>
 <th class="num">系統 MDD 中位數</th><th class="num">買進持有 MDD 中位數</th></tr></thead>
-<tbody><tr><td class='lbl'>L=63（判準列（預註冊）· n=1,000）</td><td class='num'>0.514</td><td class='num'>48.5%</td><td class='num'>-32.14%</td><td class='num'>-47.13%</td><td class='num'>0.427</td><td class='num'>44.2%</td><td class='num'>-26.98%</td><td class='num'>-31.29%</td></tr><tr><td class='lbl'>L=126（n=500）</td><td class='num'>0.622</td><td class='num'>59.4%</td><td class='num'>-30.67%</td><td class='num'>-49.16%</td><td class='num'>0.534</td><td class='num'>54.8%</td><td class='num'>-26.01%</td><td class='num'>-33.11%</td></tr><tr><td class='lbl'>L=252（n=500）</td><td class='num'>0.692</td><td class='num'>66.6%</td><td class='num'>-28.56%</td><td class='num'>-51.51%</td><td class='num'>0.668</td><td class='num'>68.4%</td><td class='num'>-24.29%</td><td class='num'>-32.41%</td></tr><tr><td class='lbl'>L=504（n=500）</td><td class='num'>0.806</td><td class='num'>78.4%</td><td class='num'>-26.47%</td><td class='num'>-52.90%</td><td class='num'>0.734</td><td class='num'>75.8%</td><td class='num'>-23.71%</td><td class='num'>-39.30%</td></tr></tbody></table></div>
+<tbody><tr><td class="lbl">L=63（判準列（預註冊）· n=1,000）</td><td class="num">0.514</td><td class="num">48.5%</td><td class="num">-32.14%</td><td class="num">-47.13%</td><td class="num">0.427</td><td class="num">44.2%</td><td class="num">-26.98%</td><td class="num">-31.29%</td></tr><tr><td class="lbl">L=126（n=500）</td><td class="num">0.622</td><td class="num">59.4%</td><td class="num">-30.67%</td><td class="num">-49.16%</td><td class="num">0.534</td><td class="num">54.8%</td><td class="num">-26.01%</td><td class="num">-33.11%</td></tr><tr><td class="lbl">L=252（n=500）</td><td class="num">0.692</td><td class="num">66.6%</td><td class="num">-28.56%</td><td class="num">-51.51%</td><td class="num">0.668</td><td class="num">68.4%</td><td class="num">-24.29%</td><td class="num">-32.41%</td></tr><tr><td class="lbl">L=504（n=500）</td><td class="num">0.806</td><td class="num">78.4%</td><td class="num">-26.47%</td><td class="num">-52.90%</td><td class="num">0.734</td><td class="num">75.8%</td><td class="num">-23.71%</td><td class="num">-39.30%</td></tr></tbody></table></div>
 <div class="note">贏的機率 p_B 會隨著搬動區塊變長而一路往上升；區塊越短，重排就越容易把「跌了一年半的
 慢熊市」切碎成一段段各自獨立的短跌，而均線這類趨勢閘門靠的正是那種能連續好幾季的走勢，所以短區塊
 天生對趨勢型規則不利（這正是「這頁沒有告訴你的事」第一條限制的數字版本）。
@@ -360,8 +420,6 @@ A 高估規則穩定性（重抽已跑完規則的報酬，不重跑規則鏈）
 <div class="note">這代表什麼：這張補充表說明的是「規則的優勢有多依賴長期走勢」，不是重新算一次判定——
 就算再樂觀地換更長的區塊，兩個市場都還沒摸到「過尺穩健」那條線，跟第三節主表的結論一致。</div>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">五、這頁沒有告訴你的事</h2>
 <ul class="disc">
@@ -375,17 +433,13 @@ A 高估規則穩定性（重抽已跑完規則的報酬，不重跑規則鏈）
 </ul>
 <details style="margin-top:1rem">
 <summary>每一個判斷背後的理由（完整記錄，共 8 條）</summary>
-<ul class="disc" style="margin-top:.6rem"><li><b>Method B 基期窗</b>：以各市場 ev（US 2005-01-03／TW 2014-01-01）起到資料末端的原生共同索引為重抽母體（與 A 的原始序列同窗），不延伸到 ev 之前的暖機期歷史——spec 的「前 505 個交易日暖機」在此母體上算，指標（raw_ratio min_periods=252、gate_w52 52週）在暖機期內是用重抽後的資料自己建立，不借用 ev 之前的真實歷史。<br><span class='tiny'>理由：spec 未指名母體起點；505≈2×252 恰好對齊 raw_ratio 的 min_periods=252（留一倍緩衝），強烈暗示暖機是設計成『路徑自給自足』而非借用暖機期外的真實資料——選 ev 為母體起點讓暖機長度與原始判準窗的量級一致，也讓方法 A／B 用同一段原始序列，可比。</span></li><li><b>Method B 現金利率</b>：US／TW 兩腿各自的 panel['r'] 在建構時已是同一來源（US 兩腿皆用^IRX、TW 兩腿皆用 1% 平盤），本檔取兩腿其一（legs[0]）作『現金利率序列 r』，與spec『現金利率序列 r 從 panel 取得』的單數用法一致。<br><span class='tiny'>理由：兩腿本來就相同，取一即代表另一腿，不需要另外合成。</span></li><li><b>Method B 合成 panel 的 close 欄</b>：重抽路徑只有 adjclose（總報酬）序列，沒有獨立的未調整價；close 設為等於 adjclose。<br><span class='tiny'>理由：與現有 SMH／0050／2330 三腿的既有慣例完全一致（那三腿本來就 close==adjclose，見 run_vol_target.load_panel），且 eng 的 DRIP 邏輯在 close==adjclose 時退化為恆等（無額外股利調整雜訊），是最保守的簡化。</span></li><li><b>Method B 路徑起點</b>：重抽後的 log 報酬陣列，第 0 個元素強制設回 0（不論重抽到什麼），確保 price[0] 精確等於真實起點價。<br><span class='tiny'>理由：spec 明文要求『重建價格路徑從真實起點價出發』；若不強制歸零，重抽到非零值會讓day-0 價格偏離真實起點，違反此要求。</span></li><li><b>Method B 美股 GFC 分期指標改列</b>：spec 原文『美股 GFC 分期（2005-2008）CAGR 符號為正的比例』在重抽路徑上不可行（block bootstrap 打散了『哪一段是 2005-2008』這個日曆概念，重抽後的路徑沒有『2005-2008 那一段』可指認），改報『系統最差 12 個月報酬優於B&H 最差 12 個月報酬的比例』（僅美股）。<br><span class='tiny'>理由：使用者任務指示已明確拍板此替代指標（『JUDGMENT CALL: 報 fraction of resamples where system's worst-12-month return is better than B&H's worst-12-month return』）。</span></li><li><b>Method A／B 的 matched-cash 尺</b>：尺的定義＝解 k 使『k·B&H＋(1-k)·現金』的 CAGR 等於該次重抽系統的 CAGR，再看系統的 MDD 是否比這條稀釋線淺（pass＝系統 MDD 較淺）。<br><span class='tiny'>理由：與 insurance_premium/run_premium.py 既有 ruler1『A 勝 E』的邏輯同構——那是本 repo既有的『matched-cash 尺』唯一實作範例，沿用其判準形狀而非另立新規則。</span></li><li><b>方法 B 執行層 clamp</b>：exec_leg_weight(w, 20, 10, 75.0) 的 clamp 固定用 75（＝cap1.5 的50×1.5），比照 build_market 內 cap1.5 分支的 clamp 慣例。<br><span class='tiny'>理由：spec 已明講 exec_leg_weight(20,10,75)，與現行追蹤主系統的執行層 A2 clamp 完全一致。</span></li><li><b>Method A 現金序列</b>：與 Method B 同一條 panel['r']（legs[0]）——現金利率序列本身不分方法 A／B，是同一組資料。<br><span class='tiny'>理由：spec 沒有要求兩法用不同現金定義；沿用同一序列可比。</span></li></ul>
+<ul class="disc" style="margin-top:.6rem"><li><b>Method B 基期窗</b>：以各市場 ev（US 2005-01-03／TW 2014-01-01）起到資料末端的原生共同索引為重抽母體（與 A 的原始序列同窗），不延伸到 ev 之前的暖機期歷史——spec 的「前 505 個交易日暖機」在此母體上算，指標（raw_ratio min_periods=252、gate_w52 52週）在暖機期內是用重抽後的資料自己建立，不借用 ev 之前的真實歷史。<br/><span class="tiny">理由：spec 未指名母體起點；505≈2×252 恰好對齊 raw_ratio 的 min_periods=252（留一倍緩衝），強烈暗示暖機是設計成『路徑自給自足』而非借用暖機期外的真實資料——選 ev 為母體起點讓暖機長度與原始判準窗的量級一致，也讓方法 A／B 用同一段原始序列，可比。</span></li><li><b>Method B 現金利率</b>：US／TW 兩腿各自的 panel['r'] 在建構時已是同一來源（US 兩腿皆用^IRX、TW 兩腿皆用 1% 平盤），本檔取兩腿其一（legs[0]）作『現金利率序列 r』，與spec『現金利率序列 r 從 panel 取得』的單數用法一致。<br/><span class="tiny">理由：兩腿本來就相同，取一即代表另一腿，不需要另外合成。</span></li><li><b>Method B 合成 panel 的 close 欄</b>：重抽路徑只有 adjclose（總報酬）序列，沒有獨立的未調整價；close 設為等於 adjclose。<br/><span class="tiny">理由：與現有 SMH／0050／2330 三腿的既有慣例完全一致（那三腿本來就 close==adjclose，見 run_vol_target.load_panel），且 eng 的 DRIP 邏輯在 close==adjclose 時退化為恆等（無額外股利調整雜訊），是最保守的簡化。</span></li><li><b>Method B 路徑起點</b>：重抽後的 log 報酬陣列，第 0 個元素強制設回 0（不論重抽到什麼），確保 price[0] 精確等於真實起點價。<br/><span class="tiny">理由：spec 明文要求『重建價格路徑從真實起點價出發』；若不強制歸零，重抽到非零值會讓day-0 價格偏離真實起點，違反此要求。</span></li><li><b>Method B 美股 GFC 分期指標改列</b>：spec 原文『美股 GFC 分期（2005-2008）CAGR 符號為正的比例』在重抽路徑上不可行（block bootstrap 打散了『哪一段是 2005-2008』這個日曆概念，重抽後的路徑沒有『2005-2008 那一段』可指認），改報『系統最差 12 個月報酬優於B&amp;H 最差 12 個月報酬的比例』（僅美股）。<br/><span class="tiny">理由：使用者任務指示已明確拍板此替代指標（『JUDGMENT CALL: 報 fraction of resamples where system's worst-12-month return is better than B&amp;H's worst-12-month return』）。</span></li><li><b>Method A／B 的 matched-cash 尺</b>：尺的定義＝解 k 使『k·B&amp;H＋(1-k)·現金』的 CAGR 等於該次重抽系統的 CAGR，再看系統的 MDD 是否比這條稀釋線淺（pass＝系統 MDD 較淺）。<br/><span class="tiny">理由：與 insurance_premium/run_premium.py 既有 ruler1『A 勝 E』的邏輯同構——那是本 repo既有的『matched-cash 尺』唯一實作範例，沿用其判準形狀而非另立新規則。</span></li><li><b>方法 B 執行層 clamp</b>：exec_leg_weight(w, 20, 10, 75.0) 的 clamp 固定用 75（＝cap1.5 的50×1.5），比照 build_market 內 cap1.5 分支的 clamp 慣例。<br/><span class="tiny">理由：spec 已明講 exec_leg_weight(20,10,75)，與現行追蹤主系統的執行層 A2 clamp 完全一致。</span></li><li><b>Method A 現金序列</b>：與 Method B 同一條 panel['r']（legs[0]）——現金利率序列本身不分方法 A／B，是同一組資料。<br/><span class="tiny">理由：spec 沒有要求兩法用不同現金定義；沿用同一序列可比。</span></li></ul>
 </details>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">六、這頁用到的名詞</h2>
 <ul class="disc"><li><b>bootstrap（拔靴法）</b>：從一組已觀察到的資料裡反覆隨機抽樣、重建出很多個「平行世界」版本的同一段歷史，藉此估計一個統計量（例如 Calmar 比）到底有多不確定，而不是只看一次算出來的單一數字。</li><li><b>block（區塊）</b>：bootstrap 不是逐日打散重抽（那會破壞股價本身「今天跟明天有關聯」的相依性），而是連續抽出一整段（例如 63 個交易日）當作一個單位再重新拼接，保留短期內的相依結構。</li><li><b>p 值（本頁的 p_B）</b>：在很多個重抽出來的平行世界裡，系統的 Calmar 比贏過買進持有的比例。p_B=0.514 代表：1,000 個平行世界裡大約只有 51%（一半多一點）系統會贏，跟丟銅板差不多。</li><li><b>分位數帶</b>：把重抽出來的一千（或一萬）個數字由小到大排序，取第 5%、25%、50%（中位數）、75%、95% 位置的值，用來呈現「這個數字的合理範圍」而不是只給一個點。</li><li><b>Calmar 比</b>：年化報酬 ÷ 最大回撤的絕對值，衡量「每承受一分回撤風險換到多少報酬」，數字越高越好。</li><li><b>Martin 比（Ulcer Performance Index）</b>：年化報酬 ÷ Ulcer Index（把整段期間所有時點的回撤幅度平方後取均方根），比 Calmar 更在意「長期泡在回撤裡」而不只是單一最深的那一次。</li><li><b>matched-cash 尺</b>：把買進持有用現金稀釋到跟系統同樣的年化報酬，看稀釋後的回撤是不是比系統淺——如果稀釋更淺，代表系統的下檔保護其實可以用「單純少放一點錢」複製，而且更省。</li></ul>
 </div>
-
-
 <div class="section">
 <h2 class="section-title">一分鐘版</h2>
 <ul class="disc">
@@ -399,17 +453,41 @@ A 高估規則穩定性（重抽已跑完規則的報酬，不重跑規則鏈）
 其他判斷（要不要繼續用、要不要調整）不在本頁範圍內。</li>
 </ul>
 </div>
-
-
+</section><section class="mchap" id="regime"><div class="mchap-hd"><h2>二、整段牛熊為單位重抽：判定「穩健」</h2></div><div class="mchap-sum"><div class="hero">
+<div class="hero-top">
+<span class="verdict-tag">預註冊（跑測試前先寫死、不能事後改的規則）判準（換一種更公平的洗牌方式重測）</span>
+<h2>美股：0.955 的機率系統贏——<span style="color:#059669">穩健</span>；
+    台股：0.925 的機率系統贏——<span style="color:#059669">穩健</span></h2>
+<p>上一頁（<a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶</a>）把歷史價格切成固定
+    長度的小段（63 個交易日）打亂重排，用電腦模擬很多個「平行世界」版本的歷史，看系統贏過買進持有
+    的機率有多高。但這個切法有個問題：段切得越長，算出來系統贏的機率就跟著單調上升
+    （段長 126 天→0.62、252 天→0.69、504 天→0.81）——這代表固定切法會把「跌了一年半的慢熊」
+    硬剁成好幾小段、打散它的連續性，對「需要撐好幾季才見效」的趨勢規則天生不公平。本頁換一種
+    切法：不用固定天數，改用<b>真實發生過的整段多頭／空頭週期</b>當最小單位，段的內部結構完全
+    保留，只打亂段跟段誰先誰後——這樣算出來的機率，對趨勢規則才公平。如果換成這種公平切法後，
+    機率仍不到 0.90，「系統能過關只是運氣」這句話才真正站得住；如果過了，前一頁的結論要加註
+    「這個結果會因為洗牌方式不同而改變」。</p>
 </div>
-
+<div class="hero-stats">
+<div><div class="hs-label">美股：系統贏的機率</div><div class="hs-value" style="color:#059669">0.955</div></div>
+<div><div class="hs-label">台股：系統贏的機率</div><div class="hs-value" style="color:#059669">0.925</div></div>
+<div><div class="hs-label">美股：整循環洗牌版（中性參考）</div><div class="hs-value">0.776</div></div>
+<div><div class="hs-label">台股：整循環洗牌版（中性參考）</div><div class="hs-value">0.734</div></div>
+</div>
+</div><div class="takeaway">
+<b>給沒有統計背景的讀者：</b>
+上一頁把歷史報酬切成固定長度的小段打亂重排，這一頁改成切成整段完整的多頭或空頭週期再打亂，
+更貼近真實市場「一段行情會連續走好幾年」的樣子，重新算系統贏過稀釋對照組的機率（p 值）。
+看主要數字時，重點一樣是 p 值離 0.5 有多遠——這一頁的 p 值比上一頁略高，但仍在中性偏邊際的範圍，
+不算穩健通過。本頁不建議該不該持續使用這套規則，也不是進出場訊號，它只回答「換一種更貼近真實市場
+節奏的重排方法，結論會不會不一樣」這個方法學問題。
+</div></div><a class="mchap-link" href="/backtest/regime_bootstrap/">看完整頁：保留 regime 的 bootstrap 完整頁 →</a></section><section class="mchap" id="both"><div class="mchap-hd"><h2>三、兩個答案並讀</h2></div><p>兩個答案回答的是不同的重抽問題，並不互相抵消。固定段長的重排方式本身對趨勢規則不利，所以第一個答案只能說明這種量法分不出高下；改用整段牛熊重抽之後，美股 0.955、台股 0.925。整循環洗牌版（中性參考）是美股 0.776、台股 0.734，介於兩者之間。</p><p>兩種量法都不是進出場訊號，也不是調整配置的建議。</p></section></div>
 <footer>
-  <div class="container">
-    &copy; 2026 InvestMQuest Research &middot; 已採用系統的統計不確定性帶（統計強度量測研究頁，不是選系統，不含配置建議）&middot;
-    規格 docs/Adopted_System_Bootstrap_Spec.md・頁面生成 2026-09-06，方法 B block 敏感度補跑 results/vol_targeting/adopted_bootstrap_sensitivity.json &middot; 僅供研究參考，不構成投資建議
+<div class="container">
+    © 2026 InvestMQuest Research · 已採用系統的統計不確定性帶（統計強度量測研究頁，不是選系統，不含配置建議）·
+    規格 docs/Adopted_System_Bootstrap_Spec.md・頁面生成 2026-09-06，方法 B block 敏感度補跑 results/vol_targeting/adopted_bootstrap_sensitivity.json · 僅供研究參考，不構成投資建議
   </div>
 </footer>
-
 <script>
 new Chart(document.getElementById('chart-dcal-us'), {
   type: 'bar',
