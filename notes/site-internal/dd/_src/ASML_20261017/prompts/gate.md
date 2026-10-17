@@ -1,0 +1,319 @@
+你是 DD 管線 v20 的判斷層閘（gate），標的 ASML（20261017）。你未參與寫判斷，這是一次跨模型冷讀，單回合、無工具：bundle 全文已附在本訊息「===== BUNDLE =====」分隔線之後，讀完就直接作答，沒有第二輪，也不能查證 bundle 以外的任何資料。
+
+## 任務
+
+依 bundle 內 `gate_card.md` 的 ①–⑧ checklist 逐條複核 `judgment.json`，只揪判斷級的錯，不判斷寫得好不好。判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級問題（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡；無實質問題給 🟢。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：`gate_card.md`（①–⑧ checklist 全文與 🔴／🟡／🟢 口徑）、被引用事實與負向條目子集（核對 `fact_refs` 用）、`scenario_meta.json`（情境樹權威值，對帳 `decision_inputs.irr_base_pct`／`ev5y_pct` 用）、`judgment.json` 全文（被審對象，原樣）。
+
+## 禁
+
+- 禁 WebSearch／WebFetch、禁開 bundle 以外任何檔（包含 `docs/dd/`、`.dd_build/` 下的其他產物）。
+- 禁跑任何腳本（`validate_judgment.py`／`dd_decision.py`／`dd_scenario.py` 已在判斷端跑過，機械層不歸你）。
+- 禁提整段改寫判斷、禁自己動手修補 `judgment.json`——你只出稽核，修補是另一支流程的事。
+- 證據包裡沒有的東西不得臆測補白，只講證據包內找得到依據的話。
+
+
+===== BUNDLE =====
+
+## ① gate_card.md（判斷層閘卡）
+
+<!-- source: scripts/dd_prompts/gate_contract.md sha256:90928128665c694a; .claude/skills/stock-analyst/references/critic-gates.md sha256:8dff4ac45280acfd git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+你是 DD 管線 v20 的判斷層閘（gate），sonnet，單輪、無工具。你未參與寫判斷，這是一次跨模型冷讀。
+輸入：`judgment.json`（待審判斷物）＋ `facts.json`（事實表，每軸 finding 帶 source／as_of／direction）。
+任務只有一件：依下列 checklist 逐條複核 `judgment.json`，只揪**判斷級**的錯，不判斷寫得好不好。
+判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡。
+禁 WebSearch／WebFetch、禁讀輸入以外任何檔、禁改 `judgment.json`，只出稽核清單。
+
+## checklist（①–⑧ 全出，不得跳號、不得「同上」帶過）
+
+① 競爭惡化——份額流失／新進入者／客戶 second-source／大客戶轉單。查 facts.json 對應軸（competitive_share_entrants／customer_second_source／customer_concentration_credit）裡負向、或應被引用的 finding，核對 judgment.json 的 `moat.threats`／`moat.competitors`／`contradictions[]`／`decision_inputs.bear` 是否接住；被引用=N 卻是負向的 finding 即漏接。[gate_contract §①]
+
+② 供需 durability——緊缺或過剩是結構還是週期，供給可逆性是否寫進 bear 機率。facts.json 的 supply_demand_durability 軸負向 finding，若未被引用且未列 `evidence_dismissed`，須在 `premortem`／`decision_inputs.bear` 找到對應處理，找不到即 🔴。[gate_contract §②]
+
+③ 其他結構變數（開放軸）——法規／政策／關稅／反壟斷／補貼、通路重構、商業模式轉移、替代技術、客戶結構轉移。找 facts.json 覆蓋總覽裡「有 finding 卻沒人接住」的軸，對照 `contradictions[]`／`premortem.blind_spots`／`triggers[]`；閘禁搜尋，不重新查有沒有漏掉的產業變化。[gate_contract §③]
+
+④ priced-in——共識與賣方目標價 vs 現價，裁決是否只是把市場已知的事再說一次。看 `decision_inputs.market_wrong_reason_given` 是否有具體內容（非空泛套話），對照 facts.json 的 `latest_quarter_kpis[].vs_consensus` 與 `valuation_current`。判斷寫「不追／等價格」而裁決是進場、`decision_inputs.wait_for_price` 卻沒填 true ＝ 矛盾；填了 true 時裁決落觀望是規則結果，不算矛盾，只看 `wait_for_price_condition` 是否具體可驗。[gate_contract §④]
+
+⑤ 覆蓋面掃描（強制）——facts.json 逐軸點名 status="none"／"not_applicable" 的每一軸：理由站得住嗎？查詢是否切題且足以支撐該軸結論（不以查詢次數計）？**缺軸本身即 🔴，不需先證明結論錯**。[gate_contract §⑤]
+
+⑥ 量化模組完整性抽查（強制）——(i) `moat.roic_durability.reinvest_rate`／`.roiic` 有沒有 `.formula_note` 真算（寫「估計約 X%」無算式＝🔴）；`.endo_ceiling` 是否與共識 EPS CAGR（facts.json）交叉檢查，天花板 < CAGR 且 `reasoning` 未處理＝🔴。(ii) `scenario_inputs` 的 Bull/Base/Bear EPS 是否有實質價差（Bull 幾乎等於 Base、只靠倍數撐估值＝退化，🔴）；`scenario_inputs.valuation_basis`＝`sales_multiple`（虧損公司，程式決定）時改查 Bull/Base 的營收路徑（`rev`）：Bull 終端營收須實質高於 Base、Bull 前兩年不得與 Base 相同，只靠終端 EV/S 撐價差＝退化，🔴；並看 Bear 的 `net_debt_y5`／`shares_y5` 是否反映該情境的融資缺口與稀釋（債重公司 Bear 沿用目前淨負債與股數＝樂觀，🟡）。(iii) `decision_inputs.irr_base_pct`／`ev5y_pct`／`asym_ratio` 缺省或 null 合法（程式回填），但 ROIIC 缺輸入、口徑或算式仍為實質問題。[gate_contract §⑥]
+
+⑦ 數字新鮮度——`judgment.json` 引用的每個營運指標，是否不比 facts.json 的 `latest_quarter_kpis[].as_of` 對應項目舊？有一個更舊即 🔴。`decision_inputs.consensus_rev_3m_pct` 若依附 `stale=true` 來源，確認未被當唯一依據；引用摘要內容的欄位須標「來源：摘要」。[gate_contract §⑦]
+
+⑧ 前份漂移歸因（QC-49）——facts.json 的 `prior_dd` 存在時，`drift_watch` 20 欄中有變動的每一欄是否都映射到 `contradictions[]` 一個帶 `cause` 的條目（可多欄共用一條目）、且主因站得住；**裁決／核心假設／情境方法變更不得併入純價格原因**；漏欄或無歸因＝🔴；前份該欄本身空或缺欄者不計，給 🟡 或 🟢。無前份時填 🟢 並註「無前份」。[gate_contract §⑧]
+  - `axis` 以 `[程式歸因]` 開頭的條目是程式算的（均線、現價、期望報酬拆解、裁決、角色）。「期望報酬拆解」兩條是程式用本次情境先換情境、再換股價算出的數字（asym_ratio／ev5y_pct／irr_base_pct／bull_5y_price／bear_5y_price），視為已歸因，其中「價格變動」只是股價效果，不適用「不得併入純價格原因」。裁決／角色條目是反事實結果（逐一把矩陣輸入改回前份值重算），視為已歸因；其中「價格變動」是反事實證明估值燈單獨改變了裁決，不適用上面「不得併入純價格原因」，不要為此給 🔴（2026-09-24）。
+  - QC-49 承繼（90 天內翻面須引前次已發火觸發器）只比方向：進場／觀望／迴避。「進場」與「進場·條件式」同方向，角色（核心／衛星）變動也不在 QC-49 範圍；判斷者答 `decision_inputs.qc49_inherit_prior`，前次裁決與角色由程式帶入。
+
+## (a)(b) 兩項強制職責（2026-08-06 拍板，不得因精簡拿掉）
+
+(a) 覆蓋面掃描：逐軸點名「哪一軸整個沒查」，做法同 checklist ⑤，缺軸本身即 🔴。
+(b) 量化模組完整性抽查：ROIC×再投資率真算與否、內生天花板對帳共識 CAGR、情境樹 Bull/Base/Bear EPS 價差是否實質、IRR 內部對帳，做法同 checklist ⑥。
+(c) 數字可回溯：判斷引用的歷史數字逐一核對 facts.json 原文的期間與單位；反證條目要查採納理由與後果是否成立，不能只因編號存在就算過。[gate.md.tmpl 2026-09-11 註腳]
+
+## 🔴／🟡／🟢 口徑
+
+判斷級 🔴 限下列三種形狀：
+
+1. **證據包已有而判斷未接**——證據包內存在的 finding／數字，判斷物完全沒接進 `contradictions`／`moat.threats`／`premortem`／`triggers`／`thesis.R`，也沒寫進 `evidence_dismissed[]`；
+2. **算術或機率防線失守**——推導不可複算、內部恆等式不對帳、情境樹退化、機率與其自身依據矛盾；
+3. **裁決與自身輸入矛盾**——`decision_inputs`／`scenario_meta`／`decision_out` 三者互斥，或裁決與判斷物自己寫下的理由相反。
+
+**資料級不算 🔴**（證據包本身缺料、來源不夠新、某軸查不到）——那是 Stage 0 的問題，最多給 🟡 並在附註點名。無實質問題給 🟢；有實質但不改裁決方向的給 🟡。
+
+## 輸出格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
+
+
+---
+
+## ②b 被引用的事實與負向條目（v19；閘要查數字時不必猜）
+
+### 判斷檔 `fact_refs` 引到的事實（32 條）
+- `f_kpi0_total_net_sales`（q1_business）｜Total net sales＝11662 €百萬｜期間與口徑：Q3 2026（公告於 2026-10-14）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：ASML Q3 2026 新聞稿（6-K）（numbers.latest_quarter_kpis.items[0]，as_of Q3 2026（公告於 2026-10-14））
+  - 註記：未查得
+- `f_kpi1_gross_margin`（q1_business）｜Gross margin＝57.5 %｜期間與口徑：Q3 2026（公告於 2026-10-14）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：ASML Q3 2026 新聞稿（6-K）（numbers.latest_quarter_kpis.items[1]，as_of Q3 2026（公告於 2026-10-14））
+  - 註記：未查得
+- `f_kpi2_net_income`（q1_business）｜Net income＝4960 €百萬｜期間與口徑：Q3 2026（公告於 2026-10-14）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：ASML Q3 2026 新聞稿（6-K）（numbers.latest_quarter_kpis.items[2]，as_of Q3 2026（公告於 2026-10-14））
+  - 註記：未查得
+- `f_kpi3_installed_base_managemen`（q1_business）｜Installed Base Management sales＝3289 €百萬｜期間與口徑：Q3 2026（公告於 2026-10-14）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：ASML Q3 2026 新聞稿（6-K）（numbers.latest_quarter_kpis.items[3]，as_of Q3 2026（公告於 2026-10-14））
+  - 註記：高於公司自家指引約 €400 百萬（CEO 說法，見搜尋摘要，未逐字核對）
+- `f_kpi4_guidance_q4_2026`（q1_business）｜Guidance Q4 2026＝net sales €14.2–15.2bn；gross margin 約 57%；R&D 約 €1.2bn；SG&A 約 €0.4bn｜期間與口徑：Q3 2026（公告於 2026-10-14）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：guidance
+  - 來源：ASML Q3 2026 新聞稿（6-K）（numbers.latest_quarter_kpis.items[4]，as_of Q3 2026（公告於 2026-10-14））
+  - 註記：未查得
+- `f_kpi5_guidance_fy2026`（q1_business）｜Guidance FY2026＝net sales €44–45bn；gross margin 約 56%｜期間與口徑：Q3 2026（公告於 2026-10-14）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：guidance
+  - 來源：ASML Q3 2026 新聞稿（6-K）；搜尋摘要稱 7 月指引為 €43–45bn、毛利率 54–56%（未逐字核對）（numbers.latest_quarter_kpis.items[5]，as_of Q3 2026（公告於 2026-10-14））
+  - 註記：未查得
+- `f_peer_asml_operating_margin_pct`（q2_moat）｜ASML 營業利益率＝35.42 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.ASML.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_earnings_recency`（q1_business）｜最近一次財報日＝2026-10-14 date｜期間與口徑：2026-10-14／距今 3 個交易日｜kind：realized
+  - 來源：—（numbers.earnings_recency，as_of 2026-10-14）
+- `f_peer_asml_gross_margin_pct`（q2_moat）｜ASML 毛利率＝52.73 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.ASML.gross_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_2330_tw_operating_margin_pct`（q2_moat）｜2330.TW 營業利益率＝56.1 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.2330.TW.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_nvda_operating_margin_pct`（q2_moat）｜NVDA 營業利益率＝65.21 %｜期間與口徑：TTM ending 2026-07-31（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.NVDA.operating_margin_pct，as_of TTM ending 2026-07-31（4季加總））
+- `f_peer_avgo_operating_margin_pct`（q2_moat）｜AVGO 營業利益率＝48.52 %｜期間與口徑：TTM ending 2026-07-31（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.AVGO.operating_margin_pct，as_of TTM ending 2026-07-31（4季加總））
+- `f_peer_onto_operating_margin_pct`（q2_moat）｜ONTO 營業利益率＝13.81 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.ONTO.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_consensus_eps_fy1`（q5_valuation）｜FY1 共識 EPS＝42.94 USD/share｜期間與口徑：2026-10-08／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261008.xlsx（numbers.consensus_revision.latest_snapshot.fy1，as_of 2026-10-08）
+- `f_consensus_eps_fy2`（q5_valuation）｜FY2 共識 EPS＝58.13 USD/share｜期間與口徑：2026-10-08／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261008.xlsx（numbers.consensus_revision.latest_snapshot.fy2，as_of 2026-10-08）
+- `f_consensus_eps_fy3`（q5_valuation）｜FY3 共識 EPS＝76.46 USD/share｜期間與口徑：2026-10-08／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261008.xlsx（numbers.consensus_revision.latest_snapshot.fy3，as_of 2026-10-08）
+- `f_rev_consensus_fy1_m`（q5_valuation）｜FY1 共識營收（百萬）＝44468.86 EUR m｜期間與口徑：2026-10-17／yfinance revenue_estimate 0y 平均（34 位分析師）；與 f_consensus_eps_fy1 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy1.avg_m，as_of 2026-10-17）
+  - 註記：財報幣別 EUR ≠ 報價幣別 USD（ADR 或跨幣別）：淨負債／營收是 EUR，股價是 USD，每股價換算必須先對齊幣別與 ADR 比例，本欄不換算；股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_rev_consensus_fy2_m`（q5_valuation）｜FY2 共識營收（百萬）＝57214.82 EUR m｜期間與口徑：2026-10-17／yfinance revenue_estimate +1y 平均（38 位分析師）；與 f_consensus_eps_fy2 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy2.avg_m，as_of 2026-10-17）
+  - 註記：財報幣別 EUR ≠ 報價幣別 USD（ADR 或跨幣別）：淨負債／營收是 EUR，股價是 USD，每股價換算必須先對齊幣別與 ADR 比例，本欄不換算；股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_consensus_rev_3m_fy1_pct`（q5_valuation）｜FY1 共識近 3 個月修正＝11.33 %｜期間與口徑：2026-07-16 → 2026-10-08／FY1 共識 EPS 38.57 → 42.94（Koyfin 快照，約 90 天間距）；投影成 decision_inputs.consensus_rev_3m_pct｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261008.xlsx（numbers.consensus_revision.latest_snapshot.fy1 ÷ snapshot_90d_prior.fy1，as_of 2026-10-08）
+- `f_net_debt_m`（q5_valuation）｜目前淨負債（總債務－現金及短投）＝-10772.1 EUR m｜期間與口徑：2026-10-17／yfinance 最新一季：總債務 1963.0、現金 12735.1（含租賃負債口徑）｜kind：realized
+  - 來源：—（numbers.capital_structure.net_debt_m，as_of 2026-10-17）
+  - 註記：財報幣別 EUR ≠ 報價幣別 USD（ADR 或跨幣別）：淨負債／營收是 EUR，股價是 USD，每股價換算必須先對齊幣別與 ADR 比例，本欄不換算；股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_shares_diluted_m`（q5_valuation）｜目前股數（百萬股）＝385.42 m shares｜期間與口徑：2026-10-17／yfinance impliedSharesOutstanding（各類股合計）｜kind：realized
+  - 來源：—（numbers.capital_structure.shares_diluted_m，as_of 2026-10-17）
+  - 註記：財報幣別 EUR ≠ 報價幣別 USD（ADR 或跨幣別）：淨負債／營收是 EUR，股價是 USD，每股價換算必須先對齊幣別與 ADR 比例，本欄不換算；股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_dividend_yield_ttm`（q5_valuation）｜trailing 12個月股息殖利率＝0.552 %｜期間與口徑：2026-10-17／trailing 12個月股息（依除息日加總，非發放日）÷ 判斷日股價 × 100｜kind：realized
+  - 來源：—（numbers.dividend_yield_ttm.value_pct，as_of 2026-10-17）
+- `f_pe_current`（q5_valuation）｜Trailing P/E（現值）＝40.39 x｜期間與口徑：2026-10-16（RTH 收盤，UTC）／4 個年度端點內的分位＝51.9｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.pe，as_of 2026-10-16（RTH 收盤，UTC））
+- `f_fwd_pe_latest`（q5_valuation）｜Forward P/E（最近快照）＝41.46 x｜期間與口徑：2026-10-08／分母＝FY1 EPS 42.94，分子＝快照價 1780.34｜kind：realized
+  - 來源：—（numbers.valuation_history.fwd_recent_window.points[-1]，as_of 2026-10-08）
+- `f_price_at_dd`（q5_valuation）｜判斷日股價＝1641.52 USD｜期間與口徑：2026-10-16（RTH 收盤，UTC）／收盤價，與情境樹起點同源｜kind：realized
+  - 來源：—（numbers.price_at_dd，as_of 2026-10-16（RTH 收盤，UTC））
+- `f_pe_percentile`（q5_valuation）｜Trailing P/E 年度端點分位＝51.9 %｜期間與口徑：2026-10-16（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.pe.current_percentile_within_annual_points，as_of 2026-10-16（RTH 收盤，UTC））
+- `f_ps_percentile`（q5_valuation）｜P/S 年度端點分位＝100.0 %｜期間與口徑：2026-10-16（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.ps.current_percentile_within_annual_points，as_of 2026-10-16（RTH 收盤，UTC））
+- `f_ev_s_percentile`（q5_valuation）｜EV/S 年度端點分位＝100.0 %｜期間與口徑：2026-10-16（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.ev_s.current_percentile_within_annual_points，as_of 2026-10-16（RTH 收盤，UTC））
+- `f_consensus_rev_fy1_pct`（q5_valuation）｜FY1 共識修正＝-1.69 %｜期間與口徑：2026-10-08／兩份 Koyfin 快照之間的 EPS 修正幅度（43.68 → 42.94）｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261008.xlsx（numbers.consensus_revision.fy1.revision_pct，as_of 2026-10-08）
+- `f_consensus_rev_fy2_pct`（q5_valuation）｜FY2 共識修正＝-1.39 %｜期間與口徑：2026-10-08／兩份 Koyfin 快照之間的 EPS 修正幅度（58.95 → 58.13）｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261008.xlsx（numbers.consensus_revision.fy2.revision_pct，as_of 2026-10-08）
+- `f_week26_return_pct`（q5_valuation）｜26 週報酬＝12.84 %｜期間與口徑：2026-10-16（RTH 收盤，UTC）／含息前價格報酬，對照基準 ^GSPC｜kind：realized
+  - 來源：—（numbers.momentum_26w.return_26w_pct，as_of 2026-10-16（RTH 收盤，UTC））
+- `f_rsi14`（q5_valuation）｜RSI(14)＝37.67｜期間與口徑：2026-10-16（RTH 收盤，UTC）／日線 14 期；rsi14_usable=True｜kind：realized
+  - 來源：—（numbers.momentum_26w.rsi14，as_of 2026-10-16（RTH 收盤，UTC））
+
+### findings_digest 中方向為負或來源衝突的條目（17 條）
+- `competitive_share_entrants#1`（competitive_share_entrants｜方向 -｜狀態 ok）：今夏有報導稱中國光刻機廠（上海某公司）今年出貨 5 台 DUV、2027 年暫定 20 台，ASML 股價兩個交易日跌約 10%；其為 DUV 非 EUV，被評為距 EUV 多年，機台未經驗證。
+  - 來源：Barchart/Nasdaq: Everyone's focused on China but that's not ASML's biggest risk（as_of 2026-08-01）｜affects：moat_trend、decision_inputs.bear
+- `competitive_share_entrants#2`（competitive_share_entrants｜方向 -｜狀態 ok）：Musk 的 Terafab 被指為潛在客戶亦為潛在 EUV 對手（自由電子雷射光源路線），FEL-EUV 尚未量產就緒，未宣布設備訂單。
+  - 來源：Dealroom: ASML faces a double-edged Terafab: prospective customer and potential EUV rival（as_of 2026-08-07）｜affects：moat_trend、decision_inputs.bear
+- `competitive_share_entrants#3`（competitive_share_entrants｜方向 -｜狀態 ok）：2026 年 6 月報導稱 Nikon 與美亞大型晶片廠進行進階洽談、數案接近正式採購單（未證實）；Canon 奈米壓印僅用於 3D NAND 等特定應用，尚不構成對 ASML 的威脅。
+  - 來源：IPS News: Competitor Challenges ASML in the Evolving Global Semiconductor Lithography Landscape（as_of 2026-06-10）｜affects：moat_trend、decision_inputs.bear
+- `customer_second_source#0`（customer_second_source｜方向 -｜狀態 ok）：Bloomberg 報導 TSMC 認為 ASML 最新設備過貴；TSMC 將在 2029 年前不把最先進（High-NA）機台用於量產以節省成本（搜尋摘要轉述，非逐字）
+  - 來源：Bloomberg video, 'TSMC says ASML's latest chipmaking gear is too pricey', 2026-04-23（as_of 2026-04-23）｜affects：decision_inputs.bear、valuation
+- `customer_concentration_credit#0`（customer_concentration_credit｜方向 -｜狀態 ok）：ASML FY2025 20-F 風險因子標題載明「淨銷售額高比例來自少數客戶」；本次搜尋未取得 FY2025 最大客戶占比數字
+  - 來源：SEC EDGAR ASML Form 20-F FY2025（as_of 2026-02-01）｜affects：decision_inputs.bear、thesis.R
+- `customer_concentration_credit#1`（customer_concentration_credit｜方向 -｜狀態 ok）：歷史揭露：FY2021 最大客戶占淨銷售約37.0%，前兩大客戶合計66.3%（FY2020 為31.4%、FY2019 為39.7%）
+  - 來源：SEC EDGAR ASML Form 20-F FY2021 / FY2020（as_of 2022-02-01）｜affects：decision_inputs.bear、thesis.R
+- `customer_concentration_credit#2`（customer_concentration_credit｜方向 -｜狀態 ok）：Mizuho 下調 ASML 至中立，理由含對台積電的客戶集中度上升；預期 Samsung、Intel 2026 上行有限（為訂單面，非信用面）
+  - 來源：itiger: ASML cut to Neutral at Mizuho on downside risk to 2026 business outlook（as_of 2026-07-01）｜affects：decision_inputs.bear、thesis.R
+- `regulatory_antitrust#0`（regulatory_antitrust｜方向 -｜狀態 ok）：美國商務部長 Lutnick 據報向 ASML 高層詢問是否有 EUV 機台違反美方主導管制流入中國；ASML 表示全力遵守所有適用法規。Commerce 未對是否掌握出貨證據置評，消息來源未提出佐證（單一媒體報導）。
+  - 來源：NL Times: US commerce secretary raises concerns over reports ASML machine reached China（as_of 2026-06-19）｜affects：decision_inputs.bear、triggers
+- `reg_tariff_export#0`（reg_tariff_export｜方向 -｜狀態 ok）：2026年6月報導：美國商務部長 Lutnick 據稱向 ASML 提出疑慮，認為有一台 EUV 設備可能流入中國；ASML 否認，稱從未向中國出貨 EUV 或其專用零件。報導時屬未證實的審查，非確認違規。
+  - 來源：China Global South: ASML Denies Selling EUV Chipmaking Tool to China After Report of U.S. Concern（as_of 2026-06-19）｜affects：decision_inputs.bear、thesis.R
+- `reg_tariff_export#1`（reg_tariff_export｜方向 -｜狀態 ok）：2025年7月 ASML 因川普關稅不確定性收窄全年財測，執行長稱仍規劃 2026 年成長但無法確認；搜尋未找到 2026 年 Section 232 半導體關稅是否實施及對 ASML 影響的報導。
+  - 來源：iTiger: ASML Narrows Guidance Amid Tariff Uncertainty, Warns On 2026 Growth（as_of 2025-07-16）｜affects：thesis.R、valuation
+- `geo_supply_chain#0`（geo_supply_chain｜方向 -｜狀態 ok）：ASML 20-F 披露 Carl Zeiss SMT 為其光學元件唯一供應商；Zeiss 產能可能限制系統產量，若關係終止或光學供應長期中斷，ASML 實質上無法營運（該 20-F 為 FY2020 版，現況可能已變）。
+  - 來源：ASML Holding NV Form 20-F FY2020 (SEC)（as_of 2021-02-10）｜affects：decision_inputs.bear、thesis.R
+- `geo_supply_chain#1`（geo_supply_chain｜方向 -｜狀態 ok）：2026 年 Q1 中國大陸占 ASML 銷售 19%（前季 36%）；公司預期 2026 年中國約占 20%；2025 全年中國占 33%。
+  - 來源：Caixin Global: ASML's China sales slump as export curbs bite（as_of 2026-04-16）｜affects：thesis.R、valuation
+- `geo_supply_chain#2`（geo_supply_chain｜方向 -｜狀態 ok）：2026 年 4 月美國議員提出 MATCH Act，擬將 EUV 禁令延伸至 DUV 浸潤式設備；若美國立法且荷蘭執行，將是自 2024 年 9 月以來首度新增對 ASML 的限制；分析師估影響為營收個位數百分比，另有估 EPS 最多降 10%。
+  - 來源：MarketScreener: ASML shares fall on US Congress plan to further restrict China exports（as_of 2026-04-16）｜affects：decision_inputs.bear、triggers
+- `substitute_technology#0`（substitute_technology｜方向 -｜狀態 ok）：ASML 自家 20-F 風險因子載明：若競爭者的替代技術更有效，或客戶轉向較不依賴微影的新架構，業務將受損。
+  - 來源：ASML Holding NV Form 20-F FY2019 (SEC)（as_of 2020-02-01）｜affects：decision_inputs.bear、moat_trend
+- `substitute_technology#4`（substitute_technology｜方向 -｜狀態 ok）：MATCH Act 正於美國國會審議，將禁止對中國銷售新 DUV 並含既有設備維修服務。
+  - 來源：Search summary of commentary (nasdaq.com 'everyones focused china thats not asmls biggest risk')（as_of 2026-07-01）｜affects：decision_inputs.bear、thesis.R
+- `major_events#0`（major_events｜方向 -｜狀態 ok）：美國 SDNY 有針對 ASML 與三名高管的證券集體訴訟（Case 24-cv-08664），集體期間 2024-01-24 至 2024-10-15，主張 10(b)/20(a)；來源為律所新聞稿，指控未經裁定，搜尋結果未見判決或和解。此案提起於 12 個月視窗之前，是否仍在進行未查明。
+  - 來源：Pomerantz／KTMC 律所公告（SDxCentral、ktmc.com）（as_of 2024-11-01）｜affects：decision_inputs.bear、triggers
+- `lawsuit_class_action#0`（lawsuit_class_action｜方向 -｜狀態 ok）：SDNY 證券集體訴訟 City of Hollywood Firefighters' Pension Fund v. ASML Holding N.V.（24-cv-08664），集體期間 2024-01-24 至 2024-10-15；指控未經裁定；未見判決或和解。提起日在 12 個月視窗之前。
+  - 來源：KTMC 律所公告 ASML Holding N.V. Securities Fraud Class Action（as_of 2024-11-01）｜affects：decision_inputs.bear、triggers
+
+### 事實表自陳的缺口（1 條）
+- q6_how_wrong：digest.qa_flags 有 7 條管理層迴避紀錄，內容須由事實表 agent 逐條落成事實或缺口
+
+---
+
+scenario_meta.json sidecar（判斷層情境樹權威，checklist ⑥(iii) 對帳用）
+
+（來源：/Users/ivanchang/financial-analysis-bot/.dd_build/runs/ASML_20261017/scenario_meta.json）
+（以下 JSON 為緊湊格式（省空白），內容完整）
+```json
+{"bull_5y_price":4000,"bear_5y_price":1100,"p_bull_pct":25,"p_bear_pct":30,"upside_5y_pct":48.9,"ev5y_pct":48.0,"irr_base_pct":8.3,"asym_ratio":3.6,"scenario_tree":{"terminal_label":"FY2031E","start":{"eps":42.94,"pe":38.23,"basis":"FY2026E共識每股盈餘（美元，2026-10-08快照）；財年已過十個月，接近當年度實際；終端倍數同樣套用當年度盈餘"},"eps":{"bull":[60,82,98,110,125],"base":[58.13,76.46,82,86,94],"bear":[54,58,46,50,55]},"pe":{"bull":32,"base":26,"bear":20},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":0.552,"net_buyback":0},"second_stage":{"bull_cagr_pct":12,"base_cagr_pct":8},"valuation_dependent":false}}
+```
+
+---
+
+## ④b 舊逐字稿摘錄（前一季＋投資人日；對照管理層以前說過什麼）
+
+### ASML_Q2_2026_Earnings_Call_20260715.md
+- 2026-07-15｜CFO｜guidance：Q2 總淨銷售 93 億歐元，高於財測上緣，因安裝基礎管理銷售高於預期（原話："billion, which is above the high end of our guidance"）
+- 2026-07-15｜CFO｜margin：Q2 毛利率 54%，高於財測（原話："Gross margin for the quarter was above our guidance at 54%,"）
+- 2026-07-15｜CFO｜margin：Q2 營業費用高於財測，原因為技術與 IT 轉型的估計成本認列（主要在 R&D）（原話："were higher than guided due to the recognition"）
+- 2026-07-15｜CFO｜margin：Q2 EUV 系統銷售 38 億歐元（原話："which included EUR 3.8 billion from EUV system sales,"）
+- 2026-07-15｜CFO｜customer：Q2 系統銷售邏輯 51%、記憶體 49%（原話："almost equally split between logic at 51% and memory at 49%."）
+- 2026-07-15｜CFO｜margin：Q2 安裝基礎管理銷售 28 億歐元，比財測高近 3 億，主要來自升級業務（原話："almost EUR 300 million above our guidance"）
+- 2026-07-15｜CFO｜capital_allocation：Q2 自由現金流 13 億歐元（原話："Our free cash flow in Q2 was EUR 1.3 billion."）
+- 2026-07-15｜CFO｜capital_allocation：Q2 依 2026–2028 庫藏股計畫買回約 11 億歐元（原話："billion worth of shares under the current 2026-2028 share"）
+- 2026-07-15｜CFO｜capital_allocation：2026 首季中期股息每股 1.88 歐元（原話："interim dividend over 2026 will be EUR 1.88 per ordinary"）
+- 2026-07-15｜CFO｜guidance：全年有效稅率預期約 17%（原話："expect that annualized effective tax rate is around 17%."）
+- 2026-07-15｜CFO｜guidance：Q3 毛利率財測 55%–57%（原話："Gross margin for Q3 is expected to be between 55% and 57%."）
+- 2026-07-15｜CFO｜guidance：Q3 R&D 費用預期約 12 億歐元（原話："The expected R&D expenses for Q3 are around EUR 1.2 billion"）
+- 2026-07-15｜CFO｜guidance：上調 2026 全年財測（原話："Driven by continued strong demand, we are updating our full"）
+- 2026-07-15｜CFO｜guidance：全年淨銷售 430–450 億歐元、毛利率 54%–56%（原話："total net sales between EUR 43 billion and EUR 45 billion"）
+- 2026-07-15｜CEO｜customer：多家客戶上調資本支出計畫（原話："A number of our customers have revised their capital"）
+- 2026-07-15｜CEO｜customer：邏輯與 DRAM 客戶皆與其客戶簽長期協議，提供能見度（原話："Our customers in both segments are entering into long-term"）
+- 2026-07-15｜CEO｜product：邏輯端微影強度上升（原話："driving both an increase in litho intensity and greater"）
+- 2026-07-15｜CEO｜guidance：先進邏輯／晶圓代工相關系統銷售今年成長逾 25%（原話："now expect advanced logic/foundry-related net system sales"）
+- 2026-07-15｜CEO｜guidance：記憶體相關系統銷售今年成長逾 75%（原話："to grow by over 75% this year."）
+- 2026-07-15｜CEO｜customer：DRAM 量、HBM 與 1c／1b 節點 EUV 層數增加並存，CEO 稱 DRAM 對 ASML 是「perfect storm」（原話："creates a bit the perfect storm for ASML on DRAM"）
+- 2026-07-15｜CFO｜guidance：今年預計出貨約 65 台 Low-NA EUV（原話："We now expect to ship around 65 Low-NA"）
+- 2026-07-15｜CFO｜guidance：EUV 系統銷售年增逾 45%（原話："year-over-year EUV net system sales growth of over 45%."）
+- 2026-07-15｜CFO｜guidance：浸潤式 DUV 今年約 130 台（原話："For immersion deep UV, we expect about 130 shipments"）
+- 2026-07-15｜CFO｜guidance：非 EUV 系統銷售預期成長約 25%（原話："we expect growth in non-EUV net system sales of around 25%"）
+- 2026-07-15｜CFO｜guidance：安裝基礎管理銷售今年成長逾 30%（原話："Management sales are expected to grow over 30% this year"）
+- 2026-07-15｜CFO｜guidance：中國占全年淨銷售仍約 20%（原話："We continue to expect this to make up around 20%"）
+- 2026-07-15｜CFO｜commitment：2027 年 Low-NA EUV 訂單接近全額覆蓋（原話："close to being fully covered with orders for Low-NA EUV"）
+- 2026-07-15｜CFO｜commitment：計畫 2027 年 Low-NA EUV 產能增加約 30%（原話："increase our Low-NA EUV capacity by around 30%."）
+- 2026-07-15｜CFO｜guidance：2028 年已收到大量 Low-NA EUV 訂單（原話："significant number of Low-NA EUV orders."）
+- 2026-07-15｜CFO｜guidance：正在研究 2028 年再增 30% 產能（尚為「investigate」）（原話："investigate a further 30% capacity increase for that year."）
+- 2026-07-15｜CFO｜commitment：浸潤式系統 2027 年產能增 30%（原話："intend to increase capacity by 30% in 2027"）
+- 2026-07-15｜CEO｜product：Intel Foundry 在 Intel 18A 以 High-NA EUV 生產部分 Core Ultra Series 3（原話："to produce a subset of its Intel Core Ultra Series 3"）
+- 2026-07-15｜CEO｜product：High-NA 平台成熟度持續改善（原話："improving towards the level required for insertion"）
+- 2026-07-15｜CFO｜guidance：2026 年 High-NA 認列維持 4 至 5 台（原話："Yes, 4 to 5 is still our view for this year."）
+- 2026-07-15｜CEO｜commitment：下次資本市場日訂於 2027 年 6 月 10 日更新長期展望（原話："Capital Markets Day, which will be held on June 10, 2027"）
+- 2026-07-15｜CEO｜competition：CEO 稱 High-NA 要勝過 Low-NA 加浸潤多重曝光的成本，關鍵在平台成熟度（原話："to beat the cost of Low-NA plus immersion multi-patterning"）
+- 2026-07-15｜CEO｜product：CEO 認為不需要比較兩種機台價格（原話："there is no real need to maybe look at one tool price"）
+- 2026-07-15｜CFO｜guidance：CFO 同意當前環境給定價更大彈性（原話："to beat the cost of Low-NA plus immersion multi"）
+- 2026-07-15｜CFO｜guidance：CFO 稱已在執行定價，但受長交期影響不會立即反映（原話："And of course, we're executing on that as well."）
+- 2026-07-15｜CFO｜guidance：CFO 稱可望取得更大價值份額，帶來更好定價能力（原話："gives you better pricing power."）
+- 2026-07-15｜CFO｜commitment：與客戶討論如何就額外價值獲得回報（原話："conversations with customers on how we get rewarded"）
+- 2026-07-15｜CEO｜commitment：產能擴充皆基於現有廠房（原話："there is no real need to maybe look at one tool"）
+- 2026-07-15｜CFO｜guidance：CFO 稱 2027 約 85 台為目前供需平衡點（原話："we think the 85 is a nice representation of"）
+- 2026-07-15｜CFO｜margin：CFO 說明 2027 年 EUV 機台組合 E／F，晶圓產能增幅約 45% 而非 30%（原話："not 30% improvement of wafer capacity that we're adding, but"）
+- 2026-07-15｜CFO｜product：D 型機台今年售完，2027 年改出 E、F（原話："we're simply sold out when it comes to D models"）
+- 2026-07-15｜CFO｜margin：CFO 稱明年 E、F 組合有較佳 ASP（原話："that mix will come with a better ASP than the mix"）
+- 2026-07-15｜CFO｜margin：CFO 拆解下半年毛利率：浸潤式出貨大增（原話："not 30% improvement of wafer capacity that we're"）
+- 2026-07-15｜CFO｜margin：CFO 以財測中點推算下半年毛利率約 56%（原話："second half at a gross margin of 56% approximately"）
+- 2026-07-15｜CFO｜risk：2025 年曾請 ZEISS 準備較低的浸潤式數量，致上半年偏弱（原話："ZEISS prep for a substantially lower immersion number"）
+- 2026-07-15｜CEO｜risk：CEO 稱 2027、2028 需求尚未進入穩定狀態（原話："a stable state on what the demand will be for '27"）
+- 2026-07-15｜CFO｜guidance：CFO 稱 2028 產能研究先於客戶正式下單（原話："So we're not waiting. We're preempting."）
+- 2026-07-15｜CEO｜customer：升級需求強勁，客戶要求加速並開發新升級產品（2027、2028）（原話："So this creates really strong condition for system upgrade."）
+- 2026-07-15｜CEO｜product：E 與 F：客戶兩者都要；F 將用於 1.4nm（原話："the F will certainly be used for 1.4-nanometer"）
+- 2026-07-15｜CEO｜product：DRAM 與邏輯客戶同時驗證 High-NA（原話："are qualifying equally High-NA today."）
+- 2026-07-15｜CFO｜commitment：CFO 稱 R&D 與 SG&A 持續控管，營運槓桿未來會更好（原話："I think all the capacity increases, either planned or"）
+- 2026-07-15｜CFO｜capital_allocation：預計今年動工新園區，但屬 2028 年之後（原話："We expect to break ground this year on a new campus"）
+
+### 問答異常語氣（迴避／改口／保留）
+- ASML_Q2_2026_Earnings_Call_20260715.md｜問：Bouvignies（UBS）問 Low-NA 是否有調價空間、何時反映｜答法：CEO 先轉談 High-NA 成熟度；CFO 承認有彈性但不給時間表，只說視訂單與交期而定
+- ASML_Q2_2026_Earnings_Call_20260715.md｜問：Houri（ODDO）問 2028 年 110 台已覆蓋多少｜答法：CFO 稱不提供訂單或覆蓋率數字，改談客戶訊號強
+- ASML_Q2_2026_Earnings_Call_20260715.md｜問：Houri 問 75% 記憶體成長中 HBM 與量的比例｜答法：CEO 稱難以知道確切比例，改談量與層數
+- ASML_Q2_2026_Earnings_Call_20260715.md｜問：Tammy Qiu（Berenberg）問能否優於 WFE 成長｜答法：CFO 稱從不評論 WFE，只談自家計畫
+- ASML_Q2_2026_Earnings_Call_20260715.md｜問：Nigel van Putten（MS）問 45% 產能是否為 EUV 營收下限｜答法：CFO 稱不對明年營收給任何指引
+- ASML_Q2_2026_Earnings_Call_20260715.md｜問：Muse（Cantor）問 60% 增量營業利益率是否為目標｜答法：CFO 稱不量化，僅說營運槓桿將變好
+- ASML_Q2_2026_Earnings_Call_20260715.md｜問：Scemama（BofA）問 2027 毛利率是否高於 2026 出口率｜答法：CFO 稱不給 2027 毛利率指引，只列定性驅動因素
+
+---
+
+| axis | status | n_findings | n_queries |
+|---|---|---|---|
+| competitive_share_entrants | found | 4 | 3 |
+| customer_second_source | found | 2 | 2 |
+| customer_concentration_credit | found | 4 | 3 |
+| supply_demand_durability | found | 6 | 3 |
+| regulatory_antitrust | found | 1 | 3 |
+| reg_tariff_export | found | 2 | 2 |
+| geo_supply_chain | found | 4 | 3 |
+| end_markets | found | 8 | 4 |
+| substitute_technology | found | 5 | 4 |
+| channel_business_model_shift | found | 2 | 2 |
+| capital_markets_pricing | found | 4 | 4 |
+| major_events | found | 1 | 5 |
+
+---
+
+## 前份判斷摘要（含 drift_watch_prior 20 欄前份值；漂移歸因對帳用）
+
+```json
+{"date":"20260716","verdict":"進場","role":"核心","H":{"status":"ok","format":"table","rows":[{"id":"H1","text":"WFE/EUV 需求超級週期延續，AI 驅動 capex 兌現","columns":{"2Y 驗證點":"2026 €43–45B（二度上修）、2027 再成長且訂單近乎全滿","5Y 驗證點":"2030 €44–60B（投資者日模型）","10Y 驗證點":"EUV 為 sub-2nm 物理必需，多代延續","具體數字門檻":"2026 指引 €43–45B（上緣）；2027 EUV 產能 84 台；WFE 2027 $135B（SEMI，+7.3%）；設備銷售 2027 創高 $156B","信息來源":"ASML 2026-07-15 法說 + SEMI 2026 forecast","漂移觸發":"2026 指引下修 或 WFE 連 2 季降速 或 2027 訂單連 2 季軟化 → 削弱"}},{"id":"H2","text":"High-NA EUV（0.55NA）鞏固下一代壟斷——由 Intel 首度高量產驗證（前次「延後/集中」已部分解除）","columns":{"2Y 驗證點":"Intel Panther Lake on 18A 選擇性層 High-NA 高量產（2026-07-15 ASML 證實特定層別雙資格認證、良率與 NXE 相當；「85%」為 KeyBanc 推估）；SK Hynix 2 台、Samsung EXE:5200B（SF2/HBM4）","5Y 驗證點":"EXE:5200 大量商業部署 2028–29；TSMC 仍缺席至 ~2029（A14 用 0.33NA）","10Y 驗證點":"High-NA 成 sub-1.4nm 主流","具體數字門檻":"2026 出貨 10 台 High-NA（~$380M/台）；60+ 台總 EUV；2027 EUV 產能 +~30%（~78–84 台，來源分歧）；Intel 14A 風險量產 2027、量產 2028","信息來源":"ASML 2026-07-15；Intel Foundry roadmap；TrendForce","漂移觸發":"Intel 14A 取消 或 High-NA 出貨連 2 季 miss → 削弱"}},{"id":"H3","text":"估值 de-rate 至壟斷成熟區 30–35x FY27（de-rating＝進場條件，非賣出條件）——本份已透過 EPS 成長兌現","columns":{"2Y 驗證點":"FY27 fwd PE ≤ 34–35x（後上修共識 ~$52 → $1,815 = 33–35x）","5Y 驗證點":"持有期內倍數維持 28–35x 壟斷成熟區","10Y 驗證點":"—","具體數字門檻":"後上修 FY27 EPS ~$52（凍結 Excel 快照仍 $47.87 = 37.9x，見 §11 lag 註記）","信息來源":"§11.1 歷史分位 + Q2 二度上修 + 共識上修軌跡","漂移觸發":"FY27 fwd PE 反升 &gt; 45x → 追高風險、暫停加碼"}}]},"R":{"status":"ok","format":"table","rows":[{"id":"R1","text":"出口管制升級：MATCH Act（2026-04-22 通眾院外委會，把管制自 EUV 擴及 DUV、150 天窗施壓荷/日否則 FDPR）；BIS/Lutnick 自 2026-04 質問 ASML 高管 EUV 零件是否違規流入中國（AMAT 2026-02 因經韓轉 SMIC 遭罰 $252.5M 為先例）。兩情境：溫和管制＝壓縮 China ~20% TAM；MATCH Act 若過關擴及 DUV＝近乎清零 China 業務（China 現幾乎全靠 DUV+服務）——後者機率較低但衝擊大一個量級","columns":{"對應假設":"H1","時間尺度":"⚡ 短期（1–2 季可觸發）","監測指標":"MATCH Act 立法進度、BIS 立案、China 營收占比","警戒閾值":"MATCH Act 院會表決 或 BIS 正式立案；China 營收連 2 季 YoY &lt;−30%（JPM 估 EPS −10%）"}},{"id":"R2","text":"High-NA 採用邊際化：TSMC 跳過至 ~2029、High-NA 經濟性（~$380M/台）使非 Intel 客戶採用緩慢；Intel 14A 若找不到外部客戶而暫停 → H2「鞏固下一代壟斷」右移","columns":{"對應假設":"H2","時間尺度":"🔥 中期（4–6 季）","監測指標":"High-NA 季度出貨、Intel 14A 外部客戶確認、TSMC High-NA roadmap","警戒閾值":"High-NA 連 2 季出貨 miss 或 Intel 14A 確認暫停"}},{"id":"R3","text":"AI capex 週期見頂 + 估值倍數壓縮：hyperscaler 2026 FCF 已惡化（Amazon 已轉負——2026 Q1 −$18.2B、FY 估 −$17~28B；四大合計 capex ~$725B、+77% YoY，BofA 估已吃掉 ~94% 股利回購後營運現金流）→ 若 2027 capex 增速見頂 → 訂單能見度被折價 + 倍數壓向中樞——最高機率、不需基本面惡化","columns":{"對應假設":"H1/H3","時間尺度":"🐢 長期慢變數（可被 R1 加速）","監測指標":"hyperscaler capex 修訂、WFE 增速、FY27 fwd PE 分位","警戒閾值":"hyperscaler 2027 capex guidance 下修 或 WFE 連 2 季負成長"}}]},"single_thing":null,"kill_metrics":null,"rearm_trigger":"加碼觸發：回檔至 $1,650（FY27 ≈32x）分批，或 2027 指引/訂單再上修、Intel 14A 外部客戶落地","irr_base_pct":7.0,"ev5y_pct":37.0,"drift_watch_prior":{"dca_verdict":"進場","dca_role":"核心","signal":"B","val":"🟡","ma":"✅","trap":"🟡","moat_trend":"→","runway_post_y5":"🟢","asym_ratio":3.6,"ev5y_pct":37.0,"irr_base_pct":7.0,"max_dd_pct":-55.0,"bull_5y_price":3449.0,"bear_5y_price":1271.0,"p_bull_pct":30.0,"p_bear_pct":25.0,"rearm_trigger":"加碼觸發：回檔至 $1,650（FY27 ≈32x）分批，或 2027 指引/訂單再上修、Intel 14A 外部客戶落地","price_at_dd":1815.27,"archetype":"品質複利成長","cycle_position":null}}
+```
+
+---
+
+## judgment.json 全文（被審對象，緊湊格式）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"ASML","date":"2026-10-17","schema":"v15.0","contract":"v19","company_name":"ASML Holding N.V."},"oneliner":"EUV獨家供應商，2027–28產能仍供不應求，首次談成關鍵機台漲價；FY2027前瞻本益比約28倍，股價已回到前份設定的加碼價位；最大風險是2028後客戶擴產放緩，讓高點盈利回落。","facts_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/ASML_20261017/facts.json","scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/ASML_20261017/scenario.json","answers":{"q1_business":{"verdict":"賺晶片廠擴產的錢：機台（EUV／DUV）一次性收款，加上安裝基礎升級與服務的經常性收入；錢卡在先進製程曝光這一節點，EUV只有ASML能供貨。","reasoning":"最新一季（2026第三季）總營收€11.66bn、毛利率57.5%、淨利€4.96bn；系統銷售約€8.4bn（EUV約€4.1bn含1台High-NA，非EUV約€4.3bn），安裝基礎管理€3.29bn，占總營收約28%，比指引高約€0.4bn，是本季毛利率超標的主因。淨利含Mistral AI投資評價增益約€0.5bn，約占當季淨利一成，屬一次性。近四季營益率35.4%。全年2026指引€44–45bn、毛利率約56%，第四季指引€14.2–15.2bn、毛利率約57%。產業時鐘判在擴張期：客戶需求到2028仍超過供給，2027產能增30%、2028研究再增逾30%，SEMI年中預測WFE 2027年+21.8%、2028年+14.1%；過熱的跡象（漲價、客戶要求提前下2029–30訂單）已出現，但管理層表示以晶圓廠建設計畫驗證需求，尚未接受2029–30訂單。供需持久性：結構性持久至2028，證據只蓋到2028，2029以後不足。單點依賴有兩處：上游光學只有Zeiss一家（20-F揭露，管理層稱不是2028擴產瓶頸）；下游前兩大客戶在FY2021合計占66.3%，近期集中度又往台積電上升。產業態勢三軸：競爭面靜態（中國DUV、Nikon、自由電子雷射光源皆未構成量產威脅），結構面轉好（漲價談成、High-NA進量產排程、DRAM新EUV客戶），其他結構變數中出口管制持續收緊（MATCH Act擬把禁令擴及DUV與維修），整體裁為雙向拉鋸，結構性轉好略占上風。","fact_refs":["f_kpi0_total_net_sales","f_kpi1_gross_margin","f_kpi2_net_income","f_kpi3_installed_base_managemen","f_kpi4_guidance_q4_2026","f_kpi5_guidance_fy2026","f_peer_asml_operating_margin_pct","f_earnings_recency"],"verdict_values":{"revenue_quality":"系統銷售具週期性但有預付款與長交期緩衝；安裝基礎管理約占28%，隨EUV裝機數累積，2026年預期成長約50%，其中升級業務毛利高但管理層自稱是擺動因素。","unit_econ_note":"價值隨產能定價：機台吞吐量提高（NXE:3800F每小時260片、浸潤式330片）即可提高售價；升級售價跟隨機台售價；2027起關鍵機台漲價，2028全面反映。","archetype":{"primary":"品質複利成長","secondary":"循環/商品","confidence":"中","fingerprint":"獨占設備商，盈利隨晶圓廠資本支出循環，但EUV獨家與服務收入提供底部"},"industry":{"clock_phase":"II","sd_verdict_source":"結構性持久至2028：第三季新聞稿稱2027與2028規劃供給無法完全滿足客戶需求，客戶以預付款下單、非流動負債季增約€5bn；2029以後僅有客戶意向，尚未接單。","bargaining":{"up":"Zeiss為光學唯一供應商（20-F FY2020版揭露，現況未更新）；管理層稱Zeiss不是2028擴產瓶頸，但擴產需部分補貼供應鏈。","down":"前兩大客戶FY2021合計占66.3%，最大客戶37.0%；台積電公開嫌High-NA太貴並抵制漲價，但關鍵機台漲價已在第三季談成。","geo":"中國約占2026營收20%（2025年33%）；韓國2026第一季占系統銷售45%；出貨受荷蘭與美國出口許可約束。"},"profit_pool_dir":"價值鏈利潤主要在晶片設計（輝達營益率65%）與代工（台積電56%），ASML為35%；本次漲價管理層稱為生態系價值重新分配，利潤池向微影小幅移動。","tam_table":[{"item":"全球WFE 2026（SEMI年中預測）","value":"US$143.9B"},{"item":"WFE 2027成長（SEMI）","value":"+21.8%"},{"item":"WFE 2028（SEMI）","value":"約US$200B，+14.1%"},{"item":"全球設備銷售2028（SEMI）","value":"US$229.5B"},{"item":"ASML光刻市占","value":"約90%，EUV唯一供應商（2026-01投資摘要）"},{"item":"OI池占比五年變化","value":"事實表未涵蓋"}]}}},"q2_moat":{"verdict":"護城河趨勢上升：EUV獨家供應下首次談成漲價，High-NA進入客戶量產排程，DRAM端出現新的EUV客戶。","reasoning":"機制是EUV唯一供應商、整體光刻市占約90%，客戶製程以ASML機台認證，換供應商等於重新認證整條製程。定價權擴大的證據：第三季CFO稱與客戶的漲價談判已完成，2027起反映在營收與毛利率，2028起全面且持續；CEO說這是過去從未做過的討論，客戶接受生態系價值在移動。執行力擴大：2026年低NA EUV出貨約65台，較2025年44台增近50%，2027產能再增30%。同業對照只有利潤率沒有ROIC：ASML營益率35.4%高於設備同業ONTO的13.8%，差距約22個百分點，且ASML年度營益率由2022年30.7%升至2025年34.6%，利差為正且擴大；但低於客戶台積電56.1%與輝達65.2%，說明價值鏈分配仍偏向下游。反向證據：台積電嫌High-NA太貴，量產延至2030；中國DUV新進者與自由電子雷射光源報導曾讓股價兩日跌約10%，但皆未量產。威脅均為點對點，不扣分。","fact_refs":["f_peer_asml_gross_margin_pct","f_peer_asml_operating_margin_pct","f_peer_2330_tw_operating_margin_pct","f_peer_nvda_operating_margin_pct","f_peer_avgo_operating_margin_pct","f_peer_onto_operating_margin_pct","f_kpi1_gross_margin","f_kpi3_installed_base_managemen"],"verdict_values":{"moat":{"mechanism":"EUV唯一供應商＋製程認證轉換成本＋安裝基礎升級與服務隨裝機數累積","execution":9,"pricing":9,"grade":"A","trend":"↑","trend_evidence":"第三季法說：關鍵機台漲價談判完成（史上首次），2027起反映、2028全面；三星2028、台積電2030宣布High-NA量產；英特爾High-NA曝光逾100萬片晶圓；DRAM出現新EUV客戶。反向：台積電抵制High-NA價格。","competitor_notes":[{"name":"2330.TW","strategy_note":"最大客戶而非對手；營益率56%高於ASML，High-NA延到2030量產，是ASML漲價最大的議價阻力。"},{"name":"NVDA","strategy_note":"AI需求源頭，營益率65%顯示利潤池在晶片設計端；ASML漲價等於向這個利潤池分一小塊。"},{"name":"AVGO","strategy_note":"客製AI晶片受益者，與ASML不同層級，只作為AI需求強度的側面對照。"},{"name":"ONTO","strategy_note":"同屬半導體設備，營益率13.8%遠低於ASML的35.4%，反映獨占地位帶來的利差。"},{"name":"Nikon／Canon","strategy_note":"Nikon洽談先進浸潤式訂單未證實；Canon奈米壓印限於3D NAND等特定用途，EUV層級無對手。"}],"peer_na_reason":"事實表同業表只有毛利率、營益率、FCF利潤率與研發密度，沒有ROIC；以營益率作利差代理，同業中僅ONTO屬設備業。","threats":[{"level":"🟡","text":"中國DUV新進者：報導稱今年出貨5台DUV、2027暫定20台，機台未經驗證，距EUV多年；即使中國取得20台浸潤式機，估計影響2027營收約2.4%。","p":"10%","evidence_refs":["competitive_share_entrants#1","substitute_technology#1","substitute_technology#2"]},{"level":"🟡","text":"自由電子雷射EUV光源路線（Terafab、xLight）：尚未量產、無設備訂單，ASML與xLight合作技術展示，較像供應鏈元件而非整機替代。","p":"5%","evidence_refs":["competitive_share_entrants#2","customer_second_source#1"]},{"level":"🟡","text":"Nikon與美亞晶片廠洽談採購（未證實），屬DUV層級點對點競爭。","p":"15%","evidence_refs":["competitive_share_entrants#3"]},{"level":"🟡","text":"客戶議價反撲：台積電嫌High-NA太貴、延到2030才量產，限制下一代機台的定價空間。","p":"40%","evidence_refs":["customer_second_source#0"]},{"level":"🟡","text":"架構替代：客戶轉向較不依賴微影的新架構或X光微影（Substrate），目前只有宣稱、無量產證據。","p":"5%","evidence_refs":["substitute_technology#0","substitute_technology#3"]}],"roic_durability":{"quadrant":"高利益率×高周轉（推論：客戶預付款讓營運資金為負；投入資本事實表未涵蓋）","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者、決策者、付款者都是晶片廠；客戶自身的產品已用長約鎖到至少2028，擴產是需要而非想要，延後買機台等於讓出AI產能。代理讀數：非流動負債（預付款）第三季季增約€5bn。"},{"item":"決策層級","level":"🟢","text":"替代性在製程節點層級衡量：先進邏輯與DRAM的關鍵層只有ASML EUV可用，換供應商要重新認證整條製程；台積電寧可延後High-NA也沒有改用他牌。"},{"item":"價值鏈分配","level":"🟡","text":"營益率35%低於台積電56%與輝達65%；首次漲價成功顯示分配向微影移動，但漲價有一部分要拿去補貼供應鏈擴產，台積電抵制High-NA價格。"},{"item":"社會容忍度","level":"🟡","text":"不依賴監管授權，但出口受荷蘭與美國管制：中國占比由2025年33%降到2026年約20%，MATCH Act擬把禁令擴及DUV與維修；管理層表態不會每年漲價，刻意不把價格推到經濟上限。"}],"roiic":"無法計算：投入資本事實表未涵蓋。2022→2025年營業利益約€6.5bn增至約€11.3bn，同期FCF多數年度高於淨利，增量成長幾乎不耗用股東資本。","reinvest_rate":"近零或為負：2025年FCF €11.0bn高於淨利€9.6bn，2024年FCF/淨利1.20；擴產資金主要來自客戶預付款（第三季FCF €11.4bn）。","endo_ceiling":null,"formula_note":"增量報酬×再投資率在預付款模式下失真：再投資率近零會算出接近零的上限，但實際成長由客戶預付款支應的產能擴充推動（2026年EUV出貨+50%、2027產能+30%）；改以產能年增約30%作為量的上限參考，價與毛利擴張另計。"}}}},"q3_growth":{"verdict":"成長跑道寬：2027–28量價齊揚，High-NA是有客戶量產時程背書的第二條曲線。","reasoning":"成長以量為主（產能2027年+30%、2028年研究逾30%），價次之（關鍵機台漲價2027起反映、2028全面），升級服務與回購為輔。共識每股盈餘FY2026E 42.94→FY2027E 58.13→FY2028E 76.46美元，兩年年化約33.4%；三年口徑因基期FY2025實際為歐元（24.71），與美元共識不同幣別，不硬算。共識營收FY2026E €44.5bn→FY2027E €57.2bn，+28.7%。內生上限公式在預付款模式失真，以產能年增約30%作量的上限；共識盈餘年化33%與此相差約3個百分點，由漲價與毛利擴張補上，可以歸因，不屬依賴重估。滲透率：High-NA量產剛起步（三星2028、台積電2030），12吋光罩聯盟目標2031試產、2033量產，客戶規劃更多層，第二曲線有來源；低NA EUV在DRAM仍有新客戶導入。衰退信號亮一盞（盈餘成長高於營收成長逾5個百分點，來自漲價與毛利擴張）。主要不確定在2029以後：證據只蓋到2028。","fact_refs":["f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_rev_consensus_fy1_m","f_rev_consensus_fy2_m","f_kpi5_guidance_fy2026","f_kpi4_guidance_q4_2026","f_consensus_rev_3m_fy1_pct"],"verdict_values":{"growth":{"driver_mix":"量（產能+30%）為主、價（2027起漲價，2028全面）次之、升級服務與回購為輔","runway_years":"≥10","runway_post_y5":"🟢","endo_ceiling_basis":"公式（增量報酬×再投資率）在客戶預付款撐資金時失真；以產能年增約30%為量的上限參考，漲價與毛利擴張另計。共識盈餘兩年年化約33%，超出部分可歸因於漲價與毛利擴張。","segments":[{"item":"EUV系統 2026成長","value":">45%"},{"item":"非EUV系統 2026成長","value":"約20%"},{"item":"安裝基礎管理 2026成長","value":"約50%；第三季€3.29bn，第四季指引約€3.7bn"},{"item":"邏輯系統 2026","value":"約+10%（先進邏輯>25%）"},{"item":"記憶體系統 2026","value":"約+75%，主要為DRAM"},{"item":"第三季系統銷售組合","value":"邏輯54%／記憶體46%"}],"decay_signals":[{"signal":"每股盈餘成長顯著高於營收成長（差>5個百分點）","lit":true,"evidence":"FY2026E→FY2027E每股盈餘+35.4%、營收+28.7%，差6.7個百分點；來自漲價與毛利擴張。營收為歐元、盈餘為美元，匯率假設不同時差距會偏移。"},{"signal":"毛利率連2季年減","lit":false,"evidence":"第二季54%、第三季57.5%，皆高於前一年度約51–53%。"},{"signal":"FCF/淨利<0.75連2年","lit":false,"evidence":"2023年0.41、2024年1.20、2025年1.15，未連續。"},{"signal":"核心市占近12個月縮減","lit":false,"evidence":"搜尋未顯示光刻市占變動。"},{"signal":"主力產品提價後銷量下滑","lit":false,"evidence":"漲價2027才反映，尚無量的資料。"},{"signal":"SBC/營收>5%且上升","lit":null,"evidence":"事實表未涵蓋。"},{"signal":"維持性資本支出占FCF>60%","lit":null,"evidence":"事實表未涵蓋。"}],"trap_rating":"🟡"}}},"q4_capital":{"verdict":"資本配置中等偏弱：現金充裕、配發積極，但回購在高倍數時執行，股權稀釋資料不足。","reasoning":"FCF/淨利轉換率2022年1.27、2023年0.41、2024年1.20、2025年1.15（事實表年度財務歷史，yfinance），波動來自客戶預付款進出，第三季單季FCF €11.4bn同樣是預付款推高。淨現金約€10.8bn（現金及短投€12.7bn、總債務€2.0bn）。現金去向：第三季依2026–2028計畫回購約€4.1bn（第二季約€1.1bn），每季中期股息€1.88，殖利率約0.55%。無重大併購，Mistral AI為少數股權投資。回購時點的本益比約35–41倍，盈餘殖利率約2.4–2.9%，難以通過十年期殖利率加2%的門檻（十年期殖利率事實表未涵蓋）。SBC與股數歷史事實表未涵蓋；以淨利÷稀釋每股盈餘反推的股數口徑互相矛盾（2022年約350百萬、2024年約394百萬），不採信。","fact_refs":["f_net_debt_m","f_shares_diluted_m","f_dividend_yield_ttm","f_kpi2_net_income","f_pe_current","f_fwd_pe_latest"],"verdict_values":{"capalloc":{"items":[{"name":"ma_roiic","applicable":false,"passed":null,"input":"近年無重大併購；Mistral AI為少數股權投資，第三季認列評價增益約€0.5bn，不屬營運併購。"},{"name":"buyback_yield","applicable":true,"passed":false,"input":"回購時點本益比約35–41倍，盈餘殖利率約2.4–2.9%；十年期殖利率事實表未涵蓋，但門檻需高於殖利率加2%，判定未過。"},{"name":"sbc_dilution","applicable":true,"passed":null,"input":"SBC與歷史股數事實表未涵蓋；反推股數口徑矛盾，無法判定。"}]},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購；配發只有回購（第三季約€4.1bn）與每季股息€1.88兩項，已寫在本題理由，無需展開表格。"}}}},"q5_valuation":{"verdict":"現價要求FY2027–28共識兌現、且2029後盈利不大幅回落；前者有預付款與產能證據，我信；後者沒有證據，所以只給中性。","reasoning":"現價1,641.52美元，對FY2027E共識58.13為28.2倍，對FY2026E 42.94為38.2倍；前份時FY27本益比約35倍，股價下跌約10%加上共識上修，倍數降約七個。PEG以當年度38.2倍除兩年盈餘年化33.4%約1.14，落在合理區。歷史位置只有四個年度端點：本益比分位51.9，市銷率與EV/S皆為四點中最高，反映利潤率走高而非盈利倍數昂貴。五年分位事實表未涵蓋（只有四個年度端點），不外推。共識FY1近三個月上修11.3%，但最近兩份快照間三年皆小幅下修1.3–1.7%。賣方目標價分散（約1,970至2,623美元），不作承重。基準情境（2031年每股盈餘94美元×26倍）年化約9%，報酬來自盈餘成長，倍數由38倍降到26倍是拖累，不依賴重估。","fact_refs":["f_price_at_dd","f_fwd_pe_latest","f_pe_current","f_pe_percentile","f_ps_percentile","f_ev_s_percentile","f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_consensus_rev_fy1_pct","f_consensus_rev_fy2_pct","f_consensus_rev_3m_fy1_pct","f_dividend_yield_ttm"],"verdict_values":{"valuation":{"basis":"前瞻本益比（FY2027E共識）＋PEG；自身歷史年度端點對照","tier":"獨占半導體設備","peers":{"expanded":false,"reason":"事實表同業表沒有本益比；台積電、輝達、博通是客戶或AI晶片，與微影設備屬不同層級，不能當估值錨；ONTO無倍數資料。"},"peg":1.14,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"FY2027E前瞻本益比28.2倍、當年度38.2倍；PEG約1.14（38.2倍÷兩年盈餘年化33.4%）；本益比年度端點分位51.9，市銷率與EV/S在四點最高（利潤率上升所致）；基準情境五年年化約9%（股價至約2,444美元）。倍數不貴，但分母是週期高點盈利，2029年後沒有證據，因此判中性而非便宜。","upside_short_pct":13,"upside_mid_pct":30,"denominator_disputed":false,"denominator_note":"第三季淨利含Mistral AI評價增益約€0.5bn（約當季淨利一成），屬一次性但不改結論；真正的分歧在2028年後盈利能否維持，不在分母的一次性項目。短期上檔＝FY2027E 58.13×32倍≈1,860美元（+13%）；中期＝三年後FY2029E基準82×26倍≈2,132美元（+30%）。"}}},"q6_how_wrong":{"verdict":"最可能看錯在把2027–28週期高點盈利當成高原：若AI資本支出在2028見頂，盈利與倍數會一起下修。","reasoning":"依據見反證紀錄四條：需求囤貨與2029後回落、出口管制擴及DUV、漲價被擴產成本與客戶議價吃掉、市銷率位於年度端點高位。衰退信號只亮一盞（盈餘成長快於營收，來自漲價），陷阱風險判中。動能面不過熱：26週報酬12.8%、RSI 37.7，股價自10月8日快照價約1,780美元回落。","fact_refs":["f_week26_return_pct","f_rsi14","f_ps_percentile","f_consensus_rev_fy1_pct","f_fwd_pe_latest"],"verdict_values":{"trap":{"verdict":"🟡","label":"週期高點盈利與升級業務的可持續性"}}}},"scenario_inputs":{"terminal_label":"FY2031E","start":{"eps":42.94,"pe":38.23,"basis":"FY2026E共識每股盈餘（美元，2026-10-08快照）；財年已過十個月，接近當年度實際；終端倍數同樣套用當年度盈餘"},"eps":{"bull":[60,82,98,110,125],"base":[58.13,76.46,82,86,94],"bear":[54,58,46,50,55]},"pe":{"bull":32,"base":26,"bear":20},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":0.55,"net_buyback":0},"second_stage":{"bull_cagr_pct":12,"base_cagr_pct":8},"max_dd":{"lo":-55,"hi":-35,"basis":"上緣−35%：盈利不衰退、倍數由當年度38倍壓到約25倍（42.94×25≈1,074美元）；中段−44%至−50%：悲觀路徑2029谷底每股盈餘46×熄火倍數20倍＝920美元，情緒超跌至18倍＝828美元；下緣−55%：谷底盈利×約16.5倍的恐慌超跌，事實表未涵蓋歷史最大回撤，作保守下限。","trigger_time":null},"basis":{"bull":"2028產能再增逾30%、漲價全面反映、High-NA出貨逐年放大，2031年每股盈餘125美元；終端32倍（對照現FY2027前瞻28倍、當年度38倍）。","base":"2027–28照共識（58.13、76.46），2029–30高原小幅成長，2031年94美元；終端26倍，低於現FY2027前瞻28倍（事實表未涵蓋同業本益比，以自身現值對照）；每股盈餘已含回購，淨回購殖利率填0避免重複計算。","bear":"2027–28略低於共識，2029年AI資本支出見頂、盈利回落到46美元，2031年回到55美元（不高於FY2027E共識）；終端20倍＝成長熄火至約10%的倍數錨；同時假設MATCH Act擴及DUV。機率30%：需求證據只蓋到2028，五年窗涵蓋2029–31，且部分2029–30意向可能是保留產能。"},"endo_ceiling_exceeded":true},"counter_evidence":{"blind_spots":[{"view":"論點失敗","evidence":"客戶希望提前下2029–30訂單，有分析提醒部分可能是保留產能；Mizuho以客戶集中台積電、三星與英特爾上行有限降評；2026年4月時全年指引還只有€36–40bn，半年內大幅變動，顯示能見度波動大。","assumption":"2027–28需求已由晶圓廠建設計畫與「痛的」預付款驗證，不是重複下單。","consequence":"若AI資本支出在2028見頂，2029–30營收回落，盈利回到悲觀路徑46–55美元，股價跌到約1,100美元以下，五年虧損三成以上。","ruling":"部分採納：悲觀機率給30%。2027–28採信（非流動負債第三季季增約€5bn、管理層尚未接受2029–30訂單以免超賣）；2029–30意向不計入基準。與唯一致命點部分重疊（同為量能落空），本條補上2029年後回落的路徑。","watch":"每季非流動負債（預付款）變動、2027年1月年度展望、主要客戶資本支出公告","evidence_refs":["customer_concentration_credit#2","supply_demand_durability#2"],"fact_refs":["f_consensus_rev_fy1_pct","f_consensus_eps_fy2"]},{"view":"論點失敗","evidence":"MATCH Act擬把禁令由EUV擴及DUV浸潤式與既有設備維修；美國商務部長據報質疑EUV機台流入中國，ASML否認；中國占比已由2025年33%降至2026年第一季19%。","assumption":"中國占比穩在約20%，管制不再擴大到DUV與服務。","consequence":"若立法且荷蘭執行，分析師估營收影響個位數百分比、每股盈餘最多降10%；若調查成立另有罰款與許可風險。","ruling":"採納為風險但不是主因：衝擊上限約一成盈利，小於需求循環；放進悲觀情境並設減碼觸發。","watch":"MATCH Act院會進度、荷蘭政府執行表態、BIS立案與否、每季中國營收占比","evidence_refs":["geo_supply_chain#2","substitute_technology#4","geo_supply_chain#1","regulatory_antitrust#0","reg_tariff_export#0"],"fact_refs":[]},{"view":"論點成功但股東經濟變差","evidence":"CFO稱部分漲價要用來補貼供應鏈擴產；第四季毛利率指引約57%，營收大增仍低於第三季57.5%，原因是擴產成本；升級業務是毛利擺動因素；前兩大客戶集中、台積電抵制漲價；光學只有Zeiss一家。","assumption":"量增帶來固定成本攤提，漲價大部分直接進毛利率。","consequence":"營收照共識成長，但毛利率停在約56%，盈利低於基準路徑，報酬落在基準與悲觀之間。","ruling":"部分採納：以FY2028毛利率≥57%為檢驗門檻；未達則停止加碼。","watch":"每季毛利率、第四季財報對2027毛利率的首次指引","evidence_refs":["geo_supply_chain#0","customer_concentration_credit#0","customer_concentration_credit#1","customer_second_source#0"],"fact_refs":["f_kpi1_gross_margin","f_kpi4_guidance_q4_2026"]},{"view":"價格已反映太多","evidence":"市銷率16倍、EV/S約15.8倍，都是四個年度端點中最高；本益比約40倍；最新兩份共識快照三個財年皆小幅下修1.3–1.7%。","assumption":"市場用FY2027前瞻倍數約28倍定價，而非用2029谷底盈利。","consequence":"若市場改用谷底盈利定價，倍數壓到20倍，現價下檔約三成。","ruling":"反駁：股價已較前份低約10%，FY2027倍數28倍低於前份認定的30–35倍成熟區；基準情境年化約9%完全來自盈餘成長，不依賴倍數擴張。市銷率高位反映利潤率走高，列入觀察。","watch":"FY2028E前瞻本益比回到35倍以上（約2,676美元）且盈利未上修","evidence_refs":[],"fact_refs":["f_ps_percentile","f_ev_s_percentile","f_pe_current","f_consensus_rev_fy2_pct","f_fwd_pe_latest"]}],"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 ✅ → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=✅","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 1815.27 → 本次 1641.52（-9.6%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=1815.27","side_b":"本次 price_at_dd=1641.52","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 1,815.27 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 1,815.27 美元：Bull 價 3,449、Bear 價 1,271，五年期望值 +37.0%，基準年化 7.0%，不對稱比 3.6","side_b":"本次情境、股價仍用 1,815.27 美元：Bull 價 4,000、Bear 價 1,100，五年期望值 +33.9%，基準年化 6.1%，不對稱比 2.55","ruling":"先換情境、股價不動：五年期望值少 3.1 個百分點，基準年化少 0.9 個百分點。不對稱比由 3.6 變為 2.55。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變差。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 1,815.27 美元：五年期望值 +33.9%，基準年化 6.1%，不對稱比 2.55","side_b":"本次情境、股價 1,641.52 美元：五年期望值 +48.0%，基準年化 8.3%，不對稱比 3.63","ruling":"再換股價、情境不動：起點價下跌 9.6%，五年期望值多 14.2 個百分點，基準年化多 2.2 個百分點，不對稱比由 2.55 升到 3.63。合計五年期望值比前份多 11.0 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"需求真實性：真實擴產還是囤貨","cause":null,"prior_field":null,"side_a":"管理層（2026-10-14 CEO、CFO）：需求以客戶晶圓廠建設計畫驗證，下單附「痛的」預付款且取消代價高；非流動負債季增約€5bn；尚未接受2029–30訂單以免排擠其他客戶。","side_b":"賣方：部分2029–30意向可能是保留產能；Mizuho降評，理由是客戶集中台積電、三星與英特爾2026上行有限。","ruling":"可調和（程度差異）：2027–28以預付款與產能計畫驗證，採信；2029–30只有意向，不計入基準情境。","evidence_level":"中：預付款為財報數字，2029後只有管理層轉述","settle_metric":"每季非流動負債變動；2027年1月年度展望","if_then":["若2027年1月營收展望≥€57bn且非流動負債續增→加碼至目標權重","若非流動負債連2季下降→停止加碼並減碼三分之一"],"evidence_refs":["customer_concentration_credit#2"]},{"axis":"管理層前後說法：2027–28產能","cause":null,"prior_field":null,"side_a":"2026-07-15 CFO：2027年約85台是目前供需平衡點，2028年「研究」再增30%；2027低NA訂單接近全滿。","side_b":"2026-10-14 CFO：2027與2028規劃產出都不足以滿足需求，2028研究超過30%；CEO拒絕給2027–28新數字。","ruling":"方向一致、改口是往上修；但不給數字讓檢驗延到2027年1月展望與2027-06-10資本市場日。","evidence_level":"高：兩次法說原話","settle_metric":"2027年1月年度展望；資本市場日長期模型","if_then":["若1月展望與資本市場日確認2028產能增幅≥30%→維持基準並可加碼","若2028產能目標低於30%→停止加碼並重估悲觀機率"],"evidence_refs":[]},{"axis":"現在就賣的最強論證","cause":null,"prior_field":null,"side_a":"賣方論證：市銷率位於年度端點最高；第三季57.5%毛利率靠高毛利升級業務，CFO自稱擺動因素；第四季毛利率指引反而下滑；最新共識快照小幅下修；股價八個交易日跌約8%，市場可能在定價週期頂部。","side_b":"持有論證：FY2027前瞻28倍不貴；漲價2027起才反映；管理層稱仍有大量機台未升級並將推新升級產品；預付款驗證需求至2028。","ruling":"不採納為賣出理由：倍數與盈利證據支持持有；但把毛利率連2季低於53%與預付款連2季下降設為減碼門檻。","evidence_level":"中","settle_metric":"每季毛利率、非流動負債","if_then":["若毛利率連2季低於53%→減碼三分之一","若股價反彈至2,676美元以上且盈利未上修→減碼四分之一"],"evidence_refs":[]},{"axis":"估值與訊號（價格變動）","cause":"價格變動","prior_field":["val","signal"],"side_a":"前份（2026-07-16，股價1,815.27）：估值中性、訊號B；FY27本益比約35倍（以上修後共識約52美元計）。","side_b":"本次（股價1,641.52）：FY2027E共識升至58.13，前瞻本益比約28倍；估值仍判中性（分母在週期高點），訊號升為A（品質A、估值中性、RSI 37.7未過熱）。","ruling":"股價下跌約10%加上共識上修，倍數下降約七個；估值結論不升為便宜，因2029年後盈利沒有證據。","evidence_level":"高：價格與共識皆為事實表數字","settle_metric":"FY2027E前瞻本益比","if_then":["若FY2027E前瞻本益比降到26倍以下且年度展望達標→加碼一批"],"evidence_refs":[]},{"axis":"護城河、跑道、陷阱、類型、週期位置（新證據）","cause":"新證據","prior_field":["moat_trend","runway_post_y5","trap","archetype","cycle_position"],"side_a":"前份：護城河趨勢持平、成長跑道寬、陷阱風險中、品質複利成長、週期位置未設。","side_b":"本次：護城河趨勢改為上升（第三季法說確認關鍵機台漲價談判完成，2027起反映、2028全面；三星2028、台積電2030宣布High-NA量產；DRAM新EUV客戶）；跑道寬、陷阱風險中、品質複利成長、週期位置未設，四項重新檢查後維持。","ruling":"定價權由「有彈性但不給時間表」（2026-07-15 CFO）變成「已談成」（2026-10-14 CFO），屬新證據，趨勢上調；其餘四項證據方向未變。","evidence_level":"高：法說原話","settle_metric":"2027毛利率指引；High-NA年度出貨","if_then":["若2027年毛利率未因漲價上升（低於56%）→護城河趨勢降回持平"],"evidence_refs":["customer_second_source#0"]},{"axis":"情境機率、最大回撤、裁決與角色（方法變動）","cause":"方法變動","prior_field":["p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份：樂觀30%、悲觀25%、最大回撤−55%單點；裁決進場。","side_b":"本次：樂觀25%、基準45%、悲觀30%；內生成長公式在預付款模式失真，保守視為共識超出上限，悲觀機率下限30%；最大回撤改為−55%至−35%範圍，由悲觀路徑谷底盈利×熄火倍數推出；裁決與角色由程式依本次輸入重算。","ruling":"機率調整來自方法（上限檢核與五年窗涵蓋2029–31），不是基本面轉弱。","evidence_level":"中","settle_metric":"2027年1月展望","if_then":["若2027展望與資本市場日把需求能見度延伸到2029→悲觀機率可降回25%"],"evidence_refs":[]},{"axis":"加碼重啟條件（前份觸發已發火）","cause":"新證據","prior_field":["rearm_trigger"],"side_a":"加碼觸發：回檔至$1,650（FY27 ≈32x）分批，或 2027 指引/訂單再上修、Intel 14A 外部客戶落地","side_b":"加碼：回檔至$1,500以下（FY2027E共識約26倍）且2027年1月營收展望≥€52bn；或展望≥€57bn時直接加碼","ruling":"前份加碼觸發已於2026-10-16發火（收盤1,641.52低於1,650），另一分支（2027訂單上修）也在第三季成立；共識上修到58.13後，同一價位對應倍數由32倍降到28倍，新門檻改用26倍並綁定年度展望。英特爾14A外部客戶本包未涵蓋，移除。","evidence_level":"高","settle_metric":"股價與2027年1月展望","if_then":["若回檔至1,500美元以下且展望≥€52bn→加碼一批","若展望<€52bn→不加碼，改走減碼條件"],"evidence_refs":[]},{"axis":"Single Thing 唯一致命點設定","cause":"方法變動","prior_field":null,"side_a":"前份未設唯一致命點（null）","side_b":"2027年1月ASML公布的2027年展望低於€52bn，或宣布縮減2027–2028產能擴充","ruling":"本次依規則補設；選數學上敏感度最大的一項：基準路徑FY2027–28盈利成長主要靠出貨量，而不是最戲劇性的出口管制（盈利衝擊上限約一成）。","evidence_level":"中","settle_metric":"2027年1月年度展望","if_then":["若發生→減碼至三分之一並重跑研究"],"evidence_refs":[]},{"axis":"清倉／減碼門檻（新增）","cause":"方法變動","prior_field":null,"side_a":"前份無清倉／減碼量化門檻（null）","side_b":"年度展望<€52bn減碼至三分之一；非流動負債連2季下降減碼三分之一；毛利率連2季<53%減碼三分之一；MATCH Act成法且荷蘭執行減碼一半","ruling":"前份只有警戒閾值沒有動作；本次把四個可每季檢驗的指標綁上具體減碼比例。","evidence_level":"中","settle_metric":"季報","if_then":["任兩項同時觸發→清倉"],"evidence_refs":[]},{"axis":"風險門檻調整（減碼條件）","cause":"新證據","prior_field":null,"side_a":"前份風險一：MATCH Act 院會表決 或 BIS 正式立案；China 營收連 2 季 YoY <−30%。前份風險三：hyperscaler 2027 capex guidance 下修 或 WFE 連 2 季負成長","side_b":"風險一：MATCH Act成法且荷蘭執行，或中國全年營收占比<10%；需求風險：非流動負債連2季下降或2027年1月展望<€52bn","ruling":"中國營收在2026第一季已由36%降到19%，年減幅門檻在既有管制下就會誤觸，改用占比水準；院會表決不等於生效，改為成法且荷蘭執行。雲端業者資本支出不在本包，改用ASML自身的預付款與展望作需求代理。","evidence_level":"中","settle_metric":"MATCH Act進度、季報","if_then":["若觸發→依觸發器減碼"],"evidence_refs":["geo_supply_chain#1","geo_supply_chain#2"]}],"triggers":[{"n":1,"text":"2027年展望不及或產能擴充縮減","type":"Single Thing","maps_to":"Single Thing","metric":"2027年1月公布的2027年營收展望；2027–28產能計畫","threshold":"展望中位數<€52bn，或宣布縮減2027–28產能擴充","action":"減碼至三分之一並重跑研究","source_freq":"ASML第四季財報，年度","date":"2027-01","evidence_refs":[]},{"n":2,"text":"客戶預付款轉弱","type":"假設驗證","maps_to":"H1","metric":"非流動負債（主要為客戶預付款）季變動","threshold":"連2季下降","action":"停止加碼並減碼三分之一","source_freq":"季報資產負債表，每季","date":"每季","evidence_refs":["customer_concentration_credit#2"]},{"n":3,"text":"漲價未進毛利率","type":"假設驗證","maps_to":"H2","metric":"年度毛利率","threshold":"FY2027毛利率<56%或FY2028<57%","action":"停止加碼","source_freq":"季報，每季","date":"2028-01","evidence_refs":["customer_second_source#0"]},{"n":4,"text":"MATCH Act把禁令擴及DUV與維修","type":"風險","maps_to":"R1","metric":"MATCH Act立法與荷蘭執行","threshold":"成法且荷蘭宣布執行","action":"減碼一半","source_freq":"新聞與政府公告，事件","date":null,"evidence_refs":["geo_supply_chain#2","substitute_technology#4","geo_supply_chain#1"]},{"n":5,"text":"EUV流入中國調查升級","type":"風險","maps_to":"R1","metric":"美國商務部對ASML的調查狀態","threshold":"BIS正式立案或開罰","action":"減碼三分之一","source_freq":"新聞與BIS公告，事件","date":null,"evidence_refs":["regulatory_antitrust#0","reg_tariff_export#0"]},{"n":6,"text":"美國證券集體訴訟進展","type":"風險","maps_to":"R2","metric":"紐約南區證券集體訴訟（2024年期間）","threshold":"集體認證通過且不利和解金額>€1bn","action":"減碼至半倉","source_freq":"法院紀錄與公司公告，事件","date":null,"evidence_refs":["major_events#0","lawsuit_class_action#0"]},{"n":7,"text":"光學供應成為瓶頸","type":"風險","maps_to":"R4","metric":"管理層對Zeiss產能的表述、出貨落後","threshold":"管理層承認光學供應限制出貨，或低NA EUV年出貨低於產能計畫一成","action":"停止加碼","source_freq":"法說，每季","date":"每季","evidence_refs":["geo_supply_chain#0"]},{"n":8,"text":"競爭者拿到量產訂單","type":"風險","maps_to":"R5","metric":"Nikon先進浸潤式量產訂單；中國DUV出貨","threshold":"Nikon確認量產訂單，或中國廠2027年出貨≥20台且通過客戶驗證","action":"停止加碼","source_freq":"新聞與產業報告，事件","date":null,"evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#3","competitive_share_entrants#2"]},{"n":9,"text":"回檔加碼","type":"估值rearm","maps_to":"H1","metric":"股價與FY2027E前瞻本益比","threshold":"股價≤1,500美元（約26倍）且2027展望≥€52bn","action":"分批加碼一批","source_freq":"每日股價；年度展望","date":null,"evidence_refs":[]},{"n":10,"text":"展望強勁加碼","type":"加碼","maps_to":"H1","metric":"2027年營收展望","threshold":"展望中位數≥€57bn且2028產能增幅≥30%獲確認","action":"加碼至目標權重","source_freq":"第四季財報，年度","date":"2027-01","evidence_refs":[]},{"n":11,"text":"估值過熱減碼","type":"減碼","maps_to":"H2","metric":"FY2028E前瞻本益比","threshold":"股價>2,676美元（35倍）且盈利未上修","action":"減碼四分之一","source_freq":"每日股價","date":null,"evidence_refs":[]},{"n":12,"text":"年度展望與資本市場日複審","type":"複審日期","maps_to":"H1","metric":"2027展望；長期營收與毛利率模型","threshold":"—","action":"重跑研究","source_freq":"事件","date":"2027-06-10","evidence_refs":[]}],"kill_metrics":[{"metric":"2027年營收展望（2027年1月公布）","bear_threshold":"中位數<€52bn或宣布縮減產能擴充","window":"2027-01財報","source":"ASML第四季財報新聞稿","last_status":"unknown"},{"metric":"非流動負債（客戶預付款）季變動","bear_threshold":"連續2季下降","window":"每季","source":"ASML季報資產負債表","last_status":"ok"},{"metric":"季度毛利率","bear_threshold":"連續2季低於53%","window":"每季","source":"ASML季報","last_status":"ok"},{"metric":"中國營收占比與MATCH Act","bear_threshold":"全年占比<10%或MATCH Act成法並經荷蘭執行","window":"每季／事件","source":"ASML季報地區別、政府公告","last_status":"warning"}],"evidence_dismissed":[{"ref":"reg_tariff_export#1","reason":"證據是2025年7月的關稅不確定性與財測收窄，已被之後2026年三次上調指引取代；同一條也註明搜尋未找到2026年半導體232關稅實施的報導，時效過期且無現行事件可對應。"}],"action_conditions":{"rearm_trigger":"加碼：回檔至$1,500以下（FY2027E共識約26倍）且2027年1月營收展望≥€52bn；或展望≥€57bn時直接加碼","exec_line":"前份加碼價位已觸發；現價分兩批：第一批現在，第二批待2027年1月展望確認≥€52bn或回檔至1,500美元以下。","holding_cap":"單一持股上限6%；深回撤（可能−35%至−55%）有心理準備，論點完整時不因波動減碼"}},"decision_inputs":{"signal":"A","ma":"🟡","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把FY2027–28盈利當週期高點而給28倍，但漲價2028才全面反映，客戶已用預付款鎖定2028產能並要求2029–30排程，盈利高原可能比市場假設長。","momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":false,"wait_for_price":null,"wait_for_price_condition":null,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null},"decision_out":{"verdict":"進場","role":"核心","row_hit":"10","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='A'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='↑', moat='A'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='A'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟢'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把FY2027–28盈利當週期高點而給28倍，但漲價2028才全面反映，客戶已用預付款鎖定2028產能並要求2029–30排程，盈利高原可能比市場假設長。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":true,"basis":"capalloc_grade='C'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='A', runway='🟢', val='🟡', moat_trend='↑', week26=12.84, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position=None, moat='A', moat_trend='↑', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":false,"basis":"signal='A', val='🟡'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='A', val='🟡', ma='🟡'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='A', val='🟡', ma='🟡'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":true,"basis":"signal='A', val='🟡', ma='🟡'"},{"row":"10-verdict","condition":"命中 row10 → 進場","hit":true,"basis":"row_hit=10"},{"row":"QC-49","condition":"qc49_inherit_prior=False，不套用","hit":false,"basis":"qc49_inherit_prior=False"}],"pacing":[],"holding_cap":"中期 2-5 年","requires_critic":[]},"thesis":{"H":[{"id":"H1","text":"產能吃緊延續至2028：2027營收依共識成長約28%，由產能擴充30%與漲價推動。","2y":"2027營收≥€52bn；2027年低NA EUV出貨較2026年約65台增約30%","5y":null,"10y":null,"threshold":"2027年營收展望中位數≥€52bn（共識€57.2bn的九成）；非流動負債不連2季下降","source":"ASML 2027年1月第四季財報與年度展望；季報資產負債表","drift_rule":"營收或財測較共識路徑連2季偏離≥5%＝削弱，連3季≥10%＝反轉"},{"id":"H2","text":"定價權上移：漲價2027起反映、2028全面，High-NA成為第二曲線（三星2028、台積電2030量產）。","2y":null,"5y":"2028–2030毛利率維持≥57%；High-NA年出貨逐年增加","10y":null,"threshold":"FY2028毛利率≥57%（2026約56%）；三星High-NA量產不晚於2028、台積電不晚於2030","source":"ASML季報、2027-06-10資本市場日、客戶製程藍圖公告","drift_rule":"近四季毛利率連4季低於門檻5%以上（<54.2%）＝削弱，連6季低於10%以上（<51.3%）＝反轉"},{"id":"H3","text":"EUV與High-NA是先進邏輯與DRAM的必要工具，安裝基礎服務隨裝機數累積，墊高營收底部。","2y":null,"5y":null,"10y":"2036年前無量產級替代微影路線；安裝基礎管理營收占比維持≥25%","threshold":"安裝基礎管理占總營收≥25%（2026第三季約28%）；無客戶以非ASML的EUV量產先進節點","source":"ASML年報業務別揭露、客戶量產公告","drift_rule":"跨2個年度低於門檻＝削弱，跨3個年度＝反轉"}],"R":[{"id":"R1","text":"出口管制擴大：MATCH Act擬把禁令擴及DUV與維修，美方調查EUV是否流入中國；中國約占2026營收20%。","h_ref":"H1","clock":"⚡","threshold":"MATCH Act成法且荷蘭執行，或中國全年營收占比<10%","evidence_refs":["geo_supply_chain#1","geo_supply_chain#2","substitute_technology#4","regulatory_antitrust#0","reg_tariff_export#0"]},{"id":"R2","text":"需求囤貨或AI資本支出2028見頂，2029–30營收回落；另有2024年期間的美國證券集體訴訟未決。","h_ref":"H1","clock":"🔥","threshold":"非流動負債連2季下降，或2027年1月展望<€52bn","evidence_refs":["customer_concentration_credit#2","major_events#0","lawsuit_class_action#0"]},{"id":"R3","text":"客戶集中與議價反撲：前兩大客戶FY2021合計66.3%，集中度往台積電上升；台積電嫌High-NA貴、延到2030。","h_ref":"H2","clock":"🐢","threshold":"台積電再延後High-NA量產時程，或FY2028毛利率<57%","evidence_refs":["customer_concentration_credit#0","customer_concentration_credit#1","customer_concentration_credit#2","customer_second_source#0"]},{"id":"R4","text":"光學唯一供應商Zeiss：若產能跟不上或關係中斷，ASML實質無法出貨。","h_ref":"H1","clock":"🐢","threshold":"管理層承認光學供應限制出貨，或年出貨低於產能計畫一成","evidence_refs":["geo_supply_chain#0"]},{"id":"R5","text":"替代技術與新進者：中國DUV、自由電子雷射光源、Nikon、較不依賴微影的新架構。","h_ref":"H3","clock":"🐢","threshold":"任一對手取得先進節點量產訂單並通過客戶驗證","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","competitive_share_entrants#3","substitute_technology#0"]}],"single_thing":{"description":"2027年1月ASML公布的2027年展望低於€52bn，或宣布縮減2027–2028產能擴充（代表客戶擴產延後）。","why_fatal":"基準路徑FY2027–28每股盈餘58.13→76.46的成長主要靠出貨量（產能年增30%）；量能不到位，漲價與升級業務撐不住，2028年後的盈利高原假設瓦解，盈利與倍數會同時下修。","if_happens":"減碼至三分之一並重跑研究；悲觀機率上調至40%以上。","how_monitor":"2027年1月第四季財報展望；每季非流動負債（預付款）變動；主要客戶資本支出與建廠公告。","probability":"15%：客戶已用預付款下單、管理層稱供不應求至2028，但2026年4月全年指引仍只有€36–40bn，半年內變動逾一成，能見度波動大。"}},"appendix_a":{"growth_durability":8,"quality_score":9,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":28.24,"peg_fy2":0.85,"stress":{"pass":4,"total":5}},"eps_meta":{"base_eps_path":{"FY2025A":24.71,"FY2026E":42.94,"FY2027E":58.13,"FY2028E":76.46},"fy_end_month":12,"eps_basis":"FY2025A為歐元年度稀釋每股盈餘（yfinance年度財報）；FY2026E–FY2028E為美元共識（Koyfin 2026-10-08，ADR一股對一股普通股）。幣別不同，三年年複合會被匯率扭曲，判斷以FY2026E→FY2028E兩年年化33.4%為準。"},"catalysts":[{"date":"2027-01","date_precision":"month","type":"guidance","event":"第四季財報與2027年展望、2027毛利率首次指引","impact":"高","watch":"營收展望是否≥€52bn；2028產能增幅"},{"date":"2027-01","date_precision":"quarter","type":"product","event":"NXE:3800F小量出貨、浸潤式每小時330片新機導入","impact":"中","watch":"新機售價與毛利貢獻"},{"date":"2027-06","date_precision":"month","type":"guidance","event":"資本市場日（2027-06-10）更新長期展望","impact":"高","watch":"2030年營收與毛利率模型、2029–30接單政策"},{"date":null,"date_precision":null,"type":"regulatory","event":"MATCH Act立法與荷蘭執行","impact":"中","watch":"院會表決、荷蘭政府表態"},{"date":"2028","date_precision":null,"type":"product","event":"三星High-NA進入量產","impact":"中","watch":"High-NA年度出貨與層數"}]}
+```
+
+---
+
+## 尾段：回覆格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```json
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
