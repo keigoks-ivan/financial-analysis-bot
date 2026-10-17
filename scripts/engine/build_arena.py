@@ -2199,7 +2199,9 @@ def main() -> int:
     # dedupe 修復（2026-09-09）：load_qgm_rows／load_light_rows 過去只各自對
     # stocks_map（dd-pool）去重，沒對過彼此——INCY 這類同時在 QGM 品質池與快審卡
     # 出現的名字會在 universe_rows 進兩列。first source wins: dd-pool > qgm > light。
-    light = load_light_rows(stocks_map, exclude=qgm_tickers)
+    # 2026-10-18：再排除 stocks_map 已有的名字——無 DD 裁決的母體列（例如 10-18 起 INCY 成
+    # largecap-koyfin 列）已在 universe_rows，光卡再加一列會觸發下方重複防線、整個 --daily 中止。
+    light = load_light_rows(stocks_map, exclude=qgm_tickers | set(stocks_map))
     universe_rows += [r for r in light if r["verdict"] in ("進場", "觀望", None)]
 
     # 防線：universe_rows 不得有重複 ticker（席位不得重複曝險）。
