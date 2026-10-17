@@ -44,6 +44,10 @@ sys.path.insert(0, str(HERE))
 from site_nav import full_nav_block  # noqa: E402
 
 NAV_BLOCK = full_nav_block("system", "lthub")
+
+# 實盤證據清單的資料來源：回測區頁面資料（docs/backtest/_page_meta.py，首頁第①區同一份）
+sys.path.insert(0, str(HERE.parent / "docs" / "backtest"))
+import _page_meta as _PM  # noqa: E402
 OUT = HERE.parent / "docs" / "long-track" / "index.html"
 
 # 2026-09-10 總覽儀表板化：讀既有兩份 JSON 產生「今天」區塊，本檔不重新計算任何數字——
@@ -153,6 +157,8 @@ a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .pill.shadow{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe}
 .pill.cand{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
 .pill.ret{background:#f3f4f6;color:var(--muted);border:1px solid var(--border)}
+.pill.rej{background:#fbeceb;color:#b42318;border:1px solid #f0c4c0}
+.ev-intro{font-size:.84rem;color:var(--muted);margin:.1rem 0 .7rem;line-height:1.65}
 .sys-one{font-size:.86rem;color:#374151;line-height:1.6}
 .sys-meta{display:flex;gap:1.2rem;flex-wrap:wrap;margin-top:.5rem;font-size:.76rem;color:var(--muted)}
 .sys-meta b{color:#374151;font-weight:600}
@@ -287,6 +293,8 @@ CONSOLE_JS = """
   }
 
   function activate(tab){
+    var anchor = null;
+    if(tab === 'evidence'){ anchor = 'evidence'; tab = 'overview'; }
     if(TABS.indexOf(tab) < 0) tab = 'overview';
     document.querySelectorAll('.console-tab-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-ctab') === tab);
@@ -295,6 +303,7 @@ CONSOLE_JS = """
       p.classList.toggle('active', p.id === 'panel-' + tab);
     });
     if(frames[tab]) ensureLoaded(tab);
+    if(anchor){ var el = document.getElementById(anchor); if(el) el.scrollIntoView(); }
   }
 
   document.querySelectorAll('.console-tab-btn').forEach(function(b){
@@ -480,6 +489,31 @@ def render_shadow_table(systems) -> str:
             f'債金版只追蹤美股。</div>')
 
 
+def render_evidence() -> str:
+    """「實盤證據」一節：支撐實單配置的檢驗頁（資料來自 docs/backtest/_page_meta.py 第①區）。
+    實盤與候選直接列出，已否決的收在摺疊區。頁面網址維持 /backtest/…，不搬家。"""
+    import html as _H
+    urls = _PM.ZONE_ORDER[1]
+    pill_cls = {"live": "live", "cand": "cand", "rej": "rej", "ret": "ret", "note": "ret"}
+
+    def row(u):
+        p = _PM.PAGES[u]
+        return (f'<a class="sysrow" href="{u}"><span class="sysrow-name">{_H.escape(p["title"], quote=False)}</span>'
+                f'<span class="pill {pill_cls[p["status"]]}">{_PM.STATUS[p["status"]]}</span>'
+                f'<span class="sysrow-one">{_H.escape(p["desc"], quote=False)}</span><span class="arr">→</span></a>')
+
+    shown = [u for u in urls if _PM.PAGES[u]["status"] in ("live", "cand", "note")]
+    dead = [u for u in urls if _PM.PAGES[u]["status"] in ("rej", "ret")]
+    body = "".join(row(u) for u in shown)
+    dead_html = ""
+    if dead:
+        dead_html = (f'<details class="ov-retired" style="margin-top:.8rem"><summary>已否決（{len(dead)}）</summary>'
+                     f'<div class="retired-list">{"".join(row(u) for u in dead)}</div></details>')
+    intro = (f'<div class="ev-intro">支撐實單配置的檢驗，共 {len(urls)} 頁，先看第一頁的總覽。'
+             f'每頁的結論和判斷依據都寫在頁內；網址在回測區，狀態標籤與回測區首頁一致。</div>')
+    return (f'<div class="grp live" id="evidence"><div class="grp-h">實盤證據</div>{intro}{body}{dead_html}</div>\n')
+
+
 def render_overview_body() -> str:
     """總覽分頁本體（家族地圖）— 獨立於 page chrome，供 console 殼內嵌 Tab 1。
     2026-09-10 改版：頂部加「今天」儀表板（見 render_today_strip），實單主系統維持
@@ -518,6 +552,8 @@ def render_overview_body() -> str:
                 f'<span class="sysrow-one">{s["one"]}</span>'
                 f'<span class="arr">→</span></a>')
         groups_html += f'<div class="grp {cls}"><div class="grp-h">{title}</div>{rows}</div>\n'
+
+    groups_html += render_evidence()
 
     ret_title, _, _, ret_systems = GROUPS[3]
     ret_rows = ""
