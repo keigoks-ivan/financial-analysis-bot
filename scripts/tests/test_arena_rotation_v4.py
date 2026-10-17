@@ -234,3 +234,44 @@ def test_lit_roster_removed_and_filled_relative_to_prev():
 def test_lit_roster_is_stateless_and_idempotent():
     pool = [_lit_row("A", "green"), _lit_row("B", "yellow")]
     assert select_lit_roster_v52(pool, ["A", "B"])["core"] == select_lit_roster_v52(pool, None)["core"]
+
+
+# ── 下席原因顯示（_down_reasons，只管顯示，不改選席規則）──
+from engine.build_arena import _down_reasons  # noqa: E402
+
+
+def _dr_row(t, code="green", rank=None, rev=10.0, passed=True, why=None, lamp_why="", veto_rev=False):
+    return {"ticker": t, "pool_rank": rank, "lamp": {"code": code, "why": lamp_why},
+            "grp": {"pass": passed, "why": why or [], "rev_used_pct": rev,
+                    "rev_anchor": "earnings", "veto_revision": veto_rev}}
+
+
+def _shorts(t, rows):
+    return [s for s, _ in _down_reasons(t, rows)]
+
+
+def test_down_reason_red_by_ath_and_200dma_listed_together():
+    rows = [_dr_row("A", "red", 1, lamp_why="距歷史新高 -12.0%（現價 1，還原新高 2，需再漲 3%）、跌破 200 日線 -2.5%")]
+    assert _shorts("A", rows) == ["時機燈轉紅：距歷史新高 -12.0%", "時機燈轉紅：跌破 200 日線 -2.5%"]
+
+
+def test_down_reason_out_of_pool_and_red_both_listed():
+    rows = [_dr_row("T", "red", None, rev=4.0, lamp_why="距歷史新高 -15.1%")]
+    assert _shorts("T", rows) == ["財報後上修 +4.0%，低於 5% 入池門檻", "時機燈轉紅：距歷史新高 -15.1%"]
+
+
+def test_down_reason_lit_but_squeezed_out_reports_rank():
+    rows = [_dr_row(t, "green", i) for i, t in enumerate("ABCDEFG", 1)]
+    assert _shorts("G", rows) == ["上修排名第 7，被擠出前 5"]
+    assert _shorts("A", rows) == ["原因未判定"]
+
+
+def test_down_reason_rank_counts_only_lit_names():
+    rows = [_dr_row("R1", "red", 1), _dr_row("R2", "red", 2)] + [_dr_row(t, "green", i) for i, t in enumerate("ABCDEF", 3)]
+    assert _shorts("F", rows) == ["上修排名第 6，被擠出前 5"]
+
+
+def test_down_reason_veto_chips_and_missing_ticker():
+    rows = [_dr_row("V", "red", None, passed=False, why=["DD 迴避否決"], lamp_why="跌破 200 日線 -1.0%")]
+    assert _shorts("V", rows) == ["DD 迴避", "時機燈轉紅：跌破 200 日線 -1.0%"]
+    assert _shorts("NOPE", rows) == ["已不在母體"]

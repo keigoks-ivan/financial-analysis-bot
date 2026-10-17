@@ -860,6 +860,63 @@ _WAIT_GROUP_LABELS = (
 )
 
 
+def _down_reasons(ticker: str, rows: list) -> list:
+    """下席原因（只管顯示，不改任何選席規則；2026-10-17）。回傳 [(短文字, 原句)]，可多個，
+    順序＝資格否決 → 出池 → 時機燈紅 → 亮燈但被擠出前 5。判定全部讀 select_lit_roster_v52()
+    與 grp_score() 已算好的欄位：
+      - 資格否決：grp.pass=False 時沿用 grp.why（既有 chip 句型）；
+      - 出池：上修（grp.rev_used_pct）低於 POOL_REV_MIN，且不是上修否決（否決已在 why）；
+      - 時機燈紅：lamp.code=="red"，數字取 lamp.why（距新高／200 日線兩段各列一條）；
+      - 擠出前 5：在池（有 pool_rank）、燈亮著（LIT_LAMP_CODES），按池序在亮燈者中的名次 >
+        CORE_SLOTS。
+    都不成立才回「原因未判定」；ticker 不在 rows 才回「已不在母體」。"""
+    r = next((x for x in rows if x["ticker"] == ticker), None)
+    if r is None:
+        return [("已不在母體", "本期母體清單沒有這檔")]
+    g = r.get("grp") or {}
+    lamp = r.get("lamp") or {}
+    out: list = []
+    seen: set = set()
+
+    def add(short, title=None):
+        if short not in seen:
+            seen.add(short)
+            out.append((short, title or short))
+
+    if not g.get("pass"):
+        for w in (g.get("why") or []):
+            add(*(_match_chip(w) or (w, w)))
+    rev = g.get("rev_used_pct")
+    if not g.get("veto_revision"):
+        if rev is not None and rev < POOL_REV_MIN:
+            lbl = "財報後上修" if g.get("rev_anchor") in ("earnings", "earnings_pending") else "三個月上修"
+            add(f"{lbl} {rev:+.1f}%，低於 {POOL_REV_MIN:.0f}% 入池門檻")
+        elif rev is None and g.get("pass"):
+            add("上修資料缺漏，無法入池")
+    code = lamp.get("code")
+    if code == "red":
+        hit = False
+        for part in str(lamp.get("why") or "").split("、"):
+            part = re.sub(r"（.*?）", "", part).strip()
+            if part.startswith("距歷史新高"):
+                add(f"時機燈轉紅：{part}"); hit = True
+            elif part.startswith("跌破 200 日線"):
+                add(f"時機燈轉紅：{part}"); hit = True
+        if not hit:
+            d = r.get("dist_ath_pct")
+            add("時機燈轉紅" + (f"：距歷史新高 {d:+.1f}%" if isinstance(d, (int, float)) else ""))
+    elif code == "out" and not out:
+        add("時機燈不合格：未站上 52 週線")
+    elif code in LIT_LAMP_CODES and r.get("pool_rank"):
+        lit = sorted((x for x in rows if x.get("pool_rank")
+                      and (x.get("lamp") or {}).get("code") in LIT_LAMP_CODES),
+                     key=lambda x: x["pool_rank"])
+        n = next((i for i, x in enumerate(lit, 1) if x["ticker"] == ticker), None)
+        if n is not None and n > CORE_SLOTS:
+            add(f"上修排名第 {n}，被擠出前 {CORE_SLOTS}")
+    return out or [("原因未判定", "資格、池、時機燈三項都查不出下席原因")]
+
+
 def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
                         lamp_as_of=None, last_rotation_date=None) -> list[str]:
     """v5『① 核心席（5）／② 可買／③ 等待池』區塊（board.txt 用，含 DOWN 異動列）——
@@ -879,14 +936,8 @@ def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
         L.append(_pool_ascii_row(f"C{j}", r))
     gone = [t for t in prev_seats if t not in seat_of]
     if gone:
-        why = {r["ticker"]: r for r in rows}
         for t in gone:
-            r = why.get(t)
-            why_txt = "；".join((((r or {}).get("grp") or {}).get("why") or [])[:2])
-            if not why_txt and r and ((r.get("lamp") or {}).get("code") not in LIT_LAMP_CODES):   # v5.2 紅燈下席
-                d = (r.get("lamp") or {}).get("dist_ath_pct")
-                why_txt = "時機燈紅" + (f"（距新高 {d:+.1f}%）" if isinstance(d, (int, float)) else "")
-            why_txt = why_txt or ("亮燈者依上修排序擠出前 5" if r else "不在母體")
+            why_txt = "；".join(title for _, title in _down_reasons(t, rows))
             L.append(f"  DOWN {_ticker_col(t)}：{why_txt}")
     L.append("")
 
@@ -1631,13 +1682,9 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 
     gone = [t for t in prev_seats if t not in seat_label]
     if gone:
-        why_map = {r["ticker"]: r for r in rows}
         lines = []
         for t in gone:
-            r = why_map.get(t)
-            why = (((r or {}).get("grp") or {}).get("why") or [])
-            chips = _chips_from_why(why, limit=2) if why else []
-            reason = _chips_html(chips) if chips else '<span class="bw-muted">上修排序被擠出前 5，或已不在母體</span>'
+            reason = _chips_html(_down_reasons(t, rows), cap=8)
             lines.append(f'<div class="bw-note-line">🔻 DOWN <b>{escape(t)}</b>：{reason}</div>')
         changes_html = "".join(lines)
     else:
