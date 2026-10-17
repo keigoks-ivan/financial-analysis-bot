@@ -644,3 +644,19 @@ def test_build_and_csv_with_batch2_series(tmp_path, monkeypatch):
     assert tx[2]["near_month_contract"] == "202610" and tx[2]["basis_points"] == "230.0"
     ot = list(_csv.DictReader(open(tmp_path / "csv" / "otc_inst.csv", encoding="utf-8")))
     assert ot[0]["foreign_net_yi"] == "" and ot[0]["trust_net_yi"] == "13.74"
+
+
+# ---------------------------------------------------------------- 預測檢定區塊（靜態 forecast.json）
+
+def test_forecast_json_static_result():
+    """docs/tw-chips/data/forecast.json 是 v7 檢定結果的靜態轉存：五個指標都不通過，頁面照『不通過』版呈現。"""
+    f = json.loads((Path(__file__).resolve().parents[2] / "docs" / "tw-chips" / "data" / "forecast.json").read_text(encoding="utf-8"))
+    assert f["page_layer_pass"] is False and f["scoreboard"] is None
+    assert [x["id"] for x in f["indicators"]] == ["A", "B", "C", "D", "E"]
+    assert not any(x["pass"] for x in f["indicators"])
+    by = {x["id"]: x for x in f["indicators"]}
+    assert by["A"]["insufficient"] is True and by["A"]["n_high"] == 18
+    assert round(by["B"]["S_test"] * 100, 1) == 13.1 and round(by["B"]["p_placebo"], 4) == 0.0665
+    assert by["B"]["n_low_w52on"] == 21
+    assert all(by[k]["S_test"] < 0 for k in "CDE")
+    assert f["test_start"] == "2022-01-01" and round(f["n_indep_est"]) == 18
