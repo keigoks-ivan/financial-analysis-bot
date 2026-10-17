@@ -250,7 +250,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">量化回測</a> / 10 年</div>
     <h1>量化系統回測 — 10 年視角</h1>
-    <div class="sub">近 10 年滾動窗口(2016-06 ~ 2026-06)· 「無 2008」的壓力對照窗 — 本頁的工作是偵測 regime 集中，不是排名；判定 = 與 <a href="/backtest/">20 年頁</a>取交集</div>
+    <div class="sub">近 10 年滾動窗口(2016-06 ~ 2026-06)· 「無 2008」的壓力對照窗 — 本頁的工作是偵測 regime 集中，不是排名；判定 = 與 20 年窗取交集</div>
     %TOGGLE%
   </div>
 </div>
