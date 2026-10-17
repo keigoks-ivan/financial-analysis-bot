@@ -13,6 +13,7 @@
 """
 from __future__ import annotations
 
+import csv
 import datetime as dt
 import json
 import sys
@@ -21,6 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "data" / "tw_chips"
 OUT = ROOT / "docs" / "tw-chips" / "data"
+CSV_OUT = ROOT / "data" / "tw_chips" / "csv"
 DISPLAY_START = "2016-10-01"
 TZ_TAIPEI = dt.timezone(dt.timedelta(hours=8))
 
@@ -29,12 +31,12 @@ TZ_TAIPEI = dt.timezone(dt.timedelta(hours=8))
 
 def yuan_to_yi(x):
     """元 → 億元（2 位小數）。"""
-    return None if x is None else round(x / 1e8, 2)
+    return None if x is None else round(x / 1e8, 2) + 0.0   # + 0.0 去掉 -0.0
 
 
 def qianyuan_to_yi(x):
     """仟元／千元 → 億元（2 位小數）。1 仟元 = 1e3 元，1 億 = 1e8 元，故 ÷ 1e5。"""
-    return None if x is None else round(x / 1e5, 2)
+    return None if x is None else round(x / 1e5, 2) + 0.0
 
 
 def load_jsonl(name: str) -> dict[str, dict]:
@@ -87,13 +89,15 @@ def cumulate(xs: list, nd: int = 2) -> list:
 
 
 def ffill(xs: list, max_gap: int = 5) -> list:
-    """往後補值，最多連補 max_gap 天（匯率用：美國休市日沿用前一營業日）。"""
+    """往後補值，最多連補 max_gap 天（匯率用：美國休市日沿用前一營業日）。
+    最後一筆真實資料之後不補（FRED 約晚一週更新，不能把舊值當成最新日）。"""
+    last_real = max((i for i, v in enumerate(xs) if v is not None), default=-1)
     out, last, age = [], None, 0
-    for v in xs:
+    for i, v in enumerate(xs):
         if v is not None:
             last, age = v, 0
             out.append(v)
-        elif last is not None and age < max_gap:
+        elif last is not None and age < max_gap and i < last_real:
             age += 1
             out.append(last)
         else:
@@ -120,6 +124,88 @@ def margin_final(cal: list[str], rows: dict[str, dict]) -> dict[str, dict]:
 def ratio_pct(a, b, nd: int = 2):
     """a / b × 100；b 為 0 或缺 → None。"""
     return None if a is None or not b else round(a / b * 100, nd)
+
+
+# ---------------------------------------------------------------- 回測用 CSV（扁平、一天一列、英文欄名）
+
+WHO3 = (("foreign", "f"), ("trust", "t"), ("dealer", "dl"))
+
+
+def _csv_columns() -> dict:
+    """series → [(欄名, 取值函式(row))]。欄名後綴即單位：_twd＝元、_thousand_twd＝仟元／千元、_yi＝億元、
+    _lots＝張、_oi＝未平倉口數、_pct＝百分比。第一欄一律是 date。"""
+    cols = {}
+    cols["taiex"] = [("open", lambda r: r["o"]), ("high", lambda r: r["h"]),
+                     ("low", lambda r: r["l"]), ("close", lambda r: r["c"])]
+    cols["turnover"] = [("turnover_twd", lambda r: r["amt"]), ("turnover_yi", lambda r: yuan_to_yi(r["amt"])),
+                        ("volume_shares", lambda r: r["sh"])]
+    c = []
+    for name, k in WHO3:
+        c += [(f"{name}_buy_twd", lambda r, k=k: r[k][0]), (f"{name}_sell_twd", lambda r, k=k: r[k][1]),
+              (f"{name}_net_twd", lambda r, k=k: r[k][0] - r[k][1]),
+              (f"{name}_net_yi", lambda r, k=k: yuan_to_yi(r[k][0] - r[k][1]))]
+    cols["inst"] = c
+    cols["margin"] = [
+        ("margin_balance_lots", lambda r: r["mg"]), ("margin_balance_lots_prev_day", lambda r: r["mg_p"]),
+        ("short_balance_lots", lambda r: r["sh"]), ("short_balance_lots_prev_day", lambda r: r["sh_p"]),
+        ("margin_balance_thousand_twd", lambda r: r["mga"]), ("margin_balance_thousand_twd_prev_day", lambda r: r["mga_p"]),
+        ("margin_balance_yi", lambda r: qianyuan_to_yi(r["mga"])),
+        ("short_to_margin_ratio_pct", lambda r: ratio_pct(r["sh"], r["mg"])),
+    ]
+    c = []
+    for name, k in WHO3:
+        c += [(f"{name}_long_oi", lambda r, k=k: r[k][0]), (f"{name}_short_oi", lambda r, k=k: r[k][1]),
+              (f"{name}_net_oi", lambda r, k=k: r[k][0] - r[k][1])]
+    cols["fut_inst"] = c
+    c = []
+    for side, sk in (("call", "c"), ("put", "p")):
+        for name, k in WHO3:
+            p = f"{side}_{name}"
+            c += [(f"{p}_long_oi", lambda r, sk=sk, k=k: r[sk][k][0]), (f"{p}_short_oi", lambda r, sk=sk, k=k: r[sk][k][1]),
+                  (f"{p}_long_oi_amount_thousand_twd", lambda r, sk=sk, k=k: r[sk][k][2]),
+                  (f"{p}_short_oi_amount_thousand_twd", lambda r, sk=sk, k=k: r[sk][k][3]),
+                  (f"{p}_net_oi", lambda r, sk=sk, k=k: r[sk][k][0] - r[sk][k][1]),
+                  (f"{p}_net_oi_amount_yi", lambda r, sk=sk, k=k: qianyuan_to_yi(r[sk][k][2] - r[sk][k][3]))]
+    cols["opt_inst"] = c
+    cols["pcr"] = [("put_volume", lambda r: r["pv"]), ("call_volume", lambda r: r["cv"]),
+                   ("volume_ratio_pct", lambda r: r["vr"]), ("put_oi", lambda r: r["po"]),
+                   ("call_oi", lambda r: r["co"]), ("oi_ratio_pct", lambda r: r["or"])]
+    c = []
+    for grp, key in (("all", "a"), ("specific", "s")):
+        for i, nm in enumerate(("top5_long", "top5_short", "top10_long", "top10_short")):
+            c.append((f"{grp}_{nm}", lambda r, key=key, i=i: r[key][i]))
+        c.append((f"{grp}_top5_net", lambda r, key=key: r[key][0] - r[key][1]))
+        c.append((f"{grp}_top10_net", lambda r, key=key: r[key][2] - r[key][3]))
+    c.append(("market_oi", lambda r: r["oi"]))
+    cols["large"] = c
+    cols["usdtwd"] = [("usdtwd", lambda r: r["v"])]
+    return cols
+
+
+def export_csv() -> dict:
+    """data/tw_chips/csv/{series}.csv：jsonl 全部歷史（含指數暖機年）扁平化，一天一列。
+    融資融券另加 *_final 欄（以隔日『前日餘額』定稿，最新一日仍為當日餘額）。"""
+    CSV_OUT.mkdir(parents=True, exist_ok=True)
+    counts = {}
+    for series, cols in _csv_columns().items():
+        rows = load_jsonl(series)
+        days = sorted(rows)
+        extra = []
+        if series == "margin":
+            fin = margin_final(days, rows)
+            extra = [("margin_balance_yi_final", lambda d: qianyuan_to_yi(fin[d]["mga"])),
+                     ("margin_balance_lots_final", lambda d: fin[d]["mg"]),
+                     ("short_balance_lots_final", lambda d: fin[d]["sh"]),
+                     ("is_final", lambda d: int(fin[d]["final"]))]
+        with (CSV_OUT / f"{series}.csv").open("w", encoding="utf-8", newline="") as f:
+            w = csv.writer(f, lineterminator="\n")
+            w.writerow(["date"] + [n for n, _ in cols] + [n for n, _ in extra])
+            for d in days:
+                r = rows[d]
+                w.writerow([d] + ["" if (v := fn(r)) is None else v for _, fn in cols]
+                           + ["" if (v := fn(d)) is None else v for _, fn in extra])
+        counts[series] = len(days)
+    return counts
 
 
 # ---------------------------------------------------------------- 建檔
@@ -246,6 +332,8 @@ def main() -> int:
         "cal_first": cal[0], "cal_last": cal[-1], "n_cal": len(cal),
         "series": series,
     })
+    n_csv = export_csv()
+    print("csv：" + "、".join(f"{k} {v} 列" for k, v in n_csv.items()))
     print(f"built：日曆 {cal[0]}～{cal[-1]}（{len(cal)} 日）")
     for s in series:
         print(f"  {s['key']:9s} n={s['n']:5d} {s['first']}～{s['last']} gaps={s['gaps']}")

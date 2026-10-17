@@ -245,7 +245,7 @@ def test_rolling_and_cumulate():
 
 
 def test_ffill_limited():
-    assert build.ffill([1.0, None, None, 2.0, None], max_gap=1) == [1.0, 1.0, None, 2.0, 2.0]
+    assert build.ffill([1.0, None, None, 2.0, None], max_gap=1) == [1.0, 1.0, None, 2.0, None]   # 最後真實值之後不補
 
 
 def test_margin_final_uses_next_day_prior_balance():
@@ -294,3 +294,33 @@ def test_build_end_to_end_small(tmp_path, monkeypatch):
     assert cal == days
     meta = json.loads((out / "meta.json").read_text())
     assert {s["key"]: s["n"] for s in meta["series"]}["inst"] == 1
+
+
+def test_no_negative_zero_after_unit_conversion():
+    assert str(build.qianyuan_to_yi(-3)) == "0.0"
+    assert str(build.yuan_to_yi(-3)) == "0.0"
+
+
+def test_export_csv_flat_english_columns(tmp_path, monkeypatch):
+    src = tmp_path / "src"
+    src.mkdir()
+    monkeypatch.setattr(build, "SRC", src)
+    monkeypatch.setattr(build, "CSV_OUT", tmp_path / "csv")
+    (src / "inst.jsonl").write_text(json.dumps(
+        {"d": "2026-10-16", "f": [356324360692, 402471523529], "t": [43848499145, 32800992175],
+         "dl": [37034708616, 70448717021]}) + "\n")
+    (src / "margin.jsonl").write_text("\n".join(json.dumps(r) for r in (
+        {"d": "2026-10-15", "mg": 9521231, "mg_p": 9467239, "sh": 229150, "sh_p": 228653, "mga": 646415015, "mga_p": 651556359},
+        {"d": "2026-10-16", "mg": 9538664, "mg_p": 9521230, "sh": 233602, "sh_p": 229150, "mga": 645594048, "mga_p": 646415871},
+    )) + "\n")
+    counts = build.export_csv()
+    assert counts["inst"] == 1 and counts["margin"] == 2 and counts["fut_inst"] == 0
+    import csv as _csv
+    inst = list(_csv.DictReader(open(tmp_path / "csv" / "inst.csv", encoding="utf-8")))
+    assert list(inst[0])[0] == "date"
+    assert inst[0]["foreign_net_twd"] == str(356324360692 - 402471523529)
+    assert inst[0]["foreign_net_yi"] == "-461.47"
+    mg = list(_csv.DictReader(open(tmp_path / "csv" / "margin.csv", encoding="utf-8")))
+    assert mg[0]["margin_balance_lots_final"] == "9521230" and mg[0]["is_final"] == "1"   # 10-15 以 10-16 的前日餘額定稿
+    assert mg[1]["margin_balance_lots_final"] == "9538664" and mg[1]["is_final"] == "0"
+    assert mg[1]["margin_balance_yi"] == "6455.94"

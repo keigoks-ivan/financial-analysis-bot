@@ -75,10 +75,11 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .sub-title{font-size:11.5px;color:var(--muted);margin:8px 0 2px}
 .cbox{position:relative;width:100%}
 .cbox + .cbox{margin-top:6px}
-.readout{position:absolute;left:72px;top:4px;z-index:5;pointer-events:none;font-family:var(--mono);font-size:11px;line-height:1.45;background:color-mix(in srgb,var(--card) 82%,transparent);padding:2px 6px;border-radius:5px;color:var(--body);max-width:calc(100% - 140px)}
+.readout{position:absolute;left:86px;top:4px;z-index:5;pointer-events:none;font-family:var(--mono);font-size:11px;line-height:1.45;background:color-mix(in srgb,var(--card) 82%,transparent);padding:2px 6px;border-radius:5px;color:var(--body);max-width:calc(100% - 140px)}
 .readout b{font-weight:600;color:var(--ink)}
 .readout i{display:inline-block;width:7px;height:7px;border-radius:2px;margin:0 3px 0 8px;vertical-align:baseline}
 .readout i:first-of-type{margin-left:4px}
+@media (max-width:640px){ .readout{left:70px;max-width:calc(100% - 76px)} }
 .note{font-size:11.5px;color:var(--muted);margin:4px 0 0}
 
 /* 頁尾資料來源 */
@@ -254,13 +255,16 @@ function pf(def){
   var p = def.fmt && def.fmt.p!=null ? def.fmt.p : 2;
   return {type:'price', precision:p, minMove:Math.pow(10,-p)};
 }
+function narrow(){ return window.innerWidth < 640; }
 function baseOptions(T, h, width){
+  var nr = narrow();
   return {
     width:width, height:h,
-    layout:{background:{type:'solid',color:T.bg}, textColor:T.text, fontFamily:"'Inter','Noto Sans TC',sans-serif", fontSize:11},
+    layout:{background:{type:'solid',color:T.bg}, textColor:T.text, fontFamily:"'Inter','Noto Sans TC',sans-serif", fontSize:nr?10:11},
     grid:{vertLines:{color:T.grid}, horzLines:{color:T.grid}},
-    leftPriceScale:{visible:true, minimumWidth:70, borderColor:T.border, scaleMargins:{top:0.08,bottom:0.08}},
-    rightPriceScale:{visible:true, minimumWidth:54, borderColor:T.border, scaleMargins:{top:0.08,bottom:0.08}},
+    // 左右軸寬固定（取比最長標籤略大的值），所有圖的時間軸才會逐像素對齊
+    leftPriceScale:{visible:true, minimumWidth:nr?66:80, borderColor:T.border, scaleMargins:{top:0.08,bottom:0.08}},
+    rightPriceScale:{visible:!nr, minimumWidth:66, borderColor:T.border, scaleMargins:{top:0.08,bottom:0.08}},
     timeScale:{borderColor:T.border, rightOffset:2, minBarSpacing:0.04, fixLeftEdge:true, timeVisible:false},
     crosshair:{mode:0, vertLine:{labelVisible:true}, horzLine:{labelVisible:true}},
     localization:{locale:'zh-TW'},
@@ -409,7 +413,7 @@ function buildSection(spec){
   });
   if(spec.id==='fut'||spec.id==='large') {}
   if(cbx) cbx.addEventListener('change', function(){
-    items.forEach(function(it){ it.overlay.applyOptions({visible:cbx.checked}); });
+    items.forEach(function(it){ it.overlay.applyOptions({visible:cbx.checked}); it.chart.applyOptions({rightPriceScale:{visible:cbx.checked || !narrow()}}); });
     readouts(null);
   });
   if(sel) sel.addEventListener('change', function(){
@@ -497,7 +501,7 @@ function buildSource(){
   document.getElementById('src').innerHTML =
     '<h2>資料來源與涵蓋期間</h2><div class="tbl-wrap"><table><thead><tr><th>序列</th><th>來源</th><th>最早日</th><th>最新日</th><th>筆數</th><th>缺漏日</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<p class="fine">資料每個交易日晚間自動更新，最近一次建檔時間：'+m.updated+'（台北）。'+
-    '現貨三大法人、融資融券、指數與成交金額取自證交所；期貨、選擇權、Put/Call Ratio、大額交易人取自期交所；匯率取自 FRED（聖路易聯邦準備銀行，日資料，美國休市日沿用前一營業日）。<br>'+
+    '現貨三大法人、融資融券、指數與成交金額取自證交所；期貨、選擇權、Put/Call Ratio、大額交易人取自期交所；匯率取自 FRED（聖路易聯邦準備銀行，日資料，約晚一週更新，美國休市日圖上沿用前一營業日）。<br>'+
     '期交所網站只開放近 3 年的三大法人期貨與選擇權日資料，2018-06-05 至 2023-10-17 的部分取自 FinMind 轉載的同一份期交所資料（2023-10 起與期交所原表逐筆核對一致）；2018-06 之前沒有可取得的來源，圖上留白，不補數字。<br>'+
     '融資融券依證交所註明「以前日餘額為準」，每個交易日的餘額以隔日公布的前日餘額為準；最新一日暫用當日餘額。融券官方只公布張數，沒有金額。<br>'+
     '加權指數資料的缺漏日是證交所該月沒有提供當日資料的日子，沒有任何一天是補出來的。圖表使用 TradingView Lightweight Charts。</p>';
