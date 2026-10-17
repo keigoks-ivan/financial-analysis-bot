@@ -410,7 +410,7 @@ def _last_nav(series):
 def render_shadow_table(systems) -> str:
     """影子對照區：一張表三列（2026-10-17）。報酬一律讀既有 JSON 的 NAV 末值（起算 100）：
     不借錢版＝live_scoreboard shadows.{us,tw}.sa10；債金版＝c1_shadow_state daily 末列
-    （只有美股）；舊規則版＝noma_state 無 NAV 序列，顯示「—」。同期實盤＝live_scoreboard
+    （只有美股）；舊規則版＝noma_state nav_us／nav_tw 末值。同期實盤＝live_scoreboard
     markets.{us,tw}.nav_sys（債金版另用 c1 daily 的 nav_main，與記分板同值）。不重算。"""
     sb = _load_json(SCOREBOARD_JSON)
     c1 = _load_json(C1_STATE_JSON)
@@ -451,11 +451,14 @@ def render_shadow_table(systems) -> str:
     c1_live = f'美 <b>{_fmt_ret(c1_last.get("nav_main"))}</b>'
     cells["c1"] = (start_c1, d_c1, c1_ret, c1_live)
 
-    # 舊規則版：noma_state.json 只存權重歷史、沒有 NAV 序列 → 「—」；起算日取該檔第一筆 live 紀錄
-    noma_start = next((h.get("date") for h in noma.get("history_us", []) if h.get("source") == "live"), None) \
+    # 舊規則版：noma_state.json 的 nav_us／nav_tw（2026-10-17 起，與記分板 nav_sys 同一套簿記，起點＝第一筆 live 日＝100）
+    noma_nav = {m: noma.get("nav_" + m) for m in ("us", "tw")}
+    noma_pair = {m: _last_nav(noma_nav[m]) for m in ("us", "tw")}
+    noma_start = next((r.get("date") for r in (noma_nav["us"] or noma_nav["tw"] or [])[:1]), None) \
+        or next((h.get("date") for h in noma.get("history_us", []) if h.get("source") == "live"), None) \
         or noma.get("ruleset_locked_date") or "—"
-    d_noma = noma.get("data_date") or "—"
-    cells["noma"] = (noma_start, d_noma, '美 <span class="sh-na">—</span>｜台 <span class="sh-na">—</span>', two_mkt(live))
+    d_noma = noma_pair["us"][1] or noma_pair["tw"][1] or noma.get("data_date") or "—"
+    cells["noma"] = (noma_start, d_noma, two_mkt(noma_pair), two_mkt(live))
 
     rows = ""
     for s in systems:
@@ -473,7 +476,7 @@ def render_shadow_table(systems) -> str:
             f'<th>回答什麼問題</th><th>起算日以來報酬</th><th>同期實盤</th></tr></thead>'
             f'<tbody>{rows}</tbody></table></div>'
             f'<div class="sh-foot">三條線都每交易日更新，沒有 email。報酬讀自 live_scoreboard.json、'
-            f'c1_shadow_state.json，本頁不重新計算；舊規則版的狀態檔沒有淨值序列，報酬顯示「—」。'
+            f'c1_shadow_state.json、noma_state.json，本頁不重新計算。'
             f'債金版只追蹤美股。</div>')
 
 

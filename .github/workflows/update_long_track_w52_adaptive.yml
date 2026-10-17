@@ -110,6 +110,13 @@ jobs:
         continue-on-error: true
         run: python scripts/update_long_track_w52_adaptive_c1.py
 
+      - name: Rebuild /long-track/ overview again (shadow table reads noma/c1 state written above)
+        # 2026-10-17：總覽「影子對照」表讀 noma_state.json（nav_us／nav_tw）與 c1_shadow_state.json，
+        # 這兩檔在上面才寫入；第一次重建（記分板之後）看到的是前一日的值，這裡再跑一次讓表與當日同步。
+        # 純組版、冪等，失敗不擋實單更新。
+        continue-on-error: true
+        run: python scripts/build_long_track_index.py
+
       - name: Build synthesized live mail (today conclusion + F70 MA account)
         # 2026-09-15 持有人拍板：實單信與 F70 信合成一封。build_live_mail.py 零 LLM、
         # 純組版，只讀上面兩步驟寫的 lt_w52a_alert.txt／lt_f70_alert.txt 與兩份

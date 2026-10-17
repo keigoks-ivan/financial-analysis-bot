@@ -185,6 +185,7 @@ def repair_phantom_splits(c: pd.Series, thresh: float = 0.4) -> pd.Series:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import update_long_track_w52_adaptive as _w52  # noqa: E402  (主系統 fetch_close：台股官方收盤補值＋資料延遲偵測，不複製第二份)
+import build_live_scoreboard as _lsb  # noqa: E402  (日報酬簿記與 nav_from_returns 原函式重用；與實盤 nav_sys 同一套)
 
 
 def fetch_close(ticker: str) -> pd.Series:
@@ -1284,6 +1285,31 @@ def detect_changes(prev: dict, sigs: dict, skip_legs=()) -> list:
     return out
 
 
+def build_nav_series(m: dict, history: list, exec_map: dict, px_map: dict, gaps: list) -> list:
+    """舊規則版淨值（2026-10-17 新增）：起點＝本檔第一筆 source=='live' 日＝100，之後逐日套
+    記分板的日報酬簿記（腿報酬×前日執行率＋現金×剩餘比例－借款利差×超額比例－換手成本 7bps），
+    與實盤 nav_sys 同一個函式 `leg_daily_returns_generic`；執行率取本檔 history 重放的 executed
+    （cap 1.5、無均線層、同 A2 執行層）。純讀本檔 history 與價格，不改既有欄位。"""
+    legs = m["legs"]
+    live_dates = [r["date"] for r in history if r.get("source") == "live"]
+    if not live_dates:
+        return []
+    inception = live_dates[0]
+    date_to_idx = {r["date"]: i for i, r in enumerate(history)}
+    px = {t: {ts.strftime("%Y-%m-%d"): float(c) for ts, c in px_map[t].items()} for t in legs}
+    px_dates = {t: sorted(px[t]) for t in legs}
+    mk = next(x for x in _lsb.MARKETS if x["key"] == m["key"])
+    if mk["cash_ticker"] == "^IRX":
+        cash = _lsb.fetch_us_cash_series()
+        cash_dates = sorted(cash)
+    else:
+        cash, cash_dates = None, None
+    rows = _lsb.leg_daily_returns_generic(mk, legs, history, live_dates, date_to_idx,
+                                          exec_map[m["key"]]["executed"], px, px_dates,
+                                          cash, cash_dates, gaps, "noma")
+    return _lsb.nav_from_returns(rows, inception)
+
+
 def main():
     prev_state = {}
     if STATE_JSON.exists():
@@ -1365,6 +1391,24 @@ def main():
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
 
+    # ---- 舊規則版淨值（失敗不擋頁面與既有欄位：保留上次已存的序列）----
+    nav_map, nav_gaps = {}, []
+    for m in MARKETS:
+        try:
+            nv = build_nav_series(m, hist_map[m["key"]], exec_map, px_map, nav_gaps)
+        except Exception as e:  # noqa: BLE001
+            print(f"WARN: {m['short']} 淨值計算失敗（{type(e).__name__}: {e}），沿用上次序列")
+            nv = []
+        if nv and not any(g.get("market") == m["key"] for g in nav_gaps):
+            nav_map[m["key"]] = nv
+        else:
+            nav_map[m["key"]] = prev_state.get("nav_" + m["key"], [])
+            if nv:
+                print(f"WARN: {m['short']} 淨值有價格缺口 {nav_gaps[:1]}，沿用上次序列")
+    for k, v in nav_map.items():
+        if v:
+            print(f"NAV {k}: {v[0]['date']}={v[0]['nav']} → {v[-1]['date']}={v[-1]['nav']}")
+
     state_json = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "data_date": data_date,
@@ -1400,6 +1444,9 @@ def main():
         },
         "history_us": hist_map["us"],
         "history_tw": hist_map["tw"],
+        "nav_note": "舊規則版淨值：本檔第一筆 live 日＝100；日報酬簿記同記分板 nav_sys（leg_daily_returns_generic），執行率取本檔 history 重放（cap 1.5、無均線層、A2）",
+        "nav_us": nav_map["us"],
+        "nav_tw": nav_map["tw"],
     }
     if delays:
         state_json["data_delay"] = {"legs": {t: i for d_ in delays.values() for t, i in d_.items()},
