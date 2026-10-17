@@ -1,0 +1,401 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 TSM（2026-10-17）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**後半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/TSM_20261017/prose_B.html`，依序含 s8、s9、s10、s11、s12、decision（s85 若觸發併入）。前半（s1–s7）由另一通同時在寫，你不要碰；s1 的結論與 decision 段的裁決都以 judgment 投影視圖為準，不需對照前半。
+
+每章 3–6 條，每條 100–200 字；s10（估值與三種未來）與 s12（最可能怎麼賠）至少 1,500 bytes，把情境輸入、終端倍數、反證三視角的裁定鋪開。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：TSM　日期：2026-10-17　archetype：None　前份裁決：2026-09-16　進場｜核心　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1367B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（437B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（993B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1468B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1029B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（487B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（746B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2094B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（4135B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（1838B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（282B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1367           3943-5633      5 條（2–6 內）  
+s3                  8000         437           5294-7563      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3490          8057-11510      5 條（2–6 內）  
+s6                 11000         487          7359-10513      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         746           1928-2754      5 條（2–6 內）  
+s10                 5000        2094           2034-2906      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        1838           2000-3162      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         282            853-1218      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=4675B；至少需散文≈40.33KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−55
+−55%
+−50%
+−49%
+−45%
+−40%
+−40
+−34%
+−4.5%
+−0.3%
+−0.21
+0
+0.1
+0.2
+0.3%
+0.34
+0.43
+0.5
+0.58
+0.6
+0.74
+0.75
+0.8
+0.93
+0.93%
+0.992
+1
+01
+1%
+1.57
+1.698
+2
+2%
+2.93%
+3
+3%
+3.2
+4%
+4
+4.84
+4.89
+5
+5%
+5.5
+5.9%
+06
+6.0
+6
+6.3
+7
+07
+7.96%
+8%
+8
+9
+09
+9.8%
+9.8
+10
+10%
+11.4
+11.6
+11.9%
+11.93
+12
+12%
+12.3
+13.0%
+13
+13.2%
+13.3%
+14
+14.3
+15
+15.7%
+16
+16.2%
+16.95
+17%
+17
+17.5
+17.6%
+18%
+18
+18.2
+18.22
+19%
+19
+19.5
+20%
+20
+21
+21%
+22%
+22
+22.55
+22.65
+23%
+24
+24.3
+24.34
+24.5
+25%
+25.3%
+26
+26.74
+28%
+28
+28.9
+30%
+30
+30.6%
+32.5
+33%
+33.1
+33.1%
+33.5
+34.3
+35%
+38.2
+39
+40%
+42
+42%
+42.6%
+42.8
+44%
+44.2%
+45%
+45.5
+45.5%
+48%
+49
+49.5%
+50%
+52
+$52.3
+54%
+54.4%
+56.1%
+57%
+58%
+58.7%
+59.9%
+60
+60%
+60.3%
+62%
+64%
+64.2%
+65
+65%
+65.7%
+66%
+66
+66.4%
+67%
+67.7%
+68%
+70
+72.3%
+72.5%
+74.7%
+75%
+75.4%
+75.9%
+78%
+79%
+81.4%
+82
+85%
+92%
+100
+100%
+110
+120%
+130
+150%
+210
+228
+230
+232
+250
+273
+294
+331.25
+$361
+362
+$362
+402
+412.61
+413.75
+446
+453
+458
+467
+523
+543
+549
+600
+640
+2022
+2023
+2024
+2025
+2026
+2027
+2028
+2029
+2030
+2035
+20261017
+1,144
+1,222
+1,260
+1,560
+4,430
+7,047
+9,200
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"TSM","date":"2026-10-17","schema":"v15.2","contract":"v19","company_name":"Taiwan Semiconductor Manufacturing Company Limited"},"oneliner":"全球晶圓代工市占 72.5% 的製程龍頭。第三季營收高於指引上緣，全年成長上修到約 44%；現價約 FY2027E 共識 EPS 的 18 倍。基本面沒變，股價卻回落；主要風險在資本支出強度、Apple 引進第二家代工廠，以及台灣產能集中。","thesis":{"H":[{"id":"H1","text":"AI 加速器與先進製程需求在 2027 年仍高於供給，美元營收維持高成長","2y":"FY2027 美元營收年增 ≥25%，HPC 占營收 ≥65%","5y":null,"10y":null,"threshold":"FY2027 美元營收年增 ≥25%；HPC 平台占營收 ≥65%","source":"公司季度財報的平台別營收、2027 年 1 月全年指引","drift_rule":"TTM 營收低於上述路徑：連兩季 ≥5% 為削弱，連三季 ≥10% 為反轉"},{"id":"H2","text":"定價權足以吸收 2 奈米放量與海外廠 3–4pp 稀釋，毛利率長期守在 60% 以上","2y":null,"5y":"FY2027–FY2030 年度毛利率皆 ≥60%、營益率 ≥50%","10y":null,"threshold":"年度毛利率 ≥60%，營益率 ≥50%","source":"公司年報與季度財報","drift_rule":"TTM 毛利率連四季低於 57% 為削弱，連六季低於 54% 為反轉"},{"id":"H3","text":"製程領先延續到 A14 之後，全球代工市占守在 65% 以上","2y":null,"5y":null,"10y":"2035 年前每代新節點量產不落後對手，代工市占 ≥65%，7 奈米以下占晶圓營收 ≥75%","threshold":"代工市占 ≥65%；7 奈米以下占晶圓營收 ≥75%","source":"TrendForce 季度市占、公司製程別營收","drift_rule":"跨兩個年度低於門檻為削弱，跨三個年度為反轉"}],"R":[{"id":"R1","text":"消費性與價格敏感終端轉弱，CEO 在 7 月與 10 月兩次法說都說 2027 年規劃轉審慎","h_ref":"H1","clock":"⚡","threshold":"第四季營收低於 523 億美元，或 2027 年成長指引 <20%","evidence_refs":[]},{"id":"R2","text":"Apple 引進英特爾 18A 作第二來源，從低階處理器開始分流","h_ref":"H3","clock":"🔥","threshold":"年報 Apple 占營收 <12%，或英特爾公告為 Apple 量產先進製程","evidence_refs":["competitive_share_entrants#2","customer_second_source#0"]},{"id":"R3","text":"資本支出強度上升與海外稀釋擴大，管理層「營收成長快於資本支出成長」的承諾可能失守","h_ref":"H2","clock":"🔥","threshold":"FY2027 資本支出增速高於營收，且自由現金流對淨利 <0.5","evidence_refs":[]},{"id":"R4","text":"先進產能高度集中在台灣，海外規模要到 2028 年後；台灣電力供應是單點失效的傳導管道","h_ref":"H3","clock":"🐢","threshold":"台灣電力事件造成單季指引下修，或 2028 年後海外先進產能仍不具規模","evidence_refs":["geo_supply_chain#0","geo_supply_chain#1","geo_supply_chain#2"]},{"id":"R5","text":"出口管制雙邊收緊：美方可能罰款 10 億美元以上，台灣研議把對中國 AI 晶片出口限制擴大到所有中國客戶","h_ref":"H1","clock":"🔥","threshold":"罰款 ≥10 億美元並附營運限制，或新規定定案；受影響營收事實表未涵蓋，以公司揭露為準","evidence_refs":["reg_tariff_export#2","major_events#0"]},{"id":"R6","text":"客戶集中度上升：前十大客戶占營收 78%，最大客戶由 12% 升到 19%","h_ref":"H2","clock":"🐢","threshold":"前十大占營收 >85%，或單一客戶 >25%","evidence_refs":["customer_concentration_credit#0"]}],"single_thing":{"description":"台海封鎖或海上檢疫，使台灣晶圓廠的設備、原料或能源進口中斷","why_fatal":"5 奈米以下先進邏輯產能約九成在台灣；亞利桑那在 2027 年前是唯一的海外先進據點，2028 年後才有規模。台灣停擺時沒有替代產能，盈利與資產價值同時受損。","if_happens":"清倉，不等基本面數字確認","how_monitor":"解放軍演習規模與是否劃設禁航區、台灣能源進口與港口航運、公司月營收與海外產能進度","probability":"12–24 個月約 3–5%（主觀估計，事實表未涵蓋機率來源）"}},"appendix_a":{"growth_durability":8,"quality_score":9,"ai_risk":"🟢","long_term_confidence":"高","fpe_fy2":18.22,"peg_fy2":0.6,"stress":{"pass":2,"total":3}},"eps_meta":{"base_eps_path":{"FY2025A":null,"FY2026E":16.95,"FY2027E":22.65,"FY2028E":28.9},"fy_end_month":12,"eps_basis":"每 ADR 美元（Koyfin 普通股共識 ×5）。FY2025A 的美元口徑事實表未涵蓋，只有台幣每 ADR 331.25，不自行換匯，所以留空；三年成長改用 FY2026E→FY2028E 年化 30.6%。"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/TSM_20261017/scenario.json","archetype":{"primary":"品質複利成長","secondary":"循環/商品","confidence":"中","fingerprint":"高利潤率、重資本、單一產業市占過七成，獲利隨 AI 與半導體景氣起伏"},"industry":{"clock_phase":"II","sd_verdict_source":"結構性持久：CEO 稱 AI 晶片短缺延續到 2027 年以後，新廠需 2–3 年、擴產再 1–2 年；CoWoS 2026 年需求約 100 萬片，供給 60–70 萬片；第三季法說再說需求仍遠高於供給。","bargaining":{"up":"設備商議價力上升：管理層承認設備、材料與人工通膨是真的，高數值孔徑曝光機要到 2030 年才導入。","down":"客戶集中但缺乏替代：前十大占營收 78%，Nvidia 鎖住 2026–2027 年 CoWoS 擴產一半以上；不過 2 奈米以下只有三家量產，三星市占 5.9%。","geo":"5 奈米以下先進邏輯產能約九成在台灣；美國 232 關稅以在美設廠豁免，逼產能外移，海外廠稀釋毛利率 3–4pp。"},"profit_pool_dir":"利潤池往設計端與製造瓶頸兩端集中。公司毛利率由 2023 年 54.4% 升到 2026 年第二季 67.7%，在價值鏈中分到的份額上升，但仍低於最大客戶 Nvidia 的 74.7%。","tam_table":{"expanded":false,"reason":"事實表沒有代工總市場、滲透率與利潤池占比的五年序列，只有市占 72.5% 單點與 CoWoS 供需估計，無法做五年前對照，以免自行推估。"}},"moat":{"mechanism":"製程領先、規模成本、設計導入轉換成本三者疊加。先進製程從設計階段就綁定製程設計套件，換廠要重新流片與驗證；72.5% 市占帶來的規模，讓管理層有底氣說公司在每個營運地區都是成本最低的製造者。","execution":10,"pricing":8,"grade":"A","trend":"↑","trend_evidence":"份額：代工市占 72.3% → 72.5%，與第二名差距 12.3 倍。定價：年度毛利率 54.4%（2023）→ 56.1%（2024）→ 59.9%（2025），2026 年第二季 67.7%。領先度：A14 客戶洽談熱度高於 2 奈米同期。最大客戶 Nvidia 沒有出現轉單跡象；Apple 只在低階處理器評估第二來源，尚未量產。","peer_na_reason":"同業表列的是客戶（NVDA、AVGO、AMD）與記憶體廠（MU），不是代工對手；三星晶圓代工與英特爾代工的投入資本報酬事實表未涵蓋，所以改用市占與毛利率兩條可比軸證明方向。","threats":[{"level":"🟡","text":"Apple 與英特爾就 18A 生產部分 Apple 自研晶片達成初步協議，Apple 同時評估讓低階處理器改由其他廠生產；分析師認為英特爾短期是低量備援。","p":"35%","evidence_refs":["competitive_share_entrants#2","customer_second_source#0"]},{"level":"🟡","text":"先進製程需求達公司產能的 110–120%，三星與英特爾不用搶客戶就能承接溢出單，累積量產經驗、縮小差距。","p":"40%","evidence_refs":["competitive_share_entrants#1"]},{"level":"🟡","text":"先進封裝獨占性下降：CoWoS 部分委外給封測廠、向 GlobalFoundries 採購中介層，英特爾 EMIB-T 成為替代方案。","p":"30%","evidence_refs":["channel_business_model_shift#0","channel_business_model_shift#1"]},{"level":"🟡","text":"營業秘密外洩的員工法律程序。目前只有二手摘要，沒有涉案製程與損失金額。","p":"10%","evidence_refs":["major_events#1"]}],"roic_durability":{"quadrant":"高利益率×低周轉","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者（雲端與 AI 模型公司）、決策者（晶片設計公司）、付款者（設計公司下單）三個角色都成立。CEO 派團隊實地查美國資料中心與電力進度，結論是「目前順利」。例外是消費性與價格敏感終端轉弱。"},{"item":"決策層級","level":"🟢","text":"替代性要在單一晶片專案層級衡量：先進製程換廠要重做設計套件與驗證，2 奈米以下只有三家量產，CEO 也不准客戶轉租產能。不過 Apple 已在低階處理器層級評估英特爾，代表低階產品上替代性存在。"},{"item":"價值鏈分配","level":"🟡","text":"公司毛利率 64.2% 低於最大客戶 Nvidia 的 74.7%。上游設備通膨擠壓成本；前三大客戶控制 85% 以上的 CoWoS 產能，買方集中。公司在價值鏈的份額雖在上升，但 CEO 明言不把價格推到上限。"},{"item":"社會容忍度","level":"🟡","text":"美國用 232 關稅與在地設廠豁免要求產能移轉，台灣研議收緊對中國出口。晶片製造用電約占台灣發電量 18%，電力分配的社會容忍度是隱性上限。目前是政策壓力，還沒到限制定價。"}],"roiic":"約 45%。代理算法：2022→2025 年淨利增加 7,047 億台幣，除以 2023–2025 年「淨利減自由現金流」的累計淨再投資約 1.57 兆台幣。折舊與投入資本事實表未涵蓋，屬近似值；基期 2022 年是景氣高點，算法偏保守。","reinvest_rate":"約 42%。FY2025 淨利 1.698 兆減自由現金流 0.992 兆，再除以淨利。2026 年資本支出上修到 600–640 億美元，往後再投資率可能更高。","endo_ceiling":19,"formula_note":"內生成長率＝增量報酬約 45% × 再投資率約 42% ≈ 19%；淨再投資以「淨利減自由現金流」代理。"},"combined":9.0,"score":9.0,"spread_table":[{"metric":"毛利率","TSM":64.23,"NVDA":74.67,"AVGO":68.77,"AMD":53.2,"MU":72.57,"unit":"%"},{"metric":"營業利益率","TSM":56.1,"NVDA":65.21,"AVGO":48.52,"AMD":15.71,"MU":65.67,"unit":"%"},{"metric":"FCF 利潤率","TSM":25.33,"NVDA":41.92,"AVGO":44.22,"AMD":20.34,"MU":28.99,"unit":"%"},{"metric":"研發密度","TSM":6.07,"NVDA":7.79,"AVGO":13.28,"AMD":22.74,"MU":5.3,"unit":"%"}],"competitors":[{"name":"NVDA","gm":74.67,"om":65.21,"fcf_margin":41.92,"rd_intensity":7.79,"strategy_note":"最大客戶，不是對手。毛利率 74.7% 高於公司的 64.2%，代表設計端在價值鏈分得更多，也是公司漲價空間的上限參考。","period":"TTM ending 2026-07-31（4季加總）"},{"name":"AVGO","gm":68.77,"om":48.52,"fcf_margin":44.22,"rd_intensity":13.28,"strategy_note":"客製 AI 晶片客戶。FCF 利潤率 44.2% 高於公司的 25.3%，差距來自公司的重資本支出，不是定價弱。","period":"TTM ending 2026-07-31（4季加總）"},{"name":"AMD","gm":53.2,"om":15.71,"fcf_margin":20.34,"rd_intensity":22.74,"strategy_note":"客戶。營益率 15.7%，議價力遠弱於公司，CoWoS 配額仰賴公司。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"MU","gm":72.57,"om":65.67,"fcf_margin":28.99,"rd_intensity":5.3,"strategy_note":"同屬重資本製造業的對照。營益率 65.7% 正處記憶體景氣高點，提醒公司目前的利潤率也帶有週期成分。","period":"TTM ending 2026-05-31（4季加總）"}]},"growth":{"driver_mix":"量價齊揚。量：先進製程與 CoWoS 擴產，2 奈米產能 2027 年翻倍以上。價：先進製程漲價與 2 奈米組合。無併購、無回購。","runway_years":"事實表未涵蓋滲透率序列，無法計算","runway_post_y5":"🟢","endo_ceiling_basis":"報酬持續期檢核的內生上界約 19%（增量報酬約 45% × 再投資率約 42%）。共識 FY2026→FY2028 EPS 年化約 30.6%，缺口約 11.6pp，歸因於毛利率擴張（2025 年 59.9% → 2026 年第三季 66.4%）與漲價。","segments":[{"item":"HPC","value":"第三季占營收 68%，季增 22%"},{"item":"智慧型手機","value":"占 21%，季增 10%"},{"item":"物聯網","value":"占 4%，季增 5%"},{"item":"車用","value":"占 4%，季增 23%"},{"item":"消費性電子","value":"占 1%，季減 12%"},{"item":"製程組合","value":"2 奈米 8%、3 奈米 33%、5 奈米 28%、7 奈米 10%；7 奈米以下合計 79%"}],"decay_signals":["自由現金流對淨利連兩年低於 0.75（FY2024 0.74、FY2025 0.58），原因是資本支出擴張"],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購支撐。股東回報只有現金股利，殖利率 0.93%，管理層承諾每股股利逐年增加，沒有回購可展開。"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"近三年沒有重大併購；併購金額事實表未涵蓋","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"公司以現金股利為主，未見回購計畫；回購資料事實表未涵蓋","grade":"N/A"},{"year":"—","action":"sbc_dilution","rationale":"員工酬勞以現金紅利發放（2026 上半年占營收 2.93%），不發股權，股數淨稀釋近零","grade":"過"}]},"valuation":{"basis":"Forward P/E（FY2026E 共識 EPS 16.95 美元／ADR）搭配 PEG。市銷率與 EV/S 因台幣營收對美元股價沒有換算，不採用。","tier":"大型半導體製造龍頭","peers":{"expanded":false,"reason":"事實表同業表只有利潤率，沒有同業本益比；而且列的是客戶與記憶體廠，不是同層級的代工對手，不能當倍數錨。"},"fwd_pe":24.34,"peg":0.8,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"FY2026E 24.3 倍、FY2027E 18.2 倍；FY2026→FY2028 共識 EPS 年化 30.6%，PEG 約 0.8，落在便宜區。不過年報端點本益比分位 100%（只有 4 個年度點），且共識建立在接近歷史高點的毛利率上；便宜與否取決於利潤率守不守得住，所以判為合理。","upside_short_pct":9.8,"upside_mid_pct":33.1},"trap_analysis":{"verdict":"🟡","label":"資本密集度上升中的高品質龍頭"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"公司同時推進近 20 座新廠，2 奈米產能 2027 年翻倍；先進製程需求達公司產能 110–120% 的溢出單由三星與英特爾承接；Apple 與英特爾 18A 有初步協議。","assumption":"AI 加速器需求到 2027 年後仍高於供給（CEO 說法），且各客戶預測加總不會高估真實需求。","consequence":"若 2028 年需求進入消化期，產能剛好大量開出，稼動率與價格同時下滑；EPS 可比照 2023 年回落，倍數壓到 12–13 倍，股價約 210–230 美元。","ruling":"部分採納。這是五年內最可能虧掉一半的故事，已放進 30% 的 Bear 機率；但存貨天數下降、CoWoS 售罄至 2026 年底，目前看不到過剩證據。","watch":"第四季營收是否達 523 億美元下緣、2027 年成長指引、存貨天數、CoWoS 交期","evidence_refs":["competitive_share_entrants#2","customer_second_source#0"],"fact_refs":["f_kpi4_guidance_q3_2026_2026","f_consensus_eps_fy2"]},{"view":"論點失敗","evidence":"台灣生產全球約 92% 的 5 奈米以下邏輯晶片；亞利桑那在 2027 年前是唯一的海外先進據點，有意義的海外規模要到 2028 年後；晶片製造用電約占台灣發電量 18%。","assumption":"台海維持現狀，台灣電力與能源進口穩定。","consequence":"一旦封鎖或檢疫，沒有替代產能，盈利與資產價值同時受損；這也是唯一致命點。","ruling":"採納為尾端風險，與唯一致命點一致；機率低，不放進情境機率，改用事件出場處理。","watch":"解放軍演習規模與禁航區、台灣能源進口、海外先進產能進度","evidence_refs":["geo_supply_chain#0","geo_supply_chain#1","geo_supply_chain#2"],"fact_refs":[]},{"view":"論點成功但股東經濟變差","evidence":"自由現金流對淨利 FY2024 0.74、FY2025 0.58；2026–2028 年資本支出更顯著高於過去三年；設備通膨屬實；海外廠稀釋擴大到 3–4pp；前十大客戶占營收 78%，最大客戶毛利率 74.7% 高於公司。","assumption":"增量報酬約 45% 能延續，營收成長快於資本支出成長（管理層承諾）。","consequence":"營收照 AI 需求成長，但每股自由現金流落後；股息殖利率只有 0.93%，4 兆台幣現金報酬低，股東實拿的經濟價值落後營收。","ruling":"部分採納。價值陷阱風險因此評為中度，並設資本支出對營收、自由現金流對淨利的出場指標。目前反駁的依據是毛利率仍在上升、增量報酬約 45%。","watch":"FY2027 資本支出年增率對營收年增率、自由現金流對淨利是否跌破 0.5","evidence_refs":["customer_concentration_credit#0"],"fact_refs":["f_kpi2_fcf","f_peer_tsm_fcf_margin_pct","f_peer_nvda_gross_margin_pct"]},{"view":"價格已反映太多","evidence":"年報端點本益比分位 100%（4 個年度點）；共識 FY2026→FY2028 EPS 年化 30.6%，建立在接近歷史高點的 66–67% 毛利率上。","assumption":"市場用 24 倍 FY2026E 定價，等於預設高利潤率可以延續。","consequence":"若毛利率回到 60% 附近，EPS 下修疊加倍數壓縮，下行雙殺。","ruling":"反駁。現價對 FY2027E 只有 18.2 倍、PEG 約 0.8；Base 終端 18 倍低於現價倍數，Base 報酬來自 EPS 複利而非重新評價；而且財報後股價已從 453 美元回落到 412.61 美元。","watch":"毛利率是否守住 60%、FY2027E 共識是否續升","evidence_refs":[],"fact_refs":["f_pe_percentile","f_consensus_eps_fy2","f_consensus_eps_fy3","f_price_at_dd"]}],"max_dd":{"lo":-55,"hi":-40,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 🟡 → 本次 ✅","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=🟡","side_b":"本次 ma=✅","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 413.75 → 本次 412.61（-0.3%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=413.75","side_b":"本次 price_at_dd=412.61","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 413.75 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 413.75 美元：Bull 價 1,222、Bear 價 294，五年期望值 +81.4%，基準年化 13.0%，不對稱比 6.3","side_b":"本次情境、股價仍用 413.75 美元：Bull 價 1,144、Bear 價 273，五年期望值 +75.4%，基準年化 13.2%，不對稱比 4.84","ruling":"先換情境、股價不動：五年期望值少 6.0 個百分點，基準年化多 0.2 個百分點。不對稱比由 6.3 變為 4.84。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變差。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 413.75 美元：五年期望值 +75.4%，基準年化 13.2%，不對稱比 4.84","side_b":"本次情境、股價 412.61 美元：五年期望值 +75.9%，基準年化 13.3%，不對稱比 4.89","ruling":"再換股價、情境不動：起點價下跌 0.3%，五年期望值多 0.5 個百分點，基準年化多 0.1 個百分點，不對稱比由 4.84 升到 4.89。合計五年期望值比前份少 5.5 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"前份基本面判斷延續","cause":"新證據","prior_field":["signal","val","moat_trend","runway_post_y5","archetype","cycle_position"],"side_a":"前份（2026-09-16）：品質 A、估值合理、護城河擴大、成長跑道寬、品質複利成長型、中循環、進場","side_b":"本次：同樣結論。第三季營收 467 億美元高於指引上緣，全年成長上修到約 44%，市占 72.5% 創新高；股價 412.61 美元與前份 413.75 美元幾乎相同，FY2027E 共識 22.55 → 22.65","ruling":"一致判斷，不改。新證據強化原論點，估值條件因股價與共識都幾乎沒動而不變。","evidence_level":"公司財報與法說（2026-10-15）","settle_metric":"第四季營收對指引、2027 年全年指引","if_then":["若第四季營收達指引且 2027 年成長指引 ≥20%，維持原判斷"],"evidence_refs":["competitive_share_entrants#0","capital_markets_pricing#0"]},{"axis":"價值陷阱風險由低改為中度","cause":"方法變動","prior_field":["trap"],"side_a":"前份：價值陷阱風險低（🟢）","side_b":"本次：十類衰退信號逐項比對，自由現金流對淨利連兩年低於 0.75（FY2024 0.74、FY2025 0.58），亮一項，改為中度（🟡）","ruling":"這筆資料前份就已存在，變的是本次嚴格逐項比對，屬方法變動，不是基本面惡化。","evidence_level":"年度財報","settle_metric":"FY2026 自由現金流對淨利","if_then":["若 FY2026 自由現金流對淨利回到 0.75 以上，恢復低風險","若跌破 0.5 且資本支出增速高於營收，減碼至半倉"],"evidence_refs":[]},{"axis":"情境機率與回撤範圍","cause":"方法變動","prior_field":["p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份：Bull 28%、Bear 30%，最大回撤單點 −50%","side_b":"本次：Bull 28%、Base 42%、Bear 30% 不變；最大回撤改填範圍 −55% 到 −40%","ruling":"機率不變。最大回撤由單點改為範圍，屬方法變動；下緣加深 5pp，用來反映台海與出口管制的尾端。","evidence_level":"情境推導","settle_metric":"不適用","if_then":[],"evidence_refs":[]},{"axis":"加碼條件改寫","cause":"方法變動","prior_field":["rearm_trigger"],"side_a":"FY2027 共識 EPS 22.55 × 16x ≈ $361 以下，或 250 週均線斜率回到 +3% 以上且毛利率連兩季 ≥66%","side_b":"股價跌至 FY2027 共識 EPS 22.65 × 16x ≈ $362 以下分批加碼；或 2027 年營收成長指引 ≥20% 且第四季營收達指引下緣 $52.3B","ruling":"加碼門檻的價格只隨共識更新（22.55 → 22.65），幾乎不變。第二條改寫有兩個原因：毛利率連兩季 ≥66% 已成立（第二季 67.7%、第三季 66.4%），不再有區辨力；均線斜率由程式另算，改用基本面事件。前份價格條件 $361 沒有觸發；均線斜率那半事實表未涵蓋，所以整條未確認觸發，延續前份判斷。","evidence_level":"共識快照與公司財報","settle_metric":"股價、2027 年全年指引","if_then":["若股價 ≤$362 且第四季營收達指引，加碼一批","若 2027 年成長指引 <20%，停止加碼"],"evidence_refs":[]},{"axis":"出場指標由無到有","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設出場指標","side_b":"本次新設：年度毛利率 <58% 減碼、資本支出增速高於營收且自由現金流對淨利 <0.5 減碼、Apple 占營收 <12% 減碼、市占連兩季 <68% 減碼、台海封鎖清倉","ruling":"前份是空白，本次補上，屬方法變動。","evidence_level":"不適用","settle_metric":"見出場指標清單","if_then":["任一減碼指標觸發，減碼至半倉","封鎖事件發生，清倉"],"evidence_refs":[]},{"axis":"Single Thing 新設","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未記錄唯一致命點","side_b":"Single Thing：台海封鎖或海上檢疫，使台灣晶圓廠的設備、原料或能源進口中斷；發生即清倉","ruling":"前份空白，本次補上。選它的理由是數學上敏感度最大：先進邏輯產能約九成在台灣，2028 年前沒有替代。","evidence_level":"產業報導","settle_metric":"台海航運與能源進口","if_then":["封鎖或檢疫實際限制航運 ≥7 天，清倉"],"evidence_refs":["geo_supply_chain#0","geo_supply_chain#1"]},{"axis":"增量資本報酬：擴產創造價值或稀釋報酬","cause":null,"prior_field":null,"side_a":"價值創造：2022→2025 年淨利增加 7,047 億台幣，對應淨再投資約 1.57 兆，增量報酬約 45%；毛利率在擴產期一路升到 66–67%；管理層重申營收成長快於資本支出成長","side_b":"報酬稀釋：2026–2028 年資本支出更顯著高於過去三年，設備通膨屬實，海外廠稀釋擴大到 3–4pp，自由現金流對淨利降到 0.58","ruling":"不可調和（方向相反），裁定站價值創造這邊。依據是硬數據：擴產期間毛利率與營益率都在上升，不是下降。","evidence_level":"年度財報＋兩季法說","settle_metric":"FY2027 資本支出年增率對營收年增率、年度毛利率","if_then":["若 FY2027 資本支出年增率高於營收年增率且全年毛利率 <60%，減碼至半倉","反向條件：若 FY2027 營收年增 ≥25% 且毛利率 ≥62%，維持並在 $362 以下加碼"],"evidence_refs":["customer_concentration_credit#0"]},{"axis":"營收超預期與股價回落","cause":null,"prior_field":null,"side_a":"第三季營收 467 億美元高於指引上緣，第四季指引中點年增 58%，全年成長上修到約 44%","side_b":"股價自 10/8 的 453 美元跌到 412.61 美元，RSI 34.3；市場擔心資本支出強度、AI 資金與電力瓶頸","ruling":"可調和，屬程度差異：股價先跌，基本面沒有受損。依股價跌但基本面無損的處理原則，分批買回，不停損。","evidence_level":"公司財報、市場價格","settle_metric":"FY2026E 共識是否上修","if_then":["若股價續跌但第四季營收達指引，分批反買","若股價續漲而 2027 年指引尚未公布，不追"],"evidence_refs":["capital_markets_pricing#0","capital_markets_pricing#1","capital_markets_pricing#2"]},{"axis":"管理層前後說法對照（7 月 → 10 月）","cause":null,"prior_field":null,"side_a":"2026-07-16 法說：第三季營收指引 446–458 億美元、毛利率 65–67%；全年成長略高於 40%；海外稀釋初期 2–3%、後期 3–4%；CEO 稱不大幅漲價以免擠壓客戶","side_b":"2026-10-15 法說：第三季 467 億美元超過上緣、毛利率 66.4%；全年上修到約 44%；2026 年海外稀釋接近 2%、後段 3–4% 不變；CEO 改稱定價要讓價值被認可、給股東最大價值","ruling":"說到做到，財測連兩季超標。唯一的口徑轉變在定價，由「不擠壓客戶」轉向「讓價值被認可」，與市場傳出漲價一致，屬程度差異。","evidence_level":"兩季法說逐字稿","settle_metric":"2027 年毛利率指引","if_then":["若 2027 年毛利率指引中點 ≥64%，視為漲價落地"],"evidence_refs":[]},{"axis":"Steelman：現在就賣的最強論證","cause":null,"prior_field":null,"side_a":"賣方論點：毛利率接近歷史高點；資本支出加速；Apple 引進第二來源；英特爾 EMIB-T 與 18A 成熟；台灣出口管制與美方罰款未結；消費性終端轉弱，管理層對 2027 年轉審慎","side_b":"持有論點：市占創新高、需求高於供給的說法有 CoWoS 售罄佐證，FY2027E 只有 18.2 倍，Base 報酬不靠重新評價","ruling":"維持持有。賣方論點都是 1–3 年後才會驗證的風險，已分別設出場門檻，目前沒有一項觸發。","evidence_level":"綜合","settle_metric":"出場指標清單","if_then":["任一出場指標觸發，照該指標的動作減碼或清倉"],"evidence_refs":["reg_tariff_export#2","major_events#0"]}],"triggers":[{"n":1,"text":"第四季營收是否達指引下緣","type":"假設驗證","maps_to":"H1","metric":"第四季美元營收","threshold":"≥523 億美元","action":"未達則停止加碼","source_freq":"季度財報","date":"2027-01","evidence_refs":[]},{"n":2,"text":"2027 年全年營收成長指引","type":"假設驗證","maps_to":"H1","metric":"2027 年美元營收成長指引","threshold":"≥20%","action":"低於 20% 則停止加碼，並把 Bear 機率上調到 35%","source_freq":"年度指引","date":"2027-01","evidence_refs":[]},{"n":3,"text":"Apple 轉單英特爾的實質化","type":"風險","maps_to":"R2","metric":"年報 Apple 占營收比重，或英特爾量產公告","threshold":"<12%，或公告量產先進製程","action":"減碼至半倉","source_freq":"年報、公司公告","date":null,"evidence_refs":["competitive_share_entrants#2","customer_second_source#0"]},{"n":4,"text":"出口管制事項定案","type":"風險","maps_to":"R5","metric":"美方罰款金額、台灣對中國出口新規定","threshold":"罰款 ≥10 億美元並附營運限制，或新規定把所有中國客戶納入","action":"單純一次性罰款不動作；附營運限制則減碼一級","source_freq":"監管公告","date":null,"evidence_refs":["reg_tariff_export#2","major_events#0"]},{"n":5,"text":"台海封鎖或檢疫","type":"Single Thing","maps_to":"Single Thing","metric":"台灣港口航運與能源進口","threshold":"實際限制 ≥7 天","action":"清倉","source_freq":"即時新聞","date":null,"evidence_refs":["geo_supply_chain#0","geo_supply_chain#1"]},{"n":6,"text":"股價回到加碼區","type":"估值rearm","maps_to":"H1","metric":"股價","threshold":"≤362 美元（FY2027E 22.65 × 16 倍）","action":"分批加碼一批","source_freq":"每日","date":null,"evidence_refs":[]},{"n":7,"text":"資本密集度失控","type":"減碼","maps_to":"R3","metric":"FY2027 資本支出年增率對營收年增率、自由現金流對淨利","threshold":"資本支出增速高於營收，且自由現金流對淨利 <0.5","action":"減碼至半倉","source_freq":"年報","date":"2028-01","evidence_refs":["customer_concentration_credit#0"]},{"n":8,"text":"第四季財報複審","type":"複審日期","maps_to":null,"metric":"全份複審","threshold":"財報發布","action":"重跑判斷","source_freq":"季度","date":"2027-01-15","evidence_refs":[]}],"kill_metrics":[{"metric":"年度毛利率","bear_threshold":"全年 <58%，扣掉海外稀釋 3–4pp 後仍守不住","window":"FY2027–FY2028 年報","source":"公司季度財報與年報","last_status":"ok"},{"metric":"資本支出年增率對營收年增率，與自由現金流對淨利","bear_threshold":"資本支出增速高於營收，且自由現金流對淨利 <0.5","window":"FY2027–FY2028","source":"年報現金流量表","last_status":"warning"},{"metric":"Apple 占營收比重","bear_threshold":"<12%，或英特爾公告為 Apple 量產先進製程","window":"FY2026–FY2027 年報","source":"年報客戶集中度揭露、公司公告","last_status":"ok"},{"metric":"全球晶圓代工市占","bear_threshold":"連兩季 <68%","window":"每季","source":"TrendForce 季度排名","last_status":"ok"},{"metric":"台海封鎖或檢疫","bear_threshold":"實際限制航運或能源進口 ≥7 天","window":"持續","source":"官方公告、主要通訊社","last_status":"ok"}],"evidence_dismissed":[],"decision_out":{"verdict":"進場","role":"核心","row_hit":"10","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='A'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='↑', moat='A'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='✅'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='A'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟢'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場在財報前後把股價從 453 美元壓到 412.61 美元，擔心資本支出強度、AI 資金與電力瓶頸。但第三季營收高於指引上緣、第四季指引年增 58%，財報前的 FY2026E 共識還沒反映，股價先走，證據還沒跟上。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='A', runway='🟢', val='🟡', moat_trend='↑', week26=11.93, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position='中循環', moat='A', moat_trend='↑', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":false,"basis":"signal='A', val='🟡'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='A', val='🟡', ma='✅'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='A', val='🟡', ma='✅'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":true,"basis":"signal='A', val='🟡', ma='✅'"},{"row":"10-verdict","condition":"命中 row10 → 進場","hit":true,"basis":"row_hit=10"},{"row":"QC-49","condition":"qc49_inherit_prior=True 但前次裁決與矩陣機械輸出方向相同，無需承繼","hit":false,"basis":"prior_verdict='進場', 矩陣機械輸出='進場'"}],"pacing":[],"holding_cap":null,"requires_critic":[],"rearm_trigger":"股價跌至 FY2027 共識 EPS 22.65 × 16x ≈ $362 以下分批加碼；或 2027 年營收成長指引 ≥20% 且第四季營收達指引下緣 $52.3B","exec_line":"現價 412.61 美元依目標倉位分批，首批不超過目標的一半；$362 以下補第二批。第四季營收低於 523 億美元或 2027 年指引 <20% 時停止加碼；任一出場指標觸發，照該指標動作執行。"},"reasoning":{"industry":"收費方式是按晶圓片計價，先進封裝另外收費。最新一季逐字稿（2026-10-15，CFO）顯示：HPC 占營收 68%、季增 22%，智慧型手機占 21%，7 奈米以下占晶圓營收 79%（2 奈米 8%、3 奈米 33%、5 奈米 28%、7 奈米 10%）。第四季指引 523–543 億美元，中點年增 58%，全年成長由 7 月的「略高於 40%」上修到約 44%。產業時鐘在擴張期：CEO 說需求仍遠高於供給、缺口很大；存貨天數減少 5 天到 82 天，還看不到庫存堆積。供需持久度判為結構性持久，依據是新廠要 2–3 年、擴產再 1–2 年，CoWoS 2026 年需求約 100 萬片，供給只有 60–70 萬片。單點依賴：前十大客戶占 FY2025 營收 78%，最大客戶（Nvidia）約 19%；因為代工市占 72.5%，客戶在先進製程沒有同量級的替代廠，所以集中度目前反而是議價優勢。產業態勢是雙向拉鋸。轉好的一面：市占創新高、CoWoS 到 2026 年底已售罄。競爭的一面：Apple 與英特爾 18A 達成初步協議。其他結構變數：台灣研議收緊對中國的 AI 晶片出口；美國對先進邏輯晶片課 232 關稅，但在美新建產能可豁免。","moat":"可證的方向用份額軸：2026 年第二季全球代工市占 72.5%（第一季 72.3%），與第二名三星的差距擴大到 12.3 倍。定價軸：毛利率 2023 年 54.4%、2025 年 59.9%、2026 年第二季 67.7%，第三季在 2 奈米稀釋下仍有 66.4%。執行面：2 奈米良率佳，2027 年產能翻倍以上；A14 洽談客戶比 2 奈米同期多，CEO 預期會是更大的節點；5 倍光罩尺寸的先進封裝已量產，CEO 稱目前只有台積電做得到。執行力評 10、定價權評 8。定價權扣分的理由：CEO 明言不擠壓客戶，毛利率仍低於最大客戶，且海外廠稀釋會擴大到 3–4pp。同業投入資本報酬事實表未涵蓋（同業表列的是客戶），所以改用份額軸證明方向。威脅都屬點對點：Apple 用英特爾 18A 生產部分晶片的初步協議、三星與英特爾承接溢出需求、先進封裝被外包與替代。目前看不到生態攻擊或架構替代。報酬持續期：當期營益率 TTM 56.1%、第三季年化 ROE 45.5%（法說揭露），屬高利益率、低周轉的重資本型。增量報酬約 45%、再投資率約 42%，內生成長上界約 19%。","growth":"成長來源是量價齊揚，沒有併購也沒有回購。量：近 20 座廠同時進行，其中台灣 13 座先進製程與封裝廠、海外 5–6 座；2 奈米產能 2027 年翻倍以上。價：先進製程漲價，加上 2 奈米組合提升。共識 EPS（每 ADR 美元）FY2026E 16.95、FY2027E 22.65、FY2028E 28.9，兩年年化約 30.6%。內生上界約 19%，缺口約 11.6pp，可歸因於毛利率擴張與漲價：年度毛利率 2025 年 59.9%，2026 年第三季 66.4%。不是靠回購或併購，所以不屬於依賴重新評價的成長。跑道判斷不看市占：代工市占 72.5% 已無多少空間，成長要靠先進製程矽含量增加，以及封裝從 CoWoS 擴到 SoIC 與晶圓級系統。滲透率序列事實表未涵蓋，無法算出達 30% 滲透率要幾年。十類衰退信號亮一項：自由現金流對淨利連兩年低於 0.75（FY2024 0.74、FY2025 0.58），原因是資本支出擴張，所以價值陷阱風險評為中度。","governance":"自由現金流對淨利：FY2023 0.34、FY2024 0.74、FY2025 0.58。第三季（法說揭露）營業現金流約 9,200 億台幣，資本支出 4,430 億（約 48%），發放股利 1,560 億（約 17%），其餘留成現金。期末現金與有價證券約 4 兆台幣（1,260 億美元），淨現金約 3.2 兆台幣。員工酬勞是現金紅利，2026 上半年占營收 2.93%，不發股權，所以股數淨稀釋近零。沒有回購，也沒有重大併購。管理層承諾每股股利逐季、逐年增加，並重申只要執行得好，營收成長會快於資本支出成長；但 2026–2028 年資本支出會「更顯著高於」過去三年，這個承諾是接下來的檢驗點。","valuation":"現價 412.61 美元，對 FY2026E 共識 EPS 16.95 是 24.3 倍，對 FY2027E 22.65 是 18.2 倍，對 FY2028E 28.9 是 14.3 倍。FY2026E 共識是 10/8 財報前的快照；之後第三季營收高於指引上緣、第四季指引年增 58%，分母偏保守。近三個月 FY1 共識上修 7.96%。短期上檔：FY2027E 22.65 × 20 倍 ≈ 453 美元，約 +9.8%。中期上檔：FY2028E 28.9 × 19 倍 ≈ 549 美元，約 +33.1%。事實表的市銷率 0.43 倍與 EV/S −0.21 倍，是拿台幣營收對美元市值、沒有換算的結果，數值失真，不採用。trailing 本益比 26.74 與快照 forward 本益比數值完全相同，疑為同一欄位重用，也不採用。年報端點分位只有 4 個年度點，不是五年分位。","premortem":"第一，失敗路徑：近 20 座新廠在 2027–2028 年陸續投產，若 AI 需求進入消化期，三星與英特爾又承接了溢出單，EPS 可能比照 2023 年回落（當年營收 −4.5%、營益率由 49.5% 降到 42.6%），倍數壓到 12–13 倍。第二，股東經濟：自由現金流對淨利已降到 0.58，海外稀釋擴大到 3–4pp，設備通膨也是真的，營收成長可能不會等比例轉成每股價值。第三，價格面：年報端點本益比在 4 點中最高，共識隱含利潤率接近高點。股價自 10/8 的 453 美元跌到 412.61 美元，RSI 34.3，26 週報酬 11.9%，沒有過熱。三個視角的詳細裁定見反證紀錄。"},"plain":{"six":{"how_it_makes_money":"公司賺的是全球 AI 與高階運算晶片設計公司的製造費，獲利集中在先進製程和先進封裝兩個產能瓶頸。第二季營收 402 億美元、營益率 60.3%；第三季（2026-10-15 法說）營收 467 億美元，高於指引上緣，毛利率 66.4%、營益率 58.7%。","moat":"護城河擴大中（↑）。機制是製程領先、規模成本，加上設計導入造成的轉換成本；份額與定價兩軸都在往上走。","growth":"成長跑道寬（🟢）：代工市占已過七成，但下一條曲線有來源可查，包括先進封裝平台與 A14。","capital":"資本配置有紀律，但再投資負擔正在加重：盈餘近半投回產能，股東回報以穩定增加的現金股利為主。","valuation":"現價要求 2027–2028 年 EPS 大致照共識兌現，且毛利率守在 60% 以上；這一點我相信。估值落在合理區，不算便宜到可以忽略利潤率風險。","how_wrong":"最可能看錯的有三處：2028 年 AI 資本支出進入消化期而公司正好大量投產；資本密集度上升，侵蝕每股經濟價值；台灣產能集中的尾端事件。"}},"decision_inputs":{"signal":"A","ma":"✅","cycle_position":"中循環","cycle_verdict":"未觸發","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場在財報前後把股價從 453 美元壓到 412.61 美元，擔心資本支出強度、AI 資金與電力瓶頸。但第三季營收高於指引上緣、第四季指引年增 58%，財報前的 FY2026E 共識還沒反映，股價先走，證據還沒跟上。","momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":true,"prior_verdict":"進場","prior_role":"核心","wait_for_price":null,"trap":"🟡","val":"🟡","moat":"A","moat_trend":"↑","runway_post_y5":"🟢","capalloc_grade":"B","archetype":"品質複利成長","price_at_dd":412.61,"week26_return_pct":11.93,"consensus_rev_3m_pct":7.96,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":false,"val_denominator_note":"FY2026E 共識 16.95 在第三季財報前取得，分母偏保守而非虛胖。事實表 trailing 本益比 26.74 與 10/8 快照 forward 本益比相同，疑為欄位重用，不作為估值依據。"},"catalysts":[{"date":"2027-01","date_precision":"month","type":"guidance","event":"第四季財報與 2027 年全年營收、毛利率指引","impact":"高","watch":"成長指引是否 ≥20%、毛利率指引中點是否 ≥64%"},{"date":"2027-06","date_precision":"quarter","type":"capacity","event":"台南新 3 奈米廠上半年量產","impact":"中","watch":"3 奈米供給缺口是否收斂"},{"date":"2027-07","date_precision":"quarter","type":"capacity","event":"亞利桑那第二廠 3 奈米第三季量產（略早於原時程）","impact":"中","watch":"海外稀釋是否超過 3%"},{"date":"2027-12","date_precision":"quarter","type":"product","event":"A14 風險試產","impact":"中","watch":"客戶數與量產時程是否維持 2028 年"},{"date":null,"date_precision":null,"type":"regulatory","event":"台灣對中國 AI 晶片出口管制定案、美方出口管制罰款結果","impact":"中","watch":"受影響營收與營運限制"}],"_projected_from":"v19"}
+```
