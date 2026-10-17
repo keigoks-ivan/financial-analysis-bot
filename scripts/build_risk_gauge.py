@@ -24,6 +24,12 @@ Outputs:
 NFCI (Chicago Fed, FRED free CSV) is fetched best-effort; on failure the
 previous NFCI history is reused so the chart degrades gracefully.
 
+NFCI as first published (ALFRED vintages, 2011-05 onward) is stored alongside
+as nfci_rt / nfci_rt_up, so the homepage can show the line and the colours
+readers actually saw at the time (FRED's history is re-estimated every week).
+Earlier weeks are carried over from the previous risk_history.json; only
+missing weeks are fetched, at most NFCI_RT_MAX_FETCH per run.
+
 Runs daily in update-risk-gauge-daily.yml (Tue-Sat 01:10 UTC, after US close);
 weekly-market-update.yml (Sat) still runs it as a redundant backup — the
 script is idempotent (gauge history dedupes by date).
@@ -56,6 +62,9 @@ MARKER_END = '<!-- RISK_GAUGE:END -->'
 TICKERS = ['^GSPC', '^VIX', '^VIX3M', 'HYG', 'IEF', 'XLY', 'XLP',
            'HG=F', 'GC=F', 'AUDJPY=X', '^NDX', '^SOX']
 NFCI_URL = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=NFCI'
+ALFRED_NFCI_URL = 'https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=NFCI&vintage_date={d}'
+NFCI_RT_START = pd.Timestamp('2011-05-20')  # first Friday covered by ALFRED's earliest NFCI vintage (2011-05-25)
+NFCI_RT_MAX_FETCH = 8                       # cap per run, so a lost cache never triggers hundreds of requests
 
 LOOKBACK_63D = 63   # ~3 months of trading days
 
@@ -87,6 +96,70 @@ def fetch_nfci():
     except Exception as e:
         print(f"  ⚠ NFCI fetch failed: {e}")
         return None
+
+
+def nfci_first_release(week):
+    """(value, up) for one Friday as first published: the vintage in effect on the
+    following Thursday (release is Wednesday 8:30 ET, Thursday in holiday weeks).
+    up = 1 if that vintage shows the week above its value four weeks earlier, i.e.
+    the colour the homepage showed at the time. None if ALFRED is unreachable or the
+    week is not in that vintage yet."""
+    d = min(week + pd.Timedelta(days=6), pd.Timestamp.today().normalize())
+    try:
+        import requests
+        csv = requests.get(ALFRED_NFCI_URL.format(d=d.strftime('%Y-%m-%d')), timeout=30).text
+        s = pd.read_csv(io.StringIO(csv), parse_dates=[0], index_col=0).iloc[:, 0]
+        s = pd.to_numeric(s, errors='coerce').dropna()
+    except Exception as e:
+        print(f"  ⚠ ALFRED NFCI fetch failed for {week.date()}: {e}")
+        return None
+    if week not in s.index:
+        return None
+    prev = s.loc[:week - pd.Timedelta(days=28)]
+    if prev.empty:
+        return None
+    v, p = round(float(s.loc[week]), 2), round(float(prev.iloc[-1]), 2)
+    return v, int(v > p)
+
+
+def nfci_realtime(weeks, nfci):
+    """Lists aligned to weeks: first-published NFCI value and up-flag (None before
+    2011-05 or not yet available). Reuses the previous risk_history.json and fetches
+    only the most recent missing weeks."""
+    rt = {}
+    if HISTORY_JSON.exists():
+        old = json.loads(HISTORY_JSON.read_text(encoding='utf-8'))
+        for w, v, u in zip(old.get('weeks', []), old.get('nfci_rt', []), old.get('nfci_rt_up', [])):
+            if v is not None and u is not None:
+                rt[w] = (v, u)
+    if nfci is not None:
+        last_obs = nfci.index.max()
+        missing = [w for w in weeks
+                   if NFCI_RT_START <= w <= last_obs and w.strftime('%Y-%m-%d') not in rt]
+        for w in missing[-NFCI_RT_MAX_FETCH:]:
+            r = nfci_first_release(w)
+            if r is not None:
+                rt[w.strftime('%Y-%m-%d')] = r
+        if len(missing) > NFCI_RT_MAX_FETCH:
+            print(f"  ⚠ {len(missing) - NFCI_RT_MAX_FETCH} older weeks still lack first-release NFCI")
+    keys = [w.strftime('%Y-%m-%d') for w in weeks]
+    return [rt[k][0] if k in rt else None for k in keys], [rt[k][1] if k in rt else None for k in keys]
+
+
+def nfci_rt_meta(weeks, nfci_now, rt_up):
+    """Share of weeks whose colour at the time differs from today's colour
+    (same rule as the homepage: above the value four weeks earlier = tightening)."""
+    n = same = 0
+    first = None
+    for i in range(4, len(weeks)):
+        a, b = nfci_now[i], nfci_now[i - 4]
+        if rt_up[i] is None or a is None or b is None:
+            continue
+        first = first or weeks[i]
+        n += 1
+        same += int(int(a > b) == rt_up[i])
+    return {'from': first, 'weeks': n,
+            'disagree_pct': round((n - same) / n * 100, 1) if n else None}
 
 
 def band(s, w):
@@ -334,6 +407,12 @@ def main():
     def _nan_to_none(s):
         return [None if pd.isna(v) else float(v) for v in s]
 
+    nfci_rt, nfci_rt_up = nfci_realtime(wk_score.index, nfci)
+    rt_meta = nfci_rt_meta([d.strftime('%Y-%m-%d') for d in wk_score.index],
+                           _nan_to_none(wk_nfci), nfci_rt_up)
+    print(f"  NFCI colours at the time differ from today's in {rt_meta['disagree_pct']}% "
+          f"of {rt_meta['weeks']} weeks since {rt_meta['from']}")
+
     HISTORY_JSON.write_text(json.dumps({
         'as_of': as_of,
         'weeks': [d.strftime('%Y-%m-%d') for d in wk_score.index],
@@ -342,6 +421,9 @@ def main():
         'ndx': _nan_to_none(wk_ndx),
         'sox': _nan_to_none(wk_sox),
         'nfci': _nan_to_none(wk_nfci),
+        'nfci_rt': nfci_rt,
+        'nfci_rt_up': nfci_rt_up,
+        'nfci_rt_meta': rt_meta,
         'vix': _nan_to_none(wk_vix),
         'vixhi': _nan_to_none(wk_vixhi),
     }, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
