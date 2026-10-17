@@ -325,3 +325,112 @@ def test_export_csv_flat_english_columns(tmp_path, monkeypatch):
     assert mg[0]["margin_balance_lots_final"] == "9521230" and mg[0]["is_final"] == "1"   # 10-15 以 10-16 的前日餘額定稿
     assert mg[1]["margin_balance_lots_final"] == "9538664" and mg[1]["is_final"] == "0"
     assert mg[1]["margin_balance_yi"] == "6455.94"
+
+
+# ---------------------------------------------------------------- 借券（TWT72U／TWT93U／市值週報）
+
+def _twt72u(date="20261016"):
+    f = ["證券代號", "證券名稱", "前日借券餘額(1)股", "本日異動股借券(2)", "本日異動股還券(3)",
+         "本日借券餘額股(4)=(1)+(2)-(3)", "本日收盤價(5)單位：元", "借券餘額市值單位：元(6)=(4)*(5)", "市場別"]
+    return {"stat": "OK", "date": date, "fields": f, "data": [
+        ["2330", "台積電", "100", "0", "0", "100", "1,000.00", "100,000", "集中市場"],
+        ["2317", "鴻海", "200", "0", "50", "150", "200.50", "30,075", "集中市場"],
+        ["6488", "環球晶", "10", "0", "0", "10", "400.00", "4,000", "櫃檯買賣中心"],
+        ["合計", "　", "250", "0", "50", "250", "　", "130,075", "集中市場"],
+        ["合計", "　", "10", "0", "0", "10", "　", "4,000", "櫃檯買賣中心"],
+        ["合計", "　", "260", "0", "50", "260", "　", "134,075", "整體市場"],
+    ]}
+
+
+def _twt93u(date="20261016"):
+    f = ["代號", "名稱", "前日餘額", "賣出", "買進", "現券", "今日餘額", "次一營業日限額",
+         "前日餘額", "當日賣出", "當日還券", "當日調整", "當日餘額", "次一營業日可限額", "備註"]
+
+    def row(code, bal):
+        return [code, "x", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", bal, "0", " "]
+    return {"stat": "OK", "date": date, "fields": f, "data": [
+        row("2330", "40"), row("2317", "1,000"), row("0050", "0"), row("9999", "5"),
+        ["", "合計", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "1,045", "0", " "]]}
+
+
+def test_parse_lending_total_takes_listed_total_row_only():
+    r = fetch.parse_lending_total(_twt72u(), "2026-10-16")
+    assert r["lend_sh"] == 250 and r["lend_amt"] == 130075          # 集中市場合計，不是整體市場的 260／134,075
+    assert r["px"] == {"2330": 1000.0, "2317": 200.5, "6488": 400.0}
+
+
+def test_parse_lending_total_rejects_wrong_date_and_missing_total():
+    assert fetch.parse_lending_total(_twt72u("20261015"), "2026-10-16") is None   # 休市日被導到別天
+    p = _twt72u()
+    p["data"] = [r for r in p["data"] if not (r[0] == "合計" and r[8] == "集中市場")]
+    assert fetch.parse_lending_total(p, "2026-10-16") is None
+    assert fetch.parse_lending_total({"stat": "很抱歉，沒有符合條件的資料!"}, "2026-10-16") is None
+    p = _twt72u()
+    p["fields"][5] = "改版後欄位"
+    assert fetch.parse_lending_total(p, "2026-10-16") is None
+
+
+def test_parse_short_balance_amount_is_shares_times_close_and_tracks_missing_price():
+    px = fetch.parse_lending_total(_twt72u(), "2026-10-16")["px"]
+    r = fetch.parse_short_balance(_twt93u(), "2026-10-16", px)
+    assert r["slb_sh"] == 40 + 1000 + 5
+    assert r["slb_amt"] == 40 * 1000.0 + 1000 * 200.5               # 9999 沒有收盤價，不計入金額
+    assert r["slb_nopx"] == 5
+    assert fetch.parse_short_balance(_twt93u("20261015"), "2026-10-16", px) is None
+    bad = _twt93u()
+    bad["fields"][12] = "改版"
+    assert fetch.parse_short_balance(bad, "2026-10-16", px) is None
+
+
+def test_parse_mktcap_xls_excel_serial_to_date(monkeypatch):
+    import types
+
+    class Sheet:
+        nrows = 4
+
+        def row_values(self, r):
+            return [["表頭", "", ""], ["日期", "總市值", ""], [46311.0, 1541834.31, ""], [46304.0, "1613576.55", ""]][r]
+
+    class Book:
+        def sheet_by_index(self, i):
+            return Sheet()
+    fake = types.SimpleNamespace(open_workbook=lambda *a, **k: Book())
+    monkeypatch.setitem(sys.modules, "xlrd", fake)
+    rows = fetch.parse_mktcap_xls("x.xls")
+    assert rows == [{"d": "2026-10-16", "cap": 1541834.31}, {"d": "2026-10-09", "cap": 1613576.55}]
+
+
+def test_weekly_cap_ratio_only_on_week_end_days_and_in_percent():
+    cal = ["2026-10-14", "2026-10-15", "2026-10-16"]
+    sbl = {d: {"slb_amt": 1.473e12, "lend_amt": 3.2819e12} for d in cal}
+    cap = {"2026-10-16": {"d": "2026-10-16", "cap": 1541834.31}}        # 億元
+    assert build.weekly_cap_ratio(cal, sbl, cap, "slb_amt") == [None, None, round(1.473e12 / 1541834.31e8 * 100, 3)]
+    assert build.weekly_cap_ratio(cal, sbl, cap, "lend_amt")[2] == 2.129
+    assert build.weekly_cap_ratio(cal, {}, cap, "slb_amt") == [None, None, None]   # 當天沒借券資料就不算
+
+
+def test_build_and_csv_with_sbl(tmp_path, monkeypatch):
+    src, out = tmp_path / "src", tmp_path / "out"
+    src.mkdir()
+    monkeypatch.setattr(build, "SRC", src)
+    monkeypatch.setattr(build, "OUT", out)
+    monkeypatch.setattr(build, "CSV_OUT", tmp_path / "csv")
+    monkeypatch.setattr(build, "DISPLAY_START", "2026-10-14")
+    days = ["2026-10-14", "2026-10-15", "2026-10-16"]
+    (src / "taiex.jsonl").write_text("\n".join(
+        json.dumps({"d": d, "o": 1, "h": 2, "l": 0.5, "c": 1.5}) for d in days) + "\n")
+    (src / "sbl.jsonl").write_text("\n".join(json.dumps(
+        {"d": d, "lend_sh": 1, "lend_amt": 3281903982590, "slb_sh": 1, "slb_amt": 1473007249973.3, "slb_nopx": 0})
+        for d in days) + "\n")
+    (src / "mktcap.jsonl").write_text(json.dumps({"d": "2026-10-16", "cap": 1541834.31}) + "\n")
+    assert build.main() == 0
+    s = json.loads((out / "sbl.json").read_text())
+    assert s["lend"] == [32819.04] * 3 and s["slb"] == [14730.07] * 3          # 億元
+    assert s["cap"] == [None, None, 1541834.31]
+    assert s["lend_r"][:2] == [None, None] and s["lend_r"][2] == 2.129
+    import csv as _csv
+    rows = list(_csv.DictReader(open(tmp_path / "csv" / "sbl.csv", encoding="utf-8")))
+    assert rows[2]["lend_balance_to_market_cap_pct_weekly"] == "2.129" and rows[0]["listed_market_cap_yi_weekly"] == ""
+    assert rows[0]["short_sale_balance_yi"] == "14730.07"
+    cap = list(_csv.DictReader(open(tmp_path / "csv" / "mktcap.csv", encoding="utf-8")))
+    assert cap == [{"date": "2026-10-16", "listed_market_cap_yi": "1541834.31"}]

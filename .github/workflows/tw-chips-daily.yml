@@ -2,7 +2,8 @@ name: TW Chips Daily Data
 
 # 台股籌碼趨勢（/tw-chips/）每日資料管線：
 #   1. scripts/tw_chips/fetch.py  — 只抓缺的日子，append 進 data/tw_chips/{series}.jsonl
-#      （證交所：指數／成交金額／三大法人現貨／融資融券；期交所：期貨與選擇權三大法人／
+#      （證交所：指數／成交金額／三大法人現貨／融資融券／借券餘額與借券賣出餘額／市值週報；
+#      期交所：期貨與選擇權三大法人／
 #      Put-Call Ratio／大額交易人；FRED：新台幣匯率）。
 #   2. scripts/tw_chips/build.py  — 轉成 docs/tw-chips/data/*.json（頁面讀這些）。
 #
@@ -50,7 +51,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests xlrd   # xlrd：讀證交所市值週報的 .xls
 
       - name: Fetch missing days (TWSE / TAIFEX / FRED)
         id: fetch

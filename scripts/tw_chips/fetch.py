@@ -7,6 +7,8 @@
     turnover   全市場成交金額（元）/成交股數       TWSE FMTQIK（月查詢）
     inst       現貨三大法人買進/賣出金額（元）      TWSE BFI82U（逐日）
     margin     融資融券餘額（張、融資金額仟元）    TWSE MI_MARGN（逐日）
+    sbl        上市借券餘額（官方金額）＋借券賣出餘額（股數×收盤價）  TWSE lending/TWT72U ＋ marginTrading/TWT93U（逐日）
+    mktcap     上市股票總市值（億元，週末）          TWSE statisticsWeek『市值週報』（單一 zip，2005-09 起）
     fut_inst   臺股期貨三大法人未平倉口數          TAIFEX futContractsDateDown（近 3 年）＋ FinMind（2018-06 起，同源轉載）
     opt_inst   臺指選擇權三大法人買賣權未平倉      TAIFEX callsAndPutsDateDown（近 3 年）＋ FinMind（同上）
     pcr        選擇權 Put/Call Ratio              TAIFEX pcRatioDown（月查詢）
@@ -53,7 +55,7 @@ TAIFEX_GAP = 1.5
 BACKOFF = [20, 60, 180, 300]   # 退避秒數；用完仍失敗就放棄該請求
 TZ_TAIPEI = dt.timezone(dt.timedelta(hours=8))
 
-SERIES = ["taiex", "turnover", "inst", "margin", "fut_inst", "opt_inst", "pcr", "large", "usdtwd"]
+SERIES = ["taiex", "turnover", "inst", "margin", "sbl", "mktcap", "fut_inst", "opt_inst", "pcr", "large", "usdtwd"]
 
 
 # ---------------------------------------------------------------- 純解析函式（有單元測試）
@@ -175,6 +177,99 @@ def parse_margn(payload: dict, d: str) -> dict | None:
     if None in vals.values():
         return None
     return {"d": d, **vals}
+
+
+def parse_lending_total(payload: dict, d: str) -> dict | None:
+    """lending/TWT72U（selectType=SLBNLB）日回應 → 上市（集中市場）借券餘額與各股收盤價。
+
+    回傳 {lend_sh, lend_amt, px:{代號:收盤價}}：
+    lend_sh＝上市借券餘額（股）、lend_amt＝上市借券餘額市值（元，證交所官方彙總，
+    ＝各股本日借券餘額 × 本日收盤價加總）；px 供借券賣出餘額換算金額用。
+    只取「合計」列中市場別為「集中市場」的那一列（櫃檯買賣中心、整體市場兩列不用）。
+    日期不符（休市日被導到別天）或欄位改版回 None。
+    """
+    if not isinstance(payload, dict) or payload.get("stat") != "OK":
+        return None
+    if payload.get("date") and payload["date"] != d.replace("-", ""):
+        return None
+    fields = payload.get("fields") or []
+    if len(fields) < 9 or not fields[5].startswith("本日借券餘額") or "收盤價" not in fields[6] \
+            or "市值" not in fields[7] or fields[8] != "市場別":
+        return None
+    tot, px = None, {}
+    for row in payload.get("data") or []:
+        if len(row) < 9:
+            continue
+        if row[0].strip() == "合計":
+            if row[8].strip() == "集中市場":
+                tot = row
+            continue
+        c = to_num(row[6])
+        if c is not None:
+            px[row[0].strip()] = c
+    if tot is None:
+        return None
+    sh, amt = to_num(tot[5]), to_num(tot[7])
+    if sh is None or amt is None:
+        return None
+    return {"lend_sh": sh, "lend_amt": amt, "px": px}
+
+
+def parse_short_balance(payload: dict, d: str, px: dict) -> dict | None:
+    """marginTrading/TWT93U（融券借券賣出餘額）日回應 → 上市借券賣出餘額（股）與金額（元）。
+
+    借券賣出餘額金額＝各股「借券賣出當日餘額」× 當日收盤價（收盤價取自 TWT72U 同日同代號）加總。
+    證交所沒有借券賣出餘額的金額彙總，所以這條是自己乘出來的；找不到收盤價的股數記在 slb_nopx。
+    """
+    if not isinstance(payload, dict) or payload.get("stat") != "OK":
+        return None
+    if payload.get("date") and payload["date"] != d.replace("-", ""):
+        return None
+    fields = payload.get("fields") or []
+    if len(fields) < 15 or fields[0] != "代號" or fields[12] != "當日餘額" or fields[8] != "前日餘額":
+        return None
+    sh = amt = nopx = 0
+    total_row = None
+    for row in payload.get("data") or []:
+        if len(row) < 13:
+            continue
+        code = row[0].strip()
+        if not code:                       # 表尾「合計」列代號是空字串
+            if row[1].strip() == "合計":
+                total_row = row
+            continue
+        n = to_num(row[12])
+        if not n:
+            continue
+        sh += n
+        if code in px:
+            amt += n * px[code]
+        else:
+            nopx += n
+    if total_row is None:
+        return None
+    return {"slb_sh": sh, "slb_amt": round(amt, 2), "slb_nopx": nopx}
+
+
+def parse_mktcap_xls(path_or_bytes) -> list[dict]:
+    """市值週報 week1-new.xls → [{d, cap}]；cap＝上市股票總市值（億元），d＝週末日（通常週五）。
+
+    需要 xlrd（.xls 舊格式）。第 0、1 列是表頭，之後每列一週：[Excel 日期序號, 總市值]。
+    """
+    import xlrd
+    book = xlrd.open_workbook(file_contents=path_or_bytes) if isinstance(path_or_bytes, bytes) \
+        else xlrd.open_workbook(path_or_bytes)
+    sh = book.sheet_by_index(0)
+    out = []
+    for r in range(2, sh.nrows):
+        row = sh.row_values(r)
+        try:
+            serial, cap = float(row[0]), float(row[1])
+        except (TypeError, ValueError, IndexError):
+            continue
+        day = dt.date(1899, 12, 30) + dt.timedelta(days=int(serial))
+        out.append({"d": day.isoformat(), "cap": cap})
+    return out
 
 
 def _csv_rows(text: str) -> list[dict]:
@@ -562,6 +657,80 @@ def fetch_daily_twse(which: list[str], st: State, start: dt.date, today: dt.date
     log(f"inst/margin：本輪新增 {n} 筆")
 
 
+def fetch_sbl(st: State, start: dt.date, today: dt.date, backfill: bool, limit: int | None):
+    """逐日抓借券：TWT72U（上市借券餘額，官方金額彙總＋各股收盤價）＋TWT93U（各股借券賣出餘額股數）。
+    兩個都抓到才寫一行；最新日優先；每天 2 次請求。"""
+    store = Store("sbl")
+    todo = missing_trading_days(store, "sbl", st, start, today, None if backfill else 45)
+    log(f"sbl：待抓 {len(todo)} 天")
+    todo = sorted(todo, reverse=True)
+    if limit:
+        todo = todo[:limit]
+    fails = n = 0
+    for d in todo:
+        d8 = d.replace("-", "")
+        try:
+            lend = parse_lending_total(twse_json("lending/TWT72U", {"date": d8, "selectType": "SLBNLB"}), d)
+            short = parse_short_balance(twse_json("marginTrading/TWT93U", {"date": d8}), d, lend["px"]) \
+                if lend else None
+        except Blocked as e:
+            fails += 1
+            log(f"FAIL sbl {d}：{e}")
+            if fails >= 3:
+                log("連續失敗 3 次，停止本輪（下次續跑）。")
+                st.save()
+                return
+            continue
+        fails = 0
+        if lend is None or short is None:
+            st.bump_gap("sbl", d)
+            log(f"  sbl {d} 查無資料（第 {st.gap_attempts('sbl', d)} 次）")
+            continue
+        store.add({"d": d, "lend_sh": lend["lend_sh"], "lend_amt": lend["lend_amt"], **short})
+        n += 1
+        if n % 50 == 0:
+            st.save()
+            log(f"  ...已抓 {n} 筆，目前到 {d}")
+    st.save()
+    log(f"sbl：本輪新增 {n} 筆；最新 {store.last()}")
+
+
+def fetch_mktcap(start: dt.date):
+    """證交所『市值週報』：一個 zip 含 2005-09 起每週末的上市股票總市值（億元），整檔下載、每次覆蓋。"""
+    store = Store("mktcap")
+    j = twse_json("statisticsWeek/index", {})
+    url = None
+    for row in j.get("data") or []:
+        if len(row) >= 2 and str(row[1]).endswith(".zip"):
+            url = row[1]
+    if not url:
+        raise Blocked("市值週報：找不到 zip 連結")
+    import zipfile
+    last_err = ""
+    for wait in [0] + BACKOFF:
+        if wait:
+            time.sleep(wait)
+        _twse_throttle.wait()
+        try:
+            r = _session.get("https://www.twse.com.tw" + url, timeout=60)
+            if r.status_code != 200:
+                last_err = f"HTTP {r.status_code}"
+                continue
+            with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+                name = next(n for n in z.namelist() if n.lower().endswith(".xls"))
+                rows = parse_mktcap_xls(z.read(name))
+            break
+        except (requests.RequestException, zipfile.BadZipFile, StopIteration) as e:
+            last_err = type(e).__name__
+    else:
+        raise Blocked(f"市值週報下載失敗：{last_err}")
+    n = 0
+    for row in rows:
+        if row["d"] >= (start - dt.timedelta(days=45)).isoformat():
+            n += store.add(row)
+    log(f"mktcap：新增/更新 {n} 筆；最新 {store.last()}")
+
+
 def _taifex_window(today: dt.date) -> dt.date:
     """期交所網站只提供近 3 年，起點取 3 年前＋1 天。"""
     try:
@@ -704,11 +873,15 @@ def main():
             failed.append(label)
             log(f"FAIL {label}：{type(e).__name__}: {e}")
 
-    if {"taiex", "turnover"} & set(only) or {"inst", "margin"} & set(only):
+    if {"taiex", "turnover"} & set(only) or {"inst", "margin", "sbl"} & set(only):
         run("taiex/turnover", fetch_taiex_turnover, st, TAIEX_START, today)
     daily = [s for s in ("inst", "margin") if s in only]
     if daily:
         run("inst/margin", fetch_daily_twse, daily, st, start, today, args.backfill, args.limit or None)
+    if "sbl" in only:
+        run("sbl", fetch_sbl, st, start, today, args.backfill, args.limit or None)
+    if "mktcap" in only:
+        run("mktcap", fetch_mktcap, start)
     if "fut_inst" in only:
         run("fut_inst", fetch_fut_inst, start, today, args.backfill)
     if "opt_inst" in only:

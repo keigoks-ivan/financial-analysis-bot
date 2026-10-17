@@ -8,6 +8,8 @@
 換算：
     TWSE BFI82U 金額單位＝元           → 億元：÷ 1e8
     TWSE MI_MARGN 融資金額單位＝仟元   → 億元：÷ 1e5
+    TWSE 借券（TWT72U／TWT93U 換算）金額單位＝元 → 億元：÷ 1e8
+    TWSE 市值週報總市值單位＝億元（不換算）
     TAIFEX 選擇權契約金額單位＝千元    → 億元：÷ 1e5
     FMTQIK 成交金額單位＝元            → 億元：÷ 1e8
 """
@@ -126,6 +128,18 @@ def ratio_pct(a, b, nd: int = 2):
     return None if a is None or not b else round(a / b * 100, nd)
 
 
+def weekly_cap_ratio(cal: list[str], sbl: dict[str, dict], cap: dict[str, dict], key: str, nd: int = 3) -> list:
+    """借券金額（元）÷ 上市總市值（%），只在『市值週報』有值的週末日計算，其餘日子 None。
+
+    總市值官方只有週末日數字（億元，×1e8 換成元）；當天沒有借券資料或不在日曆上也是 None。
+    不拿前一週的市值去除日頻金額——那樣會把一週內的指數漲跌混進比率。"""
+    out = []
+    for d in cal:
+        c, r = cap.get(d), sbl.get(d)
+        out.append(None if c is None or r is None else ratio_pct(r[key], c["cap"] * 1e8, nd))
+    return out
+
+
 # ---------------------------------------------------------------- 回測用 CSV（扁平、一天一列、英文欄名）
 
 WHO3 = (("foreign", "f"), ("trust", "t"), ("dealer", "dl"))
@@ -179,6 +193,14 @@ def _csv_columns() -> dict:
     c.append(("market_oi", lambda r: r["oi"]))
     cols["large"] = c
     cols["usdtwd"] = [("usdtwd", lambda r: r["v"])]
+    cols["sbl"] = [
+        ("lend_balance_shares", lambda r: r["lend_sh"]), ("lend_balance_twd", lambda r: r["lend_amt"]),
+        ("lend_balance_yi", lambda r: yuan_to_yi(r["lend_amt"])),
+        ("short_sale_balance_shares", lambda r: r["slb_sh"]), ("short_sale_balance_twd", lambda r: r["slb_amt"]),
+        ("short_sale_balance_yi", lambda r: yuan_to_yi(r["slb_amt"])),
+        ("short_sale_balance_no_price_shares", lambda r: r["slb_nopx"]),
+    ]
+    cols["mktcap"] = [("listed_market_cap_yi", lambda r: r["cap"])]
     return cols
 
 
@@ -197,6 +219,13 @@ def export_csv() -> dict:
                      ("margin_balance_lots_final", lambda d: fin[d]["mg"]),
                      ("short_balance_lots_final", lambda d: fin[d]["sh"]),
                      ("is_final", lambda d: int(fin[d]["final"]))]
+        if series == "sbl":
+            cap = load_jsonl("mktcap")
+            extra = [("listed_market_cap_yi_weekly", lambda d: cap[d]["cap"] if d in cap else None),
+                     ("lend_balance_to_market_cap_pct_weekly",
+                      lambda d: ratio_pct(rows[d]["lend_amt"], cap[d]["cap"] * 1e8, 3) if d in cap else None),
+                     ("short_sale_balance_to_market_cap_pct_weekly",
+                      lambda d: ratio_pct(rows[d]["slb_amt"], cap[d]["cap"] * 1e8, 3) if d in cap else None)]
         with (CSV_OUT / f"{series}.csv").open("w", encoding="utf-8", newline="") as f:
             w = csv.writer(f, lineterminator="\n")
             w.writerow(["date"] + [n for n, _ in cols] + [n for n, _ in extra])
@@ -233,6 +262,8 @@ def main() -> int:
     pcr = load_jsonl("pcr")
     large = load_jsonl("large")
     fx = load_jsonl("usdtwd")
+    sbl = load_jsonl("sbl")
+    mktcap = load_jsonl("mktcap")
 
     dump("cal.json", {"t": cal})
 
@@ -268,6 +299,15 @@ def main() -> int:
         "ratio": [ratio_pct(s, m) for s, m in zip(sh, mg)],   # 券資比（%）＝融券張數 ÷ 融資張數
         "mga_chg": [None if i == 0 or mga[i] is None or mga[i - 1] is None else round(mga[i] - mga[i - 1], 2)
                     for i in range(len(cal))],
+    })
+
+    # 4b. 借券：金額（億元，逐日）、占上市總市值（%，只在市值週報有值的週末日）
+    dump("sbl.json", {
+        "slb": align(cal, sbl, lambda r: yuan_to_yi(r["slb_amt"])),       # 借券賣出餘額金額（億元）
+        "lend": align(cal, sbl, lambda r: yuan_to_yi(r["lend_amt"])),    # 借券餘額金額（億元）
+        "cap": [mktcap[d]["cap"] if d in mktcap else None for d in cal],  # 上市總市值（億元，週末日）
+        "slb_r": weekly_cap_ratio(cal, sbl, mktcap, "slb_amt"),          # 借券賣出餘額 ÷ 總市值（%）
+        "lend_r": weekly_cap_ratio(cal, sbl, mktcap, "lend_amt"),        # 借券餘額 ÷ 總市值（%）
     })
 
     # 5. 臺股期貨三大法人未平倉淨口數
@@ -321,6 +361,8 @@ def main() -> int:
         info("turnover", turn, "成交金額", "億元", "TWSE FMTQIK"),
         info("inst", inst, "三大法人現貨買賣超", "億元", "TWSE BFI82U"),
         info("margin", margin, "融資融券餘額", "億元／張", "TWSE MI_MARGN"),
+        info("sbl", sbl, "借券餘額／借券賣出餘額", "億元", "TWSE TWT72U（官方金額）＋TWT93U（股數×收盤價）"),
+        {**info("mktcap", mktcap, "上市總市值（週）", "億元", "TWSE 市值週報"), "gaps": 0},
         info("fut_inst", fut, "臺股期貨三大法人未平倉", "口", "TAIFEX（2023-10 起）＋FinMind 轉載（2018-06 起）"),
         info("opt_inst", opt, "臺指選擇權三大法人未平倉", "口／億元", "TAIFEX（2023-10 起）＋FinMind 轉載（2018-06 起）"),
         info("pcr", pcr, "選擇權 Put/Call Ratio", "%", "TAIFEX pcRatio"),
