@@ -183,20 +183,13 @@ def repair_phantom_splits(c: pd.Series, thresh: float = 0.4) -> pd.Series:
     return c
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import update_long_track_w52_adaptive as _w52  # noqa: E402  (主系統 fetch_close：台股官方收盤補值＋資料延遲偵測，不複製第二份)
+
+
 def fetch_close(ticker: str) -> pd.Series:
-    end = datetime.now() + timedelta(days=1)
-    start = end - timedelta(days=365 * 13)   # 13y: W250 (~4.8y) warmup + state history
-    df = yf.download(YF_SYMBOL[ticker], start=start.strftime("%Y-%m-%d"),
-                     end=end.strftime("%Y-%m-%d"), progress=False, auto_adjust=True)
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
-    c = df["Close"]
-    if isinstance(c, pd.DataFrame):
-        c = c.iloc[:, 0]
-    c = c.dropna()
-    if getattr(c.index, "tz", None) is not None:
-        c.index = c.index.tz_localize(None)
-    return repair_phantom_splits(c) if IS_TW[ticker] else c
+    """與主系統同一套（yfinance auto-adjust＋幻影分割修復＋台股證交所官方收盤補最新一兩根）。"""
+    return _w52.fetch_close(ticker)
 
 
 # ---------------------------------------------------------------------------
@@ -1261,7 +1254,7 @@ window.addEventListener('hashchange', function(){{
 # ---------------------------------------------------------------------------
 # change detection — 本頁無 email，detect_changes 只用於 log／頁面顯示，不寫 alert 檔
 # ---------------------------------------------------------------------------
-def detect_changes(prev: dict, sigs: dict) -> list:
+def detect_changes(prev: dict, sigs: dict, skip_legs=()) -> list:
     """可行動變化＝任一腿今日目標與現持（執行層 executed_pct）差 ≥ 20pp（EXEC_BAND，
     與回測 A2 執行層 band_exec_replay 用同一個門檻）。閘門翻轉本身不是獨立觸發條件——
     若翻轉後的目標仍落在 20pp 門檻內，A2 不會調整部位。held is None（首次執行、無前一次
@@ -1271,6 +1264,8 @@ def detect_changes(prev: dict, sigs: dict) -> list:
         return []
     out = []
     for t in ALL_TICKERS:
+        if t in skip_legs:        # 資料延遲：不據舊價產生變化
+            continue
         pt = prev["tickers"].get(t)
         if not pt:
             continue
@@ -1313,7 +1308,12 @@ def main():
         exp[m["key"]] = sum(sigs[t]["final"] for t in m["legs"]) * 100
         print(f"{m['short']} combined target exposure: {exp[m['key']]:.0f}%")
 
-    changes = detect_changes(prev_state, sigs)
+    delays = _w52.market_delays(px_map, MARKETS)    # 台股資料延遲（腿最新日 < 市場最新交易日、官方也補不上）
+    delayed_legs = {t for m in MARKETS if m["key"] in delays for t in m["legs"]}
+    for d_ in delays.values():
+        for t, info in d_.items():
+            print(f"DATA DELAY: {t} 最新日 {info['last']} < 市場最新交易日 {info['ref']}")
+    changes = detect_changes(prev_state, sigs, skip_legs=delayed_legs)
     data_date = max(sigs[t]["wk_date"] for t in ALL_TICKERS)
 
     # ---- per-market history: one-time seed from main system (pre-MA-layer dates)
@@ -1329,9 +1329,12 @@ def main():
                 prev_history = seed
                 print(f"{m['short']} seeded {len(seed)} pre-{MA_LAYER_START_DATE} days from main system state.json")
         backfill = build_backfill(px_map, legs) if len(prev_history) < BACKFILL_DAYS else []
-        daily_date = max(px_map[t].index[-1] for t in legs)
-        today_rec = _daily_record(px_map, legs, daily_date, "live")
-        history = merge_history(prev_history, backfill, today_rec)
+        if m["key"] in delays and prev_history:
+            history = list(prev_history)        # 資料延遲：不以舊價寫當日記錄
+        else:
+            daily_date = max(px_map[t].index[-1] for t in legs)
+            today_rec = _daily_record(px_map, legs, daily_date, "live")
+            history = merge_history(prev_history, backfill, today_rec)
         hist_map[m["key"]] = history
         print(f"{m['short']} history: {len(history)} days (backfill {len(backfill)}, "
               f"span {history[0]['date']}→{history[-1]['date']})")
@@ -1357,6 +1360,7 @@ def main():
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map,
                          main_state=main_state, last_change_desc=last_change_desc)
+    html = _w52.inject_delay_banner(html, _w52.delay_lines_for(delays))
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
@@ -1397,6 +1401,9 @@ def main():
         "history_us": hist_map["us"],
         "history_tw": hist_map["tw"],
     }
+    if delays:
+        state_json["data_delay"] = {"legs": {t: i for d_ in delays.values() for t, i in d_.items()},
+                                    "note": "資料延遲：該市場本次未寫當日 history"}
     STATE_JSON.write_text(json.dumps(state_json, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Sidecar JSON: {STATE_JSON}")
 

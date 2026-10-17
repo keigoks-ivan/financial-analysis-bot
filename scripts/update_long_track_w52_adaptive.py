@@ -340,12 +340,20 @@ def _num(x):
         return None
 
 
+_LAST_TWSE_REQ = [0.0]
+
+
 def _get_json_retry(url: str, params: dict | None = None):
     import time
     import requests
     last = None
     for i in range(2):
         try:
+            # 證交所對連續請求限流（約 3 次／5 秒）：同一程序內請求至少間隔 1.5 秒
+            wait = 1.5 - (time.time() - _LAST_TWSE_REQ[0])
+            if wait > 0:
+                time.sleep(wait)
+            _LAST_TWSE_REQ[0] = time.time()
             r = requests.get(url, params=params, headers={"User-Agent": OFFICIAL_UA}, timeout=20)
             r.raise_for_status()
             return r.json()
@@ -442,6 +450,40 @@ def tw_leg_delays(px_map: dict, notes_map: dict, legs: list) -> dict:
     ref = max(cands)
     return {t: {"last": last[t].strftime("%Y-%m-%d"), "ref": ref.strftime("%Y-%m-%d")}
             for t in legs if last[t] < ref}
+
+
+def market_delays(px_map: dict, markets: list) -> dict:
+    """各台股市場的資料延遲：{市場 key: {腿: {"last","ref"}}}，無延遲的市場不出現。
+    主系統與三支影子頁共用（影子 import 本模組的 fetch_close／本函式）。"""
+    out = {}
+    for m in markets:
+        if all(IS_TW.get(t) for t in m["legs"]):
+            d = tw_leg_delays(px_map, FETCH_NOTES, m["legs"])
+            if d:
+                out[m["key"]] = d
+    return out
+
+
+def delay_lines_for(delays: dict) -> list:
+    lines = []
+    for d in delays.values():
+        for t, info in d.items():
+            lines.append(
+                f"⚠ 資料延遲：{TICKER_MARKET[t]} {t} 最新日線僅到 {info['last']}（市場最新交易日 {info['ref']}；"
+                f"yfinance 未更新、證交所官方收盤也補不上）。本次不據舊價寫入{TICKER_MARKET[t]}當日紀錄或產生換倉指令，"
+                f"維持前一個已確認的決策（現持不變）；資料補齊後下次執行自動恢復。")
+    return lines
+
+
+def inject_delay_banner(html: str, lines: list) -> str:
+    """資料延遲橫幅。頁面是含 DOCTYPE 的完整文件：插在 <body> 之後，放最前面會讓瀏覽器進 quirks mode。"""
+    if not lines:
+        return html
+    banner = ('<div style="background:#fff4e5;border:1px solid #f0b86e;border-radius:6px;'
+              'padding:10px 14px;margin:0 0 12px;font-size:.85rem;color:#7a4a00;">'
+              + "<br>".join(lines) + "</div>\n")
+    html2, n_sub = re.subn(r"(<body[^>]*>)", lambda mo: mo.group(1) + "\n" + banner, html, count=1)
+    return html2 if n_sub else banner + html
 
 
 def fetch_close(ticker: str) -> pd.Series:
@@ -2020,12 +2062,7 @@ def main():
     # 且證交所官方收盤也補不上）→ 該市場本次不寫當日 history、不產生換倉指令，維持前一個
     # 已確認的決策（executed 由 history 重放，history 不動即不變），並在 alert／state／頁面
     # 標示「資料延遲」。無延遲時 delays 為空，以下全部走原路徑。
-    delays = {}                       # 市場 key -> {腿: {"last","ref"}}
-    for m in MARKETS:
-        if all(IS_TW[t] for t in m["legs"]):
-            d_ = tw_leg_delays(px_map, FETCH_NOTES, m["legs"])
-            if d_:
-                delays[m["key"]] = d_
+    delays = market_delays(px_map, MARKETS)     # 市場 key -> {腿: {"last","ref"}}
     delayed_legs = {t for m in MARKETS if m["key"] in delays for t in m["legs"]}
     for mk, d_ in delays.items():
         for t, info in d_.items():
@@ -2100,14 +2137,8 @@ def main():
         print("No actionable change vs last run.")
 
     # ---- 資料延遲通知（與可行動變化同一封信；同一組延遲只通知一次，避免一天兩輪重複寄）----
-    delay_lines, delay_state = [], None
+    delay_lines, delay_state = delay_lines_for(delays), None
     if delays:
-        for mk, d_ in delays.items():
-            for t, info in d_.items():
-                delay_lines.append(
-                    f"⚠ 資料延遲：{TICKER_MARKET[t]} {t} 最新日線僅到 {info['last']}（市場最新交易日 {info['ref']}；"
-                    f"yfinance 未更新、證交所官方收盤也補不上）。本次不據舊價產生{TICKER_MARKET[t]}換倉指令，"
-                    f"維持前一個已確認的決策（現持不變）；資料補齊後下次執行自動恢復。")
         delay_key = sorted(f"{t}|{i['last']}|{i['ref']}" for d_ in delays.values() for t, i in d_.items())
         delay_state = {"key": delay_key,
                        "legs": {t: i for d_ in delays.values() for t, i in d_.items()},
@@ -2125,14 +2156,7 @@ def main():
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map,
                          last_change_desc=last_change_desc, leg_panel_map=leg_panel_map)
-    if delay_lines:
-        banner = ('<div style="background:#fff4e5;border:1px solid #f0b86e;border-radius:6px;'
-                  'padding:10px 14px;margin:0 0 12px;font-size:.85rem;color:#7a4a00;">'
-                  + "<br>".join(delay_lines) + "</div>\n")
-        # _body.html 是含 DOCTYPE 的完整文件：橫幅插在 <body> 之後，放前面會讓瀏覽器進 quirks mode
-        html, n_sub = re.subn(r"(<body[^>]*>)", lambda mo: mo.group(1) + "\n" + banner, html, count=1)
-        if not n_sub:
-            html = banner + html
+    html = inject_delay_banner(html, delay_lines)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
