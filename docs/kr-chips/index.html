@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>韓股籌碼趨勢 — InvestMQuest Research</title>
+<meta name="description" content="韓股籌碼十年日頻趨勢：KOSPI 與 KOSDAQ 指數、外國人／機構／個人買賣超與累計、外國人持股比重、投資人預託金、信用融資、借券餘額、韓元匯率，所有圖時間軸同步，每日自動更新。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{
+  --up:#c0392b; --down:#1f6fb8;            /* 韓股慣例：紅＝買超／上漲，藍＝賣超／下跌 */
+  --c1:#173564; --c2:#a77c2a; --c3:#2f8577; --c4:#7a4fa3; --idx:#8996ab;
+  --chip-bg:#f1ece0; --ban:rgba(120,130,150,.20);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#eef1f6; --body:#d3dae6; --sec:#a3afc2; --muted:#7f8ca0;
+    --paper:#0e1522; --card:#151e2f; --line:#2a364b; --line-soft:#1f2a3d;
+    --accent:#8fb0cf; --gold-deep:#d4b576; --gold-bg:#2a2414; --gold-soft:#4a3d1c;
+    --up:#ff6b61; --down:#5aa9ff;
+    --c1:#8fb0cf; --c2:#e0b95c; --c3:#5fcab8; --c4:#b79ae0; --idx:#6f7f98;
+    --chip-bg:#1c2639; --ban:rgba(180,190,210,.14);
+  }
+}
+*{box-sizing:border-box;min-width:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.6;font-size:14px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px 60px}
+.page-head{padding:22px 0 8px}
+.page-head h1{margin:2px 0 6px;font-family:var(--serif);font-size:1.6rem;line-height:1.25;color:var(--ink)}
+.page-head p{margin:0;color:var(--sec);font-size:.9rem;line-height:1.75}
+.asof{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:6px}
+
+/* 控制列：區間按鈕 */
+.ctl{position:sticky;top:var(--nav-h,52px);z-index:50;background:var(--paper);padding:8px 0;border-bottom:1px solid var(--line);margin-top:10px}
+.ctl-inner{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.ctl-label{font-size:12px;color:var(--sec)}
+.rng{display:flex;flex-wrap:wrap;gap:4px}
+.rng button{font-family:var(--mono);font-size:12px;font-weight:600;padding:.3rem .65rem;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--body);cursor:pointer}
+.rng button:hover{border-color:var(--accent)}
+.rng button.on{background:var(--accent);border-color:var(--accent);color:var(--card)}
+@media (prefers-color-scheme: dark){ .rng button.on{color:#0e1522} }
+
+/* 最新數字小卡 */
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;box-shadow:var(--sh-1)}
+.card .k{font-size:11.5px;color:var(--sec);margin-bottom:2px}
+.card .v{font-family:var(--mono);font-size:1.15rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.25;overflow-wrap:anywhere}
+.card .s{font-family:var(--mono);font-size:11.5px;color:var(--sec);font-variant-numeric:tabular-nums}
+.card .d{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px}
+.up{color:var(--up)} .dn{color:var(--down)}
+@media (max-width:900px){ .cards{grid-template-columns:repeat(3,1fr)} }
+@media (max-width:560px){ .cards{grid-template-columns:repeat(2,1fr)} .card .v{font-size:1.02rem} }
+
+/* 圖區塊 */
+.sec{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin:16px 0;padding:14px 14px 10px;box-shadow:var(--sh-1)}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.sec-head h2{margin:0;font-family:var(--sans);font-size:1rem;font-weight:700;color:var(--ink)}
+.sec-head .n{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-right:2px}
+.sec-head .latest{font-family:var(--mono);font-size:.9rem;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.sec-head .latest small,.sec-head .chg small{font-weight:400;color:var(--muted);font-size:.72rem}
+.sec-head .chg{font-family:var(--mono);font-size:.82rem;color:var(--sec);font-variant-numeric:tabular-nums}
+.sec-head .tools{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:12px;color:var(--sec)}
+.tools label{display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+.tools select{font:inherit;font-size:12px;padding:.15rem .3rem;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--body)}
+.tools{flex-wrap:wrap}
+.tools input{flex:none}
+@media (max-width:640px){ .sec-head .tools{margin-left:0;width:100%;gap:4px 14px} }
+.hint{margin:4px 0 8px;font-size:12.5px;color:var(--sec);line-height:1.7}
+.legend{display:flex;flex-wrap:wrap;gap:4px 8px;margin:0 0 6px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:.1rem .5rem;border-radius:999px;background:var(--chip-bg);color:var(--body);cursor:pointer;user-select:none;border:1px solid transparent}
+.chip i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.chip.off{opacity:.4;text-decoration:line-through}
+.sub-title{font-size:11.5px;color:var(--muted);margin:8px 0 2px}
+.cbox{position:relative;width:100%}
+.cbox + .cbox{margin-top:6px}
+.readout{position:absolute;left:86px;top:4px;z-index:5;pointer-events:none;font-family:var(--mono);font-size:11px;line-height:1.45;background:color-mix(in srgb,var(--card) 82%,transparent);padding:2px 6px;border-radius:5px;color:var(--body);max-width:calc(100% - 140px)}
+.readout b{font-weight:600;color:var(--ink)}
+.readout i{display:inline-block;width:7px;height:7px;border-radius:2px;margin:0 3px 0 8px;vertical-align:baseline}
+.readout i:first-of-type{margin-left:4px}
+@media (max-width:640px){ .readout{left:70px;max-width:calc(100% - 76px)} }
+.note{font-size:11.5px;color:var(--muted);margin:4px 0 0}
+
+/* 頁尾資料來源 */
+.src{margin-top:26px}
+.src h2{font-size:1rem;color:var(--ink);margin:0 0 8px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+.src table{width:100%;border-collapse:collapse;font-size:12.5px}
+.src th{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;color:var(--sec);text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);white-space:nowrap}
+.src td{padding:.45rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);vertical-align:top}
+.src td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.src .fine{font-size:12px;color:var(--sec);line-height:1.8;margin-top:10px}
+.err{padding:20px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--down)}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/" class="active">韓股籌碼</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/simulation/">模擬</a>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<main class="wrap">
+  <div class="page-head">
+    <div class="t-overline">KOREA FLOWS</div>
+    <h1>韓股籌碼趨勢</h1>
+    <p>十年日頻資料，看外國人、機構、個人的買賣超，以及預託金、信用融資和借券的水位。所有圖共用同一條時間軸，拖曳、縮放、移動十字線時各圖同步。</p>
+    <div class="asof" id="asof">資料載入中…</div>
+  </div>
+
+  <div class="ctl" id="ctl">
+    <div class="ctl-inner">
+      <span class="ctl-label">區間</span>
+      <div class="rng" id="rng">
+        <button data-m="1">1 月</button><button data-m="3">3 月</button><button data-m="6">6 月</button>
+        <button data-m="12" class="on">1 年</button><button data-m="36">3 年</button><button data-m="60">5 年</button><button data-m="0">10 年</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cards" id="cards"></div>
+  <div id="charts"></div>
+
+  <section class="src" id="src"></section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+(function(){
+'use strict';
+var LWC = window.LightweightCharts;
+var V = String(Date.now()).slice(0,8);   // 資料檔快取：每約 11 天自然換一次，另由 meta.updated 補強
+var FILES = ['cal','kospi','kosdaq','inst','deposit','credit','lend','fx','meta'];
+var D = {}, CAL = [], CAL_IDX = {};
+var charts = [];            // 所有圖：{chart, box, readout, series:[{def,api}], overlay, cum, ...}
+var syncing = false;
+var curMonths = 12;
+
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function theme(){
+  return {bg:css('--card'), text:css('--body'), grid:css('--line-soft'), border:css('--line'),
+    up:css('--up'), down:css('--down'), c1:css('--c1'), c2:css('--c2'), c3:css('--c3'), c4:css('--c4'),
+    idx:css('--idx'), ref:css('--muted'), ban:css('--ban')};
+}
+var FMT = {
+  int:function(v){ return v==null?'—':Math.round(v).toLocaleString('en-US'); },
+  d1:function(v){ return v==null?'—':v.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1}); },
+  d2:function(v){ return v==null?'—':v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); },
+  d3:function(v){ return v==null?'—':v.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3}); },
+  sgn:function(f){ var g=function(v){ return v==null?'—':(v>0?'+':'')+f(v); }; g.p=f.p; return g; },
+  zh:function(v){ return v==null?'—':(v/10000).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }   // 億韓元 → 兆韓元
+};
+FMT.int.p=0; FMT.d1.p=1; FMT.d2.p=2; FMT.d3.p=3;
+function lastIdx(arr){ for(var i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return i; } return -1; }
+function valBack(arr, i, n){            // i 往前 n 個交易日；該日沒值就往前找最多 5 天
+  var j = i - n;
+  for(var k=0;k<=5 && j-k>=0;k++){ if(arr[j-k]!=null) return arr[j-k]; }
+  return null;
+}
+function sumLast(arr, i, n){ var s=0; for(var k=0;k<n;k++){ var v=arr[i-k]; if(v==null) return null; s+=v; } return s; }
+// 自 from 起逐日累計；缺值日該點為 null，之後接續累計
+function cumFrom(arr, from){
+  var out = new Array(arr.length), tot = 0;
+  for(var i=0;i<arr.length;i++){
+    if(i<from){ out[i]=null; continue; }
+    var v = arr[i];
+    if(v==null){ out[i]=null; continue; }
+    tot += v; out[i] = Math.round(tot*100)/100;
+  }
+  return out;
+}
+
+/* ---------------- 圖表定義 ---------------- */
+// kind: line | hist | candle | vol；col: 主題色 key；sign: 柱狀圖依正負上色（紅買超／藍賣超）
+function priceSpec(id, n, title, M, hint){
+  return {id:id, n:n, title:title, height:380, overlay:false, volume:true,
+   head:{arr:M.c, fmt:FMT.d2, unit:'點', delta:'diff', dfmt:FMT.sgn(FMT.d2)},
+   hint:hint,
+   series:[
+     {k:'c', name:title.split(' ')[0], kind:'candle', o:M.o, h:M.h, l:M.l, arr:M.c, fmt:FMT.d2},
+     {k:'ma20', name:'20 日', kind:'line', arr:M.ma20, col:'c2', fmt:FMT.d2, w:1},
+     {k:'ma60', name:'60 日', kind:'line', arr:M.ma60, col:'c3', fmt:FMT.d2, w:1},
+     {k:'ma240', name:'240 日', kind:'line', arr:M.ma240, col:'c4', fmt:FMT.d2, w:1},
+     {k:'amt', name:'成交金額（億韓元）', kind:'vol', arr:M.amt, fmt:FMT.int}
+   ]};
+}
+function flowSpec(id, n, mk, title, pre, M, hint){
+  var I = D.inst, S = FMT.sgn(FMT.int);
+  return {id:id, n:n, title:title, unit:'億韓元', overlay:true, multi:true, cum:true, ovKey:mk,
+   head:{arr:I[pre+'f'], fmt:S, unit:'億韓元', name:'外國人', delta:'sum20', dfmt:S, dlabel:'近 20 日合計'},
+   hint:hint,
+   subs:[
+     {h:200, title:'外國人', series:[{k:'f', name:'外國人', kind:'hist', sign:true, arr:I[pre+'f'], fmt:S}]},
+     {h:150, title:'機構', series:[{k:'i', name:'機構', kind:'hist', sign:true, arr:I[pre+'i'], fmt:S}]},
+     {h:150, title:'個人', series:[{k:'p', name:'個人', kind:'hist', sign:true, arr:I[pre+'p'], fmt:S}]}
+   ]};
+}
+function tril(arr){ return arr.map(function(v){ return v==null ? null : Math.round(v/100)/100; }); }   // 億韓元 → 兆韓元（2 位小數）
+function buildSpecs(){
+  var K=D.kospi, Q=D.kosdaq, DP=D.deposit, C=D.credit, L=D.lend, X=D.fx;
+  var S = FMT.sgn(FMT.int);
+  return [
+  priceSpec('kospi', '1', 'KOSPI 日 K 線與成交金額', K,
+    'K 線紅漲藍跌，下方灰柱是 KOSPI 的成交金額（億韓元）。20 日、60 日、240 日均線大致相當於月線、季線、年線；指數站在年線上方、三條均線同向上，代表中長期趨勢向上。'),
+  priceSpec('kosdaq', '2', 'KOSDAQ 日 K 線與成交金額', Q,
+    'K 線紅漲藍跌，下方灰柱是 KOSDAQ 的成交金額（億韓元）。KOSDAQ 以中小型成長股為主，走勢與成交金額的節奏和 KOSPI 不完全同步，可與上一張對照。'),
+  flowSpec('ik', '3', 'kospi', 'KOSPI 投資人別買賣超（外國人、機構、個人）', 'k', K,
+    '紅柱是買超、藍柱是賣超，單位為億韓元。三類相加不等於零，差額主要是其他法人。勾選「疊加累計」後，紫線從目前畫面最左邊那一天開始逐日加總，往上代表這段期間淨買、往下代表淨賣；拖曳、縮放或切換區間按鈕，累計都會跟著重新起算。'),
+  flowSpec('iq', '4', 'kosdaq', 'KOSDAQ 投資人別買賣超（外國人、機構、個人）', 'q', Q,
+    '紅柱是買超、藍柱是賣超，單位為億韓元。KOSDAQ 的買賣超金額比 KOSPI 小很多，縱軸尺度不同，不要直接拿來和上一張比大小。累計線的算法與上一張相同：從目前畫面最左邊那一天開始加總。'),
+  {id:'fown', n:'5', title:'外國人持股比重與持股市值', unit:'%', overlay:true, multi:true, ovKey:'kospi',
+   head:{arr:K.fpct, fmt:FMT.d2, unit:'%', name:'KOSPI 外國人持股比重', delta:'diff', dfmt:FMT.sgn(FMT.d2)},
+   hint:'外國人持股比重＝外國人持有的上市股票市值 ÷ 該市場上市總市值。比重上升有兩種來源：外國人淨買進，或外國人持有的股票漲得比整體多，所以要和上一張的買賣超一起看。下圖是外國人持股的絕對市值，單位為兆韓元。',
+   subs:[
+     {h:220, title:'外國人持股比重（%）', series:[
+       {k:'kf', name:'KOSPI', kind:'line', arr:K.fpct, col:'c1', fmt:FMT.d2},
+       {k:'qf', name:'KOSDAQ', kind:'line', arr:Q.fpct, col:'c2', fmt:FMT.d2}]},
+     {h:170, title:'外國人持股市值（兆韓元）', series:[
+       {k:'kc', name:'KOSPI', kind:'line', arr:tril(K.fcap), col:'c1', fmt:FMT.d2},
+       {k:'qc', name:'KOSDAQ', kind:'line', arr:tril(Q.fcap), col:'c2', fmt:FMT.d2}]}
+   ]},
+  {id:'dep', n:'6', title:'投資人預託金、未收款與反向交易', unit:'億韓元', overlay:true, multi:true, ovKey:'kospi',
+   head:{arr:DP.dep, fmt:FMT.int, unit:'億韓元', name:'投資人預託金', delta:'diff', dfmt:S, extra:function(i){
+       return DP.dep[i]!=null ? '（'+FMT.zh(DP.dep[i])+' 兆）' : ''; }},
+   hint:'投資人預託金是投資人放在券商帳戶、還沒拿去買股票的現金，常被當作場外待進場資金的指標。未收款是先買股、尚未繳款的金額；到期沒繳，券商隔日強制賣出，這就是反向交易。反向交易金額與它佔前一日未收款的比重上升，代表短線融通部位正在被迫出清，多出現在指數急跌時。',
+   subs:[
+     {h:230, title:'投資人預託金（億韓元）', series:[{k:'dep', name:'投資人預託金', kind:'line', arr:DP.dep, col:'c1', fmt:FMT.int}]},
+     {h:130, title:'委託買賣未收款（億韓元）', series:[{k:'unpaid', name:'未收款', kind:'line', arr:DP.unpaid, col:'c2', fmt:FMT.int}]},
+     {h:130, title:'反向交易（強制賣出）金額（億韓元）', series:[{k:'forced', name:'反向交易金額', kind:'hist', arr:DP.forced, col:'c3', fmt:FMT.int}]},
+     {h:130, title:'反向交易金額佔前一日未收款（%）', series:[{k:'fpct', name:'反向交易比重', kind:'line', arr:DP.forced_pct, col:'c4', fmt:FMT.d1}]}
+   ]},
+  {id:'cr', n:'7', title:'信用交易融資餘額（分市場）與佔市值比', unit:'億韓元', overlay:true, multi:true, ovKey:'kospi',
+   head:{arr:C.tot, fmt:FMT.int, unit:'億韓元', name:'融資餘額合計', delta:'diff', dfmt:S, extra:function(i){
+       return C.tot[i]!=null ? '（'+FMT.zh(C.tot[i])+' 兆）' : ''; }},
+   hint:'信用交易融資是投資人向券商借錢買股票的餘額，是韓國散戶槓桿的主要指標。餘額跟著指數創高一路上升，代表追價意願升溫；指數下跌時快速下降，是被迫斷頭或主動減碼。下圖把餘額除以該市場上市總市值，扣掉市場本身變大的影響：KOSPI 線除以 KOSPI 市值，KOSDAQ 線除以 KOSDAQ 市值，合計線除以兩市場市值之和。',
+   subs:[
+     {h:230, title:'融資餘額（億韓元）', series:[
+       {k:'tot', name:'合計', kind:'line', arr:C.tot, col:'c1', fmt:FMT.int},
+       {k:'k', name:'KOSPI', kind:'line', arr:C.kospi, col:'c2', fmt:FMT.int},
+       {k:'q', name:'KOSDAQ', kind:'line', arr:C.kosdaq, col:'c3', fmt:FMT.int}]},
+     {h:170, title:'融資餘額佔上市總市值（%）', series:[
+       {k:'rt', name:'合計', kind:'line', arr:C.r_tot, col:'c1', fmt:FMT.d3},
+       {k:'rk', name:'KOSPI', kind:'line', arr:C.r_kospi, col:'c2', fmt:FMT.d3},
+       {k:'rq', name:'KOSDAQ', kind:'line', arr:C.r_kosdaq, col:'c3', fmt:FMT.d3}]}
+   ]},
+  {id:'ld', n:'8', title:'借券餘額（全市場合計）與佔上市總市值比', unit:'億韓元', overlay:true, multi:true, ovKey:'kospi', ban:true,
+   head:{arr:L.amt, fmt:FMT.int, unit:'億韓元', name:'借券餘額', delta:'diff', dfmt:S, extra:function(i){
+       return L.amt[i]!=null ? '（'+FMT.zh(L.amt[i])+' 兆）' : ''; }},
+   hint:'借券餘額是已借出、尚未歸還的股票市值，是放空的主要股源；但借券也用於交割與避險，餘額高不等於放空部位大。灰色底色是 2023-11-06 至 2025-03-30 的全面禁止放空期間，期間餘額明顯下降。本圖是全市場合計（含 ETF、ETN），佔比的分母是 KOSPI 與 KOSDAQ 上市總市值，只適合看趨勢。',
+   subs:[
+     {h:230, title:'借券餘額（億韓元）', series:[{k:'amt', name:'借券餘額', kind:'line', arr:L.amt, col:'c1', fmt:FMT.int}]},
+     {h:170, title:'借券餘額佔上市總市值（%）', series:[{k:'ratio', name:'借券佔市值', kind:'line', arr:L.ratio, col:'c2', fmt:FMT.d2}]}
+   ]},
+  {id:'fx', n:'9', title:'韓元兌美元匯率', unit:'KRW/USD', overlay:true, height:220, ovKey:'kospi',
+   head:{arr:X.v, fmt:FMT.d2, unit:'韓元', delta:'diff', dfmt:FMT.sgn(FMT.d2)},
+   hint:'1 美元兌多少韓元，數字上升代表韓元貶值，下降代表升值。可和外國人買賣超對照，看資金流向有沒有和匯率同方向。資料來自 FRED，約晚一週更新，美國休市日沿用前一營業日的收盤值。',
+   series:[{k:'v', name:'USD/KRW', kind:'line', arr:X.v, col:'c1', fmt:FMT.d2}]}
+  ];
+}
+function ovArr(key){ return key==='kosdaq' ? D.kosdaq.c : D.kospi.c; }
+function ovName(key){ return key==='kosdaq' ? 'KOSDAQ' : 'KOSPI'; }
+
+/* ---------------- 繪圖 ---------------- */
+function mkData(def, T){
+  var n = CAL.length, out = new Array(n), i;
+  if(def.kind==='candle'){
+    for(i=0;i<n;i++) out[i] = def.arr[i]==null ? {time:CAL[i]} : {time:CAL[i],open:def.o[i],high:def.h[i],low:def.l[i],close:def.arr[i]};
+  } else if(def.kind==='hist' && def.sign){
+    for(i=0;i<n;i++){ var v=def.arr[i]; out[i] = v==null ? {time:CAL[i]} : {time:CAL[i],value:v,color:v>=0?T.up:T.down}; }
+  } else if(def.kind==='vol'){
+    for(i=0;i<n;i++){ var u=def.arr[i]; out[i] = u==null ? {time:CAL[i]} : {time:CAL[i],value:u,color:(css('--idx')+'66')}; }
+  } else {
+    for(i=0;i<n;i++) out[i] = def.arr[i]==null ? {time:CAL[i]} : {time:CAL[i],value:def.arr[i]};
+  }
+  return out;
+}
+function pf(def){
+  var p = def.fmt && def.fmt.p!=null ? def.fmt.p : 2;
+  return {type:'price', precision:p, minMove:Math.pow(10,-p)};
+}
+function narrow(){ return window.innerWidth < 640; }
+function baseOptions(T, h, width){
+  var nr = narrow();
+  return {
+    width:width, height:h,
+    layout:{background:{type:'solid',color:T.bg}, textColor:T.text, fontFamily:"'Inter','Noto Sans TC',sans-serif", fontSize:nr?10:11},
+    grid:{vertLines:{color:T.grid}, horzLines:{color:T.grid}},
+    // 左右軸寬固定（取比最長標籤略大的值），所有圖的時間軸才會逐像素對齊
+    leftPriceScale:{visible:true, minimumWidth:nr?70:80, borderColor:T.border, scaleMargins:{top:0.08,bottom:0.08}},
+    rightPriceScale:{visible:!nr, minimumWidth:66, borderColor:T.border, scaleMargins:{top:0.08,bottom:0.08}},
+    timeScale:{borderColor:T.border, rightOffset:2, minBarSpacing:0.04, fixLeftEdge:true, timeVisible:false},
+    crosshair:{mode:0, vertLine:{labelVisible:true}, horzLine:{labelVisible:true}},
+    localization:{locale:'zh-TW'},
+    handleScale:{axisPressedMouseMove:{time:true, price:true}},
+    kineticScroll:{touch:true, mouse:false}
+  };
+}
+
+// opts: {ov:是否加指數疊加線, ovKey, cumDef:累計線定義, ban:是否畫禁空底色}
+function makeChart(parent, h, title, defs, opts){
+  var T = theme();
+  var box = document.createElement('div'); box.className='cbox'; parent.appendChild(box);
+  if(title){ var st=document.createElement('div'); st.className='sub-title'; st.textContent=title; box.parentNode.insertBefore(st, box); }
+  var ro = document.createElement('div'); ro.className='readout'; box.appendChild(ro);
+  var chart = LWC.createChart(box, baseOptions(T, h, box.clientWidth||300));
+  var item = {chart:chart, box:box, readout:ro, series:[], overlay:null, cum:null, ovKey:opts.ovKey, defs:defs};
+  if(opts.ban){
+    var band = chart.addHistogramSeries({priceScaleId:'ban', priceLineVisible:false, lastValueVisible:false, priceFormat:{type:'price',precision:0,minMove:1}});
+    chart.priceScale('ban').applyOptions({scaleMargins:{top:0,bottom:0}, visible:false});
+    band.setData(CAL.map(function(d,i){ return D.cal.ban[i] ? {time:d,value:1,color:T.ban} : {time:d}; }));
+    item.band = band;
+  }
+  defs.forEach(function(def){
+    var api;
+    var col = def.col ? T[def.col] : null;
+    if(def.kind==='candle'){
+      api = chart.addCandlestickSeries({priceScaleId:'left', upColor:T.up, downColor:T.down, borderUpColor:T.up, borderDownColor:T.down,
+        wickUpColor:T.up, wickDownColor:T.down, priceLineVisible:false, lastValueVisible:true, priceFormat:pf(def)});
+      chart.priceScale('left').applyOptions({scaleMargins:{top:0.06,bottom:0.26}});
+    } else if(def.kind==='vol'){
+      api = chart.addHistogramSeries({priceScaleId:'right', priceFormat:{type:'volume'}, priceLineVisible:false, lastValueVisible:false});
+      chart.priceScale('right').applyOptions({scaleMargins:{top:0.78,bottom:0}});
+    } else if(def.kind==='hist'){
+      api = chart.addHistogramSeries({priceScaleId:'left', priceFormat:pf(def), priceLineVisible:false, lastValueVisible:false, color:col||T.c1});
+    } else {
+      api = chart.addLineSeries({priceScaleId:'left', color:col, lineWidth:def.w||2, priceLineVisible:false, lastValueVisible:false,
+        crosshairMarkerVisible:true, priceFormat:pf(def)});
+    }
+    api.setData(mkData(def, T));
+    if(def.zero) api.createPriceLine({price:0, color:T.ref, lineWidth:1, lineStyle:2, axisLabelVisible:false});
+    item.series.push({def:def, api:api, visible:true});
+  });
+  if(opts.cumDef){
+    // 累計線：畫在右軸（有刻度），數值隨可視範圍的最左邊那天重新起算
+    var cd = Object.assign({}, opts.cumDef);
+    var cl = chart.addLineSeries({priceScaleId:'right', color:T.c4, lineWidth:2, priceLineVisible:false,
+      lastValueVisible:false, crosshairMarkerVisible:true, visible:false, priceFormat:{type:'price',precision:0,minMove:1}});
+    cl.createPriceLine({price:0, color:T.ref, lineWidth:1, lineStyle:2, axisLabelVisible:false});
+    item.cum = {def:cd, api:cl, src:opts.cumDef.src, visible:false};
+  }
+  if(opts.ov){
+    // 有累計線時，指數疊加線改放隱藏刻度的獨立軸（只看形狀），避免和累計線共用右軸而失真
+    var sid = opts.cumDef ? 'idx' : 'right';
+    var line = chart.addLineSeries({priceScaleId:sid, color:T.idx, lineWidth:1, lineStyle:0, priceLineVisible:false,
+      lastValueVisible:false, crosshairMarkerVisible:false, visible:false, priceFormat:{type:'price',precision:0,minMove:1}});
+    var oa = ovArr(opts.ovKey);
+    line.setData(oa.map(function(v,i){ return v==null?{time:CAL[i]}:{time:CAL[i],value:v}; }));
+    item.overlay = line;
+    if(opts.cumDef) chart.priceScale('idx').applyOptions({scaleMargins:{top:0.08,bottom:0.08}, visible:false});
+    else if(!item.series.some(function(s){return s.def.kind==='vol';}))
+      chart.priceScale('right').applyOptions({scaleMargins:{top:0.08,bottom:0.08}});
+  }
+  wireSync(item);
+  if(typeof ResizeObserver!=='undefined'){
+    new ResizeObserver(function(){ var w=box.clientWidth; if(w>0) chart.applyOptions({width:w}); }).observe(box);
+  }
+  charts.push(item);
+  return item;
+}
+
+function wireSync(item){
+  item.chart.timeScale().subscribeVisibleLogicalRangeChange(function(r){
+    if(syncing || !r) return;
+    syncing = true;
+    charts.forEach(function(o){ if(o!==item) o.chart.timeScale().setVisibleLogicalRange(r); });
+    syncing = false;
+    scheduleCum();
+  });
+  item.chart.subscribeCrosshairMove(function(p){
+    if(syncing) return;
+    syncing = true;
+    if(!p || !p.time){
+      charts.forEach(function(o){ o.chart.clearCrosshairPosition(); });
+      readouts(null);
+    } else {
+      var i = CAL_IDX[p.time];
+      charts.forEach(function(o){
+        if(o===item) return;
+        var s = o.series[0], arr = s.def.arr, v = arr[i];
+        if(v==null){ var j=lastIdx(arr.slice(0,i+1)); v = j>=0?arr[j]:0; }
+        o.chart.setCrosshairPosition(v, p.time, s.api);
+      });
+      readouts(i);
+    }
+    syncing = false;
+  });
+}
+
+/* ---- 累計（自畫面起點）：依目前可視範圍的最左邊那天重算 ---- */
+var cumTimer = null;
+function scheduleCum(){ if(cumTimer) clearTimeout(cumTimer); cumTimer = setTimeout(recomputeCum, 60); }
+function recomputeCum(){
+  cumTimer = null;
+  var any = charts.filter(function(o){ return o.cum && o.cum.visible; });
+  if(!any.length) return;
+  var r = charts[0].chart.timeScale().getVisibleLogicalRange();
+  var from = r ? Math.max(0, Math.ceil(r.from)) : 0;
+  any.forEach(function(o){
+    o.cum.def.arr = cumFrom(o.cum.src, from);
+    o.cum.def.from = from;
+    o.cum.api.setData(o.cum.def.arr.map(function(v,i){ return v==null?{time:CAL[i]}:{time:CAL[i],value:v}; }));
+  });
+  readouts(null);
+}
+
+function readouts(i){
+  charts.forEach(function(o){
+    var idx = i;
+    if(idx==null){ idx = -1; o.series.forEach(function(s){ var li=lastIdx(s.def.arr); if(li>idx) idx=li; }); }
+    var html = '<b>'+CAL[idx]+'</b>';
+    var T = theme();
+    o.series.forEach(function(s){
+      if(!s.visible) return;
+      var d = s.def;
+      var col = d.kind==='candle' ? T.up : d.kind==='vol' ? T.idx : d.sign ? T.up : T[d.col];
+      var v = d.arr[idx];
+      var txt = d.kind==='candle' ? (v==null?'—': '開'+FMT.d2(d.o[idx])+' 高'+FMT.d2(d.h[idx])+' 低'+FMT.d2(d.l[idx])+' 收'+FMT.d2(v)) : d.fmt(v);
+      html += '<i style="background:'+col+'"></i>'+d.name+' '+txt+'&ensp;';
+    });
+    if(o.cum && o.cum.visible && o.cum.def.arr){
+      html += '<i style="background:'+T.c4+'"></i>累計（自 '+CAL[o.cum.def.from||0]+' 起） '+FMT.sgn(FMT.int)(o.cum.def.arr[idx])+'&ensp;';
+    }
+    if(o.overlay && o.overlay.options().visible){
+      var cv = ovArr(o.ovKey)[idx];
+      html += '<i style="background:'+T.idx+'"></i>'+ovName(o.ovKey)+' '+FMT.d2(cv)+'&ensp;';
+    }
+    o.readout.innerHTML = html;
+  });
+}
+
+/* ---------------- 區段（標題列、說明、圖） ---------------- */
+function buildSection(spec){
+  var root = document.getElementById('charts');
+  var sec = document.createElement('section'); sec.className='sec'; sec.id='s-'+spec.id; root.appendChild(sec);
+  var head = document.createElement('div'); head.className='sec-head'; sec.appendChild(head);
+  head.innerHTML = '<span class="n">'+spec.n+'</span><h2>'+spec.title+'</h2><span class="latest"></span><span class="chg"></span>';
+  var tools = document.createElement('div'); tools.className='tools'; head.appendChild(tools);
+  var cbx = null, cumBox = null;
+  if(spec.cum){
+    var lc = document.createElement('label'); lc.innerHTML='<input type="checkbox"> 疊加累計（自畫面起點，右軸）';
+    cumBox = lc.firstChild; tools.appendChild(lc);
+  }
+  if(spec.overlay){
+    var lab = document.createElement('label'); lab.innerHTML='<input type="checkbox"> 疊加'+ovName(spec.ovKey)+(spec.cum?'（無刻度，只看走勢）':'（右軸）');
+    cbx = lab.firstChild; tools.appendChild(lab);
+  }
+  var hint = document.createElement('p'); hint.className='hint'; hint.textContent = spec.hint; sec.appendChild(hint);
+  var legend = document.createElement('div'); legend.className='legend'; sec.appendChild(legend);
+
+  var wrap = document.createElement('div'); sec.appendChild(wrap);
+  var items = [];
+  var subs = spec.subs || [{h:spec.height, title:null, series:spec.series}];
+  subs.forEach(function(sub){
+    var defs = sub.series.map(function(d){ return Object.assign({}, d); });
+    var opts = {ov:spec.overlay, ovKey:spec.ovKey, ban:!!spec.ban};
+    if(spec.cum) opts.cumDef = {k:'cum', name:'累計', kind:'line', arr:null, src:defs[0].arr};
+    var it = makeChart(wrap, sub.h, sub.title, defs, opts);
+    it.vol = !!spec.volume;
+    items.push(it);
+  });
+
+  // 圖例（可點擊顯示／隱藏序列）
+  items.forEach(function(it){
+    it.series.forEach(function(s){
+      var chip = document.createElement('span'); chip.className='chip';
+      var T = theme();
+      var col = s.def.kind==='candle' ? T.up : s.def.kind==='vol' ? T.idx : s.def.sign ? T.up : T[s.def.col];
+      chip.innerHTML = '<i style="background:'+col+'"></i>'+s.def.name;
+      chip.addEventListener('click', function(){
+        s.visible = !s.visible; s.api.applyOptions({visible:s.visible});
+        chip.classList.toggle('off', !s.visible); readouts(null);
+      });
+      legend.appendChild(chip);
+    });
+  });
+  if(cbx) cbx.addEventListener('change', function(){
+    items.forEach(function(it){
+      it.overlay.applyOptions({visible:cbx.checked});
+      if(!spec.cum) it.chart.applyOptions({rightPriceScale:{visible:cbx.checked || !narrow()}});
+    });
+    readouts(null);
+  });
+  if(cumBox) cumBox.addEventListener('change', function(){
+    items.forEach(function(it){
+      it.cum.visible = cumBox.checked;
+      it.cum.api.applyOptions({visible:cumBox.checked});
+      it.chart.applyOptions({rightPriceScale:{visible:cumBox.checked || !narrow()}});
+    });
+    recomputeCum(); readouts(null);
+  });
+  headline(spec, sec);
+  spec._items = items;
+}
+
+function headline(spec, sec){
+  var h = spec.head, arr = h.arr;
+  var i = lastIdx(arr);
+  var latestEl = sec.querySelector('.latest'), chgEl = sec.querySelector('.chg');
+  if(i<0){ latestEl.textContent='—'; chgEl.textContent=''; return; }
+  var ex = h.extra ? h.extra(i) : '';
+  latestEl.innerHTML = (h.name||'')+' '+h.fmt(arr[i])+' '+(h.unit||'')+ex+' <small>'+CAL[i]+'</small>';
+  var txt = '';
+  if(h.delta==='sum20'){
+    var s = sumLast(arr, i, 20);
+    txt = s==null ? '' : (h.dlabel||'近 20 日合計')+' '+h.dfmt(s)+' '+(h.unit||'');
+  } else {
+    var pv = valBack(arr, i, 20);
+    txt = pv==null ? '' : '較 20 日前 '+h.dfmt(arr[i]-pv)+' '+(h.unit||'');
+  }
+  chgEl.innerHTML = txt;
+}
+
+/* ---------------- 小卡 ---------------- */
+function card(k, v, s, d, cls){
+  return '<div class="card"><div class="k">'+k+'</div><div class="v '+(cls||'')+'">'+v+'</div><div class="s">'+(s||'&nbsp;')+'</div><div class="d">'+d+'</div></div>';
+}
+function cls(v){ return v>0?'up':v<0?'dn':''; }
+function buildCards(){
+  var K=D.kospi, I=D.inst, DP=D.deposit, C=D.credit, L=D.lend, h='';
+  var ip = lastIdx(K.c);
+  var pchg = ip>0 && K.c[ip-1]!=null ? K.c[ip]-K.c[ip-1] : null;
+  h += card('KOSPI', FMT.d2(K.c[ip]), pchg==null?'':(pchg>0?'+':'')+FMT.d2(pchg)+'（'+(pchg>0?'+':'')+FMT.d2(pchg/K.c[ip-1]*100)+'%）', CAL[ip], cls(pchg));
+  var ii = lastIdx(I.kf);
+  h += card('KOSPI 外國人買賣超（億韓元）', ii<0?'—':FMT.sgn(FMT.int)(I.kf[ii]), ii<0?'':'近 20 日合計 '+FMT.sgn(FMT.int)(sumLast(I.kf, ii, 20)||0), ii<0?'—':CAL[ii], ii<0?'':cls(I.kf[ii]));
+  var id = lastIdx(DP.dep);
+  var dchg = id>0 && DP.dep[id-1]!=null ? DP.dep[id]-DP.dep[id-1] : null;
+  h += card('投資人預託金（兆韓元）', id<0?'—':FMT.zh(DP.dep[id]), dchg==null?'':'較前一日 '+FMT.sgn(FMT.int)(dchg)+' 億', id<0?'—':CAL[id], dchg==null?'':cls(dchg));
+  var ic = lastIdx(C.tot);
+  var cchg = ic>0 && C.tot[ic-1]!=null ? C.tot[ic]-C.tot[ic-1] : null;
+  h += card('信用融資餘額（兆韓元）', ic<0?'—':FMT.zh(C.tot[ic]), ic<0?'':'佔上市總市值 '+FMT.d2(C.r_tot[ic])+'%', ic<0?'—':CAL[ic], cchg==null?'':cls(cchg));
+  var il = lastIdx(L.amt), ir = lastIdx(L.ratio);     // 佔比的分母（市值）晚一天公布，所以佔比的最新日可能比餘額早一天
+  h += card('借券餘額（兆韓元）', il<0?'—':FMT.zh(L.amt[il]), ir<0?'':'佔上市總市值 '+FMT.d2(L.ratio[ir])+'%'+(ir!==il?'（'+CAL[ir].slice(5)+'）':''), il<0?'—':CAL[il], '');
+  document.getElementById('cards').innerHTML = h;
+}
+
+/* ---------------- 區間 ---------------- */
+function setRange(months){
+  curMonths = months;
+  var n = CAL.length, from = 0;
+  if(months>0){
+    var last = new Date(CAL[n-1]+'T00:00:00Z');
+    last.setUTCMonth(last.getUTCMonth()-months);
+    var tgt = last.toISOString().slice(0,10);
+    from = 0;
+    for(var i=0;i<n;i++){ if(CAL[i]>=tgt){ from=i; break; } }
+  }
+  var r = {from:from-0.5, to:n-1+2};
+  syncing = true;
+  charts.forEach(function(o){ o.chart.timeScale().setVisibleLogicalRange(r); });
+  syncing = false;
+  [].forEach.call(document.querySelectorAll('#rng button'), function(b){ b.classList.toggle('on', +b.dataset.m===months); });
+  scheduleCum();
+}
+
+/* ---------------- 頁尾 ---------------- */
+function buildSource(){
+  var m = D.meta;
+  var rows = m.series.map(function(s){
+    return '<tr><td>'+s.label+'</td><td>'+s.source+'</td><td class="num">'+(s.first_all||'—')+'</td><td class="num">'+(s.last||'—')+'</td><td class="num">'+s.n.toLocaleString('en-US')+'</td><td class="num">'+s.gaps+'</td></tr>';
+  }).join('');
+  document.getElementById('src').innerHTML =
+    '<h2>資料來源與涵蓋期間</h2><div class="tbl-wrap"><table><thead><tr><th>序列</th><th>來源</th><th>資料最早日</th><th>最新日</th><th>筆數（圖上十年）</th><th>缺漏日</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<p class="fine">資料每個韓國交易日收盤後自動更新，最近一次建檔時間：'+m.updated+'（台北）。'+
+    '成交金額、上市總市值、外國人持股、投資人預託金、信用交易融資、借券餘額取自韓國金融投資協會（KOFIA）FreeSIS 統計，原始單位為百萬韓元，頁面換算為億韓元；匯率取自 FRED（聖路易聯邦準備銀行，日資料，約晚一週更新，美國休市日圖上沿用前一營業日）。KOFIA 的日資料通常晚一個交易日公布，最新一天的成交金額、預託金、融資等欄位可能暫時空白。<br>'+
+    '指數 K 線與投資人別買賣超取自 Naver 證券（行動版）的公開資料，不是交易所原表。買賣超只有外國人、機構、個人三類，沒有其他法人，所以三者相加不等於零。抽查 5 個交易日與韓國媒體引用的交易所數字比對，4 日誤差在 1.2% 以內，另 1 日（2026-03-27，KOSPI）外國人與個人的金額各差約 4,600 億韓元，原因尚未查明。<br>'+
+    '借券餘額是 KOFIA 逐檔公布的全市場合計，含 ETF 與 ETN，與媒體引用的數字約差 0.1%；因為沒有分市場數字，佔比的分母用 KOSPI 加 KOSDAQ 上市總市值。灰色底色是 2023-11-06 至 2025-03-30 的全面禁止放空期間（2025-03-31 恢復）。<br>'+
+    '放空餘額與成交、KOSPI200 期貨與選擇權的投資人別部位、VKOSPI，需要韓國交易所（KRX）會員帳號才能取得，暫未提供。<br>'+
+    '圖表使用 TradingView Lightweight Charts。</p>';
+  document.getElementById('asof').textContent = '指數資料至 '+m.cal_last+'・最近建檔 '+m.updated+'（台北）・所有圖自 '+m.cal_first+' 起';
+}
+
+/* ---------------- 主題切換 ---------------- */
+function reTheme(){
+  var T = theme();
+  charts.forEach(function(o){
+    o.chart.applyOptions({
+      layout:{background:{type:'solid',color:T.bg}, textColor:T.text},
+      grid:{vertLines:{color:T.grid}, horzLines:{color:T.grid}},
+      leftPriceScale:{borderColor:T.border}, rightPriceScale:{borderColor:T.border}, timeScale:{borderColor:T.border}
+    });
+    o.series.forEach(function(s){
+      var d = s.def;
+      if(d.kind==='line') s.api.applyOptions({color:T[d.col]});
+      else if(d.kind==='candle') s.api.applyOptions({upColor:T.up,downColor:T.down,borderUpColor:T.up,borderDownColor:T.down,wickUpColor:T.up,wickDownColor:T.down});
+      if(d.kind==='hist' || d.kind==='vol') s.api.setData(mkData(d, T));
+    });
+    if(o.overlay) o.overlay.applyOptions({color:T.idx});
+    if(o.cum) o.cum.api.applyOptions({color:T.c4});
+    if(o.band) o.band.setData(CAL.map(function(d,i){ return D.cal.ban[i] ? {time:d,value:1,color:T.ban} : {time:d}; }));
+  });
+  readouts(null);
+}
+
+/* ---------------- 啟動 ---------------- */
+function load(name){
+  return fetch('data/'+name+'.json?v='+V).then(function(r){ if(!r.ok) throw new Error(name+' '+r.status); return r.json(); });
+}
+function fixNavOffset(){
+  var nav = document.querySelector('.imq-nav-root');
+  if(nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight+'px');
+}
+
+Promise.all(FILES.map(load)).then(function(res){
+  FILES.forEach(function(f,i){ D[f] = res[i]; });
+  CAL = D.cal.t; CAL.forEach(function(d,i){ CAL_IDX[d]=i; });
+  fixNavOffset(); window.addEventListener('resize', fixNavOffset);
+  buildCards();
+  buildSpecs().forEach(buildSection);
+  buildSource();
+  [].forEach.call(document.querySelectorAll('#rng button'), function(b){
+    b.addEventListener('click', function(){ setRange(+b.dataset.m); });
+  });
+  setRange(12);
+  readouts(null);
+  if(window.matchMedia){
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    (mq.addEventListener ? mq.addEventListener.bind(mq,'change') : mq.addListener.bind(mq))(reTheme);
+  }
+  window.__kr = {charts:charts, CAL:CAL, D:D};
+  window.__chipsReady = true;
+}).catch(function(e){
+  document.getElementById('charts').innerHTML = '<div class="err">資料載入失敗：'+String(e.message||e)+'。請稍後重新整理。</div>';
+  window.__chipsError = String(e.message||e);
+});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+name: KR Chips Daily Data
+
+# 韓股籌碼趨勢（/kr-chips/）每日資料管線：
+#   1. scripts/kr_chips/fetch.py  — 只抓缺的日子，append 進 data/kr_chips/{series}.jsonl
+#      （KOFIA FreeSIS：成交金額／上市總市值／外國人持股／投資人預託金／信用融資／借券餘額；
+#      Naver 行動版 API：指數 OHLC 與外國人／機構／個人買賣超；FRED：韓元匯率）。
+#   2. scripts/kr_chips/build.py  — 轉成 docs/kr-chips/data/*.json（頁面讀這些）與 csv/。
+#
+# 排程：韓國 15:30 收盤（台北 14:30）。主要班次放 16:37 台北（週一至週五，避開整點／半點尖峰），
+# 此時 Naver 的指數與買賣超已有當天數字；KOFIA 日資料通常晚一個交易日公布，所以隔天 09:17 台北
+# 的備援班次負責補上 KOFIA 的最新一天（fetch.py 每次都重抓 KOFIA 最近 40 天，晚到的數字會自動補進來）。
+# fetch.py 本身是增量的：沒有缺口時只打少數幾次請求，備援班次不會重複抓整批資料。
+#
+# 個別序列失敗不讓 job 失敗，只有 3 個以上序列同時失敗（代表來源改版或整體被擋）才標紅。
+# 若 Naver 在 GitHub runner 被擋，改由本機排程抓 inst_kospi／inst_kosdaq／px_kospi／px_kosdaq 四個序列。
+#
+# Push 迴圈與 rebase 衝突處理照 scripts/ci/ 共用腳本（見 active-etf-daily.yml 同款）。
+
+on:
+  schedule:
+    - cron: "37 8 * * 1-5"   # 主要班次：16:37 台北（週一至週五）
+    - cron: "17 1 * * 2-6"   # 備援班次：隔天 09:17 台北（週二至週六 UTC 日期）
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch missing days (KOFIA / Naver / FRED)
+        id: fetch
+        continue-on-error: true
+        run: |
+          set +e
+          python3 scripts/kr_chips/fetch.py 2>&1 | tee /tmp/fetch.log
+          rc=${PIPESTATUS[0]}
+          n_fail=$(grep -cE '^FAIL [a-z_]+：' /tmp/fetch.log || true)
+          echo "n_fail=${n_fail:-0}" >> "$GITHUB_OUTPUT"
+          echo "fetch rc=$rc n_fail=${n_fail:-0}"
+          exit $rc
+
+      - name: Build page data (docs/kr-chips/data/)
+        run: python3 scripts/kr_chips/build.py
+
+      - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/kr_chips/ docs/kr-chips/data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+            git commit -m "data: kr chips daily snapshot ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            for i in 1 2 3 4 5 6; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+              bash scripts/ci/rebase_or_flag.sh || exit 1
+              sleep $((RANDOM % 20 + 5))
+            done
+            echo "Push failed after 6 attempts"
+            exit 1
+          fi
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
+
+      - name: Fail the job if many series failed
+        if: always() && steps.fetch.outcome == 'failure'
+        run: |
+          echo "::error::${{ steps.fetch.outputs.n_fail }} series failed to fetch (>=3) — KOFIA/Naver may have blocked this runner or changed their format. See the fetch step log."
+          exit 1
