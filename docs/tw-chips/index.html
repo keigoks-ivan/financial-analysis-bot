@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>台股籌碼趨勢 — InvestMQuest Research</title>
+<meta name="description" content="台股籌碼十年日頻趨勢：加權指數、三大法人買賣超與累計、融資融券、外資期貨與選擇權未平倉、Put/Call Ratio、大額交易人、新台幣匯率，所有圖時間軸同步，每日自動更新。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{
+  --up:#c0392b; --down:#1e8e5a;            /* 台股慣例：紅＝買超／上漲，綠＝賣超／下跌 */
+  --c1:#173564; --c2:#a77c2a; --c3:#2f8577; --c4:#7a4fa3; --idx:#8996ab;
+  --chip-bg:#f1ece0;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#eef1f6; --body:#d3dae6; --sec:#a3afc2; --muted:#7f8ca0;
+    --paper:#0e1522; --card:#151e2f; --line:#2a364b; --line-soft:#1f2a3d;
+    --accent:#8fb0cf; --gold-deep:#d4b576; --gold-bg:#2a2414; --gold-soft:#4a3d1c;
+    --up:#ff6b61; --down:#4cc38a;
+    --c1:#8fb0cf; --c2:#e0b95c; --c3:#5fcab8; --c4:#b79ae0; --idx:#6f7f98;
+    --chip-bg:#1c2639;
+  }
+}
+*{box-sizing:border-box;min-width:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.6;font-size:14px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px 60px}
+.page-head{padding:22px 0 8px}
+.page-head h1{margin:2px 0 6px;font-family:var(--serif);font-size:1.6rem;line-height:1.25;color:var(--ink)}
+.page-head p{margin:0;color:var(--sec);font-size:.9rem;line-height:1.75}
+.asof{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:6px}
+
+/* 控制列：區間按鈕 */
+.ctl{position:sticky;top:var(--nav-h,52px);z-index:50;background:var(--paper);padding:8px 0;border-bottom:1px solid var(--line);margin-top:10px}
+.ctl-inner{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.ctl-label{font-size:12px;color:var(--sec)}
+.rng{display:flex;flex-wrap:wrap;gap:4px}
+.rng button{font-family:var(--mono);font-size:12px;font-weight:600;padding:.3rem .65rem;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--body);cursor:pointer}
+.rng button:hover{border-color:var(--accent)}
+.rng button.on{background:var(--accent);border-color:var(--accent);color:var(--card)}
+@media (prefers-color-scheme: dark){ .rng button.on{color:#0e1522} }
+
+/* 最新數字小卡 */
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;box-shadow:var(--sh-1)}
+.card .k{font-size:11.5px;color:var(--sec);margin-bottom:2px}
+.card .v{font-family:var(--mono);font-size:1.15rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.25;overflow-wrap:anywhere}
+.card .s{font-family:var(--mono);font-size:11.5px;color:var(--sec);font-variant-numeric:tabular-nums}
+.card .d{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px}
+.up{color:var(--up)} .dn{color:var(--down)}
+@media (max-width:900px){ .cards{grid-template-columns:repeat(3,1fr)} }
+@media (max-width:560px){ .cards{grid-template-columns:repeat(2,1fr)} .card .v{font-size:1.02rem} }
+
+/* 圖區塊 */
+.sec{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin:16px 0;padding:14px 14px 10px;box-shadow:var(--sh-1)}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.sec-head h2{margin:0;font-family:var(--sans);font-size:1rem;font-weight:700;color:var(--ink)}
+.sec-head .n{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-right:2px}
+.sec-head .latest{font-family:var(--mono);font-size:.9rem;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.sec-head .latest small,.sec-head .chg small{font-weight:400;color:var(--muted);font-size:.72rem}
+.sec-head .chg{font-family:var(--mono);font-size:.82rem;color:var(--sec);font-variant-numeric:tabular-nums}
+.sec-head .tools{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:12px;color:var(--sec)}
+.tools label{display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+.tools select{font:inherit;font-size:12px;padding:.15rem .3rem;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--body)}
+.hint{margin:4px 0 8px;font-size:12.5px;color:var(--sec);line-height:1.7}
+.legend{display:flex;flex-wrap:wrap;gap:4px 8px;margin:0 0 6px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:.1rem .5rem;border-radius:999px;background:var(--chip-bg);color:var(--body);cursor:pointer;user-select:none;border:1px solid transparent}
+.chip i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.chip.off{opacity:.4;text-decoration:line-through}
+.sub-title{font-size:11.5px;color:var(--muted);margin:8px 0 2px}
+.cbox{position:relative;width:100%}
+.cbox + .cbox{margin-top:6px}
+.readout{position:absolute;left:72px;top:4px;z-index:5;pointer-events:none;font-family:var(--mono);font-size:11px;line-height:1.45;background:color-mix(in srgb,var(--card) 82%,transparent);padding:2px 6px;border-radius:5px;color:var(--body);max-width:calc(100% - 140px)}
+.readout b{font-weight:600;color:var(--ink)}
+.readout i{display:inline-block;width:7px;height:7px;border-radius:2px;margin:0 3px 0 8px;vertical-align:baseline}
+.readout i:first-of-type{margin-left:4px}
+.note{font-size:11.5px;color:var(--muted);margin:4px 0 0}
+
+/* 頁尾資料來源 */
+.src{margin-top:26px}
+.src h2{font-size:1rem;color:var(--ink);margin:0 0 8px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+.src table{width:100%;border-collapse:collapse;font-size:12.5px}
+.src th{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;color:var(--sec);text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);white-space:nowrap}
+.src td{padding:.45rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);vertical-align:top}
+.src td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.src .fine{font-size:12px;color:var(--sec);line-height:1.8;margin-top:10px}
+.err{padding:20px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--down)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="page-head">
+    <div class="t-overline">TAIWAN FLOWS</div>
+    <h1>台股籌碼趨勢</h1>
+    <p>十年日頻資料，看外資、投信、融資和期貨部位的方向。所有圖共用同一條時間軸，拖曳、縮放、移動十字線時各圖同步。</p>
+    <div class="asof" id="asof">資料載入中…</div>
+  </div>
+
+  <div class="ctl" id="ctl">
+    <div class="ctl-inner">
+      <span class="ctl-label">區間</span>
+      <div class="rng" id="rng">
+        <button data-m="1">1 月</button><button data-m="3">3 月</button><button data-m="6">6 月</button>
+        <button data-m="12" class="on">1 年</button><button data-m="36">3 年</button><button data-m="60">5 年</button><button data-m="0">10 年</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cards" id="cards"></div>
+  <div id="charts"></div>
+
+  <section class="src" id="src"></section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+(function(){
+'use strict';
+var LWC = window.LightweightCharts;
+var V = String(Date.now()).slice(0,8);   // 資料檔快取：每約 11 天自然換一次，另由 meta.updated 補強
+var FILES = ['cal','price','inst','margin','fut','opt','pcr','large','fx','meta'];
+var D = {}, CAL = [], CAL_IDX = {};
+var charts = [];            // 所有圖：{chart, box, readout, series:[{def,api}], overlay, ...}
+var syncing = false;
+var curMonths = 12;
+
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function theme(){
+  return {bg:css('--card'), text:css('--body'), grid:css('--line-soft'), border:css('--line'),
+    up:css('--up'), down:css('--down'), c1:css('--c1'), c2:css('--c2'), c3:css('--c3'), c4:css('--c4'),
+    idx:css('--idx'), ref:css('--muted')};
+}
+var FMT = {
+  int:function(v){ return v==null?'—':Math.round(v).toLocaleString('en-US'); },
+  d1:function(v){ return v==null?'—':v.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1}); },
+  d2:function(v){ return v==null?'—':v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); },
+  sgn:function(f){ var g=function(v){ return v==null?'—':(v>0?'+':'')+f(v); }; g.p=f.p; return g; }
+};
+FMT.int.p=0; FMT.d1.p=1; FMT.d2.p=2;
+function lastIdx(arr){ for(var i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return i; } return -1; }
+function valBack(arr, i, n){            // i 往前 n 個交易日；該日沒值就往前找最多 5 天
+  var j = i - n;
+  for(var k=0;k<=5 && j-k>=0;k++){ if(arr[j-k]!=null) return arr[j-k]; }
+  return null;
+}
+function sumLast(arr, i, n){ var s=0; for(var k=0;k<n;k++){ var v=arr[i-k]; if(v==null) return null; s+=v; } return s; }
+
+/* ---------------- 圖表定義 ---------------- */
+// kind: line | hist | candle；col: 主題色 key；sign: 柱狀圖依正負上色（紅買超／綠賣超）
+function buildSpecs(){
+  var P=D.price, I=D.inst, M=D.margin, F=D.fut, O=D.opt, R=D.pcr, L=D.large, X=D.fx;
+  var optWho = {f:'外資', t:'投信', dl:'自營商'};
+  return [
+  {id:'price', n:'1', title:'加權指數日 K 線與成交金額', height:380, overlay:false, volume:true,
+   head:{arr:P.c, fmt:FMT.d2, unit:'點', delta:'diff', dfmt:FMT.sgn(FMT.d2)},
+   hint:'K 線紅漲綠跌，下方灰柱是全市場成交金額（億元）。20 日、60 日、240 日均線大致相當於月線、季線、年線；指數站在年線上方、三條均線同向上，代表中長期趨勢向上。',
+   series:[
+     {k:'c', name:'加權指數', kind:'candle', o:P.o, h:P.h, l:P.l, arr:P.c, fmt:FMT.d2},
+     {k:'ma20', name:'20 日', kind:'line', arr:P.ma20, col:'c2', fmt:FMT.d2, w:1},
+     {k:'ma60', name:'60 日', kind:'line', arr:P.ma60, col:'c3', fmt:FMT.d2, w:1},
+     {k:'ma240', name:'240 日', kind:'line', arr:P.ma240, col:'c4', fmt:FMT.d2, w:1},
+     {k:'amt', name:'成交金額（億元）', kind:'vol', arr:P.amt, fmt:FMT.int}
+   ]},
+  {id:'inst', n:'2', title:'三大法人現貨買賣超', unit:'億元', overlay:true, multi:true,
+   head:{arr:I.f, fmt:FMT.sgn(FMT.int), unit:'億元', name:'外資', delta:'sum20', dfmt:FMT.sgn(FMT.int), dlabel:'近 20 日合計'},
+   hint:'紅柱是買超、綠柱是賣超，單位為億元。三者之中外資的量體最大；連續多日同方向才算趨勢，單日的大買大賣常和指數調整、期貨結算有關。投信、自營商另有各自的節奏，分開畫在下面。',
+   subs:[
+     {h:200, title:'外資及陸資', series:[{k:'f', name:'外資', kind:'hist', sign:true, arr:I.f, fmt:FMT.sgn(FMT.int)}]},
+     {h:130, title:'投信', series:[{k:'t', name:'投信', kind:'hist', sign:true, arr:I.t, fmt:FMT.sgn(FMT.int)}]},
+     {h:130, title:'自營商（自行買賣＋避險）', series:[{k:'dl', name:'自營商', kind:'hist', sign:true, arr:I.dl, fmt:FMT.sgn(FMT.int)}]}
+   ]},
+  {id:'cum', n:'3', title:'外資、投信累計買賣超與外資 20 日合計', unit:'億元', overlay:true, multi:true,
+   head:{arr:I.f_cum, fmt:FMT.sgn(FMT.int), unit:'億元', name:'外資累計', delta:'diff', dfmt:FMT.sgn(FMT.int)},
+   hint:'上圖把每日買賣超逐日加總（自 2016-10 起算），線往上代表長期淨買、往下代表長期淨賣，斜率由陡轉平代表買盤力道減弱。下圖是外資最近 20 個交易日（約一個月）的買賣超合計，用來濾掉單日雜訊，由負轉正代表外資由賣轉買。',
+   subs:[
+     {h:240, title:'累計買賣超（億元，自 2016-10 起）', series:[
+       {k:'f_cum', name:'外資累計', kind:'line', arr:I.f_cum, col:'c1', fmt:FMT.sgn(FMT.int), zero:true},
+       {k:'t_cum', name:'投信累計', kind:'line', arr:I.t_cum, col:'c2', fmt:FMT.sgn(FMT.int)}]},
+     {h:170, title:'外資 20 日滾動合計（億元）', series:[
+       {k:'f_r20', name:'外資 20 日合計', kind:'hist', sign:true, arr:I.f_r20, fmt:FMT.sgn(FMT.int)}]}
+   ]},
+  {id:'margin', n:'4', title:'融資餘額、融券餘額與券資比', unit:'億元', overlay:true, multi:true,
+   head:{arr:M.mga, fmt:FMT.int, unit:'億元', name:'融資餘額', delta:'diff', dfmt:FMT.sgn(FMT.int), extra:function(i){
+       return (M.mg[i]!=null? '（'+FMT.d1(M.mg[i]/10000)+' 萬張）' : ''); }},
+   hint:'融資是散戶借錢買股票的餘額。餘額跟著指數創高一路上升，代表追價意願升溫；指數下跌時餘額快速下降，是被迫斷頭或主動減碼。融券是借股票放空尚未回補的張數，官方只公布張數，沒有金額。券資比是融券張數除以融資張數，比值越高，放空相對融資買進的力量越大。',
+   subs:[
+     {h:230, title:'融資餘額（億元）', series:[{k:'mga', name:'融資餘額', kind:'line', arr:M.mga, col:'c1', fmt:FMT.int}]},
+     {h:150, title:'融券餘額（張）', series:[{k:'sh', name:'融券餘額', kind:'line', arr:M.sh, col:'c2', fmt:FMT.int}]},
+     {h:150, title:'券資比（%）', series:[{k:'ratio', name:'券資比', kind:'line', arr:M.ratio, col:'c3', fmt:FMT.d2}]}
+   ]},
+  {id:'fut', n:'5', title:'臺股期貨三大法人未平倉淨口數', unit:'口', overlay:true, height:260,
+   head:{arr:F.f, fmt:FMT.sgn(FMT.int), unit:'口', name:'外資', delta:'diff', dfmt:FMT.sgn(FMT.int)},
+   hint:'未平倉淨口數＝多單口數減空單口數。外資常用期貨替現貨部位避險，所以長期多為淨空，看變化方向比看正負更重要：淨空單變大，代表外資在加碼避險或看空；淨空單縮小或轉為淨多，代表避險部位回補。',
+   series:[
+     {k:'f', name:'外資', kind:'line', arr:F.f, col:'c1', fmt:FMT.sgn(FMT.int), zero:true},
+     {k:'t', name:'投信', kind:'line', arr:F.t, col:'c2', fmt:FMT.sgn(FMT.int)},
+     {k:'dl', name:'自營商', kind:'line', arr:F.dl, col:'c3', fmt:FMT.sgn(FMT.int)}
+   ]},
+  {id:'opt', n:'6', title:'臺指選擇權三大法人買權、賣權未平倉', unit:'口', overlay:true, multi:true, who:true,
+   head:{arrFn:function(w){ return O['c_'+w+'_n']; }, fmt:FMT.sgn(FMT.int), unit:'口', name:'買權淨口數', delta:'diff', dfmt:FMT.sgn(FMT.int)},
+   hint:'未平倉淨部位＝買方口數減賣方口數。買權淨部位偏多、賣權淨部位偏空，代表該法人整體押指數上漲；反過來則偏向看跌。金額是未平倉部位的權利金市值，以億元表示。用右上角選單切換外資、投信或自營商。',
+   subs:[
+     {h:230, title:'未平倉淨口數（口）', series:[
+       {k:'c_n', name:'買權淨口數', kind:'line', col:'c1', fmt:FMT.sgn(FMT.int), zero:true, optKey:'c_{w}_n'},
+       {k:'p_n', name:'賣權淨口數', kind:'line', col:'c2', fmt:FMT.sgn(FMT.int), optKey:'p_{w}_n'}]},
+     {h:200, title:'未平倉淨金額（億元）', series:[
+       {k:'c_a', name:'買權淨金額', kind:'line', col:'c1', fmt:FMT.sgn(FMT.d2), zero:true, optKey:'c_{w}_a'},
+       {k:'p_a', name:'賣權淨金額', kind:'line', col:'c2', fmt:FMT.sgn(FMT.d2), optKey:'p_{w}_a'}]}
+   ]},
+  {id:'pcr', n:'7', title:'選擇權 Put/Call Ratio', unit:'%', overlay:true, height:240,
+   head:{arr:R.or, fmt:FMT.d1, unit:'%', name:'未平倉比', delta:'diff', dfmt:FMT.sgn(FMT.d1)},
+   hint:'賣權量除以買權量的百分比。高於 100% 代表賣權比買權多，避險或看空的部位較重；低於 100% 則買權較多。未平倉比比較穩定，成交量比單日波動大，看趨勢以未平倉比為主。',
+   series:[
+     {k:'or', name:'未平倉比', kind:'line', arr:R.or, col:'c1', fmt:FMT.d1, ref:100},
+     {k:'vr', name:'成交量比', kind:'line', arr:R.vr, col:'c2', fmt:FMT.d1, w:1}
+   ]},
+  {id:'large', n:'8', title:'臺股期貨大額交易人未平倉', unit:'口', overlay:true, height:260,
+   head:{arr:L.s10, fmt:FMT.sgn(FMT.int), unit:'口', name:'特定法人前十大', delta:'diff', dfmt:FMT.sgn(FMT.int)},
+   hint:'大額交易人是持倉最大的前五或前十名，數字是他們的買方部位減賣方部位，另外單獨列出其中的特定法人。為正代表大戶買方部位大於賣方，為負則相反。口數以大型臺指約當計算（小型 1/4、微型 1/20），涵蓋所有到期月份。',
+   series:[
+     {k:'a5', name:'前五大', kind:'line', arr:L.a5, col:'c1', fmt:FMT.sgn(FMT.int), zero:true},
+     {k:'a10', name:'前十大', kind:'line', arr:L.a10, col:'c4', fmt:FMT.sgn(FMT.int)},
+     {k:'s5', name:'特定法人前五大', kind:'line', arr:L.s5, col:'c2', fmt:FMT.sgn(FMT.int), w:1},
+     {k:'s10', name:'特定法人前十大', kind:'line', arr:L.s10, col:'c3', fmt:FMT.sgn(FMT.int), w:1}
+   ]},
+  {id:'fx', n:'9', title:'新台幣兌美元匯率', unit:'TWD/USD', overlay:true, height:220,
+   head:{arr:X.v, fmt:FMT.d2, unit:'元', delta:'diff', dfmt:FMT.sgn(FMT.d2)},
+   hint:'新台幣兌 1 美元的匯率，數字上升代表新台幣貶值，下降代表升值。可和外資買賣超對照，看資金流向有沒有和匯率同方向。美國休市日沿用前一營業日的收盤值。',
+   series:[{k:'v', name:'USD/TWD', kind:'line', arr:X.v, col:'c1', fmt:FMT.d2}]}
+  ];
+}
+
+/* ---------------- 繪圖 ---------------- */
+function mkData(def, T){
+  var n = CAL.length, out = new Array(n), i;
+  if(def.kind==='candle'){
+    for(i=0;i<n;i++) out[i] = def.arr[i]==null ? {time:CAL[i]} : {time:CAL[i],open:def.o[i],high:def.h[i],low:def.l[i],close:def.arr[i]};
+  } else if(def.kind==='hist' && def.sign){
+    for(i=0;i<n;i++){ var v=def.arr[i]; out[i] = v==null ? {time:CAL[i]} : {time:CAL[i],value:v,color:v>=0?T.up:T.down}; }
+  } else if(def.kind==='vol'){
+    for(i=0;i<n;i++){ var u=def.arr[i]; out[i] = u==null ? {time:CAL[i]} : {time:CAL[i],value:u,color:(css('--idx')+'66')}; }
+  } else {
+    for(i=0;i<n;i++) out[i] = def.arr[i]==null ? {time:CAL[i]} : {time:CAL[i],value:def.arr[i]};
+  }
+  return out;
+}
+function pf(def){
+  var p = def.fmt && def.fmt.p!=null ? def.fmt.p : 2;
+  return {type:'price', precision:p, minMove:Math.pow(10,-p)};
+}
+function baseOptions(T, h, width){
+  return {
+    width:width, height:h,
+    layout:{background:{type:'solid',color:T.bg}, textColor:T.text, fontFamily:"'Inter','Noto Sans TC',sans-serif", fontSize:11},
+    grid:{vertLines:{color:T.grid}, horzLines:{color:T.grid}},
+    leftPriceScale:{visible:true, minimumWidth:70, borderColor:T.border, scaleMargins:{top:0.08,bottom:0.08}},
+    rightPriceScale:{visible:true, minimumWidth:54, borderColor:T.border, scaleMargins:{top:0.08,bottom:0.08}},
+    timeScale:{borderColor:T.border, rightOffset:2, minBarSpacing:0.04, fixLeftEdge:true, timeVisible:false},
+    crosshair:{mode:0, vertLine:{labelVisible:true}, horzLine:{labelVisible:true}},
+    localization:{locale:'zh-TW'},
+    handleScale:{axisPressedMouseMove:{time:true, price:true}},
+    kineticScroll:{touch:true, mouse:false}
+  };
+}
+
+function makeChart(parent, h, title, defs, ov, sectionOverlayOn){
+  var T = theme();
+  var box = document.createElement('div'); box.className='cbox'; parent.appendChild(box);
+  if(title){ var st=document.createElement('div'); st.className='sub-title'; st.textContent=title; box.parentNode.insertBefore(st, box); }
+  var ro = document.createElement('div'); ro.className='readout'; box.appendChild(ro);
+  var chart = LWC.createChart(box, baseOptions(T, h, box.clientWidth||300));
+  var item = {chart:chart, box:box, readout:ro, series:[], overlay:null, defs:defs};
+  defs.forEach(function(def){
+    var api, opt;
+    var col = def.col ? T[def.col] : null;
+    if(def.kind==='candle'){
+      api = chart.addCandlestickSeries({priceScaleId:'left', upColor:T.up, downColor:T.down, borderUpColor:T.up, borderDownColor:T.down,
+        wickUpColor:T.up, wickDownColor:T.down, priceLineVisible:false, lastValueVisible:true, priceFormat:pf(def)});
+      chart.priceScale('left').applyOptions({scaleMargins:{top:0.06,bottom:0.26}});
+    } else if(def.kind==='vol'){
+      api = chart.addHistogramSeries({priceScaleId:'right', priceFormat:{type:'volume'}, priceLineVisible:false, lastValueVisible:false});
+      chart.priceScale('right').applyOptions({scaleMargins:{top:0.78,bottom:0}});
+    } else if(def.kind==='hist'){
+      api = chart.addHistogramSeries({priceScaleId:'left', priceFormat:pf(def), priceLineVisible:false, lastValueVisible:false, color:col||T.c1});
+    } else {
+      api = chart.addLineSeries({priceScaleId:'left', color:col, lineWidth:def.w||2, priceLineVisible:false, lastValueVisible:false,
+        crosshairMarkerVisible:true, priceFormat:pf(def)});
+    }
+    api.setData(mkData(def, T));
+    if(def.zero) api.createPriceLine({price:0, color:T.ref, lineWidth:1, lineStyle:2, axisLabelVisible:false});
+    if(def.ref!=null) api.createPriceLine({price:def.ref, color:T.ref, lineWidth:1, lineStyle:2, axisLabelVisible:true, title:''});
+    item.series.push({def:def, api:api, visible:true});
+  });
+  if(ov){
+    var line = chart.addLineSeries({priceScaleId:'right', color:T.idx, lineWidth:1, lineStyle:0, priceLineVisible:false,
+      lastValueVisible:false, crosshairMarkerVisible:false, visible:!!sectionOverlayOn, priceFormat:{type:'price',precision:0,minMove:1}});
+    line.setData(D.price.c.map(function(v,i){ return v==null?{time:CAL[i]}:{time:CAL[i],value:v}; }));
+    item.overlay = line;
+    if(!item.series.some(function(s){return s.def.kind==='vol';}))
+      chart.priceScale('right').applyOptions({scaleMargins:{top:0.08,bottom:0.08}});
+  }
+  wireSync(item);
+  if(typeof ResizeObserver!=='undefined'){
+    new ResizeObserver(function(){ var w=box.clientWidth; if(w>0) chart.applyOptions({width:w}); }).observe(box);
+  }
+  charts.push(item);
+  return item;
+}
+
+function wireSync(item){
+  item.chart.timeScale().subscribeVisibleLogicalRangeChange(function(r){
+    if(syncing || !r) return;
+    syncing = true;
+    charts.forEach(function(o){ if(o!==item) o.chart.timeScale().setVisibleLogicalRange(r); });
+    syncing = false;
+  });
+  item.chart.subscribeCrosshairMove(function(p){
+    if(syncing) return;
+    syncing = true;
+    if(!p || !p.time){
+      charts.forEach(function(o){ o.chart.clearCrosshairPosition(); });
+      readouts(null);
+    } else {
+      var i = CAL_IDX[p.time];
+      charts.forEach(function(o){
+        if(o===item) return;
+        var s = o.series[0], arr = s.def.arr, v = arr[i];
+        if(v==null){ var j=lastIdx(arr.slice(0,i+1)); v = j>=0?arr[j]:0; }
+        o.chart.setCrosshairPosition(v, p.time, s.api);
+      });
+      readouts(i);
+    }
+    syncing = false;
+  });
+}
+
+function readouts(i){
+  charts.forEach(function(o){
+    var idx = i;
+    if(idx==null){ idx = -1; o.series.forEach(function(s){ var li=lastIdx(s.def.arr); if(li>idx) idx=li; }); }
+    var html = '<b>'+CAL[idx]+'</b>';
+    o.series.forEach(function(s){
+      if(!s.visible) return;
+      var d = s.def, T = theme();
+      var col = d.kind==='candle' ? T.up : d.kind==='vol' ? T.idx : d.sign ? T.up : T[d.col];
+      var v = d.arr[idx];
+      var txt = d.kind==='candle' ? (v==null?'—': '開'+FMT.d2(d.o[idx])+' 高'+FMT.d2(d.h[idx])+' 低'+FMT.d2(d.l[idx])+' 收'+FMT.d2(v)) : d.fmt(v);
+      html += '<i style="background:'+col+'"></i>'+d.name+' '+txt+'&ensp;';
+    });
+    if(o.overlay && o.overlay.options().visible){
+      var cv = D.price.c[idx];
+      html += '<i style="background:'+theme().idx+'"></i>加權指數 '+FMT.d2(cv)+'&ensp;';
+    }
+    o.readout.innerHTML = html;
+  });
+}
+
+/* ---------------- 區段（標題列、說明、圖） ---------------- */
+function buildSection(spec){
+  var root = document.getElementById('charts');
+  var sec = document.createElement('section'); sec.className='sec'; sec.id='s-'+spec.id; root.appendChild(sec);
+  var head = document.createElement('div'); head.className='sec-head'; sec.appendChild(head);
+  head.innerHTML = '<span class="n">'+spec.n+'</span><h2>'+spec.title+'</h2><span class="latest"></span><span class="chg"></span>';
+  var tools = document.createElement('div'); tools.className='tools'; head.appendChild(tools);
+  var who = 'f';
+  var sel = null, ovOn = false, cbx = null;
+  if(spec.who){
+    sel = document.createElement('select');
+    sel.innerHTML = '<option value="f">外資</option><option value="t">投信</option><option value="dl">自營商</option>';
+    tools.appendChild(sel);
+  }
+  if(spec.overlay){
+    var lab = document.createElement('label'); lab.innerHTML='<input type="checkbox"> 疊加加權指數（右軸）';
+    cbx = lab.firstChild; tools.appendChild(lab);
+  }
+  var hint = document.createElement('p'); hint.className='hint'; hint.textContent = spec.hint; sec.appendChild(hint);
+  var legend = document.createElement('div'); legend.className='legend'; sec.appendChild(legend);
+
+  var wrap = document.createElement('div'); sec.appendChild(wrap);
+  var items = [];
+  var subs = spec.subs || [{h:spec.height, title:null, series:spec.series}];
+  subs.forEach(function(sub){
+    var defs = sub.series.map(function(d){ return Object.assign({}, d); });
+    if(spec.who) defs.forEach(function(d){ d.arr = D.opt[d.optKey.replace('{w}', who)]; });
+    var it = makeChart(wrap, sub.h, sub.title, defs, spec.overlay, false);
+    it.vol = !!spec.volume;
+    items.push(it);
+  });
+
+  // 圖例（可點擊顯示／隱藏序列）
+  items.forEach(function(it){
+    it.series.forEach(function(s){
+      var chip = document.createElement('span'); chip.className='chip';
+      var T = theme();
+      var col = s.def.kind==='candle' ? T.up : s.def.kind==='vol' ? T.idx : s.def.sign ? T.up : T[s.def.col];
+      chip.innerHTML = '<i style="background:'+col+'"></i>'+s.def.name;
+      chip.addEventListener('click', function(){
+        s.visible = !s.visible; s.api.applyOptions({visible:s.visible});
+        chip.classList.toggle('off', !s.visible); readouts(null);
+      });
+      legend.appendChild(chip);
+    });
+  });
+  if(spec.id==='fut'||spec.id==='large') {}
+  if(cbx) cbx.addEventListener('change', function(){
+    items.forEach(function(it){ it.overlay.applyOptions({visible:cbx.checked}); });
+    readouts(null);
+  });
+  if(sel) sel.addEventListener('change', function(){
+    who = sel.value;
+    items.forEach(function(it){
+      it.series.forEach(function(s){
+        s.def.arr = D.opt[s.def.optKey.replace('{w}', who)];
+        s.api.setData(mkData(s.def, theme()));
+      });
+    });
+    headline(spec, sec, who);
+    readouts(null);
+  });
+  headline(spec, sec, who);
+  spec._items = items;
+}
+
+function headline(spec, sec, who){
+  var h = spec.head, arr = h.arr || h.arrFn(who);
+  var i = lastIdx(arr);
+  var latestEl = sec.querySelector('.latest'), chgEl = sec.querySelector('.chg');
+  if(i<0){ latestEl.textContent='—'; chgEl.textContent=''; return; }
+  var name = h.name || '';
+  if(spec.who) name = ({f:'外資',t:'投信',dl:'自營商'})[who] + '買權淨口數';
+  var ex = h.extra ? h.extra(i) : '';
+  latestEl.innerHTML = name+' '+h.fmt(arr[i])+' '+(h.unit||'')+ex+' <small>'+CAL[i]+'</small>';
+  var txt = '';
+  if(h.delta==='sum20'){
+    var s = sumLast(arr, i, 20);
+    txt = s==null ? '' : (h.dlabel||'近 20 日合計')+' '+h.dfmt(s)+' '+(h.unit||'');
+  } else {
+    var pv = valBack(arr, i, 20);
+    txt = pv==null ? '' : '較 20 日前 '+h.dfmt(arr[i]-pv)+' '+(h.unit||'');
+  }
+  chgEl.innerHTML = txt;
+}
+
+/* ---------------- 小卡 ---------------- */
+function card(k, v, s, d, cls){
+  return '<div class="card"><div class="k">'+k+'</div><div class="v '+(cls||'')+'">'+v+'</div><div class="s">'+(s||'&nbsp;')+'</div><div class="d">'+d+'</div></div>';
+}
+function cls(v){ return v>0?'up':v<0?'dn':''; }
+function buildCards(){
+  var P=D.price, I=D.inst, M=D.margin, F=D.fut, R=D.pcr, h='';
+  var ip = lastIdx(P.c);
+  var pchg = ip>0 ? P.c[ip]-P.c[ip-1] : null;
+  h += card('加權指數', FMT.d2(P.c[ip]), pchg==null?'':(pchg>0?'+':'')+FMT.d2(pchg)+'（'+(pchg>0?'+':'')+FMT.d2(pchg/P.c[ip-1]*100)+'%）', CAL[ip], cls(pchg));
+  var ii = lastIdx(I.f);
+  h += card('外資買賣超（億元）', ii<0?'—':FMT.sgn(FMT.int)(I.f[ii]), ii<0?'':'近 20 日合計 '+FMT.sgn(FMT.int)(sumLast(I.f, ii, 20)||0), ii<0?'—':CAL[ii], ii<0?'':cls(I.f[ii]));
+  var im = lastIdx(M.mga);
+  var mchg = im>0 && M.mga[im-1]!=null ? M.mga[im]-M.mga[im-1] : null;
+  h += card('融資餘額增減（億元）', mchg==null?'—':FMT.sgn(FMT.int)(mchg), im<0?'':'餘額 '+FMT.int(M.mga[im])+' 億元', im<0?'—':CAL[im], mchg==null?'':cls(mchg));
+  var iff = lastIdx(F.f);
+  var fchg = iff>0 && F.f[iff-1]!=null ? F.f[iff]-F.f[iff-1] : null;
+  h += card('外資期貨淨口數（口）', iff<0?'—':FMT.sgn(FMT.int)(F.f[iff]), fchg==null?'':'較前一日 '+FMT.sgn(FMT.int)(fchg), iff<0?'—':CAL[iff], iff<0?'':cls(F.f[iff]));
+  var ir = lastIdx(R.or);
+  h += card('選擇權 P/C Ratio', ir<0?'—':FMT.d1(R.or[ir])+'%', ir<0?'':'成交量比 '+FMT.d1(R.vr[ir])+'%', ir<0?'—':CAL[ir]+'（未平倉比）', '');
+  document.getElementById('cards').innerHTML = h;
+}
+
+/* ---------------- 區間 ---------------- */
+function setRange(months){
+  curMonths = months;
+  var n = CAL.length, from = 0;
+  if(months>0){
+    var last = new Date(CAL[n-1]+'T00:00:00Z');
+    last.setUTCMonth(last.getUTCMonth()-months);
+    var tgt = last.toISOString().slice(0,10);
+    from = 0;
+    for(var i=0;i<n;i++){ if(CAL[i]>=tgt){ from=i; break; } }
+  }
+  var r = {from:from-0.5, to:n-1+2};
+  syncing = true;
+  charts.forEach(function(o){ o.chart.timeScale().setVisibleLogicalRange(r); });
+  syncing = false;
+  [].forEach.call(document.querySelectorAll('#rng button'), function(b){ b.classList.toggle('on', +b.dataset.m===months); });
+}
+
+/* ---------------- 頁尾 ---------------- */
+function buildSource(){
+  var m = D.meta;
+  var rows = m.series.map(function(s){
+    return '<tr><td>'+s.label+'</td><td>'+s.source+'</td><td class="num">'+(s.first||'—')+'</td><td class="num">'+(s.last||'—')+'</td><td class="num">'+s.n.toLocaleString('en-US')+'</td><td class="num">'+s.gaps+'</td></tr>';
+  }).join('');
+  document.getElementById('src').innerHTML =
+    '<h2>資料來源與涵蓋期間</h2><div class="tbl-wrap"><table><thead><tr><th>序列</th><th>來源</th><th>最早日</th><th>最新日</th><th>筆數</th><th>缺漏日</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<p class="fine">資料每個交易日晚間自動更新，最近一次建檔時間：'+m.updated+'（台北）。'+
+    '現貨三大法人、融資融券、指數與成交金額取自證交所；期貨、選擇權、Put/Call Ratio、大額交易人取自期交所；匯率取自 FRED（聖路易聯邦準備銀行，日資料，美國休市日沿用前一營業日）。<br>'+
+    '期交所網站只開放近 3 年的三大法人期貨與選擇權日資料，2018-06-05 至 2023-10-17 的部分取自 FinMind 轉載的同一份期交所資料（2023-10 起與期交所原表逐筆核對一致）；2018-06 之前沒有可取得的來源，圖上留白，不補數字。<br>'+
+    '融資融券依證交所註明「以前日餘額為準」，每個交易日的餘額以隔日公布的前日餘額為準；最新一日暫用當日餘額。融券官方只公布張數，沒有金額。<br>'+
+    '加權指數資料的缺漏日是證交所該月沒有提供當日資料的日子，沒有任何一天是補出來的。圖表使用 TradingView Lightweight Charts。</p>';
+  document.getElementById('asof').textContent = '指數資料至 '+m.cal_last+'・最近建檔 '+m.updated+'（台北）・所有圖自 '+m.cal_first+' 起';
+}
+
+/* ---------------- 主題切換 ---------------- */
+function reTheme(){
+  var T = theme();
+  charts.forEach(function(o){
+    o.chart.applyOptions({
+      layout:{background:{type:'solid',color:T.bg}, textColor:T.text},
+      grid:{vertLines:{color:T.grid}, horzLines:{color:T.grid}},
+      leftPriceScale:{borderColor:T.border}, rightPriceScale:{borderColor:T.border}, timeScale:{borderColor:T.border}
+    });
+    o.series.forEach(function(s){
+      var d = s.def;
+      if(d.kind==='line') s.api.applyOptions({color:T[d.col]});
+      else if(d.kind==='candle') s.api.applyOptions({upColor:T.up,downColor:T.down,borderUpColor:T.up,borderDownColor:T.down,wickUpColor:T.up,wickDownColor:T.down});
+      if(d.kind==='hist' || d.kind==='vol' || d.kind==='candle') {
+        if(d.kind!=='candle') s.api.setData(mkData(d, T));
+      }
+    });
+    if(o.overlay) o.overlay.applyOptions({color:T.idx});
+  });
+  readouts(null);
+}
+
+/* ---------------- 啟動 ---------------- */
+function load(name){
+  return fetch('data/'+name+'.json?v='+V).then(function(r){ if(!r.ok) throw new Error(name+' '+r.status); return r.json(); });
+}
+function fixNavOffset(){
+  var nav = document.querySelector('.imq-nav-root');
+  if(nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight+'px');
+}
+
+Promise.all(FILES.map(load)).then(function(res){
+  FILES.forEach(function(f,i){ D[f] = res[i]; });
+  CAL = D.cal.t; CAL.forEach(function(d,i){ CAL_IDX[d]=i; });
+  fixNavOffset(); window.addEventListener('resize', fixNavOffset);
+  buildCards();
+  buildSpecs().forEach(buildSection);
+  buildSource();
+  [].forEach.call(document.querySelectorAll('#rng button'), function(b){
+    b.addEventListener('click', function(){ setRange(+b.dataset.m); });
+  });
+  setRange(12);
+  readouts(null);
+  if(window.matchMedia){
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    (mq.addEventListener ? mq.addEventListener.bind(mq,'change') : mq.addListener.bind(mq))(reTheme);
+  }
+  window.__tw = {charts:charts, CAL:CAL};
+  window.__chipsReady = true;
+}).catch(function(e){
+  document.getElementById('charts').innerHTML = '<div class="err">資料載入失敗：'+String(e.message||e)+'。請稍後重新整理。</div>';
+  window.__chipsError = String(e.message||e);
+});
+})();
+</script>
+</body>
+</html>

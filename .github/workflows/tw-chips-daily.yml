@@ -1,0 +1,107 @@
+name: TW Chips Daily Data
+
+# 台股籌碼趨勢（/tw-chips/）每日資料管線：
+#   1. scripts/tw_chips/fetch.py  — 只抓缺的日子，append 進 data/tw_chips/{series}.jsonl
+#      （證交所：指數／成交金額／三大法人現貨／融資融券；期交所：期貨與選擇權三大法人／
+#      Put-Call Ratio／大額交易人；FRED：新台幣匯率）。
+#   2. scripts/tw_chips/build.py  — 轉成 docs/tw-chips/data/*.json（頁面讀這些）。
+#
+# 排程：融資融券證交所約 21:30 前後才完整公布，所以主要班次放 21:47 台北（週一至週五，
+# 避開整點／半點尖峰）；隔天 08:17 台北是備援（前一晚來不及公布、或證交所限流時補抓）。
+# fetch.py 本身是增量的：沒有缺口時只打當月兩個月查詢，備援班次不會重複抓整批資料。
+#
+# 證交所限制每次請求間隔 ≥ 3 秒並會擋頻繁請求；fetch.py 內建節流與退避，連續失敗 3 次就
+# 停止本輪（下一班續跑）。個別序列失敗不讓 job 失敗，只有 3 個以上序列同時失敗（代表
+# 來源改版或整體被擋）才讓 job 標紅。
+#
+# Push 迴圈與 rebase 衝突處理照 scripts/ci/ 共用腳本（見 active-etf-daily.yml 同款）。
+
+on:
+  schedule:
+    - cron: "47 13 * * 1-5"  # 主要班次：21:47 台北（週一至週五）
+    - cron: "17 0 * * 2-6"   # 備援班次：隔天 08:17 台北（週二至週六 UTC 日期）
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch missing days (TWSE / TAIFEX / FRED)
+        id: fetch
+        continue-on-error: true
+        run: |
+          set +e
+          python3 scripts/tw_chips/fetch.py 2>&1 | tee /tmp/fetch.log
+          rc=${PIPESTATUS[0]}
+          n_fail=$(grep -c '^FAIL ' /tmp/fetch.log || true)
+          echo "n_fail=${n_fail:-0}" >> "$GITHUB_OUTPUT"
+          echo "fetch rc=$rc n_fail=${n_fail:-0}"
+          exit $rc
+
+      - name: Build page data (docs/tw-chips/data/)
+        run: python3 scripts/tw_chips/build.py
+
+      - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/tw_chips/ docs/tw-chips/data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+            git commit -m "data: tw chips daily snapshot ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            for i in 1 2 3 4 5 6; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+              bash scripts/ci/rebase_or_flag.sh || exit 1
+              sleep $((RANDOM % 20 + 5))
+            done
+            echo "Push failed after 6 attempts"
+            exit 1
+          fi
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
+
+      - name: Fail the job if many series failed
+        if: always() && steps.fetch.outcome == 'failure'
+        run: |
+          echo "::error::${{ steps.fetch.outputs.n_fail }} series failed to fetch (>=3) — TWSE/TAIFEX may have blocked this runner or changed their format. See the fetch step log."
+          exit 1
