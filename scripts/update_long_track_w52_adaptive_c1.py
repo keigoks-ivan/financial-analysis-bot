@@ -395,7 +395,7 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">系統主控台</a> / <a href="/long-track-w52-adaptive/">實單主系統</a> / 債金版影子對照</div>
     <h1>債金版影子對照（美股）</h1>
-    <div class="sub">股票部分上限 100% 不借錢，另疊 IEF、GLD 週線趨勢 · 與實單主系統並排追蹤 · 無 email</div>
+    <div class="sub">股票部分同不借錢版（技術名 cap 1.0，上限 100%），另疊 IEF、GLD 週線趨勢 · 與實單主系統並排追蹤 · 無 email</div>
   </div>
 </div>
 <div class="container">
@@ -412,7 +412,7 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 <p class="small">起點與實單主系統相同（淨值 100），三條線用同一套日報酬簿記與同一份實錄執行層算出，因此可以直接並排。下方回測是另一段口徑，不與這裡混看。</p>
 
 <div class="tiles">
-  <div class="tile"><div class="k">債金版累計報酬（{st['n_live_days']} 個交易日）</div><div class="v">{ret['c1']:+.1f}%</div><div class="s">實盤 {ret['main']:+.1f}% · cap 1.0 影子 {ret['cap10']:+.1f}%</div></div>
+  <div class="tile"><div class="k">債金版累計報酬（{st['n_live_days']} 個交易日）</div><div class="v">{ret['c1']:+.1f}%</div><div class="s">實盤 {ret['main']:+.1f}% · 不借錢版 {ret['cap10']:+.1f}%</div></div>
   <div class="tile"><div class="k">目前自高點回撤</div><div class="v">{dd_now['c1']:.1f}%</div><div class="s">實盤 {dd_now['main']:.1f}% · 追蹤期最深債金版 {dd_min['c1']:.1f}% 對實盤 {dd_min['main']:.1f}%</div></div>
   <div class="tile"><div class="k">IEF 條件數／今日權重</div><div class="v">{ief['n']}／3 · {ief['applied_w_pct']:.1f}%</div><div class="s">目標權重 {ief['target_w_pct']:.1f}%（週線截至 {ief['week_date']}）</div></div>
   <div class="tile"><div class="k">GLD 條件數／今日權重</div><div class="v">{gld['n']}／3 · {gld['applied_w_pct']:.1f}%</div><div class="s">目標權重 {gld['target_w_pct']:.1f}%（週線截至 {gld['week_date']}）</div></div>
@@ -420,9 +420,9 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 
 <div class="card">
 <h3>淨值對照（起點 100）</h3>
-<div class="legend"><span><i style="border-color:#1d4ed8"></i>債金版（不借錢＋IEF／GLD）</span><span><i style="border-color:#0c1521"></i>實單主系統</span><span><i style="border-color:#d97706;border-top-style:dashed"></i>cap 1.0 影子（未疊加）</span></div>
+<div class="legend"><span><i style="border-color:#1d4ed8"></i>債金版（不借錢＋IEF／GLD）</span><span><i style="border-color:#0c1521"></i>實單主系統</span><span><i style="border-color:#d97706;border-top-style:dashed"></i>不借錢版（未疊加）</span></div>
 <div id="ch-live-nav" class="chart"></div>
-<div class="takeaway">到 {last['date']}，債金版為 {last['nav_c1']:.1f}，實單主系統為 {last['nav_main']:.1f}，只有股票部分的 cap 1.0 影子為 {last['nav_cap10']:.1f}。債金版與 cap 1.0 影子的差距（{ret['c1'] - ret['cap10']:+.1f}）就是 IEF、GLD 疊加累計貢獻的淨值點數。追蹤期很短，只能看運作是否如預期，不能據此比較優劣。</div>
+<div class="takeaway">到 {last['date']}，債金版為 {last['nav_c1']:.1f}，實單主系統為 {last['nav_main']:.1f}，只有股票部分的不借錢版為 {last['nav_cap10']:.1f}。債金版與不借錢版的差距（{ret['c1'] - ret['cap10']:+.1f}）就是 IEF、GLD 疊加累計貢獻的淨值點數。追蹤期很短，只能看運作是否如預期，不能據此比較優劣。</div>
 </div>
 
 <div class="grid2">
@@ -502,7 +502,7 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 <li>疊加部位的資金成本若比短期利率高 1.5%，債金版的年化仍比現行高約 0.3 個百分點（研究敏感度測試）。</li>
 <li>追蹤期只有 {st['n_live_days']} 個交易日，不足以判斷任何優劣；本頁只回答「並排看起來如何」。</li>
 </ul>
-<p class="small" style="margin-top:.6rem">資料：QQQ、SMH、IEF、GLD 為還原股價，現金利率用 ^IRX（yfinance）。自檢：本頁重算的實單與 cap 1.0 影子淨值，與記分板發布值最大差 {('%.4f' % sb.get('main_vs_scoreboard_max_abs', 0)) if sb else '—'}／{('%.4f' % sb.get('a10_vs_scoreboard_max_abs', 0)) if sb else '—'}（淨值點）。</p>
+<p class="small" style="margin-top:.6rem">資料：QQQ、SMH、IEF、GLD 為還原股價，現金利率用 ^IRX（yfinance）。自檢：本頁重算的實單與不借錢版淨值，與記分板發布值最大差 {('%.4f' % sb.get('main_vs_scoreboard_max_abs', 0)) if sb else '—'}／{('%.4f' % sb.get('a10_vs_scoreboard_max_abs', 0)) if sb else '—'}（淨值點）。</p>
 </div>
 
 </div>

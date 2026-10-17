@@ -1041,7 +1041,7 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
   <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>cap 1.5 無均線層（美+台）｜舊規則影子 | InvestMQuest Research</title>
+  <title>舊規則版｜唯讀影子 | InvestMQuest Research</title>
   <meta name="description" content="W52 × 自適應波動率 cap 1.5，無日線均線層（2026-07-18～2026-09-14 舊實單規則）· 美股 QQQ+SMH ＋ 台股 0050+2330 · 2026-09-15 起降為唯讀影子，不採用為實單、無 email · 供均線層 kill condition 對帳">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1150,12 +1150,12 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </div>
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">W52 × 自適應波動率（實單主系統）</a> / cap 1.5（舊規則影子）</div>
-    <h1>cap 1.5，無均線層 — 舊實單規則・唯讀影子</h1>
-    <div class="sub">美股 QQQ+SMH ＋ 台股 0050+2330 · 2026-07-18～2026-09-14 的實單規則（cap 固定 <b>1.5</b>，無均線條件）；持有人 {MA_LAYER_START_DATE} 拍板為股票腿加日線均線確認後，本頁降為唯讀影子，供均線層 kill condition 對帳。閘門、套袖分母、執行層與<a href="/long-track/#live">實單主系統</a>逐位元相同。<b>本頁唯讀、不採用為實單、無 email</b>。</div>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">W52 × 自適應波動率（實單主系統）</a> / 舊規則版</div>
+    <h1>舊規則版 — 唯讀影子</h1>
+    <div class="sub">技術名：cap 1.5，無均線層 · 美股 QQQ+SMH ＋ 台股 0050+2330 · 2026-07-18～2026-09-14 的實單規則（cap 固定 <b>1.5</b>，無均線條件）；持有人 {MA_LAYER_START_DATE} 拍板為股票腿加日線均線確認後，本頁降為唯讀影子，供均線層 kill condition 對帳。閘門、套袖分母、執行層與<a href="/long-track/#live">實單主系統</a>逐位元相同。<b>本頁唯讀、不採用為實單、無 email</b>。</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
       <a href="/long-track/#live" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">回實單主系統（cap_eff＋均線確認）</a>
-      <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">cap 1.0 影子對照</a>
+      <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">不借錢版</a>
       <a href="/long-track-w52-adaptive/tw-semivol.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股 B-ii 影子（唯讀）</a>
       <a href="/long-track/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">系統主控台</a>
     </div>

@@ -50,6 +50,9 @@ OUT = HERE.parent / "docs" / "long-track" / "index.html"
 # 缺欄位一律顯示「—」，絕不捏造。
 STATE_JSON = HERE.parent / "docs" / "long-track-w52-adaptive" / "state.json"
 SCOREBOARD_JSON = HERE.parent / "docs" / "market" / "data" / "live_scoreboard.json"
+LEVERAGE_STATE_JSON = HERE.parent / "docs" / "long-track-w52-adaptive" / "leverage_state.json"
+C1_STATE_JSON = HERE.parent / "docs" / "long-track-w52-adaptive" / "c1_shadow_state.json"
+NOMA_STATE_JSON = HERE.parent / "docs" / "long-track-w52-adaptive" / "noma_state.json"
 
 SPRT_MEANING = {          # 見 build_live_scoreboard.py 的 green/yellow/red 定義
     "green": ("綠", "影子勝過系統"),
@@ -66,18 +69,16 @@ GROUPS = [
                 "（均線五條件全對 cap_eff=1.5，否則退回 1.0）。",
          "status": ("實單", "live"), "freq": "每交易日 × 2（台／美收盤後）", "email": "✅ 有"},
     ]),
-    ("影子對照（同引擎、股票不上槓桿）", "shadow", False, [
-        {"name": "W52 × 自適應波動率 cap 1.0 影子", "url": "/long-track-w52-adaptive/leverage.html",
-         "one": "同引擎的 cap 1.0（不上槓桿）影子線，供槓桿 vs 不槓桿對照。",
-         "status": ("影子對照", "shadow"), "freq": "每交易日 × 2", "email": "❌（併入主系統通知）"},
-        {"name": "債金版影子對照（美股）", "url": "/long-track-w52-adaptive/c1-shadow.html",
-         "one": "股票部分 cap 1.0 不借錢，加 IEF／GLD 週線三條件趨勢疊加（各最多 20%）。"
-                "<b>實盤未採用</b>，2026-10-17 起僅與實單並排追蹤。",
-         "status": ("影子對照", "shadow"), "freq": "每交易日 × 2（隨主系統）", "email": "❌（無 email）"},
-        {"name": "舊實單規則 cap 1.5（無均線層）", "url": "/long-track-w52-adaptive/noma.html",
-         "one": "2026-07-18～2026-09-14 的實單規則（cap 固定 1.5，無均線條件），"
-                "2026-09-15 均線層上線後降為唯讀影子，供 kill condition 對帳。",
-         "status": ("影子對照", "shadow"), "freq": "每交易日 × 2", "email": "❌（無 email）"},
+    ("影子對照（跟實盤同一套引擎，只改一個地方）", "shadow", False, [
+        {"name": "不借錢版", "url": "/long-track-w52-adaptive/leverage.html", "key": "cap10",
+         "diff": "股票最多 100%，不借錢；其他規則和實盤相同。",
+         "ask": "借錢值不值得？", "status": None},
+        {"name": "債金版", "url": "/long-track-w52-adaptive/c1-shadow.html", "key": "c1",
+         "diff": "不借錢版，再加公債（IEF）和黃金（GLD）：兩者各自趨勢向上時，各加最多 20%。",
+         "ask": "加公債、黃金有沒有幫助？", "status": "實盤未採用"},
+        {"name": "舊規則版", "url": "/long-track-w52-adaptive/noma.html", "key": "noma",
+         "diff": "2026-09-15 以前的實盤規則：股票最多 150%，沒有均線條件。",
+         "ask": "均線條件有沒有用？", "status": None},
     ]),
     ("前瞻 OOS 候選（決策前研究通過、尚非實單）", "cand", False, [
         {"name": "🥇 GLD 金 sleeve", "url": "/long-track-gld/",
@@ -190,6 +191,27 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 .sysrow:hover{border-color:var(--brand);text-decoration:none}
 .sysrow-name{font-weight:700;font-size:.88rem;color:var(--text)}
 .sysrow-one{font-size:.8rem;color:var(--muted);flex:1 1 260px}
+.shtbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.2rem .9rem .5rem}
+.shtbl{width:100%;border-collapse:collapse;font-size:.84rem}
+.shtbl th{text-align:left;padding:.55rem .5rem;border-bottom:1px solid var(--border);font-size:.72rem;color:var(--muted);font-weight:700}
+.shtbl td{padding:.65rem .5rem;border-bottom:1px solid var(--border);vertical-align:top;color:#374151;line-height:1.6}
+.shtbl tr:last-child td{border-bottom:0}
+.shtbl td.sh-name a{font-weight:700;color:var(--text)}
+.shtbl td.sh-name a:hover{color:var(--brand)}
+.shtbl .sh-pill{display:inline-block;margin-top:.25rem;font-size:.68rem;font-weight:700;padding:.1rem .5rem;border-radius:99px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
+.shtbl .sh-ret b{color:var(--text);font-variant-numeric:tabular-nums}
+.shtbl .sh-since{display:block;font-size:.72rem;color:var(--muted)}
+.shtbl .sh-na{color:var(--muted)}
+.sh-foot{font-size:.74rem;color:var(--muted);margin:.4rem .1rem 0;line-height:1.6}
+@media(max-width:640px){
+  .shtbl thead{display:none}
+  .shtbl,.shtbl tbody,.shtbl tr,.shtbl td{display:block;width:100%}
+  .shtbl tr{padding:.5rem 0;border-bottom:1px solid var(--border)}
+  .shtbl tr:last-child{border-bottom:0}
+  .shtbl td{border-bottom:0;padding:.2rem .3rem}
+  .shtbl td[data-label]::before{content:attr(data-label);display:block;font-size:.7rem;font-weight:700;color:var(--muted)}
+  .shtbl td.sh-name::before{display:none}
+}
 .ov-retired{margin-top:1.6rem}
 .ov-retired summary{cursor:pointer;font-weight:800;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
   padding-left:.6rem;border-left:4px solid var(--grey)}
@@ -372,6 +394,89 @@ def render_today_strip() -> str:
 </div>"""
 
 
+def _fmt_ret(nav) -> str:
+    """NAV（起算 100）→ 報酬百分比字串；缺值回「—」。只做 nav/100−1 的顯示換算。"""
+    if not isinstance(nav, (int, float)):
+        return "—"
+    return f"{(nav / 100 - 1) * 100:+.1f}%".replace("-", "−")
+
+
+def _last_nav(series):
+    if isinstance(series, list) and series and isinstance(series[-1], dict):
+        return series[-1].get("nav"), series[-1].get("date")
+    return None, None
+
+
+def render_shadow_table(systems) -> str:
+    """影子對照區：一張表三列（2026-10-17）。報酬一律讀既有 JSON 的 NAV 末值（起算 100）：
+    不借錢版＝live_scoreboard shadows.{us,tw}.sa10；債金版＝c1_shadow_state daily 末列
+    （只有美股）；舊規則版＝noma_state 無 NAV 序列，顯示「—」。同期實盤＝live_scoreboard
+    markets.{us,tw}.nav_sys（債金版另用 c1 daily 的 nav_main，與記分板同值）。不重算。"""
+    sb = _load_json(SCOREBOARD_JSON)
+    c1 = _load_json(C1_STATE_JSON)
+    noma = _load_json(NOMA_STATE_JSON)
+    lev = _load_json(LEVERAGE_STATE_JSON)
+    mk = sb.get("markets", {})
+    sh = sb.get("shadows", {})
+
+    def sb_pair(shadow_key=None):
+        """回傳 {us:(nav,date), tw:(nav,date)}；shadow_key=None 取實盤 nav_sys。"""
+        out = {}
+        for m in ("us", "tw"):
+            if shadow_key is None:
+                ser = (mk.get(m) or {}).get("nav_sys")
+            else:
+                ser = ((sh.get(m) or {}).get(shadow_key) or {}).get("nav")
+            out[m] = _last_nav(ser)
+        return out
+
+    def two_mkt(pair):
+        us, tw = pair["us"][0], pair["tw"][0]
+        return f'美 <b>{_fmt_ret(us)}</b>｜台 <b>{_fmt_ret(tw)}</b>'
+
+    c1_daily = c1.get("daily") or []
+    c1_last = c1_daily[-1] if c1_daily else {}
+    c1_first = c1_daily[0] if c1_daily else {}
+
+    cells = {}
+    cap10 = sb_pair("sa10")
+    live = sb_pair(None)
+    d_cap10 = cap10["us"][1] or cap10["tw"][1] or lev.get("data_date") or "—"
+    start_cap10 = ((sh.get("us") or {}).get("sa10") or {}).get("nav", [{}])[0].get("date") or lev.get("ruleset_locked_date") or "—"
+    cells["cap10"] = (start_cap10, d_cap10, two_mkt(cap10), two_mkt(live))
+
+    start_c1 = c1.get("inception") or c1_first.get("date") or "—"
+    d_c1 = c1_last.get("date") or c1.get("data_date") or "—"
+    c1_ret = f'美 <b>{_fmt_ret(c1_last.get("nav_c1"))}</b>'
+    c1_live = f'美 <b>{_fmt_ret(c1_last.get("nav_main"))}</b>'
+    cells["c1"] = (start_c1, d_c1, c1_ret, c1_live)
+
+    # 舊規則版：noma_state.json 只存權重歷史、沒有 NAV 序列 → 「—」；起算日取該檔第一筆 live 紀錄
+    noma_start = next((h.get("date") for h in noma.get("history_us", []) if h.get("source") == "live"), None) \
+        or noma.get("ruleset_locked_date") or "—"
+    d_noma = noma.get("data_date") or "—"
+    cells["noma"] = (noma_start, d_noma, '美 <span class="sh-na">—</span>｜台 <span class="sh-na">—</span>', two_mkt(live))
+
+    rows = ""
+    for s in systems:
+        start, upto, ret_html, live_html = cells[s["key"]]
+        pill = f'<br><span class="sh-pill">{s["status"]}</span>' if s.get("status") else ""
+        rows += (
+            f'<tr><td class="sh-name"><a href="{s["url"]}">{s["name"]}</a>{pill}</td>'
+            f'<td data-label="跟實盤差在哪">{s["diff"]}</td>'
+            f'<td data-label="回答什麼問題">{s["ask"]}</td>'
+            f'<td class="sh-ret" data-label="起算日以來報酬">{ret_html}'
+            f'<span class="sh-since">{start} 起算，截至 {upto}</span></td>'
+            f'<td class="sh-ret" data-label="同期實盤">{live_html}'
+            f'<span class="sh-since">{start} 起算</span></td></tr>')
+    return (f'<div class="shtbl-wrap"><table class="shtbl"><thead><tr><th>名稱</th><th>跟實盤差在哪</th>'
+            f'<th>回答什麼問題</th><th>起算日以來報酬</th><th>同期實盤</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table></div>'
+            f'<div class="sh-foot">三條線都每交易日更新，沒有 email。報酬讀自 live_scoreboard.json、'
+            f'c1_shadow_state.json，本頁不重新計算；舊規則版的狀態檔沒有淨值序列，報酬顯示「—」。'
+            f'債金版只追蹤美股。</div>')
+
+
 def render_overview_body() -> str:
     """總覽分頁本體（家族地圖）— 獨立於 page chrome，供 console 殼內嵌 Tab 1。
     2026-09-10 改版：頂部加「今天」儀表板（見 render_today_strip），實單主系統維持
@@ -395,7 +500,11 @@ def render_overview_body() -> str:
             f'<span>Email 通知：<b>{s["email"]}</b></span></div></a>')
     groups_html = f'<div class="grp {live_cls}"><div class="grp-h">{live_title}</div>{live_rows}</div>\n'
 
-    for title, cls, _, systems in GROUPS[1:3]:      # 影子對照、前瞻 OOS 候選 → 一行式
+    sh_title, sh_cls, _, sh_systems = GROUPS[1]       # 影子對照 → 一張表
+    groups_html += (f'<div class="grp {sh_cls}"><div class="grp-h">{sh_title}</div>'
+                    f'{render_shadow_table(sh_systems)}</div>\n')
+
+    for title, cls, _, systems in GROUPS[2:3]:      # 前瞻 OOS 候選 → 一行式
         rows = ""
         for s in systems:
             st_txt, st_cls = s["status"]

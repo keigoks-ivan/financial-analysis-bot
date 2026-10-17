@@ -841,7 +841,7 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
   <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>W52 × 自適應波動率 100%｜cap 1.0 影子對照 | InvestMQuest Research</title>
+  <title>不借錢版｜影子對照 | InvestMQuest Research</title>
   <meta name="description" content="美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應 σ 波動率目標 × 執行層 · cap 1.0（100%）影子對照頁（2026-07-18 主從對調；實單主系統為 cap 1.5）· 無 email">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -941,12 +941,12 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 {NAV_BLOCK}
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%（實單主系統）</a> / cap 1.0 影子對照</div>
-    <h1>W52 × 自適應波動率 100% — 影子對照</h1>
-    <div class="sub">美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應 σ 波動率目標 × 執行層 · <b>cap 1.0（100%）影子對照頁</b>：訊號與<a href="/long-track-w52-adaptive/">實單主系統（cap 1.5）</a>完全相同、只把曝險上限收回 1.0 · 無獨立 email · <span style="opacity:.7">研究代號 變體 C</span></div>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%（實單主系統）</a> / 不借錢版</div>
+    <h1>不借錢版 — 影子對照</h1>
+    <div class="sub">技術名：cap 1.0（W52 × 自適應波動率 100%）· 美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應 σ 波動率目標 × 執行層 · <b>cap 1.0（100%）影子對照頁</b>：訊號與<a href="/long-track-w52-adaptive/">實單主系統（cap 1.5）</a>完全相同、只把曝險上限收回 1.0 · 無獨立 email · <span style="opacity:.7">研究代號 變體 C</span></div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
       <a href="/long-track-w52-adaptive/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">實單主系統 cap 1.5</a>
-      <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">cap 1.0 影子對照（本頁）</a>
+      <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">不借錢版（本頁）</a>
       <a href="/backtest/vol_targeting/adaptive.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">美股變體實驗室</a>
       <a href="/backtest/vol_targeting/tw.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股變體實驗室</a>
       <a href="/long-track-w52-adaptive/tw-semivol.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股 B-ii 影子（唯讀）</a>
@@ -1024,7 +1024,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 
 </div>
 <footer class="imq-foot">
-  <div>&copy; {datetime.now().year} InvestMQuest Research · W52 × 自適應波動率 100%（cap 1.0 影子對照・實單主系統為 cap 1.5）</div>
+  <div>&copy; {datetime.now().year} InvestMQuest Research · 不借錢版（技術名 cap 1.0・實單主系統為 cap 1.5）</div>
   <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
 </footer>
 <script>

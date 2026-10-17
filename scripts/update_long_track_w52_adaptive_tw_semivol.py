@@ -949,7 +949,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
     <div class="sub">台股 0050+2330 · 週線 W52 單線閘門 × <b>B-ii 下跌半變異套袖</b> × cap 1.5 × 執行層 A2 · <b>唯讀影子追蹤頁</b>：與<a href="/long-track-w52-adaptive/">實單主系統</a>訊號完全相同、<b>唯一差異＝台股腿套袖分母改用下跌半變異 D20</b>（美股不在本頁範圍）· 無獨立 email · 不構成倉位建議</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
       <a href="/long-track-w52-adaptive/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">實單主系統 cap 1.5</a>
-      <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">cap 1.0 影子對照</a>
+      <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">不借錢版</a>
       <a href="/long-track-w52-adaptive/tw-semivol.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">台股 B-ii 影子（本頁）</a>
       <a href="/backtest/vol_targeting/tw.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股變體實驗室</a>
       <a href="/long-track-tw/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股長線 2330/0050（舊實倉・對照）</a>
