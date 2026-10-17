@@ -281,6 +281,7 @@ def test_build_end_to_end_small(tmp_path, monkeypatch):
     src.mkdir()
     monkeypatch.setattr(build, "SRC", src)
     monkeypatch.setattr(build, "OUT", out)
+    monkeypatch.setattr(build, "CSV_OUT", tmp_path / "csv")
     monkeypatch.setattr(build, "DISPLAY_START", "2026-10-14")
     days = ["2026-10-14", "2026-10-15", "2026-10-16"]
     (src / "taiex.jsonl").write_text("\n".join(
