@@ -221,6 +221,19 @@ def timing_txt(p_label) -> str:
     return f"{P_LABEL_DOT.get(p_label, '🔴')}{P_LABEL_TXT.get(p_label, '52 週線下或缺')}"
 
 
+def lamp_cell(row: dict, p_label) -> str:
+    """2026-10-17：席位表「時機燈」欄改顯示選核心席用的那顆燈（row['lamp']，距還原歷史新高＋200 日線），
+    原本的 p_label 趨勢標籤降為小字；沒有 lamp 時退回舊顯示。"""
+    lamp = row.get("lamp") or {}
+    if not lamp.get("label"):
+        return escape(timing_txt(p_label))
+    dist = (row.get("grp") or {}).get("dist_hi")
+    dist_txt = f"距新高 {dist:+.1f}%".replace("-", "−") if isinstance(dist, (int, float)) else ""
+    sub = "　".join(x for x in (dist_txt, P_LABEL_TXT.get(p_label, "")) if x)
+    return (f'<div style="font-size:12px;">{escape(lamp["label"])}</div>'
+            + (f'<div style="color:{TEXT_GRAY};font-size:10.5px;margin-top:2px;">{escape(sub)}</div>' if sub else ""))
+
+
 # ── 換入 / 全陣容 入選原因 ─────────────────────────────────────────────
 def entry_reason(row: dict, seat_no: int, track: str = "core") -> str:
     """v5（2026-09-17）：核心席不再要求 DD 裁決＝進場（DD 只做迴避否決／角色標籤），
@@ -412,7 +425,7 @@ def render_seat_table(cur_rows: list[dict], vacant_n: int, track_label: str,
                       f'<div style="color:{TEXT_GRAY};font-size:10.5px;">{escape(grp3)}</div>')
         dd_cell = (f'<div style="font-size:12px;">{escape(row.get("dd_tag") or "—")}</div>'
                    f'<div style="margin-top:2px;">{hyst_text(row.get("hyst"))}</div>')
-        rows.append([ticker_cell, score_cell, escape(timing_txt(ol["p_label"])), dd_cell,
+        rows.append([ticker_cell, score_cell, lamp_cell(row, ol["p_label"]), dd_cell,
                      week_status_pill(row["ticker"], prev_rank, i, degrade)])
     for v in range(1, vacant_n + 1):
         vacant_cell = (f'<div style="color:{TEXT_GRAY};font-size:10.5px;">'
