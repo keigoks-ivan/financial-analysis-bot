@@ -210,6 +210,7 @@ MENU = {
         ("macro", "/macro/", "總經深度報告"),
         ("macrodb", "/macro/db/", "總經資料庫"),  # 2026-10-08 美台總經數據庫（官方原始數據、每日更新）
         ("aicredit", "/ai-credit/", "AI 信用監測"),  # 2026-10-16 AI 信用風險 12 條指標（每日更新、越線時通知）
+        ("tchips", "/tw-chips/", "台股籌碼"),  # 2026-10-17 台股籌碼十年趨勢（外資／投信／融資／期貨選擇權，每日更新）
         ("earn", "/earnings/", "財報分析"),
         ("markets", "/markets.html", "Markets"),
         ("sectors", "/sectors.html", "Sectors"),
@@ -359,6 +360,7 @@ PREFIX_ACTIVE = [
     ("stock-dash/", ("research", "sdash")),  # 個股儀表板（2026-09-23 新增）
     ("etf-dash/", ("research", "etfd")),  # ETF 儀表板（2026-09-24 新增）
     ("active-etf/", ("research", "aetf")),  # 主動式 ETF（2026-09-25 新增）
+    ("tw-chips/", ("market", "tchips")),  # 台股籌碼趨勢（2026-10-17 新增）
     ("ideas/", ("research", "ideas")),  # 投資想法（2026-09-23 新增）
     ("research/synthesis/", ("research", "thub")),
     ("research/", ("research", "thub")),
