@@ -115,6 +115,8 @@ def build_headline(w52a_text: str | None, f70_text: str | None, is_test: bool) -
         actions.append("月底把 F70 紙上帳戶拉回 70：30，同樣不必操作。")
     if actions:
         line += " " + " ".join(actions)
+    if w52a_text and "資料延遲" in w52a_text:
+        line += " ⚠ 有腿資料延遲（詳見下方 alert 原文）：該市場本次不產生換倉指令，維持前一個已確認的決策。"
     if is_test:
         line += "（測試信：以下為目前實際狀態，非事件比對）"
     return line

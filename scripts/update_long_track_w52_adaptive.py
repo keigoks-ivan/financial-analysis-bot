@@ -61,6 +61,7 @@ knowledge/rule_ledger.md「實單主系統規則鏈」）。history_us／history
 """
 import argparse
 import json
+import re
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -295,6 +296,154 @@ def repair_phantom_splits(c: pd.Series, thresh: float = 0.4) -> pd.Series:
     return c
 
 
+# ---------------------------------------------------------------------------
+# 台股收盤價官方補值（2026-10-17）：yfinance 的 0050.TW／2330.TW 最新一天常晚到——
+# 該日 Close=NaN（有 Volume 無收盤，fetch_close 的 dropna 會直接丟掉那一列），或給
+# 盤後尚未定案的暫時價（2026-10-15 實測 0050 暫時價 ≈109.5、官方收盤 108.9）。腿的
+# 最新日因此比另一腿／官方少一天，_daily_record 用 max(各腿最新日) 當記錄日，晚到的腿
+# 就以前一日（或暫時價）參與當日目標權重（2026-10-15 差 12.3pp）。
+# 補法：只動最新的一兩根 bar——(1) 晚到的日子用證交所官方收盤補上；(2) 最後一根 yfinance
+# bar 與官方差 > OFFICIAL_TOL 且前一根與官方吻合（還原口徑＝原始價）時，換成官方收盤。
+# 歷史不動。還原口徑：最新 bar 位於最近一次除權息之後，auto_adjust 還原因子＝1，官方原始
+# 收盤即同口徑（2026-07～10 實測 0050／2330 yfinance 與官方比值，除權息後皆 1.0000000）；
+# 若除權息落在缺口內，缺口 bar 在除息日當天或之後，同樣因子 1。官方抓不到時不補、
+# 不報錯，由 tw_leg_delays 偵測「腿最新日 < 台股最新交易日」並標示資料延遲（見 main）。
+# 來源與 etf_dash 同一組證交所端點（STOCK_DAY_ALL 已在 CI 長期使用）。
+# ---------------------------------------------------------------------------
+TWSE_STOCK_DAY_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY"
+TWSE_STOCK_DAY_ALL_URL = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
+OFFICIAL_UA = "Mozilla/5.0 (compatible; investmquest-w52/1.0)"
+OFFICIAL_TOL = 1e-4          # 相對差門檻（float32 雜訊 ~1e-7；0050 一檔 0.05/110 ≈ 4.5e-4）
+OFFICIAL_MAX_BARS = 3        # 一次最多補幾根；更長的缺口視為異常、不補（交給資料延遲標示）
+OFFICIAL_MAX_MOVE = 0.11     # 補進來的 bar 相對前一根的單日漲跌上限（台股漲跌停 ±10%）
+FETCH_NOTES: dict = {}       # ticker -> 補值紀錄，main 讀取（資料延遲偵測、state 稽核欄）
+
+
+def _roc_to_ts(s: str):
+    """'115/10/16' 或 '1151016' → Timestamp；失敗回 None。"""
+    try:
+        s = str(s).strip()
+        if "/" in s:
+            y, m, d = s.split("/")
+        else:
+            y, m, d = s[:-4], s[-4:-2], s[-2:]
+        return pd.Timestamp(int(y) + 1911, int(m), int(d))
+    except Exception:
+        return None
+
+
+def _num(x):
+    try:
+        v = float(str(x).replace(",", ""))
+        return v if v > 0 else None
+    except Exception:
+        return None
+
+
+def _get_json_retry(url: str, params: dict | None = None):
+    import time
+    import requests
+    last = None
+    for i in range(2):
+        try:
+            r = requests.get(url, params=params, headers={"User-Agent": OFFICIAL_UA}, timeout=20)
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:      # noqa: BLE001 — 官方抓不到不得讓實單主程式掛掉
+            last = e
+            time.sleep(2)
+    raise last
+
+
+def fetch_official_closes(ticker: str, since: pd.Timestamp) -> dict | None:
+    """證交所官方日收盤（原始價）{Timestamp: close}；since 當月起到本月（台北）。
+    先試 STOCK_DAY（月檔，可補多日缺口），失敗再試 STOCK_DAY_ALL（只有最新一日）。
+    兩者皆失敗回 None（呼叫端不補值）；任何例外都不外拋。"""
+    import time
+    out: dict = {}
+    ok_any = False
+    now_tpe = datetime.now(timezone(timedelta(hours=8)))
+    months = pd.period_range(pd.Timestamp(since).to_period("M"),
+                             pd.Timestamp(now_tpe.year, now_tpe.month, 1).to_period("M"), freq="M")
+    for k, per in enumerate(months):
+        try:
+            if k:
+                time.sleep(1.5)            # 證交所對連續請求限流
+            j = _get_json_retry(TWSE_STOCK_DAY_URL,
+                                {"date": f"{per.year}{per.month:02d}01", "stockNo": ticker, "response": "json"})
+            if not isinstance(j, dict):
+                continue
+            ok_any = True
+            for r in j.get("data") or []:
+                ts, v = _roc_to_ts(r[0]), _num(r[6])
+                if ts is not None and v is not None:
+                    out[ts] = v
+        except Exception as e:             # noqa: BLE001
+            print(f"  official STOCK_DAY {ticker} {per} failed: {e}")
+    if not ok_any:
+        try:
+            j = _get_json_retry(TWSE_STOCK_DAY_ALL_URL)
+            for r in j if isinstance(j, list) else []:
+                if r.get("Code") == ticker:
+                    ts, v = _roc_to_ts(r.get("Date")), _num(r.get("ClosingPrice"))
+                    if ts is not None and v is not None:
+                        out[ts] = v
+                    ok_any = True
+        except Exception as e:             # noqa: BLE001
+            print(f"  official STOCK_DAY_ALL {ticker} failed: {e}")
+    return out if ok_any and out else None
+
+
+def reconcile_with_official(c: pd.Series, off: dict | None):
+    """純函式（無網路）：用官方收盤補 yfinance 序列最新的一兩根。回傳 (序列, 紀錄)。
+    off 為 None／空＝官方抓不到，序列原封不動。"""
+    notes = {"yf_last": c.index[-1].strftime("%Y-%m-%d"), "official": bool(off),
+             "official_latest": None, "appended": [], "refreshed": [], "skipped": None}
+    if not off:
+        return c, notes
+    notes["official_latest"] = max(off).strftime("%Y-%m-%d")
+    last = c.index[-1]
+    # (2) 最後一根暫時價 → 官方收盤（前一根與官方吻合＝原始價口徑，才敢換）
+    if last in off and len(c) >= 2:
+        prev = c.index[-2]
+        if prev in off and abs(float(c.iloc[-2]) / off[prev] - 1) <= OFFICIAL_TOL \
+                and abs(float(c.iloc[-1]) / off[last] - 1) > OFFICIAL_TOL:
+            c = c.copy()
+            c.iloc[-1] = off[last]
+            notes["refreshed"].append(last.strftime("%Y-%m-%d"))
+    # (1) 晚到的日子 → 官方收盤
+    new_dates = sorted(d for d in off if d > last)
+    if new_dates:
+        if len(new_dates) > OFFICIAL_MAX_BARS:
+            notes["skipped"] = f"缺口 {len(new_dates)} 根 > {OFFICIAL_MAX_BARS}，不補"
+            return c, notes
+        vals, ref = [], float(c.iloc[-1])
+        for d in new_dates:
+            if abs(off[d] / ref - 1) > OFFICIAL_MAX_MOVE:
+                notes["skipped"] = f"{d.date()} 相對前值變動超過 {OFFICIAL_MAX_MOVE:.0%}，不補"
+                break
+            vals.append((d, off[d]))
+            ref = off[d]
+        if vals:
+            c = pd.concat([c, pd.Series([v for _, v in vals], index=pd.DatetimeIndex([d for d, _ in vals]))])
+            notes["appended"] = [d.strftime("%Y-%m-%d") for d, _ in vals]
+    return c, notes
+
+
+def tw_leg_delays(px_map: dict, notes_map: dict, legs: list) -> dict:
+    """腿最新日 < 該市場最新交易日（取各腿最新日與官方最新日的最大值）→ 資料延遲。
+    回傳 {腿: {"last": 腿最新日, "ref": 市場最新交易日}}；無延遲回 {}。"""
+    last = {t: px_map[t].index[-1] for t in legs}
+    cands = list(last.values())
+    for t in legs:
+        ol = (notes_map.get(t) or {}).get("official_latest")
+        if ol:
+            cands.append(pd.Timestamp(ol))
+    ref = max(cands)
+    return {t: {"last": last[t].strftime("%Y-%m-%d"), "ref": ref.strftime("%Y-%m-%d")}
+            for t in legs if last[t] < ref}
+
+
 def fetch_close(ticker: str) -> pd.Series:
     end = datetime.now() + timedelta(days=1)
     start = end - timedelta(days=365 * 13)   # 13y: W250 (~4.8y) warmup + state history
@@ -308,7 +457,18 @@ def fetch_close(ticker: str) -> pd.Series:
     c = c.dropna()
     if getattr(c.index, "tz", None) is not None:
         c.index = c.index.tz_localize(None)
-    return repair_phantom_splits(c) if IS_TW[ticker] else c
+    if IS_TW[ticker]:
+        off = fetch_official_closes(ticker, c.index[-2] if len(c) > 1 else c.index[-1])
+        c, notes = reconcile_with_official(c, off)
+        FETCH_NOTES[ticker] = notes
+        if notes["appended"] or notes["refreshed"]:
+            print(f"  {ticker}: 官方收盤補值 appended={notes['appended']} refreshed={notes['refreshed']}")
+        if notes["skipped"]:
+            print(f"  {ticker}: 官方補值略過（{notes['skipped']}）")
+        if not notes["official"]:
+            print(f"  {ticker}: 證交所官方收盤抓不到，不補值")
+        return repair_phantom_splits(c)
+    return c
 
 
 # ---------------------------------------------------------------------------
@@ -1622,7 +1782,7 @@ window.addEventListener('hashchange', function(){{
 # ---------------------------------------------------------------------------
 # change detection
 # ---------------------------------------------------------------------------
-def detect_changes(prev: dict, sigs: dict) -> list:
+def detect_changes(prev: dict, sigs: dict, skip_legs=()) -> list:
     """可行動變化＝任一腿今日目標與現持（執行層 executed_pct）差 ≥ 20pp（EXEC_BAND，
     與回測 A2 執行層 band_exec_replay 用同一個門檻）。閘門翻轉本身不是獨立觸發條件——
     若翻轉後的目標仍落在 20pp 門檻內，A2 不會調整部位，通知也不該提示調整；閘門翻轉
@@ -1637,6 +1797,8 @@ def detect_changes(prev: dict, sigs: dict) -> list:
         return []
     out = []
     for t in ALL_TICKERS:
+        if t in skip_legs:        # 該市場資料延遲（見 tw_leg_delays）：不據舊價產生換倉指令
+            continue
         pt = prev["tickers"].get(t)
         if not pt:
             continue
@@ -1657,7 +1819,7 @@ def detect_changes(prev: dict, sigs: dict) -> list:
     return out
 
 
-def detect_cap_eff_flips(prev: dict, sigs: dict) -> list:
+def detect_cap_eff_flips(prev: dict, sigs: dict, skip_legs=()) -> list:
     """任一腿 cap_eff 翻轉（1.5↔1.0，均線五條件是否全對）。這種變化<b>只寫進 email
     內文的說明，不單獨觸發 email</b>——不計入 detect_changes 的 20pp 門檻判定，也不
     影響是否寄信；只在因其他理由（20pp drift）已經要寄信時，一併附註說明。prev 無
@@ -1666,6 +1828,8 @@ def detect_cap_eff_flips(prev: dict, sigs: dict) -> list:
         return []
     out = []
     for t in ALL_TICKERS:
+        if t in skip_legs:
+            continue
         pt = prev["tickers"].get(t)
         if not pt or "cap_eff" not in pt:
             continue
@@ -1677,7 +1841,8 @@ def detect_cap_eff_flips(prev: dict, sigs: dict) -> list:
     return out
 
 
-def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: list | None = None) -> str:
+def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: list | None = None,
+                    delay_lines: list | None = None) -> str:
     """組 long_track_w52_mail.html（§5.7 版型）。無可行動變化時仍要產出一份
     「無變化／測試信」版本，讓 workflow 的 test_email 分支永遠有檔可用。
     v7-backtest 副本若缺 mail_html.py（見上方 import 降級），本函式不會被呼叫。
@@ -1712,6 +1877,8 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
                  "任一條不對退回 1.0（三個價格條件加 1% 遲滯）。")
     if cap_flips:
         body += note("cap_eff 翻轉說明（僅供參考，不單獨觸發本信）：" + "；".join(cap_flips))
+    if delay_lines:
+        body += note("；".join(delay_lines))
     if not has_event:
         body += note("目前無可行動變化 — 這是測試信，確認 email 管線正常。")
 
@@ -1849,8 +2016,23 @@ def main():
         exp[m["key"]] = sum(sigs[t]["final"] for t in m["legs"]) * 100
         print(f"{m['short']} combined target exposure: {exp[m['key']]:.0f}%")
 
-    changes = detect_changes(prev_state, sigs)
-    cap_flips = detect_cap_eff_flips(prev_state, sigs)   # 說明用，不影響 changes/是否寄信
+    # ---- 台股資料延遲偵測（2026-10-17）：腿最新日 < 該市場最新交易日（yfinance 晚到、
+    # 且證交所官方收盤也補不上）→ 該市場本次不寫當日 history、不產生換倉指令，維持前一個
+    # 已確認的決策（executed 由 history 重放，history 不動即不變），並在 alert／state／頁面
+    # 標示「資料延遲」。無延遲時 delays 為空，以下全部走原路徑。
+    delays = {}                       # 市場 key -> {腿: {"last","ref"}}
+    for m in MARKETS:
+        if all(IS_TW[t] for t in m["legs"]):
+            d_ = tw_leg_delays(px_map, FETCH_NOTES, m["legs"])
+            if d_:
+                delays[m["key"]] = d_
+    delayed_legs = {t for m in MARKETS if m["key"] in delays for t in m["legs"]}
+    for mk, d_ in delays.items():
+        for t, info in d_.items():
+            print(f"DATA DELAY: {t} 最新日 {info['last']} < 市場最新交易日 {info['ref']}")
+
+    changes = detect_changes(prev_state, sigs, skip_legs=delayed_legs)
+    cap_flips = detect_cap_eff_flips(prev_state, sigs, skip_legs=delayed_legs)   # 說明用，不影響 changes/是否寄信
     data_date = max(sigs[t]["wk_date"] for t in ALL_TICKERS)
 
     # ---- per-market history: rule-replay backfill (once) + daily live append ----
@@ -1859,9 +2041,13 @@ def main():
         legs = m["legs"]
         prev_history = prev_state.get(m["hist_key"], [])
         backfill = build_backfill(px_map, legs) if len(prev_history) < BACKFILL_DAYS else []
-        daily_date = max(px_map[t].index[-1] for t in legs)
-        today_rec = _daily_record(px_map, legs, daily_date, "live")
-        history = merge_history(prev_history, backfill, today_rec)
+        if m["key"] in delays and prev_history:
+            # 資料延遲：不以舊價寫當日記錄，history 維持前次（已確認）狀態
+            history = list(prev_history)
+        else:
+            daily_date = max(px_map[t].index[-1] for t in legs)
+            today_rec = _daily_record(px_map, legs, daily_date, "live")
+            history = merge_history(prev_history, backfill, today_rec)
         hist_map[m["key"]] = history
         print(f"{m['short']} history: {len(history)} days (backfill {len(backfill)}, "
               f"span {history[0]['date']}→{history[-1]['date']})")
@@ -1913,12 +2099,40 @@ def main():
             ALERT_FILE.unlink()
         print("No actionable change vs last run.")
 
+    # ---- 資料延遲通知（與可行動變化同一封信；同一組延遲只通知一次，避免一天兩輪重複寄）----
+    delay_lines, delay_state = [], None
+    if delays:
+        for mk, d_ in delays.items():
+            for t, info in d_.items():
+                delay_lines.append(
+                    f"⚠ 資料延遲：{TICKER_MARKET[t]} {t} 最新日線僅到 {info['last']}（市場最新交易日 {info['ref']}；"
+                    f"yfinance 未更新、證交所官方收盤也補不上）。本次不據舊價產生{TICKER_MARKET[t]}換倉指令，"
+                    f"維持前一個已確認的決策（現持不變）；資料補齊後下次執行自動恢復。")
+        delay_key = sorted(f"{t}|{i['last']}|{i['ref']}" for d_ in delays.values() for t, i in d_.items())
+        delay_state = {"key": delay_key,
+                       "legs": {t: i for d_ in delays.values() for t, i in d_.items()},
+                       "note": "資料延遲：該市場本次未寫當日 history、未產生換倉指令，executed_pct 維持前次"}
+        if (prev_state.get("data_delay") or {}).get("key") != delay_key:
+            existing = ALERT_FILE.read_text(encoding="utf-8") if ALERT_FILE.exists() else ""
+            head = "" if existing else f"⚠ W52×自適應波動率 150%（美+台・實單）資料延遲通知（數據截至 {data_date}）\n\n"
+            ALERT_FILE.write_text(existing + head + "\n".join(delay_lines) + "\n", encoding="utf-8")
+            print(f"Alert file (data delay): {ALERT_FILE}")
+
     if frame is not None:
-        ALERT_HTML.write_text(build_mail_html(changes, sigs, exp, data_date, cap_flips=cap_flips), encoding="utf-8")
+        ALERT_HTML.write_text(build_mail_html(changes, sigs, exp, data_date, cap_flips=cap_flips,
+                                              delay_lines=delay_lines or None), encoding="utf-8")
         print(f"Mail HTML written: {ALERT_HTML}")
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map,
                          last_change_desc=last_change_desc, leg_panel_map=leg_panel_map)
+    if delay_lines:
+        banner = ('<div style="background:#fff4e5;border:1px solid #f0b86e;border-radius:6px;'
+                  'padding:10px 14px;margin:0 0 12px;font-size:.85rem;color:#7a4a00;">'
+                  + "<br>".join(delay_lines) + "</div>\n")
+        # _body.html 是含 DOCTYPE 的完整文件：橫幅插在 <body> 之後，放前面會讓瀏覽器進 quirks mode
+        html, n_sub = re.subn(r"(<body[^>]*>)", lambda mo: mo.group(1) + "\n" + banner, html, count=1)
+        if not n_sub:
+            html = banner + html
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
@@ -1964,6 +2178,13 @@ def main():
         "history_us": hist_map["us"],
         "history_tw": hist_map["tw"],
     }
+    # 稽核欄（只在有事的日子才出現，平常 state.json 形狀不變）：官方補值紀錄、資料延遲狀態
+    patched = {t: {"appended": n["appended"], "refreshed": n["refreshed"]}
+               for t, n in FETCH_NOTES.items() if n.get("appended") or n.get("refreshed")}
+    if patched:
+        state_json["official_close_patch"] = patched
+    if delay_state:
+        state_json["data_delay"] = delay_state
     STATE_JSON.write_text(json.dumps(state_json, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Sidecar JSON: {STATE_JSON}")
 
