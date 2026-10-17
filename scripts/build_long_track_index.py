@@ -66,10 +66,14 @@ GROUPS = [
                 "（均線五條件全對 cap_eff=1.5，否則退回 1.0）。",
          "status": ("實單", "live"), "freq": "每交易日 × 2（台／美收盤後）", "email": "✅ 有"},
     ]),
-    ("影子對照（同引擎、不上槓桿）", "shadow", False, [
+    ("影子對照（同引擎、股票不上槓桿）", "shadow", False, [
         {"name": "W52 × 自適應波動率 cap 1.0 影子", "url": "/long-track-w52-adaptive/leverage.html",
          "one": "同引擎的 cap 1.0（不上槓桿）影子線，供槓桿 vs 不槓桿對照。",
          "status": ("影子對照", "shadow"), "freq": "每交易日 × 2", "email": "❌（併入主系統通知）"},
+        {"name": "C1 影子對照（美股）", "url": "/long-track-w52-adaptive/c1-shadow.html",
+         "one": "股票部分 cap 1.0 不借錢，加 IEF／GLD 週線三條件趨勢疊加（各最多 20%）。"
+                "<b>實盤未採用</b>，2026-10-17 起僅與實單並排追蹤。",
+         "status": ("影子對照", "shadow"), "freq": "每交易日 × 2（隨主系統）", "email": "❌（無 email）"},
         {"name": "舊實單規則 cap 1.5（無均線層）", "url": "/long-track-w52-adaptive/noma.html",
          "one": "2026-07-18～2026-09-14 的實單規則（cap 固定 1.5，無均線條件），"
                 "2026-09-15 均線層上線後降為唯讀影子，供 kill condition 對帳。",

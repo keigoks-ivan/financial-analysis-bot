@@ -100,6 +100,16 @@ jobs:
         # Same two-cron schedule; NO email of its own.
         run: python scripts/update_long_track_w52_adaptive_noma.py
 
+      - name: Run C1 shadow comparison page (cap 1.0 stock + IEF/GLD E3 overlay, US only)
+        # 2026-10-17: read-only US shadow page (docs/long-track-w52-adaptive/c1-shadow.html).
+        # C1 is NOT adopted for live trading; it is tracked side by side with the live main
+        # system from the same inception date. Reads state.json written above (live NAV and
+        # cap 1.0 NAV are recomputed with the scoreboard's own functions), fetches IEF/GLD/^IRX,
+        # renders the frozen research backtest from c1_backtest.json. NO email of its own.
+        # Fail-safe: any data gap -> exit 0 and the existing page/state stay untouched.
+        continue-on-error: true
+        run: python scripts/update_long_track_w52_adaptive_c1.py
+
       - name: Build synthesized live mail (today conclusion + F70 MA account)
         # 2026-09-15 持有人拍板：實單信與 F70 信合成一封。build_live_mail.py 零 LLM、
         # 純組版，只讀上面兩步驟寫的 lt_w52a_alert.txt／lt_f70_alert.txt 與兩份
@@ -186,7 +196,7 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/long-track-w52-adaptive/noma.html docs/long-track-w52-adaptive/noma_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/f70_signal_state.json docs/long-track/index.html
+          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/long-track-w52-adaptive/noma.html docs/long-track-w52-adaptive/noma_state.json docs/long-track-w52-adaptive/c1-shadow.html docs/long-track-w52-adaptive/c1_shadow_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/f70_signal_state.json docs/long-track/index.html
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then
