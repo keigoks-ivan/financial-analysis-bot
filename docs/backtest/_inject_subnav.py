@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Surgically refresh the /backtest/ pill-bar in every page.
+"""Surgically refresh the /backtest/ pill-bar in every page (rows = the zones of the /backtest/ index).
 
 The pill-bar is baked into each page's HTML by that page's own generator, most
 of which live in the sibling v7-backtest repo and re-run with drifting numbers.
@@ -27,30 +27,24 @@ sys.path.insert(0, str(Path(__file__).parent))
 import _nav_common as NC  # noqa: E402
 
 START = '<style id="bt-subnav-style">'
-GROUPS = ["COMPARISON", "INDIVIDUAL", "MULTI", "TAIWAN", "OPTIONS", "INTRADAY",
-          "RESEARCH_ETF", "RESEARCH_FREQ", "RESEARCH_MA", "RESEARCH_CRASH",
-          "RESEARCH_MACRO", "TW_CB", "RESEARCH_FACTOR", "FUTURES_DAILY", "RESEARCH_OOS", "VENDOR"]
-# 2026-10-01 補：FUTURES_DAILY、RESEARCH_OOS 一直漏在這份清單外（--check 報 16 頁「該連結已不在
-# _nav_common」，那些頁的 pill-bar 不會被更新）；同批加入新的 VENDOR（商用策略專區）。
-# 2026-08-29 補：TW_CB 補進來——2026-08-15 新增 TW_CB_LINKS 時漏了同步加進這份
-# GROUPS 清單，導致 tw_cb/ 頁自己的 active key 一直無法被 valid_keys()/url_to_key()
-# 解析（--check 會報「無法反解 active key」）。同批順手補上新加的 RESEARCH_FACTOR。
-
-
-def valid_keys() -> set[str]:
-    out = set()
-    for g in GROUPS:
-        for _u, _n, k, _s in getattr(NC, f"{g}_LINKS"):
-            out.add(k)
-    return out
+# 2026-10 整理：子導覽改成依首頁七區分行，頁面清單來自 _page_meta.py（PAGES／MEMBERS／FOLDED）。
+import _page_meta as PM  # noqa: E402
 
 
 def url_to_key() -> dict[str, str]:
-    out = {}
-    for g in GROUPS:
-        for u, _n, k, _s in getattr(NC, f"{g}_LINKS"):
-            out[u] = k
+    """頁面網址 → 該頁在子導覽高亮的 pill key。成員頁（原頁仍在、內容屬主頁某章）與已折進主頁的舊網址
+    都高亮主頁那一顆。"""
+    out = {u: p["key"] for u, p in PM.PAGES.items()}
+    for u, m in PM.MEMBERS.items():
+        out[u] = PM.PAGES[m["main"]]["key"]
+    for u, (main, _anchor) in PM.FOLDED.items():
+        out[u] = PM.PAGES[main]["key"]
+    out.setdefault("/backtest/", "index")
     return out
+
+
+def valid_keys() -> set[str]:
+    return {p["key"] for p in PM.PAGES.values()} | {"index"}
 
 
 def main() -> int:
@@ -74,7 +68,8 @@ def main() -> int:
             problems.append(f"{p}: 找到 style 但無 </nav>")
             continue
         j += len("</nav>")
-        m = re.search(r'<a href="([^"]+)" class="bt-on"', html[i:j])
+        m = re.search(r'<a href="([^"]+)" class="bt-on"', html[i:j]) or \
+            re.search(r'<a class="bt-on" href="([^"]+)"', html[i:j])
         if not m:
             problems.append(f"{p}: 無 bt-on，無法反解 active key")
             continue

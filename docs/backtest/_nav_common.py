@@ -1,235 +1,60 @@
 """Canonical /backtest/ sub-navigation (pill bar) — single source of truth.
 
-Every backtest page header renders the same groups via make_toggle(active):
-    對比總覽：    20y | 10y | criteria | tw20y | multi20y | lev20y | masens | freelunch
-    個別系統：    dual | long | long_qqq | ensemble | smh | six_state | v1r1 | gem
-                  | slope | rsi2 | st | levvt | exitsw | short | cndr | cc
-    多資產：      turtle | clenow | slope_global | xadef
-    台股波段：    tw0050cmp | twcrash | tw0050 | tw0050lt | lttw | tw0050six
-                  | tw_vcrash | tw0050d
-    台股選擇權：  tw_opt | txo_vs | txo_ps | txo_ic | txo_cc0050 | txo_th
-    日內交易：    txf_intra | txf_chips | ssf_xsec | txf_basis
-    研究筆記：    dvw | dvw_deep | dvw_global | dvw_tw | ma_cross | ma_dev
-                  | ma_dynband | ma_squeeze | smh_vcrash
-    研究・總經：  housing_gdp
-    研究・可轉債：tw_cb
-    研究・因子：  return_driver | pead | pead_reaction | accruals | share_issuance
-                  | profitability | asset_growth | index_inclusion | insider | revmom
-    研究・跨標的驗證： w52_oos | ins_prem | adopt_boot | regime_boot | comb_acct | slow_bear | slow_bear_onset
-                  | cross_sec_trend
+Every backtest page header renders the same rows via make_toggle(active):
+one row per zone of the /backtest/ index (2026-10 reorganisation), in the same order:
+    ① 實盤證據 | ② 槓桿與保險 | ③ 趨勢規則 | ④ 台指期與短線 | ⑤ 選股與因子
+    ⑥ 分散資產 | ⑦ 總經與房市 | 方法與術語
+Which page sits in which row, its short label and its status come from _page_meta.py
+(PAGES). Pages that were folded into another page's chapter are not in the bar;
+the pages that still exist but belong to a chapter (_page_meta.MEMBERS) highlight
+their main page's pill (aliases).
 
-Design (2026-07-11 redesign):
+Design (2026-07-11 redesign, kept):
   * Colour discipline — every pill is neutral (grey fill, dark-grey text); the
     ONE current page is highlighted with the site brand deep-blue gradient
-    (imq-nav #081832→#173564). No per-pill rainbow colours.
-  * No emoji in labels (matches imq-nav's 2026-07-07 de-emoji decision).
-  * Status ('否決'/'失敗'/'負貢獻'/'未過'/'觀察') is a small suffix TAG inside the
-    pill, not baked into the label text — 已否決/失敗 use muted red, 未過/觀察
-    use muted amber. Dead pills sort to the end of their group and recede.
+    (imq-nav #081832→#173564).
+  * No emoji in labels.
+  * Status (實盤/候選/已否決/已退役) is a small suffix TAG inside the pill; 筆記 has no tag.
+    已否決/已退役 pills sort to the end of their row and recede.
   * Compact layout — fixed-width left label column, pills flow to the right,
-    one row per group.  No JS; wraps (never horizontally overflows) on mobile.
+    one row per zone.  No JS; wraps (never horizontally overflows) on mobile.
 
-Each link entry is (url, label, key, status) where status is None or one of the
-Chinese status words above.
+Each link entry is (url, label, key, status) where status is one of the keys of
+_page_meta.STATUS.
 
 Used by:
-    docs/backtest/_build_index.py           (overview, if wired)
-    v7-backtest generators (six_state, v1r1, long_track, lto_qqq, ensemble, …)
-    — they sys.path this directory and import make_toggle.
+  * docs/backtest/_build_*.py, scripts/build_*.py and the v7-backtest page generators
+    (they sys.path this directory and import make_toggle);
+  * _inject_subnav.py — surgically refreshes the bar in every existing page.
 
-When adding a page: add one entry here, regenerate all pages.
+When adding a page: add one entry to _page_meta.PAGES, then run _inject_subnav.py.
 """
 from __future__ import annotations
 
-# status → (css-class, is-dead)  — dead sorts last within a group
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+import _page_meta as PM  # noqa: E402
+
+# status → (css-class, is-dead)  — dead sorts last within a row; 筆記 shows no tag
 _STATUS = {
-    "否決": ("dead", True),
-    "失敗": ("dead", True),
-    "負貢獻": ("dead", True),
-    "未過": ("watch", False),
-    "觀察": ("watch", False),
-    "模擬中": ("watch", False),
-    "專區": ("watch", False),
-    "研究": ("watch", False),
+    "live": ("live", False),
+    "cand": ("watch", False),
+    "note": (None, False),
+    "rej": ("dead", True),
+    "ret": ("dead", True),
 }
 
-COMPARISON_LINKS = [
-    ("/backtest/", "20 年", "20y", None),
-    ("/backtest/10y/", "10 年", "10y", None),
-    ("/backtest/criteria/", "評估標準", "criteria", None),
-    ("/backtest/tw/", "台股總覽", "tw20y", None),
-    ("/backtest/multi/", "多資產總覽", "multi20y", None),
-    ("/backtest/leverage/", "槓桿疊加總覽", "lev20y", None),
-    ("/backtest/ma_sensitivity/", "MA 敏感度", "masens", None),
-    ("/backtest/free_lunch/", "分散與免費午餐", "freelunch", None),
-]
+ROW_LABELS = {1: "① 實盤證據", 2: "② 槓桿與保險", 3: "③ 趨勢規則", 4: "④ 台指期與短線",
+              5: "⑤ 選股與因子", 6: "⑥ 分散資產", 7: "⑦ 總經與房市", 8: "方法與術語"}
 
-INDIVIDUAL_LINKS = [
-    ("/backtest/dual_track/", "SPY/QQQ 雙軌多空", "dual", "否決"),
-    ("/backtest/long_track/", "SPY/QQQ 長軌", "long", None),
-    ("/backtest/long_track_qqq/", "QQQ 長軌純攻", "long_qqq", None),
-    ("/backtest/long_track_ensemble/", "SPY/QQQ 集成", "ensemble", None),
-    ("/backtest/long_track_smh/", "SMH/QQQ 進攻", "smh", None),
-    ("/backtest/six_state/", "QQQ＋SMH 六狀態", "six_state", None),
-    ("/backtest/six_state_v1r1/", "QQQ 六狀態實盤", "v1r1", None),
-    ("/backtest/gem/", "SPY/ACWX 雙動能", "gem", None),
-    ("/backtest/slope_filter/", "SPY/AGG 斜率", "slope", None),
-    ("/backtest/rsi2_mr/", "SPY/QQQ 均值回歸", "rsi2", None),
-    ("/backtest/supertrend/", "週線 Supertrend", "st", None),
-    ("/backtest/minervini/", "Minervini RS+VCP", "minervini", None),
-    ("/backtest/mom_volscaling/", "動能·波動縮放", "momvs", None),
-    ("/backtest/dual_track_study/", "雙軌分散研究", "dtstudy", None),
-    ("/backtest/leverage_voltarget/", "期貨槓桿疊加", "levvt", None),
-    ("/backtest/vol_targeting/", "波動目標倉位", "vol_targeting", "研究"),
-    ("/backtest/exit_switch/", "出場法切換", "exitsw", "否決"),
-    ("/backtest/short_system/", "指數做空", "short", "失敗"),
-    ("/backtest/cndr/", "Iron Condor", "cndr", "失敗"),
-    ("/backtest/covered_call/", "Covered Call", "cc", "負貢獻"),
-    ("/backtest/put_timing/", "SPY/QQQ 買 put 避險", "put_timing", "負貢獻"),
-]
-
-# 台股選擇權專區：TXO 短波動/賣方/避險策略群，共用 TAIEX/TWVIX/TXO 資料層 +
-# Black-76 引擎（見 tw_options hub）。自成一個 pill 群，不與美股個別系統混列。
-OPTIONS_LINKS = [
-    ("/backtest/tw_options/", "台股選擇權專區", "tw_opt", "專區"),
-    ("/backtest/txo_vol_seller/", "台指選擇權賣方", "txo_vs", "模擬中"),
-    ("/backtest/txo_put_seller/", "台指賣方下檔", "txo_ps", "研究"),
-    ("/backtest/txo_iron_condor/", "台指雙賣", "txo_ic", "研究"),
-    ("/backtest/txo_covered_call_0050/", "台指 Covered Call", "txo_cc0050", "研究"),
-    ("/backtest/txo_tail_hedge/", "台指尾端避險", "txo_th", "研究"),
-]
-
-MULTI_LINKS = [
-    ("/backtest/turtle/", "唐奇安突破", "turtle", None),
-    ("/backtest/clenow/", "跨資產趨勢", "clenow", None),
-    ("/backtest/multiasset_trend/", "SG Trend 複製", "matrend", None),
-    ("/backtest/turtle_adopt/", "組合採用 Sleeve", "turtle_adopt", None),
-    ("/backtest/slope_filter_global/", "全球斜率穩健性", "slope_global", None),
-    ("/backtest/crossasset_defense/", "跨資產防守", "xadef", None),
-]
-
-TAIWAN_LINKS = [
-    ("/backtest/tw_0050_compare/", "0050 總覽·台美差異", "tw0050cmp", None),
-    ("/backtest/tw_0050/", "0050 進攻趨勢（移植）", "tw0050", None),
-    ("/backtest/tw_0050_lt/", "0050 長軌趨勢", "tw0050lt", None),
-    ("/backtest/long_track_tw/", "2330/0050 E3 長軌", "lttw", None),
-    ("/backtest/tw_0050_six/", "0050 六狀態機", "tw0050six", None),
-    ("/backtest/tw_0050_dual/", "0050 雙軌多空", "tw0050d", "否決"),
-]
-
-# 2026-09-10：台指期趨勢研究按日線與 60 分 K 兩個時間框架列示。
-FUTURES_DAILY_LINKS = [
-    ("/backtest/txf_daily/", "台指期日線・20 日通道", "txf_daily", "研究"),
-    ("/backtest/txf_hourly/", "台指期60分K・趨勢與通道", "txf_hourly", "研究"),
-]
-
-# 2026-10-01：外部策略檢驗（原名商用策略專區，同日改名；網址不變）——賣家公開策略照文字重建、只看賣家沒看過的資料，並與實單並排比較。
-VENDOR_LINKS = [
-    ("/backtest/vendor/", "外部策略檢驗", "vendor", "專區"),
-]
-
-INTRADAY_LINKS = [
-    ("/backtest/txf_intraday/", "台指當沖", "txf_intra", "未過"),
-    ("/backtest/txf_chips/", "籌碼偏向", "txf_chips", "觀察"),
-    ("/backtest/ssf_xsec/", "個股期橫斷面", "ssf_xsec", "未過"),
-    ("/backtest/txf_basis/", "基差偏向", "txf_basis", "否決"),
-]
-
-# 研究筆記：機制/方法探索頁，非可交易系統排名的一部分。收攏原本落在
-# pill 清單之外、無法從導航進入的 9 顆孤兒頁（2026-07-11）。daily_vs_weekly
-# 主頁對三個子頁無前向連結，故不採「單一代表 pill＋頁內互連」而給每頁各一
-# 顆自有 pill，確保每頁皆可從導航到達且自身高亮（代價：本群較寬，維持單列）。
-# 研究筆記依主題拆為四群（2026-07-20 重分類）。原本 12 條混雜四個互不相關的主題，
-# 且 smh_vcrash 落在研究筆記、同性質的 tw_vcrash／tw_crash 卻在台股波段。現以
-# 「研究主題」為軸，與「可交易系統」（個別系統／台股波段）明確區隔。
-RESEARCH_ETF_LINKS = [
-    ("/backtest/active_etf/", "主動式ETF總結", "active_etf", "專區"),
-    ("/backtest/tw_active_etf/", "台股主動式ETF", "tw_active_etf", "研究"),
-    ("/backtest/us_active_etf/", "美股主動式ETF", "us_active_etf", "研究"),
-    ("/backtest/tw_mutual_fund/", "台股共同基金", "tw_mutual_fund", "研究"),
-]
-
-RESEARCH_FREQ_LINKS = [
-    ("/backtest/daily_vs_weekly/", "日/週線", "dvw", None),
-    ("/backtest/daily_vs_weekly_deep/", "日/週·深掘", "dvw_deep", None),
-    ("/backtest/daily_vs_weekly_global/", "日/週·全球", "dvw_global", None),
-    ("/backtest/daily_vs_weekly_tw/", "日/週·台股", "dvw_tw", None),
-]
-
-RESEARCH_MA_LINKS = [
-    ("/backtest/ma_cross/", "MA 交叉", "ma_cross", None),
-    ("/backtest/ma_deviation/", "MA 乖離", "ma_dev", None),
-    ("/backtest/ma_dynband/", "MA 動態帶", "ma_dynband", None),
-    ("/backtest/ma_squeeze/", "MA 擠壓", "ma_squeeze", None),
-]
-
-RESEARCH_CRASH_LINKS = [
-    ("/backtest/smh_vcrash/", "SMH V崩", "smh_vcrash", None),
-    ("/backtest/tw_vcrash/", "台股 V崩防禦", "tw_vcrash", None),
-    ("/backtest/tw_crash/", "台股含崩盤驗證", "twcrash", None),
-]
-
-# 2026-08-08 新增：跨國總經研究（非可交易系統，故另立一群而不塞進既有四群）。
-RESEARCH_MACRO_LINKS = [
-    ("/backtest/housing_gdp/", "人均GDP與房價", "housing_gdp", "研究"),
-    ("/backtest/yield_curve/", "殖利率倒掛與衰退", "yield_curve", "研究"),
-    ("/backtest/yc_equity/", "倒掛之後股票該賣嗎", "yc_equity", "研究"),
-    ("/backtest/sahm_rule/", "Sahm 法則跨國", "sahm_rule", "研究"),
-    ("/backtest/first_cut/", "第一次降息後的股市", "first_cut", "研究"),
-    # 2026-10-04：漲多了還能追嗎（美股／產業／避險基金／台股的追高回測；原主報告＋續篇合併為一頁）。
-    ("/backtest/chasing_returns/", "漲多了還能追嗎", "chasing_returns", "研究"),
-]
-
-# 2026-08-15 新增：台股可轉債（CB）研究專區——五個獨立回測（折價組合/停止轉換/
-# 賣回保底/月營收催化/折價收斂）彙整頁，自成一群（同 OPTIONS_LINKS 的做法），
-# 不塞進 TAIWAN_LINKS（那是可交易的波段系統排名）或既有研究四群（主題不合）。
-TW_CB_LINKS = [
-    ("/backtest/tw_cb/", "台股可轉債專區", "tw_cb", "研究"),
-]
-
-# 2026-08-29 新增：美股「獲利 vs 估值」報酬歸因研究（事後分解 + 事前預測五分位 +
-# 先知測試三段），非可交易系統，也不是台股/選擇權主題，自成一群（同 TW_CB_LINKS
-# 的做法）。
-# 2026-09-05 新增：實單規則鏈（W52 閘門×自適應 σ×cap1.5）的跨標的前瞻證偽——
-# 凍結規則丟到規則選擇時從未看過的 ~30 檔標的，量化是否「普遍」或該進 kill 訊號
-# 檢討清單。非可交易系統、非既有四群主題，自成一群（同 TW_CB_LINKS 的做法）。
-# 2026-09-05 再新增：保留 regime 的 bootstrap（以真實牛熊段為重抽單位，對照
-# adopted_bootstrap 固定 block 63 對趨勢規則不公平的疑慮）。
-RESEARCH_OOS_LINKS = [
-    ("/backtest/live_system_evidence/", "證據總覽（先看這頁）", "evidence_hub", "研究"),
-    ("/backtest/w52_adaptive_oos/", "W52×自適應 σ 跨標的證偽", "w52_oos", "研究"),
-    ("/backtest/insurance_premium/", "深熊保險的價格", "ins_prem", "研究"),
-    ("/backtest/adopted_bootstrap/", "已採用系統的統計不確定性帶", "adopt_boot", "研究"),
-    ("/backtest/regime_bootstrap/", "保留 regime 的 bootstrap", "regime_boot", "研究"),
-    ("/backtest/combined_account/", "美台合併帳戶層", "comb_acct", "研究"),
-    ("/backtest/slow_bear_base_rate/", "慢熊的 base rate", "slow_bear", "研究"),
-    ("/backtest/slow_bear_onset/", "慢熊：起點認得出來嗎？", "slow_bear_onset", "研究"),
-    ("/backtest/f_portfolio/", "F 組合：疊兩種保險", "f_portfolio", "研究"),
-    ("/backtest/a0_d1_comfort/", "A0＋D1 舒服度", "a0_d1_comfort", "研究"),
-    ("/backtest/f_comfort/", "F 組合舒服度", "f_comfort", "研究"),
-    ("/backtest/comfort_tournament/", "舒服度錦標賽", "comfort_tournament", "研究"),
-    ("/backtest/futures_leg/", "F70 換 CTA 腿", "futures_leg", "否決"),
-    ("/backtest/cross_sectional_trend/", "橫斷面版趨勢", "cross_sec_trend", "研究"),
-    ("/backtest/a0_proposal/", "A0 提案（10 月回顧點）", "a0_proposal", "研究"),
-]
-
-RESEARCH_FACTOR_LINKS = [
-    ("/backtest/return_driver/", "美股漲跌歸因：獲利與估值", "return_driver", "研究"),
-    ("/backtest/pead/", "美股財報驚喜後漂移", "pead", "研究"),
-    ("/backtest/pead_reaction/", "財報打敗但沒漲，之後贏面大嗎", "pead_reaction", "研究"),
-    ("/backtest/accruals/", "美股獲利品質（應計項目）", "accruals", "研究"),
-    ("/backtest/share_issuance/", "美股股數增減（發行與回購）", "share_issuance", "研究"),
-    ("/backtest/profitability/", "美股獲利能力因子", "profitability", "研究"),
-    ("/backtest/asset_growth/", "美股資產成長異象", "asset_growth", "研究"),
-    ("/backtest/index_inclusion/", "指數納入效應", "index_inclusion", "研究"),
-    ("/backtest/insider/", "內部人買賣叢集買進", "insider", "研究"),
-    ("/backtest/revmom/", "台股月營收動能選股", "revmom", "研究"),
-]
-
-# 向後相容：舊名保留為五群之串接，供外部引用者使用。
-RESEARCH_LINKS = (RESEARCH_ETF_LINKS + RESEARCH_FREQ_LINKS
-                  + RESEARCH_MA_LINKS + RESEARCH_CRASH_LINKS
-                  + RESEARCH_MACRO_LINKS)
+# 向後相容：舊的 pill 群名稱改為依區組成
+ZONE_LINKS = {
+    z: [(u, PM.PAGES[u]["short"], PM.PAGES[u]["key"], PM.PAGES[u]["status"]) for u in PM.ZONE_ORDER[z]]
+    for z in PM.ZONES
+}
+ALIASES = PM.aliases()
 
 # One <style> block per page (make_toggle is embedded once). Scoped under
 # .bt-subnav so it can never collide with page CSS.
@@ -254,8 +79,10 @@ _STYLE = (
     '.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}'
     '.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}'
     '.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}'
+    '.bt-tag-live{background:rgba(184,146,74,.2);color:#7a5a1a}'
     '.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}'
     '.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}'
+    '.bt-on .bt-tag-live{background:rgba(255,255,255,.22);color:#fff}'
     '@media(max-width:640px){'
     '.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}'
     '.bt-subnav-lbl{flex-basis:auto;padding-top:0}}'
@@ -270,13 +97,14 @@ def _pill(url: str, label: str, key: str, status: str | None, active: str) -> st
         kind, is_dead = _STATUS[status]
         if is_dead and key != active:
             cls.append("bt-dead")
-        tag = f'<span class="bt-tag bt-tag-{kind}">{status}</span>'
+        if kind:
+            tag = f'<span class="bt-tag bt-tag-{kind}">{PM.STATUS[status]}</span>'
     cls_attr = f' class="{" ".join(cls)}"' if cls else ""
     return f'<a href="{url}"{cls_attr}>{label}{tag}</a>'
 
 
 def _sorted(links: list) -> list:
-    """Dead (否決/失敗/負貢獻) pills sort to the end; otherwise stable order."""
+    """已否決／已退役 pills sort to the end; otherwise stable order."""
     def rank(entry):
         status = entry[3]
         return 1 if (status and _STATUS[status][1]) else 0
@@ -290,22 +118,8 @@ def _row(title: str, links: list, active: str) -> str:
 
 
 def make_toggle(active: str) -> str:
-    """Render the five-group pill bar. `active` = key of the current page."""
+    """Render the pill bar. `active` = key of the current page (member keys are aliased)."""
+    active = ALIASES.get(active, active)
     return (_STYLE + '<nav class="bt-subnav" aria-label="回測子導航">'
-            + _row("對比總覽", COMPARISON_LINKS, active)
-            + _row("個別系統", INDIVIDUAL_LINKS, active)
-            + _row("多資產", MULTI_LINKS, active)
-            + _row("台股波段", TAIWAN_LINKS, active)
-            + _row("台股選擇權", OPTIONS_LINKS, active)
-            + _row("期貨趨勢", FUTURES_DAILY_LINKS, active)
-            + _row("日內交易", INTRADAY_LINKS, active)
-            + _row("外部策略", VENDOR_LINKS, active)
-            + _row("研究・主動式ETF", RESEARCH_ETF_LINKS, active)
-            + _row("研究・頻率", RESEARCH_FREQ_LINKS, active)
-            + _row("研究・均線", RESEARCH_MA_LINKS, active)
-            + _row("研究・崩盤", RESEARCH_CRASH_LINKS, active)
-            + _row("研究・總經", RESEARCH_MACRO_LINKS, active)
-            + _row("研究・可轉債", TW_CB_LINKS, active)
-            + _row("研究・因子", RESEARCH_FACTOR_LINKS, active)
-            + _row("研究・跨標的驗證", RESEARCH_OOS_LINKS, active)
+            + "".join(_row(ROW_LABELS[z], ZONE_LINKS[z], active) for z in sorted(ZONE_LINKS))
             + '</nav>')
