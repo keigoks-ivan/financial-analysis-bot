@@ -212,7 +212,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 'use strict';
 var LWC = window.LightweightCharts;
 var V = String(Date.now()).slice(0,8);   // 資料檔快取：每約 11 天自然換一次，另由 meta.updated 補強
-var FILES = ['cal','price','inst','margin','sbl','fut','opt','pcr','large','fx','meta'];
+var FILES = ['cal','price','inst','margin','sbl','dtrade','otc','fut','mtx','basis','opt','pcr','large','fx','meta'];
 var D = {}, CAL = [], CAL_IDX = {};
 var charts = [];            // 所有圖：{chart, box, readout, series:[{def,api}], overlay, ...}
 var syncing = false;
@@ -231,6 +231,7 @@ var FMT = {
   sgn:function(f){ var g=function(v){ return v==null?'—':(v>0?'+':'')+f(v); }; g.p=f.p; return g; }
 };
 FMT.int.p=0; FMT.d1.p=1; FMT.d2.p=2;
+function firstIdx(arr){ for(var i=0;i<arr.length;i++){ if(arr[i]!=null) return i; } return -1; }
 function lastIdx(arr){ for(var i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return i; } return -1; }
 function valBack(arr, i, n){            // i 往前 n 個交易日；該日沒值就往前找最多 5 天
   var j = i - n;
@@ -242,7 +243,7 @@ function sumLast(arr, i, n){ var s=0; for(var k=0;k<n;k++){ var v=arr[i-k]; if(v
 /* ---------------- 圖表定義 ---------------- */
 // kind: line | hist | candle；col: 主題色 key；sign: 柱狀圖依正負上色（紅買超／綠賣超）
 function buildSpecs(){
-  var P=D.price, I=D.inst, M=D.margin, B=D.sbl, F=D.fut, O=D.opt, R=D.pcr, L=D.large, X=D.fx;
+  var P=D.price, I=D.inst, M=D.margin, B=D.sbl, F=D.fut, O=D.opt, R=D.pcr, L=D.large, X=D.fx, DT=D.dtrade, OT=D.otc, MX=D.mtx, BS=D.basis;
   var optWho = {f:'外資', t:'投信', dl:'自營商'};
   return [
   {id:'price', n:'1', title:'加權指數日 K 線與成交金額', height:380, overlay:false, volume:true,
@@ -255,16 +256,22 @@ function buildSpecs(){
      {k:'ma240', name:'240 日', kind:'line', arr:P.ma240, col:'c4', fmt:FMT.d2, w:1},
      {k:'amt', name:'成交金額（億元）', kind:'vol', arr:P.amt, fmt:FMT.int}
    ]},
-  {id:'inst', n:'2', title:'三大法人現貨買賣超', unit:'億元', overlay:false, multi:true, cum:true,
+  {id:'inst', n:'2', title:'三大法人現貨買賣超（上市、上櫃）', unit:'億元', overlay:false, multi:true, cum:true,
    head:{arr:I.f, fmt:FMT.sgn(FMT.int), unit:'億元', name:'外資', delta:'sum20', dfmt:FMT.sgn(FMT.int), dlabel:'近 20 日合計'},
-   hint:'紅柱是買超、綠柱是賣超，單位為億元，看左軸。每張圖另有一條「累計（自畫面起點）」線，看右軸（手機版右軸收起，數字看圖上方讀數）：從目前畫面最左邊那一天開始逐日加總、起點歸零，所以切換區間、拖曳或縮放後會重新累計，選「1 年」看到的就是近 1 年累計。三者之中外資的量體最大；連續多日同方向才算趨勢，單日的大買大賣常和指數調整、期貨結算有關。投信、自營商另有各自的節奏，分開畫在下面。',
+   hint:'紅柱是買超、綠柱是賣超，單位為億元，看左軸。每張圖另有一條「累計（自畫面起點）」線，看右軸（手機版右軸收起，數字看圖上方讀數）：從目前畫面最左邊那一天開始逐日加總、起點歸零，所以切換區間、拖曳或縮放後會重新累計，選「1 年」看到的就是近 1 年累計。三者之中外資的量體最大；連續多日同方向才算趨勢，單日的大買大賣常和指數調整、期貨結算有關。投信、自營商另有各自的節奏，分開畫在下面。最下面三張是上櫃市場（櫃買中心）的同樣三個法人：上櫃投信與自營商自 2017-01-03 起有資料，外資自 2018-01-15 起（官方在這之前沒有外資列）；上市、上櫃是兩個市場，金額分開看，不要直接相加。',
    subs:[
      {h:200, title:'外資及陸資', series:[{k:'f', name:'外資', kind:'hist', sign:true, arr:I.f, fmt:FMT.sgn(FMT.int)},
        {k:'f_c', name:'累計（自畫面起點）', kind:'line', col:'c1', axis:'right', cumOf:I.f, arr:I.f.map(function(){return null;}), fmt:FMT.sgn(FMT.int), zero:true}]},
      {h:130, title:'投信', series:[{k:'t', name:'投信', kind:'hist', sign:true, arr:I.t, fmt:FMT.sgn(FMT.int)},
        {k:'t_c', name:'累計（自畫面起點）', kind:'line', col:'c1', axis:'right', cumOf:I.t, arr:I.t.map(function(){return null;}), fmt:FMT.sgn(FMT.int), zero:true}]},
      {h:130, title:'自營商（自行買賣＋避險）', series:[{k:'dl', name:'自營商', kind:'hist', sign:true, arr:I.dl, fmt:FMT.sgn(FMT.int)},
-       {k:'dl_c', name:'累計（自畫面起點）', kind:'line', col:'c1', axis:'right', cumOf:I.dl, arr:I.dl.map(function(){return null;}), fmt:FMT.sgn(FMT.int), zero:true}]}
+       {k:'dl_c', name:'累計（自畫面起點）', kind:'line', col:'c1', axis:'right', cumOf:I.dl, arr:I.dl.map(function(){return null;}), fmt:FMT.sgn(FMT.int), zero:true}]},
+     {h:150, title:'上櫃：外資及陸資（櫃買中心）', series:[{k:'of', name:'上櫃外資', kind:'hist', sign:true, arr:OT.f, fmt:FMT.sgn(FMT.int)},
+       {k:'of_c', name:'上櫃累計（自畫面起點）', kind:'line', col:'c1', axis:'right', cumOf:OT.f, arr:OT.f.map(function(){return null;}), fmt:FMT.sgn(FMT.int), zero:true}]},
+     {h:110, title:'上櫃：投信', series:[{k:'ot', name:'上櫃投信', kind:'hist', sign:true, arr:OT.t, fmt:FMT.sgn(FMT.int)},
+       {k:'ot_c', name:'上櫃累計（自畫面起點）', kind:'line', col:'c1', axis:'right', cumOf:OT.t, arr:OT.t.map(function(){return null;}), fmt:FMT.sgn(FMT.int), zero:true}]},
+     {h:110, title:'上櫃：自營商（自行買賣＋避險）', series:[{k:'odl', name:'上櫃自營商', kind:'hist', sign:true, arr:OT.dl, fmt:FMT.sgn(FMT.int)},
+       {k:'odl_c', name:'上櫃累計（自畫面起點）', kind:'line', col:'c1', axis:'right', cumOf:OT.dl, arr:OT.dl.map(function(){return null;}), fmt:FMT.sgn(FMT.int), zero:true}]}
    ]},
   {id:'cum', n:'3', title:'外資、投信累計買賣超與外資 20 日合計', unit:'億元', overlay:true, multi:true,
    head:{arr:I.f_cum, fmt:FMT.sgn(FMT.int), unit:'億元', name:'外資累計', delta:'diff', dfmt:FMT.sgn(FMT.int)},
@@ -276,14 +283,17 @@ function buildSpecs(){
      {h:170, title:'外資 20 日滾動合計（億元）', series:[
        {k:'f_r20', name:'外資 20 日合計', kind:'hist', sign:true, arr:I.f_r20, fmt:FMT.sgn(FMT.int)}]}
    ]},
-  {id:'margin', n:'4', title:'融資餘額、融券餘額與券資比', unit:'億元', overlay:true, multi:true,
+  {id:'margin', n:'4', title:'融資餘額、融券餘額與券資比（上市、上櫃）', unit:'億元', overlay:true, multi:true,
    head:{arr:M.mga, fmt:FMT.int, unit:'億元', name:'融資餘額', delta:'diff', dfmt:FMT.sgn(FMT.int), extra:function(i){
        return (M.mg[i]!=null? '（'+FMT.d1(M.mg[i]/10000)+' 萬張）' : ''); }},
-   hint:'融資是散戶借錢買股票的餘額。餘額跟著指數創高一路上升，代表追價意願升溫；指數下跌時餘額快速下降，是被迫斷頭或主動減碼。融券是借股票放空尚未回補的張數，官方只公布張數，沒有金額。券資比是融券張數除以融資張數，比值越高，放空相對融資買進的力量越大。',
+   hint:'融資是散戶借錢買股票的餘額。餘額跟著指數創高一路上升，代表追價意願升溫；指數下跌時餘額快速下降，是被迫斷頭或主動減碼。融券是借股票放空尚未回補的張數，官方只公布張數，沒有金額。券資比是融券張數除以融資張數，比值越高，放空相對融資買進的力量越大。最下面三張是上櫃市場的同樣資料（櫃買中心彙總表，自 2016-10 起），上市、上櫃的餘額分開計算。',
    subs:[
      {h:230, title:'融資餘額（億元）', series:[{k:'mga', name:'融資餘額', kind:'line', arr:M.mga, col:'c1', fmt:FMT.int}]},
      {h:150, title:'融券餘額（張）', series:[{k:'sh', name:'融券餘額', kind:'line', arr:M.sh, col:'c2', fmt:FMT.int}]},
-     {h:150, title:'券資比（%）', series:[{k:'ratio', name:'券資比', kind:'line', arr:M.ratio, col:'c3', fmt:FMT.d2}]}
+     {h:150, title:'券資比（%）', series:[{k:'ratio', name:'券資比', kind:'line', arr:M.ratio, col:'c3', fmt:FMT.d2}]},
+     {h:180, title:'上櫃：融資餘額（億元）', series:[{k:'omga', name:'上櫃融資餘額', kind:'line', arr:OT.mga, col:'c4', fmt:FMT.int}]},
+     {h:130, title:'上櫃：融券餘額（張）', series:[{k:'osh', name:'上櫃融券餘額', kind:'line', arr:OT.sh, col:'c4', fmt:FMT.int}]},
+     {h:130, title:'上櫃：券資比（%）', series:[{k:'oratio', name:'上櫃券資比', kind:'line', arr:OT.ratio, col:'c4', fmt:FMT.d2}]}
    ]},
   {id:'sbl', n:'5', title:'借券餘額占上市總市值', unit:'%', overlay:true, multi:true,
    head:{arr:B.slb_r, fmt:FMT.d2, unit:'%', name:'借券賣出餘額占總市值', delta:'prev4', dfmt:FMT.sgn(FMT.d2), dunit:'個百分點', extra:function(i){
@@ -299,7 +309,18 @@ function buildSpecs(){
      {h:130, title:'上市總市值（億元，證交所市值週報，每週末一點）', series:[
        {k:'cap', name:'上市總市值', kind:'line', arr:B.cap, col:'c3', fmt:FMT.int, sparse:true}]}
    ]},
-  {id:'fut', n:'6', title:'臺股期貨三大法人未平倉淨口數', unit:'口', overlay:true, height:260,
+  {id:'dtrade', n:'6', title:'當沖比率（上市）', unit:'%', overlay:true, multi:true,
+   head:{arr:DT.r_amt, fmt:FMT.d1, unit:'%', name:'當沖買進金額占成交金額', delta:'diff', dfmt:FMT.sgn(FMT.d1), dunit:'個百分點', extra:function(i){
+       return DT.amt[i]!=null ? '（當沖買進 '+FMT.int(DT.amt[i])+' 億元）' : ''; }},
+   hint:'當日沖銷是同一天買進又賣出的交易，這個比率越高，代表市場裡短線進出的人越多。上圖有兩條線：一條是當沖買進金額占全市場成交金額的比重，一條是當沖成交股數占全市場成交股數的比重，都是證交所每天公布的官方數字，分母包含一般交易、盤後定價、零股與鉅額。金額比通常高於股數比，表示被拿來當沖的股票平均股價高於全市場平均。2017 年 4 月 28 日起現股當沖的證交稅減半，這之後比率明顯墊高，所以跨年份比較要把這個制度變化考慮進去。比率只描述當下的交易熱度，單看它沒辦法判斷指數接下來漲或跌。',
+   subs:[
+     {h:230, title:'當沖占全市場比重（%）', series:[
+       {k:'r_amt', name:'金額比（買進金額 ÷ 成交金額）', kind:'line', arr:DT.r_amt, col:'c1', fmt:FMT.d2},
+       {k:'r_sh', name:'股數比（成交股數 ÷ 市場股數）', kind:'line', arr:DT.r_sh, col:'c2', fmt:FMT.d2}]},
+     {h:170, title:'當沖買進成交金額（億元）', series:[
+       {k:'dtamt', name:'當沖買進金額', kind:'line', arr:DT.amt, col:'c3', fmt:FMT.int}]}
+   ]},
+  {id:'fut', n:'7', title:'臺股期貨三大法人未平倉淨口數', unit:'口', overlay:true, height:260,
    head:{arr:F.f, fmt:FMT.sgn(FMT.int), unit:'口', name:'外資', delta:'diff', dfmt:FMT.sgn(FMT.int)},
    hint:'未平倉淨口數＝多單口數減空單口數。外資常用期貨替現貨部位避險，所以長期多為淨空，看變化方向比看正負更重要：淨空單變大，代表外資在加碼避險或看空；淨空單縮小或轉為淨多，代表避險部位回補。',
    series:[
@@ -307,7 +328,35 @@ function buildSpecs(){
      {k:'t', name:'投信', kind:'line', arr:F.t, col:'c2', fmt:FMT.sgn(FMT.int)},
      {k:'dl', name:'自營商', kind:'line', arr:F.dl, col:'c3', fmt:FMT.sgn(FMT.int)}
    ]},
-  {id:'opt', n:'7', title:'臺指選擇權三大法人買權、賣權未平倉', unit:'口', overlay:true, multi:true, who:true,
+  {id:'mtx', n:'8', title:'小型臺指期貨散戶多空比', unit:'%', overlay:true, multi:true,
+   head:{arr:MX.ratio, fmt:FMT.sgn(FMT.d1), unit:'%', name:'小台散戶多空比', delta:'diff', dfmt:FMT.sgn(FMT.d1), dunit:'個百分點', extra:function(i){
+       return '（三大法人淨 '+FMT.sgn(FMT.int)(MX.net[i])+' 口，全市場 '+FMT.int(MX.oi[i])+' 口）'; }},
+   hint:'算法：散戶多空比＝－（外資、投信、自營商三者的小型臺指期貨未平倉淨口數合計）÷ 小型臺指期貨全市場所有月份未平倉口數 × 100。淨口數＝多方口數減空方口數；三大法人以外的交易人整體視為「散戶方」，所以三大法人合計淨空越多，這個比值越正，代表散戶方整體越偏多。常有人把散戶越看多當成偏危險的訊號，但這只是市場上的說法，本頁只呈現資料，沒有替這個說法背書。微型臺指期貨（2024-07-29 上市）用同樣算法另畫一條，起點較晚。資料全部來自期交所，2023-10 以前取自 FinMind 轉載的同一份期交所資料。',
+   subs:[
+     {h:240, title:'散戶多空比（%，正值＝三大法人以外整體偏多）', series:[
+       {k:'mr', name:'小台散戶多空比', kind:'line', arr:MX.ratio, col:'c1', fmt:FMT.sgn(FMT.d1), zero:true},
+       {k:'tr', name:'微台散戶多空比', kind:'line', arr:MX.tmf_ratio, col:'c2', fmt:FMT.sgn(FMT.d1)}]},
+     {h:200, title:'三大法人小台未平倉淨口數（口）', series:[
+       {k:'mf', name:'外資', kind:'line', arr:MX.f, col:'c1', fmt:FMT.sgn(FMT.int), zero:true},
+       {k:'mt', name:'投信', kind:'line', arr:MX.t, col:'c2', fmt:FMT.sgn(FMT.int)},
+       {k:'md', name:'自營商', kind:'line', arr:MX.dl, col:'c3', fmt:FMT.sgn(FMT.int)}]},
+     {h:170, title:'全市場未平倉口數（口，所有月份合計）', series:[
+       {k:'moi', name:'小台', kind:'line', arr:MX.oi, col:'c1', fmt:FMT.int},
+       {k:'toi', name:'微台', kind:'line', arr:MX.tmf_oi, col:'c2', fmt:FMT.int}]}
+   ]},
+  {id:'basis', n:'9', title:'期貨正逆價差與台指 VIX', unit:'點', overlay:true, multi:true,
+   head:{arr:BS.pts, fmt:FMT.sgn(FMT.d1), unit:'點', name:'近月期貨 − 加權指數', delta:'diff', dfmt:FMT.sgn(FMT.d1), extra:function(i){
+       return '（'+FMT.sgn(FMT.d2)(BS.pct[i])+'%'+(BS.vix[i]!=null ? '，台指 VIX '+FMT.d2(BS.vix[i]) : '')+'）'; }},
+   hint:'正逆價差＝臺股期貨近月契約收盤價減加權指數收盤價：期貨比現貨貴是正價差，比現貨便宜是逆價差。換月規則：近月契約在最後交易日（每月第三個星期三，遇休市順延）當天改看次月契約，所以每月到期日價差會跳一格，離到期愈近價差通常愈小。時間差要留意：期貨一般盤 13:45 收盤，加權指數 13:30 收盤，相差 15 分鐘，圖上的點數包含這 15 分鐘的期貨波動，不是純粹的價差。價差也受利率和預期股息影響，因此不能單看正負下結論：台股除息集中在 6、7 月，這兩個月近月期貨在多數年份（2017 至 2023 年、2025 年）會出現逆價差，是季節現象；2020 年 3 月與 2024 年 8 月則是急殺行情，期貨跌得比現貨快，逆價差一度達到指數的 3.8%（2020-03-19）與 2.3%（2024-08-05）。台指 VIX 是期交所用臺指選擇權報價算出的未來 30 天預期波動，數字越高代表市場預期震盪越大；期交所網站只保留最近約 4 個月的每日檔案，所以這條線從 2026-07-01 才開始，之後每天累積。',
+   subs:[
+     {h:240, title:'近月期貨收盤 − 加權指數收盤（點）', series:[
+       {k:'bpts', name:'正逆價差（點）', kind:'line', arr:BS.pts, col:'c1', fmt:FMT.sgn(FMT.d1), zero:true}]},
+     {h:200, title:'正逆價差占加權指數（%）', series:[
+       {k:'bpct', name:'正逆價差（%）', kind:'line', arr:BS.pct, col:'c2', fmt:FMT.sgn(FMT.d2), zero:true}]},
+     {h:170, title:'臺指選擇權波動率指數（台指 VIX）', series:[
+       {k:'vix', name:'台指 VIX', kind:'line', arr:BS.vix, col:'c3', fmt:FMT.d2}]}
+   ]},
+  {id:'opt', n:'10', title:'臺指選擇權三大法人買權、賣權未平倉', unit:'口', overlay:true, multi:true, who:true,
    head:{arrFn:function(w){ return O['c_'+w+'_n']; }, fmt:FMT.sgn(FMT.int), unit:'口', name:'買權淨口數', delta:'diff', dfmt:FMT.sgn(FMT.int)},
    hint:'未平倉淨部位＝買方口數減賣方口數。買權淨部位偏多、賣權淨部位偏空，代表該法人整體押指數上漲；反過來則偏向看跌。用右上角選單切換外資、投信或自營商。',
    subs:[
@@ -315,14 +364,14 @@ function buildSpecs(){
        {k:'c_n', name:'買權淨口數', kind:'line', col:'c1', fmt:FMT.sgn(FMT.int), zero:true, optKey:'c_{w}_n'},
        {k:'p_n', name:'賣權淨口數', kind:'line', col:'c2', fmt:FMT.sgn(FMT.int), optKey:'p_{w}_n'}]}
    ]},
-  {id:'pcr', n:'8', title:'選擇權 Put/Call Ratio', unit:'%', overlay:true, height:240,
+  {id:'pcr', n:'11', title:'選擇權 Put/Call Ratio', unit:'%', overlay:true, height:240,
    head:{arr:R.or, fmt:FMT.d1, unit:'%', name:'未平倉比', delta:'diff', dfmt:FMT.sgn(FMT.d1)},
    hint:'賣權量除以買權量的百分比。高於 100% 代表賣權比買權多，避險或看空的部位較重；低於 100% 則買權較多。未平倉比比較穩定，成交量比單日波動大，看趨勢以未平倉比為主。',
    series:[
      {k:'or', name:'未平倉比', kind:'line', arr:R.or, col:'c1', fmt:FMT.d1, ref:100},
      {k:'vr', name:'成交量比', kind:'line', arr:R.vr, col:'c2', fmt:FMT.d1, w:1}
    ]},
-  {id:'large', n:'9', title:'臺股期貨大額交易人未平倉', unit:'口', overlay:true, height:260,
+  {id:'large', n:'12', title:'臺股期貨大額交易人未平倉', unit:'口', overlay:true, height:260,
    head:{arr:L.s10, fmt:FMT.sgn(FMT.int), unit:'口', name:'特定法人前十大', delta:'diff', dfmt:FMT.sgn(FMT.int)},
    hint:'大額交易人是持倉最大的前五或前十名，數字是他們的買方部位減賣方部位，另外單獨列出其中的特定法人。為正代表大戶買方部位大於賣方，為負則相反。口數以大型臺指約當計算（小型 1/4、微型 1/20），涵蓋所有到期月份。',
    series:[
@@ -331,7 +380,7 @@ function buildSpecs(){
      {k:'s5', name:'特定法人前五大', kind:'line', arr:L.s5, col:'c2', fmt:FMT.sgn(FMT.int), w:1},
      {k:'s10', name:'特定法人前十大', kind:'line', arr:L.s10, col:'c3', fmt:FMT.sgn(FMT.int), w:1}
    ]},
-  {id:'fx', n:'10', title:'新台幣兌美元匯率', unit:'TWD/USD', overlay:true, height:220,
+  {id:'fx', n:'13', title:'新台幣兌美元匯率', unit:'TWD/USD', overlay:true, height:220,
    head:{arr:X.v, fmt:FMT.d2, unit:'元', delta:'diff', dfmt:FMT.sgn(FMT.d2)},
    hint:'新台幣兌 1 美元的匯率，數字上升代表新台幣貶值，下降代表升值。可和外資買賣超對照，看資金流向有沒有和匯率同方向。美國休市日沿用前一營業日的收盤值。',
    series:[{k:'v', name:'USD/TWD', kind:'line', arr:X.v, col:'c1', fmt:FMT.d2}]}
@@ -377,6 +426,16 @@ function baseOptions(T, h, width){
   };
 }
 
+/* 資料起點晚於圖的最左邊（少於 10 年）的序列：在第一個資料點上標「資料起點 日期」，圖例也註明 */
+function markStarts(item){
+  var T = theme(), done = {};
+  item.series.forEach(function(s){
+    if(!s.start) return;
+    var txt = done[s.start] ? '' : '資料起點 '+s.start;
+    done[s.start] = true;
+    s.api.setMarkers([{time:s.start, position:'aboveBar', color:T.ref, shape:'arrowDown', text:txt}]);
+  });
+}
 function makeChart(parent, h, title, defs, ov, sectionOverlayOn){
   var T = theme();
   var box = document.createElement('div'); box.className='cbox'; parent.appendChild(box);
@@ -403,8 +462,10 @@ function makeChart(parent, h, title, defs, ov, sectionOverlayOn){
     api.setData(mkData(def, T));
     if(def.zero) api.createPriceLine({price:0, color:T.ref, lineWidth:1, lineStyle:2, axisLabelVisible:false});
     if(def.ref!=null) api.createPriceLine({price:def.ref, color:T.ref, lineWidth:1, lineStyle:2, axisLabelVisible:true, title:''});
-    item.series.push({def:def, api:api, visible:true});
+    var fi = def.cumOf || def.kind==='vol' ? -1 : firstIdx(def.arr);
+    item.series.push({def:def, api:api, visible:true, start:(fi>5 ? CAL[fi] : null)});
   });
+  markStarts(item);
   if(defs.some(function(d){ return d.sparse; })){
     var pad = chart.addLineSeries({priceScaleId:'left', priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false});
     pad.setData(CAL.map(function(d){ return {time:d}; }));
@@ -459,7 +520,7 @@ function recomputeCum(force){
   var el = document.querySelector('#s-inst .cumhd');
   if(el){
     var f = FMT.sgn(FMT.int);
-    el.innerHTML = '畫面期間累計（'+CAL[start]+' 至 '+CAL[end]+'）：外資 '+f(Math.round(tot.f_c))+'、投信 '+f(Math.round(tot.t_c))+'、自營商 '+f(Math.round(tot.dl_c))+' 億元';
+    el.innerHTML = '畫面期間累計（'+CAL[start]+' 至 '+CAL[end]+'）：上市外資 '+f(Math.round(tot.f_c))+'、投信 '+f(Math.round(tot.t_c))+'、自營商 '+f(Math.round(tot.dl_c))+'；上櫃外資 '+f(Math.round(tot.of_c||0))+'、投信 '+f(Math.round(tot.ot_c||0))+'、自營商 '+f(Math.round(tot.odl_c||0))+' 億元';
   }
   var cc = document.getElementById('cardCum');
   if(cc) cc.textContent = FMT.sgn(FMT.int)(Math.round(tot.f_c));
@@ -553,7 +614,7 @@ function buildSection(spec){
       var chip = document.createElement('span'); chip.className='chip';
       var T = theme();
       var col = s.def.kind==='candle' ? T.up : s.def.kind==='vol' ? T.idx : s.def.sign ? T.up : T[s.def.col];
-      chip.innerHTML = '<i style="background:'+col+'"></i>'+s.def.name;
+      chip.innerHTML = '<i style="background:'+col+'"></i>'+s.def.name+(s.start ? '（自 '+s.start+' 起）' : '');
       chip.addEventListener('click', function(){
         s.visible = !s.visible; s.api.applyOptions({visible:s.visible});
         chip.classList.toggle('off', !s.visible); readouts(null);
@@ -601,7 +662,7 @@ function headline(spec, sec, who){
     txt = p4==null ? '' : '較 4 週前 '+h.dfmt(arr[i]-p4)+' '+(h.dunit||h.unit||'');
   } else {
     var pv = valBack(arr, i, 20);
-    txt = pv==null ? '' : '較 20 日前 '+h.dfmt(arr[i]-pv)+' '+(h.unit||'');
+    txt = pv==null ? '' : '較 20 日前 '+h.dfmt(arr[i]-pv)+' '+(h.dunit||h.unit||'');
   }
   chgEl.innerHTML = txt;
 }
@@ -660,6 +721,8 @@ function buildSource(){
     '現貨三大法人、融資融券、指數與成交金額取自證交所；期貨、選擇權、Put/Call Ratio、大額交易人取自期交所；匯率取自 FRED（聖路易聯邦準備銀行，日資料，約晚一週更新，美國休市日圖上沿用前一營業日）。<br>'+
     '期交所網站只開放近 3 年的三大法人期貨與選擇權日資料，2018-06-05 至 2023-10-17 的部分取自 FinMind 轉載的同一份期交所資料（2023-10 起與期交所原表逐筆核對一致）；2018-06 之前沒有可取得的來源，圖上留白，不補數字。<br>'+
     '借券：上市借券餘額的金額直接取自證交所「借券餘額表」（TWT72U）的官方彙總；證交所只公布借券賣出餘額的股數（TWT93U），金額是各股借券賣出餘額股數乘當日收盤價（取自同日 TWT72U）加總。上市總市值取自證交所「市值週報」，官方只有每週最後一個交易日的數字（2005-09 起、週報為初步估計），所以占比只在週末日計算，圖上每週一點，沒有拿前一週的市值去除逐日金額。<br>'+
+    '小型／微型臺指期貨：三大法人未平倉口數取自期交所「三大法人－區分各期貨契約」（futContractsDateDown，MXF／TMF），全市場未平倉口數取自期交所「期貨每日交易行情」（dlFutDataDown）一般交易時段所有月份（含週契約）、不含跨月價差單的合計。正逆價差同樣用這份行情的近月契約收盤價減加權指數收盤。台指 VIX 取自期交所波動率指數月檔，官網只保留最近約 4 個月，起點是我們開始抓的 2026-07-01。<br>'+
+    '當沖比率取自證交所「當日沖銷交易統計資訊」（TWTB4U），比重為證交所官方計算，分母含一般、盤後定價、零股與鉅額成交。上櫃三大法人與融資融券取自櫃買中心的官方彙總表（insti/summary、margin/balance），融資融券直接取表尾合計列，沒有逐檔加總；上櫃三大法人 2017-01-03 之前整天沒有資料，2017-01-03 至 2018-01-12 官方只列投信與自營商，外資自 2018-01-15 起，圖上留白不補。<br>'+
     '融資融券依證交所註明「以前日餘額為準」，每個交易日的餘額以隔日公布的前日餘額為準；最新一日暫用當日餘額。融券官方只公布張數，沒有金額。<br>'+
     '加權指數資料的缺漏日是證交所該月沒有提供當日資料的日子，沒有任何一天是補出來的。圖表使用 TradingView Lightweight Charts。</p>';
   document.getElementById('asof').textContent = '指數資料至 '+m.cal_last+'・最近建檔 '+m.updated+'（台北）・所有圖自 '+m.cal_first+' 起';

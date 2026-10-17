@@ -14,6 +14,15 @@
     pcr        選擇權 Put/Call Ratio              TAIFEX pcRatioDown（月查詢）
     large      臺股期貨大額交易人前五/前十大       TAIFEX largeTraderFutDown（月查詢）
     usdtwd     新台幣兌美元                        FRED DEXTAUS
+    mtx_inst   小型臺指期貨三大法人未平倉口數        TAIFEX futContractsDateDown（MXF，近 3 年）＋ FinMind（2018-06 起，同源轉載）
+    tmf_inst   微型臺指期貨三大法人未平倉口數        TAIFEX futContractsDateDown（TMF，2024-07 上市起）
+    mtx_mkt    小型臺指期貨全市場未平倉口數合計      TAIFEX dlFutDataDown（MTX，月查詢，2016-10 起）
+    tmf_mkt    微型臺指期貨全市場未平倉口數合計      TAIFEX dlFutDataDown（TMF，月查詢，2024-07 起）
+    tx_daily   臺股期貨各到期月收盤／結算價（前 3 個月份）TAIFEX dlFutDataDown（TX，月查詢，2016-10 起）
+    vix        臺指選擇權波動率指數（TAIWAN VIX）日收盤  TAIFEX vix/log2data/YYYYMMnew.txt（官網只留最近約 4 個月）
+    dtrade     上市當日沖銷交易統計（股數、金額、占市場比重）  TWSE dayTrading/TWTB4U（逐日）
+    otc_inst   上櫃三大法人買賣金額彙總（元）        TPEx insti/summary（逐日；2017-01 起只有投信、自營商，外資 2018-01-15 起）
+    otc_margin 上櫃融資融券餘額彙總（張、融資金額仟元）TPEx margin/balance（逐日）
 
 期交所網站只開放「近 3 年」的三大法人期貨/選擇權日資料；更早的部分用 FinMind 轉載的同一份期交所資料補
 （2023-10-16 起與期交所逐筆核對一致，見頁面資料來源說明）。FinMind 最早只到 2018-06-05，
@@ -50,12 +59,18 @@ UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit
                     "(KHTML, like Gecko) Chrome/120.0 Safari/537.36"}
 TWSE = "https://www.twse.com.tw/rwd/zh"
 TAIFEX = "https://www.taifex.com.tw/cht/3"
+TPEX = "https://www.tpex.org.tw/www/zh-tw"
+TPEX_GAP = 2.5        # 秒；櫃買中心沒有公布頻率限制，比照 TWSE 保守放慢
+TMF_START = dt.date(2024, 7, 1)        # 微型臺指期貨 2024-07-29 上市
+OTC_INST_START = dt.date(2017, 1, 1)   # 櫃買三大法人彙總最早有資料的年份（2017-01-03 起，之前整天查無資料）
+VIX_URL = "https://www.taifex.com.tw/file/taifex/Dailydownload/vix/log2data/{ym}new.txt"
 TWSE_GAP = 3.2        # 秒；官方限制約 3 次/5 秒，保守取 3.2
 TAIFEX_GAP = 1.5
 BACKOFF = [20, 60, 180, 300]   # 退避秒數；用完仍失敗就放棄該請求
 TZ_TAIPEI = dt.timezone(dt.timedelta(hours=8))
 
-SERIES = ["taiex", "turnover", "inst", "margin", "sbl", "mktcap", "fut_inst", "opt_inst", "pcr", "large", "usdtwd"]
+SERIES = ["taiex", "turnover", "inst", "margin", "sbl", "mktcap", "fut_inst", "opt_inst", "pcr", "large", "usdtwd",
+          "mtx_inst", "tmf_inst", "mtx_mkt", "tmf_mkt", "tx_daily", "vix", "dtrade", "otc_inst", "otc_margin"]
 
 
 # ---------------------------------------------------------------- 純解析函式（有單元測試）
@@ -272,6 +287,141 @@ def parse_mktcap_xls(path_or_bytes) -> list[dict]:
     return out
 
 
+def parse_fut_daily_csv(text: str) -> list[dict]:
+    """dlFutDataDown（down_type=1，單一商品）日行情 CSV → [{d, oi, oi_wk, m}]。
+
+    只取『一般』交易時段（盤後列沒有未沖銷口數）、略過跨月價差單（到期月份含 '/'）。
+    oi＝所有到期契約（含週契約）未沖銷口數合計；oi_wk＝其中週契約（月份欄形如 202610W4）；
+    m＝最近三個月份契約 [[月份 YYYYMM, 收盤價, 結算價], ...]（收盤價『-』＝當天沒成交，存 None）。"""
+    by_day: dict[str, dict] = {}
+    for r in _csv_rows(text):
+        if r.get("交易時段", "一般") not in ("一般", ""):
+            continue
+        d = slash_to_iso(r.get("交易日期", ""))
+        c = r.get("到期月份(週別)", "").strip()
+        if not d or not c or "/" in c:
+            continue
+        oi = to_num(r.get("未沖銷契約數")) or 0
+        rec = by_day.setdefault(d, {"d": d, "oi": 0, "oi_wk": 0, "m": []})
+        rec["oi"] += oi
+        if re.fullmatch(r"\d{6}", c):
+            rec["m"].append([c, to_num(r.get("收盤價")), to_num(r.get("結算價"))])
+        else:
+            rec["oi_wk"] += oi
+    for rec in by_day.values():
+        rec["m"] = sorted(rec["m"])[:3]
+    return [v for _, v in sorted(by_day.items()) if v["m"] or v["oi_wk"]]
+
+
+def parse_vix_txt(text: str) -> list[dict]:
+    """期交所臺指選擇權波動率指數月檔（cp950 解碼後）→ [{d, v, v1}]。
+    欄位：日期、時間（13450000＝13:45:00）、臺指選擇權波動率指數、收盤前 1 分鐘平均。
+    v＝當日收盤（13:45 最後一筆）；v1＝收盤前 1 分鐘平均。"""
+    out = []
+    for line in text.splitlines():
+        m = re.match(r"\s*(\d{8})\s+(\d+)\s+([\d.]+)\s+([\d.]+)\s*$", line)
+        if m:
+            d = f"{m.group(1)[:4]}-{m.group(1)[4:6]}-{m.group(1)[6:]}"
+            out.append({"d": d, "v": float(m.group(3)), "v1": float(m.group(4))})
+    return sorted(out, key=lambda x: x["d"])
+
+
+def parse_dtrade(payload: dict, d: str) -> dict | None:
+    """dayTrading/TWTB4U 日回應 → 上市當日沖銷統計。
+
+    sh＝當日沖銷成交股數、sh_p＝占市場成交股數比重%；
+    buy／sell＝當日沖銷買進／賣出成交金額（元）、buy_p／sell_p＝占市場買進／賣出平均成交金額比重%
+    （官方公式：÷（整體市場買進＋賣出）÷2，市場含一般、盤後定價、零股、鉅額，與 FMTQIK 成交金額一致）。
+    日期不符或欄位改版回 None。"""
+    if not isinstance(payload, dict) or payload.get("stat") != "OK":
+        return None
+    if payload.get("date") and payload["date"] != d.replace("-", ""):
+        return None
+    for t in payload.get("tables") or []:
+        f = t.get("fields") or []
+        if len(f) >= 6 and f[0] == "當日沖銷交易總成交股數" and f[1].startswith("當日沖銷交易總成交股數占市場比重") \
+                and "買進成交金額" in f[2] and "買進成交金額占市場比重" in f[3] \
+                and "賣出成交金額" in f[4] and "賣出成交金額占市場比重" in f[5] and t.get("data"):
+            vals = [to_num(x) for x in t["data"][0][:6]]
+            if len(vals) < 6 or None in vals:
+                return None
+            return {"d": d, "sh": vals[0], "sh_p": vals[1], "buy": vals[2], "buy_p": vals[3],
+                    "sell": vals[4], "sell_p": vals[5]}
+    return None
+
+
+def _norm_name(s: str) -> str:
+    return re.sub(r"[\s　*＊]", "", s or "")
+
+
+def parse_tpex_inst(payload: dict, d: str) -> dict | None:
+    """櫃買中心 insti/summary（三大法人買賣金額彙總表）→ {d, f?:[買,賣], t:[買,賣], dl:[買,賣]}（元）。
+
+    f＝外資及陸資（不含外資自營商，外資自營商已含在自營商內）、t＝投信、dl＝自營商合計。
+    2017-01-03～2018-01-12 官方只列投信與自營商（沒有外資列與合計列），此時不含 f；
+    2017-01 以前整天查無資料。休市／日期不符回 None。"""
+    if not isinstance(payload, dict) or payload.get("stat") != "ok":
+        return None
+    if payload.get("date") and payload["date"] != d.replace("-", ""):
+        return None
+    tabs = payload.get("tables") or []
+    if not tabs:
+        return None
+    found: dict[str, list] = {}
+    for row in tabs[0].get("data") or []:
+        if not row or len(row) < 3:
+            continue
+        name = _norm_name(row[0])
+        b, s = to_num(row[1]), to_num(row[2])
+        if b is None or s is None:
+            continue
+        key = {"外資及陸資(不含自營商)": "f", "外資及陸資合計": "f_all", "投信": "t",
+               "自營商合計": "dl", "自營商": "dl"}.get(name)
+        if key and key not in found:
+            found[key] = [b, s]
+    if "t" not in found or "dl" not in found:
+        return None
+    rec = {"d": d, "t": found["t"], "dl": found["dl"]}
+    f = found.get("f") or found.get("f_all")
+    if f:
+        rec["f"] = f
+    return rec
+
+
+def parse_tpex_margin(payload: dict, d: str) -> dict | None:
+    """櫃買中心 margin/balance（上櫃股票融資融券餘額）表尾合計列 → 與 TWSE margin 同結構。
+
+    mg＝融資餘額（張）、sh＝融券餘額（張）、mga＝融資餘額（仟元）；*_p＝前日餘額。
+    直接取官方『合計(張)』與『融資金(仟元)』兩列，不逐檔加總。"""
+    if not isinstance(payload, dict) or payload.get("stat") != "ok":
+        return None
+    if payload.get("date") and payload["date"] != d.replace("-", ""):
+        return None
+    tabs = payload.get("tables") or []
+    if not tabs:
+        return None
+    f = tabs[0].get("fields") or []
+    try:
+        i_mg, i_mgp = f.index("資餘額"), f.index("前資餘額(張)")
+        i_sh, i_shp = f.index("券餘額"), f.index("前券餘額(張)")
+    except ValueError:
+        return None
+    tot = amt = None
+    for row in tabs[0].get("summary") or []:
+        if len(row) > max(i_mg, i_mgp, i_sh, i_shp):
+            if row[1].startswith("合計"):
+                tot = row
+            elif row[1].startswith("融資金"):
+                amt = row
+    if tot is None or amt is None:
+        return None
+    vals = {"mg": to_num(tot[i_mg]), "mg_p": to_num(tot[i_mgp]), "sh": to_num(tot[i_sh]),
+            "sh_p": to_num(tot[i_shp]), "mga": to_num(amt[i_mg]), "mga_p": to_num(amt[i_mgp])}
+    if None in vals.values():
+        return None
+    return {"d": d, **vals}
+
+
 def _csv_rows(text: str) -> list[dict]:
     """期交所 CSV（cp950 解碼後）→ dict 列；欄名去空白，濾掉尾端空欄與 HTML 錯誤頁。"""
     if "<html" in text.lower()[:400] or "DateTime" in text[:400]:
@@ -299,11 +449,12 @@ def _inst_key(name: str) -> str | None:
     return None
 
 
-def parse_fut_inst_csv(text: str) -> list[dict]:
-    """futContractsDateDown（commodityId=TXF）CSV → [{d, f:[多單OI,空單OI], t:[..], dl:[..]}]（口）。"""
+def parse_fut_inst_csv(text: str, prod: str = "臺股期貨") -> list[dict]:
+    """futContractsDateDown（commodityId=TXF／MXF／TMF）CSV → [{d, f:[多單OI,空單OI], t:[..], dl:[..]}]（口）。
+    prod＝CSV『商品名稱』欄：臺股期貨（TXF）、小型臺指期貨（MXF）、微型臺指期貨（TMF）。"""
     by_day: dict[str, dict] = {}
     for r in _csv_rows(text):
-        if r.get("商品名稱") != "臺股期貨":
+        if r.get("商品名稱") != prod:
             continue
         d, k = slash_to_iso(r["日期"]), _inst_key(r.get("身份別", ""))
         lo, so = to_num(r.get("多方未平倉口數")), to_num(r.get("空方未平倉口數"))
@@ -375,13 +526,13 @@ def parse_fred_csv(text: str) -> list[dict]:
     return out
 
 
-def finmind_fut_rows(data: list[dict]) -> list[dict]:
-    """FinMind TaiwanFuturesInstitutionalInvestors（futures_id=TX）→ 同 parse_fut_inst_csv 結構。"""
+def finmind_fut_rows(data: list[dict], fid: str = "TX") -> list[dict]:
+    """FinMind TaiwanFuturesInstitutionalInvestors（futures_id=TX／MTX／TMF）→ 同 parse_fut_inst_csv 結構。"""
     m = {"外資": "f", "外資及陸資": "f", "投信": "t", "自營商": "dl"}
     by_day: dict[str, dict] = {}
     for r in data:
         k = m.get(r.get("institutional_investors"))
-        if k and r.get("futures_id") == "TX":
+        if k and r.get("futures_id") == fid:
             by_day.setdefault(r["date"], {"d": r["date"]})[k] = [
                 r["long_open_interest_balance_volume"], r["short_open_interest_balance_volume"]]
     return [v for _, v in sorted(by_day.items()) if {"f", "t", "dl"} <= set(v)]
@@ -455,6 +606,19 @@ class State:
 
     def save(self):
         DATA.mkdir(parents=True, exist_ok=True)
+        # 多個回補程序同時跑（TWSE／TPEx 各一個）時，先併入磁碟上別人剛寫的內容，避免互相覆蓋
+        if self.path.exists():
+            try:
+                disk = json.loads(self.path.read_text(encoding="utf-8"))
+            except ValueError:
+                disk = {}
+            for s, lst in (disk.get("months_done") or {}).items():
+                mine = self.d["months_done"].setdefault(s, [])
+                self.d["months_done"][s] = sorted(set(mine) | set(lst))
+            for s, g in (disk.get("gaps") or {}).items():
+                mine = self.d["gaps"].setdefault(s, {})
+                for day, n in g.items():
+                    mine[day] = max(mine.get(day, 0), n)
         self.path.write_text(json.dumps(self.d, ensure_ascii=False, sort_keys=True, indent=1) + "\n",
                              encoding="utf-8")
 
@@ -490,6 +654,7 @@ class Throttle:
 
 _twse_throttle = Throttle(TWSE_GAP)
 _taifex_throttle = Throttle(TAIFEX_GAP)
+_tpex_throttle = Throttle(TPEX_GAP)
 _session = requests.Session()
 _session.headers.update(UA)
 
@@ -526,6 +691,35 @@ def twse_json(path: str, params: dict) -> dict:
             continue
         return j
     raise Blocked(f"TWSE {path} {params} 重試用盡：{last_err}")
+
+
+def tpex_json(path: str, params: dict) -> dict:
+    """打櫃買中心 www/zh-tw 端點（回 JSON，成功時 stat＝ok）；非 JSON／5xx／429 退避重試，用完拋 Blocked。"""
+    last_err = ""
+    for wait in [0] + BACKOFF[:3]:
+        if wait:
+            log(f"  退避 {wait}s（{last_err}）")
+            time.sleep(wait)
+        _tpex_throttle.wait()
+        try:
+            r = _session.get(f"{TPEX}/{path}", params={**params, "response": "json"},
+                             timeout=60, allow_redirects=False)
+        except requests.RequestException as e:
+            last_err = f"{type(e).__name__}"
+            continue
+        if r.status_code in (301, 302, 307, 403, 429) or r.status_code >= 500:
+            last_err = f"HTTP {r.status_code}"
+            continue
+        try:
+            j = r.json()
+        except ValueError:
+            last_err = "非 JSON/空回應"
+            continue
+        if not isinstance(j, dict) or "stat" not in j:
+            last_err = "缺 stat"
+            continue
+        return j
+    raise Blocked(f"TPEx {path} {params} 重試用盡：{last_err}")
 
 
 def taifex_post(endpoint: str, data: dict) -> str:
@@ -740,9 +934,11 @@ def _taifex_window(today: dt.date) -> dt.date:
 
 
 def _chunks(a: dt.date, b: dt.date, days: int):
+    """切查詢區間。days>0＝每段最多 days 天；days<=0＝依曆月切（每段不跨月）。
+    dlFutDataDown 的區間上限是『起日起算一個曆月』，固定 30 天會在跨 2 月的段被整段拒絕（回空檔），所以用曆月切。"""
     cur = a
     while cur <= b:
-        end = min(cur + dt.timedelta(days=days - 1), b)
+        end = min(month_end(cur) if days <= 0 else cur + dt.timedelta(days=days - 1), b)
         yield cur, end
         cur = end + dt.timedelta(days=1)
 
@@ -772,6 +968,9 @@ def fetch_range_csv(name: str, endpoint: str, extra: dict, parser, start: dt.dat
                 for r in rows:
                     n += store.add(r)
                 break
+        else:
+            if (e - c0).days >= 6 and c1 < today - dt.timedelta(days=10):
+                log(f"  警告：{name} {c0}～{c1} 回空檔（可能被區間規則拒絕或當期無資料）")
     log(f"{name}：新增/更新 {n} 筆；最早 {min(store.rows) if store.rows else None}，最新 {store.last()}")
 
 
@@ -826,6 +1025,124 @@ def fetch_large(start, today, backfill):
     fetch_range_csv("large", "largeTraderFutDown", {}, parse_large_csv, start, today, 28)
 
 
+def fetch_mtx_inst(start, today, backfill):
+    win = _taifex_window(today)
+    fetch_range_csv("mtx_inst", "futContractsDateDown", {"commodityId": "MXF"},
+                    lambda t: parse_fut_inst_csv(t, "小型臺指期貨"), max(start, win), today, 360, floor=win)
+    if backfill:
+        s = Store("mtx_inst")
+        first_taifex = min([d for d in s.rows if d >= win.isoformat()] or [today.isoformat()])
+        fetch_finmind_backfill("mtx_inst", "TaiwanFuturesInstitutionalInvestors", "data_id", "MTX",
+                               lambda data: finmind_fut_rows(data, "MTX"), dt.date.fromisoformat(first_taifex))
+
+
+def fetch_tmf_inst(start, today, backfill):
+    """微型臺指期貨 2024-07-29 上市，期交所 3 年窗口已涵蓋全部歷史，不需要 FinMind。"""
+    win = max(_taifex_window(today), TMF_START)
+    fetch_range_csv("tmf_inst", "futContractsDateDown", {"commodityId": "TMF"},
+                    lambda t: parse_fut_inst_csv(t, "微型臺指期貨"), max(start, win), today, 360, floor=win)
+
+
+def fetch_fut_daily(name: str, prod: str, parser, start: dt.date, today: dt.date):
+    """期交所『期貨每日交易行情』dlFutDataDown：一次最多一個曆月，依曆月逐段補。"""
+    fetch_range_csv(name, "dlFutDataDown", {"down_type": "1", "commodity_id": prod}, parser, start, today, 0)
+
+
+def _oi_only(text: str) -> list[dict]:
+    return [{"d": r["d"], "oi": r["oi"], "oi_wk": r["oi_wk"]} for r in parse_fut_daily_csv(text)]
+
+
+def fetch_mtx_mkt(start, today, backfill):
+    fetch_fut_daily("mtx_mkt", "MTX", _oi_only, start, today)
+
+
+def fetch_tmf_mkt(start, today, backfill):
+    fetch_fut_daily("tmf_mkt", "TMF", _oi_only, max(start, TMF_START), today)
+
+
+def fetch_tx_daily(start, today, backfill):
+    fetch_fut_daily("tx_daily", "TX", lambda t: [{"d": r["d"], "m": r["m"]} for r in parse_fut_daily_csv(t)],
+                    start, today)
+
+
+def fetch_vix(today: dt.date):
+    """臺指選擇權波動率指數：官網每月一個 txt，只留最近約 4 個月（更早的月份檔已下架），
+    所以這條序列的最早日就是我們開始抓的那個月，之後每天累積。"""
+    store = Store("vix")
+    n = 0
+    seen = []
+    for k in range(6):                       # 本月往前 6 個月，抓得到的就收
+        y, m = today.year, today.month - k
+        while m <= 0:
+            y, m = y - 1, m + 12
+        ym = f"{y:04d}{m:02d}"
+        _taifex_throttle.wait()
+        try:
+            r = _session.get(VIX_URL.format(ym=ym), timeout=60)
+        except requests.RequestException as e:
+            log(f"  VIX {ym} 失敗：{type(e).__name__}")
+            continue
+        text = r.content.decode("cp950", errors="replace")
+        if r.status_code != 200 or "<html" in text[:300].lower():
+            continue                         # 月檔不存在（已下架或還沒到）
+        rows = parse_vix_txt(text)
+        seen.append(ym)
+        for row in rows:
+            n += store.add(row)
+    log(f"vix：新增/更新 {n} 筆（讀到月檔 {sorted(seen)}）；最早 {min(store.rows) if store.rows else None}，最新 {store.last()}")
+
+
+def fetch_daily_series(series: str, st: State, start: dt.date, today: dt.date, backfill: bool,
+                       limit: int | None, getter):
+    """通用逐日抓取（單一序列）：缺的交易日、最新日優先、連續 3 次被擋就停、查無資料記 gap。"""
+    store = Store(series)
+    todo = sorted(missing_trading_days(store, series, st, start, today, None if backfill else 45), reverse=True)
+    log(f"{series}：待抓 {len(todo)} 天")
+    if limit:
+        todo = todo[:limit]
+    fails = n = 0
+    for d in todo:
+        try:
+            row = getter(d)
+        except Blocked as e:
+            fails += 1
+            log(f"FAIL {series} {d}：{e}")
+            if fails >= 3:
+                log("連續失敗 3 次，停止本輪（下次續跑）。")
+                st.save()
+                return
+            continue
+        fails = 0
+        if row is None:
+            st.bump_gap(series, d)
+            log(f"  {series} {d} 查無資料（第 {st.gap_attempts(series, d)} 次）")
+            continue
+        store.add(row)
+        n += 1
+        if n % 50 == 0:
+            st.save()
+            log(f"  ...已抓 {n} 筆，目前到 {d}")
+    st.save()
+    log(f"{series}：本輪新增 {n} 筆；最新 {store.last()}")
+
+
+def fetch_dtrade(st, start, today, backfill, limit):
+    fetch_daily_series("dtrade", st, start, today, backfill, limit,
+                       lambda d: parse_dtrade(twse_json("dayTrading/TWTB4U", {"date": d.replace("-", "")}), d))
+
+
+def fetch_otc_inst(st, start, today, backfill, limit):
+    fetch_daily_series("otc_inst", st, max(start, OTC_INST_START), today, backfill, limit,
+                       lambda d: parse_tpex_inst(tpex_json("insti/summary", {
+                           "type": "Daily", "date": d.replace("-", "/"), "id": ""}), d))
+
+
+def fetch_otc_margin(st, start, today, backfill, limit):
+    fetch_daily_series("otc_margin", st, start, today, backfill, limit,
+                       lambda d: parse_tpex_margin(tpex_json("margin/balance", {
+                           "date": d.replace("-", "/"), "id": ""}), d))
+
+
 def fetch_usdtwd(start, today, backfill):
     store = Store("usdtwd")
     r = None
@@ -873,7 +1190,7 @@ def main():
             failed.append(label)
             log(f"FAIL {label}：{type(e).__name__}: {e}")
 
-    if {"taiex", "turnover"} & set(only) or {"inst", "margin", "sbl"} & set(only):
+    if {"taiex", "turnover"} & set(only) or {"inst", "margin", "sbl", "dtrade", "otc_inst", "otc_margin"} & set(only):
         run("taiex/turnover", fetch_taiex_turnover, st, TAIEX_START, today)
     daily = [s for s in ("inst", "margin") if s in only]
     if daily:
@@ -892,6 +1209,24 @@ def main():
         run("large", fetch_large, start, today, args.backfill)
     if "usdtwd" in only:
         run("usdtwd", fetch_usdtwd, start, today, args.backfill)
+    if "mtx_inst" in only:
+        run("mtx_inst", fetch_mtx_inst, start, today, args.backfill)
+    if "tmf_inst" in only:
+        run("tmf_inst", fetch_tmf_inst, start, today, args.backfill)
+    if "mtx_mkt" in only:
+        run("mtx_mkt", fetch_mtx_mkt, start, today, args.backfill)
+    if "tmf_mkt" in only:
+        run("tmf_mkt", fetch_tmf_mkt, start, today, args.backfill)
+    if "tx_daily" in only:
+        run("tx_daily", fetch_tx_daily, start, today, args.backfill)
+    if "vix" in only:
+        run("vix", fetch_vix, today)
+    if "dtrade" in only:
+        run("dtrade", fetch_dtrade, st, start, today, args.backfill, args.limit or None)
+    if "otc_inst" in only:
+        run("otc_inst", fetch_otc_inst, st, start, today, args.backfill, args.limit or None)
+    if "otc_margin" in only:
+        run("otc_margin", fetch_otc_margin, st, start, today, args.backfill, args.limit or None)
 
     if args.backfill:       # 回補完整理檔案：依日期排序、每日一行
         for s in only:

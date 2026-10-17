@@ -140,6 +140,67 @@ def weekly_cap_ratio(cal: list[str], sbl: dict[str, dict], cap: dict[str, dict],
     return out
 
 
+def third_wednesday(y: int, m: int) -> dt.date:
+    d = dt.date(y, m, 1)
+    d += dt.timedelta(days=(2 - d.weekday()) % 7)      # 當月第一個星期三
+    return d + dt.timedelta(days=14)
+
+
+def expiry_date(ym: str, calset: set, last_cal: str) -> str:
+    """臺指期貨最後交易日＝到期月份第三個星期三；遇休市順延到下一個交易日（以交易日曆判斷）。
+    日曆之後的月份沒有曆可查，直接回第三個星期三。2016-10～2026-10 共 123 個已到期契約，
+    此規則算出的日期與『契約最後一次出現在行情檔的日期』逐一相同（見測試與 README）。"""
+    d = third_wednesday(int(ym[:4]), int(ym[4:]))
+    while d.isoformat() not in calset and d.isoformat() <= last_cal:
+        d += dt.timedelta(days=1)
+    return d.isoformat()
+
+
+def near_month_pick(day: str, months: list, calset: set, last_cal: str):
+    """換月規則：近月契約在最後交易日（結算日）當天就改看次月；其餘日子看近月。
+    months＝當天掛牌的月份契約 [[YYYYMM, 收盤價, 結算價], ...]（由近到遠）。回 (契約月份, 收盤價) 或 (None, None)。"""
+    for c, close, _settle in months:
+        if expiry_date(c, calset, last_cal) > day:
+            return c, close
+    return None, None
+
+
+def basis_series(cal: list[str], tx: dict[str, dict], taiex: dict[str, dict]) -> dict:
+    """期貨正逆價差：台指期近月一般盤收盤（13:45）−加權指數收盤（13:30）。
+    回 {"contract":[...], "fut":[...], "pts":[...], "pct":[...]}，對齊 cal；缺值 None。
+    點數＝期貨收盤 − 指數收盤（正值＝正價差、負值＝逆價差）；百分比＝點數 ÷ 指數收盤 × 100。"""
+    calset, last_cal = set(taiex), max(taiex, default="")
+    contract, fut, pts, pct = [], [], [], []
+    for d in cal:
+        r, t = tx.get(d), taiex.get(d)
+        c, f = near_month_pick(d, r["m"], calset, last_cal) if r else (None, None)
+        s = t["c"] if t else None
+        contract.append(c)
+        fut.append(f)
+        if f is None or s is None:
+            pts.append(None)
+            pct.append(None)
+        else:
+            pts.append(round(f - s, 2) + 0.0)
+            pct.append(round((f - s) / s * 100, 3) + 0.0)
+    return {"contract": contract, "fut": fut, "pts": pts, "pct": pct}
+
+
+def retail_ratio(cal: list[str], inst: dict[str, dict], mkt: dict[str, dict], nd: int = 2) -> dict:
+    """散戶多空比（小型／微型臺指期貨）＝ −(三大法人淨未平倉口數合計) ÷ 全市場所有月份未平倉口數 × 100。
+    淨口數＝多方未平倉口數 − 空方未平倉口數；三大法人以外的交易人（含散戶、法人以外的大戶）視為同一方。
+    正值＝三大法人以外的交易人整體偏多（法人整體偏空）。回 {net, oi, ratio}，對齊 cal。"""
+    net, oi, ratio = [], [], []
+    for d in cal:
+        r, m = inst.get(d), mkt.get(d)
+        n = None if r is None else sum(r[k][0] - r[k][1] for k in ("f", "t", "dl"))
+        o = None if m is None else m["oi"]
+        net.append(n)
+        oi.append(o)
+        ratio.append(None if n is None or not o else round(-n / o * 100, nd) + 0.0)
+    return {"net": net, "oi": oi, "ratio": ratio}
+
+
 # ---------------------------------------------------------------- 回測用 CSV（扁平、一天一列、英文欄名）
 
 WHO3 = (("foreign", "f"), ("trust", "t"), ("dealer", "dl"))
@@ -201,6 +262,33 @@ def _csv_columns() -> dict:
         ("short_sale_balance_no_price_shares", lambda r: r["slb_nopx"]),
     ]
     cols["mktcap"] = [("listed_market_cap_yi", lambda r: r["cap"])]
+    c = []
+    for name, k in WHO3:
+        c += [(f"{name}_long_oi", lambda r, k=k: r[k][0]), (f"{name}_short_oi", lambda r, k=k: r[k][1]),
+              (f"{name}_net_oi", lambda r, k=k: r[k][0] - r[k][1])]
+    cols["mtx_inst"] = c
+    cols["tmf_inst"] = c
+    cols["mtx_mkt"] = [("market_oi_all_contracts", lambda r: r["oi"]), ("market_oi_weekly_contracts", lambda r: r["oi_wk"])]
+    cols["tmf_mkt"] = cols["mtx_mkt"]
+    c = []
+    for i in (1, 2, 3):
+        c += [(f"contract_{i}", lambda r, i=i: r["m"][i - 1][0] if len(r["m"]) >= i else None),
+              (f"close_{i}", lambda r, i=i: r["m"][i - 1][1] if len(r["m"]) >= i else None),
+              (f"settlement_{i}", lambda r, i=i: r["m"][i - 1][2] if len(r["m"]) >= i else None)]
+    cols["tx_daily"] = c
+    cols["vix"] = [("taiwan_vix_close", lambda r: r["v"]), ("taiwan_vix_last_minute_avg", lambda r: r["v1"])]
+    cols["dtrade"] = [("daytrade_shares", lambda r: r["sh"]), ("daytrade_shares_pct_of_market", lambda r: r["sh_p"]),
+                      ("daytrade_buy_amount_twd", lambda r: r["buy"]), ("daytrade_buy_amount_yi", lambda r: yuan_to_yi(r["buy"])),
+                      ("daytrade_buy_amount_pct_of_market", lambda r: r["buy_p"]),
+                      ("daytrade_sell_amount_twd", lambda r: r["sell"]), ("daytrade_sell_amount_pct_of_market", lambda r: r["sell_p"])]
+    c = []
+    for name, k in WHO3:
+        c += [(f"{name}_buy_twd", lambda r, k=k: r[k][0] if k in r else None),
+              (f"{name}_sell_twd", lambda r, k=k: r[k][1] if k in r else None),
+              (f"{name}_net_twd", lambda r, k=k: r[k][0] - r[k][1] if k in r else None),
+              (f"{name}_net_yi", lambda r, k=k: yuan_to_yi(r[k][0] - r[k][1]) if k in r else None)]
+    cols["otc_inst"] = c
+    cols["otc_margin"] = cols["margin"]
     return cols
 
 
@@ -213,12 +301,28 @@ def export_csv() -> dict:
         rows = load_jsonl(series)
         days = sorted(rows)
         extra = []
-        if series == "margin":
+        if series in ("margin", "otc_margin"):
             fin = margin_final(days, rows)
             extra = [("margin_balance_yi_final", lambda d: qianyuan_to_yi(fin[d]["mga"])),
                      ("margin_balance_lots_final", lambda d: fin[d]["mg"]),
                      ("short_balance_lots_final", lambda d: fin[d]["sh"]),
                      ("is_final", lambda d: int(fin[d]["final"]))]
+        if series in ("mtx_inst", "tmf_inst"):
+            mk = load_jsonl("mtx_mkt" if series == "mtx_inst" else "tmf_mkt")
+            rr = retail_ratio(days, rows, mk)
+            pos = {d: i for i, d in enumerate(days)}
+            extra = [("market_oi_all_contracts", lambda d: mk[d]["oi"] if d in mk else None),
+                     ("inst_net_oi_total", lambda d: rr["net"][pos[d]]),
+                     ("retail_long_short_ratio_pct", lambda d: rr["ratio"][pos[d]])]
+        if series == "tx_daily":
+            tai = load_jsonl("taiex")
+            bs = basis_series(days, rows, tai)
+            pos = {d: i for i, d in enumerate(days)}
+            extra = [("near_month_contract", lambda d: bs["contract"][pos[d]]),
+                     ("near_month_close", lambda d: bs["fut"][pos[d]]),
+                     ("taiex_close", lambda d: tai[d]["c"] if d in tai else None),
+                     ("basis_points", lambda d: bs["pts"][pos[d]]),
+                     ("basis_pct", lambda d: bs["pct"][pos[d]])]
         if series == "sbl":
             cap = load_jsonl("mktcap")
             extra = [("listed_market_cap_yi_weekly", lambda d: cap[d]["cap"] if d in cap else None),
@@ -264,6 +368,11 @@ def main() -> int:
     fx = load_jsonl("usdtwd")
     sbl = load_jsonl("sbl")
     mktcap = load_jsonl("mktcap")
+    mtx_i, tmf_i = load_jsonl("mtx_inst"), load_jsonl("tmf_inst")
+    mtx_m, tmf_m = load_jsonl("mtx_mkt"), load_jsonl("tmf_mkt")
+    tx_daily, vix = load_jsonl("tx_daily"), load_jsonl("vix")
+    dtrade = load_jsonl("dtrade")
+    otc_inst, otc_margin = load_jsonl("otc_inst"), load_jsonl("otc_margin")
 
     dump("cal.json", {"t": cal})
 
@@ -345,6 +454,43 @@ def main() -> int:
     # 9. 新台幣
     dump("fx.json", {"v": ffill(align(cal, fx, lambda r: r["v"]))})
 
+    # 10. 小型／微型臺指期貨：三大法人淨未平倉口數與散戶多空比
+    rr_m, rr_t = retail_ratio(cal, mtx_i, mtx_m), retail_ratio(cal, tmf_i, tmf_m)
+    dump("mtx.json", {
+        "f": align(cal, mtx_i, lambda r: r["f"][0] - r["f"][1]),
+        "t": align(cal, mtx_i, lambda r: r["t"][0] - r["t"][1]),
+        "dl": align(cal, mtx_i, lambda r: r["dl"][0] - r["dl"][1]),
+        "net": rr_m["net"], "oi": rr_m["oi"], "ratio": rr_m["ratio"],
+        "tmf_net": rr_t["net"], "tmf_oi": rr_t["oi"], "tmf_ratio": rr_t["ratio"],
+    })
+
+    # 11. 期貨正逆價差（近月收盤 − 加權指數收盤）與臺指選擇權波動率指數
+    bs = basis_series(cal, tx_daily, taiex_all)
+    dump("basis.json", {
+        "pts": bs["pts"], "pct": bs["pct"], "fut": bs["fut"], "contract": bs["contract"],
+        "vix": align(cal, vix, lambda r: r["v"]),
+    })
+
+    # 12. 上市當日沖銷（占市場成交金額、股數比重；當沖買進金額）
+    dump("dtrade.json", {
+        "r_amt": align(cal, dtrade, lambda r: r["buy_p"]),
+        "r_sh": align(cal, dtrade, lambda r: r["sh_p"]),
+        "amt": align(cal, dtrade, lambda r: yuan_to_yi(r["buy"])),
+    })
+
+    # 13. 上櫃（櫃買中心）三大法人買賣超（億元）與融資融券餘額
+    ofin = margin_final(cal, otc_margin)
+    omg = align(cal, ofin, lambda r: r["mg"])
+    osh = align(cal, ofin, lambda r: r["sh"])
+    dump("otc.json", {
+        "f": align(cal, otc_inst, lambda r: yuan_to_yi(r["f"][0] - r["f"][1]) if "f" in r else None),
+        "t": align(cal, otc_inst, lambda r: yuan_to_yi(r["t"][0] - r["t"][1])),
+        "dl": align(cal, otc_inst, lambda r: yuan_to_yi(r["dl"][0] - r["dl"][1])),
+        "mga": align(cal, ofin, lambda r: qianyuan_to_yi(r["mga"])),
+        "mg": omg, "sh": osh,
+        "ratio": [ratio_pct(s_, m_) for s_, m_ in zip(osh, omg)],
+    })
+
     # 序列摘要（頁尾資料來源表用）
     def info(name, rows, label, unit, source):
         ds = sorted(d for d in rows if d >= DISPLAY_START)
@@ -368,6 +514,15 @@ def main() -> int:
         info("pcr", pcr, "選擇權 Put/Call Ratio", "%", "TAIFEX pcRatio"),
         info("large", large, "大額交易人（臺股期貨）", "口", "TAIFEX largeTraderFut"),
         info("usdtwd", fx, "新台幣兌美元", "TWD/USD", "FRED DEXTAUS"),
+        info("mtx_inst", mtx_i, "小型臺指期貨三大法人未平倉", "口", "TAIFEX futContractsDateDown MXF（2023-10 起）＋FinMind 轉載（2018-06 起）"),
+        info("tmf_inst", tmf_i, "微型臺指期貨三大法人未平倉", "口", "TAIFEX futContractsDateDown TMF"),
+        info("mtx_mkt", mtx_m, "小型臺指期貨全市場未平倉口數", "口", "TAIFEX dlFutDataDown MTX"),
+        info("tmf_mkt", tmf_m, "微型臺指期貨全市場未平倉口數", "口", "TAIFEX dlFutDataDown TMF"),
+        info("tx_daily", tx_daily, "臺股期貨近月收盤（正逆價差）", "點", "TAIFEX dlFutDataDown TX"),
+        {**info("vix", vix, "臺指選擇權波動率指數", "點", "TAIFEX 波動率指數月檔（官網只留近約 4 個月）"), "gaps": 0},
+        info("dtrade", dtrade, "上市當日沖銷統計", "億元／%", "TWSE dayTrading/TWTB4U"),
+        info("otc_inst", otc_inst, "上櫃三大法人買賣超", "億元", "TPEx insti/summary"),
+        info("otc_margin", otc_margin, "上櫃融資融券餘額", "億元／張", "TPEx margin/balance"),
     ]
     dump("meta.json", {
         "updated": dt.datetime.now(TZ_TAIPEI).strftime("%Y-%m-%d %H:%M"),

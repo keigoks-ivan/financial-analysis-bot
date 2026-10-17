@@ -434,3 +434,213 @@ def test_build_and_csv_with_sbl(tmp_path, monkeypatch):
     assert rows[0]["short_sale_balance_yi"] == "14730.07"
     cap = list(_csv.DictReader(open(tmp_path / "csv" / "mktcap.csv", encoding="utf-8")))
     assert cap == [{"date": "2026-10-16", "listed_market_cap_yi": "1541834.31"}]
+
+
+# ---------------------------------------------------------------- 第二批：小台／微台、正逆價差、VIX、當沖、上櫃
+
+MXF_CSV = (
+    "日期,商品名稱,身份別,多方交易口數,多方交易契約金額(千元),空方交易口數,空方交易契約金額(千元),多空交易口數淨額,多空交易契約金額淨額(千元),多方未平倉口數,多方未平倉契約金額(千元),空方未平倉口數,空方未平倉契約金額(千元),多空未平倉口數淨額,多空未平倉契約金額淨額(千元)\n"
+    "2026/10/16,小型臺指期貨,自營商,1,1,1,1,0,0,306,1,10658,1,-10352,1\n"
+    "2026/10/16,小型臺指期貨,投信,0,0,0,0,0,0,87,1,107,1,-20,1\n"
+    "2026/10/16,小型臺指期貨,外資及陸資,1,1,1,1,0,0,3676,1,4427,1,-751,1\n"
+    "2026/10/16,臺股期貨,外資及陸資,1,1,1,1,0,0,9,1,9,1,0,1\n")
+
+
+def test_parse_fut_inst_csv_selects_product_by_name():
+    rows = fetch.parse_fut_inst_csv(MXF_CSV, "小型臺指期貨")
+    assert rows == [{"d": "2026-10-16", "dl": [306, 10658], "t": [87, 107], "f": [3676, 4427]}]
+    assert fetch.parse_fut_inst_csv(MXF_CSV) == []          # 預設只收臺股期貨，且三法人不齊就不收（只有外資一列）
+    fm = [{"date": "2018-06-05", "futures_id": "MTX", "institutional_investors": "外資",
+           "long_open_interest_balance_volume": 1250, "short_open_interest_balance_volume": 1846},
+          {"date": "2018-06-05", "futures_id": "MTX", "institutional_investors": "投信",
+           "long_open_interest_balance_volume": 46, "short_open_interest_balance_volume": 0},
+          {"date": "2018-06-05", "futures_id": "MTX", "institutional_investors": "自營商",
+           "long_open_interest_balance_volume": 20536, "short_open_interest_balance_volume": 8722},
+          {"date": "2018-06-05", "futures_id": "TX", "institutional_investors": "外資",
+           "long_open_interest_balance_volume": 9, "short_open_interest_balance_volume": 9}]
+    assert fetch.finmind_fut_rows(fm, "MTX") == [{"d": "2018-06-05", "f": [1250, 1846], "t": [46, 0], "dl": [20536, 8722]}]
+
+
+FUT_DAILY_CSV = (
+    "交易日期,契約,到期月份(週別),開盤價,最高價,最低價,收盤價,漲跌價,漲跌%,成交量,結算價,未沖銷契約數,最後最佳買價,最後最佳賣價,歷史最高價,歷史最低價,是否因訊息面暫停交易,交易時段,價差對單式委託成交量\n"
+    "2026/10/16,MTX,202610W4,1,1,1,47000,0,0%,5,47001,4,1,1,1,1,,一般,,\n"
+    "2026/10/16,MTX,202610  ,1,1,1,47242,0,0%,5,47250,29164,1,1,1,1,,一般,,\n"
+    "2026/10/16,MTX,202610  ,1,1,1,47100,0,0%,5,-,-,1,1,1,1,,盤後,,\n"
+    "2026/10/16,MTX,202611  ,1,1,1,47300,0,0%,5,47310,10808,1,1,1,1,,一般,,\n"
+    "2026/10/16,MTX,202612  ,1,1,1,-,0,0%,0,47400,2198,1,1,1,1,,一般,,\n"
+    "2026/10/16,MTX,202703  ,1,1,1,47500,0,0%,5,47510,590,1,1,1,1,,一般,,\n"
+    "2026/10/16,MTX,202610/202611,1,1,1,1,0,0%,5,-,-,1,1,1,1,,一般,,\n")
+
+
+def test_parse_fut_daily_csv_sums_all_months_skips_spreads_and_after_hours():
+    r = fetch.parse_fut_daily_csv(FUT_DAILY_CSV)
+    assert len(r) == 1 and r[0]["d"] == "2026-10-16"
+    assert r[0]["oi"] == 4 + 29164 + 10808 + 2198 + 590          # 含週契約，不含盤後列與跨月價差
+    assert r[0]["oi_wk"] == 4
+    assert r[0]["m"] == [["202610", 47242, 47250], ["202611", 47300, 47310], ["202612", None, 47400]]   # 只留近三個月份，沒成交收盤價＝None
+
+
+def test_parse_vix_txt():
+    text = ("日期\t時間\t臺指選擇權波動率指數\t收盤前1分鐘平均\n--------\t-------------------\t--------------------\t-------------------\n"
+            "20261015\t13450000\t\t30.61\t\t30.61\n20261016\t13450000\t\t26.37\t\t26.33\n")
+    assert fetch.parse_vix_txt(text) == [{"d": "2026-10-15", "v": 30.61, "v1": 30.61}, {"d": "2026-10-16", "v": 26.37, "v1": 26.33}]
+    assert fetch.parse_vix_txt("<HTML><title>404</title>") == []
+
+
+DTRADE_PAYLOAD = {"stat": "OK", "date": "20261016", "tables": [
+    {"title": "115年10月16日 當日沖銷交易統計資訊",
+     "fields": ["當日沖銷交易總成交股數", "當日沖銷交易總成交股數占市場比重%", "當日沖銷交易總買進成交金額",
+                "當日沖銷交易總買進成交金額占市場比重%", "當日沖銷交易總賣出成交金額", "當日沖銷交易總賣出成交金額占市場比重%"],
+     "data": [["2,392,658,000", "20.24", "377,952,391,370", "38.03", "378,930,466,350", "38.12"]]},
+    {"title": "標的", "fields": ["證券代號"], "data": [["2330"]]}]}
+
+
+def test_parse_dtrade_and_its_ratio_matches_turnover():
+    row = fetch.parse_dtrade(DTRADE_PAYLOAD, "2026-10-16")
+    assert row == {"d": "2026-10-16", "sh": 2392658000, "sh_p": 20.24, "buy": 377952391370, "buy_p": 38.03,
+                   "sell": 378930466350, "sell_p": 38.12}
+    assert fetch.parse_dtrade(DTRADE_PAYLOAD, "2026-10-15") is None           # 日期不符（休市被導到別天）
+    assert fetch.parse_dtrade({"stat": "很抱歉，沒有符合條件的資料!"}, "2026-10-16") is None
+    # 官方比重＝當沖買進金額 ÷ FMTQIK 全市場成交金額（993,814,830,090）：整數空間重算到小數 2 位
+    assert round(row["buy"] * 10000 / 993814830090) == 3803
+    assert round(row["sh"] * 10000 / 11820630612) == 2024
+
+
+TPEX_INST_NEW = {"stat": "ok", "date": "20261016", "tables": [{"date": "115/10/16", "data": [
+    ["外資及陸資合計", "73,677,462,203", "76,961,795,204", "-3,284,333,001"],
+    ["　外資及陸資(不含自營商)", "73,677,462,203", "76,961,795,204", "-3,284,333,001"],
+    ["　外資自營商", "0", "0", "0"],
+    ["投信", "6,056,353,497", "4,682,247,965", "1,374,105,532"],
+    ["自營商合計", "5,836,459,951", "9,116,991,593", "-3,280,531,642"],
+    ["　自營商(自行買賣)", "1,511,400,251", "4,619,670,128", "-3,108,269,877"],
+    ["三大法人合計*", "85,570,275,651", "90,761,034,762", "-5,190,759,111"]]}]}
+TPEX_INST_2017 = {"stat": "ok", "date": "20170510", "tables": [{"date": "106/05/10", "data": [
+    ["投信", "189,257,359", "517,516,125", "-328,258,766"], ["自營商", "1,199,468,180", "727,009,746", "472,458,434"],
+    ["自營商(自行買賣)", "373,788,410", "195,076,050", "178,712,360"], []]}]}
+
+
+def test_parse_tpex_inst_new_and_2017_formats_and_empty():
+    r = fetch.parse_tpex_inst(TPEX_INST_NEW, "2026-10-16")
+    assert r == {"d": "2026-10-16", "t": [6056353497, 4682247965], "dl": [5836459951, 9116991593],
+                 "f": [73677462203, 76961795204]}
+    # 三大法人合計＝外資(不含自營商)＋投信＋自營商合計（官方註明外資自營商已含在自營商內）
+    assert sum(r[k][0] for k in ("f", "t", "dl")) == 85570275651
+    assert sum(r[k][1] for k in ("f", "t", "dl")) == 90761034762
+    old = fetch.parse_tpex_inst(TPEX_INST_2017, "2017-05-10")
+    assert old == {"d": "2017-05-10", "t": [189257359, 517516125], "dl": [1199468180, 727009746]}   # 沒有外資列就不寫 f
+    assert fetch.parse_tpex_inst({"stat": "ok", "date": "20161007", "tables": [{"data": []}]}, "2016-10-07") is None
+    assert fetch.parse_tpex_inst(TPEX_INST_NEW, "2026-10-15") is None
+
+
+TPEX_MARGIN = {"stat": "ok", "date": "20261016", "tables": [{
+    "fields": ["代號", "名稱", "前資餘額(張)", "資買", "資賣", "現償", "資餘額", "資屬證金", "資使用率(%)", "資限額",
+               "前券餘額(張)", "券賣", "券買", "券償", "券餘額", "券屬證金", "券使用率(%)", "券限額", "資券相抵(張)", "備註"],
+    "data": [["6488", "環球晶", "1", "0", "0", "0", "1", "0", "1", "1", "0", "0", "0", "0", "0", "0", "0", "1", "0", ""]],
+    "summary": [["", "合計(張)", "2,368,231", "67,193", "68,817", "1,975", "2,364,632", "", "", "", "33,644", "7,579", "2,873", "104", "38,246", "", "", "", "", ""],
+                ["", "融資金(仟元)", "218,961,719", "8,090,791", "8,616,671", "185,720", "218,250,119", "", "", "", "", "", "", "", "", "", "", "", "", ""]]}]}
+
+
+def test_parse_tpex_margin_takes_footer_totals_not_stock_sum():
+    r = fetch.parse_tpex_margin(TPEX_MARGIN, "2026-10-16")
+    assert r == {"d": "2026-10-16", "mg": 2364632, "mg_p": 2368231, "sh": 38246, "sh_p": 33644,
+                 "mga": 218250119, "mga_p": 218961719}
+    assert fetch.parse_tpex_margin(TPEX_MARGIN, "2026-10-15") is None
+    bad = {"stat": "ok", "date": "20261016", "tables": [{"fields": ["代號"], "data": [], "summary": []}]}
+    assert fetch.parse_tpex_margin(bad, "2026-10-16") is None
+
+
+def test_chunks_by_calendar_month():
+    import datetime as dt
+    ch = list(fetch._chunks(dt.date(2017, 1, 31), dt.date(2017, 3, 5), 0))
+    assert ch == [(dt.date(2017, 1, 31), dt.date(2017, 1, 31)), (dt.date(2017, 2, 1), dt.date(2017, 2, 28)),
+                  (dt.date(2017, 3, 1), dt.date(2017, 3, 5))]
+    assert list(fetch._chunks(dt.date(2017, 1, 1), dt.date(2017, 3, 1), 28))[0] == (dt.date(2017, 1, 1), dt.date(2017, 1, 28))
+
+
+def test_state_save_merges_other_process_progress(tmp_path, monkeypatch):
+    monkeypatch.setattr(fetch, "DATA", tmp_path)
+    a, b = fetch.State(), fetch.State()            # 兩個回補程序同時啟動
+    a.bump_gap("dtrade", "2026-10-01")
+    a.save()
+    b.bump_gap("otc_inst", "2018-01-12")
+    b.mark_month("taiex", "2016-10")
+    b.save()
+    c = fetch.State()
+    assert c.gap_attempts("dtrade", "2026-10-01") == 1 and c.gap_attempts("otc_inst", "2018-01-12") == 1
+    assert c.month_done("taiex", "2016-10")
+
+
+def test_expiry_rule_third_wednesday_with_holiday_shift():
+    import datetime as dt
+    assert build.third_wednesday(2026, 10) == dt.date(2026, 10, 21)
+    cal = {"2026-09-16", "2026-09-17"}
+    assert build.expiry_date("202609", cal, "2026-10-16") == "2026-09-16"
+    cal2 = {"2026-09-17", "2026-09-18"}              # 假設第三個星期三（9/16）休市 → 順延到下一個交易日
+    assert build.expiry_date("202609", cal2, "2026-10-16") == "2026-09-17"
+    assert build.expiry_date("202712", {"2026-10-16"}, "2026-10-16") == "2027-12-15"     # 日曆之後：不調整
+
+
+def test_near_month_pick_rolls_on_expiry_day():
+    cal = {"2026-09-15", "2026-09-16", "2026-09-17"}
+    months = [["202609", 100, 100], ["202610", 110, 109], ["202611", 120, 119]]
+    assert build.near_month_pick("2026-09-15", months, cal, "2026-09-17") == ("202609", 100)
+    assert build.near_month_pick("2026-09-16", months, cal, "2026-09-17") == ("202610", 110)    # 到期日當天改看次月
+    assert build.near_month_pick("2026-09-17", months[1:], cal, "2026-09-17") == ("202610", 110)
+
+
+def test_basis_series_points_and_percent():
+    taiex = {"2026-09-15": {"c": 20000.0}, "2026-09-16": {"c": 20100.0}, "2026-09-17": {"c": 20050.0}}
+    tx = {"2026-09-15": {"m": [["202609", 20100, 0], ["202610", 20200, 0]]},
+          "2026-09-16": {"m": [["202609", 20100, 0], ["202610", 20250, 0]]},
+          "2026-09-17": {"m": [["202610", None, 0]]}}
+    b = build.basis_series(sorted(taiex), tx, taiex)
+    assert b["contract"] == ["202609", "202610", "202610"]
+    assert b["pts"] == [100.0, 150.0, None] and b["pct"] == [0.5, 0.746, None]
+
+
+def test_retail_ratio_integer_space():
+    inst = {"d1": {"f": [3676, 4427], "t": [87, 107], "dl": [306, 10658]}}
+    mk = {"d1": {"oi": 43256}, "d2": {"oi": 100}}
+    r = build.retail_ratio(["d1", "d2"], inst, mk)
+    assert r["net"] == [-11123, None] and r["oi"] == [43256, 100]
+    assert r["ratio"] == [25.71, None]
+
+
+def test_build_and_csv_with_batch2_series(tmp_path, monkeypatch):
+    import csv as _csv
+    src, out = tmp_path / "src", tmp_path / "out"
+    src.mkdir()
+    monkeypatch.setattr(build, "SRC", src)
+    monkeypatch.setattr(build, "OUT", out)
+    monkeypatch.setattr(build, "CSV_OUT", tmp_path / "csv")
+    monkeypatch.setattr(build, "DISPLAY_START", "2026-10-14")
+    days = ["2026-10-14", "2026-10-15", "2026-10-16"]
+
+    def w(name, rows):
+        (src / f"{name}.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    w("taiex", [{"d": d, "o": 1, "h": 2, "l": 0.5, "c": 47000.0 + i * 100} for i, d in enumerate(days)])
+    w("mtx_inst", [{"d": "2026-10-16", "dl": [306, 10658], "t": [87, 107], "f": [3676, 4427]}])
+    w("mtx_mkt", [{"d": d, "oi": 43256, "oi_wk": 0} for d in days])
+    w("tx_daily", [{"d": d, "m": [["202610", 47100.0 + i * 100 + 130, 0], ["202611", 47500.0, 0]]} for i, d in enumerate(days)])
+    w("vix", [{"d": "2026-10-16", "v": 26.37, "v1": 26.33}])
+    w("dtrade", [{"d": "2026-10-16", "sh": 2392658000, "sh_p": 20.24, "buy": 377952391370, "buy_p": 38.03,
+                  "sell": 378930466350, "sell_p": 38.12}])
+    w("otc_inst", [{"d": "2026-10-16", "t": [6056353497, 4682247965], "dl": [5836459951, 9116991593]}])      # 沒有外資列
+    w("otc_margin", [{"d": d, "mg": 2364632, "mg_p": 2368231, "sh": 38246, "sh_p": 33644, "mga": 218250119, "mga_p": 218961719}
+                     for d in days])
+    assert build.main() == 0
+    m = json.loads((out / "mtx.json").read_text())
+    assert m["ratio"] == [None, None, 25.71] and m["net"] == [None, None, -11123] and m["f"][2] == -751
+    b = json.loads((out / "basis.json").read_text())
+    assert b["pts"] == [230.0, 230.0, 230.0] and b["vix"] == [None, None, 26.37]
+    assert json.loads((out / "dtrade.json").read_text())["r_amt"] == [None, None, 38.03]
+    o = json.loads((out / "otc.json").read_text())
+    assert o["f"][2] is None and o["t"][2] == 13.74 and o["dl"][2] == -32.81       # 億元
+    assert o["mga"][0] == 2189.62                                                 # 隔日前日餘額定稿
+    rows = list(_csv.DictReader(open(tmp_path / "csv" / "mtx_inst.csv", encoding="utf-8")))
+    assert rows[0]["foreign_long_oi"] == "3676" and rows[0]["market_oi_all_contracts"] == "43256"
+    assert rows[0]["retail_long_short_ratio_pct"] == "25.71"
+    tx = list(_csv.DictReader(open(tmp_path / "csv" / "tx_daily.csv", encoding="utf-8")))
+    assert tx[2]["near_month_contract"] == "202610" and tx[2]["basis_points"] == "230.0"
+    ot = list(_csv.DictReader(open(tmp_path / "csv" / "otc_inst.csv", encoding="utf-8")))
+    assert ot[0]["foreign_net_yi"] == "" and ot[0]["trust_net_yi"] == "13.74"
