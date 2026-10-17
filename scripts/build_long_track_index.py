@@ -67,21 +67,24 @@ SPRT_MEANING = {          # 見 build_live_scoreboard.py 的 green/yellow/red �
 # 每組＝(分類、色、突出、系統清單)；系統 dict：name／url／one／status／freq／email
 GROUPS = [
     ("實單主系統", "live", True, [
-        {"name": "W52 × 自適應波動率 cap_eff（美 + 台）", "url": "/long-track-w52-adaptive/",
-         "one": "兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap_eff ＋ A2 執行層。"
-                "<b>2026-07-18 起接棒為實單主系統；2026-09-15 起股票腿加日線均線確認</b>"
-                "（均線五條件全對 cap_eff=1.5，否則退回 1.0）。",
+        {"name": "W52 × 自適應波動率（美股債金版・台股不借錢版）", "url": "/long-track-w52-adaptive/",
+         "one": "兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 ＋ A2 執行層。"
+                "<b>2026-10-19 起：美股股票部分上限 100% 不借錢，另加公債（IEF）與黃金（GLD）各最多 20% 的週線疊加；台股上限 100%、不借錢。</b>"
+                "此前（2026-07-18 至 10-16）用 cap 1.5 ＋日線均線確認，現降為對照線，每日更新、不寄信。",
          "status": ("實單", "live"), "freq": "每交易日 × 2（台／美收盤後）", "email": "✅ 有"},
     ]),
     ("影子對照（跟實盤同一套引擎，只改一個地方）", "shadow", False, [
         {"name": "不借錢版", "url": "/long-track-w52-adaptive/leverage.html", "key": "cap10",
-         "diff": "股票最多 100%，不借錢；其他規則和實盤相同。",
-         "ask": "借錢值不值得？", "status": None},
+         "diff": "股票最多 100%，不借錢；2026-10-19 起台股實盤與美股的股票部分用的就是這條規則。",
+         "ask": "不借錢之後，和舊規則比差多少？", "status": "10-19 起即實盤"},
         {"name": "債金版", "url": "/long-track-w52-adaptive/c1-shadow.html", "key": "c1",
-         "diff": "不借錢版，再加公債（IEF）和黃金（GLD）：兩者各自趨勢向上時，各加最多 20%。",
-         "ask": "加公債、黃金有沒有幫助？", "status": "實盤未採用"},
+         "diff": "不借錢版，再加公債（IEF）和黃金（GLD）：兩者各自趨勢向上時，各加最多 20%。2026-10-19 起美股實盤用這條規則。",
+         "ask": "加公債、黃金有沒有幫助？", "status": "10-19 起即實盤"},
+        {"name": "舊規則 cap 1.5（對照線）", "url": "/long-track-w52-adaptive/cap15.html", "key": "cap15",
+         "diff": "2026-10-19 以前的實盤規則：股票最多 150%，加日線均線確認。",
+         "ask": "新規則比舊規則好還是差？", "status": "對照線・不寄信"},
         {"name": "舊規則版", "url": "/long-track-w52-adaptive/noma.html", "key": "noma",
-         "diff": "2026-09-15 以前的實盤規則：股票最多 150%，沒有均線條件。",
+         "diff": "2026-09-15 以前的實盤規則：股票最多 150%，沒有均線條件（維持不動的舊影子）。",
          "ask": "均線條件有沒有用？", "status": None},
     ]),
     ("前瞻 OOS 候選（決策前研究通過、尚非實單）", "cand", False, [
@@ -122,7 +125,8 @@ GROUPS = [
 
 PLAIN = ('這個家族的沿革（白話）：早期實單主線用「六狀態機」與「STX50／E3」兩套引擎；'
          '<b>2026-07-18 起改由「W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層」接棒為實單主系統</b>'
-         '（美台兩市場各 70% 指數部），舊引擎降為凍結對照。'
+         '（美台兩市場各 70% 指數部），舊引擎降為凍結對照；'
+         '<b>2026-10-19 起再改為美股債金版、台股不借錢版</b>（股票部分上限 100%，美股另加公債與黃金），cap 1.5 規則降為對照線。'
          'GLD 金 sleeve、商品 sleeve 與 F70（A 70%＋D1 拿掉 SPY 30%）是決策前研究通過後的<b>前瞻候選</b>'
          '——還在紙上測、尚未進實單。')
 
@@ -366,6 +370,14 @@ def render_today_strip() -> str:
     us_block = mkt_block("美股 QQQ + SMH", ["QQQ", "SMH"], "combined_exposure_us_pct")
     tw_block = mkt_block("台股 0050 + 2330", ["0050", "2330"], "combined_exposure_tw_pct")
     change_line = f'最近一次執行層變動：<b>{last_change_date}</b>｜{last_change_desc}'
+    ov = state.get("overlay") or {}
+    if all(k in ov for k in ("ief", "gld")):
+        def _ov(k, nm):
+            o = ov[k]
+            return f'{nm} <b>{o.get("n", "—")}／3</b> 條成立，目標 <b>{o.get("target_pct", "—")}%</b>'
+        ov_state = "已生效" if ov.get("active") else f'{ov.get("active_from", "2026-10-19")} 起生效，目前為預覽'
+        change_line += (f'<br>美股債金疊加（占指數部淨值，各最多 20%，{ov_state}）：'
+                        f'{_ov("ief", "公債（IEF）")}；{_ov("gld", "黃金（GLD）")}')
 
     shadow_entries = [   # (顯示名, market key, shadow key)
         ("S-60（美）", "us", "s60"), ("S-F（美）", "us", "sf"),
@@ -416,6 +428,11 @@ def _last_nav(series):
     return None, None
 
 
+def state_cap15_date() -> str:
+    """舊規則對照線的資料日（讀 cap15_state.json；缺檔回「—」）。"""
+    return _load_json(STATE_JSON.parent / "cap15_state.json").get("data_date") or "—"
+
+
 def render_shadow_table(systems) -> str:
     """影子對照區：一張表三列（2026-10-17）。報酬一律讀既有 JSON 的 NAV 末值（起算 100）：
     不借錢版＝live_scoreboard shadows.{us,tw}.sa10；債金版＝c1_shadow_state daily 末列
@@ -457,7 +474,7 @@ def render_shadow_table(systems) -> str:
     start_c1 = c1.get("inception") or c1_first.get("date") or "—"
     d_c1 = c1_last.get("date") or c1.get("data_date") or "—"
     c1_ret = f'美 <b>{_fmt_ret(c1_last.get("nav_c1"))}</b>'
-    c1_live = f'美 <b>{_fmt_ret(c1_last.get("nav_main"))}</b>'
+    c1_live = f'美 <b>{_fmt_ret(c1_last.get("nav_main"))}</b>（舊規則 cap 1.5 同期）'
     cells["c1"] = (start_c1, d_c1, c1_ret, c1_live)
 
     # 舊規則版：noma_state.json 的 nav_us／nav_tw（2026-10-17 起，與記分板 nav_sys 同一套簿記，起點＝第一筆 live 日＝100）
@@ -468,6 +485,8 @@ def render_shadow_table(systems) -> str:
         or noma.get("ruleset_locked_date") or "—"
     d_noma = noma_pair["us"][1] or noma_pair["tw"][1] or noma.get("data_date") or "—"
     cells["noma"] = (noma_start, d_noma, two_mkt(noma_pair), two_mkt(live))
+
+    cells["cap15"] = ("2026-07-18", state_cap15_date(), "見該頁（逐日更新）", two_mkt(live))
 
     rows = ""
     for s in systems:
@@ -484,7 +503,9 @@ def render_shadow_table(systems) -> str:
     return (f'<div class="shtbl-wrap"><table class="shtbl"><thead><tr><th>名稱</th><th>跟實盤差在哪</th>'
             f'<th>回答什麼問題</th><th>起算日以來報酬</th><th>同期實盤</th></tr></thead>'
             f'<tbody>{rows}</tbody></table></div>'
-            f'<div class="sh-foot">三條線都每交易日更新，沒有 email。報酬讀自 live_scoreboard.json、'
+            f'<div class="sh-foot">四條線都每交易日更新，沒有 email。2026-10-19 起「不借錢版」「債金版」就是實盤的規則，'
+            f'這兩列的「同期實盤」在生效日前是舊規則、生效日後是新規則（記分板的實盤線接續同一份紀錄）；'
+            f'債金版列的「同期」固定是舊規則 cap 1.5。報酬讀自 live_scoreboard.json、'
             f'c1_shadow_state.json、noma_state.json，本頁不重新計算。'
             f'債金版只追蹤美股。</div>')
 
@@ -598,7 +619,7 @@ def render() -> str:
 </div>
 <div class="console-tab-panel" id="panel-overview">{overview_body}</div>
 <div class="console-tab-panel" id="panel-live">
-  <p class="console-embed-note">W52 × 自適應波動率 cap 1.5（美＋台）· 2026-07-18 起實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/live_system_evidence/">這套系統的證據總覽（12 頁，白話）→</a> · <a href="#scoreboard">跳到記分板 →</a></p>
+  <p class="console-embed-note">W52 × 自適應波動率（美股債金版・台股不借錢版）· 2026-10-19 起新規則實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/live_system_evidence/">這套系統的證據總覽（12 頁，白話）→</a> · <a href="#scoreboard">跳到記分板 →</a></p>
   <iframe class="console-embed-frame" id="live-frame" data-src="/long-track-w52-adaptive/_body.html" title="實單主系統" scrolling="no" loading="lazy"></iframe>
 </div>
 <div class="console-tab-panel" id="panel-scoreboard">

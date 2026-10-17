@@ -1,11 +1,12 @@
 {
-  "generated_at": "2026-10-17T08:21:13Z",
+  "generated_at": "2026-10-17T16:18:22Z",
+  "profile": "live",
   "data_date": "2026-10-16",
   "ruleset_locked_date": "2026-07-17",
-  "ruleset_revision_date": "2026-09-15",
-  "mechanism": "W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x cap_eff (1.5 if daily-MA-score5 long-confirm else 1.0, lag 20, price conditions w/ 1% hysteresis since 2026-09-15) x exec layer A2 20pp/10%round/clamp fixed 75pp (scale 0~150; upgraded 2026-07-22)",
-  "status": "LIVE main system since 2026-07-18 (cap_eff up to 1.5, both markets; MA confirm layer since 2026-09-15; pre-live review gate demoted to post-live review point: 60 tracking days OR first >=10% drawdown); email on actionable change",
-  "leverage": "cap_eff = 1.5 if daily-MA-score5 long-confirm else 1.0 (since 2026-09-15); w = gate x min(cap_eff, σ_t/RV20); financing = cash rate + spread 1.5%/yr; TW must use futures not margin; US cap 1.5 = informed decision (research shows US leverage lower Calmar; user chose consistency over risk-adjusted return)",
+  "ruleset_revision_date": "2026-10-19",
+  "mechanism": "W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x exec layer A2 (20pp band / 10% round). From 2026-10-19: stock part cap 1.0 (no borrowing, clamp 50pp/leg; the daily-MA layer no longer changes exposure); US adds IEF/GLD weekly overlay (<=20% each, +1/3 per condition: weekly close > 40w MA, > 52w MA, > close 52w ago); TW has no overlay. Before 2026-10-19: cap_eff = 1.5 if daily-MA-score5 long-confirm else 1.0 (lag 20, 1% hysteresis since 2026-09-15), clamp 75pp; history not rewritten",
+  "status": "LIVE main system. Since 2026-10-19: US = bond-gold version (cap 1.0 + IEF/GLD), TW = no-borrowing version (cap 1.0); decided 2026-10-17. The previous cap 1.5 + daily-MA rule runs on as a control line (cap15_state.json), no email. Email on actionable change (leg target vs held >= 20pp, held above new cap, or IEF/GLD condition count change)",
+  "leverage": "No borrowing from 2026-10-19: stock exposure <= 100% per market; TW leveraged leg (2330 mini futures + small TAIEX) no longer needed. US overlay is funded by swapping the index-account holding (XNAS) into bond/gold funds while the other account adds MNQ to keep stock exposure. Before 2026-10-19: cap_eff up to 1.5 (informed decision, see history).",
   "last_change_date": "2026-09-18",
   "last_change_desc": "美股 QQQ：最終權重 70% → 50%",
   "weights": {
@@ -60329,6 +60330,57 @@
       "combined_pct": 114.1
     }
   ],
+  "rule_changes": [
+    {
+      "effective": "2026-10-19",
+      "decided": "2026-10-17",
+      "from_tag": "w52a_ma_h1",
+      "to_tag": "w52a_c1_live",
+      "summary": "持有人拍板：美股改債金版（股票部分上限 100% 不借錢，另加公債 IEF、黃金 GLD 各最多 20% 的週線趨勢疊加）；台股改不借錢版（上限 100%，不加債金）。生效日起第一個交易日起算。",
+      "us": "cap 1.0 不借錢＋IEF／GLD 週線三條件疊加（每條 1/3、各最多 20%）；A2 執行層 20pp／10% 取整／單腿 clamp 50pp",
+      "tw": "cap 1.0 不借錢，其餘同舊規則，不加債金；A2 執行層 clamp 50pp",
+      "history_policy": "生效日前的 history_us／history_tw 紀錄不改寫；現持超過新上限者於生效日先拉回上限（2330 60%→50%）",
+      "control_line": "舊規則（cap 1.5＋日線均線確認）以 --profile cap15 續跑，輸出 cap15_state.json／cap15.html，不寄信"
+    }
+  ],
+  "overlay": {
+    "active": false,
+    "active_from": "2026-10-19",
+    "asof": "2026-10-16",
+    "stale": false,
+    "w_max_pct": 20.0,
+    "ief": {
+      "symbol": "IEF",
+      "week_date": "2026-10-16",
+      "close": 90.42,
+      "ma40": 92.6,
+      "ma52": 92.79,
+      "px52": 93.64,
+      "c_ma40": false,
+      "c_ma52": false,
+      "c_px52": false,
+      "n": 0,
+      "target_pct": 0.0,
+      "last_close": 90.42,
+      "last_close_date": "2026-10-16"
+    },
+    "gld": {
+      "symbol": "GLD",
+      "week_date": "2026-10-16",
+      "close": 382.01,
+      "ma40": 414.94,
+      "ma52": 408.85,
+      "px52": 388.99,
+      "c_ma40": false,
+      "c_ma52": false,
+      "c_px52": false,
+      "n": 0,
+      "target_pct": 0.0,
+      "last_close": 382.01,
+      "last_close_date": "2026-10-16"
+    },
+    "note": "實盤起始持有 0%；條件數由前次紀錄比對，未生效前只預覽、不寄信。"
+  },
   "official_close_patch": {
     "0050": {
       "appended": [

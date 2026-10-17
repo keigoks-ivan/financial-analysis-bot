@@ -45,8 +45,19 @@ jobs:
       - name: Install dependencies
         run: pip install "yfinance>=0.2.40" pandas numpy
 
-      - name: Run W52 × adaptive vol-target update
+      - name: Run W52 × adaptive vol-target update (LIVE main system)
+        # 2026-10-19 起實盤主系統：美股債金版（股票上限 100% 不借錢＋IEF／GLD 週線疊加）、
+        # 台股不借錢版（上限 100%）。生效日前的紀錄按舊規則保留、不改寫（state.json 每筆帶 rule 標籤）。
+        # 可行動變化寫 lt_w52a_alert.txt（含債金條件數改變），由下方 build_live_mail.py 合成寄出。
         run: python scripts/update_long_track_w52_adaptive.py
+
+      - name: Run old-rule control line (cap 1.5 + daily-MA confirm, former LIVE rule)
+        # 2026-10-19 起：原實盤規則（cap 1.5＋日線均線確認）降為對照線，每日照常更新、不寄信
+        # （--profile cap15 不寫 alert、不動 lt_w52a_alert.txt）。輸出 cap15_state.json／cap15.html。
+        # 必須在記分板之前、C1／noma／tw-semivol 影子之前跑——它們讀 cap15_state.json 做「現行 vs 舊規則」對照。
+        # 失敗不擋實單更新。
+        continue-on-error: true
+        run: python scripts/update_long_track_w52_adaptive.py --profile cap15
 
       - name: Run live scoreboard (PREREG 2026-09-05 forward SPRT vs diluted B&H)
         # 只用 state.json 的 source=='live' 實錄，date-keyed 冪等；讀不到資料/例外一律
@@ -75,16 +86,17 @@ jobs:
             python scripts/build_f70_alert.py
           fi
 
-      - name: Run W52 × adaptive cap 1.0 shadow control page
-        # cap 1.0 (100%) shadow control page (docs/long-track-w52-adaptive/leverage.html).
-        # Since 2026-07-18 main/shadow swap: LIVE main is now cap 1.5 (index.html);
-        # this script writes the cap 1.0 shadow. Same two-cron schedule; NO email of its
-        # own — notifications are covered by the cap 1.5 main system (alert file below).
+      - name: Run W52 × adaptive cap 1.0 page (不借錢版; = LIVE rule for TW from 2026-10-19)
+        # cap 1.0 (100%) page (docs/long-track-w52-adaptive/leverage.html). Independent history
+        # (own replay since 2021). From 2026-10-19 this is the same rule as the LIVE TW leg and
+        # the stock part of the LIVE US leg; kept running as an independent cross-check.
+        # NO email of its own — notifications come from the LIVE main system (alert file below).
         run: python scripts/update_long_track_w52_adaptive_leverage.py
 
       - name: Run TW B-ii downside-semivariance shadow tracking page
         # 2026-08-17: read-only TW-only shadow page (docs/long-track-w52-adaptive/tw-semivol.html).
-        # Signal is identical to the cap 1.5 LIVE main system except the TW leg's vol-target
+        # Signal is identical to the old cap 1.5 rule (now the cap15 control line; read from
+        # cap15_state.json since 2026-10-19) except the TW leg's vol-target
         # sleeve denominator (B-ii downside semivariance instead of RV20); NOT adopted as a
         # live rule (pre-registered criteria not fully met — see Adaptive_Sigma_Spec.md
         # 2026-08-17 decision record). Same two-cron schedule; NO email of its own.
@@ -100,11 +112,12 @@ jobs:
         # Same two-cron schedule; NO email of its own.
         run: python scripts/update_long_track_w52_adaptive_noma.py
 
-      - name: Run C1 shadow comparison page (cap 1.0 stock + IEF/GLD E3 overlay, US only)
-        # 2026-10-17: read-only US shadow page (docs/long-track-w52-adaptive/c1-shadow.html).
-        # C1 is NOT adopted for live trading; it is tracked side by side with the live main
-        # system from the same inception date. Reads state.json written above (live NAV and
-        # cap 1.0 NAV are recomputed with the scoreboard's own functions), fetches IEF/GLD/^IRX,
+      - name: Run C1 comparison page (cap 1.0 stock + IEF/GLD E3 overlay, US only; = LIVE US rule from 2026-10-19)
+        # 2026-10-17: US page (docs/long-track-w52-adaptive/c1-shadow.html). C1 was a shadow
+        # until 2026-10-19; from then on it IS the live US rule. The page keeps tracking it
+        # against the OLD rule from the same inception date (the "現行" line reads
+        # cap15_state.json, the old-rule control line, so the pre-switch numbers do not move).
+        # Reads state.json for the live inception/dates, fetches IEF/GLD/^IRX,
         # renders the frozen research backtest from c1_backtest.json. NO email of its own.
         # Fail-safe: any data gap -> exit 0 and the existing page/state stay untouched.
         continue-on-error: true
@@ -118,6 +131,8 @@ jobs:
         run: python scripts/build_long_track_index.py
 
       - name: Build synthesized live mail (today conclusion + F70 MA account)
+        # 2026-10-19 起：實單 alert 含「美股債金條件數改變」與「現持高於新上限」；舊 cap 1.5 規則
+        # （cap15 對照線）不寫 alert、不寄信。
         # 2026-09-15 持有人拍板：實單信與 F70 信合成一封。build_live_mail.py 零 LLM、
         # 純組版，只讀上面兩步驟寫的 lt_w52a_alert.txt／lt_f70_alert.txt 與兩份
         # state.json，不抓價、不算訊號、不改任何 state；任一 alert 存在才寫
@@ -184,7 +199,7 @@ jobs:
 
             —
             InvestMQuest · 實單系統合成信（美＋台＋F70，2026-09-15 起取代原本的實單信與 F70 信）
-            每交易日台股/美股收盤後自動檢查 · 可行動變化＝美/台任一腿最終權重與現持差 ≥ 20pp 或 F70 D1X 腿部位變化／月底再平衡
+            每交易日台股/美股收盤後自動檢查 · 可行動變化＝美/台任一腿最終權重與現持差 ≥ 20pp、現持高於新規則上限、美股公債/黃金週線條件數改變，或 F70 D1X 腿部位變化／月底再平衡
             退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_w52_adaptive.yml
 
       - name: Discord notify (live system)
@@ -203,7 +218,7 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/long-track-w52-adaptive/noma.html docs/long-track-w52-adaptive/noma_state.json docs/long-track-w52-adaptive/c1-shadow.html docs/long-track-w52-adaptive/c1_shadow_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/f70_signal_state.json docs/long-track/index.html
+          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/cap15.html docs/long-track-w52-adaptive/cap15_state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/long-track-w52-adaptive/noma.html docs/long-track-w52-adaptive/noma_state.json docs/long-track-w52-adaptive/c1-shadow.html docs/long-track-w52-adaptive/c1_shadow_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/f70_signal_state.json docs/long-track/index.html
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then

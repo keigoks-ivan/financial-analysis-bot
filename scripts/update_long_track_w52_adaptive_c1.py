@@ -53,7 +53,11 @@ except ImportError:                        # pragma: no cover
 
 DOCS = _w52.DOCS
 DIR = DOCS / "long-track-w52-adaptive"
-STATE_IN = DIR / "state.json"
+# 2026-10-19 起債金版即實盤（state.json 為新規則）。本頁文字裡的「實單主系統」「實盤」指切換前的
+# 舊規則（cap 1.5＋均線），改讀 cap15_state.json（生效日前與當時實盤逐筆相同）；尚未產生時退回 state.json。
+STATE_IN = DIR / "cap15_state.json"
+if not STATE_IN.exists():
+    STATE_IN = DIR / "state.json"
 BT_JSON = DIR / "c1_backtest.json"
 OUT_HTML = DIR / "c1-shadow.html"
 OUT_STATE = DIR / "c1_shadow_state.json"
@@ -546,6 +550,9 @@ def main():
         st = build()
         bt = json.loads(BT_JSON.read_text(encoding="utf-8"))
         html = render(st, bt)
+        html = _w52.inject_switch_banner(html, "債金版自此即實盤（美股）。本頁文字中的「實單主系統」「實盤」指 2026-10-19 前的舊規則（cap 1.5＋日線均線確認），"
+                                          "現為<a href=\"/long-track-w52-adaptive/cap15.html\">對照線</a>，本頁的對比線讀的是該對照線；債金版與不借錢版兩條線的算法不變，"
+                                          "生效日後的數字改以實盤主系統頁為準。")
     except Abort as e:
         print(f"  ✗ fail-safe: {e} — outputs left unchanged")
         sys.exit(0)

@@ -1130,6 +1130,10 @@ def main():
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map)
     html = _w52.inject_delay_banner(html, _w52.delay_lines_for(delays))
+    html = _w52.inject_switch_banner(html, "這條規則（上限 100%、不借錢）自此即實盤：台股用它，美股的股票部分用它（美股另加公債與黃金，見"
+                                      "<a href=\"/long-track-w52-adaptive/c1-shadow.html\">債金版頁</a>）。本頁維持獨立的一份紀錄，從 2021 年回放起算、自己重放執行層，"
+                                      "當作對實盤的獨立核對；下文「實單主系統」「主系統」指 2026-10-19 前的 cap 1.5 規則，現為"
+                                      "<a href=\"/long-track-w52-adaptive/cap15.html\">對照線</a>。")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")

@@ -130,6 +130,37 @@ RULE_TAG = "w52a_ma_h1"                    # 本規則版本標籤：寫入 stat
 BACKFILL_DAYS = 1260                       # 回放窗（近五年交易日，2026-07-24 由 756/近三年擴充）
 HISTORY_CAP = 1320                         # state.json history 陣列上限（>1260 留實錄餘裕）
 
+# ---- 2026-10-19 規則切換（持有人 2026-10-17 拍板）----------------------------------------
+# 生效日起（資料日 >= RULE_SWITCH_DATE 的紀錄）實盤主系統改為：
+#   美股＝債金版：股票部分 cap 1.0（不借錢，w = 閘門 × min(1, σ_t/RV20)，A2 執行層 clamp 50pp／腿）
+#               ＋ IEF／GLD 各最多 20% 的週線三條件疊加（見 overlay_*）；
+#   台股＝不借錢版：cap 1.0，其餘同現行，不加債金。
+# 生效日前的歷史紀錄一律不改寫；舊規則（cap 1.5＋日線均線確認）以 --profile cap15 繼續跑成對照線
+# （cap15_state.json／cap15.html，不寄信）。規則以「紀錄的 rule 標籤」自我描述：
+#   RULE_TAG（w52a_ma_h1）＝舊規則；NEW_RULE_TAG（w52a_c1_live）＝新規則。
+RULE_SWITCH_DATE = "2026-10-19"
+RULE_SWITCH_DECISION_DATE = "2026-10-17"   # 持有人拍板日
+NEW_RULE_TAG = "w52a_c1_live"
+NEW_CAP = 1.0                              # 新規則股票部分曝險上限（不借錢）
+EXEC_CLAMP_NEW = 50.0 * NEW_CAP            # 新規則執行層 clamp（單腿滿載 50pp）
+OVERLAY_W = 0.20                           # IEF、GLD 各最多 20%（研究凍結值，同 c1 影子）
+OVERLAY_LEGS = ("ief", "gld")
+OVERLAY_SYM = {"ief": "IEF", "gld": "GLD"}
+OVERLAY_NAME = {"ief": "公債（IEF）", "gld": "黃金（GLD）"}
+# 測試用覆寫（本機驗證新規則路徑用，CI 不設）：W52_RULE_SWITCH_DATE=2026-10-16 之類
+import os as _os
+RULE_SWITCH_DATE = _os.environ.get("W52_RULE_SWITCH_DATE") or RULE_SWITCH_DATE
+
+PROFILE = "live"        # "live"＝實盤主系統（預設，import 時也是這個）；"cap15"＝舊規則對照線（main 依 --profile 設定）
+
+
+def is_new_rule(ts) -> bool:
+    """該資料日是否適用新規則：只有實盤 profile、且資料日 >= 生效日。cap15 對照線恆為舊規則。"""
+    if PROFILE != "live":
+        return False
+    d = ts.strftime("%Y-%m-%d") if hasattr(ts, "strftime") else str(ts)[:10]
+    return d >= RULE_SWITCH_DATE
+
 # ---------------------------------------------------------------------------
 # 回測摘要（results/vol_targeting/adaptive_sigma.json，2026-07-17 版）— 轉錄
 # 每列：(label, cagr%, mdd%, calmar, ui, martin)
@@ -486,6 +517,22 @@ def inject_delay_banner(html: str, lines: list) -> str:
     return html2 if n_sub else banner + html
 
 
+def inject_switch_banner(html: str, text_html: str) -> str:
+    """規則切換說明橫幅（2026-10-19）。插在頁首區塊之後第一個 <div class="container"> 的開頭；
+    找不到頁首區塊就退回插在 <body> 之後。影子頁沿用舊文字時，靠這條橫幅說明字面上的
+    「實單主系統」「現行」在 2026-10-19 前後各指哪一套規則。"""
+    banner = ('<div style="background:#eef4ff;border:1px solid #c9d9f5;border-radius:8px;'
+              'padding:.8rem 1.1rem;margin:1rem 0;font-size:.86rem;color:#0f1f3d;line-height:1.7">'
+              f'<b>{RULE_SWITCH_DATE} 規則切換</b>　{text_html}</div>\n')
+    i = html.find('class="page-hdr"')
+    j = html.find('<div class="container">', i) if i >= 0 else -1
+    if j >= 0:
+        j += len('<div class="container">')
+        return html[:j] + "\n" + banner + html[j:]
+    html2, n_sub = re.subn(r"(<body[^>]*>)", lambda mo: mo.group(1) + "\n" + banner, html, count=1)
+    return html2 if n_sub else banner + html
+
+
 def fetch_close(ticker: str) -> pd.Series:
     end = datetime.now() + timedelta(days=1)
     start = end - timedelta(days=365 * 13)   # 13y: W250 (~4.8y) warmup + state history
@@ -632,7 +679,9 @@ def _sleeve_from(px: pd.Series, win: int = 20):
     rv_now = float(rv.iloc[-1])
     sig_now = float(sigma.iloc[-1])
     _, ma5_on = _ma_conditions(px)
-    cap_eff = 1.5 if ma5_on else 1.0
+    # 2026-10-19 起（is_new_rule）：上限固定 NEW_CAP＝1.0（不借錢），均線層不再影響曝險
+    # （ma5_on 仍照算並記錄，僅供對照）；舊規則與 cap15 對照線維持原式，逐位元不變。
+    cap_eff = NEW_CAP if is_new_rule(px.index[-1]) else (1.5 if ma5_on else 1.0)
     if rv_now > 0 and not np.isnan(sig_now):
         raw = sig_now / rv_now
         w = min(cap_eff, raw)
@@ -648,7 +697,8 @@ def sleeve_state(px: pd.Series) -> dict:
     cond, _ = _ma_conditions(px)
     # 距離開槓桿：raw < 1 時波動還要降 (1-raw) 才到 1.0（開始借錢）；raw ≥ 1 已在借
     return {"rv20": rv_now, "sigma_t": sig_now, "sleeve": w, "raw_ratio": raw,
-            "ma5_on": ma5_on, "cap_eff": cap_eff, "ma_cond": cond, "rule": RULE_TAG,
+            "ma5_on": ma5_on, "cap_eff": cap_eff, "ma_cond": cond,
+            "rule": NEW_RULE_TAG if is_new_rule(px.index[-1]) else RULE_TAG,
             "levered": bool(raw > 1.0), "dist_to_lever": max(0.0, 1.0 - raw)}
 
 
@@ -689,8 +739,8 @@ def _daily_record(px_map: dict, legs: list, d: pd.Timestamp, source: str) -> dic
             "ma5_on": ma5_on,
             "cap_eff": cap_eff,
             "ma_cond": cond,
-            "rule": RULE_TAG,
-            "final_pct": round(final * 100, 1),   # 組合 pp，0..75（每腿滿槓桿 75）
+            "rule": NEW_RULE_TAG if is_new_rule(d) else RULE_TAG,
+            "final_pct": round(final * 100, 1),   # 組合 pp：舊規則 0..75（每腿滿槓桿 75）；新規則 0..50
         }
     rec["combined_pct"] = round(combined * 100, 1)
     return rec
@@ -724,6 +774,22 @@ def merge_history(prev_history: list, backfill: list, today_rec: dict,
 # 每市場各自從 history 確定性重放（history_us／history_tw），冪等可重現。
 # band／grid／clamp 以組合 pp 為單位（每腿滿載＝50 pp；cap1.5 clamp＝75pp）。
 # ---------------------------------------------------------------------------
+def exec_clamp_for(tk: dict) -> float:
+    """該筆紀錄適用的執行層 clamp：新規則標籤 → 50pp，其餘（舊規則、更早的回放紀錄）→ 75pp。
+    由紀錄自己的 rule 標籤決定，不看今天是哪個 profile，所以任何腳本重放同一份 history
+    （記分板、C1 影子、對照線）都得到同一條現持序列。"""
+    return EXEC_CLAMP_NEW if tk.get("rule") == NEW_RULE_TAG else EXEC_CLAMP
+
+
+def next_exec(held: float, target: float, clamp: float) -> float:
+    """與 band_exec_replay 同一條單日更新式（整數 pp 空間）：現持超過上限先拉回；
+    |目標 − 現持| ≥ 20pp 才調整，取整到 10 格再 clamp。通知用，保證與重放一致。"""
+    cur = min(held, clamp)
+    if abs(target - cur) >= EXEC_BAND:
+        cur = min(round(target / EXEC_GRID) * EXEC_GRID, clamp)
+    return cur
+
+
 def band_exec_replay(history: list, legs: list) -> dict:
     """對每腿的最終權重（組合 pp）重放執行層：executed 初始 0，逐日若
     |target − executed| ≥ 20pp 則 executed = min(round(target/10)×10, 50×cap)，否則不變。
@@ -739,14 +805,23 @@ def band_exec_replay(history: list, legs: list) -> dict:
             tk = r["tickers"][t]
             target = tk["final_pct"]
             gate = bool(tk["gate"])
+            clamp = exec_clamp_for(tk)
+            before = cur[t]
+            # 規則切換（舊 clamp 75 → 新 clamp 50）：現持若超過新上限，先拉回上限（不借錢），
+            # 這一步獨立於 20pp 門檻——否則 60 對 50 差 10pp 不會觸發，部位會卡在上限之上。
+            if cur[t] > clamp:
+                cur[t] = clamp
+                forced = True
+            else:
+                forced = False
             if abs(target - cur[t]) >= EXEC_BAND:
-                new = min(round(target / EXEC_GRID) * EXEC_GRID, EXEC_CLAMP)
-                if new != cur[t]:
-                    flipped = prev_gate[t] is not None and gate != prev_gate[t]
-                    events.append({"date": r["date"], "leg": t,
-                                   "from": cur[t], "to": new,
-                                   "reason": "閘門翻轉" if flipped else "波動調整"})
-                    cur[t] = new
+                cur[t] = min(round(target / EXEC_GRID) * EXEC_GRID, clamp)
+            if cur[t] != before:
+                flipped = prev_gate[t] is not None and gate != prev_gate[t]
+                events.append({"date": r["date"], "leg": t,
+                               "from": before, "to": cur[t],
+                               "reason": ("閘門翻轉" if flipped else
+                                          ("規則切換" if forced and cur[t] == clamp else "波動調整"))})
             executed[t].append(cur[t])
             prev_gate[t] = gate
         combined.append(round(sum(cur[t] for t in legs), 1))
@@ -764,6 +839,12 @@ def events_card(mkt: dict, events: list) -> str:
     # 該資訊已在主圖 pane 2 與今天結論條呈現，事件表只留「哪天哪腿為什麼變」）。
     cutoff = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
     recent_events = [e for e in events if e["date"] >= cutoff]
+    if PROFILE == "live":
+        events_rule_txt = f"A2：20pp 門檻＋10% 取整；單腿上限 {RULE_SWITCH_DATE} 前 75%、起 50%"
+        events_clamp_txt = f"單腿上限（{RULE_SWITCH_DATE} 前 75%、起 50%）"
+    else:
+        events_rule_txt = "A2：20pp 門檻＋10% 取整＋clamp 150%"
+        events_clamp_txt = " 75%"
     if not recent_events:
         body = ('<tr><td colspan="4" style="text-align:center;color:var(--muted)">'
                 '最近一年窗內無執行層調整事件（皆未跨 20pp 門檻）</td></tr>')
@@ -775,9 +856,9 @@ def events_card(mkt: dict, events: list) -> str:
                      f'<td>{ev["from"]:.0f}% → {ev["to"]:.0f}%</td>'
                      f'<td style="color:{rc}">{ev["reason"]}</td></tr>\n')
     return f"""<div class="card">
-<h3>{mkt['short']} 最近一年執行層訊號變化事件（A2：20pp 門檻＋10% 取整＋clamp 150%）</h3>
+<h3>{mkt['short']} 最近一年執行層訊號變化事件（{events_rule_txt}）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-只有當某腿目標與現持差 ≥ 20pp 才調整（取整到 10% 格、再 clamp 於 75%），故事件遠少於每日微調。倒序列出最近 365 天內全部事件；「舊→新」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」否則「波動調整」。</p>
+只有當某腿目標與現持差 ≥ 20pp 才調整（取整到 10% 格、再 clamp 於{events_clamp_txt}），故事件遠少於每日微調。倒序列出最近 365 天內全部事件；「舊→新」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」，{RULE_SWITCH_DATE} 起現持超過新上限而被拉回則「規則切換」，其餘「波動調整」。</p>
 <table><thead><tr><th>日期</th><th>腿</th><th>舊→新</th><th>原因</th></tr></thead>
 <tbody>{body}</tbody></table>
 </div>"""
@@ -842,13 +923,17 @@ def ticker_card(t: str, d: dict, exec_pct: float = None) -> str:
         mark = "✓" if ok else "✕"
         return f'<span class="tag" style="background:{bg};color:{fg};margin:0 .2rem .2rem 0">{mark} {name}</span>'
 
-    lamps = "".join([
+    new_rule = d.get("rule") == NEW_RULE_TAG
+    lamps = "" if new_rule else "".join([
         _lamp("收&gt;MA60", cond["gt60"]),
         _lamp("收&gt;MA120", cond["gt120"]),
         _lamp("收&gt;MA200", cond["gt200"]),
         _lamp("MA120↑", cond["s120_up"]),
         _lamp("MA200↑", cond["s200_up"]),
     ])
+    ma_metrics = ("" if new_rule else
+                  f'\n    <span class="tcard-metric">均線 <b>{n_on}/5</b></span>'
+                  f'\n    <span class="tcard-metric">cap_eff <b>{cap_eff:.1f}</b></span>')
     gate_pill = (f'<span class="tag" style="background:var(--green-bg);color:var(--green-text)">✓ 在場</span>'
                  if gate_on else
                  f'<span class="tag" style="background:var(--red-bg);color:var(--red-text)">✕ 出場</span>')
@@ -858,9 +943,7 @@ def ticker_card(t: str, d: dict, exec_pct: float = None) -> str:
     <span class="pos-badge pos-{col}">目標 {target_pp:.0f}pp ／ 現持 {exec_txt}</span>
   </div>
   <div class="tcard-row">{gate_pill}
-    <span class="tcard-metric">距 W52 <b style="color:var(--{'green' if d52>=0 else 'red'})">{fmt_pct(d52,1)}</b></span>
-    <span class="tcard-metric">均線 <b>{n_on}/5</b></span>
-    <span class="tcard-metric">cap_eff <b>{cap_eff:.1f}</b></span>
+    <span class="tcard-metric">距 W52 <b style="color:var(--{'green' if d52>=0 else 'red'})">{fmt_pct(d52,1)}</b></span>{ma_metrics}
   </div>
   <div class="tcard-row">
     <span class="tcard-metric">raw σ_t/RV20 <b>{d['raw_ratio']:.2f}</b></span>
@@ -1093,6 +1176,16 @@ def f70_section(exec_last_us: dict, main_data_date: str) -> str:
 # ---------------------------------------------------------------------------
 # per-market render (html block + chart JS)
 # ---------------------------------------------------------------------------
+def MARKER_DATE() -> str:
+    """曝險 pane 的事件標記日：實盤＝規則切換日；cap15 對照線＝均線層上線日。"""
+    return RULE_SWITCH_DATE if PROFILE == "live" else RULE_REVISION_DATE
+
+
+def MARKER_TEXT() -> str:
+    return (f"規則切換 {RULE_SWITCH_DATE}：美債金版／台不借錢版" if PROFILE == "live"
+            else f"均線層上線 {RULE_REVISION_DATE}")
+
+
 def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict, leg_panel: dict) -> dict:
     """2026-09-15 重做：拿掉 Chart.js 用的量表／乘法鏈／燃料表／回測縮圖欄位
     （對應圖表已改用 Lightweight Charts 主圖或收進 <details> 純表格），新增主圖
@@ -1146,6 +1239,8 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict, leg_pa
         for i, d in enumerate(dates):
             exit_any = (pa["gate"][i] == 0) or (pb["gate"][i] == 0)
             cap10_any = (not pa["ma5_on"][i]) or (not pb["ma5_on"][i])
+            if PROFILE == "live" and d >= RULE_SWITCH_DATE:
+                cap10_any = False      # 新規則上限固定 1.0，均線層不再影響曝險，不畫 cap_eff 色塊
             if exit_any:
                 ribbon.append([d, "exit"])
             elif cap10_any:
@@ -1161,7 +1256,7 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict, leg_pa
             "a_w52_raw": json.dumps(pa["w52"], separators=(",", ":")),
             "b_w52_raw": json.dumps(pb["w52"], separators=(",", ":")),
             "ribbon": json.dumps(ribbon, separators=(",", ":")),
-            "has_revision": RULE_REVISION_DATE in dates,
+            "has_revision": MARKER_DATE() in dates,
             "ma60_now": {a: pa["ma60_now"], b: pb["ma60_now"]},
         })
 
@@ -1186,6 +1281,73 @@ def _dual_breakdown(legs, finals, exec_finals):
             f"<b>現持 {ed}%</b>＝{exe}（執行層；"
             f"<b>|目標−現持| 未達 20pp 不調，故兩者常有幾 % 差、是設計非錯誤</b>）")
     return html, td, ed
+
+
+# ---------------------------------------------------------------------------
+# 實盤 profile 的回測區塊（2026-10-19 起）：數字全部轉錄／讀取既有檔，不重算——
+#   · 不借錢版（美台）：update_long_track_w52_adaptive_leverage 的 BT_US／BT_TW（A2 執行層）
+#   · 債金版（美）：docs/long-track-w52-adaptive/c1_backtest.json（本機研究程式產生、凍結）
+#   · 舊規則逐年績效／槓桿堆疊／融資敏感度：保留在 cap15.html（原 annual_perf_section／backtest_section）
+# ---------------------------------------------------------------------------
+C1_BACKTEST_JSON = DOCS / "long-track-w52-adaptive" / "c1_backtest.json"
+
+
+def _bt_stats_row(label, st, hl=False):
+    cls = ' class="rowhl"' if hl else ""
+    return (f'<tr{cls}><td>{label}</td><td class="num">{st["cagr"]:.1f}%</td><td class="num">{st["mdd"]:.1f}%</td>'
+            f'<td class="num">{st["ulcer"]:.2f}</td><td class="num">{st["uw10_frac"]:.0f}%</td></tr>')
+
+
+def _live_c1_block() -> str:
+    try:
+        bt = json.loads(C1_BACKTEST_JSON.read_text(encoding="utf-8"))
+        s_bt, med = bt["stats_daily_wfri"], bt["anchor_median"]
+        st = bt["stress"]["升息 2022-01～2023-10"]
+    except Exception:
+        return ('<div class="card"><h3>美股債金版研究期回測</h3><p style="font-size:.82rem;color:var(--muted)">'
+                '研究期回測檔暫時讀不到，完整數字見 <a href="/long-track-w52-adaptive/c1-shadow.html">債金版頁</a>。</p></div>')
+    rows = "".join([
+        _bt_stats_row("債金版（週五錨點，日頻）", s_bt["C1"], True),
+        _bt_stats_row("舊規則 cap 1.5＋均線（週五錨點）", s_bt["C0"]),
+        _bt_stats_row("50/50 買進持有", s_bt["BH"]),
+        _bt_stats_row("債金版（五個週線錨點中位數）", med["C1"]),
+        _bt_stats_row("舊規則（五個週線錨點中位數）", med["C0"]),
+    ])
+    return f"""<div class="card">
+<h3>美股債金版研究期回測（{bt['window'][0]} ～ {bt['window'][1]}）</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
+股票部分不借錢，另疊公債（IEF）與黃金（GLD）各最多 20%，各看週線三個條件。這是研究程式一次算出的凍結曲線，不隨每日資料重算；事前登記的六條判準全數通過，但 W-FRI 全窗數字在定門檻前已經看過，不算新證據。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>規則</th><th class="num">年化</th><th class="num">最大回撤</th><th class="num">Ulcer</th><th class="num">低於前高 10% 的時間</th></tr></thead>
+<tbody>{rows}</tbody></table></div>
+<div class="takeaway">五個錨點中位數：債金版年化 {med['C1']['cagr']:.1f}%、Ulcer {med['C1']['ulcer']:.1f}，舊規則年化 {med['C0']['cagr']:.1f}%、Ulcer {med['C0']['ulcer']:.1f}。
+最明確的弱點是債券與股票同跌的升息期：2022-01 至 2023-10，債金版 {st['C1']['ret']:+.1f}%，舊規則 {st['C0']['ret']:+.1f}%。債券與黃金在 2005 至 2026 年整體是順風，結論只在這段樣本成立，也只測了美股。</div>
+</div>"""
+
+
+def live_backtest_blocks(mkt: dict, appendix: str, sigs: dict) -> str:
+    import update_long_track_w52_adaptive_leverage as _lev
+    bt = _lev.BT_US if mkt["key"] == "us" else _lev.BT_TW
+    rows = ""
+    for lab, cagr, mdd, calmar, ui, martin in bt["rows"]:
+        shown = lab.replace("（本頁追蹤）", "（現行實盤的股票部分）")
+        hl = ("rowhl" if "現行實盤" in shown else ("rowbh" if "買進持有" in shown else ""))
+        rows += (f'<tr class="{hl}"><td>{shown}</td><td class="num">{cagr:.2f}%</td>'
+                 f'<td class="num">{mdd:.1f}%</td><td class="num">{calmar:.3f}</td>'
+                 f'<td class="num">{ui:.2f}</td><td class="num">{martin:.2f}</td></tr>\n')
+    stock_card = f"""<div class="card">
+<h3>{mkt['short']} 不借錢版股票部分回測（窗 {bt['window']}）</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
+藍底列是 2026-10-19 起實盤的股票部分：週線 W52 閘門 × 自適應波動率（上限 100%）× 執行層（20pp 門檻、10% 取整）。其他列為同窗對照。數字轉錄自不借錢版頁，台股為 7 bps 均一成本，含證交稅的真實成本版約再降 0.5 個百分點年化。</p>
+<table><thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Ulcer</th><th class="num">Martin</th></tr></thead>
+<tbody>{rows}</tbody></table>
+<div class="takeaway">逐年績效、槓桿堆疊、融資利差敏感度與壓力統計屬於舊規則（cap 1.5＋均線），保留在 <a href="/long-track-w52-adaptive/cap15.html">舊規則對照線頁</a>。</div>
+</div>"""
+    ov_card = _live_c1_block() if mkt["key"] == "us" else (
+        '<div class="card"><h3>台股沒有債金疊加</h3><p style="font-size:.82rem;color:var(--muted)">'
+        '台股只改成不借錢版，不加公債與黃金。台股實作上，槓桿段原本用的 2330 小型個股期與小台指不再需要。</p></div>')
+    appendix_live = appendix.replace("，且槓桿放大這個深熊未測風險", "") if appendix else ""
+    return f"{stock_card}\n{ov_card}\n{appendix_live}"
 
 
 def market_html(mkt: dict, sigs: dict, md: dict) -> str:
@@ -1220,18 +1382,28 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
   <span class="ln-item"><span class="ln-swatch" style="background:{AMBER_HEX}"></span>{legs[1]}</span>
   <span class="ln-item"><span class="ln-line"></span>W52（各腿同比例）</span>
   <span class="ln-item"><span class="ln-swatch" style="background:var(--red)"></span>閘門出場（曝險 pane 底色）</span>
-  <span class="ln-item"><span class="ln-swatch" style="background:var(--purple)"></span>cap_eff 退回 1.0（曝險 pane 底色）</span>
+  <span class="ln-item"><span class="ln-swatch" style="background:var(--purple)"></span>cap_eff 退回 1.0（曝險 pane 底色{'，僅舊規則期間' if PROFILE == 'live' else ''}）</span>
 </div>"""
     else:
         chart_html = ('<p style="font-size:.85rem;color:var(--muted);padding:1rem 0">'
                       'render-only 模式（未重新抓取價格）不重繪主圖；下次正常執行（抓價）會自動補回。</p>')
     appendix = appendix_2330_section() if suf == "tw" else ""
+    if PROFILE == "live":
+        chart_desc = (f"附 100% 參考線〈新規則上限〉、{RULE_SWITCH_DATE} 規則切換的標記，並用底色標出閘門出場與舊規則期間 cap_eff 被壓回 1.0 的期間")
+        details_body = live_backtest_blocks(mkt, appendix, sigs)
+        details_hdr = f"{mkt['short']} 回測與統計（點開看研究期數字{'、債金疊加' if suf == 'us' else ''}、舊規則逐年績效連結、近 8 週閘門軌跡{'、2330 長窗附錄' if appendix else ''}）"
+    else:
+        chart_desc = "附 100%／150% 參考線、2026-09-15 均線層上線的標記，並用底色標出閘門出場與 cap_eff 被壓回 1.0 的期間"
+        details_body = f"""{backtest_section(mkt)}
+{annual_perf_section(mkt)}
+{appendix}"""
+        details_hdr = f"{mkt['short']} 回測與統計（點開看完整數字：回測堆疊表、逐年績效、曝險分布、利差敏感度、壓力統計、近 8 週閘門軌跡{'、2330 長窗附錄' if appendix else ''}）"
     return f"""<div class="mkt-section" id="mkt-{suf}" data-market="{suf}">
 <div class="mkt-hd"><span class="mkt-tag">{mkt['name']} — 主圖（近一年，可切 1Y／3Y／5Y）</span></div>
 
 <div class="card">
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-三個垂直排列的圖：<b>價格</b>（{legs[0]}／{legs[1]} 各自正規化為近 1260 個交易日前＝100，並附 W52 週均線同比例對照）、<b>曝險</b>（現持〈執行層，粗階梯，主角〉vs 每日理論目標〈訊號，細線〉，附 100%／150% 參考線、2026-09-15 均線層上線的標記，並用底色標出閘門出場與 cap_eff 被壓回 1.0 的期間）、<b>波動</b>（RV20 實際波動 vs σ_t 自適應門檻，兩腿各一組顏色）。拖曳可平移、滾輪可縮放，游標停在圖上看逐日數值。</p>
+三個垂直排列的圖：<b>價格</b>（{legs[0]}／{legs[1]} 各自正規化為近 1260 個交易日前＝100，並附 W52 週均線同比例對照）、<b>曝險</b>（現持〈執行層，粗階梯，主角〉vs 每日理論目標〈訊號，細線〉，{chart_desc}）、<b>波動</b>（RV20 實際波動 vs σ_t 自適應門檻，兩腿各一組顏色）。拖曳可平移、滾輪可縮放，游標停在圖上看逐日數值。</p>
 {chart_html}
 </div>
 
@@ -1239,11 +1411,9 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 
 <div class="card">
 <details>
-<summary style="cursor:pointer;font-weight:600;font-size:.88rem">{mkt['short']} 回測與統計（點開看完整數字：回測堆疊表、逐年績效、曝險分布、利差敏感度、壓力統計、近 8 週閘門軌跡{'、2330 長窗附錄' if appendix else ''}）</summary>
+<summary style="cursor:pointer;font-weight:600;font-size:.88rem">{details_hdr}</summary>
 <div style="margin-top:.9rem">
-{backtest_section(mkt)}
-{annual_perf_section(mkt)}
-{appendix}
+{details_body}
 {"".join(recent_table(t, sigs[t]) for t in legs)}
 </div>
 </details>
@@ -1266,9 +1436,10 @@ def market_js(mkt: dict, md: dict) -> str:
     if not chart["has_chart"]:
         return f"// ===== market: {suf} ===== (render-only：無 px_map，不建主圖)\n"
     H = md["H"]
+    ref_line = 100 if PROFILE == "live" else 150     # 實盤新上限 100%；cap15 對照線沿用 150%
     revision_marker = (f"""
   var revMarkers_{suf} = LightweightCharts.createSeriesMarkers(execSeries_{suf}, [
-    {{time:'{RULE_REVISION_DATE}', position:'aboveBar', color:'{BRAND_HEX}', shape:'circle', text:'均線層上線 {RULE_REVISION_DATE}'}}
+    {{time:'{MARKER_DATE()}', position:'aboveBar', color:'{BRAND_HEX}', shape:'circle', text:'{MARKER_TEXT()}'}}
   ]);""" if chart["has_revision"] else "")
     return f"""
 // ===== market: {suf}（Lightweight Charts v5） =====
@@ -1329,8 +1500,8 @@ def market_js(mkt: dict, md: dict) -> str:
   targetSeries_{suf}.setData(_pts(COMB_{suf}));
   execSeries_{suf}.createPriceLine({{price:100, color:'rgba(120,120,120,0.6)',
     lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, title:'100%', axisLabelVisible:true}});
-  execSeries_{suf}.createPriceLine({{price:150, color:'rgba(220,38,38,0.6)',
-    lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, title:'150%', axisLabelVisible:true}});{revision_marker}
+  execSeries_{suf}.createPriceLine({{price:{ref_line}, color:'rgba(220,38,38,0.6)',
+    lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, title:'{ref_line}%', axisLabelVisible:true}});{revision_marker}
 
   // ---- pane 2：RV20 vs σ_t（每腿各一組顏色）----
   chart_{suf}.addPane();
@@ -1416,7 +1587,7 @@ def _leg_trigger_text(t: str, d: dict, ma60_now: float | None) -> str:
         parts.append(f"跌破 W52 {d['w52']:.2f} 出場")
     else:
         parts.append(f"漲回 W52 {d['w52']:.2f} 之上進場")
-    if ma60_now is not None:
+    if ma60_now is not None and d.get("rule") != NEW_RULE_TAG:   # 新規則（上限 1.0）不看均線層
         if d["ma5_on"]:
             trig_px = ma60_now * (1.0 - MA_BUF)
             parts.append(f"跌破 {trig_px:.2f}（MA60×{100*(1-MA_BUF):.0f}%）cap_eff 降回 1.0")
@@ -1429,6 +1600,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
                      last_change_desc: str | None, exec_map: dict,
                      leg_panel_map: dict | None = None) -> str:
     leg_panel_map = leg_panel_map or {}
+    any_new = any(sigs[t].get("rule") == NEW_RULE_TAG for t in ALL_TICKERS)
     if last_change_date:
         changed = f"最近一次執行層變動：{last_change_date}，{last_change_desc or '（無敘述）'}。"
     else:
@@ -1451,10 +1623,15 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
                         f'<span class="tag" style="background:var(--red-bg);color:var(--red-text)">出場</span>')
             ma60_now = (panel.get(t) or {}).get("ma60_now") if panel else None
             trig = _leg_trigger_text(t, d, ma60_now)
-            leg_rows += (f'<div class="today-leg"><b>{t}</b> {gate_pill} '
-                        f'均線 <b>{n_on}/5</b> · cap_eff <b>{d["cap_eff"]:.1f}</b> · '
-                        f'現持 <b>{exec_last.get(t, 0.0):.0f}pp</b><br>'
-                        f'<span style="color:var(--muted);font-size:.78rem">下一個會動的價位：{trig}</span></div>')
+            if d.get("rule") == NEW_RULE_TAG:
+                leg_rows += (f'<div class="today-leg"><b>{t}</b> {gate_pill} '
+                            f'目標 <b>{d["final"]*100:.0f}pp</b> · 現持 <b>{exec_last.get(t, 0.0):.0f}pp</b><br>'
+                            f'<span style="color:var(--muted);font-size:.78rem">下一個會動的價位：{trig}</span></div>')
+            else:
+                leg_rows += (f'<div class="today-leg"><b>{t}</b> {gate_pill} '
+                            f'均線 <b>{n_on}/5</b> · cap_eff <b>{d["cap_eff"]:.1f}</b> · '
+                            f'現持 <b>{exec_last.get(t, 0.0):.0f}pp</b><br>'
+                            f'<span style="color:var(--muted);font-size:.78rem">下一個會動的價位：{trig}</span></div>')
         mkt_cards += f"""<div class="today-mkt hero-{ccol}">
   <div class="today-mkt-name">{m['name']}</div>
   <div class="today-mkt-num" style="color:var(--{ccol})">{exec_combined:.0f}%</div>
@@ -1462,14 +1639,21 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
   {leg_rows}
 </div>"""
 
+    if any_new:
+        glossary_cap = ("<b>曝險上限</b>＝2026-10-19 起股票部分最高 100%，不借錢（此前美台為 cap_eff 最高 150%，此後只在對照線 "
+                        "<a href=\"/long-track-w52-adaptive/cap15.html\">cap15.html</a> 繼續追蹤）；"
+                        "<b>債金疊加</b>＝美股另外各最多 20% 配置公債（IEF）與黃金（GLD），各看週線三個條件，每成立一條加三分之一；")
+    else:
+        glossary_cap = ("<b>cap_eff</b>＝套袖目前的曝險上限：日線均線五條件（收盤 &gt; MA60／MA120／MA200、MA120／MA200 斜率向上）"
+                        "全對時 1.5（單一腿最高可放大到自身額度的 150%），任一條不對時退回 1.0（2026-09-15 起新增，此前固定 1.5）；")
     return f"""<div class="card" style="border:2px solid var(--brand);background:#eef4ff">
 <h3 style="color:var(--brand)">今天結論</h3>
 <div class="today-grid">{mkt_cards}</div>
 <div class="rule-list" style="font-size:.85rem;margin-top:.8rem">{changed}</div>
 <div style="font-size:.72rem;color:var(--muted);margin-top:.6rem;line-height:1.7">
 名詞：<b>W52</b>＝過去 52 週（約一年）收盤價的平均線，本系統用它當長期趨勢的進出場閘門（週收在上方視為多頭、在下方視為空頭）；
-<b>套袖（自適應波動率）</b>＝波動低於自身近 3 年中位數時加碼、波動升高時自動減碼的機制；
-<b>cap_eff</b>＝套袖目前的曝險上限：日線均線五條件（收盤 &gt; MA60／MA120／MA200、MA120／MA200 斜率向上）全對時 1.5（單一腿最高可放大到自身額度的 150%），任一條不對時退回 1.0（2026-09-15 起新增，此前固定 1.5）；
+<b>套袖（自適應波動率）</b>＝波動低於自身近 3 年中位數時放大部位、波動升高時自動減碼的機制（2026-10-19 起放大到滿額 100% 為止）；
+{glossary_cap}
 <b>執行層／A2</b>＝目標權重與現持部位差要達到 20 個百分點門檻才真的調整，避免天天微調。
 </div>
 </div>"""
@@ -1491,10 +1675,261 @@ def _fear_greed_line() -> str:
 # ---------------------------------------------------------------------------
 # Full HTML
 # ---------------------------------------------------------------------------
+PILL_ON = "font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none"
+PILL_OFF = "font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none"
+
+
+def _legacy_banner() -> str:
+    return f"""<div class="oos-banner">
+  <span class="tag-loud">實單主系統・2026-07-18 起・cap_eff 1.5／1.0（均線確認，2026-09-15 起）・email 提醒可行動變化</span>
+  <div style="font-size:.86rem">本頁是<b>{FREEZE_DATE} 凍結、2026-07-18 起正式採用的實單主系統</b>：<b>W52 單線閘門 × 自適應 σ 波動率目標 cap_eff × 執行層 A2（20pp 門檻＋10% 取整＋clamp 150%）</b>（美台四腿、各市場 50/50 獨立組合，曝險可上到 150%）。真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢加碼、波動一高自動降回。<b>{RULE_REVISION_DATE} 起（持有人拍板）</b>：股票腿加一道<b>日線均線確認</b>——收盤 &gt; MA60／MA120／MA200（各加 1% 遲滯）＋ MA120／MA200 20 個交易日前上揚，五條全對 <b>cap_eff = 1.5</b>、任一條不對 <b>cap_eff 退回 1.0</b>（w = min(cap_eff, σ_t/RV20)）；理由是「不在跌中借錢」寫進規則，比事後手動減碼誠實，其餘機制（閘門、套袖分母、執行層、成本）不變。每交易日台股／美股收盤後更新，<b>可行動變化以 email 提醒</b>（任一腿今日目標與現持執行層差 ≥ 20pp；<b>閘門翻轉本身不構成觸發，須一併達到 20pp 門檻</b>，與回測 A2 一致；任一腿 cap_eff 翻轉會寫進 email 內文說明，但不單獨觸發 email）。
+  <br><br><b>誠實紀律（兩點白紙黑字）</b>：<b>①</b> <b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點（60 個追蹤交易日，或首次 ≥ 10% 組合回撤事件）</b>——即先上實單、再於回顧點檢驗水下體驗是否符合預期。<b>②</b> <b>美股採 cap 1.5 是「知情決策」</b>：研究顯示<b>美股這一腿槓桿的風險調整報酬（Calmar）較不划算</b>、任何融資利差下都不佔優，<b>選擇兩市場一致性與報酬（而非風險調整最優）</b>，明知美股這一腿是為對稱操作付的代價。<b>此外</b>：槓桿放大所有模型誤差、深熊未實測（見 2330 長窗與誠實揭露）、台股須用期貨非融資、實際峰值建議壓 140% 留保證金緩衝。均線層預註冊 kill condition 見帳本 <code>knowledge/rule_ledger.md</code>「實單主系統規則鏈」。</div>
+</div>
+
+"""
+
+
+def _legacy_rules() -> str:
+    return f"""<div class="card">
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則說明（點開看完整規則、2026-09-15 均線層修訂與 kill condition，白話版）</summary>
+<div style="margin-top:.9rem">
+<div class="card">
+<h3>追蹤主系統規則（W52 × 自適應波動率 × 均線確認；{FREEZE_DATE} 定案，{RULE_REVISION_DATE} 起加均線層，此後不再調整）</h3>
+<div class="rule-list">
+① <b>四腿、兩市場</b>：美股 {{QQQ, SMH}} 各 50%、台股 {{0050, 2330}} 各 50%（.TW，內嵌幻影分割修復）。兩組合各自獨立追蹤（各 100%），日報酬 50/50 加權合成（<b>絕不直接相加 equity curve</b>）。<br>
+② <b>週線 W52 單線閘門</b>（W-FRI）：<b>週收盤 &gt; SMA52w 在場、&lt; SMA52w 出場</b>；<b>無 W104／W250 斜率滯後條件</b>（此為與舊 score5 系統的唯一結構差異，換取深熊後快速再進場）；<b>長多 only</b>，閘門輸出 0／1。卡片仍顯示 W104／W250 供參考背景，但<b>閘門決策只用 W52</b>。<br>
+③ <b>自適應波動率套袖 × cap_eff（凍結 {FREEZE_DATE}）</b>：σ_t＝RV20 的 <b>rolling(756, min_periods=252).median()</b>；raw＝σ_t／RV20；<b>w = min(cap_eff, raw)</b>——σ_t/RV &lt; 1 減碼，&gt; 1 <b>才借錢加碼</b>（真波動率目標，cap_eff 全開時上到 150%，見④）。融資＝現金利率＋利差 1.5%/年；台股實作須用期貨。<br>
+④ <b>日線均線長多確認（{RULE_REVISION_DATE} 起併入實單，持有人拍板）</b>：以 auto-adjust 收盤價算 <code>ma60/ma120/ma200</code>；五條件——收盤 &gt; MA60、收盤 &gt; MA120、收盤 &gt; MA200、MA120 今日 &gt; MA120 {MA_LAG} 個交易日前、MA200 今日 &gt; MA200 {MA_LAG} 個交易日前——<b>全對 → cap_eff = 1.5</b>；<b>任一條不對 → cap_eff 退回 1.0</b>。三個價格條件（收盤 vs MA60/120/200）各加 <b>1% 遲滯</b>：條件目前關，收盤要漲過 MA 才轉開；目前開，收盤要跌破 MA×99% 才轉關；介於中間沿用前一日狀態（理由：收盤貼著 MA60 天天翻會讓執行層跟著抖動）。MA 未暖機（資料不足 200 日）視為不全開。<br>
+⑤ <b>機制與視窗凍結</b>：W52 閘門、滾動中位數 3 年（756／252）、均線 lag {MA_LAG}、執行層皆鎖死，<b>此後不再調整</b>；不掃參擇優、不改機制形狀、不加濾網後重跑。固定 σ 對照值（QQQ 20%／SMH 25%／0050 15%／2330 25%）僅供卡片顯示，套袖不使用。<br>
+⑥ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
+⑦ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
+⑧ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
+⑨ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×1.5＝75pp（<b>固定，不隨 cap_eff 變動</b>／組合 150%）；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。<br>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t／均線條件皆為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿今日目標與現持（執行層 executed）差 ≥ 20pp；<b>閘門翻轉本身不觸發通知，須一併達 20pp 門檻</b>（與回測 A2 執行層一致）；<b>cap_eff 翻轉只寫進 email 內文說明，不單獨觸發通知</b>。舊規則（無均線層，2026-07-18～2026-09-14）轉為唯讀影子 <a href="/long-track-w52-adaptive/noma.html">noma.html</a>，供均線層 kill condition 對帳。</span>
+</div>
+</div>
+
+<div class="card">
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則沿革（歷次凍結後的變更紀錄）</summary>
+<div class="rule-list" style="font-size:.82rem;margin-top:.75rem">
+• <b>2026-07-17</b>：規則凍結——W52 單線閘門 × 自適應 σ_t（RV20 近三年滾動中位數，756／252）定案，此後不掃參擇優、不改機制形狀、不加濾網。<br>
+• <b>2026-07-18</b>：正式採用 cap 1.5（真波動率目標，w = 閘門 × clip(σ_t/RV, 上限 1.5)）為實單主系統。<br>
+• <b>2026-07-22</b>：執行層由 10pp 門檻／5% 取整改為現行 A2（20pp 門檻／10% 取整／取整後 clamp 於 50×cap）。採用理由＝調整頻率下降（美股約 28→13 次／年、台股約 27→12 次／年，約 −55%）；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。切換當日曾提示以今日目標持股率對帳一次實際持倉（<code>band_exec_replay</code> 對全史重放的現持序列隨規則改變）。<br>
+• <b>{RULE_REVISION_DATE}</b>（持有人拍板）：股票腿加<b>日線均線確認</b>——五條件（收 &gt; MA60／MA120／MA200＋MA120／MA200 斜率向上，lag {MA_LAG}）全對 cap_eff=1.5、否則退回 1.0；三個價格條件加 1% 遲滯。理由＝「不在跌中借錢」寫進規則比事後手動減碼誠實（回測：美股年化 14.1%→13.9%、MDD −23.7%→−23.0%、跌中持有超過 100% 天數 591→369；台股年化 23.3%→22.7%、跌中槓桿天數 339→170）。history 既有紀錄不重算，新紀錄帶 <code>rule: "{RULE_TAG}"</code>。舊規則（無均線層）轉為唯讀影子 <a href="/long-track-w52-adaptive/noma.html">noma.html</a>；預註冊 kill condition 見帳本 <code>knowledge/rule_ledger.md</code>「實單主系統規則鏈」(d)(e)。<br>
+</div>
+</details>
+</div>
+
+<div class="card">
+<h3>期貨實務實作（研究，非下單指令）</h3>
+<div class="rule-list" style="font-size:.86rem">
+<b>美股</b>：IBKR portfolio margin，或 <b>MNQ 微型 Nasdaq 期貨</b>加曝險。<span style="color:var(--amber-text)">MNQ 對 SMH 腿有 tracking 偏差（MNQ ≈ NDX、非半導體），以 MNQ 複製 SMH 槓桿會有基差／beta 落差。</span>——<b>研究判定美股槓桿 Calmar 較低、不划算；知情仍採 cap 1.5 求兩市場一致性（見頁首知情決策）。</b><br>
+<b>台股（候選）</b>：<b>不能用融資（利率 6～7%）</b>，改用 <b>2330 小型個股期</b>（100 股/口 ≈ NT$11 萬名目）＋<b>小台指</b>。<b>口數換算例</b>（NT$10M sleeve、峰值 140% ＝ 額外 40% ＝ NT$4M）：2330 約 NT$2M ÷ 11 萬 ≈ <b>18 口</b>小型個股期；大盤約 NT$2M 以小台（每點 50 元、指數 ~23000 ≈ 名目 115 萬/口）≈ <b>1～2 口</b>。實際依當時價格與保證金重算。<br>
+<b>峰值上限壓 140%</b>（非研究理論值 150%）留保證金緩衝；<b>轉倉／基差摩擦估 0.3～0.5pp/年</b>未計入回測，實際增益要再打折。
+</div>
+</div>
+
+<div class="card" style="border:2px solid var(--amber-border);background:var(--amber-bg)">
+<h3 style="color:var(--amber-text)">誠實揭露（採用前必讀）</h3>
+<div class="rule-list" style="font-size:.82rem">
+① <b>槓桿放大所有模型誤差</b>：W52 樣本內迭代、自適應慢變數、10% 取整路徑成分——全被 ×1.5。<br>
+② <b>深熊退化的直接證據</b>：含 2008 的 2330 長窗裡 W52 × 自適應 Calmar <b>0.433 反而略劣於 score5×自適應 0.441</b>；快閘門對慢熊誘多抵抗較弱，<b>加槓桿只會更痛</b>。<br>
+③ <b>台股數字含取整路徑成分＋ 2014+ 無崩盤樣本</b>：cap 1.5 Calmar 1.198 不宜當「穩定勝出」；組合層級遇 2008 級深熊的槓桿行為未測試。<br>
+④ <b>台股須用期貨、峰值壓 140%</b>：融資 6～7% 不可行；但注意——真波動率目標借得少，融資利差不是主殺手（見敏感度表），用期貨的真正理由是保證金／強制平倉機制。<br>
+⑤ <b>美股槓桿不划算</b>：美股這一腿的風險調整報酬（Calmar）在任何融資利差下都次優——槓桿的價值只在台股這種低波乾淨多頭樣本，且該樣本無崩盤。
+</div>
+</div>
+
+<div class="card" style="border:2px solid var(--blue-border)">
+<h3 style="color:var(--blue-text)">採用決策與上線後回顧點（2026-07-18 正式決策）</h3>
+<div class="rule-list" style="font-size:.82rem">
+本系統（cap 1.5、兩市場）於 2026-07-18 正式<b>採為實單主系統，立即切實單</b>。<b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點</b>——先上線、再於下列時點回顧：<br>
+• 滿 <b>60 個追蹤交易日</b>的實單實錄，回顧實際持股率／事件節奏與回測分布是否一致；<b>或</b><br>
+• 首次經歷 <b>≥ 10% 組合回撤事件</b>，回顧 W52 快閘門 × 自適應套袖 × cap 1.5 在真實下殺中的水下體驗是否符合預期（尤其慢熊誘多情境、槓桿放大痛感）。<br>
+回顧點若發現與預期背離，再按 charter 調整部位或降回無槓桿基準。<b>知情決策已載於頁首兩點</b>：關卡改回顧點、美股 cap 1.5 明知 Calmar 較低仍取一致性。<br>
+<span style="color:var(--muted);font-size:.78rem">補充：台股回測數字為 7 bps 均一成本；<b>真實成本版（賣出證交稅 0050 15bps／2330 35bps）約再降 0.5pp CAGR</b>（cap 1.5 -0.52pp），見<a href="/backtest/vol_targeting/tw.html">台股實驗室的真實成本版</a>。</span>
+</div>
+</div>
+</div>
+</details>
+</div>
+
+"""
+
+
+def overlay_card(overlay: dict | None, overlay_changes: list | None) -> str:
+    """債金疊加卡（美股）：公債、黃金現在幾條成立、目標幾 %、怎麼換。只讀 state 的 overlay 區塊。"""
+    if not overlay or not all(k in overlay for k in OVERLAY_LEGS):
+        return ""
+    active = bool(overlay.get("active"))
+    status_tag = ('<span class="tag" style="background:var(--green-bg);color:var(--green-text);margin-left:.4rem">已生效</span>'
+                  if active else
+                  f'<span class="tag" style="background:var(--amber-bg);color:var(--amber-text);margin-left:.4rem">{RULE_SWITCH_DATE} 起生效・目前為預覽</span>')
+
+    def cond_rows(o):
+        def r(label, ok, val, thr):
+            mark = ('<span style="color:var(--green);font-weight:600">成立</span>' if ok
+                    else '<span style="color:var(--red);font-weight:600">未成立</span>')
+            return (f'<tr><td>{label}</td><td class="num">{val}</td><td class="num">{thr}</td><td>{mark}</td></tr>')
+        c = "—" if o["close"] is None else f"{o['close']:.2f}"
+        f = lambda x: "—" if x is None else f"{x:.2f}"
+        return "".join([r("週收 &gt; 40 週均", o["c_ma40"], c, f(o["ma40"])),
+                        r("週收 &gt; 52 週均", o["c_ma52"], c, f(o["ma52"])),
+                        r("週收 &gt; 52 週前", o["c_px52"], c, f(o["px52"]))])
+    cards = ""
+    for k in OVERLAY_LEGS:
+        o = overlay[k]
+        veh, what = OVERLAY_VEHICLE[k]
+        cards += f"""<div class="card" style="margin:0">
+<h3 style="margin-bottom:.4rem">{OVERLAY_NAME[k]}：{o['n']}／3 條成立，目標 {o['target_pct']:.1f}%</h3>
+<table><thead><tr><th>條件（週線截至 {o['week_date']}）</th><th class="num">週收盤</th><th class="num">門檻</th><th>狀態</th></tr></thead>
+<tbody>{cond_rows(o)}</tbody></table>
+<div style="font-size:.76rem;color:var(--muted);margin-top:.5rem">換倉標的：{veh}（{what}）。每多一條成立，指數部帳戶賣出等比例 XNAS 換入 {veh}，另一帳戶加買等比例 MNQ 維持股票曝險；條件減少則反向。</div>
+</div>"""
+    chg = overlay.get("last_change_desc")
+    chg_line = (f'<div class="rule-list" style="font-size:.85rem;margin-top:.8rem">最近一次債金條件數變動：{overlay.get("last_change_date", "—")}，{chg}。</div>'
+                if chg else
+                '<div class="rule-list" style="font-size:.85rem;margin-top:.8rem">最近一次債金條件數變動：尚無紀錄（實盤起始持有 0%）。</div>')
+    stale = ('<div style="font-size:.78rem;color:var(--red-text);margin-top:.4rem">債金資料暫時抓不到，以上沿用前次紀錄。</div>'
+             if overlay.get("stale") else "")
+    return f"""<div class="card" style="border:2px solid var(--brand);background:#f5f8ff">
+<h3 style="color:var(--brand)">債金疊加（美股）{status_tag}</h3>
+<p style="font-size:.82rem;color:var(--muted);margin-bottom:.7rem">股票部分之外，公債（IEF）與黃金（GLD）各最多 20%（占指數部淨值）。各看週線三個條件，每成立一條加三分之一，週五收盤判定、下一個交易日換倉。條件數改變時會寄信。</p>
+<div class="grid2">{cards}</div>
+{chg_line}{stale}
+</div>"""
+
+
+def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None, old_banner: str, old_rules: str) -> dict:
+    """頁面文字區塊。live＝新實盤（美股債金版・台股不借錢版）；cap15＝舊規則對照線。
+    old_banner／old_rules 是舊實盤頁原文（cap15 對照線沿用，live 另寫新文）。"""
+    sw = RULE_SWITCH_DATE
+    if PROFILE == "cap15":
+        old_rules = old_rules.replace("本頁為實單主系統、發 email 提醒", f"本頁自 {sw} 起為對照線、不寄信")
+        return {
+            "title": "W52 × 自適應波動率 150%｜舊規則對照線（cap 1.5＋均線） | InvestMQuest Research",
+            "desc": f"{sw} 前的實單規則（cap 1.5＋日線均線確認），{sw} 起降為對照線，每日照常更新、不下單、不寄信。",
+            "crumb": "W52 × 自適應波動率 150%（舊規則對照線）",
+            "h1": "W52 × 自適應波動率 150% — 舊規則對照線",
+            "sub": (f"美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應波動率 <b>cap_eff</b>（w = 閘門 × min(cap_eff, σ_t/RV20)；"
+                    f"{RULE_REVISION_DATE} 起加日線均線確認，全對 cap_eff=1.5、否則 1.0）× 執行層 · 這是 2026-07-18 至 {sw} 前的實單規則，"
+                    f"<b>{sw} 起降為對照線</b>，紀錄與實盤在生效日前逐筆相同"),
+            "pills": (f'<a href="/long-track-w52-adaptive/" style="{PILL_ON}">實單主系統（現行）</a>'
+                      f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_ON}">舊規則 cap 1.5（本頁）</a>'),
+            "banner": (f'<div class="oos-banner">\n  <span class="tag-loud">對照線・{sw} 起不下單、不寄信</span>\n'
+                       f'  <div style="font-size:.86rem">本頁保留 {sw} 前的實單規則（<b>W52 閘門 × 自適應波動率 cap_eff 最高 1.5 × 執行層 A2</b>，'
+                       f'{RULE_REVISION_DATE} 起含日線均線確認），每交易日照常更新，用來和現行實盤並排看：不借錢、加公債與黃金，到底比舊規則好還是差。'
+                       f'現行實盤見<a href="/long-track-w52-adaptive/">實單主系統頁</a>。以下規則說明與回測數字都是舊規則的版本。</div>\n</div>\n\n'),
+            "above_cards": "",
+            "rules": old_rules,
+            "footer": f"W52 × 自適應波動率 150%（美+台）· 舊規則對照線（{sw} 起）",
+        }
+    # ---- live（新實盤）----
+    s_us = sigs["QQQ"].get("rule") == NEW_RULE_TAG
+    return {
+        "title": "W52 × 自適應波動率｜實單主系統（美股債金版・台股不借錢版） | InvestMQuest Research",
+        "desc": (f"實單主系統：{sw} 起美股用債金版（股票上限 100%，另加公債、黃金各最多 20% 的週線疊加），台股用不借錢版（上限 100%）；"
+                 "週線 W52 閘門 × 自適應波動率 × 執行層，email 提醒可行動變化。"),
+        "crumb": "W52 × 自適應波動率（實單主系統）",
+        "h1": "W52 × 自適應波動率 — 實單主系統",
+        "sub": (f"美股 QQQ+SMH 用<b>債金版</b>，台股 0050+2330 用<b>不借錢版</b> · 週線 W52 單線閘門 × 自適應波動率（w = 閘門 × min(1, σ_t/RV20)）× 執行層 · "
+                f"Long only · <b>{sw} 起生效</b>；生效日前的紀錄按舊規則（cap 1.5＋均線）保留，不改寫"),
+        "pills": (f'<a href="/long-track-w52-adaptive/" style="{PILL_ON}">實單主系統（本頁）</a>'
+                  f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5（對照線）</a>'
+                  f'<a href="/long-track-w52-adaptive/noma.html" style="{PILL_OFF}">舊規則版（無均線層）</a>'
+                  f'<a href="/long-track-w52-adaptive/leverage.html" style="{PILL_OFF}">不借錢版（{sw} 起即實盤）</a>'
+                  f'<a href="/long-track-w52-adaptive/c1-shadow.html" style="{PILL_OFF}">債金版（{sw} 起即實盤）</a>'
+                  f'<a href="/long-track-w52-adaptive/tw-semivol.html" style="{PILL_OFF}">台股 B-ii 影子（唯讀）</a>'
+                  f'<a href="/backtest/vol_targeting/leverage.html" style="{PILL_OFF}">槓桿研究頁</a>'),
+        "banner": f"""<div class="oos-banner">
+  <span class="tag-loud">實單主系統・{sw} 起：美股債金版、台股不借錢版・email 提醒可行動變化</span>
+  <div style="font-size:.86rem">本頁是實單主系統。<b>{sw} 起（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）</b>美股用<b>債金版</b>，台股用<b>不借錢版</b>。底層不變：週線 W52 閘門決定在場或出場，自適應波動率決定持股比例，執行層要求目標與現持差 20 個百分點才調整。
+  <br><br><b>改了什麼</b>：股票部分的曝險上限從 150% 收回 100%，不再借錢加碼，日線均線確認那一層因此不再影響曝險。美股另外把公債（IEF）與黃金（GLD）各最多 20% 配進來，各看週線三個條件（週收盤高於 40 週均線、高於 52 週均線、高於 52 週前的收盤），每成立一條加三分之一。台股只有不借錢，沒有債金。
+  <br><br><b>為什麼改</b>：研究期回測裡，美股債金版和舊規則比：最大回撤差距在事前登記的容許範圍內（五個錨點中位數略好），Ulcer（回撤深度與時間的綜合指標）與低於前高 10% 的時間明顯縮短，年化沒有下降（數字見下方「回測與統計」）。代價是升息期債券與股票同跌時，債金疊加沒有保護；債券與黃金在 2005 至 2026 年整體順風，結論只測了美股，也只在這段樣本成立。
+  <br><br><b>誠實紀律</b>：<b>①</b> 六條判準是事前登記的，但全窗數字在定門檻前已經看過，所以全窗不算新證據。<b>②</b> 記分板與前瞻 SPRT 事前登記的對象是舊規則；{sw} 是規則斷點，這一天之後的數字不能與之前連成同一條實績，見記分板頁的修訂說明。<b>③</b> 舊規則（cap 1.5＋均線）改為<a href="/long-track-w52-adaptive/cap15.html">對照線</a>，每日照常更新、不寄信；生效日前的 history 一律不改寫。<b>④</b> 台股 2330 在生效日現持 60%，高於新上限 50%，生效日第一個交易日先拉回上限，不等 20 個百分點門檻。可行動變化包含：任一腿目標與現持差 ≥ 20pp、現持高於新上限，以及美股公債或黃金的週線條件數改變。</div>
+</div>
+
+""",
+        "above_cards": overlay_card(overlay, overlay_changes),
+        "rules": f"""<div class="card">
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則說明（點開看完整規則、{sw} 規則切換、沿革與揭露，白話版）</summary>
+<div style="margin-top:.9rem">
+<div class="card">
+<h3>追蹤主系統規則（W52 × 自適應波動率；{FREEZE_DATE} 定案，{sw} 起股票上限 100% 並加債金）</h3>
+<div class="rule-list">
+① <b>四腿、兩市場</b>：美股 {{QQQ, SMH}} 各 50%、台股 {{0050, 2330}} 各 50%（.TW，內嵌幻影分割修復）。兩組合各自獨立追蹤（各 100%），日報酬 50/50 加權合成（<b>絕不直接相加 equity curve</b>）。<br>
+② <b>週線 W52 單線閘門</b>（W-FRI）：<b>週收盤 &gt; SMA52w 在場、&lt; SMA52w 出場</b>；<b>無 W104／W250 斜率滯後條件</b>；<b>長多 only</b>，閘門輸出 0／1。卡片仍顯示 W104／W250 供參考背景，但<b>閘門決策只用 W52</b>。<br>
+③ <b>自適應波動率套袖（凍結 {FREEZE_DATE}）</b>：σ_t＝RV20 的 <b>rolling(756, min_periods=252).median()</b>；raw＝σ_t／RV20；<b>{sw} 起 w = min(1, raw)</b>——σ_t/RV &lt; 1 減碼，&ge; 1 維持滿額，<b>不借錢加碼</b>。（此前 w = min(cap_eff, raw)，cap_eff 最高 1.5，見④。）<br>
+④ <b>日線均線長多確認（{RULE_REVISION_DATE} 至 {sw} 前適用）</b>：收盤 &gt; MA60／MA120／MA200（各加 1% 遲滯）＋ MA120／MA200 {MA_LAG} 個交易日前上揚，五條全對 cap_eff=1.5，否則 1.0。<b>{sw} 起上限固定 1.0，這一層不再影響曝險</b>（欄位仍記錄，供對照線使用）。<br>
+⑤ <b>債金疊加（美股，{sw} 起）</b>：IEF（7–10 年美債）與 GLD（黃金）各最多 20%（占指數部淨值）。各看週線三個條件——週收盤 &gt; 40 週均線、&gt; 52 週均線、&gt; 52 週前的收盤——每成立一條加 20% 的三分之一，週五收盤判定、下一個交易日換倉。定義與參數照抄研究程式，沒有調任何參數。台股沒有這一層。<br>
+⑥ <b>機制與視窗凍結</b>：W52 閘門、滾動中位數 3 年（756／252）、執行層、債金三條件皆鎖死，<b>此後不再調整</b>；不掃參擇優、不改機制形狀、不加濾網後重跑。固定 σ 對照值（QQQ 20%／SMH 25%／0050 15%／2330 25%）僅供卡片顯示，套袖不使用。<br>
+⑦ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
+⑧ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算，單腿最高 50%。<br>
+⑨ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。0050 資料若晚到，先用證交所官方收盤補值，補不上就標「資料延遲」、不換倉。<br>
+⑩ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於單腿上限。上限在 {sw} 前是 75pp（組合 150%），起是 50pp（組合 100%）；現持高於新上限時，先拉回上限，再看 20pp 門檻。回測主數字含此執行層。<br>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿今日目標與現持（執行層）差 ≥ 20pp、現持高於新上限，或美股公債／黃金的週線條件數改變；<b>閘門翻轉本身不觸發通知，須一併達 20pp 門檻</b>。舊規則（cap 1.5＋均線）以<a href="/long-track-w52-adaptive/cap15.html">對照線</a>續跑，不寄信。</span>
+</div>
+</div>
+
+<div class="card">
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則沿革（歷次凍結後的變更紀錄）</summary>
+<div class="rule-list" style="font-size:.82rem;margin-top:.75rem">
+• <b>2026-07-17</b>：規則凍結——W52 單線閘門 × 自適應 σ_t（RV20 近三年滾動中位數，756／252）定案，此後不掃參擇優、不改機制形狀、不加濾網。<br>
+• <b>2026-07-18</b>：正式採用 cap 1.5（真波動率目標，w = 閘門 × clip(σ_t/RV, 上限 1.5)）為實單主系統。<br>
+• <b>2026-07-22</b>：執行層由 10pp 門檻／5% 取整改為 A2（20pp 門檻／10% 取整／取整後 clamp 於 50×cap）。採用理由＝調整頻率下降（美股約 28→13 次／年、台股約 27→12 次／年，約 −55%）；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。<br>
+• <b>{RULE_REVISION_DATE}</b>（持有人拍板）：股票腿加<b>日線均線確認</b>——五條件全對 cap_eff=1.5、否則退回 1.0；三個價格條件加 1% 遲滯。history 既有紀錄不重算，新紀錄帶 <code>rule: "{RULE_TAG}"</code>。舊規則（無均線層）轉為唯讀影子 <a href="/long-track-w52-adaptive/noma.html">noma.html</a>。<br>
+• <b>{sw}</b>（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）：<b>美股改債金版</b>（股票上限 100% 不借錢，另加 IEF／GLD 各最多 20% 的週線三條件疊加）、<b>台股改不借錢版</b>（上限 100%，不加債金）。生效日起的紀錄帶 <code>rule: "{NEW_RULE_TAG}"</code>，生效日前的 history 不改寫；2330 現持 60% 於生效日先拉回新上限 50%。舊規則（cap 1.5＋均線）以 <a href="/long-track-w52-adaptive/cap15.html">cap15.html</a> 續跑為對照線，每日更新、不寄信。state.json 的 <code>rule_changes</code> 記有這一筆。<br>
+</div>
+</details>
+</div>
+
+<div class="card">
+<h3>實作方式（研究，非下單指令）</h3>
+<div class="rule-list" style="font-size:.86rem">
+<b>美股債金疊加</b>：每多一個條件成立，指數部帳戶賣出等比例 XNAS、換入 CBU0（7–10 年美債）或 IGLN（黃金）；另一個帳戶加買等比例 MNQ（微型 Nasdaq 期貨），讓股票曝險維持不變。條件減少時反向操作。<span style="color:var(--amber-text)">MNQ 追蹤 NDX、不是半導體，用它補 SMH 腿的曝險會有基差。</span><br>
+<b>台股</b>：上限收回 100% 之後不再需要槓桿段，原本用來加碼的 2330 小型個股期與小台指部位不再使用。生效日 2330 現持若高於 50%，第一個交易日先拉回上限。<br>
+</div>
+</div>
+
+<div class="card" style="border:2px solid var(--amber-border);background:var(--amber-bg)">
+<h3 style="color:var(--amber-text)">誠實揭露（採用前必讀）</h3>
+<div class="rule-list" style="font-size:.82rem">
+① <b>債金疊加只在美股測過</b>，債券與黃金在 2005 至 2026 年整體順風；債券與股票同跌的升息期（2022-01 至 2023-10）債金疊加沒有保護作用，是這個版本最明確的弱點。<br>
+② <b>W52 是樣本內迭代的結果</b>：含 2008 的 2330 長窗裡，W52 × 自適應 Calmar 0.433 略劣於舊系統 score5 × 自適應 0.441；快閘門對慢熊誘多的抵抗較弱。不借錢降低了損失放大，但沒有消除這個風險。<br>
+③ <b>台股數字含取整路徑成分</b>，2014 年以後沒有崩盤樣本，不宜當作穩定勝出的證據。<br>
+④ <b>全窗數字事前已看過</b>：債金版的六條判準事前登記，但 W-FRI 全窗數字在定門檻前已經看過；新資訊只來自五個週線錨點、分期、壓力期與單一資產拆解。<br>
+⑤ <b>前瞻紀錄有規則斷點</b>：記分板與 SPRT 事前登記的對象是舊規則，{sw} 之後的數字屬於新規則，兩段不能連成同一條實績。
+</div>
+</div>
+
+<div class="card" style="border:2px solid var(--blue-border)">
+<h3 style="color:var(--blue-text)">採用決策與上線後回顧點</h3>
+<div class="rule-list" style="font-size:.82rem">
+2026-07-18 起以 cap 1.5 為實單主系統，原「實單前複審關卡」改為上線後回顧點。{RULE_SWITCH_DECISION_DATE} 持有人拍板切換為美股債金版、台股不借錢版，{sw} 生效。上線後回顧點沿用：滿 <b>60 個追蹤交易日</b>的實單實錄，或首次出現 <b>≥ 10% 組合回撤</b>，回顧實際持股率、事件節奏與回測分布是否一致。<br>
+<span style="color:var(--muted);font-size:.78rem">補充：台股回測數字為 7 bps 均一成本；真實成本版（賣出證交稅 0050 15bps／2330 35bps）約再降 0.5pp CAGR，見<a href="/backtest/vol_targeting/tw.html">台股實驗室的真實成本版</a>。</span>
+</div>
+</div>
+</div>
+</details>
+</div>
+
+""",
+        "footer": f"W52 × 自適應波動率 · 實單主系統（{sw} 起：美股債金版、台股不借錢版）",
+    }
+
+
 def generate_html(sigs: dict, changes: list | None, last_change_date: str | None,
                   hist_map: dict, exec_map: dict, last_change_desc: str | None = None,
-                  leg_panel_map: dict | None = None) -> str:
+                  leg_panel_map: dict | None = None, overlay: dict | None = None,
+                  overlay_changes: list | None = None) -> str:
     changes = changes or []
+    PG = _page_blocks(sigs, overlay, overlay_changes,
+                      _legacy_banner() if PROFILE == "cap15" else "",
+                      _legacy_rules() if PROFILE == "cap15" else "")
     leg_panel_map = leg_panel_map or {m["key"]: {} for m in MARKETS}
     now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
     data_date = max(sigs[t]["wk_date"] for t in ALL_TICKERS)
@@ -1549,8 +1984,8 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
        <a> 點下去會在 iframe 內開整個站（套娃）。base target="_top" 讓全頁連結預設在
        父視窗開；不影響相對路徑解析（沒有設 base href）。 -->
   <base target="_top">
-  <title>W52 × 自適應波動率 150%（美+台）｜實單主系統 | InvestMQuest Research</title>
-  <meta name="description" content="W52 × 自適應波動率 cap 1.5（150%）· 2026-07-18 起實單主系統（美+台）· 週線 W52 單線閘門 × 自適應 σ 波動率目標 × 執行層 · email 提醒可行動變化">
+  <title>{PG["title"]}</title>
+  <meta name="description" content="{PG["desc"]}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -1644,6 +2079,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 .lwc-pane-title{{position:absolute;left:8px;font-size:.72rem;font-weight:700;color:var(--muted);
   background:rgba(255,255,255,.72);padding:.05rem .4rem;border-radius:4px;pointer-events:none;z-index:3}}
 .grid2{{display:grid;grid-template-columns:1fr 1fr;gap:1rem}}
+.tablewrap{{overflow-x:auto}}
 @media(max-width:768px){{.tgrid-4{{grid-template-columns:1fr 1fr}}.status-exposure{{font-size:2rem}}table{{font-size:.74rem}}th,td{{padding:.4rem .45rem}}
   .grid2{{grid-template-columns:1fr}}.today-grid{{grid-template-columns:1fr}}}}
 @media(max-width:480px){{.tgrid-4{{grid-template-columns:1fr}}}}
@@ -1653,19 +2089,15 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 {NAV_BLOCK}
 <div class="container" style="padding-top:1rem">
 {today_conclusion_html}
+{PG["above_cards"]}
 </div>
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / W52 × 自適應波動率 150%（實單主系統）</div>
-    <h1>W52 × 自適應波動率 150% — 實單主系統</h1>
-    <div class="sub">美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應 σ 波動率目標 <b>cap_eff</b>（w = 閘門 × min(cap_eff, σ_t/RV20)；{RULE_REVISION_DATE} 起加日線均線確認，全對 cap_eff=1.5、否則 1.0）× 執行層 · Long only · <b>2026-07-18 起為實單系統</b>（兩市場皆 cap_eff 最高 1.5）· <span style="opacity:.7">研究代號 變體 C，見 Adaptive_Sigma_Spec</span></div>
+    <div class="crumb"><a href="/">首頁</a> / {PG["crumb"]}</div>
+    <h1>{PG["h1"]}</h1>
+    <div class="sub">{PG["sub"]}</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
-      <a href="/long-track-w52-adaptive/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">實單主系統 cap_eff（本頁）</a>
-      <a href="/long-track-w52-adaptive/noma.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">舊規則版（無均線層）</a>
-      <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">不借錢版（唯讀）</a>
-      <a href="/long-track-w52-adaptive/c1-shadow.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">債金版（唯讀）</a>
-      <a href="/long-track-w52-adaptive/tw-semivol.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股 B-ii 影子（唯讀）</a>
-      <a href="/backtest/vol_targeting/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">槓桿研究頁</a>
+      {PG["pills"]}
       <a href="/backtest/vol_targeting/adaptive.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">美股變體實驗室</a>
       <a href="/backtest/vol_targeting/tw.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股變體實驗室</a>
       <a href="/backtest/f_comfort/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">F70 均線版研究頁</a>
@@ -1682,11 +2114,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </div>
 <div class="container">
 
-<div class="oos-banner">
-  <span class="tag-loud">實單主系統・2026-07-18 起・cap_eff 1.5／1.0（均線確認，2026-09-15 起）・email 提醒可行動變化</span>
-  <div style="font-size:.86rem">本頁是<b>{FREEZE_DATE} 凍結、2026-07-18 起正式採用的實單主系統</b>：<b>W52 單線閘門 × 自適應 σ 波動率目標 cap_eff × 執行層 A2（20pp 門檻＋10% 取整＋clamp 150%）</b>（美台四腿、各市場 50/50 獨立組合，曝險可上到 150%）。真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢加碼、波動一高自動降回。<b>{RULE_REVISION_DATE} 起（持有人拍板）</b>：股票腿加一道<b>日線均線確認</b>——收盤 &gt; MA60／MA120／MA200（各加 1% 遲滯）＋ MA120／MA200 20 個交易日前上揚，五條全對 <b>cap_eff = 1.5</b>、任一條不對 <b>cap_eff 退回 1.0</b>（w = min(cap_eff, σ_t/RV20)）；理由是「不在跌中借錢」寫進規則，比事後手動減碼誠實，其餘機制（閘門、套袖分母、執行層、成本）不變。每交易日台股／美股收盤後更新，<b>可行動變化以 email 提醒</b>（任一腿今日目標與現持執行層差 ≥ 20pp；<b>閘門翻轉本身不構成觸發，須一併達到 20pp 門檻</b>，與回測 A2 一致；任一腿 cap_eff 翻轉會寫進 email 內文說明，但不單獨觸發 email）。
-  <br><br><b>誠實紀律（兩點白紙黑字）</b>：<b>①</b> <b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點（60 個追蹤交易日，或首次 ≥ 10% 組合回撤事件）</b>——即先上實單、再於回顧點檢驗水下體驗是否符合預期。<b>②</b> <b>美股採 cap 1.5 是「知情決策」</b>：研究顯示<b>美股這一腿槓桿的風險調整報酬（Calmar）較不划算</b>、任何融資利差下都不佔優，<b>選擇兩市場一致性與報酬（而非風險調整最優）</b>，明知美股這一腿是為對稱操作付的代價。<b>此外</b>：槓桿放大所有模型誤差、深熊未實測（見 2330 長窗與誠實揭露）、台股須用期貨非融資、實際峰值建議壓 140% 留保證金緩衝。均線層預註冊 kill condition 見帳本 <code>knowledge/rule_ledger.md</code>「實單主系統規則鏈」。</div>
-</div>
+{PG["banner"]}
 
 <div class="status-date" style="text-align:center;margin-bottom:.5rem">{data_asof_label} · 頁面更新 {now} 台北時間 · 兩組合各自獨立追蹤（各 100%）</div>
 {_fear_greed_line()}
@@ -1700,75 +2128,9 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 
 {markets_html}
 
-<div class="card">
-<details>
-<summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則說明（點開看完整規則、2026-09-15 均線層修訂與 kill condition，白話版）</summary>
-<div style="margin-top:.9rem">
-<div class="card">
-<h3>追蹤主系統規則（W52 × 自適應波動率 × 均線確認；{FREEZE_DATE} 定案，{RULE_REVISION_DATE} 起加均線層，此後不再調整）</h3>
-<div class="rule-list">
-① <b>四腿、兩市場</b>：美股 {{QQQ, SMH}} 各 50%、台股 {{0050, 2330}} 各 50%（.TW，內嵌幻影分割修復）。兩組合各自獨立追蹤（各 100%），日報酬 50/50 加權合成（<b>絕不直接相加 equity curve</b>）。<br>
-② <b>週線 W52 單線閘門</b>（W-FRI）：<b>週收盤 &gt; SMA52w 在場、&lt; SMA52w 出場</b>；<b>無 W104／W250 斜率滯後條件</b>（此為與舊 score5 系統的唯一結構差異，換取深熊後快速再進場）；<b>長多 only</b>，閘門輸出 0／1。卡片仍顯示 W104／W250 供參考背景，但<b>閘門決策只用 W52</b>。<br>
-③ <b>自適應波動率套袖 × cap_eff（凍結 {FREEZE_DATE}）</b>：σ_t＝RV20 的 <b>rolling(756, min_periods=252).median()</b>；raw＝σ_t／RV20；<b>w = min(cap_eff, raw)</b>——σ_t/RV &lt; 1 減碼，&gt; 1 <b>才借錢加碼</b>（真波動率目標，cap_eff 全開時上到 150%，見④）。融資＝現金利率＋利差 1.5%/年；台股實作須用期貨。<br>
-④ <b>日線均線長多確認（{RULE_REVISION_DATE} 起併入實單，持有人拍板）</b>：以 auto-adjust 收盤價算 <code>ma60/ma120/ma200</code>；五條件——收盤 &gt; MA60、收盤 &gt; MA120、收盤 &gt; MA200、MA120 今日 &gt; MA120 {MA_LAG} 個交易日前、MA200 今日 &gt; MA200 {MA_LAG} 個交易日前——<b>全對 → cap_eff = 1.5</b>；<b>任一條不對 → cap_eff 退回 1.0</b>。三個價格條件（收盤 vs MA60/120/200）各加 <b>1% 遲滯</b>：條件目前關，收盤要漲過 MA 才轉開；目前開，收盤要跌破 MA×99% 才轉關；介於中間沿用前一日狀態（理由：收盤貼著 MA60 天天翻會讓執行層跟著抖動）。MA 未暖機（資料不足 200 日）視為不全開。<br>
-⑤ <b>機制與視窗凍結</b>：W52 閘門、滾動中位數 3 年（756／252）、均線 lag {MA_LAG}、執行層皆鎖死，<b>此後不再調整</b>；不掃參擇優、不改機制形狀、不加濾網後重跑。固定 σ 對照值（QQQ 20%／SMH 25%／0050 15%／2330 25%）僅供卡片顯示，套袖不使用。<br>
-⑥ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
-⑦ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
-⑧ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
-⑨ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×1.5＝75pp（<b>固定，不隨 cap_eff 變動</b>／組合 150%）；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。<br>
-<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t／均線條件皆為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿今日目標與現持（執行層 executed）差 ≥ 20pp；<b>閘門翻轉本身不觸發通知，須一併達 20pp 門檻</b>（與回測 A2 執行層一致）；<b>cap_eff 翻轉只寫進 email 內文說明，不單獨觸發通知</b>。舊規則（無均線層，2026-07-18～2026-09-14）轉為唯讀影子 <a href="/long-track-w52-adaptive/noma.html">noma.html</a>，供均線層 kill condition 對帳。</span>
-</div>
-</div>
-
-<div class="card">
-<details>
-<summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則沿革（歷次凍結後的變更紀錄）</summary>
-<div class="rule-list" style="font-size:.82rem;margin-top:.75rem">
-• <b>2026-07-17</b>：規則凍結——W52 單線閘門 × 自適應 σ_t（RV20 近三年滾動中位數，756／252）定案，此後不掃參擇優、不改機制形狀、不加濾網。<br>
-• <b>2026-07-18</b>：正式採用 cap 1.5（真波動率目標，w = 閘門 × clip(σ_t/RV, 上限 1.5)）為實單主系統。<br>
-• <b>2026-07-22</b>：執行層由 10pp 門檻／5% 取整改為現行 A2（20pp 門檻／10% 取整／取整後 clamp 於 50×cap）。採用理由＝調整頻率下降（美股約 28→13 次／年、台股約 27→12 次／年，約 −55%）；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。切換當日曾提示以今日目標持股率對帳一次實際持倉（<code>band_exec_replay</code> 對全史重放的現持序列隨規則改變）。<br>
-• <b>{RULE_REVISION_DATE}</b>（持有人拍板）：股票腿加<b>日線均線確認</b>——五條件（收 &gt; MA60／MA120／MA200＋MA120／MA200 斜率向上，lag {MA_LAG}）全對 cap_eff=1.5、否則退回 1.0；三個價格條件加 1% 遲滯。理由＝「不在跌中借錢」寫進規則比事後手動減碼誠實（回測：美股年化 14.1%→13.9%、MDD −23.7%→−23.0%、跌中持有超過 100% 天數 591→369；台股年化 23.3%→22.7%、跌中槓桿天數 339→170）。history 既有紀錄不重算，新紀錄帶 <code>rule: "{RULE_TAG}"</code>。舊規則（無均線層）轉為唯讀影子 <a href="/long-track-w52-adaptive/noma.html">noma.html</a>；預註冊 kill condition 見帳本 <code>knowledge/rule_ledger.md</code>「實單主系統規則鏈」(d)(e)。<br>
-</div>
-</details>
-</div>
-
-<div class="card">
-<h3>期貨實務實作（研究，非下單指令）</h3>
-<div class="rule-list" style="font-size:.86rem">
-<b>美股</b>：IBKR portfolio margin，或 <b>MNQ 微型 Nasdaq 期貨</b>加曝險。<span style="color:var(--amber-text)">MNQ 對 SMH 腿有 tracking 偏差（MNQ ≈ NDX、非半導體），以 MNQ 複製 SMH 槓桿會有基差／beta 落差。</span>——<b>研究判定美股槓桿 Calmar 較低、不划算；知情仍採 cap 1.5 求兩市場一致性（見頁首知情決策）。</b><br>
-<b>台股（候選）</b>：<b>不能用融資（利率 6～7%）</b>，改用 <b>2330 小型個股期</b>（100 股/口 ≈ NT$11 萬名目）＋<b>小台指</b>。<b>口數換算例</b>（NT$10M sleeve、峰值 140% ＝ 額外 40% ＝ NT$4M）：2330 約 NT$2M ÷ 11 萬 ≈ <b>18 口</b>小型個股期；大盤約 NT$2M 以小台（每點 50 元、指數 ~23000 ≈ 名目 115 萬/口）≈ <b>1～2 口</b>。實際依當時價格與保證金重算。<br>
-<b>峰值上限壓 140%</b>（非研究理論值 150%）留保證金緩衝；<b>轉倉／基差摩擦估 0.3～0.5pp/年</b>未計入回測，實際增益要再打折。
-</div>
-</div>
-
-<div class="card" style="border:2px solid var(--amber-border);background:var(--amber-bg)">
-<h3 style="color:var(--amber-text)">誠實揭露（採用前必讀）</h3>
-<div class="rule-list" style="font-size:.82rem">
-① <b>槓桿放大所有模型誤差</b>：W52 樣本內迭代、自適應慢變數、10% 取整路徑成分——全被 ×1.5。<br>
-② <b>深熊退化的直接證據</b>：含 2008 的 2330 長窗裡 W52 × 自適應 Calmar <b>0.433 反而略劣於 score5×自適應 0.441</b>；快閘門對慢熊誘多抵抗較弱，<b>加槓桿只會更痛</b>。<br>
-③ <b>台股數字含取整路徑成分＋ 2014+ 無崩盤樣本</b>：cap 1.5 Calmar 1.198 不宜當「穩定勝出」；組合層級遇 2008 級深熊的槓桿行為未測試。<br>
-④ <b>台股須用期貨、峰值壓 140%</b>：融資 6～7% 不可行；但注意——真波動率目標借得少，融資利差不是主殺手（見敏感度表），用期貨的真正理由是保證金／強制平倉機制。<br>
-⑤ <b>美股槓桿不划算</b>：美股這一腿的風險調整報酬（Calmar）在任何融資利差下都次優——槓桿的價值只在台股這種低波乾淨多頭樣本，且該樣本無崩盤。
-</div>
-</div>
-
-<div class="card" style="border:2px solid var(--blue-border)">
-<h3 style="color:var(--blue-text)">採用決策與上線後回顧點（2026-07-18 正式決策）</h3>
-<div class="rule-list" style="font-size:.82rem">
-本系統（cap 1.5、兩市場）於 2026-07-18 正式<b>採為實單主系統，立即切實單</b>。<b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點</b>——先上線、再於下列時點回顧：<br>
-• 滿 <b>60 個追蹤交易日</b>的實單實錄，回顧實際持股率／事件節奏與回測分布是否一致；<b>或</b><br>
-• 首次經歷 <b>≥ 10% 組合回撤事件</b>，回顧 W52 快閘門 × 自適應套袖 × cap 1.5 在真實下殺中的水下體驗是否符合預期（尤其慢熊誘多情境、槓桿放大痛感）。<br>
-回顧點若發現與預期背離，再按 charter 調整部位或降回無槓桿基準。<b>知情決策已載於頁首兩點</b>：關卡改回顧點、美股 cap 1.5 明知 Calmar 較低仍取一致性。<br>
-<span style="color:var(--muted);font-size:.78rem">補充：台股回測數字為 7 bps 均一成本；<b>真實成本版（賣出證交稅 0050 15bps／2330 35bps）約再降 0.5pp CAGR</b>（cap 1.5 -0.52pp），見<a href="/backtest/vol_targeting/tw.html">台股實驗室的真實成本版</a>。</span>
-</div>
-</div>
-</div>
-</details>
-</div>
-
-</div>
+{PG["rules"]}</div>
 <footer class="imq-foot">
-  <div>&copy; {datetime.now().year} InvestMQuest Research · W52 × 自適應波動率 150%（美+台）· 2026-07-18 起實單主系統</div>
+  <div>&copy; {datetime.now().year} InvestMQuest Research · {PG["footer"]}</div>
   <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
 </footer>
 <script src="https://unpkg.com/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js"></script>
@@ -1847,16 +2209,24 @@ def detect_changes(prev: dict, sigs: dict, skip_legs=()) -> list:
         gate_flip = bool(pt.get("gate")) != bool(sigs[t]["gate"])
         target = round(sigs[t]["final"] * 100, 1)
         held = pt.get("executed_pct")
+        clamp = EXEC_CLAMP_NEW if sigs[t].get("rule") == NEW_RULE_TAG else EXEC_CLAMP
         # A2 一致性修正（LOGIC_AUDIT.md 一之1）：可行動事件只用 20pp 門檻判定，
         # 不再讓 gate_flip 單獨觸發——否則通知會在 A2 實際不動的情況下要求調整部位。
-        drift = held is None or abs(target - held) >= EXEC_BAND
+        # 2026-10-19 規則切換：現持高於新上限（例如 2330 持 60、上限 50）也算可行動，
+        # 與 band_exec_replay 的「先拉回上限」同一式（next_exec）。
+        if held is None:
+            drift, new_exec = True, min(round(target / EXEC_GRID) * EXEC_GRID, clamp)
+        else:
+            new_exec = next_exec(held, target, clamp)
+            drift = new_exec != held
         if drift:
-            new_exec = min(round(target / EXEC_GRID) * EXEC_GRID, EXEC_CLAMP)
             parts = []
             if gate_flip:
                 parts.append("閘門 " + ("出場→在場" if sigs[t]["gate"] else "在場→出場"))
             arrow = (f"最終權重 {held:.0f}% → {new_exec:.0f}%"
                      if held is not None else f"最終權重 → {new_exec:.0f}%")
+            if held is not None and held > clamp:
+                arrow += f"（規則切換：不借錢版單腿上限 {clamp:.0f}%，先拉回上限）"
             out.append(f"<b>{TICKER_MARKET[t]} {t}</b>：{'、'.join(parts) + ' → ' if parts else ''}{arrow}")
     return out
 
@@ -1875,6 +2245,8 @@ def detect_cap_eff_flips(prev: dict, sigs: dict, skip_legs=()) -> list:
         pt = prev["tickers"].get(t)
         if not pt or "cap_eff" not in pt:
             continue
+        if sigs[t].get("rule") == NEW_RULE_TAG or pt.get("rule") == NEW_RULE_TAG:
+            continue    # 新規則上限固定 1.0，舊→新的 cap_eff 變動是規則切換，不是均線翻轉
         prev_cap = pt.get("cap_eff")
         cur_cap = sigs[t]["cap_eff"]
         if prev_cap != cur_cap:
@@ -1883,8 +2255,107 @@ def detect_cap_eff_flips(prev: dict, sigs: dict, skip_legs=()) -> list:
     return out
 
 
+# ---------------------------------------------------------------------------
+# 債金疊加（美股，2026-10-19 起併入實盤）— 計算與 c1 影子同一套：週線 E3 三條件，
+# 每成立一條 ＋1/3，權重 = 20% × 條件數/3。直接重用 update_long_track_w52_adaptive_c1 的
+# fetch_adj／e3_weekly（已驗過的計算，不另寫一份）；c1 模組頂層會 import 本模組，
+# 故一律在函式內延後匯入。實盤沒有延遲兩日的報酬簿記問題（那是影子算報酬用的），
+# 這裡只回答「目前幾條成立、目標幾 %」。
+# ---------------------------------------------------------------------------
+def compute_overlay(asof: pd.Timestamp) -> dict:
+    """回傳 {'ief': {...}, 'gld': {...}}；任一資產抓不到、資料不足 → 拋例外（呼叫端 fail-safe
+    成沿用前次）。只採用日期 <= min(asof, 該資產最新日) 的「已收完」週五 bar：進行中的週不提前採用。"""
+    import update_long_track_w52_adaptive_c1 as c1
+    out = {}
+    for k in OVERLAY_LEGS:
+        adj = c1.fetch_adj(OVERLAY_SYM[k])
+        eff_asof = min(pd.Timestamp(asof), adj.index[-1])
+        wk = c1.e3_weekly(adj)
+        done = wk[wk.index <= eff_asof]
+        if done.empty:
+            raise ValueError(f"{OVERLAY_SYM[k]} 無已收盤週線")
+        r = done.iloc[-1]
+
+        def _f(x):
+            return None if pd.isna(x) else round(float(x), 2)
+        n = int(r["n"])
+        out[k] = {
+            "symbol": OVERLAY_SYM[k],
+            "week_date": str(done.index[-1].date()),
+            "close": _f(r["close"]), "ma40": _f(r["ma40"]), "ma52": _f(r["ma52"]), "px52": _f(r["px52"]),
+            "c_ma40": bool(r["c1"]), "c_ma52": bool(r["c2"]), "c_px52": bool(r["c3"]),
+            "n": n,
+            "target_pct": round(OVERLAY_W * n / 3.0 * 100, 2),
+            "last_close": round(float(adj.iloc[-1]), 2), "last_close_date": str(adj.index[-1].date()),
+        }
+    return out
+
+
+def overlay_state_block(ov: dict | None, prev_overlay: dict | None, active: bool, us_date: str) -> dict:
+    """寫進 state.json 的 overlay 區塊。ov 為 None（抓價失敗）→ 沿用前次內容並標 stale。"""
+    if ov is None:
+        blk = dict(prev_overlay or {})
+        blk.update({"active": bool(active), "active_from": RULE_SWITCH_DATE, "stale": True})
+        blk.setdefault("asof", us_date)
+        return blk
+    return {"active": bool(active), "active_from": RULE_SWITCH_DATE, "asof": us_date, "stale": False,
+            "w_max_pct": OVERLAY_W * 100, **{k: ov[k] for k in OVERLAY_LEGS},
+            "note": "實盤起始持有 0%；條件數由前次紀錄比對，未生效前只預覽、不寄信。"}
+
+
+def detect_overlay_changes(prev_state: dict, ov: dict | None, active: bool) -> list:
+    """債金條件數改變（＝疊加目標改變）。生效前不報；ov 為 None（抓不到）不報。前次沒有生效中的
+    overlay 紀錄 → 視為實盤目前持有 0（條件數 0），所以生效日第一次若已有條件成立就會報一次。"""
+    if not active or not ov:
+        return []
+    prev = (prev_state or {}).get("overlay") or {}
+    out = []
+    for k in OVERLAY_LEGS:
+        n_prev = int((prev.get(k) or {}).get("n", 0)) if prev.get("active") else 0
+        n_now = ov[k]["n"]
+        if n_now != n_prev:
+            out.append({"leg": k, "n_prev": n_prev, "n_now": n_now,
+                        "target_prev": round(OVERLAY_W * n_prev / 3.0 * 100, 2),
+                        "target_now": ov[k]["target_pct"], "info": ov[k]})
+    return out
+
+
+OVERLAY_VEHICLE = {"ief": ("CBU0", "7–10 年美債"), "gld": ("IGLN", "黃金")}
+
+
+def overlay_action_text(ch: dict) -> str:
+    """只寫通用做法，不寫金額或股數。"""
+    veh, what = OVERLAY_VEHICLE[ch["leg"]]
+    if ch["n_now"] > ch["n_prev"]:
+        return (f"指數部帳戶賣出等比例 XNAS、買入 {veh}（{what}）；另一帳戶加買等比例 MNQ，維持股票曝險不變。")
+    return (f"指數部帳戶賣出 {veh}、買回等比例 XNAS；另一帳戶減掉等比例 MNQ，維持股票曝險不變。")
+
+
+def overlay_change_lines(changes: list) -> list:
+    """alert 事件行（以『<b>美股 …</b>』開頭，與 detect_changes 同格式，供 email 解析）。"""
+    out = []
+    for ch in changes:
+        out.append(f"<b>美股 {OVERLAY_NAME[ch['leg']]}</b>：週線條件 {ch['n_prev']}／3 → {ch['n_now']}／3，"
+                   f"目標 {ch['target_prev']:.1f}% → {ch['target_now']:.1f}%（占指數部淨值）。{overlay_action_text(ch)}")
+    return out
+
+
+def overlay_status_lines(ov: dict | None) -> list:
+    """alert／email 純文字：公債、黃金現在幾條成立、目標幾 %。"""
+    if not ov:
+        return ["債金疊加：資料暫缺，沿用前次。"]
+    lines = []
+    for k in OVERLAY_LEGS:
+        o = ov[k]
+        mark = lambda b: "成立" if b else "未成立"
+        lines.append(f"  {OVERLAY_NAME[k]}：{o['n']}／3 條成立（週收 > 40 週均 {mark(o['c_ma40'])}、"
+                     f"> 52 週均 {mark(o['c_ma52'])}、> 52 週前 {mark(o['c_px52'])}；週線截至 {o['week_date']}），"
+                     f"目標 {o['target_pct']:.1f}%")
+    return lines
+
+
 def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: list | None = None,
-                    delay_lines: list | None = None) -> str:
+                    delay_lines: list | None = None, overlay: dict | None = None) -> str:
     """組 long_track_w52_mail.html（§5.7 版型）。無可行動變化時仍要產出一份
     「無變化／測試信」版本，讓 workflow 的 test_email 分支永遠有檔可用。
     v7-backtest 副本若缺 mail_html.py（見上方 import 降級），本函式不會被呼叫。
@@ -1912,11 +2383,26 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
     body = one_minute(bullets)
     body += tiles(tile_items)
     body += section("TARGET WEIGHTS", "各腿目標權重", table(headers, rows, numeric_cols={3, 4, 5}))
-    ma_note = "、".join(
-        f"{TICKER_MARKET[t]} {t} cap_eff {sigs[t]['cap_eff']:.1f}（均線{'五條全對' if sigs[t]['ma5_on'] else '未全對'}）"
-        for t in ALL_TICKERS)
-    body += note(f"均線確認層（{RULE_REVISION_DATE} 起併入實單）：{ma_note}。五條全對 cap_eff = 1.5，"
-                 "任一條不對退回 1.0（三個價格條件加 1% 遲滯）。")
+    new_legs = [t for t in ALL_TICKERS if sigs[t].get("rule") == NEW_RULE_TAG]
+    old_legs = [t for t in ALL_TICKERS if t not in new_legs]
+    if new_legs:
+        body += note(f"{RULE_SWITCH_DATE} 起實盤改為美股債金版、台股不借錢版：股票部分上限 100%，不借錢。"
+                     f"{'、'.join(new_legs)} 已適用新規則。舊規則（cap 1.5＋均線）改為對照線，不再寄信。")
+    if old_legs:
+        ma_note = "、".join(
+            f"{TICKER_MARKET[t]} {t} cap_eff {sigs[t]['cap_eff']:.1f}（均線{'五條全對' if sigs[t]['ma5_on'] else '未全對'}）"
+            for t in old_legs)
+        body += note(f"均線確認層（{RULE_REVISION_DATE} 起併入實單，{RULE_SWITCH_DATE} 前適用）：{ma_note}。"
+                     "五條全對 cap_eff = 1.5，任一條不對退回 1.0（三個價格條件加 1% 遲滯）。")
+    if overlay and sigs["QQQ"].get("rule") == NEW_RULE_TAG:
+        o_rows = []
+        for k in OVERLAY_LEGS:
+            o = overlay[k]
+            o_rows.append([f"<strong>{esc(OVERLAY_NAME[k])}</strong>", f"{o['n']}／3",
+                           f"{'✓' if o['c_ma40'] else '✕'} {'✓' if o['c_ma52'] else '✕'} {'✓' if o['c_px52'] else '✕'}",
+                           f"{o['target_pct']:.1f}%"])
+        body += section("OVERLAY", "債金疊加（美股，各最多 20%，占指數部淨值）",
+                        table(["資產", "成立條件", "40 週均／52 週均／52 週前", "目標"], o_rows, numeric_cols={1, 3}))
     if cap_flips:
         body += note("cap_eff 翻轉說明（僅供參考，不單獨觸發本信）：" + "；".join(cap_flips))
     if delay_lines:
@@ -1925,13 +2411,15 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
         body += note("目前無可行動變化 — 這是測試信，確認 email 管線正常。")
 
     return frame(
-        title="W52 × 自適應波動率 150%（美＋台・實單）",
+        title="W52 × 自適應波動率（美股債金版・台股不借錢版・實盤）",
         date=str(data_date),
         body_html=body,
         button_label="前往 W52 實單主系統頁 →",
         button_url=LT_W52_PAGE_URL,
         accent="navy",
-        disclaimer=f"實單主系統機械訊號通知（描述器）。{RULE_REVISION_DATE} 起股票腿含日線均線確認（cap_eff 1.5／1.0）。可行動變化＝任一腿今日目標與現持（執行層）差 ≥ 20pp；閘門翻轉本身不觸發，須一併達 20pp 門檻；cap_eff 翻轉本身也不觸發。",
+        disclaimer=(f"實單主系統機械訊號通知（描述器）。{RULE_SWITCH_DATE} 起股票部分上限 100%（不借錢），美股另加公債、黃金週線疊加。"
+                    "可行動變化＝任一腿今日目標與現持（執行層）差 ≥ 20pp、現持高於新上限，或美股債金條件數改變；"
+                    "閘門翻轉本身不觸發，須一併達 20pp 門檻。"),
     )
 
 
@@ -1977,13 +2465,106 @@ def _leg_chart_panel(px_map: dict, legs: list, dates: list) -> dict:
     return out
 
 
+# ---------------------------------------------------------------------------
+# 規則切換的狀態紀錄（寫進 state.json 的 rule_changes；冪等，以 effective＋to_tag 為 key）
+# ---------------------------------------------------------------------------
+RULE_CHANGE_ENTRY = {
+    "effective": RULE_SWITCH_DATE,
+    "decided": RULE_SWITCH_DECISION_DATE,
+    "from_tag": RULE_TAG,
+    "to_tag": NEW_RULE_TAG,
+    "summary": ("持有人拍板：美股改債金版（股票部分上限 100% 不借錢，另加公債 IEF、黃金 GLD 各最多 20% 的"
+                "週線趨勢疊加）；台股改不借錢版（上限 100%，不加債金）。生效日起第一個交易日起算。"),
+    "us": "cap 1.0 不借錢＋IEF／GLD 週線三條件疊加（每條 1/3、各最多 20%）；A2 執行層 20pp／10% 取整／單腿 clamp 50pp",
+    "tw": "cap 1.0 不借錢，其餘同舊規則，不加債金；A2 執行層 clamp 50pp",
+    "history_policy": "生效日前的 history_us／history_tw 紀錄不改寫；現持超過新上限者於生效日先拉回上限（2330 60%→50%）",
+    "control_line": "舊規則（cap 1.5＋日線均線確認）以 --profile cap15 續跑，輸出 cap15_state.json／cap15.html，不寄信",
+}
+
+
+def merge_rule_changes(prev_list) -> list:
+    out = [e for e in (prev_list or []) if isinstance(e, dict)]
+    if not any(e.get("effective") == RULE_CHANGE_ENTRY["effective"]
+               and e.get("to_tag") == RULE_CHANGE_ENTRY["to_tag"] for e in out):
+        out.append(dict(RULE_CHANGE_ENTRY))
+    return out
+
+
+def seed_cap15_state(live_state_path: Path) -> dict:
+    """cap15 對照線第一次執行：從實盤 state.json 複製生效日前（舊規則標籤）的 history，
+    確保對照線與切換前的實盤紀錄逐筆相同，之後各自往下走。"""
+    try:
+        live = json.loads(live_state_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    seeded = {k: v for k, v in live.items() if k in ("tickers", "last_change_date", "last_change_desc")}
+    for hk in ("history_us", "history_tw"):
+        seeded[hk] = [r for r in live.get(hk, [])
+                      if not any(tk.get("rule") == NEW_RULE_TAG for tk in r["tickers"].values())]
+    print(f"[cap15] seeded from {live_state_path.name}: " +
+          ", ".join(f"{hk} {len(seeded[hk])}" for hk in ("history_us", "history_tw")))
+    return seeded
+
+
+def build_alert_lines(events: list, sigs: dict, exp: dict, data_date, cap_flips: list, ov: dict | None) -> list:
+    """可行動變化的純文字 alert（email 內文）。事件行以「• 」開頭（build_live_mail 靠這個解析）。"""
+    new_fmt = any(sigs[t].get("rule") == NEW_RULE_TAG for t in ALL_TICKERS)
+    ev = [c.replace("<b>", "").replace("</b>", "") for c in events]
+    if new_fmt:
+        head = f"⚡ 實盤主系統（美股債金版・台股不借錢版）可行動變化（數據截至 {data_date}）"
+    else:
+        head = f"⚡ W52×自適應波動率 150%（美+台・實單）可行動變化（數據截至 {data_date}）"
+    lines = [head, ""]
+    for c in ev:
+        lines.append("• " + c)
+    if new_fmt:
+        lines += ["", "當前目標權重（股票部分不借錢，單腿上限 50%）："]
+    else:
+        lines += ["", "當前目標權重（cap_eff，均線五條全對上限 1.5、否則 1.0）："]
+    for t in ALL_TICKERS:
+        d = sigs[t]
+        if d.get("rule") == NEW_RULE_TAG:
+            lines.append(f"  {TICKER_MARKET[t]} {t}: {d['final']*100:.0f}%  "
+                         f"(閘門{'在場' if d['gate'] else '出場'}, RV20 {d['rv20']*100:.1f}%, "
+                         f"σ_t {d['sigma_t']*100:.1f}%, 套袖 {d['sleeve']:.2f})")
+        else:
+            lines.append(f"  {TICKER_MARKET[t]} {t}: {d['final']*100:.0f}%  "
+                         f"(閘門{'在場' if d['gate'] else '出場'}, RV20 {d['rv20']*100:.1f}%, "
+                         f"σ_t {d['sigma_t']*100:.1f}%, 套袖 {d['sleeve']:.2f}, "
+                         f"cap_eff {d['cap_eff']:.1f}, 均線{'全對' if d['ma5_on'] else '未全對'})")
+    if ov is not None and sigs["QQQ"].get("rule") == NEW_RULE_TAG:
+        lines += ["", "債金疊加（美股，各最多 20%，占指數部淨值；每成立一條加三分之一）："]
+        lines += overlay_status_lines(ov)
+    if cap_flips:
+        lines += ["", "cap_eff 翻轉（僅供說明，不單獨觸發本信）："]
+        for note_line in cap_flips:
+            lines.append("  " + note_line)
+    lines += ["", f"美股組合曝險 {exp['us']:.0f}% · 台股組合曝險 {exp['tw']:.0f}% · 下一個交易日調整至上列目標。", ""]
+    if new_fmt:
+        lines.append("W52 × 自適應波動率 實盤主系統（{} 起：美股債金版、台股不借錢版；舊 cap 1.5 規則降為對照線、不寄信）。"
+                     "詳細： https://research.investmquest.com/long-track-w52-adaptive/".format(RULE_SWITCH_DATE))
+    else:
+        lines.append("W52 × 自適應波動率 150%（{} 起含日線均線確認）實單主系統。詳細： "
+                     "https://research.investmquest.com/long-track-w52-adaptive/".format(RULE_REVISION_DATE))
+    return lines
+
+
 def main():
+    global PROFILE, STATE_JSON, OUTPUT, NAV_BLOCK
     parser = argparse.ArgumentParser()
     parser.add_argument("--render-only", action="store_true",
                         help="只用既有 state.json 重繪 _body.html：不抓價（無網路呼叫）、"
                              "不寫 state.json（不 append 歷史）、不產生 alert／mail HTML（不觸發 email）。"
                              "供本機驗證頁面渲染用；CI 預設（不帶此旗標）行為完全不變。")
+    parser.add_argument("--profile", choices=("live", "cap15"), default="live",
+                        help="live＝實盤主系統（預設）。cap15＝舊規則（cap 1.5＋日線均線確認）對照線："
+                             "寫 cap15_state.json／cap15.html，不寫 alert、不寄信、不計債金。")
     args = parser.parse_args()
+    PROFILE = args.profile
+    if PROFILE == "cap15":
+        STATE_JSON = DOCS / "long-track-w52-adaptive" / "cap15_state.json"
+        OUTPUT = DOCS / "long-track-w52-adaptive" / "cap15.html"
+        NAV_BLOCK = full_nav_block("system", "lthub")
 
     prev_state = {}
     if STATE_JSON.exists():
@@ -1991,6 +2572,8 @@ def main():
             prev_state = json.loads(STATE_JSON.read_text())
         except Exception:
             prev_state = {}
+    elif PROFILE == "cap15":
+        prev_state = seed_cap15_state(DOCS / "long-track-w52-adaptive" / "state.json")
 
     if args.render_only:
         if not prev_state or "tickers" not in prev_state:
@@ -2037,7 +2620,8 @@ def main():
         leg_panel_map = {m["key"]: {} for m in MARKETS}
 
         html = generate_html(sigs, [], last_change_date, hist_map, exec_map,
-                             last_change_desc=last_change_desc, leg_panel_map=leg_panel_map)
+                             last_change_desc=last_change_desc, leg_panel_map=leg_panel_map,
+                             overlay=prev_state.get("overlay"), overlay_changes=[])
         OUTPUT.parent.mkdir(parents=True, exist_ok=True)
         OUTPUT.write_text(html, encoding="utf-8")
         print(f"[render-only] Written {OUTPUT} ({len(html):,} bytes). "
@@ -2051,7 +2635,8 @@ def main():
         d = compute_ticker(t, px_map[t])
         sigs[t] = d
         print(f"  {t}: gate={'IN' if d['gate'] else 'OUT'} RV20={d['rv20']*100:.1f}% "
-              f"σ_t={d['sigma_t']*100:.1f}% sleeve={d['sleeve']:.2f} -> final {d['final']*100:.0f}%")
+              f"σ_t={d['sigma_t']*100:.1f}% sleeve={d['sleeve']:.2f} -> final {d['final']*100:.0f}%"
+              f"{'  [新規則 cap 1.0]' if d.get('rule') == NEW_RULE_TAG else ''}")
 
     exp = {}
     for m in MARKETS:
@@ -2072,6 +2657,29 @@ def main():
     cap_flips = detect_cap_eff_flips(prev_state, sigs, skip_legs=delayed_legs)   # 說明用，不影響 changes/是否寄信
     data_date = max(sigs[t]["wk_date"] for t in ALL_TICKERS)
 
+    # ---- 債金疊加（只在實盤 profile；美股）。抓不到 → 沿用前次、標 stale、不報變化。
+    us_date_ts = max(px_map[t].index[-1] for t in US_TICKERS)
+    us_new = PROFILE == "live" and is_new_rule(us_date_ts)
+    ov, overlay_changes, overlay_blk = None, [], None
+    if PROFILE == "live":
+        try:
+            ov = compute_overlay(us_date_ts)
+            for k in OVERLAY_LEGS:
+                print(f"Overlay {OVERLAY_SYM[k]}: {ov[k]['n']}/3 target {ov[k]['target_pct']:.2f}% (week {ov[k]['week_date']})")
+        except Exception as e:  # noqa: BLE001 — fail-safe：疊加資料抓不到不擋實盤主流程
+            print(f"[overlay][WARN] 債金資料取得失敗，沿用前次紀錄：{type(e).__name__}: {e}", file=sys.stderr)
+        overlay_changes = detect_overlay_changes(prev_state, ov, us_new)
+        overlay_blk = overlay_state_block(ov, prev_state.get("overlay"), us_new, us_date_ts.strftime("%Y-%m-%d"))
+        if overlay_changes:
+            overlay_blk["last_change_date"] = us_date_ts.strftime("%Y-%m-%d")
+            overlay_blk["last_change_desc"] = "；".join(
+                f"{OVERLAY_NAME[c['leg']]} {c['n_prev']}／3 → {c['n_now']}／3（目標 {c['target_prev']:.1f}% → {c['target_now']:.1f}%）"
+                for c in overlay_changes)
+        else:
+            for kk in ("last_change_date", "last_change_desc"):
+                if (prev_state.get("overlay") or {}).get(kk):
+                    overlay_blk[kk] = prev_state["overlay"][kk]
+
     # ---- per-market history: rule-replay backfill (once) + daily live append ----
     hist_map = {}
     for m in MARKETS:
@@ -2084,6 +2692,10 @@ def main():
         else:
             daily_date = max(px_map[t].index[-1] for t in legs)
             today_rec = _daily_record(px_map, legs, daily_date, "live")
+            if m["key"] == "us" and us_new and ov:
+                today_rec["overlay"] = {"ief_n": ov["ief"]["n"], "gld_n": ov["gld"]["n"],
+                                        "ief_target_pct": ov["ief"]["target_pct"],
+                                        "gld_target_pct": ov["gld"]["target_pct"]}
             history = merge_history(prev_history, backfill, today_rec)
         hist_map[m["key"]] = history
         print(f"{m['short']} history: {len(history)} days (backfill {len(backfill)}, "
@@ -2102,73 +2714,96 @@ def main():
         print(f"{m['short']} exec layer: {len(er['events'])} events, current executed " +
               ", ".join(f"{t} {er['last'][t]:.0f}%" for t in m["legs"]))
 
-    # 實單主系統（2026-07-18 起）：可行動變化以 email 提醒（訊號＝cap 1.5 權重與現持執行層差
-    # ≥ 20pp；閘門翻轉本身不觸發，見 detect_changes 與 LOGIC_AUDIT.md 一之1）。
+    # 實單主系統：可行動變化以 email 提醒（訊號＝目標權重與現持執行層差 ≥ 20pp，或現持高於新規則
+    # 上限；閘門翻轉本身不觸發，見 detect_changes 與 LOGIC_AUDIT.md 一之1）。2026-10-19 起另加
+    # 「債金條件數改變」。cap15 對照線不寫 alert、不寄信，但仍記 last_change 供頁面顯示。
+    alert_events = list(changes) + overlay_change_lines(overlay_changes)
     if changes:
         last_change_date = data_date
         last_change_desc = "; ".join(c.replace("<b>", "").replace("</b>", "") for c in changes)
         print(f"CHANGES: {last_change_desc}")
-        lines = [f"⚡ W52×自適應波動率 150%（美+台・實單）可行動變化（數據截至 {data_date}）", ""]
-        for c in changes:
-            lines.append("• " + c.replace("<b>", "").replace("</b>", ""))
-        lines += ["", "當前目標權重（cap_eff，均線五條全對上限 1.5、否則 1.0）："]
-        for t in ALL_TICKERS:
-            d = sigs[t]
-            lines.append(f"  {TICKER_MARKET[t]} {t}: {d['final']*100:.0f}%  "
-                         f"(閘門{'在場' if d['gate'] else '出場'}, RV20 {d['rv20']*100:.1f}%, "
-                         f"σ_t {d['sigma_t']*100:.1f}%, 套袖 {d['sleeve']:.2f}, "
-                         f"cap_eff {d['cap_eff']:.1f}, 均線{'全對' if d['ma5_on'] else '未全對'})")
-        if cap_flips:
-            lines += ["", "cap_eff 翻轉（僅供說明，不單獨觸發本信）："]
-            for note_line in cap_flips:
-                lines.append("  " + note_line)
-        lines += ["", f"美股組合曝險 {exp['us']:.0f}% · 台股組合曝險 {exp['tw']:.0f}% · 下一個交易日調整至上列目標。", "",
-                  "W52 × 自適應波動率 150%（{} 起含日線均線確認）實單主系統。詳細： https://research.investmquest.com/long-track-w52-adaptive/".format(RULE_REVISION_DATE)]
-        # 結尾必帶換行：workflow 的 `cat lt_w52a_alert.txt` 後緊接 `echo "ALERT_EOF"`，
-        # 若檔尾無換行，最後一行內容會與 ALERT_EOF 黏在同列，$GITHUB_OUTPUT heredoc
-        # 找不到匹配分隔符而讓整個 job 失敗（只在真有可行動變化的日子才觸發，故隱蔽）。
-        ALERT_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        print(f"Alert file: {ALERT_FILE}")
     else:
         last_change_date = prev_state.get("last_change_date")
         last_change_desc = prev_state.get("last_change_desc")
-        if ALERT_FILE.exists():
-            ALERT_FILE.unlink()
-        print("No actionable change vs last run.")
+    if overlay_changes:
+        print("OVERLAY CHANGES: " + "; ".join(c.replace("<b>", "").replace("</b>", "") for c in overlay_change_lines(overlay_changes)))
 
-    # ---- 資料延遲通知（與可行動變化同一封信；同一組延遲只通知一次，避免一天兩輪重複寄）----
     delay_lines, delay_state = delay_lines_for(delays), None
-    if delays:
-        delay_key = sorted(f"{t}|{i['last']}|{i['ref']}" for d_ in delays.values() for t, i in d_.items())
-        delay_state = {"key": delay_key,
-                       "legs": {t: i for d_ in delays.values() for t, i in d_.items()},
-                       "note": "資料延遲：該市場本次未寫當日 history、未產生換倉指令，executed_pct 維持前次"}
-        if (prev_state.get("data_delay") or {}).get("key") != delay_key:
-            existing = ALERT_FILE.read_text(encoding="utf-8") if ALERT_FILE.exists() else ""
-            head = "" if existing else f"⚠ W52×自適應波動率 150%（美+台・實單）資料延遲通知（數據截至 {data_date}）\n\n"
-            ALERT_FILE.write_text(existing + head + "\n".join(delay_lines) + "\n", encoding="utf-8")
-            print(f"Alert file (data delay): {ALERT_FILE}")
+    if PROFILE == "live":
+        if alert_events:
+            lines = build_alert_lines(alert_events, sigs, exp, data_date, cap_flips, ov)
+            # 結尾必帶換行：workflow 的 `cat lt_w52a_alert.txt` 後緊接 `echo "ALERT_EOF"`，
+            # 若檔尾無換行，最後一行內容會與 ALERT_EOF 黏在同列，$GITHUB_OUTPUT heredoc
+            # 找不到匹配分隔符而讓整個 job 失敗（只在真有可行動變化的日子才觸發，故隱蔽）。
+            ALERT_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            print(f"Alert file: {ALERT_FILE}")
+        else:
+            if ALERT_FILE.exists():
+                ALERT_FILE.unlink()
+            print("No actionable change vs last run.")
 
-    if frame is not None:
-        ALERT_HTML.write_text(build_mail_html(changes, sigs, exp, data_date, cap_flips=cap_flips,
-                                              delay_lines=delay_lines or None), encoding="utf-8")
-        print(f"Mail HTML written: {ALERT_HTML}")
+        # ---- 資料延遲通知（與可行動變化同一封信；同一組延遲只通知一次，避免一天兩輪重複寄）----
+        if delays:
+            delay_key = sorted(f"{t}|{i['last']}|{i['ref']}" for d_ in delays.values() for t, i in d_.items())
+            delay_state = {"key": delay_key,
+                           "legs": {t: i for d_ in delays.values() for t, i in d_.items()},
+                           "note": "資料延遲：該市場本次未寫當日 history、未產生換倉指令，executed_pct 維持前次"}
+            if (prev_state.get("data_delay") or {}).get("key") != delay_key:
+                existing = ALERT_FILE.read_text(encoding="utf-8") if ALERT_FILE.exists() else ""
+                head = "" if existing else f"⚠ W52×自適應波動率 實盤主系統 資料延遲通知（數據截至 {data_date}）\n\n"
+                ALERT_FILE.write_text(existing + head + "\n".join(delay_lines) + "\n", encoding="utf-8")
+                print(f"Alert file (data delay): {ALERT_FILE}")
+
+        if frame is not None:
+            ALERT_HTML.write_text(build_mail_html(alert_events, sigs, exp, data_date, cap_flips=cap_flips,
+                                                  delay_lines=delay_lines or None, overlay=ov), encoding="utf-8")
+            print(f"Mail HTML written: {ALERT_HTML}")
+    else:
+        if delays:
+            delay_key = sorted(f"{t}|{i['last']}|{i['ref']}" for d_ in delays.values() for t, i in d_.items())
+            delay_state = {"key": delay_key,
+                           "legs": {t: i for d_ in delays.values() for t, i in d_.items()},
+                           "note": "資料延遲：該市場本次未寫當日 history、未產生換倉指令，executed_pct 維持前次"}
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map,
-                         last_change_desc=last_change_desc, leg_panel_map=leg_panel_map)
+                         last_change_desc=last_change_desc, leg_panel_map=leg_panel_map,
+                         overlay=overlay_blk, overlay_changes=overlay_changes)
     html = inject_delay_banner(html, delay_lines)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
 
+    if PROFILE == "live":
+        mechanism = ("W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x exec layer A2 (20pp band / 10%% round). "
+                     "From %s: stock part cap 1.0 (no borrowing, clamp 50pp/leg; the daily-MA layer no longer changes exposure); "
+                     "US adds IEF/GLD weekly overlay (<=20%% each, +1/3 per condition: weekly close > 40w MA, > 52w MA, > close 52w ago); "
+                     "TW has no overlay. Before %s: cap_eff = 1.5 if daily-MA-score5 long-confirm else 1.0 (lag %d, 1%% hysteresis since %s), clamp 75pp; history not rewritten"
+                     % (RULE_SWITCH_DATE, RULE_SWITCH_DATE, MA_LAG, RULE_REVISION_DATE))
+        status = ("LIVE main system. Since %s: US = bond-gold version (cap 1.0 + IEF/GLD), TW = no-borrowing version (cap 1.0); decided %s. "
+                  "The previous cap 1.5 + daily-MA rule runs on as a control line (cap15_state.json), no email. "
+                  "Email on actionable change (leg target vs held >= 20pp, held above new cap, or IEF/GLD condition count change)"
+                  % (RULE_SWITCH_DATE, RULE_SWITCH_DECISION_DATE))
+        leverage = ("No borrowing from %s: stock exposure <= 100%% per market; TW leveraged leg (2330 mini futures + small TAIEX) no longer needed. "
+                    "US overlay is funded by swapping the index-account holding (XNAS) into bond/gold funds while the other account adds MNQ to keep stock exposure. "
+                    "Before %s: cap_eff up to 1.5 (informed decision, see history)." % (RULE_SWITCH_DATE, RULE_SWITCH_DATE))
+        revision_date = RULE_SWITCH_DATE
+    else:
+        mechanism = ("CONTROL LINE (old live rule): W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x cap_eff (1.5 if daily-MA-score5 long-confirm else 1.0, lag %d, price conditions w/ %.0f%% hysteresis since %s) x exec layer A2 20pp/10%%round/clamp fixed 75pp"
+                     % (MA_LAG, MA_BUF * 100, RULE_REVISION_DATE))
+        status = ("Control line since %s: the former live rule (cap 1.5 + daily-MA confirm) kept running for comparison; not traded, no email"
+                  % RULE_SWITCH_DATE)
+        leverage = "cap_eff = 1.5 if daily-MA-score5 long-confirm else 1.0; w = gate x min(cap_eff, σ_t/RV20); not traded"
+        revision_date = RULE_REVISION_DATE
+
     state_json = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "profile": PROFILE,
         "data_date": data_date,
         "ruleset_locked_date": FREEZE_DATE,
-        "ruleset_revision_date": RULE_REVISION_DATE,
-        "mechanism": "W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x cap_eff (1.5 if daily-MA-score5 long-confirm else 1.0, lag %d, price conditions w/ %.0f%% hysteresis since %s) x exec layer A2 20pp/10%%round/clamp fixed 75pp (scale 0~150; upgraded 2026-07-22)" % (MA_LAG, MA_BUF * 100, RULE_REVISION_DATE),
-        "status": "LIVE main system since 2026-07-18 (cap_eff up to 1.5, both markets; MA confirm layer since %s; pre-live review gate demoted to post-live review point: 60 tracking days OR first >=10%% drawdown); email on actionable change" % RULE_REVISION_DATE,
-        "leverage": "cap_eff = 1.5 if daily-MA-score5 long-confirm else 1.0 (since %s); w = gate x min(cap_eff, σ_t/RV20); financing = cash rate + spread 1.5%%/yr; TW must use futures not margin; US cap 1.5 = informed decision (research shows US leverage lower Calmar; user chose consistency over risk-adjusted return)" % RULE_REVISION_DATE,
+        "ruleset_revision_date": revision_date,
+        "mechanism": mechanism,
+        "status": status,
+        "leverage": leverage,
         "last_change_date": last_change_date,
         "last_change_desc": last_change_desc,
         "weights": WEIGHTS,
@@ -2202,6 +2837,9 @@ def main():
         "history_us": hist_map["us"],
         "history_tw": hist_map["tw"],
     }
+    if PROFILE == "live":
+        state_json["rule_changes"] = merge_rule_changes(prev_state.get("rule_changes"))
+        state_json["overlay"] = overlay_blk
     # 稽核欄（只在有事的日子才出現，平常 state.json 形狀不變）：官方補值紀錄、資料延遲狀態
     patched = {t: {"appended": n["appended"], "refreshed": n["refreshed"]}
                for t, n in FETCH_NOTES.items() if n.get("appended") or n.get("refreshed")}

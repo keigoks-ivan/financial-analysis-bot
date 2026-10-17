@@ -70,7 +70,9 @@ _cand = [HERE.parent / "docs", HERE.parents[2] / "docs" if len(HERE.parents) >= 
 DOCS = next((c for c in _cand if c.exists()), _cand[0])
 OUTPUT = DOCS / "long-track-w52-adaptive" / "tw-semivol.html"
 STATE_JSON = DOCS / "long-track-w52-adaptive" / "tw_semivol_state.json"
-MAIN_STATE_JSON = DOCS / "long-track-w52-adaptive" / "state.json"   # 唯讀：實單主系統對照
+# 2026-10-19 起實盤主系統改為美股債金版／台股不借錢版，原實單規則（cap 1.5＋均線）降為對照線 cap15。
+# 本頁文字裡的「主系統」指 2026-10-19 前的那套規則，對照卡改讀 cap15_state.json。
+MAIN_STATE_JSON = DOCS / "long-track-w52-adaptive" / "cap15_state.json"   # 唯讀：舊實單規則（cap15 對照線）對照
 # 無 email／alert：影子追蹤頁（B-ii 台股套袖，不採用為實單規則）；可行動變化 email 由主系統覆蓋（且主系統不受本頁規則影響）。
 
 TW_TICKERS = ["0050", "2330"]
@@ -1121,6 +1123,9 @@ def main():
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map, main_state)
     html = _w52.inject_delay_banner(html, _w52.delay_lines_for(delays))
+    html = _w52.inject_switch_banner(html, "實盤自此改為美股債金版、台股不借錢版（股票部分上限 100%），原實單規則（cap 1.5＋日線均線確認）降為"
+                                      "<a href=\"/long-track-w52-adaptive/cap15.html\">對照線</a>。本頁文字中的「主系統」指 2026-10-19 前的那套規則，"
+                                      "對照卡讀的是該對照線；本頁維持原規則（只換台股波動分母）繼續每日更新，不受切換影響。")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
