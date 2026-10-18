@@ -1639,7 +1639,7 @@ def _legacy_rules() -> str:
 <div class="card">
 <h3>期貨實務實作（研究，非下單指令）</h3>
 <div class="rule-list" style="font-size:.86rem">
-<b>美股</b>：IBKR portfolio margin，或 <b>MNQ 微型 Nasdaq 期貨</b>加曝險。<span style="color:var(--amber-text)">MNQ 對 SMH 腿有 tracking 偏差（MNQ ≈ NDX、非半導體），以 MNQ 複製 SMH 槓桿會有基差／beta 落差。</span>——<b>研究判定美股槓桿 Calmar 較低、不划算；知情仍採 cap 1.5 求兩市場一致性（見頁首知情決策）。</b><br>
+<b>美股</b>：用 <b>MNQ 微型 Nasdaq 期貨</b>加曝險。<span style="color:var(--amber-text)">MNQ 對 SMH 腿有 tracking 偏差（MNQ ≈ NDX、非半導體），以 MNQ 複製 SMH 槓桿會有基差／beta 落差。</span>——<b>研究判定美股槓桿 Calmar 較低、不划算；知情仍採 cap 1.5 求兩市場一致性（見頁首知情決策）。</b><br>
 <b>台股（候選）</b>：<b>不能用融資（利率 6～7%）</b>，改用 <b>2330 小型個股期</b>（100 股/口 ≈ NT$11 萬名目）＋<b>小台指</b>。<b>口數換算例</b>（NT$10M sleeve、峰值 140% ＝ 額外 40% ＝ NT$4M）：2330 約 NT$2M ÷ 11 萬 ≈ <b>18 口</b>小型個股期；大盤約 NT$2M 以小台（每點 50 元、指數 ~23000 ≈ 名目 115 萬/口）≈ <b>1～2 口</b>。實際依當時價格與保證金重算。<br>
 <b>峰值上限壓 140%</b>（非研究理論值 150%）留保證金緩衝；<b>轉倉／基差摩擦估 0.3～0.5pp/年</b>未計入回測，實際增益要再打折。
 </div>
@@ -1700,7 +1700,7 @@ def overlay_card(overlay: dict | None, overlay_changes: list | None) -> str:
 <h3 style="margin-bottom:.4rem">{OVERLAY_NAME[k]}：{o['n']}／3 條成立，目標 {o['target_pct']:.1f}%</h3>
 <table><thead><tr><th>條件（週線截至 {o['week_date']}）</th><th class="num">週收盤</th><th class="num">門檻</th><th>狀態</th></tr></thead>
 <tbody>{cond_rows(o)}</tbody></table>
-<div style="font-size:.76rem;color:var(--muted);margin-top:.5rem">換倉標的：{veh}（{what}）。每多一條成立，指數部帳戶賣出等比例 XNAS 換入 {veh}，另一帳戶加買等比例 MNQ 維持股票曝險；條件減少則反向。</div>
+<div style="font-size:.76rem;color:var(--muted);margin-top:.5rem">每多一條成立，{what}部位加三分之一（最多 20%），股票曝險不變；條件減少則反向。實際換倉方式寫在提醒信裡。</div>
 </div>"""
     chg = overlay.get("last_change_desc")
     chg_line = (f'<div class="rule-list" style="font-size:.85rem;margin-top:.8rem">最近一次債金條件數變動：{overlay.get("last_change_date", "—")}，{chg}。</div>'
@@ -1805,7 +1805,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
 <div class="card">
 <h3>實作方式（研究，非下單指令）</h3>
 <div class="rule-list" style="font-size:.86rem">
-<b>美股債金疊加</b>：每多一個條件成立，指數部帳戶賣出等比例 XNAS、換入 CBU0（7–10 年美債）或 IGLN（黃金）；另一個帳戶加買等比例 MNQ（微型 Nasdaq 期貨），讓股票曝險維持不變。條件減少時反向操作。<span style="color:var(--amber-text)">MNQ 追蹤 NDX、不是半導體，用它補 SMH 腿的曝險會有基差。</span><br>
+<b>美股債金疊加</b>：每多一個條件成立，加一份 7–10 年美債或黃金部位，股票曝險維持不變；條件減少時反向操作。實際換倉方式寫在提醒信裡。<br>
 <b>台股</b>：上限收回 100% 之後不再需要槓桿段，原本用來加碼的 2330 小型個股期與小台指部位不再使用。生效日 2330 現持若高於 50%，第一個交易日先拉回上限。<br>
 </div>
 </div>
@@ -2695,7 +2695,7 @@ def main():
                   "Email on actionable change (leg target vs held >= 20pp, held above new cap, or IEF/GLD condition count change)"
                   % (RULE_SWITCH_DATE, RULE_SWITCH_DECISION_DATE))
         leverage = ("No borrowing from %s: stock exposure <= 100%% per market; TW leveraged leg (2330 mini futures + small TAIEX) no longer needed. "
-                    "US overlay is funded by swapping the index-account holding (XNAS) into bond/gold funds while the other account adds MNQ to keep stock exposure. "
+                    "US overlay: each satisfied condition adds one third of a 20%% bond or gold position while stock exposure stays unchanged. "
                     "Before %s: cap_eff up to 1.5 (informed decision, see history)." % (RULE_SWITCH_DATE, RULE_SWITCH_DATE))
         revision_date = RULE_SWITCH_DATE
     else:
