@@ -250,6 +250,14 @@ jobs:
           NOTIFY_BODY: ${{ steps.seat_alert.outputs.body }}
         run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/cockpit/
 
+      # ── 13. 想法頁 /ideas/bond-outlook.html 的資料型量表（2026-10-18 新增，非整併自舊 workflow）：
+      #    SPY 對 IEF 60 日相關、10 年減 3 個月利差（FRED，貼現率換 BEY）、IEF／黃金三條件（呼叫實單程式
+      #    compute_overlay）。任何一項抓不到就沿用上次的值；腳本本身不會失敗，這裡再加 continue-on-error。
+      #    讀 docs/long-track-w52-adaptive/state.json 只做核對，不寫它。見 docs/ideas/data/bond-outlook/data.py 檔頭。──
+      - name: "[ideas-bond] Refresh bond-outlook gauges"
+        continue-on-error: true
+        run: python docs/ideas/data/bond-outlook/data.py --gauges
+
       # ── 收斂：單一 commit + push（路徑＝各原 workflow commit 路徑聯集）──
       - name: Commit and push if changed
         id: commit_and_push
@@ -281,7 +289,10 @@ jobs:
             docs/monitor/data/internals_alerts.json \
             docs/rs-turn/data/ \
             data/rs_turn/universe.json \
-            docs/stages/data/; do
+            docs/stages/data/ \
+            docs/ideas/bond-outlook.html \
+            docs/ideas/data/bond-outlook/gauges.json \
+            docs/ideas/data/bond-outlook/data.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if [ -z "$PATHS" ]; then
