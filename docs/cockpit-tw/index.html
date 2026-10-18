@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>台股選股主控台 — InvestMQuest Research</title>
-<meta name="description" content="台股選股的整合入口：大盤與實單曝險、DD Screener 台股池、QGM 台股、RS 雷達與兩條動能對照組。">
+<meta name="description" content="台股選股的整合入口：大盤與實單曝險、DD Screener 台股池、RS 雷達與兩條動能對照組。">
 <link rel="stylesheet" href="/assets/imq-base.css">
 <link rel="stylesheet" href="/assets/imq-badge.css">
 <script src="/assets/imq-badge.js"></script>
@@ -280,7 +280,6 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       <div class="disc-col">
         <div class="disc-col-title">品質路</div>
         <a class="disc-link" href="/dd-screener/tw/">DD Screener 台股池<small>Koyfin 台股品質篩選 × 美股同一套排序</small></a>
-        <a class="disc-link" href="/qgm-tw/">QGM 台股<small>品質 × 成長 × 趨勢，每日掃描</small></a>
       </div>
       <div class="disc-col">
         <div class="disc-col-title">技術路</div>
@@ -347,15 +346,6 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <section class="block">
       <div class="sec-head">
         <span class="sec-num">1</span>
-        <h2 class="sec-title">QGM 台股</h2>
-        <span class="sec-desc">品質（Quality）× 成長（Growth）× 趨勢 · <a href="/qgm-tw/">完整頁</a></span>
-      </div>
-      <div id="qgm-mount"><div class="placeholder">載入中⋯</div></div>
-      <p class="roster-note">QGM 先用基本面分兩個池。品質池（MLB）要自由現金流利潤率 10% 以上、ROIC 15% 以上、EPS 兩年年化成長 15% 以上。加速池（3A）要 EPS 兩年年化成長 25% 以上，現金流和 ROIC 的門檻放寬。品質分是 QGM 的基本面合成分，滿分 80。RS 等級是相對強弱，越高代表近期漲得比多數股票多，品質池要 80 以上、加速池要 90 以上。趨勢樣板通過，代表股價處在上升趨勢。四項全過才進今日候選。</p>
-    </section>
-    <section class="block">
-      <div class="sec-head">
-        <span class="sec-num">2</span>
         <h2 class="sec-title">台股 RS 雷達</h2>
         <span class="sec-desc">0050、0051、006201 成分股的相對強弱 × 波動收縮</span>
       </div>
@@ -364,7 +354,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     </section>
     <section class="block">
       <div class="sec-head">
-        <span class="sec-num">3</span>
+        <span class="sec-num">2</span>
         <h2 class="sec-title">動能對照組</h2>
         <span class="sec-desc">只列績效，名單不作為選股依據</span>
       </div>
@@ -414,7 +404,6 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
    monitor  /monitor/data/latest.json                 加權指數（key=twii）
    lt       /long-track-w52-adaptive/state.json       實單台股指數部曝險（0050／2330）
    dd       /dd-screener/tw/latest.json               DD Screener 台股池
-   qgm      /qgm-tw/latest.json                       QGM 台股
    rs       /screener/tw_latest.json                  台股 RS 雷達
    p10      /research/price-momentum-tw/track.json    P10 台股（只讀 NAV，不列持股：PREREG 規定不進 cockpit 清單）
    lamp     /stages/data/lamp_tw.json                 台股階段燈
@@ -438,7 +427,6 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     monitor: '/monitor/data/latest.json',
     lt:      '/long-track-w52-adaptive/state.json',
     dd:      '/dd-screener/tw/latest.json',
-    qgm:     '/qgm-tw/latest.json',
     rs:      '/screener/tw_latest.json',
     p10:     '/research/price-momentum-tw/track.json',
     lamp:    '/stages/data/lamp_tw.json'
@@ -496,7 +484,6 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     safe(renderRoster, 'roster-mount', '台股池資料暫缺');
     safe(renderFunnel, 'funnel-mount', '台股池資料暫缺');
     safe(renderPool, 'pool-mount', '台股池資料暫缺');
-    safe(renderQgm, 'qgm-mount', 'QGM 台股資料暫缺');
     safe(renderRs, 'rs-mount', 'RS 雷達資料暫缺');
     safe(renderP10, 'p10-mount', 'P10 台股資料暫缺');
     safe(renderSeats, 'seats-mount', '台股席位資料暫缺');
@@ -622,28 +609,6 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       '<p class="roster-note">RS：跟台股 RS 雷達同一套算法，跟雷達的掃描名單一起排百分位，0 到 100。滑過「四條件」可看沒過的條件，滑過營業現金流利潤率可看自由現金流利潤率與資本支出占營收。'+lampNote()+'</p>';
   }
 
-  /* 發現層：QGM 台股 */
-  function renderQgm(){
-    var q = S.qgm; if(!q){ $('qgm-mount').innerHTML = ph('QGM 台股資料暫缺'); return; }
-    var s = q.summary || {};
-    var cand = q.candidates || [], watch = q.watch_list || [];
-    var head = '<div class="chip-row">'+
-      [['掃描檔數', q.universe_size], ['品質池', s.mlb], ['加速池', s['3a']], ['趨勢確認', (s.trend_confirmed_mlb||0)+(s.trend_confirmed_3a||0)], ['觀察名單', watch.length], ['今日候選', cand.length]]
-      .map(function(c){return '<div class="chip"><div class="chip-k">'+c[0]+'</div><div class="chip-v num">'+fmt(c[1],0)+'</div></div>';}).join('')+'</div>';
-    var list = cand.concat(watch);
-    var body = list.map(function(r){
-      var tt = r.trend_template && r.trend_template.all_pass;
-      return '<tr><td>'+stockCell(r.ticker)+'</td><td>'+(r.pool==='3A'?'加速池':'品質池')+'</td>'+
-        '<td class="num">'+fmt(r.quality_score,1)+'</td><td class="num">'+fmt(r.rs_rating,0)+'</td>'+
-        '<td>'+(tt?'<span class="v-in">通過</span>':'<span class="muted">未過</span>')+'</td>'+
-        '<td class="num">'+fmt(r.fy1_per,1)+' / '+fmt(r.fy2_per,1)+'</td></tr>';
-    }).join('');
-    var stamp = String(q.run_timestamp||'').slice(0,10);
-    $('qgm-mount').innerHTML = head + (list.length ? '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
-      '<th>股票</th><th>池</th><th class="num">品質分</th><th class="num">RS 等級</th><th>趨勢樣板</th><th class="num">本益比 '+esc(q.fy1_label||'')+' / '+esc(q.fy2_label||'')+'</th>'+
-      '</tr></thead><tbody>'+body+'</tbody></table></div>' : ph('今天沒有候選，也沒有觀察名單')) +
-      '<p class="roster-note">掃描日 '+esc(stamp)+'。'+(cand.length?'':'今天沒有候選（品質、趨勢、波動收縮、相對強弱四項全過），表內是觀察名單。')+'</p>';
-  }
 
   /* 發現層：RS 雷達前 10 */
   var TREND = {accelerating:'加速', steady:'穩升', fading:'轉弱', choppy:'盤整'};
