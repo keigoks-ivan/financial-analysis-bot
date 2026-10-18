@@ -36,6 +36,8 @@ from datetime import datetime, timedelta, timezone
 
 from classify import classify
 from common import (
+    DATA_DIR,
+    PENDING_DIR,
     ROOT,
     daily_output_path,
     iso,
@@ -45,6 +47,7 @@ from common import (
     now_utc,
     pending_path,
 )
+from data_retention import prune_intel
 from deepread import run_deepread
 from llm import Ledger
 from summarize import (
@@ -267,6 +270,12 @@ def main():
 
     print(f"[intel/run_daily] wrote {out_path}")
     run_render(date)
+    if not args.out:  # 2026-10-19：正式輸出才清舊檔（--out 是測試用），失敗不影響日報
+        try:
+            removed = prune_intel(DATA_DIR, PENDING_DIR, protect={date})
+            print(f"[intel/run_daily] retention: removed data={len(removed['data'])} pending={len(removed['pending'])}")
+        except OSError as e:
+            print(f"[intel/run_daily] WARNING: retention skipped: {e!r}", file=sys.stderr)
 
     s = output["status"]
     print(

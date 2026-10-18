@@ -49,8 +49,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
@@ -58,6 +59,12 @@ CACHE = os.path.join(DATA, "rotation_radar_daily.json")
 OUT_JSON = os.path.join(ROOT, "docs", "rotation", "data", "radar.json")
 # 每日快照：累積歷史供未來長程輪動回放與復盤驗證（零 churn，週末 as_of 不變即 no-op）
 SNAP_DIR = os.path.join(ROOT, "docs", "rotation", "data", "snapshots")
+# 2026-10-19：快照的保留規則。頁面與其他腳本都不讀舊快照（雷達頁只讀 radar.json），原本每個交易日多 0.43 MB。
+# 最近 14 份全留；更舊的每 28 天留一份，只回看 372 天。被刪的舊檔由 v7-backtest 的 tools/sync_site_data.py 另存一份。
+SNAP_KEEP_RECENT = 14
+SNAP_ANCHOR_GAP_DAYS = 28
+SNAP_ANCHOR_MAX_DAYS = 372
+_SNAP_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})\.json$")
 
 # ── Universe config (order preserved end-to-end; frontend keys color by it) ──
 UNIVERSES = [
@@ -152,6 +159,47 @@ def write_json_if_changed(path, obj, volatile=("generated_at", "built_at", "gene
     with open(path, "w", encoding="utf-8") as f:
         f.write(_serialize(obj))
     return True
+
+
+def prune_snapshots(snap_dir=None, keep_recent=None, anchor_gap_days=None, anchor_max_days=None):
+    """清舊快照，回傳實際刪除的檔名（由舊到新）。重複執行不會再刪（冪等）。
+
+    最近 keep_recent 份全留；較舊的由舊到新挑稀疏錨點，每個錨點與前一個相隔至少 anchor_gap_days 天，
+    只回看 anchor_max_days 天（距最新一份的天數）。只認 YYYY-MM-DD.json，其他檔案不動。
+    """
+    snap_dir = SNAP_DIR if snap_dir is None else snap_dir
+    keep_recent = SNAP_KEEP_RECENT if keep_recent is None else keep_recent
+    anchor_gap_days = SNAP_ANCHOR_GAP_DAYS if anchor_gap_days is None else anchor_gap_days
+    anchor_max_days = SNAP_ANCHOR_MAX_DAYS if anchor_max_days is None else anchor_max_days
+    if not os.path.isdir(snap_dir):
+        return []
+    found = []
+    for name in os.listdir(snap_dir):
+        m = _SNAP_NAME.match(name)
+        if not m:
+            continue
+        try:
+            found.append((date.fromisoformat(m.group(1)), name))
+        except ValueError:
+            continue
+    found.sort()
+    if not found:
+        return []
+    newest = found[-1][0]
+    keep = {name for _, name in found[max(len(found) - keep_recent, 0):]}
+    last = None
+    for day, name in found:
+        if name in keep or (newest - day).days > anchor_max_days:
+            continue
+        if last is None or (day - last).days >= anchor_gap_days:
+            keep.add(name)
+            last = day
+    removed = []
+    for _, name in found:
+        if name not in keep:
+            os.remove(os.path.join(snap_dir, name))
+            removed.append(name)
+    return removed
 
 
 # ───────────────────────────────────────────────────────────────────────────
@@ -567,6 +615,9 @@ def main():
         snap_path = os.path.join(SNAP_DIR, f"{payload['as_of']}.json")
         snap_wrote = write_json_if_changed(snap_path, payload, volatile=("generated_at",))
         info(f"snapshot {payload['as_of']}.json: {'written' if snap_wrote else 'no change'}")
+        pruned = prune_snapshots()
+        if pruned:
+            info(f"snapshots pruned: {len(pruned)} old file(s)")
 
     # Summary: per-universe quadrant placement using the mid frame ("60") current.
     print("\n── quadrant placement (frame 60, current point) ──")

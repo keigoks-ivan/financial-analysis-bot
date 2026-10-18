@@ -33,6 +33,7 @@ JSON 欄位名外洩。改動這類字串前先查該份 styleguide 是否已有
 | `sources.yml` | 輸入：來源白名單（誰／怎麼抓／哪個維度／T1-T4） |
 | `docs/monitor\|regime\|rotation\|crowding\|detective/data/*.json` | 輸入：站內既有數字骨幹（唯讀，本目錄不寫這些檔） |
 | `docs/intel/pending/YYYY-MM-DD.json` | 輸出：候選卡片＋當日統計，餵給下一步 haiku/sonnet |
+| `data_retention.py` | 保留規則（2026-10-19，網站體積）：`run_daily.py` 寫完日報後自動清，`pending/YYYY-MM-DD.json` 留最近 7 份、`data/YYYY-MM-DD.json` 留最近 14 份；狀態檔與日期頁 `docs/intel/YYYY-MM-DD.html` 不碰。舊檔另存在本機 `~/v7-backtest/data/intel_archive/`。測試：`scripts/tests/test_intel_retention.py` |
 | `docs/intel/data/sources_health.json` | 輸出：每個來源本次抓取的 ok/latency/item_count/error |
 | `docs/intel/data/state.json` | 輸出：跨日狀態（regime 標籤／輪動領先象限／擁擠極端集合／kill-watch near-set／Polymarket 前日機率），用來判斷「有沒有變」 |
 
