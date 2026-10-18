@@ -93,13 +93,16 @@ v5 席位引擎（2026-09-17 持有人拍板「品質派 ∩ 獲利上修 ∩ �
      `sat_seats_m5` 變數），與 payload 真正的 v5 `sat_seats`（全量等待池）是兩件
      事，故獨立變數不共用，避免污染 M5 頁面既有的擂台/板凳文案。
 
-v5.3（2026-10-18 持有人拍板；只限美股看板，台股席位／十倍股頁不變）——黃燈倉位 0.5 → 1.0：
+v5.3（2026-10-18 持有人拍板；美股看板先改，同日晚間延伸到台股席位／十倍股頁）——黃燈倉位 0.5 → 1.0：
   倉位對應 綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。依據 v7-backtest docs/SeatSizing_Results.md
   （亮燈就滿倉 Calmar 高於黃燈半倉，97% 種子）與 docs/SeatSizing_Results_v2.md（同曝險比較，
   滿倉按比例放現金 Calmar 0.37 對半倉 0.27，98% 種子；半倉只在 2018、2020 急殺淺約 3 個百分點），
   2010～2026 品質大型股代理（缺上修排序）。登記判準形式上未過（同資料第二次檢驗）：持有人
-  依兩次回測決定改，非登記判準通過。實作：row_dict(s, yellow_full=False) 預設同舊版，只有
-  main() 兩處呼叫傳 True；build_tenbagger.py／build_seats_tw.py 呼叫 row_dict(s) 不變，仍黃燈半倉。
+  依兩次回測決定改，非登記判準通過。實作：row_dict(s, yellow_full=False) 預設同舊版，三個
+  呼叫端都傳 True：本檔 main() 兩處（美股看板）、build_seats_tw.tw_row（台股席位）、
+  build_tenbagger.main()（十倍股頁）。台股、十倍股延伸依 v7-backtest
+  docs/SeatSizing_Results_TW_Small.md，兩個母體登記分類都是「無法分辨」，持有人依回測知情決定改，
+  非登記判準通過（數字見 grp.py 檔頭 v5.3 段）。
 """
 from __future__ import annotations
 
@@ -411,8 +414,8 @@ def dd_tag(s: dict) -> str:
 
 
 def row_dict(s: dict, yellow_full: bool = False) -> dict:
-    """yellow_full（v5.3，2026-10-18，只限美股看板）：True＝黃燈滿倉（見 grp.timing_lamp）；
-    預設 False 與舊版逐位元相同，台股席位／十倍股頁不傳。"""
+    """yellow_full（v5.3，2026-10-18）：True＝黃燈滿倉（見 grp.timing_lamp），美股看板、台股席位、
+    十倍股頁三個呼叫端都傳 True；預設 False 與舊版逐位元相同。"""
     if "_r26" not in s:
         st = weekly_structure(s["ticker"])
         s["_r26"] = st.get("r26") if st else None
@@ -606,8 +609,8 @@ ACTION_CODE_ASCII = {"green": "FULL", "yellow": "HALF", "hot": "HALF", "red": "Z
 
 
 def _act_ascii(lamp: dict) -> str:
-    """lamp → FULL/HALF/ZERO/-。v5.3 起黃燈在美股看板 size==1.0，須讀 size 而非只看 code；
-    size 為 0.5 的黃燈（台股路徑、資料缺 fallback）維持 HALF。"""
+    """lamp → FULL/HALF/ZERO/-。v5.3 起黃燈 size==1.0，須讀 size 而非只看 code；
+    size 為 0.5 的黃燈（距新高資料缺的 fallback）維持 HALF。"""
     code = lamp.get("code")
     if code == "yellow" and lamp.get("size") == 1.0:
         return "FULL"
@@ -2194,7 +2197,8 @@ def main() -> int:
     lamp_map = load_lamp()
     for s in stocks + qgm_rows:
         s["_stage_code"] = lamp_map.get(s["ticker"])
-    # v5.3（2026-10-18）：美股看板黃燈滿倉，只有這一處傳 yellow_full=True
+    # v5.3（2026-10-18）：美股看板黃燈滿倉，這一處傳 yellow_full=True
+    # （台股席位 build_seats_tw.tw_row、十倍股 build_tenbagger.main() 各自傳）
     universe_rows = [row_dict(s, yellow_full=True) for s in stocks] + [row_dict(s, yellow_full=True) for s in qgm_rows]
     # dedupe 修復（2026-09-09）：load_qgm_rows／load_light_rows 過去只各自對
     # stocks_map（dd-pool）去重，沒對過彼此——INCY 這類同時在 QGM 品質池與快審卡

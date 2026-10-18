@@ -18,6 +18,12 @@ Owner decisions 2026-10-09/10 (knowledge/rule_ledger.md「台股核心席」):
      exists the seats stay empty, and names that pass every gate with a lit
      timing lamp are listed unranked as candidates.
 
+Owner decision 2026-10-18 (v5.3, same day as the US board): yellow lamp sizing
+0.5 -> 1.0, so 綠 1.0 / 黃 1.0 / 橘 0.5 / 紅 0 / 不合格 0. Basis: v7-backtest
+docs/SeatSizing_Results_TW_Small.md (c61b63b), classified 「無法分辨」 — registered
+criterion 4 (crash-window drawdown) not passed — so this is the owner's informed
+choice, not a registered pass. tw_row() passes yellow_full=True to row_dict().
+
 TW pool has no short-interest data, so that US gate never fires; insider
 buying (a display chip in the US) is almost always empty. 下次財報 falls back to the
 statutory filing deadline when yfinance has no date.
@@ -71,7 +77,7 @@ def tw_row(s0):
     """One TW pool stock → the US row_dict() shape, quality gate on OCF margin."""
     s = copy.deepcopy(s0)
     s['fcf'] = s.get('ocf')
-    r = ba.row_dict(s)
+    r = ba.row_dict(s, yellow_full=True)   # v5.3 (2026-10-18): yellow lamp = full size
     r['name'] = s0.get('name')
     g = r['grp'] = dict(r['grp'])
     g['why'] = [w.replace('品質閘 FCF', '品質閘 營業現金流利潤率') for w in g.get('why') or []]
@@ -237,7 +243,8 @@ def _legend():
 <div class="bw-note-line"><b>規則跟美股核心席相同</b>：先過資格，再依財報後上修排序，最後由時機燈決定倉位。核心席每週六（台北）依週五收盤重算：池內時機燈亮著的名字依上修取前 5，亮燈不足就空席。週中燈號只管倉位。這是研究名單，不是帳戶持倉。</div>
 <div class="bw-note-line"><b>資格</b>：三年成長、品質、站上 52 週線三項全過。三年成長＝Koyfin 今年到後年的每股盈餘年化成長 ≥15%，沒有第三年預估就不算過。品質＝投入資本報酬率（ROIC）≥15% 且營業現金流利潤率 ≥10%，或 ROIC ≥25% 且營業現金流為正。台股資本支出重，品質改看營業現金流，美股看自由現金流。另外五種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、財報後上修低於 −5%、估值閘紅燈（PEG &gt;2.0 或本益比相對五年均值 &gt;1.75 倍）。市值不另設門檻，台股池本身已是 10 億美元以上。</div>
 <div class="bw-note-line"><b>上修</b>：分析師對每股盈餘預估調高了幾 %，基準是這檔股票最近一次財報前的那份 Koyfin 快照。上修 ≥5% 才入池，池內依上修由高到低排。台股快照從 2026-10 開始存，第一筆上修要等第三季財報之後再匯出一次，在那之前核心席空著，過關且燈亮的名字列在「④ 候補」。yfinance 沒有財報日的名字，改用公開資訊觀測站上董事會通過財報的日期。</div>
-<div class="bw-note-line"><b>時機燈</b>：量的是距還原權息歷史新高多遠。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉。🟡 半倉＝差 3%～10%。🟠 過熱＝近 12 個月（扣最近一個月）漲幅 &gt;150%，半倉。🔴 等板機＝差超過 10% 或跌破 200 日線，零倉。⚫ 不合格＝未站上 52 週線。🟢🟡🟠 算亮燈。滑過燈號可看階段燈，階段燈不影響時機燈。</div>
+<div class="bw-note-line"><b>時機燈</b>：量的是距還原權息歷史新高多遠。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉。🟡 接近＝差 3%～10% 且站上 200 日線，同樣正常倉（v5.3 起，原為半倉）。距歷史新高的資料缺時，黃燈暫列半倉，標「🟡 資料缺」。🟠 過熱＝近 12 個月（扣最近一個月）漲幅 &gt;150%，半倉。🔴 等板機＝差超過 10% 或跌破 200 日線，零倉。⚫ 不合格＝未站上 52 週線。🟢🟡🟠 算亮燈。滑過燈號可看階段燈，階段燈不影響時機燈。</div>
+<div class="bw-note-line"><b>變更紀錄 v5.3（2026-10-18 起）</b>：倉位對應綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。黃燈由半倉改滿倉，依據是 v7-backtest 的台股回測（SeatSizing_Results_TW_Small.md，2013-04 至 2026-09）。同曝險比較是黃燈滿倉但整體投入跟半倉一樣多，比的是 Calmar（年化報酬除以最大回撤）：合格且燈亮的股票全部等權持有，0.181 對半倉 0.074；最多持 5 檔的設計跑 1,000 個隨機遞補種子，中位數 0.324 對 0.096，1,000 個種子全部較高，前後段也都較高。代價是直接滿倉在急殺時回撤較深：全部持有設計在 2022 年窗深 14.5 個百分點，2025 年窗深 9.6 個百分點，超過登記的 8 個百分點門檻。登記分類是「無法分辨」，績效面支持、風險告知門檻未過。回測樣本是代理母體，缺三年成長、上修排序、估值與營業現金流利潤率，規則也是看過美股大型股結果後訂的。本次是持有人依回測知情決定改，不是登記判準通過。橘燈維持半倉。</div>
 <div class="bw-note-line"><b>下次財報</b>：「≤N 天」是公司還沒公告日期，依法定期限推算（第一季 5/15、第二季 8/14、第三季 11/14、年報 3/31），實際可能更早。距財報 7 天內標橘色。</div>
 <div class="bw-note-line"><b>底部</b>：只在距歷史新高 10% 以內才算。回檔一次比一次小、量縮、離底部高點近算「緊」，否則算「鬆」。只排 ③ 等待池裡 🟡 組的順序，不改燈號或倉位。</div>
 <div class="bw-note-line"><b>跟美股的資料差異</b>：融券比在美股是資格條件，台股池沒有這項資料，這一條等於不設。內部人買賣在美股只是備註，台股池幾乎沒有資料。</div>
@@ -288,7 +295,7 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
                 lamp_map, conc=None, board=None):
     core_v = [views[r['ticker']] for r in sel['core']]
     rev_n = sum(1 for v in views.values() if v.get('rev_used_pct') is not None)
-    head = f"台股核心席 · {as_of} · 台股池 {n_universe} 檔"
+    head = f"台股核心席 v5.3 · {as_of} · 台股池 {n_universe} 檔"
     rule = (f"資格全過 {len(sel['eligible'])} 檔，上修 ≥5% 入池 {len(sel['pool'])} 檔，"
             f"有上修數字的 {rev_n} 檔。Koyfin 預估 {rev_as_of or '—'}，股價 {as_of}，"
             f"階段燈 {lamp_as_of or '—'}。")

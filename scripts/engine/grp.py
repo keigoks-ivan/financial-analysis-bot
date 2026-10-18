@@ -134,7 +134,8 @@ v5.2（2026-10-09 持有人拍板，見 knowledge/rule_ledger.md 同日三列）
      核心四席距新高 −21～−35% 全紅燈零倉——席位是排名不是決策；觸發是市場給的，
      沒訊號的月份就該空著。
 
-v5.3（2026-10-18 持有人拍板；**只限美股看板 /cockpit/**）——黃燈倉位 0.5 → 1.0：
+v5.3（2026-10-18 持有人拍板；美股看板 /cockpit/ 先改，同日晚間延伸到台股席位 /cockpit-tw/
+與十倍股頁 /picks/）——黃燈倉位 0.5 → 1.0：
   倉位對應綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。黃燈標籤由「🟡 半倉」改「🟡 接近」。
   依據：v7-backtest docs/SeatSizing_Results.md（亮燈就滿倉的 Calmar 高於黃燈半倉，97%
   種子）與 docs/SeatSizing_Results_v2.md（同曝險比較：滿倉按比例放現金 Calmar 0.37 對半倉
@@ -142,10 +143,18 @@ v5.3（2026-10-18 持有人拍板；**只限美股看板 /cockpit/**）——黃
   （缺上修排序）。**登記判準形式上未過**（同資料第二次檢驗），本次是持有人依兩次回測決定
   改，不是登記判準通過。橘燈（過熱）維持 0.5（回測的滿倉對照組曾把橘也放 1.0，持有人只拍
   板黃燈）。
-  實作：timing_lamp(s, yellow_full=False) 預設逐位元同舊版；只有美股看板（build_arena.main()
-  → row_dict(s, yellow_full=True)）傳 True。十倍股頁（build_tenbagger.py）與台股席位
-  （build_seats_tw.py）照舊呼叫 row_dict(s)，維持黃燈半倉。距歷史新高資料缺的 yellow
+  實作：timing_lamp(s, yellow_full=False) 預設逐位元同舊版；三個呼叫端都傳 True——美股看板
+  （build_arena.main() → row_dict(s, yellow_full=True)）、台股席位（build_seats_tw.tw_row）、
+  十倍股頁（build_tenbagger.main()）。距歷史新高資料缺的 yellow
   fallback 不屬於「−10%~−3% 且站上 200 日線」，v5.3 仍保守半倉（標「🟡 資料缺」）。
+  台股、十倍股延伸（2026-10-18 晚，持有人拍板）：依據 v7-backtest docs/SeatSizing_Results_TW_Small.md
+  （c61b63b）。兩個母體登記分類都是「無法分辨」，不是登記判準通過，持有人依回測知情決定改。
+  台股：同曝險比較 Calmar 0.181 對半倉 0.074（全部持有）、0.324 對 0.096（五席 1,000 種子
+  中位數），1,000 個種子全部較高，前後段也都較高；判準④未過，直接滿倉在 2022 年窗比半倉
+  深 14.5 個百分點、2025 年窗深 9.6（全部持有設計）。十倍股（美股中小型）：同曝險比較
+  0.271 對 0.267（全部持有）、0.255 對 0.184（五席中位數），1,000 個種子裡 992 個較高；
+  判準②後段差 0.00001 未過、④八個比較有 6 個超過 8 個百分點。timing_lamp() 沒有台股專用
+  的黃燈路徑，台股黃燈與美股走同一段程式。
 """
 from __future__ import annotations
 
@@ -237,13 +246,13 @@ CYCLE_GUARD_PEG_MAX = 0.3      # 循環股守門：PEG 需 < 此值才觸發 gua
 CYCLE_GUARD_PCTL_CAP = 50.0    # guard 觸發時，own_score_v4 的 p_g／p_ey 百分位上限
 # v4 時機燈 action 對照（build_arena 倉位欄；v5 沿用同一份，位置大小不變，見檔頭 v5 段）
 LAMP_ACTION = {"green": "正常倉", "yellow": "半倉", "hot": "半倉", "red": "零倉・等板機", "out": "—"}
-# v5.3（2026-10-18，只限美股看板）：黃燈滿倉的 action 文字。台股／十倍股不用，維持 LAMP_ACTION。
+# v5.3（2026-10-18，美股看板／台股席位／十倍股頁）：黃燈滿倉的 action 文字。全域 LAMP_ACTION 不動。
 LAMP_ACTION_V53 = {**LAMP_ACTION, "yellow": "正常倉"}
 
 
 def lamp_action(lamp: dict, yellow_full: bool = False) -> str:
     """timing_lamp() 輸出 → action 文字。yellow_full=False 時與舊 LAMP_ACTION.get(code, "—") 完全相同；
-    True（美股看板 v5.3）時只有「黃燈且 size==1.0」改「正常倉」，黃燈資料缺 fallback（size 0.5）仍「半倉」。"""
+    True（v5.3：美股看板、台股席位、十倍股頁）時只有「黃燈且 size==1.0」改「正常倉」，黃燈資料缺 fallback（size 0.5）仍「半倉」。"""
     code = lamp.get("code")
     if yellow_full and code == "yellow" and lamp.get("size") == 1.0:
         return LAMP_ACTION_V53["yellow"]
@@ -533,7 +542,7 @@ def timing_lamp(s: dict, yellow_full: bool = False) -> dict:
     且站上 200 日線，突破帶）＞ yellow（−10%~−3% 之間且站上 200 日線，或資料不足
     以判定）。倉位：green 1.0／yellow 0.5／hot 0.5／red 0／out 0（LAMP_ACTION，
     沿用 v4 定義不變）。
-    yellow_full（v5.3，2026-10-18，只限美股看板）：True 時「−10%~−3% 且站上 200 日線」的
+    yellow_full（v5.3，2026-10-18，美股看板／台股席位／十倍股頁都傳 True）：True 時「−10%~−3% 且站上 200 日線」的
     黃燈 size 改 1.0、label 改「🟡 接近」；預設 False＝與舊版逐位元相同。橘燈維持 0.5；
     距新高資料缺的 yellow fallback 兩種模式都是 0.5（label 於 True 時標「🟡 資料缺」）。"""
     ma = s.get("ma") or {}

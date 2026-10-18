@@ -201,7 +201,7 @@ knowledge/rule_ledger.md「席位引擎」各版列，每輪皆附證偽條件�
 <tr><td class="left">v4.1</td><td class="left">融券占流通股比 &gt;10% 只能衛星；基期效應（FY1→FY2 低基期跳增改用 FY2→FY3 成長）；循環股守門（毛利跨距／capex 佔比 × PEG 過低）</td><td class="left">✅ 2026-09-17</td></tr>
 <tr><td class="left">v5</td><td class="left">品質派資格 × 上修排序 × 歷史新高板機：own_score_v4 退為對照 tooltip，排序改上修單一變數；耐久與融券高升級為整體資格閘（沒有衛星軌可退）；衛星軌取消，池扣掉核心即等待池；時機燈全面改讀距歷史新高（還原權息全歷史）＋200 日線</td><td class="left">✅ 2026-09-17</td></tr>
 <tr><td class="left">v5.2</td><td class="left">成長閘統一 15%（取消耐久者放寬）；耐久降為顯示旗標，不擋資格；核心席改為池內時機燈亮著的名字依上修取前 5，亮燈不足就空席，每週六依週五收盤重算，取代月頻輪動</td><td class="left">✅ 2026-10-09</td></tr>
-<tr><td class="left">v5.3</td><td class="left">美股看板黃燈（距還原歷史新高 −10%~−3% 且站上 200 日線）倉位由 0.5 改 1.0，倉位對應綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0；依據 v7-backtest SeatSizing_Results.md 與 SeatSizing_Results_v2.md（2010～2026 品質大型股代理，缺上修排序）。登記判準形式上未過，是持有人依兩次回測決定改，非登記判準通過。台股席位與十倍股頁不變</td><td class="left">✅ 2026-10-18</td></tr>
+<tr><td class="left">v5.3</td><td class="left">美股看板黃燈（距還原歷史新高 −10%~−3% 且站上 200 日線）倉位由 0.5 改 1.0，倉位對應綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0；依據 v7-backtest SeatSizing_Results.md 與 SeatSizing_Results_v2.md（2010～2026 品質大型股代理，缺上修排序）。登記判準形式上未過，是持有人依兩次回測決定改，非登記判準通過。同日晚間台股席位與十倍股頁也改為黃燈滿倉，依據 v7-backtest SeatSizing_Results_TW_Small.md；兩個母體的登記分類都是「無法分辨」，同樣是持有人依回測知情決定改，非登記判準通過</td><td class="left">✅ 2026-10-18</td></tr>
 </tbody></table>
 </div>"""
     # 2026-07-10 選股主控台整併：engine 總覽改輸出 nav-less 片段，供 /cockpit/#seats

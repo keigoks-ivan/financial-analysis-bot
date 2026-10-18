@@ -42,6 +42,14 @@ CADENCE（v5 起改為每日，取代舊版月頻 21 天 cadence guard）
 本檔不再自行節流；yfinance 只在市值快取缺漏時才補（見上），且只對「已在 latest.json
 覆蓋、市值帶未知」的少量名字，不是整個 universe，daily 跑量可控。
 
+v5.3 黃燈滿倉（2026-10-18 持有人拍板；美股看板同日先改，本頁與台股席位同日晚間跟進）
+------------------------------------------------------------------------------
+倉位對應 綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0：row_dict(s, yellow_full=True)，距歷史新高
+資料缺的黃燈 fallback 仍 0.5（標「🟡 資料缺」）。依據 v7-backtest docs/SeatSizing_Results_TW_Small.md
+（c61b63b）美股中小型：同曝險比較 Calmar 0.271 對半倉 0.267（全部持有）、0.255 對 0.184
+（五席中位數），1,000 個種子裡 992 個較高；判準②後段差 0.00001 未過、④八個比較有 6 個超過
+8 個百分點。登記分類「無法分辨」，持有人依回測知情決定改，非登記判準通過。
+
 FAIL-SAFE
 ---------
 兩個主要來源（universe.json／dd-screener latest.json）皆讀取失敗 → exit 0、不覆蓋既有
@@ -290,7 +298,7 @@ def main():
     rows_all = []
     for t in in_band:
         s = latest_by_ticker[t]
-        rows_all.append(arena.row_dict(s))
+        rows_all.append(arena.row_dict(s, yellow_full=True))   # v5.3 (2026-10-18): 黃燈滿倉
 
     eligible = [r for r in rows_all if (r.get("grp") or {}).get("pass")]
     funnel["資格閘全過（品質×耐久×三年成長×站上52週線×否決）＝ELIGIBLE"] = len(eligible)
@@ -353,7 +361,10 @@ def main():
                  "$10億–$200億市值帶——GRP 席位地板之下、零重疊是設計。池＝資格全過"
                  "且財報後上修（缺值退回三月）≥+5% 者，依上修降冪排序（同值 tie-break "
                  "implied_growth_pct、再 tie-break 盈餘殖利率）。可買＝池中時機燈綠/橘"
-                 "者；等待池依燈號分接近新高（🟡）／拉回中（🔴）。本組只看不進倉位，"
+                 "者；等待池依燈號分接近新高（🟡）／拉回中（🔴）。倉位對應（v5.3，2026-10-18 "
+                 "起）綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0，黃燈由 0.5 改 1.0，依 v7-backtest "
+                 "SeatSizing_Results_TW_Small.md；登記分類為「無法分辨」，是持有人依回測知情決定"
+                 "改，非登記判準通過。本組只看不進倉位，"
                  "無核心席、無月頻輪動。持有人 veto（picks.json veto[]）優先於一切規則。"
                  "資料不足＝母體中查不到 dd-screener/QGM 池 v5 欄位或市值未知者，如實"
                  "列計數，不用寬鬆假設硬湊池。每日隨 dd-screener latest.json 重算。"
