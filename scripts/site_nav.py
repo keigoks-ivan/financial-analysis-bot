@@ -116,6 +116,11 @@ Change log:
     2026-10-16：市場 ▾ 下拉新增「AI 信用監測」("aicredit", /ai-credit/)，緊接「總經資料庫」
         (macrodb) 之後；PREFIX_ACTIVE 新增 ai-credit/ 前綴。外部 3 repo synced literal
         已同步為各 repo 的 ai-credit-nav 分支（只 commit，未 push）。
+    2026-10-19：入口整理（持有人拍板）。(1) 研究 ▾ 下拉移除「Tier Matrix」；PREFIX_ACTIVE 的
+        id/tier_matrix.html 專屬映射一併刪除，落回 id/ 前綴（研究群、產業研究項）。(2) 頂層移除
+        「使用指南」(/how-to.html)——使用指南併入投資流程，how-to.html 改成轉址樁（入 SKIP_FILES，
+        不注入 nav）；頂層只留「投資流程」(/flow/)。外部 3 repo synced literal（v7-backtest／
+        morning-briefing／minervini-quality-backtest）尚未同步，見 site-composition.md。
 """
 
 import re
@@ -160,7 +165,7 @@ NAV_STYLE = """<style id="imq-nav-style">
 
 NAV_SCRIPT = """<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>"""
 
-# (group, item, href, label) — groups: home / pick / research / market / system / mm / howto
+# (group, item, href, label) — groups: home / pick / research / market / system / mm
 # 2026-07-07 整站 IA v2（見 notes/site-internal/root/_proposal_site_ia_20260707.md）：
 # 三群 catch-all（研究/市場/工具）改為四群意圖式（選股/研究/市場/系統）——
 # 選股系統原散在研究+工具兩選單，收斂為單一「選股」群；跨資產三頁（描述器）
@@ -191,7 +196,6 @@ MENU = {
         ("aetf", "/active-etf/", "主動式 ETF"),  # 2026-09-25 新增，緊接 ETF 儀表板之後
         ("id", "/id/", "產業研究"),
         ("ideas", "/ideas/", "投資想法"),
-        ("tier", "/id/tier_matrix.html", "Tier Matrix"),
     ],
     # 2026-08-20 intel 2.0 Phase C：市場群 13→7 收斂——monitor／detective／crowding／
     # regime／rotation（產業輪動）／catalyst 六個監看入口整併進情報監視器分頁殼
@@ -256,7 +260,6 @@ def build_nav(group=None, item=None):
     pick_cls = ' class="active"' if group == "pick" else ""
     mm_cls = ' class="active"' if group == "mm" else ""
     flow_cls = ' class="active"' if group == "flow" else ""
-    howto_cls = ' class="active"' if group == "howto" else ""
     # 2026-09-13：補回全站模擬入口，避免重建頁面遺失。
     simulation_cls = ' class="active"' if group == "simulation" else ""
     search_cls = ' class="active"' if group == "search" else ""
@@ -272,7 +275,6 @@ def build_nav(group=None, item=None):
 {dd("system")}
       <a href="/simulation/"{simulation_cls}>模擬</a>
       <a href="/flow/"{flow_cls}>投資流程</a>
-      <a href="/how-to.html"{howto_cls}>使用指南</a>
       <a href="/search.html"{search_cls}>搜尋</a>
     </nav>
   </div>
@@ -371,7 +373,6 @@ PREFIX_ACTIVE = [
     ("dd/", ("research", "thub")),
     ("dca/", ("research", "thub")),
     ("report/", ("research", "thub")),
-    ("id/tier_matrix.html", ("research", "tier")),
     ("id/", ("research", "id")),
     ("ds/", ("research", "id")),
     ("comparisons/", ("research", "thub")),
@@ -432,7 +433,6 @@ PREFIX_ACTIVE = [
     # 頂層
     ("flow/", ("flow", None)),  # 投資流程（2026-07-19 復活孤兒頁；頂層連結，howto 模式）
     ("mental-models/", ("mm", None)),
-    ("how-to.html", ("howto", None)),
     ("search.html", ("search", None)),  # 搜尋（2026-07-11 新增頂層連結）
     ("index.html", ("home", None)),
 ]
@@ -495,6 +495,7 @@ SKIP_FILES = {
     # 回這個純版本——若不排除，site_nav.py 全站 sweep 會注入 nav，下次 assemble_prod.py 一跑
     # 又被蓋掉，兩邊互相打架、反覆造成 diff churn（比照 picks/index.html 等既有 redirect stub）。
     "stock-dash/full.html",                      # redirect stub -> index.html
+    "how-to.html",                               # redirect stub -> /flow/（2026-10-19 使用指南併入投資流程）
 }
 
 

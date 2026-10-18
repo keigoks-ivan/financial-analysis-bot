@@ -137,7 +137,6 @@ NAV_HTML = """<style id="imq-nav-style">
         </div>
       </div>
       <a href="/flow/">投資流程</a>
-      <a href="/how-to.html">使用指南</a>
       <a href="/search.html">搜尋</a>
     </nav>
   </div>
