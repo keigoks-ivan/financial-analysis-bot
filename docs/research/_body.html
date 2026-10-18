@@ -1210,61 +1210,6 @@ details.collapsible-widget>.widget-body{border:1px solid var(--border);border-to
   </div>
 </div>
 
-<div class="section" id="earnings-reports">
-  <div class="container">
-    <h2 class="section-title">財報分析<span class="count" id="earnings-count">&nbsp;</span></h2>
-    <div class="search-wrap">
-      <input id="earnings-search" type="text" placeholder="搜尋 Ticker、報告類型…">
-    </div>
-    <div class="filter-bar">
-      <div class="filter-group">
-        <span class="filter-label">類型</span>
-        <button class="filter-btn active" data-filter="form" data-value="all">全部</button>
-        <button class="filter-btn" data-filter="form" data-value="10-K">10-K</button>
-        <button class="filter-btn" data-filter="form" data-value="10-Q">10-Q</button>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">護城河</span>
-        <button class="filter-btn active" data-filter="moat" data-value="all">全部</button>
-        <button class="filter-btn" data-filter="moat" data-value="wide">寬護城河</button>
-        <button class="filter-btn" data-filter="moat" data-value="narrow">窄護城河</button>
-        <button class="filter-btn" data-filter="moat" data-value="nomoat">無護城河</button>
-        <button class="filter-btn" data-filter="moat" data-value="unrated">未評級</button>
-      </div>
-    </div>
-    <div class="card">
-      <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>公司</th>
-            <th>類型</th>
-            <th>日期</th>
-            <th>護城河等級</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="report-tbody">
-<tr class="searchable" data-form="10-Q" data-moat="unrated">
-  <td><strong>ADBE</strong></td>
-  <td><span class="tag tag-10q">10-Q</span></td>
-  <td class="date-cell">2026-03-26</td>
-  <td><span style="color:var(--text-muted)">—</span></td>
-  <td><a href="/report/32f5fbfbbd738102bfb2e8b4da3fe1de.html">查看 &rarr;</a></td>
-</tr>
-<tr class="searchable" data-form="10-K" data-moat="narrow">
-  <td><strong>LOW</strong></td>
-  <td><span class="tag tag-10k">10-K</span></td>
-  <td class="date-cell">2026-03-24</td>
-  <td><span class="moat-badge moat-narrow">窄護城河 Narrow Moat</span></td>
-  <td><a href="/report/32d5fbfbbd738146916dd89cd9621bb2.html">查看 &rarr;</a></td>
-</tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-  </div>
-</div>
 
 
 
@@ -1439,42 +1384,6 @@ details.collapsible-widget>.widget-body{border:1px solid var(--border);border-to
   sortTable('asym', false);
   computeStats();
   filterDd();
-
-  /* Earnings */
-  var earningsSearch = document.getElementById('earnings-search');
-  var earningsRows = document.querySelectorAll('#report-tbody tr.searchable');
-  var earningsCount = document.getElementById('earnings-count');
-  var filters = {form:'all', moat:'all'};
-
-  function renderEarningsCount(shown, total){
-    if(earningsCount) earningsCount.textContent = total + ' 筆' + (shown !== total ? ' / 顯示 ' + shown : '');
-  }
-  function filterEarnings(){
-    var q = (earningsSearch && earningsSearch.value || '').toLowerCase();
-    var shown = 0;
-    earningsRows.forEach(function(row){
-      var matchText = !q || row.textContent.toLowerCase().indexOf(q) >= 0;
-      var matchForm = filters.form === 'all' || row.getAttribute('data-form') === filters.form;
-      var matchMoat = filters.moat === 'all' || row.getAttribute('data-moat') === filters.moat;
-      var vis = matchText && matchForm && matchMoat;
-      row.style.display = vis ? '' : 'none';
-      if(vis) shown++;
-    });
-    renderEarningsCount(shown, earningsRows.length);
-  }
-  if(earningsSearch) earningsSearch.addEventListener('input', filterEarnings);
-
-  document.querySelectorAll('.filter-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var group = btn.getAttribute('data-filter');
-      var val = btn.getAttribute('data-value');
-      filters[group] = val;
-      btn.parentElement.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
-      btn.classList.add('active');
-      filterEarnings();
-    });
-  });
-  renderEarningsCount(earningsRows.length, earningsRows.length);
 
   /* Upside filter buttons */
   document.querySelectorAll('.upside-filterable').forEach(function(card){
