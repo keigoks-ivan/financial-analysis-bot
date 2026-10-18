@@ -84,7 +84,9 @@ TESTING = [
      "now": "2026-10-19 起累積中",
      "name": "舊規則對照線", "url": "/long-track-w52-adaptive/cap15.html"},
     {"q": "NFCI 紅燈時持股減半，能不能讓回撤變淺？",
-     "start": "登記中", "due": "登記中", "now": "尚未開始",
+     "start": "2026-10-19",
+     "due": "2029-10-19 起（兩個市場都至少 3 次股災才判，最晚 2031-10-19）",
+     "now": None, "key": "nfci",      # now 由 nfci_forward_now_html 讀影子線狀態檔組出
      "name": None, "url": None},
 ]
 
@@ -413,6 +415,64 @@ def render_today_strip() -> str:
 </div>"""
 
 
+NFCI_FORWARD_JSON = HERE.parent / "docs" / "long-track" / "data" / "nfci_forward_state.json"
+NFCI_PENDING = "2026-10-19 起累積中"
+
+
+def _nfci_pp(bp) -> str:
+    """整數基點 → 百分點，一位小數（只在顯示時換算）。"""
+    return f"{bp / 100:+.1f}"
+
+
+def nfci_forward_now_html(state) -> str:
+    """「還在測的」NFCI 那一列的目前結果：讀 update_nfci_forward.py 寫的狀態檔，不重算。
+    檔案不存在或還沒有影子資料時寫「2026-10-19 起累積中」。判定日之前只放累積中的數字，不提前判。"""
+    if not state or not state.get("markets"):
+        return NFCI_PENDING
+    cur = (state.get("nfci") or {}).get("current") or {}
+    color = {"red": "紅燈", "green": "綠燈"}.get(cur.get("color"), "—")
+    parts = [f"目前燈號：{color}（{cur.get('release_date', '—')} 公布的版本）"]
+    for key, label in (("us", "美股"), ("tw", "台股")):
+        m = state["markets"].get(key)
+        if not m:
+            parts.append(f"{label}：{NFCI_PENDING}")
+            continue
+        cr = m["crashes"]
+        if cr["count"]:
+            eps = "、".join(_nfci_pp(e["benefit_bp"]) + ("（進行中）" if not e["recovered"] else "")
+                           for e in cr["episodes"])
+            crash = f"股災 {cr['count']} 次，每次影子線少跌（個百分點，負數代表跌得更深）：{eps}"
+        else:
+            crash = "股災 0 次"
+        cal = m["calmar"]
+        if cal.get("shadow") is not None and cal.get("live") is not None:
+            calmar = f"整段 Calmar（年化報酬 ÷ 最大回撤）影子線 {cal['shadow']:.2f}／實單 {cal['live']:.2f}"
+        else:
+            calmar = "整段 Calmar（年化報酬 ÷ 最大回撤）滿一年後才算"
+        adj = m["adjustments"]
+        ratio = f"{adj['ratio']:.2f} 倍" if adj.get("ratio") is not None else "—"
+        parts.append(f"{label}：{crash}；{calmar}；調整次數比 {ratio}（影子線 {adj['shadow']} 次／實單 {adj['live']} 次）")
+    if state.get("status") not in (None, "累積中"):
+        word = {True: "過", False: "沒過", None: "算不出來"}
+        crit = state.get("criteria") or {}
+        for key, label in (("us", "美股"), ("tw", "台股")):
+            c = crit.get(key)
+            if c:
+                parts.append(f"已到判定日（{state['status']}）{label}：股災 {word[c['crash_rule']]}、"
+                             f"整段報酬回撤比 {word[c['calmar_rule']]}、調整次數 {word[c['trade_rule']]}"
+                             f"{'' if c['crashes_enough'] else '（股災不滿 3 次）'}")
+        if not crit:
+            parts.append(f"已到判定日：{state['status']}")
+    return "<br>".join(parts)
+
+
+def _load_nfci_forward():
+    try:
+        return json.loads(NFCI_FORWARD_JSON.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
 def render_testing_table(rows) -> str:
     """還在測的：一張小表，每列一個還沒答案的問題。欄位＝問題、開始日、判定日、目前結果、頁面連結。
     「目前結果」沒有自動來源就寫文字，不編數字。"""
@@ -422,7 +482,7 @@ def render_testing_table(rows) -> str:
         body += (f'<tr><td class="sh-name" data-label="問題">{r["q"]}</td>'
                  f'<td data-label="開始日">{r["start"]}</td>'
                  f'<td data-label="判定日">{r["due"]}</td>'
-                 f'<td data-label="目前結果">{r["now"]}</td>'
+                 f'<td data-label="目前結果">{nfci_forward_now_html(_load_nfci_forward()) if r.get("key") == "nfci" else r["now"]}</td>'
                  f'<td data-label="頁面">{link}</td></tr>')
     return (f'<div class="shtbl-wrap"><table class="shtbl"><thead><tr><th>問題</th><th>開始日</th>'
             f'<th>判定日</th><th>目前結果</th><th>頁面</th></tr></thead>'

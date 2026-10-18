@@ -1,0 +1,102 @@
+name: "NFCI Forward Shadow"
+
+# NFCI 紅燈減半往前測的影子線（事前登記 2026-10-18；v7-backtest docs/NFCI_Forward_Prereg.md）。
+# 不下單、不寄信。每次實單 workflow 跑完就接著跑：
+#   1. scripts/update_nfci_forward.py
+#        - 補抓尚未存檔的週三 NFCI 版本（ALFRED，週三版本在週四 UTC 起才抓）→ docs/long-track/data/nfci_releases.csv（只增不改）
+#        - 讀實單 state.json 的每日目標，起始日（2026-10-19）起整段重算影子線 → docs/long-track/data/nfci_forward_state.json
+#   2. scripts/build_long_track_index.py：系統主控台「還在測的」NFCI 那一列讀上面的狀態檔
+#   3. commit 自己的三個檔（存檔、狀態檔、主控台）並 push
+#
+# 為何接在實單 workflow 之後（workflow_run）而不是自己排程：影子線的目標就是實單當天寫進 state.json 的
+# 目標，實單每天跑兩次（台股、美股收盤後），影子線必須讀到實單剛寫好的那一版，才不會用到舊的。
+# workflow_run 預設 checkout 的是觸發那次 run 的「起始 sha」（早於實單的資料 commit），所以明確指定 ref: main。
+# 實單 workflow 失敗時（conclusion != success）不跑，等下一次。
+#
+# Deploy Pages：GITHUB_TOKEN push 不會觸發 push 事件，部署靠 deploy-pages.yml 的 workflow_run 清單
+# 帶上本 workflow 的名稱（"NFCI Forward Shadow"）。
+on:
+  workflow_run:
+    workflows: ["Update W52 × Adaptive Vol-Target Signal (US+TW)"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+# 不取消進行中的 run，新 run 排隊（兩個 run 同時 push 會互撞）
+concurrency:
+  group: nfci-forward-shadow
+  cancel-in-progress: false
+
+jobs:
+  shadow:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Run NFCI forward shadow
+        id: shadow
+        # 失敗不擋後面的 commit（存檔可能已經補抓到新的一週，要留下來）；最後一步再讓整個 job 標紅。
+        continue-on-error: true
+        run: python scripts/update_nfci_forward.py
+
+      - name: Rebuild /long-track/ console
+        run: python scripts/build_long_track_index.py
+
+      - name: Commit and push
+        id: commit_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/long-track/data/nfci_releases.csv docs/long-track/data/nfci_forward_state.json docs/long-track/index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+          git commit -m "data: NFCI forward shadow ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Fail the job if the shadow script failed
+        if: steps.shadow.outcome == 'failure'
+        run: |
+          echo "::error::update_nfci_forward.py failed; see the 'Run NFCI forward shadow' step log."
+          exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
