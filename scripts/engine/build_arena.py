@@ -103,6 +103,11 @@ v5.3（2026-10-18 持有人拍板；美股看板先改，同日晚間延伸到�
   build_tenbagger.main()（十倍股頁）。台股、十倍股延伸依 v7-backtest
   docs/SeatSizing_Results_TW_Small.md，兩個母體登記分類都是「無法分辨」，持有人依回測知情決定改，
   非登記判準通過（數字見 grp.py 檔頭 v5.3 段）。
+
+v5.5（2026-10-18 持有人拍板，不另做回測；美股看板與十倍股頁，台股席位頁不改）——品質閘的現金流
+條件從「FCF margin ≥10%（ROIC ≥25 時只要 ≥0）」改成「FCF > 0」，ROIC ≥15 不變。實作全在
+grp.quality_gate()（台股列帶 _quality_rule="margin10" 維持舊規則，見 grp.py 檔頭 v5.5 段）；
+本檔只改說明文字與「FCF 率 x%，需大於 0」chip。
 """
 from __future__ import annotations
 
@@ -120,7 +125,7 @@ from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
 from engine.grp import (  # noqa: E402
     DD_FRESH_DAYS, G_MIN_CAGR, G_MIN_CAGR_DURABLE, LAMP_ACTION, MKTCAP_MIN, MOM_12_1_OVERHEAT,
-    P_LABEL_HTML, PEAK_ROIC_X, POOL_REV_MIN, Q_FCF_MIN, Q_ROIC_MIN, R26_OVERHEAT_FALLBACK,
+    P_LABEL_HTML, PEAK_ROIC_X, POOL_REV_MIN, Q_ROIC_MIN, R26_OVERHEAT_FALLBACK,
     R_VETO_FY1, VAL_PEG_MAX, VAL_PE_VS_5Y_MAX, cap_ok, fetch_caps, grp_route, grp_score, in_pool,
     market_ok, own_score_v4, pool_sort_key, timing_lamp, lamp_action,
 )
@@ -1154,7 +1159,7 @@ _CHIP_PATTERNS = [
      lambda w, m: f"ROIC {float(m.group(1)):.1f}%，未達 {Q_ROIC_MIN:.0f}%"),
     (re.compile(r"^品質閘 FCF 缺"), lambda w, m: "FCF 率缺資料"),
     (re.compile(r"^品質閘 FCF ([+-]?[\d.]+)"),
-     lambda w, m: f"FCF 率 {float(m.group(1)):.1f}%，未達 {Q_FCF_MIN:.0f}%"),
+     lambda w, m: f"FCF 率 {float(m.group(1)):.1f}%，需大於 0"),   # v5.5：美股規則；台股列的 why 已改標「營業現金流利潤率」，不走這條
     (re.compile(r"^品質欄缺"), lambda w, m: "品質未判定（金融股另軌）"),
     (re.compile(r"^成長閘用 2 年成長率代替"), lambda w, m: "成長用兩年數代替"),
     (re.compile(r"^成長閘未過"), lambda w, m: f"成長未達 {G_MIN_CAGR:.0f}%"),
@@ -1693,11 +1698,12 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 
     legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表（下方「全母體看板」共用本段說明）</summary>
 <div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看分析師有沒有在財報後上修（排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心席每週六（台北）重算（週五收盤）：池內亮燈者依上修取前 5，亮燈不足就空席（2026-10-09 起，不再每月換席）；週中燈號只管倉位。這是研究名單，不是帳戶持倉。</div>
-<div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘、三年成長 15%、站上 52 週線。四項全過才有資格；耐久只是旗標（2026-10-09 起）。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
+<div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘（ROIC ≥15% 且自由現金流 &gt;0）、三年成長 15%、站上 52 週線。四項全過才有資格；耐久只是旗標（2026-10-09 起）。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
 <div class="bw-note-line"><b>耐久</b>：兩種算法擇一達標即可。QGM 五年 ROIC 穩定度 ≥75%；或 Koyfin 五年平均、三年平均、現值三者都 ≥15%。看的是一致性，不是單一年份。2026-10-09 起只當旗標，不擋資格：時點回看顯示它對結果零貢獻，而且它偏好的是低成長消費股。</div>
 <div class="bw-note-line"><b>第二關 排序</b>：只看財報後上修幅度。基準是該股最近一次財報日前的月度快照，缺財報錨定時退回三個月。上修 ≥5% 才入池，池內依上修由高到低排。同值先比 implied_growth_pct，再比盈餘殖利率。不看股價漲幅。own_score_v4 五百分位對照分只在「上修%（財報後）」欄 hover 顯示，不參與排序。</div>
 <div class="bw-note-line"><b>第三關 時機燈</b>：量的是距還原權息全歷史最高收盤價多遠，燈號直接對應倉位。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉／🟡 接近＝差 3%~10% 且站上 200 日線，同樣正常倉（v5.3 起，原為半倉）／🟠 過熱＝12-1 月動能 &gt;150% 但仍在突破帶附近，半倉／🔴 等板機＝差超過 10% 或跌破 200 日線，零倉／⚫ 不合格＝未站上 52 週線。過熱與頂點不擋資格，只影響燈號。RS 與生命週期階段只在 hover 顯示，不影響燈號。時機燈與倉位每日更新，不用等月頻換席。</div>
 <div class="bw-note-line"><b>變更紀錄 v5.3（2026-10-18 起）</b>：倉位對應綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。黃燈由半倉改滿倉，依據是 v7-backtest 的兩份回測（SeatSizing_Results.md：亮燈就滿倉的 Calmar 高於黃燈半倉，97% 種子；SeatSizing_Results_v2.md：同曝險比較，滿倉按比例放現金 Calmar 0.37 對半倉 0.27，98% 種子，半倉只在 2018、2020 急殺淺約 3 個百分點）。樣本是 2010～2026 年的品質大型股代理，缺上修排序。登記判準形式上未過（同一份資料第二次檢驗），本次是持有人依兩次回測決定改，不是登記判準通過。橘燈維持半倉。</div>
+<div class="bw-note-line"><b>變更紀錄 v5.5（2026-10-18 起）</b>：品質閘的自由現金流條件從「利潤率 ≥10%（ROIC ≥25% 時只要 ≥0）」改成「自由現金流 &gt;0」，ROIC ≥15% 不變。持有人決定，沒有另做回測；美股大型股席位回測的資格條件本來就用自由現金流 &gt;0。</div>
 <div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內前 5，每月第一次排程整批重選一次；月中只有硬否決能換人，空位由池遞補。沒進核心的池成員全部叫等待池，依燈號分兩組：②可買＝今天綠燈或橘燈，板機已亮；③等待池＝其餘，再分 🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🔴 拉回中／⚫ 資料缺（這兩組依上修排序），衛星席已取消。</div>
 <div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。</div>
 <div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排③等待池裡 🟡 組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。</div>
@@ -2451,7 +2457,7 @@ def main() -> int:
         "lamp_as_of": as_of, "lamp_source": "daily", "lamp_last_rotation_date": last_rotation_date,
         "rev_data_as_of": rev_data_as_of, "price_as_of": price_as_of,
         "method": ("v5 席位引擎（2026-09-17，owner thesis「品質派 ∩ 獲利上修 ∩ 突破還原權息歷史新高」）："
-                  "資格＝品質派——品質閘（ROIC≥15∧FCF≥10，或 ROIC≥25∧FCF≥0 資本週期豁免）×三年成長"
+                  "資格＝品質派——品質閘（ROIC≥15∧FCF>0，v5.5 起，2026-10-18）×三年成長"
                   "（Koyfin FY1→FY3 CAGR≥15%）×站上 52 週線；耐久一致性（QGM 五年穩定度 "
                   "≥75%，或 Koyfin 五年∧三年∧現值三者皆 ≥15%）2026-10-09 起只當旗標；財報後上修 ≤−5%（缺財報錨定退回三個月）／"
                   "體質拒絕／衰退 ⛔／DD 迴避／融券占流通股比 >10% 皆整體排除（v5 無衛星軌可退）。排序＝"
@@ -2582,7 +2588,7 @@ def main() -> int:
 本頁只保留擂台配對／席位變動帳本／產業分布這些既有的凍結視圖，僅換殼不改文。</b></div>
 <div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星快照 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
-資格（<b>v5 品質派</b>，2026-09-17 持有人拍板）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF ≥10；capex 週期豁免 ROIC ≥25 ∧ FCF ≥0）×
+資格（<b>v5 品質派</b>，2026-09-17 持有人拍板）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF &gt;0；v5.5，2026-10-18 起，原為 FCF ≥10 並有 ROIC ≥25 ∧ FCF ≥0 的 capex 週期豁免）×
 <b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%，耐久與否一律同門檻；且成長必須是三年期 Koyfin 數字——只有 FY1→FY2 單年 fallback 的名字不入池，改列「可選但先不入池」隊列）× <b>位置閘</b>（站上 52 週線）（<b>耐久</b>：QGM 五年穩定度 ≥75%，或 Koyfin 五年∧三年∧現值三者皆 ≥15%——2026-10-09 起只當旗標，不擋資格）× <b>財報後上修否決</b>（≤−5%，以該股自己最近一次財報日前最新月度 snapshot 為基準，缺財報錨定退回舊制近三個月日曆窗；FY+1 單月 ≤−10% 僅兩者皆缺值時 fallback）× 新硬否決（體質拒絕／衰退 ⛔／DD 迴避 180 天內／融券占流通股比 &gt;10%）——<b>融券高整體資格排除，v5 沒有衛星軌可以收留</b>。
 排序＝<b>上修單一變數</b>（財報後錨定，缺值退回三個月）降冪，同值 tie-break implied_growth_pct、再 tie-break 盈餘殖利率——資格全過者中，上修 ≥+5% 才進「池」，池即候選／候補的全部。舊 <b>own_score v4</b>（財報後上修、12-1 月動能、成長封頂 30、品質、盈餘殖利率五個百分位平均）保留一輪只做逐檔「v4 對照」，不參與本排序。成長遇<b>基期效應</b>（FY1→FY2 因低基期跳增 &gt;1.6x 且 FY2→FY3 成長 &lt;20%）改用 FY2→FY3 成長率取代（此項仍作用於成長閘本身）。
 <b>過熱／頂點不是資格閘</b>：12-1 月動能 &gt;150%（缺值 fallback 26 週漲幅 &gt;80%）＝過熱，只影響時機燈（🟠過熱，半倉），v5 起不再排除核心候選（核心純比池內排序前 5）；roic_vs_5y_x ≥1.3＝頂點，純顯示註記（⚠）。<b>內部人買賣</b>（近 3 個月淨股數）僅供備註，不進資格與排序。

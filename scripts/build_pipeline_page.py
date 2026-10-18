@@ -265,7 +265,8 @@ def _plabel_badge(s: dict) -> str:
 
 def _qgate_tag(s: dict) -> str:
     """品質閘顯示（display-only，2026-09-02 v2 新增；不動任何既有資格閘邏輯）。
-    ROIC≥15∧FCF≥10（或 capex 週期豁免 ROIC≥25∧FCF≥0）；pass=None＝金融股等品質欄缺，另軌不判。"""
+    ROIC≥15∧FCF>0（v5.5，2026-10-18 起，與美股席位同規則；原為 FCF≥10 或 capex 週期豁免 ROIC≥25∧FCF≥0）；
+    pass=None＝金融股等品質欄缺，另軌不判。"""
     qg = quality_gate(s)
     p = qg.get("pass")
     if p is None:

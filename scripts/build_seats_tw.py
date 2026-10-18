@@ -102,6 +102,9 @@ def tw_row(s0):
     """One TW pool stock → the US row_dict() shape, quality gate on OCF margin."""
     s = copy.deepcopy(s0)
     s['fcf'] = s.get('ocf')
+    # v5.5 (2026-10-18): US board / ten-bagger page moved to FCF > 0; this page keeps the
+    # original rule (OCF margin >= 10%, or ROIC >= 25% and OCF >= 0).
+    s[grp.QUALITY_RULE_KEY] = grp.Q_RULE_MARGIN10
     r = ba.row_dict(s, yellow_full=True)   # v5.3 (2026-10-18): yellow lamp = full size
     r['name'] = s0.get('name')
     g = r['grp'] = dict(r['grp'])

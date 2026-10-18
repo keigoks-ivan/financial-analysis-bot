@@ -20,6 +20,7 @@ _picks_first_principles_review_20260902.md Part A／D）——**擁有層與時�
       （ROIC ≥30 → +2）－ 倍數風險（PEG >2 → −5）。回答「值不值得擁有、排第幾」。
   品質閘（資格，擁有層）：ROIC ≥15 ∧ FCF margin ≥10；capex 週期豁免＝ROIC ≥25 ∧ FCF ≥0
       （FCF margin 在資本週期上半場量的是投資強度，用更高 ROIC 當代價換一條路）。
+      （v5.5，2026-10-18 起美股改為 ROIC ≥15 ∧ FCF >0、無豁免；台股席位頁維持本段，見檔尾 v5.5 段。）
   時機層（燈號，週尺度）：P 位置閘照舊（席位仍要求站上 52 週線），R 上修降為燈號；
       R 一票否決由單月 −2% 放寬到 −10%（單月 −2% 是時機雜訊，讓核心席兩個月換三席）。
   排序不再用 R——站內 scoreboard by_shape：動能重估 n=237 中位 −6.3%／虧損率 66%，
@@ -155,6 +156,16 @@ v5.3（2026-10-18 持有人拍板；美股看板 /cockpit/ 先改，同日晚間
   0.271 對 0.267（全部持有）、0.255 對 0.184（五席中位數），1,000 個種子裡 992 個較高；
   判準②後段差 0.00001 未過、④八個比較有 6 個超過 8 個百分點。timing_lamp() 沒有台股專用
   的黃燈路徑，台股黃燈與美股走同一段程式。
+
+v5.5（2026-10-18 持有人拍板，不另做回測；美股看板與十倍股頁，台股席位頁不改）——品質閘的現金流條件
+改成自由現金流 > 0：
+  品質閘＝ROIC ≥15 ∧ FCF margin > 0（嚴格大於，剛好 0 不過）。原本的「FCF margin ≥10；ROIC ≥25
+  時只需 ≥0」對美股取消，ROIC ≥15 不變；ROIC ≥25 者一樣要 >0，豁免不再有作用，美股列的
+  quality["exempt"] 恆為 False。依據：持有人決定；v7-backtest 美股大型股席位回測的資格條件本來就
+  用自由現金流 > 0，沒有為這次改動另做回測。版號標 v5.5，避開台股 v5.4（看大盤切換出場，只有台股）。
+  實作：quality_gate(s) 預設走新規則；台股席位 build_seats_tw.tw_row() 在股票列帶
+  s["_quality_rule"] = "margin10"，quality_gate 讀到就維持原規則（營業現金流利潤率 ≥10，或
+  ROIC ≥25 時 ≥0），台股輸出不變。
 """
 from __future__ import annotations
 
@@ -165,8 +176,13 @@ G_MIN_CAGR = 15.0        # G 閘：FY1→FY3 EPS CAGR（非耐久）
 G_MIN_CAGR_DURABLE = 15.0  # 2026-10-09 持有人拍板統一 15%（v4 曾對 durable_5y 放寬至 10%，與「找未來成長」目標相反；常數保留供 build_arena 匯入）
 # 擁有層（v2）：品質閘與排序鍵常數
 Q_ROIC_MIN = 15.0        # 品質閘：ROIC ≥15%
-Q_FCF_MIN = 10.0         # 品質閘：FCF margin ≥10%
-Q_ROIC_EXEMPT = 25.0     # capex 週期豁免：ROIC ≥25 時 FCF margin 只需 ≥0
+Q_FCF_MIN = 10.0         # 舊規則（margin10，v5.5 起只剩台股席位用）：現金流利潤率 ≥10%
+Q_ROIC_EXEMPT = 25.0     # 舊規則（margin10）的 capex 週期豁免：ROIC ≥25 時利潤率只需 ≥0
+# v5.5（2026-10-18）：美股看板、十倍股頁的現金流條件＝自由現金流 > 0（嚴格大於，剛好 0 不過）。
+# 台股席位頁維持舊規則——build_seats_tw.tw_row() 在股票列帶 s[QUALITY_RULE_KEY] = Q_RULE_MARGIN10。
+Q_FCF_POS_MIN = 0.0
+QUALITY_RULE_KEY = "_quality_rule"
+Q_RULE_MARGIN10 = "margin10"
 OWN_G_CAP = 30.0         # 排序鍵成長封頂（防基期效應排第一）
 OWN_DURABLE_ROIC = 30.0  # 持續期加分門檻（ROIC ≥30 → +2）
 OWN_PEG_PENALTY = 2.0    # PEG >2 → −5
@@ -771,18 +787,26 @@ def grp_score(s: dict) -> dict:
 
 
 def quality_gate(s: dict) -> dict:
-    """擁有層品質閘（v2）：ROIC ≥15 ∧ FCF ≥10，或 capex 週期豁免（ROIC ≥25 ∧ FCF ≥0）。
-    金融股（roic 與 fcf 皆缺）→ pass=None（另軌，不判過不過）。"""
+    """擁有層品質閘。v5.5（2026-10-18 起）預設規則＝ROIC ≥15 ∧ FCF margin >0（嚴格大於），
+    沒有利潤率門檻也沒有豁免（exempt 恆 False）。s["_quality_rule"] == "margin10"（台股席位頁
+    build_seats_tw.tw_row 設定）維持 v2 原規則：ROIC ≥15 ∧ 利潤率 ≥10，或 capex 週期豁免
+    （ROIC ≥25 ∧ 利潤率 ≥0）。金融股（roic 與 fcf 皆缺）→ pass=None（另軌，不判過不過）。"""
     roic = _f(s.get("roic")); fcf = _f(s.get("fcf"))
     if roic is None and fcf is None:
         return {"pass": None, "roic": None, "fcf": None, "why": ["品質欄缺（金融／另軌）"], "exempt": False}
     why = []
-    base = (roic is not None and roic >= Q_ROIC_MIN) and (fcf is not None and fcf >= Q_FCF_MIN)
-    exempt = (not base) and (roic is not None and roic >= Q_ROIC_EXEMPT) and (fcf is not None and fcf >= 0)
+    if s.get(QUALITY_RULE_KEY) == Q_RULE_MARGIN10:
+        base = (roic is not None and roic >= Q_ROIC_MIN) and (fcf is not None and fcf >= Q_FCF_MIN)
+        exempt = (not base) and (roic is not None and roic >= Q_ROIC_EXEMPT) and (fcf is not None and fcf >= 0)
+        fcf_fail = fcf is None or fcf < Q_FCF_MIN
+    else:
+        base = (roic is not None and roic >= Q_ROIC_MIN) and (fcf is not None and fcf > Q_FCF_POS_MIN)
+        exempt = False
+        fcf_fail = fcf is None or fcf <= Q_FCF_POS_MIN
     if not base and not exempt:
         if roic is None or roic < Q_ROIC_MIN:
             why.append(f"品質閘 ROIC {roic if roic is not None else '缺'}")
-        if fcf is None or fcf < Q_FCF_MIN:
+        if fcf_fail:
             why.append(f"品質閘 FCF {fcf if fcf is not None else '缺'}")
     return {"pass": bool(base or exempt), "roic": roic, "fcf": fcf, "exempt": exempt, "why": why}
 
