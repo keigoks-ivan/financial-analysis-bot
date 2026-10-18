@@ -26,6 +26,14 @@ DATA = ROOT / "docs/market/data"
 SOURCE_DIR = ROOT / "data/market_sources/series"
 TAIPEI = timezone(timedelta(hours=8))
 
+# 2026-10-19：站台體積管理。docs/ 受 GitHub Pages 1 GB 上限約束，releases／snapshots 原本只增不減
+# （每天約 +4 MB，兩個月長到 187 MiB）。保留規則在每次發布後執行，被刪的舊檔由
+# v7-backtest/tools/sync_site_data.py 每天從 origin/main 複製一份留在本機。
+KEEP_RELEASES = 30              # 頁面只讀 refresh.json 指的那一包；多留的是回滾與稽核用
+KEEP_SNAPSHOTS = 30             # 最近的證據版本全留（約一週；prepare 比對上次判讀、history_rows 驗證用）
+SNAPSHOT_ANCHOR_GAP_DAYS = 6    # 較舊的證據版本只留稀疏錨點，供 7／30／90／365 天期間比較取基準
+SNAPSHOT_ANCHOR_MAX_DAYS = 372  # period_comparisons 最長回看 365 天加 7 天容許區間
+
 
 def read_json(path, default=None):
     if not Path(path).exists():
@@ -393,6 +401,92 @@ def publish(data_dir, snapshot, read, history, now, errors, warnings, accepted=F
     return refresh
 
 
+def _release_entries(data_dir):
+    """releases/*.json 的 (生成時間, 檔名, 路徑)；讀不了的檔案不動、不計入。"""
+    entries = []
+    for path in Path(data_dir, "releases").glob("*.json"):
+        try:
+            generated_at = str(read_json(path)["refresh"]["generated_at"])
+        except (OSError, ValueError, TypeError, KeyError, AttributeError):
+            continue
+        entries.append((generated_at, path.name, path))
+    return entries
+
+
+def _snapshot_entries(data_dir):
+    """snapshots/*.json 的 (保存時間, 檔名, 路徑, 市況日, snapshot_id)；讀不了或沒有市況日的檔案不動、不計入。"""
+    entries = []
+    for path in Path(data_dir, "snapshots").glob("*.json"):
+        try:
+            item = read_json(path)
+            captured_at = str(item.get("captured_at") or "")
+            as_of = parse_day(item["state"]["as_of"])
+        except (OSError, ValueError, TypeError, KeyError, AttributeError):
+            continue
+        if as_of is None:
+            continue
+        entries.append((captured_at, path.name, path, as_of, str(item.get("snapshot_id") or path.stem)))
+    return entries
+
+
+def _pinned_snapshot_ids(data_dir):
+    """仍被引用、不能刪的證據版本：目前發布包、上次判讀（prepare 的比對基準）、問題板的綁定錨點。"""
+    ids = set()
+    for name in ("refresh.json", "read.json", "questions.json"):
+        try:
+            value = (read_json(Path(data_dir) / name, {}) or {}).get("snapshot_id")
+        except (OSError, ValueError, AttributeError):
+            continue
+        if isinstance(value, str) and value:
+            ids.add(value)
+    return ids
+
+
+def prune_history(data_dir, keep_releases=None, keep_snapshots=None, anchor_gap_days=None, anchor_max_days=None):
+    """發布後清理舊檔，回傳實際刪除的檔名。重複執行不會再刪（冪等）。
+
+    releases：只留最近 keep_releases 份（照 refresh.generated_at 排序）；refresh.json 指的那份必留。
+    snapshots：最近 keep_snapshots 份全留，加上被引用的版本，再加稀疏錨點——較舊版本照市況日
+    由舊到新挑，每個錨點相隔至少 anchor_gap_days 天，只回看 anchor_max_days 天。
+    錨點間距最多 7 天、期間比較的容許區間寬 8 天，所以 7／30／90／365 天都找得到起點。
+    """
+    keep_releases = KEEP_RELEASES if keep_releases is None else keep_releases
+    keep_snapshots = KEEP_SNAPSHOTS if keep_snapshots is None else keep_snapshots
+    anchor_gap_days = SNAPSHOT_ANCHOR_GAP_DAYS if anchor_gap_days is None else anchor_gap_days
+    anchor_max_days = SNAPSHOT_ANCHOR_MAX_DAYS if anchor_max_days is None else anchor_max_days
+    data_dir = Path(data_dir)
+    removed = {"releases": [], "snapshots": []}
+
+    current_bundle = (read_json(data_dir / "refresh.json", {}) or {}).get("bundle")
+    releases = sorted(_release_entries(data_dir))
+    keep = {e[2] for e in releases[max(len(releases) - keep_releases, 0):]}
+    for _, name, path in releases:
+        if path not in keep and current_bundle != "releases/" + name:
+            path.unlink(missing_ok=True)
+            removed["releases"].append(name)
+
+    snapshots = sorted(_snapshot_entries(data_dir), key=lambda e: (e[0], e[1]))
+    pinned = _pinned_snapshot_ids(data_dir)
+    keep = {e[2] for e in snapshots[max(len(snapshots) - keep_snapshots, 0):]}
+    keep |= {e[2] for e in snapshots if e[4] in pinned or e[2].stem in pinned}
+    if snapshots:
+        newest = max(e[3] for e in snapshots)
+        by_day = {}
+        for entry in snapshots:  # 依保存時間由舊到新，同一天最晚保存的一份蓋掉前面的
+            if entry[2] not in keep and (newest - entry[3]).days <= anchor_max_days:
+                by_day[entry[3]] = entry
+        last = None
+        for day in sorted(by_day):
+            if last is None or (day - last).days >= anchor_gap_days:
+                keep.add(by_day[day][2])
+                last = day
+    for _, name, path, _, _ in snapshots:
+        if path not in keep:
+            path.unlink(missing_ok=True)
+            removed["snapshots"].append(name)
+    return removed
+
+
 def locked_publish(data_dir, snapshot, read, history, now, errors, warnings, accepted, prior_hash):
     # 2026-09-13：同一工作目錄的並行排程使用檔案鎖及前版檢查，拒絕晚到的舊判讀。
     data_dir = Path(data_dir)
@@ -407,7 +501,9 @@ def locked_publish(data_dir, snapshot, read, history, now, errors, warnings, acc
         next_day = parse_day(snapshot["state"].get("as_of"))
         if current_day and next_day and current_day > next_day:
             raise ValueError("不可用較舊資料覆蓋新版本")
-        return publish(data_dir, snapshot, read, history, now, errors, warnings, accepted)
+        result = publish(data_dir, snapshot, read, history, now, errors, warnings, accepted)
+        prune_history(data_dir)
+        return result
 
 
 def main():
