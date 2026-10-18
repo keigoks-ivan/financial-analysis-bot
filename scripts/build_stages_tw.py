@@ -269,7 +269,7 @@ def detail_rows(cols, stage_today, fields, C, as_of_idx, history, names, twd_per
         if info is None:
             continue
         adv_twd = fields['adv20_usd'].at[as_of_idx, t]
-        hub = f"/t/{t}.html" if (build_stages.DOCS_T_DIR / f"{t}.html").exists() else None
+        hub = build_stages.hub_url(t)
         rows.append({
             'ticker': t, 'name': names.get(t), 'stage': s, 'stage_name': build_stages.STAGE_NAMES[s],
             'days_in_stage': info['days_in_stage'], 'stage_since': info['stage_since'],

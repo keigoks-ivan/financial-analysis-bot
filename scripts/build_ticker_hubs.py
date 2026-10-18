@@ -5,8 +5,14 @@ Professionals think in tickers, but the site is organized by report type. A
 single ticker's coverage is scattered across docs/dd, docs/id, docs/supply-chain,
 docs/comparisons, docs/research/synthesis. This script emits:
 
-  docs/t/{TICKER}.html   one aggregation page per ticker (universe = every
-                         ticker with >=1 parseable DD report)
+  docs/t/{TICKER}.html   one aggregation page per ticker NOT in the stock-dash
+                         universe (universe = every ticker with >=1 parseable DD
+                         report). Tickers in the stock-dash universe get no HTML
+                         page: their research overview lives in /stock-dash/?t={T}
+                         #research, fed by docs/t/data/{T}.json. The old redirect
+                         stubs were deleted (2026-10); legacy /t/{T}.html bookmarks
+                         are handled by docs/404.html + docs/assets/legacy-redirects.json.
+  docs/t/data/{T}.json   structured data for every ticker (stock-dash reads it)
   docs/t/index.html      directory index with count stats + filterable grid
 
 Read-only aggregation. Deterministic (sorted iteration everywhere) so re-runs
@@ -552,33 +558,6 @@ def build_ticker_data(ticker, dd_rows, cur, ids, sc, comps, syns):
     }
 
 
-def render_redirect_stub(ticker):
-    """個股研究併入 /stock-dash/ 後，in-universe ticker 的 docs/t/{T}.html 只留
-    導轉樁（保留既有 URL，見 ~670 份 DD 頁與站內 nav／search index 的外部連結）。"""
-    target = "/stock-dash/?t={0}#research".format(ticker)
-    return """<!doctype html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="0; url={target}">
-<link rel="canonical" href="{target}">
-<title>{ticker} 個股研究總覽 — InvestMQuest Research</title>
-<meta name="description" content="{ticker} 的個股研究總覽已併入個股儀表板「本站研究」章節。">
-<meta name="robots" content="noindex">
-<script>
-(function(){{
-  location.replace({target_js});
-}})();
-</script>
-</head>
-<body>
-<p>這一頁已經併入 <a href="{target}">個股儀表板</a>，正在自動跳轉…</p>
-</body>
-</html>
-""".format(target=esc(target), ticker=esc(ticker), target_js=json.dumps(target))
-
-
 def render_ticker_page(ticker, dd_rows, cur, ids, sc, comps, syns, stock, as_of):
     oneliner = ""
     if cur and cur["meta"]:
@@ -878,9 +857,10 @@ def main():
     universe_sorted = sorted(universe, key=lambda s: s.upper())
 
     # 2026-09-29：個股研究併入 /stock-dash/——hub ticker 若在 dd-screener 母體
-    # （stock-dash 每日資料管線的母體）內，/t/{T}.html 降為導轉樁；不在母體的
-    # ticker（尚無 stock-dash 資料）維持原本完整 hub 頁不動。先印出集合差異，
-    # 人工核對有沒有拼字/大小寫這類需要另外處理的落差。
+    # （stock-dash 每日資料管線的母體）內，/t/{T}.html 降為導轉樁；2026-10 起導轉樁
+    # 直接刪除（舊網址由 404.html 對照表接住），不再產出。不在母體的 ticker（尚無
+    # stock-dash 資料）維持原本完整 hub 頁不動。先印出集合差異，人工核對有沒有
+    # 拼字/大小寫這類需要另外處理的落差。
     dash_universe = set(stocks.keys())
     hub_not_in_dash = sorted(universe - dash_universe)
     print(f"hub tickers        : {len(universe_sorted)}")
@@ -909,13 +889,12 @@ def main():
         )
 
         if t in dash_universe:
-            html_str = render_redirect_stub(t)
-            redirected += 1
-        else:
-            html_str = render_ticker_page(
-                t, dd_rows, cur, t_ids, t_sc, t_comps, t_syns, stocks.get(t), as_of,
-            )
-            kept += 1
+            redirected += 1  # 不產 HTML：儀表板「本站研究」讀上面的 data JSON
+            continue
+        html_str = render_ticker_page(
+            t, dd_rows, cur, t_ids, t_sc, t_comps, t_syns, stocks.get(t), as_of,
+        )
+        kept += 1
         (OUT / f"{t}.html").write_text(html_str, encoding="utf-8")
 
     cov_counts = {}
@@ -927,8 +906,8 @@ def main():
     total_bytes = sum(f.stat().st_size for f in OUT.glob("*.html"))
     data_bytes = sum(f.stat().st_size for f in DATA_DIR.glob("*.json"))
     print(f"tickers            : {len(universe_sorted)}")
-    print(f"pages (incl index) : {len(universe_sorted) + 1}")
-    print(f"  redirect stubs (in dash universe) : {redirected}")
+    print(f"pages (incl index) : {kept + 1}")
+    print(f"  no page, data JSON only (in dash universe): {redirected}")
     print(f"  full hub pages (not in dash universe): {kept}")
     print(f"docs/t total size  : {total_bytes/1024:.1f} KB")
     print(f"docs/t/data total size: {data_bytes/1024:.1f} KB")

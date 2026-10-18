@@ -29,6 +29,7 @@ import dd_meta_reader  # 2026-09-07：v13+ overlay 候選集合改走共用 iter
 ROOT = Path(__file__).parent.parent
 DCA_DIR = ROOT / "_archived" / "dca"  # 2026-10-13：docs/dca 退役，原檔封存於此
 DD_DIR = ROOT / "docs" / "dd"
+LEGACY_REDIRECTS = ROOT / "docs" / "assets" / "legacy-redirects.json"
 
 # Regex: handle both <th> and <td> label elements (DCA reports use <th>)
 _ROLE_RE = re.compile(
@@ -184,17 +185,30 @@ def load_dca_records() -> dict:
     return records
 
 
+def _legacy_dca_href(filename: str) -> Optional[str]:
+    """舊 /dca/DCA_*.html 已刪除；連到它原本轉址的目的地（與 404.html 用同一份對照表）。"""
+    try:
+        data = json.loads(LEGACY_REDIRECTS.read_text(encoding="utf-8"))
+        return data["dca"].get(filename)
+    except Exception:
+        return None
+
+
 def _ticker_link(ticker: str, path: str) -> str:
     if path:
         # v13 records store the DD filename (DD_*) → link to its #decision anchor;
         # v17 快速版 overlay 存的是 "brief/BRIEF_*"（2026-09-07）→ 連到 /dd/brief/
-        # 下同名檔（快速版無 #decision 錨點）；legacy records 存 DCA 檔名 → /dca/。
+        # 下同名檔（快速版無 #decision 錨點）；legacy records 存 DCA 檔名 → 對照表的 DD 目的地
+        # （docs/dca/ 已刪除，對照表沒有該檔就只顯示代號、不連）。
         if path.startswith("DD_"):
             href = f"/dd/{escape(path)}#decision"
         elif path.startswith("brief/BRIEF_"):
             href = f"/dd/{escape(path)}"
         else:
-            href = f"/dca/{escape(path)}"
+            legacy = _legacy_dca_href(path)
+            if legacy is None:
+                return escape(ticker)
+            href = escape(legacy)
         return (
             f'<a href="{href}" target="_blank" rel="noopener">'
             f'{escape(ticker)}</a>'

@@ -396,9 +396,10 @@
     linksEl.innerHTML = links;
     pop.classList.add("open");
     positionPop(pop, anchorEl);
-    // /t/{T}.html 存在才顯示——彈出時才做一次 HEAD 判斷，不預先對每個徽號探測
-    var hubUrl = "/t/" + encodeURIComponent(ticker) + ".html";
-    fetch(hubUrl, { method: "HEAD" }).then(function (r) {
+    // 個股頁連結：/t/data/{T}.json（本站研究資料檔）存在才顯示，連到個股儀表板「本站研究」——
+    // 彈出時才做一次 HEAD 判斷，不預先對每個徽號探測。（舊的 /t/{T}.html 轉址檔已刪除）
+    var hubUrl = "/stock-dash/?t=" + encodeURIComponent(ticker) + "#research";
+    fetch("/t/data/" + encodeURIComponent(ticker) + ".json", { method: "HEAD" }).then(function (r) {
       if (r.ok && pop.classList.contains("open") && pop.querySelector(".qtm-pop-tk").textContent === ticker) {
         var a = document.createElement("a");
         a.href = hubUrl; a.textContent = "看個股頁 →";

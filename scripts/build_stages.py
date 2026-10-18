@@ -59,6 +59,17 @@ HISTORY_JSON = DATA_DIR / 'history.json'
 LAMP_JSON = DATA_DIR / 'lamp.json'
 DOCS_T_DIR = ROOT / 'docs' / 't'
 
+
+def hub_url(t):
+    """個股研究連結：有完整 hub 頁（docs/t/{T}.html）連 hub；否則有 docs/t/data/{T}.json
+    （個股儀表板「本站研究」章節的資料檔）就連 /stock-dash/；都沒有回 None。
+    舊的 /t/{T}.html 轉址檔已刪除，不再連到它。"""
+    if (DOCS_T_DIR / f"{t}.html").exists():
+        return f"/t/{t}.html"
+    if (DOCS_T_DIR / "data" / f"{t}.json").exists():
+        return f"/stock-dash/?t={t}#research"
+    return None
+
 DEFINITION_VERSION = "v2"  # 2026-09 owner decision: add S5 高檔整理 (tt_pass_count==5
 # AND dist_52w_high >= -8% AND not S4 AND not S3) — carves the residual 過渡 bucket
 # down to names that satisfy every Trend Template condition and sit within 8% of
@@ -624,7 +635,7 @@ def build():
         info = ticker_path_info(digit_str, merged_dates)
         if info is None:
             continue
-        hub = f"/t/{t}.html" if (DOCS_T_DIR / f"{t}.html").exists() else None
+        hub = hub_url(t)
         rows.append({
             'ticker': t, 'stage': s, 'stage_name': STAGE_NAMES[s],
             'days_in_stage': info['days_in_stage'], 'stage_since': info['stage_since'],

@@ -4,6 +4,35 @@
   <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script>
+  // 舊網址相容：/dca/ 與 /t/{代號}.html 的轉址檔已刪除，這裡照 /assets/legacy-redirects.json 轉到原本的目的地；
+  // 對照表沒有的路徑維持原本的 404 畫面。
+  (function () {
+    var p;
+    try { p = decodeURIComponent(location.pathname); } catch (e) { return; }
+    var key = null, tk = null, m;
+    if (p === '/dca' || p === '/dca/' || p === '/dca/index' || p === '/dca/index.html') key = 'index.html';
+    else if ((m = /^\/dca\/([^\/]+?)(?:\.html)?$/.exec(p))) key = m[1] + '.html';
+    else if ((m = /^\/t\/([A-Za-z0-9.\-]+?)(?:\.html)?$/.exec(p)) && m[1] !== 'index') tk = m[1];
+    if (key === null && tk === null) return;
+    var root = document.documentElement;
+    root.style.visibility = 'hidden';
+    var show = function () { root.style.visibility = ''; };
+    var timer = setTimeout(show, 3000);
+    var go = function (dest) { clearTimeout(timer); location.replace(dest); };
+    fetch('/assets/legacy-redirects.json').then(function (r) { return r.json(); }).then(function (map) {
+      if (key !== null) {
+        if (Object.prototype.hasOwnProperty.call(map.dca, key)) return go(map.dca[key]);
+        return show();
+      }
+      if (map.t.indexOf(tk) !== -1) return go(map.t_dest.replace('{t}', tk));
+      // 後備：對照表沒有、但 /t/data/{代號}.json 存在（個股儀表板在用）的代號，同樣轉到儀表板
+      return fetch('/t/data/' + tk + '.json', { method: 'HEAD' }).then(function (r) {
+        if (r.ok) go(map.t_dest.replace('{t}', tk)); else show();
+      });
+    }).catch(show);
+  })();
+  </script>
   <title>404 找不到頁面 | InvestMQuest Research</title>
   <meta name="description" content="AI 驅動財報分析平台，提供 8-K / 10-Q / 10-K 深度解讀">
   <meta property="og:title" content="404 找不到頁面">

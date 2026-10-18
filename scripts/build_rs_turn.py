@@ -103,6 +103,16 @@ LATEST_JSON = DATA_DIR / 'latest.json'
 HISTORY_JSON = DATA_DIR / 'history.json'
 DOCS_T_DIR = ROOT / 'docs' / 't'
 
+
+def hub_url(t):
+    """個股研究連結：有完整 hub 頁（docs/t/{T}.html）連 hub；否則有 docs/t/data/{T}.json
+    就連個股儀表板「本站研究」章節；都沒有回 None。舊的 /t/{T}.html 轉址檔已刪除。"""
+    if (DOCS_T_DIR / f"{t}.html").exists():
+        return f"/t/{t}.html"
+    if (DOCS_T_DIR / "data" / f"{t}.json").exists():
+        return f"/stock-dash/?t={t}#research"
+    return None
+
 BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
 NASDAQ_SCREENER_URL = (
     'https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=5000&offset=0&download=true'
@@ -683,7 +693,7 @@ def build():
         tags = build_tags(pullback_v, reclaimed_v, e21_up_v, crossed_v, near_v,
                            higher_v, range_pos_v)
 
-        hub = f"/t/{t}.html" if (DOCS_T_DIR / f"{t}.html").exists() else None
+        hub = hub_url(t)
 
         rows.append({
             'rank': rank, 'ticker': t, 'status': status, 'tags': tags,

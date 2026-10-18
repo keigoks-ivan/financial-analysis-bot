@@ -28,6 +28,7 @@ ROOT = Path(__file__).parent.parent
 DD_DIR = ROOT / "docs" / "dd"
 DCA_DIR = ROOT / "_archived" / "dca"  # 2026-10-13：docs/dca 退役，原檔封存於此
 DCA_MANIFEST = ROOT / "scripts" / "dca_verdict_manifest.json"
+LEGACY_REDIRECTS = ROOT / "docs" / "assets" / "legacy-redirects.json"
 RESEARCH_HTML = ROOT / "docs" / "research" / "index.html"
 META_RE = re.compile(r'<script id="dd-meta"[^>]*>(.*?)</script>', re.DOTALL)
 # Parse <tr class="searchable" data-ticker=...> rows from the research table —
@@ -394,8 +395,14 @@ def render_dca_verdict_card() -> str:
     if enter_list:
         MAX_SHOW = 3
         shown = enter_list[:MAX_SHOW]
+        # docs/dca/ 已刪除：連到舊檔原本轉址的 DD（對照表同 404.html），對照表沒有就只顯示代號
+        try:
+            legacy_map = json.loads(LEGACY_REDIRECTS.read_text(encoding="utf-8"))["dca"]
+        except Exception:
+            legacy_map = {}
         links = " · ".join(
-            f'<a href="/dca/{escape(fn)}" target="_blank" rel="noopener">{escape(tk)}</a>'
+            f'<a href="{escape(legacy_map[fn])}" target="_blank" rel="noopener">{escape(tk)}</a>'
+            if fn in legacy_map else escape(tk)
             for _, tk, fn in shown
         )
         extra = len(enter_list) - MAX_SHOW

@@ -12,8 +12,8 @@ docs/index.html hero 區的「個股 DD」「產業 ID」兩個數字是手動�
                 多次報告；符號一致沿用站上既有「+」慣例）
   - id-count  = docs/id/ID_*.html 檔案數（含 _full 附文獻變體；產業 ID
                 報告總數）
-  - 另外掃 docs/t/*.html（排除 index.html）取得個股總覽頁數 = 實際覆蓋的
-    不重複 ticker 數，僅供 console 輸出與人工核對用，不直接寫回 hero
+  - 另外掃 docs/t/data/*.json 取得個股總覽資料檔數 = 實際覆蓋的
+    不重複 ticker 數（docs/t/{T}.html 轉址檔已刪除，改數資料檔），僅供 console 輸出與人工核對用，不直接寫回 hero
     （hero 目前沒有對應的「個股覆蓋數」卡片，避免無中生有新增版位）。
 
 可重複執行（idempotent）：重跑會用最新檔案數覆寫，不會累加。
@@ -39,7 +39,7 @@ def count_id() -> int:
 
 
 def count_t_pages() -> int:
-    return len([f for f in T_DIR.glob("*.html") if f.name != "index.html"])
+    return len(list((T_DIR / "data").glob("*.json")))
 
 
 def replace_stat(html: str, stat_key: str, new_value: str) -> str:
@@ -67,7 +67,7 @@ def main() -> None:
 
     print(f"docs/dd/  DD_*.html      : {dd_n}  -> hero 個股 DD = {dd_n}+")
     print(f"docs/id/  ID_*.html      : {id_n}  -> hero 產業 ID = {id_n}+")
-    print(f"docs/t/   *.html (-index): {t_n}  （個股總覽覆蓋 ticker 數，僅供核對，hero 無對應卡片）")
+    print(f"docs/t/data *.json         : {t_n}  （個股總覽覆蓋 ticker 數，僅供核對，hero 無對應卡片）")
 
 
 if __name__ == "__main__":

@@ -408,10 +408,13 @@ def main():
     seats = seats_core + seats_sat
 
     def tlink(t):
-        """站內個股頁 /t/{T}.html；台股代號試 .TW。沒有頁面回 None。"""
+        """站內個股研究連結；台股代號試 .TW。有完整 hub 頁（/t/{T}.html）連 hub，
+        否則有 /t/data/{T}.json 就連個股儀表板「本站研究」；都沒有回 None。"""
         for name in (t, t + ".TW"):
             if (DOCS / "t" / f"{name}.html").exists():
                 return f"/t/{name}.html"
+            if (DOCS / "t" / "data" / f"{name}.json").exists():
+                return f"/stock-dash/?t={name}#research"
         return None
 
     # 價格
