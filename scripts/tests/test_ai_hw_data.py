@@ -1,4 +1,4 @@
-"""docs/ideas/data/ai-hardware-cycle/data.py 的測試：data.json 必要欄位、圖 7a 十檔、日期格式、
+"""docs/ideas/data/ai-hardware-cycle/data.py 的測試：data.json 必要欄位、圖 7a 十檔、圖 8 亞洲 16 檔、日期格式、
 52 週均線與距離算法、抓不到時沿用上一版並標 stale。全程離線，不連 yfinance／History of Market。
 
 python3.12 -m pytest scripts/tests/test_ai_hw_data.py -q
@@ -28,16 +28,26 @@ sys.dont_write_bytecode = _dwb
 
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SYMBOLS = [s for s, _ in ah.REL_TICKERS]
+ASIA_SYMBOLS = [s for s, _, _ in ah.ASIA_TICKERS]
+ALL_SYMBOLS = SYMBOLS + [s for s in ASIA_SYMBOLS if s not in SYMBOLS]
 
 
 def fake_prices(last="2026-10-16", missing=(), nan_last=()):
-    """合成價格：2025-06-02 到 last 的交易日，每檔緩慢上升；missing 整欄拿掉，nan_last 最後一天缺值。"""
+    """合成價格：2025-06-02 到 last 的交易日，每檔緩慢上升（含圖 7 十檔與圖 8 十六檔）；missing 整欄拿掉，nan_last 最後一天缺值。"""
     idx = pd.bdate_range("2025-06-02", last)
-    df = pd.DataFrame({s: 100.0 + np.arange(len(idx)) * (0.1 + 0.01 * i) for i, s in enumerate(SYMBOLS)}, index=idx)
+    df = pd.DataFrame({s: 100.0 + np.arange(len(idx)) * (0.1 + 0.01 * i) for i, s in enumerate(ALL_SYMBOLS)}, index=idx)
     df = df.drop(columns=list(missing))
     for s in nan_last:
         df.loc[df.index[-1], s] = np.nan
     return df
+
+
+def fake_fetch(**kw):
+    """像 yfinance：只回傳呼叫端要的代號（欄）。"""
+    def f(syms):
+        df = fake_prices(**kw)
+        return df[[s for s in syms if s in df.columns]]
+    return f
 
 
 @pytest.fixture(scope="module")
@@ -101,6 +111,28 @@ def test_date_columns_are_consistent(data):
     assert data["rel"]["last_date"] == data["ratio"]["last_date"] == data["latest"]["date"]
 
 
+def test_asia_has_16_sorted(data):
+    A = data["asia"]
+    items = A["items"]
+    assert len(items) == 16
+    assert sorted(i["ticker"] for i in items) == sorted(ASIA_SYMBOLS)
+    pcts = [i["pct_from_high"] for i in items]
+    assert pcts == sorted(pcts)                       # 跌最多在前
+    assert all(p <= 0 for p in pcts)
+    assert A["start"] == "2026-01-01" and A["adjusted"] is True
+    assert DATE_RE.match(A["last_date"])
+    assert A["last_date"] == max(i["last_date"] for i in items)
+    for i in items:
+        assert {"ticker", "label", "region", "ytd_high", "ytd_high_date", "pct_from_high", "pct_1w",
+                "ma52", "pct_vs_ma52", "last_close", "last_date"} <= set(i), i["ticker"]
+        assert i["region"] in ("kr", "jp", "cn", "tw", "us")
+        assert DATE_RE.match(i["ytd_high_date"]) and DATE_RE.match(i["last_date"])
+        assert "2026-01-01" <= i["ytd_high_date"] <= i["last_date"]
+        assert i["ytd_high"] >= i["last_close"] > 0
+        # 距均線 % 與收盤、均線自洽（四捨五入 0.1）
+        assert abs((i["last_close"] / i["ma52"] - 1) * 100 - i["pct_vs_ma52"]) < 0.06, i["ticker"]
+
+
 # ───────────────────────── 算法 ─────────────────────────
 def test_calc_latest_ma52_and_drop():
     df = fake_prices()
@@ -135,6 +167,47 @@ def test_last_day_with_missing_quote_falls_back_one_day():
 def test_missing_ticker_raises():
     with pytest.raises(ValueError):
         ah.calc_rel(fake_prices(missing=("CRWV",)))
+
+
+def test_calc_asia_matches_manual():
+    """合成價格手算一檔：2330.TW 今年 3/2 衝到 300 之後一路下滑；最後一天是週三，均線要含本週最新收盤。"""
+    df = fake_prices(last="2026-10-14")
+    idx = df.index
+    s = pd.Series(100.0 + np.arange(len(idx)) * 0.2, index=idx)
+    peak = pd.Timestamp("2026-03-02")
+    n_after = int((idx > peak).sum())
+    s[idx > peak] = 300.0 - np.arange(1, n_after + 1) * 0.5
+    s[peak] = 300.0
+    df["2330.TW"] = s
+    got = [i for i in ah.calc_asia(df)["items"] if i["ticker"] == "2330.TW"][0]
+    close = float(s.iloc[-1])
+    assert got["ytd_high"] == 300.0 and got["ytd_high_date"] == "2026-03-02"
+    assert got["pct_from_high"] == round((close / 300.0 - 1) * 100, 1)
+    assert got["pct_1w"] == round((close / float(s.iloc[-6]) - 1) * 100, 1)       # 往前第 5 個交易日（10/7）
+    assert s.index[-6] == pd.Timestamp("2026-10-07")
+    fridays = s[s.index.weekday == 4]                                              # 最近 51 個週五收盤＋本週最新收盤
+    ma = (fridays.iloc[-51:].sum() + close) / 52
+    assert got["ma52"] == round(float(ma), 2)
+    assert got["pct_vs_ma52"] == round((close / ma - 1) * 100, 1)
+    assert got["last_close"] == round(close, 2) and got["last_date"] == "2026-10-14"
+
+
+def test_calc_asia_needs_52_weeks_and_all_tickers():
+    with pytest.raises(ValueError):
+        ah.calc_asia(fake_prices().loc["2026-03-01":])
+    with pytest.raises(ValueError):
+        ah.calc_asia(fake_prices(missing=("2317.TW",)))
+
+
+def test_calc_asia_uses_own_calendar():
+    """台積電最後一天沒收盤（例如台股休市）：它用前一天，其他檔的最新日不受影響，不跨市場取交集。"""
+    df = fake_prices(nan_last=("2330.TW",))
+    A = ah.calc_asia(df)
+    by = {i["ticker"]: i for i in A["items"]}
+    assert by["2330.TW"]["last_date"] == "2026-10-15"
+    assert by["2330.TW"]["last_close"] == round(float(df["2330.TW"].iloc[-2]), 2)
+    assert all(i["last_date"] == "2026-10-16" for t, i in by.items() if t != "2330.TW")
+    assert A["last_date"] == "2026-10-16"
 
 
 # ───────────────────────── stale 邏輯 ─────────────────────────
@@ -208,3 +281,36 @@ def test_fpe_failure_falls_back_to_old_and_marks_stale(monkeypatch, old):
     got = ah.forward_pe()
     assert got["stale"] is True
     assert got["weekly"] == old["fpe"]["weekly"]
+
+
+def test_asia_fresh_fetch_clears_stale(monkeypatch, old):
+    _no_csv(monkeypatch)
+    old["asia"]["stale"] = True
+    out = ah.build([], old, fetch=fake_fetch())
+    assert out["asia"]["stale"] is False and len(out["asia"]["items"]) == 16
+    assert out["stale"] is False
+
+
+def test_asia_fetch_failure_stales_only_asia(monkeypatch, old):
+    """第二次（亞洲 16 檔）抓價丟例外：圖 7 的 rel／ratio／latest 照常更新，asia 沿用舊值標 stale。"""
+    _no_csv(monkeypatch)
+    inner = fake_fetch()
+
+    def flaky(syms):
+        if "000660.KS" in syms:
+            raise RuntimeError("yfinance down (asia)")
+        return inner(syms)
+
+    out = ah.build([], old, fetch=flaky)
+    for k in ("rel", "ratio", "latest"):
+        assert out[k]["stale"] is False, k
+    assert out["asia"]["stale"] is True
+    assert {x: y for x, y in out["asia"].items() if x != "stale"} == {x: y for x, y in old["asia"].items() if x != "stale"}
+    assert out["stale"] is True
+
+
+def test_asia_missing_ticker_stales_only_asia(monkeypatch, old):
+    _no_csv(monkeypatch)
+    out = ah.build([], old, fetch=fake_fetch(missing=("2317.TW",)))
+    assert out["asia"]["stale"] is True and out["asia"]["items"] == old["asia"]["items"]
+    assert out["rel"]["stale"] is False and out["ratio"]["stale"] is False and out["latest"]["stale"] is False

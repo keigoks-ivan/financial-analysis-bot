@@ -403,6 +403,16 @@ p{margin:.6rem 0}
 <div class="pn-c">龍頭股最晚轉弱。這條線跌回 100 以下，代表 Nvidia 開始輸給費半。</div>
 <div class="src">資料到 <span data-live-date="ymd">2026-10-16</span>，每個美股交易日更新。Yahoo Finance，還原權息收盤。<span id="live-stale"></span></div>
 </figure>
+<figure class="chart" id="fig8">
+<div class="pn-t">8a　亞洲與美國半導體：距今年最高收盤的跌幅（%）</div>
+<div class="cbox" style="--h:460px;--hm:460px"><canvas id="c8a" role="img" aria-label="水平長條圖：韓國、日本、中國、台灣與美國 16 檔半導體股與指數，最新收盤距 2026 年最高收盤的跌幅，跌最多排最上面"></canvas></div>
+<div class="pn-c" data-live-text="asia-high-note"></div>
+<div class="pn-t">8b　距 52 週均線（%，負數＝已跌破）</div>
+<div class="cbox" style="--h:460px;--hm:460px"><canvas id="c8b" role="img" aria-label="水平長條圖：同樣 16 檔半導體股與指數，最新收盤距 52 週均線的百分比，順序同 8a，負數代表已跌破均線"></canvas></div>
+<div class="pn-c" data-live-text="asia-ma-note"></div>
+<div class="src">資料到 <span data-live-date="ymd" data-live-from="asia">…</span>，每個美股交易日更新。Yahoo Finance，還原權息收盤；各市場用自己的交易日。<span class="live-stale-asia"></span></div>
+</figure>
+<p>亞洲的半導體分成兩邊。記憶體、韓國、日本設備與中國先跌：<span data-live-text="asia-top-label">…</span>比今年高點低 <span data-live-text="asia-top-pct">…</span>%，<span data-live-text="asia-below-n">…</span> 檔已跌破 52 週均線。台積電與台股只跌 <span data-live-text="asia-tsmc-drop">…</span>% 與 <span data-live-text="asia-twii-drop">…</span>%，離均線還有 <span data-live-text="asia-tsmc-ma">…</span>%。這一輪的賠錢順序從被墊錢的需求端往上游走，台積電是下一個要看的。</p>
 <div class="tbl-wrap"><table class="imq-table">
 <thead><tr><th>類型</th><th>段</th><th>高點後第 4 個月的跌幅</th><th>最終跌幅</th><th>高點時高於 52 週均線</th></tr></thead>
 <tbody>
@@ -842,6 +852,16 @@ function chart6(c,wide){
 
 /* ---------- 圖 7a：6/22 以來各環節漲跌 ---------- */
 function fmtPct(v){return (v>0?'+':v<0?'\u2212':'')+Math.abs(v).toFixed(1)+'%';}
+function signLabelsPlugin(c,wide,vals){
+  return {id:'signlabels',afterDatasetsDraw:function(chart){
+    var ctx=chart.ctx;
+    chart.getDatasetMeta(0).data.forEach(function(el,i){
+      var v=vals[i],t=fmtPct(v);
+      ctx.save();ctx.font='600 '+(wide?12:11)+'px '+c.sans;ctx.textBaseline='middle';ctx.fillStyle=c.body;
+      if(v<0){ctx.textAlign='right';ctx.fillText(t,el.x-5,el.y);}else{ctx.textAlign='left';ctx.fillText(t,el.x+5,el.y);}
+      ctx.restore();});
+  }};
+}
 function chart7a(c,wide){
   var R=D.rel; if(!R||!R.items)return null;
   var items=R.items, vals=items.map(function(it){return it.pct;});
@@ -858,14 +878,7 @@ function chart7a(c,wide){
   o.scales.y=axis(c,wide,null,{grid:{display:false},ticks:{color:c.body,font:{size:wide?12:11,family:c.sans}}});
   o.plugins.tooltip.callbacks={title:function(it){return items[it[0].dataIndex].label;},
     label:function(it){var x=items[it.dataIndex];return R.base_date.slice(5).replace('-','/')+' 起 '+fmtPct(x.pct)+'（收盤 '+x.base_close.toFixed(2)+' → '+x.last_close.toFixed(2)+'）';}};
-  var signlabels={id:'signlabels',afterDatasetsDraw:function(chart){
-    var ctx=chart.ctx;
-    chart.getDatasetMeta(0).data.forEach(function(el,i){
-      var v=vals[i],t=fmtPct(v);
-      ctx.save();ctx.font='600 '+(wide?12:11)+'px '+c.sans;ctx.textBaseline='middle';ctx.fillStyle=c.body;
-      if(v<0){ctx.textAlign='right';ctx.fillText(t,el.x-5,el.y);}else{ctx.textAlign='left';ctx.fillText(t,el.x+5,el.y);}
-      ctx.restore();});
-  }};
+  var signlabels=signLabelsPlugin(c,wide,vals);
   return {type:'bar',data:{labels:items.map(function(it){return it.label;}),datasets:ds},options:o,plugins:[signlabels]};
 }
 
@@ -903,7 +916,43 @@ function chart7b(c,wide){
   return {type:'line',data:{datasets:ds},options:o,plugins:[vlines,endlabels]};
 }
 
-var BUILD={c1:chart1,c2:chart2,c3:chart3,c4:chart4,c5:chart5,c6:chart6,c7a:chart7a,c7b:chart7b};
+/* ---------- 圖 8：亞洲與美國半導體 ---------- */
+function asiaColor(c,it){
+  if(it.ticker==='NVDA')return c.ink;
+  return it.region==='tw'?c.accent:it.region==='us'?c.muted:c.sec;
+}
+function fmtPx(v){return Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function chart8(c,wide,key,xr,tip){
+  var A=D.asia; if(!A||!A.items)return null;
+  var items=A.items, vals=items.map(function(it){return it[key];});
+  var cols=items.map(function(it){return asiaColor(c,it);});
+  var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals);
+  var xr2=xr(lo,hi);
+  var ds=[{label:'%',data:vals,backgroundColor:cols,borderWidth:0,borderRadius:4,borderSkipped:'start',barPercentage:0.7,categoryPercentage:0.9}];
+  var o=base(c,wide,{indexAxis:'y',interaction:{mode:'nearest',axis:'y',intersect:true}});
+  o.plugins.legend.display=false;
+  o.scales.x=axis(c,wide,null,{min:xr2[0],max:xr2[1],
+    grid:{color:function(ctx){return ctx.tick&&ctx.tick.value===0?c.sec:alpha(c.line,0.9);}},
+    ticks:{color:c.sec,stepSize:10,callback:function(v){return v+'%';},font:{size:wide?12:11,family:c.sans}}});
+  o.scales.y=axis(c,wide,null,{grid:{display:false},ticks:{color:c.body,font:{size:wide?12:11,family:c.sans}}});
+  o.plugins.tooltip.callbacks={title:function(it){return items[it[0].dataIndex].label;},
+    label:function(it){return tip(items[it.dataIndex]);}};
+  return {type:'bar',data:{labels:items.map(function(it){return it.label;}),datasets:ds},options:o,plugins:[signLabelsPlugin(c,wide,vals)]};
+}
+function chart8a(c,wide){
+  return chart8(c,wide,'pct_from_high',
+    function(lo){return [Math.min(-10,Math.floor((lo-(wide?10:14))/10)*10),0];},
+    function(x){return ['高點 '+x.ytd_high_date+'，收盤 '+fmtPx(x.ytd_high),
+      '最新 '+x.last_date+'，收盤 '+fmtPx(x.last_close)+'（'+fmtPct(x.pct_from_high)+'）',
+      '近 1 週 '+fmtPct(x.pct_1w)];});
+}
+function chart8b(c,wide){
+  return chart8(c,wide,'pct_vs_ma52',
+    function(lo,hi){return [Math.min(-10,Math.floor((lo-(wide?10:14))/10)*10),Math.max(10,Math.ceil((hi+(wide?9:12))/10)*10)];},
+    function(x){return ['收盤 '+fmtPx(x.last_close)+'，52 週均線 '+fmtPx(x.ma52)+'（'+fmtPct(x.pct_vs_ma52)+'）'];});
+}
+
+var BUILD={c1:chart1,c2:chart2,c3:chart3,c4:chart4,c5:chart5,c6:chart6,c7a:chart7a,c7b:chart7b,c8a:chart8a,c8b:chart8b};
 
 function draw(){
   var wide=window.innerWidth>=600; lastWide=wide;
@@ -946,9 +995,33 @@ function fillLive(){
   if(st&&[D.rel,D.ratio,D.latest,D.drawdown].some(function(b){return b&&b.stale;}))st.textContent='本次更新沒抓到最新價格，上面的圖與數字是上一次的值。';
 }
 
+/* ---------- 圖 8 的文字與 stale 提示 ---------- */
+function fillAsia(){
+  var A=D&&D.asia; if(!A||!A.items)return;
+  var items=A.items;
+  function by(t){return items.filter(function(it){return it.ticker===t;})[0];}
+  var near=items.filter(function(it){return it.pct_from_high>=-10;});
+  var broke=items.filter(function(it){return it.pct_vs_ma52<0;});
+  var top3=items.slice(0,3).map(function(it){return it.label;}).join('、');
+  var tsmc=by('2330.TW'), twii=by('^TWII');
+  var txt={
+    'asia-high-note':'跌最多的是'+top3+'。'+(near.length?near.length+' 檔還在高點 10% 以內：'+near.map(function(it){return it.label;}).join('、')+'。':'沒有任何一檔還在高點 10% 以內。'),
+    'asia-ma-note':'已跌破 52 週均線：'+(broke.length?broke.map(function(it){return it.label;}).join('、'):'沒有')+'。'+(tsmc&&by('^SOX')?'台積電離均線 '+fmtPct(tsmc.pct_vs_ma52)+'，費半 '+fmtPct(by('^SOX').pct_vs_ma52)+'。':''),
+    'asia-top-label':items[0].label,
+    'asia-top-pct':Math.abs(items[0].pct_from_high).toFixed(1),
+    'asia-below-n':String(items.filter(function(it){return it.region!=='us'&&it.pct_vs_ma52<0;}).length)
+  };
+  if(tsmc){txt['asia-tsmc-drop']=Math.abs(tsmc.pct_from_high).toFixed(1);txt['asia-tsmc-ma']=Math.abs(tsmc.pct_vs_ma52).toFixed(1);}
+  if(twii)txt['asia-twii-drop']=Math.abs(twii.pct_from_high).toFixed(1);
+  document.querySelectorAll('[data-live-text^="asia-"]').forEach(function(el){
+    var k=el.getAttribute('data-live-text');if(txt[k]!==undefined)el.textContent=txt[k];});
+  if(A.stale)document.querySelectorAll('.live-stale-asia').forEach(function(el){
+    el.textContent='本次更新沒抓到最新價格，上面的圖與數字是上一次的值。';});
+}
+
 if(typeof Chart==='undefined'){fail();return;}
 fetch(DATA_URL,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
-  .then(function(j){D=j;fillLive();draw();
+  .then(function(j){D=j;fillLive();fillAsia();draw();
     var mq=window.matchMedia('(prefers-color-scheme: dark)');
     if(mq.addEventListener)mq.addEventListener('change',draw);else if(mq.addListener)mq.addListener(draw);
     new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});

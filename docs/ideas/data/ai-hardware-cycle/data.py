@@ -8,6 +8,9 @@
 - 圖 1 的「現在 2026-06-22」那條路徑：^SOX 收盤，延伸到最新交易日。
 - 圖 7a：2026-06-22 收盤到最新交易日的漲跌，10 檔（見 REL_TICKERS）。
 - 圖 7b：NVDA ÷ ^SOX，2026-01-02 起，以 2026-06-22 為 100。
+- 圖 8：亞洲與美國半導體 16 檔（見 ASIA_TICKERS），今年（2026-01-01 起）最高收盤與日期、最新收盤距該高點的 %、
+  近 1 週（往前第 5 個交易日）%、距 52 週均線 %（均線規則同 latest）。各檔用自己市場的交易日，不跨市場取交集；
+  跟圖 7 分開抓一次，抓不到或少任何一檔，asia 整塊沿用上一版並標 stale，不影響其他區塊。
 - latest：SMH／^SOX／QQQ 的收盤、52 週均線（週五收盤的最近 52 筆平均，含本週最新收盤）、
   距均線 drop_pct＝(1−均線／收盤)×100（還要跌多少碰到均線）、NVDA 收盤、資料日期。
 任何一塊抓不到（或少一檔）：該塊保留 data.json 上一版並標 stale: true，程式照常 exit 0。
@@ -66,7 +69,16 @@ REL_TICKERS = [  # (yfinance 代號, 圖上標籤)
     ("SMH", "SMH"), ("^SOX", "費半 ^SOX"), ("ORCL", "ORCL"), ("MU", "MU"), ("CRWV", "CRWV"),
 ]
 LATEST_KEYS = {"SMH": "smh", "^SOX": "sox", "QQQ": "qqq"}   # 有 52 週均線的三檔
-BLOCKS = ("rel", "ratio", "latest")
+ASIA_START = "2026-01-01"           # 圖 8：今年最高收盤的起算日
+ASIA_TICKERS = [  # (yfinance 代號, 中文標籤, 地區)
+    ("000660.KS", "海力士", "kr"), ("005930.KS", "三星", "kr"), ("^KS11", "KOSPI", "kr"),
+    ("6146.T", "Disco", "jp"), ("8035.T", "東京威力", "jp"), ("6857.T", "愛德萬", "jp"),
+    ("0981.HK", "中芯", "cn"),
+    ("2330.TW", "台積電", "tw"), ("^TWII", "台股加權", "tw"), ("2454.TW", "聯發科", "tw"),
+    ("3711.TW", "日月光", "tw"), ("2317.TW", "鴻海", "tw"),
+    ("^SOX", "費半", "us"), ("SMH", "SMH", "us"), ("MU", "美光", "us"), ("NVDA", "Nvidia", "us"),
+]
+BLOCKS = ("rel", "ratio", "latest", "asia")
 
 
 def fetch_prices(symbols, start=PRICE_START, tries=3):
@@ -142,6 +154,35 @@ def calc_latest(df):
         out[key] = {"close": r(close), "ma52": r(ma), "drop_pct": r((1 - ma / close) * 100, 1)}
     out["nvda"] = {"close": r(d["NVDA"].iloc[-1])}
     return out
+
+
+def calc_asia(df):
+    """圖 8：每檔用自己的交易日（不取交集）。今年最高收盤、距高點 %、近 1 週 %、距 52 週均線 %。跌最多的排前面。"""
+    items = []
+    for sym, label, region in ASIA_TICKERS:
+        if sym not in df.columns:
+            raise ValueError(f"缺少代號 {sym}")
+        s = df[sym].dropna()
+        if len(s) < 6:
+            raise ValueError(f"{sym} 收盤不足 6 筆")
+        w = s.resample("W-FRI").last().dropna()
+        if len(w) < 52:
+            raise ValueError(f"{sym} 週收盤不足 52 筆")
+        ytd = s.loc[ASIA_START:]
+        if ytd.empty:
+            raise ValueError(f"{sym} 沒有 {ASIA_START} 之後的收盤")
+        close, ma = float(s.iloc[-1]), float(w.iloc[-52:].mean())
+        hi = float(ytd.max())
+        items.append({"ticker": sym, "label": label, "region": region,
+                      "ytd_high": r(hi), "ytd_high_date": _ymd(ytd.idxmax()),
+                      "pct_from_high": r((close / hi - 1) * 100, 1),
+                      "pct_1w": r((close / float(s.iloc[-6]) - 1) * 100, 1),
+                      "ma52": r(ma), "pct_vs_ma52": r((close / ma - 1) * 100, 1),
+                      "last_close": r(close), "last_date": _ymd(s.index[-1])})
+    items.sort(key=lambda x: x["pct_from_high"])
+    return {"start": ASIA_START, "last_date": max(i["last_date"] for i in items), "adjusted": True,
+            "ma_rule": "週五收盤最近 52 筆平均（含本週最新收盤）；pct_vs_ma52＝(收盤／均線−1)×100，負數＝已跌破",
+            "items": items}
 
 
 def _path(close, d, grp):
@@ -334,11 +375,18 @@ def build(argv, old, fetch=fetch_prices):
     except Exception as e:  # noqa: BLE001
         print("抓價失敗，全部價格類區塊沿用上一版：", str(e)[:120])
 
-    def block(name, fn):
+    # 圖 8 另抓一次（獨立 try）：失敗只讓 asia 沿用舊值，不影響 rel／ratio／latest
+    px_asia = None
+    try:
+        px_asia = fetch([s for s, _, _ in ASIA_TICKERS])
+    except Exception as e:  # noqa: BLE001
+        print("亞洲價格抓取失敗，圖 8 沿用上一版：", str(e)[:120])
+
+    def block(name, fn, frame):
         try:
-            if px is None:
+            if frame is None:
                 raise RuntimeError("沒有價格")
-            res = fn(px)
+            res = fn(frame)
             # 不讓資料日倒退（例如來源回傳比上一版更舊的資料）
             prev = (old.get(name) or {}).get("last_date") or (old.get(name) or {}).get("date")
             cur = res.get("last_date") or res.get("date")
@@ -360,8 +408,9 @@ def build(argv, old, fetch=fetch_prices):
         out["fpe"] = forward_pe()
     else:
         out["fpe"] = old["fpe"]
-    for name, fn in (("rel", calc_rel), ("ratio", calc_ratio), ("latest", calc_latest)):
-        b = block(name, fn)
+    for name, fn, frame in (("rel", calc_rel, px), ("ratio", calc_ratio, px), ("latest", calc_latest, px),
+                            ("asia", calc_asia, px_asia)):
+        b = block(name, fn, frame)
         if b is not None:
             out[name] = b
     out.update({"nvidia": NVIDIA, "ai_revenue": AI_REV, "exposure": EXPOSURE, "scenarios": SCENARIOS})
@@ -389,6 +438,8 @@ def main(argv=None):
         print("圖 7a", out["rel"]["last_date"], " ".join(f"{i['ticker']} {i['pct']:+.1f}" for i in out["rel"]["items"]))
     if "latest" in out:
         print("latest", json.dumps(out["latest"], ensure_ascii=False))
+    if "asia" in out:
+        print("圖 8", out["asia"]["last_date"], " ".join(f"{i['label']} {i['pct_from_high']:+.1f}" for i in out["asia"]["items"]))
 
 
 if __name__ == "__main__":
