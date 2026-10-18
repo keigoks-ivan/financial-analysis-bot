@@ -15,7 +15,7 @@ F70 的頁面（/backtest/f_comfort/）走回測區既有的「退役橫幅」�
 RET_BANNER），文字同 ARCHIVE_TEXT["f70"]。
 
 用法：
-    python3 scripts/archive_banner.py --apply   # 補進六個已產出的 HTML（只動橫幅區塊）
+    python3 scripts/archive_banner.py --apply   # 補進已產出的 HTML（只動橫幅區塊；含 2026-10-19 追加的三個手動報告索引）
     python3 scripts/archive_banner.py --check   # 只檢查各頁橫幅是否在、文字是否一致
 """
 from __future__ import annotations
@@ -49,18 +49,51 @@ PAGES = {
     "smh_leverage": "docs/long-track-smh/leverage/index.html",
 }
 
+# 2026-10-19 追加三條手動報告類（週報、多股對比、期望落差）。它們不是影子線，不進系統主控台歸檔區，
+# 所以不放進上面的 ARCHIVE_TEXT／PAGES（那兩個的測試假設標籤固定、頁首是 page-hdr）。
+# key → (標籤, 一句結論, 連結網址或 None, 連結文字)。標籤寫最後更新日，不寫歸檔日。
+# 連結帶 target=_top：多股對比、期望落差的 _body.html 是研究清單分頁裡的 iframe 片段。
+MANUAL_ARCHIVE = {
+    "weekly": (
+        "已歸檔・最後更新 2026-06-21",
+        "每週深度週報在這一期之後不再新增，內容由每日簡報與市況主控台接手。頁面保留，因為個股報告仍引用這些週報。",
+        "/market/", "市況主控台 →",
+    ),
+    "comparisons": (
+        "已歸檔・最後更新 2026-06-11",
+        "多股對比不再新增，已有的 14 份保留供查。",
+        None, "",
+    ),
+    "synthesis": (
+        "已歸檔・最後更新 2026-07-01",
+        "期望落差綜合研判不再新增，已有的 6 份保留供查。",
+        None, "",
+    ),
+}
+MANUAL_PAGES = {
+    "weekly": "docs/weekly/index.html",
+    "comparisons": "docs/comparisons/_body.html",
+    "synthesis": "docs/research/synthesis/_body.html",
+}
+
 START = "<!--archive-banner-->"
 END = "<!--/archive-banner-->"
 
 
 def archive_banner(key: str) -> str:
     """單行 HTML（自帶行內樣式，不依賴各頁的 CSS 變數），夾在標記之間。"""
-    txt = ARCHIVE_TEXT[key]
+    if key in MANUAL_ARCHIVE:
+        label, txt, href, link_text = MANUAL_ARCHIVE[key]
+        link = (f'　<a href="{href}" target="_top" style="color:#1a56db;font-weight:600;white-space:nowrap">{link_text}</a>'
+                if href else "")
+    else:
+        label, txt = ARCHIVE_LABEL, ARCHIVE_TEXT[key]
+        link = '　<a href="/long-track/#archive" style="color:#1a56db;font-weight:600;white-space:nowrap">系統主控台歸檔區 →</a>'
     return (
         f'{START}<div style="background:#f4f4f5;border-bottom:1px solid #d4d4d8;border-left:6px solid #71717a;'
         f'color:#3f3f46;padding:.8rem 1.2rem;font-size:.9rem;line-height:1.7">'
-        f'<div style="max-width:1080px;margin:0 auto"><b>{ARCHIVE_LABEL}</b>　{txt}'
-        f'　<a href="/long-track/#archive" style="color:#1a56db;font-weight:600;white-space:nowrap">系統主控台歸檔區 →</a>'
+        f'<div style="max-width:1080px;margin:0 auto"><b>{label}</b>　{txt}'
+        f'{link}'
         f'</div></div>{END}'
     )
 
@@ -100,7 +133,7 @@ def main(argv: list[str]) -> int:
         print(__doc__)
         return 2
     bad = 0
-    for key, rel in PAGES.items():
+    for key, rel in {**PAGES, **MANUAL_PAGES}.items():
         p = root / rel
         text = p.read_text(encoding="utf-8")
         new = apply_to_html(text, key)
