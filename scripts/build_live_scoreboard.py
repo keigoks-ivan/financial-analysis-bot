@@ -52,6 +52,10 @@ SCHEMA = "live-scoreboard-v0"
 # CONFIG — PREREG 凍結（Live_Scoreboard_Spec.md；不得依單一案例調參）
 # ═══════════════════════════════════════════════════════════════════════
 
+# 2026-10-19 持有人決定：事前登記的對象是舊規則，舊規則階段凍結在新規則生效日之前（不含當天）。
+# 不跟 _w52.RULE_SWITCH_DATE 連動：那個常數可用環境變數覆寫做本機測試，凍結日不能跟著動。
+OLD_STAGE_END_EXCL = "2026-10-19"
+
 MARKETS = [
     {
         "key": "us", "label": "美股", "hist_key": "history_us",
@@ -199,7 +203,15 @@ PREREG = {
                              "自 2026-10-19 起帶新規則標記，band_exec_replay 依標記回放，生效日前的執行層持股率逐筆不變。"
                              "注意：本記分板的實單 NAV 只計股票四腿，不含美股債金疊加的收益；2026-10-19 以後的實單 NAV "
                              "與前段不是同一條規則，不能連成同一條實績來解讀。事前登記的前瞻檢定針對舊規則，"
-                             "新規則的前瞻檢定尚未事前登記，處理方式待持有人決定",
+                             "新規則不另外事前登記（見下一筆舊規則階段凍結）",
+            },
+            {
+                "date": "2026-10-19",
+                "what": "舊規則階段凍結：記分板只計到 2026-10-16（新規則生效前最後一個交易日），主記分板與影子帳戶"
+                        "最後計入的月份都是 2026-09；之後每天重算只會因還原價格微調，不再增加月樣本",
+                "why": "持有人 2026-10-19 決定。事前登記的對象是舊規則，新規則上線後繼續累積會把兩條規則混成同一份實績",
+                "unchanged": "SPRT 參數、判定門檻、影子帳戶定義、既有月樣本與判定語意全部不變；判定停在凍結時的狀態，不結案。"
+                             "新規則不另外事前登記，改用規則帳本（knowledge/rule_ledger.md）2026-10-19 確認的退回條件判",
             },
             {
                 "date": "2026-10-19",
@@ -435,6 +447,9 @@ def build_market(mkt, state, gaps, judgment_calls):
 
     history = sorted(history, key=lambda r: r["date"])
     live_rows = [r for r in history if r.get("source") == "live"]
+    # 舊規則階段凍結：只計新規則生效日之前的實錄（最後一天 2026-10-16）。10 月因此成為
+    # 未走完的月，不進月樣本，SPRT 最後計入的月份是 2026-09。
+    live_rows = [r for r in live_rows if r["date"] < OLD_STAGE_END_EXCL]
     if not live_rows:
         raise FailSafeAbort(f"[{key}] 尚無 source=='live' 日紀錄，NAV 簿記無法起算（F4a）")
 
@@ -1025,6 +1040,7 @@ details.lsb-prereg summary{{cursor:pointer;font-size:.82rem;color:#57606a;margin
 details.lsb-prereg pre{{max-height:280px;overflow:auto;background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:.6rem;font-size:.72rem;white-space:pre-wrap}}
 </style></head>
 <body>
+<div class="lsb-plain">舊規則階段已凍結：這個記分板檢驗的是 2026-10-19 以前的實單規則，只算到 2026-10-16，最後計入的月份是 2026-09。新規則（美股債金版、台股不借錢版）不在這裡判。</div>
 {gaps_html}
 {adopt_html}
 <p class="lsb-note"><a href="/backtest/live_system_evidence/">這套系統的九項證據總覽 →</a></p>
