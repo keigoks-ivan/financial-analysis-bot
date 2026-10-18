@@ -1,3 +1,4 @@
+import {gzJson} from './gzjson.js';
 import {RESEARCH_KEY,hash,newResearch,addIdea,reserveUniverse,markSeen,beginTrial,addOpportunity,addQuickObservation,analysisPacket,resolveOpportunities,evaluateStock,researchStats} from './research.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pct=n=>n===null||n===undefined?'—':(n*100).toFixed(2)+'%';
@@ -15,7 +16,7 @@ export function installResearch({document,storage,fetch,context,pause,notify,dow
  const version=()=>state.ideas.flatMap(i=>i.versions).find(v=>v.id===selected);
  const note=(message,error=false)=>{$('researchStatus').textContent=message;$('researchStatus').className='notice'+(error?' error':'');};
  const guard=fn=>async(...args)=>{try{return await fn(...args);}catch(e){note(e.message,true);notify(e.message,true);}};
- const request=async path=>{const r=await fetch(path);if(!r.ok)throw Error('研究行情載入失敗，可稍後繼續同一批驗證。');return r.json();};
+ const request=async path=>{const r=await fetch(path);if(!r.ok)throw Error('研究行情載入失敗，可稍後繼續同一批驗證。');return gzJson(r);};
  async function universe(){if(!catalog)catalog=await request('./data/stocks/catalog.json');change(()=>reserveUniverse(state,catalog));return catalog;}
  function fillEditor(v=null){
   editing=v?state.ideas.find(i=>i.versions.some(x=>x.id===v.id)).id:null;
@@ -58,14 +59,14 @@ export function installResearch({document,storage,fetch,context,pause,notify,dow
  async function execute(trial){
   if(busy)return;busy=true;pauseRequested=false;render();
   try{
-   if(!actions)actions=await request('./data/stocks/actions.json');
+   if(!actions)actions=await request('./data/stocks/actions.json.gz');
    if(trial.model!=='stock-daily-study-v1'||trial.actionsHash!==hash(JSON.stringify(actions)))throw Error('驗證模型或權息附檔已改變，不能混用這批凍結資料；請保留原紀錄。');
    for(const symbol of trial.symbols){
     if(pauseRequested)break;
     if(trial.results.some(r=>r.symbol===symbol))continue;
     note(`正在驗證第 ${trial.results.length+1} / ${trial.symbols.length} 檔；規則已固定，請稍候。`);
     try{
-     const pool=await request('./data/stocks/'+symbol+'.json');if(pool.sha256!==trial.hashes[symbol])throw Error('行情版本已改變，不能混用本次凍結資料。');
+     const pool=await request('./data/stocks/'+symbol+'.json.gz');if(pool.sha256!==trial.hashes[symbol])throw Error('行情版本已改變，不能混用本次凍結資料。');
      const meta=(await universe()).find(s=>s.symbol===symbol);if(!meta||hash(JSON.stringify(meta.liquidity))!==trial.liquidityHashes?.[symbol])throw Error('成交活躍度篩選已改變，不能混用凍結批次。');
      const result=await evaluateStock(pool,meta.liquidity,trial.rules,actions,()=>new Promise(resolve=>setTimeout(resolve,0)));
      change(()=>{trial=state.trials.find(t=>t.id===trial.id);trial.results.push(result);delete trial.errors[symbol];});
@@ -91,7 +92,7 @@ export function installResearch({document,storage,fetch,context,pause,notify,dow
  $('downloadAnalysis').onclick=guard(()=>{if(busy)throw Error('請先暫停規則試驗，再匯出分析檔。');const packet=analysisPacket(state,context());download(JSON.stringify(packet,null,2),'trading-idea-analysis.json');notify('分析檔已準備下載；請附到目前對話，我就能接著整理與回測。');});
  async function launch(kind){
   if(busy||launching)return;launching=true;
-  try{pause();const v=version();if(!v)return;const c=await universe();if(!actions)actions=await request('./data/stocks/actions.json');const trial=change(()=>{const t=beginTrial(state,v,c,kind);t.actionsHash=hash(JSON.stringify(actions));return t;});await execute(trial);}finally{launching=false;}
+  try{pause();const v=version();if(!v)return;const c=await universe();if(!actions)actions=await request('./data/stocks/actions.json.gz');const trial=change(()=>{const t=beginTrial(state,v,c,kind);t.actionsHash=hash(JSON.stringify(actions));return t;});await execute(trial);}finally{launching=false;}
  }
  $('exploreIdea').onclick=guard(()=>launch('explore'));
  $('finalIdea').onclick=guard(()=>{if(!version())return;$('finalConfirmText').textContent='此版本將固定規則並使用 8 檔預留股票。啟動後，這批資料永久視為已使用；即使結果不佳或中斷，也不能重抽同一版本的考題。';$('finalResearchDialog').showModal();});

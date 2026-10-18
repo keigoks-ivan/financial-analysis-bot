@@ -1,5 +1,6 @@
 import {EXAM_KEY,eligibleQuestions,selectStart,makeQuestion,newExam,answerQuestion,questionView,examSummary,examPacket,readExam,classifySeries,selectScenarioStart,scheduleScenarios,archiveExam,cumulativeResearch,selectionStats,contextGroups} from './model.js';
 import {shuffle} from '../random.js';
+import {gzJson} from '../gzjson.js';
 const $=id=>document.getElementById(id),pct=n=>n===null?'—':(n*100).toFixed(1)+'%',esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let exam=null,review=0,visible=120,busy=false,storageBlocked=false,history=[];
 try{exam=readExam(localStorage);}catch{$('storageStatus').textContent='無法讀取本機進度，原始資料已保留。本次可練習並下載，但不會覆寫舊資料。';storageBlocked=true;}
@@ -10,7 +11,7 @@ function save(){
  try{localStorage.setItem(EXAM_KEY,JSON.stringify(exam));$('storageStatus').textContent='';}
  catch{$('storageStatus').textContent='本機儲存失敗，本場答案仍在畫面中。請保持此頁開啟，交卷後下載分析檔；重新整理可能回到較早的進度。';}
 }
-async function json(path){const r=await fetch(path);if(!r.ok)throw Error('行情載入失敗，請稍後重試。');return r.json();}
+async function json(path){const r=await fetch(path);if(!r.ok)throw Error('行情載入失敗，請稍後重試。');return gzJson(r);}
 $('examMode').onchange=()=>{$('focusLabel').hidden=$('examMode').value!=='focused';$('modeHelp').textContent={random:'依股票與時間隨機抽題，用來觀察整體判斷。',focused:'指定一類情境集中練習；具體分類細節在交卷後揭曉。',balanced:'五類情境各占相同題數，順序隨機；交卷前不透露每題分類。'}[$('examMode').value];};
 $('waitFor').onchange=()=>{$('waitNoteLabel').hidden=$('waitFor').value!=='其他條件';};
 $('groupDimension').onchange=()=>render();
@@ -25,7 +26,7 @@ $('start').onclick=async()=>{
   for(let n=0;n<count;n++){
    const shuffled=shuffle(candidates);let item,start;
    for(const s of shuffled){
-    if(!cache.has(s.symbol)){const pool=await json('../data/stocks/'+encodeURIComponent(s.symbol)+'.json');cache.set(s.symbol,pool);series.set(s.symbol,classifySeries(pool));}
+    if(!cache.has(s.symbol)){const pool=await json('../data/stocks/'+encodeURIComponent(s.symbol)+'.json.gz');cache.set(s.symbol,pool);series.set(s.symbol,classifySeries(pool));}
     start=selectScenarioStart(s,horizon,[...prior,...questions],series.get(s.symbol),schedule[n]);
     if(start!==null){item=s;break;}
    }

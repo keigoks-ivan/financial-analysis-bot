@@ -7,6 +7,7 @@ import {pickCampaign,assembleCampaign} from './campaigns.js';
 import {DailyReplayEngine,createDailyRun} from './daily.js';
 import {StockReplayEngine,createStockRun,pickStock,stockRules,stockFee,stockExecution,stockBudgetQty,stockChartBars,stockPriceFactor,stockDrawingPrice} from './stocks.js';
 import {randomFloat} from './random.js';
+import {gzJson} from './gzjson.js';
 const $=id=>document.getElementById(id), money=(n,d=0)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 const signed=(n,d=0)=>(n>0?'+':'')+money(n,d), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const time=s=>{s=((Math.floor(s)%86400)+86400)%86400;return [Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(v=>String(v).padStart(2,'0')).join(':');};
@@ -44,7 +45,7 @@ function configureMode(daily,length,saved=null){
 async function loadDaily(plan=null,saved=null){
   const request=++loadId;loading=true;setPlaying(false);notify('正在載入日線波段行情…');
   try{
-    if(!dailyPool){const r=await fetch('./data/daily.json');if(!r.ok)throw Error('日線資料載入失敗。');dailyPool=await r.json();}
+    if(!dailyPool){const r=await fetch('./data/daily.json.gz');if(!r.ok)throw Error('日線資料載入失敗。');dailyPool=await gzJson(r);}
     if(request!==loadId)return;
     const days=plan?.days??([60,120,240].includes(Number($('runLength').value))?Number($('runLength').value):120);
     const data=createDailyRun(dailyPool,days,plan,randomFloat,recentReplayPlans());
@@ -74,10 +75,10 @@ async function loadStock(market,plan=null,saved=null){
     const universe=etf?indexCatalog:stockCatalog,chosen=etf?$('etfSelect').value:'random';
     const recent=recentReplayPlans(),selected=plan?universe.find(s=>s.symbol===plan.symbol&&s.market===market):etf&&chosen&&chosen!=='random'?universe.find(s=>s.symbol===chosen):pickStock(etf?universe:research.explorationCatalog(universe),market,days,randomFloat,recent);
     if(!selected)throw Error('找不到這個股票的儲存進度。');
-    const r=await fetch('./data/stocks/'+selected.symbol+'.json');if(!r.ok)throw Error('個股行情載入失敗。');const pool=await r.json();
+    const r=await fetch('./data/stocks/'+selected.symbol+'.json.gz');if(!r.ok)throw Error('個股行情載入失敗。');const pool=await gzJson(r);
     if(pool.sha256!==selected.sha256)throw Error('個股資料版本不一致，請重新整理。');if(request!==loadId)return;
-    if(etf&&!indexActions){const ar=await fetch('./data/stocks/index-actions.json');if(!ar.ok)throw Error('ETF 配息資料載入失敗。');indexActions=await ar.json();}
-    if(!etf&&!stockActions){const ar=await fetch('./data/stocks/actions.json');if(!ar.ok)throw Error('交割與股息資料載入失敗。');stockActions=await ar.json();}
+    if(etf&&!indexActions){const ar=await fetch('./data/stocks/index-actions.json.gz');if(!ar.ok)throw Error('ETF 配息資料載入失敗。');indexActions=await gzJson(ar);}
+    if(!etf&&!stockActions){const ar=await fetch('./data/stocks/actions.json.gz');if(!ar.ok)throw Error('交割與股息資料載入失敗。');stockActions=await gzJson(ar);}
     if(request!==loadId)return;const data=createStockRun(pool,days,plan,randomFloat,etf?indexActions:stockActions,selected.liquidity,recent);if(etf){data.stock.assetType='index-etf';data.stock.fundSource=selected.fundSource;data.dailyPlan.assetType='index-etf';}engine=new StockReplayEngine(data,saved?.snapshot);if(!saved){$('fullBlind').checked=true;$('blind').checked=true;}configureMode(true,days,saved);
     $('qty').value=market==='TW'?'100':'10';$('orderPrice').value=engine.last;resetChart();restoreWorkspace(saved);loading=false;setTimeframe(frame);render();save();
     notify(saved?'已恢復同一檔股票與同一局進度。':'已抽取 '+(hiddenIdentity()?'盲測標的':selected.name+'（'+selected.symbol+'）')+'，共 '+days+' 個交易日；開局前 60 日符合成交活躍度條件。買進扣現金，賣出須有持股。');
@@ -117,8 +118,8 @@ async function loadSession(id,saved=null){
   if(id==='random')return loadCampaign(saved?.snapshot?.campaign,saved);
   const request=++loadId;loading=true;setPlaying(false);document.querySelectorAll('#orderForm button').forEach(b=>b.disabled=true);
   try{
-    const response=await fetch(`./data/${id}.json`);if(!response.ok)throw Error('行情資料載入失敗，請稍後重試。');
-    const data=await response.json();if(request!==loadId)return;
+    const response=await fetch(`./data/${id}.json.gz`);if(!response.ok)throw Error('行情資料載入失敗，請稍後重試。');
+    const data=await gzJson(response);if(request!==loadId)return;
     if(!Array.isArray(data.ticks)||!data.ticks.length)throw Error('這個場次沒有可用成交資料。');
     try{engine=new ReplayEngine(data,saved?.snapshot);}catch{engine=new ReplayEngine(data);notify('舊進度格式不符，已載入新的練習。',true);}
     configureMode(false,5,saved);$('sessionSelect').value=id;$('orderPrice').value=engine.last;resetChart();restoreWorkspace(saved);loading=false;
@@ -135,7 +136,7 @@ async function loadCampaign(plan=null,saved=null){
     const firstIndex=catalog.findIndex(c=>c.id===plan.ids[0]);
     if(!plan.ids.every((id,i)=>catalog[firstIndex+i]?.id===id&&catalog[firstIndex+i]?.group===catalog[firstIndex].group))throw Error('資料日期或契約不連續，請重新抽取。');
     notify(`正在載入 ${plan.days} 個交易日的真實行情…`);
-    const chunks=await Promise.all(plan.ids.map(async id=>{const r=await fetch(`./data/campaigns/${id}.json`);if(!r.ok)throw Error('行情載入失敗，請重新開局。');return r.json();}));
+    const chunks=await Promise.all(plan.ids.map(async id=>{const r=await fetch(`./data/campaigns/${id}.json.gz`);if(!r.ok)throw Error('行情載入失敗，請重新開局。');return gzJson(r);}));
     if(request!==loadId)return;
     const data=assembleCampaign(chunks,plan);
     engine=new ReplayEngine(data,saved?.snapshot);configureMode(false,plan.days,saved);$('sessionSelect').value='random';
