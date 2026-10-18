@@ -190,6 +190,8 @@ jobs:
           BYTES="$(xargs -0 wc -c < "$LIST" | awk '$2!="total"{s+=$1} END{print s+0}')"
           xargs -0 rm -f < "$LIST"
           find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          # 2026-10-19：個股儀表板的判斷層 state/ 靠 artifact 跨日接續（stock-dash-daily.yml），頁面不讀，不上網站（約 15 MiB）
+          rm -rf ./stock-dash/data/state
           rm -f "$LIST"
           echo "Stripped $N internal files ($BYTES bytes) from the site artifact."
           for k in "${KEEP[@]}"; do
