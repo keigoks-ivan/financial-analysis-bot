@@ -25,7 +25,7 @@ _DAY_FILE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.json$")
 
 
 def _dated_files(directory):
-    """(日期, 路徑)，由舊到新；檔名日期不合法的不計入、不動。"""
+    """（日期、路徑），由舊到新；檔名日期不合法的不計入、不動。"""
     found = []
     for path in Path(directory).glob("*.json"):
         m = _DAY_FILE.match(path.name)
