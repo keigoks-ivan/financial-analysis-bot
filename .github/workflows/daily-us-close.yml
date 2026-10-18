@@ -221,6 +221,14 @@ jobs:
         continue-on-error: true
         run: python docs/ideas/data/bond-outlook/data.py --gauges
 
+      # ── 14. 想法頁 /ideas/ai-hardware-cycle.html 的價格類圖與 W52 距離（2026-10-18 新增）：
+      #    重抓 yfinance，更新 data.json 的圖 1「現在」路徑、圖 7a／7b、latest（SMH／費半／QQQ 收盤與 52 週均線）。
+      #    任何一塊抓不到就沿用上一版並標 stale；腳本 exit 0，這裡再加 continue-on-error。
+      #    見 docs/ideas/data/ai-hardware-cycle/data.py 檔頭。──
+      - name: "[ideas-aihw] Refresh ai-hardware-cycle prices"
+        continue-on-error: true
+        run: python3 docs/ideas/data/ai-hardware-cycle/data.py
+
       # ── 收斂：單一 commit + push（路徑＝各原 workflow commit 路徑聯集）──
       - name: Commit and push if changed
         id: commit_and_push
@@ -253,7 +261,8 @@ jobs:
             docs/stages/data/ \
             docs/ideas/bond-outlook.html \
             docs/ideas/data/bond-outlook/gauges.json \
-            docs/ideas/data/bond-outlook/data.json; do
+            docs/ideas/data/bond-outlook/data.json \
+            docs/ideas/data/ai-hardware-cycle/data.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if [ -z "$PATHS" ]; then

@@ -77,6 +77,9 @@ p{margin:.6rem 0}
 .chart .cbox{position:relative;height:var(--h,340px)}
 .chart figcaption{font-size:.84rem;color:var(--sec);margin-top:8px;line-height:1.6}
 .chart .src{font-size:.76rem;color:var(--muted);margin-top:2px}
+.chart .pn-t{font-size:.86rem;font-weight:600;color:var(--ink);margin:2px 0 6px}
+.chart .pn-t+.cbox{margin-bottom:2px}
+.chart .pn-c{font-size:.84rem;color:var(--sec);margin:6px 0 14px;line-height:1.6}
 .page-note{margin-top:3rem;font-size:.78rem;color:var(--sec);border-top:1px solid var(--line);padding-top:1rem}
 @media(max-width:600px){.chart .cbox{height:var(--hm,300px)}.chart{padding:10px 8px 6px}h1{font-size:1.4rem}.cp-when{margin-left:0}.cp-rule{grid-template-columns:1fr}.ev li{flex-wrap:wrap}}
 </style>
@@ -393,6 +396,15 @@ p{margin:.6rem 0}
 
 <h3>歷次高點之後的跌幅</h3>
 <figure class="chart"><div class="cbox" style="--h:360px;--hm:320px"><canvas id="c1" role="img" aria-label="折線圖：費半歷次高點後 500 個交易日內相對高點的跌幅，四次循環頂、三次消化期與現在各一條線"></canvas></div><figcaption>前 4 個月兩類路徑重疊，光看這段分不出現在屬於哪一類。線畫到回到前高為止。</figcaption></figure>
+<figure class="chart" id="fig7">
+<div class="pn-t">7a　6/22 收盤到 <span data-live-date="md" data-live-from="rel">10/16</span> 收盤的漲跌</div>
+<div class="cbox" style="--h:340px;--hm:340px"><canvas id="c7a" role="img" aria-label="水平長條圖：2026 年 6 月 22 日收盤到最新交易日，Nvidia、QQQ、AMD、台積電、博通、SMH、費半指數、Oracle、美光、CoreWeave 共 10 檔的漲跌幅，由大到小排列"></canvas></div>
+<div class="pn-c">CoreWeave、Oracle 跌幅大於費半，Nvidia <span data-live-text="nvda-state">還沒跌</span>。</div>
+<div class="pn-t">7b　Nvidia 對費半的相對強弱（Nvidia ÷ 費半，6/22＝100）</div>
+<div class="cbox" style="--h:300px;--hm:300px"><canvas id="c7b" role="img" aria-label="折線圖：Nvidia 股價除以費半指數的比值，2026 年 1 月 2 日起，以 6 月 22 日為 100，標出 6 月 22 日與 11 月 19 日 Nvidia 財報"></canvas></div>
+<div class="pn-c">龍頭股最晚轉弱。這條線跌回 100 以下，代表 Nvidia 開始輸給費半。</div>
+<div class="src">資料到 <span data-live-date="ymd">2026-10-16</span>，每個美股交易日更新。Yahoo Finance，還原權息收盤。<span id="live-stale"></span></div>
+</figure>
 <div class="tbl-wrap"><table class="imq-table">
 <thead><tr><th>類型</th><th>段</th><th>高點後第 4 個月的跌幅</th><th>最終跌幅</th><th>高點時高於 52 週均線</th></tr></thead>
 <tbody>
@@ -402,7 +414,7 @@ p{margin:.6rem 0}
 </tbody></table></div>
 <p class="muted">費半指數，本機用 yfinance 計算，資料到 10/16，存於 v7-backtest/data/semi_cycle_drawdowns/。消化期指跌幅小於 35% 且低點後 12 個月內回前高。2004 年（跌 34.8%，114 個月才回前高）也歸為循環頂，表中未列。</p>
 <p>前 4 個月內的最大跌幅兩類重疊，分不出來。第 4 個月當天的跌幅 −23.9% 落在消化期區間之外、循環頂區間之內，偏向循環頂，但每類只有 3～5 段。另一個能分的是起點：這一波高點時費半高於 52 週均線 82%，只有 2000 年的 126% 更高。</p>
-<p>歷次循環頂（含 2004 年）第一次跌破 52 週均線時，已從高點跌 13%～31%，之後再跌 18%～77%。消化期跌破時已跌 9%～22%，之後再跌 15%～19%。現在費半 11,137 點，52 週均線 9,885 點，還要跌 11.2% 才碰到。SMH（美國版）539.79 美元，均線 479.69，還差 11.1%。QQQ 709.80，均線 661.09，還差 6.9%。SMH 對 QQQ 的比值自 6/22 跌了 16.2%。</p>
+<p>歷次循環頂（含 2004 年）第一次跌破 52 週均線時，已從高點跌 13%～31%，之後再跌 18%～77%。消化期跌破時已跌 9%～22%，之後再跌 15%～19%。現在（<span data-live-date="md">10/16</span> 收盤）費半 <span data-live="sox.close" data-fmt="int">11,137</span> 點，52 週均線 <span data-live="sox.ma52" data-fmt="int">9,885</span> 點，還要跌 <span data-live="sox.drop_pct" data-fmt="p1">11.2</span>% 才碰到。SMH（美國版）<span data-live="smh.close" data-fmt="p2">539.79</span> 美元，均線 <span data-live="smh.ma52" data-fmt="p2">479.69</span>，還差 <span data-live="smh.drop_pct" data-fmt="p1">11.1</span>%。QQQ <span data-live="qqq.close" data-fmt="p2">709.80</span>，均線 <span data-live="qqq.ma52" data-fmt="p2">661.09</span>，還差 <span data-live="qqq.drop_pct" data-fmt="p1">6.9</span>%。SMH 對 QQQ 的比值自 6/22 跌了 16.2%。</p>
 
 <h2>三種情境</h2>
 <div class="tbl-wrap"><table class="imq-table">
@@ -440,7 +452,7 @@ p{margin:.6rem 0}
 <p>兩版成分只差一檔：美國版有 ARM，UCITS 版有 ENTG。持有的 UCITS 版，Nvidia 的權重約是美國版的一半，記憶體約兩倍。UCITS 版 13 倍的本益比看起來便宜，一部分是記憶體股在獲利高峰的低倍數拉低的。本頁判斷記憶體最像循環頂，所以在情境 C 裡，UCITS 版未必比美國版跌得少。</p>
 
 <h3>W52 規則什麼時候會動作</h3>
-<p>W52 看的是美國版 SMH 週收盤對 52 週均線。均線 479.69，現價 539.79，還差 11.1%。用目前的均線值算，大約是從 6/22 高點跌 28%（費半指數要跌 32%）。這一波漲到均線之上 82%（SMH 是 69%），規則會比歷史平均晚動作，歷次循環頂第一次跌破均線時已跌 13%～31%。晚動作是規則設計的結果，代價是這次等待的成本比過去高。</p>
+<p>W52 看的是美國版 SMH 週收盤對 52 週均線。均線 <span data-live="smh.ma52" data-fmt="p2">479.69</span>，現價 <span data-live="smh.close" data-fmt="p2">539.79</span>（<span data-live-date="md">10/16</span> 收盤），還差 <span data-live="smh.drop_pct" data-fmt="p1">11.1</span>%。用目前的均線值算，大約是從 6/22 高點跌 28%（費半指數要跌 32%）。這一波漲到均線之上 82%（SMH 是 69%），規則會比歷史平均晚動作，歷次循環頂第一次跌破均線時已跌 13%～31%。晚動作是規則設計的結果，代價是這次等待的成本比過去高。</p>
 <p>10/19 起股票上限 100% 不借錢，對這個風險有對應。債、金兩條腿能幫多少要看各自的週線條件。利率還在升：10 年期公債殖利率 10/15 為 5.10%，Fed 9/16 升息到 3.75～4.00%，下次會議 10/27～28。IEF 那條腿的週線條件在這種環境下可能不成立，GLD 那條腿的狀態本文沒有核算。</p>
 <p>W52 的進出照機械規則，查核點不改變它。本頁的用處是解讀：W52 動作之前，分辨下跌比較像消化期還是循環頂；W52 轉為不持有之後，查核點 1、2、4 轉回支持，代表資金面修復，可以拿來判斷重新持有的訊號是不是可信。</p>
 
@@ -818,16 +830,82 @@ function chart6(c,wide){
   o.plugins.tooltip.callbacks={title:function(it){var x=items[it[0].dataIndex];return x.name+'（主觀 '+x.prob+'%）';},
     label:function(it){var x=items[it.dataIndex];return x.text+' 美元';}};
   var L={};s.lines.forEach(function(l){L[l.key]=l;});
+  var LV=D.latest&&D.latest.smh; // 現價與 52 週均線讀 latest（每個美股交易日更新），沒有就用 scenarios 的寫死值
+  var maV=LV?LV.ma52:L.ma52.value, pxV=LV?LV.close:L.px.value;
+  o.scales.x.max=Math.max(700,340+Math.ceil((pxV+10-340)/60)*60);
   o.plugins.vlines={font:'600 '+(wide?12:11)+'px '+c.sans,bg:c.card,text:c.body,lines:[
-    {x:L.ma52.value,label:L.ma52.label+' '+L.ma52.value.toFixed(2),color:c.sec,dash:[4,3],w:1.5,row:0,align:'center'},
-    {x:L.px.value,label:L.px.label+' '+L.px.value.toFixed(2),color:c.ink,w:2,row:1,align:'center'},
+    {x:maV,label:L.ma52.label+' '+maV.toFixed(2),color:c.sec,dash:[4,3],w:1.5,row:0,align:'center'},
+    {x:pxV,label:L.px.label+' '+pxV.toFixed(2),color:c.ink,w:2,row:1,align:'center'},
     {x:L.peak.value,label:L.peak.label+' '+L.peak.value.toFixed(2),color:c.muted,dash:[4,3],w:1.5,row:2,align:'right'}]};
   // y 軸標籤：名稱、主觀機率、價格範圍各一行
   var labs=items.map(function(it){return [it.name,'主觀 '+it.prob+'%',it.text];});
   return {type:'bar',data:{labels:labs,datasets:ds},options:o,plugins:[vlines]};
 }
 
-var BUILD={c1:chart1,c2:chart2,c3:chart3,c4:chart4,c5:chart5,c6:chart6};
+/* ---------- 圖 7a：6/22 以來各環節漲跌 ---------- */
+function fmtPct(v){return (v>0?'+':v<0?'\u2212':'')+Math.abs(v).toFixed(1)+'%';}
+function chart7a(c,wide){
+  var R=D.rel; if(!R||!R.items)return null;
+  var items=R.items, vals=items.map(function(it){return it.pct;});
+  var cols=items.map(function(it){
+    return it.ticker==='NVDA'?c.ink:it.ticker==='SMH'?c.accent:(it.ticker==='QQQ'||it.ticker==='^SOX')?c.muted:c.sec;});
+  var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals);
+  var xmin=Math.min(-10,Math.floor((lo-(wide?10:14))/10)*10), xmax=Math.max(10,Math.ceil((hi+(wide?9:12))/10)*10);
+  var ds=[{label:'漲跌',data:vals,backgroundColor:cols,borderWidth:0,borderRadius:4,borderSkipped:'start',barPercentage:0.7,categoryPercentage:0.9}];
+  var o=base(c,wide,{indexAxis:'y',interaction:{mode:'nearest',axis:'y',intersect:true}});
+  o.plugins.legend.display=false;
+  o.scales.x=axis(c,wide,null,{min:xmin,max:xmax,
+    grid:{color:function(ctx){return ctx.tick&&ctx.tick.value===0?c.sec:alpha(c.line,0.9);}},
+    ticks:{color:c.sec,stepSize:10,callback:function(v){return v+'%';},font:{size:wide?12:11,family:c.sans}}});
+  o.scales.y=axis(c,wide,null,{grid:{display:false},ticks:{color:c.body,font:{size:wide?12:11,family:c.sans}}});
+  o.plugins.tooltip.callbacks={title:function(it){return items[it[0].dataIndex].label;},
+    label:function(it){var x=items[it.dataIndex];return R.base_date.slice(5).replace('-','/')+' 起 '+fmtPct(x.pct)+'（收盤 '+x.base_close.toFixed(2)+' → '+x.last_close.toFixed(2)+'）';}};
+  var signlabels={id:'signlabels',afterDatasetsDraw:function(chart){
+    var ctx=chart.ctx;
+    chart.getDatasetMeta(0).data.forEach(function(el,i){
+      var v=vals[i],t=fmtPct(v);
+      ctx.save();ctx.font='600 '+(wide?12:11)+'px '+c.sans;ctx.textBaseline='middle';ctx.fillStyle=c.body;
+      if(v<0){ctx.textAlign='right';ctx.fillText(t,el.x-5,el.y);}else{ctx.textAlign='left';ctx.fillText(t,el.x+5,el.y);}
+      ctx.restore();});
+  }};
+  return {type:'bar',data:{labels:items.map(function(it){return it.label;}),datasets:ds},options:o,plugins:[signlabels]};
+}
+
+/* ---------- 圖 7b：Nvidia ÷ 費半，6/22＝100 ---------- */
+function chart7b(c,wide){
+  var Rt=D.ratio; if(!Rt||!Rt.dates)return null;
+  var Y0=+Rt.start.slice(0,4);
+  function dayNum(d){return Math.round((Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10))-Date.UTC(Y0,0,1))/86400000);}
+  var xs=Rt.dates.map(dayNum), pts=xs.map(function(x,i){return {x:x,y:Rt.values[i]};});
+  var xb=dayNum(Rt.base_date), xe=dayNum(Rt.event.date), xlast=xs[xs.length-1];
+  var xmax=Math.max(xe+11,xlast+11), xmin=0;
+  var lo=Math.min.apply(null,Rt.values), hi=Math.max.apply(null,Rt.values);
+  var ymin=Math.min(80,Math.floor((lo-5)/20)*20), ymax=Math.ceil((hi+8)/20)*20;
+  var ref=[{x:xmin,y:100}].concat(xs.map(function(x){return {x:x,y:100};}),[{x:xmax,y:100}]);
+  var ds=[
+    {label:'Nvidia ÷ 費半',data:pts,borderColor:c.ink,backgroundColor:c.ink,borderWidth:2,pointRadius:0,pointHoverRadius:3,tension:0,_dates:Rt.dates,order:1,
+     endText:Rt.values[Rt.values.length-1].toFixed(1),endIndex:pts.length-1},
+    {label:'6/22＝100',data:ref,borderColor:c.sec,backgroundColor:c.sec,borderWidth:1.5,borderDash:[5,4],pointRadius:0,pointHoverRadius:0,isRef:true,order:2,
+     endText:'6/22＝100',endSide:'left',endIndex:0}
+  ];
+  var o=base(c,wide,{interaction:{mode:'nearest',axis:'x',intersect:false}});
+  o.plugins.legend.display=false;
+  o.layout.padding.top=wide?26:42;
+  o.scales.x=axis(c,wide,null,{type:'linear',min:xmin,max:xmax,grid:{color:'transparent'},
+    afterBuildTicks:function(sc){var t=[];for(var m=0;m<12;m++){var v=Math.round((Date.UTC(Y0,m,1)-Date.UTC(Y0,0,1))/86400000);if(v<=xmax)t.push({value:v});}sc.ticks=t;},
+    ticks:{color:c.sec,autoSkip:false,maxRotation:0,callback:function(v){return (new Date(Date.UTC(Y0,0,1+v)).getUTCMonth()+1)+'月';},font:{size:wide?12:11,family:c.sans}}});
+  o.scales.y=axis(c,wide,null,{min:ymin,max:ymax,ticks:{color:c.sec,stepSize:20,font:{size:wide?12:11,family:c.sans}}});
+  o.plugins.tooltip.filter=function(it){return !it.dataset.isRef;};
+  o.plugins.tooltip.callbacks={title:function(it){return it[0].dataset._dates[it[0].dataIndex];},
+    label:function(it){return '相對強弱 '+it.parsed.y.toFixed(1);}};
+  o.plugins.endlabels={font:'600 '+(wide?12:11)+'px '+c.sans,text:c.body};
+  o.plugins.vlines={font:'600 '+(wide?12:11)+'px '+c.sans,bg:c.card,text:c.body,lines:[
+    {x:xb,label:Rt.base_date.slice(5).replace('-','/'),color:c.muted,dash:[3,3],w:1.5,row:0,align:'center'},
+    {x:xe,label:Rt.event.date.slice(5).replace('-','/')+' '+Rt.event.label,color:c.muted,dash:[3,3],w:1.5,row:wide?0:1,align:'right'}]};
+  return {type:'line',data:{datasets:ds},options:o,plugins:[vlines,endlabels]};
+}
+
+var BUILD={c1:chart1,c2:chart2,c3:chart3,c4:chart4,c5:chart5,c6:chart6,c7a:chart7a,c7b:chart7b};
 
 function draw(){
   var wide=window.innerWidth>=600; lastWide=wide;
@@ -835,7 +913,7 @@ function draw(){
   var c=P();
   Object.keys(BUILD).forEach(function(id){
     var cvs=document.getElementById(id); if(!cvs)return;
-    try{charts.push(new Chart(cvs,BUILD[id](c,wide)));}
+    try{var cfg=BUILD[id](c,wide);if(cfg)charts.push(new Chart(cvs,cfg));}
     catch(e){console.error('chart '+id,e);}
   });
 }
@@ -844,9 +922,35 @@ function fail(){
     b.style.height='auto';b.innerHTML='<p class="muted">圖表資料載入失敗，請看下方表格。</p>';});
 }
 
+
+/* ---------- 每個美股交易日更新的數字（latest）---------- */
+function getPath(o,path){return path.split('.').reduce(function(a,k){return a==null?null:a[k];},o);}
+function fmtLive(v,f){
+  if(v===null||v===undefined||isNaN(v))return null;
+  if(f==='int')return fmtInt(Math.round(v));
+  if(f==='p1')return Number(v).toFixed(1);
+  return Number(v).toFixed(2);
+}
+function fillLive(){
+  var L=D&&D.latest; if(!L)return;
+  document.querySelectorAll('[data-live]').forEach(function(el){
+    var t=fmtLive(getPath(L,el.getAttribute('data-live')),el.getAttribute('data-fmt'));
+    if(t!==null)el.textContent=t;});
+  document.querySelectorAll('[data-live-date]').forEach(function(el){
+    var from=el.getAttribute('data-live-from'),blk=from?D[from]:L;
+    var d=blk&&(blk.last_date||blk.date);
+    if(!d||!/^\d{4}-\d\d-\d\d$/.test(d))return;
+    el.textContent=el.getAttribute('data-live-date')==='md'?(+d.slice(5,7))+'/'+(+d.slice(8,10)):d;});
+  var nv=D.rel&&D.rel.items.filter(function(it){return it.ticker==='NVDA';})[0];
+  document.querySelectorAll('[data-live-text="nvda-state"]').forEach(function(el){
+    if(nv)el.textContent=nv.pct>=0?'還沒跌':'跌了 '+Math.abs(nv.pct).toFixed(1)+'%';});
+  var st=document.getElementById('live-stale');
+  if(st&&[D.rel,D.ratio,D.latest,D.drawdown].some(function(b){return b&&b.stale;}))st.textContent='本次更新沒抓到最新價格，上面的圖與數字是上一次的值。';
+}
+
 if(typeof Chart==='undefined'){fail();return;}
 fetch(DATA_URL,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
-  .then(function(j){D=j;draw();
+  .then(function(j){D=j;fillLive();draw();
     var mq=window.matchMedia('(prefers-color-scheme: dark)');
     if(mq.addEventListener)mq.addEventListener('change',draw);else if(mq.addListener)mq.addListener(draw);
     new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});

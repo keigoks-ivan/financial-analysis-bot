@@ -1,10 +1,23 @@
 """AI 硬體循環（/ideas/ai-hardware-cycle.html）圖表用的數據。
 
-重跑：python3.12 docs/ideas/data/ai-hardware-cycle/data.py
-輸出：同目錄 data.json。頁面只讀這份 json 畫圖，前端不計算。
+重跑：python3.12 docs/ideas/data/ai-hardware-cycle/data.py [--fpe]
+輸出：同目錄 data.json。頁面只讀這份 json 畫圖與填 W52 距離數字，前端不計算。
+每個美股交易日由 .github/workflows/daily-us-close.yml 跑一次（不帶旗標）。
 
-- 圖 1 費半高點後路徑：~/v7-backtest/data/semi_cycle_drawdowns/SOX.csv（date, close）；
-  沒有這個檔（例如 CI）就退回 yfinance ^SOX。高點日取當日收盤。
+每次執行重抓（yfinance，還原權息 auto_adjust）：
+- 圖 1 的「現在 2026-06-22」那條路徑：^SOX 收盤，延伸到最新交易日。
+- 圖 7a：2026-06-22 收盤到最新交易日的漲跌，10 檔（見 REL_TICKERS）。
+- 圖 7b：NVDA ÷ ^SOX，2026-01-02 起，以 2026-06-22 為 100。
+- latest：SMH／^SOX／QQQ 的收盤、52 週均線（週五收盤的最近 52 筆平均，含本週最新收盤）、
+  距均線 drop_pct＝(1−均線／收盤)×100（還要跌多少碰到均線）、NVDA 收盤、資料日期。
+任何一塊抓不到（或少一檔）：該塊保留 data.json 上一版並標 stale: true，程式照常 exit 0。
+最新日以 10 檔＋三個均線標的都有收盤的最後一天為準，不用缺資料的半天。
+
+不重抓、照舊寫入（常數在本檔）：圖 3～6 的靜態資料，以及圖 2 的遠期本益比（沿用上一版 data.json）。
+圖 2 要更新時加 --fpe：先抓網路，失敗退回本機快取，再退回上一版（標 stale）。
+
+- 圖 1 其他高點（歷史）：~/v7-backtest/data/semi_cycle_drawdowns/SOX.csv（date, close）；
+  沒有這個檔（例如 CI）就沿用上一版 data.json 的路徑；兩者都沒有才退回 yfinance ^SOX 全史。高點日取當日收盤。
 - 圖 2 費半 12 個月遠期本益比：History of Market（CC BY 4.0）
   https://historyofmarket.com/api/sectors/forward-pe.json 的 sectors.sox。
   週頻 series 到 2026-08-05 為止；其後是同站 forwardOwn（日頻、自算混合遠期，與 series
@@ -14,6 +27,8 @@
 """
 import json
 import os
+import sys
+import time
 import datetime as dt
 from pathlib import Path
 
@@ -41,37 +56,156 @@ def r(x, n=2):
     return round(float(x), n)
 
 
-def load_sox():
+# 圖 7、latest 用的價格參數
+BASE_DATE = "2026-06-22"            # 這一輪費半高點（收盤）
+RATIO_START = "2026-01-02"
+PRICE_START = "2025-06-01"          # 52 週均線要 52 個週五收盤，多抓一些
+EVENT = {"date": "2026-11-19", "label": "Nvidia FQ3 財報"}
+REL_TICKERS = [  # (yfinance 代號, 圖上標籤)
+    ("NVDA", "NVDA"), ("QQQ", "QQQ"), ("AMD", "AMD"), ("TSM", "TSM"), ("AVGO", "AVGO"),
+    ("SMH", "SMH"), ("^SOX", "費半 ^SOX"), ("ORCL", "ORCL"), ("MU", "MU"), ("CRWV", "CRWV"),
+]
+LATEST_KEYS = {"SMH": "smh", "^SOX": "sox", "QQQ": "qqq"}   # 有 52 週均線的三檔
+BLOCKS = ("rel", "ratio", "latest")
+
+
+def fetch_prices(symbols, start=PRICE_START, tries=3):
+    """yfinance 還原權息收盤，回傳 DataFrame（欄＝代號）。三次都失敗就丟例外，由呼叫端沿用舊值。"""
+    import yfinance as yf
+    last = None
+    for i in range(tries):
+        try:
+            df = yf.download(list(symbols), start=start, auto_adjust=True, progress=False, threads=False)["Close"]
+            if isinstance(df, pd.Series):
+                df = df.to_frame(list(symbols)[0])
+            df = df.dropna(how="all")
+            if not df.empty:
+                return df
+            last = "empty"
+        except Exception as e:  # noqa: BLE001
+            last = str(e)[:100]
+        time.sleep(2 * (i + 1))
+    raise RuntimeError(f"yfinance 抓不到：{last}")
+
+
+def _ymd(ts):
+    return pd.Timestamp(ts).strftime("%Y-%m-%d")
+
+
+def common_frame(df, symbols):
+    """只留 symbols 都有收盤的日期（最新日若有一檔還沒出就退到前一天）。"""
+    miss = [s for s in symbols if s not in df.columns]
+    if miss:
+        raise ValueError(f"缺少代號 {miss}")
+    d = df[list(symbols)].dropna()
+    if d.empty:
+        raise ValueError("沒有共同交易日")
+    return d
+
+
+def calc_rel(df):
+    """圖 7a：BASE_DATE 收盤到最新共同交易日的漲跌 %，由大到小。"""
+    d = common_frame(df, [s for s, _ in REL_TICKERS])
+    base = pd.Timestamp(BASE_DATE)
+    if base not in d.index:
+        raise ValueError(f"基準日 {BASE_DATE} 不在收盤序列內")
+    b, last = d.loc[base], d.iloc[-1]
+    labels = dict(REL_TICKERS)
+    items = [{"ticker": s, "label": labels[s], "pct": r((last[s] / b[s] - 1) * 100, 1),
+              "base_close": r(b[s]), "last_close": r(last[s])} for s, _ in REL_TICKERS]
+    items.sort(key=lambda x: -x["pct"])
+    return {"base_date": BASE_DATE, "last_date": _ymd(d.index[-1]), "adjusted": True, "items": items}
+
+
+def calc_ratio(df):
+    """圖 7b：NVDA ÷ ^SOX，以 BASE_DATE 為 100。"""
+    d = common_frame(df, ["NVDA", "^SOX"])
+    base = pd.Timestamp(BASE_DATE)
+    if base not in d.index:
+        raise ValueError(f"基準日 {BASE_DATE} 不在收盤序列內")
+    ratio = d["NVDA"] / d["^SOX"]
+    idx = (ratio / ratio.loc[base] * 100).loc[RATIO_START:]
+    return {"base_date": BASE_DATE, "start": _ymd(idx.index[0]), "last_date": _ymd(idx.index[-1]),
+            "event": EVENT, "dates": [_ymd(x) for x in idx.index], "values": [r(v) for v in idx.values]}
+
+
+def calc_latest(df):
+    """SMH／^SOX／QQQ 收盤、52 週均線（週五收盤最近 52 筆平均）、距均線 %；NVDA 收盤；資料日。"""
+    d = common_frame(df, list(LATEST_KEYS) + ["NVDA"])
+    out = {"date": _ymd(d.index[-1]), "ma_rule": "週五收盤最近 52 筆平均（含本週最新收盤）；drop_pct＝(1−均線／收盤)×100"}
+    for sym, key in LATEST_KEYS.items():
+        s = d[sym]
+        w = s.resample("W-FRI").last().dropna()
+        if len(w) < 52:
+            raise ValueError(f"{sym} 週收盤不足 52 筆")
+        close, ma = float(s.iloc[-1]), float(w.iloc[-52:].mean())
+        out[key] = {"close": r(close), "ma52": r(ma), "drop_pct": r((1 - ma / close) * 100, 1)}
+    out["nvda"] = {"close": r(d["NVDA"].iloc[-1])}
+    return out
+
+
+def _path(close, d, grp):
+    ts = pd.Timestamp(d)
+    if ts not in close.index:
+        raise ValueError(f"高點日 {d} 不在費半收盤序列內")
+    i = close.index.get_loc(ts)
+    seg = close.iloc[i:i + MAX_DAYS + 1]
+    # 第一次收盤回到（或高於）高點就截斷，最後一點記 0：圖只畫「跌幅」，不畫創新高之後的漲幅
+    back = [k for k in range(1, len(seg)) if seg.iloc[k] >= seg.iloc[0]]
+    if back:
+        seg = seg.iloc[:back[0] + 1]
+    pct = [r((v / seg.iloc[0] - 1) * 100, 1) for v in seg.values]
+    if back:
+        pct[-1] = 0.0
+    return {"peak": d, "group": grp, "peak_close": r(seg.iloc[0]),
+            "days": len(pct) - 1, "recovered": bool(back),
+            "last_date": seg.index[-1].strftime("%Y-%m-%d"),
+            "last_pct": pct[-1], "min_pct": min(pct), "path": pct}
+
+
+def load_hist_sox(old_paths):
+    """歷史高點用的費半收盤：本機 v7 CSV；沒有就回 None（改沿用上一版路徑）；上一版也沒有才抓 yfinance 全史。"""
     if SOX_CSV.exists():
         df = pd.read_csv(SOX_CSV, parse_dates=["date"]).set_index("date")["close"]
         return df.dropna(), f"v7-backtest {SOX_CSV.name}"
+    if old_paths:
+        return None, "上一版 data.json"
     import yfinance as yf
     df = yf.download("^SOX", start="1994-01-01", auto_adjust=False, progress=False)["Close"]
     df = df.iloc[:, 0] if isinstance(df, pd.DataFrame) else df
     return df.dropna(), "yfinance ^SOX"
 
 
-def drawdown_paths():
-    close, src = load_sox()
-    paths = []
+def drawdown_paths(live_sox, old):
+    """live_sox：yfinance ^SOX 收盤序列（含 BASE_DATE 之後），None 表示這次沒抓到。
+    現在這條路徑用 live_sox 延伸到最新日；抓不到就沿用上一版並標 stale。其餘歷史高點不隨日更新。"""
+    old_dd = (old or {}).get("drawdown") or {}
+    old_paths = {p["peak"]: p for p in old_dd.get("paths", [])}
+    hist, hist_src = load_hist_sox(old_paths)
+    paths, now_stale = [], False
     for d, grp in PEAKS:
-        ts = pd.Timestamp(d)
-        if ts not in close.index:
-            raise SystemExit(f"高點日 {d} 不在費半收盤序列內")
-        i = close.index.get_loc(ts)
-        seg = close.iloc[i:i + MAX_DAYS + 1]
-        # 第一次收盤回到（或高於）高點就截斷，最後一點記 0：圖只畫「跌幅」，不畫創新高之後的漲幅
-        back = [k for k in range(1, len(seg)) if seg.iloc[k] >= seg.iloc[0]]
-        if back:
-            seg = seg.iloc[:back[0] + 1]
-        pct = [r((v / seg.iloc[0] - 1) * 100, 1) for v in seg.values]
-        if back:
-            pct[-1] = 0.0
-        paths.append({"peak": d, "group": grp, "peak_close": r(seg.iloc[0]),
-                      "days": len(pct) - 1, "recovered": bool(back),
-                      "last_date": seg.index[-1].strftime("%Y-%m-%d"),
-                      "last_pct": pct[-1], "min_pct": min(pct), "path": pct})
-    return {"source": src, "last_close_date": close.index[-1].strftime("%Y-%m-%d"), "paths": paths}
+        p = None
+        if grp == "now":
+            if live_sox is not None:
+                try:
+                    p = _path(live_sox, d, grp)
+                except Exception as e:  # noqa: BLE001
+                    print("現在路徑算不出來：", str(e)[:100])
+            if p is None:
+                p, now_stale = old_paths.get(d), True
+        elif hist is not None:
+            p = _path(hist, d, grp)
+        else:
+            p = old_paths.get(d)
+        if p is None:
+            raise SystemExit(f"高點 {d} 沒有可用資料（沒有 v7 CSV、沒有上一版、也抓不到）")
+        paths.append(p)
+    now = [p for p in paths if p["group"] == "now"][0]
+    src = f"歷史高點：{hist_src}；現在路徑：" + ("yfinance ^SOX" if not now_stale else "上一版 data.json（本次沒抓到）")
+    out = {"source": src, "last_close_date": now["last_date"], "paths": paths}
+    if now_stale:
+        out["stale"] = True
+    return out
 
 
 def load_fpe():
@@ -93,7 +227,7 @@ def forward_pe():
             old = json.loads(OUT.read_text()).get("fpe")
             if old:
                 print("fpe 沿用上一版 data.json")
-                return old
+                return {**old, "stale": True}
         raise SystemExit("取不到遠期本益比，也沒有上一版可沿用")
     sox = raw["sectors"]["sox"]
     weekly = [(x["date"], x["value"]) for x in sox["series"] if x["date"] >= "2011-01-01"]
@@ -183,20 +317,84 @@ SCENARIOS = {
 }
 
 
-def main():
-    out = {
-        "generated": dt.date.today().isoformat(),
-        "drawdown": drawdown_paths(),
-        "fpe": forward_pe(),
-        "nvidia": NVIDIA, "ai_revenue": AI_REV, "exposure": EXPOSURE, "scenarios": SCENARIOS,
-    }
+def load_old():
+    try:
+        return json.loads(OUT.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def build(argv, old, fetch=fetch_prices):
+    """組出新的 data.json 內容（不含 generated）。抓價失敗的區塊沿用 old 並標 stale: true。"""
+    old = old or {}
+    symbols = [s for s, _ in REL_TICKERS]
+    px = None
+    try:
+        px = fetch(symbols)
+    except Exception as e:  # noqa: BLE001
+        print("抓價失敗，全部價格類區塊沿用上一版：", str(e)[:120])
+
+    def block(name, fn):
+        try:
+            if px is None:
+                raise RuntimeError("沒有價格")
+            res = fn(px)
+            # 不讓資料日倒退（例如來源回傳比上一版更舊的資料）
+            prev = (old.get(name) or {}).get("last_date") or (old.get(name) or {}).get("date")
+            cur = res.get("last_date") or res.get("date")
+            if prev and cur and cur < prev:
+                raise ValueError(f"新資料日 {cur} 早於上一版 {prev}")
+            res["stale"] = False
+            return res
+        except Exception as e:  # noqa: BLE001
+            print(f"{name} 沿用上一版（stale）：", str(e)[:120])
+            if name in old:
+                return {**old[name], "stale": True}
+            return None
+
+    live_sox = None
+    if px is not None and "^SOX" in px.columns:
+        live_sox = px["^SOX"].dropna()
+    out = {"drawdown": drawdown_paths(live_sox, old)}
+    if "--fpe" in argv or "fpe" not in old:
+        out["fpe"] = forward_pe()
+    else:
+        out["fpe"] = old["fpe"]
+    for name, fn in (("rel", calc_rel), ("ratio", calc_ratio), ("latest", calc_latest)):
+        b = block(name, fn)
+        if b is not None:
+            out[name] = b
+    out.update({"nvidia": NVIDIA, "ai_revenue": AI_REV, "exposure": EXPOSURE, "scenarios": SCENARIOS})
+    out["stale"] = bool(out["drawdown"].get("stale") or out["fpe"].get("stale")
+                        or any(out.get(n, {}).get("stale", True) for n in BLOCKS))
+    return out
+
+
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    old = load_old()
+    out = build(argv, old)
+    # generated 只在內容有變時更新，同資料重跑 data.json 不變（CI 才不會天天空 commit）
+    out["generated"] = dt.date.today().isoformat()
+    if old and {k: v for k, v in old.items() if k != "generated"} == {k: v for k, v in out.items() if k != "generated"}:
+        out["generated"] = old.get("generated", out["generated"])
+    out = {"generated": out.pop("generated"), **out}
     OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    print("寫入", OUT, OUT.stat().st_size, "bytes")
+    print("寫入", OUT, OUT.stat().st_size, "bytes", "（有 stale 區塊）" if out["stale"] else "")
     for p in out["drawdown"]["paths"]:
         print(p["peak"], p["group"], "第", p["days"], "日", "回前高" if p["recovered"] else "未回前高", p["last_pct"], "%（最深", p["min_pct"], "%）")
     for m in out["fpe"]["marks"]:
         print(m["label"], m["date"], m["value"])
+    if "rel" in out:
+        print("圖 7a", out["rel"]["last_date"], " ".join(f"{i['ticker']} {i['pct']:+.1f}" for i in out["rel"]["items"]))
+    if "latest" in out:
+        print("latest", json.dumps(out["latest"], ensure_ascii=False))
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as e:  # noqa: BLE001  CI 不要因為這支變紅；上一版 data.json 原封不動
+        print("data.py 非預期錯誤，未更新：", repr(e)[:200])
