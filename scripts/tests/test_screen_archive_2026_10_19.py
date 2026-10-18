@@ -52,8 +52,11 @@ def test_qgm_archives_keep_at_most_30_dates_and_index_has_no_dead_links():
 
 
 def test_qgm_latest_json_still_present_for_seat_engine_and_page_has_note():
-    note = "本頁不再列在選單；資料仍每週更新，供選股席位的候選母體使用。"
-    for name in ("qgm", "qgm-tw"):
+    notes = {
+        "qgm": "本頁不再列在選單；資料仍每週更新，供選股席位的候選母體使用。",
+        "qgm-tw": "本頁不再列在選單；資料仍每週更新，供 DD Screener 台股池的品質與市值資料使用。",
+    }
+    for name, note in notes.items():
         data = json.loads(_read(DOCS / name / "latest.json"))
         assert {"candidates", "watch_list", "quality_pool"} <= set(data), name
         html = _read(DOCS / name / "latest.html")
