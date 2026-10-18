@@ -45,7 +45,6 @@ OUT_BODY = DOCS / "long-track" / "_scoreboard_body.html"
 sys.path.insert(0, str(ROOT / "scripts"))
 import score_flowmap as _sf  # noqa: E402  (top-level imports stdlib-only; reuse SPRT helper + latch)
 import update_long_track_w52_adaptive as _w52  # noqa: E402  (reuse fetch_close / band_exec_replay / WEIGHTS)
-import _crossasset_frozen as _d1  # noqa: E402  (S-F 影子帳戶 D1 腿；凍結搬運自 v7-backtest，見檔頭 docstring)
 
 SCHEMA = "live-scoreboard-v0"
 
@@ -87,11 +86,7 @@ SA10_CLAMP = 50.0 * SA10_CAP  # 執行層 clamp（A2 同門檻/格，clamp 隨 c
 
 SHADOW_DEFINITIONS = {
     "s60": "S-60：同標的 50/50 B&H 固定 60% ＋ 現金 40%，月再平衡，7 bps（保險價格頁 E-60 的事前可執行版本）。",
-    "sf": "S-F：50% 系統實錄 NAV ＋ 50% D1（SPY/TLT/GLD/DBC 等權、E3 趨勢＋Chandelier 半倉閘門，逐日重算），月再平衡，7 bps。僅美股。",
     "sa10": "S-A10：系統規則但 cap 1.0（無槓桿），執行層同 A2（20pp 門檻／10% 取整），clamp 改為 50pp／腿。",
-    "sf70": "S-F70：70% 系統實錄 NAV ＋ 30% D1X（拿掉 SPY 的 D1：TLT/GLD/DBC 等權各 1/3、E3 趨勢＋"
-            "Chandelier 半倉閘門，逐日重算），月再平衡，7 bps。僅美股（2026-09-10 新增，見 "
-            "PREREG['shadows']['amendments']）。",
 }
 
 SHADOW_SPRT_TEXT = (
@@ -169,11 +164,11 @@ PREREG = {
         "source_doc": "v7-backtest/docs/Shadow_Tracks_Spec.md",
         "positioning": (
             "10 月回顧點無論決定什麼，之後都需要前瞻的、非回測的對照：如果當初改成別的，會怎樣。"
-            "四條影子帳戶（S-F70 為 2026-09-10 新增，見 amendments）用同一套實錄與價格、同樣的成本，"
-            "每天記、每月一個位元。不是收斂面，任何判定都不觸發帳本動作。"
+            "兩條影子帳戶（S-60、S-A10；S-F、S-F70 已於 2026-10-19 移除，見 amendments）用同一套實錄與價格、"
+            "同樣的成本，每天記、每月一個位元。不是收斂面，任何判定都不觸發帳本動作。"
         ),
         "definitions": SHADOW_DEFINITIONS,
-        "coverage": "美股四條（S-60／S-F／S-A10／S-F70）都跑；台股跑 S-60 與 S-A10（無 D1 腿，spec 明文 D1 僅美股）。",
+        "coverage": "美股與台股各跑 S-60、S-A10 兩條。",
         "scoring": SHADOW_SPRT_TEXT,
         "no_ledger_action": "任何判定都不觸發帳本動作（spec 明文）——影子帳戶是回顧點的資訊，不是 kill condition。",
         "amendments": [
@@ -206,32 +201,29 @@ PREREG = {
                              "與前段不是同一條規則，不能連成同一條實績來解讀。事前登記的前瞻檢定針對舊規則，"
                              "新規則的前瞻檢定尚未事前登記，處理方式待持有人決定",
             },
+            {
+                "date": "2026-10-19",
+                "what": "移除影子帳戶 S-F 與 S-F70，不再計算也不再顯示，兩條線的定義與計算口徑一併從 PREREG 移出。"
+                        "S-F＝50% 系統實錄 NAV ＋ 50% D1（SPY／TLT／GLD／DBC 等權、E3 趨勢＋Chandelier 半倉閘門，"
+                        "逐日重算）；S-F70＝70% 系統實錄 NAV ＋ 30% D1X（D1 去掉 SPY，TLT／GLD／DBC 各 1/3）；"
+                        "兩條皆月再平衡、7 bps，僅美股",
+                "why": "持有人 2026-10-19 決定。F 系列對照線已在 2026-10-18 歸檔停更，D1／D1X 這一籃資產不再是候選配置，"
+                       "繼續記這兩條沒有可以回顧的對象",
+                "unchanged": "S-60、S-A10 的定義、SPRT 參數（p0=0.5／p1=0.65／α=0.05／β=0.10、n_eff floor 20）、"
+                             "命中與判定語意，以及主記分板（系統對 B-cagr／B-mdd）的計算與判定，全部不變。"
+                             "S-F、S-F70 的歷史停在最後一次計算日 2026-10-16：兩條都已收 3 個月、SPRT 進行中；"
+                             "累計淨值比系統高，S-F 為 2.34 pp、S-F70 為 1.55 pp。兩條線沒有結案判定，"
+                             "也沒有觸發任何帳本動作；逐日序列留在本次修訂前的版本紀錄，不回填、不改寫",
+            },
         ],
         "disclosure": (
             "影子帳戶與系統共用同一段實錄期，樣本同樣只有幾個月；它們的價值在累積，不在現在的數字。"
-            "S-F 的 D1 腿是回測期選的規則，影子期是它的第一段 OOS。"
         ),
         "judgment_calls": {
-            "d1_cash_proxy": (
-                "S-F 的 D1 腿現金部位（TSMOM 比較基準、run_pos_tw 未投入部位的現金報酬）改用 "
-                "yfinance 即時抓 SHY 當代理，取代 v7-backtest 原版 SHY→BIL 價格拼接（該拼接來自 "
-                "v7 repo 內部 pickle 快照，fab CI 抓不到、也不該跨 repo 讀本機檔案）；SHY 現時仍在"
-                "存續中，短率與 BIL 高度貼近，差異遠小於本影子帳戶要看的訊號雜訊。"
-            ),
-            "d1_vendoring": (
-                "fab 這支 repo 的 CI 跑不到 /Users/ivanchang/v7-backtest 本機路徑（既有 v7 相依一律"
-                "走「CANONICAL COPY + try/except」或「靜態轉錄常數」慣例，從無跨 repo import）。故將"
-                "e3_pos／chand_gate／half_gate／build_signals 等函式逐行搬運進 scripts/_crossasset_frozen.py，"
-                "功能上對齊 v7-backtest 對應原始函式（檔頭列出每個函式的搬運來源）。"
-            ),
             "sa10_clamp": (
                 "S-A10「cap 1.0」翻譯為執行層 clamp＝50pp／腿（cap1.0×50pp 滿載）；A2 的 band=20pp／"
                 "grid=10% 逐字沿用（spec 明文「執行層 A2 同」，只有 clamp 隨 cap 改變，非另開一套"
                 "執行層參數）。"
-            ),
-            "sf_rebalance": (
-                "S-F 月再平衡的時點採月末再平衡（同主記分板 B-cagr/B-mdd 的既有 JUDGMENT CALL，"
-                "維持口徑一致）；換手成本＝|實際權重−0.5|×7bps×淨值。"
             ),
             "s60_rebalance": "S-60 直接重用主記分板既有的 build_diluted(k) 月末再平衡＋7bps 邏輯，k 固定 0.6，不走 k_cagr/k_mdd 兩個 PREREG 凍結值。",
         },
@@ -697,40 +689,6 @@ def load_backtest_prior(gaps):
 # 兩市場合併（TWD，50/50 月再平衡）
 # ═══════════════════════════════════════════════════════════════════════
 
-def build_sf_series(mkt_us, d1_returns, gaps, weight_sys=0.5, tag="S-F"):
-    """S-F 系列：weight_sys 比例系統實錄 NAV ＋ (1-weight_sys) 比例 D1（或拿掉 SPY 的
-    D1 子集），月末再平衡＋7bps（同主記分板 build_diluted 月末再平衡口徑，但這裡再平衡
-    的兩腿是「系統 NAV」與「D1 NAV」而非個股腿）。weight_sys/tag 參數化後同時服務 S-F
-    （0.5、D1 四腿）與 S-F70（0.7、D1X 三腿 TLT/GLD/DBC，2026-09-10 新增，見
-    PREREG['shadows']['amendments']）——同一份簿記邏輯，不另開一份可能漂移的複製。"""
-    live_dates = [r["date"] for r in mkt_us["nav_sys"]]
-    inception = mkt_us["inception"]
-    sys_ret = mkt_us["sys_returns_by_date"]
-    w_d1 = 1.0 - weight_sys
-    sys_val, d1_val = weight_sys * 100.0, w_d1 * 100.0
-    out = [{"date": inception, "nav": 100.0}]
-    for i in range(1, len(live_dates)):
-        d = live_dates[i]
-        r_sys = sys_ret.get(d, 0.0)
-        r_d1 = d1_returns.get(d)
-        if r_d1 is None:
-            gaps.append({"market": "us", "date": d, "reason": f"[{tag}] D1 缺當日報酬，計為 0（不捏造）"})
-            r_d1 = 0.0
-        sys_val *= (1.0 + r_sys)
-        d1_val *= (1.0 + r_d1)
-        nav_pre = sys_val + d1_val
-        is_month_end = (i == len(live_dates) - 1) or (month_of(live_dates[i + 1]) != month_of(d))
-        if is_month_end and nav_pre > 0:
-            turnover = abs(weight_sys - sys_val / nav_pre)
-            cost = turnover * TURNOVER_COST_FRAC * nav_pre
-            nav_post = nav_pre - cost
-            sys_val, d1_val = weight_sys * nav_post, w_d1 * nav_post
-            out.append({"date": d, "nav": round(nav_post, 4)})
-        else:
-            out.append({"date": d, "nav": round(nav_pre, 4)})
-    return out
-
-
 def build_shadow_block(shadow_key, mkt, shadow_nav, prior_sprt):
     """一條影子帳戶對「系統實錄」的月度比較與 SPRT——命中＝影子帳戶月報酬 > 系統
     月報酬（方向與主記分板相反），逐字重用 compute_monthly_samples/build_sprt_block
@@ -758,39 +716,6 @@ def build_shadows_for_market(mk, m, prior_shadow_mk, gaps, judgment_calls):
             continue
         prior_sprt = (prior_shadow_mk.get(shadow_key) or {}).get("sprt")
         out[shadow_key] = build_shadow_block(shadow_key, m, nav_series, prior_sprt)
-    if mk == "us":
-        try:
-            d1_returns, d1_diag = _d1.build_d1_daily_returns()
-        except Exception as e:  # noqa: BLE001
-            gaps.append({"market": "us", "reason": f"S-F D1 建置失敗（{type(e).__name__}: {e}），S-F 跳過本次"})
-            d1_returns, d1_diag = {}, {}
-        if d1_returns:
-            judgment_calls.append(
-                "S-F D1 現金腿：SHY 代理取代 v7-backtest 原版 SHY→BIL 拼接（見 PREREG['shadows']"
-                "['judgment_calls']['d1_cash_proxy']）；D1 訊號逐日重算，不用回測快取。"
-            )
-            sf_nav = build_sf_series(m, d1_returns, gaps)
-            prior_sprt = (prior_shadow_mk.get("sf") or {}).get("sprt")
-            out["sf"] = build_shadow_block("sf", m, sf_nav, prior_sprt)
-            out["sf"]["d1_leg_diag"] = d1_diag
-        else:
-            gaps.append({"market": "us", "reason": "S-F：D1 日報酬序列為空，跳過本次"})
-
-        # S-F70（2026-09-10 新增，見 PREREG['shadows']['amendments']）：70% 系統實錄 ＋
-        # 30% D1X（拿掉 SPY 的 D1：TLT/GLD/DBC 等權各 1/3）——重用同一套 build_sf_series，
-        # 只換 weight_sys／tag／D1 腿清單，不另開第二份實作。
-        try:
-            d1x_returns, d1x_diag = _d1.build_d1_daily_returns(legs=["TLT", "GLD", "DBC"])
-        except Exception as e:  # noqa: BLE001
-            gaps.append({"market": "us", "reason": f"S-F70 D1X 建置失敗（{type(e).__name__}: {e}），S-F70 跳過本次"})
-            d1x_returns, d1x_diag = {}, {}
-        if d1x_returns:
-            sf70_nav = build_sf_series(m, d1x_returns, gaps, weight_sys=0.7, tag="S-F70")
-            prior_sprt = (prior_shadow_mk.get("sf70") or {}).get("sprt")
-            out["sf70"] = build_shadow_block("sf70", m, sf70_nav, prior_sprt)
-            out["sf70"]["d1_leg_diag"] = d1x_diag
-        else:
-            gaps.append({"market": "us", "reason": "S-F70：D1X 日報酬序列為空，跳過本次"})
     return out
 
 
@@ -956,9 +881,8 @@ def mkt_section(mkt):
 </div>"""
 
 
-SHADOW_LABELS = {"s60": "S-60（固定 60% B&H）", "sf": "S-F（50% 系統 ＋ 50% D1）", "sa10": "S-A10（cap 1.0 無槓桿）",
-                  "sf70": "S-F70（70% 系統 ＋ 30% D1X）"}
-SHADOW_COLORS = {"s60": "#8250df", "sf": "#0969da", "sa10": "#bf3989", "sf70": "#bc4c00"}
+SHADOW_LABELS = {"s60": "S-60（固定 60% B&H）", "sa10": "S-A10（cap 1.0 無槓桿）"}
+SHADOW_COLORS = {"s60": "#8250df", "sa10": "#bf3989"}
 
 
 def shadow_market_section(mk, mkt, shadows):
@@ -1109,7 +1033,7 @@ details.lsb-prereg pre{{max-height:280px;overflow:auto;background:#f6f8fa;border
 {tw_sec}
 {combined_note}
 <h2 style="margin:1.4rem 0 .3rem;font-size:1.05rem">影子帳戶：如果當初選別的</h2>
-<div class="lsb-plain">💬 白話：這裡的三條線不是本站現在真的在跑的東西，是「如果 10 月回顧點當初選了別的做法，帳會怎麼記」的平行對照——S-60 是不解方程、事前就能執行的固定六成持股版本；S-F 是把一半資金換成一籃子跨資產（美股／公債／黃金／原物料）趨勢規則；S-A10 是拿掉槓桿上限的系統本尊。上面每個市場的 SPRT 淘汰賽問的是「系統有沒有贏過稀釋現金的基準」，這裡的 SPRT 問的是相反方向的問題：「如果當初選了這條影子帳戶，會不會比現在的系統好」。判紅只代表某條影子帳戶的實錄目前不如系統，判綠代表某條影子帳戶目前贏過系統——兩者都只是留給 10 月回顧點參考的證據，不會觸發任何帳本動作或配置調整。</div>
+<div class="lsb-plain">💬 白話：這裡的兩條線不是本站現在真的在跑的東西，是「如果 10 月回顧點當初選了別的做法，帳會怎麼記」的平行對照——S-60 是不解方程、事前就能執行的固定六成持股版本；S-A10 是拿掉槓桿上限的系統本尊。上面每個市場的 SPRT 淘汰賽問的是「系統有沒有贏過稀釋現金的基準」，這裡的 SPRT 問的是相反方向的問題：「如果當初選了這條影子帳戶，會不會比現在的系統好」。判紅只代表某條影子帳戶的實錄目前不如系統，判綠代表某條影子帳戶目前贏過系統——兩者都只是留給 10 月回顧點參考的證據，不會觸發任何帳本動作或配置調整。原有的 S-F、S-F70 兩條已於 2026-10-19 移除，原因與停算日的數字見下方 PREREG 修訂紀錄。</div>
 {us_shadow_sec}
 {tw_shadow_sec}
 <details class="lsb-prereg"><summary>PREREG（預先寫死、事後不能改的規則，展開查看逐字條文）</summary><pre>{esc(prereg_json)}</pre></details>
