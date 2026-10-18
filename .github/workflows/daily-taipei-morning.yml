@@ -9,7 +9,7 @@ name: Daily Taipei Morning Band
 # 排程：Tue-Sat 01:00 UTC ＝ 台北 09:00。
 #
 # 整合對照表（舊 workflow → 本帶 steps）：
-#   daily-non-fundamental-refresh.yml → build_dd_screener.py / build_quality_entry.py
+#   daily-non-fundamental-refresh.yml → build_dd_screener.py（build_quality_entry.py 於 2026-10-19 歸檔停跑）
 #                                       / state_machine/study/write_daily_close.py
 #                                       / sop_funnel/build.py + alert.py（含 SOP email）
 #
@@ -148,9 +148,8 @@ jobs:
         run: python scripts/build_tenbagger.py || echo "::warning::tenbagger v5 small-cap pool refresh failed"
         continue-on-error: true
 
-      - name: "[non-fundamental] Step 3 — Quality-Entry screener"
-        run: python scripts/build_quality_entry.py
-        continue-on-error: true
+      # Step 3（Quality-Entry screener）2026-10-19 持有人拍板歸檔：頁面停止更新、每日快照搬出網站，
+      # 本帶不再跑 scripts/build_quality_entry.py（腳本留著可手動重產；dd2/run.py 仍 import 其中的函式）。
 
       - name: "[non-fundamental] Step 8 — Study daily closes slice (態④研究寬表 forward 切片)"
         run: python scripts/state_machine/study/write_daily_close.py
@@ -221,9 +220,6 @@ jobs:
             docs/dd-screener/smallcap/ \
             docs/dd-screener/tw/ \
             docs/cockpit-tw/data/ \
-            docs/dd-screener/quality-entry.html \
-            docs/dd-screener/quality-entry.json \
-            docs/dd-screener/quality-entry-snapshots/ \
             docs/dd-screener/state-machine/data/study/closes_daily/ \
             docs/dd-screener/sop-funnel.html \
             docs/dd-screener/sop-funnel/ \

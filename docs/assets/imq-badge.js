@@ -387,8 +387,8 @@
     pop.querySelector(".qtm-pop-body").innerHTML = renderPopupBody(idx, ticker);
     var dd = ddInfo(idx, ticker);
     var stageCode = stageOf(idx, ticker);
-    var listPage = stageCode === "S1" ? "/rs-turn/" : "/stages/";
-    var listLabel = stageCode === "S1" ? "看它在轉強觀察 →" : "看它在個股階段雷達 →";
+    var listPage = "/stages/";  // 2026-10-19：轉強觀察已併入階段雷達，所有階段都連到同一頁
+    var listLabel = "看它在個股階段雷達 →";
     var linksEl = pop.querySelector(".qtm-pop-links");
     var links = "";
     if (dd.path) links += '<a href="' + esc(dd.path) + '">看 DD 報告 →</a>';

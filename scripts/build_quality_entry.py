@@ -17,7 +17,8 @@ Pipeline:
 Usage:
   python3 scripts/build_quality_entry.py
   python3 scripts/build_quality_entry.py --dry-run     # 不寫檔
-  python3 scripts/build_quality_entry.py --no-snapshot # 不寫 daily snapshot
+  python3 scripts/build_quality_entry.py --no-snapshot # 不寫 daily snapshot（2026-10-19 起已是預設）
+  python3 scripts/build_quality_entry.py --snapshot    # 寫 daily snapshot（歸檔後預設不寫，舊快照在 v7-backtest/data/quality_entry_snapshots/）
 """
 from __future__ import annotations
 
@@ -32,6 +33,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dd_screener_quality import has_excel_cagr  # noqa: E402
 from site_nav import DD_SCREENER_SUBNAV, build_subnav, full_nav_block  # noqa: E402
+from archive_banner import archive_banner  # noqa: E402  (2026-10-19 歸檔橫幅；文字集中在 scripts/archive_banner.py)
 
 # ── paths ─────────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
@@ -45,6 +47,9 @@ SNAPSHOT_DIR = OUTPUT_DIR / "quality-entry-snapshots"
 NAV_BLOCK = full_nav_block(
     "pick", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/quality-entry.html")
 )
+# 2026-10-19 持有人拍板歸檔：停止自動更新（daily-taipei-morning.yml 的 Step 3 與 update_dd_index.py 的觸發已拿掉），
+# 頁面頂端放歸檔橫幅；本程式留著可手動重產（重產的頁面仍帶橫幅），dd2/run.py 也 import 本檔的 ma_state_label_and_score。
+ARCHIVE_BANNER = archive_banner("quality_entry")
 
 TAIPEI_TZ = timezone(timedelta(hours=8))
 SCHEMA_VERSION = "1.0"
@@ -685,6 +690,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 </head>
 <body>
 {NAV_BLOCK}
+{ARCHIVE_BANNER}
 
 <div class="hero">
   <div class="hero-inner">
@@ -766,7 +772,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
       <li>MA snapshot 為 yfinance 週線（每次 build 重抓）；timing 欄位來自 docs/screener/latest.json 每日 cron + yfinance fallback</li>
     </ul>
     <h4>機器可讀</h4>
-    <p>JSON sidecar: <a href="/dd-screener/quality-entry.json"><code>/dd-screener/quality-entry.json</code></a> · 每日快照：<code>/dd-screener/quality-entry-snapshots/YYYY-MM-DD.json</code>（schema v{SCHEMA_VERSION}）</p>
+    <p>JSON sidecar: <a href="/dd-screener/quality-entry.json"><code>/dd-screener/quality-entry.json</code></a> · 每日快照（schema v{SCHEMA_VERSION}，2026-05-18 至 2026-10-18）已移出網站，不再提供</p>
   </div>
 
 </div>
@@ -786,7 +792,8 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--dry-run", action="store_true", help="Don't write files")
-    p.add_argument("--no-snapshot", action="store_true", help="Skip daily snapshot write")
+    p.add_argument("--no-snapshot", action="store_true", help="Skip daily snapshot write (default since 2026-10-19)")
+    p.add_argument("--snapshot", action="store_true", help="Write the daily snapshot (off by default since archive, 2026-10-19)")
     args = p.parse_args()
 
     doc = build_pipeline()
@@ -804,7 +811,7 @@ def main() -> int:
 
     render_html(doc, HTML_OUT)
 
-    if not args.no_snapshot:
+    if args.snapshot and not args.no_snapshot:
         SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
         snap_path = SNAPSHOT_DIR / f"{_today()}.json"
         snap_path.write_text(

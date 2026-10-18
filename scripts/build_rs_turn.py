@@ -10,6 +10,10 @@ turned up again — "從弱轉強", not "貼高". It is NOT a convergence surfac
 (2026-07-07 policy): output never feeds picks/GRP/dd-screener/cockpit rankings,
 only two plain links (docs/screeners.html card, docs/cockpit disc-link).
 
+2026-10-19：網頁 docs/rs-turn/index.html 已改為轉址到 /stages/（個股階段雷達，轉強是它的 S1 一段）；
+本程式只寫 docs/rs-turn/data/*.json 與 data/rs_turn/universe.json，階段雷達（build_stages.py）仍匯入本檔的
+母體與六條件，資料照常每日產生。
+
 Also produces a breadth line — how many names pass the full screen each day,
 recomputed over a fixed trailing window (see BREADTH section) — as a
 mechanism-only descriptor ("a batch of names turning strong together"), never

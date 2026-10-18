@@ -11,11 +11,16 @@
 2026-10-19 追加第八條：SMH 槓桿疊加（/long-track-smh/leverage/，key＝smh_leverage），
 橫幅的日期與標籤沿用本檔的 ARCHIVE_DATE。
 
+2026-10-19 追加選股區三頁（持有人拍板）：Quality-Entry（/dd-screener/quality-entry.html）、
+Tier Matrix（/id/tier_matrix.html）、衛星·循環軌（/dd-screener/cyclical-track.html），key 與文字放在下面的
+SCREEN_ARCHIVE，日期標籤是 2026-10-19，連結指向各自的上一層（不是長線系統主控台）。上面七條長線的 PAGES、
+ARCHIVE_TEXT 與 ARCHIVE_LABEL 完全不動。
+
 F70 的頁面（/backtest/f_comfort/）走回測區既有的「退役橫幅」機制（docs/backtest/_page_meta.py 的
 RET_BANNER），文字同 ARCHIVE_TEXT["f70"]。
 
 用法：
-    python3 scripts/archive_banner.py --apply   # 補進已產出的 HTML（只動橫幅區塊；含 2026-10-19 追加的三個手動報告索引）
+    python3 scripts/archive_banner.py --apply   # 補進已產出的 HTML（只動橫幅區塊；含 2026-10-19 追加的三個手動報告索引與三個選股頁）
     python3 scripts/archive_banner.py --check   # 只檢查各頁橫幅是否在、文字是否一致
 """
 from __future__ import annotations
@@ -76,12 +81,39 @@ MANUAL_PAGES = {
     "synthesis": "docs/research/synthesis/_body.html",
 }
 
+# ── 2026-10-19 選股區三頁歸檔 ──────────────────────────────────────────────────
+SCREEN_ARCHIVE_DATE = "2026-10-19"
+SCREEN_ARCHIVE_LABEL = f"已歸檔・{SCREEN_ARCHIVE_DATE} 停止更新"
+SCREEN_ARCHIVE = {
+    "quality_entry": {
+        "page": "docs/dd-screener/quality-entry.html",
+        "text": "持有人 2026-10-19 決定歸檔：這頁的複合分沒有任何決策流程在用，選股排序以席位引擎和 DD Screener 主表為準。"
+                "頁面和最後一版名單保留，每日快照已移出網站。",
+        "link": ("/dd-screener/", "DD Screener 主表 →"),
+    },
+    "tier_matrix": {
+        "page": "docs/id/tier_matrix.html",
+        "text": "持有人 2026-10-19 決定歸檔：Tier 分級停在 2026-07-05 的判斷，原訂 60 天複審沒有做。"
+                "本頁保留作為當時的定見紀錄，Tier 不再更新；表中訊號、裁決等即時欄位仍讀 DD Screener 的當日資料，"
+                "個股現行判斷以 DD 報告為準。",
+        "link": ("/id/", "產業深度索引 →"),
+    },
+    "cyclical_track": {
+        "page": "docs/dd-screener/cyclical-track.html",
+        "text": "持有人 2026-10-19 決定歸檔：循環股不再單獨列一條線。本頁停止更新，名單停在最後一次產生的版本；"
+                "循環軌的資料仍每週產生，選股主控台陣容表的等待池位置閘還在讀它。",
+        "link": ("/cockpit/", "選股主控台 →"),
+    },
+}
+
 START = "<!--archive-banner-->"
 END = "<!--/archive-banner-->"
 
 
 def archive_banner(key: str) -> str:
     """單行 HTML（自帶行內樣式，不依賴各頁的 CSS 變數），夾在標記之間。"""
+    if key in SCREEN_ARCHIVE:
+        return _screen_banner(key)
     if key in MANUAL_ARCHIVE:
         label, txt, href, link_text = MANUAL_ARCHIVE[key]
         link = (f'　<a href="{href}" target="_top" style="color:#1a56db;font-weight:600;white-space:nowrap">{link_text}</a>'
@@ -98,6 +130,19 @@ def archive_banner(key: str) -> str:
     )
 
 
+def _screen_banner(key: str) -> str:
+    """選股區三頁的橫幅：同樣式，日期標籤是 2026-10-19，連結指向各自的上一層。"""
+    spec = SCREEN_ARCHIVE[key]
+    href, label = spec["link"]
+    return (
+        f'{START}<div style="background:#f4f4f5;border-bottom:1px solid #d4d4d8;border-left:6px solid #71717a;'
+        f'color:#3f3f46;padding:.8rem 1.2rem;font-size:.9rem;line-height:1.7">'
+        f'<div style="max-width:1080px;margin:0 auto"><b>{SCREEN_ARCHIVE_LABEL}</b>　{spec["text"]}'
+        f'　<a href="{href}" style="color:#1a56db;font-weight:600;white-space:nowrap">{label}</a>'
+        f'</div></div>{END}'
+    )
+
+
 def _nav_end(text: str) -> int:
     """<body> 之後全站導覽列結束的位置（導覽列由 site_nav 管，橫幅放在它後面，重生導覽不會動到）。"""
     b = text.find("<body")
@@ -108,6 +153,12 @@ def _nav_end(text: str) -> int:
     if h < 0:
         return b
     pos = h + len("</header>")
+    # dd-screener 各頁在 </header> 後面多一條次選單（<div class="imq-subnav">…</div></div>），橫幅放在它後面
+    rest = text[pos:].lstrip("\n")
+    if rest.startswith('<div class="imq-subnav">'):
+        s = text.find("</div></div>", len(text) - len(rest))
+        if s >= 0:
+            pos = s + len("</div></div>")
     nxt = text[pos:].lstrip("\n")
     if nxt.startswith("<script>(function(){document.querySelectorAll('.imq-dd-btn')"):
         s = text.find("</script>", pos) + len("</script>")
@@ -133,7 +184,8 @@ def main(argv: list[str]) -> int:
         print(__doc__)
         return 2
     bad = 0
-    for key, rel in {**PAGES, **MANUAL_PAGES}.items():
+    all_pages = {**PAGES, **MANUAL_PAGES, **{k: v["page"] for k, v in SCREEN_ARCHIVE.items()}}
+    for key, rel in all_pages.items():
         p = root / rel
         text = p.read_text(encoding="utf-8")
         new = apply_to_html(text, key)

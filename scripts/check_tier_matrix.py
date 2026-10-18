@@ -433,6 +433,10 @@ def run_check(quiet: bool = False, json_out: bool = False, min_id_count: int = 2
 # HTML injection (for /research/ and /id/ landing pages)
 # ---------------------------------------------------------------------------
 
+# 2026-10-19 持有人拍板：Tier Matrix 頁歸檔、停止更新（橫幅文字見 scripts/archive_banner.py 的 SCREEN_ARCHIVE["tier_matrix"]）。
+# 歸檔後不再往 /id/ 索引注入「Tier Matrix 健康度」卡片；run_check()（命令列健康度檢查）照舊可用，只是建議不再有人處理。
+TIER_MATRIX_ARCHIVED = True
+
 INJECTION_MARKER_START = "<!-- TIER_MATRIX_ALERT_START -->"
 INJECTION_MARKER_END = "<!-- TIER_MATRIX_ALERT_END -->"
 
@@ -521,6 +525,9 @@ def build_alert_html(report: dict) -> str:
 
 def inject_html_alert(min_id_count: int = 2, include_geopolitics: bool = False) -> int:
     """Generate alert HTML and inject into /research/ and /id/ landing pages."""
+    if TIER_MATRIX_ARCHIVED:
+        print("ℹ️ Tier Matrix 已於 2026-10-19 歸檔，不再注入健康度卡片（見 scripts/archive_banner.py）")
+        return 0
     # First run check in JSON mode internally
     id_tickers: dict[str, list[str]] = {}
     if not ID_DIR.exists():

@@ -3,6 +3,9 @@ RS + VCP Screener (Mark Minervini Style)
 Computes Relative Strength + Volatility Contraction Pattern scores
 for ~200 US stocks. Outputs JSON for web display.
 
+2026-10-19：網頁 docs/screener.html 與 docs/screeners.html 已改為轉址到 /stages/（個股階段雷達）；
+本程式只寫 docs/screener/*.json，階段雷達、台股池、價格快取等仍讀這些資料，資料照常每日產生。
+
 Usage:
   python scripts/screener.py          # full run
   python scripts/screener.py --quick  # skip fundamentals (faster)

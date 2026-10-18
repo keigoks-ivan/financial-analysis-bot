@@ -3218,33 +3218,10 @@ def main():
     if not screener_ok:
         return _emit_sync_result(required_failures, optional_failures)
 
-    # Event-driven trigger for Quality-Entry screener (品質複利者 + 勝率切入點).
-    # Reads latest.json (schema v1.2+) and emits docs/dd-screener/quality-entry.{html,json}
-    # plus a daily snapshot. Independent of Alpha Ranker — its failure must not block
-    # this; both are supplementary to the canonical /research/ + /dd-screener/.
-    qe_script = Path(__file__).resolve().parent / "build_quality_entry.py"
-    if not qe_script.exists():
-        optional_failures.append(f"缺少 build_quality_entry.py：{qe_script}")
-    else:
-        print(f"\n→ Auto-trigger: {qe_script.name}")
-        try:
-            subprocess.run(
-                [sys.executable, str(qe_script)],
-                check=True,
-            )
-        except subprocess.CalledProcessError as e:
-            optional_failures.append(f"build_quality_entry.py exit {e.returncode}")
-            print(
-                f"\n⚠ Quality-Entry build failed (exit {e.returncode}). "
-                f"Rerun `python3 {qe_script}` manually.",
-                file=sys.stderr,
-            )
-        except Exception as e:
-            optional_failures.append(f"build_quality_entry.py：{e}")
-            print(
-                f"\n⚠ Quality-Entry errored: {e}.",
-                file=sys.stderr,
-            )
+    # ARCHIVED 2026-10-19（持有人拍板）：Quality-Entry screener（docs/dd-screener/quality-entry.{html,json}）
+    # 歸檔停更，DD 發布不再連鎖觸發 build_quality_entry.py。腳本留著可手動重產（頁面仍帶歸檔橫幅），
+    # dd2/run.py 的 _ma_state() 仍 import 其中的 ma_state_label_and_score，所以檔案不可刪。
+    # 其餘 DD 同步步驟不讀 quality-entry 的任何輸出。
 
     # ARCHIVED 2026-07-07（選股頁面整理，見 notes/site-internal/root/
     # _proposal_stock_pages_cleanup_20260707.md）：Bottom-Out / Breakout /

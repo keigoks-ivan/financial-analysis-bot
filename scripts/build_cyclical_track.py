@@ -27,6 +27,7 @@ Usage:
   python3 scripts/build_cyclical_track.py
   python3 scripts/build_cyclical_track.py --dry-run     # 不寫檔
   python3 scripts/build_cyclical_track.py --no-snapshot # 不寫 daily snapshot
+  python3 scripts/build_cyclical_track.py --write-html  # 另外重產頁面（2026-10-19 起預設不寫，頁面已歸檔）
 """
 from __future__ import annotations
 
@@ -39,6 +40,7 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from site_nav import DD_SCREENER_SUBNAV, build_subnav, full_nav_block  # noqa: E402
+from archive_banner import archive_banner  # noqa: E402  (2026-10-19 歸檔橫幅；文字集中在 scripts/archive_banner.py)
 
 # ── paths ─────────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
@@ -52,6 +54,10 @@ SNAPSHOT_DIR = OUTPUT_DIR / "cyclical-track-snapshots"
 NAV_BLOCK = full_nav_block(
     "pick", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/cyclical-track.html")
 )
+# 2026-10-19 持有人拍板歸檔：頁面（cyclical-track.html）停止更新，頂端放歸檔橫幅；預設不再寫 HTML，要手動重產加 --write-html。
+# 資料（cyclical-track.json 與每週快照）照常每週寫：選股主控台陣容表的等待池位置閘（docs/cockpit/index.html）、
+# 流程板機片段（build_pipeline_page.py）與 portfolio-manager 都還在讀這份 JSON。
+ARCHIVE_BANNER = archive_banner("cyclical_track")
 
 TAIPEI_TZ = timezone(timedelta(hours=8))
 SCHEMA_VERSION = "1.0"
@@ -446,6 +452,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 </head>
 <body>
 {NAV_BLOCK}
+{ARCHIVE_BANNER}
 
 <div class="hero">
   <div class="hero-inner">
@@ -549,6 +556,8 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--dry-run", action="store_true", help="Don't write files")
     p.add_argument("--no-snapshot", action="store_true", help="Skip snapshot write")
+    p.add_argument("--write-html", action="store_true",
+                   help="Also regenerate cyclical-track.html (archived 2026-10-19; off by default)")
     args = p.parse_args()
 
     doc = build_pipeline()
@@ -564,7 +573,10 @@ def main() -> int:
     )
     print(f"  ✓ Wrote {JSON_OUT} ({JSON_OUT.stat().st_size:,} bytes)")
 
-    render_html(doc, HTML_OUT)
+    if args.write_html:
+        render_html(doc, HTML_OUT)
+    else:
+        print(f"  (skip) {HTML_OUT.name} 已歸檔，不重寫頁面；要重產加 --write-html")
 
     if not args.no_snapshot:
         SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
