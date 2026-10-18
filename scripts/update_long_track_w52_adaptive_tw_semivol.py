@@ -64,6 +64,8 @@ except ImportError:                        # v7-backtest: repo-root snippet
     from site_nav_snippet import full_nav_block  # noqa: E402
 
 NAV_BLOCK = full_nav_block("system", "lthub")  # 2026-08-23 系統群瘦身：voltrack 項移除，併入系統主控台
+from archive_banner import archive_banner  # noqa: E402  (2026-10-18 歸檔橫幅；文字集中在 scripts/archive_banner.py)
+ARCHIVE_BANNER = archive_banner("tw_semivol")
 
 # ---- output dir: <repo_root>/docs/long-track-w52-adaptive/ -----------------
 _cand = [HERE.parent / "docs", HERE.parents[2] / "docs" if len(HERE.parents) >= 3 else HERE / "docs"]
@@ -937,6 +939,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </head>
 <body>
 {NAV_BLOCK}
+{ARCHIVE_BANNER}
 <div class="page-hdr">
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / <a href="/long-track-w52-adaptive/">W52 × 自適應波動率（實單主系統）</a> / 台股 B-ii 影子追蹤</div>

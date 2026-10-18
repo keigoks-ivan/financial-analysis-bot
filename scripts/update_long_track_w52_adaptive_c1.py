@@ -45,6 +45,7 @@ sys.path.insert(0, str(HERE))
 
 import update_long_track_w52_adaptive as _w52  # noqa: E402  (fetch_close／band_exec_replay／WEIGHTS)
 import build_live_scoreboard as _lsb  # noqa: E402  (S-A10 執行層與日報酬簿記，原函式重用)
+from archive_banner import archive_banner  # noqa: E402  (2026-10-18 歸檔橫幅；文字集中在 scripts/archive_banner.py)
 
 try:                                       # fab: scripts/site_nav.py
     from site_nav import full_nav_block
@@ -348,8 +349,8 @@ def render(st: dict, bt: dict) -> str:
   <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>債金版影子對照｜實盤未採用，僅並排追蹤 | InvestMQuest Research</title>
-  <meta name="description" content="美股債金版影子對照：股票部分 cap 1.0 不借錢，加 IEF／GLD 週線趨勢疊加；與實單主系統並排追蹤，實盤未採用。">
+  <title>債金版影子對照｜已歸檔，2026-10-19 起成為美股實單 | InvestMQuest Research</title>
+  <meta name="description" content="美股債金版影子對照（已歸檔，2026-10-18 停止更新）：股票部分不借錢，加 IEF／GLD 週線趨勢疊加；2026-10-19 起成為美股實單，之前的影子紀錄保留。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
@@ -395,6 +396,7 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 </head>
 <body>
 {nav_html}
+{archive_banner('c1')}
 <div class="page-hdr">
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">系統主控台</a> / <a href="/long-track-w52-adaptive/">實單主系統</a> / 債金版影子對照</div>
@@ -404,7 +406,7 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 </div>
 <div class="container">
 
-<div class="banner"><b class="tag">實盤未採用</b>債金版只在這裡並排追蹤，實盤不動、不下單、不構成任何配置建議。數據截至 {last['date']}，頁面更新 {now} 台北時間。</div>
+<div class="banner"><b class="tag">已歸檔</b>債金版 2026-10-19 起成為美股實單，本頁停止更新，以下是上線前的影子紀錄，不構成任何配置建議。數據截至 {last['date']}，頁面更新 {now} 台北時間。</div>
 
 <div class="card">
 <h2>債金版是什麼</h2>

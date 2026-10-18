@@ -5,8 +5,10 @@
 四分頁單一入口：
   #overview   總覽        — 頂部「今天」儀表板（讀 state.json／live_scoreboard.json，見
                             render_today_strip；今天曝險＋影子帳戶一覽，不重算任何數字）
-                            ＋家族地圖（實單主系統大卡片／影子對照＋前瞻 OOS 候選一行式／
-                            已退役凍結對照收進單一 details／沿革白話盒收進 details），inline
+                            ＋家族地圖三區（2026-10-18 整理）：實單主系統大卡片／還在測的
+                            （一張小表，每列一個還沒答案的問題）／歸檔（預設收起的 details，
+                            每條一句結論，文字來自 scripts/archive_banner.py）；沿革白話盒
+                            收進 details，inline
   #live       美股即時    — iframe 嵌入 /long-track-w52-adaptive/_body.html
   #scoreboard 記分板      — iframe 嵌入 /long-track/_scoreboard_body.html（2026-09-10 由
                             #live 拆出獨立分頁；#live 內保留一個跳轉連結）
@@ -48,15 +50,13 @@ NAV_BLOCK = full_nav_block("system", "lthub")
 # 實盤證據清單的資料來源：回測區頁面資料（docs/backtest/_page_meta.py，首頁第①區同一份）
 sys.path.insert(0, str(HERE.parent / "docs" / "backtest"))
 import _page_meta as _PM  # noqa: E402
+from archive_banner import ARCHIVE_DATE, ARCHIVE_TEXT  # noqa: E402  (歸檔區每條線的一句結論)
 OUT = HERE.parent / "docs" / "long-track" / "index.html"
 
 # 2026-09-10 總覽儀表板化：讀既有兩份 JSON 產生「今天」區塊，本檔不重新計算任何數字——
 # 缺欄位一律顯示「—」，絕不捏造。
 STATE_JSON = HERE.parent / "docs" / "long-track-w52-adaptive" / "state.json"
 SCOREBOARD_JSON = HERE.parent / "docs" / "market" / "data" / "live_scoreboard.json"
-LEVERAGE_STATE_JSON = HERE.parent / "docs" / "long-track-w52-adaptive" / "leverage_state.json"
-C1_STATE_JSON = HERE.parent / "docs" / "long-track-w52-adaptive" / "c1_shadow_state.json"
-NOMA_STATE_JSON = HERE.parent / "docs" / "long-track-w52-adaptive" / "noma_state.json"
 
 SPRT_MEANING = {          # 見 build_live_scoreboard.py 的 green/yellow/red 定義
     "green": ("綠", "影子勝過系統"),
@@ -64,7 +64,8 @@ SPRT_MEANING = {          # 見 build_live_scoreboard.py 的 green/yellow/red �
     "yellow": ("黃", "樣本不足，尚未能判定"),
 }
 
-# 每組＝(分類、色、突出、系統清單)；系統 dict：name／url／one／status／freq／email
+# 三區（2026-10-18 影子／對照線整理，持有人拍板）：實單主系統／還在測的／歸檔。
+# 實單主系統：每組＝(分類、色、突出、系統清單)；系統 dict：name／url／one／status／freq／email
 GROUPS = [
     ("實單主系統", "live", True, [
         {"name": "W52 × 自適應波動率（美股債金版・台股不借錢版）", "url": "/long-track-w52-adaptive/",
@@ -73,62 +74,52 @@ GROUPS = [
                 "此前（2026-07-18 至 10-16）用 cap 1.5 ＋日線均線確認，現降為對照線，每日更新、不寄信。",
          "status": ("實單", "live"), "freq": "每交易日 × 2（台／美收盤後）", "email": "✅ 有"},
     ]),
-    ("影子對照（跟實盤同一套引擎，只改一個地方）", "shadow", False, [
-        {"name": "不借錢版", "url": "/long-track-w52-adaptive/leverage.html", "key": "cap10",
-         "diff": "股票最多 100%，不借錢；2026-10-19 起台股實盤與美股的股票部分用的就是這條規則。",
-         "ask": "不借錢之後，和舊規則比差多少？", "status": "10-19 起即實盤"},
-        {"name": "債金版", "url": "/long-track-w52-adaptive/c1-shadow.html", "key": "c1",
-         "diff": "不借錢版，再加公債（IEF）和黃金（GLD）：兩者各自趨勢向上時，各加最多 20%。2026-10-19 起美股實盤用這條規則。",
-         "ask": "加公債、黃金有沒有幫助？", "status": "10-19 起即實盤"},
-        {"name": "舊規則 cap 1.5（對照線）", "url": "/long-track-w52-adaptive/cap15.html", "key": "cap15",
-         "diff": "2026-10-19 以前的實盤規則：股票最多 150%，加日線均線確認。",
-         "ask": "新規則比舊規則好還是差？", "status": "對照線・不寄信"},
-        {"name": "舊規則版", "url": "/long-track-w52-adaptive/noma.html", "key": "noma",
-         "diff": "2026-09-15 以前的實盤規則：股票最多 150%，沒有均線條件（維持不動的舊影子）。",
-         "ask": "均線條件有沒有用？", "status": None},
-    ]),
-    ("前瞻 OOS 候選（決策前研究通過、尚非實單）", "cand", False, [
-        {"name": "🥇 GLD 金 sleeve", "url": "/long-track-gld/",
-         "one": "非股票 sleeve 決策前研究通過後的前瞻紙上追蹤（單腿 GLD、cap 1.0、"
-                "W52×自適應＋A2）。長樣本 1976-2026 含 20 年熊市壓力測試通過。<b>尚非實單</b>。",
-         "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日（美股收盤後）", "email": "✅（可行動變化）"},
-        {"name": "🐢 商品 Sleeve（80/20 組合）", "url": "/turtle-sleeve/",
-         "one": "GLD/USO→期貨 商品 sleeve 疊上 STX50 的 80/20 組合曝險，OOS 並行追蹤。",
-         "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日", "email": "—"},
-        {"name": "🧩 F70：A 70%＋D1（TLT／GLD／DBC）30%", "url": "/backtest/f_comfort/",
-         "one": "2026-09-10 選定的紙上候選；記分板 S-F70 影子帳戶每日追蹤，見 #scoreboard；"
-                "D1 拿掉 SPY 因為 A 已是美股。",
-         "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日（隨 W52 主系統更新）",
-         "email": "✅（D1X 腿部位變化、月底再平衡）"},
-    ]),
-    ("已退役・凍結對照（被 W52×自適應取代）", "ret", False, [
-        {"name": "STX50（SMH/QQQ 美股）", "url": "/long-track-smh/",
-         "one": "2026-07-18 由 W52×自適應接棒、2026-07-23 停更（cron 已移除）。",
-         "status": ("已凍結・2026-07-23 停更", "ret"), "freq": "已停更（僅手動）", "email": "—"},
-        {"name": "E3（0050/2330 台股）", "url": "/long-track-tw/",
-         "one": "2026-07-18 由 W52×自適應接棒、2026-07-23 停更（cron 已移除）。",
-         "status": ("已凍結・2026-07-23 停更", "ret"), "freq": "已停更（僅手動）", "email": "—"},
-        {"name": "0050 + 2330 固定 σ（歸檔）", "url": "/long-track-tw-vt/",
-         "one": "固定 σ 版波動率目標，vt 家族早期研究線、已歸檔對照。",
-         "status": ("凍結對照", "ret"), "freq": "歸檔", "email": "—"},
-        {"name": "自適應美台總覽（歸檔）", "url": "/long-track-adaptive-vt/",
-         "one": "自適應 σ 美台總覽，vt 家族研究線、已歸檔對照。",
-         "status": ("凍結對照", "ret"), "freq": "歸檔", "email": "—"},
-        {"name": "QQQ + SMH 長軌 × 套袖（歸檔）", "url": "/long-track-qs-vt/",
-         "one": "週線長軌閘門 × 波動率套袖組合，vt 家族研究線、已歸檔對照。",
-         "status": ("凍結對照", "ret"), "freq": "歸檔", "email": "—"},
-        {"name": "六狀態機（SMH/QQQ）", "url": "/backtest/six_state/status/",
-         "one": "早期六態機引擎，已退役、僅手動；被 W52×自適應取代。",
-         "status": ("凍結對照", "ret"), "freq": "手動", "email": "—"},
-    ]),
+]
+
+# 還在測的：每列一個還沒答案的問題。q／start／due／now／name／url（url 為 None 表示頁面還沒建）。
+TESTING = [
+    {"q": "新規則（2026-10-19 起：美股債金版、台股不借錢版）比舊規則（股票上限 150%，加日線均線確認）好嗎？",
+     "start": "2026-10-19",
+     "due": "上線滿 60 個交易日，或組合首次出現 10% 以上回撤時回顧（草案，持有人未確認）",
+     "now": "2026-10-19 起累積中",
+     "name": "舊規則對照線", "url": "/long-track-w52-adaptive/cap15.html"},
+    {"q": "NFCI 紅燈時持股減半，能不能讓回撤變淺？",
+     "start": "登記中", "due": "登記中", "now": "尚未開始",
+     "name": None, "url": None},
+]
+
+# 歸檔：先 2026-10-18 歸檔的七條（一句結論來自 archive_banner.ARCHIVE_TEXT，與各頁頂端橫幅同字），
+# 再接原本已退役的六條。每列（名稱、網址、一句結論、右側狀態字）。
+ARCHIVED_NEW = [
+    ("不借錢版", "/long-track-w52-adaptive/leverage.html", ARCHIVE_TEXT["leverage"]),
+    ("債金版", "/long-track-w52-adaptive/c1-shadow.html", ARCHIVE_TEXT["c1"]),
+    ("舊規則版（沒有均線條件）", "/long-track-w52-adaptive/noma.html", ARCHIVE_TEXT["noma"]),
+    ("台股下跌半變異", "/long-track-w52-adaptive/tw-semivol.html", ARCHIVE_TEXT["tw_semivol"]),
+    ("黃金單腿（GLD）", "/long-track-gld/", ARCHIVE_TEXT["gld"]),
+    ("商品組合", "/turtle-sleeve/", ARCHIVE_TEXT["turtle"]),
+    ("F70：股票 70% 加三資產 30%", "/backtest/f_comfort/", ARCHIVE_TEXT["f70"]),
+]
+ARCHIVED_OLD = [
+    ("STX50（美股 SMH／QQQ）", "/long-track-smh/",
+     "2026-07-18 由 W52 × 自適應波動率接棒，2026-07-23 停更。", "2026-07-23 停更"),
+    ("E3（台股 0050／2330）", "/long-track-tw/",
+     "2026-07-18 由 W52 × 自適應波動率接棒，2026-07-23 停更。", "2026-07-23 停更"),
+    ("0050＋2330 固定 σ", "/long-track-tw-vt/",
+     "固定 σ 版波動率目標，早期研究線，已歸檔對照。", "凍結對照"),
+    ("自適應美台總覽", "/long-track-adaptive-vt/",
+     "自適應 σ 美台總覽，早期研究線，已歸檔對照。", "凍結對照"),
+    ("QQQ＋SMH 套袖", "/long-track-qs-vt/",
+     "週線長軌閘門 × 波動率套袖組合，早期研究線，已歸檔對照。", "凍結對照"),
+    ("六狀態機（SMH／QQQ）", "/backtest/six_state/status/",
+     "早期六狀態機引擎，已退役、僅手動；被 W52 × 自適應波動率取代。", "凍結對照"),
 ]
 
 PLAIN = ('這個家族的沿革（白話）：早期實單主線用「六狀態機」與「STX50／E3」兩套引擎；'
          '<b>2026-07-18 起改由「W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層」接棒為實單主系統</b>'
          '（美台兩市場各 70% 指數部），舊引擎降為凍結對照；'
          '<b>2026-10-19 起再改為美股債金版、台股不借錢版</b>（股票部分上限 100%，美股另加公債與黃金），cap 1.5 規則降為對照線。'
-         'GLD 金 sleeve、商品 sleeve 與 F70（A 70%＋D1 拿掉 SPY 30%）是決策前研究通過後的<b>前瞻候選</b>'
-         '——還在紙上測、尚未進實單。')
+         f'<b>{ARCHIVE_DATE} 整理影子線</b>：不借錢版、債金版（已成為實單）、舊規則版、台股下跌半變異、黃金單腿、商品組合、F70 '
+         '七條停止更新並歸檔，頁面凍結保留；還沒有答案的問題只剩下「還在測的」那張小表。')
 
 CSS = """
 :root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;
@@ -230,6 +221,13 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   font-size:.82rem;color:inherit}
 .retired-row:hover{color:var(--brand)}
 .retired-row .rr-meta{color:var(--muted);flex:0 0 auto;white-space:nowrap}
+.arch-row{display:flex;gap:.3rem .9rem;flex-wrap:wrap;align-items:baseline;padding:.55rem .3rem;border-bottom:1px solid var(--border);font-size:.82rem;color:inherit}
+.arch-row:hover{color:var(--brand);text-decoration:none}
+.arch-row .ar-name{font-weight:700;flex:0 0 13em;color:var(--text)}
+.arch-row .ar-one{flex:1 1 22em;color:#4b5563;line-height:1.6}
+.arch-row .ar-meta{color:var(--muted);flex:0 0 auto;white-space:nowrap;font-size:.76rem}
+.arch-sub{font-size:.74rem;font-weight:700;color:var(--muted);margin:.8rem 0 .1rem .3rem}
+.tsttbl-note{font-size:.76rem;color:var(--muted);margin:.4rem .1rem 0;line-height:1.6}
 
 /* ── 系統主控台 tabbar（2026-08-23，比照 /cockpit/ 與 /t/ 殼；沿用本頁既有 token）── */
 .console-tabbar{display:flex;gap:.25rem;flex-wrap:wrap;border-bottom:1px solid var(--border);margin:.2rem 0 1.3rem;position:sticky;top:0;background:var(--bg);z-index:5}
@@ -298,7 +296,7 @@ CONSOLE_JS = """
 
   function activate(tab){
     var anchor = null;
-    if(tab === 'evidence'){ anchor = 'evidence'; tab = 'overview'; }
+    if(tab === 'evidence' || tab === 'archive'){ anchor = tab; tab = 'overview'; }
     if(TABS.indexOf(tab) < 0) tab = 'overview';
     document.querySelectorAll('.console-tab-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-ctab') === tab);
@@ -307,7 +305,7 @@ CONSOLE_JS = """
       p.classList.toggle('active', p.id === 'panel-' + tab);
     });
     if(frames[tab]) ensureLoaded(tab);
-    if(anchor){ var el = document.getElementById(anchor); if(el) el.scrollIntoView(); }
+    if(anchor){ var el = document.getElementById(anchor); if(el){ if(el.tagName === 'DETAILS') el.open = true; el.scrollIntoView(); } }
   }
 
   document.querySelectorAll('.console-tab-btn').forEach(function(b){
@@ -415,99 +413,40 @@ def render_today_strip() -> str:
 </div>"""
 
 
-def _fmt_ret(nav) -> str:
-    """NAV（起算 100）→ 報酬百分比字串；缺值回「—」。只做 nav/100−1 的顯示換算。"""
-    if not isinstance(nav, (int, float)):
-        return "—"
-    return f"{(nav / 100 - 1) * 100:+.1f}%".replace("-", "−")
+def render_testing_table(rows) -> str:
+    """還在測的：一張小表，每列一個還沒答案的問題。欄位＝問題、開始日、判定日、目前結果、頁面連結。
+    「目前結果」沒有自動來源就寫文字，不編數字。"""
+    body = ""
+    for r in rows:
+        link = (f'<a href="{r["url"]}">{r["name"]}</a>' if r.get("url") else '<span class="sh-na">—</span>')
+        body += (f'<tr><td class="sh-name" data-label="問題">{r["q"]}</td>'
+                 f'<td data-label="開始日">{r["start"]}</td>'
+                 f'<td data-label="判定日">{r["due"]}</td>'
+                 f'<td data-label="目前結果">{r["now"]}</td>'
+                 f'<td data-label="頁面">{link}</td></tr>')
+    return (f'<div class="shtbl-wrap"><table class="shtbl"><thead><tr><th>問題</th><th>開始日</th>'
+            f'<th>判定日</th><th>目前結果</th><th>頁面</th></tr></thead>'
+            f'<tbody>{body}</tbody></table></div>'
+            f'<div class="tsttbl-note">只列還沒有答案的問題。判定日是回顧的時點，不是自動切換規則的日子；'
+            f'第一列的判定日是草案，等持有人確認。</div>')
 
 
-def _last_nav(series):
-    if isinstance(series, list) and series and isinstance(series[-1], dict):
-        return series[-1].get("nav"), series[-1].get("date")
-    return None, None
-
-
-def state_cap15_date() -> str:
-    """舊規則對照線的資料日（讀 cap15_state.json；缺檔回「—」）。"""
-    return _load_json(STATE_JSON.parent / "cap15_state.json").get("data_date") or "—"
-
-
-def render_shadow_table(systems) -> str:
-    """影子對照區：一張表三列（2026-10-17）。報酬一律讀既有 JSON 的 NAV 末值（起算 100）：
-    不借錢版＝live_scoreboard shadows.{us,tw}.sa10；債金版＝c1_shadow_state daily 末列
-    （只有美股）；舊規則版＝noma_state nav_us／nav_tw 末值。同期實盤＝live_scoreboard
-    markets.{us,tw}.nav_sys（債金版另用 c1 daily 的 nav_main，與記分板同值）。不重算。"""
-    sb = _load_json(SCOREBOARD_JSON)
-    c1 = _load_json(C1_STATE_JSON)
-    noma = _load_json(NOMA_STATE_JSON)
-    lev = _load_json(LEVERAGE_STATE_JSON)
-    mk = sb.get("markets", {})
-    sh = sb.get("shadows", {})
-
-    def sb_pair(shadow_key=None):
-        """回傳 {us:(nav,date), tw:(nav,date)}；shadow_key=None 取實盤 nav_sys。"""
-        out = {}
-        for m in ("us", "tw"):
-            if shadow_key is None:
-                ser = (mk.get(m) or {}).get("nav_sys")
-            else:
-                ser = ((sh.get(m) or {}).get(shadow_key) or {}).get("nav")
-            out[m] = _last_nav(ser)
-        return out
-
-    def two_mkt(pair):
-        us, tw = pair["us"][0], pair["tw"][0]
-        return f'美 <b>{_fmt_ret(us)}</b>｜台 <b>{_fmt_ret(tw)}</b>'
-
-    c1_daily = c1.get("daily") or []
-    c1_last = c1_daily[-1] if c1_daily else {}
-    c1_first = c1_daily[0] if c1_daily else {}
-
-    cells = {}
-    cap10 = sb_pair("sa10")
-    live = sb_pair(None)
-    d_cap10 = cap10["us"][1] or cap10["tw"][1] or lev.get("data_date") or "—"
-    start_cap10 = ((sh.get("us") or {}).get("sa10") or {}).get("nav", [{}])[0].get("date") or lev.get("ruleset_locked_date") or "—"
-    cells["cap10"] = (start_cap10, d_cap10, two_mkt(cap10), two_mkt(live))
-
-    start_c1 = c1.get("inception") or c1_first.get("date") or "—"
-    d_c1 = c1_last.get("date") or c1.get("data_date") or "—"
-    c1_ret = f'美 <b>{_fmt_ret(c1_last.get("nav_c1"))}</b>'
-    c1_live = f'美 <b>{_fmt_ret(c1_last.get("nav_main"))}</b>（舊規則 cap 1.5 同期）'
-    cells["c1"] = (start_c1, d_c1, c1_ret, c1_live)
-
-    # 舊規則版：noma_state.json 的 nav_us／nav_tw（2026-10-17 起，與記分板 nav_sys 同一套簿記，起點＝第一筆 live 日＝100）
-    noma_nav = {m: noma.get("nav_" + m) for m in ("us", "tw")}
-    noma_pair = {m: _last_nav(noma_nav[m]) for m in ("us", "tw")}
-    noma_start = next((r.get("date") for r in (noma_nav["us"] or noma_nav["tw"] or [])[:1]), None) \
-        or next((h.get("date") for h in noma.get("history_us", []) if h.get("source") == "live"), None) \
-        or noma.get("ruleset_locked_date") or "—"
-    d_noma = noma_pair["us"][1] or noma_pair["tw"][1] or noma.get("data_date") or "—"
-    cells["noma"] = (noma_start, d_noma, two_mkt(noma_pair), two_mkt(live))
-
-    cells["cap15"] = ("2026-07-18", state_cap15_date(), "見該頁（逐日更新）", two_mkt(live))
-
-    rows = ""
-    for s in systems:
-        start, upto, ret_html, live_html = cells[s["key"]]
-        pill = f'<br><span class="sh-pill">{s["status"]}</span>' if s.get("status") else ""
-        rows += (
-            f'<tr><td class="sh-name"><a href="{s["url"]}">{s["name"]}</a>{pill}</td>'
-            f'<td data-label="跟實盤差在哪">{s["diff"]}</td>'
-            f'<td data-label="回答什麼問題">{s["ask"]}</td>'
-            f'<td class="sh-ret" data-label="起算日以來報酬">{ret_html}'
-            f'<span class="sh-since">{start} 起算，截至 {upto}</span></td>'
-            f'<td class="sh-ret" data-label="同期實盤">{live_html}'
-            f'<span class="sh-since">{start} 起算</span></td></tr>')
-    return (f'<div class="shtbl-wrap"><table class="shtbl"><thead><tr><th>名稱</th><th>跟實盤差在哪</th>'
-            f'<th>回答什麼問題</th><th>起算日以來報酬</th><th>同期實盤</th></tr></thead>'
-            f'<tbody>{rows}</tbody></table></div>'
-            f'<div class="sh-foot">四條線都每交易日更新，沒有 email。2026-10-19 起「不借錢版」「債金版」就是實盤的規則，'
-            f'這兩列的「同期實盤」在生效日前是舊規則、生效日後是新規則（記分板的實盤線接續同一份紀錄）；'
-            f'債金版列的「同期」固定是舊規則 cap 1.5。報酬讀自 live_scoreboard.json、'
-            f'c1_shadow_state.json、noma_state.json，本頁不重新計算。'
-            f'債金版只追蹤美股。</div>')
+def render_archive() -> str:
+    """歸檔區：預設收起。先 2026-10-18 歸檔的七條，再接原本已退役的六條；每條一句結論。"""
+    new_rows = "".join(
+        f'<a class="arch-row" href="{u}"><span class="ar-name">{n}</span><span class="ar-one">{one}</span>'
+        f'<span class="ar-meta">{ARCHIVE_DATE} 歸檔</span></a>'
+        for n, u, one in ARCHIVED_NEW)
+    old_rows = "".join(
+        f'<a class="arch-row" href="{u}"><span class="ar-name">{n}</span><span class="ar-one">{one}</span>'
+        f'<span class="ar-meta">{st}</span></a>'
+        for n, u, one, st in ARCHIVED_OLD)
+    total = len(ARCHIVED_NEW) + len(ARCHIVED_OLD)
+    return (f'<details class="ov-retired" id="archive"><summary>歸檔（{total}）</summary>'
+            f'<div class="retired-list">'
+            f'<div class="arch-sub">{ARCHIVE_DATE} 歸檔：停止更新，頁面凍結保留（{len(ARCHIVED_NEW)}）</div>{new_rows}'
+            f'<div class="arch-sub">更早已退役（{len(ARCHIVED_OLD)}）</div>{old_rows}'
+            f'</div></details>')
 
 
 def render_evidence() -> str:
@@ -528,7 +467,7 @@ def render_evidence() -> str:
     body = "".join(row(u) for u in shown)
     dead_html = ""
     if dead:
-        dead_html = (f'<details class="ov-retired" style="margin-top:.8rem"><summary>已否決（{len(dead)}）</summary>'
+        dead_html = (f'<details class="ov-retired" style="margin-top:.8rem"><summary>已否決與已退役（{len(dead)}）</summary>'
                      f'<div class="retired-list">{"".join(row(u) for u in dead)}</div></details>')
     intro = (f'<div class="ev-intro">支撐實單配置的檢驗，共 {len(urls)} 頁，先看第一頁的總覽。'
              f'每頁的結論和判斷依據都寫在頁內；網址在回測區，狀態標籤與回測區首頁一致。</div>')
@@ -538,12 +477,14 @@ def render_evidence() -> str:
 def render_overview_body() -> str:
     """總覽分頁本體（家族地圖）— 獨立於 page chrome，供 console 殼內嵌 Tab 1。
     2026-09-10 改版：頂部加「今天」儀表板（見 render_today_strip），實單主系統維持
-    大卡片，影子對照／前瞻 OOS 候選改一行式，已退役／凍結對照收進單一 details，
-    沿革白話盒移到底部 details。"""
+    大卡片，沿革白話盒移到底部 details。
+    2026-10-18 整理成三區：實單主系統／還在測的（一張小表）／歸檔（預設收起，含七條新歸檔
+    與六條早已退役）。實盤證據清單（render_evidence）維持在還在測的之後。"""
     today_strip = render_today_strip()
     lede = ('<div class="ov-lede">看這三件事就好：上面「今天」區塊的<b>今天曝險</b>'
             '（目標／現持曝險與各腿在場／出場）、<b>最近一次變動</b>（哪一天、哪一腿調整了多少）、'
-            '下面影子帳戶表的<b>影子帳戶怎麼說</b>（累計淨值差與 SPRT 判定是否已經足夠判斷現行規則比對照組好）。</div>')
+            '區塊底部影子帳戶表的<b>影子帳戶怎麼說</b>（累計淨值差與 SPRT 判定是否已經足夠判斷現行規則比對照組好）。'
+            '還沒有答案的問題，看下面「還在測的」。</div>')
 
     live_title, live_cls, _, live_systems = GROUPS[0]
     live_rows = ""
@@ -558,32 +499,12 @@ def render_overview_body() -> str:
             f'<span>Email 通知：<b>{s["email"]}</b></span></div></a>')
     groups_html = f'<div class="grp {live_cls}"><div class="grp-h">{live_title}</div>{live_rows}</div>\n'
 
-    sh_title, sh_cls, _, sh_systems = GROUPS[1]       # 影子對照 → 一張表
-    groups_html += (f'<div class="grp {sh_cls}"><div class="grp-h">{sh_title}</div>'
-                    f'{render_shadow_table(sh_systems)}</div>\n')
-
-    for title, cls, _, systems in GROUPS[2:3]:      # 前瞻 OOS 候選 → 一行式
-        rows = ""
-        for s in systems:
-            st_txt, st_cls = s["status"]
-            rows += (
-                f'<a class="sysrow" href="{s["url"]}">'
-                f'<span class="sysrow-name">{s["name"]}</span>'
-                f'<span class="pill {st_cls}">{st_txt}</span>'
-                f'<span class="sysrow-one">{s["one"]}</span>'
-                f'<span class="arr">→</span></a>')
-        groups_html += f'<div class="grp {cls}"><div class="grp-h">{title}</div>{rows}</div>\n'
+    groups_html += (f'<div class="grp shadow"><div class="grp-h">還在測的</div>'
+                    f'{render_testing_table(TESTING)}</div>\n')
 
     groups_html += render_evidence()
 
-    ret_title, _, _, ret_systems = GROUPS[3]
-    ret_rows = ""
-    for s in ret_systems:
-        st_txt, _ = s["status"]
-        ret_rows += (f'<a class="retired-row" href="{s["url"]}">'
-                     f'<span>{s["name"]}</span><span class="rr-meta">{st_txt}</span></a>')
-    retired_html = (f'<details class="ov-retired"><summary>{ret_title.split("（")[0]}'
-                    f'（{len(ret_systems)}）</summary><div class="retired-list">{ret_rows}</div></details>')
+    retired_html = render_archive()
 
     history_html = (f'<details class="ov-history"><summary>沿革</summary>'
                     f'<div class="plain-box" style="margin-top:.6rem">'

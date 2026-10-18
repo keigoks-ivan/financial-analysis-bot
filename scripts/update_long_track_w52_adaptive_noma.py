@@ -61,6 +61,8 @@ except ImportError:                        # v7-backtest: repo-root snippet
 
 # 獨立完整頁（非 iframe 片段）：比照 tw-semivol.html／leverage.html，掛完整站 nav。
 NAV_BLOCK = full_nav_block("system", "lthub")
+from archive_banner import archive_banner  # noqa: E402  (2026-10-18 歸檔橫幅；文字集中在 scripts/archive_banner.py)
+ARCHIVE_BANNER = archive_banner("noma")
 
 # ---- output dir: <repo_root>/docs/long-track-w52-adaptive/ -----------------
 _cand = [HERE.parent / "docs", HERE.parents[2] / "docs" if len(HERE.parents) >= 3 else HERE / "docs"]
@@ -1142,6 +1144,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </head>
 <body>
 {NAV_BLOCK}
+{ARCHIVE_BANNER}
 <div class="container" style="padding-top:1rem">
 {today_conclusion_html}
 </div>

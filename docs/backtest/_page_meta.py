@@ -62,8 +62,8 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '實盤系統憑什麼：�
                           'short': 'F70 抱得住度',
                           'key': 'f_comfort',
                           'zone': 1,
-                          'status': 'cand',
-                          'desc': 'F70 的紙上候選評估，含不借錢版（A0＋D1）與戰術配置錦標賽。'},
+                          'status': 'ret',
+                          'desc': 'F70 的評估，2026-10-18 歸檔，不再追蹤；含不借錢版（A0＋D1）與戰術配置錦標賽。'},
  '/backtest/a0_proposal/': {'title': '10 月回顧點提案：實盤從 cap 1.5 降為不借錢 cap 1.0（A0 提案）',
                             'short': 'A0 提案',
                             'key': 'a0_proposal',
@@ -617,7 +617,9 @@ RET_LINE = "本頁為存檔：六狀態機已於 2026-07-04 退役，頁內數�
 # 頂端加對照線橫幅的頁（合併主頁的各章橫幅已在章節內）
 REF_BANNER_URLS = ["/backtest/long_track_smh/", "/backtest/long_track_tw/", "/backtest/leverage_voltarget/",
                    "/backtest/turtle_adopt/", "/backtest/multi/", "/backtest/10y/"]
-RET_BANNER = {"/backtest/six_state/status/": "本頁為存檔：六狀態機已於 2026-07-04 退役，以下是 2026-07-03 的最後一次狀態，不再運作。"}
+RET_BANNER = {"/backtest/six_state/status/": "本頁為存檔：六狀態機已於 2026-07-04 退役，以下是 2026-07-03 的最後一次狀態，不再運作。",
+              # 2026-10-18 F70 歸檔；文字同 scripts/archive_banner.py 的 ARCHIVE_TEXT["f70"]
+              "/backtest/f_comfort/": "已歸檔・2026-10-18 停止更新。持有人 2026-10-18 決定歸檔。「股票以外要不要放別的資產」改由債金版回答。"}
 
 
 def aliases() -> dict[str, str]:

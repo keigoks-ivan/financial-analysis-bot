@@ -37,6 +37,8 @@ except ImportError:
 from mail_html import esc, frame, note, one_minute, pill, section, table, tiles  # noqa: E402
 
 NAV_BLOCK = full_nav_block("system", "lthub")
+from archive_banner import archive_banner  # noqa: E402  (2026-10-18 歸檔橫幅；文字集中在 scripts/archive_banner.py)
+ARCHIVE_BANNER = archive_banner("gld")
 
 _cand = [HERE.parent / "docs", HERE.parents[2] / "docs" if len(HERE.parents) >= 3 else HERE / "docs"]
 DOCS = next((c for c in _cand if c.exists()), _cand[0])
@@ -636,6 +638,7 @@ def generate_html(sig: dict, change: str | None, last_change_date: str | None,
 </head>
 <body>
 {NAV_BLOCK}
+{ARCHIVE_BANNER}
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/">前瞻追蹤</a> / GLD 金 sleeve</div>
   <h1>GLD 黃金 · W52×自適應波動率 sleeve</h1>

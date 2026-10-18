@@ -69,8 +69,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yfinance as yf
-from pandas.tseries.holiday import USFederalHolidayCalendar
-from pandas.tseries.offsets import CustomBusinessDay
 
 # ---- nav import (byte-identical file across two repos) ---------------------
 HERE = Path(__file__).resolve().parent
@@ -99,14 +97,6 @@ OUTPUT = DOCS / "long-track-w52-adaptive" / "_body.html"
 STATE_JSON = DOCS / "long-track-w52-adaptive" / "state.json"
 ALERT_FILE = DOCS.parent / "lt_w52a_alert.txt"    # 實單主系統：可行動變化 email 提醒
 ALERT_HTML = DOCS.parent / "long_track_w52_mail.html"  # 同一事件的美觀 HTML 版（§5.7）
-F70_STATE_JSON = DOCS / "long-track" / "f70_signal_state.json"  # F70 均線版區塊唯讀來源
-# F70 帳戶層權重公式（2026-09-15 起頁面新增區塊，紙上候選・尚非實單）：
-# 股票腿（QQQ/SMH）執行層現持 pct（組合刻度 0~150）× 0.7 ＋ 每腿 D1X pos × 0.3 × 1/3。
-# 逐位元對齊 build_f70_alert.py 的 WEIGHT_D1X／LEG_WEIGHT（本頁抄常數值，不 import，
-# 避免呈現層跨檔耦合到另一支 CI 腳本）。
-F70_WEIGHT_STOCK = 0.7
-F70_WEIGHT_D1X = 0.30
-F70_LEG_WEIGHT = 1.0 / 3.0
 LT_W52_PAGE_URL = "https://research.investmquest.com/long-track-w52-adaptive/"
 # 槓桿回測數字由 results/vol_targeting/w52_adaptive_leverage.json 轉錄為下方 LEV 常數
 # （fab 副本無法讀 v7 results，故轉錄；比照主頁 BT_US/BT_TW 慣例）。曝險/燃料表
@@ -1098,82 +1088,6 @@ GFC 段兩者 MDD 同為 −36.4%，純 W52 閘門更深（−38.6%）。與美�
 
 
 # ---------------------------------------------------------------------------
-# F70 均線版（2026-09-15 新增區塊；紙上候選・尚非實單，非規則函式、唯讀 D1X 訊號檔）
-# ---------------------------------------------------------------------------
-def _f70_next_rebalance(date_str: str) -> str:
-    """月底再平衡日近似——逐行抄自 scripts/build_f70_alert.py::next_rebalance_date
-    （不 import，避免呈現層耦合另一支 CI 腳本）：用 CustomBusinessDay(美國聯邦假日
-    行事曆) 往後走近似營業日，直到下一步會跨月為止，回傳跨月前那一天。"""
-    cbd = CustomBusinessDay(calendar=USFederalHolidayCalendar())
-    cur = pd.Timestamp(date_str)
-    while True:
-        nxt = cur + cbd
-        if nxt.month != cur.month:
-            return cur.strftime("%Y-%m-%d")
-        cur = nxt
-
-
-def f70_section(exec_last_us: dict, main_data_date: str) -> str:
-    """F70 均線版帳戶表：股票腿（QQQ/SMH）執行層現持（0~150 組合刻度）× 70% ＋
-    每腿 D1X（TLT/GLD/DBC）pos × 30% × 1/3。D1X 部位讀 docs/long-track/f70_signal_state.json
-    的 records 最新一筆（唯讀，本頁不產生此檔）。exec_last_us＝該市場 band_exec_replay 的
-    last dict（{'QQQ':pct,'SMH':pct}，組合刻度 0~150，來自既有 exec_map，非新規則）。
-    讀不到檔或空 records 時回傳「D1X 資料未就緒」，不拋例外。"""
-    try:
-        raw = json.loads(F70_STATE_JSON.read_text())
-        records = raw.get("records") or {}
-        if not records:
-            raise ValueError("empty records")
-        d1x_date = sorted(records.keys())[-1]
-        d1x = records[d1x_date]
-        legs_d1x = ["TLT", "GLD", "DBC"]
-        for t in legs_d1x:
-            if t not in d1x or "pos" not in d1x[t]:
-                raise ValueError(f"missing {t}.pos")
-    except Exception:
-        return """<div class="card">
-<h3>F70 均線版（股票腿 70% ＋ TLT/GLD/DBC 30%）<span class="tag" style="background:var(--amber-bg);color:var(--amber-text);margin-left:.4rem">紙上候選・尚非實單</span></h3>
-<p style="font-size:.85rem;color:var(--muted)">D1X 資料未就緒。</p>
-</div>"""
-
-    rows = []
-    total = 0.0
-    for t in ("QQQ", "SMH"):
-        pct = exec_last_us.get(t, 0.0) * F70_WEIGHT_STOCK
-        rows.append((t, pct, "股票腿現持 × 70%"))
-        total += pct
-    for t in legs_d1x:
-        pct = float(d1x[t]["pos"]) * F70_WEIGHT_D1X * F70_LEG_WEIGHT * 100
-        gate_txt = "在場" if d1x[t].get("gate") else "出場"
-        rows.append((t, pct, f"D1X pos {d1x[t]['pos']:.2f}（{gate_txt}）× 30% × 1/3"))
-        total += pct
-    cash = 100.0 - total
-
-    body = ""
-    for name, pct, note_txt in rows:
-        body += (f'<tr><td><b>{name}</b></td><td class="num">{pct:.1f}%</td>'
-                 f'<td style="color:var(--muted);font-size:.8rem">{note_txt}</td></tr>\n')
-    cash_color = "var(--red-text)" if cash < 0 else "var(--text)"
-    body += (f'<tr class="rowhl"><td><b>現金</b></td><td class="num" style="color:{cash_color}">{cash:.1f}%</td>'
-             f'<td style="color:var(--muted);font-size:.8rem">= 100% − 合計曝險（可為負，代表借款）</td></tr>\n')
-    body += (f'<tr class="rowhl"><td><b>合計曝險</b></td><td class="num">{total:.1f}%</td>'
-             f'<td style="color:var(--muted);font-size:.8rem">QQQ + SMH + TLT + GLD + DBC 加總</td></tr>\n')
-
-    lag_note = (f'（D1X 資料 as-of <b>{d1x_date}</b>，主系統資料 as-of <b>{main_data_date}</b>——'
-                f'CI 排程 F70 alert 在主系統之後跑，資料可能晚一天，此為已知落差，非錯誤）'
-                if d1x_date != main_data_date else f'（D1X 與主系統資料同為 as-of <b>{d1x_date}</b>）')
-    next_reb = _f70_next_rebalance(main_data_date)
-    return f"""<div class="card">
-<h3>F70 均線版（股票腿 70% ＋ TLT/GLD/DBC 30%）<span class="tag" style="background:var(--amber-bg);color:var(--amber-text);margin-left:.4rem">紙上候選・尚非實單</span></h3>
-<p style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem">
-帳戶層權重 = 股票腿（QQQ、SMH）執行層現持 × 70% ＋ 每腿 D1X（TLT／GLD／DBC，各自的長短期趨勢與動能投票決定部位）× 30% × 三分之一{lag_note}。月底再平衡回 70／30，下一個近似月底交易日：<b>{next_reb}</b>。</p>
-<table><thead><tr><th>腿</th><th class="num">帳戶層權重</th><th>算法</th></tr></thead>
-<tbody>{body}</tbody></table>
-<p style="font-size:.76rem;color:var(--muted);margin-top:.6rem">D1X（TLT/GLD/DBC 分散腿）目前僅是紙上研究、未接實單；QQQ／SMH 兩腿沿用本頁實單執行層現持。詳見 <a href="/backtest/f_comfort/">F70 均線版研究頁</a>、<a href="/long-track/#scoreboard">記分板 S-F70</a>。</p>
-</div>"""
-
-
-# ---------------------------------------------------------------------------
 # per-market render (html block + chart JS)
 # ---------------------------------------------------------------------------
 def MARKER_DATE() -> str:
@@ -1706,7 +1620,7 @@ def _legacy_rules() -> str:
 ⑦ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
 ⑧ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
 ⑨ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×1.5＝75pp（<b>固定，不隨 cap_eff 變動</b>／組合 150%）；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。<br>
-<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t／均線條件皆為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿今日目標與現持（執行層 executed）差 ≥ 20pp；<b>閘門翻轉本身不觸發通知，須一併達 20pp 門檻</b>（與回測 A2 執行層一致）；<b>cap_eff 翻轉只寫進 email 內文說明，不單獨觸發通知</b>。舊規則（無均線層，2026-07-18～2026-09-14）轉為唯讀影子 <a href="/long-track-w52-adaptive/noma.html">noma.html</a>，供均線層 kill condition 對帳。</span>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t／均線條件皆為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿今日目標與現持（執行層 executed）差 ≥ 20pp；<b>閘門翻轉本身不觸發通知，須一併達 20pp 門檻</b>（與回測 A2 執行層一致）；<b>cap_eff 翻轉只寫進 email 內文說明，不單獨觸發通知</b>。舊規則（無均線層，2026-07-18～2026-09-14）轉為唯讀影子（2026-10-18 已歸檔，停止更新），供均線層 kill condition 對帳。</span>
 </div>
 </div>
 
@@ -1717,7 +1631,7 @@ def _legacy_rules() -> str:
 • <b>2026-07-17</b>：規則凍結——W52 單線閘門 × 自適應 σ_t（RV20 近三年滾動中位數，756／252）定案，此後不掃參擇優、不改機制形狀、不加濾網。<br>
 • <b>2026-07-18</b>：正式採用 cap 1.5（真波動率目標，w = 閘門 × clip(σ_t/RV, 上限 1.5)）為實單主系統。<br>
 • <b>2026-07-22</b>：執行層由 10pp 門檻／5% 取整改為現行 A2（20pp 門檻／10% 取整／取整後 clamp 於 50×cap）。採用理由＝調整頻率下降（美股約 28→13 次／年、台股約 27→12 次／年，約 −55%）；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。切換當日曾提示以今日目標持股率對帳一次實際持倉（<code>band_exec_replay</code> 對全史重放的現持序列隨規則改變）。<br>
-• <b>{RULE_REVISION_DATE}</b>（持有人拍板）：股票腿加<b>日線均線確認</b>——五條件（收 &gt; MA60／MA120／MA200＋MA120／MA200 斜率向上，lag {MA_LAG}）全對 cap_eff=1.5、否則退回 1.0；三個價格條件加 1% 遲滯。理由＝「不在跌中借錢」寫進規則比事後手動減碼誠實（回測：美股年化 14.1%→13.9%、MDD −23.7%→−23.0%、跌中持有超過 100% 天數 591→369；台股年化 23.3%→22.7%、跌中槓桿天數 339→170）。history 既有紀錄不重算，新紀錄帶 <code>rule: "{RULE_TAG}"</code>。舊規則（無均線層）轉為唯讀影子 <a href="/long-track-w52-adaptive/noma.html">noma.html</a>；預註冊 kill condition 見帳本 <code>knowledge/rule_ledger.md</code>「實單主系統規則鏈」(d)(e)。<br>
+• <b>{RULE_REVISION_DATE}</b>（持有人拍板）：股票腿加<b>日線均線確認</b>——五條件（收 &gt; MA60／MA120／MA200＋MA120／MA200 斜率向上，lag {MA_LAG}）全對 cap_eff=1.5、否則退回 1.0；三個價格條件加 1% 遲滯。理由＝「不在跌中借錢」寫進規則比事後手動減碼誠實（回測：美股年化 14.1%→13.9%、MDD −23.7%→−23.0%、跌中持有超過 100% 天數 591→369；台股年化 23.3%→22.7%、跌中槓桿天數 339→170）。history 既有紀錄不重算，新紀錄帶 <code>rule: "{RULE_TAG}"</code>。舊規則（無均線層）轉為唯讀影子（2026-10-18 已歸檔，停止更新）；預註冊 kill condition 見帳本 <code>knowledge/rule_ledger.md</code>「實單主系統規則鏈」(d)(e)。<br>
 </div>
 </details>
 </div>
@@ -1838,11 +1752,12 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
                 f"Long only · <b>{sw} 起生效</b>；生效日前的紀錄按舊規則（cap 1.5＋均線）保留，不改寫"),
         "pills": (f'<a href="/long-track-w52-adaptive/" style="{PILL_ON}">實單主系統（本頁）</a>'
                   f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5（對照線）</a>'
-                  f'<a href="/long-track-w52-adaptive/noma.html" style="{PILL_OFF}">舊規則版（無均線層）</a>'
-                  f'<a href="/long-track-w52-adaptive/leverage.html" style="{PILL_OFF}">不借錢版（{sw} 起即實盤）</a>'
-                  f'<a href="/long-track-w52-adaptive/c1-shadow.html" style="{PILL_OFF}">債金版（{sw} 起即實盤）</a>'
-                  f'<a href="/long-track-w52-adaptive/tw-semivol.html" style="{PILL_OFF}">台股 B-ii 影子（唯讀）</a>'
-                  f'<a href="/backtest/vol_targeting/leverage.html" style="{PILL_OFF}">槓桿研究頁</a>'),
+                  f'<a href="/backtest/vol_targeting/leverage.html" style="{PILL_OFF}">槓桿研究頁</a>'
+                  # 2026-10-18 影子線整理：不借錢版、債金版已歸檔（停止更新），只留這一行連到上線前的影子紀錄；
+                  # 其餘歸檔線（舊規則版、台股下跌半變異、黃金單腿、商品組合、F70）的連結一律不放在實單頁。
+                  '<span style="font-size:.8rem;color:var(--muted);align-self:center">上線前的影子紀錄：'
+                  '<a href="/long-track-w52-adaptive/leverage.html">不借錢版</a>、'
+                  '<a href="/long-track-w52-adaptive/c1-shadow.html">債金版</a></span>'),
         "banner": f"""<div class="oos-banner">
   <span class="tag-loud">實單主系統・{sw} 起：美股債金版、台股不借錢版・email 提醒可行動變化</span>
   <div style="font-size:.86rem">本頁是實單主系統。<b>{sw} 起（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）</b>美股用<b>債金版</b>，台股用<b>不借錢版</b>。底層不變：週線 W52 閘門決定在場或出場，自適應波動率決定持股比例，執行層要求目標與現持差 20 個百分點才調整。
@@ -1881,7 +1796,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
 • <b>2026-07-17</b>：規則凍結——W52 單線閘門 × 自適應 σ_t（RV20 近三年滾動中位數，756／252）定案，此後不掃參擇優、不改機制形狀、不加濾網。<br>
 • <b>2026-07-18</b>：正式採用 cap 1.5（真波動率目標，w = 閘門 × clip(σ_t/RV, 上限 1.5)）為實單主系統。<br>
 • <b>2026-07-22</b>：執行層由 10pp 門檻／5% 取整改為 A2（20pp 門檻／10% 取整／取整後 clamp 於 50×cap）。採用理由＝調整頻率下降（美股約 28→13 次／年、台股約 27→12 次／年，約 −55%）；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。<br>
-• <b>{RULE_REVISION_DATE}</b>（持有人拍板）：股票腿加<b>日線均線確認</b>——五條件全對 cap_eff=1.5、否則退回 1.0；三個價格條件加 1% 遲滯。history 既有紀錄不重算，新紀錄帶 <code>rule: "{RULE_TAG}"</code>。舊規則（無均線層）轉為唯讀影子 <a href="/long-track-w52-adaptive/noma.html">noma.html</a>。<br>
+• <b>{RULE_REVISION_DATE}</b>（持有人拍板）：股票腿加<b>日線均線確認</b>——五條件全對 cap_eff=1.5、否則退回 1.0；三個價格條件加 1% 遲滯。history 既有紀錄不重算，新紀錄帶 <code>rule: "{RULE_TAG}"</code>。舊規則（無均線層）轉為唯讀影子（2026-10-18 已歸檔，停止更新）。<br>
 • <b>{sw}</b>（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）：<b>美股改債金版</b>（股票上限 100% 不借錢，另加 IEF／GLD 各最多 20% 的週線三條件疊加）、<b>台股改不借錢版</b>（上限 100%，不加債金）。生效日起的紀錄帶 <code>rule: "{NEW_RULE_TAG}"</code>，生效日前的 history 不改寫；2330 現持 60% 於生效日先拉回新上限 50%。舊規則（cap 1.5＋均線）以 <a href="/long-track-w52-adaptive/cap15.html">cap15.html</a> 續跑為對照線，每日更新、不寄信。state.json 的 <code>rule_changes</code> 記有這一筆。<br>
 </div>
 </details>
@@ -1958,7 +1873,6 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
     for m in MARKETS:
         exec_last_all.update(exec_map[m["key"]]["last"])
     legs_row_html = "".join(ticker_card(t, sigs[t], exec_last_all.get(t)) for t in ALL_TICKERS)
-    f70_section_html = f70_section(exec_map["us"]["last"], data_date)
 
     change_html = (
         ('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;'
@@ -2100,7 +2014,6 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
       {PG["pills"]}
       <a href="/backtest/vol_targeting/adaptive.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">美股變體實驗室</a>
       <a href="/backtest/vol_targeting/tw.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股變體實驗室</a>
-      <a href="/backtest/f_comfort/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">F70 均線版研究頁</a>
       <a href="/backtest/live_system_evidence/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">證據總覽</a>
       <a href="/long-track/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">系統主控台</a>
       <a href="/long-track/#scoreboard" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">記分板</a>
@@ -2123,8 +2036,6 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 
 <div class="mkt-hd"><span class="mkt-tag">四腿卡片</span></div>
 <div class="tgrid-4">{legs_row_html}</div>
-
-{f70_section_html}
 
 {markets_html}
 

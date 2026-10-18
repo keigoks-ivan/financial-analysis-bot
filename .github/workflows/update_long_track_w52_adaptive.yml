@@ -54,7 +54,7 @@ jobs:
       - name: Run old-rule control line (cap 1.5 + daily-MA confirm, former LIVE rule)
         # 2026-10-19 起：原實盤規則（cap 1.5＋日線均線確認）降為對照線，每日照常更新、不寄信
         # （--profile cap15 不寫 alert、不動 lt_w52a_alert.txt）。輸出 cap15_state.json／cap15.html。
-        # 必須在記分板之前、C1／noma／tw-semivol 影子之前跑——它們讀 cap15_state.json 做「現行 vs 舊規則」對照。
+        # 必須在記分板之前跑。（2026-10-18 起 C1／noma／tw-semivol 影子已歸檔、不再讀它。）
         # 失敗不擋實單更新。
         continue-on-error: true
         run: python scripts/update_long_track_w52_adaptive.py --profile cap15
@@ -71,70 +71,19 @@ jobs:
         continue-on-error: true
         run: python scripts/build_long_track_index.py
 
-      - name: Run F70 D1X alert (paper candidate)
-        # F70 紙上候選（70% 系統 A ＋ 30% D1X／TLT/GLD/DBC）：D1X 三腿部位變化／
-        # 月底再平衡提醒，date-keyed state 冪等；任何例外一律 exit 0 不寫檔
-        # （build_f70_alert.py 內建 fail-safe）。A 腿（QQQ/SMH）的變化已由上面
-        # update_long_track_w52_adaptive.py 的 alert 通知，本步驟只描述 D1X 腿。
-        # test_email 手動觸發時改跑 --test-email：只抓價寫 f70_mail.html（今天
-        # 實際腿狀態），不比對前次記錄、不寫 state.json——避免測試觸發把真實
-        # last_alert_date 治理狀態弄髒（見 build_f70_alert.py --test-email 說明）。
-        run: |
-          if [ "${{ inputs.test_email }}" = "true" ]; then
-            python scripts/build_f70_alert.py --test-email
-          else
-            python scripts/build_f70_alert.py
-          fi
+      # 2026-10-18 影子／對照線整理（持有人拍板）：下列線停止每日更新、頁面歸檔（頁頂有歸檔橫幅，
+      # 內容凍結）；腳本都留在 scripts/，要重產可手動跑，但 CI 不再跑：
+      #   F70 D1X alert（build_f70_alert.py）、不借錢版頁（..._leverage.py）、台股下跌半變異（..._tw_semivol.py）、
+      #   舊規則版 noma（..._noma.py）、債金版頁（..._c1.py）；黃金單腿 GLD 與商品組合另在各自的 workflow 停掉。
+      # 注意：實單主腳本 import ..._c1（債金條件的計算）與 ..._leverage（回測區塊常數），所以這兩支腳本與
+      # c1_backtest.json 不能刪。對照線 cap15 照常每日更新。
+      # 原先接在這裡的「總覽再重建一次」只是為了讓影子表追上當日，影子表已移除，故一併拿掉。
 
-      - name: Run W52 × adaptive cap 1.0 page (不借錢版; = LIVE rule for TW from 2026-10-19)
-        # cap 1.0 (100%) page (docs/long-track-w52-adaptive/leverage.html). Independent history
-        # (own replay since 2021). From 2026-10-19 this is the same rule as the LIVE TW leg and
-        # the stock part of the LIVE US leg; kept running as an independent cross-check.
-        # NO email of its own — notifications come from the LIVE main system (alert file below).
-        run: python scripts/update_long_track_w52_adaptive_leverage.py
-
-      - name: Run TW B-ii downside-semivariance shadow tracking page
-        # 2026-08-17: read-only TW-only shadow page (docs/long-track-w52-adaptive/tw-semivol.html).
-        # Signal is identical to the old cap 1.5 rule (now the cap15 control line; read from
-        # cap15_state.json since 2026-10-19) except the TW leg's vol-target
-        # sleeve denominator (B-ii downside semivariance instead of RV20); NOT adopted as a
-        # live rule (pre-registered criteria not fully met — see Adaptive_Sigma_Spec.md
-        # 2026-08-17 decision record). Same two-cron schedule; NO email of its own.
-        run: python scripts/update_long_track_w52_adaptive_tw_semivol.py
-
-      - name: Run cap 1.5 no-MA legacy-rule shadow tracking page
-        # 2026-09-15: read-only US+TW shadow page (docs/long-track-w52-adaptive/noma.html).
-        # This is the RETIRED 2026-07-18~2026-09-14 live rule (cap fixed 1.5, no daily-MA
-        # confirm layer). The daily-MA long-confirm condition that was previously tracked
-        # here as a candidate is now part of the LIVE main system (cap_eff); this script
-        # (renamed from update_long_track_w52_adaptive_ma_confirm.py) keeps tracking the
-        # old rule as a read-only shadow for the MA-layer kill condition (rule_ledger.md).
-        # Same two-cron schedule; NO email of its own.
-        run: python scripts/update_long_track_w52_adaptive_noma.py
-
-      - name: Run C1 comparison page (cap 1.0 stock + IEF/GLD E3 overlay, US only; = LIVE US rule from 2026-10-19)
-        # 2026-10-17: US page (docs/long-track-w52-adaptive/c1-shadow.html). C1 was a shadow
-        # until 2026-10-19; from then on it IS the live US rule. The page keeps tracking it
-        # against the OLD rule from the same inception date (the "現行" line reads
-        # cap15_state.json, the old-rule control line, so the pre-switch numbers do not move).
-        # Reads state.json for the live inception/dates, fetches IEF/GLD/^IRX,
-        # renders the frozen research backtest from c1_backtest.json. NO email of its own.
-        # Fail-safe: any data gap -> exit 0 and the existing page/state stay untouched.
-        continue-on-error: true
-        run: python scripts/update_long_track_w52_adaptive_c1.py
-
-      - name: Rebuild /long-track/ overview again (shadow table reads noma/c1 state written above)
-        # 2026-10-17：總覽「影子對照」表讀 noma_state.json（nav_us／nav_tw）與 c1_shadow_state.json，
-        # 這兩檔在上面才寫入；第一次重建（記分板之後）看到的是前一日的值，這裡再跑一次讓表與當日同步。
-        # 純組版、冪等，失敗不擋實單更新。
-        continue-on-error: true
-        run: python scripts/build_long_track_index.py
-
-      - name: Build synthesized live mail (today conclusion + F70 MA account)
+      - name: Build synthesized live mail (today conclusion + bond/gold overlay)
         # 2026-10-19 起：實單 alert 含「美股債金條件數改變」與「現持高於新上限」；舊 cap 1.5 規則
         # （cap15 對照線）不寫 alert、不寄信。
-        # 2026-09-15 持有人拍板：實單信與 F70 信合成一封。build_live_mail.py 零 LLM、
-        # 純組版，只讀上面兩步驟寫的 lt_w52a_alert.txt／lt_f70_alert.txt 與兩份
+        # 2026-09-15 持有人拍板：實單信與 F70 信合成一封；2026-10-18 F70 歸檔，信裡不再有 F70。
+        # build_live_mail.py 零 LLM、純組版，只讀上面步驟寫的 lt_w52a_alert.txt 與
         # state.json，不抓價、不算訊號、不改任何 state；任一 alert 存在才寫
         # lt_live_alert.txt／live_mail.html，兩者皆無則不寫檔（exit 0）。test_email
         # 手動觸發時加 --test-email：不論 alert 有無都寫 live_mail.html（標「測試信」），
@@ -178,9 +127,9 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Email actionable change (synthesized US+TW live + F70)
-        # 2026-09-15 起：原本「實單信」與「F70 信」兩封合成這一封，內容＝今天結論
-        # （美＋台四腿）＋ F70 均線版帳戶表＋兩邊 alert 原文（見 build_live_mail.py）。
+      - name: Email actionable change (synthesized US+TW live)
+        # 2026-09-15 起：原本「實單信」與「F70 信」兩封合成這一封；2026-10-18 起 F70 歸檔，內容＝今天結論
+        # （美＋台四腿）＋債金疊加＋alert 原文（見 build_live_mail.py）。
         if: (steps.livealert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
         continue-on-error: true
         uses: dawidd6/action-send-mail@v3
@@ -190,7 +139,7 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_APP_PASSWORD }}
-          subject: "⚡ 實單系統 可行動變化（美＋台＋F70）${{ steps.livealert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          subject: "⚡ 實單系統 可行動變化（美＋台）${{ steps.livealert.outputs.changed == 'true' && '' || '(測試信)' }}"
           to: keigoks@gmail.com
           from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
           html_body: file://live_mail.html
@@ -198,8 +147,8 @@ jobs:
             ${{ steps.livealert.outputs.changed == 'true' && steps.livealert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}
 
             —
-            InvestMQuest · 實單系統合成信（美＋台＋F70，2026-09-15 起取代原本的實單信與 F70 信）
-            每交易日台股/美股收盤後自動檢查 · 可行動變化＝美/台任一腿最終權重與現持差 ≥ 20pp、現持高於新規則上限、美股公債/黃金週線條件數改變，或 F70 D1X 腿部位變化／月底再平衡
+            InvestMQuest · 實單系統合成信（美＋台；2026-10-18 起不含 F70）
+            每交易日台股/美股收盤後自動檢查 · 可行動變化＝美/台任一腿最終權重與現持差 ≥ 20pp、現持高於新規則上限，或美股公債/黃金週線條件數改變
             退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_w52_adaptive.yml
 
       - name: Discord notify (live system)
@@ -207,7 +156,7 @@ jobs:
         continue-on-error: true
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
-          NOTIFY_TITLE: "⚡ 實單系統 可行動變化（美＋台＋F70）${{ steps.livealert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          NOTIFY_TITLE: "⚡ 實單系統 可行動變化（美＋台）${{ steps.livealert.outputs.changed == 'true' && '' || '(測試信)' }}"
           NOTIFY_BODY: "${{ steps.livealert.outputs.changed == 'true' && steps.livealert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}"
         run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/long-track/#live
 
@@ -218,7 +167,7 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/cap15.html docs/long-track-w52-adaptive/cap15_state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/long-track-w52-adaptive/noma.html docs/long-track-w52-adaptive/noma_state.json docs/long-track-w52-adaptive/c1-shadow.html docs/long-track-w52-adaptive/c1_shadow_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/f70_signal_state.json docs/long-track/index.html
+          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/cap15.html docs/long-track-w52-adaptive/cap15_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/index.html
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then
