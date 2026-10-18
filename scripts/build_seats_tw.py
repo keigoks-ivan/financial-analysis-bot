@@ -24,6 +24,24 @@ docs/SeatSizing_Results_TW_Small.md (c61b63b), classified 「無法分辨」 —
 criterion 4 (crash-window drawdown) not passed — so this is the owner's informed
 choice, not a registered pass. tw_row() passes yellow_full=True to row_dict().
 
+Owner decision 2026-10-18 (v5.4, TW seats page only): 看大盤切換出場 (X1). Registered in
+v7-backtest docs/SeatExitSwitch_Prereg.md (e26888d); the registered conclusion is
+「現行維持」 (US small/mid caps failed), TW passed all four criteria, and the owner decided
+to switch the TW seats page only — an exception, not a registered pass.
+  - Market state at the decision day: TWSE total-return index close < its 200-day simple
+    average = 大盤空頭; otherwise (equal included) 大盤多頭. Source: data/macro_db/series/
+    tw.twse_tri.csv (TWSE TAIEX/MFI94U, identical to the backtest's index_tr.parquet on all
+    4,353 overlapping days). Latest row not later than the decision day; older than 7
+    calendar days (or missing) → that week falls back to the current exit.
+  - 大盤多頭 (bull): an incumbent leaves only when its close < its own 200-day line or it is no longer
+    eligible/in the pool; a drop of more than 10% from the high does not remove it.
+    大盤空頭 (bear): the current red-lamp exit. Entry, ranking, sizing are unchanged.
+  - A held name that is red only by distance keeps the sizing coefficient of its last non-red
+    day (backtest rule), kept in docs/cockpit-tw/data/seats_tw_state.json (written on every
+    run). Missing entry → 1.0 and a log line.
+  - The exit is judged where the roster is re-selected (--ledger, Saturday, Friday close).
+    Daily runs use the market state of the last Saturday's decision day.
+
 TW pool has no short-interest data, so that US gate never fires; insider
 buying (a display chip in the US) is almost always empty. 下次財報 falls back to the
 statutory filing deadline when yfinance has no date.
@@ -44,7 +62,9 @@ Usage:
 
 import argparse
 import copy
+import csv
 import json
+import math
 import sys
 from datetime import date, datetime, timedelta, timezone
 from html import escape
@@ -62,6 +82,11 @@ OUT_DIR = ROOT / 'docs' / 'cockpit-tw' / 'data'
 BODY_HTML = OUT_DIR / '_seats_tw_body.html'
 SEATS_JSON = OUT_DIR / 'seats_tw.json'
 LEDGER_JSON = OUT_DIR / 'seats_tw_ledger.json'
+STATE_NAME = 'seats_tw_state.json'     # path resolved from OUT_DIR at run time (see _state_path)
+MARKET_CSV = ROOT / 'data' / 'macro_db' / 'series' / 'tw.twse_tri.csv'   # 發行量加權股價報酬指數
+MKT_MA = 200            # 大盤均線天數（登記 SeatExitSwitch_Prereg.md 第三節）
+MKT_STALE_DAYS = 7      # 最近一筆比決策日早超過這麼多日曆天＝大盤資料未更新，該週退回現行賣法
+X1_DEFAULT_SIZE = 1.0   # 狀態檔缺這檔的最近非紅燈倉位時的預設
 
 TPE = timezone(timedelta(hours=8))
 CORE_SLOTS = ba.CORE_SLOTS
@@ -81,7 +106,104 @@ def tw_row(s0):
     r['name'] = s0.get('name')
     g = r['grp'] = dict(r['grp'])
     g['why'] = [w.replace('品質閘 FCF', '品質閘 營業現金流利潤率') for w in g.get('why') or []]
+    # v5.4: 跌破自己的 200 日線？（缺值不算跌破，同 grp.timing_lamp 的 vs200 判斷）
+    vs200 = grp._f((s0.get('timing') or {}).get('vs_200ma_pct'))
+    r['_below200'] = vs200 is not None and vs200 < 0
     return r
+
+
+# ── 看大盤切換出場（v5.4，2026-10-18，SeatExitSwitch X1）────────────────────
+
+def load_market_series(path=None):
+    """tw.twse_tri.csv → [(date, close)]，依日期升冪。檔案缺或壞掉回傳 []（呼叫端視為資料缺）。"""
+    out = []
+    try:
+        with open(path or MARKET_CSV, encoding='utf-8', newline='') as f:
+            for row in csv.DictReader(f):
+                try:
+                    out.append((date.fromisoformat(row['date'][:10]), float(row['value'])))
+                except (KeyError, ValueError, TypeError):
+                    continue
+    except OSError:
+        return []
+    out.sort(key=lambda x: x[0])
+    return out
+
+
+def market_state(series, decision_date):
+    """決策日的大盤狀態（純函式）。
+
+    取最近一筆「不晚於決策日」的加權報酬指數收盤；收盤嚴格小於該筆往前連續 200 列的簡單平均＝空頭，
+    其餘（含恰好相等、均線不足 200 列）＝多頭（登記：缺值時比較為假，歸多頭）。
+    mode 'x1'＝看大盤切換出場（多頭）；'e1'＝現行賣法（空頭，或資料缺／太舊而退回）。
+    最近一筆比決策日早超過 MKT_STALE_DAYS 個日曆天、或沒有任何不晚於決策日的資料＝退回現行賣法。"""
+    dd = decision_date if isinstance(decision_date, date) else date.fromisoformat(str(decision_date)[:10])
+    res = {'mode': 'e1', 'status': 'missing', 'decision_date': dd.isoformat(),
+           'data_date': None, 'close': None, 'ma200': None}
+    i = max((k for k, (d, _) in enumerate(series) if d <= dd), default=None)
+    if i is None:
+        return res
+    d, close = series[i]
+    res.update(data_date=d.isoformat(), close=close)
+    if (dd - d).days > MKT_STALE_DAYS:
+        res['status'] = 'stale'
+        return res
+    if i + 1 >= MKT_MA:
+        ma = math.fsum(v for _, v in series[i + 1 - MKT_MA:i + 1]) / MKT_MA
+        res['ma200'] = ma
+        bear = close < ma
+    else:
+        bear = False
+    res['status'] = 'bear' if bear else 'bull'
+    res['mode'] = 'e1' if bear else 'x1'
+    return res
+
+
+def _x1_dist_only(r):
+    """紅燈只因距新高 < −10%（沒跌破自己的 200 日線）。"""
+    return (r.get('lamp') or {}).get('code') == 'red' and not r.get('_below200')
+
+
+def _as_lit(r):
+    """選席用的副本：把大盤多頭時留任的紅燈在席者當作亮燈。不改原列。"""
+    return dict(r, lamp=dict(r['lamp'], code='yellow'))
+
+
+def apply_x1_hold(sel, state, log=print):
+    """大盤多頭續抱的席位：燈號維持紅，倉位改用「最近一次非紅燈的倉位」（回測規則）。
+    state＝{ticker: {'size': ...}}；缺值用 X1_DEFAULT_SIZE 並印一行。"""
+    for r in sel['core']:
+        if not r.get('x1_hold'):
+            continue
+        t = r['ticker']
+        size = (state.get(t) or {}).get('size')
+        if size is None:
+            size = X1_DEFAULT_SIZE
+            log(f"  ! seats-tw: {t} 狀態檔沒有最近非紅燈倉位，續抱倉位用 {X1_DEFAULT_SIZE}")
+        lamp = dict(r['lamp'])
+        why = lamp.get('why') or ''
+        lamp.update(label='🔴 續抱', size=size, trigger=None,
+                    why=f"大盤多頭，只在跌破自己的 200 日線才賣；倉位沿用最近一次非紅燈的倉位 {size}｜{why}")
+        r['lamp'] = lamp
+        r['action'] = ('正常倉' if size >= 1.0 else '半倉') + '・續抱'
+
+
+def update_state(state, core_rows, as_of):
+    """每個在席者最近一次非紅燈的倉位。亮燈（綠／橘／黃）且距新高有資料才更新；
+    其餘保留舊值；離席者的紀錄丟掉。"""
+    new = {}
+    for r in core_rows:
+        t = r['ticker']
+        lamp = r.get('lamp') or {}
+        if lamp.get('code') in ba.LIT_LAMP_CODES and r.get('dist_ath_pct') is not None:
+            new[t] = {'size': lamp.get('size'), 'code': lamp.get('code'), 'date': as_of}
+        elif t in state:
+            new[t] = state[t]
+    return new
+
+
+def _state_path():
+    return OUT_DIR / STATE_NAME
 
 
 def statutory_deadline(today, last_earnings_date=None):
@@ -117,6 +239,7 @@ def flat(r, today):
     v['route_why'] = None
     v['next_earn_fallback'] = None
     v['earnings_date_source'] = r.get('_earnings_date_source')
+    v['x1_hold'] = bool(r.get('x1_hold'))
     if v.get('days_to_next_earnings') is None:
         dl, label = statutory_deadline(today, (r.get('_last_earnings_date')))
         if dl is not None:
@@ -134,17 +257,28 @@ def _pool_key(r):
     return grp.pool_sort_key(r['grp'].get('rev_used_pct'), r.get('implied_growth_pct'), ey)
 
 
-def select(rows, prev_core, reselect, last_snap=None):
+def select(rows, prev_core, reselect, last_snap=None, market=None):
     """Split rows into the board sections. Pure apart from the inputs.
 
     reselect=False keeps prev_core and carries the last rotation's removed/filled
     for display, so 新席 and the DOWN lines stay up until the next Saturday.
+
+    market（v5.4）：market_state() 的結果。mode 'x1'（大盤多頭）時，在席者只要仍在池內
+    （資格成立、上修 ≥5%）且沒跌破自己的 200 日線，就算留任候選，仍依池序競爭前 5；
+    沒有 market 或 mode 'e1'＝現行賣法，與 v5.3 逐位元相同。
     """
     eligible = [r for r in rows if r['grp'].get('pass')]
     pool = sorted((r for r in eligible if grp.in_pool(r['grp'].get('rev_used_pct'))), key=_pool_key)
     by_t = {r['ticker']: r for r in rows}
+    x1 = bool(market) and market.get('mode') == 'x1'
+    pool_set = {r['ticker'] for r in pool}
     if reselect:
-        rotation = ba.select_lit_roster_v52(pool, prev_core, core_slots=CORE_SLOTS)
+        roster_pool = pool
+        if x1:
+            incumbents = set(prev_core or [])
+            roster_pool = [_as_lit(r) if r['ticker'] in incumbents and _x1_dist_only(r) else r
+                           for r in pool]
+        rotation = ba.select_lit_roster_v52(roster_pool, prev_core, core_slots=CORE_SLOTS)
     else:
         last_snap = last_snap or {}
         rotation = {'core': [t for t in (prev_core or []) if t in by_t], 'rotated': False,
@@ -154,8 +288,13 @@ def select(rows, prev_core, reselect, last_snap=None):
     filled = {t for _, t in rotation['filled']}
     for r in core:
         r['seat_note'] = '新席' if r['ticker'] in filled else '現任'
+        r['x1_hold'] = False
         if not _lit(r):
-            r['seat_note'] += '・週中轉紅，週六複判'
+            if x1 and r['ticker'] in pool_set and _x1_dist_only(r):
+                r['x1_hold'] = True
+                r['seat_note'] += '・大盤多頭續抱'
+            else:
+                r['seat_note'] += '・週中轉紅，週六複判'
     seated = set(rotation['core'])
     waiting = [r for r in pool if r['ticker'] not in seated]
     buyable = [r for r in waiting if (r.get('lamp') or {}).get('code') in ('green', 'hot')]
@@ -245,6 +384,7 @@ def _legend():
 <div class="bw-note-line"><b>上修</b>：分析師對每股盈餘預估調高了幾 %，基準是這檔股票最近一次財報前的那份 Koyfin 快照。上修 ≥5% 才入池，池內依上修由高到低排。台股快照從 2026-10 開始存，第一筆上修要等第三季財報之後再匯出一次，在那之前核心席空著，過關且燈亮的名字列在「④ 候補」。yfinance 沒有財報日的名字，改用公開資訊觀測站上董事會通過財報的日期。</div>
 <div class="bw-note-line"><b>時機燈</b>：量的是距還原權息歷史新高多遠。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉。🟡 接近＝差 3%～10% 且站上 200 日線，同樣正常倉（v5.3 起，原為半倉）。距歷史新高的資料缺時，黃燈暫列半倉，標「🟡 資料缺」。🟠 過熱＝近 12 個月（扣最近一個月）漲幅 &gt;150%，半倉。🔴 等板機＝差超過 10% 或跌破 200 日線，零倉。⚫ 不合格＝未站上 52 週線。🟢🟡🟠 算亮燈。滑過燈號可看階段燈，階段燈不影響時機燈。</div>
 <div class="bw-note-line"><b>變更紀錄 v5.3（2026-10-18 起）</b>：倉位對應綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。黃燈由半倉改滿倉，依據是 v7-backtest 的台股回測（SeatSizing_Results_TW_Small.md，2013-04 至 2026-09）。同曝險比較是黃燈滿倉但整體投入跟半倉一樣多，比的是 Calmar（年化報酬除以最大回撤）：合格且燈亮的股票全部等權持有，0.181 對半倉 0.074；最多持 5 檔的設計跑 1,000 個隨機遞補種子，中位數 0.324 對 0.096，1,000 個種子全部較高，前後段也都較高。代價是直接滿倉在急殺時回撤較深：全部持有設計在 2022 年窗深 14.5 個百分點，2025 年窗深 9.6 個百分點，超過登記的 8 個百分點門檻。登記分類是「無法分辨」，績效面支持、風險告知門檻未過。回測樣本是代理母體，缺三年成長、上修排序、估值與營業現金流利潤率，規則也是看過美股大型股結果後訂的。本次是持有人依回測知情決定改，不是登記判準通過。橘燈維持半倉。</div>
+<div class="bw-note-line"><b>變更紀錄 v5.4（2026-10-18 起）</b>：賣法改成看大盤切換，只改台股席位頁，美股看板與十倍股頁不變。依據是 v7-backtest 的「看大盤切換出場」回測（SeatExitSwitch_Results.md，台股 2013-03 至 2026-09）：黃燈滿倉下 Calmar 0.232 對現行 0.190，1,000 種五檔組合中 779 種較好。登記結論是不改，因為美股中小型沒過；持有人破例只改台股。好處多半來自慢出場本身。回測年化報酬 13.21%，低於同期 0050 的 20.32%。大盤多頭續抱的席位維持紅燈，倉位沿用最近一次非紅燈的倉位。</div>
 <div class="bw-note-line"><b>下次財報</b>：「≤N 天」是公司還沒公告日期，依法定期限推算（第一季 5/15、第二季 8/14、第三季 11/14、年報 3/31），實際可能更早。距財報 7 天內標橘色。</div>
 <div class="bw-note-line"><b>底部</b>：只在距歷史新高 10% 以內才算。回檔一次比一次小、量縮、離底部高點近算「緊」，否則算「鬆」。只排 ③ 等待池裡 🟡 組的順序，不改燈號或倉位。</div>
 <div class="bw-note-line"><b>跟美股的資料差異</b>：融券比在美股是資格條件，台股池沒有這項資料，這一條等於不設。內部人買賣在美股只是備註，台股池幾乎沒有資料。</div>
@@ -291,11 +431,34 @@ def _board_html(views, seat_code_map, lamp_map, n_eligible, rev_n):
             + ''.join(body) + '</tbody></table></div>')
 
 
+RULE_LINE = '大盤好時（加權報酬指數在 200 日線上），跌破自己的 200 日線才賣；大盤不好時，跌 10% 就賣。'
+
+
+def _market_html(market):
+    """賣法一句話＋目前大盤狀態一行（v5.4）。market＝market_state() 的結果。"""
+    rule = f'<div class="bw-note-line"><b>賣法</b>：{RULE_LINE}</div>'
+    if not market:
+        return rule
+    st = market.get('status')
+    d = escape(market.get('data_date') or '—')
+    if st in ('stale', 'missing'):
+        line = (f'大盤資料未更新，本週用現行賣法（最近一筆資料日期 {d}）。' if market.get('data_date')
+                else '大盤資料未更新，本週用現行賣法（沒有資料）。')
+    else:
+        nums = f"加權報酬指數 {market['close']:,.2f}"
+        nums += f"，200 日線 {market['ma200']:,.2f}" if market.get('ma200') is not None \
+            else '，200 日線資料不足（依登記算多頭）'
+        word, way = ('多頭', '本週用「跌破自己的 200 日線才賣」') if st == 'bull' \
+            else ('空頭', '本週用「跌 10% 就賣」（現行賣法）')
+        line = f'大盤狀態（{d} 收盤）：{nums}，<b>{word}</b>。{way}。'
+    return rule + f'<div class="bw-note-line">{line}</div>'
+
+
 def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_universe,
-                lamp_map, conc=None, board=None):
+                lamp_map, conc=None, board=None, market=None):
     core_v = [views[r['ticker']] for r in sel['core']]
     rev_n = sum(1 for v in views.values() if v.get('rev_used_pct') is not None)
-    head = f"台股核心席 v5.3 · {as_of} · 台股池 {n_universe} 檔"
+    head = f"台股核心席 v5.4 · {as_of} · 台股池 {n_universe} 檔"
     rule = (f"資格全過 {len(sel['eligible'])} 檔，上修 ≥5% 入池 {len(sel['pool'])} 檔，"
             f"有上修數字的 {rev_n} 檔。Koyfin 預估 {rev_as_of or '—'}，股價 {as_of}，"
             f"階段燈 {lamp_as_of or '—'}。")
@@ -323,7 +486,7 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + '<h3 class="bw-sec">① 核心席（5）</h3>'
         + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）'
           '的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。</div>'
-        + fresh + status
+        + fresh + _market_html(market) + status
         + _table(core_v, lamp_map, seat_prefix='C', empty_seats=CORE_SLOTS - len(core_v))
         + (_conc_html(conc) if conc else '')
         + _legend() + ''.join(lines)
@@ -387,7 +550,14 @@ def build(reselect, today=None):
         prev_core = prior[-1]['core'] if prior else []
     else:
         prev_core = (ledger.get('roster') or {}).get('core') or []
-    sel = select(rows, prev_core, reselect, last_snap=snaps[-1] if snaps else None)
+    # v5.4：賣法看決策日的大盤狀態。週六重選用當次 as_of；平日只刷燈號，沿用上次週六的決策日。
+    decision_date = as_of if reselect else (ledger.get('last_rotation_date') or as_of)
+    market = market_state(load_market_series(), decision_date)
+    sel = select(rows, prev_core, reselect, last_snap=snaps[-1] if snaps else None, market=market)
+    state_doc = _load_json(_state_path(), {})
+    state = state_doc.get('last_nonred') or {}
+    apply_x1_hold(sel, state)
+    new_state = update_state(state, sel['core'], as_of)
     views = {r['ticker']: flat(r, today) for r in rows}
     industry = {s['ticker']: s.get('tw_industry') for s in doc['stocks']}
     for t, v in views.items():
@@ -407,12 +577,15 @@ def build(reselect, today=None):
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     BODY_HTML.write_text(render_html(as_of, rev_as_of, lamp_doc.get('as_of'), last_rotation_date,
-                                     sel, views, len(rows), lamp_map, conc, board), encoding='utf-8')
+                                     sel, views, len(rows), lamp_map, conc, board, market), encoding='utf-8')
+    if new_state != state:
+        _state_path().write_text(json.dumps({'schema_version': 'tw-state-1.0', 'last_nonred': new_state},
+                                            ensure_ascii=False, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     pick = lambda key: [views[r['ticker']] for r in sel[key]]  # noqa: E731
     SEATS_JSON.write_text(json.dumps({
         'schema_version': 'tw-1.0',
         'as_of': as_of, 'rev_data_as_of': rev_as_of, 'stage_lamp_as_of': lamp_doc.get('as_of'),
-        'last_rotation_date': last_rotation_date,
+        'last_rotation_date': last_rotation_date, 'market': market,
         'counts': {'universe': len(rows), 'eligible': len(sel['eligible']), 'pool': len(sel['pool']),
                    'with_revision': sum(1 for v in views.values() if v.get('rev_used_pct') is not None),
                    'candidates': len(sel['candidates'])},
@@ -429,6 +602,7 @@ def build(reselect, today=None):
         LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     print(f"  ✓ seats-tw {as_of}: eligible {len(sel['eligible'])}, pool {len(sel['pool'])}, "
           f"core {sel['rotation']['core']}, candidates {[r['ticker'] for r in sel['candidates']]}"
+          + f", market {market['status']} ({market['data_date']})"
           + (" (re-selected)" if reselect else " (lamps only)"))
     return sel
 
