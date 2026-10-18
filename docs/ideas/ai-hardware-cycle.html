@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>AI 硬體循環 — 投資想法 | InvestMQuest Research</title>
+<meta name="description" content="AI 硬體需求到 2028 年都缺貨，這一輪的風險在替需求墊錢的人：訂金與保證讓風險往 Nvidia 的資產負債表集中。附 2000 年時間表、記憶體、UCITS 版 SMH 曝險、三種情境與七個查核點。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{--pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;--mix-bg:#efe9da}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#eef1f6;--body:#c9d2df;--sec:#95a2b6;--muted:#6f7c90;--paper:#0b0d11;--card:#14181f;
+  --line:#28303c;--line-soft:#1f2530;--accent:#9cc0ff;--gold-deep:#d4b576;
+  --pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--pos-bg:#12261a;--neg-bg:#2a1414;--warn-bg:#2a2210;--mix-bg:#1f2530}}
+:root[data-theme="dark"]{
+  --ink:#eef1f6;--body:#c9d2df;--sec:#95a2b6;--muted:#6f7c90;--paper:#0b0d11;--card:#14181f;
+  --line:#28303c;--line-soft:#1f2530;--accent:#9cc0ff;--gold-deep:#d4b576;
+  --pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--pos-bg:#12261a;--neg-bg:#2a1414;--warn-bg:#2a2210;--mix-bg:#1f2530}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);line-height:1.75;font-size:15.5px}
+.wrap{max-width:880px;margin:0 auto;padding:28px 16px 64px}
+a{color:var(--accent)}
+.crumb{font-size:.8rem;color:var(--sec);margin-bottom:10px}
+.crumb a{color:var(--sec)}
+h1{font-family:var(--serif);color:var(--ink);font-size:1.75rem;line-height:1.3;margin:.2rem 0 .6rem}
+h2{font-family:var(--serif);color:var(--ink);font-size:1.3rem;margin:2.4rem 0 .8rem;padding-top:.4rem;border-top:1px solid var(--line)}
+h3{font-size:1.02rem;color:var(--ink);margin:1.6rem 0 .4rem}
+.meta{font-family:var(--mono);font-size:.74rem;color:var(--sec);display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.thesis{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--r);padding:18px 20px;margin:20px 0;font-size:1.08rem;color:var(--ink);font-weight:600;line-height:1.6}
+.summary{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 20px 14px 38px;margin:0}
+.summary li{margin:.3rem 0}
+p{margin:.6rem 0}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:12px 0}
+.imq-table{border:1px solid var(--line);border-radius:var(--r)}
+.imq-table td{vertical-align:top}
+.imq-table tr:last-child td{border-bottom:0}
+.chain{display:flex;flex-direction:column;gap:6px;margin:14px 0}
+.step{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 14px;font-size:.92rem}
+.step b{color:var(--ink)}
+.step small{color:var(--sec);display:block}
+.arrow{color:var(--muted);text-align:center;font-size:.8rem;line-height:1}
+.badge{display:inline-block;font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:.05em;padding:.14rem .55rem;border-radius:5px;white-space:nowrap;vertical-align:1px}
+.b-sup{color:var(--pos);background:var(--pos-bg)}
+.b-ref{color:var(--neg);background:var(--neg-bg)}
+.b-mix{color:var(--warn);background:var(--warn-bg)}
+.b-un{color:var(--sec);background:var(--mix-bg)}
+.muted-red{color:var(--neg);font-size:.84rem}
+.cpstatus-wrap{margin:14px 0 22px}
+.cpstatus-star{width:1.6em;text-align:center;color:var(--gold-deep);font-size:.9rem}
+.cpstatus-since{font-family:var(--mono);font-size:.78rem;color:var(--sec);white-space:nowrap}
+.cpstatus-note{margin-top:6px}
+.deep-toggle{font-family:var(--mono);font-size:.72rem;color:var(--accent);background:none;border:1px solid var(--line);border-radius:6px;padding:.25rem .6rem;margin:8px 0 2px;cursor:pointer}
+.deep-toggle:hover{background:var(--line-soft)}
+.deep-sources{display:block;font-size:.76rem;color:var(--muted);margin-top:2px}
+.src-type{color:var(--muted)}
+.cp{scroll-margin-top:70px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px;margin:14px 0}
+.cp-head{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+.cp-id{font-family:var(--mono);font-size:.72rem;color:var(--gold-deep);font-weight:600}
+.cp-title{font-weight:700;color:var(--ink);font-size:1rem}
+.cp-when{font-family:var(--mono);font-size:.7rem;color:var(--sec);margin-left:auto}
+.cp-rule{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:.86rem;margin:8px 0 4px}
+.cp-rule span:nth-child(odd){color:var(--sec);white-space:nowrap}
+.ev{list-style:none;margin:8px 0 0;padding:0;border-top:1px dashed var(--line);font-size:.85rem}
+.ev li{padding:6px 0;border-bottom:1px dashed var(--line-soft);display:flex;gap:8px;align-items:baseline}
+.ev li:last-child{border-bottom:0}
+.ev .d{font-family:var(--mono);font-size:.72rem;color:var(--sec);white-space:nowrap}
+.ev .src{color:var(--muted);font-size:.76rem}
+.ev .lbl{font-size:.72rem;color:var(--sec);margin:6px 0 0}
+.muted{color:var(--sec);font-size:.84rem}
+.note{background:var(--line-soft);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:.86rem;margin:12px 0}
+.kill li{margin:.35rem 0}
+.page-note{margin-top:3rem;font-size:.78rem;color:var(--sec);border-top:1px solid var(--line);padding-top:1rem}
+@media(max-width:600px){h1{font-size:1.4rem}.cp-when{margin-left:0}.cp-rule{grid-template-columns:1fr}.ev li{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/" class="active">投資想法</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/simulation/">模擬</a>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+<div class="crumb"><a href="/ideas/">投資想法</a> › AI 硬體循環</div>
+<h1>AI 硬體：風險在 Nvidia 的資產負債表，不在需求</h1>
+<div class="meta"><span>建立 2026-10-18</span><span>·</span><span>數據截至 2026-10-16</span><span>·</span><span class="badge b-sup">追蹤中</span><span>·</span><span id="hit-total">早報新證據：讀取中</span></div>
+
+<div class="thesis">這一輪 AI 硬體景氣要結束，最可能的原因是替需求墊錢的人撐不住，需求本身到 2028 年都還缺貨。墊錢的鏈最後接到 Nvidia 的資產負債表上：供應與產能承諾 2,790 億美元、替 OpenAI 關係企業 SB Energy 的俄亥俄園區作保上限 1,050 億、AI 雲協議 360 億、存貨 316 億、非上市投資 479 億。目前判斷是景氣中段的消化期（主觀機率 55%）。2026 年 6 月 22 日是不是這一輪的循環頂，要等 11 月中 Nvidia 財報，一直到 2027 年第一季 OpenAI 下一輪募資、四大雲公布 2027 年資本支出，才能確認或排除。</div>
+
+<div class="cpstatus-wrap" id="cpstatus"></div>
+
+<h2>一頁摘要</h2>
+<ul class="summary">
+<li>台積電、美光、ASML 都說 2027、2028 年供給不夠，Nvidia 說缺貨至少到 FY2028 年底。</li>
+<li>四大雲 2026 年資本支出指引合計約 7,200～7,450 億美元，三家說 2027 年還會增加。</li>
+<li>可歸因 AI 營收約 2,000～2,500 億美元年化，是高盛打平門檻 3,000 億的 67%～83%（本文估算）。</li>
+<li>供應商用長約和訂金把風險推給客戶：ASML 的合約負債一季多 57 億歐元。</li>
+<li>Nvidia 接下風險：供應與產能承諾一季從 1,190 億增到 2,790 億美元，存貨比年初多 48%。</li>
+<li>最弱的一節是 OpenAI 到 Oracle、CoreWeave：CoreWeave 2031 年債殖利率 10 月中到 15.78%。</li>
+<li>6 月 22 日高點時費半高於 52 週均線 82%，歷史上只有 2000 年的 126% 更高。</li>
+<li>主觀機率：消化期 55%、循環頂 45%，要到 2027 年第一季才分得出來。</li>
+<li>撐住結論的是「利潤落在誰」：這次的訂單附帶訂金與保證，風險一路往 Nvidia 集中。</li>
+</ul>
+
+<h2>先分清楚兩種頂</h2>
+<p><b>股價的頂通常比生意的頂早 5 到 14 個月。</b>過去三次半導體與網通循環，都是股價先到頂，營收或獲利晚好幾季才轉弱。所以 10 月底四大雲的財報再好，也排除不了 6 月 22 日就是這一輪的股價高點。</p>
+
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>循環</th><th>股價高點</th><th>高點之後生意還在變好</th><th>生意轉弱</th><th>間隔</th></tr></thead>
+<tbody>
+<tr><td>2000 網通</td><td>納指 2000-03-10</td><td>2000-11-06 思科營收年增 66%，存貨從 12.3 億升到 19.6 億美元</td><td>2001-02 營收增速 12 季來首次放緩；2001-05-08 營收年減 4%，提列超額存貨 22.5 億</td><td>11～14 個月</td></tr>
+<tr><td>2018 記憶體</td><td>SK 海力士 2018-05 最後一個高點</td><td>2018 年第三季三星、海力士季獲利創高</td><td>2018 年第四季海力士 DRAM 均價季減 11%；美光 2018-12 說客戶庫存偏高、要去化</td><td>5～7 個月</td></tr>
+<tr><td>2021 GPU</td><td>Nvidia 2021-11</td><td>資料中心營收在股價高點後又創高約 8 個月</td><td>2022-04 季遊戲營收見頂；2022-08 預告 13.2 億美元存貨相關費用</td><td>5～9 個月</td></tr>
+</tbody></table></div>
+<p class="muted">間隔是股價高點到生意轉弱的月數，本文依日期計算。2018 年的股價高點日期來自二手整理。</p>
+
+<p>費半 2026-06-22 收在 14,634.72 點的高點，到 10/16 剛滿 4 個月。照 2018、2021 年的間隔，生意轉弱會落在 2026 年 11 月到 2027 年 3 月，現在已經進入這段時間。照 2000 年的間隔，會落在 2027 年 5 月到 8 月。中間正好經過 Nvidia FQ4 財報（約 2027 年 2 月）與 OpenAI 下一輪募資。</p>
+
+<h2>生意面：缺貨到 2028 年</h2>
+<p><b>上游四家公司在 8 月底到 10 月中都說 2027、2028 年供給不夠。</b>這些話跟它們的資本支出與漲價決定同時出現，是需求面最硬的證據。</p>
+<ul>
+<li>台積電（10/15 法說，第三方逐字稿）：2026 年全年營收成長約 44%，第四季指引 523～543 億美元，高效能運算（HPC）占第三季營收 68%。財務長說 2026～2028 年資本支出「顯著高於過去三年」，N2 年產能 2027 年倍增以上。魏哲家說 AI 加速器年複合成長率「可能更高」於先前的中到高 50%。</li>
+<li>Nvidia（8/26 新聞稿與逐字稿）：FQ2 營收 962 億美元，年增 106%。資料中心 890 億，年增 117%。FQ3 營收指引 1,080 億美元正負 2%，毛利率指引 74.0%。財務長 Kress 說 FY2028 營收成長約 70%，「這是受供給限制的展望」，供給瓶頸「至少持續到 FY2028 年底」。</li>
+<li>美光（9/30 新聞稿與 prepared remarks）：FQ4 營收 542.3 億美元，毛利率 86.8%，FQ1 營收指引 615 億。公司預期 2027 與 2028 年的記憶體供需「比 2026 年緊得多」。</li>
+<li>ASML（10/14 向 SEC 提交的 6-K）：2027、2028 年規劃中的供給「無法完全滿足需求」，2027 年低數值孔徑 EUV 與 DUV 浸潤式產能增加 30%，部分客戶想下 2029～2030 年的訂單。ASML 從 2026 年起不再公布季度訂單金額。</li>
+</ul>
+<p>台積電法說那句「prudent（審慎）」常被解讀成 2027 年轉保守。逐字稿裡，這句話緊接在「消費性與價格敏感的終端市場受到挑戰」之後，講的是手機、PC 這類終端。同一場法說，魏哲家被問到 2027 年供給會不會比 2026 年更緊，他不願表態，理由是客戶需求還在成長。</p>
+
+<h3>新產能什麼時候到</h3>
+<ul>
+<li>DRAM：新廠要到 2027 年下半年才有意義的量，實質貢獻在 2028 年（TrendForce）。美光愛達荷新廠 2027 年中開始產出晶圓，SK 海力士清州 M17 廠 2028 年底才有第一批無塵室（媒體報導）。</li>
+<li>DRAM 位元供給成長 2026 年 25%、2027 年 19%（美銀，媒體報導）。</li>
+<li>HBM（高頻寬記憶體）：2027 年位元出貨年增 50～60%，仍低於需求成長（TrendForce）。</li>
+<li>CoWoS 先進封裝：2027 年底月產能各家估 11.2 萬到 26 萬片，單位口徑不一致（媒體報導）。</li>
+</ul>
+<p>找得到的預測裡，沒有一家券商說 2027 年供需反轉。最接近的是 Citi 預期記憶體價格 2027 年第二季見頂，以及 Bloomberg Intelligence 認為 2028 年可能轉為供過於求（媒體報導）。</p>
+
+<h3>買方的錢</h3>
+<p>TrendForce 10/14 估九大雲端業者 2026 年資本支出約 9,570 億美元，年增 106%。2027 年超過 1.5 兆，年增 60%。四大雲自己的 2026 年指引加起來約 7,200～7,450 億美元：</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>公司</th><th>2026 年資本支出</th><th>對 2027 年的說法</th><th>出處與口徑</th></tr></thead>
+<tbody>
+<tr><td>Meta</td><td>1,300～1,450 億美元</td><td>沒給</td><td>新聞稿，含融資租賃本金</td></tr>
+<tr><td>Alphabet</td><td>1,950～2,050 億</td><td>「2027 年資本支出會顯著增加」</td><td>法說逐字稿</td></tr>
+<tr><td>Microsoft</td><td>約 1,750 億</td><td>「FY27 資本支出會年增」</td><td>法說逐字稿；1,750 億指曆年還是 FY27 沒講清楚</td></tr>
+<tr><td>Amazon</td><td>約 2,200 億</td><td>容量不足的情況 2027 年也會存在</td><td>CEO 在法說上的口頭說法，新聞稿沒有資本支出指引</td></tr>
+</tbody></table></div>
+
+<h2>錢：AI 營收追得上嗎</h2>
+<p><b>可歸因的 AI 營收大約是打平門檻的 67%～83%，成長也比資本支出快。</b>這是多頭最硬的一條，下面把數字攤開。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>項目</th><th>最新</th><th>較早</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>OpenAI 年化營收</td><td>近 500 億美元（2026-09；含經 AWS、Google Cloud 賣出的約 700 億）</td><td>100 億（2025-06）</td><td>15 個月約 5 倍</td></tr>
+<tr><td>Anthropic 年化營收</td><td>650 億（2026-07）；第三季單季 168 億</td><td>約 90 億（2025-12）</td><td>口徑含雲端夥伴代賣</td></tr>
+<tr><td>Microsoft AI 年化營收</td><td>逾 370 億（2026-04）</td><td>年增 123%</td><td>部分來自 OpenAI 付的雲端費用</td></tr>
+<tr><td>Google Cloud 季營收</td><td>247.7 億（第二季）</td><td>年增 82%</td><td>整個 Cloud，積壓訂單 5,140 億</td></tr>
+<tr><td>AWS 季營收</td><td>422 億（第二季）</td><td>年增 36.7%</td><td>AI 部分沒拆</td></tr>
+</tbody></table></div>
+<p class="muted">以上全部是媒體報導（Reuters、FT、Bloomberg 轉述），營收數字未經審計。</p>
+
+<p>本文估算：兩家模型公司年化營收合計約 1,150～1,350 億美元，加上微軟 AI 的 370 億，是 1,520～1,720 億。再加雲端裡 AI 的部分（各家沒拆，這一段是推估），可歸因 AI 營收約 2,000～2,500 億美元年化。高盛 9/24 估 2026 年資本支出約 8,000 億，要打平需約 3,000 億年化 AI 營收，基建層要賺到 10% 的投入資本報酬率需約 4,170 億（媒體轉述）。目前的營收約是打平門檻的 67%～83%，10% 報酬門檻的 48%～60%。</p>
+<p>覆蓋率在升，金額缺口要看營收能不能再翻倍。資本支出 2027 年預估增加 50%～60%（高盛 2027 年 1.2 兆對 2026 年 8,000 億，TrendForce 九大雲年增 60%），打平門檻跟著升到約 4,500 億。營收若也只增加 50%，覆蓋率不變，金額缺口反而從約 750 億擴大到約 1,125 億。營收要翻倍，缺口才會收掉。兩家模型公司的年化營收過去一年都是倍數成長，這是多頭的依據。Anthropic 第三季每 1 美元算力支出產生 1.70 美元營收，2025 年是 0.63 美元，調整後營業利益率約 11%（媒體報導，未審計）。</p>
+<p>這個推論有兩處可能錯。第一，營收數字幾乎都是公司告訴投資人、再經媒體轉述，OpenAI 9 月的「近 500 億」和「近 700 億」同時流傳。第二，2000 年也有一組大家相信的成長數字：網路流量「每兩個月翻倍」，實際約六個月翻倍，正確資料在 2000 年就出現，但被忽略了（Chancellor 引 Odlyzko 的研究）。另外，微軟的 AI 營收有一部分是 OpenAI 付的雲端費用，OpenAI 與 Anthropic 的營收又含經 AWS、Google Cloud 代賣的部分，跟雲端營收相加會重複計算。門檻也有口徑問題：高盛的 3,000 億對應 8,000 億資本支出，用 TrendForce 九大雲的 9,570 億換算，門檻約 3,590 億，覆蓋率降到 56%～70%。</p>
+<p>買方自己的現金流更緊。FT 報導 OpenAI 內部預測 2026～2030 年累計自由現金流 −2,780 億美元，同期算力與基建支出約 8,560 億。2 月時 OpenAI 已對投資人把 2030 年前算力支出從 1.4 兆下修到約 6,000 億（Reuters）。以上都是媒體報導。這個缺口要靠外部募資補，所以 OpenAI 的下一輪募資是本頁第一個關鍵查核點。</p>
+
+<h2>墊錢的人：風險怎麼流到 Nvidia</h2>
+<p><b>這一輪跟 2000、2018 年最大的不同是訂金。</b>上游用長約和押金把風險推給客戶。AI 晶片這一段，接得最多的是 Nvidia：它向記憶體與晶圓廠下長單，再替 OpenAI 的資料中心與 AI 雲夥伴作保。下表依產業鏈由上往下排。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>誰</th><th>怎麼保護自己</th><th>數字</th><th>出處</th></tr></thead>
+<tbody>
+<tr><td>ASML</td><td>收訂金</td><td>非流動合約負債一季從 35.7 億升到 93.0 億歐元</td><td>6-K</td></tr>
+<tr><td>台積電</td><td>客戶暫收款、2027 年漲價</td><td>暫收款 3/31 的 1,497 億台幣升到 6/30 的 2,342 億；2027 年基本漲幅 5～10%；存貨天數 82 天</td><td>暫收款與漲價為媒體報導；存貨天數為管理報告</td></tr>
+<tr><td>美光</td><td>26 份策略客戶協議，照約付款（take-or-pay），收現金押金</td><td>客戶財務承諾 320 億美元，已入帳押金約 130 億，多數 2029～2031 年才退；剩餘履約義務約 1,340 億</td><td>prepared remarks、10-K</td></tr>
+<tr><td>三星、SK 海力士</td><td>五年長約、預付款、價格底</td><td>三星的長約涵蓋未來產能 60～70%</td><td>媒體報導</td></tr>
+<tr><td><b>Nvidia</b></td><td><b>保護很小，它是接下風險的一方</b></td><td>見下一節</td><td>10-Q</td></tr>
+<tr><td>伺服器組裝廠</td><td>沒有，毛利率 5%～9%</td><td>鴻海第二季 6.12%、廣達 5.02%、緯穎 9.3%</td><td>媒體報導（緯穎為新聞稿）</td></tr>
+<tr><td>CoreWeave</td><td>舉債</td><td>積壓訂單約 1,042 億美元；帳列借款約 351 億；第二季淨利息費用 6.4 億，調整後 EBITDA 15.1 億</td><td>新聞稿；借款為資產負債表加總；利息費用為媒體報導</td></tr>
+<tr><td>Oracle</td><td>舉債、增資</td><td>剩餘履約義務 6,640 億；借款約 1,253 億；已完成 200 億美元市價增資</td><td>新聞稿、10-Q</td></tr>
+</tbody></table></div>
+<p class="muted">照約付款（take-or-pay）：客戶不提貨也要付錢。剩餘履約義務：已簽約、還沒認列的營收。</p>
+
+<h3>Nvidia 10-Q 裡的數字（季末 2026-07-26）</h3>
+<ul>
+<li>存貨 315.75 億美元，年初 214.0 億，多 48%。增加的主要是原料，從 38.1 億升到 113.4 億。財務長說是為 Vera Rubin 上市備貨。</li>
+<li>供應與產能承諾 2,790 億美元，上一季 1,190 億。到期分布：FY27 剩餘 920 億、FY28 870 億、FY29 880 億。10-Q 說部分合約在下確定訂單前「可取消、重排或調整」，可能要付額外費用，可取消的比例沒有揭露。</li>
+<li>其他承諾：雲端服務協議 290 億、未起租的資料中心租約 250 億、股權投資 250 億、資本支出 80 億，加上供應承諾共 3,660 億。另有 AI 雲協議 360 億、替第三方簽的資料中心租約 200 億。</li>
+<li>AI 雲協議的條款寫明，對方「可以單方面停止提供給 Nvidia，改以更好的價格賣給第三方客戶」。要不要繼續履約，選擇權在對方手上。</li>
+<li>保證：2026 年 8 月替 SB Energy（OpenAI 關係企業，俄亥俄州約 4.25GW、20 年租約）作保，上限 1,050 億美元。另有 AI 雲夥伴的土地、電力、廠房保證 35 億。</li>
+<li>付款期：對投資級客戶的大額採購給 90 天到一年。應收帳款 630.6 億美元，年增 127%，快過營收的 106%，應收帳款天數 60 天。</li>
+<li>非上市投資帳面 479 億美元。H200 因需求轉弱提列 4 億損失。</li>
+</ul>
+<p>Nvidia 也收客戶預付款，上半年新增 156 億美元（去年同期 75 億），跟 2,790 億的承諾比是小數。7 月起它向 neocloud（專做 GPU 出租的新型雲端業者）承諾租回賣不掉的算力，Sharon AI 4 萬顆、Firmus 最多 17 萬顆。8 月再與 Apollo、Blackstone、KKR 等機構組成 5,000 億美元的融資平台，Nvidia 最多擔保 1,250 億。這兩項是媒體報導，條款沒有全部確認。</p>
+
+<h3>跟 2000 年的朗訊比</h3>
+<p>2000 年 6 月底朗訊對客戶的信用承諾約 77 億美元，約占當年營收 23%（10-K）。Nvidia 的保證 1,085 億加 AI 雲協議 360 億，合計 1,445 億美元。用 FQ3 指引 1,080 億乘 4 的年化營收 4,320 億算，約占 33%。把 2,790 億供應承諾也算進去，合計 4,235 億，占年化營收 98%。</p>
+<p>兩個口徑意義不同。33% 是 Nvidia 替客戶與夥伴承擔的信用風險，跟朗訊的賣方融資同類，但 1,050 億是保證上限，朗訊的 77 億是承諾金額，分母一個用未來年化營收、一個用當年營收，只能看量級。98% 包含 Nvidia 向供應商下的單，正常情況下會變成銷貨成本：以 74% 毛利率計，FQ3 單季銷貨成本約 281 億。所以供應承諾要變成損失，營收得大幅低於預期，存貨賣不掉、承諾照付。</p>
+<p>真正的損失順序也要分清楚。OpenAI 募資失敗，先承受的是 Oracle、CoreWeave 的股東與債權人。Nvidia 的保證要到承租方違約才會被動用，觸發順序與實際年租金 10-Q 沒有揭露。Nvidia 的現金與自由現金流能吸收多少，本頁沒有比對。</p>
+
+<h2>最弱的一節：OpenAI 到 Oracle、CoreWeave</h2>
+<p><b>如果這條鏈會斷，最可能從 OpenAI 的募資開始。</b></p>
+<div class="chain">
+<div class="step"><b>OpenAI 募不到錢</b><small>2026～2030 年累計自由現金流預測 −2,780 億美元（媒體報導）</small></div>
+<div class="arrow">▼</div>
+<div class="step"><b>Oracle 的合約無法兌現</b><small>剩餘履約義務 6,640 億，OpenAI 約占近半（媒體報導）</small></div>
+<div class="arrow">▼</div>
+<div class="step"><b>Oracle、CoreWeave 不再下單，或付不出利息</b><small>Oracle 第一季自由現金流 −54 億；CoreWeave 債殖利率 15.78%</small></div>
+<div class="arrow">▼</div>
+<div class="step"><b>Nvidia 的存貨與保證出事</b><small>存貨 315.75 億、供應承諾 2,790 億、SB Energy 保證上限 1,050 億</small></div>
+</div>
+<ul>
+<li>Oracle FY27 第一季（截至 8/31）：剩餘履約義務 6,640 億美元，年增 2,090 億。資本支出 285 億，自由現金流 −54 億。借款約 1,253 億，利息費用 14.3 億，年增 55%（新聞稿、10-Q）。</li>
+<li>Oracle 全年資本支出 900～950 億只出現在法說摘要，公司書面只說「高於 FY26」。S&amp;P 7 月把評等降到 BBB-，只比垃圾級高一級。五年期 CDS 10 月中升到 288bp，創新高（媒體報導）。</li>
+<li>CoreWeave（CNBC 10/15）：2031 年到期的 9.75% 債券殖利率到 15.78%。五年期 CDS 一度高於 1,140bp，最新約 1,038bp。S&amp;P Global Market Intelligence 的分析師說，1,000bp 以上通常代表信用壓力。</li>
+<li>10 月中 CoreWeave 股價單週跌 15%～25%，Dell 跌約 11%、Nebius 約 10%，費半一週市值少了約 1 兆美元（媒體報導）。</li>
+</ul>
+<p>Nvidia 第二季資料中心營收裡，大型雲端 487 億美元，AI 雲、產業與企業客戶 403 億（媒體報導）。OpenAI、Oracle、CoreWeave 各占多少，Nvidia 沒有拆開揭露。</p>
+<p>這一節跟 2000 年最大的不同在四大雲。Microsoft、Alphabet、Amazon、Meta 都是投資級，本業現金流大。2000 年倒閉的多是 Winstar、NorthPoint、Teligent 這類新進電信商，2000 年 1 月到 2002 年 9 月約半數上市的新進地方電信商破產。這次的壓力集中在 OpenAI、Oracle、CoreWeave 這一支。</p>
+
+<h2>2000 年怎麼結束的</h2>
+<p><b>2000 年從股價高點到設備商提列存貨，花了 14 個月。</b>信用市場比營收先出事。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>日期</th><th>事件</th><th>距納指高點</th></tr></thead>
+<tbody>
+<tr><td>2000-03-10</td><td>納指收盤高點 5,048.62</td><td>0</td></tr>
+<tr><td>2000-05</td><td>Fed 5/16 最後一次升息到 6.5%；高收益債利差從 5 月起明顯走寬</td><td>2 個月</td></tr>
+<tr><td>2000 全年</td><td>高收益債發行 450 億美元，1997～99 年每年都超過 1,000 億</td><td></td></tr>
+<tr><td>2000-11-06</td><td>思科營收年增 66%，存貨從 12.3 億升到 19.6 億（多 59%）</td><td>8 個月</td></tr>
+<tr><td>2001-01</td><td>1/3 Fed 緊急降息 50bp；Chambers 說 12、1 月生意偏慢</td><td>10 個月</td></tr>
+<tr><td>2001-02-15</td><td>北電把第一季營收預期從 81 億砍到 63 億</td><td>11 個月</td></tr>
+<tr><td>2001-04-18</td><td>Winstar 破產，兩天前沒付朗訊 7,500 萬美元</td><td>13 個月</td></tr>
+<tr><td>2001-05-08</td><td>思科提列超額存貨 22.5 億，含採購承諾準備共 23.6 億</td><td>14 個月</td></tr>
+</tbody></table></div>
+<p>北美電信業者資本支出 2000 年約 920 億美元，2001 年減 28%，2002 年再減 20%（當時的預測值）。</p>
+<p>對照現在：費半 6/22 高點到 10 月中 CoreWeave 債券與 CDS 出現壓力，相隔 3.7 個月。Nvidia 7 月底存貨比年初多 48%、供應承諾一季多一倍以上，位置類似思科 2000 年 11 月存貨多 59% 那一季。差別在整體信用市場：高收益債利差 10/15 是 3.23%（FRED），比 8 月底的 2.60% 寬了 63bp，離 2000 年底的 873bp 還很遠，壓力目前集中在 AI 相關的借款人。</p>
+
+<h2>記憶體：最像循環頂的一塊</h2>
+<p><b>記憶體漲價在減速，股價先跌了。</b></p>
+<ul>
+<li>DRAM 合約價季漲幅：第一季 90～95%，第三季 13～18%，第四季預估 10～15%（TrendForce，媒體報導）。</li>
+<li>DDR5 現貨一個月跌近 30%，是 2025 年 2 月以來第一次月跌，合約價沒有跟著跌（媒體報導，發稿日不明）。</li>
+<li>客戶庫存升到 7～9 週，先前是 2～4 週（媒體報導）。Counterpoint 提到伺服器端可能有重複下單。</li>
+<li>10/13 韓國綜合指數跌 5.5%，SK 海力士跌約 10%、三星約 7%。觸發點是長鑫（CXMT）宣布年底推出 4F² 結構的 DDR5 伺服器模組。海力士已從高點跌約 58%、三星約 44%（媒體報導）。</li>
+</ul>
+<p>美光 FQ4 毛利率 86.8%，2018 年頂點約 61%。預估本益比約 6 倍（媒體報導）。低本益比出現在獲利高峰，是記憶體循環頂常見的樣子。</p>
+<p>這次跟 2018 年不同的是長約。美光的協議多為五年，照約付款、附現金押金與價格區間，三星、海力士也簽了五年約。這會讓營收下滑來得比 2018 年晚，幅度也淺一些。價格底的水準沒有揭露，如果設在現價之下，長約保護得了營收，保護不了 87% 的毛利率。</p>
+
+<h2>二手 GPU 與折舊：租金在漲，殘值在跌</h2>
+<ul>
+<li>H100 二手實際成交中位約 14,250 美元，資料中心 GPU 二手指數一年從 89 降到 75，約跌 16%。同一家業者預估 H100 殘值占原價 2026 年 27%～39%、2027 年 11%～19%（American Compute，估價與放貸業者，有利益關係）。</li>
+<li>租金反而在漲：一年期 H100 合約價 2025-10 約 1.70 美元／小時，2026-03 為 2.35，2026-06 約 2.65（SemiAnalysis，媒體報導）。Nebius 的 H100 隨選價 10/1 起從 3.85 美元調到 4.50（媒體報導）。</li>
+</ul>
+<p>兩個價格看的時間不同。租金反映現在缺貨，二手價反映市場對 2027 年以後的看法。</p>
+<p>四大雲的伺服器折舊年限在 5～6 年：Alphabet 6 年，Amazon 部分縮短到 5 年，Meta 5.5 年。Burry 估 2026～2028 年少提折舊 1,760 億美元，這是他自己的估算。折舊年限本身不會讓景氣結束，景氣結束後會放大損失。GPU 抵押貸款的貸款成數一般是 60%～70%，目前沒找到違約案例，Nvidia 的租回承諾與融資平台在支撐這個市場（媒體報導）。</p>
+
+<h2>中國與主權資金：有幫忙，量不大</h2>
+<ul>
+<li>中國：阿里第二季資本支出 676.8 億人民幣，年增 75%。騰訊 527.8 億，年增 176%。字節 2026 年逾 2,000 億（匿名來源）。中國四大雲約占九大雲資本支出的 14%（本文估算）。以上為媒體報導。</li>
+<li>中國越來越買國產晶片：國產晶片占中國 AI 伺服器 56%（TrendForce 預測），華為在中國 AI 加速器出貨市佔 28%（IDC），都是媒體轉述。Nvidia 的財測不含中國資料中心營收，台積電的中國營收占 6%。</li>
+<li>對 SMH 成分股分三類：中國是設備股的客戶，AMAT、LRCX、KLAC 中國營收占 25%～43%（較舊期別）。中國是記憶體的對手，長鑫目標 2027 年擴到每月 42 萬片，科創板上市首日漲 466%。對 Nvidia 影響中性。</li>
+<li>10/16 中國商務部草擬 40 項技術出口管制，AI 占 23 項，管的是模型與技術出口，沒有列晶片進口（媒體報導）。</li>
+<li>主權資金：MGX 募近 500 億美元、沙烏地 Humain 目標 2030 年 1.9GW、歐盟 AI 超級工廠公私合計逾 300 億歐元（公款多在 2028～2035 年度預算）、韓國採購逾 26 萬顆 Nvidia、美國國防部 FY27 編列 295 億的預算要求。一年合計幾百億美元，不到 2027 年資本支出的 5%（本文估算）。</li>
+</ul>
+
+<h2>市場已反映什麼</h2>
+<p><b>估值已經壓下來，但 6 月高點離均線的距離只有 2000 年能比。</b></p>
+<h3>費半 12 個月遠期本益比</h3>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>時點</th><th>本益比</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>2024-06-14（序列最高）</td><td>29.74</td><td></td></tr>
+<tr><td>2026-06-19（這一輪高點）</td><td>28.26</td><td></td></tr>
+<tr><td>2021-11-19（循環頂）</td><td>21.71</td><td></td></tr>
+<tr><td><b>2026-10-16（現在）</b></td><td><b>16.9</b></td><td>從高點壓了 40%</td></tr>
+<tr><td>2018-03-09（消化期的頂）</td><td>15.37</td><td>現在略高於這裡</td></tr>
+<tr><td>2022-10-14（循環底）</td><td>12.84</td><td>獲利不變，股價還要跌 24%</td></tr>
+<tr><td>2018-12-21（消化期的底）</td><td>11.47</td><td></td></tr>
+</tbody></table></div>
+<p class="muted">historyofmarket.com 的費半 12 個月混合遠期共識，週頻。2002～2010 年獲利接近零、失真，2000 年沒有可用值。</p>
+<p>獲利預估還在往上：SMH 成分股明年 EPS 預估 90 天上修 15.6%，ETF 價格 90 天只動了 0.04%。</p>
+
+<h3>歷次高點之後的跌幅</h3>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>類型</th><th>段</th><th>高點後第 4 個月的跌幅</th><th>最終跌幅</th><th>高點時高於 52 週均線</th></tr></thead>
+<tbody>
+<tr><td>消化期</td><td>2015、2018、2020</td><td>−1%～−20%</td><td>−25%～−35%</td><td>+12%～+24%</td></tr>
+<tr><td>循環頂</td><td>2000、2007、2021、2024</td><td>−10%～−28%</td><td>−40%～−84%</td><td>2000 +126%、2007 +16%、2021 +22%、2024 +37%</td></tr>
+<tr><td>現在</td><td>2026-06-22 起</td><td>−23.9%（7/29 最深 −28.6%）</td><td>未知</td><td>+82%</td></tr>
+</tbody></table></div>
+<p class="muted">費半指數，本機用 yfinance 計算，資料到 10/16，存於 v7-backtest/data/semi_cycle_drawdowns/。消化期指跌幅小於 35% 且低點後 12 個月內回前高。2004 年（跌 34.8%，114 個月才回前高）也歸為循環頂，表中未列。</p>
+<p>前 4 個月內的最大跌幅兩類重疊，分不出來。第 4 個月當天的跌幅 −23.9% 落在消化期區間之外、循環頂區間之內，偏向循環頂，但每類只有 3～5 段。另一個能分的是起點：這一波高點時費半高於 52 週均線 82%，只有 2000 年的 126% 更高。</p>
+<p>歷次循環頂（含 2004 年）第一次跌破 52 週均線時，已從高點跌 13%～31%，之後再跌 18%～77%。消化期跌破時已跌 9%～22%，之後再跌 15%～19%。現在費半 11,137 點，52 週均線 9,885 點，還要跌 11.2% 才碰到。SMH（美國版）539.79 美元，均線 479.69，還差 11.1%。QQQ 709.80，均線 661.09，還差 6.9%。SMH 對 QQQ 的比值自 6/22 跌了 16.2%。</p>
+
+<h2>三種情境</h2>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>情境</th><th>主觀機率</th><th>長什麼樣</th><th>SMH（美國版）這段期間的價格範圍</th></tr></thead>
+<tbody>
+<tr><td>A 消化期已近尾聲</td><td>25%</td><td>7/29 的低點就是底；10 月底四大雲說 2027 年資本支出增加 40% 以上；記憶體第四季合約價續漲</td><td>回到 600 以上</td></tr>
+<tr><td>B 消化期拉長</td><td>30%</td><td>跌到 52 週均線附近（約 480，從高點跌 28%）；2027 年上半年回到前高；資金面緊但沒有斷</td><td>480～540</td></tr>
+<tr><td>C 循環頂</td><td>45%</td><td>OpenAI 募資卡住，Oracle 或 CoreWeave 違約、重組，Nvidia 提列存貨與保證損失；2028 年才回前高</td><td>370～400（從高點跌 40%～45%）</td></tr>
+</tbody></table></div>
+<p>機率是主觀判斷，沒有歷史頻率可以校準。C 給到 45%，理由只有一個：風險集中在一張資產負債表上。2000 年是很多小電信商分散倒閉，這次是一條鏈。消化期合計仍占 55%，因為 AI 營收一年倍數成長、記憶體有五年長約與押金、四大雲是投資級且本業現金流大，這三件事 2000 年都沒有。供給到 2028 年才夠也支持消化期，但 2000 年的設備商同樣在缺料，這一條的分量較輕（見反方第 3 點）。</p>
+<p>10 月底四大雲的財報只能把 A 和 B 分開。記憶體的資料會比較早說話：12 月的合約價與美光 FQ1 財報若轉弱，C 的機率要上調。要排除 C，得等 Nvidia FQ3、FQ4 的存貨與承諾，以及 OpenAI 的下一輪募資。</p>
+
+<h2>對錢的意義</h2>
+<p><b>本頁是景氣背景判斷，不改 W52 引擎的曝險與調整。</b>美股指數部 70% 由 QQQ 與 SMH（UCITS 版）各半組成，依 W52 週線規則乘上自適應波動率調整，10/19 起股票上限 100% 不借錢，另有公債 IEF、黃金 GLD 各最多 20%。台股指數部是 0050、2330 各半。</p>
+
+<h3>持有的是 UCITS 版，曝險跟美國版差很多</h3>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th></th><th>美國版 SMH</th><th>UCITS 版（IE00BMC38736，持有中）</th></tr></thead>
+<tbody>
+<tr><td>追蹤指數與單一上限</td><td>MVIS US Listed Semiconductor 25，上限 20%</td><td>MVIS US Listed Semiconductor 10% Capped ESG，上限 10%</td></tr>
+<tr><td>NVDA</td><td>19.77%</td><td>10.06%</td></tr>
+<tr><td>AMD／TSM／AVGO</td><td>5.57%／9.27%／5.41%</td><td>11.14%／10.14%／9.67%</td></tr>
+<tr><td>MU／SK 海力士</td><td>4.70%／3.99%</td><td>9.56%／8.12%</td></tr>
+<tr><td>GPU 鏈（NVDA、AMD、AVGO、MRVL、TSM、ALAB）</td><td>45.7%</td><td>44.0%</td></tr>
+<tr><td>記憶體</td><td>8.7%</td><td>17.7%</td></tr>
+<tr><td>設備（ASML、AMAT、LRCX、KLAC、TER、ENTG）</td><td>19.2%</td><td>20.8%</td></tr>
+<tr><td>類比、PC、手機（TXN、ADI、QCOM、NXPI、INTC、MCHP、STM、ON）</td><td>19.9%</td><td>14.7%</td></tr>
+<tr><td>加權遠期本益比（調和平均）</td><td>15.76</td><td>12.99（價格日 10/14）</td></tr>
+<tr><td>成分股明年 EPS 90 天修正</td><td>+15.6%</td><td>+16.1%</td></tr>
+<tr><td>ETF 價格 90 天</td><td>+0.04%</td><td>−2.1%</td></tr>
+</tbody></table></div>
+<p class="muted">站內 ETF 儀表板，as_of 10/16，持股為 VanEck 10/12 官方檔。單一上限來自搜尋摘要，沒有讀到指數方法書。</p>
+<p>兩版成分只差一檔：美國版有 ARM，UCITS 版有 ENTG。持有的 UCITS 版，Nvidia 的權重約是美國版的一半，記憶體約兩倍。UCITS 版 13 倍的本益比看起來便宜，一部分是記憶體股在獲利高峰的低倍數拉低的。本頁判斷記憶體最像循環頂，所以在情境 C 裡，UCITS 版未必比美國版跌得少。</p>
+
+<h3>W52 規則什麼時候會動作</h3>
+<p>W52 看的是美國版 SMH 週收盤對 52 週均線。均線 479.69，現價 539.79，還差 11.1%。用目前的均線值算，大約是從 6/22 高點跌 28%（費半指數要跌 32%）。這一波漲到均線之上 82%（SMH 是 69%），規則會比歷史平均晚動作，歷次循環頂第一次跌破均線時已跌 13%～31%。晚動作是規則設計的結果，代價是這次等待的成本比過去高。</p>
+<p>10/19 起股票上限 100% 不借錢，對這個風險有對應。債、金兩條腿能幫多少要看各自的週線條件。利率還在升：10 年期公債殖利率 10/15 為 5.10%，Fed 9/16 升息到 3.75～4.00%，下次會議 10/27～28。IEF 那條腿的週線條件在這種環境下可能不成立，GLD 那條腿的狀態本文沒有核算。</p>
+<p>W52 的進出照機械規則，查核點不改變它。本頁的用處是解讀：W52 動作之前，分辨下跌比較像消化期還是循環頂；W52 轉為不持有之後，查核點 1、2、4 轉回支持，代表資金面修復，可以拿來判斷重新持有的訊號是不是可信。</p>
+
+<h3>相關的產業報告與站內頁</h3>
+<ul>
+<li><a href="/id/ID_AIComputeCapexCycle_20260903.html">AI 算力資本支出循環</a>（9/3）：推翻條件「新型雲端業者任一家違約、降評或再融資失敗」與查核點 4 重疊。</li>
+<li><a href="/id/ID_AIAcceleratorDemand_20260905.html">AI 加速器需求</a>（9/5）：「Nvidia 存貨增幅連兩季高於營收增幅」已亮一季警示，與查核點 2 重疊。</li>
+<li><a href="/id/ID_HyperscalerCloudBigThree_20261014.html">三大雲</a>（10/14）：租價指數、折舊年限、三雲成長對資本支出的條件，與查核點 3、7 重疊。</li>
+<li><a href="/ai-credit/">AI 信用監測</a>：12 條指標 1 條越線（Nvidia 承諾除以營收 55.9%）。它用的承諾合計 1,695 億美元跟 10-Q 的任何組合都對不上，站內算法待核對。</li>
+<li><a href="/ideas/ai-scissors.html">AI 剪刀差</a>：同一條產業鏈，那一頁看價格，本頁看誰在墊錢。</li>
+</ul>
+
+<h2>反方意見</h2>
+<div class="note">以下由獨立審稿角色冷讀本文後寫成。第 1、4、5 點與審稿人列出的數字勘誤（QQQ 距均線、兩家模型公司營收下限、2018 年間隔、時間表月份）已改正文；第 2、3 點部分採納，正文已調整措辭，機率維持不變。</div>
+
+<h3>1. 只列了 Nvidia 的負債端，沒有分母，也沒有損失順序</h3>
+<p>頁面列出承諾 2,790 億、保證上限 1,050 億、AI 雲協議 360 億、存貨 316 億、非上市投資 479 億，但沒有 Nvidia 的現金、自由現金流或股東權益，看不出這些數字壓不壓得住。「供應承諾占年化營收 98%」用錯分母：供應承諾會變成銷貨成本，應該比未來的銷貨成本。以 74% 毛利率計，FY28 營收若照公司說法成長約 70%，隱含銷貨成本遠高於 FY28 到期的 870 億承諾。承諾要變成損失，營收得大幅下滑，這等於風險還是在需求。</p>
+<p>保證 1,050 億是上限，要到承租方違約才會動用。OpenAI 募資失敗時，先承受的是 Oracle（借款約 1,253 億）與 CoreWeave（借款約 351 億）的股東和債權人。ASML 的客戶是晶圓廠，「客戶裡接得最多的是 Nvidia」這句沒有證據。</p>
+<p class="muted">對本文的影響：削弱標題與主張方框「墊錢的鏈最後接到 Nvidia 的資產負債表上」，以及摘要「風險一路往 Nvidia 集中」。不影響「OpenAI 募資是最弱的一節」與 Oracle、CoreWeave 信用惡化的事實。正文已改寫 98% 的解讀、補上損失順序，並把「客戶裡接得最多」限縮到 AI 晶片這一段。</p>
+
+<h3>2. 55% 的消化期機率被敘事錨定，頁面自己的數據偏向循環頂</h3>
+<p>第 4 個月當天的跌幅 −23.9%，落在消化期的 −1%～−20% 之外，落在循環頂的 −10%～−28% 之內；高點時高於均線 82%，只有 2000 年更高。撐 55% 的理由多是落後指標：頁面自己證明，生意面在股價高點後 8～11 個月還會變好。費半 16.9 倍是用創高中的獲利預估算的，「獲利不變還要跌 24%」的前提正好是情境 C 要推翻的。以三情境區間中點粗算（A 620、B 510、C 385），機率加權價約 481，比現價低約 11%，分布偏空。B 的價格區間上緣 540 就是現價。</p>
+<p class="muted">對本文的影響：削弱「目前判斷是消化期（主觀機率 55%）」。不影響「要等 Nvidia 財報與 OpenAI 募資才能確認」的程序性結論。正文已改掉「第 4 個月跌幅分不出來」的說法，機率維持協調者的主觀判斷，讀者可以照這一條自行下調。</p>
+
+<h3>3. 「缺貨」在 2000 年與 2018 年的高點附近也有</h3>
+<p>思科 FY2000 年報寫到元件短缺限制毛利率、部分產品交期長於目標，並因單一來源零件建高存貨；當時也有重複下單的報導（審稿人引思科 10-K、10-Q 與 Light Reading，未核對頁碼）。美光 2018 年 3 月說 DRAM 嚴重供不應求，6 月說缺貨會延續到隔年，12 月就改口客戶要去化庫存、2019 年供過於求（TechRadar、Market Realist）。供應商在高點附近說缺貨，2000 與 2018 年都發生過。2000 年北美電信資本支出約 920 億，有多少來自在位的大型業者，頁面沒有拆。</p>
+<p class="muted">對本文的影響：削弱「生意面：缺貨到 2028 年」作為消化期證據的分量，以及「這些事 2000 年都沒有」。不影響台積電、ASML 說法本身的事實紀錄。正文已把缺貨從「2000 年沒有的事」中拿掉。</p>
+
+<h3>4. 時間表只挑了最慢的 2000 年</h3>
+<p>三個循環的間隔是 2000 年 11～14 個月、2018 年 5～7 個月、2021 年 5～9 個月。若照 2018、2021 年，生意轉弱的時間落在 2026 年 11 月到 2027 年 3 月，已經開始。記憶體的徵兆也比四大雲資本支出更早出現：合約價漲幅連三季減速、客戶庫存從 2～4 週升到 7～9 週、DDR5 現貨月跌近 30%。12 月的合約價與美光財報，應該比 2027 年第一季更早區分 B 與 C。</p>
+<p class="muted">對本文的影響：削弱「要到 2027 年第一季才分得出來」。正文已改成同時列出兩組時間，並把記憶體資料列為較早的訊號。</p>
+
+<h3>5. AI 營收是殘差估計，「缺口在縮」用的是比率語言</h3>
+<p>明細加起來只有 1,520～1,720 億，要到 2,000～2,500 億，有 280～980 億來自沒有拆分的「雲端裡的 AI」。OpenAI、Anthropic 的營收含雲端代賣，跟雲端營收相加會重複。高盛 3,000 億門檻對應 8,000 億資本支出，用九大雲 9,570 億換算約 3,590 億，覆蓋率降到 56%～70%。以金額算，營收與資本支出都增加 50% 時，缺口從約 750 億擴大到約 1,125 億，營收要翻倍缺口才會收掉。</p>
+<p class="muted">對本文的影響：削弱「可歸因 AI 營收是打平門檻的 67%～83%」與「缺口在縮」。不影響「兩家模型公司營收成長很快」的定性判斷。正文已補上殘差比例、重複計算、門檻換算與金額缺口的算法。</p>
+
+
+
+<h2>什麼情況收回這個想法</h2>
+<ul class="kill">
+<li>「需求到 2028 年都缺貨」建立在台積電、美光、ASML、Nvidia 的供給說法。若其中兩家在下一季財報改口說 2027 年供需平衡或過剩，收回。</li>
+<li>「風險集中在 Nvidia」建立在供應承諾與保證只增不減。若 Nvidia 連兩季承諾持平、存貨增幅低於營收增幅，而且 OpenAI 順利完成下一輪募資，情境 C 收回。</li>
+<li>「最弱的只有 OpenAI 這一支」建立在四大雲本業現金流撐得住。若 2027 年資本支出讓四家中兩家以上自由現金流轉負，風險就不只在一條鏈，這個說法收回。</li>
+<li>「AI 營收追得上」建立在營收成長快過資本支出。若 OpenAI 或 Anthropic 年化營收連兩季持平，或 AI 營收增速掉到資本支出增速以下，收回。</li>
+<li>「記憶體最像循環頂」建立在合約價減速。若 2027 年第一季合約價漲幅回升，而且客戶庫存回到 4 週以下，收回。</li>
+</ul>
+
+<h2>還沒查到的</h2>
+<ul>
+<li>OpenAI、Anthropic 的營收全部來自媒體轉述，未經審計。OpenAI 9 月的「近 500 億」與「近 700 億」口徑並存。</li>
+<li>可歸因 AI 營收 2,000～2,500 億是本文估算。雲端營收裡 AI 的部分各家沒拆，微軟 AI 營收與 OpenAI 營收有重複。高盛門檻只有媒體轉述，原報告未取得。</li>
+<li>Nvidia 2,790 億供應承諾裡可取消的比例、記憶體占多少，10-Q 沒揭露。</li>
+<li>Nvidia 營收裡 OpenAI、Oracle、CoreWeave 各占多少沒有揭露，「風險集中在一條鏈」是從承諾與保證的對象推定。</li>
+<li>OpenAI 約占 Oracle 剩餘履約義務近半、Oracle FY27 資本支出 900～950 億、S&amp;P 降評、Oracle CDS 288bp，都只有二手來源。</li>
+<li>美光剩餘履約義務：10-K 約 1,340 億，prepared remarks 轉述約 1,500 億，口徑沒對上。320 億財務承諾出自 prepared remarks，10-K 裡沒找到這個數字。</li>
+<li>記憶體長約的價格底水準沒揭露，毛利率保護不住是推定。</li>
+<li>台積電客戶暫收款、2027 年漲價幅度、三星長約比例只有二手。</li>
+<li>記憶體客戶庫存 7～9 週、DDR5 現貨月跌 30%（發稿日不明）、合約價季漲幅都是二手。</li>
+<li>Nvidia 的租回承諾與 5,000 億融資平台，條款沒有全部確認。</li>
+<li>朗訊信用承諾占營收 23%，用的是 2000 年 6 月底的承諾對全年營收，期間沒有完全對齊。</li>
+<li>台積電法說用的是第三方逐字稿，沒有讀到台積電官網原檔。</li>
+<li>UCITS 版指數的單一上限 10% 來自搜尋摘要，沒有讀到方法書。</li>
+<li>10/19 新規則下 IEF、GLD 兩條腿目前的週線條件，本文沒有核算。</li>
+<li>站內 AI 信用監測頁的 Nvidia 承諾合計 1,695 億，跟 10-Q 的任何組合都對不上。</li>
+<li>Nvidia 的現金、自由現金流能吸收多少承諾與保證損失，本頁沒有比對；SB Energy 保證的觸發順序與年租金 10-Q 沒揭露。</li>
+<li>2000 年電信資本支出裡在位大型業者的占比沒有拆，「2000 年倒的是新進電信商」只是個案與 CLEC 破產比例。</li>
+<li>情境機率是主觀判斷。歷次循環頂只有 4～5 段，消化期 3 段，分類也會隨定義改變。</li>
+</ul>
+
+<h2>事件時程</h2>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>日期</th><th>事件</th><th>看什麼</th></tr></thead>
+<tbody>
+<tr><td>10/21</td><td>Meta 第三季財報</td><td>2027 年資本支出、自由現金流</td></tr>
+<tr><td>10/27～28</td><td>FOMC</td><td>是否再升息</td></tr>
+<tr><td>10/28</td><td>Microsoft FY27 第一季財報</td><td>FY27 資本支出年增多少</td></tr>
+<tr><td>10/28</td><td>Alphabet 第三季財報（日期為推估）</td><td>2027 年「顯著增加」有沒有數字</td></tr>
+<tr><td>10/29</td><td>Amazon 第三季財報</td><td>2027 年容量與資本支出</td></tr>
+<tr><td>11/10</td><td>美國商務部附屬企業規則恢復（除非延長）</td><td>對中國出貨</td></tr>
+<tr><td>11/15</td><td>中國出口管制草案徵求意見截止</td><td>有沒有加入晶片項目</td></tr>
+<tr><td>11/16</td><td>CoreWeave 第三季財報</td><td>利息費用、債務、積壓訂單</td></tr>
+<tr><td>約 11/19</td><td>Nvidia FQ3 財報（日期為推估）</td><td>存貨、供應承諾、保證、應收帳款天數</td></tr>
+<tr><td>約 12/9</td><td>Oracle FY27 第二季財報（日期為推估）</td><td>自由現金流、借款、OpenAI 合約</td></tr>
+<tr><td>約 12/17</td><td>美光 FQ1 財報（日期為推估）</td><td>長約執行、合約價、客戶庫存</td></tr>
+<tr><td>約 2027-01-15</td><td>台積電第四季法說（日期為推估）</td><td>2027 年資本支出、先進封裝</td></tr>
+<tr><td>2027 年第一季</td><td>OpenAI 下一輪募資或上市（無日期）</td><td>估值、金額、算力合約規模</td></tr>
+</tbody></table></div>
+
+<h2>查核點</h2>
+<div class="note">每個查核點下面有兩種證據：<b>建立時</b>是查證過的事實；<b>早報</b>是之後每天自動比對進來的新聞，由 Claude 讀原文判斷支持、推翻或無關。這一頁的「支持」指資金鏈撐住、消化期的判斷成立；「推翻」指資金鏈斷裂或需求轉弱，往情境 C 移動。</div>
+<div id="cps"></div>
+
+<h2>資料來源</h2>
+<ul class="muted">
+<li>Nvidia：FQ2 FY27 新聞稿 <a href="https://www.sec.gov/Archives/edgar/data/0001045810/000104581026000073/q2fy27pr.htm">sec.gov</a>；10-Q（季末 2026-07-26）<a href="https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm">sec.gov</a>；法說逐字稿 <a href="https://s201.q4cdn.com/141608511/files/content_files/TRANSCRIPT_-NVIDIA-Corp-NVDA-US-Q2-2027-Earnings-Call-26-August-2026-5_00-PM-ET.pdf">q4cdn</a>。</li>
+<li>美光：FQ4 FY26 新聞稿 <a href="https://www.sec.gov/Archives/edgar/data/0000723125/000072312526000018/a2026q4ex991-pressrelease.htm">sec.gov</a>；prepared remarks <a href="https://s25.q4cdn.com/621799436/files/doc_financials/2026/q4/Q4-FY26-Prepared-Remarks.pdf">q4cdn</a>；FY26 10-K <a href="https://www.sec.gov/Archives/edgar/data/723125/000072312526000023/mu-20260903.htm">sec.gov</a>。</li>
+<li>ASML：2026 年第三季 6-K <a href="https://www.sec.gov/Archives/edgar/data/0000937966/000162828026065813/pressreleasefinancialresul.htm">新聞稿</a>、<a href="https://www.sec.gov/Archives/edgar/data/937966/000162828026065813/financial_statementsxusx.htm">財務報表</a>。</li>
+<li>台積電：2026 年第三季法說第三方逐字稿 <a href="https://www.earningswhispers.com/transcript/TSM/Q32026">earningswhispers</a>；3Q26 管理報告（存貨天數、HPC 占比）。</li>
+<li>Oracle：FY27 第一季新聞稿 <a href="https://s23.q4cdn.com/440135859/files/content_files/1q27-pressrelease-September_FINAL.pdf">q4cdn</a>；10-Q <a href="https://www.sec.gov/Archives/edgar/data/1341439/000119312526389274/orcl-20260831.htm">sec.gov</a>。</li>
+<li>CoreWeave：2026 年第二季新聞稿 <a href="https://www.sec.gov/Archives/edgar/data/1769628/000176962826000362/coreweave2q26earningspress.htm">sec.gov</a>；債券與 CDS <a href="https://www.cnbc.com/2026/10/15/coreweave-credit-default-swaps-hit-distress-levels-as-investors-sour-on-ai-debt.html">CNBC 10/15</a>。</li>
+<li>四大雲：Meta 第二季新聞稿 <a href="https://www.sec.gov/Archives/edgar/data/1326801/000162828026050596/meta-06302026xexhibit991.htm">sec.gov</a>；Alphabet 法說逐字稿（Investing.com 版）與 8-K；Microsoft 法說逐字稿（Motley Fool 版）；Amazon 法說逐字稿（Motley Fool 版轉載）與新聞稿 <a href="https://www.sec.gov/Archives/edgar/data/1018724/000101872426000024/amzn-20260630xex991.htm">sec.gov</a>；財報日期：Meta IR、Microsoft 與 Amazon 公告轉載。</li>
+<li>TrendForce：九大雲資本支出 <a href="https://www.trendforce.com/presscenter/news/20261014-13269.html">10/14</a>；HBM <a href="https://www.trendforce.com/presscenter/news/20260929-13255.html">9/29</a>；DRAM <a href="https://www.trendforce.com/presscenter/news/20260730-13158.html">7/30</a>。</li>
+<li>Fed 與利率：<a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm">FOMC 日曆</a>、9/16 聲明；FRED DGS10、BAMLH0A0HYM2。</li>
+<li>2000 年：思科 2000-11 新聞稿與 2001-05 8-K、朗訊 10-K、北電（CNN）、NYU Stern 高收益債發行量、Lightwave 電信資本支出預測。</li>
+<li>費半遠期本益比：<a href="https://historyofmarket.com/semi/semi-fwdpe/">historyofmarket.com</a>。跌幅與 52 週均線：本機 yfinance 計算，資料存 v7-backtest/data/semi_cycle_drawdowns/。</li>
+<li>SMH 兩版成分與估值：站內 <a href="/etf-dash/">ETF 儀表板</a>（as_of 10/16）。W52 狀態：站內長線追蹤 state.json（10/16）。</li>
+<li>GPU 二手價：American Compute <a href="https://www.amcompute.com/appraisals/h100">H100 估價頁</a>（估價與放貸業者，有利益關係）。</li>
+<li>媒體報導（OpenAI、Anthropic 營收，高盛門檻，記憶體價格，韓股，中國與主權資金）：Reuters、FT、Bloomberg、CNBC 與其轉載，正文已逐條標註。</li>
+</ul>
+
+<footer class="page-note">本頁是研究推論，不是投資建議。起始分析 2026-10-18；之後的變化只記在查核點，不改寫上方分析。</footer>
+<footer class="imq-foot">
+  <div>&copy; 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
+</div>
+
+<script>
+(function(){
+  var IDEA = 'ai-hardware-cycle';
+  var CPS = [
+    {id:'cp1', t:'OpenAI 的錢：下一輪募資、上市、算力合約有沒有縮', when:'隨時（2027 年第一季前後下一輪募資）', keystone:true,
+     yes:'OpenAI 完成新一輪募資或上市申請，估值持平或更高；與 Oracle、Nvidia、AMD、Broadcom、Microsoft 的算力合約與 Stargate、SB Energy 園區照原規模推進或擴大', no:'募資延後或失敗、估值下修，或算力合約、資料中心專案重談、縮減、延後、付款延遲；單一傳聞沒有公司說法不算',
+     seed:[
+      ['2026-02','mix','對投資人把 2030 年前算力支出從 1.4 兆下修到約 6,000 億美元','Reuters（媒體報導）'],
+      ['2026-08','mix','Nvidia 替 OpenAI 關係企業 SB Energy 的俄亥俄園區作保，上限 1,050 億美元','Nvidia 10-Q'],
+      ['2026-09','sup','年化營收近 500 億美元，不含經雲端夥伴賣出的部分','FT／Reuters（媒體報導）'],
+      ['2026-09','mix','內部預測 2026～2030 年累計自由現金流 −2,780 億美元','FT（媒體報導）']]},
+    {id:'cp2', t:'Nvidia 存貨、供應承諾與保證', when:'每季（FQ3 約 11/19、FQ4 約 2027-02 下旬）', keystone:true,
+     yes:'存貨增幅低於營收增幅，供應與產能承諾持平或隨營收成長，沒有新的存貨或保證損失', no:'提列存貨或保證損失、取消或重談供應承諾、應收帳款天數再升，或保證被動用',
+     seed:[
+      ['7/26 季末','mix','存貨 315.75 億美元，比年初多 48%；原料從 38.1 億升到 113.4 億','Nvidia 10-Q'],
+      ['7/26 季末','mix','供應與產能承諾一季從 1,190 億增到 2,790 億美元，部分可取消、重排','Nvidia 10-Q'],
+      ['FQ2','mix','應收帳款年增 127%，快過營收的 106%；應收帳款天數 60 天，對投資級客戶給 90 天到一年付款期','Nvidia 10-Q、法說逐字稿']]},
+    {id:'cp3', t:'四大雲 2027 資本支出 vs 營運現金流', when:'每季（10/21 Meta、10/28 Microsoft 與 Alphabet、10/29 Amazon）', keystone:false,
+     yes:'2027 年資本支出指引年增 20% 以上，且營運現金流仍能支應', no:'2027 年指引年增低於 20%，或改用消化、暫停、放緩等字眼；或四家中兩家以上自由現金流轉負',
+     seed:[
+      ['7/22','sup','Alphabet：2027 年資本支出會顯著增加；2026 年指引上調到 1,950～2,050 億美元','法說逐字稿'],
+      ['7/29','sup','Microsoft：FY27 資本支出會年增','法說逐字稿'],
+      ['7/29','mix','Meta 第二季自由現金流 7.8 億美元，去年同期 85 億','媒體報導']]},
+    {id:'cp4', t:'Oracle、CoreWeave 與 neocloud 的債信', when:'隨時（11/16 CoreWeave、約 12/9 Oracle）', keystone:false,
+     yes:'債券利差或 CDS 收窄、新債超額認購、評等維持', no:'Oracle 降到垃圾級、CoreWeave 等 CDS 持續高於 1,000bp、發債失敗、違反貸款條件、違約或重組',
+     seed:[
+      ['10/15','ref','CoreWeave 2031 年到期債殖利率 15.78%，五年期 CDS 一度高於 1,140bp、最新約 1,038bp','CNBC'],
+      ['8/31 季末','mix','Oracle 自由現金流 −54 億美元，借款約 1,253 億，利息費用年增 55%','Oracle 新聞稿、10-Q'],
+      ['7/09','mix','S&P 把 Oracle 降到 BBB-，只比垃圾級高一級','媒體報導']]},
+    {id:'cp5', t:'記憶體：合約價、長約執行、客戶庫存', when:'每季（約 12/17 美光）', keystone:false,
+     yes:'DRAM 或 HBM 合約價續漲或持平，長約與押金照約執行或延長', no:'合約價季減、長約重談或取消、客戶庫存高於 8 週、重複下單退潮',
+     seed:[
+      ['9/30','sup','美光：2027、2028 年供需比 2026 年緊得多；26 份長約，已入帳押金約 130 億美元','美光 prepared remarks、10-K'],
+      ['第四季','mix','DRAM 合約價季漲幅從第一季 90～95% 降到第四季預估 10～15%','TrendForce（媒體報導）'],
+      ['10/13','mix','韓國綜合指數跌 5.5%、SK 海力士跌約 10%，觸發點是長鑫宣布年底推 4F² DDR5','媒體報導']]},
+    {id:'cp6', t:'2027 供給到位：HBM4 良率、Rubin 放量、新廠、CoWoS 產能', when:'每季（約 2027-01-15 台積電）', keystone:false,
+     yes:'台積電、ASML、美光、SK 海力士等持續說 2027、2028 年供給緊，新廠、HBM4、CoWoS 與 Rubin 放量照時程', no:'出現 2027 年供過於求的可信預測，或新產能到位時價格轉跌，或 Rubin 再延後造成出貨空窗',
+     seed:[
+      ['10/14','sup','ASML：2027、2028 年規劃供給無法完全滿足需求；非流動合約負債一季從 35.7 億升到 93.0 億歐元','ASML 6-K'],
+      ['10/15','sup','台積電：N2 年產能 2027 年倍增以上；2026～2028 年資本支出顯著高於過去三年','法說逐字稿（第三方）'],
+      ['9/21','mix','TrendForce：Rubin 放量因 HBM4 良率延到 2027 年','TrendForce 摘要頁']]},
+    {id:'cp7', t:'GPU 二手價、租金與抵押品', when:'隨時', keystone:false,
+     yes:'一年期 H100 合約價持平或上漲，二手價與殘值穩定', no:'三個月內租金跌逾 30%、二手指數年減逾 30%，或貸款方調降 GPU 貸款成數、出現抵押品處分',
+     seed:[
+      ['2026-06','sup','一年期 H100 合約價約 2.65 美元／小時，2025-10 約 1.70','SemiAnalysis（媒體報導）'],
+      ['2026-08','mix','資料中心 GPU 二手指數 75，一年前 89，約跌 16%','American Compute（估價業者）'],
+      ['10/1','sup','Nebius H100 隨選價從 3.85 美元調到 4.50','媒體報導（牌價）']]},
+  ];
+  var VB = {sup:['b-sup','支持'], ref:['b-ref','推翻'], mix:['b-mix','兩面'], un:['b-un','未判斷'],
+            supports:['b-sup','支持'], refutes:['b-ref','推翻'], unjudged:['b-un','未判斷'], candidate:['b-un','可能相關']};
+  var STATUS_VB = {supports:['b-sup','支持'], shaky:['b-mix','動搖'], refutes:['b-ref','推翻'], no_data:['b-un','尚無資料']};
+  var ENTRY_VB = {supports:['b-sup','支持'], refutes:['b-ref','推翻'], shaky:['b-mix','動搖'], neutral:['b-un','中性']};
+  var KIND_LABEL = {search:'主動搜尋', earnings:'財報', transcript:'法說逐字稿', reverify:'週一複查', candidate:'早報候選'};
+  var SRC_TYPE_LABEL = {official:'官方', data:'數據', media:'媒體'};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function badge(v){var b=VB[v]||VB.un;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
+  function statusBadge(s){var b=STATUS_VB[s]||STATUS_VB.no_data;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
+  function entryBadge(v){var b=ENTRY_VB[v]||ENTRY_VB.neutral;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
+  function keystoneOf(c, keystoneMap){
+    if(keystoneMap && Object.prototype.hasOwnProperty.call(keystoneMap, c.id)) return keystoneMap[c.id];
+    return !!c.keystone;
+  }
+  function statusOf(research, cpid){
+    return research && research.status && research.status[IDEA] && research.status[IDEA][cpid];
+  }
+  function entriesFor(research, cpid){
+    var list = ((research && research.entries) || []).filter(function(e){return e.idea===IDEA && e.checkpoint===cpid;});
+    list.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    return list;
+  }
+  function sourcesHtml(sources){
+    if(!sources || !sources.length) return '';
+    return sources.map(function(s){
+      var t = SRC_TYPE_LABEL[s.type] || s.type || '';
+      var link = s.url ? '<a href="'+esc(s.url)+'" rel="noopener">'+esc(s.title||s.url)+'</a>' : esc(s.title||'');
+      return '<span class="src-link">'+link+(t?'<span class="src-type">（'+esc(t)+'）</span>':'')+'</span>';
+    }).join('　');
+  }
+  function deepEntryLine(e){
+    var kind = KIND_LABEL[e.kind] || e.kind || '';
+    var src = sourcesHtml(e.sources);
+    return '<li><span class="d">'+esc((e.date||'').slice(5))+'</span>'+entryBadge(e.verdict)
+      +'<span>'+esc(e.summary||'')+(kind?' <span class="src">'+esc(kind)+'</span>':'')
+      +(src?'<span class="deep-sources">'+src+'</span>':'')+'</span></li>';
+  }
+  function deepBlock(research, researchState, cpid){
+    var head = '<div class="lbl muted" style="margin-top:8px">深入查核（每天 05:15）</div>';
+    if(researchState==='loading') return head+'<ul class="ev"><li class="muted">讀取中</li></ul>';
+    if(researchState==='error') return head+'<ul class="ev"><li class="muted">深入查核資料沒讀到</li></ul>';
+    var list = entriesFor(research, cpid);
+    if(!list.length) return head+'<ul class="ev"><li class="muted">還沒有深入查核紀錄</li></ul>';
+    var shown = list.slice(0,10), rest = list.slice(10);
+    var html = head+'<ul class="ev">';
+    shown.forEach(function(e){ html += deepEntryLine(e); });
+    html += '</ul>';
+    if(rest.length){
+      var mid = 'deep-more-'+cpid;
+      html += '<ul class="ev deep-more" id="'+mid+'" hidden>';
+      rest.forEach(function(e){ html += deepEntryLine(e); });
+      html += '</ul>';
+      html += '<button type="button" class="deep-toggle" data-target="'+mid+'">顯示全部（其餘 '+rest.length+' 則）</button>';
+    }
+    return html;
+  }
+  function fmtRunTime(run){
+    var t = (run && (run.finished || run.date)) || '';
+    var m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(t);
+    return m ? (m[1]+' '+m[2]) : t;
+  }
+  function statusHead(researchState, research){
+    if(researchState==='loading') return '<div class="muted">讀取中</div>';
+    if(researchState==='error') return '<div class="muted">深入查核資料沒讀到</div>';
+    var run = research && research.run;
+    if(!run || !run.status || run.status==='pending') return '<div class="muted">每天 05:15 自動查核，尚未開始</div>';
+    if(run.status==='failed') return '<div class="muted-red">最近一次查核失敗：'+esc(run.reason||'')+'</div>';
+    return '<div class="muted">最後查核 '+esc(fmtRunTime(run))+'</div>';
+  }
+  function statusTable(researchState, research, keystoneMap){
+    var rows='';
+    CPS.forEach(function(c,i){
+      var st = researchState==='ok' ? statusOf(research, c.id) : null;
+      var statusKey = st ? st.status : 'no_data';
+      var reason = st ? (st.reason||'') : (researchState==='ok' ? '尚未查核' : '');
+      var since = st ? (st.since||'') : '';
+      rows += '<tr><td class="cpstatus-star">'+(keystoneOf(c,keystoneMap)?'★':'')+'</td>'
+        +'<td><a href="#'+c.id+'">查核點 '+(i+1)+'：'+esc(c.t)+'</a></td>'
+        +'<td>'+statusBadge(statusKey)+'</td>'
+        +'<td>'+esc(reason)+'</td>'
+        +'<td class="cpstatus-since">'+esc(since)+'</td></tr>';
+    });
+    return '<div class="tbl-wrap"><table class="imq-table cpstatus-tbl"><thead><tr><th></th><th>查核點</th><th>狀態</th><th>理由</th><th>最近確認</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+  function mountStatus(researchState, research, keystoneMap){
+    document.getElementById('cpstatus').innerHTML = statusHead(researchState, research)
+      + statusTable(researchState, research, keystoneMap)
+      + '<div class="muted cpstatus-note">★ 關鍵查核點：轉為推翻時整篇重新評估。</div>';
+  }
+  function render(hits, hitsState, researchState, research, keystoneMap){
+    var html='';
+    CPS.forEach(function(c,i){
+      var h = hits.filter(function(x){return x.checkpoint===c.id;});
+      var st = researchState==='ok' ? statusOf(research, c.id) : null;
+      var statusKey = st ? st.status : 'no_data';
+      html+='<div class="cp" id="'+c.id+'"><div class="cp-head"><span class="cp-id">查核點 '+(i+1)+'</span><span class="cp-title">'+(keystoneOf(c,keystoneMap)?'★ ':'')+esc(c.t)+'</span>'+statusBadge(statusKey)+'<span class="cp-when">'+esc(c.when)+'</span></div>';
+      html+='<div class="cp-rule"><span>成立</span><span>'+esc(c.yes)+'</span><span>推翻</span><span>'+esc(c.no)+'</span></div>';
+      html+=deepBlock(research, researchState, c.id);
+      html+='<div class="lbl muted" style="margin-top:10px">早報新證據</div><ul class="ev">';
+      if(h.length){
+        h.forEach(function(x){
+          var title = x.url ? '<a href="'+esc(x.url)+'" rel="noopener">'+esc(x.headline)+'</a>' : esc(x.headline);
+          html+='<li><span class="d">'+esc((x.date||'').slice(5))+'</span>'+badge(x.verdict)+'<span>'+title+' <span class="src">'+esc(x.source||'')+'</span></span></li>';
+        });
+      } else {
+        html+='<li class="muted">'+(hitsState==='ok'?'還沒有新證據':hitsState)+'</li>';
+      }
+      html+='</ul>';
+      if(c.seed.length){
+        html+='<div class="lbl muted" style="margin-top:10px">建立時的證據</div><ul class="ev">';
+        c.seed.forEach(function(s){html+='<li><span class="d">'+esc(s[0])+'</span>'+badge(s[1])+'<span>'+esc(s[2])+' <span class="src">'+esc(s[3])+'</span></span></li>';});
+        html+='</ul>';
+      }
+      html+='</div>';
+    });
+    document.getElementById('cps').innerHTML=html;
+    document.querySelectorAll('.deep-toggle').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var t = document.getElementById(btn.getAttribute('data-target'));
+        if(!t) return;
+        if(t.hasAttribute('hidden')){ t.removeAttribute('hidden'); btn.textContent='收合'; }
+        else { t.setAttribute('hidden',''); btn.textContent='顯示全部'; }
+      });
+    });
+  }
+  render([], '讀取中', 'loading', null, null);
+  mountStatus('loading', null, null);
+
+  var hitsP = fetch('/briefing/data/idea_hits.json',{cache:'no-store'}).then(function(r){
+    if(r.status===404) throw new Error('404'); if(!r.ok) throw new Error('http');
+    return r.json();
+  }).then(function(d){
+    var hits=(d.hits||[]).filter(function(x){return x.idea===IDEA && x.verdict!=='unrelated';});
+    hits.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    var sup=hits.filter(function(x){return x.verdict==='supports';}).length, ref=hits.filter(function(x){return x.verdict==='refutes';}).length;
+    var t='早報新證據 '+hits.length+' 則（支持 '+sup+'、推翻 '+ref+'）';
+    if(d.history==='unavailable') t+='，較早紀錄沒讀到';
+    document.getElementById('hit-total').textContent=t;
+    return {hits:hits, state:'ok'};
+  }).catch(function(e){
+    var msg = e.message==='404' ? '早報還沒開始比對，每天 06:15 更新' : '早報紀錄沒讀到';
+    document.getElementById('hit-total').textContent=msg;
+    return {hits:[], state:msg};
+  });
+
+  var researchP = fetch('/ideas/data/research.json',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('http');
+    return r.json();
+  }).then(function(d){ return {state:'ok', data:d}; }).catch(function(){ return {state:'error', data:null}; });
+
+  var ideasP = fetch('/ideas/ideas.json',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('http');
+    return r.json();
+  }).catch(function(){ return null; });
+
+  Promise.all([hitsP, researchP, ideasP]).then(function(res){
+    var h=res[0], rs=res[1], ideasData=res[2];
+    var keystoneMap = null;
+    if(ideasData && ideasData.ideas){
+      var idea = ideasData.ideas.filter(function(x){return x.id===IDEA;})[0];
+      if(idea && idea.checkpoints){
+        keystoneMap = {};
+        idea.checkpoints.forEach(function(cp){ keystoneMap[cp.id] = !!cp.keystone; });
+      }
+    }
+    render(h.hits, h.state, rs.state, rs.data, keystoneMap);
+    mountStatus(rs.state, rs.data, keystoneMap);
+  });
+})();
+</script>
+<script type="application/json" id="idea-meta">
+{
+ "id": "ai-hardware-cycle",
+ "type": "idea",
+ "version": "1.0",
+ "date": "2026-10-18",
+ "thesis": "這一輪 AI 硬體景氣要結束，最可能的原因是替需求墊錢的人撐不住，需求本身到 2028 年都還缺貨。墊錢的鏈最後接到 Nvidia 的資產負債表：供應與產能承諾 2,790 億美元、SB Energy 保證上限 1,050 億、AI 雲協議 360 億、存貨 316 億、非上市投資 479 億。目前判斷是消化期（主觀 55%），6/22 是否為循環頂要到 2026-11 中至 2027 年第一季才能確認或排除。",
+ "regime_call": "B",
+ "scenario_probs": {
+  "A": 0.25,
+  "B": 0.3,
+  "C": 0.45
+ },
+ "scenario_probs_note": "主觀判斷；A 消化期近尾聲、B 消化期拉長、C 循環頂",
+ "monitors": [
+  "NVDA inventory",
+  "NVDA purchase commitments",
+  "CRWV CDS",
+  "ORCL FCF",
+  "DRAM contract price",
+  "SOX vs 52w MA",
+  "SMH vs 52w MA"
+ ],
+ "falsifiers": [
+  "台積電、美光、ASML、Nvidia 中兩家改口說 2027 年供需平衡或過剩 → 需求到 2028 年缺貨的判斷錯誤",
+  "Nvidia 連兩季承諾持平、存貨增幅低於營收增幅，且 OpenAI 完成下一輪募資 → 情境 C 收回",
+  "四大雲中兩家以上自由現金流轉負 → 風險不只在 OpenAI 這一支",
+  "OpenAI 或 Anthropic 年化營收連兩季持平，或 AI 營收增速低於資本支出增速 → AI 營收追得上的判斷錯誤",
+  "2027 年第一季記憶體合約價漲幅回升且客戶庫存回到 4 週以下 → 記憶體循環頂判斷錯誤"
+ ],
+ "next_events": [
+  "2026-10-21 Meta Q3",
+  "2026-10-28 FOMC",
+  "2026-10-28 Microsoft FY27 Q1",
+  "2026-10-29 Amazon Q3",
+  "2026-11-16 CoreWeave Q3",
+  "2026-11-19 Nvidia FQ3 (approx)",
+  "2026-12-17 Micron FQ1 (approx)",
+  "2027-Q1 OpenAI funding"
+ ],
+ "rulebook_layer": "regime_context_only",
+ "data_asof": "2026-10-18",
+ "data_last_trading_day": "2026-10-16",
+ "sources": [
+  "SEC filings (NVDA, MU, ASML, ORCL, CRWV, META, AMZN, GOOGL)",
+  "company earnings call transcripts",
+  "Federal Reserve",
+  "FRED",
+  "TrendForce",
+  "historyofmarket.com",
+  "yfinance",
+  "site etf-dash",
+  "media reports (Reuters, FT, Bloomberg, CNBC)"
+ ]
+}
+</script>
+</body>
+</html>
