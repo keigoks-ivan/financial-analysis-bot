@@ -402,15 +402,17 @@ def ind_12(units: dict) -> dict:
         "head": ["項目", "金額", "資料日"],
         "rows": [
             ["對客戶與夥伴的保證（最大可能損失）", usd(f["guarantee"]), f["guarantee_date"]],
-            ["AI 雲端夥伴承諾", usd(ex["ai_cloud"]), c.get("report_date", "")],
+            ["AI 雲端夥伴承諾（10-Q 附註「Additional commitments」）", usd(ex["ai_cloud"]), c.get("report_date", "")],
             ["股權投資承諾（投資，不是放款）", usd(ex["equity"]), c.get("report_date", "")],
             ["合計", usd(num), ""],
             ["近四季營收", usd(f["rev_ttm"]), f["rev_end"]],
             ["合計 ÷ 近四季營收", pct(r, 1), ""],
         ],
     }
-    p = (f"Nvidia 對客戶的保證與融資承諾合計 {usd(num)}，是近四季營收的 {pct(r, 1)}，高於 25% 的門檻。其中保證是最大可能損失，不是已借出的錢。"
-         if b else f"Nvidia 對客戶的保證與融資承諾合計 {usd(num)}，是近四季營收的 {pct(r, 1)}，未超過 25%。")
+    calc = (f"算式：保證 {usd(f['guarantee'])} ＋ AI 雲端夥伴承諾 {usd(ex['ai_cloud'])} ＋ 股權投資承諾 {usd(ex['equity'])}；"
+            "不含供應與產能承諾、雲端服務協議、未起租資料中心租約、資本支出，以及替第三方簽的資料中心租約。")
+    p = (f"Nvidia 對客戶的保證與融資承諾合計 {usd(num)}，是近四季營收的 {pct(r, 1)}，高於 25% 的門檻。{calc}其中保證是最大可能損失，不是已借出的錢。"
+         if b else f"Nvidia 對客戶的保證與融資承諾合計 {usd(num)}，是近四季營收的 {pct(r, 1)}，未超過 25%。{calc}")
     return {"id": 12, "group": "C", "name": NAMES[12], "value": r, "value_text": pct(r, 1), "threshold": THRESHOLD_TEXT[12],
             "breached": b, "date_text": _dates([f["guarantee_date"], f["rev_end"], c.get("report_date")]),
             "stale": _stale([uf, uc]), "plain": p, "table": tbl, "notes": []}
