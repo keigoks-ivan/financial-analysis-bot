@@ -1,5 +1,10 @@
 # docs/pm/ — 出場閉環（Portfolio Monitor）
 
+> **2026-10-19 起持倉週掃停止**：不再產生 `MONITOR_*.md`（舊檔留在 repo、不上站），`/pm/` 改為「已停止」頁，
+> `build_pm_flags.py` 已從 `intel-2-daily.yml`、`detective-daily.yml` 拿掉，`flags.json` 停在最後一版。
+> `holdings.json` **仍每週更新**，因為每日早報（morning-briefing，讀 `/pm/holdings.json`）與 Discord 助理（my-agent）還在讀它。
+> 以下為停止前的設計紀錄。
+
 這一層是「出場閉環」：把選股系統的產出當成**真實組合**來監控與汰換分析。
 核心原則（用戶 2026-07-19 拍板）：**系統選出來的組合＝真實組合**——持倉不是手填的
 券商部位，而是選股系統自己的產出。監控與汰換分析都針對這個組合。
