@@ -120,7 +120,7 @@ Change log:
         id/tier_matrix.html 專屬映射一併刪除，落回 id/ 前綴（研究群、產業研究項）。(2) 頂層移除
         「使用指南」(/how-to.html)——使用指南併入投資流程，how-to.html 改成轉址樁（入 SKIP_FILES，
         不注入 nav）；頂層只留「投資流程」(/flow/)。外部 3 repo synced literal（v7-backtest／
-        morning-briefing／minervini-quality-backtest）尚未同步，見 site-composition.md。
+        morning-briefing／minervini-quality-backtest）2026-10-19 已同步，byte-identical。
 """
 
 import re
