@@ -8,9 +8,8 @@
 反而正常回應）：
 
   DGS10（10Y 殖利率，%）、DGS30（30Y 殖利率，%）、BAMLH0A0HYM2（ICE BofA HY OAS，%）、
-  THREEFYTP10（Kim–Wright 10Y term premium，%——注意這不是 NY Fed ACM，monitor 頁面把
-  tp10y 標成「ACM」是既有標籤誤植，本檔與 harvest_macro_falsifiers.py 皆不修正 monitor 標籤，
-  只在 harvest 的 note 註記，見設計稿 §9）、SOFR（%）、IORB（%）、DEXCHUS（USD/CNY 匯率）、
+  THREEFYTP10（Kim–Wright 10Y term premium，%——注意這不是 NY Fed ACM；harvest_macro_falsifiers.py
+  對文字出現 ACM 的門檻一律不收，不會綁到 tp10y）、SOFR（%）、IORB（%）、DEXCHUS（USD/CNY 匯率）、
   T10YIE（10Y breakeven 通膨預期，%）。
 
 另衍生一條非 FRED 直抓序列 sofr_iorb：(SOFR − IORB) × 100，單位＝bp，只取兩序列共同交易日

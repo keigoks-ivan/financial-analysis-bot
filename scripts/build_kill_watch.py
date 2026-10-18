@@ -11,6 +11,9 @@ docs/detective/data/kill_watch.json 由 build_detective.py（第 7 源）與頁�
     （registry 的 value 已用 series 原生 spark 單位表示，故此處為純 raw 比對；
     任何 bp↔pp 換算已在 backfill 時 baked 進 value，見各條 notes）；
     缺者 fallback：現抓 FRED CSV（不帶假 UA，抄 build_monitor.fetch_fred）／yfinance。
+  · data_source.type="macro_db"：讀 data/macro_db/series/<sid>.csv 最後一筆（總經資料庫，
+    CI 每日更新）。用於監測頁沒有的序列，例如紐約聯準會 ACM 期限溢價 us.acm_tp10；
+    monitor 的 tp10y 是 Kim–Wright（FRED THREEFYTP10），兩者不可互換。
   · 取數失敗 → unknown（誠實失敗，不外推、不捏造）。
   · near＝未越線但距閾值 20% 以內（value≠0；value==0 時不判 near）。
 
@@ -33,6 +36,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(ROOT, "docs")
 
 NEAR_BAND = 0.20  # 距閾值 20% 以內 → near
+MACRO_DB_SERIES = os.path.join(ROOT, "data", "macro_db", "series")
 
 
 # ── zero-churn IO（協議抄 build_monitor.py / build_detective.py）─────────────
@@ -115,9 +119,38 @@ def _series_from(doc_json, cat, key):
     return None
 
 
+def _macro_db_points(sid):
+    """讀 data/macro_db/series/<sid>.csv（欄位 date,value），回傳 [(date, value), ...] 升冪；
+    檔缺或無有效列回 []。sid 只允許 [a-z0-9_.]，擋路徑跳脫。"""
+    if not re.fullmatch(r"[a-z0-9_.]+", sid or ""):
+        return []
+    path = os.path.join(MACRO_DB_SERIES, f"{sid}.csv")
+    pts = []
+    try:
+        with open(path, encoding="utf-8") as fh:
+            next(fh, None)
+            for line in fh:
+                parts = line.strip().split(",")
+                if len(parts) < 2:
+                    continue
+                try:
+                    pts.append((parts[0], float(parts[1])))
+                except ValueError:
+                    continue
+    except OSError:
+        return []
+    return pts
+
+
 def get_current(ds, monitor, internals):
     """回傳 (value, as_of, err)。err 非 None 代表 unknown。"""
     typ, key = ds.get("type"), ds.get("key")
+    if typ == "macro_db":
+        pts = _macro_db_points(key)
+        if not pts:
+            return None, None, f"macro_db series {key} missing or empty"
+        d, v = pts[-1]
+        return float(v), d, None
     if typ in ("monitor", "internals"):
         doc = monitor if typ == "monitor" else internals
         if "/" not in (key or ""):
@@ -145,6 +178,9 @@ def get_current(ds, monitor, internals):
 def _series_spark(ds, monitor, internals):
     """回傳 (spark, frequency)；取不到回 (None, None)。只用於估速度，不影響狀態。"""
     typ, key = ds.get("type"), ds.get("key")
+    if typ == "macro_db":
+        pts = _macro_db_points(key)
+        return ([v for _, v in pts[-30:]] or None), "daily"
     if typ not in ("monitor", "internals") or "/" not in (key or ""):
         return None, None
     cat, skey = key.split("/", 1)

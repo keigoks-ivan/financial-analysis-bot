@@ -89,10 +89,18 @@ META_RE = re.compile(r'<script type="application/json" id="macro-meta">(.*?)</sc
 # harvest，先確認 threshold 是單一可判門檻、source 對得上某個 docs/monitor series，再加一行。
 SERIES_MAP = [
     ("ICE BofA HY OAS", ["hy_oas"]),
-    ("NY Fed ACM", ["tp10y"]),
+    ("Kim–Wright", ["tp10y"]),
+    ("Kim-Wright", ["tp10y"]),
+    ("THREEFYTP10", ["tp10y"]),
     ("FRED DGS10/DGS30", ["dgs10", "dgs30"]),
     ("NY Fed SOFR", ["sofr_iorb"]),
 ]
+
+# 紐約聯準會 ACM 與 monitor tp10y（FRED THREEFYTP10＝Kim–Wright）是兩個不同模型的 10 年期
+# 期限溢價，同日差距可達 0.2 到 0.4 個百分點。ledger 的 resolver 命名空間（monitor／internals）
+# 目前沒有 ACM 序列，所以文字出現 ACM 的證偽門檻一律不收；不能退而綁 tp10y，否則 ACM 的門檻
+# 會被 Kim–Wright 的數字判成已觸發或未觸發。要收 ACM，先在 resolver 端接上 ACM 序列。
+ACM_RE = re.compile(r"(?<![A-Za-z])ACM(?![A-Za-z])")
 
 # 顯示單位：dgs10/dgs30/hy_oas/tp10y 是 monitor 的 %，sofr_iorb 是 monitor 的 bp（"3bps" 這類
 # 字串）。climatology() 的衍生 sofr_iorb 序列本身就是 bp 尺度，故此處與 monitor 現值、threshold
@@ -384,6 +392,12 @@ def harvest(p_mode=None, ledger_path=None):
             source = km.get("source", "")
             threshold = km.get("threshold", "")
             hay = f"{metric} {source}"
+
+            if ACM_RE.search(hay):
+                skipped.append((f"{rel}｜{metric}",
+                                 "ACM 期限溢價：ledger 的 resolver 沒有 ACM 序列"
+                                 "（monitor tp10y 是 Kim–Wright，不可替代），不收"))
+                continue
 
             keys = None
             for needle, mapped_keys in SERIES_MAP:
