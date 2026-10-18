@@ -17,7 +17,7 @@ name: Daily US Close Band
 #   daily-fundamentals-us.yml   → fundamentals_us.py（吃 screener 的 latest.json）
 #   rotation-radar-daily.yml    → build_rotation_radar.py / build_home_pulse.py
 #   update_turtle_sleeve.yml    → update_turtle_sleeve.py（含 sleeve 訊號 email；2026-10-18 起停跑並歸檔）
-#   update_leverage_overlay.yml → update_leverage_overlay.py
+#   update_leverage_overlay.yml → update_leverage_overlay.py（2026-10-19 起停跑並歸檔）
 #   update-risk-gauge-daily.yml → build_risk_gauge.py
 #   monitor-daily.yml           → build_monitor.py / _score / _internals / _home_pulse
 #   （2026-09-08 新增，非整併自舊 workflow）→ build_rs_turn.py（轉強觀察 + 寬度線，
@@ -127,10 +127,10 @@ jobs:
       # 頁面 docs/turtle-sleeve/ 凍結保留（頁頂有歸檔橫幅）；update_turtle_sleeve.py 留在 repo，可手動重產。
       # 原本的 run／讀 alert／寄信三個 step 與 commit 路徑一併移除。
 
-      # ── 7. update_leverage_overlay ──
-      - name: "[leverage-overlay] Run vol-target leverage overlay update"
-        run: python scripts/update_leverage_overlay.py
-        continue-on-error: true
+      # ── 7. update_leverage_overlay（SMH 槓桿疊加）──
+      # 2026-10-19 停跑並歸檔（持有人拍板）：這條線疊在 2026-07-23 停更的舊美股系統 STX50 上，比較的基礎已經不存在。
+      # 頁面 docs/long-track-smh/leverage/ 凍結保留（頁頂有歸檔橫幅）；update_leverage_overlay.py 留在 repo，可手動重產。
+      # 原本的 run step 與 commit 路徑一併移除。
 
       # ── 8. update-risk-gauge-daily (市場風險儀表) ──
       - name: "[risk-gauge] Build risk on/off gauge"
@@ -245,8 +245,6 @@ jobs:
             docs/rotation/data/radar.json \
             docs/rotation/data/snapshots \
             docs/home/pulse.json \
-            docs/long-track-smh/leverage/index.html \
-            docs/long-track-smh/leverage/state.json \
             docs/markets.html \
             docs/cache/risk_gauge.json \
             docs/cache/risk_history.json \

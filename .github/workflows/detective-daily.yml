@@ -22,12 +22,13 @@ name: Daily Market Detective
 # cron 平日（週二～週六台灣時間清晨）為 fallback＋寄 digest；
 # cron 週六另一班次為週報班次。build_detective.py 是 zero-churn 寫入——資料
 # 沒動就空 diff、不 commit，故重複觸發是冪等的。
+# 2026-10-19：rotation-radar-daily 已刪除（排程清理），workflow_run 清單同步移除
+# "Daily Asset Rotation Radar (RRG)"；"Daily Market Monitor" 仍在。
 on:
   workflow_run:
     workflows:
       - "Daily US Close Band"                 # 主要事件源（2026-07-18 起 monitor／rotation 資料併入此支）
       - "Daily Market Monitor"                # dispatch-only：手動刷新 monitor 時仍觸發
-      - "Daily Asset Rotation Radar (RRG)"    # dispatch-only：手動刷新 rotation 時仍觸發
     types: [completed]
   schedule:
     # 2026-07-18 維持獨立（未併入時段帶 B）：本 workflow 帶 workflow_run 事件驅動

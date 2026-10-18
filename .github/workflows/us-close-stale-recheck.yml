@@ -7,10 +7,10 @@ name: US Close Stale Recheck
 # Mon-Fri 21:45 UTC＝美股收盤後 45 分）常被 GitHub 排程延遲 2 小時以上才真的
 # 開跑。2026-09-22、2026-09-24 兩天都撞到「run 實際跑到 20:00 ET 以後」，此時
 # Yahoo（yfinance）對這批 ETF 回傳的還是前一交易日的 K 棒（新一天的收盤資料
-# 還沒定案），造成三個輸出檔案的資料日期卡在前一個交易日：
+# 還沒定案），造成輸出檔案的資料日期卡在前一個交易日：
 #   - docs/rotation/data/radar.json          （as_of 欄位，build_rotation_radar.py）
 #   - （docs/turtle-sleeve/state.json 已於 2026-10-18 歸檔停更，從檢查清單移除）
-#   - docs/long-track-smh/leverage/state.json（data_date 欄位，update_leverage_overlay.py）
+#   - （docs/long-track-smh/leverage/state.json 已於 2026-10-19 歸檔停更，從檢查清單移除）
 # 該次 run 本身不會失敗（exit 0），資料通常隔天會自己補上（self-heal），但
 # 首頁檢查清單期待資料日期 >= 前一個美股交易日，中間這段空窗會讓首頁顯示過期。
 #
@@ -89,7 +89,6 @@ jobs:
 
           targets = {
               "radar": ("docs/rotation/data/radar.json", "as_of"),
-              "leverage": ("docs/long-track-smh/leverage/state.json", "data_date"),
           }
 
           lines = [f"expected={expected}"]
@@ -119,11 +118,6 @@ jobs:
         continue-on-error: true
         run: python scripts/build_rotation_radar.py
 
-      - name: "[leverage-overlay] Rerun update_leverage_overlay.py (stale)"
-        if: steps.check.outputs.leverage_stale == 'true'
-        continue-on-error: true
-        run: python scripts/update_leverage_overlay.py
-
       # ── 3. 重跑後再查一次同樣三個欄位 ──
       - name: Re-check staleness after rerun
         id: recheck
@@ -141,7 +135,6 @@ jobs:
 
           targets = {
               "radar": ("docs/rotation/data/radar.json", "as_of"),
-              "leverage": ("docs/long-track-smh/leverage/state.json", "data_date"),
           }
 
           lines = [f"expected={expected}"]
@@ -167,23 +160,17 @@ jobs:
           RADAR_WAS: ${{ steps.check.outputs.radar_stale }}
           RADAR_NOW: ${{ steps.recheck.outputs.radar_stale }}
           RADAR_DATE: ${{ steps.recheck.outputs.radar_date }}
-          LEVERAGE_WAS: ${{ steps.check.outputs.leverage_stale }}
-          LEVERAGE_NOW: ${{ steps.recheck.outputs.leverage_stale }}
-          LEVERAGE_DATE: ${{ steps.recheck.outputs.leverage_date }}
           EXPECTED: ${{ steps.recheck.outputs.expected }}
         run: |
           if [ "$RADAR_WAS" = "true" ] && [ "$RADAR_NOW" = "true" ]; then
             echo "::warning::docs/rotation/data/radar.json still stale after rerun (as_of=${RADAR_DATE:-none}, expected=${EXPECTED})"
           fi
-          if [ "$LEVERAGE_WAS" = "true" ] && [ "$LEVERAGE_NOW" = "true" ]; then
-            echo "::warning::docs/long-track-smh/leverage/state.json still stale after rerun (data_date=${LEVERAGE_DATE:-none}, expected=${EXPECTED})"
-          fi
           echo "done."
 
       # ── 收斂：單一 commit + push（路徑＝三支 script 各自在 daily-us-close.yml
       #    裡對應的 commit 路徑聯集）。Zero-churn：沒重跑或重跑後內容沒變
-      #    （build_rotation_radar.py / update_leverage_overlay.py 都是 zero-churn 寫檔）
-      #    就不會有 diff；2026-10-18 起商品組合（turtle-sleeve）已歸檔，不在清單內 ──
+      #    （build_rotation_radar.py 是 zero-churn 寫檔）就不會有 diff；
+      #    2026-10-18 起商品組合（turtle-sleeve）、2026-10-19 起 SMH 槓桿疊加已歸檔，不在清單內 ──
       - name: Commit and push if changed
         id: commit_and_push
         env:
@@ -193,9 +180,7 @@ jobs:
           for p in \
             data/rotation_radar_daily.json \
             docs/rotation/data/radar.json \
-            docs/rotation/data/snapshots \
-            docs/long-track-smh/leverage/index.html \
-            docs/long-track-smh/leverage/state.json; do
+            docs/rotation/data/snapshots; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if [ -z "$PATHS" ]; then

@@ -8,6 +8,9 @@
   2. 系統主控台歸檔區（scripts/build_long_track_index.py）讀 ARCHIVE_TEXT 當每條線的一句結論；
   3. 已經產出的 HTML 用本檔 --apply 一次性補上（冪等，以 <!--archive-banner--> 為界，重跑只會換內容）。
 
+2026-10-19 追加第八條：SMH 槓桿疊加（/long-track-smh/leverage/，key＝smh_leverage），
+橫幅的日期與標籤沿用本檔的 ARCHIVE_DATE。
+
 F70 的頁面（/backtest/f_comfort/）走回測區既有的「退役橫幅」機制（docs/backtest/_page_meta.py 的
 RET_BANNER），文字同 ARCHIVE_TEXT["f70"]。
 
@@ -31,6 +34,7 @@ ARCHIVE_TEXT = {
     "tw_semivol": "持有人 2026-08-17 決定不採用（台股勝出、美股沒有），而且這條線跑在已經退下的舊規則上。",
     "gld": "實單 2026-10-19 起已有黃金腿（週線三條件版），單腿 GLD 追蹤不再需要。",
     "turtle": "這條線疊在 2026-07-23 停更的舊美股系統（STX50）上，比較的基礎已經不存在。",
+    "smh_leverage": "疊在 2026-07-23 停更的舊美股系統 STX50 上，比較的基礎已經不存在。",
     "f70": "持有人 2026-10-18 決定歸檔。「股票以外要不要放別的資產」改由債金版回答。",
 }
 
@@ -42,6 +46,7 @@ PAGES = {
     "tw_semivol": "docs/long-track-w52-adaptive/tw-semivol.html",
     "gld": "docs/long-track-gld/index.html",
     "turtle": "docs/turtle-sleeve/index.html",
+    "smh_leverage": "docs/long-track-smh/leverage/index.html",
 }
 
 START = "<!--archive-banner-->"

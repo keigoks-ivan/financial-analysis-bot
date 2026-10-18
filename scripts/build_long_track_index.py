@@ -104,6 +104,8 @@ ARCHIVED_NEW = [
 ARCHIVED_OLD = [
     ("STX50（美股 SMH／QQQ）", "/long-track-smh/",
      "2026-07-18 由 W52 × 自適應波動率接棒，2026-07-23 停更。", "2026-07-23 停更"),
+    ("SMH 槓桿疊加", "/long-track-smh/leverage/",
+     ARCHIVE_TEXT["smh_leverage"], f"{ARCHIVE_DATE} 歸檔"),
     ("E3（台股 0050／2330）", "/long-track-tw/",
      "2026-07-18 由 W52 × 自適應波動率接棒，2026-07-23 停更。", "2026-07-23 停更"),
     ("0050＋2330 固定 σ", "/long-track-tw-vt/",

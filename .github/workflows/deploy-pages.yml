@@ -39,6 +39,14 @@ name: Deploy Pages
 #                            Market Detective" (its own alert-network commit) are
 #                            now listed directly. The two dormant entries are kept
 #                            so a manual dispatch of either still deploys.
+#                            2026-10-19 trigger-list cleanup: removed the three entries
+#                            whose workflows were deleted ("Weekly Cross-Asset Refresh
+#                            (crowding + rotation + regime)", "Daily Asset Rotation Radar
+#                            (RRG)", "Daily Non-Fundamental Refresh" — all dispatch-only
+#                            leftovers); added the scheduled bot-committing crons that
+#                            were missing (Asia close band, tw/kr chips, macro-db, flowmap,
+#                            statlab, horizon, forecast-settle, fear-greed, five weekly-*
+#                            crons) plus "NFCI Forward Shadow".
 #   3. schedule            — name-independent safety net every 6h: catches ANY
 #                            other bot-committed docs/ change (screeners /
 #                            fundamentals / weekly crons) without having to
@@ -53,14 +61,12 @@ on:
     workflows:
       # 2026-09-13：市場資料與週度跨資產產物落帳後立即部署，避免等待六小時補漏。
       - "Market State Daily"
-      - "Weekly Cross-Asset Refresh (crowding + rotation + regime)"
       - "Intel 2.0 Daily Chain"                        # 情報監視器一條鏈（06:30 TPE；GITHUB_TOKEN push 不觸發 push 事件，靠這行即時部署）
       - "Daily US Close Band"                          # 主要夜間刷新（monitor＋rotation＋home pulse，2026-07-18 併入）
       - "Daily Market Detective"                       # detective 警報網自身 commit
       - "Weekly Decision Engine"
       - "Update W52 × Adaptive Vol-Target Signal (US+TW)"
       - "Daily Market Monitor"                         # dispatch-only：手動刷新時仍部署
-      - "Daily Asset Rotation Radar (RRG)"             # dispatch-only：手動刷新時仍部署
       - "Stock Dashboard Daily Data"                   # 2026-09-22：個股儀表板每日資料（不進 git，靠 artifact），跑完即重部署
       - "ETF Dashboard Daily Data"                     # 2026-09-24：ETF 儀表板每日資料（進 git，用 GITHUB_TOKEN push 不觸發 push 事件，靠這行即時部署）
       - "Active ETF Daily Data"                        # 2026-09-25：主動式 ETF 每日持股/AUM/分析（進 git，靠這行即時部署）
@@ -68,7 +74,22 @@ on:
       - "DD Downstream Sync"                           # 2026-10-13：DD 下游彙總檔（dd_links／search-index／rss／首頁最新發布／track-record）；GITHUB_TOKEN push 不觸發 push 事件
       - "AI Credit Monitor Daily"                      # 2026-10-16：AI 信用風險監測 /ai-credit/（頁面與資料進 git，GITHUB_TOKEN push 不觸發 push 事件，靠這行即時部署）
       - "Daily Taipei Morning Band"                    # 2026-10-18：選股看板／dd-screener／十倍股每日刷新（GITHUB_TOKEN push 不觸發 push 事件，之前要等六小時排程）
-      - "Daily Non-Fundamental Refresh"                # 2026-10-18：dispatch-only：手動刷新選股看板時仍部署
+      # 2026-10-19：補上漏列的排程（皆為 GITHUB_TOKEN push，不會觸發 push 事件，之前要等六小時排程）
+      - "Daily Asia Close Band"                        # 台股篩選／階段燈號／價格快取（16:00 TPE）
+      - "TW Chips Daily Data"                          # /tw-chips/
+      - "KR Chips Daily Data"                          # /kr-chips/
+      - "Macro DB Daily"                               # /macro/db/
+      - "Daily Conditional Flow Map"                   # /flowmap/
+      - "Daily Statistical Properties Panel"           # /statlab/
+      - "Horizon Daily"                                # /horizon/
+      - "Weekly Forecast Ledger Settle + Flowmap Scorecard"  # 預測帳本結算（市況主控台底層）
+      - "Update Fear/Greed Thermometer (weekly reminder)"    # /fear-greed/
+      - "Weekly Fundamental Refresh"
+      - "Weekly ID Staleness Refresh"
+      - "Weekly Market Data Update"
+      - "Weekly Price-Momentum TW Update"
+      - "Weekly US Quarterly"
+      - "NFCI Forward Shadow"                          # 2026-10-19：NFCI 前瞻影子線（workflow 由另一條工作新增，名稱須與其 name: 一致）
     types: [completed]
   schedule:
     - cron: "0 */6 * * *"
@@ -141,6 +162,42 @@ jobs:
           done
           echo "::error::Failed to download stock-dash-data (run $RUN_ID) after 3 attempts — failing this deploy so the live site keeps its data."
           exit 1
+
+      # 2026-10-19：內部說明檔與程式檔不上網站。只刪這次 CI checkout 裡的 docs/ 副本，repo 本身不動
+      # （repo 是 public，github.com 上仍讀得到，這一步只是讓檔案不出現在網站、搜尋引擎收不到）。
+      # 刪的類型：*.md、*.py、*.pyc、__pycache__/、*.ipynb、*.sh、.gitignore、.DS_Store；
+      # .js／.json／.csv／.txt／.xml／.zip／CNAME／.nojekyll 等網站要用的檔不在此列。
+      # 白名單＝頁面刻意連到的檔案，照現況保留（新增連結到 .md／.py 的頁面時，要記得補在這裡）。
+      # 持倉週報 docs/pm/MONITOR_*.md 由 *.md 一併排除（/pm/ 頁的歷史清單連結因此失效，處理方式見對應 commit 說明）。
+      - name: Strip internal files (md / py / ...) from the site artifact
+        run: |
+          set -euo pipefail
+          cd docs
+          KEEP=(
+            ./ideas/data/ai-hardware-cycle/data.py   # /ideas/ai-hardware-cycle.html「產生腳本」連結
+            ./ideas/data/bond-outlook/data.py        # /ideas/bond-outlook.html「產生腳本」連結
+            ./ideas/data/bond-repricing/data.py      # /ideas/bond-repricing.html「重跑腳本」連結
+            ./cache/README.md                        # /cache/ 頁「規範細節見 README」連結
+            ./id/INDEX.md                            # /id/tier_matrix.html、/id/ID_CNTW_Master_20260424.html「索引」連結
+          )
+          FIND_KEEP=()
+          for k in "${KEEP[@]}"; do FIND_KEEP+=( -not -path "$k" ); done
+          LIST="$(mktemp)"
+          find . -type f \( -name '*.md' -o -name '*.py' -o -name '*.pyc' -o -name '*.ipynb' \
+                           -o -name '*.sh' -o -name '.gitignore' -o -name '.DS_Store' \) \
+                 "${FIND_KEEP[@]}" -print0 > "$LIST"
+          N="$(tr -cd '\0' < "$LIST" | wc -c | tr -d ' ')"
+          BYTES="$(xargs -0 wc -c < "$LIST" | awk '$2!="total"{s+=$1} END{print s+0}')"
+          xargs -0 rm -f < "$LIST"
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          rm -f "$LIST"
+          echo "Stripped $N internal files ($BYTES bytes) from the site artifact."
+          for k in "${KEEP[@]}"; do
+            [ -f "$k" ] || echo "::warning::whitelisted file not found: $k"
+          done
+          for f in index.html 404.html CNAME .nojekyll robots.txt; do
+            [ -f "$f" ] || { echo "::error::site file missing after strip: $f"; exit 1; }
+          done
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3

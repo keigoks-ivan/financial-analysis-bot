@@ -29,6 +29,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from site_nav import full_nav_block  # noqa: E402
 
 NAV_BLOCK = full_nav_block("system", "lthub")
+from archive_banner import archive_banner  # noqa: E402  (2026-10-19 歸檔橫幅；文字集中在 scripts/archive_banner.py)
+ARCHIVE_BANNER = archive_banner("smh_leverage")
 OUTPUT = Path(__file__).parent.parent / "docs" / "long-track-smh" / "leverage" / "index.html"
 STATE_JSON = Path(__file__).parent.parent / "docs" / "long-track-smh" / "leverage" / "state.json"
 STX_STATE = Path(__file__).parent.parent / "docs" / "long-track-smh" / "state.json"
@@ -107,7 +109,7 @@ def main():
                      if stx_exp is not None else "")
 
     html = PAGE.format(
-        NAV=NAV_BLOCK, hero=hero, big=big, L=L, f=f, vol_pct=f"{vol*100:.0f}%",
+        NAV=NAV_BLOCK, ARCHIVE_BANNER=ARCHIVE_BANNER, hero=hero, big=big, L=L, f=f, vol_pct=f"{vol*100:.0f}%",
         med_pct=f"{med*100:.0f}%", calm=calm, contracts=contracts, unit=f"{unit:,.0f}",
         nav=f"{NOMINAL_NAV:,.0f}", asof=asof_str, now=now, rows=rows,
         stx_line=stx_line, combined_note=combined_note)
@@ -176,6 +178,7 @@ td{{font-variant-numeric:tabular-nums}}
 </head>
 <body>
 {NAV}
+{ARCHIVE_BANNER}
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / <a href="/long-track-smh/">美股長線訊號</a> / vol-target 槓桿層</div>
   <h1>vol-target 槓桿層 — STX50 即時讀數</h1>
