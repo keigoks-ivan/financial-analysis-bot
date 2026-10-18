@@ -575,7 +575,7 @@ def generate_html(sig: dict, change: str | None, last_change_date: str | None,
 
     banner = ('<div class="oos-banner">⚠ <b>前瞻 OOS 追蹤中・尚非實單</b>'
               '——本頁為 GLD 金 sleeve 的<b>候選追蹤</b>（決策前研究通過後開始紙上前瞻紀錄），'
-              '<b>非實際持倉</b>。實單非股票部位目前為 0%。</div>')
+              '<b>非實際持倉</b>。凍結當時實單非股票部位為 0%；2026-10-19 起美股實單已含黃金與公債腿（各最多 20%）。</div>')
 
     plain = ('<div class="plain-box"><span class="pb-tag">💬 白話</span><span class="pb-body">'
              '這頁在做什麼：把「決策前研究」裡驗證過的<b>黃金持有規則</b>（趨勢紅綠燈＋看波動'

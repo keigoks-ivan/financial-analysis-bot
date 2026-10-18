@@ -22,13 +22,13 @@ ZONES = {1: ('我現在持有什麼、憑什麼', '實盤系統的規則、證�
  7: ('總經與房市', '殖利率倒掛、衰退訊號、降息後的股市，以及各國房價與所得的關係。'),
  8: ('方法與術語', '評估標準、術語對照表與各系統的總覽比較。')}
 
-PAGES = {'/backtest/live_system_evidence/': {'title': '實盤系統憑什麼：十一項獨立檢驗總覽',
+PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼：十一項獨立檢驗總覽',
                                      'short': '證據總覽',
                                      'key': 'evidence_hub',
                                      'zone': 1,
                                      'status': 'live',
                                      'desc': '頁內結論：「證據強度整體算中等」'},
- '/backtest/w52_adaptive_oos/': {'title': '換一批沒看過的標的，實盤規則還有效嗎？（W52×自適應 σ 跨標的前瞻證偽）',
+ '/backtest/w52_adaptive_oos/': {'title': '換一批沒看過的標的，舊實單規則還有效嗎？（W52×自適應 σ 跨標的前瞻證偽）',
                                  'short': '跨標的前瞻證偽',
                                  'key': 'w52_oos',
                                  'zone': 1,
@@ -40,7 +40,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '實盤系統憑什麼：�
                                   'zone': 1,
                                   'status': 'live',
                                   'desc': '頁內結論：「均線閘門買到的保險仍然比「單純少放一點錢」划算」'},
- '/backtest/adopted_bootstrap/': {'title': '打亂歷史重跑一千次：實盤優勢是本事還是運氣？',
+ '/backtest/adopted_bootstrap/': {'title': '打亂歷史重跑一千次：舊實單優勢是本事還是運氣？',
                                   'short': '打亂歷史重跑',
                                   'key': 'adopt_boot',
                                   'zone': 1,
@@ -64,12 +64,12 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '實盤系統憑什麼：�
                           'zone': 1,
                           'status': 'ret',
                           'desc': 'F70 的評估，2026-10-18 歸檔，不再追蹤；含不借錢版（A0＋D1）與戰術配置錦標賽。'},
- '/backtest/a0_proposal/': {'title': '10 月回顧點提案：實盤從 cap 1.5 降為不借錢 cap 1.0（A0 提案）',
+ '/backtest/a0_proposal/': {'title': '10 月回顧點提案：實單從 cap 1.5 降為不借錢 cap 1.0（A0 提案，已採用）',
                             'short': 'A0 提案',
                             'key': 'a0_proposal',
                             'zone': 1,
                             'status': 'cand',
-                            'desc': '頁內結論：「建議：10 月回顧點採用 A0。」'},
+                            'desc': '建議 10 月回顧點採用 A0；持有人 2026-10-17 拍板，2026-10-19 起生效。'},
  '/backtest/f_portfolio/': {'title': '疊兩種保險（均線閘門＋跨資產分散）的四關證偽（F 組合）',
                             'short': '疊兩種保險',
                             'key': 'f_portfolio',
@@ -93,7 +93,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '實盤系統憑什麼：�
                          'key': 'lev20y',
                          'zone': 2,
                          'status': 'note',
-                         'desc': '舊法（STX50＋MNQ）已降級；現役引擎的三種曝險設計並列。'},
+                         'desc': '舊法（STX50＋MNQ）已降級；舊實單引擎（2026-07-18～10-16）的三種曝險設計並列。'},
  '/backtest/vol_targeting/': {'title': '波動率目標倉位：免保費的降回撤套袖（vol targeting）',
                               'short': '波動率目標倉位',
                               'key': 'vol_targeting',
@@ -483,7 +483,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '實盤系統憑什麼：�
                    'key': 'tw20y',
                    'zone': 8,
                    'status': 'live',
-                   'desc': '頁內結論：「台股實單主系統為 W52 週線閘門 × 自適應波動率目標（cap 1.5）」'},
+                   'desc': '頁內結論：「台股實單規則自 2026-10-19 起為不借錢版（上限 100%）」'},
  '/backtest/multi/': {'title': '多資產回測總覽',
                       'short': '多資產總覽',
                       'key': 'multi20y',
@@ -547,7 +547,7 @@ MEMBERS = {'/backtest/long_track_smh/': {'title': 'SMH/QQQ 長軌加 Supertrend 
                                 'anchor': 'onset',
                                 'chapter': '二、慢熊剛開始時認得出來嗎',
                                 'key': 'slow_bear_onset'},
- '/backtest/regime_bootstrap/': {'title': '以整段牛熊為單位重抽：實盤優勢站得住嗎？（保留 regime 的 bootstrap）',
+ '/backtest/regime_bootstrap/': {'title': '以整段牛熊為單位重抽：舊實單優勢站得住嗎？（保留 regime 的 bootstrap）',
                                  'short': '保留 regime 的 bootstrap',
                                  'status': 'live',
                                  'main': '/backtest/adopted_bootstrap/',
@@ -612,14 +612,29 @@ ZONE_ORDER = {z: [u for u, p in PAGES.items() if p["zone"] == z] for z in ZONES}
 # 實盤證據：首頁第①區只留一個入口（/long-track/#evidence），這些頁在系統主控台列出。
 EVIDENCE_URLS = ZONE_ORDER[1]
 
-REF_LINE = "本頁所述系統（STX50／E3）自 2026-07-18 起為對照線，實盤改為 W52×自適應波動率（cap 1.5）。本頁僅供對照，不是現行配置。"
+REF_LINE = "本頁所述系統（STX50／E3）自 2026-07-18 起為對照線，現已歸檔。2026-10-19 起的實單規則是：美股債金版（股票上限 100%、不借錢，另加公債與黃金各最多 20%），台股不借錢版（上限 100%，不加債金）。本頁僅供對照，不是現行配置。"
 RET_LINE = "本頁為存檔：六狀態機已於 2026-07-04 退役，頁內數字不再更新，僅供對照。"
 # 頂端加對照線橫幅的頁（合併主頁的各章橫幅已在章節內）
 REF_BANNER_URLS = ["/backtest/long_track_smh/", "/backtest/long_track_tw/", "/backtest/leverage_voltarget/",
                    "/backtest/turtle_adopt/", "/backtest/multi/", "/backtest/10y/"]
 RET_BANNER = {"/backtest/six_state/status/": "本頁為存檔：六狀態機已於 2026-07-04 退役，以下是 2026-07-03 的最後一次狀態，不再運作。",
               # 2026-10-18 F70 歸檔；文字同 scripts/archive_banner.py 的 ARCHIVE_TEXT["f70"]
-              "/backtest/f_comfort/": "已歸檔・2026-10-18 停止更新。持有人 2026-10-18 決定歸檔。「股票以外要不要放別的資產」改由債金版回答。"}
+              "/backtest/f_comfort/": "已歸檔・2026-10-18 停止更新。持有人 2026-10-18 決定歸檔。「股票以外要不要放別的資產」改由債金版回答。",
+              # 2026-10-19 規則切換：這份決策備忘的提案已被採用
+              "/backtest/a0_proposal/": "決策已做：持有人 2026-10-17 拍板，2026-10-19 起實單的股票部分上限 100%、不借錢（美股另加公債與黃金各最多 20%，台股不加）。本頁是提案當時（2026-10-17）的備忘，文中的「現行」「A」指當時的 cap 1.5 配置。"}
+
+# 2026-10-19 規則切換：這些頁檢驗或描述的是 2026-07-18～10-16 的舊實單規則（曝險上限 150%），不再標「實盤」。
+# 只改頁首標籤（_apply_meta 讀 CHIP_OVERRIDE）；子導覽與首頁的狀態字樣仍照 STATUS。
+OLD_RULE_LABEL = "舊實單規則（2026-07-18～10-16）的證據"
+OLD_RULE_DEF = '檢驗或描述的是 2026-07-18～10-16 的實單規則（曝險上限 150%）。2026-10-19 起的實單規則見<a href="/long-track-w52-adaptive/">長線追蹤</a>。'
+OLD_RULE_URLS = ["/backtest/live_system_evidence/", "/backtest/w52_adaptive_oos/", "/backtest/insurance_premium/",
+                 "/backtest/adopted_bootstrap/", "/backtest/combined_account/", "/backtest/slow_bear_base_rate/",
+                 "/backtest/tw/", "/backtest/slow_bear_onset/", "/backtest/regime_bootstrap/"]
+CHIP_OVERRIDE = {u: (OLD_RULE_LABEL, OLD_RULE_DEF, "note") for u in OLD_RULE_URLS}
+CHIP_OVERRIDE["/backtest/a0_proposal/"] = (
+    "已採用", "提案的不借錢上限 100% 已於 2026-10-17 由持有人拍板，2026-10-19 起生效。", "live")
+CHIP_OVERRIDE["/backtest/nonequity/"] = (
+    "部分已採用", "黃金（GLD）與公債（IEF）已於 2026-10-19 進入美股實單，各最多 20%；商品與長天期美債（TLT）未採用。", "live")
 
 
 def aliases() -> dict[str, str]:

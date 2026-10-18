@@ -190,7 +190,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <div class="dt-ep-head"><h2>DD 選股宇宙</h2><span class="dt-path">/dd-screener/latest.json</span></div>
     <p class="dt-purpose">全站個股 DD 宇宙的機器可讀快照——約 240 檔已寫過 DD 報告的個股，帶基本面訊號（FCF／ROIC／EPS 成長／PEG／負債）、護城河評分、統一裁決（dca_verdict）、五年情境價與 EPS 估計。是 <code>/dd-screener/</code>、<code>/cockpit/</code>、<code>/t/</code> 三頁的共同資料源。</p>
     <div class="dt-facts">
-      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Tue–Sat 09:00 台北）· workflow <code>daily-non-fundamental-refresh</code> 跑 <code>build_dd_screener.py</code>；每份新 DD 發布時亦即時重建</span></div>
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Tue–Sat 09:00 台北）· workflow <code>daily-taipei-morning</code> 跑 <code>build_dd_screener.py</code>；每份新 DD 發布時亦即時重建</span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 快照交易日；<code>eps_estimates_source.snapshot_date</code> = EPS 估計 Excel 快照日</span></div>
     </div>
     <div class="dt-tablewrap"><table class="dt-schema">
@@ -343,7 +343,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <div class="dt-ep-head"><h2>產業輪動（RRG 主題）</h2><span class="dt-path">/rotation/data/latest.json</span></div>
     <p class="dt-purpose">64 個站內主題於週線宇宙的相對輪動位置（RRG：相對強度比值 × 動能），含四象限分類、產業時鐘相位、修正寬度與廣度。<b>描述器非擇時</b>——相對排名於本站宇宙內，非市場絕對輪動。</p>
     <div class="dt-facts">
-      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（週日 12:00 UTC）· workflow <code>crossasset-weekly</code> 跑 <code>build_rotation.py</code></span></div>
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（週日 22:30 UTC＝台北週一 06:30）· workflow <code>intel-2-daily</code> 週日段跑 <code>build_rotation.py</code></span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> / <code>data_asof_weekly</code> = 週線資料截止日；<code>generated_at</code> = 產生時戳</span></div>
     </div>
     <div class="dt-tablewrap"><table class="dt-schema">
@@ -377,7 +377,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <div class="dt-ep-head"><h2>輪動雷達（多框架 RRG 尾跡）</h2><span class="dt-path">/rotation/data/radar.json</span></div>
     <p class="dt-purpose">跨資產／產業／因子三個宇宙的多時間框架（120／60／20 交易日）RRG 尾跡動畫資料，日更。每日凍結副本存於 <code>/rotation/data/snapshots/{YYYY-MM-DD}.json</code>（同 schema）。</p>
     <div class="dt-facts">
-      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Tue–Sat 22:40 UTC）· workflow <code>rotation-radar-daily</code></span></div>
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Mon–Fri 21:45 UTC，美股收盤帶）· workflow <code>daily-us-close</code> 跑 <code>build_rotation_radar.py</code></span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 最新交易日；snapshots 檔名即該日</span></div>
     </div>
     <div class="dt-tablewrap"><table class="dt-schema">
@@ -398,7 +398,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <div class="dt-ep-head"><h2>擁擠交易監測</h2><span class="dt-path">/crowding/data/latest.json</span></div>
     <p class="dt-purpose">三層交叉驗證（COT 部位／ETF 動能／主題擁擠分數，互相對照）的資料層：15 個期貨市場的 COT（CFTC 大戶持倉報告）部位極端、15 檔跨資產 ETF 的動能／偏離、64 個主題的五維擁擠分數（漲多了嗎／齊漲齊跌程度／分析師在追嗎／成交量異常度／站內看多程度）。<b>描述器非擇時</b>——衡量部位集中與下方緩衝，不預測轉折時點。</p>
     <div class="dt-facts">
-      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（週日 12:00 UTC）· workflow <code>crossasset-weekly</code> 跑 <code>build_crowding.py</code></span></div>
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（週日 22:30 UTC＝台北週一 06:30）· workflow <code>intel-2-daily</code> 週日段跑 <code>build_crowding.py</code></span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>cot_as_of</code> = CFTC COT 報告日（常滯後數日）；<code>generated_at</code> = 產生時戳；ETF 時效見 <code>meta</code></span></div>
     </div>
     <div class="dt-tablewrap"><table class="dt-schema">
@@ -420,7 +420,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <div class="dt-ep-head"><h2>精選清單（候選 + 正式榜）</h2><span class="dt-path">/picks/candidates.json</span></div>
     <p class="dt-purpose">由 <code>build_picks.py</code> 規則自動判定的爆發軌清單（循環形狀＋站上年線＋非過熱）。含正式榜（official）與候選，兩者互斥；持有人保留 veto。<b>本檔只收三閘評分（GRP）席位規格外的名字</b>——三閘評分結構線（甲線）長抱名單見 <code>/engine/arena.json</code>（長熬組已於 2026-07-29 退役，職能與三閘評分席位重疊）。</p>
     <div class="dt-facts">
-      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">事件驅動——每份 DD 發布／同步時經 <code>update_dd_index.py</code> 連鎖 <code>build_picks.py</code>；每日 <code>daily-non-fundamental-refresh</code> 亦刷新</span></div>
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">事件驅動——每份 DD 發布／同步時經 <code>update_dd_index.py</code> 連鎖 <code>build_picks.py</code></span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 判定基準交易日；<code>generated_at</code> = 產生時戳</span></div>
     </div>
     <div class="dt-tablewrap"><table class="dt-schema">
@@ -453,7 +453,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <div class="dt-ep-head"><h2>全資產市場監測</h2><span class="dt-path">/monitor/data/latest.json</span></div>
     <p class="dt-purpose">近百條跨資產序列（指數／類股／因子／利率／波動／信用／匯率／商品／加密／流動性）的日更明細＋統計異常偵測，含當日 alerts。schema=<code>monitor-v1</code>。<b>描述器非擇時</b>。</p>
     <div class="dt-facts">
-      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Tue–Sat 22:52 UTC）· workflow <code>monitor-daily</code> 跑 <code>build_monitor.py</code></span></div>
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Mon–Fri 21:45 UTC，美股收盤帶）· workflow <code>daily-us-close</code> 跑 <code>build_monitor.py</code>；<code>monitor-daily</code> 於次日 07:00 UTC 補跑亞歐收盤列</span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 資料交易日；部分序列自帶 stale 旗標</span></div>
     </div>
     <div class="dt-tablewrap"><table class="dt-schema">
@@ -510,7 +510,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <div class="dt-ep-head"><h2>大類資產 Regime</h2><span class="dt-path">/regime/data/latest.json</span></div>
     <p class="dt-purpose">六軸記分卡（利率／成長／通脹／信用／美元／波動）的機械＋editorial 兩層讀數，收斂成單一 regime 綜合定位（0–1）。<b>非可交易指數</b>——環境判讀而非擇時訊號。</p>
     <div class="dt-facts">
-      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（週日 12:00 UTC）· workflow <code>crossasset-weekly</code> 跑 <code>build_regime.py</code></span></div>
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（週日 22:30 UTC＝台北週一 06:30）· workflow <code>intel-2-daily</code> 週日段跑 <code>build_regime.py</code></span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v">各軸 <code>reading</code> 內含來源日期；<code>meta</code> 帶 cot_as_of／etf_as_of；<code>generated_at</code> = 產生時戳</span></div>
     </div>
     <div class="dt-tablewrap"><table class="dt-schema">
@@ -590,7 +590,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <div class="dt-ep-head"><h2>裁決實績</h2><span class="dt-path">/track-record/data/latest.json</span></div>
     <p class="dt-purpose">裁決實績的回顧性統計資料層——依 DD schema 版本（v1.2 / v1.3+）分表的分季 cohort 統計（30／90／180 日與迄今報酬中位數、對 SPY 勝率、正報酬占比）、極值案例與排除樣本留痕。驅動 <a href="/long-track/#record">系統主控台・裁決實績</a>分頁。</p>
     <div class="dt-facts">
-      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">事件驅動——每份 DD 發布經 <code>update_dd_index.py</code> 連鎖 <code>build_track_record.py</code> 即時重建；週日 <code>kill-watch-weekly</code>／<code>weekly-fundamental-refresh</code> 亦會觸發</span></div>
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">事件驅動——每份 DD 發布經 <code>update_dd_index.py</code> 連鎖 <code>build_track_record.py</code> 即時重建；週日 <code>intel-2-daily</code> 週日段／<code>weekly-fundamental-refresh</code> 亦會觸發</span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>meta.data_as_of</code> = 還原股價資料截止日；<code>meta.built_at</code> = 產生時戳</span></div>
     </div>
     <div class="dt-tablewrap"><table class="dt-schema">
@@ -671,17 +671,17 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
   <!-- ══ LONG-TRACK W52-ADAPTIVE STATE ══ -->
   <section class="dt-ep" id="long-track-state">
     <div class="dt-ep-head"><h2>W52 自適應引擎狀態（主系統／槓桿／台股半年化波動）</h2><span class="dt-path">/long-track-w52-adaptive/{state,leverage_state,tw_semivol_state}.json</span></div>
-    <p class="dt-purpose">W52 × 自適應波動率 cap 1.5 引擎三個變體的完整機制與歷史：<code>state.json</code>＝主系統（美 QQQ/SMH、台 0050/2330，cap 1.5 實單）、<code>leverage_state.json</code>＝槓桿版研究對照、<code>tw_semivol_state.json</code>＝台股半年化波動變體（非實單訊號）。驅動 <a href="/long-track/#live">系統主控台・實單主系統</a>分頁與各自獨立頁。</p>
+    <p class="dt-purpose">W52 × 自適應波動率引擎的完整機制與歷史：<code>state.json</code>＝主系統（美 QQQ/SMH、台 0050/2330；2026-10-19 起美股債金版、台股不借錢版，股票上限 100%；舊規則 cap 1.5 另存 <code>cap15_state.json</code> 為對照線）、<code>leverage_state.json</code>＝槓桿版研究對照（已歸檔，停更）、<code>tw_semivol_state.json</code>＝台股半年化波動變體（非實單訊號，已歸檔，停更）。驅動 <a href="/long-track/#live">系統主控台・實單主系統</a>分頁與各自獨立頁。</p>
     <div class="dt-facts">
-      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每個交易日兩班（美股收盤後 07:00 UTC＝台北 15:00；台股收盤後 21:35 UTC＝台北隔日 05:35）· workflow <code>update_long_track_w52_adaptive</code> 依序跑三支 <code>update_long_track_w52_adaptive*.py</code></span></div>
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每個交易日兩班（台股收盤後 07:00 UTC＝台北 15:00；美股收盤後 21:35 UTC＝台北隔日 05:35）· workflow <code>update_long_track_w52_adaptive</code> 依序跑主系統與舊規則對照線（<code>--profile cap15</code>）；<code>leverage_state.json</code>、<code>tw_semivol_state.json</code> 已於 2026-10-18 歸檔，不在排程內</span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>data_date</code> = 權重計算基準的週線資料日；<code>generated_at</code> = 產生時戳；<code>ruleset_locked_date</code> = 規則凍結日</span></div>
     </div>
     <div class="dt-tablewrap"><table class="dt-schema">
       <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
       <tbody>
-        <tr><td class="f">mechanism</td><td class="ty">string</td><td>文字描述門檻與 cap（W52 閘門 × 自適應 σ_t × cap 1.5 × 執行層 A2）</td></tr>
+        <tr><td class="f">mechanism</td><td class="ty">string</td><td>文字描述門檻與 cap（W52 閘門 × 自適應 σ_t × 股票上限 100% × 執行層 A2；美股另有公債、黃金週線疊加）</td></tr>
         <tr><td class="f">status</td><td class="ty">string</td><td>LIVE（主系統）／研究對照（槓桿版、tw-semivol）+ 生效日與復審條件</td></tr>
-        <tr><td class="f">leverage</td><td class="ty">string</td><td>僅主系統另有：槓桿段融資假設與市場差異（台股須用期貨）</td></tr>
+        <tr><td class="f">leverage</td><td class="ty">string</td><td>僅主系統另有：2026-10-19 起不借錢的說明與美股公債、黃金疊加的資金來源；此前為槓桿段融資假設（台股須用期貨）</td></tr>
         <tr><td class="f">last_change_date / last_change_desc</td><td class="ty">string</td><td>最近一次曝險變動日期與說明（無變動為 null）</td></tr>
         <tr><td class="f">weights / combined_exposure_us_pct / combined_exposure_tw_pct</td><td class="ty">object/number</td><td>各成分權重、美／台合併曝險百分比</td></tr>
         <tr><td class="f">tickers</td><td class="ty">object</td><td>逐檔：market／gate／sigma_base_pct／sigma_t_pct／rv20_pct／raw_ratio／levered／sleeve_weight／final_weight_pct／executed_pct／wk_date／wk_close／w52／w104／w250／s104_pos／s250_pos</td></tr>

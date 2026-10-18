@@ -34,8 +34,8 @@ CORR_M = json.loads(_DECOMPOSE.read_text())["l3"]["CMDTY2"]["corr_monthly"]["STX
 
 # Adoption candidate spotlight: the 80/20 combined system (sleeve = L4-pending).
 LIVE_CARD = {
-    "name": "組合系統 · STX50 + 商品 Sleeve（80/20）", "tag": "L4 候選 · OOS 並行追蹤",
-    "sub": "80% STX50(SMH/QQQ)＋ 20% CMDTY2 sleeve(GLD/USO→MGC/MCL)· 月底再平衡 · sleeve 採用為未決 L4 決策",
+    "name": "組合系統 · STX50 + 商品 Sleeve（80/20）", "tag": "已歸檔（2026-10-18）",
+    "sub": "80% STX50(SMH/QQQ)＋ 20% CMDTY2 sleeve(GLD/USO→MGC/MCL)· 月底再平衡 · 採用決策未做，紙上追蹤已停止",
     "cagr": "+13.79%", "mdd": "-16.31%", "sharpe": "1.04", "calmar": "0.85",
     "url": "/backtest/turtle_adopt/",
 }
@@ -49,10 +49,10 @@ def tag_bh():
     return '<span class="tag tag-bh">基準</span>'
 
 SYSTEMS = [
-    ("L4 採用候選", TEAL, [
+    ("L4 採用候選（已歸檔）", TEAL, [
         ("🧩 組合系統：STX50 + 商品 Sleeve（80/20）", "/backtest/turtle_adopt/",
          "商品 sleeve 疊上股票核心 · Calmar 0.65→0.85、MDD -21.9%→-16.3%(sleeve 視窗)· 削回撤、不增報酬 · "
-         "sleeve 採用待 L4 · 即時頁 <a href='/turtle-sleeve/'>/turtle-sleeve/</a>",
+         "已歸檔（2026-10-18）· 歸檔頁 <a href='/turtle-sleeve/'>/turtle-sleeve/</a>",
          "+13.79%", "-16.31%", "1.04", "0.85", "有效交換", tag_cand()),
         ("🐢 商品/債/匯/股 唐奇安突破（55/20）", "/backtest/turtle/",
          "USO/GLD/DBA/FXE/TLT/SPY · 55/20 突破(2007 起)· 2026-06 修正：原 22.5% CAGR 是停損成交假象，"
@@ -119,7 +119,7 @@ def render():
     <div><span>Sharpe</span><b>{c['sharpe']}</b></div>
     <div><span>Calmar</span><b>{c['calmar']}</b></div>
   </div>
-  <a class="ac-link" href="{c['url']}">採用評估頁 →</a> &nbsp;·&nbsp; <a href="/turtle-sleeve/" style="font-size:.82rem">即時 sleeve 狀態 →</a>
+  <a class="ac-link" href="{c['url']}">採用評估頁 →</a> &nbsp;·&nbsp; <a href="/turtle-sleeve/" style="font-size:.82rem">歸檔頁（2026-10-18）→</a>
 </div>
 <div class="acard-note">
   <div class="acn-title">為什麼獨立分頁</div>
@@ -211,8 +211,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 
 <!-- SPOTLIGHT -->
 <div class="section">
-<h2 class="section-title">採用候選 · 組合系統(80/20)</h2>
-<div class="section-sub">多資產的價值在<b>組合貢獻</b>:商品 sleeve 疊上美股股票核心(STX50)後的 80/20 系統，是目前唯一進到 L4 決策的多資產拼圖。</div>
+<h2 class="section-title">組合系統(80/20)· 已歸檔（2026-10-18）</h2>
+<div class="section-sub">多資產的價值在<b>組合貢獻</b>:商品 sleeve 疊上美股股票核心(STX50)後的 80/20 系統，曾是唯一進到 L4 決策的多資產拼圖，紙上追蹤已於 2026-10-18 歸檔。</div>
 <div class="live-wrap">%CARD%</div>
 </div>
 
@@ -245,7 +245,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </a>
 <a href="/turtle-sleeve/" style="display:flex;gap:.75rem;align-items:center;background:var(--card);border:1px solid var(--border);border-left:3px solid #d97706;border-radius:8px;padding:1rem 1.25rem;text-decoration:none;color:inherit;margin-top:.75rem">
   <span style="font-size:1.3rem">🐢</span>
-  <span style="flex:1"><span style="font-weight:600;color:#b45309">商品 Sleeve + 組合系統 — 即時狀態(OOS 並行追蹤)</span><br><span style="font-size:.82rem;color:var(--muted)">GLD/USO→MGC/MCL 日線訊號 + 80/20 STX50 組合曝險 · 每日美股收盤後更新 · 紙上權益，非實倉</span></span>
+  <span style="flex:1"><span style="font-weight:600;color:#b45309">商品 Sleeve + 組合系統 — 已歸檔（2026-10-18）</span><br><span style="font-size:.82rem;color:var(--muted)">GLD/USO→MGC/MCL 日線訊號 + 80/20 STX50 組合曝險 · 2026-10-18 起停止更新 · 紙上權益，非實倉</span></span>
   <span style="color:#b45309">→</span>
 </a>
 </div>

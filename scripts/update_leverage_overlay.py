@@ -183,7 +183,7 @@ td{{font-variant-numeric:tabular-nums}}
 </div></div>
 <div class="container">
 
-<div style="background:var(--amber-bg);border:2px solid var(--amber-border);color:var(--amber-text);border-radius:10px;padding:.9rem 1.2rem;margin:1rem 0;font-size:.92rem;font-weight:600;text-align:center">2026-07-18 起母系統（STX50）非實單系統（實單已改為 <a href="/long-track-w52-adaptive/" style="color:var(--amber-text);text-decoration:underline">W52 × 自適應波動率 150%</a>）；本頁本為實驗性紙上讀數、保留作對照。</div>
+<div style="background:var(--amber-bg);border:2px solid var(--amber-border);color:var(--amber-text);border-radius:10px;padding:.9rem 1.2rem;margin:1rem 0;font-size:.92rem;font-weight:600;text-align:center">2026-07-18 起母系統（STX50）非實單系統（實單已改為 <a href="/long-track-w52-adaptive/" style="color:var(--amber-text);text-decoration:underline">W52 × 自適應波動率</a>，2026-10-19 起上限 100%、不借錢）；本頁本為實驗性紙上讀數、保留作對照。</div>
 
 <div class="banner">
   <b>⚠ 實驗性 · 紙上讀數 · 非實倉。</b>2026-06 review 結論:這是一個<b>很薄、股票特有、且 out-of-sample 風險調整 edge ≈ 0</b> 的小東西

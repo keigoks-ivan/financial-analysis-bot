@@ -69,8 +69,10 @@ def banners_for(url: str) -> str:
 
 
 def meta_block(url: str, status: str) -> str:
-    chip = (f'<div class="bt-meta"><span class="bt-st bt-st-{status}">{PM.STATUS[status]}</span>'
-            f'<span class="bt-st-def">{PM.STATUS_DEF[status]}</span></div>')
+    # 個別頁面的標籤與說明可在 _page_meta.CHIP_OVERRIDE 覆寫（2026-10-19 規則切換後的舊規則證據頁等）
+    label, defn, cls = PM.CHIP_OVERRIDE.get(url, (PM.STATUS[status], PM.STATUS_DEF[status], status))
+    chip = (f'<div class="bt-meta"><span class="bt-st bt-st-{cls}">{label}</span>'
+            f'<span class="bt-st-def">{defn}</span></div>')
     return f"<!--bt-meta-->{chip}{banners_for(url)}<!--/bt-meta-->"
 
 
