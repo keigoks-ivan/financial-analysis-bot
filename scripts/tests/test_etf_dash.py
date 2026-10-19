@@ -1504,3 +1504,96 @@ def test_compute_weighted_forward_pe_custom_thresholds():
         constituents, total_weight=100.0, pe_min=5.0, pe_max=300.0)
     assert pe_excluded[0]["ticker"] == "AAA"  # excluded under a stricter custom pe_min
     assert value is None  # nothing left covered
+
+
+# ── build_pe_history() / extend_price_series_back_to() — Exhibit 3 預估本益比走勢 ──
+
+def _dd_days(path_by_ticker: dict[str, list[tuple[str, float, float | None]]]) -> dict:
+    """{ticker: [(date, eps_fy_next, eps_fy3), ...]} → dd_eps_history.load_days() 的格式。"""
+    days: dict = {}
+    for tk, pts in path_by_ticker.items():
+        for d, nxt, fy3 in pts:
+            days.setdefault(d, {"tickers": {}})["tickers"][tk] = {"eps_fy_next": nxt, "eps_fy3": fy3}
+    return days
+
+
+def test_build_pe_history_back_projects_and_ends_at_todays_pe():
+    constituents = [_pe_constituent("AAA", 60.0, 5.0, 100.0),   # pe 20x，盈餘權重 3
+                    _pe_constituent("BBB", 40.0, 2.0, 20.0)]    # pe 10x，盈餘權重 4
+    pe_today, _, _ = m.compute_weighted_forward_pe(constituents, total_weight=100.0)
+    dd = _dd_days({"AAA": [("2026-06-01", 4.0, None), ("2026-07-01", 5.0, None)],
+                   "BBB": [("2026-06-01", 2.0, None), ("2026-07-01", 2.0, None)]})
+    prices = [{"date": "2026-06-01", "close": 90.0}, {"date": "2026-07-01", "close": 100.0}]
+    out = m.build_pe_history(constituents, pe_today, dd, prices, {"coverage_weight_pct": 100.0}, "USD", {})
+    s = out["series"]
+    assert [p["date"] for p in s] == ["2026-06-01", "2026-07-01"]
+    # 盈餘比 = (3×0.8 + 4×1.0)／7；本益比 = 今天 × 0.9 ／ 盈餘比
+    assert s[0]["pe"] == pytest.approx(pe_today * 0.9 / (6.4 / 7), abs=0.01)
+    assert s[-1]["pe"] == pytest.approx(pe_today, abs=0.01)
+    assert out["suppressed_note"] is None
+
+
+def test_build_pe_history_rollover_counts_as_real_eps_jump():
+    constituents = [_pe_constituent("AAA", 100.0, 6.1, 122.0)]
+    dd = _dd_days({"AAA": [("2026-06-01", 5.0, 6.0), ("2026-07-01", 6.1, 7.0)]})  # 6.1 ≈ 前一天 eps_fy3 → 財年輪替
+    prices = [{"date": "2026-06-01", "close": 100.0}, {"date": "2026-07-01", "close": 100.0}]
+    out = m.build_pe_history(constituents, 20.0, dd, prices, {"coverage_weight_pct": 100.0}, "USD", {})
+    assert out["series"][0]["pe"] == pytest.approx(20.0 * 6.1 / 5.0, abs=0.01)
+    assert [e["ticker"] for e in out["rollover_events"]] == ["AAA"]
+
+
+def test_build_pe_history_ignores_rollover_that_is_really_an_anomaly_reverting():
+    # 2026-09-26 PGR 實例：eps_fy_next 誤記 1012，下一筆回到 16.36（≈ 前一天 eps_fy3），
+    # classify_eps_step() 判成財年輪替；照實計入會讓 PGR 往回推的盈餘放大 60 倍。
+    constituents = [_pe_constituent("PGR", 100.0, 16.36, 327.2)]
+    dd = _dd_days({"PGR": [("2026-09-19", 16.28, 16.08), ("2026-09-26", 1012.0, 16.08),
+                           ("2026-10-13", 16.36, 16.18)]})
+    prices = [{"date": "2026-09-19", "close": 50.0}, {"date": "2026-10-13", "close": 50.0}]
+    out = m.build_pe_history(constituents, 20.0, dd, prices, {"coverage_weight_pct": 100.0}, "USD", {})
+    assert [p["pe"] for p in out["series"]] == [20.0, 20.0, 20.0]
+    assert out["rollover_events"] == []
+
+
+def test_build_pe_history_suppressed_below_coverage_threshold():
+    constituents = [_pe_constituent("AAA", 100.0, 5.0, 100.0)]
+    dd = _dd_days({"AAA": [("2026-06-01", 5.0, None)]})
+    prices = [{"date": "2026-06-01", "close": 100.0}]
+    out = m.build_pe_history(constituents, 20.0, dd, prices, {"coverage_weight_pct": 12.0}, "USD", {})
+    assert out["series"] == []
+    assert "12.0%" in out["suppressed_note"]
+
+
+def test_build_pe_history_skips_days_with_low_earnings_coverage():
+    constituents = [_pe_constituent("AAA", 10.0, 5.0, 100.0),   # 盈餘權重 0.5（約 6%）
+                    _pe_constituent("BBB", 90.0, 4.0, 50.0)]    # 盈餘權重 7.2，07-01 才出現
+    dd = _dd_days({"AAA": [("2026-06-01", 5.0, None), ("2026-07-01", 5.0, None)],
+                   "BBB": [("2026-07-01", 4.0, None)]})
+    prices = [{"date": "2026-06-01", "close": 100.0}, {"date": "2026-07-01", "close": 100.0}]
+    out = m.build_pe_history(constituents, 12.0, dd, prices, {"coverage_weight_pct": 100.0}, "USD", {})
+    assert [p["date"] for p in out["series"]] == ["2026-07-01"]
+
+
+def test_extend_price_series_back_to_no_fetch_when_already_covered(monkeypatch):
+    def boom(*a, **kw):
+        raise AssertionError("should not fetch")
+    monkeypatch.setattr(m, "fetch_etf_price_history", boom)
+    series = [{"date": "2026-05-01", "close": 1.0}, {"date": "2026-06-01", "close": 2.0}]
+    assert m.extend_price_series_back_to("X", series, "2026-05-19") is series
+
+
+def test_extend_price_series_back_to_prepends_only_older_points(monkeypatch):
+    longer = [{"date": "2026-05-18", "close": 9.0}, {"date": "2026-05-19", "close": 9.5},
+              {"date": "2026-06-01", "close": 99.0}]
+    monkeypatch.setattr(m, "fetch_etf_price_history", lambda t, calendar_days=200: longer)
+    series = [{"date": "2026-06-01", "close": 2.0}]
+    out = m.extend_price_series_back_to("X", series, "2026-05-19")
+    assert out == [{"date": "2026-05-18", "close": 9.0}, {"date": "2026-05-19", "close": 9.5},
+                   {"date": "2026-06-01", "close": 2.0}]  # 今天這段沿用原序列
+
+
+def test_extend_price_series_back_to_fetch_failure_keeps_original(monkeypatch):
+    def fail(*a, **kw):
+        raise RuntimeError("yahoo down")
+    monkeypatch.setattr(m, "fetch_etf_price_history", fail)
+    series = [{"date": "2026-06-01", "close": 2.0}]
+    assert m.extend_price_series_back_to("X", series, "2026-05-19") is series

@@ -1658,6 +1658,26 @@ def _closest_close_on_or_before(price_series: list[dict], target_date: str):
     return candidates[-1] if candidates else None
 
 
+def extend_price_series_back_to(yf_ticker: str, series: list[dict], start_date: str | None) -> list[dict]:
+    """長線圖（Exhibit 2 EPS 指數、Exhibit 3 預估本益比）要從 dd_eps_history
+    起點（2026-05-19）一路配 ETF 股價，但兩種模式平常只抓 200 天股價（見
+    fetch_etf_price_history()／fetch_prices_batch()），約 2026-12 起就蓋不到起點，
+    線的開頭會沒有股價。蓋不到時才另外單抓這一檔 ETF 夠長的歷史，只補
+    series 第一天之前的部分（之後沿用原序列，今天的收盤不變）；抓失敗就回傳
+    原序列，不讓整檔基金掛掉。"""
+    if not start_date or not series or series[0]["date"] <= start_date:
+        return series
+    days = (datetime.now() - datetime.strptime(start_date, "%Y-%m-%d")).days + 10
+    try:
+        longer = fetch_etf_price_history(yf_ticker, calendar_days=days)
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING could not extend {yf_ticker} price history back to {start_date}: {e}",
+              file=sys.stderr)
+        return series
+    head = [p for p in longer if p["date"] < series[0]["date"]]
+    return head + series
+
+
 PRICE_BATCH_CHUNK_SIZE = 150  # 「chunk if needed」——單次 yf.download 帶太多檔容易逾時／被限速
 PRICE_BATCH_PACING_S = 1.0    # 批次之間的節流（跟逐檔的 TICKER_FETCH_PACING_S 分開）
 
@@ -2689,13 +2709,16 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     # docstring）。用今天的持股權重固定，股價同步 rebase 到同一個起點＝100，
     # 兩條線才能疊在同一個座標軸上直接比「估計漲得比股價快還慢」。
     long_eps = build_long_eps_index(holdings, dd_days, fx_cache, rc_cache)
-    long_chart_series, long_eps_suppressed_note = build_long_chart_series(long_eps, price_series)
+    long_price_series = extend_price_series_back_to(cfg["yf_ticker"], price_series, long_eps["start_date"])
+    long_chart_series, long_eps_suppressed_note = build_long_chart_series(long_eps, long_price_series)
 
     # anchor line fallback（見 apply_anchor_fallback()／anchor_history.py）——
     # fund-agnostic：用不用得到只看這次算出來的 suppressed_note 是不是
     # None，跟基金是誰無關（見 build_anchor_line_point() 上方註解）。
     long_eps_suppressed_note, anchor_chart_series, anchor_label_zh = apply_anchor_fallback(
-        long_eps_suppressed_note, etf_key, price_series)
+        long_eps_suppressed_note, etf_key, long_price_series)
+    pe_history = build_pe_history(constituents, weighted_fwd_pe, dd_days, long_price_series, long_eps,
+                                   pe_basis_ccy, fx_cache)
 
     excluded_weight = sum(e["weight_pct"] or 0 for e in excluded)
     non_equity_weight = sum(e["weight_pct"] or 0 for e in non_equity)
@@ -2819,6 +2842,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
                 "series": anchor_chart_series,
                 "label_zh": anchor_label_zh,
             },
+            "pe_history": pe_history,
         },
         "long_eps_index_summary": {
             "full_period_pct": long_full_period_pct,
@@ -2960,14 +2984,17 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
     chart_price_series = etf_series[-130:]
 
     long_eps = build_long_eps_index(holdings, dd_days, fx_cache, rc_cache)
-    long_chart_series, long_eps_suppressed_note = build_long_chart_series(long_eps, etf_series)
+    long_price_series = extend_price_series_back_to(cfg["yf_ticker"], etf_series, long_eps["start_date"])
+    long_chart_series, long_eps_suppressed_note = build_long_chart_series(long_eps, long_price_series)
 
     # anchor line fallback（見 apply_anchor_fallback()／build_fund_full() 同一
     # 段註解）——PRICE 模式不會有新的 FULL run 快照可存，只是把上次 FULL 存下來
     # 的 anchor_history 讀出來，配上今天批次抓到的最新股價，讓股價那一側每天
     # 都跟著更新（跟 long_eps_index 現有行為一致）。
     long_eps_suppressed_note, anchor_chart_series, anchor_label_zh = apply_anchor_fallback(
-        long_eps_suppressed_note, etf_key, etf_series)
+        long_eps_suppressed_note, etf_key, long_price_series)
+    pe_history = build_pe_history(constituents, weighted_fwd_pe, dd_days, long_price_series, long_eps,
+                                   pe_basis_ccy, fx_cache)
 
     excluded_weight = sum(e["weight_pct"] or 0 for e in excluded)
     non_equity_weight = sum(e["weight_pct"] or 0 for e in non_equity)
@@ -3050,6 +3077,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
                 "series": anchor_chart_series,
                 "label_zh": anchor_label_zh,
             },
+            "pe_history": pe_history,
         },
         "long_eps_index_summary": {
             "full_period_pct": long_full_period_pct,
@@ -3441,6 +3469,144 @@ def build_long_eps_index(holdings: list[dict], dd_days: dict, fx_cache: dict, rc
         "currency_by_ticker": currency_by_ticker,  # 只含非空值的 ticker；build_methods_note_zh() 用來組非美元報表段落
         "uncovered_tickers": sorted(set(tickers) - set(covered_tickers)),  # 有權重但不在 dd-screener 母體裡的名字
     }
+
+
+# ---------------------------------------------------------------------------
+# 預估本益比走勢（Exhibit 3，2026-10-19 加）——把今天的加權預估本益比（見
+# compute_weighted_forward_pe()）用 dd_eps_history 的成分股明年度 EPS 往回推：
+#   本益比_t = 本益比_今天 × (ETF 股價_t ／ ETF 股價_今天) ／ (成分股盈餘_t ／ 成分股盈餘_今天)
+# 成分股盈餘固定用今天的持股股數：每檔的盈餘權重 = 權重 × EPS／股價（今天的
+# 盈餘殖利率），跟 harmonic mean 本益比的分母是同一個量，所以最後一點等於
+# 頁面上的「預估本益比」。
+# ---------------------------------------------------------------------------
+
+def build_pe_history(constituents: list[dict], weighted_fwd_pe: float | None, dd_days: dict,
+                      price_series: list[dict], long_eps: dict, basis_ccy: str, fx_cache: dict,
+                      pe_min: float = PE_EXCLUDE_MIN_X, pe_max: float = PE_EXCLUDE_MAX_X) -> dict:
+    """回傳 {"series": [{date, pe, coverage_pct}], "start_date", "earnings_coverage_pct",
+    "rollover_events", "suppressed_note"}。
+
+    跟 build_long_eps_index() 用同一份 dd-screener 快照鏈、同一套
+    classify_eps_step() 判定，差兩處：
+      - 財年輪替那一步照實計入。本益比的分母就是「明年度」EPS，換年那天
+        本益比本來就會往下跳一階；EPS 指數線量的是分析師修正，才刻意接過去。
+      - EPS 換成基金計價幣別（basis_ccy，見 FUND_REGISTRY pe_basis_currency）
+        的當天金額：美元基金直接用美元 EPS，0050／TAIEX 用當天匯率換回台幣，
+        股價與 EPS 同一個幣別才能相除。
+    異常步驟（scale_anomaly／unconfirmed_anomaly）比照 EPS 指數線不採信，該檔
+    EPS 當作沒變。某天沒資料的成分股沿用前一個已知值；第一次出現之前不計入，
+    其餘成分股的盈餘權重重新正規化（見每點的 coverage_pct，分母是今天通過
+    本益比區間篩選的全部成分股盈餘權重）。覆蓋率門檻沿用
+    LONG_EPS_LINE_MIN_COVERAGE_PCT（看 long_eps 的權重覆蓋率），低於門檻不畫，
+    理由跟 build_long_chart_series() 相同。
+    ETF 股價是 Yahoo 還原價（含息），越早的點本益比會偏低，幅度約等於該點到
+    今天之間的配息率。"""
+    out = {"series": [], "start_date": None, "earnings_coverage_pct": None,
+           "rollover_events": [], "suppressed_note": None}
+    coverage = long_eps.get("coverage_weight_pct") or 0.0
+    if coverage < LONG_EPS_LINE_MIN_COVERAGE_PCT:
+        out["suppressed_note"] = (f"dd-screener 名單只涵蓋本基金 {coverage:.1f}% 的權重，低於 "
+                                  f"{LONG_EPS_LINE_MIN_COVERAGE_PCT:.0f}% 門檻，不畫。涵蓋太少時，"
+                                  "往回推出來的本益比只反映少數幾檔股票。")
+        return out
+    if not weighted_fwd_pe or not price_series:
+        out["suppressed_note"] = "今天的預估本益比或 ETF 股價缺資料，無法往回推。"
+        return out
+
+    earn_w: dict[str, float] = {}
+    for c in constituents:
+        eps, px, w = c.get("eps_fy_next_usd"), c.get("price_usd"), c.get("weight_pct") or 0
+        if not eps or not px or w <= 0:
+            continue
+        if not (pe_min <= px / eps <= pe_max):
+            continue
+        earn_w[c["ticker"]] = w * eps / px
+    total_earn_w = sum(earn_w.values())
+
+    fx_by_date: dict[str, float | None] = {}
+
+    def fx_at(d: str) -> float | None:
+        if basis_ccy == "USD":
+            return 1.0
+        if d not in fx_by_date:
+            fx_by_date[d] = get_fx_rate(basis_ccy, d, fx_cache)
+        return fx_by_date[d]
+
+    dates = sorted(dd_days.keys())
+    levels: dict[str, dict[str, float]] = {}  # ticker -> {date: EPS 鏈（任意尺度，只用比值）}
+    rollover_events: list[dict] = []
+    for tk in earn_w:
+        prev = None
+        level = 1.0
+        pts: dict[str, float] = {}
+        for d in dates:
+            rec = dd_days[d]["tickers"].get(tk)
+            if rec is None:
+                continue
+            nxt = dd_eps_history.get_usd_value(rec, "eps_fy_next")
+            fy3 = dd_eps_history.get_usd_value(rec, "eps_fy3")
+            fx = fx_at(d)
+            if nxt is None or nxt <= 0 or not fx:
+                continue
+            if prev is not None:
+                p_nxt, p_fy3, p_fx = prev
+                step_type, _ = classify_eps_step(p_nxt, p_fy3, nxt, fy3)
+                step_ratio = (nxt * fx) / (p_nxt * p_fx)
+                if step_type == "rollover":
+                    # 異常值恢復正常的那一步也會被判成財年輪替（2026-09-26 PGR
+                    # eps_fy_next 誤記 1012，10-13 回到 16.36 ≈ 前一天的 eps_fy3），
+                    # 照實計入會讓 PGR 往回推的盈餘放大 60 倍。變動超過
+                    # UNCONFIRMED_JUMP_THRESHOLD 的輪替一律不採信，跟異常步驟同處理。
+                    if abs(step_ratio - 1) > UNCONFIRMED_JUMP_THRESHOLD:
+                        step_type = "unconfirmed_anomaly"
+                    else:
+                        rollover_events.append({"ticker": tk, "date": d,
+                                                 "earnings_weight_pct": round(earn_w[tk] / total_earn_w * 100, 2)})
+                if step_type not in ("scale_anomaly", "unconfirmed_anomaly"):
+                    level *= step_ratio
+            prev = (nxt, fy3, fx)
+            pts[d] = level
+        if pts:
+            levels[tk] = pts
+    if not levels:
+        out["suppressed_note"] = "成分股在 dd-screener 歷史裡沒有可用的明年度 EPS，無法往回推。"
+        return out
+
+    last_level = {tk: pts[max(pts)] for tk, pts in levels.items()}
+    anchor_close = price_series[-1]["close"]
+    running: dict[str, float] = {}
+    series = []
+    for d in dates:
+        for tk, pts in levels.items():
+            if d in pts:
+                running[tk] = pts[d] / last_level[tk]
+        if not running:
+            continue
+        cov_w = sum(earn_w[tk] for tk in running)
+        # dd-screener 母體 2026-09 才擴大，XLF／RSP 這類基金早期只有一成左右的
+        # 盈餘權重有資料，那段不畫（門檻同基金層級的 LONG_EPS_LINE_MIN_COVERAGE_PCT）。
+        if cov_w / total_earn_w * 100 < LONG_EPS_LINE_MIN_COVERAGE_PCT:
+            continue
+        ratio_e = sum(earn_w[tk] * r for tk, r in running.items()) / cov_w
+        px_pt = _closest_close_on_or_before(price_series, d)
+        if not px_pt or ratio_e <= 0:
+            continue
+        series.append({"date": d, "pe": round(weighted_fwd_pe * px_pt["close"] / anchor_close / ratio_e, 2),
+                        "coverage_pct": round(cov_w / total_earn_w * 100, 2)})
+    # dd-screener 今天還沒更新時，最後一點補上頁面上今天的本益比，線才會接到同一個數字。
+    if series and series[-1]["date"] < price_series[-1]["date"]:
+        series.append({"date": price_series[-1]["date"], "pe": round(weighted_fwd_pe, 2),
+                        "coverage_pct": series[-1]["coverage_pct"]})
+
+    if not series:
+        out["suppressed_note"] = (f"每天的 EPS 覆蓋率都低於 {LONG_EPS_LINE_MIN_COVERAGE_PCT:.0f}%，"
+                                  "還沒有可以畫的點。")
+        return out
+    out["series"] = series
+    out["start_date"] = series[0]["date"] if series else None
+    out["earnings_coverage_pct"] = series[-1]["coverage_pct"] if series else None
+    out["rollover_events"] = rollover_events
+    return out
 
 
 # ---------------------------------------------------------------------------

@@ -369,6 +369,16 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div class="ex-src" id="chartNote"></div>
 </section>
 
+<section class="exhibit" id="exhibit3">
+  <div class="ex-label">EXHIBIT 3</div>
+  <div class="ex-title">預估本益比走勢</div>
+  <div class="ex-sub">每天的 ETF 股價除以成分股加權明年度 EPS 預估，最後一點就是今天的預估本益比</div>
+  <div class="chart-box" style="height:240px"><canvas id="chartPe"></canvas></div>
+  <div class="conclusion" id="peSentence" style="display:none"></div>
+  <div class="ex-src" id="peSrc"></div>
+  <div class="ex-src" id="peNote"></div>
+</section>
+
 <div class="stat-row" id="statRow"></div>
 
 <section class="chapter">
@@ -1032,6 +1042,54 @@ function renderChart(d){
   });
 }
 
+// Exhibit 3（2026-10-19 加）：預估本益比走勢，資料是 chart.pe_history（見
+// build_etf_dash.py build_pe_history()）。覆蓋率不足時 series 是空的，
+// suppressed_note 說明原因。
+var peChartInstance = null;
+function renderPeChart(d){
+  var ph = (d.chart && d.chart.pe_history) || {};
+  var series = ph.series || [];
+  var canvas = document.getElementById('chartPe');
+  var sentence = document.getElementById('peSentence');
+  if(peChartInstance){ peChartInstance.destroy(); peChartInstance = null; }
+  if(!series.length){
+    sentence.style.display = 'none';
+    document.getElementById('peSrc').textContent = '';
+    document.getElementById('peNote').textContent = '';
+    canvas.parentElement.style.height = 'auto';
+    noData(canvas.parentElement, ph.suppressed_note || '無本益比歷史資料');
+    return;
+  }
+  var hi = series[0], lo = series[0];
+  series.forEach(function(p){ if(p.pe > hi.pe) hi = p; if(p.pe < lo.pe) lo = p; });
+  var last = series[series.length-1];
+  sentence.textContent = esc(series[0].date)+' 以來最高 '+hi.pe.toFixed(1)+'x（'+esc(hi.date)+'），最低 '+
+    lo.pe.toFixed(1)+'x（'+esc(lo.date)+'），目前 '+last.pe.toFixed(1)+'x。';
+  sentence.style.display = '';
+  document.getElementById('peSrc').textContent =
+    '資料來源：ETF 股價為 Yahoo 還原收盤價；成分股明年度 EPS 預估來自站上 DD Screener 的每日紀錄，'+
+    esc(ph.start_date)+' 起共 '+series.length+' 天；成分股權重固定用今天的持股。';
+  var nRoll = (ph.rollover_events||[]).length;
+  document.getElementById('peNote').textContent =
+    '有 EPS 紀錄的成分股占盈餘的 '+(ph.earnings_coverage_pct!=null?ph.earnings_coverage_pct.toFixed(1)+'%':'無資料')+
+    '，其餘假設跟著同步變動。'+
+    (nRoll>0 ? '期間有 '+nRoll+' 次成分股換財年，「明年度」改成下一年，當天線會往下跳一小階。' : '')+
+    '股價含息還原，越早的點本益比略偏低，幅度約等於那天到今天的配息率。';
+
+  peChartInstance = new Chart(canvas, {
+    type:'line',
+    data:{labels:series.map(function(p){return p.date;}), datasets:[
+      {label:'預估本益比', data:series.map(function(p){return p.pe;}), borderColor:COL.navy, pointRadius:0, borderWidth:1.6, spanGaps:true}
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{x:{ticks:{color:COL.muted,font:{size:8},maxTicksLimit:6}, grid:{display:false}},
+              y:{position:'left', ticks:{color:COL.muted,font:{size:9}, callback:function(v){return v+'x';}}, grid:{color:COL.line}}},
+      plugins:{legend:{display:false},
+               tooltip:{callbacks:{label:function(ctx){return ' '+ctx.parsed.y.toFixed(1)+'x';}}}}
+    }
+  });
+}
+
 function render(d){
   renderCover(d);
   renderInfoStrip(d);
@@ -1042,6 +1100,7 @@ function render(d){
   renderPeriodsQualityNote(d);
   renderStatRow(d);
   renderChart(d);
+  renderPeChart(d);
   var contrib = d.contributions || {};
   renderContribTable('contrib30', contrib['30d']);
   renderContribTable('contrib90', contrib['90d']);
