@@ -86,6 +86,8 @@ import anchor_history  # noqa: E402
 import price_history  # noqa: E402
 import flows  # noqa: E402
 import long_pe  # noqa: E402
+import ishares_us  # noqa: E402
+import pe_daily  # noqa: E402
 
 try:
     import yfinance as yf
@@ -385,6 +387,57 @@ FUND_REGISTRY = {
         "holdings_url": "https://www.blackrock.com/jp/individual/ja/products/279438/fund/1480664184455.ajax"
                         "?fileType=csv&fileName=1475_holdings&dataType=fund",
         "holdings_page_url": "https://www.blackrock.com/jp/individual/ja/products/279438/ishares-core-topix-etf",
+        "other_listings": [],
+    },
+    # 2026-10-19 加四檔 iShares 美國掛牌的單一市場／區域基金（持股檔格式相同，
+    # 共用 source "ishares_us"，見 ishares_us.py）。成分股不在 dd-screener 名單，
+    # Exhibit 3 的推算線不畫，改用每日本益比紀錄（pe_daily.py）。
+    # 本益比基準幣別用預設（USD）：EPS、股價都先換成美元再相除。
+    "EWY": {
+        "label_zh": "iShares MSCI 南韓 ETF（EWY，美國掛牌）",
+        "label_en": "iShares MSCI South Korea ETF (EWY, NYSE Arca)",
+        "yf_ticker": "EWY",
+        "isin": "US4642867729",
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239681/ishares-msci-south-korea-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239681/ishares-msci-south-korea-etf",
+        "other_listings": [],
+    },
+    "EWM": {
+        "label_zh": "iShares MSCI 馬來西亞 ETF（EWM，美國掛牌）",
+        "label_en": "iShares MSCI Malaysia ETF (EWM, NYSE Arca)",
+        "yf_ticker": "EWM",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239669/ishares-msci-malaysia-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239669/ishares-msci-malaysia-etf",
+        "other_listings": [],
+    },
+    "EWZ": {
+        "label_zh": "iShares MSCI 巴西 ETF（EWZ，美國掛牌）",
+        "label_en": "iShares MSCI Brazil ETF (EWZ, NYSE Arca)",
+        "yf_ticker": "EWZ",
+        "isin": "US4642864007",
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239612/ishares-msci-brazil-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239612/ishares-msci-brazil-etf",
+        "other_listings": [],
+    },
+    "IEV": {
+        "label_zh": "iShares 歐洲 ETF（IEV，標普歐洲 350，美國掛牌）",
+        "label_en": "iShares Europe ETF (IEV, S&P Europe 350, NYSE Arca)",
+        "yf_ticker": "IEV",
+        "isin": "US4642878619",
+        "source": "ishares_us",
+        # 2026-10-19 實測：362 檔股票，EPS 涵蓋門檻 90% 約 209 檔；其餘小權重
+        # 成分股列在完整持股明細，但不抓 EPS（見 select_eps_scope_tickers()）。
+        "eps_scope_cutoff_pct": 90.0,
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239736/ishares-europe-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239736/ishares-europe-etf",
         "other_listings": [],
     },
 }
@@ -1462,6 +1515,9 @@ HOLDINGS_SOURCES = {
     "twse": (fetch_twse_taiex_universe, parse_twse_taiex_universe),
     "yuanta": (fetch_yuanta_holdings_page, parse_yuanta_0050_holdings),
     "ishares_jp": (fetch_ishares_jp_holdings_csv, parse_ishares_jp_holdings_csv),
+    # 2026-10-19 加 EWY／EWM／EWZ／IEV——iShares 美國官網持股檔，四檔共用
+    # （解析與各市場代號轉換見 ishares_us.py）。
+    "ishares_us": (ishares_us.fetch_ishares_us_holdings_csv, ishares_us.parse_ishares_us_holdings_csv),
 }
 
 
@@ -1550,6 +1606,20 @@ def get_holdings_with_fallback(etf_key: str, cfg: dict) -> tuple[str, list[dict]
 EPS_TREND_CALL_COUNT = 0  # 只在 FULL 模式的 fetch_ticker_eps_and_price() 裡加一，main() 結束時印出來稽核
 
 
+def normalize_price_quote(price: float | None, raw_currency: str | None) -> tuple[float | None, str, int]:
+    """yfinance 對倫敦掛牌股票的股價幣別回 "GBp"（便士，1 英鎊＝100 便士），
+    但 eps_trend 的 EPS 是英鎊。若只把幣別 upper() 成 GBP，股價會是實際的 100
+    倍，個股本益比差 100 倍，被個股本益比合理區間門檻濾掉（成分股整檔消失）。
+    這裡把 GBp／GBX 的股價除以 100、幣別當 GBP。回傳 (價格, 大寫幣別,
+    報價除數)；除數 100 表示「yfinance 報價是便士」，PRICE 模式批次下載的收盤
+    價（同樣是便士）要用同一個除數還原，見 build_fund_price()。2026-10-19
+    加 IEV 時發現；既有 17 檔基金沒有任何持股走到這條路。"""
+    ccy = (raw_currency or "USD").strip()
+    if ccy in ("GBp", "GBX"):
+        return (price / 100.0 if price is not None else None), "GBP", 100
+    return price, ccy.upper(), 1
+
+
 def fetch_ticker_eps_and_price(ticker: str) -> dict:
     global EPS_TREND_CALL_COUNT
     result = {"ticker": ticker, "status": "ok", "reason": None}
@@ -1595,6 +1665,7 @@ def fetch_ticker_eps_and_price(ticker: str) -> dict:
 
     price = None
     price_currency = None
+    price_quote_divisor = 1
     market_cap = None
     try:
         fi = yf_call_with_backoff(lambda: t.fast_info, label=f"{ticker}.fast_info")
@@ -1611,7 +1682,9 @@ def fetch_ticker_eps_and_price(ticker: str) -> dict:
         # 那一檔）是 KRW。價格幣別跟 eps_currency 未必相同來源但通常一致（同一
         # 家公司同一個掛牌），這裡分開存是為了不假設兩者一定相等。
         pc = fi.get("currency") if hasattr(fi, "get") else getattr(fi, "currency", None)
-        price_currency = str(pc).upper() if pc else None
+        price, price_currency, price_quote_divisor = normalize_price_quote(price, str(pc) if pc else None)
+        if not pc:
+            price_currency = None
     except Exception as e:  # noqa: BLE001
         print(f"[etf_dash] WARNING fast_info failed for {ticker}: {e}", file=sys.stderr)
 
@@ -1621,6 +1694,7 @@ def fetch_ticker_eps_and_price(ticker: str) -> dict:
         "eps_fy_next_anchors_local": anchors,  # {7d,30d,60d,90d}: EPS N days ago (local currency)
         "price": price,
         "price_currency": price_currency or "USD",
+        "price_quote_divisor": price_quote_divisor,  # 倫敦股 100（便士報價），其餘 1，見 normalize_price_quote()
         "market_cap": market_cap,  # local currency，units 未統一（多數 USD），風格快照只用它排序取中位數
     })
     return result
@@ -1736,7 +1810,7 @@ def _all_known_constituent_tickers() -> set[str]:
     """回填用——蒐集「目前 eps_cache 裡已知的全部基金」的全部成分股 ticker
     （每檔基金讀 data/etf_dash/eps_cache/{ETF}.json 的 "tickers" 字典，取
     status=="ok" 的那些，即 constituents 實際會用到的 ticker），外加每檔
-    基金自己的 ETF ticker（cfg["yf_ticker"]）。刻意讀「目前已知的全部 17 檔」
+    基金自己的 ETF ticker（cfg["yf_ticker"]）。刻意讀「目前已知的全部 21 檔」
     而不是只看這次 run 的 --etf 參數——回填的目的是讓 prices.jsonl 一次涵蓋
     全站，不是只涵蓋今天剛好跑到的那幾檔（見 backfill_price_history_if_needed()
     docstring）。某檔基金還沒有 eps_cache（例如全新加入、從沒 FULL 過）就
@@ -1757,12 +1831,29 @@ def _all_known_constituent_tickers() -> set[str]:
     return tickers
 
 
+def _pence_quoted_tickers() -> set[str]:
+    """eps_cache 裡標了 price_quote_divisor=100 的 yfinance 代號（倫敦掛牌股）。"""
+    out: set[str] = set()
+    for etf_key in FUND_REGISTRY:
+        cache_path = EPS_CACHE_DIR / f"{etf_key}.json"
+        if not cache_path.exists():
+            continue
+        try:
+            eps_cache = json.loads(cache_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for tk, info in (eps_cache.get("tickers") or {}).items():
+            if info.get("status") == "ok" and (info.get("price_quote_divisor") or 1) == 100:
+                out.add(info.get("yf_ticker_used") or tk)
+    return out
+
+
 def backfill_price_history_if_needed(price_days: dict) -> dict:
     """2026-09-26 self-heal（coordinator 回饋：報酬貢獻不該乾等 ~3 個月讓
     prices.jsonl 自然累積到有用的覆蓋率）——price_days 現有天數不足
     price_history.MIN_TRADING_DAYS 天，就用一次批次 yfinance 下載（重用
     fetch_prices_batch()，跟 PRICE 模式每天已經在用的同一支函式，不是新的
-    抓取路徑）把全站（目前 eps_cache 已知的 17 檔基金＋各自成分股＋各基金
+    抓取路徑）把全站（目前 eps_cache 已知的 21 檔基金＋各自成分股＋各基金
     自己的 ETF ticker，見 _all_known_constituent_tickers()）一次補進
     ~100 個曆日的收盤價，寫回 data/etf_dash/prices.jsonl。已經有足夠天數
     （例如日常累積到門檻之後）就直接回傳原本傳進來的 price_days，不做任何
@@ -1783,6 +1874,10 @@ def backfill_price_history_if_needed(price_days: dict) -> dict:
         print(f"[etf_dash] WARNING price_history backfill failed ({e}); contribution stays at low "
               f"coverage until it accumulates day-by-day", file=sys.stderr)
         return price_days
+    # 倫敦股 yfinance 報價是便士，prices.jsonl 一律存英鎊（見 normalize_price_quote()）。
+    pence = _pence_quoted_tickers()
+    batch = {tk: ([{**pt, "close": round(pt["close"] / 100.0, 6)} for pt in pts] if tk in pence else pts)
+             for tk, pts in batch.items()}
     merged = price_history.merge_ticker_series(price_days, batch)
     price_history.save_days(merged)
     n_new_days = len(merged) - len(price_days)
@@ -1823,6 +1918,21 @@ def build_weight_methodology_note_zh(cfg: dict, holdings: list[dict]) -> str | N
             "近似），含股票、期貨等各類資產的權重——期貨（台股期貨／台灣50ETF股票期貨）等"
             "非個股部位見完整持股明細表的「非個股」列，不計入 EPS。"
         )
+    if cfg.get("source") == "ishares_us":
+        unmapped = [h for h in holdings if ishares_us.is_unmapped(h["ticker"])]
+        note = (
+            "持股檔給的是各國交易所自己的代號，本頁依交易所轉成 yfinance 代號"
+            "（韓國 6 位數字加 .KS／.KQ、馬來西亞用 Bursa 簡稱對照表轉數字碼加 .KL、"
+            "巴西 B3 代號加 .SA、歐洲各所加對應後綴；倫敦掛牌股票的 yfinance 股價以便士"
+            "報價，本頁除以 100 換成英鎊後才與英鎊 EPS 相除）。"
+        )
+        if unmapped:
+            wt = sum(h["weight_pct"] or 0 for h in unmapped)
+            names = "、".join(f"{h['name']}（{h['raw_ticker_field']}，{h['weight_pct']:.2f}%）"
+                              for h in sorted(unmapped, key=lambda h: -(h["weight_pct"] or 0))[:10])
+            note += (f"有 {len(unmapped)} 檔（合計 {wt:.2f}% 權重）代號無法對應，已排除、不計入 EPS 相關"
+                     f"計算：{names}。")
+        return note
     return None
 
 
@@ -2246,7 +2356,8 @@ def build_anchor_chart_series(etf_key: str, price_series: list[dict]) -> tuple[l
 
 
 def apply_anchor_fallback(long_eps_suppressed_note: str | None, etf_key: str,
-                           price_series: list[dict]) -> tuple[str | None, list[dict], str | None]:
+                           price_series: list[dict],
+                           long_chart_series: list[dict] | None = None) -> tuple[str | None, list[dict], str | None]:
     """Threshold switch，FULL／PRICE 兩個模式共用（見 build_fund_full()／
     build_fund_price() 呼叫處）：只有 dd-screener 長線被 build_long_chart_series()
     抑制（long_eps_suppressed_note 不是 None，也就是覆蓋率低於
@@ -2254,8 +2365,14 @@ def apply_anchor_fallback(long_eps_suppressed_note: str | None, etf_key: str,
     suppressed_note 清成 None（改顯示 anchor line，不是兩則訊息一起顯示——見
     Exhibit 2「移除『不畫長線』說明」的既有要求），這檔基金還沒有任何
     anchor_history（例如還沒跑過一次 FULL）就維持原本的抑制說明，不是靜默
-    顯示空圖。回傳 (更新後的 suppressed_note, anchor_chart_series, anchor_label_zh)。"""
-    if long_eps_suppressed_note is None:
+    顯示空圖。回傳 (更新後的 suppressed_note, anchor_chart_series, anchor_label_zh)。
+
+    2026-10-19 加 long_chart_series：dd-screener 名單完全沒有本基金成分股（EWY 等覆蓋 0%）
+    時 build_long_chart_series() 回 ([], None)「完全沒資料」，原本不會試 anchor line。
+    呼叫端傳進畫好的 dd-screener 線，空的就也試 anchor；試不到維持原本的 None（前端照舊
+    顯示「無長線 EPS 指數資料」）。不傳（None）時行為跟以前一樣。"""
+    no_dd_line = long_chart_series is not None and not long_chart_series
+    if long_eps_suppressed_note is None and not no_dd_line:
         return None, [], None
     anchor_chart_series, anchor_label_zh = build_anchor_chart_series(etf_key, price_series)
     if anchor_chart_series:
@@ -2272,7 +2389,13 @@ def apply_anchor_fallback(long_eps_suppressed_note: str | None, etf_key: str,
 # 或 >PE_EXCLUDE_MAX_X 整筆排除、權重重新正規化，明細記進 pe_excluded 供稽核
 # （不悄悄改數字）。FULL／PRICE 兩個模式共用同一個函式，避免兩處各寫一次
 # 分岔（過去兩處各自 inline 算過一次，這次順手收斂）。
-PE_EXCLUDE_MIN_X = 3.0     # 個股遠期本益比 < 此值 → 疑似資料異常，排除出加權遠期本益比分子分母
+# 2026-10-19 持有人拍板下限 3 → 2：加 EWY 時三星（2.98x）、SK 海力士（2.63x）被 3 倍擋掉，
+# EWY 只剩一半權重、本益比每天在 6 倍與 11 倍之間跳。兩檔的低本益比是真的（記憶體景氣
+# 盈餘暴增；Yahoo 39 位分析師、GuruFocus 2.78x、未來資產 2027F 4.3x 交叉確認），Charter
+# （2.47x，股價 110 美元、明年 EPS 44.6 美元）同理。2 倍仍擋得住 PGR（0.2x）與 TOPIX 裡
+# 東京海上 1.0x 這類明顯的 Yahoo 資料錯誤。改動當天的影響：EWY 10.84→4.57x（涵蓋 50%→95%）、
+# XLC 15.40→14.19x，TOPIX、TAIEX 變動不到 0.15。
+PE_EXCLUDE_MIN_X = 2.0     # 個股遠期本益比 < 此值 → 疑似資料異常，排除出加權遠期本益比分子分母
 PE_EXCLUDE_MAX_X = 300.0   # 個股遠期本益比 > 此值 → 同上（多半是 EPS 趨近 0 造成的雜訊，不是真實估值）
 
 
@@ -2326,7 +2449,10 @@ CONTRIB_PERIOD_DEFS = [("1M", 30, "近一個月"), ("3M", 90, "近三個月")]
 # get_tw_industry_map()）——task 指定的六檔：SPY／RSP／QQQ 靠 9 檔 SPDR
 # 產業 ETF 持股反查，TAIEX／0050 靠 TWSE 產業別代碼，TOPIX 靠 iShares JP CSV
 # 自帶的 Sector 欄。
-SECTOR_CONTRIB_ETF_KEYS = {"SPY", "RSP", "QQQ", "TAIEX", "0050", "TOPIX"}
+SECTOR_CONTRIB_ETF_KEYS = {"SPY", "RSP", "QQQ", "TAIEX", "0050", "TOPIX",
+                           # 2026-10-19：iShares 美國持股檔自帶 Sector 欄（解析時已轉中文標籤），
+                           # resolve_sector() 第 1 步直接用，不需要新程式。
+                           "EWY", "EWM", "EWZ", "IEV"}
 
 
 def compute_price_contribution(etf_key: str, constituents: list[dict], total_weight: float,
@@ -2500,8 +2626,10 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
                          if eps_scope_cutoff_pct else None)
     eps_scope_note_zh = build_eps_scope_note_zh(cfg, holdings, eps_scope_tickers)
 
-    unique_tickers = sorted(eps_scope_tickers if eps_scope_tickers is not None
-                            else {h["ticker"] for h in holdings})
+    # 代號轉不出來的名字（ishares_us.UNMAPPED_PREFIX）不抓 EPS，直接排除。
+    unique_tickers = sorted(tk for tk in (eps_scope_tickers if eps_scope_tickers is not None
+                                          else {h["ticker"] for h in holdings})
+                            if not ishares_us.is_unmapped(tk))
     n_new_fetches = 0
     for tk in unique_tickers:
         if tk not in ticker_cache:
@@ -2543,6 +2671,12 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             "has_stock_dash": h["ticker"] in stock_dash_universe,
             "sector": h.get("sector"),  # 目前只有 TOPIX（iShares JP CSV）持股列自帶，見 resolve_sector()
         }
+        if ishares_us.is_unmapped(h["ticker"]):
+            rec["status"] = "unmapped_ticker"
+            rec["reason"] = f"代號無法對應 yfinance：{h.get('unmapped_reason')}（維護者請補 ishares_us.py 的對照表）"
+            rec["unmapped_reason"] = h.get("unmapped_reason")
+            excluded.append(rec)
+            continue
         if eps_scope_tickers is not None and h["ticker"] not in eps_scope_tickers:
             # 權重排在 EPS 涵蓋門檻之外，本來就沒抓（不在 unique_tickers 裡，
             # ticker_cache 沒有這一筆）——跟「抓了但沒資料」的 no_eps_data 分開，
@@ -2610,6 +2744,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             "price_usd": round(price_usd, 4) if price_usd is not None else None,
             "price_fx_normalized": price_fx_normalized,
             "market_cap_local": info.get("market_cap"),  # 風格快照市值分位數用，見 fetch_ticker_eps_and_price()
+            "price_quote_divisor": info.get("price_quote_divisor", 1),
         })
         constituents.append(rec)
 
@@ -2717,7 +2852,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     # fund-agnostic：用不用得到只看這次算出來的 suppressed_note 是不是
     # None，跟基金是誰無關（見 build_anchor_line_point() 上方註解）。
     long_eps_suppressed_note, anchor_chart_series, anchor_label_zh = apply_anchor_fallback(
-        long_eps_suppressed_note, etf_key, long_price_series)
+        long_eps_suppressed_note, etf_key, long_price_series, long_chart_series)
     pe_history = build_pe_history(constituents, weighted_fwd_pe, dd_days, long_price_series, long_eps,
                                    pe_basis_ccy, fx_cache)
 
@@ -2763,6 +2898,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             "status": "ok", "reason": None, "yf_ticker_used": c["yf_ticker_used"],
             "eps_currency": c["eps_currency"], "eps_fy_next_local": c["eps_fy_next_local"],
             "price_currency": c["price_currency"], "has_stock_dash": c["has_stock_dash"],
+            "price_quote_divisor": c.get("price_quote_divisor", 1),
             "revisions_pct": c["revisions_pct"],
         }
     for e in excluded:
@@ -2770,6 +2906,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             "status": e["status"], "reason": e.get("reason"), "yf_ticker_used": e["ticker"],
             "eps_currency": None, "eps_fy_next_local": None, "price_currency": None,
             "has_stock_dash": e["has_stock_dash"], "revisions_pct": None,
+            "unmapped_reason": e.get("unmapped_reason"),
         }
     eps_cache_payload = {
         "eps_as_of": today_str,
@@ -2935,6 +3072,9 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         yf_tk = info.get("yf_ticker_used", h["ticker"])
         price_series_c = batch.get(yf_tk)
         price_local = price_series_c[-1]["close"] if price_series_c else None
+        quote_divisor = info.get("price_quote_divisor") or 1  # 倫敦股便士報價還原，見 normalize_price_quote()
+        if price_local is not None and quote_divisor != 1:
+            price_local = price_local / quote_divisor
         price_currency = (info.get("price_currency") or "USD").upper()
         price_usd, price_fx_normalized = convert_to_basis_currency(
             price_local, price_currency, pe_basis_ccy, today_str, fx_cache)
@@ -2951,6 +3091,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
             "price_currency": price_currency,
             "price_usd": round(price_usd, 4) if price_usd is not None else None,
             "price_fx_normalized": price_fx_normalized,
+            "price_quote_divisor": quote_divisor,
         })
         constituents.append(rec)
 
@@ -2993,7 +3134,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
     # 的 anchor_history 讀出來，配上今天批次抓到的最新股價，讓股價那一側每天
     # 都跟著更新（跟 long_eps_index 現有行為一致）。
     long_eps_suppressed_note, anchor_chart_series, anchor_label_zh = apply_anchor_fallback(
-        long_eps_suppressed_note, etf_key, long_price_series)
+        long_eps_suppressed_note, etf_key, long_price_series, long_chart_series)
     pe_history = build_pe_history(constituents, weighted_fwd_pe, dd_days, long_price_series, long_eps,
                                    pe_basis_ccy, fx_cache)
 
@@ -3644,7 +3785,7 @@ def render_preview_html(data: dict) -> str:
 # Overview — 2026-09-25 加 9 檔產業 ETF＋RSP 到 17 檔後，/etf-dash/?view=overview
 # 一頁看全部基金（見 docs/etf-dash/index.html renderOverview()）。這裡把每檔
 # 基金已經寫好的 docs/etf-dash/data/{ETF}.json 摘出幾個欄位彙總成一個小檔——
-# 頁面只 fetch 這一個檔，不用對 17 檔各發一次 request。
+# 頁面只 fetch 這一個檔，不用對 21 檔各發一次 request。
 # ---------------------------------------------------------------------------
 
 SECTOR_ETF_KEYS = {"XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLC", "XLB"}
@@ -3861,6 +4002,12 @@ def main() -> int:
             n_fail += 1
             continue
         data["chart"]["long_pe"] = long_pe.build_long_pe(etf_key, long_pe_series)
+        # 每日本益比紀錄（FULL／PRICE 都記）；Exhibit 3 推算線被抑制時改用這份紀錄，
+        # 見 pe_daily.py。紀錄失敗不影響其他圖。
+        try:
+            pe_daily.apply_fallback(data, etf_key)
+        except Exception as e:  # noqa: BLE001
+            print(f"[etf_dash] WARNING {etf_key}: pe_daily failed: {e}", file=sys.stderr)
         out_path = OUT_DIR / f"{etf_key}.json"
         out_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[etf_dash] wrote {out_path} "

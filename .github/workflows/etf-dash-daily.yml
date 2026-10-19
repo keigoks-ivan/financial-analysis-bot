@@ -2,14 +2,16 @@ name: ETF Dashboard Daily Data
 
 # ETF 股價 vs 成分股 EPS 預估修正儀表板（/etf-dash/）每日資料管線。
 #
-# 跑 scripts/etf_dash/build_etf_dash.py，現在共 17 檔（SMH 美國掛牌 + SMH_UCITS
+# 跑 scripts/etf_dash/build_etf_dash.py，現在共 21 檔（SMH 美國掛牌 + SMH_UCITS
 # 愛爾蘭掛牌 + QQQ 那斯達克 100 + SPY 標普 500，2026-09-24 加 QQQ／SPY；
 # 2026-09-25 再加 TAIEX 台灣加權指數〈TWSE 公開資料機械估算近似持股〉+ 0050
 # 元大台灣50〈元大投信官方持股頁〉+ TOPIX（1475）+ 9 檔 SPDR 產業 ETF（XLK／
 # XLF／XLE／XLV／XLI／XLY／XLP／XLC／XLB，跟 SPY 同一套 SSGA xlsx 格式）+
 # RSP（Invesco 標普 500 等權重 ETF，跟 QQQ 同一套 Invesco JSON API，失敗且無
 # 自身快取時退回 SPY 成分股等權重近似）——見 build_etf_dash.py 對應段落的
-# 方法論註解）。9 檔產業 ETF＋RSP 的成分股全是 SPY 500 檔的子集合，跟 SPY 同
+# 方法論註解）。2026-10-19 再加 4 檔 iShares 美國掛牌的國家／區域基金：EWY 南韓、
+# EWM 馬來西亞、EWZ 巴西、IEV 歐洲（共用 source "ishares_us"，見
+# scripts/etf_dash/ishares_us.py；IEV 另設 EPS 涵蓋門檻 90%）。9 檔產業 ETF＋RSP 的成分股全是 SPY 500 檔的子集合，跟 SPY 同
 # 一個 run 共用 ticker_cache 幾乎不增加新的 eps_trend 呼叫。
 #
 # 2026-09-25 加 TAIEX／0050 後 0050 的 FULL 模式抓取需要 node（parse
@@ -59,6 +61,10 @@ name: ETF Dashboard Daily Data
 #   - data/etf_dash/long_pe/{key}.csv        2026-10-19 加：Exhibit 4 長期本益比
 #     的週資料（scripts/etf_dash/long_pe.py），每次 run 抓外部 API 一次，一週
 #     多一列。
+#   - data/etf_dash/pe_daily/{ETF}.csv       2026-10-19 加：每日本益比紀錄
+#     （scripts/etf_dash/pe_daily.py，欄位 date,pe,coverage_pct,mode），每次
+#     build 記一列、每檔基金一個檔，同一天重跑覆蓋；Exhibit 3 的 dd-screener
+#     推算線不畫時（成分股不在名單）改用這份紀錄當線，自上線日起累積，不回補。
 # 修正廣度／風格快照本身不落地成獨立檔案（存在 eps_cache／docs 輸出 JSON
 # 裡，已被既有的 data/etf_dash/eps_cache/ 與 docs/etf-dash/data/ 路徑覆蓋）。
 #
@@ -169,9 +175,13 @@ jobs:
     # 全部撞到時 worst case 10+30+60+90=190 秒，這次本機測試就是撞到全部
     # 重試失敗才退回 SPY 等權重近似）。相對於既有 7 檔基金合計 FULL 上看
     # ~35 分鐘的估計，9 檔產業 ETF＋RSP 這條路徑增加的時間 worst case 約
-    # 4-5 分鐘（RSP 重試 backoff 為主），PRICE 模式全 17 檔本機實測僅 2m10s。
+    # 4-5 分鐘（RSP 重試 backoff 為主），PRICE 模式全 17 檔本機實測僅 2m10s（2026-10-19 加 4 檔後的估算見 timeout-minutes 上方）。
     # 60 分鐘上限仍有餘裕，但為了給 GitHub runner 網路變異＋Invesco 持續
     # 節流的情況多一點緩衝，拉高到 75 分鐘。
+    # 2026-10-19 再加 EWY／EWM／EWZ／IEV 四檔：本機實測 FULL 四檔共 351 次 eps_trend
+    # 呼叫、4m14s（IEV 只抓權重前 90% 的 207 檔）；PRICE 四檔 1m26s。最近兩次週六
+    # FULL 在 CI 跑 22.0／22.6 分鐘，平日 PRICE 約 10 分鐘；即使 CI 比本機慢一倍，
+    # 四檔也只多 ~8 分鐘，FULL 約 30 分鐘，距 75 分鐘上限仍有餘裕，上限不動。
     timeout-minutes: 75
     steps:
       - name: Checkout repository
@@ -185,7 +195,7 @@ jobs:
       - name: Install dependencies
         run: pip install "yfinance>=0.2.40" pandas numpy requests openpyxl xlrd
 
-      - name: Build ETF dashboard data (17 funds)
+      - name: Build ETF dashboard data (21 funds)
         # 個別 ETF 失敗（持股來源格式改版、被擋、yfinance 掛了一整輪重試後仍
         # 失敗）只會讓 build_etf_dash.py 略過那一檔、其餘照跑；只有全部失敗它
         # 才會 non-zero exit——那種情況本步驟紅燈，後面的 commit 步驟仍會跑
@@ -201,7 +211,7 @@ jobs:
         id: build
         env:
           MODE_INPUT: ${{ github.event.inputs.mode || 'auto' }}
-        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --etf RSP --etf XLK --etf XLF --etf XLE --etf XLV --etf XLI --etf XLY --etf XLP --etf XLC --etf XLB --etf TAIEX --etf 0050 --etf TOPIX --mode "$MODE_INPUT"
+        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --etf RSP --etf XLK --etf XLF --etf XLE --etf XLV --etf XLI --etf XLY --etf XLP --etf XLC --etf XLB --etf TAIEX --etf 0050 --etf TOPIX --etf EWY --etf EWM --etf EWZ --etf IEV --mode "$MODE_INPUT"
 
       - name: Fail loudly if the build step errored
         if: steps.build.outcome == 'failure'
@@ -215,12 +225,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/eps_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/ data/etf_dash/prices.jsonl data/etf_dash/flows/ data/etf_dash/tw_industry_map.json data/etf_dash/anchor_history/ data/etf_dash/long_pe/
+          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/eps_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/ data/etf_dash/prices.jsonl data/etf_dash/flows/ data/etf_dash/tw_industry_map.json data/etf_dash/anchor_history/ data/etf_dash/long_pe/ data/etf_dash/pe_daily/
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
             DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
-            git commit -m "data: ETF dashboard snapshot ${DATE} (17 funds)
+            git commit -m "data: ETF dashboard snapshot ${DATE} (21 funds)
 
             Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
             for i in 1 2 3 4 5 6; do

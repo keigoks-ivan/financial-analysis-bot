@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ETF 儀表板 — InvestMQuest Research</title>
-<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計，共 17 檔（美股大盤 SPY／RSP／QQQ、9 檔美股產業 SPDR、SMH 兩版本、台灣加權指數／元大台灣50／TOPIX），含總覽頁。">
+<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計，共 21 檔（美股大盤 SPY／RSP／QQQ、9 檔美股產業 SPDR、SMH 兩版本、台灣加權指數／元大台灣50／TOPIX、南韓 EWY、馬來西亞 EWM、巴西 EWZ、歐洲 IEV），含總覽頁。">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -316,7 +316,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 <div id="overviewView" style="display:none">
 <section class="exhibit" id="ovExhibit">
   <div class="ex-label">總覽</div>
-  <div class="ex-title">17 檔基金一覽</div>
+  <div class="ex-title">21 檔基金一覽</div>
   <div class="ex-sub">依「美股大盤／美股產業／半導體／亞洲」分組；點欄位標題可排序（分組內排序，分組順序不變）</div>
   <div class="conclusion" id="ovSummarySentence"></div>
   <div class="callout-tiles" id="ovTiles"></div>
@@ -343,7 +343,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 
 <section class="exhibit" id="ovTableExhibit">
   <div class="ex-label">總覽表</div>
-  <div class="ex-title">17 檔基金完整數字</div>
+  <div class="ex-title">21 檔基金完整數字</div>
   <div class="tbl-wrap"><table class="imq-table" id="ovTable"></table></div>
   <div class="ex-src" id="ovSrc"></div>
 </section>
@@ -376,7 +376,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 <section class="exhibit" id="exhibit3">
   <div class="ex-label">EXHIBIT 3</div>
   <div class="ex-title">預估本益比走勢</div>
-  <div class="ex-sub">每天的 ETF 股價除以成分股加權明年度 EPS 預估，最後一點就是今天的預估本益比</div>
+  <div class="ex-sub" id="peSub">每天的 ETF 股價除以成分股加權明年度 EPS 預估，最後一點就是今天的預估本益比</div>
   <div class="chart-box" style="height:240px"><canvas id="chartPe"></canvas></div>
   <div class="conclusion" id="peSentence" style="display:none"></div>
   <div class="ex-src" id="peSrc"></div>
@@ -538,7 +538,13 @@ var FUND_GROUPS = [
   {label:'亞洲', funds:[
     {key:'TAIEX', label:'台灣加權指數'},
     {key:'0050', label:'元大台灣50'},
-    {key:'TOPIX', label:'TOPIX（1475）'}
+    {key:'TOPIX', label:'TOPIX（1475）'},
+    {key:'EWY', label:'南韓 EWY'},
+    {key:'EWM', label:'馬來西亞 EWM'}
+  ]},
+  {label:'歐洲與拉美', funds:[
+    {key:'IEV', label:'歐洲 IEV'},
+    {key:'EWZ', label:'巴西 EWZ'}
   ]}
 ];
 var FUND_LIST = FUND_GROUPS.reduce(function(acc, g){ return acc.concat(g.funds); }, []);
@@ -1075,12 +1081,29 @@ function renderPeChart(d){
     noData(canvas.parentElement, ph.suppressed_note || '無本益比歷史資料');
     return;
   }
+  var last = series[series.length-1];
+  var isDaily = ph.source === 'daily_record';
+  if(isDaily) document.getElementById('peSub').textContent = ph.source_note_zh || '';
+  // 每日紀錄（dd-screener 推算線被抑制時的備援，見 pe_daily.py）只有 1 個點時不畫空圖。
+  if(isDaily && series.length < 2){
+    sentence.style.display = 'none';
+    document.getElementById('peSrc').textContent = '';
+    document.getElementById('peNote').textContent = '';
+    canvas.parentElement.style.height = 'auto';
+    canvas.parentElement.innerHTML = '<div class="nodata">'+esc(last.date)+' 開始記錄，目前 '+last.pe.toFixed(1)+'x</div>';
+    return;
+  }
   var hi = series[0], lo = series[0];
   series.forEach(function(p){ if(p.pe > hi.pe) hi = p; if(p.pe < lo.pe) lo = p; });
-  var last = series[series.length-1];
   sentence.textContent = esc(series[0].date)+' 以來最高 '+hi.pe.toFixed(1)+'x（'+esc(hi.date)+'），最低 '+
     lo.pe.toFixed(1)+'x（'+esc(lo.date)+'），目前 '+last.pe.toFixed(1)+'x。';
   sentence.style.display = '';
+  if(isDaily){
+    document.getElementById('peSrc').textContent =
+      '資料來源：本頁每次更新時算出的加權預估本益比（成分股明年度 EPS 預估來自 Yahoo Finance 分析師估計），'+
+      esc(ph.start_date)+' 起共 '+series.length+' 天。';
+    document.getElementById('peNote').textContent = '';
+  } else {
   document.getElementById('peSrc').textContent =
     '資料來源：ETF 股價為 Yahoo 還原收盤價；成分股明年度 EPS 預估來自站上 DD Screener 的每日紀錄，'+
     esc(ph.start_date)+' 起共 '+series.length+' 天；成分股權重固定用今天的持股。';
@@ -1090,11 +1113,12 @@ function renderPeChart(d){
     '，其餘假設跟著同步變動。'+
     (nRoll>0 ? '期間有 '+nRoll+' 次成分股換財年，「明年度」改成下一年，當天線會往下跳一小階。' : '')+
     '股價含息還原，越早的點本益比略偏低，幅度約等於那天到今天的配息率。';
+  }
 
   peChartInstance = new Chart(canvas, {
     type:'line',
     data:{labels:series.map(function(p){return p.date;}), datasets:[
-      {label:'預估本益比', data:series.map(function(p){return p.pe;}), borderColor:COL.navy, pointRadius:0, borderWidth:1.6, spanGaps:true}
+      {label:'預估本益比', data:series.map(function(p){return p.pe;}), borderColor:COL.navy, pointRadius:(isDaily && series.length<15)?3:0, borderWidth:1.6, spanGaps:true}
     ]},
     options:{responsive:true, maintainAspectRatio:false,
       scales:{x:{ticks:{color:COL.muted,font:{size:8},maxTicksLimit:6}, grid:{display:false}},
@@ -1223,7 +1247,7 @@ function render(d){
   wireCollapsibleSections();
 }
 
-// ── 總覽（/etf-dash/?view=overview）——讀 data/overview.json 一個檔，17 檔基金
+// ── 總覽（/etf-dash/?view=overview）——讀 data/overview.json 一個檔，21 檔基金
 // 依 FUND_GROUPS 分組列出，點欄位標題排序（同分組內排序，分組順序不變，見
 // OV_COLUMNS 與 sortOverviewGroups()）。────────────────────────────────────
 
@@ -1359,7 +1383,7 @@ function renderOverviewHeader(){
 }
 
 // 2026-09-25 加：KPI 三格，純機械（只挑 overview.json 裡的最大/最小值，不下判斷字眼），
-// 掃全部 17 檔（summary_sentence_zh 只看 9 檔美股產業 ETF，這裡刻意放大範圍，避免跟句子
+// 掃全部 21 檔（summary_sentence_zh 只看 9 檔美股產業 ETF，這裡刻意放大範圍，避免跟句子
 // 完全重複）。2026-09-25 二次修：ticker 放大在前、完整名稱縮小在後（見 coordinator
 // 回饋 #7）——原本完整名稱＋ticker 擠在同一行，長名稱（如「VanEck 半導體 UCITS ETF
 // （SMH_UCITS）」）會換成兩行，版面不齊。
@@ -1616,7 +1640,7 @@ function renderSectorFlows(ov){
 
 function renderOverview(ov){
   document.getElementById('coverLeft').innerHTML =
-    '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · 17 檔基金一覽</span>';
+    '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · 21 檔基金一覽</span>';
 
   var byKey = {};
   (ov.funds||[]).forEach(function(f){ byKey[f.etf_key] = f; });

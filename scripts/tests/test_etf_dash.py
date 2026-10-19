@@ -1193,6 +1193,18 @@ def test_apply_anchor_fallback_keeps_suppressed_note_when_no_anchor_history(monk
     assert label is None
 
 
+def test_apply_anchor_fallback_tries_anchor_when_dd_line_has_no_data_at_all(monkeypatch):
+    """覆蓋 0%（EWY 等）時 build_long_chart_series 回 ([], None)，傳進空的 dd 線也要試 anchor。"""
+    monkeypatch.setattr(m, "build_anchor_chart_series", lambda k, p: ([{"date": "2026-10-19"}], "anchor"))
+    note, series, label = m.apply_anchor_fallback(None, "EWY", [], [])
+    assert note is None and series == [{"date": "2026-10-19"}] and label == "anchor"
+    monkeypatch.setattr(m, "build_anchor_chart_series", lambda k, p: ([], None))
+    assert m.apply_anchor_fallback(None, "EWY", [], []) == (None, [], None)
+    # dd 線畫得出來時不動
+    monkeypatch.setattr(m, "build_anchor_chart_series", lambda k, p: (_ for _ in ()).throw(AssertionError))
+    assert m.apply_anchor_fallback(None, "SPY", [], [{"date": "2026-10-19"}]) == (None, [], None)
+
+
 def test_apply_anchor_fallback_clears_suppressed_note_when_anchor_history_available(monkeypatch):
     fake_series = [{"date": "2026-09-25", "eps_index": 100.0, "price_index": 100.0, "coverage_pct": 90.0}]
     monkeypatch.setattr(m, "build_anchor_chart_series", lambda etf_key, price_series: (fake_series, "anchor label"))

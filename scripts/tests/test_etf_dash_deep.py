@@ -180,7 +180,7 @@ def test_compute_style_snapshot_size_quantiles():
 
 
 def test_compute_style_snapshot_pe_dispersion_excludes_outliers():
-    # PGR-style outlier: price_usd/eps_fy_next_usd way outside [3x,300x]
+    # PGR-style outlier: price_usd/eps_fy_next_usd way outside [2x,300x]
     constituents = [
         _sc("A", 50, eps_usd=10, price_usd=200),   # pe=20x, kept
         _sc("B", 50, eps_usd=1000, price_usd=200),  # pe=0.2x, excluded
