@@ -55,6 +55,10 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .ex-title{font-family:var(--sans);font-size:.95rem;font-weight:700;color:var(--ink);margin:1px 0 2px}
 .ex-sub{font-size:11.5px;color:var(--sec);margin-bottom:8px}
 .chart-box{width:100%;position:relative}
+.rng{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px}
+.rng button{font-family:var(--mono);font-size:11px;font-weight:600;padding:.25rem .6rem;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--body);cursor:pointer}
+.rng button:hover{border-color:var(--x-navy)}
+.rng button.on{background:var(--x-navy);border-color:var(--x-navy);color:#fff}
 .ex-src{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:5px}
 .conclusion{font-size:13px;color:var(--body);line-height:1.7;padding:11px 13px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-top:8px}
 .daily-line{font-size:12.5px;color:var(--body);line-height:1.6;padding:8px 12px;background:var(--gold-bg);border:1px solid var(--gold-soft);border-left:3px solid var(--gold-deep);border-radius:var(--r);margin-bottom:8px}
@@ -383,6 +387,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div class="ex-label">EXHIBIT 4</div>
   <div class="ex-title" id="lpTitle">長期預估本益比</div>
   <div class="ex-sub" id="lpSub"></div>
+  <div class="rng" id="lpRange"></div>
   <div class="chart-box" style="height:240px"><canvas id="chartLongPe"></canvas></div>
   <div class="conclusion" id="lpSentence" style="display:none"></div>
   <div class="ex-src" id="lpSrc"></div>
@@ -1102,14 +1107,34 @@ function renderPeChart(d){
 
 // Exhibit 4（2026-10-19 加）：長期本益比，資料是 chart.long_pe（見
 // scripts/etf_dash/long_pe.py）。外部序列，口徑跟 Exhibit 3 不同，所以另畫一張。
+// 2026-10-19 持有人要求：可選時間區間（站上 .rng 按鈕慣例），區間都以最新一筆為終點；
+// 中位數、「比幾成的週／月貴」、圖頂截斷都只用區間內的點重算（算法同 long_pe.summarize）。
 var longPeChartInstance = null;
+var LONG_PE_RANGES = [{y:1,label:'1 年'},{y:3,label:'3 年'},{y:5,label:'5 年'},{y:10,label:'10 年'},{y:20,label:'20 年'},{y:0,label:'全部'}];
+var longPeRangeYears = 0;  // 0＝全部；換基金時沿用上次的選擇
+function longPeWindow(series, years){
+  if(!years) return series;
+  var end = new Date(series[series.length-1].date);
+  var start = new Date(end); start.setFullYear(end.getFullYear() - years);
+  var cut = start.toISOString().slice(0,10);
+  return series.filter(function(p){return p.date >= cut;});
+}
+function longPeStats(win){
+  var vals = win.map(function(p){return p.pe;}).sort(function(a,b){return a-b;});
+  var n = vals.length, cur = win[n-1].pe;
+  var median = n % 2 ? vals[(n-1)/2] : (vals[n/2-1] + vals[n/2]) / 2;
+  var below = vals.filter(function(v){return v < cur;}).length;
+  return {median:median, current:cur, pct_below:below/n*100};
+}
 function renderLongPeChart(d){
   var lp = (d.chart && d.chart.long_pe) || {};
   var canvas = document.getElementById('chartLongPe');
   var sentence = document.getElementById('lpSentence');
+  var rangeBox = document.getElementById('lpRange');
   if(longPeChartInstance){ longPeChartInstance.destroy(); longPeChartInstance = null; }
   if(!lp.available || !(lp.series||[]).length){
     sentence.style.display = 'none';
+    rangeBox.innerHTML = '';
     document.getElementById('lpSub').textContent = '';
     document.getElementById('lpSrc').textContent = '';
     document.getElementById('lpNote').textContent = '';
@@ -1117,11 +1142,25 @@ function renderLongPeChart(d){
     noData(canvas.parentElement, lp.note_zh || '無長期本益比資料');
     return;
   }
-  var series = lp.series, st = lp.stats || {};
-  var startYear = String(lp.start_date).slice(0, 4);
+  var full = lp.series;
+  var spanYears = (new Date(full[full.length-1].date) - new Date(full[0].date)) / (365.25*86400000);
+  // 只列比全期短的區間；上次選的區間比這檔資料還長就退回全部
+  var ranges = LONG_PE_RANGES.filter(function(r){return r.y === 0 || r.y < spanYears;});
+  if(!ranges.some(function(r){return r.y === longPeRangeYears;})) longPeRangeYears = 0;
+  rangeBox.innerHTML = ranges.map(function(r){
+    return '<button type="button" data-y="'+r.y+'"'+(r.y===longPeRangeYears?' class="on"':'')+'>'+r.label+'</button>';
+  }).join('');
+  rangeBox.onclick = function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    longPeRangeYears = +b.getAttribute('data-y');
+    renderLongPeChart(d);
+  };
+
+  var series = longPeWindow(full, longPeRangeYears), st = longPeStats(series);
+  var since = longPeRangeYears ? '近 '+longPeRangeYears+' 年' : String(full[0].date).slice(0, 4)+' 年以來';
   document.getElementById('lpTitle').textContent = lp.title_zh || '長期本益比';
   document.getElementById('lpSub').textContent = lp.sub_zh || '';
-  sentence.textContent = '目前 '+st.current.toFixed(1)+'x，'+startYear+' 年以來中位數 '+st.median.toFixed(1)+
+  sentence.textContent = '目前 '+st.current.toFixed(1)+'x，'+since+'中位數 '+st.median.toFixed(1)+
     'x，比 '+Math.round(st.pct_below)+'% 的'+(lp.period_unit_zh||'週')+'貴。';
   sentence.style.display = '';
   document.getElementById('lpSrc').innerHTML =
@@ -1144,14 +1183,15 @@ function renderLongPeChart(d){
   if(ageDays > (lp.stale_days||21)) notes.push('資料只到 '+esc(lp.end_date)+'，來源尚未更新。');
   document.getElementById('lpNote').textContent = notes.join('');
 
+  var tickLen = longPeRangeYears && longPeRangeYears <= 10 ? 7 : 4;  // 10 年以內顯示年月，只顯示年份會重複
   longPeChartInstance = new Chart(canvas, {
     type:'line',
     data:{labels:series.map(function(p){return p.date;}), datasets:[
       {label:'本益比', data:vals, borderColor:COL.navy, pointRadius:0, borderWidth:1.3, spanGaps:true},
       {label:'中位數', data:vals.map(function(){return st.median;}), borderColor:COL.gold, borderDash:[4,4], pointRadius:0, borderWidth:1.2}
     ]},
-    options:{responsive:true, maintainAspectRatio:false,
-      scales:{x:{ticks:{color:COL.muted,font:{size:8},maxTicksLimit:8, callback:function(v){return String(this.getLabelForValue(v)).slice(0,4);}}, grid:{display:false}},
+    options:{responsive:true, maintainAspectRatio:false, animation:false,
+      scales:{x:{ticks:{color:COL.muted,font:{size:8},maxTicksLimit:8, callback:function(v){return String(this.getLabelForValue(v)).slice(0,tickLen);}}, grid:{display:false}},
               y:{position:'left', max:yMax, ticks:{color:COL.muted,font:{size:9}, callback:function(v){return v+'x';}}, grid:{color:COL.line}}},
       plugins:{legend:{display:false},
                tooltip:{callbacks:{label:function(ctx){return ' '+ctx.dataset.label+' '+ctx.parsed.y.toFixed(1)+'x';}}}}
