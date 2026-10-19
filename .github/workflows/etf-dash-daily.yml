@@ -56,6 +56,9 @@ name: ETF Dashboard Daily Data
 #     上線那天起累積。
 #   - data/etf_dash/tw_industry_map.json     台股（TAIEX／0050）產業分解用的
 #     TWSE 產業別代碼表快取，FULL 模式週期性重抓，單一小檔（非 append-only）。
+#   - data/etf_dash/long_pe/{key}.csv        2026-10-19 加：Exhibit 4 長期本益比
+#     的週資料（scripts/etf_dash/long_pe.py），每次 run 抓外部 API 一次，一週
+#     多一列。
 # 修正廣度／風格快照本身不落地成獨立檔案（存在 eps_cache／docs 輸出 JSON
 # 裡，已被既有的 data/etf_dash/eps_cache/ 與 docs/etf-dash/data/ 路徑覆蓋）。
 #
@@ -180,7 +183,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install "yfinance>=0.2.40" pandas numpy requests openpyxl
+        run: pip install "yfinance>=0.2.40" pandas numpy requests openpyxl xlrd
 
       - name: Build ETF dashboard data (17 funds)
         # 個別 ETF 失敗（持股來源格式改版、被擋、yfinance 掛了一整輪重試後仍
@@ -212,7 +215,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/eps_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/ data/etf_dash/prices.jsonl data/etf_dash/flows/ data/etf_dash/tw_industry_map.json data/etf_dash/anchor_history/
+          git add data/etf_dash/snapshots/ data/etf_dash/holdings_cache/ data/etf_dash/eps_cache/ data/etf_dash/dd_eps_history.jsonl docs/etf-dash/data/ data/etf_dash/prices.jsonl data/etf_dash/flows/ data/etf_dash/tw_industry_map.json data/etf_dash/anchor_history/ data/etf_dash/long_pe/
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else

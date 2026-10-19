@@ -85,6 +85,7 @@ import dd_eps_history  # noqa: E402
 import anchor_history  # noqa: E402
 import price_history  # noqa: E402
 import flows  # noqa: E402
+import long_pe  # noqa: E402
 
 try:
     import yfinance as yf
@@ -3834,6 +3835,14 @@ def main() -> int:
     us_sector_lookup = build_us_sector_lookup()
     tw_industry_map = get_tw_industry_map()
     price_today_closes: dict[str, float] = {}
+    # Exhibit 4 長期本益比（見 long_pe.py）：外部 API 每次 run 只抓一次，抓失敗沿用
+    # data/etf_dash/long_pe/*.csv，不影響其他圖。
+    try:
+        long_pe_series = long_pe.refresh({long_pe.FUND_LONG_PE[k][0] for k in args.etf
+                                          if k in long_pe.FUND_LONG_PE})
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING long_pe refresh failed: {e}", file=sys.stderr)
+        long_pe_series = {}
     print(f"[etf_dash] price_history: {len(price_days)} day(s) on file; "
           f"us_sector_lookup covers {len(us_sector_lookup)} ticker(s); "
           f"tw_industry_map covers {len(tw_industry_map)} code(s)")
@@ -3851,6 +3860,7 @@ def main() -> int:
             print(f"[etf_dash] ERROR {etf_key} failed: {e}", file=sys.stderr)
             n_fail += 1
             continue
+        data["chart"]["long_pe"] = long_pe.build_long_pe(etf_key, long_pe_series)
         out_path = OUT_DIR / f"{etf_key}.json"
         out_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"[etf_dash] wrote {out_path} "
