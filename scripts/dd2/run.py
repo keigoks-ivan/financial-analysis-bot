@@ -360,6 +360,13 @@ def do_stage0(ctx):
     agents_dir = run_dir / "agents"
     for d in (parts_dir, prompts_dir, agents_dir):
         d.mkdir(parents=True, exist_ok=True)
+    # 同日非 --resume 重跑：上一輪的 axes_{k}.json／reused_coverage.json 會留在 parts/，
+    # finalize 依編號合併、後者覆蓋前者，舊的 none 會蓋掉新查到的（2308.TW 2026-10-19）。
+    # 本輪 stale 軸重寫 axes_{k}、fresh 軸重寫 reused_coverage，舊檔一律不再需要。
+    if not ctx.args.resume:
+        for old in parts_dir.iterdir():
+            if re.fullmatch(r"axes_\d+\.json", old.name) or old.name == "reused_coverage.json":
+                old.unlink()
 
     evidence = _load_json(run_dir / "evidence.json")
     axes = _load_json(run_dir / "axes.json")
