@@ -1663,6 +1663,28 @@ def fetch_ticker_eps_and_price(ticker: str) -> dict:
         v = row.get(col)
         anchors[key] = None if v is None or pd.isna(v) else float(v)
 
+    # 2026-10-19 財務預估摘要（今年度欄）：同一個 Ticker 物件再讀 eps_trend 的
+    # 0y 列（現值、90 天前）與 earnings_estimate 的 0y.yearAgoEps（去年度實際
+    # EPS）。yfinance 兩者共用同一次 quoteSummary（earningsTrend）快取，不增加
+    # HTTP 請求（2026-10-19 以 monkeypatch 計數驗證：兩個屬性合計 1 次）。缺值
+    # 一律 None，不影響既有 +1y 流程與 status。
+    def _num(v):
+        return None if v is None or pd.isna(v) else float(v)
+    fy0_curr = fy0_90d = fy0_prev_actual = None
+    try:
+        if "0y" in eps_trend.index:
+            r0 = eps_trend.loc["0y"]
+            fy0_curr, fy0_90d = _num(r0.get("current")), _num(r0.get("90daysAgo"))
+            ccy0 = r0.get("currency") if "currency" in eps_trend.columns else None
+            ee = t.earnings_estimate
+            if ee is not None and not ee.empty and "0y" in ee.index and "yearAgoEps" in ee.columns:
+                ee_ccy = ee.loc["0y"].get("currency") if "currency" in ee.columns else None
+                # 兩份表幣別不同（極少見）就不用去年度實際值，避免跨幣別混算
+                if ee_ccy is None or ccy0 is None or str(ee_ccy).upper() == str(ccy0).upper():
+                    fy0_prev_actual = _num(ee.loc["0y"].get("yearAgoEps"))
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING fy0 fields failed for {ticker}: {e}", file=sys.stderr)
+
     price = None
     price_currency = None
     price_quote_divisor = 1
@@ -1692,6 +1714,9 @@ def fetch_ticker_eps_and_price(ticker: str) -> dict:
         "eps_fy_next_local": current,
         "eps_currency": currency,
         "eps_fy_next_anchors_local": anchors,  # {7d,30d,60d,90d}: EPS N days ago (local currency)
+        "eps_fy_curr_local": fy0_curr,  # 今年度（0y）EPS 預估現值，2026-10-19 財務預估摘要用
+        "eps_fy_curr_90d_local": fy0_90d,  # 今年度 EPS 預估 90 天前
+        "eps_fy_prev_actual_local": fy0_prev_actual,  # 去年度實際 EPS（earnings_estimate 0y.yearAgoEps）
         "price": price,
         "price_currency": price_currency or "USD",
         "price_quote_divisor": price_quote_divisor,  # 倫敦股 100（便士報價），其餘 1，見 normalize_price_quote()
@@ -2433,6 +2458,98 @@ def compute_weighted_forward_pe(constituents: list[dict], total_weight: float,
     return weighted_fwd_pe, coverage_pct, pe_excluded
 
 
+# 2026-10-19 財務預估摘要（基金頁「財務預估摘要」表、總覽表「明年 EPS 成長／PEG」）。
+# 口徑跟頭條加權遠期本益比同一套：把成分股當成一個「盈餘殖利率加總」的組合，
+# 基金層級本益比 = Σw / Σ(w/PE)（調和平均），成長率 = 兩個年度的 Σ(w/PE) 相除減 1。
+# 同一檔股票不同年度的 EPS 同幣別，所以只需要頭條已算好的明年度本益比 PE1（已含
+# 匯率換算）乘上當地幣別的 EPS 比值，就能得到另一年度的本益比：
+#   PE0 = PE1×E1/E0（E0＝今年度預估）、PEm1 = PE1×E1/Em1（Em1＝去年度實際）。
+# 每個年度的個股本益比也要落在 [PE_EXCLUDE_MIN_X, PE_EXCLUDE_MAX_X]，負值或缺值
+# 不進該集合。集合 S0＝已納入頭條且 PE0 在帶內；S01＝S0 且 PEm1 也在帶內。
+# 年度是各公司自己的會計年度（Yahoo 的 0y／+1y），不是日曆年。
+FORWARD_SUMMARY_NOTE_ZH = (
+    "年度是各公司自己的會計年度（Yahoo 的今年度與明年度預估），不是日曆年。"
+    "本益比與成長率是把成分股的盈餘（本益比倒數）依權重加總後再算，個股本益比落在 "
+    f"{PE_EXCLUDE_MIN_X:g}–{PE_EXCLUDE_MAX_X:g} 倍之外或盈餘為負的先排除；"
+    "明年度的三個月修正沿用 Exhibit 1，今年度的修正用同一套方法。"
+)
+
+
+def compute_forward_summary(constituents: list[dict], total_weight: float, periods: list[dict] | None,
+                             pe_min: float = PE_EXCLUDE_MIN_X, pe_max: float = PE_EXCLUDE_MAX_X) -> dict:
+    """純函式：回傳 {"fy0": {...}, "fy1": {...}, "note_zh": str}。每個年度欄位：
+    pe／eps_growth_pct／peg／rev_3m_pct 與各自涵蓋權重 pe_coverage_pct／
+    growth_coverage_pct／rev_coverage_pct（佔基金總權重 %）；coverage_pct＝pe 的涵蓋率。
+    算不出來的值一律 None（前端顯示「—」）。舊快取沒有今年度三欄時 fy0 全 None、
+    fy1 的本益比／修正照常（成長率需要今年度 EPS，也是 None）。PEG＝本益比 ÷ 成長
+    （%）；成長 ≤ 0 或缺值時 None。"""
+    def _in_band(pe):
+        return pe is not None and pe_min <= pe <= pe_max
+
+    pe1_all, _cov1, _excl = compute_weighted_forward_pe(constituents, total_weight, pe_min, pe_max)
+    pe1_cov = _cov1
+    s0, s01 = [], []   # (w, 1/PE1, 1/PE0, 1/PEm1 or None)
+    for c in constituents:
+        eps_u, px = c.get("eps_fy_next_usd"), c.get("price_usd")
+        e1 = c.get("eps_fy_next_local")
+        w = c.get("weight_pct") or 0
+        if not eps_u or not px or not e1 or e1 <= 0 or w <= 0:
+            continue
+        pe1 = px / eps_u
+        if not _in_band(pe1):
+            continue
+        e0, em1 = c.get("eps_fy_curr_local"), c.get("eps_fy_prev_actual_local")
+        if e0 is None or e0 <= 0:
+            continue
+        pe0 = pe1 * e1 / e0
+        if not _in_band(pe0):
+            continue
+        pem1 = pe1 * e1 / em1 if (em1 is not None and em1 > 0) else None
+        s0.append((w, 1 / pe1, 1 / pe0))
+        if _in_band(pem1):
+            s01.append((w, 1 / pe0, 1 / pem1))
+
+    def _cov(rows):
+        return round(sum(r[0] for r in rows) / total_weight * 100, 2) if total_weight and rows else None
+
+    w0 = sum(r[0] for r in s0)
+    y0_sum = sum(r[0] * r[2] for r in s0)   # Σ w/PE0
+    y1_sum = sum(r[0] * r[1] for r in s0)   # Σ w/PE1
+    pe0_val = round(w0 / y0_sum, 2) if w0 and y0_sum > 0 else None
+    fy1_growth = round((y1_sum / y0_sum - 1) * 100, 2) if y0_sum > 0 else None
+    w01 = sum(r[0] for r in s01)
+    ya = sum(r[0] * r[1] for r in s01)      # Σ w/PE0（S01 內）
+    yb = sum(r[0] * r[2] for r in s01)      # Σ w/PEm1
+    fy0_growth = round((ya / yb - 1) * 100, 2) if w01 and yb > 0 else None
+
+    def _peg(pe, g):
+        return round(pe / g, 2) if pe is not None and g is not None and g > 0 else None
+
+    # 今年度 3 個月修正：跟 Exhibit 1 同一套（classify_revision 的無效基期排除與 ±50% 封頂、
+    # 覆蓋成分股權重重新正規化），只是換成 0y 的現值對 90 天前。
+    acc, cw = 0.0, 0.0
+    for c in constituents:
+        w = c.get("weight_pct") or 0
+        st, _r, _raw, capped = classify_revision(c.get("eps_fy_curr_90d_local"), c.get("eps_fy_curr_local"))
+        if st in ("ok", "capped") and capped is not None and w > 0:
+            acc += w * capped
+            cw += w
+    fy0_rev = round(acc / cw, 2) if cw > 0 else None
+    p90 = next((p for p in (periods or []) if p.get("key") == "90d"), None) or {}
+    fy1_rev = p90.get("eps_chg_pct")
+
+    return {
+        "fy0": {"pe": pe0_val, "eps_growth_pct": fy0_growth, "peg": _peg(pe0_val, fy0_growth),
+                 "rev_3m_pct": fy0_rev, "coverage_pct": _cov(s0), "pe_coverage_pct": _cov(s0),
+                 "growth_coverage_pct": _cov(s01),
+                 "rev_coverage_pct": round(cw / total_weight * 100, 2) if total_weight and cw else None},
+        "fy1": {"pe": pe1_all, "eps_growth_pct": fy1_growth, "peg": _peg(pe1_all, fy1_growth),
+                 "rev_3m_pct": fy1_rev, "coverage_pct": pe1_cov, "pe_coverage_pct": pe1_cov,
+                 "growth_coverage_pct": _cov(s0), "rev_coverage_pct": p90.get("coverage_pct")},
+        "note_zh": FORWARD_SUMMARY_NOTE_ZH,
+    }
+
+
 # ---------------------------------------------------------------------------
 # 報酬貢獻 (price-return contribution) — 2026-09-26 加。contribution_pct =
 # 目前權重 × 個股報酬%（見模組層 CONTRIB_PERIOD_DEFS）——用「目前權重」不是
@@ -2745,6 +2862,10 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             "price_fx_normalized": price_fx_normalized,
             "market_cap_local": info.get("market_cap"),  # 風格快照市值分位數用，見 fetch_ticker_eps_and_price()
             "price_quote_divisor": info.get("price_quote_divisor", 1),
+            # 2026-10-19 財務預估摘要用（今年度 EPS 三欄，當地幣別；缺值 None）
+            "eps_fy_curr_local": info.get("eps_fy_curr_local"),
+            "eps_fy_curr_90d_local": info.get("eps_fy_curr_90d_local"),
+            "eps_fy_prev_actual_local": info.get("eps_fy_prev_actual_local"),
         })
         constituents.append(rec)
 
@@ -2817,6 +2938,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
     # 個股本益比不在合理區間的先排除（見 compute_weighted_forward_pe() 上方
     # 模組註解的 PGR 案例）。
     weighted_fwd_pe, pe_coverage_pct, pe_excluded = compute_weighted_forward_pe(constituents, total_weight)
+    forward_summary = compute_forward_summary(constituents, total_weight, periods)
 
     # ---- daily snapshot (idempotent per day)
     snap_dir = SNAP_DIR / etf_key
@@ -2900,6 +3022,9 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             "price_currency": c["price_currency"], "has_stock_dash": c["has_stock_dash"],
             "price_quote_divisor": c.get("price_quote_divisor", 1),
             "revisions_pct": c["revisions_pct"],
+            "eps_fy_curr_local": c.get("eps_fy_curr_local"),
+            "eps_fy_curr_90d_local": c.get("eps_fy_curr_90d_local"),
+            "eps_fy_prev_actual_local": c.get("eps_fy_prev_actual_local"),
         }
     for e in excluded:
         cached_tickers[e["ticker"]] = {
@@ -2953,6 +3078,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
                       f"{PE_EXCLUDE_MIN_X:g}x 或 >{PE_EXCLUDE_MAX_X:g}x 視為資料異常，排除見 pe_excluded",
             "pe_excluded": pe_excluded,
         },
+        "forward_summary": forward_summary,
         "constituents": constituents,
         "excluded": excluded,
         "excluded_weight_pct": round(excluded_weight, 2),
@@ -3092,6 +3218,10 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
             "price_usd": round(price_usd, 4) if price_usd is not None else None,
             "price_fx_normalized": price_fx_normalized,
             "price_quote_divisor": quote_divisor,
+            # 舊快取（2026-10-19 前）沒有這三欄 → None，摘要表顯示「—」直到下次 FULL
+            "eps_fy_curr_local": info.get("eps_fy_curr_local"),
+            "eps_fy_curr_90d_local": info.get("eps_fy_curr_90d_local"),
+            "eps_fy_prev_actual_local": info.get("eps_fy_prev_actual_local"),
         })
         constituents.append(rec)
 
@@ -3150,6 +3280,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         if base_pt["eps_index"]:
             long_last_90d_pct = round(long_chart_series[-1]["eps_index"] / base_pt["eps_index"] * 100 - 100, 4)
     periods = eps_cache["periods"]  # 凍結，整週不變——見本函式 docstring
+    forward_summary = compute_forward_summary(constituents, total_weight, periods)
     yfinance_90d_pct = next((p["eps_chg_pct"] for p in periods if p["key"] == "90d"), None)
 
     breadth = compute_eps_breadth(constituents)
@@ -3192,6 +3323,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
                       f"個股本益比 <{PE_EXCLUDE_MIN_X:g}x 或 >{PE_EXCLUDE_MAX_X:g}x 視為資料異常，排除見 pe_excluded",
             "pe_excluded": pe_excluded,
         },
+        "forward_summary": forward_summary,
         "constituents": constituents,
         "excluded": excluded,
         "excluded_weight_pct": round(excluded_weight, 2),
@@ -3842,6 +3974,11 @@ def build_overview_json() -> dict:
             "implied_pe_chg_pct_30d": p30.get("implied_pe_chg_pct"),
             "implied_pe_chg_pct_90d": p90.get("implied_pe_chg_pct"),
             "weighted_forward_pe": fpe.get("value"),
+            # 2026-10-19 財務預估摘要欄（總覽表「明年 EPS 成長」「PEG」；今年度一併給）
+            "fy1_eps_growth_pct": ((d.get("forward_summary") or {}).get("fy1") or {}).get("eps_growth_pct"),
+            "fy1_peg": ((d.get("forward_summary") or {}).get("fy1") or {}).get("peg"),
+            "fy0_eps_growth_pct": ((d.get("forward_summary") or {}).get("fy0") or {}).get("eps_growth_pct"),
+            "fy0_peg": ((d.get("forward_summary") or {}).get("fy0") or {}).get("peg"),
             "eps_as_of": d.get("eps_as_of"),
             "as_of": d.get("as_of"),
             "mode": d.get("mode"),

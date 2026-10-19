@@ -77,6 +77,14 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .imq-table tbody tr:nth-child(even) td{background:#f5f6f8}
 .imq-table td.k{color:var(--sec);white-space:nowrap}
 .tbl-wrap{overflow-x:auto}
+/* 2026-10-19 財務預估摘要表：欄＝今年度／明年度，數字等寬；表頭沿用 .imq-table th 的深藍。
+   手機寬度只有 3 欄、第一欄允許換行，不會破版。 */
+#fwdSummaryTable{max-width:480px}
+#fwdSummaryTable th{white-space:normal}
+#fwdSummaryTable td.k{width:40%}
+#fwdSummaryTable td.k{white-space:normal}
+#fwdSummaryTable td.num{width:auto}
+#fwdSummaryTable td .cov{display:block;font-family:var(--sans);font-size:9.5px;color:var(--muted);font-weight:400}
 #periodsTable th{white-space:normal}
 #periodsTable td:first-child{white-space:nowrap}
 /* 總覽表 7 欄，跟 periodsTable 同一個問題：表頭若強制不換行，長標籤（如「隱含
@@ -317,7 +325,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 <section class="exhibit" id="ovExhibit">
   <div class="ex-label">總覽</div>
   <div class="ex-title">21 檔基金一覽</div>
-  <div class="ex-sub">依「美股大盤／美股產業／半導體／亞洲」分組；點欄位標題可排序（分組內排序，分組順序不變）</div>
+  <div class="ex-sub">依「美股大盤／美股產業／半導體／亞洲／歐洲與拉美」分組；點欄位標題可排序（分組內排序，分組順序不變）</div>
   <div class="conclusion" id="ovSummarySentence"></div>
   <div class="callout-tiles" id="ovTiles"></div>
 </section>
@@ -352,6 +360,13 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 <div id="fundView" style="display:none">
 <div class="ov-link-row"><a class="ov-link" href="?view=overview">&larr; 回總覽</a></div>
 <div class="info-strip" id="infoStrip"></div>
+
+<section class="exhibit" id="fwdSummary">
+  <div class="ex-label">財務預估摘要</div>
+  <div class="ex-title">成分股加權的今年度、明年度預估</div>
+  <div class="tbl-wrap"><table class="imq-table" id="fwdSummaryTable"></table></div>
+  <div class="ex-src" id="fwdSummaryNote"></div>
+</section>
 
 <section class="exhibit" id="exhibit1">
   <div class="ex-label">EXHIBIT 1</div>
@@ -649,6 +664,37 @@ function renderDailyUpdateLine(d){
   }
   bits.push('目前預估本益比 '+(pe!=null?fmtNum(pe,1)+'x':'無資料'));
   el.innerHTML = bits.join('；')+'。';
+}
+
+// 2026-10-19 財務預估摘要：資料來自 d.forward_summary（build_etf_dash.py::
+// compute_forward_summary）。缺值（含舊快取尚未有今年度欄位）一律顯示「—」。
+function fwdDash(){ return '<span style="color:var(--muted)">—</span>'; }
+function fwdPctColored(v){
+  if(v===null||v===undefined||Number.isNaN(v)) return fwdDash();
+  return '<span class="'+(v>=0?'x-pos':'x-neg')+'">'+fmtPct(v)+'</span>';
+}
+function fwdCov(c){ return (c!=null) ? '<span class="cov">涵蓋 '+c.toFixed(0)+'%</span>' : ''; }
+function renderFwdSummary(d){
+  var sec = document.getElementById('fwdSummary');
+  var fs = d.forward_summary;
+  var tbl = document.getElementById('fwdSummaryTable'), note = document.getElementById('fwdSummaryNote');
+  if(!fs){ tbl.innerHTML = '<tbody><tr><td class="k">財務預估摘要尚無資料，下次每週更新後出現。</td></tr></tbody>'; note.textContent=''; return; }
+  var y0 = fs.fy0 || {}, y1 = fs.fy1 || {};
+  function numCell(v, fmt, cov){ return '<td class="num">'+(v==null?fwdDash():fmt(v))+(v==null?'':fwdCov(cov))+'</td>'; }
+  function x1(v){ return fmtNum(v,1)+'x'; }
+  function x2(v){ return Number(v).toFixed(2); }
+  tbl.innerHTML =
+    '<thead><tr><th></th><th class="num">今年度</th><th class="num">明年度</th></tr></thead><tbody>'+
+    '<tr><td class="k">EPS 成長</td>'+
+      '<td class="num">'+(y0.eps_growth_pct==null?fwdDash():fwdPctColored(y0.eps_growth_pct)+fwdCov(y0.growth_coverage_pct))+'</td>'+
+      '<td class="num">'+(y1.eps_growth_pct==null?fwdDash():fwdPctColored(y1.eps_growth_pct)+fwdCov(y1.growth_coverage_pct))+'</td></tr>'+
+    '<tr><td class="k">本益比</td>'+numCell(y0.pe,x1,y0.pe_coverage_pct)+numCell(y1.pe,x1,y1.pe_coverage_pct)+'</tr>'+
+    '<tr><td class="k">PEG</td>'+numCell(y0.peg,x2,y0.growth_coverage_pct)+numCell(y1.peg,x2,y1.growth_coverage_pct)+'</tr>'+
+    '<tr><td class="k">3 個月修正</td>'+
+      '<td class="num">'+(y0.rev_3m_pct==null?fwdDash():fwdPctColored(y0.rev_3m_pct)+fwdCov(y0.rev_coverage_pct))+'</td>'+
+      '<td class="num">'+(y1.rev_3m_pct==null?fwdDash():fwdPctColored(y1.rev_3m_pct)+fwdCov(y1.rev_coverage_pct))+'</td></tr>'+
+    '</tbody>';
+  note.textContent = (fs.note_zh||'')+' 各數字下方為涵蓋的基金權重比例。';
 }
 
 function renderPeriodsTable(d){
@@ -1229,6 +1275,7 @@ function render(d){
   document.getElementById('ex1Src').textContent =
     '資料來源：'+(d.holdings_issuer_zh||'基金官方持股下載')+' + yfinance Ticker.eps_trend + yfinance ETF 日收盤';
   renderDailyUpdateLine(d);
+  renderFwdSummary(d);
   renderPeriodsTable(d);
   renderPeriodsQualityNote(d);
   renderStatRow(d);
@@ -1266,6 +1313,8 @@ var OV_COLUMNS = [
   {key:'price_chg_pct_90d', label:'股價 3M', full:'股價漲跌（3個月）', numeric:true},
   {key:'implied_pe_chg_pct_90d', label:'本益比變動 3M', full:'隱含本益比變動（3個月）', numeric:true, bar:true},
   {key:'weighted_forward_pe', label:'預估本益比', full:'目前預估本益比', numeric:true, lo:true},
+  {key:'fy1_eps_growth_pct', label:'明年 EPS 成長', full:'明年度 EPS 成長（成分股加權）', numeric:true, lo:true},
+  {key:'fy1_peg', label:'PEG', full:'明年度 PEG（本益比 ÷ 明年度 EPS 成長）', numeric:true, lo:true},
   {key:'eps_as_of', label:'EPS 更新', full:'EPS 預估更新日', numeric:false, lo:true},
   {key:'breadth_90d', label:'修正廣度 3M', full:'EPS 修正廣度（近三個月，上修/持平/下修權重佔比）', numeric:false, lo:true, sortable:false},
   {key:'flow_1m_net', label:'資金流 1M', full:'資金流淨額（近一個月，Δ受益權份額×NAV）', numeric:true, lo:true}
@@ -1326,6 +1375,8 @@ function ovRowHtml(row){
     '<td class="num">'+fmtPctColored(row.price_chg_pct_90d)+'</td>'+
     '<td class="num">'+divBarHtml(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d')+'</td>'+
     '<td class="num ov-col-lo">'+(row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—')+'</td>'+
+    '<td class="num ov-col-lo">'+(row.fy1_eps_growth_pct!=null?fwdPctColored(row.fy1_eps_growth_pct):fwdDash())+'</td>'+
+    '<td class="num ov-col-lo">'+(row.fy1_peg!=null?Number(row.fy1_peg).toFixed(2):fwdDash())+'</td>'+
     '<td class="ov-col-lo">'+esc(row.eps_as_of||'—')+'</td>'+
     '<td class="ov-col-lo">'+ovBreadthCellHtml(row.breadth_90d)+'</td>'+
     '<td class="num ov-col-lo">'+(row.flows_skipped?'<span style="color:var(--muted)">指數無資金流</span>':(row.flow_1m_net!=null?fmtMoney(row.flow_1m_net,row.flow_nav_currency):'累積中'))+'</td></tr>';
