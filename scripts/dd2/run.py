@@ -564,6 +564,7 @@ def _ma_state(ticker):
 
 def _inject_ma_facts(ctx, facts_path):
     """把六態與四個均線數字加進 facts.json 的 q5_valuation.facts；回 (label, snapshot)。"""
+    import dd_facts
     snap, label = _ma_state(ctx.ticker)
     _atomic_write_json(ctx.run_dir / "ma_snapshot.json", {"label": label, "snapshot": snap})
     facts = _load_json(facts_path)
