@@ -396,7 +396,7 @@ def _axis_block(axes):
         lines.append("[{0}] {1}".format(a.get("id"), a.get("name", "")))
         lines.append("Q: {0}".format(a.get("question", "")))
         if a.get("hint"):
-            lines.append("來源提示: {0}".format(a["hint"]))
+            lines.append("來源提示：{0}".format(a["hint"]))
         for q in a.get("queries", []) or []:
             lines.append("  - {0}".format(q))
         if a.get("na_allowed"):
