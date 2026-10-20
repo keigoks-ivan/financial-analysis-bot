@@ -35,6 +35,7 @@ from facts_store import FactsStore  # noqa: E402
 import bundle  # noqa: E402
 import spawn as sp  # noqa: E402
 import decide  # noqa: E402  機械閘（decide.py A/B/C/H 四類，2026-09-20）
+import primary_docs  # noqa: E402  一手文件由程式先抓好、切段，注入每軸題目（零 LLM）
 
 STAGES = ["plan", "stage0", "facts", "judged", "gated", "brief", "prose", "finish"]
 
@@ -387,6 +388,18 @@ def do_stage0(ctx):
             part["events"] = ctx.store.get_events()
         _atomic_write_json(parts_dir / "reused_coverage.json", part)
 
+    # 一手文件：程式先抓（台股＝公開資訊觀測站／年報／公平會、美股＝SEC EDGAR），依軸摘錄注入下面每軸題目；
+    # 零 LLM、同日同檔快取，失敗只記 note 不擋（見 primary_docs.py）
+    pdocs = {}
+    if stale_ids:
+        try:
+            pdocs = primary_docs.collect(ctx.ticker, ctx.date, run_dir)
+            pman = primary_docs.load_manifest(run_dir)
+            st["primary_docs"] = {"axis_counts": pman.get("axis_counts"), "requests": pman.get("requests"),
+                                  "sources": pman.get("sources")}
+        except Exception as e:  # noqa: BLE001  任何錯誤都不能擋 stage0
+            st["primary_docs"] = {"error": "{0}: {1}".format(type(e).__name__, str(e)[:200])}
+
     # 每軸一通
     specs = []
     by_id = {a.get("id"): a for a in axes}
@@ -409,6 +422,7 @@ def do_stage0(ctx):
             "PART_PATH": str(run_dir / part_rel),
             "EVENTS_BLOCK": ddreport.EVENTS_ADDENDUM if is_major else "",
             "EVENTS_JSON_KEY": (',\n  "events": ' + ddreport.EVENTS_JSON_SAMPLE) if is_major else "",
+            "PRIMARY_DOCS_BLOCK": primary_docs.render_axis_block(pdocs, axis_id),
         }
         text = ddreport._render_template(COVERAGE_TMPL, mapping)
         prompt_rel = "prompts/a_{0}_{1}.md".format(k, axis_id)
