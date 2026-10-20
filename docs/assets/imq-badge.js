@@ -361,7 +361,7 @@
       own == null ? "—" : ("<b>" + fmt1(own) + "</b>" + (seat ? (" " + esc(SEAT_LABEL[seat])) : "")),
       (singleYear ? "單年成長法　" : "") + "上修、動能、成長、品質、盈餘殖利率五項排名百分位的平均，只供對照，不決定排序"
     );
-    html += popupRow("時機", chip(t), prev ? ("來自" + esc(prev.label) + "，" + prev.days + " 天前") : "");
+    html += popupRow("階段", chip(t), prev ? ("來自" + esc(prev.label) + "，" + prev.days + " 天前") : "");
     html += popupRow("DD 裁決", chip(d), (d.tag && d.tag !== d.label) ? esc(d.tag) : "");
     return html;
   }
@@ -821,7 +821,7 @@
         "品質未過＝差哪一條，點徽章看差多少；無品質資料＝沒有財務資料可判，不是未過。</p>" +
         "<p><b>列的意思</b>：每一段一行，過渡＝不符合以上任何一段的殘差態（資料不足、流動性不夠或分類不到），預設收合、可展開查看。</p>" +
         "<ul>" + stageLines + "</ul>" +
-        "<p><b>有標籤的格子</b>：最該看（品質過×轉強、品質過×收縮完成）——基本面過關，時機最明確的兩種狀態：回檔剛結束，或波動已收縮到等突破，這兩格最值得花時間看。" +
+        "<p><b>有標籤的格子</b>：最該看（品質過×轉強、品質過×收縮完成）——基本面過關，而且走到最值得看的兩段：回檔剛結束，或波動已收縮到等突破，這兩格最值得花時間看。" +
         "持股警訊（品質過×弱勢）——基本面過關但動能轉弱，若是手上持股要留意。" +
         "研究隊列（品質未過×領先）——動能很強但財務數字還沒達標，值得研究但不是現成標的。" +
         "略過（品質未過×弱勢）——兩邊都沒亮，預設收合、不用花時間。" +
@@ -919,7 +919,7 @@
 
       var s2 = '<li class="qtm-weekly-step"><div class="qtm-weekly-head"><span class="qtm-weekly-num">②</span>' +
         '<span class="qtm-weekly-title">最該看</span><span class="qtm-weekly-count">' + step2Count + " 檔</span></div>" +
-        '<p class="qtm-weekly-desc">基本面過關，而且時機最明確的兩種狀態：回檔剛結束，或波動已收縮到等突破。去看 DD 裁決與板機。轉強本身沒有統計優勢（見下方對照組），收縮完成是最緊、最可證偽的一段。</p>' +
+        '<p class="qtm-weekly-desc">基本面過關，而且走到最值得看的兩段：回檔剛結束，或波動已收縮到等突破。去看 DD 裁決與時機燈。轉強本身沒有統計優勢（見下方對照組），收縮完成是最緊、最可證偽的一段。</p>' +
         weeklySubgroupHTML("回檔剛結束（轉強）", step2S1) +
         weeklySubgroupHTML("收縮完成、等突破", step2S3) +
         "</li>";
@@ -990,7 +990,7 @@
       }
       el.innerHTML =
         '<div class="qtm-matrix">' +
-        "<h3>品質 × 時機</h3>" +
+        "<h3>品質 × 階段</h3>" +
         '<p class="qtm-lede">橫看基本面過不過閘，直看現在走到生命週期哪一段；多層都亮的格子是觀察池，只亮一邊的格子是研究隊列，兩邊都不亮的略過。它只回答「看誰」，不是買賣指令。</p>' +
         controlsHTML() +
         renderLegend() +

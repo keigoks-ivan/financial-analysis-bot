@@ -578,15 +578,21 @@ def timing_lamp(s: dict, yellow_full: bool = False) -> dict:
         px = _f(ma.get("price"))
         need = ""
         if ath_px is not None and px is not None and px > 0:
-            need = f"（現價 {px:.2f}，還原新高 {ath_px:.2f}，需再漲 {(ath_px / px - 1) * 100:.1f}%）"
+            relight = ath_px * (1 + ATH_RED_DIST / 100)
+            need = (f"（現價 {px:.2f}，還原新高 {ath_px:.2f}，再漲 {(relight / px - 1) * 100:.1f}% "
+                    f"回到距新高 {abs(ATH_RED_DIST):.0f}% 內）")
         elif ath_px is not None:
             need = f"（還原新高 {ath_px:.2f}）"
         red_hits.append(f"距歷史新高 {dist_ath:+.1f}%{need}")
+    relight_if = []
+    if red_hits:
+        relight_if.append(f"回到距新高 {abs(ATH_RED_DIST):.0f}% 內")
     if vs200 is not None and vs200 < 0:
         red_hits.append(f"跌破 200 日線 {vs200:+.1f}%")
+        relight_if.append("站回 200 日線")
     if red_hits:
         return {"code": "red", "label": "🔴 等板機", "size": 0.0,
-                "trigger": "突破還原歷史新高", "why": "、".join(red_hits)}
+                "trigger": "且".join(relight_if), "why": "、".join(red_hits)}
 
     green_ok = dist_ath is not None and dist_ath >= ATH_GREEN_DIST and (vs200 is None or vs200 >= 0)
     overheated = mom is not None and mom > MOM_12_1_OVERHEAT

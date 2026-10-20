@@ -59,12 +59,15 @@ def test_timing_lamp_out_when_below_w52():
 def test_timing_lamp_red_dist_ath_below_minus10():
     lamp = grp.timing_lamp(_lamp_input(dist_ath=-15.0))
     assert lamp["code"] == "red"
-    assert lamp["trigger"] == "突破還原歷史新高"
+    assert lamp["trigger"] == "回到距新高 10% 內"
 
 
 def test_timing_lamp_red_vs200_negative_even_near_high():
     lamp = grp.timing_lamp(_lamp_input(dist_ath=-1.0, vs200=-2.0))
     assert lamp["code"] == "red", "距新高很近但跌破 200 日線仍是紅燈"
+    assert lamp["trigger"] == "站回 200 日線"
+    both = grp.timing_lamp(_lamp_input(dist_ath=-15.0, vs200=-2.0))
+    assert both["trigger"] == "回到距新高 10% 內且站回 200 日線"
 
 
 def test_timing_lamp_green_all_conditions_met():
