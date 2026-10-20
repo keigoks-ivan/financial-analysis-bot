@@ -475,6 +475,16 @@ def _recency_fact(numbers, buckets):
 # coverage／events → findings_digest（不按方向裁掉）
 # ---------------------------------------------------------------------------
 
+def _digest_empty_status(status):
+    """無 findings 的軸在 digest 的狀態：none 照抄；not_applicable（2026-10-20 起由程式
+    依業態標記）照抄，不算缺口；其餘（pending、found 卻無 findings）才是 gap。"""
+    if status in ("none", None):
+        return "none"
+    if status == "not_applicable":
+        return "not_applicable"
+    return "gap"
+
+
 def build_findings_digest(evidence) -> list:
     """逐條抄 coverage／events 的 findings；查無料的軸（status=none／
     not_applicable 且無 findings）也各留一條 status 條目，讓缺口看得見。
@@ -494,7 +504,7 @@ def build_findings_digest(evidence) -> list:
                     "section": section,
                     "direction": None,
                     "claim": None,
-                    "status": "none" if v.get("status") in ("none", None) else "gap",
+                    "status": _digest_empty_status(v.get("status")),
                     "source": None,
                     "as_of": None,
                 })

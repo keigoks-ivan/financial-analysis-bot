@@ -520,7 +520,7 @@
 |---|---|---|---|---|
 | **DD 閘 ⑤ 覆蓋面燈號改由程式依 `evidence.json` 的 coverage 判定：任一核心軸 none（含 pending、整軸缺席）→ 🔴 並直接停下（印「核心軸缺證據：…」，不跑 patch、不再閘）；只有非核心軸 none → 🟡；全部 found／not_applicable → 🟢。閘 agent 回的 ⑤ 被程式覆寫，不同時記進 manifest `mechanical_overrides`，閘 agent 只評論。核心軸＝共用四條（競爭份額、供需持續性、終端市場、客戶集中度）＋各 archetype 加項（循環：供給紀律與新產能、庫存價格位置；未獲利：稀釋軌跡、轉正路徑；金融：資本信用週期；轉機：催化劑時程、清算價值底；公用：費率案與准許 ROE；EMS：稼動率與資本支出週期；品質複利無加項）；其餘為非核心。金融的 `customer_second_source`、`customer_concentration_credit` 由程式標 not_applicable，stage0 不派 agent**（清單與理由見 `coverage-axes.md` 的 `core_axes`／`not_applicable_by_archetype`；實作 `dd_evidence.py::coverage_gate`、`dd2/run.py::_coverage_gate`） | 2026-10-20 | 持有人 2026-10-20 核准。普查 53 次 v20 執行：閘 agent 對同型空軸判得不一致——10-11 八檔台股各空 3～7 軸全放行、2059 空 5 軸放行，6515 只空反壟斷一軸卻被擋紅；最終輪 52 份 gate_result 的 ⑤ 紅 2、黃 41、綠 9。另有 5 個空軸 note 明寫「本軸不適用此業態」（金融、藥廠、零售的客戶第二來源），卻因 `na_allowed=false` 只能回 none | 上線後 30 份 v20 DD 內，若有 ≥1 例 ⑤ 為黃而放行、其空軸恰為事後 90 天內實際發生的負面事件面向（例如反壟斷調查、主要客戶轉單），撤回改回閘 agent 判定 | 尚未審計（2026-10 輪之後上線）。回溯考卷見下 |
 
-加一提刪一：候刪審查對象為「覆蓋面缺軸本身即 🔴」（repo CLAUDE.md DD critic 職責書 (a)；`gate_contract.md` §⑤ 與 `critic-gates.md` ⑤ 同文）——本規則取代它：缺軸不再自動紅，只有核心軸缺證據才紅。舊條文在舊鏈（`ddreport.py`）與 CLAUDE.md 仍在，與 v20 閘卡 `gate_card.md` 的 ⑤ 已不一致，待持有人決定是否改寫。
+加一提刪一：候刪審查對象為「覆蓋面缺軸本身即 🔴」（repo CLAUDE.md DD critic 職責書 (a)；`gate_contract.md` §⑤ 與 `critic-gates.md` ⑤ 同文）——本規則取代它：缺軸不再自動紅，只有核心軸缺證據才紅。持有人 2026-10-20 決定統一：CLAUDE.md (a)、`gate_contract.md` §⑤、`critic-gates.md` ⑤、`v16/agent-prompts.md` ⑤ 同日改成本規則，舊條文刪除。
 
 **回溯考卷（2026-10-20，唯讀 `.dd_build/runs/*_202609*、*_202610*`）**：83 夾中 53 份有閘結果且證據完整（另 6 份 evidence 為 pending，排除），新規則燈號與實際閘 agent 的 ⑤ 逐夾對照：
 - 分布：實際紅 2／黃 42／綠 9 → 新規則紅 9／黃 33／綠 11。

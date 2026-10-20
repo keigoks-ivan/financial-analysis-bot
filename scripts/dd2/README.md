@@ -315,3 +315,20 @@ C 類 0 題（MU 的 `findings_digest` 23 條負向 finding 全部已在 judgmen
 **補資料（零 LLM）**：`dd_numbers_extra.compute_capital_structure` → `evidence.numbers.capital_structure`；`dd_facts._valuation_facts` 落成 `f_net_debt_m`、`f_shares_diluted_m`、`f_ev_m`、`f_rev_consensus_fy1_m`／`fy2_m`、`f_ev_s_fwd`（金額單位＝百萬，幣別＝財報申報幣別，寫在 fact 的 `unit`）。注意既有 `f_consensus_rev_fy*_pct` 其實是 EPS 修正率，未改名未動。限制：yfinance `revenue_estimate` 只有 0y／+1y 兩個年度，**無 FY3 共識營收**（`f_rev_consensus_fy3_m` 不會產生）；財報幣別 ≠ 報價幣別（ADR）時 `fx_mismatch=true`、`f_ev_m`／`f_ev_s_fwd` 不產生，淨負債與營收仍給但判斷者必須自行對齊幣別與 ADR 比例。股數＝`impliedSharesOutstanding`（各類股合計）而非完全稀釋，終端股數的稀釋由判斷者在 `shares_y5` 反映。
 
 **呈現**：`bundle.py` 尾段依口徑給 `_SCENARIO_INPUTS_SHAPE_SALES`；`cards/judge_card.md`③、`judge_addendum_archetype.md`QC-45、`gate_card.md`⑥(ii) 各加一段；QC-48 Bull 區段在 sales 模式起始價直接用 `scenario.json` 的 price。`gen_dd_tables.py` 情境樹表（`v19-stree`）sales 模式顯示起點列（營收／EV/S）＋逐年營收＋終端 EV/S＋終端淨負債／股數；`dd_scenario --html` 的 e11 表顯示終端營收、EV/S、淨負債／股數、終端每股價、每股營收貢獻、倍數貢獻。
+
+## 10｜2026-10-20 根因修正（台股常跑不過）
+
+**背景**：普查 53 次 v20 執行，最終發布 83%，一次跑過只有 32%（台股 6%）；空軸共 98 個，台股平均每檔 2.9 軸、美股 1.4 軸，其中 43 個是「有網址、沒拿到原文」。持有人不接受加查證輪數（每檔多約 $1.5），改由程式補。
+
+- **plan 前置檢查**：代號沒寫交易所尾碼時 `_infer_exchange_suffix` 自動補（.TW／.TWO）。對手只照 id-meta 同產業規則挑；`_peers_from_screener` 只在錯誤訊息裡列候選，不自動選（曾把 JPM 配到 Visa）。沒有舊報告、也沒有產業 ID 的新台股要先給 `--peers`。
+- **一手文件（`primary_docs.py`＋`primary_tw.py`／`primary_us.py`，零 LLM）**：stage0 開頭 `primary_docs.collect()`，台股抓 doc.twse t57sb01 年報主要銷貨客戶表（pdftotext）、新版 MOPS `POST /mops/api/t05st01` 重大訊息、公平會處分書；美股抓 EDGAR 10-K／20-F／8-K。各軸 prompt 以 `{{PRIMARY_DOCS_BLOCK}}` 注入相關摘錄。抓到的資料另存 `~/v7-backtest/data/primary_docs/`（已登記 catalog）。
+- **線索補原文（`clue_backfill.py`）**：agent 有網址沒拿到原文時寫進 `clues`（url＋match_terms）。程式在每 part 驗證前抓頁面，找 400 字窗內命中 ≥2 個且過半的詞：找到 → finding（`excerpt_source=program_fetch`）；找不到或抓不到 → 仍留 finding，`excerpt=null`、`excerpt_source=search_summary`（不可丟，否則證據變少：2383 一度 28→16 條）。found 但 findings 空 → 改 none。`rescue_undated` 同一步補無日期 finding 的日期。
+- **單次查詢的空軸**：`_retry_thin_none_axes` 對只查 1 次就回 none 的軸重派一次，重派後再跑一次補原文（manifest `clue_backfill_retry`）。
+- **證據庫**：none、pending、缺席、found 卻無 findings 一律視為過期，每次重查（以前 none 會被沿用 90 天）。
+- **閘 ⑤ 程式判定**：核心軸 none → 🔴，只缺非核心軸 → 🟡，全 found／not_applicable → 🟢（`dd_evidence.coverage_gate`、`run.py::_coverage_gate`；清單在 `coverage-axes.md` 的 `core_axes`／`not_applicable_by_archetype`）。facts 段結尾先算一次，核心軸缺就停，不花 opus 判斷費。金融的客戶第二來源、客戶集中度標 not_applicable、不派 agent，寫 `parts/na_coverage.json`。閘 agent 回的 ⑤ 被程式覆寫並記 `mechanical_overrides`。規則與撤回條件見 `knowledge/rule_ledger.md` 2026-10-20。
+- **散文修補**：`_prose_fix_spawn` 同一通也補「數字沒出現在正文」的缺漏。
+- **發布自救（`ddreport.py`）**：cherry-pick 只在 5 個彙總檔衝突時，`_rescue_aggregate_conflict` 在 origin/main 只放自己的檔、合併 INDEX 列、重跑 `update_dd_index.py`（約 9 分）再推；non-fast-forward 換乾淨 worktree 重推；pre-push QC 只因「連到尚未發布的 DD」擋下時同樣走重建（同一棵樹多檔先後 finish 會發生）。
+
+**用法注意**：`--redo` 不會連帶重跑後段，要列全，例如 `--redo facts,judged,gated,brief,prose`。zsh 下 `run.py $spec` 不拆字，整串會被當成代號，參數直接寫在指令裡。
+
+**實測（2026-10-20）**：2303.TW 空軸 3→1、閘第 2 輪 0 紅、$5.92；2383.TW 4→2（皆非核心）、第 1 輪 0 紅、$4.79；MU 0 空軸、第 1 輪 0 紅、$4.27（09-17 版卡在閘）。三檔皆觀望｜追蹤，都由發布自救推上站。

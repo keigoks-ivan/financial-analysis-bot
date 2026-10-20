@@ -163,7 +163,8 @@ premortem 等）≤3 行推導，第二階段會原樣鋪進 <div class="reasoni
    哪一項在 \`coverage\` 有料卻沒進 \`contradictions\`／\`premortem\`／\`triggers\`？
 ④ priced-in——共識與賣方目標價 vs 現價，我的裁決是否只是把市場已知的事再說一次？
 ⑤ **覆蓋面掃描**——\`evidence.json.coverage\` 中 status="none"／"not_applicable" 的**每一軸**逐軸點名：
-   理由站得住嗎？queries_run 是否 <2 條或不相關？**缺軸本身即 🔴**，不需先證明結論錯；🔴 時回報
+   理由站得住嗎？queries_run 是否 <2 條或不相關？**核心軸（coverage-axes.md 的 core_axes）缺即 🔴**，
+   不需先證明結論錯；只缺非核心軸 🟡（2026-10-20 改，見 rule_ledger）；🔴 時回報
    orchestrator 該軸需回 Stage 0 補搜，不得自己上網補。
 ⑥ **量化模組完整性抽查**——(i) \`moat.roic_durability.reinvest_rate\`／\`.roiic\` 是否有 \`.formula_note\`
    實算（寫「估計約 X%」無算式＝🔴）；\`.endo_ceiling\` 是否與 valuation 隱含共識 EPS CAGR 交叉檢查

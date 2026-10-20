@@ -54,7 +54,9 @@ Stage 0 evidence 收集的職責，不是閘的職責）。
 
 **⑤ 覆蓋面掃描（強制）**：gate_view (c) 表逐軸點名 `status="none"`／`"not_applicable"` 的每一軸——
 理由站得住嗎？查詢是否切題且足以支撐該軸結論（看下方查詢詞明細判斷，不以 `n_queries` 次數計）？
-**缺軸本身即 🔴，不需先證明結論錯**——這是 critic-gates.md QC-41 ⑤ 原文的核心主張，v17 版唯一差異是
+**核心軸（`coverage-axes.md` 的 `core_axes`）none 即 🔴，不需先證明結論錯；只有非核心軸 none 為 🟡；依業態
+不適用（`not_applicable_by_archetype`）不算缺**（2026-10-20 由「缺軸本身即 🔴」改寫，見 rule_ledger；
+v20 由程式判定，見 `scripts/dd2/cards/gate_card.md` ⑤）——與 critic-gates.md QC-41 ⑤ 同一條規則，v17 版唯一差異是
 查詢詞明細已經機械列在 gate_view 裡，閘不必自己去猜「查了什麼」。（2026-09-10 WP-E：口徑從「次數
 <2」改「切題且足以支撐結論」，與 B8 撤配額後的機械 coverage 閘 `queries_run≥1` 同步，不再要求湊
 次數。）
