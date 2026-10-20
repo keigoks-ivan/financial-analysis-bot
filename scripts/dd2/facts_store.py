@@ -295,6 +295,9 @@ class FactsStore(object):
         """回 `{"stale": [axis_id...], "fresh": {axis_id: axis_obj}}`。
 
         stale 條件（任一命中即 stale，不重疊檢查）：
+          0. 存查的軸是空的（status 為 none／pending／缺，或 found 但 findings 為空），不論 TTL
+             （2026-10-20：空軸被當 fresh 沿用 90～180 天，新的一手抓取、補原文都不會觸發）。
+             not_applicable 不算空，照 TTL。
           1. store 裡沒有這軸的存查。
           2. `age_days >= TTL_DAYS.get(axis_id, DEFAULT_TTL_DAYS)`（剛好到期算 stale）。
           3. `new_quarter` 為 True 且軸屬於 `FORCE_REFRESH_NEW_QUARTER_AXES`。
@@ -316,6 +319,10 @@ class FactsStore(object):
             try:
                 fetched_d = _parse_date(entry.get("fetched_at"))
             except (TypeError, ValueError):
+                stale.append(axis_id)
+                continue
+            status = entry.get("status")
+            if status != "not_applicable" and (status != "found" or not entry.get("findings")):
                 stale.append(axis_id)
                 continue
             age_days = max(0, (today_d - fetched_d).days)
