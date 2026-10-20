@@ -1562,6 +1562,7 @@ def cmd_plan(args):
             "PART_PATH": str(part_path),
             "EVENTS_BLOCK": EVENTS_ADDENDUM if is_major else "",
             "EVENTS_JSON_KEY": (',\n  "events": ' + EVENTS_JSON_SAMPLE) if is_major else "",
+            "PRIMARY_DOCS_BLOCK": "",  # 一手文件摘錄只在 v20（dd2）注入；舊鏈留空
         }
         prompt_text = _render_template(PROMPTS_TMPL_DIR / "coverage.md.tmpl", mapping)
         prompt_rel = "prompts/a_{0}.md".format(k)
