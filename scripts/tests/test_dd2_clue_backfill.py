@@ -608,3 +608,19 @@ def test_rescue_over_http_uses_page_meta_date(server, tmp_path):
     st = cb.rescue_undated(path, tmp_path / "fetch_cache")
     assert (st["rescued"], st["fetch_failed"]) == (1, 1)
     assert _read(path)["findings"][0]["as_of"] == "2026-10-14"
+
+
+def test_found_with_only_clues_becomes_none_when_nothing_verified(tmp_path):
+    # 2383.TW 2026-10-20 供需軸：agent 只交 clues 卻填 found，全沒核實要改回 none，否則驗證判不合格
+    part = {"coverage": {"supply_demand_durability": _axis(status="found", clues=[
+        _clue(terms=["完全無關", "不存在的詞"])])}}
+    run = _run_dir(tmp_path, {"axes_4.json": part}, [{"id": "supply_demand_durability", "affects": ["thesis.H"]}])
+    cb.backfill(run, fetch=_fake_fetch({"https://news.example.com/a": {}}))
+    ax = json.loads((run / "parts" / "axes_4.json").read_text(encoding="utf-8"))["coverage"]["supply_demand_durability"]
+    assert ax["status"] == "none" and ax["findings"] == [] and "clues" not in ax
+    # 核實到一條就維持 found
+    part["coverage"]["supply_demand_durability"] = _axis(status="found", clues=[_clue()])
+    run2 = _run_dir(tmp_path / "r2", {"axes_4.json": part}, [{"id": "supply_demand_durability", "affects": ["thesis.H"]}])
+    cb.backfill(run2, fetch=_fake_fetch({"https://news.example.com/a": {"page_date": "2026-10-14"}}))
+    ax2 = json.loads((run2 / "parts" / "axes_4.json").read_text(encoding="utf-8"))["coverage"]["supply_demand_durability"]
+    assert ax2["status"] == "found" and len(ax2["findings"]) == 1

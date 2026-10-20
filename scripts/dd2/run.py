@@ -409,6 +409,18 @@ def _retry_thin_none_axes(ctx, st, specs, py):
     ctx.save()
 
 
+def _clue_backfill(run_dir, st, key):
+    """線索補原文：agent 有網址沒拿到原文的線索，程式零 LLM 補抓（失敗只記錄不擋）。
+    已處理的 clues 會從 part 拿掉，重複呼叫只處理新出現的。"""
+    try:
+        from clue_backfill import backfill
+        res = backfill(run_dir)
+        if res.get("clues") or key == "clue_backfill":
+            st[key] = res
+    except Exception as exc:
+        st[key] = {"error": repr(exc)}
+
+
 def do_stage0(ctx):
     st = ctx.stage_begin("stage0")
     run_dir = ctx.run_dir
@@ -571,6 +583,10 @@ def do_stage0(ctx):
             st["agent_usage"].append(_usage_record(s["id"], r, {"axis_id": s.get("axis_id")}))
         ctx.save()
 
+    # 線索補原文要在驗 part 之前：agent 只交 clues 時 findings 是空的，先驗會整軸判不合格
+    # （2383.TW 2026-10-20 供需軸）。補派的軸在下面 _retry_thin_none_axes 之後再跑一次。
+    _clue_backfill(run_dir, st, "clue_backfill")
+
     # 驗 part；缺檔或不合格 → 寫成 none＋note，不重試
     incomplete = []
     for s in specs:
@@ -614,11 +630,7 @@ def do_stage0(ctx):
     _retry_thin_none_axes(ctx, st, specs, py)  # none 但只查 1 條的軸補派一次（2026-10-20）
     st["incomplete_axes"] = incomplete
 
-    try:  # 線索補原文：agent 有網址沒拿到原文的線索，程式零 LLM 補抓（失敗只記錄不擋）
-        from clue_backfill import backfill
-        st["clue_backfill"] = backfill(run_dir)
-    except Exception as exc:
-        st["clue_backfill"] = {"error": repr(exc)}
+    _clue_backfill(run_dir, st, "clue_backfill_retry")
     rc, out, needs = ddreport._finalize_run_dir(run_dir)
     st["finalize_rc"] = rc
     if rc != 0:

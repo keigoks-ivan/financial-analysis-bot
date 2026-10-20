@@ -675,6 +675,10 @@ def backfill(run_dir, max_urls=MAX_URLS, fetch=None):
             note = (axis_obj.get("note") or "").rstrip()
             axis_obj["note"] = (note + " " if note else "") + "線索 {0} 條，程式核實 {1} 條".format(n_clues, verified)
             del axis_obj["clues"]  # 核實不了的線索不進證據包
+            # agent 只交 clues 卻填 found（2383.TW 2026-10-20 供需軸）：線索全沒核實就是空軸，
+            # 留 found＋空 findings 會被 validate_evidence 判不合格、整軸記成 incomplete
+            if axis_obj.get("status") == "found" and not axis_obj.get("findings"):
+                axis_obj["status"] = "none"
 
     backup_dir = parts_dir / "_pre_backfill"
     for p, obj, axes in loaded:
