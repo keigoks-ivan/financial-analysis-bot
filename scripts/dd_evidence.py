@@ -4,6 +4,8 @@
 子命令：
   axes    --archetype X [--segments a,b,c] [--ticker T --company C --industry I --customers X] [--json]
           印出該 archetype 應查的軸清單（含 per_segment 展開＋佔位符替換），供 orchestrator fan-out 派工。
+          軸物件另帶標記（2026-10-20）：`core: true`＝核心軸（閘 ⑤ 依此判紅）、
+          `not_applicable_reason`＝此 archetype 明確不適用（dd2 stage0 不派 agent，直接寫 not_applicable）。
   init    TICKER DATE --archetype X [--segments a,b,c]
           寫 .dd_build/{TICKER}_{DATE}.evidence.json 骨架（coverage 依 archetype 展開，全部 status=pending）。
   merge   FILE PART.json
@@ -112,7 +114,93 @@ def resolve_axes(matrix, archetype, segments=None, values=None, market=None):
                 resolved.append(_apply_placeholders(a, seg_values))
         else:
             resolved.append(_apply_placeholders(dict(axis), values))
+    # 2026-10-20：核心軸／不適用軸標記（資料在 coverage-axes.md 的 core_axes／not_applicable_by_archetype）
+    core, na = core_axis_ids(matrix, archetype), na_axis_reasons(matrix, archetype)
+    for a in resolved:
+        base = a["id"].split("__", 1)[0]
+        if base in core:
+            a["core"] = True
+        if base in na:
+            a["not_applicable_reason"] = na[base]
     return resolved
+
+
+def core_axis_ids(matrix, archetype):
+    """該 archetype 的核心軸 base id 集合＝共用核心＋該類加項（per_segment 軸以展開前 id 計）。"""
+    core = matrix.get("core_axes") or {}
+    return set(core.get("common") or []) | set((core.get("by_archetype") or {}).get(archetype) or [])
+
+
+def na_axis_reasons(matrix, archetype):
+    """該 archetype 明確不適用的軸 → 理由（空 dict＝沒有）。"""
+    items = (matrix.get("not_applicable_by_archetype") or {}).get(archetype) or []
+    return {x["id"]: x["reason"] for x in items if x.get("id") and x.get("reason")}
+
+
+def _axis_names(matrix):
+    names = {a["id"]: a.get("name", "") for a in matrix.get("common", [])}
+    for axes in (matrix.get("by_archetype") or {}).values():
+        for a in axes:
+            names[a["id"]] = a.get("name", "")
+    return names
+
+
+def coverage_gate(coverage, matrix, archetype):
+    """閘 ⑤ 覆蓋面燈號（程式判定，2026-10-20 持有人核准；取代閘 agent 自由判）。
+
+    只看 evidence.json 的 coverage 與 archetype 的核心軸清單：
+      任一核心軸 none（含 pending、整軸缺席）→ 🔴；
+      核心軸全有證據、只有非核心軸 none → 🟡；全部 found／not_applicable → 🟢。
+    per_segment 軸（end_markets__*）以 base id 歸組：整組全空才算該軸 none；只有部分分段空 → 🟡。
+    found／not_applicable 都算有證據；not_applicable 若是採證 agent 自報（不是 archetype 設定標的，
+    沒有 na_source）而且落在核心軸，燈號不變，但列在 agent_na_core 供稽核。
+    回 dict：light／reason／core_none／noncore_none／partial／agent_na_core／archetype。"""
+    core = core_axis_ids(matrix, archetype)
+    names = _axis_names(matrix)
+    groups = {}
+    for axis_id, c in (coverage or {}).items():
+        base = axis_id.split("__", 1)[0]
+        groups.setdefault(base, []).append((axis_id, c if isinstance(c, dict) else {}))
+
+    def label(base):
+        return "{0}（{1}）".format(base, names[base]) if names.get(base) else base
+
+    def empties(base):
+        return [aid for aid, c in groups.get(base, []) if c.get("status") not in ("found", "not_applicable")]
+
+    core_none, partial, agent_na_core = [], [], []
+    for base in sorted(core):
+        members = groups.get(base) or []
+        bad = empties(base)
+        if not members or len(bad) == len(members):
+            core_none.append(base)
+        elif bad:
+            partial.append(base)
+        for aid, c in members:
+            if c.get("status") == "not_applicable" and c.get("na_source") != "archetype":
+                agent_na_core.append(aid)
+    noncore_none = sorted(b for b in groups if b not in core and len(empties(b)) == len(groups[b]))
+
+    if core_none:
+        light = "🔴"
+        reason = "核心軸缺證據：{0}。".format("、".join(label(b) for b in core_none))
+    elif noncore_none or partial:
+        light = "🟡"
+        bits = []
+        if partial:
+            bits.append("核心軸只有部分分段無證據：{0}".format("、".join(label(b) for b in partial)))
+        if noncore_none:
+            bits.append("非核心軸無證據：{0}（尾部風險或事件型，不擋）".format("、".join(label(b) for b in noncore_none)))
+        reason = "；".join(bits) + "。"
+    else:
+        light = "🟢"
+        reason = "核心軸皆有證據或不適用，非核心軸也沒有空軸。"
+    if noncore_none and core_none:
+        reason += "另有非核心軸無證據：{0}。".format("、".join(label(b) for b in noncore_none))
+    if agent_na_core:
+        reason += "核心軸由採證 agent 自報不適用（燈號不變，請看 note 理由）：{0}。".format("、".join(agent_na_core))
+    return {"light": light, "reason": reason, "core_none": core_none, "noncore_none": noncore_none,
+            "partial": partial, "agent_na_core": agent_na_core, "archetype": archetype}
 
 
 def _localize_axis(axis, matrix, market):
@@ -154,8 +242,10 @@ def cmd_axes(args):
         return 0
     print(f"archetype={args.archetype!r}　軸數={len(axes)}")
     for a in axes:
-        print(f"\n[{a['id']}] {a['name']}")
+        print(f"\n[{a['id']}] {a['name']}" + ("　（核心軸）" if a.get("core") else ""))
         print(f"  Q: {a['question']}")
+        if a.get("not_applicable_reason"):
+            print(f"  (此 archetype 不適用：{a['not_applicable_reason']})")
         for q in a["queries"]:
             print(f"    - {q}")
         if a.get("na_allowed"):

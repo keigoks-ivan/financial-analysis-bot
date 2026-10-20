@@ -6,6 +6,8 @@
 - 強制刷新：`new_quarter` 使 90 天軸失效、`price_move_pct` 使
   `capital_markets_pricing` 失效、`major_events` 14 天窗且不受兩種強制刷新影響
 - `plan_refresh` 對未知軸 id 用預設 90 天（TTL 邊界與強制刷新不套用）
+- `plan_refresh` 把空軸（none／pending／缺 status／found 但無 findings）一律列 stale，不論 TTL；
+  not_applicable 照 TTL
 - `seed_from_evidence` 不覆蓋較新（含同日）的既有存查
 - `plan_refresh` 回傳的 fresh 物件（含 findings 逐條）帶 `reused_from`／`age_days`
 - `put_axis` 的 `axis_meta`（顯式傳入優先於 `.dd_build/runs/{run}/axes.json` 查找）
@@ -170,6 +172,40 @@ def test_plan_refresh_unknown_axis_defaults_to_90_days(tmp_path):
 
     store.put_axis(axis_id, _mk_axis_obj(), _iso(TODAY - datetime.timedelta(days=89)), "R2")
     assert store.plan_refresh([axis_id], TODAY)["stale"] == []
+
+
+def test_plan_refresh_empty_axis_is_stale_regardless_of_ttl(tmp_path):
+    store = FactsStore(tmp_path, "TICK")
+    fetched_at = _iso(TODAY - datetime.timedelta(days=1))  # 遠未到 TTL
+    cases = {
+        "competitive_share_entrants": _mk_axis_obj(status="none", findings=[]),
+        "customer_concentration_credit": _mk_axis_obj(status="pending", findings=[]),
+        "supply_demand_durability": _mk_axis_obj(status="found", findings=[]),  # found 但沒有 finding
+        "regulatory_antitrust": {"queries_run": ["q"], "findings": [{"claim": "c"}]},  # 缺 status
+    }
+    for axis_id, obj in cases.items():
+        store.put_axis(axis_id, obj, fetched_at, "R1")
+    plan = store.plan_refresh(list(cases), TODAY)
+    assert sorted(plan["stale"]) == sorted(cases)
+    assert plan["fresh"] == {}
+
+
+def test_plan_refresh_none_axis_with_findings_residue_is_still_stale(tmp_path):
+    store = FactsStore(tmp_path, "TICK")
+    axis_id = "reg_tariff_export"
+    store.put_axis(axis_id, _mk_axis_obj(status="none"), _iso(TODAY), "R1")  # status=none 但帶 findings
+    assert store.plan_refresh([axis_id], TODAY)["stale"] == [axis_id]
+
+
+def test_plan_refresh_not_applicable_follows_ttl(tmp_path):
+    store = FactsStore(tmp_path, "TICK")
+    axis_id = "customer_second_source"  # TTL_DAYS = 90
+    na = _mk_axis_obj(status="not_applicable", note="銀行沒有這件事", findings=[])
+    store.put_axis(axis_id, na, _iso(TODAY - datetime.timedelta(days=89)), "R1")
+    plan = store.plan_refresh([axis_id], TODAY)
+    assert plan["stale"] == [] and plan["fresh"][axis_id]["status"] == "not_applicable"
+    store.put_axis(axis_id, na, _iso(TODAY - datetime.timedelta(days=90)), "R2")
+    assert store.plan_refresh([axis_id], TODAY)["stale"] == [axis_id]
 
 
 def test_plan_refresh_missing_axis_is_stale(tmp_path):
