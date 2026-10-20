@@ -5094,6 +5094,54 @@ def _ignore_inline_prompt_files(dirpath, names):
     return [n for n in names if n.endswith("_inline.md")]
 
 
+# 2026-10-20（WP1）：存檔標點正規化。規則與 scripts/qc.py 對齊（不改 qc.py）：
+# qc 對 _src 只掃 .md（.html 只掃 docs/ 底下；.json／.txt 不掃），判定＝CJK 字元
+# 直接接半形 , . :（; ? ! 刻意不判，見 qc.py 註解），且 .md 會先剝掉 fenced code
+# 與行內 code。這裡照同一組字元範圍與同一組例外轉換，掃不到的檔型不動。
+_ARCHIVE_PUNCT_SUFFIXES = (".md",)
+_QC_CJK_RANGE = "\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff"  # = qc.py 的 CJK
+_CJK_HALF_PUNCT_RE = re.compile(
+    r"(?P<code>```.*?```|`[^`\n]*`)|(?P<cjk>[" + _QC_CJK_RANGE + r"])(?P<punct>[,.:])",
+    re.DOTALL,
+)
+_HALF_TO_FULL_PUNCT = {",": "，", ".": "。", ":": "："}
+
+
+def _normalize_cjk_punct(text):
+    """把『CJK 字元後緊接的半形 , . :』轉成全形 ，。：（; 不轉，qc.py 不判）。
+    fenced／行內 code 原樣保留（qc.py 同樣不掃）。回傳 `(新文字, 轉換處數)`。
+    冪等：轉完再跑不會再命中。"""
+    hits = [0]
+
+    def _sub(m):
+        if m.group("code") is not None:
+            return m.group("code")
+        hits[0] += 1
+        return m.group("cjk") + _HALF_TO_FULL_PUNCT[m.group("punct")]
+
+    return _CJK_HALF_PUNCT_RE.sub(_sub, text), hits[0]
+
+
+def _normalize_archive_punct(archive_dir):
+    """對存檔目錄底下所有 .md 做 `_normalize_cjk_punct`，有改才寫回（位元組層
+    讀寫，保留換行原樣；非 UTF-8 的檔略過）。回傳 `(改動檔數, 總處數)`。"""
+    files_changed = 0
+    total_hits = 0
+    for path in sorted(Path(archive_dir).rglob("*")):
+        if not path.is_file() or path.suffix.lower() not in _ARCHIVE_PUNCT_SUFFIXES:
+            continue
+        try:
+            text = path.read_bytes().decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        new_text, hits = _normalize_cjk_punct(text)
+        if hits:
+            path.write_bytes(new_text.encode("utf-8"))
+            files_changed += 1
+            total_hits += hits
+    return files_changed, total_hits
+
+
 def _archive_run_dir(run_dir, archive_dir):
     """把 run 目錄的固定產物複製到 `notes/site-internal/dd/_src/{T}_{D}/`，
     檔名照既有慣例加 `{T}_{D}.` 前綴；`parts/`／`prompts/`／`agents/`／
@@ -5139,6 +5187,14 @@ def _archive_run_dir(run_dir, archive_dir):
         shutil.copy2(str(manifest_src), str(archive_dir / "manifest.json"))
         copied.append("manifest.json")
 
+    # 2026-10-20（WP1）：存檔的 .md 一律過一次標點正規化——agent 寫的 gate.md／
+    # qc48.md 與提示檔會帶「中文後接半形 , . :」，pre-push qc.py 掃 _src 底下
+    # .md 會擋（AMAT 10-12）。原 run 目錄不動，只改存檔副本。
+    norm_files, norm_hits = _normalize_archive_punct(archive_dir)
+    if norm_hits:
+        print("[archive] 標點正規化：{0} 個 .md／{1} 處（中文後半形 , . : → ，。：）".format(
+            norm_files, norm_hits))
+
     print("[archive] {0} → {1}（{2} 項）".format(run_dir, archive_dir, len(copied)))
     return copied
 
@@ -5164,14 +5220,306 @@ def _git_ahead_behind():
 
 
 DD_WORKTREE_DIR = Path("/tmp/dd_wt")
+# 2026-10-20（WP1）：彙總檔衝突自救用（模組層，供測試 monkeypatch 覆寫）。
+DD_WORKTREE_PUSH_DIR = Path("/tmp/dd_wt_push")  # 自救 commit 重推用的乾淨 worktree
+DD_RESCUE_SYNC_TIMEOUT = 2400  # update_dd_index.py 實測約 9 分鐘，留 4 倍餘裕
+DD_RESCUE_PUSH_RETRIES = 3
+
+# 2026-10-20（WP1）：cherry-pick 衝突固定落在這五個彙總檔（53 次執行中 14 次
+# 卡 HOLD）。衝突只涉及它們時，commit 裡「自己的檔」是乾淨的，彙總檔本來就
+# 是 update_dd_index.py 由 INDEX 重生的衍生物，可以在最新 origin/main 上重建。
+# 路徑由模組層常數推導（`_repo_rel`），測試 monkeypatch 假 repo 時一併跟著走。
+_INDEX_ROW_ADDED_RE = re.compile(r"^\+(\| \d{4}-\d{2}-\d{2} \|.*)$")
+_INDEX_FILE_KEY_RE = re.compile(r"(?:brief/)?(?:DD|BRIEF)_[^\s|]+?\.html")
 
 
-def _push_head_via_worktree(commit_sha):
+def _repo_rel(path):
+    """REPO_ROOT 底下的 POSIX 相對路徑；不在 REPO_ROOT 底下就原樣回傳。"""
+    try:
+        return Path(path).resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        return Path(path).as_posix()
+
+
+def _aggregate_rel_paths():
+    """五個彙總檔的 repo 相對路徑（與 `_finish_file_set` 的同步檔同一組）。"""
+    return [_repo_rel(p) for p in (
+        INDEX_MD_PATH, RESEARCH_BODY_PATH, DD_SCREENER_LATEST_PATH,
+        PICKS_CANDIDATES_PATH, TICKER_HUB_DIR / "index.html",
+    )]
+
+
+def _conflicts_only_aggregates(conflict_paths, aggregate_paths):
+    """衝突檔非空、且全部落在彙總檔內才回 True；有任何一檔在彙總檔外就回
+    False（維持 HOLD）。"""
+    conflicts = [c.strip() for c in (conflict_paths or []) if c and c.strip()]
+    allowed = set(aggregate_paths)
+    return bool(conflicts) and all(c in allowed for c in conflicts)
+
+
+def _select_own_paths(changed_paths, tickers, date=None):
+    """從 commit 動過的檔挑出『這幾檔自己的檔』（repo 相對路徑）：
+    `docs/dd/DD_{T}_{D}.html`、`docs/dd/brief/BRIEF_{T}_{D}.html`、
+    `notes/site-internal/dd/_src/{T}_{D}/**`、`docs/t/data/{T}.json`。
+    `date` 為 None（批尾同步 commit，不含報告）時只認 `docs/t/data/{T}.json`。
+    刻意不收 `docs/t/{T}.html`：origin 已刪 /t/ 轉址樁（8850801fd），
+    build_ticker_hubs.py 只對不在 dash 母體的 ticker 才產 hub 頁，有沒有交給
+    重建後的 worktree 決定。其餘（彙總檔、他人被掃進 commit 的檔）一律不收。"""
+    dd_rel = _repo_rel(DD_DIR)
+    src_rel = _repo_rel(SRC_ARCHIVE_DIR)
+    hub_data_rel = _repo_rel(TICKER_HUB_DIR / "data")
+    own = []
+    for raw in changed_paths or []:
+        p = raw.strip()
+        if not p:
+            continue
+        for t in tickers or []:
+            hit = p == "{0}/{1}.json".format(hub_data_rel, t)
+            if date and not hit:
+                hit = (
+                    p == "{0}/DD_{1}_{2}.html".format(dd_rel, t, date)
+                    or p == "{0}/brief/BRIEF_{1}_{2}.html".format(dd_rel, t, date)
+                    or p.startswith("{0}/{1}_{2}/".format(src_rel, t, date))
+                )
+            if hit:
+                own.append(p)
+                break
+    return own
+
+
+def _added_index_rows(diff_text):
+    """從 `git show -U0 <sha> -- docs/dd/INDEX.md` 的 diff 取該 commit 新增的表格列
+    （`+| 2026-…` 開頭），去掉前導 `+`。"""
+    rows = []
+    for line in (diff_text or "").splitlines():
+        m = _INDEX_ROW_ADDED_RE.match(line)
+        if m:
+            rows.append(m.group(1).rstrip())
+    return rows
+
+
+def _index_row_file_key(row):
+    m = _INDEX_FILE_KEY_RE.search(row or "")
+    return m.group(0) if m else None
+
+
+def _merge_index_rows(index_text, rows):
+    """把 `rows` 依序插到 INDEX.md 表格最後一列（最後一個以 `|` 開頭的行）之後；
+    整列相同或同檔名（`DD_…html`／`brief/BRIEF_…html`）已存在的列跳過，冪等。
+    回傳 `(新文字, 實際新增的列)`。"""
+    had_nl = index_text.endswith("\n")
+    lines = index_text.splitlines()
+    seen_lines = {ln.rstrip() for ln in lines}
+    seen_keys = {k for k in (_index_row_file_key(ln) for ln in lines if ln.startswith("|")) if k}
+    table_idx = [i for i, ln in enumerate(lines) if ln.startswith("|")]
+    insert_at = table_idx[-1] + 1 if table_idx else len(lines)
+    added = []
+    for row in rows:
+        row = row.rstrip()
+        key = _index_row_file_key(row)
+        if row in seen_lines or (key and key in seen_keys):
+            continue
+        lines.insert(insert_at, row)
+        insert_at += 1
+        seen_lines.add(row)
+        if key:
+            seen_keys.add(key)
+        added.append(row)
+    new_text = "\n".join(lines)
+    if lines and (had_nl or not index_text):
+        new_text += "\n"
+    return new_text, added
+
+
+def _is_non_fast_forward(output):
+    """push 輸出是『遠端又前進』（可重推）而不是 hook／權限擋下。"""
+    low = (output or "").lower()
+    return any(k in low for k in (
+        "non-fast-forward", "fetch first", "tip of your current branch is behind"))
+
+
+def _cleanup_worktree(path):
+    """移除 worktree 並 prune；目錄殘留一併清掉。"""
+    _git(["worktree", "remove", "--force", str(path)])
+    if Path(path).exists():
+        shutil.rmtree(str(path), ignore_errors=True)
+    _git(["worktree", "prune"])
+
+
+def _git_out(r):
+    return ((r.stdout or "") + (r.stderr or "")).strip()
+
+
+def _push_commit_via_clean_worktree(commit_sha):
+    """自救 commit 在原 worktree 推送遇 non-fast-forward 時：每次 fetch、另開乾淨
+    worktree 於最新 origin/main 上 cherry-pick 該 commit 再推（原 worktree 有
+    update_dd_index 改出來的髒檔，無法 rebase），最多 `DD_RESCUE_PUSH_RETRIES` 次；
+    每次結束都 remove＋prune。push 被擋但不是 non-fast-forward（例如 pre-push
+    QC）就停下回報，不重試、不繞過。回傳 (ok, reason)。"""
+    wt = DD_WORKTREE_PUSH_DIR
+    last_out = ""
+    for attempt in range(1, DD_RESCUE_PUSH_RETRIES + 1):
+        _cleanup_worktree(wt)
+        _git(["fetch", "origin", "main"])
+        add_r = _git(["worktree", "add", "--detach", str(wt), "origin/main"])
+        if add_r.returncode != 0:
+            _cleanup_worktree(wt)
+            return False, "重推 worktree add 失敗：{0}".format(_git_out(add_r))
+        try:
+            cp_r = _git(["cherry-pick", commit_sha], cwd=wt)
+            if cp_r.returncode != 0:
+                _git(["cherry-pick", "--abort"], cwd=wt)
+                return False, (
+                    "重推第 {0} 次 cherry-pick 又衝突（origin 在重建期間動了彙總檔，"
+                    "需重跑 finish）：{1}".format(attempt, _git_out(cp_r)))
+            push_r = _git(["push", "origin", "HEAD:main"], cwd=wt)
+            if push_r.returncode == 0:
+                return True, ""
+            last_out = _git_out(push_r)
+            if not _is_non_fast_forward(last_out):
+                return False, "push 被擋（可能 pre-push QC gate）：{0}".format(last_out)
+            print("[rescue] 重推第 {0}/{1} 次 non-fast-forward，重新 fetch 再試".format(
+                attempt, DD_RESCUE_PUSH_RETRIES))
+        finally:
+            _cleanup_worktree(wt)
+    return False, "push 連續 {0} 次 non-fast-forward：{1}".format(
+        DD_RESCUE_PUSH_RETRIES, last_out)
+
+
+def _rescue_run(cmd, wt):
+    """在 worktree 內跑一支重建腳本；回傳 (ok, 輸出尾段)。"""
+    try:
+        r = subprocess.run(
+            cmd, cwd=str(wt), capture_output=True, text=True,
+            timeout=DD_RESCUE_SYNC_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return False, "逾時（>{0}s）".format(DD_RESCUE_SYNC_TIMEOUT)
+    out = ((r.stdout or "") + (r.stderr or "")).strip()
+    if r.returncode != 0:
+        return False, "rc={0}：{1}".format(r.returncode, out[-4000:] or "（無輸出）")
+    return True, out
+
+
+def _rescue_aggregate_conflict(commit_sha, wt, tickers, date=None):
+    """2026-10-20（WP1）：cherry-pick 只在彙總檔衝突時的自救。`wt` 是已在
+    origin/main、已 `cherry-pick --abort` 的乾淨 worktree。
+
+    做法（照 10-19 手動救 JPM／WMT／SNPS 與台股三檔的步驟）：
+    1. 只從 commit checkout『這幾檔自己的檔』（`_select_own_paths`）；
+    2. 把該 commit 在 INDEX.md 新增的列插到 worktree 版表格最後一列之後
+       （`_merge_index_rows`，同列跳過）；
+    3. 在 worktree 跑 update_dd_index.py 重建彙總檔；worktree 版 update_dd_index
+       還沒帶 `--include-non-dd`（本修正未上 origin 前）時，補跑
+       build_dd_screener.py --include-non-dd，latest.json 才不少 QGM 名字；
+    4. 只 add 白名單（自己的檔＋五個彙總檔＋重建後存在的 docs/t/{T}.html）並
+       commit（沿用原 commit 訊息）；
+    5. 推送；non-fast-forward 時改走 `_push_commit_via_clean_worktree`。
+    任一步失敗回 (False, reason)，不 push、不繞過 QC。"""
+    wt = Path(wt)
+    aggregates = _aggregate_rel_paths()
+    diff_r = _git(["diff-tree", "--no-commit-id", "--name-only", "-r",
+                   "--diff-filter=AM", commit_sha], cwd=wt)
+    changed = [ln.strip() for ln in (diff_r.stdout or "").splitlines() if ln.strip()]
+    own = _select_own_paths(changed, tickers, date)
+    if date and not own:
+        return False, "彙總檔衝突自救中止：commit {0} 內找不到 {1} 自己的檔".format(
+            commit_sha[:12], "、".join(tickers or []))
+    skipped = [p for p in changed if p not in own and p not in aggregates]
+    if skipped:
+        print("[rescue] 略過 {0} 個非本檔／非彙總檔（不帶上 origin）：{1}".format(
+            len(skipped), "、".join(skipped[:5]) + ("…" if len(skipped) > 5 else "")))
+
+    # 1) 自己的檔
+    for i in range(0, len(own), 200):
+        co_r = _git(["checkout", commit_sha, "--"] + own[i:i + 200], cwd=wt)
+        if co_r.returncode != 0:
+            return False, "自救 checkout 自己的檔失敗：{0}".format(_git_out(co_r))
+    print("[rescue] 取回自己的檔 {0} 個".format(len(own)))
+
+    # 2) INDEX 列
+    index_rel = _repo_rel(INDEX_MD_PATH)
+    show_r = _git(["show", "--format=", "-U0", commit_sha, "--", index_rel], cwd=wt)
+    rows = _added_index_rows(show_r.stdout)
+    index_path = wt / index_rel
+    index_text = index_path.read_text(encoding="utf-8") if index_path.exists() else ""
+    new_text, added_rows = _merge_index_rows(index_text, rows)
+    if added_rows:
+        index_path.write_text(new_text, encoding="utf-8")
+    print("[rescue] INDEX.md 新增 {0}／{1} 列（同列或同檔名已存在者跳過）".format(
+        len(added_rows), len(rows)))
+    dd_rel = _repo_rel(DD_DIR)
+    for row in rows:
+        key = _index_row_file_key(row)
+        if key and not (wt / dd_rel / key).exists():
+            return False, "自救中止：INDEX 列指向的報告不在 origin／自己的檔內：{0}".format(key)
+
+    # 3) 重建彙總檔
+    py = _pick_python()
+    update_script = wt / "scripts" / "update_dd_index.py"
+    print("[rescue] 在 worktree 跑 update_dd_index.py（約 9 分鐘）…")
+    ok, out = _rescue_run([py, str(update_script)], wt)
+    if not ok:
+        return False, "自救 update_dd_index.py 失敗：{0}".format(out)
+    if "--include-non-dd" not in update_script.read_text(encoding="utf-8"):
+        print("[rescue] worktree 版 update_dd_index 未帶 --include-non-dd，補跑 build_dd_screener")
+        ok, out = _rescue_run(
+            [py, str(wt / "scripts" / "build_dd_screener.py"), "--include-non-dd"], wt)
+        if not ok:
+            return False, "自救 build_dd_screener.py --include-non-dd 失敗：{0}".format(out)
+
+    # 4) 白名單 add＋commit
+    hub_rel = _repo_rel(TICKER_HUB_DIR)
+    whitelist = list(own) + list(aggregates)
+    whitelist += ["{0}/{1}.html".format(hub_rel, t) for t in (tickers or [])]
+    to_add = [p for p in dict.fromkeys(whitelist) if (wt / p).exists()]
+    for i in range(0, len(to_add), 200):
+        add_r = _git(["add", "--"] + to_add[i:i + 200], cwd=wt)
+        if add_r.returncode != 0:
+            return False, "自救 git add 失敗：{0}".format(_git_out(add_r))
+    msg_r = _git(["log", "-1", "--format=%B", commit_sha], cwd=wt)
+    message = (msg_r.stdout or "").strip() or "Add DD（彙總檔衝突自救重建）"
+    commit_r = _git(["commit", "-m", message], cwd=wt)
+    if commit_r.returncode != 0:
+        return False, "自救 git commit 失敗：{0}".format(_git_out(commit_r))
+    rev_r = _git(["rev-parse", "HEAD"], cwd=wt)
+    rescue_sha = (rev_r.stdout or "").strip()
+    # 其餘重生出來的衍生檔（data 快取、搜尋索引等）不在白名單，丟掉：既不入
+    # commit，也不讓 pre-push 的 qc 去掃這些未提交的髒檔。
+    _git(["checkout", "--", "."], cwd=wt)
+    print("[rescue] 已建自救 commit {0}（自己的檔 {1}＋彙總檔 {2}）".format(
+        rescue_sha[:12], len(own), len([p for p in to_add if p in aggregates])))
+
+    # 5) 推送
+    push_r = _git(["push", "origin", "HEAD:main"], cwd=wt)
+    if push_r.returncode == 0:
+        ok, reason = True, ""
+    else:
+        out = _git_out(push_r)
+        if not _is_non_fast_forward(out):
+            return False, "push 被擋（可能 pre-push QC gate）：{0}".format(out)
+        print("[rescue] non-fast-forward，改用乾淨 worktree 重推")
+        _cleanup_worktree(wt)  # 先放掉原 worktree 的磁碟再開新的
+        ok, reason = _push_commit_via_clean_worktree(rescue_sha)
+    if ok:
+        print(
+            "[rescue] 彙總檔衝突自救完成，已推 origin/main（自救 commit {0}）。"
+            "本地 main 仍留著原 commit {1}，其彙總檔內容與已推版不同；對齊 origin 時先比 "
+            "patch-id，別直接 pull --rebase（彙總檔會再衝突）".format(
+                rescue_sha[:12], commit_sha[:12]))
+    return ok, reason
+
+
+def _push_head_via_worktree(commit_sha, tickers=None, date=None):
     """遠端領先時的自救推送：開一個 detached worktree（`origin/main`），
     只把本次 finish 產生的那顆 commit（`commit_sha`）cherry-pick 上去再推，
     本地 main（目前所在 working tree／分支）完全不動——不 update-ref、
     不 checkout 任何檔。回傳 (ok: bool, reason: str)；ok=False 時 reason
     說明是 cherry-pick 衝突還是 push 被擋（例如 pre-push QC gate）。
+
+    2026-10-20（WP1）：cherry-pick 衝突且衝突檔全落在五個彙總檔內、又有給
+    `tickers` 時，改走 `_rescue_aggregate_conflict`（取回自己的檔、合併 INDEX 列、
+    在 origin/main 重建彙總檔、再推）；衝突涉及其他檔仍是 HOLD。`tickers`／`date`
+    由呼叫端帶（finish：[T]＋date；batch-sync：全批 tickers、date=None）。
     """
     wt = DD_WORKTREE_DIR
     # 清掉可能殘留的舊 worktree 註冊（不假設乾淨環境）
@@ -5188,7 +5536,15 @@ def _push_head_via_worktree(commit_sha):
 
     cp_r = _git(["cherry-pick", commit_sha], cwd=wt)
     if cp_r.returncode != 0:
+        conflict_r = _git(["diff", "--name-only", "--diff-filter=U"], cwd=wt)
+        conflicts = [ln.strip() for ln in (conflict_r.stdout or "").splitlines() if ln.strip()]
         _git(["cherry-pick", "--abort"], cwd=wt)
+        if tickers and _conflicts_only_aggregates(conflicts, _aggregate_rel_paths()):
+            print("[rescue] cherry-pick 只在彙總檔衝突（{0}），走自救重建".format("、".join(conflicts)))
+            try:
+                return _rescue_aggregate_conflict(commit_sha, wt, tickers, date)
+            finally:
+                _cleanup_worktree(wt)
         _git(["worktree", "remove", "--force", str(wt)])
         return False, "cherry-pick 衝突：{0}".format(
             ((cp_r.stdout or "") + (cp_r.stderr or "")).strip()
@@ -5625,7 +5981,7 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
         if not commit_sha:
             rev_r = _git(["rev-parse", "HEAD"])
             commit_sha = (rev_r.stdout or "").strip()
-        ok, reason = _push_head_via_worktree(commit_sha)
+        ok, reason = _push_head_via_worktree(commit_sha, tickers=[ticker], date=date)
         if ok:
             manifest["finish"]["report_pushed_sha"] = commit_sha
             manifest["finish"]["state"] = (
@@ -6067,7 +6423,7 @@ def _sync_batch_site(rows, date, no_push=False, skip_dd_screener=False):
     if behind > 0:
         rev_r = _git(["rev-parse", "HEAD"])
         commit_sha = (rev_r.stdout or "").strip()
-        ok, reason = _push_head_via_worktree(commit_sha)
+        ok, reason = _push_head_via_worktree(commit_sha, tickers=tickers)
         if ok:
             _mark_sync_rows(completed, "PASS")
             print("[ok] batch-sync 遠端領先 {0}，worktree 推送完成".format(behind))
