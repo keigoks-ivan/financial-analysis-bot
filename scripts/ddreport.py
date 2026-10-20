@@ -40,6 +40,7 @@ import dd_bundle  # noqa: E402  （WP-C：delta 判斷 prompt 沿用 `_transcrip
 import dd_codex  # 2026-09-11：明選 Codex 才走直接回傳，不默默改供應商。
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
 import dd_meta_reader  # noqa: E402  （WP7a peers 來源③：讀 id-meta related_tickers，不改其內部）
+import dd_prior  # noqa: E402  （2026-10-20：代號比對鍵與前份 DD 檔案掃描，補尾碼／peers 沿用）
 import dd_project  # noqa: E402  （WP-H2-1：v19 判斷檔的形狀正規化與投影，唯一轉接）
 import dd_metric_resolver  # noqa: E402  （2026-09-07：batch 摘要 Max DD 改用共用 helper，只 import 不改其內部）
 import dd_sections  # noqa: E402  （2026-09-06 WP4b：leak_hits／split_sections，gates 用來把 FAIL 歸因到 sid）
@@ -450,74 +451,11 @@ def _resolve_archetype(cli_archetype, prior):
 
 
 # ---------------------------------------------------------------------------
-# 2026-10-20：前份 DD 查找（同一家公司的檔名變體）＋純數字代號補尾碼。
-# dd_prior.py 以「檔名裡的代號」比對（normalize_ticker 還把點去掉），抓不到：
-#   DD_2317_20260601（檔內 ticker 是 2317.TW）、DD_3037.TW_20260601（比對鍵被去成 3037TW）。
-# 這裡以檔內 dd-meta 的 ticker 為準，檔名只當預篩；老檔沒有 dd-meta 才退回檔名。
+# 2026-10-20：純數字代號補尾碼。前份 DD 的查找（檔名變體 DD_2317_／DD_3037.TW_／DD_2308TW_／BRIEF_）
+# 在 dd_prior.find_dd_files：以檔內 dd-meta 的 ticker 為準，檔名只預篩。
 # ---------------------------------------------------------------------------
 
-_PRIOR_FNAME_RE = re.compile(r"^(?:DD|BRIEF)_(?P<ticker>.+)_(?P<date>\d{8})\.html$")
-
-
-def _tkey(t):
-    """代號比對鍵：大寫、去點；台股 .TWO 併入 .TW（同一代號不會同時在上市與上櫃）。"""
-    k = str(t or "").strip().upper().replace(".", "")
-    return re.sub(r"^(\d{4,6}[A-Z]?)TWO$", r"\1TW", k)
-
-
-def _iter_dd_by_code(code):
-    """(YYYYMMDD, 是否完整版, Path, 檔名代號, 檔內 dd-meta ticker 或 None)，升冪（同日完整版在後）。
-    只預篩檔名：數字開頭的代號用前綴（2317→DD_2317_／DD_2317TW_／DD_2317.TW_），其餘要求去點後相等。"""
-    base = _tkey(code)
-    m0 = re.match(r"\d+", base)
-    out = []
-    for f in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True):
-        fm = _PRIOR_FNAME_RE.match(f.name)
-        if not fm:
-            continue
-        fk = _tkey(fm.group("ticker"))
-        if not (fk.startswith(m0.group(0)) if m0 else fk == base):
-            continue
-        mt = (dd_meta_reader.read_dd_meta(f) or {}).get("ticker")
-        out.append((fm.group("date"), f.name.startswith("DD_"), f, fm.group("ticker"), mt or None))
-    out.sort(key=lambda x: (x[0], x[1]))
-    return out
-
-
-def _find_prior_dd_files(ticker):
-    """同一家公司所有前份 DD／快速版 [(YYYYMMDD, Path)]（升冪）。比對鍵＝dd-meta ticker，
-    沒有 dd-meta 才用檔名代號。"""
-    want = _tkey(ticker)
-    return [(d, f) for d, _full, f, ft, mt in _iter_dd_by_code(ticker)
-            if _tkey(mt or ft) == want]
-
-
-def _repair_prior_dd(prior, prior_out, ticker, date):
-    """dd_prior.py 沒找到前份、或只找到較舊的檔名變體時，用 `_find_prior_dd_files` 的清單重建
-    prior.prior_dd 並回寫 prior.json；回（可能已更新的）prior。
-    暫時換掉 dd_prior.find_dd_files 再呼叫 build_prior_dd，讓 inception／12 個月前一起用完整清單；
-    等 dd_prior.find_dd_files 自己改成以 dd-meta 為準，這段就變成 no-op，可刪。"""
-    files = _find_prior_dd_files(ticker)
-    before = [d for d, _ in files if d < date]
-    if not prior or not before:
-        return prior
-    cur = prior.get("prior_dd") or {}
-    if cur.get("status") == "ok" and str(cur.get("date") or "") >= before[-1]:
-        return prior
-    import dd_prior
-    real = dd_prior.find_dd_files
-    dd_prior.find_dd_files = lambda _t: list(files)
-    try:
-        fixed = dd_prior.build_prior_dd(_tkey(ticker), date)
-    finally:
-        dd_prior.find_dd_files = real
-    if fixed.get("status") != "ok":
-        return prior
-    prior = dict(prior, prior_dd=fixed)
-    _atomic_write_json(prior_out, prior)
-    print("前份 DD：dd_prior 以檔名找不到，改依 dd-meta ticker 找到 {0}（{1}）".format(
-        fixed.get("path"), fixed.get("date")))
-    return prior
+_tkey = dd_prior.ticker_key  # 比對鍵：大寫、去點、.TWO 併入 .TW
 
 
 def _infer_exchange_suffix(code):
@@ -527,7 +465,7 @@ def _infer_exchange_suffix(code):
     非台股（6857／6146 在池裡是日股，2026-10-11 就是這樣被當成美股跑）。"""
     code = str(code).strip().upper()
     seen = {}
-    for _d, _full, f, _ft, mt in _iter_dd_by_code(code):
+    for _d, _full, f, _ft, mt in dd_prior.iter_dd_by_code(code):
         if mt and re.fullmatch(re.escape(code) + r"\.[A-Z]+", str(mt).strip().upper()):
             seen[str(mt).strip().upper()] = f
     if len(seen) == 1:
@@ -556,8 +494,8 @@ def _infer_exchange_suffix(code):
 # ---------------------------------------------------------------------------
 # WP7a #3：peers 來源優先順序 --peers → SRC_ARCHIVE_DIR 前份 evidence.json 的
 # numbers.peer_financials → docs/id/ID_*.html id-meta related_tickers[]（2026-10-20
-# 起要貼題才採用）→ dd-screener 同產業後備 → 都沒有則交由呼叫端印錯誤退出
-# （strict 會擋 <2 對手，早停比晚停省）。
+# 起要貼題才採用）→ 都沒有則交由呼叫端印錯誤退出（strict 會擋 <2 對手，早停比晚停省），
+# 錯誤訊息附 dd-screener 同產業候選供參考（不自動採用）。
 # ---------------------------------------------------------------------------
 
 def _peers_from_archive(ticker):
@@ -599,8 +537,8 @@ PRICES_TW_PATH = REPO_ROOT / "docs" / "cache" / "prices-tw.json"
 _TW_ELECTRONICS_CODES = ("24", "25", "26", "27", "28", "29", "30", "31")  # 半導體／電腦週邊／光電／通信網路／電子零組件／電子通路／資訊服務／其他電子
 _TW_TICKER_RE = re.compile(r"\d{4,6}[A-Z]?\.TWO?")
 ID_MAIN_PURITY_PCT = 40   # 同 ID 機器初篩慣用門檻（id-meta-schema：purity_pct ≥ 40）
-PEERS_PICK_N = 3          # 後備一次挑幾檔
-PEERS_MIN_N = 2           # 少於這個數就當找不到（strict 會擋 <2 對手）
+PEERS_HINT_N = 5          # 找不到對手時，錯誤訊息裡列幾檔 dd-screener 候選
+PEERS_MIN_N = 2           # 少於這個數就不列（strict 會擋 <2 對手）
 PEERS_MAX_MCAP_LOG_RATIO = math.log(10)  # 同官方產業別但市值差 10 倍以上，排在市值較接近者之後
 
 
@@ -719,20 +657,22 @@ def _peers_from_id_meta(ticker):
     return best or None
 
 
-def _peers_from_screener(ticker, n=PEERS_PICK_N, min_n=PEERS_MIN_N, use_yf=True):
-    """後備來源：docs/dd-screener/latest.json 裡同產業、同市場優先、市值最接近的 n 檔（去自身）。
+def _peers_from_screener(ticker, n=PEERS_HINT_N, min_n=PEERS_MIN_N, use_yf=True):
+    """dd-screener（docs/dd-screener/latest.json）裡同產業、同市場優先、市值最接近的 n 檔候選（去自身）。
+    **不自動採用**：2026-10-20 實測品質不夠（JPM→V,MA,MS；2317.TW→3665,3711,2308），對手錯會靜默拉低
+    判斷品質，比 plan 停下更糟；只在找不到對手的錯誤訊息裡列給人參考，由人用 --peers 指定。
     產業／市值判斷見 _peer_group／_peer_mcap。標的市值本機算不出且 use_yf 時查一次 yfinance；
-    仍沒有就改挑市值最大的（最常被拿來對照）。找不到 ≥ min_n 檔回 None。會印出所選對手。"""
+    仍沒有就改列市值最大的。回 (候選 list, 一行說明)；不足 min_n 檔或判不出產業回 (None, None)。"""
     try:
         stocks = _load_json(DD_SCREENER_LATEST_PATH).get("stocks") or []
     except Exception:
-        return None
+        return None, None
     target = ticker.strip().upper()
     maps = _load_peer_maps()
     rows = {str(s.get("ticker") or "").upper(): s for s in stocks}
     grp = _peer_group(target, maps, rows.get(target))
     if not grp:
-        return None
+        return None, None
     tmc = _peer_mcap(target, maps, rows.get(target))
     if tmc is None and use_yf:
         tmc = _yf_market_cap(target)
@@ -753,17 +693,17 @@ def _peers_from_screener(ticker, n=PEERS_PICK_N, min_n=PEERS_MIN_N, use_yf=True)
     cands.sort(key=lambda x: x[0])
     picks = cands[:n]
     if len(picks) < min_n:
-        return None
-    print("peers 後備（dd-screener 同產業 {0}，標的市值{1}）：{2}".format(
+        return None, None
+    note = "dd-screener 同產業候選（{0}，標的市值{1}；僅供參考，請用 --peers 指定）：{2}".format(
         grp, "≈{0:,.0f}M".format(tmc / 1e6) if tmc else "未知",
         "、".join("{0}（{1}）".format(t, "{0:,.0f}M".format(mc / 1e6) if mc else "市值未知")
-                  for _k, t, _r, mc in picks)))
-    return [t for _k, t, _r, _mc in picks]
+                  for _k, t, _r, mc in picks))
+    return [t for _k, t, _r, _mc in picks], note
 
 
 def _resolve_peers(cli_peers, ticker):
     """回傳 (peers_str_or_None, source)。優先序：--peers → archive →
-    id-meta（貼題才採用）→ auto_screener（dd-screener 同產業、市值最接近）→ (None, None)（呼叫端負責印錯誤退出）。"""
+    id-meta（貼題才採用）→ (None, None)（呼叫端負責印錯誤退出，並用 _peers_from_screener 列參考候選）。"""
     if cli_peers:
         return cli_peers, "cli"
     from_archive = _peers_from_archive(ticker)
@@ -772,9 +712,6 @@ def _resolve_peers(cli_peers, ticker):
     from_id_meta = _peers_from_id_meta(ticker)
     if from_id_meta:
         return ",".join(from_id_meta), "id_meta"
-    from_screener = _peers_from_screener(ticker)
-    if from_screener:
-        return ",".join(from_screener), "auto_screener"
     return None, None
 
 
@@ -1466,7 +1403,6 @@ def cmd_plan(args):
             prior = _load_json(prior_out)
         except Exception as e:
             print("[warn] prior.json 解析失敗：{0}".format(e), file=sys.stderr)
-    prior = _repair_prior_dd(prior, prior_out, ticker, date)  # 檔名變體（DD_2317_／DD_3037.TW_）dd_prior 找不到
 
     # 2. archetype 解析
     archetype, src = _resolve_archetype(args.archetype, prior)
@@ -1570,11 +1506,12 @@ def cmd_plan(args):
     else:
         peers_str, peers_src = _resolve_peers(args.peers, ticker)
         if not peers_str:
+            _hint_peers, hint = _peers_from_screener(ticker)
             print(
                 "[error] 找不到可用對手清單（--peers 未給、{0}/{1}_*/ 無歷史 "
-                "numbers.peer_financials、docs/id/ID_*.html 無貼題的 ID、"
-                "dd-screener 同產業不足 {2} 檔）：請帶 --peers a,b 手動指定（strict 會擋 <2 "
-                "對手，早停比晚停省）".format(SRC_ARCHIVE_DIR, ticker, PEERS_MIN_N),
+                "numbers.peer_financials、docs/id/ID_*.html 無貼題的 ID）：請帶 --peers a,b 手動指定"
+                "（strict 會擋 <2 對手，早停比晚停省）".format(SRC_ARCHIVE_DIR, ticker)
+                + ("\n" + hint if hint else ""),
                 file=sys.stderr,
             )
             _atomic_write_json(run_dir / "manifest.json", manifest)

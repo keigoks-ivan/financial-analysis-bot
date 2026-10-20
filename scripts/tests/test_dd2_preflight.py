@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """測試 DD 管線 WP2（2026-10-20）：開跑預檢、證據驗證矛盾、散文自動修一次。
 
-(a) 前份 DD 查找：以 dd-meta ticker 為準（DD_2317_／DD_3037.TW_／DD_2308TW_／BRIEF_ 都認得）
+(a) 前份 DD 查找（dd_prior）：以 dd-meta ticker 為準（DD_2317_／DD_3037.TW_／DD_2308TW_／BRIEF_ 都認得）；
+    帶點代號（2317.TW、6857.T）傳進 build_ledger／build_canonical_id，不再被去點
 (b) 純數字代號補尾碼：前份 DD → security_meta → 判不了才停
-(c) 對手清單：id_meta 要貼題才採用；後備 auto_screener（同產業、同市場、市值最接近）
+(c) 對手清單：id_meta 要貼題才採用；找不到時不自動採用 dd-screener，只列候選供參考
+(c') peer_financials 的 .SH 在送進 yfinance 時換成 .SS
 (d) status=none 且只查 1 條：warn 加 (info)、stage0 補派一次
 (e) 散文自動修一次：「未覆蓋數字」擋下時也走 prose_fix
 
@@ -22,6 +24,8 @@ SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 sys.path.insert(0, str(SCRIPTS_DIR / "dd2"))
 
+import dd_numbers_extra  # noqa: E402
+import dd_prior  # noqa: E402
 import ddreport  # noqa: E402
 import validate_evidence  # noqa: E402
 from dd2 import run as dd2_run  # noqa: E402
@@ -40,6 +44,8 @@ def dd_dir(tmp_path, monkeypatch):
     (d / "brief").mkdir(parents=True)
     monkeypatch.setattr(ddreport, "DD_DIR", d)
     monkeypatch.setattr(ddreport, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(dd_prior, "DD_DIR", d)
+    monkeypatch.setattr(dd_prior, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(ddreport, "DD_SCREENER_LATEST_PATH", tmp_path / "docs" / "dd-screener" / "latest.json")
     return d
 
@@ -48,55 +54,84 @@ def dd_dir(tmp_path, monkeypatch):
 # (a) 前份 DD 查找
 # ---------------------------------------------------------------------------
 
-def test_tkey_normalizes_dots_and_tw_two():
-    assert ddreport._tkey("3037.TW") == ddreport._tkey("3037TW") == "3037TW"
-    assert ddreport._tkey("6187.TWO") == "6187TW"
-    assert ddreport._tkey("6139.KL") == "6139KL"
-    assert ddreport._tkey("brk.b") == "BRKB"
+def test_ticker_key_normalizes_dots_and_tw_two():
+    assert dd_prior.ticker_key("3037.TW") == dd_prior.ticker_key("3037TW") == "3037TW"
+    assert dd_prior.ticker_key("6187.TWO") == "6187TW"
+    assert dd_prior.ticker_key("6139.KL") == "6139KL"
+    assert dd_prior.ticker_key("brk.b") == "BRKB"
 
 
-def test_find_prior_dd_files_filename_variants_and_meta_wins(dd_dir):
+def test_find_dd_files_filename_variants_and_meta_wins(dd_dir):
     (dd_dir / "DD_2317_20260601.html").write_text(_dd_html("2317.TW"), encoding="utf-8")        # 檔名無尾碼
     (dd_dir / "DD_2317TW_20260414.html").write_text(_dd_html("2317.TW"), encoding="utf-8")      # 檔名去點
     (dd_dir / "DD_2317.TW_20261019.html").write_text(_dd_html("2317.TW"), encoding="utf-8")     # 檔名帶點
     (dd_dir / "brief" / "BRIEF_2317.TW_20260905.html").write_text(_dd_html("2317.TW"), encoding="utf-8")
     (dd_dir / "DD_2317_20250101.html").write_text(_dd_html("2317.KL"), encoding="utf-8")        # 檔名相同代號、檔內是別家
     (dd_dir / "DD_23170_20260101.html").write_text(_dd_html("23170.TW"), encoding="utf-8")      # 前綴相同的別檔
-    got = ddreport._find_prior_dd_files("2317.TW")
+    got = dd_prior.find_dd_files("2317.TW")
     assert [d for d, _ in got] == ["20260414", "20260601", "20260905", "20261019"]
+    assert [d for d, _ in dd_prior.find_dd_files("2317.TWO")] == [d for d, _ in got]   # TW／TWO 視為同家
 
 
-def test_find_prior_dd_files_no_meta_falls_back_to_filename(dd_dir):
+def test_find_dd_files_no_meta_falls_back_to_filename_and_us_unchanged(dd_dir):
     (dd_dir / "DD_NVDA_20260411.html").write_text("<html>legacy 沒有 dd-meta</html>", encoding="utf-8")
-    assert [d for d, _ in ddreport._find_prior_dd_files("NVDA")] == ["20260411"]
-    assert ddreport._find_prior_dd_files("NVDAX") == []
+    (dd_dir / "DD_NVDA_20260511.html").write_text(_dd_html("NVDA"), encoding="utf-8")
+    assert [d for d, _ in dd_prior.find_dd_files("NVDA")] == ["20260411", "20260511"]
+    assert dd_prior.find_dd_files("NVDAX") == []
+    (dd_dir / "DD_BRK.B_20260101.html").write_text(_dd_html("BRK.B"), encoding="utf-8")
+    assert [d for d, _ in dd_prior.find_dd_files("BRK.B")] == ["20260101"]
 
 
-def test_repair_prior_dd_rebuilds_when_dd_prior_missed(dd_dir, tmp_path, monkeypatch):
-    import dd_prior
-    monkeypatch.setattr(dd_prior, "REPO_ROOT", tmp_path)
+def test_build_prior_dd_finds_dotted_filename_with_dated_before(dd_dir):
     (dd_dir / "DD_3037.TW_20260601.html").write_text(_dd_html("3037.TW", {"archetype": "循環/商品"}), encoding="utf-8")
-    out = tmp_path / "prior.json"
-    prior = {"prior_dd": {"status": "no_prior_dd"}, "ledger": {"status": "ok"}}
-    fixed = ddreport._repair_prior_dd(prior, out, "3037.TW", "20261020")
-    assert fixed["prior_dd"]["status"] == "ok"
-    assert fixed["prior_dd"]["date"] == "20260601"
-    assert fixed["prior_dd"]["prior_meta"]["archetype"] == "循環/商品"
-    assert fixed["ledger"] == {"status": "ok"}                      # 其他區塊原樣
-    assert json.loads(out.read_text(encoding="utf-8"))["prior_dd"]["status"] == "ok"
-    # dd_prior 的 find_dd_files 暫時替換後必須還原
-    assert dd_prior.find_dd_files.__module__ == "dd_prior"
+    (dd_dir / "DD_3037.TW_20261020.html").write_text(_dd_html("3037.TW"), encoding="utf-8")   # 同日，不算前份
+    prior = dd_prior.build_prior_dd("3037.TW", "20261020")
+    assert prior["status"] == "ok" and prior["date"] == "20260601"
+    assert prior["prior_meta"]["archetype"] == "循環/商品"
 
 
-def test_repair_prior_dd_leaves_alone_when_already_latest(dd_dir, tmp_path):
-    (dd_dir / "DD_2308TW_20260514.html").write_text(_dd_html("2308.TW"), encoding="utf-8")
-    prior = {"prior_dd": {"status": "ok", "date": "20260514"}}
-    out = tmp_path / "prior.json"
-    assert ddreport._repair_prior_dd(prior, out, "2308.TW", "20261020") is prior
-    assert not out.exists()
-    # 同日（date 之後）的檔不算前份
-    (dd_dir / "DD_2308.TW_20261020.html").write_text(_dd_html("2308.TW"), encoding="utf-8")
-    assert ddreport._repair_prior_dd(prior, out, "2308.TW", "20261020") is prior
+def test_dd_prior_main_passes_raw_dotted_ticker_to_all_builders(monkeypatch, tmp_path):
+    seen = {}
+    monkeypatch.setattr(dd_prior, "build_prior_dd", lambda t, d: seen.setdefault("prior", t) and {})
+    monkeypatch.setattr(dd_prior, "build_ledger", lambda t: seen.setdefault("ledger", t) and {})
+    monkeypatch.setattr(dd_prior, "build_canonical_id", lambda t: seen.setdefault("cid", t) and {})
+    monkeypatch.setattr(dd_prior, "build_transcripts", lambda t: {})
+    monkeypatch.setattr(sys, "argv", ["dd_prior.py", " 3711.tw ", "--out", str(tmp_path / "o.json")])
+    dd_prior.main()
+    assert seen == {"prior": "3711.TW", "ledger": "3711.TW", "cid": "3711.TW"}
+
+
+def test_build_canonical_id_queries_with_dotted_ticker(monkeypatch):
+    asked = []
+    monkeypatch.setattr(dd_prior.dd_meta_reader, "find_ids_for_ticker", lambda d, t: asked.append(t) or [])
+    assert dd_prior.build_canonical_id("3711.TW") == {"status": "gap"}
+    assert asked == ["3711.TW"]
+
+
+def test_build_ledger_matches_dotted_entity_alias_and_passes_raw_to_q(tmp_path, monkeypatch):
+    kd = tmp_path / "knowledge"
+    kd.mkdir()
+    (kd / "graph.json").write_text(json.dumps({
+        "aliases": {"2330.TW": "TSM"}, "nodes": [{"id": "TSM", "canonical": "進場"}]}), encoding="utf-8")
+    (kd / "decisions.jsonl").write_text("\n".join(json.dumps(d, ensure_ascii=False) for d in [
+        {"kind": "decision", "id": "d1", "entity": "TSM", "date": "2026-03-01", "verdict": "進場"},
+        {"kind": "decision", "id": "d2", "entity": "2330.TW", "date": "2026-07-01", "verdict": "進場"},
+        {"kind": "decision", "id": "d3", "entity": "3017.TW", "date": "2026-07-01", "verdict": "觀望"},
+    ]), encoding="utf-8")
+    (kd / "falsifiers.json").write_text(json.dumps({"items": [{"ticker": "2330.TW", "metric": "m"}]}), encoding="utf-8")
+    monkeypatch.setattr(dd_prior, "KNOWLEDGE_DIR", kd)
+    calls = []
+
+    class _P:
+        stdout = ""
+
+    monkeypatch.setattr(dd_prior, "_run_q", lambda args, timeout=120: calls.append(list(args)) or _P())
+    out = dd_prior.build_ledger("2330.TW")
+    assert [d["date"] for d in out["decision_history"]] == ["2026-03-01", "2026-07-01"]   # 別名 TSM 的決策也帶出
+    assert [f["metric"] for f in out["falsifiers"]] == ["m"]
+    assert calls == [["2330.TW"], ["--note", "2330.TW"]]
+    # 去點寫法（舊 bug）查不到——保留這個斷言，防回退
+    assert dd_prior.build_ledger("2330TW")["decision_history"] == []
 
 
 # ---------------------------------------------------------------------------
@@ -279,49 +314,81 @@ def _screener(tmp_path, rows):
     (tmp_path / "latest.json").write_text(json.dumps({"stocks": rows}), encoding="utf-8")
 
 
-def test_screener_fallback_same_industry_nearest_market_cap(peer_env, capsys):
+def test_screener_candidates_same_industry_nearest_market_cap(peer_env):
     _screener(peer_env, [
         dict(ticker="WMT", **_fund(950)), dict(ticker="COST", **_fund(440)), dict(ticker="KO", **_fund(400)),
         dict(ticker="TGT", **_fund(60)), dict(ticker="DG", **_fund(20)),
         dict(ticker="META", **_fund(900)),   # 市值最近但不同產業
     ])
-    assert ddreport._peers_from_screener("WMT") == ["COST", "KO", "TGT"]
-    assert "COST" in capsys.readouterr().out
+    got, note = ddreport._peers_from_screener("WMT")
+    assert got == ["COST", "KO", "TGT", "DG"]
+    assert "僅供參考" in note and "--peers" in note and "COST" in note
 
 
-def test_screener_fallback_prefers_same_official_industry_within_electronics(peer_env):
+def test_screener_candidates_prefer_same_official_industry_within_electronics(peer_env):
     _screener(peer_env, [
         dict(ticker="2303.TW"), dict(ticker="3711.TW"), dict(ticker="3443.TW"), dict(ticker="3017.TW"),
         dict(ticker="2330.TW"), dict(ticker="2002.TW"),
     ])
     # 2303 市值 1000；3711=1200、3443=1000、2330=500000（差 500 倍）、3017=1100（電子但非半導體）、2002 非電子
-    got = ddreport._peers_from_screener("2303.TW")
-    assert got == ["3443.TW", "3711.TW", "3017.TW"]        # 半導體且市值在 10 倍內的先，再補市值接近的電子股
-    assert "2002.TW" not in got and "2330.TW" not in got
+    got, _ = ddreport._peers_from_screener("2303.TW")
+    assert got[:3] == ["3443.TW", "3711.TW", "3017.TW"]    # 半導體且市值在 10 倍內的先，再補市值接近的電子股
+    assert "2002.TW" not in got
 
 
-def test_screener_fallback_target_market_cap_from_yfinance(peer_env, monkeypatch):
+def test_screener_candidates_target_market_cap_from_yfinance(peer_env, monkeypatch):
     _screener(peer_env, [dict(ticker="WMT"), dict(ticker="COST", **_fund(440)), dict(ticker="KO", **_fund(400))])
     calls = []
     monkeypatch.setattr(ddreport, "_yf_market_cap", lambda t: calls.append(t) or 430)
-    assert ddreport._peers_from_screener("WMT") == ["COST", "KO"]   # 標的 430：|ln(440/430)| < |ln(400/430)| → COST 先
+    assert ddreport._peers_from_screener("WMT")[0] == ["COST", "KO"]   # 標的 430：|ln(440/430)| < |ln(400/430)| → COST 先
     assert calls == ["WMT"]
 
 
-def test_screener_fallback_needs_two(peer_env):
+def test_screener_candidates_need_two(peer_env):
     _screener(peer_env, [dict(ticker="WMT", **_fund(950)), dict(ticker="COST", **_fund(440))])
-    assert ddreport._peers_from_screener("WMT") is None
-    assert ddreport._peers_from_screener("UNKNOWN") is None          # 判不出產業
+    assert ddreport._peers_from_screener("WMT") == (None, None)
+    assert ddreport._peers_from_screener("UNKNOWN") == (None, None)   # 判不出產業
 
 
-def test_resolve_peers_order_falls_to_auto_screener(peer_env, monkeypatch):
+def test_resolve_peers_never_adopts_screener_candidates(peer_env, monkeypatch):
+    """id_meta／archive 都沒有時回 (None, None) 讓 plan 停下；dd-screener 候選只進錯誤訊息，不自動採用。"""
     _fake_ids(monkeypatch, peer_env, {})
     _screener(peer_env, [dict(ticker="WMT", **_fund(950)), dict(ticker="COST", **_fund(440)),
                          dict(ticker="KO", **_fund(400)), dict(ticker="TGT", **_fund(60))])
-    peers, src = ddreport._resolve_peers(None, "WMT")
-    assert src == "auto_screener" and peers == "COST,KO,TGT"
+    assert ddreport._peers_from_screener("WMT")[0]                      # 候選有，
+    assert ddreport._resolve_peers(None, "WMT") == (None, None)        # 但不採用
     assert ddreport._resolve_peers("A,B", "WMT") == ("A,B", "cli")
     assert ddreport._resolve_peers(None, "UNKNOWN") == (None, None)
+
+
+# ---------------------------------------------------------------------------
+# (c') peer_financials 的 .SH → .SS（只在送進 yfinance 的呼叫點）
+# ---------------------------------------------------------------------------
+
+def test_yf_symbol_maps_sh_to_ss_only():
+    assert dd_numbers_extra._yf_symbol("688521.SH") == "688521.SS"
+    assert dd_numbers_extra._yf_symbol("688521.sh") == "688521.SS"
+    for t in ("301269.SZ", "6857.T", "2317.TW", "SNPS", "688521.SS"):
+        assert dd_numbers_extra._yf_symbol(t) == t
+
+
+def test_ttm_financials_sends_ss_to_yfinance_but_keeps_key(monkeypatch):
+    asked = []
+
+    class _YF:
+        @staticmethod
+        def Ticker(sym):
+            asked.append(sym)
+
+            class _T:
+                quarterly_income_stmt = None   # 沒資料也無妨：只驗送進 yfinance 的代號
+                quarterly_cashflow = None
+            return _T()
+
+    monkeypatch.setattr(dd_numbers_extra, "_lazy_imports", lambda: (None, None, _YF))
+    out = dd_numbers_extra.compute_peer_financials("SNPS", ["688521.SH"])
+    assert asked == ["SNPS", "688521.SS"]
+    assert list(out) == ["SNPS", "688521.SH"]          # 報告上的鍵維持原代號
 
 
 # ---------------------------------------------------------------------------
