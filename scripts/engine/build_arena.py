@@ -1230,6 +1230,12 @@ def _num(v, d: int = 1) -> str:
         return '<span class="bw-muted">—</span>'
 
 
+def _num_txt(v, d: int = 1, unit: str = "") -> str:
+    """_num 的純文字版，給 title 屬性用：缺值回「—」，不帶 HTML。"""
+    s = _num(v, d)
+    return "—" if s.startswith("<") else s + unit
+
+
 def _val_cell_html(val: dict | None) -> str:
     """估值閘欄（v5.1，2026-09-18，見 grp.valuation_gate()）：「{燈} {PEG}x／{倍數}x」，
     缺其一顯示「—」；兩者皆缺（⚪）整格顯示「⚪ 缺值」。`val` 是 grp["valuation"]，
@@ -1271,8 +1277,8 @@ def _bottom_cell_html(v: dict) -> str:
     age = v.get("vcp_base_age_days")
     n_disp = int(n) if isinstance(n, (int, float)) else "—"
     age_disp = int(age) if isinstance(age, (int, float)) else "—"
-    title = (f"VCP 分數 {_num(score, 0)}｜回檔 {n_disp} 段｜末段回檔 {_num(last_pb, 1)}%｜"
-             f"量縮比 {_num(vol, 2)}｜底部天數 {age_disp} 天")
+    title = (f"VCP 分數 {_num_txt(score, 0)}｜回檔 {n_disp} 段｜末段回檔 {_num_txt(last_pb, 1, '%')}｜"
+             f"量縮比 {_num_txt(vol, 2)}｜底部天數 {age_disp} 天")
     if kind in ("breakout_tight", "breakout_loose"):
         text = "緊縮後突破" if kind == "breakout_tight" else "鬆散突破"
         cls = "up" if kind == "breakout_tight" else "mut"
@@ -1493,7 +1499,7 @@ def _seat_remark(v: dict) -> str:
     扁平 schema（2026-09-17 全母體看板欄位對齊，取代舊版直接讀巢狀 r["grp"]）。"""
     bits = []
     if v.get("peak"):
-        bits.append(_chip_html("⚠ 頂點", "ROIC 高於五年平均 1.3 倍以上——純顯示，非下市訊號"))
+        bits.append(_chip_html("⚠ 頂點", "ROIC 高於五年平均 1.3 倍以上，只顯示，不是下席訊號"))
     # v5（2026-09-17，見 grp.py 檔頭 v5 段）：過熱不再是排除核心候選的旗標（時機燈
     # 🟠 過熱本身已經是這個資訊的呈現）；融券高升級為整體資格閘排除，凡是會出現在
     # 池／席位表的列，high_short_interest 必為 False（不可能出現在這裡），故兩個
@@ -1553,8 +1559,8 @@ def _shared_thead_cells() -> list[str]:
         '顯示「PEG／PE 相對五年均倍數」">估值</th>',
         '<th class="bw-l">時機</th>',
         '<th class="bw-l">倉位</th>',
-        '<th class="bw-l" title="個股報告的裁決標籤，僅供顯示，不影響席位／排序；'
-        '護城河評級摺入本欄 hover；⚠過期＝逾 180 天">DD</th>',
+        '<th class="bw-l" title="個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只供顯示，不影響席位與排序；'
+        '護城河評級在本欄滑鼠提示；⚠過期＝逾 180 天">DD</th>',
         '<th class="bw-l" title="VCP（回檔一次比一次小、量縮、離底部高點近）——只在'
         '距歷史新高 10% 以內算，只排③等待池 🟡 組序、標🟢/🟠突破措辭，不改燈號或倉位。'
         '緊 n段＝過閘、鬆 n段＝未過、資料短＝日線不足、—＝距新高超過 10% 未算">底部</th>',
@@ -1579,9 +1585,9 @@ def _row_cells(v: dict, lamp_map: dict) -> list[str]:
     rev_pending = (' <span class="bw-pill bw-pill-warn">待財報後匯出</span>'
                    if v.get("rev_anchor") == "earnings_pending" else "")
     rev_title = (f"錨定：{rev_anchor_txt}｜基準快照 {v.get('rev_baseline_date') or '—'}｜"
-                 f"綜合對照分（只供對照，不決定排序）：{_num(v.get('score'), 1)}｜"
-                 f"隱含成長 {_num(v.get('implied_growth_pct'), 1)}%｜"
-                 f"盈餘殖利率 {_num(v.get('ey'), 1)}%（同值比序：上修→隱含成長→盈餘殖利率）")
+                 f"綜合對照分（只供對照，不決定排序）：{_num_txt(v.get('score'), 1)}｜"
+                 f"隱含成長 {_num_txt(v.get('implied_growth_pct'), 1, '%')}｜"
+                 f"盈餘殖利率 {_num_txt(v.get('ey'), 1, '%')}（同值比序：上修→隱含成長→盈餘殖利率）")
     durable_bits = []
     if v.get("durable_roic_5y_avg_pct") is not None:
         durable_bits.append(f"五年 ROIC 平均 {v['durable_roic_5y_avg_pct']:.1f}%")

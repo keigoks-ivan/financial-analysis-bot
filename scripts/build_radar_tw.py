@@ -230,15 +230,15 @@ def render(payload):
             "但不列出、不參加熱產業排名，因為台股池不收。" if payload.get('excluded_n') else "")
     return (
         '<div class="board-wrap">' + _BOARD_CSS
-        + f'<div class="bw-head">台股全市場雷達 · {escape(payload["as_of"])} 起那一週的週收盤 · '
+        + f'<div class="bw-head">台股全市場雷達 · {escape(payload["as_of"])} 當週收盤 · '
           f'{payload["scored_n"]} 檔</div>'
         + '<div class="bw-rule">四種形狀每週六（台北）依週五收盤掃一次，門檻跟美股雷達相同。'
-          '名單是用來找名字的，不是買進名單：池外的名字要先補 DD，進場仍看上面的時機燈。</div>'
+          '名單用來找名字，不是買進名單：池外的名字要先進台股池，才有席位資格。進場仍看上面的時機燈。</div>'
         + f'<div class="bw-note-line">掃描範圍：0050、0051、006201 成分股加台股池，共 {payload["universe_n"]} 檔，'
           f'其中 {payload["scored_n"]} 檔有 56 週以上的週線可以算。高點取近 25 個月的最高週收盤。'
           f'RS 百分位是近 12 個月漲幅在這 {payload["scored_n"]} 檔裡贏過幾成，0 到 100。{excl}</div>'
         + '<div class="bw-note-line">跟美股雷達不同的地方：沒有分析師上修欄，也沒有「三閘主榜」，'
-          '台股的上修數字要等第三季財報後的 Koyfin 快照。「主題下沉」用 0051 成分股代替美股的 S&amp;P 400 中型股。'
+          '上修看上方的席位表。「主題下沉」用 0051 成分股代替美股的 S&amp;P 400 中型股。'
           f'產業用證交所／櫃買中心產業別，名單裡少於 {HOT_MIN_MEMBERS} 檔的產業不列入熱產業。</div>'
         + ''.join(cards)
         + f'<div class="bw-note-line">熱產業（近 13 週報酬中位數前 {br.P["theme_hot_sectors"]} 名）：'

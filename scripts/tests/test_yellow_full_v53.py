@@ -159,8 +159,7 @@ def test_tw_legend_and_head_say_v53_and_not_old_wording():
     legend = tw._legend()
     assert "🟡 接近" in legend and "🟡 半倉" not in legend
     assert "綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0" in legend
-    assert "不是登記判準通過" in legend
-    assert "無法分辨" in legend
+    assert "變更紀錄" not in legend
 
 
 # ── 十倍股頁（build_tenbagger.main()）：黃燈 1.0，橘燈 0.5，fallback 0.5 ──────

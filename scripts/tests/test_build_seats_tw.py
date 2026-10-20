@@ -224,7 +224,8 @@ def test_board_ranks_eligible_by_v4_score_and_marks_seats(paths):
     seats = {b['ticker']: b['seat'] for b in board}
     assert seats == {'2000.TW': 'C1', '1000.TW': 'C2'}
     html = (out / '_seats_tw_body.html').read_text(encoding='utf-8')
-    assert '全母體看板（v4 對照排序，2 檔）' in html and 'class="bw-seated"' in html
+    assert '全母體看板（依綜合對照分排序，2 檔）' in html and 'class="bw-seated"' in html
+    assert 'v4 對照' not in html
     assert '沒有上修數字的名字，分數是其餘四項的平均' in html
 
 

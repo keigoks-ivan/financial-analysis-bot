@@ -307,7 +307,7 @@ def test_end_to_end_hold_through_distance_red_then_bear_week_drops_it(env):
     snap = json.loads((env.out_dir / 'seats_tw_ledger.json').read_text(encoding='utf-8'))['snapshots'][-1]
     assert snap['core'] == [] and snap['removed'][0][0] == '1000.TW'
     assert env.state() == {}                                             # 離席者的紀錄丟掉
-    assert '本週用「跌 10% 就賣」（現行賣法）' in env.html()
+    assert '本週用「時機燈轉紅就賣」' in env.html()
 
 
 def _seat_one(env, hot=False):
@@ -351,7 +351,7 @@ def test_stale_market_data_falls_back_to_current_exit_and_says_so(env):
     tw.build(True, today=date(2026, 10, 17))
     d = env.seats()
     assert d['market']['status'] == 'stale' and d['core_seats'] == []
-    assert '大盤資料未更新，本週用現行賣法' in env.html()
+    assert '大盤資料未更新，本週照空頭處理' in env.html()
     assert env.state() == {}
 
 
@@ -361,7 +361,7 @@ def test_missing_market_file_also_falls_back(env):
     env.pool_json([_inc('1000.TW', dist=-15.0)], '2026-10-16')
     tw.build(True, today=date(2026, 10, 17))
     assert env.seats()['market']['status'] == 'missing' and env.seats()['core_seats'] == []
-    assert '大盤資料未更新，本週用現行賣法' in env.html()
+    assert '大盤資料未更新，本週照空頭處理' in env.html()
 
 
 def test_reselect_retry_is_idempotent_with_x1(env):
@@ -389,31 +389,31 @@ def test_daily_run_does_not_write_the_ledger_but_does_write_state(env):
 
 # ── 頁面文字 ─────────────────────────────────────────────────────────────
 
-def test_page_shows_rule_state_line_basis_and_exception_wording(env):
+def test_page_shows_rule_and_state_line_without_changelog(env):
     env.market(BULL_CLOSES, date(2026, 10, 15))
     env.pool_json([_stock('1111.TW')], '2026-10-16')
     tw.build(False, today=date(2026, 10, 17))
     html = env.html()
-    assert '大盤好時（加權報酬指數在 200 日線上），跌破自己的 200 日線才賣；大盤不好時，跌 10% 就賣。' in html
+    assert ('大盤多頭（加權報酬指數在 200 日線之上）時，在席者離歷史新高再遠也續抱，跌破自己的 200 日線才賣；'
+            '大盤空頭時，時機燈轉紅就賣（距歷史新高超過 10% 或跌破 200 日線）。') in html
     assert '大盤狀態（2026-10-15 收盤）：加權報酬指數 110.00，200 日線 100.05，<b>多頭</b>' in html
-    assert '變更紀錄 v5.4' in html and 'Calmar 0.232 對現行 0.190' in html and '779 種較好' in html
-    assert '登記結論是不改，因為美股中小型沒過' in html and '持有人破例只改台股' in html
-    assert '台股核心席 v5.4' in html
+    assert '大盤多頭續抱' in html and '倉位沿用最近一次非紅燈的倉位' in html
+    assert '變更紀錄' not in html and '現行賣法' not in html
+    assert '台股核心席 · 資料日' in html and '台股核心席 v5' not in html
 
 
 def test_page_bear_and_stale_lines():
     bull = tw._market_html({'status': 'bull', 'data_date': '2026-10-16', 'close': 108938.83, 'ma200': 91579.5071})
     assert '加權報酬指數 108,938.83，200 日線 91,579.51，<b>多頭</b>' in bull
     bear = tw._market_html({'status': 'bear', 'data_date': '2026-10-16', 'close': 90.0, 'ma200': 100.0})
-    assert '<b>空頭</b>' in bear and '本週用「跌 10% 就賣」（現行賣法）' in bear
+    assert '<b>空頭</b>' in bear and '本週用「時機燈轉紅就賣」' in bear
     stale = tw._market_html({'status': 'stale', 'data_date': '2026-10-01', 'close': 1.0, 'ma200': None})
-    assert '大盤資料未更新，本週用現行賣法' in stale and '2026-10-01' in stale
-    assert '大盤資料未更新，本週用現行賣法' in tw._market_html({'status': 'missing', 'data_date': None})
+    assert '大盤資料未更新，本週照空頭處理，用「時機燈轉紅就賣」' in stale and '2026-10-01' in stale
+    assert '大盤資料未更新，本週照空頭處理' in tw._market_html({'status': 'missing', 'data_date': None})
 
 
 def test_new_page_text_uses_fullwidth_punctuation_after_chinese():
     legend = tw._legend()
-    line = legend.split('變更紀錄 v5.4')[1].split('</div>')[0]
-    for text in (line, tw.RULE_LINE, tw._market_html({'status': 'bull', 'data_date': '2026-10-16',
-                                                       'close': 1.0, 'ma200': 1.0})):
+    for text in (legend, tw.RULE_LINE, tw._market_html({'status': 'bull', 'data_date': '2026-10-16',
+                                                         'close': 1.0, 'ma200': 1.0})):
         assert not re.search(r'[一-鿿][,.:;]', text), text
