@@ -229,6 +229,14 @@ jobs:
         continue-on-error: true
         run: python3 docs/ideas/data/ai-hardware-cycle/data.py
 
+      # ── 15. 想法頁 /ideas/asia-capital-2027.html 的台韓指數、外資、融資、52 週線與實盤六檔（2026-10-20 新增）：
+      #    讀 repo 內 data/tw_chips、data/kr_chips（各自的 daily workflow 已更新）＋yfinance 六檔收盤。
+      #    任何一塊抓不到就沿用上一版並標 stale；腳本 exit 0，這裡再加 continue-on-error。
+      #    見 docs/ideas/data/asia-capital-2027/data.py 檔頭。──
+      - name: "[ideas-asia] Refresh asia-capital-2027 data"
+        continue-on-error: true
+        run: python3 docs/ideas/data/asia-capital-2027/data.py
+
       # ── 收斂：單一 commit + push（路徑＝各原 workflow commit 路徑聯集）──
       - name: Commit and push if changed
         id: commit_and_push
@@ -260,7 +268,8 @@ jobs:
             docs/ideas/bond-outlook.html \
             docs/ideas/data/bond-outlook/gauges.json \
             docs/ideas/data/bond-outlook/data.json \
-            docs/ideas/data/ai-hardware-cycle/data.json; do
+            docs/ideas/data/ai-hardware-cycle/data.json \
+            docs/ideas/data/asia-capital-2027/data.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if [ -z "$PATHS" ]; then
