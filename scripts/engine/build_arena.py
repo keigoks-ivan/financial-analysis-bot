@@ -1114,7 +1114,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
              "note=備註（頂點/循環/循環守門/基期/內部人/財報前/新席）")
     L.append("lamp/act 代碼：GRN/FULL=可進·正常倉（距新高 ≥−3% 且站上 200 日線）、"
              "YLW/FULL=接近新高·正常倉（距新高 −10%~−3% 且站上 200 日線；距新高資料缺的 YLW 暫列 HALF）、HOT/HALF=過熱·半倉（動能 >150% 但仍在"
-             "突破帶附近）、RED/ZERO=等板機·零倉（距新高 <−10% 或跌破 200 日線）、"
+             "突破帶附近）、RED/ZERO=拉回中·零倉（距新高 <−10% 或跌破 200 日線）、"
              "OUT/-=不合格·未站上 52 週線")
     L.append("dd 代碼：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，"
              "!old=逾 180 天過期")

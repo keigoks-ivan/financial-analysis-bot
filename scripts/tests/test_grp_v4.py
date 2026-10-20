@@ -119,7 +119,7 @@ def test_lamp_action_mapping():
     assert grp.LAMP_ACTION["green"] == "正常倉"
     assert grp.LAMP_ACTION["yellow"] == "半倉"
     assert grp.LAMP_ACTION["hot"] == "半倉"
-    assert grp.LAMP_ACTION["red"] == "零倉・等板機"
+    assert grp.LAMP_ACTION["red"] == "零倉・拉回中"
     assert grp.LAMP_ACTION["out"] == "—"
 
 

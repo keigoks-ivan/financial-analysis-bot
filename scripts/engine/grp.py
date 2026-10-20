@@ -50,7 +50,7 @@ vs SPY +1.2%、首批 B&H +1.0%、10 週 23 檔坐過 10 席——換手率過�
   5. 時機燈 timing_lamp()：把位置／RS／200 日線／階段收斂成一個燈號＋倉位建議，
      不再是三個獨立欄位；核心 vs 衛星是「值不值得擁有」的月頻判斷，時機燈是「現在
      能不能買」的週頻判斷——CLS 是最佳示範：耐久＋不過熱→核心候選，但距高 −31%／
-     RS 33／跌破 200 日線→🔴 等板機／零倉，兩層判斷刻意不互相污染。
+     RS 33／跌破 200 日線→🔴 拉回中／零倉，兩層判斷刻意不互相污染。
   無產業/主題集中度上限（持有人拍板：席位本來就沒幾席，硬性 cap 只會逼著湊數）。
   月頻輪動（見 build_arena 檔頭）：每月第一次 --ledger 跑重新選一次，期間只有硬否決
   （迴避／拒絕/⛔／三月上修 ≤−5／市值不足／連兩週跌破 52 週線）能換人，空位由下一
@@ -261,7 +261,7 @@ CYCLE_CAPEX_PCT_REV = 15.0     # 循環股守門：資本支出佔營收門檻�
 CYCLE_GUARD_PEG_MAX = 0.3      # 循環股守門：PEG 需 < 此值才觸發 guard（cyclical 且低到可疑）
 CYCLE_GUARD_PCTL_CAP = 50.0    # guard 觸發時，own_score_v4 的 p_g／p_ey 百分位上限
 # v4 時機燈 action 對照（build_arena 倉位欄；v5 沿用同一份，位置大小不變，見檔頭 v5 段）
-LAMP_ACTION = {"green": "正常倉", "yellow": "半倉", "hot": "半倉", "red": "零倉・等板機", "out": "—"}
+LAMP_ACTION = {"green": "正常倉", "yellow": "半倉", "hot": "半倉", "red": "零倉・拉回中", "out": "—"}
 # v5.3（2026-10-18，美股看板／台股席位／十倍股頁）：黃燈滿倉的 action 文字。全域 LAMP_ACTION 不動。
 LAMP_ACTION_V53 = {**LAMP_ACTION, "yellow": "正常倉"}
 
@@ -591,7 +591,7 @@ def timing_lamp(s: dict, yellow_full: bool = False) -> dict:
         red_hits.append(f"跌破 200 日線 {vs200:+.1f}%")
         relight_if.append("站回 200 日線")
     if red_hits:
-        return {"code": "red", "label": "🔴 等板機", "size": 0.0,
+        return {"code": "red", "label": "🔴 拉回中", "size": 0.0,
                 "trigger": "且".join(relight_if), "why": "、".join(red_hits)}
 
     green_ok = dist_ath is not None and dist_ath >= ATH_GREEN_DIST and (vs200 is None or vs200 >= 0)
