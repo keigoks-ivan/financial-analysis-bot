@@ -877,6 +877,16 @@ _BUY_GROUP_LABELS = (
 )
 
 
+def _core_vacancy_note(n_core: int, buyable: list) -> str:
+    """核心有空席時的說明句。空席只在週六重算時決定；週中新亮燈的名字列在 ② 可買，
+    所以 ② 有名字時不能寫「池內沒有亮燈者」，要說明下週六才重算。核心滿 5 席回空字串。"""
+    if n_core >= CORE_SLOTS:
+        return ""
+    if buyable:
+        return f"週六重算時亮燈者不足；本週新亮燈的 {len(buyable)} 檔見 ② 可買，下週六重算"
+    return "池內沒有亮燈者可遞補，寧缺勿濫"
+
+
 def _group_waiting_pool_by_timing(waiting_rest: list) -> tuple[list, list, list]:
     """v5（2026-09-17 owner follow-up，見 knowledge/rule_ledger.md「v5 席位引擎」
     列）：③ 等待池依時機燈分三段顯示——🟡 接近新高（距新高 −10%~−3%，站上 200 日線）
@@ -986,6 +996,9 @@ def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
     L.append(_POOL_ASCII_HDR_SEAT)
     for j, r in enumerate(core_seats, 1):
         L.append(_pool_ascii_row(f"C{j}", r))
+    vacancy = _core_vacancy_note(len(core_seats), buyable)
+    if vacancy:
+        L.append(f"  空席 {CORE_SLOTS - len(core_seats)}：{vacancy}")
     gone = [t for t in prev_seats if t not in seat_of]
     if gone:
         for t in gone:
@@ -1746,6 +1759,10 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
 
     core_tbl = _pool_table_html(core_seats, lamp_map, seat_prefix="C")
+    vacancy = _core_vacancy_note(len(core_seats), buyable)
+    if vacancy:
+        core_tbl += (f'<div class="bw-note-line">空席 {CORE_SLOTS - len(core_seats)}：'
+                     f'{escape(vacancy)}</div>')
     buy_brk, buy_near, buy_nodata = _group_buyable_by_timing(buyable)
     if not buyable:
         buyable_tbl = '<div class="bw-note-line">（無——等待池目前沒有亮燈的名字）</div>'
@@ -2629,7 +2646,7 @@ def main() -> int:
     for i in range(CORE_SLOTS - len(core_seats)):
         core_tbl = core_tbl.replace("</tbody>", (
             f'<tr><td class="left">{len(core_seats)+i+1}. <span class="muted">（空缺）</span></td>'
-            f'<td class="left muted" colspan="6">池內沒有亮燈者可遞補，寧缺勿濫</td></tr></tbody>'), 1)
+            f'<td class="left muted" colspan="6">{escape(_core_vacancy_note(len(core_seats), buyable))}</td></tr></tbody>'), 1)
     # M5 對照組（PREREG 凍結，見上方 sat_seats_m5 定義註解）：取等待池前 5 當這個
     # 凍結實驗自己的固定「衛星席位」快照，與下方 v5 真正的等待池表無關。
     sat_body = "".join(seat_tr(r, i) for i, r in enumerate(sat_seats_m5, 1))

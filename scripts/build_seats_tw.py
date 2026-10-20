@@ -497,6 +497,9 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
           '的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。</div>'
         + fresh + _market_html(market) + status
         + _table(core_v, lamp_map, seat_prefix='C', empty_seats=CORE_SLOTS - len(core_v))
+        + (f'<div class="bw-note-line">空席 {CORE_SLOTS - len(core_v)}：'
+           f'{escape(ba._core_vacancy_note(len(core_v), sel["buyable"]))}</div>'
+           if len(core_v) < CORE_SLOTS else '')
         + (_conc_html(conc) if conc else '')
         + _legend() + ''.join(lines)
         + f'<h3 class="bw-sec">② 可買（{len(sel["buyable"])} 檔）</h3>'
