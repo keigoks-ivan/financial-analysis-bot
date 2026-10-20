@@ -187,11 +187,12 @@ def test_held_incumbent_still_competes_by_pool_rank_for_the_five_seats():
     assert sel['rotation']['removed'] == [('1000.TW', '亮燈者依上修排序擠出前 5')]
 
 
-def test_no_market_or_e1_market_is_identical_to_v53():
+def test_no_market_or_stale_market_is_identical_to_v53():
+    # v5.6 起大盤空頭週不補新席（見 test_seats_tw_bear_no_buy.py）；資料太舊退回現行賣法、照常補位，與 v5.3 相同
     stocks = lambda: [_inc('1000.TW'), _stock('2000.TW', **_rev(30)), _inc('3000.TW', rev=25, vs200=-3.0)]  # noqa: E731
     prev = ('1000.TW', '3000.TW')
     a = tw.select(_rows(stocks()), list(prev), True)
-    b = tw.select(_rows(stocks()), list(prev), True, market=BEAR)
+    b = tw.select(_rows(stocks()), list(prev), True, market={'mode': 'e1', 'status': 'stale'})
     assert [r['ticker'] for r in a['core']] == [r['ticker'] for r in b['core']] == ['2000.TW']
     assert a['rotation'] == b['rotation']
 

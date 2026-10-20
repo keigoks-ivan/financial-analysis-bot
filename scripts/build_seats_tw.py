@@ -42,6 +42,18 @@ to switch the TW seats page only — an exception, not a registered pass.
   - The exit is judged where the roster is re-selected (--ledger, Saturday, Friday close).
     Daily runs use the market state of the last Saturday's decision day.
 
+Owner decision 2026-10-21 (v5.6, TW seats page only): 大盤跌破 200 日線不買新股. Registered in
+v7-backtest docs/SeatEntryGate_Prereg.md (fafc772); the registered conclusion is 「現行維持」 (US
+small/mid caps failed on the fixed data: five seats better, hold-all worse), TW passed all four
+criteria (X1N vs X1, 999/1000 seeds, also at matched exposure, independent recompute 5.9e-11),
+and the owner decided to switch the TW seats page only — an exception, not a registered pass.
+  - Same market state as v5.4. In a 大盤空頭 week (status 'bear', i.e. computed from fresh data)
+    the Saturday re-selection adds no new names: empty seats stay empty (cash). Incumbents leave
+    only when out of the pool or red (the bear-week exit); being out-ranked by a new name does not
+    remove them, because that swap would be a buy. Sizing changes of held names are unchanged.
+  - Stale or missing market data does not block buying (falls back to the v5.4 behaviour).
+  - The names that would have been added are kept as rotation['blocked'] for display.
+
 TW pool has no short-interest data, so that US gate never fires; insider
 buying (a display chip in the US) is almost always empty. 下次財報 falls back to the
 statutory filing deadline when yfinance has no date.
@@ -162,6 +174,19 @@ def market_state(series, decision_date):
     return res
 
 
+# ── 大盤空頭不買新股（v5.6，2026-10-21，SeatEntryGate N）──────────────────────
+
+def bear_no_buy(rotation, pool, prev_core):
+    """大盤空頭週不買新股（純函式）。rotation＝select_lit_roster_v52 的結果，pool 依池序排好。
+    新進者全部取消、空席留空；在席者只在出池或時機燈轉紅時離席，不因排序被新名字擠出（擠出要買新名字）。
+    回傳格式同 select_lit_roster_v52，另加 blocked＝本來會補進的名字。"""
+    prev = set(prev_core or [])
+    core = [r['ticker'] for r in pool if r['ticker'] in prev and _lit(r)][:CORE_SLOTS]
+    return {'core': core, 'rotated': False,
+            'removed': [x for x in rotation['removed'] if x[0] not in core],
+            'filled': [], 'blocked': [t for _, t in rotation['filled']]}
+
+
 def _x1_dist_only(r):
     """紅燈只因距新高 < −10%（沒跌破自己的 200 日線）。"""
     return (r.get('lamp') or {}).get('code') == 'red' and not r.get('_below200')
@@ -266,7 +291,7 @@ def select(rows, prev_core, reselect, last_snap=None, market=None):
     reselect=False keeps prev_core and carries the last rotation's removed/filled
     for display, so 新席 and the DOWN lines stay up until the next Saturday.
 
-    market（v5.4）：market_state() 的結果。mode 'x1'（大盤多頭）時，在席者只要仍在池內
+    market（v5.4）：market_state() 的結果。status 'bear'（v5.6）時不補新席，見 bear_no_buy()。mode 'x1'（大盤多頭）時，在席者只要仍在池內
     （資格成立、上修 ≥5%）且沒跌破自己的 200 日線，就算留任候選，仍依池序競爭前 5；
     沒有 market 或 mode 'e1'＝現行賣法，與 v5.3 逐位元相同。
     """
@@ -282,11 +307,14 @@ def select(rows, prev_core, reselect, last_snap=None, market=None):
             roster_pool = [_as_lit(r) if r['ticker'] in incumbents and _x1_dist_only(r) else r
                            for r in pool]
         rotation = ba.select_lit_roster_v52(roster_pool, prev_core, core_slots=CORE_SLOTS)
+        if market and market.get('status') == 'bear':
+            rotation = bear_no_buy(rotation, roster_pool, prev_core)
     else:
         last_snap = last_snap or {}
         rotation = {'core': [t for t in (prev_core or []) if t in by_t], 'rotated': False,
                     'removed': [tuple(x) for x in last_snap.get('removed') or []],
-                    'filled': [tuple(x) for x in last_snap.get('filled') or []]}
+                    'filled': [tuple(x) for x in last_snap.get('filled') or []],
+                    'blocked': list(last_snap.get('blocked') or [])}
     core = [by_t[t] for t in rotation['core']]
     filled = {t for _, t in rotation['filled']}
     for r in core:
@@ -438,23 +466,27 @@ RULE_LINE = ('大盤多頭（加權報酬指數在 200 日線之上）時，在�
              '大盤空頭時，時機燈轉紅就賣（距歷史新高超過 10% 或跌破 200 日線）。')
 
 
+BUY_LINE = '大盤空頭的週六不補新席，空席放現金；大盤回到多頭的下一個週六照常補。'
+
+
 def _market_html(market):
     """賣法一句話＋目前大盤狀態一行（v5.4）。market＝market_state() 的結果。"""
-    rule = f'<div class="bw-note-line"><b>賣法</b>：{RULE_LINE}</div>'
+    rule = (f'<div class="bw-note-line"><b>賣法</b>：{RULE_LINE}</div>'
+            f'<div class="bw-note-line"><b>補位</b>：{BUY_LINE}</div>')
     if not market:
         return rule
     st = market.get('status')
     d = escape(market.get('data_date') or '—')
     if st in ('stale', 'missing'):
-        line = (f'大盤資料未更新，本週照空頭處理，用「時機燈轉紅就賣」（最近一筆資料日期 {d}）。'
+        line = (f'大盤資料未更新，本週照空頭處理，用「時機燈轉紅就賣」，新席照常補（最近一筆資料日期 {d}）。'
                 if market.get('data_date')
-                else '大盤資料未更新，本週照空頭處理，用「時機燈轉紅就賣」（沒有資料）。')
+                else '大盤資料未更新，本週照空頭處理，用「時機燈轉紅就賣」，新席照常補（沒有資料）。')
     else:
         nums = f"加權報酬指數 {market['close']:,.2f}"
         nums += f"，200 日線 {market['ma200']:,.2f}" if market.get('ma200') is not None \
             else '，200 日線資料不足，算多頭'
         word, way = ('多頭', '本週用「跌破自己的 200 日線才賣」') if st == 'bull' \
-            else ('空頭', '本週用「時機燈轉紅就賣」')
+            else ('空頭', '本週用「時機燈轉紅就賣」，不補新席')
         line = f'大盤狀態（{d} 收盤）：{nums}，<b>{word}</b>。{way}。'
     return rule + f'<div class="bw-note-line">{line}</div>'
 
@@ -498,8 +530,11 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + fresh + _market_html(market) + status
         + _table(core_v, lamp_map, seat_prefix='C', empty_seats=CORE_SLOTS - len(core_v))
         + (f'<div class="bw-note-line">空席 {CORE_SLOTS - len(core_v)}：'
-           f'{escape(ba._core_vacancy_note(len(core_v), sel["buyable"]))}</div>'
-           if len(core_v) < CORE_SLOTS else '')
+           + (escape('大盤空頭，本週不補新席，空席放現金。') if (market or {}).get('status') == 'bear'
+              else escape(ba._core_vacancy_note(len(core_v), sel["buyable"])))
+           + '</div>' if len(core_v) < CORE_SLOTS else '')
+        + (f'<div class="bw-note-line">本週因大盤空頭沒補進：{escape("、".join(sel["rotation"]["blocked"]))}。</div>'
+           if sel['rotation'].get('blocked') else '')
         + (_conc_html(conc) if conc else '')
         + _legend() + ''.join(lines)
         + f'<h3 class="bw-sec">② 可買（{len(sel["buyable"])} 檔）</h3>'
@@ -583,7 +618,8 @@ def build(reselect, today=None):
         last_rotation_date = as_of
         snaps = [x for x in snaps if x.get('date') != as_of]
         snaps.append({'date': as_of, 'rev_data_as_of': rev_as_of, 'core': sel['rotation']['core'],
-                      'removed': sel['rotation']['removed'], 'filled': sel['rotation']['filled']})
+                      'removed': sel['rotation']['removed'], 'filled': sel['rotation']['filled'],
+                      'blocked': sel['rotation'].get('blocked', [])})
         ledger = {'schema_version': 'tw-1.0', 'roster': {'core': sel['rotation']['core']},
                   'last_rotation_date': last_rotation_date, 'snapshots': snaps}
 
