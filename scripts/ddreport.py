@@ -24,6 +24,7 @@ import argparse
 import hashlib
 import html as html_lib
 import json
+import math
 import os
 import re
 import shutil
@@ -39,6 +40,7 @@ import dd_bundle  # noqa: E402  （WP-C：delta 判斷 prompt 沿用 `_transcrip
 import dd_codex  # 2026-09-11：明選 Codex 才走直接回傳，不默默改供應商。
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
 import dd_meta_reader  # noqa: E402  （WP7a peers 來源③：讀 id-meta related_tickers，不改其內部）
+import dd_prior  # noqa: E402  （2026-10-20：代號比對鍵與前份 DD 檔案掃描，補尾碼／peers 沿用）
 import dd_project  # noqa: E402  （WP-H2-1：v19 判斷檔的形狀正規化與投影，唯一轉接）
 import dd_metric_resolver  # noqa: E402  （2026-09-07：batch 摘要 Max DD 改用共用 helper，只 import 不改其內部）
 import dd_sections  # noqa: E402  （2026-09-06 WP4b：leak_hits／split_sections，gates 用來把 FAIL 歸因到 sid）
@@ -449,9 +451,51 @@ def _resolve_archetype(cli_archetype, prior):
 
 
 # ---------------------------------------------------------------------------
+# 2026-10-20：純數字代號補尾碼。前份 DD 的查找（檔名變體 DD_2317_／DD_3037.TW_／DD_2308TW_／BRIEF_）
+# 在 dd_prior.find_dd_files：以檔內 dd-meta 的 ticker 為準，檔名只預篩。
+# ---------------------------------------------------------------------------
+
+_tkey = dd_prior.ticker_key  # 比對鍵：大寫、去點、.TWO 併入 .TW
+
+
+def _infer_exchange_suffix(code):
+    """不帶尾碼的純數字代號 → (完整代號, 依據說明)；判不了回 (None, 原因)。
+    ①前份 DD／快速版的 dd-meta ticker（同代號只有一種尾碼才採用，日股 .T 也一樣）；
+    ②data/active_etf/security_meta.json（TWSE→.TW、TPEx→.TWO），且 dd-screener 池裡沒有同代號的
+    非台股（6857／6146 在池裡是日股，2026-10-11 就是這樣被當成美股跑）。"""
+    code = str(code).strip().upper()
+    seen = {}
+    for _d, _full, f, _ft, mt in dd_prior.iter_dd_by_code(code):
+        if mt and re.fullmatch(re.escape(code) + r"\.[A-Z]+", str(mt).strip().upper()):
+            seen[str(mt).strip().upper()] = f
+    if len(seen) == 1:
+        full, f = next(iter(seen.items()))
+        return full, "前份 DD {0} 的 dd-meta ticker".format(f.name)
+    if len(seen) > 1:
+        return None, "前份 DD 對 {0} 有多種尾碼（{1}）".format(code, "、".join(sorted(seen)))
+    try:
+        sm = _load_json(REPO_ROOT / "data" / "active_etf" / "security_meta.json")
+    except Exception:
+        return None, "查不到前份 DD，security_meta.json 也讀不到"
+    hits = [(code + sfx, (sm.get(code + sfx) or {}).get("market")) for sfx in (".TW", ".TWO") if code + sfx in sm]
+    if len(hits) != 1:
+        return None, "前份 DD 與 security_meta.json 都查不到 {0}".format(code)
+    full, mkt = hits[0]
+    try:
+        pool = [str(s.get("ticker") or "").upper() for s in _load_json(DD_SCREENER_LATEST_PATH).get("stocks", [])]
+    except Exception:
+        pool = []
+    other = [t for t in pool if t.startswith(code + ".") and not t.endswith((".TW", ".TWO"))]
+    if other:
+        return None, "{0} 在 security_meta 是台股，但 dd-screener 池裡同代號有 {1}，無法判斷".format(code, "、".join(other))
+    return full, "security_meta.json（{0}）".format(mkt)
+
+
+# ---------------------------------------------------------------------------
 # WP7a #3：peers 來源優先順序 --peers → SRC_ARCHIVE_DIR 前份 evidence.json 的
-# numbers.peer_financials → docs/id/ID_*.html id-meta related_tickers[] →
-# 都沒有則交由呼叫端印錯誤退出（strict 會擋 <2 對手，早停比晚停省）。
+# numbers.peer_financials → docs/id/ID_*.html id-meta related_tickers[]（2026-10-20
+# 起要貼題才採用）→ 都沒有則交由呼叫端印錯誤退出（strict 會擋 <2 對手，早停比晚停省），
+# 錯誤訊息附 dd-screener 同產業候選供參考（不自動採用）。
 # ---------------------------------------------------------------------------
 
 def _peers_from_archive(ticker):
@@ -481,9 +525,99 @@ def _peers_from_archive(ticker):
     return None
 
 
+# 2026-10-20：id_meta 來源要過「題材貼題」關、新增 dd-screener 後備。
+# 10-19 實測：WMT 帶出 META,GOOGL,AMZN,TTD（AI 廣告 ID）、JPM 帶出 DAL,UAL,AAL,LUV（航空 ID）——
+# 舊版取 find_ids_for_ticker 的第一份（檔名字母序，常是最舊的），不看題材。
+# 產業判斷只用本機兩份可靠分類：台股＝TWSE／TPEx 官方產業別（security_meta.json，電子類八個產業別併成一組，
+# 因為篩選池的台股幾乎都是電子股，細分後同業常不足 2 檔）、美股等＝GICS 大類（data/engine/universe.json）；
+# 都沒有才退到 dd-screener 的自由文字 sector（只有約 1/10 有填，且只接受完全相同）。
+PEER_UNIVERSE_PATH = REPO_ROOT / "data" / "engine" / "universe.json"
+SECURITY_META_PATH = REPO_ROOT / "data" / "active_etf" / "security_meta.json"
+PRICES_TW_PATH = REPO_ROOT / "docs" / "cache" / "prices-tw.json"
+_TW_ELECTRONICS_CODES = ("24", "25", "26", "27", "28", "29", "30", "31")  # 半導體／電腦週邊／光電／通信網路／電子零組件／電子通路／資訊服務／其他電子
+_TW_TICKER_RE = re.compile(r"\d{4,6}[A-Z]?\.TWO?")
+ID_MAIN_PURITY_PCT = 40   # 同 ID 機器初篩慣用門檻（id-meta-schema：purity_pct ≥ 40）
+PEERS_HINT_N = 5          # 找不到對手時，錯誤訊息裡列幾檔 dd-screener 候選
+PEERS_MIN_N = 2           # 少於這個數就不列（strict 會擋 <2 對手）
+PEERS_MAX_MCAP_LOG_RATIO = math.log(10)  # 同官方產業別但市值差 10 倍以上，排在市值較接近者之後
+
+
+def _load_peer_maps():
+    """產業／市值判斷用的本機資料，缺檔就給空表（判不出同產業，來源自然不被採用）。"""
+    def _j(p):
+        try:
+            return _load_json(p) or {}
+        except Exception:
+            return {}
+    uni = {str(x.get("ticker") or "").upper(): x.get("sector")
+           for x in (_j(PEER_UNIVERSE_PATH).get("tickers") or [])}
+    tw = {_tkey(k): v for k, v in _j(SECURITY_META_PATH).items() if isinstance(v, dict)}
+    tw_px = {_tkey(k): v.get("price") for k, v in (_j(PRICES_TW_PATH).get("tickers") or {}).items()
+             if isinstance(v, dict)}
+    return {"uni": uni, "tw": tw, "tw_px": tw_px}
+
+
+def _peer_group(ticker, maps, row=None):
+    """同產業判斷用的分組標籤；判不出回 None。"""
+    t = str(ticker or "").strip().upper()
+    if _TW_TICKER_RE.fullmatch(t):
+        sm = maps["tw"].get(_tkey(t))
+        if not sm:
+            return None
+        if str(sm.get("industry_code")) in _TW_ELECTRONICS_CODES:
+            return "TW:電子"
+        return "TW:{0}".format(sm.get("industry_name")) if sm.get("industry_name") else None
+    if maps["uni"].get(t):
+        return "GICS:{0}".format(maps["uni"][t])
+    txt = str((row or {}).get("sector") or "").strip().lower()
+    return "TXT:{0}".format(txt) if txt else None
+
+
+def _peer_industry(ticker, maps, row=None):
+    """比 _peer_group 細一層：台股用官方產業別代碼，其餘同 _peer_group。"""
+    t = str(ticker or "").strip().upper()
+    if _TW_TICKER_RE.fullmatch(t):
+        return "TW:{0}".format((maps["tw"].get(_tkey(t)) or {}).get("industry_code"))
+    return _peer_group(t, maps, row)
+
+
+def _peer_market(t):
+    t = str(t or "").strip().upper()
+    sfx = t.rsplit(".", 1)[-1] if "." in t else ""
+    if sfx in ("TW", "TWO"):
+        return "TW"
+    return sfx if sfx and (len(sfx) > 1 or sfx == "T") else "US"
+
+
+def _peer_mcap(ticker, maps, row=None):
+    """本機算的市值近似（各自本幣，只拿來在同市場內比大小）。台股＝流通股數×最新收盤；
+    其餘＝Koyfin 稀釋股數×現價（dd-screener 的 fund 欄）。算不出回 None。"""
+    t = str(ticker or "").strip().upper()
+    if _TW_TICKER_RE.fullmatch(t):
+        sh = (maps["tw"].get(_tkey(t)) or {}).get("shares_outstanding")
+        px = maps["tw_px"].get(_tkey(t))
+        return sh * px if sh and px else None
+    f = (row or {}).get("fund") or {}
+    sh, px = f.get("dil_shares_fy"), f.get("last_price_local")
+    return sh * px if sh and px else None
+
+
+def _yf_market_cap(ticker):
+    """標的本身本機算不出市值時的最後手段（一次網路查詢）；失敗回 None。"""
+    try:
+        import yfinance as yf
+        mc = (yf.Ticker(ticker).info or {}).get("marketCap")
+        return float(mc) if mc else None
+    except Exception:
+        return None
+
+
 def _peers_from_id_meta(ticker):
-    """`docs/id/ID_*.html` id-meta `related_tickers[]` 含 {T} 的那份，取前 4 檔
-    （去自身）。回傳 list 或 None。"""
+    """`docs/id/ID_*.html` id-meta `related_tickers[]` 含 {T} 的各份 ID 裡挑最貼題的一份，取前 4 檔對手（去自身）。
+    每份 ID（同一份的多個版本只看最新一版）要過其一才採用：
+      (A) 標的是該 ID 的主要成員：depth=🔴 且（purity_pct ≥ 40 或排在 related_tickers 第一位）→ 取其餘成員前 4 檔；
+      (B) 產業相符：其餘成員裡與標的同產業（_peer_group 相同）的 ≥ 2 檔 → 只取這些同產業成員前 4 檔。
+    多份都過時 (A) 先於 (B)，再比同產業成員數、標的 depth、publish_date（新者先）。都不過回 None。"""
     if not ID_DIR.exists():
         return None
     try:
@@ -492,20 +626,84 @@ def _peers_from_id_meta(ticker):
         return None
     if not matches:
         return None
-    _, meta = matches[0]
-    related = meta.get("related_tickers") or []
-    tickers = []
     target = ticker.strip().upper()
-    for r in related:
-        t = (r.get("ticker") or "").strip().upper()
-        if t and t != target and t not in tickers:
-            tickers.append(t)
-    return tickers[:4] or None
+    maps = _load_peer_maps()
+    tgrp = _peer_group(target, maps)
+    best, best_score, seen_stem = None, None, set()
+    for path, meta in sorted(matches, key=lambda pm: str(pm[1].get("publish_date") or ""), reverse=True):
+        stem = re.sub(r"_\d{8}$", "", path.stem)  # ID_AIEDAIP_20260427／_20261014 是同一份的兩個版本
+        if stem in seen_stem:
+            continue
+        seen_stem.add(stem)
+        entries = [r for r in (meta.get("related_tickers") or []) if (r.get("ticker") or "").strip()]
+        order = [r["ticker"].strip().upper() for r in entries]
+        me = next((r for r in entries if r["ticker"].strip().upper() == target), None)
+        others = []
+        for t in order:
+            if t != target and t not in others:
+                others.append(t)
+        same = [t for t in others if tgrp and _peer_group(t, maps) == tgrp]
+        red = "🔴" in str((me or {}).get("depth") or "")
+        main = red and (((me or {}).get("purity_pct") or 0) >= ID_MAIN_PURITY_PCT or order.index(target) == 0)
+        if main:
+            peers = others[:4]
+        elif len(same) >= 2:
+            peers = same[:4]
+        else:
+            continue
+        score = (main, len(same), red, str(meta.get("publish_date") or ""))
+        if best_score is None or score > best_score:
+            best, best_score = peers, score
+    return best or None
+
+
+def _peers_from_screener(ticker, n=PEERS_HINT_N, min_n=PEERS_MIN_N, use_yf=True):
+    """dd-screener（docs/dd-screener/latest.json）裡同產業、同市場優先、市值最接近的 n 檔候選（去自身）。
+    **不自動採用**：2026-10-20 實測品質不夠（JPM→V,MA,MS；2317.TW→3665,3711,2308），對手錯會靜默拉低
+    判斷品質，比 plan 停下更糟；只在找不到對手的錯誤訊息裡列給人參考，由人用 --peers 指定。
+    產業／市值判斷見 _peer_group／_peer_mcap。標的市值本機算不出且 use_yf 時查一次 yfinance；
+    仍沒有就改列市值最大的。回 (候選 list, 一行說明)；不足 min_n 檔或判不出產業回 (None, None)。"""
+    try:
+        stocks = _load_json(DD_SCREENER_LATEST_PATH).get("stocks") or []
+    except Exception:
+        return None, None
+    target = ticker.strip().upper()
+    maps = _load_peer_maps()
+    rows = {str(s.get("ticker") or "").upper(): s for s in stocks}
+    grp = _peer_group(target, maps, rows.get(target))
+    if not grp:
+        return None, None
+    tmc = _peer_mcap(target, maps, rows.get(target))
+    if tmc is None and use_yf:
+        tmc = _yf_market_cap(target)
+    tmkt = _peer_market(target)
+    tind = _peer_industry(target, maps, rows.get(target))
+    cands = []
+    for t, row in rows.items():
+        if not t or _tkey(t) == _tkey(target) or _peer_group(t, maps, row) != grp:
+            continue
+        mc = _peer_mcap(t, maps, row)
+        if tmc and mc:
+            dist = abs(math.log(mc / tmc))
+        else:
+            dist = float("inf") if tmc else -(mc or 0)
+        # 電子類併成一組後，仍先挑官方產業別相同、市值差不到 10 倍的（例：聯電先挑半導體，不是市值相近的散熱）
+        tight = _peer_industry(t, maps, row) == tind and dist <= PEERS_MAX_MCAP_LOG_RATIO
+        cands.append(((_peer_market(t) != tmkt, not tight, dist, t), t, row, mc))
+    cands.sort(key=lambda x: x[0])
+    picks = cands[:n]
+    if len(picks) < min_n:
+        return None, None
+    note = "dd-screener 同產業候選（{0}，標的市值{1}；僅供參考，請用 --peers 指定）：{2}".format(
+        grp, "≈{0:,.0f}M".format(tmc / 1e6) if tmc else "未知",
+        "、".join("{0}（{1}）".format(t, "{0:,.0f}M".format(mc / 1e6) if mc else "市值未知")
+                  for _k, t, _r, mc in picks))
+    return [t for _k, t, _r, _mc in picks], note
 
 
 def _resolve_peers(cli_peers, ticker):
     """回傳 (peers_str_or_None, source)。優先序：--peers → archive →
-    id-meta → (None, None)（呼叫端負責印錯誤退出）。"""
+    id-meta（貼題才採用）→ (None, None)（呼叫端負責印錯誤退出，並用 _peers_from_screener 列參考候選）。"""
     if cli_peers:
         return cli_peers, "cli"
     from_archive = _peers_from_archive(ticker)
@@ -1308,11 +1506,12 @@ def cmd_plan(args):
     else:
         peers_str, peers_src = _resolve_peers(args.peers, ticker)
         if not peers_str:
+            _hint_peers, hint = _peers_from_screener(ticker)
             print(
                 "[error] 找不到可用對手清單（--peers 未給、{0}/{1}_*/ 無歷史 "
-                "numbers.peer_financials、docs/id/ID_*.html 無含 {1} 的 "
-                "related_tickers）：請帶 --peers a,b 手動指定（strict 會擋 <2 "
-                "對手，早停比晚停省）".format(SRC_ARCHIVE_DIR, ticker),
+                "numbers.peer_financials、docs/id/ID_*.html 無貼題的 ID）：請帶 --peers a,b 手動指定"
+                "（strict 會擋 <2 對手，早停比晚停省）".format(SRC_ARCHIVE_DIR, ticker)
+                + ("\n" + hint if hint else ""),
                 file=sys.stderr,
             )
             _atomic_write_json(run_dir / "manifest.json", manifest)
@@ -1363,6 +1562,7 @@ def cmd_plan(args):
             "PART_PATH": str(part_path),
             "EVENTS_BLOCK": EVENTS_ADDENDUM if is_major else "",
             "EVENTS_JSON_KEY": (',\n  "events": ' + EVENTS_JSON_SAMPLE) if is_major else "",
+            "PRIMARY_DOCS_BLOCK": "",  # 一手文件摘錄只在 v20（dd2）注入；舊鏈留空
         }
         prompt_text = _render_template(PROMPTS_TMPL_DIR / "coverage.md.tmpl", mapping)
         prompt_rel = "prompts/a_{0}.md".format(k)
@@ -5094,6 +5294,54 @@ def _ignore_inline_prompt_files(dirpath, names):
     return [n for n in names if n.endswith("_inline.md")]
 
 
+# 2026-10-20（WP1）：存檔標點正規化。規則與 scripts/qc.py 對齊（不改 qc.py）：
+# qc 對 _src 只掃 .md（.html 只掃 docs/ 底下；.json／.txt 不掃），判定＝CJK 字元
+# 直接接半形 , . :（; ? ! 刻意不判，見 qc.py 註解），且 .md 會先剝掉 fenced code
+# 與行內 code。這裡照同一組字元範圍與同一組例外轉換，掃不到的檔型不動。
+_ARCHIVE_PUNCT_SUFFIXES = (".md",)
+_QC_CJK_RANGE = "\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff"  # = qc.py 的 CJK
+_CJK_HALF_PUNCT_RE = re.compile(
+    r"(?P<code>```.*?```|`[^`\n]*`)|(?P<cjk>[" + _QC_CJK_RANGE + r"])(?P<punct>[,.:])",
+    re.DOTALL,
+)
+_HALF_TO_FULL_PUNCT = {",": "，", ".": "。", ":": "："}
+
+
+def _normalize_cjk_punct(text):
+    """把『CJK 字元後緊接的半形 , . :』轉成全形 ，。：（; 不轉，qc.py 不判）。
+    fenced／行內 code 原樣保留（qc.py 同樣不掃）。回傳 `(新文字, 轉換處數)`。
+    冪等：轉完再跑不會再命中。"""
+    hits = [0]
+
+    def _sub(m):
+        if m.group("code") is not None:
+            return m.group("code")
+        hits[0] += 1
+        return m.group("cjk") + _HALF_TO_FULL_PUNCT[m.group("punct")]
+
+    return _CJK_HALF_PUNCT_RE.sub(_sub, text), hits[0]
+
+
+def _normalize_archive_punct(archive_dir):
+    """對存檔目錄底下所有 .md 做 `_normalize_cjk_punct`，有改才寫回（位元組層
+    讀寫，保留換行原樣；非 UTF-8 的檔略過）。回傳 `(改動檔數, 總處數)`。"""
+    files_changed = 0
+    total_hits = 0
+    for path in sorted(Path(archive_dir).rglob("*")):
+        if not path.is_file() or path.suffix.lower() not in _ARCHIVE_PUNCT_SUFFIXES:
+            continue
+        try:
+            text = path.read_bytes().decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        new_text, hits = _normalize_cjk_punct(text)
+        if hits:
+            path.write_bytes(new_text.encode("utf-8"))
+            files_changed += 1
+            total_hits += hits
+    return files_changed, total_hits
+
+
 def _archive_run_dir(run_dir, archive_dir):
     """把 run 目錄的固定產物複製到 `notes/site-internal/dd/_src/{T}_{D}/`，
     檔名照既有慣例加 `{T}_{D}.` 前綴；`parts/`／`prompts/`／`agents/`／
@@ -5139,6 +5387,14 @@ def _archive_run_dir(run_dir, archive_dir):
         shutil.copy2(str(manifest_src), str(archive_dir / "manifest.json"))
         copied.append("manifest.json")
 
+    # 2026-10-20（WP1）：存檔的 .md 一律過一次標點正規化——agent 寫的 gate.md／
+    # qc48.md 與提示檔會帶「中文後接半形 , . :」，pre-push qc.py 掃 _src 底下
+    # .md 會擋（AMAT 10-12）。原 run 目錄不動，只改存檔副本。
+    norm_files, norm_hits = _normalize_archive_punct(archive_dir)
+    if norm_hits:
+        print("[archive] 標點正規化：{0} 個 .md／{1} 處（中文後半形 , . : → ，。：）".format(
+            norm_files, norm_hits))
+
     print("[archive] {0} → {1}（{2} 項）".format(run_dir, archive_dir, len(copied)))
     return copied
 
@@ -5164,14 +5420,306 @@ def _git_ahead_behind():
 
 
 DD_WORKTREE_DIR = Path("/tmp/dd_wt")
+# 2026-10-20（WP1）：彙總檔衝突自救用（模組層，供測試 monkeypatch 覆寫）。
+DD_WORKTREE_PUSH_DIR = Path("/tmp/dd_wt_push")  # 自救 commit 重推用的乾淨 worktree
+DD_RESCUE_SYNC_TIMEOUT = 2400  # update_dd_index.py 實測約 9 分鐘，留 4 倍餘裕
+DD_RESCUE_PUSH_RETRIES = 3
+
+# 2026-10-20（WP1）：cherry-pick 衝突固定落在這五個彙總檔（53 次執行中 14 次
+# 卡 HOLD）。衝突只涉及它們時，commit 裡「自己的檔」是乾淨的，彙總檔本來就
+# 是 update_dd_index.py 由 INDEX 重生的衍生物，可以在最新 origin/main 上重建。
+# 路徑由模組層常數推導（`_repo_rel`），測試 monkeypatch 假 repo 時一併跟著走。
+_INDEX_ROW_ADDED_RE = re.compile(r"^\+(\| \d{4}-\d{2}-\d{2} \|.*)$")
+_INDEX_FILE_KEY_RE = re.compile(r"(?:brief/)?(?:DD|BRIEF)_[^\s|]+?\.html")
 
 
-def _push_head_via_worktree(commit_sha):
+def _repo_rel(path):
+    """REPO_ROOT 底下的 POSIX 相對路徑；不在 REPO_ROOT 底下就原樣回傳。"""
+    try:
+        return Path(path).resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        return Path(path).as_posix()
+
+
+def _aggregate_rel_paths():
+    """五個彙總檔的 repo 相對路徑（與 `_finish_file_set` 的同步檔同一組）。"""
+    return [_repo_rel(p) for p in (
+        INDEX_MD_PATH, RESEARCH_BODY_PATH, DD_SCREENER_LATEST_PATH,
+        PICKS_CANDIDATES_PATH, TICKER_HUB_DIR / "index.html",
+    )]
+
+
+def _conflicts_only_aggregates(conflict_paths, aggregate_paths):
+    """衝突檔非空、且全部落在彙總檔內才回 True；有任何一檔在彙總檔外就回
+    False（維持 HOLD）。"""
+    conflicts = [c.strip() for c in (conflict_paths or []) if c and c.strip()]
+    allowed = set(aggregate_paths)
+    return bool(conflicts) and all(c in allowed for c in conflicts)
+
+
+def _select_own_paths(changed_paths, tickers, date=None):
+    """從 commit 動過的檔挑出『這幾檔自己的檔』（repo 相對路徑）：
+    `docs/dd/DD_{T}_{D}.html`、`docs/dd/brief/BRIEF_{T}_{D}.html`、
+    `notes/site-internal/dd/_src/{T}_{D}/**`、`docs/t/data/{T}.json`。
+    `date` 為 None（批尾同步 commit，不含報告）時只認 `docs/t/data/{T}.json`。
+    刻意不收 `docs/t/{T}.html`：origin 已刪 /t/ 轉址樁（8850801fd），
+    build_ticker_hubs.py 只對不在 dash 母體的 ticker 才產 hub 頁，有沒有交給
+    重建後的 worktree 決定。其餘（彙總檔、他人被掃進 commit 的檔）一律不收。"""
+    dd_rel = _repo_rel(DD_DIR)
+    src_rel = _repo_rel(SRC_ARCHIVE_DIR)
+    hub_data_rel = _repo_rel(TICKER_HUB_DIR / "data")
+    own = []
+    for raw in changed_paths or []:
+        p = raw.strip()
+        if not p:
+            continue
+        for t in tickers or []:
+            hit = p == "{0}/{1}.json".format(hub_data_rel, t)
+            if date and not hit:
+                hit = (
+                    p == "{0}/DD_{1}_{2}.html".format(dd_rel, t, date)
+                    or p == "{0}/brief/BRIEF_{1}_{2}.html".format(dd_rel, t, date)
+                    or p.startswith("{0}/{1}_{2}/".format(src_rel, t, date))
+                )
+            if hit:
+                own.append(p)
+                break
+    return own
+
+
+def _added_index_rows(diff_text):
+    """從 `git show -U0 <sha> -- docs/dd/INDEX.md` 的 diff 取該 commit 新增的表格列
+    （`+| 2026-…` 開頭），去掉前導 `+`。"""
+    rows = []
+    for line in (diff_text or "").splitlines():
+        m = _INDEX_ROW_ADDED_RE.match(line)
+        if m:
+            rows.append(m.group(1).rstrip())
+    return rows
+
+
+def _index_row_file_key(row):
+    m = _INDEX_FILE_KEY_RE.search(row or "")
+    return m.group(0) if m else None
+
+
+def _merge_index_rows(index_text, rows):
+    """把 `rows` 依序插到 INDEX.md 表格最後一列（最後一個以 `|` 開頭的行）之後；
+    整列相同或同檔名（`DD_…html`／`brief/BRIEF_…html`）已存在的列跳過，冪等。
+    回傳 `(新文字, 實際新增的列)`。"""
+    had_nl = index_text.endswith("\n")
+    lines = index_text.splitlines()
+    seen_lines = {ln.rstrip() for ln in lines}
+    seen_keys = {k for k in (_index_row_file_key(ln) for ln in lines if ln.startswith("|")) if k}
+    table_idx = [i for i, ln in enumerate(lines) if ln.startswith("|")]
+    insert_at = table_idx[-1] + 1 if table_idx else len(lines)
+    added = []
+    for row in rows:
+        row = row.rstrip()
+        key = _index_row_file_key(row)
+        if row in seen_lines or (key and key in seen_keys):
+            continue
+        lines.insert(insert_at, row)
+        insert_at += 1
+        seen_lines.add(row)
+        if key:
+            seen_keys.add(key)
+        added.append(row)
+    new_text = "\n".join(lines)
+    if lines and (had_nl or not index_text):
+        new_text += "\n"
+    return new_text, added
+
+
+def _is_non_fast_forward(output):
+    """push 輸出是『遠端又前進』（可重推）而不是 hook／權限擋下。"""
+    low = (output or "").lower()
+    return any(k in low for k in (
+        "non-fast-forward", "fetch first", "tip of your current branch is behind"))
+
+
+def _cleanup_worktree(path):
+    """移除 worktree 並 prune；目錄殘留一併清掉。"""
+    _git(["worktree", "remove", "--force", str(path)])
+    if Path(path).exists():
+        shutil.rmtree(str(path), ignore_errors=True)
+    _git(["worktree", "prune"])
+
+
+def _git_out(r):
+    return ((r.stdout or "") + (r.stderr or "")).strip()
+
+
+def _push_commit_via_clean_worktree(commit_sha):
+    """自救 commit 在原 worktree 推送遇 non-fast-forward 時：每次 fetch、另開乾淨
+    worktree 於最新 origin/main 上 cherry-pick 該 commit 再推（原 worktree 有
+    update_dd_index 改出來的髒檔，無法 rebase），最多 `DD_RESCUE_PUSH_RETRIES` 次；
+    每次結束都 remove＋prune。push 被擋但不是 non-fast-forward（例如 pre-push
+    QC）就停下回報，不重試、不繞過。回傳 (ok, reason)。"""
+    wt = DD_WORKTREE_PUSH_DIR
+    last_out = ""
+    for attempt in range(1, DD_RESCUE_PUSH_RETRIES + 1):
+        _cleanup_worktree(wt)
+        _git(["fetch", "origin", "main"])
+        add_r = _git(["worktree", "add", "--detach", str(wt), "origin/main"])
+        if add_r.returncode != 0:
+            _cleanup_worktree(wt)
+            return False, "重推 worktree add 失敗：{0}".format(_git_out(add_r))
+        try:
+            cp_r = _git(["cherry-pick", commit_sha], cwd=wt)
+            if cp_r.returncode != 0:
+                _git(["cherry-pick", "--abort"], cwd=wt)
+                return False, (
+                    "重推第 {0} 次 cherry-pick 又衝突（origin 在重建期間動了彙總檔，"
+                    "需重跑 finish）：{1}".format(attempt, _git_out(cp_r)))
+            push_r = _git(["push", "origin", "HEAD:main"], cwd=wt)
+            if push_r.returncode == 0:
+                return True, ""
+            last_out = _git_out(push_r)
+            if not _is_non_fast_forward(last_out):
+                return False, "push 被擋（可能 pre-push QC gate）：{0}".format(last_out)
+            print("[rescue] 重推第 {0}/{1} 次 non-fast-forward，重新 fetch 再試".format(
+                attempt, DD_RESCUE_PUSH_RETRIES))
+        finally:
+            _cleanup_worktree(wt)
+    return False, "push 連續 {0} 次 non-fast-forward：{1}".format(
+        DD_RESCUE_PUSH_RETRIES, last_out)
+
+
+def _rescue_run(cmd, wt):
+    """在 worktree 內跑一支重建腳本；回傳 (ok, 輸出尾段)。"""
+    try:
+        r = subprocess.run(
+            cmd, cwd=str(wt), capture_output=True, text=True,
+            timeout=DD_RESCUE_SYNC_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return False, "逾時（>{0}s）".format(DD_RESCUE_SYNC_TIMEOUT)
+    out = ((r.stdout or "") + (r.stderr or "")).strip()
+    if r.returncode != 0:
+        return False, "rc={0}：{1}".format(r.returncode, out[-4000:] or "（無輸出）")
+    return True, out
+
+
+def _rescue_aggregate_conflict(commit_sha, wt, tickers, date=None):
+    """2026-10-20（WP1）：cherry-pick 只在彙總檔衝突時的自救。`wt` 是已在
+    origin/main、已 `cherry-pick --abort` 的乾淨 worktree。
+
+    做法（照 10-19 手動救 JPM／WMT／SNPS 與台股三檔的步驟）：
+    1. 只從 commit checkout『這幾檔自己的檔』（`_select_own_paths`）；
+    2. 把該 commit 在 INDEX.md 新增的列插到 worktree 版表格最後一列之後
+       （`_merge_index_rows`，同列跳過）；
+    3. 在 worktree 跑 update_dd_index.py 重建彙總檔；worktree 版 update_dd_index
+       還沒帶 `--include-non-dd`（本修正未上 origin 前）時，補跑
+       build_dd_screener.py --include-non-dd，latest.json 才不少 QGM 名字；
+    4. 只 add 白名單（自己的檔＋五個彙總檔＋重建後存在的 docs/t/{T}.html）並
+       commit（沿用原 commit 訊息）；
+    5. 推送；non-fast-forward 時改走 `_push_commit_via_clean_worktree`。
+    任一步失敗回 (False, reason)，不 push、不繞過 QC。"""
+    wt = Path(wt)
+    aggregates = _aggregate_rel_paths()
+    diff_r = _git(["diff-tree", "--no-commit-id", "--name-only", "-r",
+                   "--diff-filter=AM", commit_sha], cwd=wt)
+    changed = [ln.strip() for ln in (diff_r.stdout or "").splitlines() if ln.strip()]
+    own = _select_own_paths(changed, tickers, date)
+    if date and not own:
+        return False, "彙總檔衝突自救中止：commit {0} 內找不到 {1} 自己的檔".format(
+            commit_sha[:12], "、".join(tickers or []))
+    skipped = [p for p in changed if p not in own and p not in aggregates]
+    if skipped:
+        print("[rescue] 略過 {0} 個非本檔／非彙總檔（不帶上 origin）：{1}".format(
+            len(skipped), "、".join(skipped[:5]) + ("…" if len(skipped) > 5 else "")))
+
+    # 1) 自己的檔
+    for i in range(0, len(own), 200):
+        co_r = _git(["checkout", commit_sha, "--"] + own[i:i + 200], cwd=wt)
+        if co_r.returncode != 0:
+            return False, "自救 checkout 自己的檔失敗：{0}".format(_git_out(co_r))
+    print("[rescue] 取回自己的檔 {0} 個".format(len(own)))
+
+    # 2) INDEX 列
+    index_rel = _repo_rel(INDEX_MD_PATH)
+    show_r = _git(["show", "--format=", "-U0", commit_sha, "--", index_rel], cwd=wt)
+    rows = _added_index_rows(show_r.stdout)
+    index_path = wt / index_rel
+    index_text = index_path.read_text(encoding="utf-8") if index_path.exists() else ""
+    new_text, added_rows = _merge_index_rows(index_text, rows)
+    if added_rows:
+        index_path.write_text(new_text, encoding="utf-8")
+    print("[rescue] INDEX.md 新增 {0}／{1} 列（同列或同檔名已存在者跳過）".format(
+        len(added_rows), len(rows)))
+    dd_rel = _repo_rel(DD_DIR)
+    for row in rows:
+        key = _index_row_file_key(row)
+        if key and not (wt / dd_rel / key).exists():
+            return False, "自救中止：INDEX 列指向的報告不在 origin／自己的檔內：{0}".format(key)
+
+    # 3) 重建彙總檔
+    py = _pick_python()
+    update_script = wt / "scripts" / "update_dd_index.py"
+    print("[rescue] 在 worktree 跑 update_dd_index.py（約 9 分鐘）…")
+    ok, out = _rescue_run([py, str(update_script)], wt)
+    if not ok:
+        return False, "自救 update_dd_index.py 失敗：{0}".format(out)
+    if "--include-non-dd" not in update_script.read_text(encoding="utf-8"):
+        print("[rescue] worktree 版 update_dd_index 未帶 --include-non-dd，補跑 build_dd_screener")
+        ok, out = _rescue_run(
+            [py, str(wt / "scripts" / "build_dd_screener.py"), "--include-non-dd"], wt)
+        if not ok:
+            return False, "自救 build_dd_screener.py --include-non-dd 失敗：{0}".format(out)
+
+    # 4) 白名單 add＋commit
+    hub_rel = _repo_rel(TICKER_HUB_DIR)
+    whitelist = list(own) + list(aggregates)
+    whitelist += ["{0}/{1}.html".format(hub_rel, t) for t in (tickers or [])]
+    to_add = [p for p in dict.fromkeys(whitelist) if (wt / p).exists()]
+    for i in range(0, len(to_add), 200):
+        add_r = _git(["add", "--"] + to_add[i:i + 200], cwd=wt)
+        if add_r.returncode != 0:
+            return False, "自救 git add 失敗：{0}".format(_git_out(add_r))
+    msg_r = _git(["log", "-1", "--format=%B", commit_sha], cwd=wt)
+    message = (msg_r.stdout or "").strip() or "Add DD（彙總檔衝突自救重建）"
+    commit_r = _git(["commit", "-m", message], cwd=wt)
+    if commit_r.returncode != 0:
+        return False, "自救 git commit 失敗：{0}".format(_git_out(commit_r))
+    rev_r = _git(["rev-parse", "HEAD"], cwd=wt)
+    rescue_sha = (rev_r.stdout or "").strip()
+    # 其餘重生出來的衍生檔（data 快取、搜尋索引等）不在白名單，丟掉：既不入
+    # commit，也不讓 pre-push 的 qc 去掃這些未提交的髒檔。
+    _git(["checkout", "--", "."], cwd=wt)
+    print("[rescue] 已建自救 commit {0}（自己的檔 {1}＋彙總檔 {2}）".format(
+        rescue_sha[:12], len(own), len([p for p in to_add if p in aggregates])))
+
+    # 5) 推送
+    push_r = _git(["push", "origin", "HEAD:main"], cwd=wt)
+    if push_r.returncode == 0:
+        ok, reason = True, ""
+    else:
+        out = _git_out(push_r)
+        if not _is_non_fast_forward(out):
+            return False, "push 被擋（可能 pre-push QC gate）：{0}".format(out)
+        print("[rescue] non-fast-forward，改用乾淨 worktree 重推")
+        _cleanup_worktree(wt)  # 先放掉原 worktree 的磁碟再開新的
+        ok, reason = _push_commit_via_clean_worktree(rescue_sha)
+    if ok:
+        print(
+            "[rescue] 彙總檔衝突自救完成，已推 origin/main（自救 commit {0}）。"
+            "本地 main 仍留著原 commit {1}，其彙總檔內容與已推版不同；對齊 origin 時先比 "
+            "patch-id，別直接 pull --rebase（彙總檔會再衝突）".format(
+                rescue_sha[:12], commit_sha[:12]))
+    return ok, reason
+
+
+def _push_head_via_worktree(commit_sha, tickers=None, date=None):
     """遠端領先時的自救推送：開一個 detached worktree（`origin/main`），
     只把本次 finish 產生的那顆 commit（`commit_sha`）cherry-pick 上去再推，
     本地 main（目前所在 working tree／分支）完全不動——不 update-ref、
     不 checkout 任何檔。回傳 (ok: bool, reason: str)；ok=False 時 reason
     說明是 cherry-pick 衝突還是 push 被擋（例如 pre-push QC gate）。
+
+    2026-10-20（WP1）：cherry-pick 衝突且衝突檔全落在五個彙總檔內、又有給
+    `tickers` 時，改走 `_rescue_aggregate_conflict`（取回自己的檔、合併 INDEX 列、
+    在 origin/main 重建彙總檔、再推）；衝突涉及其他檔仍是 HOLD。`tickers`／`date`
+    由呼叫端帶（finish：[T]＋date；batch-sync：全批 tickers、date=None）。
     """
     wt = DD_WORKTREE_DIR
     # 清掉可能殘留的舊 worktree 註冊（不假設乾淨環境）
@@ -5188,7 +5736,15 @@ def _push_head_via_worktree(commit_sha):
 
     cp_r = _git(["cherry-pick", commit_sha], cwd=wt)
     if cp_r.returncode != 0:
+        conflict_r = _git(["diff", "--name-only", "--diff-filter=U"], cwd=wt)
+        conflicts = [ln.strip() for ln in (conflict_r.stdout or "").splitlines() if ln.strip()]
         _git(["cherry-pick", "--abort"], cwd=wt)
+        if tickers and _conflicts_only_aggregates(conflicts, _aggregate_rel_paths()):
+            print("[rescue] cherry-pick 只在彙總檔衝突（{0}），走自救重建".format("、".join(conflicts)))
+            try:
+                return _rescue_aggregate_conflict(commit_sha, wt, tickers, date)
+            finally:
+                _cleanup_worktree(wt)
         _git(["worktree", "remove", "--force", str(wt)])
         return False, "cherry-pick 衝突：{0}".format(
             ((cp_r.stdout or "") + (cp_r.stderr or "")).strip()
@@ -5625,7 +6181,7 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
         if not commit_sha:
             rev_r = _git(["rev-parse", "HEAD"])
             commit_sha = (rev_r.stdout or "").strip()
-        ok, reason = _push_head_via_worktree(commit_sha)
+        ok, reason = _push_head_via_worktree(commit_sha, tickers=[ticker], date=date)
         if ok:
             manifest["finish"]["report_pushed_sha"] = commit_sha
             manifest["finish"]["state"] = (
@@ -6067,7 +6623,7 @@ def _sync_batch_site(rows, date, no_push=False, skip_dd_screener=False):
     if behind > 0:
         rev_r = _git(["rev-parse", "HEAD"])
         commit_sha = (rev_r.stdout or "").strip()
-        ok, reason = _push_head_via_worktree(commit_sha)
+        ok, reason = _push_head_via_worktree(commit_sha, tickers=tickers)
         if ok:
             _mark_sync_rows(completed, "PASS")
             print("[ok] batch-sync 遠端領先 {0}，worktree 推送完成".format(behind))

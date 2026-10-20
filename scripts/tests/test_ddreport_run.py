@@ -458,7 +458,7 @@ def test_resolve_peers_falls_back_to_id_meta(tmp_path, monkeypatch):
         assert ticker == "ZPEER"
         return [(fake_id_dir / "ID_Fake.html", {
             "related_tickers": [
-                {"ticker": "ZPEER"}, {"ticker": "AMD"}, {"ticker": "NVDA"},
+                {"ticker": "ZPEER", "depth": "🔴"}, {"ticker": "AMD"}, {"ticker": "NVDA"},
                 {"ticker": "MU"}, {"ticker": "WDC"}, {"ticker": "STX"},
             ],
         })]

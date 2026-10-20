@@ -3077,8 +3077,11 @@ def main():
     print(f"\n→ Auto-trigger: {screener_script.name} (rebuild /dd-screener/ to match universe)")
     screener_ok = False
     try:
+        # 2026-10-20：與 daily-taipei-morning.yml 同口徑帶 --include-non-dd。
+        # 不帶的話每次 DD 發布重建的 latest.json 會少 QGM 品質池的 dd_status=none
+        # 名字（8 檔），要等隔天早上 CI 才補回。
         subprocess.run(
-            [sys.executable, str(screener_script)],
+            [sys.executable, str(screener_script), "--include-non-dd"],
             check=True,
         )
         screener_ok = True

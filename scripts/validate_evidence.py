@@ -283,6 +283,11 @@ def check_axis(axis_id, axis_obj, matrix):
         fails.append(f"[{axis_id}] status={status!r} 非法（pending 或未知值一律 FAIL）")
         return fails, warns
 
+    # 2026-10-20 clues（查證 agent 留的線索，由 clue_backfill 補原文後拿掉）：選填，只驗形狀、一律 (info) 不擋
+    clues = c.get("clues")
+    if clues is not None and not (isinstance(clues, list) and all(isinstance(x, dict) for x in clues)):
+        warns.append(f"(info) [{axis_id}] clues 須為物件陣列")
+
     if status == "found":
         findings = c.get("findings") or []
         if not findings:
@@ -310,6 +315,9 @@ def check_axis(axis_id, axis_obj, matrix):
                 warns.append(f"(info) [{axis_id}] findings[{i}].excerpt {len(ex)} 字，超過 600（原文摘錄應只取支撐 claim 的段落）")
             if f.get("excerpt_from") not in (None, "snippet", "page"):
                 warns.append(f"(info) [{axis_id}] findings[{i}].excerpt_from={f.get('excerpt_from')!r} 須為 snippet／page")
+            # 2026-10-20 clue_backfill 升級的 finding 帶 excerpt_source（"program_fetch"）；只驗形狀、不擋
+            if f.get("excerpt_source") is not None and not isinstance(f.get("excerpt_source"), str):
+                warns.append(f"(info) [{axis_id}] findings[{i}].excerpt_source 須為字串")
 
     elif status == "none":
         # 2026-09-10（B8 規則精簡）：撤「每軸 ≥2 條獨立查詢」的湊數下限——同一次搜尋
@@ -319,7 +327,7 @@ def check_axis(axis_id, axis_obj, matrix):
         if len(qr) < 1:
             fails.append(f"[{axis_id}] status=none 但沒有任何 queries_run 紀錄（12 軸全掃須可稽核）")
         elif len(qr) < 2:
-            warns.append(f"[{axis_id}] status=none 且 queries_run 僅 1 條（不擋，供覆蓋面掃描判讀）")
+            warns.append(f"(info) [{axis_id}] status=none 且 queries_run 僅 1 條（不擋，供覆蓋面掃描判讀）")
 
     elif status == "not_applicable":
         note = c.get("note") or ""

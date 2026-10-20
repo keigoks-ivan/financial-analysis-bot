@@ -881,6 +881,13 @@ def compute_consensus_revision(ticker, date_dt):
 # numbers.peer_financials
 # ---------------------------------------------------------------------------
 
+def _yf_symbol(ticker):
+    """送進 yfinance 的代號：上海 .SH（ID／Koyfin 慣用寫法）→ .SS（yfinance 的後綴，.SH 查無資料）。
+    只在呼叫點換，peer_financials 的鍵與報告顯示仍用原代號。"""
+    t = str(ticker or "")
+    return t[:-3] + ".SS" if t.upper().endswith(".SH") else t
+
+
 def _ttm_financials(ticker):
     out = {
         "gross_margin_pct": None, "operating_margin_pct": None,
@@ -891,7 +898,7 @@ def _ttm_financials(ticker):
     }
     try:
         np, pd, yf = _lazy_imports()
-        t = yf.Ticker(ticker)
+        t = yf.Ticker(_yf_symbol(ticker))
         qis = t.quarterly_income_stmt
         qcf = None
         try:

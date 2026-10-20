@@ -35,6 +35,7 @@ from facts_store import FactsStore  # noqa: E402
 import bundle  # noqa: E402
 import spawn as sp  # noqa: E402
 import decide  # noqa: E402  機械閘（decide.py A/B/C/H 四類，2026-09-20）
+import primary_docs  # noqa: E402  一手文件由程式先抓好、切段，注入每軸題目（零 LLM）
 
 STAGES = ["plan", "stage0", "facts", "judged", "gated", "brief", "prose", "finish"]
 
@@ -352,6 +353,74 @@ def _stage0_part_ok(spec, part, py):
     return _sub([py, SCRIPTS_DIR / "validate_evidence.py", "--part", part])[0] == 0
 
 
+THIN_NONE_MIN_QUERIES = 2
+
+
+def _retry_thin_none_axes(ctx, st, specs, py):
+    """stage0 交件後、finalize 前：status=none 但 queries_run 不到 2 條的軸，自動再派一次（每軸最多一次）。
+    validate_evidence 對這種軸只發 (info)、不擋，但單一查詢的 none 多半是搜尋詞選得不好，不是真的沒有
+    （MS 1017、NTAP、6139.KL 都曾因此整段 FAIL 或留下薄軸）。原件備份成 axes_{k}.json.thin1，
+    兼作「已補過」記號（--resume 不會再補）；補派的件驗過就換上，沒交或不合格就還原原件。"""
+    thin = []
+    for sp_ in specs:
+        if sp_["id"] == "a1_numbers" or sp_["id"].startswith("a2_"):
+            continue
+        part = ctx.run_dir / sp_["out"]
+        if not part.exists() or part.with_name(part.name + ".thin1").exists():
+            continue
+        try:
+            cov = ((_load_json(part) or {}).get("coverage") or {}).get(sp_["axis_id"]) or {}
+        except (OSError, ValueError):
+            continue
+        qr = cov.get("queries_run") or []
+        if cov.get("status") == "none" and len(qr) < THIN_NONE_MIN_QUERIES and "(agent incomplete)" not in qr:
+            thin.append((sp_, qr))
+    if not thin:
+        return
+    retry_specs = []
+    for sp_, qr in thin:
+        part = ctx.run_dir / sp_["out"]
+        part.with_name(part.name + ".thin1").write_text(part.read_text(encoding="utf-8"), encoding="utf-8")
+        part.unlink()  # 子 agent 沒有 Read，舊檔在就不能覆寫
+        base = (ctx.run_dir / sp_["prompt"]).read_text(encoding="utf-8")
+        retry_rel = sp_["prompt"].replace(".md", "_retry.md")
+        (ctx.run_dir / retry_rel).write_text(base + (
+            "\n\n---\n\n## 補查（上一輪這一軸只列了 {0} 條查詢就判 none，覆蓋面不足）\n"
+            "上一輪的查詢：{1}。這一輪請換不同的關鍵字或角度（含公司所在地的語言、在地媒體、監管機關網站）再查；"
+            "queries_run 要列出**全部**實際跑過的查詢（至少 {2} 條，含上一輪那條）。查到就 status=found 並附 findings；"
+            "仍查無就 status=none，note 寫明查過哪些。其餘格式與寫入路徑同上。".format(
+                len(qr), "、".join(map(str, qr)) or "（無）", THIN_NONE_MIN_QUERIES)), encoding="utf-8")
+        retry_id = sp_["id"] + "_retry"
+        retry_specs.append(dict(sp_, id=retry_id, prompt=retry_rel, out="agents/{0}.json".format(retry_id)))
+    results = dd_headless.spawn_many(retry_specs, max_parallel=STAGE0_MAX_PARALLEL)
+    log = st.setdefault("thin_none_retry", {})
+    for (sp_, qr), rs, r in zip(thin, retry_specs, results):
+        r = _enrich_from_raw(r or {"ok": False}, ctx.run_dir / rs["out"])
+        st["agent_usage"].append(_usage_record(rs["id"], r, {"axis_id": sp_["axis_id"]}))
+        part = ctx.run_dir / sp_["out"]
+        kept = part.exists() and _sub([py, SCRIPTS_DIR / "validate_evidence.py", "--part", part])[0] == 0
+        if not kept:  # 補派沒交或不合格：還原原件，維持補派前的行為
+            if part.exists():
+                part.replace(part.with_name(part.name + ".rejected"))
+            part.write_text(part.with_name(part.name + ".thin1").read_text(encoding="utf-8"), encoding="utf-8")
+        cov = ((_load_json(part) or {}).get("coverage") or {}).get(sp_["axis_id"]) or {}
+        log[sp_["axis_id"]] = {"queries_before": len(qr), "queries_after": len(cov.get("queries_run") or []),
+                               "status_after": cov.get("status"), "kept_retry": bool(kept)}
+    ctx.save()
+
+
+def _clue_backfill(run_dir, st, key):
+    """線索補原文：agent 有網址沒拿到原文的線索，程式零 LLM 補抓（失敗只記錄不擋）。
+    已處理的 clues 會從 part 拿掉，重複呼叫只處理新出現的。"""
+    try:
+        from clue_backfill import backfill
+        res = backfill(run_dir)
+        if res.get("clues") or key == "clue_backfill":
+            st[key] = res
+    except Exception as exc:
+        st[key] = {"error": repr(exc)}
+
+
 def do_stage0(ctx):
     st = ctx.stage_begin("stage0")
     run_dir = ctx.run_dir
@@ -365,14 +434,26 @@ def do_stage0(ctx):
     # 本輪 stale 軸重寫 axes_{k}、fresh 軸重寫 reused_coverage，舊檔一律不再需要。
     if not ctx.args.resume:
         for old in parts_dir.iterdir():
-            if re.fullmatch(r"axes_\d+\.json", old.name) or old.name == "reused_coverage.json":
+            if re.fullmatch(r"axes_\d+\.json(\.thin1)?", old.name) or old.name == "reused_coverage.json":
                 old.unlink()
 
     evidence = _load_json(run_dir / "evidence.json")
     axes = _load_json(run_dir / "axes.json")
     if isinstance(axes, dict):
         axes = axes.get("axes") or []
-    axis_ids = [a.get("id") for a in axes if a.get("id")]
+    # 2026-10-20 持有人核准：archetype 明確不適用的軸（coverage-axes.md not_applicable_by_archetype，
+    # dd_evidence axes 帶 not_applicable_reason）不派 agent、不進證據庫沿用計畫，直接寫 not_applicable＋理由。
+    na_axes = [a for a in axes if a.get("id") and a.get("not_applicable_reason")]
+    na_ids = set(a["id"] for a in na_axes)
+    axis_ids = [a.get("id") for a in axes if a.get("id") and a.get("id") not in na_ids]
+    na_part = parts_dir / "na_coverage.json"
+    if na_axes:
+        _atomic_write_json(na_part, {"coverage": {a["id"]: {
+            "status": "not_applicable", "queries_run": [], "findings": [],
+            "note": a["not_applicable_reason"], "na_source": "archetype"} for a in na_axes}})
+    elif na_part.exists():
+        na_part.unlink()
+    st["not_applicable_axes"] = sorted(na_ids)
 
     new_q = _new_quarter(ctx, evidence)
     move = _price_move_pct(ctx, evidence)
@@ -386,6 +467,18 @@ def do_stage0(ctx):
         if "major_events" in fresh and ctx.store.get_events():
             part["events"] = ctx.store.get_events()
         _atomic_write_json(parts_dir / "reused_coverage.json", part)
+
+    # 一手文件：程式先抓（台股＝公開資訊觀測站／年報／公平會、美股＝SEC EDGAR），依軸摘錄注入下面每軸題目；
+    # 零 LLM、同日同檔快取，失敗只記 note 不擋（見 primary_docs.py）
+    pdocs = {}
+    if stale_ids:
+        try:
+            pdocs = primary_docs.collect(ctx.ticker, ctx.date, run_dir)
+            pman = primary_docs.load_manifest(run_dir)
+            st["primary_docs"] = {"axis_counts": pman.get("axis_counts"), "requests": pman.get("requests"),
+                                  "sources": pman.get("sources")}
+        except Exception as e:  # noqa: BLE001  任何錯誤都不能擋 stage0
+            st["primary_docs"] = {"error": "{0}: {1}".format(type(e).__name__, str(e)[:200])}
 
     # 每軸一通
     specs = []
@@ -409,6 +502,7 @@ def do_stage0(ctx):
             "PART_PATH": str(run_dir / part_rel),
             "EVENTS_BLOCK": ddreport.EVENTS_ADDENDUM if is_major else "",
             "EVENTS_JSON_KEY": (',\n  "events": ' + ddreport.EVENTS_JSON_SAMPLE) if is_major else "",
+            "PRIMARY_DOCS_BLOCK": primary_docs.render_axis_block(pdocs, axis_id),
         }
         text = ddreport._render_template(COVERAGE_TMPL, mapping)
         prompt_rel = "prompts/a_{0}_{1}.md".format(k, axis_id)
@@ -489,6 +583,10 @@ def do_stage0(ctx):
             st["agent_usage"].append(_usage_record(s["id"], r, {"axis_id": s.get("axis_id")}))
         ctx.save()
 
+    # 線索補原文要在驗 part 之前：agent 只交 clues 時 findings 是空的，先驗會整軸判不合格
+    # （2383.TW 2026-10-20 供需軸）。補派的軸在下面 _retry_thin_none_axes 之後再跑一次。
+    _clue_backfill(run_dir, st, "clue_backfill")
+
     # 驗 part；缺檔或不合格 → 寫成 none＋note，不重試
     incomplete = []
     for s in specs:
@@ -504,6 +602,13 @@ def do_stage0(ctx):
         part = run_dir / s["out"]
         ok = part.exists()
         if ok:
+            try:  # 驗證前先救 as_of：有 url 沒日期的 finding 抓頁取頁面發布日，救不到才由下面丟棄（零 LLM）
+                from clue_backfill import rescue_undated
+                resc = rescue_undated(part, run_dir / "fetch_cache")
+                if resc["details"]:
+                    st.setdefault("rescued_undated", {})[s["axis_id"]] = {k: v for k, v in resc.items() if k != "details"}
+            except Exception as exc:
+                st.setdefault("rescued_undated", {})[s["axis_id"]] = {"error": repr(exc)}
             rc, out = _sub([py, SCRIPTS_DIR / "validate_evidence.py", "--part", part])
             ok = rc == 0
         if not ok and part.exists():
@@ -522,8 +627,10 @@ def do_stage0(ctx):
             _atomic_write_json(part, {"coverage": {s["axis_id"]: {
                 "status": "none", "queries_run": ["(agent incomplete)"], "findings": [],
                 "note": "dd2: 子 agent 未在輪數內交出合格 part，記為缺口"}}})
+    _retry_thin_none_axes(ctx, st, specs, py)  # none 但只查 1 條的軸補派一次（2026-10-20）
     st["incomplete_axes"] = incomplete
 
+    _clue_backfill(run_dir, st, "clue_backfill_retry")
     rc, out, needs = ddreport._finalize_run_dir(run_dir)
     st["finalize_rc"] = rc
     if rc != 0:
@@ -661,6 +768,17 @@ def do_facts(ctx):
     st["valuation_basis"] = decide_valuation_basis(ctx)
     if re.search(r"^\[FAIL\]", o2, re.M):
         return ctx.stage_end("facts", False, o1 + "\n" + o2)
+    # 2026-10-20：閘 ⑤ 的程式規則提前到 facts 尾判——核心軸缺證據是 stage0 的洞，judged（opus）跑下去也補不了，
+    # 紅就停在這裡，不花 opus。gated 段的覆寫與停下保留（--resume 跳過 facts 時仍要擋）。
+    # --force-gate（dry-run 預覽）照舊往下走，讓閘段記紅。
+    cg = _coverage_gate(ctx, st, use_judgment=False)
+    if cg and cg["light"] == "🔴":
+        if getattr(ctx.args, "force_gate", False) and getattr(ctx.args, "dry_run", False):
+            print("[facts] ⑤ 核心軸缺證據但 --force-gate（dry-run）往下走，僅供預覽，閘段仍記紅")
+        else:
+            lines = ["⑤ 覆蓋面（程式判定）🔴：核心軸缺證據，停在 facts，不跑 judged／gated", cg["reason"]]
+            lines += _core_missing_lines(ctx, cg)
+            return ctx.stage_end("facts", False, "\n".join(lines))
     return ctx.stage_end("facts", True, o1 + "\n" + o2)
 
 
@@ -1404,6 +1522,90 @@ def _mechanical_extra_section(mid_items):
     return "\n".join(lines)
 
 
+def _judged_archetype(ctx):
+    """判斷者歸的 archetype（answers.q1_business.verdict_values.archetype.primary）；沒有回 None。"""
+    try:
+        v = ((((_load_json(ctx.run_dir / "judgment.json").get("answers") or {}).get("q1_business") or {})
+              .get("verdict_values") or {}).get("archetype"))
+    except Exception:
+        return None
+    v = v.get("primary") if isinstance(v, dict) else v
+    return v if isinstance(v, str) and v else None
+
+
+def _coverage_gate(ctx, st, use_judgment=True):
+    """閘 ⑤ 覆蓋面燈號由程式判定（2026-10-20 持有人核准）：任一核心軸 none → 🔴；只有非核心軸 none →
+    🟡；全 found／not_applicable → 🟢。核心軸清單在 coverage-axes.md，規則實作在 dd_evidence.coverage_gate。
+    結果存 st["coverage_gate"]；算不出來（evidence 缺檔等）回 None，⑤ 沿用閘 agent 的判定並記 coverage_gate_error。
+    use_judgment=False（facts 段尾呼叫，judged 還沒跑、judgment.json 可能是上一輪留的）不做 archetype 歸類對照。"""
+    de = ddreport.dd_evidence
+    try:
+        evidence = _load_json(ctx.run_dir / "evidence.json")
+        matrix = de.load_matrix()
+        archetype = evidence.get("archetype_hint") or ctx.manifest.get("archetype")
+        cg = de.coverage_gate(evidence.get("coverage") or {}, matrix, archetype)
+        # plan 時的 archetype 只來自 --archetype／前份 DD／預設；判斷者另歸類時，他那類的專屬核心軸沒被採證。
+        # 只在 reason 註明，不改燈號（缺的是 plan 設定，不是證據品質）。
+        judged = _judged_archetype(ctx) if use_judgment else None
+        if judged and judged != archetype:
+            have = set(a.split("__", 1)[0] for a in (evidence.get("coverage") or {}))
+            missing = sorted(de.core_axis_ids(matrix, judged) - de.core_axis_ids(matrix, archetype) - have)
+            if missing:
+                cg["archetype_mismatch"] = {"plan": archetype, "judged": judged, "core_not_gathered": missing}
+                cg["reason"] += "plan 時 archetype 為「{0}」、判斷者歸「{1}」，{1} 的專屬核心軸未採證（不計燈號）：{2}。".format(
+                    archetype, judged, "、".join(missing))
+        # stage0 的 _drop_undated_findings 會丟掉沒有 as_of 的 finding，整軸因此記 none（ALAB／LEVI 的競爭份額軸）：
+        # 核心軸缺證據若是這樣來的，標出來讓指揮者判斷是補證還是破例（原檔在 parts/*.predrop）。
+        du = ((ctx.manifest.get("stages") or {}).get("stage0") or {}).get("dropped_undated") or {}
+        dropped = dict((a, du[a]) for a in cg["core_none"] if a in du)
+        if dropped:
+            cg["core_none_dropped_undated"] = dropped
+            cg["reason"] += "其中 {0} 在 stage0 被丟掉無 as_of 的 finding（{1} 條），未必真的沒證據，原檔見 parts/*.predrop。".format(
+                "、".join(sorted(dropped)), sum(dropped.values()))
+    except Exception as exc:
+        st["coverage_gate_error"] = str(exc)[:300]
+        return None
+    st["coverage_gate"] = cg
+    ctx.save()
+    return cg
+
+
+def _core_missing_lines(ctx, cg):
+    """⑤ 紅（核心軸缺證據）停下訊息的後兩行；最後一行是「核心軸缺證據：…」（stage_end 只印最後一行）。"""
+    return ["補證後重跑：不帶 --resume 重跑（證據庫不再沿用空軸，none 的軸 stage0 會重查，其餘軸沿用）",
+            "核心軸缺證據：" + "、".join(cg.get("core_none") or [])]
+
+
+def _coverage_gate_section(cg):
+    """給閘 agent 看的程式判定結果（它的 ⑤ 燈號會被覆寫，只需評論）。"""
+    if not cg:
+        return None
+    return ("## ⑤ 覆蓋面（程式判定，你回的 ⑤ 燈號會被覆寫）\n\n"
+            "燈號 {0}：{1}\n\n⑤ 的 reason 只需評論：空軸的查詢詞是否切題、判斷有沒有交代缺口對結論的影響。".format(
+                cg["light"], cg["reason"]))
+
+
+def _apply_coverage_light(ctx, items, cg):
+    """閘 agent 回的 ⑤ 換成程式判定：燈號與 reason 主體由程式擁有，閘的評論附在後面；
+    燈號與閘 agent 回的不同時記 manifest.mechanical_overrides（寫法同 decision_inputs.ma）。"""
+    out, seen = [], False
+    for it in items:
+        if it["item"] == "⑤":
+            seen = True
+            if not it["light"].startswith(cg["light"]):
+                rec = {"path": "$.gate_result.⑤.light", "judge": it["light"], "program": cg["light"]}
+                lst = ctx.manifest.setdefault("mechanical_overrides", [])
+                if rec not in lst:
+                    lst.append(rec)
+            comment = it["reason"].strip()
+            it = dict(it, light=cg["light"], reason=cg["reason"] + (" 閘評論：" + comment if comment else ""))
+        out.append(it)
+    if not seen:
+        out.insert(min(4, len(out)), {"item": "⑤", "light": cg["light"], "judgment_path": "evidence.json#coverage",
+                                      "reason": cg["reason"]})
+    return out
+
+
 def _gate_once(ctx, st, idx):
     """跑一次閘（機械閘＋opus 閘）。回 (ok_spawn, clean_items, reds, yellows)。
 
@@ -1424,7 +1626,9 @@ def _gate_once(ctx, st, idx):
         except Exception as exc:  # 機械閘本身不該讓整個 gated 段炸掉；記下來、退回純 opus 閘
             st.setdefault("mechanical_gate_error", []).append(str(exc)[:500])
         ctx.save()
-    b = bundle.build_gate(ctx.run_dir, cards_dir=CARDS_DIR, extra_section=_mechanical_extra_section(mid_items))
+    cg = _coverage_gate(ctx, st)  # ⑤ 由程式判定，先算好讓閘 agent 看到
+    extra = "\n\n".join(s for s in (_mechanical_extra_section(mid_items), _coverage_gate_section(cg)) if s) or None
+    b = bundle.build_gate(ctx.run_dir, cards_dir=CARDS_DIR, extra_section=extra)
     st.setdefault("bundle_bytes", []).append(b.get("bytes"))
     r = sp.oneshot_stream(b["prompt_path"], ctx.gate_model, agents_dir / "gate_{0}.json".format(idx), ctx.run_dir,
                           budget_cache_read=GATE_BUDGET)
@@ -1443,6 +1647,9 @@ def _gate_once(ctx, st, idx):
             continue
         llm_clean.append({"item": str(it.get("item", "")), "light": str(it.get("light", "")),
                           "judgment_path": str(it.get("judgment_path", "")), "reason": str(it.get("reason", ""))})
+    if cg:
+        llm_clean = _apply_coverage_light(ctx, llm_clean, cg)
+        ctx.save()
     clean = list(mech_items) + llm_clean
     reds = [x for x in clean if x["light"].startswith("🔴")]
     yellows = [x for x in clean if x["light"].startswith("🟡")]
@@ -1528,6 +1735,13 @@ def do_gated(ctx):
         st["red"] = len(reds)
         st["yellow"] = len(yellows)
         st["rounds"] = idx
+        cg = st.get("coverage_gate") or {}
+        if cg.get("light") == "🔴":
+            # 核心軸缺證據是 stage0 的洞，patch 只能改判斷、補不了證據：不跑 patch／再閘，直接停下（2026-10-20）
+            lines = ["閘紅燈 {0} 項（⑤ 覆蓋面由程式判定為紅；patch 輪補不了證據，不跑 patch／再閘）".format(len(reds))]
+            lines += ["- {0} {1} {2}".format(x["item"], x["judgment_path"], x["reason"]) for x in reds if x["item"] != "⑤"]
+            lines += _core_missing_lines(ctx, cg)
+            return ctx.stage_end("gated", False, "\n".join(lines))
         if not reds:
             return ctx.stage_end("gated", True, "🔴 0 🟡 {0}（第 {1} 輪）".format(len(yellows), idx))
         if idx >= max_rounds:
@@ -1685,6 +1899,7 @@ def _gates_v20(ctx, out_html=None, postprocess=False):
     judgment_path, evidence_path = run_dir / "judgment.json", run_dir / "evidence.json"
     out_path = Path(out_html) if out_html else run_dir / "DD_preview.html"
     findings, warns = [], []
+    ctx.prose_misses = {}  # sid → [{"raw","context"}]，給 prose_fix 提示用（每次 gates 重算）
 
     cmd = [py, SCRIPTS_DIR / "render_dd.py", "--assemble", prose_dir, "--tables", tables_dir,
            "--judgment", judgment_path, "-o", out_path, "--layout", "v19"]
@@ -1709,6 +1924,7 @@ def _gates_v20(ctx, out_html=None, postprocess=False):
         for sid, misses in (vj.get("by_section") or {}).items():
             sample = "、".join("{0}（{1}）".format(m.get("raw"), m.get("context")) for m in misses[:3])
             findings.append((sid, "validate_prose：{0} 個未覆蓋數字：{1}".format(len(misses), sample)))
+            ctx.prose_misses[sid] = list(misses)
 
     html_text = out_path.read_text(encoding="utf-8")
     markers = dd_sections.split_sections(html_text)
@@ -1821,26 +2037,50 @@ def _prose_prepare_v20(ctx):
 
 
 PROSE_FIX_MARGIN = 1.2  # 補寫目標＝下限 ×1.2，留餘裕
+PROSE_FIX_MAX_MISSES = 15  # 每章最多列幾個未覆蓋數字給補寫提示（其餘只記個數）
 
 
-def _prose_fix_spawn(ctx, sids):
+def _prose_fix_spawn(ctx, sids, uncovered=None):
     """一通 sonnet 補寫：沿用前半散文 prompt（散文卡、白名單、判斷投影視圖都在裡面），尾端加覆蓋指示，
-    只重寫篇幅不足的章節，寫到 prose_fix.html（_do_prose_split 會讓它蓋掉同 sid）。"""
+    只重寫被擋的章節，寫到 prose_fix.html（_do_prose_split 會讓它蓋掉同 sid）。
+    `uncovered`＝{sid: [{"raw","context"}]}（2026-10-20 起）：含未覆蓋數字的章節，列出數字與所在句，
+    要求「要嘛刪掉、要嘛改用判斷／事實表裡已有的數字，不得自行推算新數字」。"""
+    uncovered = uncovered or {}
     base = (ctx.run_dir / "prompts" / "prose_A.md")
     base_text = base.read_text(encoding="utf-8") if base.exists() else ""
     lines = ["", "---", "", "## ⑨ 補寫任務（本段優先，取代上面任務頭與寫入指示）", "",
-             "上一輪散文已寫好，只有下列章節篇幅不足、被硬閘擋下。**只重寫這幾章**，其他章節一個字都不要寫。", ""]
+             "上一輪散文已寫好，只有下列章節{0}被硬閘擋下。**只重寫這幾章**，其他章節一個字都不要寫。".format(
+                 "（篇幅不足，或含判斷／事實表裡沒有的數字）" if uncovered else "篇幅不足、"), ""]
     for sid in sids:
         f = ctx.run_dir / "prose" / (sid + ".html")
         cur = f.stat().st_size if f.exists() else 0
         floor = PROSE_SECTION_FLOOR.get(sid, 0)
-        lines.append("- `{0}`：現在 {1:,}B，下限 {2:,}B，**目標 ≥ {3:,}B**".format(sid, cur, floor, int(floor * PROSE_FIX_MARGIN)))
-    lines += ["",
-              "做法：保留現稿的論點與結論，補的是深度——用上面 judgment 投影視圖裡已有、但現稿沒寫到的內容"
-              "（機制、證據、同業對照、反證）。不得灌水重複、不得出現白名單以外的數字、不得心算衍生數字。"
-              "格式同散文卡 §6：每章前一行 `<!-- SID:sX -->`，緊接完整的 `<section>`（`<h2>`／`<p class=\"lead\">`／`<ul class=\"pts\">`），"
-              "表格注入標記照現稿保留。", "",
-              "一次 Write 到 `{0}`，寫完即停。".format(ctx.run_dir / "prose_fix.html"), "", "現稿："]
+        if sid in uncovered:
+            lines.append("- `{0}`：含 {1} 個未覆蓋數字（見下方清單）；現在 {2:,}B{3}".format(
+                sid, len(uncovered[sid]), cur, "，下限 {0:,}B（改完仍須達標）".format(floor) if floor else ""))
+        else:
+            lines.append("- `{0}`：現在 {1:,}B，下限 {2:,}B，**目標 ≥ {3:,}B**".format(sid, cur, floor, int(floor * PROSE_FIX_MARGIN)))
+    fmt = ("格式同散文卡 §6：每章前一行 `<!-- SID:sX -->`，緊接完整的 `<section>`（`<h2>`／`<p class=\"lead\">`／`<ul class=\"pts\">`），"
+           "表格注入標記照現稿保留。")
+    deepen = ("保留現稿的論點與結論，補的是深度——用上面 judgment 投影視圖裡已有、但現稿沒寫到的內容"
+              "（機制、證據、同業對照、反證）。不得灌水重複、不得出現白名單以外的數字、不得心算衍生數字。")
+    if uncovered:
+        lines += ["", "### 未覆蓋數字（不在判斷物／事實表裡，驗證器逐個擋）"]
+        for sid in sids:
+            if sid in uncovered:
+                lines += ["", "`{0}`：".format(sid)]
+                lines += ["- `{0}` ｜ …{1}…".format(m.get("raw"), m.get("context")) for m in uncovered[sid][:PROSE_FIX_MAX_MISSES]]
+                if len(uncovered[sid]) > PROSE_FIX_MAX_MISSES:
+                    lines.append("- 另有 {0} 個，同類處理".format(len(uncovered[sid]) - PROSE_FIX_MAX_MISSES))
+        lines += ["", "處理方式：那幾個數字**要嘛刪掉**（連同只靠它撐起來的半句），**要嘛改用判斷物／事實表（白名單與判斷投影視圖）裡已有的數字**，"
+                  "逐字照抄；**不得自行推算新數字**（差值、比率、加總、幾個百分點都算新數字）。"
+                  "改寫時保留該章的論點與結論，其餘沒被點名的數字不要動。"]
+        if any(sid not in uncovered for sid in sids):
+            lines += ["", "篇幅不足的章節（上面沒列未覆蓋數字的那幾章）：" + deepen]
+        lines += ["", fmt, ""]
+    else:
+        lines += ["", "做法：" + deepen + fmt, ""]
+    lines += ["一次 Write 到 `{0}`，寫完即停。".format(ctx.run_dir / "prose_fix.html"), "", "現稿："]
     for sid in sids:
         f = ctx.run_dir / "prose" / (sid + ".html")
         lines += ["", "```html", "<!-- SID:{0} -->".format(sid), f.read_text(encoding="utf-8") if f.exists() else "", "```"]
@@ -1862,6 +2102,30 @@ def _length_only_short_sids(findings):
     if short and len(short) + len(depth) == len(findings):
         return short
     return None
+
+
+def _prose_fix_targets(ctx, findings):
+    """那一次 prose_fix 要修的章節：回 (sids, uncovered)，不適用回 None。
+    2026-10-20 持有人同意：除了「篇幅不足」，「未覆蓋數字」（validate_prose）擋下時也走同一次補寫；
+    兩者可並存。findings 裡只要有別種原因（leaks／qc／math／機器 id／驗證器本身壞掉／機械表章節的數字）
+    就不是補寫能解的，回 None 照舊停下。_depth（整檔／散文本體偏短）只當篇幅類的陪襯。"""
+    short, unc = [], []
+    for sid, why in findings:
+        why = str(why)
+        if why.startswith("篇幅"):
+            short.append(sid)
+        elif sid == "_depth":
+            continue
+        elif why.startswith("validate_prose：") and "個未覆蓋數字" in why and sid not in _MECH_TABLE_SIDS \
+                and not sid.startswith("_") and (ctx.run_dir / "prose" / (sid + ".html")).exists():
+            unc.append(sid)
+        else:
+            return None
+    sids = list(dict.fromkeys(short + unc))
+    if not sids:
+        return None
+    misses = getattr(ctx, "prose_misses", None) or {}
+    return sids, {sid: misses[sid] for sid in unc if misses.get(sid)}
 
 
 def do_prose(ctx):
@@ -1900,10 +2164,11 @@ def do_prose(ctx):
     ok, findings, warns = _gates_v20(ctx)
     # 2026-09-24 持有人拍板：只有「章節篇幅不足」擋下時，允許一通補寫（只重寫短的那幾章，最多一次）。
     # LULU s5 連兩次 2.8–2.9KB（下限 3KB），判斷物護城河材料有 7KB，屬寫得太精簡而非缺料。
-    short = _length_only_short_sids(findings)
-    if not ok and not errors and short and not st.get("prose_fix"):
-        st["prose_fix"] = short
-        r = _prose_fix_spawn(ctx, short)
+    # 2026-10-20 持有人同意：「未覆蓋數字」擋下時也走這一次補寫（可與篇幅不足並存），見 _prose_fix_targets。
+    fix = _prose_fix_targets(ctx, findings)
+    if not ok and not errors and fix and not st.get("prose_fix"):
+        st["prose_fix"], st["prose_fix_uncovered"] = fix[0], {k: len(v) for k, v in fix[1].items()}
+        r = _prose_fix_spawn(ctx, fix[0], fix[1])
         st["agent_usage"].append(_usage_record("prose_fix", r))
         ctx.save()
         if (ctx.run_dir / "prose_fix.html").exists():
@@ -1920,10 +2185,10 @@ def do_prose(ctx):
         else (ddreport.DD_DIR / "DD_{0}_{1}.html".format(ctx.ticker, ctx.date))
     ok2, findings2, _ = _gates_v20(ctx, out_html=out_path, postprocess=not ctx.args.dry_run)
     # 2026-10-05 TPR：後處理後才短（s5 2,654B）時同一條補寫規則也適用（仍最多一次）。
-    short2 = _length_only_short_sids(findings2)
-    if not ok2 and short2 and not st.get("prose_fix"):
-        st["prose_fix"] = short2
-        r = _prose_fix_spawn(ctx, short2)
+    fix2 = _prose_fix_targets(ctx, findings2)
+    if not ok2 and fix2 and not st.get("prose_fix"):
+        st["prose_fix"], st["prose_fix_uncovered"] = fix2[0], {k: len(v) for k, v in fix2[1].items()}
+        r = _prose_fix_spawn(ctx, fix2[0], fix2[1])
         st["agent_usage"].append(_usage_record("prose_fix", r))
         ctx.save()
         if (ctx.run_dir / "prose_fix.html").exists():
@@ -2058,9 +2323,14 @@ def main(argv=None):
     if re.fullmatch(r"\d{4,6}", ticker):
         # 2026-10-11：不帶尾碼的數字代號（例 3017_20261005）被當美股跑：股價新台幣、Koyfin 共識美元、
         # 動能基準 ^GSPC。universe 池同時有日股（6857、6146），無法從代號本身判斷市場。
-        print("[stop] {0} 沒有交易所尾碼：台股上市用 {0}.TW、上櫃用 {0}.TWO，日股用 {0}.T".format(ticker),
-              file=sys.stderr)
-        return 2
+        # 2026-10-20：前份 DD 的 dd-meta 或 security_meta.json 判得出市場就自動補尾碼，判不出才停。
+        full, why = ddreport._infer_exchange_suffix(ticker)
+        if not full:
+            print("[stop] {0} 沒有交易所尾碼（{1}）：台股上市用 {0}.TW、上櫃用 {0}.TWO，日股用 {0}.T".format(ticker, why),
+                  file=sys.stderr)
+            return 2
+        print("[auto] {0} 沒有交易所尾碼：依 {1}，補成 {2}".format(ticker, why, full))
+        ticker = full
     date = args.date or time.strftime("%Y%m%d")
     ctx = Ctx(ticker, date, args)
     ctx.load_manifest()
