@@ -68,6 +68,13 @@ section.block{padding:1.1rem 0}
 .ref-fold[open] summary{border-bottom:1px solid var(--border-soft)}
 .ref-fold summary small{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:500;color:var(--muted)}
 .ref-fold .ref-body{padding:.9rem 1.1rem}
+.timing-fold table{width:100%;max-width:820px;border-collapse:collapse;font-size:.84rem;line-height:1.55;margin:.2rem 0 .5rem}
+.timing-fold th{font-size:.76rem;font-weight:600;color:var(--text-sec);text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--border);background:var(--bg-soft,rgba(0,0,0,.025))}
+.timing-fold td{padding:.45rem .6rem;border-bottom:1px solid var(--border-soft);vertical-align:top}
+.timing-fold td:first-child,.timing-fold td.n{white-space:nowrap}
+.timing-fold td.n{text-align:right;font-variant-numeric:tabular-nums}
+.timing-fold .bw-lamp-foot,.timing-fold .t-note{font-size:.8rem;color:var(--text-sec);line-height:1.7;margin:.3rem 0 .8rem}
+.timing-fold h3{font-size:.86rem;font-weight:650;margin:.2rem 0 .3rem}
 .ref-body p{font-size:.82rem;color:var(--text-sec);line-height:1.7;margin:0 0 .7rem}
 .ref-body p:last-child{margin-bottom:0}
 .embed-frame{width:100%;border:0;display:block;min-height:70vh;background:transparent}
@@ -245,6 +252,22 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       <h2 class="sec-title">陣容</h2>
       <span class="sec-desc">席次看三關：公司夠不夠好（品質、三年成長；耐久只標旗標）、分析師有沒有在財報後上修、股價離歷史新高多遠。排名只看上修幅度，距新高只決定燈號與倉位。太貴不入池：PEG 超過 2，或本益比高於五年均值 1.75 倍。核心席只收時機燈亮著的名字，每週六依週五收盤重算，亮燈不足就空席。DD 不是必要條件，只有「迴避」會剔除；只有單年成長預估的先列隊。換席規則見「席位排序」分頁。這是研究名單，不是帳戶持倉。</span>
     </div>
+    <details class="ref-fold timing-fold" id="timing" open>
+      <summary>時機怎麼判定<small>時機燈決定倉位與核心席</small></summary>
+      <div class="ref-body">
+        <h3>時機燈</h3>
+        <div id="lamp-rules-mount"><div class="placeholder">載入中⋯</div></div>
+        <h3>頁上另外兩個「時機」</h3>
+        <p class="t-note">名字裡也有時機，但都不影響燈號、倉位與席位，只供參考。</p>
+        <table>
+          <thead><tr><th>名稱</th><th>出現在</th><th>怎麼判定</th></tr></thead>
+          <tbody>
+            <tr><td>階段</td><td>「品質 × 時機」矩陣的列</td><td>個股階段雷達的六段：弱勢、轉強、築底、高檔整理、收縮完成、領先。依 50 日與 200 日均線、離一年高點多遠、相對強度、波動與量能是否收縮判定，每個交易日更新。各段定義見矩陣下方「規則與注意事項」。</td></tr>
+            <tr><td>板機</td><td>「席位明細」表最後一欄</td><td>核心席看流程板機的進場訊號：🎯 板機亮＝今天出現進場訊號；待命 A2／B／C＝還在等。等待池看循環股位置閘：低熱可執行、🔥 等回踩。兩邊都沒涵蓋的標「無時機訊號」。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
     <div id="roster-mount"><div class="placeholder">載入中⋯</div></div>
   </section>
 
@@ -683,6 +706,16 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     // 看板片段是既有 S.boardHtml 字串（載入邏輯不動），這裡只在組字串時插一個
     // 掛載點；不動 renderRoster() 抓看板片段的既有邏輯。
     var boardCard = S.boardHtml || '';
+    // 時機燈判定表：看板片段用 LAMP_RULES 註記包住，搬到陣容區上方「時機怎麼判定」，
+    // 看板說明內只留一句指引，同頁不重複
+    var lampMatch = boardCard.match(/<!--LAMP_RULES-->([\s\S]*?)<!--\/LAMP_RULES-->/);
+    var lampMount = $('lamp-rules-mount');
+    if(lampMatch){
+      boardCard = boardCard.replace(lampMatch[0], '<div class="bw-note-line">判定表見本區上方「時機怎麼判定」。</div>');
+      if(lampMount) lampMount.innerHTML = lampMatch[1];
+    } else if(lampMount){
+      lampMount.innerHTML = ph('判定表暫缺，請看「席位排序」分頁的選股看板說明');
+    }
     var matrixMount = '<div id="qt-matrix-mount" style="margin:1.1rem 0"></div>';
     var splitTag = '<h3 class="bw-sec">全母體看板';
     var splitIdx = boardCard.indexOf(splitTag);

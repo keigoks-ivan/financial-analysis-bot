@@ -124,7 +124,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
 from engine.grp import (  # noqa: E402
-    DD_FRESH_DAYS, G_MIN_CAGR, G_MIN_CAGR_DURABLE, LAMP_ACTION, MKTCAP_MIN, MOM_12_1_OVERHEAT,
+    ATH_GREEN_DIST, ATH_RED_DIST, DD_FRESH_DAYS, G_MIN_CAGR, G_MIN_CAGR_DURABLE, LAMP_ACTION, MKTCAP_MIN, MOM_12_1_OVERHEAT,
     P_LABEL_HTML, PEAK_ROIC_X, POOL_REV_MIN, Q_ROIC_MIN, R26_OVERHEAT_FALLBACK,
     R_VETO_FY1, VAL_PEG_MAX, VAL_PE_VS_5Y_MAX, cap_ok, fetch_caps, grp_route, grp_score, in_pool,
     market_ok, own_score_v4, pool_sort_key, timing_lamp, lamp_action,
@@ -995,6 +995,37 @@ def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
     return L
 
 
+def _lamp_rules_html() -> str:
+    """時機燈判定表（cockpit 會用 LAMP_RULES 註記把它抽到陣容區上方）。門檻與倉位一律
+    從 grp 常數／timing_lamp() 實際輸出取得，規則改了表格跟著變，不會和程式脫節。"""
+    g, r, m = abs(ATH_GREEN_DIST), abs(ATH_RED_DIST), MOM_12_1_OVERHEAT
+
+    def lamp(above_w52=True, dist=0.0, mom=0.0, vs200=5.0):
+        return timing_lamp({"ma": {"above_w52": above_w52, "dist_ath_pct": dist, "mom_12_1_pct": mom},
+                            "timing": {"vs_200ma_pct": vs200}}, yellow_full=True)
+
+    near = -(g + r) / 2
+    cases = [
+        (lamp(), f"距歷史新高 {g:g}% 以內，站上 200 日線，近 12 個月（扣最近一個月）漲幅不超過 {m:g}%"),
+        (lamp(dist=near), f"距歷史新高 {g:g}%～{r:g}%，站上 200 日線"),
+        (lamp(mom=m + 1), f"距歷史新高 {g:g}% 以內、站上 200 日線，但近 12 個月（扣最近一個月）漲幅超過 {m:g}%"),
+        (lamp(dist=-(r + 1)), f"距歷史新高超過 {r:g}%，或跌破 200 日線"),
+        (lamp(above_w52=False), "股價在 52 週均線之下（優先判定，不看其他條件）"),
+        (lamp(dist=None), "站上 52 週線，但缺距歷史新高資料"),
+    ]
+    rows = "".join(
+        f'<tr><td>{escape(c["label"])}</td><td>{escape(cond)}</td>'
+        f'<td class="n">{"0" if c["size"] == 0 else format(c["size"], ".1f")}</td>'
+        f'<td>{"亮燈，可入席" if c["code"] in LIT_LAMP_CODES else "不入席；在席者週六下席"}</td></tr>'
+        for c, cond in cases)
+    return ('<!--LAMP_RULES--><div class="bw-lamp-rules"><table>'
+            '<thead><tr><th>燈號</th><th>條件</th><th>倉位</th><th>核心席</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table>'
+            '<div class="bw-lamp-foot">歷史新高＝還原權息後的全歷史最高收盤價；200 日線、52 週線都是收盤均線。'
+            '燈號和倉位每天更新；核心席每週六（台北）依週五收盤重算，週中轉紅只把倉位降到 0，席位等週六才換。</div>'
+            '</div><!--/LAMP_RULES-->')
+
+
 def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_pool_rows, prev_snap,
                       entered, lamp_map, rev_data_as_of=None, price_as_of=None,
                       lamp_as_of=None, last_rotation_date=None) -> str:
@@ -1401,6 +1432,12 @@ _BOARD_CSS = """<style>
 .board-wrap .bw-chip-more{color:var(--muted,#999)}
 .board-wrap .bw-note-line{font-size:12px;color:var(--sec,var(--text-sec,#666));margin-top:8px;line-height:1.75}
 .board-wrap .bw-note-line b{color:var(--ink,var(--text,#1a1a1a))}
+.bw-lamp-rules table{border-collapse:collapse;width:100%;max-width:760px;margin:8px 0 4px;font-size:12.5px;line-height:1.55}
+.bw-lamp-rules th,.bw-lamp-rules td{border-bottom:1px solid var(--line-soft,#e8e8e8);padding:5px 8px;text-align:left;vertical-align:top}
+.bw-lamp-rules th{font-weight:650;color:var(--ink,var(--text,#1a1a1a));background:var(--line-soft,rgba(0,0,0,.035))}
+.bw-lamp-rules td:first-child,.bw-lamp-rules td.n{white-space:nowrap}
+.bw-lamp-rules td.n{text-align:right;font-variant-numeric:tabular-nums}
+.bw-lamp-rules .bw-lamp-foot{font-size:12px;color:var(--sec,var(--text-sec,#666));line-height:1.7;margin-top:4px}
 .board-wrap details.bw-fold{margin-top:4px}
 .board-wrap details.bw-fold>summary{cursor:pointer;font-size:12.5px;font-weight:650;
   color:var(--ink,var(--text,#1a1a1a));padding:6px 2px;list-style:revert}
@@ -1694,16 +1731,18 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
                 f'（{len(group)} 檔）</div>' + _pool_table_html(group, lamp_map))
         waiting_tbl = "".join(waiting_parts)
 
+    lamp_rules = _lamp_rules_html()
     legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表（下方「全母體看板」共用本段說明）</summary>
 <div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看分析師有沒有在財報後上修（排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心席每週六（台北）依週五收盤重算：池內亮燈者依上修取前 5，亮燈不足就空席；週中燈號只管倉位。這是研究名單，不是帳戶持倉。</div>
 <div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘（ROIC ≥15% 且自由現金流 &gt;0）、三年成長 15%、站上 52 週線。四項全過才有資格；耐久只是旗標。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
 <div class="bw-note-line"><b>耐久</b>：兩種算法擇一達標即可。QGM 五年 ROIC 穩定度 ≥75%；或 Koyfin 五年平均、三年平均、現值三者都 ≥15%。看的是一致性，不是單一年份。只當旗標，不擋資格。</div>
 <div class="bw-note-line"><b>第二關 排序</b>：只看財報後上修幅度。基準是該股最近一次財報日前的月度快照，缺財報錨定時退回三個月。上修 ≥5% 才入池，池內依上修由高到低排。同值先比隱含成長率，再比盈餘殖利率。不看股價漲幅。綜合對照分只在「上修%（財報後）」欄的滑鼠提示裡顯示，不參與排序。</div>
-<div class="bw-note-line"><b>第三關 時機燈</b>：量的是距還原權息全歷史最高收盤價多遠，燈號直接對應倉位。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉／🟡 接近＝差 3%~10% 且站上 200 日線，同樣正常倉／🟠 過熱＝12-1 月動能 &gt;150% 但仍在突破帶附近，半倉／🔴 等板機＝差超過 10% 或跌破 200 日線，零倉／⚫ 不合格＝未站上 52 週線。過熱與頂點不擋資格，只影響燈號。RS 與生命週期階段只在 hover 顯示，不影響燈號。時機燈與倉位每日更新。</div>
+<div class="bw-note-line"><b>第三關 時機燈</b>：量股價離歷史新高多遠，燈號直接決定倉位，判定見下表。過熱與頂點不擋資格；相對強度與生命週期階段只在滑鼠提示顯示，不影響燈號。</div>
+{lamp_rules}
 <div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內亮燈者依上修取前 5，每週六重算；週中轉紅的核心席等週六重算才下席。沒進核心的池成員全部叫等待池，依燈號分兩組：②可買＝今天綠燈或橘燈，板機已亮；③等待池＝其餘，再分 🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🔴 拉回中／⚫ 資料缺（這兩組依上修排序）。</div>
 <div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。</div>
 <div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排③等待池裡 🟡 組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。</div>
-<div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤只是顯示，不影響席位與排序。有護城河評級時併入本欄 hover。</div>
+<div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只是顯示，不影響席位與排序。有護城河評級時在本欄滑鼠提示。</div>
 <div class="bw-note-line"><b>備註欄</b>：以下都只是顯示，不進資格與排序。⚠ 頂點＝ROIC 高於五年平均 1.3 倍；基期＝三年 CAGR 因 FY1→FY2 低基期跳增，改用 FY2→FY3 成長率；循環守門＝循環股（毛利率跨距大或資本支出佔營收高）且 PEG 低到可疑；循環＝循環股但未觸發守門；財報前＝距下次財報 ≤7 天；內部人買／內部人賣＝近 3 個月內部人淨買賣方向；新席／現任／遞補＝本期席位異動狀態。</div>
 <div class="bw-note-line"><b>怎麼用</b>：核心或②可買＝現在可以買。③等待池＝上修夠強但還沒突破，等板機。</div>
 </details>"""
