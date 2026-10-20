@@ -504,6 +504,13 @@ def do_stage0(ctx):
         part = run_dir / s["out"]
         ok = part.exists()
         if ok:
+            try:  # 驗證前先救 as_of：有 url 沒日期的 finding 抓頁取頁面發布日，救不到才由下面丟棄（零 LLM）
+                from clue_backfill import rescue_undated
+                resc = rescue_undated(part, run_dir / "fetch_cache")
+                if resc["details"]:
+                    st.setdefault("rescued_undated", {})[s["axis_id"]] = {k: v for k, v in resc.items() if k != "details"}
+            except Exception as exc:
+                st.setdefault("rescued_undated", {})[s["axis_id"]] = {"error": repr(exc)}
             rc, out = _sub([py, SCRIPTS_DIR / "validate_evidence.py", "--part", part])
             ok = rc == 0
         if not ok and part.exists():
@@ -524,6 +531,11 @@ def do_stage0(ctx):
                 "note": "dd2: 子 agent 未在輪數內交出合格 part，記為缺口"}}})
     st["incomplete_axes"] = incomplete
 
+    try:  # 線索補原文：agent 有網址沒拿到原文的線索，程式零 LLM 補抓（失敗只記錄不擋）
+        from clue_backfill import backfill
+        st["clue_backfill"] = backfill(run_dir)
+    except Exception as exc:
+        st["clue_backfill"] = {"error": repr(exc)}
     rc, out, needs = ddreport._finalize_run_dir(run_dir)
     st["finalize_rc"] = rc
     if rc != 0:
