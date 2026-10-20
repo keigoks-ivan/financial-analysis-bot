@@ -673,6 +673,17 @@ def do_facts(ctx):
     st["valuation_basis"] = decide_valuation_basis(ctx)
     if re.search(r"^\[FAIL\]", o2, re.M):
         return ctx.stage_end("facts", False, o1 + "\n" + o2)
+    # 2026-10-20：閘 ⑤ 的程式規則提前到 facts 尾判——核心軸缺證據是 stage0 的洞，judged（opus）跑下去也補不了，
+    # 紅就停在這裡，不花 opus。gated 段的覆寫與停下保留（--resume 跳過 facts 時仍要擋）。
+    # --force-gate（dry-run 預覽）照舊往下走，讓閘段記紅。
+    cg = _coverage_gate(ctx, st, use_judgment=False)
+    if cg and cg["light"] == "🔴":
+        if getattr(ctx.args, "force_gate", False) and getattr(ctx.args, "dry_run", False):
+            print("[facts] ⑤ 核心軸缺證據但 --force-gate（dry-run）往下走，僅供預覽，閘段仍記紅")
+        else:
+            lines = ["⑤ 覆蓋面（程式判定）🔴：核心軸缺證據，停在 facts，不跑 judged／gated", cg["reason"]]
+            lines += _core_missing_lines(ctx, cg)
+            return ctx.stage_end("facts", False, "\n".join(lines))
     return ctx.stage_end("facts", True, o1 + "\n" + o2)
 
 
@@ -1427,10 +1438,11 @@ def _judged_archetype(ctx):
     return v if isinstance(v, str) and v else None
 
 
-def _coverage_gate(ctx, st):
+def _coverage_gate(ctx, st, use_judgment=True):
     """閘 ⑤ 覆蓋面燈號由程式判定（2026-10-20 持有人核准）：任一核心軸 none → 🔴；只有非核心軸 none →
     🟡；全 found／not_applicable → 🟢。核心軸清單在 coverage-axes.md，規則實作在 dd_evidence.coverage_gate。
-    結果存 st["coverage_gate"]；算不出來（evidence 缺檔等）回 None，⑤ 沿用閘 agent 的判定並記 coverage_gate_error。"""
+    結果存 st["coverage_gate"]；算不出來（evidence 缺檔等）回 None，⑤ 沿用閘 agent 的判定並記 coverage_gate_error。
+    use_judgment=False（facts 段尾呼叫，judged 還沒跑、judgment.json 可能是上一輪留的）不做 archetype 歸類對照。"""
     de = ddreport.dd_evidence
     try:
         evidence = _load_json(ctx.run_dir / "evidence.json")
@@ -1439,7 +1451,7 @@ def _coverage_gate(ctx, st):
         cg = de.coverage_gate(evidence.get("coverage") or {}, matrix, archetype)
         # plan 時的 archetype 只來自 --archetype／前份 DD／預設；判斷者另歸類時，他那類的專屬核心軸沒被採證。
         # 只在 reason 註明，不改燈號（缺的是 plan 設定，不是證據品質）。
-        judged = _judged_archetype(ctx)
+        judged = _judged_archetype(ctx) if use_judgment else None
         if judged and judged != archetype:
             have = set(a.split("__", 1)[0] for a in (evidence.get("coverage") or {}))
             missing = sorted(de.core_axis_ids(matrix, judged) - de.core_axis_ids(matrix, archetype) - have)
@@ -1461,6 +1473,12 @@ def _coverage_gate(ctx, st):
     st["coverage_gate"] = cg
     ctx.save()
     return cg
+
+
+def _core_missing_lines(ctx, cg):
+    """⑤ 紅（核心軸缺證據）停下訊息的後兩行；最後一行是「核心軸缺證據：…」（stage_end 只印最後一行）。"""
+    return ["補證後重跑：不帶 --resume 重跑（證據庫不再沿用空軸，none 的軸 stage0 會重查，其餘軸沿用）",
+            "核心軸缺證據：" + "、".join(cg.get("core_none") or [])]
 
 
 def _coverage_gate_section(cg):
@@ -1627,8 +1645,7 @@ def do_gated(ctx):
             # 核心軸缺證據是 stage0 的洞，patch 只能改判斷、補不了證據：不跑 patch／再閘，直接停下（2026-10-20）
             lines = ["閘紅燈 {0} 項（⑤ 覆蓋面由程式判定為紅；patch 輪補不了證據，不跑 patch／再閘）".format(len(reds))]
             lines += ["- {0} {1} {2}".format(x["item"], x["judgment_path"], x["reason"]) for x in reds if x["item"] != "⑤"]
-            lines.append("補證後重跑：先刪 facts/{0}/axes/<軸>.json（證據庫存查會沿用 none），再不帶 --resume 重跑".format(ctx.ticker))
-            lines.append("核心軸缺證據：" + "、".join(cg.get("core_none") or []))
+            lines += _core_missing_lines(ctx, cg)
             return ctx.stage_end("gated", False, "\n".join(lines))
         if not reds:
             return ctx.stage_end("gated", True, "🔴 0 🟡 {0}（第 {1} 輪）".format(len(yellows), idx))

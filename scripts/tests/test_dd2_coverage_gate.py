@@ -298,3 +298,132 @@ def test_stage0_writes_na_part_and_skips_agents(tmp_path, monkeypatch):
     (run_dir / "axes.json").write_text(json.dumps(de.resolve_axes(MATRIX, DEFAULT_ARCH), ensure_ascii=False), encoding="utf-8")
     run.do_stage0(ctx)
     assert not (run_dir / "parts" / "na_coverage.json").exists()
+
+
+# ---- facts 段尾判 ⑤：紅就停在 facts，不跑 judged ----
+
+def _facts_env(tmp_path, monkeypatch, coverage, args_extra=None):
+    ev = {"ticker": "T", "date": "20261020", "archetype_hint": DEFAULT_ARCH, "coverage": coverage}
+    (tmp_path / "evidence.json").write_text(json.dumps(ev, ensure_ascii=False), encoding="utf-8")
+    monkeypatch.setattr(run, "_run_dir", lambda t, d: tmp_path)
+
+    def fake_sub(cmd, cwd=None):
+        if "extract" in [str(c) for c in cmd]:
+            (tmp_path / "facts.json").write_text("{}", encoding="utf-8")
+        return 0, "ok"
+
+    monkeypatch.setattr(run, "_sub", fake_sub)
+    monkeypatch.setattr(run, "_inject_ma_facts", lambda ctx, out: ("🟢", {}))
+    monkeypatch.setattr(run, "decide_valuation_basis", lambda ctx: "eps_pe")
+    ns = dict(judgment_model=None, force_gate=False, dry_run=False)
+    ns.update(args_extra or {})
+    ctx = run.Ctx("T", "20261020", argparse.Namespace(**ns))
+    ctx.load_manifest()
+    return ctx
+
+
+def test_do_facts_core_none_stops_before_judged(tmp_path, monkeypatch, capsys):
+    ctx = _facts_env(tmp_path, monkeypatch, _cov(competitive_share_entrants="none", major_events="none"))
+    assert run.do_facts(ctx) is False
+    st = ctx.manifest["stages"]["facts"]
+    assert st["state"] == "FAIL" and ctx.manifest["state"] == "facts_fail"
+    assert st["coverage_gate"]["light"] == "🔴" and st["coverage_gate"]["core_none"] == ["competitive_share_entrants"]
+    assert st["note"].splitlines()[-1].startswith("核心軸缺證據：competitive_share_entrants")
+    assert "停在 facts" in st["note"]
+    assert "核心軸缺證據：competitive_share_entrants" in capsys.readouterr().out  # stage_end 印最後一行
+
+
+def test_do_facts_noncore_none_passes_and_records_gate(tmp_path, monkeypatch):
+    ctx = _facts_env(tmp_path, monkeypatch, _cov(regulatory_antitrust="none"))
+    assert run.do_facts(ctx) is True
+    st = ctx.manifest["stages"]["facts"]
+    assert st["state"] == "PASS" and st["coverage_gate"]["light"] == "🟡"
+
+
+def test_do_facts_ignores_stale_judgment_archetype(tmp_path, monkeypatch):
+    # facts 段尾 judged 還沒跑，上一輪留下的 judgment.json 不能拿來做 archetype 對照
+    ctx = _facts_env(tmp_path, monkeypatch, _cov())
+    j = {"answers": {"q1_business": {"verdict_values": {"archetype": {"primary": "循環/商品"}}}}}
+    (tmp_path / "judgment.json").write_text(json.dumps(j, ensure_ascii=False), encoding="utf-8")
+    assert run.do_facts(ctx) is True
+    assert "archetype_mismatch" not in ctx.manifest["stages"]["facts"]["coverage_gate"]
+
+
+def test_do_facts_force_gate_dry_run_continues(tmp_path, monkeypatch, capsys):
+    ctx = _facts_env(tmp_path, monkeypatch, _cov(end_markets="none"), {"force_gate": True, "dry_run": True})
+    assert run.do_facts(ctx) is True
+    assert ctx.manifest["stages"]["facts"]["coverage_gate"]["light"] == "🔴"  # 仍記紅，閘段會擋
+    assert "--force-gate" in capsys.readouterr().out
+    # 只有 force_gate 沒有 dry_run：不放行
+    ctx2 = _facts_env(tmp_path, monkeypatch, _cov(end_markets="none"), {"force_gate": True, "dry_run": False})
+    assert run.do_facts(ctx2) is False
+
+
+def test_do_facts_missing_evidence_does_not_block(tmp_path, monkeypatch):
+    ctx = _facts_env(tmp_path, monkeypatch, _cov())
+    (tmp_path / "evidence.json").unlink()
+    assert run.do_facts(ctx) is True
+    assert "coverage_gate_error" in ctx.manifest["stages"]["facts"]
+
+
+def _main_env(tmp_path, monkeypatch, coverage):
+    ctx0 = _facts_env(tmp_path, monkeypatch, coverage)  # 寫 evidence、掛 monkeypatch
+    calls = []
+
+    def fake_stage(name):
+        def fn(ctx):
+            calls.append(name)
+            ctx.stage_begin(name)
+            return ctx.stage_end(name, True)
+        return fn
+
+    real_facts = run.do_facts
+
+    def counting_facts(ctx):
+        calls.append("facts")
+        return real_facts(ctx)
+
+    monkeypatch.setattr(run, "do_plan", fake_stage("plan"))
+    monkeypatch.setattr(run, "do_stage0", fake_stage("stage0"))
+    monkeypatch.setattr(run, "do_facts", counting_facts)
+    monkeypatch.setattr(run, "do_judged", lambda ctx: (_ for _ in ()).throw(AssertionError("⑤ 紅不該跑 judged")))
+    return calls
+
+
+def _set_cov(tmp_path, coverage):
+    ev = json.loads((tmp_path / "evidence.json").read_text(encoding="utf-8"))
+    ev["coverage"] = coverage
+    (tmp_path / "evidence.json").write_text(json.dumps(ev, ensure_ascii=False), encoding="utf-8")
+
+
+def test_main_until_facts_red_returns_1_and_resume_reruns_facts_only(tmp_path, monkeypatch):
+    calls = _main_env(tmp_path, monkeypatch, _cov(supply_demand_durability="none"))
+    base = ["T", "--date", "20261020", "--until", "facts"]
+    assert run.main(base) == 1  # facts 紅：停，judged 不跑（跑了 do_judged 會 AssertionError）
+    assert calls == ["plan", "stage0", "facts"]
+    m = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+    assert m["stages"]["facts"]["state"] == "FAIL"
+    # 補證後 --resume：plan／stage0 已 PASS 跳過，只重跑 facts
+    _set_cov(tmp_path, _cov())
+    assert run.main(base + ["--resume"]) == 0
+    assert calls == ["plan", "stage0", "facts", "facts"]
+    # facts 已 PASS：--resume 跳過；--redo facts 才重跑
+    assert run.main(base + ["--resume"]) == 0
+    assert calls == ["plan", "stage0", "facts", "facts"]
+    assert run.main(base + ["--resume", "--redo", "facts"]) == 0
+    assert calls == ["plan", "stage0", "facts", "facts", "facts"]
+
+
+def test_main_until_facts_green_returns_0(tmp_path, monkeypatch):
+    calls = _main_env(tmp_path, monkeypatch, _cov(regulatory_antitrust="none"))
+    assert run.main(["T", "--date", "20261020", "--until", "facts"]) == 0
+    assert calls == ["plan", "stage0", "facts"]
+
+
+def test_resume_past_facts_pass_still_stops_at_gate(tmp_path, monkeypatch, capsys):
+    # facts 當時 PASS（例如舊版程式跑的）、之後證據變紅：--resume 跳過 facts，閘段仍要擋住
+    ctx, spawns, _ = _gated_env(tmp_path, monkeypatch, _cov(competitive_share_entrants="none"), _items("🟢"))
+    ctx.stage_begin("facts")
+    ctx.stage_end("facts", True)
+    assert run.do_gated(ctx) is False
+    assert "核心軸缺證據：competitive_share_entrants" in capsys.readouterr().out
