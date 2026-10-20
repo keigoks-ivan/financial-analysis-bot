@@ -76,6 +76,16 @@ def test_future_date_is_stale_and_frequency_windows_are_explicit():
     assert market.classify_stale("2026-08", date(2026, 10, 20), "monthly") == (False, "ok")       # 50 天
     assert market.classify_stale("2026-08", date(2026, 10, 21), "monthly") == (False, "warn")     # 51 天
     assert market.classify_stale("2026-07", date(2026, 9, 30), "monthly") == (True, "stale")      # 61 天
+    # 2026-10-20 日更改數美股交易日：週五資料到週一、週二不算停更
+    assert market.classify_stale("2026-10-16", date(2026, 10, 19), "daily") == (False, "ok")      # 週一，1 個交易日
+    assert market.classify_stale("2026-10-16", date(2026, 10, 20), "daily") == (False, "ok")      # 週二，2 個
+    assert market.classify_stale("2026-10-16", date(2026, 10, 21), "daily") == (False, "warn")    # 週三，3 個
+    assert market.classify_stale("2026-10-16", date(2026, 10, 22), "daily") == (False, "warn")    # 4 個
+    assert market.classify_stale("2026-10-16", date(2026, 10, 23), "daily") == (True, "stale")    # 5 個
+    assert market.classify_stale("2026-10-14", date(2026, 10, 17), "daily") == (False, "ok")      # 週六，2 個
+    # NYSE 休市日不算：感恩節 2026-11-26（週四）
+    assert market.classify_stale("2026-11-24", date(2026, 11, 27), "daily") == (False, "ok")      # 週三＋週五＝2 個
+    assert market.classify_stale("2026-11-24", date(2026, 11, 30), "daily") == (False, "warn")    # ＋週一＝3 個
     assert internals.yoy_series([(f"2025-{m:02d}-01", 100.0) for m in range(1, 13)] +
                                 [("2026-01-01", 103.0)])[-1][1] == 3.0
     assert monitor.S["tp10y"]["ticker"] == "THREEFYTP10"

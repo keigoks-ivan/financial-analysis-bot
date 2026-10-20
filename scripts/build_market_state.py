@@ -198,6 +198,10 @@ def fmt_val(x, unit):
 #   月頻：總經時鐘以月底起算，M 月資料要到 M+1 月中（CPI）才齊，下一個月的資料要到
 #         M+2 月中，健康時落後 15～52 天；原本 >22.5 warn、>45 stale 每月後半都誤報。
 #         改 >50 warn、>60 stale。日更、regime 不變。
+# 2026-10-20 持有人同意改：日更改數美股交易日（扣週末與 NYSE 休市日），門檻數字不變。
+#   原本數日曆天，週五的資料到週一就滿 3 天、被判 warn，每週一到週二傍晚都誤報
+#   「資料停在上週五」（2026-10-05、10-12、10-19 三週實例）。健康時最多落後 2 個
+#   交易日（週二傍晚以前手上是週五資料），漏跑一次隔天即 warn，靈敏度不變。
 STALE_LIMIT = {"daily": 4, "weekly": 16, "monthly": 60, "regime": 30}
 WARN_AFTER = {"weekly": 12, "monthly": 50}
 CADENCE_LABEL = {"daily": "日更", "weekly": "週更", "monthly": "月頻", "regime": "不定期"}
@@ -220,8 +224,43 @@ def parse_date_loose(s):
     return None
 
 
+_NYSE_CAL = None
+
+
+def _is_us_trading_day(d):
+    """共用 generate_calendar_forecasts.py 逐日寫死的 NYSE 休市表（單一來源，不另抄）。
+    表外年份或載入失敗時只扣週末。"""
+    global _NYSE_CAL
+    if _NYSE_CAL is None:
+        try:
+            spec = importlib.util.spec_from_file_location(
+                "_mkt_state_calendar", os.path.join(SCRIPTS_DIR, "generate_calendar_forecasts.py"))
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            _NYSE_CAL = mod
+        except Exception:
+            _NYSE_CAL = False
+    if d.weekday() >= 5:
+        return False
+    if _NYSE_CAL:
+        t = _NYSE_CAL.is_trading_day(d)
+        if t is not None:
+            return t
+    return True
+
+
+def _trading_days_after(d, today):
+    """(d, today] 之間的美股交易日數。"""
+    n, x = 0, d + timedelta(days=1)
+    while x <= today:
+        if _is_us_trading_day(x):
+            n += 1
+        x += timedelta(days=1)
+    return n
+
+
 def classify_stale(as_of_str, today, cadence):
-    """回傳 (stale: bool, status: 'ok'|'warn'|'stale')。"""
+    """回傳 (stale: bool, status: 'ok'|'warn'|'stale')。日更數美股交易日，其餘數日曆天。"""
     limit = STALE_LIMIT.get(cadence, 4)
     d = parse_date_loose(as_of_str)
     if d is None:
@@ -231,7 +270,7 @@ def classify_stale(as_of_str, today, cadence):
     # 2026-09-13：月頻來源常以該月 1 日標期別；鮮度從期末起算。
     if cadence == "monthly" and str(as_of_str).count("-") == 2:
         d = date(d.year, d.month, calendar.monthrange(d.year, d.month)[1])
-    n = (today - d).days
+    n = _trading_days_after(d, today) if cadence == "daily" else (today - d).days
     # 當月期別已發布但自然期末尚未到時，age 為 0；上方 raw date 檢查仍會
     # 阻擋真正的未來日期（2026-09-13）。
     n = max(0, n)
