@@ -17,6 +17,10 @@
   clues 一律從 part 拿掉（核實不了的線索不進證據包）；原始 part 備份在 parts/_pre_backfill/。
   每次執行最多處理 20 個不同網址；網址請求間隔 ≥1 秒、逾時 15 秒。寧缺勿錯：不確定就丟。
 
+另有 rescue_undated(part, cache_dir)：stage0 驗 part 之前先救「有 url、沒有可解析 as_of」的 finding——
+  抓頁、讀頁面上真有的發布日（meta／JSON-LD／開頭日期戳記）填進 as_of 並加 as_of_note；讀不到就照舊交給
+  run.py 的 _drop_undated_findings 丟棄。不推估日期、不用抓取當天。每次執行最多 15 個網址（與 backfill 的 20 分開算）。
+
 用法（手動）：python3 scripts/dd2/clue_backfill.py RUN_DIR
 Python 3.9 相容（不用 `match`、不用 `X | None`）。
 """
@@ -45,6 +49,7 @@ if str(SCRIPTS_DIR) not in sys.path:
 import validate_evidence  # noqa: E402  finding 必填欄位／日期解析的單一來源
 
 MAX_URLS = 20            # 每次執行最多處理幾個不同網址
+RESCUE_MAX_URLS = 15     # 補 as_of 的網址上限（與 MAX_URLS 分開算；整個 stage0 共用）
 FETCH_TIMEOUT = 15       # 單次請求逾時（秒）
 FETCH_DEADLINE = 30      # 一個網址從連線到讀完的總上限（秒），防慢速滴灌
 MIN_INTERVAL = 1.0       # 兩次網路請求最短間隔（秒）
@@ -730,6 +735,79 @@ def _process_clue(clue, axis_id, axis_obj, existing, seen_urls, results, fetch, 
     if axis_obj.get("status") == "none":
         axis_obj["status"] = "found"
     return "verified"
+
+
+_rescue_seen = {}  # str(cache_dir) → 已處理的網址 key；同一個 python 程序（一次 stage0）共用上限
+
+
+def _rescuable(f):
+    """有網址、as_of 缺或無法解析、其餘必填欄位齊全的 finding 才值得救（欄位不齊救了也過不了驗證）。"""
+    if not isinstance(f, dict) or validate_evidence.parse_date(f.get("as_of")) is not None:
+        return False
+    url = f.get("url")
+    if not isinstance(url, str) or not _url_ok(_clean_url(url)):
+        return False
+    return bool(f.get("claim") and f.get("source")
+                and f.get("direction") in validate_evidence.VALID_DIRECTIONS
+                and isinstance(f.get("affects"), list) and f["affects"])
+
+
+def rescue_undated(part, cache_dir=None, fetch=None, max_urls=RESCUE_MAX_URLS):
+    """救 part 裡沒有可解析 as_of 的 finding：抓頁、取頁面發布日填 as_of（加 as_of_note）。
+    取不到頁面日期的不動，留給 _drop_undated_findings。回統計 dict；原檔備份在 parts/_pre_backfill/。"""
+    part = Path(part)
+    stats = {"rescued": 0, "no_date": 0, "fetch_failed": 0, "over_limit": 0, "details": []}
+    try:
+        d = json.loads(part.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return stats
+    cands = []
+    for key in ("coverage", "events"):
+        for axis_id, v in ((d.get(key) or {}) if isinstance(d, dict) else {}).items():
+            for f in (v.get("findings") or []) if isinstance(v, dict) else []:
+                if _rescuable(f):
+                    cands.append((axis_id, f))
+    if not cands:
+        return stats
+    if fetch is None:
+        def fetch(u):
+            return fetch_text(u, cache_dir)
+    seen = _rescue_seen.setdefault(str(cache_dir), {})
+    for axis_id, f in cands:
+        url = _clean_url(f["url"])
+        key = _url_key(url)
+        detail = {"axis": axis_id, "url": url}
+        stats["details"].append(detail)
+        if key not in seen:
+            if len(seen) >= max_urls:
+                stats["over_limit"] += 1
+                detail["outcome"] = "over_limit"
+                continue
+            try:
+                seen[key] = fetch(url) or {"ok": False, "error": "fetch 無回傳"}
+            except Exception as exc:
+                seen[key] = {"ok": False, "error": "{0}: {1}".format(type(exc).__name__, str(exc)[:120])}
+        res = seen[key]
+        if not res.get("ok"):
+            stats["fetch_failed"] += 1
+            detail["outcome"] = "fetch_failed"
+            detail["error"] = res.get("error")
+        elif not res.get("page_date"):
+            stats["no_date"] += 1
+            detail["outcome"] = "no_date"
+        else:
+            f["as_of"] = res["page_date"]
+            f["as_of_note"] = "頁面發布日（程式補）"
+            stats["rescued"] += 1
+            detail["outcome"] = "rescued"
+            detail["as_of"] = res["page_date"]
+    if stats["rescued"]:
+        backup_dir = part.parent / "_pre_backfill"
+        backup_dir.mkdir(exist_ok=True)
+        if not (backup_dir / part.name).exists():
+            shutil.copy2(str(part), str(backup_dir / part.name))
+        _atomic_write_json(part, d)
+    return stats
 
 
 def main(argv):

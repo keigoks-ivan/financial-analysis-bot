@@ -503,3 +503,108 @@ def test_backfill_same_page_same_excerpt_not_duplicated(tmp_path):
     assert st["verified"] == 1 and st["duplicate"] == 1
     ax = json.loads((run / "parts" / "axes_1.json").read_text(encoding="utf-8"))["coverage"]["x_axis"]
     assert len(ax["findings"]) == 1 and ax["note"].endswith("線索 2 條，程式核實 1 條")
+
+
+# ---------------------------------------------------------------------------
+# rescue_undated：驗證前先救沒有 as_of 的 finding
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def _clear_rescue_budget():
+    cb._rescue_seen.clear()
+    yield
+    cb._rescue_seen.clear()
+
+
+def _undated(url, **kw):
+    f = {"claim": "c", "source": "s", "url": url, "excerpt": None, "excerpt_from": "snippet",
+         "direction": "0", "affects": ["thesis.R"]}
+    f.update(kw)
+    return f
+
+
+def _part(tmp_path, findings, status="found", name="axes_1.json"):
+    p = tmp_path / "parts"
+    p.mkdir(exist_ok=True)
+    path = p / name
+    path.write_text(json.dumps({"coverage": {"x_axis": {"status": status, "queries_run": ["q"],
+                                                        "findings": findings, "note": ""}}},
+                               ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def _read(path):
+    return json.loads(path.read_text(encoding="utf-8"))["coverage"]["x_axis"]
+
+
+def test_rescue_fills_page_date_and_leaves_the_rest(tmp_path):
+    fs = [_undated("https://a.example.com/1"),                        # 頁面有日期 → 救
+          _undated("https://a.example.com/2"),                        # 頁面沒日期 → 不動
+          _undated("https://a.example.com/3"),                        # 抓不到 → 不動
+          _undated("https://a.example.com/4", as_of="不明"),          # as_of 無法解析 → 也救
+          _undated("https://a.example.com/5", as_of="2026-09-01"),    # 已有日期 → 不碰
+          _undated("https://a.example.com/6", claim=""),              # 其餘欄位不齊 → 救了也過不了驗證，不碰
+          {"claim": "無網址", "source": "s", "direction": "0", "affects": ["x"]}]
+    path = _part(tmp_path, fs)
+    pages = {"https://a.example.com/1": {"page_date": "2026-10-14"}, "https://a.example.com/2": {"page_date": None},
+             "https://a.example.com/4": {"page_date": "2026-08-01"}}
+    fetch = _fake_fetch(pages)
+    st = cb.rescue_undated(path, tmp_path / "fetch_cache", fetch=fetch)
+    assert (st["rescued"], st["no_date"], st["fetch_failed"], st["over_limit"]) == (2, 1, 1, 0)
+    assert fetch.calls == ["https://a.example.com/{0}".format(i) for i in (1, 2, 3, 4)]
+    out = _read(path)["findings"]
+    assert out[0]["as_of"] == "2026-10-14" and out[0]["as_of_note"] == "頁面發布日（程式補）"
+    assert out[3]["as_of"] == "2026-08-01" and out[3]["as_of_note"] == "頁面發布日（程式補）"
+    assert "as_of" not in out[1] and "as_of" not in out[2] and "as_of_note" not in out[1]
+    assert out[4]["as_of"] == "2026-09-01" and "as_of_note" not in out[4]
+    assert out[5]["claim"] == "" and "as_of" not in out[5]
+    bak = json.loads((tmp_path / "parts" / "_pre_backfill" / "axes_1.json").read_text(encoding="utf-8"))
+    assert "as_of" not in bak["coverage"]["x_axis"]["findings"][0]
+
+
+def test_rescue_nothing_to_do_does_not_touch_part_or_network(tmp_path):
+    path = _part(tmp_path, [_undated("https://a.example.com/1", as_of="2026-10-01")])
+    before = path.read_text(encoding="utf-8")
+    fetch = _fake_fetch({})
+    st = cb.rescue_undated(path, tmp_path / "fetch_cache", fetch=fetch)
+    assert st["details"] == [] and fetch.calls == [] and path.read_text(encoding="utf-8") == before
+    assert not (tmp_path / "parts" / "_pre_backfill").exists()
+    bad = tmp_path / "parts" / "axes_9.json"
+    bad.write_text("{壞掉的 json", encoding="utf-8")
+    assert cb.rescue_undated(bad, tmp_path / "fetch_cache")["details"] == []
+
+
+def test_rescue_budget_is_shared_across_parts_and_url_fetched_once(tmp_path):
+    p1 = _part(tmp_path, [_undated("https://a.example.com/{0}".format(i)) for i in range(4)], name="axes_1.json")
+    p2 = _part(tmp_path, [_undated("https://a.example.com/0"), _undated("https://a.example.com/9")], name="axes_2.json")
+    pages = {"https://a.example.com/{0}".format(i): {"page_date": "2026-10-14"} for i in (0, 1, 2, 3, 9)}
+    fetch = _fake_fetch(pages)
+    st1 = cb.rescue_undated(p1, tmp_path / "fetch_cache", fetch=fetch, max_urls=3)
+    st2 = cb.rescue_undated(p2, tmp_path / "fetch_cache", fetch=fetch, max_urls=3)
+    assert (st1["rescued"], st1["over_limit"]) == (3, 1)
+    assert (st2["rescued"], st2["over_limit"]) == (1, 1)     # /0 已抓過（共用），/9 超額
+    assert len(fetch.calls) == 3
+
+
+def test_rescue_then_validate_and_drop_order(tmp_path):
+    """救在丟之前：救得到的留下，救不到的才被 _drop_undated_findings 拿掉；救完整軸能過驗證。"""
+    import run as dd2_run
+    path = _part(tmp_path, [_undated("https://a.example.com/1", as_of="2026-10-01"),
+                            _undated("https://a.example.com/2"), _undated("https://a.example.com/3")])
+    fails, _ = validate_evidence.check_axis("x_axis", _read(path), {})
+    assert fails  # 救之前：缺 as_of，驗證不過
+    cb.rescue_undated(path, tmp_path / "fetch_cache",
+                      fetch=_fake_fetch({"https://a.example.com/2": {"page_date": "2026-10-14"},
+                                         "https://a.example.com/3": {"page_date": None}}))
+    assert dd2_run._drop_undated_findings(path) == 1
+    ax = _read(path)
+    assert [f["url"][-1] for f in ax["findings"]] == ["1", "2"] and ax["status"] == "found"
+    fails, _ = validate_evidence.check_axis("x_axis", ax, {})
+    assert fails == []
+
+
+def test_rescue_over_http_uses_page_meta_date(server, tmp_path):
+    path = _part(tmp_path, [_undated(server + "/utf8"), _undated(server + "/missing")])
+    st = cb.rescue_undated(path, tmp_path / "fetch_cache")
+    assert (st["rescued"], st["fetch_failed"]) == (1, 1)
+    assert _read(path)["findings"][0]["as_of"] == "2026-10-14"
