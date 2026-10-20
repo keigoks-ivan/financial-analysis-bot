@@ -210,8 +210,8 @@ def test_tenbagger_embed_page_text_updated():
     html = (SCRIPTS_DIR.parent / "docs" / "picks" / "_embed.html").read_text(encoding="utf-8")
     assert "🟡 半倉" not in html
     assert "🟡 接近＝距新高" in html
-    assert "變更紀錄 v5.3" in html
-    assert "不是登記判準通過" in html and "無法分辨" in html
+    assert "🟢🟡 正常倉、🟠 半倉" in html
+    assert "變更紀錄" not in html
 
 
 # ── 三個呼叫端都傳 yellow_full=True（防日後有人漏傳而悄悄退回半倉）──────────────

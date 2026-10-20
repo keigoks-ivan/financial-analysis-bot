@@ -285,14 +285,12 @@ def render_grp_board(payload: dict) -> str:
                    f'<td>{pct(r["ret_12m"], 0)}</td>'
                    f'<td>{ROUTE_TXT.get(r.get("route"))}</td><td>{pool}</td></tr>')
     return f"""<div class="shape-card" style="border-left-color:var(--warn)">
-<h3>三閘主榜（發現層舊制） <span class="cnt">{len(board)} 檔全過三閘（顯示 top 30，按上修幅度）</span></h3>
-<div class="shape-desc"><b>2026-07-04 拍板的原始發現準則：高成長 × EPS 上修 × 位置適合＋市值 ≥ $200 億</b>——
-成長閘＝FY+1 隱含 EPS 成長 ≥15% ｜ 上修閘＝FY+1 EPS 30 天修正 &gt;0（下修否決）｜ 位置閘＝站上 40 週線＋位置標籤
-｜市值門檻管本榜與席位資格（本期另有 {payload.get('grp_subfloor_n', 0)} 檔過三閘但未達市值，留在形狀欄）。
-<b>這是雷達自己較寬鬆的發現層舊制，不是現行 v5 GRP 引擎的資格閘</b>（後者是三年成長／財報後上修／
-耐久一致性／距歷史新高，見 <a href="/engine/">選股主控台 · 席位排序</a>）——本榜的軌別欄「核心向／衛星向」
-沿用護城河字母，與 v5 席位引擎純比上修排序的核心／等待池分野是兩回事。排序＝上修幅度。這是研究優先序，
-進場仍走 DD 裁決＋板機。</div>
+<h3>三閘主榜（發現層） <span class="cnt">{len(board)} 檔全過三閘（顯示 top 30，按上修幅度）</span></h3>
+<div class="shape-desc"><b>發現準則：高成長 × EPS 上修 × 位置適合，市值 ≥ $200 億</b>。
+成長閘＝FY+1 隱含 EPS 成長 ≥15% ｜ 上修閘＝FY+1 EPS 30 天修正 &gt;0（下修否決）｜ 位置閘＝站上 40 週線＋位置標籤。
+本期另有 {payload.get('grp_subfloor_n', 0)} 檔過三閘但未達市值，留在形狀欄。
+<b>這套準則比席位資格寬</b>（席位資格見 <a href="/engine/">席位總表</a>）；「軌別」欄的核心向／衛星向依護城河等級標示，
+與席位的核心／等待池無關。按上修幅度排序，只代表研究順序，進場仍走 DD 裁決＋板機。</div>
 <table><thead><tr><th class="left">Ticker</th><th class="left">產業</th><th>層</th>
 <th>成長閘</th><th>30 天修正</th><th class="left">位置閘</th><th>12M</th><th>軌別</th><th>DD池</th></tr></thead>
 <tbody>{''.join(trs)}</tbody></table>
@@ -335,12 +333,11 @@ def render(payload: dict) -> str:
 
     body = f"""<div class="hero">
 <h1>全市場雷達 · 發現層</h1>
-<div class="hero-sub">S&amp;P 500＋Nasdaq 100＋S&amp;P 400 中型股（~920 檔，2026-07-04 持有人拍板排除小型股）每週全掃。
-<b>主榜是 2026-07-04 拍板的原始三閘發現準則</b>（高成長 × EPS 上修 30 天修正 × 位置適合，按上修幅度排）——
-只做研究優先序，<b>不是</b>現行 v5 GRP 引擎的資格與排序（後者是品質派資格 × 財報後上修排序 × 距歷史新高板機，
-見 <a href="/engine/">選股主控台 · 席位排序</a>）；四形狀欄降為發現鏡頭（突破／循環轉折／動能／主題下沉，從不同角度找候選）。
-<b>這是研究導航不是買入清單</b>：池外名字＝候選入池補 DD；要進場一律走 DD 裁決＋板機。</div>
-<div class="asof">{payload['as_of']} 價格 as of ｜ universe {payload['universe_n']} 檔（S&amp;P 500 ∪ NDX 100 ∪ S&amp;P 400 ∪ DD 池美國上市含 ADR；不含外國掛牌）
+<div class="hero-sub">每週掃 S&amp;P 500、Nasdaq 100 與 S&amp;P 400 中型股（約 920 檔，不含小型股）。
+<b>主榜用三閘發現準則</b>（高成長 × 30 天 EPS 上修 × 位置適合，按上修幅度排），只排研究順序，
+<b>不是</b>席位的資格與排序（席位見 <a href="/engine/">席位總表</a>）。四個形狀欄從不同角度找候選：突破、循環轉折、動能、主題下沉。
+<b>這是研究導航，不是買入清單</b>：池外名字是補 DD 的候選，進場一律走 DD 裁決＋板機。</div>
+<div class="asof">價格日 {payload['as_of']} ｜ 母體 {payload['universe_n']} 檔（S&amp;P 500 ∪ NDX 100 ∪ S&amp;P 400 ∪ DD 池美國上市含 ADR；不含外國掛牌）
 ｜ 可算 {payload['scored_n']} 檔 ｜ 修正確認覆蓋 {covered['stage2_ok']}/{covered['stage2_cand']} 檔</div>
 </div>
 <div class="stat-row">
@@ -354,9 +351,9 @@ def render(payload: dict) -> str:
 </div>
 {render_grp_board(payload)}
 {''.join(cards)}
-<div class="note">熱產業（13 週報酬中位數 top {P['theme_hot_sectors']}）：{escape('、'.join(payload['hot_sectors']))}。
-形狀門檻 v1 於 2026-07-04 鎖定（PREREG 慣例，季檢才可調）；四形狀出身依據＝12M/24M 發現力驗屍
-＋池外贏家稽核（top50 有 54% 在池外、集中於主題中小型）。一檔可同時命中多形狀。</div>"""
+<div class="note">熱產業（13 週報酬中位數前 {P['theme_hot_sectors']} 名）：{escape('、'.join(payload['hot_sectors']))}。
+形狀門檻事前鎖定，季檢才可調。四個形狀取自回看過去 12／24 個月的大漲股，以及池外贏家稽核
+（前 50 名有 54% 在池外，集中在主題中小型股）。一檔可同時命中多個形狀。</div>"""
     return page_embed_shell("全市場雷達 · 席位排序", body,
                             "S&P 1500 全市場結構掃描 × 四形狀路由 × EPS 修正拐點確認")
 

@@ -315,8 +315,8 @@ def _verdict_badge(v: Optional[str], source: Optional[str] = None) -> str:
         return '<span class="verdict v-none">待補 DD</span>'
     cls = {"進場": "v-in", "觀望": "v-watch", "迴避": "v-avoid"}.get(v, "v-none")
     # P1: overlay_extracted＝機器抽取自 v12 舊 DD 結論（非 v13/v14 決策層原生），標「※」小記。
-    mark = ('<sup class="v-overlay" title="機器抽取自 v12 舊報告結論，非 v13/v14 原生；'
-            'medium/low 信心待人工複審" style="font-size:9px;color:#94a3b8;cursor:help">※抽取</sup>'
+    mark = ('<sup class="v-overlay" title="由程式從舊版報告結論抽取，不是報告原生裁決；'
+            '中、低信心者待人工複審" style="font-size:9px;color:#94a3b8;cursor:help">※抽取</sup>'
             if source == "overlay_extracted" else "")
     return f'<span class="verdict {cls}">{escape(v)}</span>{mark}'
 
@@ -324,7 +324,7 @@ def _verdict_badge(v: Optional[str], source: Optional[str] = None) -> str:
 def _de_badge(s: dict) -> str:
     de = _safe_float(s.get("de"))
     if de is not None and de > DE_WARN_THRESHOLD:
-        return f' <span class="de-warn" title="D/E {de:.2f} &gt; {DE_WARN_THRESHOLD} — advisory，不計分不擋">⚠ D/E {de:.1f}</span>'
+        return f' <span class="de-warn" title="D/E {de:.2f} &gt; {DE_WARN_THRESHOLD}，只提醒，不計分不擋">⚠ D/E {de:.1f}</span>'
     return ""
 
 
@@ -335,7 +335,7 @@ def _pct(v: Optional[float], decimals: int = 1, signed: bool = True) -> str:
     return f"{sign}{v:.{decimals}f}%"
 
 
-DISCOVERY_DETAIL_HTML = '\n<section class="block">\n  <h2 class="block-h"><span class="step">1b</span> 發現層明細 · 多倍候選池 × 形狀掃描</h2>\n  <div class="block-sub">2026-07-07 自 DD Screener 總覽移駐——發現層明細統一住在漏斗頁。兩塊皆為瀏覽器端即時讀取，資料檔未產出時自動隱藏。</div>\n  <!-- ══ Discovery Pool：ID 已標 🔴 核心受益、尚未建 DD ══════════════════════\n       資料源 discovery_pool.json（scripts/list_breakout_candidates.py --write，\n       build_dd_screener.py 每次 build 後自動刷新）。本表 universe 與主表互斥：\n       主表 = 已建 DD 的 242 檔；本池 = ID 層發現但還沒進 DD 漏斗的名字。\n  ═══════════════════════════════════════════════════════════════════════════ -->\n  <div id="discovery-pool" style="display:none;margin:18px 0 0">\n    <details style="background:#fbf3df;border:1px solid var(--line);border-radius:10px;padding:12px 18px">\n      <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--warn);letter-spacing:.02em">\n        多倍候選池 — ID 已標 🔴 核心受益、尚未建 DD（<span id="dp-count">0</span> 檔）\n      </summary>\n      <p style="font-size:11.5px;line-height:1.7;color:var(--warn);margin:10px 0 8px">\n        產業報告（ID）§9 標為 <strong>🔴 核心受益</strong>但還沒做個股 DD 的名單 — 這些 ticker 不在上方主表 universe 內（主表只收已建 DD 者）。\n        排序鍵：市值級距（mid/small 優先）→ 純度% → 5Y 需求倍數 → 被標 🔴 的 ID 數。\n        「待補」＝來源 ID 為 v2.4 前的 legacy 報告，重跑後自動補齊；欄位定義見 industry-analyst v2.4（<code>purity_pct</code> / <code>mcap_bucket</code> / <code>demand_5y_multiple</code>）。\n        對池內名字跑 <code>ddreport {ticker}</code> 產 DD 後，該 ticker 自動移入主表。\n      </p>\n      <div id="dp-table" style="overflow-x:auto"></div>\n    </details>\n    <!-- 形狀掃描（爆發形狀 × 覆蓋標籤，橫切研究狀態的雷達）。資料 pre_id_scan.json\n         （scripts/scan_pre_id.py，手動/週更），檔案不存在時整塊隱藏。 -->\n    <details id="pre-id-scan" style="display:none;margin-top:10px;background:#e8eef5;border:1px solid var(--line);border-radius:10px;padding:12px 18px">\n      <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--accent-ink)">\n        形狀掃描 — 正在噴的多倍形狀 × 前瞻確認 × 覆蓋標籤（<span id="ps-count">0</span> 檔，<span id="ps-asof">—</span>）\n      </summary>\n      <p style="font-size:11.5px;line-height:1.7;color:var(--accent-ink);margin:10px 0 8px">\n        <strong>橫切研究狀態的雷達</strong>：用「形狀」過濾（不用覆蓋、也不用市值過濾）——掃 RS 領導（510 股日更）∪ <strong>自訂全市場 screen</strong>（美股主板 × 市值 ≥ $0.3B × 營收 YoY ≥ +20%，系統性條件掃描、不是當日漲幅榜碰運氣），過爆發形狀閘（<strong>市值 ≥ $0.3B 無上限</strong>、季營收 YoY ≥ +20%、52 週位置 ≥ 0.6 或 RS ≥ 80、GM ≥ 25%、金融/REIT 剔除）。命中後<strong>三層標籤</strong>而非剔除：\n        <br>• <strong>前瞻</strong>：trailing 只證明過去，多倍股是「市場還沒 price in 的持續成長」——DD universe 內用 Koyfin FY1→FY3 EPS CAGR（與下方主表<strong>同源</strong>，附修正動能），universe 外用 yfinance 分析師 FY+1 營收預估。<span style="background:#eafaef;color:var(--pos);padding:0 6px;border-radius:99px">🟢 續強 ≥+15%</span> <span style="background:var(--line-soft);color:var(--sec);padding:0 6px;border-radius:99px">➖ 放緩 0~15%</span> <span style="background:#fbeceb;color:var(--neg);padding:0 6px;border-radius:99px">🔴 反轉 &lt;0</span>（trailing 是基期效應/週期頂）<span style="background:var(--line-soft);color:var(--sec);padding:0 6px;border-radius:99px">⚪ 無預估</span>（零分析師＝真沒被發現，是訊號不是剔除理由）。<strong>排序＝min(trailing, 前瞻) 保守取小</strong>——trailing +104% 但前瞻 −24% 的週期頂自動沉底。\n        <br>• <strong>加速</strong>：📈 預估下季 YoY 明顯高於已報告 YoY（營運槓桿點火中）／📉 明顯放緩／➖ 平穩。加速 × 🟢 前瞻 × ✅有DD 三者疊加＝本漏斗最強候選訊號。\n        <br>• <strong>覆蓋 + 市值級距</strong>：<span style="background:#e8eef5;color:var(--accent-ink);padding:0 6px;border-radius:99px">🔭 盲區</span>零覆蓋 → <strong>立 ID</strong>｜<span style="background:#fbf3df;color:var(--warn);padding:0 6px;border-radius:99px">🟡 有 ID 無 DD</span> → 形狀轉強＝加速訊號，<strong>建 DD</strong>｜<span style="background:#eafaef;color:var(--pos);padding:0 6px;border-radius:99px">✅ 有 DD</span> → 懂它且剛突破＝最強訊號，<strong>回頭重看 DD</strong>（AR Live 只抓回檔、抓不到突破，這裡補上）。大型股照樣翻倍（NVDA $300B→$3T），小/中型看「沒被發現」、大型/mega 看週期/重定價。\n        <br>• <strong>週數</strong>：連續在榜週數（🆕＝本次新進榜）。形狀撐過 3 週比一日遊強得多；歷史同時累積成日後回測這條漏斗命中率的資料。\n        <br><strong>用途：告訴你注意力放哪</strong>——不是買入清單，估值與獲利品質刻意不在此把關（多倍股早期永遠看起來貴），那是管線②（DD 裁決層）的事。最終進場由個股 DD 統一裁決（#decision）+ 時機決定。\n      </p>\n      <div id="ps-table" style="overflow-x:auto"></div>\n    </details>\n  </div>\n</section>\n<script>\n// ── Discovery pool（ID 🔴 未建 DD 候選池）─────────────────────────────────\n// 獨立 fetch，404 / parse 失敗時整個區塊保持隱藏，不影響主表。\nfetch(\'./discovery_pool.json\')\n  .then(function(r) { if (!r.ok) throw new Error(\'HTTP \' + r.status); return r.json(); })\n  .then(function(pool) {\n    var rows = pool.rows || [];\n    if (!rows.length) return;\n    var esc = function(s) {\n      return String(s == null ? \'\' : s).replace(/&/g, \'&amp;\').replace(/</g, \'&lt;\').replace(/>/g, \'&gt;\');\n    };\n    var pending = \'<span style="color:var(--warn);opacity:.55">待補</span>\';\n    var html = \'<table style="width:100%;border-collapse:collapse;font-size:11.5px;background:var(--card);border-radius:6px">\' +\n      \'<thead><tr style="background:#fbf3df;color:var(--warn);text-align:left">\' +\n      \'<th style="padding:6px 10px">Ticker</th><th style="padding:6px 8px">市值</th>\' +\n      \'<th style="padding:6px 8px">純度%</th><th style="padding:6px 8px">需求5Y×</th>\' +\n      \'<th style="padding:6px 8px">🔴 ID 數</th><th style="padding:6px 10px">主題</th>\' +\n      \'</tr></thead><tbody>\';\n    rows.forEach(function(r, i) {\n      var themes = (r.themes || []).join(\'；\');\n      html += \'<tr style="border-top:1px solid var(--line)\' + (i % 2 ? \';background:var(--paper)\' : \'\') + \'">\' +\n        \'<td style="padding:5px 10px;font-weight:700;color:var(--ink)">\' + esc(r.ticker) + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.mcap_bucket ? esc(r.mcap_bucket) : pending) + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.purity_pct != null ? esc(r.purity_pct) : pending) + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.best_demand_mult != null ? esc(r.best_demand_mult) : pending) + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + esc(r.core_count) + \'</td>\' +\n        \'<td style="padding:5px 10px;color:var(--sec);max-width:420px">\' + esc(themes) + \'</td>\' +\n        \'</tr>\';\n    });\n    html += \'</tbody></table>\' +\n      \'<p style="font-size:10.5px;color:var(--warn);margin:8px 0 2px">as of \' + esc(pool.as_of || \'—\') +\n      \'｜掃描 \' + esc(pool.id_files_scanned) + \' 份 ID｜v2.4 排序欄位就緒 \' + esc(pool.v24_ranked) + \'/\' + esc(pool.total) + \' 檔</p>\';\n    document.getElementById(\'dp-table\').innerHTML = html;\n    document.getElementById(\'dp-count\').textContent = rows.length;\n    document.getElementById(\'discovery-pool\').style.display = \'\';\n  })\n  .catch(function() { /* pool 未產出：區塊保持隱藏 */ });\n\n// ── 形狀掃描（爆發形狀 × 覆蓋標籤，橫切研究狀態的雷達）─────────────────\nfetch(\'./pre_id_scan.json\')\n  .then(function(r) { if (!r.ok) throw new Error(\'HTTP \' + r.status); return r.json(); })\n  .then(function(scan) {\n    var rows = scan.rows || [];\n    if (!rows.length) return;\n    var esc = function(s) {\n      return String(s == null ? \'\' : s).replace(/&/g, \'&amp;\').replace(/</g, \'&lt;\').replace(/>/g, \'&gt;\');\n    };\n    var COV = {\n      dd:  {t: \'✅ 有 DD\',       bg: \'#eafaef\', fg: \'var(--pos)\'},\n      id:  {t: \'🟡 有 ID 無 DD\', bg: \'#fbf3df\', fg: \'var(--warn)\'},\n      \'\':  {t: \'🔭 盲區\',        bg: \'#e8eef5\', fg: \'var(--accent-ink)\'}\n    };\n    var FWD = {\n      strong:  {t: \'🟢\', bg: \'#eafaef\', fg: \'var(--pos)\'},\n      slow:    {t: \'➖\', bg: \'var(--line-soft)\', fg: \'var(--sec)\'},\n      reverse: {t: \'🔴\', bg: \'#fbeceb\', fg: \'var(--neg)\'},\n      none:    {t: \'⚪\', bg: \'var(--line-soft)\', fg: \'var(--muted)\'}\n    };\n    var ACCEL = {up: \'📈\', down: \'📉\', flat: \'➖\'};\n    var html = \'<table style="width:100%;border-collapse:collapse;font-size:11.5px;background:var(--card);border-radius:6px">\' +\n      \'<thead><tr style="background:#e8eef5;color:var(--accent-ink);text-align:left">\' +\n      \'<th style="padding:6px 10px">Ticker</th><th style="padding:6px 8px">覆蓋</th><th style="padding:6px 8px">市值</th>\' +\n      \'<th style="padding:6px 8px">營收YoY</th>\' +\n      \'<th style="padding:6px 8px" title="DD universe 內＝Koyfin FY1→FY3 EPS CAGR（與主表同源）；外＝yfinance 分析師 FY+1 營收預估。🟢≥+15% ➖0~15% 🔴<0 ⚪無預估">前瞻</th>\' +\n      \'<th style="padding:6px 8px" title="預估下季 YoY vs 已報告 YoY：📈 加速（≥1.15×）📉 放緩（≤0.7× 或轉負）➖ 平穩">加速</th>\' +\n      \'<th style="padding:6px 8px" title="連續在榜週數；🆕＝本次新進榜">週</th>\' +\n      \'<th style="padding:6px 8px">GM</th>\' +\n      \'<th style="padding:6px 8px">52w位置</th><th style="padding:6px 8px">RS</th>\' +\n      \'<th style="padding:6px 10px">Industry</th></tr></thead><tbody>\';\n    rows.forEach(function(r, i) {\n      var c = COV[r.coverage || \'\'] || COV[\'\'];\n      var f = FWD[r.fwd_tag || \'none\'] || FWD.none;\n      var fwdTxt = r.fwd_growth_pct != null\n        ? f.t + \' \' + (r.fwd_growth_pct > 0 ? \'+\' : \'\') + Math.round(r.fwd_growth_pct) + \'%\'\n        : f.t + \' —\';\n      var fwdTip = r.fwd_src === \'koyfin\'\n        ? \'Koyfin FY1→FY3 EPS CAGR（與主表同源）\' + (r.eps_revision_pct != null ? \'｜修正 \' + (r.eps_revision_pct > 0 ? \'+\' : \'\') + r.eps_revision_pct + \'pp\' : \'\')\n        : (r.fwd_src === \'yf\' ? \'yfinance 分析師 FY+1 營收預估\' : \'無分析師預估（零覆蓋＝真沒被發現）\');\n      var wk = r.weeks_on_list || 1;\n      var isNew = r.first_seen && scan.as_of && r.first_seen === scan.as_of;\n      // ✅有DD 的覆蓋標籤連到該 DD §14 裁決錨點（雷達↔裁決一鍵；「懂它且剛轉強→直接看裁決」）\n      var covInner = \'<span style="background:\' + c.bg + \';color:\' + c.fg + \';padding:1px 7px;border-radius:99px;font-size:10.5px;white-space:nowrap">\' + c.t + \'</span>\';\n      var covCell = (r.coverage === \'dd\' && r.dd_path)\n        ? \'<a href="\' + r.dd_path + \'" target="_blank" style="text-decoration:none" title="跳該 DD 統一裁決">\' + covInner + \'</a>\'\n        : covInner;\n      html += \'<tr style="border-top:1px solid var(--line)\' + (i % 2 ? \';background:var(--paper)\' : \'\') + \'">\' +\n        \'<td style="padding:5px 10px;font-weight:700;color:var(--ink)">\' + esc(r.ticker) +\n        (r.name ? \' <span style="font-weight:400;color:var(--sec);font-size:10.5px">\' + esc(r.name) + \'</span>\' : \'\') + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + covCell + \'</td>\' +\n        \'<td style="padding:5px 8px">$\' + (r.mcap_usd / 1e9).toFixed(1) + \'B <span style="color:var(--muted);font-size:10px">\' + esc(r.mcap_bucket || \'\') + \'</span></td>\' +\n        \'<td style="padding:5px 8px;color:var(--pos);font-weight:700">+\' + Math.round(r.rev_growth * 100) + \'%</td>\' +\n        \'<td style="padding:5px 8px" title="\' + esc(fwdTip) + \'"><span style="background:\' + f.bg + \';color:\' + f.fg + \';padding:1px 7px;border-radius:99px;font-size:10.5px;white-space:nowrap;font-weight:600">\' + fwdTxt + \'</span></td>\' +\n        \'<td style="padding:5px 8px;text-align:center">\' + (ACCEL[r.accel] || \'—\') + \'</td>\' +\n        \'<td style="padding:5px 8px;white-space:nowrap">\' + (isNew ? \'<span style="background:#e8eef5;color:var(--accent-ink);padding:0 5px;border-radius:99px;font-size:10px;font-weight:700">🆕</span>\' : esc(wk) + \'週\') + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.gross_margin != null ? Math.round(r.gross_margin * 100) + \'%\' : \'—\') + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.range_pos != null ? esc(r.range_pos) : \'—\') + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.rs_score != null ? esc(r.rs_score) : \'—\') + \'</td>\' +\n        \'<td style="padding:5px 10px;color:var(--sec)">\' + esc(r.industry || \'\') + \'</td></tr>\';\n    });\n    var cc = scan.coverage_counts || {};\n    var fc = scan.fwd_counts || {};\n    html += \'</tbody></table>\' +\n      \'<p style="font-size:10.5px;color:var(--accent-ink);margin:8px 0 2px">as of \' + esc(scan.as_of) +\n      \'｜掃描候選 \' + esc(scan.candidates_scanned) + \'｜命中 \' + esc(scan.hits) +\n      (scan.hits > rows.length ? \'（顯示排序前 \' + rows.length + \'）\' : \'\') +\n      \'（🔭 盲區 \' + esc(cc.blind != null ? cc.blind : \'—\') + \'｜🟡 有 ID \' + esc(cc.id != null ? cc.id : \'—\') + \'｜✅ 有 DD \' + esc(cc.dd != null ? cc.dd : \'—\') + \'）\' +\n      (scan.fwd_counts ? \'｜前瞻：🟢 \' + esc(fc.strong) + \'／➖ \' + esc(fc.slow) + \'／🔴 \' + esc(fc.reverse) + \'／⚪ \' + esc(fc.none) : \'\') +\n      \'｜排序＝min(trailing, 前瞻) 保守取小</p>\';\n    document.getElementById(\'ps-table\').innerHTML = html;\n    document.getElementById(\'ps-count\').textContent = rows.length;\n    document.getElementById(\'ps-asof\').textContent = scan.as_of || \'—\';\n    document.getElementById(\'pre-id-scan\').style.display = \'\';\n  })\n  .catch(function() { /* 掃描未產出：區塊保持隱藏 */ });\n</script>\n'
+DISCOVERY_DETAIL_HTML = '\n<section class="block">\n  <h2 class="block-h"><span class="step">1b</span> 發現層明細 · 多倍候選池 × 形狀掃描</h2>\n  <div class="block-sub">兩塊都在瀏覽器端即時讀取，沒有資料時自動隱藏。</div>\n  <!-- ══ Discovery Pool：ID 已標 🔴 核心受益、尚未建 DD ══════════════════════\n       資料源 discovery_pool.json（scripts/list_breakout_candidates.py --write，\n       build_dd_screener.py 每次 build 後自動刷新）。本表 universe 與主表互斥：\n       主表 = 已建 DD 的 242 檔；本池 = ID 層發現但還沒進 DD 漏斗的名字。\n  ═══════════════════════════════════════════════════════════════════════════ -->\n  <div id="discovery-pool" style="display:none;margin:18px 0 0">\n    <details style="background:#fbf3df;border:1px solid var(--line);border-radius:10px;padding:12px 18px">\n      <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--warn);letter-spacing:.02em">\n        多倍候選池 — ID 已標 🔴 核心受益、尚未建 DD（<span id="dp-count">0</span> 檔）\n      </summary>\n      <p style="font-size:11.5px;line-height:1.7;color:var(--warn);margin:10px 0 8px">\n        產業報告（ID）標為 <strong>🔴 核心受益</strong>但還沒做個股 DD 的名單 — 這些 ticker 不在上方主表 universe 內（主表只收已建 DD 者）。\n        排序鍵：市值級距（mid/small 優先）→ 純度% → 5Y 需求倍數 → 被標 🔴 的 ID 數。\n        「待補」＝來源產業報告是舊版、缺這些欄位，重跑後自動補齊。\n        池內名字做完 DD 後，會自動移入主表。\n      </p>\n      <div id="dp-table" style="overflow-x:auto"></div>\n    </details>\n    <!-- 形狀掃描（爆發形狀 × 覆蓋標籤，橫切研究狀態的雷達）。資料 pre_id_scan.json\n         （scripts/scan_pre_id.py，手動/週更），檔案不存在時整塊隱藏。 -->\n    <details id="pre-id-scan" style="display:none;margin-top:10px;background:#e8eef5;border:1px solid var(--line);border-radius:10px;padding:12px 18px">\n      <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--accent-ink)">\n        形狀掃描 — 正在噴的多倍形狀 × 前瞻確認 × 覆蓋標籤（<span id="ps-count">0</span> 檔，<span id="ps-asof">—</span>）\n      </summary>\n      <p style="font-size:11.5px;line-height:1.7;color:var(--accent-ink);margin:10px 0 8px">\n        <strong>橫切研究狀態的雷達</strong>：用「形狀」過濾（不用覆蓋、也不用市值過濾）——掃 RS 領導（510 股日更）∪ <strong>自訂全市場 screen</strong>（美股主板 × 市值 ≥ $0.3B × 營收 YoY ≥ +20%，系統性條件掃描、不是當日漲幅榜碰運氣），過爆發形狀閘（<strong>市值 ≥ $0.3B 無上限</strong>、季營收 YoY ≥ +20%、52 週位置 ≥ 0.6 或 RS ≥ 80、GM ≥ 25%、金融/REIT 剔除）。命中後<strong>三層標籤</strong>而非剔除：\n        <br>• <strong>前瞻</strong>：trailing 只證明過去，多倍股是「市場還沒 price in 的持續成長」——DD universe 內用 Koyfin FY1→FY3 EPS CAGR（與下方主表<strong>同源</strong>，附修正動能），universe 外用 yfinance 分析師 FY+1 營收預估。<span style="background:#eafaef;color:var(--pos);padding:0 6px;border-radius:99px">🟢 續強 ≥+15%</span> <span style="background:var(--line-soft);color:var(--sec);padding:0 6px;border-radius:99px">➖ 放緩 0~15%</span> <span style="background:#fbeceb;color:var(--neg);padding:0 6px;border-radius:99px">🔴 反轉 &lt;0</span>（trailing 是基期效應/週期頂）<span style="background:var(--line-soft);color:var(--sec);padding:0 6px;border-radius:99px">⚪ 無預估</span>（零分析師＝真沒被發現，是訊號不是剔除理由）。<strong>排序＝min(trailing, 前瞻) 保守取小</strong>——trailing +104% 但前瞻 −24% 的週期頂自動沉底。\n        <br>• <strong>加速</strong>：📈 預估下季 YoY 明顯高於已報告 YoY（營運槓桿點火中）／📉 明顯放緩／➖ 平穩。加速 × 🟢 前瞻 × ✅有DD 三者疊加＝本漏斗最強候選訊號。\n        <br>• <strong>覆蓋 + 市值級距</strong>：<span style="background:#e8eef5;color:var(--accent-ink);padding:0 6px;border-radius:99px">🔭 盲區</span>零覆蓋 → <strong>立 ID</strong>｜<span style="background:#fbf3df;color:var(--warn);padding:0 6px;border-radius:99px">🟡 有 ID 無 DD</span> → 形狀轉強＝加速訊號，<strong>建 DD</strong>｜<span style="background:#eafaef;color:var(--pos);padding:0 6px;border-radius:99px">✅ 有 DD</span> → 懂它且剛突破＝最強訊號，<strong>回頭重看 DD</strong>（AR Live 只抓回檔、抓不到突破，這裡補上）。大型股照樣翻倍（NVDA $300B→$3T），小/中型看「沒被發現」、大型/mega 看週期/重定價。\n        <br>• <strong>週數</strong>：連續在榜週數（🆕＝本次新進榜）。形狀撐過 3 週比一日遊強得多；歷史同時累積成日後回測這條漏斗命中率的資料。\n        <br><strong>用途：告訴你注意力放哪</strong>——不是買入清單，估值與獲利品質刻意不在此把關（多倍股早期永遠看起來貴），那是管線②（DD 裁決層）的事。最終進場由個股 DD 統一裁決（#decision）+ 時機決定。\n      </p>\n      <div id="ps-table" style="overflow-x:auto"></div>\n    </details>\n  </div>\n</section>\n<script>\n// ── Discovery pool（ID 🔴 未建 DD 候選池）─────────────────────────────────\n// 獨立 fetch，404 / parse 失敗時整個區塊保持隱藏，不影響主表。\nfetch(\'./discovery_pool.json\')\n  .then(function(r) { if (!r.ok) throw new Error(\'HTTP \' + r.status); return r.json(); })\n  .then(function(pool) {\n    var rows = pool.rows || [];\n    if (!rows.length) return;\n    var esc = function(s) {\n      return String(s == null ? \'\' : s).replace(/&/g, \'&amp;\').replace(/</g, \'&lt;\').replace(/>/g, \'&gt;\');\n    };\n    var pending = \'<span style="color:var(--warn);opacity:.55">待補</span>\';\n    var html = \'<table style="width:100%;border-collapse:collapse;font-size:11.5px;background:var(--card);border-radius:6px">\' +\n      \'<thead><tr style="background:#fbf3df;color:var(--warn);text-align:left">\' +\n      \'<th style="padding:6px 10px">Ticker</th><th style="padding:6px 8px">市值</th>\' +\n      \'<th style="padding:6px 8px">純度%</th><th style="padding:6px 8px">需求5Y×</th>\' +\n      \'<th style="padding:6px 8px">🔴 ID 數</th><th style="padding:6px 10px">主題</th>\' +\n      \'</tr></thead><tbody>\';\n    rows.forEach(function(r, i) {\n      var themes = (r.themes || []).join(\'；\');\n      html += \'<tr style="border-top:1px solid var(--line)\' + (i % 2 ? \';background:var(--paper)\' : \'\') + \'">\' +\n        \'<td style="padding:5px 10px;font-weight:700;color:var(--ink)">\' + esc(r.ticker) + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.mcap_bucket ? esc(r.mcap_bucket) : pending) + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.purity_pct != null ? esc(r.purity_pct) : pending) + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.best_demand_mult != null ? esc(r.best_demand_mult) : pending) + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + esc(r.core_count) + \'</td>\' +\n        \'<td style="padding:5px 10px;color:var(--sec);max-width:420px">\' + esc(themes) + \'</td>\' +\n        \'</tr>\';\n    });\n    html += \'</tbody></table>\' +\n      \'<p style="font-size:10.5px;color:var(--warn);margin:8px 0 2px">as of \' + esc(pool.as_of || \'—\') +\n      \'｜掃描 \' + esc(pool.id_files_scanned) + \' 份 ID｜排序欄位齊全 \' + esc(pool.v24_ranked) + \'/\' + esc(pool.total) + \' 檔</p>\';\n    document.getElementById(\'dp-table\').innerHTML = html;\n    document.getElementById(\'dp-count\').textContent = rows.length;\n    document.getElementById(\'discovery-pool\').style.display = \'\';\n  })\n  .catch(function() { /* pool 未產出：區塊保持隱藏 */ });\n\n// ── 形狀掃描（爆發形狀 × 覆蓋標籤，橫切研究狀態的雷達）─────────────────\nfetch(\'./pre_id_scan.json\')\n  .then(function(r) { if (!r.ok) throw new Error(\'HTTP \' + r.status); return r.json(); })\n  .then(function(scan) {\n    var rows = scan.rows || [];\n    if (!rows.length) return;\n    var esc = function(s) {\n      return String(s == null ? \'\' : s).replace(/&/g, \'&amp;\').replace(/</g, \'&lt;\').replace(/>/g, \'&gt;\');\n    };\n    var COV = {\n      dd:  {t: \'✅ 有 DD\',       bg: \'#eafaef\', fg: \'var(--pos)\'},\n      id:  {t: \'🟡 有 ID 無 DD\', bg: \'#fbf3df\', fg: \'var(--warn)\'},\n      \'\':  {t: \'🔭 盲區\',        bg: \'#e8eef5\', fg: \'var(--accent-ink)\'}\n    };\n    var FWD = {\n      strong:  {t: \'🟢\', bg: \'#eafaef\', fg: \'var(--pos)\'},\n      slow:    {t: \'➖\', bg: \'var(--line-soft)\', fg: \'var(--sec)\'},\n      reverse: {t: \'🔴\', bg: \'#fbeceb\', fg: \'var(--neg)\'},\n      none:    {t: \'⚪\', bg: \'var(--line-soft)\', fg: \'var(--muted)\'}\n    };\n    var ACCEL = {up: \'📈\', down: \'📉\', flat: \'➖\'};\n    var html = \'<table style="width:100%;border-collapse:collapse;font-size:11.5px;background:var(--card);border-radius:6px">\' +\n      \'<thead><tr style="background:#e8eef5;color:var(--accent-ink);text-align:left">\' +\n      \'<th style="padding:6px 10px">Ticker</th><th style="padding:6px 8px">覆蓋</th><th style="padding:6px 8px">市值</th>\' +\n      \'<th style="padding:6px 8px">營收YoY</th>\' +\n      \'<th style="padding:6px 8px" title="DD universe 內＝Koyfin FY1→FY3 EPS CAGR（與主表同源）；外＝yfinance 分析師 FY+1 營收預估。🟢≥+15% ➖0~15% 🔴<0 ⚪無預估">前瞻</th>\' +\n      \'<th style="padding:6px 8px" title="預估下季 YoY vs 已報告 YoY：📈 加速（≥1.15×）📉 放緩（≤0.7× 或轉負）➖ 平穩">加速</th>\' +\n      \'<th style="padding:6px 8px" title="連續在榜週數；🆕＝本次新進榜">週</th>\' +\n      \'<th style="padding:6px 8px">GM</th>\' +\n      \'<th style="padding:6px 8px">52w位置</th><th style="padding:6px 8px">RS</th>\' +\n      \'<th style="padding:6px 10px">Industry</th></tr></thead><tbody>\';\n    rows.forEach(function(r, i) {\n      var c = COV[r.coverage || \'\'] || COV[\'\'];\n      var f = FWD[r.fwd_tag || \'none\'] || FWD.none;\n      var fwdTxt = r.fwd_growth_pct != null\n        ? f.t + \' \' + (r.fwd_growth_pct > 0 ? \'+\' : \'\') + Math.round(r.fwd_growth_pct) + \'%\'\n        : f.t + \' —\';\n      var fwdTip = r.fwd_src === \'koyfin\'\n        ? \'Koyfin FY1→FY3 EPS CAGR（與主表同源）\' + (r.eps_revision_pct != null ? \'｜修正 \' + (r.eps_revision_pct > 0 ? \'+\' : \'\') + r.eps_revision_pct + \'pp\' : \'\')\n        : (r.fwd_src === \'yf\' ? \'yfinance 分析師 FY+1 營收預估\' : \'無分析師預估（零覆蓋＝真沒被發現）\');\n      var wk = r.weeks_on_list || 1;\n      var isNew = r.first_seen && scan.as_of && r.first_seen === scan.as_of;\n      // ✅有DD 的覆蓋標籤連到該 DD §14 裁決錨點（雷達↔裁決一鍵；「懂它且剛轉強→直接看裁決」）\n      var covInner = \'<span style="background:\' + c.bg + \';color:\' + c.fg + \';padding:1px 7px;border-radius:99px;font-size:10.5px;white-space:nowrap">\' + c.t + \'</span>\';\n      var covCell = (r.coverage === \'dd\' && r.dd_path)\n        ? \'<a href="\' + r.dd_path + \'" target="_blank" style="text-decoration:none" title="跳該 DD 統一裁決">\' + covInner + \'</a>\'\n        : covInner;\n      html += \'<tr style="border-top:1px solid var(--line)\' + (i % 2 ? \';background:var(--paper)\' : \'\') + \'">\' +\n        \'<td style="padding:5px 10px;font-weight:700;color:var(--ink)">\' + esc(r.ticker) +\n        (r.name ? \' <span style="font-weight:400;color:var(--sec);font-size:10.5px">\' + esc(r.name) + \'</span>\' : \'\') + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + covCell + \'</td>\' +\n        \'<td style="padding:5px 8px">$\' + (r.mcap_usd / 1e9).toFixed(1) + \'B <span style="color:var(--muted);font-size:10px">\' + esc(r.mcap_bucket || \'\') + \'</span></td>\' +\n        \'<td style="padding:5px 8px;color:var(--pos);font-weight:700">+\' + Math.round(r.rev_growth * 100) + \'%</td>\' +\n        \'<td style="padding:5px 8px" title="\' + esc(fwdTip) + \'"><span style="background:\' + f.bg + \';color:\' + f.fg + \';padding:1px 7px;border-radius:99px;font-size:10.5px;white-space:nowrap;font-weight:600">\' + fwdTxt + \'</span></td>\' +\n        \'<td style="padding:5px 8px;text-align:center">\' + (ACCEL[r.accel] || \'—\') + \'</td>\' +\n        \'<td style="padding:5px 8px;white-space:nowrap">\' + (isNew ? \'<span style="background:#e8eef5;color:var(--accent-ink);padding:0 5px;border-radius:99px;font-size:10px;font-weight:700">🆕</span>\' : esc(wk) + \'週\') + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.gross_margin != null ? Math.round(r.gross_margin * 100) + \'%\' : \'—\') + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.range_pos != null ? esc(r.range_pos) : \'—\') + \'</td>\' +\n        \'<td style="padding:5px 8px">\' + (r.rs_score != null ? esc(r.rs_score) : \'—\') + \'</td>\' +\n        \'<td style="padding:5px 10px;color:var(--sec)">\' + esc(r.industry || \'\') + \'</td></tr>\';\n    });\n    var cc = scan.coverage_counts || {};\n    var fc = scan.fwd_counts || {};\n    html += \'</tbody></table>\' +\n      \'<p style="font-size:10.5px;color:var(--accent-ink);margin:8px 0 2px">as of \' + esc(scan.as_of) +\n      \'｜掃描候選 \' + esc(scan.candidates_scanned) + \'｜命中 \' + esc(scan.hits) +\n      (scan.hits > rows.length ? \'（顯示排序前 \' + rows.length + \'）\' : \'\') +\n      \'（🔭 盲區 \' + esc(cc.blind != null ? cc.blind : \'—\') + \'｜🟡 有 ID \' + esc(cc.id != null ? cc.id : \'—\') + \'｜✅ 有 DD \' + esc(cc.dd != null ? cc.dd : \'—\') + \'）\' +\n      (scan.fwd_counts ? \'｜前瞻：🟢 \' + esc(fc.strong) + \'／➖ \' + esc(fc.slow) + \'／🔴 \' + esc(fc.reverse) + \'／⚪ \' + esc(fc.none) : \'\') +\n      \'｜排序＝min(trailing, 前瞻) 保守取小</p>\';\n    document.getElementById(\'ps-table\').innerHTML = html;\n    document.getElementById(\'ps-count\').textContent = rows.length;\n    document.getElementById(\'ps-asof\').textContent = scan.as_of || \'—\';\n    document.getElementById(\'pre-id-scan\').style.display = \'\';\n  })\n  .catch(function() { /* 掃描未產出：區塊保持隱藏 */ });\n</script>\n'
 
 
 # ── section renderers ─────────────────────────────────────────────────────────
@@ -350,7 +350,7 @@ def render_universe(latest: dict, pre_id: Optional[dict], momentum_blind: list) 
   <h2 class="block-h"><span class="step">1</span> 宇宙 · 待研究隊列</h2>
   <div class="block-sub">DD 宇宙規模與兩條「還沒被研究的候選」入口——形狀掃描命中但完全沒人研究過的盲區（不在任何產業報告、也還沒做 DD），與下方回看鏡的動能盲區（高報酬卻無／舊 DD）。</div>
   <div class="stat-row">
-    <div class="stat"><strong>{universe}</strong>DD 宇宙（latest.json）</div>
+    <div class="stat"><strong>{universe}</strong>DD 宇宙</div>
     <div class="stat"><strong>{shape_blind}</strong>形狀掃描盲區</div>
     <div class="stat"><strong>{mom_blind}</strong>動能盲區 <a href="#lookback" class="mini">→ 回看鏡</a></div>
   </div>
@@ -368,8 +368,8 @@ def render_gate(gated: list) -> str:
     return f"""<section class="block">
   <h2 class="block-h"><span class="step">2</span> 資格閘 · 通過 {len(gated)} 檔</h2>
   <div class="block-sub">
-    自算口徑（<b>不依賴 pass_count</b>）：<code>fail_criteria −{{de}} 為空</code> 且 <code>moat_grade∈{{S,A,B}}</code> 且 <code>moat_trend≠↓</code>。
-    D/E 為 advisory——<code>&gt;{DE_WARN_THRESHOLD}</code> 標 ⚠ 但<b>不計分、不擋</b>（持有人 2026-06-11 拍板的五項資格門檻無 D/E；本頁已把 de 退出閘）。
+    過閘條件：五項資格門檻全過（D/E 不在其中），護城河等級為 S／A／B，且趨勢不是 ↓。
+    D/E <code>&gt;{DE_WARN_THRESHOLD}</code> 標 ⚠，只提醒，<b>不計分、不擋</b>。
     本閘通過 {len(gated)} 檔，其中 <b>{de_warn_n}</b> 檔帶 D/E ⚠。
   </div>
   <div class="gate-grid">{tags}</div>
@@ -427,15 +427,15 @@ def render_core(core_sorted: list) -> str:
     return f"""<div class="track-card track-core">
   <h3>核心軌 <span class="cnt">席位 {len(sleeve)}/{CORE_SLOTS}</span></h3>
   <div class="track-desc">
-    <b>方式甲 · 結構長抱線的核心分軌。</b>軌別＝<b>DD 裁決＝進場 且 角色含「核心持倉」</b>；<b>席位硬上限 {CORE_SLOTS} 檔</b>（章程 core ≤5）。
-    選席＝<b>角色優先</b>：無條件核心持倉先佔位，餘席依 <b>擁有層分</b>（own_score＝min(成長，30)＋FY1 盈餘殖利率＋持續期加分－倍數風險，2026-09-02 v2 拍板的排序主幹）補足；超出落板凳。
-    <b>本頁核心軌自成一格</b>：選席以 DD 裁決＋角色為準，own_score 只排序同樣過關者——與 <a href="/engine/">GRP 決策引擎</a> 目前的 v5 上修排序（品質派資格 × 財報後上修排序）分屬不同排序鍵，不是同一份榜。
-    <b>DD 統一裁決在此只做否決／角色標籤，不是排序鍵</b>——資格仍由上方資格閘與角色判定，own_score 只回答「同樣過關者排第幾」。
-    <b>EV5y × 確定性維持參考子訊號</b>（僅列示、不主導排序）；EV5y 取 <code>live_ev5y_pct</code> 優先、缺則 <code>ev5y_pct</code>。單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
+    <b>結構長抱線（甲線）的核心軌。</b>入軌＝<b>DD 裁決＝進場，且角色含「核心持倉」</b>；<b>最多 {CORE_SLOTS} 席</b>。
+    選席＝<b>角色優先</b>：無條件核心持倉先佔位，其餘依 <b>擁有層分</b>（＝min(成長，30)＋FY1 盈餘殖利率＋持續期加分－倍數風險）補足；超出的落板凳。
+    <b>這份名單與 <a href="/engine/">決策引擎</a> 的席位不同</b>：決策引擎依財報後上修排序，本頁依擁有層分排序。
+    <b>DD 統一裁決不參與排序</b>：資格看上方資格閘與角色，擁有層分只回答「同樣過關者排第幾」。
+    <b>EV5y × 確定性只列示參考</b>，不影響排序；EV5y 優先用即時重算值，缺值才用報告原值。單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
   </div>
   <div class="seg-h seg-in">核心席位（最終 {CORE_SLOTS}）· {len(sleeve)} 檔</div>
   {_core_table(sleeve, "目前無可執行核心進場票。")}
-  <div class="track-note">排序鍵＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC ≥30 +2、PEG >2 −5），本頁獨立排序（與 /engine/ 目前 v5 的上修排序分屬不同鍵）；上修幅度降為燈號。</div>
+  <div class="track-note">排序＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC ≥30 加 2、PEG &gt;2 減 5），與決策引擎的上修排序不同；上修幅度只當燈號。</div>
   {noncore_note}
   <div class="seg-h seg-watch">核心板凳（進場核心·超出席位，等席位開遞補）· {len(bench_core)} 檔</div>
   {_core_table(bench_core, "無溢出板凳名字。")}
@@ -518,14 +518,14 @@ def render_cyclical(cyc: Optional[dict]) -> str:
     if not cyc:
         return """<div class="track-card track-cyc">
   <h3>衛星·循環軌</h3>
-  <div class="empty">cyclical-track.json 尚未產生 — 先跑 <code>scripts/build_cyclical_track.py</code>。</div>
+  <div class="empty">循環軌資料尚未產生。</div>
 </div>"""
     low = cyc.get("low_heat", [])
     hot = cyc.get("hot", [])
     return f"""<div class="track-card track-cyc">
   <h3>衛星·循環軌 <span class="cnt">{cyc.get('qualified_total', 0)} 檔（低熱 {len(low)} / 🔥 {len(hot)}）</span></h3>
   <div class="track-desc warn-inline">
-    <b>研究提名清單，非進場清單</b>——循環底部（FCF／ROIC 未過）× 分析師上修的候選池，交 DD（QC-42 循環鏡頭附錄 B）＋ 板機接手。
+    <b>研究提名清單，非進場清單</b>——循環底部（FCF／ROIC 未過）× 分析師上修的候選池，交給 DD（循環股鏡頭）與板機接手。
     單檔上限 <b>{CYCLICAL_CAP_PCT:.0f}%</b>；🔥 標記者 12M 報酬 &gt; +250%，<b>明文不可追高</b>，等回踩。
     詳見 <a href="/dd-screener/cyclical-track.html">循環軌全頁</a>。
   </div>
@@ -586,7 +586,7 @@ def render_rereview(rows: list) -> str:
     return f"""<div class="track-card track-rereview">
   <h3>⏰ 觀望複審隊列 <span class="cnt">{len(rows)} 檔</span></h3>
   <div class="track-desc">
-    <b>裁決保鮮迴路</b>——觀望/迴避不是終局。命中任一門檻＝裁決回爐複審（跑 stock-analyst 複審，非重寫）：
+    <b>裁決保鮮迴路</b>——觀望/迴避不是終局。命中任一門檻＝裁決回爐複審（複審，不是重寫）：
     ① 錯過成本 ≥ +{REREVIEW_MISS_PCT:.0f}%（裁決日價 → 現價）
     ② FY+1 EPS 單月上修 ≥ +{REREVIEW_EPS_FY1_PCT:.0f}%
     ③ 2Y CAGR 修正 ≥ +{REREVIEW_EPS2Y_PP:.0f}pp（②③＝循環軌同口徑）。
@@ -639,7 +639,7 @@ def render_trigger(sop: Optional[dict], veto_by_reason: dict,
 
     return f"""<section class="block">
   <h2 class="block-h"><span class="step">4</span> 板機現況 <span class="asof">sop-funnel as of {as_of}</span></h2>
-  <div class="block-sub">SOP 漏斗 T+1 執行層的當日燈號。偏熱（態2）否決＝反動能硬閘擋下的訊號累計（ledger append-only 統計）。</div>
+  <div class="block-sub">SOP 漏斗 T+1 執行層的當日燈號。偏熱（態2）否決＝反動能硬閘擋下的訊號累計（紀錄只增不改）。</div>
   <div class="stat-row">
     <div class="stat"><strong>{len(today)}</strong>今日訊號</div>
     <div class="stat"><strong>{len(opens)}</strong>持倉中 open</div>
@@ -665,7 +665,7 @@ def _veto_ctrl_html(vc: Optional[dict]) -> str:
             f'否決後 to-date 中位 <b>{vc["med_todate"]:+.1f}%</b> · '
             f'最深回撤中位 <b>{vc["med_maxdd"]:+.1f}%</b> · '
             f'曾回撤&gt;10% 比例 <b>{vc["pullback10_pct"]:.0f}%</b>'
-            f'　＝閘擋下的名字後來給不給回踩機會，91 天複檢閾值時看這行。</div>')
+            f'　＝看被擋下的名字後來有沒有給回踩機會，複檢這道閘時參考。</div>')
 
 
 def _lookback_row(entry: dict) -> str:
@@ -700,8 +700,8 @@ def render_lookback(lb12: list, lb24: list, queue12: list, queue24: list) -> str
     return f"""<section class="block" id="lookback">
   <h2 class="block-h"><span class="step">5</span> 回看鏡 · 發現力稽核</h2>
   <div class="block-sub">
-    週線報酬 top {LOOKBACK_TOP_N}（<code>close[-1]/close[-53]</code>＝12M、<code>[-105]</code>＝24M），標覆蓋狀態＝「這些大漲的名字我抓到了嗎」的誠實稽核。
-    <b>盲區＋DD&gt;{DD_STALE_DAYS} 天</b>者＝<b>動能盲區研究隊列</b>（表中反白列）。SNDK／AXTI／BE 等 mandate-gap 循環贏家已回補新 DD＝已覆蓋，正是循環鏡頭補上的證據。
+    近 12 個月、24 個月週線報酬前 {LOOKBACK_TOP_N} 名，標出覆蓋狀態，檢查「這些大漲的名字我抓到了嗎」。
+    <b>盲區＋DD&gt;{DD_STALE_DAYS} 天</b>者＝<b>動能盲區研究隊列</b>（表中反白列）。
   </div>
   <div class="queue-note">
     <b>12M 動能盲區隊列</b>（{len(queue12)}）：{q12}<br>
@@ -716,8 +716,8 @@ def render_lookback(lb12: list, lb24: list, queue12: list, queue24: list) -> str
 
 def _prov_badge(prov: str) -> str:
     if prov == "rigorous":
-        return '<span class="prov prov-rig">🟢 §11.5</span>'
-    return '<span class="prov prov-heur">🟡 heur</span>'
+        return '<span class="prov prov-rig">🟢 情境加權</span>'
+    return '<span class="prov prov-heur">🟡 粗估</span>'
 
 
 def _eps_incomplete(s: dict) -> bool:
@@ -726,8 +726,8 @@ def _eps_incomplete(s: dict) -> bool:
 
 
 def _eps_flag(s: dict) -> str:
-    return ('<span class="eps-flag" title="Koyfin 無 FY3 EPS 預估：過閘 eps2y 與 heur EV5y 可能失真；'
-            '§11.5 情境不受影響">⚠ EPS 不全</span>') if _eps_incomplete(s) else ""
+    return ('<span class="eps-flag" title="Koyfin 無 FY3 EPS 預估：過閘的兩年 EPS 成長與粗估 EV5y 可能失真；'
+            '機率加權情境不受影響">⚠ EPS 不全</span>') if _eps_incomplete(s) else ""
 
 
 def _lb_score_row(u: dict, rank: int) -> str:
@@ -763,17 +763,17 @@ def render_leaderboard(univ: list, artifacts: list, n_total: int) -> str:
             f'{escape(u["s"]["ticker"])}（EV5y {_pct(u["raw_ev"], signed=True)}）' for u in artifacts)
         art_note = (f'<div class="queue-note" style="border-color:var(--warn)">'
                     f'<b>⚠ EV5y 異常 · 抽出排行待人工檢視（{len(artifacts)}）</b>：{items}<br>'
-                    f'　來源＝heur 啟發式（無 §11.5 情境）且 EV5y &gt; {HEUR_EV5Y_ARTIFACT_CAP:.0f}%，'
-                    f'數值不可信（多為舊 DD 無 bull/bear 情境）→ 補 v14 DD 才有嚴謹 EV5y。</div>')
+                    f'　來源是粗估（沒有機率加權情境）且 EV5y &gt; {HEUR_EV5Y_ARTIFACT_CAP:.0f}%，'
+                    f'數值不可信 → 補完整 DD 才有嚴謹 EV5y。</div>')
     return f"""<section class="block" id="leaderboard">
   <h2 class="block-h"><span class="step">6</span> 全宇宙潛力榜 · 補 DD 導航</h2>
   <div class="block-sub">
-    把 <b>EV5y × 確定性</b> 套到全宇宙 {n_total} 檔——<b>這是研究補 DD 優先序，非席位排序</b>（本頁核心軌排序主幹＝<b>擁有層分</b>〔own_score，2026-09-02 v2 拍板；與 <a href="/engine/">GRP 決策引擎</a> 目前 v5 的上修排序分屬不同鍵，DD 統一裁決在此只做否決／角色標籤，不是資格本身〕，EV5y 在此僅作補 DD 導航的參考子訊號）。
+    把 <b>EV5y × 確定性</b> 套到全宇宙 {n_total} 檔——<b>這是補 DD 的優先順序，不是席位排序</b>（核心軌看擁有層分；EV5y 在這裡只用來排補 DD 的順序）。
     <b>確定性</b>（moat+quality/20）全宇宙皆有；<b>EV5y</b> 出處分兩級：
-    <span class="prov prov-rig">🟢 §11.5</span> 機率加權情境（嚴謹、有反偏差防線）vs
-    <span class="prov prov-heur">🟡 heur</span> 啟發式估計（僅方向性）。
-    <b>用途</b>：🟡 高分票＝「看起來有潛力但 EV5y 未經 §11.5 嚴謹化」＝<b>下一個該補 v14 DD 的候選</b>（補了就把 🟡 轉 🟢）。
-    <br><span class="eps-flag">⚠ EPS 不全</span>＝Koyfin 無 FY3 EPS 預估（多為小型股無分析師覆蓋），此時<b>過閘 eps2y 與 heur EV5y 雙重不可信</b>——補 DD 用 §11.5 bottom-up 自建情境即可繞過（如 WLDN）。
+    <span class="prov prov-rig">🟢 情境加權</span> 機率加權情境（嚴謹、有反偏差防線）vs
+    <span class="prov prov-heur">🟡 粗估</span> 啟發式估計（只有方向性）。
+    <b>用途</b>：🟡 高分票＝看起來有潛力但 EV5y 還沒經過情境加權＝<b>下一個該補完整 DD 的候選</b>（補了就由 🟡 轉 🟢）。
+    <br><span class="eps-flag">⚠ EPS 不全</span>＝Koyfin 無 FY3 EPS 預估（多為小型股無分析師覆蓋），此時<b>過閘的兩年 EPS 成長與粗估 EV5y 都不可信</b>；補 DD 時由下而上自建情境即可繞過（如 WLDN）。
   </div>
   {art_note}
   <div class="tbl-wrap"><table class="lb-score">
@@ -790,11 +790,11 @@ def render_leaderboard(univ: list, artifacts: list, n_total: int) -> str:
 
 def render_howto() -> str:
     rules = [
-        ("這頁只排序，不下單", "潛力分決定「先研究／先考慮誰」，<b>不是買進訊號</b>。要買，等 sop-funnel 板機亮燈：A1 起漲／B 回踩／<b>C 冷卻完成</b>（偏熱〔態2〕否決後，完成週收盤跌回 +2σ 帶內且守住 52 週線 — 2026-07-04 起，過熱不再是終局）。"),
+        ("這頁只排序，不下單", "潛力分決定「先研究／先考慮誰」，<b>不是買進訊號</b>。要買，等 sop-funnel 板機亮燈：A1 起漲／B 回踩／<b>C 冷卻完成</b>（偏熱〔態2〕否決後，週收盤跌回 +2σ 帶內且守住 52 週線；過熱不是終局）。"),
         ("裁決是唯一權威", "能不能進候選，看 DD 統一裁決＝<b>進場／觀望／迴避</b>。沒裁決（待補 DD）＝還沒資格，不是可買。"),
-        ("席位鎖死：核心 5 ＋ 衛星 5", "核心軌固定 5 席（角色優先），衛星／循環另計。滿了要進，得<b>打贏現有最弱的</b>才換，不加席位。"),
+        ("核心席位鎖死 5 席", "核心軌固定 5 席（角色優先），衛星／循環另計。滿了要進，得<b>打贏現有最弱的</b>才換，不加席位。"),
         ("三軌各有任務，別混", "核心＝耐久複利（上限 10%）；衛星結構＝runway🟢 數倍股（5%）；衛星循環＝底部×上修（3%，先等回踩）。"),
-        ("潛力榜是補 DD 導航，不是買入排行", "🟢 §11.5 才可信，<b>🟡 heur 只有方向性</b>。標「→ 補 DD」＝下一個該研究的名字，不是叫你買。"),
+        ("潛力榜是補 DD 導航，不是買入排行", "🟢 情境加權才可信，<b>🟡 粗估只有方向性</b>。標「→ 補 DD」＝下一個該研究的名字，不是叫你買。"),
         ("由左到右讀", "發現 → 資格閘 → 三軌裁決 → 板機 → 回看鏡 → 潛力榜。每一站只回答一個問題，別跳著看。"),
         ("這頁不含實際持倉", "只呈現研究層。買了什麼、多少倉位，不在站上。"),
         ("觀望不是終局", "觀望/迴避後錯過成本 ≥+30% 或 EPS 上修過門檻 → 進「⏰ 複審隊列」，裁決<b>必須回爐</b>。複審≠追高，維持原判也合法；不複審才是缺陷。"),
@@ -814,7 +814,7 @@ def render_privacy() -> str:
   <h2 class="block-h"><span class="step">7</span> 隱私線</h2>
   <div class="privacy-body">
     本頁只呈現<b>研究層</b>：宇宙、資格閘、三軌候選、板機燈號、發現力稽核。
-    <b>實際持倉與權重不上站</b>（與 <code>/pm/</code> 封存同一原則）。射擊名單≠買入指令——每檔進場仍須
+    <b>實際持倉與權重不上站</b>。射擊名單≠買入指令——每檔進場仍須
     (a) 站上 DD 統一裁決＝進場、(b) sop-funnel 板機亮燈、(c) 部位在個股部上限內
     （核心 ≤{CORE_CAP_PCT:.0f}%／衛星 ≤{SATELLITE_CAP_PCT:.0f}%／循環 ≤{CYCLICAL_CAP_PCT:.0f}%，分母＝個股部淨值）。
   </div>
@@ -1109,10 +1109,10 @@ body{{background:transparent}}</style>
     <div class="hero-h1">個股部漏斗總覽 · Pipeline</div>
     <div class="hero-sub">
       個股部（總資產 25%，5～10 檔最有上漲潛力的組合）整條投資流程的活數字：
-      <b>發現 → 資格閘 → 三軌射擊名單 → 板機 → 監控 → 回看鏡</b>。所有數字來自既有 JSON，每週隨基本面刷新自動更新。
+      <b>發現 → 資格閘 → 三軌射擊名單 → 板機 → 監控 → 回看鏡</b>。數字每週隨基本面資料自動更新。
       本頁只呈現<b>研究層</b>，實際持倉與權重不上站。
-      <b>分工（兩條線＋一個板機＋一個對照）</b>：本頁是<b>方式甲（結構長抱線）</b>與<b>方式乙（循環時機線）</b>共用的<b>流程與板機</b>視圖——核心／衛星結構軌＝甲線，衛星循環軌＝乙線，sop-funnel＝兩線共用板機。
-      <b>本頁核心軌排序主幹＝擁有層分</b>（own_score，2026-09-02 v2 拍板；與 <a href="/engine/">GRP 決策引擎</a> 目前的 v5 上修排序分屬不同鍵，非同一份榜——EV5y×確定性維持參考子訊號，DD 統一裁決只做否決／角色標籤非資格本身），對外成品榜見 <a href="/picks/">精選清單</a>。
+      <b>分工</b>：本頁是<b>結構長抱線（甲線：核心軌、衛星結構軌）</b>與<b>循環時機線（乙線：衛星循環軌）</b>共用的<b>流程與板機</b>頁，兩條線共用 sop-funnel 板機。
+      <b>核心軌依擁有層分排序</b>，與 <a href="/engine/">決策引擎</a> 的上修排序不是同一份名單；EV5y×確定性只作參考，DD 統一裁決只做否決與角色標籤。對外成品榜見 <a href="/picks/">精選清單</a>。
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><strong>{_fmt_stamp(run_ts)}</strong>最後更新（台北）</div>
@@ -1137,11 +1137,9 @@ body{{background:transparent}}</style>
 {privacy_html}
 
 <div class="meta-note">
-  <p><b>數據來源</b>：<code>latest.json</code>（宇宙／資格閘／核心軌／結構軌）·
-  <code>cyclical-track.json</code>（循環軌）· <code>sop-funnel/latest.json</code>＋<code>ledger.json</code>（板機／否決）·
-  <code>pre_id_scan.json</code>（形狀盲區）· <code>data/weekly_cache/</code>（回看鏡週線報酬）。</p>
-  <p style="margin-top:8px">資格閘為<b>自算口徑</b>（fail−de 為空 ∧ moat∈{{S,A,B}} ∧ trend≠↓），不依賴 latest.json 的 pass_count。
-  射擊名單≠買入指令，見「隱私線」三重前提。</p>
+  <p><b>數據來源</b>：DD 篩選器（宇宙、資格閘、核心軌、結構軌）· 循環軌 · SOP 漏斗（板機、否決）·
+  形狀掃描（盲區）· 週線價格（回看鏡報酬）。</p>
+  <p style="margin-top:8px">射擊名單≠買入指令，見「隱私線」三重前提。</p>
 </div>
 </div>
 

@@ -165,22 +165,20 @@ def render(payload: dict) -> str:
 <th>中位報酬</th><th>虧損比例</th></tr></thead><tbody>{''.join(sv_trs)}</tbody></table></div>"""
                if sv_trs else "")
 
-    gates = "".join(f'<li><b>{g["date"]}</b>　{escape(g["label"])}</li>' for g in GATE_CHANGES)
     body = f"""<div class="hero">
 <h1>形狀記分板 · 結算層</h1>
 <div class="hero-sub">每筆 DD 裁決 × 週線自動結算（裁決日 → 最新價），按「裁決當下的價格形狀」分桶。
-回答一個問題：<b>哪種形狀我判得準、哪種形狀我系統性錯過</b>。判斷函數的季度校準以此為據。</div>
+回答一個問題：<b>哪種形狀我判得準、哪種形狀我系統性錯過</b>。每季校準判斷規則時以此為據。</div>
 <div class="asof">價格 as of {payload['as_of']} ｜ 結算 {payload['n_settled']} 筆
 （聚合取結算齡 ≥{MIN_AGE_DAYS} 天者 {payload['n_aged']} 筆）｜ 各筆視窗不等長：方向可信、量級慎讀</div>
 </div>
 {table("依形狀", "裁決當下的價格結構分桶（無 look-ahead：只用裁決日前 104 週線）。",
        by_shape, list(SHAPE_LABELS.values()))}
-{table("依裁決", "觀望/迴避的正報酬＝錯過成本——與套牢同權重對答案。裁決欄 2026-06（v13）起才有。",
+{table("依裁決", "觀望／迴避之後的上漲＝錯過成本，與進場後套牢同樣計分。裁決欄從 2026-06 起才有資料。",
        by_verdict, ["進場", "觀望", "迴避", "（無裁決）"])}
 {sv_html}
-<div class="note"><b>Gate 變更分段線</b>（append-only，歷史不重算）：<ul style="margin:4px 0 0 18px">{gates}</ul></div>
-<div class="note warn">誠實邊界：決策史自 2026-03 起（~4 個月）、單一多頭 regime、樣本仍薄——
-本頁的用途是「讓校準有地方看」，不是「已可下結論」。第一批裁決滿 91 天約在 2026-09 底。</div>"""
+<div class="note warn">誠實邊界：決策紀錄從 2026-03 開始，只經歷單一多頭行情，樣本仍薄。
+本頁讓校準有地方看，還不能拿來下結論。</div>"""
     return page_embed_shell("形狀記分板 · 席位排序", body,
                             "DD 裁決 × 價格形狀的自動結算記分板 — 判斷函數的校準依據")
 

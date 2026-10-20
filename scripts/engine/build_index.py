@@ -56,42 +56,41 @@ def main() -> int:
     n_alerts = sum(1 for d in arena.get("duels", []) if d.get("alert"))
     cap_b = f"{MKTCAP_MIN / 1e9:.0f}"
 
-    funnel = f"""① 資格    品質派資格閘——雷達每週掃 S&P 500＋NDX＋中型股（{scored_n} 檔可算）
-             品質閘 ROIC ≥15% ∧ 自由現金流 >0（v5.5，2026-10-18 起；原為 FCF margin ≥10%，ROIC ≥25% 時 ≥0）
-             × 三年成長 FY1→FY3 EPS CAGR ≥15%（統一門檻，不對耐久者放寬）× 站上 52 週線 × 市值 ≥ ${cap_b} 億美元
-             財報後上修 ≤−5%（缺財報錨定退回三個月）／體質拒絕／衰退 ⛔／DD 迴避／
-             融券占流通股比 >10% 皆整體排除——融券高不進池，沒有衛星軌可以收留
-             耐久一致性（QGM 五年穩定度 ≥75%，或 Koyfin 五年∧三年∧現值三者皆 ≥15%）只當顯示旗標，不擋資格
-             母體＝DD 池 ∪ QGM 品質池（US／TW）∪ 快審卡 → 主榜（現 {board_n} 檔，按資格判定）
+    funnel = f"""① 資格    雷達每週掃 S&P 500＋NDX＋中型股（{scored_n} 檔可算）
+             品質閘 ROIC ≥15% ∧ 自由現金流 >0
+             × 三年成長 FY1→FY3 EPS CAGR ≥15% × 站上 52 週線 × 市值 ≥ ${cap_b} 億美元
+             以下任一即排除：財報後上修 ≤−5%（缺財報錨定看近三個月）／體質拒絕／衰退 ⛔／
+             DD 迴避／融券占流通股比 >10%
+             耐久（QGM 五年穩定度 ≥75%，或 Koyfin 五年∧三年∧現值 ROIC 皆 ≥15%）只當顯示旗標
+             母體＝DD 池 ∪ QGM 品質池（US／TW）∪ 快審卡 → 主榜（現 {board_n} 檔）
 
-② 排序    上修單一變數——資格全過名字中，財報後上修（缺值退回三個月）≥+5% 者進「池」（現 {pool_n} 檔）
-             池內依上修降冪排序，同值 tie-break implied_growth_pct、再 tie-break 盈餘殖利率
-             own_score（v4 五百分位排序）保留一輪只做逐檔「v4 對照」tooltip，不參與本排序
-             資格全過但上修未達 +5% 的名字列收合區供人工複審，不進池
+② 排序    資格全過、財報後上修（缺值看近三個月）≥+5% 者進「池」（現 {pool_n} 檔）
+             池內依上修由高到低排；同值比隱含成長率，再比盈餘殖利率
+             上修未達 +5% 的名字列在收合區供人工複審，不進池
 
 ③ 席位    核心＝池內時機燈亮著（🟢／🟠／🟡＝距還原權息歷史新高 ≥−10% 且站上 200 日線）的名字，
-             依上修排序取前 5；亮燈不足就空席，不拿紅燈湊數；其餘池成員＝等待池（無固定席次、無 %倉上限）
-             週頻重選：每週六台北 11:00 依週五收盤重算一次（同時寄「每週選股結果」email）；
-             平日只刷新燈號與倉位，不換人；燈轉紅即下席
-             DD 降為選配層：不再是必經審查，只做迴避否決＋角色標籤（≤180 天內有效，僅供顯示）
+             依上修取前 5；亮燈不足就空席，不拿紅燈湊數；其餘池成員＝等待池（無固定席次）
+             每週六台北 11:00 依週五收盤重算（同時寄「每週選股結果」email）；
+             平日只刷新燈號與倉位，不換人；週中轉紅的席位等週六重算才下席
+             DD 是選配：只做迴避否決＋角色標籤（180 天內有效，僅供顯示）
 
 ④ 板機    距歷史新高（時機燈，每日重算）——池 {pool_n} 檔中今天可買 {buyable_n} 檔
-             🟢 可進＝距還原權息全歷史新高 ≥−3% 且站上 200 日線；🟡 接近＝−10%~−3% 且站上 200 日線，正常倉（v5.3）
-             🔴 等板機＝距新高 <−10% 或跌破 200 日線；🟠 過熱＝動能 >150% 但仍在綠燈距離內，半倉
-             倉位（v5.3，2026-10-18 起）：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0
+             🟢 可進＝距還原權息全歷史新高 ≥−3% 且站上 200 日線；🟡 接近＝−10%~−3% 且站上 200 日線
+             🔴 等板機＝距新高 <−10% 或跌破 200 日線；🟠 過熱＝動能 >150% 但仍在綠燈距離內
+             倉位：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0
              核心席不代表現在該買——時機燈才回答「現在能不能買」
 
 ⑤ 守門    一席一卡（現 {n_cards} 張／{n_claims} 條宣稱）
-             GRP 守門週更自動結算（成長跌破／轉下修／破線 → 卡片自己亮 ⛔）
+             三閘守門每週自動結算（成長跌破／轉下修／破線 → 卡片自己亮 ⛔）
              ＋ DD 深層宣稱帶期限（到期亮 ⏰ 人工結算）
-             觀望也被盯：錯過成本／上修觸發 → 強制複審（複審對 DD 扳機，不因上修就追）"""
+             觀望也被盯：錯過成本或上修觸發 → 強制複審（複審 DD，不因上修就追）"""
 
     body = f"""<div class="hero">
 <h1>決策引擎</h1>
-<div class="hero-sub" style="font-size:15px"><b>一句話：品質派資格閘（品質×三年成長）決定進不進池——
-上修排序（財報後錨定）決定池內排第幾；核心席由池內時機燈亮著的名字依上修取前 5，每週六重算一次；
-DD 降為選配層只做 veto 與角色標籤。</b></div>
-<div class="asof">研究層頁面，不含實際持倉 ｜ 日更（核心每週六換人）｜ 分工：本引擎＝<b>方式甲（結構長抱線）的排序主幹</b>——品質派資格×上修排序×歷史新高板機引擎（GRP v5）與席位（機器擂台）；流程與板機見 <a href="/dd-screener/pipeline.html">Pipeline</a>，對外成品榜見 <a href="/picks/">精選清單</a> ｜ 已結算 {sb.get('n_settled', '—')} 筆歷史裁決</div>
+<div class="hero-sub" style="font-size:15px"><b>一句話：品質資格（品質 × 三年成長）決定進不進池，
+財報後上修決定池內排第幾；核心席是池內時機燈亮著的前 5 名，每週六重算一次。
+DD 只做否決與角色標籤。</b></div>
+<div class="asof">研究層頁面，不含實際持倉 ｜ 每日更新，核心席每週六重算 ｜ 流程與板機見 <a href="/dd-screener/pipeline.html">流程板機</a>，小市值版見 <a href="/picks/">精選榜</a> ｜ 已結算 {sb.get('n_settled', '—')} 筆歷史裁決</div>
 </div>
 
 <div class="block">
@@ -104,10 +103,10 @@ DD 降為選配層只做 veto 與角色標籤。</b></div>
 <table>
 <thead><tr><th class="left">問題</th><th class="left">權威</th><th class="left">在哪看</th></tr></thead>
 <tbody>
-<tr><td class="left">先看誰</td><td class="left">選股看板（board.txt，市場活數據，日更）</td><td class="left"><a href="/engine/board.txt">看板</a>・<a href="/engine/radar.html">雷達</a></td></tr>
-<tr><td class="left">能不能買</td><td class="left">資格閘＋DD veto（懂生意的否決權，DD 只剔除不排序）</td><td class="left"><a href="/engine/cards.html">決策卡</a></td></tr>
-<tr><td class="left">核心還是等待池</td><td class="left">池內時機燈亮著的名字依上修排序取前 5 為核心，其餘為等待池（無 DD 角色路由、無護城河字母路由）</td><td class="left"><a href="/engine/arena.html">擂台</a></td></tr>
-<tr><td class="left">何時買</td><td class="left">時機燈（距歷史新高＋200 日線）＋ regime 撥盤</td><td class="left"><a href="/dd-screener/sop-funnel.html">SOP Funnel</a>・<a href="/engine/arena.html">擂台</a></td></tr>
+<tr><td class="left">先看誰</td><td class="left">選股看板（市場活數據，日更）</td><td class="left"><a href="/engine/board.txt">看板</a>・<a href="/engine/radar.html">雷達</a></td></tr>
+<tr><td class="left">能不能買</td><td class="left">資格閘＋DD 否決（DD 只剔除、不排序）</td><td class="left"><a href="/engine/cards.html">決策卡</a></td></tr>
+<tr><td class="left">核心還是等待池</td><td class="left">池內時機燈亮著的名字依上修取前 5 為核心，其餘為等待池</td><td class="left"><a href="/engine/arena.html">擂台</a></td></tr>
+<tr><td class="left">何時買</td><td class="left">時機燈（距歷史新高＋200 日線）＋大盤撥盤</td><td class="left"><a href="/dd-screener/sop-funnel.html">SOP Funnel</a>・<a href="/engine/arena.html">擂台</a></td></tr>
 <tr><td class="left">何時複審／出場</td><td class="left">決策卡宣稱（帶數字帶期限）</td><td class="left"><a href="/engine/cards.html">決策卡</a></td></tr>
 <tr><td class="left">規則能不能改</td><td class="left">記分板（91 天結算，季檢才調參）</td><td class="left"><a href="/engine/scoreboard.html">記分板</a></td></tr>
 </tbody></table>
@@ -118,11 +117,11 @@ DD 降為選配層只做 veto 與角色標籤。</b></div>
 <div class="stat-row">
 <div class="stat"><strong>{len(core)}/{core_slots}</strong><span>核心席</span></div>
 <div class="stat"><strong>{len(sat)} 檔</strong><span>等待池</span></div>
-<div class="stat"><strong>{escape(regime.get('label') or '—')}</strong><span>Regime 撥盤</span></div>
+<div class="stat"><strong>{escape(regime.get('label') or '—')}</strong><span>大盤撥盤</span></div>
 <div class="stat"><strong>{n_alerts}</strong><span>擂台警報</span></div>
 </div>
 <div class="block-sub">核心：{escape('、'.join(core) or '—')}　｜　等待池：{escape('、'.join(sat) or '—')}
-（衛星軌已取消——池扣掉核心即等待池，無固定席次、無 %倉上限；核心空席是刻意的——池內沒有名字亮燈時就不拿紅燈湊數，空席就是倉位管理）</div>
+（等待池＝池扣掉核心，無固定席次。核心空席是刻意的：池內沒有名字亮燈時，不拿紅燈湊數。）</div>
 </div>
 
 <div class="block">
@@ -130,21 +129,20 @@ DD 降為選配層只做 veto 與角色標籤。</b></div>
 <table>
 <thead><tr><th class="left">驅動力</th><th class="left">頻率</th><th class="left">影響</th></tr></thead>
 <tbody>
-<tr><td class="left"><b>財報後上修刷新</b></td><td class="left">每月（Koyfin snapshot，以個股自己最近一次財報日錨定）＋每日（時機燈重算）</td>
-<td class="left">上修現在是<b>唯一排序鍵</b>（缺財報錨定退回三個月日曆窗）；≤−5% 否決資格（雙源皆缺才退回 FY+1
-單月 ≤−10% fallback）。核心席每週六依週五收盤重算一次，平日不換人，只刷新燈號與倉位</td></tr>
+<tr><td class="left"><b>財報後上修刷新</b></td><td class="left">每月（Koyfin 快照，以個股最近一次財報日為基準）＋每日（時機燈重算）</td>
+<td class="left">上修是<b>唯一排序依據</b>（缺財報錨定看近三個月）；≤−5% 失去資格（兩個資料源都缺時看 FY+1
+單月 ≤−10%）。核心席每週六依週五收盤重算，平日不換人，只刷新燈號與倉位</td></tr>
 <tr><td class="left"><b>財報季條件翻正</b></td><td class="left">季度</td>
 <td class="left">觀望票的翻正條件與決策卡宣稱到期潮集中在財報季——池組成變動的主窗口</td></tr>
 <tr><td class="left"><b>新 DD／快審補齊</b></td><td class="left">持續</td>
 <td class="left">池內仍有大量無裁決名字＋主榜大型候選待審——每補一檔＝多一個挑戰者</td></tr>
 <tr><td class="left"><b>距歷史新高（時機燈）</b></td><td class="left">每日</td>
-<td class="left">不影響資格或排序，但決定誰有資格坐核心席（綠／橘／黃燈）；燈轉紅即下席；破 52 週線＝資格閘失守</td></tr>
+<td class="left">不影響資格或排序，但決定誰有資格坐核心席（綠／橘／黃燈）；轉紅的席位在週六重算時下席；破 52 週線＝資格閘失守</td></tr>
 </tbody></table>
-<div class="note"><b>週頻亮燈選席（v5.2 起取代月頻輪動）</b>：每週六台北 11:00 依週五收盤重算一次核心席——
-池內時機燈亮著（綠／橘／黃）的名字依上修取前 5，亮燈不足就空席；平日只刷新燈號與倉位，燈轉紅即下席。
-等待池不是持久化名單、沒有「衛星快時鐘」這種軌別時鐘概念——池成員每次重算都是當下資格＋排序的結果。
-每次核心上席/下席都記入<a href="/engine/arena.html">席位變動帳本</a>（append-only），
-季檢時用帳本校準換人節奏與空席比例，不憑感覺預設。</div>
+<div class="note"><b>每週亮燈選席</b>：每週六台北 11:00 依週五收盤重算核心席，池內時機燈亮著（綠／橘／黃）的名字依上修取前 5，
+不足就空席；平日只刷新燈號與倉位，週中轉紅的席位等週六重算才下席。等待池每次重算都是當下資格與排序的結果。
+每次核心上席、下席都記入<a href="/engine/arena.html">席位變動帳本</a>（只增不改），
+季檢時用帳本校準換人節奏與空席比例。</div>
 </div>
 
 <div class="block">
@@ -164,45 +162,23 @@ DD 降為選配層只做 veto 與角色標籤。</b></div>
 <p>結構訊號批量 → 候選逐檔 EPS 修正確認。</p>
 <a href="/engine/radar.html">→ 雷達</a></div>
 <div class="layer"><div class="lno">L1</div><h3>資格閘＋上修排序</h3>
-<p>品質閘＋三年成長＝資格，財報後上修排序決定池內名次；核心席由池內時機燈亮著的名字依上修取前 5；own_score（v4）保留一輪僅供逐檔對照。</p></div>
+<p>品質閘＋三年成長＝資格，財報後上修決定池內名次；核心席由池內時機燈亮著的名字依上修取前 5。</p></div>
 <div class="layer"><div class="lno">L2</div><h3>決策卡</h3>
-<p>一席一卡：GRP 守門自動結算＋DD 深層宣稱帶期限。</p>
+<p>一席一卡：三閘守門自動結算＋DD 深層宣稱帶期限。</p>
 <a href="/engine/cards.html">→ 決策卡</a></div>
 <div class="layer"><div class="lno">L3</div><h3>席位擂台</h3>
-<p>席位 vs 同軌最強挑戰者，警報進每月人工擂台；席位變動帳本 append-only。</p>
+<p>席位對上同軌別最強挑戰者，警報進每月人工擂台；席位變動帳本只增不改。</p>
 <a href="/engine/arena.html">→ 擂台</a></div>
 <div class="layer"><div class="lno">L4</div><h3>結算所</h3>
-<p>每筆裁決 × 週線自動結算、按形狀分桶——判斷函數的季度校準依據。</p>
+<p>每筆裁決 × 週線自動結算、按形狀分桶——每季校準判斷規則的依據。</p>
 <a href="/engine/scoreboard.html">→ 記分板</a></div>
 </div>
 <div class="note" style="margin-top:12px">
-<b>紀律</b>：資格閘門檻數字（品質閘／成長閘／市值門檻）PREREG 鎖定，季檢憑記分板數據才可調，
-2026-09-02 v2 起已歷經 v3／v4／v4.1／v5 多輪修訂（見 <a href="/engine/scoreboard.html">記分板</a>與
-knowledge/rule_ledger.md「席位引擎」各版列，每輪皆附證偽條件）；記分板 append-only、gate 變更畫分段線、
-歷史不重算；樣本未熟（n&lt;20 或齡&lt;91 天）標「觀察期」不給結論。
-<b>與 <a href="/dd-screener/pipeline.html">dd-screener Pipeline</a> 的關係</b>：同屬<b>方式甲（結構長抱線）</b>，
-不是兩套並存的競爭排序——Pipeline 核心軌<b>已對齊本引擎的上修排序主幹</b>（DD 降為選配 veto／角色標籤）。
-本區＝甲線排序主幹的機器擂台視圖，Pipeline＝同一條甲線的流程與板機視圖，兩者互指不重複。
+<b>紀律</b>：資格閘門檻（品質閘／成長閘／市值門檻）事前鎖定，季檢憑<a href="/engine/scoreboard.html">記分板</a>數據才可調，
+每次調整都附證偽條件；記分板只增不改，門檻變更不回頭重算歷史；樣本未熟（n&lt;20 或未滿 91 天）標「觀察期」，不給結論。
+<b>與 <a href="/dd-screener/pipeline.html">流程板機</a> 的關係</b>：兩頁都屬結構長抱線。本頁是排序與席位擂台，
+流程板機是同一條線的流程與板機；流程板機的核心軌另用擁有層分排序，與本頁的上修排序不是同一份名單。
 </div>
-</div>
-
-<div class="block">
-<h2>路線圖</h2>
-<table>
-<thead><tr><th class="left">Phase</th><th class="left">內容</th><th class="left">狀態</th></tr></thead>
-<tbody>
-<tr><td class="left">1-2</td><td class="left">雷達＋GRP 主榜＋擂台＋決策卡＋記分板＋快審層＋市值門檻＋系統測試（32 斷言）</td><td class="left">✅ 2026-07-04 上線</td></tr>
-<tr><td class="left">3</td><td class="left">形狀檢查表與 GRP 閾值首次季度校準（記分板滿 91 天後）</td><td class="left">2026-10—</td></tr>
-<tr><td class="left">v2</td><td class="left">擁有層×時機層分離：own_score 排序、品質閘（含 capex 週期豁免）、R 降為燈號、DD 只做 veto／角色標籤、遲滯 2/4</td><td class="left">✅ 2026-09-02</td></tr>
-<tr><td class="left">B4②</td><td class="left">遲滯降權版：DD 180 天內裁決＝觀望的現任席，下席門檻 4→2 次不過閘</td><td class="left">✅ 2026-09-04</td></tr>
-<tr><td class="left">v2 校準</td><td class="left">v2 首輪校準：甲軌前 15 對 p_clim（DD 池 365 天無條件基準 0.582）</td><td class="left">2026-12</td></tr>
-<tr><td class="left">v3</td><td class="left">席位資格改綁三年期 Koyfin 成長（單年 fallback 不再入席）；DD 不再是入席前提，核心另需耐久（五年 ROIC 平均 ≥15% 或 QGM 五年穩定度 ≥75%）取代 DD 角色／護城河字母路由</td><td class="left">✅ 2026-09-09</td></tr>
-<tr><td class="left">v4</td><td class="left">月頻輪動取代週遲滯（僅六項硬否決可換人）；上修否決改看三月（財報後另見下）；own_score 改五因子百分位排序（own_score_v4）；過熱／頂點拆分，過熱只排除核心候選；無產業集中度上限；時機燈（位置＋RS＋200 日線＋階段收斂成單一燈號）</td><td class="left">✅ 2026-09-17</td></tr>
-<tr><td class="left">v4.1</td><td class="left">融券占流通股比 &gt;10% 只能衛星；基期效應（FY1→FY2 低基期跳增改用 FY2→FY3 成長）；循環股守門（毛利跨距／capex 佔比 × PEG 過低）</td><td class="left">✅ 2026-09-17</td></tr>
-<tr><td class="left">v5</td><td class="left">品質派資格 × 上修排序 × 歷史新高板機：own_score_v4 退為對照 tooltip，排序改上修單一變數；耐久與融券高升級為整體資格閘（沒有衛星軌可退）；衛星軌取消，池扣掉核心即等待池；時機燈全面改讀距歷史新高（還原權息全歷史）＋200 日線</td><td class="left">✅ 2026-09-17</td></tr>
-<tr><td class="left">v5.2</td><td class="left">成長閘統一 15%（取消耐久者放寬）；耐久降為顯示旗標，不擋資格；核心席改為池內時機燈亮著的名字依上修取前 5，亮燈不足就空席，每週六依週五收盤重算，取代月頻輪動</td><td class="left">✅ 2026-10-09</td></tr>
-<tr><td class="left">v5.3</td><td class="left">美股看板黃燈（距還原歷史新高 −10%~−3% 且站上 200 日線）倉位由 0.5 改 1.0，倉位對應綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0；依據 v7-backtest SeatSizing_Results.md 與 SeatSizing_Results_v2.md（2010～2026 品質大型股代理，缺上修排序）。登記判準形式上未過，是持有人依兩次回測決定改，非登記判準通過。同日晚間台股席位與十倍股頁也改為黃燈滿倉，依據 v7-backtest SeatSizing_Results_TW_Small.md；兩個母體的登記分類都是「無法分辨」，同樣是持有人依回測知情決定改，非登記判準通過</td><td class="left">✅ 2026-10-18</td></tr>
-</tbody></table>
 </div>"""
     # 2026-07-10 選股主控台整併：engine 總覽改輸出 nav-less 片段，供 /cockpit/#seats
     # 分頁 iframe 嵌入；/engine/index.html 已改為 redirect stub（見 site_nav SKIP_FILES）。

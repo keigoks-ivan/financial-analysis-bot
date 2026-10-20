@@ -248,8 +248,8 @@ def render_card(c: dict, *, open_default: bool) -> str:
 <td class="left">{P_LABEL_HTML.get(g["p_label"])}{dist}</td>
 <td>站上 52 週線</td><td>{cell(p_ok)}</td><td class="left">破線 → 複審</td></tr>
 </tbody></table>
-<div class="note" style="font-size:11.5px;margin:-4px 0 8px">v5 起另有耐久一致性／融券占流通股比 &gt;10%／DD 迴避／體質拒絕／衰退 ⛔ 四項整體資格排除，
-未逐列展開——任一觸發都會反映在上方「⛔ 三閘落席」總警示。</div>"""
+<div class="note" style="font-size:11.5px;margin:-4px 0 8px">另有融券占流通股比 &gt;10%／DD 迴避／體質拒絕／衰退 ⛔ 四項會直接排除資格，
+這裡不逐列展開；任一觸發都會反映在上方「⛔ 三閘落席」警示。</div>"""
 
     alert = ""
     if grp_fail:
@@ -263,7 +263,7 @@ def render_card(c: dict, *, open_default: bool) -> str:
         c.get("_seat"), '<span class="tag tag-blind">板凳</span>')
     is_light = c.get("qual_tier") == "light"
     tier_badge = '　<span class="tag tag-pool">🪶 快審（等待池限定）</span>' if is_light else ""
-    src_line = (f'快審卡 {escape(c.get("card_date") or "")}（無完整 DD——核心席需升級 v14 DD）'
+    src_line = (f'快審卡 {escape(c.get("card_date") or "")}（無完整 DD）'
                 if is_light else
                 f'DD {escape(c.get("dd_date") or "")}（<a href="{escape(c.get("source_dd") or "#")}#decision">原報告</a>）')
     light_html = ""
@@ -348,16 +348,15 @@ def main() -> int:
 
     body = f"""<div class="hero">
 <h1>決策卡 · 判斷層</h1>
-<div class="hero-sub">一席一卡，兩層守門：上層三閘評分（GRP，成長閘／上修閘／位置閘，每日自動結算，
-破閘自動亮 ⛔）＋下層深層證偽（基本面宣稱，財報期人工結算）。卡片分兩級：完整 DD 抽取卡
-（核心席）vs 🪶 快審卡（等待池限定——v5 衛星軌已取消，無固定倉位上限）。下表 30 秒掃全局，點 ticker 或卡片展開細節。</div>
+<div class="hero-sub">一席一卡，兩層守門：上層是三閘守門（成長閘／上修閘／位置閘），自動結算，破閘亮 ⛔；
+下層是 DD 的基本面證偽宣稱，財報期人工結算。卡片分兩種：從完整 DD 抽取的卡，以及只用於等待池的 🪶 快審卡。
+下表 30 秒掃全局，點代號或卡片展開細節。</div>
 <div class="asof">{len(cards)} 張卡 ｜ {n_claims} 條宣稱（❌ 觸發 {n_breach} · ⏰ 到期 {n_due}）｜ 週更結算</div>
 </div>
 {render_overview(cards)}
 {sections}
-<div class="note">卡片維護協議：新席位入場 → 抽卡；DD 複審 → 重抽；宣稱觸發（❌）→ 按 action_on_fail
-處理並在卡片 JSON 回填 status；到期（⏰）→ 人工結算 pass/breach。卡片真相在
-<code>docs/engine/cards/data/*.json</code>，本頁只渲染。</div>
+<div class="note">卡片怎麼維護：新名字上席就建卡；DD 複審後重抽；宣稱觸發（❌）就照卡上的觸發動作處理；
+到期（⏰）由人工結算成立或不成立。</div>
 <script>
 (function(){{
   function openTarget(){{

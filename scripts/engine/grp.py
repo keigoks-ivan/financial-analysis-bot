@@ -643,12 +643,12 @@ def grp_score(s: dict) -> dict:
     if g is None:
         g = _f(s.get("eps2y_live")) or _f(s.get("eps2y"))
         if g is not None:
-            why.append("成長閘用 2 年成長率代替（缺 FY3 預估，v4 不採計為資格）")
+            why.append("成長閘用 2 年成長率代替（缺 FY3 預估，不算進資格）")
     g_min = G_MIN_CAGR_DURABLE if s.get("durable_5y") else G_MIN_CAGR
     g_pass = bool(g_three_year) and g is not None and g >= g_min
     if not g_pass:
         if not g_three_year:
-            why.append(f"成長閘未過（v4 需三年期 Koyfin CAGR，現值 {g if g is not None else '缺'}）")
+            why.append(f"成長閘未過（需三年期 Koyfin CAGR，現值 {g if g is not None else '缺'}）")
         else:
             why.append(f"成長閘未過（CAGR {g if g is not None else '缺'} < {g_min:.0f}%）")
 
