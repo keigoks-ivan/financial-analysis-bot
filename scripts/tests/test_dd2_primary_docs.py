@@ -443,3 +443,10 @@ def test_live_collect_tw_and_us(tmp_path):
     assert "major_events" in tw_axes and "customer_concentration_credit" in tw_axes
     us_axes = primary_docs.collect("TXN", dt.date.today().strftime("%Y%m%d"), tmp_path / "us")
     assert "customer_concentration_credit" in us_axes and "major_events" in us_axes
+
+
+def test_ar_anchor_matches_two_year_arabic_ten_percent_heading():
+    # 6223.TWO 114 年報：「最近兩年度佔銷貨總額 10%之客戶名單」（「兩」＋阿拉伯數字 10%）
+    line = "  (2) 最近兩年度佔銷貨總額 10%之客戶名單"
+    assert any(rx.search(line) for rx in tw.AR_ANCHORS)
+    assert not any(rx.search("本公司 113 年度及 114 年度無佔進貨淨額 10%以上之廠商。") for rx in tw.AR_ANCHORS)

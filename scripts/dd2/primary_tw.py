@@ -356,6 +356,8 @@ AR_ANCHORS = [
     re.compile(r"[佔占]營業收入(?:淨額)?百分之十以上之客戶"),
     re.compile(r"曾[佔占]進[（(]銷[）)]貨總額百分之十以上"),
     re.compile(r"主要進銷貨客戶"),
+    # 6223.TWO 年報寫「最近兩年度佔銷貨總額 10%之客戶名單」：「兩」與阿拉伯數字 10%
+    re.compile(r"最近[二兩]年度[^\n]{0,6}[佔占]銷貨(?:總額|淨額)\s*10\s*[%％]"),
 ]
 FS_ANCHORS = [re.compile(r"重要客戶資訊"), re.compile(r"主要客戶資訊"), re.compile(r"對單一客戶之銷售"),
               re.compile(r"主要客戶")]
