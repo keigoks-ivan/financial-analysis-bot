@@ -1,0 +1,316 @@
+你是 DD 管線 v20 的判斷層閘（gate），標的 2317.TW（20261020）。你未參與寫判斷，這是一次跨模型冷讀，單回合、無工具：bundle 全文已附在本訊息「===== BUNDLE =====」分隔線之後，讀完就直接作答，沒有第二輪，也不能查證 bundle 以外的任何資料。
+
+## 任務
+
+依 bundle 內 `gate_card.md` 的 ①–⑧ checklist 逐條複核 `judgment.json`，只揪判斷級的錯，不判斷寫得好不好。判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級問題（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡；無實質問題給 🟢。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：`gate_card.md`（①–⑧ checklist 全文與 🔴／🟡／🟢 口徑）、被引用事實與負向條目子集（核對 `fact_refs` 用）、`scenario_meta.json`（情境樹權威值，對帳 `decision_inputs.irr_base_pct`／`ev5y_pct` 用）、`judgment.json` 全文（被審對象，原樣）。
+
+## 禁
+
+- 禁 WebSearch／WebFetch、禁開 bundle 以外任何檔（包含 `docs/dd/`、`.dd_build/` 下的其他產物）。
+- 禁跑任何腳本（`validate_judgment.py`／`dd_decision.py`／`dd_scenario.py` 已在判斷端跑過，機械層不歸你）。
+- 禁提整段改寫判斷、禁自己動手修補 `judgment.json`——你只出稽核，修補是另一支流程的事。
+- 證據包裡沒有的東西不得臆測補白，只講證據包內找得到依據的話。
+
+
+===== BUNDLE =====
+
+## ① gate_card.md（判斷層閘卡）
+
+<!-- source: scripts/dd_prompts/gate_contract.md sha256:90928128665c694a; .claude/skills/stock-analyst/references/critic-gates.md sha256:8dff4ac45280acfd git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+<!-- 2026-10-20 ⑤ 改程式判定；來源 gate_contract §⑤／critic-gates ⑤ 同日改成同一條規則（核心軸 none 🔴、非核心 🟡）；重新濃縮時以本卡 ⑤ 為準 -->
+
+你是 DD 管線 v20 的判斷層閘（gate），sonnet，單輪、無工具。你未參與寫判斷，這是一次跨模型冷讀。
+輸入：`judgment.json`（待審判斷物）＋ `facts.json`（事實表，每軸 finding 帶 source／as_of／direction）。
+任務只有一件：依下列 checklist 逐條複核 `judgment.json`，只揪**判斷級**的錯，不判斷寫得好不好。
+判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡。
+禁 WebSearch／WebFetch、禁讀輸入以外任何檔、禁改 `judgment.json`，只出稽核清單。
+
+## checklist（①–⑧ 全出，不得跳號、不得「同上」帶過）
+
+① 競爭惡化——份額流失／新進入者／客戶 second-source／大客戶轉單。查 facts.json 對應軸（competitive_share_entrants／customer_second_source／customer_concentration_credit）裡負向、或應被引用的 finding，核對 judgment.json 的 `moat.threats`／`moat.competitors`／`contradictions[]`／`decision_inputs.bear` 是否接住；被引用=N 卻是負向的 finding 即漏接。[gate_contract §①]
+
+② 供需 durability——緊缺或過剩是結構還是週期，供給可逆性是否寫進 bear 機率。facts.json 的 supply_demand_durability 軸負向 finding，若未被引用且未列 `evidence_dismissed`，須在 `premortem`／`decision_inputs.bear` 找到對應處理，找不到即 🔴。[gate_contract §②]
+
+③ 其他結構變數（開放軸）——法規／政策／關稅／反壟斷／補貼、通路重構、商業模式轉移、替代技術、客戶結構轉移。找 facts.json 覆蓋總覽裡「有 finding 卻沒人接住」的軸，對照 `contradictions[]`／`premortem.blind_spots`／`triggers[]`；閘禁搜尋，不重新查有沒有漏掉的產業變化。[gate_contract §③]
+
+④ priced-in——共識與賣方目標價 vs 現價，裁決是否只是把市場已知的事再說一次。看 `decision_inputs.market_wrong_reason_given` 是否有具體內容（非空泛套話），對照 facts.json 的 `latest_quarter_kpis[].vs_consensus` 與 `valuation_current`。判斷寫「不追／等價格」而裁決是進場、`decision_inputs.wait_for_price` 卻沒填 true ＝ 矛盾；填了 true 時裁決落觀望是規則結果，不算矛盾，只看 `wait_for_price_condition` 是否具體可驗。[gate_contract §④]
+
+⑤ 覆蓋面掃描——**燈號由程式判定**（核心軸 none→🔴；只有非核心軸 none→🟡；全 found／not_applicable→🟢），bundle 附程式結果，你回的 ⑤ 燈號會被覆寫。你只評論：facts.json 點名 status="none"／"not_applicable" 的軸，查詢是否切題（不以查詢次數計）、判斷有沒有交代缺口對結論的影響；不得因缺軸自行升 🔴。
+
+⑥ 量化模組完整性抽查（強制）——(i) `moat.roic_durability.reinvest_rate`／`.roiic` 有沒有 `.formula_note` 真算（寫「估計約 X%」無算式＝🔴）；`.endo_ceiling` 是否與共識 EPS CAGR（facts.json）交叉檢查，天花板 < CAGR 且 `reasoning` 未處理＝🔴。(ii) `scenario_inputs` 的 Bull/Base/Bear EPS 是否有實質價差（Bull 幾乎等於 Base、只靠倍數撐估值＝退化，🔴）；`scenario_inputs.valuation_basis`＝`sales_multiple`（虧損公司，程式決定）時改查 Bull/Base 的營收路徑（`rev`）：Bull 終端營收須實質高於 Base、Bull 前兩年不得與 Base 相同，只靠終端 EV/S 撐價差＝退化，🔴；並看 Bear 的 `net_debt_y5`／`shares_y5` 是否反映該情境的融資缺口與稀釋（債重公司 Bear 沿用目前淨負債與股數＝樂觀，🟡）。(iii) `decision_inputs.irr_base_pct`／`ev5y_pct`／`asym_ratio` 缺省或 null 合法（程式回填），但 ROIIC 缺輸入、口徑或算式仍為實質問題。[gate_contract §⑥]
+
+⑦ 數字新鮮度——`judgment.json` 引用的每個營運指標，是否不比 facts.json 的 `latest_quarter_kpis[].as_of` 對應項目舊？有一個更舊即 🔴。`decision_inputs.consensus_rev_3m_pct` 若依附 `stale=true` 來源，確認未被當唯一依據；引用摘要內容的欄位須標「來源：摘要」。[gate_contract §⑦]
+
+⑧ 前份漂移歸因（QC-49）——facts.json 的 `prior_dd` 存在時，`drift_watch` 20 欄中有變動的每一欄是否都映射到 `contradictions[]` 一個帶 `cause` 的條目（可多欄共用一條目）、且主因站得住；**裁決／核心假設／情境方法變更不得併入純價格原因**；漏欄或無歸因＝🔴；前份該欄本身空或缺欄者不計，給 🟡 或 🟢。無前份時填 🟢 並註「無前份」。[gate_contract §⑧]
+  - `axis` 以 `[程式歸因]` 開頭的條目是程式算的（均線、現價、期望報酬拆解、裁決、角色）。「期望報酬拆解」兩條是程式用本次情境先換情境、再換股價算出的數字（asym_ratio／ev5y_pct／irr_base_pct／bull_5y_price／bear_5y_price），視為已歸因，其中「價格變動」只是股價效果，不適用「不得併入純價格原因」。裁決／角色條目是反事實結果（逐一把矩陣輸入改回前份值重算），視為已歸因；其中「價格變動」是反事實證明估值燈單獨改變了裁決，不適用上面「不得併入純價格原因」，不要為此給 🔴（2026-09-24）。
+  - QC-49 承繼（90 天內翻面須引前次已發火觸發器）只比方向：進場／觀望／迴避。「進場」與「進場·條件式」同方向，角色（核心／衛星）變動也不在 QC-49 範圍；判斷者答 `decision_inputs.qc49_inherit_prior`，前次裁決與角色由程式帶入。
+
+## (a)(b) 兩項強制職責（2026-08-06 拍板，不得因精簡拿掉）
+
+(a) 覆蓋面掃描：逐軸點名「哪一軸整個沒查」，做法同 checklist ⑤（燈號由程式判定，你只評論）。
+(b) 量化模組完整性抽查：ROIC×再投資率真算與否、內生天花板對帳共識 CAGR、情境樹 Bull/Base/Bear EPS 價差是否實質、IRR 內部對帳，做法同 checklist ⑥。
+(c) 數字可回溯：判斷引用的歷史數字逐一核對 facts.json 原文的期間與單位；反證條目要查採納理由與後果是否成立，不能只因編號存在就算過。[gate.md.tmpl 2026-09-11 註腳]
+
+## 🔴／🟡／🟢 口徑
+
+判斷級 🔴 限下列三種形狀：
+
+1. **證據包已有而判斷未接**——證據包內存在的 finding／數字，判斷物完全沒接進 `contradictions`／`moat.threats`／`premortem`／`triggers`／`thesis.R`，也沒寫進 `evidence_dismissed[]`；
+2. **算術或機率防線失守**——推導不可複算、內部恆等式不對帳、情境樹退化、機率與其自身依據矛盾；
+3. **裁決與自身輸入矛盾**——`decision_inputs`／`scenario_meta`／`decision_out` 三者互斥，或裁決與判斷物自己寫下的理由相反。
+
+**資料級不算 🔴**（證據包本身缺料、來源不夠新、某軸查不到）——那是 Stage 0 的問題，最多給 🟡 並在附註點名。無實質問題給 🟢；有實質但不改裁決方向的給 🟡。
+
+## 輸出格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
+
+
+---
+
+## ②b 被引用的事實與負向條目（v19；閘要查數字時不必猜）
+
+### 判斷檔 `fact_refs` 引到的事實（36 條）
+- `f_kpi0_gaap`（q1_business）｜營收（GAAP 合併）＝2525.9 十億 TWD｜期間與口徑：2026Q2（季末 2026-06-30，法說／公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：鴻海 2026Q2 法說會（公司 IR https://www.honhai.com/zh-tw/investor-relations ；具體新聞稿頁未直接取得，數字經 https://blog.fugle.tw/post/earnings-call-2317-2026-08-12 轉述並與 yfinance quarterly_income_stmt 核對）；yfinance quarterly 報表（2026-06-30 欄）（numbers.latest_quarter_kpis.items[0]，as_of 2026Q2（季末 2026-06-30，法說／公告於 2026-08-12））
+  - 註記：未取得單季共識
+- `f_kpi1_gaap`（q1_business）｜毛利率（GAAP）＝6.12 %｜期間與口徑：2026Q2（季末 2026-06-30，法說／公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：鴻海 2026Q2 法說會（公司 IR https://www.honhai.com/zh-tw/investor-relations ；具體新聞稿頁未直接取得，數字經 https://blog.fugle.tw/post/earnings-call-2317-2026-08-12 轉述並與 yfinance quarterly_income_stmt 核對）（numbers.latest_quarter_kpis.items[1]，as_of 2026Q2（季末 2026-06-30，法說／公告於 2026-08-12））
+  - 註記：未取得
+- `f_kpi2_gaap_non_gaap`（q1_business）｜營業利益／營業利益率（GAAP；公司不另報 Non-GAAP）＝3.75 %（營業利益 948.0 億 TWD，YoY +68%）｜期間與口徑：2026Q2（季末 2026-06-30，法說／公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：鴻海 2026Q2 法說會（公司 IR https://www.honhai.com/zh-tw/investor-relations ；具體新聞稿頁未直接取得，數字經 https://blog.fugle.tw/post/earnings-call-2317-2026-08-12 轉述並與 yfinance quarterly_income_stmt 核對）；yfinance quarterly 報表（2026-06-30 欄）（numbers.latest_quarter_kpis.items[2]，as_of 2026Q2（季末 2026-06-30，法說／公告於 2026-08-12））
+  - 註記：未取得
+- `f_kpi3_eps`（q1_business）｜稅後純益（歸屬母公司）／EPS＝4.27 TWD／股（純益 599.7 億 TWD，YoY +35%，QoQ +20%）｜期間與口徑：2026Q2（季末 2026-06-30，法說／公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：鴻海 2026Q2 法說會（公司 IR https://www.honhai.com/zh-tw/investor-relations ；具體新聞稿頁未直接取得，數字經 https://blog.fugle.tw/post/earnings-call-2317-2026-08-12 轉述並與 yfinance quarterly_income_stmt 核對）；yfinance 稀釋 EPS 4.24（numbers.latest_quarter_kpis.items[3]，as_of 2026Q2（季末 2026-06-30，法說／公告於 2026-08-12））
+  - 註記：未取得
+- `f_kpi6`（q1_business）｜管理層指引＝Q3 營收較 Q2『顯著成長』、YoY『強勁成長』；全年『強勁成長』；全年營益率高於 2025 的 3.2%；AI 機櫃 Q3 出貨 QoQ 高雙位數成長；2026 資本支出 YoY +30% 以上 定性（公司未給數字區間）｜期間與口徑：2026Q2（季末 2026-06-30，法說／公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：guidance
+  - 來源：鴻海 2026Q2 法說會（公司 IR https://www.honhai.com/zh-tw/investor-relations ；具體新聞稿頁未直接取得，數字經 https://blog.fugle.tw/post/earnings-call-2317-2026-08-12 轉述並與 yfinance quarterly_income_stmt 核對）（numbers.latest_quarter_kpis.items[6]，as_of 2026Q2（季末 2026-06-30，法說／公告於 2026-08-12））
+  - 註記：FY1 共識營收 10.87 兆 TWD（capital_structure）
+- `f_kpi7_ai`（q1_business）｜雲端網路產品占營收（AI 伺服器為主）＝51 %｜期間與口徑：2026Q2（季末 2026-06-30，法說／公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：鴻海 2026Q2 法說會（公司 IR https://www.honhai.com/zh-tw/investor-relations ；具體新聞稿頁未直接取得，數字經 https://blog.fugle.tw/post/earnings-call-2317-2026-08-12 轉述並與 yfinance quarterly_income_stmt 核對）（numbers.latest_quarter_kpis.items[7]，as_of 2026Q2（季末 2026-06-30，法說／公告於 2026-08-12））
+  - 註記：不適用
+- `f_kpi8`（q1_business）｜淨現金＝219.8 十億 TWD｜期間與口徑：2026-06-30／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：鴻海 2026Q2 法說會（公司 IR https://www.honhai.com/zh-tw/investor-relations ；具體新聞稿頁未直接取得，數字經 https://blog.fugle.tw/post/earnings-call-2317-2026-08-12 轉述並與 yfinance quarterly_income_stmt 核對）（numbers.latest_quarter_kpis.items[8]，as_of 2026-06-30）
+  - 註記：不適用
+- `f_peer_2317_tw_operating_margin_pct`（q2_moat）｜2317.TW 營業利益率＝3.51 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.2317.TW.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_2382_tw_operating_margin_pct`（q2_moat）｜2382.TW 營業利益率＝3.34 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.2382.TW.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_3231_tw_operating_margin_pct`（q2_moat）｜3231.TW 營業利益率＝3.8 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.3231.TW.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_jbl_operating_margin_pct`（q2_moat）｜JBL 營業利益率＝5.03 %｜期間與口徑：TTM ending 2026-05-31（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.JBL.operating_margin_pct，as_of TTM ending 2026-05-31（4季加總））
+- `f_peer_cls_operating_margin_pct`（q2_moat）｜CLS 營業利益率＝8.85 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.CLS.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_2317_tw_gross_margin_pct`（q2_moat）｜2317.TW 毛利率＝6.12 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.2317.TW.gross_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_consensus_eps_fy1`（q5_valuation）｜FY1 共識 EPS＝18.47 TWD/share｜期間與口徑：2026-10-08／Koyfin 快照共識值；原為美元，已依快照日匯率換算為新台幣（twd (koyfin usd ×31.8483 @ 2026-10-08)）｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261008.xlsx（numbers.consensus_revision.latest_snapshot.fy1，as_of 2026-10-08）
+- `f_consensus_eps_fy2`（q5_valuation）｜FY2 共識 EPS＝23.25 TWD/share｜期間與口徑：2026-10-08／Koyfin 快照共識值；原為美元，已依快照日匯率換算為新台幣（twd (koyfin usd ×31.8483 @ 2026-10-08)）｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261008.xlsx（numbers.consensus_revision.latest_snapshot.fy2，as_of 2026-10-08）
+- `f_consensus_eps_fy3`（q5_valuation）｜FY3 共識 EPS＝27.39 TWD/share｜期間與口徑：2026-10-08／Koyfin 快照共識值；原為美元，已依快照日匯率換算為新台幣（twd (koyfin usd ×31.8483 @ 2026-10-08)）｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261008.xlsx（numbers.consensus_revision.latest_snapshot.fy3，as_of 2026-10-08）
+- `f_rev_consensus_fy1_m`（q5_valuation）｜FY1 共識營收（百萬）＝10872980.57 TWD m｜期間與口徑：2026-10-20／yfinance revenue_estimate 0y 平均（18 位分析師）；與 f_consensus_eps_fy1 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy1.avg_m，as_of 2026-10-20）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_rev_consensus_fy2_m`（q5_valuation）｜FY2 共識營收（百萬）＝13988541.4 TWD m｜期間與口徑：2026-10-20／yfinance revenue_estimate +1y 平均（20 位分析師）；與 f_consensus_eps_fy2 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy2.avg_m，as_of 2026-10-20）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_kpi4_fcf`（q4_capital）｜自由現金流（FCF）＝-117.7 十億 TWD（營業現金流 -72.3、資本支出 -45.4）｜期間與口徑：2026Q2（季末 2026-06-30，法說／公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：yfinance quarterly 報表（2026-06-30 欄）；上半年 FCF 約 -1,500 億 TWD 與法說轉述一致（numbers.latest_quarter_kpis.items[4]，as_of 2026Q2（季末 2026-06-30，法說／公告於 2026-08-12））
+  - 註記：不適用
+- `f_kpi5_sbc`（q4_capital）｜SBC 占營業利益＝0.78 %（SBC 7.4 億 TWD）｜期間與口徑：2026Q2（季末 2026-06-30，法說／公告於 2026-08-12）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：yfinance quarterly 報表（2026-06-30 欄）（Stock Based Compensation）（numbers.latest_quarter_kpis.items[5]，as_of 2026Q2（季末 2026-06-30，法說／公告於 2026-08-12））
+  - 註記：不適用
+- `f_net_debt_m`（q5_valuation）｜目前淨負債（總債務－現金及短投）＝-166925.05 TWD m｜期間與口徑：2026-10-20／yfinance 最新一季：總債務 1357777.99、現金 1524703.04（含租賃負債口徑）｜kind：realized
+  - 來源：—（numbers.capital_structure.net_debt_m，as_of 2026-10-20）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_dividend_yield_ttm`（q5_valuation）｜trailing 12個月股息殖利率＝2.957 %｜期間與口徑：2026-10-20／trailing 12個月股息（依除息日加總，非發放日）÷ 判斷日股價 × 100｜kind：realized
+  - 來源：—（numbers.dividend_yield_ttm.value_pct，as_of 2026-10-20）
+- `f_peer_2317_tw_fcf_margin_pct`（q2_moat）｜2317.TW FCF 利潤率＝-0.46 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.2317.TW.fcf_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_price_at_dd`（q5_valuation）｜判斷日股價＝242.5 TWD｜期間與口徑：2026-10-20（RTH 收盤，UTC）／收盤價，與情境樹起點同源｜kind：realized
+  - 來源：—（numbers.price_at_dd，as_of 2026-10-20（RTH 收盤，UTC））
+- `f_fwd_pe_latest`（q5_valuation）｜Forward P/E（最近快照）＝13.48 x｜期間與口徑：2026-10-08／分母＝FY1 EPS 18.47，分子＝快照價 249.0｜kind：realized
+  - 來源：—（numbers.valuation_history.fwd_recent_window.points[-1]，as_of 2026-10-08）
+- `f_pe_current`（q5_valuation）｜Trailing P/E（現值）＝16.42 x｜期間與口徑：2026-10-20（RTH 收盤，UTC）／4 個年度端點內的分位＝95.3｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.pe，as_of 2026-10-20（RTH 收盤，UTC））
+- `f_pe_percentile`（q5_valuation）｜Trailing P/E 年度端點分位＝95.3 %｜期間與口徑：2026-10-20（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.pe.current_percentile_within_annual_points，as_of 2026-10-20（RTH 收盤，UTC））
+- `f_ps_percentile`（q5_valuation）｜P/S 年度端點分位＝88.8 %｜期間與口徑：2026-10-20（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.ps.current_percentile_within_annual_points，as_of 2026-10-20（RTH 收盤，UTC））
+- `f_consensus_rev_3m_fy1_pct`（q5_valuation）｜FY1 共識近 3 個月修正＝4.23 %｜期間與口徑：2026-07-16 → 2026-10-08／FY1 共識 EPS 17.72 → 18.47（Koyfin 快照，約 90 天間距）；投影成 decision_inputs.consensus_rev_3m_pct｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261008.xlsx（numbers.consensus_revision.latest_snapshot.fy1 ÷ snapshot_90d_prior.fy1，as_of 2026-10-08）
+- `f_ev_s_fwd`（q5_valuation）｜EV/S（EV ÷ FY1 共識營收）＝0.3 x｜期間與口徑：2026-10-20／f_ev_m ÷ f_rev_consensus_fy1_m（前瞻口徑；f_ev_s_current 是 trailing 12 個月營收口徑）｜kind：estimate
+  - 來源：—（numbers.capital_structure.ev_m ÷ revenue_consensus.fy1.avg_m，as_of 2026-10-20）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_rsi14`（q5_valuation）｜RSI(14)＝43.9｜期間與口徑：2026-10-20（RTH 收盤，UTC）／日線 14 期；rsi14_usable=True｜kind：realized
+  - 來源：—（numbers.momentum_26w.rsi14，as_of 2026-10-20（RTH 收盤，UTC））
+- `f_week26_return_pct`（q5_valuation）｜26 週報酬＝18.35 %｜期間與口徑：2026-10-20（RTH 收盤，UTC）／含息前價格報酬，對照基準 ^TWII｜kind：realized
+  - 來源：—（numbers.momentum_26w.return_26w_pct，as_of 2026-10-20（RTH 收盤，UTC））
+- `f_ma_state`（q5_valuation）｜週線均線六態（decision_inputs.ma 必須等於此值）＝🟡｜期間與口徑：2026-10-20／timing-appendix §F 週線六態：🟢 價<W52且>W104且三斜率正｜✅ 價>W52>W104>W250且W250斜率>+3%｜🟡 排列過但W250斜率−3~+3%｜🟠 價<W104但>W250｜❌ 價<W250或斜率<−3%｜kind：realized
+  - 來源：程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）（ma_snapshot.json，as_of 2026-10-20）
+  - 原文：「price 242.5 / W52 233.05 / W104 202.57 / W250 147.64 / W250 13週斜率 1.76%」
+- `f_ma_w52`（q5_valuation）｜52 週均線＝233.05 TWD｜期間與口徑：2026-10-20／週線收盤 SMA（yfinance auto_adjust）｜kind：realized
+  - 來源：程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）（ma_snapshot.json，as_of 2026-10-20）
+- `f_ma_w104`（q5_valuation）｜104 週均線＝202.57 TWD｜期間與口徑：2026-10-20／週線收盤 SMA（yfinance auto_adjust）｜kind：realized
+  - 來源：程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）（ma_snapshot.json，as_of 2026-10-20）
+- `f_ma_slope_w250_pct`（q5_valuation）｜W250 13 週斜率＝1.76 %｜期間與口徑：2026-10-20／週線收盤 SMA（yfinance auto_adjust）｜kind：realized
+  - 來源：程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）（ma_snapshot.json，as_of 2026-10-20）
+
+### findings_digest 中方向為負或來源衝突的條目（11 條）
+- `competitive_share_entrants#1`（competitive_share_entrants｜方向 -｜狀態 ok）：搜尋摘要稱廣達追加百億資本支出擴產、緯創台美加碼擴產，且有評析指 AI 伺服器打破 ODM「完全競爭」、緯創新客戶下半年加入（摘要轉述，未讀原頁，日期為約略）
+  - 來源：搜尋結果彙整（鴻海 對手 擴產 OR 殺價 2026）；moneyweekly／cnyes 等（as_of 2026-08-10）｜affects：moat_trend、decision_inputs.bear
+- `customer_second_source#1`（customer_second_source｜方向 -｜狀態 ok）：彭博研究認為鴻海 2026 年底前仍為 iPhone 組裝龍頭，未來兩年組裝占有率約 55%–60%；立訊為第二大組裝業者，預估約負責 30% iPhone 訂單（搜尋摘要轉述；文章確切發布日未取得）
+  - 來源：世界日報／彭博：即便iPhone供應鏈轉移 鴻海仍將穩居組裝龍頭（as_of 2026-01-01）｜affects：moat_trend、decision_inputs.bear
+- `customer_concentration_credit#0`（customer_concentration_credit｜方向 -｜狀態 ok）：鴻海114年度年報（母公司個別表）主要銷貨客戶僅列匿名「戊客戶」一家：113年占銷貨淨額54.03%（3,706,464百萬元），114年占44.11%（3,574,256百萬元），與發行人無關係。
+  - 來源：公開資訊觀測站電子書件 114年股東會年報 主要銷貨客戶表（PDF第125頁）（as_of 2026-05-19）｜affects：decision_inputs.bear、thesis.R
+- `regulatory_antitrust#2`（regulatory_antitrust｜方向 -｜狀態 ok）：美國 ITC 就 Vicor 專利主張對鴻海及工業富聯啟動 337 調查（專利，非反壟斷）。
+  - 來源：uanalyze 鴻海及子公司遭美國337調查（as_of 2026-10-11）｜affects：decision_inputs.bear
+- `reg_tariff_export#0`（reg_tariff_export｜方向 -｜狀態 ok）：鴻海旗下工業富聯兩家子公司（天津富聯精密電子、南寧富聯富桂精密工業）於2023年12月被美國列入未經核實清單；該清單不等同實體清單，通過檢查可移除
+  - 來源：中央社 cna.com.tw（2023-12-21 報導）（as_of 2023-12-21）｜affects：decision_inputs.bear、triggers
+- `reg_tariff_export#1`（reg_tariff_export｜方向 -｜狀態 ok）：金融時報報導（2025年2月），北京對工程師與設備離境施加限制，使鴻海難以把設備與技術主管移往印度
+  - 來源：technews.tw 轉述金融時報（as_of 2025-02-17）｜affects：decision_inputs.bear、moat_trend
+- `geo_supply_chain#0`（geo_supply_chain｜方向 -｜狀態 ok）：優分析資料稱鴻海中國產能約占70%、非中國產能約30%（含美國、墨西哥、印度、台灣、越南）；來源未註明確切日期，年代不明
+  - 來源：優分析 uanalyze 產業資料庫（as_of 2022-10-10）｜affects：decision_inputs.bear、thesis.R
+- `geo_supply_chain#2`（geo_supply_chain｜方向 -｜狀態 ok）：鴻海非中國產能比重曾由30%降至25%（劉揚偉於法說會坦言）；越南為東南亞最大生產基地，大於印度
+  - 來源：工商時報／uanalyze 引述（as_of 2021-01-01）｜affects：decision_inputs.bear
+- `geo_supply_chain#3`（geo_supply_chain｜方向 -｜狀態 ok）：2020年疫情期間中國當局不同意鴻海深圳、鄭州廠區如期復工，顯示單一地區廠區停工風險（歷史事件）
+  - 來源：TechNews 引述日經亞洲評論（as_of 2020-02-07）｜affects：decision_inputs.bear、thesis.R
+- `major_events#1`（major_events｜方向 -｜狀態 ok）：美國國際貿易委員會依 Vicor 專利侵權主張啟動 337 調查，鴻海及子公司列為被調查方；鴻海稱案件在立案初期，產品、生產營運及出貨未受影響
+  - 來源：technews 財經 337 Vicor 報導 / uanalyze（as_of 2026-10-11）｜affects：decision_inputs.bear、thesis.R
+- `lawsuit_class_action#0`（lawsuit_class_action｜方向 -｜狀態 ok）：美國 ITC 啟動 337 調查（Vicor 專利侵權主張），鴻海及子公司列為被調查方；鴻海稱未影響出貨
+  - 來源：technews 財經 337 Vicor 報導（as_of 2026-10-11）｜affects：decision_inputs.bear、thesis.R
+
+### 事實表自陳的缺口（1 條）
+- q6_how_wrong：digest.qa_flags 有 3 條管理層迴避紀錄，內容須由事實表 agent 逐條落成事實或缺口
+
+---
+
+scenario_meta.json sidecar（判斷層情境樹權威，checklist ⑥(iii) 對帳用）
+
+（來源：/Users/ivanchang/financial-analysis-bot/.dd_build/runs/2317.TW_20261020/scenario_meta.json）
+（以下 JSON 為緊湊格式（省空白），內容完整）
+```json
+{"bull_5y_price":600.0,"bear_5y_price":157.5,"p_bull_pct":25,"p_bear_pct":30,"upside_5y_pct":57.2,"ev5y_pct":52.1,"irr_base_pct":9.5,"asym_ratio":3.5,"scenario_tree":{"terminal_label":"FY2031E","start":{"eps":18.47,"pe":13.13,"basis":"FY1（2026E）共識 EPS 18.47 元，現價 242.5 元，13.13 倍；終端倍數套在 FY2031E 當年 EPS，同為當年度口徑，相隔五年"},"eps":{"bull":[24.5,30.0,34.0,37.0,40.0],"base":[23.25,26.8,28.5,29.5,30.5],"bear":[21.5,22.0,18.5,16.5,17.5]},"pe":{"bull":15,"base":12.5,"bear":9},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":2.957,"net_buyback":0},"second_stage":{"bull_cagr_pct":8,"base_cagr_pct":4},"valuation_dependent":false}}
+```
+
+---
+
+## ④b 舊逐字稿摘錄（前一季＋投資人日；對照管理層以前說過什麼）
+
+### 2317.TW_Special_Call_Stellantis_N_V_20210518.md
+- 2021-05-18｜Yves Bonnefont｜capital_allocation：Foxconn 與 Stellantis 合資公司採 50-50 表決權，雙方各投入最佳 IP（原話："The JV will be a 50-50 voting rights company"）
+- 2021-05-18｜Yang-Wei Liu｜capital_allocation：Foxconn 及其子公司 FIH 先與 Stellantis 合作開發資訊娛樂軟硬體（原話："Foxconn and our subsidiary company, FIH, will initially work"）
+- 2021-05-18｜Carlos Tavares｜commitment：Tavares 表示本合資是長期策略計畫的一塊，完整計畫年底發表（原話："we will present to you by the end of this year."）
+- 2021-05-18｜Yang-Wei Liu｜customer：Mobile Drive 不獨家供應 Stellantis，也將供應其他公司（原話："Mobile Drive will not be exclusive to Stellantis."）
+- 2021-05-18｜Yves Bonnefont｜competition：合資公司須與其他供應商以公平交易條件競爭 Stellantis 的業務（原話："It also has to compete for Stellantis' business"）
+- 2021-05-18｜Yves Bonnefont｜product：合資公司承接約 250 名已組好的軟體工程師（原話："software engineers preassembled, organized."）
+- 2021-05-18｜Yves Bonnefont｜customer：Stellantis 稱全球有 1,200 萬輛活躍連網車（原話："Today, Stellantis has 12 million active connected vehicles"）
+- 2021-05-18｜Yves Bonnefont｜product：軟體策略目標之一：打造持續更新的車與服務（原話："we want this strategy to create forever up-to-date vehicle"）
+- 2021-05-18｜Yves Bonnefont｜margin：永遠最新策略伴隨新商業模式與變現方式（原話："a new business model, a new monetization approach"）
+- 2021-05-18｜Yves Bonnefont｜margin：被問收入分成時，稱分成方式依地區而定，JV 角色為技術提供者（原話："the way we will work on the revenue will also depend"）
+- 2021-05-18｜Calvin Chih｜commitment：Calvin 稱執行重點為速度、品質與具競爭力成本（原話："execute with speed, quality and competitive cost."）
+- 2021-05-18｜Calvin Chih｜margin：Calvin 稱個人化與區域服務是無縫體驗與經常性收入的關鍵（原話："experience and the recurring revenue generation."）
+- 2021-05-18｜Yves Bonnefont｜customer：Stellantis 車款價格帶涵蓋 1.5 萬至 15 萬歐元，座艙需可擴充（原話："vehicles ranging from EUR 15,000, up to EUR 150,000."）
+- 2021-05-18｜Yves Bonnefont｜customer：JV 技術預計服務 Stellantis 全產品組合而非單一品牌（原話："serve the full portfolio of Stellantis and not specifically"）
+- 2021-05-18｜Yves Bonnefont｜product：JV 將開發應用層與部分座艙中介層（原話："layer as well as some of the cockpit middleware."）
+- 2021-05-18｜Yves Bonnefont｜product：JV 初期聚焦座艙與連網服務（原話："the JV is in the first stage extremely focused on cockpit"）
+- 2021-05-18｜Calvin Chih｜competition：Calvin 區分 Mobile Drive 與 MIH：前者逐車開發，非平台概念（原話："It's not a platform concept."）
+- 2021-05-18｜Calvin Chih｜competition：Calvin 回應 Tesla／VW 自研：多數現行車款使用多供應商，整合耗時（原話："cars selling today are using multiple suppliers."）
+- 2021-05-18｜Calvin Chih｜product：工程師執行主要在亞洲（台北），歐洲設需求與專案管理據點（原話："execution, the engineer in Asia, particularly in Taipei."）
+- 2021-05-18｜Yves Bonnefont｜product：不阻止用戶使用 Android Auto／CarPlay 投影模式（原話："prevent people who prefer projected mode from using"）
+- 2021-05-18｜Calvin Chih｜risk：Calvin 表示網路安全將是主要重點（原話："Cybersecurity will also be our primary focus."）
+- 2021-05-18｜Carlos Tavares｜commitment：Tavares 稱此破壞式轉型對 Stellantis 長期策略是必要（原話："We believe that this disruption is a must for Stellantis."）
+- 2021-05-18｜Calvin Chih｜guidance：Mobile Drive 無市占目標，稱剛成立（原話："No, we don't have that yet."）
+
+### 2317.TW_Special_Call_Hon_Hai_Precision_Industry_Co_Ltd_20241008.md
+- 2024-10-08｜Yang-Wei Liu｜commitment：董事長稱鴻海將是首批出貨 GB200 相關超級晶片的廠商。（原話："Foxconn will be the first to ship these super chips."）
+- 2024-10-08｜Yang-Wei Liu｜customer：董事長轉述客戶要求更多自動化。（原話："Our customers told us they want to see more automation."）
+- 2024-10-08｜Benjamin Ting｜product：Ting 稱正在興建全球最大的 GB200 生產設施。（原話："the largest GB200 production facility on the planet."）
+- 2024-10-08｜Benjamin Ting｜customer：Ting 提到大家都在要 Blackwell。（原話："asking for Blackwell, so it's hard"）
+- 2024-10-08｜Benjamin Ting｜commitment：Ting 表示已承諾建成後為台灣最強超級電腦（自建 Blackwell 資料中心）。（原話："So we have committed, when it is done, it is going to be"）
+- 2024-10-08｜Benjamin Ting｜capital_allocation：Ting 重申董事長宣布要自建 Blackwell 超算資料中心。（原話："our own Blackwell supercomputing data center."）
+- 2024-10-08｜Annemarie Grosse Frie｜product：Siemens 稱與鴻海合作產線的週期時間與產出變化數字。（原話："reduced by 25%, while throughput has increased by 20%."）
+- 2024-10-08｜Jeff Walters｜product：BCG 稱鴻海營運逾一萬台射出成形機，為 Genesis 平台用例。（原話："Foxconn operates over 10,000 injection molding machines"）
+- 2024-10-08｜Jesse Chao｜product：Foxconn 低軌衛星：前一年發射兩顆 Pearl CubeSats。（原話："launching our 2 Pearl CubeSats into low-earth orbit."）
+- 2024-10-08｜Jerry Hsiao｜capital_allocation：Hsiao 稱鴻海已投入逾 100 億美元（原文接 3+3 策略下的永續脈絡）。（原話："Foxconn has invested over USD 10 billion"）
+- 2024-10-08｜Jun Seki｜product：Seki 說明 EV 策略加入設計服務 CDMS。（原話："That is the CDMS; D for Design."）
+- 2024-10-08｜Jun Seki｜capital_allocation：Seki 稱與 ZF 合資公司於 5 月 1 日成立。（原話："Actually, we did. As you see, May 1st, we newly established"）
+- 2024-10-08｜Eike Dorff｜guidance：ZF Foxconn 合資 CEO 稱營收目標由 40 億歐元增至 80 億歐元，不含鴻海車款機會。（原話："from EUR 4 billion to EUR 8 billion over the next years."）
+- 2024-10-08｜Andy Lee｜customer：Foxtron CEO 稱 Model C 在台灣成為暢銷電動車之一。（原話："one of the best-selling electric car in Taiwan."）
+- 2024-10-08｜Andy Lee｜product：Model C 美國版預計 2025 年底上市。（原話："launching at the end of 2025."）
+- 2024-10-08｜Emma Lee｜product：Model U 迷你巴士最大續航 275 公里。（原話："offers a maximum range of 275 kilometers"）
+- 2024-10-08｜Tais Chuu｜product：Model D 充電 10 分鐘可增加 350 公里。（原話："350 kilometers in just 10 minutes"）
+- 2024-10-08｜Tais Chuu｜product：Foxtron 定位為 EV 平台供應商。（原話："we are an EV platform provider first."）
+
+### 問答異常語氣（迴避／改口／保留）
+- 2317.TW_Special_Call_Stellantis_N_V_20210518.md｜問：Briana Noble：Stellantis 客戶何時開始受惠？｜答法：稱無法揭露首款座艙日期，改談已有明確專案、品牌之後再宣布
+- 2317.TW_Special_Call_Stellantis_N_V_20210518.md｜問：José Asumendi：軟體更新收入如何分成？｜答法：未給分成比例，改稱依地區而定、JV 是技術提供者
+- 2317.TW_Special_Call_Stellantis_N_V_20210518.md｜問：Lauly Lee：Mobile Drive 是否有市占目標與時程？｜答法：未給目標，稱剛成立尚無
+
+---
+
+| axis | status | n_findings | n_queries |
+|---|---|---|---|
+| competitive_share_entrants | found | 2 | 3 |
+| customer_second_source | found | 3 | 3 |
+| customer_concentration_credit | found | 1 | 2 |
+| supply_demand_durability | found | 6 | 2 |
+| regulatory_antitrust | found | 3 | 3 |
+| reg_tariff_export | found | 4 | 3 |
+| geo_supply_chain | found | 4 | 3 |
+| end_markets | found | 6 | 3 |
+| substitute_technology | found | 1 | 3 |
+| channel_business_model_shift | found | 3 | 3 |
+| capital_markets_pricing | found | 4 | 4 |
+| major_events | found | 2 | 5 |
+| ems_utilization_capex_cycle | found | 3 | 3 |
+| ems_roic_asset_turnover_benchmark | none | 0 | 3 |
+
+未涵蓋／不適用軸的查詢詞原文（供判相關性）：
+- **ems_roic_asset_turnover_benchmark**（none）：鴻海 ROIC 資產週轉 同業 廣達 緯創 和碩；鴻海 存貨天數 現金轉換週期；EMS AI Server ODM ROIC benchmark 2026 Foxconn Quanta Wistron
+
+---
+
+## 前份判斷摘要（含 drift_watch_prior 20 欄前份值；漂移歸因對帳用）
+
+```json
+{"date":"20260601","verdict":"B","role":null,"H":{"status":"ok","format":"table","rows":[{"id":"H1","text":"AI 伺服器需求結構性向上，鴻海維持 ~40% 機櫃市占並隨 GB300/Rubin/ASIC 放量","columns":{"2Y 驗證點":"2026 機櫃出貨翻倍兌現；雲端網通段佔比 ≥ 48%","5Y 驗證點":"AI 伺服器佔集團營收 ≥ 55%，市占維持 ≥ 35%","10Y 驗證點":"AI infra 進入更新週期，鴻海仍為前二大 ODM","具體數字門檻":"2026 AI 機櫃出貨 YoY ≥ +80%；JPM 估 AI server 營收 +63%","來源":"公司法說（5/14）/ JPMorgan / DIGITIMES","漂移觸發":"連 2 季 AI 機櫃出貨 TTM 偏離指引 ≥ 10% → 削弱"}},{"id":"H2","text":"成長轉化為 EPS：mix 向 AI/系統整合傾斜 + 寄售改善現金轉換，毛利美元與 EPS 同步成長","columns":{"2Y 驗證點":"2026E EPS 17.58（+31%）兌現；雲端網通段 OPM 不被稀釋","5Y 驗證點":"集團 OPM 由 3.2% 升向 4%+；FCF/NI 回升 ≥ 0.4","10Y 驗證點":"EPS 維持雙位數 CAGR，現金轉換結構性改善","具體數字門檻":"FY26 EPS ≥ 17；雲端網通段 OPM YoY 持平或升","來源":"yfinance/Refinitiv 共識；公司寄售指引","漂移觸發":"連 2 季 TTM EPS 偏離共識 ≥ 10% → 削弱"}},{"id":"H3","text":"估值維持「AI 系統整合商」再評價，PE 不回落至 pre-AI 組裝廠倍數","columns":{"2Y 驗證點":"Fwd PE 維持 ≥ 12x（FY+2）","5Y 驗證點":"PE 區間穩定於 12–16x（非回到 8–11x）","10Y 驗證點":"市場長期認可系統整合溢價","具體數字門檻":"FY+2 PE 不破 11x（pre-AI 中樞）","來源":"歷史 PE 河流圖（Goodinfo / statementdog）","漂移觸發":"連 4 季 TTM PE 中樞下移破 11x → 反轉"}}]},"R":{"status":"ok","format":"table","rows":[{"id":"R1","text":"AI 伺服器組裝商品化 / 價格戰，毛利美元被壓","columns":{"對應假設":"H1/H2","時間尺度":"🔥 中期（4–6 季）","監測指標":"雲端網通段 OPM；GB 機櫃 ASP 趨勢","警戒閾值":"該段 OPM 連 2 季 YoY −0.5pp"}},{"id":"R2","text":"FCF 轉換持續落後（高營運資金 + capex +30%），現金流陷阱","columns":{"對應假設":"H2","時間尺度":"⚡ 短期（1–2 季可現）","監測指標":"FCF/NI（TTM）；寄售佔伺服器營收比","警戒閾值":"FCF/NI 連 2 季 TTM &lt; 0.3 且寄售佔比未升"}},{"id":"R3","text":"AI 資本支出週期見頂 + 客戶內部化/在地化稀釋台廠紅利","columns":{"對應假設":"H1/H3","時間尺度":"🐢 長期（2+ 年慢變數）","監測指標":"hyperscaler capex 指引；客戶自製/白牌比例","警戒閾值":"Top 4 hyperscaler capex YoY 連 3 季 &lt; +10%（≥ 50% 機率才砍倉）"}}]},"single_thing":null,"kill_metrics":null,"rearm_trigger":null,"irr_base_pct":null,"ev5y_pct":null,"drift_watch_prior":{"dca_verdict":null,"dca_role":null,"signal":"B","val":"🟠","ma":"✅","trap":"🟡","moat_trend":null,"runway_post_y5":null,"asym_ratio":null,"ev5y_pct":null,"irr_base_pct":null,"max_dd_pct":null,"bull_5y_price":null,"bear_5y_price":null,"p_bull_pct":null,"p_bear_pct":null,"rearm_trigger":null,"price_at_dd":289.0,"archetype":null,"cycle_position":null}}
+```
+
+---
+
+## judgment.json 全文（被審對象，緊湊格式）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"2317.TW","date":"2026-10-20","schema":"v15.2","contract":"v19","company_name":"鴻海精密工業"},"oneliner":"AI 伺服器機櫃市占逾四成、營收年增四成以上，但擴張一直在吃現金；FY1 本益比 13 倍不貴，等 2026 全年自由現金流轉正再談進場","facts_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/2317.TW_20261020/facts.json","scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/2317.TW_20261020/scenario.json","answers":{"q1_business":{"verdict":"鴻海賺的是雲端服務商與消費電子品牌付的組裝整合費。2026Q2 營收 2.53 兆，雲端網路占 51%，毛利率 6.12%，營業利益率 3.75%。錢卡在 GPU 供應商與雲端客戶兩端，鴻海拿到的是量與整合效率，拿不到價","reasoning":"最新一季營收 2.53 兆新台幣。雲端網路產品（AI 伺服器為主）占 51%，2025Q4 為 42%，當時消費智能占 39%。毛利率 6.12%，營業利益率 3.75%（營業利益 948 億，年增 68%），每股盈餘 4.27 元。第三季營收約 3.02 兆，年增 47%，9 月單月 1.15 兆。產業時鐘判在擴張期，依據是訂單與出貨量，不是股價：雲端客戶資本支出持續增加，公司稱需求能見度比 5 月好，AI 機櫃第三季出貨季增高雙位數。不過鴻海、廣達、緯創同時在擴產，已經是擴張後段。供需持久性判為週期性、會反轉，時點未定。需求來自少數雲端客戶的資本支出，供給端三家同步加產能，一旦資本支出增速放緩，價格與稼動率會一起往下。單點依賴：年報匿名最大客戶占母公司銷貨 44.11%（2025 年，前一年 54.03%）。比重在降，但仍超過四成，算集中度風險，不算護城河證據。這是母公司個別表口徑，合併報表的客戶占比事實表未涵蓋。分部單價與量的結構化數字事實表也未涵蓋，只能用類別占比與公司的定性指引","fact_refs":["f_kpi0_gaap","f_kpi1_gaap","f_kpi2_gaap_non_gaap","f_kpi3_eps","f_kpi6","f_kpi7_ai","f_kpi8"],"verdict_values":{"revenue_quality":"營收由量驅動，跟著雲端客戶的資本支出走。ASIC 機櫃改成寄售後，營收認列會縮水，主要動到的是營收與毛利率的口徑，所以營收成長率可能低估實際出貨成長","unit_econ_note":"每 100 元營收約留下 6.1 元毛利、3.75 元營業利益、2.4 元歸屬母公司淨利（Q2 淨利 599.7 億÷營收 2.53 兆）","archetype":{"primary":"EMS/ODM","secondary":null,"confidence":"高","fingerprint":"毛利率長年在 6% 上下，營業利益率 2.6%–3.8%，自由現金流隨營運資金大幅擺動，營收由客戶出貨量決定"},"industry":{"clock_phase":"II","sd_verdict_source":"週期性，會反轉，時點未定。公司法說稱雲端客戶資本支出續增、能見度改善；但外資通路調查顯示 2026 年 4 月全球 GB 機櫃產量月減 3%，世代交替會造成出貨斷層","bargaining":{"up":"上游 GPU 供應商議價力強。ASIC 機櫃改成寄售，關鍵零件由客戶自己供應，鴻海只收組裝與整合費","down":"最大客戶占母公司銷貨 44.11%（2025），前一年 54.03%；雲端客戶也集中在少數幾家，每一代機櫃都會重新分配份額","geo":"中國產能比重高（舊資料約七成），美國與墨西哥正在擴產；2025 年 2 月報導指北京限制設備與工程師離境"},"profit_pool_dir":"利潤池往上游 GPU 與下游雲端客戶集中。組裝端靠自製液冷、Busbar、連接器爭取多一點附加價值，成效事實表未量化","tam_table":[{"item":"雲端網路占營收（公司公布）","value":"2025Q4 42% → 2026Q2 51%"},{"item":"雲端業務占營收（凱基估）","value":"2025 年 40% → 2026E 55% → 2027E 62%"},{"item":"AI 機櫃出貨市占（外資通路調查）","value":"2026 年 4 月約 3,700 櫃，市占逾 44%"},{"item":"AI 伺服器週產能（公司目標）","value":"2025-11 約 1,000 櫃 → 2026 年目標 2,000 櫃"},{"item":"AI 伺服器 TAM、滲透率、利潤池占比五年變化","value":"事實表未涵蓋"}]}}},"q2_moat":{"verdict":"護城河方向判持平（→）。機制是規模、良率與垂直整合帶來的交期與成本優勢，機櫃市占逾四成居首；但營業利益率跟廣達、緯創的差距不到 0.3 個百分點，也沒有拉開，定價權弱","reasoning":"機制：全球產能布局、自製零組件、大客戶交付紀錄，三者讓鴻海在每一代機櫃量產初期拿到最大份額。2024-10-08 劉揚偉稱鴻海會是首批出貨 GB200 的廠商，外資調查顯示 2026 年 4 月機櫃市占逾 44%，這個承諾有兌現。可證方向：鴻海 TTM 營業利益率 3.51%，廣達 3.34%，緯創 3.80%，差距 +0.17 與 −0.29 個百分點，三家幾乎同一水準。對 JBL（5.03%）和 CLS（8.85%）明顯落後，代表產品組合偏重附加價值較低的組裝。執行力評 8：營業利益率從 2022 年 2.62% 升到 2026Q2 3.75%。定價力評 4：毛利率 2023 年 6.30%、2024 年 6.25%、2025 年 6.15%，連兩年下滑；ASIC 機櫃改由客戶自供關鍵零件，議價空間再被壓縮。產業態勢判雙向拉鋸。競爭面在惡化：廣達追加百億資本支出，緯創有新客戶下半年加入。結構面在轉好：雲端客戶資本支出續增，能見度改善。其他結構變數是 Vicor 專利的 337 調查與美中關稅。執行在擴大，定價持平偏縮，合起來判持平，不標向上。投入資本與周轉率事實表未涵蓋，當期 ROIC 算不出來","fact_refs":["f_peer_2317_tw_operating_margin_pct","f_peer_2382_tw_operating_margin_pct","f_peer_3231_tw_operating_margin_pct","f_peer_jbl_operating_margin_pct","f_peer_cls_operating_margin_pct","f_peer_2317_tw_gross_margin_pct","f_kpi2_gaap_non_gaap"],"verdict_values":{"moat":{"mechanism":"全球規模化產能、垂直整合零組件、量產交付紀錄，換來每一代機櫃量產初期的最大份額。本質是成本與交期優勢，不是定價權","execution":8,"pricing":4,"grade":"C","trend":"→","trend_evidence":"營業利益率 2.62%（2022）→3.20%（2025）→3.75%（2026Q2）。對廣達 TTM 營業利益率差距 +0.17 個百分點，對緯創 −0.29 個百分點，差距很窄也沒有擴大。機櫃市占逾 44% 居首，但同業在擴產、ASIC 寄售削薄附加價值。執行擴大、定價持平偏縮，合判持平","competitor_notes":[{"name":"2382.TW","strategy_note":"廣達：營業利益率 3.34%，跟鴻海同一級，追加百億資本支出擴產，是機櫃份額最直接的對手"},{"name":"3231.TW","strategy_note":"緯創：營業利益率 3.80%，略高於鴻海，但 TTM 自由現金流利潤率 −8.93%，擴產燒錢比鴻海更兇；下半年有新客戶加入"},{"name":"JBL","strategy_note":"捷普：營業利益率 5.03%，自由現金流為正。業務偏多元製造服務，不是機櫃的直接對手，可當現金轉換的參照"},{"name":"CLS","strategy_note":"CLS：營業利益率 8.85%，靠網通交換器與設計服務拿到較高附加價值，跟鴻海不同級，不當估值錨"},{"name":"立訊","strategy_note":"iPhone 第二大組裝廠，彭博估約負責 30% 訂單，正在侵蝕鴻海的消費電子份額"}],"spread_notes":null,"peer_na_reason":null,"threats":[{"level":"🟡","text":"同業擴產與新客戶分流：廣達、緯創加碼產能，下一代機櫃的份額可能重新分配","p":40,"evidence_refs":["competitive_share_entrants#1"]},{"level":"🟡","text":"iPhone 組裝份額被立訊分走：彭博估鴻海未來兩年 55%–60%，立訊約 30%","p":35,"evidence_refs":["customer_second_source#1"]},{"level":"🟡","text":"ASIC 機櫃改寄售，客戶自供關鍵零件，組裝端的附加價值變薄","p":30,"evidence_refs":[]}],"roic_durability":{"quadrant":"低利益率×高周轉（周轉率事實表未涵蓋，依代工商業模式判讀）","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者是 AI 模型與雲端服務的終端用戶，決策者與付款者是雲端客戶的資本支出部門。公司稱雲端客戶持續加碼、能見度改善，需求很急；但急不等於能持久，延後一代機櫃採購對客戶的代價不高"},{"item":"決策層級","level":"🟡","text":"替代性要用每一代機櫃專案來衡量，不是看整個伺服器市場。三家 ODM 都通過認證，每次世代交替（GB300 換 VR）客戶都會重新分配份額，轉換成本只在單一世代內成立"},{"item":"價值鏈分配","level":"🔴","text":"價值鏈的利潤集中在 GPU 與雲端客戶兩端，組裝端毛利率只有 6% 上下，三家同業利益率幾乎相同。ASIC 改寄售後關鍵零件由客戶供應，組裝環節能分到的錢再被壓縮"},{"item":"社會容忍度","level":"🟡","text":"定價不面對消費者，沒有社會容忍度的天花板；限制來自政治面：子公司曾被列入美方未經核實清單，北京限制設備與工程師外移，產地選擇受政策約束"}],"roiic":"事實表未涵蓋投入資本。粗估：營業利益 2024 年約 2,003 億（6.86 兆×2.92%）→2025 年約 2,593 億（8.10 兆×3.20%），增加約 590 億；同年資本支出約 1,738 億，稅前增量報酬約 34%。這沒有計入營運資金投入（2026Q2 營業現金流 −723 億），真實值會明顯更低","reinvest_rate":"事實表未涵蓋折舊與營運資金變動，無法照公式計算。2026 上半年自由現金流約 −1,500 億，代表再投資額已超過同期淨利，再投資率高於 100%","endo_ceiling":null,"formula_note":"內生成長＝增量報酬×再投資率；兩項輸入都缺，上界不給數字"}}}},"q3_growth":{"verdict":"五年後跑道判中等（🟡）。機櫃市占已逾四成，靠搶份額再往上的空間有限。電動車、機器人、數位健康這些第二曲線從 2020 年講到現在，營收貢獻事實表未涵蓋，不列入計算","reasoning":"成長來源是量：AI 機櫃今年出貨估倍增，800G 以上交換器出貨也估倍增。價格貢獻小，沒有回購，併購規模小（子公司對 Maxnerva 發動公開要約，金額未載）。共識 EPS 從 FY2025 實際 13.4 元到 FY2028 的 27.39 元，三年年化約 26.9%，算法是 (27.39÷13.4)^(1/3)−1。同期營收共識從 8.10 兆到 13.99 兆（FY2027），兩年年化約 31%。EPS 與營收增速相當，不是靠利潤率灌水。內生上界算不出來，但缺口來自哪裡很清楚。一是營業利益率從 3.2% 升到 3.75%。二是用營運資金和資本支出（2026 年預計年增三成以上）墊出來的量。後者不是內生複利，要等現金流事後回收才算數，所以長期信心上限設為中。滲透率：AI 伺服器占整體伺服器的比例事實表未涵蓋，改用機櫃市占代替，已逾 44%，再往上的空間不到一倍，跑道判中等。衰退信號亮兩個。第一，自由現金流÷淨利 2024 年 0.14、2025 年 0.27，連兩年低於 0.75。第二，年度毛利率 2023 到 2025 年連兩年下滑；季度年比資料事實表未涵蓋，以年度口徑代替","fact_refs":["f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_rev_consensus_fy1_m","f_rev_consensus_fy2_m","f_kpi7_ai","f_kpi6","f_kpi4_fcf"],"verdict_values":{"growth":{"driver_mix":"量為主（AI 機櫃、交換器出貨倍增）；價格貢獻小；沒有回購；併購小","runway_years":"事實表未涵蓋 AI 伺服器滲透率；機櫃市占已逾 44%","runway_post_y5":"🟡","endo_ceiling_basis":"投入資本、折舊、營運資金變動都沒有收錄，無法算增量報酬×再投資率。判定共識年化 26.9% 高於內生上界，因為成長靠營運資金墊付，2024 與 2025 年自由現金流只有淨利的 0.14 與 0.27","segments":[{"item":"雲端網路產品","value":"2026Q2 占 51%（2025Q4 42%）；凱基估 2027 年 62%"},{"item":"消費智能產品","value":"2025Q4 占 39%；分部成長率事實表未涵蓋"},{"item":"電腦終端、元件及其他","value":"2026 年 5 月略衰退、7 月回升；占比事實表未涵蓋"}],"decay_signals":[{"signal":"自由現金流÷淨利連兩年低於 0.75","lit":true,"value":"2024 年 0.14、2025 年 0.27"},{"signal":"毛利率連續下滑","lit":true,"value":"年度口徑 6.30%→6.25%→6.15%；季度年比事實表未涵蓋"},{"signal":"EPS 成長顯著高於營收成長","lit":false,"value":"共識兩年 EPS 年化約 31.7%，營收約 31%，差距不到 5 個百分點"},{"signal":"SBC 占營收高且上升","lit":false,"value":"SBC 只占營業利益 0.78%"},{"signal":"核心市占縮減","lit":false,"value":"機櫃市占逾 44% 居首；iPhone 份額歷史序列事實表未涵蓋"},{"signal":"維護性資本支出占自由現金流過高","lit":null,"value":"事實表未涵蓋"}],"trap_rating":"🟡"}}},"q4_capital":{"verdict":"資本配置中性偏弱。不回購、配息約四成淨利、股權不稀釋，錢沒有亂花；但擴張期現金先流出，2026 上半年自由現金流約 −1,500 億，近兩年自由現金流只有淨利的 0.14 和 0.27","reasoning":"自由現金流÷淨利：2022 年 0.06、2023 年 2.30、2024 年 0.14、2025 年 0.27。只有 2023 年營收下滑、營運資金回收的那一年超過 1。2026Q2 單季自由現金流 −1,177 億（營業現金流 −723 億、資本支出 −454 億），TTM 自由現金流利潤率 −0.46%。SBC 單季 7.4 億，占營業利益 0.78%，稀釋可以忽略。現金去向依金額排序：資本支出（2025 年約 1,738 億，2026 年預計年增三成以上）最大，其次是股息（殖利率約 2.96%，2020-05-15 法說承諾至少配發淨利的 40%），再來是小型併購（Maxnerva 公開要約），回購為零。淨現金 2,198 億（2026-06-30），公司稱 2027 年續擴產、沒有股權籌資計畫。判斷：配置紀律沒問題，但品質要等擴產的現金回收後才能確認","fact_refs":["f_kpi4_fcf","f_kpi5_sbc","f_kpi8","f_net_debt_m","f_dividend_yield_ttm","f_peer_2317_tw_fcf_margin_pct"],"verdict_values":{"capalloc":{"items":[{"name":"ma_roiic","applicable":false,"passed":null,"input":"併購規模小（Maxnerva 公開要約金額未載），沒有可算的已實現增量報酬"},{"name":"buyback_yield","applicable":false,"passed":null,"input":"沒有回購"},{"name":"sbc_dilution","applicable":true,"passed":true,"input":"SBC 單季 7.4 億，年化約 30 億，占市值約 0.09%，遠低於 1.5%"}]},"governance":{"capital_returns":{"expanded":false,"reason":"成長靠自建產能與營運資金，不靠併購；唯一的併購事件 Maxnerva 金額未載，無法展開"}}}},"q5_valuation":{"verdict":"現價要求的是：FY2027 EPS 23.25 元大致兌現，之後不崩。FY1 本益比 13.1 倍、FY2 10.4 倍，市場已經用代工週期股的倍數在打折 FY2027。我大致同意這個折價。估值合理，但沒有便宜到可以不管現金流","reasoning":"現價 242.5 元÷FY1 共識 EPS 18.47 元＝13.13 倍；÷FY2 23.25 元＝10.43 倍。PEG＝13.13÷26.9（三年共識 EPS 年化）≈0.49，表面上便宜，但這個成長率建立在資本支出週期上，不能照單全收。歷史位置：TTM 本益比 16.42 倍，落在近四個年度端點的 95.3 分位；P/S 0.37 倍在 88.8 分位。也就是盈餘雖然高，倍數也已經在自身區間上緣。五年連續分位事實表未涵蓋。FY1 共識近三個月上修 4.23%（17.72→18.47），股價卻從前份的 289 元跌到 242.5 元，倍數壓縮主要來自價格。短期上檔：FY2027 EPS 23.25 元×12 倍＝279 元，約 +15%。三年中期：FY2029 Base 情境 28.5 元×12.5 倍＝356 元，約 +47%。同業倍數事實表未涵蓋，不拿 CLS 這類高毛利同業當錨。結論：估值合理，進場的約束在現金流，不在價格","fact_refs":["f_price_at_dd","f_fwd_pe_latest","f_pe_current","f_pe_percentile","f_ps_percentile","f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_consensus_rev_3m_fy1_pct","f_ev_s_fwd","f_dividend_yield_ttm"],"verdict_values":{"valuation":{"basis":"前瞻本益比（FY1 13.13 倍、FY2 10.43 倍）搭配 PEG","tier":"大型 EMS/ODM 組裝","peers":{"expanded":false,"reason":"事實表的同業對照只有利潤率，沒有同業倍數；高毛利的 CLS、JBL 不同級，不當錨"},"fwd_pe":13.13,"peg":0.49,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"FY1 本益比 13.1 倍、FY2 10.4 倍、PEG 約 0.5，看起來偏便宜。但 TTM 本益比位於自身四個年度端點的 95 分位，自由現金流為負，便宜只在盈餘能持續的前提下成立，所以判合理（🟡）。五年分位事實表未涵蓋，不另算","upside_short_pct":15,"upside_mid_pct":47,"denominator_disputed":false,"denominator_note":"FY1 盈餘上半年已實現約 7.83 元（Q1 約 3.56 加 Q2 4.27），分母大致已落地；FY2 以後的週期風險放在 Bear 情境處理，不在分母本身"}}},"q6_how_wrong":{"verdict":"最可能看錯的地方：把 AI 資本支出週期高點的盈餘當成常態，而這段成長一直在燒營運資金。如果 2027 年後資本支出增速放緩，盈餘和倍數會一起下修","reasoning":"價值陷阱判黃。衰退信號亮兩個：自由現金流÷淨利連兩年低於 0.75，年度毛利率連兩年微降。其餘項目沒亮，或事實表未涵蓋（市占歷史序列、維護性資本支出）。空方最強的數字：2026 上半年自由現金流約 −1,500 億，相當於淨現金 2,198 億的三分之二。技術面：股價 242.5 元在 52 週均線 233 元、104 週均線 203 元之上，250 週均線斜率 +1.76%，偏平；RSI 43.9，26 週漲 18.35%，不過熱。歷史最大回撤與訴訟金額事實表未涵蓋。最新一季法說逐字稿沒有入包（包內實際是 2020 年第一季），管理層說法只能靠媒體轉述，這是本次判斷的證據缺口","fact_refs":["f_kpi4_fcf","f_kpi8","f_pe_percentile","f_rsi14","f_week26_return_pct","f_ma_state","f_ma_w52","f_ma_w104","f_ma_slope_w250_pct"],"verdict_values":{"trap":{"verdict":"🟡","label":"盈餘是真的，但現金轉換還沒證實，處在週期中段"}}}},"scenario_inputs":{"terminal_label":"FY2031E","start":{"eps":18.47,"pe":13.13,"basis":"FY1（2026E）共識 EPS 18.47 元，現價 242.5 元，13.13 倍；終端倍數套在 FY2031E 當年 EPS，同為當年度口徑，相隔五年"},"eps":{"bull":[24.5,30.0,34.0,37.0,40.0],"base":[23.25,26.8,28.5,29.5,30.5],"bear":[21.5,22.0,18.5,16.5,17.5]},"pe":{"bull":15,"base":12.5,"bear":9},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":2.96,"net_buyback":0},"second_stage":{"bull_cagr_pct":8,"base_cagr_pct":4},"max_dd":{"lo":-55,"hi":-35,"basis":"峰值 FY2027 EPS 23.25 元回落到 Bear 谷底 16.5 元（−29%），本益比從 13.1 倍壓到 8–9 倍（−31% 到 −39%），價格約 132–148 元，對現價 −39% 到 −46%；再留 10 個百分點給流動性超跌，下緣 −55%。上緣 −35% 對齊 Bear 五年終點（17.5 元×9 倍＝157.5 元）。同業倍數與歷史最大回撤事實表未涵蓋，只能用自身倍數區間推","trigger_time":null},"basis":{"bull":"下一代 VR 機櫃維持四成以上市占，雲端占營收升到六成以上，營業利益率升到 4.5%，2031 年 EPS 40 元；15 倍高於現值 13.1 倍、低於 TTM 16.4 倍","base":"2027 年照共識 23.25 元，之後資本支出增速放緩，EPS 年增降到 3%–7%，2031 年 30.5 元；12.5 倍略低於現值 13.1 倍","bear":"2028 年 AI 資本支出降溫，加上三家同步擴產引發價格戰，營業利益率回到 3% 以下，EPS 從 22 元回落到 16.5–17.5 元；9 倍是成長降到約 10% 時的代工倍數"},"endo_ceiling_exceeded":true},"counter_evidence":{"blind_spots":[{"view":"論點失敗","evidence":"廣達追加百億資本支出，緯創在台美擴產並有新客戶加入；外資調查顯示 2026 年 4 月全球 GB 機櫃產量月減 3%，世代交替會出現斷層","assumption":"雲端客戶資本支出在 2027 年後仍維持高增速，鴻海保住四成以上機櫃份額","consequence":"如果 2028 年資本支出增速轉弱，三家擴出來的產能會用價格搶單。營業利益率回到 3% 以下，EPS 回到 17 元上下，倍數壓到 9 倍，五年後股價約 157 元（−35%），途中可能跌到 −50%","ruling":"採納，作為 Bear 情境的主軸，機率 30%。這跟唯一致命點（機櫃市占跌破三成）部分重疊，份額門檻已補進致命點","watch":"月營收雲端網路類別、法說 AI 機櫃出貨季增、外資通路調查機櫃市占","evidence_refs":["competitive_share_entrants#1"],"fact_refs":["f_kpi6","f_kpi7_ai"]},{"view":"論點成功但股東經濟變差","evidence":"2026Q2 自由現金流 −1,177 億，上半年約 −1,500 億；2024 與 2025 年自由現金流只有淨利的 0.14 和 0.27；2026 年資本支出預計年增三成以上","assumption":"營收倍增帶來的盈餘，會在擴張放緩後轉成現金回到股東手上","consequence":"如果營運資金長期被客戶和上游占用，盈餘成長只會變成帳上的應收與存貨，配息只能靠淨現金撐，股東實拿的報酬會遠低於 EPS 成長","ruling":"採納，列為這次唯一的進場約束：2026 全年自由現金流轉正、自由現金流÷淨利 ≥0.3，才重跑研究","watch":"季報現金流量表；應收與存貨天數（事實表未涵蓋，需補）","evidence_refs":[],"fact_refs":["f_kpi4_fcf","f_peer_2317_tw_fcf_margin_pct","f_kpi8"]},{"view":"價格已反映太多","evidence":"TTM 本益比 16.42 倍，在自身四個年度端點的 95.3 分位；P/S 在 88.8 分位；盈餘正處歷史高點","assumption":"FY1 13 倍、FY2 10 倍的前瞻倍數代表便宜","consequence":"用週期高點的盈餘算倍數，看起來便宜，其實是週期頂部的典型樣貌；盈餘回落後倍數反而會升高","ruling":"部分反駁。FY1 盈餘上半年已實現約 7.83 元，13 倍不算延伸。但 FY2 的 10.4 倍便宜，只在 2027 年盈餘守住時成立，所以不靠估值論證進場","watch":"FY2 共識 EPS 修正方向、雲端客戶資本支出指引","evidence_refs":[],"fact_refs":["f_pe_current","f_pe_percentile","f_ps_percentile","f_fwd_pe_latest"]},{"view":"論點失敗","evidence":"美國 ITC 依 Vicor 電源模組專利對鴻海及子公司啟動 337 調查；中國產能比重高（舊資料約七成）；北京曾限制設備與工程師移往印度","assumption":"法律與地緣事件只影響個別產品，碰不到 AI 機櫃出貨","consequence":"如果初裁成立並發出排除令，涉案電源模組要改設計或換供應商，短期出貨會延誤；受影響營收金額事實表未涵蓋","ruling":"採納為風險，但不放進 Bear 主軸。公司稱出貨未受影響，同案還有台達電與廣達，屬產業共同風險","watch":"ITC 初裁時程、公司重大訊息","evidence_refs":["regulatory_antitrust#2","major_events#1","lawsuit_class_action#0","geo_supply_chain#0","reg_tariff_export#1"],"fact_refs":[]}],"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 ✅ → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=✅","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 289.0 → 本次 242.5（-16.1%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=289.0","side_b":"本次 price_at_dd=242.5","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 289 元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 289 元：五年期望值 前份未列，基準年化 前份未列，前份未列不對稱比","side_b":"本次情境、股價仍用 289 元：Bull 價 600、Bear 價 157.5，五年期望值 +27.6%，基準年化 5.7%，不對稱比 1.97","ruling":"先換情境、股價不動：五年期望值與基準年化前份未列，無法比較。前份未列不對稱比，本次為 1.97。Bull、Bear 價位與股價無關，只受情境影響。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 289 元：五年期望值 +27.6%，基準年化 5.7%，不對稱比 1.97","side_b":"本次情境、股價 242.5 元：五年期望值 +52.1%，基準年化 9.5%，不對稱比 3.5","ruling":"再換股價、情境不動：起點價下跌 16.1%，五年期望值多 24.5 個百分點，基準年化多 3.8 個百分點，不對稱比由 1.97 升到 3.5。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"獲利成長與現金轉換","cause":null,"prior_field":null,"side_a":"Q3 營收年增 47%，Q2 營業利益年增 68%；公司稱獲利成長高於擴產支出增幅，2027 年續擴產，不辦股權籌資","side_b":"Q2 自由現金流 −1,177 億，上半年約 −1,500 億，TTM 自由現金流利潤率 −0.46%；2024 與 2025 年自由現金流只有淨利的 0.14 和 0.27","ruling":"不可調和，方向相反。站 B 側，當成約束：盈餘是真的，但現金回收前不算已驗證的股東報酬。依據是連兩年轉換率低於 0.3 的實績，不是對公司說法的直覺懷疑","evidence_level":"財報實績對公司說法","settle_metric":"FY2026 全年自由現金流與自由現金流÷淨利（2027 年 3 月年報）","if_then":["若 2026 全年自由現金流轉正，且自由現金流÷淨利 ≥0.3 → 重跑研究，首倉上限 3%，分兩批","若 2026 全年自由現金流仍為負，且 2027Q1 營業現金流再為負 → H2 判削弱，Bear 機率上調到 35%，不建倉","若股價先回到 290 元以上，而現金流還沒轉正 → 不追","若股價跌到 205 元以下（約 FY2 本益比 8.8 倍），而月營收仍年增 ≥30%、現金流沒有惡化 → 分批反買，首筆 1%"],"evidence_refs":[]},{"axis":"管理層長期目標的可信度","cause":null,"prior_field":null,"side_a":"2020-05-15 法說，劉揚偉回應提問時說 10% 利潤率目標仍在計畫內（提問方稱為毛利率），2025 年目標不變","side_b":"2025 年實際毛利率 6.15%、營業利益率 3.20%。同一場法說承諾電動車、數位健康、機器人是第三條成長曲線，六年後的營收貢獻事實表未涵蓋","ruling":"不可調和，採 B 側：管理層的長期利潤率目標打折，不當 H3 的依據。2024-10-08 承諾首批出貨 GB200 則有兌現（外資調查市占逾 44%），所以只採信一到兩季內能驗證的出貨指引","evidence_level":"逐字稿原話對年報實績","settle_metric":"年度毛利率與營業利益率","if_then":["若 FY2027 營業利益率 ≥4% → 提高對管理層長期指引的採信度，H3 提前驗證","若公司再提出沒有時程的長期利潤率目標 → 不放進情境樹"],"evidence_refs":[]},{"axis":"機櫃份額與同業擴產","cause":null,"prior_field":null,"side_a":"外資調查 2026 年 4 月鴻海機櫃出貨約 3,700 櫃，市占逾 44%；ASIC 伺服器市占逾四成；週產能目標從 1,000 櫃倍增到 2,000 櫃","side_b":"廣達追加百億資本支出，緯創在台美擴產並有新客戶下半年加入；ASIC 機櫃改寄售，客戶自供關鍵零件","ruling":"可調和，屬程度差異。份額領先是事實，但領先只換到量，沒有換到利潤率差距（對廣達 +0.17 個百分點，對緯創 −0.29 個百分點），護城河判持平","evidence_level":"外資通路調查與媒體轉述，未讀原頁","settle_metric":"外資通路調查機櫃市占；三家 TTM 營業利益率差距","if_then":["若市占連 2 個月低於 35% → 啟動 R1 的減碼檢查","若對廣達的營業利益率差距連 2 季擴大到 +0.5 個百分點以上 → 護城河方向可上調"],"evidence_refs":["competitive_share_entrants#1"]},{"axis":"最大客戶集中度","cause":null,"prior_field":null,"side_a":"年報匿名最大客戶占母公司銷貨從 54.03%（2024）降到 44.11%（2025）；AI 雲端客戶變多，管理層稱產品結構更平衡","side_b":"比重仍超過四成；彭博估立訊約負責 30% iPhone 訂單，鴻海未來兩年份額 55%–60%","ruling":"可調和。集中度下降是營收結構轉向雲端，不是丟單；但最大客戶自己的組裝份額正被分流，列入 R4 監測","evidence_level":"年報原文（母公司個別表）加上彭博研究轉述","settle_metric":"年報主要客戶占比；iPhone 組裝份額","if_then":["若下一份年報最大客戶占比低於 35%，且雲端占營收高於 55% → R4 降級","若最大客戶占比仍高於 40%，且組裝份額跌破 50% → R4 觸發，Bear 機率上調 5 個百分點"],"evidence_refs":["customer_concentration_credit#0","customer_second_source#1"]},{"axis":"證據品質","cause":null,"prior_field":null,"side_a":"本包標示的最新一季逐字稿，實際是 2020 年第一季法說","side_b":"2026Q2 法說內容只能從媒體與券商轉述取得（需求能見度改善、全年營業利益率高於 3.2%、資本支出年增三成以上）","ruling":"在 2026Q3 法說原文入包前無法裁決。管理層對寄售比重、營運資金回收時程的說法核對不到原話，現金轉換的判斷暫時以財報數字為準","evidence_level":"二手轉述","settle_metric":"下一季法說原文","if_then":["若下一季逐字稿確認營運資金回收時程（例如明年上半年營業現金流轉正）→ H2 的證據等級上調","若逐字稿迴避現金流提問 → 維持觀望"],"evidence_refs":[]},{"axis":"現在就買的最強論證","cause":null,"prior_field":null,"side_a":"FY1 13.1 倍、FY2 10.4 倍，PEG 約 0.5，殖利率約 3%，淨現金 2,198 億；FY1 共識三個月上修 4.23%，股價反而比前份低 16%；Base 情境五年後約 381 元（+57%），另有約 3% 殖利率","side_b":"盈餘建立在資本支出週期上，現金轉換連兩年低於 0.3，TTM 本益比在自身區間 95 分位；股價在 52 週均線之上，但長均線偏平","ruling":"買方論證成立一半：價格不是問題，問題在現金。等年報驗證的機會成本有限，因為 Bear 情境 −35% 的下檔，大於現在進場能多拿的那幾個百分點","evidence_level":"事實表數字","settle_metric":"FY2026 自由現金流","if_then":["若現金流條件提前在 2026Q3 季報出現（營業現金流單季轉正，且應收沒有再升）→ 提前重跑研究"],"evidence_refs":[]},{"axis":"估值與訊號（前份漂移）","cause":"價格變動","prior_field":["val","signal"],"side_a":"前份 2026-06-01：股價 289 元，估值結論偏貴，訊號 B","side_b":"本次股價 242.5 元（−16%），同期 FY1 共識上修；FY1 本益比 13.1 倍、FY2 10.4 倍，估值結論改為合理，訊號維持 B","ruling":"估值從偏貴改為合理，完全來自價格下跌與盈餘上修，基本面判斷沒變。訊號維持，因為現金轉換與週期位置都沒有改善","evidence_level":"事實表數字","settle_metric":"FY2 本益比","if_then":["若股價回到 289 元以上，而 FY2 共識沒有再上修 → 估值改回偏貴"],"evidence_refs":[]},{"axis":"價值陷阱判斷（前份漂移）","cause":"新證據","prior_field":["trap"],"side_a":"前份價值陷阱判黃，依據以預估為主","side_b":"本次維持黃，依據改為實績：2026Q2 單季自由現金流 −1,177 億，上半年約 −1,500 億；2024 與 2025 年自由現金流÷淨利 0.14 和 0.27","ruling":"結論不變，證據加重：現金轉換的弱點已經由季報證實，不再只是預估","evidence_level":"財報實績","settle_metric":"自由現金流÷淨利","if_then":["若 FY2026 自由現金流÷淨利 ≥0.3 → 價值陷阱可降為綠","若連三季 TTM 自由現金流為負 → 價值陷阱升為紅"],"evidence_refs":[]},{"axis":"新版流程補欄（前份漂移）","cause":"方法變動","prior_field":["moat_trend","runway_post_y5","archetype","cycle_position","p_bull_pct","p_bear_pct","max_dd_pct","rearm_trigger"],"side_a":"前份沒有給長抱裁決、角色、護城河方向、五年後跑道、商業模式分類、循環位置、情境機率、最大回撤、重新進場條件（皆為空值）","side_b":"本次依新版流程補齊：護城河持平、跑道中等、EMS/ODM、中循環、Bull 25%／Base 45%／Bear 30%、最大回撤 −35% 到 −55%、重新進場條件是 FY2026 自由現金流轉正且自由現金流÷淨利 ≥0.3","ruling":"補欄屬於方法變動，不是推翻前份的結論","evidence_level":"方法","settle_metric":null,"if_then":["若下次流程改變補欄口徑 → 同樣歸為方法變動，不算新證據"],"evidence_refs":[]},{"axis":"清倉與減碼門檻（新設）","cause":"方法變動","prior_field":null,"side_a":"前份沒有設清倉門檻、減碼門檻、重新進場條件（皆為空值）","side_b":"清倉：外資調查 AI 機櫃出貨市占連 2 個月低於 30%。減碼：季營業利益率連 2 季低於 3.0%。重新進場：FY2026 自由現金流轉正，且自由現金流÷淨利 ≥0.3","ruling":"新設理由：份額是數學上最大的單一敏感項，所以拿來當清倉線；營業利益率是價格戰最早顯現的地方，所以拿來當減碼線；現金轉換是這次進場的唯一約束，所以拿來當重新進場條件","evidence_level":"方法","settle_metric":"機櫃市占、季營業利益率、年度自由現金流","if_then":["若三個門檻中任一個在下次研究被修改 → 必須寫明舊門檻、新門檻與理由"],"evidence_refs":[]},{"axis":"Single Thing 唯一致命點（新設）","cause":"方法變動","prior_field":null,"side_a":"前份沒有設唯一致命點（空值）","side_b":"Single Thing：下一代 VR 機櫃量產時，主要雲端客戶把份額大幅改給廣達、緯創，或改寄售自建，鴻海機櫃市占從逾四成跌破三成","ruling":"新設。雲端網路占營收 51%，是共識 EPS 增量的主要來源，份額是情境樹裡最大的單一敏感項，比 337 調查或關稅更致命","evidence_level":"方法","settle_metric":"外資通路調查機櫃市占","if_then":["若市占連 2 個月低於 30% → 清倉"],"evidence_refs":[]},{"axis":"假設與風險門檻調整","cause":"方法變動","prior_field":null,"side_a":"前份 H1：2026 AI 機櫃出貨年增 ≥80%。H2：FY26 EPS ≥17。H3：FY+2 本益比不破 11 倍。R2：FCF÷淨利連 2 季 TTM 低於 0.3，且寄售占比未升","side_b":"本次 H1 改看全年營收 ≥10.5 兆與機櫃市占 ≥40%。H2 改看營業利益率 ≥3.5% 與自由現金流轉正。H3 改為五年內營業利益率 ≥4%。R2 改為 TTM 自由現金流連 2 季為負，且全年仍為負","ruling":"H3 的 11 倍門檻已經跌破（FY2 10.43 倍），但跌破來自股價下跌與盈餘上修，不代表論點失敗，估值改由情境樹處理。舊 R2 的 FCF÷淨利已低於 0.3，但 ASIC 改寄售讓寄售比重上升，條件沒有完整觸發，改成直接看現金。H1 公司稱機櫃出貨今年倍增，舊門檻在軌道上，改用每月可驗證的營收。H2 的 EPS 17 元已被共識 18.47 元超過，改看現金轉換","evidence_level":"方法加事實表數字","settle_metric":"全年營收、營業利益率、自由現金流","if_then":["若新門檻在下一份研究再調整 → 逐條寫出舊值、新值與理由"],"evidence_refs":[]}],"triggers":[{"n":1,"text":"2026 全年營收對照共識","type":"假設驗證","maps_to":"H1","metric":"全年合併營收","threshold":"≥10.5 兆","action":"未達 → H1 判削弱，Bear 機率上調到 35%","source_freq":"月營收公告（每月 5 日前後）","date":"2027-01"},{"n":2,"text":"2026 全年自由現金流","type":"假設驗證","maps_to":"H2","metric":"自由現金流、自由現金流÷淨利","threshold":"自由現金流 ≥0，且自由現金流÷淨利 ≥0.3","action":"達標 → 重跑研究，首倉上限 3%；未達 → 維持觀望","source_freq":"年報（每年 3 月）","date":"2027-03"},{"n":3,"text":"營業利益率連續下滑","type":"減碼","maps_to":"R1","metric":"季營業利益率","threshold":"連 2 季低於 3.0%","action":"若已持有，減碼一半","source_freq":"季報","date":null,"evidence_refs":["competitive_share_entrants#1"]},{"n":4,"text":"機櫃份額流失","type":"Single Thing","maps_to":"single_thing","metric":"外資通路調查 AI 機櫃出貨市占","threshold":"連 2 個月低於 30%","action":"清倉","source_freq":"外資通路調查（每月）","date":null},{"n":5,"text":"Vicor 專利 337 初裁","type":"風險","maps_to":"R5","metric":"ITC 初裁結果與受影響營收","threshold":"認定侵權並建議排除令，且受影響營收高於 5%","action":"停止加碼，重估受影響營收","source_freq":"ITC 公告、公司重大訊息","date":null,"evidence_refs":["regulatory_antitrust#2","lawsuit_class_action#0","major_events#1"]},{"n":6,"text":"重新進場條件","type":"估值rearm","maps_to":"H2","metric":"FY2026 自由現金流","threshold":"轉正，且自由現金流÷淨利 ≥0.3","action":"重跑研究，首倉上限 3%，分兩批","source_freq":"年報","date":"2027-03"},{"n":7,"text":"第三季財報複審","type":"複審日期","maps_to":"H2","metric":"營業利益率、營業現金流","threshold":"營業利益率 ≥3.5%，營業現金流轉正","action":"更新 H2 進度","source_freq":"季報","date":"2026-11"},{"n":8,"text":"關稅吸收失敗","type":"風險","maps_to":"R3","metric":"單季營業利益率","threshold":"新關稅生效後，單季低於 3%","action":"停止加碼，重估 Bear 機率","source_freq":"季報、美方公告","date":null,"evidence_refs":["reg_tariff_export#0","geo_supply_chain#0"]}],"kill_metrics":[{"metric":"外資通路調查 AI 機櫃出貨市占","bear_threshold":"低於 30%","window":"連 2 個月","source":"外資通路調查、季度法說","last_status":"ok"},{"metric":"季營業利益率","bear_threshold":"低於 3.0%","window":"連 2 季","source":"季報","last_status":"ok"},{"metric":"年度自由現金流","bear_threshold":"FY2026 與 FY2027 皆為負","window":"2 個會計年度","source":"年報現金流量表","last_status":"warning"},{"metric":"雲端網路產品月營收年增率","bear_threshold":"低於 0%","window":"連 3 個月","source":"月營收公告","last_status":"ok"}],"evidence_dismissed":[],"action_conditions":{"rearm_trigger":"FY2026 自由現金流轉正，且自由現金流÷淨利 ≥0.3（2027 年 3 月年報）","exec_line":"條件達成後重跑研究，首倉上限 3%，分兩批；等待期間股價回到 290 元以上不追；AI 機櫃市占連 2 個月低於 30% 就清倉","holding_cap":"3%"}},"decision_inputs":{"signal":"B","ma":"🟡","cycle_position":"中循環","cycle_verdict":"未觸發","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":false,"cycle_gates_pass":false,"qc49_inherit_prior":null,"wait_for_price":true,"wait_for_price_condition":"等 2026 全年報表確認自由現金流轉正、自由現金流÷淨利 ≥0.3；約束在現金，不在價格","qc48_result":null,"qc48_note":null},"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8w(原9)","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟡', moat_trend='→', week26=18.35, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='EMS/ODM', cycle_position='中循環', moat='C', moat_trend='→', cycle_gates_pass=False"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":false,"basis":"signal='B', val='🟡'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":true,"basis":"signal='B', val='🟡', ma='🟡'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='B', val='🟡', ma='🟡'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟡', ma='🟡'"},{"row":"8w","condition":"判斷者宣告 wait_for_price（價格合理但要等）→ 原 row9 進場改觀望（等價格）","hit":true,"basis":"wait_for_price=True, 等待條件='等 2026 全年報表確認自由現金流轉正、自由現金流÷淨利 ≥0.3；約束在現金，不在價格'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":null,"requires_critic":[]},"thesis":{"H":[{"id":"H1","text":"AI 機櫃需求延續到 2027 年，鴻海守住四成以上機櫃市占，營收跟得上共識","2y":"2026 全年營收 ≥10.5 兆，2027 年 ≥13 兆，機櫃市占 ≥40%","5y":null,"10y":null,"threshold":"2026 全年營收 ≥10.5 兆（共識 10.87 兆的約 97%）；2027 年營收 ≥13 兆（共識 13.99 兆的約 93%）；外資調查機櫃市占 ≥40%","source":"月營收公告、季度法說、外資通路調查","drift_rule":"營收 TTM 偏離共識連 2 季 ≥5% 判削弱，連 3 季 ≥10% 判反轉"},{"id":"H2","text":"成長轉成股東拿得到的現金：營業利益率守在 3.5% 以上，2026 下半年起自由現金流轉正","2y":"FY2026 全年營業利益率 ≥3.5%、自由現金流 ≥0；FY2027 自由現金流÷淨利 ≥0.3","5y":null,"10y":null,"threshold":"全年營業利益率 ≥3.5%；FY2026 自由現金流 ≥0；FY2027 自由現金流÷淨利 ≥0.3","source":"季報與年報現金流量表；公司全年營業利益率指引（高於 2025 年的 3.2%）","drift_rule":"TTM 營業利益率連 2 季低於 3.5% 判削弱；TTM 自由現金流連 3 季為負判反轉"},{"id":"H3","text":"從組裝廠走向 AI 基礎設施整合商：自製液冷、Busbar、連接器比重提高，五年內營業利益率升到 4% 以上，且不落後主要同業","2y":null,"5y":"FY2030 前 TTM 營業利益率 ≥4%，對廣達營業利益率差距 ≥0","10y":null,"threshold":"TTM 營業利益率 ≥4%（FY2030 前）；對廣達 TTM 營業利益率差距 ≥0","source":"季報、同業季報、法說揭露的自製零組件進度","drift_rule":"對廣達營業利益率差距連 4 季為負判削弱；連 6 季為負且差距擴大判反轉"}],"R":[{"id":"R1","text":"AI 機櫃商品化與價格戰：三家同步擴產，下一代機櫃份額重新分配","h_ref":"H1/H3","clock":"🔥","threshold":"季營業利益率連 2 季年減 ≥0.3 個百分點，或外資調查機櫃市占跌破 35%","evidence_refs":["competitive_share_entrants#1"]},{"id":"R2","text":"現金轉換持續落後：營運資金與資本支出吃掉盈餘","h_ref":"H2","clock":"⚡","threshold":"TTM 自由現金流連 2 季為負，且 2026 全年自由現金流仍為負","evidence_refs":[]},{"id":"R3","text":"地緣與關稅：中國產能比重高，北京限制設備與工程師外移，子公司曾被列入美方未經核實清單；產能資料多是 2021–2022 年的舊數字，現況事實表未涵蓋","h_ref":"H1/H2","clock":"🐢","threshold":"美方對中國或台灣組裝的伺服器加徵關稅，且鴻海單季營業利益率降到 3% 以下","evidence_refs":["geo_supply_chain#0","geo_supply_chain#2","geo_supply_chain#3","reg_tariff_export#0","reg_tariff_export#1"]},{"id":"R4","text":"最大客戶集中，以及 iPhone 組裝份額流向立訊","h_ref":"H1","clock":"🐢","threshold":"年報最大客戶占母公司銷貨仍高於 40%，且其組裝份額跌破 50%（彭博估目前 55%–60%）","evidence_refs":["customer_concentration_credit#0","customer_second_source#1"]},{"id":"R5","text":"Vicor 專利 337 調查：涉案電源模組若被下排除令，伺服器出貨需要改設計","h_ref":"H1","clock":"🔥","threshold":"ITC 初裁認定侵權並建議排除令，且公司揭露受影響營收高於 5%","evidence_refs":["regulatory_antitrust#2","major_events#1","lawsuit_class_action#0"]}],"single_thing":{"description":"下一代 VR 機櫃量產時，主要雲端客戶把份額大幅改給廣達、緯創，或改寄售自建，鴻海機櫃市占從逾四成跌破三成","why_fatal":"雲端網路占營收 51%，是 2026–2028 年共識 EPS 增量的主要來源。份額跌破三成，等於 FY2027–FY2028 的成長段消失，EPS 落回 Bear 路徑；數學上這是情境樹最大的單一敏感項","if_happens":"清倉，不等財報確認","how_monitor":"外資通路調查的月度機櫃出貨與市占、月營收雲端網路類別、季度法說 AI 機櫃出貨季增","probability":"15%（12–24 個月）"}},"appendix_a":{"growth_durability":5,"quality_score":6,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":10.43,"peg_fy2":0.39,"stress":{"pass":null,"total":null}},"eps_meta":{"base_eps_path":{"FY2025A":13.4,"FY2026E":18.47,"FY2027E":23.25,"FY2028E":27.39},"fy_end_month":12,"eps_basis":"稀釋 EPS（IFRS 報表）；共識取自 Koyfin 美元值，依 2026-10-08 匯率換算為新台幣"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"guidance","event":"第三季財報與法說：第四季與 2027 年展望、資本支出","impact":"高","watch":"營業利益率是否 ≥3.5%，營業現金流是否轉正"},{"date":"2026-11","date_precision":"month","type":"other","event":"10 月營收公告","impact":"中","watch":"雲端網路類別年增率"},{"date":"2026-12","date_precision":"quarter","type":"product","event":"VR 世代 AI 機櫃第四季加速出貨（外資預估）","impact":"高","watch":"機櫃出貨季增與市占"},{"date":"2027-03","date_precision":"month","type":"other","event":"2026 年報：全年自由現金流","impact":"高","watch":"自由現金流是否轉正，自由現金流÷淨利是否 ≥0.3"},{"date":null,"date_precision":null,"type":"regulatory","event":"ITC 337 調查（Vicor 專利）程序進展；時程事實表未涵蓋","impact":"中","watch":"初裁是否涉及伺服器電源模組"}]}
+```
+
+---
+
+## ⑤ 覆蓋面（程式判定，你回的 ⑤ 燈號會被覆寫）
+
+燈號 🟡：非核心軸無證據：ems_roic_asset_turnover_benchmark（ROIC 與資產週轉同業對比）（尾部風險或事件型，不擋）。
+
+⑤ 的 reason 只需評論：空軸的查詢詞是否切題、判斷有沒有交代缺口對結論的影響。
+
+---
+
+## 尾段：回覆格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```json
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
