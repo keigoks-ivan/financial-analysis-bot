@@ -290,7 +290,7 @@ def render_grp_board(payload: dict) -> str:
 成長閘＝FY+1 隱含 EPS 成長 ≥15% ｜ 上修閘＝FY+1 EPS 30 天修正 &gt;0（下修否決）｜ 位置閘＝站上 40 週線＋位置標籤。
 本期另有 {payload.get('grp_subfloor_n', 0)} 檔過三閘但未達市值，留在形狀欄。
 <b>這套準則比席位資格寬</b>（席位資格見 <a href="/engine/">席位總表</a>）；「軌別」欄的核心向／衛星向依護城河等級標示，
-與席位的核心／等待池無關。按上修幅度排序，只代表研究順序，進場仍走 DD 裁決＋板機。</div>
+與席位的核心／等待池無關。按上修幅度排序，只代表研究順序，進場仍走 DD 裁決＋時機燈。</div>
 <table><thead><tr><th class="left">Ticker</th><th class="left">產業</th><th>層</th>
 <th>成長閘</th><th>30 天修正</th><th class="left">位置閘</th><th>12M</th><th>軌別</th><th>DD池</th></tr></thead>
 <tbody>{''.join(trs)}</tbody></table>
@@ -336,7 +336,7 @@ def render(payload: dict) -> str:
 <div class="hero-sub">每週掃 S&amp;P 500、Nasdaq 100 與 S&amp;P 400 中型股（約 920 檔，不含小型股）。
 <b>主榜用三閘發現準則</b>（高成長 × 30 天 EPS 上修 × 位置適合，按上修幅度排），只排研究順序，
 <b>不是</b>席位的資格與排序（席位見 <a href="/engine/">席位總表</a>）。四個形狀欄從不同角度找候選：突破、循環轉折、動能、主題下沉。
-<b>這是研究導航，不是買入清單</b>：池外名字是補 DD 的候選，進場一律走 DD 裁決＋板機。</div>
+<b>這是研究導航，不是買入清單</b>：池外名字是補 DD 的候選，進場一律走 DD 裁決＋時機燈。</div>
 <div class="asof">價格日 {payload['as_of']} ｜ 母體 {payload['universe_n']} 檔（S&amp;P 500 ∪ NDX 100 ∪ S&amp;P 400 ∪ DD 池美國上市含 ADR；不含外國掛牌）
 ｜ 可算 {payload['scored_n']} 檔 ｜ 修正確認覆蓋 {covered['stage2_ok']}/{covered['stage2_cand']} 檔</div>
 </div>

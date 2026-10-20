@@ -172,7 +172,7 @@ NAV_SCRIPT = """<script>(function(){document.querySelectorAll('.imq-dd-btn').for
 # 自研究移入市場；每日簡報已暫停自 nav 移除（/briefing/ 歸檔頁仍可直達）。
 MENU = {
     # 2026-07-10 選股主控台整併（見 notes/site-internal/root/_consolidation_stock_console_20260710.md）：
-    # 精選榜／流程板機／席位排序（＋原駕駛艙總覽）四頁已收斂進單一 /cockpit/ 四分頁，
+    # 精選榜／選股流程／席位排序（＋原駕駛艙總覽）四頁已收斂進單一 /cockpit/ 四分頁，
     # 故下拉移除 picks／pipe／eng 三個舊條目，只留單一「選股主控台」入口。
     # 舊 URL 皆為活 redirect stub，外部書籤與外部 3 repo 舊 nav 仍可用。
     # 2026-08-20 選股入口整頓第二批：DD Screener／Momentum-5／QGM 美股／QGM 台股／
@@ -456,7 +456,7 @@ SKIP_FILES = {
     "dd-screener/pipeline.html",                # redirect stub -> /cockpit/#pipeline
     "engine/index.html",                        # redirect stub -> /cockpit/#seats
     "picks/_embed.html",                        # iframe 片段（精選榜分頁）
-    "dd-screener/_pipeline_body.html",          # iframe 片段（流程板機分頁）
+    "dd-screener/_pipeline_body.html",          # iframe 片段（選股流程分頁）
     "engine/_index_body.html",                  # iframe 片段（席位排序·席位總表子分頁）
     # 2026-07-10 engine 四子頁收編成 /cockpit/#seats 子分頁：
     # 舊 4 URL → redirect stub；builder 改產 nav-less _*_body 片段（供子分頁 iframe）。

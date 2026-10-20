@@ -46,7 +46,6 @@ BOARD_TXT = ROOT / "docs" / "engine" / "board.txt"
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 CANDIDATES_JSON = ROOT / "docs" / "picks" / "candidates.json"
 TENBAGGER_JSON = ROOT / "docs" / "picks" / "tenbagger.json"
-SOP_FUNNEL_JSON = ROOT / "docs" / "dd-screener" / "sop-funnel" / "latest.json"
 SCORECARD_JSON = ROOT / "docs" / "flowmap" / "data" / "scorecard.json"
 OUT_HTML = ROOT / "engine_weekly_mail.html"
 OUT_SUBJECT = ROOT / "engine_weekly_mail_subject.txt"
@@ -487,7 +486,6 @@ def main() -> int:
     # ── 讀取其餘資料源（缺檔不致命，段落各自降級）──
     candidates = load_json(CANDIDATES_JSON)
     tenbagger = load_json(TENBAGGER_JSON)
-    sop_funnel = load_json(SOP_FUNNEL_JSON)
     scorecard = load_json(SCORECARD_JSON)
     board_lines: list[str] = []
     try:
@@ -503,8 +501,6 @@ def main() -> int:
 
     own_board = arena.get("own_board") or []
     mech_nodd = [r for r in own_board if r.get("src") != "dd-pool" and r.get("pass")]
-
-    today_signals = (sop_funnel or {}).get("today_signals") if sop_funnel is not None else None
 
     # ── §subject 用數字 ──
     n_core, n_sat = len(core_cur), len(sat_cur)
@@ -621,12 +617,6 @@ def main() -> int:
     else:
         section_challengers += render_alert_box("neutral", "本週 0 檔",
                                                   "本週無「無 DD 機械過閘」名單成員。")
-    if isinstance(today_signals, list):
-        n_sig = len(today_signals)
-        sig_txt = "、".join(s.get("ticker", "—") for s in today_signals[:8]) if n_sig else ""
-        section_challengers += (f'<div style="font-size:12.5px;color:{TEXT_GRAY};margin-top:6px;">'
-                                 f'另外，機械板機（狀態機訊號）本週觸發 {n_sig} 檔進場訊號'
-                                 f'{("：" + escape(sig_txt)) if sig_txt else "（本週無新板機）"}。</div>')
 
     # ── §BREAKOUT PICKS（爆發正式榜＋晚段守門）──
     section_breakout = section_header("BREAKOUT PICKS", "爆發正式榜與晚段守門")

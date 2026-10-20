@@ -1073,7 +1073,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
 
     `rev_data_as_of`／`price_as_of`（daily 全量重跑，見 grp.py 檔頭 v5 段）：上修
     （池排序鍵）只在新的 Koyfin xlsx 匯入時真的變動，價格／距歷史新高／時機燈每天
-    都變——頁首分開標兩個日期，讀者才看得出「排序」與「板機」各自的資料新鮮度。
+    都變——頁首分開標兩個日期，讀者才看得出「排序」與「時機燈」各自的資料新鮮度。
     `lamp_as_of`／`last_rotation_date`：「核心席」區塊的兩行新鮮度戳記，見
     _pool_section_lines()。"""
     seat_code = {r["ticker"]: f"C{j}" for j, r in enumerate(core_seats, 1)}
@@ -1617,7 +1617,7 @@ def _shared_thead_cells() -> list[str]:
         '同值先比隱含成長率，再比盈餘殖利率。滑鼠移到數字上可看基準快照日、'
         '錨定方式與綜合對照分（只供對照，不決定排序）">上修%（財報後）</th>',
         '<th title="距離還原權息全歷史最高收盤價（不是 52 週高）；'
-        '負值＝現價低於史上最高。板機：此欄 ≥−3% 且站上 200 日線＝突破帶（時機燈綠燈）">距歷史新高%</th>',
+        '負值＝現價低於史上最高。時機燈：此欄 ≥−3% 且站上 200 日線＝突破帶（綠燈）">距歷史新高%</th>',
         '<th class="bw-l" title="距下次財報天數；<=7 天標記——分數為財報前快照">下次財報</th>',
         '<th class="bw-l" title="只是旗標，不擋資格：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均、'
         '三年平均、現值三者皆 ≥15%（看一致性，不是單一數字）">耐久</th>',
@@ -1681,7 +1681,7 @@ def _row_cells(v: dict, lamp_map: dict) -> list[str]:
         ath_bits.append("5 年高代理（全歷史查詢失敗）")
     dist_ath_title = "｜".join(ath_bits) or "資料缺"
     lamp_title = (f'{lamp.get("why", "")}｜階段：{stage_txt}（RS／階段僅供參考，不影響燈號）'
-                 + (f'｜板機：{lamp["trigger"]}' if lamp.get("trigger") else ""))
+                 + (f'｜時機燈亮燈條件：{lamp["trigger"]}' if lamp.get("trigger") else ""))
     lamp_cell = f'<span class="bw-pill" title="{escape(lamp_title)}">{escape(lamp.get("label", "—"))}</span>'
     return [
         f'<td class="bw-l"><strong>{_tk_link(v)}</strong></td>',
@@ -2535,7 +2535,7 @@ def main() -> int:
                   "體質拒絕／衰退 ⛔／DD 迴避／融券占流通股比 >10% 皆整體排除（v5 無衛星軌可退）。排序＝"
                   "上修（財報後錨定，缺值退回三月）降冪，tie-break implied_growth_pct、再 tie-break 盈餘"
                   "殖利率——池＝資格全過名字中上修 ≥5% 者，own_score_v4 五百分位對照分保留一輪僅供 "
-                  "hover 對照、不參與排序。板機＝時機燈（距還原權息全歷史最高收盤價與 200 日線）：綠＝"
+                  "hover 對照、不參與排序。時機燈（距還原權息全歷史最高收盤價與 200 日線）：綠＝"
                   "距新高 ≥−3% 且站上 200 日線；黃＝−10%~−3%；紅＝距新高 <−10% 或跌破 200 日線；橘＝過熱"
                   "（12-1 月動能 >150%）但仍在突破帶附近，倉位對應（v5.3，2026-10-18 起）綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0"
                   "（黃燈由 0.5 改 1.0，依 v7-backtest SeatSizing_Results.md 與 SeatSizing_Results_v2.md；登記判準形式上未過，持有人依兩次回測決定改）。核心＝池內亮燈者依上修取前 5，每週六（台北）重算、可空席（v5.2）"
