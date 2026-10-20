@@ -372,7 +372,19 @@ def do_stage0(ctx):
     axes = _load_json(run_dir / "axes.json")
     if isinstance(axes, dict):
         axes = axes.get("axes") or []
-    axis_ids = [a.get("id") for a in axes if a.get("id")]
+    # 2026-10-20 持有人核准：archetype 明確不適用的軸（coverage-axes.md not_applicable_by_archetype，
+    # dd_evidence axes 帶 not_applicable_reason）不派 agent、不進證據庫沿用計畫，直接寫 not_applicable＋理由。
+    na_axes = [a for a in axes if a.get("id") and a.get("not_applicable_reason")]
+    na_ids = set(a["id"] for a in na_axes)
+    axis_ids = [a.get("id") for a in axes if a.get("id") and a.get("id") not in na_ids]
+    na_part = parts_dir / "na_coverage.json"
+    if na_axes:
+        _atomic_write_json(na_part, {"coverage": {a["id"]: {
+            "status": "not_applicable", "queries_run": [], "findings": [],
+            "note": a["not_applicable_reason"], "na_source": "archetype"} for a in na_axes}})
+    elif na_part.exists():
+        na_part.unlink()
+    st["not_applicable_axes"] = sorted(na_ids)
 
     new_q = _new_quarter(ctx, evidence)
     move = _price_move_pct(ctx, evidence)
@@ -1404,6 +1416,83 @@ def _mechanical_extra_section(mid_items):
     return "\n".join(lines)
 
 
+def _judged_archetype(ctx):
+    """判斷者歸的 archetype（answers.q1_business.verdict_values.archetype.primary）；沒有回 None。"""
+    try:
+        v = ((((_load_json(ctx.run_dir / "judgment.json").get("answers") or {}).get("q1_business") or {})
+              .get("verdict_values") or {}).get("archetype"))
+    except Exception:
+        return None
+    v = v.get("primary") if isinstance(v, dict) else v
+    return v if isinstance(v, str) and v else None
+
+
+def _coverage_gate(ctx, st):
+    """閘 ⑤ 覆蓋面燈號由程式判定（2026-10-20 持有人核准）：任一核心軸 none → 🔴；只有非核心軸 none →
+    🟡；全 found／not_applicable → 🟢。核心軸清單在 coverage-axes.md，規則實作在 dd_evidence.coverage_gate。
+    結果存 st["coverage_gate"]；算不出來（evidence 缺檔等）回 None，⑤ 沿用閘 agent 的判定並記 coverage_gate_error。"""
+    de = ddreport.dd_evidence
+    try:
+        evidence = _load_json(ctx.run_dir / "evidence.json")
+        matrix = de.load_matrix()
+        archetype = evidence.get("archetype_hint") or ctx.manifest.get("archetype")
+        cg = de.coverage_gate(evidence.get("coverage") or {}, matrix, archetype)
+        # plan 時的 archetype 只來自 --archetype／前份 DD／預設；判斷者另歸類時，他那類的專屬核心軸沒被採證。
+        # 只在 reason 註明，不改燈號（缺的是 plan 設定，不是證據品質）。
+        judged = _judged_archetype(ctx)
+        if judged and judged != archetype:
+            have = set(a.split("__", 1)[0] for a in (evidence.get("coverage") or {}))
+            missing = sorted(de.core_axis_ids(matrix, judged) - de.core_axis_ids(matrix, archetype) - have)
+            if missing:
+                cg["archetype_mismatch"] = {"plan": archetype, "judged": judged, "core_not_gathered": missing}
+                cg["reason"] += "plan 時 archetype 為「{0}」、判斷者歸「{1}」，{1} 的專屬核心軸未採證（不計燈號）：{2}。".format(
+                    archetype, judged, "、".join(missing))
+        # stage0 的 _drop_undated_findings 會丟掉沒有 as_of 的 finding，整軸因此記 none（ALAB／LEVI 的競爭份額軸）：
+        # 核心軸缺證據若是這樣來的，標出來讓指揮者判斷是補證還是破例（原檔在 parts/*.predrop）。
+        du = ((ctx.manifest.get("stages") or {}).get("stage0") or {}).get("dropped_undated") or {}
+        dropped = dict((a, du[a]) for a in cg["core_none"] if a in du)
+        if dropped:
+            cg["core_none_dropped_undated"] = dropped
+            cg["reason"] += "其中 {0} 在 stage0 被丟掉無 as_of 的 finding（{1} 條），未必真的沒證據，原檔見 parts/*.predrop。".format(
+                "、".join(sorted(dropped)), sum(dropped.values()))
+    except Exception as exc:
+        st["coverage_gate_error"] = str(exc)[:300]
+        return None
+    st["coverage_gate"] = cg
+    ctx.save()
+    return cg
+
+
+def _coverage_gate_section(cg):
+    """給閘 agent 看的程式判定結果（它的 ⑤ 燈號會被覆寫，只需評論）。"""
+    if not cg:
+        return None
+    return ("## ⑤ 覆蓋面（程式判定，你回的 ⑤ 燈號會被覆寫）\n\n"
+            "燈號 {0}：{1}\n\n⑤ 的 reason 只需評論：空軸的查詢詞是否切題、判斷有沒有交代缺口對結論的影響。".format(
+                cg["light"], cg["reason"]))
+
+
+def _apply_coverage_light(ctx, items, cg):
+    """閘 agent 回的 ⑤ 換成程式判定：燈號與 reason 主體由程式擁有，閘的評論附在後面；
+    燈號與閘 agent 回的不同時記 manifest.mechanical_overrides（寫法同 decision_inputs.ma）。"""
+    out, seen = [], False
+    for it in items:
+        if it["item"] == "⑤":
+            seen = True
+            if not it["light"].startswith(cg["light"]):
+                rec = {"path": "$.gate_result.⑤.light", "judge": it["light"], "program": cg["light"]}
+                lst = ctx.manifest.setdefault("mechanical_overrides", [])
+                if rec not in lst:
+                    lst.append(rec)
+            comment = it["reason"].strip()
+            it = dict(it, light=cg["light"], reason=cg["reason"] + (" 閘評論：" + comment if comment else ""))
+        out.append(it)
+    if not seen:
+        out.insert(min(4, len(out)), {"item": "⑤", "light": cg["light"], "judgment_path": "evidence.json#coverage",
+                                      "reason": cg["reason"]})
+    return out
+
+
 def _gate_once(ctx, st, idx):
     """跑一次閘（機械閘＋opus 閘）。回 (ok_spawn, clean_items, reds, yellows)。
 
@@ -1424,7 +1513,9 @@ def _gate_once(ctx, st, idx):
         except Exception as exc:  # 機械閘本身不該讓整個 gated 段炸掉；記下來、退回純 opus 閘
             st.setdefault("mechanical_gate_error", []).append(str(exc)[:500])
         ctx.save()
-    b = bundle.build_gate(ctx.run_dir, cards_dir=CARDS_DIR, extra_section=_mechanical_extra_section(mid_items))
+    cg = _coverage_gate(ctx, st)  # ⑤ 由程式判定，先算好讓閘 agent 看到
+    extra = "\n\n".join(s for s in (_mechanical_extra_section(mid_items), _coverage_gate_section(cg)) if s) or None
+    b = bundle.build_gate(ctx.run_dir, cards_dir=CARDS_DIR, extra_section=extra)
     st.setdefault("bundle_bytes", []).append(b.get("bytes"))
     r = sp.oneshot_stream(b["prompt_path"], ctx.gate_model, agents_dir / "gate_{0}.json".format(idx), ctx.run_dir,
                           budget_cache_read=GATE_BUDGET)
@@ -1443,6 +1534,9 @@ def _gate_once(ctx, st, idx):
             continue
         llm_clean.append({"item": str(it.get("item", "")), "light": str(it.get("light", "")),
                           "judgment_path": str(it.get("judgment_path", "")), "reason": str(it.get("reason", ""))})
+    if cg:
+        llm_clean = _apply_coverage_light(ctx, llm_clean, cg)
+        ctx.save()
     clean = list(mech_items) + llm_clean
     reds = [x for x in clean if x["light"].startswith("🔴")]
     yellows = [x for x in clean if x["light"].startswith("🟡")]
@@ -1528,6 +1622,14 @@ def do_gated(ctx):
         st["red"] = len(reds)
         st["yellow"] = len(yellows)
         st["rounds"] = idx
+        cg = st.get("coverage_gate") or {}
+        if cg.get("light") == "🔴":
+            # 核心軸缺證據是 stage0 的洞，patch 只能改判斷、補不了證據：不跑 patch／再閘，直接停下（2026-10-20）
+            lines = ["閘紅燈 {0} 項（⑤ 覆蓋面由程式判定為紅；patch 輪補不了證據，不跑 patch／再閘）".format(len(reds))]
+            lines += ["- {0} {1} {2}".format(x["item"], x["judgment_path"], x["reason"]) for x in reds if x["item"] != "⑤"]
+            lines.append("補證後重跑：先刪 facts/{0}/axes/<軸>.json（證據庫存查會沿用 none），再不帶 --resume 重跑".format(ctx.ticker))
+            lines.append("核心軸缺證據：" + "、".join(cg.get("core_none") or []))
+            return ctx.stage_end("gated", False, "\n".join(lines))
         if not reds:
             return ctx.stage_end("gated", True, "🔴 0 🟡 {0}（第 {1} 輪）".format(len(yellows), idx))
         if idx >= max_rounds:

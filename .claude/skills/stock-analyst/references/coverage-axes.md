@@ -22,9 +22,20 @@
 - **`per_segment: true`**（僅 `end_markets` 一軸）：實際軸數由 evidence 的 `numbers.segments`（採集包
   的營收段清單）或 `dd_evidence.py --segments a,b,c` 展開，`axis_id` 變成 `end_markets__{slug}`。
   展開前只在此檔留一個模板列。
-- **`na_allowed`**：預設 `false`（不得用「不適用」逃避查證）。目前唯一 `true` 的是
-  `regulatory_antitrust`——反壟斷對多數小型股/利基市場確實不適用，其餘軸即使查無所獲也必須落
-  `status:"none"` 附 `queries_run`，不得標 `not_applicable`。
+- **`na_allowed`**：預設 `false`（不得用「不適用」逃避查證）。目前 `true` 的有三軸：
+  `regulatory_antitrust`——反壟斷對多數小型股/利基市場確實不適用；`customer_second_source`、
+  `customer_concentration_credit`（2026-10-20 新增）——金融、藥廠、零售商的客戶是分散的終端對象，
+  採證 agent 實際上在 note 寫「本軸不適用此業態」卻因本旗標為 false 被驗證擋下、只能回 `none`。
+  其餘軸即使查無所獲也必須落 `status:"none"` 附 `queries_run`，不得標 `not_applicable`。
+  `none` 專指「軸適用、但搜尋查無來源」，`not_applicable` 專指「軸對此業態根本不成立」，兩者不得混用。
+- **`not_applicable_by_archetype`**（2026-10-20，持有人核准）：依 archetype 明確不適用的軸與理由。
+  `dd_evidence.py axes` 在該軸物件上帶 `not_applicable_reason`，`dd2/run.py` stage0 對這類軸不派
+  採證 agent，直接寫 `status:"not_applicable"`＋理由（`na_source:"archetype"`）。只列明確不適用的；
+  拿不準就不列，交給採證 agent 依 `na_allowed` 自報。清單理由見檔末「核心軸與不適用軸」節。
+- **`core_axes`**（2026-10-20，持有人核准）：核心軸＝`common` 共用核心＋`by_archetype` 該類加項。
+  閘 ⑤ 覆蓋面燈號由程式依 evidence.json 的 coverage 算（`dd_evidence.py::coverage_gate`）：任一核心軸
+  none（含 pending／缺席）→ 🔴；只有非核心軸 none → 🟡；全部 found／not_applicable → 🟢。
+  `axes` 子命令在核心軸物件上帶 `core: true`。清單與理由見檔末。
 - **`queries` 是起點不是配額**（2026-09-10 規則精簡，B8）：12 個 common 軸**全掃不變**，但**撤掉「每軸獨立湊查詢次數」的下限**——同一次搜尋的來源可同時支撐多個軸，`queries_run` 只要求誠實記錄你**實際下過**的查詢（至少 1 條，不得為湊數編造未下過的詞）。有暴露、異常、來源衝突或重要缺料才加深該軸；`not_applicable` 仍須基於業務或來源本身，**快取過期或來源失敗不算「無事」**。
 - **`na_needs_reason`**：全部軸皆 `true`——即使 `na_allowed` 的軸，標 `not_applicable` 時 `note` 仍必須
   非空且講出「為何不適用」（如「市值 $8B、無反壟斷判例先例，2026 年無主管機關動作」），不得只寫
@@ -82,7 +93,7 @@
         "{TICKER} {COMPANY} largest customer second source OR in-house 2026"
       ],
       "affects": ["moat_trend", "thesis.R", "decision_inputs.bear"],
-      "na_allowed": false,
+      "na_allowed": true,
       "na_needs_reason": true
     },
     {
@@ -103,7 +114,7 @@
       ],
       "hint_tw": "台股年報「主要銷貨客戶」表會列占營收 10% 以上的客戶（常匿名成甲／乙客戶），先找年報或法說簡報。",
       "affects": ["thesis.R", "decision_inputs.bear", "triggers"],
-      "na_allowed": false,
+      "na_allowed": true,
       "na_needs_reason": true
     },
     {
@@ -497,6 +508,80 @@
         "na_needs_reason": true
       }
     ]
+  },
+  "core_axes": {
+    "common": [
+      "competitive_share_entrants",
+      "supply_demand_durability",
+      "end_markets",
+      "customer_concentration_credit"
+    ],
+    "by_archetype": {
+      "品質複利成長": [],
+      "循環/商品": ["cyclical_supply_discipline_capacity", "cyclical_inventory_price_position"],
+      "未獲利高成長": ["unprofitable_dilution_trajectory", "unprofitable_path_to_profitability"],
+      "金融": ["financial_capital_credit_cycle"],
+      "轉機/特殊情境": ["turnaround_catalyst_timeline", "turnaround_liquidation_floor"],
+      "受監管公用/穩定內需": ["regulated_rate_case_roe"],
+      "EMS/ODM": ["ems_utilization_capex_cycle"]
+    }
+  },
+  "not_applicable_by_archetype": {
+    "品質複利成長": [],
+    "循環/商品": [],
+    "未獲利高成長": [],
+    "金融": [
+      {
+        "id": "customer_second_source",
+        "reason": "金融業（銀行、保險、券商、資產管理）的客戶是大量分散的存款人、借款人與投保人，沒有「最大客戶導入第二供應商或自製」這件事；本軸對此業態不適用，由 archetype 設定直接標記，未派採證。"
+      },
+      {
+        "id": "customer_concentration_credit",
+        "reason": "金融業營收來自大量分散的零售與機構客戶，沒有前幾大客戶占營收比重可看；借款人集中與客戶信用惡化併入 financial_capital_credit_cycle 軸。本軸對此業態不適用，由 archetype 設定直接標記，未派採證。"
+      }
+    ],
+    "轉機/特殊情境": [],
+    "受監管公用/穩定內需": [],
+    "EMS/ODM": []
   }
 }
 ```
+
+## 核心軸與不適用軸（2026-10-20，持有人核准；閘 ⑤ 程式規則的資料）
+
+**為什麼要有核心軸**：閘 ⑤ 原本由閘 agent 自由判空軸，同型空軸判得不一致（10-11 八檔台股各空 3～7 軸全放行，
+6515 只空反壟斷一軸卻被擋紅）。改成程式規則：核心軸缺證據才紅，其餘空軸只標黃。
+
+**核心軸怎麼定**：決定生意好壞、而且缺了判斷層就沒有東西可以接的軸列核心；尾部風險或事件型的軸列非核心
+（缺了是資料缺口，不是生意看不懂）。
+
+| 範圍 | 核心軸 | 理由 |
+|:---|:---|:---|
+| 共用 | `competitive_share_entrants` | 份額消長是護城河方向的直接證據，① 競爭惡化只能從這裡接 |
+| 共用 | `supply_demand_durability` | 緊缺或過剩是結構還是週期，決定 Bear 機率與估值倍數，② 只能從這裡接 |
+| 共用 | `end_markets` | 營收段的需求動能，是成長假設 H 的來源 |
+| 共用 | `customer_concentration_credit` | B2B 的客戶集中度；金融業由下表標不適用，B2C／藥廠／零售由採證 agent 依 `na_allowed` 回 `not_applicable` |
+| 循環/商品 | `cyclical_supply_discipline_capacity`、`cyclical_inventory_price_position` | 循環股的生意好壞就是供給紀律與價格週期位置；`cyclical_prior_downcycle_behavior` 是歷史類比，毛利歷史已在事實表，列非核心 |
+| 未獲利高成長 | `unprofitable_dilution_trajectory`、`unprofitable_path_to_profitability` | 存活條件（稀釋、轉正）；`unprofitable_nrr_rule40_band` 是同業帶排名，數字另有來源，列非核心 |
+| 金融 | `financial_capital_credit_cycle` | 信用循環位置是金融股的主軸；`financial_regulatory_capital_rules` 是政策風向，列非核心 |
+| 轉機/特殊情境 | `turnaround_catalyst_timeline`、`turnaround_liquidation_floor` | 轉機論點只剩「催化劑是真的」與「資產底站得住」兩件事 |
+| 受監管公用/穩定內需 | `regulated_rate_case_roe` | 費率案與准許 ROE 決定獲利天花板 |
+| EMS/ODM | `ems_utilization_capex_cycle` | 稼動率與資本支出週期決定 ROIC 稀釋風險；`ems_roic_asset_turnover_benchmark` 是同業排名，數字在 `numbers.peer_financials`，列非核心 |
+| 品質複利成長 | （無加項） | 預設尺只用共用核心 |
+
+**非核心軸（全 archetype）**：`customer_second_source`、`regulatory_antitrust`、`reg_tariff_export`、
+`geo_supply_chain`、`substitute_technology`、`channel_business_model_shift`、`major_events`、
+`capital_markets_pricing`。前七條是尾部風險或事件型；`capital_markets_pricing` 是估值輸入，
+priced-in 由 ④ 讀事實表的共識與現價判斷，不靠這一軸。
+
+**不適用軸（程式在 stage0 直接標，不派 agent）**：目前只列金融的 `customer_second_source` 與
+`customer_concentration_credit`。其餘 archetype 都沒列，原因：藥廠、零售商都落在「品質複利成長」，沒法用
+archetype 區分；「受監管公用/穩定內需」含 staple，客戶集中與自有品牌替代仍然適用；循環、未獲利、轉機、
+EMS 的客戶端軸都適用。這幾類若實際不適用，由採證 agent 依 `na_allowed` 回 `not_applicable` 附理由。
+
+**已知限制**：核心軸與不適用軸依 `evidence.json` 的 `archetype_hint`（plan 時由 `--archetype`、前份 DD、
+預設「品質複利成長」依序決定）查表，不是判斷者事後歸的 archetype。plan 時 archetype 與判斷者不同時
+（2026-09～10 的 61 個 v20 run：16 個走預設、26 個沿用前份 DD、19 個由 CLI 指定；有閘結果的 53 份裡 9 份判斷者
+另歸類），判斷者歸類的專屬軸沒被採證，程式只在 ⑤ 的 reason 註明，不改燈號。不適用軸只對 plan 時已知的 archetype 生效。
+
+**凍結**：本清單上線即凍結至下輪校準，期間不因單一案例改核心軸（見 `knowledge/rule_ledger.md` 2026-10-20 列）。
