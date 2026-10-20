@@ -469,6 +469,7 @@ SKIP_FILES = {
     "engine/_board_body.html",                  # 純片段（選股看板 v2，嵌 cockpit 陣容區與擂台頁；無 html/head/body）
     "engine/_cards_body.html",                  # iframe 片段（決策卡子分頁）
     "engine/_scoreboard_body.html",             # iframe 片段（記分板子分頁）
+    "engine/_research_body.html",               # iframe 片段（出場研究子分頁，2026-10-20；產生器在 v7-backtest tools/build_seat_exit_research_page.py）
     "long-track/_scoreboard_body.html",         # iframe 片段（實單前瞻記分板，嵌 /long-track/#live；2026-09-05）
     # 2026-08-20 研究區整併第一階段：/研究/ 群 7 頁收斂成 /t/ + /id/ 兩個主控台。
     # 3 個 redirect stub 與 4 個 nav-less iframe 片段一律不注入站 nav（原因同上）。
