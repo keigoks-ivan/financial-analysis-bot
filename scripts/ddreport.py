@@ -5752,13 +5752,34 @@ def _push_head_via_worktree(commit_sha, tickers=None, date=None):
 
     push_r = _git(["push", "origin", "HEAD:main"], cwd=wt)
     if push_r.returncode != 0:
+        push_out = (push_r.stdout or "") + (push_r.stderr or "")
+        if tickers and _qc_only_unpublished_dd_links(push_out):
+            # 彙總檔是在本機 working tree 重建的，同一棵樹裡還沒發布的其他 DD 也被列進去，
+            # pre-push QC 判死連結（2026-10-20 MU／2303.TW／2383.TW 同一 worktree 先後 finish）。
+            # 改在 origin/main 只放自己的檔重建彙總檔再推。
+            print("[rescue] pre-push QC：彙總檔連到尚未發布的 DD，改在 origin/main 只放自己的檔重建")
+            _git(["reset", "-q", "--hard", "origin/main"], cwd=wt)
+            try:
+                return _rescue_aggregate_conflict(commit_sha, wt, tickers, date)
+            finally:
+                _cleanup_worktree(wt)
         _git(["worktree", "remove", "--force", str(wt)])
-        return False, "push 被擋（可能 pre-push QC gate）：{0}".format(
-            ((push_r.stdout or "") + (push_r.stderr or "")).strip()
-        )
+        return False, "push 被擋（可能 pre-push QC gate）：{0}".format(push_out.strip())
 
     _git(["worktree", "remove", "--force", str(wt)])
     return True, ""
+
+
+_QC_ERROR_COUNT_RE = re.compile(r"(\d+) error\(s\) — QC gate FAILED")
+_QC_DEAD_DD_LINK_RE = re.compile(r'dead internal link "[^"]*" -> docs/dd/(?:brief/)?[A-Z]+_[^ /]+\.html \(missing\)')
+
+
+def _qc_only_unpublished_dd_links(output):
+    """pre-push QC 的錯誤是否全是「連到 docs/dd/ 底下不存在的 DD／BRIEF 檔」。
+    其他錯誤（標點、別的死連結）照舊 HOLD，不走重建。"""
+    m = _QC_ERROR_COUNT_RE.search(output or "")
+    n = len(_QC_DEAD_DD_LINK_RE.findall(output or ""))
+    return bool(m) and n > 0 and int(m.group(1)) == n
 
 
 def _finish_source_path(run_dir, source_name):

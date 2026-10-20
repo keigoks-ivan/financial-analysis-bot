@@ -640,3 +640,49 @@ def test_batch_sync_passes_batch_tickers_to_push_helper(tmp_path, monkeypatch):
 
     assert ddreport._sync_batch_site(rows, "20261020") == 0
     assert seen == [("cafe5678", ["ZAAA", "ZBBB"], None)]
+
+
+_QC_DEAD_DD = ('❌ 1 error(s) — QC gate FAILED:\n'
+               '  docs/research/_body.html:1216: dead internal link "/dd/DD_2303.TW_20261020.html#decision" '
+               '-> docs/dd/DD_2303.TW_20261020.html (missing)\n')
+
+
+def test_qc_only_unpublished_dd_links():
+    assert ddreport._qc_only_unpublished_dd_links(_QC_DEAD_DD)
+    two = _QC_DEAD_DD.replace("1 error(s)", "2 error(s)") + \
+        '  docs/x.html:3: dead internal link "/dd/brief/BRIEF_MU_20261020.html" -> docs/dd/brief/BRIEF_MU_20261020.html (missing)\n'
+    assert ddreport._qc_only_unpublished_dd_links(two)
+    # 混了別種錯誤（標點、非 DD 死連結）→ 不走重建
+    assert not ddreport._qc_only_unpublished_dd_links(_QC_DEAD_DD.replace("1 error(s)", "2 error(s)"))
+    assert not ddreport._qc_only_unpublished_dd_links(
+        '❌ 1 error(s) — QC gate FAILED:\n  docs/a.html:1: dead internal link "/x/y.html" -> docs/x/y.html (missing)\n')
+    assert not ddreport._qc_only_unpublished_dd_links("QC FAIL: CJK followed by half-width punctuation")
+
+
+def test_clean_cherry_pick_but_qc_dead_dd_link_goes_rescue(rescue_env):
+    # 2026-10-20：cherry-pick 沒衝突，但本機重建的彙總檔連到同一棵樹裡還沒發布的 DD，pre-push QC 擋
+    env = rescue_env
+    base = _run_git(env["work"], "rev-parse", env["sha"] + "~1").strip()
+    _run_git(env["work"], "push", "-f", "-q", "origin", base + ":main")  # 遠端退回 base → cherry-pick 乾淨
+    _run_git(env["work"], "fetch", "-q", "origin", "main")
+    hooks = env["tmp"] / "hooks"
+    hooks.mkdir()
+    hook = hooks / "pre-push"
+    hook.write_text(
+        "#!/bin/sh\n"
+        "while read lref lsha rref rsha; do\n"
+        "  if git show \"$lsha:docs/research/_body.html\" | grep -q local; then\n"
+        "    printf '%s' '" + _QC_DEAD_DD.replace("'", "") + "' >&2\n"
+        "    exit 1\n"
+        "  fi\n"
+        "done\n"
+        "exit 0\n")
+    hook.chmod(0o755)
+    _run_git(env["work"], "config", "core.hooksPath", str(hooks))
+
+    ok, reason = ddreport._push_head_via_worktree(env["sha"], tickers=["ZZZ"], date="20261020")
+    assert ok, reason
+    assert env["show"]("docs/dd/DD_ZZZ_20261020.html") == "<html>ZZZ</html>"
+    assert env["show"]("docs/research/_body.html") == "<p>2</p>"  # 在 origin 只放自己的檔重建
+    assert "DD_ZZZ_20261020.html" in env["show"]("docs/dd/INDEX.md")
+    _assert_worktrees_gone(env)
