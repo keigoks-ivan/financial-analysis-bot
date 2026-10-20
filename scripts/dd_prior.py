@@ -112,7 +112,34 @@ DRIFT_WATCH = [
 ]
 
 
-def find_dd_files(ticker_norm: str):
+def ticker_key(t) -> str:
+    """代號比對鍵：大寫、去點；台股 .TWO 併入 .TW（同一代號不會同時在上市與上櫃）。
+    檔名與 id-meta／dd-meta 對同一檔的寫法不一（DD_2317_／DD_2308TW_／DD_3037.TW_，檔內都是 2317.TW），
+    只拿來比對，不拿來當 q.py／id-meta 的查詢字串。"""
+    k = str(t or "").strip().upper().replace(".", "")
+    return re.sub(r"^(\d{4,6}[A-Z]?)TWO$", r"\1TW", k)
+
+
+def iter_dd_by_code(code):
+    """(YYYYMMDD, 是否完整版, Path, 檔名代號, 檔內 dd-meta ticker 或 None)，升冪（同日完整版在後）。
+    只預篩檔名：數字開頭的代號用前綴（2317→DD_2317_／DD_2317TW_／DD_2317.TW_），其餘要求去點後相等。"""
+    base = ticker_key(code)
+    m0 = re.match(r"\d+", base)
+    out = []
+    for f in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True):
+        m = _FNAME_RE.match(f.name)
+        if not m:
+            continue
+        fk = ticker_key(m.group("ticker"))
+        if not (fk.startswith(m0.group(0)) if m0 else fk == base):
+            continue
+        mt = (dd_meta_reader.read_dd_meta(f) or {}).get("ticker")
+        out.append((m.group("date"), f.name.startswith("DD_"), f, m.group("ticker"), mt or None))
+    out.sort(key=lambda x: (x[0], x[1]))
+    return out
+
+
+def find_dd_files(ticker: str):
     """[(YYYYMMDD, Path), ...] ascending by date, for this ticker only.
 
     2026-09-07：候選集合改走 dd_meta_reader.iter_dd_paths（含 docs/dd/brief/
@@ -121,15 +148,13 @@ def find_dd_files(ticker_norm: str):
     把它當作不存在，繼續錨定在更舊的完整版上（P1-3）。同 ticker 同日期若完整版
     與快速版並存，排序讓完整版排在後面，使 build_prior_dd() 的 cands[-1] 選中
     完整版——與 dd_meta_reader.iter_latest_dd_metas 的「同日完整版優先」慣例一致。
+
+    2026-10-20：比對鍵改為檔內 dd-meta 的 ticker（檔名只預篩，老檔沒有 dd-meta 才退回檔名）。
+    舊版比的是檔名代號，且 ticker 先被去點：DD_2317_（檔內 2317.TW）、DD_3037.TW_ 都找不到，
+    10-19 起新檔名帶點，下一輪必漏。
     """
-    out = []
-    for f in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True):
-        m = _FNAME_RE.match(f.name)
-        if m and m.group("ticker") == ticker_norm:
-            is_full = f.name.startswith("DD_")
-            out.append((m.group("date"), is_full, f))
-    out.sort(key=lambda x: (x[0], x[1]))
-    return [(date_str, path) for date_str, _is_full, path in out]
+    want = ticker_key(ticker)
+    return [(d, f) for d, _full, f, ft, mt in iter_dd_by_code(ticker) if ticker_key(mt or ft) == want]
 
 
 def _read(f: Path) -> str:
@@ -324,8 +349,8 @@ def find_12m_ago(files, ref_date_str):
     return {"path": str(f.relative_to(REPO_ROOT)), "date": d, "days_from_365d_mark": best_diff}
 
 
-def build_prior_dd(ticker_norm: str, before_date: str | None) -> dict:
-    files = find_dd_files(ticker_norm)
+def build_prior_dd(ticker: str, before_date: str | None) -> dict:
+    files = find_dd_files(ticker)
     if not files:
         return {"status": "no_prior_dd"}
 
@@ -371,9 +396,11 @@ def _run_q(args_list, timeout=120):
     )
 
 
-def build_ledger(ticker_norm: str) -> dict:
+def build_ledger(ticker: str) -> dict:
+    """2026-10-20：吃原始代號（2317.TW、6857.T），不再用去點的 2317TW——knowledge 帳本的 entity／aliases／
+    falsifiers 都寫帶點的 2330.TW，去點後台股決策史、別名（2330.TW→TSM）、證偽門檻全查不到（3017.TW 0 筆→3 筆）。"""
     try:
-        _run_q([ticker_norm])  # triggers decisions/graph/settlement rebuild-if-stale
+        _run_q([ticker])  # triggers decisions/graph/settlement rebuild-if-stale
     except Exception as e:
         return {"status": "unavailable", "error": f"q.py invoke failed: {e}"}
 
@@ -385,7 +412,7 @@ def build_ledger(ticker_norm: str) -> dict:
 
         graph = json.loads(graph_path.read_text(encoding="utf-8"))
         aliases = graph.get("aliases", {})
-        canonical = aliases.get(ticker_norm, ticker_norm)
+        canonical = aliases.get(ticker, ticker)
         members = {canonical} | {a for a, c in aliases.items() if c == canonical}
 
         decisions = []
@@ -436,12 +463,12 @@ def build_ledger(ticker_norm: str) -> dict:
             fdata = json.loads(falsifiers_path.read_text(encoding="utf-8"))
             falsifiers = [
                 it for it in fdata.get("items", [])
-                if (it.get("ticker") or "").upper() == ticker_norm
+                if ticker_key(it.get("ticker")) == ticker_key(ticker)
             ]
 
         usernote = None
         try:
-            p = _run_q(["--note", ticker_norm])
+            p = _run_q(["--note", ticker])
             text = (p.stdout or "").strip()
             usernote = text[:TEXT_CAP] if text else None
         except Exception:
@@ -518,9 +545,11 @@ def extract_id_facts(html: str, skill_version: str) -> dict:
 _CONV_RANK = {"high": 3, "mid": 2, "low": 1, None: 0}
 
 
-def build_canonical_id(ticker_norm: str) -> dict:
+def build_canonical_id(ticker: str) -> dict:
+    """2026-10-20：吃原始代號——id-meta related_tickers 寫的是 3711.TW／6857.T，
+    去點的 3711TW 比不到，所有台股／日股的 canonical_id 都是 gap。"""
     try:
-        matches = dd_meta_reader.find_ids_for_ticker(ID_DIR, ticker_norm)
+        matches = dd_meta_reader.find_ids_for_ticker(ID_DIR, ticker)
     except Exception as e:
         return {"status": "gap", "error": str(e)}
     if not matches:
@@ -654,13 +683,13 @@ def main():
     ap.add_argument("--drive-ticker", default=None, help="Koyfin Drive 資料夾用原始 ticker（如 2330.TW）")
     args = ap.parse_args()
 
-    ticker_norm = normalize_ticker(args.ticker)
+    ticker = args.ticker.strip().upper()
     drive_ticker = args.drive_ticker or args.ticker
 
     result = {
-        "prior_dd": build_prior_dd(ticker_norm, args.date),
-        "ledger": build_ledger(ticker_norm),
-        "canonical_id": build_canonical_id(ticker_norm),
+        "prior_dd": build_prior_dd(ticker, args.date),
+        "ledger": build_ledger(ticker),
+        "canonical_id": build_canonical_id(ticker),
         "transcripts": build_transcripts(drive_ticker),
     }
 

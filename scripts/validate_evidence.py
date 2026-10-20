@@ -327,7 +327,7 @@ def check_axis(axis_id, axis_obj, matrix):
         if len(qr) < 1:
             fails.append(f"[{axis_id}] status=none 但沒有任何 queries_run 紀錄（12 軸全掃須可稽核）")
         elif len(qr) < 2:
-            warns.append(f"[{axis_id}] status=none 且 queries_run 僅 1 條（不擋，供覆蓋面掃描判讀）")
+            warns.append(f"(info) [{axis_id}] status=none 且 queries_run 僅 1 條（不擋，供覆蓋面掃描判讀）")
 
     elif status == "not_applicable":
         note = c.get("note") or ""
