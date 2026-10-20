@@ -3,18 +3,24 @@
  *
  * 定位（設計稿 §0）：純瀏覽器端把既有 JSON 接起來畫，不落新名單檔、不新增
  * build 腳本輸出。所有資料一律 fetch 既有端點：
- *   /engine/arena.json         v4 對照分／席位／DD 裁決／ROIC／FCF（own_board 母體；
- *                              v5 起真正的排序鍵是財報後上修，own_board.score 僅供對照）
+ *   /engine/arena.json         綜合對照分／席位／DD 裁決／ROIC／FCF（own_board 母體；
+ *                              席位依財報後上修排序，own_board.score＝綜合對照分只供對照）
  *   /stages/data/lamp.json     全母體時機碼（今日）
  *   /stages/data/latest.json  轉強～領先四段的天數／來路／RS 等細節（S1–S4 才有）
  *   /stages/data/history.json 250 個交易日的每日階段字串（算 Δ／本週新進／命中率）
  *   /dd-screener/latest.json  DD 裁決（日更，優先於 arena 週更快照）＋財務數字備援
  *
- * 品質閘＝v2（scripts/engine/grp.py::quality_gate）：ROIC≥15% 且 FCF≥10%，
- * 或資本週期豁免（ROIC≥25% 且 FCF≥0）。core_seats／sat_seats／core_bench 三個
- * 席位陣列自帶算好的 grp.quality（優先直接讀）；own_board／dd-screener 只給
- * 原始 roic／fcf 數字，本檔在瀏覽器端用同一條公式重算（README 對照見設計稿 §2
- * 「若欄位不存在則用最接近的既有欄位」——own_board 沒有 grp.quality 子物件）。
+ * 品質閘＝scripts/engine/grp.py::quality_gate 的美股規則：ROIC ≥15% 且自由現金流
+ * 利潤率 >0（剛好 0 不過）；ROIC 與自由現金流都缺＝金融股另軌，不判過不過。
+ * core_seats／sat_seats／core_bench 三個席位陣列自帶算好的 grp.quality（優先直接
+ * 讀）；own_board／dd-screener 只給原始 roic／fcf 數字，本檔在瀏覽器端用同一條公式
+ * 重算（README 對照見設計稿 §2「若欄位不存在則用最接近的既有欄位」——own_board
+ * 沒有 grp.quality 子物件）。grp.quality_gate 的規則一改，qualityFromRoicFcf 要跟著改。
+ *
+ * 本檔只讀美股選股引擎的輸出。台股（.TW）不在美股引擎母體內（grp.market_ok），
+ * 品質閘在台股席位頁另算（scripts/build_seats_tw.py：營業現金流利潤率 ≥10%，或
+ * ROIC ≥25% 且營業現金流利潤率 ≥0），用的資料本檔沒有讀，所以 dd-screener 裡的
+ * .TW 名字不在這裡判品質。
  *
  * 四格徽章「同一檔在任何頁面長得一樣」（§3）：本檔自帶固定色盤（imq-badge.css
  * 的 --qtm-* token），不吃各主頁自己的設計系統變數。
@@ -24,7 +30,8 @@
   var IMQ = global.IMQBadge = global.IMQBadge || {};
 
   // ── 常數 ──────────────────────────────────────────────────────────
-  var Q_ROIC_MIN = 15, Q_FCF_MIN = 10, Q_ROIC_EXEMPT = 25;
+  var Q_ROIC_MIN = 15, Q_FCF_POS_MIN = 0;   // 同 grp.py Q_ROIC_MIN／Q_FCF_POS_MIN
+  var EXCLUDED_SUFFIXES = [".TW"];          // 同 grp.py EXCLUDED_SUFFIXES（美股引擎不收的掛牌）
   var STAGE_LABEL = { S0: "弱勢", S1: "轉強", S2: "築底", S5: "高檔整理", S3: "收縮完成", S4: "領先", S9: "過渡" };
   // S5 高檔整理（2026-09-09 owner decision）介於 S2 築底與 S3 收縮完成之間，色階
   // 也介於 sec（S2）與 pos（S3/S4）之間，故給它自己的 accent-muted token
@@ -60,23 +67,30 @@
     }).catch(function () { return null; });
   }
 
-  // ── 品質閘（scripts/engine/grp.py::quality_gate 的瀏覽器端重算，見檔頭說明）─
+  // ── 品質閘（scripts/engine/grp.py::quality_gate 美股規則的瀏覽器端重算，見檔頭說明）─
+  // 過＝ROIC ≥15% 且自由現金流利潤率 >0（剛好 0 不過）。沒有豁免，exempt 恆為 false。
   function qualityFromRoicFcf(roic, fcf) {
     if (roic == null && fcf == null) {
       return { pass: null, why: [], exempt: false, roic: null, fcf: null };
     }
-    var base = (roic != null && roic >= Q_ROIC_MIN) && (fcf != null && fcf >= Q_FCF_MIN);
-    var exempt = !base && (roic != null && roic >= Q_ROIC_EXEMPT) && (fcf != null && fcf >= 0);
+    var roicOk = roic != null && roic >= Q_ROIC_MIN;
+    var fcfOk = fcf != null && fcf > Q_FCF_POS_MIN;
     var why = [];
-    if (!base && !exempt) {
-      if (roic == null || roic < Q_ROIC_MIN) {
-        why.push("ROIC " + (roic == null ? "缺" : (fmt1(roic) + "%，差 " + fmt1(Q_ROIC_MIN - roic) + " 個百分點")));
-      }
-      if (fcf == null || fcf < Q_FCF_MIN) {
-        why.push("FCF " + (fcf == null ? "缺" : (fmt1(fcf) + "%，差 " + fmt1(Q_FCF_MIN - fcf) + " 個百分點")));
-      }
+    if (!roicOk) {
+      why.push("ROIC " + (roic == null ? "缺" : (fmt1(roic) + "%，差 " + fmt1(Q_ROIC_MIN - roic) + " 個百分點")));
     }
-    return { pass: !!(base || exempt), why: why, exempt: exempt, roic: roic, fcf: fcf };
+    if (!fcfOk) {
+      why.push("自由現金流利潤率 " + (fcf == null ? "缺" : (fmt1(fcf) + "%，需大於 0")));
+    }
+    return { pass: roicOk && fcfOk, why: why, exempt: false, roic: roic, fcf: fcf };
+  }
+  function marketOk(ticker) {
+    var t = String(ticker || "");
+    for (var i = 0; i < EXCLUDED_SUFFIXES.length; i++) {
+      var sfx = EXCLUDED_SUFFIXES[i];
+      if (t.length >= sfx.length && t.slice(-sfx.length) === sfx) return false;
+    }
+    return true;
   }
   function qualityBucketKey(q) {
     if (!q || q.pass == null) return "none";
@@ -163,7 +177,8 @@
         if (!r || !r.ticker) return;
         // dd-screener 日更、比 arena 週更快照新鮮，DD 裁決優先用它
         idx.dd[r.ticker] = { verdict: r.dca_verdict || null, dd_path: r.dd_path || null, dd_tag: null, source: "dd-screener" };
-        if (!idx.quality[r.ticker]) {
+        // .TW 名字的品質閘在台股席位頁另算（見檔頭），這裡留空＝無品質資料。
+        if (!idx.quality[r.ticker] && marketOk(r.ticker)) {
           idx.quality[r.ticker] = qualityFromRoicFcf(r.roic, r.fcf);
           idx.quality[r.ticker].source = "dd-screener";
         }
@@ -274,14 +289,14 @@
     return '<i class="qtm-warn-dot" title="' + esc(w.title) + '">⚠</i>';
   }
 
-  // ── 四格內容（品質／v4 對照分／時機／DD）──────────────────────────────
+  // ── 四格內容（品質／綜合對照分／時機／DD）────────────────────────────
   function qualityCellHTML(idx, ticker) {
     var q = idx.quality[ticker];
     var warn = qualityWarnFor(idx, ticker);
     if (!q || q.pass == null) return { cls: "q-mut", label: "無資料", sub: "還沒有財務資料可判，不是未過" };
     if (q.pass) {
       return {
-        cls: "q-pos", label: q.exempt ? "過（資本週期豁免）" : "過",
+        cls: "q-pos", label: "過",
         sub: warn ? warn.title : "", warn: warn
       };
     }
@@ -330,6 +345,8 @@
   function renderPopupBody(idx, ticker) {
     var qc = qualityCellHTML(idx, ticker);
     var own = idx.ownScore[ticker];
+    // 不合格名字在 universe_board 的分數是佔位 0.0；真分數最低＝100／檔數 > 0
+    if (own != null && own <= 0) own = null;
     var singleYear = idx.gMethod[ticker] === "FY1→FY2 單年";
     var t = timingCellHTML(idx, ticker);
     var prev = prevStageInfo(idx, ticker);
@@ -340,9 +357,9 @@
     html += popupRow("品質", chip(qc) + (qc.warn ? ('<i class="qtm-warn-dot" title="' + esc(qc.warn.title) + '">⚠</i>') : ""),
                      qc.sub ? esc(qc.sub) : "");
     html += popupRow(
-      "v4 對照分",
+      "綜合對照分",
       own == null ? "—" : ("<b>" + fmt1(own) + "</b>" + (seat ? (" " + esc(SEAT_LABEL[seat])) : "")),
-      (singleYear ? "單年成長法　" : "") + "own_score_v4 百分位對照，v5 不用於排序"
+      (singleYear ? "單年成長法　" : "") + "上修、動能、成長、品質、盈餘殖利率五項排名百分位的平均，只供對照，不決定排序"
     );
     html += popupRow("時機", chip(t), prev ? ("來自" + esc(prev.label) + "，" + prev.days + " 天前") : "");
     html += popupRow("DD 裁決", chip(d), (d.tag && d.tag !== d.label) ? esc(d.tag) : "");
@@ -446,8 +463,8 @@
       return a < b ? -1 : (a > b ? 1 : 0);
     });
   }
-  // 本週清單專用排序：席位標記（C／S／B）優先，同層再依 v4 對照分排序（僅供排序穩定，
-  // 不是 v5 實際排序鍵）——與 sortTickers 共用同一邏輯，只多一層「有沒有席位」的優先鍵。
+  // 本週清單專用排序：席位標記（C／S／B）優先，同層再依綜合對照分排序（只為了排序穩定，
+  // 不是席位的排序鍵）——與 sortTickers 共用同一邏輯，只多一層「有沒有席位」的優先鍵。
   function sortTickersSeatFirst(idx, list) {
     return list.slice().sort(function (a, b) {
       var sa = idx.seat[a] ? 1 : 0, sb = idx.seat[b] ? 1 : 0;
@@ -602,7 +619,7 @@
     if (!el) return;
     el.classList.add("qtm-root");
     el.innerHTML = '<div class="qtm-matrix"><div class="qtm-empty">載入中…</div></div>';
-    // 三態母體：board＝席位榜（own_board，約 60 檔）／research＝研究母體（universe_board，
+    // 三態母體：board＝席位榜（own_board，最多 60 檔）／research＝研究母體（universe_board，
     // 約 277 檔，cockpit 預設）／all＝全市場（lamp.json，約 1,400 檔，階段雷達頁預設）。
     var state = {
       universe: opts.universe === "all" ? "all" : (opts.universe === "board" ? "board" : "research"),
@@ -797,9 +814,10 @@
           return "<li>" + esc(STAGE_LABEL[code]) + "：" + esc(STAGE_DESC[code]) + "</li>";
         }).join("");
       var uniN = idx.universeN != null ? idx.universeN : "約 277";
+      var boardN = idx.boardN != null ? idx.boardN : "最多 60";
       return (
         '<details class="qtm-rules" open><summary>規則與注意事項</summary><div class="qtm-rules-body">' +
-        "<p><b>欄的意思</b>：品質過＝ROIC 15% 以上且自由現金流率 10% 以上（重資本擴張期豁免：ROIC 25% 以上且自由現金流不為負；金融股不判定）；" +
+        "<p><b>欄的意思</b>：品質過＝ROIC 15% 以上，且自由現金流為正（利潤率大於 0，剛好 0 不算）；金融股不判定。" +
         "品質未過＝差哪一條，點徽章看差多少；無品質資料＝沒有財務資料可判，不是未過。</p>" +
         "<p><b>列的意思</b>：每一段一行，過渡＝不符合以上任何一段的殘差態（資料不足、流動性不夠或分類不到），預設收合、可展開查看。</p>" +
         "<ul>" + stageLines + "</ul>" +
@@ -811,15 +829,16 @@
         "<p><b>不限格子的小標</b>：代號旁若掛著「DD 進場・品質未過」，是 DD 判斷過進場、但現在財務數字過不了品質閘的名字，任何格子都可能出現，完整名單見上方本週清單③論點矛盾。</p>" +
         "<p><b>標記圖例</b>：C／S／B＝核心席／等待池／候補，數字是席次序；外框實線＝進場、空心＝觀望、虛線＝無 DD、劃線＝迴避；" +
         "底線＝本週新進此格；Δ＝較 5 個交易日前的家數變化；「更多」可展開看完整名單。</p>" +
-        "<p><b>母體切換</b>：席位榜（現任與候補，約 60 檔）／研究母體（DD 池美股加品質池加缺三年成長預估的隊列，約 " + esc(String(uniN)) + " 檔——" +
+        "<p><b>母體切換</b>：席位榜（現任與候補，" + esc(String(boardN)) + " 檔）／研究母體（DD 池美股加品質池加缺三年成長預估的隊列，約 " + esc(String(uniN)) + " 檔——" +
         "席位不用先有 DD，但成長預估要是三年期，只有單年預估的才排在隊列）／" +
         "全市場（約 1,400 檔）。海外雙掛牌名字（如日股、KL 掛牌）沒有階段資料，一律落在過渡。</p>" +
         "<p><b>命中率怎麼算</b>：算的是進入某格後，第 60 個交易日在哪一段、期間曾到過的最高段；品質用今天的判定回推，不是進入當時的舊資料。" +
         "樣本數低於 20 標「樣本不足」。轉強格另外附一組對照——同樣深回檔但當天沒有轉強的股票，比較兩邊誰的後續表現好（對照資料不足會標明）。" +
         "這些數字描述過去，不是預測。</p>" +
         "<p><b>更新時間</b>：階段（縱軸）每個交易日美股收盤後更新，目前資料日 " + esc(idx.lampAsOf || "—") + "；" +
-        "品質、v4 對照分每日隨選股引擎更新，核心席為月頻輪動（僅硬否決可中途換人），目前資料日 " +
+        "品質、綜合對照分每日隨選股引擎更新，目前資料日 " +
         esc(idx.arenaAsOf ? String(idx.arenaAsOf).slice(0, 10) : "—") + "；" +
+        "核心席每週六（台北）依週五收盤重選，週中燈號轉紅只影響倉位，席位等週六再判；" +
         "DD 裁決隨新報告發布更新，目前資料日 " + esc(idx.ddAsOf || "—") + "。</p>" +
         "<p class=\"qtm-rules-close\">名單只回答「看誰」，不回答「買不買」與「何時」。</p>" +
         "</div></details>"
@@ -946,7 +965,7 @@
         var rows = STAGE_ORDER.slice();
         if (state.expandS9) rows.push("S9");
         var gridHtml = '<div class="qtm-gh"></div>' +
-          '<div class="qtm-gh">品質過<small>ROIC≥15% 且 FCF≥10%（或資本週期豁免）</small></div>' +
+          '<div class="qtm-gh">品質過<small>ROIC ≥15% 且自由現金流 &gt;0</small></div>' +
           '<div class="qtm-gh">品質未過</div>' +
           '<div class="qtm-gh">無品質資料<small>還沒有財務資料可判，不是未過</small></div>';
         rows.forEach(function (stageCode) {
