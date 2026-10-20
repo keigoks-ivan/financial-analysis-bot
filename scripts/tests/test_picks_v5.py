@@ -196,7 +196,6 @@ def test_veto_excludes_ticker_entirely(tmp_path, monkeypatch):
     all_tickers = ({r["ticker"] for r in out["official"]}
                    | {r["ticker"] for r in out["not_in_pool"]}
                    | {r["ticker"] for r in out["buyable"]}
-                   | {r["ticker"] for r in out["waiting"]["yellow"]}
                    | {r["ticker"] for r in out["waiting"]["red"]})
     assert "VETOED" not in all_tickers
     assert "CLEAN" in all_tickers

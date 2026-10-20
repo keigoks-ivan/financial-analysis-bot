@@ -31,8 +31,8 @@ scripts/engine/build_arena._flat_view()（GRP 席位表本尊的同一份函式�
 不重寫 grp_score／durable_5y_v5／timing_lamp／pool_sort_key 任何一條規則，只換
 ①市值帶（$10億–$200億，非 ≥$200億）②不設核心席／不做月頻輪動（本頁「只看不進
 倉位」，見 _embed.html）。輸出 schema 見 main() 尾端 payload 字面：`official`＝池
-（依上修降冪排序，同 grp.pool_sort_key）；`buyable`＝池中時機燈綠/橘者；`waiting`＝
-池中其餘者依燈號分 yellow/red 兩組；`not_in_pool`＝資格閘全過但上修未達 +5% 者
+（依上修降冪排序，同 grp.pool_sort_key）；`buyable`＝池中時機燈亮著者（綠／黃／橘，與席位入席同一組燈號）；`waiting`＝
+池中其餘者（燈號未亮，只有 red 一組）；`not_in_pool`＝資格閘全過但上修未達 +5% 者
 （收合複審用）。無 `seat_cap`（v5 無核心席概念，池不設上限）。
 
 CADENCE（v5 起改為每日，取代舊版月頻 21 天 cadence guard）
@@ -327,15 +327,14 @@ def main():
     funnel["資格閘過但上修未達 5%（收合複審，不進池）"] = len(not_in_pool_rows)
 
     official_out = [to_out_row(r, caps) for r in pool_rows]
-    buyable_out = [row for row in official_out if (row.get("lamp") or {}).get("code") in ("green", "hot")]
+    buyable_out = [row for row in official_out if (row.get("lamp") or {}).get("code") in arena.LIT_LAMP_CODES]
     buyable_tickers = {row["ticker"] for row in buyable_out}
     waiting_rows = [row for row in official_out if row["ticker"] not in buyable_tickers]
-    waiting_yellow = [row for row in waiting_rows if (row.get("lamp") or {}).get("code") == "yellow"]
     waiting_red = [row for row in waiting_rows if (row.get("lamp") or {}).get("code") == "red"]
     not_in_pool_out = [to_out_row(r, caps) for r in not_in_pool_rows]
 
-    funnel["時機燈 綠/橘（可買）"] = len(buyable_out)
-    funnel["時機燈 黃（接近新高）"] = len(waiting_yellow)
+    funnel["時機燈亮（可買：綠／黃／橘）"] = len(buyable_out)
+    funnel["　其中 黃燈（接近新高）"] = sum(1 for row in buyable_out if (row.get("lamp") or {}).get("code") == "yellow")
     funnel["時機燈 紅（拉回中）"] = len(waiting_red)
 
     as_of = latest_doc.get("as_of") or datetime.now(TW8).strftime("%Y-%m-%d")
@@ -366,8 +365,8 @@ def main():
                  "（品質閘×耐久一致性×三年成長×站上52週線×財報後上修否決）跑在 "
                  "$10億–$200億市值帶——GRP 席位地板之下、零重疊是設計。池＝資格全過"
                  "且財報後上修（缺值退回三月）≥+5% 者，依上修降冪排序（同值 tie-break "
-                 "implied_growth_pct、再 tie-break 盈餘殖利率）。可買＝池中時機燈綠/橘"
-                 "者；等待池依燈號分接近新高（🟡）／拉回中（🔴）。倉位對應（v5.3，2026-10-18 "
+                 "implied_growth_pct、再 tie-break 盈餘殖利率）。可買＝池中時機燈亮著"
+                 "者（綠／黃／橘）；等待池＝燈號未亮的拉回中（🔴）。倉位對應（v5.3，2026-10-18 "
                  "起）綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0，黃燈由 0.5 改 1.0，依 v7-backtest "
                  "SeatSizing_Results_TW_Small.md；登記分類為「無法分辨」，是持有人依回測知情決定"
                  "改，非登記判準通過。本組只看不進倉位，"
@@ -379,7 +378,7 @@ def main():
                  "dd_smallcap 觀察名單，與主 dd-screener 池同 ticker 時主池列優先。"),
         "official": official_out,
         "buyable": buyable_out,
-        "waiting": {"yellow": waiting_yellow, "red": waiting_red},
+        "waiting": {"red": waiting_red},
         "not_in_pool": not_in_pool_out,
     }
 
@@ -399,7 +398,7 @@ def main():
     print(f"[build_tenbagger] 資料不足：未在池覆蓋={no_screener_data}　市值未知={cap_unknown}　"
           f"帶外（cap 已知但不在 $10億-$200億）={out_of_band}")
     print(f"[build_tenbagger] 池（official）={len(official_out)}　可買={len(buyable_out)}　"
-          f"等待池 🟡={len(waiting_yellow)}　🔴={len(waiting_red)}　"
+          f"等待池 🔴={len(waiting_red)}　"
           f"品質過閘上修未達5%={len(not_in_pool_out)}")
 
     def _fmt(row):
@@ -410,9 +409,6 @@ def main():
 
     print("[build_tenbagger] 可買：")
     for row in buyable_out:
-        print(f"    {_fmt(row)}")
-    print("[build_tenbagger] 等待池 🟡接近新高：")
-    for row in waiting_yellow:
         print(f"    {_fmt(row)}")
     print("[build_tenbagger] 等待池 🔴拉回中：")
     for row in waiting_red:

@@ -21,14 +21,14 @@ v1.0（2026-04-18）於 2026-07-07 退役（三處根本矛盾：機械超漲止
 |---|---|---|---|
 | 核心 | 複利長抱 | ≤5 檔，單檔 ≤10%（個股部淨值） | 統一裁決＝進場＋角色＝核心；GRP 席位 |
 | 衛星·結構 | runway 🟢 數倍股 | 單檔 ≤5% | bull×≥2、runway 🟢；統一裁決＝進場 |
-| 衛星·循環 | QC-42 循環時機 | 單檔 ≤3% | cyclical-track 提名＋統一裁決（含附錄 B 循環鏡頭）＋sop-funnel 板機 |
+| 衛星·循環 | QC-42 循環時機 | 單檔 ≤3% | cyclical-track 提名＋統一裁決（含附錄 B 循環鏡頭）＋時機燈 |
 
 一檔一軌。現金＝殘差式，硬性下限 5%、無上限（bottom-up，benchmark 不直接決定現金水位）。個股部整體目標 5–10 檔。
 
 ## 席位與排序語言
 
 - **席位排序一律 GRP 三閘**（`scripts/engine/grp.py`：高成長 × EPS 上修 × 股價位置，按上修幅度排序，寧缺勿濫）。**禁 IRR / EV5y 主排序**（EV5y 只作 tiebreak）。
-- 聚合層名單使用鐵律（2026-07-11 拍板）：**多層交集＝高信心觀察池；層間分歧＝研究隊列**。名單只回答「看誰」，不回答「買不買」與「何時」——買不買走 DD 統一裁決 → 決策三錨 → sop-funnel 板機，PM 不縮短這條鏈。
+- 聚合層名單使用鐵律（2026-07-11 拍板）：**多層交集＝高信心觀察池；層間分歧＝研究隊列**。名單只回答「看誰」，不回答「買不買」與「何時」——買不買走 DD 統一裁決 → 決策三錨 → 時機燈（engine `grp.timing_lamp()`，/cockpit/「時機怎麼判定」；2026-10-20 取代 sop-funnel 板機），PM 不縮短這條鏈。
 
 ## 白話呈現
 
@@ -44,7 +44,7 @@ v1.0（2026-04-18）於 2026-07-07 退役（三處根本矛盾：機械超漲止
 6. **動作分級輸出**（每一條建議必須引用來源）：
    - **thesis 級處置候選**：monitor red flag 或統一裁決翻面 → 建議先 spawn `industry-thesis-critic` ＋ `python knowledge/q.py {T}` ＋ `--note {T}`（決策三錨），錨齊了才談減清。
    - **trim**：超上限/集中度/估值極端 → trim 回目標倉（引長抱分軌，禁清倉語言）。
-   - **加碼/新進候選**：統一裁決進場＋GRP 席位＋sop-funnel 板機狀態齊 → 列候選與觸發條件；板機未開 → 只列 standby。
+   - **加碼/新進候選**：統一裁決進場＋GRP 席位＋時機燈亮著 → 列候選與觸發條件；時機燈未亮 → 只列 standby。
    - **維持**：無變化者一行帶過。
 7. **Override 留痕**：L1 sizing / L2 horizon / L3 information（強制標「應重跑 stock-analyst {T}」）皆附 reversal condition；L4 thesis 禁止（唯一出路＝重跑 DD）。
 
@@ -65,7 +65,7 @@ v1.0（2026-04-18）於 2026-07-07 退役（三處根本矛盾：機械超漲止
 | position-thesis-monitor | 週掃 triage（被動、廣） | PM 的輸入 |
 | industry-thesis-critic | 決策當下深度冷讀（1 ID） | PM 動部位前必 spawn（repo CLAUDE.md 規則） |
 | stock-analyst 統一裁決 | 個股 direction 唯一權威 | PM 只引用，不生產 |
-| sop-funnel | 進場時機板機 | PM 不繞過；板機未開只 standby |
+| 時機燈（engine `grp.timing_lamp()`） | 進場時機 | PM 不繞過；燈未亮只 standby。sop-funnel 頁照跑，只供參考 |
 | GRP | 席位排序 | PM 的排序語言 |
 
 ## 規則治理

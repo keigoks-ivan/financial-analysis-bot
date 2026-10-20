@@ -209,7 +209,9 @@ def test_cyclical_track_data_consumers_and_weekly_job_untouched():
     weekly = _read(WF / "weekly-fundamental-refresh.yml")
     assert "run: python scripts/build_cyclical_track.py" in weekly
     assert "docs/dd-screener/cyclical-track.json" in weekly
-    assert "cyclical-track.json" in _read(DOCS / "cockpit" / "index.html")  # 陣容表的等待池位置閘還在讀
+    assert "cyclical-track.json" in _read(SCRIPTS / "build_pipeline_page.py")  # 漏斗總覽頁的循環軌區塊還在讀
+    assert "cyclical-track.json" in _read(ROOT / ".claude" / "skills" / "portfolio-manager" / "SKILL.md")  # 席位對照還在讀
+    assert "cyclical-track.json" not in _read(DOCS / "cockpit" / "index.html")  # 2026-10-20 等待池位置閘已拿掉
 
 
 def test_tier_matrix_card_and_inject_are_archived(capsys):

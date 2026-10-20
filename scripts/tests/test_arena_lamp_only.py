@@ -244,6 +244,15 @@ def test_group_waiting_pool_splits_yellow_red_gray_preserving_order():
     assert [r["ticker"] for r in gray] == ["D"], "dist_ath_pct 缺值優先歸類為資料缺，不管 lamp code"
 
 
+def test_group_waiting_pool_unlit_non_red_goes_gray_not_yellow():
+    # ③ 只收燈沒亮的名字：週中跌破 52 週線（out）或沒有燈號的，不能被標成 🟡 接近新高
+    rows = [_waiting_row("O", -6.0, "out"), _waiting_row("N", -5.0, None), _waiting_row("R", -15.0, "red")]
+    yellow, red, gray = build_arena._group_waiting_pool_by_timing(rows)
+    assert yellow == []
+    assert [r["ticker"] for r in red] == ["R"]
+    assert [r["ticker"] for r in gray] == ["O", "N"]
+
+
 def test_group_waiting_pool_all_empty_groups_are_valid():
     yellow, red, gray = build_arena._group_waiting_pool_by_timing([])
     assert yellow == [] and red == [] and gray == []

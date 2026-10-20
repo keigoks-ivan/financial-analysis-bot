@@ -87,6 +87,17 @@ def test_reselect_takes_top_lit_by_revision():
     assert sel['candidates'] == []
 
 
+def test_buyable_includes_yellow_lamp():
+    stocks = [_stock(f'{1000 + i}.TW', **_rev(30 - i)) for i in range(7)]
+    stocks[6]['ma']['dist_ath_pct'] = -6.0                        # 6th by revision: yellow
+    stocks[6]['timing']['dist_52w_high_pct'] = -6.0
+    sel = tw.select(_rows(stocks), [], reselect=True)
+    assert len(sel['core']) == 5
+    assert [r['ticker'] for r in sel['buyable']] == ['1005.TW', '1006.TW']
+    assert (sel['buyable'][1]['lamp'] or {}).get('code') == 'yellow'
+    assert sel['waiting_rest'] == []
+
+
 def test_daily_keeps_roster_and_carries_last_rotation_notes():
     stocks = [_stock('1000.TW', **_rev(10)), _stock('2000.TW', **_rev(20))]
     stocks[1]['ma']['dist_ath_pct'] = -20.0                       # seated name turned red mid-week

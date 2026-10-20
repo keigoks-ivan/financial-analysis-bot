@@ -200,8 +200,10 @@ def test_tenbagger_yellow_is_full_orange_half_fallback_half(tmp_path, monkeypatc
     assert (by["MISS"]["lamp"]["code"], by["MISS"]["lamp"]["size"], by["MISS"]["lamp"]["label"]) \
         == ("yellow", 0.5, "🟡 資料缺")
     assert by["MISS"]["action"] == "半倉"
-    # 等待池分組仍以 code 分：兩個黃燈（含資料缺）都在 waiting.yellow
-    assert {r["ticker"] for r in out["waiting"]["yellow"]} == {"YLW", "MISS"}
+    # 可買＝亮燈者（綠／黃／橘，含資料缺黃燈）；等待池只剩紅燈
+    assert {"YLW", "MISS", "GRN", "HOT"} <= {r["ticker"] for r in out["buyable"]}
+    assert {r["ticker"] for r in out["waiting"]["red"]} == {"RED"}
+    assert "yellow" not in out["waiting"]
     assert "非登記判準通過" in out["note"] and "綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0" in out["note"]
 
 
@@ -243,3 +245,18 @@ def test_ascii_action_reads_size():
     assert ba._act_ascii({"code": "green", "size": 1.0}) == "FULL"
     assert ba._act_ascii({"code": "red", "size": 0.0}) == "ZERO"
     assert ba._act_ascii({"code": "out", "size": 0.0}) == "-"
+
+
+def test_buyable_groups_breakout_near_nodata_with_vcp_order():
+    from engine import build_arena as ba
+    rows = [
+        {"ticker": "G", "lamp": {"code": "green"}, "dist_ath_pct": -1.0},
+        {"ticker": "Y1", "lamp": {"code": "yellow"}, "dist_ath_pct": -6.0, "vcp_tight": False},
+        {"ticker": "Y2", "lamp": {"code": "yellow"}, "dist_ath_pct": -8.0, "vcp_tight": True},
+        {"ticker": "N", "lamp": {"code": "yellow"}, "dist_ath_pct": None},
+        {"ticker": "H", "lamp": {"code": "hot"}, "dist_ath_pct": -0.5},
+    ]
+    brk, near, nodata = ba._group_buyable_by_timing(rows)
+    assert [r["ticker"] for r in brk] == ["G", "H"]
+    assert [r["ticker"] for r in near] == ["Y2", "Y1"], "底部緊的排前面，同值維持上修順序"
+    assert [r["ticker"] for r in nodata] == ["N"]

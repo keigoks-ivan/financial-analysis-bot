@@ -140,15 +140,16 @@ footer a{font-weight:600}
     <p class="transparency">資格＝品質閘（ROIC ≥15% 且自由現金流 &gt;0）× 三年成長預估 ≥15% × 站上 52 週線；耐久一致性只當顯示旗標，不擋資格。池＝資格全過且財報後獲利上修（缺值看近三個月）達 +5% 以上，依上修幅度由高到低排。上修未達 5% 的名字進下方收合區複審，不進池。</p>
 
     <div class="group-block">
-      <div class="group-title g2"><span class="dot"></span>①可買 <span class="sub">時機燈綠／橘——今天板機亮的</span></div>
+      <div class="group-title g2"><span class="dot"></span>①可買 <span class="sub">時機燈亮著（綠／黃／橘），依上修排序</span></div>
+      <div class="subhead">🟢 突破帶（距新高 3% 內，站上 200 日線；過熱的標 🟠、半倉）</div>
       <div id="pool-buyable-body"></div>
+      <div class="subhead">🟡 接近新高（距新高 3%～10%，站上 200 日線；缺距新高資料的標 🟡 資料缺、半倉）</div>
+      <div id="pool-buyable-yellow-body"></div>
     </div>
 
     <div class="group-block">
-      <div class="group-title g3"><span class="dot"></span>②等待池 <span class="sub">上修夠強，還沒到買點</span></div>
-      <div class="subhead">🟡 接近新高</div>
-      <div id="pool-waiting-yellow-body"></div>
-      <div class="subhead">🔴 拉回中</div>
+      <div class="group-title g3"><span class="dot"></span>②等待池 <span class="sub">上修夠強，時機燈還沒亮</span></div>
+      <div class="subhead">🔴 拉回中（距新高超過 10%，或跌破 200 日線）</div>
       <div id="pool-waiting-red-body"></div>
     </div>
 
@@ -286,9 +287,11 @@ footer a{font-weight:600}
     if(!r.ok) throw new Error('tenbagger '+r.status); return r.json();
   }).then(function(d){
     d = d || {};
-    document.getElementById('pool-buyable-body').innerHTML = tableHtml(d.buyable||[]);
+    var buy = d.buyable || [];
+    var isYellow = function(r){ return ((r.lamp||{}).code) === 'yellow'; };
+    document.getElementById('pool-buyable-body').innerHTML = tableHtml(buy.filter(function(r){ return !isYellow(r); }));
+    document.getElementById('pool-buyable-yellow-body').innerHTML = tableHtml(buy.filter(isYellow));
     var waiting = d.waiting || {};
-    document.getElementById('pool-waiting-yellow-body').innerHTML = tableHtml(waiting.yellow||[]);
     document.getElementById('pool-waiting-red-body').innerHTML = tableHtml(waiting.red||[]);
     var notPool = d.not_in_pool||[];
     document.getElementById('pool-notpool-body').innerHTML = tableHtml(notPool);
@@ -329,7 +332,7 @@ footer a{font-weight:600}
     }
   }).catch(function(e){
     dataErr('pool-buyable-body');
-    dataErr('pool-waiting-yellow-body');
+    dataErr('pool-buyable-yellow-body');
     dataErr('pool-waiting-red-body');
     dataErr('pool-notpool-body');
   });

@@ -300,7 +300,7 @@ def select(rows, prev_core, reselect, last_snap=None, market=None):
                 r['seat_note'] += '・週中轉紅，週六複判'
     seated = set(rotation['core'])
     waiting = [r for r in pool if r['ticker'] not in seated]
-    buyable = [r for r in waiting if (r.get('lamp') or {}).get('code') in ('green', 'hot')]
+    buyable = [r for r in waiting if (r.get('lamp') or {}).get('code') in ba.LIT_LAMP_CODES]
     waiting_rest = [r for r in waiting if r not in buyable]
     not_in_pool = [r for r in eligible if not grp.in_pool(r['grp'].get('rev_used_pct'))]
     candidates = sorted((r for r in not_in_pool
@@ -389,7 +389,7 @@ def _legend():
 <div class="bw-note-line"><b>大盤多頭續抱</b>：大盤多頭時，只因離歷史新高超過 10% 而轉紅、仍在池內的在席者照樣續抱，燈號標「🔴 續抱」，倉位沿用最近一次非紅燈的倉位。</div>
 <div class="bw-note-line"><b>回測</b>：照現行規則回測 2013-03 至 2026-09，持有全部合格股年化報酬 13.21%，最大回撤 −57.01%；同期買進持有 0050 年化 20.32%，最大回撤 −33.96%。報酬和回撤都不如 0050。</div>
 <div class="bw-note-line"><b>下次財報</b>：「≤N 天」是公司還沒公告日期，依法定期限推算（第一季 5/15、第二季 8/14、第三季 11/14、年報 3/31），實際可能更早。距財報 7 天內標橘色。</div>
-<div class="bw-note-line"><b>底部</b>：只在距歷史新高 10% 以內才算。回檔一次比一次小、量縮、離底部高點近算「緊」，否則算「鬆」。只排 ③ 等待池裡 🟡 組的順序，不改燈號或倉位。</div>
+<div class="bw-note-line"><b>底部</b>：只在距歷史新高 10% 以內才算。回檔一次比一次小、量縮、離底部高點近算「緊」，否則算「鬆」。只排 ② 可買裡 🟡 接近新高組的順序，不改燈號或倉位。</div>
 <div class="bw-note-line"><b>跟美股的資料差異</b>：融券比在美股是資格條件，台股池沒有這項資料，這一條等於不設。內部人買賣在美股只是備註，台股池幾乎沒有資料。</div>
 </details>"""
 
@@ -484,6 +484,10 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
                                  f'（{len(group)} 檔）</div>'
                                  + _table([views[r['ticker']] for r in group], lamp_map))
     v = lambda rows: [views[r['ticker']] for r in rows]  # noqa: E731
+    buy_parts = [f'<div class="bw-sub" style="margin-top:10px"><b>{escape(label)}</b>'
+                 f'（{len(group)} 檔）</div>' + _table(v(group), lamp_map)
+                 for (label, _), group in zip(ba._BUY_GROUP_LABELS,
+                                              ba._group_buyable_by_timing(sel['buyable'])) if group]
     return (
         '<div class="board-wrap">' + ba._BOARD_CSS
         + f'<div class="bw-head">{escape(head)}</div>'
@@ -496,10 +500,10 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + (_conc_html(conc) if conc else '')
         + _legend() + ''.join(lines)
         + f'<h3 class="bw-sec">② 可買（{len(sel["buyable"])} 檔）</h3>'
-        + '<div class="bw-sub">池內沒坐核心席、時機燈綠或橘的名字。</div>'
-        + _table(v(sel['buyable']), lamp_map)
+        + '<div class="bw-sub">池內沒坐核心席、今天時機燈亮著（綠／黃／橘）的名字，依燈號分組。</div>'
+        + (''.join(buy_parts) or '<div class="bw-note-line">（無）</div>')
         + f'<h3 class="bw-sec">③ 等待池（{len(sel["waiting_rest"])} 檔）</h3>'
-        + '<div class="bw-sub">上修夠、還沒突破的池內名字，依時機燈分組，組內依上修排序。</div>'
+        + '<div class="bw-sub">上修夠、時機燈還沒亮的池內名字，依時機燈分組，組內依上修排序。</div>'
         + (''.join(waiting_parts) or '<div class="bw-note-line">（無）</div>')
         + f'<h3 class="bw-sec">③b 太貴不入池（{len(sel["too_expensive"])} 檔）</h3>'
         + '<div class="bw-sub">其他資格全過，只有估值閘紅燈。名字在這裡代表不加碼，不是賣出訊號。</div>'

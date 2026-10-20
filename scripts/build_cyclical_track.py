@@ -4,8 +4,8 @@
 設計 source-of-truth: docs/_handoff_stock_sleeve_pipeline_20260703.md（Task 2）
 
 定位：**研究提名清單，不是進場清單**。挑出「trailing 財務難看（循環底部）但
-分析師正在上修」的標的，供 stock-analyst v14 DD（含 QC-42 循環鏡頭附錄 B）與
-sop-funnel 板機接手。每檔要進場仍須 (a) DD 裁決＝進場 (b) 板機亮燈。
+分析師正在上修」的標的，供 stock-analyst v14 DD（含 QC-42 循環鏡頭附錄 B）接手。
+每檔要進場仍須 (a) DD 裁決＝進場 (b) 時機燈亮著（engine grp.timing_lamp）。
 
 資格規則（門檻為持有人拍板，勿自行調參）：
   1. 循環特徵：fail_criteria ∩ {fcf, roic} ≠ ∅（trailing 財務難看）
@@ -55,8 +55,8 @@ NAV_BLOCK = full_nav_block(
     "pick", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/cyclical-track.html")
 )
 # 2026-10-19 持有人拍板歸檔：頁面（cyclical-track.html）停止更新，頂端放歸檔橫幅；預設不再寫 HTML，要手動重產加 --write-html。
-# 資料（cyclical-track.json 與每週快照）照常每週寫：選股主控台陣容表的等待池位置閘（docs/cockpit/index.html）、
-# 流程板機片段（build_pipeline_page.py）與 portfolio-manager 都還在讀這份 JSON。
+# 資料（cyclical-track.json 與每週快照）照常每週寫：漏斗總覽片段（build_pipeline_page.py）與 portfolio-manager
+# 都還在讀這份 JSON（選股主控台的等待池位置閘 2026-10-20 已拿掉）。
 ARCHIVE_BANNER = archive_banner("cyclical_track")
 
 TAIPEI_TZ = timezone(timedelta(hours=8))
@@ -460,7 +460,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
     <div class="hero-sub">
       個股部第三軌（衛星·循環）的<b>研究提名層</b>。鎖定「trailing 財務難看（FCF／ROIC 未過＝循環底部）
       <b>但分析師正在上修</b>」的標的——補上「循環贏家型（如 SNDK／MU）全數卡在品質閘」這個篩選死角的
-      代理捕手。輸出<b>不是進場清單</b>，是交給個股 DD（循環鏡頭附錄 B）與板機接手的候選池。
+      代理捕手。輸出<b>不是進場清單</b>，是交給個股 DD（循環鏡頭附錄 B）接手的候選池；何時買看時機燈。
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><strong>{run_ts_display}</strong>最後更新（台北）</div>
@@ -480,10 +480,10 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
     本軌只回答「該研究誰」。每檔要真正進場，仍須同時通過：
     <ul>
       <li>(a) v14 個股 DD 統一裁決＝<b>進場</b>（含循環鏡頭附錄 B 的反動能硬閘）；</li>
-      <li>(b) sop-funnel 板機亮燈（T+1 執行）。</li>
+      <li>(b) 時機燈亮著（距還原權息歷史新高 10% 內且站上 200 日線）。</li>
     </ul>
     單檔上限 <b>{SINGLE_NAME_CAP_PCT:.0f}%</b>（個股部淨值，衛星倉位）。🔥 標記者為 12M 報酬 &gt; +250%，
-    <b>明文不可追高</b>——名單保留、排序沉底，等回踩進 sweet spot 再由 DD／板機把關。
+    <b>明文不可追高</b>——名單保留、排序沉底，等回踩進 sweet spot 再由 DD 與時機燈把關。
   </div>
 
   <div class="formula-panel">
@@ -516,7 +516,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 
   <div class="tier-card tier-hot">
     <h2>🔥 已熱組 — 等回踩，明文不可追 <span class="badge">12M &gt; +250%</span></h2>
-    <div class="desc">同樣通過循環＋上修資格，但 12M 報酬已 &gt; +250%，反動能閘擋在門外。保留追蹤，等回踩到 sweet spot 再由 DD／板機把關；<b>此組不可直接追高</b>。</div>
+    <div class="desc">同樣通過循環＋上修資格，但 12M 報酬已 &gt; +250%，反動能閘擋在門外。保留追蹤，等回踩到 sweet spot 再由 DD 與時機燈把關；<b>此組不可直接追高</b>。</div>
     {hot_html}
   </div>
 
@@ -533,7 +533,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
       <li>12M 報酬：<code>data/weekly_cache/{{TICKER}}.json</code> 週線 <code>close[-1]/close[-53]−1</code>（bars 不足即不計熱度）</li>
     </ul>
     <h4>下游</h4>
-    <p>候選 → <code>stock-analyst</code> v14 DD（循環鏡頭附錄 B）→ sop-funnel 板機 → 個股部衛星倉位（單檔 ≤ {SINGLE_NAME_CAP_PCT:.0f}%）。</p>
+    <p>候選 → <code>stock-analyst</code> v14 DD（循環鏡頭附錄 B）→ 時機燈 → 個股部衛星倉位（單檔 ≤ {SINGLE_NAME_CAP_PCT:.0f}%）。</p>
     <h4>機器可讀</h4>
     <p>JSON sidecar: <a href="/dd-screener/cyclical-track.json"><code>/dd-screener/cyclical-track.json</code></a> · 每週快照：<code>/dd-screener/cyclical-track-snapshots/YYYY-MM-DD.json</code>（schema v{SCHEMA_VERSION}）</p>
   </div>

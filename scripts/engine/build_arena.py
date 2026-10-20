@@ -77,7 +77,7 @@ v5 席位引擎（2026-09-17 持有人拍板「品質派 ∩ 獲利上修 ∩ �
      `apply_own_score_v4()`）保留一輪只做「v4 對照」tooltip 與全母體對照表。
   3. 席位：核心＝ `select_fresh_roster_v5()`/`rotate_roster()` 對 `pool_rows` 取前
      5（月頻輪動機制不變，只是候選池換成 pool_rows）；衛星軌取消，`waiting_pool`
-     （池扣掉核心）依時機燈拆成 `buyable`（綠/橘燈）與 `waiting_rest`（其餘）兩段
+     （池扣掉核心）依時機燈拆成 `buyable`（亮燈：綠／黃／橘，2026-10-20 起含黃燈）與 `waiting_rest`（其餘）兩段
      顯示。`sat_seats`（arena.json）保留 key 向下相容，內容改成整個 `waiting_pool`
      （每列帶 `track:"pool"` 標記）；`sat_vacant` 恆為 0（池無固定席次概念）。
   4. 時機燈：grp.timing_lamp() 全面改讀 `ma.dist_ath_pct`（見 build_dd_screener.
@@ -854,13 +854,36 @@ _POOL_ASCII_HDR_IDX = (f"{'#':<{W_SEATCODE}} {'ticker':<{W_TICKER}} {'rev':>{W_R
                        f"{'bottom':<{W_BOTTOM}} note")
 
 
+def _group_buyable_by_timing(buyable: list) -> tuple[list, list, list]:
+    """② 可買依時機燈分三段：突破帶（綠／橘）／🟡 接近新高（距新高資料在）／🟡 資料缺。
+    🟡 接近新高組沿用 VCP 深度 1 排序（`vcp_tight=True` 排前面，同值維持傳入的上修順序，
+    見 knowledge/rule_ledger.md「VCP 深度 1」列）。只分組顯示，不改燈號與倉位。"""
+    brk, near, nodata = [], [], []
+    for r in buyable:
+        if (r.get("lamp") or {}).get("code") in ("green", "hot"):
+            brk.append(r)
+        elif r.get("dist_ath_pct") is None:
+            nodata.append(r)
+        else:
+            near.append(r)
+    near.sort(key=lambda r: not r.get("vcp_tight"))
+    return brk, near, nodata
+
+
+_BUY_GROUP_LABELS = (
+    (f"🟢 突破帶（距新高 {abs(ATH_GREEN_DIST):.0f}% 內，站上 200 日線；過熱的標 🟠、半倉）", "brk"),
+    (f"🟡 接近新高（距新高 {abs(ATH_GREEN_DIST):.0f}%～{abs(ATH_RED_DIST):.0f}%，站上 200 日線；底部緊的排前面）", "near"),
+    ("🟡 資料缺（站上 52 週線但缺距新高資料，半倉）", "nodata"),
+)
+
+
 def _group_waiting_pool_by_timing(waiting_rest: list) -> tuple[list, list, list]:
     """v5（2026-09-17 owner follow-up，見 knowledge/rule_ledger.md「v5 席位引擎」
     列）：③ 等待池依時機燈分三段顯示——🟡 接近新高（距新高 −10%~−3%，站上 200 日線）
     ／🔴 拉回中（距新高 <−10% 或跌破 200 日線）／⚫ 資料缺（`dist_ath_pct` 缺值，
     燈號退回 yellow fallback，無法歸類進前兩段）。分組只看 `dist_ath_pct` 是否存在
-    與 `lamp["code"]`是否為 "red"——`waiting_rest` 本身已排除 green/hot（見②可買
-    定義），故其餘只會落在 yellow 或 red，本函式不重算燈號。
+    與 `lamp["code"]`是否為 "red"——`waiting_rest` 本身已排除亮燈者（2026-10-20 起美股、台股皆然，見②可買
+    定義），故其餘只會落在 red（或缺距新高資料），本函式不重算燈號。
 
     VCP 深度 1（2026-09-18，見 notes/site-internal/root/_seat_engine_v5_1_20260918.md
     §3／knowledge/rule_ledger.md「VCP 深度 1」列）：🟡 組另外用 `vcp_tight` 做一次
@@ -874,8 +897,10 @@ def _group_waiting_pool_by_timing(waiting_rest: list) -> tuple[list, list, list]
             gray.append(r)
         elif (r.get("lamp") or {}).get("code") == "red":
             red.append(r)
-        else:
+        elif (r.get("lamp") or {}).get("code") in LIT_LAMP_CODES:
             yellow.append(r)
+        else:  # ⚫ 不合格（週中跌破 52 週線）或沒有燈號，不能標成 🟡
+            gray.append(r)
     yellow.sort(key=lambda r: not r.get("vcp_tight"))
     return yellow, red, gray
 
@@ -883,7 +908,7 @@ def _group_waiting_pool_by_timing(waiting_rest: list) -> tuple[list, list, list]
 _WAIT_GROUP_LABELS = (
     ("🟡 接近新高（距新高 −10%~−3%，站上 200 日線）", "yellow"),
     ("🔴 拉回中（距新高 <−10% 或跌破 200 日線）", "red"),
-    ("⚫ 資料缺（距歷史新高資料不足，無法歸類）", "gray"),
+    ("⚫ 不合格或資料缺（跌破 52 週線，或距新高資料不足）", "gray"),
 )
 
 
@@ -949,8 +974,8 @@ def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
     """v5『① 核心席（5）／② 可買／③ 等待池』區塊（board.txt 用，含 DOWN 異動列）——
     取代 v4「核心5＋衛星5＋候補5」（見 grp.py 檔頭 v5 段第 3-4 點／
     knowledge/rule_ledger.md「v5 席位引擎」列）。核心＝池內亮燈者前 5（v5.2 每週六（台北）重算、
-    可空席，見 select_lit_roster_v52()）；可買＝等待池中時機燈 green/hot
-    者（「今天板機亮的」，可能是空清單）；等待池＝其餘池成員（依上修排序，即
+    可空席，見 select_lit_roster_v52()）；可買＝等待池中時機燈亮著（LIT_LAMP_CODES）
+    者（可能是空清單，依 _group_buyable_by_timing() 分段）；等待池＝其餘池成員（依上修排序，即
     `pool_rows` 扣掉核心後剩下的，見呼叫端）。"""
     seat_of = {r["ticker"]: "核心席" for r in core_seats}
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
@@ -968,16 +993,22 @@ def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
             L.append(f"  DOWN {_ticker_col(t)}：{why_txt}")
     L.append("")
 
-    L.append(f"== ② 可買（等待池中時機燈綠/橘，共 {len(buyable)} 檔——今天板機亮的）")
+    L.append(f"== ② 可買（池內沒進核心、今天時機燈亮著，共 {len(buyable)} 檔；依燈號分組）")
     if buyable:
-        L.append(_POOL_ASCII_HDR_IDX)
-        for i, r in enumerate(buyable, 1):
-            L.append(_pool_ascii_row(i, r))
+        groups = dict(zip(("brk", "near", "nodata"), _group_buyable_by_timing(buyable)))
+        for label, key in _BUY_GROUP_LABELS:
+            group = groups[key]
+            if not group:
+                continue
+            L.append(f"  -- {label}（{len(group)} 檔）")
+            L.append(_POOL_ASCII_HDR_IDX)
+            for i, r in enumerate(group, 1):
+                L.append(_pool_ascii_row(i, r))
     else:
-        L.append("  （無——等待池目前沒有名字板機亮燈）")
+        L.append("  （無——等待池目前沒有亮燈的名字）")
     L.append("")
 
-    L.append(f"== ③ 等待池（上修強、還沒突破，共 {len(waiting_rest)} 檔；依時機燈分組，組內依上修排序）")
+    L.append(f"== ③ 等待池（上修夠強、時機燈還沒亮，共 {len(waiting_rest)} 檔；組內依上修排序）")
     if not waiting_rest:
         L.append("  （無）")
     else:
@@ -1058,14 +1089,14 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
              + f"｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
              "｜美股含 ADR，台股另有看板")
     L.append("資格：市值 200 億美元以上、品質閘（ROIC ≥15% 且自由現金流 >0）、三年成長 15%、站上 52 週線；"
-             "耐久只當旗標。排序：財報後上修。板機：突破還原權息後的歷史新高。"
+             "耐久只當旗標。排序：財報後上修。時機燈：距還原權息歷史新高 10% 內且站上 200 日線就亮。"
              "核心席每週六（台北）重算，可空席；其餘每天重排。這是研究名單，不是帳戶持倉。")
     L.append("倉位：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。")
     L.append("池：資格全過、財報後上修 ≥5% 的名字，依上修由高到低排；同值先比隱含成長率，再比盈餘殖利率。"
              "綜合對照分只供對照，不決定排序。"
              "核心席：池內時機燈亮著（綠／黃／橘）的名字依上修取前 5，每週六（台北）依週五收盤重算，"
-             "亮燈不足就空席；週中燈號只管倉位。沒進核心的池成員是等待池：②可買＝綠燈或橘燈，板機已亮；"
-             "③等待池＝其餘，分🟡接近新高／🔴拉回中／⚫資料缺三段，組內依上修排序。")
+             "亮燈不足就空席；週中燈號只管倉位。沒進核心的池成員：②可買＝今天亮燈（綠／黃／橘），"
+             "分突破帶／🟡接近新高／🟡資料缺三段；③等待池＝燈號還沒亮，分🔴拉回中／⚫不合格或資料缺，組內依上修排序。")
     L.append("耐久：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均、三年平均、現值三者都 ≥15%；"
              "只當旗標（dur 欄 Y／—），不擋資格。融券占流通股比 >10% 排除。"
              "過熱（12-1 月動能 >150%）只影響時機燈（🟠半倉）；頂點（ROIC 相對五年均 ≥1.3 倍）只顯示。"
@@ -1087,7 +1118,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
              "OUT/-=不合格·未站上 52 週線")
     L.append("dd 代碼：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，"
              "!old=逾 180 天過期")
-    L.append("怎麼用：核心或②可買＝現在可以買；③等待池＝上修夠強但還沒突破，等板機。")
+    L.append("怎麼用：核心或②可買＝現在可以買；③等待池＝上修夠強但燈號還沒亮，等燈亮。")
     L.append("")
     L.extend(_pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
                                  lamp_as_of, last_rotation_date))
@@ -1710,12 +1741,19 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
     """v5『① 核心席（5）／② 可買／③ 等待池』HTML 區塊（h3＋sub＋表＋legend＋DOWN
     變動列）——取代 v4「核心5＋衛星5＋候補5」，見 grp.py 檔頭 v5 段／
     knowledge/rule_ledger.md「v5 席位引擎」列。核心＝池前 5（月頻輪動，硬否決立即
-    下席、空位由池遞補）；可買＝等待池中時機燈綠/橘者；等待池＝其餘池成員。"""
+    下席、空位由池遞補）；可買＝等待池中時機燈亮著者（綠／黃／橘）；等待池＝其餘池成員。"""
     seat_label = {r["ticker"]: f"核心 {i}" for i, r in enumerate(core_seats, 1)}
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
 
     core_tbl = _pool_table_html(core_seats, lamp_map, seat_prefix="C")
-    buyable_tbl = _pool_table_html(buyable, lamp_map)
+    buy_brk, buy_near, buy_nodata = _group_buyable_by_timing(buyable)
+    if not buyable:
+        buyable_tbl = '<div class="bw-note-line">（無——等待池目前沒有亮燈的名字）</div>'
+    else:
+        buyable_tbl = "".join(
+            f'<div class="bw-sub" style="margin-top:10px"><b>{escape(label)}</b>'
+            f'（{len(group)} 檔）</div>' + _pool_table_html(group, lamp_map)
+            for (label, _), group in zip(_BUY_GROUP_LABELS, (buy_brk, buy_near, buy_nodata)) if group)
     waiting_yellow, waiting_red, waiting_gray = _group_waiting_pool_by_timing(waiting_rest)
     if not waiting_rest:
         waiting_tbl = '<div class="bw-note-line">（無）</div>'
@@ -1739,12 +1777,12 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 <div class="bw-note-line"><b>第二關 排序</b>：只看財報後上修幅度。基準是該股最近一次財報日前的月度快照，缺財報錨定時退回三個月。上修 ≥5% 才入池，池內依上修由高到低排。同值先比隱含成長率，再比盈餘殖利率。不看股價漲幅。綜合對照分只在「上修%（財報後）」欄的滑鼠提示裡顯示，不參與排序。</div>
 <div class="bw-note-line"><b>第三關 時機燈</b>：量股價離歷史新高多遠，燈號直接決定倉位，判定見下表。過熱與頂點不擋資格；相對強度與生命週期階段只在滑鼠提示顯示，不影響燈號。</div>
 {lamp_rules}
-<div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內亮燈者依上修取前 5，每週六重算；週中轉紅的核心席等週六重算才下席。沒進核心的池成員全部叫等待池，依燈號分兩組：②可買＝今天綠燈或橘燈，板機已亮；③等待池＝其餘，再分 🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🔴 拉回中／⚫ 資料缺（這兩組依上修排序）。</div>
+<div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內亮燈者依上修取前 5，每週六重算；週中轉紅的核心席等週六重算才下席。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依上修排序。</div>
 <div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。</div>
-<div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排③等待池裡 🟡 組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。</div>
+<div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排②可買裡 🟡 接近新高組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。</div>
 <div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只是顯示，不影響席位與排序。有護城河評級時在本欄滑鼠提示。</div>
 <div class="bw-note-line"><b>備註欄</b>：以下都只是顯示，不進資格與排序。⚠ 頂點＝ROIC 高於五年平均 1.3 倍；基期＝三年 CAGR 因 FY1→FY2 低基期跳增，改用 FY2→FY3 成長率；循環守門＝循環股（毛利率跨距大或資本支出佔營收高）且 PEG 低到可疑；循環＝循環股但未觸發守門；財報前＝距下次財報 ≤7 天；內部人買／內部人賣＝近 3 個月內部人淨買賣方向；新席／現任／遞補＝本期席位異動狀態。</div>
-<div class="bw-note-line"><b>怎麼用</b>：核心或②可買＝現在可以買。③等待池＝上修夠強但還沒突破，等板機。</div>
+<div class="bw-note-line"><b>怎麼用</b>：核心或②可買＝現在可以買。③等待池＝上修夠強但燈號還沒亮，等燈亮。</div>
 </details>"""
 
     gone = [t for t in prev_seats if t not in seat_label]
@@ -1765,11 +1803,11 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
            + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。週中燈號只管倉位，席位等週六複判。</div>'
            + freshness + core_tbl + legend + changes_html
            + f'<h3 class="bw-sec">② 可買（{len(buyable)} 檔）</h3>'
-           + '<div class="bw-sub">等待池中時機燈綠/橘者——今天板機亮的，可能是空清單。</div>'
+           + '<div class="bw-sub">池內沒進核心、今天時機燈亮著（綠／黃／橘）的名字，依燈號分組。可能是空清單。</div>'
            + buyable_tbl
            + f'<h3 class="bw-sec">③ 等待池（{len(waiting_rest)} 檔）</h3>'
-           + '<div class="bw-sub">上修強、還沒突破——池中扣掉核心與②可買後的其餘名字，'
-             '依時機燈分組（🟡接近新高／🔴拉回中／⚫資料缺），組內依上修排序。</div>'
+           + '<div class="bw-sub">上修夠強、時機燈還沒亮——池中扣掉核心與②可買後的其餘名字，'
+             '依時機燈分組（🔴拉回中／⚫不合格或資料缺），組內依上修排序。</div>'
            + waiting_tbl)
 
 
@@ -2343,10 +2381,10 @@ def main() -> int:
     core_seated = {r["ticker"] for r in core_seats}
 
     # 等待池＝池扣掉核心，依上修排序（已經是 pool_rows 的順序，直接篩即可）；
-    # 可買＝等待池中時機燈綠/橘者（今天板機亮的，可能是空清單）；等待池（顯示用）＝
-    # 其餘（見 grp.py 檔頭 v5 段第 5 點／knowledge/rule_ledger.md「v5 席位引擎」列）。
+    # 可買＝等待池中時機燈亮著者（綠／黃／橘，與核心席入席同一組 LIT_LAMP_CODES，
+    # 可能是空清單）；等待池（顯示用）＝其餘（見 knowledge/rule_ledger.md 2026-10-20 段）。
     waiting_pool = [r for r in pool_rows if r["ticker"] not in core_seated]
-    buyable = [r for r in waiting_pool if (r.get("lamp") or {}).get("code") in ("green", "hot")]
+    buyable = [r for r in waiting_pool if (r.get("lamp") or {}).get("code") in LIT_LAMP_CODES]
     buyable_tickers = {r["ticker"] for r in buyable}
     waiting_rest = [r for r in waiting_pool if r["ticker"] not in buyable_tickers]
 
