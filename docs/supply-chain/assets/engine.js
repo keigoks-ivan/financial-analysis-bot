@@ -4,6 +4,9 @@
  *   data/{topic}.json  — node graph for the topic
  *   data/dd_links.json — ticker → DD report path (built by scripts/build_supply_chain_dd_index.py)
  *   data/topics.json   — manifest of all topics + active flag, drives tab strip
+ *   data/live.json        — 每日價格層（scripts/build_supply_chain_live.py）；可缺
+ *   data/live_mcap.json   — 週更市值（美元）；可缺
+ *   data/content_asof.json — topic → 結構資料（內容）最後變動日；可缺
  * (Filenames intentionally non-_prefixed — GitHub Pages' Jekyll layer strips
  *  underscore-prefix files from publish output.)
  */
@@ -38,6 +41,8 @@ let singleFilter = false;
 let activeNodeId = null;
 let searchTerm = "";
 let view = "table";                       // 'table' | 'graph' — 表格優先 (default)
+let LIVE = null, LIVE_MCAP = null, CONTENT_ASOF = {};
+let colorMode = "comp";                   // 'comp' 依競爭態勢（預設）| 'perf' 依近 3 月表現中位數
 let tableSort = { col: "row", dir: 1 };   // current table sort column + direction
 const ROW_ORDER = {};                      // row id -> logical index (for 層 sort)
 const CONF_RANK = { high: 3, med: 2, low: 1 };
@@ -50,6 +55,70 @@ const flagOf = c => c.country && FLAG[c.country] ? FLAG[c.country] : "";
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./,""); } catch(e) { return u; } };
 const cssEsc = s => String(s).replace(/"/g,'\\"');
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+/* ---------- 即時價格層與「舊資料」標示 ---------- */
+const STALE_TICKER_DAYS = 5;   // 個股最後收盤比整體 as_of 舊 5 天以上 → 標收盤日
+const STALE_LIVE_DAYS = 5;     // 整份價格層比今天舊 5 天以上 → 頁頂警示
+const STALE_MCAP_DAYS = 21;    // 市值（週更）比價格 as_of 舊 21 天以上 → 標「舊」
+const dayDiff = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 864e5);
+const fmtPct = x => (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(1) + "%";
+const fmtDd = x => (x >= -0.0005 ? "0.0%" : "−" + Math.abs(x * 100).toFixed(1) + "%");
+const fmtMcap = b => b >= 1000 ? `$${(b / 1000).toFixed(2)}T` : b >= 10 ? `$${Math.round(b)}B`
+  : b >= 1 ? `$${b.toFixed(1)}B` : `$${Math.round(b * 1000)}M`;
+function tickerKey(c) { return c && c.ticker ? String(c.ticker).trim() : ""; }
+function liveOf(c) {
+  const t = tickerKey(c);
+  return t && LIVE && LIVE.tickers ? (LIVE.tickers[t] || null) : null;
+}
+function mcapOf(c) {
+  const t = tickerKey(c);
+  return t && LIVE_MCAP && LIVE_MCAP.mcap ? (LIVE_MCAP.mcap[t] || null) : null;
+}
+// 內容年月（content_asof 的 YYYY-MM），用於「2026-06 估」小標
+function estYM() { const d = CONTENT_ASOF[TOPIC.id]; return d ? String(d).slice(0, 7) : ""; }
+function estTag() {
+  const ym = estYM();
+  const tip = ym ? `此數字為 ${CONTENT_ASOF[TOPIC.id]} 前後研究時的估計，之後沒有更新` : "此數字為研究時的估計，之後沒有更新";
+  return `<span class="est-tag" title="${tip}">${ym ? ym + " 估" : "舊資料"}</span>`;
+}
+// 公司列的小字：近 3 月、近 12 月報酬、距高點、市值（美元）。沒資料的欄不顯示。
+function liveLine(c) {
+  const L = liveOf(c), M = mcapOf(c);
+  const parts = [];
+  if (L) {
+    if (typeof L.ret_3m === "number") parts.push(`近 3 月 ${fmtPct(L.ret_3m)}`);
+    if (typeof L.ret_12m === "number") parts.push(`近 12 月 ${fmtPct(L.ret_12m)}`);
+    if (typeof L.dd_from_high === "number") parts.push(`距高點 ${fmtDd(L.dd_from_high)}`);
+  }
+  let mold = "";
+  if (M && typeof M.usd_b === "number") {
+    parts.push(`市值 ${fmtMcap(M.usd_b)}`);
+    const ref = (LIVE && LIVE.as_of) || "";
+    if (M.d && ref && dayDiff(ref, M.d) > STALE_MCAP_DAYS) mold = `<span class="lv-old" title="市值更新日 ${M.d}">（市值 ${M.d.slice(5)} 舊）</span>`;
+  }
+  if (!parts.length) return "";
+  let stale = "";
+  if (L && LIVE.as_of && L.last_date && dayDiff(LIVE.as_of, L.last_date) >= STALE_TICKER_DAYS)
+    stale = `<span class="lv-old" title="此檔最後收盤日 ${L.last_date}，比其他檔舊">（${L.last_date.slice(5)} 收盤）</span>`;
+  return `<div class="lv" title="只描述現況，未經檢定，不作進出依據">${parts.join(" · ")}${stale}${mold}</div>`;
+}
+
+/* 節點「近 3 月表現」＝該節點有資料的公司 ret_3m 中位數 */
+function median(a) {
+  const s = [...a].sort((x, y) => x - y), m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+function nodePerf(n) {
+  const cos = n.companies || [];
+  const v = cos.map(liveOf).filter(x => x && typeof x.ret_3m === "number").map(x => x.ret_3m);
+  return v.length ? { med: median(v), k: v.length, N: cos.length } : null;
+}
+// 負：藍；0：灰；正：琥珀。±30% 以上同色
+const PERF_NEG = [29, 78, 216], PERF_MID = [100, 116, 139], PERF_POS = [180, 83, 9], PERF_CLAMP = 0.30;
+function perfColor(x) {
+  const t = Math.min(Math.abs(x) / PERF_CLAMP, 1), end = x >= 0 ? PERF_POS : PERF_NEG;
+  return `rgb(${PERF_MID.map((m, i) => Math.round(m + (end[i] - m) * t)).join(",")})`;
+}
 
 function ddLinkFor(tickerStr) {
   if (!tickerStr) return null;
@@ -97,6 +166,27 @@ function renderTabs() {
       wrap.appendChild(btn);
     }
   });
+}
+
+/* ---------- 頁頂：結構資料與價格各截至何時 ---------- */
+function renderLiveStrip() {
+  if (document.getElementById("liveStrip")) return;
+  const host = document.querySelector(".sc-head") || document.querySelector(".shell");
+  if (!host) return;
+  const struct = CONTENT_ASOF[TOPIC.id];
+  let warn = "";
+  let priceTxt;
+  if (LIVE && LIVE.as_of) {
+    priceTxt = `價格截至 ${LIVE.as_of}`;
+    const age = dayDiff(new Date().toISOString().slice(0, 10), LIVE.as_of);
+    if (age >= STALE_LIVE_DAYS) warn = `<span class="ls-warn">價格已 ${age} 天沒有更新，以下報酬為舊資料。</span>`;
+  } else {
+    priceTxt = "價格資料暫缺";
+  }
+  const left = struct ? `結構資料截至 ${struct}｜` : "";
+  const div = el("div", "live-strip", `${left}${priceTxt}。價格只描述現況，未經檢定，不作進出依據。${warn}`);
+  div.id = "liveStrip";
+  host.parentNode.insertBefore(div, host);
 }
 
 /* ---------- header ---------- */
@@ -263,8 +353,9 @@ function buildNode(n) {
     return `<span class="chip" title="${safeName}">${flagOf(c) ? flagOf(c) + " " : ""}${firstName}${mark}</span>`;
   }).join("");
   const more = cos.length > 3 ? `<span class="chip more">+${cos.length - 3}</span>` : "";
-  const growth = n.growth ? `<span class="g">↑ ${n.growth}</span>` : "";
-  const ms = n.marketSize ? `<span class="ms">${n.marketSize}</span>` : "";
+  const growth = n.growth ? `<span class="g est">↑ ${n.growth}</span>` : "";
+  const ms = n.marketSize ? `<span class="ms est">${n.marketSize}</span>` : "";
+  const estT = (n.growth || n.marketSize) ? estTag() : "";
   const trust = trustBadge(n);
 
   card.innerHTML = `
@@ -277,7 +368,7 @@ function buildNode(n) {
       <span class="n-badge">${comp.label}</span>
     </div>
     <div class="n-companies">${chips}${more}</div>
-    ${(growth || ms || trust) ? `<div class="n-foot">${growth}${ms}${trust}</div>` : ""}
+    ${(growth || ms || trust) ? `<div class="n-foot">${growth}${ms}${estT}${trust}</div>` : ""}
   `;
   card.onclick = () => openDrawer(n.id);
   card.onmouseenter = () => highlightPath(n.id, true);
@@ -295,6 +386,7 @@ function sortVal(n, col) {
     case "src":  return srcCount(n);
     case "conf": return CONF_RANK[n.confidence] || 0;
     case "co":   return (((n.companies || [])[0]) || {}).name || "";
+    case "perf": { const p = nodePerf(n); return p ? p.med : -9; }
     default:     return "";
   }
 }
@@ -318,6 +410,10 @@ function renderTableBody() {
     const co = (n.companies || [])[0] || {};
     const dd = ddLinkFor(co.ticker);
     const ddb = dd ? ` <a href="${dd.href}" class="dd-link" target="_blank" rel="noopener" title="開啟 DD 報告">DD↗</a>` : "";
+    const pf = nodePerf(n);
+    const perfCell = !LIVE ? "" : pf
+      ? `<td class="t-perf"><span class="perf-pill${colorMode === "perf" ? " on" : ""}" style="--pc:${perfColor(pf.med)}" title="${pf.k}／${pf.N} 家有價格資料">${fmtPct(pf.med)}</span></td>`
+      : `<td class="t-perf"><span class="perf-pill none">—</span></td>`;
     const coName = co.name ? `${flagOf(co)} ${String(co.name).split("（")[0]}${ddb}` : "—";
     return `<tr data-id="${n.id}">
       <td class="t-name">${flag}${n.name}</td>
@@ -326,6 +422,7 @@ function renderTableBody() {
       <td class="t-dots" title="來源強度 ${k} 源">${dots}</td>
       <td>${conf}</td>
       <td class="t-co">${coName}</td>
+      ${perfCell}
     </tr>`;
   }).join("");
   tb.querySelectorAll("tr[data-id]").forEach(tr =>
@@ -345,6 +442,7 @@ function renderTable() {
   (TOPIC.rows || []).forEach((r, i) => { ROW_ORDER[r.id] = i; TOPIC._rowlbl[r.id] = r.label; });
   const cols = [["name", "節點"], ["row", "層"], ["comp", "競爭態勢"],
                 ["src", "來源強度"], ["conf", "信心度"], ["co", "主要公司"]];
+  if (LIVE) cols.push(["perf", "近 3 月中位"]);
   const thead = cols.map(([k, lbl]) => `<th data-col="${k}">${lbl}<span class="t-arr"></span></th>`).join("");
   host.innerHTML = `<div class="t-wrap"><table class="sc-table">
     <thead><tr>${thead}</tr></thead><tbody id="scTbody"></tbody></table></div>`;
@@ -365,6 +463,33 @@ function setView(v) {
   document.querySelectorAll(".view-toggle .vt").forEach(b => b.classList.toggle("on", b.dataset.v === v));
   if (v === "graph") requestAnimationFrame(() => requestAnimationFrame(drawEdges));
 }
+/* 上色切換：預設依 competition；'perf' 依節點公司近 3 月報酬中位數（只描述現況，不代表買賣訊號） */
+function applyColorMode() {
+  document.querySelectorAll(".node").forEach(card => {
+    const n = TOPIC._map[card.dataset.id];
+    if (!n) return;
+    const badge = card.querySelector(".n-badge");
+    if (colorMode === "perf") {
+      const p = nodePerf(n);
+      card.style.setProperty("--cc", p ? perfColor(p.med) : "#CBD5E1");
+      if (badge) {
+        badge.textContent = p ? fmtPct(p.med) : "無價格";
+        badge.title = p ? `近 3 月報酬中位數（${p.k}／${p.N} 家有價格資料）` : "此節點沒有可用的價格資料";
+        badge.style.color = p ? "" : "#475569";
+      }
+    } else {
+      card.style.setProperty("--cc", colorOf(n));
+      if (badge) { badge.textContent = compOf(n).label; badge.title = ""; badge.style.color = ""; }
+    }
+  });
+}
+function setColorMode(m) {
+  colorMode = m;
+  document.querySelectorAll(".view-toggle .ct").forEach(b => b.classList.toggle("on", b.dataset.c === m));
+  const sc = document.getElementById("perfScale"); if (sc) sc.style.display = m === "perf" ? "" : "none";
+  applyColorMode();
+  renderTableBody();
+}
 function injectViews() {
   const wrap = document.querySelector(".map-wrap");
   const canvas = document.getElementById("mapCanvas");
@@ -372,11 +497,16 @@ function injectViews() {
   const bar = el("div", "view-toggle",
     `<button data-v="table" class="vt on">▤ 表</button>` +
     `<button data-v="graph" class="vt">▦ 圖</button>` +
+    (LIVE ? `<span class="ct-sep"></span><span class="ct-lbl">上色</span>` +
+      `<button data-c="comp" class="ct on">競爭態勢</button>` +
+      `<button data-c="perf" class="ct" title="以該節點有價格資料的公司之近 3 月報酬中位數上色">近 3 月表現</button>` +
+      `<span class="perf-scale" id="perfScale" style="display:none"><span>−30%</span><i></i><span>+30%</span></span>` : "") +
     `<span class="vt-hint">點欄位標題排序 · 點列看詳情 · 左上圖例 / 搜尋同步篩選</span>`);
   wrap.insertBefore(bar, canvas);
   const tv = el("div"); tv.id = "tableView";
   wrap.insertBefore(tv, canvas.nextSibling);
   bar.querySelectorAll(".vt").forEach(b => b.onclick = () => setView(b.dataset.v));
+  bar.querySelectorAll(".ct").forEach(b => b.onclick = () => setColorMode(b.dataset.c));
   renderTable();
   setView(view);
 }
@@ -503,7 +633,7 @@ function openDrawer(id) {
   if (n.growth)     metrics.push(["年增率 / CAGR", n.growth]);
   if (metrics.length)
     body.appendChild(section("關鍵指標",
-      `<div class="metrics">${metrics.map(m => `<div class="metric"><div class="k">${m[0]}</div><div class="v">${m[1]}</div></div>`).join("")}</div>`));
+      `<div class="metrics">${metrics.map(m => `<div class="metric"><div class="k">${m[0]} ${estTag()}</div><div class="v est">${m[1]}</div></div>`).join("")}</div>`));
 
   if (n.analysis)
     body.appendChild(section(`競爭態勢分析 · ${comp.label}`,
@@ -524,13 +654,13 @@ function openDrawer(id) {
       const goldBadge = gold ? '<span class="gold-badge" title="Top Pick · ⚑ × 核心業務 × 供應鏈鎖喉緊俏">💎</span> ' : '';
       const rowCls = gold ? ' class="golden"' : '';
       return `<tr${rowCls}>
-        <td>${goldBadge}<span class="co-name"><span class="co-flag">${(FLAG[c.country] || "")}</span>${c.name}${tickerHTML}${ddBtn}</span></td>
-        <td><span class="co-share">${c.share || "—"}</span></td>
+        <td>${goldBadge}<span class="co-name"><span class="co-flag">${(FLAG[c.country] || "")}</span>${c.name}${tickerHTML}${ddBtn}</span>${liveLine(c)}</td>
+        <td><span class="co-share${c.share ? " est" : ""}">${c.share || "—"}</span></td>
         <td><span class="co-note">${c.note || ""}${csrc}</span>${prod}</td>
       </tr>`;
     }).join("");
     body.appendChild(section(`主要廠商 (${n.companies.length})　<span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink-faint)">依國別標示 · <span style="color:${cc}">●</span> = 有對應 DD 報告 · <span style="color:#F59E0B">💎</span> = Top Pick</span>`,
-      `<table class="co-table"><thead><tr><th>公司</th><th>市佔／地位</th><th>角色／產品</th></tr></thead><tbody>${rows}</tbody></table>`));
+      `<table class="co-table"><thead><tr><th>公司</th><th>市佔／地位 ${n.companies.some(c => c.share) ? estTag() : ""}</th><th>角色／產品</th></tr></thead><tbody>${rows}</tbody></table>`));
   }
 
   const up = (n.upstream || []).map(flowTag).join("");
@@ -609,7 +739,7 @@ function tierRows(byKey) {
     const note = company.note || "";
     const prod = company.products ? `<div class="gold-prod">🔧 ${company.products}</div>` : "";
     return `<tr>
-      <td><span class="gold-co"><span class="co-flag">${flag}</span><strong>${company.name}</strong>${tickerHTML}</span>${ddBtn}</td>
+      <td><span class="gold-co"><span class="co-flag">${flag}</span><strong>${company.name}</strong>${tickerHTML}</span>${ddBtn}${liveLine(company)}</td>
       <td>${nodeChips}</td>
       <td><span class="gold-single">⚑ ${single}</span></td>
       <td><span class="gold-note">${note}</span>${prod}</td>
@@ -705,13 +835,19 @@ async function boot() {
     return;
   }
   try {
-    const [topic, ddLinks, manifest] = await Promise.all([
+    const [topic, ddLinks, manifest, live, liveMcap, asof] = await Promise.all([
       fetchJSON(`data/${topicId}.json`),
       fetchJSON(`data/dd_links.json`).catch(() => ({})),
       fetchJSON(`data/topics.json`).catch(() => ({ topics: [{ id: topicId, tab: topicId, active: true }] })),
+      fetchJSON(`data/live.json`).catch(() => null),          // 價格層缺檔不影響地圖
+      fetchJSON(`data/live_mcap.json`).catch(() => null),
+      fetchJSON(`data/content_asof.json`).catch(() => ({})),
     ]);
     TOPIC = topic;
     DD_LINKS = ddLinks;
+    LIVE = live && live.tickers ? live : null;
+    LIVE_MCAP = liveMcap && liveMcap.mcap ? liveMcap : null;
+    CONTENT_ASOF = asof || {};
     TOPICS_MANIFEST = manifest.topics || [];
 
     TOPIC._map = {};
@@ -719,6 +855,7 @@ async function boot() {
 
     renderTabs();
     renderHeader();
+    renderLiveStrip();
     renderLegend();
     renderStats();
     renderGrid();

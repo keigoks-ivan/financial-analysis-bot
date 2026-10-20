@@ -283,6 +283,7 @@ def load_mechanical():
         sl = json.loads(sl_p.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, KeyError):
         return None
+    tm_as_of = json.loads(tm_p.read_text(encoding="utf-8")).get("as_of", "")
     node_cache = {}
     def node_info(topic, nid):
         if topic not in node_cache:
@@ -309,9 +310,9 @@ def load_mechanical():
         rows.append({"topic": r["topic"], "node_id": r.get("node_id"),
                      "name": nd.get("name") or r.get("node_id"), "tier": r.get("tier"),
                      "note": r.get("note", ""), "terminal": w, "score": score,
-                     "tickers": tickers[:4]})
+                     "tickers": tickers[:4], "all_tickers": tickers})
     rows.sort(key=lambda x: -x["score"])
-    return {"rows": rows, "as_of": sl.get("as_of", "?"), "n": len(rows)}
+    return {"rows": rows, "as_of": sl.get("as_of", "?"), "n": len(rows), "tm_as_of": tm_as_of}
 
 
 def curated_ticker_set():
@@ -336,7 +337,7 @@ def mechanical_html(mech, dd_links) -> str:
              '<strong>「未收錄」= 漏網提名</strong>，複審後才入上方分級，不自動晉升。</p>')
     h.append('<div style="overflow-x:auto"><table class="tier-mech-tbl"><thead><tr>'
              '<th>節點</th><th>鏈</th><th>替代難度</th><th>終端市場</th><th>分數</th>'
-             '<th>關鍵廠商</th><th>編輯層</th></tr></thead><tbody>')
+             '<th>關鍵廠商</th><th>近 3 月</th><th>編輯層</th></tr></thead><tbody>')
     for r in mech["rows"][:15]:
         if not r["tickers"]:
             status = '私有/無 ticker（人工對帳）'
@@ -347,8 +348,10 @@ def mechanical_html(mech, dd_links) -> str:
         h.append(f'<tr><td>{esc(r["name"])}<br><small>{esc(r["note"][:48])}</small></td>'
                  f'<td>{topic_chips([r["topic"]])}</td>'
                  f'<td>{esc(LAG_LABEL.get(r["tier"], r["tier"]))}</td>'
-                 f'<td>${r["terminal"]:g}B</td><td><strong>{r["score"]:g}</strong></td>'
-                 f'<td>{esc(" / ".join(r["tickers"]) or "—")}</td><td>{status}</td></tr>')
+                 f'<td>{terminal_html(r["terminal"], mech.get("tm_as_of", ""))}</td>'
+                 f'<td><strong>{r["score"]:g}</strong></td>'
+                 f'<td>{esc(" / ".join(r["tickers"]) or "—")}</td>'
+                 f'{perf_cell(r["all_tickers"])}<td>{status}</td></tr>')
     h.append('</tbody></table></div>')
 
     # 公司級聚合：同公司跨鏈稀缺節點分數加總（分攤同節點多供應商），
@@ -380,6 +383,25 @@ def mechanical_html(mech, dd_links) -> str:
 
 def esc(s: str) -> str:
     return html.escape(str(s or ""), quote=True)
+
+
+def terminal_html(usd_b, as_of) -> str:
+    """終端市場規模是 terminal_markets.json 的研究估計，之後沒有更新：灰字加「YYYY-MM 估」小標，
+    沿用 engine.js estTag() 與 engine.css 的 .est / .est-tag。日期取該檔 as_of，不寫死。"""
+    ym = str(as_of or "")[:7]
+    tip = (f"此數字為 {as_of} 前後研究時的估計，之後沒有更新" if as_of
+           else "此數字為研究時的估計，之後沒有更新")
+    return (f'<span class="est">${usd_b:g}B</span>'
+            f'<span class="est-tag" title="{esc(tip)}">{esc(ym + " 估" if ym else "舊資料")}</span>')
+
+
+def perf_cell(tickers) -> str:
+    """「近 3 月」欄：data-tk 放該節點的 ticker 清單，由頁尾 TIER_PERF_JS 讀 data/live.json
+    取 ret_3m 中位數填入（算法同 engine.js nodePerf）。無 ticker 的私有節點直接顯示「—」。"""
+    tks = [t for t in dict.fromkeys(tickers) if t]
+    if not tks:
+        return '<td class="t-perf"><span class="perf-v" title="私有或無上市代號">—</span></td>'
+    return f'<td class="t-perf" data-tk="{esc(",".join(tks))}"><span class="perf-v">—</span></td>'
 
 
 def load_dd_links() -> dict:
@@ -416,18 +438,55 @@ def row_html(e, dd_links) -> str:
     return (f'<tr><td><div class="sc-bn">{e["name"]}</div>'
             f'{supplier_html(e["sup"], dd_links)}</td>'
             f'<td>{topic_chips(e["topics"])}</td>'
+            f'{perf_cell([tk for _n, tk, _c in e["sup"]])}'
             f'<td><span class="gold-single">{e["verdict"]}</span></td></tr>')
 
 
 def table_html(entries, cls, dd_links, head0) -> str:
     body = "".join(row_html(e, dd_links) for e in entries)
     return (f'<div class="gold-table-wrap"><table class="gold-table {cls}">'
-            f'<thead><tr><th>{head0}</th><th>出現產業</th><th>替代性裁決</th></tr></thead>'
+            f'<thead><tr><th>{head0}</th><th>出現產業</th><th>近 3 月</th><th>替代性裁決</th></tr></thead>'
             f'<tbody>{body}</tbody></table></div>')
+
+
+TIER_PERF_JS = """<script>
+/* 近 3 月欄：讀 data/live.json，取各節點 data-tk 清單內有資料者的 ret_3m 中位數（同 engine.js nodePerf） */
+(function () {
+  var STALE_LIVE_DAYS = 5;
+  var fmtPct = function (x) { return (x >= 0 ? "+" : "\u2212") + Math.abs(x * 100).toFixed(1) + "%"; };
+  var median = function (a) {
+    var s = a.slice().sort(function (x, y) { return x - y; }), m = s.length >> 1;
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+  var strip = document.getElementById("tierLiveStrip");
+  fetch("data/live.json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (live) {
+      var T = live && live.tickers;
+      if (!T) throw new Error("no tickers");
+      document.querySelectorAll("td.t-perf[data-tk]").forEach(function (td) {
+        var tks = td.getAttribute("data-tk").split(",");
+        var v = [];
+        tks.forEach(function (t) { var x = T[t]; if (x && typeof x.ret_3m === "number") v.push(x.ret_3m); });
+        var out = td.querySelector(".perf-v");
+        if (!v.length) { out.title = "沒有價格資料"; return; }
+        out.textContent = fmtPct(median(v));
+        out.title = "有價格的 " + v.length + " 檔 ret_3m 的中位數（清單 " + tks.length + " 檔）";
+      });
+      if (strip) {
+        var msg = "價格截至 " + live.as_of + "。只描述現況，未經檢定，不作進出依據。";
+        var age = Math.round((Date.now() - Date.parse(live.as_of)) / 864e5);
+        if (age >= STALE_LIVE_DAYS) msg += '<span class="ls-warn">價格已 ' + age + " 天沒有更新，近 3 月為舊資料。</span>";
+        strip.innerHTML = msg;
+      }
+    })
+    .catch(function () { if (strip) strip.textContent = "價格資料暫缺，近 3 月欄空白。"; });
+})();
+</script>"""
 
 
 def build_block(dd_links) -> str:
     h = []
+    h.append('<div class="live-strip" id="tierLiveStrip">價格資料載入中。</div>')
     h.append('<h3 class="tier-t0"><span class="ico">🔴</span>T0 · 全球真單點 · '
              f'{len(T0)} 條 — 無合格二供，斷供即全產業停擺</h3>')
     h.append('<p class="lede">無 ANY 合格二供、替代路線需以「年」甚至「十年」計、'
@@ -460,6 +519,8 @@ def build_block(dd_links) -> str:
     mech = load_mechanical()
     if mech:
         h.append(mechanical_html(mech, dd_links))
+
+    h.append(TIER_PERF_JS)
 
     h.append('<p class="gold-foot">稀缺分級為<strong>編輯判斷</strong>（可替代性 · 認證 / 切換時間 · '
              '產能 / 地理集中度 · 斷供爆炸半徑），單一資料源在 '

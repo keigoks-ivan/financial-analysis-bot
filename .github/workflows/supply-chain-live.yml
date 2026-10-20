@@ -1,0 +1,174 @@
+name: Supply Chain Live Prices
+
+# 供應鏈地圖（/supply-chain/）每日價格層。
+#
+# 跑 scripts/build_supply_chain_live.py：讀 docs/supply-chain/data/*.json 全部
+# companies[].ticker（約 630 檔），yfinance 批次下載 13 個月日線，輸出
+#   docs/supply-chain/data/live.json         每檔 close／近 3 月／近 12 月報酬／距高點
+#   docs/supply-chain/data/live_health.json  每檔連續失敗天數
+#   docs/supply-chain/data/live_mcap.json    市值（美元），只在週一（--mcap）更新
+# engine.js 讀這三個檔在公司列顯示小字，並在頁頂標價格截至哪天。價格層缺檔不影響地圖。
+# 內容日期 data/content_asof.json 由 scripts/build_supply_chain_content_asof.py 在本機
+# 依 git 歷史產生（CI 淺 checkout 讀不到歷史），本 workflow 不動它。
+#
+# 排程（台北時間，避開整點，美股收盤之後）：
+#   - 週二到週六 07:43（UTC 週一到週五 23:43）：只更新價格。
+#   - 週一 07:43（UTC 週日 23:43）：價格＋市值（--mcap，串行 fast_info，約 20 分鐘）＋
+#     代號健檢（連續失敗 ≥3 天的代號 email＋Discord，沒有就不發）。
+#   週一那班的價格 bar 是週五收盤（週末沒有新 bar），沒有問題。
+#   手動 workflow_dispatch 可勾 mcap 連市值與健檢一起跑。
+#
+# 通知：做法照 ai-credit-daily.yml（email 用 dawidd6/action-send-mail＋Discord 用
+# scripts/notify_discord.py，secret 缺少時略過、不讓 workflow 失敗）。
+#
+# GITHUB_TOKEN push 不觸發 deploy-pages.yml 的 push 事件，故 deploy-pages.yml 的
+# workflow_run 清單已加入本 workflow 名稱。
+#
+# Push 迴圈與 rebase 衝突處理照 etf-dash-daily.yml：push 失敗就 scripts/ci/rebase_or_flag.sh，
+# 內容衝突就 retrigger_once.sh 從最新 main 重跑一次（retry=1），再撞就 ::error:: 結束。
+
+on:
+  schedule:
+    - cron: "43 23 * * 1-5"   # 週二到週六 07:43 台北：價格
+    - cron: "43 23 * * 0"     # 週一 07:43 台北：價格＋市值＋代號健檢
+  workflow_dispatch:
+    inputs:
+      mcap:
+        description: "連市值與代號健檢一起跑（約多 20 分鐘）"
+        required: false
+        default: false
+        type: boolean
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas
+
+      # 週一排程或手動勾 mcap → 加 --mcap 與 --alert-out（寫 sc_live_title.txt／sc_live_alert.txt，
+      # 只在有連續失敗 ≥3 天的代號時才有檔）。
+      # build 腳本在覆蓋率 <50%（整體斷線）時 exit 2 且不寫檔；commit 步驟照跑（no-op），
+      # 最後一步把 job 標紅，避免像 etf-dash 那樣默默停更。
+      - name: Build live prices
+        id: build
+        continue-on-error: true
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          MCAP_INPUT: ${{ github.event.inputs.mcap }}
+        run: |
+          ARGS=""
+          if [ "$SCHEDULE" = "43 23 * * 0" ] || [ "$MCAP_INPUT" = "true" ]; then
+            ARGS="--mcap --alert-out ."
+          fi
+          python3 scripts/build_supply_chain_live.py $ARGS
+
+      - name: Read health alert
+        id: scalert
+        run: |
+          if [ -f sc_live_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "title=$(head -n 1 sc_live_title.txt)" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # SMTP secret 缺少時略過寄信（MAIL_USERNAME／MAIL_APP_PASSWORD 與 ai-credit-daily.yml 共用）。
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email ticker health
+        if: steps.scalert.outputs.changed == 'true' && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.scalert.outputs.title }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: file://sc_live_alert.txt
+
+      - name: Discord ticker health
+        if: steps.scalert.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_MARKET }}
+          NOTIFY_TITLE: ${{ steps.scalert.outputs.title }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file sc_live_alert.txt --url https://research.investmquest.com/supply-chain/
+
+      - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for f in live.json live_health.json live_mcap.json; do
+            if [ -f "docs/supply-chain/data/$f" ]; then git add "docs/supply-chain/data/$f"; fi
+          done
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+            git commit -m "data: supply-chain live prices ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            for i in 1 2 3 4 5 6; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+              bash scripts/ci/rebase_or_flag.sh || exit 1
+              sleep $((RANDOM % 20 + 5))
+            done
+            echo "Push failed after 6 attempts"
+            exit 1
+          fi
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
+
+      - name: Mark job failed if the build step errored
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "::error::build_supply_chain_live.py exited non-zero — supply-chain live prices were not refreshed."
+          exit 1
