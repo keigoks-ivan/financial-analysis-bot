@@ -609,6 +609,28 @@ def _build_finding(clue, axis_id, hit_text, page_date, default_affects):
     return f, None
 
 
+_KEEP_AS_SNIPPET = ("no_match", "fetch_failed", "over_limit")
+
+
+def _keep_as_snippet(clue, axis_id, axis_obj, existing, default_affects):
+    """核實不到的線索 → snippet finding（excerpt=null、excerpt_source=search_summary）；
+    日期不可解析、網址已在 findings 就不收。回是否收進。"""
+    if not _valid_clue(clue) or not _url_ok(_clean_url(clue["url"])):
+        return False
+    key = _url_key(_clean_url(clue["url"]))
+    if key in existing or validate_evidence.parse_date(clue.get("as_of")) is None:
+        return False
+    f, _ = _build_finding(clue, axis_id, None, None, default_affects)
+    if f is None:
+        return False
+    f.update({"excerpt": None, "excerpt_from": "snippet", "excerpt_source": "search_summary"})
+    axis_obj.setdefault("findings", []).append(f)
+    existing.add(key)
+    if axis_obj.get("status") == "none":
+        axis_obj["status"] = "found"
+    return True
+
+
 def _valid_clue(c):
     return (isinstance(c, dict) and isinstance(c.get("url"), str) and c["url"].strip()
             and isinstance(c.get("claim"), str) and c["claim"].strip()
@@ -625,7 +647,7 @@ def backfill(run_dir, max_urls=MAX_URLS, fetch=None):
         def fetch(u):
             return fetch_text(u, cache_dir)
     stats = {"clues": 0, "urls": 0, "fetched": 0, "cache_hits": 0, "fetch_failed": 0, "verified": 0,
-             "discarded": 0, "duplicate": 0, "over_limit": 0, "axes_upgraded": [], "details": []}
+             "kept_snippet": 0, "discarded": 0, "duplicate": 0, "over_limit": 0, "axes_upgraded": [], "details": []}
     if not parts_dir.exists():
         return stats
     loaded = []  # (part_path, obj, [(axis_id, axis_obj, [clue,...])])
@@ -653,6 +675,7 @@ def backfill(run_dir, max_urls=MAX_URLS, fetch=None):
             n_clues = len(clues)
             stats["clues"] += n_clues
             verified = 0
+            kept = 0
             existing = {_url_key(f.get("url")) for f in (axis_obj.get("findings") or [])
                         if isinstance(f, dict) and isinstance(f.get("url"), str)}
             for clue in clues:
@@ -668,12 +691,20 @@ def backfill(run_dir, max_urls=MAX_URLS, fetch=None):
                 if outcome == "verified":
                     verified += 1
                     stats["verified"] += 1
+                elif outcome in _KEEP_AS_SNIPPET and _keep_as_snippet(clue, axis_id, axis_obj, existing,
+                                                                     default_affects.get(axis_id)):
+                    # 只加不減：核實不到的線索照改版前的 snippet finding 保留（excerpt=null），
+                    # 不因改走 clues 而比改版前少證據（2383.TW 2026-10-20：28→16 條）
+                    kept += 1
+                    stats["kept_snippet"] += 1
+                    detail["kept_as"] = "snippet"
                 else:
                     stats["discarded"] += 1
             if verified and axis_id not in stats["axes_upgraded"]:
                 stats["axes_upgraded"].append(axis_id)
             note = (axis_obj.get("note") or "").rstrip()
-            axis_obj["note"] = (note + " " if note else "") + "線索 {0} 條，程式核實 {1} 條".format(n_clues, verified)
+            axis_obj["note"] = (note + " " if note else "") + "線索 {0} 條，程式核實 {1} 條".format(n_clues, verified) \
+                + ("，{0} 條以搜尋摘要保留（未核原文）".format(kept) if kept else "")
             del axis_obj["clues"]  # 核實不了的線索不進證據包
             # agent 只交 clues 卻填 found（2383.TW 2026-10-20 供需軸）：線索全沒核實就是空軸，
             # 留 found＋空 findings 會被 validate_evidence 判不合格、整軸記成 incomplete

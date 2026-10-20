@@ -328,19 +328,24 @@ def test_backfill_upgrades_hit_and_discards_miss(tmp_path):
     fetch = _fake_fetch({"https://news.example.com/a": {"page_date": "2026-10-14"},
                          "https://news.example.com/b": {}})
     st = cb.backfill(run, fetch=fetch)
-    assert st["clues"] == 2 and st["verified"] == 1 and st["discarded"] == 1 and st["urls"] == 2
+    assert st["clues"] == 2 and st["verified"] == 1 and st["kept_snippet"] == 1 and st["discarded"] == 0
+    assert st["urls"] == 2
     assert st["axes_upgraded"] == ["regulatory_antitrust"]
     out = json.loads((run / "parts" / "axes_2.json").read_text(encoding="utf-8"))
     ax = out["coverage"]["regulatory_antitrust"]
     assert ax["status"] == "found" and "clues" not in ax
-    assert len(ax["findings"]) == 1
+    assert len(ax["findings"]) == 2
+    # 沒核實的那條照改版前的 snippet finding 保留，不丟
+    kept = ax["findings"][1]
+    assert kept["excerpt"] is None and kept["excerpt_from"] == "snippet" and kept["excerpt_source"] == "search_summary"
+    assert kept["url"] == "https://news.example.com/b"
     f = ax["findings"][0]
     assert f["excerpt_source"] == "program_fetch" and f["excerpt_from"] == "page"
     assert f["url"] == "https://news.example.com/a" and f["as_of"] == "2026-10-14" and "as_of_note" not in f
     assert f["direction"] == "-" and f["affects"] == ["decision_inputs.bear"] and f["source"] == "示範新聞"
     assert "罰鍰" in f["excerpt"] and "1,000 萬元" in f["excerpt"]
     assert f["excerpt"] in _page_text().replace("\n", " ")
-    assert ax["note"].endswith("線索 2 條，程式核實 1 條")
+    assert ax["note"].endswith("線索 2 條，程式核實 1 條，1 條以搜尋摘要保留（未核原文）")
     # 升級後的 axis 通過 evidence 驗證
     fails, _ = validate_evidence.check_axis("regulatory_antitrust", ax, {})
     assert fails == []
@@ -441,7 +446,7 @@ def test_backfill_url_limit_and_invalid_clues(tmp_path):
     assert len(fetch.calls) == 3 and st["over_limit"] == 2 and st["verified"] == 3
     assert [d["outcome"] for d in st["details"]] == ["verified"] * 3 + ["over_limit"] * 2 + ["invalid", "invalid", "bad_url"]
     ax = json.loads((run / "parts" / "axes_1.json").read_text(encoding="utf-8"))["coverage"]["x_axis"]
-    assert ax["note"].endswith("線索 8 條，程式核實 3 條")
+    assert ax["note"].endswith("線索 8 條，程式核實 3 條，2 條以搜尋摘要保留（未核原文）")
 
 
 def test_backfill_shared_url_fetched_once_across_axes(tmp_path):
@@ -613,7 +618,7 @@ def test_rescue_over_http_uses_page_meta_date(server, tmp_path):
 def test_found_with_only_clues_becomes_none_when_nothing_verified(tmp_path):
     # 2383.TW 2026-10-20 供需軸：agent 只交 clues 卻填 found，全沒核實要改回 none，否則驗證判不合格
     part = {"coverage": {"supply_demand_durability": _axis(status="found", clues=[
-        _clue(terms=["完全無關", "不存在的詞"])])}}
+        _clue(terms=["完全無關", "不存在的詞"], as_of="近期")])}}  # 日期不可解析，連 snippet 都留不住
     run = _run_dir(tmp_path, {"axes_4.json": part}, [{"id": "supply_demand_durability", "affects": ["thesis.H"]}])
     cb.backfill(run, fetch=_fake_fetch({"https://news.example.com/a": {}}))
     ax = json.loads((run / "parts" / "axes_4.json").read_text(encoding="utf-8"))["coverage"]["supply_demand_durability"]
