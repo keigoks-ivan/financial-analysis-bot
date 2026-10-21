@@ -589,7 +589,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     var h = s.hyst ? ('<span class="imq-badge">'+esc(s.hyst)+'</span>') : '<span class="imq-badge">—</span>';
     return newBadge + h;
   }
-  function groupRow(label){ return '<tr class="rgroup"><td colspan="12">'+esc(label)+'</td></tr>'; }
+  function groupRow(label){ return '<tr class="rgroup"><td colspan="20">'+esc(label)+'</td></tr>'; }
   function renderRoster(){
     var mount = $('roster-mount');
     if(!S.arena || !Array.isArray(S.arena.core_seats)){ mount.innerHTML = ph('陣容資料暫缺'); return; }
@@ -626,6 +626,15 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       }
     }catch(e){ newSeat = {core:{}, sat:{}}; ledgerNote = ''; }
     function numTd(v,d){ return '<td class="num">'+((v==null||isNaN(v))?'—':fmt(v,d))+'</td>'; }
+    function epsTd(d){
+      var a=[d.eps_curr,d.eps_next,d.eps_3];
+      if(a.every(function(x){return x==null||isNaN(x);})) return '<td class="num">—</td>';
+      return '<td class="num" title="'+esc('幣別 '+(d.eps_ccy||'未標示'))+'">'+a.map(function(x){return (x==null||isNaN(x))?'—':fmt(x,2);}).join('／')+'</td>';
+    }
+    function olTd(d){
+      if(d.ol_pp==null||isNaN(d.ol_pp)) return '<td class="num">—</td>';
+      return '<td class="num"'+(d.ol_label?(' title="'+esc(d.ol_label)+'"'):'')+'>'+(d.ol_pp>0?'+':'')+fmt(d.ol_pp,2)+'</td>';
+    }
     function row(seatLabel, s, isSat){
       var grp = s.grp||{};
       var own = grp.own||{};
@@ -636,11 +645,14 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
         ? ('<a href="'+esc(s.dd_path)+'#decision"'+tkTitle+'>'+tkTxt+'</a>')
         : ('<span'+tkTitle+'>'+tkTxt+'</span>');
       if(dashOk[s.ticker]) tkHtml += ' <a class="dash-lnk" href="/stock-dash/?t='+esc(s.ticker)+'">儀表板</a>';
+      var dn = s.ddn||{};
       var scoreCell = '<td class="num" title="'+esc(ownTooltip(grp,scoreVal))+'">'+((scoreVal==null||isNaN(scoreVal))?'—':fmt(scoreVal,1))+'</td>';
       return '<tr><td class="roster-seat">'+esc(seatLabel)+'</td>'+
         '<td class="roster-tk">'+tkHtml+'</td>'+
         scoreCell +
         numTd(grp.g,1) + numTd(own.ey,1) + numTd(s.roic,1) + numTd(s.fcf,1) + numTd(s.peg,2) +
+        numTd(dn.g3,1) + numTd(dn.rev3,1) + epsTd(dn) + numTd(dn.pe2,1) +
+        numTd(dn.inc_roic,1) + numTd(dn.reinvest,1) + numTd(dn.implied,1) + olTd(dn) +
         '<td>'+revPill(grp)+'</td>'+
         '<td>'+timingPill(s.lamp)+'</td>'+
         '<td>'+ddCell(s, liveV)+'</td>'+
@@ -656,12 +668,20 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     (S.arena.sat_seats||[]).forEach(function(s,i){ rows += row('等待池 '+(i+1), s, true); });
     var vac = S.arena.sat_vacant||0;
     if(vac>0) rows += '<tr><td class="roster-seat">衛星 '+((S.arena.sat_seats||[]).length+1)+'–5</td>'+
-      '<td colspan="11" style="color:var(--muted);font-size:.8rem">空 '+vac+' 席——空位是刻意的，空位即倉位管理</td></tr>';
+      '<td colspan="19" style="color:var(--muted);font-size:.8rem">空 '+vac+' 席——空位是刻意的，空位即倉位管理</td></tr>';
     var bench = (S.arena.core_bench||[]).map(function(b){return b.ticker;}).filter(Boolean);
     var asof = S.arena.run_timestamp ? String(S.arena.run_timestamp).slice(0,10) : '';
     var thead = '<tr><th>席</th><th>Ticker</th>'+
       '<th class="num" title="'+esc('上修、12-1 月動能、成長、品質、盈餘殖利率五項排名百分位的平均，只供對照，不決定排序；排序看選股看板的「上修%（財報後）」欄。逐檔算式見該列滑鼠提示')+'">綜合對照分</th>'+
       '<th class="num">成長%</th><th class="num">EY%</th><th class="num">ROIC%</th><th class="num">FCF%</th><th class="num">PEG</th>'+
+      '<th class="num" title="'+esc('Koyfin 預估今年到後年的每股盈餘年化成長（原始值）。資格閘的三年成長 ≥15% 用的就是這個；左邊「成長%」是資格閘實際採用的值（基期跳增時改用後年成長，並封頂 30%）。只供參考')+'">三年 EPS 成長%</th>'+
+      '<th class="num" title="'+esc('Koyfin 共識預估的未來三年營收年化成長。只供參考')+'">營收成長%</th>'+
+      '<th class="num" title="'+esc('每股盈餘預估，依序為今年／明年／後年，美股單位為美元（ADR 若非美元，滑鼠移到數字上看幣別）。只供參考')+'">EPS 預估（今／明／後）</th>'+
+      '<th class="num" title="'+esc('股價 ÷ 明年預估每股盈餘（dd-screener 的 2Y P/E，每日重算；缺值退回報告當時數字）。只供參考')+'">預估本益比（明年）</th>'+
+      '<th class="num" title="'+esc('近 3 個財年：（今年稅後營業利潤 − 3 年前稅後營業利潤）÷ 新增投入資本。投入資本不增反減時顯示「—」')+'">增量 ROIC%</th>'+
+      '<th class="num" title="'+esc('近 3 年新增投入資本 ÷ 期間年化稅後營業利潤，公司把多少獲利拿去繼續投資擴張')+'">再投資率%</th>'+
+      '<th class="num" title="'+esc('增量 ROIC × 再投資率，機械推算的內生成長率上限，是描述數字，不是預測')+'">隱含成長%</th>'+
+      '<th class="num" title="'+esc('營收成長% − 營業利益成長%（pp＝百分點），只在營業利益為正時計算。負值＝利潤率擴張')+'">營運槓桿（pp）</th>'+
       '<th title="'+esc('財報後上修（缺值看近三個月），是排序依據；≤−5% 即失去資格（兩個資料源都缺時看 FY+1 單月 ≤−10%），失去資格的名字不會出現在席位表')+'">上修</th>'+
       '<th title="'+esc('距歷史新高（還原權息全歷史）＋200 日線收斂成單一燈號，只標示現在能不能買，不參與排序')+'">時機燈</th>'+
       '<th>DD</th><th>異動</th></tr>';
@@ -696,6 +716,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       (bench.length?('板凳前排：'+esc(bench.join('、'))+' · '):'')+
       (asof?('資料日 '+esc(asof)+' · '):'')+
       (ledgerNote?(ledgerNote+' · '):'')+
+      '成長%右邊八欄（三年 EPS 成長至營運槓桿）來自 dd-screener，只供參考，不影響資格、排序與席位；'+
       'DD 只做否決與角色標籤，不參與排序；排序看上修，時機燈只標示能不能買；另有<a href="/engine/board.txt">純文字版</a>'+
       '</div></div></details>';
     refreshLampCells(mount);

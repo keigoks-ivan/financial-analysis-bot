@@ -428,6 +428,25 @@ def dd_tag(s: dict) -> str:
     return tag
 
 
+def dd_numbers(s: dict) -> dict:
+    """席位表「dd-screener 數字欄」的原料（2026-10-21 持有人要求，純顯示，不進資格、排序、席位）。
+    全部原樣取自 dd-screener 的 latest.json 該檔資料，口徑照 docs/dd-screener/index.html：
+    預估本益比＝live_fpe_est（缺則 fpe_fy2，即「2Y P/E」，用明年預估 EPS）；PEG＝live_peg 優先、缺則 peg；
+    現金流率＝s["fcf"]（美股自由現金流÷營收；台股 tw_row() 已把 s["fcf"] 換成營業現金流率 ocf）；
+    營運槓桿＝營收成長% − 營業利益成長%（build_dd_screener 算好的 ol_divergence_pp）。"""
+    f = s.get("fund") or {}
+    pe = s.get("live_fpe_est") if s.get("live_fpe_est") is not None else s.get("fpe_fy2")
+    peg = s.get("live_peg") if s.get("live_peg") is not None else s.get("peg")
+    return {"g3": s.get("eps_fy1_fy3_cagr_pct"), "rev3": f.get("est_rev_cagr_3y_pct"),
+            "roic": s.get("roic"), "cf": s.get("fcf"),
+            "eps_curr": s.get("eps_fy_curr"), "eps_next": s.get("eps_fy_next"), "eps_3": s.get("eps_fy3"),
+            "eps_ccy": s.get("eps_display_currency"),
+            "pe2": pe, "peg": peg,
+            "inc_roic": s.get("incremental_roic_pct"), "inc_roic_note": s.get("incremental_roic_note"),
+            "reinvest": s.get("reinvest_rate_pct"), "implied": s.get("implied_growth_pct"),
+            "ol_pp": s.get("ol_divergence_pp"), "ol_label": s.get("ol_divergence_label")}
+
+
 def row_dict(s: dict, yellow_full: bool = False) -> dict:
     """yellow_full（v5.3，2026-10-18）：True＝黃燈滿倉（見 grp.timing_lamp），美股看板、台股席位、
     十倍股頁三個呼叫端都傳 True；預設 False 與舊版逐位元相同。"""
@@ -494,6 +513,7 @@ def row_dict(s: dict, yellow_full: bool = False) -> dict:
             "insider_signal": s.get("insider_signal"), "insider_net_buy_3m": s.get("insider_net_buy_3m"),
             "moat": f'{s.get("moat_grade") or "?"}{s.get("moat_trend") or ""}' if s.get("moat_grade") else "—",
             "shape": shape_of(s["ticker"]),
+            "ddn": dd_numbers(s),
             "dd_path": s.get("dd_path")}
 
 
@@ -1566,6 +1586,7 @@ def _flat_view(r: dict) -> dict:
             "route": r["route"], "route_why": r.get("route_why"),
             "dd_tag": r.get("dd_tag"), "verdict": r.get("verdict"),
             "moat": r.get("moat"), "src": r.get("src"), "seat_note": r.get("seat_note"),
+            "ddn": r.get("ddn"),   # 2026-10-21：dd-screener 數字欄，見 dd_numbers()
             "dd_path": r.get("dd_path")}
 
 
@@ -1605,7 +1626,7 @@ def _seat_remark(v: dict) -> str:
     return "".join(bits) or '<span class="bw-muted">—</span>'
 
 
-def _shared_thead_cells() -> list[str]:
+def _shared_thead_cells(market: str = "us") -> list[str]:
     """代號…備註 10 個共用 <th>——席位表（_seat_section_html／池表）與全母體表
     （render_board_html）逐字共用，避免兩表的表頭文字各寫一份而日後漂移。
     v5（2026-09-17，見 grp.py 檔頭 v5 段）：欄序改為代號／上修%（財報後）／
@@ -1639,8 +1660,69 @@ def _shared_thead_cells() -> list[str]:
         '<th class="bw-l" title="VCP（回檔一次比一次小、量縮、離底部高點近）——只在'
         '距歷史新高 10% 以內算，只排③等待池 🟡 組序、標🟢/🟠突破措辭，不改燈號或倉位。'
         '緊 n段＝過閘、鬆 n段＝未過、資料短＝日線不足、—＝距新高超過 10% 未算">底部</th>',
+    ] + _ddn_thead_cells(market) + [
         '<th class="bw-l">備註</th>',
     ]
+
+
+def _ddn_thead_cells(market: str = "us") -> list[str]:
+    """dd-screener 數字欄表頭（2026-10-21 持有人要求「全部都要更新」）——只顯示，不進資格、排序、席位。
+    數字來自 dd-screener 的 latest.json（美股 docs/dd-screener、台股 docs/dd-screener/tw），見 dd_numbers()。"""
+    tw = market == "tw"
+    cf_name = "營業現金流率%" if tw else "自由現金流率%"
+    cf_tip = ("營業現金流÷營收，台股品質閘看的就是這個（資本支出重，所以不看自由現金流）"
+              if tw else "自由現金流÷營收（近四季）")
+    ccy = "新台幣" if tw else "美元（ADR 若非美元，滑鼠移到數字上看幣別）"
+    return [
+        '<th title="Koyfin 預估今年到後年的每股盈餘年化成長。資格閘的「三年成長 ≥15%」用的就是這個欄位；'
+        '遇到基期跳增時，資格閘會改用後年成長，並封頂 30%，本欄仍顯示原始值。只供參考">三年 EPS 成長%</th>',
+        '<th title="Koyfin 共識預估的未來三年營收年化成長。只供參考，不影響資格、排序與席位">營收成長%</th>',
+        '<th title="投入資本報酬率（ROIC）現值。品質閘的 ROIC ≥15% 看的就是這個。只供參考">ROIC%</th>',
+        f'<th title="{cf_tip}。只供參考">{cf_name}</th>',
+        f'<th title="每股盈餘預估，依序為今年／明年／後年，單位{ccy}。只供參考">EPS 預估（今／明／後）</th>',
+        '<th title="股價 ÷ 明年預估每股盈餘（dd-screener 的「2Y P/E」，每日用 yfinance 重算；缺值時退回報告當時的數字）。'
+        '只供參考，估值閘另看估值欄">預估本益比（明年）</th>',
+        '<th title="PEG＝預估本益比 ÷ 預估盈餘年化成長，優先用現價重算值，缺則用報告當時的數字。'
+        '與估值欄的 PEG 同一個數字，單獨列出方便排序比較">PEG</th>',
+        '<th title="近 3 個財年：（今年稅後營業利潤 − 3 年前稅後營業利潤）÷ 新增投入資本。'
+        '新增的一塊錢資本賺到多少報酬，用來判斷成長值不值得繼續投。投入資本不增反減時顯示「—」">增量 ROIC%</th>',
+        '<th title="近 3 年新增投入資本 ÷ 期間年化稅後營業利潤，意思是公司把多少獲利拿去繼續投資擴張">再投資率%</th>',
+        '<th title="增量 ROIC × 再投資率，機械推算的內生成長率上限，是描述數字，不是預測">隱含成長%</th>',
+        '<th title="營收成長% − 營業利益成長%（pp＝百分點），只在營業利益為正時計算。'
+        '負值＝利潤率擴張，正值越大代表成本吃掉越多營收成長">營運槓桿（pp）</th>',
+    ]
+
+
+def _ddn_cells(v: dict) -> list[str]:
+    """對應 _ddn_thead_cells() 的 11 個 <td>；缺值一律「—」。"""
+    d = v.get("ddn") or {}
+    dash = '<span class="bw-muted">—</span>'
+
+    def n(key, dec=1, sign=False):
+        x = d.get(key)
+        if not isinstance(x, (int, float)):
+            return dash
+        return f"{x:+.{dec}f}" if sign else f"{x:.{dec}f}"
+
+    eps_vals = [d.get("eps_curr"), d.get("eps_next"), d.get("eps_3")]
+    if all(isinstance(x, (int, float)) for x in eps_vals):
+        eps_txt = "／".join(f"{x:.2f}" for x in eps_vals)
+    elif any(isinstance(x, (int, float)) for x in eps_vals):
+        eps_txt = "／".join(f"{x:.2f}" if isinstance(x, (int, float)) else "—" for x in eps_vals)
+    else:
+        eps_txt = None
+    ccy = d.get("eps_ccy")
+    eps_cell = (f'<td class="bw-l" title="{escape(f"幣別 {ccy}" if ccy else "幣別未標示")}">{eps_txt}</td>'
+                if eps_txt else f'<td class="bw-l">{dash}</td>')
+    inc_note = d.get("inc_roic_note")
+    inc = n("inc_roic")
+    inc_cell = (f'<td title="{escape(inc_note)}">{inc}</td>' if inc_note and inc == dash else f"<td>{inc}</td>")
+    ol_label = d.get("ol_label")
+    ol_cell = (f'<td title="{escape(ol_label)}">{n("ol_pp", 2, True)}</td>' if ol_label
+               else f'<td>{n("ol_pp", 2, True)}</td>')
+    return [f'<td>{n("g3")}</td>', f'<td>{n("rev3")}</td>', f'<td>{n("roic")}</td>', f'<td>{n("cf")}</td>',
+            eps_cell, f'<td>{n("pe2")}</td>', f'<td>{n("peg", 2)}</td>',
+            inc_cell, f'<td>{n("reinvest")}</td>', f'<td>{n("implied")}</td>', ol_cell]
 
 
 def _row_cells(v: dict, lamp_map: dict) -> list[str]:
@@ -1701,6 +1783,7 @@ def _row_cells(v: dict, lamp_map: dict) -> list[str]:
         f'<td class="bw-l">{escape(v.get("action") or "—")}</td>',
         f'<td class="bw-l">{_dd_pill(v.get("dd_tag"), v.get("moat"))}</td>',
         f'<td class="bw-l">{_bottom_cell_html(v)}</td>',
+        *_ddn_cells(v),
         f'<td class="bw-note">{_seat_remark(v)}</td>',
     ]
 
@@ -1793,6 +1876,7 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 <div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排②可買裡 🟡 接近新高組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。</div>
 <div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只是顯示，不影響席位與排序。有護城河評級時在本欄滑鼠提示。</div>
 <div class="bw-note-line"><b>備註欄</b>：以下都只是顯示，不進資格與排序。⚠ 頂點＝ROIC 高於五年平均 1.3 倍；基期＝三年 CAGR 因 FY1→FY2 低基期跳增，改用 FY2→FY3 成長率；循環守門＝循環股（毛利率跨距大或資本支出佔營收高）且 PEG 低到可疑；循環＝循環股但未觸發守門；財報前＝距下次財報 ≤7 天；內部人買／內部人賣＝近 3 個月內部人淨買賣方向；新席／現任／遞補＝本期席位異動狀態。</div>
+<div class="bw-note-line"><b>底部之後的數字欄</b>：三年 EPS 成長、營收成長、ROIC、自由現金流率、EPS 預估、預估本益比、PEG、增量 ROIC、再投資率、隱含成長、營運槓桿，都來自 dd-screener，只供參考，不影響資格、排序與席位。其中三年 EPS 成長 ≥15%、ROIC ≥15%、自由現金流 &gt;0 本來就是資格條件，這裡只是把數字攤開。</div>
 <div class="bw-note-line"><b>怎麼用</b>：核心或②可買＝現在可以買。③等待池＝資格全過但燈號還沒亮，等燈亮。</div>
 </details>"""
 

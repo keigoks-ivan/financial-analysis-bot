@@ -399,12 +399,12 @@ def _table(views, lamp_map, seat_prefix=None, empty_seats=0):
     if not views and not empty_seats:
         return '<div class="bw-note-line">（無）</div>'
     head = ('<tr><th class="bw-l">' + ('席' if seat_prefix else '#') + '</th>'
-            + ''.join(ba._shared_thead_cells()) + '</tr>')
+            + ''.join(ba._shared_thead_cells('tw')) + '</tr>')
     body = []
     for i, v in enumerate(views, 1):
         code = f"{seat_prefix}{i}" if seat_prefix else str(i)
         body.append(f'<tr><td class="bw-l">{escape(code)}</td>' + ''.join(_cells(v, lamp_map)) + '</tr>')
-    n_cols = len(ba._shared_thead_cells())
+    n_cols = len(ba._shared_thead_cells('tw'))
     for j in range(len(views) + 1, len(views) + empty_seats + 1):
         body.append(f'<tr class="bw-muted-row"><td class="bw-l">{seat_prefix}{j}</td>'
                     f'<td class="bw-l" colspan="{n_cols}">空席</td></tr>')
@@ -423,6 +423,7 @@ def _legend():
 <div class="bw-note-line"><b>回測</b>：照現行規則回測 2013-03 至 2026-09，持有全部合格股年化報酬 13.21%，最大回撤 −57.01%；同期買進持有 0050 年化 20.32%，最大回撤 −33.96%。報酬和回撤都不如 0050。</div>
 <div class="bw-note-line"><b>下次財報</b>：「≤N 天」是公司還沒公告日期，依法定期限推算（第一季 5/15、第二季 8/14、第三季 11/14、年報 3/31），實際可能更早。距財報 7 天內標橘色。</div>
 <div class="bw-note-line"><b>底部</b>：只在距歷史新高 10% 以內才算。回檔一次比一次小、量縮、離底部高點近算「緊」，否則算「鬆」。只排 ② 可買裡 🟡 接近新高組的順序，不改燈號或倉位。</div>
+<div class="bw-note-line"><b>底部之後的數字欄</b>：三年 EPS 成長、營收成長、ROIC、營業現金流率、EPS 預估（新台幣）、預估本益比、PEG、增量 ROIC、再投資率、隱含成長、營運槓桿，都來自 dd-screener，只供參考，不影響資格、排序與席位。其中三年 EPS 成長 ≥15%、ROIC 與營業現金流率本來就是資格條件，這裡只是把數字攤開。</div>
 <div class="bw-note-line"><b>跟美股的資料差異</b>：融券比在美股是資格條件，台股池沒有這項資料，這一條等於不設。內部人買賣在美股只是備註，台股池幾乎沒有資料。</div>
 </details>"""
 
@@ -443,7 +444,7 @@ def _board_html(views, seat_code_map, lamp_map, n_eligible, rev_n):
     tooltips); the 席 column goes after the first 8 shared cells, as in _board_tr()."""
     if not views:
         return ''
-    thead_cells = ba._shared_thead_cells()
+    thead_cells = ba._shared_thead_cells('tw')
     thead = ('<tr><th title="依綜合對照分排的名次，只供對照；席位依上修排序">#</th>' + ''.join(thead_cells[:8])
              + '<th class="bw-l" title="目前坐的核心席，空白＝沒坐席">席</th>' + ''.join(thead_cells[8:]) + '</tr>')
     body = []
