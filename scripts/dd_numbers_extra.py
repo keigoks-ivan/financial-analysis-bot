@@ -83,6 +83,8 @@ def _family_files(prefix):
 def _eps_snapshot_files(ticker):
     """(path, yyyymmdd) 由舊到新：最新快照含這檔的第一個 Koyfin 家族；都不含就回 universe 家族（照舊報「不在最新快照」）。"""
     for key in FAMILY_ORDER:
+        if FAMILIES[key].get("briefing_only"):   # 2026-10-21 早報寬名單不參與 DD 共識查找
+            continue
         files = _family_files(FAMILIES[key]["xlsx_family"])
         if files and _load_snap(files[-1][0]).get(ticker) is not None:
             return files

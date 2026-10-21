@@ -63,9 +63,27 @@ FAMILIES = {
             "dd_tw watchlist (screen dd_tw_v1: TW, >=$1B, ROIC>=15; FCF>0 removed 2026-10-09)"
         ),
     },
+    # 2026-10-21 早報用台股寬名單：市值前 500 大裡有 FY1～FY3 任一 EPS 預估的股票（303 檔，
+    # 10-21 靜態成員），含金融股與興櫃。80 欄版面與 dd_tw_80col 相同。只餵
+    # build_tw_wide_eps.py -> docs/dd-screener/tw-wide/latest.json（morning-briefing 查表用），
+    # 不進席位／stages／FunnelRank／dd-screener 台股頁。
+    "tw_wide": {
+        "watchlist_tab": "dd_tw_wide",
+        "url": "https://app.koyfin.com/myw/3f08da00-3648-4d1e-8864-ece367ccef8c",
+        "xlsx_family": "DD_tw_wide_EPS_estimates_",
+        # dd_numbers_extra._eps_snapshot_files 跳過這個家族：DD 共識 EPS 的查找順序維持不變。
+        "briefing_only": True,
+        "universe_note": (
+            "dd_tw_wide watchlist (早報用寬名單：市值前 500 大有預估，含金融；"
+            "不進席位／stages／FunnelRank)"
+        ),
+    },
 }
 
-FAMILY_ORDER = ["screener", "smallcap", "largecap", "tw"]
+FAMILY_ORDER = ["screener", "smallcap", "largecap", "tw", "tw_wide"]
+
+# 抓取或建置失敗時只印警告、不擋其他家族與推送（koyfin_scrape.py／koyfin_refresh_all.py 讀這個）。
+NON_BLOCKING_FAMILIES = ("tw_wide",)
 
 
 def raw_txt_name(family_key: str, date_str: str) -> str:

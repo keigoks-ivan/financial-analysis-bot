@@ -102,3 +102,19 @@
 - Koyfin 重抓：`koyfin_refresh_all.py` 的下游鏈最後兩步是台股 build 與台股頁，排在 tenbagger／arena
   之後，台股出錯不會擋到美股。
 - 台股選股主控台 `/cockpit-tw/` 讀 `tw/latest.json`，與美股 `/cockpit/` 互相有切換連結。
+
+## 早報用寬名單 `dd_tw_wide`（2026-10-21 起）
+
+持有人 10-21 決定：早報台股創高區塊要掛 dd-screener 數字，但主名單 78 檔只對到當天 40 檔創高股裡的 1 檔。
+做法是另開一份只給早報查數字的名單，主名單、席位、stages、FunnelRank、台股頁都不動。金融股放進來，只顯示數字、不排名。
+
+- Watchlist：https://app.koyfin.com/myw/3f08da00-3648-4d1e-8864-ece367ccef8c（tab 名 `dd_tw_wide`），從 `dd_tw_80col` 複製，80 欄版面相同。
+- 成員：早報市值前 500 大（`~/morning-briefing/data/tw_universe.json`，10-12 版）裡，Koyfin 有 FY1～FY3 任一 EPS 預估的 303 檔，含金融 12 檔。成員是 10-21 固定下來的，不會跟著前 500 大自動變動。
+- 10-21 量測：前 500 大有預估的比例，市值 30 億美元以上 90%、10～30 億 59%、5～10 億 38%。有第三年預估的只有 198 檔。
+- 對到率：10-21 的 40 檔創高股，主名單對到 1 檔，加上寬名單後對到 30 檔。另外 10 檔 Koyfin 完全沒有預估，例如彰銀、合庫金。
+- 程式：`koyfin_families.py` 的 family `tw_wide`（`briefing_only`，DD 共識 EPS 查找會跳過它），每天跟其他名單一起抓，抓取、閘門、建 xlsx、每日快照任何一步失敗都只警告，不擋其他名單與推送。
+  `build_tw_wide_eps.py` 是下游最後一步，輸出 `docs/dd-screener/tw-wide/latest.json`；早報 `dd_numbers.py` 的 `TW_URLS` 第二個網址讀它，同代號以主名單為準。
+- 口徑：EPS 用 Koyfin 美元乘主名單同一天的匯率換成新台幣。去年實際 EPS 不用 Koyfin 的美元值，因為它用歷史匯率換，跟預估差約 3%；改用 yfinance 的新台幣值，同財年沿用上一份。
+  與主名單重疊的 66 檔，ROIC 與去年實際 EPS 完全相同，今年預估 EPS 最大差 1.6%，來自主名單 DD 列用逐檔匯率。
+- 每日快照存在 `data/eps-estimates/daily/tw_wide/`（Koyfin 美元，與 `tw/` 同格式），v7 `tools/sync_site_data.py` 每天同步。
+- 首跑的 yfinance 抓去年實際 EPS 花了 8 分鐘，之後沿用只要 1 分鐘以內。52 檔沒有去年實際 EPS，多半是 EPS 為零或負。

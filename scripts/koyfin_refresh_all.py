@@ -28,7 +28,7 @@ Pipeline per family (screener / smallcap / largecap, see scripts/koyfin_families
      same new FY1 (within 1%) shows on 2 consecutive scrapes; more than max(10, 5% of
      rows) held in a family -> exit 6, nothing built. Each run writes
      data/eps-estimates/gate/gate_report_<date>.json + held_state.json (committed), and
-     a daily EPS snapshot under data/eps-estimates/daily/{dd,smallcap,tw}/.
+     a daily EPS snapshot under data/eps-estimates/daily/{dd,smallcap,tw,tw_wide}/.
      The Koyfin scrape itself is never retried; login expired (exit 3) just stops.
   5. build the xlsx via `python3 scripts/koyfin_xlsx_from_raw.py`
 Then, once every requested family is done: the six downstream commands in
@@ -40,6 +40,7 @@ python3.12 — copied verbatim, not a typo):
   python3 scripts/engine/build_arena.py
   python3.12 scripts/build_dd_screener.py --universe tw      (2026-10-09 TW pool)
   python3.12 scripts/build_dd_screener_tw_page.py            (2026-10-09 TW pool page)
+  python3.12 scripts/build_tw_wide_eps.py                    (2026-10-21 早報用台股寬名單，失敗只警告)
 The two TW commands run last because the chain stops at the first failure,
 and a TW problem must not keep tenbagger / arena from running.
 Then a final summary (universe sizes, largecap rows, arena core/waiting/buyable line).
@@ -70,7 +71,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-from koyfin_families import FAMILIES, FAMILY_ORDER, raw_txt_name, fingerprint_sidecar_name  # noqa: E402
+from koyfin_families import FAMILIES, FAMILY_ORDER, NON_BLOCKING_FAMILIES, raw_txt_name, fingerprint_sidecar_name  # noqa: E402
 import load_eps_estimates_xlsx as leex  # noqa: E402  (stdlib-only reader, python3.12-safe)
 import eps_daily  # noqa: E402  (2026-10-21 逐檔閘門／每日快照)
 import market_sessions as ms  # noqa: E402
@@ -260,7 +261,11 @@ DOWNSTREAM_CMDS = [
     # above (run_downstream stops at the first failure).
     ["{PY312}", "scripts/build_dd_screener.py", "--universe", "tw"],
     ["{PY312}", "scripts/build_dd_screener_tw_page.py"],
+    # 2026-10-21 早報用台股寬名單 (docs/dd-screener/tw-wide/latest.json)。最後一步，
+    # 且失敗只警告（NON_BLOCKING_DOWNSTREAM），不擋 commit／push。
+    ["{PY312}", "scripts/build_tw_wide_eps.py"],
 ]
+NON_BLOCKING_DOWNSTREAM = ("build_tw_wide_eps.py",)
 
 
 def run_downstream() -> tuple[bool, str]:
@@ -275,6 +280,9 @@ def run_downstream() -> tuple[bool, str]:
         if proc.stderr:
             print(proc.stderr, file=sys.stderr)
         if proc.returncode != 0:
+            if cmd[-1].endswith(NON_BLOCKING_DOWNSTREAM):
+                print(f"WARN: non-blocking downstream command failed (exit {proc.returncode}): {cmd}", file=sys.stderr)
+                continue
             print(f"downstream command failed (exit {proc.returncode}): {cmd}", file=sys.stderr)
             return False, arena_line
         if "build_arena.py" in cmd[-1]:
@@ -408,13 +416,19 @@ def write_daily_snapshots(built: list[dict], date_str: str) -> list[Path]:
         members = [by_family[f] for f in cfg["families"] if f in by_family]
         if not members:
             continue
-        excels = [leex.load_excel(b["xlsx"]) for b in members]
-        scraped = max(b["scraped_at_utc"] for b in members).isoformat()
-        doc = eps_daily.build_daily_snapshot(
-            group, excels, scraped_at_utc=scraped, source_files=[b["xlsx"].name for b in members])
-        doc["snapshot_date"] = snapshot_date
-        path = eps_daily.daily_dir(group) / f"{snapshot_date}.json"
-        eps_daily.write_daily_snapshot(path, doc)
+        try:
+            excels = [leex.load_excel(b["xlsx"]) for b in members]
+            scraped = max(b["scraped_at_utc"] for b in members).isoformat()
+            doc = eps_daily.build_daily_snapshot(
+                group, excels, scraped_at_utc=scraped, source_files=[b["xlsx"].name for b in members])
+            doc["snapshot_date"] = snapshot_date
+            path = eps_daily.daily_dir(group) / f"{snapshot_date}.json"
+            eps_daily.write_daily_snapshot(path, doc)
+        except Exception as exc:  # noqa: BLE001
+            if group in NON_BLOCKING_FAMILIES:
+                print(f"[daily-snapshot] WARN: {group} failed ({type(exc).__name__}: {exc}); ignored.", file=sys.stderr)
+                continue
+            raise
         print(f"[daily-snapshot] {group}: {doc['universe_size']} tickers -> {path.relative_to(ROOT)}")
         written.append(path)
     return written
@@ -427,6 +441,7 @@ def git_commit(built: list[dict], push: bool, extra_paths: list[Path] | None = N
         "docs/dd-screener/smallcap/latest.json",
         "docs/dd-screener/tw/latest.json",
         "docs/dd-screener/tw/index.html",
+        "docs/dd-screener/tw-wide/latest.json",
         "docs/engine/arena.json", "docs/engine/board.txt", "docs/engine/_arena_body.html",
     ]
     # 2026-10-21: daily EPS snapshots + gate report + held state ride in the same commit.
@@ -594,6 +609,19 @@ def main() -> int:
 
     built = []
     for family_key in families:
+        if family_key in NON_BLOCKING_FAMILIES:
+            # 2026-10-21 早報用寬名單：任何失敗（缺 raw 檔、指紋、閘門 exit 6、建 xlsx）只警告，跳過
+            try:
+                rc, info = process_family(family_key, date_str, args.dry_run, scratch_dir)
+            except Exception as exc:  # noqa: BLE001
+                rc, info = 1, {"family": family_key}
+                print(f"[{family_key}] WARN: {type(exc).__name__}: {exc}", file=sys.stderr)
+            if rc != 0:
+                print(f"[{family_key}] WARN: non-blocking family failed (exit {rc}); skipped, "
+                      f"other families and push continue.", file=sys.stderr)
+                continue
+            built.append(info)
+            continue
         rc, info = process_family(family_key, date_str, args.dry_run, scratch_dir)
         if rc != 0:
             return rc

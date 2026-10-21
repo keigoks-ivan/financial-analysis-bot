@@ -55,7 +55,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-from koyfin_families import FAMILIES, FAMILY_ORDER, raw_txt_name, fingerprint_sidecar_name  # noqa: E402
+from koyfin_families import FAMILIES, FAMILY_ORDER, NON_BLOCKING_FAMILIES, raw_txt_name, fingerprint_sidecar_name  # noqa: E402
 
 DEFAULT_PROFILE_DIR = Path.home() / ".koyfin-playwright"
 SCRAPER_JS_PATH = SCRIPTS_DIR / "koyfin_scraper.js"
@@ -303,6 +303,11 @@ def cmd_scrape(profile_dir: Path, names: list[str], date_str: str, headless: boo
         try:
             for name in names:
                 rc = scrape_one(context, name, date_str, timeout_sec)
+                if name in NON_BLOCKING_FAMILIES:
+                    # 2026-10-21 早報用寬名單失敗只警告，不讓整體 exit code 擋掉其他家族與推送
+                    if rc != 0:
+                        print(f"[{name}] WARN: scrape failed (exit {rc}); non-blocking family, ignored.")
+                    continue
                 worst = max(worst, rc)
                 if rc != 0:
                     print(f"[{name}] stopped (exit {rc}) — not proceeding to remaining watchlists is NOT "

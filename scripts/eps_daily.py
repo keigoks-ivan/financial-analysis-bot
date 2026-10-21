@@ -2,7 +2,7 @@
 """每日 Koyfin 抓取的三塊共用邏輯（2026-10-21）：
 
   1. 閘門逐檔處理（取代「任何一檔超過 35% 就整批停」）
-  2. 每日 EPS 快照（data/eps-estimates/daily/{dd,smallcap,tw}/YYYY-MM-DD.json）
+  2. 每日 EPS 快照（data/eps-estimates/daily/{dd,smallcap,tw,tw_wide}/YYYY-MM-DD.json）
   3. 「財報後」基準挑選、「財報後第 k 天」對位
 
 stdlib + load_eps_estimates_xlsx（只讀 xlsx，不需要 openpyxl），python3 與 python3.12 都能 import。
@@ -58,12 +58,15 @@ SNAPSHOT_GROUPS = {
     "dd": {"families": ["screener", "largecap"], "dir": "eps-estimates-snapshots"},
     "smallcap": {"families": ["smallcap"], "dir": "smallcap/eps-estimates-snapshots"},
     "tw": {"families": ["tw"], "dir": "tw/eps-estimates-snapshots"},
+    # 2026-10-21 早報用台股寬名單（dd_tw_wide）。沒有月快照目錄（早報用，不進頁面）。
+    "tw_wide": {"families": ["tw_wide"], "dir": "tw-wide/eps-estimates-snapshots"},
 }
+TW_FAMILIES = ("tw", "tw_wide")      # 台股家族：看台股交易日、代號要解析 .TW／.TWO
 DD_SCREENER_DIR = ROOT / "docs" / "dd-screener"
 
 
 def family_market(family_key: str) -> str:
-    return "TW" if family_key == "tw" else "US"
+    return "TW" if family_key in TW_FAMILIES else "US"
 
 
 # ---------------------------------------------------------------------------
@@ -213,7 +216,7 @@ def make_report_dates_lookup(family_key: str, today_d: date):
             return []
 
     def lookup(ticker: str) -> list[date]:
-        if family_key != "tw":
+        if family_key not in TW_FAMILIES:
             return _yf_dates(ticker)
         out: list[date] = []
         for suf in (".TW", ".TWO"):
@@ -275,7 +278,7 @@ def build_daily_snapshot(group: str, excels: list, *, scraped_at_utc: str, sourc
     """excels: 同一群組各家族的 ExcelSnapshot（排在前面的優先）。"""
     snap_date = excels[0].snapshot_date
     tickers: dict = {}
-    if group == "tw":
+    if group in TW_FAMILIES:
         monthly = {k.split(".")[0]: k for k in _latest_monthly_keys(group, docs_dir)}
         codes = sorted({c for ex in excels for c in ex.tickers})
         unknown = [c for c in codes if c not in monthly]
