@@ -255,9 +255,12 @@ def test_down_reason_red_by_ath_and_200dma_listed_together():
     assert _shorts("A", rows) == ["時機燈轉紅：距歷史新高 -12.0%", "時機燈轉紅：跌破 200 日線 -2.5%"]
 
 
-def test_down_reason_out_of_pool_and_red_both_listed():
+def test_down_reason_low_revision_is_no_longer_an_out_of_pool_reason():
+    # v5.7（2026-10-21）：沒有「上修低於 5% 入池門檻」這個出池原因了，只剩時機燈轉紅
     rows = [_dr_row("T", "red", None, rev=4.0, lamp_why="距歷史新高 -15.1%")]
-    assert _shorts("T", rows) == ["財報後上修 +4.0%，低於 5% 入池門檻", "時機燈轉紅：距歷史新高 -15.1%"]
+    assert _shorts("T", rows) == ["時機燈轉紅：距歷史新高 -15.1%"]
+    rows = [_dr_row("N", "red", None, rev=None, lamp_why="距歷史新高 -15.1%")]
+    assert _shorts("N", rows) == ["時機燈轉紅：距歷史新高 -15.1%"]
 
 
 def test_down_reason_lit_but_squeezed_out_reports_rank():

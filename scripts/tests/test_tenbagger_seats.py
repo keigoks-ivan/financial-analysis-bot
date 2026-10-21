@@ -162,8 +162,24 @@ def test_e2e_retry_on_same_price_date_is_idempotent(tmp_path, monkeypatch):
     assert paths["seats"].read_text(encoding="utf-8") == first
 
 
-def test_e2e_pool_threshold_still_five_percent(tmp_path, monkeypatch):
-    stocks = [_v5_stock("LOW", rev_pct=3.0, cap_b=5.0), _v5_stock("OK", rev_pct=8.0, cap_b=5.0)]
+def test_e2e_pool_has_no_revision_threshold_and_revision_only_orders(tmp_path, monkeypatch):
+    # v5.7 第四項：資格全過即入池。低上修、零上修、缺上修（最後兩項未達 −5% 否決）都進池，上修只排序
+    stocks = [_v5_stock("LOW", rev_pct=3.0, cap_b=5.0), _v5_stock("OK", rev_pct=8.0, cap_b=5.0),
+              _v5_stock("NEG", rev_pct=-2.0, cap_b=5.0), _v5_stock("VETO", rev_pct=-8.0, cap_b=5.0)]
     paths = _setup(monkeypatch, tmp_path, stocks)
     bt.main([])
-    assert [r["ticker"] for r in _out(paths)["seats"]["roster"]] == ["OK"]
+    out = _out(paths)
+    assert [r["ticker"] for r in out["official"]] == ["OK", "LOW", "NEG"]       # −8% 是上修否決，不具資格
+    assert [r["ticker"] for r in out["seats"]["roster"]] == ["OK", "LOW", "NEG"]
+    assert out["not_in_pool"] == []
+
+
+def test_e2e_missing_revision_is_in_pool_and_ranks_last(tmp_path, monkeypatch):
+    nr = _v5_stock("NOREV", rev_pct=None, cap_b=5.0)
+    for k in ("eps_rev_since_earnings_pct", "eps_rev_anchor", "eps_rev_since_earnings_baseline_date"):
+        nr.pop(k, None)
+    nr["eps_rev_3m_pct"] = None
+    paths = _setup(monkeypatch, tmp_path, [nr, _v5_stock("OK", rev_pct=8.0, cap_b=5.0)])
+    bt.main([])
+    tickers = [r["ticker"] for r in _out(paths)["official"]]
+    assert tickers == ["OK", "NOREV"]

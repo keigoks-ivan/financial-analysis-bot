@@ -137,7 +137,7 @@ footer a{font-weight:600}
       <h2>小市值版席位池</h2>
       <span class="tagline">10–200 億美元 · 與席位陣容同一套規則 · 每日更新</span>
     </div>
-    <p class="transparency">資格＝品質閘（ROIC ≥15% 且自由現金流 &gt;0）× 三年成長預估 ≥15% × 站上 52 週線；耐久一致性只當顯示旗標，不擋資格。池＝資格全過且財報後獲利上修（缺值看近三個月）達 +5% 以上，依上修幅度由高到低排。上修未達 5% 的名字進下方收合區複審，不進池。</p>
+    <p class="transparency">資格＝品質閘（ROIC ≥15% 且自由現金流 &gt;0）× 三年成長預估 ≥15% × 站上 52 週線；耐久一致性只當顯示旗標，不擋資格。池＝資格全過的名字（2026-10-21 起沒有上修 ≥5% 的門檻），依財報後獲利上修（缺值看近三個月）由高到低排，沒有上修數字的排最後。</p>
 
     <div class="group-block">
       <div class="group-title g1"><span class="dot"></span>十席名單 <span class="sub">每週六（台北）依週五收盤重選 · 紅燈就賣 · 空席放現金</span></div>
@@ -160,11 +160,6 @@ footer a{font-weight:600}
       <div class="subhead">🔴 拉回中（距新高超過 10%，或跌破 200 日線）</div>
       <div id="pool-waiting-red-body"></div>
     </div>
-
-    <details class="fold">
-      <summary>③品質過閘但上修未達 5%（收合，共 <span id="notpool-count">0</span> 檔，僅供複審）</summary>
-      <div id="pool-notpool-body" style="margin-top:.7rem"></div>
-    </details>
 
     <details class="fold">
       <summary>資格漏斗——每一關卡刷掉多少檔</summary>
@@ -316,10 +311,6 @@ footer a{font-weight:600}
     document.getElementById('pool-buyable-yellow-body').innerHTML = tableHtml(buy.filter(isYellow));
     var waiting = d.waiting || {};
     document.getElementById('pool-waiting-red-body').innerHTML = tableHtml(waiting.red||[]);
-    var notPool = d.not_in_pool||[];
-    document.getElementById('pool-notpool-body').innerHTML = tableHtml(notPool);
-    var cc = document.getElementById('notpool-count');
-    if(cc) cc.textContent = notPool.length;
 
     var funnelEl = document.getElementById('pool-funnel-body');
     if(funnelEl){
@@ -358,7 +349,6 @@ footer a{font-weight:600}
     dataErr('pool-buyable-body');
     dataErr('pool-buyable-yellow-body');
     dataErr('pool-waiting-red-body');
-    dataErr('pool-notpool-body');
   });
 
   // ---- 治理狀態 (picks.json：changelog + veto) ----

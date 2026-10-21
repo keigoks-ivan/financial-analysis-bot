@@ -57,7 +57,7 @@ Not a registered pass — an exception: the v7-backtest TW rule (docs/SeatFullGr
 revision threshold (TW has no historical estimates), nor the valuation gate or the three-year growth gate.
   - Pool = every name that passes all eligibility gates (grp.pass, valuation gate included; names red
     only on valuation stay in 「③b 太貴不入池」). Revision is a sort key only (grp.pool_sort_key, the
-    existing pool order). The US board and the ten-bagger page keep grp.in_pool() / POOL_REV_MIN.
+    existing pool order). The US board and the ten-bagger page dropped the same threshold later that day (fourth item), so grp.in_pool() / POOL_REV_MIN now have no callers.
   - Everything else is unchanged: the lamp-lit top 5, X1 exit, bear-week no-buy, yellow full size,
     Saturday re-selection. Reason for the change: 30 names passed eligibility but the highest revision
     was +2.6%, so the seats had been empty since 2026-10-09.

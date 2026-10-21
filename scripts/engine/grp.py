@@ -276,7 +276,7 @@ def lamp_action(lamp: dict, yellow_full: bool = False) -> str:
 # v5（2026-09-17，見檔頭 v5 段／rule_ledger「v5 席位引擎」列）——耐久一致性判準常數：
 DURABLE_QGM_STABILITY_MIN = 75.0   # QGM 五年 ROIC 穩定度 pct_above（0-100 尺度）≥ 此值
 DURABLE_ROIC_MIN = 15.0            # Koyfin 路徑：五年平均／三年平均／現值三者皆須 ≥ 此值
-POOL_REV_MIN = 5.0                 # 池門檻：財報後上修（缺值退回三月）≥ 此值才進池
+POOL_REV_MIN = 5.0                 # 池門檻（v5.7，2026-10-21 起台股、美股看板、十倍股頁都不用，保留常數供舊 import 與測試）
 # v5 時機燈（timing_lamp()）——距歷史新高（ma.dist_ath_pct，還原權息全歷史）分帶：
 ATH_RED_DIST = -10.0     # < 此值（或跌破 200 日線）＝紅燈
 ATH_GREEN_DIST = -3.0    # ≥ 此值 且站上 200 日線＝綠燈（突破帶）
@@ -365,7 +365,8 @@ def pool_sort_key(rev, implied_growth=None, ey=None) -> tuple:
 
 
 def in_pool(rev_used_pct) -> bool:
-    """v5 池門檻（見 POOL_REV_MIN）：上修（財報後錨定優先，缺值退回三月）
+    """【v5.7 起沒有呼叫者：台股、美股看板、十倍股頁都改成資格全過即入池，上修只排序。保留供舊測試與外部 import。】
+    v5 池門檻（見 POOL_REV_MIN）：上修（財報後錨定優先，缺值退回三月）
     ≥ +5% 才進池；資格閘全過但上修 <+5% 者「品質過閘、上修未達 5%」，不進池。"""
     return rev_used_pct is not None and rev_used_pct >= POOL_REV_MIN
 

@@ -32,7 +32,7 @@ scripts/engine/build_arena._flat_view()（GRP 席位表本尊的同一份函式�
 ①市值帶（$10億–$200億，非 ≥$200億）②不設核心席／不做月頻輪動（本頁「只看不進
 倉位」，見 _embed.html）。輸出 schema 見 main() 尾端 payload 字面：`official`＝池
 （依上修降冪排序，同 grp.pool_sort_key）；`buyable`＝池中時機燈亮著者（綠／黃／橘，與席位入席同一組燈號）；`waiting`＝
-池中其餘者（燈號未亮，只有 red 一組）；`not_in_pool`＝資格閘全過但上修未達 +5% 者
+池中其餘者（燈號未亮，只有 red 一組）；`not_in_pool`＝v5.7 起恆為空（資格全過即入池）
 （收合複審用）。無 `seat_cap`（v5 無核心席概念，池不設上限）。
 
 CADENCE（v5 起改為每日，取代舊版月頻 21 天 cadence guard）
@@ -65,7 +65,7 @@ v5.7 十席（2026-10-21 持有人破例決定；非登記通過）
   3. 在席者不會被排名更高的新名字擠掉。
 倉位綠 1.0／黃 1.0／橘 0.5（v5.3），空席放現金。狀態檔不存在（第一次跑）時不等週六，直接從空席照規則補。
 依據：美股中小型 5 席換 10 席在配對格全期 100%、前段 94%、後段 100% 變好；但台股前段只有 46%，登記要兩個市場
-都過，所以不是登記通過，是持有人的破例決定。研究依據 /cockpit/#seats-grid。池門檻（上修 ≥5%）不動。純函式
+都過，所以不是登記通過，是持有人的破例決定。研究依據 /cockpit/#seats-grid。v5.7 同日第四項：池也拿掉「上修 ≥5% 才進池」，資格全過（估值閘紅燈仍不進）即入池，上修只排序，缺上修數字的排最後。純函式
 select_seats()，測試 scripts/tests/test_tenbagger_seats.py。
 
 FAIL-SAFE
@@ -287,7 +287,7 @@ def _smallcap_rev_baseline_note(smallcap_meta, candidate_rows, smallcap_tickers)
 
 
 def select_seats(pool_rows, prev_roster, vetoed=(), slots=SEAT_SLOTS):
-    """v5.7 十席重選（純函式）。pool_rows＝池（資格全過＋上修 ≥5%，已扣 veto），依池序排好；
+    """v5.7 十席重選（純函式）。pool_rows＝池（資格全過，已扣 veto），依池序排好；
     prev_roster＝上次的在席名單。在席者留任的條件：仍在池內且時機燈亮著（綠／黃／橘）；否則下席。
     空席依池序補時機燈亮著的名字，最多 slots 席；在席者不會被更高名次的新名字擠掉。
     回傳 {"roster": [...依池序], "removed": [(ticker, 理由)], "filled": [ticker]}。"""
@@ -297,7 +297,7 @@ def select_seats(pool_rows, prev_roster, vetoed=(), slots=SEAT_SLOTS):
     for t in prev_roster or []:
         r = by_t.get(t)
         if r is None:
-            removed.append((t, "持有人否決" if t in set(vetoed) else "出池（資格不成立或上修未達 5%）"))
+            removed.append((t, "持有人否決" if t in set(vetoed) else "出池（資格不成立）"))
         elif (r.get("lamp") or {}).get("code") not in lit:
             removed.append((t, "時機燈轉紅（距新高 <−10% 或跌破 200 日線）"))
         else:
@@ -359,14 +359,13 @@ def main(argv=None):
 
     eligible = [r for r in rows_all if (r.get("grp") or {}).get("pass")]
     funnel["資格閘全過（品質×耐久×三年成長×站上52週線×否決）＝ELIGIBLE"] = len(eligible)
-    smallcap_rev_baseline_note = _smallcap_rev_baseline_note(smallcap_meta, rows_all, smallcap_tickers)
+    # v5.7：池不再看上修門檻，「上修基準未建所以池內看不到小市值名字」的提示不再成立
+    smallcap_rev_baseline_note = None
     if smallcap_rev_baseline_note:
         info(f"smallcap 池：{smallcap_rev_baseline_note}")
 
-    pool_rows = sorted((r for r in eligible if grp.in_pool((r.get("grp") or {}).get("rev_used_pct"))),
-                       key=pool_key)
-    not_in_pool_rows = sorted((r for r in eligible if not grp.in_pool((r.get("grp") or {}).get("rev_used_pct"))),
-                              key=pool_key)
+    pool_rows = sorted(eligible, key=pool_key)   # v5.7：資格全過即入池，上修只排序（缺值排最後）
+    not_in_pool_rows: list = []
 
     vetoed = sorted({r["ticker"] for r in pool_rows + not_in_pool_rows if r["ticker"] in veto})
     if vetoed:
@@ -374,8 +373,7 @@ def main(argv=None):
     pool_rows = [r for r in pool_rows if r["ticker"] not in veto]
     not_in_pool_rows = [r for r in not_in_pool_rows if r["ticker"] not in veto]
 
-    funnel["財報後上修 ≥5%（缺值退回三月）＝進池"] = len(pool_rows)
-    funnel["資格閘過但上修未達 5%（收合複審，不進池）"] = len(not_in_pool_rows)
+    funnel["進池（資格全過即入池，上修只排序；v5.7 起無 ≥5% 門檻）"] = len(pool_rows)
 
     # ── v5.7 十席：狀態檔 → 重選或沿用 ──
     seats_doc = load_json_quiet(SEATS_LEDGER) or {}
@@ -463,7 +461,7 @@ def main(argv=None):
         "note": ("十倍組 v5 小市值池（2026-09-17 起）：GRP 席位同一套 v5 資格閘規則"
                  "（品質閘×耐久一致性×三年成長×站上52週線×財報後上修否決）跑在 "
                  "$10億–$200億市值帶——GRP 席位地板之下、零重疊是設計。池＝資格全過"
-                 "且財報後上修（缺值退回三月）≥+5% 者，依上修降冪排序（同值 tie-break "
+                 "者（v5.7 起沒有上修 ≥5% 門檻），依上修降冪排序（缺上修數字的排最後；同值 tie-break "
                  "implied_growth_pct、再 tie-break 盈餘殖利率）。可買＝池中時機燈亮著"
                  "者（綠／黃／橘）；等待池＝燈號未亮的拉回中（🔴）。v5.7（2026-10-21 起）設 10 席："
                  "每週六（台北）重選，在席者紅燈或出池就下席，空席從池中亮燈者照池序補，在席者不被"
@@ -506,7 +504,7 @@ def main(argv=None):
           f"帶外（cap 已知但不在 $10億-$200億）={out_of_band}")
     print(f"[build_tenbagger] 池（official）={len(official_out)}　可買={len(buyable_out)}　"
           f"等待池 🔴={len(waiting_red)}　"
-          f"品質過閘上修未達5%={len(not_in_pool_out)}")
+          f"池外={len(not_in_pool_out)}")
 
     def _fmt(row):
         lamp = row.get("lamp") or {}

@@ -152,17 +152,17 @@ def test_daily_mode_core_untouched_pool_reranked_ledger_untouched(tmp_path, monk
     # not re-derived from this run's ranking.
     assert [r["ticker"] for r in out["core_seats"]] == _CORE5
 
-    # 3) pool re-ranked from fresh data: PQRSF (rev 8%) is in the waiting pool
-    # (sat_seats, backward-compat key), PQRSG (rev 3% < the +5% pool floor) is
-    # not — it shows up only in "not_in_pool".
-    assert [r["ticker"] for r in out["sat_seats"]] == ["PQRSF"]
+    # 3) pool re-ranked from fresh data. v5.7 (2026-10-21): no +5% pool floor any more, so
+    # PQRSF (rev 8%) and PQRSG (rev 3%) are both in the waiting pool, ordered by revision;
+    # "not_in_pool" stays as an (always empty) key for old consumers.
+    assert [r["ticker"] for r in out["sat_seats"]] == ["PQRSF", "PQRSG"]
     assert all(r.get("track") == "pool" for r in out["sat_seats"])
-    assert [r["ticker"] for r in out["not_in_pool"]] == ["PQRSG"]
-    assert out["pool_size"] == 6   # 5 core + PQRSF; PQRSG excluded (below pool floor)
+    assert out["not_in_pool"] == []
+    assert out["pool_size"] == 7   # 5 core + PQRSF + PQRSG
     assert out["rev_data_as_of"] == "2026-09-15"
     assert out["price_as_of"] == "2026-09-20"
 
-    # Re-rank check: bump PQRSG's revision above the pool floor and above
+    # Re-rank check: bump PQRSG's revision above
     # PQRSF's, rerun, and confirm the pool order actually moves — this is what
     # "re-ranked" means, not just "recomputed to the same answer" — while core
     # membership (already full, no veto) stays exactly the same 5 names.

@@ -240,3 +240,19 @@ def test_e2e_daily_run_uses_last_decision_days_market_and_never_writes_ledger(tm
     out = json.loads(paths["ARENA_JSON"].read_text(encoding="utf-8"))
     assert out["market_tm"]["decision_date"] == "2026-09-11" and out["market_tm"]["status"] == "bull"
     assert paths["LEDGER_JSON"].read_text(encoding="utf-8") == before
+
+
+# ── v5.7 第四項：池不看上修門檻 ────────────────────────────────────────────
+
+def test_e2e_pool_has_no_revision_threshold_valuation_red_still_out_and_order_by_revision(tmp_path, monkeypatch):
+    stocks = [_v5_stock("PQRSA", 20.0), _v5_stock("LOWREV", 1.0), _v5_stock("NEGREV", -2.0),
+              _v5_stock("PRICEY", 30.0, peg=3.0)]          # 估值閘紅燈：太貴不入池
+    paths = _patch_paths(monkeypatch, tmp_path)
+    _write_fixtures(paths, stocks, as_of=AS_OF, ledger={"schema_version": "5.0", "snapshots": []})
+    monkeypatch.setattr(sys, "argv", ["build_arena.py", "--ledger"])
+    assert build_arena.main() == 0
+    out = json.loads(paths["ARENA_JSON"].read_text(encoding="utf-8"))
+    seated = [r["ticker"] for r in out["core_seats"]]
+    assert seated == ["PQRSA", "LOWREV", "NEGREV"]          # 池序＝上修降冪，含 +1% 與 −2%
+    assert out["pool_size"] == 3 and out["not_in_pool"] == []
+    assert "PRICEY" not in seated

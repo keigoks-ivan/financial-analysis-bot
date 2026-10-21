@@ -144,7 +144,8 @@ def test_durable_true_with_everything_else_clean_passes():
 def test_pool_membership_is_separate_from_eligibility():
     """grp_score()['pass'] is eligibility only — the +5% pool threshold is an
     additional filter the caller (build_arena.main()) applies via grp.in_pool()
-    on top of `pass`, not baked into `pass` itself."""
+    on top of `pass`, not baked into `pass` itself. (v5.7, 2026-10-21: no page applies it any
+    more — grp.in_pool() is kept only as a constant-backed helper for old imports.)"""
     g = grp.grp_score(_v5_stock(eps_rev_3m_pct=2.0))   # positive revision, but < 5%
     assert g["pass"], "低於 5% 的正向上修仍是 ELIGIBLE（只是不進池）"
     assert not grp.in_pool(g["rev_used_pct"]), "但不滿足池門檻"

@@ -70,8 +70,8 @@ v5 席位引擎（2026-09-17 持有人拍板「品質派 ∩ 獲利上修 ∩ �
 引擎」列／notes/site-internal/root/_seat_engine_v5_20260917.md）——本檔改動：
   1. 母體/資格/池：不變的是母體組成（DD 池∪QGM 品質池∪快審卡）；grp_score() 已把
      耐久（durable_5y）與融券高升級為資格閘本體，本檔只需在 ELIGIBLE 集合
-     （r["grp"]["pass"]）上再疊加「上修 ≥5%」這道池門檻（grp.in_pool()），見
-     main() 的 `pool_rows`／`not_in_pool_rows`。
+     （r["grp"]["pass"]）上入池（v5.7 起不再疊加「上修 ≥5%」門檻，資格全過即入池、上修只排序），見
+     main() 的 `pool_rows`；`not_in_pool_rows` 恆為空（保留 key 供舊消費端）。
   2. 排序：`pool_rows` 依 grp.pool_sort_key()（上修降冪、tie-break implied_growth_pct、
      再 tie-break EY）排序，取代 v4 的 own_score_v4 百分位排序；後者（`ranked`／
      `apply_own_score_v4()`）保留一輪只做「v4 對照」tooltip 與全母體對照表。
@@ -132,7 +132,7 @@ from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
 from engine.grp import (  # noqa: E402
     ATH_GREEN_DIST, ATH_RED_DIST, DD_FRESH_DAYS, G_MIN_CAGR, G_MIN_CAGR_DURABLE, LAMP_ACTION, MKTCAP_MIN, MOM_12_1_OVERHEAT,
-    P_LABEL_HTML, PEAK_ROIC_X, POOL_REV_MIN, Q_ROIC_MIN, R26_OVERHEAT_FALLBACK,
+    P_LABEL_HTML, PEAK_ROIC_X, Q_ROIC_MIN, R26_OVERHEAT_FALLBACK,
     R_VETO_FY1, VAL_PEG_MAX, VAL_PE_VS_5Y_MAX, cap_ok, fetch_caps, grp_route, grp_score, in_pool,
     market_ok, own_score_v4, pool_sort_key, timing_lamp, lamp_action,
 )
@@ -937,7 +937,6 @@ def _down_reasons(ticker: str, rows: list) -> list:
     順序＝資格否決 → 出池 → 時機燈紅 → 亮燈但被擠出前 5。判定全部讀 select_lit_roster_v52()
     與 grp_score() 已算好的欄位：
       - 資格否決：grp.pass=False 時沿用 grp.why（既有 chip 句型）；
-      - 出池：上修（grp.rev_used_pct）低於 POOL_REV_MIN，且不是上修否決（否決已在 why）；
       - 時機燈紅：lamp.code=="red"，數字取 lamp.why（距新高／200 日線兩段各列一條）；
       - 擠出前 5：在池（有 pool_rank）、燈亮著（LIT_LAMP_CODES），按池序在亮燈者中的名次 >
         CORE_SLOTS。
@@ -958,13 +957,6 @@ def _down_reasons(ticker: str, rows: list) -> list:
     if not g.get("pass"):
         for w in (g.get("why") or []):
             add(*(_match_chip(w) or (w, w)))
-    rev = g.get("rev_used_pct")
-    if not g.get("veto_revision"):
-        if rev is not None and rev < POOL_REV_MIN:
-            lbl = "財報後上修" if g.get("rev_anchor") in ("earnings", "earnings_pending") else "三個月上修"
-            add(f"{lbl} {rev:+.1f}%，低於 {POOL_REV_MIN:.0f}% 入池門檻")
-        elif rev is None and g.get("pass"):
-            add("上修資料缺漏，無法入池")
     code = lamp.get("code")
     if code == "red":
         hit = False
@@ -1085,7 +1077,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
                       lamp_as_of=None, last_rotation_date=None) -> str:
     """v5 附錄 B 式等寬看板（2026-09-17，見 grp.py 檔頭 v5 段／knowledge/rule_ledger.md
     「v5 席位引擎」列，取代 v4「核心5＋衛星5＋候補5」）：① 核心席（5）／② 可買／
-    ③ 等待池／④ 品質過閘、上修未達 5%＋全母體 v4 對照排序＋DD 進場 vs 機械資格＋
+    ③ 等待池＋全母體 v4 對照排序＋DD 進場 vs 機械資格＋
     無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt 與 <pre> 嵌頁
     （docs/engine/_arena_body.html、docs/cockpit/index.html 皆讀同一份文字）。
 
@@ -1115,7 +1107,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
              "耐久只當旗標。排序：財報後上修。時機燈：距還原權息歷史新高 10% 內且站上 200 日線就亮。"
              "核心席每週六（台北）重算，可空席；其餘每天重排。這是研究名單，不是帳戶持倉。")
     L.append("倉位：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。")
-    L.append("池：資格全過、財報後上修 ≥5% 的名字，依上修由高到低排；同值先比隱含成長率，再比盈餘殖利率。"
+    L.append("池：資格全過的名字（v5.7 起沒有上修門檻），依上修由高到低排（缺上修數字的排最後）；同值先比隱含成長率，再比盈餘殖利率。"
              "綜合對照分只供對照，不決定排序。"
              "核心席：池內時機燈亮著（綠／黃／橘）的名字依上修取前 5，每週六（台北）依週五收盤重算，"
              "亮燈不足就空席；週中燈號只管倉位。沒進核心的池成員：②可買＝今天亮燈（綠／黃／橘），"
@@ -1152,15 +1144,6 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     if _too_exp:
         L.append(_POOL_ASCII_HDR_IDX)
         for i, r in enumerate(_too_exp[:40], 1):
-            L.append(_pool_ascii_row(i, r))
-    else:
-        L.append("  （無）")
-    L.append("")
-
-    L.append(f"== ④ 品質過閘、上修未達 5%（共 {len(not_in_pool_rows)} 檔，僅供複審，不進池）")
-    if not_in_pool_rows:
-        L.append(_POOL_ASCII_HDR_IDX)
-        for i, r in enumerate(not_in_pool_rows[:40], 1):
             L.append(_pool_ascii_row(i, r))
     else:
         L.append("  （無）")
@@ -1799,9 +1782,9 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
     lamp_rules = _lamp_rules_html()
     legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表（下方「全母體看板」共用本段說明）</summary>
 <div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看分析師有沒有在財報後上修（排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心席每週六（台北）依週五收盤重算：池內亮燈者依上修取前 5，亮燈不足就空席；週中燈號只管倉位。這是研究名單，不是帳戶持倉。</div>
-<div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘（ROIC ≥15% 且自由現金流 &gt;0）、三年成長 15%、站上 52 週線。四項全過才有資格；耐久只是旗標。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
+<div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘（ROIC ≥15% 且自由現金流 &gt;0）、三年成長 15%、站上 52 週線。四項全過才有資格；耐久只是旗標。資格全過就入池（v5.7 起沒有上修門檻）。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
 <div class="bw-note-line"><b>耐久</b>：兩種算法擇一達標即可。QGM 五年 ROIC 穩定度 ≥75%；或 Koyfin 五年平均、三年平均、現值三者都 ≥15%。看的是一致性，不是單一年份。只當旗標，不擋資格。</div>
-<div class="bw-note-line"><b>第二關 排序</b>：只看財報後上修幅度。基準是該股最近一次財報日前的月度快照，缺財報錨定時退回三個月。上修 ≥5% 才入池，池內依上修由高到低排。同值先比隱含成長率，再比盈餘殖利率。不看股價漲幅。綜合對照分只在「上修%（財報後）」欄的滑鼠提示裡顯示，不參與排序。</div>
+<div class="bw-note-line"><b>第二關 排序</b>：只看財報後上修幅度。基準是該股最近一次財報日前的月度快照，缺財報錨定時退回三個月。池內依上修由高到低排，缺上修數字的排最後。同值先比隱含成長率，再比盈餘殖利率。不看股價漲幅。綜合對照分只在「上修%（財報後）」欄的滑鼠提示裡顯示，不參與排序。</div>
 <div class="bw-note-line"><b>第三關 時機燈</b>：量股價離歷史新高多遠，燈號直接決定倉位，判定見下表。過熱與頂點不擋資格；相對強度與生命週期階段只在滑鼠提示顯示，不影響燈號。</div>
 {lamp_rules}
 <div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內亮燈者依上修取前 5，每週六重算；週中轉紅的核心席等週六重算才下席。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依上修排序。</div>
@@ -1918,7 +1901,7 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
 
     pool_section = _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_map,
                                       lamp_as_of, last_rotation_date, market_note)
-    collapsed_section = _collapsed_section_html(not_in_pool_rows, lamp_map)
+    collapsed_section = _collapsed_section_html(not_in_pool_rows, lamp_map) if not_in_pool_rows else ""   # v5.7：恆為空
     too_expensive_section = _too_expensive_section_html(too_expensive_rows(rows), lamp_map)
 
     # ── DD 進場 vs 機械資格 ──
@@ -1982,7 +1965,7 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     head_line = (f"選股看板 · 資料日 {as_of}" + (f" · {freshness_line}" if freshness_line else "")
                 + f" · 母體 {len(rows)}（美股含 ADR；台股另建）")
     rule_line = ("同一套三關一燈。先過資格：市值 200 億以上、品質閘、三年成長、站上 52 週線"
-                 "（耐久只當旗標）。再依財報後上修排序，上修 ≥5% 入池。最後由時機燈決定倉位。"
+                 "（耐久只當旗標）。資格全過即入池，再依財報後上修排序（v5.7 起沒有上修 ≥5% 門檻）。最後由時機燈決定倉位。"
                  "體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 >10%、財報後上修低於 −5%、"
                  "估值閘紅燈（PEG >2.0 或 PE 相對五年均倍數 >1.75x，兩者皆缺不算否決）都整體排除。"
                  "核心＝池內亮燈者依上修取前 5，每週六（台北）重算、可空席；其餘為等待池。不設產業上限；內部人買賣只是備註。"
@@ -2080,8 +2063,7 @@ def rotation_month(as_of: str) -> str:
 
 def select_fresh_roster_v5(pool_ranked: list, core_slots: int = CORE_SLOTS) -> list:
     """v5 整批重選（pure，2026-09-17，見 grp.py 檔頭 v5 段第 3-4 點／
-    knowledge/rule_ledger.md「v5 席位引擎」列）：`pool_ranked` 為池（資格閘全過 ∧
-    財報後上修 ≥5%；耐久 2026-10-09 起只當旗標）依 grp.pool_sort_key() 排序後的列表——池本身已經是
+    knowledge/rule_ledger.md「v5 席位引擎」列）：`pool_ranked` 為池（資格閘全過；v5.7 起不看上修門檻；耐久 2026-10-09 起只當旗標）依 grp.pool_sort_key() 排序後的列表——池本身已經是
     全部資格檻，沒有 v4「core_candidate」那道濾網，池內名次就是唯一判準。回傳前
     `core_slots` 名的 ticker 清單。無產業/主題集中度上限（2026-09-17 持有人拍板，
     v4 已拍板、v5 沿用不變）。"""
@@ -2108,7 +2090,7 @@ def select_lit_roster_v52(pool_ranked: list, prev_core_roster=None,
             continue
         r = by_t.get(t)
         if r is None:
-            removed.append((t, "出池（資格閘或上修 ≥5% 未達）"))
+            removed.append((t, "出池（資格不成立）"))
         elif (r.get("lamp") or {}).get("code") not in LIT_LAMP_CODES:
             removed.append((t, "時機燈轉紅（距新高 <−10% 或跌破 200 日線）"))
         else:
@@ -2351,19 +2333,19 @@ def main() -> int:
     for i, r in enumerate(ranked, 1):
         r["rank"] = i
 
-    # ── v5 池（品質派資格 ∧ 耐久 ∧ 財報後上修 ≥5%，見 grp.py 檔頭 v5 段第 1-4 點）──
+    # ── v5 池（品質派資格；v5.7 起不再要求財報後上修 ≥5%，見 grp.py 檔頭 v5 段第 1-4 點）──
     # r["grp"]["pass"] 已在 grp_score() 內反映品質閘/成長閘/位置閘/上修否決/新硬否決/
-    # 耐久/融券高（見該函式 v5 段落），這裡只再疊加 v5 新增的「池」門檻（上修 ≥5%）。
+    # 耐久/融券高（見該函式 v5 段落），v5.7（2026-10-21）起資格全過即入池，上修只用來排序。
     eligible = [r for r in universe_rows if r["grp"].get("pass")]
 
     def _pool_key(r: dict):
         ey = ((r["grp"].get("own") or {}).get("raw") or {}).get("ey")
         return pool_sort_key(r["grp"].get("rev_used_pct"), r.get("implied_growth_pct"), ey)
 
-    pool_rows = sorted((r for r in eligible if in_pool(r["grp"].get("rev_used_pct"))), key=_pool_key)
+    pool_rows = sorted(eligible, key=_pool_key)   # v5.7：不看上修門檻；缺上修值排最後（pool_sort_key）
     for i, r in enumerate(pool_rows, 1):
         r["pool_rank"] = i
-    not_in_pool_rows = sorted((r for r in eligible if not in_pool(r["grp"].get("rev_used_pct"))), key=_pool_key)
+    not_in_pool_rows: list = []   # v5.7：沒有池外的資格全過名字了；保留變數與 arena.json key
     pool_by_ticker = {r["ticker"]: r for r in pool_rows}
 
     # ── 月頻輪動（arena-ledger.json，只管核心席，見 rotate_roster() docstring／
@@ -2584,7 +2566,7 @@ def main() -> int:
                   "≥75%，或 Koyfin 五年∧三年∧現值三者皆 ≥15%）2026-10-09 起只當旗標；財報後上修 ≤−5%（缺財報錨定退回三個月）／"
                   "體質拒絕／衰退 ⛔／DD 迴避／融券占流通股比 >10% 皆整體排除（v5 無衛星軌可退）。排序＝"
                   "上修（財報後錨定，缺值退回三月）降冪，tie-break implied_growth_pct、再 tie-break 盈餘"
-                  "殖利率——池＝資格全過名字中上修 ≥5% 者，own_score_v4 五百分位對照分保留一輪僅供 "
+                  "殖利率——池＝資格全過的名字（v5.7 起沒有上修 ≥5% 門檻），own_score_v4 五百分位對照分保留一輪僅供 "
                   "hover 對照、不參與排序。時機燈（距還原權息全歷史最高收盤價與 200 日線）：綠＝"
                   "距新高 ≥−3% 且站上 200 日線；黃＝−10%~−3%；紅＝距新高 <−10% 或跌破 200 日線；橘＝過熱"
                   "（12-1 月動能 >150%）但仍在突破帶附近，倉位對應（v5.3，2026-10-18 起）綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0"
@@ -2713,7 +2695,7 @@ def main() -> int:
 資格＝<b>品質閘</b>（ROIC ≥15 ∧ FCF &gt;0）×
 <b>成長閘</b>（三年期 Koyfin FY1→FY3 EPS CAGR ≥15%；只有 FY1→FY2 單年預估的名字不入池，改列「可選但先不入席」）× <b>位置閘</b>（站上 52 週線）× <b>財報後上修否決</b>（≤−5%，以該股最近一次財報日前的最新月度快照為基準，缺財報錨定看近三個月；兩者都缺時看 FY+1 單月 ≤−10%）× 硬否決（體質拒絕／衰退 ⛔／DD 迴避 180 天內／融券占流通股比 &gt;10%）。
 <b>耐久</b>（QGM 五年穩定度 ≥75%，或 Koyfin 五年∧三年∧現值三者皆 ≥15%）只當旗標，不擋資格。
-排序＝<b>只看財報後上修</b>（缺值看近三個月），由高到低；同值先比隱含成長率，再比盈餘殖利率。資格全過且上修 ≥+5% 才進「池」，池就是候選的全部。<b>綜合對照分</b>（財報後上修、12-1 月動能、成長封頂 30、品質、盈餘殖利率五個百分位平均）只供逐檔對照，不參與排序。成長遇<b>基期效應</b>（FY1→FY2 因低基期跳增 &gt;1.6x 且 FY2→FY3 成長 &lt;20%）改用 FY2→FY3 成長率（這項仍作用於成長閘本身）。
+排序＝<b>只看財報後上修</b>（缺值看近三個月），由高到低；同值先比隱含成長率，再比盈餘殖利率。資格全過就進「池」（v5.7 起沒有上修 ≥5% 門檻；缺上修數字的排最後），池就是候選的全部。<b>綜合對照分</b>（財報後上修、12-1 月動能、成長封頂 30、品質、盈餘殖利率五個百分位平均）只供逐檔對照，不參與排序。成長遇<b>基期效應</b>（FY1→FY2 因低基期跳增 &gt;1.6x 且 FY2→FY3 成長 &lt;20%）改用 FY2→FY3 成長率（這項仍作用於成長閘本身）。
 <b>過熱／頂點不是資格閘</b>：12-1 月動能 &gt;150%（缺值看 26 週漲幅 &gt;80%）＝過熱，只影響時機燈（🟠 過熱，半倉），不排除核心候選；ROIC 高於五年平均 1.3 倍＝頂點，純顯示（⚠）。<b>內部人買賣</b>（近 3 個月淨股數）只是備註，不進資格與排序。
 <b>倉位</b>：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。
 <b>DD 選配</b>：不是入池前提，只做迴避否決（180 天內）；觀望／進場只當角色標籤顯示。
