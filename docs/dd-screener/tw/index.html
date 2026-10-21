@@ -603,9 +603,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
         <br><em>QGM MLB 門檻：</em><code>≤ 2.0x</code>；缺值算不通過。
       </li>
 
-      <li><strong>2Y P/E</strong>：即時 FY+2 Forward P/E — <strong>v1.7.3 簡化為只顯示最新數字</strong>。
-        <br><em>來源（live）：</em>每日 <code>scripts/build_dd_screener.py</code>，主路徑用 yfinance FY EPS 估算（<code>live_fpe_method = 'eps'</code>）；EPS 抓不到時 fallback 用 <code>fpe_fy2 × price_now/price_at_dd</code> 漂移推算（標 <code>*</code>，<code>live_fpe_method = 'drift'</code>，假設 EPS 未 revise — 半年以上會高估「變貴」程度）。
-        <br><em>規則：</em>純資訊欄，不參與 pass_count；無配色 / 無 DD 對照 — 想知 DD 寫入時的對比請看 <code>/research/</code> 表格的 <code>data-pe2y</code> 欄位。
+      <li><strong>2Y P/E</strong>：預估本益比（明年）＝ <code>現價 ÷ 明年預估 EPS</code>（2026-10-21 起與 PEG 同口徑）。現價用本列 ma.price，明年預估 EPS 用 Koyfin <code>eps_fy_next</code>，幣別處理同 PEG。有沒有 DD 都同一算法；本欄 ÷ 三年成長 ＝ PEG。
+        <br><em>算不出來就留空：</em>明年預估 EPS 缺或 ≤0，或 EPS 與股價幣別對不上又沒有可靠匯率。
+        <br><em>規則：</em>純資訊欄，不參與 pass_count；無配色。
       </li>
 
       <li><strong>D/E（Debt/Equity）</strong>：Total Debt / Stockholders Equity。<strong>2026-07-03 起降為 advisory（不計入通過條件、不擋閘）</strong> —— 持有人拍板的質量條件本無 D/E，此欄過去在 AVGO / LLY / APP / SEZL / STX 等槓桿型贏家造成誤殺。
@@ -1028,18 +1028,13 @@ function _sortStocks(stocks) {
 //   EPS rev:  上修 = 綠；下修 = 紅
 // 缺資料 fallback：live 為 null 時退回 frozen DD 值 + 小灰字 "DD" 標記。
 function _renderLivePECell(s) {
-  // v1.7.3: 簡化為「只顯示最新數字」— 拿掉 drift % 小字 + 配色 + DD 對照
-  // tooltip。live 缺值時 fallback 顯示 frozen DD 值（無 label）。
-  // heuristic method (`drift` fallback) 仍標 `*` 提醒非 yfinance real EPS 算出。
-  var live = s.live_fpe_est;
-  var pe = s.fpe_fy2;
-  var v = (live !== null && live !== undefined) ? live : pe;
-  if (v === null || v === undefined) return '<td>—</td>';
-  var method = s.live_fpe_method;
-  var mark = (method === 'drift')
-    ? '<sup style="font-size:8px;color:var(--muted)" title="yfinance EPS 未取得，用 price-drift 推算">*</sup>'
-    : '';
-  return '<td style="font-variant-numeric:tabular-nums">' + v.toFixed(1) + mark + '</td>';
+  // 2026-10-21 PEG 口徑統一：只顯示 fpe_next＝現價 ÷ 明年預估 EPS（跟 PEG 同一個本益比，
+  // 本欄 ÷ 三年成長＝PEG）；算不出來就是 —，不退回 live_fpe_est／fpe_fy2。
+  var v = s.fpe_next;
+  if (v === null || v === undefined) {
+    return '<td title="算不出來：明年預估 EPS 缺值／≤0，或 EPS 與股價幣別對不上">—</td>';
+  }
+  return '<td style="font-variant-numeric:tabular-nums">' + v.toFixed(1) + '</td>';
 }
 
 function _renderLivePEGCell(s, flag) {
@@ -1815,7 +1810,7 @@ function buildTable(stocks) {
 
   // ---- 估值 group: PEG | 2Y P/E | 估值 vs 5Y | 5Y期望 ----
   var thPeg = _thSortable(critByKey.peg.label, 'live_peg', {title: 'PEG = （現價 ÷ 明年預估 EPS）÷ 三年 EPS 年化成長；算不出來留空'});
-  var thLivePe = _thSortable('2Y P/E', 'live_fpe_est', {title: '即時 FY+2 Forward P/E — yfinance 每日抓 FY EPS 重算；hover 看 DD frozen 對比與漂移幅度'});
+  var thLivePe = _thSortable('2Y P/E', 'fpe_next', {title: '預估本益比（明年）＝ 現價 ÷ 明年預估 EPS（Koyfin）；跟 PEG 同一個本益比，本欄 ÷ 三年成長 ＝ PEG；算不出來留空'});
   var thValuationVs5y = _thSortable('估值 vs 5Y', 'pe_vs_5y_x', {title: 'NTM 本益比 ÷ 過去 5 年平均本益比 —— 高於 1.5x 代表估值明顯貴於自身歷史'});
   var th5yExpect = _thSortable('5Y期望', 'live_ev5y_pct', {title: '即時 5 年期望報酬率（原稱 5Y IRR）— 由 DD 決策層 frozen 值用「price_at_dd / price_now」回推（heuristic，假設 terminal value 不變）；hover 看 DD 對比'});
 
