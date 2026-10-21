@@ -1500,6 +1500,26 @@ _BOARD_CSS = """<style>
 .board-wrap details.bw-fold>summary{cursor:pointer;font-size:12.5px;font-weight:650;
   color:var(--ink,var(--text,#1a1a1a));padding:6px 2px;list-style:revert}
 .board-wrap details.bw-fold[open]>summary{margin-bottom:6px}
+.board-wrap details.bw-secfold{margin-top:16px}
+.board-wrap details.bw-secfold>summary{font-family:var(--serif,'Playfair Display','Noto Serif TC',Georgia,serif);
+  font-size:15px;font-weight:700}
+.board-wrap .sv-bar{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:10px 0 6px}
+.board-wrap .sv-lbl{font-size:11.5px;color:var(--sec,var(--text-sec,#666))}
+.board-wrap .sv-bar label{cursor:pointer}
+.board-wrap .sv-bar input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.board-wrap .sv-bar label span{display:inline-block;font-size:12px;line-height:1.5;padding:3px 14px;
+  border:1px solid var(--line,var(--border,#ddd));border-radius:999px;background:var(--card,#fff);
+  color:var(--sec,var(--text-sec,#666))}
+.board-wrap .sv-bar input:checked+span{background:var(--accent,#0d2244);border-color:var(--accent,#0d2244);
+  color:var(--card,#fff);font-weight:650}
+.board-wrap .sv-bar input:focus-visible+span{outline:2px solid var(--accent,#0d2244);outline-offset:2px}
+.board-wrap:has(.sv-bar input[value="timing"]:checked) .g-f{display:none}
+.board-wrap:has(.sv-bar input[value="fund"]:checked) .g-t{display:none}
+.board-wrap th.sv-code,.board-wrap td.sv-code{position:sticky;left:0;z-index:1;
+  background:var(--card,#fff);box-shadow:1px 0 0 var(--line,var(--border,#ddd))}
+.board-wrap th.sv-code{z-index:2}
+.board-wrap tbody tr:hover td.sv-code,.board-wrap tr.bw-seated td.sv-code{background:var(--card,#fff)}
+.board-wrap tr.bw-muted-row td.sv-code{opacity:1;color:var(--muted,#999)}
 @media(max-width:760px){.board-wrap table{font-size:11.5px}.board-wrap th,.board-wrap td{padding:4px 6px}}
 </style>"""
 
@@ -1590,10 +1610,47 @@ def _flat_view(r: dict) -> dict:
             "dd_path": r.get("dd_path")}
 
 
-def _seat_remark(v: dict) -> str:
-    """備註欄（chip 清單）——席位表與全母體表共用，讀 `_flat_view()`/own_board 的
-    扁平 schema（2026-09-17 全母體看板欄位對齊，取代舊版直接讀巢狀 r["grp"]）。"""
+def _bottom_chip(v: dict) -> str:
+    """備註欄的「底部」標籤（2026-10-21 起取代獨立的底部欄）：判定同 _bottom_cell_html()
+    （共用 _vcp_kind()），提示文字同原欄位；距新高超過 10%（未算）不放標籤。"""
+    kind = _vcp_kind(v)
+    if kind == "far":
+        return ""
+    if kind == "insufficient":
+        return _chip_html("底部 資料短", "日線不足 221 根，算不出 VCP")
+    n = v.get("vcp_pullback_count"); last_pb = v.get("vcp_last_pullback_pct")
+    age = v.get("vcp_base_age_days")
+    n_disp = int(n) if isinstance(n, (int, float)) else "—"
+    age_disp = int(age) if isinstance(age, (int, float)) else "—"
+    title = (f"VCP 分數 {_num_txt(v.get('vcp_score'), 0)}｜回檔 {n_disp} 段｜末段回檔 {_num_txt(last_pb, 1, '%')}｜"
+             f"量縮比 {_num_txt(v.get('vcp_vol_dryup_ratio'), 2)}｜底部天數 {age_disp} 天")
+    if kind == "breakout_tight":
+        return _chip_html("底部 緊縮後突破", title)
+    if kind == "breakout_loose":
+        return _chip_html("底部 鬆散突破", title)
+    if kind == "tight":
+        return _chip_html(f"底部 緊 {n_disp}段", title)
+    if kind == "loose":
+        return _chip_html(f"底部 鬆 {n_disp}段", title)
+    return ""
+
+
+def _durable_chip(v: dict) -> str:
+    """備註欄的「耐久 ✓」標籤（2026-10-21 起取代獨立的耐久欄）：只有達標才放；提示文字同原欄位。"""
+    if not v.get("durable_5y"):
+        return ""
     bits = []
+    if v.get("durable_roic_5y_avg_pct") is not None:
+        bits.append(f"五年 ROIC 平均 {v['durable_roic_5y_avg_pct']:.1f}%")
+    if v.get("durable_qgm_pct") is not None:
+        bits.append(f"QGM 五年穩定度 {v['durable_qgm_pct']:.1f}%")
+    return _chip_html("耐久 ✓", "；".join(bits) or "耐久資料不足")
+
+
+def _seat_remark(v: dict) -> str:
+    """備註欄（chip 清單）——美股與台股席位表共用，讀 `_flat_view()`/own_board 的扁平 schema。
+    2026-10-21 起耐久、底部由獨立欄改成這裡的標籤（排在最前面）。"""
+    bits = [c for c in (_durable_chip(v), _bottom_chip(v)) if c]
     if v.get("peak"):
         bits.append(_chip_html("⚠ 頂點", "ROIC 高於五年平均 1.3 倍以上，只顯示，不是下席訊號"))
     # v5（2026-09-17，見 grp.py 檔頭 v5 段）：過熱不再是排除核心候選的旗標（時機燈
@@ -1626,6 +1683,54 @@ def _seat_remark(v: dict) -> str:
     return "".join(bits) or '<span class="bw-muted">—</span>'
 
 
+# 欄位組（2026-10-21 縮表，持有人拍板）：表格上方「時機／基本面／全部」切換鈕用。
+# 順序＝_shared_thead_cells()／_row_cells() 的欄序：代號、上修、距歷史新高、下次財報、估值、時機、
+# 倉位、DD、dd-screener 數字欄 10 個、備註。"" ＝永遠顯示；g-t ＝時機組；g-f ＝基本面組；
+# sv-code ＝永遠顯示且左右捲動時固定在左（見 _BOARD_CSS）。
+SHARED_COL_GROUPS = (["sv-code", "", "g-t", "g-t", "g-t", "", "", "g-t"] + ["g-f"] * 10 + ["g-t"])
+
+
+def _grp_cell(cell_html: str, grp: str) -> str:
+    """在 <th>／<td> 開頭標籤加上欄位組 class（原本有 class 就併進去）；grp 為空則原樣回傳。"""
+    if not grp:
+        return cell_html
+    m = re.match(r"<(t[hd])((?:\s[^>]*)?)>", cell_html)
+    if not m:
+        return cell_html
+    tag, attrs = m.group(1), m.group(2)
+    if 'class="' in attrs:
+        attrs = attrs.replace('class="', f'class="{grp} ', 1)
+    else:
+        attrs += f' class="{grp}"'
+    return f"<{tag}{attrs}>" + cell_html[m.end():]
+
+
+def _apply_col_groups(cells: list[str]) -> list[str]:
+    assert len(cells) == len(SHARED_COL_GROUPS), (len(cells), len(SHARED_COL_GROUPS))
+    return [_grp_cell(c, g) for c, g in zip(cells, SHARED_COL_GROUPS)]
+
+
+def _empty_seat_row(code: str) -> str:
+    """空席列：欄數與欄位組同一般列（不用 colspan，隱藏欄時才不會撐出多餘的欄）。"""
+    cells = ['<td class="bw-l">空席</td>'] + ['<td></td>'] * (len(SHARED_COL_GROUPS) - 1)
+    return (f'<tr class="bw-muted-row"><td class="bw-l">{escape(code)}</td>'
+            + "".join(_grp_cell(c, g) for c, g in zip(cells, SHARED_COL_GROUPS)) + "</tr>")
+
+
+def _seat_view_bar_html() -> str:
+    """表格上方「時機／基本面／全部」切換（每頁一組，放在第一張席位表之前）。純 CSS：radio ＋ :has()
+    切換 .g-t／.g-f 兩組欄（見 _BOARD_CSS）；記住上次選擇靠 /engine/seat_view.js（宿主頁載入）。
+    預設「時機」；沒有 JS 或不支援 :has() 時退回全部欄位顯示。"""
+    def opt(val, label, tip, checked=False):
+        return (f'<label title="{escape(tip)}"><input type="radio" name="seatview" value="{val}"'
+                + (' checked' if checked else '') + f'><span>{label}</span></label>')
+    return ('<div class="sv-bar" role="radiogroup" aria-label="席位表欄位組"><span class="sv-lbl">欄位</span>'
+            + opt("timing", "時機", "代號、上修、時機、倉位＋距歷史新高、下次財報、估值、DD、備註", True)
+            + opt("fund", "基本面", "代號、上修、時機、倉位＋dd-screener 數字欄（三年 EPS 成長至營運槓桿）")
+            + opt("all", "全部", "全部欄位")
+            + '</div>')
+
+
 def _shared_thead_cells(market: str = "us") -> list[str]:
     """代號…備註 10 個共用 <th>——席位表（_seat_section_html／池表）與全母體表
     （render_board_html）逐字共用，避免兩表的表頭文字各寫一份而日後漂移。
@@ -1637,8 +1742,10 @@ def _shared_thead_cells(market: str = "us") -> list[str]:
     時機之前插入「估值」欄——10 個共用欄，_board_tr() 的席欄插入點跟著往後挪一位。
     VCP 深度 1（2026-09-18，見 notes/site-internal/root/_seat_engine_v5_1_20260918.md
     §3）：DD 之後、備註之前插入「底部」欄——11 個共用欄，插在 _board_tr() 席欄
-    插入點（index 8）之後，不需要跟著挪動任何既有 index（見該函式註解）。"""
-    return [
+    插入點（index 8）之後，不需要跟著挪動任何既有 index（見該函式註解）。
+    2026-10-21 縮表（持有人）：耐久、底部兩欄併入備註成標籤，PEG（明年）欄拿掉（估值欄已顯示同一個 PEG）；
+    每格依 SHARED_COL_GROUPS 加欄位組 class，供頁面上方「時機／基本面／全部」切換。"""
+    cells = [
         '<th class="bw-l">代號</th>',
         '<th title="排序依據：以該股最近一次財報日前的最新月度快照為基準，'
         'FY 加權 EPS 上修幅度（已排除匯率），缺財報錨定時看近三個月；池內依此欄由高到低排，'
@@ -1647,8 +1754,6 @@ def _shared_thead_cells(market: str = "us") -> list[str]:
         '<th title="距離還原權息全歷史最高收盤價（不是 52 週高）；'
         '負值＝現價低於史上最高。時機燈：此欄 ≥−3% 且站上 200 日線＝突破帶（綠燈）">距歷史新高%</th>',
         '<th class="bw-l" title="距下次財報天數；<=7 天標記——分數為財報前快照">下次財報</th>',
-        '<th class="bw-l" title="只是旗標，不擋資格：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均、'
-        '三年平均、現值三者皆 ≥15%（看一致性，不是單一數字）">耐久</th>',
         '<th class="bw-l" title="估值閘：PEG（優先用現價重算值，缺則用 Koyfin）'
         '&gt;2.0，或預估本益比相對五年均倍數 &gt;1.75x，任一則紅；紅燈整體排除、不進池。'
         '兩者皆缺不算否決，標 ⚪ 缺值。'
@@ -1657,12 +1762,10 @@ def _shared_thead_cells(market: str = "us") -> list[str]:
         '<th class="bw-l">倉位</th>',
         '<th class="bw-l" title="個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只供顯示，不影響席位與排序；'
         '護城河評級在本欄滑鼠提示；⚠過期＝逾 180 天">DD</th>',
-        '<th class="bw-l" title="VCP（回檔一次比一次小、量縮、離底部高點近）——只在'
-        '距歷史新高 10% 以內算，只排③等待池 🟡 組序、標🟢/🟠突破措辭，不改燈號或倉位。'
-        '緊 n段＝過閘、鬆 n段＝未過、資料短＝日線不足、—＝距新高超過 10% 未算">底部</th>',
     ] + _ddn_thead_cells(market) + [
         '<th class="bw-l">備註</th>',
     ]
+    return _apply_col_groups(cells)
 
 
 def _ddn_thead_cells(market: str = "us") -> list[str]:
@@ -1682,8 +1785,6 @@ def _ddn_thead_cells(market: str = "us") -> list[str]:
         f'<th title="每股盈餘預估，依序為今年／明年／後年，單位{ccy}。只供參考">EPS 預估（今／明／後）</th>',
         '<th title="股價 ÷ 明年預估每股盈餘（dd-screener 的「2Y P/E」，每日用 yfinance 重算；缺值時退回報告當時的數字）。'
         '只供參考，估值閘另看估值欄">預估本益比（明年）</th>',
-        '<th title="PEG＝明年預估本益比（左欄）÷ 三年 EPS 年化成長（今年到後年），優先用現價重算值，缺則用報告當時的數字。'
-        '與 dd-screener、估值欄的 PEG 同一個數字">PEG（明年）</th>',
         '<th title="近 3 個財年：（今年稅後營業利潤 − 3 年前稅後營業利潤）÷ 新增投入資本。'
         '新增的一塊錢資本賺到多少報酬，用來判斷成長值不值得繼續投。投入資本不增反減時顯示「—」">增量 ROIC%</th>',
         '<th title="近 3 年新增投入資本 ÷ 期間年化稅後營業利潤，意思是公司把多少獲利拿去繼續投資擴張">再投資率%</th>',
@@ -1694,7 +1795,7 @@ def _ddn_thead_cells(market: str = "us") -> list[str]:
 
 
 def _ddn_cells(v: dict) -> list[str]:
-    """對應 _ddn_thead_cells() 的 11 個 <td>；缺值一律「—」。"""
+    """對應 _ddn_thead_cells() 的 10 個 <td>；缺值一律「—」。"""
     d = v.get("ddn") or {}
     dash = '<span class="bw-muted">—</span>'
 
@@ -1722,13 +1823,13 @@ def _ddn_cells(v: dict) -> list[str]:
     ol_cell = (f'<td class="bw-l" title="{escape(ol_tip)}">{escape(ol_label)}</td>' if ol_label
                else f'<td class="bw-l">{dash}</td>')
     return [f'<td>{n("g3")}</td>', f'<td>{n("rev3")}</td>', f'<td>{n("roic")}</td>', f'<td>{n("cf")}</td>',
-            eps_cell, f'<td>{n("pe2")}</td>', f'<td>{n("peg", 2)}</td>',
+            eps_cell, f'<td>{n("pe2")}</td>',
             inc_cell, f'<td>{n("reinvest")}</td>', f'<td>{n("implied")}</td>', ol_cell]
 
 
 def _row_cells(v: dict, lamp_map: dict) -> list[str]:
-    """代號…備註 10 個共用 <td>——席位表（_seat_tr）與全母體表（_board_tr）共用同一份
-    渲染，見兩處呼叫端。輸入 `v` 是 `_flat_view()`（或 arena.json own_board[] 原生）
+    """代號…備註 19 個共用 <td>（2026-10-21 起；耐久、底部併入備註、PEG 欄拿掉）——美股席位表
+    （_seat_tr）與台股席位表（build_seats_tw._cells）共用同一份渲染。輸入 `v` 是 `_flat_view()`（或 arena.json own_board[] 原生）
     產出的扁平列。v5（2026-09-17，見 grp.py 檔頭 v5 段）：移除排名分／12M 動能%
     兩欄，新增距歷史新高%；v4 對照排名分與階段/RS 降為 tooltip 專屬資訊。v5.1
     （2026-09-18）：新增估值欄（見 _val_cell_html()）。VCP 深度 1（2026-09-18）：
@@ -1746,13 +1847,6 @@ def _row_cells(v: dict, lamp_map: dict) -> list[str]:
                  f"綜合對照分（只供對照，不決定排序）：{_num_txt(v.get('score'), 1)}｜"
                  f"隱含成長 {_num_txt(v.get('implied_growth_pct'), 1, '%')}｜"
                  f"盈餘殖利率 {_num_txt(v.get('ey'), 1, '%')}（同值比序：上修→隱含成長→盈餘殖利率）")
-    durable_bits = []
-    if v.get("durable_roic_5y_avg_pct") is not None:
-        durable_bits.append(f"五年 ROIC 平均 {v['durable_roic_5y_avg_pct']:.1f}%")
-    if v.get("durable_qgm_pct") is not None:
-        durable_bits.append(f"QGM 五年穩定度 {v['durable_qgm_pct']:.1f}%")
-    durable_cell = (f'<span title="{escape("；".join(durable_bits) or "耐久資料不足")}">'
-                    f'{"✓" if v.get("durable_5y") else "—"}</span>')
     days_ne = v.get("days_to_next_earnings")
     if days_ne is None:
         next_earn_cell = '<span class="bw-muted">—</span>'
@@ -1773,44 +1867,24 @@ def _row_cells(v: dict, lamp_map: dict) -> list[str]:
     lamp_title = (f'{lamp.get("why", "")}｜階段：{stage_txt}（RS／階段僅供參考，不影響燈號）'
                  + (f'｜時機燈亮燈條件：{lamp["trigger"]}' if lamp.get("trigger") else ""))
     lamp_cell = f'<span class="bw-pill" title="{escape(lamp_title)}">{escape(lamp.get("label", "—"))}</span>'
-    return [
+    return _apply_col_groups([
         f'<td class="bw-l"><strong>{_tk_link(v)}</strong></td>',
         f'<td title="{escape(rev_title)}">{_num(v.get("rev_used_pct"), 1)}{rev_pending}</td>',
         f'<td title="{escape(dist_ath_title)}">{_num(v.get("dist_ath_pct"), 1)}</td>',
         f'<td class="bw-l">{next_earn_cell}</td>',
-        f'<td class="bw-l">{durable_cell}</td>',
         f'<td class="bw-l">{_val_cell_html(v.get("valuation"))}</td>',
         f'<td class="bw-l">{lamp_cell}</td>',
         f'<td class="bw-l">{escape(v.get("action") or "—")}</td>',
         f'<td class="bw-l">{_dd_pill(v.get("dd_tag"), v.get("moat"))}</td>',
-        f'<td class="bw-l">{_bottom_cell_html(v)}</td>',
         *_ddn_cells(v),
         f'<td class="bw-note">{_seat_remark(v)}</td>',
-    ]
+    ])
 
 
 def _seat_tr(r: dict, code: str, lamp_map: dict, muted: bool = False) -> str:
     v = _flat_view(r)
     cls = ' class="bw-muted-row"' if muted else ""
     return (f'<tr{cls}><td class="bw-l">{escape(code)}</td>' + "".join(_row_cells(v, lamp_map))
-            + "</tr>")
-
-
-def _board_tr(v: dict, idx: int, seat_code: str | None, lamp_map: dict) -> str:
-    """全母體表單列——# 排序名次 ＋ 11 個共用欄 ＋ 席（目前坐哪一席，未坐席留白）。
-    `seat_code` 是 "C1"/"S2" 這類字串（與席位表自己的席次代碼同一套詞彙）或 None。
-    v5（2026-09-17）：共用欄從 10 個減為 9 個（見 _shared_thead_cells()），席欄插入點
-    跟著從 index 8 移到 index 7（倉位／DD 之間，語意不變：插在「倉位」欄之後）。
-    v5.1（2026-09-18）：新增估值欄使共用欄變回 10 個，席欄插入點跟著從 index 7
-    移到 index 8（估值欄插在耐久之後、倉位之前，不影響「插在倉位欄之後」的語意）。
-    VCP 深度 1（2026-09-18）：新增底部欄使共用欄變 11 個，但插在 DD 之後、備註
-    之前——晚於席欄插入點（index 8），故 `cells[:8]`／`cells[8:]` 兩段切法不用改，
-    `cells[8:]` 現在多帶一個底部欄，順序自然是 DD／底部／備註。"""
-    cells = _row_cells(v, lamp_map)
-    seat_cell = (f'<td class="bw-l">{escape(seat_code)}</td>' if seat_code
-                else '<td class="bw-l"><span class="bw-muted">—</span></td>')
-    cls = ' class="bw-seated"' if seat_code else ""
-    return (f'<tr{cls}><td>{idx}</td>' + "".join(cells[:8]) + seat_cell + "".join(cells[8:])
             + "</tr>")
 
 
@@ -1865,19 +1939,20 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
         waiting_tbl = "".join(waiting_parts)
 
     lamp_rules = _lamp_rules_html()
-    legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表（下方「全母體看板」共用本段說明）</summary>
+    legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表</summary>
 <div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看分析師有沒有在財報後上修（排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心席每週六（台北）依週五收盤重算：池內亮燈者依上修取前 5，亮燈不足就空席。賣法是大盤空頭才看紅燈（見上方賣法）。這是研究名單，不是帳戶持倉。</div>
 <div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘（ROIC ≥15% 且自由現金流 &gt;0）、三年成長 15%、站上 52 週線。四項全過才有資格；耐久只是旗標。資格全過就入池（v5.7 起沒有上修門檻）。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
-<div class="bw-note-line"><b>耐久</b>：兩種算法擇一達標即可。QGM 五年 ROIC 穩定度 ≥75%；或 Koyfin 五年平均、三年平均、現值三者都 ≥15%。看的是一致性，不是單一年份。只當旗標，不擋資格。</div>
+<div class="bw-note-line"><b>耐久</b>：兩種算法擇一達標即可。QGM 五年 ROIC 穩定度 ≥75%；或 Koyfin 五年平均、三年平均、現值三者都 ≥15%。看的是一致性，不是單一年份。只當旗標，不擋資格；達標的在備註欄顯示「耐久 ✓」。</div>
 <div class="bw-note-line"><b>第二關 排序</b>：只看財報後上修幅度。基準是該股最近一次財報日前的月度快照，缺財報錨定時退回三個月。池內依上修由高到低排，缺上修數字的排最後。同值先比隱含成長率，再比盈餘殖利率。不看股價漲幅。綜合對照分只在「上修%（財報後）」欄的滑鼠提示裡顯示，不參與排序。</div>
 <div class="bw-note-line"><b>第三關 時機燈</b>：量股價離歷史新高多遠，燈號直接決定倉位，判定見下表。例外是大盤多頭時續抱的紅燈在席者，倉位沿用最近一次非紅燈的倉位。過熱與頂點不擋資格；相對強度與生命週期階段只在滑鼠提示顯示，不影響燈號。</div>
 {lamp_rules}
 <div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內亮燈者依上修取前 5，每週六重算。在席者轉紅時，大盤空頭週六下席；大盤多頭續抱，只有失去資格才下席。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依上修排序。</div>
 <div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。</div>
-<div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排②可買裡 🟡 接近新高組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。</div>
+<div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排②可買裡 🟡 接近新高組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。結果顯示在備註欄，例如「底部 緊 2段」；距歷史新高超過 10% 的不放標籤。</div>
 <div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只是顯示，不影響席位與排序。有護城河評級時在本欄滑鼠提示。</div>
-<div class="bw-note-line"><b>備註欄</b>：以下都只是顯示，不進資格與排序。⚠ 頂點＝ROIC 高於五年平均 1.3 倍；基期＝三年 CAGR 因 FY1→FY2 低基期跳增，改用 FY2→FY3 成長率；循環守門＝循環股（毛利率跨距大或資本支出佔營收高）且 PEG 低到可疑；循環＝循環股但未觸發守門；財報前＝距下次財報 ≤7 天；內部人買／內部人賣＝近 3 個月內部人淨買賣方向；新席／現任／遞補＝本期席位異動狀態。</div>
-<div class="bw-note-line"><b>底部之後的數字欄</b>：三年 EPS 成長、營收成長、ROIC、自由現金流率、EPS 預估、預估本益比、PEG、增量 ROIC、再投資率、隱含成長、營運槓桿，都來自 dd-screener，只供參考，不影響資格、排序與席位。其中三年 EPS 成長 ≥15%、ROIC ≥15%、自由現金流 &gt;0 本來就是資格條件，這裡只是把數字攤開。</div>
+<div class="bw-note-line"><b>備註欄</b>：以下都只是顯示，不進資格與排序。耐久 ✓、底部＝上面兩段說明的結果；⚠ 頂點＝ROIC 高於五年平均 1.3 倍；基期＝三年 CAGR 因 FY1→FY2 低基期跳增，改用 FY2→FY3 成長率；循環守門＝循環股（毛利率跨距大或資本支出佔營收高）且 PEG 低到可疑；循環＝循環股但未觸發守門；財報前＝距下次財報 ≤7 天；內部人買／內部人賣＝近 3 個月內部人淨買賣方向；新席／現任／遞補＝本期席位異動狀態。</div>
+<div class="bw-note-line"><b>基本面欄組</b>：三年 EPS 成長、營收成長、ROIC、自由現金流率、EPS 預估、預估本益比、增量 ROIC、再投資率、隱含成長、營運槓桿，都來自 dd-screener，只供參考，不影響資格、排序與席位。其中三年 EPS 成長 ≥15%、ROIC ≥15%、自由現金流 &gt;0 本來就是資格條件，這裡只是把數字攤開。</div>
+<div class="bw-note-line"><b>欄位切換</b>：表格上方可切換「時機／基本面／全部」，一次切換全頁的席位表。代號、上修、時機、倉位永遠顯示；「時機」顯示距歷史新高、下次財報、估值、DD、備註；「基本面」顯示上段的數字欄。左右捲動時代號欄固定在左邊。③等待池、③b 太貴不入池、DD 進場對照、缺三年成長預估四個區段預設收合，點標題展開。</div>
 <div class="bw-note-line"><b>怎麼用</b>：核心或②可買＝現在可以買。③等待池＝資格全過但燈號還沒亮，等燈亮。</div>
 </details>"""
 
@@ -1897,14 +1972,14 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 
     return ('<h3 class="bw-sec">① 核心席（5）</h3>'
            + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。週中燈號只管倉位，席位等週六複判；大盤多頭時紅燈的現任續抱（見賣法）。</div>'
-           + freshness + market_note + core_tbl + legend + changes_html
+           + freshness + market_note + _seat_view_bar_html() + core_tbl + legend + changes_html
            + f'<h3 class="bw-sec">② 可買（{len(buyable)} 檔）</h3>'
            + '<div class="bw-sub">池內沒進核心、今天時機燈亮著（綠／黃／橘）的名字，依燈號分組。可能是空清單。</div>'
            + buyable_tbl
-           + f'<h3 class="bw-sec">③ 等待池（{len(waiting_rest)} 檔）</h3>'
+           + f'<details class="bw-fold bw-secfold"><summary>③ 等待池（{len(waiting_rest)} 檔）</summary>'
            + '<div class="bw-sub">資格全過、時機燈還沒亮：池中扣掉核心與②可買後的其餘名字，'
              '依時機燈分組（🔴拉回中／⚫不合格或資料缺），組內依上修排序。</div>'
-           + waiting_tbl)
+           + waiting_tbl + '</details>')
 
 
 
@@ -1923,11 +1998,12 @@ def too_expensive_rows(rows: list) -> list:
 
 def _too_expensive_section_html(rows_list: list, lamp_map: dict) -> str:
     """『③b 太貴不入池』區塊（見 too_expensive_rows()）。"""
-    return (f'<h3 class="bw-sec">③b 太貴不入池（{len(rows_list)} 檔）</h3>'
+    return (f'<details class="bw-fold bw-secfold"><summary>③b 太貴不入池（{len(rows_list)} 檔）</summary>'
             '<div class="bw-sub">其他資格全過，只有估值閘紅燈。給持有者看：名字在這裡代表不加碼，'
             '不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。依上修排序。</div>'
             + (_pool_table_html(rows_list, lamp_map) if rows_list
-               else '<div class="bw-note-line">目前沒有名字只差估值。</div>'))
+               else '<div class="bw-note-line">目前沒有名字只差估值。</div>')
+            + '</details>')
 
 def _collapsed_section_html(not_in_pool_rows: list, lamp_map: dict) -> str:
     """v5『④ 品質過閘、上修未達 5%』收合區塊——資格全過但財報後上修未達 +5%，不進池，
@@ -1937,30 +2013,6 @@ def _collapsed_section_html(not_in_pool_rows: list, lamp_map: dict) -> str:
            + '<div class="bw-sub">資格全過（品質×三年成長×站上 52 週線）但財報後上修未達 +5%，'
              '不進池、不佔核心席，僅供人工複審；依上修排序，補上更新的財報或修正即可能進池。</div>'
            + _pool_table_html(not_in_pool_rows, lamp_map) + '</details>')
-
-
-def _own_board_section_html(views: list[dict], seat_code_map: dict, lamp_map: dict) -> str:
-    """『全母體看板（v4 對照排序）』h3＋說明＋表格——render_board_html() 用；`views`
-    需已依 score（v4 五百分位對照分，僅供對照，見 grp.py 檔頭 v5 段第 3 點）降冪
-    排序、至多 40 列；`seat_code_map`＝{ticker: "C1"/"S2"}。v5（2026-09-17）：席欄
-    插入點從 index 8 移到 index 7，見 _board_tr() 註解。v5.1（2026-09-18）：估值欄
-    插入使共用欄變回 10 個，席欄插入點跟著移到 index 8（同 _board_tr()）。VCP 深度 1
-    （2026-09-18）：底部欄插在 DD 之後（晚於席欄插入點），共用欄變 11 個但
-    `thead_cells[:8]`／`thead_cells[8:]` 切法不變（同 _board_tr() 註解）。"""
-    thead_cells = _shared_thead_cells()
-    thead = ('<tr><th title="依綜合對照分排的名次，只供對照；池的實際排序見上方表格">#</th>'
-             + "".join(thead_cells[:8])
-             + '<th class="bw-l" title="目前坐核心席次；空白＝未坐席">席</th>'
-             + "".join(thead_cells[8:]) + "</tr>")
-    body_rows = [_board_tr(v, i, seat_code_map.get(v["ticker"]), lamp_map) for i, v in enumerate(views, 1)]
-    main_tbl = ('<div class="bw-scroll"><table><thead>' + thead + "</thead><tbody>"
-                + "".join(body_rows) + "</tbody></table></div>")
-    return ('<h3 class="bw-sec">全母體看板（依綜合對照分排序）</h3>'
-           + '<div class="bw-sub">綜合對照分＝上修、12-1 月動能、成長、品質、盈餘殖利率五項排名百分位的平均，'
-             '只供對照，不決定池的排序。本表欄位與上方相同，只多一欄「席」，定義見「怎麼讀這張表」。'
-             '核心席是從上方池（依上修排序）取前 5，不是從這張表挑的'
-             '<span class="stage-lamp-asof"></span>。</div>'
-           + main_tbl)
 
 
 def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_pool_rows, prev_snap,
@@ -1975,16 +2027,8 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     「價格/距新高/時機燈」兩個日期，見 render_board_text() docstring 同名段。
     `lamp_as_of`／`last_rotation_date`：轉交 _pool_section_html() 渲染成「① 核心席」
     區塊的兩行新鮮度戳記。"""
-    # 席次代碼（C1-C5）——與「① 核心席」表自己的席次代碼同一套詞彙，供全母體表
-    # 「席」欄顯示。
-    seat_code_map = {r["ticker"]: f"C{i}" for i, r in enumerate(core_seats, 1)}
-
-    # v4 對照：全母體看板仍用 own_score_v4 名次排序，只做對照，不影響 ①②③ 的池排序
-    # （後者用 grp.pool_sort_key()，見呼叫端 main()）。
-    rows_ranked = sorted((r for r in rows if r["grp"].get("pass")), key=lambda r: -(r["score"] or 0))
-    own = rows_ranked[:40]
-    own_section = _own_board_section_html([_flat_view(r) for r in own], seat_code_map, lamp_map)
-
+    # 2026-10-21（持有人）：頁面不再畫「全母體看板」——v5.7 起池子就是全部資格過關的名字，
+    # 看板列的跟池表是同一批。資料檔（universe_board.json、arena.json own_board）照舊產出，見 main()。
     pool_section = _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_map,
                                       lamp_as_of, last_rotation_date, market_note)
     collapsed_section = _collapsed_section_html(not_in_pool_rows, lamp_map) if not_in_pool_rows else ""   # v5.7：恆為空
@@ -2004,9 +2048,8 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
                 f'<td class="bw-l">{_timing_pill(g.get("p_label"), r.get("r26"), g.get("dist_hi"))}</td>'
                 f'<td class="bw-note">{_chips_html(_chips_from_why(g.get("why")))}</td></tr>')
         ng_tbl = (
-            '<details class="bw-fold"><summary>DD 進場但機械資格未過：' + str(len(ng)) + ' 檔（點開複審）</summary>'
             '<div class="bw-scroll"><table><thead>' + ng_thead + "</thead><tbody>"
-            + "".join(ng_rows) + "</tbody></table></div></details>")
+            + "".join(ng_rows) + "</tbody></table></div>")
     else:
         ng_tbl = '<div class="bw-note-line">進場票全數過機械三閘，無需人工複審。</div>'
 
@@ -2068,14 +2111,13 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
         + pool_section
         + too_expensive_section
         + collapsed_section
-        + own_section
-        + '<h3 class="bw-sec">DD 進場 vs 機械資格</h3>'
-        + f'<div class="bw-sub">{escape(dd_gate_sub)}——過閘者已在池或核心席中，這裡只列未過者供人工複審。</div>'
-        + ng_tbl
-        + '<h3 class="bw-sec">可選但先不入席：缺三年成長預估</h3>'
+        + f'<details class="bw-fold bw-secfold" id="bw-dd-gate"><summary>DD 進場 vs 機械資格（{escape(dd_gate_sub)}）</summary>'
+        + '<div class="bw-sub">過閘者已在池或核心席中，這裡只列未過者供人工複審。</div>'
+        + ng_tbl + '</details>'
+        + f'<details class="bw-fold bw-secfold"><summary>可選但先不入席：缺三年成長預估（{len(queue_rows)} 檔）</summary>'
         + '<div class="bw-sub">這些名字三閘都過，但成長只有單年預估（FY1→FY2），沒有三年期 FY1→FY3 預估，'
           '所以只列隊、不入池。補上三年成長預估後，下次重算就會用三年成長率重新競爭排序（不需要先有 DD）。</div>'
-        + qgm_tbl
+        + qgm_tbl + '</details>'
         + '<div class="bw-note-line">同內容另有<a href="/engine/board.txt">純文字版</a>（終端機／郵件用）。</div>'
         + "</div>"
     )
@@ -2818,7 +2860,8 @@ def main() -> int:
 <div class="note">核心板凳（進場但未坐席）：{bench_line(core_bench)}。
 衛星板凳：{bench_line(sat_bench)}。
 挑戰者池 top（三閘全過）：{escape('、'.join(r['ticker'] for r in payload['challengers_top'][:10]) or '—')}。</div>
-{_STAGE_LAMP_SCRIPT}"""
+{_STAGE_LAMP_SCRIPT}
+<script src="/engine/seat_view.js" defer></script>"""
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     universe_board = build_universe_board(universe_rows, core_seats, sat_seats_m5, core_bench, sat_bench, as_of)

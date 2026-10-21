@@ -9,6 +9,7 @@ Synthetic stocks, no network.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -240,9 +241,9 @@ def test_mops_dated_name_says_so_in_the_revision_tooltip():
     assert '董事會通過日' not in plain
 
 
-# ── 全母體看板（v4 對照排序）──────────────────────────────────────────────
+# ── 全母體看板已從頁面拿掉（2026-10-21），資料檔照舊 ────────────────────────────
 
-def test_board_ranks_eligible_by_v4_score_and_marks_seats(paths):
+def test_board_v4_still_in_json_but_not_drawn_on_page(paths):
     pool, out = paths
     stocks = [_stock('1000.TW', **_rev(10)), _stock('2000.TW', **_rev(20)),
               _stock('3000.TW', cagr=5.0)]                             # fails three-year growth
@@ -253,19 +254,34 @@ def test_board_ranks_eligible_by_v4_score_and_marks_seats(paths):
     assert {b['ticker'] for b in board} == {'1000.TW', '2000.TW'}       # eligible only
     scores = [b['score_v4'] or 0 for b in board]                      # None (< 4 items) ranks as 0
     assert scores == sorted(scores, reverse=True)
-    seats = {b['ticker']: b['seat'] for b in board}
-    assert seats == {'2000.TW': 'C1', '1000.TW': 'C2'}
+    assert {b['ticker']: b['seat'] for b in board} == {'2000.TW': 'C1', '1000.TW': 'C2'}
     html = (out / '_seats_tw_body.html').read_text(encoding='utf-8')
-    assert '全母體看板（依綜合對照分排序，2 檔）' in html and 'class="bw-seated"' in html
-    assert 'v4 對照' not in html
-    assert '沒有上修數字的名字，分數是其餘四項的平均' in html
+    assert '全母體看板' not in html and '<tr class="bw-seated"' not in html
 
 
-def test_board_without_revision_says_score_uses_four_items(paths):
+def test_tw_page_table_shape_toggle_and_collapsed_sections(paths):
+    pool, out = paths
+    _write_pool(pool, [_stock('1000.TW', **_rev(10)), _stock('2000.TW', **_rev(20))], '2026-10-16')
+    tw.build(True, today=date(2026, 10, 17))
+    html = (out / '_seats_tw_body.html').read_text(encoding='utf-8')
+    assert html.count('class="sv-bar"') == 1
+    ths = ''.join(re.findall(r'<th[^>]*>[^<]*</th>', html))
+    for gone in ('PEG（明年）', '>耐久<', '>底部<'):
+        assert gone not in ths
+    for table in re.findall(r'<table>.*?</table>', html, re.S):
+        n_th = len(re.findall(r'<th[ >]', table))
+        for tr in re.findall(r'<tr[^>]*>(.*?)</tr>', table, re.S)[1:]:
+            assert len(re.findall(r'<td[ >]', tr)) == n_th
+    folds = re.findall(r'<details class="bw-fold bw-secfold">', html)
+    assert len(folds) == 2 and '<details class="bw-fold" open><summary>怎麼讀這張表' in html
+
+
+def test_tw_empty_seat_rows_match_header_width(paths):
     pool, out = paths
     _write_pool(pool, [_stock('1111.TW')], '2026-10-09')
     tw.build(False, today=date(2026, 10, 10))
     html = (out / '_seats_tw_body.html').read_text(encoding='utf-8')
-    assert '台股還沒有上修數字，目前的分數是其餘四項的平均' in html
-    board_part = html.split('全母體看板')[1]
-    assert board_part.count('<tr><td>1</td>') == 1                     # 1 row, no seat
+    core = re.search(r'<table>.*?</table>', html, re.S).group(0)
+    n_th = len(re.findall(r'<th[ >]', core))
+    rows = re.findall(r'<tr class="bw-muted-row">(.*?)</tr>', core, re.S)
+    assert len(rows) == 5 and all(len(re.findall(r'<td[ >]', r)) == n_th for r in rows)

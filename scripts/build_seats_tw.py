@@ -379,7 +379,7 @@ def _cells(v, lamp_map):
     tk = escape(v['ticker'].split('.')[0])
     label = f"{tk} {escape(v['name'])}" if v.get('name') else tk
     link = (f'<a href="{escape(v["dd_path"])}#decision">{label}</a>' if v.get('dd_path') else label)
-    cells[0] = f'<td class="bw-l"><strong>{link}</strong></td>'
+    cells[0] = ba._grp_cell(f'<td class="bw-l"><strong>{link}</strong></td>', 'sv-code')
     if v.get('rev_anchor') == 'quarter_end':
         # 缺財報日（build_dd_screener.tw_quarter_anchor_date()）：US 共用 tooltip 沒有這個錨定。
         title = escape(f"錨定：缺財報日，取該季季底前的快照｜基準快照 {v.get('rev_baseline_date') or '—'}")
@@ -391,7 +391,7 @@ def _cells(v, lamp_map):
         days = v['days_to_next_earnings']
         title = escape(f"公司未公告日期，依{v['next_earn_fallback']}推算，可能提前公布")
         cls = ' class="bw-pill bw-pill-warn"' if 0 <= days <= 7 else ''
-        cells[3] = f'<td class="bw-l"><span{cls} title="{title}">≤{days} 天</span></td>'
+        cells[3] = ba._grp_cell(f'<td class="bw-l"><span{cls} title="{title}">≤{days} 天</span></td>', 'g-t')
     return cells
 
 
@@ -404,10 +404,8 @@ def _table(views, lamp_map, seat_prefix=None, empty_seats=0):
     for i, v in enumerate(views, 1):
         code = f"{seat_prefix}{i}" if seat_prefix else str(i)
         body.append(f'<tr><td class="bw-l">{escape(code)}</td>' + ''.join(_cells(v, lamp_map)) + '</tr>')
-    n_cols = len(ba._shared_thead_cells('tw'))
     for j in range(len(views) + 1, len(views) + empty_seats + 1):
-        body.append(f'<tr class="bw-muted-row"><td class="bw-l">{seat_prefix}{j}</td>'
-                    f'<td class="bw-l" colspan="{n_cols}">空席</td></tr>')
+        body.append(ba._empty_seat_row(f'{seat_prefix}{j}'))
     return ('<div class="bw-scroll"><table><thead>' + head + '</thead><tbody>'
             + ''.join(body) + '</tbody></table></div>')
 
@@ -422,8 +420,10 @@ def _legend():
 <div class="bw-note-line"><b>大盤多頭續抱</b>：大盤多頭時，只因離歷史新高超過 10% 而轉紅、仍在池內的在席者照樣續抱，燈號標「🔴 續抱」，倉位沿用最近一次非紅燈的倉位。</div>
 <div class="bw-note-line"><b>回測</b>：照現行規則回測 2013-03 至 2026-09，持有全部合格股年化報酬 13.21%，最大回撤 −57.01%；同期買進持有 0050 年化 20.32%，最大回撤 −33.96%。報酬和回撤都不如 0050。</div>
 <div class="bw-note-line"><b>下次財報</b>：「≤N 天」是公司還沒公告日期，依法定期限推算（第一季 5/15、第二季 8/14、第三季 11/14、年報 3/31），實際可能更早。距財報 7 天內標橘色。</div>
-<div class="bw-note-line"><b>底部</b>：只在距歷史新高 10% 以內才算。回檔一次比一次小、量縮、離底部高點近算「緊」，否則算「鬆」。只排 ② 可買裡 🟡 接近新高組的順序，不改燈號或倉位。</div>
-<div class="bw-note-line"><b>底部之後的數字欄</b>：三年 EPS 成長、營收成長、ROIC、營業現金流率、EPS 預估（新台幣）、預估本益比、PEG、增量 ROIC、再投資率、隱含成長、營運槓桿，都來自 dd-screener，只供參考，不影響資格、排序與席位。其中三年 EPS 成長 ≥15%、ROIC 與營業現金流率本來就是資格條件，這裡只是把數字攤開。</div>
+<div class="bw-note-line"><b>底部</b>：只在距歷史新高 10% 以內才算。回檔一次比一次小、量縮、離底部高點近算「緊」，否則算「鬆」。只排 ② 可買裡 🟡 接近新高組的順序，不改燈號或倉位。結果顯示在備註欄，例如「底部 緊 2段」。</div>
+<div class="bw-note-line"><b>耐久</b>：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均、三年平均、現值三者都 ≥15%，兩種擇一達標。只是旗標，不擋資格；達標的在備註欄顯示「耐久 ✓」。</div>
+<div class="bw-note-line"><b>欄位切換</b>：表格上方可切換「時機／基本面／全部」，一次切換全頁的席位表。代號、上修、時機、倉位永遠顯示；「時機」顯示距歷史新高、下次財報、估值、DD、備註；「基本面」顯示下段的數字欄。左右捲動時代號欄固定在左邊。③ 等待池與 ③b 太貴不入池預設收合，點標題展開。</div>
+<div class="bw-note-line"><b>基本面欄組</b>：三年 EPS 成長、營收成長、ROIC、營業現金流率、EPS 預估（新台幣）、預估本益比、增量 ROIC、再投資率、隱含成長、營運槓桿，都來自 dd-screener，只供參考，不影響資格、排序與席位。其中三年 EPS 成長 ≥15%、ROIC 與營業現金流率本來就是資格條件，這裡只是把數字攤開。</div>
 <div class="bw-note-line"><b>跟美股的資料差異</b>：融券比在美股是資格條件，台股池沒有這項資料，這一條等於不設。內部人買賣在美股只是備註，台股池幾乎沒有資料。</div>
 </details>"""
 
@@ -437,35 +437,6 @@ def board_rows(rows):
     apply_own_score_v4() 已記成 0，排在最後。只供對照，不影響席位或候補。"""
     return sorted((r for r in rows if r['grp'].get('pass')),
                   key=lambda r: -(r.get('score') or 0))[:BOARD_ROWS]
-
-
-def _board_html(views, seat_code_map, lamp_map, n_eligible, rev_n):
-    """build_arena._own_board_section_html() with the TW cells (name, fallback
-    tooltips); the 席 column goes after the first 8 shared cells, as in _board_tr()."""
-    if not views:
-        return ''
-    thead_cells = ba._shared_thead_cells('tw')
-    thead = ('<tr><th title="依綜合對照分排的名次，只供對照；席位依上修排序">#</th>' + ''.join(thead_cells[:8])
-             + '<th class="bw-l" title="目前坐的核心席，空白＝沒坐席">席</th>' + ''.join(thead_cells[8:]) + '</tr>')
-    body = []
-    for i, v in enumerate(views, 1):
-        cells = _cells(v, lamp_map)
-        code = seat_code_map.get(v['ticker'])
-        seat = (f'<td class="bw-l">{escape(code)}</td>' if code
-                else '<td class="bw-l"><span class="bw-muted">—</span></td>')
-        cls = ' class="bw-seated"' if code else ''
-        body.append(f'<tr{cls}><td>{i}</td>' + ''.join(cells[:8]) + seat + ''.join(cells[8:]) + '</tr>')
-    scope = (f'資格全過的 {n_eligible} 檔' if n_eligible <= len(views)
-             else f'資格全過的 {n_eligible} 檔裡分數最高的 {len(views)} 檔')
-    rev_note = ('台股還沒有上修數字，目前的分數是其餘四項的平均。' if rev_n == 0
-                else '沒有上修數字的名字，分數是其餘四項的平均。')
-    return (f'<h3 class="bw-sec">全母體看板（依綜合對照分排序，{len(views)} 檔）</h3>'
-            f'<div class="bw-sub">{scope}，依綜合對照分排列，比上面的表多一欄「席」。'
-            '綜合對照分是五項排名百分位的平均：上修、近 12 個月（扣最近一個月）股價動能、'
-            f'成長、品質、盈餘殖利率。百分位是在這群名字裡贏過幾成。{rev_note}這張表只供對照：核心席依上修排序，'
-            '都不是從這張表挑的。欄位定義見上方「怎麼讀這張表」。</div>'
-            '<div class="bw-scroll"><table><thead>' + thead + '</thead><tbody>'
-            + ''.join(body) + '</tbody></table></div>')
 
 
 RULE_LINE = ('大盤多頭（加權報酬指數在 200 日線之上）時，在席者離歷史新高再遠也續抱，跌破自己的 200 日線才賣；'
@@ -498,7 +469,7 @@ def _market_html(market):
 
 
 def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_universe,
-                lamp_map, conc=None, board=None, market=None):
+                lamp_map, conc=None, market=None):
     core_v = [views[r['ticker']] for r in sel['core']]
     rev_n = sum(1 for v in views.values() if v.get('rev_used_pct') is not None)
     head = f"台股核心席 · 資料日 {as_of} · 台股池 {n_universe} 檔"
@@ -530,6 +501,7 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）'
           '的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。</div>'
         + fresh + _market_html(market) + status
+        + ba._seat_view_bar_html()
         + _table(core_v, lamp_map, seat_prefix='C', empty_seats=CORE_SLOTS - len(core_v))
         + (f'<div class="bw-note-line">空席 {CORE_SLOTS - len(core_v)}：'
            + (escape('大盤空頭，本週不補新席，空席放現金。') if (market or {}).get('status') == 'bear'
@@ -542,14 +514,14 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + f'<h3 class="bw-sec">② 可買（{len(sel["buyable"])} 檔）</h3>'
         + '<div class="bw-sub">池內沒坐核心席、今天時機燈亮著（綠／黃／橘）的名字，依燈號分組。</div>'
         + (''.join(buy_parts) or '<div class="bw-note-line">（無）</div>')
-        + f'<h3 class="bw-sec">③ 等待池（{len(sel["waiting_rest"])} 檔）</h3>'
-        + '<div class="bw-sub">上修夠、時機燈還沒亮的池內名字，依時機燈分組，組內依上修排序。</div>'
+        + f'<details class="bw-fold bw-secfold"><summary>③ 等待池（{len(sel["waiting_rest"])} 檔）</summary>'
+        + '<div class="bw-sub">資格全過、時機燈還沒亮的池內名字，依時機燈分組，組內依上修排序。</div>'
         + (''.join(waiting_parts) or '<div class="bw-note-line">（無）</div>')
-        + f'<h3 class="bw-sec">③b 太貴不入池（{len(sel["too_expensive"])} 檔）</h3>'
+        + '</details>'
+        + f'<details class="bw-fold bw-secfold"><summary>③b 太貴不入池（{len(sel["too_expensive"])} 檔）</summary>'
         + '<div class="bw-sub">其他資格全過，只有估值閘紅燈。名字在這裡代表不加碼，不是賣出訊號。</div>'
         + _table(v(sel['too_expensive']), lamp_map)
-        + _board_html(v(board or []), {r['ticker']: f"C{i}" for i, r in enumerate(sel['core'], 1)},
-                      lamp_map, len(sel['eligible']), rev_n)
+        + '</details>'
         + '</div>'
     )
 
@@ -620,7 +592,7 @@ def build(reselect, today=None):
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     BODY_HTML.write_text(render_html(as_of, rev_as_of, lamp_doc.get('as_of'), last_rotation_date,
-                                     sel, views, len(rows), lamp_map, conc, board, market), encoding='utf-8')
+                                     sel, views, len(rows), lamp_map, conc, market), encoding='utf-8')
     if new_state != state:
         _state_path().write_text(json.dumps({'schema_version': 'tw-state-1.0', 'last_nonred': new_state},
                                             ensure_ascii=False, indent=1, sort_keys=True) + '\n', encoding='utf-8')
