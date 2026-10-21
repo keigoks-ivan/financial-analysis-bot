@@ -1688,8 +1688,8 @@ def _ddn_thead_cells(market: str = "us") -> list[str]:
         '新增的一塊錢資本賺到多少報酬，用來判斷成長值不值得繼續投。投入資本不增反減時顯示「—」">增量 ROIC%</th>',
         '<th title="近 3 年新增投入資本 ÷ 期間年化稅後營業利潤，意思是公司把多少獲利拿去繼續投資擴張">再投資率%</th>',
         '<th title="增量 ROIC × 再投資率，機械推算的內生成長率上限，是描述數字，不是預測">隱含成長%</th>',
-        '<th title="營收成長% − 營業利益成長%（pp＝百分點），只在營業利益為正時計算。'
-        '負值＝利潤率擴張，正值越大代表成本吃掉越多營收成長">營運槓桿（pp）</th>',
+        '<th class="bw-l" title="營收成長% − 營業利益成長%，只在營業利益為正時計算。格子顯示分類（同 dd-screener），'
+        '滑鼠移到格子上看百分點數字；利潤率擴張＝營業利益成長快過營收">營運槓桿</th>',
     ]
 
 
@@ -1717,9 +1717,10 @@ def _ddn_cells(v: dict) -> list[str]:
     inc_note = d.get("inc_roic_note")
     inc = n("inc_roic")
     inc_cell = (f'<td title="{escape(inc_note)}">{inc}</td>' if inc_note and inc == dash else f"<td>{inc}</td>")
-    ol_label = d.get("ol_label")
-    ol_cell = (f'<td title="{escape(ol_label)}">{n("ol_pp", 2, True)}</td>' if ol_label
-               else f'<td>{n("ol_pp", 2, True)}</td>')
+    ol_label = d.get("ol_label")   # 照 dd-screener：格子顯示分類，百分點只放提示（基期小時數字會很極端）
+    ol_tip = f"營收成長% − 營業利益成長% = {n('ol_pp', 2, True)} 個百分點（只在營業利益為正時計算）"
+    ol_cell = (f'<td class="bw-l" title="{escape(ol_tip)}">{escape(ol_label)}</td>' if ol_label
+               else f'<td class="bw-l">{dash}</td>')
     return [f'<td>{n("g3")}</td>', f'<td>{n("rev3")}</td>', f'<td>{n("roic")}</td>', f'<td>{n("cf")}</td>',
             eps_cell, f'<td>{n("pe2")}</td>', f'<td>{n("peg", 2)}</td>',
             inc_cell, f'<td>{n("reinvest")}</td>', f'<td>{n("implied")}</td>', ol_cell]

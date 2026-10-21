@@ -632,8 +632,9 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       return '<td class="num" title="'+esc('幣別 '+(d.eps_ccy||'未標示'))+'">'+a.map(function(x){return (x==null||isNaN(x))?'—':fmt(x,2);}).join('／')+'</td>';
     }
     function olTd(d){
-      if(d.ol_pp==null||isNaN(d.ol_pp)) return '<td class="num">—</td>';
-      return '<td class="num"'+(d.ol_label?(' title="'+esc(d.ol_label)+'"'):'')+'>'+(d.ol_pp>0?'+':'')+fmt(d.ol_pp,2)+'</td>';
+      if(!d.ol_label) return '<td>—</td>';
+      var pp=(d.ol_pp==null||isNaN(d.ol_pp))?'—':((d.ol_pp>0?'+':'')+fmt(d.ol_pp,2));
+      return '<td title="'+esc('營收成長% − 營業利益成長% = '+pp+' 個百分點（只在營業利益為正時計算）')+'">'+esc(d.ol_label)+'</td>';
     }
     function row(seatLabel, s, isSat){
       var grp = s.grp||{};
@@ -681,7 +682,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       '<th class="num" title="'+esc('近 3 個財年：（今年稅後營業利潤 − 3 年前稅後營業利潤）÷ 新增投入資本。投入資本不增反減時顯示「—」')+'">增量 ROIC%</th>'+
       '<th class="num" title="'+esc('近 3 年新增投入資本 ÷ 期間年化稅後營業利潤，公司把多少獲利拿去繼續投資擴張')+'">再投資率%</th>'+
       '<th class="num" title="'+esc('增量 ROIC × 再投資率，機械推算的內生成長率上限，是描述數字，不是預測')+'">隱含成長%</th>'+
-      '<th class="num" title="'+esc('營收成長% − 營業利益成長%（pp＝百分點），只在營業利益為正時計算。負值＝利潤率擴張')+'">營運槓桿（pp）</th>'+
+      '<th class="num" title="'+esc('營收成長% − 營業利益成長%，只在營業利益為正時計算。格子顯示分類（利潤率擴張、壓縮等），滑鼠移到格子上看百分點數字')+'">營運槓桿</th>'+
       '<th title="'+esc('財報後上修（缺值看近三個月），是排序依據；≤−5% 即失去資格（兩個資料源都缺時看 FY+1 單月 ≤−10%），失去資格的名字不會出現在席位表')+'">上修</th>'+
       '<th title="'+esc('距歷史新高（還原權息全歷史）＋200 日線收斂成單一燈號，只標示現在能不能買，不參與排序')+'">時機燈</th>'+
       '<th>DD</th><th>異動</th></tr>';

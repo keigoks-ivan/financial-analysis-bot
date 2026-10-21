@@ -54,7 +54,7 @@ def test_nvda_numbers_match_latest_json():
     assert f"{s['eps_fy_curr']:.2f}／{s['eps_fy_next']:.2f}／{s['eps_fy3']:.2f}" in cells[4]
     assert f"{s['live_fpe_est']:.1f}" in cells[5] and f"{s['live_peg']:.2f}" in cells[6]
     assert f"{s['incremental_roic_pct']:.1f}" in cells[7] and f"{s['reinvest_rate_pct']:.1f}" in cells[8]
-    assert f"{s['implied_growth_pct']:.1f}" in cells[9] and f"{s['ol_divergence_pp']:+.2f}" in cells[10]
+    assert f"{s['implied_growth_pct']:.1f}" in cells[9] and s['ol_divergence_label'] in cells[10] and f"{s['ol_divergence_pp']:+.2f}" in cells[10]
     assert 'None' not in txt and 'nan' not in txt
 
 
