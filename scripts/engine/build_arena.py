@@ -104,6 +104,13 @@ v5.3（2026-10-18 持有人拍板；美股看板先改，同日晚間延伸到�
   docs/SeatSizing_Results_TW_Small.md，兩個母體登記分類都是「無法分辨」，持有人依回測知情決定改，
   非登記判準通過（數字見 grp.py 檔頭 v5.3 段）。
 
+v5.7（2026-10-21 持有人破例決定，只改美股看板；十倍股頁、台股不用本段）——賣法改「大盤空頭才看紅燈」：
+  決策日 SPY 還原收盤 < 200 日線＝大盤空頭。大盤多頭週在席者只在資格不成立（出池）或跌破自己的 200 日線時下席，
+  只因距歷史新高 <−10% 轉紅的續抱，倉位沿用最近一次非紅燈的倉位（狀態檔 arena_state.json）；大盤空頭週照現行；
+  大盤資料缺或超過 7 天退回現行賣法。實作在 scripts/engine/seat_x1.py（純函式），資料取 data/flowmap_prices.json 的
+  SPY（flowmap-daily 每日更新）。非登記通過：v7 席位全格子測試的登記結論是現行維持（大型股在登記裡只當參考），
+  美股大型股配對格全期 100%／前段 81%／後段 91% 變好，判定母體（美股中小型）偏好紅燈就賣。
+
 v5.5（2026-10-18 持有人拍板，不另做回測；美股看板與十倍股頁，台股席位頁不改）——品質閘的現金流
 條件從「FCF margin ≥10%（ROIC ≥25 時只要 ≥0）」改成「FCF > 0」，ROIC ≥15 不變。實作全在
 grp.quality_gate()（台股列帶 _quality_rule="margin10" 維持舊規則，見 grp.py 檔頭 v5.5 段）；
@@ -130,6 +137,7 @@ from engine.grp import (  # noqa: E402
     market_ok, own_score_v4, pool_sort_key, timing_lamp, lamp_action,
 )
 from dd_screener_quality import load_qgm_durability_index  # noqa: E402
+from engine import seat_x1  # noqa: E402
 
 WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"   # 非 DD 池週線 fallback（見 build_radar.py 檔頭 docstring）
 QGM_US = ROOT / "docs" / "qgm" / "latest.json"
@@ -164,6 +172,8 @@ STAGE_CODE_ASCII = {"S0": "WEAK", "S1": "TURN", "S2": "BASE", "S5": "HIGH",
 W_STAGE = 4
 CARDS_JSON = OUT_DIR / "cards.json"
 LEDGER_JSON = OUT_DIR / "arena-ledger.json"   # 席位變動帳本（append-only）
+STATE_JSON = OUT_DIR / "arena_state.json"      # v5.7：在席者最近一次非紅燈的倉位（大盤多頭續抱用）
+SPY_PRICES_JSON = ROOT / "data" / "flowmap_prices.json"   # v5.7：SPY 還原收盤（flowmap-daily 每日更新）
 ARENA_JSON = OUT_DIR / "arena.json"
 # 2026-07-10 席位分頁整併：輸出 nav-less 片段供 /cockpit/#seats-arena 子分頁 iframe 嵌入；
 # /engine/arena.html 已改為 redirect stub（見 site_nav SKIP_FILES）。內容為 M5 對照組 PREREG 凍結，只換殼不改文。
@@ -418,6 +428,14 @@ def dd_tag(s: dict) -> str:
     return tag
 
 
+def _below_200(s: dict) -> bool:
+    try:
+        v = float((s.get("timing") or {}).get("vs_200ma_pct"))
+    except (TypeError, ValueError):
+        return False
+    return v < 0
+
+
 def row_dict(s: dict, yellow_full: bool = False) -> dict:
     """yellow_full（v5.3，2026-10-18）：True＝黃燈滿倉（見 grp.timing_lamp），美股看板、台股席位、
     十倍股頁三個呼叫端都傳 True；預設 False 與舊版逐位元相同。"""
@@ -462,6 +480,8 @@ def row_dict(s: dict, yellow_full: bool = False) -> dict:
             # 是池排序（grp.pool_sort_key()）與 timing_lamp() 板機的原料，直接從 s
             # 讀（timing_lamp 已經讀過 s["ma"]，這裡另存一份供席位表欄位／tooltip用）。
             "dist_ath_pct": (s.get("ma") or {}).get("dist_ath_pct"),
+            # v5.7：跌破自己的 200 日線？（缺值不算跌破，同 timing_lamp 的 vs200 判斷）
+            "below_200": _below_200(s),
             "ath_adj_price": (s.get("ma") or {}).get("ath_adj_price"),
             "ath_adj_date": (s.get("ma") or {}).get("ath_adj_date"),
             "ath_source": (s.get("ma") or {}).get("ath_source"),
@@ -992,7 +1012,7 @@ def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
 
     L = ["== ① 核心席（5）"]
     if lamp_as_of or last_rotation_date:
-        L.append(f"時機更新：{lamp_as_of or '—'}（每日）／席位更新：{last_rotation_date or '—'}（每週六（台北）依週五收盤重算：亮燈入席、紅燈下席、不足 5 席就空著）")
+        L.append(f"時機更新：{lamp_as_of or '—'}（每日）／席位更新：{last_rotation_date or '—'}（每週六（台北）依週五收盤重算：亮燈入席、不足 5 席就空著）")
     L.append(_POOL_ASCII_HDR_SEAT)
     for j, r in enumerate(core_seats, 1):
         L.append(_pool_ascii_row(f"C{j}", r))
@@ -1750,7 +1770,7 @@ def _pool_table_html(rows_list: list, lamp_map: dict, seat_prefix: str | None = 
 
 
 def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_map,
-                       lamp_as_of=None, last_rotation_date=None) -> str:
+                       lamp_as_of=None, last_rotation_date=None, market_note="") -> str:
     """v5『① 核心席（5）／② 可買／③ 等待池』HTML 區塊（h3＋sub＋表＋legend＋DOWN
     變動列）——取代 v4「核心5＋衛星5＋候補5」，見 grp.py 檔頭 v5 段／
     knowledge/rule_ledger.md「v5 席位引擎」列。核心＝池前 5（月頻輪動，硬否決立即
@@ -1813,12 +1833,12 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
         changes_html = '<div class="bw-note-line">本期無下席變動。</div>'
 
     freshness = (f'<div class="bw-note-line">時機更新：{escape(lamp_as_of or "—")}（每日）／'
-                f'席位更新：{escape(last_rotation_date or "—")}（每週六（台北）依週五收盤時機燈——亮燈入席、紅燈下席、不足 5 席就空著）</div>'
+                f'席位更新：{escape(last_rotation_date or "—")}（每週六（台北）依週五收盤時機燈——亮燈入席、不足 5 席就空著；賣法見下）</div>'
                 if (lamp_as_of or last_rotation_date) else "")
 
     return ('<h3 class="bw-sec">① 核心席（5）</h3>'
            + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。週中燈號只管倉位，席位等週六複判。</div>'
-           + freshness + core_tbl + legend + changes_html
+           + freshness + market_note + core_tbl + legend + changes_html
            + f'<h3 class="bw-sec">② 可買（{len(buyable)} 檔）</h3>'
            + '<div class="bw-sub">池內沒進核心、今天時機燈亮著（綠／黃／橘）的名字，依燈號分組。可能是空清單。</div>'
            + buyable_tbl
@@ -1886,7 +1906,7 @@ def _own_board_section_html(views: list[dict], seat_code_map: dict, lamp_map: di
 
 def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_pool_rows, prev_snap,
                       entered, lamp_map, rev_data_as_of=None, price_as_of=None,
-                      lamp_as_of=None, last_rotation_date=None) -> str:
+                      lamp_as_of=None, last_rotation_date=None, market_note="") -> str:
     """HTML TABLE 版看板 v5（2026-09-17，見 grp.py 檔頭 v5 段／knowledge/rule_ledger.md
     「v5 席位引擎」列，取代 v4「核心5＋衛星5＋候補5」）。回傳裸片段（無 html/head/body），
     可直接 innerHTML 或接進另一頁 <body>。內容與 render_board_text 同源同排序，只是
@@ -1907,7 +1927,7 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     own_section = _own_board_section_html([_flat_view(r) for r in own], seat_code_map, lamp_map)
 
     pool_section = _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_map,
-                                      lamp_as_of, last_rotation_date)
+                                      lamp_as_of, last_rotation_date, market_note)
     collapsed_section = _collapsed_section_html(not_in_pool_rows, lamp_map)
     too_expensive_section = _too_expensive_section_html(too_expensive_rows(rows), lamp_map)
 
@@ -2388,14 +2408,34 @@ def main() -> int:
     # --ledger 排程（週五收盤）決定；--daily／手動跑沿用帳本 roster.core、只刷燈——席位
     # ＝週收盤決策、燈號＝每日倉位，與 v7-backtest 兩段式回看的週收盤口徑一致，也避免
     # −10% 邊界天天抖。沿用的席位可能本週已轉紅或出池，故顯示仍需 all_by_ticker fallback。
+    # v5.7（2026-10-21）：賣法看決策日的大盤狀態（SPY 還原收盤 vs 200 日線）。--ledger 用當次 as_of；
+    # 平日只刷燈號，沿用上次 --ledger 的決策日（帳本 last_decision_date，沒有就用今天的資料日）。
+    decision_date = as_of if args.ledger else (ledger0.get("last_decision_date") or as_of)
+    try:
+        market = seat_x1.market_state(seat_x1.load_close_series(SPY_PRICES_JSON), decision_date)
+    except ValueError:   # as_of 是 "—" 等無法解析的日期：視為大盤資料缺，退回現行賣法
+        market = {"mode": "e1", "status": "missing", "decision_date": None,
+                  "data_date": None, "close": None, "ma200": None}
     if args.ledger:
-        rotation = select_lit_roster_v52(pool_rows, prev_core_roster)
+        rotation = seat_x1.select_roster(pool_rows, prev_core_roster, market, select_lit_roster_v52)
     else:
         rotation = {"core": [t for t in (prev_core_roster or []) if t in all_by_ticker],
                     "rotated": False, "removed": [], "filled": []}
     core_seats = [pool_by_ticker.get(t) or all_by_ticker.get(t) for t in rotation["core"]]
     core_seats = [r for r in core_seats if r is not None]
     core_seated = {r["ticker"] for r in core_seats}
+    # v5.7：大盤多頭下只因距新高轉紅的在席者續抱，燈號維持紅、倉位沿用最近一次非紅燈的倉位（狀態檔）。
+    try:
+        state_doc = json.loads(STATE_JSON.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        state_doc = {}
+    x1_state = state_doc.get("last_nonred") or {}
+    x1_held = seat_x1.held_tickers(core_seats, set(pool_by_ticker), market, LIT_LAMP_CODES)
+    seat_x1.apply_hold(core_seats, x1_held, x1_state)
+    x1_new_state = seat_x1.update_state(x1_state, core_seats, as_of, LIT_LAMP_CODES)
+    if x1_new_state != x1_state:
+        STATE_JSON.write_text(json.dumps({"schema_version": "arena-state-1.0", "last_nonred": x1_new_state},
+                                         ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
     # 等待池＝池扣掉核心，依上修排序（已經是 pool_rows 的順序，直接篩即可）；
     # 可買＝等待池中時機燈亮著者（綠／黃／橘，與核心席入席同一組 LIT_LAMP_CODES，
@@ -2414,7 +2454,7 @@ def main() -> int:
         t = r["ticker"]
         r["seat_note"] = "新席" if t in filled_tickers else "現任"   # v5.2：無遞補概念
         if (r.get("lamp") or {}).get("code") not in LIT_LAMP_CODES:
-            r["seat_note"] += "・週中轉紅，週六複判"
+            r["seat_note"] += "・大盤多頭續抱" if t in x1_held else "・週中轉紅，週六複判"
         r["track"] = "core"
     for r in waiting_pool:
         r["track"] = "pool"   # 2026-09-17：backward-compat 標記，見 payload["sat_seats"] 註解
@@ -2513,6 +2553,7 @@ def main() -> int:
                 new_streak.pop(r["ticker"], None)
         ledger["w52_fail_streak"] = new_streak
         ledger["last_rotation_month"] = current_month
+        ledger["last_decision_date"] = as_of   # v5.7：平日刷燈用這天的大盤狀態
         ledger["roster"] = {"core": [r["ticker"] for r in core_seats]}   # v5：等待池不持久化，見上
         LEDGER_JSON.parent.mkdir(parents=True, exist_ok=True)
         LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
@@ -2539,11 +2580,13 @@ def main() -> int:
     board_html = render_board_html(as_of, universe_rows, core_seats, buyable, waiting_rest, not_in_pool_rows,
                                    prev, entered, lamp_map, rev_data_as_of=rev_data_as_of,
                                    price_as_of=price_as_of, lamp_as_of=as_of,
-                                   last_rotation_date=last_rotation_date)
+                                   last_rotation_date=last_rotation_date,
+                                   market_note=seat_x1.market_note_html(market))
     BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
         "schema_version": "5.0",
         "lamp_as_of": as_of, "lamp_source": "daily", "lamp_last_rotation_date": last_rotation_date,
+        "market_x1": market,
         "rev_data_as_of": rev_data_as_of, "price_as_of": price_as_of,
         "method": ("v5 席位引擎（2026-09-17，owner thesis「品質派 ∩ 獲利上修 ∩ 突破還原權息歷史新高」）："
                   "資格＝品質派——品質閘（ROIC≥15∧FCF>0，v5.5 起，2026-10-18）×三年成長"

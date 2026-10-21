@@ -49,6 +49,8 @@ def _patch_paths(monkeypatch, tmp_path):
         "ARENA_JSON": tmp_path / "arena.json",
         "ARENA_HTML": tmp_path / "_arena_body.html",
         "LEDGER_JSON": tmp_path / "arena-ledger.json",
+        "STATE_JSON": tmp_path / "arena_state.json",              # v5.7
+        "SPY_PRICES_JSON": tmp_path / "flowmap_prices.json",       # v5.7：不存在＝大盤資料缺，退回現行賣法
         "BOARD_TXT": tmp_path / "board.txt",
         "BOARD_HTML": tmp_path / "_board_body.html",
         "UNIVERSE_BOARD_JSON": tmp_path / "universe_board.json",
