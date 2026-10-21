@@ -21,6 +21,7 @@ re-sync those templates too (see .claude/notes/site-composition.md).
 Usage:
     python3 scripts/site_nav.py            # apply to docs/
     python3 scripts/site_nav.py --check    # report variants, change nothing
+    python3 scripts/site_nav.py --include-external   # 另含外部 repo 擁有的歷史頁（見 Change log 2026-10-21）
 
 Change log:
     2026-07-17：系統群 11→8，三波動率追蹤條整併為單一「波動率追蹤家族」入口。
@@ -121,6 +122,19 @@ Change log:
         「使用指南」(/how-to.html)——使用指南併入投資流程，how-to.html 改成轉址樁（入 SKIP_FILES，
         不注入 nav）；頂層只留「投資流程」(/flow/)。外部 3 repo synced literal（v7-backtest／
         morning-briefing／minervini-quality-backtest）2026-10-19 已同步，byte-identical。
+    2026-10-21：市場 ▾ 拆組（持有人拍板）。(1) 市場 ▾ 只留 5 項（市況主控台／情報監視器／每日
+        簡報／資產輪動雷達／財報分析）；(2) 新增下拉「總經與籌碼 ▾」（group key "macrochip"），
+        排在市場 ▾ 之後、選股直連之前，7 項：總經深度報告／總經資料庫／AI 信用監測／台股籌碼／
+        韓股籌碼／全球市場（原 Markets）／產業板塊（原 Sectors）。PREFIX_ACTIVE 的 macro/db/、
+        macro/、ai-credit/、tw-chips/、kr-chips/、markets.html、sectors.html 改到 macrochip
+        （★first-match：macro/db/ 仍須排在 macro/ 之前★）；macro_db/render.py、
+        ai_credit/aic_page.py 的 full_nav_block 呼叫同步改 group。(3) 新增
+        `--include-external`：把 EXTERNAL_TREES（qgm／qgm-tw／briefing／weekly／backtest）裡
+        「已有站頭」的歷史頁一併重注入（無站頭的頁面、SKIP_FILES 一律不碰）。2026-10-21 前
+        這些歷史頁沒人更新：預設 sweep 整棵跳過、外部 generator 只重產當期頁，每次改 nav 後
+        約 400–700 支歷史頁停在舊版。往後改 nav：同步三個外部 snippet 之後，必須再跑一次
+        `python3 scripts/site_nav.py --include-external`，並以 `--include-external --check`
+        驗證 0 筆待更新。外部 3 repo synced literal 2026-10-21 同步（各 repo nav-regroup-1021 分支）。
 """
 
 import re
@@ -212,16 +226,22 @@ MENU = {
         ("intel", "/intel/", "情報監視器"),  # 2026-08-19 新增；2026-08-20 Phase C 升為市場群首位
         ("brief", "/briefing/", "每日簡報"),  # 2026-08-17 日報恢復（週一至週六 06:15），重新掛回頁首
         ("radar", "/rotation/radar.html", "資產輪動雷達"),
+        ("earn", "/earnings/", "財報分析"),
+        # 2026-07-11 週報已停更，自頁首移除（/weekly/ 頁面保留可直達；
+        # PREFIX_ACTIVE 的 weekly/ 映射保留，使其頁面仍歸市場群 active）
+    ],
+    # 2026-10-21 市場 ▾ 拆組（持有人拍板）：市場群只留 5 項日常看盤入口（市況主控台／情報
+    # 監視器／每日簡報／資產輪動雷達／財報分析），總經與籌碼資料另立「總經與籌碼 ▾」，
+    # 排在市場 ▾ 之後、選股直連之前。全球市場／產業板塊兩頁由英文 Markets／Sectors
+    # 改中文標籤（頁面內容分別是全球股市比較、美股產業 ETF 比較）。
+    "macrochip": [
         ("macro", "/macro/", "總經深度報告"),
         ("macrodb", "/macro/db/", "總經資料庫"),  # 2026-10-08 美台總經數據庫（官方原始數據、每日更新）
         ("aicredit", "/ai-credit/", "AI 信用監測"),  # 2026-10-16 AI 信用風險 12 條指標（每日更新、越線時通知）
         ("tchips", "/tw-chips/", "台股籌碼"),  # 2026-10-17 台股籌碼十年趨勢（外資／投信／融資／期貨選擇權，每日更新）
         ("kchips", "/kr-chips/", "韓股籌碼"),  # 2026-10-17 韓股籌碼十年趨勢（外資／機構／個人／預託金／融資／借券，每日更新）
-        ("earn", "/earnings/", "財報分析"),
-        ("markets", "/markets.html", "Markets"),
-        ("sectors", "/sectors.html", "Sectors"),
-        # 2026-07-11 週報已停更，自頁首移除（/weekly/ 頁面保留可直達；
-        # PREFIX_ACTIVE 的 weekly/ 映射保留，使其頁面仍歸市場群 active）
+        ("markets", "/markets.html", "全球市場"),
+        ("sectors", "/sectors.html", "產業板塊"),
     ],
     # 2026-08-23 系統群瘦身（8→4，見 notes/site-internal/root/
     # _consolidation_system_20260823.md）：市場偵探／裁決實績／持倉週掃／實單
@@ -236,7 +256,7 @@ MENU = {
         ("data", "/data.html", "公開資料"),
     ],
 }
-GROUP_LABELS = {"pick": "選股", "research": "研究", "market": "市場", "system": "系統"}
+GROUP_LABELS = {"pick": "選股", "research": "研究", "market": "市場", "macrochip": "總經與籌碼", "system": "系統"}
 
 
 def build_nav(group=None, item=None):
@@ -269,6 +289,7 @@ def build_nav(group=None, item=None):
     <nav class="imq-menu">
       <a href="/"{home_cls}>首頁</a>
 {dd("market")}
+{dd("macrochip")}
       <a href="/cockpit/"{pick_cls}>選股</a>
 {dd("research")}
       <a href="/mental-models/"{mm_cls}>心智模型</a>
@@ -364,8 +385,8 @@ PREFIX_ACTIVE = [
     ("stock-dash/", ("research", "sdash")),  # 個股儀表板（2026-09-23 新增）
     ("etf-dash/", ("research", "etfd")),  # ETF 儀表板（2026-09-24 新增）
     ("active-etf/", ("research", "aetf")),  # 主動式 ETF（2026-09-25 新增）
-    ("tw-chips/", ("market", "tchips")),  # 台股籌碼趨勢（2026-10-17 新增）
-    ("kr-chips/", ("market", "kchips")),  # 韓股籌碼趨勢（2026-10-17 新增）
+    ("tw-chips/", ("macrochip", "tchips")),  # 台股籌碼趨勢（2026-10-17 新增）
+    ("kr-chips/", ("macrochip", "kchips")),  # 韓股籌碼趨勢（2026-10-17 新增）
     ("canslim/", ("research", "canslim")),  # CAN SLIM 選股名單（2026-10-17 新增）
     ("ideas/", ("research", "ideas")),  # 投資想法（2026-09-23 新增）
     ("research/synthesis/", ("research", "thub")),
@@ -385,17 +406,17 @@ PREFIX_ACTIVE = [
     ("catalyst/", ("market", None)),
     ("monitor/", ("market", None)),  # 全資產市場監測（2026-07-10；Phase C 併入 intel 儀表分頁）
     ("intel/", ("market", "intel")),  # 情報監視器 Phase 1（2026-08-19 新增）
-    ("markets.html", ("market", "markets")),
-    ("sectors.html", ("market", "sectors")),
+    ("markets.html", ("macrochip", "markets")),
+    ("sectors.html", ("macrochip", "sectors")),
     ("crowding/", ("market", None)),
     # rotation/radar.html 是「資產輪動雷達」獨立項目；須排在 rotation/ 之前，
     # 否則會被 rotation/ 前綴吃掉。index.html 與 ROTATION_*.html 歸市場群（無選單項）。
     ("rotation/radar.html", ("market", "radar")),  # 資產輪動雷達（2026-07-11 新增）
     ("rotation/", ("market", None)),
     ("regime/", ("market", None)),
-    ("macro/db/", ("market", "macrodb")),  # 總經資料庫（2026-10-08）；須排在 macro/ 之前
-    ("ai-credit/", ("market", "aicredit")),  # AI 信用風險監測（2026-10-16 新增）
-    ("macro/", ("market", "macro")),  # 總經深度報告（2026-07-09），nav 已掛項目
+    ("macro/db/", ("macrochip", "macrodb")),  # 總經資料庫（2026-10-08）；須排在 macro/ 之前
+    ("ai-credit/", ("macrochip", "aicredit")),  # AI 信用風險監測（2026-10-16 新增）
+    ("macro/", ("macrochip", "macro")),  # 總經深度報告（2026-07-09），nav 已掛項目
     ("weekly/", ("market", "week")),
     ("briefing/", ("market", "brief")),  # 2026-08-17 恢復更新，nav 項目已掛回
     # 市場偵探：2026-08-23 系統群瘦身時移出系統群——它是 /intel/ 變化分頁的
@@ -496,6 +517,14 @@ SKIP_FILES = {
     # 回這個純版本——若不排除，site_nav.py 全站 sweep 會注入 nav，下次 assemble_prod.py 一跑
     # 又被蓋掉，兩邊互相打架、反覆造成 diff churn（比照 picks/index.html 等既有 redirect stub）。
     "stock-dash/full.html",                      # redirect stub -> index.html
+    # 2026-10-21：macro_db/render.py 產的六個搬家轉址樁（meta refresh，<body> 與 </body> 同一行），
+    # 不該有站頭；先前每次 sweep 都灌 nav、generator 重產又蓋掉，--check 永遠回報 6 筆待更新。
+    "macro/db/an/id.html",
+    "macro/db/an/my.html",
+    "macro/db/an/sg.html",
+    "macro/db/an/th.html",
+    "macro/db/an/tradewar.html",
+    "macro/db/an/vn.html",
     "how-to.html",                               # redirect stub -> /flow/（2026-10-19 使用指南併入投資流程）
 }
 
@@ -532,12 +561,13 @@ STRIP_PATTERNS = [
 BODY_RE = re.compile(r"<body[^>]*>")
 
 
-def process(path: Path, check=False):
+def process(path: Path, check=False, include_external=False):
     rel = str(path.relative_to(ROOT))
     parts = path.relative_to(ROOT).parts
     if any(part in SKIP_DIRS for part in parts):
         return "skip"
-    if parts and parts[0] in EXTERNAL_TREES:
+    external = bool(parts and parts[0] in EXTERNAL_TREES)
+    if external and not include_external:
         return "skip-external"
     if rel in SKIP_FILES:
         return "skip"
@@ -560,6 +590,10 @@ def process(path: Path, check=False):
     for pat in STRIP_PATTERNS:
         stripped = pat.sub("", stripped)
 
+    # 外部樹只換「已有站頭」的頁面：沒有站頭的（iframe 片段、獨立狀態頁等）不能被灌 nav。
+    if external and stripped == text:
+        return "skip-external-nonav"
+
     group, item = active_for(rel)
     subnav = ""
     if rel.startswith("dd-screener/"):
@@ -580,10 +614,11 @@ def process(path: Path, check=False):
 
 def main():
     check = "--check" in sys.argv
+    include_external = "--include-external" in sys.argv
     counts = {}
     issues = []
     for path in sorted(ROOT.rglob("*.html")):
-        status = process(path, check=check)
+        status = process(path, check=check, include_external=include_external)
         counts[status] = counts.get(status, 0) + 1
         if status in ("no-body", "non-utf8"):
             issues.append((status, str(path.relative_to(ROOT))))

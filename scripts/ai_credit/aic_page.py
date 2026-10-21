@@ -322,7 +322,7 @@ def build_page(state: dict, inds: list[dict], summary: dict, events: list[dict],
                gpu_rows: list[dict] | None = None, events_all: list[dict] | None = None) -> str:
     from site_nav import full_nav_block  # noqa: E402
 
-    nav = full_nav_block("market", "aicredit")
+    nav = full_nav_block("macrochip", "aicredit")
     units = state["units"]
     charts = P2.Charts()
     by_group = {g: [x for x in inds if x["group"] == g] for g in GROUPS}

@@ -406,7 +406,7 @@ def nav_block():
     """全站選單從 scripts/site_nav.py 產生，高亮「市場 ▾ 總經資料庫」；與 site_nav.py 重注入的結果逐字相同。"""
     try:
         import site_nav
-        return site_nav.full_nav_block("market", "macrodb")
+        return site_nav.full_nav_block("macrochip", "macrodb")
     except Exception:  # noqa: BLE001
         return ""
 
