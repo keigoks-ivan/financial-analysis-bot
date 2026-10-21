@@ -212,6 +212,51 @@ jobs:
           NOTIFY_BODY: ${{ steps.sop_alert.outputs.body }}
         run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/dd-screener/sop-funnel.html
 
+      # 台股席位每月調整占比（v5.8，2026-10-21，見 knowledge/rule_ledger.md 同日列）：Step 2a-tw-seats 在每月
+      # 第一個週六重選、而且有在席者時寫 tw_seats_rebal_alert.txt；有這個檔就寄信＋Discord，其他日子沒有。
+      - name: "[non-fundamental] Read TW seats rebalance alert"
+        id: tw_rebal_alert
+        continue-on-error: true
+        run: |
+          if [ -f tw_seats_rebal_alert.txt ]; then
+            echo "triggered=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat tw_seats_rebal_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "triggered=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: "[non-fundamental] Email TW seats rebalance"
+        if: steps.tw_rebal_alert.outputs.triggered == 'true'
+        uses: dawidd6/action-send-mail@v3
+        continue-on-error: true
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "📊 台股席位每月調整占比"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.tw_rebal_alert.outputs.body }}
+
+            —
+            InvestMQuest · 台股席位每月第一個週六自動計算
+
+      - name: Discord notify (TW seats rebalance)
+        if: steps.tw_rebal_alert.outputs.triggered == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+          NOTIFY_TITLE: "📊 台股席位每月調整占比"
+          NOTIFY_BODY: ${{ steps.tw_rebal_alert.outputs.body }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/cockpit-tw/
+
       # ── 收斂：單一 commit + push（路徑＝原 workflow commit 路徑）──
       - name: Commit and push if changed
         id: commit_and_push
