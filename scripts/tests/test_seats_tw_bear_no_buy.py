@@ -56,7 +56,7 @@ def test_bear_week_incumbent_is_not_pushed_out_by_rank():
 
 
 def test_bear_week_incumbent_out_of_the_pool_still_leaves():
-    sel = tw.select(_rows([_stock('1000.TW', **_rev(3.0))]), ['1000.TW'], True, market=BEAR)
+    sel = tw.select(_rows([_stock('1000.TW', cagr=5.0)]), ['1000.TW'], True, market=BEAR)
     assert sel['core'] == [] and [t for t, _ in sel['rotation']['removed']] == ['1000.TW']
 
 

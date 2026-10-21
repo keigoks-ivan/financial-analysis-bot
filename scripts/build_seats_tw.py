@@ -14,9 +14,7 @@ Owner decisions 2026-10-09/10 (knowledge/rule_ledger.md「台股核心席」):
   2. Quality gate: operating-cash-flow margin in place of FCF margin, same
      thresholds (TW pool CASH_BASIS decision: capex-heavy names).
   3. No market-cap gate beyond the pool's own US$1B floor.
-  4. Seats need revision >= +5% like the US pool. Until TW revision data
-     exists the seats stay empty, and names that pass every gate with a lit
-     timing lamp are listed unranked as candidates.
+  4. (Superseded by v5.7, see below.) Seats needed revision >= +5% like the US pool.
 
 Owner decision 2026-10-18 (v5.3, same day as the US board): yellow lamp sizing
 0.5 -> 1.0, so 綠 1.0 / 黃 1.0 / 橘 0.5 / 紅 0 / 不合格 0. Basis: v7-backtest
@@ -53,6 +51,17 @@ and the owner decided to switch the TW seats page only — an exception, not a r
     remove them, because that swap would be a buy. Sizing changes of held names are unchanged.
   - Stale or missing market data does not block buying (falls back to the v5.4 behaviour).
   - The names that would have been added are kept as rotation['blocked'] for display.
+
+Owner decision 2026-10-21 (v5.7, TW seats page only, third item of the same day): 拿掉「上修 ≥5% 才進池」.
+Not a registered pass — an exception: the v7-backtest TW rule (docs/SeatFullGrid_Results.md) never had a
+revision threshold (TW has no historical estimates), nor the valuation gate or the three-year growth gate.
+  - Pool = every name that passes all eligibility gates (grp.pass, valuation gate included; names red
+    only on valuation stay in 「③b 太貴不入池」). Revision is a sort key only (grp.pool_sort_key, the
+    existing pool order). The US board and the ten-bagger page keep grp.in_pool() / POOL_REV_MIN.
+  - Everything else is unchanged: the lamp-lit top 5, X1 exit, bear-week no-buy, yellow full size,
+    Saturday re-selection. Reason for the change: 30 names passed eligibility but the highest revision
+    was +2.6%, so the seats had been empty since 2026-10-09.
+  - Why the sections 「④ 候補」「⑤ 其他過關」 are gone: both only existed for names outside the +5% pool.
 
 TW pool has no short-interest data, so that US gate never fires; insider
 buying (a display chip in the US) is almost always empty. 下次財報 falls back to the
@@ -292,11 +301,11 @@ def select(rows, prev_core, reselect, last_snap=None, market=None):
     for display, so 新席 and the DOWN lines stay up until the next Saturday.
 
     market（v5.4）：market_state() 的結果。status 'bear'（v5.6）時不補新席，見 bear_no_buy()。mode 'x1'（大盤多頭）時，在席者只要仍在池內
-    （資格成立、上修 ≥5%）且沒跌破自己的 200 日線，就算留任候選，仍依池序競爭前 5；
+    （資格成立）且沒跌破自己的 200 日線，就算留任候選，仍依池序競爭前 5；
     沒有 market 或 mode 'e1'＝現行賣法，與 v5.3 逐位元相同。
     """
     eligible = [r for r in rows if r['grp'].get('pass')]
-    pool = sorted((r for r in eligible if grp.in_pool(r['grp'].get('rev_used_pct'))), key=_pool_key)
+    pool = sorted(eligible, key=_pool_key)   # v5.7：資格全過即入池，上修只排序（不再 ≥5% 門檻）
     by_t = {r['ticker']: r for r in rows}
     x1 = bool(market) and market.get('mode') == 'x1'
     pool_set = {r['ticker'] for r in pool}
@@ -330,12 +339,7 @@ def select(rows, prev_core, reselect, last_snap=None, market=None):
     waiting = [r for r in pool if r['ticker'] not in seated]
     buyable = [r for r in waiting if (r.get('lamp') or {}).get('code') in ba.LIT_LAMP_CODES]
     waiting_rest = [r for r in waiting if r not in buyable]
-    not_in_pool = [r for r in eligible if not grp.in_pool(r['grp'].get('rev_used_pct'))]
-    candidates = sorted((r for r in not_in_pool
-                         if r['grp'].get('rev_used_pct') is None and _lit(r)),
-                        key=lambda r: r['ticker'])
-    cand_set = {r['ticker'] for r in candidates}
-    others = sorted((r for r in not_in_pool if r['ticker'] not in cand_set), key=_pool_key)
+    candidates, others = [], []   # v5.7：沒有「池外」的資格全過名字了，兩欄留空保持輸出格式
     return {'eligible': eligible, 'pool': pool, 'rotation': rotation, 'core': core,
             'buyable': buyable, 'waiting_rest': waiting_rest,
             'too_expensive': ba.too_expensive_rows(rows),
@@ -343,10 +347,10 @@ def select(rows, prev_core, reselect, last_snap=None, market=None):
 
 
 def concentration(sel, industry):
-    """Industry mix of the core seats, or of the candidates while the seats are
-    empty. Informational like the US 最大單一產業占席 (no cap, owner 2026-09-17);
+    """Industry mix of the core seats, or of the buyable names while the seats are
+    empty (v5.7: the candidates list no longer exists). Informational like the US 最大單一產業占席 (no cap, owner 2026-09-17);
     industry = TWSE/TPEx official classification (latest.json tw_industry)."""
-    basis, rows = ('core', sel['core']) if sel['core'] else ('candidates', sel['candidates'])
+    basis, rows = ('core', sel['core']) if sel['core'] else ('buyable', sel['buyable'])
     counts = {}
     for r in rows:
         k = industry.get(r['ticker']) or '（未分類）'
@@ -362,7 +366,7 @@ def _conc_html(conc):
         return ''
     mix = '、'.join(f"{escape(r['industry'])} ×{r['n']}" for r in conc['rows'])
     lead = ('核心席產業分布' if conc['basis'] == 'core'
-            else f"核心席空著，先看候補 {conc['n']} 檔的產業分布")
+            else f"核心席空著，先看可買 {conc['n']} 檔的產業分布")
     warn = (f"單一產業占 {conc['max_share_pct']}%，超過一半。產業不設上限（同美股），這行只是提示。"
             if conc['max_share_pct'] > 50 else '')
     return f'<div class="bw-note-line">{lead}（證交所／櫃買中心產業別）：{mix}。{warn}</div>'
@@ -412,8 +416,9 @@ def _legend():
     return """<details class="bw-fold" open><summary>怎麼讀這張表</summary>
 <div class="bw-note-line"><b>三關一燈</b>：先過資格，再依財報後上修排序，最後由時機燈決定倉位。核心席每週六（台北）依週五收盤重算：池內時機燈亮著的名字依上修取前 5，亮燈不足就空席；週中燈號只管倉位。規則跟美股核心席相同，只有品質條件、市值門檻與賣法按台股設定。這是研究名單，不是帳戶持倉。</div>
 <div class="bw-note-line"><b>資格</b>：三年成長、品質、站上 52 週線三項全過。三年成長＝Koyfin 今年到後年的每股盈餘年化成長 ≥15%，沒有第三年預估就不算過。品質＝投入資本報酬率（ROIC）≥15% 且營業現金流利潤率 ≥10%，或 ROIC ≥25% 且營業現金流利潤率不為負。台股資本支出重，所以品質看營業現金流，美股看自由現金流。另外五種情況直接出局：體質拒絕、衰退 ⛔、180 天內的 DD 迴避、財報後上修 ≤−5%、估值閘紅燈（PEG &gt;2.0 或本益比相對五年均值 &gt;1.75 倍）。市值不另設門檻，台股池本身已是 10 億美元以上。</div>
-<div class="bw-note-line"><b>上修</b>：分析師把每股盈餘預估調高了幾 %。基準是這檔股票最近一次財報前的 Koyfin 快照，缺財報錨定時看近三個月。財報日先看 yfinance，沒有就用公開資訊觀測站上董事會通過財報的日期，兩邊都沒有就取該季季底前的快照。上修 ≥5% 才入池，池內由高到低排，同值先比隱含成長率，再比盈餘殖利率。還沒有上修數字、但過關且燈亮的名字列在「④ 候補」。</div>
+<div class="bw-note-line"><b>上修</b>：分析師把每股盈餘預估調高了幾 %。基準是這檔股票最近一次財報前的 Koyfin 快照，缺財報錨定時看近三個月。財報日先看 yfinance，沒有就用公開資訊觀測站上董事會通過財報的日期，兩邊都沒有就取該季季底前的快照。資格全過就入池（v5.7 起沒有上修門檻），池內由高到低排，同值先比隱含成長率，再比盈餘殖利率。上修只管排序。</div>
 <div class="bw-note-line"><b>時機燈</b>：量的是距還原權息歷史新高多遠，燈號直接對應倉位：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉。🟡 接近＝差 3%～10% 且站上 200 日線，同樣正常倉。距歷史新高資料缺的黃燈標「🟡 資料缺」，暫列半倉。🟠 過熱＝已在突破帶，但近 12 個月（扣最近一個月）漲幅 &gt;150%，半倉。🔴 拉回中＝差超過 10% 或跌破 200 日線，零倉。⚫ 不合格＝未站上 52 週線。🟢🟡🟠 算亮燈。滑過燈號可看階段燈，階段燈不影響時機燈。</div>
+<div class="bw-note-line"><b>v5.7 變更（2026-10-21）</b>：拿掉「上修 ≥5% 才入池」，資格全過就入池，上修只決定排序。這是持有人的破例決定，不是回測登記通過。原因是決定當天資格全過 30 檔，上修最高不到 3%，核心席從 10 月 9 日上線以來一直空著。回測（席位全格子測試）用的台股規則本來就沒有上修門檻，因為台股沒有歷史預估；估值閘和三年成長閘回測也沒有。研究依據見 <a href="/cockpit/#seats-grid">席位全格子測試</a>。其餘規則不變：時機燈亮著取前 5、看大盤切換出場、大盤空頭週不補新席。</div>
 <div class="bw-note-line"><b>大盤多頭續抱</b>：大盤多頭時，只因離歷史新高超過 10% 而轉紅、仍在池內的在席者照樣續抱，燈號標「🔴 續抱」，倉位沿用最近一次非紅燈的倉位。</div>
 <div class="bw-note-line"><b>回測</b>：照現行規則回測 2013-03 至 2026-09，持有全部合格股年化報酬 13.21%，最大回撤 −57.01%；同期買進持有 0050 年化 20.32%，最大回撤 −33.96%。報酬和回撤都不如 0050。</div>
 <div class="bw-note-line"><b>下次財報</b>：「≤N 天」是公司還沒公告日期，依法定期限推算（第一季 5/15、第二季 8/14、第三季 11/14、年報 3/31），實際可能更早。距財報 7 天內標橘色。</div>
@@ -456,7 +461,7 @@ def _board_html(views, seat_code_map, lamp_map, n_eligible, rev_n):
     return (f'<h3 class="bw-sec">全母體看板（依綜合對照分排序，{len(views)} 檔）</h3>'
             f'<div class="bw-sub">{scope}，依綜合對照分排列，比上面的表多一欄「席」。'
             '綜合對照分是五項排名百分位的平均：上修、近 12 個月（扣最近一個月）股價動能、'
-            f'成長、品質、盈餘殖利率。百分位是在這群名字裡贏過幾成。{rev_note}這張表只供對照：核心席依上修排序，候補不排名，'
+            f'成長、品質、盈餘殖利率。百分位是在這群名字裡贏過幾成。{rev_note}這張表只供對照：核心席依上修排序，'
             '都不是從這張表挑的。欄位定義見上方「怎麼讀這張表」。</div>'
             '<div class="bw-scroll"><table><thead>' + thead + '</thead><tbody>'
             + ''.join(body) + '</tbody></table></div>')
@@ -496,16 +501,12 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
     core_v = [views[r['ticker']] for r in sel['core']]
     rev_n = sum(1 for v in views.values() if v.get('rev_used_pct') is not None)
     head = f"台股核心席 · 資料日 {as_of} · 台股池 {n_universe} 檔"
-    rule = (f"資格全過 {len(sel['eligible'])} 檔，上修 ≥5% 入池 {len(sel['pool'])} 檔，"
+    rule = (f"資格全過入池 {len(sel['pool'])} 檔（v5.7 起沒有上修門檻，上修只排序），"
             f"有上修數字的 {rev_n} 檔。上修資料 {rev_as_of or '—'}，股價 {as_of}，"
             f"階段燈 {lamp_as_of or '—'}。")
     fresh = (f'<div class="bw-note-line">時機更新：{escape(as_of)}（每日）／'
              f'席位更新：{escape(last_rotation_date or "尚未重算")}（每週六（台北）依週五收盤）</div>')
-    if rev_n == 0:
-        status = ('<div class="bw-note-line"><b>目前沒有任何一檔有上修數字，核心席全部空著。</b>'
-                  '過關且燈亮的名字列在下方「④ 候補」，不排名。</div>')
-    else:
-        status = ''
+    status = ''
     lines = [f'<div class="bw-note-line">🔻 DOWN <b>{escape(t)}</b>：{escape(why)}</div>'
              for t, why in sel['rotation'].get('removed') or []]
     yellow, red, gray = ba._group_waiting_pool_by_timing(sel['waiting_rest'])
@@ -546,13 +547,6 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + f'<h3 class="bw-sec">③b 太貴不入池（{len(sel["too_expensive"])} 檔）</h3>'
         + '<div class="bw-sub">其他資格全過，只有估值閘紅燈。名字在這裡代表不加碼，不是賣出訊號。</div>'
         + _table(v(sel['too_expensive']), lamp_map)
-        + f'<h3 class="bw-sec">④ 候補：過關、燈亮、還沒有上修數字（{len(sel["candidates"])} 檔）</h3>'
-        + '<div class="bw-sub">資格全過、時機燈亮著，只差上修數字。不排名，依代號排列。'
-          '有了上修數字後，≥5% 的進池、依上修排序，未達 5% 的移到 ⑤。</div>'
-        + _table(v(sel['candidates']), lamp_map)
-        + f'<details class="bw-fold"><summary>⑤ 其他過關名字（{len(sel["others"])} 檔，點開）</summary>'
-        + '<div class="bw-sub">資格全過，但上修未達 5%，或時機燈沒亮且還沒有上修數字。不進池、不佔席。</div>'
-        + _table(v(sel['others']), lamp_map) + '</details>'
         + _board_html(v(board or []), {r['ticker']: f"C{i}" for i, r in enumerate(sel['core'], 1)},
                       lamp_map, len(sel['eligible']), rev_n)
         + '</div>'

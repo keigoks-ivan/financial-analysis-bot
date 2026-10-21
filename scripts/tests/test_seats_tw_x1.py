@@ -175,7 +175,7 @@ def test_bull_does_not_let_a_non_incumbent_red_name_in():
 
 
 def test_bull_incumbent_out_of_the_pool_still_leaves():
-    sel = _sel([_inc(rev=3.0)], BULL)                                   # 上修掉到 +5% 以下＝資格不成立
+    sel = _sel([_inc(cagr=5.0)], BULL)                                  # 三年成長掉到 15% 以下＝資格不成立（v5.7 起上修不再是門檻）
     assert sel['core'] == []
     assert [t for t, _ in sel['rotation']['removed']] == ['1000.TW']
 

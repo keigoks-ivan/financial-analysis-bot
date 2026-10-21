@@ -64,27 +64,47 @@ def _rows(stocks):
     return [tw.tw_row(s) for s in stocks]
 
 
-def test_no_revision_empty_seats_and_lit_candidates():
-    rows = _rows([_stock('3333.TW'), _stock('1111.TW'),
-                  _stock('2222.TW', dist_ath=-20.0)])          # red lamp
+def test_v57_pool_is_every_eligible_name_regardless_of_revision():
+    # v5.7（2026-10-21）：沒有上修數字、上修很低、上修為負（未達否決線）的名字，資格全過就進池也能坐席
+    rows = _rows([_stock('3333.TW'), _stock('1111.TW', **_rev(1.0)),
+                  _stock('2222.TW', dist_ath=-20.0, **_rev(2.6))])          # red lamp
     sel = tw.select(rows, [], reselect=True)
-    assert sel['pool'] == [] and sel['core'] == []
-    assert [r['ticker'] for r in sel['candidates']] == ['1111.TW', '3333.TW']   # by code
-    assert [r['ticker'] for r in sel['others']] == ['2222.TW']
+    assert {r['ticker'] for r in sel['pool']} == {'1111.TW', '2222.TW', '3333.TW'}
+    assert [r['ticker'] for r in sel['core']] == ['1111.TW', '3333.TW']      # lit only, revision orders
+    assert [r['ticker'] for r in sel['waiting_rest']] == ['2222.TW']
+    assert sel['candidates'] == [] and sel['others'] == []
+
+
+def test_v57_revision_only_orders_the_pool():
+    stocks = [_stock('1000.TW', **_rev(0.5)), _stock('2000.TW', **_rev(2.6)), _stock('3000.TW', **_rev(-3.0))]
+    sel = tw.select(_rows(stocks), [], reselect=True)
+    assert [r['ticker'] for r in sel['pool']] == ['2000.TW', '1000.TW', '3000.TW']
+
+
+def test_v57_valuation_red_still_too_expensive_not_in_pool():
+    stocks = [_stock('1000.TW', **_rev(10)), _stock('2000.TW', **_rev(30), peg=3.0)]
+    sel = tw.select(_rows(stocks), [], reselect=True)
+    assert [r['ticker'] for r in sel['pool']] == ['1000.TW']
+    assert [r['ticker'] for r in sel['too_expensive']] == ['2000.TW']
+
+
+def test_v57_us_pool_threshold_unchanged():
+    from engine import grp
+    assert grp.POOL_REV_MIN == 5.0
+    assert grp.in_pool(4.9) is False and grp.in_pool(None) is False and grp.in_pool(5.0) is True
 
 
 def test_reselect_takes_top_lit_by_revision():
     stocks = [_stock(f'{1000 + i}.TW', **_rev(30 - i)) for i in range(7)]
     stocks[0]['ma']['dist_ath_pct'] = -20.0                       # top revision, red lamp
     stocks[0]['timing']['dist_52w_high_pct'] = -20.0
-    stocks.append(_stock('9999.TW', **_rev(3.0)))                 # below +5%: not in pool
+    stocks.append(_stock('9999.TW', **_rev(3.0)))                 # v5.7: below +5% still in the pool, ranks last
     sel = tw.select(_rows(stocks), [], reselect=True)
     assert [r['ticker'] for r in sel['core']] == ['1001.TW', '1002.TW', '1003.TW', '1004.TW', '1005.TW']
     assert all(r['seat_note'] == '新席' for r in sel['core'])
-    assert {r['ticker'] for r in sel['buyable']} == {'1006.TW'}
+    assert [r['ticker'] for r in sel['buyable']] == ['1006.TW', '9999.TW']
     assert [r['ticker'] for r in sel['waiting_rest']] == ['1000.TW']
-    assert [r['ticker'] for r in sel['others']] == ['9999.TW']
-    assert sel['candidates'] == []
+    assert sel['others'] == [] and sel['candidates'] == []
 
 
 def test_buyable_includes_yellow_lamp():
@@ -146,11 +166,12 @@ def test_build_writes_fragment_and_fallback_earnings(paths):
     _write_pool(pool, [_stock('1111.TW', next_earnings_date=None)], '2026-10-09')
     tw.build(False, today=date(2026, 10, 10))
     html = (out / '_seats_tw_body.html').read_text(encoding='utf-8')
-    assert html.startswith('<div class="board-wrap">') and html.count('空席') >= 5
+    assert html.startswith('<div class="board-wrap">') and html.count('空席') >= 4
     assert '≤35 天' in html
+    assert '資格全過入池' in html and '④ 候補' not in html and '上修未達' not in html
     data = json.loads((out / 'seats_tw.json').read_text(encoding='utf-8'))
-    assert data['counts']['candidates'] == 1
-    assert data['candidates'][0]['next_earn_fallback'] == '第三季法定期限 11/14'
+    assert data['counts']['pool'] == 1
+    assert data['buyable'][0]['next_earn_fallback'] == '第三季法定期限 11/14'
     assert not (out / 'seats_tw_ledger.json').exists()          # daily run never writes the ledger
 
 
@@ -180,15 +201,15 @@ def test_quarter_end_anchor_gets_its_own_tooltip():
 
 # ── industry concentration (informational, 2026-10-10) ────────────────────
 
-def test_concentration_uses_candidates_while_seats_are_empty():
+def test_concentration_uses_buyable_while_seats_are_empty():
     rows = _rows([_stock('1111.TW'), _stock('2222.TW'), _stock('3333.TW')])
-    sel = tw.select(rows, [], reselect=True)
+    sel = tw.select(rows, [], reselect=False)       # daily run, seats still empty
     conc = tw.concentration(sel, {'1111.TW': '半導體業', '2222.TW': '半導體業'})
-    assert conc['basis'] == 'candidates' and conc['n'] == 3
+    assert conc['basis'] == 'buyable' and conc['n'] == 3
     assert conc['rows'] == [{'industry': '半導體業', 'n': 2}, {'industry': '（未分類）', 'n': 1}]
     assert conc['max_share_pct'] == 67
     html = tw._conc_html(conc)
-    assert '候補 3 檔' in html and '超過一半' in html
+    assert '可買 3 檔' in html and '超過一半' in html
 
 
 def test_concentration_switches_to_core_seats():
@@ -204,7 +225,7 @@ def test_build_writes_industry_and_concentration(paths):
     _write_pool(pool, [_stock('1111.TW', tw_industry='半導體業')], '2026-10-09')
     tw.build(False, today=date(2026, 10, 10))
     data = json.loads((out / 'seats_tw.json').read_text(encoding='utf-8'))
-    assert data['candidates'][0]['tw_industry'] == '半導體業'
+    assert data['buyable'][0]['tw_industry'] == '半導體業'
     assert data['concentration']['rows'] == [{'industry': '半導體業', 'n': 1}]
     assert '證交所／櫃買中心產業別' in (out / '_seats_tw_body.html').read_text(encoding='utf-8')
 
