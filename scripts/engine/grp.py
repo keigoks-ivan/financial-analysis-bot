@@ -67,7 +67,7 @@ v4.1（2026-09-17 持有人拍板，三項 DD-free 機械規則搬進引擎，�
      成長閘（grp_score 的 g）與排序鍵（own_raw 的 g）——例：MRK／MU 兩檔原始三年
      CAGR 皆被 FY1→FY2 低基期跳增蓋掉真實的 FY2→FY3 穩態成長。
   3. 循環股守門（own_raw()／own_score_v4()）：毛利率四點跨距 >20pp 或資本支出佔
-     營收 >15% → cyclical；cyclical 且 PEG（live_peg 優先，fallback peg）<0.3 →
+     營收 >15% → cyclical；cyclical 且 PEG（只讀 live_peg，缺值不守門）<0.3 →
      cycle_guard=True，成長分位／盈餘殖利率分位封頂 50 再平均——循環股在景氣高點
      常同時出現「爆量成長」與「PEG 低到可疑」，不封頂會讓排序誤判成複利成長。
   規則登記：knowledge/rule_ledger.md「v4.1 融券比 >10% 只能衛星」「v4.1 基期效應＋
@@ -117,7 +117,7 @@ notes/site-internal/root/_seat_engine_v5_20260917.md）——品質＝資格、�
 
 v5.1（2026-09-18 持有人拍板，見 notes/site-internal/root/
 _seat_engine_v5_1_20260918.md §1／knowledge/rule_ledger.md「v5.1 估值閘」列）——
-資格閘加估值閘，機械取代 DD 報告的估值判斷：紅＝PEG（live_peg 優先，缺則 peg）
+資格閘加估值閘，機械取代 DD 報告的估值判斷：紅＝PEG（只讀 live_peg＝現價÷明年預估 EPS÷三年成長，缺值就不看這一半）
 >2.0，或 PE NTM 相對五年均倍數（pe_vs_5y_x，dd-screener 已算好）>1.75，任一則紅
 （valuation_gate()）；紅燈整體排除、不進池，兩者皆缺不算否決（標 ⚪ 缺值）。是
 入池／月頻換席的資格閘，**不是**月中硬否決——不進 build_arena.hard_veto_v5() 的
@@ -284,7 +284,7 @@ ATH_GREEN_DIST = -3.0    # ≥ 此值 且站上 200 日線＝綠燈（突破帶�
 # 距離才降為橘燈半倉，否則按原距離判黃/紅（MOM_12_1_OVERHEAT 沿用上面 v4 定義的常數）。
 # v5.1（2026-09-18 持有人拍板，見檔頭 v5.1 段／notes/site-internal/root/
 # _seat_engine_v5_1_20260918.md §1／rule_ledger.md「v5.1 估值閘」列）——估值閘常數：
-VAL_PEG_MAX = 2.0          # PEG（live_peg 優先，缺則 peg）> 此值 → 紅
+VAL_PEG_MAX = 2.0          # PEG（只讀 live_peg，2026-10-21 口徑統一）> 此值 → 紅
 VAL_PE_VS_5Y_MAX = 1.75    # PE NTM 相對五年均倍數（s["pe_vs_5y_x"]）> 此值 → 紅
 
 
@@ -375,7 +375,8 @@ def valuation_gate(s: dict) -> dict:
     """v5.1 估值閘（2026-09-18 持有人拍板，見檔頭 v5.1 段／notes/site-internal/root/
     _seat_engine_v5_1_20260918.md §1／knowledge/rule_ledger.md「v5.1 估值閘」列）——
     機械取代 DD 報告的估值判斷（DD 才有的五年本益比分位，改用 Koyfin 的 PE NTM 相對
-    五年均倍數代替）。紅燈：PEG（s["live_peg"] 現價重算優先，缺則 s["peg"] Koyfin）
+    五年均倍數代替）。紅燈：PEG（只讀 s["live_peg"]＝現價÷明年預估 EPS÷三年成長，
+    2026-10-21 全站口徑統一；不再退回 QGM／yfinance 的 s["peg"]）
     > VAL_PEG_MAX，或 PE NTM 相對五年均倍數（s["pe_vs_5y_x"]，dd-screener 已算好）
     > VAL_PE_VS_5Y_MAX，任一項紅即紅。這是入池／月頻換席時的資格閘，不是月中硬否決
     （見 build_arena.hard_veto_v5() 同段註解——`veto_valuation` 不在七個硬否決之列，
@@ -385,14 +386,11 @@ def valuation_gate(s: dict) -> dict:
     缺一個 → 只用另一個判定（不因為只有一個數字就從嚴或從寬）。
 
     回傳 {"light": "🔴"|"🟢"|"⚪", "peg": float|None,
-    "peg_source": "live"|"koyfin"|None, "pe_vs_5y_x": float|None,
+    "peg_source": "live"|None（一律 live；缺值為 None）, "pe_vs_5y_x": float|None,
     "red_by": [...]（"peg"／"pe_vs_5y" 之一或兩者皆有，未觸發則空list）,
     "why": str|None（紅燈或缺值時給一句話，綠燈為 None）}。"""
     peg = _f(s.get("live_peg"))
     peg_source = "live" if peg is not None else None
-    if peg is None:
-        peg = _f(s.get("peg"))
-        peg_source = "koyfin" if peg is not None else None
     x = _f(s.get("pe_vs_5y_x"))
 
     red_by, reasons = [], []
@@ -446,7 +444,7 @@ def own_raw(s: dict) -> dict:
 
     v4.1 另算循環股守門（cyclical／cycle_guard，見檔頭同名段）：cyclical＝毛利率
     （LTM/FY-1/FY-2/FY-3，需 ≥3 點）跨距 >20pp 或資本支出佔營收 >15%；guard＝
-    cyclical 且 PEG（live_peg 優先，fallback peg）<0.3——PEG 低到可疑通常是循環股
+    cyclical 且 PEG（只讀 live_peg）<0.3——PEG 低到可疑通常是循環股
     在景氣高點被低估未來獲利，own_score_v4() 依 cycle_guard 把 p_g／p_ey 百分位
     封頂 50，cyclical 本身即使未觸發 guard 也照樣回傳，供純顯示用的「循環」備註。"""
     g_raw, base_effect, base_effect_detail = _base_effect_growth(s)
@@ -465,8 +463,6 @@ def own_raw(s: dict) -> dict:
     cyclical = bool((gm_swing is not None and gm_swing > CYCLE_GM_SWING_PP)
                      or (capex_pct_rev is not None and capex_pct_rev > CYCLE_CAPEX_PCT_REV))
     peg = _f(s.get("live_peg"))
-    if peg is None:
-        peg = _f(s.get("peg"))
     cycle_guard = bool(cyclical and peg is not None and peg < CYCLE_GUARD_PEG_MAX)
     cycle_guard_detail = ({"gm_swing_pp": round(gm_swing, 1) if gm_swing is not None else None,
                            "capex_pct_rev": capex_pct_rev, "peg": peg} if cyclical else None)
@@ -831,7 +827,7 @@ def own_score(s: dict, g=None) -> dict:
         px = _f((s.get("ma") or {}).get("price")); e1 = _f(s.get("eps_fy_next"))
         if px and e1 and px > 0:
             ey = e1 / px * 100.0
-    roic = _f(s.get("roic")); peg = _f(s.get("live_peg")) or _f(s.get("peg"))
+    roic = _f(s.get("roic")); peg = _f(s.get("live_peg"))
     if g is None:
         return {"score": None, "g_capped": None, "ey": ey, "durable": False, "peg_penalty": False}
     sc = min(g, OWN_G_CAP) + (ey or 0.0)

@@ -137,6 +137,7 @@ from engine.grp import (  # noqa: E402
     market_ok, own_score_v4, pool_sort_key, timing_lamp, lamp_action,
 )
 from dd_screener_quality import load_qgm_durability_index  # noqa: E402
+from peg_unified import compute_peg_unified  # noqa: E402
 from engine import seat_tm  # noqa: E402
 
 WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"   # 非 DD 池週線 fallback（見 build_radar.py 檔頭 docstring）
@@ -297,6 +298,12 @@ def load_qgm_rows(stocks_map: dict, exclude: set | None = None,
                 g_method = "FY1→FY3 CAGR" if g3 is not None else "FY1→FY2 單年"
                 per1 = x.get("fy1_per")
                 st = weekly_structure(tk)
+                # 2026-10-21 PEG 口徑統一：QGM 列也用同一定義（現價 ÷ 明年預估 EPS ÷ 三年成長；
+                # QGM 的 fy1_per 口徑不同，只留給 live_fpe_est 做盈餘殖利率，不再當 PEG 分子）。
+                # QGM 池是美股、股價與預估 EPS 皆美元；成長只認三年 CAGR（g3），沒有就留空，
+                # 不用單年成長湊 PEG。
+                _qgm_px = (st.get("px") if st else None) or x.get("price")
+                _qgm_peg = compute_peg_unified(tk, _qgm_px, fy2, g3, eps_ccy="USD")
                 conds = (x.get("trend_template") or {}).get("conditions") or {}
                 c1 = (conds.get("condition_1") or {}).get("pass")
                 c3 = (conds.get("condition_3") or {}).get("pass")
@@ -310,7 +317,7 @@ def load_qgm_rows(stocks_map: dict, exclude: set | None = None,
                     "fcf": fcf * 100 if fcf is not None else None,
                     "de": hv("debt_to_equity"),
                     "eps_fy1_fy3_cagr_pct": g1, "eps_fy_next": fy2, "eps_fy_curr": fy1,
-                    "live_fpe_est": per1, "live_peg": (per1 / g1) if per1 and g1 and g1 > 0 else None,
+                    "live_fpe_est": per1, **_qgm_peg,
                     "eps_fy_next_revision_pct": None, "eps2y_revision_pp": None,
                     "ma": {"above_w52": st.get("above_w52") if st else bool(c1 and c3),
                            "price": st.get("px") or x.get("price")},
@@ -431,12 +438,13 @@ def dd_tag(s: dict) -> str:
 def dd_numbers(s: dict) -> dict:
     """席位表「dd-screener 數字欄」的原料（2026-10-21 持有人要求，純顯示，不進資格、排序、席位）。
     全部原樣取自 dd-screener 的 latest.json 該檔資料，口徑照 docs/dd-screener/index.html：
-    預估本益比＝live_fpe_est（缺則 fpe_fy2，即「2Y P/E」，用明年預估 EPS）；PEG＝live_peg 優先、缺則 peg；
+    預估本益比（明年）＝fpe_next、PEG＝live_peg，兩者同一口徑（2026-10-21 全站統一）：現價 ÷ 明年預估 EPS，
+    PEG 再 ÷ 三年 EPS 年化成長；算不出來留空，不退回任何別的 PEG 或 fpe_fy2；
     現金流率＝s["fcf"]（美股自由現金流÷營收；台股 tw_row() 已把 s["fcf"] 換成營業現金流率 ocf）；
     營運槓桿＝營收成長% − 營業利益成長%（build_dd_screener 算好的 ol_divergence_pp）。"""
     f = s.get("fund") or {}
-    pe = s.get("live_fpe_est") if s.get("live_fpe_est") is not None else s.get("fpe_fy2")
-    peg = s.get("live_peg") if s.get("live_peg") is not None else s.get("peg")
+    pe = s.get("fpe_next")
+    peg = s.get("live_peg")
     return {"g3": s.get("eps_fy1_fy3_cagr_pct"), "rev3": f.get("est_rev_cagr_3y_pct"),
             "roic": s.get("roic"), "cf": s.get("fcf"),
             "eps_curr": s.get("eps_fy_curr"), "eps_next": s.get("eps_fy_next"), "eps_3": s.get("eps_fy3"),
@@ -485,7 +493,7 @@ def row_dict(s: dict, yellow_full: bool = False) -> dict:
             "grp": g, "score": g["score"],
             "lamp": lamp, "action": lamp_action(lamp, yellow_full),
             "roic": g["quality"].get("roic"), "fcf": g["quality"].get("fcf"),
-            "peg": (s.get("live_peg") if s.get("live_peg") is not None else s.get("peg")),
+            "peg": s.get("live_peg"),
             "r26": s.get("_r26"), "r52": s.get("_r52"),
             # v5（2026-09-17，見 grp.py 檔頭 v5 段）：距歷史新高／implied_growth_pct
             # 是池排序（grp.pool_sort_key()）與 timing_lamp() 板機的原料，直接從 s
@@ -1137,7 +1145,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
              "只當旗標（dur 欄 Y／—），不擋資格。融券占流通股比 >10% 排除。"
              "過熱（12-1 月動能 >150%）只影響時機燈（🟠半倉）；頂點（ROIC 相對五年均 ≥1.3 倍）只顯示。"
              "兩者都不擋資格。")
-    L.append("估值閘：PEG >2.0（優先用現價重算，缺則用 Koyfin），或本益比（未來 12 個月）"
+    L.append("估值閘：PEG >2.0（現價 ÷ 明年預估 EPS ÷ 三年 EPS 年化成長，算不出來留空），或本益比（未來 12 個月）"
              "高於五年均值 1.75 倍，任一成立即紅燈，不進池；兩者都缺不算否決，標 ⚪ 缺值。")
     L.append("欄位說明：rev=財報後上修%（已排除匯率；以該股自己最近一次財報日前最新"
              "月度快照為基準，缺財報錨定退回三個月）、distATH=距還原權息全歷史"
@@ -1339,8 +1347,7 @@ def _val_cell_html(val: dict | None) -> str:
     peg, x = val.get("peg"), val.get("pe_vs_5y_x")
     peg_s = f"{peg:.1f}x" if peg is not None else "—"
     x_s = f"{x:.1f}x" if x is not None else "—"
-    title_bits = [f"PEG 來源：{'現價重算' if val.get('peg_source') == 'live' else 'Koyfin'}"
-                 if val.get("peg_source") else "PEG 缺值"]
+    title_bits = ["PEG：現價 ÷ 明年預估 EPS ÷ 三年 EPS 年化成長" if val.get("peg_source") else "PEG 缺值（算不出來留空）"]
     if val.get("why"):
         title_bits.append(val["why"])
     cls = "up" if light == "🟢" else "dn"
@@ -1754,7 +1761,7 @@ def _shared_thead_cells(market: str = "us") -> list[str]:
         '<th title="距離還原權息全歷史最高收盤價（不是 52 週高）；'
         '負值＝現價低於史上最高。時機燈：此欄 ≥−3% 且站上 200 日線＝突破帶（綠燈）">距歷史新高%</th>',
         '<th class="bw-l" title="距下次財報天數；<=7 天標記——分數為財報前快照">下次財報</th>',
-        '<th class="bw-l" title="估值閘：PEG（優先用現價重算值，缺則用 Koyfin）'
+        '<th class="bw-l" title="估值閘：PEG（現價 ÷ 明年預估 EPS ÷ 三年 EPS 年化成長，算不出來留空）'
         '&gt;2.0，或預估本益比相對五年均倍數 &gt;1.75x，任一則紅；紅燈整體排除、不進池。'
         '兩者皆缺不算否決，標 ⚪ 缺值。'
         '顯示「PEG／PE 相對五年均倍數」">估值</th>',
@@ -1783,8 +1790,8 @@ def _ddn_thead_cells(market: str = "us") -> list[str]:
         '<th title="投入資本報酬率（ROIC）現值。品質閘的 ROIC ≥15% 看的就是這個。只供參考">ROIC%</th>',
         f'<th title="{cf_tip}。只供參考">{cf_name}</th>',
         f'<th title="每股盈餘預估，依序為今年／明年／後年，單位{ccy}。只供參考">EPS 預估（今／明／後）</th>',
-        '<th title="股價 ÷ 明年預估每股盈餘（dd-screener 的「2Y P/E」，每日用 yfinance 重算；缺值時退回報告當時的數字）。'
-        '只供參考，估值閘另看估值欄">預估本益比（明年）</th>',
+        '<th title="現價 ÷ 明年預估每股盈餘（EPS 與股價幣別不同時先換成股價幣別；算不出來留空，不退回報告當時的數字）。'
+        '與 PEG 同一口徑：PEG = 本欄 ÷ 三年 EPS 年化成長。只供參考，估值閘另看估值欄">預估本益比（明年）</th>',
         '<th title="近 3 個財年：（今年稅後營業利潤 − 3 年前稅後營業利潤）÷ 新增投入資本。'
         '新增的一塊錢資本賺到多少報酬，用來判斷成長值不值得繼續投。投入資本不增反減時顯示「—」">增量 ROIC%</th>',
         '<th title="近 3 年新增投入資本 ÷ 期間年化稅後營業利潤，意思是公司把多少獲利拿去繼續投資擴張">再投資率%</th>',
@@ -1951,7 +1958,7 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 <div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排②可買裡 🟡 接近新高組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。結果顯示在備註欄，例如「底部 緊 2段」；距歷史新高超過 10% 的不放標籤。</div>
 <div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只是顯示，不影響席位與排序。有護城河評級時在本欄滑鼠提示。</div>
 <div class="bw-note-line"><b>備註欄</b>：以下都只是顯示，不進資格與排序。耐久 ✓、底部＝上面兩段說明的結果；⚠ 頂點＝ROIC 高於五年平均 1.3 倍；基期＝三年 CAGR 因 FY1→FY2 低基期跳增，改用 FY2→FY3 成長率；循環守門＝循環股（毛利率跨距大或資本支出佔營收高）且 PEG 低到可疑；循環＝循環股但未觸發守門；財報前＝距下次財報 ≤7 天；內部人買／內部人賣＝近 3 個月內部人淨買賣方向；新席／現任／遞補＝本期席位異動狀態。</div>
-<div class="bw-note-line"><b>基本面欄組</b>：三年 EPS 成長、營收成長、ROIC、自由現金流率、EPS 預估、預估本益比、增量 ROIC、再投資率、隱含成長、營運槓桿，都來自 dd-screener，只供參考，不影響資格、排序與席位。其中三年 EPS 成長 ≥15%、ROIC ≥15%、自由現金流 &gt;0 本來就是資格條件，這裡只是把數字攤開。</div>
+<div class="bw-note-line"><b>基本面欄組</b>：三年 EPS 成長、營收成長、ROIC、自由現金流率、EPS 預估、預估本益比、增量 ROIC、再投資率、隱含成長、營運槓桿，都來自 dd-screener，只供參考，不影響資格、排序與席位。其中三年 EPS 成長 ≥15%、ROIC ≥15%、自由現金流 &gt;0 本來就是資格條件，這裡只是把數字攤開。預估本益比＝現價 ÷ 明年預估 EPS，PEG＝預估本益比 ÷ 三年 EPS 年化成長（估值閘看的 PEG 就是這個），任一項算不出來就留空。</div>
 <div class="bw-note-line"><b>欄位切換</b>：表格上方可切換「時機／基本面／全部」，一次切換全頁的席位表。代號、上修、時機、倉位永遠顯示；「時機」顯示距歷史新高、下次財報、估值、DD、備註；「基本面」顯示上段的數字欄。左右捲動時代號欄固定在左邊。③等待池、③b 太貴不入池、DD 進場對照、缺三年成長預估四個區段預設收合，點標題展開。</div>
 <div class="bw-note-line"><b>怎麼用</b>：核心或②可買＝現在可以買。③等待池＝資格全過但燈號還沒亮，等燈亮。</div>
 </details>"""

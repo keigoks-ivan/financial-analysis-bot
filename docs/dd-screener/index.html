@@ -599,10 +599,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
         <br><em>用途：</em>驗證 forward CAGR 公式（<code>((FY+3 / FY+1)^0.5 − 1) × 100</code>，Excel 直接給）；觀察上修/下修方向強弱對比（FY1 與 FY3 上修幅度差很大 = 成長曲線位移）。
       </li>
 
-      <li><strong>PEG</strong>：即時前瞻 PEG = <code>live FwdPE / Excel FY+1→FY+3 CAGR</code> — <strong>v1.10 起分母改用 Excel forward CAGR，與主欄「FY+1→FY+3 CAGR」一致</strong>。之前用 yfinance YearAgo→FY+1 anchored CAGR，對 SBC 重的 SaaS（GAAP TTM 被 SBC 壓低）造成 fake-low PEG（CDNS 0.77 → 修正後 2.32；DDOG 4.42 → 3.79）。當 Excel CAGR 缺值（FY1 負如 NBIS / CRWV / NVTS、或 yfinance-only ticker 如 6857.T）會 fallback 回 yfinance CAGR。
-        <br><em>來源（live）：</em>純 derive — 分子分母都用 live，所以價格動 + 分析師修正都會反映在這欄。
-        <br><em>規則：</em>frozen DD PEG 進 tooltip（hover 看 DD 對比）；live 任一邊失敗時 fallback 顯示 frozen DD 並標 <code>DD</code>。
-        <br><em>QGM MLB 門檻：</em><code>≤ 2.0x</code>（顏色基於 live 值）
+      <li><strong>PEG</strong>：<code>（現價 ÷ 明年預估 EPS）÷ 三年 EPS 年化成長</code>（2026-10-21 全站統一）。現價用本列 ma.price，明年預估 EPS 用 Koyfin <code>eps_fy_next</code>，成長用 Koyfin「FY+1→FY+3 CAGR」（今年到後年）。有沒有 DD、主名單／小型股／台股，全部列同一算法。
+        <br><em>算不出來就留空：</em>明年預估 EPS 缺或 ≤0、三年成長缺或 ≤0、EPS 與股價幣別對不上又沒有可靠匯率（例如馬股 .KL，Koyfin EPS 是美元、股價是馬幣，先用匯率把 EPS 換成股價幣別）。留空顯示 —，不退回 QGM 或 yfinance 的 PEG。同一列的 <code>fpe_next</code>（預估本益比，明年）÷ 三年成長 ＝ PEG，欄位內滑鼠移上去可核對。
+        <br><em>QGM MLB 門檻：</em><code>≤ 2.0x</code>；缺值算不通過。
       </li>
 
       <li><strong>2Y P/E</strong>：即時 FY+2 Forward P/E — <strong>v1.7.3 簡化為只顯示最新數字</strong>。
@@ -1045,33 +1044,18 @@ function _renderLivePECell(s) {
 }
 
 function _renderLivePEGCell(s, flag) {
-  var peg = s.peg;
+  // 2026-10-21 PEG 口徑統一：只顯示 live_peg＝（現價 ÷ 明年預估 EPS）÷ 三年 EPS 年化成長；
+  // 算不出來就是 —，不退回任何別的 PEG（沒有 DD 標記、沒有 ‡ 標記）。
   var live = s.live_peg;
-  if ((peg === null || peg === undefined) && (live === null || live === undefined)) {
-    return '<td>—</td>';
-  }
-  var display, tip;
   if (live === null || live === undefined) {
-    display = peg.toFixed(2) + 'x<span style="font-size:9px;color:var(--muted);margin-left:3px">DD</span>';
-    tip = ' title="Live PEG 估算失敗，暫顯示 DD frozen ' + peg.toFixed(2) + 'x"';
-  } else {
-    display = '<strong>' + live.toFixed(2) + 'x</strong>';
-    var parts = ['Live PEG ' + live.toFixed(2) + 'x (live FwdPE / live EPS CAGR)'];
-    if (peg !== null && peg !== undefined) parts.push('DD frozen ' + peg.toFixed(2) + 'x');
-    tip = ' title="' + parts.join('; ') + '"';
+    return '<td title="算不出來：明年預估 EPS 或三年成長缺值／≤0，或 EPS 與股價幣別對不上">—</td>';
   }
-  // v1.3: peg_fallback marker — frozen PEG 來自 yfinance 手動 forwardPE/CAGR
-  // fallback，分母 (YearAgo→FY+1 CAGR) 與主流前瞻 consensus 不可比。pass/fail
-  // 照算（不改 QualityGate），僅標註 provenance。
-  var fbMark = s.peg_fallback
-    ? '<sup style="font-size:8px;color:var(--warn)" title="PEG 分母與主流不可比：來自 yfinance YearAgo→FY+1 CAGR fallback">‡</sup>'
-    : '';
-  // Color flag re-evaluated against live value if available (live primary semantics)
-  var pegForFlag = (live !== null && live !== undefined) ? live : peg;
-  // BOOLEAN for cellStyle() (not 'pass'/'fail' string — a string is always
-  // truthy → PEG > 2.0 wrongly rendered green). null → grey (no data).
-  var liveFlag = pegForFlag == null ? null : (pegForFlag <= 2.0);
-  return '<td' + tip + ' style="' + cellStyle(liveFlag) + '">' + display + fbMark + '</td>';
+  var parts = ['PEG ' + live.toFixed(2) + 'x'];
+  if (s.fpe_next !== null && s.fpe_next !== undefined && s.eps_fy1_fy3_cagr_pct != null) {
+    parts.push('= 預估本益比（明年）' + s.fpe_next.toFixed(1) + ' ÷ 三年 EPS 成長 ' + s.eps_fy1_fy3_cagr_pct.toFixed(1) + '%');
+  }
+  var liveFlag = (live <= 2.0);  // BOOLEAN for cellStyle()
+  return '<td title="' + parts.join(' ') + '" style="' + cellStyle(liveFlag) + '"><strong>' + live.toFixed(2) + 'x</strong></td>';
 }
 
 // ── ATH spotlight (rendered once at load; independent of tier/filter state) ──
@@ -1831,7 +1815,7 @@ function buildTable(stocks) {
   var thTargetUpside = _thSortable('目標價', 'target_upside_pct', {title: '分析師目標價平均 ÷ 現價 − 1（皆當地掛牌貨幣，僅供比率使用）；hover 看目標價區間與最高/最低'});
 
   // ---- 估值 group: PEG | 2Y P/E | 估值 vs 5Y | 5Y期望 ----
-  var thPeg = _thSortable(critByKey.peg.label, 'live_peg', {title: '即時 PEG = live FwdPE / live EPS CAGR — sort 按 live 數值'});
+  var thPeg = _thSortable(critByKey.peg.label, 'live_peg', {title: 'PEG = （現價 ÷ 明年預估 EPS）÷ 三年 EPS 年化成長；算不出來留空'});
   var thLivePe = _thSortable('2Y P/E', 'live_fpe_est', {title: '即時 FY+2 Forward P/E — yfinance 每日抓 FY EPS 重算；hover 看 DD frozen 對比與漂移幅度'});
   var thValuationVs5y = _thSortable('估值 vs 5Y', 'pe_vs_5y_x', {title: 'NTM 本益比 ÷ 過去 5 年平均本益比 —— 高於 1.5x 代表估值明顯貴於自身歷史'});
   var th5yExpect = _thSortable('5Y期望', 'live_ev5y_pct', {title: '即時 5 年期望報酬率（原稱 5Y IRR）— 由 DD 決策層 frozen 值用「price_at_dd / price_now」回推（heuristic，假設 terminal value 不變）；hover 看 DD 對比'});

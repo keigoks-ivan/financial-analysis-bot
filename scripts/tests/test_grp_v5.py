@@ -179,10 +179,13 @@ def test_valuation_gate_both_missing_is_gray_not_a_veto():
     assert g["why"] is not None, "缺值仍要記錄一句話（why），只是不當否決"
 
 
-def test_valuation_gate_live_peg_takes_precedence_over_peg():
+def test_valuation_gate_reads_only_live_peg_never_old_peg():
+    # 2026-10-21 PEG 口徑統一：只讀 live_peg，舊 peg 欄（QGM／yfinance）一律不看。
     g = grp.valuation_gate({"live_peg": 1.0, "peg": 5.0})
-    assert g["peg"] == 1.0 and g["peg_source"] == "live", "live_peg 優先，即使 peg（Koyfin）本身會紅"
+    assert g["peg"] == 1.0 and g["peg_source"] == "live"
     assert g["light"] == "🟢"
+    g2 = grp.valuation_gate({"peg": 5.0})
+    assert g2["peg"] is None and g2["peg_source"] is None and g2["light"] == "⚪", "缺 live_peg 不退回 peg"
 
 
 def test_valuation_gate_one_missing_judged_on_the_other_alone():
@@ -194,7 +197,7 @@ def test_valuation_gate_one_missing_judged_on_the_other_alone():
     assert g["peg"] is None and g["pe_vs_5y_x"] == 1.2
 
     # multiple 缺，只剩 PEG——同理用 PEG 單獨判定。
-    g2 = grp.valuation_gate({"peg": 1.5})
+    g2 = grp.valuation_gate({"live_peg": 1.5})
     assert g2["light"] == "🟢"
     assert g2["peg"] == 1.5 and g2["pe_vs_5y_x"] is None
 

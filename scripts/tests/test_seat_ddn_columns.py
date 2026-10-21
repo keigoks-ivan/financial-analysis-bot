@@ -19,7 +19,16 @@ N_DDN = 10     # 2026-10-21：PEG（明年）欄拿掉，估值欄已顯示同�
 
 
 def _stocks(path):
-    return {s['ticker']: s for s in json.loads((ROOT / path).read_text(encoding='utf-8'))['stocks']}
+    """讀 latest.json；fpe_next／live_peg 若檔內還是舊口徑（重產前），就用統一算法補上，測試前後都成立。"""
+    from peg_unified import compute_peg_unified
+    out = {}
+    for s in json.loads((ROOT / path).read_text(encoding='utf-8'))['stocks']:
+        if 'fpe_next' not in s:
+            s.update(compute_peg_unified(s['ticker'], (s.get('ma') or {}).get('price'), s.get('eps_fy_next'),
+                                         s.get('eps_fy1_fy3_cagr_pct'), s.get('eps_display_currency', 'USD'),
+                                         eps_reliable=s.get('eps_source') == 'xlsx'))
+        out[s['ticker']] = s
+    return out
 
 
 def _n_th(cells):
@@ -52,15 +61,18 @@ def test_nvda_numbers_match_latest_json():
     assert f"{s['fund']['est_rev_cagr_3y_pct']:.1f}" in cells[1]
     assert f"{s['roic']:.1f}" in cells[2] and f"{s['fcf']:.1f}" in cells[3]
     assert f"{s['eps_fy_curr']:.2f}／{s['eps_fy_next']:.2f}／{s['eps_fy3']:.2f}" in cells[4]
-    assert f"{s['live_fpe_est']:.1f}" in cells[5]
+    assert f"{s['fpe_next']:.1f}" in cells[5]
     assert f"{s['incremental_roic_pct']:.1f}" in cells[6] and f"{s['reinvest_rate_pct']:.1f}" in cells[7]
     assert f"{s['implied_growth_pct']:.1f}" in cells[8] and s['ol_divergence_label'] in cells[9] and f"{s['ol_divergence_pp']:+.2f}" in cells[9]
     assert 'None' not in txt and 'nan' not in txt
 
 
-def test_pe_falls_back_to_frozen_and_peg_to_frozen():
-    d = ba.dd_numbers({'live_fpe_est': None, 'fpe_fy2': 20.0, 'live_peg': None, 'peg': 1.5})
-    assert d['pe2'] == 20.0 and d['peg'] == 1.5
+def test_pe_and_peg_do_not_fall_back_to_old_values():
+    # 2026-10-21 PEG 口徑統一：預估本益比（明年）只讀 fpe_next、PEG 只讀 live_peg，算不出來留空。
+    d = ba.dd_numbers({'live_fpe_est': 18.0, 'fpe_fy2': 20.0, 'live_peg': None, 'peg': 1.5})
+    assert d['pe2'] is None and d['peg'] is None
+    d2 = ba.dd_numbers({'fpe_next': 12.34, 'live_peg': 0.8, 'peg': 1.5})
+    assert d2['pe2'] == 12.34 and d2['peg'] == 0.8
 
 
 def test_tw_2330_uses_ocf_and_matches_latest_json():
@@ -70,7 +82,7 @@ def test_tw_2330_uses_ocf_and_matches_latest_json():
     assert len(cells) == len(ba._shared_thead_cells('tw'))
     d = v['ddn']
     assert d['cf'] == s['ocf'] and d['eps_ccy'] == 'TWD'
-    assert d['pe2'] == s['live_fpe_est'] and d['peg'] == s['live_peg']
+    assert d['pe2'] == s['fpe_next'] and d['peg'] == s['live_peg']
     assert any('營業現金流率%' in h for h in ba._shared_thead_cells('tw'))
     assert any('自由現金流率%' in h for h in ba._shared_thead_cells('us'))
 

@@ -83,7 +83,7 @@ def test_v57_revision_only_orders_the_pool():
 
 
 def test_v57_valuation_red_still_too_expensive_not_in_pool():
-    stocks = [_stock('1000.TW', **_rev(10)), _stock('2000.TW', **_rev(30), peg=3.0)]
+    stocks = [_stock('1000.TW', **_rev(10)), _stock('2000.TW', **_rev(30), live_peg=3.0)]
     sel = tw.select(_rows(stocks), [], reselect=True)
     assert [r['ticker'] for r in sel['pool']] == ['1000.TW']
     assert [r['ticker'] for r in sel['too_expensive']] == ['2000.TW']

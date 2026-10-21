@@ -104,6 +104,7 @@ from engine.grp import market_ok as grp_market_ok  # noqa: E402
 # to line up with it (see compute_vcp_tag() docstring below).
 from engine.grp import ATH_RED_DIST as GRP_ATH_RED_DIST  # noqa: E402
 from vcp_core import calc_vcp, VCP_MIN_BARS  # noqa: E402
+from peg_unified import compute_peg_unified, price_currency  # noqa: E402
 from update_dd_index import (  # noqa: E402
     collect_dca_ev_map,
     collect_dca_moat_trend_map,
@@ -1044,11 +1045,14 @@ def evaluate_criteria(quality: dict) -> tuple[int, list[str]]:
 
     A null field is treated as a failed criterion (can't verify), recorded
     in fail_criteria so the front-end can show "—" rather than red.
+
+    2026-10-21 PEG 口徑統一：PEG 條件讀 quality["live_peg"]（現價 ÷ 明年預估 EPS ÷
+    三年成長；缺值＝算不出來＝不通過），不再讀 quality["peg"]（舊 QGM／yfinance 值）。
     """
     fails: list[str] = []
     passes = 0
     for c in SCORED_CRITERIA:
-        v = quality.get(c["key"])
+        v = quality.get("live_peg" if c["key"] == "peg" else c["key"])
         if v is None:
             fails.append(c["key"])
             continue
@@ -2788,31 +2792,33 @@ def _compute_eps_revision(entry: dict, eps2y_live: float | None, prev_snapshot: 
     return out
 
 
-def _compute_live_peg(pe_drift: dict, eps2y_live: float | None,
-                       live_fy_result: dict | None = None) -> dict:
-    """Derive live PEG from live_fpe_est / CAGR.
+def _compute_live_peg(ticker: str, ma: dict | None, live_fy_result: dict | None,
+                      fx_cache: dict | None = None, fx_date: str | None = None,
+                      fx_for=None) -> dict:
+    """全站統一 PEG（2026-10-21，持有人指示「PEG 口徑統一處理」）。
 
-    v1.10: prefer Excel pure-forward CAGR (eps_fy1_fy3_cagr_pct, what the UI's
-    "CAGR" column displays) over eps2y_live (yfinance yearAgo→FY+1, basis
-    can mix GAAP TTM with non-GAAP forward → fake-low PEG for SBC-heavy SaaS).
-    CDNS observed: eps_fy1_fy3_cagr_pct=17.15, eps2y_live=52.0 → old PEG
-    39.83/52 = 0.77 (misleading), new PEG 39.83/17.15 = 2.32 (realistic).
+    fpe_next ＝ 現價（ma.price）÷ 明年預估 EPS（eps_fy_next）；
+    live_peg ＝ fpe_next ÷ eps_fy1_fy3_cagr_pct（Koyfin 今年到後年的年化成長）。
+    不分有沒有 DD、不分主名單／小型股／台股；算不出來就是 None，不退回 QGM／yfinance
+    的 PEG，也不再用 live_fpe_est 或 eps2y_live。幣別換算規則見 peg_unified.py。
 
-    Falls back to eps2y_live only when Excel CAGR is unavailable
-    (FY1 negative for NBIS/CRWV/NVTS; yfinance-only tickers like 6857.T).
-
-    pe_drift: the dict returned by _compute_live_pe_drift() (contains live_fpe_est).
-    live_fy_result: dict returned by _fetch_live_fy_eps() (contains cagr_fy1_fy3_pct).
-
-    Writes:
-      live_peg: live PEG ratio (None if FPE or CAGR is missing/≤ 0)
+    Writes: live_peg, fpe_next。
     """
-    fpe = pe_drift.get("live_fpe_est")
-    excel_cagr = (live_fy_result or {}).get("cagr_fy1_fy3_pct")
-    cagr = excel_cagr if excel_cagr is not None else eps2y_live
-    if fpe and cagr and fpe > 0 and cagr > 0:
-        return {"live_peg": round(fpe / cagr, 2)}
-    return {"live_peg": None}
+    lfy = live_fy_result or {}
+    p_ccy = price_currency(ticker)
+    e_ccy = lfy.get("eps_display_currency", "USD")
+    fx = None
+    if p_ccy and p_ccy != "USD" and (e_ccy or "USD").upper() == "USD":
+        try:
+            if fx_for is not None:
+                fx = fx_for(p_ccy)
+            elif fx_cache is not None:
+                fx = get_fx_rate(p_ccy, fx_date or datetime.now().strftime("%Y-%m-%d"), fx_cache)
+        except Exception:
+            fx = None
+    return compute_peg_unified(
+        ticker, (ma or {}).get("price"), lfy.get("eps_1y_raw"), lfy.get("cagr_fy1_fy3_pct"),
+        eps_ccy=e_ccy, fx_per_usd=fx, eps_reliable=(lfy.get("eps_source") == "xlsx"))
 
 
 def _compute_live_ev5y(entry: dict, ma: dict) -> dict:
@@ -4169,7 +4175,8 @@ def enrich_ticker(
     # v1.3: peg_fallback — frozen PEG came from yfinance manual forwardPE/CAGR
     # path (denominator not comparable to mainstream forward consensus). The
     # PEG pass/fail is still computed normally; this only annotates provenance.
-    peg_fallback = bool(quality_meta.get("peg_fallback"))
+    # 2026-10-21 PEG 口徑統一：不再有退回的 PEG，peg_fallback 一律 False（舊 quality_meta 旗標不再讀）。
+    peg_fallback = False
 
     # v1.5: quality cache fallback for yfinance-path rows on total-wipe outages.
     # Only triggers when ALL 5 fields are None AND source is yfinance (QGM rows
@@ -4258,8 +4265,6 @@ def enrich_ticker(
     # ROIC % (post koyfin-xlsx/QGM/yfinance priority above) + the raw Excel
     # record (roic_5y_avg_pct / roic_3y_avg_pct / EBIT / IC / revenue columns).
     roic_decomp = compute_roic_decomposition(_excel_record_for_eps2y, quality.get("roic"))
-
-    pass_count, fails = evaluate_criteria(quality)
 
     if skip_ma:
         ma = _empty_ma()
@@ -4365,7 +4370,15 @@ def enrich_ticker(
     # buy-side consensus shift rather than yfinance YearAgo→FY+1 window noise.
     excel_cagr_for_rev = (live_fy_result or {}).get("cagr_fy1_fy3_pct")
     eps_revision = _compute_eps_revision(entry, excel_cagr_for_rev, prev_snapshot or {})
-    live_peg = _compute_live_peg(pe_drift, eps2y_live, live_fy_result)  # FPE & Excel CAGR
+    # 2026-10-21 PEG 口徑統一：現價 ÷ 明年預估 EPS ÷ 三年成長，全部列同一算法；
+    # 舊 peg（QGM／yfinance 來源）另存 peg_old_ref 只供查核，peg 欄改成跟 live_peg 同值。
+    live_peg = _compute_live_peg(
+        t, ma, live_fy_result, fx_cache=fx_cache,
+        fx_date=excel_snapshot.snapshot_date if excel_snapshot else None)
+    quality["peg_old_ref"] = quality.get("peg")
+    quality["live_peg"] = live_peg["live_peg"]
+    quality["peg"] = live_peg["live_peg"]
+    pass_count, fails = evaluate_criteria(quality)
 
     # Compute ev5y_pct before passing to live_ev5y helper (entry doesn't carry it yet)
     ev5y_pct = _ev5y_for(t, dca_ev_map)
@@ -4533,7 +4546,7 @@ def enrich_ticker(
         **pe_drift,         # live_fpe_est, pe_drift_pct, dd_age_days, live_pct_5y_est
         **eps2y_live_result,  # eps2y_live, eps2y_live_method
         **eps_revision,     # eps2y_prev_month, eps2y_prev_month_date, eps2y_revision_pp, eps2y_revision_dir
-        **live_peg,         # live_peg
+        **live_peg,         # live_peg, fpe_next（現價 ÷ 明年預估 EPS，同幣別）
         **live_ev5y,        # live_ev5y_pct, live_ev5y_method
         # v1.7.2: raw yfinance EPS estimates (current FY / next FY / TTM)
         "eps_fy_curr": eps_curr_val,

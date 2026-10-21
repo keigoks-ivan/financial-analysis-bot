@@ -62,7 +62,7 @@ QUALITY_GATE = {  # 五條件閘門（用戶 2026-06-11 拍板；資料全取 dd
     "fcf": 10.0,                    # FCF margin > 10%（2026-06-11 自 15 下修：15 在 AI capex
                                     #   超級週期懲罰投資期的 S/A 級公司 — LLY/MSFT/AMAT 案例；
                                     #   資本紀律由 ROIC>15 把守，FCF 只當現金地板）
-    "peg": 2.0,                     # < 2（live_peg 優先，缺值退 peg）
+    "peg": 2.0,                     # < 2（只讀 live_peg，缺值＝缺資料）
     # 第五條件：護城河 — grade ∉ {C, X}（全站 screener veto 慣例）
     #           且 moat_trend ≠ ↓（進場漏斗不開衰退中護城河的新倉；
     #           trend 源頭 = build_dd_screener 的 DCA-authoritative map）
@@ -110,10 +110,7 @@ def quality_check(row: dict) -> tuple[bool | None, list[str], dict]:
     roic = _num(row.get("roic"))
     fcf = _num(row.get("fcf"))
     peg = _num(row.get("live_peg"))
-    peg_src = "live_peg"
-    if peg is None:
-        peg = _num(row.get("peg"))
-        peg_src = "peg"
+    peg_src = "live_peg"   # 2026-10-21 PEG 口徑統一：只讀 live_peg，不再退回 peg
     grade = row.get("moat_grade")
     trend = row.get("moat_trend")
     used = {"eps_fy1_fy3_cagr_pct": cagr, "roic": roic, "fcf": fcf,

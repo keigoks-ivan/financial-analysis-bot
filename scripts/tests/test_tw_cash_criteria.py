@@ -26,7 +26,7 @@ if str(SCRIPTS_DIR) not in sys.path:
 import build_dd_screener as bds  # noqa: E402
 
 # 聯亞 3081 on 2026-10-09: FCF margin 2.6%, capex 24.8% of sales, ROIC 20.8%.
-CAPEX_HEAVY = {"fcf": 2.6, "ocf": 27.4, "roic": 20.8, "eps2y": 20.0, "peg": 1.5, "de": 0.1}
+CAPEX_HEAVY = {"fcf": 2.6, "ocf": 27.4, "roic": 20.8, "eps2y": 20.0, "peg": 1.5, "live_peg": 1.5, "de": 0.1}
 
 
 @pytest.fixture
