@@ -126,7 +126,7 @@ footer a{font-weight:600}
   <div class="container">
     <span class="eyebrow">精選 · THE LIST</span>
     <h1>精選榜</h1>
-    <p class="lede">這頁只放一件事：<b>市值太小、進不了三閘評分席位的名字。</b>席位要求市值 200 億美元以上；這頁把同一套資格規則（品質閘 × 三年成長 × 站上 52 週線 × 財報後獲利上修）跑在 10–200 億美元的中小型股，只看、不進倉位。<br><b>結構長抱的正式名單不在這頁</b>，在 <a href="/cockpit/">主控台的席位陣容</a>。流程見 <a href="/dd-screener/pipeline.html">選股流程</a>。</p>
+    <p class="lede">這頁只放一件事：<b>市值太小、進不了三閘評分席位的名字。</b>席位要求市值 200 億美元以上；這頁把同一套資格規則（品質閘 × 三年成長 × 站上 52 週線 × 財報後獲利上修）跑在 10–200 億美元的中小型股，並設 10 個席位。<br><b>結構長抱的正式名單不在這頁</b>，在 <a href="/cockpit/">主控台的席位陣容</a>。流程見 <a href="/dd-screener/pipeline.html">選股流程</a>。</p>
         <p class="disc">本頁為研究紀錄與流程展示，非投資建議。</p>
   </div>
 </section>
@@ -138,6 +138,14 @@ footer a{font-weight:600}
       <span class="tagline">10–200 億美元 · 與席位陣容同一套規則 · 每日更新</span>
     </div>
     <p class="transparency">資格＝品質閘（ROIC ≥15% 且自由現金流 &gt;0）× 三年成長預估 ≥15% × 站上 52 週線；耐久一致性只當顯示旗標，不擋資格。池＝資格全過且財報後獲利上修（缺值看近三個月）達 +5% 以上，依上修幅度由高到低排。上修未達 5% 的名字進下方收合區複審，不進池。</p>
+
+    <div class="group-block">
+      <div class="group-title g1"><span class="dot"></span>十席名單 <span class="sub">每週六（台北）依週五收盤重選 · 紅燈就賣 · 空席放現金</span></div>
+      <div id="seats-summary" class="asof"></div>
+      <div id="seats-body"></div>
+      <div id="seats-changes" class="asof" style="margin-top:.5rem"></div>
+      <p class="transparency" style="margin-top:.7rem"><b>v5.7 變更（2026-10-21）</b>：這頁原本只列池子、不進倉位，現在做成 10 個席位。在席者時機燈轉紅，或資格不成立、出池，就下席；空席從池中時機燈亮著（綠／黃／橘）的名字照上修排序補，最多 10 席；在席者不會被排名更高的新名字擠掉。倉位綠 1.0、黃 1.0、橘 0.5，空席放現金。這是持有人的破例決定，不是回測登記通過：美股中小型從 5 席換 10 席，配對格全期 100%、前段 94%、後段 100% 變好，但台股前段只有 46%，登記要求兩個市場都過。研究依據見 <a href="/cockpit/#seats-grid">席位全格子測試</a>。</p>
+    </div>
 
     <div class="group-block">
       <div class="group-title g2"><span class="dot"></span>①可買 <span class="sub">時機燈亮著（綠／黃／橘），依上修排序</span></div>
@@ -175,7 +183,7 @@ footer a{font-weight:600}
       <p><b>上修%（財報後）</b>優先讀該股最近一次財報後的獲利上修幅度，缺值才看近三個月；池內依這欄由高到低排，同值再看隱含成長率、再看盈餘殖利率。<b>距歷史新高%</b>是還原配息後的全歷史最高收盤價距離，不是 52 週高。</p>
       <p><b>時機</b>：🟢 可進＝距歷史新高 ≥−3% 且站上 200 日均線；🟡 接近＝距新高 −10%～−3% 且站上 200 日均線；🟠 過熱＝12 個月減 1 個月動能 &gt;150% 但仍在突破帶附近；🔴 拉回中＝距新高 &lt;−10% 或跌破 200 日均線。<b>倉位</b>跟時機對應：🟢🟡 正常倉、🟠 半倉、🔴 零倉。距歷史新高的資料缺時，黃燈暫列半倉，標「🟡 資料缺」。</p>
                   <p><b>DD</b>是個股報告的裁決標籤，除了「迴避」會排除資格，其餘只供顯示，不影響排序；沒有 DD 是常態，本頁多數名字市值不到席位的追蹤門檻。<b>備註</b>欄的頂點、基期、循環守門、內部人買賣，同樣純顯示，不進資格與排序，定義與席位表相同。</p>
-      <p>本頁只看、不進倉位：不設核心名單、不做輪動，每天用當天資料把全部名字重新算一次。</p>
+      <p><b>十席</b>：席位每週六（台北）依週五收盤重選一次，平日只更新燈號與倉位，週中轉紅的席位等週六才下席。池、可買、等待池三張表每天用當天資料重新算。</p>
     </div>
   </div>
 </section>
@@ -199,7 +207,8 @@ footer a{font-weight:600}
   }
 
   function tkrCell(r){
-    return r.dd_path ? '<a href="'+esc(r.dd_path)+'">'+esc(r.ticker)+'</a>' : esc(r.ticker);
+    var t = r.dd_path ? '<a href="'+esc(r.dd_path)+'">'+esc(r.ticker)+'</a>' : esc(r.ticker);
+    return r.seat ? t+' <span class="chip" title="目前在十席名單裡">'+esc(r.seat)+'</span>' : t;
   }
   function revCell(r){
     var anchor = r.rev_anchor==='earnings' ? '財報後' : (r.rev_anchor==='earnings_pending' ? '待財報後匯出（沿用上一季財報後上修）' : (r.rev_anchor==='calendar_3m' ? '日曆三個月（缺財報錨定）' : '—'));
@@ -260,7 +269,7 @@ footer a{font-weight:600}
       +'<td>'+earnCell(r)+'</td>'
       +'<td>'+durCell(r)+'</td>'
       +'<td>'+lampCell(r)+'</td>'
-      +'<td>'+esc(r.action||'—')+'</td>'
+      +'<td>'+esc(r.action||'—')+(r.seat_note?'<br><span style="color:var(--muted);font-size:.7rem">'+esc(r.seat_note)+'</span>':'')+'</td>'
       +'<td>'+ddCell(r)+'</td>'
       +'<td class="remark">'+remarkCell(r)+'</td></tr>';
   }
@@ -287,6 +296,20 @@ footer a{font-weight:600}
     if(!r.ok) throw new Error('tenbagger '+r.status); return r.json();
   }).then(function(d){
     d = d || {};
+    var sd = d.seats || {};
+    var roster = sd.roster || [];
+    var sumEl = document.getElementById('seats-summary');
+    if(sumEl){
+      sumEl.textContent = '在席 '+(sd.n_seated||0)+' / '+(sd.slots||10)+' 席　·　空席 '+(sd.vacant!=null?sd.vacant:'—')
+        +'　·　倉位合計 '+(sd.invested_seats!=null?sd.invested_seats:'—')+' 席（其餘放現金）　·　最近重選 '+(sd.last_rotation_date||'—');
+    }
+    document.getElementById('seats-body').innerHTML = tableHtml(roster);
+    var chEl = document.getElementById('seats-changes');
+    if(chEl){
+      var out=(sd.removed||[]).map(function(x){return '🔻 '+esc(x.ticker)+'：'+esc(x.why);});
+      var inn=(sd.filled||[]).map(function(t){return '🆕 '+esc(t);});
+      chEl.innerHTML = (out.concat(inn).join('<br>')) || '本週沒有進出。';
+    }
     var buy = d.buyable || [];
     var isYellow = function(r){ return ((r.lamp||{}).code) === 'yellow'; };
     document.getElementById('pool-buyable-body').innerHTML = tableHtml(buy.filter(function(r){ return !isYellow(r); }));
@@ -331,6 +354,7 @@ footer a{font-weight:600}
       }
     }
   }).catch(function(e){
+    dataErr('seats-body');
     dataErr('pool-buyable-body');
     dataErr('pool-buyable-yellow-body');
     dataErr('pool-waiting-red-body');

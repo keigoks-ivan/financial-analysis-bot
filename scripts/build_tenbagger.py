@@ -56,6 +56,18 @@ v5.5 品質閘現金流條件改 FCF > 0（2026-10-18 持有人拍板，不另�
 grp.quality_gate()，本檔不另寫。上方 Koyfin dd_smallcap_v5 篩選器的 FCF 利潤率 ≥10% 條件沒有
 動（供給面），所以放寬只作用在主池（DD 池與 QGM 品質池）的名字。
 
+v5.7 十席（2026-10-21 持有人破例決定；非登記通過）
+------------------------------------------------------------------------------
+本頁原本「只看不進倉位」，改成真的 10 個席位，有狀態檔 docs/picks/tenbagger_seats.json（roster／最近重選日／
+週快照）。每週六（台北）重選一次（daily-taipei-morning 的週六班，用週五美股收盤；平日只刷燈號、席位沿用）：
+  1. 在席者紅燈（時機燈沒亮）或資格不成立／出池（含持有人 veto）就下席——紅燈就賣，美股中小型現行賣法；
+  2. 空席從池中時機燈亮著（綠／黃／橘）的名字照池序（上修降冪）補，最多 10 席；
+  3. 在席者不會被排名更高的新名字擠掉。
+倉位綠 1.0／黃 1.0／橘 0.5（v5.3），空席放現金。狀態檔不存在（第一次跑）時不等週六，直接從空席照規則補。
+依據：美股中小型 5 席換 10 席在配對格全期 100%、前段 94%、後段 100% 變好；但台股前段只有 46%，登記要兩個市場
+都過，所以不是登記通過，是持有人的破例決定。研究依據 /cockpit/#seats-grid。池門檻（上修 ≥5%）不動。純函式
+select_seats()，測試 scripts/tests/test_tenbagger_seats.py。
+
 FAIL-SAFE
 ---------
 兩個主要來源（universe.json／dd-screener latest.json）皆讀取失敗 → exit 0、不覆蓋既有
@@ -94,6 +106,8 @@ from engine import build_arena as arena  # noqa: E402
 
 PICKS = os.path.join(DOCS, "picks", "picks.json")
 OUT = os.path.join(DOCS, "picks", "tenbagger.json")
+SEATS_LEDGER = os.path.join(DOCS, "picks", "tenbagger_seats.json")   # v5.7：十席狀態檔
+SEAT_SLOTS = 10
 UNIVERSE_JSON = os.path.join(ROOT, "data", "engine", "universe.json")
 DD_LATEST = os.path.join(DOCS, "dd-screener", "latest.json")
 # v5 smallcap pool (2026-09-17): second Koyfin universe (own screen + watchlist,
@@ -108,6 +122,14 @@ TW8 = timezone(timedelta(hours=8))
 # 未調參常數）～ $200 億天板＝grp.MKTCAP_MIN（GRP 席位地板）之下，零重疊是設計。
 CAP_LO = 1e9
 CAP_HI = grp.MKTCAP_MIN  # $200 億
+
+
+def load_json_quiet(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
 
 
 def warn(msg):
@@ -264,6 +286,34 @@ def _smallcap_rev_baseline_note(smallcap_meta, candidate_rows, smallcap_tickers)
     return f"上修基準將於下次快照建立（{next_month or '下次重跑'}）"
 
 
+def select_seats(pool_rows, prev_roster, vetoed=(), slots=SEAT_SLOTS):
+    """v5.7 十席重選（純函式）。pool_rows＝池（資格全過＋上修 ≥5%，已扣 veto），依池序排好；
+    prev_roster＝上次的在席名單。在席者留任的條件：仍在池內且時機燈亮著（綠／黃／橘）；否則下席。
+    空席依池序補時機燈亮著的名字，最多 slots 席；在席者不會被更高名次的新名字擠掉。
+    回傳 {"roster": [...依池序], "removed": [(ticker, 理由)], "filled": [ticker]}。"""
+    lit = arena.LIT_LAMP_CODES
+    by_t = {r["ticker"]: r for r in pool_rows}
+    keep, removed = [], []
+    for t in prev_roster or []:
+        r = by_t.get(t)
+        if r is None:
+            removed.append((t, "持有人否決" if t in set(vetoed) else "出池（資格不成立或上修未達 5%）"))
+        elif (r.get("lamp") or {}).get("code") not in lit:
+            removed.append((t, "時機燈轉紅（距新高 <−10% 或跌破 200 日線）"))
+        else:
+            keep.append(t)
+    keep = keep[:slots]
+    filled = []
+    for r in pool_rows:
+        if len(keep) >= slots:
+            break
+        if r["ticker"] not in keep and (r.get("lamp") or {}).get("code") in lit:
+            keep.append(r["ticker"])
+            filled.append(r["ticker"])
+    order = {r["ticker"]: i for i, r in enumerate(pool_rows)}
+    return {"roster": sorted(keep, key=lambda t: order[t]), "removed": removed, "filled": filled}
+
+
 def to_out_row(r, caps):
     v = arena._flat_view(r)  # noqa: SLF001 — GRP 席位表本尊同一份扁平化函式，見檔頭 docstring
     cap = caps.get(r["ticker"])
@@ -272,7 +322,8 @@ def to_out_row(r, caps):
     return v
 
 
-def main():
+def main(argv=None):
+    ledger_flag = "--ledger" in (sys.argv[1:] if argv is None else argv)
     picks = load_json(PICKS, "picks.json (veto)")
     veto = set()
     if isinstance(picks, dict) and isinstance(picks.get("veto"), list):
@@ -326,7 +377,54 @@ def main():
     funnel["財報後上修 ≥5%（缺值退回三月）＝進池"] = len(pool_rows)
     funnel["資格閘過但上修未達 5%（收合複審，不進池）"] = len(not_in_pool_rows)
 
+    # ── v5.7 十席：狀態檔 → 重選或沿用 ──
+    seats_doc = load_json_quiet(SEATS_LEDGER) or {}
+    snaps = sorted(seats_doc.get("snapshots") or [], key=lambda x: x.get("date") or "")
+    as_of_seat = latest_doc.get("as_of") or datetime.now(TW8).strftime("%Y-%m-%d")
+    reselect = ledger_flag or not seats_doc.get("last_rotation_date")   # 第一次跑（沒有狀態檔）不等週六，直接補
+    if reselect:
+        # 同一個價格日重跑（workflow retry）從該日之前的席位開始，結果與第一次相同
+        prior = [x for x in snaps if (x.get("date") or "") < as_of_seat]
+        prev_roster = prior[-1]["roster"] if prior else []
+        sel = select_seats(pool_rows, prev_roster, vetoed=vetoed)
+        roster = sel["roster"]
+        removed_seat, filled_seat = sel["removed"], sel["filled"]
+        last_rotation_date = as_of_seat
+        snaps = [x for x in snaps if x.get("date") != as_of_seat]
+        snaps.append({"date": as_of_seat, "roster": roster,
+                      "removed": [list(x) for x in removed_seat], "filled": filled_seat})
+        os.makedirs(os.path.dirname(SEATS_LEDGER), exist_ok=True)
+        with open(SEATS_LEDGER, "w", encoding="utf-8") as f:
+            json.dump({"schema": "tenbagger-seats-1.0", "slots": SEAT_SLOTS, "roster": roster,
+                       "last_rotation_date": last_rotation_date, "snapshots": snaps},
+                      f, ensure_ascii=False, indent=1)
+            f.write("\n")
+    else:
+        roster = list(seats_doc.get("roster") or [])
+        last_rotation_date = seats_doc.get("last_rotation_date")
+        last = snaps[-1] if snaps else {}
+        removed_seat = [tuple(x) for x in last.get("removed") or []]
+        filled_seat = list(last.get("filled") or [])
+    rows_by_t = {r["ticker"]: r for r in rows_all}
+    pool_set = {r["ticker"] for r in pool_rows}
+    seat_code = {t: f"T{i}" for i, t in enumerate(roster, 1)}
+    seat_out = []
+    for t in roster:
+        r = rows_by_t.get(t)
+        if r is None:
+            continue
+        v = to_out_row(r, caps)
+        v["seat"] = seat_code[t]
+        note = "新席" if t in filled_seat else "現任"
+        if (v.get("lamp") or {}).get("code") not in arena.LIT_LAMP_CODES:
+            note += "・週中轉紅，週六複判" if t in pool_set else "・週中出池，週六複判"
+        v["seat_note"] = note
+        seat_out.append(v)
+    invested = sum((v.get("lamp") or {}).get("size") or 0 for v in seat_out)
+
     official_out = [to_out_row(r, caps) for r in pool_rows]
+    for row in official_out:
+        row["seat"] = seat_code.get(row["ticker"])
     buyable_out = [row for row in official_out if (row.get("lamp") or {}).get("code") in arena.LIT_LAMP_CODES]
     buyable_tickers = {row["ticker"] for row in buyable_out}
     waiting_rows = [row for row in official_out if row["ticker"] not in buyable_tickers]
@@ -336,6 +434,7 @@ def main():
     funnel["時機燈亮（可買：綠／黃／橘）"] = len(buyable_out)
     funnel["　其中 黃燈（接近新高）"] = sum(1 for row in buyable_out if (row.get("lamp") or {}).get("code") == "yellow")
     funnel["時機燈 紅（拉回中）"] = len(waiting_red)
+    funnel["十席：在席（每週六重選）"] = len(seat_out)
 
     as_of = latest_doc.get("as_of") or datetime.now(TW8).strftime("%Y-%m-%d")
     rev_data_as_of = (latest_doc.get("eps_estimates_source") or {}).get("snapshot_date")
@@ -366,16 +465,24 @@ def main():
                  "$10億–$200億市值帶——GRP 席位地板之下、零重疊是設計。池＝資格全過"
                  "且財報後上修（缺值退回三月）≥+5% 者，依上修降冪排序（同值 tie-break "
                  "implied_growth_pct、再 tie-break 盈餘殖利率）。可買＝池中時機燈亮著"
-                 "者（綠／黃／橘）；等待池＝燈號未亮的拉回中（🔴）。倉位對應（v5.3，2026-10-18 "
+                 "者（綠／黃／橘）；等待池＝燈號未亮的拉回中（🔴）。v5.7（2026-10-21 起）設 10 席："
+                 "每週六（台北）重選，在席者紅燈或出池就下席，空席從池中亮燈者照池序補，在席者不被"
+                 "排名更高的新名字擠掉；持有人的破例決定，非登記通過。倉位對應（v5.3，2026-10-18 "
                  "起）綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0，黃燈由 0.5 改 1.0，依 v7-backtest "
                  "SeatSizing_Results_TW_Small.md；登記分類為「無法分辨」，是持有人依回測知情決定"
-                 "改，非登記判準通過。本組只看不進倉位，"
-                 "無核心席、無月頻輪動。持有人 veto（picks.json veto[]）優先於一切規則。"
+                 "改，非登記判準通過。持有人 veto（picks.json veto[]）優先於一切規則。"
                  "資料不足＝母體中查不到 dd-screener/QGM 池 v5 欄位或市值未知者，如實"
                  "列計數，不用寬鬆假設硬湊池。每日隨 dd-screener latest.json 重算。"
                  "2026-09-17 起母體多一路：Koyfin 篩選器 dd_smallcap_v5（美股含 ADR、"
                  "市值 10 億–200 億美元、ROIC≥15%、自由現金流利潤率≥10%）產生的 "
                  "dd_smallcap 觀察名單，與主 dd-screener 池同 ticker 時主池列優先。"),
+        "seats": {
+            "rule_version": "v5.7", "slots": SEAT_SLOTS, "n_seated": len(seat_out),
+            "vacant": SEAT_SLOTS - len(seat_out), "invested_seats": round(invested, 2),
+            "cash_seats": round(SEAT_SLOTS - invested, 2),
+            "last_rotation_date": last_rotation_date, "roster": seat_out,
+            "removed": [{"ticker": t, "why": w} for t, w in removed_seat], "filled": filled_seat,
+        },
         "official": official_out,
         "buyable": buyable_out,
         "waiting": {"red": waiting_red},
@@ -407,6 +514,10 @@ def main():
                 f"距新高 {row.get('dist_ath_pct')}%　燈{lamp.get('label')}　"
                 f"市值 ${row.get('cap_B')}B")
 
+    print(f"[build_tenbagger] 十席（{'重選' if reselect else '沿用'}，最近重選日 {last_rotation_date}）："
+          f"在席 {len(seat_out)}／{SEAT_SLOTS}　倉位合計 {invested:.1f}　下席 {[t for t, _ in removed_seat]}　補進 {filled_seat}")
+    for row in seat_out:
+        print(f"    {row['seat']:<4}{_fmt(row)}　{row['seat_note']}")
     print("[build_tenbagger] 可買：")
     for row in buyable_out:
         print(f"    {_fmt(row)}")

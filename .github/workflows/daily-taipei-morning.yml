@@ -144,8 +144,13 @@ jobs:
       # GRP 席位地板之下）——排在 Arena 之後、Quality-Entry 之前，失敗只 warning，
       # 不擋本帶其餘 step。母體 2026-09-17 起併入上一步的 smallcap latest.json
       # （見 build_tenbagger.py load_universe()）。
+      # v5.7（2026-10-21）：十倍組設 10 席。週六（台北）這班依週五收盤重選席位並記帳（--ledger），
+      # 其餘日子只刷新燈號與池（席位沿用 docs/picks/tenbagger_seats.json）；狀態檔不存在時第一次跑直接補。
       - name: "[non-fundamental] Step 2b — Picks tenbagger v5 small-cap pool daily refresh"
-        run: python scripts/build_tenbagger.py || echo "::warning::tenbagger v5 small-cap pool refresh failed"
+        run: |
+          ARGS=""
+          [ "$(TZ=Asia/Taipei date +%u)" = 6 ] && ARGS="--ledger"
+          python scripts/build_tenbagger.py $ARGS || echo "::warning::tenbagger v5 small-cap pool refresh failed"
         continue-on-error: true
 
       # Step 3（Quality-Entry screener）2026-10-19 持有人拍板歸檔：頁面停止更新、每日快照搬出網站，
@@ -224,11 +229,13 @@ jobs:
             docs/dd-screener/sop-funnel.html \
             docs/dd-screener/sop-funnel/ \
             docs/engine/arena.json \
+            docs/engine/arena_state.json \
             docs/engine/_board_body.html \
             docs/engine/board.txt \
             docs/engine/_arena_body.html \
             docs/engine/universe_board.json \
-            docs/picks/tenbagger.json; do
+            docs/picks/tenbagger.json \
+            docs/picks/tenbagger_seats.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if [ -z "$PATHS" ]; then

@@ -75,6 +75,7 @@ def _patch_tenbagger_paths(monkeypatch, tmp_path):
     monkeypatch.setattr(bt, "SMALLCAP_LATEST", str(smallcap_latest))
     monkeypatch.setattr(bt, "PICKS", str(picks_json))
     monkeypatch.setattr(bt, "OUT", str(out_json))
+    monkeypatch.setattr(bt, "SEATS_LEDGER", str(tmp_path / "tenbagger_seats.json"))   # v5.7 十席狀態檔
     # Cap resolution's network fallback (grp.fetch_caps) must never touch the
     # real internet or the shared data/engine/mktcap.json cache from a test run.
     monkeypatch.setattr(grp, "load_caps", lambda: {})
