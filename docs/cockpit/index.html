@@ -36,6 +36,8 @@ section.block{padding:1.1rem 0}
 .sec-num{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:700;color:#fff;background:var(--accent);
   width:1.55rem;height:1.55rem;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .sec-title{font-size:1.12rem;font-weight:700;margin:0;font-family:'Playfair Display','Noto Serif TC',Georgia,serif}
+.roster-sub{font-size:.86rem;font-weight:650;margin:1.1rem 0 .3rem}
+.roster-sub2{font-size:.78rem;font-weight:600;color:var(--text-sec);margin:.7rem 0 .35rem}
 .sec-desc{font-size:.76rem;color:var(--muted)}
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-1)}
 .placeholder{background:var(--card);border:1px dashed var(--border);border-radius:var(--r);padding:1rem 1.2rem;
@@ -255,7 +257,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <div class="sec-head">
       <span class="sec-num">2</span>
       <h2 class="sec-title">陣容</h2>
-      <span class="sec-desc">席次看三關：公司夠不夠好（品質、三年成長；耐久只標旗標）、分析師有沒有在財報後上修、股價離歷史新高多遠。排名只看上修幅度，距新高只決定燈號與倉位。太貴不入池：PEG 超過 2，或本益比高於五年均值 1.75 倍。核心席只收時機燈亮著的名字，每週六依週五收盤重算，亮燈不足就空席。DD 不是必要條件，只有「迴避」會剔除；只有單年成長預估的先列隊。換席規則見「席位排序」分頁。這是研究名單，不是帳戶持倉。</span>
+      <span class="sec-desc">兩套美股席位的在席與排隊：美股看板 5 席，精選榜十倍組 10 席。每週六依週五收盤重選，亮燈不足就空席。完整規則與表格在「席位排序」「精選榜」分頁。</span>
     </div>
     <details class="ref-fold timing-fold" id="timing" open>
       <summary>時機怎麼判定<small>時機燈決定倉位與核心席</small></summary>
@@ -477,6 +479,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     monitor: '/monitor/data/latest.json',
     dd:      '/dd-screener/latest.json',
     arena:   '/engine/arena.json',
+    tb:      '/picks/tenbagger.json',
     ledger:  '/engine/arena-ledger.json'
   };
   var S = {};
@@ -592,7 +595,8 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   function groupRow(label){ return '<tr class="rgroup"><td colspan="20">'+esc(label)+'</td></tr>'; }
   function renderRoster(){
     var mount = $('roster-mount');
-    if(!S.arena || !Array.isArray(S.arena.core_seats)){ mount.innerHTML = ph('陣容資料暫缺'); return; }
+    var arenaOk = !!(S.arena && Array.isArray(S.arena.core_seats));
+    var tbOk = !!(S.tb && S.tb.seats && Array.isArray(S.tb.seats.roster));
     // 現行裁決（日更 dd-screener）：顯示層即時；席位歸屬仍歸週更 engine
     var liveV = {};
     // 個股儀表板只涵蓋 dd-screener 名單內的股票（/stock-dash/ 逐檔 build），
@@ -625,103 +629,73 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
           : ('本期無換席（'+esc(sd)+'）');
       }
     }catch(e){ newSeat = {core:{}, sat:{}}; ledgerNote = ''; }
-    function numTd(v,d){ return '<td class="num">'+((v==null||isNaN(v))?'—':fmt(v,d))+'</td>'; }
-    function epsTd(d){
-      var a=[d.eps_curr,d.eps_next,d.eps_3];
-      if(a.every(function(x){return x==null||isNaN(x);})) return '<td class="num">—</td>';
-      return '<td class="num" title="'+esc('幣別 '+(d.eps_ccy||'未標示'))+'">'+a.map(function(x){return (x==null||isNaN(x))?'—':fmt(x,2);}).join('／')+'</td>';
-    }
-    function olTd(d){
-      if(!d.ol_label) return '<td>—</td>';
-      var pp=(d.ol_pp==null||isNaN(d.ol_pp))?'—':((d.ol_pp>0?'+':'')+fmt(d.ol_pp,2));
-      return '<td title="'+esc('營收成長% − 營業利益成長% = '+pp+' 個百分點（只在營業利益為正時計算）')+'">'+esc(d.ol_label)+'</td>';
-    }
-    function row(seatLabel, s, isSat){
-      var grp = s.grp||{};
-      var own = grp.own||{};
-      var scoreVal = own.score!=null ? own.score : (s.score!=null?s.score:grp.score);
-      var tkTitle = (grp.pass===false && Array.isArray(grp.why) && grp.why.length) ? (' title="'+esc(grp.why[0])+'"') : '';
+    function tkLink(s){
+      var tkTitle = (s.grp && s.grp.pass===false && Array.isArray(s.grp.why) && s.grp.why.length) ? (' title="'+esc(s.grp.why[0])+'"') : '';
       var tkTxt = esc(s.ticker);
       var tkHtml = s.dd_path
         ? ('<a href="'+esc(s.dd_path)+'#decision"'+tkTitle+'>'+tkTxt+'</a>')
         : ('<span'+tkTitle+'>'+tkTxt+'</span>');
       if(dashOk[s.ticker]) tkHtml += ' <a class="dash-lnk" href="/stock-dash/?t='+esc(s.ticker)+'">儀表板</a>';
-      var dn = s.ddn||{};
-      var scoreCell = '<td class="num" title="'+esc(ownTooltip(grp,scoreVal))+'">'+((scoreVal==null||isNaN(scoreVal))?'—':fmt(scoreVal,1))+'</td>';
-      return '<tr><td class="roster-seat">'+esc(seatLabel)+'</td>'+
-        '<td class="roster-tk">'+tkHtml+'</td>'+
-        scoreCell +
-        numTd(grp.g,1) + numTd(own.ey,1) + numTd(s.roic,1) + numTd(s.fcf,1) + numTd(s.peg,2) +
-        numTd(dn.g3,1) + numTd(dn.rev3,1) + epsTd(dn) + numTd(dn.pe2,1) +
-        numTd(dn.inc_roic,1) + numTd(dn.reinvest,1) + numTd(dn.implied,1) + olTd(dn) +
-        '<td>'+revPill(grp)+'</td>'+
-        '<td>'+timingPill(s.lamp)+'</td>'+
-        '<td>'+ddCell(s, liveV)+'</td>'+
-        '<td>'+hystCell(s, newSeat, isSat)+'</td>'+
-      '</tr>';
+      return '<span class="roster-tk">'+tkHtml+'</span>';
     }
-    var rows = '';
-    rows += groupRow('核心席（'+S.arena.core_seats.length+'/5）');
-    S.arena.core_seats.forEach(function(s,i){ rows += row('核心 '+(i+1), s, false); });
-    // v5 席位引擎（2026-09-17，見 knowledge/rule_ledger.md「v5 席位引擎」列）：
-    // sat_seats 現在是整個等待池（無固定 5 席），標籤與計數跟著改，不再假裝「/5」。
-    rows += groupRow('等待池（'+((S.arena.sat_seats||[]).length)+' 檔）');
-    (S.arena.sat_seats||[]).forEach(function(s,i){ rows += row('等待池 '+(i+1), s, true); });
-    var vac = S.arena.sat_vacant||0;
-    if(vac>0) rows += '<tr><td class="roster-seat">衛星 '+((S.arena.sat_seats||[]).length+1)+'–5</td>'+
-      '<td colspan="19" style="color:var(--muted);font-size:.8rem">空 '+vac+' 席——空位是刻意的，空位即倉位管理</td></tr>';
-    var bench = (S.arena.core_bench||[]).map(function(b){return b.ticker;}).filter(Boolean);
-    var asof = S.arena.run_timestamp ? String(S.arena.run_timestamp).slice(0,10) : '';
-    var thead = '<tr><th>席</th><th>Ticker</th>'+
-      '<th class="num" title="'+esc('上修、12-1 月動能、成長、品質、盈餘殖利率五項排名百分位的平均，只供對照，不決定排序；排序看選股看板的「上修%（財報後）」欄。逐檔算式見該列滑鼠提示')+'">綜合對照分</th>'+
-      '<th class="num">成長%</th><th class="num">EY%</th><th class="num">ROIC%</th><th class="num">FCF%</th><th class="num" title="明年預估本益比 ÷ 三年 EPS 年化成長（今年到後年），與 dd-screener、估值欄同一個數字">PEG（明年）</th>'+
-      '<th class="num" title="'+esc('Koyfin 預估今年到後年的每股盈餘年化成長（原始值）。資格閘的三年成長 ≥15% 用的就是這個；左邊「成長%」是資格閘實際採用的值（基期跳增時改用後年成長，並封頂 30%）。只供參考')+'">三年 EPS 成長%</th>'+
-      '<th class="num" title="'+esc('Koyfin 共識預估的未來三年營收年化成長。只供參考')+'">營收成長%</th>'+
-      '<th class="num" title="'+esc('每股盈餘預估，依序為今年／明年／後年，美股單位為美元（ADR 若非美元，滑鼠移到數字上看幣別）。只供參考')+'">EPS 預估（今／明／後）</th>'+
-      '<th class="num" title="'+esc('股價 ÷ 明年預估每股盈餘（dd-screener 的 2Y P/E，每日重算；缺值退回報告當時數字）。只供參考')+'">預估本益比（明年）</th>'+
-      '<th class="num" title="'+esc('近 3 個財年：（今年稅後營業利潤 − 3 年前稅後營業利潤）÷ 新增投入資本。投入資本不增反減時顯示「—」')+'">增量 ROIC%</th>'+
-      '<th class="num" title="'+esc('近 3 年新增投入資本 ÷ 期間年化稅後營業利潤，公司把多少獲利拿去繼續投資擴張')+'">再投資率%</th>'+
-      '<th class="num" title="'+esc('增量 ROIC × 再投資率，機械推算的內生成長率上限，是描述數字，不是預測')+'">隱含成長%</th>'+
-      '<th class="num" title="'+esc('營收成長% − 營業利益成長%，只在營業利益為正時計算。格子顯示分類（利潤率擴張、壓縮等），滑鼠移到格子上看百分點數字')+'">營運槓桿</th>'+
-      '<th title="'+esc('財報後上修（缺值看近三個月），是排序依據；≤−5% 即失去資格（兩個資料源都缺時看 FY+1 單月 ≤−10%），失去資格的名字不會出現在席位表')+'">上修</th>'+
-      '<th title="'+esc('距歷史新高（還原權息全歷史）＋200 日線收斂成單一燈號，只標示現在能不能買，不參與排序')+'">時機燈</th>'+
-      '<th>DD</th><th>異動</th></tr>';
-    // 選股看板（HTML TABLE 版）已含席位＋燈號＋DD/護城河，是陣容區首個元素；
-    // 12 欄明細表收進 <details>（ROIC／FCF／PEG／異動是它獨有的資訊，預設收合——
-    // 看板 fetch 失敗時無看板卡，明細表改預設展開，陣容不至於整塊開天窗）
-    // 品質 × 階段矩陣掛在「目前席位」之後、「DD 進場 vs 機械資格」之前——
-    // 看板片段是既有 S.boardHtml 字串（載入邏輯不動），這裡只在組字串時插一個
-    // 掛載點；不動 renderRoster() 抓看板片段的既有邏輯。
-    var boardCard = S.boardHtml || '';
-    // 時機燈判定表：看板片段用 LAMP_RULES 註記包住，搬到陣容區上方「時機怎麼判定」，
-    // 看板說明內只留一句指引，同頁不重複
-    var lampMatch = boardCard.match(/<!--LAMP_RULES-->([\s\S]*?)<!--\/LAMP_RULES-->/);
+    function seatRow(label, s, isSat, noHyst){
+      return '<tr><td class="roster-seat">'+esc(label)+'</td><td>'+tkLink(s)+'</td>'+
+        '<td>'+timingPill(s.lamp)+'</td><td>'+esc(s.action||'—')+'</td>'+
+        '<td>'+ddCell(s, liveV)+'</td><td>'+(noHyst?'<span class="imq-badge">—</span>':hystCell(s, newSeat, isSat))+'</td></tr>';
+    }
+    function emptyRow(label){
+      return '<tr><td class="roster-seat">'+esc(label)+'</td><td class="muted">空席</td><td class="muted">—</td><td>現金</td><td class="muted">—</td><td class="muted">—</td></tr>';
+    }
+    function seatTable(list, prefix, slots, isSat, noHyst){
+      var rows = list.slice(0, slots).map(function(s,i){ return seatRow(s.seat || (prefix+(i+1)), s, isSat, noHyst); });
+      for(var i=rows.length;i<slots;i++) rows.push(emptyRow(prefix+(i+1)));
+      return '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
+        '<th>席號</th><th>Ticker</th><th>時機燈</th><th>倉位</th><th>DD</th><th>異動</th>'+
+        '</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
+    }
+    function queueTable(list){
+      return '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
+        '<th class="num">名次</th><th>Ticker</th><th>時機燈</th></tr></thead><tbody>'+
+        list.slice(0,5).map(function(s,i){
+          return '<tr><td class="num">'+(i+1)+'</td><td>'+tkLink(s)+'</td><td>'+timingPill(s.lamp)+'</td></tr>';
+        }).join('')+'</tbody></table></div>';
+    }
+    // 美股看板：核心席 5 席＋排隊（buyable_seats 已是池序＝上修排序，pool_rank 遞增，直接取前 5）
+    var html = '';
+    html += '<div class="roster-sub">美股看板 5 席</div>';
+    if(arenaOk){
+      var core = S.arena.core_seats;
+      html += '<div class="roster-sub2">在席</div>' + seatTable(core, '核心 ', 5, false);
+      var bq = S.arena.buyable_seats || [];
+      html += '<div class="roster-sub2">排隊（下次有空席先補）</div>';
+      html += bq.length ? queueTable(bq) : '<p class="roster-note">目前沒有排隊的股票。</p>';
+      html += '<p class="roster-note">等待池 '+((S.arena.waiting_pool||[]).length)+' 檔（時機燈還沒亮）→ <a href="#seats-arena">看全部</a>。資料日 '+esc(String(S.arena.run_timestamp||'').slice(0,10))+'。'+(ledgerNote?(' '+ledgerNote+'。'):'')+'</p>';
+    } else {
+      html += ph('美股看板資料暫缺');
+    }
+    // 精選榜十倍組：10 席＋排隊（buyable 扣掉已在席的）
+    html += '<div class="roster-sub">精選榜十倍組 10 席</div>';
+    if(tbOk){
+      var tr = S.tb.seats.roster, slots = S.tb.seats.slots || 10;
+      var seated = {}; tr.forEach(function(x){ seated[x.ticker]=true; });
+      var tq = (S.tb.buyable||[]).filter(function(x){ return !seated[x.ticker]; });
+      html += '<div class="roster-sub2">在席</div>' + seatTable(tr, 'T', slots, false, true);
+      html += '<div class="roster-sub2">排隊（下次有空席先補）</div>';
+      html += tq.length ? queueTable(tq) : '<p class="roster-note">目前沒有排隊的股票（亮燈的都已在席）。</p>';
+      html += '<p class="roster-note">等待池 '+((S.tb.waiting && S.tb.waiting.red || []).length)+' 檔（時機燈還沒亮）→ <a href="#picks">看全部</a>。資料日 '+esc(String(S.tb.as_of||'').slice(0,10))+'。</p>';
+    } else {
+      html += ph('精選榜十倍組資料暫缺');
+    }
+    // 時機燈判定表：從看板片段取出 LAMP_RULES 區塊，放到陣容區上方「時機怎麼判定」
+    var lampMatch = (S.boardHtml || '').match(/<!--LAMP_RULES-->([\s\S]*?)<!--\/LAMP_RULES-->/);
     var lampMount = $('lamp-rules-mount');
     if(lampMatch){
-      boardCard = boardCard.replace(lampMatch[0], '<div class="bw-note-line">判定表見本區上方「時機怎麼判定」。</div>');
       if(lampMount) lampMount.innerHTML = lampMatch[1];
     } else if(lampMount){
       lampMount.innerHTML = ph('判定表暫缺，請看「席位排序」分頁的選股看板說明');
     }
-    var matrixMount = '<div id="qt-matrix-mount" style="margin:1.1rem 0"></div>';
-    var splitTag = '<details class="bw-fold bw-secfold" id="bw-dd-gate"';
-    var splitIdx = boardCard.indexOf(splitTag);
-    boardCard = (splitIdx >= 0)
-      ? (boardCard.slice(0, splitIdx) + matrixMount + boardCard.slice(splitIdx))
-      : (matrixMount + boardCard);
-    mount.innerHTML = boardCard +
-      '<details class="ref-fold"'+(boardCard?'':' open')+'><summary>席位明細<small>12 欄完整表</small></summary>'+
-      '<div class="ref-body">'+
-      '<div class="card" style="overflow-x:auto"><table class="roster-table">'+thead+rows+'</table></div>'+
-      '<div class="roster-note">'+
-      (bench.length?('板凳前排：'+esc(bench.join('、'))+' · '):'')+
-      (asof?('資料日 '+esc(asof)+' · '):'')+
-      (ledgerNote?(ledgerNote+' · '):'')+
-      '成長%右邊八欄（三年 EPS 成長至營運槓桿）來自 dd-screener，只供參考，不影響資格、排序與席位；'+
-      'DD 只做否決與角色標籤，不參與排序；排序看上修，時機燈只標示能不能買；另有<a href="/engine/board.txt">純文字版</a>'+
-      '</div></div></details>';
+    mount.innerHTML = html;
     refreshLampCells(mount);
-    if(window.IMQBadge) window.IMQBadge.mountMatrix('qt-matrix-mount', {universe:'research'});
   }
   // 「時機」欄（個股階段雷達，/stages/data/lamp.json）：建置期看板片段已含建置當時的
   // 階段值，這裡在頁面載入時再 fetch 一次覆寫成當天最新——404／格式錯就靜默保留建置期值。

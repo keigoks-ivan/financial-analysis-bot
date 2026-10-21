@@ -93,6 +93,7 @@ section.block{padding:1.1rem 0}
 .roster-seat{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);white-space:nowrap}
 .roster-tk{font-weight:700}
 .roster-tk .dash-lnk{font-weight:400;font-size:.7rem;color:var(--muted)}
+.roster-sub{font-size:.8rem;font-weight:600;margin:.9rem 0 .4rem}
 .roster-note{font-size:.74rem;color:var(--muted);margin-top:.55rem;line-height:1.7}
 .v-in{color:var(--green)}.v-watch{color:var(--amber)}.v-avoid{color:var(--red)}
 .roster-table td.num,.roster-table th.num{text-align:right;font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
@@ -268,7 +269,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <div class="sec-head">
       <span class="sec-num">2</span>
       <h2 class="sec-title">陣容</h2>
-      <span class="sec-desc">DD Screener 台股池排名前 10。這是研究名單，不是持倉，也不是席位。</span>
+      <span class="sec-desc">台股 5 席：在席與排隊。每週六依週五收盤重選，完整表格在「席位排序」分頁。</span>
     </div>
     <div id="roster-mount"><div class="placeholder">載入中⋯</div></div>
   </section>
@@ -410,6 +411,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
    rs       /screener/tw_latest.json                  台股 RS 雷達
    p10      /research/price-momentum-tw/track.json    P10 台股（只讀 NAV，不列持股：PREREG 規定不進 cockpit 清單）
    lamp     /stages/data/lamp_tw.json                 台股階段燈
+   seats    /cockpit-tw/data/seats_tw.json            台股 5 席與排隊（總覽陣容）
    席位／雷達 /cockpit-tw/data/_seats_tw_body.html、_radar_tw_body.html（HTML 片段，直接掛上）
    revmom   /revmom-picks/（HTML，無 JSON）            只解析「前進追蹤」表；解析失敗退回連結 */
 (function(){
@@ -432,7 +434,8 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     dd:      '/dd-screener/tw/latest.json',
     rs:      '/screener/tw_latest.json',
     p10:     '/research/price-momentum-tw/track.json',
-    lamp:    '/stages/data/lamp_tw.json'
+    lamp:    '/stages/data/lamp_tw.json',
+    seats:   '/cockpit-tw/data/seats_tw.json'
   };
   var S = {};
   var pending = Object.keys(sources).map(function(k){
@@ -544,30 +547,37 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     return !rows.some(function(r){return num(r.eps_rev_since_earnings_pct) || num(r.eps_rev_3m_pct);});
   }
 
-  /* ② 陣容：台股池前 10 */
+  /* ② 陣容：台股 5 席在席與排隊（讀 seats_tw.json） */
   function renderRoster(){
-    if(!S.dd || !S.dd.stocks){ $('roster-mount').innerHTML = ph('台股池資料暫缺'); return; }
-    var top = rankedRows().slice(0,10);
-    var body = top.map(function(r){
-      return '<tr><td class="num">'+r.funnel_v2_rank+'</td><td>'+stockCell(r.ticker)+'</td>'+
-        '<td class="num">'+fmt(priceOf(r),priceOf(r)<100?2:0)+'</td>'+
-        '<td class="num">'+pct(r.eps2y,1)+'</td>'+
-        '<td class="num">'+pct(r.roic,1)+'</td>'+
-        '<td class="num">'+pct(dist52(r),1)+'</td>'+
-        '<td>'+lampCell(r.ticker)+'</td>'+
-        '<td>'+ddCell(r)+'</td></tr>';
-    }).join('');
-    var notes = ['資料日 '+esc(String(S.dd.as_of||'').slice(0,10))+'，母體 '+((S.dd.stocks||[]).length)+' 檔。'];
-    notes.push('EPS 明年成長：分析師預估明年 EPS 比今年多多少，跟台股池的成長條件同一個數字。距 52 週高：現價比過去一年最高價低多少。');
-    var noEps = top.filter(function(r){return r.eps_fy_curr==null && r.eps_fy_next==null && r.eps_fy3==null;})
-      .map(function(r){return code(r.ticker)+' '+(nameOf(r.ticker)||'');});
-    if(noEps.length) notes.push(noEps.join('、')+' 在 Koyfin 沒有分析師預估，名次只看品質和股價。');
-    if(noRevision()) notes.push('台股池還沒有上修數字，排序的「預估落差」一面暫時少了這一項。');
-    notes.push(lampNote());
-    $('roster-mount').innerHTML = '<div class="card"><table class="roster-table"><thead><tr>'+
-      '<th class="num">名次</th><th>股票</th><th class="num">股價</th><th class="num">EPS 明年成長</th><th class="num">ROIC</th><th class="num">距 52 週高</th><th>階段</th><th>DD 裁決</th>'+
-      '</tr></thead><tbody>'+body+'</tbody></table></div>'+
-      '<p class="roster-note">'+notes.join(' ')+' <a href="/dd-screener/tw/">完整台股池 →</a></p>';
+    var d = S.seats;
+    if(!d || !Array.isArray(d.core_seats)){ $('roster-mount').innerHTML = ph('台股席位資料暫缺'); return; }
+    function nm(r){return '<span class="roster-tk">'+esc(code(r.ticker))+'</span> '+esc(r.name||nameOf(r.ticker))+' <span class="mk">'+mkt(r.ticker)+'</span>';}
+    function lampLab(r){return r.lamp && r.lamp.label ? esc(r.lamp.label) : '<span class="muted">—</span>';}
+    var seatRows = d.core_seats.slice(0,5).map(function(r,i){
+      return '<tr><td class="num">C'+(i+1)+'</td><td>'+nm(r)+'</td><td>'+lampLab(r)+'</td><td>'+esc(r.action||'—')+'</td>'+
+        '<td class="num">'+(num(r.seat_target_pct)?Number(r.seat_target_pct).toFixed(1)+'%':'—')+'</td></tr>';
+    });
+    for(var i=seatRows.length;i<5;i++){
+      seatRows.push('<tr><td class="num">C'+(i+1)+'</td><td class="muted">空席</td><td class="muted">—</td><td class="muted">—</td><td class="num">現金</td></tr>');
+    }
+    var seatTbl = '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
+      '<th class="num">席號</th><th>股票</th><th>燈號</th><th>倉位</th><th class="num">本月占比</th>'+
+      '</tr></thead><tbody>'+seatRows.join('')+'</tbody></table></div>';
+    var q = (d.buyable||[]).slice(0,5);
+    var queue;
+    if(q.length){
+      queue = '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
+        '<th class="num">名次</th><th>股票</th><th>燈號</th></tr></thead><tbody>'+
+        q.map(function(r,i){return '<tr><td class="num">'+(i+1)+'</td><td>'+nm(r)+'</td><td>'+lampLab(r)+'</td></tr>';}).join('')+
+        '</tbody></table></div>';
+    } else {
+      queue = '<p class="roster-note">目前沒有排隊的股票。</p>';
+    }
+    var nWait = (d.waiting||[]).length;
+    $('roster-mount').innerHTML =
+      '<div class="roster-sub">在席</div>'+seatTbl+
+      '<div class="roster-sub">排隊（下次有空席先補）</div>'+queue+
+      '<p class="roster-note">等待池 '+nWait+' 檔（資格全過、時機燈還沒亮）→ <a href="#seats">看全部席位</a>。資料日 '+esc(String(d.as_of||'').slice(0,10))+'。</p>';
   }
 
   /* 選股流程：漏斗數字 */
