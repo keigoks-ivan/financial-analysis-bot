@@ -37,6 +37,33 @@ PY312="${KOYFIN_PY312:-/opt/homebrew/bin/python3.12}"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
+# 2026-10-21: --jitter-max-sec N (consumed here, not passed on) waits a random 0..N seconds
+# before doing anything, so the daily start time is not the same every day. Koyfin scraping
+# is never retried by this script or by koyfin_refresh_all.py: one attempt per run, and exit 3
+# (login expired) just stops.
+JITTER_MAX=0
+ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --jitter-max-sec)
+      JITTER_MAX="${2:?--jitter-max-sec needs a number of seconds}"; shift 2 ;;
+    --jitter-max-sec=*)
+      JITTER_MAX="${1#*=}"; shift ;;
+    *)
+      ARGS+=("$1"); shift ;;
+  esac
+done
+case "$JITTER_MAX" in
+  ''|*[!0-9]*) echo "ERROR: --jitter-max-sec must be a non-negative integer, got '$JITTER_MAX'" >&2; exit 2 ;;
+esac
+set -- ${ARGS[@]+"${ARGS[@]}"}
+if [ "$JITTER_MAX" -gt 0 ]; then
+  JITTER=$(( RANDOM * 32768 + RANDOM ))
+  JITTER=$(( JITTER % (JITTER_MAX + 1) ))
+  log "jitter: sleeping ${JITTER}s (max ${JITTER_MAX}s) before starting"
+  sleep "$JITTER"
+fi
+
 if [ ! -d "$SHARED_REPO/.git" ]; then
   echo "ERROR: $SHARED_REPO is not a git repo (expected the shared financial-analysis-bot checkout)" >&2
   exit 1

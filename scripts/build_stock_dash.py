@@ -1794,12 +1794,22 @@ def derive_fy_labels(info, yf_fy_label_note=None):
 _eps_snapshot_cache = {}
 
 
-def load_eps_snapshot_by_date(snapshot_date):
+def load_eps_snapshot_by_date(snapshot_date, kind=None):
+    """kind="daily"（latest.json 的 eps_rev_since_earnings_baseline_kind，2026-10-21）：
+    基準是每日快照，放在 eps-estimates-snapshots/daily/YYYY-MM-DD.json；其餘照舊找月快照。"""
     if not snapshot_date:
         return None
-    if snapshot_date in _eps_snapshot_cache:
-        return _eps_snapshot_cache[snapshot_date]
+    key = (snapshot_date, kind)
+    if key in _eps_snapshot_cache:
+        return _eps_snapshot_cache[key]
     found = None
+    if kind == "daily":
+        try:
+            found = json.loads((EPS_SNAPSHOT_DIR / "daily" / f"{snapshot_date}.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            found = None
+        _eps_snapshot_cache[key] = found
+        return found
     if EPS_SNAPSHOT_DIR.exists():
         for f in sorted(EPS_SNAPSHOT_DIR.glob("*.json")):
             try:
@@ -1809,7 +1819,7 @@ def load_eps_snapshot_by_date(snapshot_date):
             if d.get("snapshot_date") == snapshot_date:
                 found = d
                 break
-    _eps_snapshot_cache[snapshot_date] = found
+    _eps_snapshot_cache[key] = found
     return found
 
 
@@ -2160,7 +2170,10 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
     dd_as_of = str(load_dd_screener().get("as_of") or "")[:10] or None
     snap_1m = load_eps_snapshot_by_date(row.get("eps_revision_baseline_date"))
     snap_3m = load_eps_snapshot_by_date(row.get("eps_rev_3m_baseline_date"))
-    snap_since = load_eps_snapshot_by_date(row.get("eps_rev_since_earnings_baseline_date"))
+    _since_date = row.get("eps_rev_since_earnings_baseline_date")
+    snap_since = (load_eps_snapshot_by_date(_since_date, "daily")
+                  if row.get("eps_rev_since_earnings_baseline_kind") == "daily"
+                  else load_eps_snapshot_by_date(_since_date))
 
     # 2026-10-08：財年滾動偵測（與 dd-screener 同一個 eps_fy_shift.fy_shift）。
     from eps_fy_shift import fy_shift
@@ -2273,13 +2286,15 @@ def build_card_eps_revision(ticker, row, info, analyst_rev):
             "vs_since_earnings": row.get("eps_rev_since_earnings_baseline_date"),
             "since_earnings_anchor": row.get("eps_rev_anchor"),
             "since_earnings_days": row.get("eps_rev_since_earnings_days"),
+            "since_earnings_baseline_kind": row.get("eps_rev_since_earnings_baseline_kind"),
         },
         "table_fy_shift": {"vs_3m_ago": shift_3m, "vs_since_earnings": shift_since},
         "table_method": (
             "「較上月」直接用 dd-screener 已經算好的逐財年修正百分比；「近 3 個月」與「自上次財報以來」"
             "改用當時的月度 EPS 估值快照（docs/dd-screener/eps-estimates-snapshots/）比對現在的估值，"
             "逐財年重算 (現在−快照)÷|快照|×100%，算法跟 dd-screener 算「較上月」一樣，只是換比較基準日；"
-            "快照缺該財年資料就記為無資料。"
+            "快照缺該財年資料就記為無資料。「自上次財報以來」的基準直接用 dd-screener latest.json 的 "
+            "eps_rev_since_earnings_baseline：有每日快照時是財報前最後一天的每日快照，沒有時才用月度快照。"
         ),
         "eps_path_chart": eps_path_chart,
         "rev_yoy_bars": rev_yoy_bars,

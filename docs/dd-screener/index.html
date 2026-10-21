@@ -123,6 +123,23 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
 .ath-spotlight .ath-label{font-weight:700;color:var(--pos);margin-right:4px;white-space:nowrap}
 .ath-spotlight .ath-empty{color:var(--muted);font-style:italic}
 .ath-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:11px;font-weight:600;color:var(--pos);cursor:pointer;font-family:inherit;line-height:1.4;transition:background .12s,border-color .12s}
+.pe-track{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:0 20px 12px;font-size:11.5px;color:var(--ink)}
+.pe-head{font-size:12.5px}
+.pe-head .pe-sub{margin-left:8px;font-size:11px;color:var(--muted)}
+.pe-note{margin-top:4px;color:var(--sec);line-height:1.6}
+.pe-body{margin-top:8px;overflow-x:auto}
+.pe-empty{color:var(--muted);font-style:italic;line-height:1.6}
+.pe-tbl{border-collapse:collapse;width:100%;font-size:11.5px}
+.pe-tbl th,.pe-tbl td{padding:5px 9px;border-bottom:1px solid var(--line-soft);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pe-tbl th{font-size:10.5px;color:var(--sec);font-weight:600;background:var(--paper)}
+.pe-tbl th.l,.pe-tbl td.l{text-align:left}
+.pe-tbl th.grp{text-align:center;border-left:1px solid var(--line)}
+.pe-tbl td.sep{border-left:1px solid var(--line)}
+.pe-tbl .pe-miss{color:var(--muted);font-size:10.5px}
+.pe-tbl .pe-up{color:var(--pos);font-weight:700}
+.pe-tbl .pe-dn{color:var(--neg);font-weight:700}
+.pe-tbl .pe-tm{color:var(--muted);font-size:10.5px;margin-left:4px}
+.pe-foot{margin-top:6px;color:var(--muted);font-size:10.5px;line-height:1.6}
 .ath-chip:hover{background:#eafaef;border-color:var(--pos)}
 .ath-chip.at-high{background:var(--pos);border-color:var(--pos);color:#fff}
 .ath-chip.at-high:hover{background:var(--pos)}
@@ -264,6 +281,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
 <section class="ath-spotlight" id="ath-spotlight" aria-label="近 ATH 個股快速導航">
   <span class="ath-label">近 5Y 新高（日線 ≥ −2% · ≤ 10D）：</span>
   <span class="ath-empty" id="ath-empty-placeholder" style="display:none">暫無 ticker 觸頂</span>
+</section>
+
+<section class="pe-track" id="pe-track" aria-label="近期財報修正">
+  <div class="pe-head"><b>近期財報修正</b><span class="pe-sub" id="pe-sub"></span></div>
+  <div class="pe-note">財報公布後的頭兩個交易日，分析師把篩選用的兩個年度的 EPS 預估改了多少。這是研究用的檢視，不進排名，也不是買賣訊號。</div>
+  <div class="pe-body" id="pe-body"></div>
 </section>
 
 <div class="filter-row">
@@ -1243,7 +1266,8 @@ function _renderLiveEPSCell(s, flag) {
     var revSinceSign = s.eps_rev_since_earnings_pct > 0 ? '+' : '';
     var revSinceBase = s.eps_rev_since_earnings_baseline_date
       ? _baselineDateClean(s.eps_rev_since_earnings_baseline_date) : '?';
-    parts.push('財報後 ' + revSinceSign + s.eps_rev_since_earnings_pct.toFixed(1) + '%（基準 ' + revSinceBase + '）');
+    var revSinceKind = s.eps_rev_since_earnings_baseline_kind === 'daily' ? ' 每日快照' : '';
+    parts.push('財報後 ' + revSinceSign + s.eps_rev_since_earnings_pct.toFixed(1) + '%（基準 ' + revSinceBase + revSinceKind + '）');
   }
   if (s.days_to_next_earnings !== null && s.days_to_next_earnings !== undefined) {
     parts.push('下次財報 ' + s.days_to_next_earnings + ' 天');
@@ -2360,6 +2384,64 @@ document.addEventListener('click', function(e) {
   if (DATA) renderAll();
 });
 
+// ── 近期財報修正（2026-10-21）：財報前／第 1 天／第 2 天的 EPS 預估 ───────────
+function renderPostEarnings(pe) {
+  var body = document.getElementById('pe-body');
+  var sub = document.getElementById('pe-sub');
+  if (!body) return;
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  var rows = (pe && pe.rows) || [];
+  var n = pe && pe.daily_snapshot_count || 0;
+  if (sub) {
+    sub.textContent = pe ? ('每日快照 ' + n + ' 份' + (pe.daily_snapshot_first ? '，最早 ' + pe.daily_snapshot_first : '')) : '';
+  }
+  if (!rows.length) {
+    var msg;
+    if (!pe) {
+      msg = '這份資料還沒有產出近期財報修正。';
+    } else if (n === 0) {
+      msg = '每日快照剛開始累積，目前還沒有任何一天的資料。從第一份快照起，之後發財報的公司才會列在這裡。';
+    } else {
+      msg = '最近 ' + (pe.window_sessions || 5) + ' 個交易日沒有可以比較的財報。';
+    }
+    if (pe && pe.no_baseline_count) {
+      msg += '另有 ' + pe.no_baseline_count + ' 家最近發過財報，但財報前沒有每日快照可以當基準，沒有列出。';
+    }
+    body.innerHTML = '<div class="pe-empty">' + esc(msg) + '</div>';
+    return;
+  }
+  var yrs = (pe.years || rows[0].years.map(function(y) { return y.year; }));
+  function eps(v) { return v == null ? '<span class="pe-miss">尚未抓到</span>' : v.toFixed(2); }
+  function chg(v, day) {
+    if (v == null) return '<span class="pe-miss">—</span>';
+    var cls = v > 0 ? 'pe-up' : (v < 0 ? 'pe-dn' : '');
+    return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(1) + '%</span>' +
+           (day ? '<span class="pe-tm">第 ' + day + ' 天</span>' : '');
+  }
+  var h = '<table class="pe-tbl"><thead><tr><th class="l" rowspan="2">公司</th><th class="l" rowspan="2">財報日</th>';
+  yrs.forEach(function(y) { h += '<th class="grp" colspan="4">' + y + ' 年 EPS 預估</th>'; });
+  h += '</tr><tr>';
+  yrs.forEach(function() { h += '<th>財報前</th><th>第 1 天</th><th>第 2 天</th><th>變動</th>'; });
+  h += '</tr></thead><tbody>';
+  rows.forEach(function(r) {
+    var ccy = r.ccy && r.ccy !== 'USD' ? '<span class="pe-tm">' + esc(r.ccy) + '</span>' : '';
+    h += '<tr><td class="l"><b>' + esc(r.ticker) + '</b>' + ccy + '</td>' +
+         '<td class="l">' + esc(r.last_earnings_date) + '<span class="pe-tm">' + esc(r.timing) + '</span></td>';
+    (r.years || []).forEach(function(y) {
+      h += '<td class="sep">' + eps(y.before) + '</td><td>' + eps(y.day1) + '</td><td>' + eps(y.day2) +
+           '</td><td>' + chg(y.change_pct, y.change_day) + '</td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table>' +
+       '<div class="pe-foot">財報前＝財報當天開盤前最後一次抓到的預估；第 1 天＝財報後第一個交易日收盤之後抓到的第一份；' +
+       '第 2 天＝再隔一個交易日。變動是最新一天對財報前。「尚未抓到」代表那一天的快照還沒有。' +
+       '年份用日曆年對齊，各公司財年不同也放在同一年比。外幣公司以財報幣別計價。</div>';
+  body.innerHTML = h;
+}
+
 // ── Data fetch ────────────────────────────────────────────────────────────
 fetch('./latest.json')
   .then(function(r) {
@@ -2390,6 +2472,7 @@ fetch('./latest.json')
 
     updateHeroBadge();
     renderAthSpotlight(data.stocks || []);
+    renderPostEarnings(data.post_earnings_recent || null);
     renderEpsSourceBanner();
     renderAll();
     applyHashTicker();

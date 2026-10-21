@@ -20,9 +20,16 @@ Pipeline per family (screener / smallcap / largecap, see scripts/koyfin_families
      previous xlsx of the same family. This script only does the MECHANICAL
      screen (candidate list) — the skill's decision tree (stock split vs. bad
      Koyfin data vs. real analyst revision) requires WebSearch + judgment and
-     is NOT automated. Any flagged ticker is a hard stop (exit 6): no xlsx is
-     built, no downstream command runs, until a human resolves it (see the
-     note file this task also produces for the recovery procedure).
+     is NOT automated.
+     2026-10-21 (daily run, owner decision): flagged tickers are handled one by one
+     (rules in scripts/eps_daily.py): both |FY1| < 0.10 -> skipped; reported earnings in
+     the last 3 trading days -> accepted ("財報後大幅修正"); otherwise the EPS-estimate
+     columns (eps_daily.HELD_COLUMNS) keep the previous xlsx's values ("held") until the
+     same new FY1 (within 1%) shows on 2 consecutive scrapes; more than max(10, 5% of
+     rows) held in a family -> exit 6, nothing built. Each run writes
+     data/eps-estimates/gate/gate_report_<date>.json + held_state.json (committed), and
+     a daily EPS snapshot under docs/dd-screener/**/eps-estimates-snapshots/daily/.
+     The Koyfin scrape itself is never retried; login expired (exit 3) just stops.
   5. build the xlsx via `python3 scripts/koyfin_xlsx_from_raw.py`
 Then, once every requested family is done: the six downstream commands in
 the order the task brief gives them (note build_arena uses `python3`, not
@@ -54,7 +61,7 @@ import json
 import re
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -64,6 +71,8 @@ if str(SCRIPTS_DIR) not in sys.path:
 
 from koyfin_families import FAMILIES, FAMILY_ORDER, raw_txt_name, fingerprint_sidecar_name  # noqa: E402
 import load_eps_estimates_xlsx as leex  # noqa: E402  (stdlib-only reader, python3.12-safe)
+import eps_daily  # noqa: E402  (2026-10-21 逐檔閘門／每日快照)
+import market_sessions as ms  # noqa: E402
 
 RAW_DIR = ROOT / "data" / "eps-estimates"
 DATA_DIR = ROOT / "data" / "eps-estimates"
@@ -148,11 +157,13 @@ def parse_fy1_from_raw(raw_path: Path) -> dict:
 
 
 def find_previous_snapshot(data_dir: Path, xlsx_family: str, exclude_date: str) -> Path | None:
-    """Latest existing xlsx of this family strictly excluding `exclude_date`
+    """Latest existing xlsx of this family dated strictly BEFORE `exclude_date`
     (the date we're about to build) — find_latest_excel() alone would just
     return today's own file once it exists (e.g. largecap's only snapshot is
     2026-09-18 itself), which would make the gate compare a file against
-    itself. Returns None when there is no earlier snapshot (e.g. a family's
+    itself. 2026-10-21: "strictly before" instead of "any other date", so a
+    daily re-run (or a --date back-fill) never compares against a LATER file.
+    Returns None when there is no earlier snapshot (e.g. a family's
     first-ever run — the skill explicitly says Step 5 does not apply then)."""
     pat = re.compile(re.escape(xlsx_family) + r"(\d{8})\.xlsx$")
     candidates = []
@@ -160,7 +171,7 @@ def find_previous_snapshot(data_dir: Path, xlsx_family: str, exclude_date: str) 
         return None
     for p in data_dir.glob(f"{xlsx_family}*.xlsx"):
         m = pat.search(p.name)
-        if m and m.group(1) != exclude_date:
+        if m and m.group(1) < exclude_date:
             candidates.append((m.group(1), p))
     if not candidates:
         return None
@@ -177,8 +188,9 @@ def run_anomaly_gate(new_fy1: dict, prev_snapshot) -> dict:
     automated; a non-empty "flagged" list means the caller must stop and a
     human must walk that decision tree before anything downstream runs."""
     if prev_snapshot is None:
-        return {"flagged": [], "checked": 0, "skipped_no_prev": True}
+        return {"flagged": [], "tiny_eps_skipped": [], "checked": 0, "skipped_no_prev": True}
     flagged = []
+    tiny = []
     checked = 0
     for ticker, new_v in new_fy1.items():
         if new_v is None:
@@ -193,17 +205,19 @@ def run_anomaly_gate(new_fy1: dict, prev_snapshot) -> dict:
         sign_flip = (prev_v > 0 and new_v < 0) or (prev_v < 0 and new_v > 0)
         pct_move = None if prev_v == 0 else abs(new_v - prev_v) / abs(prev_v) * 100
         if sign_flip or (pct_move is not None and pct_move >= FY1_GATE_PCT):
-            flagged.append(
-                {
-                    "ticker": ticker,
-                    "prev_fy1": prev_v,
-                    "new_fy1": new_v,
-                    "pct_move": pct_move,
-                    "sign_flip": sign_flip,
-                }
-            )
+            row = {
+                "ticker": ticker,
+                "prev_fy1": prev_v,
+                "new_fy1": new_v,
+                "pct_move": pct_move,
+                "sign_flip": sign_flip,
+            }
+            # 2026-10-21 rule a: both |FY1| < 0.10 USD -> a cent of noise (MP 0.02->0.01,
+            # SPCX -0.09->-0.01), not an anomaly.
+            (tiny if eps_daily.is_tiny_eps(prev_v, new_v) else flagged).append(row)
     flagged.sort(key=lambda r: r["ticker"])
-    return {"flagged": flagged, "checked": checked, "skipped_no_prev": False}
+    tiny.sort(key=lambda r: r["ticker"])
+    return {"flagged": flagged, "tiny_eps_skipped": tiny, "checked": checked, "skipped_no_prev": False}
 
 
 # ---------------------------------------------------------------------------
@@ -273,6 +287,34 @@ def run_downstream() -> tuple[bool, str]:
 # Main
 # ---------------------------------------------------------------------------
 
+def raw_scraped_at_utc(raw_path: Path) -> datetime:
+    """When the raw file was written (UTC). The scrape writes it right before this script runs,
+    so the mtime is the scrape time; a --no-scrape re-run reads the same value (idempotent)."""
+    return datetime.fromtimestamp(raw_path.stat().st_mtime, tz=timezone.utc)
+
+
+def make_report_lookup(family_key: str, as_of_utc: datetime):
+    """Earnings-date lookup for flagged tickers only (monkeypatched in tests)."""
+    return eps_daily.make_report_dates_lookup(family_key, as_of_utc.date())
+
+
+def _print_gate_lists(family_key: str, res: dict, tiny: list) -> None:
+    def _row(r):
+        move = f"{r['pct_move']:.1f}%" if r.get("pct_move") is not None else "n/a"
+        return f"{r['ticker']}: prev_fy1={r['prev_fy1']} new_fy1={r['new_fy1']} move={move} sign_flip={r['sign_flip']}"
+    for title, key in (("財報後大幅修正（收下）", "accepted_after_earnings"),
+                       ("暫扣（EPS 預估欄沿用前一份）", "held"),
+                       ("連續兩天相同，放行", "released_after_2_days")):
+        rows = res[key]
+        print(f"[{family_key}] {title}: {len(rows)}")
+        for r in rows:
+            extra = f" report_date={r['report_date']}" if r.get("report_date") else ""
+            print(f"    {_row(r)}{extra}")
+    print(f"[{family_key}] 微小 EPS 略過: {len(tiny)}")
+    for r in tiny:
+        print(f"    {_row(r)}")
+
+
 def process_family(family_key: str, date_str: str, dry_run: bool, scratch_dir: Path | None) -> tuple[int, dict]:
     fam = FAMILIES[family_key]
     snapshot_date = f"{date_str[0:4]}-{date_str[4:6]}-{date_str[6:8]}"
@@ -286,34 +328,98 @@ def process_family(family_key: str, date_str: str, dry_run: bool, scratch_dir: P
     prev_path = find_previous_snapshot(DATA_DIR, fam["xlsx_family"], date_str)
     prev_snapshot = leex.load_excel(prev_path) if prev_path else None
     gate = run_anomaly_gate(new_fy1, prev_snapshot)
+    as_of_utc = raw_scraped_at_utc(raw_path)
+
+    report = {"family": family_key, "date": snapshot_date, "scraped_at_utc": as_of_utc.isoformat(),
+              "previous_xlsx": prev_path.name if prev_path else None, "rows": fp["rows"],
+              "checked": gate["checked"], "status": "ok",
+              "held_columns": [name for _, _, name in eps_daily.HELD_COLUMNS],
+              "accepted_after_earnings": [], "held": [], "released_after_2_days": [],
+              "tiny_eps_skipped": gate.get("tiny_eps_skipped", [])}
+    res = {"accepted_after_earnings": [], "held": [], "released_after_2_days": [], "state_after": {}}
 
     if gate["skipped_no_prev"]:
+        report["status"] = "no_previous_xlsx"
         print(f"[{family_key}] Step 5 gate: no previous {fam['xlsx_family']}*.xlsx snapshot to compare "
               f"against — gate not applicable (first run for this family), per skill.")
     else:
         print(f"[{family_key}] Step 5 gate: checked {gate['checked']} tickers vs. {prev_path.name}, "
-              f"{len(gate['flagged'])} flagged (|FY1 move| >= {FY1_GATE_PCT}% or sign flip).")
+              f"{len(gate['flagged'])} flagged (|FY1 move| >= {FY1_GATE_PCT}% or sign flip; "
+              f"{len(gate['tiny_eps_skipped'])} tiny-EPS skipped).")
+
+    # held state as it stood before this run (a same-day re-run starts from the same point -> idempotent)
+    state_before, state_writable = eps_daily.load_held_state(family_key, snapshot_date)
 
     if gate["flagged"]:
-        print(f"\n[{family_key}] STOP — Step 5 anomaly gate tripped. Mechanical screen only; a human must "
-              f"walk the skill's decision tree (stock split vs. bad Koyfin data vs. real analyst revision — "
-              f"SKILL.md Step 5) for each ticker below before any xlsx is built or any downstream command runs.\n")
-        for r in gate["flagged"]:
-            move = f"{r['pct_move']:.1f}%" if r["pct_move"] is not None else "n/a"
-            print(f"    {r['ticker']}: prev_fy1={r['prev_fy1']} new_fy1={r['new_fy1']} "
-                  f"move={move} sign_flip={r['sign_flip']}")
-        return 6, {"family": family_key, "gate": gate}
+        market = eps_daily.family_market(family_key)
+        ref = ms.latest_closed_session(market, as_of_utc)
+        lookup = make_report_lookup(family_key, as_of_utc)
+        res = eps_daily.resolve_flagged(
+            gate["flagged"], family_key=family_key, today=snapshot_date, state_before=state_before,
+            report_dates_for=lookup, ref_session=ref)
+        for k in ("accepted_after_earnings", "held", "released_after_2_days"):
+            report[k] = res[k]
+        _print_gate_lists(family_key, res, gate["tiny_eps_skipped"])
+
+        limit = eps_daily.held_limit(fp["rows"])
+        if len(res["held"]) > limit:
+            report["status"] = "blocked_too_many_held"
+            print(f"\n[{family_key}] STOP — {len(res['held'])} tickers held, over the limit "
+                  f"max({eps_daily.HELD_MAX_ABS}, {eps_daily.HELD_MAX_FRAC:.0%} of {fp['rows']} rows) = {limit:.0f}. "
+                  f"This looks like a broken scrape, not individual anomalies; nothing is built.\n")
+            if not dry_run:
+                eps_daily.write_gate_report(eps_daily.GATE_DIR, date_str, family_key, report)
+            return 6, {"family": family_key, "gate": gate}
+    elif gate["tiny_eps_skipped"]:
+        _print_gate_lists(family_key, res, gate["tiny_eps_skipped"])
+
+    build_raw = raw_path
+    if res["held"]:
+        held_set = {r["ticker"] for r in res["held"]}
+        lines = raw_path.read_text(encoding="utf-8").splitlines()
+        held_lines = eps_daily.apply_held_to_raw_lines(lines, held_set, prev_snapshot)
+        build_raw = raw_path.with_name(raw_path.stem + ".held.txt")
+        build_raw.write_text("\n".join(held_lines) + "\n", encoding="utf-8")
+        print(f"[{family_key}] held {len(held_set)} ticker(s): EPS-estimate columns "
+              f"({', '.join(report['held_columns'])}) copied from {prev_path.name} -> {build_raw.name}")
 
     out_dir = scratch_dir if dry_run and scratch_dir else DATA_DIR
     out_path = out_dir / f"{fam['xlsx_family']}{date_str}.xlsx"
-    rc, rows = build_xlsx(family_key, raw_path, out_path, snapshot_date)
+    rc, rows = build_xlsx(family_key, build_raw, out_path, snapshot_date)
     if rc != 0:
         return rc, {"family": family_key}
 
-    return 0, {"family": family_key, "rows": rows, "xlsx": out_path, "fingerprint": fp, "gate": gate}
+    if not dry_run:
+        eps_daily.write_gate_report(eps_daily.GATE_DIR, date_str, family_key, report)
+        if state_writable:
+            eps_daily.save_held_state(family_key, snapshot_date, state_before, res["state_after"])
+
+    return 0, {"family": family_key, "rows": rows, "xlsx": out_path, "fingerprint": fp, "gate": gate,
+               "gate_report": report, "scraped_at_utc": as_of_utc, "date_str": date_str}
 
 
-def git_commit(built: list[dict], push: bool) -> int:
+def write_daily_snapshots(built: list[dict], date_str: str) -> list[Path]:
+    """每日 EPS 快照：每個群組（dd = screener+largecap、smallcap、tw）一個檔，同一天重跑覆蓋。"""
+    written = []
+    snapshot_date = f"{date_str[0:4]}-{date_str[4:6]}-{date_str[6:8]}"
+    by_family = {b["family"]: b for b in built if "xlsx" in b}
+    for group, cfg in eps_daily.SNAPSHOT_GROUPS.items():
+        members = [by_family[f] for f in cfg["families"] if f in by_family]
+        if not members:
+            continue
+        excels = [leex.load_excel(b["xlsx"]) for b in members]
+        scraped = max(b["scraped_at_utc"] for b in members).isoformat()
+        doc = eps_daily.build_daily_snapshot(
+            group, excels, scraped_at_utc=scraped, source_files=[b["xlsx"].name for b in members])
+        doc["snapshot_date"] = snapshot_date
+        path = eps_daily.daily_dir(group) / f"{snapshot_date}.json"
+        eps_daily.write_daily_snapshot(path, doc)
+        print(f"[daily-snapshot] {group}: {doc['universe_size']} tickers -> {path.relative_to(ROOT)}")
+        written.append(path)
+    return written
+
+
+def git_commit(built: list[dict], push: bool, extra_paths: list[Path] | None = None) -> int:
     xlsx_paths = [str(b["xlsx"].relative_to(ROOT)) for b in built if "xlsx" in b]
     doc_paths = [
         "docs/dd-screener/latest.json", "docs/dd-screener/index.html",
@@ -322,7 +428,12 @@ def git_commit(built: list[dict], push: bool) -> int:
         "docs/dd-screener/tw/index.html",
         "docs/engine/arena.json", "docs/engine/board.txt", "docs/engine/_arena_body.html",
     ]
-    doc_paths = [p for p in doc_paths if (ROOT / p).exists()]
+    # 2026-10-21: daily EPS snapshots + gate report + held state ride in the same commit.
+    doc_paths += [str(p.relative_to(ROOT)) for p in (extra_paths or [])]
+    doc_paths += [str(p.relative_to(ROOT)) for p in (
+        eps_daily.HELD_STATE_PATH, eps_daily.GATE_DIR / "gate_report_latest.json",
+        *[eps_daily.GATE_DIR / f"gate_report_{b['date_str']}.json" for b in built if "date_str" in b])]
+    doc_paths = [p for p in dict.fromkeys(doc_paths) if (ROOT / p).exists()]
     add_paths = xlsx_paths + doc_paths
     if not add_paths:
         print("[commit] nothing to add (dry-run or no families built) — skipping.")
@@ -421,6 +532,10 @@ def main() -> int:
         proc = subprocess.run(cmd, cwd=str(ROOT))
         if proc.returncode != 0:
             print(f"koyfin_scrape.py --all failed (exit {proc.returncode})", file=sys.stderr)
+            if proc.returncode == 3:
+                print("Koyfin login expired (or no profile): stopping, no retry. Run "
+                      "`python3 scripts/koyfin_scrape.py --login` by hand.", file=sys.stderr)
+            # 2026-10-21: the scrape is never retried automatically (daily run, one attempt).
             return proc.returncode
 
     families = [args.only] if args.only else FAMILY_ORDER
@@ -445,6 +560,8 @@ def main() -> int:
             print(f"  {b['family']}: rows={b.get('rows')} -> {b.get('xlsx')}")
         return 0
 
+    daily_paths = write_daily_snapshots(built, date_str)
+
     ok, arena_line = run_downstream()
     if not ok:
         return 1
@@ -468,7 +585,7 @@ def main() -> int:
         print(f"  {arena_line}")
 
     if args.commit:
-        return git_commit(built, args.push)
+        return git_commit(built, args.push, daily_paths)
 
     print("\n(no --commit given — nothing staged, matching every other skill's default-stop-for-review git flow)")
     return 0

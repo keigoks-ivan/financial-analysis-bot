@@ -142,6 +142,7 @@ from eps_fy_shift import (  # noqa: E402
 )
 from tw_filing_calendar import latest_due_quarter_start  # noqa: E402
 import tw_mops_earnings  # noqa: E402
+import eps_daily  # noqa: E402  (2026-10-21 每日快照：財報前基準、財報後第 k 天)
 
 OUTPUT_DIR = ROOT / "docs" / "dd-screener"
 OUTPUT_PATH = OUTPUT_DIR / "latest.json"
@@ -2584,11 +2585,14 @@ def get_earnings_calendar(dd_ticker: str, yf_ticker: str, cache: dict) -> dict:
     def _from(h):
         return {"last_earnings_date": h.get("last_earnings_date"),
                 "next_earnings_date": h.get("next_earnings_date"),
-                "past_earnings_dates": h.get("past_earnings_dates")}
+                "past_earnings_dates": h.get("past_earnings_dates"),
+                "last_earnings_time": h.get("last_earnings_time")}
 
     # 2026-10-08: entries without past_earnings_dates predate the fiscal-year
     # rollover fix (eps_fy_shift.py) -> treated as stale, refetched once.
-    if hit.get("checked") and "past_earnings_dates" in hit:
+    # 2026-10-21: entries without last_earnings_time (BMO/AMC) predate the post-earnings
+    # tracking section -> refetched once.
+    if hit.get("checked") and "past_earnings_dates" in hit and "last_earnings_time" in hit:
         try:
             checked = datetime.strptime(hit["checked"], "%Y-%m-%d").date()
             if (today - checked).days < EARNINGS_CALENDAR_CACHE_MAX_AGE_DAYS:
@@ -2596,6 +2600,7 @@ def get_earnings_calendar(dd_ticker: str, yf_ticker: str, cache: dict) -> dict:
         except ValueError:
             pass
     last_ed = next_ed = None
+    last_time = None
     past_dates: list[str] = []
     try:
         ed = yf.Ticker(yf_ticker).get_earnings_dates(limit=12)
@@ -2612,6 +2617,11 @@ def get_earnings_calendar(dd_ticker: str, yf_ticker: str, cache: dict) -> dict:
             if len(past):
                 last_ed = past.max().date().isoformat()
                 past_dates = sorted({ts.date().isoformat() for ts in past})
+                # 2026-10-21: 盤前／盤後（同 build_earnings_reaction.classify：16:00 以後算盤後；
+                # 00:00 視為只知日期，不判斷）。index 已去掉時區，時間是交易所當地時間。
+                _lt = past.max()
+                if not (_lt.hour == 0 and _lt.minute == 0):
+                    last_time = "AMC" if _lt.hour + _lt.minute / 60 >= 16 else "BMO"
             future = idx[idx > today_ts]
             if len(future):
                 next_ed = future.min().date().isoformat()
@@ -2622,6 +2632,7 @@ def get_earnings_calendar(dd_ticker: str, yf_ticker: str, cache: dict) -> dict:
     with _earnings_calendar_lock:
         cache[dd_ticker] = {"last_earnings_date": last_ed, "next_earnings_date": next_ed,
                              "past_earnings_dates": past_dates,
+                             "last_earnings_time": last_time,
                              "checked": today.isoformat()}
     return _from(cache[dd_ticker])
 
@@ -2660,6 +2671,20 @@ def _load_all_monthly_snapshots() -> dict:
                 continue
     _ALL_MONTHLY_SNAPSHOTS_CACHE = out
     return out
+
+
+_ALL_DAILY_SNAPSHOTS_CACHE: dict | None = None
+
+
+def _load_all_daily_snapshots() -> dict:
+    """2026-10-21: every daily EPS snapshot ({snapshot_dir}/daily/YYYY-MM-DD.json, written by
+    koyfin_refresh_all.py; see eps_daily.py) keyed by date. Kept in a subdirectory so the 1m /
+    3m / monthly loaders above (which only match files directly in the snapshot dir) never see
+    them. Cached at module level like the other snapshot loaders."""
+    global _ALL_DAILY_SNAPSHOTS_CACHE
+    if _ALL_DAILY_SNAPSHOTS_CACHE is None:
+        _ALL_DAILY_SNAPSHOTS_CACHE = eps_daily.load_daily_snapshots(_snapshot_dir() / "daily")
+    return _ALL_DAILY_SNAPSHOTS_CACHE
 
 
 def pick_strictly_before_baseline(snapshots: dict, target_date: str | None) -> dict | None:
@@ -3074,7 +3099,9 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
                                      last_fye: str | None = None,
                                      past_earnings_dates: list | None = None,
                                      current_source: str | None = None,
-                                     quarter_anchor_date: str | None = None) -> dict:
+                                     quarter_anchor_date: str | None = None,
+                                     daily_snapshots: dict | None = None,
+                                     market: str = "US") -> dict:
     """v4 席位引擎財報錨定上修 (2026-09-17 owner decision — see
     knowledge/rule_ledger.md「上修改為財報後錨定」列 for the calendar-window
     unfairness this fixes): like _compute_eps_rev_3m(), but the baseline
@@ -3117,6 +3144,15 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
                                               snapshot actually used and
                                               TODAY (how stale the anchor is,
                                               regardless of which anchor won)
+      eps_rev_since_earnings_baseline      — {"date", "kind"}; kind "daily" (the last daily
+                                              snapshot taken before the report, 2026-10-21) or
+                                              "monthly" (the monthly picker above; also the
+                                              calendar-3m fallback). The daily snapshot is used
+                                              when its scraped_at_utc is before the earnings
+                                              day's cutoff (10:00 UTC, TW 05:30 UTC) and its
+                                              date is within 10 days of the report; anchors
+                                              "earnings" / "earnings_pending" only.
+      eps_rev_since_earnings_baseline_kind — same as baseline["kind"], flat for readers.
 
     `monthly_snapshots` is injectable (defaults to _load_all_monthly_
     snapshots(), same convention as compute_eps_fy1_consec_down()'s
@@ -3150,12 +3186,22 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
         anchor_date = prior[-1].isoformat() if prior else None
         anchor = "earnings_pending"
 
-    baseline = pick_strictly_before_baseline(monthly_snapshots, anchor_date)
+    baseline, baseline_kind = None, "monthly"
+    if anchor in ("earnings", "earnings_pending"):
+        baseline = eps_daily.pick_daily_baseline(
+            daily_snapshots if daily_snapshots is not None else _load_all_daily_snapshots(),
+            anchor_date, market)
+        if baseline is not None:
+            baseline_kind = "daily"
+    if baseline is None:
+        baseline = pick_strictly_before_baseline(monthly_snapshots, anchor_date)
     if baseline is None:
         baseline_date = eps_rev_3m_result.get("eps_rev_3m_baseline_date")
         return {
             "eps_rev_since_earnings_pct": eps_rev_3m_result.get("eps_rev_3m_pct"),
             "eps_rev_since_earnings_baseline_date": baseline_date,
+            "eps_rev_since_earnings_baseline": {"date": baseline_date, "kind": "monthly"},
+            "eps_rev_since_earnings_baseline_kind": "monthly",
             "eps_rev_anchor": "calendar_3m",
             "eps_rev_since_earnings_anchor_date": None,
             "eps_rev_since_earnings_days": _days_since(baseline_date),
@@ -3173,6 +3219,8 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
     return {
         "eps_rev_since_earnings_pct": _fold_eps_rev_fy_weighted(rev),
         "eps_rev_since_earnings_baseline_date": baseline_date,
+        "eps_rev_since_earnings_baseline": {"date": baseline_date, "kind": baseline_kind},
+        "eps_rev_since_earnings_baseline_kind": baseline_kind,
         "eps_rev_anchor": anchor,
         "eps_rev_since_earnings_anchor_date": anchor_date,
         "eps_rev_since_earnings_days": _days_since(baseline_date),
@@ -3180,6 +3228,12 @@ def _compute_eps_rev_since_earnings(ticker: str, yf_ticker: str, eps_curr: float
         "eps_rev_since_earnings_fy_shift_status": rev.get("eps_revision_fy_shift_status"),
         "_eps_rev_since_earnings_fy": _fy_triplet(rev),
     }
+
+
+def _market_of_ticker(ticker: str) -> str:
+    """"TW" for the TW pool and any .TW/.TWO listing, else "US" (2026-10-21: picks the
+    daily-baseline cutoff time and the trading calendar)."""
+    return "TW" if UNIVERSE_MODE == "tw" or ticker.endswith((".TW", ".TWO")) else "US"
 
 
 def tw_quarter_anchor_date(import_date: str | None, last_earnings_date: str | None) -> str | None:
@@ -4389,6 +4443,7 @@ def enrich_ticker(
         quarter_anchor_date=(tw_quarter_anchor_date(
             excel_snapshot.snapshot_date if excel_snapshot else None, last_earnings_date)
             if UNIVERSE_MODE == "tw" else None),
+        market=_market_of_ticker(t),
     )
 
     # 2026-09-17: fundamental gates — DD 技能既有機械規則搬進 screener (see
@@ -4505,6 +4560,7 @@ def enrich_ticker(
         # 財報錨定上修 (2026-09-17): per-ticker earnings calendar + the
         # earnings-anchored revision (see _compute_eps_rev_since_earnings()).
         "last_earnings_date": last_earnings_date,
+        "last_earnings_time": _earnings_cal.get("last_earnings_time"),   # "BMO" / "AMC" / None（2026-10-21）
         "fiscal_year_end": last_fye,
         "past_earnings_dates": past_earnings_dates,
         "next_earnings_date": next_earnings_date,
@@ -4909,6 +4965,25 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
                 elapsed = time.time() - t0
                 print(f"    [{i:>3}/{len(futs)}] {elapsed:.0f}s")
 
+    # Step 4.35 (2026-10-21): 近期財報修正——財報公布後第 1、2 天的 EPS 預估逐日變化，
+    # 讀每日快照（docs/dd-screener/**/eps-estimates-snapshots/daily/）。研究檢視，不進任何分數。
+    _pe_asof = excel_snapshot.snapshot_date if excel_snapshot else None
+    _pe_years = condition_calendar_years(_pe_asof) if _pe_asof else None
+    _pe_daily = _load_all_daily_snapshots()
+    post_earn = {"tracks": {}, "recent": [], "no_baseline": []}
+    if _pe_years:
+        post_earn = eps_daily.compute_post_earnings_tracks(
+            enriched, daily_snapshots=_pe_daily, years=_pe_years, now_utc=datetime.now(timezone.utc),
+            market_for=lambda r: _market_of_ticker(r["ticker"]),
+            currency_for=lambda t: (reporting_ccy_cache.get(t) or {}).get("currency"),
+            fx_for=lambda c, d: get_fx_rate(c, d, fx_cache))
+    for _row in enriched:
+        _tr = post_earn["tracks"].get(_row["ticker"])
+        if _tr:
+            _row["post_earnings_track"] = _tr
+    print(f"  [post-earnings] daily snapshots {len(_pe_daily)}, recent reporters with a baseline "
+          f"{len(post_earn['recent'])}, without a baseline {len(post_earn['no_baseline'])}")
+
     # Step 4.4: persist the reporting-currency / FX caches (new tickers/dates
     # resolved during this run) — best-effort, never blocks the build.
     if not dry_run:
@@ -5207,6 +5282,17 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         "roic_decomp_summary": roic_decomp_summary,
         "fundamental_gates_summary": fundamental_gates_summary,
         "funnel_gate_summary": funnel_gate_summary,
+        # 2026-10-21: 近期財報修正（第 k 天＝財報後第 k 個交易日收盤之後的第一份每日快照）
+        "post_earnings_recent": {
+            "as_of": now.strftime("%Y-%m-%d"),
+            "window_sessions": eps_daily.POST_EARNINGS_WINDOW_SESSIONS,
+            "years": list(_pe_years) if _pe_years else None,
+            "daily_snapshot_count": len(_pe_daily),
+            "daily_snapshot_first": min(_pe_daily) if _pe_daily else None,
+            "daily_snapshot_last": max(_pe_daily) if _pe_daily else None,
+            "no_baseline_count": len(post_earn["no_baseline"]),
+            "rows": post_earn["recent"],
+        },
         "stocks": enriched,
     }
     if UNIVERSE_MODE == "tw":

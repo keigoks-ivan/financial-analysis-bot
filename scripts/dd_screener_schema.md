@@ -444,6 +444,27 @@ The 32 existing 進場 DDs were backfilled into the kill registry as `llm_only`
 entries (`source: "dd_backfill_2026-07-19"`) without touching the published HTML —
 future DDs emit the field natively.
 
+## Daily EPS snapshots and 近期財報修正 (2026-10-21)
+
+`koyfin_refresh_all.py` scrapes every Tue–Sat and writes one compact EPS snapshot per
+universe group per day to `eps-estimates-snapshots/daily/YYYY-MM-DD.json`
+(`smallcap/` and `tw/` have their own `daily/`). Same row schema as the monthly files
+(`eps_fy_curr/next/fy3`, `eps_cagr_2y`, `source`) plus `kind: "daily"` and
+`scraped_at_utc`. The subdirectory keeps them away from the 1m / 3m / monthly loaders.
+
+New per-stock fields: `last_earnings_time` ("BMO" / "AMC" / null),
+`eps_rev_since_earnings_baseline` (`{"date", "kind": "daily" | "monthly"}`) and the flat
+`eps_rev_since_earnings_baseline_kind`. `kind: "daily"` = the last daily snapshot whose
+`scraped_at_utc` is before 10:00 UTC on the report date (TW: 05:30 UTC) and whose date is
+within 10 days of it; otherwise the monthly picker applies unchanged.
+
+New top level `post_earnings_recent`: `{as_of, window_sessions, years, daily_snapshot_count,
+daily_snapshot_first/last, no_baseline_count, rows[]}`. Each row (also stored on the stock as
+`post_earnings_track`) has `ticker, last_earnings_date, timing, reaction_day, ccy,
+before_snapshot, day1_snapshot, day2_snapshot, years[{year, before, day1, day2, change_pct,
+change_day}]`. Day k = the first daily snapshot scraped after the close of trading day
+R+k−1 (R = first session after the report is public). Research view only.
+
 ## File location
 
 ```
