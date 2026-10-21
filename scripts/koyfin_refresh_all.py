@@ -58,6 +58,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -452,11 +453,47 @@ def git_commit(built: list[dict], push: bool, extra_paths: list[Path] | None = N
         print(proc.stderr, file=sys.stderr)
         return proc.returncode
     if push:
-        return git_push_with_retry()
+        return git_push_with_retry(add_paths=add_paths)
     return 0
 
 
-def git_push_with_retry(max_attempts: int = 3) -> int:
+def in_dedicated_worktree() -> bool:
+    """True only inside the unattended automation worktree that koyfin_refresh_worktree.sh resets
+    to origin/main every run (KOYFIN_WORKTREE, default ~/.koyfin-refresh-worktree). Never true in
+    the shared working copy."""
+    target = Path(os.environ.get("KOYFIN_WORKTREE", str(Path.home() / ".koyfin-refresh-worktree")))
+    try:
+        return ROOT.resolve() == target.resolve()
+    except OSError:
+        return False
+
+
+def replay_onto_origin(add_paths: list[str]) -> int:
+    """2026-10-21 (daily runs): in the dedicated worktree only. The downstream builds leave
+    tracked caches modified (data/*_cache.json, data/weekly_cache/...), so a plain rebase refuses,
+    and origin/main moves almost every day (daily CI commits latest.json / arena.json). Instead:
+    drop the leftover cache edits (the worktree is reset and cleaned on the next run anyway), move
+    to origin/main, put back exactly this run's committed files from our commit, commit again.
+    Our files win: they were all rebuilt from the new xlsx in this run."""
+    ours = run(["git", "rev-parse", "HEAD"]).stdout.strip()
+    msg = run(["git", "log", "-1", "--format=%B", ours]).stdout.strip()
+    for cmd in (["git", "checkout", "--", "."], ["git", "fetch", "origin", "main"],
+                ["git", "reset", "--hard", "origin/main"],
+                ["git", "checkout", ours, "--"] + add_paths):
+        proc = run(cmd)
+        if proc.returncode != 0:
+            print(proc.stderr, file=sys.stderr)
+            print(f"[push] replay failed at `{' '.join(cmd[:3])}`; our commit is {ours}", file=sys.stderr)
+            return proc.returncode
+    proc = run(["git", "commit", "-m", msg])
+    print(proc.stdout)
+    if proc.returncode != 0:
+        print(proc.stderr, file=sys.stderr)
+        return proc.returncode
+    return 0
+
+
+def git_push_with_retry(max_attempts: int = 3, add_paths: list[str] | None = None) -> int:
     """Push HEAD onto origin's main (`HEAD:main`, not `main` — this also
     works from a detached-HEAD worktree whose local branch isn't literally
     named main, as well as the ordinary case of running on branch main).
@@ -465,8 +502,9 @@ def git_push_with_retry(max_attempts: int = 3) -> int:
     routinely has other Claude sessions' uncommitted work sitting in it, and
     `--autostash` can silently fold that into our rebase or lose it under a
     conflict — see notes/site-internal/root/_koyfin_refresh_automation_20260918.md.
-    The dedicated automation worktree this now normally runs in is always
-    clean going in, so it never needs autostash in the first place. A plain
+    The dedicated automation worktree is clean going in, but the downstream
+    builds leave tracked caches modified; there (only there) a rejected push
+    is handled by replay_onto_origin() instead of a rebase (2026-10-21). A plain
     `git rebase` refusing on a dirty tree (manual/shared-copy runs) is the
     correct behavior here, not a bug to route around.
 
@@ -479,6 +517,13 @@ def git_push_with_retry(max_attempts: int = 3) -> int:
         if proc.returncode == 0:
             return 0
         print(proc.stderr, file=sys.stderr)
+        if add_paths and in_dedicated_worktree():
+            print(f"[push] rejected (attempt {attempt}/{max_attempts}) — dedicated worktree: replaying this "
+                  f"run's files onto origin/main (never force-push)...")
+            rc = replay_onto_origin(add_paths)
+            if rc != 0:
+                return rc
+            continue
         print(f"[push] rejected (attempt {attempt}/{max_attempts}) — fetching + rebasing onto "
               f"origin/main (no autostash; never force-push)...")
         proc = run(["git", "fetch", "origin", "main"])

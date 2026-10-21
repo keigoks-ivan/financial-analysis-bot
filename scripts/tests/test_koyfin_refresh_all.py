@@ -208,3 +208,41 @@ def test_find_previous_snapshot_finds_prior_universe_xlsx():
     assert prev is not None
     assert prev.name != "DD_universe_EPS_estimates_20260918.xlsx"
     assert prev.name.startswith("DD_universe_EPS_estimates_")
+
+
+def _git(cwd, *args):
+    import subprocess
+    return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args], cwd=str(cwd),
+                          text=True, capture_output=True, check=True).stdout.strip()
+
+
+def test_push_replays_onto_moved_origin_in_dedicated_worktree(tmp_path, monkeypatch):
+    """2026-10-21: origin moved (CI rewrote latest.json) and the worktree has leftover cache edits ->
+    replay our files onto origin/main and push; our latest.json wins, CI's other file is kept."""
+    origin, a, b = tmp_path / "origin.git", tmp_path / "a", tmp_path / "b"
+    _git(tmp_path, "init", "--bare", "-b", "main", str(origin))
+    _git(tmp_path, "clone", str(origin), str(a))
+    (a / "latest.json").write_text("v0\n"); (a / "cache.json").write_text("c0\n")
+    _git(a, "add", "."); _git(a, "commit", "-m", "base"); _git(a, "push", "origin", "HEAD:main")
+    _git(tmp_path, "clone", str(origin), str(b))
+    (b / "latest.json").write_text("ci\n"); (b / "other.txt").write_text("ci other\n")
+    _git(b, "add", "."); _git(b, "commit", "-m", "ci"); _git(b, "push", "origin", "HEAD:main")
+    (a / "latest.json").write_text("ours\n"); (a / "new.xlsx").write_text("x\n")
+    _git(a, "add", "latest.json", "new.xlsx"); _git(a, "commit", "-m", "koyfin refresh")
+    (a / "cache.json").write_text("dirty\n")          # downstream leftover
+    monkeypatch.setattr(kra, "ROOT", a)
+    monkeypatch.setenv("KOYFIN_WORKTREE", str(a))
+    monkeypatch.setenv("GIT_AUTHOR_NAME", "t"); monkeypatch.setenv("GIT_AUTHOR_EMAIL", "t@t")
+    monkeypatch.setenv("GIT_COMMITTER_NAME", "t"); monkeypatch.setenv("GIT_COMMITTER_EMAIL", "t@t")
+    assert kra.git_push_with_retry(add_paths=["latest.json", "new.xlsx"]) == 0
+    _git(b, "pull", "-q", "origin", "main")
+    assert (b / "latest.json").read_text() == "ours\n"
+    assert (b / "new.xlsx").exists() and (b / "other.txt").read_text() == "ci other\n"
+    assert (b / "cache.json").read_text() == "c0\n"
+    assert _git(b, "log", "-1", "--format=%s") == "koyfin refresh"
+
+
+def test_push_shared_copy_never_replays(tmp_path, monkeypatch):
+    monkeypatch.setattr(kra, "ROOT", tmp_path / "shared")
+    monkeypatch.setenv("KOYFIN_WORKTREE", str(tmp_path / "elsewhere"))
+    assert kra.in_dedicated_worktree() is False
