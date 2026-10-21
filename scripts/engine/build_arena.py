@@ -1023,7 +1023,7 @@ def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
         L.append("  （無——等待池目前沒有亮燈的名字）")
     L.append("")
 
-    L.append(f"== ③ 等待池（上修夠強、時機燈還沒亮，共 {len(waiting_rest)} 檔；組內依上修排序）")
+    L.append(f"== ③ 等待池（資格全過、時機燈還沒亮，共 {len(waiting_rest)} 檔；組內依上修排序）")
     if not waiting_rest:
         L.append("  （無）")
     else:
@@ -1062,13 +1062,14 @@ def _lamp_rules_html() -> str:
     rows = "".join(
         f'<tr><td>{escape(c["label"])}</td><td>{escape(cond)}</td>'
         f'<td class="n">{"0" if c["size"] == 0 else format(c["size"], ".1f")}</td>'
-        f'<td>{"亮燈，可入席" if c["code"] in LIT_LAMP_CODES else "不入席；在席者週六下席"}</td></tr>'
+        f'<td>{"亮燈，可入席" if c["code"] in LIT_LAMP_CODES else ("不入席；在席者大盤多頭時續抱，大盤空頭時週六下席" if c["code"] == "red" else "不入席；在席者週六下席（失去資格）")}</td></tr>'
         for c, cond in cases)
     return ('<!--LAMP_RULES--><div class="bw-lamp-rules"><table>'
             '<thead><tr><th>燈號</th><th>條件</th><th>倉位</th><th>核心席</th></tr></thead>'
             f'<tbody>{rows}</tbody></table>'
             '<div class="bw-lamp-foot">歷史新高＝還原權息後的全歷史最高收盤價；200 日線、52 週線都是收盤均線。'
-            '燈號和倉位每天更新；核心席每週六（台北）依週五收盤重算，週中轉紅只把倉位降到 0，席位等週六才換。</div>'
+            '燈號和倉位每天更新；核心席每週六（台北）依週五收盤重算。在席者週中轉紅：大盤空頭週倉位降到 0、週六下席；'
+            '大盤多頭週續抱，倉位沿用最近一次非紅燈的倉位。</div>'
             '</div><!--/LAMP_RULES-->')
 
 
@@ -1133,7 +1134,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
              "OUT/-=不合格·未站上 52 週線")
     L.append("dd 代碼：IN/WATCH/AVOID/legacy/none，core/sat/trk=角色，Nd=天數，"
              "!old=逾 180 天過期")
-    L.append("怎麼用：核心或②可買＝現在可以買；③等待池＝上修夠強但燈號還沒亮，等燈亮。")
+    L.append("怎麼用：核心或②可買＝現在可以買；③等待池＝資格全過但燈號還沒亮，等燈亮。")
     L.append("")
     L.extend(_pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
                                  lamp_as_of, last_rotation_date))
@@ -1781,18 +1782,18 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 
     lamp_rules = _lamp_rules_html()
     legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表（下方「全母體看板」共用本段說明）</summary>
-<div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看分析師有沒有在財報後上修（排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心席每週六（台北）依週五收盤重算：池內亮燈者依上修取前 5，亮燈不足就空席；週中燈號只管倉位。這是研究名單，不是帳戶持倉。</div>
+<div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看分析師有沒有在財報後上修（排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心席每週六（台北）依週五收盤重算：池內亮燈者依上修取前 5，亮燈不足就空席。賣法是大盤空頭才看紅燈（見上方賣法）。這是研究名單，不是帳戶持倉。</div>
 <div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘（ROIC ≥15% 且自由現金流 &gt;0）、三年成長 15%、站上 52 週線。四項全過才有資格；耐久只是旗標。資格全過就入池（v5.7 起沒有上修門檻）。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
 <div class="bw-note-line"><b>耐久</b>：兩種算法擇一達標即可。QGM 五年 ROIC 穩定度 ≥75%；或 Koyfin 五年平均、三年平均、現值三者都 ≥15%。看的是一致性，不是單一年份。只當旗標，不擋資格。</div>
 <div class="bw-note-line"><b>第二關 排序</b>：只看財報後上修幅度。基準是該股最近一次財報日前的月度快照，缺財報錨定時退回三個月。池內依上修由高到低排，缺上修數字的排最後。同值先比隱含成長率，再比盈餘殖利率。不看股價漲幅。綜合對照分只在「上修%（財報後）」欄的滑鼠提示裡顯示，不參與排序。</div>
-<div class="bw-note-line"><b>第三關 時機燈</b>：量股價離歷史新高多遠，燈號直接決定倉位，判定見下表。過熱與頂點不擋資格；相對強度與生命週期階段只在滑鼠提示顯示，不影響燈號。</div>
+<div class="bw-note-line"><b>第三關 時機燈</b>：量股價離歷史新高多遠，燈號直接決定倉位，判定見下表。例外是大盤多頭時續抱的紅燈在席者，倉位沿用最近一次非紅燈的倉位。過熱與頂點不擋資格；相對強度與生命週期階段只在滑鼠提示顯示，不影響燈號。</div>
 {lamp_rules}
-<div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內亮燈者依上修取前 5，每週六重算；週中轉紅的核心席等週六重算才下席。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依上修排序。</div>
+<div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內亮燈者依上修取前 5，每週六重算。在席者轉紅時，大盤空頭週六下席；大盤多頭續抱，只有失去資格才下席。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依上修排序。</div>
 <div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。</div>
 <div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排②可買裡 🟡 接近新高組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。</div>
 <div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只是顯示，不影響席位與排序。有護城河評級時在本欄滑鼠提示。</div>
 <div class="bw-note-line"><b>備註欄</b>：以下都只是顯示，不進資格與排序。⚠ 頂點＝ROIC 高於五年平均 1.3 倍；基期＝三年 CAGR 因 FY1→FY2 低基期跳增，改用 FY2→FY3 成長率；循環守門＝循環股（毛利率跨距大或資本支出佔營收高）且 PEG 低到可疑；循環＝循環股但未觸發守門；財報前＝距下次財報 ≤7 天；內部人買／內部人賣＝近 3 個月內部人淨買賣方向；新席／現任／遞補＝本期席位異動狀態。</div>
-<div class="bw-note-line"><b>怎麼用</b>：核心或②可買＝現在可以買。③等待池＝上修夠強但燈號還沒亮，等燈亮。</div>
+<div class="bw-note-line"><b>怎麼用</b>：核心或②可買＝現在可以買。③等待池＝資格全過但燈號還沒亮，等燈亮。</div>
 </details>"""
 
     gone = [t for t in prev_seats if t not in seat_label]
@@ -1810,13 +1811,13 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
                 if (lamp_as_of or last_rotation_date) else "")
 
     return ('<h3 class="bw-sec">① 核心席（5）</h3>'
-           + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。週中燈號只管倉位，席位等週六複判。</div>'
+           + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。週中燈號只管倉位，席位等週六複判；大盤多頭時紅燈的現任續抱（見賣法）。</div>'
            + freshness + market_note + core_tbl + legend + changes_html
            + f'<h3 class="bw-sec">② 可買（{len(buyable)} 檔）</h3>'
            + '<div class="bw-sub">池內沒進核心、今天時機燈亮著（綠／黃／橘）的名字，依燈號分組。可能是空清單。</div>'
            + buyable_tbl
            + f'<h3 class="bw-sec">③ 等待池（{len(waiting_rest)} 檔）</h3>'
-           + '<div class="bw-sub">上修夠強、時機燈還沒亮——池中扣掉核心與②可買後的其餘名字，'
+           + '<div class="bw-sub">資格全過、時機燈還沒亮：池中扣掉核心與②可買後的其餘名字，'
              '依時機燈分組（🔴拉回中／⚫不合格或資料缺），組內依上修排序。</div>'
            + waiting_tbl)
 
