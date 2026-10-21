@@ -105,9 +105,9 @@ v5.3（2026-10-18 持有人拍板；美股看板先改，同日晚間延伸到�
   非登記判準通過（數字見 grp.py 檔頭 v5.3 段）。
 
 v5.7（2026-10-21 持有人破例決定，只改美股看板；十倍股頁、台股不用本段）——賣法改「大盤空頭才看紅燈」：
-  決策日 SPY 還原收盤 < 200 日線＝大盤空頭。大盤多頭週在席者只在資格不成立（出池）或跌破自己的 200 日線時下席，
-  只因距歷史新高 <−10% 轉紅的續抱，倉位沿用最近一次非紅燈的倉位（狀態檔 arena_state.json）；大盤空頭週照現行；
-  大盤資料缺或超過 7 天退回現行賣法。實作在 scripts/engine/seat_x1.py（純函式），資料取 data/flowmap_prices.json 的
+  決策日 SPY 還原收盤 < 200 日線＝大盤空頭。大盤多頭週在席者只在資格不成立（出池，含站上 52 週線）時下席，
+  所有紅燈（距歷史新高 <−10% 或跌破 200 日線）都續抱，倉位沿用最近一次非紅燈的倉位（狀態檔 arena_state.json）；大盤空頭週照現行；
+  大盤資料缺或超過 7 天退回現行賣法。實作在 scripts/engine/seat_tm.py（純函式），資料取 data/flowmap_prices.json 的
   SPY（flowmap-daily 每日更新）。非登記通過：v7 席位全格子測試的登記結論是現行維持（大型股在登記裡只當參考），
   美股大型股配對格全期 100%／前段 81%／後段 91% 變好，判定母體（美股中小型）偏好紅燈就賣。
 
@@ -137,7 +137,7 @@ from engine.grp import (  # noqa: E402
     market_ok, own_score_v4, pool_sort_key, timing_lamp, lamp_action,
 )
 from dd_screener_quality import load_qgm_durability_index  # noqa: E402
-from engine import seat_x1  # noqa: E402
+from engine import seat_tm  # noqa: E402
 
 WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"   # 非 DD 池週線 fallback（見 build_radar.py 檔頭 docstring）
 QGM_US = ROOT / "docs" / "qgm" / "latest.json"
@@ -428,14 +428,6 @@ def dd_tag(s: dict) -> str:
     return tag
 
 
-def _below_200(s: dict) -> bool:
-    try:
-        v = float((s.get("timing") or {}).get("vs_200ma_pct"))
-    except (TypeError, ValueError):
-        return False
-    return v < 0
-
-
 def row_dict(s: dict, yellow_full: bool = False) -> dict:
     """yellow_full（v5.3，2026-10-18）：True＝黃燈滿倉（見 grp.timing_lamp），美股看板、台股席位、
     十倍股頁三個呼叫端都傳 True；預設 False 與舊版逐位元相同。"""
@@ -480,8 +472,6 @@ def row_dict(s: dict, yellow_full: bool = False) -> dict:
             # 是池排序（grp.pool_sort_key()）與 timing_lamp() 板機的原料，直接從 s
             # 讀（timing_lamp 已經讀過 s["ma"]，這裡另存一份供席位表欄位／tooltip用）。
             "dist_ath_pct": (s.get("ma") or {}).get("dist_ath_pct"),
-            # v5.7：跌破自己的 200 日線？（缺值不算跌破，同 timing_lamp 的 vs200 判斷）
-            "below_200": _below_200(s),
             "ath_adj_price": (s.get("ma") or {}).get("ath_adj_price"),
             "ath_adj_date": (s.get("ma") or {}).get("ath_adj_date"),
             "ath_source": (s.get("ma") or {}).get("ath_source"),
@@ -2412,12 +2402,12 @@ def main() -> int:
     # 平日只刷燈號，沿用上次 --ledger 的決策日（帳本 last_decision_date，沒有就用今天的資料日）。
     decision_date = as_of if args.ledger else (ledger0.get("last_decision_date") or as_of)
     try:
-        market = seat_x1.market_state(seat_x1.load_close_series(SPY_PRICES_JSON), decision_date)
+        market = seat_tm.market_state(seat_tm.load_close_series(SPY_PRICES_JSON), decision_date)
     except ValueError:   # as_of 是 "—" 等無法解析的日期：視為大盤資料缺，退回現行賣法
         market = {"mode": "e1", "status": "missing", "decision_date": None,
                   "data_date": None, "close": None, "ma200": None}
     if args.ledger:
-        rotation = seat_x1.select_roster(pool_rows, prev_core_roster, market, select_lit_roster_v52)
+        rotation = seat_tm.select_roster(pool_rows, prev_core_roster, market, select_lit_roster_v52)
     else:
         rotation = {"core": [t for t in (prev_core_roster or []) if t in all_by_ticker],
                     "rotated": False, "removed": [], "filled": []}
@@ -2429,12 +2419,12 @@ def main() -> int:
         state_doc = json.loads(STATE_JSON.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         state_doc = {}
-    x1_state = state_doc.get("last_nonred") or {}
-    x1_held = seat_x1.held_tickers(core_seats, set(pool_by_ticker), market, LIT_LAMP_CODES)
-    seat_x1.apply_hold(core_seats, x1_held, x1_state)
-    x1_new_state = seat_x1.update_state(x1_state, core_seats, as_of, LIT_LAMP_CODES)
-    if x1_new_state != x1_state:
-        STATE_JSON.write_text(json.dumps({"schema_version": "arena-state-1.0", "last_nonred": x1_new_state},
+    tm_state = state_doc.get("last_nonred") or {}
+    tm_held = seat_tm.held_tickers(core_seats, set(pool_by_ticker), market, LIT_LAMP_CODES)
+    seat_tm.apply_hold(core_seats, tm_held, tm_state)
+    tm_new_state = seat_tm.update_state(tm_state, core_seats, as_of, LIT_LAMP_CODES)
+    if tm_new_state != tm_state:
+        STATE_JSON.write_text(json.dumps({"schema_version": "arena-state-1.0", "last_nonred": tm_new_state},
                                          ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
     # 等待池＝池扣掉核心，依上修排序（已經是 pool_rows 的順序，直接篩即可）；
@@ -2454,7 +2444,7 @@ def main() -> int:
         t = r["ticker"]
         r["seat_note"] = "新席" if t in filled_tickers else "現任"   # v5.2：無遞補概念
         if (r.get("lamp") or {}).get("code") not in LIT_LAMP_CODES:
-            r["seat_note"] += "・大盤多頭續抱" if t in x1_held else "・週中轉紅，週六複判"
+            r["seat_note"] += "・大盤多頭續抱" if t in tm_held else "・週中轉紅，週六複判"
         r["track"] = "core"
     for r in waiting_pool:
         r["track"] = "pool"   # 2026-09-17：backward-compat 標記，見 payload["sat_seats"] 註解
@@ -2581,12 +2571,12 @@ def main() -> int:
                                    prev, entered, lamp_map, rev_data_as_of=rev_data_as_of,
                                    price_as_of=price_as_of, lamp_as_of=as_of,
                                    last_rotation_date=last_rotation_date,
-                                   market_note=seat_x1.market_note_html(market))
+                                   market_note=seat_tm.market_note_html(market))
     BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
         "schema_version": "5.0",
         "lamp_as_of": as_of, "lamp_source": "daily", "lamp_last_rotation_date": last_rotation_date,
-        "market_x1": market,
+        "market_tm": market,
         "rev_data_as_of": rev_data_as_of, "price_as_of": price_as_of,
         "method": ("v5 席位引擎（2026-09-17，owner thesis「品質派 ∩ 獲利上修 ∩ 突破還原權息歷史新高」）："
                   "資格＝品質派——品質閘（ROIC≥15∧FCF>0，v5.5 起，2026-10-18）×三年成長"

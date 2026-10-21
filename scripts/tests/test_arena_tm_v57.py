@@ -1,7 +1,7 @@
 """美股看板 v5.7（2026-10-21 持有人破例決定）：大盤空頭才看紅燈（SPY 還原收盤 vs 200 日線）。
 
-規則見 scripts/engine/seat_x1.py 檔頭。這裡驗：大盤狀態判定（含恰好相等、均線不足、不偷看決策日之後、資料過舊）、
-大盤多頭週紅燈不下席／跌破 200 日線或出池仍下席、大盤空頭週紅燈下席、資料過舊退回現行賣法、
+規則見 scripts/engine/seat_tm.py 檔頭（回測定義：紅燈 ∧ 大盤空頭，不是看大盤切換）。這裡驗：大盤狀態判定（含恰好相等、均線不足、不偷看決策日之後、資料過舊）、
+大盤多頭週所有紅燈（含跌破 200 日線）都不下席／出池仍下席、大盤空頭週紅燈下席、資料過舊退回現行賣法、
 續抱倉位沿用最近一次非紅燈的倉位（狀態檔）、十倍股頁與台股不受影響。合成資料，不連網。
 """
 from __future__ import annotations
@@ -16,7 +16,7 @@ import pytest
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from engine import build_arena, grp, seat_x1  # noqa: E402
+from engine import build_arena, grp, seat_tm  # noqa: E402
 from test_arena_lamp_only import _CORE5, _patch_paths, _v5_stock, _write_fixtures  # noqa: E402
 
 AS_OF = "2026-09-18"        # 週五
@@ -31,106 +31,106 @@ def _series(closes, end=date(2026, 9, 18)):
 # ── 大盤狀態 ──────────────────────────────────────────────────────────────
 
 def test_state_bear_bull_and_exactly_equal_is_bull():
-    bear = seat_x1.market_state(_series([100.0] * 199 + [99.0]), date(2026, 9, 18))
+    bear = seat_tm.market_state(_series([100.0] * 199 + [99.0]), date(2026, 9, 18))
     assert (bear["status"], bear["mode"]) == ("bear", "e1")
     # 恰好相等＝多頭：200 列平均 = 100，收盤 100
-    eq = seat_x1.market_state(_series([100.0] * 200), date(2026, 9, 18))
-    assert (eq["status"], eq["mode"]) == ("bull", "x1") and eq["ma200"] == 100.0
+    eq = seat_tm.market_state(_series([100.0] * 200), date(2026, 9, 18))
+    assert (eq["status"], eq["mode"]) == ("bull", "tm") and eq["ma200"] == 100.0
 
 
 def test_fewer_than_200_rows_counts_as_bull():
-    st = seat_x1.market_state(_series([100.0] * 150 + [1.0]), date(2026, 9, 18))
-    assert st["ma200"] is None and st["mode"] == "x1"
+    st = seat_tm.market_state(_series([100.0] * 150 + [1.0]), date(2026, 9, 18))
+    assert st["ma200"] is None and st["mode"] == "tm"
 
 
 def test_average_uses_exactly_the_last_200_rows():
-    st = seat_x1.market_state(_series([1000.0] * 50 + [100.0] * 200), date(2026, 9, 18))
+    st = seat_tm.market_state(_series([1000.0] * 50 + [100.0] * 200), date(2026, 9, 18))
     assert st["ma200"] == 100.0 and st["status"] == "bull"
 
 
 def test_never_peeks_past_the_decision_day():
     s = _series([100.0] * 199 + [110.0, 50.0])          # 最後一列暴跌，決策日是前一天
-    assert seat_x1.market_state(s, date(2026, 9, 17))["status"] == "bull"
-    assert seat_x1.market_state(s, date(2026, 9, 18))["status"] == "bear"
+    assert seat_tm.market_state(s, date(2026, 9, 17))["status"] == "bull"
+    assert seat_tm.market_state(s, date(2026, 9, 18))["status"] == "bear"
 
 
 def test_stale_or_missing_data_falls_back_to_current_exit():
     s = _series([100.0] * 200, end=date(2026, 9, 10))
-    st = seat_x1.market_state(s, date(2026, 9, 18))     # 8 天前
+    st = seat_tm.market_state(s, date(2026, 9, 18))     # 8 天前
     assert (st["status"], st["mode"]) == ("stale", "e1")
-    assert seat_x1.market_state(s, date(2026, 9, 17))["status"] == "bull"   # 7 天內不算舊
-    assert seat_x1.market_state([], date(2026, 9, 18))["status"] == "missing"
-    assert seat_x1.market_state(s, date(2020, 1, 1))["status"] == "missing"  # 決策日前沒有任何資料
+    assert seat_tm.market_state(s, date(2026, 9, 17))["status"] == "bull"   # 7 天內不算舊
+    assert seat_tm.market_state([], date(2026, 9, 18))["status"] == "missing"
+    assert seat_tm.market_state(s, date(2020, 1, 1))["status"] == "missing"  # 決策日前沒有任何資料
 
 
 def test_load_close_series_reads_flowmap_format_and_survives_bad_file(tmp_path):
     p = tmp_path / "f.json"
     p.write_text(json.dumps({"series": {"SPY": [["2026-09-17", 500.0], ["2026-09-16", 499.5], ["x", 1]]}}))
-    assert seat_x1.load_close_series(p) == [(date(2026, 9, 16), 499.5), (date(2026, 9, 17), 500.0)]
-    assert seat_x1.load_close_series(tmp_path / "nope.json") == []
+    assert seat_tm.load_close_series(p) == [(date(2026, 9, 16), 499.5), (date(2026, 9, 17), 500.0)]
+    assert seat_tm.load_close_series(tmp_path / "nope.json") == []
     p.write_text("{bad")
-    assert seat_x1.load_close_series(p) == []
+    assert seat_tm.load_close_series(p) == []
 
 
 # ── 純函式：選席 ──────────────────────────────────────────────────────────
 
-def _row(t, code="green", below_200=False, size=1.0):
+def _row(t, code="green", size=1.0):
     return {"ticker": t, "lamp": {"code": code, "size": size, "label": code, "why": ""},
-            "below_200": below_200, "dist_ath_pct": -1.0}
+            "dist_ath_pct": -1.0}
 
 
 def _selector(pool, prev, core_slots=5):
     return build_arena.select_lit_roster_v52(pool, prev, core_slots=core_slots)
 
 
-BULL = {"mode": "x1", "status": "bull"}
+BULL = {"mode": "tm", "status": "bull"}
 BEAR = {"mode": "e1", "status": "bear"}
 
 
-def test_bull_week_red_by_distance_incumbent_stays_but_below_200_leaves():
-    pool = [_row("A", "red"), _row("B", "red", below_200=True), _row("C")]
-    rot = seat_x1.select_roster(pool, ["A", "B"], BULL, _selector)
-    assert rot["core"] == ["A", "C"]
-    assert [t for t, _ in rot["removed"]] == ["B"]
+def test_bull_week_every_red_incumbent_stays():
+    # 紅燈不論原因（距新高 <−10% 或跌破 200 日線）都續抱
+    pool = [_row("A", "red"), _row("B", "red"), _row("C")]
+    rot = seat_tm.select_roster(pool, ["A", "B"], BULL, _selector)
+    assert rot["core"] == ["A", "B", "C"] and rot["removed"] == []
 
 
 def test_bear_week_and_stale_week_red_incumbent_leaves_like_before():
     pool = [_row("A", "red"), _row("C")]
     for market in (BEAR, {"mode": "e1", "status": "stale"}, None):
-        rot = seat_x1.select_roster(pool, ["A"], market, _selector)
+        rot = seat_tm.select_roster(pool, ["A"], market, _selector)
         assert rot["core"] == ["C"] and [t for t, _ in rot["removed"]] == ["A"]
 
 
 def test_bull_week_new_red_name_is_not_bought():
-    rot = seat_x1.select_roster([_row("A", "red"), _row("C")], [], BULL, _selector)
+    rot = seat_tm.select_roster([_row("A", "red"), _row("C")], [], BULL, _selector)
     assert rot["core"] == ["C"]            # 非現任的紅燈不當亮燈
 
 
 def test_bull_week_incumbent_out_of_pool_leaves():
-    rot = seat_x1.select_roster([_row("C")], ["A"], BULL, _selector)      # A 不在池內（資格不成立）
+    rot = seat_tm.select_roster([_row("C")], ["A"], BULL, _selector)      # A 不在池內（資格不成立）
     assert rot["core"] == ["C"] and [t for t, _ in rot["removed"]] == ["A"]
 
 
 def test_input_rows_are_not_mutated_and_no_market_equals_selector():
     pool = [_row("A", "red")]
-    seat_x1.select_roster(pool, ["A"], BULL, _selector)
+    seat_tm.select_roster(pool, ["A"], BULL, _selector)
     assert pool[0]["lamp"]["code"] == "red"
     pool2 = [_row("A"), _row("B", "red")]
-    assert seat_x1.select_roster(pool2, ["B"], None, _selector) == _selector(pool2, ["B"])
+    assert seat_tm.select_roster(pool2, ["B"], None, _selector) == _selector(pool2, ["B"])
 
 
 def test_hold_uses_last_nonred_size_default_and_state_update():
     rows = [_row("A", "red", size=0.0), _row("B", "red", size=0.0), _row("C", "hot", size=0.5)]
-    held = seat_x1.held_tickers(rows, {"A", "B", "C"}, BULL, build_arena.LIT_LAMP_CODES)
+    held = seat_tm.held_tickers(rows, {"A", "B", "C"}, BULL, build_arena.LIT_LAMP_CODES)
     assert held == {"A", "B"}
     logs = []
-    seat_x1.apply_hold(rows, held, {"A": {"size": 0.5}}, log=logs.append)
+    seat_tm.apply_hold(rows, held, {"A": {"size": 0.5}}, log=logs.append)
     assert rows[0]["lamp"]["size"] == 0.5 and rows[0]["action"] == "半倉・續抱" and rows[0]["lamp"]["code"] == "red"
     assert rows[1]["lamp"]["size"] == 1.0 and rows[1]["action"] == "正常倉・續抱" and len(logs) == 1
     assert "lamp" in rows[2] and rows[2]["lamp"]["label"] == "hot"
-    new = seat_x1.update_state({"A": {"size": 0.5}, "Z": {"size": 1.0}}, rows, "2026-09-18", build_arena.LIT_LAMP_CODES)
+    new = seat_tm.update_state({"A": {"size": 0.5}, "Z": {"size": 1.0}}, rows, "2026-09-18", build_arena.LIT_LAMP_CODES)
     assert set(new) == {"A", "C"} and new["C"]["size"] == 0.5          # 紅燈保留舊值；離席的 Z 丟掉
-    assert seat_x1.held_tickers(rows, {"A"}, BEAR, build_arena.LIT_LAMP_CODES) == set()
+    assert seat_tm.held_tickers(rows, {"A"}, BEAR, build_arena.LIT_LAMP_CODES) == set()
 
 
 def test_us_and_tenbagger_pool_threshold_untouched():
@@ -176,7 +176,7 @@ def test_e2e_bull_week_red_incumbent_stays_with_last_nonred_size(tmp_path, monke
     a = core["PQRSA"]
     assert a["lamp"]["code"] == "red" and a["lamp"]["label"] == "🔴 續抱" and a["lamp"]["size"] == 0.5
     assert a["action"] == "半倉・續抱" and "大盤多頭續抱" in a["seat_note"]
-    assert out["market_x1"]["status"] == "bull"
+    assert out["market_tm"]["status"] == "bull"
     ledger = json.loads(paths["LEDGER_JSON"].read_text(encoding="utf-8"))
     assert ledger["roster"]["core"] == _CORE5 and ledger["last_decision_date"] == AS_OF
     state = json.loads(paths["STATE_JSON"].read_text(encoding="utf-8"))["last_nonred"]
@@ -196,7 +196,7 @@ def test_e2e_bear_week_red_incumbent_leaves_and_next_name_fills(tmp_path, monkey
     _, out = _run(monkeypatch, tmp_path, _stocks(), BEAR_SPY)
     assert sorted(r["ticker"] for r in out["core_seats"]) == sorted(_CORE5[1:] + ["PQRSF"])
     assert any(x["ticker"] == "PQRSA" for x in out["rotation"]["removed"])
-    assert out["market_x1"]["status"] == "bear"
+    assert out["market_tm"]["status"] == "bear"
 
 
 @pytest.mark.parametrize("spy", [None, [100.0] * 200], ids=["no-file", "stale"])
@@ -209,14 +209,14 @@ def test_e2e_missing_or_stale_market_data_keeps_current_exit(tmp_path, monkeypat
     assert build_arena.main() == 0
     out = json.loads(paths["ARENA_JSON"].read_text(encoding="utf-8"))
     assert "PQRSA" not in [r["ticker"] for r in out["core_seats"]]
-    assert out["market_x1"]["status"] in ("missing", "stale")
+    assert out["market_tm"]["status"] in ("missing", "stale")
 
 
-def test_e2e_bull_week_below_200_incumbent_leaves(tmp_path, monkeypatch):
+def test_e2e_bull_week_below_200_red_incumbent_stays(tmp_path, monkeypatch):
     stocks = _stocks()
     stocks[0]["timing"] = {"vs_200ma_pct": -3.0, "dist_52w_high_pct": -15.0}
     _, out = _run(monkeypatch, tmp_path, stocks, BULL_SPY)
-    assert "PQRSA" not in [r["ticker"] for r in out["core_seats"]]
+    assert "PQRSA" in [r["ticker"] for r in out["core_seats"]]        # 跌破 200 日線也是紅燈：多頭週續抱
 
 
 def test_e2e_bull_week_ineligible_incumbent_leaves(tmp_path, monkeypatch):
@@ -238,11 +238,5 @@ def test_e2e_daily_run_uses_last_decision_days_market_and_never_writes_ledger(tm
     monkeypatch.setattr(sys, "argv", ["build_arena.py", "--daily"])
     assert build_arena.main() == 0
     out = json.loads(paths["ARENA_JSON"].read_text(encoding="utf-8"))
-    assert out["market_x1"]["decision_date"] == "2026-09-11" and out["market_x1"]["status"] == "bull"
+    assert out["market_tm"]["decision_date"] == "2026-09-11" and out["market_tm"]["status"] == "bull"
     assert paths["LEDGER_JSON"].read_text(encoding="utf-8") == before
-
-
-def test_row_dict_below_200_flag():
-    assert build_arena.row_dict(_v5_stock("X", 20.0, timing={"vs_200ma_pct": -1.0}))["below_200"] is True
-    assert build_arena.row_dict(_v5_stock("X", 20.0))["below_200"] is False
-    assert build_arena.row_dict(_v5_stock("X", 20.0, timing={}))["below_200"] is False
