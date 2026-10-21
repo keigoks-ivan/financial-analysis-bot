@@ -5,6 +5,10 @@
 每塊分「外面」與「公司自己」。全部從既有 CI 產物與 yfinance 算，不呼叫模型、
 不靠任何報告刷新（DD／產業報告可能不再更新，只當基準線連結）。
 
+抓大放小：一件事要嘛碰到總資金約一成以上，要嘛會讓實單系統停擺，才算大事。
+「今天先看」、60 天日曆、今天要處理只放大事，小事合成一行計數加連結。
+九題資料層不動（far 九個元素），另用 far_groups 收成三個大題＋一個小區塊。
+
 輸入（缺檔不 crash，記進 gaps[]）：
   docs/horizon/questions.json          遠方大問題（人工維護，很少改）
   docs/dd-screener/latest.json         EPS 上修、下次財報日
@@ -16,9 +20,8 @@
   docs/engine/arena-ledger.json        席位名單
   docs/engine/cards.json               查核卡（主張被破、到期）
   docs/long-track-w52-adaptive/state.json  實單主系統權重歷史
-  docs/track-record/data/latest.json   DD 裁決事後報酬
   data/sahm_rule.json                  失業率
-  gh run list（有 gh 時）              排程失敗
+  gh run list（有 gh 時）              排程失敗（實單系統的 W52 排程另算大事）
 輸出：
   docs/horizon/data/horizon.json       頁面讀這份
   docs/horizon/data/history.json       每日追加各題數字（會累積）
@@ -42,6 +45,12 @@ OUT_DIR = DOCS / "horizon" / "data"
 TODAY = datetime.now(timezone(timedelta(hours=8))).date()  # 台北日期
 
 gaps: list[str] = []
+
+# 這幾家的財報會動到整個 AI 硬體這一注（其他單檔財報只是小事，席位每月照規則機械換）
+BIG_TICKERS = {"NVDA", "TSM", "MSFT", "GOOGL", "AMZN", "META"}
+BIG_MACRO = ("FOMC", "CPI", "NFP", "PCE", "GDP", "QRA")  # 日曆上只留這幾類總經
+TOP_MACRO = ("FOMC", "CPI", "NFP", "PCE", "GDP")  # 7 天內進「今天先看」的總經（QRA 不進）
+AI_SEAT_QIDS = ("ai_compute", "memory", "power", "robotics")  # 算 AI 席位的四題（ai_split 的席位可能是軟體股，不算）
 
 
 def load(path: Path, default=None):
@@ -389,7 +398,6 @@ def main():
     ledger = load(DOCS / "engine" / "arena-ledger.json", {}) or {}
     cards = load(DOCS / "engine" / "cards.json", {}) or {}
     live = load(DOCS / "long-track-w52-adaptive" / "state.json", {}) or {}
-    track = load(DOCS / "track-record" / "data" / "latest.json", {}) or {}
     threads = (load(DOCS / "intel" / "data" / "threads.json", {}) or {}).get("threads", [])
     sahm = compute_sahm(load(ROOT / "data" / "sahm_rule.json", {}) or {})
 
@@ -455,6 +463,7 @@ def main():
         hits = match_threads(q, threads)
         far.append({
             "id": q["id"], "kind": q["kind"], "q": q["q"], "why": q.get("why"),
+            "short": q.get("short") or q["q"], "group": q.get("group"), "role": q.get("role"),
             "gain": q.get("gain"), "lose": q.get("lose"), "capex": q.get("capex"),
             "series_def": q.get("series"), "alarm_def": q.get("alarm"),
             "baseline": q.get("baseline", []), "metrics": metrics, "alarm": alarm,
@@ -501,6 +510,62 @@ def main():
                       "days": len(th.get("daily_counts") or {}), "first_seen": th.get("first_seen"),
                       "last_seen": th.get("last_seen")})
     n_active = sum(1 for t in threads if t.get("status") == "active")
+
+    # ── 三個大題＋小區塊：九題資料層不動（far 九個元素照舊），只加分組給頁面渲染 ──
+    def last_final_pct(hist_key, tk):
+        try:
+            v = (live.get(hist_key) or [])[-1]["tickers"][tk].get("final_pct")
+            return float(v) if v is not None else None
+        except Exception:  # noqa: BLE001
+            return None
+
+    fmap = {f["id"]: f for f in far}
+    smh_pct = last_final_pct("history_us", "SMH")
+    tsmc_pct = last_final_pct("history_tw", "2330")
+    # AI 席位＝算力、記憶體、電力、機器人四題席位的聯集（ai_split 的席位可能是軟體股，不算）
+    ai_seats = [t for t in seats if any(t in fmap[i]["my_seats"] for i in AI_SEAT_QIDS if i in fmap)]
+    ai_money = None
+    if seats and (smh_pct is not None or tsmc_pct is not None):
+        # 下限：QQQ、0050 裡的 AI 股和台股個股沒算。美股 70% 指數部、30% 個股；台股只算 70% 指數部裡的台積電
+        ai_money = {
+            "us_pct": round(0.7 * smh_pct + 0.3 * len(ai_seats) / len(seats) * 100, 1) if smh_pct is not None else None,
+            "tw_pct": round(0.7 * tsmc_pct, 1) if tsmc_pct is not None else None,
+            "smh_pct": smh_pct, "tsmc_pct": tsmc_pct,
+            "n_ai_seats": len(ai_seats), "n_seats": len(seats), "ai_seats": ai_seats,
+        }
+    else:
+        gaps.append("實單 SMH／台積電比重或席位名單缺：AI 這一注佔多少錢略過")
+    far_groups = []
+    for g in qdoc.get("groups") or []:
+        mem = [f for f in far if f.get("group") == g["id"]]
+        if not mem:
+            continue
+        grp = {"id": g["id"], "title": g.get("title") or mem[0]["q"],
+               "main": next((f["id"] for f in mem if f.get("role") == "main"), None),
+               "subs": [f["id"] for f in mem if f.get("role") == "sub"],
+               "minors": [f["id"] for f in mem if f.get("role") == "minor"]}
+        if grp["subs"]:
+            ids = {f["id"] for f in mem}
+            # 整張卡的故事線合計最多 3 條（不同題配到同一條只算一次）
+            by_thread = {}
+            for e in ev["entries"].values():
+                if e["qid"] in ids and (e["thread_id"] not in by_thread or
+                                        (e.get("last_seen") or "") > (by_thread[e["thread_id"]].get("last_seen") or "")):
+                    by_thread[e["thread_id"]] = e
+            mine, seen_t = [], set()
+            for e in sorted(by_thread.values(), key=lambda e: e.get("last_seen") or "", reverse=True):
+                if e["title"] not in seen_t:
+                    seen_t.add(e["title"])
+                    mine.append(e)
+            grp["evidence_total"] = len(mine)
+            grp["evidence_recent"] = mine[:3]
+            grp["money"] = ai_money
+            grp["ai_seats"] = ai_seats
+            bet = next((b for b in bets if grp["main"] in b["qids"]), None)
+            if bet and len(bet["qids"]) > 1:
+                grp["corr"] = {"avg_corr": bet["avg_corr"], "qids": bet["qids"],
+                               "apart": [f["id"] for f in mem if f["id"] not in bet["qids"]]}
+        far_groups.append(grp)
 
     # ── 遠方：公司（策略還有效嗎） ──
     strategy = []
@@ -554,40 +619,41 @@ def main():
                              "ret": round(avg, 1), "bench": round(spy_r, 1), "bench_label": "SPY",
                              "diff": round(avg - spy_r, 1), "note": "期間短，只看方向",
                              "link": "/cockpit/"})
-    # DD 裁決：進場 vs 觀望，30 天報酬中位數
-    try:
-        v = track["tables"]["v13plus"]
-        e30, w30 = v["進場"]["windows"]["d30"], v["觀望"]["windows"]["d30"]
-        strategy.append({"label": "DD 裁決：進場 vs 觀望", "window": "發布後 30 天",
-                         "ret": e30["median"], "bench": w30["median"], "bench_label": "觀望組",
-                         "diff": round(e30["median"] - w30["median"], 1) if None not in (e30["median"], w30["median"]) else None,
-                         "note": f"進場 {e30['n']} 份、觀望 {w30['n']} 份；進場贏 SPY 比例 {e30['pct_beat_spy']}%",
-                         "link": "/track-record/"})
-    except Exception:  # noqa: BLE001
-        gaps.append("track-record 裁決表讀不到")
 
     # ── 遠方：公司（生存風險） ──
     risks = []
     q_ai = next((f for f in far if f["id"] == "ai_compute"), None)
     if q_ai and seats:
         core_in = [t for t in seats_core if t in q_ai["my_seats"]]
+        # 席位數用 AI 硬體這一注四題的聯集（跟 AI 卡片同一個數），核心席是 0 時不寫
+        n_ai = ai_money["n_ai_seats"] if ai_money else len(q_ai["my_seats"])
+        core_txt = f"核心 {len(core_in)}/{len(seats_core)}、" if seats_core else ""
+        money = ""
+        if ai_money:
+            parts = [f"{lab}資金至少 {ai_money[k]:.0f}%" for lab, k in (("美股", "us_pct"), ("台股", "tw_pct"))
+                     if ai_money.get(k) is not None]
+            money = "；占" + "、".join(parts)
         risks.append({
             "key": "concentration",
-            "title": "押注集中在「AI 算力還在加速」",
-            "value": f"核心 {len(core_in)}/{len(seats_core)}、全部 {len(q_ai['my_seats'])}/{len(seats)} 席",
-            "level": "high" if len(q_ai["my_seats"]) / len(seats) >= 0.5 else "mid",
+            "title": "押注集中在 AI 硬體",
+            "value": f"{core_txt}{n_ai}/{len(seats)} 席{money}",
+            "level": "high" if n_ai / len(seats) >= 0.5 else "mid",
             "detail": "席位裡屬於 AI 硬體鏈（晶片、設備、代工組裝、儲存）的比例；實單的 SMH 與台積電也在同一題。",
             "link": "/cockpit/",
         })
     exp_tw = live.get("combined_exposure_tw_pct")
     exp_us = live.get("combined_exposure_us_pct")
+    overlay = live.get("overlay") or {}
+    ief_o, gld_o = overlay.get("ief") or {}, overlay.get("gld") or {}
     if exp_tw is not None:
+        bond_gold = (f"；另有債金腿 公債 {(ief_o.get('target_pct') or 0):g}%、黃金 {(gld_o.get('target_pct') or 0):g}%"
+                     if overlay else "")
         risks.append({
             "key": "leverage",
             "title": "實單曝險",
-            "value": f"美股 {exp_us}%、台股 {exp_tw}%",
+            "value": f"美股 {exp_us}%、台股 {exp_tw}%{bond_gold}",
             "level": "high" if max(exp_tw or 0, exp_us or 0) > 100 else "low",
-            "detail": "超過 100% 代表有用槓桿。台股兩條腿是 0050 與台積電，跟上一條的 AI 題目重疊。",
+            "detail": "10-19 起兩邊都不借錢，股票上限 100%。台股兩條腿是 0050 與台積電，跟上一條的 AI 題目重疊。",
             "link": "/long-track-w52-adaptive/",
         })
     geo = [t for t in threads if t.get("category") == "geo" and any(
@@ -640,26 +706,34 @@ def main():
                 "seats_proxied": proxied,
             })
 
-    # ── 60 天內 ──
+    # ── 60 天內：upcoming 只放大事（總經、六大廠財報、換席），小事各留一行計數加連結 ──
     horizon_end = TODAY + timedelta(days=60)
     upcoming = []
+    other_macro = 0
     for e in cal.get("events", []):
         d = parse_date(e.get("date"))
         if d and TODAY <= d <= horizon_end:
-            upcoming.append({"date": str(d), "side": "外面", "type": e.get("type"), "label": e.get("label"),
-                             "tag": "總經", "link": "/intel/calendar.html"})
+            if e.get("type") in BIG_MACRO:
+                upcoming.append({"date": str(d), "side": "外面", "type": e.get("type"), "label": e.get("label"),
+                                 "tag": "總經", "link": "/intel/calendar.html"})
+            else:
+                other_macro += 1
     basket_t = {}
     for q in questions:
         for k in ("gain", "lose"):
             for t in (q.get(k) or {}).get("tickers", []):
                 basket_t.setdefault(t, q["q"])
-    for t in sorted(set(seats) | set(basket_t)):
+    n_earn_small = 0
+    for t in sorted(set(seats) | set(basket_t) | BIG_TICKERS):
         r = screener.get(t)
         d = parse_date((r or {}).get("next_earnings_date"))
         if d and TODAY <= d <= horizon_end:
-            upcoming.append({"date": str(d), "side": "外面", "type": "財報",
-                             "label": f"{t} 財報", "tag": "席位" if t in seats else "遠方問題",
-                             "note": basket_t.get(t), "link": tlink(t)})
+            if t in BIG_TICKERS:
+                upcoming.append({"date": str(d), "side": "外面", "type": "財報",
+                                 "label": f"{t} 財報", "tag": "AI 大廠",
+                                 "note": "會動到整個 AI 硬體這一注", "link": tlink(t)})
+            else:
+                n_earn_small += 1
     # 公司自己的日程
     lr = ledger.get("last_rotation_month")
     if lr:
@@ -668,26 +742,20 @@ def main():
         if nm <= horizon_end:
             upcoming.append({"date": str(max(nm, TODAY)), "side": "公司", "type": "換席",
                              "label": "席位引擎月度換席", "tag": "系統", "link": "/cockpit/"})
-    # 預測對帳、總經引信、查核卡到期：同一天合併成一行，避免洗版
-    def grouped(items, kind, fmt, tag, link):
-        by_day = {}
-        for d, name in items:
-            if d and TODAY <= d <= horizon_end:
-                by_day.setdefault(str(d), []).append(name)
-        for d, names in by_day.items():
-            upcoming.append({"date": d, "side": "公司", "type": kind, "label": fmt(names), "tag": tag,
-                             "items": names, "link": link})
-    grouped([(parse_date(c.get("resolve_by")), c.get("label")) for c in state.get("council", [])],
-            "預測到期", lambda n: f"市況預測對帳 {len(n)} 筆", "市況", "/market/")
-    grouped([(parse_date(f.get("resolve_by")), f"{f.get('metric')} 門檻 {f.get('threshold')}（現 {f.get('now')}）")
-             for f in state.get("fuses", [])],
-            "引信到期", lambda n: f"總經引信到期 {len(n)} 條", "市況", "/market/")
-    card_items = [(parse_date(c.get("next_deadline")), t) for t, c in (cards.get("by_ticker") or {}).items()]
-    grouped([x for x in card_items if x[1] in seats], "查核到期",
-            lambda n: f"席位查核卡到期：{'、'.join(n)}", "席位", "/engine/cards.html")
-    grouped([x for x in card_items if x[1] not in seats], "查核到期",
-            lambda n: f"查核卡到期 {len(n)} 檔：{'、'.join(n[:5])}{'…' if len(n) > 5 else ''}", "查核卡", "/engine/cards.html")
     upcoming.sort(key=lambda x: (x["date"], x["side"]))
+
+    def n_due(dates):
+        return sum(1 for d in dates if d and TODAY <= d <= horizon_end)
+    n_pred = n_due([parse_date(c.get("resolve_by")) for c in state.get("council", [])])
+    n_fuse = n_due([parse_date(f.get("resolve_by")) for f in state.get("fuses", [])])
+    n_card = n_due([parse_date(c.get("next_deadline")) for c in (cards.get("by_ticker") or {}).values()])
+    upcoming_small = [x for x in (
+        {"type": "財報", "n": n_earn_small, "label": f"另有 {n_earn_small} 檔個股財報", "link": "/earnings/"},
+        {"type": "其他總經", "n": other_macro, "label": f"另有 {other_macro} 場其他總經事件", "link": "/intel/calendar.html"},
+        {"type": "查核到期", "n": n_card, "label": f"另有 {n_card} 檔查核卡到期", "link": "/engine/cards.html"},
+        {"type": "預測到期", "n": n_pred, "label": f"另有 {n_pred} 筆市況預測到期", "link": "/market/"},
+        {"type": "引信到期", "n": n_fuse, "label": f"另有 {n_fuse} 條總經引信到期", "link": "/market/"},
+    ) if x["n"]]
 
     # ── 今天要處理 ──
     fires_out = []
@@ -699,27 +767,9 @@ def main():
             fires_out.append({"side": "外面", "level": "high", "text": a["msg"], "link": "/intel/gauges.html"})
     triggers = state.get("triggers", [])
     fires_co = []
-    fresh_link = {"monitor": "/monitor/", "detective": "/detective/", "flowmap": "/flowmap/",
-                  "statlab": "/statlab/", "regime": "/regime/", "crowding": "/crowding/",
-                  "總經時鐘": "/macro/", "intel": "/intel/"}
-    for f in state.get("freshness", []):
-        if f.get("status") not in ("ok", None):
-            link = next((v for k, v in fresh_link.items() if k in f["pipeline"]), "/market/")
-            fires_co.append({"side": "公司", "level": "mid",
-                             "text": f"{f['pipeline']} 資料停在 {f.get('as_of')}（應為{f.get('cadence')}）",
-                             "link": link})
-    breach = [(t, c) for t, c in (cards.get("by_ticker") or {}).items() if c.get("n_breach")]
-    if breach:
-        fires_co.append({"side": "公司", "level": "high",
-                         "text": "查核卡主張被推翻：" + "、".join(f"{t}（{c['n_breach']} 條）" for t, c in breach),
-                         "link": "/engine/cards.html"})
-    overdue = [t for t, c in (cards.get("by_ticker") or {}).items()
-               if c.get("n_due") and (parse_date(c.get("next_deadline")) or TODAY) < TODAY]
-    if overdue:
-        fires_co.append({"side": "公司", "level": "mid",
-                         "text": f"查核卡過期沒複查：{len(overdue)} 檔（{'、'.join(overdue[:6])}{'…' if len(overdue) > 6 else ''}）",
-                         "link": "/engine/cards.html"})
-    # 排程失敗（每個 workflow 只看最近一次）
+    live_trouble = []  # 實單系統出問題（W52 排程失敗、債金腿資料過期、實單頁資料停住）：進「今天先看」
+    fail_other = []
+    # 排程失敗（每個 workflow 只看最近一次）：名稱含 W52 的是實單系統，其餘合成一行
     try:
         res = subprocess.run(["gh", "run", "list", "--limit", "200", "--json",
                               "workflowName,conclusion,createdAt,url"],
@@ -733,57 +783,90 @@ def main():
                 latest.setdefault(r["workflowName"], r)
             for name, r in latest.items():
                 if r.get("conclusion") == "failure":
-                    fires_co.append({"side": "公司", "level": "high",
-                                     "text": f"排程失敗：{name}（{r['createdAt'][:10]}）", "link": r["url"]})
+                    if "W52" in name:
+                        live_trouble.append({"side": "公司", "level": "high",
+                                             "text": f"實單系統排程失敗：{name}（{r['createdAt'][:10]}）",
+                                             "link": r["url"]})
+                    else:
+                        fail_other.append((name, r))
     except Exception:  # noqa: BLE001
         gaps.append("找不到 gh：排程狀態略過")
+    if overlay.get("stale"):
+        live_trouble.append({"side": "公司", "level": "high",
+                             "text": f"實單債金腿資料過期（資料停在 {overlay.get('asof')}）",
+                             "link": "/long-track-w52-adaptive/"})
+    stale_pipes = [f for f in state.get("freshness", []) if f.get("status") not in ("ok", None)]
+    for f in stale_pipes:
+        if "實單" in f["pipeline"]:
+            live_trouble.append({"side": "公司", "level": "high",
+                                 "text": f"{f['pipeline']} 資料停在 {f.get('as_of')}（應為{f.get('cadence')}）",
+                                 "link": "/long-track-w52-adaptive/"})
+    stale_pipes = [f for f in stale_pipes if "實單" not in f["pipeline"]]
+    fires_co.extend(live_trouble)
+    if fail_other:
+        base = re.sub(r"/runs/\d+.*$", "", fail_other[0][1]["url"])
+        fires_co.append({"side": "公司", "level": "mid",
+                         "text": f"其他排程失敗 {len(fail_other)} 個：{'、'.join(n for n, _ in fail_other[:3])}"
+                                 f"{'…' if len(fail_other) > 3 else ''}",
+                         "link": base})
+    if stale_pipes:
+        fires_co.append({"side": "公司", "level": "mid",
+                         "text": f"資訊頁資料停住 {len(stale_pipes)} 個：{'、'.join(f['pipeline'] for f in stale_pipes[:3])}"
+                                 f"{'…' if len(stale_pipes) > 3 else ''}",
+                         "link": "/market/"})
+    n_breach = sum(1 for c in (cards.get("by_ticker") or {}).values() if c.get("n_breach"))
+    n_overdue = sum(1 for c in (cards.get("by_ticker") or {}).values()
+                    if c.get("n_due") and (parse_date(c.get("next_deadline")) or TODAY) < TODAY)
+    if n_breach or n_overdue:
+        fires_co.append({"side": "公司", "level": "mid",
+                         "text": "查核卡：" + "、".join(x for x in (
+                             f"{n_breach} 檔主張被推翻" if n_breach else "",
+                             f"{n_overdue} 檔過期沒複查" if n_overdue else "") if x),
+                         "link": "/engine/cards.html"})
 
     # ── 方向一致嗎 ──
     env = state.get("environment", [])
     market_rows = [e for e in env if e.get("key") != "system_cockpit"]
     n_warn = sum(1 for e in market_rows if e.get("tone") == "warn" and not e.get("stale"))
     n_fresh = sum(1 for e in market_rows if not e.get("stale"))
-    exp_rule = (state.get("exposure_rule") or {}).get("target")
-    kelly = (state.get("kelly_rule") or {}).get("exposure")
     env_link = {"regime": "/regime/", "macro_clock": "/macro/", "detective": "/detective/", "monitor": "/monitor/"}
     depts = [{"label": e["label"], "value": e["value"], "tone": e.get("tone"), "stale": e.get("stale"),
               "link": e.get("link") or env_link.get(e.get("key"))} for e in market_rows]
     depts.append({"label": "實單主系統目標曝險", "value": f"美 {exp_us}%・台 {exp_tw}%", "tone": "info",
                   "link": "/long-track-w52-adaptive/"})
-    if exp_rule is not None:
-        depts.append({"label": "曝險規則（波動・趨勢・信用）", "value": f"{round(exp_rule * 100)}%", "tone": "info"})
-    if kelly is not None:
-        depts.append({"label": "凱利規則", "value": f"{round(kelly * 100)}%", "tone": "info"})
+    if overlay:
+        depts.append({"label": "實單債金腿",
+                      "value": f"公債 {ief_o.get('n', 0)}/3 條件・{(ief_o.get('target_pct') or 0):g}%；"
+                               f"黃金 {gld_o.get('n', 0)}/3 條件・{(gld_o.get('target_pct') or 0):g}%",
+                      "tone": "info", "link": "/long-track-w52-adaptive/"})
     depts.append({"label": "席位引擎", "value": f"核心 {len(seats_core)}＋衛星 {len(seats_sat)} 席（{snap.get('date')}）",
                   "tone": "info", "link": "/cockpit/"})
     conflicts = []
     if n_fresh and n_warn * 2 > n_fresh and max(exp_us or 0, exp_tw or 0) >= 100:
         conflicts.append(f"市況 {n_warn}/{n_fresh} 項偏警戒，實單曝險仍在 {max(exp_us or 0, exp_tw or 0)}%。"
                          "兩邊規則各自成立，但方向不同，值得看一下原因。")
-    alarmed_with_seats = [f for f in far if (f["alarm"] or {}).get("hit") and f["my_seats"]]
+    # 只看三個大題的主警戒；子題警戒是小事
+    alarmed_with_seats = [f for f in far if f.get("role") == "main" and (f["alarm"] or {}).get("hit") and f["my_seats"]]
     for f in alarmed_with_seats:
         conflicts.append(f"「{f['q']}」碰到警戒線，但席位裡還有 {len(f['my_seats'])} 檔押在這題。")
 
-    # ── 今天先看（規則排序，最多 5 件） ──
+    # ── 今天先看（只放大事，最多 5 件，不足就少放） ──
     top = []
-    for f in alarmed_with_seats:
-        top.append({"rank": 1, "text": f"遠方警戒：{f['alarm_def']['text']}，席位有 {len(f['my_seats'])} 檔在這題",
-                    "anchor": f"#q-{f['id']}"})
-    for x in fires_co:
-        if x["level"] == "high":
-            top.append({"rank": 2, "text": x["text"], "anchor": "#today", "link": x.get("link")})
-    for x in fires_out:
+    for f in far:  # 1. 三個大題的主警戒碰到，不論席位有沒有押
+        if f.get("role") == "main" and (f["alarm"] or {}).get("hit"):
+            seat_txt = f"，席位有 {len(f['my_seats'])} 檔在這題" if f["my_seats"] else ""
+            top.append({"rank": 1, "text": f"大題警戒：{f['alarm_def']['text']}{seat_txt}", "anchor": f"#q-{f['id']}"})
+    for x in live_trouble:  # 2. 實單系統出問題
+        top.append({"rank": 2, "text": x["text"], "anchor": "#today", "link": x.get("link")})
+    for x in fires_out:  # 3. 市場嚴重異常
         top.append({"rank": 3, "text": "市場：" + x["text"], "anchor": "#today", "link": x.get("link")})
     soon = [u for u in upcoming if parse_date(u["date"]) <= TODAY + timedelta(days=7)
-            and (u["tag"] in ("席位",) or u["type"] in ("FOMC", "CPI", "NFP", "PCE", "換席"))]
+            and (u["type"] in TOP_MACRO or u["type"] in ("財報", "換席"))]  # 4. 7 天內：總經、六大廠財報、換席
     for u in soon[:3]:
         top.append({"rank": 4, "text": f"{u['date'][5:]} {u['label']}", "anchor": "#soon", "link": u.get("link")})
-    for f in far:
-        if (f["alarm"] or {}).get("hit") and not f["my_seats"]:
-            top.append({"rank": 5, "text": f"遠方警戒：{f['alarm_def']['text']}", "anchor": f"#q-{f['id']}"})
-    for r in risks:
+    for r in risks:  # 5. 風險等級高
         if r["level"] == "high":
-            top.append({"rank": 6, "text": f"{r['title']}：{r['value']}", "anchor": "#risk", "link": r.get("link")})
+            top.append({"rank": 5, "text": f"{r['title']}：{r['value']}", "anchor": "#risk", "link": r.get("link")})
     top.sort(key=lambda x: x["rank"])
     top = top[:5]
 
@@ -847,6 +930,7 @@ def main():
         "history_since": first_day,
         "top": top,
         "far": far,
+        "far_groups": far_groups,
         "strategy": strategy,
         "bets": bets,
         "no_series": link_info.get("no_series", []),
@@ -858,6 +942,7 @@ def main():
         "first_review": first_review,
         "risks": risks,
         "upcoming": upcoming,
+        "upcoming_small": upcoming_small,
         "fires_out": fires_out,
         "fires_co": fires_co,
         "triggers": triggers,

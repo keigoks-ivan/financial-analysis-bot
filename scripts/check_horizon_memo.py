@@ -10,6 +10,8 @@
   3. refs 路徑都解得到非空值（far.<題目 id>.… 用題目 id 取，其餘照 key 走）
   4. 文字裡帶小數點的數字，都要在 horizon.json 或 history.json 找得到（照顯示位數四捨五入比對）
   5. 不得出現買賣指令用語、破折號
+  6. 要決定的事只能挑大事：decision.refs 至少一條指向大事路徑（AI 硬體五題、利率、衰退、
+     risks、stress、depts、upcoming、top），不能全指向 fires_co（查核卡、排程這類小事）
 """
 from __future__ import annotations
 
@@ -24,6 +26,9 @@ DATA = ROOT / "docs" / "horizon" / "data"
 
 BANNED = ["買進", "買入", "賣出", "加碼", "減碼", "建倉", "清倉", "出場", "進場", "停損", "停利",
           "目標價", "應該買", "應該賣", "建議買", "建議賣", "——"]
+# 大事路徑：decision.refs 至少要有一條落在這裡（單一席位、查核卡、其他排程不算）
+BIG_FAR = {"ai_compute", "memory", "power", "robotics", "ai_split", "rates", "recession"}
+BIG_TOP = {"risks", "stress", "depts", "upcoming", "top"}
 LIMITS = {"headline": 40, "changed": 90, "chain": 180, "question": 60, "why": 180, "blind": 140}
 
 
@@ -52,6 +57,20 @@ def resolve(doc, path):
     return cur
 
 
+def is_big_ref(h, path):
+    """ref 是否指向大事：far 只算 AI 硬體五題、利率、衰退（可用題目 id 或序號），其餘看第一段。"""
+    parts = path.split(".")
+    if parts[0] in BIG_TOP:
+        return True
+    if parts[0] == "far" and len(parts) > 1:
+        k = parts[1]
+        if k.isdigit():
+            far = h.get("far") or []
+            k = far[int(k)].get("id") if int(k) < len(far) else None
+        return k in BIG_FAR
+    return False
+
+
 def all_numbers(o, out):
     if isinstance(o, bool):
         return
@@ -78,13 +97,14 @@ def brief():
     print("## 今天先看")
     for t in h["top"]:
         print(f"- {t['text']}")
-    print("\n## 九題（現在｜7 天前）")
+    print("\n## 九題（現在｜7 天前）　頁面收成三個大題：AI 硬體（算力為主，其餘四題是分項）、利率、衰退；美元與 AI 代理人是小題")
+    role_tag = {"main": "大題主警戒", "sub": "AI 硬體分項", "minor": "小題"}
     for f in h["far"]:
         m = f["metrics"]
         now = (hist.get(h["as_of"]) or {}).get(f["id"], {})
         then = week_ago.get(f["id"], {})
         lean = (f.get("lean") or {}).get("text")
-        print(f"### {f['id']}　{f['q']}　市場目前：{lean}　警戒線：{f['alarm_def']['text']}（{'已碰到' if (f['alarm'] or {}).get('hit') else '未碰到'}）")
+        print(f"### {f['id']}　{f['q']}　[{role_tag.get(f.get('role'), '')}]　市場目前：{lean}　警戒線：{f['alarm_def']['text']}（{'已碰到' if (f['alarm'] or {}).get('hit') else '未碰到'}）")
         if m.get("gain"):
             g = m["gain"]
             print(f"  受惠籃：EPS 上修 {g.get('eps_rev_3m')}｜三年成長預估 {g.get('growth_3y')}（月變 {g.get('growth_3y_chg')}）"
@@ -102,6 +122,14 @@ def brief():
     print("\n## 幾個押注")
     for b in h["bets"]:
         print(f"- {b['qids']} 平均相關 {b['avg_corr']} 席位 {b['seats']}")
+    g_ai = next((g for g in h.get("far_groups", []) if g.get("money")), None)
+    if g_ai:
+        m = g_ai["money"]
+        print("\n## AI 硬體這一注佔多少錢（下限；QQQ、0050 裡的 AI 股和台股個股沒算）")
+        print(f"- 美股 {m.get('us_pct')}%、台股 {m.get('tw_pct')}%｜屬於這一注的席位 {m['n_ai_seats']}/{m['n_seats']} 檔：{'、'.join(m['ai_seats'])}")
+        c = g_ai.get("corr")
+        if c:
+            print(f"- 這幾題近兩年一起漲跌，平均相關 {c['avg_corr']}：{c['qids']}；沒併進來：{c['apart']}")
     print("\n## 方法還管不管用")
     for s in h["strategy"]:
         print(f"- {s['label']} {s['window']}：{s['ret']} vs {s['bench_label']} {s['bench']}（差 {s['diff']}）")
@@ -120,9 +148,11 @@ def brief():
     print("\n## 方向一致嗎")
     for c in h["conflicts"]:
         print(f"- {c}")
-    print("\n## 60 天內（前 15 件）")
+    print("\n## 60 天內（只有大事，前 15 件）")
     for u in h["upcoming"][:15]:
         print(f"- {u['date']} [{u['side']}] {u['label']}")
+    if h.get("upcoming_small"):
+        print("小事（只留計數）：" + "｜".join(x["label"] for x in h["upcoming_small"]))
     if h.get("market_headline"):
         print(f"\n## 市況判讀（{h.get('market_read_as_of')}）\n{h['market_headline']}")
     memo_p = DATA / "memo.json"
@@ -174,6 +204,14 @@ def check():
     for where, r in ref_lists:
         if resolve(h, r) is None:
             errs.append(f"{where} ref 解不到：{r}")
+    # 要決定的事只能挑大事
+    dec_refs = dec.get("refs") or []
+    if not dec_refs:
+        errs.append("decision 沒有 refs")
+    elif all(r.split(".")[0] == "fires_co" for r in dec_refs):
+        errs.append("decision 的 refs 全指向 fires_co（查核卡、排程這類小事），要決定的事只能挑大事")
+    elif not any(is_big_ref(h, r) for r in dec_refs):
+        errs.append("decision 的 refs 沒有任何一條指向大事路徑（far 的 AI 硬體五題／利率／衰退、risks、stress、depts、upcoming、top）")
     # 數字
     known = set()
     all_numbers(h, known)

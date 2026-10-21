@@ -85,6 +85,13 @@ a{color:var(--accent)}
 a.tick{color:var(--accent);text-decoration:none;border-bottom:1px dotted var(--accent)}
 .top .jump{font-family:var(--mono);font-size:.7rem;color:var(--muted);border:0;margin-left:.3rem}
 .risk b a,.fire a,.ev .t a,h3 a{color:inherit;text-decoration:none;border-bottom:1px dotted var(--muted)}
+.money{border:1px solid var(--gold);border-radius:var(--r);padding:9px 13px;margin:.6rem 0;font-size:.92rem;color:var(--ink)}
+.money small{display:block;margin-top:.25rem;font-size:.8rem;color:var(--sec)}
+.subs{list-style:none;padding:0;margin:.3rem 0 0}
+.subs li{display:flex;gap:.2rem .6rem;flex-wrap:wrap;align-items:baseline;padding:.5rem 0;border-top:1px solid var(--line-soft);font-size:.86rem}
+.subs .nm{color:var(--ink);font-weight:600}
+.subs .nums{font-family:var(--mono);font-size:.74rem;color:var(--sec)}
+.q h5{margin:1rem 0 0;font-family:var(--mono);font-size:.72rem;font-weight:600;color:var(--gold-deep)}
 </style>
 </head>
 <body>
@@ -192,14 +199,9 @@ a.tick{color:var(--accent);text-decoration:none;border-bottom:1px dotted var(--a
 <p class="sub">三個問題：世界往哪走、公司的方法還管不管用、公司最怕什麼。</p>
 
 <h3>世界往哪走</h3>
-<p class="sub">每題用一籃股票回答。分析師把獲利預估往上改、三年成長預估變高、股價贏大盤，代表市場站在「是」那邊。警戒線碰到，代表答案可能要翻。</p>
-<h3 id="bets">九題其實是幾個押注</h3>
-<p class="sub">把每題的股票籃（總經題用利率、美元）近兩年的週漲跌拿來比。常常一起漲跌的題目，其實是同一個押注：答案一翻，會一起翻。</p>
-<div id="bets-list"></div>
+<p class="sub">只放三個大題：AI 硬體這一注、利率、衰退。每題用一籃股票（總經題用利率、失業率）回答。分析師把獲利預估往上改、三年成長預估變高、股價贏大盤，代表市場站在「是」那邊。主警戒線碰到，代表答案可能要翻。</p>
 <div id="far-list"></div>
-<h3 id="blind">九題沒涵蓋、但還在發展的事</h3>
-<p class="sub">情報監視器正在追的故事線，配不到任何一題的列在這裡。某一條一直出現，就該考慮加成第十題。</p>
-<div class="card"><div id="blind-list"></div></div>
+<p class="sub" id="blind"></p>
 
 <h3 id="strategy">公司的方法還管不管用</h3>
 <div class="card" style="overflow-x:auto"><table id="strat"></table></div>
@@ -215,14 +217,16 @@ a.tick{color:var(--accent);text-decoration:none;border-bottom:1px dotted var(--a
 <div class="card" style="overflow-x:auto"><table id="stress-table"></table></div>
 
 <h2 id="soon">60 天內 <span class="share">25%</span></h2>
-<p class="sub">已經排定日期的事。外面是總經數據和財報，公司是換席、預測對帳和查核卡到期。</p>
+<p class="sub">已經排定日期的大事：總經數據、輝達、台積電、微軟、Google、亞馬遜、Meta 的財報，還有席位換席。其他小事各留一行計數，連到原頁。</p>
 <div class="card"><ul class="ev" id="soon-30"></ul>
-<details><summary id="soon-more-label">31–60 天</summary><ul class="ev" id="soon-60"></ul></details></div>
+<details><summary id="soon-more-label">31–60 天</summary><ul class="ev" id="soon-60"></ul></details>
+<ul class="ev" id="soon-small"></ul></div>
 
 <h2 id="today">今天要處理 <span class="share">25%</span></h2>
+<p class="sub">公司側只列實單系統的問題，其他的各合成一行。</p>
 <div class="grid2">
   <div class="card"><h3 style="margin-top:0">外面</h3><div id="fires-out"></div>
-    <h3><a href="/market/">離觸發很近的價位 →</a></h3><div id="triggers"></div></div>
+    <div id="triggers"></div></div>
   <div class="card"><h3 style="margin-top:0">公司</h3><div id="fires-co"></div></div>
 </div>
 
@@ -235,13 +239,16 @@ a.tick{color:var(--accent);text-decoration:none;border-bottom:1px dotted var(--a
   <b>怎麼算的</b>
   <ul>
     <li>每天自動重算，不呼叫模型，也不靠任何報告更新。報告只放在各題下面當「當初怎麼想」的連結。</li>
+    <li>什麼算大事：一件事碰到總資金約一成以上，或會讓實單系統停擺。席位每月照規則機械換，單檔財報和查核卡不會引發任何動作，算小事。輝達、台積電、微軟、Google、亞馬遜、Meta 的財報例外，會動到整個 AI 硬體這一注，算大事。</li>
+    <li>「今天先看」的順序：一、三個大題（AI 硬體、利率、衰退）的主警戒線碰到，不論席位有沒有押。二、實單系統出問題（每日訊號排程失敗、債金腿資料過期）。三、市場嚴重異常。四、7 天內的總經數據、上述六家的財報、換席，最多 3 件。五、風險等級高的長期風險。最多 5 件，不足就少放，不拿小事補。</li>
+    <li>AI 硬體這一注佔多少錢，只算下限。美股＝70% × SMH（半導體 ETF）現在的比重＋30% × 屬於這一注的席位占比。台股＝70% × 台積電現在的比重。屬於這一注的席位，取 AI 算力、記憶體、電力、機器人四題各自席位的聯集；AI 硬體對軟體那題不算，因為它的席位可能是軟體股。QQQ、0050 裡的 AI 股和台股個股沒算。</li>
+    <li>小事去了哪裡：個股財報、查核卡到期、市況預測到期、總經引信到期、其他排程失敗、資訊頁停更、離觸發很近的價位、沒配到題的新聞故事線，各留一行計數，連到原頁。</li>
     <li>EPS 上修：籃內公司近 3 個月獲利預估的變化，取中位數。三年成長預估：分析師預估未來兩個財年的年化 EPS 成長，每月一筆。一年股價對大盤：個股一年報酬減 SPY，取中位數。</li>
-    <li>新聞：情報監視器的故事線，用關鍵字配到各題，配到的會一直留著，越積越多。</li>
-    <li>「今天先看」的順序：警戒線碰到而且席位押在那題、公司系統出問題、市場嚴重異常、7 天內的大事、長期風險。最多 5 件。</li>
-    <li>九題幾個押注：近兩年週漲跌的相關係數，0.6 以上併成同一組，0.4 以上列在各題「一起動」。</li>
+    <li>新聞：情報監視器的故事線，用關鍵字配到各題，配到的會一直留著，越積越多。AI 硬體卡的五題合計只列最新 3 條。</li>
+    <li>連動：近兩年週漲跌的相關係數，0.6 以上併成同一組，AI 硬體卡上寫的是那一組的平均；0.4 以上列在利率、衰退兩張卡的「一起動」。</li>
     <li>自有資金撐得起的成長：增量資本報酬率乘再投資率，代表公司不向外拿錢、不提高利潤率，靠自己賺的錢能長多快。</li>
     <li>市場站哪邊：EPS 上修、三年成長預估月變、一年股價對大盤三個訊號，多數是正的算「偏是」。成對的題目看兩籃的差。</li>
-    <li>幕僚備忘：每週一由 Claude 讀完這頁寫成，另一個模型冷讀、程式再驗數字，只提問題，不寫買賣。</li>
+    <li>幕僚備忘：每週一由 Claude 讀完這頁寫成，另一個模型冷讀、程式再驗數字，只提問題，不寫買賣。要決定的題目只挑大事。</li>
     <li>問題清單在 <span class="tick">docs/horizon/questions.json</span>，程式是 <span class="tick">scripts/build_horizon.py</span>。</li>
   </ul>
   <div id="gaps" class="asof"></div>
@@ -252,13 +259,15 @@ a.tick{color:var(--accent);text-decoration:none;border-bottom:1px dotted var(--a
 (function(){
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// 月變很小但不是 0 時多給一位小數，避免警戒碰到卻顯示 -0.0
+const chgD=v=>v!=null&&v!==0&&Math.abs(v)<0.05?2:1;
 const num=(v,d=1,suf='%',sign=true)=>v==null?'<span class="mut">—</span>':
   `<span class="${v>0?'pos':v<0?'neg':''}">${sign&&v>0?'+':''}${Number(v).toFixed(d)}${suf}</span>`;
 const plain=(v,d=2,suf='')=>v==null?'<span class="mut">—</span>':`${Number(v).toFixed(d)}${suf}`;
 const arrow=(now,prev)=>{if(now==null||prev==null)return '';const d=now-prev;
   if(Math.abs(d)<0.05)return ' <span class="mut">→</span>';return d>0?' <span class="pos">↑</span>':' <span class="neg">↓</span>'};
 const md=s=>s?s.slice(5).replace('-','/'):'';
-let TL={}, qname2={};
+let TL={}, qname2={}, FM={};
 const tk=t=>TL[t]?`<a class="tick" href="${esc(TL[t])}">${esc(t)}</a>`:`<span class="tick">${esc(t)}</span>`;
 
 fetch('data/memo.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(renderMemo).catch(()=>renderMemo(null));
@@ -274,18 +283,12 @@ function render(d){
   $('top').innerHTML=d.top.length?'<ol>'+d.top.map(t=>`<li><a href="${esc(t.link||t.anchor)}">${esc(t.text)}</a>${t.link?` <a class="jump" href="${esc(t.anchor)}">本頁 ↓</a>`:''}</li>`).join('')+'</ol>'
     :'<p class="empty">今天沒有需要先處理的事。</p>';
 
-  // 遠方
-  $('far-list').innerHTML=d.far.map(renderQ).join('');
+  // 遠方：三個大題＋一個小區塊（資料層仍是九題）
+  FM=Object.fromEntries(d.far.map(f=>[f.id,f]));
+  $('far-list').innerHTML=(d.far_groups&&d.far_groups.length)?d.far_groups.map(renderGroup).join(''):d.far.map(f=>renderQ(f)).join('');
 
-  // 幾個押注
-  const qname=Object.fromEntries(d.far.map(f=>[f.id,f.q]));
-  $('bets-list').innerHTML=d.bets.map((b,i)=>`<div class="card bet"><div class="qs">${b.qids.map(id=>`<div><a href="#q-${esc(id)}">${esc(qname[id])}</a></div>`).join('')}</div>
-    <div class="meta">${b.qids.length>1?`平均相關 ${b.avg_corr}`:'自己一組'}<br>席位 ${b.seats.length} 檔${b.seats.length?'：'+b.seats.map(tk).join('、'):''}</div></div>`).join('')+
-    (d.no_series.length?`<p class="empty">沒有週資料、不列入比較：${d.no_series.map(id=>esc(qname[id])).join('、')}</p>`:'');
-
-  // 盲點
-  $('blind-list').innerHTML=`<p class="empty">目前在追 ${d.threads_active} 條，${d.blind_total} 條沒配到任何一題。</p>`+
-    '<ul class="ev">'+d.blind_spots.map(b=>`<li><span class="d">${b.days} 天</span><span class="t"><a href="/intel/threads.html">${esc(b.title)}</a></span>${b.heat==='up'?'<span class="chip hit">升溫</span>':b.heat==='down'?'<span class="chip na">降溫</span>':''}</li>`).join('')+'</ul>';
+  // 沒配到題的故事線
+  $('blind').innerHTML=`<a href="/intel/">另有 ${d.blind_total} 條新聞故事線沒配到題 →</a>`;
 
   // 自己考自己
   $('review-box').innerHTML=d.review.length?'<table><tr><th>題目</th><th>當時</th><th style="text-align:right">之後贏多少</th></tr>'+
@@ -316,12 +319,13 @@ function render(d){
   $('soon-30').innerHTML=a.map(li).join('')||'<li class="empty">30 天內沒有排定的事。</li>';
   $('soon-60').innerHTML=b.map(li).join('');
   $('soon-more-label').textContent=`31–60 天（${b.length} 件）`;
+  $('soon-small').innerHTML=(d.upcoming_small||[]).map(x=>`<li><span class="d"></span><span class="t"><a href="${esc(x.link)}">${esc(x.label)} →</a></span></li>`).join('');
 
   // 今天
   const fire=f=>`<div class="fire ${esc(f.level)}">${f.link?`<a href="${esc(f.link)}">${esc(f.text)} →</a>`:esc(f.text)}</div>`;
   $('fires-out').innerHTML=d.fires_out.map(fire).join('')||'<p class="empty">沒有紅燈。</p>';
   $('fires-co').innerHTML=d.fires_co.map(fire).join('')||'<p class="empty">系統都正常。</p>';
-  $('triggers').innerHTML=(d.triggers||[]).map(t=>`<div class="fire">${esc(t.label)} <b class="tick">${esc(t.level)}</b><br><span class="mut">${esc(t.why)}</span></div>`).join('')||'<p class="empty">沒有。</p>';
+  $('triggers').innerHTML=(d.triggers||[]).length?`<div class="fire"><a href="/market/">${d.triggers.length} 個價位離觸發很近 →</a></div>`:'<p class="empty">沒有離觸發很近的價位。</p>';
 
   // 方向
   $('conflicts').innerHTML=d.conflicts.map(c=>`<div class="conflict">${esc(c)}</div>`).join('');
@@ -349,7 +353,7 @@ function alarmChip(a){
   return a.hit?'<span class="chip hit">已碰到</span>':'<span class="chip ok">未碰到</span>';
 }
 
-function renderQ(f){
+function qRows(f){
   const m=f.metrics; let rows='';
   if(f.kind==='macro'){
     const s=m.series||{};
@@ -366,12 +370,17 @@ function renderQ(f){
     const r=(label,key,fmt,extra)=>`<tr><td>${label}</td><td class="n">${fmt(g[key])}${extra?extra(g):''}</td>${l?`<td class="n">${fmt(l[key])}</td><td class="n">${num(sp[key],1,' 點')}</td>`:''}</tr>`;
     rows=head+
       r('EPS 上修（3 個月）','eps_rev_3m',v=>num(v),x=>arrow(x.eps_rev_3m,f.eps_prev_month))+
-      r('三年成長預估（年化）','growth_3y',v=>num(v,1,'%',false),x=>x.growth_3y_chg!=null?` <span class="mut">月變 </span>${num(x.growth_3y_chg,1,' 點')}`:'')+
+      r('三年成長預估（年化）','growth_3y',v=>num(v,1,'%',false),x=>x.growth_3y_chg!=null?` <span class="mut">月變 </span>${num(x.growth_3y_chg,chgD(x.growth_3y_chg),' 點')}`:'')+
       r('一年股價對大盤','rs_52w',v=>num(v,0),x=>arrow(x.rs_52w,x.rs_52w_prev))+
       r('半年股價對大盤','rs_26w',v=>num(v,0))+
       r('自有資金撐得起的成長','self_funded',v=>num(v,1,'%',false),x=>` <span class="mut">${x.n_self}/${x.n_total} 檔有資料</span>`);
     if(m.capex)rows+=`<tr><td>${esc(f.capex.label)}</td><td class="n">${num(m.capex.capex_pct_rev,1,'%',false)}</td>${l?'<td></td><td></td>':''}</tr>`;
   }
+  return rows;
+}
+
+function renderQ(f){
+  const rows=qRows(f);
   const seats=f.my_seats.length?f.my_seats.map(tk).join('、'):'<span class="mut">沒有</span>';
   const members=f.kind==='macro'?'':`<div class="row"><span class="lbl">籃內</span><span>${f.gain.tickers.map(tk).join('、')}${f.lose?`<span class="mut">　對照：</span>${f.lose.tickers.map(tk).join('、')}`:''}</span></div>`;
   const news=(f.evidence_recent||[]).slice(0,4);
@@ -387,6 +396,71 @@ function renderQ(f){
     ${news.length?'<ul class="news">'+news.map(n=>`<li>${esc(n.title)} <span class="mut asof">${md(n.last_seen)}${n.heat==='up'?' 升溫':''}</span></li>`).join('')+'</ul>':''}
     ${base?`<div class="row"><span class="lbl">當初怎麼想</span><span>${base}</span></div>`:''}
   </div>`;
+}
+
+function leanChip(f){
+  return f.lean?` <span class="chip lean ${/資料不足|分歧/.test(f.lean.text)?'na':'co'}">市場目前${esc(f.lean.text)}${f.lean.n_pos!=null?`（${f.lean.n_pos}/${f.lean.n}）`:''}</span>`:'';
+}
+
+function renderGroup(g){
+  if(g.id==='minor')return renderMinor(g);
+  if(g.subs&&g.subs.length)return renderBig(g);
+  return FM[g.main]?renderQ(FM[g.main]):'';
+}
+
+// 三個大題裡最大的一張：AI 硬體這一注（主題用算力那題，另四題是分項，每個分項一行）
+function renderBig(g){
+  const f=FM[g.main], subs=g.subs.map(id=>FM[id]).filter(Boolean);
+  const m=g.money, pc=v=>v==null?'—':'約 '+Math.round(v)+'%';
+  const money=m?`<div class="money">這一注佔多少錢（粗估下限）：美股 <b>${pc(m.us_pct)}</b>、台股 <b>${pc(m.tw_pct)}</b>
+    <small>美股＝指數部 70% × SMH（半導體 ETF）現在占的 ${m.smh_pct==null?'—':m.smh_pct+'%'}，加上個股部 30% × 屬於這一注的席位占比（${m.n_seats} 席裡有 ${m.n_ai_seats} 席）。台股＝指數部 70% × 台積電現在占的 ${m.tsmc_pct==null?'—':m.tsmc_pct+'%'}。QQQ、0050 裡的 AI 股和台股個股沒算，所以是下限。</small></div>`:'';
+  const seats=(g.ai_seats||[]).length?g.ai_seats.map(tk).join('、'):'<span class="mut">沒有</span>';
+  const c=g.corr, sh=id=>(FM[id]&&FM[id].short)||id;
+  const corr=c?`<div class="row"><span class="lbl">一起動</span><span>${c.qids.map(id=>`<a href="#q-${esc(id)}">${esc(sh(id))}</a>`).join('、')} 近兩年一起漲跌，平均相關 <b class="tick">${esc(c.avg_corr)}</b>${c.apart.length?`<span class="mut">。${c.apart.map(id=>esc(sh(id))).join('、')}沒併進來，跟其他題的相關都低於 0.6</span>`:''}</span></div>`:'';
+  const news=(g.evidence_recent||[]).slice(0,3);
+  const seen=new Set(), base=[f].concat(subs).flatMap(x=>x.baseline||[]).filter(b=>!seen.has(b.url)&&seen.add(b.url))
+    .map(b=>`<a href="${esc(b.url)}">${esc(b.label)}</a>`).join('、');
+  return `<div class="card q" id="q-${esc(f.id)}">
+    <h4>${esc(g.title)}${leanChip(f)}</h4>
+    <div class="why"><b>核心問題</b>　${esc(f.q)}<br>${esc(f.why)}</div>
+    ${money}
+    <div style="overflow-x:auto"><table>${qRows(f)}</table></div>
+    <div class="row"><span class="lbl">籃內</span><span>${f.gain.tickers.map(tk).join('、')}</span></div>
+    <div class="row"><span class="lbl">主警戒線</span>${alarmChip(f.alarm)}<span>${esc(f.alarm_def.text)}</span></div>
+    <div class="row"><span class="lbl">你的席位</span><span>${seats}<span class="mut">　屬於這一注，共 ${(g.ai_seats||[]).length} 檔</span></span></div>
+    <h5>分項，各一行</h5>
+    <ul class="subs">${subs.map(x=>subRow(x,false)).join('')}</ul>
+    ${corr}
+    <div class="row"><span class="lbl">新聞</span><a href="/intel/threads.html">累積 ${g.evidence_total||0} 條故事線 →</a></div>
+    ${news.length?'<ul class="news">'+news.map(n=>`<li>${esc(n.title)} <span class="mut asof">${md(n.last_seen)}${n.heat==='up'?' 升溫':''}</span></li>`).join('')+'</ul>':''}
+    ${base?`<div class="row"><span class="lbl">當初怎麼想</span><span>${base}</span></div>`:''}
+  </div>`;
+}
+
+// 分項與小題都只留一行：市場站哪邊、警戒有沒有碰到、三個慢數字
+function numBits(f){
+  const m=f.metrics||{};
+  if(f.kind==='macro'){
+    const s=m.series||{};
+    return (f.series_def||[]).map(x=>{const k=x.key,u=x.unit==='%'?'%':'',chg=s[k+'_chg_52w'];
+      return `${esc(x.label)} ${plain(s[k],2,u)}${chg!=null?`（一年 ${x.unit==='%'?num(chg,2,' 點'):num(chg)}）`:''}`}).join('・');
+  }
+  const g=m.gain||{}, sp=m.spread||{};
+  const a=f.kind==='pair'
+    ?[['EPS 上修差',sp.eps_rev_3m,1,' 點'],['一年股價對大盤差',sp.rs_52w,0,' 點'],['半年股價對大盤差',sp.rs_26w,0,' 點']]
+    :[['EPS 上修',g.eps_rev_3m,1,'%'],['三年成長月變',g.growth_3y_chg,chgD(g.growth_3y_chg),' 點'],['一年股價對大盤',g.rs_52w,0,'%']];
+  return a.map(x=>`${x[0]} ${num(x[1],x[2],x[3])}`).join('・');
+}
+
+function subRow(f,withSeats){
+  const seats=withSeats?`<span class="mut">席位：${f.my_seats.length?f.my_seats.map(tk).join('、'):'沒有'}</span>`:'';
+  return `<li id="q-${esc(f.id)}"><span class="nm">${esc(f.q)}</span>${leanChip(f)}${alarmChip(f.alarm)}<span class="mut">警戒：${esc(f.alarm_def.text)}</span>
+    <span class="nums">${numBits(f)}</span>${seats}</li>`;
+}
+
+function renderMinor(g){
+  return `<div class="card q"><h4>${esc(g.title)}</h4><div class="why">這兩題身上的錢很少，各留一行。</div>
+    <ul class="subs">${g.minors.map(id=>FM[id]?subRow(FM[id],true):'').join('')}</ul></div>`;
 }
 })();
 </script>
