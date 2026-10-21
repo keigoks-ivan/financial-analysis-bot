@@ -2677,13 +2677,14 @@ _ALL_DAILY_SNAPSHOTS_CACHE: dict | None = None
 
 
 def _load_all_daily_snapshots() -> dict:
-    """2026-10-21: every daily EPS snapshot ({snapshot_dir}/daily/YYYY-MM-DD.json, written by
-    koyfin_refresh_all.py; see eps_daily.py) keyed by date. Kept in a subdirectory so the 1m /
-    3m / monthly loaders above (which only match files directly in the snapshot dir) never see
-    them. Cached at module level like the other snapshot loaders."""
+    """2026-10-21: every daily EPS snapshot (data/eps-estimates/daily/{dd,smallcap,tw}/YYYY-MM-DD.json,
+    written by koyfin_refresh_all.py; see eps_daily.py) keyed by date. Kept outside the monthly
+    snapshot dir so the 1m / 3m / monthly loaders above never see them, and outside docs/ so
+    they are not published. Cached at module level like the other snapshot loaders."""
     global _ALL_DAILY_SNAPSHOTS_CACHE
     if _ALL_DAILY_SNAPSHOTS_CACHE is None:
-        _ALL_DAILY_SNAPSHOTS_CACHE = eps_daily.load_daily_snapshots(_snapshot_dir() / "daily")
+        group = "tw" if UNIVERSE_MODE == "tw" else ("smallcap" if UNIVERSE_MODE == "smallcap" else "dd")
+        _ALL_DAILY_SNAPSHOTS_CACHE = eps_daily.load_daily_snapshots(eps_daily.daily_dir(group))
     return _ALL_DAILY_SNAPSHOTS_CACHE
 
 
@@ -4966,7 +4967,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
                 print(f"    [{i:>3}/{len(futs)}] {elapsed:.0f}s")
 
     # Step 4.35 (2026-10-21): 近期財報修正——財報公布後第 1、2 天的 EPS 預估逐日變化，
-    # 讀每日快照（docs/dd-screener/**/eps-estimates-snapshots/daily/）。研究檢視，不進任何分數。
+    # 讀每日快照（data/eps-estimates/daily/）。研究檢視，不進任何分數。
     _pe_asof = excel_snapshot.snapshot_date if excel_snapshot else None
     _pe_years = condition_calendar_years(_pe_asof) if _pe_asof else None
     _pe_daily = _load_all_daily_snapshots()

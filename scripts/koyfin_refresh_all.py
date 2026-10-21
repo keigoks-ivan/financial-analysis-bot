@@ -28,7 +28,7 @@ Pipeline per family (screener / smallcap / largecap, see scripts/koyfin_families
      same new FY1 (within 1%) shows on 2 consecutive scrapes; more than max(10, 5% of
      rows) held in a family -> exit 6, nothing built. Each run writes
      data/eps-estimates/gate/gate_report_<date>.json + held_state.json (committed), and
-     a daily EPS snapshot under docs/dd-screener/**/eps-estimates-snapshots/daily/.
+     a daily EPS snapshot under data/eps-estimates/daily/{dd,smallcap,tw}/.
      The Koyfin scrape itself is never retried; login expired (exit 3) just stops.
   5. build the xlsx via `python3 scripts/koyfin_xlsx_from_raw.py`
 Then, once every requested family is done: the six downstream commands in

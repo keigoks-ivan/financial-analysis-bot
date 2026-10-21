@@ -447,10 +447,10 @@ future DDs emit the field natively.
 ## Daily EPS snapshots and 近期財報修正 (2026-10-21)
 
 `koyfin_refresh_all.py` scrapes every Tue–Sat and writes one compact EPS snapshot per
-universe group per day to `eps-estimates-snapshots/daily/YYYY-MM-DD.json`
-(`smallcap/` and `tw/` have their own `daily/`). Same row schema as the monthly files
+universe group per day to `data/eps-estimates/daily/{dd,smallcap,tw}/YYYY-MM-DD.json`
+(committed, not published under docs/). Same row schema as the monthly files
 (`eps_fy_curr/next/fy3`, `eps_cagr_2y`, `source`) plus `kind: "daily"` and
-`scraped_at_utc`. The subdirectory keeps them away from the 1m / 3m / monthly loaders.
+`scraped_at_utc`. Living outside the monthly snapshot dir keeps them away from the 1m / 3m / monthly loaders.
 
 New per-stock fields: `last_earnings_time` ("BMO" / "AMC" / null),
 `eps_rev_since_earnings_baseline` (`{"date", "kind": "daily" | "monthly"}`) and the flat

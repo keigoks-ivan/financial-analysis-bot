@@ -1684,6 +1684,7 @@ def compute_market_beta(ticker, df, spy_df, window=252):
 # 內文（見下方「護城河」區塊），其餘卡片仍完全不讀 DD、只用 dd-screener。
 DD_SCREENER_LATEST_PATH = ROOT / "docs" / "dd-screener" / "latest.json"      # read-only source
 EPS_SNAPSHOT_DIR = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"  # read-only source
+EPS_DAILY_SNAPSHOT_DIR = ROOT / "data" / "eps-estimates" / "daily" / "dd"  # 2026-10-21 每日快照（eps_daily.daily_dir("dd")）
 SUE_BREAKS_PATH = OUT_DIR / "_sue_breaks.json"        # shared file this script writes
 PEAD_EVENTS_CSV = Path.home() / "v7-backtest" / "results" / "pead" / "pead_events.csv"  # read-only, outside repo
 INSIDER_CLUSTER_WINDOW_DAYS = 90
@@ -1796,7 +1797,7 @@ _eps_snapshot_cache = {}
 
 def load_eps_snapshot_by_date(snapshot_date, kind=None):
     """kind="daily"（latest.json 的 eps_rev_since_earnings_baseline_kind，2026-10-21）：
-    基準是每日快照，放在 eps-estimates-snapshots/daily/YYYY-MM-DD.json；其餘照舊找月快照。"""
+    基準是每日快照，放在 data/eps-estimates/daily/dd/YYYY-MM-DD.json；其餘照舊找月快照。"""
     if not snapshot_date:
         return None
     key = (snapshot_date, kind)
@@ -1805,7 +1806,7 @@ def load_eps_snapshot_by_date(snapshot_date, kind=None):
     found = None
     if kind == "daily":
         try:
-            found = json.loads((EPS_SNAPSHOT_DIR / "daily" / f"{snapshot_date}.json").read_text(encoding="utf-8"))
+            found = json.loads((EPS_DAILY_SNAPSHOT_DIR / f"{snapshot_date}.json").read_text(encoding="utf-8"))
         except (OSError, ValueError):
             found = None
         _eps_snapshot_cache[key] = found

@@ -2,7 +2,7 @@
 """每日 Koyfin 抓取的三塊共用邏輯（2026-10-21）：
 
   1. 閘門逐檔處理（取代「任何一檔超過 35% 就整批停」）
-  2. 每日 EPS 快照（docs/dd-screener/**/eps-estimates-snapshots/daily/YYYY-MM-DD.json）
+  2. 每日 EPS 快照（data/eps-estimates/daily/{dd,smallcap,tw}/YYYY-MM-DD.json）
   3. 「財報後」基準挑選、「財報後第 k 天」對位
 
 stdlib + load_eps_estimates_xlsx（只讀 xlsx，不需要 openpyxl），python3 與 python3.12 都能 import。
@@ -53,7 +53,7 @@ HELD_COLUMNS = [
     (49, "est_eps_cagr_3y_pct", "Est EPS CAGR 3Y %"),
 ]
 
-# 家族 → 快照目錄（相對 docs/dd-screener）與每日快照的合併群組
+# 家族 → 月快照目錄（相對 docs/dd-screener）與每日快照的合併群組（每日快照目錄見 daily_dir）
 SNAPSHOT_GROUPS = {
     "dd": {"families": ["screener", "largecap"], "dir": "eps-estimates-snapshots"},
     "smallcap": {"families": ["smallcap"], "dir": "smallcap/eps-estimates-snapshots"},
@@ -235,8 +235,12 @@ def make_report_dates_lookup(family_key: str, today_d: date):
 # 2. 每日 EPS 快照
 # ---------------------------------------------------------------------------
 
-def daily_dir(group: str, docs_dir: Path | None = None) -> Path:
-    return (docs_dir or DD_SCREENER_DIR) / SNAPSHOT_GROUPS[group]["dir"] / "daily"
+# 每日快照放 data/（不發布到網站）：data/eps-estimates/daily/{dd,smallcap,tw}/YYYY-MM-DD.json
+DAILY_SNAPSHOT_ROOT = ROOT / "data" / "eps-estimates" / "daily"
+
+
+def daily_dir(group: str, root: Path | None = None) -> Path:
+    return (root or DAILY_SNAPSHOT_ROOT) / group
 
 
 def snapshot_record(rec: dict) -> dict:
