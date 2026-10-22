@@ -399,7 +399,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                               'key': 'ath_patterns',
                               'zone': 5,
                               'status': 'rej',
-                              'desc': '頁內結論：「美股找不到有利的新高形狀；台股創歷史新高本身就有優勢」'},
+                              'desc': '美股找不到有利的新高形狀；台股新高本身有優勢，營收也創新高更好'},
  '/backtest/chart_patterns/': {'title': '看圖的型態有沒有用？',
                                'short': '看圖型態',
                                'key': 'chart_patterns',
