@@ -156,7 +156,9 @@ def check_file(path):
                     _br, _rr = (_b / price - 1) * 100, (_r / price - 1) * 100
                     if _rr < 0:
                         _ar_span = max(_ar_span, abs((p_bull * abs(_br)) / (p_bear * abs(_rr)) - ar_calc))
-            if ar is not None and abs(ar_calc - ar) > max(AR_TOL, _ar_span):
+            # 2026-10-22 NFLX：meta 的 AR 本身也只存小數 1 位（精確 5.148 存 5.1），
+            # 和輸入價的捨入疊加後可超過 0.06（重算 5.164）——再加上 AR 自身 ±0.05。
+            if ar is not None and abs(ar_calc - ar) > max(AR_TOL, _ar_span + 0.05):
                 fails.append(f"AR 對不上（canonical 機率加權口徑）：meta {ar} vs 重算 "
                              f"{ar_calc:.2f}（({p_bull}×{abs(bull_ret):.1f})/"
                              f"({p_bear}×{abs(bear_ret):.1f})）")
