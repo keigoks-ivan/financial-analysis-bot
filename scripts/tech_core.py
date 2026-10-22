@@ -224,9 +224,43 @@ def download_prices(tickers, period='15mo', auto_adjust=True):
         if df is None:
             continue
         trimmed = df[df.index >= start]
+        # Yahoo sometimes returns the newest daily bar with Open/High/Low/Close
+        # all NaN but Volume populated (bar not finalised yet). Rows with no
+        # Close are not trading days for this ticker; see also _drop_unsettled_tail.
+        trimmed = trimmed[trimmed['Close'].notna()]
         if not trimmed.empty:
             frames[t] = trimmed
 
     if not frames:
         return pd.DataFrame()
-    return pd.concat(frames, axis=1)
+    out = pd.concat(frames, axis=1)
+    return _drop_unsettled_tail(out)
+
+
+UNSETTLED_TAIL_MIN_FRAC = 0.5   # a trailing date is "settled" when at least this
+                                 # share of the previous date's valid closes exist
+
+
+def _drop_unsettled_tail(px):
+    """Drop trailing dates whose Close is present for fewer than
+    UNSETTLED_TAIL_MIN_FRAC of the preceding date's tickers.
+
+    Yahoo sometimes serves the newest daily bar with NaN OHLC (Volume only)
+    for most tickers while a handful already carry the settled bar (CI runs
+    after UTC midnight, 2026-10-19..21: 6 of 1400 tickers had a Close on the
+    last date). Wide-frame consumers (build_rs_turn / build_stages) then see a
+    last row that is ~all NaN and every ticker has only 251 valid closes in
+    its trailing 252 rows, so eligible collapses to ~1-4. Only trailing dates
+    are touched, and only when the row is clearly unsettled; the settled bar
+    comes back on the next run."""
+    if px.empty or not isinstance(px.columns, pd.MultiIndex):
+        return px
+    try:
+        close = px.xs('Close', axis=1, level=1)
+    except KeyError:
+        return px
+    cnt = close.notna().sum(axis=1)
+    n = len(cnt)
+    while n >= 2 and cnt.iloc[n - 1] < UNSETTLED_TAIL_MIN_FRAC * cnt.iloc[n - 2]:
+        n -= 1
+    return px if n == len(cnt) else px.iloc[:n]
