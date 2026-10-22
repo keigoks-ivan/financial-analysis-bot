@@ -347,6 +347,9 @@ def _stage0_part_ok(spec, part, py):
     if sid.startswith("a2_"):
         return _sub([py, SCRIPTS_DIR / "validate_digest.py", part,
                      "--transcripts", Path(spec["transcript"]).parent])[0] == 0
+    # 2026-10-22 CSX：--resume 時 stale 軸重新編號，axes_{k} 可能是上一輪別的軸，軸不符不沿用
+    if spec.get("axis_id") not in (data.get("coverage") or {}):
+        return False
     cov = (data.get("coverage") or {}).get(spec.get("axis_id")) or {}
     if "(agent incomplete)" in (cov.get("queries_run") or []):
         return False
