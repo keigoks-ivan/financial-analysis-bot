@@ -172,6 +172,57 @@ jobs:
           NOTIFY_TITLE: ${{ steps.weekly_mail.outputs.subject }}
         run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --url https://research.investmquest.com/engine/arena.html
 
+      # ── 選股席位變化通知（2026-10-22）：只報三套席位（美股看板 5、台股 5、十倍組 10）的進出席，
+      #    以及各套「排隊前 5 名」的成員進出。取代原本在 daily-us-close.yml 的「選股主控台名單變化」。
+      #    放在席位與排隊都算完之後；狀態檔 docs/engine/roster_notify_state.json 換版後第一次只建基準。
+      #    週六 09:00 的 daily-taipei-morning.yml 也跑同一支腳本；兩邊隔約兩小時，狀態檔 docs/engine/ 隨本檔一起 commit。──
+      - name: "[roster] Check seat roster changes"
+        continue-on-error: true
+        run: python scripts/check_seat_roster_alerts.py
+
+      - name: "[roster] Read seat roster alert"
+        id: roster_alert
+        continue-on-error: true
+        run: |
+          if [ -f roster_alert.txt ] && [ -f roster_alert_subject.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "subject<<ROSTER_EOF"
+              cat roster_alert_subject.txt
+              echo "ROSTER_EOF"
+              echo "body<<ROSTER_EOF"
+              cat roster_alert.txt
+              echo "ROSTER_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: "[roster] Email seat roster changes"
+        if: steps.roster_alert.outputs.changed == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.roster_alert.outputs.subject }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://roster_alert_mail.html
+          body: ${{ steps.roster_alert.outputs.body }}
+
+      - name: "[roster] Discord notify seat roster changes"
+        if: steps.roster_alert.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_PICKS }}
+          NOTIFY_TITLE: ${{ steps.roster_alert.outputs.subject }}
+          NOTIFY_BODY: ${{ steps.roster_alert.outputs.body }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/cockpit/
+
       - name: Commit and push if changed
         id: commit_push
         env:
