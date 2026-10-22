@@ -138,6 +138,9 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
 .muted{color:var(--muted)}
 .tbl-scroll{overflow-x:auto}
 .tbl-scroll .roster-table{min-width:760px}
+.roster-wide .roster-table{width:max-content;min-width:100%}
+.roster-wide .roster-table th,.roster-wide .roster-table td{white-space:nowrap}
+.roster-wide .roster-table th:nth-child(2),.roster-wide .roster-table td:nth-child(2){position:sticky;left:0;background:var(--bg);z-index:1}
 .chip-row{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:.8rem}
 .chip{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-1);padding:.55rem .9rem;min-width:96px}
 .chip-k{font-size:.68rem;color:var(--muted);font-weight:600;letter-spacing:.04em}
@@ -552,23 +555,59 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     var d = S.seats;
     if(!d || !Array.isArray(d.core_seats)){ $('roster-mount').innerHTML = ph('台股席位資料暫缺'); return; }
     function nm(r){return '<span class="roster-tk">'+esc(code(r.ticker))+'</span> '+esc(r.name||nameOf(r.ticker))+' <span class="mk">'+mkt(r.ticker)+'</span>';}
+    // 13 個數字欄（成長%、EY%、ROIC%、營業現金流率%、PEG 加 dd-screener 八欄），在席表與排隊表共用；
+    // 格式同台股席位頁（build_seats_tw.py 的 _ddn_cells）：缺值「—」，EPS 預估三個數字用「／」，營運槓桿格顯示分類、百分點放提示
+    var DASH = '<span class="muted">—</span>';
+    function nf(v,dec,sign){return num(v)?((sign&&v>0?'+':'')+Number(v).toFixed(dec)):null;}
+    function nc(v,dec){var s=nf(v,dec);return '<td class="num">'+(s==null?DASH:s)+'</td>';}
+    function epsCell(dn){
+      var a=[dn.eps_curr,dn.eps_next,dn.eps_3];
+      if(!a.some(num)) return '<td class="num">'+DASH+'</td>';
+      return '<td class="num" title="'+esc(dn.eps_ccy?('幣別 '+dn.eps_ccy):'幣別未標示')+'">'+a.map(function(x){return num(x)?Number(x).toFixed(2):'—';}).join('／')+'</td>';
+    }
+    function incCell(dn){
+      var s=nf(dn.inc_roic,1);
+      return (dn.inc_roic_note && s==null) ? '<td class="num" title="'+esc(dn.inc_roic_note)+'">'+DASH+'</td>' : '<td class="num">'+(s==null?DASH:s)+'</td>';
+    }
+    function olCell(dn){
+      if(!dn.ol_label) return '<td>'+DASH+'</td>';
+      var pp=nf(dn.ol_pp,2,true);
+      return '<td title="'+esc('營收成長% − 營業利益成長% = '+(pp==null?'—':pp)+' 個百分點（只在營業利益為正時計算）')+'">'+esc(dn.ol_label)+'</td>';
+    }
+    function ddnCells(r){
+      var dn=r.ddn||{};
+      return nc(r.g,1)+nc(r.ey,1)+nc(r.roic,1)+nc(r.fcf,1)+nc(r.peg,2)+
+        nc(dn.g3,1)+nc(dn.rev3,1)+epsCell(dn)+nc(dn.pe2,1)+incCell(dn)+nc(dn.reinvest,1)+nc(dn.implied,1)+olCell(dn);
+    }
+    var DDN_TH =
+      '<th class="num">成長%</th><th class="num">EY%</th><th class="num">ROIC%</th>'+
+      '<th class="num" title="'+esc('營業現金流÷營收，台股品質閘看的就是這個（資本支出重，所以不看自由現金流）。只供參考')+'">營業現金流率%</th>'+
+      '<th class="num" title="'+esc('明年預估本益比 ÷ 三年 EPS 年化成長（今年到後年），與 dd-screener、估值欄同一個數字')+'">PEG（明年）</th>'+
+      '<th class="num" title="'+esc('Koyfin 預估今年到後年的每股盈餘年化成長。資格閘的「三年成長 ≥15%」用的就是這個欄位；遇到基期跳增時，資格閘會改用後年成長，並封頂 30%，本欄仍顯示原始值。只供參考')+'">三年 EPS 成長%</th>'+
+      '<th class="num" title="'+esc('Koyfin 共識預估的未來三年營收年化成長。只供參考，不影響資格、排序與席位')+'">營收成長%</th>'+
+      '<th class="num" title="'+esc('每股盈餘預估，依序為今年／明年／後年，單位新台幣。只供參考')+'">EPS 預估（今／明／後）</th>'+
+      '<th class="num" title="'+esc('現價 ÷ 明年預估每股盈餘（EPS 與股價幣別不同時先換成股價幣別；算不出來留空，不退回報告當時的數字）。與 PEG 同一口徑：PEG = 本欄 ÷ 三年 EPS 年化成長。只供參考，估值閘另看估值欄')+'">預估本益比（明年）</th>'+
+      '<th class="num" title="'+esc('近 3 個財年：（今年稅後營業利潤 − 3 年前稅後營業利潤）÷ 新增投入資本。新增的一塊錢資本賺到多少報酬，用來判斷成長值不值得繼續投。投入資本不增反減時顯示「—」')+'">增量 ROIC%</th>'+
+      '<th class="num" title="'+esc('近 3 年新增投入資本 ÷ 期間年化稅後營業利潤，意思是公司把多少獲利拿去繼續投資擴張')+'">再投資率%</th>'+
+      '<th class="num" title="'+esc('增量 ROIC × 再投資率，機械推算的內生成長率上限，是描述數字，不是預測')+'">隱含成長%</th>'+
+      '<th title="'+esc('營收成長% − 營業利益成長%，只在營業利益為正時計算。格子顯示分類（同 dd-screener），滑鼠移到格子上看百分點數字；利潤率擴張＝營業利益成長快過營收')+'">營運槓桿</th>';
     function lampLab(r){return r.lamp && r.lamp.label ? esc(r.lamp.label) : '<span class="muted">—</span>';}
     var seatRows = d.core_seats.slice(0,5).map(function(r,i){
       return '<tr><td class="num">C'+(i+1)+'</td><td>'+nm(r)+'</td><td>'+lampLab(r)+'</td><td>'+esc(r.action||'—')+'</td>'+
-        '<td class="num">'+(num(r.seat_target_pct)?Number(r.seat_target_pct).toFixed(1)+'%':'—')+'</td></tr>';
+        '<td class="num">'+(num(r.seat_target_pct)?Number(r.seat_target_pct).toFixed(1)+'%':'—')+'</td>'+ddnCells(r)+'</tr>';
     });
     for(var i=seatRows.length;i<5;i++){
-      seatRows.push('<tr><td class="num">C'+(i+1)+'</td><td class="muted">空席</td><td class="muted">—</td><td class="muted">—</td><td class="num">現金</td></tr>');
+      seatRows.push('<tr><td class="num">C'+(i+1)+'</td><td class="muted">空席</td><td class="muted">—</td><td class="muted">—</td><td class="num">現金</td><td class="muted" colspan="13">—</td></tr>');
     }
-    var seatTbl = '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
-      '<th class="num">席號</th><th>股票</th><th>燈號</th><th>倉位</th><th class="num">本月占比</th>'+
+    var seatTbl = '<div class="card tbl-scroll roster-wide"><table class="roster-table"><thead><tr>'+
+      '<th class="num">席號</th><th>股票</th><th>燈號</th><th>倉位</th><th class="num">本月占比</th>'+DDN_TH+
       '</tr></thead><tbody>'+seatRows.join('')+'</tbody></table></div>';
     var q = (d.buyable||[]).slice(0,5);
     var queue;
     if(q.length){
-      queue = '<div class="card tbl-scroll"><table class="roster-table"><thead><tr>'+
-        '<th class="num">名次</th><th>股票</th><th>燈號</th></tr></thead><tbody>'+
-        q.map(function(r,i){return '<tr><td class="num">'+(i+1)+'</td><td>'+nm(r)+'</td><td>'+lampLab(r)+'</td></tr>';}).join('')+
+      queue = '<div class="card tbl-scroll roster-wide"><table class="roster-table"><thead><tr>'+
+        '<th class="num">名次</th><th>股票</th><th>燈號</th>'+DDN_TH+'</tr></thead><tbody>'+
+        q.map(function(r,i){return '<tr><td class="num">'+(i+1)+'</td><td>'+nm(r)+'</td><td>'+lampLab(r)+'</td>'+ddnCells(r)+'</tr>';}).join('')+
         '</tbody></table></div>';
     } else {
       queue = '<p class="roster-note">目前沒有排隊的股票。</p>';
@@ -577,6 +616,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     $('roster-mount').innerHTML =
       '<div class="roster-sub">在席</div>'+seatTbl+
       '<div class="roster-sub">排隊（下次有空席先補）</div>'+queue+
+      '<p class="roster-note">成長%右邊八欄（三年 EPS 成長至營運槓桿）來自 dd-screener，只供參考，不影響資格、排序與席位。</p>'+
       '<p class="roster-note">等待池 '+nWait+' 檔（資格全過、時機燈還沒亮）→ <a href="#seats">看全部席位</a>。資料日 '+esc(String(d.as_of||'').slice(0,10))+'。</p>';
   }
 
