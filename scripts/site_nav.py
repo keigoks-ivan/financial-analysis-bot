@@ -135,6 +135,22 @@ Change log:
         約 400–700 支歷史頁停在舊版。往後改 nav：同步三個外部 snippet 之後，必須再跑一次
         `python3 scripts/site_nav.py --include-external`，並以 `--include-external --check`
         驗證 0 筆待更新。外部 3 repo synced literal 2026-10-21 同步（各 repo nav-regroup-1021 分支）。
+    2026-10-22：全站放寬（持有人拍板「全站都放寬」）。各頁自己寫死的頁面寬度（880–1,240px）在大螢幕
+        兩邊留白，改由這裡統一蓋成上限 1700px，視窗窄時照舊。(1) 站頭 .imq-nav-inner／.imq-subnav-inner
+        與內容同寬。(2) NAV_STYLE 加一條：.wrap／.container／各種頁首 inner／.crumb 一律
+        max(1240px, min(1700px, 100% − 48px))：兩邊留 24px，原本靠負邊距伸進留白的元件（如 ID 頁
+        .cat-jump）才不會撐出橫捲軸；底線 1240px 是各頁原本最寬的上限，保證不會比原本窄。供應鏈頁的
+        .shell 原本 1480，底線另設 1480。只在視窗 ≥1280px 生效，筆電以下維持各頁原樣。選擇器前面
+        加 html body 提高權重，蓋過各頁 <head> 的設定；更深一層的元件規則（如 .chart .container）權重更高，
+        不受影響。(3) body、main 只有報告類頁面（DD、ID、早報、週報）有寬度上限，滿版頁沒有；直接蓋會讓
+        滿版頁在超過 1700px 的螢幕上被縮窄、靠左。所以 NAV_SCRIPT 尾端先量：body 本身、以及一個暫時插入
+        的 <main class="page"> 的 max-width 若在 600–1700px，才在 <html> 加 imq-wb／imq-wm，並把原值記在
+        --imq-wb0／--imq-wm0 當底線，CSS 只對有這兩個 class 的頁面放寬。這段在站頭位置同步執行（head 的樣式表已載入），量完立刻移除，不閃動。放在下拉選單程式之後，
+        STRIP_PATTERNS 才認得整段 <script>。
+        供應鏈頁（.shell，見上）、學習課程（.lc-wrap）、心智模型頁（.mm-*）各自的外框也列進去。
+        (4) DD v19 版型（.v19-frame 固定 1200 寬、目錄 208＋內文 900 的橫排）另外放寬外框，內文加
+        min-width:0，否則內文最寬的表格會把 flex 欄撐出畫面。
+        外部 3 repo synced literal 同日同步。
 """
 
 import re
@@ -167,6 +183,7 @@ NAV_STYLE = """<style id="imq-nav-style">
 .imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
 .imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
 .imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
 @media(max-width:768px){
   .imq-nav-root{padding:.55rem 12px}
   .imq-nav-inner{gap:.4rem}
@@ -177,7 +194,7 @@ NAV_STYLE = """<style id="imq-nav-style">
 }
 </style>"""
 
-NAV_SCRIPT = """<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>"""
+NAV_SCRIPT = """<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>"""
 
 # (group, item, href, label) — groups: home / pick / research / market / system / mm
 # 2026-07-07 整站 IA v2（見 notes/site-internal/root/_proposal_site_ia_20260707.md）：
