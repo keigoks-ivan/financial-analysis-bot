@@ -151,6 +151,10 @@ Change log:
         (4) DD v19 版型（.v19-frame 固定 1200 寬、目錄 208＋內文 900 的橫排）另外放寬外框，內文加
         min-width:0，否則內文最寬的表格會把 flex 欄撐出畫面。
         外部 3 repo synced literal 同日同步。
+    2026-10-24：頂層重新排序（持有人拍板「照看盤到下單的流程排」）：首頁｜市場 ▾｜總經與籌碼 ▾｜
+        研究 ▾｜選股｜系統 ▾｜投資流程｜模擬｜心智模型｜搜尋。研究 ▾ 移到選股之前，心智模型從選股與
+        系統之間移到模擬之後；只換位置，各項名稱、下拉內容、PREFIX_ACTIVE 都沒動。
+        外部 3 repo synced literal 同日同步。
 """
 
 import re
@@ -307,12 +311,12 @@ def build_nav(group=None, item=None):
       <a href="/"{home_cls}>首頁</a>
 {dd("market")}
 {dd("macrochip")}
-      <a href="/cockpit/"{pick_cls}>選股</a>
 {dd("research")}
-      <a href="/mental-models/"{mm_cls}>心智模型</a>
+      <a href="/cockpit/"{pick_cls}>選股</a>
 {dd("system")}
-      <a href="/simulation/"{simulation_cls}>模擬</a>
       <a href="/flow/"{flow_cls}>投資流程</a>
+      <a href="/simulation/"{simulation_cls}>模擬</a>
+      <a href="/mental-models/"{mm_cls}>心智模型</a>
       <a href="/search.html"{search_cls}>搜尋</a>
     </nav>
   </div>
@@ -509,6 +513,7 @@ SKIP_FILES = {
     "engine/_scoreboard_body.html",             # iframe 片段（記分板子分頁）
     "engine/_research_body.html",               # iframe 片段（出場研究子分頁，2026-10-20；產生器在 v7-backtest tools/build_seat_exit_research_page.py）
     "engine/_grid_research_body.html",          # iframe 片段（全格子研究子分頁，2026-10-21；產生器在 v7-backtest tools/build_seat_full_grid_page.py）
+    "engine/_replay_body.html",                 # iframe 片段（過去一年回放子分頁，2026-10-23；產生器在 v7-backtest tools/build_seat_replay_page.py）
     "long-track/_scoreboard_body.html",         # iframe 片段（實單前瞻記分板，嵌 /long-track/#live；2026-09-05）
     # 2026-08-20 研究區整併第一階段：/研究/ 群 7 頁收斂成 /t/ + /id/ 兩個主控台。
     # 3 個 redirect stub 與 4 個 nav-less iframe 片段一律不注入站 nav（原因同上）。
