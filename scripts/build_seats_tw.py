@@ -63,23 +63,24 @@ revision threshold (TW has no historical estimates), nor the valuation gate or t
     was +2.6%, so the seats had been empty since 2026-10-09.
   - Why the sections 「④ 候補」「⑤ 其他過關」 are gone: both only existed for names outside the +5% pool.
 
-Owner decision 2026-10-21 (v5.8, TW seats page only): 每月依波動分配每席大小. Registered in v7-backtest
-docs/SeatRebal_Prereg.md (f6d7dfd), results docs/SeatRebal_Results.md (2c8aaca, owner decision 6b78bfb).
-Rule R2 passed all six criteria on TW (750/1000 seeds, median Calmar 0.799 -> 0.872, CAGR 24.3% -> 22.9%,
-max drawdown -30.6% -> -26.2%); US small/mid caps missed one (second-half Calmar), so the registered
-conclusion is 「單一市場」 and switching the TW page is the owner's exception, like v5.4 / v5.6.
-  - Rebalance day: the Saturday re-selection whose decision date is in a different month from the previous
-    decision date (ledger snapshot); the first run ever does not count.
-  - Base weight of each incumbent (seated before this week and still seated after exits) =
-    (incumbents with a sigma / 5) x (1/sigma) / sum(1/sigma); sigma = sample std of the last 60 daily
-    returns (61 adjusted closes up to the decision date, yfinance). Missing sigma -> 1/5. The incumbents
-    together keep (incumbents / 5), the same total as equal weight.
-  - Names that enter on the rebalance day or later in the month use 1/5 until the next rebalance day.
-  - Shown weight = base x lamp size (orange halves it), as a share of the money for the TW seats; empty
-    seats are cash. Kept in seats_tw_state.json 'vol_rebal'.
-  - Data guard (not in the registration): a daily move larger than the TW price limit (10%) means bad
-    data, so that name's sigma counts as missing.
-  - On a rebalance day with incumbents, writes tw_seats_rebal_alert.txt for the workflow mail / Discord step.
+Owner decision 2026-10-21 (v5.8, TW seats page only): 每月依波動分配每席大小. (Superseded by v5.9, see below.)
+Registered in v7-backtest docs/SeatRebal_Prereg.md (f6d7dfd), results docs/SeatRebal_Results.md (2c8aaca,
+owner decision 6b78bfb). Rule R2 passed all six criteria on TW (750/1000 seeds, median Calmar 0.799 -> 0.872,
+CAGR 24.3% -> 22.9%, max drawdown -30.6% -> -26.2%); US small/mid caps missed one (second-half Calmar), so the
+registered conclusion is 「單一市場」 and switching the TW page was the owner's exception, like v5.4 / v5.6.
+  - Each incumbent's weight was set once a month by inverse 60-day volatility (sum equal to equal weight),
+    new names used 1/5 until the next rebalance day, and a mail / Discord alert went out on that day.
+    The code for this (seat_weights, update_vol_rebal, tw_seats_rebal_alert.txt, state key 'vol_rebal',
+    the 「本月占比」 column) was removed in v5.9; see commit b8595de8f for the v5.8 implementation.
+
+Owner decision 2026-10-23 (v5.9, TW seats page only): 拿掉 v5.8 的每月依波動分配，恢復每檔等權 (1/5 each,
+lamp size on top: 綠 1.0 / 黃 1.0 / 橘 0.5 / 紅 0), i.e. back to the v5.7 sizing. This is the owner's decision,
+not a test conclusion. Basis he looked at: the one-year replay (2025-10-22 flat -> 2026-10-22, the same 10
+entries and exits) gives +29.6% / max drawdown -33.6% with the volatility allocation and +39.8% / -34.0% with
+equal weight (0050: +74.0%); the 2010-2026 test (v7 docs/SeatRebal_Results.md, 1,000 seeds) says the volatility
+allocation costs 1.4 points of CAGR for Calmar 0.80 -> 0.87. Registered in knowledge/rule_ledger.md (v5.9 row).
+  - The old state key 'vol_rebal' in seats_tw_state.json is no longer read; the next run rewrites the file
+    with only schema_version and last_nonred.
 
 TW pool has no short-interest data, so that US gate never fires; insider
 buying (a display chip in the US) is almost always empty. 下次財報 falls back to the
@@ -126,10 +127,6 @@ MARKET_CSV = ROOT / 'data' / 'macro_db' / 'series' / 'tw.twse_tri.csv'   # 發�
 MKT_MA = 200            # 大盤均線天數（登記 SeatExitSwitch_Prereg.md 第三節）
 MKT_STALE_DAYS = 7      # 最近一筆比決策日早超過這麼多日曆天＝大盤資料未更新，該週退回現行賣法
 X1_DEFAULT_SIZE = 1.0   # 狀態檔缺這檔的最近非紅燈倉位時的預設
-VOL_DAYS = 60           # 每月調倉：近 60 個交易日日報酬的標準差（登記 SeatRebal_Prereg.md 第三節）
-TW_MOVE_LIMIT = 0.11    # 台股漲跌幅上限 10%；單日漲跌超過這個數＝資料錯誤，該股 σ 當缺值
-REBAL_ALERT_TXT = ROOT / 'tw_seats_rebal_alert.txt'   # 調倉日才寫，workflow 讀到就寄信＋Discord
-SITE_URL = 'https://research.investmquest.com/cockpit-tw/'
 
 TPE = timezone(timedelta(hours=8))
 CORE_SLOTS = ba.CORE_SLOTS
@@ -259,141 +256,6 @@ def update_state(state, core_rows, as_of):
         elif t in state:
             new[t] = state[t]
     return new
-
-
-# ── 每月依波動分配（v5.8，2026-10-21，SeatRebal R2）──────────────────────────
-
-def is_rebal_day(reselect, prior_snaps, as_of):
-    """每月第一個決策週：週六重選，且決策日與上一個決策日不同月份。沒有上一個決策日（第一次跑）不算。"""
-    if not reselect or not prior_snaps:
-        return False
-    return (prior_snaps[-1].get('date') or '')[:7] != as_of[:7]
-
-
-def sigma_from_closes(closes):
-    """61 個收盤 → 60 個日報酬的樣本標準差。收盤不足 61 個、任一缺值或 ≤0、單日漲跌超過
-    TW_MOVE_LIMIT（資料錯誤）、σ 為 0 → None。"""
-    if len(closes) != VOL_DAYS + 1:
-        return None
-    if any(not isinstance(c, (int, float)) or not math.isfinite(c) or c <= 0 for c in closes):
-        return None
-    rets = [closes[k + 1] / closes[k] - 1.0 for k in range(VOL_DAYS)]
-    if any(abs(x) > TW_MOVE_LIMIT for x in rets):
-        return None
-    m = math.fsum(rets) / VOL_DAYS
-    sd = math.sqrt(math.fsum((x - m) ** 2 for x in rets) / (VOL_DAYS - 1))
-    return sd if sd > 0 and math.isfinite(sd) else None
-
-
-def vol_base(tickers, sigma, slots=CORE_SLOTS):
-    """R2 基本權重（純函式）：缺 σ 的拿 1/席位數；有 σ 的共分「有 σ 檔數 ÷ 席位數」，與 1/σ 成正比。
-    合計＝在席檔數 ÷ 席位數，與等權相同。"""
-    ok = [t for t in tickers if sigma.get(t)]
-    base = {t: 1.0 / slots for t in tickers if t not in ok}
-    inv = {t: 1.0 / sigma[t] for t in ok}
-    tot = math.fsum(inv.values())
-    for t in ok:
-        base[t] = len(ok) / slots * inv[t] / tot
-    return base
-
-
-def fetch_closes(tickers, decision_date):
-    """yfinance 還原收盤（auto_adjust），每檔取不晚於決策日、有值的最後 VOL_DAYS+1 個收盤。
-    抓不到的檔回傳 []（σ 當缺值）。"""
-    out = {t: [] for t in tickers}
-    if not tickers:
-        return out
-    dd = date.fromisoformat(decision_date[:10])
-    try:
-        import yfinance as yf
-        df = yf.download(list(tickers), start=(dd - timedelta(days=150)).isoformat(),
-                         end=(dd + timedelta(days=1)).isoformat(), auto_adjust=True,
-                         progress=False, threads=False)
-        close = df['Close']
-        if not hasattr(close, 'columns'):
-            close = close.to_frame(tickers[0])
-        close = close[[d.date() <= dd for d in close.index]]
-        for t in tickers:
-            if t in close.columns:
-                vals = [float(x) for x in close[t].dropna().tolist()]
-                out[t] = vals[-(VOL_DAYS + 1):]
-    except Exception as e:  # noqa: BLE001 — 抓價失敗只讓 σ 缺值（等權），不擋席位
-        _warn(f"σ 抓價失敗（{type(e).__name__}: {e}），本月照等權")
-    return out
-
-
-def update_vol_rebal(rb, reselect, prior_snaps, as_of, core, prev_core, log=print):
-    """回傳 (新的 vol_rebal, 今天是否剛調倉)。調倉日重算在席者的基本權重；其他週六重選把已離席的
-    名字丟掉（之後重新入席的照等權）；平日不動。同一個決策日重跑沿用第一次的結果，不再寄通知。"""
-    rb = dict(rb or {})
-    if not reselect:
-        return rb, False
-    if is_rebal_day(reselect, prior_snaps, as_of):
-        if rb.get('decision_date') == as_of:
-            return rb, False
-        inc = [t for t in core if t in set(prev_core or [])]
-        closes = fetch_closes(inc, as_of)
-        sig = {t: sigma_from_closes(closes.get(t) or []) for t in inc}
-        for t in inc:
-            if sig[t] is None:
-                log(f"  ! seats-tw: {t} 近 {VOL_DAYS} 日波動算不出來（收盤 {len(closes.get(t) or [])} 筆），本月用等權")
-        old = rb.get('base') or {}
-        return {'decision_date': as_of, 'base': vol_base(inc, sig), 'sigma': sig,
-                'prev_base': {t: old.get(t, 1.0 / CORE_SLOTS) for t in inc}}, bool(inc)
-    keep = set(core)
-    for k in ('base', 'sigma', 'prev_base'):
-        if k in rb:
-            rb[k] = {t: v for t, v in rb[k].items() if t in keep}
-    return rb, False
-
-
-def seat_weights(core_rows, rb):
-    """每席本月占比＝基本權重 × 倉位倍數。基本權重：本月調倉時在席的用 rb['base']，其餘 1/席位數。"""
-    base = rb.get('base') or {}
-    sig = rb.get('sigma') or {}
-    out = {}
-    for r in core_rows:
-        t = r['ticker']
-        b = base.get(t)
-        src = 'vol' if b is not None else 'equal'
-        b = b if b is not None else 1.0 / CORE_SLOTS
-        size = (r.get('lamp') or {}).get('size') or 0.0
-        out[t] = {'base': b, 'size': size, 'target': b * size, 'sigma': sig.get(t), 'src': src}
-    return out
-
-
-def next_rebal_month(last_decision_date):
-    """下次調倉的月份：上一個決策日的下個月（那個月第一個週六重選）。"""
-    d = date.fromisoformat(last_decision_date[:10])
-    return 1 if d.month == 12 else d.month + 1
-
-
-def _pct(x, nd=1):
-    return '—' if x is None else f"{x * 100:.{nd}f}%"
-
-
-def rebal_alert_text(as_of, core_rows, weights, views, n_empty, next_month):
-    """調倉日通知內文（純文字，寄信與 Discord 共用）。"""
-    L = [f"台股席位每月調整占比（依 {as_of} 收盤）", '',
-         '請把每檔調到「台股席位總資金 × 本月占比」。占比依近 60 個交易日的波動分配，波動大的少放；'
-         '月中新進席先用 20%，到下個月第一個週六一起調。橘燈半倉已算進本月占比。', '']
-    for i, r in enumerate(core_rows, 1):
-        t = r['ticker']
-        w = weights[t]
-        name = (views.get(t) or {}).get('name') or ''
-        label = f"C{i} {t.split('.')[0]} {name}".strip()
-        if w['src'] == 'vol':
-            prev = w.get('prev_base')
-            prev_s = f"（上月 {_pct(prev * w['size'])}）" if prev is not None else ''
-            sig = f"，近 60 日日波動 {_pct(w['sigma'], 2)}" if w['sigma'] is not None else '，波動算不出來，用等權'
-            L.append(f"{label}：本月 {_pct(w['target'])}{prev_s}{sig}")
-        else:
-            L.append(f"{label}：本月 {_pct(w['target'])}（本週新進，先用等權）")
-    if n_empty:
-        L.append(f"空席 {n_empty}：放現金 {_pct(n_empty / CORE_SLOTS, 0)}")
-    total = math.fsum(w['target'] for w in weights.values())
-    L += ['', f"股票合計 {_pct(total)}，其餘放現金。下次調整：{next_month} 月第一個週六。", SITE_URL]
-    return '\n'.join(L) + '\n'
 
 
 def _state_path():
@@ -552,56 +414,19 @@ def _cells(v, lamp_map):
     return cells
 
 
-POS_COL = 6   # 共用欄序裡「倉位」的位置（build_arena._shared_thead_cells）；本月占比插在它後面
-
-
-WEIGHT_TH = ('<th title="占台股席位總資金的比例＝月初依近 60 個交易日波動分配的基本占比 × 倉位倍數。'
-             '每月第一個週六調整；月中新進席先用 20%。空席放現金">本月占比</th>')
-
-
-def _weight_cell(w):
-    if not w:
-        return '<td>—</td>'
-    if w['src'] == 'vol':
-        sig = (f"近 60 日日波動 {_pct(w['sigma'], 2)}" if w['sigma'] is not None
-               else '波動算不出來，用等權')
-        title = f"月初基本占比 {_pct(w['base'])}（{sig}）× 倉位 {w['size']:g}"
-    else:
-        title = f"本月新進，先用等權 {_pct(w['base'])} × 倉位 {w['size']:g}，下個月第一個週六一起調"
-    return f'<td title="{escape(title)}">{_pct(w["target"])}</td>'
-
-
-def _table(views, lamp_map, seat_prefix=None, empty_seats=0, weights=None):
+def _table(views, lamp_map, seat_prefix=None, empty_seats=0):
     if not views and not empty_seats:
         return '<div class="bw-note-line">（無）</div>'
-    ths = ba._shared_thead_cells('tw')
-    if weights is not None:
-        ths = ths[:POS_COL + 1] + [WEIGHT_TH] + ths[POS_COL + 1:]
     head = ('<tr><th class="bw-l">' + ('席' if seat_prefix else '#') + '</th>'
-            + ''.join(ths) + '</tr>')
+            + ''.join(ba._shared_thead_cells('tw')) + '</tr>')
     body = []
     for i, v in enumerate(views, 1):
         code = f"{seat_prefix}{i}" if seat_prefix else str(i)
-        cells = _cells(v, lamp_map)
-        if weights is not None:
-            cells = cells[:POS_COL + 1] + [_weight_cell(weights.get(v['ticker']))] + cells[POS_COL + 1:]
-        body.append(f'<tr><td class="bw-l">{escape(code)}</td>' + ''.join(cells) + '</tr>')
+        body.append(f'<tr><td class="bw-l">{escape(code)}</td>' + ''.join(_cells(v, lamp_map)) + '</tr>')
     for j in range(len(views) + 1, len(views) + empty_seats + 1):
-        row = ba._empty_seat_row(f'{seat_prefix}{j}')
-        if weights is not None:
-            row = _with_empty_weight(row)
-        body.append(row)
+        body.append(ba._empty_seat_row(f'{seat_prefix}{j}'))
     return ('<div class="bw-scroll"><table><thead>' + head + '</thead><tbody>'
             + ''.join(body) + '</tbody></table></div>')
-
-
-def _with_empty_weight(row):
-    """空席列在「倉位」格後補一個空的本月占比格（席欄＋共用欄的第 POS_COL+1 個 <td> 之後）。"""
-    k, pos = 0, 0
-    for _ in range(POS_COL + 2):
-        k = row.index('</td>', pos)
-        pos = k + len('</td>')
-    return row[:pos] + '<td></td>' + row[pos:]
 
 
 def _legend():
@@ -611,7 +436,6 @@ def _legend():
 <div class="bw-note-line"><b>上修</b>：分析師把每股盈餘預估調高了幾 %。基準是這檔股票最近一次財報前的 Koyfin 快照，缺財報錨定時看近三個月。財報日先看 yfinance，沒有就用公開資訊觀測站上董事會通過財報的日期，兩邊都沒有就取該季季底前的快照。資格全過就入池（v5.7 起沒有上修門檻），池內由高到低排，同值先比隱含成長率，再比盈餘殖利率。上修只管排序。</div>
 <div class="bw-note-line"><b>時機燈</b>：量的是距還原權息歷史新高多遠，燈號直接對應倉位：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉。🟡 接近＝差 3%～10% 且站上 200 日線，同樣正常倉。距歷史新高資料缺的黃燈標「🟡 資料缺」，暫列半倉。🟠 過熱＝已在突破帶，但近 12 個月（扣最近一個月）漲幅 &gt;150%，半倉。🔴 拉回中＝差超過 10% 或跌破 200 日線，零倉。⚫ 不合格＝未站上 52 週線。🟢🟡🟠 算亮燈。滑過燈號可看階段燈，階段燈不影響時機燈。</div>
 <div class="bw-note-line"><b>v5.7 變更（2026-10-21）</b>：拿掉「上修 ≥5% 才入池」，資格全過就入池，上修只決定排序。這是持有人的破例決定，不是回測登記通過。原因是決定當天資格全過 30 檔，上修最高不到 3%，核心席從 10 月 9 日上線以來一直空著。回測（席位全格子測試）用的台股規則本來就沒有上修門檻，因為台股沒有歷史預估；估值閘和三年成長閘回測也沒有。研究依據見 <a href="/cockpit/#seats-grid">席位全格子測試</a>。其餘規則不變：時機燈亮著取前 5、看大盤切換出場、大盤空頭週不補新席。</div>
-<div class="bw-note-line"><b>本月占比（v5.8，2026-10-22 起）</b>：每月第一個週六依近 60 個交易日的波動重新分配每席大小，波動大的少放、波動小的多放，在席合計與等權相同；月中新進席先用 20%，到下個月第一個週六一起調。本月占比＝這個基本占比 × 倉位倍數，指占台股席位總資金的比例，空席放現金。月中燈號改變時，照現有持股金額加減（例如轉橘燈就減半），不用回到占比。回測（2010–2026，1,000 種補席順序的中位數）：年化 24.3% 降到 22.9%，最深跌幅從 −30.6% 收斂到 −26.2%，大漲年少賺、下跌年少賠。美股中小型差一條沒過，所以這是持有人的破例決定，不是回測登記通過。</div>
 <div class="bw-note-line"><b>大盤多頭續抱</b>：大盤多頭時，只因離歷史新高超過 10% 而轉紅、仍在池內的在席者照樣續抱，燈號標「🔴 續抱」，倉位沿用最近一次非紅燈的倉位。</div>
 <div class="bw-note-line"><b>回測</b>：照現行規則回測 2013-03 至 2026-09，持有全部合格股年化報酬 13.21%，最大回撤 −57.01%；同期買進持有 0050 年化 20.32%，最大回撤 −33.96%。報酬和回撤都不如 0050。</div>
 <div class="bw-note-line"><b>下次財報</b>：「≤N 天」是公司還沒公告日期，依法定期限推算（第一季 5/15、第二季 8/14、第三季 11/14、年報 3/31），實際可能更早。距財報 7 天內標橘色。</div>
@@ -664,7 +488,7 @@ def _market_html(market):
 
 
 def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_universe,
-                lamp_map, conc=None, market=None, weights=None, rb=None):
+                lamp_map, conc=None, market=None):
     core_v = [views[r['ticker']] for r in sel['core']]
     rev_n = sum(1 for v in views.values() if v.get('rev_used_pct') is not None)
     head = f"台股核心席 · 資料日 {as_of} · 台股池 {n_universe} 檔"
@@ -697,8 +521,7 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
           '的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。</div>'
         + fresh + _market_html(market) + status
         + ba._seat_view_bar_html()
-        + _table(core_v, lamp_map, seat_prefix='C', empty_seats=CORE_SLOTS - len(core_v), weights=weights or {})
-        + _weight_html(weights or {}, rb or {}, last_rotation_date or as_of)
+        + _table(core_v, lamp_map, seat_prefix='C', empty_seats=CORE_SLOTS - len(core_v))
         + (f'<div class="bw-note-line">空席 {CORE_SLOTS - len(core_v)}：'
            + (escape('大盤空頭，本週不補新席，空席放現金。') if (market or {}).get('status') == 'bear'
               else escape(ba._core_vacancy_note(len(core_v), sel["buyable"])))
@@ -720,14 +543,6 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + '</details>'
         + '</div>'
     )
-
-
-def _weight_html(weights, rb, last_decision_date):
-    total = math.fsum(w['target'] for w in weights.values())
-    last = (f"上次調整依 {escape(rb['decision_date'])} 收盤" if rb.get('decision_date')
-            else '還沒調整過，目前都是等權')
-    return (f'<div class="bw-note-line"><b>本月占比</b>：股票合計 {_pct(total)}，其餘放現金。{last}；'
-            f'下次調整：{next_rebal_month(last_decision_date)} 月第一個週六（台北），依前一個交易日收盤。</div>')
 
 
 # ── main ─────────────────────────────────────────────────────────────────
@@ -767,7 +582,6 @@ def build(reselect, today=None):
         prior = [x for x in snaps if (x.get('date') or '') < as_of]
         prev_core = prior[-1]['core'] if prior else []
     else:
-        prior = []
         prev_core = (ledger.get('roster') or {}).get('core') or []
     # v5.4：賣法看決策日的大盤狀態。週六重選用當次 as_of；平日只刷燈號，沿用上次週六的決策日。
     decision_date = as_of if reselect else (ledger.get('last_rotation_date') or as_of)
@@ -777,17 +591,7 @@ def build(reselect, today=None):
     state = state_doc.get('last_nonred') or {}
     apply_x1_hold(sel, state)
     new_state = update_state(state, sel['core'], as_of)
-    rb_old = state_doc.get('vol_rebal') or {}
-    rb, rebal_now = update_vol_rebal(rb_old, reselect, prior if reselect else [], as_of,
-                                     sel['rotation']['core'], prev_core)
-    weights = seat_weights(sel['core'], rb)
-    for t, w in weights.items():
-        w['prev_base'] = (rb.get('prev_base') or {}).get(t) if w['src'] == 'vol' else None
     views = {r['ticker']: flat(r, today) for r in rows}
-    for t, w in weights.items():
-        views[t].update(seat_base_pct=round(w['base'] * 100, 2), seat_target_pct=round(w['target'] * 100, 2),
-                        seat_sigma_pct=None if w['sigma'] is None else round(w['sigma'] * 100, 3),
-                        seat_weight_src=w['src'])
     industry = {s['ticker']: s.get('tw_industry') for s in doc['stocks']}
     for t, v in views.items():
         v['tw_industry'] = industry.get(t)
@@ -807,27 +611,15 @@ def build(reselect, today=None):
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     BODY_HTML.write_text(render_html(as_of, rev_as_of, lamp_doc.get('as_of'), last_rotation_date,
-                                     sel, views, len(rows), lamp_map, conc, market, weights, rb), encoding='utf-8')
-    if new_state != state or rb != rb_old:
-        doc_state = {'schema_version': 'tw-state-1.0', 'last_nonred': new_state}
-        if rb:
-            doc_state['vol_rebal'] = rb
-        _state_path().write_text(json.dumps(doc_state, ensure_ascii=False, indent=1, sort_keys=True) + '\n',
-                                 encoding='utf-8')
-    if reselect:
-        REBAL_ALERT_TXT.unlink(missing_ok=True)
-        if rebal_now:
-            REBAL_ALERT_TXT.write_text(rebal_alert_text(
-                as_of, sel['core'], weights, views, CORE_SLOTS - len(sel['core']),
-                next_rebal_month(as_of)), encoding='utf-8')
+                                     sel, views, len(rows), lamp_map, conc, market), encoding='utf-8')
+    if new_state != state:
+        _state_path().write_text(json.dumps({'schema_version': 'tw-state-1.0', 'last_nonred': new_state},
+                                            ensure_ascii=False, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     pick = lambda key: [views[r['ticker']] for r in sel[key]]  # noqa: E731
     SEATS_JSON.write_text(json.dumps({
         'schema_version': 'tw-1.0',
         'as_of': as_of, 'rev_data_as_of': rev_as_of, 'stage_lamp_as_of': lamp_doc.get('as_of'),
         'last_rotation_date': last_rotation_date, 'market': market,
-        'vol_rebal': {'decision_date': rb.get('decision_date'),
-                      'next_month': next_rebal_month(last_rotation_date or as_of),
-                      'stock_total_pct': round(math.fsum(w['target'] for w in weights.values()) * 100, 2)},
         'counts': {'universe': len(rows), 'eligible': len(sel['eligible']), 'pool': len(sel['pool']),
                    'with_revision': sum(1 for v in views.values() if v.get('rev_used_pct') is not None),
                    'candidates': len(sel['candidates'])},
@@ -845,7 +637,6 @@ def build(reselect, today=None):
     print(f"  ✓ seats-tw {as_of}: eligible {len(sel['eligible'])}, pool {len(sel['pool'])}, "
           f"core {sel['rotation']['core']}, candidates {[r['ticker'] for r in sel['candidates']]}"
           + f", market {market['status']} ({market['data_date']})"
-          + (f", vol rebalance {rb.get('decision_date')}" if rebal_now else '')
           + (" (re-selected)" if reselect else " (lamps only)"))
     return sel
 
