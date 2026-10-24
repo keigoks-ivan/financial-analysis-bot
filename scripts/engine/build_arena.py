@@ -260,7 +260,8 @@ def load_qgm_rows(stocks_map: dict, exclude: set | None = None,
     2026-09-16 起用它帶的 Koyfin FY1／FY3 補三年 CAGR——在此之前這些列被 main() 整批丟掉，
     QGM 名字永遠只有單年成長、g_three_year 恆為 False、永遠進不了席位（v3「DD 選配」名存實亡）。
     欄位對齊 latest.json 口徑：roic／fcf／成長（FY1→FY2 單年，QGM 的 cagr2y 以 FY0 為基期會膨脹）
-    ／live_fpe_est＝fy1_per／時機取週線 cache，缺則用 QGM trend template 條件 1＋3。"""
+    ／live_fpe_est＝fy1_per／時機取週線 cache，缺則用 QGM trend template 條件 1＋3。
+    2026-10-24 起：ln 有對應列時，上述數值一律改用 ln 的值，見 _overlay_latest_none()。"""
     rows = []
     seen = set(exclude or ())
     for path, src, fx in ((QGM_US, "qgm-us", 1.0), (QGM_TW, "qgm-tw", TWD_PER_USD)):
@@ -310,7 +311,7 @@ def load_qgm_rows(stocks_map: dict, exclude: set | None = None,
                 qb = x.get("quality_breakdown") or {}
                 durable = (qb.get("roic_5y_stability") or {}).get("pct_above")
                 roic = hv("roic"); fcf = hv("fcf_margin")
-                rows.append({
+                rows.append(_overlay_latest_none({
                     "ticker": tk, "name": tk, "sector": "", "_src": "qgm", "_qgm_pool": src,
                     "_durable_5y": durable, "_g_method": g_method,
                     "roic": roic * 100 if roic is not None else None,
@@ -327,8 +328,39 @@ def load_qgm_rows(stocks_map: dict, exclude: set | None = None,
                     "_mktcap": (x.get("market_cap_b") or 0) * 1e9 / fx,
                     "moat_grade": None, "moat_trend": None,
                     "dca_verdict": None, "dca_role": None, "dd_path": None, "dd_age_days": None,
-                })
+                }, ln))
     return rows
+
+
+# QGM 列自己的身份／來源欄位：_overlay_latest_none() 不拿 dd-screener 列覆寫。
+_QGM_OWN_KEYS = frozenset({"ticker", "_src", "_qgm_pool", "_durable_5y", "_g_method",
+                           "_mktcap", "_r26", "_r52"})
+
+
+def _overlay_latest_none(row: dict, ln: dict) -> dict:
+    """2026-10-24 資料口徑統一（持有人拍板「用 dd screener 的數字」，見 knowledge/rule_ledger.md
+    同日列）：QGM 重建列在 dd-screener latest.json 有對應的 dd_status="none" 列（ln）時，
+    數值一律改用 ln 的值——ROIC／FCF／D/E／三年成長／EPS／預估本益比／PEG／上修／
+    ma.*（含 dist_ath_pct）／timing.*（含 vs_200ma_pct）／fund／增量 ROIC 等，鍵名與一般
+    DD 池列、largecap-koyfin 列相同，row_dict() 照原讀法讀。ln 沒有該值（None 或缺鍵）
+    才保留 QGM 算的值；ma／timing／fund 這類巢狀 dict 逐鍵合併，同樣 ln 有值優先。
+    _QGM_OWN_KEYS（身份標記、QGM 耐久原值、市值、週線報酬）不覆寫。ln 空＝原樣回傳。
+    修正前：重建列只帶少數欄位，dist_ath_pct 缺 → timing_lamp() 一律落「🟡 資料缺」，
+    席位表 dd-screener 數字欄全空（EXPE／VRTX／DXCM／INCY）。"""
+    if not ln:
+        return row
+    out = dict(row)
+    for k, v in ln.items():
+        if k in _QGM_OWN_KEYS or v is None:
+            continue
+        cur = out.get(k)
+        if isinstance(v, dict) and isinstance(cur, dict):
+            merged = dict(cur)
+            merged.update({kk: vv for kk, vv in v.items() if vv is not None})
+            out[k] = merged
+        else:
+            out[k] = v
+    return out
 
 
 def qgm_cap_map() -> dict:
