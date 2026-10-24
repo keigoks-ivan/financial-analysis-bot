@@ -1430,6 +1430,13 @@ def normalize_v20(obj, facts=None, date=None):
             if isinstance(gov.get(k), str):
                 gov[k] = {"note": gov[k]}
                 changes.append("q4.verdict_values.governance.{0}: 字串 → {{\"note\": 原文}}".format(k))
+    # SPOT 2026-10-24：valuation.targets 是選填物件（dd_brief 缺了走 fallback），判斷者寫 null
+    # 被 schema 擋。null＝沒填，拿掉鍵，與其他檔「不寫這個鍵」同形，不補任何值。
+    q5 = ((obj.get("answers") or {}).get("q5_valuation") or {}).get("verdict_values") or {}
+    for path, val in (("q5.verdict_values.valuation", q5.get("valuation")), ("valuation", obj.get("valuation"))):
+        if isinstance(val, dict) and "targets" in val and val["targets"] is None:
+            del val["targets"]
+            changes.append("{0}.targets: null → 拿掉鍵（選填，未補值）".format(path))
     changes += _normalize_base_eps_path(obj, facts, date)
     return obj, changes
 
