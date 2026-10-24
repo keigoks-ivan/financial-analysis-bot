@@ -631,7 +631,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 <footer>
   <div class="container">
     &copy; 2026 InvestMQuest Research &middot; 狀態判斷僅供研究參考，不構成投資建議 &middot;
-    數據來源: yfinance &middot; 自動更新: 每週五美股收盤後
+    數據來源：yfinance &middot; 已於 2026-07-04 停止更新
   </div>
 </footer>
 <script>
