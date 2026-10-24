@@ -144,6 +144,9 @@ def _kpi_facts(numbers, buckets):
         value = item.get("value")
         if isinstance(value, dict) and {"low", "high"} <= set(value):
             value = "{0}～{1}".format(value["low"], value["high"])
+        # 2026-10-25 6146.T：一條指引寫成多欄物件（營收／營業利益／純利…），攤成「鍵 值；鍵 值」字串。
+        elif isinstance(value, dict):
+            value = "；".join("{0} {1}".format(k, v) for k, v in value.items())
         fact = _fact(
             fid, metric, value,
             item.get("as_of") or quarter, item.get("unit"),
