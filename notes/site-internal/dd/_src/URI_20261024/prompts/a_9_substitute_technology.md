@@ -1,0 +1,82 @@
+你是 stock-analyst v20 DD 的證據採集子 agent。標的：URI。
+你負責下列 1 個覆蓋軸，逐軸獨立查證，**本軸最多 4 次 WebSearch**（每一類題目一次），查不到就記 none，不要一直挖。
+
+[substitute_technology] 替代技術
+Q: 是否存在正在崛起、可能取代本標的核心產品/技術的替代方案？
+  - product substitute technology threat 2026
+  - alternative technology disruption 2026 2027
+  - URI technology obsolescence risk
+  - next-generation technology roadmap 2026
+
+
+## 規則（嚴格遵守，違反視為無效輸出）
+1. **只回 sourced claim**：每條 finding 必須有可查證的 source（URL 或明確可搜尋到的來源名＋標題）與 as_of（該資訊的發布/生效日期，非你查詢的日期）。
+2. **查不到就 status="none"**，並列出你實際下過的 queries_run（至少 1 條，需與你實際搜尋詞一致，不得事後編造）。軸清單裡的 `queries` 是起點不是配額，同一次搜尋的來源可同時支撐多個軸。**不得因為查無所獲就用訓練知識/常識填 claim。**
+3. **三種狀態不得混用**：found＝有 sourced claim；none＝軸適用於本標的業態、但搜尋查無來源；not_applicable＝該軸對本標的業態根本不成立（例：銀行沒有「最大客戶導入第二供應商」、零售商的客戶是終端消費者）。**軸對此業態不適用時回 not_applicable 並在 note 寫理由，不要回 none。**只有軸物件標 na_allowed=true 才可回 not_applicable，沒標的軸只能 found 或 none；拿不準是否適用就當適用、照常搜尋，不要用 not_applicable 省搜尋。
+4. **不臆測、不外推**：claim 只寫你實際找到的事實，不要自己推論「這意味著」，那是判斷層的工作。
+5. direction 欄：這條 finding 對本標的是正面(+)／中性(0)／負面(-)，僅標事實方向，不要寫成裁決語。
+6. affects 欄：這條 finding 影響哪些判斷面（可填 moat_trend／thesis.H／thesis.R／decision_inputs.bear／valuation／triggers 等，可複選）。
+7. **現價一律引 `numbers.price_at_dd`／`price_as_of`，不得自行寫「現價」數字**：市值、距 52 週高低點 %、目標價 vs 現價，一律引用該欄，不從聚合站另抓現價字面數字。
+8. **原始證據與解讀分開存**：每條 finding 另填三欄——`url`（實際讀到的網址，沒有就填 null）、`excerpt`（從該來源**逐字複製**、支撐 claim 的原文，≤300 字，不得改寫或翻譯）、`excerpt_from`（`snippet`＝搜尋摘要／`page`＝WebFetch 讀到的頁面）。`claim` 是你對原文的精簡轉述；`excerpt` 是證據本身。找不到可逐字複製的原文就填 null，不要自己寫一句當原文。
+
+## 程式已抓好的一手文件摘錄（本軸）
+以下為程式抓取的一手文件摘錄，可直接逐字引用（附 url 與 as_of）：
+- 引用時 finding 的 `url`、`as_of` 照該則標示填；`source` 寫「來源＋文件」；`excerpt` 從「<<<」「>>>」之間**逐字複製**（≤300 字，取最能支撐 claim 的連續一段，不改寫、不翻譯）；`excerpt_from` 填 `"page"`。
+- 一手清單顯示沒有某類事件時（例如「標題含關鍵字者 0 則」），可據此寫一條「經查一手紀錄無此類事件」的 finding（status=found、direction=`"0"`），excerpt 用清單本身那一句統計；不要因為沒找到事件就標 none。
+- 這些摘錄不算你的搜尋：`queries_run` 只記你自己實際下過的搜尋；摘錄仍可另外搜尋補充，但不必為了湊證據重搜摘錄已涵蓋的內容。
+- 摘錄與本軸問題無關或不足以回答時，照常搜尋；仍查不到才記 none。
+
+[1] 來源：SEC EDGAR｜文件：10-K（FY2025，申報 2026-01-28）｜章節：Item 1A. Risk Factors｜url：https://www.sec.gov/Archives/edgar/data/1067701/000106770126000007/uri-20251231.htm｜as_of：2026-01-28
+<<<
+In addition, the following factors, among others, could adversely impact us, our customers or our suppliers and in turn adversely affect our revenues and operating results: •a decrease in expected levels of infrastructure spending; •a lack of availability of credit; •excess fleet in the equipment rental industry; •a decrease in the level of exploration, development, production activity and capital spending by oil and natural gas companies; •an increase in costs, including the cost of construction materials, as a result of inflation, tariffs or other factors; •an increase in interest rates; •instability in macroeconomic conditions; •adverse weather conditions, which may temporarily affect a particular region; •a prolonged shutdown of the U.S. government; •public health crises and epidemics (or concerns over the possibility of such a health crisis or epidemic), such as COVID-19; •supply chain disruptions; •terrorism or hostilities involving the United States, Canada, Europe, Australia or New Zealand; •geopolitical conflicts, such as those in Ukraine and Venezuela, and the resultant sanctions and other measures imposed in response; or •other unforeseen or catastrophic events.
+
+We believe that one of our competitive advantages is the mobility of our fleet. Accordingly, our business in the past has been, and in the future could be, adversely affected by limitations on fuel supplies or significant increases in fuel prices that result in higher costs to us for transporting equipment from one branch to another branch. Although we have used, and may continue to use, futures contracts to hedge against fluctuations in fuel prices, a significant or protracted price fluctuation or disruption of fuel supplies could have a material adverse effect on our financial condition and results of operations. Additionally, potential climate change regulation could increase the overall cost of fuel to us and have a material adverse effect on us. See “Operational Risks–Severe weather events and other natural occurrences may materially adversely impact our operations and markets.”
+
+In addition, we must continue to identify, hire, train and retain key personnel who maintain relationships with our customers and who provide technical skills required for our Company's growth. There is a shortage of qualified personnel in these fields, and we compete with other companies for the limited pool of talent. The failure to recruit and retain necessary key personnel could cause disruption, harm our business and hamper our ability to grow our Company.
+
+Disruptions in our information technology systems, or those of our third-party vendors, could adversely affect our operating results by limiting our ability to effectively monitor and control our operations, adjust to changing market conditions, implement strategic initiatives or support our online ordering system.
+
+We rely on the continuous and uninterrupted performance of our information technology systems, and those of our third-party vendors, to be able to monitor and control our operations, adjust to changing market conditions, implement strategic initiatives and support our online ordering system. These systems may be subject to interruptions due to technological errors, bugs, defects or vulnerabilities, system capacity constraints, human errors, computer or communications failures, power loss, 16 Table of Contents disruptions during upgrades or replacements of software or hardware or integrations of acquired businesses systems, adverse acts of nature and other unexpected events. Disruptions to our customers’ information technology systems could also adversely impact us. Any disruptions in these systems or the failure of these systems to operate as expected have in the past adversely affected, and could in the future adversely affect, our ability to access and use certain applications and could, depending on the nature and magnitude of the problem, adversely affect our operating results by limiting our ability to effectively monitor and control our operations, adjust to changing market conditions, implement strategic initiatives and service online orders. Although such disruptions and failures have not been material to date, we cannot guarantee that they will not be material in the future.
+
+We depend on the security of our information technology systems, and those of our third-party vendors, to support numerous business processes and activities, including our online ordering system. There are numerous cybersecurity risks applicable to these systems, including individual and group criminal hackers, industrial espionage, man-in-the-middle and denial of service attacks, viruses, malicious software (malware), employee error or malfeasance and phishing attacks. We also face cybersecurity risks due to our reliance on internet technology and hybrid work arrangements, which could strain our technology resources or create additional opportunities for cybercriminals to exploit vulnerabilities. Cyber threats are constantly evolving, especially given the advances in, and the rise of the use of, artificial intelligence, thereby increasing the difficulty of preventing, detecting and successfully defending against them. Successful breaches could, among other things, disrupt our operations, jeopardize the security of information stored in or transmitted by the sites, networks and systems, which include cloud-based networks and data center storage, or result in the unauthorized access, disclosure, theft and misuse of company, customer, and employee sensitive and confidential information. If this were to occur, we could be in violation of applicable privacy, data security and other laws, subjected to regulatory enforcement actions and private litigation, and our reputation and financial performance may be adversely affected.
+
+Although we employ security measures designed to protect our data and systems, and, to our knowledge, so do our third-party vendors, these measures have in the past not detected or prevented, and may in the future not detect or prevent, all attempts to infiltrate our systems. We have, from time to time, experienced threats to and breaches of our data and systems, including malware and computer virus attacks, which have led, and could in the future lead to, disruptions in our online ordering or other systems, or the unauthorized release of confidential or otherwise protected information or corruption of data. We continuously develop and enhance our controls, processes and practices that are designed to protect our systems, computers, software, data and networks from attack, damage, vulnerabilities or unauthorized access. This continued development and enhancement requires us to expend significant resources. However, we may not anticipate or combat all types of future attacks until after they have been launched, and there is no guarantee that the measures we take will be adequate to safeguard against all threats. If any of these breaches of security occur or are anticipated in the future, we could be required to expend additional capital and other resources, including costs to deploy additional personnel and protection technologies, train employees and engage third-party experts and consultants.…
+
+As severe weather events and other natural occurrences become increasingly common, our or our customers’ operations may be disrupted, which could result in increased operational costs or reduced demand for our products and services, and the increased incidence of severe weather and other natural occurrences may also reduce the availability or increase the cost of insurance for such events. In addition, severe weather events and other natural occurrences may impact the global economy, including as a result of disruptions to supply chains. While we have invested in the administration of programs and physical loss prevention improvements to mitigate the risk of natural disasters causing disruption to our ability to serve our customers and communities in times of need, extended periods of disruptions could have an adverse effect on our results of operations.
+
+Our collective bargaining agreements and our relationship with our union-represented employees could disrupt our ability to serve our customers, lead to higher labor costs or the payment of withdrawal liability.
+>>>
+
+
+## 回傳格式（嚴格 JSON 契約，不得夾雜其他文字；一次 Write）
+```json
+{
+  "coverage": {
+    "<axis_id>": {
+      "status": "found|none|not_applicable",
+      "queries_run": ["...", "..."],
+      "findings": [
+        {"claim": "...", "source": "...", "url": "https://...", "excerpt": "逐字原文…", "excerpt_from": "snippet|page", "as_of": "YYYY-MM-DD", "direction": "+|0|-", "affects": ["moat_trend"]}
+      ],
+      "note": "",
+      "clues": [
+        {"claim": "...", "source": "...", "url": "https://...", "as_of": "YYYY-MM-DD", "direction": "+|0|-", "affects": ["moat_trend"], "match_terms": ["預期原文逐字出現的字串", "..."]}
+      ]
+    }
+  }
+}
+```
+
+`clues` 選填、每軸一個陣列，沒有就整個欄位省略。只在你**找到有網址的線索、但沒讀到頁面而拿不到可逐字複製的原文**時放；程式會打開該網址，在全文裡找 `match_terms` 同時出現的一段原文，找到就升級成帶原文的 finding；找不到（或頁面打不開）就照 `excerpt_from: "snippet"`、`excerpt: null` 的 finding 保留，並標為未核原文。
+- 只有 clues、findings 是空的時，`status` 填 `none`（程式核實到原文後會自動改成 `found`）。
+- `url` 必須是你在搜尋結果裡實際看到的網址；不得編造、不得猜網址、不得填網站首頁。沒有網址的線索不要放（寫進 note）。已經寫在 findings 的網址不要重複放。
+- `match_terms` 放 2～5 個預期原文會逐字出現的字串：金額、比例、專有名詞、引號裡的關鍵詞。照原文可能的寫法填，不要改寫或翻譯；不要放公司名、代號、年份或「營收」「公司」這類到處都有的詞。
+- 其餘欄位（`claim`、`source`、`as_of`、`direction`、`affects`）規則同 findings；`as_of` 填你推估的文章發布日，程式讀到頁面發布日會以頁面為準。
+
+寫入路徑：`/Users/ivanchang/financial-analysis-bot/.dd_build/runs/URI_20261024/parts/axes_9.json`（用 Write 工具寫一次，不要分次 Edit）。
+
+## 輪次紀律
+你只有 WebSearch、WebFetch、Write 三個工具，沒有 Bash。**寫完 part 檔就停止**，不要自己驗證、不要重讀、不要回報長文。驗證由程式做；缺欄程式會把該軸記成缺口，不會叫你重寫。
+搜尋：本軸最多 4 次；WebFetch 只在搜尋摘要不足以寫出 as_of 與 claim 時才用，每軸最多 2 次。
+
+回報 ≤50 字：完成幾軸、found/none 各幾軸。
