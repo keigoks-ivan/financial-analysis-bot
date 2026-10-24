@@ -657,6 +657,13 @@ def test_qc_only_unpublished_dd_links():
     assert not ddreport._qc_only_unpublished_dd_links(
         '❌ 1 error(s) — QC gate FAILED:\n  docs/a.html:1: dead internal link "/x/y.html" -> docs/x/y.html (missing)\n')
     assert not ddreport._qc_only_unpublished_dd_links("QC FAIL: CJK followed by half-width punctuation")
+    # 警告區也列了死連結：只數錯誤區
+    warn = ('⚠  2 warning(s) (non-blocking):\n'
+            '  docs/research/_body.html:520: dead internal link "/dd/DD_LRCX_20261024.html" '
+            '-> docs/dd/DD_LRCX_20261024.html (missing)\n'
+            '  docs/research/_body.html:520: dead internal link "/dd/DD_LRCX_20261024.html#decision" '
+            '-> docs/dd/DD_LRCX_20261024.html (missing)\n\n')
+    assert ddreport._qc_only_unpublished_dd_links(warn + _QC_DEAD_DD)
 
 
 def test_clean_cherry_pick_but_qc_dead_dd_link_goes_rescue(rescue_env):
@@ -686,3 +693,20 @@ def test_clean_cherry_pick_but_qc_dead_dd_link_goes_rescue(rescue_env):
     assert env["show"]("docs/research/_body.html") == "<p>2</p>"  # 在 origin 只放自己的檔重建
     assert "DD_ZZZ_20261020.html" in env["show"]("docs/dd/INDEX.md")
     _assert_worktrees_gone(env)
+
+
+def test_own_index_rows_drops_foreign_and_regenerates_missing_own(monkeypatch, tmp_path):
+    # 2026-10-24 META：commit 的 INDEX 新列只有別檔（ROP）的，自己那列被別的 commit 帶走
+    monkeypatch.setattr(ddreport, "DD_DIR", ddreport.REPO_ROOT / "docs" / "dd")
+    own = ["docs/dd/DD_ZZZ_20261020.html", "docs/t/data/ZZZ.json"]
+    seen = []
+    monkeypatch.setattr(ddreport, "_index_row_fields",
+                        lambda p: seen.append(Path(p).name) or {"row": ROW_C})
+    assert ddreport._own_index_rows([ROW_B], own, ["ZZZ"], "20261020", tmp_path) == [ROW_C]
+    assert seen == ["DD_ZZZ_20261020.html"]
+    # 自己那列已在 commit 內：不重產
+    seen.clear()
+    assert ddreport._own_index_rows([ROW_B, ROW_C], own, ["ZZZ"], "20261020", tmp_path) == [ROW_C]
+    assert seen == []
+    # 批尾同步（date=None）：只過濾不重產
+    assert ddreport._own_index_rows([ROW_B], own, ["ZZZ"], None, tmp_path) == []

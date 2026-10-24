@@ -5419,9 +5419,10 @@ def _git_ahead_behind():
         return (0, 0)
 
 
-DD_WORKTREE_DIR = Path("/tmp/dd_wt")
+# 2026-10-24：路徑帶 pid——三個視窗同時 finish 時共用 /tmp/dd_wt，互相 remove 對方的 worktree。
+DD_WORKTREE_DIR = Path("/tmp/dd_wt_{0}".format(os.getpid()))
 # 2026-10-20（WP1）：彙總檔衝突自救用（模組層，供測試 monkeypatch 覆寫）。
-DD_WORKTREE_PUSH_DIR = Path("/tmp/dd_wt_push")  # 自救 commit 重推用的乾淨 worktree
+DD_WORKTREE_PUSH_DIR = Path("/tmp/dd_wt_push_{0}".format(os.getpid()))  # 自救 commit 重推用的乾淨 worktree
 DD_RESCUE_SYNC_TIMEOUT = 2400  # update_dd_index.py 實測約 9 分鐘，留 4 倍餘裕
 DD_RESCUE_PUSH_RETRIES = 3
 
@@ -5501,6 +5502,31 @@ def _added_index_rows(diff_text):
 def _index_row_file_key(row):
     m = _INDEX_FILE_KEY_RE.search(row or "")
     return m.group(0) if m else None
+
+
+def _own_index_rows(rows, own, tickers, date, wt):
+    """2026-10-24：多視窗共用 INDEX.md，finish commit 會帶到別檔的列（META commit 只有
+    ROP 列、自己那列被 HON commit 帶走）。只留指向自己檔的列；有 `date` 而自己報告的列
+    不在 commit 內時，從 worktree 取回的報告重產一列。"""
+    def _is_own(name):
+        return any(name.startswith(("DD_{0}_".format(t), "BRIEF_{0}_".format(t)))
+                   and (not date or name.endswith("_{0}.html".format(date)))
+                   for t in tickers or [])
+
+    kept, foreign = [], []
+    for r in rows:
+        key = _index_row_file_key(r)
+        (foreign if key and not _is_own(Path(key).name) else kept).append(r)
+    if foreign:
+        print("[rescue] 略過 {0} 條別檔的 INDEX 列：{1}".format(
+            len(foreign), "、".join(_index_row_file_key(r) for r in foreign)))
+    if date:
+        have = {Path(_index_row_file_key(r)).name for r in kept if _index_row_file_key(r)}
+        for t in tickers or []:
+            html_rel = "{0}/DD_{1}_{2}.html".format(_repo_rel(DD_DIR), t, date)
+            if html_rel in own and Path(html_rel).name not in have:
+                kept.append(_index_row_fields(Path(wt) / html_rel)["row"])
+    return kept
 
 
 def _merge_index_rows(index_text, rows):
@@ -5639,7 +5665,7 @@ def _rescue_aggregate_conflict(commit_sha, wt, tickers, date=None):
     # 2) INDEX 列
     index_rel = _repo_rel(INDEX_MD_PATH)
     show_r = _git(["show", "--format=", "-U0", commit_sha, "--", index_rel], cwd=wt)
-    rows = _added_index_rows(show_r.stdout)
+    rows = _own_index_rows(_added_index_rows(show_r.stdout), own, tickers, date, wt)
     index_path = wt / index_rel
     index_text = index_path.read_text(encoding="utf-8") if index_path.exists() else ""
     new_text, added_rows = _merge_index_rows(index_text, rows)
@@ -5776,10 +5802,13 @@ _QC_DEAD_DD_LINK_RE = re.compile(r'dead internal link "[^"]*" -> docs/dd/(?:brie
 
 def _qc_only_unpublished_dd_links(output):
     """pre-push QC 的錯誤是否全是「連到 docs/dd/ 底下不存在的 DD／BRIEF 檔」。
-    其他錯誤（標點、別的死連結）照舊 HOLD，不走重建。"""
+    其他錯誤（標點、別的死連結）照舊 HOLD，不走重建。
+    只數錯誤區（「QC gate FAILED:」之後）：警告區也會列死連結（2026-10-24 META）。"""
     m = _QC_ERROR_COUNT_RE.search(output or "")
-    n = len(_QC_DEAD_DD_LINK_RE.findall(output or ""))
-    return bool(m) and n > 0 and int(m.group(1)) == n
+    if not m:
+        return False
+    n = len(_QC_DEAD_DD_LINK_RE.findall(output[m.end():]))
+    return n > 0 and int(m.group(1)) == n
 
 
 def _finish_source_path(run_dir, source_name):
