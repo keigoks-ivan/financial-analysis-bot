@@ -672,7 +672,8 @@ def _ma_state(ticker):
     import dd_screener_ma
     import build_quality_entry
     import dd_facts
-    snap = dd_screener_ma.compute_ma_snapshot(ticker, use_cache=True)
+    from dd_screener_quality import _yf_ticker_for
+    snap = dd_screener_ma.compute_ma_snapshot(_yf_ticker_for(ticker), use_cache=True)
     label, _score = build_quality_entry.ma_state_label_and_score(snap or {})
     if label == "—":
         label = "-"

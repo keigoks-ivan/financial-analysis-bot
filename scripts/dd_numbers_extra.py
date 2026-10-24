@@ -152,20 +152,20 @@ def compute_valuation_history(ticker, date_dt):
     }
     try:
         np, pd, yf = _lazy_imports()
-        t = yf.Ticker(ticker)
+        t = yf.Ticker(_yf_symbol(ticker))
         info = {}
         try:
             info = t.info or {}
         except Exception as e:
             out["note"] = f"info 讀取失敗：{e}"
 
-        w = yf.download(ticker, period="6y", interval="1wk", auto_adjust=True, progress=False)
+        w = yf.download(_yf_symbol(ticker), period="6y", interval="1wk", auto_adjust=True, progress=False)
         if w is None or w.empty:
             out["note"] = ((out["note"] + "；") if out["note"] else "") + "週線價格序列為空"
             return out
-        close = w["Close"][ticker] if hasattr(w["Close"], "columns") or ticker in getattr(w["Close"], "columns", []) else w["Close"]
+        close = w["Close"][_yf_symbol(ticker)] if hasattr(w["Close"], "columns") or _yf_symbol(ticker) in getattr(w["Close"], "columns", []) else w["Close"]
         try:
-            close = w["Close"][ticker]
+            close = w["Close"][_yf_symbol(ticker)]
         except Exception:
             close = w["Close"]
         close = close.dropna()
@@ -337,7 +337,7 @@ def compute_financial_history(ticker, date_dt, max_years=_FIN_HISTORY_MAX_YEARS)
     }
     try:
         np, pd, yf = _lazy_imports()
-        t = yf.Ticker(ticker)
+        t = yf.Ticker(_yf_symbol(ticker))
         try:
             info = t.info or {}
         except Exception:
@@ -432,7 +432,7 @@ def compute_price_and_earnings_recency(ticker, date_dt):
     }
     try:
         np, pd, yf = _lazy_imports()
-        t = yf.Ticker(ticker)
+        t = yf.Ticker(_yf_symbol(ticker))
         info = {}
         try:
             info = t.info or {}
@@ -444,10 +444,10 @@ def compute_price_and_earnings_recency(ticker, date_dt):
         rth_time = info.get("regularMarketTime")  # yfinance 有時給 epoch int，有時缺
         if rth_close is None:
             # 退回：抓最近一筆日線收盤
-            daily = yf.download(ticker, period="10d", interval="1d", auto_adjust=False, progress=False)
+            daily = yf.download(_yf_symbol(ticker), period="10d", interval="1d", auto_adjust=False, progress=False)
             if daily is not None and not daily.empty:
                 try:
-                    close_series = daily["Close"][ticker]
+                    close_series = daily["Close"][_yf_symbol(ticker)]
                 except Exception:
                     close_series = daily["Close"]
                 close_series = close_series.dropna()
@@ -525,7 +525,7 @@ def compute_capital_structure(ticker, date_dt):
     notes = []
     try:
         np, pd, yf = _lazy_imports()
-        t = yf.Ticker(ticker)
+        t = yf.Ticker(_yf_symbol(ticker))
         info = {}
         for attempt in range(3):  # yfinance 偶發限流（Too Many Requests）：退避重試，三次都失敗才記 note
             try:
@@ -636,7 +636,7 @@ def compute_dividend_yield_ttm(ticker, date_dt, price_at_dd):
         return out
     try:
         np, pd, yf = _lazy_imports()
-        t = yf.Ticker(ticker)
+        t = yf.Ticker(_yf_symbol(ticker))
         divs = t.dividends
         if divs is None or divs.empty:
             # 整段股息歷史都空：分不出「從不配息」還是「代號沒對上／yfinance 缺資料」，
@@ -689,12 +689,12 @@ def compute_momentum_26w(ticker, idx_benchmark=None):
     }
     try:
         np, pd, yf = _lazy_imports()
-        daily = yf.download(ticker, period="14mo", interval="1d", auto_adjust=True, progress=False)
+        daily = yf.download(_yf_symbol(ticker), period="14mo", interval="1d", auto_adjust=True, progress=False)
         if daily is None or daily.empty:
             out["note"] = "日線價格序列為空"
             return out
         try:
-            close = daily["Close"][ticker]
+            close = daily["Close"][_yf_symbol(ticker)]
         except Exception:
             close = daily["Close"]
         close = close.dropna()
@@ -767,7 +767,7 @@ def _yf_consensus(ticker, date_dt):
     幣別是 yfinance 報價幣別（台股為新台幣）。抓不到回 None。"""
     try:
         np, pd, yf = _lazy_imports()
-        est = yf.Ticker(ticker).earnings_estimate
+        est = yf.Ticker(_yf_symbol(ticker)).earnings_estimate
         if est is None or est.empty or "0y" not in est.index or "+1y" not in est.index:
             return None
 
@@ -885,9 +885,14 @@ def compute_consensus_revision(ticker, date_dt):
 
 def _yf_symbol(ticker):
     """送進 yfinance 的代號：上海 .SH（ID／Koyfin 慣用寫法）→ .SS（yfinance 的後綴，.SH 查無資料）。
-    只在呼叫點換，peer_financials 的鍵與報告顯示仍用原代號。"""
+    只在呼叫點換，peer_financials 的鍵與報告顯示仍用原代號。
+    2026-10-24：歐股（BESI→BESI.AS、LVMH→MC.PA）照 dd_screener_quality 的對照表換，
+    v20 第一次跑 BESI 時價格／估值／共識全抓空（yfinance 沒有裸代號 BESI）。"""
     t = str(ticker or "")
-    return t[:-3] + ".SS" if t.upper().endswith(".SH") else t
+    if t.upper().endswith(".SH"):
+        return t[:-3] + ".SS"
+    from dd_screener_quality import _yf_ticker_for
+    return _yf_ticker_for(t)
 
 
 def _ttm_financials(ticker):
@@ -1114,7 +1119,7 @@ def build_kpi_placeholder(ticker, evidence):
     if not quarter_label:
         try:
             np, pd, yf = _lazy_imports()
-            t = yf.Ticker(ticker)
+            t = yf.Ticker(_yf_symbol(ticker))
             edates = t.earnings_dates
             if edates is not None and not edates.empty:
                 now = pd.Timestamp.now(tz=edates.index.tz)
