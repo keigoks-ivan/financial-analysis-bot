@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Analysis · 2026-10-23 — InvestMQuest Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --bg-subtle:#fafaf9; --surface:#ffffff; --surface-2:#f7f7f5;
+  --border:#e5e5e2; --border-strong:#1a1a1a;
+  --text:#1a1a1a; --text-muted:#666; --text-dim:#999;
+  --accent:#2563eb; --green:#15803d; --green-bg:#f0fdf4;
+  --red:#b91c1c; --red-bg:#fef2f2; --amber:#b45309; --amber-bg:#fffbeb;
+  --orange:#c2410c; --orange-bg:#fff7ed; --radius:8px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+
+.imq-nav{display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+  padding:12px 28px;border-bottom:1px solid var(--border);background:var(--bg-subtle);
+  font-size:13px;position:sticky;top:0;z-index:50;}
+.imq-nav a{color:var(--text-muted);text-decoration:none;}
+.imq-nav a:hover{color:var(--accent);}
+.imq-brand{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--text)!important;
+  letter-spacing:-.3px;margin-right:8px;}
+.imq-dd{position:relative;}
+.imq-dd-label{color:var(--text-muted);cursor:default;}
+.imq-dd:hover .imq-dd-label{color:var(--accent);}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:-12px;padding:8px 0;min-width:150px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:0 6px 20px rgba(0,0,0,.07);}
+.imq-dd:hover .imq-dd-menu{display:block;}
+.imq-dd-menu a{display:block;padding:6px 16px;white-space:nowrap;}
+.imq-dd.active > .imq-dd-label{color:var(--text);font-weight:500;}
+.imq-dd-menu a.active{color:var(--accent);font-weight:500;}
+
+.container{max-width:880px;margin:0 auto;padding:32px 24px 80px;}
+.breadcrumb{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:24px;}
+.breadcrumb a{color:var(--text-dim);text-decoration:none;}
+.breadcrumb a:hover{color:var(--accent);}
+
+.report-header{border-bottom:2px solid var(--border-strong);padding-bottom:24px;margin-bottom:32px;}
+.report-header h1{font-size:32px;line-height:1.25;margin:0 0 10px;letter-spacing:-.6px;}
+.report-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px;}
+.report-lede{border-left:3px solid var(--accent);padding:14px 18px;background:var(--surface-2);
+  border-radius:0 var(--radius) var(--radius) 0;font-size:15px;}
+
+.toc{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 22px;margin-bottom:40px;}
+.toc-title{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text-dim);margin-bottom:10px;}
+.toc ol{margin:0;padding-left:20px;font-size:14px;}
+.toc li{margin:4px 0;}
+.toc a{color:var(--text);text-decoration:none;}
+.toc a:hover{color:var(--accent);}
+
+h2{font-size:23px;margin:52px 0 18px;padding-bottom:9px;border-bottom:1px solid var(--border-strong);
+  letter-spacing:-.3px;}
+h3{font-size:17px;margin:32px 0 10px;}
+h4{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text-muted);margin:20px 0 8px;}
+p{margin:0 0 14px;}
+ul{margin:0 0 14px;padding-left:20px;}
+li{margin:5px 0;}
+
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:14px;}
+th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--text-muted);padding:8px 10px;border-bottom:1px solid var(--border-strong);
+  font-weight:500;}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+tbody tr:hover{background:var(--surface-2);}
+
+.company-card{border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;
+  margin:22px 0;background:var(--surface);}
+.company-header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+.ticker{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;letter-spacing:-.4px;}
+.meta-right{font-size:12.5px;color:var(--text-muted);text-align:right;}
+
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;
+  padding:2px 7px;border-radius:4px;letter-spacing:.4px;white-space:nowrap;}
+.tag.beat{background:var(--green-bg);color:var(--green);}
+.tag.miss{background:var(--red-bg);color:var(--red);}
+.tag.inline{background:var(--amber-bg);color:var(--amber);}
+.tag.raise{background:var(--green-bg);color:var(--green);}
+.tag.maintain{background:var(--amber-bg);color:var(--amber);}
+.tag.lower{background:var(--red-bg);color:var(--red);}
+
+.stock-move{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;
+  padding:2px 7px;border-radius:4px;}
+.stock-move.up{background:var(--green-bg);color:var(--green);}
+.stock-move.down{background:var(--red-bg);color:var(--red);}
+
+.lede-list{margin:.45rem 0 0 1.15rem;padding:0;}
+.lede-list li{margin:.3rem 0;}
+.stat-strip{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;}
+.stat-chip{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;
+  padding:4px 10px;border-radius:4px;background:var(--surface-2);border:1px solid var(--border);white-space:nowrap;}
+.stat-chip .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-right:6px;}
+.stat-chip.good{background:var(--green-bg);color:var(--green);border-color:transparent;}
+.stat-chip.bad{background:var(--red-bg);color:var(--red);border-color:transparent;}
+.stat-chip.mid{background:var(--amber-bg);color:var(--amber);border-color:transparent;}
+.stat-chip.na{color:var(--text-muted);}
+.bottom-line{border-left:3px solid var(--border-strong);background:var(--surface-2);
+  padding:10px 14px;margin:12px 0 4px;font-size:14.5px;border-radius:0 var(--radius) var(--radius) 0;}
+.bottom-line strong{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:.7px;color:var(--text-muted);margin-right:8px;}
+.trend-list{list-style:none;padding:0;margin:0 0 28px;}
+.trend-list li{margin:9px 0;}
+.tl{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);
+  border-radius:4px;padding:1px 7px;margin-right:8px;white-space:nowrap;vertical-align:1px;}
+.trend-list li.impl .tl{color:var(--accent);border-color:var(--accent);background:transparent;}
+
+.winner-row td:first-child{border-left:3px solid var(--green);font-family:'IBM Plex Mono',monospace;font-weight:500;}
+.loser-row td:first-child{border-left:3px solid var(--red);font-family:'IBM Plex Mono',monospace;font-weight:500;}
+
+.contradiction{background:var(--orange-bg);border-left:3px solid var(--orange);
+  border-radius:0 var(--radius) var(--radius) 0;padding:16px 20px;margin:18px 0;}
+.contradiction h4{color:var(--orange);font-size:12px;margin:0 0 8px;}
+.contradiction p{margin:0 0 10px;font-size:14.5px;}
+.implication{margin-bottom:0!important;color:var(--text);}
+
+.summary-list{list-style:none;padding:0;}
+.summary-list li{border-left:3px solid var(--accent);background:var(--surface-2);
+  padding:12px 16px;margin:10px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:14.5px;}
+
+.noncon{background:#fdf4ff;border-left:3px solid #9333ea;border-radius:0 var(--radius) var(--radius) 0;
+  padding:14px 18px;margin:14px 0;}
+.noncon h4{color:#9333ea;margin-top:0;}
+
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 20px;margin-top:48px;font-size:12.5px;color:var(--text-muted);line-height:1.65;}
+footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+  margin-top:28px;padding-top:20px;border-top:1px solid var(--border);}
+footer a{color:var(--text-dim);text-decoration:none;}
+
+@media (max-width:720px){
+  .container{padding:22px 16px 60px;}
+  .report-header h1{font-size:24px;}
+  .company-card{padding:18px 16px;}
+  .company-header{flex-direction:column;align-items:flex-start;}
+  .meta-right{text-align:left;}
+  table{font-size:13px;}
+  th,td{padding:7px 6px;}
+  .imq-nav{gap:14px;padding:10px 14px;}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/earnings/" class="active">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/markets.html">全球市場</a>
+          <a href="/sectors.html">產業板塊</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<!-- PLAIN_PRIMER_START -->
+<details style="max-width:900px;margin:16px auto;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:2px 18px 14px;font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.9;color:#334155">
+<summary style="cursor:pointer;padding:12px 0;font-weight:600;color:#1E3A5F;font-size:13.5px">📖 第一次讀這種報告？點開看怎麼讀</summary>
+<div style="margin:2px 0 4px;padding-top:8px;border-top:1px solid #E2E8F0">
+<p style="margin:6px 0">這是財報分析報告，整理公司公布財報當下的數字重點與市場反應。</p>
+<p style="margin:6px 0"><strong>結論在哪：</strong>通常在後段的「總結」；部分報告後面附加「Phase R 覆核」，是同一份報告針對特定結論的後續補充，不是新報告。</p>
+<p style="margin:6px 0"><strong>常見詞：</strong>「EPS」是每股盈餘；「財測」（guidance）是公司自己對未來業績的預估；「優於預期／不如預期」是跟市場原本的共識預估比較後的結果，不是絕對的好壞——公司賺錢又成長，也可能因為「不如預期」股價當天下跌。</p>
+<p style="margin:6px 0"><strong>時效提醒：</strong>這是財報「當天」的即時反應紀錄，之後股價與基本面可能已經變化，相關個股最新結論請看 <a href="/research/" style="color:#2563EB;text-decoration:underline">/research/</a>。</p>
+<p style="margin:6px 0 0">想查其他詞的意思，見<a href="/learn/glossary.html" style="color:#2563EB;text-decoration:underline">投資詞彙表</a>。</p>
+</div>
+</details>
+<!-- PLAIN_PRIMER_END -->
+
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-10-23
+  </div>
+
+  <header class="report-header">
+    <h1>美股 10/23 財報日深度分析</h1>
+    <div class="report-meta">5 companies analyzed · $50B+ 4家 + DD快篩名單1家 · 財報日曆錨定風險再爆（5檔誤列）vs 信用品質改善股價反應兩極（AXP vs COF）</div>
+    <div class="report-lede">
+      <strong>核心發現：</strong>
+      <ul class="lede-list">
+        <li>本日最重要的方法論發現：第三方財報日曆再次把CVX、XOM、ABBV、HCA、NVT五檔誤列為10/23發布——逐一查證官方公告後確認全數另有他期，已排除，本報告鎖定清單僅5家（見§1末完整性對帳）。</li>
+        <li>AXP調整後EPS $4.68 beat、GAAP EPS+31%、信用損失提列減少並上調全年guidance，卻收跌-3.68%——與10/20 COF幾乎相同的「信用品質改善」敘事，股價反應完全相反（§4矛盾1）。</li>
+        <li>SLB adj EPS年減7%仍beat共識+3.2%、營收beat+1.9%，「distinct upcycle」前瞻敘事帶動收漲+7.08%；與10/22 VLO「史上最高單季獲利仍收跌」形成能源鏈上下游完全相反的定價邏輯（§4矛盾2）。</li>
+        <li>Eni調整後淨利較去年同期翻逾一倍至€2.8B、beat自身共識€2.48B，上修回購至€3.8B並加發特別股息，收漲+4.28%，是本日第二個「前瞻佳＋beat=漲」的能源股案例。</li>
+        <li>INFY因FY27營收成長guidance從1.5-3%下修至1-2%重摔-6.58%，儘管淨利YoY+6%——guidance下修已連續多季，是本季唯一「非美股beat仍遭guide-down否定」案例，呼應10/22 DECK劇本。</li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="toc">
+    <div class="toc-title">目錄</div>
+    <ol>
+      <li><a href="#s1">§1 各公司財報重點</a></li>
+      <li><a href="#s2">§2 產業與子產業趨勢</a></li>
+      <li><a href="#s3">§3 贏家與輸家</a></li>
+      <li><a href="#s4">§4 互相矛盾與不合邏輯之處</a></li>
+      <li><a href="#s5">§5 總結與驗證點日曆</a></li>
+    </ol>
+  </div>
+
+  <h2 id="s1">§1 各公司財報重點</h2>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">AXP · American Express</span>
+      <span class="meta-right">市值約$219.6B · 盤前（10/23 Q3 2026發布，7:00AM ET新聞稿／8:30AM ET法說會）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後$4.68 BEAT +1.7~4.7%</span>
+      <span class="stat-chip mid"><span class="k">營收</span>$20.1B INLINE</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE</span>
+      <span class="stat-chip bad"><span class="k">股價</span>收 -3.68%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>調整後EPS beat、GAAP EPS因GBTG股權出售收益大增+31%，信用損失提列由$1.3B降至$1.0B顯示消費者信用品質改善，全年guidance同步上修，卻收跌-3.68%，是本日最清晰的「beat-and-raise反遭拋售」案例（見§4矛盾1）。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP EPS</td><td>$5.42</td><td>—</td><td>YoY+31%（含GBTG股權出售稅前收益$982M，淨計入$336M重組費用後）</td></tr>
+        <tr><td>調整後EPS</td><td>$4.68</td><td>$4.60（Benzinga）／$4.47（Zacks）共識</td><td><span class="tag beat">BEAT +1.7~4.7%</span>；YoY+13%</td></tr>
+        <tr><td>營收（扣除利息費用）</td><td>$20.1B（$20,062M）</td><td>約$20.12-20.13B共識</td><td><span class="tag inline">INLINE</span>（差距&lt;0.1%）；YoY+9%</td></tr>
+        <tr><td>刷卡金額（billed business）</td><td>$454.0B</td><td>—</td><td>YoY+8%</td></tr>
+        <tr><td>GAAP淨利／調整後淨利</td><td>$3.7B／$3.2B</td><td>—</td><td>YoY+28%／+11%</td></tr>
+        <tr><td>信用損失提列</td><td>$1.0B</td><td>—</td><td>去年同期$1.3B，反映準備金回沖而非增提；淨沖銷率1.8%（去年1.9%）</td></tr>
+        <tr><td>FY26指引（GAAP EPS）</td><td>$18.30-18.60</td><td>此前$17.30-17.90（7/24設定，共識$17.69）</td><td><span class="tag raise">RAISE</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>GAAP與調整後落差：</strong>GAAP EPS $5.42與調整後$4.68相差15.8%（低於本skill 50%強制追查門檻），主要來自GBTG（Global Business Travel Group）股權出售稅前收益$982M，扣除$336M重組費用後淨額計入GAAP但排除於調整後數字，屬一次性項目而非營運改善。</li>
+      <li><strong>信用品質是本季真正亮點：</strong>提列準備金較去年同期減少$300M、淨沖銷率下降，顯示高端客群信用狀況持續健康，與10/20 COF的「NIM+40bps、準備金回沖$225M」敘事幾乎同構（見§4矛盾1）。</li>
+      <li><strong>Guidance上修的構成：</strong>新guidance區間（$18.30-18.60）相較7月設定的$17.30-17.90區間整體上移約$1，但調整後guidance $17.60-17.90與7月區間高點重疊，上修主要反映GBTG一次性收益入帳而非營運展望顯著轉強。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得——財報發布距本報告生成時點僅數小時，逐字稿彙整站點尚未索引，依SEC 8-K新聞稿摘要撰寫。</li>
+      <li>CEO Stephen Squeri於新聞稿中強調「excellent credit quality」與刷卡金額、會員續卡率的強勁表現（新聞稿引述，非法說會逐字稿）。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>最終判決：10/23正式收盤 <span class="stock-move down">-3.68%</span> 至$313.22（單一來源stockanalysis.com歷史收盤頁，未達二源一致確認門檻，已誠實標注）。</li>
+      <li>漲跌理由：本報告未能取得具名分析師對當日跌勢的評論（財報發布僅數小時，尚未有具名評論索引），僅能觀察到beat-and-raise與股價反應方向相反，列入§4矛盾1待後續驗證。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul>
+      <li>財報後券商更新未取得（截至報告生成時）。財報前背景：9月底Benzinga彙整21位分析師平均目標價約$346（Neutral傾向），Truist 9/23將目標價自$375下修至$370；另有7月引述Goldman Sachs目標價$400、Morgan Stanley $311，各來源時間點不一，僅供財報前背景參考。</li>
+    </ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">SLB · SLB Limited（Schlumberger）</span>
+      <span class="meta-right">市值約$73.5B · 盤前（10/23 Q3 2026發布，7:00AM ET新聞稿／9:30AM ET法說會）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後$0.64 BEAT +3.2%</span>
+      <span class="stat-chip good"><span class="k">營收</span>$9.45B BEAT +1.9%</span>
+      <span class="stat-chip mid"><span class="k">指引</span>質性展望（無數字guidance）</span>
+      <span class="stat-chip good"><span class="k">股價</span>收 +7.08%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>調整後EPS與營收同步beat共識，儘管兩者皆較去年同期下滑（高基期效應），管理層稱產業進入「distinct upcycle」、2027展望看法正面，加上Data Center Solutions營收年增76%，前瞻敘事壓倒本季YoY數字下滑，收漲+7.08%，本日漲幅最大個股。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>營收</td><td>$9.45B</td><td>$9.27B共識（Benzinga）</td><td><span class="tag beat">BEAT +1.9%</span>；QoQ+5%／YoY+6%</td></tr>
+        <tr><td>調整後EPS</td><td>$0.64</td><td>$0.62共識</td><td><span class="tag beat">BEAT +3.2%</span>；QoQ+16%／YoY-7%</td></tr>
+        <tr><td>GAAP EPS</td><td>$0.49</td><td>—</td><td>QoQ-6%／YoY-2%</td></tr>
+        <tr><td>調整後EBITDA</td><td>$2.07B（21.9%margin）</td><td>—</td><td>QoQ+9%／YoY約持平</td></tr>
+        <tr><td>Production Systems營收</td><td>$4.00B（16.1%margin）</td><td>—</td><td>QoQ+6%／YoY+15%（排除ChampionX併購貢獻+5%）</td></tr>
+        <tr><td>Data Center Solutions營收</td><td>$230M</td><td>—</td><td>QoQ+23%／YoY+76%</td></tr>
+        <tr><td>自由現金流</td><td>$828M</td><td>—</td><td>營運現金流$1.51B</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>beat幅度小但方向明確：</strong>EPS、營收雙beat幅度均在2-3%區間，非驚豔式超越，但扭轉了「YoY雙降」表面上的負面印象。</li>
+      <li><strong>Data Center Solutions是新敘事核心：</strong>營收僅$230M、佔總營收不到2.5%，但YoY+76%的成長率使其成為管理層強調的未來成長引擎，呼應市場對「AI基建周邊服務」的高估值偏好——與10/22 WDC/BE/FIX三檔「AI基建beat仍遭拋售」形成有趣對照：SLB的AI關聯敘事（規模遠小於核心業務）反而被市場正面定價。</li>
+      <li><strong>中東地緣風險仍是變數：</strong>中東營收QoQ+13%但仍低於去年同期水準，新聞稿明確歸因於衝突相關營運中斷，管理層稱該區域活動復甦將是2027年上檔來源之一。</li>
+      <li><strong>Kelvion收購案：</strong>約$3.4B現金＋承接約$0.7B債務，預計2027上半年完成，屬資料中心散熱/工業冷卻領域的策略性加碼，與Data Center Solutions成長敘事呼應。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得，依SEC 8-K新聞稿摘要撰寫（法說會9:30AM ET召開，距本報告生成時點僅數小時）。</li>
+      <li>管理層於新聞稿中稱產業進入「distinct upcycle」，由能源安全與供應鏈多元化驅動，對2027年展望為「a very compelling outlook...with further upside as Middle East activity recovers」（新聞稿引述）。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>最終判決：10/23正式收盤 <span class="stock-move up">+7.08%</span> 至$53.06（單一來源stockanalysis.com，未達二源確認門檻，已標注）。</li>
+      <li>漲跌理由：EPS/營收雙beat＋Data Center Solutions高成長敘事＋管理層正面前瞻語言，三者共同驅動，本報告未能取得具名分析師當日評論佐證因果順序。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul>
+      <li>財報後券商更新未取得（截至報告生成時）。</li>
+    </ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">ALV · Autoliv</span>
+      <span class="meta-right">市值約$8.7B（DD快篩名單） · 盤前（10/23 Q3 2026發布，12:00 CET新聞稿／14:00 CET法說會）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip bad"><span class="k">EPS</span>調整後$2.19 YoY-5.7%</span>
+      <span class="stat-chip bad"><span class="k">營收</span>$2,693M YoY-0.5%</span>
+      <span class="stat-chip bad"><span class="k">指引</span>LOWER（區間下緣）</span>
+      <span class="stat-chip bad"><span class="k">股價</span>收 -3.54%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>淨銷售與EPS同步較去年同期下滑，FY26調整後營業利益率guidance下修至原區間（10.5-11%）的低端10.5%，全球輕型車產量（LVP）下滑1.9%疊加中國市場終端需求疲弱，收跌-3.54%，為本日DD快篩名單納入的唯一非$50B+個股。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>淨銷售</td><td>$2,693M</td><td>未取得獨立共識數字</td><td>YoY-0.5%（報告貨幣）／-1.1%（有機）</td></tr>
+        <tr><td>GAAP稀釋EPS</td><td>$2.13</td><td>未取得獨立共識數字</td><td>YoY-6.8%</td></tr>
+        <tr><td>調整後稀釋EPS</td><td>$2.19</td><td>—</td><td>YoY-5.7%</td></tr>
+        <tr><td>營業利益率／調整後</td><td>9.4%／9.7%</td><td>—</td><td>YoY各-0.4pp／-0.3pp</td></tr>
+        <tr><td>FY26指引（調整後營業利益率）</td><td>約10.5%</td><td>此前區間10.5-11%</td><td><span class="tag lower">LOWER</span>（區間低端）</td></tr>
+        <tr><td>FY26指引（有機銷售成長）</td><td>約0%</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>DD快篩名單納入理由：</strong>ALV市值$8.7B未達$50B+門檻，惟其為<code>docs/dd-screener/latest.json</code>追蹤名單上的美股ticker，依規則不論市值一律納入。</li>
+      <li><strong>關稅成本已大部分轉嫁：</strong>公司已向客戶回收2025年關稅成本逾80%，本季淨影響僅約$6M（約35bps毛利率衝擊），FY26整體關稅稀釋預估約20bps，與2025年相近，顯示關稅已非新增風險而是已消化的既定成本結構。</li>
+      <li><strong>區域分化明顯：</strong>亞洲（不含中國）有機銷售+8.8%（印度+29%最突出），中國-5.8%（但對中國本土車廠的銷售逆勢+21%，顯示在華外資車廠客群流失但本土客群滲透加深），EMEA與美洲皆-2.9%。</li>
+      <li><strong>CEO對Q4表態轉強：</strong>Mikael Bratt表示「anticipate a strong fourth quarter」，與本季guidance下修形成一定程度的語氣落差，是否兌現留待下季驗證（見§5驗證點日曆）。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得，依SEC 8-K新聞稿摘要撰寫。</li>
+      <li>CEO Mikael Bratt新聞稿引述：關稅成本轉嫁為公司持續的策略重點，原文完整表述未能取得逐字稿確認。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>最終判決：10/23正式收盤 <span class="stock-move down">-3.54%</span> 至$114.67（單一來源stockanalysis.com，未達二源確認門檻）。</li>
+      <li>漲跌理由：EPS與營收雙降疊加guidance下修至區間低端，股價反應與基本面方向一致，非本日爭議案例。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul>
+      <li>財報後券商更新未取得（截至報告生成時）。</li>
+    </ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">E · Eni</span>
+      <span class="meta-right">市值約$93.7B（ADR） · 盤前（10/23 Q3 2026發布，義大利時間開盤前新聞稿／14:00 CET法說會）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>N/A（以淨利呈現）</span>
+      <span class="stat-chip good"><span class="k">淨利</span>調整後€2.8B BEAT +13%</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE（回購＋現金流）</span>
+      <span class="stat-chip good"><span class="k">股價</span>收 +4.28%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>調整後淨利€2.8B較去年同期翻逾一倍、beat公司自身共識€2.48B逾13%，上游營業利益大增76%，同步上修FY26回購至€3.8B並加發每股€0.46特別股息，收漲+4.28%，是本日第二個「前瞻佳＋beat=漲」的能源股案例。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>調整後淨利</td><td>€2.8B（約$3.14B）</td><td>€2.48B（公司自身共識）</td><td><span class="tag beat">BEAT 約+13%</span>；YoY翻逾一倍</td></tr>
+        <tr><td>上游（E&amp;P）營業利益</td><td>€4.63B</td><td>—</td><td>YoY+76%</td></tr>
+        <tr><td>煉油調整後營業利益</td><td>€730M</td><td>—</td><td>—</td></tr>
+        <tr><td>Versalis（化學品）</td><td>-€180M（虧損）</td><td>—</td><td>產品利潤率疲弱</td></tr>
+        <tr><td>上游產量</td><td>約181萬boe/d</td><td>—</td><td>YoY+7%（公司口徑）；另一來源指YoY+4%（口徑差異可能來自價格效應調整）</td></tr>
+        <tr><td>FY26調整後營運現金流guidance</td><td>€16.5B</td><td>此前guidance未取得精確數字</td><td><span class="tag raise">RAISE</span></td></tr>
+        <tr><td>FY26回購</td><td>€3.8B</td><td>—</td><td>較此前上修約12%</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>營收數字未取得：</strong>本報告反覆搜尋後僅取得淨利／營業利益層級數字，未能取得合併營收精確數字，依規則誠實標注，不影響beat/miss方向判定（能源業beat/miss慣例上以淨利/EPS為主要判準）。</li>
+      <li><strong>股東回饋是本季最大驚喜：</strong>除常規回購上修至€3.8B外，另加發每股€0.46特別股息（12/9發放），顯示管理層對資產負債表強度（pro forma淨負債率降至9%，歷史新低）的信心明顯高於市場財報前預期。</li>
+      <li><strong>Versalis虧損是結構性拖累：</strong>化學品部門連續虧損反映歐洲化工產能過剩與終端需求疲弱，與上游/煉油的強勁表現形成集團內部分化，是否持續虧損值得後續追蹤。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得，依公司新聞稿與財經媒體（Investing.com、energynews.pro）摘要撰寫。</li>
+      <li>新聞稿提及簽署合約重啟委內瑞拉Junin 5油田生產，屬地緣政治敏感項目，未來現金流貢獻時點不明確。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>最終判決：10/23正式收盤 <span class="stock-move up">+4.28%</span> 至$62.08（單一來源stockanalysis.com，未達二源確認門檻）。</li>
+      <li>漲跌理由：淨利beat自身共識逾13%＋股東回饋大幅上修，是本季最清晰的「數字與資本配置雙重超預期」案例之一。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul>
+      <li>財報後券商更新未取得（截至報告生成時）。</li>
+    </ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">INFY · Infosys</span>
+      <span class="meta-right">市值約$53.6B（ADR） · 盤前（10/23印度時間約15:45 IST發布，約等於美東時間清晨）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>淨利₹7,823Cr YoY+6%</span>
+      <span class="stat-chip mid"><span class="k">營收</span>₹49,244Cr YoY+11%</span>
+      <span class="stat-chip bad"><span class="k">指引</span>LOWER</span>
+      <span class="stat-chip bad"><span class="k">股價</span>收 -6.58%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>淨利YoY+6%至₹7,823Cr，但公司將FY27固定匯率營收成長guidance從1.5-3%下修至1-2%——這是連續多季的guidance下修，市場未因淨利成長buy-in，反因guidance下修重摔-6.58%，與10/22 DECK「EPS beat仍遭guide-down否定」劇本高度呼應。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>合併淨利</td><td>₹7,823 Cr</td><td>未取得獨立共識數字</td><td>YoY+6%（QoQ+0.7%）</td></tr>
+        <tr><td>營收（印度盧比）</td><td>₹49,244 Cr</td><td>—</td><td>YoY+11%</td></tr>
+        <tr><td>營收（美元，固定匯率）</td><td>$5,145M</td><td>—</td><td>YoY+1.5%／QoQ+1.2%</td></tr>
+        <tr><td>營業利益率</td><td>約21%</td><td>—</td><td>guidance維持20-22%不變</td></tr>
+        <tr><td>FY27指引（固定匯率營收成長）</td><td>1-2%</td><td>此前1.5-3%（7月設定）</td><td><span class="tag lower">LOWER</span></td></tr>
+        <tr><td>大型交易總合約金額（TCV）</td><td>$5.2B</td><td>—</td><td>62%為淨新增（net new）</td></tr>
+        <tr><td>AI相關營收</td><td>—</td><td>—</td><td>QoQ+29%</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>guidance下修已是連續模式：</strong>Q1 FY27（7月發布）即已將guidance自原區間上緣下修，本季（Q2 FY27）再度下修下緣，是本季財報中「指引方向持續惡化」最明確的案例，而非單季意外。</li>
+      <li><strong>AI相關營收是少數亮點：</strong>QoQ+29%的成長率顯示企業AI轉型需求仍在加速，但其絕對規模未在新聞稿中揭露，無法判斷對整體營收成長的貢獻度。</li>
+      <li><strong>美元計價營收成長遠低於盧比計價：</strong>盧比計價YoY+11% vs 美元固定匯率YoY僅+1.5%，兩者落差主要反映匯率效應與定價機制差異，投資人應以固定匯率美元數字判斷真實業務動能，而非盧比報表數字。</li>
+      <li><strong>利潤率守住但成長失速：</strong>營業利益率維持20-22% guidance不變，顯示管理層選擇保護利潤率而非以價格競爭換取營收成長，與ALV本季「guidance下修但關稅成本已大部分轉嫁」的防禦性姿態類似。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得，依印度財經媒體（analyticsinsight.net、inkl.com、multibagg.ai）摘要撰寫，非官方逐字稿。</li>
+      <li>公司宣布每股₹26中期股息，反映現金狀況穩健。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>最終判決：10/23正式收盤 <span class="stock-move down">-6.58%</span> 至$12.35（ADR，單一來源stockanalysis.com，未達二源確認門檻）。</li>
+      <li>漲跌理由：guidance下修為主因，財報前市場已普遍預期guidance可能下修（pre-results commentary），但實際下修幅度仍觸發賣壓。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul>
+      <li>財報後券商更新未取得（截至報告生成時）。</li>
+    </ul>
+  </div>
+
+  <p style="font-size:13px;color:var(--text-muted);margin-top:28px;">
+    <strong>完整性對帳：</strong>本報告分析 <strong>5 家：$50B+ 4家（AXP、SLB、E、INFY）+ DD快篩名單1家（ALV，市值約$8.7B，見<code>docs/dd-screener/latest.json</code> 357檔美股ticker追蹤名單，不論市值納入）+ 用戶指定0家</strong>，與Step 5鎖定清單家數完全相符。
+    <strong>排除說明（延續10/22報告對第三方財報日曆的強化查證，本輪再度抓到五起錨定錯誤）：</strong>第三方彙整日曆（fffinstill）原列出CVX、XOM、ABBV、HCA等多檔ticker於10/23發布，另一彙整日曆（therighttrader）與DD快篩名單並列出NVT——逐一查證官方新聞稿/投資者關係公告後確認：<strong>CVX實際為10/30</strong>（公司10/1公告10/30 11:00AM ET法說會）、<strong>XOM實際為10/30</strong>（公司官方10/16新聞稿確認10/30發布）、<strong>ABBV實際為10/30</strong>（公司新聞稿明確聲明10/30盤前發布，第三方「10/23估計」已過時）、<strong>HCA實際為10/26或10/27</strong>（兩個獨立來源互相矛盾但皆非10/23，已排除）、<strong>NVT（DD快篩名單ticker）實際為10/30</strong>（公司新聞稿明確確認，7/31發布的Q2財報guidance亦提及Q3展望但非Q3發布日）——以上5檔ticker因明確查證錨定錯誤，已排除於本報告，避免誤納造成分析失真。本報告最終採用的5家公司清單，核心依據為SLB（SEC 8-K+公司新聞稿直接確認）、AXP（公司12月官方年度行事曆+9月webcast公告雙重確認）、ALV（公司9/24新聞稿直接確認）、E（公司investor relations網站14:00CET法說會公告確認，惟board會議日期與市場公告日期在部分第三方來源間仍有一天落差，已於卡片內標注此殘留不確定性）、INFY（印度財經媒體investywise專文確認Q2 FY2027發布日期並經後續實際結果報導交叉驗證）。
+    <strong>股價證據分級：</strong>5家公司股價反應皆僅取得單一來源（stockanalysis.com歷史收盤頁）確認，未達本skill v2.1標準的二源一致門檻——本輪覆核發現一般WebSearch對本日(10/23)市場收盤相關的新聞報導、市場解讀、分析師評論幾乎完全無法檢索到（多次嘗試後僅取得財報前或往年同期資料），僅WebFetch至股價歷史資料頁與SEC/公司官方新聞稿兩類結構化來源可靠取得數字。此為本報告搜尋環境的已知限制，非規則執行疏漏，已如實記錄供後續比對。
+    <strong>財報後具名券商更新：</strong>5家公司財報發布時間距本報告生成時點僅數小時，MarketBeat／Benzinga／TheFly／TipRanks等彙整服務截至報告生成時點尚未索引任何一家的財報後新目標價或評等異動，5家卡片皆誠實標注「未取得」，AXP財報前共識數字因來源時間點不一已標注僅供背景參考。
+    <strong>Transcript取得狀況：</strong>5家公司因財報皆於本報告生成時點前數小時內發布，逐字稿彙整站點均尚未索引，本報告Earnings Call段落皆依SEC 8-K新聞稿或財經媒體摘要撰寫，誠實標注「Transcript未取得」，未自編任何管理層或分析師的具名引述。
+  </p>
+
+  <h2 id="s2">§2 產業與子產業趨勢</h2>
+
+  <h3>1. 消費信貸：信用品質改善的敘事，股價反應卻南轍北轍</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>消費信貸公司本季財報顯示信用品質普遍改善（準備金回沖、淨沖銷率下降），但市場對此敘事的定價方向在不同個股間完全相反。</li>
+    <li><span class="tl">細節</span>AXP：信用損失提列$1.0B（去年$1.3B）、淨沖銷率1.8%（去年1.9%），調整後EPS beat +1.7~4.7%並上修guidance，收跌-3.68%。COF（10/20）：NIM+40bps、準備金回沖$225M、EPS beat +2.9%，盤後+4.19%、10/21正式收盤+2.53%（收窄但仍為正）。</li>
+    <li><span class="tl">Cross-day比較</span>兩家公司相隔三個交易日發布幾乎同構的「信用品質改善」敘事，COF的市場反應是持續正向（盤後到收盤皆漲），AXP則是直接收跌，差異可能來自guidance上修的構成（AXP上修主要靠GBTG一次性收益而非營運本身，COF可能更多反映純營運改善）或財報發布時市場整體氣氛（本週科技股賣壓是否外溢至金融股）。</li>
+    <li><span class="tl">上下游一致性檢查</span>兩家發卡機構對美國消費者信用狀況的描述方向一致（皆轉好），顯示消費者資產負債表健康度的宏觀判斷並無矛盾，矛盾僅存在於「如何被股價定價」這一層。</li>
+    <li><span class="tl">可證偽條件</span>若下一家發卡機構（如DFS、SYF，若於後續財報季報告）同樣出現「信用改善但股價跌」的模式，則可排除AXP個股特有因素，確認這是消費信貸板塊整體的估值位階問題；若轉為漲多於跌，則AXP本次下跌可能是GBTG一次性收益被市場識破為「非真實beat」所致。</li>
+    <li class="impl"><span class="tl">Implication</span>信用品質改善不再是股價的充分條件——市場正在更仔細拆解guidance上修的「真實性」（營運改善vs一次性收益），對依賴EPS headline數字做快速判斷的投資人是重要提醒。</li>
+  </ul>
+
+  <h3>2. 能源價值鏈：前瞻敘事正在系統性壓倒落後指標的本季數字</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>能源股本季的股價定價邏輯明確轉向「前瞻展望與資本配置承諾」，而非本季YoY比較的絕對數字好壞。</li>
+    <li><span class="tl">細節</span>SLB：adj EPS YoY-7%但beat共識+3.2%，「distinct upcycle」前瞻語言＋Data Center Solutions+76%YoY，收漲+7.08%。Eni：adj淨利YoY翻逾一倍、beat自身共識+13%，上修回購至€3.8B＋特別股息，收漲+4.28%。對照10/22 VLO：adj EPS beat+12.8%、史上最高單季獲利，卻收跌-2.40%。</li>
+    <li><span class="tl">Cross-day比較</span>三天內三家能源股呈現兩種完全相反的股價反應：上游油服（SLB）與整合油氣（Eni）前瞻佳即漲，下游煉油（VLO）歷史數字佳卻跌——差異可能在於煉油業本質上是「利差生意」，缺乏類似「upcycle」或AI相關的敘事溢價空間，而上游服務與整合油氣公司能提供更具敘事性的資本配置故事（回購、股息、新能源轉型相關業務）。</li>
+    <li><span class="tl">上下游一致性檢查</span>SLB的中東營收復甦敘事與Eni的委內瑞拉油田重啟形成呼應——兩家公司都在強調地緣政治風險區域的供給端正常化是2027年的上檔來源，顯示市場對「供給瓶頸緩解」題材有一致的正面定價傾向。</li>
+    <li><span class="tl">可證偽條件</span>若VLO下一季財報（Q4 2026/Q1 2027）同樣給出強勢前瞻語言卻仍遭股價懲罰，則確認煉油業結構性缺乏敘事溢價；若轉為正面反應，則10/22 VLO的下跌可能只是當日板塊性因素（如WTI當天上漲對煉油廠的成本解讀）而非永久性定價邏輯轉變。</li>
+    <li class="impl"><span class="tl">Implication</span>能源股投資人應更重視管理層對未來12-24個月的敘事語言與資本配置承諾，而非僅比較本季YoY數字——這與AI基建鏈「beat仍跌」的邏輯剛好相反，顯示不同產業對「什麼樣的beat才算真beat」的市場標準正在分化。</li>
+  </ul>
+
+  <h3>3. 汽車供應鏈：零件商與主機廠同步承壓，guidance紀律取代成長敘事</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>汽車產業鏈（零件商與主機廠）本季財報呈現一致的疲弱基調，management正用guidance紀律（下修或區間收窄）管理市場預期，而非試圖維持成長故事。</li>
+    <li><span class="tl">細節</span>ALV：淨銷售YoY-0.5%、EPS YoY-6.8%，FY26 guidance下修至區間低端，收跌-3.54%。GM（10/20）：adj EPS beat 4-5%但guidance「區間收窄非上移中點」，收跌-6.84%（「本年度第三次出現此模式」）。</li>
+    <li><span class="tl">Cross-day比較</span>ALV與GM雖分屬零件商與主機廠，guidance處理方式不同（ALV直接下修、GM技術性收窄不上修中點），但股價反應方向一致（皆跌），顯示市場對汽車產業鏈的guidance語言已相當敏銳，任何非明確上修的guidance動作都被解讀為負面訊號。</li>
+    <li><span class="tl">上下游一致性檢查</span>ALV揭露的全球LVP（輕型車產量）YoY-1.9%與中國市場-6.9%的產量數字，為GM等主機廠的終端銷售疲弱提供了供應鏈層級的獨立驗證——兩個數據點方向一致，確認汽車終端需求疲弱是真實的產業現象而非單一公司執行問題。</li>
+    <li><span class="tl">可證偽條件</span>若ALV下季財報兌現CEO所稱「strong fourth quarter」，且global LVP同步回升，則本季疲弱可視為短期雜訊；若Q4仍疲弱或CEO措辭與實際結果再度脫節，則確認汽車產業鏈正進入結構性放緩（見§5驗證點日曆）。</li>
+    <li class="impl"><span class="tl">Implication</span>汽車供應鏈的guidance語言已成為比本季實際數字更重要的股價驅動因子，印證「guidance紀律」本身正在變成市場評估管理層可信度的核心指標，而非單純的業績預告工具。</li>
+  </ul>
+
+  <h3>4. 全球IT外包：guidance連續下修，AI敘事尚不足以扭轉成長失速的市場定價</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>印度IT外包龍頭Infosys本季guidance連續第二個季度下修，顯示企業IT支出放緩是持續性而非單季現象，AI相關營收的高成長率尚不足以抵消整體guidance下修對股價的衝擊。</li>
+    <li><span class="tl">細節</span>INFY：淨利YoY+6%，但FY27固定匯率營收成長guidance自1.5-3%二度下修至1-2%，AI營收QoQ+29%，收跌-6.58%。</li>
+    <li><span class="tl">Cross-day比較</span>與10/21 IBM（營收beat+5%但毛利率不如預期，盤後-4.63%）同樣呈現「表面數字尚可但guidance/margin層面透露隱憂」的模式，顯示企業IT支出放緩的訊號本季已從美國企業軟體巨頭擴散到印度外包服務商，是跨地理區域的一致性訊號而非單一公司或單一市場現象。</li>
+    <li><span class="tl">上下游一致性檢查</span>INFY的AI營收高成長（QoQ+29%）與整體營收guidance下修同時存在，顯示企業客戶的IT預算正在「向AI相關項目集中、向傳統IT服務萃縮」，與10/21 NOW（訂閱營收超guidance上緣、AI ACV破$10億）的「AI優先」敘事互相印證——傳統IT外包與傳統企業軟體授權模式的客戶預算正被AI相關支出排擠，而非單純的總體IT預算緊縮。</li>
+    <li><span class="tl">可證偽條件</span>若INFY下季（Q3 FY27，約2027年1月）guidance止跌或AI營收占比揭露後顯示已能部分抵消傳統業務萃縮，則「AI排擠傳統IT」假說獲得支持；若guidance第三次下修，則需考慮是否為印度IT外包模式本身（而非AI排擠）的結構性問題。</li>
+    <li class="impl"><span class="tl">Implication</span>傳統IT服務/外包類股的guidance下修模式值得與美股企業軟體股（IBM/NOW等）同步追蹤，兩者可能共享同一組巨集驅動因子（企業AI轉型預算重分配），單看任一家都可能誤判為個股特有問題。</li>
+  </ul>
+
+  <h3>5. ⚠️ 非共識觀察：「beat is default, raise is alpha」本季的勝率已明顯低於歷史基準</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>本skill長期追蹤的meta-pattern「beat is default, raise is alpha」（beat幅度不重要，guidance上修才是真正的alpha來源）在本財報季的實際勝率顯著偏低，beat-and-raise組合近期反而更常被股價懲罰。</li>
+    <li><span class="tl">細節</span>本財報季近五個交易日清點：AXP（beat+raise，收-3.68%）、WDC（beat+raise，10/22-6.43%→10/23-2.97%連跌）、BE（beat+raise，10/22-8.70%→10/23-11.24%連跌）、GM（beat+guidance區間收窄，-6.84%）、T（beat+raise，10/21-6.45%）；相對地，純粹beat未明確raise的SLB（+7.08%）與beat+raise的Eni（+4.28%）、COF（10/20+2.53%）則上漲——beat-and-raise組的勝率（3漲/5跌，若含GM的「技術性收窄」更接近6敗）明顯低於過去建立此meta-pattern時的歷史基準。</li>
+    <li><span class="tl">Cross-day比較</span>這個模式從10/20（GM）、10/21（T）、10/22（WDC/BE/FIX）持續到10/23（AXP），已連續四個交易日出現beat-and-raise反遭拋售的案例，橫跨科技（WDC）、電力（BE）、機電（FIX）、電信（T）、汽車（GM）、金融（AXP）六個完全不同的產業，排除任何單一產業特有因素的解釋。</li>
+    <li><span class="tl">上下游一致性檢查</span>不適用——此觀察本身是跨產業的統計模式歸納，而非單一供應鏈的上下游驗證。</li>
+    <li><span class="tl">可證偽條件</span>若接下來一週（INTC 10/29、AMZN/AAPL/MSFT等年底財報季）beat-and-raise組合的股價反應勝率回升至多數上漲，則本週觀察到的現象應視為短期估值位階修正的集中釋放，而非meta-pattern本身失效；若持續偏低，則「beat is default, raise is alpha」需要加上「除非估值已充分反映」的限定條件重新校準。</li>
+    <li class="impl"><span class="tl">Implication</span>當前市場環境下，單純核對「有沒有beat、有沒有raise」已不足以預判股價反應方向，剩餘估值空間（如10/22報告已指出的TXN剩餘上檔4.55%vs NOW剩餘35%）可能已取代beat/raise本身，成為更關鍵的股價決定因子，建議後續報告在§5 takeaway中持續追蹤此meta-pattern的勝率演變。</li>
+  </ul>
+
+  <h2 id="s3">§3 贏家與輸家</h2>
+
+  <h3>贏家</h3>
+  <table>
+    <thead><tr><th style="width:70px;">公司</th><th style="width:150px;">股價</th><th>原因（20字內）</th></tr></thead>
+    <tbody>
+      <tr class="winner-row"><td>SLB</td><td>收 +7.08%（10/23）</td><td>雙beat＋「distinct upcycle」前瞻敘事</td></tr>
+      <tr class="winner-row"><td>E</td><td>收 +4.28%（10/23）</td><td>淨利翻倍beat＋回購上修＋特別股息</td></tr>
+    </tbody>
+  </table>
+
+  <h3>輸家</h3>
+  <table>
+    <thead><tr><th style="width:70px;">公司</th><th style="width:150px;">股價</th><th>原因（20字內）</th></tr></thead>
+    <tbody>
+      <tr class="loser-row"><td>INFY</td><td>收 -6.58%（10/23）</td><td>FY27營收guidance連續二度下修</td></tr>
+      <tr class="loser-row"><td>AXP</td><td>收 -3.68%（10/23）</td><td>beat+raise仍遭拋售，詳見§4矛盾1</td></tr>
+      <tr class="loser-row"><td>ALV</td><td>收 -3.54%（10/23）</td><td>營收/EPS雙降，guidance下修至低端</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="s4">§4 互相矛盾與不合邏輯之處</h2>
+
+  <div class="contradiction">
+    <h4>矛盾 1：AXP調整後EPS beat、GAAP EPS+31%、信用損失提列大減並上調全年guidance，卻收跌-3.68%——與10/20 COF幾乎相同的「信用品質改善」敘事，股價反應完全相反</h4>
+    <p>AXP與COF本季皆呈現「準備金回沖、淨沖銷率下降、EPS beat、guidance上修」的幾乎同構敘事，COF（10/20）盤後+4.19%、10/21正式收盤仍為+2.53%；AXP（10/23）卻直接收跌-3.68%。兩者的guidance上修構成不同可能是關鍵差異：COF的beat更直接反映NIM與信用成本的營運面改善，AXP的GAAP EPS大增主要來自GBTG股權出售一次性收益（$982M稅前），調整後guidance上修幅度（$17.60-17.90 vs 此前$17.30-17.90區間高點附近）相對COF的上修力度可能更保守，顯示市場能分辨「真實營運改善」與「一次性收益包裝的beat」兩者的差異。</p>
+    <p class="implication">→ <strong>Implication：</strong>信用卡/消費信貸類股的investor base正在對guidance上修進行更精細的拆解，單純的headline EPS beat與guidance raise已不足以保證正向股價反應——這也是本週（10/20-10/23）beat-and-raise組合勝率明顯偏低的meta-pattern的一個新案例（見§2第5條⚠️非共識觀察）。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 2：SLB adj EPS YoY-7%仍收漲+7.08%，10/22 VLO adj EPS beat+12.8%、史上最高單季獲利卻收跌-2.40%——能源鏈上下游的股價定價邏輯完全相反</h4>
+    <p>SLB（上游油服）本季EPS、EBITDA等多項指標皆較去年同期下滑，僅因「略優於共識」與前瞻展望正面即大漲；VLO（下游煉油）則是創史上最高單季獲利、EPS大幅beat共識，卻仍收跌。兩者分屬能源價值鏈的不同環節，業務本質（服務合約定價vs裂解利差）不同，但股價邏輯的落差幅度（一個因「略優於共識+前瞻佳」大漲7%，另一個因「歷史最佳但無新敘事」小跌2.4%）顯示市場對能源股的估值溢價已明確集中在「有成長敘事/upcycle故事」的細分領域，而非單純的獲利絕對水準。</p>
+    <p class="implication">→ <strong>Implication：</strong>投資能源股時，相同宏觀油價環境下，個股的「敘事可延展性」（能否講出一個關於未來2-3年結構性成長的故事）可能已經比單季財務數字本身更能解釋股價表現，這與傳統「能源股是純週期/現金流股、估值看絕對ROE與自由現金流」的分析框架存在張力，值得後續財報季持續驗證是否為暫時現象或永久性估值邏輯轉變。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 3：INFY淨利YoY+6%仍重摔-6.58%，Eni adj淨利YoY翻逾一倍收漲+4.28%——「淨利成長本身」在本季已不是股價反應的可靠預測指標</h4>
+    <p>INFY淨利實際是正成長（+6% YoY），但因為FY27營收guidance連續第二度下修，市場選擇完全無視淨利成長而以guidance下修定價，重摔逾6.5%；同一天Eni的淨利成長幅度遠高於INFY（翻逾一倍），且同樣伴隨正面的前瞻訊號（回購上修、特別股息），收漲逾4%。兩者的差異核心在於「guidance方向」而非「淨利成長幅度」——INFY的guidance向下、Eni的資本配置承諾向上，兩者的淨利成長率本身反而不是解釋股價差異的主要變數。</p>
+    <p class="implication">→ <strong>Implication：</strong>這進一步印證§2第5條「beat is default, raise is alpha」在本季的變形版本——當guidance信號（無論是營收成長guidance或資本配置承諾）與淨利成長方向出現分歧時，市場優先定價guidance信號而非當期財務成果，這個模式本季已在美股（AXP/WDC/BE/GM/T）與非美股（INFY）同步出現，顯示這是全球性而非美股特有的市場行為轉變。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 4：第三方財報日曆本輪再度把CVX、XOM、ABBV、HCA、NVT五檔誤列為10/23報告，與10/22報告排除15檔的規模相當——方法論風險並未隨單次查核而消除</h4>
+    <p>10/22報告已特別強化日期查證並排除15檔錨定錯誤的ticker，本報告（10/23）在相同的查證強度下，仍再抓到5檔新的錨定錯誤（CVX/XOM/ABBV實際為10/30，HCA為10/26或10/27，NVT為10/30）。這代表第三方財報日曆（fffinstill、therighttrader等）的系統性錨定錯誤率在本財報季持續偏高，並非單日偶發或已隨時間修正的問題。</p>
+    <p class="implication">→ <strong>Implication：</strong>本skill的「逐一查證官方公告」流程雖然有效攔下了潛在的分析失真（若誤納CVX/XOM/ABBV三檔mega-cap，將嚴重扭曲本報告的產業結構與市值分布），但也大幅消耗搜尋預算——後續報告應考慮是否能建立一份「已知容易被誤列的高市值ticker」黑名單（如本輪的CVX/XOM/ABBV/HCA/NVT），供下次查證時優先交叉確認，以提升查證效率。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 5：ALV與GM（10/20）皆以guidance技術性處理（下修或區間收窄）管理市場預期，但兩者對「關稅成本」的揭露方向相反——ALV稱已轉嫁80%+、GM未見類似揭露——卻股價同向下跌</h4>
+    <p>ALV明確揭露其關稅成本轉嫁進度（已回收2025年成本逾80%，本季淨影響僅約$6M），顯示公司在關稅議題上的因應已相對成熟、透明度高；但股價仍因營收/EPS雙降與guidance下修而收跌。這代表「關稅風險管理良好」這個正面訊號，在整體基本面疲弱的背景下，並未能轉化為股價的正面因子——市場對汽車供應鏈個股的定價，本季明顯更聚焦於終端需求（LVP）與guidance方向，而非個別公司的成本管理能力。</p>
+    <p class="implication">→ <strong>Implication：</strong>這提醒投資人在評估「公司執行力」類的正面訊號（如成本轉嫁能力、供應鏈管理）時，若宏觀需求面（如全球LVP持續下滑）本身是逆風，個股層級的執行力改善可能不足以抵消股價的下行壓力——與§4矛盾3（Eni/INFY淨利成長本身不是可靠預測指標）呼應同一個結論：本季市場定價的優先順序是「需求面方向」與「guidance信號」，公司自身的執行力敘事退居次要。</p>
+  </div>
+
+  <h2 id="s5">§5 總結與驗證點日曆</h2>
+
+  <h3>五條核心 takeaway</h3>
+  <ul class="summary-list">
+    <li><strong>1. Beat-and-raise連四日遭股價懲罰，橫跨六個不相關產業。</strong>AXP（金融）接續10/20 GM（汽車）、10/21 T（電信）、10/22 WDC/BE（科技/電力），確認非單一產業現象（§2第5條／§4矛盾1）。</li>
+    <li><strong>2. 能源鏈上下游定價邏輯背離——前瞻敘事壓倒本季數字。</strong>SLB（+7.08%）、Eni（+4.28%）皆因前瞻展望與資本配置承諾上漲，10/22 VLO歷史最佳獲利卻跌（§2第2條／§4矛盾2）。</li>
+    <li><strong>3. Guidance方向已取代淨利成長幅度，成為股價的主要解釋變數。</strong>INFY淨利+6%仍跌6.58%、Eni淨利翻倍且漲4.28%，關鍵差異在guidance信號而非成長率本身（§4矛盾3）。</li>
+    <li><strong>4. 第三方財報日曆錨定錯誤本季已是常態而非個案。</strong>連兩份報告（10/22、10/23）各排除約15家與5家誤列ticker，查證流程本身已是分析失真防線的必要環節（§4矛盾4）。</li>
+    <li><strong>5. 汽車供應鏈需求面疲弱蓋過個股執行力改善。</strong>ALV關稅轉嫁管理良好仍難抵消全球LVP下滑的逆風，呼應GM（10/20）的guidance收窄模式（§2第3條／§4矛盾5）。</li>
+  </ul>
+
+  <h3>驗證點日曆</h3>
+  <table>
+    <thead><tr><th>本日推論</th><th>驗證事件</th><th style="width:150px;">預定日期</th></tr></thead>
+    <tbody>
+      <tr><td>Beat-and-raise反遭拋售是否為估值位階修正的暫時集中釋放，或meta-pattern本身需重新校準</td><td>INTC 10/29、及後續Mag 7系列財報的beat+raise股價反應勝率</td><td>10/29起</td></tr>
+      <tr><td>ALV CEO所稱「strong fourth quarter」是否兌現，全球LVP能否回升</td><td>ALV Q4 2026財報與同期LVP數據</td><td>約2027年1月</td></tr>
+      <tr><td>SLB「distinct upcycle」與中東活動復甦敘事是否兌現為實際營收/EBITDA成長</td><td>SLB Q4 2026財報，中東區域營收YoY是否轉正</td><td>約2027年1月</td></tr>
+      <tr><td>INFY guidance是否第三度下修，或AI營收占比提升能否抵消傳統業務萃縮</td><td>INFY Q3 FY27財報（約2027年1月）</td><td>約2027年1月</td></tr>
+      <tr><td>Eni Versalis化學品部門虧損是否持續，是否侵蝕集團整體資本配置彈性</td><td>Eni Q4 2026財報Versalis部門表現</td><td>約2027年2月</td></tr>
+      <tr><td>AXP本季GBTG一次性收益剝離後的「真實」調整後guidance上修幅度，是否在下季維持</td><td>AXP Q4 2026財報與FY27初始guidance</td><td>約2027年1月</td></tr>
+    </tbody>
+  </table>
+
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，
+    僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。
+    過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+  </div>
+  <footer>
+    © 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a>
+  </footer>
+</div>
+</body>
+</html>
