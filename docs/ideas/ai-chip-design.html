@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>AI 設計晶片：時間只縮兩到三成，錢從工程師移到算力 — 投資想法 | InvestMQuest Research</title>
+<meta name="description" content="OpenAI 的九個月量的是寫電路程式碼到投片這一段，整顆晶片從立案到量產，AI 現在只能縮短兩到三成，更大的變化是設計成本從人力移到算力，價值往先進產能、工作負載擁有者、矽驗證介面 IP 與晶圓廠認證的簽核工具集中。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{--pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;--mix-bg:#efe9da}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#eef1f6;--body:#c9d2df;--sec:#95a2b6;--muted:#6f7c90;--paper:#0b0d11;--card:#14181f;
+  --line:#28303c;--line-soft:#1f2530;--accent:#9cc0ff;--gold-deep:#d4b576;
+  --pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--pos-bg:#12261a;--neg-bg:#2a1414;--warn-bg:#2a2210;--mix-bg:#1f2530}}
+:root[data-theme="dark"]{
+  --ink:#eef1f6;--body:#c9d2df;--sec:#95a2b6;--muted:#6f7c90;--paper:#0b0d11;--card:#14181f;
+  --line:#28303c;--line-soft:#1f2530;--accent:#9cc0ff;--gold-deep:#d4b576;
+  --pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--pos-bg:#12261a;--neg-bg:#2a1414;--warn-bg:#2a2210;--mix-bg:#1f2530}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);line-height:1.75;font-size:15.5px}
+.wrap{max-width:880px;margin:0 auto;padding:28px 16px 64px}
+a{color:var(--accent)}
+.crumb{font-size:.8rem;color:var(--sec);margin-bottom:10px}
+.crumb a{color:var(--sec)}
+h1{font-family:var(--serif);color:var(--ink);font-size:1.75rem;line-height:1.3;margin:.2rem 0 .6rem}
+h2{font-family:var(--serif);color:var(--ink);font-size:1.3rem;margin:2.4rem 0 .8rem;padding-top:.4rem;border-top:1px solid var(--line)}
+h3{font-size:1.02rem;color:var(--ink);margin:1.6rem 0 .4rem}
+.meta{font-family:var(--mono);font-size:.74rem;color:var(--sec);display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.thesis{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--r);padding:18px 20px;margin:20px 0;font-size:1.08rem;color:var(--ink);font-weight:600;line-height:1.6}
+.summary{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 20px 14px 38px;margin:0}
+.summary li{margin:.3rem 0}
+p{margin:.6rem 0}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:12px 0}
+.imq-table{border:1px solid var(--line);border-radius:var(--r)}
+.imq-table td{vertical-align:top}
+.imq-table tr:last-child td{border-bottom:0}
+.chain{display:flex;flex-direction:column;gap:6px;margin:14px 0}
+.step{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 14px;font-size:.92rem}
+.step b{color:var(--ink)}
+.step small{color:var(--sec);display:block}
+.arrow{color:var(--muted);text-align:center;font-size:.8rem;line-height:1}
+.badge{display:inline-block;font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:.05em;padding:.14rem .55rem;border-radius:5px;white-space:nowrap;vertical-align:1px}
+.b-sup{color:var(--pos);background:var(--pos-bg)}
+.b-ref{color:var(--neg);background:var(--neg-bg)}
+.b-mix{color:var(--warn);background:var(--warn-bg)}
+.b-un{color:var(--sec);background:var(--mix-bg)}
+.muted-red{color:var(--neg);font-size:.84rem}
+.cpstatus-wrap{margin:14px 0 22px}
+.cpstatus-star{width:1.6em;text-align:center;color:var(--gold-deep);font-size:.9rem}
+.cpstatus-since{font-family:var(--mono);font-size:.78rem;color:var(--sec);white-space:nowrap}
+.cpstatus-note{margin-top:6px}
+.deep-toggle{font-family:var(--mono);font-size:.72rem;color:var(--accent);background:none;border:1px solid var(--line);border-radius:6px;padding:.25rem .6rem;margin:8px 0 2px;cursor:pointer}
+.deep-toggle:hover{background:var(--line-soft)}
+.deep-sources{display:block;font-size:.76rem;color:var(--muted);margin-top:2px}
+.src-type{color:var(--muted)}
+.cp{scroll-margin-top:70px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px;margin:14px 0}
+.cp-head{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+.cp-id{font-family:var(--mono);font-size:.72rem;color:var(--gold-deep);font-weight:600}
+.cp-title{font-weight:700;color:var(--ink);font-size:1rem}
+.cp-when{font-family:var(--mono);font-size:.7rem;color:var(--sec);margin-left:auto}
+.cp-rule{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:.86rem;margin:8px 0 4px}
+.cp-rule span:nth-child(odd){color:var(--sec);white-space:nowrap}
+.ev{list-style:none;margin:8px 0 0;padding:0;border-top:1px dashed var(--line);font-size:.85rem}
+.ev li{padding:6px 0;border-bottom:1px dashed var(--line-soft);display:flex;gap:8px;align-items:baseline}
+.ev li:last-child{border-bottom:0}
+.ev .d{font-family:var(--mono);font-size:.72rem;color:var(--sec);white-space:nowrap}
+.ev .src{color:var(--muted);font-size:.76rem}
+.ev .lbl{font-size:.72rem;color:var(--sec);margin:6px 0 0}
+.muted{color:var(--sec);font-size:.84rem}
+.note{background:var(--line-soft);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:.86rem;margin:12px 0}
+.kill li{margin:.35rem 0}
+.chart{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 8px;margin:16px 0}
+.chart .cbox{position:relative;height:var(--h,340px)}
+.chart figcaption{font-size:.84rem;color:var(--sec);margin-top:8px;line-height:1.6}
+.chart .src{font-size:.76rem;color:var(--muted);margin-top:2px}
+.chart .pn-t{font-size:.86rem;font-weight:600;color:var(--ink);margin:2px 0 6px}
+.chart .pn-t+.cbox{margin-bottom:2px}
+.chart .pn-c{font-size:.84rem;color:var(--sec);margin:6px 0 14px;line-height:1.6}
+.page-note{margin-top:3rem;font-size:.78rem;color:var(--sec);border-top:1px solid var(--line);padding-top:1rem}
+@media(max-width:600px){.chart .cbox{height:var(--hm,300px)}.chart{padding:10px 8px 6px}h1{font-size:1.4rem}.cp-when{margin-left:0}.cp-rule{grid-template-columns:1fr}.ev li{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/earnings/">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/markets.html">全球市場</a>
+          <a href="/sectors.html">產業板塊</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/" class="active">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<div class="wrap">
+<div class="crumb"><a href="/ideas/">投資想法</a> › AI 與晶片設計週期</div>
+<h1>AI 設計晶片：時間只縮兩到三成，錢從工程師移到算力</h1>
+<div class="meta"><span>建立 2026-10-26</span><span>·</span><span>寫作時資料截止 2026-10-26</span><span>·</span><span>研究推論，不是投資建議</span></div>
+
+<div class="thesis">OpenAI 說它的第一顆推論晶片九個月做完，這是真的，量的是從開始寫電路程式碼（RTL）到投片（tape-out）這一段，從組隊到量產約三年。投片之後的光罩、晶圓、封裝與矽後驗證要 11～19 個月，AI 碰不到，所以整顆晶片從立案到量產，AI 現在能縮短的大約兩到三成。比時間更大的變化，是設計成本從工程師薪水移到算力與電子設計自動化軟體（EDA）的用量，能做晶片的公司變多。價值會往仍然稀缺的地方集中：先進製程與封裝產能、擁有工作負載的買家、在先進製程驗過矽的介面矽智財（IP）、晶圓廠認證的簽核工具。</div>
+
+<div class="note"><b>目錄</b>
+<ol>
+<li><a href="#summary">一頁摘要</a></li>
+<li><a href="#claim">這頁檢驗的說法</a></li>
+<li><a href="#nine-months">九個月量的是哪一段</a></li>
+<li><a href="#time">時間花在哪裡</a></li>
+<li><a href="#ai-tools">AI 工具做到哪裡</a></li>
+<li><a href="#eda-moat">EDA 的門檻</a></li>
+<li><a href="#confidential">機密與模型部署</a></li>
+<li><a href="#design-starts">設計案與產能</a></li>
+<li><a href="#first-principles">從第一性原理拆一顆晶片</a></li>
+<li><a href="#eight-questions">第一篇貼文的八個問題</a></li>
+<li><a href="#eda">EDA、中國與台積電</a></li>
+<li><a href="#structure">三到五年的產業分工</a></li>
+<li><a href="#ten-years">十年以上的推估</a></li>
+<li><a href="#taiwan">台灣的位置</a></li>
+<li><a href="#kill">什麼證據出現會收回判斷</a></li>
+<li><a href="#gaps">還沒查到的</a></li>
+<li><a href="#sources">資料來源</a></li>
+</ol>
+</div>
+
+<h2 id="summary">一頁摘要</h2>
+<ul class="summary">
+<li>九個月量的是寫 RTL 到投片，從組隊到量產約三年。</li>
+<li>投片後的光罩、晶圓、封裝、矽後驗證要 11～19 個月，AI 碰不到。</li>
+<li>RTL 加驗證的時間就算減半，立案到量產也只縮 14～27%。</li>
+<li>廠商自報的倍數多是單一任務，客戶端的整體改善在 10～40%。</li>
+<li>2026 年首次投片成功率只有 5%，提高它比寫快 RTL 省更多時間。</li>
+<li>台積電 A14 認證表上只有三家 EDA，開源與中國三到五年追不上。</li>
+<li>台積電 9 月推出 AI 設計套件，自報數位設計生產力 3～5 倍。</li>
+<li>外購介面 IP 由兩家 EDA 廠占 74%，Broadcom 等大廠自己做。</li>
+<li>撐住結論的是拆解：五種活動裡，AI 只碰得到中間兩段。</li>
+</ul>
+
+<h2 id="claim">這頁檢驗的說法</h2>
+<p>網路上有兩篇貼文在談 AI 怎麼改變晶片設計，這頁逐一檢驗。</p>
+<p>第一篇說，OpenAI 宣布它的特殊應用積體電路（ASIC）在 AI 協助下，開發時間從一般近兩年縮短一半以上，九個月完成，並推論三到五年內以晶片商為主體的電子研發業會大幅改變。作者列了八個問題：下游會不會因此改用領先廠商、AI 窮舉設計空間但 token 太貴、第一版能否直接做到成本最佳化、類比電路能否加速、系統廠研發人力怎麼變、整個電子業的影響、PC 晶片組的歷史類比，以及其他公司怎麼用閉源模型又不外洩設計。</p>
+<p>第二篇是開源硬體工具 HackHDL 作者的貼文。他認為 AI 可能讓 EDA 產業翻盤：Cadence 與 Synopsys 有技術債，中國可以用 AI 仿製甚至超越，開源的現場可程式邏輯閘陣列（FPGA）工具鏈已經成熟，晶圓廠與 EDA 融合會是優勢，所以台積電應該開始自製實驗性 EDA。</p>
+
+<h2 id="nine-months">九個月量的是寫 RTL 到投片</h2>
+<p><b>九個月是真的，量的是從開始寫 RTL 到投片，從組隊到量產約三年。</b>OpenAI 硬體負責人 Richard Ho 在 The Data Exchange 的訪談（頁面 2026 年 9 月 17 日發布）說：「from the moment we started RTL to when we taped out, that was the nine-month part that we're highlighting」。他也承認，RTL 之前已經做過模擬與效能分析。</p>
+<p>Hot Chips 2026 投影片的時間軸是：2024 年底架構概念，2025 年 2 月開始寫 RTL，2025 年 11 月投片，2026 年 5 月拿到矽。SemiAnalysis 從組隊算到投片約 16 個月。Broadcom 執行長 Hock Tan 說 2027 年部署 1.3 吉瓦（GW），2028 年上半年全速。</p>
+
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>時間</th><th>事件</th><th>來源</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>投片前約 16 個月</td><td>組隊</td><td>SemiAnalysis</td><td>組隊到投片約 16 個月</td></tr>
+<tr><td>2024 年底</td><td>架構概念</td><td>Hot Chips 投影片</td><td>RTL 之前已有模擬與分析</td></tr>
+<tr><td>2025 年 2 月</td><td>開始寫 RTL</td><td>Hot Chips 投影片、Ho 訪談</td><td>九個月的起點</td></tr>
+<tr><td>2025 年 11 月</td><td>投片，含台積電先進封裝 CoWoS 的設計</td><td>Hot Chips 投影片、SemiAnalysis</td><td>九個月的終點</td></tr>
+<tr><td>2026 年 5 月</td><td>拿到第一批矽</td><td>Hot Chips 投影片</td><td>投片後約 6 個月</td></tr>
+<tr><td>2026 年 9 月</td><td>第二代接近投片，第三代開發中</td><td>Broadcom 法說</td><td>檢驗能否重複的時點</td></tr>
+<tr><td>2027 年</td><td>部署 1.3 吉瓦</td><td>Broadcom 法說</td><td>量產爬坡</td></tr>
+<tr><td>2028 年上半年</td><td>全速出貨</td><td>Hock Tan 對 CNBC</td><td>組隊到全速約四年</td></tr>
+</tbody></table></div>
+
+<p><b>AI 的貢獻有數字，OpenAI 量化過的時間只有「省下數週」。</b>某個區塊原本放不進預留的面積，模型找到省下 13% 晶粒面積的解法。算術電路比人類基準好 10～56%：BF16 乘法器 56%、FP4 內積 21%、FP32 累加器 10%。</p>
+<p>超過一半的核心用開源高階合成語言 XLS 寫，因為當時模型不太懂 Verilog。用的是 OpenAI 內部、未經微調的 GPT 系列模型，簽核仍走標準 EDA 流程。Ho 的說法是：「If the model is 99.99% correct, you can't tape that out」。</p>
+<p>Brockman 2025 年 10 月說，模型找到約 20 項優化，每項人類要再多花一個月，Business Insider 的轉述是整體「省下數週」。這跟「兩年縮到九個月」的量級差很多。Ho 說的「舊基準 18 個月到兩年」是利益相關方的說法，沒有對照組。</p>
+<p>質疑有三種。Futurum 分析師 Brendan Burke（2026 年 6 月 26 日）認為，九個月靠的是別人沒有的資產：自家模型、Broadcom 的高速序列介面（SerDes）、封裝與後端、懂自己的工作負載。Socionext 資深總監 Moh Kolbehdari（EDN，2026 年 9 月 2 日）說，一次例外不等於可重複的方法。Hacker News 上一位自稱晶片公司執行長的網友說，從 RTL 凍結算到投片，九個月對 3 奈米大晶片是普通時程，從概念算起才驚人。</p>
+<p>九個月是真的，AI 也有實質貢獻。它的條件是一支約 100 人的團隊、懂自己的工作負載、由 Broadcom 負責晶片實作與供應鏈、用內部模型。能不能複製，要看 Broadcom 9 月說的「第二代接近投片、第三代開發中」是否一樣快。</p>
+
+<h2 id="time">時間花在驗證與晶圓廠</h2>
+<p><b>驗證占專案時間約一半，投片之後的物理時間 AI 碰不到。</b>Siemens 與 Wilson Research Group 的 2026 年調查（604 位受訪者，2026 年 9 月 8 日發布）顯示，驗證約占專案時間一半，多數專案落後進度。IC／ASIC 首次投片成功率 5%，2024 年是 14.4%，之前二十年平均約 30%。Siemens 說研究無法證明單一原因，而且 2024 年起招募受訪者的方式改了。</p>
+<p>重投片的主因是規格變更。2024 年的調查裡，約一半專案需要第二次投片，七成投片的原因是規格變更（Synopsys 的 Schirrmeister 引述，SemiEngineering 2025 年 3 月 27 日）。設計週期變短，規格變動的時間窗也變短，重投片會跟著減少。</p>
+<p>成本的分布也一樣偏向驗證與軟體。IBS 估 2 奈米一顆晶片的設計成本 7.25 億美元，軟體 43%、驗證 21%、IP 驗證約 6%，三項合計 71%（Arm 上市文件引用）。架構、實體設計、光罩等合計約 29%。SemiAnalysis 認為 IBS 的數字比業界內部高 50～66%，比例的分布仍可參考。</p>
+
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>階段</th><th>公開的時間</th><th>AI 能縮短嗎</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>架構與規格</td><td>沒有公開的分段數字</td><td>能幫忙模擬與探索</td><td>靠懂工作負載的人</td></tr>
+<tr><td>RTL 撰寫</td><td>沒有公開的分段數字</td><td>能，Fujitsu 自報生產力提高 10～30%</td><td>最像寫程式的一段</td></tr>
+<tr><td>驗證</td><td>約占專案時間一半（Wilson 2026）</td><td>能，早期評估除錯週期縮短 25～40%</td><td>AI 現在最值錢的地方</td></tr>
+<tr><td>實體設計與簽核</td><td>沒有公開的分段數字</td><td>只能在引擎外調參數</td><td>答案在晶圓廠的矽</td></tr>
+<tr><td>光罩</td><td>2～3 個月（單一論文，可信度低）</td><td>只加速光罩資料運算</td><td>物理時間</td></tr>
+<tr><td>晶圓廠週期</td><td>2 奈米約 16～17 週</td><td>不能</td><td>物理時間</td></tr>
+<tr><td>先進封裝與新訂單排隊</td><td>台積電 N2（2 奈米）新訂單 78～156 週、CoWoS 52 週以上（估計）</td><td>不能</td><td>由產能決定</td></tr>
+<tr><td>矽後驗證與軟體</td><td>約半年（2019 年的舊參考）</td><td>部分工作可提前做</td><td>Jalapeño 回片後只用 3 個月</td></tr>
+<tr><td>可靠度認證</td><td>數週</td><td>不能</td><td>物理壓力測試</td></tr>
+<tr><td>重投片</td><td>每次約 4～6 個月（估計）</td><td>驗證做好才能減少</td><td>首次成功率只有 5%</td></tr>
+</tbody></table></div>
+<p class="muted">先進封裝指台積電的 CoWoS。N2 新訂單與 CoWoS 排隊時間是 Silicon Analysts 的估計，2019 年矽後驗證數字是 Imagination 主管的說法（2 個月實驗室加 4 個月軟體）。</p>
+
+<p><b>就算 RTL 加驗證的時間減半，立案到量產也只縮短 14～27%，中間值約 20%。</b>這組數字的前提是投片前 24～36 個月、RTL 加驗證占其中 50～70%、投片後 11～19 個月。若改用目前公開的實際減幅 25～40%，只縮 7～21%。</p>
+<p>分段月數沒有任何公開來源，這組算術是用「驗證約占一半」倒推的估計。規格變更造成的重投片會因設計變快而減少，實際縮短幅度會比這組數字多一些，多多少沒有資料。</p>
+
+<h2 id="ai-tools">AI 工具省多少時間？單一任務幾十倍，整體一到四成</h2>
+<p><b>廠商的單點數字很大，客戶端的整體數字小很多。</b>Cadence 說 ChipStack 把先進製程典型 5 週的 RTL 驗證循環縮到不到一天，快 40 倍以上（Cadence 自報，2026 年 7 月 27 日法說）。Synopsys 說 AgentEngineer 的驗證收斂最多快 50 倍（Synopsys 自報，2026 年 9 月 28 日）。兩家都是自己的流程對照。</p>
+<p>客戶端的整體數字：Fujitsu 說 RTL 程式碼生成的生產力提高 10～30%。Synopsys 與 Microsoft 的早期評估，除錯週期縮短 25～40%。Samsung System LSI 用 Claude Code，一項客製晶片的驗證工作從超過一個月降到約兩天，內部算約 15 倍。同一篇報導也記錄了失誤：超出指定範圍、試圖修改沒被授權的 RTL、回滾不相關的已完成工作（Chosun Biz 報導，Samsung 沒有發新聞稿）。</p>
+<p>Nvidia 首席科學家 Dally 說，標準元件庫移植從 8 個人做 10 個月，變成一張 GPU 跑一晚，這是範圍很窄的強化學習工具（Nvidia 自述）。他同時說驗證是最長的那一段，離端到端自動設計「還很遠」。</p>
+<p>唯一有對照組的研究是 2023 年的學生實驗（大學部 22 人對 5 人），用 GPT 輔助省下 42～68% 的時間。軟體業的隨機對照實驗方向相反：METR 2025 年發現 AI 讓開發者慢 19%，2026 年 2 月的後續仍是負的，METR 自己說這是「非常弱的證據」。晶片設計沒有同類實驗。</p>
+<p>導入還淺。Wilson 2026 年調查裡，82.8% 受訪者已把 AI 用在試點之外，只有 9.0% 說已廣泛整合進驗證流程。首次投片成功率同期掉到 5%，兩個數字的量法不同、時間重疊，不能推論是 AI 造成的。</p>
+
+<p><b>大型語言模型（LLM）寫 RTL 的分數在升，代理版在 2026 年中之後停在 65～70%。</b>簡單題已經飽和，大設計與端到端的分數仍低。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>題目</th><th>2025 年</th><th>2026 年</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>VerilogEval v2（簡單題）</td><td>GPT-4o 約 61～63%、DeepSeek-R1 77.5%</td><td>Claude Opus 4.7 86.9%、GPT-5.5 84.7%</td><td>已經飽和</td></tr>
+<tr><td>Nvidia 真實工程題 CVDP，單輪</td><td>最高 33.6%</td><td>Gemini 3.1 Pro 58.6%、Opus 4.6 50.7%（NYU）</td><td>一年從三成多升到五到六成</td></tr>
+<tr><td>CVDP 代理版，三次取最好（廠商圖）</td><td>約 45%</td><td>62～69%，頁面稱停在 65～70%</td><td>升到一個高原</td></tr>
+<tr><td>OpenCores 千行以上的真設計</td><td>沒有資料</td><td>功能通過 13～24%</td><td>大設計仍低</td></tr>
+<tr><td>從規格到版圖檔（GDS）端到端（廠商題）</td><td>沒有資料</td><td>最強總分 16.6%，GPT-6 Astra 8.7%</td><td>整顆自動設計還做不到</td></tr>
+</tbody></table></div>
+<p class="muted">各來源的測試環境不同，2025 與 2026 年的數字不能直接相減。代理版與端到端兩列來自 ChipAgents 的頁面，ChipAgents 是賣晶片設計代理的公司。</p>
+<p>單純包一層 AI 代理（agent）常比單輪更差：CVDP 原論文的代理版 29.0%、單輪 33.6%，NYU 2026 年測的各模型加上工具後都低於單輪。廠商頁面上最漂亮的曲線（ChipBench 從 30.7% 到 90.6%）沒有揭露測試設定，無法和原論文比較。目前沒有任何公開案例，是 LLM 寫的 RTL 未經大幅人工處理就直接在先進製程投片。</p>
+<p>類比電路的 AI 慢一截。Cadence 說它的類比代理生產力 2～10 倍（自報），學界能生成電路拓樸，離量產版圖還遠。新創 Astrus 用強化學習做類比版圖，計畫 2026 年 10 月上線。Wilson 2022 年的資料顯示，小於 100 萬閘的設計裡，近半重投片與類比問題有關。</p>
+<p>錢在湧入。Ricursive（AlphaChip 作者創辦）2026 年 1 月 A 輪募 3 億美元，估值 40 億美元。ChipAgents 的 A 輪累計 1.34 億美元。Cognichip 的 A 輪 6,000 萬美元，Intel 執行長陳立武將加入董事會。</p>
+
+<h2 id="eda-moat">誰能進台積電認證表，誰就握有 EDA 的門檻</h2>
+<p><b>EDA 最難複製的一層，是晶圓廠認證過的簽核工具。</b>簽核是投片前最後一道檢查，確認時序、功耗、電遷移與壓降（EMIR）、設計規則（DRC）、版圖與電路一致性（LVS）都符合製程。台積電 A14、A16、N2P、N3C 的認證表，欄位只有 Cadence、Synopsys、Siemens 三家。業界說的 EDA 護城河主要指這一層：後進者得先取得晶圓廠的製程資料與認證，才能進到先進製程。</p>
+
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>項目</th><th>數字</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>A14、A16、N2P、N3C 認證表上的 EDA 廠</td><td>3 家</td><td>開源與中國工具不在表上</td></tr>
+<tr><td>認證的工具類別</td><td>10 項以上，含散熱、靜電與可靠度檢查（PERC）、3D 堆疊</td><td>每一類都要對矽校準</td></tr>
+<tr><td>2025 年累計技術檔</td><td>58,000 份以上</td><td>製程資料在台積電手上</td></tr>
+<tr><td>製程設計套件（PDK）</td><td>約 4,000 套</td><td>涵蓋 0.5 微米到 A16</td></tr>
+<tr><td>開放創新平台（OIP）的 EDA 夥伴</td><td>13 家</td><td>台積電主持認證</td></tr>
+<tr><td>OIP 的 IP 夥伴</td><td>37 家</td><td>IP 也要在製程上驗證</td></tr>
+<tr><td>OIP 矽 IP</td><td>約 93,000 項</td><td>客戶多半用現成 IP</td></tr>
+<tr><td>雲端聯盟</td><td>7 家</td><td>客戶設計早已上雲</td></tr>
+</tbody></table></div>
+<p class="muted">資料來自台積電 2025 年年報與 EDA 聯盟頁面（認證表截至 2026 年 10 月 1 日）。抓取時每格的勾選被剝掉，無法分辨「已認證」與「進行中」。</p>
+
+<p>開源流程有實體晶片的最先進製程是 130～180 奈米。12、16、22 奈米的 PDK 都是保密協議版，只能用來校準。ISPD 2026 的一篇論文用單一設計、45 奈米教學庫對照：開源的 Yosys 加 OpenROAD，功耗是商用流程的 2.3 倍，面積大約 10%，落差主要在合成。OpenROAD 的美國國防高等研究計劃署（DARPA）經費 2023 年結束，Google 的 gf180 開源 PDK 2026 年 9 月 23 日封存為唯讀。</p>
+<p>中國工具在類比與成熟製程可用，數位後端仍是缺口。華大九天 2025 年營收約 1.8 億美元，是 Cadence 的 3.5%，2026 年上半年轉虧，研發費占營收 72.6%。一份機構報告的摘要寫，數位後端佈局佈線幾乎仍被海外壟斷，5 奈米以下數位國產化基本為零（機構未標名，二手）。華大九天收購芯和半導體在 2025 年 7 月 9 日終止。2025 年 5 月美國的 EDA 出口限制只維持約六週。</p>
+<p>兩家龍頭核心業務還在成長。Cadence 核心 EDA 年增 18%（2026 年第二季），Synopsys 的 EDA 年增 8.5%（2026 財年第三季），在手訂單分別 81 億與 109 億美元，研發費合計約 46 億美元（自算）。</p>
+<p>2026 年 7 月 17 日，Moonshot 的 Kimi K3 宣稱只用開源工具、48 小時設計出一顆晶片，當天 Cadence 收盤跌 9.47%、Synopsys 跌 7.85%。那顆晶片用 45 奈米教學庫，只做模擬，沒有投片，之後也沒有獨立複製的報告。</p>
+
+<h2 id="confidential">設計機密靠代管保護，權重留在模型公司</h2>
+<p><b>頂級閉源模型能放進客戶機房的商用方案，目前只查到 Google 一種。</b>Google 的 Gemini 隔離版（Google Distributed Cloud air-gapped）2025 年 8 月 28 日正式上線，客戶是新加坡政府機構、KDDI 這類。其他權重進客戶端的先例都是政府或單一大夥伴：Los Alamos 國家實驗室，以及 Apple（Bloomberg 報導一年約 10 億美元，客製 Gemini 跑在 Apple 自家的私有雲運算上）。</p>
+<p>越頂級的模型管得越嚴。Anthropic 最頂級的模型預設要求保留資料 30 天，用來偵測跨多次請求才看得出來的濫用，零資料保留原則上不開放，只對合格客戶的內部應用有過渡期例外。</p>
+<p>晶片設計領域唯一公開的方案是 GPT-Synopsys（2026 年 9 月 30 日）：OpenAI 自己代管模型，客戶設計資料不拿來訓練。據 Let's Data Science 報導，模型做出的功耗、效能、面積（PPA）比客戶原本的好，客戶才付分潤（二手）。</p>
+<p>晶片公司的實際做法：聯發科在自家機房用 Nvidia DGX 系統，以 NeMo 微調自己的模型，每月約 600 億 token。Nvidia 自訓 ChipNeMo。Cadence 同時提供地端的 Nemotron 開源模型與雲端的 GPT。</p>
+<p>開源與閉源的差距沒有縮小。Epoch AI 估開源模型綜合落後閉源前沿約 4 個月（2026 年 5 月），2025 年 10 月約 3 個月，資安類任務落後 6～7 個月。權重外洩有真實案例：LLaMA 1（2023 年 3 月）與 Mistral 的 miqu（2024 年 1 月），兩次都是少數受信任的接收者洩出。</p>
+
+<h2 id="design-starts">先進產能比設計人力更缺</h2>
+<p><b>沒有任何公司揭露整個專案的成本下降，研發費還在漲。</b>Nvidia 研發費從 2024 財年 87 億美元漲到 2026 財年 185 億美元，員工從 29,600 人增加到 42,000 人。Marvell 2026 財年年報把「AI 壓縮整個產業的產品開發週期」列為風險，寫的是客戶可能要求更快更新、研發資源承壓。</p>
+<p>先進製程的設計案在增加。TechInsights 統計最先進三個節點的設計完成數，2018 到 2022 年年複合成長 35%。台積電的張曉強說，N2 第二年的投片數約為 N3 同期的 4 倍（2026 年 7 月日本技術論壇，二手轉述）。反向的歷史是傳統 ASIC 設計案 1997 年近 11,000 件，2005 年前後剩約 3,500～4,000 件，成本是原因之一，同時還有整併與 FPGA、標準品取代。</p>
+<p>眼前的限制是產能。台積電董事長魏哲家 2026 年 10 月 15 日說，需求與供給的差距「仍然很大」。光罩廠 Photronics 2026 年 5 月說，部分客戶的設計釋出因晶圓廠使用率過高而延後，它的在手訂單只有 1～3 週。先進製程一套光罩約 2,000～4,000 萬美元（估計值），沒有缺貨的證據。</p>
+<p>光罩的供應鏈很窄，但目前沒有卡住。多電子束寫入機只有 IMS（Intel 控股，台積電 2023 年買約 10%）與 NuFlare 兩家。極紫外光（EUV）空白光罩「目前只有日本公司製造」（Hoya，2026 年 4 月），Photronics 年報寫設備交期 12 個月以上。EUV 約占光罩量的 7%（SEMI，2025 年）。台積電與 ASML 2026 年 9 月宣布高數值孔徑（High-NA）光罩改用 12 吋，2030 年起先用 6 吋量產，12 吋試產線 2031 年前建立。</p>
+<p>產品節奏加快是需求推動的。Nvidia、AMD、Google TPU 都接近一年一代，Meta 的 MTIA 打算靠可重用晶粒約六個月一代，Apple 的節奏沒有加速。這些公司公開的理由都是市場需求，沒有一家歸功於 AI 設計工具。</p>
+
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>晶片</th><th>公開的時間</th><th>來源性質</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>Google TPU v1（28 奈米）</td><td>設計、驗證、製造、部署共 15 個月</td><td>論文原句（2017 年）</td><td>多給時間，時脈可再高 50%</td></tr>
+<tr><td>Tesla HW3（Samsung 14 奈米）</td><td>組隊到三款車全裝約三年，設計約 1.5～2 年前定案</td><td>記者現場整理，非原話</td><td>全流程約三年</td></tr>
+<tr><td>Meta MTIA</td><td>傳統晶片設計到量產可能兩年，靠可重用晶粒約六個月一代</td><td>StorageReview 轉述</td><td>晶粒重用加快節奏</td></tr>
+<tr><td>OpenAI Jalapeño（台積電 3 奈米）</td><td>組隊到投片約 16 個月，回片後矽後驗證（bring-up）3 個月</td><td>SemiAnalysis</td><td>前段快，後段照物理走</td></tr>
+<tr><td>Microsoft Maia（代號 Braga）</td><td>延後至少 6 個月，部分團隊五分之一離職</td><td>The Information 轉述</td><td>規格變更拖慢時程</td></tr>
+</tbody></table></div>
+<p class="muted">沒有任何一顆先進製程晶片公開過架構、RTL、驗證、實體設計各幾個月。晶圓廠從投片到拿矽約 8～12 週，熱批可再縮（SemiAnalysis，2026 年 5 月），大改版重投要再等 3～6 個月（個人部落格的說法）。</p>
+
+<p><b>Broadcom 的客製加速器客戶一年內從 3 家增加到 6 家，多數客戶朝一年兩顆走。</b></p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>時間</th><th>客製加速器（XPU）客戶</th><th>Hock Tan 的說法</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>2025 年 3 月</td><td>3 家</td><td>新客戶第一顆晶片約一年半</td><td>新客戶仍要一年半</td></tr>
+<tr><td>2025 年 9 月</td><td>4 家</td><td>第 4 家下單逾 100 億美元，後來確認是 Anthropic</td><td>模型公司成為客戶</td></tr>
+<tr><td>2025 年 12 月</td><td>5 家</td><td>每家幾乎兩條軌道平行，交期六個月到一年</td><td>同時開發不只一顆</td></tr>
+<tr><td>2026 年 3 月</td><td>6 家</td><td>點名 Google、Anthropic、Meta、OpenAI，多數客戶一年兩顆</td><td>節奏由需求推動</td></tr>
+<tr><td>2026 年 9 月</td><td>6 家</td><td>2027 財年 AI 營收約 1,150 億美元、2028 財年約 2,300 億美元（自動轉錄，可能有誤）</td><td>沒有第 7 家</td></tr>
+</tbody></table></div>
+<p>同業的說法：Marvell 2025 年 6 月說有 18 個客製設計案（socket）、50 個以上洽談中，2026 年 3 月改說「20 個以上」。聯發科第一顆 AI ASIC 2026 年第四季量產，第二顆 2028 年。世芯的 2 奈米加速器用晶粒分批投片，2027 年底量產。Broadcom 做的 Google TPU v8i 比聯發科的 v8t 先量產，v8t 起步還比較早。</p>
+
+<h2 id="first-principles">把一顆晶片拆成五種活動</h2>
+<p><b>把晶片開發拆成五種性質不同的活動，AI 碰得到的集中在中間兩段。</b></p>
+<div class="chain">
+<div class="step"><b>決定做什麼</b><small>理解工作負載、定架構、做取捨。AI 能幫忙模擬與探索，工作負載長什麼樣只有擁有它的人知道。OpenAI 做晶片的最大優勢在這裡。</small></div>
+<div class="arrow">▼</div>
+<div class="step"><b>精確描述：寫 RTL</b><small>最像程式語言的一段，AI 最擅長。它在成本裡占比不大，軟體、驗證、IP 驗證就占了 71%。</small></div>
+<div class="arrow">▼</div>
+<div class="step"><b>證明描述正確：驗證</b><small>占專案時間約一半，廠商說最高占工作量七成。驗證是大量產生測試、跑模擬、讀結果、找根因，可以平行化、用算力換人力，AI 現在最值錢的地方在這裡。</small></div>
+<div class="arrow">▼</div>
+<div class="step"><b>對應到物理：合成、佈局、時序、簽核</b><small>核心是數值引擎加上對晶圓廠的校準。AI 能在引擎外調參數、探索平面規劃，取代不了引擎，因為一條線在某個製程會不會短路，答案只有晶圓廠的矽知道。</small></div>
+<div class="arrow">▼</div>
+<div class="step"><b>做出來，證明它會動</b><small>光罩、晶圓、封裝、矽後驗證、可靠度認證，全是物理時間。</small></div>
+</div>
+<p>從這個拆法可以推出四件事。</p>
+
+<h3>時間有下限，由物理決定</h3>
+<p>就算前段做到零，投片到量產還要 11～19 個月，2026 年又只有 5% 的專案第一次投片就成功，所以整條鏈的縮短幅度落在兩三成。最大的時間來源是首次投片成功率：從 5% 回到 50%，一個專案就省下一次光罩加一次晶圓週期，約 4～6 個月，比 RTL 省一半還多。七成投片源自規格變更，設計週期縮短本身也會減少重投。</p>
+
+<h3>成本從人力移到算力</h3>
+<p>設計成本七成是軟體、驗證與 IP 驗證，主體是人力。AI 把人力換成算力，也就是 EDA 工具的機器時數與模型的 token。Ho 說 AI 可以「平行跑數萬次」。一篇設計自動化會議（DAC）2026 年的會後部落格轉述 Microsoft 講者的說法，每次投片用的 CPU 小時數成長 20～30 倍（二手意譯）。錢會從工程師薪水流向 EDA 的用量計價與 AI 實驗室。Synopsys 說要改成訂閱加用量計價，Cadence 說頂層產品用量加訂閱。</p>
+
+<h3>價值往仍然稀缺的互補品移動</h3>
+<p>某個投入變便宜又充足時，價值會移到仍然稀缺的東西上。稀缺的有：先進製程晶圓與 CoWoS 產能、在先進製程驗過矽的高速介面 IP、晶圓廠認證的簽核物理、懂自己工作負載的買家、矽的實測結果資料。不再稀缺的是寫 RTL 與做驗證的人力，也就是傳統無晶圓廠 IC 設計公司（Fabless）的主體。</p>
+<p>介面 IP 要分兩層看。外購市場由兩家 EDA 廠主導，IPnest 統計 2025 年 Synopsys 占 57%、Cadence 占 17%，Synopsys 在 USB、PCIe、MIPI 分別占 75.4%、63.1%、80.4%。Synopsys 執行長 Ghazi 2026 年 8 月說，PCIe 7 的機會贏了 95% 以上，並說超大規模業者的自研晶片「沒有我們的介面 IP 做不出來」。另一層是自有 SerDes：TrendForce 把 Broadcom、Marvell、聯發科歸在自己做的一邊，這是它們做客製晶片的優勢之一，聯發科的 224G SerDes 已完成矽驗證。台灣設計服務多半在外購這一層。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>年度</th><th>外購介面 IP 市場</th><th>Synopsys</th><th>Cadence</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>2016</td><td>5.5 億美元</td><td>49%</td><td>約 10%</td><td>兩家合計約六成</td></tr>
+<tr><td>2021</td><td>13.1 億美元</td><td>55.6%</td><td>14%</td><td>兩家合計近七成</td></tr>
+<tr><td>2024</td><td>23.7 億美元</td><td>55% 以上</td><td>15%（與 Alphawave 合計）</td><td>市場五年翻近兩倍</td></tr>
+<tr><td>2025</td><td>24.4 億美元</td><td>57%</td><td>17%</td><td>市場只增約 3%</td></tr>
+</tbody></table></div>
+<p class="muted">IPnest 的數字經 SemiWiki 轉載，只算外購，不含 Broadcom、Marvell 的自有 SerDes，所以所有先進製程高速介面的集中度低於 74%，低多少沒有資料。IPnest 2025 年版寫，Synopsys 介面 IP 營收微降，原因是先進加速器開始偏好高度客製的互連方案。</p>
+<p>整體設計 IP 市場 2024 年 85 億美元，Arm 占 44%、Synopsys 23%。3 奈米 PCIe 7 實體層（PHY）的一份授權費 400～450 萬美元。Qualcomm 2025 年 12 月完成收購 Alphawave。</p>
+
+<h3>省下的時間會先拿去做更複雜的晶片</h3>
+<p>1980 年代末的邏輯合成、1990 年代的 IP 重用，每次工具大幅進步之後，晶片都變得更大更複雜，成本沒有下來。Semico 2018 年寫過，過去公司多半拿省下的時間去加功能。Wilson 的數據方向相同：2007 到 2022 年驗證工程師需求年增 6.2%，設計工程師 2.7%，首次投片成功率反而下降。省下的時間第一順位會用在更複雜的晶片上，縮短時程排在後面。</p>
+
+<h2 id="eight-questions">第一篇貼文的八個問題</h2>
+<p><b>八題的共同答案是，AI 改變的是誰能做晶片與成本結構，晶片上市的時間差改變有限。</b></p>
+
+<h3>1. 下游看到 roadmap 提前，會試小案、一年後大量採用嗎</h3>
+<p class="muted">原本的說法：系統廠看到某家 IC 公司量產時程大幅提前，試用一年後滿意，就會大量改用。</p>
+<p>方向對，時間差被低估了。從看到 roadmap、樣品性能確認到大量採用，中間仍隔著一年半到兩年的晶圓廠與認證時間，跟現在一樣。先行者的優勢來自晶片本身更好，PPA 探索得更徹底。EDA 廠會在一兩年內把同樣的工具賣給所有人，工具帶來的優勢是暫時的。持久的優勢屬於先把組織改成「人監督代理」流程的公司，軟體業現在正在發生同樣的事。</p>
+
+<h3>2. AI 代理把設計空間搜完，但 token 太貴，只有大市場負擔得起嗎</h3>
+<p class="muted">原本的說法：AI 代理可以窮舉設計方向一次到位，但 token 費用龐大，只有大型 IC 市場撐得起。</p>
+<p>前半對，後半要拆開看。OpenAI 已經在窮舉，13% 的面積是搜出來的。費用的大頭在 EDA 工具的機器時數與授權，這部分正被兩家 EDA 廠改成用量計價。門檻會從「請得起多少工程師」變成「買得起多少算力」。一顆 5 億美元的晶片多花 5,000 萬美元在算力影響不大，一顆 28 奈米、4,000 萬美元的專案，比例就大。先進製程的大案會先受益，長尾晚三到五年。</p>
+
+<h3>3. 第一版能不能就做到以前第二版的成本</h3>
+<p class="muted">原本的說法：IC 公司常先推新規格上市，一兩年後再出降成本的第二版，AI 能否讓第一版就做到。</p>
+<p>PPA 的部分成立，成本的部分不成立。AI 在設計時就做徹底的面積與功耗探索，第一版更接近最佳，客戶與廠商的數字是面積少 5～15%。傳統降成本第二版的來源是製程微縮、良率學習、拿掉沒人用的功能、換便宜封裝，跟設計工具無關。</p>
+<p>更大的一件事是重投片。2024 年約一半專案要第二次投片，七成投片的原因是規格變更。設計週期縮短，規格變動的時間窗變短，重投就少，AI 驗證若再把首次投片成功率拉回來，省下的錢比降成本第二版多。比較準確的問法是「第一版就能用」。</p>
+
+<h3>4. 數位能加速、類比不能，整顆晶片還是快不了嗎</h3>
+<p class="muted">原本的說法：類比、混合訊號、PHY、射頻目前 AI 幫不上，很多晶片數位類比混合，只有數位加速沒有用。</p>
+<p>這一點不成立，理由在架構。產業已經用晶粒拆分處理類比慢的問題：Jalapeño 的 I/O 晶粒先做，用 Broadcom 現成的 SerDes，運算晶粒才是新寫的 RTL。晶粒互連標準 UCIe 與 CoWoS 封裝讓這種拆法成為標準做法。類比 IP 本來就多半用買的。數位加速之後，類比變成在舊製程上重複使用的模組，不會卡住數位。</p>
+<p>類比工程師的價值確實上升，上升的是做 IP 的那群人：Broadcom、Synopsys、Alphawave（2025 年 12 月併入 Qualcomm）、聯發科的射頻團隊。AI 對類比的幫助會慢五到十年，已經有人在做，例如 Cadence 的類比代理與 Astrus 的強化學習版圖。</p>
+
+<h3>5. 晶片 roadmap 從兩年 5 顆變 12 顆，系統廠研發人力會增加嗎</h3>
+<p class="muted">原本的說法：AI 對 IC 設計比對系統設計擅長，晶片推出加速後，系統廠開案的工程師工作量會不會反而增加。</p>
+<p>短期增加，長期減少。系統設計的 AI 工具落後晶片設計很多：印刷電路板（PCB）與多晶片模組類的 EDA 營收 2026 年第一季只增 4.8%，是各類最慢，Quilter 這類工具的盲埋孔與射頻功能還在開發。晶片變多、板子工具沒跟上，系統廠人力會先增加。緯穎研發人員 2024 年增加 29%，廣達伺服器研發人員從 2,000 多人擴到目標 3,000 人，推動的是 AI 伺服器需求，跟晶片節奏無關。</p>
+<p>長期的答案在整合。PC 從用一顆顆基本邏輯元件（TTL）拼成的主機板走到晶片組，板級的複雜度被併進矽裡，板廠的價值跟著下降。現在的版本是先進封裝：共封裝光學、高頻寬記憶體（HBM）、電源都在往晶粒旁邊移。系統廠圍著新晶片做板子的工作會縮小，留下機構、散熱、電源、機櫃整合與製造規模。</p>
+<p>手機的歷史也是這個方向。機型數從 2014 年 829 款降到 2023 年約 500 款，原始設計製造商（ODM）的外包出貨占比 2024 年升到 44%，品牌廠（OEM）的研發人數仍在增加，小米研發人員從 2019 年 8,874 人增加到 2025 年 25,457 人（含電動車與晶片）。聯發科把晶片、參考設計與軟體打包成整套方案時，手機開發從 18 個月縮到 3 個月，2007～2009 年華強北一度超過 2,000 家設計公司，之後整併（單一二手來源）。</p>
+<p>貼文沒問的是市場買不買得了 12 顆。Nvidia 一年一代已經讓客戶的部署週期跟不上，需求不會因為供給變多而加倍。更多品項會出現在工業、車用、邊緣 AI 這些長尾市場，先進製程的晶圓是配額制。</p>
+
+<h3>6. 整個電子產業會受什麼影響</h3>
+<p class="muted">原本的說法：晶片設計週期縮短一半以上，影響恐怕不只 IC 設計，整個電子業都會變，但題目太大。</p>
+<p>這題用兩個時間尺度回答，見<a href="#structure">三到五年的產業分工</a>與<a href="#ten-years">十年以上的推估</a>兩節。</p>
+
+<h3>7. IC 推出加速一倍，市場會變大、區隔更細、光罩需求倍增嗎</h3>
+<p class="muted">原本的說法：PC 晶片組從多顆整合成一顆的歷史顯示系統跟著 IC 走，IC 專案數加倍會怎樣。</p>
+<p>市場大小由終端需求決定，設計變快不會讓市場變大，會變的是誰能做晶片。歷史分兩段。高量買家對成本不敏感：2018 到 2022 年設計成本漲了數倍，最先進節點案數仍年增 35%，因為買家換成雲端與 AI 業者。長尾對成本敏感：1997 到 2005 年傳統 ASIC 案數少了約三分之二。設計變便宜後，先進製程的案數主要是現有大客戶多做幾版，長尾的增加會在 N5、N3 這類先進但有產能的節點，輪不到 N2。</p>
+<p>光罩方面，先進製程一套約 2,000～4,000 萬美元。投片數加倍，光罩需求也加倍，但晶粒化讓 I/O 晶粒跨代重用，每個產品需要的新光罩組數會下降。先進光罩多在台積電自己的光罩廠，目前沒有短缺。中期的風險在設備交期與 EUV 空白光罩，擴產要兩三年，2028 年以後才需要看。</p>
+
+<h3>8. 其他公司怎麼用頂級閉源模型又不外洩設計？權重放地端可行嗎</h3>
+<p class="muted">原本的說法：AI 實驗室有自己的資料中心，沒有外洩問題，其他公司若要用，是否把權重授權放到客戶地端，幾百家就要幾百份。</p>
+<p>要保護的是客戶的設計資料，客戶要的是模型的能力，權重不必出門。業界已經在走四條路：雲端業者代管加合約與網路隔離（Bedrock、Azure，IC 設計公司早就把設計放上雲端 EDA，台積電雲端聯盟有 7 家）、機密運算、封裝好的單機（Cirrascale 的 Gemini 單機，模型只放在揮發性記憶體，斷電即消失，廠商說法）、開源模型地端微調（聯發科、Nvidia 的做法，落後閉源約 3～7 個月）。</p>
+<p>幾百份權重放在客戶端不會發生，證據都走反方向：Anthropic 對頂級模型要求保留資料，OpenAI 的晶片設計產品選擇自己代管加分潤。權重外洩有真實案例，都是少數受信任的人洩出，而擁有機器的人不在可信執行環境（TEE）威脅模型的防護範圍內。</p>
+<p>大者恆大成立，原因在工作負載與資本。OpenAI 用的內部模型比公開版領先幾個月。持久的差距在三樣：擁有工作負載、有錢買算力、在台積電有產能優先權，三樣都跟權重無關。中型 IC 設計公司的實際處境是用 GPT-Synopsys 或 Cadence 的代管方案，落後 AI 實驗室一兩代工具，跟同業的工具水準相同。</p>
+
+<h2 id="eda">若有人能動搖 EDA，會是台積電</h2>
+<p><b>三到五年內 EDA 兩大廠的地位穩固，長期唯一有條件改寫簽核層的是台積電。</b></p>
+
+<h3>AI 會讓 EDA 翻盤嗎</h3>
+<p><b>三到五年不會，AI 用得越多，簽核工具被呼叫得越多。</b>把 EDA 拆成三層看。前段撰寫與驗證，LLM 強，最可能被代理吸收，但模擬器還是要跑。實作引擎（合成、佈局），強化學習能調參數，引擎本身是三十年校準的數值軟體。簽核物理（時序、萃取、DRC、EMIR），對晶圓廠的矽校準，由晶圓廠認證。AI 需要第三層來判斷結果對不對，所以 AI 越多，第三層被呼叫越多。</p>
+<p>Synopsys 執行長 Ghazi 2026 年 9 月 30 日說「不會有完全繞過 EDA 的時點」，五年內這句是對的。GPT-Synopsys 的合作方式可以佐證：OpenAI 授權 Synopsys 的工具來訓練模型，雙方分潤。</p>
+<p>十年尺度的風險有兩個。一是價值從按席位授權移向用量與模型，AI 實驗室分走一塊，分潤制已經開始。二是簽核物理這層的資料握在晶圓廠手上，台積電若直接提供校準過的物理模型，EDA 的簽核層會變薄。這個選項在台積電手上，開源社群沒有。</p>
+
+<h3>中國能用 AI 仿製甚至超越嗎</h3>
+<p><b>演算法層可以，校準層不行。</b>OpenROAD 已經證明演算法可以開源重寫，差距在合成品質（功耗 2.3 倍）與沒有先進 PDK。EDA 的門檻在對矽的校準資料，這份資料只有晶圓廠有。</p>
+<p>貼文說的晶圓廠與 EDA 融合在中國會發生，推動它的是出口管制。中芯有資料、有政策、有需求，7 奈米以上深紫外光（DUV）製程的晶圓廠加 EDA 融合十年內會發生，會侵蝕西方 EDA 在中國成熟製程的份額，Synopsys 2025 財年中國營收（不含 Ansys）已年減 22%。先進製程的校準資料在台積電，這一塊中國拿不到。</p>
+
+<h3>台積電該自製 EDA 嗎</h3>
+<p><b>商用 EDA 不該做，自家特有的那一層它一直在做，現在這層變成 AI。</b>台積電已經擁有 EDA 最值錢的一層：技術檔、PDK、認證權，不必擁有工具就能控制流程。自己賣工具的代價有三個。第一，三家 EDA 廠服務它所有客戶，認證者同時賣工具，中立性會被質疑。第二，Nvidia、Apple、AMD 互為對手，它們的設計資料流進台積電的工具，信任問題比技術問題大。第三，市場小：Cadence 與 Synopsys 今年營收合計約 160 億美元，約是台積電年化營收的 8.6%（自算）。台積電年報把客戶信任列為三項根本之一，董事 Moshe Gavrielov 同時是 Cadence 獨立董事。</p>
+<p>整合元件廠（IDM）的歷史是漸進的。Gelsinger 共同署名的 Intel 電腦輔助設計（CAD）史說，從 Pentium 世代起設計風格簡化到商用工具能支援，內部工具才逐步被取代。1999 年 Intel 主力 CPU 專案仍靠自家的 Nike 工具套件，2005 年 Gadi Singer 說處理器「主要用內部工具」，晶片組與通訊晶片用商用工具，2007 年 8 月 6 日 Intel 指定 Synopsys 為主要 EDA 供應商。Intel 2025 年年報仍寫中央工程組織包含 EDA 工具與設計平台。</p>
+<p>Gartner 的 Gary Smith 2005 年給過數字：用內部工具的工程師比例 1997 年 9%、2000 年 28%、2004 年 27%。他的解釋是「EDA 廠商的工具趕不上製程時，公司就自己做」。Samsung 的分法是大家都要的共通工具用買的，公司特有的自己做。Synopsys 與 Cadence 2025 年年報仍把客戶自研工具列為競爭者。歸納起來，IDM 與晶圓廠在 EDA 廠商落後的那段自己做，商用工具跟上再買，自家特有的那層一直留著。</p>
+<p>台積電的 AI 設計套件（AI Design Kit，ADK）正符合這個模式，AI 層就是 EDA 廠商現在落後的那段。2026 年 9 月 23 日的 OIP 論壇上，台積電生態系主管 Aveek Sarkar 宣布 ADK，說它是代理式設計流程的「technology knowledge layer」，數位設計生產力提高 3～5 倍，類比與射頻最多 6 倍（台積電自報，沒附佐證）。他在 EE Times 的署名文章寫，台積電幾年前就開始用強化學習做電路最佳化與設計空間探索。</p>
+<p>業務開發副總袁立本開場時說，AI 代理會與傳統 CAD 流程並行，也可能取代其中一部分（SemiWiki 轉述）。盧立中的簡報列出的 AI 任務有最佳化佈局佈線、找出並修正設計規則違規、遷移既有設計。Counterpoint 的讀法是 ADK 用訓練在台積電自家設計歷史上的代理，取代面向人的 PDK，SemiWiki 的讀法是補充 PDK 與既有 EDA 流程。台積電沒有公開 ADK 的內容、介面與授權條款，兩種讀法目前無法裁決。</p>
+<p>高層對設計與製程研發的態度不同。魏哲家講 AI 生產力都落在晶圓廠與研發營運，2024 年 10 月說 1% 的生產力提升約等於 10 億美元，沒有一句談設計或 EDA。共同營運長米玉傑 2026 年 9 月 15 日在台大說，鼓勵工程師在 EDA 用 AI，AI 對 A14、A10 這種「有很多未知」的下一代製程幫助不大，對敏感研發資料保持謹慎，Bloomberg 版的原話是「AI is like a three-year old superman」。兩種說法可以同時成立：設計流程的輸入輸出固定，適合 AI，製程研發面對的是未知的物理。</p>
+<p>台積電該防的是 AI 實驗室成為客戶設計晶片的第一站。若 OpenAI 的模型加 Synopsys 的工具變成設計晶片的預設方式，客戶會先找 OpenAI 再找台積電，OIP 的中立性會被繞過。對策是把 AI 原生參考流程做進 OIP，確保任何模型都能接上它的認證流程，並掌握矽的實測結果回饋給模型這層資料。台積電已在 A16 參考流程整合 AI，2026 年 9 月與 Siemens 做出 DRC 修正代理，ADK 是其中一步。</p>
+
+<h2 id="structure">三到五年：IC 設計公司分成三種命運</h2>
+<p><b>IC 設計公司分成三種命運。</b>擁有工作負載的公司（OpenAI、Google、Meta、Apple）做自己的晶片，越做越快。擁有稀缺 IP 或類比能力的公司（Broadcom、Marvell 的 SerDes，聯發科的射頻與數據機）變成設計服務加 IP 平台，一次性工程費（NRE）的收入占比下降，量產與 IP 收入上升。創意 2026 年第二季量產營收年增 188%，NRE 與 IP 年增 11%，已經是這個形狀（Quartr 的 AI 摘要，二手）。只有數位系統單晶片（SoC）設計能力、沒有獨特 IP 的中型 IC 設計公司，成本被 AI 壓，客戶又轉向自己做晶片。Gartner（2026 年 6 月的摘要）與 Marvell 年報都已經寫到這個風險。</p>
+<p><b>IC 與系統廠的界線往系統廠那邊移。</b>以前系統廠不做晶片，是因為要養兩千人。一支 100 人的團隊加上算力就能做出 3 奈米加速器時，大型系統公司自做晶片的門檻就剩算力與產能，兩樣都是錢。雲端業者已經在做，接下來是車廠、機器人、電信設備。台灣的 ODM 沒有自己的工作負載，自做晶片的機會小，有工作負載的是它們服務的雲端客戶。</p>
+<p><b>EDA、AI 實驗室、晶圓廠的新關係在 2025 年 12 月到 2026 年 9 月成形。</b>Nvidia 投資 Synopsys 20 億美元，OpenAI 與 Synopsys 分潤，台積電與三家 EDA 做代理流程，台積電推出 ADK。接下來三年的重點是定價與資料權：誰的模型、跑在誰的機器、用誰的工具、矽的結果回饋給誰。EDA 廠的營收不會掉，分利潤的對象多一個。</p>
+<p><b>設計服務與封裝是最直接的受益者。</b>系統公司自做晶片需要的是實體實作、IP 整合、供應鏈，也就是 Broadcom、創意、世芯、智原賣的東西。它們自己的 NRE 業務也會被 AI 壓縮，要往 IP 平台與晶粒化模組移。CoWoS 與先進封裝會變成跟晶圓一樣的配額資源。</p>
+<p><b>人才需求從看人數轉向看資深監督者。</b>數位 RTL 與驗證工程師的需求，會從人數變成能監督代理的資深工程師，初階職位縮減。類比、射頻、封裝、散熱、電源、矽後驗證的人力價值上升，跟軟體業 2025 到 2026 年的變化平行。</p>
+
+<h2 id="ten-years">十年以上，數位設計時程會貼近晶圓廠時程</h2>
+<p>這一節是推論，前提是 AI 設計能力持續進步、晶圓廠的物理不變、先進製程產能持續緊。</p>
+<p><b>數位設計週期收斂到晶圓廠週期。</b>前段用週計算時，整顆晶片的時程就等於光罩加晶圓加封裝加驗證，下限約 6～9 個月。晶片會跟著最新的工作負載推出，節奏接近軟體發版。首次投片成功率是這條路的門檻，AI 驗證要把它從 5% 拉回 50% 以上，才算真的到了。</p>
+<p><b>晶片為工作負載訂做。</b>買家從挑一顆現成晶片，變成為自己的工作負載訂做一顆。誰有工作負載、買得起晶圓，誰就能做晶片。先進製程的設計案會多好幾倍，長尾在 N5、N3 這類節點更多。市場區隔會更細，發生在成熟的先進節點，最前緣的節點仍由大客戶包下。</p>
+<p><b>中間層縮小。</b>商人數位晶片公司存在的理由是聚合設計人力。人力不再稀缺時，它的理由就剩 IP、軟體生態、供應鏈。Nvidia 會留下來，靠的是 CUDA 與系統，聯發科靠射頻與數據機。純數位的公司會被壓成設計服務。</p>
+<p><b>價值往四個地方集中。</b>晶圓廠與封裝、記憶體（HBM）、擁有設計代理的 AI 實驗室、擁有工作負載的買家。設計變多、晶圓沒變多，晶圓廠的議價力上升。</p>
+<p><b>EDA 的終局已經起步。</b>簽核物理會變成晶圓廠提供的校準模型，起點是 2026 年 9 月的 ADK。撰寫與驗證被代理吸收，EDA 廠剩下實作引擎與 IP。兩家龍頭的營收可能還在成長，收入轉向用量計價、IP 授權與分潤，Synopsys 投資人日已經往這個方向走。接下來要看 ADK 是補充還是取代面向人的 PDK、授權給誰、收不收費、三家 EDA 廠在裡面是夥伴還是被繞過的對象。</p>
+<p><b>類比慢一個世代。</b>類比在五到十年內是人力最值錢的地方，之後 AI 用物理模擬器做強化學習會追上，但會一直比數位晚一個世代。晶粒化讓類比在舊製程上重複使用，類比慢不會拖住整個系統。</p>
+<p><b>中國在成熟製程自給。</b>7 奈米以上 DUV 製程的晶圓廠加 EDA 加 AI 融合會成為國家工程，十年內在成熟製程自給。先進製程受限於光刻機，跟 EDA 無關。</p>
+<p><b>產業的速度由物理決定。</b>AI 設計晶片、晶片跑更強的 AI、更強的 AI 設計更好的晶片，新創 Ricursive 的名字就取自這個循環。循環的限制全在物理：晶圓廠週期、EUV 產能、電力。十年後產業的速度由台積電、ASML 與電網決定。</p>
+<p>可能出現的情境有幾個：一顆晶片只為一個客戶的一個模型版本而做，用完就換。系統廠不再挑晶片，改成描述需求。晶圓廠的產能分配變成整個電子業最重要的政治問題。工程師教育從學會寫 Verilog，變成學會判斷代理的設計對不對。台灣 IC 設計業從人力密集的設計，變成算力密集的設計加上 IP 與封裝。</p>
+
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>面向</th><th>三到五年</th><th>十年以上</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>設計時程</td><td>整條鏈縮短兩到三成</td><td>數位設計貼近晶圓廠週期，下限約 6～9 個月</td><td>投片成功率決定能否到達</td></tr>
+<tr><td>誰做晶片</td><td>雲端業者自做成常態，接著是車廠、機器人、電信設備</td><td>系統公司為工作負載訂做晶片</td><td>門檻變成算力與產能</td></tr>
+<tr><td>商人數位晶片公司</td><td>中型公司被 AI 與客戶自做擠壓</td><td>縮成設計服務或 IP 公司</td><td>看有沒有獨特 IP</td></tr>
+<tr><td>EDA</td><td>營收照長，多一個分利潤的 AI 實驗室</td><td>簽核層移向晶圓廠的校準模型</td><td>看 ADK 收不收費</td></tr>
+<tr><td>晶圓廠與封裝</td><td>CoWoS 變成配額資源</td><td>議價力上升</td><td>設計變多，晶圓沒變多</td></tr>
+<tr><td>類比</td><td>人力最值錢</td><td>AI 追上，但晚一個世代</td><td>晶粒化讓它不拖累系統</td></tr>
+<tr><td>人才</td><td>初階縮減，資深監督者需求上升</td><td>教育改成判斷代理的設計</td><td>類比、封裝、矽後更貴</td></tr>
+</tbody></table></div>
+
+<h2 id="taiwan">台灣受惠最直接的是台積電與設計服務</h2>
+<p><b>設計變便宜、晶圓沒變多，台積電的議價力上升。</b>它該守的是 OIP 的中立性與矽結果的回饋權，商用 EDA 不該做，ADK 已經是它的 AI 層。設計服務是系統公司自做晶片的最大受益者，NRE 的人力定價會被壓，量產與 IP 收入是未來的主體。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>類型</th><th>代表公司</th><th>三到五年</th><th>長期</th><th>所以呢</th></tr></thead>
+<tbody>
+<tr><td>晶圓代工</td><td>台積電</td><td>議價力上升，ADK 掌握 AI 層</td><td>守住 OIP 中立與矽資料回饋</td><td>不做商用 EDA</td></tr>
+<tr><td>設計服務</td><td>創意、世芯、智原</td><td>系統公司自做晶片的最大受益者</td><td>NRE 定價被壓，轉向 IP 平台與晶粒模組</td><td>量產與 IP 收入是主體</td></tr>
+<tr><td>手機與 ASIC 晶片商</td><td>聯發科</td><td>數位 SoC 被商品化，ASIC 服務成長（已在做 TPU）</td><td>靠射頻、數據機、類比與自有 SerDes</td><td>地端自訓模型方向對</td></tr>
+<tr><td>伺服器 ODM</td><td>廣達、緯穎、鴻海</td><td>開案更多、研發人力增加</td><td>板級價值被先進封裝吸走，留下機構、散熱、電源、機櫃與製造規模</td><td>沒有工作負載就不做晶片</td></tr>
+<tr><td>IC 設計人才</td><td>數位 RTL 與驗證工程師</td><td>工作形態改變，人數需求先停滯</td><td>人數需求下降</td><td>類比、射頻、封裝、矽後更貴</td></tr>
+</tbody></table></div>
+<p>世芯 2026 年 9 月 23 日與 Synopsys 發表以 Synopsys 224G PHY 為基礎的設計方法，至少這個案子的介面 IP 是外購。創意是否有自家 SerDes，只有低可信度的來源。Broadcom 做的 TPU v8i 比聯發科的 v8t 先量產，支持「自有 SerDes 加實作經驗」是客製 ASIC 的競爭優勢，AI 工具在其中的差別看不出來。</p>
+
+<h2 id="kill">什麼證據出現會收回判斷</h2>
+<p><b>本頁的判斷建立在七個前提上，任何一個被推翻，就改寫對應的段落。</b></p>
+<ul class="kill">
+<li>「整條鏈只縮兩到三成」建立在 Jalapeño 是特例。若 OpenAI 第二代（Broadcom 2026 年 9 月說接近投片）與第三代晶片都在九個月內從 RTL 到投片，而且首批矽可用，收回並上修縮短幅度。</li>
+<li>「AI 驗證還沒提高投片成功率」建立在 Wilson 2026 年調查的 5%。若 2028 年調查的首次投片成功率回到 30% 以上，收回，整條鏈的縮短會超過本頁的估計。</li>
+<li>「人力替代只發生在 AI 實驗室」建立在沒有一般 IC 設計公司公開減人。若聯發科、Qualcomm 這類公司公開在投片數增加的同時減少設計人力，收回。</li>
+<li>「簽核層的門檻沒有降」建立在台積電 N2 以下的認證表只有三家。若表上出現第四家或任何 AI 原生工具，收回。</li>
+<li>「價值還沒從 EDA 移走」建立在兩家的核心 EDA 仍在成長。若核心 EDA 成長掉到 5% 以下而投片數上升，收回。</li>
+<li>「開源三到五年碰不到先進製程」建立在沒有可公開使用的先進 PDK。若出現可公開取得的 16 奈米以下 PDK，收回。</li>
+<li>「台積電不做商用 EDA」建立在 ADK 只是知識層。若 ADK 對客戶收費或包含簽核功能，收回，台積電那一段重寫。</li>
+</ul>
+
+<h2 id="gaps">還沒查到的</h2>
+<p><b>以下缺口若補上，最可能改動的是時間那一節的算術。</b></p>
+<ul>
+<li>架構、RTL、驗證、實體設計各占幾個月，沒有任何公開的分段時程，廠商與教科書的分段甘特圖也沒找到。時間那一節的算術是用「驗證約占一半」倒推的估計。</li>
+<li>規格變更造成的重投片會因設計變快而減少，整條鏈能因此多縮多少，沒有資料。</li>
+<li>沒有「專業工程師、有對照組、整顆晶片層級」的 AI 生產力實驗。整體 10～40% 只是任務層級證據的範圍。</li>
+<li>廠商的倍數（40 倍、50 倍、ADK 的 3～5 倍與 6 倍）全是自報，沒有第三方驗證。Wilson 2026 年完整報告要會員帳號，裡面可能有生產力比例。</li>
+<li>Intel 當年改用商用工具的具體原因與年份。「2006 年」只有論壇上的一句話，另一位用戶說是 2018～2021 年。Intel 7 奈米延誤與工具的關聯，以及 AMD、HP 的歷史，也沒找到。</li>
+<li>DDR、SerDes、UCIe、HBM PHY 各自的市占，以及客製 ASIC 用自有 SerDes 與外購的比例。</li>
+<li>台積電張曉強、侯永清、羅唯仁對 AI 用在設計的說法，台積電內部用哪家模型、多少工程師在用。</li>
+<li>ADK 的全文與授權條款（台積電 OIP 2026 的簡報與 EE Times 署名文章全文）。</li>
+<li>Nvidia 官方的 2026 年 CVDP 榜、Si2 的榜單、各實驗室模型卡上的 Verilog 分數。</li>
+<li>單顆晶片的 NRE 金額，第三方估計彼此差 10 倍以上。ByteDance 是否為 Broadcom 客戶，沒有官方確認。</li>
+<li>AWS、Apple、Cerebras、Groq 的晶片開發時程，以及 Jim Keller 對做一顆晶片要多久的說法。</li>
+<li>整套 EUV 光罩從投片到全部交付要幾週（最新的硬數字是 2019 年，7～11 奈米平均交付 11 天），每層的分項時間，台積電自有光罩廠的規模。</li>
+<li>2015～2025 年逐年的手機機型數、PC 機型數、Samsung 手機部門的研發人數，以及任何 OEM 談晶片節奏與開案關係的公開發言。</li>
+<li>OpenAI 與 Broadcom 在晶片實體實作上各做多少，沒有一手來源講清楚。</li>
+<li>Kimi K3 的晶片設計之後有沒有被獨立複製。Cadence 2026 年第三季財報在本頁資料截止日當天才發布，沒有納入。</li>
+<li>DAC 2026 有一句「EDA 裡的 AI 沒有評論者說的那麼有效」被歸給 Microsoft 講者，只有一個部落格來源，本頁沒有引用為原話。</li>
+</ul>
+
+<h2 id="sources">資料來源</h2>
+<p class="muted">一手指公司文件、法說逐字稿、當事人訪談或署名文章、論文原文。二手指媒體、分析師或部落格轉述。</p>
+
+<h3>OpenAI／Broadcom 晶片</h3>
+<ul class="muted">
+<li>OpenAI 官方部落格，Jalapeño 發表，2026 年 6 月 24 日，一手（原站擋讀，經 Wayback 副本）：<a href="https://openai.com/index/openai-broadcom-jalapeno-inference-chip/" rel="noopener" target="_blank">openai.com</a></li>
+<li>OpenAI 官方部落格，Jalapeño's first results，2026 年 8 月 25 日，一手（同上）：<a href="https://openai.com/index/jalapeno-first-results/" rel="noopener" target="_blank">openai.com</a></li>
+<li>The Data Exchange，Richard Ho 訪談，2026 年 9 月 17 日，一手：<a href="https://thedataexchange.media/richard-ho-openai" rel="noopener" target="_blank">thedataexchange.media</a></li>
+<li>More Than Moore（Ian Cutress），Richard Ho 訪談，2026 年 9 月 30 日，一手：<a href="https://morethanmoore.substack.com/p/interview-with-richard-ho-openai" rel="noopener" target="_blank">morethanmoore.substack.com</a></li>
+<li>Tom's Hardware，Richard Ho 訪談逐字稿，2026 年 9 月 28 日，一手：<a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/openai-jalapeno-design-interview-transcript-hardware-vp-richard-ho-explains-how-ai-assisted-design-may-shape-the-future-of-inference-asics" rel="noopener" target="_blank">tomshardware.com</a></li>
+<li>Tae Kim，Richard Ho 訪談，2026 年 10 月 22 日，一手：<a href="https://taekim.substack.com/p/an-interview-with-openais-richard" rel="noopener" target="_blank">taekim.substack.com</a></li>
+<li>Tae Kim，Hot Chips 演講摘錄，2026 年 8 月 25 日，二手：<a href="https://taekim.substack.com/p/hot-chips-openai-jalapeno-presentation" rel="noopener" target="_blank">taekim.substack.com</a></li>
+<li>Tom's Hardware，Hot Chips 2026 Jalapeño 整理，2026 年 8 月 27 日，二手：<a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/hot-chips-2026-openais-jalapeno-ai-asic-unpacked-accelerator-developed-using-ai-achieves-efficiency-and-throughput-gains-against-power-hungry-blackwell" rel="noopener" target="_blank">tomshardware.com</a></li>
+<li>ServeTheHome，Hot Chips 2026 Jalapeño，2026 年 8 月 26 日，二手：<a href="https://www.servethehome.com/openai-jalapeno-asic-at-hot-chips-2026/" rel="noopener" target="_blank">servethehome.com</a></li>
+<li>SemiAnalysis，Jalapeño 實測，2026 年 8 月 25 日，二手：<a href="https://newsletter.semianalysis.com/p/openai-jalapeno-better-than-nvidia" rel="noopener" target="_blank">newsletter.semianalysis.com</a></li>
+<li>Business Insider（Yahoo 轉載），Brockman 談 AI 設計晶片，2025 年 10 月 13 日，二手：<a href="https://ca.news.yahoo.com/greg-brockman-says-openais-tech-035921214.html" rel="noopener" target="_blank">yahoo.com</a></li>
+<li>CNBC，OpenAI 與 Broadcom 發表 Jalapeño，2026 年 6 月 24 日，二手：<a href="https://www.cnbc.com/2026/06/24/openai-and-broadcom-reveal-jalapeno-first-ai-chip-in-partnership.html" rel="noopener" target="_blank">cnbc.com</a></li>
+<li>Futurum（Brendan Burke），九個月能否複製，2026 年 6 月 26 日，二手：<a href="https://futurumgroup.com/insights/jalapeo-in-nine-months-did-ai-just-break-chip-design-timelines/" rel="noopener" target="_blank">futurumgroup.com</a></li>
+<li>EDN（Socionext Moh Kolbehdari），2026 年 9 月 2 日，二手：<a href="https://www.edn.com/why-a-nine-month-ai-chip-tape-out-matters/" rel="noopener" target="_blank">edn.com</a></li>
+<li>Hacker News 討論串，2026 年 6 月 24 日，二手（匿名留言）：<a href="https://news.ycombinator.com/item?id=48663324" rel="noopener" target="_blank">news.ycombinator.com</a></li>
+<li>Broadcom 2026 財年第三季法說逐字稿（Motley Fool），2026 年 9 月 9 日，一手（經摘要）：<a href="https://www.fool.com/earnings/call-transcripts/2026/09/09/broadcom-avgo-q3-2026-earnings-call-transcript/" rel="noopener" target="_blank">fool.com</a></li>
+<li>Broadcom 2025 財年第一季法說逐字稿（Motley Fool），2025 年 3 月 6 日，一手（經摘要）：<a href="https://www.fool.com/earnings/call-transcripts/2025/03/06/broadcom-avgo-q1-2025-earnings-call-transcript/" rel="noopener" target="_blank">fool.com</a></li>
+<li>Broadcom 2025 財年第四季法說逐字稿（Motley Fool），2025 年 12 月 11 日，一手（經摘要）：<a href="https://www.fool.com/earnings/call-transcripts/2025/12/12/broadcom-avgo-q4-2025-earnings-call-transcript/" rel="noopener" target="_blank">fool.com</a></li>
+<li>Broadcom 2026 財年第一季法說逐字稿（Motley Fool），2026 年 3 月 4 日，一手（經摘要）：<a href="https://www.fool.com/earnings/call-transcripts/2026/03/04/broadcom-avgo-q1-2026-earnings-call-transcript/" rel="noopener" target="_blank">fool.com</a></li>
+<li>Broadcom 2025 財年第三季法說（vectorshift 轉錄頁），2025 年 9 月 4 日，二手：<a href="https://vectorshift.ai/research/companies/broadcom/earnings/2025-q3" rel="noopener" target="_blank">vectorshift.ai</a></li>
+<li>Marvell 客製設計案（Counterpoint），2025 年 6 月 20 日，二手：<a href="https://counterpointresearch.com/en/insights/marvell-outlines-major-data-center-socket-wins-at-custom-ai-investor-event" rel="noopener" target="_blank">counterpointresearch.com</a></li>
+<li>Marvell 2026 財年第四季法說逐字稿（Motley Fool），2026 年 3 月 5 日，一手（經摘要）：<a href="https://www.fool.com/earnings/call-transcripts/2026/03/05/marvell-mrvl-q4-2026-earnings-call-transcript/" rel="noopener" target="_blank">fool.com</a></li>
+<li>聯發科 2026 年第二季法說準備稿，2026 年 7 月 31 日，一手：<a href="https://www.mediatek.com/hubfs/MediaTek%20Assets/Pdfs/Quarterly%20Earnings%20Release/2026/Quarterly%20Earnings%20Release-2026Q2/Prepared%20remarks.pdf" rel="noopener" target="_blank">mediatek.com</a></li>
+<li>世芯 2026 年 8 月 14 日法說（自由時報），二手：<a href="https://ec.ltn.com.tw/article/breakingnews/5539932" rel="noopener" target="_blank">ltn.com.tw</a></li>
+</ul>
+
+<h3>驗證與設計成本調查</h3>
+<ul class="muted">
+<li>Siemens Verification Horizons（Harry Foster），2026 年功能驗證研究，2026 年 9 月 8 日，一手（Siemens 贊助）：<a href="https://blogs.sw.siemens.com/verificationhorizons/2026/09/08/the-2026-functional-verification-study/" rel="noopener" target="_blank">blogs.sw.siemens.com</a></li>
+<li>Verification Academy，2026 年研究摘要，2026 年 9 月，一手：<a href="https://verificationacademy.com/topics/planning-measurement-and-analysis/wrg-industry-data-and-trends/2026-functional-verification-study-executive-findings-paper/" rel="noopener" target="_blank">verificationacademy.com</a></li>
+<li>Verification Academy，2026 年 AI 專題，2026 年 9 月，一手：<a href="https://verificationacademy.com/topics/planning-measurement-and-analysis/wrg-industry-data-and-trends/ai-in-functional-verification-what-the-2026-industry-data-reveals/" rel="noopener" target="_blank">verificationacademy.com</a></li>
+<li>Verification Academy，2024 年趨勢報告頁，2025 年 2 月 17 日，一手：<a href="https://verificationacademy.com/topics/planning-measurement-and-analysis/wrg-industry-data-and-trends/2024-siemens-eda-and-wilson-research-group-ic-asic-functional-verification-trend-report/" rel="noopener" target="_blank">verificationacademy.com</a></li>
+<li>Siemens Verification Horizons，2022 年研究第 8 部分，2022 年 12 月 12 日，一手：<a href="https://blogs.sw.siemens.com/verificationhorizons/2022/12/12/part-8-the-2022-wilson-research-group-functional-verification-study/" rel="noopener" target="_blank">blogs.sw.siemens.com</a></li>
+<li>Siemens Verification Horizons，2022 年研究第 12 部分（類比與重投片），2023 年 1 月 9 日，一手：<a href="https://blogs.sw.siemens.com/verificationhorizons/2023/01/09/part-12-the-2022-wilson-research-group-functional-verification-study/" rel="noopener" target="_blank">blogs.sw.siemens.com</a></li>
+<li>SemiEngineering，First-Time Silicon Success Plummets（重投片與規格變更），2025 年 3 月 27 日，二手：<a href="https://semiengineering.com/first-time-silicon-success-plummets/" rel="noopener" target="_blank">semiengineering.com</a></li>
+<li>Arm 上市文件 F-1（引 IBS 設計成本），2023 年，一手：<a href="https://www.sec.gov/Archives/edgar/data/1973239/000119312523216983/d393891df1.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>SemiAnalysis，IBS 設計成本偏高，2022 年 7 月 24 日，二手：<a href="https://newsletter.semianalysis.com/p/the-dark-side-of-the-semiconductor" rel="noopener" target="_blank">newsletter.semianalysis.com</a></li>
+<li>Silicon Analysts，NRE 與設計成本，2026 年 3 月，二手（自稱低信心）：<a href="https://siliconanalysts.com/market-data/nre-design-cost" rel="noopener" target="_blank">siliconanalysts.com</a></li>
+<li>Silicon Analysts，新訂單排產時間，2026 年 10 月 19 日，二手（估計）：<a href="https://siliconanalysts.com/data/allocation-lead-times" rel="noopener" target="_blank">siliconanalysts.com</a></li>
+<li>SemiEngineering 引 Semico，AI 與設計成本，2018 年 6 月，一手：<a href="https://semiengineering.com/can-ai-alter-the-burgeoning-design-cost-trend" rel="noopener" target="_blank">semiengineering.com</a></li>
+<li>ASML 簡報（每光罩層 1.2 天），2022 年 5 月 12 日，一手：<a href="https://euvlitho.com/2022/SS2.pdf" rel="noopener" target="_blank">euvlitho.com</a></li>
+<li>Bits&amp;Chips，Rapidus 2 奈米週期，2025 年 9 月 2 日，二手：<a href="https://bits-chips.com/article/rapidus-bets-on-ultra-fast-cycle-time-at-2nm/" rel="noopener" target="_blank">bits-chips.com</a></li>
+<li>arXiv 2507.02871（光罩 2～3 個月），2025 年，二手（單一作者）：<a href="https://arxiv.org/pdf/2507.02871" rel="noopener" target="_blank">arxiv.org</a></li>
+<li>SemiEngineering，矽後 bring-up（Imagination），2019 年 11 月 26 日，一手：<a href="https://semiengineering.com/transforming-silicon-bring-up" rel="noopener" target="_blank">semiengineering.com</a></li>
+<li>SemiAnalysis，EDA Primer（投片到拿矽 8～12 週），2026 年 5 月 12 日，二手：<a href="https://newsletter.semianalysis.com/p/the-eda-primer-from-rtl-to-silicon" rel="noopener" target="_blank">newsletter.semianalysis.com</a></li>
+<li>Irrational Analysis，半導體開發指南（重投 3～6 個月），2023 年 9 月 2 日，二手（個人部落格）：<a href="https://irrationalanalysis.substack.com/p/a-guide-on-semiconductor-development" rel="noopener" target="_blank">irrationalanalysis.substack.com</a></li>
+<li>EE Times，客製晶片（TechInsights 設計完成數、Alphawave 光罩成本），2023 年 7 月 28 日，一手：<a href="https://www.eetimes.com/the-golden-age-of-custom-silicon-draws-near-part-3/" rel="noopener" target="_blank">eetimes.com</a></li>
+<li>Xenospectrum，台積電 N2 投片數為 N3 的 4 倍，2026 年 7 月，二手：<a href="https://xenospectrum.com/en/tsmc-n2-tapeouts-production-ramp/" rel="noopener" target="_blank">xenospectrum.com</a></li>
+<li>EE Times（Design &amp; Reuse 轉載），ASIC 設計案減少，2006 年 7 月 24 日，一手：<a href="https://us.design-reuse.com/news/13872/asic-design-starts-slowing-but-market-growth-continues.html" rel="noopener" target="_blank">design-reuse.com</a></li>
+<li>Nvidia 2026 財年年報（10-K），2026 年 2 月 25 日，一手：<a href="https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>Nvidia 2024 財年年報（10-K），2024 年，一手：<a href="https://www.sec.gov/Archives/edgar/data/1045810/000104581024000029/nvda-20240128.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>Marvell 2026 財年年報（10-K），2026 年，一手：<a href="https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>Google Cloud 部落格，TPU v1，2017 年 5 月 13 日，一手：<a href="https://cloud.google.com/blog/products/ai-machine-learning/an-in-depth-look-at-googles-first-tensor-processing-unit-tpu" rel="noopener" target="_blank">cloud.google.com</a></li>
+<li>Teslarati，Tesla Autonomy Day 現場紀錄，2019 年 4 月 22 日，二手：<a href="https://www.teslarati.com/tesla-autonomy-day-livestream-updates/" rel="noopener" target="_blank">teslarati.com</a></li>
+<li>StorageReview，Meta MTIA 路線圖，2026 年 3 月 13 日，二手：<a href="https://www.storagereview.com/news/metas-mtia-roadmap-four-chip-generations-in-two-years-put-genai-inference-first" rel="noopener" target="_blank">storagereview.com</a></li>
+<li>Silicon UK（轉述 The Information），Microsoft Braga 延後，2025 年 6 月，二手：<a href="https://www.silicon.co.uk/cloud/ai/microsoft-braga-ai-delay-620030" rel="noopener" target="_blank">silicon.co.uk</a></li>
+<li>Tom's Hardware，客製 AI ASIC 盤點（Maia 延後），2026 年 5 月 21 日，二手：<a href="https://www.tomshardware.com/tech-industry/semiconductors/custom-ai-asics-examined-from-broadcom-to-mtia" rel="noopener" target="_blank">tomshardware.com</a></li>
+<li>Silicon Co-Design，DAC 2026 會後部落格，2026 年 8 月 4 日，二手（意譯）：<a href="https://www.siliconcodesign.com/p/design-automation-conference-2026" rel="noopener" target="_blank">siliconcodesign.com</a></li>
+</ul>
+
+<h3>EDA 廠商與 AI 工具</h3>
+<ul class="muted">
+<li>Cadence 2026 年第二季法說準備稿（ChipStack、ViraStack），2026 年 7 月 27 日，一手：<a href="https://s206.q4cdn.com/597110084/files/doc_financials/2026/q2/CDNS-Q2-2026-Earnings-Conference-Call-Prepared-Remarks.pdf" rel="noopener" target="_blank">q4cdn.com</a></li>
+<li>Convergedigest，Synopsys AgentEngineer 與 Autopilot，2026 年 9 月 28 日，二手：<a href="https://convergedigest.com/synopsys-agentengineer-autopilot-autonomous-engineering/" rel="noopener" target="_blank">convergedigest.com</a></li>
+<li>Synopsys 部落格，代理式 AI 產業合作（Fujitsu 數字），2026 年 9 月 28 日，一手：<a href="https://www.synopsys.com/blogs/chip-design/agentic-ai-industry-collaboration.html" rel="noopener" target="_blank">synopsys.com</a></li>
+<li>EE Journal，Synopsys 與 AMD、Microsoft 的代理流程（除錯週期 25～40%），2026 年 7 月，一手：<a href="https://www.eejournal.com/industry_news/synopsys-advances-agentic-ai-chip-design-with-amd-and-microsoft/" rel="noopener" target="_blank">eejournal.com</a></li>
+<li>Futurum，AgentEngineer 分析，2026 年 9 月 28 日，二手：<a href="https://futurumgroup.com/?p=96004" rel="noopener" target="_blank">futurumgroup.com</a></li>
+<li>Tom's Hardware，2026 年晶片設計代理工具現況，2026 年，二手：<a href="https://www.tomshardware.com/tech-industry/semiconductors/the-state-of-agentic-ai-in-chip-design-tools-in-2026-cadence-synopsys-and-siemens-all-pitch-autonomous-engineers" rel="noopener" target="_blank">tomshardware.com</a></li>
+<li>Tom's Hardware，Nvidia Dally 談元件庫移植，2026 年 4 月 14 日，二手：<a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/nvidia-says-ai-cuts-10-month-eight-engineer-gpu-design-task-to-overnight-job-company-is-still-a-long-way-from-ai-designing-chips-without-human-input" rel="noopener" target="_blank">tomshardware.com</a></li>
+<li>SlashGear，Dally 於 GTC 2026，2026 年 5 月 15 日，二手：<a href="https://www.slashgear.com/2170379/nvidia-ai-gpu-design-overnight/" rel="noopener" target="_blank">slashgear.com</a></li>
+<li>ChipNeMo 論文（arXiv 2311.00176），2023 年 10 月 31 日，一手：<a href="https://arxiv.org/abs/2311.00176" rel="noopener" target="_blank">arxiv.org</a></li>
+<li>Yahoo（轉述 Chosun Biz），Samsung System LSI 用 Claude Code，2026 年 8 月 25 日，二手：<a href="https://tech.yahoo.com/ai/claude/articles/samsung-thinks-claude-code-help-002500483.html" rel="noopener" target="_blank">yahoo.com</a></li>
+<li>學生對照實驗論文（arXiv 2307.07319），2024 年 7 月 14 日版，一手：<a href="https://arxiv.org/pdf/2307.07319" rel="noopener" target="_blank">arxiv.org</a></li>
+<li>METR，開發者生產力後續研究，2026 年 2 月 24 日，一手：<a href="https://metr.org/blog/2026-02-24-uplift-update/" rel="noopener" target="_blank">metr.org</a></li>
+<li>Futurum，Cadence 2026 年第二季財報分析，2026 年 7 月 29 日，二手：<a href="https://futurumgroup.com/insights/cadence-q2-fy-2026-earnings-climb-on-agentic-ai-and-record-backlog/" rel="noopener" target="_blank">futurumgroup.com</a></li>
+<li>Synopsys 新聞稿，DSO.ai 首批 100 次商業投片，2023 年 2 月 7 日，一手：<a href="https://news.synopsys.com/2023-02-07-AI-designed-Chips-Reach-Scale-with-First-100-Commercial-Tape-Outs-Using-Synopsys-Technology" rel="noopener" target="_blank">news.synopsys.com</a></li>
+<li>Pulse 2.0，Ricursive A 輪，2026 年 1 月 26 日，一手：<a href="https://pulse2.com/ricursive-intelligence-300-million-series-a/" rel="noopener" target="_blank">pulse2.com</a></li>
+<li>Evertiq，ChipAgents A 輪累計 1.34 億美元，2026 年 8 月 17 日，二手：<a href="https://evertiq.com/news/2026-08-17-us-firm-chipagents-expands-series-a-funding-to-134-million" rel="noopener" target="_blank">evertiq.com</a></li>
+<li>Raising.fi，Cognichip A 輪，2026 年 4 月，二手：<a href="https://raising.fi/news/cognichip-series-a-april-2026" rel="noopener" target="_blank">raising.fi</a></li>
+<li>BetaKit，Astrus 類比版圖，2026 年 9 月 22 日，一手：<a href="https://betakit.com/with-new-funding-astrus-prepares-to-automate-one-of-the-biggest-bottlenecks-in-chip-design/" rel="noopener" target="_blank">betakit.com</a></li>
+<li>Quilter 官網（盲埋孔與射頻開發中），2026 年 10 月 26 日讀取，一手（廠商自述）：<a href="https://www.quilter.ai/" rel="noopener" target="_blank">quilter.ai</a></li>
+<li>ESD Alliance 2026 年第一季 EDA 營收（PCB 類 +4.8%），2026 年 7 月 13 日，二手：<a href="https://www.thailand-business-news.com/pr-news/esd-alliance-reports-electronic-system-design-industry-posts-5-7-billion-in-revenue-in-q1-2026" rel="noopener" target="_blank">thailand-business-news.com</a></li>
+</ul>
+
+<h3>RTL 基準</h3>
+<ul class="muted">
+<li>CVDP 原論文（arXiv 2506.14074），2025 年 6 月 17 日，一手：<a href="https://arxiv.org/html/2506.14074" rel="noopener" target="_blank">arxiv.org</a></li>
+<li>VerilogEval v2（arXiv 2408.11053），2024 年 8 月，一手：<a href="https://arxiv.org/html/2408.11053v2" rel="noopener" target="_blank">arxiv.org</a></li>
+<li>DeepSeek-R1 與 CodeV-R1 的 RTL 分數（arXiv 2505.24183），2025 年 5 月，一手：<a href="https://arxiv.org/html/2505.24183v5" rel="noopener" target="_blank">arxiv.org</a></li>
+<li>ChipMATE（arXiv 2605.12857），2026 年 5 月 13 日，一手：<a href="https://arxiv.org/html/2605.12857" rel="noopener" target="_blank">arxiv.org</a></li>
+<li>NYU 的 CVDP 評測（arXiv 2603.19347），2026 年 3 月 30 日，一手：<a href="https://arxiv.org/html/2603.19347" rel="noopener" target="_blank">arxiv.org</a></li>
+<li>ChipVerilog（arXiv 2607.13079），2026 年 7 月 20 日，一手：<a href="https://arxiv.org/html/2607.13079v2" rel="noopener" target="_blank">arxiv.org</a></li>
+<li>ChipAgents，Build-A-Chip Bench 與 CVDP 代理版曲線，2026 年 10 月，廠商頁面：<a href="https://chipagents.ai/research/build-a-chip-bench" rel="noopener" target="_blank">chipagents.ai</a></li>
+<li>ChipBench（arXiv 2601.21448 v2），2026 年 2 月 1 日，一手。</li>
+</ul>
+
+<h3>EDA 護城河、開源與中國</h3>
+<ul class="muted">
+<li>Synopsys 2026 財年第三季新聞稿（8-K），2026 年 8 月 26 日，一手：<a href="https://www.sec.gov/Archives/edgar/data/0000883241/000119312526368620/d157153dex991.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>Synopsys 10-Q（截至 2026 年 7 月 31 日），一手：<a href="https://www.sec.gov/Archives/edgar/data/0000883241/000088324126000025/snps-20260731.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>Synopsys 2025 財年年報（10-K），一手：<a href="https://www.sec.gov/Archives/edgar/data/883241/000088324125000028/snps-20251031.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>Synopsys 投資人日新聞稿，2026 年 9 月 30 日，一手：<a href="https://news.synopsys.com/2026-09-30-Synopsys-Details-Growth-Strategy-and-Long-term-Financial-Model-at-2026-Investor-Day" rel="noopener" target="_blank">news.synopsys.com</a></li>
+<li>Synopsys 投資人日逐字稿，2026 年 9 月 30 日，一手：<a href="https://stockanalysis.com/stocks/snps/transcripts/682621-investor-day-2026/" rel="noopener" target="_blank">stockanalysis.com</a></li>
+<li>OpenAI 與 Synopsys，GPT-Synopsys 新聞稿，2026 年 9 月 30 日，一手：<a href="https://news.synopsys.com/2026-09-30-OpenAI-and-Synopsys-Announce-GPT-Synopsys-Frontier-Intelligence-to-Revolutionize-Chip-Design" rel="noopener" target="_blank">news.synopsys.com</a></li>
+<li>Futurum，Synopsys 投資人日分析，發表於 2026 年 9 月 30 日投資人日之後（報告未載確切日期），二手：<a href="https://futurumgroup.com/insights/synopsys-investor-day-2026-turns-eda-into-a-royalty-and-ai-model-revenue-share-business/" rel="noopener" target="_blank">futurumgroup.com</a></li>
+<li>Cadence 2026 年第二季 CFO 評論，2026 年 7 月 27 日，一手：<a href="https://www.sec.gov/Archives/edgar/data/0000813672/000081367226000089/cfocommentary07272026ex9902.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>Cadence 2026 年第二季法說逐字稿，2026 年 7 月 27 日，一手：<a href="https://stockanalysis.com/stocks/cdns/transcripts/655704-q2-2026/" rel="noopener" target="_blank">stockanalysis.com</a></li>
+<li>Cadence 執行長 Devgan 於 Goldman Sachs Communacopia，2026 年 9 月 9 日，一手：<a href="https://stockanalysis.com/stocks/cdns/transcripts/744387-goldman-sachs-communacopia-technology-conference-2026/" rel="noopener" target="_blank">stockanalysis.com</a></li>
+<li>Yahoo Finance，Nvidia 投資 Synopsys 20 億美元，2025 年 12 月 1 日，二手：<a href="https://finance.yahoo.com/news/nvidia-just-made-2-billion-141209123.html" rel="noopener" target="_blank">yahoo.com</a></li>
+<li>Investing.com，Kimi K3 與 Cadence、Synopsys 下跌，2026 年 7 月 17 日，二手：<a href="https://www.investing.com/news/stock-market-news/cadence--synopsys-slide-as-kimi-k3-designs-chip-in-48h-using-no-proprietary-eda-4798775" rel="noopener" target="_blank">investing.com</a></li>
+<li>ts2.tech，Kimi K3 市場反應，2026 年 7 月 18 日，二手：<a href="https://ts2.tech/en/synopsys-nasdaqsnps-loses-6-3-billion-following-kimi-k3-chip-design-demonstration/" rel="noopener" target="_blank">ts2.tech</a></li>
+<li>SemiWiki 論壇，Kimi K3 討論串，2026 年 7 月，二手：<a href="https://semiwiki.com/forum/threads/kimi-k3-disrupting-eda.25544/" rel="noopener" target="_blank">semiwiki.com</a></li>
+<li>OpenROAD README，一手：<a href="https://github.com/The-OpenROAD-Project/OpenROAD" rel="noopener" target="_blank">github.com</a></li>
+<li>ISPD 2026 論文（開源與商用流程對照，arXiv 2601.17520），2026 年 1 月 24 日，一手：<a href="https://arxiv.org/abs/2601.17520" rel="noopener" target="_blank">arxiv.org</a></li>
+<li>Wikipedia，OpenROAD 專案（DARPA 經費），二手：<a href="https://en.wikipedia.org/wiki/OpenROAD_Project" rel="noopener" target="_blank">wikipedia.org</a></li>
+<li>google/gf180mcu-pdk（2026 年 9 月 23 日封存），一手：<a href="https://github.com/google/gf180mcu-pdk" rel="noopener" target="_blank">github.com</a></li>
+<li>21 世紀經濟報導，華大九天上半年財報，2026 年 8 月 30 日，二手：<a href="https://m.21jingji.com/article/20260830/herald/6fb865e22591bfc3cc407c0f99b71210.html" rel="noopener" target="_blank">21jingji.com</a></li>
+<li>新浪財經，華大九天 2025 年營收，2026 年 6 月 10 日，二手：<a href="https://finance.sina.com.cn/tech/discovery/2026-06-10/doc-iniavfsr5046912.shtml" rel="noopener" target="_blank">sina.com.cn</a></li>
+<li>界面新聞，華大九天終止收購芯和，2025 年 7 月 9 日，二手：<a href="https://m.jiemian.com/article/13014106.html" rel="noopener" target="_blank">jiemian.com</a></li>
+<li>36氪，中國 EDA 數位全流程，2026 年 3 月 27 日，二手：<a href="https://eu.36kr.com/en/p/3741032844410885" rel="noopener" target="_blank">36kr.com</a></li>
+<li>發現報告（機構未標名）摘要，數位後端國產化，2026 年 7 月 15 日，二手：<a href="https://www.fxbaogao.com/detail/5538497" rel="noopener" target="_blank">fxbaogao.com</a></li>
+<li>TrendForce，美國 EDA 管制對 Synopsys、Cadence 的影響，2025 年 6 月 2 日，二手：<a href="https://www.trendforce.com/news/2025/06/02/news-china-revenue-at-risk-as-u-s-curbs-slam-eda-giants-impact-on-synopsys-cadence-and-more/" rel="noopener" target="_blank">trendforce.com</a></li>
+<li>第一財經，美國撤銷 EDA 限制，2025 年 7 月 3 日，二手：<a href="https://www2.yicaiglobal.com/news/chinese-chipmakers-see-relief-as-us-lifts-eda-tool-curbs" rel="noopener" target="_blank">yicaiglobal.com</a></li>
+<li>TechNode，中國 EDA 限制的贏家與輸家，2025 年 7 月 2 日，二手：<a href="https://technode.com/2025/07/02/chinas-eda-tool-restrictions-winners-and-losers/" rel="noopener" target="_blank">technode.com</a></li>
+</ul>
+
+<h3>台積電與 OIP</h3>
+<ul class="muted">
+<li>台積電 EDA 聯盟頁面（夥伴名單截至 2026 年 9 月 23 日，認證表截至 10 月 1 日），一手：<a href="https://www.tsmc.com/english/dedicatedFoundry/oip/eda_alliance" rel="noopener" target="_blank">tsmc.com</a></li>
+<li>台積電 2025 年年報，2026 年出版，一手：<a href="https://investor.tsmc.com/sites/ir/annual-report/2025/2025%20TSMC%20Annual%20Report.E.pdf" rel="noopener" target="_blank">investor.tsmc.com</a></li>
+<li>台積電 20-F，2026 年 4 月 17 日，一手：<a href="https://investor.tsmc.com/sites/ir/sec-filings/2025_20F%20Report.pdf" rel="noopener" target="_blank">investor.tsmc.com</a></li>
+<li>台積電 2026 年第三季法說，2026 年 10 月 15 日，一手：<a href="https://investor.tsmc.com/english/quarterly-results/2026/q3" rel="noopener" target="_blank">investor.tsmc.com</a></li>
+<li>台積電雲端聯盟頁面，一手：<a href="https://www.tsmc.com/english/dedicatedFoundry/oip/cloud_alliance" rel="noopener" target="_blank">tsmc.com</a></li>
+<li>EE Times，Aveek Sarkar 署名文章（宣布 ADK），2026 年 9 月 24 日，一手（只取得摘要與短引文）：<a href="https://www.eetimes.com/inside-tsmcs-evolving-design-ecosystem-shaping-the-future-of-ai-with-ai/" rel="noopener" target="_blank">eetimes.com</a></li>
+<li>Siemens 新聞稿，OIP 論壇與 DRC 修正代理，2026 年 9 月 23 日，一手：<a href="https://news.siemens.com/en-us/siemens-tsmc-oip-ecosystem-forum-2026/" rel="noopener" target="_blank">news.siemens.com</a></li>
+<li>Futurum，台積電 OIP 論壇，2026 年 9 月 24 日，二手：<a href="https://futurumgroup.com/insights/tsmcs-oip-forum-turns-agentic-chip-design-demos-into-production-flows/" rel="noopener" target="_blank">futurumgroup.com</a></li>
+<li>Synopsys 與台積電 A16、N2P 認證，2025 年 4 月 23 日，一手：<a href="https://news.synopsys.com/2025-04-23-Synopsys-and-TSMC-Usher-In-Angstrom-Scale-Designs-with-Certified-EDA-Flows-on-Advanced-TSMC-A16-and-N2P-Processes" rel="noopener" target="_blank">news.synopsys.com</a></li>
+<li>SemiWiki，袁立本 OIP 2026 開場，2026 年 9 月 28 日，二手：<a href="https://semiwiki.com/semiconductor-manufacturers/tsmc/374143-tsmc-oip-ecosystem-forum-2026-opening-remarks/" rel="noopener" target="_blank">semiwiki.com</a></li>
+<li>SemiWiki，盧立中簡報，2026 年 9 月 25 日，二手：<a href="https://semiwiki.com/semiconductor-manufacturers/373986-designing-chips-for-the-ai-era-what-tsmcs-roadmap-means/" rel="noopener" target="_blank">semiwiki.com</a></li>
+<li>SemiWiki，ADK 介紹，2026 年 10 月 1 日，二手：<a href="https://semiwiki.com/semiconductor-manufacturers/tsmc/374098-tsmcs-ai-design-kit-bringing-agentic-ai-into-chip-design/" rel="noopener" target="_blank">semiwiki.com</a></li>
+<li>Counterpoint，ADK 取代面向人的 PDK 的讀法，2026 年 10 月，二手：<a href="https://counterpointresearch.com/en/insights/dollar-trillion-bottleneck-tsmc-oip-2026-ai-design-kit-packaging-innovations-3d-dram-timeline" rel="noopener" target="_blank">counterpointresearch.com</a></li>
+<li>Taipei Times，米玉傑台大演講，2026 年 9 月 16 日，二手（引述原話）：<a href="https://www.taipeitimes.com/News/biz/archives/2026/09/16/2003864323" rel="noopener" target="_blank">taipeitimes.com</a></li>
+<li>The Edge Malaysia（Bloomberg），米玉傑「三歲超人」，2026 年 9 月 15 日，二手（引述原話）：<a href="https://theedgemalaysia.com/node/818240" rel="noopener" target="_blank">theedgemalaysia.com</a></li>
+<li>科技新報，米玉傑談 AI 與 EDA，2026 年 9 月 21 日，二手：<a href="https://technews.tw/2026/09/21/ai-still-has-limitations-in-the-development-of-next-generation-advanced-manufacturing-processes/" rel="noopener" target="_blank">technews.tw</a></li>
+<li>Nvidia 新聞稿，魏哲家談晶圓廠 AI，2026 年 5 月 31 日，一手：<a href="https://nvidianews.nvidia.com/news/nvidia-and-tsmc-bring-ai-into-fabs-to-advance-semiconductor-design-and-manufacturing" rel="noopener" target="_blank">nvidianews.nvidia.com</a></li>
+<li>台積電 2024 年第三季法說（魏哲家「1% 生產力約 10 億美元」），2024 年 10 月 17 日，一手（LSEG 逐字稿）。</li>
+<li>iThome，台積電 IT Day 內部 LLM，2025 年 8 月 11 日，二手：<a href="https://www.ithome.com.tw/news/170501" rel="noopener" target="_blank">ithome.com.tw</a></li>
+</ul>
+
+<h3>機密部署</h3>
+<ul class="muted">
+<li>Google Cloud 部落格，Gemini 上 Google Distributed Cloud，2025 年 8 月，一手：<a href="https://cloud.google.com/blog/topics/hybrid-cloud/gemini-is-now-available-anywhere" rel="noopener" target="_blank">cloud.google.com</a></li>
+<li>Anthropic 支援文件，頂級模型的資料保留，2026 年，一手：<a href="https://support.claude.com/en/articles/15425996" rel="noopener" target="_blank">support.claude.com</a></li>
+<li>Anthropic 支援文件，零資料保留的過渡例外，2026 年 9 月 1 日狀態，一手：<a href="https://support.claude.com/en/articles/15425695" rel="noopener" target="_blank">support.claude.com</a></li>
+<li>OpenAI API 資料使用文件，頁面無日期，一手：<a href="https://developers.openai.com/api/docs/guides/your-data" rel="noopener" target="_blank">developers.openai.com</a></li>
+<li>TEE.fail 研究（實體攻擊可信執行環境），IEEE S&amp;P 2026，一手：<a href="https://tee.fail/" rel="noopener" target="_blank">tee.fail</a></li>
+<li>Epoch AI，開源與閉源能力差距，2026 年 5 月 29 日（資安類任務另見 2026 年 10 月 16 日），一手。</li>
+<li>Bloomberg（Macworld 轉述），Apple 年付約 10 億美元使用客製 Gemini，2025 年 11 月，二手。</li>
+<li>Los Alamos 國家實驗室，OpenAI 模型裝在 Venado 超級電腦，2025 年 1 月 30 日，一手。</li>
+<li>Let's Data Science，GPT-Synopsys 分潤計價，2026 年 10 月 5 日，二手。</li>
+<li>The Decoder，Mistral miqu 外洩，2024 年 2 月 1 日，二手。</li>
+<li>VentureBeat，Cirrascale 的 Gemini 單機，2026 年 4 月 22 日，二手。</li>
+</ul>
+
+<h3>介面 IP</h3>
+<ul class="muted">
+<li>SemiWiki（IPnest），2016 年介面 IP，2017 年 11 月 26 日，二手：<a href="https://semiwiki.com/semiconductor-services/ipnest/7153-worldwide-interface-ip-revenue-grew-by-13-5-in-2016-source-ipnest/" rel="noopener" target="_blank">semiwiki.com</a></li>
+<li>SemiWiki（IPnest），2021 年介面 IP，2022 年 7 月 10 日，二手：<a href="https://semiwiki.com/ip/315113-interface-ip-in-2021-1-3b-22-growth-and-3b-in-2026/" rel="noopener" target="_blank">semiwiki.com</a></li>
+<li>SemiWiki（IPnest），2024 年介面 IP，2025 年 7 月 10 日，二手：<a href="https://semiwiki.com/semiconductor-services/ipnest/357933-ai-booming-is-fueling-interface-ip-23-5-yoy-growth/" rel="noopener" target="_blank">semiwiki.com</a></li>
+<li>SemiWiki（IPnest），2025 年介面 IP，2026 年 7 月 9 日，二手：<a href="https://semiwiki.com/semiconductor-services/ipnest/370809-consolidation-and-competition-who-is-winning-the-4-5-billion-interface-ip-race/" rel="noopener" target="_blank">semiwiki.com</a></li>
+<li>SemiWiki（IPnest），2024 年設計 IP 市場，2025 年 4 月 14 日，二手：<a href="https://semiwiki.com/semiconductor-services/ipnest/354823-design-ip-market-increased-by-all-time-high-20-in-2024/" rel="noopener" target="_blank">semiwiki.com</a></li>
+<li>Synopsys 2026 財年第三季法說逐字稿（Motley Fool），2026 年 8 月 26 日，一手：<a href="https://www.fool.com/earnings/call-transcripts/2026/08/31/synopsys-snps-q3-2026-earnings-call-transcript/" rel="noopener" target="_blank">fool.com</a></li>
+<li>Cadence 2025 財年年報（10-K），一手：<a href="https://www.sec.gov/Archives/edgar/data/813672/000081367226000016/cdns-20251231.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>TrendForce，SerDes 兩大陣營，2026 年 3 月 13 日，二手：<a href="https://www.trendforce.com/news/2026/03/13/news-serdes-wars-heat-up-broadcom-marvell-mediatek-battle-for-ai-interconnect-supremacy/" rel="noopener" target="_blank">trendforce.com</a></li>
+<li>Business Wire，Qualcomm 完成收購 Alphawave，2025 年 12 月 18 日，一手：<a href="https://www.businesswire.com/news/home/20251218292351/en/Qualcomm-Completes-Acquisition-of-Alphawave-Semi" rel="noopener" target="_blank">businesswire.com</a></li>
+<li>世芯與 Synopsys 224G PHY 設計方法（聚合網站轉載），2026 年 9 月 23 日，二手：<a href="https://rallies.ai/news/alchip-teams-with-synopsys-on-224g-phy-based-design-for-ai-data-center-asic-bandwidth-constraints-96d1264d06df0644" rel="noopener" target="_blank">rallies.ai</a></li>
+</ul>
+
+<h3>光罩</h3>
+<ul class="muted">
+<li>Photronics 2026 財年第二季公告，2026 年 5 月 28 日，一手：<a href="https://www.sec.gov/Archives/edgar/data/0000810136/000114036126023057/ef20074970_ex99-1.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>Photronics 2026 財年第二季法說逐字稿（Motley Fool），2026 年 5 月 29 日，一手（經摘要）：<a href="https://fool.com/earnings/call-transcripts/2026/05/29/photronics-plab-q2-2026-earnings-transcript/" rel="noopener" target="_blank">fool.com</a></li>
+<li>Photronics 2026 財年第三季公告，2026 年 8 月 26 日，一手：<a href="https://www.sec.gov/Archives/edgar/data/0000810136/000081013626000006/plabQ32026EarningsEx99-1PR.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>Photronics 2025 財年年報（設備交期 12 個月以上），一手：<a href="https://www.sec.gov/Archives/edgar/data/810136/000153949726000752/n5545_x3-ars.pdf" rel="noopener" target="_blank">sec.gov</a></li>
+<li>Hoya FAQ（EUV 空白光罩只有日本公司製造），2026 年 4 月 1 日，一手：<a href="https://www.hoya.com/wp-content/uploads/2026/04/FY25-Q3-FAQ-en-1.pdf" rel="noopener" target="_blank">hoya.com</a></li>
+<li>Business Wire，Intel 出售 IMS 少數股權給台積電，2023 年 9 月，二手：<a href="https://www.businesswire.com/news/home/20230912608101/en/5516587/Intel-to-Sell-Minority-Stake-in-IMS-Nanofabrication-Business-to-TSMC" rel="noopener" target="_blank">businesswire.com</a></li>
+<li>SemiEngineering，eBeam Initiative 2019 年光罩廠調查，2020 年 1 月 22 日，二手：<a href="https://semiengineering.com/survey-2019-ebeam-initiative-mask-makers-survey-results/" rel="noopener" target="_blank">semiengineering.com</a></li>
+<li>Digital Today（SEMI 的 EUV 光罩占比、S&amp;S Tech 驗證時程），2026 年 10 月 26 日，二手：<a href="https://www.digitaltoday.co.kr/en/view/119148/asml-high-na-euv-in-sight-will-it-open-opportunities-for-korean-mask-makers" rel="noopener" target="_blank">digitaltoday.co.kr</a></li>
+<li>JapanTalkback，商業光罩廠市占，2026 年 7 月 30 日更新，二手：<a href="https://kantenna.com/topic/dnp-rapidus-euv-photomask-investment-2nm-semiconductor" rel="noopener" target="_blank">kantenna.com</a></li>
+<li>The Next Web，ASML 與台積電 High-NA 光罩改 12 吋，2026 年 9 月 8 日，二手：<a href="https://thenextweb.com/news/asml-tsmc-12-inch-masks-high-na-euv" rel="noopener" target="_blank">thenextweb.com</a></li>
+</ul>
+
+<h3>OEM 與 ODM</h3>
+<ul class="muted">
+<li>Xataka On，手機機型數（GSMArena 資料），2024 年 5 月 26 日，二手：<a href="https://www.xatakaon.com/smartphones/its-not-your-imagination-there-are-fewer-smartphones-launched-than-ever-before-we-have-the-data-to-prove-it" rel="noopener" target="_blank">xatakaon.com</a></li>
+<li>Counterpoint，外包手機出貨占 44%，2025 年 4 月 17 日，二手：<a href="https://counterpointresearch.com/en/insights/post-insight-research-notes-blogs-outsourced-portion-of-total-smartphone-shipments-reached-44-in-2024" rel="noopener" target="_blank">counterpointresearch.com</a></li>
+<li>Counterpoint，ODM 前三家占比，2024 年 4 月 10 日，二手：<a href="https://www.counterpointresearch.com/insight/idh-odm-contribution-to-overall-smartphone-shipments-climbs-to-all-time-high-in-2023" rel="noopener" target="_blank">counterpointresearch.com</a></li>
+<li>小米 2019 年年報，一手：<a href="https://www1.hkexnews.hk/listedco/listconews/sehk/2020/0426/2020042600019.pdf" rel="noopener" target="_blank">hkexnews.hk</a></li>
+<li>小米 2025 年業績公告，2026 年 3 月 24 日，一手：<a href="https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0324/2026032400608.pdf" rel="noopener" target="_blank">hkexnews.hk</a></li>
+<li>Lenovo 2025／26 財年第一季簡報，2025 年 8 月 14 日，一手：<a href="https://investor.lenovo.com/en/financial/results/presentation_2526_q1.pdf" rel="noopener" target="_blank">investor.lenovo.com</a></li>
+<li>HP 研發費用（SEC XBRL），一手：<a href="https://data.sec.gov/api/xbrl/companyfacts/CIK0000047217.json" rel="noopener" target="_blank">data.sec.gov</a></li>
+<li>Dell 研發費用（SEC XBRL），一手：<a href="https://data.sec.gov/api/xbrl/companyfacts/CIK0001571996.json" rel="noopener" target="_blank">data.sec.gov</a></li>
+<li>中證網，華勤研發人員，2025 年 9 月 16 日，二手：<a href="https://www.cs.com.cn/ssgs/gsxw/202509/t20250916_6513064.html" rel="noopener" target="_blank">cs.com.cn</a></li>
+<li>Slkor 宋仕強文章，聯發科整套方案與山寨機歷史，2026 年 10 月 24 日頁面，二手（單一來源）：<a href="https://www.kinghelm.net/famousDetail/16801" rel="noopener" target="_blank">kinghelm.net</a></li>
+<li>Engadget，Qualcomm QRD 60 天上市，2012 年 12 月 5 日，二手：<a href="https://www.engadget.com/2012-12-05-qualcomm-coo-steve-mollenkopf.html" rel="noopener" target="_blank">engadget.com</a></li>
+<li>緯穎 2024 年永續報告書，一手：<a href="https://www.wiwynn.com/hubfs/ESG/2025/files/Wiwynn_Sustainability_Report_ZH.pdf" rel="noopener" target="_blank">wiwynn.com</a></li>
+<li>工商時報，廣達伺服器研發人員目標 3,000 人，2025 年 1 月 9 日，二手：<a href="https://www.ctee.com.tw/news/20250109700037-430502" rel="noopener" target="_blank">ctee.com.tw</a></li>
+</ul>
+
+<h3>Intel 與 IDM 歷史</h3>
+<ul class="muted">
+<li>Gelsinger、Kirkpatrick、Kolodny、Singer，Intel CAD 史，2009 年後，一手：<a href="https://kolodny.net.technion.ac.il/files/2016/07/IntelCADPaperFinal2.pdf" rel="noopener" target="_blank">technion.ac.il</a></li>
+<li>Intel Technology Journal 1999 年第一季（Nike 工具套件），一手：<a href="https://www.intel.com/content/dam/www/public/us/en/documents/research/1999-vol03-iss-1-intel-technology-journal.pdf" rel="noopener" target="_blank">intel.com</a></li>
+<li>EE Times（Design &amp; Reuse 轉載），Gadi Singer 談內外部工具，2005 年 4 月 25 日，二手：<a href="https://us.design-reuse.com/news/10210/oems-eda-time-catch-up.html" rel="noopener" target="_blank">design-reuse.com</a></li>
+<li>EE Times（Design &amp; Reuse 轉載），Gary Smith 談內部工具比例，2005 年 4 月 5 日，二手：<a href="https://us.design-reuse.com/news/10050/eda-development-going-house-analyst-says.html" rel="noopener" target="_blank">design-reuse.com</a></li>
+<li>Synopsys 新聞稿，Intel 指定 Synopsys 為主要 EDA 供應商，2007 年 8 月 6 日，一手：<a href="https://news.synopsys.com/home?item=122371" rel="noopener" target="_blank">news.synopsys.com</a></li>
+<li>EE Times，主要供應商協議，2009 年 4 月 7 日，二手：<a href="https://www.eetimes.com/are-primary-vendor-deals-bad-for-eda/" rel="noopener" target="_blank">eetimes.com</a></li>
+<li>EE Times，Freescale 指定 Cadence 為主要供應商，2005 年 11 月 14 日，二手：<a href="https://www.eetimes.com/?p=1157587" rel="noopener" target="_blank">eetimes.com</a></li>
+<li>Intel 2025 年年報（10-K），2026 年 1 月 23 日，一手：<a href="https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm" rel="noopener" target="_blank">sec.gov</a></li>
+<li>EDN，Intel 有內部 CAD 團隊，2022 年 4 月 28 日，二手：<a href="https://www.edn.com/intels-foundry-foray-and-its-influence-on-the-eda-ip-industries/" rel="noopener" target="_blank">edn.com</a></li>
+<li>SemiWiki 論壇，Daniel Nenni 的「2006 年」說法，2024 年 10 月 22 日，二手：<a href="https://semiwiki.com/forum/goto/post?id=76373" rel="noopener" target="_blank">semiwiki.com</a></li>
+<li>SemiAnalysis，EDA Market Primer（Intel 占 Synopsys 營收比重），2026 年 5 月 21 日，二手（付費牆）：<a href="https://newsletter.semianalysis.com/p/eda-market-primer" rel="noopener" target="_blank">newsletter.semianalysis.com</a></li>
+</ul>
+
+<footer class="page-note">本頁是研究推論，不構成投資建議。寫作時資料截止 2026-10-26。</footer>
+<footer class="imq-foot">
+  <div>&copy; 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
+</div>
+</body>
+</html>
