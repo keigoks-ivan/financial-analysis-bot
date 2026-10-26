@@ -129,8 +129,19 @@ def pick_src(v7: Path, explicit: str | None) -> tuple[Path, str]:
     raise SystemExit(f"找不到 CAN SLIM 篩選輸出（{v7}/data/canslim_screen_*/screen_all[_v2].csv）")
 
 
-def load_screen(src: Path, version: str) -> pd.DataFrame:
-    f = src / ("screen_all_v2.csv" if version == "v2" else "screen_all.csv")
+def pick_forward(v7: Path) -> tuple[Path, Path] | None:
+    """v7 每週往後追蹤存下的最新一份 (canslim_all.csv, canslim_market.csv)。
+    欄位與 screen_all_v2.csv 相同（多一欄 asof），週六 10:30 的 launchd 先重算再呼叫本腳本，
+    所以名單與大盤日期都是當週的；canslim_screen_* 資料夾是 2026-10-17 一次性的，不會自己更新。"""
+    for f in sorted(glob.glob(str(v7 / "data" / "forward_tracking" / "*_canslim_all.csv")))[::-1]:
+        m = Path(f.replace("_canslim_all.csv", "_canslim_market.csv"))
+        if m.exists():
+            return Path(f), m
+    return None
+
+
+def load_screen(src: Path, version: str, csv: Path | None = None) -> pd.DataFrame:
+    f = csv or src / ("screen_all_v2.csv" if version == "v2" else "screen_all.csv")
     d = pd.read_csv(f).set_index("ticker")
     for c in ("q_ok", "c_eps_ok", "c_rev_ok", "c_ok", "a_ok", "bo5"):
         d[c] = d[c].eq(True)
@@ -272,8 +283,8 @@ def load_profiles(tickers: list[str]) -> dict:
 
 
 # --------------------------------------------------------------------------- 大盤
-def market_block(src: Path) -> dict:
-    csv = pd.read_csv(src / "market_state.csv")
+def market_block(src: Path, csv_path: Path | None = None) -> dict:
+    csv = pd.read_csv(csv_path or src / "market_state.csv")
     csv["date"] = pd.to_datetime(csv["date"])
     block = dict(chart_ok=False, rows=[], series={}, notes=[])
     series, rows = {}, []
@@ -283,12 +294,13 @@ def market_block(src: Path) -> dict:
             h = yf.Ticker(t).history(start="2025-01-01", auto_adjust=False)
             h.index = pd.to_datetime(h.index).tz_localize(None)
             h = h[["Close", "Volume"]].dropna()
+            c_row = csv[csv["ticker"] == t].iloc[0]
+            h = h[h.index <= c_row["date"]]   # 週六排程之外手動重跑時，不讓比 csv 更新的收盤造成對不上
             c, v = h["Close"], h["Volume"]
             ma50, ma200 = c.rolling(50).mean(), c.rolling(200).mean()
             dist = ((c.pct_change() <= -0.002) & (v > v.shift(1)))
             d25 = dist.iloc[-25:]
             dd = list(d25.index[d25.values])
-            c_row = csv[csv["ticker"] == t].iloc[0]
             if c.index[-1] != c_row["date"] or abs(c.iloc[-1] / c_row["close"] - 1) > 1e-4:
                 raise ValueError(f"{t} 重抓的最新收盤與 market_state.csv 對不上（{c.index[-1].date()} {c.iloc[-1]:.2f} 對 {c_row['date'].date()} {c_row['close']:.2f}）")
             tail = c.iloc[-CHART_BARS:]
@@ -359,7 +371,10 @@ def main():
     v7 = Path(a.v7).expanduser()
     src, version = pick_src(v7, a.src)
     print(f"來源 {src.name}（{version}）")
-    d = load_screen(src, version)
+    ft = None if a.src else pick_forward(v7)
+    if ft:
+        print(f"名單與大盤改用往後追蹤快照 {ft[0].name}")
+    d = load_screen(src, version, ft[0] if ft else None)
     a_info = load_a_eps(src)
 
     # ---- 漏斗
@@ -417,7 +432,7 @@ def main():
                      int(x["bo5"])])
 
     # ---- 大盤
-    mk = market_block(src)
+    mk = market_block(src, ft[1] if ft else None)
 
     # ---- 日期
     price_asof = px_last or mk["rows"][0]["date"] if mk["rows"] else None
