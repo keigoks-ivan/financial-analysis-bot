@@ -14,7 +14,7 @@
   - 這兩個欄位完全不進 `compute_funnel_v2()` 的排序計算，純資訊。
 - `compute_funnel_v2()` 內：`funnel_v2_profile`／`funnel_v2_tiers` 現在都是**四個元素**（quality/engine/gap/price 順序），`funnel_v2_median` 是這四層百分位的中位數（無需再排除護城河，因為護城河已經不在陣列裡了）。`funnel_v2_note` 資料不足文案改成 `"資料不足（N/4 層）"`。硬否決（`quality_veto_level=="拒絕"`／`decline_signal_light=="⛔"`／`veto_all_downgrade`）邏輯不變。
 - `compute_funnel_v2()` 回傳的 summary／`layer_config` 已無任何 `moat_*` 鍵（`moat_judgment_count`／`moat_missing_count`／`moat_tier_cutoffs`／`moat_judgment_enabled` 全刪，不是留空）。
-- `build()` 內 Step 4.8 的 console print 已同步簡化（拿掉舊的「moat 判斷: judgment=...」那行）。
+- `build()` 內 Step 4.8 的 console print 已同步簡化（拿掉舊的「moat 判斷：judgment=...」那行）。
 - `python3 -m py_compile scripts/build_dd_screener.py` 通過。
 
 ## 2. 頁面／schema.md／ledger／測試現況
