@@ -1,7 +1,7 @@
 {
  "schema": "market-state-v1",
  "as_of": "2026-10-26",
- "generated_at": "2026-10-26T00:45:55Z",
+ "generated_at": "2026-10-26T07:39:52Z",
  "components": {
   "monitor": {
    "as_of": "2026-10-23",
@@ -36,11 +36,11 @@
    "stale": false
   },
   "ledger": {
-   "as_of": "2026-10-19",
-   "stale": true
+   "as_of": "2026-10-26",
+   "stale": false
   },
   "scorecard": {
-   "as_of": "2026-10-16",
+   "as_of": "2026-10-23",
    "stale": false
   },
   "exposure_track": {
@@ -2178,16 +2178,6 @@
    "resolve_by": "2027-01-17"
   },
   {
-   "id": "fc_20261019_kw_02",
-   "source": "macro-falsifier",
-   "template": "macro_threshold",
-   "claim": "2027-01-17 前（90 曆日內）：核心 PCE 年增 >= 3.5% YoY",
-   "label": "2027-01-17 前（90 曆日內）：核心 ",
-   "p": 0.13,
-   "p_clim": 0.0633,
-   "resolve_by": "2027-01-17"
-  },
-  {
    "id": "fc_20261019_kw_03",
    "source": "macro-falsifier",
    "template": "macro_threshold",
@@ -2196,6 +2186,36 @@
    "p": 0.76,
    "p_clim": 0.7756,
    "resolve_by": "2027-01-17"
+  },
+  {
+   "id": "fc_20261026_cot_01",
+   "source": "cot-model",
+   "template": "cot_reversal_20d",
+   "claim": "2026-11-25 前（30 曆日內，約 20 個交易日）：Nasdaq-100 E-mini 部位極端偏多（long，可能過度樂觀）（COT 3 年滾動分位 96.8，2026-10-20 當週）後，QQQ 收盤下跌、低於今收 704.4",
+   "label": "QQQ 一個月後更低（COT 極端反轉）",
+   "p": 0.25,
+   "p_clim": 0.356,
+   "resolve_by": "2026-11-25"
+  },
+  {
+   "id": "fc_20261026_kw_01",
+   "source": "macro-falsifier",
+   "template": "macro_threshold",
+   "claim": "2027-01-24 前（90 曆日內）：核心 PCE 年增 >= 3.5% YoY",
+   "label": "2027-01-24 前（90 曆日內）：核心 ",
+   "p": 0.13,
+   "p_clim": 0.0633,
+   "resolve_by": "2027-01-24"
+  },
+  {
+   "id": "fc_20261026_cal_01",
+   "source": "calendar",
+   "template": "tom_spy_up_4d",
+   "claim": "月末四日窗：2026-11-04（次月第三個交易日）SPY 收盤高於 2026-10-29 收盤",
+   "label": "SPY 月末窗更高（日曆效應）",
+   "p": 0.5771,
+   "p_clim": 0.5832,
+   "resolve_by": "2026-11-04"
   }
  ],
  "council_summary": {
@@ -2412,7 +2432,7 @@
    "threshold": "3.5",
    "dist_pct": 16.3,
    "p": 0.13,
-   "resolve_by": "2027-01-17",
+   "resolve_by": "2027-01-24",
    "link": "/macro/MACRO_USEconomy_20260708.html",
    "as_of": "2026-08-01",
    "source_id": "internals:core_pce_yoy",
@@ -2609,13 +2629,13 @@
   "fresh": false,
   "threshold": 10,
   "lists": {
-   "sop-funnel": 30,
-   "grp-seat": 32,
+   "sop-funnel": 31,
+   "grp-seat": 43,
    "picks-baofa": 11,
-   "tenbagger": 8,
-   "own-board": 64,
+   "tenbagger": 28,
+   "own-board": 72,
    "picks-late": 20,
-   "mech-nodd": 6
+   "mech-nodd": 7
   }
  },
  "exposure_rule": {
@@ -2691,10 +2711,10 @@
   "modules": {
    "cta": {
     "cot_category_used": "non_commercial",
-    "hit_rate": 0.333,
-    "hits": 2,
+    "hit_rate": 0.375,
+    "hits": 3,
     "kill_condition": "SPRT（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20，樣本＝frozen_forecast 與 CFTC COT 週度部位變化方向逐週命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 → 模組降級為 gaps 或刪除（2026-09-02 由固定 n 二項檢定改列 SPRT，處理反覆偷看，設計稿 §3.3）",
-    "n_eff": 6,
+    "n_eff": 8,
     "n_required": 20,
     "recent_samples": [
      {
@@ -2750,10 +2770,28 @@
       "n_crossings": 2,
       "pred_dir": 1,
       "report_date": "2026-10-06"
+     },
+     {
+      "actual_dir": 1,
+      "cot_net_pct_oi_delta": 1.26,
+      "hit": false,
+      "market": "NDX",
+      "n_crossings": 1,
+      "pred_dir": -1,
+      "report_date": "2026-10-20"
+     },
+     {
+      "actual_dir": 1,
+      "cot_net_pct_oi_delta": 4.74,
+      "hit": true,
+      "market": "RTY",
+      "n_crossings": 3,
+      "pred_dir": 1,
+      "report_date": "2026-10-20"
      }
     ],
     "self_consistency": {
-     "consistent": 9,
+     "consistent": 11,
      "mismatches": [
       {
        "actual": "+3/3",
@@ -2774,8 +2812,8 @@
        "predicted": "+1/3"
       }
      ],
-     "n": 12,
-     "rate": 0.75
+     "n": 14,
+     "rate": 0.786
     },
     "sprt": {
      "A": 2.8904,
@@ -2784,14 +2822,14 @@
      "beta": 0.1,
      "decided_at": null,
      "decided_n": null,
-     "llr": -0.90196,
-     "n_used": 6,
+     "llr": -0.99627,
+     "n_used": 8,
      "p0": 0.5,
      "p1": 0.65,
      "state": "continue"
     },
     "status": "yellow",
-    "status_label": "證據累積中：有效樣本 6／需先滿 20 筆才開始判定"
+    "status_label": "證據累積中：有效樣本 8／需先滿 20 筆才開始判定"
    },
    "month_end": {
     "hit_rate": null,
@@ -3176,9 +3214,9 @@
     "status_label": "🟡 證據累積中（n_eff=1／20，LLR=0.26236）"
    },
    "dd-verdict": {
-    "bss": -0.0121,
+    "bss": -0.0149,
     "bss_ci90": [
-     -0.0206,
+     -0.0234,
      0.0044
     ],
     "calibration_buckets": [
@@ -3209,8 +3247,8 @@
      {
       "avg_p": 0.484,
       "bucket": "[40-50%]",
-      "freq": 0.388,
-      "n": 67
+      "freq": 0.387,
+      "n": 75
      },
      {
       "avg_p": null,
@@ -3221,8 +3259,8 @@
      {
       "avg_p": 0.607,
       "bucket": "[60-70%]",
-      "freq": 0.353,
-      "n": 34
+      "freq": 0.342,
+      "n": 38
      },
      {
       "avg_p": null,
@@ -3243,20 +3281,20 @@
       "n": 0
      }
     ],
-    "mean_brier": 0.2605,
-    "mean_brier_clim": 0.2574,
-    "n_eff": 91,
-    "n_resolved": 101,
-    "n_with_clim": 101,
+    "mean_brier": 0.2615,
+    "mean_brier_clim": 0.2577,
+    "n_eff": 101,
+    "n_resolved": 113,
+    "n_with_clim": 113,
     "sprt": {
      "A": 2.8904,
      "B": -2.2513,
      "alpha": 0.05,
      "beta": 0.1,
-     "decided_at": "2026-10-19",
-     "decided_n": 101,
-     "llr": -3.21508,
-     "n_used": 101,
+     "decided_at": "2026-10-26",
+     "decided_n": 113,
+     "llr": -3.78094,
+     "n_used": 113,
      "p0": 0.5,
      "p1": 0.65,
      "state": "accept_h0"
@@ -3609,7 +3647,7 @@
      "B": -2.2513,
      "alpha": 0.05,
      "beta": 0.1,
-     "decided_at": "2026-10-19",
+     "decided_at": "2026-10-26",
      "decided_n": 20,
      "llr": -4.65728,
      "n_used": 20,
@@ -4244,9 +4282,9 @@
     "status_label": "🟡 證據累積中（n_eff=1／20，LLR=0.52472）"
    },
    "sentinel-noise": {
-    "bss": -0.0905,
+    "bss": -0.1018,
     "bss_ci90": [
-     -0.1306,
+     -0.1403,
      -0.0154
     ],
     "calibration_buckets": [
@@ -4263,34 +4301,34 @@
       "n": 3
      },
      {
-      "avg_p": 0.24,
+      "avg_p": 0.243,
       "bucket": "[20-30%]",
-      "freq": 0.571,
-      "n": 7
+      "freq": 0.556,
+      "n": 9
      },
      {
-      "avg_p": 0.351,
+      "avg_p": 0.35,
       "bucket": "[30-40%]",
-      "freq": 0.438,
-      "n": 16
+      "freq": 0.471,
+      "n": 17
      },
      {
       "avg_p": 0.451,
       "bucket": "[40-50%]",
-      "freq": 0.375,
-      "n": 40
+      "freq": 0.349,
+      "n": 43
      },
      {
       "avg_p": 0.552,
       "bucket": "[50-60%]",
-      "freq": 0.375,
-      "n": 32
+      "freq": 0.371,
+      "n": 35
      },
      {
-      "avg_p": 0.647,
+      "avg_p": 0.648,
       "bucket": "[60-70%]",
-      "freq": 0.5,
-      "n": 28
+      "freq": 0.484,
+      "n": 31
      },
      {
       "avg_p": 0.755,
@@ -4299,10 +4337,10 @@
       "n": 15
      },
      {
-      "avg_p": 0.829,
+      "avg_p": 0.827,
       "bucket": "[80-90%]",
-      "freq": 0.556,
-      "n": 9
+      "freq": 0.5,
+      "n": 10
      },
      {
       "avg_p": 0.94,
@@ -4311,20 +4349,20 @@
       "n": 11
      }
     ],
-    "mean_brier": 0.2507,
-    "mean_brier_clim": 0.2299,
-    "n_eff": 148,
-    "n_resolved": 164,
-    "n_with_clim": 164,
+    "mean_brier": 0.2558,
+    "mean_brier_clim": 0.2322,
+    "n_eff": 159,
+    "n_resolved": 177,
+    "n_with_clim": 177,
     "sprt": {
      "A": 2.8904,
      "B": -2.2513,
      "alpha": 0.05,
      "beta": 0.1,
-     "decided_at": "2026-10-19",
-     "decided_n": 164,
-     "llr": -3.40021,
-     "n_used": 164,
+     "decided_at": "2026-10-26",
+     "decided_n": 177,
+     "llr": -3.70371,
+     "n_used": 177,
      "p0": 0.5,
      "p1": 0.65,
      "state": "accept_h0"
@@ -4333,7 +4371,7 @@
     "status_label": "🔴 已證實不優於基準，等校準輪處決"
    },
    "sop-funnel": {
-    "bss": -0.311,
+    "bss": -0.329,
     "bss_ci90": [
      null,
      null
@@ -4378,8 +4416,8 @@
      {
       "avg_p": 0.66,
       "bucket": "[60-70%]",
-      "freq": 0.286,
-      "n": 14
+      "freq": 0.267,
+      "n": 15
      },
      {
       "avg_p": null,
@@ -4400,11 +4438,11 @@
       "n": 0
      }
     ],
-    "mean_brier": 0.3439,
-    "mean_brier_clim": 0.2623,
-    "n_eff": 14,
-    "n_resolved": 14,
-    "n_with_clim": 14,
+    "mean_brier": 0.35,
+    "mean_brier_clim": 0.2633,
+    "n_eff": 15,
+    "n_resolved": 15,
+    "n_with_clim": 15,
     "sprt": {
      "A": 2.8904,
      "B": -2.2513,
@@ -4412,14 +4450,14 @@
      "beta": 0.1,
      "decided_at": null,
      "decided_n": null,
-     "llr": -2.51726,
-     "n_used": 14,
+     "llr": -2.87393,
+     "n_used": 15,
      "p0": 0.5,
      "p1": 0.65,
      "state": "continue"
     },
     "status": "yellow",
-    "status_label": "🟡 證據累積中（n_eff=14／20，LLR=-2.51726）"
+    "status_label": "🟡 證據累積中（n_eff=15／20，LLR=-2.87393）"
    },
    "tenbagger": {
     "bss": null,
@@ -4690,7 +4728,7 @@
    }
   },
   "exposure_rule": {
-   "as_of": "2026-10-15",
+   "as_of": "2026-10-22",
    "gates": {
     "core": "open",
     "satellite_cyclical": "closed",
@@ -4725,7 +4763,7 @@
   },
   "kelly_rule": {
    "E": 1.0,
-   "as_of": "2026-10-15",
+   "as_of": "2026-10-22",
    "edge": 0.0219,
    "inception_date": "2026-09-07",
    "kill_condition": "SPRT（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20，樣本＝逐月「當月 paper 報酬 − SPY B&H 報酬 > 0」命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 → 規則撤下；期間不調參；paper only 永不連實倉（設計稿 notes/site-internal/root/_forecast_p2_design_20260902.md §4）。",
@@ -4911,9 +4949,9 @@
   },
   {
    "pipeline": "forecast ledger 預測帳簿",
-   "as_of": "2026-10-19",
+   "as_of": "2026-10-26",
    "cadence": "日更",
-   "status": "stale"
+   "status": "ok"
   },
   {
    "pipeline": "regime 大類資產環境",
