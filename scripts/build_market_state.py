@@ -67,6 +67,10 @@ DEFAULT_PATHS = {
     "exposure_track": os.path.join(DOCS, "market", "data", "exposure_track.json"),
     "kelly_track": os.path.join(DOCS, "market", "data", "kelly_track.json"),
     "scorecard": os.path.join(DOCS, "flowmap", "data", "scorecard.json"),
+    # 2026-10-27：home_card 用（選填，缺檔不記 gap，對應區塊記為 None／略過）
+    "home_pulse": os.path.join(DOCS, "home", "pulse.json"),
+    "status_snapshot": os.path.join(DOCS, "intel", "data", "status_snapshot.json"),
+    "risk_gauge": os.path.join(DOCS, "cache", "risk_gauge.json"),
     "rv_base_rates": os.path.join(DATA, "rv_base_rates.json"),
     "trend_track_prices": os.path.join(DATA, "trend_track_prices.json"),
     "tsmom_base_rates": os.path.join(DATA, "tsmom_base_rates.json"),
@@ -2016,6 +2020,387 @@ def read_headline_fields(read_data, today):
     return headline, read_as_of
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# home_card（2026-10-27）：首頁、/market/、email 三處共用的卡片單一來源
+# 只做「挑選與改寫成白話」，數字全部取自 evidence.quotes／monitor／pulse／flows，不自己算新指標
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ref → (白話名稱, 一句白話解釋或 "")。沒列在這裡的 ref，退回 read.json refs[].why，再退回 quote 的 label。
+REF_LABELS = {
+    # 股市
+    "monitor:sp500": ("標普 500 指數", ""), "monitor:ndx": ("那斯達克 100 指數", ""),
+    "monitor:djia": ("道瓊工業指數", ""), "monitor:rut": ("羅素 2000 小型股指數", ""),
+    "monitor:sox": ("費城半導體指數", ""), "monitor:twii": ("台灣加權指數", ""),
+    "monitor:n225": ("日經 225 指數", ""), "monitor:kospi": ("韓國 KOSPI 指數", ""),
+    "monitor:hsi": ("香港恆生指數", ""), "monitor:dax": ("德國 DAX 指數", ""),
+    "monitor:stoxx": ("歐洲 STOXX 50 指數", ""), "monitor:ftse": ("英國 FTSE 100 指數", ""),
+    "monitor:vt": ("全球股票 ETF", ""), "monitor:eem": ("新興市場股票 ETF", ""),
+    "monitor:xlk": ("科技股 ETF", ""), "monitor:xlf": ("金融股 ETF", ""), "monitor:xle": ("能源股 ETF", ""),
+    "monitor:xlv": ("醫療股 ETF", ""), "monitor:xli": ("工業股 ETF", ""),
+    "monitor:xly": ("非必需消費股 ETF", ""), "monitor:xlp": ("必需消費股 ETF", ""),
+    "monitor:xlu": ("公用事業股 ETF", ""), "monitor:xlb": ("原物料股 ETF", ""),
+    "monitor:xlre": ("房地產股 ETF", ""), "monitor:xlc": ("通訊股 ETF", ""), "monitor:xbi": ("生技股 ETF", ""),
+    "monitor:mtum": ("動能股 ETF", ""), "monitor:fngs": ("大型科技股 ETF", ""),
+    "monitor:arkk": ("高風險成長股 ETF", ""),
+    "monitor:rsp_spy": ("標普 500 等權重相對市值加權", "比值越高，代表漲勢越分散到小一點的成分股"),
+    "monitor:iwm_spy": ("小型股相對標普 500", ""), "monitor:vtv_vug": ("價值股相對成長股", ""),
+    "monitor:sox_ndx": ("半導體相對那斯達克", ""), "monitor:djt_dji": ("運輸股相對道瓊工業", ""),
+    "monitor:kre_xlf": ("區域銀行相對金融股", ""), "monitor:itb_spy": ("住宅營建股相對標普 500", ""),
+    "monitor:xly_xlp": ("非必需消費相對必需消費", ""), "monitor:sphb_splv": ("高波動股相對低波動股", ""),
+    # 利率與通膨
+    "monitor:dgs3mo": ("美國 3 個月公債殖利率", ""), "monitor:dgs2": ("美國 2 年期公債殖利率", ""),
+    "monitor:dgs5": ("美國 5 年期公債殖利率", ""), "monitor:dgs10": ("美國 10 年期公債殖利率", ""),
+    "monitor:dgs30": ("美國 30 年期公債殖利率", ""),
+    "monitor:t10y2y": ("10 年期減 2 年期公債殖利率", ""), "monitor:t10y3m": ("10 年期減 3 個月公債殖利率", ""),
+    "monitor:real10y": ("10 年期實質利率", "公債利率扣掉通膨預期後的利率"),
+    "monitor:bei5y": ("5 年期通膨預期", ""), "monitor:bei5y5y": ("5 年後起算的 5 年通膨預期", ""),
+    "monitor:tp10y": ("10 年期期限溢價", "投資人持有長天期公債額外要求的補償"),
+    "monitor:tlt": ("長天期公債 ETF", ""),
+    # 波動
+    "monitor:vix": ("VIX 恐慌指數", "市場預期的未來 30 天股市波動"), "monitor:vix9d": ("9 日 VIX", ""),
+    "monitor:vvix": ("VVIX（VIX 的波動）", ""), "monitor:skew": ("SKEW 尾端風險指數", ""),
+    "monitor:move": ("MOVE 債市波動指數", "市場預期的公債價格波動"), "monitor:vix_ts": ("短天期對 30 天 VIX 比值", ""),
+    # 信用
+    "monitor:hyg": ("高收益債 ETF", ""), "monitor:lqd": ("投資級債 ETF", ""),
+    "monitor:bkln": ("槓桿貸款 ETF", ""), "monitor:hyg_lqd": ("高收益債相對投資級債", ""),
+    "monitor:emb": ("新興市場美元債 ETF", ""),
+    "monitor:hy_oas": ("高收益債利差", "高風險公司債比公債多付的利息"),
+    "monitor:ig_oas": ("投資級債利差", "高評級公司債比公債多付的利息"),
+    "monitor:ccc_oas": ("最低評級債利差", "最低評級公司債比公債多付的利息"),
+    # 匯率、商品、加密
+    "monitor:dxy": ("美元指數", ""), "monitor:usdjpy": ("美元兌日圓", ""), "monitor:usdtwd": ("美元兌新台幣", ""),
+    "monitor:eurusd": ("歐元兌美元", ""), "monitor:gbpusd": ("英鎊兌美元", ""), "monitor:usdcny": ("美元兌人民幣", ""),
+    "monitor:usdkrw": ("美元兌韓元", ""), "monitor:audusd": ("澳幣匯率", ""),
+    "monitor:wti": ("WTI 原油", ""), "monitor:brent": ("布蘭特原油", ""), "monitor:natgas": ("天然氣", ""),
+    "monitor:gold": ("黃金", ""), "monitor:silver": ("白銀", ""), "monitor:copper": ("銅", ""),
+    "monitor:alum": ("鋁", ""), "monitor:platinum": ("鉑金", ""), "monitor:palladium": ("鈀金", ""),
+    "monitor:wheat": ("小麥", ""), "monitor:corn": ("玉米", ""), "monitor:soybean": ("黃豆", ""),
+    "monitor:copper_gold": ("銅金比", "銅價除以金價，景氣好時偏高"), "monitor:gold_silver": ("金銀比", ""),
+    "monitor:btc": ("比特幣", ""), "monitor:eth": ("以太幣", ""),
+    # 流動性
+    "monitor:rrp": ("隔夜逆回購餘額", ""), "monitor:tga": ("美國財政部在聯準會的存款", ""),
+    "monitor:reserves": ("銀行準備金", ""), "monitor:nfci": ("金融條件指數", "數字越高代表金融環境越緊"),
+    "monitor:sofr_iorb": ("隔夜融資利率減準備金利率", "數字越高代表銀行間資金越緊"),
+    "monitor:stlfsi": ("聖路易聯儲金融壓力指數", ""), "monitor:walcl": ("聯準會資產負債表", ""),
+    "monitor:claims": ("每週初領失業救濟人數", ""),
+    # 站內壓力分數
+    "stress:s": ("跨資產壓力分數", ""), "stress:int": ("市場內部壓力（長期）", ""),
+    "stress:int_s": ("市場內部壓力（短期）", ""), "stress:b.vol": ("波動壓力分數", ""),
+    "stress:b.credit": ("信用壓力分數", ""), "stress:b.liq": ("流動性壓力分數", ""),
+    "stress:b.app": ("風險偏好壓力分數", ""), "stress:b.rates": ("利率壓力分數", ""),
+    # 市場內部
+    "internals:brd_above200": ("站上 200 日線的股票占比", ""), "internals:brd_above50": ("站上 50 日線的股票占比", ""),
+    "internals:brd_adv_dec": ("上漲家數占比", ""), "internals:brd_new_hi": ("接近 52 週高點的股票占比", ""),
+    "internals:brd_new_lo": ("接近 52 週低點的股票占比", ""), "internals:brd_rsi_hot": ("短線過熱的股票占比", ""),
+    "internals:brd_rsi_cold": ("短線超賣的股票占比", ""),
+    "internals:brd_sec_above50": ("站上 50 日線的產業 ETF 占比", ""),
+    "internals:brd_glb_above200": ("站上 200 日線的全球指數占比", ""),
+    "internals:qqew_qqq": ("那斯達克等權重相對市值加權", ""),
+    "internals:spy_dvol_z": ("SPY 成交金額", ""), "internals:qqq_dvol_z": ("QQQ 成交金額", ""),
+    "internals:pc_total": ("選擇權賣買比（全部）", ""), "internals:pc_index": ("選擇權賣買比（指數）", ""),
+    "internals:pc_equity": ("選擇權賣買比（個股）", ""), "internals:pc_vix": ("選擇權賣買比（VIX）", ""),
+    "internals:spx_opt_vol": ("標普 500 選擇權成交量", ""),
+    "internals:vix1d": ("1 日 VIX", ""), "internals:vix3m": ("3 個月 VIX", ""), "internals:vix6m": ("6 個月 VIX", ""),
+    "internals:vxn": ("VXN 那斯達克波動指數", ""), "internals:ovx": ("OVX 原油波動指數", "市場預期的油價波動"),
+    "internals:gvz": ("GVZ 黃金波動指數", ""), "internals:vix_vix3m": ("VIX 對 3 個月 VIX 比值", ""),
+    "internals:vix1d_vix": ("1 日 VIX 減 VIX", ""), "internals:vxn_vix": ("VXN 減 VIX", ""),
+    "internals:vrp_20d": ("波動風險溢價", "市場預期波動減去實際波動"),
+    "internals:sahm": ("薩姆失業指標", ""), "internals:core_pce_yoy": ("核心 PCE 通膨年增率", ""),
+    "internals:cpi_yoy": ("CPI 年增率", ""), "internals:payems_3m": ("非農就業月增（3 個月平均）", ""),
+    "internals:bei10y": ("10 年期通膨預期", ""), "internals:auct_b2c": ("公債標售認購倍數", ""),
+    "internals:auct_dealer": ("公債標售由交易商承接的比率", ""),
+    "internals:naaim": ("主動型經理人持股比例", ""), "internals:short_vol_ratio": ("全市場放空量占比", ""),
+    "internals:ipo_spy": ("新股上市量相對標普 500", ""), "internals:eps_rev_breadth": ("分析師上修獲利的公司占比", ""),
+    # 期貨部位（CFTC）
+    "cot:S&P 500 E-mini": ("標普 500 期貨的投機淨部位", ""), "cot:Nasdaq-100 E-mini": ("那斯達克 100 期貨的投機淨部位", ""),
+    "cot:Russell 2000 E-mini": ("羅素 2000 期貨的投機淨部位", ""), "cot:VIX futures": ("VIX 期貨的投機淨部位", ""),
+    "cot:US Treasury 2Y": ("2 年期公債期貨的投機淨部位", ""), "cot:US Treasury 5Y": ("5 年期公債期貨的投機淨部位", ""),
+    "cot:US Treasury 10Y": ("10 年期公債期貨的投機淨部位", ""), "cot:US Treasury Bonds (30Y)": ("30 年期公債期貨的投機淨部位", ""),
+    "cot:US Dollar Index (DX)": ("美元期貨的投機淨部位", ""), "cot:EUR (Euro FX)": ("歐元期貨的投機淨部位", ""),
+    "cot:JPY (Japanese Yen)": ("日圓期貨的投機淨部位", ""), "cot:Gold": ("黃金期貨的投機淨部位", ""),
+    "cot:Silver": ("白銀期貨的投機淨部位", ""), "cot:Copper": ("銅期貨的投機淨部位", ""),
+    "cot:WTI Crude": ("WTI 原油期貨的投機淨部位", ""),
+    # 資金流
+    "flow:vc_exposure_pct": ("波動控制基金的股票曝險", "這類基金在波動大時自動降低持股"),
+}
+
+# 近一年分位的窗口用語：pctile_window → (期間, 單位)
+_WINDOW_WORDS = {
+    "252_observations": ("近一年", "交易日"), "52_observations": ("近一年", "週"),
+    "12_observations": ("近一年", "月份"), "available_10y": ("近十年", {"daily": "交易日", "weekly": "週",
+                                                                          "monthly": "月份", "quarterly": "季"}),
+}
+_MARKET_NAMES = {"SPX": "標普 500", "NDX": "那斯達克 100", "RTY": "羅素 2000"}
+_CELL_TITLES = {"strong_up": "強且變強", "strong_down": "強但轉弱", "weak_up": "弱但轉強", "weak_down": "弱且變弱"}
+_QUADRANT_TO_CELL_TITLE = {"領先": "強且變強", "轉弱": "強但轉弱", "改善": "弱但轉強", "落後": "弱且變弱"}
+HOME_GROUP_MAX_LINES = 3
+
+
+def _pct_int(x):
+    """分位 → 整數百分比字串；99.6 不可被四捨五入成 100（100 只留給真正的極值）。"""
+    r = round(x)
+    if r >= 100 and x < 100:
+        r = 99
+    if r <= 0 and x > 0:
+        r = 1
+    return str(int(r))
+
+
+def home_position_text(quote, monitor_item=None):
+    """近一年分位寫成白話；窗口不明的指標（如 CFTC 週報）不寫，避免亂標期間。"""
+    if not quote:
+        return ""
+    p, win = quote.get("pctile"), quote.get("pctile_window")
+    spec = _WINDOW_WORDS.get(win)
+    if p is None or spec is None:
+        return ""
+    span, unit = spec
+    if isinstance(unit, dict):
+        unit = unit.get(quote.get("frequency"), "期")
+    if p >= 100:
+        main = f"是{span}最高"
+    elif p <= 0:
+        main = f"是{span}最低"
+    else:
+        main = f"高於{span} {_pct_int(p)}% 的{unit}"
+    # 一個月、三個月前的同一個分位：只有 monitor 日資料有（p20／p60＝20、60 個交易日前）
+    if (monitor_item and win == "252_observations" and monitor_item.get("frequency") == "daily"
+            and monitor_item.get("p20") is not None and monitor_item.get("p60") is not None):
+        def one(v):
+            return "最高" if v >= 100 else ("最低" if v <= 0 else " " + _pct_int(v) + "%")
+        main += f"；三個月前這個位置是{one(monitor_item['p60'])}、一個月前{one(monitor_item['p20'])}"
+    return main
+
+
+def _value_text(quote):
+    val = quote.get("val")
+    if isinstance(val, str) and val and "_" not in val:
+        return val
+    num = quote.get("num")
+    return f"{num:g}" if isinstance(num, (int, float)) else (str(val) if val is not None else "")
+
+
+def _home_line(ref, why, quote, snap_quote, obs, monitor_data):
+    """一條證據線。quote 是 state 現值；snap_quote 是判讀當時凍結的值（只用來標示兩者不同）。"""
+    q = quote or snap_quote
+    if q is None and obs is None:
+        return None
+    label_hint = REF_LABELS.get(ref)
+    label = (label_hint[0] if label_hint else None) or (why or "").strip() or (q or {}).get("label") or ref
+    item = find_monitor_item(monitor_data, ref.split(":", 1)[1]) if ref.startswith("monitor:") else None
+    if q is not None:
+        value_text, as_of = _value_text(q), q.get("as_of")
+    else:
+        value_text, as_of = (f"{obs['num']:g}" if isinstance(obs.get("num"), (int, float)) else ""), obs.get("as_of")
+    line = {"ref": ref, "label": label, "value_text": value_text,
+            "position_text": home_position_text(q, item) if q is not None else "", "as_of": as_of}
+    if label_hint and label_hint[1]:
+        line["hint"] = label_hint[1]
+    if why:
+        line["why"] = why
+    # 判讀寫稿後數字又更新（例如盤中價被收盤價取代）：保留判讀當時的值，讓畫面能標示
+    if quote is not None and snap_quote is not None and snap_quote.get("num") != quote.get("num"):
+        line["read_value_text"] = _value_text(snap_quote)
+        line["read_as_of"] = snap_quote.get("as_of")
+    return line
+
+
+def _first_sentence(text):
+    m = re.match(r"\s*(.+?[。！？])", text or "")
+    return m.group(1).strip() if m else None
+
+
+def home_headline(read_data, read_headline, read_as_of, read_zh):
+    """headline_zh → thesis_zh 第一句（≤80 字的完整句，不截字）→ 機械 headline。"""
+    mech = (read_zh or {}).get("headline")
+    if not read_headline:  # 沒有判讀或已過期
+        return mech, "mechanical"
+    h = (read_data.get("headline_zh") or "").strip()
+    if h:
+        return h, "headline_zh"
+    s = _first_sentence(read_headline)
+    if s is None and len(read_headline.strip()) <= 80:
+        s = read_headline.strip()
+    if s and len(s) <= 80:
+        return s, "thesis_zh"
+    return mech, "mechanical"
+
+
+def home_groups(read_data, quotes, monitor_data):
+    if not read_data:
+        return []
+    points = read_data.get("thesis_points")
+    if points:
+        source, raw = "thesis_points", [(p.get("claim_zh"), p.get("refs") or []) for p in points]
+    else:
+        source, raw = "forces", [(f.get("title"), f.get("refs") or []) for f in (read_data.get("forces") or [])]
+    snap_quotes = ((read_data.get("evidence_snapshot") or {}).get("quotes")) or {}
+    obs = {}
+    for o in read_data.get("observations") or []:
+        if o.get("field", "num") == "num" and o.get("ref"):
+            obs[o["ref"]] = {"num": o.get("value"), "as_of": o.get("as_of")}
+    seen, groups = set(), []
+    for claim, refs in raw:
+        if not claim:
+            continue
+        lines = []
+        for r in refs:
+            ref = r.get("ref") if isinstance(r, dict) else None
+            if not ref or ref in seen:
+                continue
+            line = _home_line(ref, (r.get("why") or "").strip(), quotes.get(ref), snap_quotes.get(ref),
+                              obs.get(ref), monitor_data)
+            if line is None:
+                continue
+            seen.add(ref)
+            lines.append(line)
+            if len(lines) >= HOME_GROUP_MAX_LINES:
+                break
+        groups.append({"claim": claim, "source": source, "lines": lines})
+    return groups
+
+
+def home_momentum(pulse):
+    """pulse.json 的 assets → 2×2 四格。強弱＝近 120 個交易日相對全球 60/40 組合；
+    變強／轉弱＝強弱指標比自己的 30 日平均高或低（build_rotation_radar 的 rs_ratio／rs_mom）。"""
+    assets = (pulse or {}).get("assets")
+    if not assets:
+        return None
+    cells = {k: {"title": t, "items": []} for k, t in _CELL_TITLES.items()}
+    for a in assets:
+        cell = a.get("cell")
+        if cell not in cells:
+            continue
+        item = {"label": a.get("label"), "ticker": a.get("ticker"), "streak_days": a.get("streak_days"),
+                "streak_capped": bool(a.get("streak_capped")), "change": None}
+        ch = a.get("change")
+        if ch:
+            frm = _QUADRANT_TO_CELL_TITLE.get(ch.get("from"), ch.get("from"))
+            to = _QUADRANT_TO_CELL_TITLE.get(ch.get("to"), ch.get("to"))
+            held = ch.get("held_days")
+            streak = item["streak_days"]
+            confirmed = ch.get("status") == "confirmed"
+            if isinstance(held, int) and isinstance(streak, int) and held > streak:
+                # 動能轉向後又換過格（例如先「強但轉弱」、再掉進「弱且變弱」）：兩個日數要分開講
+                text = (f"動能 {held} 個交易日前轉向，已由「{frm}」走到這格（在這格 {streak} 日）"
+                        + ("" if confirmed else "，還沒站穩"))
+            elif confirmed:
+                text = f"由「{frm}」轉入，已站穩 {held} 個交易日"
+            else:
+                text = f"剛從「{frm}」跨進來 {held} 個交易日，還沒站穩"
+            item["change"] = {"status": ch.get("status"), "held_days": held, "from_title": frm,
+                              "to_title": to, "text": text}
+        cells[cell]["items"].append(item)
+    return {
+        "as_of": pulse.get("radar_as_of"),
+        "note": "強弱看近 120 個交易日相對全球股債 60/40 組合（AOR）的表現；變強或轉弱，看這個強弱比自己的 30 日平均高或低。",
+        "cells": cells,
+    }
+
+
+def _prob_label(p, clim):
+    if p is None or clim is None:
+        return "沒有比較基準"
+    diff = (p - clim) * 100
+    if abs(diff) < 5:
+        return "接近平常"
+    return "高於平常" if diff > 0 else "低於平常"
+
+
+def _fmt_pct_move(x):
+    x = abs(x)
+    return f"{x:.2f}" if x < 1 else f"{x:.1f}"
+
+
+def home_cta_gauge(flows):
+    """距離符號：dist_pct＝(翻轉價/現價−1)×100（見 build_flows）。
+    翻轉價在現價上方（>0）＝現價低於 20 個交易日前的收盤價，訊號目前是賣出，漲這麼多就轉為買進；
+    翻轉價在現價下方（<0）＝訊號目前是買進，跌這麼多就轉為賣出。與 build_flowmap 的
+    signal＝1 if 現價 > flip_level 一致。"""
+    best = None
+    for m in (flows or {}).get("cta") or []:
+        for l in m.get("levels") or []:
+            d = l.get("dist_pct")
+            if l.get("w") == 20 and d is not None and (best is None or abs(d) < abs(best[1])):
+                best = (m, d)
+    if best is None:
+        return None
+    m, d = best
+    name = _MARKET_NAMES.get(m.get("market"), m.get("market") or "")
+    if d > 0:
+        value, label = f"{name} 再漲 {_fmt_pct_move(d)}%", "20 日訊號將轉為買進"
+    elif d < 0:
+        value, label = f"{name} 再跌 {_fmt_pct_move(d)}%", "20 日訊號將轉為賣出"
+    else:
+        value, label = f"{name} 剛好在翻轉價位", "20 日訊號隨時轉向"
+    g = {"key": "cta_flip", "name": "趨勢基金訊號", "value_text": value, "label": label,
+         "note": "趨勢基金（順著漲跌方向加減持股的基金）看 20 日走勢，現價越過 20 個交易日前的收盤價，訊號就轉向。",
+         "href": "/flowmap/"}
+    mc = re.match(r"\+?(\d+)/(\d+)", str(m.get("composite") or ""))
+    if mc:
+        g["detail"] = f"{name} 在 20、60、120 日三個期間中，目前 {mc.group(1)} 個看多。"
+    return g
+
+
+def build_home_card(read_data, read_headline, read_as_of, read_zh, evidence, monitor_data, pulse,
+                    environment, council_summary, flows, status_snapshot, risk_gauge, data_as_of):
+    quotes = (evidence or {}).get("quotes") or {}
+    headline, source = home_headline(read_data, read_headline, read_as_of, read_zh)
+
+    env = {e.get("key"): e for e in (environment or [])}
+
+    def split_env(key):
+        e = env.get(key) or {}
+        parts = str(e.get("value") or "").split(" · ")
+        return (parts[0], parts[1] if len(parts) > 1 else "", e) if e.get("value") else None
+
+    now = []
+    s = split_env("monitor")
+    if s:
+        now.append({"key": "stress", "name": "跨資產壓力", "value_text": s[0], "label": s[1],
+                    "note": "0 到 100 分，合併波動、信用、流動性、風險偏好、利率五類壓力，越高代表市場越緊。",
+                    "href": "/monitor/", "as_of": s[2].get("as_of")})
+    d = split_env("detective")
+    if d:
+        now.append({"key": "alert", "name": "警戒度", "value_text": d[0], "label": d[1],
+                    "note": "0 到 100 分，看站內偵測訊號亮黃燈、紅燈的程度，越高代表越多地方在轉壞。",
+                    "href": "/intel/change.html", "as_of": d[2].get("as_of")})
+    rg = None
+    if status_snapshot and status_snapshot.get("risk_gauge_score") is not None and status_snapshot.get("risk_gauge_label"):
+        rg = (status_snapshot["risk_gauge_score"], status_snapshot["risk_gauge_label"], status_snapshot.get("risk_gauge_date"))
+    elif risk_gauge and risk_gauge.get("score") is not None and risk_gauge.get("label_zh"):
+        rg = (risk_gauge["score"], risk_gauge["label_zh"], risk_gauge.get("as_of"))
+    if rg:
+        now.append({"key": "risk_gauge", "name": "風險儀表", "value_text": f"{rg[0]:+.2f}", "label": rg[1],
+                    "note": "股指趨勢、波動、信用、銅金比、攻守類股、套息貨幣六項各給 −1 到 +1 再平均，越正越偏風險偏好。",
+                    "href": "/#risk-chart", "as_of": rg[2]})
+
+    nxt = []
+    vol = (council_summary or {}).get("vol_up_21d") or {}
+    if vol.get("p") is not None:
+        clim = vol.get("p_clim")
+        nxt.append({"key": "vol_up_21d", "name": "一個月內波動變大的機率", "value_text": f"{vol['p'] * 100:.0f}%",
+                    "label": _prob_label(vol["p"], clim),
+                    "note": ("預測 30 天後標普 500 ETF 的已實現波動（近 21 個交易日的實際漲跌幅度）會不會比今天大"
+                             + (f"；歷史上平常是 {clim * 100:.0f}%。" if clim is not None else "。")),
+                    "href": "/market/"})
+    cta = home_cta_gauge(flows)
+    if cta:
+        nxt.append(cta)
+
+    return {
+        "schema": "market-home-card-v1",
+        "headline": headline,
+        "headline_source": source,
+        "read_as_of": read_as_of,
+        "read_expired": bool(read_data) and not read_headline,
+        "data_as_of": data_as_of,
+        "groups": home_groups(read_data if read_headline else None, quotes, monitor_data),
+        "momentum": home_momentum(pulse),
+        "gauges": {"now": now, "next_month": nxt},
+    }
+
+
 def attach_source_evidence(evidence, source_data, gaps):
     """2026-09-13：加入來源命名空間；同口徑同日差異並列，保留原始兩個值。"""
     if source_data is None:
@@ -2160,6 +2545,9 @@ def main():
     exposure_track_data = _load_json(paths["exposure_track"])  # 缺檔另外處理訊息（見 build_exposure_rule）
     kelly_track_data = _load_json(paths["kelly_track"])  # 缺檔另外處理訊息（見 build_kelly_rule）
     scorecard_data = _load_json(paths["scorecard"], gaps, "scorecard")
+    home_pulse_data = _load_json(paths["home_pulse"])  # 選填
+    status_snapshot_data = _load_json(paths["status_snapshot"])  # 選填
+    risk_gauge_data = _load_json(paths["risk_gauge"])  # 選填
 
     sources = {
         "monitor": monitor_data, "detective": detective_data, "flowmap": flowmap_data,
@@ -2229,6 +2617,10 @@ def main():
     as_of_candidates = [x for x in as_of_candidates if x]
     top_as_of = max(as_of_candidates) if as_of_candidates else today.isoformat()
 
+    home_card = build_home_card(read_data, read_headline, read_as_of, read_zh, evidence, monitor_data,
+                                home_pulse_data, environment, council_summary, flows,
+                                status_snapshot_data, risk_gauge_data, top_as_of)
+
     state = {
         "schema": SCHEMA,
         "as_of": top_as_of,
@@ -2252,6 +2644,7 @@ def main():
         "source_research": source_research,
         "read_headline": read_headline,
         "read_as_of": read_as_of,
+        "home_card": home_card,
         "gaps": gaps,
     }
 

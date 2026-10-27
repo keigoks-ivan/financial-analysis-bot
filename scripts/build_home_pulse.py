@@ -7,7 +7,8 @@
 
 自動化：GitHub Actions cron（home-pulse-daily），在 monitor（build_monitor.py）與
 rotation radar（build_rotation_radar.py）日更之後執行。設計規格見
-notes/site-internal/root/_routine_home_pulse_spec.md（schema=home-pulse-v2）。
+notes/site-internal/root/_routine_home_pulse_spec.md（schema=home-pulse-v2；
+2026-10-27 起多一個 `assets[]`，欄位向下相容）。
 """
 import json
 import os
@@ -101,6 +102,14 @@ def monitor_points(latest):
         seg3.append("、".join(tail))
     if seg3:
         pts.append("；".join(seg3))
+
+    # 2026-10-27：加油價（原本只有利率、流動性、通膨預期、波動，油價漲跌沒進來）
+    oil = [(lbl, _series(latest, key)) for lbl, key in (("WTI 原油", "wti"), ("Brent 原油", "brent"))]
+    seg4 = [f"{lbl} {it['val']}，分位 {_fmt(it['pctile'])}（{_traj(it)}）"
+            for lbl, it in oil if it and it.get("val") and it.get("pctile") is not None
+            and it.get("p20") is not None and it.get("p60") is not None]
+    if seg4:
+        pts.append("；".join(seg4))
     return pts
 
 
@@ -172,6 +181,33 @@ def reversal_flags(flagged):
             ev = (f"RS-M {verb} 100 未站穩、接近"
                   f"（{held} 交易日、{vals}）")
         out.append({"axis": axis, "from": frm, "to": to, "evidence": ev})
+    return out
+
+
+CELL = {"領先": "strong_up", "轉弱": "strong_down", "改善": "weak_up", "落後": "weak_down"}
+
+
+def build_assets(members):
+    """每檔資產只出現一次：象限、同象限連續日數，轉折旗標併進該資產的 change。
+
+    change＝null（近 8 交易日沒穿越 100）或 {from, to, status, held_days}；
+    status 沿用 reversal_flags 的 confirmed／near 判定，來源是同一份 `_rev`，不另算。
+    """
+    out = []
+    for mem in members:
+        rv = mem.get("_rev")
+        change = None
+        if rv:
+            change = {"from": rv["from"], "to": rv["to"],
+                      "status": "confirmed" if rv["confirmed"] else "near",
+                      "held_days": rv["held"]}
+        out.append({"label": mem["short"], "ticker": mem["ticker"],
+                    "quadrant": mem["q"], "cell": CELL[mem["q"]],
+                    "streak_days": mem["streak"],
+                    # trail 只有 30 點；連續日數等於 trail 長度時只代表「至少這麼久」
+                    "streak_capped": mem["streak"] >= len(mem["trail"]),
+                    "rs_ratio": round(mem["r"], 2), "rs_momentum": round(mem["m"], 2),
+                    "change": change})
     return out
 
 
@@ -250,6 +286,9 @@ def main():
         "monitor": {"points": monitor_points(latest)},
         "radar": {"points": radar_points(members)},
         "reversal_flags": flags,
+        # 2026-10-27：給首頁／市況頁卡片用的單一清單（每檔一筆）；舊欄位（monitor／radar／
+        # reversal_flags）仍有 docs/index.html 與 scripts/intel/render.py 在讀，先保留。
+        "assets": build_assets(members),
     }
 
     out = os.path.join(DOCS, "home", "pulse.json")

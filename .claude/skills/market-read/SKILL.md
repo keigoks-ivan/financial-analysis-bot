@@ -33,6 +33,7 @@ description: market-read — 市況主控台判讀層（週頻＋事件觸發，
 2. **寫 `docs/market/data/read.json`**（schema `market-read-v1`，逐欄照首份 2026-09-02 版）：
    - `thesis_zh` 第一句是一句主張（標題句規則），後面才是撐它的證據；`path_zh` 路徑句（先弱後強／先強後弱／區間…＋觸發者）。
    - `vs_prior_zh`（相較前期）：**第一句必須是一句白話結論**，≤ 40 字、最多 1 個數字、以句號收，讀者不看後文就知道上期看法對不對、方向有沒有變（例：「上期的看法大多被這週的證據撐住，方向沒變。」）。不得用「對上期負責」「N 張命題未到期」「證偽表十條有一條觸發」這類記帳語開頭。記帳明細從第二句起寫，也要用白話：「上期八個預測都還沒到期；十個改判條件都沒碰到，其中三個接近了。」頁面「本期重點」直接取這一句當首句；`check_market_read.py` 第 12 項 `vs_prior_lead` 會 FAIL 擋下超過 60 字或含「命題／負責／證偽表／到期／觸發」的首句（2026-09-17 持有人指出舊寫法沒人看得懂）。
+   - `headline_zh`、`thesis_points`（2026-10-27 起每期必寫，`check_market_read.py` 第 19 項；機械層缺這兩欄時仍可過，舊判讀不用補）：首頁、/market/、email 共用的卡片來源。`headline_zh`＝首頁一句結論，≤ 40 字、只有一句、最多 1 個數字、句號收；沒有它，卡片會退回 `thesis_zh` 第一句。`thesis_points`＝把 `thesis_zh` 拆成 2–4 條 `{claim_zh, refs[{ref, why}]}`：`claim_zh` ≤ 30 字的完整主張，每條 1–3 個 ref，ref 必須在同一份稿的 `observations`；`thesis_zh` 提到的每個論點（如油價）都要有對應一條。白話規則同上方「白話關卡」與 `zh-analyst-prose`：一句一個主數字、術語首現就地解釋、半形空格隔中文與數字、全形標點、不用比喻、不寫「不是 A，是 B」收尾句、數字只取自證據。
    - `horizons` 三筆（key 依序 `3m`／`6m`／`12m`）：只寫 `key`、`label`、`logic_zh`，**不寫** p_up／p_dd10／p_dd20／p_clim／claim_ids／resolve_by；`logic_zh` 講清楚該期限的方向看法與理由，第一句是結論標題句，文字裡也不出現機率或歷史頻率數字。
    - `forces` 2–4 張，每張 refs ≥2、每個 ref 一句「為什麼看它」。
    - `transmission` 四格（erp／credit／split／liquidity）各一句判讀。

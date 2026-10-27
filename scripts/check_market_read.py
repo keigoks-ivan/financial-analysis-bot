@@ -54,6 +54,9 @@ Exit 0＝全部通過（WARN 不算失敗，只有 FAIL 會擋 exit code）；Ex
      那斯達克（monitor:ndx／internals:qqew_qqq／internals:qqq_dvol_z／cot:Nasdaq-100 E-mini）、
      實盤部位（book:*）；body_zh 第一句照第 13 項標題句規則。as_of 早於 2026-10-16 的舊判讀
      缺此段只 WARN。
+  19.（2026-10-27 首頁卡片重構，選填）`headline_zh`（首頁一句結論，≤ 40 字、最多 1 個數字、只有一句）
+     與 `thesis_points`（2–4 條 `{claim_zh ≤ 30 字, refs[1–3 條 {ref, why}]}`）。有寫就檢查字數、
+     數字、why 非空，且每個 ref 必須出現在同一份 read.json 的 observations；兩者都沒寫（舊判讀）照樣 PASS。
 """
 from __future__ import annotations
 
@@ -158,6 +161,11 @@ def collect_refs(data: dict):
             ref = r.get("ref") if isinstance(r, dict) else None
             if isinstance(ref, str):
                 out.append((f"sector.refs[{j}].ref", ref))
+    for i, tp in enumerate(data.get("thesis_points") or []):
+        for j, r in enumerate((tp.get("refs") if isinstance(tp, dict) else None) or []):
+            ref = r.get("ref") if isinstance(r, dict) else None
+            if isinstance(ref, str):
+                out.append((f"thesis_points[{i}].refs[{j}].ref", ref))
     return out
 
 
@@ -637,6 +645,70 @@ def check_sector(data: dict):
     return PASS, f"sector 段落 refs={len(names)}，費半／那斯達克／實盤部位皆有引用"
 
 
+HOME_HEADLINE_MAX_CHARS = 40
+HOME_HEADLINE_MAX_NUMBERS = 1
+THESIS_POINTS_MIN, THESIS_POINTS_MAX = 2, 4
+THESIS_CLAIM_MAX_CHARS = 30
+THESIS_POINT_MIN_REFS, THESIS_POINT_MAX_REFS = 1, 3
+
+
+def check_home_fields(data: dict):
+    """19. 首頁卡片欄位 headline_zh／thesis_points（選填；有寫才檢查，舊判讀照樣 PASS）。"""
+    headline = data.get("headline_zh")
+    points = data.get("thesis_points")
+    if headline is None and points is None:
+        return PASS, "未提供 headline_zh／thesis_points（選填）"
+    problems = []
+    if headline is not None:
+        if not isinstance(headline, str) or not headline.strip():
+            problems.append("headline_zh 必須是非空字串")
+        else:
+            n, k = body_len(headline), count_numbers(headline)
+            if n > HOME_HEADLINE_MAX_CHARS:
+                problems.append(f"headline_zh {n} 字，上限 {HOME_HEADLINE_MAX_CHARS} 字")
+            if k > HOME_HEADLINE_MAX_NUMBERS:
+                problems.append(f"headline_zh {k} 個數字，上限 {HOME_HEADLINE_MAX_NUMBERS} 個")
+            if len(split_sentences(headline)) > 1:
+                problems.append("headline_zh 只能有一句")
+    if points is not None:
+        observed = {o.get("ref") for o in (data.get("observations") or []) if isinstance(o, dict)}
+        if not isinstance(points, list) or not (THESIS_POINTS_MIN <= len(points) <= THESIS_POINTS_MAX):
+            got = len(points) if isinstance(points, list) else "非清單"
+            problems.append(f"thesis_points 需要 {THESIS_POINTS_MIN}–{THESIS_POINTS_MAX} 條（現為 {got}）")
+        else:
+            for i, tp in enumerate(points):
+                tag = f"thesis_points[{i}]"
+                if not isinstance(tp, dict):
+                    problems.append(f"{tag} 必須是物件")
+                    continue
+                claim = tp.get("claim_zh")
+                if not isinstance(claim, str) or not claim.strip():
+                    problems.append(f"{tag}.claim_zh 空白")
+                elif body_len(claim) > THESIS_CLAIM_MAX_CHARS:
+                    problems.append(f"{tag}.claim_zh {body_len(claim)} 字，上限 {THESIS_CLAIM_MAX_CHARS} 字")
+                refs = tp.get("refs")
+                if not isinstance(refs, list) or not (THESIS_POINT_MIN_REFS <= len(refs) <= THESIS_POINT_MAX_REFS):
+                    problems.append(f"{tag}.refs 需要 {THESIS_POINT_MIN_REFS}–{THESIS_POINT_MAX_REFS} 條")
+                    continue
+                names = []
+                for j, r in enumerate(refs):
+                    ref = r.get("ref") if isinstance(r, dict) else None
+                    if not isinstance(ref, str) or not ref:
+                        problems.append(f"{tag}.refs[{j}] 缺 ref")
+                        continue
+                    names.append(ref)
+                    if not isinstance(r.get("why"), str) or not r["why"].strip():
+                        problems.append(f"{tag}.refs[{j}]（{ref}）缺 why")
+                    if ref not in observed:
+                        problems.append(f"{tag} 的 {ref} 不在 observations")
+                if len(set(names)) != len(names):
+                    problems.append(f"{tag}.refs 有重複的 ref")
+    if problems:
+        return FAIL, "；".join(problems)
+    return PASS, "headline_zh／thesis_points 格式齊全，ref 皆在 observations"
+
+
+
 CHECKS = (
     ("schema_keys", check_schema_keys, False),
     ("refs_resolvable", check_refs_resolvable, True),
@@ -656,6 +728,7 @@ CHECKS = (
     ("source_position", check_source_position, False),
     ("data_gaps_len", check_data_gaps_len, False),
     ("sector_semis", check_sector, False),
+    ("home_card_fields", check_home_fields, False),
 )
 
 

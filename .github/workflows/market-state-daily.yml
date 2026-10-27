@@ -32,10 +32,20 @@ on:
         default: "0"
         type: string
   # 2026-09-13：成功的上游資料到齊即保存版本，定時班次保留作補漏；不在 Actions 呼叫模型。
+  # 2026-10-27：daily-us-close（輪動雷達、home pulse 的動能格）也加進來，首頁動能格才跟得上最新一根收盤 bar。
   workflow_run:
-    workflows: ["Intel 2.0 Daily Chain", "Daily Market Monitor", "Daily Conditional Flow Map", "Daily Statistical Properties Panel"]
+    workflows: ["Intel 2.0 Daily Chain", "Daily Market Monitor", "Daily Conditional Flow Map", "Daily Statistical Properties Panel", "Daily US Close Band"]
     types: [completed]
     branches: [main]
+  # 2026-10-27：雲端 routine market-read-auto（台北 17:15）把 read.json 推上 main 後立刻重建 state，
+  # 首頁／市況頁的判讀標題不必等下一班。routine 以持有人帳號 push（Deploy Pages 的 push 事件在
+  # 5d0e7060f／a2fb33289 等 read.json commit 上都有觸發），所以 push 事件會來。
+  # 防循環：本 workflow 的 commit 只含 data/market_sources、state.json、refresh.json、snapshots、
+  # releases，不含 read.json（paths filter 擋住），且 GITHUB_TOKEN 推的 commit 本來就不觸發 push。
+  push:
+    branches: [main]
+    paths:
+      - "docs/market/data/read.json"
 
 permissions:
   contents: write

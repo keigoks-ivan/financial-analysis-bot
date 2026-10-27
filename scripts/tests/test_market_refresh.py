@@ -468,3 +468,76 @@ def test_due_question_board_alone_runs_questions_only(tmp_path):
     assert request["run_analysis"] is True
     assert request["run_question_board"] is True
     assert request["analysis_scope"] == "questions_only"
+
+
+# ── 2026-10-27：headline_zh／thesis_points（選填）的驗收 ──
+
+def _with_home_fields(candidate, **extra):
+    candidate.update(extra)
+    candidate["review"]["content_hash"] = refresh.candidate_hash(candidate)
+    return candidate
+
+
+def _only_home_check(monkeypatch):
+    monkeypatch.setattr(refresh.critic, "CHECKS", (("home_card_fields", refresh.critic.check_home_fields, False),))
+
+
+def _validate(candidate, snapshot, tmp_path, today=date(2026, 9, 13)):
+    prior = {}
+    return refresh.validate_candidate(
+        candidate, snapshot, _request(prior), prior, today, tmp_path / "ledger.jsonl", require_ledger=False)[0]
+
+
+GOOD_POINTS = [
+    {"claim_zh": "股市還在高檔", "refs": [{"ref": "monitor:sp500", "why": "大盤位置"}]},
+    {"claim_zh": "漲勢沒有擴散", "refs": [{"ref": "monitor:sp500", "why": "只有少數股票在漲"}]},
+]
+
+
+def test_old_read_without_new_fields_still_accepted(tmp_path, monkeypatch):
+    _only_home_check(monkeypatch)
+    today, snapshot = date(2026, 9, 13), _snapshot()
+    assert _validate(_candidate(snapshot, today), snapshot, tmp_path) == []
+
+
+def test_new_fields_accepted_when_well_formed(tmp_path, monkeypatch):
+    _only_home_check(monkeypatch)
+    today, snapshot = date(2026, 9, 13), _snapshot()
+    cand = _with_home_fields(_candidate(snapshot, today), headline_zh="股市偏弱但還沒翻轉。", thesis_points=GOOD_POINTS)
+    assert _validate(cand, snapshot, tmp_path) == []
+
+
+@pytest.mark.parametrize(
+    "extra, expected",
+    [
+        ({"headline_zh": "這是一句超過四十個字的標題" * 4 + "。"}, "headline_zh"),
+        ({"headline_zh": "油價漲到 110 美元，利率升到 5%。"}, "個數字"),
+        ({"headline_zh": "第一句。第二句。"}, "只能有一句"),
+        ({"thesis_points": GOOD_POINTS[:1]}, "需要 2–4 條"),
+        ({"thesis_points": [dict(GOOD_POINTS[0], claim_zh="這條主張寫得太長了" * 4), GOOD_POINTS[1]]}, "claim_zh"),
+        ({"thesis_points": [{"claim_zh": "沒有證據", "refs": []}, GOOD_POINTS[1]]}, "refs 需要 1–3 條"),
+        ({"thesis_points": [{"claim_zh": "ref 不在 observations", "refs": [{"ref": "monitor:ghost", "why": "x"}]}, GOOD_POINTS[1]]},
+         "不在 observations"),
+        ({"thesis_points": [{"claim_zh": "缺 why", "refs": [{"ref": "monitor:sp500", "why": " "}]}, GOOD_POINTS[1]]}, "缺 why"),
+        ({"thesis_points": [{"claim_zh": "重複", "refs": [{"ref": "monitor:sp500", "why": "a"},
+                                                        {"ref": "monitor:sp500", "why": "b"}]}, GOOD_POINTS[1]]}, "重複"),
+    ],
+)
+def test_new_fields_rejected_when_malformed(tmp_path, monkeypatch, extra, expected):
+    _only_home_check(monkeypatch)
+    today, snapshot = date(2026, 9, 13), _snapshot()
+    errors = _validate(_with_home_fields(_candidate(snapshot, today), **extra), snapshot, tmp_path)
+    assert any(expected in e for e in errors), errors
+
+
+def test_thesis_point_refs_must_match_evidence_even_without_critic(tmp_path, monkeypatch):
+    """collect_refs 納入 thesis_points：ref 若沒有可核對的 observations（數字、日期逐字等於證據），validate 擋下。"""
+    monkeypatch.setattr(refresh.critic, "CHECKS", ())
+    today, snapshot = date(2026, 9, 13), _snapshot()
+    pts = [{"claim_zh": "新的 ref", "refs": [{"ref": "monitor:other", "why": "x"}]}, GOOD_POINTS[1]]
+    errors = _validate(_with_home_fields(_candidate(snapshot, today), thesis_points=pts), snapshot, tmp_path)
+    assert any("缺少可核對的數字" in e and "monitor:other" in e for e in errors), errors
+
+
+def test_home_fields_registered_in_critic_checks():
+    assert "home_card_fields" in [name for name, _, _ in refresh.critic.CHECKS]

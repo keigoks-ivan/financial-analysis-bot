@@ -17,6 +17,10 @@
 - vs_prior_zh：哪些論點得到支持／被削弱／被推翻，上期改判條件逐條現況，預測的計算基準若有變動要明寫。全部用白話，不寫命題、證偽表、口徑、參考點這類內部用語。
 - data_gaps_zh：只寫會影響本期判斷的缺口，≤ 150 字。request.json 的 warnings 逐條清單頁面已自動列出，不重抄。
 - observations[]：每個被引用的 ref 帶 field=num／pctile／chg30_pct、value 與 as_of，必須逐字等於 evidence.json 的 quotes 同欄位。
+- headline_zh（2026-10-27 起必寫）：首頁卡片標題用的一句結論。≤ 40 字、只有一句、結論先行、最多一個數字，句號收。不放括號、不放出處、不放術語；直接講「市場現在怎麼了、對股市意味什麼」。寫完要能單獨貼在首頁上讓沒讀過本期判讀的人看懂。
+- thesis_points（2026-10-27 起必寫）：把 thesis_zh 拆成 2～4 條主張，格式 `[{"claim_zh": "…", "refs": [{"ref": "…", "why": "…"}]}]`。每條 claim_zh ≤ 30 字，是一句完整的主張（主詞＋動詞＋結果），不是數字或標籤；每條 1～3 個 ref，why 寫「這個數字為什麼支持這條主張」，一句話；ref 必須也出現在同一份 candidate 的 observations（數字、日期逐字等於 evidence.json）；同一條主張內 ref 不重複。thesis_zh 提到的每個論點（例如油價、利率、信用利差）都要有對應的一條，不能只出現在 thesis_zh 而沒有證據支撐。
+- 這兩個欄位的白話規則（引用 zh-analyst-prose）：一句只講一個意思，一句一個主數字；專有名詞第一次出現就用白話解釋或直接換成白話（「高收益債利差」可寫「垃圾債多付的利息」）；中文與數字之間半形空格，標點全形；不用比喻（煞車、天花板、雪崩、骨牌一類）；不寫「不是 A，是 B」的收尾句；不預測、不寫買賣建議；數字只能取自 evidence.json。
+- 兩個欄位由 `check_market_read.py` 第 19 項檢查（字數、數字個數、ref 在 observations），沒過依訊息改寫，併入④b 的 3 輪。
 - scenarios[]：基準／偏強／偏弱各含 name_zh、horizon、conditions_zh、falsifiers_zh、asset_implications_zh、refs。
 - sector（2026-10-15 起必寫）：{"body_zh", "refs":[{"ref","why"}]}，講費半與那斯達克的走勢與集中度、那斯達克期貨部位與主題擁擠、實盤指數部押在半導體的比例與離週線閘門多遠；refs ≥3，費半（monitor:sox／monitor:sox_ndx）、那斯達克（monitor:ndx／internals:qqew_qqq／internals:qqq_dvol_z／cot:Nasdaq-100 E-mini）、實盤部位（book:*）各至少一條。細則見 SKILL「sector」條。
 
