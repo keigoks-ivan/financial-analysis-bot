@@ -2168,7 +2168,11 @@ def home_position_text(quote, monitor_item=None):
             and monitor_item.get("p20") is not None and monitor_item.get("p60") is not None):
         def one(v):
             return "最高" if v >= 100 else ("最低" if v <= 0 else " " + _pct_int(v) + "%")
-        main += f"；三個月前這個位置是{one(monitor_item['p60'])}、一個月前{one(monitor_item['p20'])}"
+        a, b = one(monitor_item["p20"]), one(monitor_item["p60"])
+        if a == b and main.endswith(a):
+            main += "，一個月前、三個月前也是"
+        else:
+            main += f"，一個月前是{a}、三個月前{b}"
     return main
 
 
@@ -2293,7 +2297,7 @@ def home_momentum(pulse):
         cells[cell]["items"].append(item)
     return {
         "as_of": pulse.get("radar_as_of"),
-        "note": "強弱看近 120 個交易日相對全球股債 60/40 組合（AOR）的表現；變強或轉弱，看這個強弱比自己的 30 日平均高或低。",
+        "note": "強弱：相對全球股債 60/40 組合（AOR）的強弱，高於自己近 120 個交易日的平均就算強。變強或轉弱：這個強弱比近 30 個交易日的平均高或低。",
         "cells": cells,
     }
 

@@ -92,7 +92,7 @@ def test_thesis_points_used_with_labels_position_and_dedupe():
     assert [g["claim"] for g in card["groups"]] == ["信用利差仍在高檔", "油價高於一般水準"]
     hy = card["groups"][0]["lines"][0]
     assert hy["label"] == "高收益債利差" and hy["value_text"] == "3.38%" and hy["as_of"] == "2026-10-23"
-    assert hy["position_text"] == "高於近一年 99% 的交易日；三個月前這個位置是 55%、一個月前 71%"
+    assert hy["position_text"] == "高於近一年 99% 的交易日，一個月前是 71%、三個月前 55%"
     refs2 = [l["ref"] for l in card["groups"][1]["lines"]]
     assert refs2 == ["monitor:brent", "monitor:wti"]            # hy_oas 已出現過，不重複
     # 判讀寫稿時的價格（110.01）與現值（115.81）不同：現值為主，舊值另存
