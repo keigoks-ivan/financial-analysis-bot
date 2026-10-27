@@ -388,6 +388,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     <h1>市況主控台</h1>
     <p class="lede"><strong id="heroConclusion">最新市場結論載入中。</strong></p>
     <div class="mandate"><strong>本期重點：</strong><span id="heroFocus">現況、最新變化、改判條件。</span></div>
+    <div id="heroCard" class="hc" style="margin-top:.9rem" hidden></div>
     <div class="asof" id="asof">目前市場資料載入中…</div>
     <div class="refresh-status" id="refreshStatus" hidden aria-live="polite"></div>
     <div class="load-fail" id="loadFail" hidden>資料載入失敗。</div>
@@ -556,6 +557,12 @@ footer.imq-foot a{color:var(--text-secondary)}
     <p class="section-sub">以下是各管線的原始數據，全部照實列出、沒有經過篩選；判讀邏輯見上方，這裡的數字讓你自己核對。</p>
   </div>
 
+  <section id="sec-cockpit" hidden>
+    <h2>資產動能與儀表</h2>
+    <p class="section-sub">資產動能看各類資產相對全球股債組合的強弱；儀表分「現在」與「接下來一個月」兩組，各有一行說明怎麼讀。</p>
+    <div id="cockpitHost"></div>
+  </section>
+
   <section id="sec-thesis">
     <div class="card" style="border-left:3px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0">
       <div class="overline" style="margin-bottom:.4rem">今日讀法（機械生成：多模型機率彙總＋資金流位置）</div>
@@ -690,7 +697,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   </div>
 </footer>
 
-<script src="text-summaries.js"></script>
+<script src="home-card.js"></script>
 <script>
 (function () {
   "use strict";
@@ -727,8 +734,6 @@ footer.imq-foot a{color:var(--text-secondary)}
     return String(s).replace(/[，、；,;]+$/, "").trim();
   }
   function concisePoints(value, limit) {
-    var edited = window.MARKET_TEXT_SUMMARIES && window.MARKET_TEXT_SUMMARIES[String(value || "").trim()];
-    if (Array.isArray(edited) && edited.length) return edited.slice(0, limit || 4);
     var text = value == null ? "" : String(value).replace(/\s+/g, " ").trim();
     if (!text) return [];
     var chunks = splitTopLevel(text, "。！？；;");
@@ -767,8 +772,6 @@ footer.imq-foot a{color:var(--text-secondary)}
     var points = concisePoints(value, limit);
     var original = value == null ? "" : String(value).trim();
     if (!original) return "—";
-    var supplied = window.MARKET_TEXT_SUMMARIES && window.MARKET_TEXT_SUMMARIES[original];
-    if (Array.isArray(supplied) && supplied.length) points = supplied.slice(0, limit || 4);
     if (!points.length) return '<details class="compact-details"><summary>查看完整原文</summary><p class="note">' + esc(original) + '</p></details>';
     return '<ul class="summary-list">' + points.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join("") +
       '<\/ul><details class="compact-details"><summary>查看完整原文</summary><p class="note">' + esc(original) + '</p></details>';
@@ -2295,7 +2298,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     var page = $("#page-body");
     ["sec-judgment", "sec-questions", "sec-global", "sec-scenarios", "sec-falsifiers", "sec-history", "sec-source-history",
       "sec-forces", "sec-transmission", "sec-positioning", "sec-analogs", "sec-judgment-score", "sec-evidence",
-      "sec-thesis", "sec-env", "sec-models", "sec-signals", "sec-triggers", "sec-scoreboard", "sec-exposure"].forEach(function (id) {
+      "sec-cockpit", "sec-thesis", "sec-env", "sec-models", "sec-signals", "sec-triggers", "sec-scoreboard", "sec-exposure"].forEach(function (id) {
       var node = document.getElementById(id);
       if (node) page.appendChild(node);
     });
@@ -2396,7 +2399,20 @@ footer.imq-foot a{color:var(--text-secondary)}
 
     var rz = data.read_zh || {};
     var headline = read && read.thesis_zh || rz.headline || "今日無合成判讀。";
-    $("#heroConclusion").textContent = concisePoints(headline, 1)[0] || headline;
+    var card = window.MarketHomeCard && window.MarketHomeCard.isValid(data.home_card) ? data.home_card : null;
+    $("#heroConclusion").textContent = card ? card.headline : (concisePoints(headline, 1)[0] || headline);
+    // home_card 與首頁、email 共用；舊 bundle 的 state 沒有它，這時維持原本的 hero 與證據層，不顯示新區塊。
+    $("#heroCard").hidden = !card;
+    $("#sec-cockpit").hidden = !card;
+    if (card) {
+      var HC = window.MarketHomeCard;
+      $("#heroCard").innerHTML = HC.renderDates(card) + HC.renderGroups(card);
+      $("#cockpitHost").innerHTML = '<div class="hc">' + HC.renderMomentum(card) + HC.renderGauges(card, { detail: true }) + "</div>";
+      HC.bind($("#cockpitHost"));
+    } else {
+      $("#heroCard").innerHTML = "";
+      $("#cockpitHost").innerHTML = "";
+    }
     // 2026-09-17：持有人指出「最新變化：…　·　改判：…」沒人看得懂。改成兩句白話：
     // 第一句是「相較前期」的精煉首句；第二句寫清楚哪個門檻會讓看法轉多、哪個會轉空，並附現值。
     var focus = [];

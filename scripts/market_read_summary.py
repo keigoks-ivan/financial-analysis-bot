@@ -192,18 +192,113 @@ def build_review_summary(review):
     return f"　冷讀模型 {model}／第 {rnd} 輪／verdict={verdict}／剩餘 🟡 {n_yellow} 條"
 
 
+def _home_card(state_data):
+    """state.json 的 home_card（schema market-home-card-v1）；缺或格式不對回傳 None，呼叫端退回原一分鐘摘要。"""
+    card = state_data.get("home_card") if isinstance(state_data, dict) else None
+    if isinstance(card, dict) and card.get("schema") == "market-home-card-v1" and card.get("headline"):
+        return card
+    return None
+
+
+def _md(d) -> str:
+    m = re.match(r"\d{4}-(\d{2})-(\d{2})", str(d or ""))
+    return f"{m.group(1)}-{m.group(2)}" if m else ""
+
+
+def _card_date_line(card) -> str:
+    parts = []
+    if card.get("data_as_of"):
+        parts.append(f"資料 {_md(card['data_as_of'])}")
+    if card.get("read_as_of") and card.get("read_as_of") != card.get("data_as_of") and not card.get("read_expired"):
+        parts.append(f"判讀 {_md(card['read_as_of'])}")
+    line = " · ".join(parts)
+    if card.get("read_expired"):
+        line = (line + " · " if line else "") + "判讀已過期，顯示機械摘要"
+    return line
+
+
+_MOMENTUM_ORDER = ("strong_up", "strong_down", "weak_up", "weak_down")
+
+
+def _momentum_item_text(it) -> str:
+    name = it.get("label") or ""
+    if it.get("ticker"):
+        name += f" {it['ticker']}"
+    ch = it.get("change")
+    if isinstance(ch, dict):
+        name += "（已確認）" if ch.get("status") == "confirmed" else "（未站穩）"
+    return name
+
+
+def _momentum_stale(card) -> bool:
+    m = card.get("momentum") or {}
+    return bool(m.get("as_of") and card.get("data_as_of") and m["as_of"] < card["data_as_of"])
+
+
+def build_home_card_lines(card):
+    """四層純文字：結論＋日期、依主張分組的證據、資產動能四格、儀表（現在／接下來一個月）。"""
+    out = ["【結論】", card.get("headline", "")]
+    dl = _card_date_line(card)
+    if dl:
+        out.append(dl)
+    out.append("")
+    groups = card.get("groups") or []
+    if groups:
+        out.append("【證據】")
+        for g in groups:
+            out.append(f"■ {g.get('claim', '')}")
+            for l in g.get("lines") or []:
+                val = l.get("value_text", "")
+                if l.get("read_value_text") and l.get("read_value_text") != val:
+                    val += f"（判讀時 {l['read_value_text']}）"
+                pos = f"　{l['position_text']}" if l.get("position_text") else ""
+                out.append(f"　{l.get('label', '')} {val}{pos}")
+        out.append("")
+    mom = card.get("momentum")
+    if isinstance(mom, dict) and mom.get("cells"):
+        out.append("【資產動能】" + (f"（動能到 {_md(mom.get('as_of'))}）" if _momentum_stale(card) else ""))
+        for k in _MOMENTUM_ORDER:
+            c = (mom["cells"] or {}).get(k)
+            if not c:
+                continue
+            items = "、".join(_momentum_item_text(it) for it in c.get("items") or []) or "—"
+            out.append(f"　{c.get('title', '')}：{items}")
+        if mom.get("note"):
+            out.append(f"　{mom['note']}")
+        out.append("")
+    gauges = card.get("gauges") or {}
+    for key, title in (("now", "現在"), ("next_month", "接下來一個月")):
+        lst = gauges.get(key) or []
+        if not lst:
+            continue
+        out.append(f"【儀表・{title}】")
+        for g in lst:
+            lab = f" {g['label']}" if g.get("label") else ""
+            out.append(f"　{g.get('name', '')}：{g.get('value_text', '')}{lab}")
+            if g.get("note"):
+                out.append(f"　　{g['note']}")
+            if g.get("detail"):
+                out.append(f"　　{g['detail']}")
+        out.append("")
+    return out
+
+
 def build_success(data: dict, state_data):
     as_of = data.get("as_of", "?")
     thesis = data.get("thesis_zh", "") or ""
     subject = f"市況判讀 {as_of}｜{thesis[:28]}…"
 
     lines = []
-    lines.append("【主張】")
-    lines.append(thesis or "（無）")
-    lines.append("")
-    lines.append("【路徑】")
-    lines.append(data.get("path_zh") or "（無）")
-    lines.append("")
+    card = _home_card(state_data) if _commentary(data) else None
+    if card:
+        lines.extend(build_home_card_lines(card))
+    else:
+        lines.append("【主張】")
+        lines.append(thesis or "（無）")
+        lines.append("")
+        lines.append("【路徑】")
+        lines.append(data.get("path_zh") or "（無）")
+        lines.append("")
     lines.append("【三個時間框架】")
     lines.extend(build_horizons_lines(data.get("horizons"), commentary=_commentary(data)))
     lines.append("")
@@ -381,6 +476,87 @@ def render_one_minute_html(data, state_data) -> str:
         f'<div style="font-size:14px;font-weight:700;color:{COLOR_DARK};margin-bottom:8px;">一分鐘版</div>'
         f"{rows}"
     )
+
+
+def _td(content, style="", **attrs) -> str:
+    extra = "".join(f' {k}="{v}"' for k, v in attrs.items())
+    return f'<td{extra} style="{style}">{content}</td>'
+
+
+def render_home_card_html(card) -> str:
+    """四層 HTML（inline style、table 版面）：結論＋日期、依主張分組的證據、資產動能 2×2、儀表兩組。"""
+    parts = []
+    dl = _card_date_line(card)
+    parts.append(
+        f'<div style="font-size:17px;font-weight:700;line-height:1.55;color:{COLOR_DARK};">{esc(card.get("headline"))}</div>'
+        + (f'<div style="font-size:11px;color:{COLOR_GRAY};margin-top:4px;">{esc(dl)}</div>' if dl else "")
+    )
+    # ② 證據
+    for g in card.get("groups") or []:
+        rows = []
+        for l in g.get("lines") or []:
+            val = esc(l.get("value_text"))
+            if l.get("read_value_text") and l.get("read_value_text") != l.get("value_text"):
+                val += f'<div style="font-size:10px;font-weight:400;color:{COLOR_GRAY};">判讀時 {esc(l["read_value_text"])}</div>'
+            rows.append(
+                "<tr>"
+                + _td(esc(l.get("label")), f"padding:3px 6px 3px 0;font-size:12px;color:{COLOR_DARK};vertical-align:top;", width="34%")
+                + _td(val, f"padding:3px 8px 3px 0;font-size:12px;font-weight:700;color:{COLOR_DARK};vertical-align:top;white-space:nowrap;", width="18%")
+                + _td(esc(l.get("position_text")), f"padding:3px 0;font-size:11px;color:{COLOR_GRAY};vertical-align:top;line-height:1.5;")
+                + "</tr>"
+            )
+        parts.append(
+            f'<div style="margin-top:14px;padding-top:8px;border-top:1px solid {COLOR_BORDER};">'
+            f'<div style="font-size:13px;font-weight:700;color:{COLOR_DARK};line-height:1.55;margin-bottom:3px;">{esc(g.get("claim"))}</div>'
+            f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;">{"".join(rows)}</table></div>'
+        )
+    # ③ 動能 2×2
+    mom = card.get("momentum")
+    if isinstance(mom, dict) and mom.get("cells"):
+        stale = f"　動能到 {_md(mom.get('as_of'))}" if _momentum_stale(card) else ""
+        parts.append(section_header_html("ASSET MOMENTUM", "資產動能" + stale))
+        cells = []
+        for k in _MOMENTUM_ORDER:
+            c = mom["cells"].get(k) or {}
+            items = "、".join(esc(_momentum_item_text(it)) for it in c.get("items") or []) or "—"
+            cells.append(
+                f'<div style="font-size:11px;font-weight:700;color:{COLOR_GRAY};margin-bottom:3px;">{esc(c.get("title"))}</div>'
+                f'<div style="font-size:12px;line-height:1.7;color:{COLOR_DARK};">{items}</div>'
+            )
+        cell_style = f"padding:8px 10px;background-color:{COLOR_ZEBRA};border:1px solid {COLOR_BORDER};vertical-align:top;"
+        parts.append(
+            '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">'
+            f'<tr>{_td(cells[0], cell_style, width="50%")}{_td(cells[1], cell_style, width="50%")}</tr>'
+            f'<tr>{_td(cells[2], cell_style, width="50%")}{_td(cells[3], cell_style, width="50%")}</tr></table>'
+            + (f'<div style="font-size:11px;color:{COLOR_GRAY};line-height:1.55;margin-top:5px;">{esc(mom.get("note"))}</div>' if mom.get("note") else "")
+        )
+    # ④ 儀表
+    gauges = card.get("gauges") or {}
+    first = True
+    for key, title in (("now", "現在"), ("next_month", "接下來一個月")):
+        lst = gauges.get(key) or []
+        if not lst:
+            continue
+        if first:
+            parts.append(section_header_html("GAUGES", "儀表"))
+            first = False
+        rows = []
+        for g in lst:
+            lab = f' <span style="font-size:11px;font-weight:600;color:{COLOR_GRAY};">{esc(g.get("label"))}</span>' if g.get("label") else ""
+            note = esc(g.get("note")) + (f'<br>{esc(g["detail"])}' if g.get("detail") else "")
+            rows.append(
+                "<tr>"
+                + _td(esc(g.get("name")), f"padding:6px 8px 0 0;font-size:12px;color:{COLOR_DARK};vertical-align:top;", width="38%")
+                + _td(f'<b style="font-size:13px;color:{COLOR_DARK};">{esc(g.get("value_text"))}</b>{lab}', "padding:6px 0 0 0;vertical-align:top;")
+                + "</tr><tr>"
+                + _td(note, f"padding:1px 0 6px 0;font-size:11px;color:{COLOR_GRAY};line-height:1.55;border-bottom:1px solid {COLOR_BORDER};", colspan="2")
+                + "</tr>"
+            )
+        parts.append(
+            f'<div style="font-size:12px;font-weight:700;color:{COLOR_GOLD};margin:8px 0 2px 0;">{esc(title)}</div>'
+            f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;">{"".join(rows)}</table>'
+        )
+    return "".join(parts)
 
 
 def render_tiles_html(horizons) -> str:
@@ -574,8 +750,9 @@ def render_sector_html(data) -> str:
 def build_html_success(data: dict, state_data) -> str:
     as_of = data.get("as_of", "?")
     if _commentary(data):
+        card = _home_card(state_data)
         body_parts = [
-            render_one_minute_html(data, state_data),
+            render_home_card_html(card) if card else render_one_minute_html(data, state_data),
             section_header_html("THREE HORIZONS", "三個時間框架"),
             render_horizons_commentary_html(data.get("horizons")),
             section_header_html("THREE FORCES", "三股力量"),

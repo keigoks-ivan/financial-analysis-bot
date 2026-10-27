@@ -102,8 +102,8 @@ def test_fuses_distinguish_absolute_and_relative_distance():
 
 def test_long_copy_and_live_tables_are_collapsed_with_precise_metadata():
     html = PAGE.read_text(encoding="utf-8")
-    assert '<script src="text-summaries.js"></script>' in html
-    assert "window.MARKET_TEXT_SUMMARIES[original]" in html
+    assert "text-summaries" not in html
+    assert "MARKET_TEXT_SUMMARIES" not in html
     assert 'h.resolve_by || h.end_date' in html
     assert "目前數據與日期" in html
     assert "近 30 筆觀測" in html
@@ -133,3 +133,25 @@ def test_narrative_card_grids_shrink_to_the_content_width():
 def test_in_page_navigation_keeps_section_headings_visible():
     html = PAGE.read_text(encoding="utf-8")
     assert "#page-body>section,#sec-evidence{scroll-margin-top:110px}" in html
+
+
+# 2026-10-27：首頁、/market/、email 三處共用 state.home_card；前端卡片由 home-card.js 渲染，刪除 text-summaries.js。
+def test_market_page_and_home_render_home_card_without_text_summaries():
+    root = PAGE.parents[1]
+    market = PAGE.read_text(encoding="utf-8")
+    home = (root / "index.html").read_text(encoding="utf-8")
+    assert not (root / "market" / "text-summaries.js").exists()
+    assert "text-summaries" not in home and "MARKET_TEXT_SUMMARIES" not in home
+    assert '<script src="home-card.js"></script>' in market
+    assert '<script src="/market/home-card.js"></script>' in home
+    # /market/：hero 與證據層的新區塊；舊 bundle 沒有 home_card 時退回原呈現
+    assert "data.home_card" in market
+    assert 'id="sec-cockpit"' in market and 'id="heroCard"' in market
+    assert "renderMomentum" in market and "renderGauges" in market and "renderGroups" in market
+    # 首頁：讀 home_card，沒有時退回 read_headline
+    assert "d.home_card" in home and "renderAll" in home
+    assert "d.read_headline" in home
+    assert "ms-cockpit-tagx" not in home
+    js = (root / "market" / "home-card.js").read_text(encoding="utf-8")
+    for fn in ("renderHeadline", "renderGroups", "renderMomentum", "renderGauges", "renderAll"):
+        assert "function " + fn in js

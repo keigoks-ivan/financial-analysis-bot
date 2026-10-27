@@ -533,22 +533,7 @@ footer a{color:var(--muted)}
   .ms-cockpit-top{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:.5rem}
   .ms-cockpit-tag{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:.05em;
                   color:var(--accent);text-transform:uppercase}
-  .ms-cockpit-asof{font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--muted)}
-  .ms-cockpit-headline{font-size:.88rem;color:var(--text-sec);line-height:1.7;margin:0 0 .7rem;max-width:86ch}
-  .ms-cockpit-points{margin:-.15rem 0 .8rem 1.1rem;padding:0;font-size:.78rem;color:var(--text-sec);line-height:1.6;max-width:92ch}
-  .ms-cockpit-points:empty{display:none}.ms-cockpit-points li+li{margin-top:.2rem}
-  .ms-cockpit-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.7rem}
-  .ms-cockpit-chip{display:inline-flex;flex-direction:column;gap:.1rem;font-size:.68rem;color:var(--muted);
                    background:var(--accent-soft);border-radius:8px;padding:.35rem .6rem}
-  .ms-cockpit-chip b{font-family:'IBM Plex Mono',monospace;font-size:.88rem;color:var(--text);font-weight:700}
-  .ms-cockpit-chip[data-href]{cursor:pointer}
-  .ms-cockpit-chip[data-href]:hover{background:#e3e9f3}
-  .ms-cockpit-chip[hidden]{display:none}
-  .ms-cockpit-chip i{font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;margin-left:.35rem}
-  .ms-cockpit-chip i.d-green{color:#16a34a}.ms-cockpit-chip i.d-red{color:#dc2626}.ms-cockpit-chip i.d-muted{color:var(--muted)}
-  .ms-cockpit-chip--trend{min-width:9.5rem}
-  .mc-spark{display:block;width:100%;line-height:0;margin-top:.25rem}
-  .mc-spark svg{display:block;width:100%;height:26px}
   .ms-sleeve{margin-top:.7rem;padding-top:.6rem;border-top:1px solid var(--border-soft);cursor:pointer}
   .ms-sleeve-h{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-size:.7rem;font-weight:700;color:var(--text-sec);margin-bottom:.35rem}
   .ms-sleeve-h .tg{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:600;padding:.1rem .4rem;border-radius:4px;color:var(--amber);background:var(--bg-soft)}
@@ -559,8 +544,6 @@ footer a{color:var(--muted)}
   .ms-dots i.on{background:var(--accent)}
   .ms-f70-sum{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;color:var(--text);margin-top:.25rem}
   .ms-sleeve-date{font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:var(--muted);margin-top:.2rem}
-  .ms-cockpit-tagx{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:600;padding:.05rem .4rem;border-radius:4px;margin-right:.35rem;vertical-align:1px;color:var(--amber);background:var(--bg-soft)}
-  .ms-cockpit-tagx.ok{color:#fff;background:var(--teal)}
   .ms-grid{grid-template-columns:minmax(0,1fr)}
   @media(min-width:900px){#msT1{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:1.4rem}
     #msT1 .ms-sleeve{margin-top:0;padding-top:0;border-top:0;padding-left:1.4rem;border-left:1px solid var(--border-soft)}}
@@ -576,11 +559,8 @@ footer a{color:var(--muted)}
     <a class="ms-cockpit" id="msCockpit" href="/market/" hidden>
       <div class="ms-cockpit-top">
         <span class="ms-cockpit-tag">市況主控台</span>
-        <span class="ms-cockpit-asof" id="mcAsof"></span>
       </div>
-      <p class="ms-cockpit-headline" id="mcHeadline"></p>
-      <ul class="ms-cockpit-points" id="mcPoints"></ul>
-      <div class="ms-cockpit-chips" id="mcChips"><span id="mcChipsA" style="display:contents"></span><span class="ms-cockpit-chip ms-cockpit-chip--trend" id="mcChipRisk" data-href="#risk-chart" hidden></span><span class="ms-cockpit-chip ms-cockpit-chip--trend" id="mcChipStress" data-href="/intel/gauges.html" hidden></span></div>
+      <div id="mcCard"></div>
       <span class="ms-cockpit-cta">打開市況主控台 →</span>
     </a>
     <div class="ms-grid">
@@ -599,7 +579,7 @@ footer a{color:var(--muted)}
     </div>
   </div>
 </section>
-<script src="/market/text-summaries.js"></script>
+<script src="/market/home-card.js"></script>
 <script>
 (function(){
   var anyData=false;
@@ -692,142 +672,65 @@ footer a{color:var(--muted)}
   var p0=getJSON('/intel/data/status_snapshot.json').catch(function(){return null;});
   function rgColor(s){return s>=0.34 ? '#16a34a' : (s<=-0.34 ? '#dc2626' : '#b45309');}
 
-  // 主控台 chip（取代原磚 2/4）：沿用原磚的資料源與標籤/色票規則，現值＋色帶＋小 delta 合成一顆 chip
-  function setMcChip(id,name,text,color,dd,spark){
-    var c=el(id); if(!c)return;
-    c.innerHTML=mcEsc(name)+'<b style="color:'+color+'">'+mcEsc(text)+(dd?'<i class="d-'+dd.color+'">'+mcEsc(dd.txt)+'</i>':'')+'</b>'
-      +(spark?'<span class="mc-spark">'+buildSpark([{vals:spark,color:color,opacity:.7,dot:true}])+'</span>':'');
-    c.hidden=false; anyData=true;
-  }
   function mcEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
-  // 風險儀表：現值/標籤讀現況快照（fallback：risk_gauge.json），delta 讀 risk_history
-  var rgNow=null;
-  var p2a=p0.then(function(sn){
-    if(sn && sn.risk_gauge_score!=null && sn.risk_gauge_label){
-      rgNow={s:sn.risk_gauge_score,label:sn.risk_gauge_label}; return;
-    }
-    return getJSON('/cache/risk_gauge.json').then(function(d){
-      var g=d.history[d.history.length-1];
-      rgNow={s:g.score,label:g.label_zh};
-    });
-  }).catch(function(){});
-  var p2b=getJSON('/cache/risk_history.json').then(function(d){
-    var sc=d.score||[]; if(sc.length<2)return null;
-    return {dd:fmtDelta(sc[sc.length-1],sc[sc.length-2],2,'up-good'),sp:sc.slice(-WEEKLY_N)};   // 上升＝risk-on＝好→綠
-  }).catch(function(){return null;});
-  var p2=Promise.all([p2a,p2b]).then(function(r){
-    if(!rgNow)return;
-    setMcChip('mcChipRisk','風險儀表',(rgNow.s>=0?'+':'')+rgNow.s.toFixed(2)+' · '+rgNow.label,rgColor(rgNow.s),r[1]&&r[1].dd,r[1]&&r[1].sp);
-  }).catch(function(){});
-
-  // 跨資產壓力（/monitor/data/score_history.json）；label/color 抄 monitor 頁 BAND_LABELS/bandColor
-  var MON_LABEL={calm:'平靜',normal:'常態',warming:'升溫',tense:'緊張',extreme:'極端'};
-  var MON_COLOR={calm:'#15803d',normal:'#0d2244',warming:'#a16207',tense:'#c2410c',extreme:'#b91c1c'};
-  var p4=p0.then(function(sn){
-    var snapOK=!!(sn && sn.stress_score && sn.stress_score!=='—' && sn.stress_band_key);
-    return getJSON('/monitor/data/score_history.json').then(function(d){
-      var series=d.series||[]; if(!series.length)return;
-      var s=series[series.length-1], sc=s.s, bands=d.bands||{}, band='';
-      for(var b in bands){ if(sc>=bands[b][0] && sc<bands[b][1]){band=b;break;} }
-      if(!band && bands.extreme && sc>=bands.extreme[0]) band='extreme';
-      var spv=series.slice(-DAILY_N).map(function(x){return x.s;});
-      var dd=series.length>=2?fmtDelta(sc,series[series.length-2].s,1,'up-bad'):null; // 上升＝壓力升高＝壞→紅
-      if(snapOK) setMcChip('mcChipStress','跨資產壓力',sn.stress_score+' · '+(sn.stress_band||MON_LABEL[sn.stress_band_key]||sn.stress_band_key),MON_COLOR[sn.stress_band_key]||'#0d2244',dd,spv);
-      else setMcChip('mcChipStress','跨資產壓力',f1(sc)+' · '+(MON_LABEL[band]||band),MON_COLOR[band]||'#0d2244',dd,spv);
-    }).catch(function(){
-      if(snapOK) setMcChip('mcChipStress','跨資產壓力',sn.stress_score+' · '+(sn.stress_band||MON_LABEL[sn.stress_band_key]||sn.stress_band_key),MON_COLOR[sn.stress_band_key]||'#0d2244',null);
-    });
-  }).catch(function(){});
-
-  // chip 點擊：主控台整張是 <a>，chip 各自導向原卡的詳情頁
-  el('mcChips').addEventListener('click',function(ev){
-    var c=ev.target.closest('.ms-cockpit-chip[data-href]'); if(!c)return;
-    ev.preventDefault(); ev.stopPropagation();
-    var h=c.getAttribute('data-href');
-    if(h.charAt(0)==='#'){var t=document.querySelector(h); if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}
-    else location.href=h;
-  });
-
-  // 市場脈動（/home/pulse.json）要點併入主控台 bullet；轉折提醒標「已確認／接近中」
-  var pPulse=getJSON('/home/pulse.json').then(function(p){
-    if(!p||!p.headline)return [];
-    var out=[];
-    ((p.monitor||{}).points||[]).forEach(function(x){out.push(mcEsc(x));});
-    ((p.radar||{}).points||[]).forEach(function(x){out.push(mcEsc(x));});
-    (p.reversal_flags||[]).forEach(function(f){
-      var near=/未站穩|接近/.test(f.evidence||'');
-      out.push('<span class="ms-cockpit-tagx'+(near?'':' ok')+'">轉折・'+(near?'接近中':'已確認')+'</span>'+mcEsc(f.axis)+' '+mcEsc(f.from)+'→'+mcEsc(f.to)+(f.evidence?'（'+mcEsc(f.evidence)+'）':''));
-    });
-    return out;
-  }).catch(function(){return [];});
-
-  // 市況主控台合成卡（/market/data/state.json）——獨立 fail-safe：缺檔/壞檔只讓這張卡不顯示，
-  // 不影響下方既有四磚；四磚的資料源與判斷邏輯本身不變。
-  function mcPct(v){return (v==null)?'—':Math.round(v*100)+'%';}
-  // 2026-09-14：首頁只放完整短句；完整判讀留在 /market/，不以截字製造殘句。
-  function mcShortRead(value){
-    var original=String(value||'').replace(/\s+/g,' ').trim();
-    var edited=window.MARKET_TEXT_SUMMARIES&&window.MARKET_TEXT_SUMMARIES[original];
-    if(Array.isArray(edited)&&edited.length){
-      return {headline:edited[0],points:edited.slice(1,3)};
-    }
-    if(original&&original.length<=80)return {headline:original,points:[]};
-    var sentences=original.match(/[^。！？]+[。！？]/g)||[];
-    var short=[];
-    for(var i=0;i<sentences.length&&short.length<3;i++){
-      var sentence=sentences[i].trim();
-      if(sentence.length>80)break;
-      short.push(sentence);
-    }
-    return short.length?{headline:short[0],points:short.slice(1,3)}:{headline:'查看最新市況判讀',points:[]};
+  // 市況主控台合成卡：讀 /market/data/state.json 的 home_card，由 /market/home-card.js 畫四層
+  // （結論＋日期、依主張分組的證據、資產動能 2×2、儀表「現在」「接下來一個月」）。
+  // 獨立 fail-safe：缺檔／壞檔只讓這張卡不顯示，不影響下方既有四磚。
+  // 舊 state（沒有 home_card）退回只顯示 read_headline 一句。
+  var HC=window.MarketHomeCard;
+  function firstSentence(s){
+    s=String(s||'').replace(/\s+/g,' ').trim();
+    var m=s.match(/^[^。！？]+[。！？]/);
+    return m?m[0]:s;
   }
-  var p5=Promise.all([getJSON('/market/data/state.json'),pPulse]).then(function(rr){
-    var d=rr[0], pulseLis=rr[1];
-    var rz=d.read_zh||{}, cs=d.council_summary||{}, env=d.environment||[];
-    // v4：判讀層主張優先，過期或尚無判讀時 K1 的 read_headline 為 null，退回既有機械 headline
-    var hasEditorial=d.read_headline!=null&&d.read_headline!=='';
-    var headline=hasEditorial?d.read_headline:rz.headline;
-    if(!headline)return;
-    var brief=mcShortRead(headline);
-    el('mcHeadline').textContent=brief.headline;
-    el('mcPoints').innerHTML=brief.points.map(function(p){return '<li>'+mcEsc(p)+'</li>';}).join('')+pulseLis.map(function(h){return '<li>'+h+'</li>';}).join('');
-    var dates=[];
-    if(hasEditorial&&d.read_as_of)dates.push('判讀 '+d.read_as_of);
-    if(d.as_of)dates.push('資料 '+d.as_of);
-    el('mcAsof').textContent=dates.join(' · ');
-    var chips=[];
-    var vol21=cs.vol_up_21d;
-    if(vol21)chips.push(['波動一個月後升高機率', mcPct(vol21.p)+'（基準 '+mcPct(vol21.p_clim)+'）']);
-    var ctaDist=null;
-    (((d.flows||{}).cta)||[]).forEach(function(m){
-      (m.levels||[]).forEach(function(l){
-        if(l.w===20 && l.dist_pct!=null && (ctaDist===null||Math.abs(l.dist_pct)<Math.abs(ctaDist)))ctaDist=l.dist_pct;
-      });
-    });
-    if(ctaDist!=null)chips.push(['最近 CTA（趨勢跟隨基金）翻轉距離', (ctaDist>0?'+':'')+ctaDist.toFixed(1)+'%']);
-    var det=env.filter(function(e){return e.key==='detective';})[0];
-    if(det)chips.push(['警戒度', det.value, '/intel/change.html', true]);
-    el('mcChipsA').innerHTML=chips.map(function(c){
-      return '<span class="ms-cockpit-chip'+(c[3]?' ms-cockpit-chip--trend':'')+'"'+(c[2]?' data-href="'+c[2]+'"':'')+(c[3]?' id="mcChipDet"':'')+'>'+mcEsc(c[0])+'<b>'+mcEsc(c[1])+'</b>'+(c[3]?'<span class="mc-spark"></span>':'')+'</span>';
-    }).join('');
+  var p5=getJSON('/market/data/state.json').then(function(d){
+    var box=el('mcCard'), card=d.home_card;
+    if(HC&&HC.isValid(card)){
+      box.innerHTML=HC.renderAll(card,{spark:true});
+      HC.bind(box);
+    }else{
+      var h=d.read_headline||((d.read_zh||{}).headline);
+      if(!h)return;
+      var fake={headline:firstSentence(h),data_as_of:d.as_of,read_as_of:d.read_as_of};
+      box.innerHTML=HC?'<div class="hc">'+HC.renderHeadline(fake)+'</div>':mcEsc(fake.headline);
+    }
     el('msCockpit').hidden=false;
     anyData=true;
   }).catch(function(){});
 
+  // 儀表卡走勢線：警戒度、風險儀表、跨資產壓力。卡片先由 home_card 畫好，這裡只補線。
+  function setHcSpark(key,vals,color){
+    var s=document.querySelector('.hc-spark[data-spark="'+key+'"]');
+    if(!s||!vals||vals.length<2)return;
+    s.innerHTML=buildSpark([{vals:vals,color:color,opacity:.7,dot:true}]);
+  }
+  var MON_COLOR={calm:'#15803d',normal:'#0d2244',warming:'#a16207',tense:'#c2410c',extreme:'#b91c1c'};
   var DET_COLOR={calm:'#15803d',watch:'#0d2244',warming:'#a16207',tense:'#c2410c',alert:'#b91c1c'};
-  var pDet=p5.then(function(){
-    var c=el('mcChipDet'); if(!c)return;
+  var pSpark=p5.then(function(){
+    if(!document.querySelector('.hc-spark'))return;
     return Promise.all([
-      getJSON('/detective/data/alert_history_backfill.json').catch(function(){return null;}),
-      getJSON('/detective/data/alert_history.json').catch(function(){return null;})
-    ]).then(function(r){
-      var bf=(r[0]&&r[0].points)||[], lv=(r[1]&&r[1].points)||[], map={};
-      bf.forEach(function(q){map[q[0]]=q;}); lv.forEach(function(q){map[q[0]]=q;});
-      var m=Object.keys(map).sort().map(function(k){return map[k];}); if(m.length<2)return;
-      var col=DET_COLOR[m[m.length-1][2]]||'#c2410c';
-      c.querySelector('.mc-spark').innerHTML=buildSpark([{vals:m.slice(-DAILY_N).map(function(q){return q[1];}),color:col,opacity:.7,dot:true}]);
-    });
+      getJSON('/cache/risk_history.json').then(function(d){
+        var sc=d.score||[]; if(sc.length<2)return;
+        setHcSpark('risk_gauge',sc.slice(-WEEKLY_N),rgColor(sc[sc.length-1]));
+      }).catch(function(){}),
+      getJSON('/monitor/data/score_history.json').then(function(d){
+        var series=d.series||[]; if(!series.length)return;
+        var sc=series[series.length-1].s, bands=d.bands||{}, band='';
+        for(var b in bands){ if(sc>=bands[b][0] && sc<bands[b][1]){band=b;break;} }
+        if(!band && bands.extreme && sc>=bands.extreme[0]) band='extreme';
+        setHcSpark('stress',series.slice(-DAILY_N).map(function(x){return x.s;}),MON_COLOR[band]||'#0d2244');
+      }).catch(function(){}),
+      Promise.all([
+        getJSON('/detective/data/alert_history_backfill.json').catch(function(){return null;}),
+        getJSON('/detective/data/alert_history.json').catch(function(){return null;})
+      ]).then(function(r){
+        var bf=(r[0]&&r[0].points)||[], lv=(r[1]&&r[1].points)||[], map={};
+        bf.forEach(function(q){map[q[0]]=q;}); lv.forEach(function(q){map[q[0]]=q;});
+        var m=Object.keys(map).sort().map(function(k){return map[k];}); if(m.length<2)return;
+        setHcSpark('alert',m.slice(-DAILY_N).map(function(q){return q[1];}),DET_COLOR[m[m.length-1][2]]||'#c2410c');
+      }).catch(function(){})
+    ]);
   }).catch(function(){});
 
   // 實單目前目標持股（讀 /long-track-w52-adaptive/state.json，只取百分比與分數；2026-10-18 起取代原本的 F70 紙上候選卡）
@@ -850,7 +753,7 @@ footer a{color:var(--muted)}
   }).catch(function(){});
   ['ms1pos'].forEach(function(id){el(id).addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();location.href=this.getAttribute('data-href');});});
 
-  Promise.allSettled([p1,p2,p4,p5,pDet,pPos]).then(function(){
+  Promise.allSettled([p1,p5,pSpark,pPos]).then(function(){
     if(anyData)el('market-status').hidden=false;
   });
 })();
