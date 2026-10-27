@@ -56,6 +56,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = ROOT / "scripts"
 BUILD_SCRIPT = SCRIPTS_DIR / "build_stock_dash.py"
 DD_SCREENER_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
+DD_SCREENER_TW_LATEST = ROOT / "docs" / "dd-screener" / "tw" / "latest.json"
 OUT_DIR = ROOT / "docs" / "stock-dash" / "data"
 BUILD_REPORT_PATH = OUT_DIR / "_build_report.json"
 
@@ -116,8 +117,15 @@ def load_tickers():
     except Exception as e:  # noqa: BLE001
         print(f"[build_stock_dash_all] FAILED to parse {DD_SCREENER_LATEST}: {e}", file=sys.stderr)
         return [], None
-    tickers = sorted({str(s["ticker"]).strip() for s in d.get("stocks", []) if s.get("ticker")})
-    return tickers, d.get("as_of")
+    tickers = {str(s["ticker"]).strip() for s in d.get("stocks", []) if s.get("ticker")}
+    # 2026-10-27：台股名單（78 檔）也上儀表板；讀不到就只做主名單，不擋整批。
+    if DD_SCREENER_TW_LATEST.exists():
+        try:
+            tw = json.loads(DD_SCREENER_TW_LATEST.read_text(encoding="utf-8"))
+            tickers |= {str(s["ticker"]).strip() for s in tw.get("stocks", []) if s.get("ticker")}
+        except Exception as e:  # noqa: BLE001
+            print(f"[build_stock_dash_all] FAILED to parse {DD_SCREENER_TW_LATEST}: {e}", file=sys.stderr)
+    return sorted(tickers), d.get("as_of")
 
 
 def prebuild_shared_files(refresh_universe):

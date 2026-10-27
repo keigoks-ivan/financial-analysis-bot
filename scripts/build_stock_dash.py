@@ -1685,6 +1685,12 @@ def compute_market_beta(ticker, df, spy_df, window=252):
 DD_SCREENER_LATEST_PATH = ROOT / "docs" / "dd-screener" / "latest.json"      # read-only source
 EPS_SNAPSHOT_DIR = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"  # read-only source
 EPS_DAILY_SNAPSHOT_DIR = ROOT / "data" / "eps-estimates" / "daily" / "dd"  # 2026-10-21 每日快照（eps_daily.daily_dir("dd")）
+# 2026-10-27：台股名單（docs/dd-screener/tw/，78 檔）也上儀表板。不在主名單、只在台股名單的
+# 股票，整個 process 改讀台股名單與它自己的月／日快照（同一支 build_dd_screener.py 產出，
+# 欄位與幣別口徑相同）。每檔 build 是獨立 subprocess，所以在 build() 開頭切一次即可。
+DD_SCREENER_TW_LATEST_PATH = ROOT / "docs" / "dd-screener" / "tw" / "latest.json"
+EPS_SNAPSHOT_TW_DIR = ROOT / "docs" / "dd-screener" / "tw" / "eps-estimates-snapshots"
+EPS_DAILY_SNAPSHOT_TW_DIR = ROOT / "data" / "eps-estimates" / "daily" / "tw"
 SUE_BREAKS_PATH = OUT_DIR / "_sue_breaks.json"        # shared file this script writes
 PEAD_EVENTS_CSV = Path.home() / "v7-backtest" / "results" / "pead" / "pead_events.csv"  # read-only, outside repo
 INSIDER_CLUSTER_WINDOW_DAYS = 90
@@ -1763,6 +1769,27 @@ def find_dd_screener_row(ticker):
         if row.get("ticker") == ticker:
             return row, dd
     return None, dd
+
+
+def _ticker_in_list(path, ticker):
+    try:
+        d = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return any(s.get("ticker") == ticker for s in d.get("stocks", []))
+
+
+def select_dd_source(ticker):
+    """主名單優先；只在台股名單的股票，把名單與 EPS 快照路徑切到台股那一份。回傳 "main"／"tw"。"""
+    global DD_SCREENER_LATEST_PATH, EPS_SNAPSHOT_DIR, EPS_DAILY_SNAPSHOT_DIR, _dd_screener_cache
+    if _ticker_in_list(DD_SCREENER_LATEST_PATH, ticker) or not _ticker_in_list(DD_SCREENER_TW_LATEST_PATH, ticker):
+        return "main"
+    DD_SCREENER_LATEST_PATH = DD_SCREENER_TW_LATEST_PATH
+    EPS_SNAPSHOT_DIR = EPS_SNAPSHOT_TW_DIR
+    EPS_DAILY_SNAPSHOT_DIR = EPS_DAILY_SNAPSHOT_TW_DIR
+    _dd_screener_cache = None
+    _eps_snapshot_cache.clear()
+    return "tw"
 
 
 # ── 財年代號推算（Correction 2：不能再靠 DD dd-meta 的 fy_end_month）───────────
@@ -3979,6 +4006,7 @@ def build(ticker, refresh_universe=False, state_dir=None, force_version=False, d
     # it. `ticker` itself stays the dd-screener identity everywhere else in this
     # file — file name, dd-screener/EPS-snapshot/cockpit lookups, FINRA short volume —
     # only the actual yfinance calls below use the resolved symbol.
+    select_dd_source(ticker)
     from dd_screener_quality import _yf_ticker_for
     yf_ticker = _yf_ticker_for(ticker)
     t = yf.Ticker(yf_ticker)
