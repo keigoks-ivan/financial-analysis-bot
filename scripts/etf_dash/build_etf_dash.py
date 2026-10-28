@@ -4172,6 +4172,15 @@ def main() -> int:
     overview_path.write_text(json.dumps(build_overview_json(), ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[etf_dash] wrote {overview_path}")
 
+    # 本站挑選的事前登記追蹤（2026-10-28 起，見 picks_track.py）：讀剛寫好的基金
+    # JSON 與 flows，另抓三檔的收盤與配息。失敗只警告，不影響其他輸出。
+    try:
+        import picks_track  # 延後 import：模組名與 scripts/active_etf/picks.py 區分開
+        track = picks_track.write_picks_track()
+        print(f"[etf_dash] picks: status={track['status']} base_date={track['base_date']} as_of={track['as_of']}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING picks_track failed: {e}", file=sys.stderr)
+
     # 稽核用：PRICE 模式這次 run 應該是 0——fetch_ticker_eps_and_price()（唯一
     # 會碰 eps_trend 的函式）只在 build_fund_full() 的逐檔迴圈裡被呼叫，
     # build_fund_price() 完全不會走到那條路徑。
