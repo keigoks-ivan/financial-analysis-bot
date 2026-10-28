@@ -704,7 +704,10 @@ def main():
     # 本站挑選追蹤：讀剛算好的 22 檔結果與股價快取，算含息報酬與查核點；失敗只警告
     try:
         track = picks.write_picks_track(results, price_history)
-        print("picks: status={} base_date={} as_of={}".format(track["status"], track["base_date"], track["as_of"]))
+        regs = track.get("registrations") or []
+        print("picks: {} registration(s); latest status={} base_date={} as_of={}".format(
+            len(regs), regs[0].get("status") if regs else None, regs[0].get("base_date") if regs else None,
+            regs[0].get("as_of") if regs else None))
     except Exception as e:  # noqa: BLE001
         print("picks WARN: {}".format(e), file=sys.stderr)
 

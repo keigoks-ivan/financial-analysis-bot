@@ -4177,7 +4177,9 @@ def main() -> int:
     try:
         import picks_track  # 延後 import：模組名與 scripts/active_etf/picks.py 區分開
         track = picks_track.write_picks_track()
-        print(f"[etf_dash] picks: status={track['status']} base_date={track['base_date']} as_of={track['as_of']}")
+        regs = track.get("registrations") or []
+        print(f"[etf_dash] picks: {len(regs)} registration(s); latest status={regs[0].get('status') if regs else None} "
+              f"base_date={regs[0].get('base_date') if regs else None} as_of={regs[0].get('as_of') if regs else None}")
     except Exception as e:  # noqa: BLE001
         print(f"[etf_dash] WARNING picks_track failed: {e}", file=sys.stderr)
 

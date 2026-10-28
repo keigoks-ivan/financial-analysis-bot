@@ -16,7 +16,8 @@
 | `dd_eps_history.jsonl` | dd-screener 名單每天的明年度與後年度 EPS 預估，一行一天，2026-05-15 起；欄位順序見 `scripts/etf_dash/dd_eps_history.py` 的 FIELDS | JSONL |
 | `flows/{ETF}.jsonl` | 每天的流通單位數與淨值，用來推算資金流 | JSONL |
 | `tw_industry_map.json` | 台股公司代號對產業別（證交所） | JSON |
-| `picks.json` | 本站挑選的事前登記（2026-10-28：SMH 攻、XLV 守，基準 SPY，結算 2027-10-28）：挑選、登記日數字、查核點定義。手寫，登記後不改 | JSON |
+| `picks.json` | 本站挑選的事前登記清單（picks-registry-v2）：每筆登記的挑選、文字、登記日數字、查核點。第一筆 2026-10-28（SMH 攻、XLV 守，基準 SPY，結算 2027-10-28）手寫；之後每季 1 日由雲端排程 picks-monthly 用 `scripts/etf_dash/picks_register.py` 新增，既有登記不改 | JSON |
+| `picks_reviews.json` | 每月 1 日雲端排程寫的月評（picks-reviews-v1），依登記 id 歸屬；`picks_candidates.json` 是季度重挑用的候選數據（`picks_candidates.py`），`picks_status.json` 是排程成功／失敗紀錄 | JSON |
 | `picks_prices.json` | 挑選追蹤用的三檔（SMH、XLV、SPY）登記日起的未還原收盤與除息日配息，`scripts/etf_dash/picks_track.py` 每天抓並覆蓋；抓不到時當退路。輸出在 `docs/etf-dash/data/picks_track.json` | JSON |
 
 ## 已知限制
