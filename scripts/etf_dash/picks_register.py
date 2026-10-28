@@ -89,7 +89,8 @@ def frozen_of(row: dict) -> dict:
 
 
 def build_frozen_table(cands: dict, codes: list[str], as_of: str) -> dict:
-    rows_of = [fund_row(cands, c) for c in codes + [BENCH]]
+    cols = codes if BENCH in codes else codes + [BENCH]
+    rows_of = [fund_row(cands, c) for c in cols]
     w = cands["windows"]
 
     def line(label, fn):
@@ -119,10 +120,39 @@ def build_frozen_table(cands: dict, codes: list[str], as_of: str) -> dict:
         line("規模（億美元）", lambda r: "—" if r["scale_usd_bn"] is None else f"{r['scale_usd_bn'] * 10:,.0f}"),
         line("近一月淨申贖（億美元）", flow),
     ]
-    return {"title": f"登記日數字（{as_of} 收盤，美元含息；之後不改）", "columns": codes + [BENCH], "rows": rows}
+    return {"title": f"登記日數字（{as_of} 收盤，美元含息；之後不改）", "columns": cols, "rows": rows}
+
+
+def build_checkpoints_bench(cands: dict, atk: str) -> list[dict]:
+    """守方是基準 SPY 本身：查核點只看攻的那一檔（cp6 回檔比對不成立，略）。"""
+    ra = fund_row(cands, atk)
+    if ra["fwd_pe"] is None or ra["fy1_rev_3m_pct"] is None or ra["breadth_90d_up_pct"] is None:
+        raise RegisterError(f"{atk} 缺遠期本益比、三個月上修或上修寬度，無法產生查核點")
+    pe_max = round(ra["fwd_pe"] * 1.3, 1)
+    aum100 = round(ra["scale_usd_bn"] * 10) if ra["scale_usd_bn"] is not None else None
+    cp5_text = (f"{atk} 近一個月淨流出超過規模的 5%（登記日規模 {aum100:,} 億美元，即流出 {round(aum100 * 0.05):,} 億以上）"
+                if aum100 is not None else f"{atk} 近一個月淨流出超過規模的 5%（登記日規模無資料）")
+    return [
+        {"id": "cp1", "kind": "lag", "days": 126, "codes": [atk],
+         "text": f"{atk} 登記後的美元含息累計報酬，連續 126 個交易日（約半年）落後 {BENCH}",
+         "consequence": "攻的挑選推翻，不換檔，結算時照算"},
+        {"id": "cp2", "kind": "rev_3m", "min": -10, "codes": [atk],
+         "text": f"{atk} 成分股加權明年度 EPS 預估，近三個月修正低於 {MINUS}10%（登記日 {pct(ra['fy1_rev_3m_pct'])}）",
+         "consequence": "成分股盈餘轉向下修，攻的那一檔重新評估"},
+        {"id": "cp3", "kind": "pe_max", "max": {atk: pe_max}, "codes": [atk],
+         "text": f"{atk} 加權遠期本益比比登記日高三成以上：超過 {pe_max:.1f} 倍（登記日 {ra['fwd_pe']:.1f}）",
+         "consequence": "估值比登記日貴三成，攻的那一檔重新評估"},
+        {"id": "cp4", "kind": "breadth", "code": atk, "min": 50,
+         "text": f"{atk} 近三個月 EPS 上修的成分股權重低於 50%（登記日 {ra['breadth_90d_up_pct']:.1f}%）",
+         "consequence": "上修只剩少數幾檔在撐，攻的那一檔推翻"},
+        {"id": "cp5", "kind": "outflow", "code": atk, "pct": 5, "text": cp5_text,
+         "consequence": "資金在撤，攻的那一檔重新評估"},
+    ]
 
 
 def build_checkpoints(cands: dict, atk: str, dfn: str) -> list[dict]:
+    if dfn == BENCH:
+        return build_checkpoints_bench(cands, atk)
     ra, rd = fund_row(cands, atk), fund_row(cands, dfn)
     for r in (ra, rd):
         if r["fwd_pe"] is None or r["fy1_rev_3m_pct"] is None:
@@ -168,6 +198,13 @@ def validate_text(text: dict) -> None:
             raise RegisterError(f"第 {i} 段格式錯：要 {{\"lead\": \"\", \"text\": \"…\"}}")
     if not isinstance(text.get("frozen_note"), str) or not text["frozen_note"].strip():
         raise RegisterError("text.json 缺 frozen_note")
+    for k in ("title", "sub"):  # 選填：覆蓋程式模板（owner 登記用）
+        if text.get(k) is not None and (not isinstance(text[k], str) or not text[k].strip()):
+            raise RegisterError(f"text.json 的 {k} 要是非空字串")
+    links = text.get("links")
+    if links is not None and (not isinstance(links, list) or not all(
+            isinstance(x, dict) and isinstance(x.get("label"), str) and isinstance(x.get("href"), str) for x in links)):
+        raise RegisterError("text.json 的 links 要是 [{label, href}] 清單")
 
 
 def build_registration(cands: dict, registry: dict, atk: str, dfn: str, registered_on: str, text_in: dict,
@@ -184,9 +221,9 @@ def build_registration(cands: dict, registry: dict, atk: str, dfn: str, register
         raise RegisterError("登記日早於既有登記，清單只能往後 append")
     if atk == dfn:
         raise RegisterError("攻守不能是同一檔")
-    for k in (atk, dfn):
-        if k == BENCH:
-            raise RegisterError(f"{k} 是基準，不能挑")
+    if atk == BENCH:
+        raise RegisterError(f"{BENCH} 是基準，不能當攻方")
+    bench_defend = dfn == BENCH  # 守的那一半直接放基準（2026-10-28 深度檢驗後的做法）
     validate_text(text_in)
     ra, rd = fund_row(cands, atk), fund_row(cands, dfn)
     rb = fund_row(cands, BENCH)
@@ -200,31 +237,37 @@ def build_registration(cands: dict, registry: dict, atk: str, dfn: str, register
     as_of_s = cands["as_of"]
     settle_on = plus_one_year(ro).isoformat()
     frozen = {atk: frozen_of(ra), dfn: frozen_of(rd), BENCH: frozen_of(rb),
-              "overlap_pct": overlap_of(cands, atk, dfn),
+              "overlap_pct": overlap_of(cands, atk, dfn), "bench_as_defend": bench_defend,
               "metrics_as_of": {"prices": as_of_s,
                                 "eps": min(x for x in (ra["eps_as_of"], rd["eps_as_of"]) if x),
                                 "holdings": min(x for x in (ra["holdings_as_of"], rd["holdings_as_of"]) if x)}}
     text = {
-        "title": f"21 檔裡選兩檔：{atk} 攻、{dfn} 守",
-        "sub": (f"登記日寫死，中途不換檔；結算日 {settle_on}，看兩檔各半的美元含息報酬對 {BENCH}。"
+        "title": text_in.get("title") or (f"21 檔裡只買一檔：{atk} 攻，守的那一半放 {BENCH}" if bench_defend
+                                          else f"21 檔裡選兩檔：{atk} 攻、{dfn} 守"),
+        "sub": text_in.get("sub") or (
+                f"登記日寫死，中途不換檔；結算日 {settle_on}，看{'兩檔' if not bench_defend else f' {atk} 與 {BENCH} '}各半的美元含息報酬對 {BENCH}。"
                 "這一區的文字與登記日數字不再改，追蹤表與查核點每個美股交易日收盤後自動更新。"
                 "這是研究頁的判斷，與實單規則無關。"),
         "paragraphs": [{"lead": p.get("lead", ""), "text": p["text"]} for p in text_in["paragraphs"]],
         "frozen_table": build_frozen_table(cands, [atk, dfn], as_of_s),
         "frozen_note": text_in["frozen_note"],
     }
+    if text_in.get("links"):
+        text["links"] = [{"label": x["label"].strip(), "href": x["href"].strip()} for x in text_in["links"]]
     return {"id": registered_on, "kind": kind, "registered_on": registered_on, "settle_on": settle_on,
             "written_by": written_by, "evidence_as_of": as_of_s, "picks": picks, "frozen": frozen,
             "text": text, "checkpoints": build_checkpoints(cands, atk, dfn)}
 
 
-def run_text_check(text_path: Path, cands: dict) -> bool:
+def run_text_check(text_path: Path, cands: dict, extra_evidence: Path | None = None) -> bool:
     """呼叫 scripts/check_picks_text.py；沒有該檔只印警告。回傳 True＝可繼續。"""
     if not CHECK_SCRIPT.exists():
         print(f"[警告] 找不到 {CHECK_SCRIPT.relative_to(REPO_ROOT)}，跳過文字檢查", file=sys.stderr)
         return True
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
         f.write(pc.brief_within_limit(cands))
+        if extra_evidence is not None:  # owner 登記附深度分析摘要
+            f.write("\n\n# 額外證據\n" + extra_evidence.read_text(encoding="utf-8"))
         ev = f.name
     try:
         r = subprocess.run([sys.executable, str(CHECK_SCRIPT), "--kind", "etf-dash", "--text", str(text_path),
@@ -243,7 +286,8 @@ def main():
     ap.add_argument("--registered-on", required=True)
     ap.add_argument("--text", required=True, help="text.json（paragraphs 4 段＋frozen_note）")
     ap.add_argument("--dry-run", action="store_true", help="只印新登記，不寫 picks.json")
-    ap.add_argument("--kind", default="quarterly", choices=["initial", "quarterly"])
+    ap.add_argument("--kind", default="quarterly", choices=["initial", "quarterly", "revision"])
+    ap.add_argument("--extra-evidence", default=None, help="額外證據檔（owner 登記附深度分析摘要，給文字檢查用）")
     ap.add_argument("--written-by", default="routine", choices=["owner", "routine"])
     ap.add_argument("--max-age-days", type=int, default=5, help="候選數據 as_of 距登記日的上限（天），只給測試放寬")
     ap.add_argument("--candidates", default=str(CANDIDATES_PATH))
@@ -259,7 +303,7 @@ def main():
     except (RegisterError, OSError, ValueError, KeyError) as e:
         print(f"[拒絕] {e}", file=sys.stderr)
         return 2
-    if not run_text_check(Path(args.text), cands):
+    if not run_text_check(Path(args.text), cands, Path(args.extra_evidence) if args.extra_evidence else None):
         print("[拒絕] 文字檢查 FAIL，未寫入", file=sys.stderr)
         return 3
     if args.dry_run:

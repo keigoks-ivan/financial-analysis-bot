@@ -172,9 +172,10 @@ def evaluate_checkpoints(picks: dict, funds_by_code: dict, tracks: dict, bench_t
         kind = cp["kind"]
         row = {"id": cp["id"], "text": cp["text"], "consequence": cp["consequence"], "kind": kind,
                "current": None, "current_label": None, "triggered": False, "status": "untriggered"}
+        targets = [p for p in picks["picks"] if p["code"] in cp.get("codes", [q["code"] for q in picks["picks"]])]
         if kind == "lag":
             parts, trig = [], False
-            for p in picks["picks"]:
+            for p in targets:
                 n = consecutive_days_behind(tracks.get(p["code"], []), bench_track)
                 parts.append(f"{p['code']} 連續落後 {n} 天")
                 trig = trig or n >= cp["days"]
@@ -182,7 +183,7 @@ def evaluate_checkpoints(picks: dict, funds_by_code: dict, tracks: dict, bench_t
             row["triggered"] = trig
         elif kind == "rev_3m":
             parts, trig, any_data = [], False, False
-            for p in picks["picks"]:
+            for p in targets:
                 f = funds_by_code.get(p["code"]) or {}
                 v = ((f.get("forward_summary") or {}).get("fy1") or {}).get("rev_3m_pct")
                 if v is None:
@@ -196,7 +197,7 @@ def evaluate_checkpoints(picks: dict, funds_by_code: dict, tracks: dict, bench_t
                 row["triggered"] = trig
         elif kind == "pe_max":
             parts, trig, any_data = [], False, False
-            for p in picks["picks"]:
+            for p in targets:
                 f = funds_by_code.get(p["code"]) or {}
                 v = (f.get("weighted_forward_pe") or {}).get("value")
                 if v is None:
@@ -349,6 +350,8 @@ def build_registration(reg: dict, registry: dict, prices: dict, ticker_of: dict,
             }
 
         for p in reg["picks"]:
+            if p["code"] == bench:  # 守方就是基準：最後一列已是 SPY，不重複列
+                continue
             out["rows"].append(row_for(p["name"], p["code"], tracks[p["code"]], dividends[ticker_of[p["code"]]]))
         # 兩檔各半、登記日買進後不再平衡＝兩條含息指數的平均
         if all(tracks[c] for c in pick_codes):
