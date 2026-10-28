@@ -46,6 +46,7 @@ import fetch_holdings as fh  # noqa: E402       — FUND_REGISTRY / read_fund_js
 import analytics as an  # noqa: E402            — 五個分析模組(經理人功力/擁擠度/資金流/風格/操作習慣)
 import prices as pr  # noqa: E402               — 股價+成交量快取(data/active_etf/prices.jsonl)
 import security_meta as sm  # noqa: E402        — 已發行股數+產業別快取(data/active_etf/security_meta.json)
+import picks  # noqa: E402                      — 本站挑選的事前登記追蹤(data/active_etf/picks.json → docs/active-etf/data/picks_track.json)
 
 DATA_DIR = REPO_ROOT / "docs" / "active-etf" / "data"
 EPS_CACHE_DIR = REPO_ROOT / "data" / "active_etf" / "eps_cache"
@@ -699,6 +700,13 @@ def main():
     overview = build_overview(results, security_meta, ticker_series_by_t)
     (DATA_DIR / "overview.json").write_text(
         json.dumps(overview, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    # 本站挑選追蹤：讀剛算好的 22 檔結果與股價快取，算含息報酬與查核點；失敗只警告
+    try:
+        track = picks.write_picks_track(results, price_history)
+        print("picks: status={} base_date={} as_of={}".format(track["status"], track["base_date"], track["as_of"]))
+    except Exception as e:  # noqa: BLE001
+        print("picks WARN: {}".format(e), file=sys.stderr)
 
     if mode == "full":
         save_global_eps_meta(overview["as_of"])
