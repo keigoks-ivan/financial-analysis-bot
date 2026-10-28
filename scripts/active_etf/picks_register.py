@@ -33,6 +33,7 @@ PICKS_PATH = REPO_ROOT / "data" / "active_etf" / "picks.json"
 CANDIDATES_PATH = REPO_ROOT / "data" / "active_etf" / "picks_candidates.json"
 CHECKER = REPO_ROOT / "scripts" / "check_picks_text.py"
 MAX_EVIDENCE_AGE_DAYS = 5
+BENCH_CODE = "0050"  # --defend 0050：守方用基準本身（2026-10-28 深度檢驗後的做法）
 MINUS = "−"
 
 
@@ -92,17 +93,45 @@ def frozen_table(att: dict, dfn: dict, bench: dict, as_of: str) -> dict:
         ["2026-06-20 起含息報酬"] + three(lambda r: fmt_ret(r["returns"].get("s20260620"))),
         ["2025-07-15 起最大回檔"] + three(lambda r: fmt_mdd(r["mdd"].get("s20250715"))),
         ["持股加權遠期本益比"] + three(lambda r: fmt_pe(r.get("fwd_pe"))),
-        ["前十大集中度", fmt_pct(att["top10_pct"]), fmt_pct(dfn["top10_pct"]), "—"],
-        ["買進後 20 日命中率（事件數）", fmt_hit(att["hit20_pct"], att["n20"]), fmt_hit(dfn["hit20_pct"], dfn["n20"]), "—"],
-        ["買進後 60 日命中率（事件數）", fmt_hit(att["hit60_pct"], att["n60"]), fmt_hit(dfn["hit60_pct"], dfn["n60"]), "—"],
-        ["平均持有天數", fmt_int(att["avg_hold_days"]), fmt_int(dfn["avg_hold_days"]), "—"],
-        ["規模（億元）", fmt_int(att["aum_100m_twd"]), fmt_int(dfn["aum_100m_twd"]), "—"],
+        ["前十大集中度", fmt_pct(att.get("top10_pct")), fmt_pct(dfn.get("top10_pct")), "—"],
+        ["買進後 20 日命中率（事件數）", fmt_hit(att.get("hit20_pct"), att.get("n20")), fmt_hit(dfn.get("hit20_pct"), dfn.get("n20")), "—"],
+        ["買進後 60 日命中率（事件數）", fmt_hit(att.get("hit60_pct"), att.get("n60")), fmt_hit(dfn.get("hit60_pct"), dfn.get("n60")), "—"],
+        ["平均持有天數", fmt_int(att.get("avg_hold_days")), fmt_int(dfn.get("avg_hold_days")), "—"],
+        ["規模（億元）", fmt_int(att.get("aum_100m_twd")), fmt_int(dfn.get("aum_100m_twd")), "—"],
     ]
+    if dfn["code"] == BENCH_CODE:  # 守方就是 0050：表只留兩欄
+        rows = [r[:3] for r in rows]
+        return {"title": f"登記日數字（{as_of} 收盤，含息；之後不改）",
+                "columns": [att["code"], BENCH_CODE], "rows": rows}
     return {"title": f"登記日數字（{as_of} 收盤，含息；之後不改）",
             "columns": [att["code"], dfn["code"], "0050"], "rows": rows}
 
 
+def build_checkpoints_bench(att: dict) -> list[dict]:
+    """守方是 0050 本身：查核點只對攻方。cp4 看 active share，攻方若貼近指數就等於付主動費買 0050。"""
+    a = att["code"]
+    cp3 = ceil5(att["top10_pct"] + 10)
+    aum = att["aum_100m_twd"]
+    ash = att["active_share_pct"]
+    return [
+        {"id": "cp1", "kind": "lag", "days": 126,
+         "text": f"{a} 登記後的含息累計報酬，連續 126 個交易日（約半年）落後 0050",
+         "consequence": "攻的那一檔推翻，不換檔，結算時照算"},
+        {"id": "cp2", "kind": "aum_drop", "code": a, "base": aum, "drop_pct": 30,
+         "text": f"{a} 規模比登記日的 {aum:,.0f} 億縮水三成以上（跌破 {aum * 0.7:,.0f} 億）",
+         "consequence": "贖回潮會逼它賣中型股，攻的那一檔推翻"},
+        {"id": "cp3", "kind": "top10", "code": a, "max": cp3,
+         "text": f"{a} 前十大集中度超過 {cp3}%（登記日 {att['top10_pct']:.1f}%）",
+         "consequence": "攻得太集中，重新評估"},
+        {"id": "cp4", "kind": "active_share_min", "code": a, "min": 50,
+         "text": f"{a} 對 0050 的 active share 低於 50%（登記日 {ash:.1f}%）",
+         "consequence": "攻方變得貼近指數，付主動費買 0050 不划算，重新評估"},
+    ]
+
+
 def build_checkpoints(att: dict, dfn: dict, overlap: float) -> list[dict]:
+    if dfn["code"] == BENCH_CODE:
+        return build_checkpoints_bench(att)
     a, d = att["code"], dfn["code"]
     cp3 = ceil5(att["top10_pct"] + 10)
     cp4 = ceil5(dfn["top10_pct"] + 15)
@@ -147,16 +176,31 @@ def validate_text(obj) -> dict:
     note = obj.get("frozen_note")
     if not isinstance(note, str) or not note.strip():
         raise Refuse("text.frozen_note 不能空")
-    return {"paragraphs": clean, "frozen_note": note.strip()}
+    out = {"paragraphs": clean, "frozen_note": note.strip()}
+    for k in ("title", "sub"):  # 選填：覆蓋程式模板（owner 登記用）
+        v = obj.get(k)
+        if v is not None:
+            if not isinstance(v, str) or not v.strip():
+                raise Refuse(f"text.{k} 要是非空字串")
+            out[k] = v.strip()
+    links = obj.get("links")
+    if links is not None:
+        if not isinstance(links, list) or not all(isinstance(x, dict) and isinstance(x.get("label"), str)
+                                                  and isinstance(x.get("href"), str) for x in links):
+            raise Refuse("text.links 要是 [{label, href}] 清單")
+        out["links"] = [{"label": x["label"].strip(), "href": x["href"].strip()} for x in links]
+    return out
 
 
-def run_text_check(text_path: Path, cands: dict) -> str:
-    """回傳 'PASS'／'SKIP'；FAIL 丟 Refuse。證據＝候選資料的 brief。"""
+def run_text_check(text_path: Path, cands: dict, extra_evidence: Path | None = None) -> str:
+    """回傳 'PASS'／'SKIP'；FAIL 丟 Refuse。證據＝候選資料的 brief（＋ --extra-evidence 檔，owner 登記附分析頁摘要用）。"""
     if not CHECKER.exists():
         print(f"WARN: 找不到 {CHECKER.relative_to(REPO_ROOT)}，跳過文字檢查", file=sys.stderr)
         return "SKIP"
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
         f.write(pcand.render_brief(cands))
+        if extra_evidence is not None:
+            f.write("\n\n# 額外證據\n" + extra_evidence.read_text(encoding="utf-8"))
         ev = f.name
     try:
         r = subprocess.run([sys.executable, str(CHECKER), "--kind", "active-etf", "--text", str(text_path),
@@ -191,25 +235,36 @@ def build_registration(args, registry: dict, cands: dict, text: dict) -> dict:
     if args.attack == args.defend:
         raise Refuse("攻與守不能是同一檔")
     by_code = {f["code"]: f for f in cands["funds"]}
-    for c in (args.attack, args.defend):
-        if c not in by_code:
-            raise Refuse(f"候選資料裡沒有 {c}")
-    att, dfn = by_code[args.attack], by_code[args.defend]
-    for f in (att, dfn):
+    bench_defend = args.defend == BENCH_CODE
+    if args.attack not in by_code:
+        raise Refuse(f"候選資料裡沒有 {args.attack}")
+    if not bench_defend and args.defend not in by_code:
+        raise Refuse(f"候選資料裡沒有 {args.defend}")
+    att = by_code[args.attack]
+    dfn = dict(cands["benchmark_row"], code=BENCH_CODE, name="元大台灣50") if bench_defend else by_code[args.defend]
+    for f in ((att,) if bench_defend else (att, dfn)):
         for k in ("aum_100m_twd", "top10_pct", "fwd_pe"):
             if f.get(k) is None:
                 raise Refuse(f"{f['code']} 的 {k} 是空的，無法登記")
-    a, b = sorted([args.attack, args.defend])
-    overlap = cands["overlap"].get(f"{a}|{b}")
-    if overlap is None:
-        raise Refuse(f"{a}|{b} 沒有持股重疊資料")
+    if bench_defend:
+        # 守方是基準本身：重疊用攻方的 active share 換算（100 − active share）
+        if att.get("active_share_pct") is None:
+            raise Refuse(f"{att['code']} 的 active_share_pct 是空的，無法登記")
+        overlap = round(100 - att["active_share_pct"], 1)
+    else:
+        a, b = sorted([args.attack, args.defend])
+        overlap = cands["overlap"].get(f"{a}|{b}")
+        if overlap is None:
+            raise Refuse(f"{a}|{b} 沒有持股重疊資料")
 
     frozen = {}
     for f in (att, dfn):
         mdd = f["mdd"].get("s20250715")
-        frozen[f["code"]] = {"aum_100m_twd": f["aum_100m_twd"], "top10_concentration_pct": f["top10_pct"],
-                             "weighted_forward_pe": f["fwd_pe"],
+        frozen[f["code"]] = {"aum_100m_twd": f.get("aum_100m_twd"), "top10_concentration_pct": f.get("top10_pct"),
+                             "weighted_forward_pe": f.get("fwd_pe"),
                              "mdd_pct": None if mdd is None else round(mdd, 1)}
+    if bench_defend:
+        frozen[att["code"]]["active_share_vs_0050_pct"] = att["active_share_pct"]
     frozen["overlap_pct"] = overlap
 
     settle_on = plus_one_year(reg_on)
@@ -221,12 +276,18 @@ def build_registration(args, registry: dict, cands: dict, text: dict) -> dict:
                   {"code": dfn["code"], "name": dfn["name"], "role": "守"}],
         "frozen": frozen,
         "text": {
-            "title": f"{n} 檔裡選兩檔：{att['code']} 攻、{dfn['code']} 守",
-            "sub": f"登記日寫死，中途不換檔；結算日 {settle_on}，看兩檔各半的含息報酬對 0050。"
-                   "這一區的文字與登記日數字不再改，追蹤表與查核點每天自動更新。",
+            "title": text.get("title") or (
+                f"{n} 檔裡只買一檔：{att['code']} 攻，守的那一半放 0050" if bench_defend
+                else f"{n} 檔裡選兩檔：{att['code']} 攻、{dfn['code']} 守"),
+            "sub": text.get("sub") or (
+                f"登記日寫死，中途不換檔；結算日 {settle_on}，看 {att['code']} 與 0050 各半的含息報酬對 0050。"
+                if bench_defend else
+                f"登記日寫死，中途不換檔；結算日 {settle_on}，看兩檔各半的含息報酬對 0050。")
+                + "這一區的文字與登記日數字不再改，追蹤表與查核點每天自動更新。",
             "paragraphs": text["paragraphs"],
             "frozen_table": frozen_table(att, dfn, cands["benchmark_row"], as_of),
             "frozen_note": text["frozen_note"],
+            **({"links": text["links"]} if text.get("links") else {}),
         },
         "checkpoints": build_checkpoints(att, dfn, overlap),
     }
@@ -235,10 +296,11 @@ def build_registration(args, registry: dict, cands: dict, text: dict) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--attack", required=True)
-    ap.add_argument("--defend", required=True)
+    ap.add_argument("--defend", required=True, help="守方代號；0050 表示守方用基準本身")
     ap.add_argument("--registered-on", required=True)
     ap.add_argument("--text", required=True, help="text.json（paragraphs x 4＋frozen_note）")
-    ap.add_argument("--kind", default="quarterly", choices=["quarterly", "initial"])
+    ap.add_argument("--kind", default="quarterly", choices=["quarterly", "initial", "revision"])
+    ap.add_argument("--extra-evidence", default=None, help="額外證據檔（owner 登記附深度分析摘要，給文字檢查用）")
     ap.add_argument("--written-by", default="routine", choices=["routine", "owner"])
     ap.add_argument("--dry-run", action="store_true", help="只印不寫")
     args = ap.parse_args()
@@ -250,7 +312,7 @@ def main() -> int:
         text_path = Path(args.text)
         text = validate_text(json.loads(text_path.read_text(encoding="utf-8")))
         reg = build_registration(args, registry, cands, text)
-        check = run_text_check(text_path, cands)
+        check = run_text_check(text_path, cands, Path(args.extra_evidence) if args.extra_evidence else None)
     except Refuse as e:
         print(f"REFUSE: {e}", file=sys.stderr)
         return 1

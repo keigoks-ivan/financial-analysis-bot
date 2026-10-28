@@ -154,6 +154,8 @@ def evaluate_checkpoints(picks: dict, funds_by_code: dict, tracks: dict, bench_t
         if kind == "lag":
             parts, trig = [], False
             for p in picks["picks"]:
+                if p["code"] == bench_code:  # 守方是 0050 本身，不跟自己比
+                    continue
                 n = consecutive_days_behind(tracks.get(p["code"], []), bench_track)
                 parts.append(f"{p['code']} 連續落後 {n} 天")
                 trig = trig or n >= cp["days"]
@@ -174,6 +176,13 @@ def evaluate_checkpoints(picks: dict, funds_by_code: dict, tracks: dict, bench_t
             if v is not None:
                 row["current_label"] = f"{v:.1f}%"
                 row["triggered"] = v > cp["max"]
+        elif kind == "active_share_min":
+            f = funds_by_code.get(cp["code"]) or {}
+            v = f.get("active_share_vs_0050_pct")
+            row["current"] = v
+            if v is not None:
+                row["current_label"] = f"{v:.1f}%"
+                row["triggered"] = v < cp["min"]
         elif kind == "overlap":
             codes = [p["code"] for p in picks["picks"]]
             v = holdings_overlap_pct(funds_by_code.get(codes[0]) or {}, funds_by_code.get(codes[1]) or {})
