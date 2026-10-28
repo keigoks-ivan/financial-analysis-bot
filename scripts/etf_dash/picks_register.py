@@ -3,7 +3,7 @@
 """ETF 儀表板「本站挑選」新增一筆事前登記（雲端每季 1／4／7／10 月 1 日用）。
 
   python3 scripts/etf_dash/picks_register.py --attack CODE --defend CODE \\
-      --registered-on YYYY-MM-DD --text text.json [--dry-run]
+      --registered-on YYYY-MM-DD --text text.json [--base-rate base_rate.json] [--dry-run]
 
 text.json 只有模型寫的部分：
   {"paragraphs": [{"lead": "", "text": ""}, …共 4 段], "frozen_note": ""}
@@ -14,6 +14,10 @@ text.json 只有模型寫的部分：
 as_of 必須在登記日前 5 天內（--max-age-days 可改，只給測試用）。同一天已有登記就拒絕。
 寫入前呼叫 scripts/check_picks_text.py 檢查文字（找不到該檔只印警告）。
 只 append 到 data/etf_dash/picks.json 的 registrations，既有登記一個字都不動。
+
+--base-rate（skill picks-monthly v1.3 起季度登記必給）：picks_base_rate.py 的輸出。攻方代號與登記日
+要跟這次登記相同；結果（去掉 brief）原樣存進 frozen.base_rates，文字檢查另要求第二段引用其中一條的
+條件內勝率或平均超額。沒給就照舊（相容 2026-10 的兩筆舊登記），quarterly 會印警告。
 """
 from __future__ import annotations
 
@@ -207,8 +211,22 @@ def validate_text(text: dict) -> None:
         raise RegisterError("text.json 的 links 要是 [{label, href}] 清單")
 
 
+def validate_base_rate(br: dict, atk: str, registered_on: str) -> dict:
+    """檢查 picks_base_rate.py 的輸出對得上這次登記，回傳要凍結的那一份（去掉 brief）。"""
+    if not isinstance(br, dict) or br.get("schema") != "picks-base-rate-v1":
+        raise RegisterError("--base-rate 不是 picks-base-rate-v1")
+    if br.get("attack") != atk:
+        raise RegisterError(f"基率檔的攻方是 {br.get('attack')}，這次登記的攻方是 {atk}")
+    if br.get("registered_on") != registered_on:
+        raise RegisterError(f"基率檔的登記日是 {br.get('registered_on')}，這次是 {registered_on}；用同一天重跑 picks_base_rate.py")
+    rules = br.get("rules")
+    if not isinstance(rules, list) or sorted(r.get("id") for r in rules if isinstance(r, dict)) != ["a", "b", "c"]:
+        raise RegisterError("基率檔要有 a、b、c 三條規則")
+    return {k: v for k, v in br.items() if k != "brief"}
+
+
 def build_registration(cands: dict, registry: dict, atk: str, dfn: str, registered_on: str, text_in: dict,
-                       *, kind: str, written_by: str, max_age_days: int) -> dict:
+                       *, kind: str, written_by: str, max_age_days: int, base_rate: dict | None = None) -> dict:
     ro = datetime.date.fromisoformat(registered_on)
     as_of = datetime.date.fromisoformat(cands["as_of"])
     age = (ro - as_of).days
@@ -241,6 +259,8 @@ def build_registration(cands: dict, registry: dict, atk: str, dfn: str, register
               "metrics_as_of": {"prices": as_of_s,
                                 "eps": min(x for x in (ra["eps_as_of"], rd["eps_as_of"]) if x),
                                 "holdings": min(x for x in (ra["holdings_as_of"], rd["holdings_as_of"]) if x)}}
+    if base_rate is not None:
+        frozen["base_rates"] = validate_base_rate(base_rate, atk, registered_on)
     text = {
         "title": text_in.get("title") or (f"21 檔裡只買一檔：{atk} 攻，守的那一半放 {BENCH}" if bench_defend
                                           else f"21 檔裡選兩檔：{atk} 攻、{dfn} 守"),
@@ -259,7 +279,8 @@ def build_registration(cands: dict, registry: dict, atk: str, dfn: str, register
             "text": text, "checkpoints": build_checkpoints(cands, atk, dfn)}
 
 
-def run_text_check(text_path: Path, cands: dict, extra_evidence: Path | None = None) -> bool:
+def run_text_check(text_path: Path, cands: dict, extra_evidence: Path | None = None,
+                   base_rate_path: Path | None = None) -> bool:
     """呼叫 scripts/check_picks_text.py；沒有該檔只印警告。回傳 True＝可繼續。"""
     if not CHECK_SCRIPT.exists():
         print(f"[警告] 找不到 {CHECK_SCRIPT.relative_to(REPO_ROOT)}，跳過文字檢查", file=sys.stderr)
@@ -270,8 +291,11 @@ def run_text_check(text_path: Path, cands: dict, extra_evidence: Path | None = N
             f.write("\n\n# 額外證據\n" + extra_evidence.read_text(encoding="utf-8"))
         ev = f.name
     try:
-        r = subprocess.run([sys.executable, str(CHECK_SCRIPT), "--kind", "etf-dash", "--text", str(text_path),
-                            "--evidence", ev, "--mode", "register"], capture_output=True, text=True)
+        cmd = [sys.executable, str(CHECK_SCRIPT), "--kind", "etf-dash", "--text", str(text_path),
+               "--evidence", ev, "--mode", "register"]
+        if base_rate_path is not None:
+            cmd += ["--base-rate", str(base_rate_path)]
+        r = subprocess.run(cmd, capture_output=True, text=True)
     finally:
         Path(ev).unlink(missing_ok=True)
     sys.stdout.write(r.stdout)
@@ -288,6 +312,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true", help="只印新登記，不寫 picks.json")
     ap.add_argument("--kind", default="quarterly", choices=["initial", "quarterly", "revision"])
     ap.add_argument("--extra-evidence", default=None, help="額外證據檔（owner 登記附深度分析摘要，給文字檢查用）")
+    ap.add_argument("--base-rate", default=None, help="picks_base_rate.py 的輸出 JSON；存進 frozen.base_rates")
     ap.add_argument("--written-by", default="routine", choices=["owner", "routine"])
     ap.add_argument("--max-age-days", type=int, default=5, help="候選數據 as_of 距登記日的上限（天），只給測試放寬")
     ap.add_argument("--candidates", default=str(CANDIDATES_PATH))
@@ -298,12 +323,17 @@ def main():
         cands = json.loads(Path(args.candidates).read_text(encoding="utf-8"))
         registry = json.loads(Path(args.picks).read_text(encoding="utf-8"))
         text_in = json.loads(Path(args.text).read_text(encoding="utf-8"))
+        base_rate = json.loads(Path(args.base_rate).read_text(encoding="utf-8")) if args.base_rate else None
         reg = build_registration(cands, registry, args.attack, args.defend, args.registered_on, text_in,
-                                 kind=args.kind, written_by=args.written_by, max_age_days=args.max_age_days)
+                                 kind=args.kind, written_by=args.written_by, max_age_days=args.max_age_days,
+                                 base_rate=base_rate)
     except (RegisterError, OSError, ValueError, KeyError) as e:
         print(f"[拒絕] {e}", file=sys.stderr)
         return 2
-    if not run_text_check(Path(args.text), cands, Path(args.extra_evidence) if args.extra_evidence else None):
+    if base_rate is None and args.kind == "quarterly":
+        print("[警告] 季度登記沒有 --base-rate：skill v1.3 起攻方理由要附歷史基率", file=sys.stderr)
+    if not run_text_check(Path(args.text), cands, Path(args.extra_evidence) if args.extra_evidence else None,
+                          Path(args.base_rate) if args.base_rate else None):
         print("[拒絕] 文字檢查 FAIL，未寫入", file=sys.stderr)
         return 3
     if args.dry_run:

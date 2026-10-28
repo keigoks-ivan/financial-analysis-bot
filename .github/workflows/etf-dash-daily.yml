@@ -218,6 +218,18 @@ jobs:
         run: |
           echo "::warning::build_etf_dash.py exited non-zero — see previous step's log. Continuing to commit whatever data/holdings-cache state exists (never worse than before this run)."
 
+      - name: Build compare series (two-fund comparator)
+        continue-on-error: true
+        run: python3 scripts/etf_dash/build_compare_data.py
+
+      - name: Build look-through overlap & exposure
+        continue-on-error: true
+        run: python3 scripts/etf_dash/lookthrough.py
+
+      - name: Build SPY drawdown episodes table
+        continue-on-error: true
+        run: python3 scripts/etf_dash/drawdown_episodes.py
+
       - name: Commit and push if changed
         id: commit_and_push
         env:

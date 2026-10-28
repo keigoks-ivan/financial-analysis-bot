@@ -1,0 +1,35 @@
+{
+  "schema": "etf-lookthrough-portfolio-v1",
+  "說明": [
+    "持有人自己的部位，scripts/etf_dash/lookthrough.py 每天讀這個檔，把 ETF 拆回成分股，算整體曝險。",
+    "books：每個帳戶一列。share_of_total_pct 是這個帳戶占總資產的比例（%），各帳戶加起來應為 100。",
+    "positions：帳戶內的部位，pct_of_book 是占該帳戶的比例（%）。type 有三種：etf（key 填儀表板代號，例如 QQQ、SMH_UCITS、0050）、stock（ticker 填代號，台股加 .TW，例如 2330.TW；美股直接寫 NVDA）、cash（現金或債券等不拆的部位，label 自訂）。",
+    "pct_of_book 留 null 或 0 的列會略過。帳戶內加起來不到 100 的部分，頁面會列成「未填」。",
+    "比例都是占總資產，不換匯。預設值：美股、台股帳戶各 50% 是暫填數字，請改成實際比例；指數部 70% 各半（35％／35％）照 2026-10-19 起的實盤規則，個股 30% 與現金留空。"
+  ],
+  "as_of": "2026-10-28",
+  "books": [
+    {
+      "name": "美股帳戶",
+      "share_of_total_pct": 50,
+      "share_is_placeholder": true,
+      "positions": [
+        {"type": "etf", "key": "QQQ", "pct_of_book": 35, "note": "指數部 70% 的一半"},
+        {"type": "etf", "key": "SMH_UCITS", "pct_of_book": 35, "note": "指數部 70% 的一半，持有愛爾蘭版"},
+        {"type": "stock", "ticker": "", "pct_of_book": null, "note": "個股：一檔一列，填代號與占本帳戶比例"},
+        {"type": "cash", "label": "現金", "pct_of_book": null}
+      ]
+    },
+    {
+      "name": "台股帳戶",
+      "share_of_total_pct": 50,
+      "share_is_placeholder": true,
+      "positions": [
+        {"type": "etf", "key": "0050", "pct_of_book": 35, "note": "指數部 70% 的一半"},
+        {"type": "stock", "ticker": "2330.TW", "name": "台積電", "pct_of_book": 35, "note": "指數部 70% 的一半"},
+        {"type": "stock", "ticker": "", "pct_of_book": null, "note": "個股：一檔一列，填代號與占本帳戶比例"},
+        {"type": "cash", "label": "現金", "pct_of_book": null}
+      ]
+    }
+  ]
+}

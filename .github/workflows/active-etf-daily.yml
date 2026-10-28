@@ -124,6 +124,14 @@ jobs:
           MODE_INPUT: ${{ github.event.inputs.mode || 'auto' }}
         run: python3 scripts/active_etf/build_active_etf.py --mode "$MODE_INPUT"
 
+      - name: Build activeness dashboard JSON
+        continue-on-error: true
+        run: python3 scripts/active_etf/activeness.py
+
+      - name: Build compare series (two-fund comparator)
+        continue-on-error: true
+        run: python3 scripts/active_etf/build_compare_data.py
+
       - name: Publish ticker name lookup for the page
         run: |
           mkdir -p docs/active-etf/data

@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPY 回檔情境表 — InvestMQuest Research</title>
+<meta name="description" content="SPY 自 1999 年起每一次回檔 10% 以上，ETF 儀表板 21 檔各跌多少、反彈多少；分 10／15／20% 三個門檻彙總，每天更新。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{--x-navy:#0d2244;--x-navy-2:#173564;--x-rule:var(--gold-deep)}
+*{box-sizing:border-box;min-width:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.75;font-size:15px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px 60px}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.hero{padding:34px 0 18px;border-bottom:2px solid var(--gold-deep)}
+.ex-label{font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.06em;color:var(--x-navy)}
+.hero h1{font-family:var(--sans);font-size:1.7rem;line-height:1.35;margin:6px 0 8px;color:var(--ink);font-weight:700}
+.hero .sub{margin:0;color:var(--sec);font-size:13.5px}
+.summary{margin:22px 0 8px;background:var(--gold-bg);border:1px solid var(--gold-soft);border-left:3px solid var(--gold-deep);border-radius:var(--r);padding:14px 18px}
+.conc{margin:8px 0 0;padding-left:1.4em}
+.conc li{margin:5px 0;font-size:14.5px}
+.main-sec{margin-top:40px}
+.main-sec h2{font-family:var(--sans);font-size:1.25rem;margin:0 0 6px;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:6px}
+.main-sec h2 .sn{font-family:var(--mono);color:var(--gold-deep);margin-right:10px}
+.lead{font-size:1.02rem;font-weight:600;color:var(--x-navy);margin:8px 0 4px}
+.exhibit{margin:20px 0 4px}
+.ex-title{font-size:.95rem;font-weight:700;color:var(--ink);margin:1px 0 2px}
+.ex-sub{font-size:12px;color:var(--sec);margin-bottom:8px}
+.ex-src{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.t{border-collapse:collapse;font-size:.82rem;background:var(--card);width:100%}
+.t th{font-family:var(--sans);font-size:.74rem;font-weight:600;color:#fff;background:var(--x-navy);text-align:left;padding:.5rem .7rem;border-bottom:2px solid var(--x-navy);white-space:nowrap}
+.t th.num{text-align:right}
+.t td{padding:.44rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);line-height:1.5;white-space:nowrap}
+.t td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.t tbody tr:nth-child(even) td{background:#f5f6f8}
+.t tr.hl td{font-weight:700;background:var(--gold-bg) !important}
+.t.wrap td{white-space:normal;min-width:150px}
+.read{font-size:14px;margin:10px 0 0;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--x-navy);border-radius:var(--r)}
+.risks{margin:10px 0 0;padding-left:1.4em}
+.risks li{margin:6px 0}
+.back{margin:44px 0 0;padding-top:14px;border-top:1px solid var(--line);font-weight:600}
+.back a{color:var(--gold-deep)}
+@media(max-width:680px){.wrap{padding:0 16px 48px}.hero h1{font-size:1.35rem}}
+.now{margin:22px 0 8px;display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:16px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--x-navy);border-radius:var(--r);padding:14px 18px}
+.now .big{font-family:var(--mono);font-size:2rem;font-weight:600;color:var(--ink);line-height:1.2}
+.now .cap{font-size:12px;color:var(--sec)}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:5px;margin-top:6px}
+.badge.normal{background:var(--line-soft);color:var(--sec)}
+.badge.watch{background:var(--gold-bg);color:var(--warn);border:1px solid var(--gold-soft)}
+.badge.ongoing{background:#fde8e8;color:var(--neg);border:1px solid #f5c2c2}
+.now p{margin:0 0 6px;font-size:14px}
+.seg{display:inline-flex;border:1px solid var(--x-navy);border-radius:6px;overflow:hidden;margin:4px 0 10px}
+.seg button{font:600 13px var(--sans);background:var(--card);color:var(--x-navy);border:0;padding:6px 14px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--x-navy)}
+.seg button[aria-pressed="true"]{background:var(--x-navy);color:#fff}
+.t td{padding:.42rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);white-space:nowrap}
+.t td.dim{color:var(--muted)}
+.ep{margin:8px 0;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.ep summary{cursor:pointer;padding:10px 14px;font-size:14px;list-style-position:inside}
+.ep summary b{color:var(--ink)}
+.ep summary .m{font-family:var(--mono);font-size:12.5px;color:var(--sec);margin-left:6px}
+.ep .tbl-wrap{padding:0 10px 10px}
+.tag{font-size:11px;font-weight:700;padding:1px 7px;border-radius:4px;background:#fde8e8;color:var(--neg);margin-left:6px}
+.chart{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:8px}
+.chart svg{display:block;width:100%;height:auto}
+.chart text{font-family:var(--sans);fill:var(--sec)}
+.chart .lab{font-size:11px;fill:var(--body)}
+.chart .lab.hl{font-weight:700;fill:var(--ink)}
+.chart .ax{stroke:var(--line);stroke-width:1}
+.chart .zero{stroke:var(--sec);stroke-width:1;stroke-dasharray:3 3}
+.chart .pt{fill:var(--x-navy-2);fill-opacity:.55}
+.chart .pt.hl{fill:var(--gold-deep);fill-opacity:1}
+@media(max-width:680px){.now{grid-template-columns:1fr}.now .big{font-size:1.6rem}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/earnings/">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/markets.html">全球市場</a>
+          <a href="/sectors.html">產業板塊</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/" class="active">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<div class="wrap">
+<div class="hero"><div class="ex-label">ETF 儀表板 · 基準回檔情境表</div>
+<h1>SPY 跌得越深，XLV 與 XLP 少跌越多</h1>
+<p class="sub" id="sub">載入中…</p></div>
+
+<section class="now" id="nowCard" aria-live="polite"><div><div class="ex-label">現在</div><div class="big" id="nowDd">—</div><div class="cap" id="nowCap"></div><span class="badge normal" id="nowBadge">—</span></div><div id="nowText"><p>載入中…</p></div></section>
+<div id="nowTable"></div>
+
+<section class="summary"><div class="ex-label">一頁結論</div><ol class="conc" id="conc"></ol></section>
+
+<section class="main-sec"><h2><span class="sn">一</span>三個門檻的彙總</h2>
+<p class="lead">門檻拉高，XLV 與 XLP 比 SPY 少跌的次數與幅度都增加，反彈則落後更多。</p>
+<p>「少跌」是基金在 SPY 峰到谷同一段的跌幅，減去 SPY 的跌幅，單位個百分點，正數表示比 SPY 跌得少。「反彈差」是從谷底到 SPY 回前高那天，基金漲幅減 SPY 漲幅。只算已經回到前高的區段。</p>
+<div class="seg" role="group" aria-label="門檻"><button type="button" data-th="10" aria-pressed="true">SPY 跌 ≥10%</button><button type="button" data-th="15" aria-pressed="false">≥15%</button><button type="button" data-th="20" aria-pressed="false">≥20%</button></div>
+<section class="exhibit"><div class="ex-label">表 1</div><div class="ex-title" id="sumTitle">門檻彙總</div><div class="ex-sub" id="sumSub"></div><div class="tbl-wrap"><table class="t" id="sumTbl"></table></div></section>
+<p class="read" id="sumRead"></p>
+</section>
+
+<section class="main-sec"><h2><span class="sn">二</span>少跌的代價</h2>
+<p class="lead">平均少跌越多的 ETF，十年多半落後 SPY。</p>
+<section class="exhibit"><div class="ex-label">圖 1</div><div class="ex-title" id="scTitle">平均少跌對十年超額</div><div class="ex-sub" id="scSub"></div><div class="chart" id="scatter"></div></section>
+<p class="read" id="scRead"></p>
+</section>
+
+<section class="main-sec"><h2><span class="sn">三</span>每一次回檔</h2>
+<p class="lead">SPY 每回檔 10% 以上就多一列，點開看 21 檔各自的跌幅與反彈。</p>
+<section class="exhibit"><div class="ex-label">表 2</div><div class="ex-title">SPY 回檔 10% 以上的區段</div><div class="ex-sub">峰是跌破前高前最後一次創高的日子，谷是峰到回前高之間收盤最低的一天，回前高是收盤第一次回到峰值的日子。天數為日曆天。</div><div class="tbl-wrap"><table class="t" id="epTbl"></table></div></section>
+<div id="epDetails"></div>
+</section>
+
+<section class="main-sec"><h2>讀法與資料限制</h2><ul class="risks" id="notes">
+<li>各檔跌幅取 SPY 的峰日到谷日，點對點計算，不是各檔自己那段時間的最大回檔。基金自己的低點可能落在別天，實際最大回檔會比表中深。</li>
+<li>台幣（0050、TAIEX）、日圓（TOPIX）資產以當日匯率換成美元，再對齊 SPY 交易日，當地休市日用前一日收盤。亞洲收盤早於美國，同一天的數字有時差。</li>
+<li>上市晚於某段峰日的基金，該段留空；彙總的次數以各檔有資料的區段計，SMH_UCITS、XLC 的次數少，平均值參考就好。</li>
+<li>前高從 1999 年第一個交易日起算。2015 年那一段的峰是 2015-07-20；十年窗口的分析從 2015-10 起算，峰變成 2015-11-03，SPY 跌幅 −12.8%、XLV −12.1%，與本表 −13.0%、−17.1% 不同。</li>
+<li>十年超額為幾何超額：（1＋基金十年報酬）÷（1＋SPY 十年報酬）−1。圖 1 換成年化，表格與滑過圖點的說明附累計值。</li>
+<li>歷史次數不多，十年內只有幾次，結果受個別事件影響大。未扣交易成本與稅。</li>
+</ul></section>
+
+<p class="back"><a href="/etf-dash/">回 ETF 儀表板</a></p>
+</div>
+<script>
+(function(){
+var NAME={'0050':'台灣 50','EWM':'馬來西亞','EWY':'南韓','EWZ':'巴西','IEV':'歐洲 350','QQQ':'那斯達克 100','RSP':'標普等權','SMH':'半導體','SMH_UCITS':'半導體 UCITS','SPY':'標普 500','TAIEX':'台灣加權*','TOPIX':'日本 TOPIX','XLB':'原物料','XLC':'通訊服務','XLE':'能源','XLF':'金融','XLI':'工業','XLK':'科技','XLP':'必需消費','XLV':'醫療保健','XLY':'非必需消費'};
+var HL={'XLV':1,'XLP':1};
+var D=null, TH='10';
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function f1(v,sign){if(v===null||v===undefined||isNaN(v))return '—';var s=Math.abs(v).toFixed(1);if(v<0&&s!=='0.0')return '−'+s;return (sign&&v>0&&s!=='0.0'?'+':'')+s}
+function cls(v){return v===null||v===undefined?'dim':(v>0?'num pos':(v<0?'num neg':'num'))}
+function td(v,sign,c){return '<td class="'+(c||(v===null||v===undefined?'num dim':'num'))+'">'+f1(v,sign)+'</td>'}
+function tdc(v){return '<td class="'+cls(v)+'">'+f1(v,true)+'</td>'}
+function nm(k){return '<td><b>'+esc(k)+'</b> <span style="color:var(--sec)">'+esc(NAME[k]||'')+'</span></td>'}
+function yr(d){return d?d.slice(0,4):''}
+function epById(id){for(var i=0;i<D.episodes.length;i++)if(D.episodes[i].id===id)return D.episodes[i];return null}
+function fundMeta(k){for(var i=0;i<D.funds.length;i++)if(D.funds[i].key===k)return D.funds[i];return null}
+function annEx(ex){return ex===null||ex===undefined?null:100*(Math.pow(1+ex/100,1/10)-1)}
+
+function renderNow(){
+  var c=D.current, st={normal:'未達觀察線',watch:'觀察中',ongoing:'進行中'}[c.status];
+  $('nowDd').textContent=f1(c.spy_dd_pct,true)+'%';
+  $('nowCap').textContent='SPY 離前高（'+c.date+' 收盤，前高 '+c.spy_peak+'）';
+  var b=$('nowBadge'); b.textContent=st; b.className='badge '+c.status;
+  var w=D.watch_threshold_pct, e=D.episode_threshold_pct, h='';
+  if(c.status==='normal'){
+    h='<p>SPY 離前高不到 '+w+'%，不列各檔。離前高 '+w+'% 起標「觀察中」，列出各檔從同一峰日起的跌幅；到 '+e+'% 就成為表 2 的正式一列。</p>';
+    if(c.spell_min_pct!==null&&c.spell_min_pct<0)h+='<p>這一段從 '+c.spy_peak+' 起最低是 '+c.spell_trough+' 的 '+f1(c.spell_min_pct,true)+'%。</p>';
+  }else if(c.status==='watch'){
+    h='<p>SPY 從 '+c.spy_peak+' 的前高回檔超過 '+w+'%，還沒到 '+e+'%。下表是各檔從同一峰日到 '+c.date+' 的跌幅，每個交易日更新。</p>';
+  }else{
+    h='<p>SPY 這一段已經跌到 '+f1(c.spell_min_pct,true)+'%（'+c.spell_trough+'），是表 2 的第 '+c.episode_id+' 段，標「進行中」。回到前高後才計入表 1 的彙總。</p>';
+  }
+  $('nowText').innerHTML=h;
+  if(c.funds){
+    var rows=Object.keys(c.funds).filter(function(k){return c.funds[k]}).sort(function(a,b){return c.funds[b].rel_pp-c.funds[a].rel_pp});
+    var t='<section class="exhibit"><div class="ex-label">即時</div><div class="ex-title">各檔從 '+c.spy_peak+' 起的跌幅</div><div class="ex-sub">SPY 同期 '+f1(c.spy_dd_pct,true)+'%。少跌為正表示比 SPY 跌得少。</div><div class="tbl-wrap"><table class="t"><thead><tr><th>基金</th><th class="num">跌幅 %</th><th class="num">少跌（個百分點）</th><th class="num">資料日</th></tr></thead><tbody>';
+    rows.forEach(function(k){var x=c.funds[k];t+='<tr'+(HL[k]?' class="hl"':'')+'>'+nm(k)+td(x.dd_pct,true)+tdc(x.rel_pp)+'<td class="num">'+x.last_date+'</td></tr>'});
+    $('nowTable').innerHTML=t+'</tbody></table></div></section>';
+  }
+}
+
+function renderConc(){
+  var E=D.episodes, closed=E.filter(function(e){return e.status==='closed'});
+  var deep=E.slice().sort(function(a,b){return a.spy.dd_pct-b.spy.dd_pct})[0];
+  var s10=D.summary['10'].funds, s20=D.summary['20'].funds, L=[];
+  L.push(yr(D.start)+' 年起 SPY 由前高回檔 10% 以上共 '+E.length+' 次，最深一次是 '+yr(deep.peak)+' 年起的 '+f1(deep.spy.dd_pct,true)+'%。');
+  if(s10.XLV&&s20.XLV)L.push('XLV 在 '+s10.XLV.n+' 次裡有 '+s10.XLV.shallower+' 次比 SPY 少跌；SPY 跌 20% 以上的 '+s20.XLV.n+' 次裡有 '+s20.XLV.shallower+' 次。');
+  var small=closed.filter(function(e){return e.spy.dd_pct>-15}), sx=small.filter(function(e){var x=e.funds.XLV;return x&&x.rel_pp>0}).length;
+  if(small.length)L.push('SPY 只跌 10～15% 的 '+small.length+' 次，'+(sx===0?'XLV 每一次都跌得比 SPY 深':'XLV 比 SPY 少跌 '+sx+' 次')+'。保護集中在熊市，小修正時不一定守得住。');
+  var best=Object.keys(s10).filter(function(k){return s10[k].n>=Math.max(3,D.summary['10'].n_episodes-2)}).sort(function(a,b){return s10[b].avg_rel_pp-s10[a].avg_rel_pp})[0];
+  if(best){var m=fundMeta(best);L.push('長期資料完整的基金裡，平均少跌最多的是 '+best+'（'+(NAME[best]||'')+'），'+f1(s10[best].avg_rel_pp,true)+' 個百分點；它十年對 SPY 的超額是 '+f1(m.ten_year_excess_pct,true)+'%。');}
+  if(s10.XLV&&s10.XLP)L.push('少跌的另一面在反彈：從谷底到 SPY 回前高，XLV 平均比 SPY 少漲 '+f1(-s10.XLV.avg_rebound_rel_pp)+' 個百分點，XLP 少漲 '+f1(-s10.XLP.avg_rebound_rel_pp)+' 個百分點。');
+  var c=D.current;L.push('現在 SPY 離前高 '+f1(c.spy_dd_pct,true)+'%，'+{normal:'未達 '+D.watch_threshold_pct+'% 觀察線。',watch:'已過 '+D.watch_threshold_pct+'% 觀察線，各檔跌幅列在「現在」卡下方。',ongoing:'屬於進行中的第 '+c.episode_id+' 段。'}[c.status]);
+  $('conc').innerHTML=L.map(function(x){return '<li>'+x+'</li>'}).join('');
+  $('sub').textContent='資料範圍：SPY '+D.start+'～'+D.as_of+'，美元含息還原價，每個交易日更新。研究頁的整理，與實單規則無關。';
+}
+
+function renderSummary(){
+  var S=D.summary[TH], F=S.funds;
+  $('sumTitle').textContent='SPY 回檔 '+TH+'% 以上：各檔比 SPY 少跌多少';
+  $('sumSub').textContent='共 '+S.n_episodes+' 段（第 '+S.episode_ids.join('、')+' 段），SPY 平均跌 '+f1(S.spy_avg_dd_pct,true)+'%，谷到回前高平均漲 '+f1(S.spy_avg_rebound_pct,true)+'%。依平均少跌由多到少排列。';
+  var ks=Object.keys(F).sort(function(a,b){var x=F[a].avg_rel_pp,y=F[b].avg_rel_pp;if(x===null)return 1;if(y===null)return -1;return y-x});
+  var h='<thead><tr><th>基金</th><th class="num">比 SPY 淺</th><th class="num">平均跌幅 %</th><th class="num">平均少跌（個百分點）</th><th class="num">平均反彈差（個百分點）</th><th class="num">十年超額 %</th></tr></thead><tbody>';
+  h+='<tr><td><b>SPY</b> <span style="color:var(--sec)">基準</span></td><td class="num dim">—</td>'+td(S.spy_avg_dd_pct,true)+'<td class="num dim">—</td><td class="num dim">—</td><td class="num dim">—</td></tr>';
+  ks.forEach(function(k){var x=F[k],m=fundMeta(k);h+='<tr'+(HL[k]?' class="hl"':'')+'>'+nm(k)+'<td class="num">'+(x.n?x.shallower+'／'+x.n:'—')+'</td>'+td(x.avg_dd_pct,true)+tdc(x.avg_rel_pp)+tdc(x.avg_rebound_rel_pp)+tdc(m?m.ten_year_excess_pct:null)+'</tr>'});
+  $('sumTbl').innerHTML=h+'</tbody>';
+  var both=ks.filter(function(k){return F[k].avg_rel_pp!==null&&F[k].avg_rebound_rel_pp!==null});
+  var pos=both.filter(function(k){return F[k].avg_rel_pp>0}), lag=pos.filter(function(k){return F[k].avg_rebound_rel_pp<0});
+  $('sumRead').textContent='這個門檻下平均比 SPY 少跌的有 '+pos.length+' 檔，其中 '+lag.length+' 檔從谷底反彈時平均也比 SPY 少漲。'+(F.XLV?'XLV '+F.XLV.shallower+'／'+F.XLV.n+' 次較淺，平均少跌 '+f1(F.XLV.avg_rel_pp,true)+' 個百分點；':'')+(F.XLP?'XLP '+F.XLP.shallower+'／'+F.XLP.n+' 次，'+f1(F.XLP.avg_rel_pp,true)+' 個百分點。':'');
+}
+
+function renderScatter(){
+  var S=D.summary[TH].funds, pts=[], miss=[];
+  Object.keys(S).forEach(function(k){var m=fundMeta(k),x=S[k].avg_rel_pp,ex=m?m.ten_year_excess_pct:null;if(x===null||ex===null){miss.push(k);return}pts.push({k:k,x:x,y:annEx(ex),ex:ex,n:S[k].n})});
+  $('scTitle').textContent='平均少跌（SPY 跌 '+TH+'% 以上）對十年超額';
+  $('scSub').textContent='橫軸：表 1 的平均少跌，'+yr(D.start)+' 年起各次回檔平均，往右表示守得多。縱軸：十年對 SPY 的超額，年化，起點 '+D.ten_year_start+'。'+(miss.length?'沒有完整十年或沒有區段資料的不畫：'+miss.join('、')+'。':'');
+  if(!pts.length){$('scatter').innerHTML='';return}
+  var W=760,H=420,ml=56,mr=24,mt=18,mb=46;
+  function ext(a){var lo=Math.min.apply(null,a.concat([0])),hi=Math.max.apply(null,a.concat([0])),p=(hi-lo)*0.08||1;return [lo-p,hi+p]}
+  var xr=ext(pts.map(function(p){return p.x})), yr_=ext(pts.map(function(p){return p.y}));
+  function X(v){return ml+(v-xr[0])/(xr[1]-xr[0])*(W-ml-mr)} function Y(v){return mt+(yr_[1]-v)/(yr_[1]-yr_[0])*(H-mt-mb)}
+  function ticks(r){var span=r[1]-r[0],st=[1,2,5,10,20,50][0];[1,2,5,10,20,50].some(function(s){st=s;return span/s<=8});var o=[];for(var v=Math.ceil(r[0]/st)*st;v<=r[1];v+=st)o.push(v);return o}
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="各檔平均少跌對十年超額散點圖">';
+  ticks(xr).forEach(function(v){s+='<line class="ax" x1="'+X(v)+'" x2="'+X(v)+'" y1="'+mt+'" y2="'+(H-mb)+'"/><text x="'+X(v)+'" y="'+(H-mb+16)+'" font-size="11" text-anchor="middle">'+f1(v,true).replace('.0','')+'</text>'});
+  ticks(yr_).forEach(function(v){s+='<line class="ax" x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(v)+'" y2="'+Y(v)+'"/><text x="'+(ml-6)+'" y="'+(Y(v)+4)+'" font-size="11" text-anchor="end">'+f1(v,true).replace('.0','')+'</text>'});
+  s+='<line class="zero" x1="'+X(0)+'" x2="'+X(0)+'" y1="'+mt+'" y2="'+(H-mb)+'"/><line class="zero" x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(0)+'" y2="'+Y(0)+'"/>';
+  s+='<text x="'+((ml+W-mr)/2)+'" y="'+(H-8)+'" font-size="12" text-anchor="middle">平均少跌（個百分點，往右＝比 SPY 跌得少）</text>';
+  s+='<text transform="translate(14 '+((mt+H-mb)/2)+') rotate(-90)" font-size="12" text-anchor="middle">十年超額（年化 %）</text>';
+  pts.sort(function(a,b){return (HL[a.k]?1:0)-(HL[b.k]?1:0)}).forEach(function(p){
+    var h=HL[p.k]?' hl':'', cx=X(p.x), cy=Y(p.y), right=cx>W-90;
+    s+='<g><title>'+p.k+'（'+(NAME[p.k]||'')+'）平均少跌 '+f1(p.x,true)+' 個百分點，'+p.n+' 段；十年超額累計 '+f1(p.ex,true)+'%，年化 '+f1(p.y,true)+'%</title><circle class="pt'+h+'" cx="'+cx+'" cy="'+cy+'" r="'+(h?6:4.5)+'"/><text class="lab'+h+'" x="'+(right?cx-8:cx+8)+'" y="'+(cy+4)+'" text-anchor="'+(right?'end':'start')+'">'+p.k+'</text></g>';
+  });
+  $('scatter').innerHTML=s+'</svg>';
+  var pos=pts.filter(function(p){return p.x>0}), posUp=pos.filter(function(p){return p.ex>0});
+  var neg=pts.filter(function(p){return p.x<=0}), negUp=neg.filter(function(p){return p.ex>0});
+  $('scRead').textContent='圖上 '+pts.length+' 檔裡，平均比 SPY 少跌的 '+pos.length+' 檔，十年贏 SPY 的有 '+posUp.length+' 檔'+(posUp.length?'（'+posUp.map(function(p){return p.k}).join('、')+'）':'')+'；跌得比 SPY 多的 '+neg.length+' 檔，十年贏 SPY 的有 '+negUp.length+' 檔'+(negUp.length?'（'+negUp.map(function(p){return p.k}).join('、')+'）':'')+'。兩軸的期間不同：少跌是 '+yr(D.start)+' 年起的回檔平均，超額只看近十年。';
+}
+
+function renderEpisodes(){
+  var h='<thead><tr><th>次</th><th class="num">峰</th><th class="num">谷</th><th class="num">回前高</th><th class="num">SPY 跌幅 %</th><th class="num">谷到回前高反彈 %</th><th class="num">峰到谷天數</th><th class="num">谷到回前高天數</th><th class="num">XLV 少跌</th><th class="num">XLP 少跌</th></tr></thead><tbody>';
+  D.episodes.forEach(function(e){var on=e.status==='ongoing',v=e.funds.XLV,p=e.funds.XLP;
+    h+='<tr><td>第 '+e.id+' 次'+(on?'<span class="tag">進行中</span>':'')+'</td><td class="num">'+e.peak+'</td><td class="num">'+e.trough+'</td><td class="num">'+(e.recovery||'尚未')+'</td>'+td(e.spy.dd_pct,true)+td(e.spy.rebound_pct,true)+'<td class="num">'+e.days_peak_to_trough+'</td><td class="num">'+(on?'—':e.days_trough_to_recovery)+'</td>'+tdc(v?v.rel_pp:null)+tdc(p?p.rel_pp:null)+'</tr>'});
+  $('epTbl').innerHTML=h+'</tbody>';
+  var out='';
+  D.episodes.slice().reverse().forEach(function(e){
+    var on=e.status==='ongoing', F=e.funds;
+    var ks=Object.keys(F).sort(function(a,b){if(!F[a])return 1;if(!F[b])return -1;return F[b].rel_pp-F[a].rel_pp});
+    var t='<thead><tr><th>基金</th><th class="num">跌幅 %</th><th class="num">少跌（個百分點）</th><th class="num">'+(on?'谷到最新':'谷到回前高')+'反彈 %</th><th class="num">反彈差（個百分點）</th><th class="num">峰到'+(on?'最新':'回前高')+'整段 %</th></tr></thead><tbody>';
+    t+='<tr><td><b>SPY</b> <span style="color:var(--sec)">基準</span></td>'+td(e.spy.dd_pct,true)+'<td class="num dim">—</td>'+td(e.spy.rebound_pct,true)+'<td class="num dim">—</td>'+td(e.spy.full_pct,true)+'</tr>';
+    ks.forEach(function(k){var x=F[k];if(!x){t+='<tr>'+nm(k)+'<td class="num dim" colspan="5">資料不足（上市或匯率資料晚於峰日）</td></tr>';return}
+      t+='<tr'+(HL[k]?' class="hl"':'')+'>'+nm(k)+td(x.dd_pct,true)+tdc(x.rel_pp)+td(x.rebound_pct,true)+tdc(x.rebound_rel_pp)+td(x.full_pct,true)+'</tr>'});
+    var nOk=ks.filter(function(k){return F[k]}), sh=nOk.filter(function(k){return F[k].rel_pp>0}).length;
+    out+='<details class="ep"><summary><b>第 '+e.id+' 次</b>'+(on?'<span class="tag">進行中</span>':'')+'<span class="m">'+e.peak+' → '+e.trough+' → '+(e.recovery||'尚未回前高')+'｜SPY '+f1(e.spy.dd_pct,true)+'%｜'+sh+'／'+nOk.length+' 檔比 SPY 淺</span></summary><div class="tbl-wrap"><table class="t">'+t+'</tbody></table></div></details>';
+  });
+  $('epDetails').innerHTML=out;
+}
+
+function renderNotes(){
+  var ul=$('notes');
+  (D.notes||[]).forEach(function(n){var li=document.createElement('li');li.textContent=n;ul.appendChild(li)});
+  var li=document.createElement('li');li.textContent='資料產生時間 '+D.generated_at+'（UTC），來源 '+D.source+'。';ul.appendChild(li);
+}
+
+function setTh(th){TH=th;document.querySelectorAll('.seg button').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-th')===th?'true':'false')});renderSummary();renderScatter()}
+document.querySelectorAll('.seg button').forEach(function(b){b.addEventListener('click',function(){setTh(b.getAttribute('data-th'))})});
+
+fetch('data/drawdowns.json',{cache:'no-cache'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(d){
+  D=d;renderNow();renderConc();renderSummary();renderScatter();renderEpisodes();renderNotes();
+}).catch(function(e){$('sub').textContent='資料載入失敗（'+e.message+'），請稍後重新整理。'});
+})();
+</script>
+</body>
+</html>

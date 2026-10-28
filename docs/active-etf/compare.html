@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>主動式 ETF 兩檔配法比較器 — InvestMQuest Research</title>
+<meta name="description" content="選兩檔主動式 ETF 或 0050 與權重，在瀏覽器內計算累計報酬、最大回檔、beta、追蹤誤差、相關與逐年超額。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<link rel="stylesheet" href="/etf-dash/assets/compare.css">
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/earnings/">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/markets.html">全球市場</a>
+          <a href="/sectors.html">產業板塊</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/" class="active">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<div class="wrap" id="cmpRoot">
+<div class="hero"><div class="ex-label">兩檔配法比較器</div>
+<h1>兩檔配法比較器：選兩檔、設權重，看累計報酬、回檔與相關</h1>
+<p class="sub">22 檔主動式 ETF 與 0050 以台幣含息還原價計算，不換匯，基準 0050。這是試算工具，與實單規則、本站挑選的登記內容無關。</p></div>
+<section class="main-sec"><h2><span class="sn">選</span>設定配法</h2>
+<p class="lead">選兩檔和權重，再選視窗與再平衡方式。主動式 ETF 上市不到兩年，視窗會縮到兩檔的共同起日。</p>
+<div class="cmp-ctl">
+<label>A 檔<select id="cmpA"></select></label>
+<label>B 檔<select id="cmpB"></select></label>
+<div class="cmp-wbox"><label for="cmpW">A 檔權重（%）</label><div class="cmp-wrow"><input type="number" id="cmpW" min="0" max="100" step="5" value="50"><input type="range" id="cmpWR" min="0" max="100" step="5" value="50" aria-label="A 檔權重"><span class="cmp-wb" id="cmpWB">B 檔 50%</span></div></div>
+<label>比較視窗<select id="cmpWin"></select></label>
+<label>再平衡<select id="cmpReb"><option value="none">不再平衡</option><option value="M">每月</option><option value="Q">每季</option></select></label>
+<label class="cmp-chk"><input type="checkbox" id="cmpLog">圖用對數軸</label>
+<div class="cmp-custom" id="cmpCustom" hidden><label>起日<input type="date" id="cmpFrom"></label><label>訖日<input type="date" id="cmpTo"></label></div>
+</div>
+<div class="cmp-status" id="cmpStatus">資料載入中…</div>
+<div class="cmp-win" id="cmpWinNote"></div>
+<section class="summary cmp-sum"><div class="ex-label">摘要</div><div id="cmpSummary"></div></section>
+</section>
+<section class="main-sec"><h2><span class="sn">一</span>累計報酬</h2>
+<p class="lead">四條線都從視窗起日算起，起點為 100，含息。</p>
+<div class="cmp-chartbox"><div class="cmp-legend" id="cmpLegend"></div><div id="cmpChart"></div><div class="cmp-tip" id="cmpTip"></div></div>
+</section>
+<section class="main-sec"><h2><span class="sn">二</span>風險與報酬指標</h2>
+<p class="lead">配法的報酬、波動與回檔，與兩個單檔和基準並排。</p>
+<div class="tbl-wrap" id="cmpMetrics"></div>
+<p class="cmp-note" id="cmpMetricsNote"></p>
+</section>
+<section class="main-sec"><h2><span class="sn">三</span>兩檔的相關與持股重疊</h2>
+<p class="lead">主動報酬相關決定兩檔是否在同一個時間贏輸基準。</p>
+<div class="tbl-wrap" id="cmpCorr"></div>
+<p class="cmp-note" id="cmpCorrNote"></p>
+</section>
+<section class="main-sec"><h2><span class="sn">四</span>基準回檔 10% 以上的區段</h2>
+<p class="lead">每一段回檔裡，兩檔與配法各跌多少、谷底後各反彈多少。</p>
+<div class="tbl-wrap" id="cmpEpisodes"></div>
+<p class="cmp-note" id="cmpEpisodesNote"></p>
+</section>
+<section class="main-sec"><h2><span class="sn">五</span>逐年對基準超額</h2>
+<p class="lead">逐年看兩檔與配法是否贏過基準。</p>
+<div class="tbl-wrap" id="cmpYearly"></div>
+<p class="cmp-note" id="cmpYearlyNote"></p>
+</section>
+<section class="main-sec"><h2>算法與資料限制</h2>
+<ul class="risks cmp-notes">
+<li>報酬為含息還原價。台幣計價，不換匯。資料最後一日為 <span id="cmpAsOf">—</span>。</li>
+<li>幾何超額 ＝ (1＋報酬) ÷ (1＋基準報酬) − 1。年化波動與追蹤誤差用 252 個交易日年化。資訊比率 ＝ 日主動報酬年化平均 ÷ 追蹤誤差。</li>
+<li>週報酬用週五收盤，沒有週五收盤的週併入下一週。beta 為對基準報酬的迴歸斜率。</li>
+<li>配法在視窗起日依權重買進。不再平衡：之後不調整，權重隨價格漂移。每月、每季再平衡：在該月、該季最後一個交易日收盤回到設定權重，不計交易成本與稅。</li>
+<li>上漲月捕捉、下跌月捕捉：基準上漲（下跌）的日曆月裡，基金月報酬平均 ÷ 基準月報酬平均。視窗首尾月份不完整也算，月數少時雜訊大。</li>
+<li>視窗起日是要求起日當天或之前最後一個交易日的收盤。任一檔資料較晚開始時，視窗縮到共同起日並在上方標示。</li>
+<li>全部為歷史計算，沒有扣管理費以外的成本、稅與匯兌避險成本，不代表未來。與實單規則、本站挑選的登記內容無關。</li>
+</ul>
+<ul class="risks cmp-notes" id="cmpDataNotes"></ul>
+</section>
+<p class="back"><a href="/active-etf/">回 主動式 ETF 儀表板</a>　｜　<a href="/active-etf/analysis-2026-10-28.html">看 2026-10-28 深度檢驗</a></p>
+</div>
+<script>window.COMPARE_CONFIG={"dataUrl": "/active-etf/data/compare_series.json", "defaultA": "00981A", "defaultB": "0050", "defaultWindow": "all", "windows": [{"id": "all", "label": "全期（兩檔共同起日）", "kind": "all"}, {"id": "y1", "label": "一年", "kind": "years", "n": 1}, {"id": "m6", "label": "半年", "kind": "months", "n": 6}, {"id": "m3", "label": "三個月", "kind": "months", "n": 3}], "tzFunds": []};</script>
+<script src="/etf-dash/assets/compare.js"></script>
+</body>
+</html>

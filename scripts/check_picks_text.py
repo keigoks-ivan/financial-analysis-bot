@@ -2,6 +2,7 @@
 """「本站挑選」文字的機械檢查（skill `picks-monthly`；登記程式 picks_register.py 也會呼叫）。
 
   python3 scripts/check_picks_text.py --kind active-etf|etf-dash --text FILE --evidence FILE [--mode register|review]
+      [--base-rate FILE]
 
 --text 的格式
   register（預設）：{"paragraphs": [{"lead": "", "text": ""} x 4], "frozen_note": ""}
@@ -21,6 +22,10 @@
   3. 禁用詞：「——」、比喻詞清單、「本頁不對」「值得點出」「真正該」、買賣指令用語；
      「；」每段最多 1 個（review 全文最多 1 個）。
   4. 「不是 A，是 B」句型全文最多 1 次。
+  5. 基率引用（register 模式且給了 --base-rate，picks_base_rate.py 的輸出；skill picks-monthly v1.3）：
+     基率檔的 brief 併進證據；第二段（攻方理由）的 lead＋text 至少要出現一條規則的「條件內勝率」或
+     「條件內平均超額」（照顯示位數比對，符號要對）。三條都是「無基率」時，第二段要寫出「無基率」。
+     沒給 --base-rate 不查這一條（舊登記、active-etf 照舊）。
 
 輸出 PASS 或 FAIL＋逐條原因；FAIL 時 exit code 為 1。
 """
@@ -216,6 +221,33 @@ def check_review(obj: dict, ev: list[tuple[float, bool]]) -> list[str]:
     return errs
 
 
+def base_rate_cites(br: dict) -> list[tuple[float, bool]]:
+    """基率檔裡可以拿來當「引用」的數字：每條有基率的規則的條件內勝率與條件內平均超額。
+    判定「無基率」的規則（樣本不足時也有數字）不算。"""
+    out: list[tuple[float, bool]] = []
+    for r in br.get("rules") or []:
+        if r.get("verdict") == "無基率":
+            continue
+        for k in ("hit_cond_pct", "excess_cond_pct"):
+            v = r.get(k)
+            if isinstance(v, (int, float)):
+                out.append((abs(float(v)), float(v) < 0))
+    return out
+
+
+def check_base_rate_citation(obj: dict, br: dict) -> list[str]:
+    paras = obj.get("paragraphs")
+    if not isinstance(paras, list) or len(paras) < 2 or not isinstance(paras[1], dict):
+        return ["有基率檔但沒有第二段，無法檢查基率引用"]
+    s = _paragraph_str(paras[1])
+    cites = base_rate_cites(br)
+    if not cites:
+        return [] if "無基率" in s else ["三條規則都沒有基率，第二段要寫出「無基率」"]
+    if any(_number_found(sign, body, cites) for _, sign, body in text_numbers(s)):
+        return []
+    return ["第二段沒有引用任何一條規則的歷史勝率或平均超額（基率檔的條件內勝率或條件內平均超額）"]
+
+
 def check_not_a_b(text: str) -> list[str]:
     n = len(_NOT_A_B.findall(text))
     return [f"「不是 A，是 B」句型出現 {n} 次，全文上限 1 次"] if n > 1 else []
@@ -236,10 +268,16 @@ def load_text(path: Path, mode: str) -> dict:
     return obj
 
 
-def check(kind: str, obj: dict, evidence: str, mode: str = "register") -> list[str]:
-    """回傳錯誤清單；空清單＝PASS。"""
-    ev = evidence_numbers(evidence)
-    return check_review(obj, ev) if mode == "review" else check_register(obj, ev)
+def check(kind: str, obj: dict, evidence: str, mode: str = "register", base_rate: dict | None = None) -> list[str]:
+    """回傳錯誤清單；空清單＝PASS。base_rate＝picks_base_rate.py 的輸出（只在 register 模式用）。"""
+    if mode == "review":
+        return check_review(obj, evidence_numbers(evidence))
+    if base_rate:
+        evidence = evidence + "\n" + (base_rate.get("brief") or "")
+    errs = check_register(obj, evidence_numbers(evidence))
+    if base_rate:
+        errs += check_base_rate_citation(obj, base_rate)
+    return errs
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -248,14 +286,16 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--text", required=True)
     ap.add_argument("--evidence", required=True)
     ap.add_argument("--mode", default="register", choices=MODES)
+    ap.add_argument("--base-rate", default=None, help="picks_base_rate.py 的輸出 JSON（register 模式查第二段引用）")
     a = ap.parse_args(argv)
     try:
         obj = load_text(Path(a.text), a.mode)
         evidence = Path(a.evidence).read_text(encoding="utf-8")
+        base_rate = json.loads(Path(a.base_rate).read_text(encoding="utf-8")) if a.base_rate else None
     except Exception as e:  # noqa: BLE001
         print(f"FAIL 讀不到輸入：{e}")
         return 1
-    errs = check(a.kind, obj, evidence, a.mode)
+    errs = check(a.kind, obj, evidence, a.mode, base_rate)
     if errs:
         print(f"FAIL {a.kind} {a.mode}")
         for e in errs:

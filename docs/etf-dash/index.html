@@ -241,6 +241,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .section-collapsible .chapter-head .ch-toggle{float:right;font-size:11px;color:rgba(255,255,255,.7);font-weight:400}
 .section-collapsible .chapter-body{display:none}
 .section-collapsible.open .chapter-body{display:block}
+.picks-links{margin:8px 0 0;font-size:.9rem;line-height:1.9}
 </style>
 </head>
 <body>
@@ -349,6 +350,10 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 <div id="overviewView" style="display:none">
 <section class="exhibit" id="ovPicksExhibit">
   <div class="daily-line" id="ovPicksLine">載入中…</div>
+</section>
+<section class="exhibit" id="ovToolsExhibit">
+  <div class="ex-label">研究工具</div>
+  <p class="picks-links"><a href="/etf-dash/compare.html">兩檔配法比較器（自己試 SMH＋SPY 等配法） →</a> · <a href="/etf-dash/lookthrough.html">看穿重疊與整體曝險 →</a> · <a href="/etf-dash/drawdowns.html">基準回檔情境表（SPY 跌 10／15／20% 時各檔怎麼跌） →</a> · <a href="/etf-dash/analysis-2026-10-28.html">2026-10-28 深度檢驗 →</a></p>
 </section>
 <section class="exhibit" id="ovExhibit">
   <div class="ex-label">總覽</div>
@@ -1767,6 +1772,32 @@ function picksPickLine(reg){
   return reg.id + ' 登記 · ' + atk + ' 攻、' + dfn + ' 守 · ' + picksStateLabel(reg);
 }
 
+function picksBaseRateHtml(reg){
+  var b = (reg.frozen || {}).base_rates;
+  if(!b || !Array.isArray(b.rules) || !b.rules.length) return '';
+  var sg = function(v){ return v==null ? '—' : (v>0?'+':'')+v.toFixed(1).replace('-','−')+'%'; };
+  var pc = function(v){ return v==null ? '—' : v.toFixed(1)+'%'; };
+  var th = b.threshold || {};
+  var h = '<div class="picks-frozen"><div class="ex-title" style="font-size:.85rem;margin-top:12px">攻方理由的歷史基率（'+
+    esc(b.attack)+'，之後 '+esc(b.horizon_weeks)+' 週對 '+esc(b.benchmark)+'；登記日凍結）</div>'+
+    '<div class="tbl-wrap"><table class="imq-table"><thead><tr><th>規則</th>'+
+    '<th class="num">歷史勝率<br>條件成立／所有週</th><th class="num">平均超額<br>條件成立／所有週</th>'+
+    '<th class="num">獨立次數</th><th>判定</th></tr></thead><tbody>';
+  b.rules.forEach(function(r){
+    var span = (r.sample_start && r.sample_end) ? '（'+r.sample_start.slice(0,4)+'–'+r.sample_end.slice(0,4)+'）' : '';
+    h += '<tr><td class="k">'+esc(r.rule)+'<span class="base-date">'+esc(r.condition||'')+esc(span)+'</span></td>';
+    if(r.excess_cond_pct == null){ h += '<td class="num" colspan="3">—</td>'; }
+    else h += '<td class="num">'+pc(r.hit_cond_pct)+'／'+pc(r.hit_all_pct)+'</td>'+
+              '<td class="num">'+sg(r.excess_cond_pct)+'／'+sg(r.excess_all_pct)+'</td>'+
+              '<td class="num">'+esc(r.episodes)+'</td>';
+    h += '<td>'+esc(r.verdict)+(r.verdict!=='有預測力' ? '<span class="base-date">'+esc(r.reason||'')+'</span>' : '')+'</td></tr>';
+  });
+  h += '</tbody></table></div><div class="ex-src">判定：條件成立的週比所有週多贏 '+esc(th.min_diff_pp)+
+    ' 個百分點以上、而且 t ≥ '+esc(th.min_nw_t)+' 才算有預測力；條件成立不到 '+esc(th.min_cond_weeks)+
+    ' 週或獨立事件不到 '+esc(th.min_episodes)+' 次算無基率。這是事先寫死的分類線，不是結論。</div></div>';
+  return h;
+}
+
 function picksTrackTable(reg, bench){
   var h = '<thead><tr><th>標的</th><th class="num">起算收盤</th><th class="num">最新收盤</th><th class="num">累計配息</th><th class="num">含息報酬</th><th class="num">相對 '+esc(bench)+'</th><th class="num">最大回檔</th></tr></thead><tbody>';
   (reg.rows || []).forEach(function(r){
@@ -1838,6 +1869,7 @@ function picksRegHtml(reg, t){
     if(tx.frozen_note) h += '<div class="ex-src">'+esc(tx.frozen_note)+'</div>';
     h += '</div>';
   }
+  h += picksBaseRateHtml(reg);
   var settled = reg.status === 'settled';
   h += '<div class="ex-title picks-sub" style="font-size:.85rem">'+(settled ? '登記後追蹤（已結算，最終數字）' : '登記後追蹤（每個美股交易日更新）')+'</div>';
   if(reg.status === 'pending' || !(reg.rows||[]).length){

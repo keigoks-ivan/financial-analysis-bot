@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ETF 看穿重疊與整體曝險 — InvestMQuest Research</title>
+<meta name="description" content="把 ETF 拆回發行公司：21 檔看穿重疊矩陣、ADR 與本地股合併、持有人部位的整體曝險。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{--x-navy:#0d2244;--x-navy-2:#173564;--x-rule:var(--gold-deep)}
+*{box-sizing:border-box;min-width:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.75;font-size:15px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px 60px}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.hero{padding:34px 0 18px;border-bottom:2px solid var(--gold-deep)}
+.ex-label{font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.06em;color:var(--x-navy)}
+.hero h1{font-family:var(--sans);font-size:1.7rem;line-height:1.35;margin:6px 0 8px;color:var(--ink);font-weight:700}
+.hero .sub{margin:0;color:var(--sec);font-size:13.5px}
+.summary{margin:22px 0 8px;background:var(--gold-bg);border:1px solid var(--gold-soft);border-left:3px solid var(--gold-deep);border-radius:var(--r);padding:14px 18px}
+.conc{margin:8px 0 0;padding-left:1.4em}
+.conc li{margin:5px 0;font-size:14.5px}
+.main-sec{margin-top:40px}
+.main-sec h2{font-family:var(--sans);font-size:1.25rem;margin:0 0 6px;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:6px}
+.main-sec h2 .sn{font-family:var(--mono);color:var(--gold-deep);margin-right:10px}
+.lead{font-size:1.02rem;font-weight:600;color:var(--x-navy);margin:8px 0 4px}
+.exhibit{margin:20px 0 4px}
+.ex-title{font-size:.95rem;font-weight:700;color:var(--ink);margin:1px 0 2px}
+.ex-sub{font-size:12px;color:var(--sec);margin-bottom:8px}
+.ex-src{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.t{border-collapse:collapse;font-size:.82rem;background:var(--card);width:100%}
+.t th{font-family:var(--sans);font-size:.74rem;font-weight:600;color:#fff;background:var(--x-navy);text-align:left;padding:.5rem .7rem;border-bottom:2px solid var(--x-navy);white-space:nowrap}
+.t th.num{text-align:right}
+.t td{padding:.44rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);line-height:1.5;white-space:nowrap}
+.t td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.t tbody tr:nth-child(even) td{background:#f5f6f8}
+.t tr.hl td{font-weight:700;background:var(--gold-bg) !important}
+.t.wrap td{white-space:normal;min-width:150px}
+.read{font-size:14px;margin:10px 0 0;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--x-navy);border-radius:var(--r)}
+.risks{margin:10px 0 0;padding-left:1.4em}
+.risks li{margin:6px 0}
+.back{margin:44px 0 0;padding-top:14px;border-top:1px solid var(--line);font-weight:600}
+.back a{color:var(--gold-deep)}
+@media(max-width:680px){.wrap{padding:0 16px 48px}.hero h1{font-size:1.35rem}}
+.kpi-note{font-size:12px;color:var(--sec)}
+.warnbox{margin:12px 0 0;padding:10px 14px;background:#fff7e6;border:1px solid #f0d9a8;border-left:3px solid var(--warn,#b7791f);border-radius:var(--r);font-size:13.5px}
+.howto{margin:14px 0 0;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);font-size:14px}
+.howto code,.read code{font-family:var(--mono);font-size:12.5px;background:#f1f3f6;padding:1px 5px;border-radius:3px}
+.howto ol{margin:6px 0 0;padding-left:1.4em}
+.howto li{margin:4px 0}
+.t td.src{white-space:normal;min-width:240px;font-size:.78rem;color:var(--sec)}
+.t td.wrapc{white-space:normal;min-width:160px}
+.seg{display:inline-flex;border:1px solid var(--x-navy);border-radius:6px;overflow:hidden;margin:6px 0 10px}
+.seg button{font:inherit;font-size:13px;padding:5px 14px;border:0;background:var(--card);color:var(--x-navy);cursor:pointer}
+.seg button+button{border-left:1px solid var(--x-navy)}
+.seg button.on{background:var(--x-navy);color:#fff}
+.mx{border-collapse:collapse;font-family:var(--mono);font-size:11px;background:var(--card)}
+.mx th{font-family:var(--sans);font-size:10.5px;font-weight:600;color:var(--ink);padding:3px 4px;white-space:nowrap;background:var(--card)}
+.mx thead th{writing-mode:vertical-rl;transform:rotate(180deg);height:92px;text-align:left;vertical-align:bottom}
+.mx tbody th{text-align:right;position:sticky;left:0;z-index:1}
+.mx td{width:38px;min-width:38px;height:26px;text-align:center;border:1px solid #eef0f3;cursor:pointer;font-variant-numeric:tabular-nums}
+.mx td.diag{background:#e9ecf1;color:var(--muted);cursor:default}
+.mx td.sel{outline:2px solid var(--gold-deep);outline-offset:-2px}
+.detail{margin:12px 0 0;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold-deep);border-radius:var(--r);font-size:14px}
+.detail h3{margin:0 0 6px;font-size:1rem;color:var(--ink)}
+.detail .t{margin-top:6px}
+.legend{font-size:12px;color:var(--sec);margin-top:6px}
+.empty{color:var(--sec);font-size:14px;margin:6px 0}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:3px;background:#eef1f6;color:var(--x-navy);margin-left:4px}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/earnings/">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/markets.html">全球市場</a>
+          <a href="/sectors.html">產業板塊</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/" class="active">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<div class="wrap">
+<div class="hero"><div class="ex-label">ETF 儀表板｜看穿重疊</div>
+<h1>把 ETF 拆回公司，算真正的重疊與曝險</h1>
+<p class="sub" id="heroSub">資料載入中。</p></div>
+<section class="summary"><div class="ex-label">一頁結論</div><ol class="conc" id="conc"><li>資料載入中。</li></ol></section>
+
+<section class="main-sec" id="exposure"><h2><span class="sn">一</span>整體曝險</h2><p class="lead" id="expLead"></p>
+<div id="expWarn"></div>
+<section class="exhibit"><div class="ex-label">表 1</div><div class="ex-title">整體曝險摘要</div><div class="ex-sub">占總資產＝帳戶占總資產的比例 × 部位占帳戶的比例 × ETF 內的持股權重。占已填部位＝除以已經填了比例的部位合計，還沒填的個股與現金不進分母。</div><div class="tbl-wrap"><table class="t"><thead><tr><th>項目</th><th class="num">占總資產</th><th class="num">占已填部位</th></tr></thead><tbody id="kpiBody"></tbody></table></div></section>
+<p class="read">ETF 持股權重加總通常略低於 100%，差額是基金內的現金與沒有揭露的部位，表中列為「ETF 內現金與未揭露」。美股與台股帳戶都直接用占總資產的比例相加，不換匯。ADR 與本地股歸到同一家公司，台積電的 ADR 和 2330 算在一起。</p>
+<div class="howto"><strong>怎麼改成自己的部位</strong>
+<p style="margin:6px 0 0">部位比例存在 repo 的 <code>data/etf_dash/lookthrough_portfolio.json</code>，每天跟儀表板一起重算。</p>
+<ol>
+<li><code>books</code> 每一列是一個帳戶，<code>share_of_total_pct</code> 填這個帳戶占總資產的比例，各帳戶加起來是 100。</li>
+<li><code>positions</code> 是帳戶內的部位，<code>pct_of_book</code> 填占該帳戶的比例。ETF 寫 <code>{"type":"etf","key":"QQQ"}</code>，代號用儀表板的寫法，愛爾蘭版 SMH 寫 <code>SMH_UCITS</code>。</li>
+<li>個股寫 <code>{"type":"stock","ticker":"2330.TW"}</code>，台股加 <code>.TW</code>，美股直接寫代號。ADR 與本地股會自動歸到同一家公司。</li>
+<li>現金或不拆的部位寫 <code>{"type":"cash","label":"現金"}</code>。</li>
+<li>比例留 <code>null</code> 的列會略過。帳戶內加起來不到 100 的部分列為「未填」。比例改成實際數字後，把 <code>share_is_placeholder</code> 改成 <code>false</code>，暫填提示就會拿掉。</li>
+</ol></div>
+<section class="exhibit"><div class="ex-label">表 2</div><div class="ex-title">前 30 家公司的看穿權重</div><div class="ex-sub">每家公司把所有部位帶進來的權重相加。來源欄列出每個部位貢獻多少，單位都是占總資產的百分比。</div><div class="tbl-wrap"><table class="t"><thead><tr><th class="num">#</th><th>公司</th><th>代號</th><th class="num">占總資產</th><th class="num">占已填部位</th><th>來源</th></tr></thead><tbody id="topBody"></tbody></table></div></section>
+<section class="exhibit"><div class="ex-label">表 3</div><div class="ex-title">每個部位對整體的貢獻</div><div class="ex-sub">各欄是該部位帶進來的曝險，單位為占總資產的百分比。個股沒有持股日期。</div><div class="tbl-wrap"><table class="t"><thead><tr><th>帳戶</th><th>部位</th><th class="num">占帳戶</th><th class="num">占總資產</th><th>持股日期</th><th class="num">台積電</th><th class="num">輝達</th><th class="num">記憶體三家</th><th class="num">AI 半導體</th><th>帶進來最多的公司</th></tr></thead><tbody id="posBody"></tbody></table></div></section>
+<section class="exhibit"><div class="ex-label">表 4</div><div class="ex-title">AI 半導體一籃的成員</div><div class="ex-sub" id="aiDef"></div><div class="tbl-wrap"><table class="t"><thead><tr><th>公司</th><th class="num">占總資產</th><th class="num">占已填部位</th></tr></thead><tbody id="aiBody"></tbody></table></div></section>
+</section>
+
+<section class="main-sec" id="matrix"><h2><span class="sn">二</span>看穿重疊矩陣</h2><p class="lead">同一家公司在不同市場用不同代號，只對代號會把它算成 0。</p>
+<section class="exhibit"><div class="ex-label">表 5</div><div class="ex-title">21 檔兩兩重疊</div><div class="ex-sub">兩檔持股中同一家公司各取較小的權重，全部相加。看穿是先把代號歸到公司再比，代號是原始代號直接比，差值是看穿減代號。兩種算法用同一份完整持股（含沒有 EPS 的成分股），所以儀表板首頁的代號重疊可能略低。點格子看明細。</div>
+<div class="seg" role="tablist"><button type="button" data-mode="lookthrough" class="on">看穿</button><button type="button" data-mode="ticker">代號</button><button type="button" data-mode="diff">差值</button></div>
+<div class="tbl-wrap"><table class="mx" id="mx"></table></div>
+<div class="legend" id="mxLegend"></div>
+<div class="detail" id="mxDetail"></div></section>
+<p class="read">SMH 美國版與愛爾蘭版持有幾乎同一批公司，代號也都對得上，重疊仍明顯低於 100%。差距來自權重規則：愛爾蘭版單一持股上限 10%，輝達的權重被壓低，超微、美光、博通等其餘大型股相對放大。點矩陣裡這一格可以看逐家權重。</p>
+<section class="exhibit"><div class="ex-label">表 6</div><div class="ex-title">代號歸併後重疊變高的組合</div><div class="ex-sub">只列差值大於零的組合，依差值排序。</div><div class="tbl-wrap"><table class="t"><thead><tr><th>組合</th><th class="num">代號</th><th class="num">看穿</th><th class="num">差值</th><th>差值來自</th></tr></thead><tbody id="diffBody"></tbody></table></div></section>
+<section class="exhibit"><div class="ex-label">表 7</div><div class="ex-title">各檔持股日期</div><div class="ex-sub">持股清單由各發行商公布，更新頻率不同。權重合計低於 100% 的部分是基金內現金與未揭露部位。</div><div class="tbl-wrap"><table class="t"><thead><tr><th>基金</th><th>持股日期</th><th class="num">持股數</th><th class="num">權重合計</th></tr></thead><tbody id="fundBody"></tbody></table></div></section>
+</section>
+
+<section class="main-sec" id="candidates"><h2><span class="sn">三</span>未配對候選清單</h2><p class="lead">名稱相近但還沒合併的公司列在這裡，確認後補進別名表。</p>
+<p class="read" id="aliasStats"></p>
+<section class="exhibit"><div class="ex-label">表 8</div><div class="ex-title">名稱相近、尚未確認的組合</div><div class="ex-sub">同一交易所內名稱相同的代號會自動合併（例如 A／B 股、普通股與特別股）。跨交易所只靠別名表，因為名稱相同不一定是同一家：美國的 Merck &amp; Co 與德國的 Merck KGaA 就是兩家公司。確認是同一家就把代號加進 <code>data/etf_dash/issuer_aliases.json</code> 的 <code>issuers</code>，確認不是就加進 <code>distinct</code>。</div><div id="candWrap"></div></section>
+<section class="exhibit"><div class="ex-label">表 9</div><div class="ex-title">名稱不是英文、程式無法比對的大持股</div><div class="ex-sub">台股、日股的持股名稱是中文或日文，無法拿來和英文名稱比對。下表列出單檔權重 1% 以上、還沒進別名表的持股。若之後有基金持有它們的 ADR 或海外掛牌，要手動補表。</div><div class="tbl-wrap"><table class="t"><thead><tr><th>代號</th><th>名稱</th><th>基金</th><th class="num">權重</th></tr></thead><tbody id="nlBody"></tbody></table></div></section>
+<section class="exhibit"><div class="ex-label">表 10</div><div class="ex-title">已經合併的公司</div><div class="ex-sub">目前持股裡有兩個以上代號、被歸到同一家公司的名單。方式欄：別名表是手動對照，同名是同一交易所內名稱相同。</div><div class="tbl-wrap"><table class="t"><thead><tr><th>公司</th><th>方式</th><th>代號（出現在哪些基金）</th></tr></thead><tbody id="mergedBody"></tbody></table></div></section>
+<section class="exhibit"><div class="ex-label">表 11</div><div class="ex-title">已確認是不同公司的組合</div><div class="ex-sub">這些組合名稱相同或相近，人工確認後不合併，也不再列入表 8。</div><div class="tbl-wrap"><table class="t"><thead><tr><th>代號</th><th>說明</th></tr></thead><tbody id="distBody"></tbody></table></div></section>
+</section>
+
+<section class="main-sec"><h2>資料限制</h2><ul class="risks">
+<li>各檔持股日期不同，見表 7。QQQ 與 RSP 用的是月更持股，可能比其他基金舊。</li>
+<li>台灣加權指數的持股是用上市公司資料機械估算的近似值，不是官方成分。</li>
+<li>ADR 與本地股視為同一筆曝險，不計 ADR 溢價與匯率差。</li>
+<li>整體曝險只算部位檔裡填的比例。期貨、債券、黃金不在內；實盤引擎把股票曝險調低時，要同步改部位檔，否則這裡算的是滿倉的情況。</li>
+<li>名稱比對只用英文名稱。中文、日文名稱的持股只能靠別名表，見表 9。</li>
+<li>ETF 內的現金、期貨與沒有揭露的部位不拆，列在表 1 的「ETF 內現金與未揭露」。</li>
+</ul></section>
+<p class="back"><a href="/etf-dash/">回 ETF 儀表板</a></p>
+</div>
+<script>
+(function(){
+'use strict';
+var D=null, MODE='lookthrough', SEL=null;
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function pct(x,d){if(x==null||isNaN(x))return '—';return Number(x).toFixed(d==null?1:d)+'%';}
+function num(x,d){if(x==null||isNaN(x))return '—';return Number(x).toFixed(d==null?1:d);}
+function label(k){var f=(D.funds||[]).filter(function(x){return x.key===k;})[0];return f?f.label:k;}
+function shortLabel(k){return k==='SMH_UCITS'?'SMH 愛爾蘭':(k==='TAIEX'?'加權指數':k);}
+
+function renderHero(){
+  var ds=(D.funds||[]).map(function(f){return f.holdings_as_of;}).filter(Boolean).sort();
+  var gen=(D.generated_at||'').slice(0,10);
+  $('heroSub').textContent='持股日期各檔不同，最早 '+(ds[0]||'—')+'，最晚 '+(ds[ds.length-1]||'—')+'；資料產生於 '+gen+'（UTC）。整體曝險用的部位比例由持有人自己填。';
+}
+
+function renderSummary(){
+  var P=D.portfolio, S=P.stats, B=P.baskets, out=[];
+  if(S.max_single) out.push(esc(S.max_single.name)+'是最大的單一公司曝險，占總資產 <strong>'+pct(S.max_single.pct_total)+'</strong>，占已填部位 '+pct(S.max_single.pct_filled)+'。');
+  out.push('前十大公司合計占總資產 '+pct(S.top10_sum.pct_total)+'，占已填部位 '+pct(S.top10_sum.pct_filled)+'。');
+  if(B.ai_semi) out.push('AI 半導體一籃合計占總資產 <strong>'+pct(B.ai_semi.pct_total)+'</strong>，其中台積電 '+pct(B.tsmc.pct_total)+'。');
+  if(B.memory3&&B.nvidia) out.push('記憶體三家合計占總資產 '+pct(B.memory3.pct_total)+'，輝達 '+pct(B.nvidia.pct_total)+'。');
+  var ps=Object.keys(D.pairs).map(function(k){return [k,D.pairs[k]];}).filter(function(x){return x[1].diff>0;}).sort(function(a,b){return b[1].diff-a[1].diff;});
+  if(ps.length){
+    // 結論句挑可以買的基金組合，加權指數只是對照
+    var inv=ps.filter(function(x){return x[0].indexOf('TAIEX')<0;});
+    var p=(inv.length?inv:ps)[0], ab=p[0].split('|'), names=p[1].diff_top.slice(0,2).map(function(x){return x[1];}).join('、');
+    out.push(label(ab[0])+'與'+label(ab[1])+'只對代號重疊 '+pct(p[1].tk)+'，歸到公司後是 '+pct(p[1].lt)+'，差額來自'+esc(names)+'。');
+    out.push('21 檔兩兩配對中，有 '+ps.length+' 組因為代號歸併而重疊變高，其餘組合不受影響。');
+  }
+  var ph=(P.books||[]).filter(function(b){return b.share_is_placeholder;});
+  if(ph.length) out.push('各帳戶占總資產的比例目前是暫填數字，改成實際比例後，上面的曝險數字會跟著變。');
+  $('conc').innerHTML=out.map(function(s){return '<li>'+s+'</li>';}).join('');
+}
+
+function renderExposure(){
+  var P=D.portfolio, S=P.stats, B=P.baskets, T=P.totals;
+  var top=P.top30[0];
+  if(top) $('expLead').textContent=top.name+'的曝險來自 '+top.sources.length+' 個部位，合計是最大的單一公司曝險。';
+  var w=[];
+  var ph=(P.books||[]).filter(function(b){return b.share_is_placeholder;});
+  if(ph.length) w.push('暫填：'+ph.map(function(b){return esc(b.name)+'占總資產 '+pct(b.share_of_total_pct,0);}).join('、')+' 是預設值，還沒改成實際比例。');
+  (P.warnings||[]).forEach(function(s){w.push(esc(s));});
+  $('expWarn').innerHTML=w.length?'<div class="warnbox">'+w.join('<br>')+'</div>':'';
+  var rows=[
+    ['單一公司最大：'+(S.max_single?S.max_single.name:'—'), S.max_single],
+    ['前十大公司合計', S.top10_sum],
+    ['前 30 大公司合計', S.top30_sum],
+    ['台積電', B.tsmc], ['輝達', B.nvidia], ['記憶體三家（美光、SK 海力士、三星電子）', B.memory3], ['AI 半導體一籃（成員見表 4）', B.ai_semi]
+  ];
+  var h=rows.map(function(r){return '<tr'+(r[0].indexOf('AI')===0||r[0].indexOf('單一')===0?' class="hl"':'')+'><td>'+esc(r[0])+'</td><td class="num">'+pct(r[1]&&r[1].pct_total)+'</td><td class="num">'+pct(r[1]&&r[1].pct_filled)+'</td></tr>';}).join('');
+  h+='<tr><td>已填部位合計</td><td class="num">'+pct(T.filled)+'</td><td class="num">'+pct(100)+'</td></tr>';
+  h+='<tr><td>未填（個股、現金等）</td><td class="num">'+pct(T.unfilled)+'</td><td class="num">—</td></tr>';
+  h+='<tr><td>現金（已填）</td><td class="num">'+pct(T.cash)+'</td><td class="num">'+pct(T.filled?T.cash/T.filled*100:null)+'</td></tr>';
+  h+='<tr><td>ETF 內現金與未揭露</td><td class="num">'+pct(T.etf_cash_undisclosed,2)+'</td><td class="num">'+pct(T.filled?T.etf_cash_undisclosed/T.filled*100:null,2)+'</td></tr>';
+  h+='<tr><td>拆到公司的股票曝險，共 '+S.n_issuers+' 家</td><td class="num">'+pct(T.equity_lookthrough)+'</td><td class="num">'+pct(T.filled?T.equity_lookthrough/T.filled*100:null)+'</td></tr>';
+  $('kpiBody').innerHTML=h;
+  $('topBody').innerHTML=P.top30.map(function(t,i){
+    return '<tr><td class="num">'+(i+1)+'</td><td>'+esc(t.name)+'</td><td>'+esc(t.tickers.join('、'))+'</td><td class="num">'+pct(t.pct_total,2)+'</td><td class="num">'+pct(t.pct_filled,2)+'</td><td class="src">'+t.sources.map(function(s){return esc(s[0])+' '+num(s[1],2);}).join('；')+'</td></tr>';
+  }).join('');
+  $('posBody').innerHTML=P.positions.map(function(p){
+    var c=p.contrib||{};
+    return '<tr><td>'+esc(p.book)+'</td><td>'+esc(p.label)+'</td><td class="num">'+pct(p.pct_of_book,0)+'</td><td class="num">'+pct(p.eff_pct)+'</td><td>'+esc(p.holdings_as_of||'—')+'</td><td class="num">'+num(c.tsmc,2)+'</td><td class="num">'+num(c.nvidia,2)+'</td><td class="num">'+num(c.memory3,2)+'</td><td class="num">'+num(c.ai_semi,2)+'</td><td class="wrapc">'+(p.top_issuers||[]).slice(0,3).map(function(x){return esc(x[1])+' '+num(x[2],2);}).join('、')+'</td></tr>';
+  }).join('');
+  $('aiDef').textContent=(B.ai_semi&&B.ai_semi.definition_zh)||'';
+  $('aiBody').innerHTML=(B.ai_semi?B.ai_semi.members:[]).map(function(m){return '<tr><td>'+esc(m.name)+'</td><td class="num">'+pct(m.pct_total,2)+'</td><td class="num">'+pct(m.pct_filled,2)+'</td></tr>';}).join('');
+}
+
+function cellVal(i,j){var m=D.matrix[MODE];return m[i][j];}
+function color(v,maxv){
+  if(v==null||v<=0) return 'transparent';
+  var a=Math.min(1,v/maxv);
+  if(MODE==='diff') return 'rgba(183,121,31,'+(0.12+0.78*a).toFixed(2)+')';
+  return 'rgba(13,34,68,'+(0.06+0.84*a).toFixed(2)+')';
+}
+function renderMatrix(){
+  var K=D.matrix.keys, n=K.length, m=D.matrix[MODE], maxv=0;
+  for(var i=0;i<n;i++)for(var j=0;j<n;j++){if(i!==j&&m[i][j]>maxv)maxv=m[i][j];}
+  if(!maxv) maxv=1;
+  var h='<thead><tr><th></th>'+K.map(function(k){return '<th title="'+esc(label(k))+'">'+esc(shortLabel(k))+'</th>';}).join('')+'</tr></thead><tbody>';
+  for(i=0;i<n;i++){
+    h+='<tr><th title="'+esc(label(K[i]))+'">'+esc(shortLabel(K[i]))+'</th>';
+    for(j=0;j<n;j++){
+      if(i===j){h+='<td class="diag">—</td>';continue;}
+      var v=m[i][j], a=Math.min(1,(v||0)/maxv), fg=(MODE!=='diff'&&a>0.45)?'#fff':'var(--ink)';
+      var key=K[i]+'|'+K[j];
+      h+='<td data-i="'+i+'" data-j="'+j+'" style="background:'+color(v,maxv)+';color:'+fg+'"'+(SEL&&SEL[0]===i&&SEL[1]===j?' class="sel"':'')+' title="'+esc(label(K[i]))+' × '+esc(label(K[j]))+'">'+(v>0?num(v,v>=10?0:1):'')+'</td>';
+    }
+    h+='</tr>';
+  }
+  h+='</tbody>';
+  $('mx').innerHTML=h;
+  var names={lookthrough:'看穿重疊',ticker:'代號重疊',diff:'差值（看穿減代號）'};
+  $('mxLegend').textContent='目前顯示：'+names[MODE]+'，單位百分比。顏色越深數字越大，最深是 '+num(maxv)+'；空白是 0。';
+}
+function pairOf(a,b){return D.pairs[a+'|'+b]?[a,b,D.pairs[a+'|'+b]]:(D.pairs[b+'|'+a]?[b,a,D.pairs[b+'|'+a]]:null);}
+function renderDetail(){
+  if(!SEL){$('mxDetail').innerHTML='';return;}
+  var K=D.matrix.keys, a=K[SEL[0]], b=K[SEL[1]], p=pairOf(a,b);
+  if(!p){$('mxDetail').innerHTML='<h3>'+esc(label(a))+' × '+esc(label(b))+'</h3><p class="empty">兩檔沒有共同持有的公司。</p>';return;}
+  var x=p[0], y=p[1], v=p[2];
+  var h='<h3>'+esc(label(x))+' × '+esc(label(y))+'</h3><div>代號重疊 '+pct(v.tk)+'，看穿重疊 '+pct(v.lt)+'，差值 '+pct(v.diff)+'。</div>';
+  h+='<div class="tbl-wrap"><table class="t"><thead><tr><th>共同持有的公司（前 6 家）</th><th class="num">計入重疊</th><th class="num">'+esc(label(x))+'</th><th class="num">'+esc(label(y))+'</th></tr></thead><tbody>'+v.top.map(function(r){return '<tr><td>'+esc(r[1])+'</td><td class="num">'+num(r[2],2)+'</td><td class="num">'+num(r[3],2)+'</td><td class="num">'+num(r[4],2)+'</td></tr>';}).join('')+'</tbody></table></div>';
+  if(v.diff_top&&v.diff_top.length){
+    h+='<div style="margin-top:8px">差值來自：'+v.diff_top.map(function(r){return esc(r[1])+' '+num(r[2],2)+'（'+esc(r[3].join('、'))+' 對 '+esc(r[4].join('、'))+'）';}).join('、')+'。</div>';
+  }
+  $('mxDetail').innerHTML=h;
+}
+function bindMatrix(){
+  document.querySelectorAll('.seg button').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      MODE=btn.getAttribute('data-mode');
+      document.querySelectorAll('.seg button').forEach(function(b){b.classList.toggle('on',b===btn);});
+      renderMatrix();
+    });
+  });
+  $('mx').addEventListener('click',function(e){
+    var td=e.target.closest('td[data-i]'); if(!td) return;
+    SEL=[+td.getAttribute('data-i'),+td.getAttribute('data-j')];
+    renderMatrix(); renderDetail();
+  });
+}
+function renderDiffs(){
+  var ps=Object.keys(D.pairs).map(function(k){return [k,D.pairs[k]];}).filter(function(x){return x[1].diff>0;}).sort(function(a,b){return b[1].diff-a[1].diff;});
+  $('diffBody').innerHTML=ps.length?ps.map(function(x){var ab=x[0].split('|');return '<tr><td>'+esc(label(ab[0]))+' × '+esc(label(ab[1]))+'</td><td class="num">'+pct(x[1].tk,2)+'</td><td class="num">'+pct(x[1].lt,2)+'</td><td class="num">'+pct(x[1].diff,2)+'</td><td class="wrapc">'+x[1].diff_top.map(function(r){return esc(r[1])+' '+num(r[2],2);}).join('、')+'</td></tr>';}).join(''):'<tr><td colspan="5">沒有差值大於零的組合。</td></tr>';
+  $('fundBody').innerHTML=(D.funds||[]).map(function(f){return '<tr><td>'+esc(f.label)+'</td><td>'+esc(f.holdings_as_of||'—')+(f.holdings_stale?'<span class="tag">過期</span>':'')+'</td><td class="num">'+f.n_holdings+'</td><td class="num">'+pct(f.weight_sum_pct,2)+'</td></tr>';}).join('');
+}
+function renderCandidates(){
+  var A=D.alias_stats||{};
+  $('aliasStats').textContent='別名表收錄 '+A.n_issuers+' 家公司、'+A.n_tickers+' 個代號，其中 '+A.n_tickers_in_holdings+' 個代號出現在目前的持股裡。21 檔共 '+A.n_tickers_total+' 個代號，歸併後是 '+A.n_issuers_total+' 家公司；靠別名表合併 '+A.n_merged_alias+' 家，靠同交易所同名合併 '+A.n_merged_name+' 家。';
+  var C=D.candidates||[];
+  if(!C.length){
+    $('candWrap').innerHTML='<p class="empty">目前沒有待確認的組合。已審過、確認是不同公司的 '+(D.distinct_reviewed||[]).length+' 組列在表 11。</p>';
+  }else{
+    $('candWrap').innerHTML='<div class="tbl-wrap"><table class="t"><thead><tr><th>甲</th><th>乙</th><th>原因</th><th class="num">相似度</th><th>跨市場</th></tr></thead><tbody>'+C.map(function(c){
+      function side(s){return esc(s.name)+'<br><span class="kpi-note">'+esc(s.tickers.join('、'))+'｜'+esc(s.funds.join('、'))+'｜最大權重 '+num(s.max_w,2)+'</span>';}
+      return '<tr><td class="wrapc">'+side(c.a)+'</td><td class="wrapc">'+side(c.b)+'</td><td>'+esc(c.reason)+'</td><td class="num">'+num(c.similarity,2)+'</td><td>'+(c.cross_market?'是':'否')+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  }
+  $('nlBody').innerHTML=(D.non_latin_unaliased||[]).map(function(x){return '<tr><td>'+esc(x.ticker)+'</td><td>'+esc(x.name)+'</td><td>'+esc(label(x.fund))+'</td><td class="num">'+pct(x.w,2)+'</td></tr>';}).join('')||'<tr><td colspan="4">沒有。</td></tr>';
+  $('mergedBody').innerHTML=(D.merged_issuers||[]).map(function(m){return '<tr><td>'+esc(m.name)+'</td><td>'+(m.source==='alias'?'別名表':'同名')+'</td><td class="wrapc">'+m.tickers.map(function(t){return esc(t.ticker)+'（'+esc(t.funds.map(shortLabel).join('、'))+'）';}).join('、')+'</td></tr>';}).join('');
+  $('distBody').innerHTML=(D.distinct_reviewed||[]).map(function(d){return '<tr><td class="wrapc">'+esc((d.tickers||[]).join('、'))+'</td><td class="wrapc">'+esc(d.note||'')+'</td></tr>';}).join('');
+}
+function init(){
+  renderHero(); renderSummary(); renderExposure();
+  var K=D.matrix.keys, i=K.indexOf('SMH'), j=K.indexOf('0050');
+  if(i>=0&&j>=0) SEL=[i,j];
+  bindMatrix(); renderMatrix(); renderDetail(); renderDiffs(); renderCandidates();
+}
+fetch('data/lookthrough.json',{cache:'no-cache'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(j){D=j;init();}).catch(function(e){
+  $('conc').innerHTML='<li>資料讀取失敗（'+esc(e.message)+'），請稍後重新整理。</li>';
+});
+})();
+</script>
+</body>
+</html>

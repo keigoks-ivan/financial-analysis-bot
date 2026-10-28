@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>主動式 ETF 到底多主動 — InvestMQuest Research</title>
+<meta name="description" content="台股 22 檔主動式 ETF 每日儀表：對 0050 的 active share、台積電偏離、主動報酬相關、第一主成分與換手。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{--x-navy:#0d2244;--x-navy-2:#173564;--x-rule:var(--gold-deep)}
+*{box-sizing:border-box;min-width:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.75;font-size:15px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px 60px}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.hero{padding:34px 0 18px;border-bottom:2px solid var(--gold-deep)}
+.ex-label{font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.06em;color:var(--x-navy)}
+.hero h1{font-family:var(--sans);font-size:1.7rem;line-height:1.35;margin:6px 0 8px;color:var(--ink);font-weight:700}
+.hero .sub{margin:0;color:var(--sec);font-size:13.5px}
+.summary{margin:22px 0 8px;background:var(--gold-bg);border:1px solid var(--gold-soft);border-left:3px solid var(--gold-deep);border-radius:var(--r);padding:14px 18px}
+.conc{margin:8px 0 0;padding-left:1.4em}
+.conc li{margin:5px 0;font-size:14.5px}
+.main-sec{margin-top:40px}
+.main-sec h2{font-family:var(--sans);font-size:1.25rem;margin:0 0 6px;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:6px}
+.main-sec h2 .sn{font-family:var(--mono);color:var(--gold-deep);margin-right:10px}
+.lead{font-size:1.02rem;font-weight:600;color:var(--x-navy);margin:8px 0 4px}
+.exhibit{margin:20px 0 4px}
+.ex-title{font-size:.95rem;font-weight:700;color:var(--ink);margin:1px 0 2px}
+.ex-sub{font-size:12px;color:var(--sec);margin-bottom:8px}
+.ex-src{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.t{border-collapse:collapse;font-size:.82rem;background:var(--card);width:100%}
+.t th{font-family:var(--sans);font-size:.74rem;font-weight:600;color:#fff;background:var(--x-navy);text-align:left;padding:.5rem .7rem;border-bottom:2px solid var(--x-navy);white-space:nowrap}
+.t th.num{text-align:right}
+.t td{padding:.44rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);line-height:1.5;white-space:nowrap}
+.t td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.t tbody tr:nth-child(even) td{background:#f5f6f8}
+.t tr.hl td{font-weight:700;background:var(--gold-bg) !important}
+.t.wrap td{white-space:normal;min-width:150px}
+.read{font-size:14px;margin:10px 0 0;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--x-navy);border-radius:var(--r)}
+.risks{margin:10px 0 0;padding-left:1.4em}
+.risks li{margin:6px 0}
+.back{margin:44px 0 0;padding-top:14px;border-top:1px solid var(--line);font-weight:600}
+.back a{color:var(--gold-deep)}
+@media(max-width:680px){.wrap{padding:0 16px 48px}.hero h1{font-size:1.35rem}}
+/* activeness 頁 */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.kpi-l{font-size:12px;color:var(--sec)}
+.kpi-v{font-family:var(--mono);font-size:1.6rem;font-weight:600;color:var(--ink);line-height:1.3}
+.kpi-c{font-size:12.5px;color:var(--body)}
+.kpi-n{font-size:11px;color:var(--muted);line-height:1.45;margin-top:2px}
+.kpi-line{margin:12px 0 0;font-size:14.5px;font-weight:600;color:var(--x-navy)}
+.pick-box{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold-deep);border-radius:var(--r);padding:8px 14px;font-size:14px}
+.pick-box p{margin:6px 0}
+.t.sortable th{cursor:pointer;user-select:none}
+.t.sortable th.asc::after{content:" ▲";font-size:.6rem}
+.t.sortable th.desc::after{content:" ▼";font-size:.6rem}
+.t td.stale{color:var(--neg)}
+.miss{font-size:10px;color:var(--muted);margin-left:4px}
+.chart{width:100%;margin-top:4px}
+.chart svg{display:block;overflow:visible}
+.chart .grid{stroke:var(--line-soft);stroke-width:1}
+.chart .axl{stroke:var(--line);stroke-width:1}
+.chart .ax{font-family:var(--mono);font-size:10.5px;fill:var(--sec)}
+.chart .leg{font-family:var(--sans);font-size:11.5px;fill:var(--body)}
+.chart .ref{stroke:var(--neg);stroke-width:1.2;stroke-dasharray:5 4}
+.chart .reflab{fill:var(--neg)}
+.chart .cur{stroke:var(--muted);stroke-width:1}
+.pick-row{font-size:13px;margin:4px 0 8px}
+.pick-row select{font-family:var(--sans);font-size:13px;padding:3px 6px;max-width:100%}
+.tip{position:fixed;display:none;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:6px 9px;font-family:var(--mono);font-size:11.5px;line-height:1.5;color:var(--body);pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+@media(max-width:880px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:420px){.kpis{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/earnings/">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/markets.html">全球市場</a>
+          <a href="/sectors.html">產業板塊</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/" class="active">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<div class="wrap">
+<div class="hero"><div class="ex-label">主動式 ETF 每日儀表</div>
+<h1>22 檔主動式 ETF 到底多主動</h1>
+<p class="sub" id="heroSub">讀取資料中…</p></div>
+
+<section class="summary"><div class="ex-label">整體</div>
+<div class="kpis" id="kpis"></div>
+<p class="kpi-line" id="kpiLine"></p></section>
+
+<section class="main-sec"><h2><span class="sn">一</span>怎麼讀這一頁</h2>
+<ul class="risks">
+<li><b>active share</b>：基金持股權重跟 0050 不一樣的部分。0% 等於複製 0050，100% 等於沒有一檔持股重疊。算法是每檔股票的權重差取絕對值，加總後除以 2。</li>
+<li><b>台積電偏離</b>：基金的台積電權重減 0050 的台積電權重，單位是個百分點。負數代表低配。</li>
+<li><b>平均相關</b>：每天的主動報酬（基金含息報酬減 0050）跟其他檔的相關，取最近 60 個交易日。數字越接近 1，這檔賺賠 0050 的日子跟別檔越一致。</li>
+<li><b>第一主成分</b>：所有基金的主動報酬裡，能用一個共同走勢解釋的比例。80% 表示 22 檔的輸贏大部分是同一件事。</li>
+<li><b>換手</b>：相鄰兩天持股權重的變動，先扣掉股價漲跌造成的權重漂移，再取一半加總，最近 20 與 60 個交易日累加。20 日 100% 大約是一個月把整個投資組合換過一次。</li>
+</ul></section>
+
+<section class="main-sec"><h2><span class="sn">二</span>本站挑選：攻方的 active share</h2>
+<p class="lead" id="pickLead"></p>
+<div class="pick-box" id="pickBox"></div></section>
+
+<section class="main-sec"><h2><span class="sn">三</span>22 檔一覽</h2>
+<p class="lead">點欄位標題可以排序。</p>
+<section class="exhibit"><div class="ex-label">表 1</div><div class="ex-title">各檔最新數字</div>
+<div class="ex-sub" id="tblSub"></div>
+<div class="tbl-wrap"><table class="t sortable" id="tbl"><thead><tr>
+<th data-k="code">代號</th><th data-k="name">名稱</th><th data-k="as_of">持股日</th>
+<th class="num" data-k="active_share_pct">active share</th>
+<th class="num" data-k="tsmc_dev_pp">台積電偏離</th>
+<th class="num" data-k="avg_corr_others">平均相關</th>
+<th class="num" data-k="turnover_20d_pct">20 日換手</th>
+<th class="num" data-k="turnover_60d_pct">60 日換手</th>
+<th class="num" data-k="excess_1y_pct">近一年對 0050 超額</th>
+</tr></thead><tbody></tbody></table></div>
+<div class="ex-src" id="tblNote"></div></section>
+<p class="read" id="tblRead"></p>
+</section>
+
+<section class="main-sec"><h2><span class="sn">四</span>走勢</h2>
+<section class="exhibit"><div class="ex-label">圖 1</div><div class="ex-title">全體 active share 中位數</div>
+<div class="ex-sub" id="c1Sub">每天取各檔最近一份持股（最多沿用 5 個交易日）。檔數隨新基金上市增加，早期只有少數幾檔。</div>
+<div class="chart" id="c1"></div></section>
+
+<section class="exhibit"><div class="ex-label">圖 2</div><div class="ex-title">主動報酬的平均配對相關與第一主成分</div>
+<div class="ex-sub">60 個交易日滾動。視窗內每天都有報酬的基金才計入，2026 年 3 月以前只有 3～5 檔，數字跟後期不能直接比。</div>
+<div class="chart" id="c2"></div></section>
+
+<section class="exhibit"><div class="ex-label">圖 3</div><div class="ex-title">單檔：active share 與 20 日換手</div>
+<div class="ex-sub">選一檔基金。虛線是本站挑選查核點的 active share 門檻，只對攻方適用。</div>
+<div class="pick-row"><label for="fundSel">基金</label> <select id="fundSel"></select></div>
+<div class="chart" id="c3a"></div>
+<div class="chart" id="c3b"></div></section>
+</section>
+
+<section class="main-sec"><h2>資料限制</h2><ul class="risks" id="notes"></ul></section>
+<p class="back"><a href="/active-etf/">回主動式 ETF 儀表板</a>　<a href="/active-etf/analysis-2026-10-28.html">2026-10-28 深度檢驗</a></p>
+</div>
+<div class="tip" id="tip"></div>
+<script>
+(function(){
+'use strict';
+var D=null, sortKey='active_share_pct', sortDir=-1;
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function num(v,nd){return (v==null||isNaN(v))?'–':Number(v).toFixed(nd);}
+function sgn(v,nd){if(v==null||isNaN(v))return '–';var s=Number(v).toFixed(nd);return (v>0?'+':(v<0?'−':''))+s.replace('-','');}
+function cls(v){return v==null?'':(v>0?'pos':(v<0?'neg':''));}
+
+function kpi(label,val,chg,note){
+  return '<div class="kpi"><div class="kpi-l">'+label+'</div><div class="kpi-v">'+val+'</div><div class="kpi-c">'+chg+'</div>'+(note?'<div class="kpi-n">'+note+'</div>':'')+'</div>';
+}
+
+function render(){
+  var o=D.overall, p=D.pick||{};
+  $('heroSub').textContent='持股到 '+D.holdings_as_of+'，價格到 '+D.price_as_of+'，每天收盤後更新。這是研究頁的描述，與實單規則無關。';
+  var h='';
+  h+=kpi('22 檔平均 active share',num(o.active_share_mean_pct,1)+'%','一個月前比 '+sgn(o.active_share_change_1m_pp,1)+' 個百分點','比較用兩個日期都有持股的 '+o.active_share_compare_n+' 檔（'+o.active_share_compare_date+'）');
+  h+=kpi('主動報酬平均配對相關',num(o.mean_pair_corr,2),'一個月前比 '+sgn(o.corr_change_1m,2),'60 日，'+o.corr_n+' 檔，比較用 '+o.corr_compare_n+' 檔');
+  h+=kpi('第一主成分解釋比例',num(o.pc1_share*100,0)+'%','一個月前比 '+sgn(o.pc1_change_1m*100,1)+' 個百分點','同上');
+  if(p.code){
+    h+=kpi('攻方 '+esc(p.code)+' active share',num(p.active_share_pct,1)+'%','距門檻 '+num(p.margin_pp,1)+' 個百分點','查核點 '+esc((p.checkpoint_id||'').replace('cp',''))+'：低於 '+p.threshold_pct+'% 重新評估');
+  }
+  $('kpis').innerHTML=h;
+  var line='22 檔平均有 '+num(o.active_share_mean_pct,0)+'% 的持股權重跟 0050 不同。';
+  if(o.mean_pair_corr>=0.6){
+    line+='每天對 0050 的輸贏卻高度同步，平均配對相關 '+num(o.mean_pair_corr,2)+'，一個共同走勢解釋 '+num(o.pc1_share*100,0)+'%：持股各不相同，押的是同一個方向。';
+  }else if(o.mean_pair_corr>=0.4){
+    line+='每天對 0050 的輸贏部分同步，平均配對相關 '+num(o.mean_pair_corr,2)+'，一個共同走勢解釋 '+num(o.pc1_share*100,0)+'%。';
+  }else{
+    line+='各檔對 0050 的輸贏已經分開，平均配對相關只有 '+num(o.mean_pair_corr,2)+'。';
+  }
+  $('kpiLine').textContent=line;
+
+  // 本站挑選
+  if(p.code){
+    $('pickLead').textContent=p.code+' 目前 active share '+num(p.active_share_pct,1)+'%，查核點門檻 '+p.threshold_pct+'%，還有 '+num(p.margin_pp,1)+' 個百分點的距離。';
+    var f=D.funds.filter(function(x){return x.code===p.code;})[0];
+    var rank=D.funds.slice().filter(function(x){return x.latest.active_share_pct!=null;}).sort(function(a,b){return b.latest.active_share_pct-a.latest.active_share_pct;}).map(function(x){return x.code;}).indexOf(p.code)+1;
+    var s=f?f.series:null, lo=null, loD=null;
+    if(s){for(var i=0;i<s.d.length;i++){if(s.as[i]!=null&&(lo==null||s.as[i]<lo)){lo=s.as[i];loD=s.d[i];}}}
+    $('pickBox').innerHTML='<p>'+esc(p.checkpoint_text||'')+'。登記 '+esc(p.registered_on)+'，持股日 '+esc(p.as_of)+'。</p>'+
+      '<p>22 檔裡排第 '+rank+' 高。持股資料起（'+esc(s?s.d[0]:'')+'）以來最低 '+num(lo,1)+'%（'+esc(loD)+'），20 日換手 '+num(f&&f.latest.turnover_20d_pct,1)+'%。圖 3 預設顯示這一檔。</p>';
+  } else { $('pickLead').textContent='目前沒有登記中的攻方。'; }
+
+  renderTable();
+  $('tblSub').textContent='0050 權重用同一天的 0050 持股（'+D.bench_snapshot_first+' 以前用股價回推）。換手已扣掉股價漂移。「–」是持股資料不滿 20 或 60 個交易日。超額帶 * 的基金上市不滿一年，從上市後第 6 個交易日算起。';
+  var stale=D.funds.filter(function(f){return f.stale;}).map(function(f){return f.code+'（'+f.latest.as_of+'）';});
+  $('tblNote').textContent='來源：各投信官方持股檔、0050 每日持股、Yahoo 含息收盤。'+(stale.length?' 持股日落後超過 3 個交易日：'+stale.join('、')+'。':'');
+  tableRead();
+
+  charts();
+  var ul='';
+  (D.notes||[]).forEach(function(n){ul+='<li>'+esc(n)+'</li>';});
+  ul+='<li>相關與第一主成分只描述過去 60 個交易日的同步程度，不預測接下來誰會贏。</li>';
+  $('notes').innerHTML=ul;
+}
+
+function rowVal(f,k){
+  if(k==='code')return f.code; if(k==='name')return f.name||''; if(k==='as_of')return f.latest.as_of;
+  return f.latest[k];
+}
+function renderTable(){
+  var rows=D.funds.slice().sort(function(a,b){
+    var x=rowVal(a,sortKey), y=rowVal(b,sortKey);
+    if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1;
+    if(typeof x==='string')return sortDir*x.localeCompare(y);
+    return sortDir*(x-y);
+  });
+  var pc=(D.pick||{}).code, h='';
+  rows.forEach(function(f){
+    var l=f.latest;
+    var miss20=l.missing_days_20d?'<span class="miss" title="20 日內缺 '+l.missing_days_20d+' 天持股">缺 '+l.missing_days_20d+' 天</span>':'';
+    var miss60=l.missing_days_60d?'<span class="miss" title="60 日內缺 '+l.missing_days_60d+' 天持股">缺 '+l.missing_days_60d+' 天</span>':'';
+    h+='<tr'+(f.code===pc?' class="hl"':'')+'><td>'+esc(f.code)+'</td><td>'+esc(f.name||'')+'</td>'+
+      '<td class="'+(f.stale?'stale':'')+'">'+esc(l.as_of)+'</td>'+
+      '<td class="num">'+num(l.active_share_pct,1)+'</td>'+
+      '<td class="num">'+sgn(l.tsmc_dev_pp,1)+'</td>'+
+      '<td class="num">'+num(l.avg_corr_others,2)+'</td>'+
+      '<td class="num">'+num(l.turnover_20d_pct,0)+miss20+'</td>'+
+      '<td class="num">'+num(l.turnover_60d_pct,0)+miss60+'</td>'+
+      '<td class="num '+cls(l.excess_1y_pct)+'">'+(l.excess_1y_pct==null?'–':sgn(l.excess_1y_pct,1)+'%')+(l.excess_1y_basis==='listing'?'*':'')+'</td></tr>';
+  });
+  document.querySelector('#tbl tbody').innerHTML=h;
+  document.querySelectorAll('#tbl th').forEach(function(th){
+    th.classList.remove('asc','desc');
+    if(th.getAttribute('data-k')===sortKey)th.classList.add(sortDir>0?'asc':'desc');
+  });
+}
+function tableRead(){
+  var fs=D.funds.filter(function(f){return f.latest.active_share_pct!=null;});
+  var lowAS=fs.slice().sort(function(a,b){return a.latest.active_share_pct-b.latest.active_share_pct;})[0];
+  var t20=D.funds.filter(function(f){return f.latest.turnover_20d_pct!=null;}).sort(function(a,b){return b.latest.turnover_20d_pct-a.latest.turnover_20d_pct;});
+  var lowC=D.funds.filter(function(f){return f.latest.avg_corr_others!=null;}).sort(function(a,b){return a.latest.avg_corr_others-b.latest.avg_corr_others;});
+  var tsmcAll=fs.every(function(f){return f.latest.tsmc_dev_pp<0;});
+  var s='最貼近 0050 的是 '+lowAS.code+'，active share '+num(lowAS.latest.active_share_pct,1)+'%。';
+  if(t20.length)s+='近 20 日換手最多的是 '+t20[0].code+'（'+num(t20[0].latest.turnover_20d_pct,0)+'%）'+(t20.length>1?'與 '+t20[1].code+'（'+num(t20[1].latest.turnover_20d_pct,0)+'%）':'')+'。';
+  if(lowC.length>1)s+='跟其他檔最不同步的是 '+lowC[0].code+'（'+num(lowC[0].latest.avg_corr_others,2)+'）與 '+lowC[1].code+'（'+num(lowC[1].latest.avg_corr_others,2)+'）。';
+  if(tsmcAll)s+='全部 '+fs.length+' 檔都低配台積電。';
+  $('tblRead').textContent=s;
+}
+
+// ── inline SVG 折線圖 ──
+var NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function tms(d){return Date.parse(d+'T00:00:00Z');}
+function lineChart(box,cfg){
+  box.innerHTML='';
+  var W=Math.max(320,box.clientWidth||700), H=cfg.height||240, m={l:44,r:14,t:14,b:26};
+  var svg=el('svg',{viewBox:'0 0 '+W+' '+H,width:'100%',height:H,role:'img','aria-label':cfg.label||''},box);
+  var xs=[],ys=[];
+  cfg.series.forEach(function(s){s.x.forEach(function(d,i){if(s.y[i]!=null){xs.push(tms(d));ys.push(s.y[i]);}});});
+  (cfg.refs||[]).forEach(function(r){ys.push(r.y);});
+  if(!xs.length){box.textContent='沒有資料';return;}
+  var x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs);
+  var y0=cfg.ymin!=null?cfg.ymin:Math.min.apply(null,ys), y1=cfg.ymax!=null?cfg.ymax:Math.max.apply(null,ys);
+  if(cfg.ymin==null||cfg.ymax==null){var pad=(y1-y0)*0.08||1; if(cfg.ymin==null)y0-=pad; if(cfg.ymax==null)y1+=pad;}
+  if(x1===x0)x1=x0+86400000;
+  function X(t){return m.l+(t-x0)/(x1-x0)*(W-m.l-m.r);}
+  function Y(v){return H-m.b-(v-y0)/(y1-y0)*(H-m.t-m.b);}
+  // y 格線
+  var step=niceStep((y1-y0)/4);
+  for(var v=Math.ceil(y0/step)*step; v<=y1+1e-9; v+=step){
+    el('line',{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),class:'grid'},svg);
+    var tx=el('text',{x:m.l-6,y:Y(v)+4,class:'ax','text-anchor':'end'},svg); tx.textContent=cfg.yfmt?cfg.yfmt(v):v;
+  }
+  // x 月份刻度
+  var d=new Date(x0); d=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,1));
+  var months=[]; while(d.getTime()<=x1){months.push(d.getTime()); d=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,1));}
+  var every=Math.max(1,Math.ceil(months.length/((W-m.l-m.r)/70)));
+  months.forEach(function(t,i){
+    if(i%every)return;
+    var dd=new Date(t), lab=(dd.getUTCMonth()===0||i===0)?(dd.getUTCFullYear()+'-'+String(dd.getUTCMonth()+1).padStart(2,'0')):String(dd.getUTCMonth()+1).padStart(2,'0');
+    el('line',{x1:X(t),x2:X(t),y1:H-m.b,y2:H-m.b+4,class:'axl'},svg);
+    var tx=el('text',{x:X(t),y:H-m.b+16,class:'ax','text-anchor':'middle'},svg); tx.textContent=lab;
+  });
+  el('line',{x1:m.l,x2:W-m.r,y1:H-m.b,y2:H-m.b,class:'axl'},svg);
+  (cfg.refs||[]).forEach(function(r){
+    el('line',{x1:m.l,x2:W-m.r,y1:Y(r.y),y2:Y(r.y),class:'ref'},svg);
+    var tx=el('text',{x:W-m.r-4,y:Y(r.y)-5,class:'ax reflab','text-anchor':'end'},svg); tx.textContent=r.label;
+  });
+  cfg.series.forEach(function(s){
+    var dpath='',pen=false;
+    s.x.forEach(function(dd,i){var v=s.y[i]; if(v==null){pen=false;return;} dpath+=(pen?'L':'M')+X(tms(dd)).toFixed(1)+','+Y(v).toFixed(1); pen=true;});
+    el('path',{d:dpath,fill:'none',stroke:s.color,'stroke-width':s.width||2,'stroke-dasharray':s.dash||'none','stroke-linejoin':'round'},svg);
+  });
+  // 圖例
+  if(cfg.series.length>1){
+    var lx=m.l+8;
+    cfg.series.forEach(function(s){
+      el('line',{x1:lx,x2:lx+16,y1:m.t+4,y2:m.t+4,stroke:s.color,'stroke-width':2.5,'stroke-dasharray':s.dash||'none'},svg);
+      var tx=el('text',{x:lx+20,y:m.t+8,class:'ax leg'},svg); tx.textContent=s.name; lx+=28+s.name.length*13;
+    });
+  }
+  // 滑鼠讀值
+  var base=cfg.series[0], cur=el('line',{x1:0,x2:0,y1:m.t,y2:H-m.b,class:'cur',visibility:'hidden'},svg);
+  var hit=el('rect',{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,fill:'transparent'},svg);
+  function move(ev){
+    var r=svg.getBoundingClientRect(), px=(ev.clientX-r.left)/r.width*W;
+    var t=x0+(px-m.l)/(W-m.l-m.r)*(x1-x0), bi=0, bd=Infinity;
+    base.x.forEach(function(dd,i){var dt=Math.abs(tms(dd)-t); if(dt<bd){bd=dt;bi=i;}});
+    var dd=base.x[bi]; cur.setAttribute('x1',X(tms(dd))); cur.setAttribute('x2',X(tms(dd))); cur.setAttribute('visibility','visible');
+    var lines=[dd];
+    cfg.series.forEach(function(s){var j=s.x.indexOf(dd); lines.push(s.name+'：'+(j<0||s.y[j]==null?'–':(cfg.tipfmt?cfg.tipfmt(s.y[j]):s.y[j])));});
+    if(cfg.extra)lines.push(cfg.extra(dd,bi));
+    var tip=$('tip'); tip.innerHTML=lines.map(esc).join('<br>'); tip.style.display='block';
+    tip.style.left=Math.min(window.innerWidth-190,ev.clientX+12)+'px'; tip.style.top=(ev.clientY+12)+'px';
+  }
+  hit.addEventListener('mousemove',move);
+  hit.addEventListener('touchstart',function(e){move(e.touches[0]);},{passive:true});
+  hit.addEventListener('mouseleave',function(){$('tip').style.display='none';cur.setAttribute('visibility','hidden');});
+}
+function niceStep(raw){var p=Math.pow(10,Math.floor(Math.log10(raw||1))),f=raw/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p;}
+
+var C1='#0d2244', C2='#b8862b', C3='#6b7a90';
+function charts(){
+  var a=D.series.active_share;
+  lineChart($('c1'),{label:'active share 中位數',series:[{x:a.d,y:a.median,color:C1,name:'中位數'},{x:a.d,y:a.mean,color:C3,name:'平均',dash:'4 3',width:1.5}],
+    yfmt:function(v){return v+'%';},tipfmt:function(v){return v.toFixed(1)+'%';},extra:function(dd,i){return '檔數：'+a.n[i];}});
+  var c=D.series.corr;
+  lineChart($('c2'),{label:'平均配對相關與第一主成分',ymax:1,series:[{x:c.d,y:c.mean_pair,color:C1,name:'平均配對相關'},{x:c.d,y:c.pc1,color:C2,name:'第一主成分'}],
+    yfmt:function(v){return v.toFixed(1);},tipfmt:function(v){return v.toFixed(2);},extra:function(dd,i){return '檔數：'+c.n[i];}});
+  var sel=$('fundSel'), pc=sel.value||(D.pick||{}).code;
+  sel.innerHTML=D.funds.map(function(f){return '<option value="'+f.code+'"'+(f.code===pc?' selected':'')+'>'+f.code+' '+esc(f.name||'')+'</option>';}).join('');
+  sel.onchange=fundChart; fundChart();
+}
+function fundChart(){
+  var p=D.pick||{}, code=$('fundSel').value||p.code||D.funds[0].code;
+  var f=D.funds.filter(function(x){return x.code===code;})[0]||D.funds[0]; code=f.code;
+  var refs=(p.code===code&&p.threshold_pct!=null)?[{y:p.threshold_pct,label:'查核點門檻 '+p.threshold_pct+'%'}]:[];
+  lineChart($('c3a'),{label:code+' active share',height:200,series:[{x:f.series.d,y:f.series.as,color:C1,name:'active share'}],refs:refs,
+    yfmt:function(v){return v+'%';},tipfmt:function(v){return v.toFixed(1)+'%';}});
+  var has=f.series.to20.some(function(v){return v!=null;});
+  if(has){
+    lineChart($('c3b'),{label:code+' 20 日換手',height:170,ymin:0,series:[{x:f.series.d,y:f.series.to20,color:C2,name:'20 日換手'}],
+      yfmt:function(v){return v+'%';},tipfmt:function(v){return v.toFixed(0)+'%';}});
+  } else { $('c3b').innerHTML='<p class="ex-sub">'+esc(code)+' 的持股資料還不滿 20 個交易日，算不出 20 日換手。</p>'; }
+}
+
+document.querySelectorAll('#tbl th').forEach(function(th){
+  th.addEventListener('click',function(){
+    var k=th.getAttribute('data-k'); if(sortKey===k){sortDir=-sortDir;}else{sortKey=k;sortDir=(k==='code'||k==='name'||k==='as_of')?1:-1;}
+    renderTable();
+  });
+});
+var rt=null; window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){if(D)charts();},200);});
+fetch('data/activeness.json',{cache:'no-cache'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(d){D=d;render();})
+  .catch(function(e){$('heroSub').textContent='資料讀取失敗（'+e.message+'）。';});
+})();
+</script>
+</body>
+</html>
