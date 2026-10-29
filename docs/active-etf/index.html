@@ -58,6 +58,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .ex-sub{font-size:11.5px;color:var(--sec);margin-bottom:8px}
 .chart-box{width:100%;position:relative}
 .ex-src{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:5px}
+.prem-hi-pos,.prem-hi-neg{font-weight:700}
 .conclusion{font-size:13px;color:var(--body);line-height:1.7;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--x-navy);border-radius:var(--r);margin-top:8px}
 .daily-line{font-size:12.5px;color:var(--body);line-height:1.6;padding:8px 12px;background:var(--gold-bg);border:1px solid var(--gold-soft);border-left:3px solid var(--gold-deep);border-radius:var(--r);margin-bottom:8px}
 .daily-line b{color:var(--ink)}
@@ -338,6 +339,7 @@ details#recentExitsBox summary::marker{color:var(--sec)}
   <div class="ex-title">22 檔基金 + 2 檔基準完整數字</div>
   <div class="tbl-wrap"><table class="imq-table" id="ovTable"></table></div>
   <div class="ex-src" id="ovSrc"></div>
+  <div class="ex-src" id="ovPremNote"></div>
 </section>
 
 <section class="exhibit" id="ovCrowdingExhibit">
@@ -397,6 +399,15 @@ details#recentExitsBox summary::marker{color:var(--sec)}
   <div class="ex-sub">90/60/30 天前與今天四個錨點，股價與持股加權明年度 EPS 預估都在「今天」訂為 100，往回反推相對水準——兩條線可以直接比誰漲得快</div>
   <div class="chart-box" style="height:260px"><canvas id="chartMain"></canvas></div>
   <div class="ex-src" id="chartSrc">資料來源：yfinance Ticker.eps_trend 的 90/60/30 天前紀錄 + ETF 收盤價，簡化自 scripts/etf_dash/build_etf_dash.py 的 anchor line 概念（未串接 anchor_history 持久化長線）</div>
+</section>
+
+<section class="exhibit" id="premExhibit" style="display:none">
+  <div class="ex-label">折溢價</div>
+  <div class="ex-title">收盤價相對淨值的折溢價</div>
+  <div class="ex-sub" id="premStat"></div>
+  <div class="chart-box" style="height:220px"><canvas id="premCanvas"></canvas></div>
+  <div class="conclusion" id="premText"></div>
+  <div class="ex-src" id="premSrc"></div>
 </section>
 
 <div class="stat-row" id="statRow"></div>
@@ -856,6 +867,43 @@ function renderStyleTilts(d){
     }).join('')+'</tbody>';
 }
 
+// ── 折溢價(單檔) ──────────────────────────────────────────────────────
+var premChartInstance = null;
+function renderPremium(){
+  loadPremium().then(function(pj){
+    var box = document.getElementById('premExhibit');
+    var f = pj && pj.funds ? pj.funds[ETF] : null;
+    if(!f || !f.latest){ box.style.display = 'none'; return; }
+    box.style.display = '';
+    var L = f.latest;
+    document.getElementById('premStat').textContent =
+      '最新（'+L.date+'）'+fmtPct(L.pct)+'　近 20 日平均 '+fmtPct(f.avg20_pct)+
+      '　最高 '+fmtPct(f.max_pct.pct)+'（'+f.max_pct.date+'）　最低 '+fmtPct(f.min_pct.pct)+'（'+f.min_pct.date+'）'+
+      '　超過 +1% 共 '+f.days_over_1pct+' 天　低於 −1% 共 '+f.days_under_minus1pct+' 天　共 '+f.n+' 天，自 '+f.first_date+' 起';
+    var txt = '折溢價是收盤價高於淨值的百分比，正數代表用高於淨值的價格買進，負數代表用低於淨值的價格買進。';
+    if(f.note) txt += '<br>'+esc(f.note);
+    if(f.suspect && f.suspect.length) txt += '<br>另有 '+f.suspect.length+' 天折溢價絕對值超過 5%，判斷是淨值日期對不齊，未列入圖表與統計。';
+    document.getElementById('premText').innerHTML = txt;
+    document.getElementById('premSrc').textContent = '資料來源：收盤價為證交所每日收盤行情；淨值以證交所公告為主，缺的日期用投信 PCF 補。';
+    var labels = f.series.map(function(x){return x[0];}), vals = f.series.map(function(x){return x[1];});
+    var canvas = document.getElementById('premCanvas');
+    if(premChartInstance){ premChartInstance.destroy(); premChartInstance = null; }
+    function flat(v){ return labels.map(function(){return v;}); }
+    function ref(v, c, w){ return {data:flat(v), borderColor:c, borderWidth:w, borderDash:w<1?[]:[4,3], pointRadius:0, fill:false}; }
+    premChartInstance = new Chart(canvas, {type:'line',
+      data:{labels:labels, datasets:[
+        {label:'折溢價(%)', data:vals, borderColor:COL.navy, pointRadius:0, borderWidth:1.4, tension:0},
+        ref(0, COL.sec, 0.8), ref(1, COL.muted, 1), ref(-1, COL.muted, 1)]},
+      options:{responsive:true, maintainAspectRatio:false, animation:false,
+        interaction:{mode:'index', intersect:false},
+        scales:{x:{ticks:{color:COL.muted,font:{size:9},maxTicksLimit:8}, grid:{display:false}},
+                y:{ticks:{color:COL.muted,font:{size:9},callback:function(v){return v+'%';}}, grid:{color:COL.line}}},
+        plugins:{legend:{display:false},
+                 tooltip:{filter:function(i){return i.datasetIndex===0;},
+                          callbacks:{label:function(c){return '折溢價 '+fmtPct(c.parsed.y);}}}}}});
+  });
+}
+
 // ── 操作習慣(M5) ─────────────────────────────────────────────────────────
 var opsTurnoverChartInstance = null;
 var opsSmallChartInstances = {n:null, top10:null, stockw:null};
@@ -936,6 +984,7 @@ function render(d){
   renderPeriodsTable(d);
   renderStatRow(d);
   renderChart(d);
+  renderPremium();
   movesState = d.moves;
   renderMovesTable('week');
   document.querySelectorAll('.moves-tab').forEach(function(btn){
@@ -968,7 +1017,9 @@ var OV_COLUMNS = [
   {key:'active_return_3m_pct', label:'主動報酬 3M', full:'近三月主動報酬（持股法，vs 元大台灣50）', numeric:true, lo:true},
   {key:'post_trade_hit_rate_60d_pct', label:'買進後命中率', full:'加碼/新進後 60 交易日贏台灣加權指數的比率（n=事件數）', numeric:true, lo:true},
   {key:'monthly_turnover_pct', label:'月週轉率', full:'最近一個月週轉率（股數變動的交易金額 ÷ AUM ÷ 2）', numeric:true, lo:true},
-  {key:'cumulative_net_flow_100m', label:'累計淨流入', full:'累計淨申贖（億元，資料回補以來）', numeric:true, lo:true}
+  {key:'cumulative_net_flow_100m', label:'累計淨流入', full:'累計淨申贖（億元，資料回補以來）', numeric:true, lo:true},
+  {key:'prem_latest_pct', label:'折溢價', full:'最新收盤折溢價（收盤價相對淨值）', numeric:true, prem:true},
+  {key:'prem_avg20_pct', label:'折溢價 20 日均', full:'近 20 個交易日折溢價平均', numeric:true, lo:true, prem:true}
 ];
 // 2026-09-25:22 檔分 15 家投信,原本依投信分組(每組 1-3 檔)表格太高——改成
 // 單一 flat list,預設依 AUM 降冪(ov.funds 本身已由 build_active_etf.py 排好,
@@ -996,6 +1047,22 @@ function divBarHtml(value, scaleKey){
 function ovFundLabelHtml(fullLabel, ticker){
   return '<span class="ov-fund-full">'+esc(fullLabel)+'</span><span class="ov-fund-short">'+esc(ticker)+'</span>';
 }
+// ── 折溢價(premium.json,與 ovIndex 同樣快取一次;抓不到就整塊略過) ──
+var premData = null, premPromise = null;
+function loadPremium(){
+  if(!premPromise){
+    premPromise = fetch('data/premium.json').then(function(r){
+      if(!r.ok) throw new Error('http ' + r.status);
+      return r.json();
+    }).then(function(j){ premData = j; return j; }).catch(function(){ premData = null; return null; });
+  }
+  return premPromise;
+}
+function premCellHtml(v){
+  if(v==null) return '—';
+  var cls = v>=1 ? 'prem-hi-pos' : (v<=-1 ? 'prem-hi-neg' : '');
+  return cls ? '<span class="'+cls+'">'+fmtPct(v)+'</span>' : fmtPct(v);
+}
 function ovRowHtml(row){
   var isBench = row.is_benchmark;
   var nameCell = isBench
@@ -1014,7 +1081,9 @@ function ovRowHtml(row){
     '<td class="num ov-col-lo">'+(row.post_trade_hit_rate_60d_pct!=null?row.post_trade_hit_rate_60d_pct.toFixed(1)+'%'+
       (row.post_trade_n_60d!=null?' <span style="color:var(--muted)">(n='+row.post_trade_n_60d+')</span>':''):'—')+'</td>'+
     '<td class="num ov-col-lo">'+fmtPct(row.monthly_turnover_pct)+'</td>'+
-    '<td class="num ov-col-lo">'+(row.cumulative_net_flow_100m!=null?fmtNum(row.cumulative_net_flow_100m,1):'—')+'</td></tr>';
+    '<td class="num ov-col-lo">'+(row.cumulative_net_flow_100m!=null?fmtNum(row.cumulative_net_flow_100m,1):'—')+'</td>'+
+    '<td class="num">'+premCellHtml(row.prem_latest_pct)+'</td>'+
+    '<td class="num ov-col-lo">'+premCellHtml(row.prem_avg20_pct)+'</td></tr>';
 }
 function renderOverviewTbody(){
   var body = document.getElementById('ovTableBody');
@@ -1395,6 +1464,17 @@ function renderOverview(ov){
   computeBarScale(ov);
   renderOverviewHeader();
   renderOverviewTbody();
+  loadPremium().then(function(pj){
+    if(!pj || !pj.funds) return;
+    ovState.rows.concat(ovState.benchRows).forEach(function(r){
+      var f = pj.funds[r.code];
+      if(f && f.latest){ r.prem_latest_pct = f.latest.pct; r.prem_avg20_pct = f.avg20_pct; }
+    });
+    renderOverviewHeader();
+    renderOverviewTbody();
+    var el = document.getElementById('ovPremNote');
+    if(el && pj.latest_date) el.textContent = '折溢價＝收盤價 ÷ 淨值 − 1，正數為溢價。最新一日 '+pj.latest_date+'，絕對值 1% 以上加粗。淨值以證交所公告為主，投信 PCF 補，細節見各基金頁。';
+  });
   renderOvTiles(ov);
   renderOvScatter();
   renderConsensusCoverage(ov);
