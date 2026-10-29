@@ -277,3 +277,97 @@ def test_fallback_no_pe_no_record(tmp_path):
     d = _data([], pe=None)
     ph = pd_.apply_fallback(d, "EWY", tmp_path)
     assert ph["series"] == [] and ph["source"] == "none"
+
+
+# ── 2026-10-29 加 28 檔：新交易所代號轉換與註冊 ────────────────────────────
+
+@pytest.mark.parametrize("ticker,exchange,expected", [
+    ("700", "Hong Kong Exchanges And Clearing Ltd", "0700.HK"),
+    ("12345", "Hong Kong Exchanges And Clearing Ltd", "12345.HK"),
+    ("J36", "Singapore Exchange", "J36.SI"),
+    ("600519", "Shanghai Stock Exchange", "600519.SS"),
+    ("300750", "Shenzhen Stock Exchange", "300750.SZ"),
+    ("RELIANCE", "National Stock Exchange Of India", "RELIANCE.NS"),
+    ("M&M", "National Stock Exchange Of India", "M&M.NS"),
+    ("BAJAJ.AUTO", "National Stock Exchange Of India", "BAJAJ-AUTO.NS"),
+    ("534091", "Bse Ltd", "534091.BO"),
+    ("RY", "Toronto Stock Exchange", "RY.TO"),
+    ("TECK.B", "Toronto Stock Exchange", "TECK-B.TO"),
+    ("BHP", "Asx - All Markets", "BHP.AX"),
+    ("BBCA", "Indonesia Stock Exchange", "BBCA.JK"),
+    ("PTT.R", "Stock Exchange Of Thailand", "PTT.BK"),
+    ("ICT", "Philippine Stock Exchange Inc.", "ICT.PS"),
+    ("FPH", "New Zealand Exchange Ltd", "FPH.NZ"),
+    ("WALMEX*", "Bolsa Mexicana De Valores", "WALMEX.MX"),
+    ("GMEXICOB", "Bolsa Mexicana De Valores", "GMEXICOB.MX"),
+    ("1120", "Saudi Stock Exchange", "1120.SR"),
+    ("RR.", "London Stock Exchange", "RR.L"),
+    ("HEI A", "NYSE", "HEI-A"),
+])
+def test_new_exchange_symbol_conversion(ticker, exchange, expected):
+    assert iu.to_yf_symbol(ticker, exchange) == (expected, None)
+
+
+def test_new_exchange_rejects_malformed_codes():
+    assert iu.to_yf_symbol("ABC", "Hong Kong Exchanges And Clearing Ltd")[0] is None
+    assert iu.to_yf_symbol("12", "Saudi Stock Exchange")[0] is None
+    assert iu.to_yf_symbol("-", "NO MARKET (E.G. UNLISTED)")[0] is None
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("VIC VN", "VIC.VN"), ("AEM", "AEM"), ("NST AU", "NST.AX"), ("EDV LN", "EDV.L"),
+    ("2259 HK", "2259.HK"), ("700 HK", "0700.HK"), ("LUG CN", "LUG.TO"),
+    ("AMMN IJ", "AMMN.JK"), ("PE&OLES* MM", "PE&OLES.MX"),
+])
+def test_bloomberg_symbol_conversion(raw, expected):
+    assert iu.bloomberg_to_yf_symbol(raw) == (expected, None)
+
+
+def test_bloomberg_symbol_unknown_code_not_guessed():
+    assert iu.bloomberg_to_yf_symbol("ABC ZZ")[0] is None
+    assert iu.bloomberg_to_yf_symbol("2688492D")[0] is None
+
+
+NEW_COUNTRY_KEYS = ["EWU", "EWG", "EWQ", "EWP", "EWN", "EWL", "EWI", "EWA", "EWS", "EWH", "MCHI", "INDA",
+                    "THD", "VNM", "EIDO", "EPHE", "ENZL", "EWC", "EWW", "KSA"]
+NEW_SUBSECTOR_KEYS = ["SOXX", "IGV", "ITA", "XBI", "XOP", "KRE", "XHB", "GDX"]
+
+
+def test_28_new_funds_registered_with_valid_sources():
+    for k in NEW_COUNTRY_KEYS + NEW_SUBSECTOR_KEYS:
+        cfg = m.FUND_REGISTRY[k]
+        assert cfg["yf_ticker"] == k and cfg["source"] in m.HOLDINGS_SOURCES
+        assert cfg["holdings_url"].startswith("https://") and cfg["holdings_page_url"].startswith("https://")
+    assert m.FUND_REGISTRY["VNM"]["source"] == m.FUND_REGISTRY["GDX"]["source"] == "vaneck_intl"
+    assert {m.FUND_REGISTRY[k]["source"] for k in ["XBI", "XOP", "KRE", "XHB"]} == {"ssga"}
+    for k in ["MCHI", "INDA", "KSA", "IGV", "KRE", "XBI"]:
+        assert m.FUND_REGISTRY[k]["eps_scope_cutoff_pct"] == 90.0
+
+
+def test_new_funds_in_workflow_and_page_groups():
+    root = SCRIPTS_DIR.parent
+    wf = (root / ".github" / "workflows" / "etf-dash-daily.yml").read_text(encoding="utf-8")
+    html = (root / "docs" / "etf-dash" / "index.html").read_text(encoding="utf-8")
+    for k in NEW_COUNTRY_KEYS + NEW_SUBSECTOR_KEYS:
+        assert f"--etf {k} " in wf, k
+        assert f"key:'{k}'" in html, k
+    # 頁面分組與註冊表一一對應
+    import re
+    block = html[html.index("var FUND_GROUPS = ["):html.index("var FUND_LIST =")]
+    assert set(re.findall(r"\{key:'([^']+)', label:", block)) == set(m.FUND_REGISTRY)
+
+
+def test_research_universe_unchanged_by_new_funds():
+    import compare_common as cc
+    assert len(set(cc.RESEARCH_UNIVERSE)) == 21
+    assert not (set(cc.RESEARCH_UNIVERSE) & set(NEW_COUNTRY_KEYS + NEW_SUBSECTOR_KEYS))
+
+
+def test_vaneck_intl_parser_maps_suffix_and_flags_unmapped(monkeypatch):
+    rows = [{"ticker": "VIC", "raw_ticker_field": "VIC VN", "name": "Vingroup", "weight_pct": 8.0},
+            {"ticker": "AEM", "raw_ticker_field": "AEM", "name": "Agnico", "weight_pct": 5.0},
+            {"ticker": "2688492D", "raw_ticker_field": "2688492D", "name": "junk", "weight_pct": 0.0}]
+    monkeypatch.setattr(m, "parse_holdings_xlsx", lambda raw: ("2026-10-27", rows))
+    as_of, hs, ne = m.parse_vaneck_intl_holdings(b"x")
+    assert [h["ticker"] for h in hs[:2]] == ["VIC.VN", "AEM"]
+    assert iu.is_unmapped(hs[2]["ticker"]) and ne == []

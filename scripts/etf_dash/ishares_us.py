@@ -55,6 +55,21 @@ EXCHANGE_SUFFIX = {
     "Irish Stock Exchange - All Market": ".IR",
     "Nyse Euronext - Euronext Lisbon": ".LS",
     "Athens Exchange S.A. Cash Market": ".AT",
+    # 2026-10-29 加國家基金：以下交易所名稱皆取自 2026-10-27 實際下載的持股檔 Exchange 欄原文。
+    "Indonesia Stock Exchange": ".JK",
+    "New Zealand Exchange Ltd": ".NZ",
+    "Philippine Stock Exchange Inc.": ".PS",
+    "Asx - All Markets": ".AX",
+    "Toronto Stock Exchange": ".TO",
+    "Hong Kong Exchanges And Clearing Ltd": ".HK",
+    "Singapore Exchange": ".SI",
+    "Bolsa Mexicana De Valores": ".MX",
+    "National Stock Exchange Of India": ".NS",
+    "Bse Ltd": ".BO",
+    "Saudi Stock Exchange": ".SR",
+    "Shanghai Stock Exchange": ".SS",
+    "Shenzhen Stock Exchange": ".SZ",
+    "Stock Exchange Of Thailand": ".BK",
     "NYSE": "",
     "NASDAQ": "",
 }
@@ -82,6 +97,7 @@ SECTOR_ZH = {
 # 已知例外（清理規則套不出 yfinance 代號的）：(持股檔原始代號, 後綴) → yfinance 代號。
 SYMBOL_EXCEPTIONS = {
     ("BT.A", ".L"): "BT-A.L",
+    ("BAJAJ.AUTO", ".NS"): "BAJAJ-AUTO.NS",
 }
 
 
@@ -108,9 +124,61 @@ def to_yf_symbol(ticker: str, exchange: str) -> tuple[str | None, str | None]:
     if (t, suffix) in SYMBOL_EXCEPTIONS:
         return SYMBOL_EXCEPTIONS[(t, suffix)], None
     cleaned = t.rstrip(".").strip().replace(" ", "-")
+    if suffix == ".HK":
+        # 港股：數字代號補到 4 位（700 → 0700.HK）
+        if not re.fullmatch(r"\d{1,5}", cleaned):
+            return None, f"港股代號「{t}」不是數字"
+        cleaned = cleaned.zfill(4)
+    elif suffix == ".BK":
+        # 泰國：持股檔給外資板（NVDR）代號「PTT.R」，yfinance 有 EPS 預估的是本板「PTT.BK」
+        cleaned = re.sub(r"\.R$", "", cleaned)
+    elif suffix == ".MX":
+        # 墨西哥：持股檔給的 A 股代號帶星號（WALMEX*），yfinance 不帶星號
+        cleaned = cleaned.replace("*", "")
+    elif suffix == ".TO":
+        # 多倫多：股別點號改連字號（TECK.B → TECK-B.TO）
+        cleaned = cleaned.replace(".", "-")
+    elif suffix == ".SR":
+        if not re.fullmatch(r"\d{4}", cleaned):
+            return None, f"沙烏地代號「{t}」不是 4 位數字"
+    elif suffix in (".SS", ".SZ"):
+        if not re.fullmatch(r"\d{6}", cleaned):
+            return None, f"中國 A／B 股代號「{t}」不是 6 位數字"
     if not cleaned:
         return None, f"代號「{t}」清理後為空"
     return cleaned + suffix, None
+
+
+# VanEck 持股檔（GDX、VNM）的代號是「代號＋空格＋彭博國別碼」，美國掛牌的只有代號。
+# 國別碼 → yfinance 後綴；表外的碼不猜，回傳無法對應。2026-10-29 對 VNM、GDX 現有持股逐一核對。
+BLOOMBERG_SUFFIX = {
+    "VN": ".VN", "AU": ".AX", "CN": ".TO", "LN": ".L", "HK": ".HK", "IJ": ".JK", "MM": ".MX",
+}
+
+
+def bloomberg_to_yf_symbol(raw: str) -> tuple[str | None, str | None]:
+    """VanEck 持股檔 Ticker 欄（例 "VIC VN"、"AEM"、"PE&OLES* MM"）→ (yfinance 代號, None)。"""
+    t = (raw or "").strip()
+    if not t:
+        return None, "代號為空"
+    parts = t.split()
+    if len(parts) == 1:
+        if re.fullmatch(r"[A-Z]{1,6}(\.[A-Z])?", parts[0]):
+            return parts[0], None  # 美國掛牌（含 ADR）
+        return None, f"代號「{t}」沒有國別碼、也不像美國股票代號"
+    code, ex = " ".join(parts[:-1]), parts[-1]
+    suffix = BLOOMBERG_SUFFIX.get(ex)
+    if suffix is None:
+        return None, f"國別碼「{ex}」不在對照表內（BLOOMBERG_SUFFIX 待補）"
+    if suffix == ".HK":
+        if not re.fullmatch(r"\d{1,5}", code):
+            return None, f"港股代號「{code}」不是數字"
+        code = code.zfill(4)
+    elif suffix == ".MX":
+        code = code.replace("*", "")
+    elif suffix == ".TO":
+        code = code.replace(".", "-")
+    return code + suffix, None
 
 
 def fetch_ishares_us_holdings_csv(cfg: dict) -> bytes:

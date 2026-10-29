@@ -2,7 +2,7 @@ name: ETF Dashboard Daily Data
 
 # ETF 股價 vs 成分股 EPS 預估修正儀表板（/etf-dash/）每日資料管線。
 #
-# 跑 scripts/etf_dash/build_etf_dash.py，現在共 23 檔（SMH 美國掛牌 + SMH_UCITS
+# 跑 scripts/etf_dash/build_etf_dash.py，現在共 51 檔（SMH 美國掛牌 + SMH_UCITS
 # 愛爾蘭掛牌 + QQQ 那斯達克 100 + SPY 標普 500，2026-09-24 加 QQQ／SPY；
 # 2026-09-25 再加 TAIEX 台灣加權指數〈TWSE 公開資料機械估算近似持股〉+ 0050
 # 元大台灣50〈元大投信官方持股頁〉+ TOPIX（1475）+ 9 檔 SPDR 產業 ETF（XLK／
@@ -15,6 +15,8 @@ name: ETF Dashboard Daily Data
 # 一個 run 共用 ticker_cache 幾乎不增加新的 eps_trend 呼叫。2026-10-29 再加 XLU 公用事業、
 # XLRE 不動產（SPDR 產業湊齊 11 檔，共 23 檔）；總覽多兩個強弱欄，build 結尾會對全部基金
 # 重抓一次含息價格（strength.py）。本站挑選候選母體與回檔表仍固定原 21 檔（RESEARCH_UNIVERSE）。
+# 2026-10-29 再加 28 檔：20 檔單一國家基金（iShares 19 檔＋VanEck 越南 VNM）與 8 檔美股子產業
+# （SOXX／IGV／ITA／XBI／XOP／KRE／XHB／GDX），共 51 檔；時間估算見 timeout-minutes 上方。
 #
 # 2026-09-25 加 TAIEX／0050 後 0050 的 FULL 模式抓取需要 node（parse
 # Yuanta 頁面內嵌的 Nuxt SSR payload，見 build_etf_dash.py::fetch_yuanta_holdings_page
@@ -184,6 +186,10 @@ jobs:
     # 呼叫、4m14s（IEV 只抓權重前 90% 的 207 檔）；PRICE 四檔 1m26s。最近兩次週六
     # FULL 在 CI 跑 22.0／22.6 分鐘，平日 PRICE 約 10 分鐘；即使 CI 比本機慢一倍，
     # 四檔也只多 ~8 分鐘，FULL 約 30 分鐘，距 75 分鐘上限仍有餘裕，上限不動。
+    # 2026-10-29 再加 28 檔（共 51 檔）：本機逐檔 FULL 共約 1,600 次 eps_trend 呼叫（扣掉與 SPY／QQQ／SMH
+    # 重疊的美股名字後約 1,450 次），每次含股價與匯率約 1.1～1.3 秒；週六 FULL 估計比現在多
+    # 28～32 分鐘，合計約 55 分鐘，距 75 分鐘上限約 20 分鐘緩衝。若週六實測超過 60 分鐘，
+    # 先把上限拉到 120，再考慮把新 28 檔拆成第二個 job（共用快取，不重複抓 SPY 成分股）。
     timeout-minutes: 75
     steps:
       - name: Checkout repository
@@ -197,7 +203,7 @@ jobs:
       - name: Install dependencies
         run: pip install "yfinance>=0.2.40" pandas numpy requests openpyxl xlrd
 
-      - name: Build ETF dashboard data (23 funds)
+      - name: Build ETF dashboard data (51 funds)
         # 個別 ETF 失敗（持股來源格式改版、被擋、yfinance 掛了一整輪重試後仍
         # 失敗）只會讓 build_etf_dash.py 略過那一檔、其餘照跑；只有全部失敗它
         # 才會 non-zero exit——那種情況本步驟紅燈，後面的 commit 步驟仍會跑
@@ -213,7 +219,7 @@ jobs:
         id: build
         env:
           MODE_INPUT: ${{ github.event.inputs.mode || 'auto' }}
-        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --etf RSP --etf XLK --etf XLF --etf XLE --etf XLV --etf XLI --etf XLY --etf XLP --etf XLC --etf XLB --etf XLU --etf XLRE --etf TAIEX --etf 0050 --etf TOPIX --etf EWY --etf EWM --etf EWZ --etf IEV --mode "$MODE_INPUT"
+        run: python3 scripts/etf_dash/build_etf_dash.py --etf SMH --etf SMH_UCITS --etf QQQ --etf SPY --etf RSP --etf XLK --etf XLF --etf XLE --etf XLV --etf XLI --etf XLY --etf XLP --etf XLC --etf XLB --etf XLU --etf XLRE --etf TAIEX --etf 0050 --etf TOPIX --etf EWY --etf EWM --etf EWZ --etf IEV --etf EWU --etf EWG --etf EWQ --etf EWP --etf EWN --etf EWL --etf EWI --etf EWA --etf EWS --etf EWH --etf MCHI --etf INDA --etf THD --etf VNM --etf EIDO --etf EPHE --etf ENZL --etf EWC --etf EWW --etf KSA --etf SOXX --etf IGV --etf ITA --etf XBI --etf XOP --etf KRE --etf XHB --etf GDX --mode "$MODE_INPUT"
 
       - name: Fail loudly if the build step errored
         if: steps.build.outcome == 'failure'
@@ -244,7 +250,7 @@ jobs:
             echo "No changes to commit"
           else
             DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
-            git commit -m "data: ETF dashboard snapshot ${DATE} (23 funds)
+            git commit -m "data: ETF dashboard snapshot ${DATE} (51 funds)
 
             Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
             for i in 1 2 3 4 5 6; do

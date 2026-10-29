@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ETF 儀表板 — InvestMQuest Research</title>
-<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計，共 23 檔（美股大盤 SPY／RSP／QQQ、11 檔美股產業 SPDR、SMH 兩版本、台灣加權指數／元大台灣50／TOPIX、南韓 EWY、馬來西亞 EWM、巴西 EWZ、歐洲 IEV），含總覽頁。">
+<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計，共 51 檔（美股大盤 SPY／RSP／QQQ、11 檔美股產業 SPDR、10 檔美股子產業〈SMH 兩版本、SOXX、IGV、ITA、XBI、XOP、KRE、XHB、GDX〉、台灣加權指數／元大台灣50／TOPIX 與 27 檔單一國家或區域基金），含總覽頁。">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -357,8 +357,8 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 </section>
 <section class="exhibit" id="ovExhibit">
   <div class="ex-label">總覽</div>
-  <div class="ex-title">23 檔基金一覽</div>
-  <div class="ex-sub">依「美股大盤／美股產業／半導體／亞洲／歐洲與拉美」分組；點欄位標題可排序（分組內排序，分組順序不變）</div>
+  <div class="ex-title">51 檔基金一覽</div>
+  <div class="ex-sub">依「美股大盤／美股產業／美股子產業／亞洲／歐洲與拉美／北美與中東」分組；點欄位標題可排序（分組內排序，分組順序不變）</div>
   <div class="conclusion" id="ovSummarySentence"></div>
   <div class="callout-tiles" id="ovTiles"></div>
 </section>
@@ -384,7 +384,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 
 <section class="exhibit" id="ovTableExhibit">
   <div class="ex-label">總覽表</div>
-  <div class="ex-title">23 檔基金完整數字</div>
+  <div class="ex-title">51 檔基金完整數字</div>
   <div class="tbl-wrap"><table class="imq-table" id="ovTable"></table></div>
   <div class="ex-sub" id="ovReadNote" style="margin-top:8px;line-height:1.7">
     <p><b>強弱 3M、強弱 12M</b>：基金近 63、252 個交易日的含息報酬，減去 SPY 同期的含息報酬，單位是百分點<span id="ovStrengthAsOf"></span>。例如 +10.0 代表比 SPY 多漲 10 個百分點。台幣、日圓計價的基金先換成美元再算；台灣加權指數是指數，沒有配息，用價格計算。上市不到一年的基金，12M 顯示 —。</p>
@@ -586,20 +586,50 @@ var FUND_GROUPS = [
     {key:'XLU', label:'公用事業 XLU'},
     {key:'XLRE', label:'不動產 XLRE'}
   ]},
-  {label:'半導體', funds:[
+  {label:'美股子產業', funds:[
     {key:'SMH', label:'SMH（美國）'},
-    {key:'SMH_UCITS', label:'SMH（愛爾蘭）'}
+    {key:'SMH_UCITS', label:'SMH（愛爾蘭）'},
+    {key:'SOXX', label:'半導體 SOXX'},
+    {key:'IGV', label:'軟體 IGV'},
+    {key:'ITA', label:'航太國防 ITA'},
+    {key:'XBI', label:'生技 XBI'},
+    {key:'XOP', label:'油氣探勘生產 XOP'},
+    {key:'KRE', label:'區域銀行 KRE'},
+    {key:'XHB', label:'房屋建築 XHB'},
+    {key:'GDX', label:'黃金礦業 GDX'}
   ]},
   {label:'亞洲', funds:[
     {key:'TAIEX', label:'台灣加權指數'},
     {key:'0050', label:'元大台灣50'},
     {key:'TOPIX', label:'TOPIX（1475）'},
     {key:'EWY', label:'南韓 EWY'},
-    {key:'EWM', label:'馬來西亞 EWM'}
+    {key:'EWM', label:'馬來西亞 EWM'},
+    {key:'MCHI', label:'中國 MCHI'},
+    {key:'EWH', label:'香港 EWH'},
+    {key:'INDA', label:'印度 INDA'},
+    {key:'EWS', label:'新加坡 EWS'},
+    {key:'THD', label:'泰國 THD'},
+    {key:'VNM', label:'越南 VNM'},
+    {key:'EIDO', label:'印尼 EIDO'},
+    {key:'EPHE', label:'菲律賓 EPHE'},
+    {key:'EWA', label:'澳洲 EWA'},
+    {key:'ENZL', label:'紐西蘭 ENZL'}
   ]},
   {label:'歐洲與拉美', funds:[
     {key:'IEV', label:'歐洲 IEV'},
-    {key:'EWZ', label:'巴西 EWZ'}
+    {key:'EWU', label:'英國 EWU'},
+    {key:'EWG', label:'德國 EWG'},
+    {key:'EWQ', label:'法國 EWQ'},
+    {key:'EWP', label:'西班牙 EWP'},
+    {key:'EWN', label:'荷蘭 EWN'},
+    {key:'EWL', label:'瑞士 EWL'},
+    {key:'EWI', label:'義大利 EWI'},
+    {key:'EWZ', label:'巴西 EWZ'},
+    {key:'EWW', label:'墨西哥 EWW'}
+  ]},
+  {label:'北美與中東', funds:[
+    {key:'EWC', label:'加拿大 EWC'},
+    {key:'KSA', label:'沙烏地阿拉伯 KSA'}
   ]}
 ];
 var FUND_LIST = FUND_GROUPS.reduce(function(acc, g){ return acc.concat(g.funds); }, []);
@@ -1334,7 +1364,7 @@ function render(d){
   wireCollapsibleSections();
 }
 
-// ── 總覽（/etf-dash/?view=overview）——讀 data/overview.json 一個檔，23 檔基金
+// ── 總覽（/etf-dash/?view=overview）——讀 data/overview.json 一個檔，51 檔基金
 // 依 FUND_GROUPS 分組列出，點欄位標題排序（同分組內排序，分組順序不變，見
 // OV_COLUMNS 與 sortOverviewGroups()）。────────────────────────────────────
 
@@ -1485,7 +1515,7 @@ function renderOverviewHeader(){
 }
 
 // 2026-09-25 加：KPI 三格，純機械（只挑 overview.json 裡的最大/最小值，不下判斷字眼），
-// 掃全部 23 檔（summary_sentence_zh 只看 11 檔美股產業 ETF，這裡刻意放大範圍，避免跟句子
+// 掃全部 51 檔（summary_sentence_zh 只看 11 檔美股產業 ETF，這裡刻意放大範圍，避免跟句子
 // 完全重複）。2026-09-25 二次修：ticker 放大在前、完整名稱縮小在後（見 coordinator
 // 回饋 #7）——原本完整名稱＋ticker 擠在同一行，長名稱（如「VanEck 半導體 UCITS ETF
 // （SMH_UCITS）」）會換成兩行，版面不齊。
@@ -1517,7 +1547,7 @@ function renderOvTiles(ov){
 // adjacent 門檻）：blue/orange/aqua/violet 這組合在 light 模式下 CVD 全部 PASS
 // （worst ΔE 9.2，normal-vision floor 16.3），只有 aqua 對白底 contrast 落在
 // WARN（2.82:1）——用直接標籤（ticker）當 relief channel 滿足門檻要求的次要編碼。
-var SCATTER_GROUP_COLOR = {'美股大盤':'#2a78d6','美股產業':'#eb6834','半導體':'#1baf7a','亞洲':'#4a3aa7'};
+var SCATTER_GROUP_COLOR = {'美股大盤':'#2a78d6','美股產業':'#eb6834','美股子產業':'#1baf7a','亞洲':'#4a3aa7'};
 
 function buildScatterPoints(){
   var pts = [];
@@ -1742,7 +1772,7 @@ function renderSectorFlows(ov){
 
 function renderOverview(ov){
   document.getElementById('coverLeft').innerHTML =
-    '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · 23 檔基金一覽</span>';
+    '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · 51 檔基金一覽</span>';
 
   var byKey = {};
   (ov.funds||[]).forEach(function(f){ byKey[f.etf_key] = f; });

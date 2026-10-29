@@ -169,8 +169,8 @@ def test_overview_sector_flows_include_xlu_xlre(tmp_path, monkeypatch):
     assert {"XLU", "XLRE"} <= {r["etf_key"] for r in ov["sector_flows"]}
 
 
-def test_registry_has_23_funds_and_overview_page_lists_them():
-    assert len(m.FUND_REGISTRY) == 23
+def test_registry_has_51_funds_and_overview_page_lists_them():
+    assert len(m.FUND_REGISTRY) == 51
     assert {"XLU", "XLRE"} <= set(m.FUND_REGISTRY)
     html = (SCRIPTS_DIR.parent / "docs" / "etf-dash" / "index.html").read_text(encoding="utf-8")
     assert "key:'XLU'" in html and "key:'XLRE'" in html

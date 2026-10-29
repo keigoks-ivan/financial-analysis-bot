@@ -462,6 +462,334 @@ FUND_REGISTRY = {
         "holdings_page_url": "https://www.ishares.com/us/products/239736/ishares-europe-etf",
         "other_listings": [],
     },
+    # 2026-10-29 加 28 檔：20 檔國家（iShares MSCI 單一國家 ETF 19 檔＋VanEck 越南）＋8 檔美股子產業。
+    # 持股檔格式與 EWY 相同，共用 source "ishares_us"；各交易所代號轉換見 ishares_us.py。
+    # 持股網址的產品編號取自 ishares.com 產品清單頁，並逐一核對下載檔的基金名稱。
+    # isin 欄一律不填（None）：頁面不顯示、也不參與計算，不憑記憶寫。
+    # eps_scope_cutoff_pct=90：持股超過約 100 檔的基金（MCHI、INDA、KSA、IGV、KRE、XBI）只對累計
+    # 權重前 90% 的成分股抓 EPS，其餘列在持股明細但不計入。
+    "EWU": {
+        "label_zh": "iShares MSCI 英國 ETF（EWU，美國掛牌）",
+        "label_en": "iShares MSCI United Kingdom ETF (EWU)",
+        "yf_ticker": "EWU",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239690/ishares-msci-united-kingdom-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239690/ishares-msci-united-kingdom-etf",
+        "other_listings": [],
+    },
+    "EWG": {
+        "label_zh": "iShares MSCI 德國 ETF（EWG，美國掛牌）",
+        "label_en": "iShares MSCI Germany ETF (EWG)",
+        "yf_ticker": "EWG",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239650/ishares-msci-germany-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239650/ishares-msci-germany-etf",
+        "other_listings": [],
+    },
+    "EWQ": {
+        "label_zh": "iShares MSCI 法國 ETF（EWQ，美國掛牌）",
+        "label_en": "iShares MSCI France ETF (EWQ)",
+        "yf_ticker": "EWQ",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239648/ishares-msci-france-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239648/ishares-msci-france-etf",
+        "other_listings": [],
+    },
+    "EWP": {
+        "label_zh": "iShares MSCI 西班牙 ETF（EWP，美國掛牌）",
+        "label_en": "iShares MSCI Spain ETF (EWP)",
+        "yf_ticker": "EWP",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239683/ishares-msci-spain-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239683/ishares-msci-spain-etf",
+        "other_listings": [],
+    },
+    "EWN": {
+        "label_zh": "iShares MSCI 荷蘭 ETF（EWN，美國掛牌）",
+        "label_en": "iShares MSCI Netherlands ETF (EWN)",
+        "yf_ticker": "EWN",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239671/ishares-msci-netherlands-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239671/ishares-msci-netherlands-etf",
+        "other_listings": [],
+    },
+    "EWL": {
+        "label_zh": "iShares MSCI 瑞士 ETF（EWL，美國掛牌）",
+        "label_en": "iShares MSCI Switzerland ETF (EWL)",
+        "yf_ticker": "EWL",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239685/ishares-msci-switzerland-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239685/ishares-msci-switzerland-etf",
+        "other_listings": [],
+    },
+    "EWI": {
+        "label_zh": "iShares MSCI 義大利 ETF（EWI，美國掛牌）",
+        "label_en": "iShares MSCI Italy ETF (EWI)",
+        "yf_ticker": "EWI",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239664/ishares-msci-italy-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239664/ishares-msci-italy-etf",
+        "other_listings": [],
+    },
+    "EWA": {
+        "label_zh": "iShares MSCI 澳洲 ETF（EWA，美國掛牌）",
+        "label_en": "iShares MSCI Australia ETF (EWA)",
+        "yf_ticker": "EWA",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239607/ishares-msci-australia-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239607/ishares-msci-australia-etf",
+        "other_listings": [],
+    },
+    "EWS": {
+        "label_zh": "iShares MSCI 新加坡 ETF（EWS，美國掛牌）",
+        "label_en": "iShares MSCI Singapore ETF (EWS)",
+        "yf_ticker": "EWS",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239678/ishares-msci-singapore-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239678/ishares-msci-singapore-etf",
+        "other_listings": [],
+    },
+    "EWH": {
+        "label_zh": "iShares MSCI 香港 ETF（EWH，美國掛牌）",
+        "label_en": "iShares MSCI Hong Kong ETF (EWH)",
+        "yf_ticker": "EWH",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239657/ishares-msci-hong-kong-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239657/ishares-msci-hong-kong-etf",
+        "other_listings": [],
+    },
+    "MCHI": {
+        "label_zh": "iShares MSCI 中國 ETF（MCHI，美國掛牌）",
+        "label_en": "iShares MSCI China ETF (MCHI)",
+        "yf_ticker": "MCHI",
+        "isin": None,
+        "source": "ishares_us",
+        "eps_scope_cutoff_pct": 90.0,
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239619/ishares-msci-china-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239619/ishares-msci-china-etf",
+        "other_listings": [],
+    },
+    "INDA": {
+        "label_zh": "iShares MSCI 印度 ETF（INDA，美國掛牌）",
+        "label_en": "iShares MSCI India ETF (INDA)",
+        "yf_ticker": "INDA",
+        "isin": None,
+        "source": "ishares_us",
+        "eps_scope_cutoff_pct": 90.0,
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239659/ishares-msci-india-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239659/ishares-msci-india-etf",
+        "other_listings": [],
+    },
+    "THD": {
+        "label_zh": "iShares MSCI 泰國 ETF（THD，美國掛牌）",
+        "label_en": "iShares MSCI Thailand ETF (THD)",
+        "yf_ticker": "THD",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239688/ishares-msci-thailand-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239688/ishares-msci-thailand-etf",
+        "other_listings": [],
+    },
+    "EIDO": {
+        "label_zh": "iShares MSCI 印尼 ETF（EIDO，美國掛牌）",
+        "label_en": "iShares MSCI Indonesia ETF (EIDO)",
+        "yf_ticker": "EIDO",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239661/ishares-msci-indonesia-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239661/ishares-msci-indonesia-etf",
+        "other_listings": [],
+    },
+    "EPHE": {
+        "label_zh": "iShares MSCI 菲律賓 ETF（EPHE，美國掛牌）",
+        "label_en": "iShares MSCI Philippines ETF (EPHE)",
+        "yf_ticker": "EPHE",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239675/ishares-msci-philippines-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239675/ishares-msci-philippines-etf",
+        "other_listings": [],
+    },
+    "ENZL": {
+        "label_zh": "iShares MSCI 紐西蘭 ETF（ENZL，美國掛牌）",
+        "label_en": "iShares MSCI New Zealand ETF (ENZL)",
+        "yf_ticker": "ENZL",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239672/ishares-msci-new-zealand-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239672/ishares-msci-new-zealand-etf",
+        "other_listings": [],
+    },
+    "EWC": {
+        "label_zh": "iShares MSCI 加拿大 ETF（EWC，美國掛牌）",
+        "label_en": "iShares MSCI Canada ETF (EWC)",
+        "yf_ticker": "EWC",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239615/ishares-msci-canada-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239615/ishares-msci-canada-etf",
+        "other_listings": [],
+    },
+    "EWW": {
+        "label_zh": "iShares MSCI 墨西哥 ETF（EWW，美國掛牌）",
+        "label_en": "iShares MSCI Mexico ETF (EWW)",
+        "yf_ticker": "EWW",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239670/ishares-msci-mexico-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239670/ishares-msci-mexico-etf",
+        "other_listings": [],
+    },
+    "KSA": {
+        "label_zh": "iShares MSCI 沙烏地阿拉伯 ETF（KSA，美國掛牌）",
+        "label_en": "iShares MSCI Saudi Arabia ETF (KSA)",
+        "yf_ticker": "KSA",
+        "isin": None,
+        "source": "ishares_us",
+        "eps_scope_cutoff_pct": 90.0,
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/271542/ishares-msci-saudi-arabia-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/271542/ishares-msci-saudi-arabia-etf",
+        "other_listings": [],
+    },
+    "VNM": {
+        "label_zh": "VanEck 越南 ETF（VNM，美國掛牌）",
+        "label_en": "VanEck Vietnam ETF (VNM)",
+        "yf_ticker": "VNM",
+        "isin": None,
+        # VanEck 持股檔的代號帶彭博國別碼（"VIC VN"），既有 "vaneck" 來源會把國別碼丟掉，
+        # 這兩檔改用 "vaneck_intl"（下載相同，解析時依國別碼轉 yfinance 後綴）。
+        "source": "vaneck_intl",
+        "holdings_issuer_zh": "VanEck 官方持股下載",
+        "holdings_url": "https://www.vaneck.com/us/en/investments/vietnam-etf-vnm/downloads/holdings/",
+        "holdings_page_url": "https://www.vaneck.com/us/en/investments/vietnam-etf-vnm/holdings/",
+        "holdings_cookies": {
+            "ve-country-us": "iso%3Dus%26investortype%3Dretail%26language%3Den%26disclaimer%3Dtrue"
+                              "%26foreigntax%3Dfalse%26foreigntaxdisclaimer%3Dfalse",
+            "visitortype": "user",
+            "sitelanguage": "en",
+            "ve-country": "current%3Dus%26previous%3D",
+        },
+        "other_listings": [],
+    },
+    "SOXX": {
+        "label_zh": "iShares 半導體 ETF（SOXX，美國掛牌）",
+        "label_en": "iShares Semiconductor ETF (SOXX)",
+        "yf_ticker": "SOXX",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239705/ishares-semiconductor-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239705/ishares-semiconductor-etf",
+        "other_listings": [],
+    },
+    "IGV": {
+        "label_zh": "iShares 擴充科技軟體類股 ETF（IGV，美國掛牌）",
+        "label_en": "iShares Expanded Tech-Software Sector ETF (IGV)",
+        "yf_ticker": "IGV",
+        "isin": None,
+        "source": "ishares_us",
+        "eps_scope_cutoff_pct": 90.0,
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239771/ishares-expanded-tech-software-sector-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239771/ishares-expanded-tech-software-sector-etf",
+        "other_listings": [],
+    },
+    "ITA": {
+        "label_zh": "iShares 美國航太與國防 ETF（ITA，美國掛牌）",
+        "label_en": "iShares U.S. Aerospace & Defense ETF (ITA)",
+        "yf_ticker": "ITA",
+        "isin": None,
+        "source": "ishares_us",
+        "holdings_issuer_zh": "iShares（BlackRock）美國官網持股下載",
+        "holdings_url": "https://www.ishares.com/us/products/239502/ishares-u-s-aerospace-defense-etf/latest-holdings.csv",
+        "holdings_page_url": "https://www.ishares.com/us/products/239502/ishares-u-s-aerospace-defense-etf",
+        "other_listings": [],
+    },
+    "XBI": {
+        "label_zh": "SPDR 標普生技 ETF（XBI，美國掛牌）",
+        "label_en": "SPDR S&P Biotech ETF (XBI)",
+        "yf_ticker": "XBI", "isin": None, "source": "ssga",
+        "eps_scope_cutoff_pct": 90.0,
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-biotech-etf-xbi",
+        "other_listings": [],
+    },
+    "XOP": {
+        "label_zh": "SPDR 標普油氣探勘與生產 ETF（XOP，美國掛牌）",
+        "label_en": "SPDR S&P Oil & Gas Exploration & Production ETF (XOP)",
+        "yf_ticker": "XOP", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xop.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-oil-gas-exploration-production-etf-xop",
+        "other_listings": [],
+    },
+    "KRE": {
+        "label_zh": "SPDR 標普區域銀行 ETF（KRE，美國掛牌）",
+        "label_en": "SPDR S&P Regional Banking ETF (KRE)",
+        "yf_ticker": "KRE", "isin": None, "source": "ssga",
+        "eps_scope_cutoff_pct": 90.0,
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-kre.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-regional-banking-etf-kre",
+        "other_listings": [],
+    },
+    "XHB": {
+        "label_zh": "SPDR 標普房屋建築 ETF（XHB，美國掛牌）",
+        "label_en": "SPDR S&P Homebuilders ETF (XHB)",
+        "yf_ticker": "XHB", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xhb.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-homebuilders-etf-xhb",
+        "other_listings": [],
+    },
+    "GDX": {
+        "label_zh": "VanEck 黃金礦業 ETF（GDX，美國掛牌）",
+        "label_en": "VanEck Gold Miners ETF (GDX)",
+        "yf_ticker": "GDX",
+        "isin": None,
+        "source": "vaneck_intl",
+        "holdings_issuer_zh": "VanEck 官方持股下載",
+        "holdings_url": "https://www.vaneck.com/us/en/investments/gold-miners-etf-gdx/downloads/holdings/",
+        "holdings_page_url": "https://www.vaneck.com/us/en/investments/gold-miners-etf-gdx/holdings/",
+        "holdings_cookies": {
+            "ve-country-us": "iso%3Dus%26investortype%3Dretail%26language%3Den%26disclaimer%3Dtrue"
+                              "%26foreigntax%3Dfalse%26foreigntaxdisclaimer%3Dfalse",
+            "visitortype": "user",
+            "sitelanguage": "en",
+            "ve-country": "current%3Dus%26previous%3D",
+        },
+        "other_listings": [],
+    },
 }
 
 # 2026-09-24 持有人拍板：SK Hynix 在 VanEck 持股欄位裡標的 ticker「SKHYV」是
@@ -1492,6 +1820,21 @@ def parse_ishares_jp_holdings_csv(raw: bytes) -> tuple[str, list[dict], list[dic
     return as_of, rows, non_equity
 
 
+def parse_vaneck_intl_holdings(raw: bytes) -> tuple[str, list[dict], list[dict]]:
+    """VanEck 國際持股檔（VNM、GDX）：沿用 parse_holdings_xlsx() 的解析，再把「代號＋彭博國別碼」
+    轉成 yfinance 代號（見 ishares_us.bloomberg_to_yf_symbol()）。轉不出來的照樣留在 holdings，
+    ticker 前綴 UNMAPPED:，不去抓 EPS。"""
+    as_of, rows = parse_holdings_xlsx(raw)
+    for r in rows:
+        sym, why = ishares_us.bloomberg_to_yf_symbol(r["raw_ticker_field"])
+        if sym:
+            r["ticker"] = sym
+        else:
+            r["ticker"] = f"{ishares_us.UNMAPPED_PREFIX}{r['raw_ticker_field']}:VanEck"
+            r["unmapped_reason"] = why
+    return as_of, rows, []
+
+
 HOLDINGS_SOURCES = {
     "vaneck": (fetch_holdings_xlsx, lambda raw: (*parse_holdings_xlsx(raw), [])),
     "ssga": (fetch_ssga_holdings_xlsx, parse_ssga_holdings_xlsx),
@@ -1502,6 +1845,8 @@ HOLDINGS_SOURCES = {
     # 2026-10-19 加 EWY／EWM／EWZ／IEV——iShares 美國官網持股檔，四檔共用
     # （解析與各市場代號轉換見 ishares_us.py）。
     "ishares_us": (ishares_us.fetch_ishares_us_holdings_csv, ishares_us.parse_ishares_us_holdings_csv),
+    # 2026-10-29 加 VNM、GDX：VanEck 持股檔的代號帶彭博國別碼，解析後依國別碼轉 yfinance 代號。
+    "vaneck_intl": (fetch_holdings_xlsx, lambda raw: parse_vaneck_intl_holdings(raw)),
 }
 
 
@@ -1927,12 +2272,15 @@ def build_weight_methodology_note_zh(cfg: dict, holdings: list[dict]) -> str | N
             "近似），含股票、期貨等各類資產的權重——期貨（台股期貨／台灣50ETF股票期貨）等"
             "非個股部位見完整持股明細表的「非個股」列，不計入 EPS。"
         )
-    if cfg.get("source") == "ishares_us":
+    if cfg.get("source") in ("ishares_us", "vaneck_intl"):
         unmapped = [h for h in holdings if ishares_us.is_unmapped(h["ticker"])]
         note = (
             "持股檔給的是各國交易所自己的代號，本頁依交易所轉成 yfinance 代號"
             "（韓國 6 位數字加 .KS／.KQ、馬來西亞用 Bursa 簡稱對照表轉數字碼加 .KL、"
-            "巴西 B3 代號加 .SA、歐洲各所加對應後綴；倫敦掛牌股票的 yfinance 股價以便士"
+            "巴西 B3 代號加 .SA、歐洲各所加對應後綴；港股補成 4 位數字加 .HK、泰國改用本板代號加 .BK、"
+            "墨西哥去掉星號加 .MX、加拿大股別點號改連字號加 .TO、印度加 .NS、"
+            "澳洲 .AX、新加坡 .SI、印尼 .JK、菲律賓 .PS、紐西蘭 .NZ、沙烏地 .SR、上海 .SS、深圳 .SZ、越南 .VN；"
+            "倫敦掛牌股票的 yfinance 股價以便士"
             "報價，本頁除以 100 換成英鎊後才與英鎊 EPS 相除）。"
         )
         if unmapped:
@@ -2553,7 +2901,11 @@ CONTRIB_PERIOD_DEFS = [("1M", 30, "近一個月"), ("3M", 90, "近三個月")]
 SECTOR_CONTRIB_ETF_KEYS = {"SPY", "RSP", "QQQ", "TAIEX", "0050", "TOPIX",
                            # 2026-10-19：iShares 美國持股檔自帶 Sector 欄（解析時已轉中文標籤），
                            # resolve_sector() 第 1 步直接用，不需要新程式。
-                           "EWY", "EWM", "EWZ", "IEV"}
+                           "EWY", "EWM", "EWZ", "IEV",
+                           # 2026-10-29 加的 iShares 國家與子產業基金（持股檔同樣自帶 Sector 欄）
+                           "EWU", "EWG", "EWQ", "EWP", "EWN", "EWL", "EWI", "EWA", "EWS", "EWH",
+                           "MCHI", "INDA", "THD", "EIDO", "EPHE", "ENZL", "EWC", "EWW", "KSA",
+                           "SOXX", "IGV", "ITA"}
 
 
 def compute_price_contribution(etf_key: str, constituents: list[dict], total_weight: float,
@@ -2744,6 +3096,16 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
             n_new_fetches += 1
             yf_tk = TICKER_ALIAS.get(tk, tk)  # 例：SKHYV -> 000660.KS
             info = fetch_ticker_eps_and_price(yf_tk)
+            # 2026-10-29 加 INDA：Yahoo 的印度國家證交所（.NS）代號偶爾把明年度 EPS 預估整檔
+            # 填成 0（ICICI Bank 實測 current＝0、7 天前 92.5），同一檔的孟買（.BO）代號
+            # 仍有正常預估。只在 .NS 且預估恰為 0 或查無時改試 .BO，兩者是同一家公司同一份
+            # 股票，EPS 與股價都以 .BO 本身的數字為準。
+            if (yf_tk.endswith(".NS") and info.get("status") != "ok"
+                    and info.get("eps_fy_next_local") in (None, 0, 0.0)):
+                bo_tk = yf_tk[:-3] + ".BO"
+                bo_info = fetch_ticker_eps_and_price(bo_tk)
+                if bo_info.get("status") == "ok":
+                    info, yf_tk = bo_info, bo_tk
             info["yf_ticker_used"] = yf_tk
             ticker_cache[tk] = info
 
