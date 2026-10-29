@@ -47,6 +47,13 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .ov-th-sort{cursor:pointer;user-select:none}
 .ov-th-sort:hover{background:var(--x-navy-2)}
 .ov-th-sort .arrow{opacity:.55;margin-left:3px;font-size:9px}
+.ov-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;border-bottom:1px solid var(--line, #d5dbe5)}
+.ov-tabs a{font-size:13px;font-weight:700;padding:.5rem 1rem;border:1px solid transparent;border-bottom:none;border-radius:var(--r) var(--r) 0 0;color:var(--sec);text-decoration:none;margin-bottom:-1px}
+.ov-tabs a:hover{color:var(--ink, #111)}
+.ov-tabs a.active{background:var(--x-navy);color:#fff;border-color:var(--x-navy)}
+.ov-tab-note{font-weight:600}
+#ovTable td.ov-lowcov{opacity:.45}
+#ovTable td.ov-lowcov .lc-mark{opacity:1;color:var(--muted);font-size:9.5px;margin-left:2px}
 .ov-group-row td{background:var(--x-navy) !important;color:#fff !important;font-size:11px;font-weight:600;padding:.35rem .7rem}
 .ov-flag{color:var(--warn);font-size:10px;margin-left:4px;cursor:help}
 
@@ -164,7 +171,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .callout-tile .ct-name{font-size:.72rem;color:var(--sec)}
 
 /* 2026-09-25 加：象限散佈圖（Exhibit 0，總覽表格上方）——x=EPS 3個月變動%，
-   y=股價 3個月變動%，一檔一點，依分組上色（4 組，見 SCATTER_GROUP_COLOR，通過
+   y=股價 3個月變動%，一檔一點，依分組上色（每分頁 1～5 組，見 SCATTER_GROUP_COLOR，通過
    dataviz skill validate_palette.js --pairs all 驗證，見 commit 說明）。表格本身是
    無障礙備援，散佈圖只補視覺，不重複的數字都留在下面的表格。 */
 .scatter-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px 10px;margin-top:8px;position:relative}
@@ -300,8 +307,8 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
           <a href="/ai-credit/">AI 信用監測</a>
           <a href="/tw-chips/">台股籌碼</a>
           <a href="/kr-chips/">韓股籌碼</a>
-          <a href="/markets.html">全球市場</a>
-          <a href="/sectors.html">產業板塊</a>
+          <a href="/etf-dash/?view=overview&tab=countries">全球市場</a>
+          <a href="/etf-dash/?view=overview&tab=sectors">產業板塊</a>
         </div>
       </div>
       <div class="imq-dd active">
@@ -357,8 +364,10 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 </section>
 <section class="exhibit" id="ovExhibit">
   <div class="ex-label">總覽</div>
-  <div class="ex-title">51 檔基金一覽</div>
-  <div class="ex-sub">依「美股大盤／美股產業／美股子產業／亞洲／歐洲與拉美／北美與中東」分組；點欄位標題可排序（分組內排序，分組順序不變）</div>
+  <div class="ov-tabs" id="ovTabs" role="tablist" aria-label="總覽分頁"></div>
+  <div class="ex-title" id="ovTabTitle">基金一覽</div>
+  <div class="ex-sub" id="ovTabSub">點欄位標題可排序（分組內排序，分組順序不變）</div>
+  <div class="ex-sub ov-tab-note" id="ovTabNote" style="display:none"></div>
   <div class="conclusion" id="ovSummarySentence"></div>
   <div class="callout-tiles" id="ovTiles"></div>
 </section>
@@ -384,13 +393,14 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 
 <section class="exhibit" id="ovTableExhibit">
   <div class="ex-label">總覽表</div>
-  <div class="ex-title">51 檔基金完整數字</div>
+  <div class="ex-title" id="ovTableTitle">基金完整數字</div>
   <div class="tbl-wrap"><table class="imq-table" id="ovTable"></table></div>
   <div class="ex-sub" id="ovReadNote" style="margin-top:8px;line-height:1.7">
     <p><b>強弱 3M、強弱 12M</b>：基金近 63、252 個交易日的含息報酬，減去 SPY 同期的含息報酬，單位是百分點<span id="ovStrengthAsOf"></span>。例如 +10.0 代表比 SPY 多漲 10 個百分點。台幣、日圓計價的基金先換成美元再算；台灣加權指數是指數，沒有配息，用價格計算。上市不到一年的基金，12M 顯示 —。</p>
     <p><b>判讀</b>：看「本益比變動 3M」。本益比 3 個月內上升 5% 以上，代表股價漲得比獲利預估快，標「股價跑在獲利前面」；下降 5% 以上標「獲利跑在股價前面」；其餘標「對得上」。股價和本益比變動都算到最新收盤，EPS 修正算到「EPS 更新」欄那一天，之後幾天假設沒變。這只是描述股價和獲利預估近三個月誰走得比較快，不是買賣訊號。2026-10-28 用 SMH 1990 年以來的週資料檢驗，獲利上修但股價沒跟上之後，一年的報酬並沒有比較高，詳見<a href="analysis-2026-10-28.html">深度檢驗</a>。</p>
     <p>XLRE（不動產）的本益比用一般會計盈餘計算，不動產公司的房地產折舊會壓低盈餘，本益比看起來比其他產業高，不適合直接比較。</p>
   </div>
+  <div class="ex-sub ov-lowcov-note" id="ovLowCovNote" style="display:none"></div>
   <div class="ex-src" id="ovSrc"></div>
 </section>
 </div>
@@ -563,75 +573,102 @@ function fmtMoney(v, ccy){
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
-// 2026-09-25 加 9 檔產業 ETF＋RSP 到 17 檔——分組是頁面呈現層唯一負責的事
-// （build_overview_json() 只給 flat 陣列＋etf_key，見該函式 docstring），這裡
-// 是分組的唯一定義來源，桌面版分組 pill 導覽、手機版 <select><optgroup>、
-// 總覽表格的分組列都讀這份。
-var FUND_GROUPS = [
-  {label:'美股大盤', funds:[
-    {key:'SPY', label:'SPY'},
-    {key:'RSP', label:'RSP（等權重）'},
-    {key:'QQQ', label:'QQQ'}
+// 2026-10-29：總覽改三個分頁（產業／國家／大盤與持股），OV_TABS 是頁面分組與分頁
+// 成員的唯一定義來源。同一檔可出現在不同分頁（標籤可不同，例如 SPY 在國家分頁叫
+// 「美國 SPY」）。FUND_GROUPS 由 OV_TABS 去重推導（同一檔以第一次出現為準），基金
+// 切換 pill、手機 <select> 讀 FUND_GROUPS；總覽表、散佈圖讀 OV_TABS。color 是散佈圖
+// 該組的點色（同一分頁內任兩組要分得出來；四色＋洋紅，標籤文字仍直接標 ticker）。
+// build_overview_json() 只給 flat 陣列＋etf_key，不管分組。
+var OV_TABS = [
+  {key:'sectors', label:'產業', groups:[
+    {label:'美股產業', color:'#2a78d6', funds:[
+      {key:'XLK', label:'科技 XLK'},
+      {key:'XLF', label:'金融 XLF'},
+      {key:'XLE', label:'能源 XLE'},
+      {key:'XLV', label:'醫療保健 XLV'},
+      {key:'XLI', label:'工業 XLI'},
+      {key:'XLY', label:'非必需消費 XLY'},
+      {key:'XLP', label:'必需消費 XLP'},
+      {key:'XLC', label:'通訊服務 XLC'},
+      {key:'XLB', label:'原物料 XLB'},
+      {key:'XLU', label:'公用事業 XLU'},
+      {key:'XLRE', label:'不動產 XLRE'}
+    ]},
+    {label:'美股子產業', color:'#eb6834', funds:[
+      {key:'SMH', label:'SMH（美國）'},
+      {key:'SOXX', label:'半導體 SOXX'},
+      {key:'IGV', label:'軟體 IGV'},
+      {key:'ITA', label:'航太國防 ITA'},
+      {key:'XBI', label:'生技 XBI'},
+      {key:'XOP', label:'油氣探勘生產 XOP'},
+      {key:'KRE', label:'區域銀行 KRE'},
+      {key:'XHB', label:'房屋建築 XHB'},
+      {key:'GDX', label:'黃金礦業 GDX'}
+    ]}
   ]},
-  {label:'美股產業', funds:[
-    {key:'XLK', label:'科技 XLK'},
-    {key:'XLF', label:'金融 XLF'},
-    {key:'XLE', label:'能源 XLE'},
-    {key:'XLV', label:'醫療保健 XLV'},
-    {key:'XLI', label:'工業 XLI'},
-    {key:'XLY', label:'非必需消費 XLY'},
-    {key:'XLP', label:'必需消費 XLP'},
-    {key:'XLC', label:'通訊服務 XLC'},
-    {key:'XLB', label:'原物料 XLB'},
-    {key:'XLU', label:'公用事業 XLU'},
-    {key:'XLRE', label:'不動產 XLRE'}
+  {key:'countries', label:'國家', note:'這些基金都在美國掛牌，報酬以美元計，含匯率變動。', groups:[
+    {label:'美洲', color:'#2a78d6', funds:[
+      {key:'SPY', label:'美國 SPY'},
+      {key:'EWC', label:'加拿大 EWC'},
+      {key:'EWW', label:'墨西哥 EWW'},
+      {key:'EWZ', label:'巴西 EWZ'}
+    ]},
+    {label:'歐洲', color:'#4a3aa7', funds:[
+      {key:'IEV', label:'歐洲 IEV'},
+      {key:'EWU', label:'英國 EWU'},
+      {key:'EWG', label:'德國 EWG'},
+      {key:'EWQ', label:'法國 EWQ'},
+      {key:'EWL', label:'瑞士 EWL'},
+      {key:'EWN', label:'荷蘭 EWN'},
+      {key:'EWI', label:'義大利 EWI'},
+      {key:'EWP', label:'西班牙 EWP'}
+    ]},
+    {label:'東北亞', color:'#eb6834', funds:[
+      {key:'TOPIX', label:'日本 TOPIX（1475）'},
+      {key:'EWY', label:'南韓 EWY'},
+      {key:'0050', label:'台灣 元大台灣50（0050）'},
+      {key:'TAIEX', label:'台灣加權指數'},
+      {key:'MCHI', label:'中國 MCHI'},
+      {key:'EWH', label:'香港 EWH'}
+    ]},
+    {label:'南亞與東南亞', color:'#1baf7a', funds:[
+      {key:'INDA', label:'印度 INDA'},
+      {key:'EWS', label:'新加坡 EWS'},
+      {key:'EWM', label:'馬來西亞 EWM'},
+      {key:'THD', label:'泰國 THD'},
+      {key:'EIDO', label:'印尼 EIDO'},
+      {key:'EPHE', label:'菲律賓 EPHE'},
+      {key:'VNM', label:'越南 VNM'}
+    ]},
+    {label:'大洋洲與中東', color:'#c2377e', funds:[
+      {key:'EWA', label:'澳洲 EWA'},
+      {key:'ENZL', label:'紐西蘭 ENZL'},
+      {key:'KSA', label:'沙烏地阿拉伯 KSA'}
+    ]}
   ]},
-  {label:'美股子產業', funds:[
-    {key:'SMH', label:'SMH（美國）'},
-    {key:'SMH_UCITS', label:'SMH（愛爾蘭）'},
-    {key:'SOXX', label:'半導體 SOXX'},
-    {key:'IGV', label:'軟體 IGV'},
-    {key:'ITA', label:'航太國防 ITA'},
-    {key:'XBI', label:'生技 XBI'},
-    {key:'XOP', label:'油氣探勘生產 XOP'},
-    {key:'KRE', label:'區域銀行 KRE'},
-    {key:'XHB', label:'房屋建築 XHB'},
-    {key:'GDX', label:'黃金礦業 GDX'}
-  ]},
-  {label:'亞洲', funds:[
-    {key:'TAIEX', label:'台灣加權指數'},
-    {key:'0050', label:'元大台灣50'},
-    {key:'TOPIX', label:'TOPIX（1475）'},
-    {key:'EWY', label:'南韓 EWY'},
-    {key:'EWM', label:'馬來西亞 EWM'},
-    {key:'MCHI', label:'中國 MCHI'},
-    {key:'EWH', label:'香港 EWH'},
-    {key:'INDA', label:'印度 INDA'},
-    {key:'EWS', label:'新加坡 EWS'},
-    {key:'THD', label:'泰國 THD'},
-    {key:'VNM', label:'越南 VNM'},
-    {key:'EIDO', label:'印尼 EIDO'},
-    {key:'EPHE', label:'菲律賓 EPHE'},
-    {key:'EWA', label:'澳洲 EWA'},
-    {key:'ENZL', label:'紐西蘭 ENZL'}
-  ]},
-  {label:'歐洲與拉美', funds:[
-    {key:'IEV', label:'歐洲 IEV'},
-    {key:'EWU', label:'英國 EWU'},
-    {key:'EWG', label:'德國 EWG'},
-    {key:'EWQ', label:'法國 EWQ'},
-    {key:'EWP', label:'西班牙 EWP'},
-    {key:'EWN', label:'荷蘭 EWN'},
-    {key:'EWL', label:'瑞士 EWL'},
-    {key:'EWI', label:'義大利 EWI'},
-    {key:'EWZ', label:'巴西 EWZ'},
-    {key:'EWW', label:'墨西哥 EWW'}
-  ]},
-  {label:'北美與中東', funds:[
-    {key:'EWC', label:'加拿大 EWC'},
-    {key:'KSA', label:'沙烏地阿拉伯 KSA'}
+  {key:'core', label:'大盤與持股', groups:[
+    {label:'大盤與持股', color:'#2a78d6', funds:[
+      {key:'SPY', label:'SPY'},
+      {key:'RSP', label:'RSP（等權重）'},
+      {key:'QQQ', label:'QQQ'},
+      {key:'SMH', label:'SMH（美國）'},
+      {key:'SMH_UCITS', label:'SMH（愛爾蘭）'},
+      {key:'0050', label:'元大台灣50'},
+      {key:'TAIEX', label:'台灣加權指數'}
+    ]}
   ]}
 ];
+var OV_TAB_DEFAULT = 'sectors';
+var FUND_GROUPS = (function(){
+  var seen = {}, out = [];
+  OV_TABS.forEach(function(t){
+    t.groups.forEach(function(g){
+      var fs = g.funds.filter(function(f){ if(seen[f.key]) return false; seen[f.key] = true; return true; });
+      if(fs.length) out.push({label:g.label, funds:fs});
+    });
+  });
+  return out;
+})();
 var FUND_LIST = FUND_GROUPS.reduce(function(acc, g){ return acc.concat(g.funds); }, []);
 var FUND_KEYS = FUND_LIST.map(function(f){return f.key;});
 var FUND_LABEL_BY_KEY = {};
@@ -1364,8 +1401,8 @@ function render(d){
   wireCollapsibleSections();
 }
 
-// ── 總覽（/etf-dash/?view=overview）——讀 data/overview.json 一個檔，51 檔基金
-// 依 FUND_GROUPS 分組列出，點欄位標題排序（同分組內排序，分組順序不變，見
+// ── 總覽（/etf-dash/?view=overview）——讀 data/overview.json 一個檔，依 OV_TABS
+// 分三個分頁（?tab=sectors|countries|core）、分組列出，點欄位標題排序（同分組內排序，分組順序不變，見
 // OV_COLUMNS 與 sortOverviewGroups()）。────────────────────────────────────
 
 // 2026-09-25：欄位標題改短標籤＋abbr[title] 掛全名（900px 寬 7 欄不換行、不橫向捲動的
@@ -1392,7 +1429,7 @@ var OV_COLUMNS = [
   {key:'breadth_90d', label:'修正廣度 3M', full:'EPS 修正廣度（近三個月，上修/持平/下修權重佔比）', numeric:false, lo:true, sortable:false},
   {key:'flow_1m_net', label:'資金流 1M', full:'資金流淨額（近一個月，Δ受益權份額×NAV）', numeric:true, lo:true}
 ];
-var ovState = {groups:null, sortKey:null, sortDir:1};
+var ovState = {groups:null, sortKey:null, sortDir:1, tab:null};
 
 // 2026-09-25 加：EPS 3M／本益比變動 3M 兩欄 diverging bar 共用刻度（同欄所有基金的
 // max|value|），renderOverview() 裡 computeBarScale() 算好存這裡，divBarHtml() 讀。
@@ -1440,6 +1477,15 @@ function ovRelCellHtml(v){
   if(v===null||v===undefined||Number.isNaN(v)) return fwdDash();
   return (v>=0?'+':'')+v.toFixed(1);
 }
+// 2026-10-29：EPS 涵蓋不足（判讀欄由 build_overview_json() 標「涵蓋不足」，門檻只在
+// 後端 EPS_COVERAGE_MIN_PCT）時，預估本益比、本益比變動、PEG 三格淡色加 † 註記。
+var OV_LOW_COVERAGE_LABEL = '涵蓋不足';
+function ovIsLowCov(row){ return row.align_label_zh === OV_LOW_COVERAGE_LABEL; }
+function ovLowCovTd(row, cls, inner){
+  var low = ovIsLowCov(row);
+  var title = low ? ' title="有分析師 EPS 預估的成分股只占權重約 '+(row.eps_coverage_90d_pct!=null?Math.round(row.eps_coverage_90d_pct):0)+'%，這格只代表有預估的部分"' : '';
+  return '<td class="'+(cls+(low?' ov-lowcov':'')).trim()+'"'+title+'>'+inner+(low?'<span class="lc-mark">†</span>':'')+'</td>';
+}
 function ovRowHtml(row){
   var flags = '';
   if(row.holdings_stale) flags += '<span class="ov-flag" title="今日持股抓取失敗，沿用上次成功快取">⚠</span>';
@@ -1453,11 +1499,11 @@ function ovRowHtml(row){
     '<td class="num ov-col-lo">'+fmtPctColored(row.eps_chg_pct_30d)+'</td>'+
     '<td class="num">'+divBarHtml(row.eps_chg_pct_90d,'eps_chg_pct_90d')+'</td>'+
     '<td class="num">'+fmtPctColored(row.price_chg_pct_90d)+'</td>'+
-    '<td class="num">'+divBarHtml(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d')+'</td>'+
+    ovLowCovTd(row, 'num', divBarHtml(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d'))+
     '<td>'+(row.align_label_zh?esc(row.align_label_zh):fwdDash())+'</td>'+
-    '<td class="num ov-col-lo">'+(row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—')+'</td>'+
+    ovLowCovTd(row, 'num ov-col-lo', (row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—'))+
     '<td class="num ov-col-lo">'+(row.fy1_eps_growth_pct!=null?fwdPctColored(row.fy1_eps_growth_pct):fwdDash())+'</td>'+
-    '<td class="num ov-col-lo">'+(row.fy1_peg!=null?Number(row.fy1_peg).toFixed(2):fwdDash())+'</td>'+
+    ovLowCovTd(row, 'num ov-col-lo', (row.fy1_peg!=null?Number(row.fy1_peg).toFixed(2):fwdDash()))+
     '<td class="ov-col-lo">'+esc(row.eps_as_of||'—')+'</td>'+
     '<td class="ov-col-lo">'+ovBreadthCellHtml(row.breadth_90d)+'</td>'+
     '<td class="num ov-col-lo">'+(row.flows_skipped?'<span style="color:var(--muted)">指數無資金流</span>':(row.flow_1m_net!=null?fmtMoney(row.flow_1m_net,row.flow_nav_currency):'累積中'))+'</td></tr>';
@@ -1515,15 +1561,16 @@ function renderOverviewHeader(){
 }
 
 // 2026-09-25 加：KPI 三格，純機械（只挑 overview.json 裡的最大/最小值，不下判斷字眼），
-// 掃全部 51 檔（summary_sentence_zh 只看 11 檔美股產業 ETF，這裡刻意放大範圍，避免跟句子
+// 掃目前分頁的基金（summary_sentence_zh 只看 11 檔美股產業 ETF，只放產業分頁，避免跟句子
 // 完全重複）。2026-09-25 二次修：ticker 放大在前、完整名稱縮小在後（見 coordinator
 // 回饋 #7）——原本完整名稱＋ticker 擠在同一行，長名稱（如「VanEck 半導體 UCITS ETF
 // （SMH_UCITS）」）會換成兩行，版面不齊。
 function fundShortName(f){ return (f.label_zh||f.etf_key||'').split('（')[0].trim(); }
 function renderOvTiles(ov){
   var el = document.getElementById('ovTiles');
-  var epsFunds = (ov.funds||[]).filter(function(f){return f.eps_chg_pct_90d!=null;});
-  var peFunds = (ov.funds||[]).filter(function(f){return f.implied_pe_chg_pct_90d!=null;});
+  // 涵蓋不足的基金不進 KPI 格（只代表一小部分權重）
+  var epsFunds = (ov.funds||[]).filter(function(f){return f.eps_chg_pct_90d!=null && !ovIsLowCov(f);});
+  var peFunds = (ov.funds||[]).filter(function(f){return f.implied_pe_chg_pct_90d!=null && !ovIsLowCov(f);});
   var tiles = [];
   if(epsFunds.length){
     var topEps = epsFunds.reduce(function(a,b){ return b.eps_chg_pct_90d>a.eps_chg_pct_90d?b:a; });
@@ -1547,7 +1594,7 @@ function renderOvTiles(ov){
 // adjacent 門檻）：blue/orange/aqua/violet 這組合在 light 模式下 CVD 全部 PASS
 // （worst ΔE 9.2，normal-vision floor 16.3），只有 aqua 對白底 contrast 落在
 // WARN（2.82:1）——用直接標籤（ticker）當 relief channel 滿足門檻要求的次要編碼。
-var SCATTER_GROUP_COLOR = {'美股大盤':'#2a78d6','美股產業':'#eb6834','美股子產業':'#1baf7a','亞洲':'#4a3aa7'};
+var SCATTER_GROUP_COLOR = {};  // 由 renderOverviewTab() 依目前分頁的 OV_TABS[].groups[].color 填入
 
 function buildScatterPoints(){
   var pts = [];
@@ -1694,7 +1741,7 @@ function renderOvScatter(){
   '</svg><div class="scatter-tooltip" id="ovScatterTooltip"></div>';
   wrap.innerHTML = svg;
 
-  var groupsPresent = FUND_GROUPS.map(function(g){return g.label;}).filter(function(l){
+  var groupsPresent = ovState.groups.map(function(g){return g.label;}).filter(function(l){
     return pr.some(function(d){return d.p.group===l;});
   });
   legendEl.innerHTML = groupsPresent.map(function(l){
@@ -1770,13 +1817,52 @@ function renderSectorFlows(ov){
     }).join('')+'</tbody>';
 }
 
-function renderOverview(ov){
+var ovData = null;
+function ovTabByKey(k){
+  for(var i=0;i<OV_TABS.length;i++){ if(OV_TABS[i].key===k) return OV_TABS[i]; }
+  return null;
+}
+function ovTabFromUrl(){
+  var t = new URLSearchParams(location.search).get('tab');
+  return ovTabByKey(t) ? t : OV_TAB_DEFAULT;
+}
+function ovTabCount(tab){
+  return tab.groups.reduce(function(n,g){ return n + g.funds.length; }, 0);
+}
+function renderOvTabsNav(activeKey){
+  document.getElementById('ovTabs').innerHTML = OV_TABS.map(function(t){
+    return '<a role="tab" aria-selected="'+(t.key===activeKey)+'" class="'+(t.key===activeKey?'active':'')+'" data-tab="'+t.key+'" href="?view=overview&tab='+t.key+'">'+esc(t.label)+'（'+ovTabCount(t)+'）</a>';
+  }).join('');
+  document.querySelectorAll('#ovTabs a').forEach(function(a){
+    a.addEventListener('click', function(e){
+      e.preventDefault();
+      var k = a.getAttribute('data-tab');
+      if(k === ovState.tab) return;
+      history.pushState({tab:k}, '', '?view=overview&tab='+k);
+      if(ovData) renderOverviewTab(ovData, k);
+    });
+  });
+}
+
+function renderOverviewTab(ov, tabKey){
+  var tab = ovTabByKey(tabKey) || ovTabByKey(OV_TAB_DEFAULT);
+  ovState.tab = tab.key;
+  var n = ovTabCount(tab);
+  renderOvTabsNav(tab.key);
   document.getElementById('coverLeft').innerHTML =
-    '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · 51 檔基金一覽</span>';
+    '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · '+esc(tab.label)+' '+n+' 檔基金一覽</span>';
+  document.getElementById('ovTabTitle').textContent = tab.label+'：'+n+' 檔基金一覽';
+  document.getElementById('ovTabSub').textContent = '依「'+tab.groups.map(function(g){return g.label;}).join('／')+'」分組；點欄位標題可排序（分組內排序，分組順序不變）';
+  var noteEl = document.getElementById('ovTabNote');
+  noteEl.style.display = tab.note ? '' : 'none';
+  noteEl.textContent = tab.note || '';
+  document.getElementById('ovTableTitle').textContent = tab.label+'：'+n+' 檔基金完整數字';
 
   var byKey = {};
   (ov.funds||[]).forEach(function(f){ byKey[f.etf_key] = f; });
-  ovState.groups = FUND_GROUPS.map(function(g){
+  SCATTER_GROUP_COLOR = {};
+  ovState.groups = tab.groups.map(function(g){
+    SCATTER_GROUP_COLOR[g.label] = g.color;
     return {
       label: g.label,
       rows: g.funds.map(function(f){
@@ -1787,15 +1873,37 @@ function renderOverview(ov){
   });
   ovState.sortKey = null;
   ovState.sortDir = 1;
-  computeBarScale(ov);
+  // tiles、bar 刻度只算本分頁的基金
+  var tabKeys = {};
+  tab.groups.forEach(function(g){ g.funds.forEach(function(f){ tabKeys[f.key] = true; }); });
+  var sub = {funds:(ov.funds||[]).filter(function(f){ return tabKeys[f.etf_key]; })};
+  computeBarScale(sub);
   renderOverviewHeader();
   renderOverviewTbody();
-  renderOvTiles(ov);
+  renderOvTiles(sub);
   renderOvScatter();
-  renderSectorFlows(ov);
 
+  var isSectors = tab.key === 'sectors';
+  document.getElementById('ovSectorFlowsExhibit').style.display = isSectors ? '' : 'none';
+  if(isSectors) renderSectorFlows(ov);
   var sentEl = document.getElementById('ovSummarySentence');
+  sentEl.style.display = isSectors ? '' : 'none';
   sentEl.innerHTML = ov.summary_sentence_zh ? esc(ov.summary_sentence_zh) : '無資料：11 檔美股產業 ETF 尚未有近三個月 EPS 修正資料';
+
+  // 涵蓋不足註記：列出本分頁裡判讀標「涵蓋不足」的基金
+  var lows = [];
+  ovState.groups.forEach(function(g){ g.rows.forEach(function(r){ if(r.found && ovIsLowCov(r)) lows.push(r); }); });
+  var lcEl = document.getElementById('ovLowCovNote');
+  if(lows.length){
+    lcEl.style.display = '';
+    lcEl.innerHTML = '† 有分析師 EPS 預估的成分股不到七成權重（多為虧損股或沒有預估），本益比與判讀只代表有預估的部分。本頁受影響的是：'+
+      lows.map(function(r){ return esc(fundShortName(r))+'（'+esc(r.etf_key)+'，涵蓋 '+(r.eps_coverage_90d_pct!=null?Math.round(r.eps_coverage_90d_pct):0)+'%）'; }).join('、')+'。';
+  } else { lcEl.style.display = 'none'; lcEl.textContent = ''; }
+}
+
+function renderOverview(ov){
+  ovData = ov;
+  renderOverviewTab(ov, ovTabFromUrl());
   var saEl = document.getElementById('ovStrengthAsOf');
   if(saEl) saEl.textContent = ov.strength_as_of ? '，算到 '+ov.strength_as_of+' 收盤' : '';
 
@@ -1803,6 +1911,9 @@ function renderOverview(ov){
     '資料來源：docs/etf-dash/data/{ETF}.json 彙總（scripts/etf_dash/build_etf_dash.py::build_overview_json）；'+
     'as of ' + (ov.as_of || '無資料') + '，產生於 ' + (ov.generated_at || '無資料');
 }
+window.addEventListener('popstate', function(){
+  if(VIEW === 'overview' && ovData) renderOverviewTab(ovData, ovTabFromUrl());
+});
 
 function picksNextFirst(iso){
   var m = /^(\d{4})-(\d{2})-\d{2}/.exec(iso || '');

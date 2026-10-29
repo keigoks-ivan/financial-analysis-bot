@@ -122,6 +122,11 @@ Change log:
         「使用指南」(/how-to.html)——使用指南併入投資流程，how-to.html 改成轉址樁（入 SKIP_FILES，
         不注入 nav）；頂層只留「投資流程」(/flow/)。外部 3 repo synced literal（v7-backtest／
         morning-briefing／minervini-quality-backtest）2026-10-19 已同步，byte-identical。
+    2026-10-29：總經與籌碼 ▾ 的「全球市場」改連 /etf-dash/?view=overview&tab=countries、
+        「產業板塊」改連 /etf-dash/?view=overview&tab=sectors（名稱不變）；舊 sectors.html
+        改轉址樁（入 SKIP_FILES），markets.html 只留風險偏好儀表。PREFIX_ACTIVE：sectors.html
+        映射刪除，markets.html 改 ("macrochip", None)；etf-dash/ 維持 ("research","etfd")
+        （active 只看路徑，分不出分頁）。外部 3 repo synced literal 同步（nav-etfdash-tabs-1029 分支）。
     2026-10-21：市場 ▾ 拆組（持有人拍板）。(1) 市場 ▾ 只留 5 項（市況主控台／情報監視器／每日
         簡報／資產輪動雷達／財報分析）；(2) 新增下拉「總經與籌碼 ▾」（group key "macrochip"），
         排在市場 ▾ 之後、選股直連之前，7 項：總經深度報告／總經資料庫／AI 信用監測／台股籌碼／
@@ -261,8 +266,8 @@ MENU = {
         ("aicredit", "/ai-credit/", "AI 信用監測"),  # 2026-10-16 AI 信用風險 12 條指標（每日更新、越線時通知）
         ("tchips", "/tw-chips/", "台股籌碼"),  # 2026-10-17 台股籌碼十年趨勢（外資／投信／融資／期貨選擇權，每日更新）
         ("kchips", "/kr-chips/", "韓股籌碼"),  # 2026-10-17 韓股籌碼十年趨勢（外資／機構／個人／預託金／融資／借券，每日更新）
-        ("markets", "/markets.html", "全球市場"),
-        ("sectors", "/sectors.html", "產業板塊"),
+        ("markets", "/etf-dash/?view=overview&tab=countries", "全球市場"),
+        ("sectors", "/etf-dash/?view=overview&tab=sectors", "產業板塊"),
     ],
     # 2026-08-23 系統群瘦身（8→4，見 notes/site-internal/root/
     # _consolidation_system_20260823.md）：市場偵探／裁決實績／持倉週掃／實單
@@ -427,8 +432,7 @@ PREFIX_ACTIVE = [
     ("catalyst/", ("market", None)),
     ("monitor/", ("market", None)),  # 全資產市場監測（2026-07-10；Phase C 併入 intel 儀表分頁）
     ("intel/", ("market", "intel")),  # 情報監視器 Phase 1（2026-08-19 新增）
-    ("markets.html", ("macrochip", "markets")),
-    ("sectors.html", ("macrochip", "sectors")),
+    ("markets.html", ("macrochip", None)),  # 2026-10-29 只剩風險偏好儀表，選單項已改連 ETF 儀表板分頁，群高亮無項目
     ("crowding/", ("market", None)),
     # rotation/radar.html 是「資產輪動雷達」獨立項目；須排在 rotation/ 之前，
     # 否則會被 rotation/ 前綴吃掉。index.html 與 ROTATION_*.html 歸市場群（無選單項）。
@@ -548,6 +552,7 @@ SKIP_FILES = {
     "macro/db/an/th.html",
     "macro/db/an/tradewar.html",
     "macro/db/an/vn.html",
+    "sectors.html",                              # redirect stub -> /etf-dash/?view=overview&tab=sectors（2026-10-29 併入 ETF 儀表板產業分頁）
     "how-to.html",                               # redirect stub -> /flow/（2026-10-19 使用指南併入投資流程）
 }
 

@@ -251,3 +251,135 @@ def test_overview_uses_latest_close_but_fund_periods_untouched(tmp_path, monkeyp
     assert row["price_as_of"] == "2026-10-28"
     on_disk = json.loads((tmp_path / "EWZ.json").read_text(encoding="utf-8"))["periods"]
     assert on_disk == periods
+
+
+# ── 2026-10-29：EPS 涵蓋不足 ─────────────────────────────────────────────
+
+def _write_fund_cov(out_dir: Path, key: str, pe90, coverage):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    p90 = {"key": "90d", "eps_chg_pct": 1.0, "price_chg_pct": 2.0, "implied_pe_chg_pct": pe90}
+    if coverage is not None:
+        p90["coverage_pct"] = coverage
+    (out_dir / f"{key}.json").write_text(json.dumps({
+        "label_zh": key, "yf_ticker": key, "as_of": "2026-10-28", "mode": "price",
+        "periods": [{"key": "30d"}, p90], "weighted_forward_pe": {"value": 20.0},
+    }), encoding="utf-8")
+
+
+def test_eps_coverage_threshold_is_named_constant_70():
+    assert m.EPS_COVERAGE_MIN_PCT == 70
+    assert m.ALIGN_LOW_COVERAGE_ZH == "涵蓋不足"
+
+
+@pytest.mark.parametrize("cov,low", [
+    (0.0, True), (35.69, True), (69.4, True),
+    (69.5, False),    # 四捨五入到 70，不算不足
+    (70.0, False), (70.4, False), (99.66, False),
+    (None, False),    # 舊格式缺欄位，無從判斷，不標
+])
+def test_eps_coverage_is_low_boundaries(cov, low):
+    assert m.eps_coverage_is_low(cov) is low
+
+
+def test_overview_low_coverage_overrides_align_label(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "OUT_DIR", tmp_path)
+    _write_fund_cov(tmp_path, "XBI", 8.0, 35.69)     # 虧損股多，只有 36% 權重有預估
+    _write_fund_cov(tmp_path, "EPHE", None, 0.0)     # Yahoo 沒資料
+    _write_fund_cov(tmp_path, "VNM", 8.0, 70.76)     # 剛過門檻
+    ov = m.build_overview_json()
+    by = {f["etf_key"]: f for f in ov["funds"]}
+    assert by["XBI"]["align_label_zh"] == "涵蓋不足" and by["XBI"]["eps_coverage_90d_pct"] == 35.69
+    assert by["EPHE"]["align_label_zh"] == "涵蓋不足" and by["EPHE"]["eps_coverage_90d_pct"] == 0.0
+    assert by["VNM"]["align_label_zh"] == "股價跑在獲利前面"
+    assert by["VNM"]["eps_coverage_90d_pct"] == 70.76
+
+
+# ── 總覽三個分頁（單一來源 OV_TABS）──────────────────────────────────────
+
+def _page_tabs():
+    import re
+    html = (SCRIPTS_DIR.parent / "docs" / "etf-dash" / "index.html").read_text(encoding="utf-8")
+    block = html[html.index("var OV_TABS = ["):html.index("var OV_TAB_DEFAULT")]
+    tabs = {}
+    for tm in re.finditer(r"\{key:'(sectors|countries|core)', label:'([^']+)'(.*?)(?=\n  \{key:'(?:sectors|countries|core)'|\Z)", block, re.S):
+        groups = []
+        for gm in re.finditer(r"\{label:'([^']+)', color:'[^']+', funds:\[(.*?)\]\}", tm.group(3), re.S):
+            groups.append((gm.group(1), re.findall(r"\{key:'([^']+)', label:", gm.group(2))))
+        tabs[tm.group(1)] = (tm.group(2), groups)
+    return html, tabs
+
+
+def test_overview_tabs_order_and_default():
+    html, tabs = _page_tabs()
+    assert list(tabs) == ["sectors", "countries", "core"]
+    assert [tabs[k][0] for k in tabs] == ["產業", "國家", "大盤與持股"]
+    assert "var OV_TAB_DEFAULT = 'sectors';" in html
+
+
+def test_overview_tab_members_exist_in_registry_and_cover_all_51():
+    _, tabs = _page_tabs()
+    seen = set()
+    for _label, groups in tabs.values():
+        for _g, keys in groups:
+            assert set(keys) <= set(m.FUND_REGISTRY)
+            assert len(keys) == len(set(keys))
+            seen |= set(keys)
+    assert seen == set(m.FUND_REGISTRY) and len(seen) == 51
+
+
+def test_overview_tab_groups_match_spec():
+    _, tabs = _page_tabs()
+    sec = dict(tabs["sectors"][1])
+    assert list(sec) == ["美股產業", "美股子產業"]
+    assert sec["美股產業"] == ["XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLC", "XLB", "XLU", "XLRE"]
+    assert sec["美股子產業"] == ["SMH", "SOXX", "IGV", "ITA", "XBI", "XOP", "KRE", "XHB", "GDX"]
+    assert "SMH_UCITS" not in sum(sec.values(), [])
+    cty = dict(tabs["countries"][1])
+    assert list(cty) == ["美洲", "歐洲", "東北亞", "南亞與東南亞", "大洋洲與中東"]
+    assert set(cty["美洲"]) == {"SPY", "EWC", "EWW", "EWZ"}
+    assert set(cty["歐洲"]) == {"IEV", "EWU", "EWG", "EWQ", "EWL", "EWN", "EWI", "EWP"}
+    assert set(cty["東北亞"]) == {"TOPIX", "EWY", "0050", "TAIEX", "MCHI", "EWH"}
+    assert set(cty["南亞與東南亞"]) == {"INDA", "EWS", "EWM", "THD", "EIDO", "EPHE", "VNM"}
+    assert set(cty["大洋洲與中東"]) == {"EWA", "ENZL", "KSA"}
+    core = dict(tabs["core"][1])
+    assert list(core) == ["大盤與持股"]
+    assert set(core["大盤與持股"]) == {"SPY", "RSP", "QQQ", "SMH", "SMH_UCITS", "0050", "TAIEX"}
+    # 國家分頁各組顏色要分得出來
+    import re
+    html = (SCRIPTS_DIR.parent / "docs" / "etf-dash" / "index.html").read_text(encoding="utf-8")
+    colors = re.findall(r"\{label:'(?:美洲|歐洲|東北亞|南亞與東南亞|大洋洲與中東)', color:'(#[0-9a-f]{6})'", html)
+    assert len(colors) == 5 and len(set(colors)) == 5
+
+
+def test_overview_page_has_country_note_and_lowcov_note():
+    html, _ = _page_tabs()
+    assert "這些基金都在美國掛牌，報酬以美元計，含匯率變動。" in html
+    assert "有分析師 EPS 預估的成分股不到七成權重" in html
+
+
+# ── 選單、轉址樁、風險儀表頁 ─────────────────────────────────────────────
+
+def test_site_nav_points_to_etf_dash_tabs_and_sectors_is_skipped():
+    import site_nav
+    nav = site_nav.full_nav_block(group="macrochip", item=None)
+    assert '<a href="/etf-dash/?view=overview&tab=countries">全球市場</a>' in nav
+    assert '<a href="/etf-dash/?view=overview&tab=sectors">產業板塊</a>' in nav
+    assert "/sectors.html" not in nav and "/markets.html" not in nav
+    assert "sectors.html" in site_nav.SKIP_FILES
+
+
+def test_sectors_html_is_redirect_stub():
+    html = (SCRIPTS_DIR.parent / "docs" / "sectors.html").read_text(encoding="utf-8")
+    assert 'http-equiv="refresh"' in html and "location.replace" in html
+    assert html.count("/etf-dash/?view=overview") >= 3 and "tab=sectors" in html
+    assert "imq-nav-root" not in html
+
+
+def test_markets_html_keeps_only_risk_gauge():
+    html = (SCRIPTS_DIR.parent / "docs" / "markets.html").read_text(encoding="utf-8")
+    assert "<!-- RISK_GAUGE:START -->" in html and "<!-- RISK_GAUGE:END -->" in html
+    assert '<section class="hero">' in html   # build_risk_gauge 找不到標記時插在 hero 之後
+    assert "marketTable" not in html and "var MARKETS" not in html
+    assert "風險偏好儀表" in html and "Risk-On / Risk-Off Gauge" in html
+    assert "tab=countries" in html
+    assert "全球股市投資知識" in html

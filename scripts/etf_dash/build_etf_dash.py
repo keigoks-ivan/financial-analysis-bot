@@ -4306,13 +4306,31 @@ def extend_period_to_latest_close(period: dict, price_since_eps_as_of_pct: float
     return round(px_now, 4), pe_now
 
 
+# 2026-10-29：EPS 涵蓋門檻。基金 JSON 90d period 的 coverage_pct（有分析師 EPS 預估的
+# 成分股權重占比）四捨五入到整數後低於此值，總覽判讀欄改標「涵蓋不足」，頁面端對預估本益比、
+# 本益比變動、PEG 加註（XBI 約 36%，EPHE 0%）。比較在整數空間做，不用浮點小數。
+EPS_COVERAGE_MIN_PCT = 70
+ALIGN_LOW_COVERAGE_ZH = "涵蓋不足"
+
+
+def eps_coverage_is_low(coverage_pct) -> bool:
+    """四捨五入成整數後 < EPS_COVERAGE_MIN_PCT 為不足。欄位缺值（舊格式基金 JSON）
+    無從判斷，不標不足。"""
+    if coverage_pct is None:
+        return False
+    try:
+        return int(round(float(coverage_pct))) < EPS_COVERAGE_MIN_PCT
+    except (TypeError, ValueError):
+        return False
+
+
 def build_overview_json(strength_by_fund: dict | None = None) -> dict:
     """掃 docs/etf-dash/data/{ETF}.json（FUND_REGISTRY 目前已知的全部 key），
     不是只看這次 run 有沒有重建——單次 run 常常只更新一部分基金（例如只跑
     FULL 的那幾檔＋PRICE 的其他檔分開跑，或某檔基金這次抓取失敗被跳過），
     總覽頁要能看到「目前 docs/ 下最新的狀態」，不是「這次 run 動到的那幾檔」。
-    分組（美股大盤／美股產業／半導體／亞洲）與短標籤是頁面呈現層的事，交給
-    docs/etf-dash/index.html 的 FUND_GROUPS（唯一負責分組的地方）決定，這裡
+    分組與分頁（產業／國家／大盤與持股）與短標籤是頁面呈現層的事，交給
+    docs/etf-dash/index.html 的 OV_TABS（唯一負責分組的地方）決定，這裡
     只給 flat 陣列＋etf_key。summary_sentence_zh 是純機械句（見下方，只挑最大值
     報數字，不下判斷字眼），11 檔美股產業 ETF 都有 90d 資料才會產生。"""
     funds = []
@@ -4333,6 +4351,8 @@ def build_overview_json(strength_by_fund: dict | None = None) -> dict:
         since = d.get("price_since_eps_as_of_pct")
         px30, pe30 = extend_period_to_latest_close(p30, since)
         px90, pe90 = extend_period_to_latest_close(p90, since)
+        cov90 = p90.get("coverage_pct")
+        low_cov = eps_coverage_is_low(cov90)
         funds.append({
             "etf_key": etf_key,
             "label_zh": d.get("label_zh"),
@@ -4370,7 +4390,8 @@ def build_overview_json(strength_by_fund: dict | None = None) -> dict:
             # （隱含本益比 3M 變動 ±500 bps，判讀邏輯只在 strength.align_label_zh()）。
             "rel_spy_3m_pct": (strength_by_fund or {}).get(etf_key, {}).get("rel_spy_3m_pct"),
             "rel_spy_12m_pct": (strength_by_fund or {}).get(etf_key, {}).get("rel_spy_12m_pct"),
-            "align_label_zh": strength.align_label_zh(pe90),
+            "eps_coverage_90d_pct": cov90,
+            "align_label_zh": ALIGN_LOW_COVERAGE_ZH if low_cov else strength.align_label_zh(pe90),
         })
     funds.sort(key=lambda f: f["etf_key"])
 

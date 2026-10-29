@@ -353,8 +353,9 @@ def test_new_funds_in_workflow_and_page_groups():
         assert f"key:'{k}'" in html, k
     # 頁面分組與註冊表一一對應
     import re
-    block = html[html.index("var FUND_GROUPS = ["):html.index("var FUND_LIST =")]
-    assert set(re.findall(r"\{key:'([^']+)', label:", block)) == set(m.FUND_REGISTRY)
+    block = html[html.index("var OV_TABS = ["):html.index("var OV_TAB_DEFAULT")]
+    keys = set(re.findall(r"\{key:'([^']+)', label:", block)) - {"sectors", "countries", "core"}  # 去掉分頁本身
+    assert keys == set(m.FUND_REGISTRY)
 
 
 def test_research_universe_unchanged_by_new_funds():
