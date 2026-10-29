@@ -45,7 +45,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .ov-link{display:inline-block;font-family:var(--mono);font-size:12px;font-weight:700;padding:.35rem .8rem;border-radius:var(--r);background:var(--gold-deep);color:#fff;text-decoration:none}
 .ov-link:hover{opacity:.88}
 .ov-th-sort{cursor:pointer;user-select:none}
-.ov-th-sort:hover{background:var(--x-navy-2)}
+.ov-th-sort:hover{color:var(--ink)}
 .ov-th-sort .arrow{opacity:.55;margin-left:3px;font-size:9px}
 .ov-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;border-bottom:1px solid var(--line, #d5dbe5)}
 .ov-tabs a{font-size:13px;font-weight:700;padding:.5rem 1rem;border:1px solid transparent;border-bottom:none;border-radius:var(--r) var(--r) 0 0;color:var(--sec);text-decoration:none;margin-bottom:-1px}
@@ -54,7 +54,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .ov-tab-note{font-weight:600}
 #ovTable td.ov-lowcov{opacity:.45}
 #ovTable td.ov-lowcov .lc-mark{opacity:1;color:var(--muted);font-size:9.5px;margin-left:2px}
-.ov-group-row td{background:var(--x-navy) !important;color:#fff !important;font-size:11px;font-weight:600;padding:.35rem .7rem}
+.ov-group-row td{background:var(--paper) !important;color:var(--gold-deep) !important;font-size:11px;font-weight:700;letter-spacing:.04em;padding:.5rem .6rem .3rem}
 .ov-flag{color:var(--warn);font-size:10px;margin-left:4px;cursor:help}
 
 .exhibit{margin:18px 0 4px}
@@ -124,34 +124,35 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 
 /* 2026-09-25 表頭縮寫（「EPS 1M」「EPS 3M」…）配 abbr[title] 放全名，取代原本
    <br> 兩行標籤——900px 寬要塞進 7 欄不換行、不橫向捲動，短標籤是唯一辦法。 */
-#ovTable th abbr{text-decoration:underline dotted;text-decoration-color:rgba(255,255,255,.55);text-underline-offset:2px;cursor:help}
+#ovTable th abbr{text-decoration:underline dotted;text-decoration-color:rgba(107,122,146,.55);text-underline-offset:2px;cursor:help}
 
-/* 2026-09-25 加：EPS 3M／本益比變動 3M 兩欄的 inline diverging bar，置中於 0，正值往右、
-   負值往左，同欄共用刻度（每欄各自的 max|value|，見 renderDivBar）。顏色取 dataviz skill
-   documented 的 diverging pair blue<->red（palette.md，不是紅綠好壞語意，只標示正負極性），
-   數字文字維持 ink/mono token、不跟 bar 上色（見 marks-and-anatomy.md「text never wears the
-   data color」）。 */
-.divbar-cell{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;white-space:nowrap}
-.divbar-track{position:relative;width:40px;height:8px;flex:0 0 auto;background:var(--line-soft);border-radius:2px}
-.divbar-track::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--sec);opacity:.5}
-.divbar-fill{position:absolute;top:1px;height:6px;border-radius:2px}
-.divbar-fill.pos{left:50%;background:#2a78d6}
-.divbar-fill.neg{right:50%;background:#e34948}
-.divbar-val{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--body);min-width:50px;text-align:right}
+/* 2026-10-29 晚：總覽表改色塊熱圖（持有人看過三種樣式預覽後選定）。表頭改淺色兩層（上層組名、
+   下層欄名），每組第一欄左邊一條細線（.ov-gs）；數字格底色由 ovHeatStyle() 寫在 inline style，
+   文字一律 ink 不上色；「其他」組（.ov-ref）字小一號、顏色淡；第一欄固定（.ov-name sticky），
+   手機左右滑時基金名稱留著。separate＋spacing 0：collapse 下 sticky 格的邊線會不見。 */
+#ovTable{border-collapse:separate;border-spacing:0}
+#ovTable th{background:var(--card);color:var(--sec);font-family:var(--sans);font-size:.74rem;font-weight:600;letter-spacing:0;text-transform:none;padding:.35rem .6rem;border-bottom:1px solid var(--line)}
+#ovTable tr.ov-grp-row th{font-family:var(--mono);font-size:.64rem;font-weight:700;letter-spacing:.08em;color:var(--gold-deep);text-align:center;border-bottom:1px solid var(--gold-deep);padding-top:.6rem}
+#ovTable tr.ov-grp-row th.blank{border-bottom-color:transparent}
+#ovTable td{padding:.42rem .6rem;color:var(--ink)}
+#ovTable tbody tr:nth-child(even) td{background:var(--card)}
+#ovTable .ov-gs{border-left:1px solid var(--line)}
+#ovTable td.ov-ref{color:var(--sec);font-size:.78rem}
+#ovTable td.ov-strong{font-weight:700}
+#ovTable .ov-name{position:sticky;left:0;z-index:1;background:var(--card)}
+.ov-chip{display:inline-block;font-size:11.5px;line-height:1.5;padding:0 .55rem;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.ov-chip.eps{color:#1d5fae;background:#e8f1fc;border-color:#bcd5f3}
+.ov-chip.px{color:#99560b;background:#fdf0de;border-color:#efc993}
+.ov-chip.ok{color:#5d6b80;background:#f2f0ea;border-color:var(--line)}
+.ov-chip.low{color:var(--muted);background:transparent;border:1px dashed var(--muted)}
 
 /* 2026-09-25 加：基金欄兩種寬度的名稱，預設顯示完整名稱、藏 ticker-only 版本；
    ≤560px 反過來（見下方 media query）。 */
 .ov-fund-short{display:none}
 
-/* 2026-09-25 二次修（coordinator 回饋 #6）：總覽表 ≤560px 只留 基金／EPS 3個月／
-   股價 3個月／本益比變動 3個月 四欄——原本留 5 欄＋inline bar 在 ~350px 版寬仍塞不下
-   （量出來要 521px），現在額外收斂「預估本益比」（改標 ov-col-lo，見 OV_COLUMNS）、
-   隱藏 bar track 只留數字、基金欄改顯示 ticker-only，四欄合計 ~300px 內可以不捲動。 */
+/* ≤560px 基金欄只顯示 ticker，讓固定的第一欄窄一點。2026-10-29 晚起其他欄不再藏，
+   全部欄位在表格容器內橫向捲動（見上方色塊熱圖註解）。 */
 @media(max-width:560px){
-  #ovTable .ov-col-lo{display:none}
-  #ovTable .divbar-track{display:none}
-  #ovTable .divbar-cell{gap:0}
-  #ovTable .divbar-val{min-width:0}
   #ovTable .ov-fund-full{display:none}
   #ovTable .ov-fund-short{display:inline}
 }
@@ -217,7 +218,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .methods-note{font-size:11.5px;color:var(--sec);line-height:1.75;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-top:8px}
 
 /* 2026-09-26 加：EPS 修正廣度／資金流／風格快照四個新章節共用的小元件——
-   沿用既有 divbar 的 diverging pair（blue<->red，見上方 2026-09-25 註解，
+   沿用 diverging pair（blue<->red，總覽表熱圖也用同一對，
    polarity 不是好壞語意），只多一個「持平」中性色（灰，非上色語意，見
    dataviz skill 診斷面板色－status palette 之外的第三態）。 */
 .stack100{display:flex;height:16px;border-radius:3px;overflow:hidden;width:100%;background:var(--line-soft)}
@@ -396,7 +397,8 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div class="tbl-wrap"><table class="imq-table" id="ovTable"></table></div>
   <div class="ex-sub" id="ovReadNote" style="margin-top:8px;line-height:1.7">
     <p><b>強弱 3M、強弱 12M</b>：基金近 63、252 個交易日的含息報酬，減去 SPY 同期的含息報酬，單位是百分點<span id="ovStrengthAsOf"></span>。例如 +10.0 代表比 SPY 多漲 10 個百分點。台幣、日圓計價的基金先換成美元再算；台灣加權指數是指數，沒有配息，用價格計算。上市不到一年的基金，12M 顯示 —。</p>
-    <p><b>判讀</b>：看「本益比變動 3M」。本益比 3 個月內上升 5% 以上，代表股價漲得比獲利預估快，標「股價跑在獲利前面」；下降 5% 以上標「獲利跑在股價前面」；其餘標「對得上」。股價和本益比變動都算到最新收盤，EPS 修正算到「EPS 更新」欄那一天，之後幾天假設沒變。這只是描述股價和獲利預估近三個月誰走得比較快，不是買賣訊號。2026-10-28 用 SMH 1990 年以來的週資料檢驗，獲利上修但股價沒跟上之後，一年的報酬並沒有比較高，詳見<a href="analysis-2026-10-28.html">深度檢驗</a>。</p>
+    <p><b>判讀</b>：看「近 3 個月」那組的「本益比」。本益比 3 個月內上升 5% 以上，代表股價漲得比獲利預估快，標「股價跑在前」；下降 5% 以上代表獲利預估漲得比股價快，標「獲利跑在前」；其餘標「對得上」。股價和本益比變動都算到最新收盤，EPS 修正算到「EPS 更新」欄那一天，之後幾天假設沒變。這只是描述股價和獲利預估近三個月誰走得比較快，不是買賣訊號。2026-10-28 用 SMH 1990 年以來的週資料檢驗，獲利上修但股價沒跟上之後，一年的報酬並沒有比較高，詳見<a href="analysis-2026-10-28.html">深度檢驗</a>。</p>
+    <p><b>底色</b>：數字高於零偏藍、低於零偏紅，越極端顏色越深，每一欄在這個分頁裡各自比較。藍紅只標正負，不代表好壞。預估本益比和 PEG 不上色。</p>
     <p>XLRE（不動產）的本益比用一般會計盈餘計算，不動產公司的房地產折舊會壓低盈餘，本益比看起來比其他產業高，不適合直接比較。</p>
   </div>
   <div class="ex-sub ov-lowcov-note" id="ovLowCovNote" style="display:none"></div>
@@ -1404,56 +1406,53 @@ function render(d){
 // 分三個分頁（?tab=sectors|countries|core）、分組列出，點欄位標題排序（同分組內排序，分組順序不變，見
 // OV_COLUMNS 與 sortOverviewGroups()）。────────────────────────────────────
 
-// 2026-09-25：欄位標題改短標籤＋abbr[title] 掛全名（900px 寬 7 欄不換行、不橫向捲動的
-// 唯一辦法，見 #ovTable th abbr CSS）；lo:true 是 ≤560px 收斂的低優先欄（見 .ov-col-lo
-// media query）；bar:true 兩欄改畫 inline diverging bar（見 divBarHtml）。2026-09-25
-// 二次修：預估本益比也標 lo（原本只藏 EPS 1M／EPS 更新，≤560px 仍塞不下 5 欄+bar，
-// 見 coordinator 回饋），≤560px 只留 基金／EPS 3M／股價 3M／本益比變動 3M 四欄。
-// 2026-09-26 加兩欄：breadth_90d（修正廣度 mini stacked bar，不可排序——三個數字
-// 排序語意不明確，改成點進基金頁看完整表格）／flow_1m_net（近一個月資金流淨額，
-// 可排序；沿用既有 lo 慣例，≤560px 版寬先藏，跟本益比變動 3M 等既有欄一致）。
+// 2026-10-29 晚：總覽表改「色塊熱圖」（持有人看過現況與三種樣式的預覽頁後選定，14 欄全留）。
+// 欄位分四組：強弱（對 SPY）／近 3 個月／估值／其他，grp 是表頭上層組名，同組要連續排
+// （renderOverviewHeader 依 grp 合併上層格）。heat:true 的欄依數值上底色：高於零藍、低於零紅，
+// 越極端越深，每欄在本分頁內各自比（computeHeatScale／ovHeatStyle）；預估本益比、PEG 不是
+// 正負概念，不上色。判讀改短標籤（OV_ALIGN_CHIP）。ref:true 的「其他」組字小一號、顏色淡。
+// 原本 lo（≤560px 藏欄）與 EPS 3M／本益比的 inline bar 拿掉：手機改成全部欄位橫向捲動、
+// 第一欄固定。預設依強弱 12M 由強到弱（分組內，OV_DEFAULT_SORT_KEY）。full 掛在表頭 abbr[title]。
+// 2026-09-26 起修正廣度不可排序（三個數字排序語意不明確，點進基金頁看完整表格）。
 var OV_COLUMNS = [
-  {key:'label', label:'基金', numeric:false, sortable:false},
-  {key:'rel_spy_3m_pct', label:'強弱 3M', full:'強弱 3M：近 63 個交易日含息報酬減 SPY 同期含息報酬，單位為百分點；台幣、日圓計價的基金先換成美元；SPY 自己不顯示', numeric:true, lo:true},
-  {key:'rel_spy_12m_pct', label:'強弱 12M', full:'強弱 12M：近 252 個交易日含息報酬減 SPY 同期含息報酬，單位為百分點；台幣、日圓計價的基金先換成美元；SPY 自己不顯示', numeric:true},
-  {key:'eps_chg_pct_30d', label:'EPS 1M', full:'EPS 變動（1個月）', numeric:true, lo:true},
-  {key:'eps_chg_pct_90d', label:'EPS 3M', full:'EPS 變動（3個月）', numeric:true, bar:true},
-  {key:'price_chg_pct_90d', label:'股價 3M', full:'股價漲跌（3個月）', numeric:true},
-  {key:'implied_pe_chg_pct_90d', label:'本益比變動 3M', full:'隱含本益比變動（3個月）', numeric:true, bar:true},
-  {key:'align_label_zh', label:'判讀', full:'本益比變動 3M 的文字判讀：本益比 3 個月內上升 5% 以上＝股價跑在獲利前面；下降 5% 以上＝獲利跑在股價前面；其餘＝對得上。只是描述，不是買賣訊號', numeric:false},
-  {key:'weighted_forward_pe', label:'預估本益比', full:'目前預估本益比', numeric:true, lo:true},
-  {key:'fy1_eps_growth_pct', label:'明年 EPS 成長', full:'明年度 EPS 成長（成分股加權）', numeric:true, lo:true},
-  {key:'fy1_peg', label:'PEG', full:'明年度 PEG（本益比 ÷ 明年度 EPS 成長）', numeric:true, lo:true},
-  {key:'eps_as_of', label:'EPS 更新', full:'EPS 預估更新日', numeric:false, lo:true},
-  {key:'breadth_90d', label:'修正廣度 3M', full:'EPS 修正廣度（近三個月，上修/持平/下修權重佔比）', numeric:false, lo:true, sortable:false},
-  {key:'flow_1m_net', label:'資金流 1M', full:'資金流淨額（近一個月，Δ受益權份額×NAV）', numeric:true, lo:true}
+  {key:'label', grp:'', label:'基金', numeric:false, sortable:false},
+  {key:'rel_spy_3m_pct', grp:'強弱（對 SPY）', label:'3M', full:'強弱 3M：近 63 個交易日含息報酬減 SPY 同期含息報酬，單位為百分點；台幣、日圓計價的基金先換成美元；SPY 自己不顯示', numeric:true, heat:true},
+  {key:'rel_spy_12m_pct', grp:'強弱（對 SPY）', label:'12M', full:'強弱 12M：近 252 個交易日含息報酬減 SPY 同期含息報酬，單位為百分點；台幣、日圓計價的基金先換成美元；SPY 自己不顯示', numeric:true, heat:true},
+  {key:'eps_chg_pct_90d', grp:'近 3 個月', label:'EPS', full:'成分股加權明年度 EPS 預估變動（3個月）', numeric:true, heat:true},
+  {key:'price_chg_pct_90d', grp:'近 3 個月', label:'股價', full:'股價漲跌（3個月，算到最新收盤）', numeric:true, heat:true},
+  {key:'implied_pe_chg_pct_90d', grp:'近 3 個月', label:'本益比', full:'隱含本益比變動（3個月，算到最新收盤）', numeric:true, heat:true},
+  {key:'align_label_zh', grp:'近 3 個月', label:'判讀', full:'本益比 3 個月內上升 5% 以上＝股價跑在獲利前面；下降 5% 以上＝獲利跑在股價前面；其餘＝對得上。只是描述，不是買賣訊號', numeric:false},
+  {key:'weighted_forward_pe', grp:'估值', label:'預估本益比', full:'目前預估本益比', numeric:true},
+  {key:'fy1_eps_growth_pct', grp:'估值', label:'明年 EPS 成長', full:'明年度 EPS 成長（成分股加權）', numeric:true, heat:true},
+  {key:'fy1_peg', grp:'估值', label:'PEG', full:'明年度 PEG（本益比 ÷ 明年度 EPS 成長）', numeric:true},
+  {key:'eps_chg_pct_30d', grp:'其他', label:'EPS 1M', full:'EPS 變動（1個月）', numeric:true, heat:true, ref:true},
+  {key:'breadth_90d', grp:'其他', label:'修正廣度', full:'EPS 修正廣度（近三個月，上修/持平/下修權重佔比）', numeric:false, sortable:false, ref:true},
+  {key:'flow_1m_net', grp:'其他', label:'資金流 1M', full:'資金流淨額（近一個月，Δ受益權份額×NAV）', numeric:true, ref:true},
+  {key:'eps_as_of', grp:'其他', label:'EPS 更新', full:'EPS 預估更新日', numeric:false, ref:true}
 ];
-var ovState = {groups:null, sortKey:null, sortDir:1, tab:null};
+var OV_DEFAULT_SORT_KEY = 'rel_spy_12m_pct';
+var ovState = {groups:null, sortKey:null, sortDir:-1, tab:null};
 
-// 2026-09-25 加：EPS 3M／本益比變動 3M 兩欄 diverging bar 共用刻度（同欄所有基金的
-// max|value|），renderOverview() 裡 computeBarScale() 算好存這裡，divBarHtml() 讀。
-var OV_BAR_SCALE = {};
-function computeBarScale(ov){
-  var maxEps = 0, maxPe = 0;
-  (ov.funds||[]).forEach(function(f){
-    if(f.eps_chg_pct_90d!=null) maxEps = Math.max(maxEps, Math.abs(f.eps_chg_pct_90d));
-    if(f.implied_pe_chg_pct_90d!=null) maxPe = Math.max(maxPe, Math.abs(f.implied_pe_chg_pct_90d));
+// 熱圖刻度：每個 heat 欄取本分頁所有基金的 max|value|，renderOverviewTab() 呼叫 computeHeatScale()。
+// 顏色沿用原本 diverging bar 的藍紅一對（只標正負，不是好壞），數字文字不跟著上色。
+var OV_HEAT_SCALE = {};
+function computeHeatScale(ov){
+  OV_HEAT_SCALE = {};
+  OV_COLUMNS.forEach(function(c){
+    if(!c.heat) return;
+    var m = 0;
+    (ov.funds||[]).forEach(function(f){ var v = f[c.key]; if(v!=null && !Number.isNaN(v)) m = Math.max(m, Math.abs(v)); });
+    OV_HEAT_SCALE[c.key] = m || null;
   });
-  OV_BAR_SCALE = {eps_chg_pct_90d: maxEps || null, implied_pe_chg_pct_90d: maxPe || null};
 }
-// dataviz skill diverging pair（blue<->red，palette.md 已驗證值，不是紅綠好壞語意，只
-// 標極性）；bar 本身是唯一上色元素，數字文字維持 ink/mono，不跟著上色。2026-09-25：
-// 數字格式跟全站其他欄位一致改負號（原本用括號 fmtPctParen，跟其他欄不一致，已移除
-// 該函式，全部改 fmtPct）；bar track 在 ≤560px 用 CSS 隱藏（見 .divbar-track media
-// query），這裡照樣輸出，CSS 負責藏。
-function divBarHtml(value, scaleKey){
-  var txt = fmtPct(value);
-  var max = OV_BAR_SCALE[scaleKey];
-  if(value==null || !max) return '<span class="divbar-cell"><span class="divbar-val">'+(value==null?'無資料':txt)+'</span></span>';
-  var halfPct = Math.min(1, Math.abs(value) / max) * 50;
-  var fill = '<span class="divbar-fill '+(value>=0?'pos':'neg')+'" style="width:'+halfPct.toFixed(1)+'%"></span>';
-  return '<span class="divbar-cell"><span class="divbar-track">'+fill+'</span><span class="divbar-val">'+txt+'</span></span>';
+function ovHeatStyle(v, key){
+  var max = OV_HEAT_SCALE[key];
+  if(v==null || Number.isNaN(v) || !max) return '';
+  var r = Math.min(1, Math.abs(v) / max);
+  if(r < 0.04) return '';
+  return ' style="background:'+(v>0?'rgba(42,120,214,':'rgba(227,73,72,')+(0.06 + 0.5*r).toFixed(3)+')"';
 }
+function ovPctCell(v){ return (v==null || Number.isNaN(v)) ? fwdDash() : fmtPct(v, 1); }
 
 // 2026-09-25 加：基金欄在 ≤560px 只顯示 ticker（.ov-fund-short），完整名稱
 // （.ov-fund-full）藏起來——四欄塞進 ~350px 版寬唯一辦法（見 coordinator 回饋 #6）。
@@ -1479,6 +1478,13 @@ function ovRelCellHtml(v){
 // 2026-10-29：EPS 涵蓋不足（判讀欄由 build_overview_json() 標「涵蓋不足」，門檻只在
 // 後端 EPS_COVERAGE_MIN_PCT）時，預估本益比、本益比變動、PEG 三格淡色加 † 註記。
 var OV_LOW_COVERAGE_LABEL = '涵蓋不足';
+var OV_ALIGN_CHIP = {'獲利跑在股價前面':['eps','獲利跑在前'], '股價跑在獲利前面':['px','股價跑在前'], '對得上':['ok','對得上']};
+OV_ALIGN_CHIP[OV_LOW_COVERAGE_LABEL] = ['low', OV_LOW_COVERAGE_LABEL];
+function ovAlignChipHtml(lbl){
+  var c = OV_ALIGN_CHIP[lbl];
+  if(!c) return fwdDash();
+  return '<span class="ov-chip '+c[0]+'" title="'+esc(lbl)+'">'+esc(c[1])+'</span>';
+}
 function ovIsLowCov(row){ return row.align_label_zh === OV_LOW_COVERAGE_LABEL; }
 function ovLowCovTd(row, cls, inner){
   var low = ovIsLowCov(row);
@@ -1492,20 +1498,26 @@ function ovRowHtml(row){
   var nameCell = row.found
     ? '<a href="?etf='+encodeURIComponent(row.etf_key)+'">'+ovFundLabelHtml(row.label, row.etf_key)+'</a>'+flags
     : ovFundLabelHtml(row.label, row.etf_key)+'<span style="color:var(--muted)">（尚無資料）</span>';
-  return '<tr><td>'+nameCell+'</td>'+
-    '<td class="num ov-col-lo">'+ovRelCellHtml(row.rel_spy_3m_pct)+'</td>'+
-    '<td class="num">'+ovRelCellHtml(row.rel_spy_12m_pct)+'</td>'+
-    '<td class="num ov-col-lo">'+fmtPctColored(row.eps_chg_pct_30d)+'</td>'+
-    '<td class="num">'+divBarHtml(row.eps_chg_pct_90d,'eps_chg_pct_90d')+'</td>'+
-    '<td class="num">'+fmtPctColored(row.price_chg_pct_90d)+'</td>'+
-    ovLowCovTd(row, 'num', divBarHtml(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d'))+
-    '<td>'+(row.align_label_zh?esc(row.align_label_zh):fwdDash())+'</td>'+
-    ovLowCovTd(row, 'num ov-col-lo', (row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—'))+
-    '<td class="num ov-col-lo">'+(row.fy1_eps_growth_pct!=null?fwdPctColored(row.fy1_eps_growth_pct):fwdDash())+'</td>'+
-    ovLowCovTd(row, 'num ov-col-lo', (row.fy1_peg!=null?Number(row.fy1_peg).toFixed(2):fwdDash()))+
-    '<td class="ov-col-lo">'+esc(row.eps_as_of||'—')+'</td>'+
-    '<td class="ov-col-lo">'+ovBreadthCellHtml(row.breadth_90d)+'</td>'+
-    '<td class="num ov-col-lo">'+(row.flows_skipped?'<span style="color:var(--muted)">指數無資金流</span>':(row.flow_1m_net!=null?fmtMoney(row.flow_1m_net,row.flow_nav_currency):'累積中'))+'</td></tr>';
+  // 欄位順序要跟 OV_COLUMNS 一致；ov-gs＝每組第一欄（左邊細線）。
+  var peCell = ovIsLowCov(row)
+    ? ovLowCovTd(row, 'num', ovPctCell(row.implied_pe_chg_pct_90d))
+    : '<td class="num"'+ovHeatStyle(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d')+'>'+ovPctCell(row.implied_pe_chg_pct_90d)+'</td>';
+  var flowTxt = row.flows_skipped ? '<span style="color:var(--muted)" title="指數沒有申贖資料">—</span>'
+    : (row.flow_1m_net!=null ? fmtMoney(row.flow_1m_net,row.flow_nav_currency) : '累積中');
+  return '<tr><td class="ov-name">'+nameCell+'</td>'+
+    '<td class="num ov-gs"'+ovHeatStyle(row.rel_spy_3m_pct,'rel_spy_3m_pct')+'>'+ovRelCellHtml(row.rel_spy_3m_pct)+'</td>'+
+    '<td class="num ov-strong"'+ovHeatStyle(row.rel_spy_12m_pct,'rel_spy_12m_pct')+'>'+ovRelCellHtml(row.rel_spy_12m_pct)+'</td>'+
+    '<td class="num ov-gs"'+ovHeatStyle(row.eps_chg_pct_90d,'eps_chg_pct_90d')+'>'+ovPctCell(row.eps_chg_pct_90d)+'</td>'+
+    '<td class="num"'+ovHeatStyle(row.price_chg_pct_90d,'price_chg_pct_90d')+'>'+ovPctCell(row.price_chg_pct_90d)+'</td>'+
+    peCell+
+    '<td>'+ovAlignChipHtml(row.align_label_zh)+'</td>'+
+    ovLowCovTd(row, 'num ov-gs', (row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':fwdDash()))+
+    '<td class="num"'+ovHeatStyle(row.fy1_eps_growth_pct,'fy1_eps_growth_pct')+'>'+ovPctCell(row.fy1_eps_growth_pct)+'</td>'+
+    ovLowCovTd(row, 'num', (row.fy1_peg!=null?Number(row.fy1_peg).toFixed(2):fwdDash()))+
+    '<td class="num ov-ref ov-gs"'+ovHeatStyle(row.eps_chg_pct_30d,'eps_chg_pct_30d')+'>'+ovPctCell(row.eps_chg_pct_30d)+'</td>'+
+    '<td class="ov-ref">'+ovBreadthCellHtml(row.breadth_90d)+'</td>'+
+    '<td class="num ov-ref">'+flowTxt+'</td>'+
+    '<td class="ov-ref" title="'+esc(row.eps_as_of||'')+'">'+esc(row.eps_as_of ? row.eps_as_of.slice(5) : '—')+'</td></tr>';
 }
 
 function renderOverviewTbody(){
@@ -1519,10 +1531,10 @@ function renderOverviewTbody(){
   body.innerHTML = html;
 }
 
-function sortOverviewGroups(key){
-  if(!OV_COLUMNS.find(function(c){return c.key===key && c.sortable!==false;})) return;
-  ovState.sortDir = (ovState.sortKey === key) ? -ovState.sortDir : 1;
-  ovState.sortKey = key;
+// 分組內排序；null 一律排最後。第一次點某欄由大到小，再點反過來。
+function applyOvSort(){
+  var key = ovState.sortKey;
+  if(!key) return;
   ovState.groups.forEach(function(g){
     g.rows.sort(function(a, b){
       var av = a[key], bv = b[key];
@@ -1534,6 +1546,12 @@ function sortOverviewGroups(key){
       return 0;
     });
   });
+}
+function sortOverviewGroups(key){
+  if(!OV_COLUMNS.find(function(c){return c.key===key && c.sortable!==false;})) return;
+  ovState.sortDir = (ovState.sortKey === key) ? -ovState.sortDir : -1;
+  ovState.sortKey = key;
+  applyOvSort();
   // renderOverviewHeader() rebuilds the whole <table> innerHTML (thead + a
   // fresh empty tbody, so it can re-wire the .ov-th-sort click listeners with
   // updated arrows) — it must run BEFORE renderOverviewTbody() or it wipes
@@ -1544,8 +1562,17 @@ function sortOverviewGroups(key){
 }
 
 function renderOverviewHeader(){
-  var thead = '<thead><tr>' + OV_COLUMNS.map(function(c){
-    var cls = (c.numeric ? ' num' : '') + (c.lo ? ' ov-col-lo' : '');
+  // 上層：連續同 grp 的欄合併成一格
+  var spans = [];
+  OV_COLUMNS.forEach(function(c){
+    var last = spans[spans.length-1];
+    if(last && last.grp === c.grp) last.n++; else spans.push({grp:c.grp, n:1});
+  });
+  var top = spans.map(function(sp, i){
+    return '<th colspan="'+sp.n+'" class="'+(i===0?'ov-name':'ov-gs')+(sp.grp?'':' blank')+'">'+esc(sp.grp)+'</th>';
+  }).join('');
+  var thead = '<thead><tr class="ov-grp-row">'+top+'</tr><tr>' + OV_COLUMNS.map(function(c, i){
+    var cls = (c.numeric ? ' num' : '') + (i===0 ? ' ov-name' : '') + (i>0 && OV_COLUMNS[i-1].grp !== c.grp ? ' ov-gs' : '');
     var labelHtml = c.full ? '<abbr title="'+esc(c.full)+'">'+esc(c.label)+'</abbr>' : esc(c.label);
     if(c.sortable === false) return '<th class="'+cls.trim()+'">'+labelHtml+'</th>';
     var arrow = ovState.sortKey === c.key ? (ovState.sortDir>0?'▲':'▼') : '';
@@ -1851,7 +1878,7 @@ function renderOverviewTab(ov, tabKey){
   document.getElementById('coverLeft').innerHTML =
     '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · '+esc(tab.label)+' '+n+' 檔基金一覽</span>';
   document.getElementById('ovTabTitle').textContent = tab.label+'：'+n+' 檔基金一覽';
-  document.getElementById('ovTabSub').textContent = '依「'+tab.groups.map(function(g){return g.label;}).join('／')+'」分組；點欄位標題可排序（分組內排序，分組順序不變）';
+  document.getElementById('ovTabSub').textContent = '依「'+tab.groups.map(function(g){return g.label;}).join('／')+'」分組，組內預設依強弱 12M 由強到弱；點欄位標題可改排序';
   var noteEl = document.getElementById('ovTabNote');
   noteEl.style.display = tab.note ? '' : 'none';
   noteEl.textContent = tab.note || '';
@@ -1870,13 +1897,14 @@ function renderOverviewTab(ov, tabKey){
       })
     };
   });
-  ovState.sortKey = null;
-  ovState.sortDir = 1;
+  ovState.sortKey = OV_DEFAULT_SORT_KEY;
+  ovState.sortDir = -1;
   // tiles、bar 刻度只算本分頁的基金
   var tabKeys = {};
   tab.groups.forEach(function(g){ g.funds.forEach(function(f){ tabKeys[f.key] = true; }); });
   var sub = {funds:(ov.funds||[]).filter(function(f){ return tabKeys[f.etf_key]; })};
-  computeBarScale(sub);
+  computeHeatScale(sub);
+  applyOvSort();
   renderOverviewHeader();
   renderOverviewTbody();
   renderOvTiles(sub);
