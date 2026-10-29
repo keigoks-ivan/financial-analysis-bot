@@ -3923,6 +3923,27 @@ def _flow_amount_since(flows_data: dict | None, days: int, today_str: str) -> fl
     return round(amt, 2)
 
 
+def extend_period_to_latest_close(period: dict, price_since_eps_as_of_pct: float | None) -> tuple:
+    """總覽用：回傳 (股價變動％, 隱含本益比變動％)，股價終點延到最新收盤。
+
+    各基金 JSON 的 periods 凍結在 EPS 更新日（PRICE 模式不重算，見
+    build_fund_price() docstring），但平日股價已經往後走。2026-10-29 EWZ 10-26
+    單日跌 20%，總覽「判讀」還停在大跌前的價格，方向是反的。這裡起點不動（跟
+    EPS 窗口同一天），終點接上「EPS 更新日以來的股價變動」：
+    (1＋期間股價變動)×(1＋更新日以來變動)−1；EPS 假設更新日之後沒變。
+    FULL 當天 price_since_eps_as_of_pct 是 0，結果等於凍結值；缺最新價時退回凍結值。
+    只給總覽用，基金 JSON 的 periods（本站挑選讀的）不動。"""
+    px = period.get("price_chg_pct")
+    if px is None or price_since_eps_as_of_pct is None:
+        return px, period.get("implied_pe_chg_pct")
+    px_now = ((1 + px / 100) * (1 + price_since_eps_as_of_pct / 100) - 1) * 100
+    eps = period.get("eps_chg_pct")
+    pe_now = None
+    if eps is not None and (1 + eps / 100) != 0:
+        pe_now = round(((1 + px_now / 100) / (1 + eps / 100) - 1) * 100, 4)
+    return round(px_now, 4), pe_now
+
+
 def build_overview_json(strength_by_fund: dict | None = None) -> dict:
     """掃 docs/etf-dash/data/{ETF}.json（FUND_REGISTRY 目前已知的全部 key），
     不是只看這次 run 有沒有重建——單次 run 常常只更新一部分基金（例如只跑
@@ -3947,16 +3968,21 @@ def build_overview_json(strength_by_fund: dict | None = None) -> dict:
         fpe = d.get("weighted_forward_pe") or {}
         breadth_90d = (d.get("breadth") or {}).get("90d") or {}
         flows_data = d.get("flows") or {}
+        since = d.get("price_since_eps_as_of_pct")
+        px30, pe30 = extend_period_to_latest_close(p30, since)
+        px90, pe90 = extend_period_to_latest_close(p90, since)
         funds.append({
             "etf_key": etf_key,
             "label_zh": d.get("label_zh"),
             "yf_ticker": d.get("yf_ticker"),
             "eps_chg_pct_30d": p30.get("eps_chg_pct"),
             "eps_chg_pct_90d": p90.get("eps_chg_pct"),
-            "price_chg_pct_30d": p30.get("price_chg_pct"),
-            "price_chg_pct_90d": p90.get("price_chg_pct"),
-            "implied_pe_chg_pct_30d": p30.get("implied_pe_chg_pct"),
-            "implied_pe_chg_pct_90d": p90.get("implied_pe_chg_pct"),
+            # 股價與本益比變動算到最新收盤，EPS 算到 eps_as_of（見 extend_period_to_latest_close()）
+            "price_chg_pct_30d": px30,
+            "price_chg_pct_90d": px90,
+            "implied_pe_chg_pct_30d": pe30,
+            "implied_pe_chg_pct_90d": pe90,
+            "price_as_of": (d.get("price") or {}).get("date"),
             "weighted_forward_pe": fpe.get("value"),
             # 2026-10-19 財務預估摘要欄（總覽表「明年 EPS 成長」「PEG」；今年度一併給）
             "fy1_eps_growth_pct": ((d.get("forward_summary") or {}).get("fy1") or {}).get("eps_growth_pct"),
@@ -3982,7 +4008,7 @@ def build_overview_json(strength_by_fund: dict | None = None) -> dict:
             # （隱含本益比 3M 變動 ±500 bps，判讀邏輯只在 strength.align_label_zh()）。
             "rel_spy_3m_pct": (strength_by_fund or {}).get(etf_key, {}).get("rel_spy_3m_pct"),
             "rel_spy_12m_pct": (strength_by_fund or {}).get(etf_key, {}).get("rel_spy_12m_pct"),
-            "align_label_zh": strength.align_label_zh(p90.get("implied_pe_chg_pct")),
+            "align_label_zh": strength.align_label_zh(pe90),
         })
     funds.sort(key=lambda f: f["etf_key"])
 

@@ -212,3 +212,42 @@ def test_drawdown_fund_list_stays_21(tmp_path, monkeypatch):
 def test_lookthrough_funds_list_unchanged():
     import lookthrough as lt
     assert {k for k, _, _ in lt.FUNDS} == set(ORIGINAL_21)
+
+# ── 總覽股價與判讀算到最新收盤（2026-10-29 EWZ 案例）────────────────────────
+
+def test_extend_period_to_latest_close_ewz_case():
+    # EWZ：07-24→10-23 股價 +19.1996%、EPS +6.4378%；10-23→10-28 再跌 21.06%（42.59→33.62）
+    p90 = {"price_chg_pct": 19.1996, "eps_chg_pct": 6.4378, "implied_pe_chg_pct": 11.9581}
+    px, pe = m.extend_period_to_latest_close(p90, (33.62 / 42.59 - 1) * 100)
+    assert px == pytest.approx((33.62 / 35.73 - 1) * 100, abs=0.05)  # 07-24 收 35.73
+    assert pe == pytest.approx(((1 + px / 100) / 1.064378 - 1) * 100, abs=1e-3)
+    assert st.align_label_zh(pe) == "獲利跑在股價前面"
+    assert st.align_label_zh(p90["implied_pe_chg_pct"]) == "股價跑在獲利前面"
+
+
+def test_extend_period_to_latest_close_full_day_and_missing():
+    p = {"price_chg_pct": 4.0, "eps_chg_pct": 2.0, "implied_pe_chg_pct": 1.9608}
+    assert m.extend_period_to_latest_close(p, 0.0) == (4.0, pytest.approx(1.9608, abs=1e-4))
+    assert m.extend_period_to_latest_close(p, None) == (4.0, 1.9608)
+    assert m.extend_period_to_latest_close({"key": "30d"}, 3.0) == (None, None)
+    assert m.extend_period_to_latest_close({"price_chg_pct": 4.0}, 1.0) == (pytest.approx(5.04), None)
+
+
+def test_overview_uses_latest_close_but_fund_periods_untouched(tmp_path, monkeypatch):
+    monkeypatch.setattr(m, "OUT_DIR", tmp_path)
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    periods = [{"key": "30d", "eps_chg_pct": 1.0, "price_chg_pct": 2.0, "implied_pe_chg_pct": 0.9901},
+               {"key": "90d", "eps_chg_pct": 6.4378, "price_chg_pct": 19.1996, "implied_pe_chg_pct": 11.9581}]
+    (tmp_path / "EWZ.json").write_text(json.dumps({
+        "label_zh": "EWZ", "yf_ticker": "EWZ", "as_of": "2026-10-29", "mode": "price",
+        "eps_as_of": "2026-10-24", "price_since_eps_as_of_pct": -21.0613,
+        "price": {"close": 33.62, "date": "2026-10-28", "currency": "USD"},
+        "periods": periods, "weighted_forward_pe": {"value": 7.8},
+    }), encoding="utf-8")
+    row = next(f for f in m.build_overview_json()["funds"] if f["etf_key"] == "EWZ")
+    assert row["price_chg_pct_90d"] == pytest.approx(-5.91, abs=0.05)
+    assert row["implied_pe_chg_pct_90d"] < -5
+    assert row["align_label_zh"] == "獲利跑在股價前面"
+    assert row["price_as_of"] == "2026-10-28"
+    on_disk = json.loads((tmp_path / "EWZ.json").read_text(encoding="utf-8"))["periods"]
+    assert on_disk == periods
