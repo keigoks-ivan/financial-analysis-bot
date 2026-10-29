@@ -365,7 +365,9 @@ def test_site_nav_has_single_etf_dash_entry_and_sectors_is_skipped():
     assert nav.count('href="/etf-dash/') == 1   # 只留研究 ▾ ETF 儀表板，分頁在頁內切換
     assert '<a href="/etf-dash/">ETF 儀表板</a>' in nav
     assert "全球市場" not in nav and "產業板塊" not in nav
-    assert "/sectors.html" not in nav and "/markets.html" not in nav
+    assert "/sectors.html" not in nav
+    assert nav.count('<a href="/markets.html">風險偏好儀表</a>') == 1   # 市場 ▾
+    assert site_nav.full_nav_block(group="market", item="riskg").count('href="/markets.html" class="active"') == 1
     assert "sectors.html" in site_nav.SKIP_FILES
 
 

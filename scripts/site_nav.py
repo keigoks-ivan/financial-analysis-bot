@@ -130,7 +130,10 @@ Change log:
     2026-10-29 晚：持有人指出選單重複——「ETF 儀表板」「全球市場」「產業板塊」三項都開 /etf-dash/，
         其中 ETF 儀表板預設就是產業分頁，跟「產業板塊」畫面完全一樣。持有人選只留研究 ▾ ETF 儀表板：
         總經與籌碼 ▾ 移除「全球市場」「產業板塊」兩項（剩 5 項）；國家／產業／大盤在頁內分頁切換。
-        markets.html 的 PREFIX_ACTIVE ("macrochip", None) 不變。外部 3 repo synced literal 同步。
+        外部 3 repo synced literal 同步。
+    2026-10-29 晚（續）：拿掉「全球市場」後 /markets.html 的風險偏好儀表在選單沒有入口，持有人同意補：
+        市場 ▾ 在「資產輪動雷達」之後加「風險偏好儀表」("riskg", /markets.html)，市場群變 6 項；
+        PREFIX_ACTIVE 的 markets.html 改 ("market", "riskg")。外部 3 repo synced literal 同步。
     2026-10-21：市場 ▾ 拆組（持有人拍板）。(1) 市場 ▾ 只留 5 項（市況主控台／情報監視器／每日
         簡報／資產輪動雷達／財報分析）；(2) 新增下拉「總經與籌碼 ▾」（group key "macrochip"），
         排在市場 ▾ 之後、選股直連之前，7 項：總經深度報告／總經資料庫／AI 信用監測／台股籌碼／
@@ -256,6 +259,7 @@ MENU = {
         ("intel", "/intel/", "情報監視器"),  # 2026-08-19 新增；2026-08-20 Phase C 升為市場群首位
         ("brief", "/briefing/", "每日簡報"),  # 2026-08-17 日報恢復（週一至週六 06:15），重新掛回頁首
         ("radar", "/rotation/radar.html", "資產輪動雷達"),
+        ("riskg", "/markets.html", "風險偏好儀表"),  # 2026-10-29 全球市場選單項拿掉後補回的入口
         ("earn", "/earnings/", "財報分析"),
         # 2026-07-11 週報已停更，自頁首移除（/weekly/ 頁面保留可直達；
         # PREFIX_ACTIVE 的 weekly/ 映射保留，使其頁面仍歸市場群 active）
@@ -434,7 +438,7 @@ PREFIX_ACTIVE = [
     ("catalyst/", ("market", None)),
     ("monitor/", ("market", None)),  # 全資產市場監測（2026-07-10；Phase C 併入 intel 儀表分頁）
     ("intel/", ("market", "intel")),  # 情報監視器 Phase 1（2026-08-19 新增）
-    ("markets.html", ("macrochip", None)),  # 2026-10-29 只剩風險偏好儀表，選單項已改連 ETF 儀表板分頁，群高亮無項目
+    ("markets.html", ("market", "riskg")),  # 2026-10-29 只剩風險偏好儀表，入口在市場 ▾
     ("crowding/", ("market", None)),
     # rotation/radar.html 是「資產輪動雷達」獨立項目；須排在 rotation/ 之前，
     # 否則會被 rotation/ 前綴吃掉。index.html 與 ROTATION_*.html 歸市場群（無選單項）。
