@@ -359,11 +359,12 @@ def test_overview_page_has_country_note_and_lowcov_note():
 
 # ── 選單、轉址樁、風險儀表頁 ─────────────────────────────────────────────
 
-def test_site_nav_points_to_etf_dash_tabs_and_sectors_is_skipped():
+def test_site_nav_has_single_etf_dash_entry_and_sectors_is_skipped():
     import site_nav
     nav = site_nav.full_nav_block(group="macrochip", item=None)
-    assert '<a href="/etf-dash/?view=overview&tab=countries">全球市場</a>' in nav
-    assert '<a href="/etf-dash/?view=overview&tab=sectors">產業板塊</a>' in nav
+    assert nav.count('href="/etf-dash/') == 1   # 只留研究 ▾ ETF 儀表板，分頁在頁內切換
+    assert '<a href="/etf-dash/">ETF 儀表板</a>' in nav
+    assert "全球市場" not in nav and "產業板塊" not in nav
     assert "/sectors.html" not in nav and "/markets.html" not in nav
     assert "sectors.html" in site_nav.SKIP_FILES
 

@@ -127,6 +127,10 @@ Change log:
         改轉址樁（入 SKIP_FILES），markets.html 只留風險偏好儀表。PREFIX_ACTIVE：sectors.html
         映射刪除，markets.html 改 ("macrochip", None)；etf-dash/ 維持 ("research","etfd")
         （active 只看路徑，分不出分頁）。外部 3 repo synced literal 同步（nav-etfdash-tabs-1029 分支）。
+    2026-10-29 晚：持有人指出選單重複——「ETF 儀表板」「全球市場」「產業板塊」三項都開 /etf-dash/，
+        其中 ETF 儀表板預設就是產業分頁，跟「產業板塊」畫面完全一樣。持有人選只留研究 ▾ ETF 儀表板：
+        總經與籌碼 ▾ 移除「全球市場」「產業板塊」兩項（剩 5 項）；國家／產業／大盤在頁內分頁切換。
+        markets.html 的 PREFIX_ACTIVE ("macrochip", None) 不變。外部 3 repo synced literal 同步。
     2026-10-21：市場 ▾ 拆組（持有人拍板）。(1) 市場 ▾ 只留 5 項（市況主控台／情報監視器／每日
         簡報／資產輪動雷達／財報分析）；(2) 新增下拉「總經與籌碼 ▾」（group key "macrochip"），
         排在市場 ▾ 之後、選股直連之前，7 項：總經深度報告／總經資料庫／AI 信用監測／台股籌碼／
@@ -266,8 +270,6 @@ MENU = {
         ("aicredit", "/ai-credit/", "AI 信用監測"),  # 2026-10-16 AI 信用風險 12 條指標（每日更新、越線時通知）
         ("tchips", "/tw-chips/", "台股籌碼"),  # 2026-10-17 台股籌碼十年趨勢（外資／投信／融資／期貨選擇權，每日更新）
         ("kchips", "/kr-chips/", "韓股籌碼"),  # 2026-10-17 韓股籌碼十年趨勢（外資／機構／個人／預託金／融資／借券，每日更新）
-        ("markets", "/etf-dash/?view=overview&tab=countries", "全球市場"),
-        ("sectors", "/etf-dash/?view=overview&tab=sectors", "產業板塊"),
     ],
     # 2026-08-23 系統群瘦身（8→4，見 notes/site-internal/root/
     # _consolidation_system_20260823.md）：市場偵探／裁決實績／持倉週掃／實單
