@@ -8,7 +8,7 @@
   "other_listings": [],
   "as_of": "2026-10-29",
   "mode": "price",
-  "mode_reason": "EPS 快取新鮮（5 天前，as of 2026-10-24）且非週六",
+  "mode_reason": "--mode price（明示）",
   "full_refresh": "weekly",
   "eps_as_of": "2026-10-24",
   "price_since_eps_as_of_pct": 2.3509,
@@ -1649,9 +1649,9 @@
         "60d": 0.7377,
         "90d": 2.7913
       },
-      "price_local": 434.28,
+      "price_local": 437.33,
       "price_currency": "USD",
-      "price_usd": 434.28,
+      "price_usd": 437.33,
       "price_fx_normalized": true,
       "price_quote_divisor": 1,
       "eps_fy_curr_local": 20.51385,
@@ -4651,22 +4651,22 @@
         {
           "date": "2026-05-22",
           "pe": 23.67,
-          "coverage_pct": 36.31
+          "coverage_pct": 36.3
         },
         {
           "date": "2026-05-23",
           "pe": 23.68,
-          "coverage_pct": 36.31
+          "coverage_pct": 36.3
         },
         {
           "date": "2026-05-24",
           "pe": 23.68,
-          "coverage_pct": 36.31
+          "coverage_pct": 36.3
         },
         {
           "date": "2026-05-25",
           "pe": 23.68,
-          "coverage_pct": 36.31
+          "coverage_pct": 36.3
         },
         {
           "date": "2026-05-26",
@@ -5277,7 +5277,7 @@
     "yfinance_90d_pct": 2.0994,
     "note": "長線（dd-screener 快照鏈）與 yfinance 90 天單點理論上量級相近但不必相等——資料源、取樣頻率、fiscal-year 對齊方式都不同。"
   },
-  "methods_note_zh": "本頁分層更新：每週六（台北時區）完整重抓一次持股與每檔明年度 EPS 估計（現在的 EPS 估計 as of 2026-10-24），其餘日子只抓股價，跟上次 FULL 存的 EPS 快取重新配對算「今日加權遠期本益比」——Exhibit 1 的期間表格（EPS 修正％／股價漲跌／隱含本益比）因此整週不變，只有本益比跟「EPS 預估更新於...」那行每天更新。這次是只更新股價（PRICE：EPS 沿用快取）（EPS 快取新鮮（5 天前，as of 2026-10-24）且非週六）。成分股權重與明細來自State Street (SSGA) 官方每日持股下載（見 holdings_source_url，as of holdings_as_of，非 yfinance 前十大）。每檔成分股的 EPS 修正取 yfinance Ticker.eps_trend 的「明年度」(+1y) 估計，比較目前值與 7／30／60／90 天前值的百分比變動；ETF 加權 EPS 變動＝當期有資料成分股的權重重新正規化後加權平均（無資料或 EPS≤0 者見 excluded 清單，不進分子分母）。股價變動用 ETF 自身 yfinance 收盤價，取最接近錨點日期（不晚於當日）的收盤。隱含本益比變動＝(1+股價變動)/(1+EPS變動)−1。加權遠期本益比用調和平均（1/Σw·(EPS/股價)）。State Street (SSGA) 官方每日持股下載的持股清單裡另有現金／期貨／特殊有價證券共 3 筆、合計權重 0.03%（SSI US GOV MONEY MARKET CLASS（0.03%）、US DOLLAR（0.00%）、XAI EMINI INDUSTR DEC26（-0.00%）），不是普通股，不計入 EPS 與本益比計算的分子分母，完整清單見 JSON 的 non_equity 欄位。Exhibit 2 畫的 EPS 指數來自 docs/dd-screener/latest.json 的 git 歷史（scripts/etf_dash/dd_eps_history.py），從 2026-05-19 起、每個有資料的交易日一個點，比 yfinance eps_trend 只記得 90 天長得多。權重固定用今天的持股權重，指數在第一個資料日訂為 100；股價同一天也 rebase 成 100，兩條線才能疊在同一個座標軸上比誰漲得快。ALLE／AME／AOS／AXON／BA／BR／CHRW／CPRT／DAL／DD／DOV／EFX等不在 dd-screener 母體裡（母體現有 0 檔美股大型股，見 docs/dd-screener/latest.json），長線覆蓋率因此低於 100%（見 coverage_weight_pct，本基金 68.3%），缺的那部分不計入分子分母，不是當作沒漲跌。Koyfin 的預估資料是月頻更新，兩次更新之間同一個數字連著好幾週不變，所以這條線本來就該長得像階梯，不是平滑曲線。串接每一步都要過濾兩種假訊號：一是財年輪替——公司的財年結束後，「明年度」這個標籤指的年份會往後挪一年，若不處理，eps_fy_next 會無端跳一大截；判斷方式是看這一步的 eps_fy_next 是否落在前一天 eps_fy3（後年度估計）的 3% 以內，是的話用 eps_fy3 接續，不是財年輪替才用前一天的 eps_fy_next 當基準（見 classify_eps_step()）。二是原始資料本身的異常——同步驟同步過濾，整步跳過不計入指數也不計入覆蓋率。本基金的長線串接歷史裡偵測到 3 次財年輪替，都已整步排除，不計入指數。舊版兩條 EPS 線（bootstrap／history，用 yfinance 資料）保留在 chart.eps_index_bootstrap／eps_index_history 供查核，但不畫進 Exhibit 2——同一張圖擺兩條定義不同的 EPS 線只會讓人看不懂哪條才是真的。",
+  "methods_note_zh": "本頁分層更新：每週六（台北時區）完整重抓一次持股與每檔明年度 EPS 估計（現在的 EPS 估計 as of 2026-10-24），其餘日子只抓股價，跟上次 FULL 存的 EPS 快取重新配對算「今日加權遠期本益比」——Exhibit 1 的期間表格（EPS 修正％／股價漲跌／隱含本益比）因此整週不變，只有本益比跟「EPS 預估更新於...」那行每天更新。這次是只更新股價（PRICE：EPS 沿用快取）（--mode price（明示））。成分股權重與明細來自State Street (SSGA) 官方每日持股下載（見 holdings_source_url，as of holdings_as_of，非 yfinance 前十大）。每檔成分股的 EPS 修正取 yfinance Ticker.eps_trend 的「明年度」(+1y) 估計，比較目前值與 7／30／60／90 天前值的百分比變動；ETF 加權 EPS 變動＝當期有資料成分股的權重重新正規化後加權平均（無資料或 EPS≤0 者見 excluded 清單，不進分子分母）。股價變動用 ETF 自身 yfinance 收盤價，取最接近錨點日期（不晚於當日）的收盤。隱含本益比變動＝(1+股價變動)/(1+EPS變動)−1。加權遠期本益比用調和平均（1/Σw·(EPS/股價)）。State Street (SSGA) 官方每日持股下載的持股清單裡另有現金／期貨／特殊有價證券共 3 筆、合計權重 0.03%（SSI US GOV MONEY MARKET CLASS（0.03%）、US DOLLAR（0.00%）、XAI EMINI INDUSTR DEC26（-0.00%）），不是普通股，不計入 EPS 與本益比計算的分子分母，完整清單見 JSON 的 non_equity 欄位。Exhibit 2 畫的 EPS 指數來自 docs/dd-screener/latest.json 的 git 歷史（scripts/etf_dash/dd_eps_history.py），從 2026-05-19 起、每個有資料的交易日一個點，比 yfinance eps_trend 只記得 90 天長得多。權重固定用今天的持股權重，指數在第一個資料日訂為 100；股價同一天也 rebase 成 100，兩條線才能疊在同一個座標軸上比誰漲得快。ALLE／AME／AOS／AXON／BA／BR／CHRW／CPRT／DAL／DD／DOV／EFX等不在 dd-screener 母體裡（母體現有 0 檔美股大型股，見 docs/dd-screener/latest.json），長線覆蓋率因此低於 100%（見 coverage_weight_pct，本基金 68.3%），缺的那部分不計入分子分母，不是當作沒漲跌。Koyfin 的預估資料是月頻更新，兩次更新之間同一個數字連著好幾週不變，所以這條線本來就該長得像階梯，不是平滑曲線。串接每一步都要過濾兩種假訊號：一是財年輪替——公司的財年結束後，「明年度」這個標籤指的年份會往後挪一年，若不處理，eps_fy_next 會無端跳一大截；判斷方式是看這一步的 eps_fy_next 是否落在前一天 eps_fy3（後年度估計）的 3% 以內，是的話用 eps_fy3 接續，不是財年輪替才用前一天的 eps_fy_next 當基準（見 classify_eps_step()）。二是原始資料本身的異常——同步驟同步過濾，整步跳過不計入指數也不計入覆蓋率。本基金的長線串接歷史裡偵測到 3 次財年輪替，都已整步排除，不計入指數。舊版兩條 EPS 線（bootstrap／history，用 yfinance 資料）保留在 chart.eps_index_bootstrap／eps_index_history 供查核，但不畫進 Exhibit 2——同一張圖擺兩條定義不同的 EPS 線只會讓人看不懂哪條才是真的。",
   "flows": {
     "n_snapshots": 200,
     "start_date": "2026-01-13",
