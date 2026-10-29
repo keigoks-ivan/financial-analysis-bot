@@ -215,10 +215,8 @@ def test_build_us_sector_lookup_missing_cache_files_skipped(tmp_path, monkeypatc
     assert m.build_us_sector_lookup() == {}
 
 
-def test_build_us_sector_lookup_includes_lookup_only_xlre_xlu(tmp_path, monkeypatch):
-    # 2026-09-26 coordinator 回饋：XLRE/XLU 只為了反查表抓，不是顯示用基金
-    # （不在 FUND_REGISTRY），但它們的持股快取格式跟其他基金一樣，
-    # build_us_sector_lookup() 應該一視同仁讀進來。
+def test_build_us_sector_lookup_includes_xlre_xlu(tmp_path, monkeypatch):
+    # 2026-10-29 XLRE/XLU 升格為正式基金（FUND_REGISTRY）後，反查表仍要讀它們的持股快取。
     monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
     (tmp_path / "XLRE.json").write_text(json.dumps({
         "holdings": [{"ticker": "PLD", "name": "Prologis", "weight_pct": 10}]
@@ -229,34 +227,6 @@ def test_build_us_sector_lookup_includes_lookup_only_xlre_xlu(tmp_path, monkeypa
     lookup = m.build_us_sector_lookup()
     assert lookup["PLD"] == "不動產"
     assert lookup["NEE"] == "公用事業"
-
-
-def test_refresh_sector_lookup_only_holdings_writes_cache_on_success(tmp_path, monkeypatch):
-    monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
-
-    def fake_fetch(cfg):
-        return b"fake xlsx bytes"
-
-    def fake_parse(raw):
-        return ("2026-09-26", [{"ticker": "PLD", "name": "Prologis", "weight_pct": 10.0}], [])
-
-    monkeypatch.setattr(m, "fetch_ssga_holdings_xlsx", fake_fetch)
-    monkeypatch.setattr(m, "parse_ssga_holdings_xlsx", fake_parse)
-    m.refresh_sector_lookup_only_holdings()
-    d = json.loads((tmp_path / "XLRE.json").read_text(encoding="utf-8"))
-    assert d["holdings"][0]["ticker"] == "PLD"
-    d2 = json.loads((tmp_path / "XLU.json").read_text(encoding="utf-8"))
-    assert d2["as_of"] == "2026-09-26"
-
-
-def test_refresh_sector_lookup_only_holdings_failure_does_not_raise(tmp_path, monkeypatch):
-    monkeypatch.setattr(m, "HOLDINGS_CACHE_DIR", tmp_path)
-
-    def _boom(cfg):
-        raise RuntimeError("blocked")
-    monkeypatch.setattr(m, "fetch_ssga_holdings_xlsx", _boom)
-    m.refresh_sector_lookup_only_holdings()  # must not raise
-    assert not (tmp_path / "XLRE.json").exists()
 
 
 # ── price_history.py ─────────────────────────────────────────────────────────

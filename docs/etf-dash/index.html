@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ETF 儀表板 — InvestMQuest Research</title>
-<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計，共 21 檔（美股大盤 SPY／RSP／QQQ、9 檔美股產業 SPDR、SMH 兩版本、台灣加權指數／元大台灣50／TOPIX、南韓 EWY、馬來西亞 EWM、巴西 EWZ、歐洲 IEV），含總覽頁。">
+<meta name="description" content="ETF 儀表板：ETF 股價 vs 成分股 EPS 預估修正，機械計算，基金官方完整持股＋yfinance 分析師估計，共 23 檔（美股大盤 SPY／RSP／QQQ、11 檔美股產業 SPDR、SMH 兩版本、台灣加權指數／元大台灣50／TOPIX、南韓 EWY、馬來西亞 EWM、巴西 EWZ、歐洲 IEV），含總覽頁。">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -357,7 +357,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 </section>
 <section class="exhibit" id="ovExhibit">
   <div class="ex-label">總覽</div>
-  <div class="ex-title">21 檔基金一覽</div>
+  <div class="ex-title">23 檔基金一覽</div>
   <div class="ex-sub">依「美股大盤／美股產業／半導體／亞洲／歐洲與拉美」分組；點欄位標題可排序（分組內排序，分組順序不變）</div>
   <div class="conclusion" id="ovSummarySentence"></div>
   <div class="callout-tiles" id="ovTiles"></div>
@@ -376,7 +376,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 
 <section class="exhibit" id="ovSectorFlowsExhibit">
   <div class="ex-label">產業資金流</div>
-  <div class="ex-title">9 檔美股產業 SPDR 資金流（最新一週／近一個月淨額）</div>
+  <div class="ex-title">11 檔美股產業 SPDR 資金流（最新一週／近一個月淨額）</div>
   <div class="ex-sub">資金流 = Δ受益權份額 × NAV；依近一個月淨額排序，正值＝淨流入、負值＝淨流出（不是漲跌好壞，只標方向）</div>
   <div id="ovSectorFlowsWrap"></div>
   <div class="tbl-wrap"><table class="imq-table" id="ovSectorFlowsTable"></table></div>
@@ -384,8 +384,13 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 
 <section class="exhibit" id="ovTableExhibit">
   <div class="ex-label">總覽表</div>
-  <div class="ex-title">21 檔基金完整數字</div>
+  <div class="ex-title">23 檔基金完整數字</div>
   <div class="tbl-wrap"><table class="imq-table" id="ovTable"></table></div>
+  <div class="ex-sub" id="ovReadNote" style="margin-top:8px;line-height:1.7">
+    <p><b>強弱 3M、強弱 12M</b>：基金近 63、252 個交易日的含息報酬，減去 SPY 同期的含息報酬，單位是百分點<span id="ovStrengthAsOf"></span>。例如 +10.0 代表比 SPY 多漲 10 個百分點。台幣、日圓計價的基金先換成美元再算；台灣加權指數是指數，沒有配息，用價格計算。上市不到一年的基金，12M 顯示 —。</p>
+    <p><b>判讀</b>：看「本益比變動 3M」。本益比 3 個月內上升 5% 以上，代表股價漲得比獲利預估快，標「股價跑在獲利前面」；下降 5% 以上標「獲利跑在股價前面」；其餘標「對得上」。這只是描述股價和獲利預估近三個月誰走得比較快，不是買賣訊號。2026-10-28 用 SMH 1990 年以來的週資料檢驗，獲利上修但股價沒跟上之後，一年的報酬並沒有比較高，詳見<a href="analysis-2026-10-28.html">深度檢驗</a>。</p>
+    <p>XLRE（不動產）的本益比用一般會計盈餘計算，不動產公司的房地產折舊會壓低盈餘，本益比看起來比其他產業高，不適合直接比較。</p>
+  </div>
   <div class="ex-src" id="ovSrc"></div>
 </section>
 </div>
@@ -577,7 +582,9 @@ var FUND_GROUPS = [
     {key:'XLY', label:'非必需消費 XLY'},
     {key:'XLP', label:'必需消費 XLP'},
     {key:'XLC', label:'通訊服務 XLC'},
-    {key:'XLB', label:'原物料 XLB'}
+    {key:'XLB', label:'原物料 XLB'},
+    {key:'XLU', label:'公用事業 XLU'},
+    {key:'XLRE', label:'不動產 XLRE'}
   ]},
   {label:'半導體', funds:[
     {key:'SMH', label:'SMH（美國）'},
@@ -1327,7 +1334,7 @@ function render(d){
   wireCollapsibleSections();
 }
 
-// ── 總覽（/etf-dash/?view=overview）——讀 data/overview.json 一個檔，21 檔基金
+// ── 總覽（/etf-dash/?view=overview）——讀 data/overview.json 一個檔，23 檔基金
 // 依 FUND_GROUPS 分組列出，點欄位標題排序（同分組內排序，分組順序不變，見
 // OV_COLUMNS 與 sortOverviewGroups()）。────────────────────────────────────
 
@@ -1341,10 +1348,13 @@ function render(d){
 // 可排序；沿用既有 lo 慣例，≤560px 版寬先藏，跟本益比變動 3M 等既有欄一致）。
 var OV_COLUMNS = [
   {key:'label', label:'基金', numeric:false, sortable:false},
+  {key:'rel_spy_3m_pct', label:'強弱 3M', full:'強弱 3M：近 63 個交易日含息報酬減 SPY 同期含息報酬，單位為百分點；台幣、日圓計價的基金先換成美元；SPY 自己不顯示', numeric:true, lo:true},
+  {key:'rel_spy_12m_pct', label:'強弱 12M', full:'強弱 12M：近 252 個交易日含息報酬減 SPY 同期含息報酬，單位為百分點；台幣、日圓計價的基金先換成美元；SPY 自己不顯示', numeric:true},
   {key:'eps_chg_pct_30d', label:'EPS 1M', full:'EPS 變動（1個月）', numeric:true, lo:true},
   {key:'eps_chg_pct_90d', label:'EPS 3M', full:'EPS 變動（3個月）', numeric:true, bar:true},
   {key:'price_chg_pct_90d', label:'股價 3M', full:'股價漲跌（3個月）', numeric:true},
   {key:'implied_pe_chg_pct_90d', label:'本益比變動 3M', full:'隱含本益比變動（3個月）', numeric:true, bar:true},
+  {key:'align_label_zh', label:'判讀', full:'本益比變動 3M 的文字判讀：本益比 3 個月內上升 5% 以上＝股價跑在獲利前面；下降 5% 以上＝獲利跑在股價前面；其餘＝對得上。只是描述，不是買賣訊號', numeric:false},
   {key:'weighted_forward_pe', label:'預估本益比', full:'目前預估本益比', numeric:true, lo:true},
   {key:'fy1_eps_growth_pct', label:'明年 EPS 成長', full:'明年度 EPS 成長（成分股加權）', numeric:true, lo:true},
   {key:'fy1_peg', label:'PEG', full:'明年度 PEG（本益比 ÷ 明年度 EPS 成長）', numeric:true, lo:true},
@@ -1395,6 +1405,11 @@ function ovBreadthCellHtml(b){
     '<span class="seg flat" style="width:'+(b.flat_weight_pct||0)+'%"></span>'+
     '<span class="seg down" style="width:'+(b.down_weight_pct||0)+'%"></span></span></span>';
 }
+// 2026-10-29 加：強弱欄（對 SPY 的含息超額報酬，百分點）。不上色；SPY 自己與資料不足都顯示 —。
+function ovRelCellHtml(v){
+  if(v===null||v===undefined||Number.isNaN(v)) return fwdDash();
+  return (v>=0?'+':'')+v.toFixed(1);
+}
 function ovRowHtml(row){
   var flags = '';
   if(row.holdings_stale) flags += '<span class="ov-flag" title="今日持股抓取失敗，沿用上次成功快取">⚠</span>';
@@ -1403,10 +1418,13 @@ function ovRowHtml(row){
     ? '<a href="?etf='+encodeURIComponent(row.etf_key)+'">'+ovFundLabelHtml(row.label, row.etf_key)+'</a>'+flags
     : ovFundLabelHtml(row.label, row.etf_key)+'<span style="color:var(--muted)">（尚無資料）</span>';
   return '<tr><td>'+nameCell+'</td>'+
+    '<td class="num ov-col-lo">'+ovRelCellHtml(row.rel_spy_3m_pct)+'</td>'+
+    '<td class="num">'+ovRelCellHtml(row.rel_spy_12m_pct)+'</td>'+
     '<td class="num ov-col-lo">'+fmtPctColored(row.eps_chg_pct_30d)+'</td>'+
     '<td class="num">'+divBarHtml(row.eps_chg_pct_90d,'eps_chg_pct_90d')+'</td>'+
     '<td class="num">'+fmtPctColored(row.price_chg_pct_90d)+'</td>'+
     '<td class="num">'+divBarHtml(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d')+'</td>'+
+    '<td>'+(row.align_label_zh?esc(row.align_label_zh):fwdDash())+'</td>'+
     '<td class="num ov-col-lo">'+(row.weighted_forward_pe!=null?fmtNum(row.weighted_forward_pe,1)+'x':'—')+'</td>'+
     '<td class="num ov-col-lo">'+(row.fy1_eps_growth_pct!=null?fwdPctColored(row.fy1_eps_growth_pct):fwdDash())+'</td>'+
     '<td class="num ov-col-lo">'+(row.fy1_peg!=null?Number(row.fy1_peg).toFixed(2):fwdDash())+'</td>'+
@@ -1467,7 +1485,7 @@ function renderOverviewHeader(){
 }
 
 // 2026-09-25 加：KPI 三格，純機械（只挑 overview.json 裡的最大/最小值，不下判斷字眼），
-// 掃全部 21 檔（summary_sentence_zh 只看 9 檔美股產業 ETF，這裡刻意放大範圍，避免跟句子
+// 掃全部 23 檔（summary_sentence_zh 只看 11 檔美股產業 ETF，這裡刻意放大範圍，避免跟句子
 // 完全重複）。2026-09-25 二次修：ticker 放大在前、完整名稱縮小在後（見 coordinator
 // 回饋 #7）——原本完整名稱＋ticker 擠在同一行，長名稱（如「VanEck 半導體 UCITS ETF
 // （SMH_UCITS）」）會換成兩行，版面不齊。
@@ -1691,7 +1709,7 @@ window.addEventListener('resize', function(){
   ovScatterResizeTimer = setTimeout(renderOvScatter, 150);
 });
 
-// 2026-09-26 加：產業資金流——9 檔 SPDR 產業 ETF 最新一週／近一個月淨額並排
+// 2026-09-26 加：產業資金流——11 檔 SPDR 產業 ETF 最新一週／近一個月淨額並排
 // 橫向 diverging bar（依近一個月排序），資料完全來自 build_overview_json()
 // 的 sector_flows（不重算，見該函式）。上線初期（daily 紀錄不足一週）多數
 // 會是「累積中」，頁面要能誠實顯示，不是留白裝作沒這個功能。
@@ -1724,7 +1742,7 @@ function renderSectorFlows(ov){
 
 function renderOverview(ov){
   document.getElementById('coverLeft').innerHTML =
-    '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · 21 檔基金一覽</span>';
+    '<span class="tk">總覽</span><span class="nm">ETF 儀表板 · 23 檔基金一覽</span>';
 
   var byKey = {};
   (ov.funds||[]).forEach(function(f){ byKey[f.etf_key] = f; });
@@ -1747,7 +1765,9 @@ function renderOverview(ov){
   renderSectorFlows(ov);
 
   var sentEl = document.getElementById('ovSummarySentence');
-  sentEl.innerHTML = ov.summary_sentence_zh ? esc(ov.summary_sentence_zh) : '無資料：9 檔美股產業 ETF 尚未有近三個月 EPS 修正資料';
+  sentEl.innerHTML = ov.summary_sentence_zh ? esc(ov.summary_sentence_zh) : '無資料：11 檔美股產業 ETF 尚未有近三個月 EPS 修正資料';
+  var saEl = document.getElementById('ovStrengthAsOf');
+  if(saEl) saEl.textContent = ov.strength_as_of ? '，算到 '+ov.strength_as_of+' 收盤' : '';
 
   document.getElementById('ovSrc').textContent =
     '資料來源：docs/etf-dash/data/{ETF}.json 彙總（scripts/etf_dash/build_etf_dash.py::build_overview_json）；'+

@@ -34,6 +34,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from compare_common import RESEARCH_UNIVERSE  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FUND_DATA_DIR = REPO_ROOT / "docs" / "etf-dash" / "data"
 OUT_PATH = FUND_DATA_DIR / "drawdowns.json"
@@ -66,6 +69,8 @@ def fund_list() -> list[dict]:
     out = []
     for f in ov["funds"]:
         k = f["etf_key"]
+        if k not in RESEARCH_UNIVERSE:  # 2026-10-29 總覽加 XLU、XLRE，回檔表母體維持原 21 檔
+            continue
         tk = f.get("yf_ticker")
         if not tk:
             try:

@@ -20,6 +20,17 @@ DECIMALS = 5
 SCALE = 10 ** DECIMALS
 SCHEMA = "compare-series-v1"
 
+# 研究工具（本站挑選候選母體、回檔表）的固定 21 檔。2026-10-29 總覽加了 XLU、XLRE 兩檔，
+# 但本站挑選的事前登記母體就是這 21 檔，不能隨總覽增加；這裡明確列出，不從 overview.json 推。
+# 看穿（lookthrough.py）自己有 FUNDS 清單，比較器吃 picks_candidates.json，兩者本來就不隨總覽變動。
+RESEARCH_UNIVERSE = (
+    "SPY", "RSP", "QQQ",
+    "XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLC", "XLB",
+    "SMH", "SMH_UCITS",
+    "TAIEX", "0050", "TOPIX", "EWY", "EWM",
+    "IEV", "EWZ",
+)
+
 # 1475.T（TOPIX ETF）：Yahoo 還原係數在 2024-08-09 一次跳 16.1%，其餘半年配息約 1%，判斷是壞的配息記錄。
 # 把該日以前的還原價乘上這個常數，讓當日的跳動回到中位數。1.1496 是 2026-10-28 深度檢驗用同一組資料
 # 反推的估計值（跳動 ÷ 其餘配息跳動的中位數），不是官方配息資料。

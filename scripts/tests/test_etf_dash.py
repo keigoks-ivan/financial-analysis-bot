@@ -1217,7 +1217,7 @@ def test_apply_anchor_fallback_clears_suppressed_note_when_anchor_history_availa
 # ── 2026-09-25 加 9 檔 SPDR 產業 ETF + RSP — registry wiring, RSP's SPY ──────
 # equal-weight fallback, and the /etf-dash/?view=overview builder ───────────
 
-SECTOR_TICKERS = ["XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLC", "XLB"]
+SECTOR_TICKERS = ["XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLC", "XLB", "XLU", "XLRE"]
 
 
 def test_sector_etfs_use_ssga_source_and_correct_holdings_url():
@@ -1231,9 +1231,14 @@ def test_sector_etfs_use_ssga_source_and_correct_holdings_url():
         assert cfg["yf_ticker"] == tk
 
 
-def test_sector_etfs_skip_xlre_and_xlu():
-    assert "XLRE" not in m.FUND_REGISTRY
-    assert "XLU" not in m.FUND_REGISTRY
+def test_xlre_and_xlu_are_full_funds():
+    # 2026-10-29 補成正式基金：總覽、資金流、反查表都要有
+    assert "XLRE" in m.FUND_REGISTRY and "XLU" in m.FUND_REGISTRY
+    assert m.FLOWS_SOURCE_TIER["XLRE"] == "ssga_navhist"
+    assert m.FLOWS_SOURCE_TIER["XLU"] == "ssga_navhist"
+    assert {"XLRE", "XLU"} <= m.SECTOR_ETF_KEYS
+    assert m.SECTOR_ETF_LABEL_ZH["XLRE"] == "不動產" and m.SECTOR_ETF_LABEL_ZH["XLU"] == "公用事業"
+    assert not hasattr(m, "refresh_sector_lookup_only_holdings")
 
 
 def test_rsp_registered_with_invesco_source_and_params():

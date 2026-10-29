@@ -88,6 +88,7 @@ import flows  # noqa: E402
 import long_pe  # noqa: E402
 import ishares_us  # noqa: E402
 import pe_daily  # noqa: E402
+import strength  # noqa: E402
 
 try:
     import yfinance as yf
@@ -299,6 +300,27 @@ FUND_REGISTRY = {
         "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
         "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlb.xlsx",
         "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/materials-select-sector-spdr-fund-xlb",
+        "other_listings": [],
+    },
+    # 2026-10-29 補 XLU 公用事業、XLRE 不動產，SPDR 產業 ETF 湊齊 11 檔（原本 2026-09-25
+    # 只加 9 檔、略過這兩檔，兩檔只當反查表用）。長期本益比沒有對應序列（long_pe
+    # 的 FUND_LONG_PE 未列），單檔頁照 XLE／XLV 等其他沒有長期本益比的產業處理。
+    "XLU": {
+        "label_zh": "公用事業類股 SPDR 基金（XLU，S&P 公用事業產業，美國掛牌）",
+        "label_en": "Utilities Select Sector SPDR Fund (XLU)",
+        "yf_ticker": "XLU", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlu.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/utilities-select-sector-spdr-fund-xlu",
+        "other_listings": [],
+    },
+    "XLRE": {
+        "label_zh": "不動產類股 SPDR 基金（XLRE，S&P 不動產產業，美國掛牌）",
+        "label_en": "Real Estate Select Sector SPDR Fund (XLRE)",
+        "yf_ticker": "XLRE", "isin": None, "source": "ssga",
+        "holdings_issuer_zh": "State Street (SSGA) 官方每日持股下載",
+        "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlre.xlsx",
+        "holdings_page_url": "https://www.ssga.com/us/en/intermediary/etfs/real-estate-select-sector-spdr-fund-xlre",
         "other_listings": [],
     },
     # 2026-09-25 加的 RSP（Invesco S&P 500 等權重 ETF）——跟 QQQ 同一個發行商、
@@ -1121,68 +1143,30 @@ def get_tw_industry_map() -> dict[str, str]:
         return {}
 
 
-# SPDR 9 檔美股產業 ETF 各自對應的中文短標籤——用它們各自的官方持股清單
+# SPDR 11 檔美股產業 ETF 各自對應的中文短標籤——用它們各自的官方持股清單
 # （data/etf_dash/holdings_cache/{ETF}.json，這 9 檔本身就是每週或更頻繁重抓
 # 一次）當「這檔股票屬於哪個 GICS 類股」的免費副產品：SSGA 持股表本身的
 # "Sector" 欄實測對 SPY／各產業 ETF 都是空值「-」（2026-09-26 實測，不是
 # parser 沒抓到），沒有其他免費、可機械讀取的個股 GICS 分類來源，這 9 檔
 # ETF 的持股清單本身就是「屬於這個類股的股票名單」，拿來反查最省成本
 # （見 build_us_sector_lookup()）——SPY／RSP／QQQ 的風格快照／報酬貢獻產業
-# 分解都靠這份反查表，覆蓋率受限於這 9 檔＋XLRE／XLU（2026-09-26 加，見下方
-# SECTOR_LOOKUP_ONLY_LABEL_ZH——這兩檔本身不當顯示用基金，見 FUND_REGISTRY
-# 上方 2026-09-25 註解，只為了反查表額外抓持股）的持股總和，非重疊的成分股
+# 分解都靠這份反查表，覆蓋率受限於這 11 檔（含 2026-10-29 升格為正式基金的
+# XLRE／XLU，此前它們只為反查表另外抓持股）的持股總和，非重疊的成分股
 # 歸「未分類」。
 SECTOR_ETF_LABEL_ZH = {
     "XLK": "科技", "XLF": "金融", "XLE": "能源", "XLV": "醫療保健", "XLI": "工業",
     "XLY": "非必需消費", "XLP": "必需消費", "XLC": "通訊服務", "XLB": "原物料",
+    # 2026-10-29：XLRE、XLU 升格為正式基金（原本只為反查表另外抓持股）
+    "XLRE": "不動產", "XLU": "公用事業",
 }
-
-# 2026-09-26 coordinator 回饋：XLRE（不動產）／XLU（公用事業）不當成顯示用的
-# 基金（不進 FUND_REGISTRY、不出現在導覽／總覽，任務原本的 9 檔美股產業 ETF
-# 拍板刻意跳過這兩檔），但只為了 ticker→sector 反查表而抓它們的持股，能讓
-# SPY／RSP／QQQ 的 REITs／公用事業成分股不再全部落進「未分類」——跟 9 檔
-# 顯示用的產業 ETF 同一套 SSGA 持股 xlsx 格式，直接重用
-# fetch_ssga_holdings_xlsx()／parse_ssga_holdings_xlsx()，只是傳一個不在
-# FUND_REGISTRY 裡的最小 cfg dict 進去；持股快取仍然寫進
-# data/etf_dash/holdings_cache/{XLRE,XLU}.json（跟其他基金同一個目錄，同一套
-# 「抓不到就退回上次快取」邏輯），但兩者永遠不會出現在 docs/etf-dash/data/
-# 或總覽頁——build_fund()／main() 的主迴圈只處理 FUND_REGISTRY 裡的 key。
-SECTOR_LOOKUP_ONLY_LABEL_ZH = {"XLRE": "不動產", "XLU": "公用事業"}
-SECTOR_LOOKUP_ONLY_CFG = {
-    "XLRE": {"source": "ssga",
-             "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlre.xlsx"},
-    "XLU": {"source": "ssga",
-            "holdings_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlu.xlsx"},
-}
-
-
-def refresh_sector_lookup_only_holdings() -> None:
-    """每次 run 都嘗試重抓 XLRE／XLU 持股（純粹為了下面 build_us_sector_lookup()
-    的反查表，見上方註解）——失敗（xlsx 格式改版、被擋）不拋例外，直接跳過
-    那一檔，沿用上次寫進 holdings_cache 的版本（若有）；兩者都沒抓過也沒有
-    快取，反查表就是少這兩檔的資料，不影響其他任何功能。"""
-    for etf_key, cfg in SECTOR_LOOKUP_ONLY_CFG.items():
-        try:
-            raw = fetch_ssga_holdings_xlsx(cfg)
-            as_of, rows, non_equity = parse_ssga_holdings_xlsx(raw)
-            cache_path = HOLDINGS_CACHE_DIR / f"{etf_key}.json"
-            cache_path.parent.mkdir(parents=True, exist_ok=True)
-            cache_path.write_text(json.dumps({
-                "as_of": as_of, "holdings": rows, "non_equity": non_equity,
-                "source_url": cfg["holdings_url"], "fetched_at": datetime.now(timezone.utc).isoformat(),
-            }, ensure_ascii=False, indent=2), encoding="utf-8")
-        except Exception as e:  # noqa: BLE001
-            print(f"[etf_dash] WARNING refresh_sector_lookup_only_holdings: {etf_key} failed ({e}), "
-                  f"sector lookup falls back to any existing cache for it", file=sys.stderr)
 
 
 def build_us_sector_lookup() -> dict[str, str]:
-    """讀 9 檔 SPDR 產業 ETF ＋ XLRE／XLU（僅供反查，見上方註解）各自的
+    """讀 11 檔 SPDR 產業 ETF 各自的
     holdings_cache，回傳 {ticker: 中文類股標籤}。某檔快取不存在／壞掉就跳過
     那一檔（不讓整個查找表失敗），這是「盡量湊」的查找表，不是權威資料源。"""
     lookup: dict[str, str] = {}
-    all_labels = {**SECTOR_ETF_LABEL_ZH, **SECTOR_LOOKUP_ONLY_LABEL_ZH}
-    for etf_key, label in all_labels.items():
+    for etf_key, label in SECTOR_ETF_LABEL_ZH.items():
         path = HOLDINGS_CACHE_DIR / f"{etf_key}.json"
         if not path.exists():
             continue
@@ -3392,7 +3376,7 @@ TAIEX_NO_FLOWS_NOTE_ZH = "TAIEX 是指數，不是可申購／贖回的基金，
 FLOWS_SOURCE_TIER = {
     "SPY": "ssga_navhist", "XLK": "ssga_navhist", "XLF": "ssga_navhist", "XLE": "ssga_navhist",
     "XLV": "ssga_navhist", "XLI": "ssga_navhist", "XLY": "ssga_navhist", "XLP": "ssga_navhist",
-    "XLC": "ssga_navhist", "XLB": "ssga_navhist",
+    "XLC": "ssga_navhist", "XLB": "ssga_navhist", "XLU": "ssga_navhist", "XLRE": "ssga_navhist",
     "SMH": "vaneck_navhist",
     "QQQ": "invesco_direct", "RSP": "invesco_direct",
 }
@@ -3920,7 +3904,7 @@ def render_preview_html(data: dict) -> str:
 # 頁面只 fetch 這一個檔，不用對 21 檔各發一次 request。
 # ---------------------------------------------------------------------------
 
-SECTOR_ETF_KEYS = {"XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLC", "XLB"}
+SECTOR_ETF_KEYS = {"XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLC", "XLB", "XLU", "XLRE"}
 
 
 def _flow_amount_since(flows_data: dict | None, days: int, today_str: str) -> float | None:
@@ -3939,7 +3923,7 @@ def _flow_amount_since(flows_data: dict | None, days: int, today_str: str) -> fl
     return round(amt, 2)
 
 
-def build_overview_json() -> dict:
+def build_overview_json(strength_by_fund: dict | None = None) -> dict:
     """掃 docs/etf-dash/data/{ETF}.json（FUND_REGISTRY 目前已知的全部 key），
     不是只看這次 run 有沒有重建——單次 run 常常只更新一部分基金（例如只跑
     FULL 的那幾檔＋PRICE 的其他檔分開跑，或某檔基金這次抓取失敗被跳過），
@@ -3947,7 +3931,7 @@ def build_overview_json() -> dict:
     分組（美股大盤／美股產業／半導體／亞洲）與短標籤是頁面呈現層的事，交給
     docs/etf-dash/index.html 的 FUND_GROUPS（唯一負責分組的地方）決定，這裡
     只給 flat 陣列＋etf_key。summary_sentence_zh 是純機械句（見下方，只挑最大值
-    報數字，不下判斷字眼），9 檔美股產業 ETF 都有 90d 資料才會產生。"""
+    報數字，不下判斷字眼），11 檔美股產業 ETF 都有 90d 資料才會產生。"""
     funds = []
     for etf_key in FUND_REGISTRY:
         path = OUT_DIR / f"{etf_key}.json"
@@ -3994,10 +3978,15 @@ def build_overview_json() -> dict:
             "flow_1m_net": _flow_amount_since(flows_data, 30, d.get("as_of") or ""),
             "flow_nav_currency": flows_data.get("nav_currency"),
             "flows_skipped": bool(flows_data.get("skipped")),
+            # 2026-10-29 加：強弱（對 SPY 的含息超額報酬，百分點，見 strength.py）與判讀
+            # （隱含本益比 3M 變動 ±500 bps，判讀邏輯只在 strength.align_label_zh()）。
+            "rel_spy_3m_pct": (strength_by_fund or {}).get(etf_key, {}).get("rel_spy_3m_pct"),
+            "rel_spy_12m_pct": (strength_by_fund or {}).get(etf_key, {}).get("rel_spy_12m_pct"),
+            "align_label_zh": strength.align_label_zh(p90.get("implied_pe_chg_pct")),
         })
     funds.sort(key=lambda f: f["etf_key"])
 
-    # 產業資金流——9 檔 SPDR 產業 ETF 的最新一週／近一個月淨流量並排（見任務
+    # 產業資金流——11 檔 SPDR 產業 ETF 的最新一週／近一個月淨流量並排（見任務
     # 指示的 overview「產業資金流」圖），資料完全來自各基金已經寫好的 flows
     # 區塊，不重算。剛上線（daily 紀錄不足一週）某些基金這裡會是 None，頁面
     # 端要能處理（見 docs/etf-dash/index.html renderSectorFlows()）。
@@ -4041,6 +4030,9 @@ def build_overview_json() -> dict:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "as_of": taipei_now().strftime("%Y-%m-%d"),
         "funds": funds,
+        # 強弱欄截至日（SPY 最後一根）；抓價失敗沿用舊值時也沿用舊日期，頁面照實顯示
+        "strength_as_of": next((v.get("as_of") for v in (strength_by_fund or {}).values()
+                                if isinstance(v, dict) and v.get("as_of")), None),
         "summary_sentence_zh": summary_sentence_zh,
         "sector_flows": sector_flows,
     }
@@ -4109,7 +4101,6 @@ def main() -> int:
     # 基金各自重算一次。
     price_days = price_history.load_days()
     price_days = backfill_price_history_if_needed(price_days)  # self-heal — 見該函式 docstring
-    refresh_sector_lookup_only_holdings()  # XLRE／XLU，僅供下一行的反查表用，見該函式註解
     us_sector_lookup = build_us_sector_lookup()
     tw_industry_map = get_tw_industry_map()
     price_today_closes: dict[str, float] = {}
@@ -4169,7 +4160,24 @@ def main() -> int:
     # 動到的那幾檔，所以即使這次只跑一部分基金也要做（不需要 n_ok>0 才做，
     # 只要 OUT_DIR 裡有任何既有 JSON 就能生出一份有意義的總覽）。
     overview_path = OUT_DIR / "overview.json"
-    overview_path.write_text(json.dumps(build_overview_json(), ensure_ascii=False, indent=2), encoding="utf-8")
+    # 強弱欄（對 SPY 的含息超額報酬）：每次 run 對全部基金重抓一次含息價格（FULL／PRICE 都做）；
+    # 抓失敗（SPY 抓不到）沿用上一份總覽的舊值，不留空。
+    try:
+        strength_by_fund = strength.fetch_strength(FUND_REGISTRY)
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING strength failed: {e}", file=sys.stderr)
+        strength_by_fund = {}
+    if not strength_by_fund and overview_path.exists():
+        try:
+            prev = json.loads(overview_path.read_text(encoding="utf-8"))
+            strength_by_fund = {f["etf_key"]: {"rel_spy_3m_pct": f.get("rel_spy_3m_pct"),
+                                               "rel_spy_12m_pct": f.get("rel_spy_12m_pct"),
+                                               "as_of": prev.get("strength_as_of")}
+                                for f in prev.get("funds", [])}
+            print("[etf_dash] strength: reusing previous overview.json values", file=sys.stderr)
+        except (OSError, ValueError):
+            pass
+    overview_path.write_text(json.dumps(build_overview_json(strength_by_fund), ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[etf_dash] wrote {overview_path}")
 
     # 本站挑選的事前登記追蹤（2026-10-28 起，見 picks_track.py）：讀剛寫好的基金

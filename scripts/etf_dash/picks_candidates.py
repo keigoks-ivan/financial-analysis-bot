@@ -28,6 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_etf_dash as etfdash  # noqa: E402 — 只借 yf_call_with_backoff()
 import picks_track as pt  # noqa: E402 — 借 flow_1m_net()、latest_aum_usd()
+from compare_common import RESEARCH_UNIVERSE  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FUND_DATA_DIR = REPO_ROOT / "docs" / "etf-dash" / "data"
@@ -45,8 +46,10 @@ BRIEF_MAX_BYTES = 8 * 1024
 
 
 def fund_keys() -> list[str]:
+    """候選母體＝登記過的 21 檔（RESEARCH_UNIVERSE），不隨總覽新增的基金（XLU、XLRE）變多。
+    總覽目前沒有的檔（頁面資料缺）仍照舊略過，順序跟總覽一致。"""
     ov = json.loads((FUND_DATA_DIR / "overview.json").read_text(encoding="utf-8"))
-    return [f["etf_key"] for f in ov["funds"]]
+    return [f["etf_key"] for f in ov["funds"] if f["etf_key"] in RESEARCH_UNIVERSE]
 
 
 # ── 價格 ─────────────────────────────────────────────────────────────────
