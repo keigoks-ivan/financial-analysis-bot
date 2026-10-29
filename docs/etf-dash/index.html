@@ -137,7 +137,10 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 #ovTable td{padding:.42rem .6rem;color:var(--ink)}
 #ovTable tbody tr:nth-child(even) td{background:var(--card)}
 #ovTable .ov-gs{border-left:1px solid var(--line)}
-#ovTable td.ov-ref{color:var(--sec);font-size:.78rem}
+#ovTable td.ov-ref{color:var(--sec);font-size:.74rem}
+/* 2026-10-29 晚：持有人要「其他」組收窄——左右留白減半、廣度小條 60→40px、美元資金流不標 USD。 */
+#ovTable td.ov-ref,#ovTable th.ov-ref{padding-left:.35rem;padding-right:.35rem}
+#ovTable .stack100.mini{width:40px}
 #ovTable td.ov-strong{font-weight:700}
 #ovTable .ov-name{position:sticky;left:0;z-index:1;background:var(--card)}
 .ov-chip{display:inline-block;font-size:11.5px;line-height:1.5;padding:0 .55rem;border-radius:999px;border:1px solid transparent;white-space:nowrap}
@@ -1427,7 +1430,7 @@ var OV_COLUMNS = [
   {key:'fy1_peg', grp:'估值', label:'PEG', full:'明年度 PEG（本益比 ÷ 明年度 EPS 成長）', numeric:true},
   {key:'eps_chg_pct_30d', grp:'其他', label:'EPS 1M', full:'EPS 變動（1個月）', numeric:true, heat:true, ref:true},
   {key:'breadth_90d', grp:'其他', label:'修正廣度', full:'EPS 修正廣度（近三個月，上修/持平/下修權重佔比）', numeric:false, sortable:false, ref:true},
-  {key:'flow_1m_net', grp:'其他', label:'資金流 1M', full:'資金流淨額（近一個月，Δ受益權份額×NAV）', numeric:true, ref:true},
+  {key:'flow_1m_net', grp:'其他', label:'資金流 1M', full:'資金流淨額（近一個月，Δ受益權份額×NAV；美元計價不標幣別）', numeric:true, ref:true},
   {key:'eps_as_of', grp:'其他', label:'EPS 更新', full:'EPS 預估更新日', numeric:false, ref:true}
 ];
 var OV_DEFAULT_SORT_KEY = 'rel_spy_12m_pct';
@@ -1503,7 +1506,7 @@ function ovRowHtml(row){
     ? ovLowCovTd(row, 'num', ovPctCell(row.implied_pe_chg_pct_90d))
     : '<td class="num"'+ovHeatStyle(row.implied_pe_chg_pct_90d,'implied_pe_chg_pct_90d')+'>'+ovPctCell(row.implied_pe_chg_pct_90d)+'</td>';
   var flowTxt = row.flows_skipped ? '<span style="color:var(--muted)" title="指數沒有申贖資料">—</span>'
-    : (row.flow_1m_net!=null ? fmtMoney(row.flow_1m_net,row.flow_nav_currency) : '累積中');
+    : (row.flow_1m_net!=null ? fmtMoney(row.flow_1m_net, row.flow_nav_currency==='USD' ? null : row.flow_nav_currency) : '累積中');
   return '<tr><td class="ov-name">'+nameCell+'</td>'+
     '<td class="num ov-gs"'+ovHeatStyle(row.rel_spy_3m_pct,'rel_spy_3m_pct')+'>'+ovRelCellHtml(row.rel_spy_3m_pct)+'</td>'+
     '<td class="num ov-strong"'+ovHeatStyle(row.rel_spy_12m_pct,'rel_spy_12m_pct')+'>'+ovRelCellHtml(row.rel_spy_12m_pct)+'</td>'+
@@ -1572,7 +1575,7 @@ function renderOverviewHeader(){
     return '<th colspan="'+sp.n+'" class="'+(i===0?'ov-name':'ov-gs')+(sp.grp?'':' blank')+'">'+esc(sp.grp)+'</th>';
   }).join('');
   var thead = '<thead><tr class="ov-grp-row">'+top+'</tr><tr>' + OV_COLUMNS.map(function(c, i){
-    var cls = (c.numeric ? ' num' : '') + (i===0 ? ' ov-name' : '') + (i>0 && OV_COLUMNS[i-1].grp !== c.grp ? ' ov-gs' : '');
+    var cls = (c.numeric ? ' num' : '') + (i===0 ? ' ov-name' : '') + (i>0 && OV_COLUMNS[i-1].grp !== c.grp ? ' ov-gs' : '') + (c.ref ? ' ov-ref' : '');
     var labelHtml = c.full ? '<abbr title="'+esc(c.full)+'">'+esc(c.label)+'</abbr>' : esc(c.label);
     if(c.sortable === false) return '<th class="'+cls.trim()+'">'+labelHtml+'</th>';
     var arrow = ovState.sortKey === c.key ? (ovState.sortDir>0?'▲':'▼') : '';
