@@ -167,6 +167,9 @@ Change log:
         研究 ▾｜選股｜系統 ▾｜投資流程｜模擬｜心智模型｜搜尋。研究 ▾ 移到選股之前，心智模型從選股與
         系統之間移到模擬之後；只換位置，各項名稱、下拉內容、PREFIX_ACTIVE 都沒動。
         外部 3 repo synced literal 同日同步。
+    2026-10-29：全站連結不再用瀏覽器預設的藍／紫（持有人拍板）。NAV_STYLE 加
+        `:where(a){color:#0d2244}`（權重 0，各頁自訂連結色不受影響，只取代預設色）；
+        三個外部 repo 的 NAV_STYLE 副本同步。
 """
 
 import re
@@ -178,6 +181,8 @@ ROOT = Path(__file__).resolve().parent.parent / "docs"
 # ---------------------------------------------------------------- canonical
 
 NAV_STYLE = """<style id="imq-nav-style">
+/* 2026-10-29 持有人不要連結沒點藍、點過變紫：:where 權重為 0，各頁自己寫的連結顏色都會蓋過，只取代瀏覽器預設色 */
+:where(a){color:#0d2244}
 .imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 .imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
