@@ -2,20 +2,20 @@
 
 重跑：python3 -I docs/ideas/data/anthropic-ipo/build_data.py
 輸出：同目錄 data.json。頁面只讀這份 json 畫圖，前端不計算。
-只用標準函式庫。不抓網路，資料全部來自同目錄的八個 CSV 與本檔常數。
+只用標準函式庫。不抓網路，資料全部來自同目錄的 CSV 與本檔常數。
 
 單位：data.json 一律是「億美元」（CSV 的 USD_m 除以 100，USD bn 乘以 10），百分比是 %。
 每個序列都附 source（出處）與 asof（資料日期）。
 
 CSV（研究過程整理，原檔名照舊）：
-- report_a_pl_quarterly.csv：S-1 季度損益（未經查核），圖 1、2、13。
+- report_a_pl_quarterly.csv：S-1 季度損益（未經查核），畫布 c1、c2、c13。
 - report_a_pl_annual.csv：S-1 年度損益，只做驗算。
-- report_a_balance_cashflow.csv：資產負債、票據公允價值滾動表、承諾，圖 3、4。
-- report_b_commitments.csv：逐筆算力承諾，圖 5。
-- report_c_arr_timeline.csv：年化營收（run-rate）里程碑，圖 9。
-- report_d_backlog_dependency.csv：供應商積壓訂單，圖 10。
-- report_d_circular.csv：循環融資，圖 11。
-- report_e_valuation_path.csv：估值路徑，圖 12。
+- report_a_balance_cashflow.csv：資產負債、票據公允價值滾動表、承諾，畫布 c3、c4。
+- report_b_commitments.csv：逐筆算力承諾，畫布 c5。
+- report_c_arr_timeline.csv：年化營收（run-rate）里程碑，畫布 c9。
+- report_d_backlog_dependency.csv：供應商積壓訂單，畫布 c10。
+- report_d_circular.csv：循環融資，畫布 c11。
+- report_e_valuation_path.csv：估值路徑，畫布 c12。
 
 本檔常數（CSV 沒有、頁面正文有的數字）：
 - 3Q26 營收：S-1 只寫「是 4Q24（1.97 億美元）的 86 倍」，這裡用 86 × 197 百萬美元推算。
@@ -24,7 +24,13 @@ CSV（研究過程整理，原檔名照舊）：
 - 2027–2030 付款階梯：研究報告依 S-1 合約期間平均攤提的推算。
 - 積壓訂單裡各模型公司的金額：各供應商 SEC 文件與 S-1；Oracle 的 OpenAI 金額是媒體報導。
 - 循環融資：Google 2026 年 Series G-2 的 100 億美元（S-1 附註 4、附註 10），CSV 沒列，這裡補上。
-- 圖 14 的 OpenAI 數字：2026 年預估營收 360 億、到 2030 年支出計畫 8,560 億，媒體報導（二手）；平均攤四年是假設。
+- 畫布 c14 的 OpenAI 數字：2026 年預估營收 360 億、到 2030 年支出計畫 8,560 億，媒體報導（二手）；平均攤四年是假設。
+- 畫布 c16 瓶頸交期：研究整理（S-1 風險因子、GE Vernova 法說與變壓器交期的媒體報導、JLL 的資料中心併網等待），單位年。
+
+第三輪另加四個 CSV（研究助理整理，欄位 item,value,unit,asof,source_name,source_url,tier,note）：
+- dc_power.csv：美國資料中心用電，兩版 LBNL（2024 年報告與 2025 Update），畫布 c15。
+- tracking_now.csv：長期追蹤表的現值，這裡只拿 LBNL 用電占比做驗算。
+- analogies.csv、demand_ceiling.csv：歷史類比表與需求尺度，頁面正文直接引用，不進 data.json。
 """
 import csv
 import json
@@ -257,7 +263,7 @@ def required_revenue(lad):
         ref = now_a if r["company"] == "Anthropic" else OPENAI_REV_2026
         r["multiple"] = round(r["value"] / ref, 1)
     return {
-        "source": "研究推算。Anthropic：3Q26 年化依 S-1 倍數推算，2028 年需要＝付款階梯（圖 11）÷ 算力占營收 55%（S-1 1H26 實績）。"
+        "source": "研究推算。Anthropic：3Q26 年化依 S-1 倍數推算，2028 年需要＝付款階梯（ladder 區塊）÷ 算力占營收 55%（S-1 1H26 實績）。"
                   "OpenAI：2026 年預估營收 360 億與到 2030 年的支出計畫 8,560 億為媒體報導（二手），每年需要＝8,560 億平均攤四年 ÷ 55%（借用 Anthropic 的算力占比，假設）",
         "asof": "2026-10-29", "unit": "億美元",
         "rows": rows,
@@ -390,6 +396,69 @@ def circular():
     }
 
 
+# ---------------------------------------------------------------- 美國資料中心用電（c15）
+def power_use():
+    """dc_power.csv：兩版 LBNL。2014 年畫 DOE 新聞稿的 58（報告原文約 60），其餘照 CSV。"""
+    rows = read("dc_power.csv")
+    act = {r["year"]: num(r["value_twh"]) for r in rows if r["value_twh"]}
+    rng = {r["year"]: (num(r["low"]), num(r["high"])) for r in rows if r["low"]}
+    check(act.get("2014") == 60, "dc_power.csv 的 2014 年應為 LBNL 原文約 60")
+    doe_2014 = 58
+    years = ["2014", "2018", "2023", "2024", "2028", "2030"]
+    actual = [doe_2014, act["2018"], act["2023"], act["2024"], None, None]
+    ref = {"2028": act["2028"], "2030": act["2030"]}
+    check(rng["2028"] == (325, 580) and rng["2030"] == (521, 843), "2028／2030 區間與 CSV 不符")
+    check(rng["2028"][0] < ref["2028"] < rng["2028"][1] and rng["2030"][0] < ref["2030"] < rng["2030"][1],
+          "參考值要落在區間內")
+    mult = ref["2030"] / act["2024"]
+    check(round(mult, 1) == 3.4, "2030 年參考值對 2024 年應約 3.4 倍")
+    # 全美用電占比：tracking_now.csv 的 LBNL 列原文
+    trk = {r["item"]: r["value"] for r in read("tracking_now.csv")}
+    share = {"2018": 1.9, "2023": 4.4, "2024": 4.7, "2028_lo": 6.7, "2028_hi": 12.0,
+             "2030_ref": 11.8, "2030_lo": 9.5, "2030_hi": 15.3}
+    check("1.9%" in trk["美國資料中心用電：2018"] and "4.4%" in trk["美國資料中心用電：2023"]
+          and "4.7%" in trk["美國資料中心用電：2024（新版估計）"]
+          and "11.8%" in trk["美國資料中心用電：2030（新版參考情境與區間）"]
+          and "9.5%-15.3%" in trk["美國資料中心用電：2030（新版參考情境與區間）"], "占比與 tracking_now.csv 不符")
+    return {
+        "source": "LBNL《2024 United States Data Center Energy Usage Report》（2024-12，美國能源部發布）與《2025 Update》（2026-06）。"
+                  "2014 年用 DOE 新聞稿的 58 TWh，報告原文寫約 60。2028 年區間出自 2024 年報告，2028 與 2030 年參考值、2030 年區間出自 2025 年更新版",
+        "asof": "2026-06", "unit": "TWh",
+        "labels": years,
+        "actual": actual,
+        "range": {"2028": list(rng["2028"]), "2030": list(rng["2030"])},
+        "ref": ref,
+        "mult_2030_vs_2024": round(mult, 1),
+        "share_pct": share,
+    }
+
+
+# ---------------------------------------------------------------- 瓶頸交期（c16）
+def lead_times():
+    items = [
+        {"name": "資本", "lo": 0, "hi": 0, "label": "隨時", "period": "2026～2027",
+         "basis": "簽得起合約就拿得到算力"},
+        {"name": "CoWoS 與 HBM", "lo": 1, "hi": 2, "label": "1～2 年", "period": "2026～2027",
+         "basis": "封裝與記憶體擴產週期（推論）"},
+        {"name": "大型變壓器", "lo": 2, "hi": 4, "label": "2～4 年", "period": "2027 年起至少三年",
+         "basis": "pv magazine USA 2026-05（二手），Wood Mackenzie 調查約 128 週（二手）"},
+        {"name": "燃氣輪機", "lo": 3, "hi": 6, "label": "3～6 年", "period": "2027 年起至少三年",
+         "basis": "3 年＝較早媒體的新訂單交期（二手），6 年＝槽位已排到 2032 年（法說與會議說法，二手轉載）。"
+                  "第三季 8-K 在手訂單加產能保留 122 GW（一手）"},
+        {"name": "資料中心併網", "lo": 4, "hi": None, "label": "主要市場超過 4 年", "period": "2027 年起至少三年",
+         "basis": "JLL 對許多主要市場的說法（二手），發電端排隊約 5 年是另一個口徑（LBNL）"},
+        {"name": "需求", "lo": None, "hi": None, "label": "沒有交期", "period": "電力設備之後",
+         "basis": "有沒有人願意付錢，用錢與時間解不掉"},
+    ]
+    return {
+        "source": "研究整理：S-1 風險因子（p.34～36）、GE Vernova 2026 年 7 月法說與第三季 8-K（一手）、2032 年交期的法說與會議說法（二手轉載）、"
+                  "輪機交期的媒體轉述（Power Engineering、Utility Dive，二手）、"
+                  "大型變壓器交期（pv magazine USA，二手）、資料中心用電端併網等待（JLL，經 Data Center Frontier，二手）。CoWoS 與 HBM 的 1～2 年是推論",
+        "asof": "2026-10-29", "unit": "年",
+        "items": items,
+    }
+
+
 # ---------------------------------------------------------------- 估值路徑
 def valuation():
     rows = read("report_e_valuation_path.csv")
@@ -453,6 +522,8 @@ def main():
         "backlog": backlog(),
         "circular": circular(),
         "valuation": valuation(),
+        "power_use": power_use(),
+        "lead_times": lead_times(),
     }
     # 年度損益只做驗算：四季加總要等於年度
     ann = {r["period"]: r for r in read("report_a_pl_annual.csv")}
