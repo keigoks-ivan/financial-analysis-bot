@@ -70,10 +70,11 @@ def test_qgm_latest_json_still_present_for_seat_engine_and_page_has_note():
 
 # ───────────────────────── 2. 美股技術結構只留階段雷達 ─────────────────────────
 
-RETIRED = ("screener.html", "rs-turn/index.html", "screeners.html")
+# 2026-10-30：screener.html、screeners.html 持有人要求恢復為完整頁，只剩 rs-turn 維持轉址頁
+RETIRED = ("rs-turn/index.html",)
 
 
-def test_three_pages_are_redirect_stubs_to_stages():
+def test_retired_pages_are_redirect_stubs_to_stages():
     for rel in RETIRED:
         html = _read(DOCS / rel)
         assert '<meta http-equiv="refresh" content="0; url=/stages/">' in html, rel
@@ -105,10 +106,9 @@ def test_stage_radar_still_exists_and_data_generators_keep_running():
 
 def test_site_links_to_retired_pages_now_point_to_stages():
     expect_gone = {
-        "docs/stages/index.html": ('href="/rs-turn/"', 'href="/screener.html"'),
+        "docs/stages/index.html": ('href="/rs-turn/"',),
         "docs/simplicity.html": ('href="/screeners.html"', 'href="/rs-turn/"'),
         "docs/research/price-momentum/index.html": ('href="/screeners.html"',),
-        "docs/screener-tw.html": ('href="/screener.html"',),
         "docs/screener-jp.html": ('href="/screener.html"',),
         "docs/screener-my.html": ('href="/screener.html"',),
         "docs/assets/imq-badge.js": ('"/rs-turn/"',),
