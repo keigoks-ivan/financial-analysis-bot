@@ -69,7 +69,7 @@ def main() -> int:
              同值比隱含成長率，再比盈餘殖利率
 
 ③ 席位    核心＝池內時機燈亮著（🟢／🟠／🟡＝距還原權息歷史新高 ≥−10% 且站上 200 日線）的名字，
-             依上修取前 5；亮燈不足就空席，不拿紅燈湊數；其餘池成員＝等待池（無固定席次）
+             依 PEG 由低到高取前 5；亮燈不足就空席，不拿紅燈湊數；其餘池成員＝等待池（無固定席次）
              每週六台北 11:00 依週五收盤重算（同時寄「每週選股結果」email）；
              平日只刷新燈號與倉位，不換人；賣法（v5.7）＝大盤空頭才看紅燈：SPY 在 200 日線之上時
              紅燈續抱、只有失去資格才下席，跌破時週六重算紅燈下席
@@ -106,7 +106,7 @@ DD 只做否決與角色標籤。</b></div>
 <tbody>
 <tr><td class="left">先看誰</td><td class="left">選股看板（市場活數據，日更）</td><td class="left"><a href="/engine/board.txt">看板</a>・<a href="/engine/radar.html">雷達</a></td></tr>
 <tr><td class="left">能不能買</td><td class="left">資格閘＋DD 否決（DD 只剔除、不排序）</td><td class="left"><a href="/engine/cards.html">決策卡</a></td></tr>
-<tr><td class="left">核心還是等待池</td><td class="left">池內時機燈亮著的名字依上修取前 5 為核心，其餘為等待池</td><td class="left"><a href="/engine/arena.html">擂台</a></td></tr>
+<tr><td class="left">核心還是等待池</td><td class="left">池內時機燈亮著的名字依 PEG 由低到高取前 5 為核心，其餘為等待池</td><td class="left"><a href="/engine/arena.html">擂台</a></td></tr>
 <tr><td class="left">何時買</td><td class="left">時機燈（距歷史新高＋200 日線）＋大盤撥盤</td><td class="left"><a href="/dd-screener/sop-funnel.html">SOP Funnel</a>・<a href="/engine/arena.html">擂台</a></td></tr>
 <tr><td class="left">何時複審／出場</td><td class="left">決策卡宣稱（帶數字帶期限）</td><td class="left"><a href="/engine/cards.html">決策卡</a></td></tr>
 <tr><td class="left">規則能不能改</td><td class="left">記分板（91 天結算，季檢才調參）</td><td class="left"><a href="/engine/scoreboard.html">記分板</a></td></tr>
@@ -140,7 +140,7 @@ DD 只做否決與角色標籤。</b></div>
 <tr><td class="left"><b>距歷史新高（時機燈）</b></td><td class="left">每日</td>
 <td class="left">不影響資格或排序，但決定誰有資格坐核心席（綠／橘／黃燈）；轉紅的席位在週六重算時下席；破 52 週線＝資格閘失守</td></tr>
 </tbody></table>
-<div class="note"><b>每週亮燈選席</b>：每週六台北 11:00 依週五收盤重算核心席，池內時機燈亮著（綠／橘／黃）的名字依上修取前 5，
+<div class="note"><b>每週亮燈選席</b>：每週六台北 11:00 依週五收盤重算核心席，池內時機燈亮著（綠／橘／黃）的名字依 PEG 由低到高取前 5，
 不足就空席；平日只刷新燈號與倉位。賣法是大盤空頭才看紅燈（v5.7）：SPY 在 200 日線之上時，紅燈的在席者續抱，只有失去資格才下席，倉位沿用最近一次非紅燈的倉位；SPY 跌破 200 日線時，週六重算把紅燈的在席者換下。等待池每次重算都是當下資格與排序的結果。
 每次核心上席、下席都記入<a href="/engine/arena.html">席位變動帳本</a>（只增不改），
 季檢時用帳本校準換人節奏與空席比例。</div>
@@ -162,8 +162,8 @@ DD 只做否決與角色標籤。</b></div>
 <div class="layer"><div class="lno">L0</div><h3>全市場雷達</h3>
 <p>結構訊號批量 → 候選逐檔 EPS 修正確認。</p>
 <a href="/engine/radar.html">→ 雷達</a></div>
-<div class="layer"><div class="lno">L1</div><h3>資格閘＋上修排序</h3>
-<p>品質閘＋三年成長＝資格，財報後上修決定池內名次；核心席由池內時機燈亮著的名字依上修取前 5。</p></div>
+<div class="layer"><div class="lno">L1</div><h3>資格閘＋PEG 排序</h3>
+<p>品質閘＋三年成長＝資格，PEG（現價 ÷ 明年預估 EPS ÷ 三年成長）由低到高決定池內名次；核心席由池內時機燈亮著的名字依 PEG 取前 5。</p></div>
 <div class="layer"><div class="lno">L2</div><h3>決策卡</h3>
 <p>一席一卡：三閘守門自動結算＋DD 深層宣稱帶期限。</p>
 <a href="/engine/cards.html">→ 決策卡</a></div>
@@ -178,7 +178,7 @@ DD 只做否決與角色標籤。</b></div>
 <b>紀律</b>：資格閘門檻（品質閘／成長閘／市值門檻）事前鎖定，季檢憑<a href="/engine/scoreboard.html">記分板</a>數據才可調，
 每次調整都附證偽條件；記分板只增不改，門檻變更不回頭重算歷史；樣本未熟（n&lt;20 或未滿 91 天）標「觀察期」，不給結論。
 <b>與 <a href="/dd-screener/pipeline.html">選股流程</a> 的關係</b>：兩頁都屬結構長抱線。本頁是排序與席位擂台，
-選股流程是同一條線的流程頁；選股流程的核心軌另用擁有層分排序，與本頁的上修排序不是同一份名單。
+選股流程是同一條線的流程頁；選股流程的核心軌另用擁有層分排序，與本頁的 PEG 排序不是同一份名單。
 </div>
 </div>"""
     # 2026-07-10 選股主控台整併：engine 總覽改輸出 nav-less 片段，供 /cockpit/#seats
@@ -186,7 +186,7 @@ DD 只做否決與角色標籤。</b></div>
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "_index_body.html").write_text(
         page_embed_shell("決策引擎 · 席位排序", body,
-                         "選股邏輯一頁版：品質派資格 × 上修排序 × 距歷史新高時機燈 × DD 選配（veto／角色標籤）× 週頻核心選席 × 自動結算"),
+                         "選股邏輯一頁版：品質派資格 × PEG 排序 × 距歷史新高時機燈 × DD 選配（veto／角色標籤）× 週頻核心選席 × 自動結算"),
         encoding="utf-8")
     print("engine/_index_body.html written (nav-less 片段，供主控台席位排序分頁)")
     return 0

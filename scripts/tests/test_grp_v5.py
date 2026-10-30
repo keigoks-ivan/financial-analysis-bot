@@ -213,3 +213,41 @@ def test_grp_score_pass_flips_false_on_valuation_red_with_all_other_gates_clean(
     assert g_red["veto_valuation"] is True
     assert g_red["valuation"]["light"] == "🔴"
     assert "估值閘紅燈（PEG 2.5 > 2.0）" in g_red["why"]
+
+
+# ── pool_sort_key_peg()（v5.10，2026-10-30，美股看板池序：PEG 低先）──────────────
+
+def _peg_order(rows):
+    return [r["t"] for r in sorted(rows, key=lambda r: grp.pool_sort_key_peg(
+        r.get("peg"), r.get("rev"), r.get("ig"), r.get("ey")))]
+
+
+def test_pool_sort_key_peg_ranks_low_peg_first():
+    rows = [{"t": "A", "peg": 1.5, "rev": 50.0}, {"t": "B", "peg": 0.4, "rev": -3.0},
+            {"t": "C", "peg": 0.9, "rev": 10.0}]
+    assert _peg_order(rows) == ["B", "C", "A"], "PEG 由小到大，上修高低不影響名次"
+
+
+def test_pool_sort_key_peg_missing_and_nonpositive_sort_last():
+    rows = [{"t": "NONE", "peg": None, "rev": 99.0}, {"t": "ZERO", "peg": 0, "rev": 50.0},
+            {"t": "NEG", "peg": -0.5, "rev": 40.0}, {"t": "NAN", "peg": float("nan"), "rev": 30.0},
+            {"t": "STR", "peg": "n/a", "rev": 20.0}, {"t": "OK", "peg": 3.0, "rev": -10.0}]
+    order = _peg_order(rows)
+    assert order[0] == "OK", "有效的正 PEG 一律在缺值／≤0／非數字之前，哪怕 PEG 很大、上修為負"
+    assert order[1:] == ["NONE", "ZERO", "NEG", "NAN", "STR"], "無效 PEG 者之間依上修降冪（99, 50, 40, 30, 20）"
+
+
+def test_pool_sort_key_peg_tie_break_revision_then_growth_then_ey():
+    rows = [{"t": "LOWREV", "peg": 1.0, "rev": 5.0}, {"t": "HIREV", "peg": 1.0, "rev": 20.0},
+            {"t": "NOREV", "peg": 1.0, "rev": None}]
+    assert _peg_order(rows) == ["HIREV", "LOWREV", "NOREV"], "同 PEG 用上修降冪決勝，缺上修最後"
+    rows = [{"t": "G1", "peg": 1.0, "rev": 10.0, "ig": 5.0, "ey": 9.0},
+            {"t": "G2", "peg": 1.0, "rev": 10.0, "ig": 8.0, "ey": 1.0},
+            {"t": "G3", "peg": 1.0, "rev": 10.0, "ig": 8.0, "ey": 3.0}]
+    assert _peg_order(rows) == ["G3", "G2", "G1"], "上修也同值：隱含成長降冪，再盈餘殖利率降冪"
+
+
+def test_pool_sort_key_unchanged_by_peg_addition():
+    """原 pool_sort_key 仍只看上修（中小型精選榜、台股、③b 還在用）。"""
+    rows = [{"rev": 1.0}, {"rev": 9.0}, {"rev": None}]
+    assert [r["rev"] for r in sorted(rows, key=lambda r: grp.pool_sort_key(r["rev"]))] == [9.0, 1.0, None]

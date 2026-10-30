@@ -190,7 +190,7 @@ def exit_reason(ticker: str, track: str, arena: dict) -> str:
         score = row.get("score")
         if thresh is not None and score is not None:
             extra = f"（現末席 {thresh_ticker}）" if thresh_ticker else ""
-            return f"上修排序被擠下——現 v4 對照分 {score:.2f}，末席 {thresh:.2f}{extra}"
+            return f"PEG 排序被擠下——現 v4 對照分 {score:.2f}，末席 {thresh:.2f}{extra}"
         return "機械層未留下具體原因"
     # 本週 arena.json 全站找不到 → 查 dd-screener latest.json 的裁決
     verdict = dd_screener_verdict(ticker)
@@ -253,9 +253,9 @@ def entry_reason(row: dict, seat_no: int, track: str = "core") -> str:
     return (f"{row.get('route_why') or '護城河資料缺'}。"
             f"資格：成長 {g_txt}／{anchor_txt}上修 {rev_txt}／位置 {p_label}。"
             f"時機燈 {lamp_txt}（{lamp.get('why') or '—'}）。"
-            + (f"本輪核心第 {seat_no} 名（池內亮燈者依上修排序，v5.2；v4 對照分 {score_txt}）。"
+            + (f"本輪核心第 {seat_no} 名（池內亮燈者依 PEG 排序，v5.10；v4 對照分 {score_txt}）。"
                if track == "core" else
-               f"等待池第 {seat_no} 名（依上修排序；核心席待時機燈亮；v4 對照分 {score_txt}）。"))
+               f"等待池第 {seat_no} 名（依 PEG 排序；核心席待時機燈亮；v4 對照分 {score_txt}）。"))
 
 
 # ── 前後週差異 ──────────────────────────────────────────────────────────
@@ -515,7 +515,7 @@ def main() -> int:
     # ── 一分鐘版三句 ──
     sent1 = ("本週核心席位由「品質派資格」（品質閘×三年成長×站上 52 週線）"
              "過閘後，在池內<strong>時機燈亮著</strong>（綠／橘／黃，距歷史新高 ≥−10% 且站上 200 日線）"
-             "的名字中，按<strong>財報後上修</strong>降冪排序取前 5；亮燈不足就空席，不拿紅燈湊數。"
+             "的名字中，按<strong>PEG</strong>（現價 ÷ 明年預估 EPS ÷ 三年成長）由低到高排序取前 5；亮燈不足就空席，不拿紅燈湊數。"
              "DD 報告只負責否決不合格公司，或標示核心角色。等待池＝池扣掉核心的"
              "其餘合格名字。")
     if degrade:

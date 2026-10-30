@@ -166,6 +166,12 @@ v5.5（2026-10-18 持有人拍板，不另做回測；美股看板與十倍股�
   實作：quality_gate(s) 預設走新規則；台股席位 build_seats_tw.tw_row() 在股票列帶
   s["_quality_rule"] = "margin10"，quality_gate 讀到就維持原規則（營業現金流利潤率 ≥10，或
   ROIC ≥25 時 ≥0），台股輸出不變。
+
+v5.10（2026-10-30 持有人拍板；只改美股看板，中小型精選榜與台股席位不改）——池排序改 PEG 低先：
+  新增 pool_sort_key_peg(peg, rev, implied_growth, ey)：PEG（live_peg）>0 由小到大，缺值或 ≤0 排最後，
+  同值再比上修降冪、implied_growth 降冪、EY 降冪。build_arena.py 的 pool_rows 改用它；原 pool_sort_key()
+  不動（build_tenbagger.py、build_seats_tw.py、③b 太貴不入池仍用它）。持有人裁量，不是檢定通過；
+  口徑與回測不同、網站核心席無狀態等差異與退回條件見 knowledge/rule_ledger.md 2026-10-30 列。
 """
 from __future__ import annotations
 
@@ -362,6 +368,19 @@ def pool_sort_key(rev, implied_growth=None, ey=None) -> tuple:
     return (-(rev if rev is not None else neg_inf),
             -(implied_growth if implied_growth is not None else neg_inf),
             -(ey if ey is not None else neg_inf))
+
+
+def pool_sort_key_peg(peg, rev, implied_growth=None, ey=None) -> tuple:
+    """v5.10 美股看板池排序鍵（2026-10-30 持有人拍板，見 knowledge/rule_ledger.md 同日列）：
+    PEG（live_peg）> 0 者由小到大排前面；缺值、非數字、≤0 排最後。PEG 同值（或都沒有 PEG）時，
+    再照 pool_sort_key() 的順序比：上修降冪、implied_growth 降冪、EY 降冪。純函式，可直接丟進
+    `sorted(rows, key=...)`。原 pool_sort_key() 不動（中小型精選榜、台股、③b 太貴不入池仍用它）。"""
+    p = _f(peg)
+    if p is None or p <= 0:
+        head = (1, 0.0)
+    else:
+        head = (0, p)
+    return head + pool_sort_key(rev, implied_growth, ey)
 
 
 def in_pool(rev_used_pct) -> bool:

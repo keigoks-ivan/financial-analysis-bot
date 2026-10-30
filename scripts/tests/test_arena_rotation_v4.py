@@ -265,13 +265,13 @@ def test_down_reason_low_revision_is_no_longer_an_out_of_pool_reason():
 
 def test_down_reason_lit_but_squeezed_out_reports_rank():
     rows = [_dr_row(t, "green", i) for i, t in enumerate("ABCDEFG", 1)]
-    assert _shorts("G", rows) == ["上修排名第 7，被擠出前 5"]
+    assert _shorts("G", rows) == ["PEG 排名第 7，被擠出前 5"]
     assert _shorts("A", rows) == ["原因未判定"]
 
 
 def test_down_reason_rank_counts_only_lit_names():
     rows = [_dr_row("R1", "red", 1), _dr_row("R2", "red", 2)] + [_dr_row(t, "green", i) for i, t in enumerate("ABCDEF", 3)]
-    assert _shorts("F", rows) == ["上修排名第 6，被擠出前 5"]
+    assert _shorts("F", rows) == ["PEG 排名第 6，被擠出前 5"]
 
 
 def test_down_reason_veto_chips_and_missing_ticker():

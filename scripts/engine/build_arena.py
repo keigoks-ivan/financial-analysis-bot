@@ -93,6 +93,16 @@ v5 席位引擎（2026-09-17 持有人拍板「品質派 ∩ 獲利上修 ∩ �
      `sat_seats_m5` 變數），與 payload 真正的 v5 `sat_seats`（全量等待池）是兩件
      事，故獨立變數不共用，避免污染 M5 頁面既有的擂台/板凳文案。
 
+v5.10（2026-10-30 持有人拍板；只改美股看板，中小型精選榜 build_tenbagger.py 與台股 build_seats_tw.py 不動）——
+  池排序由「財報後上修降冪」改「PEG 由低到高」：`pool_rows` 改用 grp.pool_sort_key_peg()（PEG＝row 的
+  live_peg＝現價÷明年預估 EPS÷三年成長；缺值或 ≤0 排最後；同值依序比上修、implied_growth_pct、EY）。核心席
+  仍是池內亮燈者取前 5（select_lit_roster_v52 不動），等待池、可買、VCP 分組隨池序變成 PEG 低先。
+  上修仍是資格否決條件（≤−5% 排除），只是不再決定名次。③b 太貴不入池（too_expensive_rows）與 M5 對照組
+  （_arena_body.html，PREREG 凍結）文字不動，仍寫上修排序。持有人裁量，不是檢定通過：依據 v7-backtest
+  docs/SeatPEG_Results.md（美股大型股 5 席全期 Calmar 0.566 對 1,000 組隨機中位數 0.362、贏 999 組，
+  前半段 0.599 輸隨機 0.696）；與回測差異：網站 live_peg 口徑沒測過、網站核心席無狀態（現任會被擠出前 5，
+  回測是抱到出場只補空席）。退回／複審條件見 knowledge/rule_ledger.md 2026-10-30 列。
+
 v5.3（2026-10-18 持有人拍板；美股看板先改，同日晚間延伸到台股席位／十倍股頁）——黃燈倉位 0.5 → 1.0：
   倉位對應 綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。依據 v7-backtest docs/SeatSizing_Results.md
   （亮燈就滿倉 Calmar 高於黃燈半倉，97% 種子）與 docs/SeatSizing_Results_v2.md（同曝險比較，
@@ -134,7 +144,7 @@ from engine.grp import (  # noqa: E402
     ATH_GREEN_DIST, ATH_RED_DIST, DD_FRESH_DAYS, G_MIN_CAGR, G_MIN_CAGR_DURABLE, LAMP_ACTION, MKTCAP_MIN, MOM_12_1_OVERHEAT,
     P_LABEL_HTML, PEAK_ROIC_X, Q_ROIC_MIN, R26_OVERHEAT_FALLBACK,
     R_VETO_FY1, VAL_PEG_MAX, VAL_PE_VS_5Y_MAX, cap_ok, fetch_caps, grp_route, grp_score, in_pool,
-    market_ok, own_score_v4, pool_sort_key, timing_lamp, lamp_action,
+    market_ok, own_score_v4, pool_sort_key, pool_sort_key_peg, timing_lamp, lamp_action,
 )
 from dd_screener_quality import load_qgm_durability_index  # noqa: E402
 from peg_unified import compute_peg_unified  # noqa: E402
@@ -968,8 +978,8 @@ def _group_waiting_pool_by_timing(waiting_rest: list) -> tuple[list, list, list]
     VCP 深度 1（2026-09-18，見 notes/site-internal/root/_seat_engine_v5_1_20260918.md
     §3／knowledge/rule_ledger.md「VCP 深度 1」列）：🟡 組另外用 `vcp_tight` 做一次
     穩定排序（`vcp_tight=True` 排前面），同值（tie）維持傳入順序——因為傳入順序本身
-    已是 `grp.pool_sort_key()` 的上修降冪排序，Python `sort()` 是穩定排序，這一步
-    等於「先看底部緊不緊，再看上修」而不用重新算 tie-break。🔴／⚫ 兩組不動，維持
+    已是 `grp.pool_sort_key_peg()` 的 PEG 由低到高排序（v5.10 起），Python `sort()` 是穩定排序，這一步
+    等於「先看底部緊不緊，再看 PEG」而不用重新算 tie-break。🔴／⚫ 兩組不動，維持
     傳入順序（只有 🟡 是「還沒突破、值得盯緊」的池，🔴 已經在拉回、⚫ 沒資料可排）。"""
     yellow, red, gray = [], [], []
     for r in waiting_rest:
@@ -1037,7 +1047,7 @@ def _down_reasons(ticker: str, rows: list) -> list:
                      key=lambda x: x["pool_rank"])
         n = next((i for i, x in enumerate(lit, 1) if x["ticker"] == ticker), None)
         if n is not None and n > CORE_SLOTS:
-            add(f"上修排名第 {n}，被擠出前 {CORE_SLOTS}")
+            add(f"PEG 排名第 {n}，被擠出前 {CORE_SLOTS}")
     return out or [("原因未判定", "資格、池、時機燈三項都查不出下席原因")]
 
 
@@ -1047,7 +1057,7 @@ def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
     取代 v4「核心5＋衛星5＋候補5」（見 grp.py 檔頭 v5 段第 3-4 點／
     knowledge/rule_ledger.md「v5 席位引擎」列）。核心＝池內亮燈者前 5（v5.2 每週六（台北）重算、
     可空席，見 select_lit_roster_v52()）；可買＝等待池中時機燈亮著（LIT_LAMP_CODES）
-    者（可能是空清單，依 _group_buyable_by_timing() 分段）；等待池＝其餘池成員（依上修排序，即
+    者（可能是空清單，依 _group_buyable_by_timing() 分段）；等待池＝其餘池成員（依 PEG 排序，即
     `pool_rows` 扣掉核心後剩下的，見呼叫端）。"""
     seat_of = {r["ticker"]: "核心席" for r in core_seats}
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
@@ -1083,7 +1093,7 @@ def _pool_section_lines(core_seats, buyable, waiting_rest, prev_snap, rows,
         L.append("  （無——等待池目前沒有亮燈的名字）")
     L.append("")
 
-    L.append(f"== ③ 等待池（資格全過、時機燈還沒亮，共 {len(waiting_rest)} 檔；組內依上修排序）")
+    L.append(f"== ③ 等待池（資格全過、時機燈還沒亮，共 {len(waiting_rest)} 檔；組內依 PEG 排序）")
     if not waiting_rest:
         L.append("  （無）")
     else:
@@ -1168,11 +1178,11 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
              "耐久只當旗標。排序：財報後上修。時機燈：距還原權息歷史新高 10% 內且站上 200 日線就亮。"
              "核心席每週六（台北）重算，可空席；其餘每天重排。這是研究名單，不是帳戶持倉。")
     L.append("倉位：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。")
-    L.append("池：資格全過的名字（v5.7 起沒有上修門檻），依上修由高到低排（缺上修數字的排最後）；同值先比隱含成長率，再比盈餘殖利率。"
+    L.append("池：資格全過的名字（v5.7 起沒有上修門檻），依 PEG（現價 ÷ 明年預估 EPS ÷ 三年成長）由低到高排（PEG 缺值或 ≤0 的排最後）；同值先比財報後上修，再比隱含成長率、盈餘殖利率。"
              "綜合對照分只供對照，不決定排序。"
-             "核心席：池內時機燈亮著（綠／黃／橘）的名字依上修取前 5，每週六（台北）依週五收盤重算，"
+             "核心席：池內時機燈亮著（綠／黃／橘）的名字依 PEG 由低到高取前 5，每週六（台北）依週五收盤重算，"
              "亮燈不足就空席；週中燈號只管倉位。沒進核心的池成員：②可買＝今天亮燈（綠／黃／橘），"
-             "分突破帶／🟡接近新高／🟡資料缺三段；③等待池＝燈號還沒亮，分🔴拉回中／⚫不合格或資料缺，組內依上修排序。")
+             "分突破帶／🟡接近新高／🟡資料缺三段；③等待池＝燈號還沒亮，分🔴拉回中／⚫不合格或資料缺，組內依 PEG 排序。")
     L.append("耐久：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均、三年平均、現值三者都 ≥15%；"
              "只當旗標（dur 欄 Y／—），不擋資格。融券占流通股比 >10% 排除。"
              "過熱（12-1 月動能 >150%）只影響時機燈（🟠半倉）；頂點（ROIC 相對五年均 ≥1.3 倍）只顯示。"
@@ -1979,13 +1989,13 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 
     lamp_rules = _lamp_rules_html()
     legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表</summary>
-<div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看分析師有沒有在財報後上修（排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心席每週六（台北）依週五收盤重算：池內亮燈者依上修取前 5，亮燈不足就空席。賣法是大盤空頭才看紅燈（見上方賣法）。這是研究名單，不是帳戶持倉。</div>
+<div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看價格相對成長貴不貴（PEG，排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心席每週六（台北）依週五收盤重算：池內亮燈者依 PEG 由低到高取前 5，亮燈不足就空席。賣法是大盤空頭才看紅燈（見上方賣法）。這是研究名單，不是帳戶持倉。</div>
 <div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘（ROIC ≥15% 且自由現金流 &gt;0）、三年成長 15%、站上 52 週線。四項全過才有資格；耐久只是旗標。資格全過就入池（v5.7 起沒有上修門檻）。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
 <div class="bw-note-line"><b>耐久</b>：兩種算法擇一達標即可。QGM 五年 ROIC 穩定度 ≥75%；或 Koyfin 五年平均、三年平均、現值三者都 ≥15%。看的是一致性，不是單一年份。只當旗標，不擋資格；達標的在備註欄顯示「耐久 ✓」。</div>
-<div class="bw-note-line"><b>第二關 排序</b>：只看財報後上修幅度。基準是該股最近一次財報日前的月度快照，缺財報錨定時退回三個月。池內依上修由高到低排，缺上修數字的排最後。同值先比隱含成長率，再比盈餘殖利率。不看股價漲幅。綜合對照分只在「上修%（財報後）」欄的滑鼠提示裡顯示，不參與排序。</div>
+<div class="bw-note-line"><b>第二關 排序</b>：看 PEG，即現價除以明年預估 EPS，再除以三年 EPS 年化成長。池內依 PEG 由低到高排，PEG 缺值或不大於 0 的排最後。同值先比財報後上修幅度，再比隱含成長率、盈餘殖利率。財報後上修仍是資格否決條件，只是不再決定名次。不看股價漲幅。綜合對照分只在「上修%（財報後）」欄的滑鼠提示裡顯示，不參與排序。</div>
 <div class="bw-note-line"><b>第三關 時機燈</b>：量股價離歷史新高多遠，燈號直接決定倉位，判定見下表。例外是大盤多頭時續抱的紅燈在席者，倉位沿用最近一次非紅燈的倉位。過熱與頂點不擋資格；相對強度與生命週期階段只在滑鼠提示顯示，不影響燈號。</div>
 {lamp_rules}
-<div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內亮燈者依上修取前 5，每週六重算。在席者轉紅時，大盤空頭週六下席；大盤多頭續抱，只有失去資格才下席。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依上修排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依上修排序。</div>
+<div class="bw-note-line"><b>席次怎麼分</b>：核心＝池內亮燈者依 PEG 由低到高取前 5，每週六重算。在席者轉紅時，大盤空頭週六下席；大盤多頭續抱，只有失去資格才下席。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依 PEG 排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依 PEG 排序。</div>
 <div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。</div>
 <div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排②可買裡 🟡 接近新高組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。結果顯示在備註欄，例如「底部 緊 2段」；距歷史新高超過 10% 的不放標籤。</div>
 <div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只是顯示，不影響席位與排序。有護城河評級時在本欄滑鼠提示。</div>
@@ -2010,14 +2020,14 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
                 if (lamp_as_of or last_rotation_date) else "")
 
     return ('<h3 class="bw-sec">① 核心席（5）</h3>'
-           + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。週中燈號只管倉位，席位等週六複判；大盤多頭時紅燈的現任續抱（見賣法）。</div>'
+           + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字依 PEG 由低到高取前 5；亮燈不足就空席，不拿紅燈湊數。週中燈號只管倉位，席位等週六複判；大盤多頭時紅燈的現任續抱（見賣法）。</div>'
            + freshness + market_note + _seat_view_bar_html() + core_tbl + legend + changes_html
            + f'<h3 class="bw-sec">② 可買（{len(buyable)} 檔）</h3>'
            + '<div class="bw-sub">池內沒進核心、今天時機燈亮著（綠／黃／橘）的名字，依燈號分組。可能是空清單。</div>'
            + buyable_tbl
            + f'<details class="bw-fold bw-secfold"><summary>③ 等待池（{len(waiting_rest)} 檔）</summary>'
            + '<div class="bw-sub">資格全過、時機燈還沒亮：池中扣掉核心與②可買後的其餘名字，'
-             '依時機燈分組（🔴拉回中／⚫不合格或資料缺），組內依上修排序。</div>'
+             '依時機燈分組（🔴拉回中／⚫不合格或資料缺），組內依 PEG 排序。</div>'
            + waiting_tbl + '</details>')
 
 
@@ -2133,10 +2143,10 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     head_line = (f"選股看板 · 資料日 {as_of}" + (f" · {freshness_line}" if freshness_line else "")
                 + f" · 母體 {len(rows)}（美股含 ADR；台股另建）")
     rule_line = ("同一套三關一燈。先過資格：市值 200 億以上、品質閘、三年成長、站上 52 週線"
-                 "（耐久只當旗標）。資格全過即入池，再依財報後上修排序（v5.7 起沒有上修 ≥5% 門檻）。最後由時機燈決定倉位。"
+                 "（耐久只當旗標）。資格全過即入池，再依 PEG 由低到高排序（v5.7 起沒有上修 ≥5% 門檻；上修仍是資格否決條件）。最後由時機燈決定倉位。"
                  "體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 >10%、財報後上修低於 −5%、"
                  "估值閘紅燈（PEG >2.0 或 PE 相對五年均倍數 >1.75x，兩者皆缺不算否決）都整體排除。"
-                 "核心＝池內亮燈者依上修取前 5，每週六（台北）重算、可空席；其餘為等待池。不設產業上限；內部人買賣只是備註。"
+                 "核心＝池內亮燈者依 PEG 由低到高取前 5，每週六（台北）重算、可空席；其餘為等待池。不設產業上限；內部人買賣只是備註。"
                  "細節見下方「怎麼讀這張表」。")
     timing_note = ("過熱（12-1 月動能 >150%）與頂點不擋資格，只影響時機燈（🟠 半倉）或純顯示。"
                    "倉位對應：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。"
@@ -2261,7 +2271,7 @@ def select_lit_roster_v52(pool_ranked: list, prev_core_roster=None,
         elif (r.get("lamp") or {}).get("code") not in LIT_LAMP_CODES:
             removed.append((t, "時機燈轉紅（距新高 <−10% 或跌破 200 日線）"))
         else:
-            removed.append((t, "亮燈者依上修排序擠出前 5"))
+            removed.append((t, "亮燈者依 PEG 排序擠出前 5"))
     filled = [("core", t) for t in core if t not in (prev_core_roster or [])]
     return {"core": core, "rotated": False, "removed": removed, "filled": filled}
 
@@ -2507,9 +2517,11 @@ def main() -> int:
 
     def _pool_key(r: dict):
         ey = ((r["grp"].get("own") or {}).get("raw") or {}).get("ey")
-        return pool_sort_key(r["grp"].get("rev_used_pct"), r.get("implied_growth_pct"), ey)
+        # v5.10（2026-10-30）：美股看板池序改 PEG 低到高（r["peg"]＝row_dict 的 live_peg）；
+        # 上修降為 tie-break。③b 太貴不入池（too_expensive_rows）與其他頁面仍用 pool_sort_key。
+        return pool_sort_key_peg(r.get("peg"), r["grp"].get("rev_used_pct"), r.get("implied_growth_pct"), ey)
 
-    pool_rows = sorted(eligible, key=_pool_key)   # v5.7：不看上修門檻；缺上修值排最後（pool_sort_key）
+    pool_rows = sorted(eligible, key=_pool_key)   # v5.7：不看上修門檻；v5.10：PEG 低先，缺值／≤0 排最後（pool_sort_key_peg）
     for i, r in enumerate(pool_rows, 1):
         r["pool_rank"] = i
     not_in_pool_rows: list = []   # v5.7：沒有池外的資格全過名字了；保留變數與 arena.json key
@@ -2576,7 +2588,7 @@ def main() -> int:
         STATE_JSON.write_text(json.dumps({"schema_version": "arena-state-1.0", "last_nonred": tm_new_state},
                                          ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
-    # 等待池＝池扣掉核心，依上修排序（已經是 pool_rows 的順序，直接篩即可）；
+    # 等待池＝池扣掉核心，依 PEG 排序（已經是 pool_rows 的順序，直接篩即可）；
     # 可買＝等待池中時機燈亮著者（綠／黃／橘，與核心席入席同一組 LIT_LAMP_CODES，
     # 可能是空清單）；等待池（顯示用）＝其餘（見 knowledge/rule_ledger.md 2026-10-20 段）。
     waiting_pool = [r for r in pool_rows if r["ticker"] not in core_seated]
@@ -2600,7 +2612,7 @@ def main() -> int:
 
     # ── M5 對照組（_arena_body.html，PREREG 凍結，只換殼不改文，見 CLAUDE.md「Site
     # composition」段與 knowledge/rule_ledger.md）：這裡的「衛星」是凍結實驗自己的
-    # 固定 5 席快照，取等待池前 5（依上修排序）當資料源，與下方真正的 v5「等待池」
+    # 固定 5 席快照，取等待池前 5（依 PEG 排序）當資料源，與下方真正的 v5「等待池」
     # （payload["sat_seats"]／waiting_pool 全量）是兩件事，故另立變數不共用。──
     sat_seats_m5 = waiting_pool[:SAT_SLOTS]
     seated_all = core_seated | {r["ticker"] for r in sat_seats_m5}
@@ -2732,12 +2744,13 @@ def main() -> int:
                   "（Koyfin FY1→FY3 CAGR≥15%）×站上 52 週線；耐久一致性（QGM 五年穩定度 "
                   "≥75%，或 Koyfin 五年∧三年∧現值三者皆 ≥15%）2026-10-09 起只當旗標；財報後上修 ≤−5%（缺財報錨定退回三個月）／"
                   "體質拒絕／衰退 ⛔／DD 迴避／融券占流通股比 >10% 皆整體排除（v5 無衛星軌可退）。排序＝"
-                  "上修（財報後錨定，缺值退回三月）降冪，tie-break implied_growth_pct、再 tie-break 盈餘"
+                  "PEG（live_peg＝現價÷明年預估 EPS÷三年成長，v5.10 起，2026-10-30）由低到高，缺值或 ≤0 排最後，"
+                  "tie-break 上修（財報後錨定，缺值退回三月）降冪、implied_growth_pct、再 tie-break 盈餘"
                   "殖利率——池＝資格全過的名字（v5.7 起沒有上修 ≥5% 門檻），own_score_v4 五百分位對照分保留一輪僅供 "
                   "hover 對照、不參與排序。時機燈（距還原權息全歷史最高收盤價與 200 日線）：綠＝"
                   "距新高 ≥−3% 且站上 200 日線；黃＝−10%~−3%；紅＝距新高 <−10% 或跌破 200 日線；橘＝過熱"
                   "（12-1 月動能 >150%）但仍在突破帶附近，倉位對應（v5.3，2026-10-18 起）綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0"
-                  "（黃燈由 0.5 改 1.0，依 v7-backtest SeatSizing_Results.md 與 SeatSizing_Results_v2.md；登記判準形式上未過，持有人依兩次回測決定改）。核心＝池內亮燈者依上修取前 5，每週六（台北）重算、可空席（v5.2）"
+                  "（黃燈由 0.5 改 1.0，依 v7-backtest SeatSizing_Results.md 與 SeatSizing_Results_v2.md；登記判準形式上未過，持有人依兩次回測決定改）。核心＝池內亮燈者依 PEG 由低到高取前 5，每週六（台北）重算、可空席（v5.2；v5.10 起排序改 PEG）"
                   "（每月第一次排程整批重選一次，期間僅硬否決能換人、空位由池遞補）；衛星軌已取消，池扣掉"
                   "核心即「等待池」，依時機燈分②可買／③等待池顯示。無產業集中度上限；內部人買賣僅備註，"
                   "不進資格與排序。"),
