@@ -107,8 +107,9 @@ def test_stage_radar_still_exists_and_data_generators_keep_running():
 def test_site_links_to_retired_pages_now_point_to_stages():
     expect_gone = {
         "docs/stages/index.html": ('href="/rs-turn/"',),
-        "docs/simplicity.html": ('href="/screeners.html"', 'href="/rs-turn/"'),
-        "docs/research/price-momentum/index.html": ('href="/screeners.html"',),
+        # 2026-10-30 三頁恢復且選單加「RS 排行」(/screeners.html)，每頁站頭都有該連結，不再檢查它
+        "docs/simplicity.html": ('href="/rs-turn/"',),
+        "docs/research/price-momentum/index.html": (),
         "docs/screener-jp.html": ('href="/screener.html"',),
         "docs/screener-my.html": ('href="/screener.html"',),
         "docs/assets/imq-badge.js": ('"/rs-turn/"',),

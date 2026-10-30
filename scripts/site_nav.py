@@ -134,6 +134,12 @@ Change log:
     2026-10-29 晚（續）：拿掉「全球市場」後 /markets.html 的風險偏好儀表在選單沒有入口，持有人同意補：
         市場 ▾ 在「資產輪動雷達」之後加「風險偏好儀表」("riskg", /markets.html)，市場群變 6 項；
         PREFIX_ACTIVE 的 markets.html 改 ("market", "riskg")。外部 3 repo synced literal 同步。
+    2026-10-30：研究 ▾ 下拉新增「RS 排行」("rs", /screeners.html)，緊接「DD Screener」(dds) 之後
+        （持有人拍板；RS 排行表三頁 7e95e909ee 恢復後在選單沒有入口）。PREFIX_ACTIVE 的
+        screeners.html／screener.html／screener-tw.html 由 ("pick", None) 改 ("research", "rs")；
+        revmom-picks/ 新增 ("pick", None) 映射（其 generator 寫死該群，否則注入後丟高亮）；
+        screener-jp.html／screener-my.html（封存頁）與 rs-turn/、stages/ 維持 ("pick", None)。
+        外部 3 repo synced literal 同步（各 repo nav-rs-1030 分支）。
     2026-10-21：市場 ▾ 拆組（持有人拍板）。(1) 市場 ▾ 只留 5 項（市況主控台／情報監視器／每日
         簡報／資產輪動雷達／財報分析）；(2) 新增下拉「總經與籌碼 ▾」（group key "macrochip"），
         排在市場 ▾ 之後、選股直連之前，7 項：總經深度報告／總經資料庫／AI 信用監測／台股籌碼／
@@ -242,6 +248,7 @@ MENU = {
     "research": [
         ("thub", "/t/", "研究清單"),  # 2026-09-30 持有人選 A：個股內容已併入個股儀表板，此頁改為報告清單入口
         ("dds", "/dd-screener/", "DD Screener"),  # 2026-10-05 持有人要求加回（08-20 曾移出），緊接研究清單之後
+        ("rs", "/screeners.html", "RS 排行"),  # 2026-10-30 持有人拍板：RS 排行表（美股／台股）入口，緊接 DD Screener 之後
         ("canslim", "/canslim/", "CAN SLIM 選股"),  # 2026-10-17 CAN SLIM × 品質關每週名單，緊接 DD Screener 之後
         ("sdash", "/stock-dash/", "個股儀表板"),
         ("etfd", "/etf-dash/", "ETF 儀表板"),
@@ -405,9 +412,10 @@ PREFIX_ACTIVE = [
     ("research/price-momentum-tw/", ("pick", None)),
     ("qgm/", ("pick", None)),
     ("qgm-tw/", ("pick", None)),
-    ("screeners.html", ("pick", None)),
-    ("screener.html", ("pick", None)),
-    ("screener-tw.html", ("pick", None)),
+    ("revmom-picks/", ("pick", None)),  # 2026-10-30 generate_picks_page.py 寫死 ("pick", None)；補映射避免全站注入丟掉選股高亮
+    ("screeners.html", ("research", "rs")),
+    ("screener.html", ("research", "rs")),
+    ("screener-tw.html", ("research", "rs")),
     ("screener-jp.html", ("pick", None)),
     ("screener-my.html", ("pick", None)),
     ("rs-turn/", ("pick", None)),  # 轉強觀察（2026-09-08 新增；純技術結構雷達，與 screener 家族同待遇）
