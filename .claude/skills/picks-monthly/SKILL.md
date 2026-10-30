@@ -7,7 +7,7 @@ description: 「本站挑選」（/active-etf/ 與 /etf-dash/ 頁面最上面那
 
 ## 定位
 
-兩個頁面各有一份「本站挑選」事前登記清單：`/active-etf/`（台股主動式 ETF 22 檔，基準 0050.TW）與 `/etf-dash/`（21 檔，基準 SPY）。每一筆登記寫死兩檔（攻、守）、登記日數字、六個查核點與結算日（登記日加一年），之後只由程式每天算含息報酬與查核點。登記只能新增，舊登記不停，各自追蹤到自己的結算日。
+兩個頁面各有一份「本站挑選」事前登記清單：`/active-etf/`（台股主動式 ETF 22 檔，基準 0050.TW）與 `/etf-dash/`（21 檔，基準 SPY）。每一筆登記寫死兩檔（攻、守）、登記日數字、查核點與結算日（登記日加一年），之後只由程式每天算含息報酬與查核點（etf-dash 自 2026-10-30 起新登記只有 cp1 落後基準、cp5 資金流出兩條，舊登記的查核點凍結不變）。登記只能新增，舊登記不停，各自追蹤到自己的結算日。
 
 機械層（候選數據、登記程式、追蹤程式、頁面）不呼叫模型。本 skill 只補兩件需要寫字的事：
 
@@ -39,7 +39,7 @@ description: 「本站挑選」（/active-etf/ 與 /etf-dash/ 頁面最上面那
 {"schema": "picks-reviews-v1",
  "reviews": [
    {"reg_id": "2026-10-28", "as_of": "2026-11-01", "data_as_of": "2026-10-30",
-    "status_line": "兩檔各半含息 +X%，0050 +Y%，查核點 0／6 觸發",
+    "status_line": "兩檔各半含息 +X%，0050 +Y%，查核點 0／N 觸發",
     "text": "2～4 句，≤ 220 字。",
     "review": {"model": "claude-sonnet-5", "rounds": 1, "findings": []}}
  ]}
@@ -70,7 +70,13 @@ description: 「本站挑選」（/active-etf/ 與 /etf-dash/ 頁面最上面那
 3. 可選的第三句：兩檔持股或評價相對登記日的變化，只寫證據包看得到的。
 4. 不預測、不寫買賣、不寫「接下來會」。結算月評第一句寫最終數字。
 
-格式限制（`check_picks_text.py --mode review` 會擋）：全文 ≤ 220 字、2～4 句、數字都要在證據裡、無「——」、「；」最多 1 個、無比喻詞與買賣用語、「不是 A，是 B」最多 1 次。
+**固定句（etf-dash 專用，v1.4，持有人 2026-10-30 拍板）**：etf-dash 的月評，若該筆登記的 `rev_3m`（成分股預估修正）、`pe_max`（本益比倍數）、`breadth`（上修寬度）任一條在追蹤摘要裡是已觸發，月評正文要多一句，逐字照抄、不得改寫、不得拆開：
+
+> 依本站價格與獲利研究，預估修正與本益比倍數是落後訊號，這條觸發只當資訊，不當推翻理由。
+
+規則：只適用 etf-dash；三種都沒觸發就不寫這句；寫了之後仍照原本的結構，這句放在最後，不算進 2～4 句與 220 字，也不要求證據包有對應數字；這句不替代第二句對查核點的陳述，已觸發的那條照常寫。追蹤摘要會在這類查核點下印出「→ 月評要加固定句」。`check_picks_text.py` 用 `--reg-id` 讀追蹤摘要判斷：該加沒加 FAIL，不該加加了 FAIL，改寫過 FAIL。依據：`/backtest/price_vs_earnings/`。
+
+格式限制（`check_picks_text.py --mode review` 會擋）：全文（不含固定句）≤ 220 字、2～4 句、數字都要在證據裡、無「——」、「；」最多 1 個、無比喻詞與買賣用語、「不是 A，是 B」最多 1 次。
 
 通用寫作規則（對照 zh-analyst-prose）：
 
@@ -97,7 +103,7 @@ description: 「本站挑選」（/active-etf/ 與 /etf-dash/ 頁面最上面那
 
 **active-etf 的守方固定是 0050 本身，不挑**：登記指令用 `--defend 0050`。2026-10-28 用 16 個月資料檢驗（`docs/active-etf/analysis-2026-10-28.html`）：22 檔在 0050 的大修正裡沒有一檔跌得比 0050 少，主動報酬平均配對相關 0.69～0.78，守的工作 0050 自己做得比任何一檔主動式好。
 
-**etf-dash 的守方固定是 SPY 本身，不挑**（v1.2，2026-10-28 持有人選定）：登記指令用 `--defend SPY`。十年價格面檢驗（`docs/etf-dash/analysis-2026-10-28.html`）：XLV 六次回檔五次比 SPY 淺，但十年落後 SPY 27.7 個百分點，換成 SPY 當守方，十年累計多 59 個百分點、最大回檔只深 3.6 個百分點。查核點對基準守方只剩 cp1～cp5 且只看攻方。下面 1～4 條是舊做法，留作紀錄，兩個市場都不再用。
+**etf-dash 的守方固定是 SPY 本身，不挑**（v1.2，2026-10-28 持有人選定）：登記指令用 `--defend SPY`。十年價格面檢驗（`docs/etf-dash/analysis-2026-10-28.html`）：XLV 六次回檔五次比 SPY 淺，但十年落後 SPY 27.7 個百分點，換成 SPY 當守方，十年累計多 59 個百分點、最大回檔只深 3.6 個百分點。查核點對基準守方只剩 cp1～cp5 且只看攻方（v1.4 起新登記再縮成 cp1、cp5，見版本紀錄）。下面 1～4 條是舊做法，留作紀錄，兩個市場都不再用。
 
 1. 排名口徑：有近三年最大回檔的基金不少於 3 檔，就用近三年最大回檔，否則全體改用近一年最大回檔。口徑一律全體同一個，不逐檔混用。
 2. 取最大回檔最淺（絕對值最小）的前三檔，扣掉攻方本身。
@@ -143,7 +149,7 @@ python3 -c "import json;print(json.load(open('/tmp/picks/base_rate_etf-dash.json
 1. **第一段（lead 留空）**：這一季候選整體，只放一個數字（例如候選裡近一年贏基準的檔數，抄證據包，或持股重疊最高的一組）。
 2. **第二段（lead 一句主張）**：攻方為什麼。lead 是一句話的主張，text 放 2～3 個支持數字（近一年含息、盈餘面指標、評價），加上至少一條規則的歷史基率（見「攻方理由的歷史基率」）。若沿用上一季攻方，這裡寫明。
 3. **第三段（lead 一句主張）**：守方為什麼。lead 一句，text 放 2～3 個數字（最大回檔、與攻方的重疊、評價）。active-etf：lead 寫「守的那一半放 0050」，text 放攻方的 active share（證據包）與攻方對 0050 的最大回檔比較，不再比較其他基金的回檔。etf-dash：lead 寫「守的那一半放 SPY」，text 放攻方與 SPY 的持股重疊（證據包）與攻方對 SPY 的最大回檔、週 beta 比較。
-4. **第四段（lead 留空）**：「會錯在哪」，攻方一句、守方一句（active-etf 守方那句改寫「攻方若貼近指數、active share 掉到多少就不划算」；etf-dash 守方那句改寫攻方在基準回檔時會跌更深的那個數字）。各自對應登記後會變壞的那個數字，不重複六個查核點的文字，不預測。
+4. **第四段（lead 留空）**：「會錯在哪」，攻方一句、守方一句（active-etf 守方那句改寫「攻方若貼近指數、active share 掉到多少就不划算」；etf-dash 守方那句改寫攻方在基準回檔時會跌更深的那個數字）。各自對應登記後會變壞的那個數字，不重複查核點的文字，不預測。
 
 `frozen_note`：一至兩句，抄證據包的兩檔持股加權重疊與基準，講這筆登記的比較基準是什麼（active-etf 寫「守方是 0050 本身，重疊欄用攻方的 active share 換算」；etf-dash 寫「守方是 SPY 本身，重疊欄是攻方與 SPY 的持股重疊」）。不得與第三段重複同一句話。
 
@@ -156,7 +162,7 @@ python3 -c "import json;print(json.load(open('/tmp/picks/base_rate_etf-dash.json
 > 你是冷讀者。讀下列文字檔和各自的證據檔：<檔案清單>。月評檔的格式是 {"status_line","text"}，登記文字檔是 {"paragraphs":[{"lead","text"}x4],"frozen_note"}。逐項回報，每項給 🔴（必須改）、🟡（建議）或 🟢：
 > (a) 有沒有任何句子等於在叫人買或賣、加或減部位、換檔，即使沒用禁用詞。有沒有預測未來（「會」「將」「接下來」寫成事實）。
 > (b) 每個數字在證據檔裡找得到嗎？數字旁邊的標籤對不對（例如把攻方的數字寫成守方的、把含息寫成不含息、把三個月寫成一年）。有沒有把相關當成因果。有沒有自己算出來的差距或加總。
-> (c) 月評：第一句是否把兩檔各半與基準兩個數字都寫出來並說明領先或落後？第二句是否講查核點觸發數與最接近門檻的那個？全文是否 2～4 句、≤ 220 字？有沒有講證據包沒有的事？
+> (c) 月評：第一句是否把兩檔各半與基準兩個數字都寫出來並說明領先或落後？第二句是否講查核點觸發數與最接近門檻的那個？全文是否 2～4 句、≤ 220 字？有沒有講證據包沒有的事？（etf-dash 月評若含「依本站價格與獲利研究，預估修正與本益比倍數是落後訊號，這條觸發只當資訊，不當推翻理由。」這一句，它是規定文字，不算進句數與字數，也不算「證據包沒有的事」，不要標紅；只確認它逐字相同，且對應的 rev_3m、pe_max、breadth 確實有一條在追蹤摘要裡已觸發。）
 > (d) 登記文字：第二、三段的 lead 是不是主張（不是數字）？攻守的理由是否對得上規則（攻：近一年贏基準＋盈餘面改善＋評價最便宜；守：兩個市場都固定基準本身，etf-dash 是 SPY、active-etf 是 0050）？若沿用上一季攻方，是否在第二段明講？第二段引用的歷史基率，數字與標籤是否對得上基率檔（條件內對所有週、勝率對超額）？判定「沒有」或「無基率」的理由，有沒有被寫成會讓攻方多贏？active-etf 是否寫明「無基率」？第四段是否攻守各一句「會錯在哪」，而且沒有複述查核點？
 > (e) 白話與 AI 痕跡：有沒有比喻、「——」串句、「不是 A，是 B」連用、段尾金句、抽象名詞（機制、結構性、敘事、框架）、英文縮寫沒附中文、每句帶括號排名？有就 🔴。表外你覺得難懂的詞或像金句的句子，給 🟡。
 > 🟡 是建議，不擋上站。輸出 JSON：{"model": "...", "verdict": "pass" 或 "fix", "findings": [{"file": "...", "item": "a", "level": "🔴、🟡 或 🟢", "note": "..."}]}
@@ -186,7 +192,9 @@ python3 -c "import json;print(json.load(open('/tmp/picks/base_rate_etf-dash.json
            print("  列：" + json.dumps(row, ensure_ascii=False))
        print(f"  查核點 {n_trig}／{len(cps)} 觸發")
        for c in cps:
-           print(f"  - {c.get('id')} [{c.get('status')}] {c.get('text')}｜現值：{c.get('current_label')}")
+           print(f"  - {c.get('id')} [{c.get('status')}] <{c.get('kind')}> {c.get('text')}｜現值：{c.get('current_label')}")
+           if "<kind>" == "etf-dash" and c.get("status") == "triggered" and c.get("kind") in ("rev_3m", "pe_max", "breadth"):
+               print("    → 月評要加固定句（見月評寫作規則）")
        prev = [v for v in revs if v.get("reg_id") == r.get("id")]
        if prev:
            p = sorted(prev, key=lambda v: v["as_of"])[-1]
@@ -197,7 +205,7 @@ python3 -c "import json;print(json.load(open('/tmp/picks/base_rate_etf-dash.json
 
    讀 `/tmp/picks/digest_<kind>.txt`。檢查資料新鮮度：要寫月評的登記，`as_of` 距 `TODAY` 超過 5 天就是追蹤資料過期，該市場失敗（stage `資料`）。
 4. 寫月評：對每一筆要寫的登記（見月評寫作規則），把 `{"status_line": "...", "text": "..."}` 存成 `/tmp/picks/review_<kind>_<reg_id>.json`。同一個 `reg_id` 本月已有月評的跳過。
-5. 機械檢查：`python3 scripts/check_picks_text.py --kind <kind> --mode review --text /tmp/picks/review_<kind>_<reg_id>.json --evidence /tmp/picks/ev_<kind>.txt` 必須 PASS。FAIL 就依原因改稿再跑，最多 3 次，仍 FAIL 進失敗處置（stage `月評檢查`）。
+5. 機械檢查：`python3 scripts/check_picks_text.py --kind <kind> --mode review --reg-id <reg_id> --text /tmp/picks/review_<kind>_<reg_id>.json --evidence /tmp/picks/ev_<kind>.txt` 必須 PASS。FAIL 就依原因改稿再跑，最多 3 次，仍 FAIL 進失敗處置（stage `月評檢查`）。
 6. 若 `TODAY` 的月份是 1、4、7、10（季度重挑）且 `picks.json` 還沒有 `id` 等於 `TODAY` 的登記：照「季度重挑規則」從 `/tmp/picks/brief_<kind>.txt` 挑攻守各一檔。etf-dash 接著跑「攻方理由的歷史基率」的兩行指令（程式失敗進失敗處置，stage `基率`）。寫 `/tmp/picks/register_<kind>.json`（四段＋`frozen_note`），先跑 `python3 scripts/check_picks_text.py --kind <kind> --mode register --text /tmp/picks/register_<kind>.json --evidence /tmp/picks/brief_<kind>.txt`（etf-dash 加 `--base-rate /tmp/picks/base_rate_etf-dash.json`，會檢查第二段有沒有引用基率），PASS 為止（最多 3 次，stage `登記檢查`）。同時把挑選過程記在 `/tmp/picks/pick_log_<kind>.txt`（每條規則各檔的數字與結果，etf-dash 另抄三條基率的判定），冷讀要看。
 7. **冷讀**：用 `Agent` 工具開一個 subagent（`model` 用 `claude-sonnet-5`），貼入「冷讀 subagent 職責書」。檔案清單＝這輪的月評檔與登記文字檔，各自對應的證據檔，`/tmp/picks/pick_log_<kind>.txt`，etf-dash 另加 `/tmp/picks/base_rate_etf-dash.txt`。依 findings 修稿，最多 2 輪；只有 🔴 必須改，🟡 由寫稿者取捨。改過的稿重跑步驟 5、6 的檢查。第 2 輪後仍有 🔴 進失敗處置（stage `冷讀`）。
 8. append 月評（用程式寫，不手改 JSON；把 `review` 換成最後一輪冷讀的 model、rounds、findings）：
@@ -249,3 +257,4 @@ python3 -c "import json;print(json.load(open('/tmp/picks/base_rate_etf-dash.json
 - v1.1 2026-10-28：active-etf 守方固定 0050（深度檢驗：22 檔沒有一檔在修正裡比 0050 淺，主動報酬同一個賭注）。登記程式 `--defend 0050`、`--kind revision`、`--extra-evidence`；查核點對基準守方只剩四個，cp4 改看攻方 active share。
 - v1.2 2026-10-28：etf-dash 守方固定 SPY（十年檢驗：SMH＋XLV 各半 951% 對 SMH＋SPY 各半 1010%，回檔只差 3.6 個百分點；登記理由「EPS 上修股價跌」在歷史上沒有預測力，攻方理由改寫成長期贏家）。登記程式 `--defend SPY` 走基準守方分支，查核點 cp1～cp5 只看攻方。
 - v1.3 2026-10-28：攻方理由附歷史基率（持有人定：沒有基率的理由不寫進登記）。etf-dash 季度登記必跑 `picks_base_rate.py`，登記程式 `--base-rate` 把三條基率凍結進 `frozen.base_rates`，文字檢查要求第二段引用其中一條的勝率或超額；active-etf 資料太短，寫「無基率」。SMH 回頭檢查三條都是「沒有」，評價那條反向（本益比分位 ≤ 50 的週之後 52 週超額 +4.7%，所有週 +12.4%）。
+- v1.4 2026-10-30：持有人拍板，etf-dash 的查核點與「價格與獲利誰先動」研究（`/backtest/price_vs_earnings/`）結論衝突，改兩件事：①預估修正（rev_3m）、本益比倍數（pe_max）、上修寬度（breadth）是落後訊號，月評若這三種已觸發，要逐字加一句固定句，說明只當資訊、不當推翻理由（舊登記照舊追蹤，登記本身一字不改）；②自 2026-10 以後的新登記（1 月季度重挑起）etf-dash 只留 cp1（落後基準）與 cp5（資金流出），id 不重編。active-etf 不動。

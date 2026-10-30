@@ -2,7 +2,7 @@
 """「本站挑選」文字的機械檢查（skill `picks-monthly`；登記程式 picks_register.py 也會呼叫）。
 
   python3 scripts/check_picks_text.py --kind active-etf|etf-dash --text FILE --evidence FILE [--mode register|review]
-      [--base-rate FILE]
+      [--base-rate FILE] [--reg-id ID]
 
 --text 的格式
   register（預設）：{"paragraphs": [{"lead": "", "text": ""} x 4], "frozen_note": ""}
@@ -26,6 +26,14 @@
      基率檔的 brief 併進證據；第二段（攻方理由）的 lead＋text 至少要出現一條規則的「條件內勝率」或
      「條件內平均超額」（照顯示位數比對，符號要對）。三條都是「無基率」時，第二段要寫出「無基率」。
      沒給 --base-rate 不查這一條（舊登記、active-etf 照舊）。
+
+  6. 固定句（review 模式，skill picks-monthly v1.4，2026-10-30）：etf-dash 的月評，若該筆登記的
+     rev_3m、pe_max、breadth 任一條已觸發，月評必須逐字含固定句 FIXED_SENTENCE；沒觸發不得出現。
+     固定句不算進字數／句數上限，也不要求數字出現在證據裡；其他檢查（數字、禁用詞）對去掉固定句後的正文照做。
+     固定句只能逐字出現（改寫過的殘句 FAIL）；active-etf 不得出現。
+     觸發狀態從證據檔的追蹤摘要讀：給 --reg-id 時，找「## 登記 <ID>」那一段裡 `[triggered]` 的查核點，
+     kind 取該行的 `<kind>`（摘要程式印出），沒有就退回 etf-dash 既有 id 對照（cp2＝rev_3m、cp3＝pe_max、cp4＝breadth）。
+     沒給 --reg-id 就拿不到觸發狀態，只做「固定句只能逐字出現、active-etf 不得出現」。
 
 輸出 PASS 或 FAIL＋逐條原因；FAIL 時 exit code 為 1。
 """
@@ -52,6 +60,12 @@ SELF_TALK = ["本頁不對", "值得點出", "真正該"]
 TRADE_WORDS = ["買進", "買入", "賣出", "加碼", "減碼", "建倉", "清倉", "停損", "停利", "目標價",
                "應該買", "應該賣", "建議買", "建議賣"]
 DASH = "——"
+
+# 持有人 2026-10-30 拍板的固定句，逐字使用，不得改寫
+FIXED_SENTENCE = "依本站價格與獲利研究，預估修正與本益比倍數是落後訊號，這條觸發只當資訊，不當推翻理由。"
+_FIXED_FRAGMENTS = ("價格與獲利研究", "落後訊號", "只當資訊", "不當推翻理由")
+LAGGING_KINDS = ("rev_3m", "pe_max", "breadth")
+_LEGACY_CP_KIND = {"cp2": "rev_3m", "cp3": "pe_max", "cp4": "breadth"}  # etf-dash 既有登記的凍結 id 對照
 
 MINUS = "-−–－"
 PLUS = "+＋"
@@ -199,11 +213,67 @@ def check_register(obj: dict, ev: list[tuple[float, bool]]) -> list[str]:
     return errs
 
 
-def check_review(obj: dict, ev: list[tuple[float, bool]]) -> list[str]:
+def triggered_lagging_kinds(evidence: str, reg_id: str) -> set[str] | None:
+    """從追蹤摘要讀某筆登記已觸發的 rev_3m／pe_max／breadth。找不到該登記回傳 None。"""
+    lines = evidence.splitlines()
+    start = None
+    for i, ln in enumerate(lines):
+        if re.match(r"##\s*登記\s+" + re.escape(reg_id) + r"(?:\s|$)", ln):
+            start = i + 1
+            break
+    if start is None:
+        return None
+    out: set[str] = set()
+    for ln in lines[start:]:
+        if ln.startswith("## "):
+            break
+        m = re.match(r"\s*-\s*(cp\d+)\s*\[(\w+)\](?:\s*<(\w+)>)?", ln)
+        if m and m.group(2) == "triggered":
+            kind = m.group(3) or _LEGACY_CP_KIND.get(m.group(1))
+            if kind in LAGGING_KINDS:
+                out.add(kind)
+    return out
+
+
+def check_fixed_sentence(kind: str, text: str, status_line: str, evidence: str, reg_id: str | None) -> tuple[list[str], str]:
+    """回傳 (錯誤, 去掉固定句後的月評正文)。"""
     errs: list[str] = []
-    text = (obj.get("text") or "").strip()
-    if not text:
+    n = text.count(FIXED_SENTENCE)
+    body = text.replace(FIXED_SENTENCE, "")
+    if FIXED_SENTENCE in status_line:
+        errs.append("固定句只能放在月評正文，不放 status_line")
+    if n > 1:
+        errs.append(f"固定句出現 {n} 次，只能 1 次")
+    if any(f in body for f in _FIXED_FRAGMENTS):
+        errs.append("固定句必須逐字使用，不得改寫或只寫一部分")
+    if kind != "etf-dash":
+        if n:
+            errs.append(f"{kind} 的月評不得出現固定句（只適用 etf-dash）")
+        return errs, body
+    if reg_id is None:
+        return errs, body  # 拿不到觸發狀態，只檢查逐字
+    trig = triggered_lagging_kinds(evidence, reg_id)
+    if trig is None:
+        errs.append(f"證據檔裡找不到登記 {reg_id} 的追蹤摘要，無法判斷固定句該不該出現")
+    elif trig and n == 0:
+        errs.append(f"登記 {reg_id} 的 {'、'.join(sorted(trig))} 已觸發，月評要逐字加固定句：{FIXED_SENTENCE}")
+    elif not trig and n:
+        errs.append(f"登記 {reg_id} 的 rev_3m、pe_max、breadth 都沒觸發，月評不得出現固定句")
+    return errs, body
+
+
+def check_review(obj: dict, ev: list[tuple[float, bool]], kind: str = "etf-dash",
+                 evidence: str = "", reg_id: str | None = None) -> list[str]:
+    errs: list[str] = []
+    raw = (obj.get("text") or "").strip()
+    if not raw:
         return ["text 空白"]
+    sl = (obj.get("status_line") or "").strip()
+    fe, text = check_fixed_sentence(kind, raw, sl, evidence, reg_id)
+    errs += fe
+    text = text.strip()
+    if not text:
+        return errs + ["text 去掉固定句後空白"]
     if len(text) > REVIEW_MAX:
         errs.append(f"月評超過 {REVIEW_MAX} 字（{len(text)}）")
     n = len(split_sentences(text))
@@ -212,7 +282,6 @@ def check_review(obj: dict, ev: list[tuple[float, bool]]) -> list[str]:
     errs += check_words("月評", text)
     errs += check_numbers("月評", text, ev)
     parts = [text]
-    sl = (obj.get("status_line") or "").strip()
     if sl:
         parts.append(sl)
         errs += check_words("status_line", sl)
@@ -268,10 +337,11 @@ def load_text(path: Path, mode: str) -> dict:
     return obj
 
 
-def check(kind: str, obj: dict, evidence: str, mode: str = "register", base_rate: dict | None = None) -> list[str]:
+def check(kind: str, obj: dict, evidence: str, mode: str = "register", base_rate: dict | None = None,
+          reg_id: str | None = None) -> list[str]:
     """回傳錯誤清單；空清單＝PASS。base_rate＝picks_base_rate.py 的輸出（只在 register 模式用）。"""
     if mode == "review":
-        return check_review(obj, evidence_numbers(evidence))
+        return check_review(obj, evidence_numbers(evidence), kind, evidence, reg_id)
     if base_rate:
         evidence = evidence + "\n" + (base_rate.get("brief") or "")
     errs = check_register(obj, evidence_numbers(evidence))
@@ -287,6 +357,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--evidence", required=True)
     ap.add_argument("--mode", default="register", choices=MODES)
     ap.add_argument("--base-rate", default=None, help="picks_base_rate.py 的輸出 JSON（register 模式查第二段引用）")
+    ap.add_argument("--reg-id", default=None, help="review 模式：被評的登記 id；給了才查固定句該不該出現")
     a = ap.parse_args(argv)
     try:
         obj = load_text(Path(a.text), a.mode)
@@ -295,7 +366,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as e:  # noqa: BLE001
         print(f"FAIL 讀不到輸入：{e}")
         return 1
-    errs = check(a.kind, obj, evidence, a.mode, base_rate)
+    errs = check(a.kind, obj, evidence, a.mode, base_rate, a.reg_id)
     if errs:
         print(f"FAIL {a.kind} {a.mode}")
         for e in errs:

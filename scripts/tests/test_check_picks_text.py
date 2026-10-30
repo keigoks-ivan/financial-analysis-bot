@@ -152,3 +152,68 @@ def test_cli_exit_codes(tmp_path):
                            capture_output=True, text=True)
     assert r_ok.returncode == 0 and r_ok.stdout.startswith("PASS")
     assert r_bad.returncode != 0 and r_bad.stdout.startswith("FAIL") and "158.9" in r_bad.stdout
+
+
+# ── 固定句（skill picks-monthly v1.4，2026-10-30）──────────────────────────
+FIXED = cpt.FIXED_SENTENCE
+DIGEST_TRIG = """## 登記 2026-10-28　狀態 tracking
+  查核點 1／6 觸發
+  - cp1 [untriggered] <lag> 落後｜現值：x
+  - cp2 [triggered] <rev_3m> 修正低於 -10%｜現值：-12.0%
+## 登記 2026-10-29　狀態 tracking
+  查核點 0／5 觸發
+  - cp2 [untriggered] <rev_3m> 修正｜現值：+3.0%
+  - cp5 [triggered] <outflow> 流出｜現值：x
+"""
+EV2 = EVIDENCE + DIGEST_TRIG
+BODY = "兩檔各半含息 +40.2%，0050 為 +119.1%，落後。查核點 1／6 觸發，上修寬度 71.0%。"
+
+
+def rv(text, kind="etf-dash", reg_id=None):
+    return cpt.check(kind, {"text": text}, EV2, "review", reg_id=reg_id)
+
+
+def test_fixed_sentence_triggered_requires_it():
+    assert rv(BODY + FIXED, reg_id="2026-10-28") == []
+    errs = rv(BODY, reg_id="2026-10-28")
+    assert any("要逐字加固定句" in e for e in errs)
+
+
+def test_fixed_sentence_not_triggered_forbidden():
+    errs = rv(BODY + FIXED, reg_id="2026-10-29")  # 只有 outflow 觸發，不算落後訊號
+    assert any("不得出現固定句" in e for e in errs)
+    assert rv(BODY, reg_id="2026-10-29") == []
+
+
+def test_fixed_sentence_not_counted_in_limits():
+    long_body = "兩檔各半含息 +40.2%，0050 為 +119.1%。查核點 1／6 觸發。"
+    assert rv(long_body + FIXED, reg_id="2026-10-28") == []
+    four = "甲 +40.2%。乙 +119.1%。丙 71.0%。丁 62.5%。"
+    assert rv(four + FIXED, reg_id="2026-10-28") == []  # 4 句＋固定句仍是 4 句
+
+
+def test_fixed_sentence_must_be_verbatim():
+    mangled = BODY + "依本站價格與獲利研究，預估修正是落後訊號，只當資訊。"
+    assert any("逐字" in e for e in rv(mangled, reg_id="2026-10-28"))
+    assert any("逐字" in e for e in rv(mangled))  # 沒給 reg-id 也擋改寫
+
+
+def test_fixed_sentence_without_reg_id_only_verbatim():
+    assert rv(BODY + FIXED) == []
+    assert rv(BODY) == []
+
+
+def test_fixed_sentence_forbidden_in_active_etf_and_status_line():
+    assert any("active-etf" in e for e in rv(BODY + FIXED, kind="active-etf"))
+    errs = cpt.check("etf-dash", {"text": BODY, "status_line": FIXED}, EV2, "review")
+    assert any("status_line" in e for e in errs)
+
+
+def test_fixed_sentence_unknown_reg_fails():
+    assert any("找不到登記" in e for e in rv(BODY, reg_id="2099-01-01"))
+
+
+def test_fixed_sentence_legacy_digest_without_kind():
+    ev = EVIDENCE + "## 登記 2026-10-28\n  - cp3 [triggered] 本益比\n"
+    errs = cpt.check("etf-dash", {"text": BODY}, ev, "review", reg_id="2026-10-28")
+    assert any("pe_max" in e for e in errs)

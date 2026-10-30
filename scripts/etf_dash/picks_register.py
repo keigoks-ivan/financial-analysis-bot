@@ -8,7 +8,7 @@
 text.json 只有模型寫的部分：
   {"paragraphs": [{"lead": "", "text": ""}, …共 4 段], "frozen_note": ""}
 其餘全部由程式產生：挑選的名稱與 yf_ticker、frozen 數字、登記日數字表、title 與 sub
-（套模板）、六個查核點（門檻照規格模板）、結算日（登記日加一年）、id（登記日）。
+（套模板）、查核點（門檻照規格模板；守方是 SPY 時只有 cp1、cp5，2026-10-30 起）、結算日（登記日加一年）、id（登記日）。
 
 數字來源是 data/etf_dash/picks_candidates.json（picks_candidates.py 產生）；它的
 as_of 必須在登記日前 5 天內（--max-age-days 可改，只給測試用）。同一天已有登記就拒絕。
@@ -128,11 +128,13 @@ def build_frozen_table(cands: dict, codes: list[str], as_of: str) -> dict:
 
 
 def build_checkpoints_bench(cands: dict, atk: str) -> list[dict]:
-    """守方是基準 SPY 本身：查核點只看攻的那一檔（cp6 回檔比對不成立，略）。"""
+    """守方是基準 SPY 本身：查核點只看攻的那一檔。
+
+    2026-10-30 起只留 lag（cp1）與 outflow（cp5），id 沿用不重編：預估修正（rev_3m）、本益比倍數（pe_max）、
+    上修寬度（breadth）依「價格與獲利誰先動」研究是落後訊號，不再登記為查核點
+    （/backtest/price_vs_earnings/；skill picks-monthly v1.4）。2026-10-28、10-29 兩筆舊登記的查核點已凍結在
+    picks.json，picks_track 讀登記裡的 checkpoints，不會依此函式重算。"""
     ra = fund_row(cands, atk)
-    if ra["fwd_pe"] is None or ra["fy1_rev_3m_pct"] is None or ra["breadth_90d_up_pct"] is None:
-        raise RegisterError(f"{atk} 缺遠期本益比、三個月上修或上修寬度，無法產生查核點")
-    pe_max = round(ra["fwd_pe"] * 1.3, 1)
     aum100 = round(ra["scale_usd_bn"] * 10) if ra["scale_usd_bn"] is not None else None
     cp5_text = (f"{atk} 近一個月淨流出超過規模的 5%（登記日規模 {aum100:,} 億美元，即流出 {round(aum100 * 0.05):,} 億以上）"
                 if aum100 is not None else f"{atk} 近一個月淨流出超過規模的 5%（登記日規模無資料）")
@@ -140,15 +142,6 @@ def build_checkpoints_bench(cands: dict, atk: str) -> list[dict]:
         {"id": "cp1", "kind": "lag", "days": 126, "codes": [atk],
          "text": f"{atk} 登記後的美元含息累計報酬，連續 126 個交易日（約半年）落後 {BENCH}",
          "consequence": "攻的挑選推翻，不換檔，結算時照算"},
-        {"id": "cp2", "kind": "rev_3m", "min": -10, "codes": [atk],
-         "text": f"{atk} 成分股加權明年度 EPS 預估，近三個月修正低於 {MINUS}10%（登記日 {pct(ra['fy1_rev_3m_pct'])}）",
-         "consequence": "成分股盈餘轉向下修，攻的那一檔重新評估"},
-        {"id": "cp3", "kind": "pe_max", "max": {atk: pe_max}, "codes": [atk],
-         "text": f"{atk} 加權遠期本益比比登記日高三成以上：超過 {pe_max:.1f} 倍（登記日 {ra['fwd_pe']:.1f}）",
-         "consequence": "估值比登記日貴三成，攻的那一檔重新評估"},
-        {"id": "cp4", "kind": "breadth", "code": atk, "min": 50,
-         "text": f"{atk} 近三個月 EPS 上修的成分股權重低於 50%（登記日 {ra['breadth_90d_up_pct']:.1f}%）",
-         "consequence": "上修只剩少數幾檔在撐，攻的那一檔推翻"},
         {"id": "cp5", "kind": "outflow", "code": atk, "pct": 5, "text": cp5_text,
          "consequence": "資金在撤，攻的那一檔重新評估"},
     ]
