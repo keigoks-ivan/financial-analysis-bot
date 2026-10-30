@@ -263,18 +263,48 @@ def test_down_reason_low_revision_is_no_longer_an_out_of_pool_reason():
     assert _shorts("N", rows) == ["時機燈轉紅：距歷史新高 -15.1%"]
 
 
-def test_down_reason_lit_but_squeezed_out_reports_rank():
+def test_down_reason_lit_names_have_no_squeezed_out_reason():
+    # v5.11（2026-10-30）：現任抱著，亮燈名字不再有「被擠出前 5」這條下席理由
     rows = [_dr_row(t, "green", i) for i, t in enumerate("ABCDEFG", 1)]
-    assert _shorts("G", rows) == ["PEG 排名第 7，被擠出前 5"]
+    assert _shorts("G", rows) == ["原因未判定"]
     assert _shorts("A", rows) == ["原因未判定"]
-
-
-def test_down_reason_rank_counts_only_lit_names():
-    rows = [_dr_row("R1", "red", 1), _dr_row("R2", "red", 2)] + [_dr_row(t, "green", i) for i, t in enumerate("ABCDEF", 3)]
-    assert _shorts("F", rows) == ["PEG 排名第 6，被擠出前 5"]
 
 
 def test_down_reason_veto_chips_and_missing_ticker():
     rows = [_dr_row("V", "red", None, passed=False, why=["DD 迴避否決"], lamp_why="跌破 200 日線 -1.0%")]
     assert _shorts("V", rows) == ["DD 迴避", "時機燈轉紅：跌破 200 日線 -1.0%"]
     assert _shorts("NOPE", rows) == ["已不在母體"]
+
+
+# ── v5.11（2026-10-30）：現任抱著（select_hold_roster）──────────────────────────
+from engine.build_arena import select_hold_roster  # noqa: E402
+
+
+def test_hold_incumbent_stays_even_when_pool_rank_falls_below_five():
+    pool = [_lit_row(t, "green") for t in "ABCDEFG"]            # G 池序第 7
+    out = select_hold_roster(pool, ["G", "F"], core_slots=5)
+    assert "G" in out["core"] and "F" in out["core"]
+    assert out["core"] == ["A", "B", "C", "F", "G"]
+    assert [t for _, t in out["filled"]] == ["A", "B", "C"]    # 空席依池序補
+    assert out["removed"] == []
+
+
+def test_hold_full_roster_is_not_displaced_by_better_ranked_names():
+    pool = [_lit_row(t, "green") for t in "ABCDEFGHIJ"]
+    out = select_hold_roster(pool, list("FGHIJ"), core_slots=5)
+    assert out["core"] == list("FGHIJ") and out["filled"] == [] and out["removed"] == []
+
+
+def test_hold_leaves_pool_exit_and_red_lamp_with_reasons():
+    pool = [_lit_row("A", "green"), _lit_row("B", "red"), _lit_row("C", "green")]
+    out = select_hold_roster(pool, ["B", "Z", "C"], core_slots=5)
+    assert dict(out["removed"]) == {"B": "時機燈轉紅（距新高 <−10% 或跌破 200 日線）", "Z": "出池（資格不成立）"}
+    assert out["core"] == ["A", "C"]                            # C 抱著、A 依池序補、不拿紅燈湊數
+    assert [t for _, t in out["filled"]] == ["A"]
+
+
+def test_hold_empty_seats_filled_by_pool_order_lit_only_and_may_stay_empty():
+    pool = [_lit_row("A", "red"), _lit_row("B", "green"), _lit_row("C", "yellow"), _lit_row("D", "hot")]
+    out = select_hold_roster(pool, None, core_slots=2)
+    assert out["core"] == ["B", "C"]
+    assert select_hold_roster([_lit_row("A", "red")], None)["core"] == []

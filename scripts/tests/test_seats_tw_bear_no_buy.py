@@ -52,7 +52,7 @@ def test_bear_week_incumbent_is_not_pushed_out_by_rank():
     lit = [_stock(f'{2000 + i}.TW', **_rev(40 - i)) for i in range(5)]  # 5 檔亮燈、上修都比 1000 高
     sel = tw.select(_rows([_stock('1000.TW', **_rev(10))] + lit), ['1000.TW'], True, market=BEAR)
     assert _core(sel) == ['1000.TW'] and sel['rotation']['removed'] == []
-    assert sel['rotation']['blocked'] == ['2000.TW', '2001.TW', '2002.TW', '2003.TW', '2004.TW']
+    assert sel['rotation']['blocked'] == ['2000.TW', '2001.TW', '2002.TW', '2003.TW']   # 現任佔 1 席，只剩 4 個空席會補
 
 
 def test_bear_week_incumbent_out_of_the_pool_still_leaves():

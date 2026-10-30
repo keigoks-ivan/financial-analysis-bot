@@ -4,7 +4,7 @@
  * 定位（設計稿 §0）：純瀏覽器端把既有 JSON 接起來畫，不落新名單檔、不新增
  * build 腳本輸出。所有資料一律 fetch 既有端點：
  *   /engine/arena.json         綜合對照分／席位／DD 裁決／ROIC／FCF（own_board 母體；
- *                              席位依財報後上修排序，own_board.score＝綜合對照分只供對照）
+ *                              席位依 PEG 排序（v5.10），own_board.score＝綜合對照分只供對照）
  *   /stages/data/lamp.json     全母體時機碼（今日）
  *   /stages/data/latest.json  轉強～領先四段的天數／來路／RS 等細節（S1–S4 才有）
  *   /stages/data/history.json 250 個交易日的每日階段字串（算 Δ／本週新進／命中率）

@@ -171,7 +171,8 @@ v5.10（2026-10-30 持有人拍板；只改美股看板，中小型精選榜與�
   新增 pool_sort_key_peg(peg, rev, implied_growth, ey)：PEG（live_peg）>0 由小到大，缺值或 ≤0 排最後，
   同值再比上修降冪、implied_growth 降冪、EY 降冪。build_arena.py 的 pool_rows 改用它；原 pool_sort_key()
   不動（build_tenbagger.py、build_seats_tw.py、③b 太貴不入池仍用它）。持有人裁量，不是檢定通過；
-  口徑與回測不同、網站核心席無狀態等差異與退回條件見 knowledge/rule_ledger.md 2026-10-30 列。
+  口徑與回測不同（live_peg 沒測過）與退回條件見 knowledge/rule_ledger.md 2026-10-30 列。
+v5.11（同日）：三套席位改現任抱著到出場、空席才依池序補（build_arena.select_hold_roster），見同帳本 v5.11 列。
 """
 from __future__ import annotations
 

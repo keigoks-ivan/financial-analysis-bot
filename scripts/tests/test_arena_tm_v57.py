@@ -80,7 +80,7 @@ def _row(t, code="green", size=1.0):
 
 
 def _selector(pool, prev, core_slots=5):
-    return build_arena.select_lit_roster_v52(pool, prev, core_slots=core_slots)
+    return build_arena.select_hold_roster(pool, prev, core_slots=core_slots)
 
 
 BULL = {"mode": "tm", "status": "bull"}

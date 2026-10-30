@@ -205,9 +205,9 @@ def market_state(series, decision_date):
 # ── 大盤空頭不買新股（v5.6，2026-10-21，SeatEntryGate N）──────────────────────
 
 def bear_no_buy(rotation, pool, prev_core):
-    """大盤空頭週不買新股（純函式）。rotation＝select_lit_roster_v52 的結果，pool 依池序排好。
+    """大盤空頭週不買新股（純函式）。rotation＝select_hold_roster 的結果，pool 依池序排好。
     新進者全部取消、空席留空；在席者只在出池或時機燈轉紅時離席，不因排序被新名字擠出（擠出要買新名字）。
-    回傳格式同 select_lit_roster_v52，另加 blocked＝本來會補進的名字。"""
+    回傳格式同 select_hold_roster，另加 blocked＝本來會補進的名字。"""
     prev = set(prev_core or [])
     core = [r['ticker'] for r in pool if r['ticker'] in prev and _lit(r)][:CORE_SLOTS]
     return {'core': core, 'rotated': False,
@@ -334,7 +334,7 @@ def select(rows, prev_core, reselect, last_snap=None, market=None):
             incumbents = set(prev_core or [])
             roster_pool = [_as_lit(r) if r['ticker'] in incumbents and _x1_dist_only(r) else r
                            for r in pool]
-        rotation = ba.select_lit_roster_v52(roster_pool, prev_core, core_slots=CORE_SLOTS)
+        rotation = ba.select_hold_roster(roster_pool, prev_core, core_slots=CORE_SLOTS)
         if market and market.get('status') == 'bear':
             rotation = bear_no_buy(rotation, roster_pool, prev_core)
     else:
@@ -431,7 +431,7 @@ def _table(views, lamp_map, seat_prefix=None, empty_seats=0):
 
 def _legend():
     return """<details class="bw-fold" open><summary>怎麼讀這張表</summary>
-<div class="bw-note-line"><b>三關一燈</b>：先過資格，再依財報後上修排序，最後由時機燈決定倉位。核心席每週六（台北）依週五收盤重算：池內時機燈亮著的名字依上修取前 5，亮燈不足就空席；週中燈號只管倉位。規則跟美股核心席相同，只有品質條件、市值門檻與賣法按台股設定。這是研究名單，不是帳戶持倉。</div>
+<div class="bw-note-line"><b>三關一燈</b>：先過資格，再依財報後上修排序，最後由時機燈決定倉位。核心席每週六（台北）依週五收盤判斷：現任抱著，只在出池或時機燈轉紅時下席；空席才從池內時機燈亮著的名字依上修由高到低補，亮燈不足就空席；週中燈號只管倉位。規則跟美股核心席相同，只有品質條件、市值門檻與賣法按台股設定。這是研究名單，不是帳戶持倉。</div>
 <div class="bw-note-line"><b>資格</b>：三年成長、品質、站上 52 週線三項全過。三年成長＝Koyfin 今年到後年的每股盈餘年化成長 ≥15%，沒有第三年預估就不算過。品質＝投入資本報酬率（ROIC）≥15% 且營業現金流利潤率 ≥10%，或 ROIC ≥25% 且營業現金流利潤率不為負。台股資本支出重，所以品質看營業現金流，美股看自由現金流。另外五種情況直接出局：體質拒絕、衰退 ⛔、180 天內的 DD 迴避、財報後上修 ≤−5%、估值閘紅燈（PEG &gt;2.0 或本益比相對五年均值 &gt;1.75 倍）。市值不另設門檻，台股池本身已是 10 億美元以上。</div>
 <div class="bw-note-line"><b>上修</b>：分析師把每股盈餘預估調高了幾 %。基準是這檔股票最近一次財報前的 Koyfin 快照，缺財報錨定時看近三個月。財報日先看 yfinance，沒有就用公開資訊觀測站上董事會通過財報的日期，兩邊都沒有就取該季季底前的快照。資格全過就入池（v5.7 起沒有上修門檻），池內由高到低排，同值先比隱含成長率，再比盈餘殖利率。上修只管排序。</div>
 <div class="bw-note-line"><b>時機燈</b>：量的是距還原權息歷史新高多遠，燈號直接對應倉位：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉。🟡 接近＝差 3%～10% 且站上 200 日線，同樣正常倉。距歷史新高資料缺的黃燈標「🟡 資料缺」，暫列半倉。🟠 過熱＝已在突破帶，但近 12 個月（扣最近一個月）漲幅 &gt;150%，半倉。🔴 拉回中＝差超過 10% 或跌破 200 日線，零倉。⚫ 不合格＝未站上 52 週線。🟢🟡🟠 算亮燈。滑過燈號可看階段燈，階段燈不影響時機燈。</div>
@@ -518,7 +518,7 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + f'<div class="bw-rule">{escape(rule)}</div>'
         + '<h3 class="bw-sec">① 核心席（5）</h3>'
         + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）'
-          '的名字依上修取前 5；亮燈不足就空席，不拿紅燈湊數。</div>'
+          '的名字補空席，依上修由高到低；現任抱著，不因排名被換掉；亮燈不足就空席，不拿紅燈湊數。</div>'
         + fresh + _market_html(market) + status
         + ba._seat_view_bar_html()
         + _table(core_v, lamp_map, seat_prefix='C', empty_seats=CORE_SLOTS - len(core_v))

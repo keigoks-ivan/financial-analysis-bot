@@ -180,11 +180,12 @@ def test_bull_incumbent_out_of_the_pool_still_leaves():
     assert [t for t, _ in sel['rotation']['removed']] == ['1000.TW']
 
 
-def test_held_incumbent_still_competes_by_pool_rank_for_the_five_seats():
-    lit = [_stock(f'{2000 + i}.TW', **_rev(40 - i)) for i in range(5)]  # 5 檔亮燈、上修都比 1000 高
+def test_held_incumbent_is_not_displaced_by_better_ranked_names():
+    # v5.11（2026-10-30）：現任抱著，池內有 5 檔上修更高的亮燈名字也不擠掉現任
+    lit = [_stock(f'{2000 + i}.TW', **_rev(40 - i)) for i in range(5)]
     sel = _sel([_inc(rev=10)] + lit, BULL)
-    assert '1000.TW' not in [r['ticker'] for r in sel['core']]
-    assert sel['rotation']['removed'] == [('1000.TW', '亮燈者依上修排序擠出前 5')]
+    assert '1000.TW' in [r['ticker'] for r in sel['core']]
+    assert sel['rotation']['removed'] == []
 
 
 def test_no_market_or_stale_market_is_identical_to_v53():

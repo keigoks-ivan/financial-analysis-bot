@@ -429,13 +429,13 @@ def render_core(core_sorted: list) -> str:
   <div class="track-desc">
     <b>結構長抱線（甲線）的核心軌。</b>入軌＝<b>DD 裁決＝進場，且角色含「核心持倉」</b>；<b>最多 {CORE_SLOTS} 席</b>。
     選席＝<b>角色優先</b>：無條件核心持倉先佔位，其餘依 <b>擁有層分</b>（＝min(成長，30)＋FY1 盈餘殖利率＋持續期加分－倍數風險）補足；超出的落板凳。
-    <b>這份名單與 <a href="/engine/">決策引擎</a> 的席位不同</b>：決策引擎依財報後上修排序，本頁依擁有層分排序。
+    <b>這份名單與 <a href="/engine/">決策引擎</a> 的席位不同</b>：決策引擎依 PEG 排序，本頁依擁有層分排序。
     <b>DD 統一裁決不參與排序</b>：資格看上方資格閘與角色，擁有層分只回答「同樣過關者排第幾」。
     <b>EV5y × 確定性只列示參考</b>，不影響排序；EV5y 優先用即時重算值，缺值才用報告原值。單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
   </div>
   <div class="seg-h seg-in">核心席位（最終 {CORE_SLOTS}）· {len(sleeve)} 檔</div>
   {_core_table(sleeve, "目前無可執行核心進場票。")}
-  <div class="track-note">排序＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC ≥30 加 2、PEG &gt;2 減 5），與決策引擎的上修排序不同；上修幅度只當燈號。</div>
+  <div class="track-note">排序＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC ≥30 加 2、PEG &gt;2 減 5），與決策引擎的 PEG 排序不同；上修幅度只當燈號。</div>
   {noncore_note}
   <div class="seg-h seg-watch">核心板凳（進場核心·超出席位，等席位開遞補）· {len(bench_core)} 檔</div>
   {_core_table(bench_core, "無溢出板凳名字。")}
@@ -1112,7 +1112,7 @@ body{{background:transparent}}</style>
       <b>發現 → 資格閘 → 三軌射擊名單 → SOP 訊號（參考）→ 監控 → 回看鏡</b>。數字每週隨基本面資料自動更新。
       本頁只呈現<b>研究層</b>，實際持倉與權重不上站。
       <b>分工</b>：本頁是<b>結構長抱線（甲線：核心軌、衛星結構軌）</b>與<b>循環時機線（乙線：衛星循環軌）</b>共用的<b>流程</b>頁。何時買以時機燈為準，SOP 漏斗訊號只供參考。
-      <b>核心軌依擁有層分排序</b>，與 <a href="/engine/">決策引擎</a> 的上修排序不是同一份名單；EV5y×確定性只作參考，DD 統一裁決只做否決與角色標籤。對外成品榜見 <a href="/picks/">精選清單</a>。
+      <b>核心軌依擁有層分排序</b>，與 <a href="/engine/">決策引擎</a> 的 PEG 排序不是同一份名單；EV5y×確定性只作參考，DD 統一裁決只做否決與角色標籤。對外成品榜見 <a href="/picks/">精選清單</a>。
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><strong>{_fmt_stamp(run_ts)}</strong>最後更新（台北）</div>

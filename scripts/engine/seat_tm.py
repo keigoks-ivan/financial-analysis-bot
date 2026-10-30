@@ -74,8 +74,8 @@ def _as_lit(r: dict) -> dict:
 
 def select_roster(pool_ranked: list, prev_core, market, selector, **kw) -> dict:
     """大盤多頭（market['mode']=='tm'）時，池內的紅燈現任當作亮燈交給 selector
-    （build_arena.select_lit_roster_v52）；其餘情況原樣呼叫 selector（與 v5.6 逐位元相同）。
-    現任仍依池序競爭前 5，被更高名次擠出是上線原有行為，照舊。"""
+    （build_arena.select_hold_roster）；其餘情況原樣呼叫 selector（與 v5.6 逐位元相同）。
+    v5.11 起現任抱著，不再被更高名次擠出。"""
     pool = pool_ranked
     if market and market.get("mode") == "tm":
         inc = set(prev_core or [])
