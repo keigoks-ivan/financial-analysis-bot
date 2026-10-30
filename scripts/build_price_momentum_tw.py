@@ -752,6 +752,42 @@ def _upsert_nav_row(state, entry):
     state['nav_series'] = rows
 
 
+def apply_splits(state, upto_date):
+    """Splits / capital reductions (Yahoo `splits`; ratio = new shares per old
+    share) dated after a holding's entry and on or before upto_date: units are
+    multiplied by the ratio and entry/last price divided by it, so units *
+    price keeps marking the same position on Yahoo's split-adjusted closes.
+    Each split date is applied once per holding (splits_applied), so a split
+    Yahoo lists late is still picked up on a later run. Cash returned with a
+    capital reduction is not added — same price-return basis as dividends.
+    Added 2026-10-30 after 6173.TWO's 0.94 reduction (10-07) was marked on the
+    pre-reduction share count. Returns changelog lines."""
+    events = []
+    cache = {}
+    for lk in LINE_KEYS:
+        for h in state['lines'][lk]['holdings']:
+            t = h['ticker']
+            if t not in cache:
+                try:
+                    cache[t] = [(ts.strftime('%Y-%m-%d'), float(r)) for ts, r in yf.Ticker(t).splits.items()]
+                except Exception as e:
+                    print(f"    ! splits lookup failed for {t}: {type(e).__name__}: {e}")
+                    cache[t] = []
+            done = h.get('splits_applied', [])
+            for d, ratio in cache[t]:
+                if d <= h['entry_date'] or d > upto_date or d in done or ratio <= 0:
+                    continue
+                h['units'] = h['units'] * ratio
+                h['entry_price'] = round(h['entry_price'] / ratio, 2)
+                if h.get('last_price') is not None:
+                    h['last_price'] = h['last_price'] / ratio
+                done = done + [d]
+                h['splits_applied'] = done
+                events.append(f"[{lk}] {t} {d} 拆股／減資，股數乘 {ratio}，進場價與最新價除以 {ratio}。")
+                print(f"    · [{lk}] {t}: split {ratio} on {d} applied to units")
+    return events
+
+
 def download_holdings_prices(tickers):
     """Mark-only download: held names + BENCH_TICKER, same yf.download kwargs
     as the full build except the shorter period. Same retry/backoff budget;
@@ -973,8 +1009,9 @@ def build():
             c = px[t]['Close'].dropna()
         except Exception:
             continue
-        if len(c):
-            price_now[t] = float(c.iloc[-1])
+        p = _close_on_or_before(c, px_date)  # same close date as the benchmark (2026-10-30)
+        if p is not None:
+            price_now[t] = p
         if len(c) < MIN_CLOSES:
             continue
         n_price_sufficient_all += 1
@@ -1042,6 +1079,7 @@ def build():
     state = load_state()
     data_gaps = []
     nav_now = {}
+    split_events = apply_splits(state, px_date) if state else []
     # trading days a missed daily run skipped, marked on the PRE-rebalance
     # holdings — computed before process_line_update touches any state
     gap_rows = (gap_nav_rows(state, px, bench, state['nav_series'][-1]['date'], px_date)
@@ -1111,6 +1149,8 @@ def build():
     state['data_gaps'] = (state.get('data_gaps') or []) + data_gaps
     if not any(e.get('event') == DEPLOY_NOTE_20261030 for e in state.get('changelog', [])):
         state.setdefault('changelog', []).append({'date': '2026-10-30', 'event': DEPLOY_NOTE_20261030})
+    for event in split_events:
+        state['changelog'].append({'date': px_date, 'event': event})
 
     if gap_rows:
         print(f"    backfilled nav rows: {[r['date'] for r in gap_rows]}")
@@ -1141,6 +1181,7 @@ def build_mark_only():
     if px_date < last_date:
         raise FailSafeAbort(f"latest {BENCH_TICKER} close {px_date} is older than the last nav row {last_date}")
 
+    split_events = apply_splits(state, px_date)
     gap_rows = gap_nav_rows(state, px, bench, last_date, px_date)
     price_now = {}
     for t in held:
@@ -1169,6 +1210,8 @@ def build_mark_only():
     state['data_gaps'] = (state.get('data_gaps') or []) + data_gaps
     if not any(e.get('event') == DEPLOY_NOTE_20261030 for e in state.get('changelog', [])):
         state.setdefault('changelog', []).append({'date': '2026-10-30', 'event': DEPLOY_NOTE_20261030})
+    for event in split_events:
+        state['changelog'].append({'date': px_date, 'event': event})
 
     if gap_rows:
         print(f"    backfilled nav rows: {[r['date'] for r in gap_rows]}")
