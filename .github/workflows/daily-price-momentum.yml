@@ -1,0 +1,101 @@
+name: Daily Price-Momentum NAV (P10 US + TW)
+
+# 每個交易日收盤後只重算 P10 兩頁的淨值（--mark-only）：只抓持股和基準的收盤價，
+# 持股、單位數、現金、排名都不動，也不換股。換股仍由週六的完整建置負責：
+# 美股在 weekly-market-update.yml，台股在 weekly-price-momentum-tw.yml。
+# 美股只排週一～週四：週五收盤由週六完整建置記錄，避免兩邊同時推同一份 track.json。
+# 漏跑的交易日，下一次執行會用當時的持股補算（gap_nav_rows），所以排程延遲或跳過不會留洞。
+
+on:
+  schedule:
+    - cron: "20 8 * * 1-5"    # 台股：台北 16:20（13:30 收盤後）
+    - cron: "30 22 * * 1-4"   # 美股：台北隔天 06:30（美東收盤後）
+  workflow_dispatch:
+    inputs:
+      market:
+        description: "us / tw / both"
+        required: false
+        default: "both"
+        type: string
+      retry:
+        description: >-
+          內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  mark-nav:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40"
+
+      - name: Mark P10 NAV to the latest close
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          MARKET_INPUT: ${{ github.event.inputs.market || 'both' }}
+        run: |
+          case "$SCHEDULE" in
+            "20 8 * * 1-5")  MARKET=tw ;;
+            "30 22 * * 1-4") MARKET=us ;;
+            *)               MARKET="$MARKET_INPUT" ;;
+          esac
+          echo "market=$MARKET"
+          if [ "$MARKET" = "us" ] || [ "$MARKET" = "both" ]; then
+            python scripts/build_price_momentum.py --mark-only
+          fi
+          if [ "$MARKET" = "tw" ] || [ "$MARKET" = "both" ]; then
+            python scripts/build_price_momentum_tw.py --mark-only
+          fi
+
+      - name: Commit and push if changed
+        id: commit_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          FILES="docs/research/price-momentum/track.json docs/research/price-momentum-tw/track.json"
+          if git status --porcelain $FILES | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $FILES
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "data: daily P10 NAV mark ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh

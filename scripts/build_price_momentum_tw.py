@@ -162,6 +162,17 @@ uncaught exception also emits a `::warning title=P10-TW build skipped::...`
 annotation (and a GITHUB_STEP_SUMMARY line when available).
 
 Runs in the weekly-price-momentum-tw GitHub Actions workflow.
+
+DAILY MARK-ONLY (2026-10-30, plumbing only — no PREREG change)
+---------------------------------------------------------------
+`--mark-only` (daily-price-momentum workflow, every TW trading day after the
+close) downloads only the held names + BENCH_TICKER and re-marks both lines
+on that close: holdings, units, cash and ranks are untouched and it never
+rebalances — the monthly rebalance still happens only in the weekly full
+build above. nav_series rows are dated by the close (price_as_of) rather than
+the run date from 2026-10-30 on; trading days a missed run skipped are
+backfilled on the then-current holdings (gap_nav_rows). as_of keeps meaning
+"last full build".
 """
 
 import io
@@ -237,6 +248,15 @@ LIQUIDITY_WINDOW = 120       # trailing sessions for the median $-volume liquidi
 LIQUIDITY_TOP_N = 300        # weekly scoring universe size after the liquidity gate
 MIN_LISTING_DAYS = 365       # 上市日期 must be >= this many days before as_of (2026-09-16 day-1 amendment)
 INNOVATION_BOARD_SUFFIX = '-創'  # 創新板 names carry this 公司簡稱 suffix; excluded (2026-09-16 day-1 amendment)
+
+# One-time changelog note for the 2026-10-30 daily mark-to-market mode (see
+# build_mark_only()). Plumbing only — not a PREREG change.
+DEPLOY_NOTE_20261030 = (
+    "2026-10-30 起淨值改成每天更新：每個交易日收盤後，用當天收盤價重算兩條線的淨值，"
+    "持股、單位數、現金都不動，也不重算排名。換股規則不變，仍是每月一次，只在週六完整建置時判斷。"
+    "淨值序列的日期從這天起標收盤日（之前標的是執行日，通常是週六，對應週五收盤）；"
+    "漏跑的交易日，下次執行時用當時的持股補算。"
+)
 
 
 PREREG = {
@@ -669,6 +689,95 @@ def download_prices_with_retry(tickers):
         f"price download failed after {MAX_DOWNLOAD_ATTEMPTS} attempts (last: {last_reason})")
 
 
+# ── daily mark-only mode (2026-10-30, plumbing only — see DEPLOY_NOTE_20261030).
+#    Between monthly rebalances holdings/units/cash are fixed, so a daily NAV
+#    needs only the held names' closes plus the benchmark: no universe
+#    download, no TWSE/TPEx listing fetch, no signal/rank refresh, no
+#    rebalance. ──
+MARK_ONLY_PERIOD = '3mo'     # long enough to backfill trading days a missed run skipped
+
+
+def _close_series(px, t):
+    """A ticker's dropna'd close series from a group_by='ticker' frame, or None."""
+    try:
+        c = px[t]['Close'].dropna()
+    except Exception:
+        return None
+    return c if len(c) else None
+
+
+def _close_on_or_before(c, date_str):
+    """Latest close at or before date_str (compared as YYYY-MM-DD), or None."""
+    if c is None:
+        return None
+    c = c[c.index.strftime('%Y-%m-%d') <= date_str]
+    return float(c.iloc[-1]) if len(c) else None
+
+
+def gap_nav_rows(state, px, bench, after_date, before_date):
+    """NAV rows for every benchmark trading day strictly between after_date
+    and before_date, marked with each line's CURRENT (pre-rebalance)
+    holdings, units and cash — the same arithmetic as mark_to_market,
+    read-only (no last_price writes). Backfills the days a missed daily run
+    skipped."""
+    closes = {h['ticker']: _close_series(px, h['ticker'])
+              for lk in LINE_KEYS for h in state['lines'][lk]['holdings']}
+    rows = []
+    for ts, bench_close in bench.items():
+        d = ts.strftime('%Y-%m-%d')
+        if not (after_date < d < before_date):
+            continue
+        entry = {'date': d}
+        for lk in LINE_KEYS:
+            ls = state['lines'][lk]
+            total = float(ls['cash'])
+            for h in ls['holdings']:
+                p = _close_on_or_before(closes[h['ticker']], d)
+                if p is None:
+                    p = h.get('last_price', h['entry_price'])
+                total += h['units'] * p
+            entry[f'nav_{lk}'] = round(total, 2)
+        entry['nav_bench'] = round(100.0 * float(bench_close) / state['bench_close_inception'], 2)
+        entry['bench_close'] = round(float(bench_close), 2)
+        rows.append(entry)
+    return rows
+
+
+def _upsert_nav_row(state, entry):
+    """A row for a date already present is overwritten in place, never
+    duplicated; nav_series stays in date order."""
+    rows = [r for r in state['nav_series'] if r['date'] != entry['date']]
+    rows.append(entry)
+    rows.sort(key=lambda r: r['date'])
+    state['nav_series'] = rows
+
+
+def download_holdings_prices(tickers):
+    """Mark-only download: held names + BENCH_TICKER, same yf.download kwargs
+    as the full build except the shorter period. Same retry/backoff budget;
+    raises FailSafeAbort if the benchmark never comes back."""
+    all_tickers = sorted(set(tickers)) + [BENCH_TICKER]
+    last_reason = None
+    for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
+        try:
+            px = yf.download(all_tickers, period=MARK_ONLY_PERIOD, interval='1d', auto_adjust=True,
+                             group_by='ticker', progress=False, threads=True)
+            bench = px[BENCH_TICKER]['Close'].dropna()
+        except Exception as e:
+            last_reason = f"attempt {attempt} raised {type(e).__name__}: {e}"
+        else:
+            if not bench.empty:
+                return px, bench
+            last_reason = f"attempt {attempt}: {BENCH_TICKER} price series empty after download"
+        print(f"    ! {last_reason}")
+        if attempt < MAX_DOWNLOAD_ATTEMPTS:
+            backoff = RETRY_BACKOFF_SECONDS[attempt - 1] + random.uniform(0, 5)
+            print(f"    … retrying in {backoff:.0f}s")
+            time.sleep(backoff)
+    raise FailSafeAbort(
+        f"mark-only price download failed after {MAX_DOWNLOAD_ATTEMPTS} attempts (last: {last_reason})")
+
+
 def load_state():
     if TRACK_JSON.exists():
         return json.loads(TRACK_JSON.read_text(encoding='utf-8'))
@@ -854,6 +963,7 @@ def build():
 
     px, bench = download_prices_with_retry(tickers)
     bench_close = float(bench.iloc[-1])
+    px_date = bench.index[-1].strftime('%Y-%m-%d')  # nav rows are dated by close, not by run (2026-10-30)
 
     price_now = {}
     price_sufficient = []
@@ -932,6 +1042,10 @@ def build():
     state = load_state()
     data_gaps = []
     nav_now = {}
+    # trading days a missed daily run skipped, marked on the PRE-rebalance
+    # holdings — computed before process_line_update touches any state
+    gap_rows = (gap_nav_rows(state, px, bench, state['nav_series'][-1]['date'], px_date)
+                if state and state['nav_series'] else [])
 
     if state is None:
         # ── INCEPTION (both lines, same day) ──
@@ -975,21 +1089,25 @@ def build():
             for event in changelog_events:
                 state['changelog'].append({'date': as_of, 'event': event})
 
-    # ── shared tail: nav_series append/overwrite — runs for BOTH inception
+    # ── shared tail: nav_series upsert by close date — runs for BOTH inception
     #    and weekly-update so a same-day rerun is fully idempotent ──
     nav_bench = round(100.0 * bench_close / state['bench_close_inception'], 2)
     nav_entry = {
-        'date': as_of, 'nav_L12': round(nav_now['L12'], 2), 'nav_L6': round(nav_now['L6'], 2),
+        'date': px_date, 'nav_L12': round(nav_now['L12'], 2), 'nav_L6': round(nav_now['L6'], 2),
         'nav_bench': nav_bench, 'bench_close': round(bench_close, 2),
     }
-    if state['nav_series'] and state['nav_series'][-1]['date'] == as_of:
-        state['nav_series'][-1] = nav_entry
-    else:
-        state['nav_series'].append(nav_entry)
+    for row in gap_rows:
+        _upsert_nav_row(state, row)
+    _upsert_nav_row(state, nav_entry)
     state['as_of'] = as_of
+    state['price_as_of'] = px_date
     state['prereg'] = PREREG  # numbers are frozen; keep the verbatim block in sync regardless
     state['data_gaps'] = (state.get('data_gaps') or []) + data_gaps
+    if not any(e.get('event') == DEPLOY_NOTE_20261030 for e in state.get('changelog', [])):
+        state.setdefault('changelog', []).append({'date': '2026-10-30', 'event': DEPLOY_NOTE_20261030})
 
+    if gap_rows:
+        print(f"    backfilled nav rows: {[r['date'] for r in gap_rows]}")
     print(f"    nav_L12={nav_now['L12']:.2f}  nav_L6={nav_now['L6']:.2f}  nav_bench={nav_bench:.2f}")
     for lk in LINE_KEYS:
         ls = state['lines'][lk]
@@ -997,6 +1115,60 @@ def build():
               f"flags={ls['flags']}")
 
     return state, coverage
+
+
+def build_mark_only():
+    """Daily mark-to-market (2026-10-30, `--mark-only`). Only nav_series, each
+    holding's last_price, price_as_of and data_gaps change; holdings, units,
+    cash, ranks, last_rebalance_month and as_of stay exactly as the last full
+    build wrote them. Never rebalances — the monthly rebalance stays with the
+    weekly full build."""
+    state = load_state()
+    if state is None or not state.get('nav_series'):
+        raise FailSafeAbort("no track.json yet — inception needs a full build")
+    held = sorted({h['ticker'] for lk in LINE_KEYS for h in state['lines'][lk]['holdings']})
+    print(f"=== Price-Momentum TW (P10-TW) mark-only: {len(held)} held tickers + {BENCH_TICKER} ===")
+
+    px, bench = download_holdings_prices(held)
+    px_date = bench.index[-1].strftime('%Y-%m-%d')
+    last_date = state['nav_series'][-1]['date']
+    if px_date < last_date:
+        raise FailSafeAbort(f"latest {BENCH_TICKER} close {px_date} is older than the last nav row {last_date}")
+
+    gap_rows = gap_nav_rows(state, px, bench, last_date, px_date)
+    price_now = {}
+    for t in held:
+        p = _close_on_or_before(_close_series(px, t), px_date)
+        if p is not None:
+            price_now[t] = p
+
+    data_gaps = []
+    nav_now = {}
+    for lk in LINE_KEYS:
+        ls = state['lines'][lk]
+        nav_now[lk], stale = mark_to_market(ls['cash'], ls['holdings'], price_now)
+        if stale:
+            print(f"    ! [{lk}] stale price carried forward for {stale}")
+            data_gaps.append({'date': px_date, 'line': lk, 'reason': 'stale price (mark-only)', 'tickers': stale})
+
+    bench_close = float(bench.iloc[-1])
+    nav_bench = round(100.0 * bench_close / state['bench_close_inception'], 2)
+    for row in gap_rows:
+        _upsert_nav_row(state, row)
+    _upsert_nav_row(state, {
+        'date': px_date, 'nav_L12': round(nav_now['L12'], 2), 'nav_L6': round(nav_now['L6'], 2),
+        'nav_bench': nav_bench, 'bench_close': round(bench_close, 2),
+    })
+    state['price_as_of'] = px_date
+    state['data_gaps'] = (state.get('data_gaps') or []) + data_gaps
+    if not any(e.get('event') == DEPLOY_NOTE_20261030 for e in state.get('changelog', [])):
+        state.setdefault('changelog', []).append({'date': '2026-10-30', 'event': DEPLOY_NOTE_20261030})
+
+    if gap_rows:
+        print(f"    backfilled nav rows: {[r['date'] for r in gap_rows]}")
+    print(f"    {px_date}: nav_L12={nav_now['L12']:.2f}  nav_L6={nav_now['L6']:.2f}  nav_bench={nav_bench:.2f}")
+    return state, {'mode': 'mark-only', 'price_as_of': px_date,
+                   'backfilled': [r['date'] for r in gap_rows]}
 
 
 def _existing_track_as_of():
@@ -1032,8 +1204,9 @@ def _emit_gh_skip_warning(reason):
 
 
 def main():
+    mark_only = '--mark-only' in sys.argv[1:]
     try:
-        result = build()
+        result = build_mark_only() if mark_only else build()
     except FailSafeAbort as e:
         print(f"  ✗ fail-safe triggered: {e} — track.json left unchanged")
         _emit_gh_skip_warning(f"fail-safe triggered: {e}")

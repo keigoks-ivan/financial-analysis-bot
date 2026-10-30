@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/imq-base.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);
@@ -101,6 +102,16 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
 .loading,.errbox{padding:2rem;text-align:center;color:var(--muted);font-size:.85rem}
 .errbox{background:var(--card);border:1px dashed var(--line);border-radius:var(--r)}
 .foot-note{font-size:.72rem;color:var(--muted);margin-top:.7rem;line-height:1.7}
+
+/* NAV chart (2026-10-30) */
+.chart-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}
+.chart-bar button{font:inherit;font-size:.76rem;padding:.3rem .8rem;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--sec);cursor:pointer}
+.chart-bar button.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.chart-box{position:relative;height:340px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:.7rem .5rem .4rem;box-shadow:var(--sh-1)}
+.chart-note{margin:.5rem 0 1.1rem}
+.nav-more{display:block;margin:.6rem auto 0;font:inherit;font-size:.76rem;padding:.3rem 1rem;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--accent);cursor:pointer}
+.nav-more[hidden]{display:none}
+@media(max-width:640px){.chart-box{height:260px}}
 
 @media(max-width:640px){
   .hero h1{font-size:1.3rem}
@@ -211,7 +222,8 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
     <h1>P10 台股 · <span class="accent">雙線純價格動能</span> Paper Track</h1>
     <p class="sub">這是美股 P10 在台股市場的鏡像版本：同一套零基本面、全機械、自帶 NAV 的純價格動能規則，只換掉三樣東西——股票名單、基準與資料來源，資格門檻、緩衝帶、月度換倉、NAV 記帳與換手統計逐字相同。兩條線並跑，回答「慢動能 vs 快動能誰對」：<b>L12（慢線，12-1 動能）</b>與<b>L6（快線，6-1 動能）</b>，唯一差異是回看窗口。個股層零人為干預；唯一人類接觸點是下方 PREREG 的正式評審點與 kill conditions。<b>本序列不是收斂面</b>——不回饋 DD 裁決鏈，不進 picks／GRP／三軌／cockpit 任何清單，不得被引用為「某檔在 P10 台股上」的選股依據。本頁純屬研究流程展示，不構成任何投資建議。美股版見 <a href="/research/price-momentum/">P10</a>。</p>
     <div class="meta" id="hero-meta">
-      <span class="chip">資料更新：<b id="m-asof">—</b></span>
+      <span class="chip">價格日：<b id="m-pxdate">—</b></span>
+      <span class="chip">排名更新：<b id="m-asof">—</b></span>
       <span class="chip">組合成立：<b id="m-inception">—</b></span>
       <span class="chip">0050 成立收盤：<b id="m-bench0">—</b></span>
       <span class="perf-badge flat" id="m-perf-l12">L12 績效載入中…</span>
@@ -225,8 +237,14 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
     <div class="sec-hdr">
       <span class="sec-eyebrow">NAV Comparison</span>
       <span class="sec-title">NAV 對照（L12 / L6 / 0050）</span>
-      <span class="sec-desc">紙上 NAV，成立時各自基準化為 100，無交易成本、無滑價</span>
+      <span class="sec-desc">紙上 NAV，成立時各自基準化為 100，無交易成本、無滑價；每個交易日收盤後更新</span>
     </div>
+    <div class="chart-bar" role="group" aria-label="圖表切換">
+      <button type="button" class="on" data-mode="nav" aria-pressed="true">淨值</button>
+      <button type="button" data-mode="rel" aria-pressed="false">對 0050 超額（點）</button>
+    </div>
+    <div class="chart-box"><canvas id="nav-chart" role="img" aria-label="L12、L6 與 0050 淨值走勢，數字見下表"></canvas></div>
+    <p class="foot-note chart-note">虛線是 0050，灰色直線是月度換股日。2026-10-24 以前每週一個點，之後每個交易日一個點。下表只列最近 10 筆。</p>
     <div class="tbl-wrap">
       <table class="data" id="nav-tbl">
         <thead>
@@ -237,6 +255,7 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
         </tbody>
       </table>
     </div>
+    <button type="button" class="nav-more" id="nav-more" aria-expanded="false" hidden></button>
   </div>
 </section>
 
@@ -277,7 +296,7 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
         <p class="foot-note" id="holdings-desc-L6"></p>
       </div>
     </div>
-    <p class="foot-note">Score ＝ 該線動能 ÷ 同窗年化波動（L12 用 12-1、L6 用 6-1，見下方 PREREG）；🔥 heat 為純資訊 12M 報酬 &gt;+250% 標記（兩線共用同一定義，不否決、不觸發賣出）。「現重」為按最新收盤反推的持股現值佔該線目前 NAV 之比重（等權重置後會隨價格漂移）。<span class="tag ineligible" style="margin-left:0">⚠ 已不合格</span> 標示該檔已跌破 200DMA 或動能轉負；其排名與 Score 為最後一次合格時的舊值，非最新，將於下一次月度換倉賣出（非立即賣出，賣出時點由月度換倉規則決定）。</p>
+    <p class="foot-note">最新價、進場以來、現重每個交易日收盤後更新，排名與 Score 每週六更新。Score ＝ 該線動能 ÷ 同窗年化波動（L12 用 12-1、L6 用 6-1，見下方 PREREG）；🔥 heat 為純資訊 12M 報酬 &gt;+250% 標記（兩線共用同一定義，不否決、不觸發賣出）。「現重」為按最新收盤反推的持股現值佔該線目前 NAV 之比重（等權重置後會隨價格漂移）。<span class="tag ineligible" style="margin-left:0">⚠ 已不合格</span> 標示該檔已跌破 200DMA 或動能轉負；其排名與 Score 為最後一次合格時的舊值，非最新，將於下一次月度換倉賣出（非立即賣出，賣出時點由月度換倉規則決定）。</p>
   </div>
 </section>
 
@@ -357,6 +376,124 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
     var pb = $('prereg-body'); if(pb) pb.innerHTML = '<div class="errbox">資料載入失敗，稍後再試。</div>';
   }
 
+  // ── NAV chart (2026-10-30)：x 軸用日數（線性軸），週記錄與每日記錄照實際日期間距 ──
+  var NAV_SHOW = 10;
+  var BENCH_KEY = 'nav_bench', BENCH_LABEL = '0050';
+  var SERIES_COLOR = {L12: '#2a78d6', L6: '#eb6834', bench: '#6b7a92'};
+  var navChart = null, navData = null, chartMode = 'nav';
+  function dayNum(s){ return Math.round(Date.parse(s + 'T00:00:00Z') / 86400000); }
+  function dayStr(n){ return new Date(n * 86400000).toISOString().slice(0, 10); }
+  function fmtSigned(v){ return (v > 0 ? '+' : '') + v.toFixed(2); }
+
+  // 基準線、換股日直線、線尾標籤（標籤字用內文色，旁邊色條標身分）
+  var navMarks = {
+    id: 'navMarks',
+    afterDatasetsDraw: function(chart){
+      var o = chart.options.plugins.navMarks || {}, ctx = chart.ctx, a = chart.chartArea;
+      var xs = chart.scales.x, ys = chart.scales.y;
+      ctx.save();
+      ctx.font = '11px ' + getComputedStyle(document.body).fontFamily;
+      if(o.base != null){
+        var by = ys.getPixelForValue(o.base);
+        if(by >= a.top && by <= a.bottom){
+          ctx.strokeStyle = '#c9c2b2'; ctx.lineWidth = 1; ctx.setLineDash([]);
+          ctx.beginPath(); ctx.moveTo(a.left, by); ctx.lineTo(a.right, by); ctx.stroke();
+        }
+      }
+      (o.rebal || []).forEach(function(n){
+        var px = xs.getPixelForValue(n);
+        if(px < a.left || px > a.right) return;
+        ctx.strokeStyle = '#b8b0a0'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom); ctx.stroke();
+        ctx.setLineDash([]); ctx.fillStyle = '#6b7a92'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText('換股', px + 3, a.top + 11);
+      });
+      var labels = [];
+      chart.data.datasets.forEach(function(ds, i){
+        var meta = chart.getDatasetMeta(i);
+        if(!chart.isDatasetVisible(i)) return;
+        for(var k = ds.data.length - 1; k >= 0; k--){
+          if(ds.data[k].y != null){
+            labels.push({x: meta.data[k].x, y: meta.data[k].y, color: ds.borderColor,
+              text: ds.label + ' ' + (o.rel ? fmtSigned(ds.data[k].y) : ds.data[k].y.toFixed(2))});
+            break;
+          }
+        }
+      });
+      labels.sort(function(p, q){ return p.y - q.y; });
+      for(var j = 1; j < labels.length; j++){
+        if(labels[j].y - labels[j - 1].y < 14) labels[j].y = labels[j - 1].y + 14;
+      }
+      ctx.textBaseline = 'middle';
+      labels.forEach(function(l){
+        ctx.fillStyle = l.color; ctx.fillRect(l.x + 6, l.y - 1, 9, 2);
+        ctx.fillStyle = '#2a3a52'; ctx.textAlign = 'left'; ctx.fillText(l.text, l.x + 18, l.y);
+      });
+      ctx.restore();
+    }
+  };
+
+  function drawNavChart(d){
+    var el = $('nav-chart'), rows = d.nav_series || [];
+    if(!el || !window.Chart || !rows.length) return;
+    var first = dayNum(rows[0].date), lastDay = dayNum(rows[rows.length - 1].date);
+    var rebal = (((d.lines || {}).L12 || {}).rebalance_history || [])
+      .map(function(r){ return dayNum(r.date); }).filter(function(n){ return n > first; });
+    function pts(f){ return rows.map(function(r){ var v = f(r); return {x: dayNum(r.date), y: (v == null ? null : v)}; }); }
+    function line(label, data, color, dash){
+      return {label: label, data: data, borderColor: color, backgroundColor: color, borderWidth: 2,
+              borderDash: dash || [], pointRadius: 0, pointHoverRadius: 4, pointHitRadius: 10,
+              tension: 0, spanGaps: true};
+    }
+    function rel(lk){ return function(r){ return (r['nav_' + lk] != null && r[BENCH_KEY] != null) ? +(r['nav_' + lk] - r[BENCH_KEY]).toFixed(2) : null; }; }
+    var isRel = chartMode === 'rel';
+    var datasets = isRel ? [
+      line('L12', pts(rel('L12')), SERIES_COLOR.L12),
+      line('L6', pts(rel('L6')), SERIES_COLOR.L6)
+    ] : [
+      line('L12', pts(function(r){ return r.nav_L12; }), SERIES_COLOR.L12),
+      line('L6', pts(function(r){ return r.nav_L6; }), SERIES_COLOR.L6),
+      line(BENCH_LABEL, pts(function(r){ return r[BENCH_KEY]; }), SERIES_COLOR.bench, [5, 4])
+    ];
+    if(navChart) navChart.destroy();
+    navChart = new Chart(el, {
+      type: 'line',
+      data: {datasets: datasets},
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: {mode: 'index', intersect: false},
+        layout: {padding: {right: 92}},
+        scales: {
+          x: {type: 'linear', min: first, max: lastDay, grid: {display: false}, border: {color: '#e5dfd0'},
+              ticks: {color: '#6b7a92', maxTicksLimit: 8, includeBounds: false, callback: function(v){ return dayStr(Math.round(v)).slice(5); }}},
+          y: {grid: {color: '#efe9da'}, border: {display: false}, ticks: {color: '#6b7a92'},
+              title: {display: true, color: '#6b7a92',
+                      text: isRel ? '對 ' + BENCH_LABEL + ' 超額（點）' : '淨值（成立日＝100）'}}
+        },
+        plugins: {
+          legend: {position: 'top', align: 'start', labels: {color: '#2a3a52', boxWidth: 18, boxHeight: 2}},
+          tooltip: {callbacks: {
+            title: function(items){ return items.length ? dayStr(items[0].parsed.x) : ''; },
+            label: function(c){ return ' ' + c.dataset.label + '  ' + (isRel ? fmtSigned(c.parsed.y) + ' 點' : c.parsed.y.toFixed(2)); }
+          }},
+          navMarks: {base: isRel ? 0 : 100, rebal: rebal, rel: isRel}
+        }
+      },
+      plugins: [navMarks]
+    });
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.chart-bar button'), function(b){
+    b.addEventListener('click', function(){
+      chartMode = b.getAttribute('data-mode');
+      Array.prototype.forEach.call(document.querySelectorAll('.chart-bar button'), function(x){
+        x.classList.toggle('on', x === b);
+        x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+      });
+      if(navData) drawNavChart(navData);
+    });
+  });
+
   fetch('./track.json',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(render).catch(showError);
 
@@ -384,6 +521,7 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
 
     // ── hero meta ──
     $('m-asof').textContent = d.as_of || '—';
+    $('m-pxdate').textContent = d.price_as_of || d.as_of || '—';
     $('m-inception').textContent = d.inception_date || '—';
     $('m-bench0').textContent = d.bench_close_inception!=null ? d.bench_close_inception.toFixed(2) : '—';
 
@@ -423,6 +561,24 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
         '<td class="'+pnClass(relLL)+'">'+(relLL===null?'—':((relLL>0?'+':'')+relLL.toFixed(2)+' pt'))+'</td>';
       nb.appendChild(tr);
     });
+
+    // 表格只列最近 NAV_SHOW 筆，其餘按鈕展開（2026-10-30 起每個交易日一筆）
+    (function(){
+      var trs = nb.querySelectorAll('tr'), btn = $('nav-more');
+      if(!btn || trs.length <= NAV_SHOW) return;
+      for(var i = NAV_SHOW; i < trs.length; i++) trs[i].hidden = true;
+      btn.hidden = false;
+      btn.textContent = '顯示全部 ' + trs.length + ' 筆';
+      btn.onclick = function(){
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        for(var j = NAV_SHOW; j < trs.length; j++) trs[j].hidden = open;
+        btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+        btn.textContent = open ? '顯示全部 ' + trs.length + ' 筆' : '只看最近 ' + NAV_SHOW + ' 筆';
+      };
+    })();
+
+    navData = d;
+    drawNavChart(d);
 
     // ── current holdings, two lines side by side ──
     ['L12','L6'].forEach(function(lk){
