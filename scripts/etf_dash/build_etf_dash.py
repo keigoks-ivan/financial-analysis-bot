@@ -4390,6 +4390,8 @@ def build_overview_json(strength_by_fund: dict | None = None) -> dict:
             # （隱含本益比 3M 變動 ±500 bps，判讀邏輯只在 strength.align_label_zh()）。
             "rel_spy_3m_pct": (strength_by_fund or {}).get(etf_key, {}).get("rel_spy_3m_pct"),
             "rel_spy_12m_pct": (strength_by_fund or {}).get(etf_key, {}).get("rel_spy_12m_pct"),
+            # 2026-10-30 加：RS（總覽全部基金一起排名的近期強弱分數，算法見 strength.py）。
+            **{f: (strength_by_fund or {}).get(etf_key, {}).get(f) for f in strength.RS_FIELDS},
             "eps_coverage_90d_pct": cov90,
             "align_label_zh": ALIGN_LOW_COVERAGE_ZH if low_cov else strength.align_label_zh(pe90),
         })
@@ -4581,6 +4583,7 @@ def main() -> int:
             prev = json.loads(overview_path.read_text(encoding="utf-8"))
             strength_by_fund = {f["etf_key"]: {"rel_spy_3m_pct": f.get("rel_spy_3m_pct"),
                                                "rel_spy_12m_pct": f.get("rel_spy_12m_pct"),
+                                               **{k: f.get(k) for k in strength.RS_FIELDS},
                                                "as_of": prev.get("strength_as_of")}
                                 for f in prev.get("funds", [])}
             print("[etf_dash] strength: reusing previous overview.json values", file=sys.stderr)

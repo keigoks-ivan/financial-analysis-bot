@@ -386,3 +386,69 @@ def test_markets_html_keeps_only_risk_gauge():
     assert "風險偏好儀表" in html and "Risk-On / Risk-Off Gauge" in html
     assert "tab=countries" in html
     assert "全球股市投資知識" in html
+
+
+# ── RS（2026-10-30，舊 update_markets.py 算法，總覽全部基金一起排名）──────────────
+
+def test_percentile_le_counts_ties_and_self():
+    assert st.percentile_le([1, 2, 2, 4], 2) == 75.0
+    assert st.percentile_le([1, 2, 2, 4], 4) == 100.0
+    assert st.percentile_le([1, 2, 2, 4], 1) == 25.0
+
+
+@pytest.mark.parametrize("p,expected", [
+    ((80, 50, 20), ("accelerating", 5.0)),
+    ((50, 50, 20), ("steady", 2.0)),
+    ((50, 50, 50), ("steady", 2.0)),
+    ((20, 50, 80), ("fading", -5.0)),
+    ((50, 80, 20), ("choppy", 0.0)),
+])
+def test_rs_trend_bonus(p, expected):
+    assert st.rs_trend_of(*p) == expected
+
+
+def test_compute_rs_weights_and_bonus():
+    # 兩檔：A 三項都較高，B 三項都較低 → A 百分位 100/100/100，B 50/50/50
+    out = st.compute_rs({"A": (3.0, 6.0, 9.0), "B": (1.0, 2.0, 3.0)})
+    assert out["A"]["rs_score"] == 100.0           # 100 加穩定 +2，上限 100
+    assert out["A"]["rs_trend"] == "steady"
+    assert out["B"]["rs_score"] == 52.0            # 50*0.2+50*0.3+50*0.5＝50，穩定 +2
+    assert (out["B"]["rs_pct_1w"], out["B"]["rs_pct_4w"], out["B"]["rs_pct_13w"]) == (50.0, 50.0, 50.0)
+
+
+def test_compute_rs_weighted_sum_and_accelerating_cap_and_floor():
+    # 五檔，讓 X 的 1w 最強、13w 最弱：pr1=100 > pr4=60 > pr13=20 → 加速 +5
+    rets = {"X": (9, 3, 1), "A": (1, 1, 5), "B": (2, 2, 4), "C": (3, 5, 3), "D": (4, 4, 2)}
+    out = st.compute_rs(rets)
+    x = out["X"]
+    assert (x["rs_pct_1w"], x["rs_pct_4w"], x["rs_pct_13w"]) == (100.0, 60.0, 20.0)
+    assert x["rs_trend"] == "accelerating"
+    assert x["rs_score"] == round(100 * 0.2 + 60 * 0.3 + 20 * 0.5 + 5, 1) == 53.0
+    # 下限 0：單一弱者三項都最低且一路轉弱不會低於 0
+    lo = st.compute_rs({"W": (0.0, 0.0, 0.0), "S": (1.0, 1.0, 1.0)})
+    assert lo["W"]["rs_score"] >= 0
+
+
+def test_compute_rs_missing_returns_not_ranked_and_not_in_population():
+    out = st.compute_rs({"A": (1, 2, 3), "B": (2, 3, 4), "N": (1, None, 3), "Z": None})
+    assert out["N"]["rs_score"] is None and out["N"]["rs_trend"] is None
+    assert out["Z"]["rs_score"] is None
+    # 母體只有 A、B：B 百分位 100，A 50（N 不佔分母）
+    assert out["A"]["rs_pct_1w"] == 50.0 and out["B"]["rs_pct_1w"] == 100.0
+
+
+def test_compute_rs_all_missing():
+    assert st.compute_rs({"A": None})["A"]["rs_score"] is None
+    assert st.compute_rs({}) == {}
+
+
+def test_window_return_pct_uses_bench_calendar_and_insufficient_data():
+    bench = _series(np.arange(100.0, 200.0))
+    fund = _series(np.arange(100.0, 200.0) * 2)
+    r = st.window_return_pct(fund, bench, 5)
+    assert r == pytest.approx((199 * 2 / (194 * 2) - 1) * 100)
+    short = fund.iloc[-3:]            # 起點日之前沒資料
+    assert st.window_return_pct(short, bench, 5) is None
+    assert st.window_return_pct(fund, bench.iloc[-4:], 5) is None
+    stale = fund.iloc[:-10]           # 最後一根比 SPY 終點早超過 5 天
+    assert st.window_return_pct(stale, bench, 5) is None

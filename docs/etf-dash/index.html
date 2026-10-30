@@ -406,6 +406,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div class="tbl-wrap"><table class="imq-table" id="ovTable"></table></div>
   <div class="ex-sub" id="ovReadNote" style="margin-top:8px;line-height:1.7">
     <p><b>強弱 3M、強弱 12M</b>：基金近 63、252 個交易日的含息報酬，減去 SPY 同期的含息報酬，單位是百分點<span id="ovStrengthAsOf"></span>。例如 +10.0 代表比 SPY 多漲 10 個百分點。台幣、日圓計價的基金先換成美元再算；台灣加權指數是指數，沒有配息，用價格計算。上市不到一年的基金，12M 顯示 —。</p>
+    <p><b>RS</b>：0～100 的近期強弱排名分數。總覽全部基金（SPY 也參加）一起比近 1 週、4 週、13 週的含息漲幅，各自換成百分位（100＝最強），依 20／30／50 加權；三段一路變強加 5 分、穩定加 2 分、一路變弱扣 5 分。三項漲幅缺任何一項（例如上市不到 13 週）顯示 —。滑鼠移到數字上可看趨勢與三個百分位。這是近期強弱的排名，不是買賣訊號；本站測過相對強度補空席、產業輪動燈號，都沒有通過。底色以 50 為界，高於 50 偏藍、低於 50 偏紅。</p>
     <p><b>判讀</b>：看「近 3 個月」那組的「本益比」。本益比 3 個月內上升 5% 以上，代表股價漲得比獲利預估快，標「股價跑在前」；下降 5% 以上代表獲利預估漲得比股價快，標「獲利跑在前」；其餘標「對得上」。股價和本益比變動都算到最新收盤，EPS 修正算到「EPS 更新」欄那一天，之後幾天假設沒變。這只是描述股價和獲利預估近三個月誰走得比較快，不是買賣訊號。2026-10-28 用 SMH 1990 年以來的週資料檢驗，獲利上修但股價沒跟上之後，一年的報酬並沒有比較高，詳見<a href="analysis-2026-10-28.html">深度檢驗</a>。歷史上，股價通常比分析師預估早一季動，美股、台股個股都是如此。「股價跑在前」之後，多半是預估追上來，股價很少回頭；「獲利跑在前」之後沒有固定走向。完整檢定見<a href="/backtest/price_vs_earnings/">〈價格與獲利誰先動〉</a>。</p>
     <p><b>底色</b>：數字高於零偏藍、低於零偏紅，越極端顏色越深，每一欄在這個分頁裡各自比較。藍紅只標正負，不代表好壞。預估本益比和 PEG 不上色。</p>
     <p>XLRE（不動產）的本益比用一般會計盈餘計算，不動產公司的房地產折舊會壓低盈餘，本益比看起來比其他產業高，不適合直接比較。</p>
@@ -1425,6 +1426,7 @@ function render(d){
 // 2026-09-26 起修正廣度不可排序（三個數字排序語意不明確，點進基金頁看完整表格）。
 var OV_COLUMNS = [
   {key:'label', grp:'', label:'基金', numeric:false, sortable:false},
+  {key:'rs_score', grp:'強弱（對 SPY）', label:'RS', full:'RS：0～100 的近期強弱排名分數。總覽全部基金一起比近 1 週、4 週、13 週含息漲幅的百分位，依 20／30／50 加權，加速加 5 分、穩定加 2 分、轉弱扣 5 分。滑鼠移到數字上看趨勢與三個百分位。不是買賣訊號', numeric:true, heat:true, center:50},
   {key:'rel_spy_3m_pct', grp:'強弱（對 SPY）', label:'3M', full:'強弱 3M：近 63 個交易日含息報酬減 SPY 同期含息報酬，單位為百分點；台幣、日圓計價的基金先換成美元；SPY 自己不顯示', numeric:true, heat:true},
   {key:'rel_spy_12m_pct', grp:'強弱（對 SPY）', label:'12M', full:'強弱 12M：近 252 個交易日含息報酬減 SPY 同期含息報酬，單位為百分點；台幣、日圓計價的基金先換成美元；SPY 自己不顯示', numeric:true, heat:true},
   {key:'eps_chg_pct_90d', grp:'近 3 個月', label:'EPS', full:'成分股加權明年度 EPS 預估變動（3個月）', numeric:true, heat:true},
@@ -1449,14 +1451,16 @@ function computeHeatScale(ov){
   OV_HEAT_SCALE = {};
   OV_COLUMNS.forEach(function(c){
     if(!c.heat) return;
-    var m = 0;
-    (ov.funds||[]).forEach(function(f){ var v = f[c.key]; if(v!=null && !Number.isNaN(v)) m = Math.max(m, Math.abs(v)); });
+    var m = 0, ctr = c.center || 0;
+    (ov.funds||[]).forEach(function(f){ var v = f[c.key]; if(v!=null && !Number.isNaN(v)) m = Math.max(m, Math.abs(v-ctr)); });
     OV_HEAT_SCALE[c.key] = m || null;
   });
 }
 function ovHeatStyle(v, key){
   var max = OV_HEAT_SCALE[key];
   if(v==null || Number.isNaN(v) || !max) return '';
+  var col = OV_COLUMNS.find(function(c){return c.key===key;});
+  if(col && col.center) v = v - col.center;
   var r = Math.min(1, Math.abs(v) / max);
   if(r < 0.04) return '';
   return ' style="background:'+(v>0?'rgba(42,120,214,':'rgba(227,73,72,')+(0.06 + 0.5*r).toFixed(3)+')"';
@@ -1483,6 +1487,15 @@ function ovBreadthCellHtml(b){
 function ovRelCellHtml(v){
   if(v===null||v===undefined||Number.isNaN(v)) return fwdDash();
   return (v>=0?'+':'')+v.toFixed(1);
+}
+// 2026-10-30 加：RS 欄（0～100，總覽全部基金一起排名）。數字的 title 顯示趨勢與三個百分位；資料不足顯示 —。
+var OV_RS_TREND_ZH = {accelerating:'加速', steady:'穩定', fading:'轉弱', choppy:'不規則'};
+function ovRsCellHtml(row){
+  var v = row.rs_score;
+  if(v==null || Number.isNaN(v)) return fwdDash();
+  var t = OV_RS_TREND_ZH[row.rs_trend] || '';
+  var tip = '趨勢：'+t+'；百分位 1 週 '+row.rs_pct_1w+'／4 週 '+row.rs_pct_4w+'／13 週 '+row.rs_pct_13w;
+  return '<span title="'+esc(tip)+'">'+v.toFixed(1)+'</span>';
 }
 // 2026-10-29：EPS 涵蓋不足（判讀欄由 build_overview_json() 標「涵蓋不足」，門檻只在
 // 後端 EPS_COVERAGE_MIN_PCT）時，預估本益比、本益比變動、PEG 三格淡色加 † 註記。
@@ -1514,7 +1527,8 @@ function ovRowHtml(row){
   var flowTxt = row.flows_skipped ? '<span style="color:var(--muted)" title="指數沒有申贖資料">—</span>'
     : (row.flow_1m_net!=null ? fmtMoney(row.flow_1m_net, row.flow_nav_currency==='USD' ? null : row.flow_nav_currency) : '累積中');
   return '<tr><td class="ov-name">'+nameCell+'</td>'+
-    '<td class="num ov-gs"'+ovHeatStyle(row.rel_spy_3m_pct,'rel_spy_3m_pct')+'>'+ovRelCellHtml(row.rel_spy_3m_pct)+'</td>'+
+    '<td class="num ov-gs"'+ovHeatStyle(row.rs_score,'rs_score')+'>'+ovRsCellHtml(row)+'</td>'+
+    '<td class="num"'+ovHeatStyle(row.rel_spy_3m_pct,'rel_spy_3m_pct')+'>'+ovRelCellHtml(row.rel_spy_3m_pct)+'</td>'+
     '<td class="num ov-strong"'+ovHeatStyle(row.rel_spy_12m_pct,'rel_spy_12m_pct')+'>'+ovRelCellHtml(row.rel_spy_12m_pct)+'</td>'+
     '<td class="num ov-gs"'+ovHeatStyle(row.eps_chg_pct_90d,'eps_chg_pct_90d')+'>'+ovPctCell(row.eps_chg_pct_90d)+'</td>'+
     '<td class="num"'+ovHeatStyle(row.price_chg_pct_90d,'price_chg_pct_90d')+'>'+ovPctCell(row.price_chg_pct_90d)+'</td>'+
