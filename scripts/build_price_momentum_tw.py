@@ -1096,6 +1096,12 @@ def build():
         'date': px_date, 'nav_L12': round(nav_now['L12'], 2), 'nav_L6': round(nav_now['L6'], 2),
         'nav_bench': nav_bench, 'bench_close': round(bench_close, 2),
     }
+    # A row dated after this build's close can only come from a daily
+    # mark-only run that saw a newer close (Yahoo's latest bar can lag at
+    # build time). Drop it so the next daily run re-marks it on the holdings
+    # this build leaves behind — otherwise a rebalance week keeps a row
+    # marked on the outgoing holdings.
+    state['nav_series'] = [r for r in state['nav_series'] if r['date'] <= px_date]
     for row in gap_rows:
         _upsert_nav_row(state, row)
     _upsert_nav_row(state, nav_entry)
