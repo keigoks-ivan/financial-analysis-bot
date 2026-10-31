@@ -66,6 +66,7 @@ import re
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -531,6 +532,23 @@ def inject_switch_banner(html: str, text_html: str) -> str:
     return html2 if n_sub else banner + html
 
 
+US_SETTLE_ET = (16, 30)   # 美股當天日線要等紐約 16:30（收盤後 30 分鐘）才採用
+
+
+def drop_unsettled_us_bar(c: pd.Series, now_et: datetime | None = None) -> pd.Series:
+    """美股最新一根是紐約今天、而且紐約時間還沒到 16:30，就丟掉這根（盤中價格不進決策）。
+    2026-10-31 加：台股收盤那一輪排程（07:00 UTC）常延遲到美股開盤後才跑，10-30 那輪紐約 09:51
+    才跑，用盤中價格寫了美股當日紀錄；減碼門檻改 10pp 後，盤中價格寄出假換倉提醒的機會變大。
+    美股不跑資料延遲檢查（market_delays 只看台股），丟掉這根不會觸發延遲通知；當天紀錄等美股收盤那一輪寫。"""
+    if c.empty:
+        return c
+    now_et = now_et or datetime.now(ZoneInfo("America/New_York"))
+    if c.index[-1].date() == now_et.date() and (now_et.hour, now_et.minute) < US_SETTLE_ET:
+        print(f"  盤中未收盤：不採用 {c.index[-1].date()} 這根日線（紐約時間 {now_et:%H:%M}）")
+        return c.iloc[:-1]
+    return c
+
+
 def fetch_close(ticker: str) -> pd.Series:
     end = datetime.now() + timedelta(days=1)
     start = end - timedelta(days=365 * 13)   # 13y: W250 (~4.8y) warmup + state history
@@ -555,7 +573,7 @@ def fetch_close(ticker: str) -> pd.Series:
         if not notes["official"]:
             print(f"  {ticker}: 證交所官方收盤抓不到，不補值")
         return repair_phantom_splits(c)
-    return c
+    return drop_unsettled_us_bar(c)
 
 
 # ---------------------------------------------------------------------------
