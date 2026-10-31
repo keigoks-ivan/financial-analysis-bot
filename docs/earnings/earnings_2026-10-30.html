@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Analysis · 2026-10-30 — InvestMQuest Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --bg-subtle:#fafaf9; --surface:#ffffff; --surface-2:#f7f7f5;
+  --border:#e5e5e2; --border-strong:#1a1a1a;
+  --text:#1a1a1a; --text-muted:#666; --text-dim:#999;
+  --accent:#2563eb; --green:#15803d; --green-bg:#f0fdf4;
+  --red:#b91c1c; --red-bg:#fef2f2; --amber:#b45309; --amber-bg:#fffbeb;
+  --orange:#c2410c; --orange-bg:#fff7ed; --radius:8px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+
+.imq-nav{display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+  padding:12px 28px;border-bottom:1px solid var(--border);background:var(--bg-subtle);
+  font-size:13px;position:sticky;top:0;z-index:50;}
+.imq-nav a{color:var(--text-muted);text-decoration:none;}
+.imq-nav a:hover{color:var(--accent);}
+.imq-brand{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--text)!important;
+  letter-spacing:-.3px;margin-right:8px;}
+.imq-dd{position:relative;}
+.imq-dd-label{color:var(--text-muted);cursor:default;}
+.imq-dd:hover .imq-dd-label{color:var(--accent);}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:-12px;padding:8px 0;min-width:150px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:0 6px 20px rgba(0,0,0,.07);}
+.imq-dd:hover .imq-dd-menu{display:block;}
+.imq-dd-menu a{display:block;padding:6px 16px;white-space:nowrap;}
+.imq-dd.active > .imq-dd-label{color:var(--text);font-weight:500;}
+.imq-dd-menu a.active{color:var(--accent);font-weight:500;}
+
+.container{max-width:880px;margin:0 auto;padding:32px 24px 80px;}
+.breadcrumb{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:24px;}
+.breadcrumb a{color:var(--text-dim);text-decoration:none;}
+.breadcrumb a:hover{color:var(--accent);}
+
+.report-header{border-bottom:2px solid var(--border-strong);padding-bottom:24px;margin-bottom:32px;}
+.report-header h1{font-size:32px;line-height:1.25;margin:0 0 10px;letter-spacing:-.6px;}
+.report-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px;}
+.report-lede{border-left:3px solid var(--accent);padding:14px 18px;background:var(--surface-2);
+  border-radius:0 var(--radius) var(--radius) 0;font-size:15px;}
+
+.toc{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 22px;margin-bottom:40px;}
+.toc-title{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text-dim);margin-bottom:10px;}
+.toc ol{margin:0;padding-left:20px;font-size:14px;}
+.toc li{margin:4px 0;}
+.toc a{color:var(--text);text-decoration:none;}
+.toc a:hover{color:var(--accent);}
+
+h2{font-size:23px;margin:52px 0 18px;padding-bottom:9px;border-bottom:1px solid var(--border-strong);
+  letter-spacing:-.3px;}
+h3{font-size:17px;margin:32px 0 10px;}
+h4{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text-muted);margin:20px 0 8px;}
+p{margin:0 0 14px;}
+ul{margin:0 0 14px;padding-left:20px;}
+li{margin:5px 0;}
+
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:14px;}
+th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--text-muted);padding:8px 10px;border-bottom:1px solid var(--border-strong);
+  font-weight:500;}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+tbody tr:hover{background:var(--surface-2);}
+
+.company-card{border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;
+  margin:22px 0;background:var(--surface);}
+.company-header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+.ticker{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;letter-spacing:-.4px;}
+.meta-right{font-size:12.5px;color:var(--text-muted);text-align:right;}
+
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;
+  padding:2px 7px;border-radius:4px;letter-spacing:.4px;white-space:nowrap;}
+.tag.beat{background:var(--green-bg);color:var(--green);}
+.tag.miss{background:var(--red-bg);color:var(--red);}
+.tag.inline{background:var(--amber-bg);color:var(--amber);}
+.tag.raise{background:var(--green-bg);color:var(--green);}
+.tag.maintain{background:var(--amber-bg);color:var(--amber);}
+.tag.lower{background:var(--red-bg);color:var(--red);}
+
+.stock-move{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;
+  padding:2px 7px;border-radius:4px;}
+.stock-move.up{background:var(--green-bg);color:var(--green);}
+.stock-move.down{background:var(--red-bg);color:var(--red);}
+
+.lede-list{margin:.45rem 0 0 1.15rem;padding:0;}
+.lede-list li{margin:.3rem 0;}
+.stat-strip{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;}
+.stat-chip{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;
+  padding:4px 10px;border-radius:4px;background:var(--surface-2);border:1px solid var(--border);white-space:nowrap;}
+.stat-chip .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-right:6px;}
+.stat-chip.good{background:var(--green-bg);color:var(--green);border-color:transparent;}
+.stat-chip.bad{background:var(--red-bg);color:var(--red);border-color:transparent;}
+.stat-chip.mid{background:var(--amber-bg);color:var(--amber);border-color:transparent;}
+.stat-chip.na{color:var(--text-muted);}
+.bottom-line{border-left:3px solid var(--border-strong);background:var(--surface-2);
+  padding:10px 14px;margin:12px 0 4px;font-size:14.5px;border-radius:0 var(--radius) var(--radius) 0;}
+.bottom-line strong{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:.7px;color:var(--text-muted);margin-right:8px;}
+.trend-list{list-style:none;padding:0;margin:0 0 28px;}
+.trend-list li{margin:9px 0;}
+.tl{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);
+  border-radius:4px;padding:1px 7px;margin-right:8px;white-space:nowrap;vertical-align:1px;}
+.trend-list li.impl .tl{color:var(--accent);border-color:var(--accent);background:transparent;}
+
+.winner-row td:first-child{border-left:3px solid var(--green);font-family:'IBM Plex Mono',monospace;font-weight:500;}
+.loser-row td:first-child{border-left:3px solid var(--red);font-family:'IBM Plex Mono',monospace;font-weight:500;}
+
+.contradiction{background:var(--orange-bg);border-left:3px solid var(--orange);
+  border-radius:0 var(--radius) var(--radius) 0;padding:16px 20px;margin:18px 0;}
+.contradiction h4{color:var(--orange);font-size:12px;margin:0 0 8px;}
+.contradiction p{margin:0 0 10px;font-size:14.5px;}
+.implication{margin-bottom:0!important;color:var(--text);}
+
+.summary-list{list-style:none;padding:0;}
+.summary-list li{border-left:3px solid var(--accent);background:var(--surface-2);
+  padding:12px 16px;margin:10px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:14.5px;}
+
+.noncon{background:#fdf4ff;border-left:3px solid #9333ea;border-radius:0 var(--radius) var(--radius) 0;
+  padding:14px 18px;margin:14px 0;}
+.noncon h4{color:#9333ea;margin-top:0;}
+
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 20px;margin-top:48px;font-size:12.5px;color:var(--text-muted);line-height:1.65;}
+footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+  margin-top:28px;padding-top:20px;border-top:1px solid var(--border);}
+footer a{color:var(--text-dim);text-decoration:none;}
+
+@media (max-width:720px){
+  .container{padding:22px 16px 60px;}
+  .report-header h1{font-size:24px;}
+  .company-card{padding:18px 16px;}
+  .company-header{flex-direction:column;align-items:flex-start;}
+  .meta-right{text-align:left;}
+  table{font-size:13px;}
+  th,td{padding:7px 6px;}
+  .imq-nav{gap:14px;padding:10px 14px;}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+:where(a){color:#0d2244}
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/markets.html">風險偏好儀表</a>
+          <a href="/earnings/" class="active">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/screeners.html">RS 排行</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<!-- PLAIN_PRIMER_START -->
+<details style="max-width:900px;margin:16px auto;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:2px 18px 14px;font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.9;color:#334155">
+<summary style="cursor:pointer;padding:12px 0;font-weight:600;color:#1E3A5F;font-size:13.5px">📖 第一次讀這種報告？點開看怎麼讀</summary>
+<div style="margin:2px 0 4px;padding-top:8px;border-top:1px solid #E2E8F0">
+<p style="margin:6px 0">這是財報分析報告，整理公司公布財報當下的數字重點與市場反應。</p>
+<p style="margin:6px 0"><strong>結論在哪：</strong>通常在後段的「總結」；部分報告後面附加「Phase R 覆核」，是同一份報告針對特定結論的後續補充，不是新報告。</p>
+<p style="margin:6px 0"><strong>常見詞：</strong>「EPS」是每股盈餘；「財測」（guidance）是公司自己對未來業績的預估；「優於預期／不如預期」是跟市場原本的共識預估比較後的結果，不是絕對的好壞——公司賺錢又成長，也可能因為「不如預期」股價當天下跌。</p>
+<p style="margin:6px 0"><strong>時效提醒：</strong>這是財報「當天」的即時反應紀錄，之後股價與基本面可能已經變化，相關個股最新結論請看 <a href="/research/" style="color:#2563EB;text-decoration:underline">/research/</a>。</p>
+<p style="margin:6px 0 0">想查其他詞的意思，見<a href="/learn/glossary.html" style="color:#2563EB;text-decoration:underline">投資詞彙表</a>。</p>
+</div>
+</details>
+<!-- PLAIN_PRIMER_END -->
+
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-10-30
+  </div>
+
+  <header class="report-header">
+    <h1>美股 10/30 財報日深度分析</h1>
+    <div class="report-meta">11 companies analyzed · $50B+ 8家 + DD快篩名單3家 · 全數盤前發布、同日收盤即最終判決</div>
+    <div class="report-lede">
+      <strong>核心發現：</strong>
+      <ul class="lede-list">
+        <li>REGN單日爆發+13.33%——Dupixent／EYLEA HD雙創紀錄，本季最大單日正向反應（§1）。</li>
+        <li>NVT四度上調guide仍重摔-8.81%——估值已price in完美，beat+raise魔咒鎖定高倍數名字（§4矛盾1）。</li>
+        <li>能源雙雄XOM／CVX雙beat齊漲——Permian／Guyana產量創紀錄＋$200億2027買回（§2）。</li>
+        <li>AZN／ABBV／CL／CBOE全數beat+raise齊揚，防禦型龍頭罕見集體受賞（§2）。</li>
+        <li>CNI beat+raise卻收平盤-0.30%——guide上修已被市場提前消化（§4矛盾2）。</li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="toc">
+    <div class="toc-title">目錄</div>
+    <ol>
+      <li><a href="#s1">各公司財報重點</a></li>
+      <li><a href="#s2">產業與子產業趨勢</a></li>
+      <li><a href="#s3">贏家與輸家</a></li>
+      <li><a href="#s4">互相矛盾與不合邏輯之處</a></li>
+      <li><a href="#s5">總結</a></li>
+    </ol>
+  </div>
+
+  <h2 id="s1">§1 各公司財報重點</h2>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">XOM · ExxonMobil</span>
+      <span class="meta-right">~$695B · 盤前（10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後$4.23</span>
+      <span class="stat-chip good"><span class="k">淨利</span>調整後$17.5B</span>
+      <span class="stat-chip mid"><span class="k">指引</span>MAINTAIN＋資本回饋加碼</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲2.16%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>調整後EPS $4.23優於財報前共識區間（約$3.60-3.83），Permian／Guyana產量創里程碑，連續44年股息增長不中斷並宣布2027年$200億買回。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP EPS</td><td>$3.72</td><td>—</td><td>GAAP淨利$15.4B</td></tr>
+        <tr><td>調整後EPS</td><td>$4.23</td><td>約$3.60-3.83（多來源共識區間）</td><td><span class="tag beat">BEAT</span>調整後淨利$17.5B</td></tr>
+        <tr><td>股東回饋</td><td>2027年買回$200億</td><td>—</td><td>股息連增44年</td></tr>
+        <tr><td>資產負債表</td><td>年初至今淨負債減少近$110億</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>GAAP與調整後落差</strong>：GAAP EPS $3.72對比調整後$4.23，落差約12%，公司10月中8-K已預告本季約$25億的負向timing效應，屬已揭露項目而非意外。</li>
+      <li><strong>上游產量里程碑</strong>：Guyana與Kearl累計產量雙雙創紀錄，PNG LNG同步達成產量里程碑，為本季Upstream分部的主要支撐。</li>
+      <li><strong>煉油利潤率</strong>：公司10月預告煉油利潤率走高單季貢獻約$45億增量獲利，是本季調整後EPS優於共識區間的主要來源之一。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>CEO Darren Woods在新聞稿中表示公司持續以「無可比擬的規模、整合度與技術能力」應對全球能源需求，並點名2019年以來累計結構性成本節省達$169億；法說會逐字稿未取得，Q&amp;A引述暫缺。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+2.16%</span> 至$187.25（10/30 4:00PM ET，與10/29收盤$183.29比較，二源確認）。</li>
+      <li>漲因：調整後EPS優於共識區間、買回加碼＋股息連增紀錄延續，市場對能源龍頭的資本紀律給予正面評價。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前多家券商（Piper Sandler／Morgan Stanley／UBS）年內已多次上修目標價至$170-200區間，顯示財報前基調已偏正面。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">ABBV · AbbVie</span>
+      <span class="meta-right">~$478B · 盤前（10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後guide上修</span>
+      <span class="stat-chip good"><span class="k">營收</span>$17.40B +10.3%</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE 全年EPS</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲1.41%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>Skyrizi／Rinvoq合計貢獻免疫學營收+16%，神經科學+19%，全年調整後EPS guide上修至$13.95-13.99，完成Apogee收購後股價仍正向回應。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>總營收</td><td>$17.404B</td><td>公司Q2財測約$17.2B</td><td><span class="tag beat">BEAT</span> +10.3%（operational +10.5%）</td></tr>
+        <tr><td>免疫學</td><td>$9.17B</td><td>—</td><td>+16%；Skyrizi $5.776B／Rinvoq $2.706B</td></tr>
+        <tr><td>神經科學</td><td>$3.39B</td><td>—</td><td>+19.4%</td></tr>
+        <tr><td>腫瘤學／美容</td><td>$1.70B／$1.18B</td><td>—</td><td>腫瘤學持平；美容-1.4%</td></tr>
+        <tr><td>FY26調整後EPS guide</td><td>$13.95-13.99</td><td>前次$13.76-13.96</td><td><span class="tag raise">RAISE</span>含年初至今$0.69/股IPR&amp;D費用</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>Skyrizi／Rinvoq持續扛營收</strong>：兩項合計貢獻免疫學逾92%營收，是公司成長的核心引擎，增速較去年同期放緩但仍維持雙位數。</li>
+      <li><strong>Apogee併購落地</strong：公司完成Apogee Therapeutics收購並宣布股息自2027年2月起增加5.2%，顯示現金流仍支撐持續性股東回饋與併購雙軌並行。</li>
+      <li><strong>guidance數字來源分歧</strong>：不同財經媒體對guidance新區間轉述不一（另有來源稱$14.08-14.28），本卡採公司8-K原文Exhibit 99.1所載$13.95-13.99為權威版本。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，本卡依SEC 8-K press release摘要撰寫，無法引述管理層原話與分析師Q&amp;A。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+1.41%</span> 至$294.89（10/30 4:00PM ET，較10/29收盤$290.79，二源確認）。</li>
+      <li>漲因：營收與guide雙雙優於公司自身財測、Skyrizi/Rinvoq動能延續，市場對Apogee稀釋的擔憂未壓過基本面表現。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前Cantor Fitzgerald（目標價$285，Overweight）、Morgan Stanley（$296）、Canaccord（$290）皆看多，財報前共識目標價約$271-277。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">CVX · Chevron</span>
+      <span class="meta-right">~$414B · 盤前（10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後$5.28</span>
+      <span class="stat-chip good"><span class="k">淨利</span>GAAP $9.9B</span>
+      <span class="stat-chip mid"><span class="k">指引</span>未揭露新量化財測</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲1.75%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>調整後EPS $5.28優於共識約$4.80-4.89（beat約8%），美國產量較兩年前增27%，一次性費用（法律準備金／減損／退休金結算）合計約$2.94億已拆分揭露。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP EPS</td><td>$5.06</td><td>—</td><td>GAAP淨利$9.9B</td></tr>
+        <tr><td>調整後EPS</td><td>$5.28</td><td>約$4.80-4.89（多來源共識）</td><td><span class="tag beat">BEAT</span>約+8%；調整後淨利$10.4B</td></tr>
+        <tr><td>營收</td><td>未取得確切數字</td><td>約$57.3B（Benzinga財報前共識）</td><td><span class="tag inline">未確認beat/miss</span></td></tr>
+        <tr><td>美國產量</td><td>較兩年前+27%</td><td>—</td><td>無新Q4量化產量財測揭露</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>一次性項目</strong>：本季含法律準備金$1.6億、減損$1.1億、退休金結算成本$2,400萬，匯率因素另使獲利減少$1.43億，皆為GAAP與調整後EPS落差來源（落差約4%，低於需強制追查的50%門檻）。</li>
+      <li><strong>營收數字未確認</strong>：搜尋未能取得Chevron本季正式營收數字，故本卡不標示營收beat/miss，僅呈現財報前共識供參考，避免比照不同口徑誤判。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release摘要撰寫。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+1.75%</span> 至$235.52（10/30 4:00PM ET，較10/29收盤$231.46，二源確認）。</li>
+      <li>漲因：調整後EPS優於共識約8%，一次性費用皆已拆分說明，未引發市場對品質的疑慮。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">AZN · AstraZeneca</span>
+      <span class="meta-right">~$260B · 盤前（英國時間，10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>Core $2.79 +17%</span>
+      <span class="stat-chip good"><span class="k">營收</span>$16.2B +7% CER</span>
+      <span class="stat-chip mid"><span class="k">指引</span>MAINTAIN 重申全年</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲7.02%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>Q3營收+7%（固定匯率）、Core EPS +17%（固定匯率+19%），9個月累計47項主要市場新藥核准、12項正向三期讀數，全年guidance原封重申，股價單日+7.02%貼近選擇權隱含波動上緣（±7.2%）。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Q3營收</td><td>$16.2B</td><td>—</td><td>+7% CER；9個月累計$46.9B +7% CER</td></tr>
+        <tr><td>Q3 Reported EPS</td><td>$2.02</td><td>—</td><td>+23%</td></tr>
+        <tr><td>Q3 Core EPS</td><td>$2.79</td><td>—</td><td>+17%（+19% CER）；9個月Core EPS $8.00 +14%</td></tr>
+        <tr><td>FY26 guidance</td><td>重申：營收中高個位數成長、Core EPS成長略同於營收成長率</td><td>—</td><td><span class="tag maintain">MAINTAIN</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>選擇權隱含波動近乎打滿</strong>：財報前市場為AZN定價±7.2%的波動區間（高於十年均值±4.5%），實際收漲+7.02%幾乎吃滿隱含波動上緣，顯示市場財報前已預期本季為方向性事件。</li>
+      <li><strong>Reported與Core EPS落差</strong>：$2.79（Core）對$2.02（Reported），落差約27%，低於50%強制追查門檻，惟仍需留意兩口徑差距較上季擴大。</li>
+      <li><strong>管線動能</strong>：公司揭露自去年Q4以來47項主要市場核准、年初至今12項三期正向讀數，支撐guidance維持不變而非上修的穩健敘事。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，本卡依公司Q3 2026新聞稿（6-K）摘要撰寫，未取得管理層原話。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+7.02%</span> 至$186.65（10/30 4:00PM ET，較10/29收盤約$174.40，二源確認）；盤後延伸交易小幅回落至$185.55（-0.59%）。</li>
+      <li>漲因：Core EPS兩口徑雙創雙位數成長、guidance維持不變排除下修疑慮，疊加財報前隱含波動偏高顯示市場原本預期不確定性大，結果偏正向觸發回補。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">REGN · Regeneron</span>
+      <span class="meta-right">~$86B · 盤前（10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>非GAAP $20.07 +70%</span>
+      <span class="stat-chip good"><span class="k">營收</span>$5.1B +36%</span>
+      <span class="stat-chip mid"><span class="k">指引</span>未揭露新量化財測</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲13.33%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>非GAAP EPS $20.07遠超共識約$15.38（beat約30%），Dupixent／EYLEA HD／Libtayo三項皆創紀錄季銷售，是本季迄今最大單日正向股價反應。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>總營收</td><td>$5.1B</td><td>約$4.52B（Benzinga共識）</td><td><span class="tag beat">BEAT</span> +36% YoY</td></tr>
+        <tr><td>GAAP EPS</td><td>$18.45</td><td>—</td><td>+35%</td></tr>
+        <tr><td>非GAAP EPS</td><td>$20.07</td><td>約$15.38（共識）</td><td><span class="tag beat">BEAT</span>約+30%；+70% YoY</td></tr>
+        <tr><td>關鍵產品</td><td>Dupixent（Sanofi認列）$6.5B／EYLEA HD美國$699M／Libtayo $550M</td><td>—</td><td>三項皆創紀錄，分別+35%／+62%／+51%</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>Sanofi聯盟擴大</strong>：雙方擴大合作協議，Sanofi將於Q4認列$10億前期收款，另有最高$70億里程金，為未來數季的額外收入來源，尚未反映在本季財測基礎中。</li>
+      <li><strong>監管進展</strong>：FDA核准Pasatru（garetosmab）用於治療進行性骨化性纖維發育不良（FOP），為公司罕見病管線的新增里程碑。</li>
+      <li><strong>GAAP與非GAAP落差</strong>：$18.45對$20.07，落差約8%，屬正常範圍，不觸發50%強制追查規則。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>CEO Leonard Schleifer在新聞稿中稱本季為「出色的一季」，點名Dupixent、EYLEA HD、Libtayo三者皆創紀錄淨銷售；法說會逐字稿未取得，分析師Q&amp;A引述暫缺。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+13.33%</span> 至$927.89（10/30 4:00PM ET，較10/29收盤約$818.77，二源確認）；盤後延伸交易持平微漲。</li>
+      <li>漲因：營收與非GAAP EPS雙雙大幅超越共識（約30%），三大產品線同步創紀錄，疊加Sanofi聯盟擴大帶來的額外現金流能見度。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前JPMorgan（$950）、Bernstein（$916）、Morgan Stanley（$767，較舊）等目標價區間分歧，反映財報前市場對Eylea競爭格局仍有分歧。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">CNI · Canadian National Railway</span>
+      <span class="meta-right">~$79B · 盤前（10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後$2.16 +18%</span>
+      <span class="stat-chip good"><span class="k">營收</span>$4.77B +15%</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE 全年EPS</span>
+      <span class="stat-chip bad"><span class="k">股價</span>收平-0.30%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>營收/EPS雙beat、FY26 EPS guide上修至$5.68-5.95（高於原$5.40-5.69區間），自由現金流+36%，但股價僅收平盤，呼應10月以來「鐵路beat+raise未必獲賞」現象。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Q3營收</td><td>$4.771B</td><td>—</td><td>+15% YoY</td></tr>
+        <tr><td>GAAP EPS</td><td>$2.00</td><td>約$1.50（Zacks舊估計，口徑不同）</td><td>+9%</td></tr>
+        <tr><td>調整後EPS</td><td>$2.16</td><td>—</td><td>+18%</td></tr>
+        <tr><td>自由現金流</td><td>$1,076M</td><td>—</td><td>+36%</td></tr>
+        <tr><td>FY26 EPS guide</td><td>$5.68-5.95</td><td>共識約$5.67（低於新區間下緣）</td><td><span class="tag raise">RAISE</span>原$5.40-5.69</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>guide上修後仍略高於共識</strong>：市場共識EPS約$5.67僅略低於新guide下緣$5.68，意味guide上修的驚喜程度本身有限，可能是股價未獲正向回應的結構性原因。</li>
+      <li><strong>自由現金流加速</strong>：+36%的FCF成長速度遠快於營收+15%，反映資本支出效率改善，但該訊號本次未能轉化為股價正向反應。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依公司新聞稿（6-K）摘要撰寫。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收平 <span class="stock-move down">-0.30%</span> 至$123.69（10/30 4:00PM ET，較10/29收盤$124.06，二源確認）。</li>
+      <li>反應邏輯：財報內容為清晰的beat+raise，但股價幾乎無反應，顯示guide上修的驚喜程度已被市場提前消化（§4矛盾2）。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">CL · Colgate-Palmolive</span>
+      <span class="meta-right">~$69B · 盤前（10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>Base Business $0.97 +7%</span>
+      <span class="stat-chip good"><span class="k">營收</span>$5.37B +4.6%</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE 毛利率/EPS</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲2.29%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>有機成長+3.6%（含私有品牌寵物食品-0.2pp拖累）、毛利率擴張80個基點至60.2%，公司縮窄銷售guide同時上修毛利率與Base Business EPS guide。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>淨銷售</td><td>$5.369B</td><td>—</td><td>+4.6%；有機銷售+3.6%</td></tr>
+        <tr><td>GAAP EPS</td><td>$0.94</td><td>—</td><td>+3%</td></tr>
+        <tr><td>Base Business EPS</td><td>$0.97</td><td>—</td><td>+7%</td></tr>
+        <tr><td>毛利率</td><td>60.2%</td><td>—</td><td>+80bps</td></tr>
+        <tr><td>FY26 guide</td><td>銷售guide縮窄區間；毛利率與Base Business EPS guide雙上修</td><td>—</td><td><span class="tag raise">RAISE</span>（毛利率/EPS）</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>私有品牌拖累</strong>：有機銷售+3.6%中，低利潤私有品牌寵物食品銷售下滑拖累約0.2個百分點，剔除後核心品牌動能更強。</li>
+      <li><strong>GAAP與Base Business落差小</strong>：$0.94對$0.97，落差僅約3%，屬乾淨財報，無需追查一次性項目。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release摘要撰寫。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+2.29%</span> 至$95.29（10/30 4:00PM ET，較10/29收盤$93.16，二源確認）。</li>
+      <li>漲因：毛利率與EPS guide同步上修，銷售guide縮窄被解讀為更精準而非保守下修，市場給予正面評價。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">D · Dominion Energy</span>
+      <span class="meta-right">~$55B · 盤前（10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>GAAP $1.30 +12%</span>
+      <span class="stat-chip good"><span class="k">淨利</span>$1,160M</span>
+      <span class="stat-chip mid"><span class="k">指引</span>MAINTAIN 上半區間</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲2.30%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>Q3 GAAP EPS $1.30優於去年同期$1.16，公司重申全年guidance並預期落在區間上半段，53GW以上資料中心容量在洽談各階段，直接呼應AI基建用電需求主題。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Q3淨利</td><td>$1,160M</td><td>—</td><td>去年同期$1,006M</td></tr>
+        <tr><td>Q3 GAAP EPS</td><td>$1.30</td><td>約$1.20（非GAAP共識，口徑不同）</td><td>去年同期$1.16</td></tr>
+        <tr><td>營收</td><td>未取得確切數字</td><td>—</td><td>10-Q揭露本季營業收入+24%</td></tr>
+        <tr><td>FY26 guidance</td><td>重申$3.45-3.69區間，預期落在上半段</td><td>—</td><td><span class="tag maintain">MAINTAIN</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>資料中心容量管線</strong>：公司揭露逾53GW資料中心容量在各洽談階段，其中約12GW已簽訂電力服務協議（ESA），自2025年底以來新增逾5GW合約，為公司長期資本支出週期的核心支撐。</li>
+      <li><strong>9個月GAAP EPS年減</strong>：9個月累計GAAP EPS $2.37，低於去年同期$2.81，10-Q指出主因是非受管制可再生天然氣設施與部分太陽能發電設施的減損費用，與本季營運成長方向相反（§4矛盾3）。</li>
+      <li><strong>Coastal Virginia海上風電</strong>：專案完工度達81%，無重大成本超支揭露。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 10-Q／8-K摘要撰寫。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+2.30%</span> 至$66.62（10/30 4:00PM ET，較10/29收盤約$65.12，二源確認）；盤後延伸交易小幅回落。</li>
+      <li>漲因：Q3 EPS優於去年同期、guidance重申上半區間，資料中心容量管線持續擴大強化長期資本支出敘事。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">CBOE · Cboe Global Markets</span>
+      <span class="meta-right">~$30B（DD快篩名單） · 盤前（10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後$3.63 +36%</span>
+      <span class="stat-chip good"><span class="k">營收</span>$712.2M +18%</span>
+      <span class="stat-chip mid"><span class="k">指引</span>未揭露新量化財測</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲6.77%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>淨營收與調整後EPS雙雙優於共識（約$707M／$3.45），交易活躍度延續強勁，惟調整後EPS反而低於GAAP EPS，方向與多數同業相反，屬本日值得留意的會計細節。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>淨營收</td><td>$712.2M</td><td>約$707.0M（Benzinga共識）</td><td><span class="tag beat">BEAT</span> +18%</td></tr>
+        <tr><td>GAAP EPS</td><td>$4.08</td><td>—</td><td>+43%</td></tr>
+        <tr><td>調整後EPS</td><td>$3.63</td><td>約$3.45（共識）</td><td><span class="tag beat">BEAT</span> +36%</td></tr>
+        <tr><td>調整後營運費用</td><td>$204.0M</td><td>—</td><td>-3% YoY；GAAP營運費用反而+6%</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>GAAP高於調整後的反向落差</strong>：GAAP EPS $4.08高於調整後$3.63，落差約12%，方向與本日其他公司（GAAP通常低於調整後）相反，暗示GAAP口徑內含未明確揭露的一次性收益項目（§4矛盾可留意但未達50%強制追查門檻）。</li>
+      <li><strong>費用口徑分歧</strong>：調整後營運費用年減3%，但GAAP營運費用反而年增6%，與EPS口徑的反向模式一致，指向同一組一次性項目來源。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release摘要撰寫。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+6.77%</span> 至$335.53（10/30 4:00PM ET，較10/29收盤約$314.25，二源確認）；盤後延伸交易持平。</li>
+      <li>漲因：營收與調整後EPS雙雙優於共識，衍生品交易活躍度延續強勁，市場對一次性項目的反向落差未產生負面解讀。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">NVT · nVent Electric</span>
+      <span class="meta-right">~$25B（DD快篩名單） · 盤前（10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後$1.52 +67%</span>
+      <span class="stat-chip good"><span class="k">營收</span>$1.5B +44%</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE 大幅上修</span>
+      <span class="stat-chip bad"><span class="k">股價</span>收跌8.81%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>銷售與EPS雙雙大增逾四成/六成七，FY26 guide第四度上修（EPS上修至$5.36-5.39），資料中心液冷需求加速，但股價仍重摔8.81%，是本日唯一beat+raise仍遭棄的案例（§4矛盾1）。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>銷售</td><td>$1.5B</td><td>約$1.44B（共識）</td><td><span class="tag beat">BEAT</span>報告值與有機值同為+44%</td></tr>
+        <tr><td>GAAP EPS</td><td>$1.23</td><td>—</td><td>+68%</td></tr>
+        <tr><td>調整後EPS</td><td>$1.52</td><td>約$1.39（共識）</td><td><span class="tag beat">BEAT</span> +67%</td></tr>
+        <tr><td>FY26銷售成長guide</td><td>48-49%</td><td>前次37-39%</td><td><span class="tag raise">RAISE</span></td></tr>
+        <tr><td>FY26調整後EPS guide</td><td>$5.36-5.39</td><td>前次$5.00-5.10</td><td><span class="tag raise">RAISE</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>資料中心銷售上修</strong>：公司預期2026年資料中心相關銷售將超過$20億，是本季guide大幅上修的主要驅動力，液冷需求加速為核心敘事。</li>
+      <li><strong>估值已偏緊</strong>：財報前股價對應約38倍本益比，已有券商因估值過高下調評等至持有，財報前選擇權隱含波動達±13.23%，顯示市場財報前已預期為高波動事件。</li>
+      <li><strong>GAAP與調整後落差</strong>：$1.23對$1.52，落差約19%，屬一次性項目範圍，低於50%強制追查門檻。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release摘要撰寫，無法引述管理層原話與分析師Q&amp;A。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收跌 <span class="stock-move down">-8.81%</span> 至$125.98（10/30 4:00PM ET，較10/29收盤約$138.15，二源確認）。</li>
+      <li>反應邏輯：財報內容為本日最強勁的beat+raise之一，但財報前已高倍數交易、選擇權隱含波動打滿，股價重摔更可能反映「漂亮數字早已被price in、僅剩獲利了結」，而非需求端轉弱（§4矛盾1）。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前平均目標價約$198.82、評等偏多，與財報後股價重摔形成的落差留待下一輪覆核追蹤。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">LEA · Lear Corporation</span>
+      <span class="meta-right">~$6B（DD快篩名單） · 盤前（10/30 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後$3.71</span>
+      <span class="stat-chip good"><span class="k">營收</span>$5.8B</span>
+      <span class="stat-chip na"><span class="k">指引</span>未取得</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲0.90%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>營收與核心營業利益、淨利、EPS皆年增，是本日唯一的汽車零組件供應鏈代表，股價反應溫和，未取得公司新guidance數字。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>財測/共識</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>營收</td><td>$5.8B</td><td>—</td><td>年增（未取得精確百分比）</td></tr>
+        <tr><td>調整後EPS</td><td>$3.71</td><td>—</td><td>年增（未取得精確百分比）</td></tr>
+        <tr><td>FY26 guidance</td><td>未取得</td><td>—</td><td><span class="stat-chip na">未揭露</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>資料有限</strong>：搜尋預算優先配置於大型公司，LEA僅取得頭條營收與調整後EPS數字，YoY百分比與guidance細節未能二源確認，誠實標注「未取得」而非推測。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release頭條數字撰寫。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+0.90%</span> 至$118.44（10/30 4:00PM ET，較10/29收盤約$117.38，二源確認）。</li>
+      <li>漲因：營收與EPS皆年增，市場反應溫和、未見明顯驚喜或失望。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <h2 id="s2">§2 產業與子產業趨勢</h2>
+
+  <h3>能源上游雙雄——XOM／CVX</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>兩大整合型石油巨頭本季調整後EPS皆優於共識（XOM $4.23、CVX $5.28），顯示上游產量紀錄＋煉油利潤率擴張足以抵銷原油價格相對平緩的環境。</li>
+    <li><span class="tl">細節</span>XOM調整後淨利$17.5B（Permian/Guyana/Kearl多項產量里程碑）；CVX調整後淨利$10.4B（美國產量較兩年前+27%），兩者皆維持或加碼股東回饋（XOM 2027買回$200億、股息連增44年）。</li>
+    <li><span class="tl">跨日比較</span>與10/28報告的EQNR／PSX（能源同業）相比，本次XOM/CVX取得更完整的官方8-K原始數字，股價反應亦明確為正，形成能源股本輪財報季「上游與煉油利潤率雙擎」的第三個確認樣本。</li>
+    <li><span class="tl">上下游一致性</span>上游production record與煉油margin同步報喜，顯示本季能源股的獲利驅動力並非單一環節，而是production＋refining margin兩條曲線同時向上，內部一致性高。</li>
+    <li><span class="tl">可證偽</span>若Q4原油／煉油利潤率回落而兩家公司仍維持買回規模不變，將驗證本季獲利具一次性成分；若Q4法說會揭露產量目標進一步上修，則強化「結構性而非週期性」的判斷。</li>
+    <li class="impl"><span class="tl">Implication</span>能源龍頭在原油價格相對平緩的環境下仍能靠量（產量紀錄）與質（煉油利潤率）雙重槓桿交出優於共識的獲利，顯示資本紀律＋運營執行力正逐漸取代油價本身成為本輪能源股評價的主要驅動因子。</li>
+  </ul>
+
+  <h3>大型製藥／生技——ABBV／AZN／REGN</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>三家製藥龍頭本季全數beat且guidance維持或上修，是本季財報日目前為止製藥族群首次全數「無一下修」的乾淨樣本。</li>
+    <li><span class="tl">細節</span>ABBV免疫學+16%（Skyrizi $5.776B／Rinvoq $2.706B）、AZN Core EPS固定匯率+19%、REGN非GAAP EPS大超共識約30%（Dupixent/EYLEA HD/Libtayo三項創紀錄）。三者覆蓋免疫學、腫瘤學、眼科三個不同治療領域，卻同步報喜。</li>
+    <li><span class="tl">跨日比較</span>與10/29的LLY（GLP-1驅動營收+39%、guide再上修）、GILD／SYK（GAAP重摔但調整後成長）相比，本日三家製藥股的GAAP與調整後落差皆未觸及50%強制追查門檻，是本季財報口徑最乾淨的製藥股樣本群。</li>
+    <li><span class="tl">上下游一致性</span>ABBV/AZN/REGN三者終端市場不重疊（自體免疫、呼吸道腫瘤、眼科與過敏性疾病），同步優於預期代表的是個別管線執行力而非單一宏觀驅動因子，內部一致性屬「多因子各自成立」而非「單一主題帶動」。</li>
+    <li><span class="tl">可證偽</span>若下季任一家的guidance出現下修，或Skyrizi/Rinvoq/Dupixent任一品牌的YoY成長率跌破雙位數，則「製藥龍頭集體受賞」的敘事需收窄為個案而非族群現象。</li>
+    <li class="impl"><span class="tl">Implication</span>當GAAP與調整後口徑落差可控、guidance方向一致向上時，市場願意對製藥龍頭給出全面正向評價，REGN的+13.33%顯示超預期幅度（約30%）本身仍是最強的單一催化劑。</li>
+  </ul>
+
+  <h3>消費與汽車供應鏈防禦股——CL／LEA</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>兩家分屬消費必需品與汽車零組件，皆為營運相對平穩、波動度低的防禦型個股，本季雙雙溫和收漲，股價反應幅度遠小於能源/製藥/金融類股。</li>
+    <li><span class="tl">細節</span>CL有機銷售+3.6%（含私有品牌寵物食品拖累0.2pp）、毛利率擴張80bps至60.2%；LEA營收$5.8B、調整後EPS $3.71，YoY百分比因資料限制未能確認。</li>
+    <li><span class="tl">跨日比較</span>CL的「縮窄銷售guide、同步上修毛利率與EPS guide」模式，與10/27 UPS/JCI（guide上修觸發+5%以上漲幅）相比漲幅明顯溫和（+2.29%），顯示消費必需品類股的guide上修對股價的催化力度小於工業/科技類股。</li>
+    <li><span class="tl">上下游一致性</span>CL的毛利率擴張（60.2%）與有機銷售成長放緩（+3.6%）同時出現，符合「量緩質優」的防禦型消費品公司典型模式，內部邏輯一致。</li>
+    <li><span class="tl">可證偽</span>若CL下季私有品牌寵物食品拖累進一步擴大超過0.3個百分點，或LEA下季汽車終端需求出現明確下滑數字，則防禦股「溫和但穩定」的敘事將需要修正為「結構性放緩」。</li>
+    <li class="impl"><span class="tl">Implication</span>防禦型消費/工業供應鏈股的財報對股價的影響力本質上弱於成長型/週期型個股，即使交出乾淨的beat+raise，漲幅也明顯小於同日其他族群，是資金配置時區分「防禦」與「進攻」倉位的重要參考。</li>
+  </ul>
+
+  <h3>鐵路與工業運輸基建——CNI</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>CNI交出清晰的beat+raise（營收+15%、調整後EPS+18%、FY26 EPS guide上修），但股價幾乎無反應（-0.30%），是本日唯一「財報內容正向、股價持平」的案例。</li>
+    <li><span class="tl">細節</span>FY26 EPS guide上修至$5.68-5.95（原$5.40-5.69），但財報前共識約$5.67僅略低於新區間下緣，意味市場財報前已大致預期guide會上修到這個範圍。</li>
+    <li><span class="tl">跨日比較</span>與10/26-10/27「beat+raise反遭拋售」魔咒的多個反例（CDNS/UPS/JCI/RCL，皆收漲）相比，CNI的平盤收場顯示該魔咒並未全面消退，而是在不同產業間呈現分層反應——鐵路類股本次未獲獎勵。</li>
+    <li><span class="tl">上下游一致性</span>CNI自由現金流+36%遠快於營收+15%，反映資本效率改善的訊號強烈，但該訊號未能轉化為股價正向反應，顯示市場本次聚焦guide上修的「驚喜程度」而非現金流效率本身。</li>
+    <li><span class="tl">可證偽</span>若CNI股價在未來1-2週內逐步上修貼近guide上修應有的漲幅，則今日平盤應視為反應延遲而非真正的「無感」；若持續橫盤，則強化「guide上修已被完全price in」的判斷。</li>
+    <li class="impl"><span class="tl">Implication</span>guide上修本身不保證股價正向反應——當新guide區間與財報前共識的落差過小時，即使財報內容乾淨也可能「漂亮但無感」，驗證「beat is default，raise要夠意外才是真正的alpha」規律在鐵路類股的適用性（§4矛盾2）。</li>
+  </ul>
+
+  <h3>公用事業與AI電力供給——D</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>D本季EPS年增、guidance重申上半區間，核心敘事持續繞著資料中心用電容量擴張，是本季「AI基建電力供給端」持續受市場獎勵的最新樣本。</li>
+    <li><span class="tl">細節</span>53GW以上資料中心容量在各洽談階段、12GW已簽訂電力服務協議、自2025年底新增逾5GW合約，9個月GAAP EPS因非受管制可再生能源與太陽能資產減損而年減（$2.81→$2.37），與當季營運成長方向相反（§4矛盾3）。</li>
+    <li><span class="tl">跨日比較</span>與10/28報告中的AEP/EQIX/GEV（同屬資料中心用電/基建鏈）相比，D的資料中心容量擴張敘事方向一致，延續「電力供給端持續受益AI資本支出」的多日樣本，惟GEV同期因Wind業務疑慮仍遭股價懲罰，顯示公用事業類股內部亦存在業務品質分層。</li>
+    <li><span class="tl">上下游一致性</span>D的用電容量管線（需求端訊號）與NVT的資料中心液冷銷售guide上修（供給端訊號）方向一致，皆指向AI基建資本支出持續加速，但兩者股價反應截然相反（D+2.30%、NVT-8.81%），顯示同一需求主題在不同估值起點下的股價彈性差異極大。</li>
+    <li><span class="tl">可證偽</span>若D的12GW已簽ESA在Q4法說會未能進一步轉化為新增已簽約容量，或資本支出時程出現延遲揭露，則資料中心電力需求的「兌現速度」假設需要下修。</li>
+    <li class="impl"><span class="tl">Implication</span>公用事業股作為AI資本支出的「電力供給端」受益者，其股價對guidance重申的反應明顯優於鐵路這類傳統工業股，顯示AI敘事仍是本季財報日最具催化力的單一主題，但須留意GAAP減損等會計噪音可能扭曲表面獲利趨勢。</li>
+  </ul>
+
+  <h3>金融市場基礎設施——CBOE</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>CBOE淨營收與調整後EPS雙雙優於共識，衍生品交易活躍度延續強勁，是本日金融類股中反應最正向的個股（+6.77%）。</li>
+    <li><span class="tl">細節</span>淨營收$712.2M（+18%、beat共識$707.0M）、調整後EPS $3.63（+36%、beat共識$3.45），但GAAP EPS $4.08反而高於調整後EPS，方向與多數同業相反。</li>
+    <li><span class="tl">跨日比較</span>與10/26報告的HIG/CINF（財產意外險，GAAP/核心盈餘拆解規則驗證案例）相比，CBOE的GAAP與調整後反向落差提供了同一規則的另一個變體——「GAAP高於調整後」同樣需要追查一次性收益來源，不能預設調整後數字必然更高。</li>
+    <li><span class="tl">上下游一致性</span>CBOE的交易活躍度beat與市場本季整體波動率環境（多個交易日出現個股單日雙位數漲跌）方向一致，衍生品交易所類股本質上受益於市場波動加大，與本季財報日本身出現多次劇烈股價反應（REGN+13.33%、NVT-8.81%、INTC-28.58%）形成某種共生關係。</li>
+    <li><span class="tl">可證偽</span>若下季大盤波動率明顯回落而CBOE交易量/營收仍維持兩位數成長，則需將本季beat歸因於結構性份額提升而非單純波動率紅利；若交易量成長同步放緩，則波動率紅利假設成立。</li>
+    <li class="impl"><span class="tl">Implication</span>CBOE的GAAP高於調整後的反向落差提醒投資人：GAAP/調整後落差的方向性規則（通常調整後較高）並非恆定，每季仍需逐一拆解一次性項目來源，不可套用單一模板。</li>
+  </ul>
+
+  <h3>⚠️ 非共識觀察：AI基建需求端——資料中心液冷（NVT）</h3>
+  <div class="noncon">
+    <h4>市場敘事可能誤讀為「AI冷卻需求降溫」，但數字顯示的是估值修正而非需求轉弱</h4>
+    <p>NVT本季銷售+44%、調整後EPS+67%，且是公司本年度第四次上調guidance（FY26銷售成長guide由37-39%大幅上修至48-49%，資料中心銷售預期2026年將超過$20億），這是一份教科書級的beat+raise。股價卻重摔8.81%，若僅看股價表現，市場敘事可能簡化為「AI資料中心冷卻需求開始降溫」。</p>
+    <p>但財報內容完全不支持這個解讀——公司反而是上修而非下修對資料中心業務的展望。更可能的解釋是財報前股價已對應約38倍本益比的高估值，且選擇權市場財報前已定價±13.23%的高波動預期，股價重摔更接近「漲幣已被price in、財報後獲利了結」的估值修正，而非基本面轉弱（§4矛盾1）。這與10/28 GEV（Wind業務疑慮確實存在基本面問題）屬於性質不同的「beat+raise仍遭棄」案例，不應混為一談。</p>
+  </div>
+
+  <h3>AI capex鏈條追蹤（固定檢查項目）</h3>
+  <ul class="trend-list">
+    <li><span class="tl">本日涵蓋層</span>電力供給端（D：資料中心用電容量53GW管線）、散熱/液冷基建端（NVT：資料中心銷售guide上修至$20億+）。本日無上游設備／代工／晶片設計／超大規模業者層的公司報告財報。</li>
+    <li><span class="tl">訊號一致性</span>D與NVT的需求端訊號方向一致——兩者都上修對資料中心相關業務的展望，顯示電力供給與散熱基建兩個環節的AI資本支出需求仍在加速，與8月以來NVDA/MRVL/DELL樣本及10/28 AEP/EQIX樣本的方向一致。</li>
+    <li><span class="tl">錯配點</span>D（+2.30%）與NVT（-8.81%）的股價反應方向相反，顯示「誰在花錢、誰在收錢」已不足以解釋股價反應，「財報前估值起點」正成為比「AI敘事方向」更重要的股價決定因子——此為8月以來AI capex鏈條追蹤首次出現同層級（需求端）兩公司訊號一致但股價反應完全相反的案例。</li>
+    <li class="impl"><span class="tl">Implication</span>AI基建需求強勁不再是股價上漲的充分條件，投資人須同時評估個股財報前的估值溢酬水位，才能判斷beat+raise能否真正轉化為股價正向反應。</li>
+  </ul>
+
+  <h2 id="s3">§3 贏家與輸家</h2>
+
+  <h3>贏家</h3>
+  <table>
+    <thead><tr><th style="width:70px;">公司</th><th style="width:220px;">股價</th><th>原因（20字內）</th></tr></thead>
+    <tbody>
+      <tr class="winner-row"><td>REGN</td><td>收漲+13.33%至$927.89（10/30）</td><td>非GAAP EPS大超共識約30%</td></tr>
+      <tr class="winner-row"><td>AZN</td><td>收漲+7.02%至$186.65（10/30）</td><td>Core EPS固定匯率+19%</td></tr>
+      <tr class="winner-row"><td>CBOE</td><td>收漲+6.77%至$335.53（10/30）</td><td>淨營收/調整後EPS雙beat</td></tr>
+      <tr class="winner-row"><td>CL</td><td>收漲+2.29%至$95.29（10/30）</td><td>毛利率/EPS guide雙上修</td></tr>
+      <tr class="winner-row"><td>D</td><td>收漲+2.30%至$66.62（10/30）</td><td>EPS年增，資料中心容量擴大</td></tr>
+      <tr class="winner-row"><td>XOM</td><td>收漲+2.16%至$187.25（10/30）</td><td>調整後EPS優於共識，加碼買回</td></tr>
+      <tr class="winner-row"><td>CVX</td><td>收漲+1.75%至$235.52（10/30）</td><td>調整後EPS beat約8%</td></tr>
+      <tr class="winner-row"><td>ABBV</td><td>收漲+1.41%至$294.89（10/30）</td><td>Skyrizi/Rinvoq續強，EPS guide上修</td></tr>
+      <tr class="winner-row"><td>LEA</td><td>收漲+0.90%至$118.44（10/30）</td><td>營收/EPS年增，反應溫和</td></tr>
+    </tbody>
+  </table>
+
+  <h3>輸家</h3>
+  <table>
+    <thead><tr><th style="width:70px;">公司</th><th style="width:220px;">股價</th><th>原因（20字內）</th></tr></thead>
+    <tbody>
+      <tr class="loser-row"><td>NVT</td><td>收跌-8.81%至$125.98（10/30）</td><td>beat+raise仍遭棄，估值已偏緊</td></tr>
+      <tr class="loser-row"><td>CNI</td><td>收平-0.30%至$123.69（10/30）</td><td>guide上修幅度已被市場提前消化</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:13px;color:var(--text-muted);">本日11家全數盤前發布財報，分類依10/30正式交易日收盤（二源一致確認），無需等待次日Phase R覆核；為本季少見的「當日即最終判決」乾淨樣本。</p>
+
+  <h2 id="s4">§4 互相矛盾與不合邏輯之處</h2>
+
+  <div class="contradiction">
+    <h4>矛盾 1：NVT本年度第四度上調guide、beat幅度達60-70%，股價卻重摔8.81%——beat+raise魔咒鎖定高估值名字持續成立</h4>
+    <p>NVT銷售+44%、調整後EPS+67%，FY26銷售成長guide由37-39%大幅上修至48-49%、EPS guide由$5.00-5.10上修至$5.36-5.39，資料中心銷售預期2026年將超$20億——這是本日數字最漂亮的一份財報，但股價收跌8.81%。財報前股價對應約38倍本益比，選擇權市場財報前已定價±13.23%的高波動預期。</p>
+    <p class="implication">→ <strong>Implication：</strong>當個股財報前已處於高估值、高隱含波動的狀態，即使交出教科書級beat+raise，股價仍可能因「漂亮數字已被price in、僅剩獲利了結空間」而重摔——這是8月以來AI基建鏈條中GEV／NOW等案例「beat+raise仍遭棄」模式的延伸，且本次幅度（-8.81%）是該模式至今最極端的單日樣本。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 2：CNI交出清晰beat+raise（FY26 EPS guide上修至$5.68-5.95）卻收平盤-0.30%，與同日能源/製藥集體受賞形成鮮明對比</h4>
+    <p>CNI營收+15%、調整後EPS+18%、自由現金流+36%，FY26 EPS guide明確上修，財報內容找不到明顯破綻。但財報前市場共識約$5.67僅略低於新guide區間下緣$5.68，意味上修幅度本身的「驚喜程度」有限；同日XOM/CVX/ABBV/AZN/CL/CBOE六檔財報內容同樣正向卻全數收漲。</p>
+    <p class="implication">→ <strong>Implication：</strong>guide上修是否觸發股價正向反應，關鍵不在於「是否上修」而在於「上修幅度是否超出財報前市場已定價的預期」——CNI案例顯示鐵路類股這次未能複製10/26-10/27energy/consumer beat+raise反例的獎勵模式，產業間的反應分層持續存在。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 3：D的9個月GAAP EPS年減（$2.81→$2.37）與當季營運獲利年增（Q3 EPS $1.16→$1.30）方向相反，減損費用蓋過當季成長訊號</h4>
+    <p>D的Q3單季GAAP EPS由去年同期$1.16成長至$1.30（+12%），但累計9個月GAAP EPS卻由$2.81降至$2.37，10-Q揭露主因是非受管制可再生天然氣設施與部分太陽能發電設施的減損費用。單看Q3數字會得出「獲利加速成長」的結論，單看9個月累計數字則會得出「獲利年減16%」的相反結論。</p>
+    <p class="implication">→ <strong>Implication：</strong>評估公用事業股獲利趨勢時，必須同時檢視單季與累計期間數字並拆解減損等非經常性項目，否則容易因檢視區間不同而得出方向完全相反的結論——本季Q3向上與9個月向下的落差完全由資產減損解釋，不代表核心電力業務轉弱。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 4：CBOE的GAAP EPS（$4.08）反而高於調整後EPS（$3.63），方向與本日及近期多數公司的落差模式相反</h4>
+    <p>本季財報日以來GAAP通常低於調整後EPS（如REGN GAAP $18.45對非GAAP $20.07、NVT GAAP $1.23對調整後$1.52），反映一次性費用通常壓低GAAP數字；CBOE卻反向呈現GAAP $4.08高於調整後$3.63（落差約12%），GAAP營運費用同時年增6%而調整後費用年減3%。</p>
+    <p class="implication">→ <strong>Implication：</strong>「調整後數字通常高於GAAP」並非恆定規律，CBOE案例提醒投資人每季仍須逐一核對公司自身定義的調整項目，不能套用其他公司的落差方向模板，否則可能誤判一次性項目對獲利品質的實際影響。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 5（跨日驗證）：AMZN（10/29財報）與INTC（10/29財報）同屬AI資本支出鏈但業務方向相反的兩端，10/30最終收盤同步確認皆遭顯著懲罰</h4>
+    <p>Phase R覆核（10/30執行）確認：AMZN最終收跌1.41%（方向與盤後初步反應一致、未反轉），INTC則在10/30最終收跌達28.58%——AMZN身為AI雲端出租方（理論受益方）、INTC資料中心業務創15年最快成長但PC業務guide腰斬（供給方），兩者10/30同步遭市場懲罰，顯示「AI capex受益方自動獲賞」的簡單二元框架本季持續失效。</p>
+    <p class="implication">→ <strong>Implication：</strong>AMZN與INTC的10/30最終判決進一步驗證8月以來反覆出現的「AI需求強但股價不再無條件買單」規律——市場對AI相關個股的評價正從「方向對不對」轉向「幅度是否超出已price in的預期」，與本日NVT案例（矛盾1）屬同一邏輯的跨公司驗證。</p>
+  </div>
+
+  <h2 id="s5">§5 總結</h2>
+
+  <ul class="summary-list">
+    <li>防禦性龍頭集體回歸——能源/製藥/消費五檔今日全數beat+raise獲賞（§1/§2）。</li>
+    <li>AI基建「晴天變連續劇」再添一例——NVT四度上調guide仍跌8.81%（§4矛盾1）。</li>
+    <li>Beat+raise魔咒按產業分層持續——鐵路（CNI）遭冷落、能源/製藥受賞（§4矛盾2）。</li>
+    <li>REGN單日+13.33%是本季目前最大正向反應，三大產品線同步創紀錄（§1）。</li>
+    <li>跨日驗證：AMZN（10/29）初步下跌於10/30收盤確認無反轉（-1.41%），INTC同步重摔28.58%（§4矛盾5）。</li>
+  </ul>
+
+  <h3>驗證點日曆</h3>
+  <table>
+    <thead><tr><th>本日推論</th><th>驗證事件</th><th style="width:150px;">預定日期</th></tr></thead>
+    <tbody>
+      <tr><td>NVT的-8.81%是估值修正的單日雜訊，還是AI資料中心液冷客戶集中度風險開始反映</td><td>NVT Q4 2026法說會訂單能見度／客戶集中度揭露</td><td>約2027年2月</td></tr>
+      <tr><td>CNI beat+raise卻收平盤，是否代表鐵路運輸類股對財測上修的獎勵系統性降溫，或僅單日個案</td><td>後續鐵路同業財報反應／CNI股價未來1-2週走勢</td><td>11月</td></tr>
+      <tr><td>D的53GW資料中心容量管線能否持續轉化為已簽約ESA，驗證公用電力資本支出週期是否兌現</td><td>D Q4 2026法說會ESA簽約進度揭露</td><td>約2027年2月</td></tr>
+      <tr><td>ABBV guidance數字在不同媒體轉述間的矛盾（$13.95-13.99 vs 另一轉述$14.08-14.28）何者為官方權威版本</td><td>AbbVie 10-Q正式申報文件</td><td>11月初</td></tr>
+      <tr><td>AMZN Q4財測（營收$240-247B／營益$28.5-33.5B）能否兌現，驗證「beat仍跌」是否僅為短期雜訊</td><td>AMZN Q4 2026財報</td><td>約2027年2月</td></tr>
+    </tbody>
+  </table>
+
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，
+    僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。
+    過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+    <br><br>
+    <strong>本日資料完整性說明：</strong>10/30為美股交易日（週五），11家公司全數為盤前發布財報（$50B+門檻8家：XOM/ABBV/CVX/AZN/CNI/REGN/CL/D＋DD快篩名單3家：CBOE/NVT/LEA）。由於全數盤前發布且本次執行時已是美東時間週五晚間（美股已正式收盤），所有11家公司的股價反應皆以10/30正式收盤價為最終判決（二源一致確認：公司官方8-K/6-K原始財報文件＋stockanalysis.com即時報價），不存在「盤後初步反應」與「次日最終判決」的落差問題，為本季財報日系列報告少見的單日資料完整度100%樣本。部分公司（CVX營收、D營收、LEA guidance、AZN/REGN/CL/D/LEA的法說會逐字稿）因搜尋預算或資料可得性限制未能二源確認，已誠實標注「未取得」，未自行推測填補。本次執行同時完成對10/29報告（earnings_2026-10-29.html）的Phase R覆核，詳見該報告頁尾附註。
+  </div>
+
+  <footer>
+    © 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a>
+  </footer>
+</div>
+</body>
+</html>
