@@ -12,7 +12,7 @@
 
 實單的計算一律 import 實單程式，不複製、不改寫：
   update_long_track_w52_adaptive  fetch_close（取價）、band_exec_replay（實單現持）、
-                                  next_exec（執行層單日更新：20pp 門檻、10% 取整、單腿 clamp）、
+                                  next_exec（執行層單日更新：加碼 20pp／減碼門檻依 exec_down_band_for、10% 取整、單腿 clamp）、
                                   exec_clamp_for（依紀錄的規則標籤取 clamp）
   build_live_scoreboard           leg_daily_returns_generic／nav_from_returns（實單追蹤的淨值簿記：
                                   前日現持 × 當日報酬、現金利率、換手 7 bps）、fetch_us_cash_series、MARKETS
@@ -293,7 +293,8 @@ def simulate_market(mkt: dict, history: list, start_date: str, release_fn, px: d
             lt = float(tk["final_pct"])
             st = lt * RED_FACTOR if c == "red" else lt
             live_target[t][i], sh_target[t][i] = lt, st
-            held[t] = _w52.next_exec(held[t], st, _w52.exec_clamp_for(tk))
+            # 執行層照實單（登記檔：執行層照實單）：2026-11-02 起實單減碼門檻 10pp，影子線跟著用
+            held[t] = _w52.next_exec(held[t], st, _w52.exec_clamp_for(tk), _w52.exec_down_band_for(tk, dates[i]))
             sh_ex[t][i] = held[t]
 
     live_dates = dates[start_idx:]

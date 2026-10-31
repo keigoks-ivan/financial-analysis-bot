@@ -366,7 +366,7 @@ def render_today_strip() -> str:
         rows = "".join(leg_span(t) for t in legs)
         return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
                 f'<div class="tstrip-exp">目標曝險（訊號，週線閘門 × 自適應套袖算出的理論持股率）<b>{exp}%</b>'
-                f' ／ 現持曝險（執行層，實際已調整到的持股率——A2 規則要求目標與現持差達 20 個百分點才調整，故常與目標有差）<b>{exec_sum}%</b></div>'
+                f' ／ 現持曝險（執行層，實際已調整到的持股率——目標比現持高 20 個百分點、或低 10 個百分點才調整，故常與目標有差）<b>{exec_sum}%</b></div>'
                 f'<div class="tstrip-legs">{rows}</div></div>')
 
     us_block = mkt_block("美股 QQQ + SMH", ["QQQ", "SMH"], "combined_exposure_us_pct")

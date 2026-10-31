@@ -36,7 +36,8 @@ CANONICAL COPY：本檔在 v7-backtest（src/vol_target_backtest/）與 financia
 台股收盤後 + 美股收盤後各跑一次，date-keyed merge 冪等所以安全，email 提醒可行動變化）。
 
 執行層（規則凍結 2026-07-17；執行層 2026-07-22 升格 A2）：|目標 − 現持| ≥ 20pp 才調整、
-調整取整至 10% 格後 clamp 於 50×cap（cap1.5→75pp／組合 150%）；兩市場各自以 band_exec_replay
+調整取整至 10% 格後 clamp 於 50×cap（cap1.5→75pp／組合 150%）。2026-11-02 起實單減碼門檻改 10pp、
+加碼門檻維持 20pp（見 EXEC_ASYM_DATE）；兩市場各自以 band_exec_replay
 從 history_us／history_tw 確定性重放，供時間軸粗階梯線、事件表、通知與 state 的 executed_pct 用
 （回測主數字亦含此執行層，見 LEV 常數）。整數 pp 空間 ≥ 比較，不在 0..1 浮點空間重寫。
 
@@ -140,6 +141,13 @@ OVERLAY_NAME = {"ief": "公債（IEF）", "gld": "黃金（GLD）"}
 # 測試用覆寫（本機驗證新規則路徑用，CI 不設）：W52_RULE_SWITCH_DATE=2026-10-16 之類
 import os as _os
 RULE_SWITCH_DATE = _os.environ.get("W52_RULE_SWITCH_DATE") or RULE_SWITCH_DATE
+# 2026-11-02 起（持有人 2026-10-31 拍板）：實單執行層減碼門檻 20pp → 10pp，加碼門檻維持 20pp，
+# 取整格與單腿上限不變。依紀錄自己判斷：帶 NEW_RULE_TAG 且日期 ≥ EXEC_ASYM_DATE 才用 10pp；
+# 生效日前的 history 與 cap15 對照線照舊 20pp。研究：v7-backtest docs/Exec_Asym_Down_Prereg.md
+# （事前判準沒過，持有人知情採用）。
+EXEC_ASYM_DATE = "2026-11-02"
+EXEC_ASYM_DECISION_DATE = "2026-10-31"
+EXEC_ASYM_DATE = _os.environ.get("W52_EXEC_ASYM_DATE") or EXEC_ASYM_DATE   # 測試用覆寫，CI 不設
 
 PROFILE = "live"        # "live"＝實盤主系統（預設，import 時也是這個）；"cap15"＝舊規則對照線（main 依 --profile 設定）
 
@@ -614,6 +622,7 @@ CAP = 1.5   # 曝險上限（本頁＝真波動率目標 cap 1.5；主頁＝1.0�
 # 執行層常數（2026-07-22 由 10pp/5% 升格 A2：門檻 20pp／格 10%／取整後 clamp 於
 # 50×cap；cap1.5→75pp／組合 150%）。band／grid／clamp 皆組合 pp；整數 pp 空間比較。
 EXEC_BAND = 20.0
+EXEC_DOWN_BAND_NEW = 10.0         # 實單 EXEC_ASYM_DATE 起的減碼門檻（加碼仍用 EXEC_BAND）
 EXEC_GRID = 10.0
 EXEC_CLAMP = 50.0 * CAP           # cap1.5→75pp（單腿滿載）；組合上限 150%
 EXEC_UPGRADE_DATE = "2026-07-22"  # 執行層升格 A2 之日（規則凍結日仍為 FREEZE_DATE）
@@ -771,18 +780,27 @@ def exec_clamp_for(tk: dict) -> float:
     return EXEC_CLAMP_NEW if tk.get("rule") == NEW_RULE_TAG else EXEC_CLAMP
 
 
-def next_exec(held: float, target: float, clamp: float) -> float:
+def exec_down_band_for(tk: dict, date) -> float:
+    """該筆紀錄適用的減碼門檻：新規則標籤且日期 ≥ EXEC_ASYM_DATE → 10pp，其餘 → 20pp。
+    跟 exec_clamp_for 一樣由紀錄自己決定，重放同一份 history 的腳本都得到同一條現持序列。"""
+    d = date if isinstance(date, str) else pd.Timestamp(date).strftime("%Y-%m-%d")
+    return EXEC_DOWN_BAND_NEW if tk.get("rule") == NEW_RULE_TAG and d >= EXEC_ASYM_DATE else EXEC_BAND
+
+
+def next_exec(held: float, target: float, clamp: float, down: float = EXEC_BAND) -> float:
     """與 band_exec_replay 同一條單日更新式（整數 pp 空間）：現持超過上限先拉回；
-    |目標 − 現持| ≥ 20pp 才調整，取整到 10 格再 clamp。通知用，保證與重放一致。"""
+    目標比現持高 ≥ 20pp、或低 ≥ down（實單 EXEC_ASYM_DATE 起 10pp）才調整，取整到 10 格再 clamp。
+    通知用，保證與重放一致。down=20 時等於原本的 |目標 − 現持| ≥ 20pp。"""
     cur = min(held, clamp)
-    if abs(target - cur) >= EXEC_BAND:
+    if target - cur >= EXEC_BAND or cur - target >= down:
         cur = min(round(target / EXEC_GRID) * EXEC_GRID, clamp)
     return cur
 
 
 def band_exec_replay(history: list, legs: list) -> dict:
-    """對每腿的最終權重（組合 pp）重放執行層：executed 初始 0，逐日若
-    |target − executed| ≥ 20pp 則 executed = min(round(target/10)×10, 50×cap)，否則不變。
+    """對每腿的最終權重（組合 pp）重放執行層：executed 初始 0，逐日若目標比 executed 高 ≥ 20pp、
+    或低 ≥ 減碼門檻（exec_down_band_for：實單 EXEC_ASYM_DATE 起 10pp，之前 20pp），
+    則 executed = min(round(target/10)×10, 50×cap)，否則不變。
     整數 pp 空間 ≥ 比較（不在 0..1 浮點空間重寫）。回傳每腿每日 executed、組合合計、
     事件清單（日期、腿、from→to、原因＝該日閘門翻轉則「閘門翻轉」否則「波動調整」、
     當日組合執行曝險）與各腿當前值。"""
@@ -796,6 +814,7 @@ def band_exec_replay(history: list, legs: list) -> dict:
             target = tk["final_pct"]
             gate = bool(tk["gate"])
             clamp = exec_clamp_for(tk)
+            down = exec_down_band_for(tk, r["date"])
             before = cur[t]
             # 規則切換（舊 clamp 75 → 新 clamp 50）：現持若超過新上限，先拉回上限（不借錢），
             # 這一步獨立於 20pp 門檻——否則 60 對 50 差 10pp 不會觸發，部位會卡在上限之上。
@@ -804,7 +823,7 @@ def band_exec_replay(history: list, legs: list) -> dict:
                 forced = True
             else:
                 forced = False
-            if abs(target - cur[t]) >= EXEC_BAND:
+            if target - cur[t] >= EXEC_BAND or cur[t] - target >= down:
                 cur[t] = min(round(target / EXEC_GRID) * EXEC_GRID, clamp)
             if cur[t] != before:
                 flipped = prev_gate[t] is not None and gate != prev_gate[t]
@@ -830,14 +849,17 @@ def events_card(mkt: dict, events: list) -> str:
     cutoff = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
     recent_events = [e for e in events if e["date"] >= cutoff]
     if PROFILE == "live":
-        events_rule_txt = f"A2：20pp 門檻＋10% 取整；單腿上限 {RULE_SWITCH_DATE} 前 75%、起 50%"
+        events_rule_txt = (f"A2：加碼 20pp／減碼 10pp（減碼 {EXEC_ASYM_DATE} 前也是 20pp）＋10% 取整；"
+                           f"單腿上限 {RULE_SWITCH_DATE} 前 75%、起 50%")
         events_clamp_txt = f"單腿上限（{RULE_SWITCH_DATE} 前 75%、起 50%）"
+        events_band_txt = f"某腿目標比現持高 ≥ 20pp、或低 ≥ 10pp（{EXEC_ASYM_DATE} 前是 20pp）"
     else:
         events_rule_txt = "A2：20pp 門檻＋10% 取整＋clamp 150%"
         events_clamp_txt = " 75%"
+        events_band_txt = "某腿目標與現持差 ≥ 20pp"
     if not recent_events:
         body = ('<tr><td colspan="4" style="text-align:center;color:var(--muted)">'
-                '最近一年窗內無執行層調整事件（皆未跨 20pp 門檻）</td></tr>')
+                '最近一年窗內無執行層調整事件（皆未跨調整門檻）</td></tr>')
     else:
         body = ""
         for ev in reversed(recent_events):          # 倒序（最新在上）
@@ -848,7 +870,7 @@ def events_card(mkt: dict, events: list) -> str:
     return f"""<div class="card">
 <h3>{mkt['short']} 最近一年執行層訊號變化事件（{events_rule_txt}）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-只有當某腿目標與現持差 ≥ 20pp 才調整（取整到 10% 格、再 clamp 於{events_clamp_txt}），故事件遠少於每日微調。倒序列出最近 365 天內全部事件；「舊→新」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」，{RULE_SWITCH_DATE} 起現持超過新上限而被拉回則「規則切換」，其餘「波動調整」。</p>
+只有當{events_band_txt}才調整（取整到 10% 格、再 clamp 於{events_clamp_txt}），故事件遠少於每日微調。倒序列出最近 365 天內全部事件；「舊→新」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」，{RULE_SWITCH_DATE} 起現持超過新上限而被拉回則「規則切換」，其餘「波動調整」。</p>
 <table><thead><tr><th>日期</th><th>腿</th><th>舊→新</th><th>原因</th></tr></thead>
 <tbody>{body}</tbody></table>
 </div>"""
@@ -1193,7 +1215,8 @@ def _dual_breakdown(legs, finals, exec_finals):
     exe = "＋".join(f"{legs[i]} {ef[i]}%" for i in range(len(legs)))
     html = (f"<b>目標 {td}%</b>＝{tgt}（訊號，每日隨波動微調）／"
             f"<b>現持 {ed}%</b>＝{exe}（執行層；"
-            f"<b>|目標−現持| 未達 20pp 不調，故兩者常有幾 % 差、是設計非錯誤</b>）")
+            f"<b>{'目標比現持高不到 20pp、低不到 10pp' if PROFILE == 'live' else '|目標−現持| 未達 20pp'}"
+            f" 不調，故兩者常有幾 % 差、是設計非錯誤</b>）")
     return html, td, ed
 
 
@@ -1252,7 +1275,7 @@ def live_backtest_blocks(mkt: dict, appendix: str, sigs: dict) -> str:
     stock_card = f"""<div class="card">
 <h3>{mkt['short']} 不借錢版股票部分回測（窗 {bt['window']}）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-藍底列是 2026-10-19 起實盤的股票部分：週線 W52 閘門 × 自適應波動率（上限 100%）× 執行層（20pp 門檻、10% 取整）。其他列為同窗對照。數字轉錄自不借錢版頁，台股為 7 bps 均一成本，含證交稅的真實成本版約再降 0.5 個百分點年化。</p>
+藍底列是 2026-10-19 起實盤的股票部分：週線 W52 閘門 × 自適應波動率（上限 100%）× 執行層（20pp 門檻、10% 取整；{EXEC_ASYM_DATE} 起實單減碼門檻改 10pp，表中回測仍是加減碼都 20pp 的版本）。其他列為同窗對照。數字轉錄自不借錢版頁，台股為 7 bps 均一成本，含證交稅的真實成本版約再降 0.5 個百分點年化。</p>
 <table><thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Ulcer</th><th class="num">Martin</th></tr></thead>
 <tbody>{rows}</tbody></table>
 <div class="takeaway">逐年績效、槓桿堆疊、融資利差敏感度與壓力統計屬於舊規則（cap 1.5＋均線），保留在 <a href="/long-track-w52-adaptive/cap15.html">舊規則對照線頁</a>。</div>
@@ -1518,7 +1541,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
     if last_change_date:
         changed = f"最近一次執行層變動：{last_change_date}，{last_change_desc or '（無敘述）'}。"
     else:
-        changed = "最近一次執行層變動：尚無紀錄（近期沒有任何一腿的目標與現持差達到 20 個百分點的調整門檻）。"
+        changed = "最近一次執行層變動：尚無紀錄（近期沒有任何一腿的目標與現持差達到調整門檻）。"
 
     mkt_cards = ""
     for m in MARKETS:
@@ -1560,6 +1583,8 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
     else:
         glossary_cap = ("<b>cap_eff</b>＝套袖目前的曝險上限：日線均線五條件（收盤 &gt; MA60／MA120／MA200、MA120／MA200 斜率向上）"
                         "全對時 1.5（單一腿最高可放大到自身額度的 150%），任一條不對時退回 1.0（2026-09-15 起新增，此前固定 1.5）；")
+    exec_gloss = (f"目標比現持部位高 20 個百分點、或低 10 個百分點才真的調整（減碼門檻 {EXEC_ASYM_DATE} 起由 20 降為 10），避免天天微調。"
+                  if PROFILE == "live" else "目標權重與現持部位差要達到 20 個百分點門檻才真的調整，避免天天微調。")
     return f"""<div class="card" style="border:2px solid var(--brand);background:#eef4ff">
 <h3 style="color:var(--brand)">今天結論</h3>
 <div class="today-grid">{mkt_cards}</div>
@@ -1568,7 +1593,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
 名詞：<b>W52</b>＝過去 52 週（約一年）收盤價的平均線，本系統用它當長期趨勢的進出場閘門（週收在上方視為多頭、在下方視為空頭）；
 <b>套袖（自適應波動率）</b>＝波動低於自身近 3 年中位數時放大部位、波動升高時自動減碼的機制（2026-10-19 起放大到滿額 100% 為止）；
 {glossary_cap}
-<b>執行層／A2</b>＝目標權重與現持部位差要達到 20 個百分點門檻才真的調整，避免天天微調。
+<b>執行層／A2</b>＝{exec_gloss}
 </div>
 </div>"""
 
@@ -1760,7 +1785,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
                   '<a href="/long-track-w52-adaptive/c1-shadow.html">債金版</a></span>'),
         "banner": f"""<div class="oos-banner">
   <span class="tag-loud">實單主系統・{sw} 起：美股債金版、台股不借錢版・email 提醒可行動變化</span>
-  <div style="font-size:.86rem">本頁是實單主系統。<b>{sw} 起（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）</b>美股用<b>債金版</b>，台股用<b>不借錢版</b>。底層不變：週線 W52 閘門決定在場或出場，自適應波動率決定持股比例，執行層要求目標與現持差 20 個百分點才調整。
+  <div style="font-size:.86rem">本頁是實單主系統。<b>{sw} 起（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）</b>美股用<b>債金版</b>，台股用<b>不借錢版</b>。底層不變：週線 W52 閘門決定在場或出場，自適應波動率決定持股比例，執行層在目標比現持高 20 個百分點、或低 10 個百分點時才調整（減碼門檻 {EXEC_ASYM_DATE} 起由 20 降為 10）。
   <br><br><b>改了什麼</b>：股票部分的曝險上限從 150% 收回 100%，不再借錢加碼，日線均線確認那一層因此不再影響曝險。美股另外把公債（IEF）與黃金（GLD）各最多 20% 配進來，各看週線三個條件（週收盤高於 40 週均線、高於 52 週均線、高於 52 週前的收盤），每成立一條加三分之一。台股只有不借錢，沒有債金。
   <br><br><b>為什麼改</b>：研究期回測裡，美股債金版和舊規則比：最大回撤差距在事前登記的容許範圍內（五個錨點中位數略好），Ulcer（回撤深度與時間的綜合指標）與低於前高 10% 的時間明顯縮短，年化沒有下降（數字見下方「回測與統計」）。代價是升息期債券與股票同跌時，債金疊加沒有保護；債券與黃金在 2005 至 2026 年整體順風，結論只測了美股，也只在這段樣本成立。
   <br><br><b>誠實紀律</b>：<b>①</b> 六條判準是事前登記的，但全窗數字在定門檻前已經看過，所以全窗不算新證據。<b>②</b> 記分板與前瞻 SPRT 事前登記的對象是舊規則；{sw} 是規則斷點，這一天之後的數字不能與之前連成同一條實績，見記分板頁的修訂說明。<b>③</b> 舊規則（cap 1.5＋均線）改為<a href="/long-track-w52-adaptive/cap15.html">對照線</a>，每日照常更新、不寄信；生效日前的 history 一律不改寫。<b>④</b> 台股 2330 在生效日現持 60%，高於新上限 50%，生效日第一個交易日先拉回上限，不等 20 個百分點門檻。可行動變化包含：任一腿目標與現持差 ≥ 20pp、現持高於新上限，以及美股公債或黃金的週線條件數改變。</div>
@@ -1784,8 +1809,8 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
 ⑦ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
 ⑧ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算，單腿最高 50%。<br>
 ⑨ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。0050 資料若晚到，先用證交所官方收盤補值，補不上就標「資料延遲」、不換倉。<br>
-⑩ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於單腿上限。上限在 {sw} 前是 75pp（組合 150%），起是 50pp（組合 100%）；現持高於新上限時，先拉回上限，再看 20pp 門檻。回測主數字含此執行層。<br>
-<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿今日目標與現持（執行層）差 ≥ 20pp、現持高於新上限，或美股公債／黃金的週線條件數改變；<b>閘門翻轉本身不觸發通知，須一併達 20pp 門檻</b>。舊規則（cap 1.5＋均線）以<a href="/long-track-w52-adaptive/cap15.html">對照線</a>續跑，不寄信。</span>
+⑩ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：目標比現持高 ≥ 20pp、或低 ≥ 10pp 才調整（減碼門檻 {EXEC_ASYM_DATE} 前是 20pp），調整取整至 10% 格、再 clamp 於單腿上限。上限在 {sw} 前是 75pp（組合 150%），起是 50pp（組合 100%）；現持高於新上限時，先拉回上限，再看門檻。回測主數字含此執行層（20pp 對稱版）。<br>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿今日目標比現持（執行層）高 ≥ 20pp 或低 ≥ 10pp、現持高於新上限，或美股公債／黃金的週線條件數改變；<b>閘門翻轉本身不觸發通知，須一併達到門檻</b>。舊規則（cap 1.5＋均線）以<a href="/long-track-w52-adaptive/cap15.html">對照線</a>續跑，不寄信。</span>
 </div>
 </div>
 
@@ -1798,6 +1823,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
 • <b>2026-07-22</b>：執行層由 10pp 門檻／5% 取整改為 A2（20pp 門檻／10% 取整／取整後 clamp 於 50×cap）。採用理由＝調整頻率下降（美股約 28→13 次／年、台股約 27→12 次／年，約 −55%）；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。<br>
 • <b>{RULE_REVISION_DATE}</b>（持有人拍板）：股票腿加<b>日線均線確認</b>——五條件全對 cap_eff=1.5、否則退回 1.0；三個價格條件加 1% 遲滯。history 既有紀錄不重算，新紀錄帶 <code>rule: "{RULE_TAG}"</code>。舊規則（無均線層）轉為唯讀影子（2026-10-18 已歸檔，停止更新）。<br>
 • <b>{sw}</b>（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）：<b>美股改債金版</b>（股票上限 100% 不借錢，另加 IEF／GLD 各最多 20% 的週線三條件疊加）、<b>台股改不借錢版</b>（上限 100%，不加債金）。生效日起的紀錄帶 <code>rule: "{NEW_RULE_TAG}"</code>，生效日前的 history 不改寫；2330 現持 60% 於生效日先拉回新上限 50%。舊規則（cap 1.5＋均線）以 <a href="/long-track-w52-adaptive/cap15.html">cap15.html</a> 續跑為對照線，每日更新、不寄信。state.json 的 <code>rule_changes</code> 記有這一筆。<br>
+• <b>{EXEC_ASYM_DATE}</b>（持有人 {EXEC_ASYM_DECISION_DATE} 拍板）：執行層<b>減碼門檻由 20pp 降為 10pp</b>，加碼門檻維持 20pp，取整格與單腿上限不變。事前登記的判準沒過：快崩區間少跌通過，但年化少 0.7～0.9 個百分點、台股每年調整次數多 44%；持有人知情採用。生效日前的紀錄照舊用 20pp 重放，不改寫；對照線不變。<br>
 </div>
 </details>
 </div>
@@ -1880,8 +1906,9 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
          '可行動變化</b><br>' + "<br>".join(changes) +
          '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>')
         if changes else
-        ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">'
-         '無可行動變化（四腿目標與現持執行層差皆 < 20pp；閘門翻轉本身不觸發，須一併達 20pp 門檻）' +
+        ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">' +
+         ('無可行動變化（四腿都沒有達到調整門檻：加碼 20pp、減碼 10pp；閘門翻轉本身不觸發）' if PROFILE == 'live' else
+          '無可行動變化（四腿目標與現持執行層差皆 < 20pp；閘門翻轉本身不觸發，須一併達 20pp 門檻）') +
          (f'（上次變化：{last_change_date}）' if last_change_date else '') + '</div>'))
 
     markets_html = "\n".join(market_html(m, sigs, md_map[m["key"]]) for m in MARKETS)
@@ -2097,7 +2124,7 @@ window.addEventListener('hashchange', function(){{
 # ---------------------------------------------------------------------------
 # change detection
 # ---------------------------------------------------------------------------
-def detect_changes(prev: dict, sigs: dict, skip_legs=()) -> list:
+def detect_changes(prev: dict, sigs: dict, skip_legs=(), leg_dates: dict | None = None) -> list:
     """可行動變化＝任一腿今日目標與現持（執行層 executed_pct）差 ≥ 20pp（EXEC_BAND，
     與回測 A2 執行層 band_exec_replay 用同一個門檻）。閘門翻轉本身不是獨立觸發條件——
     若翻轉後的目標仍落在 20pp 門檻內，A2 不會調整部位，通知也不該提示調整；閘門翻轉
@@ -2107,7 +2134,8 @@ def detect_changes(prev: dict, sigs: dict, skip_legs=()) -> list:
     動幅必達 20pp，不受影響，故修正後只會抑制小額再進場，不會抑制出場）。held is None
     （首次執行、無前一次 executed_pct 紀錄，無法比較門檻）時仍視為需要通知。改為與現持比
     （非與前一日目標比），才不會漏掉緩慢累積的漂移；alert 顯示取整後的建議動作
-    （現持 → min(round(目標/10)×10, 50×cap)）。訊息標市場前綴（美股／台股）。"""
+    （現持 → min(round(目標/10)×10, 50×cap)）。訊息標市場前綴（美股／台股）。
+    2026-11-02 起實單減碼門檻 10pp（exec_down_band_for，依 leg_dates 的資料日判斷），加碼仍 20pp。"""
     if not prev or "tickers" not in prev:
         return []
     out = []
@@ -2128,7 +2156,8 @@ def detect_changes(prev: dict, sigs: dict, skip_legs=()) -> list:
         if held is None:
             drift, new_exec = True, min(round(target / EXEC_GRID) * EXEC_GRID, clamp)
         else:
-            new_exec = next_exec(held, target, clamp)
+            down = exec_down_band_for(sigs[t], leg_dates[t]) if leg_dates else EXEC_BAND
+            new_exec = next_exec(held, target, clamp, down)
             drift = new_exec != held
         if drift:
             parts = []
@@ -2329,8 +2358,8 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
         button_url=LT_W52_PAGE_URL,
         accent="navy",
         disclaimer=(f"實單主系統機械訊號通知（描述器）。{RULE_SWITCH_DATE} 起股票部分上限 100%（不借錢），美股另加公債、黃金週線疊加。"
-                    "可行動變化＝任一腿今日目標與現持（執行層）差 ≥ 20pp、現持高於新上限，或美股債金條件數改變；"
-                    "閘門翻轉本身不觸發，須一併達 20pp 門檻。"),
+                    f"可行動變化＝任一腿今日目標比現持（執行層）高 ≥ 20pp 或低 ≥ 10pp（減碼門檻 {EXEC_ASYM_DATE} 起）、"
+                    "現持高於新上限，或美股債金條件數改變；閘門翻轉本身不觸發，須一併達到門檻。"),
     )
 
 
@@ -2393,11 +2422,28 @@ RULE_CHANGE_ENTRY = {
 }
 
 
+EXEC_ASYM_ENTRY = {
+    "effective": EXEC_ASYM_DATE,
+    "decided": EXEC_ASYM_DECISION_DATE,
+    "from_tag": NEW_RULE_TAG,
+    "to_tag": NEW_RULE_TAG,
+    "summary": ("持有人拍板：執行層減碼門檻由 20pp 降為 10pp，加碼門檻維持 20pp，取整格與單腿上限不變。"
+                "事前登記的判準沒過（快崩少跌通過；年化少 0.7～0.9 個百分點、台股調整次數多 44% 不過），持有人知情採用。"),
+    "us": "A2 執行層：加碼 20pp／減碼 10pp／10% 取整／單腿 clamp 50pp；債金疊加不變",
+    "tw": "A2 執行層：加碼 20pp／減碼 10pp／10% 取整／單腿 clamp 50pp",
+    "history_policy": "生效日前的紀錄照舊用 20pp 重放，不改寫；依紀錄的規則標籤與日期判斷（exec_down_band_for）",
+    "control_line": "cap15 對照線不變，加減碼都是 20pp",
+    "research": "v7-backtest docs/Exec_Asym_Down_Prereg.md",
+}
+RULE_CHANGE_ENTRIES = (RULE_CHANGE_ENTRY, EXEC_ASYM_ENTRY)
+
+
 def merge_rule_changes(prev_list) -> list:
     out = [e for e in (prev_list or []) if isinstance(e, dict)]
-    if not any(e.get("effective") == RULE_CHANGE_ENTRY["effective"]
-               and e.get("to_tag") == RULE_CHANGE_ENTRY["to_tag"] for e in out):
-        out.append(dict(RULE_CHANGE_ENTRY))
+    for entry in RULE_CHANGE_ENTRIES:
+        if not any(e.get("effective") == entry["effective"] and e.get("to_tag") == entry["to_tag"]
+                   for e in out):
+            out.append(dict(entry))
     return out
 
 
@@ -2564,7 +2610,8 @@ def main():
         for t, info in d_.items():
             print(f"DATA DELAY: {t} 最新日 {info['last']} < 市場最新交易日 {info['ref']}")
 
-    changes = detect_changes(prev_state, sigs, skip_legs=delayed_legs)
+    changes = detect_changes(prev_state, sigs, skip_legs=delayed_legs,
+                             leg_dates={t: px_map[t].index[-1] for t in ALL_TICKERS})
     cap_flips = detect_cap_eff_flips(prev_state, sigs, skip_legs=delayed_legs)   # 說明用，不影響 changes/是否寄信
     data_date = max(sigs[t]["wk_date"] for t in ALL_TICKERS)
 
@@ -2625,7 +2672,7 @@ def main():
         print(f"{m['short']} exec layer: {len(er['events'])} events, current executed " +
               ", ".join(f"{t} {er['last'][t]:.0f}%" for t in m["legs"]))
 
-    # 實單主系統：可行動變化以 email 提醒（訊號＝目標權重與現持執行層差 ≥ 20pp，或現持高於新規則
+    # 實單主系統：可行動變化以 email 提醒（訊號＝目標比現持執行層高 ≥ 20pp 或低 ≥ 減碼門檻，或現持高於新規則
     # 上限；閘門翻轉本身不觸發，見 detect_changes 與 LOGIC_AUDIT.md 一之1）。2026-10-19 起另加
     # 「債金條件數改變」。cap15 對照線不寫 alert、不寄信，但仍記 last_change 供頁面顯示。
     alert_events = list(changes) + overlay_change_lines(overlay_changes)
@@ -2685,15 +2732,17 @@ def main():
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
 
     if PROFILE == "live":
-        mechanism = ("W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x exec layer A2 (20pp band / 10%% round). "
+        mechanism = ("W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x exec layer A2 (20pp band / 10%% round; "
+                     "from %s the down band is 10pp, up band stays 20pp). "
                      "From %s: stock part cap 1.0 (no borrowing, clamp 50pp/leg; the daily-MA layer no longer changes exposure); "
                      "US adds IEF/GLD weekly overlay (<=20%% each, +1/3 per condition: weekly close > 40w MA, > 52w MA, > close 52w ago); "
                      "TW has no overlay. Before %s: cap_eff = 1.5 if daily-MA-score5 long-confirm else 1.0 (lag %d, 1%% hysteresis since %s), clamp 75pp; history not rewritten"
-                     % (RULE_SWITCH_DATE, RULE_SWITCH_DATE, MA_LAG, RULE_REVISION_DATE))
+                     % (EXEC_ASYM_DATE, RULE_SWITCH_DATE, RULE_SWITCH_DATE, MA_LAG, RULE_REVISION_DATE))
         status = ("LIVE main system. Since %s: US = bond-gold version (cap 1.0 + IEF/GLD), TW = no-borrowing version (cap 1.0); decided %s. "
                   "The previous cap 1.5 + daily-MA rule runs on as a control line (cap15_state.json), no email. "
-                  "Email on actionable change (leg target vs held >= 20pp, held above new cap, or IEF/GLD condition count change)"
-                  % (RULE_SWITCH_DATE, RULE_SWITCH_DECISION_DATE))
+                  "Email on actionable change (leg target above held by >= 20pp or below by >= 10pp [down band 10pp from %s], "
+                  "held above new cap, or IEF/GLD condition count change)"
+                  % (RULE_SWITCH_DATE, RULE_SWITCH_DECISION_DATE, EXEC_ASYM_DATE))
         leverage = ("No borrowing from %s: stock exposure <= 100%% per market; TW leveraged leg (2330 mini futures + small TAIEX) no longer needed. "
                     "US overlay: each satisfied condition adds one third of a 20%% bond or gold position while stock exposure stays unchanged. "
                     "Before %s: cap_eff up to 1.5 (informed decision, see history)." % (RULE_SWITCH_DATE, RULE_SWITCH_DATE))
