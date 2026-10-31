@@ -6,7 +6,7 @@
 
   紅綠燈  每週三公布的 NFCI，取該版最後一筆與同版四週前的值（各取兩位小數），高於＝紅，相等算綠。
           週三公布、週四收盤調整、週五起生效；週四休市就順延到下一個交易日。
-  影子線  紅燈時每腿目標＝實單目標 × 0.5，綠燈＝實單目標；執行層、成本、現金利率、成交時序全部
+  影子線  紅燈時每檔目標水位＝實單目標水位 × 0.5，綠燈＝實單目標；執行層、成本、現金利率、成交時序全部
           沿用實單程式。美股只改 QQQ、SMH（公債、黃金兩腿照實單，不在這裡比），台股改 0050、2330。
   起始    2026-10-19 當天收盤，影子線的持股＝實單的持股；起始顏色用 2026-10-14 公布的那一版（紅）。
 
@@ -513,8 +513,8 @@ def build_state(start_date: str, releases: list, cap: dict, market_sims: dict, c
         "prereg": "事前登記 2026-10-18（持有人確認）",
         "start_date": start_date, "earliest_decision_date": EARLIEST_DECISION, "latest_decision_date": LATEST_DECISION,
         "data_through": asof, "status": status,
-        "rule": "紅燈時每腿目標＝實單目標 × 0.5；綠燈＝實單目標；執行層、成本、時序同實單。",
-        "scope": ("比較範圍只含股票腿：美股 QQQ、SMH，台股 0050、2330。美股公債與黃金兩腿照實單、"
+        "rule": "紅燈時每檔目標水位＝實單目標水位 × 0.5；綠燈＝實單目標；執行層、成本、時序同實單。",
+        "scope": ("比較範圍只含股票檔：美股 QQQ、SMH，台股 0050、2330。美股公債與黃金兩檔照實單、"
                   "兩邊相同，不計入。影子線不下單。"),
         "nfci": {"current": release_brief(cur_rel), "releases_total": len(releases),
                  "missing": cap.get("missing", [])},

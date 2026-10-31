@@ -1602,9 +1602,9 @@ def _book_quotes(long_track_data, gaps):
         as_of = hist[-1].get("date") if hist else None
         exe = leg.get("executed_pct")
         quotes[f"book:{sym}_exec"] = {
-            "label": f"實盤 {sym} 腿現持曝險（占{market}指數部）",
-            "val": (f"{exe:.1f}%" if exe is not None else None),
-            "num": exe, "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+            "label": f"實盤 {sym} 現持水位（單檔 0～100%，{market}指數部兩檔各占一半）",
+            "val": (f"{exe * 2:.1f}%" if exe is not None else None),   # 顯示換算：水位＝組合 pp × 2
+            "num": (exe * 2 if exe is not None else None), "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
         }
         close, w52 = leg.get("wk_close"), leg.get("w52")
         dist = round((close / w52 - 1) * 100, 1) if close and w52 else None

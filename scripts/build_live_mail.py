@@ -49,6 +49,7 @@ from update_long_track_w52_adaptive import (  # noqa: E402
     MARKETS,
     _leg_trigger_text,
     NEW_RULE_TAG, RULE_SWITCH_DATE, OVERLAY_LEGS, OVERLAY_NAME, OVERLAY_VEHICLE, OVERLAY_W,
+    lvl,
 )
 
 ROOT = HERE.parent
@@ -93,17 +94,17 @@ def build_headline(w52a_text: str | None, is_test: bool) -> str:
 
     actions = []
     if us_hit:
-        actions.append("美股 QQQ／SMH 現持與目標差達門檻，下一個交易日調整至目標。")
+        actions.append("美股 QQQ／SMH 水位現持與目標差達門檻，下一個交易日照下方「怎麼下單」調整（對到最近一格，不是調到目標）。")
     if ov_hit:
         actions.append("美股公債或黃金的週線條件數改變，依下方「債金疊加」換倉：指數部帳戶換 XNAS 與 CBU0／IGLN，另一帳戶以 MNQ 維持股票曝險。")
     if tw_hit:
-        actions.append("台股 0050／2330 現持與目標差達門檻" + ("或高於新規則上限" if switch_hit else "") + "，下一個交易日調整至目標。")
+        actions.append("台股 0050／2330 水位現持與目標差達門檻" + ("或高於新規則上限" if switch_hit else "") + "，下一個交易日照下方「怎麼下單」調整（對到最近一格，不是調到目標）。")
     if switch_hit:
-        actions.append("規則切換後台股不再需要槓桿段：2330 小型個股期與小台指部位（若有）一併平掉，2330 現貨腿先拉回上限，不等 20pp 門檻。")
+        actions.append("規則切換後台股不再需要槓桿段：2330 小型個股期與小台指部位（若有）一併平掉，2330 現貨腿先拉回上限，不等兩格門檻。")
     if actions:
         line += " " + " ".join(actions)
     if w52a_text and "資料延遲" in w52a_text:
-        line += " ⚠ 有腿資料延遲（詳見下方 alert 原文）：該市場本次不產生換倉指令，維持前一個已確認的決策。"
+        line += " ⚠ 有一檔資料延遲（詳見下方 alert 原文）：該市場本次不產生換倉指令，維持前一個已確認的決策。"
     if is_test:
         line += "（測試信：以下為目前實際狀態，非事件比對）"
     return line
@@ -119,19 +120,19 @@ def market_section(m: dict, tickers: dict) -> str:
     exec_combined = sum(tickers[t]["executed_pct"] for t in legs)
     target_combined = sum(tickers[t]["final_weight_pct"] for t in legs)
     tile_html = tiles([
-        ("現持曝險（執行層）", f"{exec_combined:.0f}%", None),
-        ("目標曝險（訊號）", f"{target_combined:.0f}%", None),
+        ("指數部股票曝險：現持（執行層）", f"{exec_combined:.0f}%", None),
+        ("指數部股票曝險：目標（訊號）", f"{target_combined:.0f}%", None),
     ])
     new_rule = all(tickers[t].get("rule") == NEW_RULE_TAG for t in legs)
     rows = []
     if new_rule:     # 2026-10-19 起：上限 100%、不看均線層，沒有 cap_eff 欄
-        headers = ["腿", "閘門", "目標／現持", "下一個會動的價位"]
+        headers = ["檔", "閘門", "水位：目標／現持", "下一個會動的價位"]
         for t in legs:
             tk = tickers[t]
             gate_pill = pill("在場", "green") if tk["gate"] else pill("出場", "gray")
             trig = _leg_trigger_text(t, {"gate": tk["gate"], "w52": tk["w52"], "rule": tk.get("rule")}, None)
             rows.append([f"<strong>{esc(t)}</strong>", gate_pill,
-                         f"{tk['final_weight_pct']:.0f}% ／ {tk['executed_pct']:.0f}%", esc(trig)])
+                         f"{lvl(tk['final_weight_pct']):.0f}% ／ {lvl(tk['executed_pct']):.0f}%", esc(trig)])
         return section(f"{m['key'].upper()} TODAY", f"{m['name']} — 今天結論",
                         tile_html + table(headers, rows, numeric_cols={2}))
     headers = ["腿", "閘門", "均線", "cap_eff", "目標／現持", "下一個會動的價位"]
@@ -185,6 +186,34 @@ def overlay_section(state: dict, w52a_text: str | None) -> str:
 
 
 # ---------------------------------------------------------------------------
+# 怎麼下單——只摘 alert 原文裡「怎麼下單」段（主系統腳本寫的、各檔占指數部 % 的變化），不重算
+# ---------------------------------------------------------------------------
+def _order_lines(w52a_text: str | None) -> list[str]:
+    if not w52a_text:
+        return []
+    out, on = [], False
+    for ln in w52a_text.splitlines():
+        if ln.startswith("怎麼下單"):
+            on = True
+            continue
+        if on:
+            if ln.startswith("  "):
+                out.append(ln.strip())
+            else:
+                break
+    return out
+
+
+def order_section(w52a_text: str | None) -> str:
+    rows = _order_lines(w52a_text)
+    if not rows:
+        return ""
+    body = "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(r)}</div>' for r in rows)
+    body += note("占指數部淨值的 %＝水位 ÷ 2（兩檔各占指數部一半）。債金部位另列於下方「債金疊加」。")
+    return section("ORDERS", "怎麼下單", body)
+
+
+# ---------------------------------------------------------------------------
 # 變了什麼——alert 原文照登，不改寫
 # ---------------------------------------------------------------------------
 def _raw_text_block(text: str) -> str:
@@ -216,7 +245,7 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
     for m in MARKETS:
         exec_combined = sum(tickers[t]["executed_pct"] for t in m["legs"])
         target_combined = sum(tickers[t]["final_weight_pct"] for t in m["legs"])
-        lines.append(f"  {m['name']}：現持 {exec_combined:.0f}% ／ 目標 {target_combined:.0f}%")
+        lines.append(f"  {m['name']}：指數部股票曝險 現持 {exec_combined:.0f}% ／ 目標 {target_combined:.0f}%")
         for t in m["legs"]:
             tk = tickers[t]
             cond = tk.get("ma_cond") or {}
@@ -224,7 +253,7 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
             trig = _leg_trigger_text(t, {"gate": tk["gate"], "w52": tk["w52"], "rule": tk.get("rule")}, None)
             if tk.get("rule") == NEW_RULE_TAG:
                 lines.append(f"    {t}：閘門{'在場' if tk['gate'] else '出場'} · "
-                             f"目標 {tk['final_weight_pct']:.0f}% ／ 現持 {tk['executed_pct']:.0f}% · 下一個會動的價位：{trig}")
+                             f"水位 現持 {lvl(tk['executed_pct']):.0f}% ／ 目標 {lvl(tk['final_weight_pct']):.0f}% · 下一個會動的價位：{trig}")
             else:
                 lines.append(f"    {t}：閘門{'在場' if tk['gate'] else '出場'} · 均線 {ma_str} · "
                              f"cap_eff {tk['cap_eff']:.1f} · 目標 {tk['final_weight_pct']:.0f}% ／ "
@@ -240,6 +269,11 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
             lines.append(f"    {OVERLAY_NAME[k]}：現在 {o['n']}／3 條成立（{det}），目標 {o['target_pct']:.1f}%")
             lines.append(f"      怎麼換：{_overlay_action(w52a_text, k)}")
     lines.append("")
+    ords = _order_lines(w52a_text)
+    if ords:
+        lines.append("怎麼下單（各檔占指數部淨值的 %＝水位 ÷ 2，兩檔各占一半）：")
+        lines += [f"    {o}" for o in ords]
+        lines.append("")
 
     lines.append("變了什麼：")
     if w52a_text:
@@ -271,6 +305,7 @@ def build_mail_html(headline: str, state: dict, w52a_text: str | None, *, is_tes
     body = _headline_block(headline)
     for m in MARKETS:
         body += market_section(m, tickers)
+    body += order_section(w52a_text)
     body += overlay_section(state, w52a_text)
     body += changes_section(w52a_text)
     body += note(f'完整頁面：<a href="{esc(LIVE_PAGE_URL)}">實單主系統「今天結論」</a> · '

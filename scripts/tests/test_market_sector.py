@@ -25,7 +25,7 @@ def _long_track():
 
 def test_book_quotes_use_executed_exposure_and_market_dates():
     q = market.build_quotes(None, None, None, None, None, {}, [], _long_track())
-    assert q["book:SMH_exec"]["num"] == 50.0  # 執行層，不是目標權重 59.1
+    assert q["book:SMH_exec"]["num"] == 100.0  # 執行層水位（pp 50 × 2），不是目標權重 59.1
     assert q["book:SMH_exec"]["as_of"] == "2026-10-13"
     assert q["book:2330_exec"]["as_of"] == "2026-10-14"
     assert q["book:SMH_w52_dist"]["num"] == 22.4

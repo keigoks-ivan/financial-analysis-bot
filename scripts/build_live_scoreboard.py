@@ -90,7 +90,7 @@ SA10_CLAMP = 50.0 * SA10_CAP  # 執行層 clamp（A2 同門檻/格，clamp 隨 c
 
 SHADOW_DEFINITIONS = {
     "s60": "S-60：同標的 50/50 B&H 固定 60% ＋ 現金 40%，月再平衡，7 bps（保險價格頁 E-60 的事前可執行版本）。",
-    "sa10": "S-A10：系統規則但 cap 1.0（無槓桿），執行層同 A2（20pp 門檻／10% 取整），clamp 改為 50pp／腿。",
+    "sa10": "S-A10：系統規則但 cap 1.0（無槓桿），執行層同 A2（水位兩格〔40%〕門檻／每格 20% 取整），單檔上限水位 100%。",
 }
 
 SHADOW_SPRT_TEXT = (
@@ -126,8 +126,8 @@ PREREG = {
     "data": {
         "records": (
             "系統實錄：docs/long-track-w52-adaptive/state.json 的 history_us／history_tw，"
-            "只取 source=='live' 的日紀錄；每日四腿的 final_pct 經 band_exec_replay（A2："
-            "20pp／10 格／clamp 75）得到執行層持股率（＝實際該持有的部位）。"
+            "只取 source=='live' 的日紀錄；每日四檔的目標經 band_exec_replay（A2："
+            "水位加減都差兩格才動、2026-11-02 起減碼差一格就動／每格 20%／單檔上限隨規則由 150% 改 100%）得到執行層水位（＝實際該持有的部位）。"
         ),
         "daily_return_formula": (
             "系統日報酬 ＝ Σ腿 執行持股率(前一日) × 腿日報酬 ＋ 現金部分 × 現金日率（美 "
@@ -197,7 +197,7 @@ PREREG = {
             {
                 "date": "2026-10-19",
                 "what": "實單主系統規則斷點：美股改債金版（股票部分上限 100% 不借錢，另加 IEF／GLD 週線疊加）、"
-                        "台股改不借錢版（上限 100%）；執行層單腿 clamp 由 75pp 改為 50pp，現持高於新上限者生效日先拉回上限",
+                        "台股改不借錢版（上限 100%）；執行層單檔上限水位由 150% 改為 100%，現持高於新上限者生效日先拉回上限",
                 "why": "持有人 2026-10-17 拍板；舊 cap 1.5 規則轉為對照線 cap15.html，每日更新、不寄信",
                 "unchanged": "既有數字、事前登記的判準與 SPRT 參數一律不改寫。state.json 的 source=='live' 實錄"
                              "自 2026-10-19 起帶新規則標記，band_exec_replay 依標記回放，生效日前的執行層持股率逐筆不變。"
@@ -233,8 +233,8 @@ PREREG = {
         ),
         "judgment_calls": {
             "sa10_clamp": (
-                "S-A10「cap 1.0」翻譯為執行層 clamp＝50pp／腿（cap1.0×50pp 滿載）；A2 的 band=20pp／"
-                "grid=10% 逐字沿用（spec 明文「執行層 A2 同」，只有 clamp 隨 cap 改變，非另開一套"
+                "S-A10「cap 1.0」翻譯為執行層單檔上限水位 100%（cap 1.0 滿載）；A2 的門檻（水位兩格＝40%）／"
+                "每格 20% 逐字沿用（spec 明文「執行層 A2 同」，只有 clamp 隨 cap 改變，非另開一套"
                 "執行層參數）。"
             ),
             "s60_rebalance": "S-60 直接重用主記分板既有的 build_diluted(k) 月末再平衡＋7bps 邏輯，k 固定 0.6，不走 k_cagr/k_mdd 兩個 PREREG 凍結值。",
@@ -881,7 +881,7 @@ def mkt_section(mkt):
 
     ev_rows = ""
     for e in mkt["exec_events"][-20:][::-1]:
-        ev_rows += f'<tr><td>{esc(e["date"])}</td><td>{esc(e["leg"])}</td><td>{e["from"]:.0f}% → {e["to"]:.0f}%</td></tr>\n'
+        ev_rows += f'<tr><td>{esc(e["date"])}</td><td>{esc(e["leg"])}</td><td>{e["from"]*2:.0f}% → {e["to"]*2:.0f}%</td></tr>\n'
     if not ev_rows:
         ev_rows = '<tr><td colspan="3" style="text-align:center;color:#888">實錄窗內無執行層調整事件</td></tr>'
 
@@ -891,7 +891,7 @@ def mkt_section(mkt):
 {chart_js}
 <table class="lsb-table"><thead><tr><th>月</th><th class="num">系統報酬</th><th class="num">B-mdd 基準報酬</th><th>命中</th></tr></thead>
 <tbody>{hit_rows}</tbody></table>
-<table class="lsb-table"><thead><tr><th>日期</th><th>腿</th><th>執行層變化</th></tr></thead>
+<table class="lsb-table"><thead><tr><th>日期</th><th>檔</th><th>執行層變化（水位；舊規則期間上限 150%）</th></tr></thead>
 <tbody>{ev_rows}</tbody></table>
 </div>"""
 
@@ -950,8 +950,8 @@ def shadow_market_section(mk, mkt, shadows):
     a10_exec = mkt.get("a10_last_exec_pct") or {}
     a10_note = ""
     if a10_exec:
-        a10_note = ("<p class='lsb-note'>S-A10 目前各腿執行層持股率：" +
-                    "／".join(f"{t} {v:.0f}%" for t, v in a10_exec.items()) + "。</p>")
+        a10_note = ("<p class='lsb-note'>S-A10 目前各檔執行層水位：" +
+                    "／".join(f"{t} {v*2:.0f}%" for t, v in a10_exec.items()) + "。</p>")
 
     return f"""<div class="lsb-market">
 <h3>{esc(mkt['label'])}影子帳戶</h3>

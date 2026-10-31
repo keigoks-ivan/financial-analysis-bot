@@ -348,16 +348,23 @@ def render_today_strip() -> str:
     tickers = state.get("tickers", {})
     data_date = state.get("data_date", "—")
     last_change_date = state.get("last_change_date") or "—"
-    last_change_desc = html.escape(state.get("last_change_desc") or "尚無紀錄", quote=False)
+    _desc = state.get("last_change_desc") or "尚無紀錄"
+    # 顯示換算：state 舊格式 desc（組合 pp）→ 水位；與主程式共用同一個 _desc_levels，state 不改
+    from update_long_track_w52_adaptive import _desc_levels  # noqa: E402
+    _desc = _desc_levels(_desc)
+    last_change_desc = html.escape(_desc, quote=False)
 
     def leg_span(t):
         tk = tickers.get(t)
         if not tk:
             return f'<span class="leg"><b>{t}</b>：—</span>'
         gate = "在場" if tk.get("gate") else "出場"
-        final = tk.get("final_weight_pct", "—")
-        exe = tk.get("executed_pct", "—")
-        return (f'<span class="leg"><b>{t}</b> {gate}｜目標 {final}%｜現持 {exe}%</span>')
+        final = tk.get("final_weight_pct")
+        exe = tk.get("executed_pct")
+        # 顯示換算：每檔水位（0～100%）＝組合 pp × 2
+        final = f"{final * 2:.0f}" if isinstance(final, (int, float)) else "—"
+        exe = f"{exe * 2:.0f}" if isinstance(exe, (int, float)) else "—"
+        return (f'<span class="leg"><b>{t}</b> {gate}｜水位 目標 {final}%｜現持 {exe}%</span>')
 
     def mkt_block(name, legs, exp_key):
         exp = state.get(exp_key, "—")
@@ -365,8 +372,8 @@ def render_today_strip() -> str:
         exec_sum = round(sum(vals), 1) if len(vals) == len(legs) and legs else "—"
         rows = "".join(leg_span(t) for t in legs)
         return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
-                f'<div class="tstrip-exp">目標曝險（訊號，週線閘門 × 自適應套袖算出的理論持股率）<b>{exp}%</b>'
-                f' ／ 現持曝險（執行層，實際已調整到的持股率——目標比現持高 20 個百分點、或低 10 個百分點才調整，故常與目標有差）<b>{exec_sum}%</b></div>'
+                f'<div class="tstrip-exp">指數部股票曝險：目標（訊號，週線閘門 × 自適應套袖算出的理論持股率，兩檔相加）<b>{exp}%</b>'
+                f' ／ 現持（執行層，實際已調整到的持股率——每檔水位分六格，目標比現持高兩格（40%）以上才加、低一格（20%）以上就減，故常與目標有差）<b>{exec_sum}%</b></div>'
                 f'<div class="tstrip-legs">{rows}</div></div>')
 
     us_block = mkt_block("美股 QQQ + SMH", ["QQQ", "SMH"], "combined_exposure_us_pct")
@@ -544,7 +551,7 @@ def render_overview_body() -> str:
     與六條早已退役）。實盤證據清單（render_evidence）維持在還在測的之後。"""
     today_strip = render_today_strip()
     lede = ('<div class="ov-lede">看這三件事就好：上面「今天」區塊的<b>今天曝險</b>'
-            '（目標／現持曝險與各腿在場／出場）、<b>最近一次變動</b>（哪一天、哪一腿調整了多少）、'
+            '（目標／現持曝險與各檔在場／出場）、<b>最近一次變動</b>（哪一天、哪一檔調整了多少）、'
             '區塊底部影子帳戶表的<b>影子帳戶怎麼說</b>（累計淨值差與 SPRT 判定是否已經足夠判斷現行規則比對照組好）。'
             '還沒有答案的問題，看下面「還在測的」。</div>')
 
