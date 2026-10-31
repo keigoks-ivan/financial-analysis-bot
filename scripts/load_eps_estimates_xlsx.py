@@ -126,9 +126,11 @@ import argparse
 import json
 import re
 import sys
+import threading
 import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -620,6 +622,94 @@ def load_latest_excel(data_dir: Path = DEFAULT_DATA_DIR, family: str = DEFAULT_F
     if path is None:
         return None
     return load_excel(path)
+
+
+# 2026-10-31：Koyfin 財報公布後常把 roic_pct／fcf_margin_pct 暫時留白（LLY 10-31 事故，
+# 見 knowledge/rule_ledger.md）。今天那列在、但這兩欄空白時，往回找同一族較早的 xlsx，
+# 取最近一份有值的，限今天快照日往前 KOYFIN_CARRY_WINDOW_DAYS 個日曆天。
+KOYFIN_CARRY_WINDOW_DAYS = 10
+
+
+class KoyfinCarry:
+    """沿用 Koyfin 前值。前幾份 xlsx 只在第一次被查詢時載入、之後快取（thread-safe）。
+
+    families：同一個 universe 用的檔名前綴清單（先到先贏，與當天合併時的優先順序一致）。
+    _family_re 只收 `<family><8 位日期>.xlsx`，所以 *_supplement_* 檔不會被抓到。
+    """
+
+    def __init__(self, families, today_snapshot_date, data_dir: Path = DEFAULT_DATA_DIR,
+                 window_days: int = KOYFIN_CARRY_WINDOW_DAYS, loader=None):
+        self.families = list(families)
+        self.data_dir = Path(data_dir)
+        self.window_days = window_days
+        self._loader = loader or load_excel
+        self._lock = threading.Lock()
+        self._snaps: list[ExcelSnapshot] | None = None
+        try:
+            self._today = datetime.strptime(str(today_snapshot_date)[:10], "%Y-%m-%d").date()
+        except (TypeError, ValueError):
+            self._today = None
+
+    def _load(self) -> list[ExcelSnapshot]:
+        with self._lock:
+            if self._snaps is not None:
+                return self._snaps
+            found = []
+            if self._today is not None and self.data_dir.exists():
+                lo = self._today - timedelta(days=self.window_days)
+                for fi, fam in enumerate(self.families):
+                    pat = _family_re(fam)
+                    for p in self.data_dir.glob(f"{fam}*.xlsx"):
+                        m = pat.search(p.name)
+                        if not m:
+                            continue
+                        d = datetime.strptime(m.group(1), "%Y%m%d").date()
+                        if lo <= d < self._today:
+                            found.append((d, fi, p))
+            found.sort(key=lambda x: (-x[0].toordinal(), x[1]))
+            self._snaps = [self._loader(p) for _, _, p in found]
+            return self._snaps
+
+    def lookup(self, ticker: str, field: str):
+        """回傳 (值, 快照日 'YYYY-MM-DD') 或 None。由新到舊，取第一份該欄非空的。"""
+        for snap in self._load():
+            rec = snap.get(ticker)
+            if rec is None:
+                continue
+            v = rec.get(field)
+            if v is not None:
+                return v, snap.snapshot_date
+        return None
+
+
+def resolve_koyfin_roic_fcf(record: dict | None, carry: "KoyfinCarry | None", ticker: str):
+    """Koyfin 今天 → Koyfin 前值。回傳 (roic, fcf, carried, carried_stamp)。
+
+    - record 為 None（今天那列不存在）：不沿用，兩欄都回 None。
+    - 兩欄各自獨立：只缺一欄時，另一欄用今天值。
+    - carried：沿用前值的欄位清單（"roic"／"fcf"）；carried_stamp：前值快照日
+      （兩欄來自不同天時取較舊那天）。
+    """
+    if record is None:
+        return None, None, [], None
+    roic = record.get("roic_pct")
+    fcf = record.get("fcf_margin_pct")
+    carried: list[str] = []
+    stamps: list[str] = []
+    if carry is not None:
+        if roic is None:
+            hit = carry.lookup(ticker, "roic_pct")
+            if hit is not None:
+                roic = hit[0]
+                carried.append("roic")
+                stamps.append(hit[1])
+        if fcf is None:
+            hit = carry.lookup(ticker, "fcf_margin_pct")
+            if hit is not None:
+                fcf = hit[0]
+                carried.append("fcf")
+                stamps.append(hit[1])
+    return roic, fcf, carried, (min(stamps) if stamps else None)
 
 
 def main():

@@ -618,3 +618,9 @@ v7-backtest 事前登記檢定 `docs/RevVeto_Prereg.md`／`docs/RevVeto_Results.
 已知弱點：
 - 回測只有一條歷史路徑（美股 2005 年起、台股 2014 年起），快崩區間只有三段。
 - 減碼門檻變窄後，盤中資料造成的假訊號影響變大。台股收盤那一輪排程（07:00 UTC）常延遲到美股開盤後才跑，會用盤中價格寫美股當日紀錄（10-30 那筆在紐約 09:51 寫入），要等美股收盤那一輪才覆蓋。持有人 2026-10-31 決定修：`fetch_close` 的 `drop_unsettled_us_bar`，美股最新一根是紐約今天且紐約時間未到 16:30 就不採用（共用 `fetch_close` 的 NFCI 影子線一起生效）。
+
+## 2026-10-31：Koyfin 品質欄空白沿用前值、擋 yfinance 營業利益錯值（資料修正，持有人拍板）
+
+| 規則 | 生日 | 觸發事故（WHY） | Kill condition（出現即刪/降級） | 2026-10 審計 |
+|---|---|---|---|---|
+| **① 品質來源順序改為 Koyfin 今天 → Koyfin 前值（10 個日曆天內）→ QGM → yfinance**（`scripts/load_eps_estimates_xlsx.py` 的 `KoyfinCarry`、`resolve_koyfin_roic_fcf`，`scripts/build_dd_screener.py` 接線）：今天的 Koyfin 那列存在、但 ROIC 或 FCF margin 空白時，兩欄各自往回找同一族（同一個 universe 的檔名前綴，不含 `*_supplement_*`）較早的 xlsx，取最近一份有值的；來源仍標 `koyfin-xlsx`，另寫 `quality_koyfin_carried`（沿用的欄位）與 `quality_koyfin_carried_stamp`（前值快照日，兩欄不同天取較舊）。今天整列不存在的 ticker 不沿用。篩選表 ROIC／FCF 格沿用時加星號與 hover「Koyfin 前值 MM-DD」。**② `fundamentals_us.calc_roic`：年報營業利益 ≤0 但稅前淨利 >0 時，營業利益視為缺值，走原有後備路徑（`operatingMargins` × `totalRevenue`，稅率 21%）**；真虧損公司 operatingMargins 也是負的，仍判不過 | 2026-10-31 | LLY 在 10-29／30 公布財報，10-31 的 Koyfin xlsx 裡 LLY 的 ROIC 與 FCF margin 暫時空白，退到 QGM（名單當天週更把 LLY 拿掉）再退到 yfinance。yfinance 的 LLY 2025 年報營業利益是 −5.71 億（同表稅前淨利 257 億、營收 652 億），ROIC 被算成 −0.66%，品質閘不過，LLY 在 10-31 週更被誤下席，空席補 UTHR。改後 LLY 的 Koyfin 前值是 ROIC 40.06、FCF margin 22.83（10-30 快照）；yfinance 後備路徑實測 ROIC 53.09% | 若沿用的前值造成另一種誤判（例如公司財報後 ROIC 真的明顯下滑，前值卻讓它多留一天品質閘通過），就取消沿用、改回「Koyfin 空白即退 QGM／yfinance」；營業利益錯值規則若讓真虧損公司誤過閘，同樣取消 | 未跑回測，屬資料錯誤修正，不改任何門檻。盤點 10-31 當天 Koyfin 空白的列：沿用後品質閘翻轉的有 LLY（不過→過）與 MRK（不過→過，yfinance 把 ROIC 算成 0.7，Koyfin 前值 21.69）；MRK 不在 10-31 美股看板名單內。10-31 席位更正（LLY 回核心席、UTHR 留等待池）另案處理 |

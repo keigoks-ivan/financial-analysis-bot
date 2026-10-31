@@ -115,7 +115,12 @@ def calc_roic(t, info=None):
         op_inc = _row(is_df, 'Operating Income')
         tax = _row(is_df, 'Tax Provision')
         pretax = _row(is_df, 'Pretax Income') or _row(is_df, 'Pre Tax Income')
-        if op_inc is None or pretax is None or pretax <= 0:
+        # 2026-10-31：年報營業利益 <=0 但稅前淨利 >0 視為 yfinance 錯值（LLY 2025 營業利益
+        # 被填成 -5.71 億、稅前淨利 257 億），改走後備路徑。真虧損的公司 operatingMargins
+        # 也是負的，後備路徑仍會判不過。
+        bad_op_inc = (op_inc is not None and op_inc <= 0
+                      and pretax is not None and pretax > 0)
+        if op_inc is None or pretax is None or pretax <= 0 or bad_op_inc:
             op_margin = info.get('operatingMargins')
             total_rev = info.get('totalRevenue')
             if op_margin is None or not total_rev or total_rev <= 0:

@@ -1666,6 +1666,13 @@ function _renderPlainCritCell(s, c) {
     var decimals = (c.unit === 'x') ? 2 : 1;
     display = v.toFixed(decimals) + c.unit;
   }
+  // 2026-10-31：Koyfin 當天空白、沿用前值的欄位，加星號與 hover 註記。
+  var carriedKey = (c.key === 'roic') ? 'roic' : (c.key === 'fcf' ? 'fcf' : null);
+  if (carriedKey && Array.isArray(s.quality_koyfin_carried) &&
+      s.quality_koyfin_carried.indexOf(carriedKey) >= 0 && v !== null && v !== undefined) {
+    var cs = s.quality_koyfin_carried_stamp ? String(s.quality_koyfin_carried_stamp).slice(5) : '';
+    return '<td style="' + cellStyle(flag) + '" title="Koyfin 前值 ' + cs + '（當天該欄空白，沿用 10 天內最近一次的值）">' + display + '*</td>';
+  }
   return '<td style="' + cellStyle(flag) + '">' + display + '</td>';
 }
 

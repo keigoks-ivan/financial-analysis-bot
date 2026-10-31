@@ -116,6 +116,8 @@ from load_eps_estimates_xlsx import (  # noqa: E402
     apply_adr_ratio,
     find_latest_excel,
     load_latest_excel,
+    KoyfinCarry,
+    resolve_koyfin_roic_fcf,
 )
 from eps_fx_normalize import (  # noqa: E402
     compute_fx_normalized_revision,
@@ -4112,6 +4114,7 @@ def enrich_ticker(
     eps_rev_3m_baseline: dict | None = None,
     earnings_calendar_cache: dict | None = None,
     fye_cache: dict | None = None,
+    koyfin_carry=None,
 ) -> dict:
     """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
 
@@ -4217,9 +4220,14 @@ def enrich_ticker(
     # can never clobber a Koyfin value landing here — this override always
     # runs last and wins.
     quality_koyfin_stamp = None
+    quality_koyfin_carried: list[str] = []
+    quality_koyfin_carried_stamp = None
     if _excel_record_for_eps2y is not None:
-        _koyfin_roic = _excel_record_for_eps2y.get("roic_pct")
-        _koyfin_fcf = _excel_record_for_eps2y.get("fcf_margin_pct")
+        # 2026-10-31：今天這列在、但這欄空白（財報公布後 Koyfin 常暫時留白）→ 沿用 10 天內
+        # 最近一份有值的前值（KoyfinCarry）。今天整列不存在的 ticker 走不到這裡，不沿用。
+        (_koyfin_roic, _koyfin_fcf, quality_koyfin_carried,
+         quality_koyfin_carried_stamp) = resolve_koyfin_roic_fcf(
+            _excel_record_for_eps2y, koyfin_carry, t)
         koyfin_hit = False
         if _koyfin_roic is not None:
             quality["roic"] = round(float(_koyfin_roic), 2)
@@ -4520,6 +4528,9 @@ def enrich_ticker(
         # 2026-09-09: Excel snapshot date the roic/fcf koyfin-xlsx override (if
         # any) came from. None when quality_source != "koyfin-xlsx".
         "quality_koyfin_stamp": quality_koyfin_stamp,
+        # 2026-10-31：Koyfin 今天空白、沿用前值的欄位（"roic"／"fcf"）與前值快照日。
+        "quality_koyfin_carried": quality_koyfin_carried,
+        "quality_koyfin_carried_stamp": quality_koyfin_carried_stamp,
         # 2026-09-09 (v3 席位資格): core-seat durability signal — see docstring.
         "durable_5y": durable_5y,
         "durable_source": durable_source,
@@ -4919,6 +4930,14 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         missing_us = []
         fallback_yf = [e["ticker"] for e in universe]
 
+    # 2026-10-31：Koyfin roic／fcf 空白時沿用前值（10 天內）。族別與當天合併的來源一致。
+    koyfin_carry = None
+    if excel_snapshot is not None:
+        _carry_families = [_excel_family()]
+        if UNIVERSE_MODE == "dd":
+            _carry_families.append(LARGECAP_XLSX_FAMILY)
+        koyfin_carry = KoyfinCarry(_carry_families, excel_snapshot.snapshot_date)
+
     # Step 0e: 2026-09-17 — persistent caches for FX-normalized EPS revision
     # (reporting currency + daily FX rate; see eps_fx_normalize.py). Loaded
     # once, mutated in place (thread-safe) inside enrich_ticker, saved back
@@ -4965,7 +4984,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot, qgm_durable_index, reporting_ccy_cache, fx_cache, eps_rev_3m_baseline, earnings_calendar_cache, fye_cache): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot, qgm_durable_index, reporting_ccy_cache, fx_cache, eps_rev_3m_baseline, earnings_calendar_cache, fye_cache, koyfin_carry): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):
@@ -5178,6 +5197,9 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
         k_roic = sum(1 for s in koyfin_rows if s.get("roic") is not None)
         k_fcf = sum(1 for s in koyfin_rows if s.get("fcf") is not None)
         print(f"  Step 5    quality (koyfin-xlsx path): rows={len(koyfin_rows)} roic={k_roic} fcf={k_fcf}")
+        k_carried = [s["ticker"] for s in koyfin_rows if s.get("quality_koyfin_carried")]
+        if k_carried:
+            print(f"  Step 5    quality (koyfin 前值沿用): {len(k_carried)} 檔 — {', '.join(k_carried)}")
     print(f"  Step 5    pass distribution: pass5={sum(1 for s in enriched if s['pass_count']==5)} "
           f"pass4={sum(1 for s in enriched if s['pass_count']==4)} "
           f"pass3={sum(1 for s in enriched if s['pass_count']==3)}")
