@@ -1,14 +1,14 @@
 //@version=6
 // =============================================================================
 // W52 × 自適應波動率 — 持股水位（任何標的，這檔自己 0～100%）
-//   引擎同實單主系統（2026-10-19 起）；執行層預設是持有人 2026-10-31 指定的單一標的版
+//   引擎與執行層同實單主系統（2026-10-19 起；減碼門檻 2026-11-02 起一格），以這檔自己的水位表示
 // -----------------------------------------------------------------------------
 // 對齊 research.investmquest.com/long-track/#live（實單頁 /long-track-w52-adaptive/）
 // 來源實作：financial-analysis-bot/scripts/update_long_track_w52_adaptive.py
 //           （profile=live；規則切換 RULE_SWITCH_DATE=2026-10-19，持有人 10-17 拍板）
 //           債金三條件：scripts/update_long_track_w52_adaptive_c1.py e3_weekly()
 //
-// 規則（1、2、4 逐位元移植自實單；3 的預設門檻是持有人指定的單一標的版，跟實單不同）：
+// 規則（逐位元移植自實單）：
 //   1. 週線 W52 單線閘門：週收 > 52 週均在場、否則出場。長多 only、無斜率滯後條件。
 //      ★ 只用「已收完的週」：週一到週四沿用上一個週五的判定，週五收盤才定稿。
 //        （來源 _gate_core：W-FRI 週棒 ffill 到當日，進行中的週不計入決策。）
@@ -17,12 +17,10 @@
 //      2026-10-19 起上限固定 1.0 ＝ 不借錢：波動高於自身常態才減碼，低於常態只是滿載。
 //      舊規則的日線均線確認層（只管借錢加碼）因此不再影響曝險，本檔不再保留；
 //      要看舊規則請用對照線 /long-track-w52-adaptive/cap15.html。
-//   3. 執行層（預設＝單一標的持股水位）：這檔自己滿倉＝100%、空手＝0%，不管組合怎麼分。
-//      目標比現持高 ≥ 20% 才加碼、低 ≥ 10% 就減碼，動則取整到 10% 格，最高 100%。
-//      加碼遲鈍、減碼敏感；全部歷史一律套用。
-//      ⚠ 比實單頁敏感一倍：實單是每腿 50% 上限下加碼 20pp／減碼 10pp／10% 取整，換成這檔
-//      自己的 0～100% 等於加碼 40／減碼 20／格 20（實單 2026-11-02 起；來源 exec_down_band_for）。
-//      要跟實單對帳，打開「網站門檻」。
+//   3. 執行層（同實單，以這檔自己的水位表示）：這檔滿倉＝100%、空手＝0%。水位六格 0／20／40／
+//      60／80／100%：目標比現持低一格（20%）以上就減碼，高兩格（40%）以上才加碼，動則對到
+//      最近一格。等於實單每腿 50% 上限下的加碼 20pp／減碼 10pp／10% 取整
+//      （實單 2026-11-02 起；來源 exec_down_band_for）。本檔全部歷史一律套用。
 //      門檻比較在整數空間（十分之一單位）做，不在 0..1 浮點空間。
 //      現持若高於上限先拉回上限（來源「規則切換」步驟，不經過門檻）。
 //   4. 債金疊加（美股實單限定，預設不顯示）：公債 IEF、黃金 GLD 各最多 20%（占指數部淨值）。
@@ -31,18 +29,17 @@
 //
 // 用法：套在【日線】圖（非日線顯示警告並停止計算）。
 //   · 任何代號都能套：刻度 0~100%，這檔自己滿倉＝100%。「滿載權重」預設 100，不必改。
-//   · 門檻／格＝滿倉的 %。預設加碼 20／減碼 10／格 10。打開「網站門檻」＝加碼 40／減碼 20／
-//     格 20，等於實單加碼 20pp、減碼 10pp、10% 取整對 50pp 腿。
+//   · 門檻／格＝滿倉的 %。預設加碼 40／減碼 20／格 20＝實單。改小就是比實單敏感的自訂版
+//     （例：加 20／減 10／格 10，交易約多一倍，回測沒有比較好，見 v7 docs/Exec_Leg100_Prereg.md）。
 //   · 把圖表設定的「股息調整」打開：來源用 auto_adjust 還原價，QQQ／SMH／0050 都有配息。
 //   · 市場模式預設「不加」：任何標的只看自己的持股水位。選「自動」才依交易所顯示美股債金層。
 //
 // 誠實邊界：
 //   · 執行層從圖上第一根 bar 由 0% 起重放，與官方頁（近 1260 日回放）起點不同；
 //     跨過任一次門檻後即收斂到同一狀態。
-//   · 預設門檻跟實單不同，現持線不會跟實單提醒信一致。開了「網站門檻」也是全部歷史套用新減碼門檻，
-//     實單 2026-11-02 以前的紀錄加減碼都是 20pp，所以那之前兩邊仍可能不同。
-//   · 預設門檻下，減碼到 90% 後目標回滿倉也加不回去（加碼要差 20%，目標最高 100%），
-//     要等目標跌到 80% 以下再減一格，之後目標回滿才會一次加回 100%。
+//   · 本檔全部歷史都用新減碼門檻；實單 2026-11-02 以前的紀錄加減都要差兩格，所以那之前兩邊可能不同。
+//   · 水位降到 80% 後，目標回滿倉也加不回去（加碼要高兩格，目標最高 100%）；要等目標跌到 60%（含）
+//     以下、減到 60%，之後目標回到 100% 才會一次加滿。這是實單規則本身的性質。
 //   · 週五盤中讀數會隨價格變動（官方頁每日收盤後定稿一次）。
 //   · 美股週五休市時，官網到下週一才採用該週；本檔在台股圖上看 IEF／GLD 會早一天。
 //   · 加密等 7 天交易商品：TV 的週界與 pandas W-FRI 不同，週線閘門有邊際差。
@@ -67,11 +64,10 @@ slot     = input.float(100.0, "本標的滿載權重（%）", minval=1, step=5, 
 normDisp = input.bool(true, "以滿載＝100% 顯示", group=grpP, tooltip="預設開啟：圖上一律 0~100%。關閉則以滿載權重的原刻度顯示，滿載填 50 就是 0~50 組合 pp。", display=display.none)
 
 // ---- 執行層 A2 ---------------------------------------------------------------
-grpE     = "執行層（預設：這檔自己 0～100%，加碼 20／減碼 10／格 10）"
-official = input.bool(false, "網站門檻（跟實單頁對帳用）", group=grpE, tooltip="打開＝加碼 40／減碼 20／格 20／套袖不平滑，等於實單每腿 50% 上限下的加碼 20pp、減碼 10pp、10% 取整。關閉（預設）＝用下方門檻。", display=display.none)
-bandPct  = input.float(20.0, "加碼門檻（滿倉的 %）", minval=0, step=5, group=grpE, tooltip="預設 20：目標比現持高 20% 以上才加碼。實單等效 40。", display=display.none)
-downPct  = input.float(10.0, "減碼門檻（滿倉的 %）", minval=0, step=5, group=grpE, tooltip="預設 10：目標比現持低 10% 以上就減碼。實單等效 20。", display=display.none)
-gridPct  = input.float(10.0, "取整格（滿倉的 %）", minval=1, step=5, group=grpE, tooltip="預設 10。實單等效 20。", display=display.none)
+grpE     = "執行層（預設＝實單：一格 20%，低一格就減、高兩格才加）"
+bandPct  = input.float(40.0, "加碼門檻（滿倉的 %）", minval=0, step=5, group=grpE, tooltip="預設 40＝實單：目標比現持高兩格以上才加碼。", display=display.none)
+downPct  = input.float(20.0, "減碼門檻（滿倉的 %）", minval=0, step=5, group=grpE, tooltip="預設 20＝實單：目標比現持低一格以上就減碼。", display=display.none)
+gridPct  = input.float(20.0, "取整格（滿倉的 %）", minval=1, step=5, group=grpE, tooltip="預設 20＝實單：水位六格 0／20／40／60／80／100%。", display=display.none)
 smoothN  = input.int(1, "套袖平滑（日，1=關）", minval=1, maxval=60, group=grpE, tooltip="預設 1＝不平滑，直接用波動適應的目標。填 N 則對套袖 w 取 N 日簡單均線再算目標；W52 閘門不經過平滑。", display=display.none)
 
 // ---- 債金疊加（美股實單）------------------------------------------------------
@@ -95,10 +91,11 @@ showTbl  = input.bool(true,  "顯示現況面板", group=grpD, display=display.n
 
 isCrypto = syminfo.type == "crypto"
 annFac   = annIn > 0 ? annIn : (isCrypto ? 365 : 252)
-effBand  = official ? 40.0 : bandPct
-effDown  = official ? 20.0 : downPct
-effGrid  = official ? 20.0 : gridPct
-effSm    = official ? 1 : smoothN
+effBand  = bandPct
+effDown  = downPct
+effGrid  = gridPct
+effSm    = smoothN
+custom   = bandPct != 40.0 or downPct != 20.0 or gridPct != 20.0 or smoothN != 1   // 偏離實單門檻
 execBand = slot * effBand / 100.0
 execDown = slot * effDown / 100.0
 execGrid = slot * effGrid / 100.0
@@ -300,7 +297,7 @@ e3txt(bool c1, bool c2, bool c3) =>
 if showTbl and barstate.islast and not notDaily
     warm  = nSig < medMin or na(w52)
     ppTag = (normDisp and slot != 100.0) ? "（" + str.tostring(heldPos, "#.#") + " pp）" : ""
-    trow(0, syminfo.ticker + " 現持（" + modeTag + (official ? "・網站門檻" : "") + "）", fnum(heldPos * mult, "#.#") + unit + ppTag, posCol)
+    trow(0, syminfo.ticker + " 現持（" + modeTag + (custom ? "・自訂門檻" : "") + "）", fnum(heldPos * mult, "#.#") + unit + ppTag, posCol)
     trow(1, "目標曝險（訊號）", fnum(targetPos * mult, "#.#") + unit + ((normDisp and slot != 100.0) ? "（" + str.tostring(targetPos, "#.#") + " pp）" : ""), color.silver)
     trow(2, "W52 閘門（已收完週）", gate ? "在場" : "出場", gate ? #2e9e5b : #e05252)
     trow(3, "決策週收 / W52", fnum(wkC, format.mintick) + " / " + fnum(w52, format.mintick), color.silver)
