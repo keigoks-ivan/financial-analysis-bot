@@ -180,6 +180,21 @@ jobs:
           echo "Push failed after 6 attempts"
           exit 1
 
+      # 2026-10-31：本 workflow 完成後，nfci-forward-shadow.yml 與 deploy-pages.yml 的 workflow_run
+      # 從 10-19 起一次都沒被觸發（NFCI 影子線 0 次執行；10-29 起 74 次連動部署 0 次來自本 workflow；
+      # 名稱全英文的 NFCI workflow 推送後 6 秒內就觸發部署）。deploy-pages 監聽的 31 個 workflow 裡，
+      # 只有本 workflow 名稱含非 ASCII 字元（×），也只有它從未觸發；疑似名稱比對失敗，未證實。
+      # 改為明確派送；失敗不影響本 workflow（實單資料已推送）。若 workflow_run 之後恢復，NFCI 會多跑一次，
+      # 它有 concurrency 排隊且整段重算，結果相同。
+      - name: Dispatch NFCI shadow and Pages deploy
+        if: success()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run nfci-forward-shadow.yml --ref main -f retry=0
+          gh workflow run deploy-pages.yml --ref main
+
       - name: Self-retrigger once after rebase conflict
         if: failure() && steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
         env:
