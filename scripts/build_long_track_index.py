@@ -372,7 +372,7 @@ def render_today_strip() -> str:
         exec_sum = round(sum(vals), 1) if len(vals) == len(legs) and legs else "—"
         rows = "".join(leg_span(t) for t in legs)
         return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
-                f'<div class="tstrip-exp">指數部股票曝險：目標（訊號，週線閘門 × 自適應套袖算出的理論持股率，兩檔相加）<b>{exp}%</b>'
+                f'<div class="tstrip-exp">指數部股票曝險：目標（訊號，週線閘門 × 自適應套袖算出的理論持股率，兩檔水位平均）<b>{exp}%</b>'
                 f' ／ 現持（執行層，實際已調整到的持股率——每檔水位分六格，目標比現持高兩格（40%）以上才加、低一格（20%）以上就減，故常與目標有差）<b>{exec_sum}%</b></div>'
                 f'<div class="tstrip-legs">{rows}</div></div>')
 

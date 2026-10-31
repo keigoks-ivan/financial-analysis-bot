@@ -1361,7 +1361,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 <div style="position:relative">
   <div id="lwc-chart-{suf}" class="lwc-chart"></div>
   <div class="lwc-pane-title" style="top:{title_top_0}px">價格（正規化 100）</div>
-  <div class="lwc-pane-title" style="top:{title_top_1}px">{'指數部股票曝險（兩檔相加，現持粗線／目標細線）' if PROFILE == 'live' else '曝險（現持粗線／目標細線）'}</div>
+  <div class="lwc-pane-title" style="top:{title_top_1}px">{'指數部股票曝險（兩檔水位平均，現持粗線／目標細線）' if PROFILE == 'live' else '曝險（現持粗線／目標細線）'}</div>
   <div class="lwc-pane-title" style="top:{title_top_2}px">RV20 vs σ_t</div>
 </div>
 <div class="legend-note">
@@ -1640,7 +1640,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
         mkt_cards += f"""<div class="today-mkt hero-{ccol}">
   <div class="today-mkt-name">{m['name']}</div>
   <div class="today-mkt-num" style="color:var(--{ccol})">{exec_combined:.0f}%</div>
-  <div class="today-mkt-sub">{'指數部股票曝險（兩檔相加）現持（執行層）' if PROFILE == 'live' else '現持曝險（執行層）'}· 目標 {target_combined:.0f}%（訊號）</div>
+  <div class="today-mkt-sub">{'指數部股票曝險（兩檔水位平均）現持（執行層）' if PROFILE == 'live' else '現持曝險（執行層）'}· 目標 {target_combined:.0f}%（訊號）</div>
   {leg_rows}
 </div>"""
 
