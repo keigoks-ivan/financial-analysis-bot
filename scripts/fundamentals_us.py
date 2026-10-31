@@ -52,8 +52,13 @@ OUTPUT_PATH = SCREENER_DIR / 'fundamentals.json'
 def _row(df, key_substring: str):
     if df is None or df.empty:
         return None
-    for r in df.index:
-        if key_substring.lower() in r.lower():
+    # 2026-10-31：先找完全同名的列，找不到才用包含比對。yfinance 損益表裡
+    # 「Other Non Operating Income Expenses」排在「Operating Income」前面，小寫後也含
+    # "operating income"，舊寫法會抓到營業外收支（LLY −5.71 億、MRK 8.2 億），ROIC 被算成接近 0。
+    key = key_substring.lower()
+    exact = [r for r in df.index if str(r).lower() == key]
+    for r in exact or df.index:
+        if key in str(r).lower():
             v = df.loc[r].iloc[0]
             try:
                 f = float(v)
@@ -115,12 +120,7 @@ def calc_roic(t, info=None):
         op_inc = _row(is_df, 'Operating Income')
         tax = _row(is_df, 'Tax Provision')
         pretax = _row(is_df, 'Pretax Income') or _row(is_df, 'Pre Tax Income')
-        # 2026-10-31：年報營業利益 <=0 但稅前淨利 >0 視為 yfinance 錯值（LLY 2025 營業利益
-        # 被填成 -5.71 億、稅前淨利 257 億），改走後備路徑。真虧損的公司 operatingMargins
-        # 也是負的，後備路徑仍會判不過。
-        bad_op_inc = (op_inc is not None and op_inc <= 0
-                      and pretax is not None and pretax > 0)
-        if op_inc is None or pretax is None or pretax <= 0 or bad_op_inc:
+        if op_inc is None or pretax is None or pretax <= 0:
             op_margin = info.get('operatingMargins')
             total_rev = info.get('totalRevenue')
             if op_margin is None or not total_rev or total_rev <= 0:

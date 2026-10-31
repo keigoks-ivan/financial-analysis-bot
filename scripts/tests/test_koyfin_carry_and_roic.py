@@ -1,8 +1,8 @@
 """2026-10-31 LLY 品質閘誤判事故的兩道修正：
   A. Koyfin 當天 roic／fcf 空白時沿用 10 天內的前值（load_eps_estimates_xlsx.KoyfinCarry、
      resolve_koyfin_roic_fcf）。
-  B. fundamentals_us.calc_roic：年報營業利益 <=0 但稅前淨利 >0 視為 yfinance 錯值，改走
-     operatingMargins × totalRevenue 後備路徑；真虧損仍判不過。
+  B. fundamentals_us._row：先找完全同名的列，避免「Operating Income」抓到排在前面的
+     「Other Non Operating Income Expenses」。
 純假資料，不讀磁碟 xlsx、不連網。
 """
 from __future__ import annotations
@@ -110,37 +110,33 @@ def test_previous_files_loaded_once(tmp_path):
     assert len(calls) == 2
 
 
-# ── B. calc_roic ─────────────────────────────────────────────────────────────
+# ── B. _row 完全同名優先 ─────────────────────────────────────────────────────
 class _FakeTicker:
-    def __init__(self, op_inc, pretax, tax=5.0, ic=100.0):
+    def __init__(self, rows, ic=100.0):
         self.balance_sheet = pd.DataFrame({"2025": [ic]}, index=["Invested Capital"])
-        self.income_stmt = pd.DataFrame(
-            {"2025": [op_inc, tax, pretax]},
-            index=["Operating Income", "Tax Provision", "Pretax Income"])
+        self.income_stmt = pd.DataFrame({"2025": list(rows.values())}, index=list(rows.keys()))
 
 
-def test_calc_roic_bad_operating_income_uses_fallback():
-    # LLY 型：年報營業利益 -5.71（錯值）、稅前淨利 257 → 走 operatingMargins × totalRevenue
-    t = _FakeTicker(op_inc=-5.71, pretax=257.0)
-    info = {"operatingMargins": 0.5, "totalRevenue": 100.0}
-    assert abs(fu.calc_roic(t, info) - 0.5 * 100 * (1 - 0.21) / 100.0) < 1e-9
+def test_row_prefers_exact_over_substring():
+    # MRK 2025 實際排列：營業外收支排在營業利益前面
+    t = _FakeTicker({"Other Non Operating Income Expenses": 8.18, "Pretax Income": 210.67,
+                     "Tax Provision": 28.04, "Operating Income": 221.07})
+    assert fu._row(t.income_stmt, "Operating Income") == 221.07
 
 
-def test_calc_roic_real_loss_still_fails():
-    # 真虧損：營業利益與稅前淨利皆 <=0 → 不走新分支，ROIC 為負
-    t = _FakeTicker(op_inc=-20.0, pretax=-25.0)
-    info = {"operatingMargins": -0.2, "totalRevenue": 100.0}
-    r = fu.calc_roic(t, info)
+def test_row_substring_fallback_when_no_exact():
+    t = _FakeTicker({"Total Operating Income As Reported": 5.0})
+    assert fu._row(t.income_stmt, "Operating Income") == 5.0
+
+
+def test_calc_roic_uses_real_operating_income():
+    t = _FakeTicker({"Other Non Operating Income Expenses": -5.71, "Pretax Income": 257.31,
+                     "Tax Provision": 50.91, "Operating Income": 300.0}, ic=690.38)
+    eff = 50.91 / 257.31
+    assert abs(fu.calc_roic(t, {}) - 300.0 * (1 - eff) / 690.38) < 1e-9
+
+
+def test_calc_roic_real_loss_still_negative():
+    t = _FakeTicker({"Operating Income": -20.0, "Pretax Income": -25.0, "Tax Provision": 0.0})
+    r = fu.calc_roic(t, {"operatingMargins": -0.2, "totalRevenue": 100.0})
     assert r is not None and r < 0
-
-
-def test_calc_roic_bad_op_inc_but_margin_negative_still_fails():
-    # 錯值判定後走後備路徑；若 operatingMargins 也是負的，結果仍是負
-    t = _FakeTicker(op_inc=-5.0, pretax=50.0)
-    info = {"operatingMargins": -0.1, "totalRevenue": 100.0}
-    assert fu.calc_roic(t, info) < 0
-
-
-def test_calc_roic_normal_unchanged():
-    t = _FakeTicker(op_inc=60.0, pretax=50.0, tax=10.0)   # 稅率 20%
-    assert abs(fu.calc_roic(t, {}) - 60.0 * 0.8 / 100.0) < 1e-9
