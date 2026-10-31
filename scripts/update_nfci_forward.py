@@ -293,7 +293,7 @@ def simulate_market(mkt: dict, history: list, start_date: str, release_fn, px: d
             lt = float(tk["final_pct"])
             st = lt * RED_FACTOR if c == "red" else lt
             live_target[t][i], sh_target[t][i] = lt, st
-            # 執行層照實單（登記檔：執行層照實單）：2026-11-02 起實單減碼門檻 10pp，影子線跟著用
+            # 執行層照實單（登記檔：執行層照實單）：2026-10-30 起實單減碼門檻 10pp，影子線跟著用
             held[t] = _w52.next_exec(held[t], st, _w52.exec_clamp_for(tk), _w52.exec_down_band_for(tk, dates[i]))
             sh_ex[t][i] = held[t]
 

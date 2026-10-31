@@ -36,7 +36,7 @@ CANONICAL COPY：本檔在 v7-backtest（src/vol_target_backtest/）與 financia
 台股收盤後 + 美股收盤後各跑一次，date-keyed merge 冪等所以安全，email 提醒可行動變化）。
 
 執行層（規則凍結 2026-07-17；執行層 2026-07-22 升格 A2）：|目標 − 現持| ≥ 20pp 才調整、
-調整取整至 10% 格後 clamp 於 50×cap（cap1.5→75pp／組合 150%）。2026-11-02 起實單減碼門檻改 10pp、
+調整取整至 10% 格後 clamp 於 50×cap（cap1.5→75pp／組合 150%）。2026-10-30 收盤那筆起實單減碼門檻改 10pp、
 加碼門檻維持 20pp（見 EXEC_ASYM_DATE）；兩市場各自以 band_exec_replay
 從 history_us／history_tw 確定性重放，供時間軸粗階梯線、事件表、通知與 state 的 executed_pct 用
 （回測主數字亦含此執行層，見 LEV 常數）。整數 pp 空間 ≥ 比較，不在 0..1 浮點空間重寫。
@@ -142,11 +142,11 @@ OVERLAY_NAME = {"ief": "公債（IEF）", "gld": "黃金（GLD）"}
 # 測試用覆寫（本機驗證新規則路徑用，CI 不設）：W52_RULE_SWITCH_DATE=2026-10-16 之類
 import os as _os
 RULE_SWITCH_DATE = _os.environ.get("W52_RULE_SWITCH_DATE") or RULE_SWITCH_DATE
-# 2026-11-02 起（持有人 2026-10-31 拍板）：實單執行層減碼門檻 20pp → 10pp，加碼門檻維持 20pp，
+# 2026-10-30 收盤那筆起（持有人 2026-10-31 拍板；原訂 11-02，同日改為照慣例用週五收盤）：實單執行層減碼門檻 20pp → 10pp，加碼門檻維持 20pp，
 # 取整格與單腿上限不變。依紀錄自己判斷：帶 NEW_RULE_TAG 且日期 ≥ EXEC_ASYM_DATE 才用 10pp；
 # 生效日前的 history 與 cap15 對照線照舊 20pp。研究：v7-backtest docs/Exec_Asym_Down_Prereg.md
 # （事前判準沒過，持有人知情採用）。
-EXEC_ASYM_DATE = "2026-11-02"
+EXEC_ASYM_DATE = "2026-10-30"   # 資料日：10-30（週五）收盤那筆起適用，11-02 第一次照新門檻下單
 EXEC_ASYM_DECISION_DATE = "2026-10-31"
 EXEC_ASYM_DATE = _os.environ.get("W52_EXEC_ASYM_DATE") or EXEC_ASYM_DATE   # 測試用覆寫，CI 不設
 
@@ -1891,7 +1891,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
 • <b>2026-07-22</b>：執行層由「差一格（20% 水位）就調、對到 10% 水位」改為 A2（差兩格（40%）才調、對到最近一格 20%、取整後 clamp 於單檔上限）。採用理由＝調整頻率下降（美股約 28→13 次／年、台股約 27→12 次／年，約 −55%）；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。<br>
 • <b>{RULE_REVISION_DATE}</b>（持有人拍板）：股票部分加<b>日線均線確認</b>——五條件全對 cap_eff=1.5、否則退回 1.0；三個價格條件加 1% 遲滯。history 既有紀錄不重算，新紀錄帶 <code>rule: "{RULE_TAG}"</code>。舊規則（無均線層）轉為唯讀影子（2026-10-18 已歸檔，停止更新）。<br>
 • <b>{sw}</b>（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）：<b>美股改債金版</b>（股票上限 100% 不借錢，另加 IEF／GLD 各最多 20% 的週線三條件疊加）、<b>台股改不借錢版</b>（上限 100%，不加債金）。生效日起的紀錄帶 <code>rule: "{NEW_RULE_TAG}"</code>，生效日前的 history 不改寫；2330 水位 120% 於生效日先拉回新上限 100%。舊規則（cap 1.5＋均線）以 <a href="/long-track-w52-adaptive/cap15.html">cap15.html</a> 續跑為對照線，每日更新、不寄信。state.json 的 <code>rule_changes</code> 記有這一筆。<br>
-• <b>{EXEC_ASYM_DATE}</b>（持有人 {EXEC_ASYM_DECISION_DATE} 拍板）：執行層<b>減碼門檻由兩格（40% 水位）降為一格（20%）</b>，加碼門檻維持兩格，取整格與單檔上限不變。事前登記的判準沒過：快崩區間少跌通過，但年化少 0.7～0.9 個百分點、台股每年調整次數多 44%；持有人知情採用。生效日前的紀錄照舊用加減都要差兩格重放，不改寫；對照線不變。<br>
+• <b>{EXEC_ASYM_DATE} 收盤起</b>（持有人 {EXEC_ASYM_DECISION_DATE} 拍板）：執行層<b>減碼門檻由兩格（40% 水位）降為一格（20%）</b>，加碼門檻維持兩格，取整格與單檔上限不變。事前登記的判準沒過：快崩區間少跌通過，但年化少 0.7～0.9 個百分點、台股每年調整次數多 44%；持有人知情採用。生效日前的紀錄照舊用加減都要差兩格重放，不改寫；對照線不變。<br>
 </div>
 </details>
 </div>
@@ -2208,7 +2208,7 @@ def detect_changes(prev: dict, sigs: dict, skip_legs=(), leg_dates: dict | None 
     （首次執行、無前一次 executed_pct 紀錄，無法比較門檻）時仍視為需要通知。改為與現持比
     （非與前一日目標比），才不會漏掉緩慢累積的漂移；alert 顯示取整後的建議動作
     （現持 → min(round(目標/10)×10, 50×cap)）。訊息標市場前綴（美股／台股）。
-    2026-11-02 起實單減碼門檻 10pp（exec_down_band_for，依 leg_dates 的資料日判斷），加碼仍 20pp。"""
+    2026-10-30 起實單減碼門檻 10pp（exec_down_band_for，依 leg_dates 的資料日判斷），加碼仍 20pp。"""
     ORDER_LINES.clear()
     if not prev or "tickers" not in prev:
         return []
