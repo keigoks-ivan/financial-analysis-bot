@@ -23,7 +23,12 @@ best to worst:
        explicit shares-outstanding column, so it's derived as AUM/NAV per
        row (same identity as tier 3, just applied to a real daily *history*
        instead of a single snapshot) — see fetch_vaneck_navhist_rows().
-       source tag: "vaneck_navhist_derived".
+       source tag: "vaneck_navhist_derived". 2026-11-01 起 GDX／VNM 也走這條。
+     - 2026-11-01 加：SPDR 的 XBI／XOP／XHB／KRE 走同一個 SSGA 檔；iShares 美國 26 檔
+       走 fetch_ishares_navhist_rows()（"ishares_navhist"）；Invesco QQQ／RSP 走
+       fetch_invesco_navhist_rows()（"invesco_navhist_derived"，失敗才退回下面的
+       fundDetails 單日快照）。0050、TOPIX（1475）、SMH_UCITS 仍留在 tier 3，原因見
+       build_etf_dash.py FLOWS_SOURCE_TIER 上方註解。
   2. **Official current-day snapshot, no history** (better than yfinance for
      "today", but can't backfill):
      - Invesco QQQ/RSP: `dng-api.invesco.com/.../shareclasses/{TICKER}
@@ -52,6 +57,7 @@ Storage: append-only-ish JSONL, one row per calendar day per fund,
 data/etf_dash/flows/{ETF}.jsonl:
     {"date": "YYYY-MM-DD", "shares_outstanding": 917782016, "nav": 767.4363,
      "nav_currency": "USD", "source": "ssga_navhist"|"vaneck_navhist_derived"|
+     "ishares_navhist"|"invesco_navhist_derived"|
      "invesco_direct"|"yfinance_direct"|"yfinance_derived"}
 Tier-1 sources return a whole history file each run — merge_history() merges
 by date (a given date's row is fully replaced if refetched, same idempotency
@@ -133,7 +139,14 @@ def merge_history(etf_key: str, new_rows: list[dict]) -> None:
     只留近 ~6 個月才不會讓公開 repo 的檔案無限成長。"""
     if not new_rows:
         return
-    existing = {r["date"]: r for r in load_rows(etf_key)}
+    # 2026-11-01：官方歷史涵蓋的期間內，舊來源（例如換源前的 yfinance 快照）的列一律
+    # 丟掉，不只覆寫同日。yfinance 快照有週六、週日的日期，官方逐日檔沒有那幾天，
+    # 留著會讓前後兩天來源不同，下游（crowding 週檔、flows_weekly 補尾）把下一個
+    # 交易日的流量記成 0。
+    first_new = min(r["date"] for r in new_rows)
+    new_sources = {r.get("source") for r in new_rows}
+    existing = {r["date"]: r for r in load_rows(etf_key)
+                if r["date"] < first_new or r.get("source") in new_sources}
     for r in new_rows:
         existing[r["date"]] = r
     _save_rows(etf_key, list(existing.values()))
@@ -270,6 +283,166 @@ def parse_vaneck_navhist_xlsx(raw: bytes, max_days: int = MAX_HISTORY_DAYS) -> l
 
 def fetch_vaneck_navhist_rows(fund_history_url: str, cookies: dict) -> list[dict]:
     return parse_vaneck_navhist_xlsx(fetch_vaneck_navhist_xlsx(fund_history_url, cookies))
+
+
+# ---------------------------------------------------------------------------
+# Tier 1c — iShares（BlackRock 美國）產品頁「Data Download」整份基金檔（2026-11-01 加，
+# 26 檔 iShares 美國掛牌）。端點是產品頁 Download 按鈕指向的 BlackRock API：
+#   https://www.blackrock.com/varnish-api/blk-one01-product-data/product-data/api/v1/
+#   get-fund-document?appType=PRODUCT_PAGE&appSubType=ISHARES&targetSite=us-ishares
+#   &locale=en_US&portfolioId={產品編號}&component=fundDownload&userType=individual
+# 回 Excel 2003 XML（SpreadsheetML，content-type application/vnd.ms-excel），約 3MB，
+# 工作表 Holdings／Historical／Performance／Distributions。Historical 表欄位：
+# As Of（"Oct 30, 2026"）／NAV per Share／Ex-Dividends／Shares Outstanding／Non-FV NAV，
+# 新到舊排列、從成立日起每個交易日一列。舊的 ishares.com `...1521942788811.ajax?
+# fileType=xls` 網址現在回的是 HTML 頁面，不能用。
+# 2026-11-01 對 TradingView 週檔 2026-08-31～10-19 八週：26 檔裡 25 檔 8/8 週在 10% 內、
+# SOXX 6/8（另兩週同號、差 11%～16%）。
+# ---------------------------------------------------------------------------
+
+ISHARES_FUND_DOC_URL = ("https://www.blackrock.com/varnish-api/blk-one01-product-data/product-data/api/v1/"
+                        "get-fund-document?appType=PRODUCT_PAGE&appSubType=ISHARES&targetSite=us-ishares"
+                        "&locale=en_US&portfolioId={pid}&component=fundDownload&userType=individual")
+NAVHIST_RETRY_BACKOFFS_S = [5, 20]
+
+
+def _get_with_retry(url: str, backoffs: list[int], **kwargs) -> requests.Response:
+    """HTTP 4xx/5xx 或連線錯誤時照 backoffs 秒數重試，最後一次仍失敗就拋例外。"""
+    last_exc: Exception | None = None
+    for wait_s in [0] + list(backoffs):
+        if wait_s:
+            time.sleep(wait_s)
+        try:
+            r = requests.get(url, **kwargs)
+            r.raise_for_status()
+            return r
+        except requests.RequestException as e:
+            last_exc = e
+    raise RuntimeError(f"GET {url} failed after {len(backoffs) + 1} attempts (last error: {last_exc})") from last_exc
+
+
+def fetch_ishares_navhist_xml(portfolio_id: str) -> bytes:
+    url = ISHARES_FUND_DOC_URL.format(pid=portfolio_id)
+    r = _get_with_retry(url, NAVHIST_RETRY_BACKOFFS_S, headers={"User-Agent": UA}, timeout=60,
+                        allow_redirects=True)
+    head = r.content[:200].lstrip(b"\xef\xbb\xbf").lstrip()
+    if not head.startswith(b"<?xml") or b'ss:Name="Historical"' not in r.content:
+        raise RuntimeError(f"unexpected iShares fund download (no SpreadsheetML Historical sheet, "
+                           f"content-type {r.headers.get('content-type')!r}, len={len(r.content)}) from {url}")
+    return r.content
+
+
+def _spreadsheetml_rows(text: str, sheet_name: str) -> list[list[str]]:
+    """把 SpreadsheetML 某一張工作表攤成字串二維表（只處理 iShares 檔實際用到的
+    <ss:Row>／<ss:Cell>／<ss:Data> 結構，不處理 ss:Index 跳格——Historical 表每列欄位齊全）。"""
+    import html as _html
+    import re as _re
+    start = text.find(f'ss:Name="{sheet_name}"')
+    if start < 0:
+        raise RuntimeError(f"worksheet {sheet_name!r} not found")
+    end = text.find("</ss:Worksheet>", start)
+    seg = text[start:end if end > 0 else None]
+    out = []
+    for row in _re.findall(r"<ss:Row[^>]*>(.*?)</ss:Row>", seg, _re.S):
+        cells = _re.findall(r"<ss:Cell[^>]*>(.*?)</ss:Cell>", row, _re.S)
+        out.append([_html.unescape(_re.sub(r"<[^>]+>", "", c)).strip() for c in cells])
+    return out
+
+
+def parse_ishares_navhist_xml(raw: bytes, max_days: int = MAX_HISTORY_DAYS) -> list[dict]:
+    text = raw.decode("utf-8-sig", errors="replace")
+    table = _spreadsheetml_rows(text, "Historical")
+    hdr_i = next((i for i, r in enumerate(table[:10])
+                  if "As Of" in r and "NAV per Share" in r and "Shares Outstanding" in r), None)
+    if hdr_i is None:
+        raise RuntimeError("could not locate header row ('As Of'/'NAV per Share'/'Shares Outstanding') "
+                           "in iShares Historical sheet")
+    hdr = table[hdr_i]
+    date_i, nav_i, so_i = hdr.index("As Of"), hdr.index("NAV per Share"), hdr.index("Shares Outstanding")
+    rows = []
+    for r in table[hdr_i + 1:]:
+        if len(r) <= max(date_i, nav_i, so_i):
+            continue
+        try:
+            d = datetime.datetime.strptime(r[date_i], "%b %d, %Y")
+            nav = float(r[nav_i].replace(",", ""))
+            shares = float(r[so_i].replace(",", ""))
+        except ValueError:
+            continue
+        if nav <= 0 or shares <= 0:
+            continue
+        rows.append({"date": d.strftime("%Y-%m-%d"), "nav": round(nav, 6), "nav_currency": "USD",
+                     "shares_outstanding": round(shares), "source": "ishares_navhist", "reason": None})
+    if not rows:
+        raise RuntimeError("parsed 0 rows from iShares Historical sheet")
+    rows.sort(key=lambda x: x["date"])
+    return rows[-max_days:]
+
+
+def fetch_ishares_navhist_rows(portfolio_id: str) -> list[dict]:
+    return parse_ishares_navhist_xml(fetch_ishares_navhist_xml(portfolio_id))
+
+
+# ---------------------------------------------------------------------------
+# Tier 1d — Invesco 產品頁「Price history」圖背後的 NAV 歷史 API（2026-11-01 加，QQQ／RSP）：
+#   https://dng-api.invesco.com/cache/v1/accounts/en_US/shareclasses/{TICKER}/navs
+#   ?idType=ticker&productType=ETF
+# 回 JSON 陣列（約 2.3MB，2016-09 起每天一列，週末與假日沿用前一個交易日的值），
+# 每列 effectiveDate／netAssetValue／shareclassTotalNetAssets／closingPrice…，沒有
+# 份額欄，用 shareclassTotalNetAssets／netAssetValue 推算（同 VanEck 的作法）。跟
+# fundDetails 同一個 WAF，常回 406 空回應，照 INVESCO_FUND_DETAILS_RETRY_BACKOFFS_S 重試。
+# 2026-11-01 對 TradingView 週檔八週：QQQ 7/8（10-12 週 −1,196 對 −1,356，差 12%）、
+# RSP 7/8（09-07 週 −2.5 對 +0.3，千億美元基金的零頭）。
+# ---------------------------------------------------------------------------
+
+
+def fetch_invesco_navhist_json(ticker: str) -> list:
+    url = f"https://dng-api.invesco.com/cache/v1/accounts/en_US/shareclasses/{ticker}/navs"
+    last_exc: Exception | None = None
+    for wait_s in [0] + INVESCO_FUND_DETAILS_RETRY_BACKOFFS_S:
+        if wait_s:
+            time.sleep(wait_s)
+        try:
+            r = requests.get(url, params={"idType": "ticker", "productType": "ETF"},
+                             headers={"User-Agent": UA, "Accept": "application/json, text/plain, */*",
+                                      "Referer": "https://www.invesco.com/", "Origin": "https://www.invesco.com"},
+                             timeout=60)
+            if r.status_code >= 400:
+                raise RuntimeError(f"{r.status_code} from {url}")
+            data = r.json()
+            if not isinstance(data, list) or not data:
+                raise RuntimeError(f"empty or non-list NAV history (body={r.text[:120]!r})")
+            return data
+        except (RuntimeError, requests.RequestException, ValueError) as e:
+            last_exc = e
+    raise RuntimeError(f"Invesco NAV history still unusable after "
+                       f"{len(INVESCO_FUND_DETAILS_RETRY_BACKOFFS_S) + 1} attempts (last error: {last_exc})") from last_exc
+
+
+def parse_invesco_navhist_json(data: list, max_days: int = MAX_HISTORY_DAYS) -> list[dict]:
+    rows = []
+    for d in data:
+        if not isinstance(d, dict):
+            continue
+        try:
+            dt = datetime.date.fromisoformat(str(d.get("effectiveDate"))[:10])
+            nav = float(d["netAssetValue"])
+            tna = float(d["shareclassTotalNetAssets"])
+        except (TypeError, ValueError, KeyError):
+            continue
+        if nav <= 0 or tna <= 0:
+            continue
+        rows.append({"date": dt.isoformat(), "nav": round(nav, 6),
+                     "nav_currency": (d.get("currencyCode") or "USD").upper(),
+                     "shares_outstanding": round(tna / nav), "source": "invesco_navhist_derived", "reason": None})
+    if not rows:
+        raise RuntimeError("parsed 0 rows from Invesco NAV history")
+    rows.sort(key=lambda x: x["date"])
+    return rows[-max_days:]
+
+
+def fetch_invesco_navhist_rows(ticker: str) -> list[dict]:
+    return parse_invesco_navhist_json(fetch_invesco_navhist_json(ticker))
 
 
 # ---------------------------------------------------------------------------

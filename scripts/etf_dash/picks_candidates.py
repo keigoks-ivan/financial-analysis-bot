@@ -37,7 +37,7 @@ OUT_PATH = REPO_ROOT / "data" / "etf_dash" / "picks_candidates.json"
 BENCH = "SPY"
 FX_TICKER = {"TWD": "TWD=X", "JPY": "JPY=X"}
 FETCH_START = "2021-01-01"
-RELIABLE_FLOW_SOURCES = {"ssga_navhist", "vaneck_navhist_derived"}
+from flows_weekly import WEEKLY_MERGE_SOURCES as RELIABLE_FLOW_SOURCES  # noqa: E402 — 發行商逐日歷史
 # 基金 → 長期本益比檔（同 data/etf_dash/long_pe/README.md）
 LONG_PE_MAP = {"SPY": "sp500", "QQQ": "ndx", "XLK": "s5inft", "XLF": "s5finl", "XLY": "s5cond",
                "XLP": "s5cons", "SMH": "sox", "SMH_UCITS": "sox", "0050": "twse", "TAIEX": "twse",

@@ -578,6 +578,57 @@ def test_merge_history_overwrites_same_date_keeps_others(tmp_path, monkeypatch):
     assert rows["2026-09-21"]["shares_outstanding"] == 105
 
 
+def test_merge_history_drops_other_source_rows_inside_new_span(tmp_path, monkeypatch):
+    # 換源：官方歷史沒有週末，舊 yfinance 週末快照要丟掉；官方歷史開始之前的舊列保留。
+    monkeypatch.setattr(flows, "FLOWS_DIR", tmp_path)
+    for d in ("2026-10-16", "2026-10-24", "2026-10-31"):
+        flows.append_today("EWZ", {"date": d, "shares_outstanding": 1, "nav": 1.0, "source": "yfinance_direct"})
+    flows.merge_history("EWZ", [
+        {"date": "2026-10-23", "shares_outstanding": 10, "nav": 1.0, "source": "ishares_navhist"},
+        {"date": "2026-10-26", "shares_outstanding": 11, "nav": 1.0, "source": "ishares_navhist"},
+        {"date": "2026-10-30", "shares_outstanding": 12, "nav": 1.0, "source": "ishares_navhist"},
+    ])
+    rows = flows.load_rows("EWZ")
+    assert [r["date"] for r in rows] == ["2026-10-16", "2026-10-23", "2026-10-26", "2026-10-30"]
+    assert rows[0]["source"] == "yfinance_direct"
+
+
+def test_parse_ishares_navhist_xml_reads_historical_sheet():
+    raw = ('\ufeff<?xml version="1.0"?>\n<ss:Workbook xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+           '<ss:Worksheet ss:Name="Holdings"><ss:Table><ss:Row><ss:Cell><ss:Data ss:Type="String">As Of</ss:Data>'
+           '</ss:Cell></ss:Row></ss:Table></ss:Worksheet>'
+           '<ss:Worksheet ss:Name="Historical"><ss:Table>'
+           '<ss:Row><ss:Cell><ss:Data ss:Type="String">As Of</ss:Data></ss:Cell>'
+           '<ss:Cell><ss:Data ss:Type="String">NAV per Share</ss:Data></ss:Cell>'
+           '<ss:Cell><ss:Data ss:Type="String">Ex-Dividends</ss:Data></ss:Cell>'
+           '<ss:Cell><ss:Data ss:Type="String">Shares Outstanding</ss:Data></ss:Cell></ss:Row>'
+           '<ss:Row><ss:Cell><ss:Data ss:Type="String">Oct 30, 2026</ss:Data></ss:Cell>'
+           '<ss:Cell><ss:Data ss:Type="Number">32.456009</ss:Data></ss:Cell>'
+           '<ss:Cell><ss:Data ss:Type="String">--</ss:Data></ss:Cell>'
+           '<ss:Cell><ss:Data ss:Type="Number">296550000</ss:Data></ss:Cell></ss:Row>'
+           '<ss:Row><ss:Cell><ss:Data ss:Type="String">Oct 29, 2026</ss:Data></ss:Cell>'
+           '<ss:Cell><ss:Data ss:Type="Number">33.123617</ss:Data></ss:Cell>'
+           '<ss:Cell><ss:Data ss:Type="String">--</ss:Data></ss:Cell>'
+           '<ss:Cell><ss:Data ss:Type="Number">298000000</ss:Data></ss:Cell></ss:Row>'
+           '</ss:Table></ss:Worksheet></ss:Workbook>').encode("utf-8")
+    rows = flows.parse_ishares_navhist_xml(raw)
+    assert [r["date"] for r in rows] == ["2026-10-29", "2026-10-30"]
+    assert rows[1]["shares_outstanding"] == 296550000 and rows[1]["nav"] == 32.456009
+    assert rows[1]["source"] == "ishares_navhist"
+
+
+def test_parse_invesco_navhist_json_derives_shares_from_tna():
+    data = [
+        {"effectiveDate": "2026-10-30", "netAssetValue": 200.0, "shareclassTotalNetAssets": 2_000_000.0,
+         "currencyCode": "USD"},
+        {"effectiveDate": "2026-10-29", "netAssetValue": 100.0, "shareclassTotalNetAssets": 1_500_000.0},
+        {"effectiveDate": "2026-10-28", "netAssetValue": None, "shareclassTotalNetAssets": 1.0},
+    ]
+    rows = flows.parse_invesco_navhist_json(data)
+    assert [(r["date"], r["shares_outstanding"]) for r in rows] == [("2026-10-29", 15000), ("2026-10-30", 10000)]
+    assert rows[0]["source"] == "invesco_navhist_derived"
+
+
 def test_merge_history_prunes_to_max_history_days(tmp_path, monkeypatch):
     monkeypatch.setattr(flows, "FLOWS_DIR", tmp_path)
     monkeypatch.setattr(flows, "MAX_HISTORY_DAYS", 3)

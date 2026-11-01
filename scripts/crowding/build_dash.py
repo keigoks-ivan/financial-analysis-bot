@@ -54,7 +54,10 @@ FLOW_ETFS = {
 # 併成新週只用發行商逐日歷史（SPDR、VanEck）。yfinance 快照（另外 37 檔）的流通單位數常停在同一個數字好幾天，
 # 2026-10-19 那週拿來跟 TradingView 對：SPDR 各檔差 1～3%，yfinance 各檔差到數倍或方向相反（0050 50,100 對 28,020
 # 百萬台幣、QQQ 0 對 2,694、EWZ 0 對 21）。這些基金的週序列先停在 TradingView 匯出的最後一週，每日檔照樣累積。
-WEEKLY_MERGE_SOURCES = {"ssga_navhist", "vaneck_navhist_derived"}
+# 2026-11-01 起 iShares 26 檔、Invesco QQQ／RSP、SPDR 另 4 檔、VanEck GDX／VNM 也改接發行商逐日歷史，
+# 來源清單統一放 scripts/etf_dash/flows_weekly.py（補尾用同一份）。0050、TOPIX、SMH_UCITS 仍是 yfinance。
+sys.path.insert(0, P("scripts", "etf_dash"))
+from flows_weekly import WEEKLY_MERGE_SOURCES  # noqa: E402
 SKIP_FLOW_DAYS = {("SMH", "2026-06-17"), ("SMH", "2026-06-18"), ("SMH", "2026-06-19"), ("SMH", "2026-06-20"), ("SMH", "2026-06-21"), ("SMH", "2026-06-22")}
 COT_ORDER = ["13874A", "209742", "239742", "1170E1", "020601", "043602", "044601", "042601",
              "098662", "099741", "097741", "088691", "084691", "085692", "067651"]
@@ -287,7 +290,14 @@ def build_flows():
     all_etfs = sorted(os.path.basename(p)[:-6] for p in os.listdir(FLOWS_DIR) if p.endswith(".jsonl")) \
         if os.path.isdir(FLOWS_DIR) else []
     for t in all_etfs:
-        for d, sh, nav, src in load_flow_jsonl(t):
+        jrows = load_flow_jsonl(t)
+        if jrows:
+            # jsonl 涵蓋的期間以 jsonl 為準：換成官方歷史後，jsonl 已刪掉的舊來源列（例如 yfinance
+            # 週末快照）不能從累積檔留下來，否則前後兩天來源不同，下一個交易日的流量會被記成 0。
+            first, keep = jrows[0][0], {r[0] for r in jrows}
+            for k in [k for k in acc if k[0] == t and k[1] >= first and k[1] not in keep]:
+                del acc[k]
+        for d, sh, nav, src in jrows:
             acc[(t, d)] = (sh, nav, src)
     # 累積檔：前後兩天份額來源不同（例如 yfinance 直接值與推算值互換）的那一天，流量記 0
     os.makedirs(os.path.dirname(FLOWS_ACC), exist_ok=True)

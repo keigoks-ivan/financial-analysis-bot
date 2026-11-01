@@ -22,9 +22,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 WEEKLY_CSV = ROOT / "data" / "crowding_monitor" / "etf_flows_weekly.csv"
-# 要跟 scripts/crowding/build_dash.py 的 WEEKLY_MERGE_SOURCES 一致：yfinance 快照的流通單位數常停在
-# 同一個數字好幾天，拿來併週會跟 TradingView 差到數倍，所以只用發行商逐日歷史。
-TAIL_SOURCES = {"ssga_navhist", "vaneck_navhist_derived"}
+# 能併成週的份額來源：只用發行商逐日歷史。yfinance 快照的流通單位數常停在同一個數字好幾天，
+# 拿來併週會跟 TradingView 差到數倍。這是唯一一份清單：scripts/crowding/build_dash.py（週檔寫入）
+# 與 picks_candidates.py（flow_reliable）都從這裡 import。2026-11-01 加 iShares、Invesco。
+WEEKLY_MERGE_SOURCES = frozenset({"ssga_navhist", "vaneck_navhist_derived", "ishares_navhist",
+                                  "invesco_navhist_derived"})
+TAIL_SOURCES = WEEKLY_MERGE_SOURCES
 MIN_WEEKS = 20
 CURRENCY_ZH = {"USD": "美元", "TWD": "台幣", "JPY": "日圓"}
 

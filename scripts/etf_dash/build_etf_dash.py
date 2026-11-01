@@ -3736,13 +3736,28 @@ TAIEX_NO_FLOWS_NOTE_ZH = "TAIEX 是指數，不是可申購／贖回的基金，
 #                              RSP 實測不穩定，失敗會落到 yfinance）
 #   "yfinance"（預設，未列在此表視同這個）— 其餘（SMH_UCITS／TOPIX／0050），
 #                              以及上述來源這次 run 失敗時的 fallback。
+# 2026-11-01 加（端點與對 TradingView 週檔的驗證見 flows.py 各段註解）：
+#   "ssga_navhist"／"vaneck_navhist" 擴到 XBI XOP XHB KRE／GDX VNM；
+#   "ishares_navhist"           — iShares 美國 26 檔，產品編號取自 holdings_page_url；
+#   "invesco_navhist"           — Invesco NAV 歷史 API（QQQ／RSP），取代 invesco_direct
+#                                  單日快照，失敗時先退回快照再退回 yfinance。
+#   仍留 yfinance 的三檔：0050 元大 PCF API（etfapi.yuantaetfs.com …/api/bridge
+#   FuncId=PCF/Daily，osunit／nav 逐日可查）對 TradingView 八週只有 1～4 週在 10% 內，
+#   TradingView 看起來晚兩個交易日、又漏掉 10-15 這類大額申購日，兩邊誰對還沒查清；
+#   TOPIX（1475）BlackRock Japan 基金檔有「発行済口数」逐日歷史，但對 TradingView 八週
+#   全部對不上（含正負號）；SMH_UCITS 的 VanEck 愛爾蘭 NAV 歷史檔只有 NAV 沒有 AUM／份額。
 FLOWS_SOURCE_TIER = {
     "SPY": "ssga_navhist", "XLK": "ssga_navhist", "XLF": "ssga_navhist", "XLE": "ssga_navhist",
     "XLV": "ssga_navhist", "XLI": "ssga_navhist", "XLY": "ssga_navhist", "XLP": "ssga_navhist",
     "XLC": "ssga_navhist", "XLB": "ssga_navhist", "XLU": "ssga_navhist", "XLRE": "ssga_navhist",
-    "SMH": "vaneck_navhist",
-    "QQQ": "invesco_direct", "RSP": "invesco_direct",
+    "XBI": "ssga_navhist", "XOP": "ssga_navhist", "XHB": "ssga_navhist", "KRE": "ssga_navhist",
+    "SMH": "vaneck_navhist", "GDX": "vaneck_navhist", "VNM": "vaneck_navhist",
+    "QQQ": "invesco_navhist", "RSP": "invesco_navhist",
+    **{k: "ishares_navhist" for k in (
+        "EIDO", "ENZL", "EPHE", "EWA", "EWC", "EWG", "EWH", "EWI", "EWL", "EWM", "EWN", "EWP", "EWQ",
+        "EWS", "EWU", "EWW", "EWY", "EWZ", "IEV", "INDA", "MCHI", "THD", "KSA", "SOXX", "IGV", "ITA")},
 }
+FLOWS_TIER1_HISTORY = {"ssga_navhist", "vaneck_navhist", "ishares_navhist", "invesco_navhist"}
 
 
 def _attach_flows_tier1_history(etf_key: str, cfg: dict, tier: str) -> bool:
@@ -3754,6 +3769,13 @@ def _attach_flows_tier1_history(etf_key: str, cfg: dict, tier: str) -> bool:
     elif tier == "vaneck_navhist":
         history_url = cfg["holdings_url"].replace("/downloads/holdings/", "/downloads/fundhistoprices/")
         rows = flows.fetch_vaneck_navhist_rows(history_url, cfg["holdings_cookies"])
+    elif tier == "ishares_navhist":
+        m = re.search(r"/products/(\d+)/", cfg.get("holdings_page_url") or "")
+        if not m:
+            raise ValueError(f"no iShares product id in holdings_page_url {cfg.get('holdings_page_url')!r}")
+        rows = flows.fetch_ishares_navhist_rows(m.group(1))
+    elif tier == "invesco_navhist":
+        rows = flows.fetch_invesco_navhist_rows(cfg["yf_ticker"])
     else:
         raise ValueError(f"unknown tier1 source {tier!r}")
     flows.merge_history(etf_key, rows)
@@ -3772,7 +3794,7 @@ def attach_flows(etf_key: str, cfg: dict, result: dict, today_str: str) -> None:
         return
     tier = FLOWS_SOURCE_TIER.get(etf_key)
     used_tier1 = False
-    if tier in ("ssga_navhist", "vaneck_navhist"):
+    if tier in FLOWS_TIER1_HISTORY:
         try:
             used_tier1 = _attach_flows_tier1_history(etf_key, cfg, tier)
         except Exception as e:  # noqa: BLE001
@@ -3780,7 +3802,7 @@ def attach_flows(etf_key: str, cfg: dict, result: dict, today_str: str) -> None:
                   f"falling back to yfinance for today", file=sys.stderr)
     snap = None
     if not used_tier1:
-        if tier == "invesco_direct":
+        if tier in ("invesco_direct", "invesco_navhist"):
             snap = flows.fetch_shares_snapshot_invesco(cfg["yf_ticker"])
             if not snap.get("source"):
                 print(f"[etf_dash] WARNING {etf_key}: Invesco fundDetails unusable today "
