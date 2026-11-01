@@ -131,7 +131,7 @@ Agent({
 - HTML：`docs/earnings/synthesis_YYYY-MM-DD.html`（同階層；prefix `synthesis_` 不與日報 regex 衝突，push-earnings 不會誤抓）
 - 索引：`docs/earnings/index.html` 在 hero 之後 / 日報列表之前插入 `<section id="monthly-synthesis">` highlight card（CSS 已預備在 index.html `.synthesis-tag` / `.synthesis-list` 規則）
 
-**素材結構**：本地日報的 §2/§3/§4/§5 + lede + report-meta（複用 push-earnings 的 parsing 邏輯）+ **缺失交易日 web fill-gap**（mkt cap ≥ $50B 的當日 earnings，light WebFetch 取 EPS/rev/guidance/reaction）+ 中量 WebSearch / WebFetch（3-5 輪/主題）做趨勢深掘。Ticker → 子產業 mapping 走 `docs/id/ID_*.html` id-meta `related_tickers[]` 為主、`docs/dd/dd-meta` industry 補強、inline 硬表 fallback。本地深度料 vs web 補料在報告中**明確分色標示（`.source-local` 藍 vs `.source-webfill` 橘）+ 信心度註腳**，§6 add/cut/hold 建議只用本地深度料當主錨。
+**素材結構**：本地日報的 §2/§3/§4/§5 + lede + report-meta（複用 push-earnings 的 parsing 邏輯）+ **缺失交易日 web fill-gap**（mkt cap ≥ $50B 的當日 earnings，light WebFetch 取 EPS/rev/guidance/reaction）+ 中量 WebSearch / WebFetch（3-5 輪/主題）做趨勢深掘。Ticker → 子產業 mapping 走 `docs/id/ID_*.html` id-meta `related_tickers[]` 為主、`docs/dd/dd-meta` industry 補強、inline 硬表 fallback。本地深度料 vs web 補料在內部區分（2026-11-01 起內文不加來源標籤，web 補料公司列在 §1 fill-gap 表與 §6 信心度註腳），§6 add/cut/hold 建議只用本地深度料當主錨。
 
 **Critic**：無強制 gate（v1 政策同 push-earnings）。用戶可在發布後手動跑 `id-review --mode synthesis`（未來 Phase 2 才有此 mode；現階段用一般 cold-review）。
 

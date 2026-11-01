@@ -41,11 +41,9 @@ top_20_mkt_cap = [NVDA, MSFT, AAPL, AMZN, GOOGL, META, TSLA, BRK.B,
 
 如有任何數字「印象記憶」但找不到 source，**移除或改成定性敘述**（如「+8x 訂單」→「訂單顯著加速」），不可保留精確數字。
 
-### 4.5.D. 本地 vs Web 標籤完整性
+### 4.5.D. 本地 vs Web 來源區分
 
-確認 in-memory 結構裡每個 ticker 都有正確 provenance flag：
-- 本地深度料 → `<span class="source-local">` 將在 HTML 出現
-- Web 補料（缺失日 + day-內盲點）→ `<span class="source-webfill">` 將在 HTML 出現
+確認 in-memory 結構裡每個 ticker 都有正確 provenance flag（本地深度料／Web 補料〔缺失日＋day-內盲點〕）。這個 flag 只供內部判斷 §6 名單資格與 confidence-note 列名，**HTML 內文不加任何來源標籤**（v1.4 起，持有人 2026-11-01 拍板）。
 
 §6 ADD/CUT 名單原則上**只用本地深度料**。Web 補料公司原則上在 §6 confidence-note 提及為 confirm-only — 但**唯一例外是 top-5 mkt cap 的 day-內盲點 webfill**（例：NVDA / MSFT / AAPL 等級），可破例入主 ADD/CUT 但必須在 confidence 欄標「業務 High / 短期 entry Medium」並附 caveat 段。
 
@@ -73,8 +71,7 @@ with open('docs/earnings/synthesis_{YYYY-MM-DD}.html') as f: s = f.read()
 print('size:', len(s), 'chars')
 print('sections H2:', len(re.findall(r'<h2 id=\"sec', s)))   # 應為 8
 print('trend blocks:', len(re.findall(r'class=\"trend-block\"', s)))   # 應 5-7
-print('source-local refs:', len(re.findall(r'class=\"source-local\"', s)))   # 應 ≥ 50
-print('source-webfill refs:', len(re.findall(r'class=\"source-webfill\"', s)))   # 應 ≥ web-fill ticker 數 × 2
+print('source tags:', len(re.findall(r'class=\"source-(local|webfill|ext)\"', s)))   # 應為 0（v1.4 起不加來源標籤）
 print('add/cut/hold tags:', len(re.findall(r'class=\"tag-(add|cut|hold)\"', s)))
 print('external URLs:', len(re.findall(r'href=\"https?://', s)))   # 應 ≥ 12 (2 per trend × 6 trends)
 "
@@ -105,14 +102,9 @@ done
 如該公司有在 window 內 report earnings 但 grep 不到 → 回 Step 4.5.A 補回。
 如該公司沒在 window 內 report（如 LLY 4 月已報過、AAPL 4/30 已在 4/30 local） → 確認本身 ticker 至少在 §2 行業地圖或 §6 holdwatch 中出現一次。
 
-### 5.5.D. 本地 / Web 分色標籤一致
+### 5.5.D. 本地 / Web 來源揭露
 
-確認每個 web-filled ticker 的所有出現都帶 `<span class="source-webfill">`。
-
-```bash
-# webfill ticker 應該出現在以下 3 個地方都有 webfill tag：
-# §1 fill-gap table, §2 industry map, §3 trend block (confirm webfill list), §6 confidence-note
-```
+確認 HTML 內文沒有任何來源標籤（上方 sanity script 的 source tags 應為 0），且每個 web-filled ticker 都列在 §1 fill-gap table 與 §6 confidence-note 的補料名單。
 
 ### 5.5.E. 跨章節一致 final check
 

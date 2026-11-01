@@ -17,8 +17,6 @@
 ```css
 /* synthesis-specific */
 .synthesis-tag{background:#ea580c;color:#fff;padding:.18rem .55rem;border-radius:4px;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-.source-local{color:#0369a1;font-size:.7rem;border:1px solid #bae6fd;padding:1px 6px;border-radius:3px;margin-left:4px}
-.source-webfill{color:#9a3412;font-size:.7rem;border:1px solid #fed7aa;padding:1px 6px;border-radius:3px;margin-left:4px}
 .trend-block{border-left:3px solid var(--accent);padding:14px 18px;background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0;margin-bottom:24px}
 .trend-block h3{margin-top:0;font-size:1.05rem}
 .imply-list{padding-left:0;list-style:none}
@@ -57,7 +55,6 @@
 
 §2 行業地圖
   - Sector × sub-industry 矩陣表（縱: 6-8 sector, 橫: 子產業, 格內: ticker count + ↑↓ reaction tilt）
-  - 本地 vs web-filled 用 .source-local / .source-webfill 分色標
   - 篇幅約 300 字（解讀矩陣為主）+ 1 張大表
 
 §3 跨產業大趨勢
@@ -71,7 +68,7 @@
 §4 各產業詳論
   - 6 個產業大段（Tech / Semi / Consumer / Financials / Industrial / Healthcare / Energy 視 window 而定）
   - 每產業 500-700 字：
-    - 子產業 winners / losers（用 .source-local / .source-webfill 分色標）
+    - 子產業 winners / losers
     - 訊息 imply（這個產業 30 天內看到什麼 thesis、什麼證偽）
   - Financials / Industrials 中段斷檔多 → 特別仰賴 Step 0.5 補回的料 → 在這兩段標明信心度
 
@@ -132,7 +129,7 @@
 - 總篇幅 ≥ 60KB（typical 70-90KB）
 - prose : table ≥ 7:3（敘事為主、表格為輔）
 - §6 是篇幅最大章節（≥ 18% 內容）
-- 每個 source citation 用 `<span class="source-local">`/`<span class="source-webfill">` tag 或括號引用
+- 每個 source citation 用括號引用或 inline 外部連結（不加來源標籤）
 
 ---
 
@@ -234,6 +231,5 @@
 - `signal-row` / `lead-row`：1 句 anchor，白底淺色 border
 - `caveat`：黃底警告
 - `pm-action`：白底 PM 行動結論
-- `source-local` / `source-webfill`：inline tag
 - `bullets`：bullet list（單層）
 - `imply-list`：卡片式 list（用在 §6 add/cut/hold）

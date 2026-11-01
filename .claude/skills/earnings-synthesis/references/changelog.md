@@ -4,6 +4,7 @@
 
 ## 版本沿革
 
+- v1.4 (2026-11-01)：內文拿掉來源標籤（local／web-filled／ext），持有人拍板；本地／web 來源仍在內部區分，web 補料公司改由 §1 fill-gap 表與 §6 confidence-note 列名揭露；Step 5.5 sanity 改為檢查來源標籤數為 0。
 - v1.3 (2026-07-16)：結構拆分——核心 SKILL.md ＋ references/ 條件載入，內容零變動（版本沿革 / HTML 輸出模板 + Step 6 index 整合 + Bullet-First 原則 / 三道 review gate 移至 references/）。
 - v1.2 (2026-07-09)：§6 PM Implications 動筆前新增 ID 機器欄交叉（`python knowledge/q.py --theme`）— priced_in=high 的產業 add 建議須逐條指明未定價利多否則降 hold；clock_phase=II 熱產業依 QC-52 打折（calibration_id_20260707）；機器欄缺（legacy）不阻斷。
 - v1.1 (2026-05-22)：拿掉 §8 Methodology 章節；新增 Step 4.5 self-review、Step 5.5 post-write sanity、Step 8.5 reflective review；明確要求 ticker completeness sweep（top-20 mkt cap 個別 confirm 是否覆蓋）；明確要求未來日期必有 source URL（防 hallucinate dates）；明確要求本地 day-內盲點處理（earnings_YYYY-MM-DD.html 存在但漏該日重要 ticker 時，當作 in-day webfill 補回）。

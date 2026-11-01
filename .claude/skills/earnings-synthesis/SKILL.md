@@ -1,8 +1,8 @@
 ---
 name: earnings-synthesis
-description: 把過去 30 天 docs/earnings/earnings_YYYY-MM-DD.html 的所有日報串成一份產業/子產業 trend + investment implication 的統整 HTML。輕掃 per-company 重點，心力放產業 read-through。**缺失交易日自動 web fill-gap 補回重要公司精簡結果**（不另存日報檔，融入趨勢章節）+ 中量 web augmentation（3-5 輪/主題）+ **8 章節**敘事為主表格為輔（v1.1 拿掉 §8 Methodology，source citations 改為 inline）。**v1.1 強制 Step 4.5 self-review gate + Step 5.5 post-write sanity check + Step 8.5 reflective review 反思**：寫稿前/後對 ticker completeness、未來日期 fact-check、本地/web 標籤、跨章節一致進行三重檢查。觸發：用戶說「跑最近財報的統整」/「earnings 統整」/「30 天財報統整」/「月度財報統整」/「財報季統整」/「過去 30 天財報重點」/「earnings synthesis」/「earnings monthly recap」/「earnings 30-day recap」/「monthly earnings rollup」。
-version: v1.3
-date: 2026-07-16
+description: 把過去 30 天 docs/earnings/earnings_YYYY-MM-DD.html 的所有日報串成一份產業/子產業 trend + investment implication 的統整 HTML。輕掃 per-company 重點，心力放產業 read-through。**缺失交易日自動 web fill-gap 補回重要公司精簡結果**（不另存日報檔，融入趨勢章節）+ 中量 web augmentation（3-5 輪/主題）+ **8 章節**敘事為主表格為輔（v1.1 拿掉 §8 Methodology，source citations 改為 inline）。**v1.1 強制 Step 4.5 self-review gate + Step 5.5 post-write sanity check + Step 8.5 reflective review 反思**：寫稿前/後對 ticker completeness、未來日期 fact-check、本地/web 來源區分、跨章節一致進行三重檢查。觸發：用戶說「跑最近財報的統整」/「earnings 統整」/「30 天財報統整」/「月度財報統整」/「財報季統整」/「過去 30 天財報重點」/「earnings synthesis」/「earnings monthly recap」/「earnings 30-day recap」/「monthly earnings rollup」。
+version: v1.4
+date: 2026-11-01
 ---
 
 # Workflow: earnings-synthesis / 30 天財報統整
@@ -173,7 +173,7 @@ date: 2026-07-16
 
 ## Step 4.5 — Self-Review Gate（反思 / write-time critic）
 
-**v1.1 新增、強制執行**。Step 4 完成 web augmentation 之後、Step 5 開寫 HTML 之前，必須對手上的 in-memory 數據做 5 軸 sanity check（Ticker Completeness Sweep / 未來日期 Fact-Check / Source Provenance / 本地 vs Web 標籤 / 跨章節一致性 Plan）。**這個 step 沒過就不准開寫**。
+**v1.1 新增、強制執行**。Step 4 完成 web augmentation 之後、Step 5 開寫 HTML 之前，必須對手上的 in-memory 數據做 5 軸 sanity check（Ticker Completeness Sweep / 未來日期 Fact-Check / Source Provenance / 本地 vs Web 來源區分 / 跨章節一致性 Plan）。**這個 step 沒過就不准開寫**。
 
 → 5 軸 checklist 全文（4.5.A–4.5.E）：**開跑本 step 前必 Read `references/review-gates.md`**（Step 4.5 段）。
 
@@ -189,7 +189,7 @@ date: 2026-07-16
 
 ## Step 5.5 — Post-Write Sanity Check（v1.1 新增）
 
-HTML 寫完、commit 前，跑一組 grep 自我驗證（結構基本盤 / 未來日期反查 / Top-20 mkt cap 覆蓋反查 / 本地-Web 分色標籤一致 / 跨章節一致 final check）。任一條 fail 就回頭修。
+HTML 寫完、commit 前，跑一組 grep 自我驗證（結構基本盤 / 未來日期反查 / Top-20 mkt cap 覆蓋反查 / 本地-Web 來源揭露 / 跨章節一致 final check）。任一條 fail 就回頭修。
 
 → 各條 grep 腳本與 gate 門檻（5.5.A–5.5.E）：**commit 前必 Read `references/review-gates.md`**（Step 5.5 段）。
 
@@ -256,7 +256,7 @@ commit & push 之後、Step 8 回報用戶之前，跑 **inline 自我反思**�
 - §4 每產業段 **不可只列名單** — 必須有「子產業 imply 結論」段（80-150 字）
 - §6 add/cut/hold **不可只寫 ticker** — 每行必須有 rationale ≥ 1 句 + confidence tag
 - 數字必引 source — `(EPS $X.XX vs est $Y.YY)` 或 `(reaction +Z.Z% 收於 $W)`
-- web-filled 公司在 §3/§4/§6 出現時 **必須加 `<span class="source-webfill">web-filled</span>` 標**
+- 內文**不加任何來源標籤**（local／web-filled／ext 都不加，v1.4 起）；web-filled 公司改在 §1 fill-gap 表與 §6 confidence-note 列名，說明是網路補查
 
 ## 白話呈現條款（2026-09-01 持有人拍板，全站適用）
 
