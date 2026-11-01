@@ -471,8 +471,8 @@ function chart1(c,wide){
   var S=D.c1.series,L=D.c1.labels;var dates=S['^SOX'].map(function(p){return p[0];});
   var o=base(c,wide);o.plugins.legend.position='bottom';
   o.scales.y.ticks.callback=pctTick;o.scales.y.max=2;
-  o.scales.x.ticks.callback=function(v,i){var d=dates[i];if(!d)return '';return d.slice(8,10)<='03'||(i>0&&dates[i-1].slice(5,7)!==d.slice(5,7))?d.slice(5,7)+'月':'';};
-  o.scales.x.ticks.autoSkip=false;o.scales.x.ticks.maxTicksLimit=14;
+  o.scales.x.ticks.callback=function(v,i){var d=dates[i];if(!d)return '';return (i===0||dates[i-1].slice(5,7)!==d.slice(5,7))?String(parseInt(d.slice(5,7),10))+'月':'';};
+  o.scales.x.ticks.autoSkip=false;
   o.plugins.tooltip.callbacks={title:function(it){return dates[it[0].dataIndex];},label:function(it){return it.dataset.label+' '+f1(it.parsed.y)+'%';}};
   var cols={'^SOX':c.accent,'SMH':c.gold,'QQQ':c.sec,'^GSPC':c.ink};
   var ds=['^SOX','SMH','QQQ','^GSPC'].map(function(k){return {label:L[k],data:S[k].map(function(p){return p[1];}),borderColor:cols[k],backgroundColor:alpha(cols[k],0.1),borderWidth:k==='^SOX'?2.2:1.4,pointRadius:0,tension:0.15,fill:k==='^SOX'};});
