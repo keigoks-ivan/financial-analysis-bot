@@ -107,6 +107,7 @@ jobs:
           python scripts/build_monitor_score.py || echo "::warning::stress score build failed; monitor data unaffected"
           python scripts/build_monitor_internals.py || echo "::warning::internals build failed; monitor core unaffected"
           python scripts/build_home_pulse.py || echo "::warning::home pulse build failed; monitor core unaffected"
+          python scripts/crowding/fetch_leveraged.py || echo "::warning::fetch_leveraged failed — keeping previous csv"
           T1=$(date +%s)
           if [ $rc -eq 0 ]; then outcome=success; else outcome=failure; echo "::warning::monitor failed, keeping yesterday's files"; fi
           echo "monitor|$outcome|$((T1-T0))" >> /tmp/chain_status.txt
@@ -159,6 +160,7 @@ jobs:
           done
           # 擁擠交易儀表（/crowding/）：抓 AAII／NAAIM 官方檔，再組 dash.json；失敗只警告、保留上週的檔
           python scripts/crowding/fetch_sentiment.py || echo "::warning::fetch_sentiment failed — keeping previous csv"
+          python scripts/crowding/fetch_leveraged.py || echo "::warning::fetch_leveraged failed — keeping previous csv"
           python scripts/crowding/build_dash.py || echo "::warning::build_dash failed — keeping previous dash.json"
           T1=$(date +%s)
           if [ $ok -gt 0 ]; then outcome=success; else outcome=failure; echo "::warning::crossasset failed, keeping yesterday's files"; fi

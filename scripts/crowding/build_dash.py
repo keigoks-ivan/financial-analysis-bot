@@ -7,10 +7,14 @@
   data/crowding_monitor/naaim_weekly.csv      NAAIM 顧問曝險（同上）
   docs/crowding/data/bofa_fms_monthly.csv     BofA 基金經理人調查最擁擠交易（人工每月補）
   data/etf_dash/flows/{ETF}.jsonl             發行商流通單位數×淨值（etf-dash 每日維護，只留 200 天）
+  data/crowding_monitor/leveraged_etf_flows_weekly.csv  槓桿 ETF（TQQQ/SQQQ/SOXL/SOXS）週淨申購，2016-11 起
+                                              （TradingView 匯出一次；之後由下面的每日檔接續）
+  data/crowding_monitor/leveraged_etf_daily.csv  同四檔的發行商每日流通單位數與淨值（fetch_leveraged.py）
   docs/crowding/data/readings.json            手寫短判讀（有日期）
 輸出：
   docs/crowding/data/dash.json
   data/crowding_monitor/etf_flows_daily.csv   ETF 每日資金流的累積檔（etf-dash 只留 200 天，這裡不丟）
+  data/crowding_monitor/leveraged_etf_flows_weekly.csv  每日檔算出的新週會寫回這裡（source=issuer）
 用法：python3 scripts/crowding/build_dash.py
 """
 from __future__ import annotations
@@ -30,6 +34,11 @@ NAAIM_CSV = P("data", "crowding_monitor", "naaim_weekly.csv")
 FMS_CSV = P("docs", "crowding", "data", "bofa_fms_monthly.csv")
 FLOWS_DIR = P("data", "etf_dash", "flows")
 FLOWS_ACC = P("data", "crowding_monitor", "etf_flows_daily.csv")
+LEV_WEEKLY = P("data", "crowding_monitor", "leveraged_etf_flows_weekly.csv")
+LEV_DAILY = P("data", "crowding_monitor", "leveraged_etf_daily.csv")
+LEV_ETFS = {"SOXL": ("半導體 3 倍多", "semi", "bull"), "SOXS": ("半導體 3 倍空", "semi", "bear"),
+            "TQQQ": ("Nasdaq-100 3 倍多", "ndx", "bull"), "SQQQ": ("Nasdaq-100 3 倍空", "ndx", "bear")}
+LEV_CHART_FROM = "2021-01-04"
 READINGS = P("docs", "crowding", "data", "readings.json")
 OUT = P("docs", "crowding", "data", "dash.json")
 
@@ -309,8 +318,80 @@ def build_flows():
     return {"etfs": etfs, "note": "資金流＝每日流通單位數變化×淨值（發行商資料）。SMH 2026-06-17 與 06-22 各有一次約 1,090 萬單位的反向跳動，互相抵銷。"}
 
 
+# ── 槓桿 ETF 多空流量 ───────────────────────────────────────────────────────
+def build_lev():
+    """週淨申購：TradingView 匯出的歷史（2016-11 起）＋發行商每日檔接續的新週。"""
+    weekly = {}
+    for r in read_csv(LEV_WEEKLY):
+        try:
+            weekly[(r["etf"], r["week"])] = [float(r["close"]) if r.get("close") else None, float(r["flow_usd_m"]),
+                                             r.get("source") or "tradingview"]
+        except (KeyError, ValueError):
+            continue
+    if not weekly:
+        return {"etfs": {}}
+    daily = {}
+    if os.path.exists(LEV_DAILY):
+        for r in read_csv(LEV_DAILY):
+            try:
+                daily.setdefault(r["etf"], []).append((r["date"][:10], float(r["shares"]), float(r["nav"])))
+            except (KeyError, ValueError):
+                continue
+    changed = False
+    for t, rows in daily.items():
+        if t not in LEV_ETFS:
+            continue
+        rows.sort()
+        last_tv = max((w for (e, w), v in weekly.items() if e == t and v[2] == "tradingview"), default="")
+        wk, prev = {}, None
+        for d, sh, nav in rows:
+            if prev is not None:
+                wd = date.fromisoformat(d)
+                monday = (wd - timedelta(days=wd.weekday())).isoformat()
+                wk.setdefault(monday, [0.0, nav])
+                wk[monday][0] += (sh - prev) * nav / 1e6
+                wk[monday][1] = nav
+            prev = sh
+        for monday, (fl, nav) in wk.items():
+            if monday <= last_tv:
+                continue
+            new = [round(nav, 4), round(fl, 2), "issuer"]
+            if weekly.get((t, monday)) != new:
+                weekly[(t, monday)] = new
+                changed = True
+    if changed:
+        with open(LEV_WEEKLY, "w", encoding="utf-8", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["week", "etf", "close", "flow_usd_m", "source"])
+            for (t, wkk), (c, fl, src) in sorted(weekly.items()):
+                w.writerow([wkk, t, c if c is not None else "", fl, src])
+    etfs = {}
+    for t, (zh, pair, side) in LEV_ETFS.items():
+        ser = sorted((wkk, v[1]) for (e, wkk), v in weekly.items() if e == t)
+        if len(ser) < 20:
+            continue
+        vals = [v for _, v in ser]
+        r4 = [sum(vals[i - 3:i + 1]) for i in range(3, len(vals))]
+        f4, f13 = sum(vals[-4:]), sum(vals[-13:])
+        mx = max(r4)
+        mxi = r4.index(mx) + 3
+        mn = min(r4)
+        mni = r4.index(mn) + 3
+        year = ser[-1][0][:4]
+        ytd = sum(v for d, v in ser if d.startswith(year))
+        etfs[t] = {"zh": zh, "pair": pair, "side": side, "since": ser[0][0], "asof": ser[-1][0], "n": len(ser),
+                   "flow_4w": round(f4, 1), "flow_13w": round(f13, 1), "ytd": round(ytd, 1),
+                   "pct_4w": pctile(r4, f4),
+                   "max_4w": round(mx, 1), "max_4w_week": ser[mxi][0], "min_4w": round(mn, 1), "min_4w_week": ser[mni][0],
+                   "yearly": sorted((y, round(sum(v for d, v in ser if d.startswith(y)), 1)) for y in {d[:4] for d, _ in ser}),
+                   "series": [[d, round(v, 1)] for d, v in ser if d >= LEV_CHART_FROM],
+                   "source_latest": weekly[(t, ser[-1][0])][2]}
+    return {"etfs": etfs, "chart_from": LEV_CHART_FROM,
+            "note": "週淨申購，百萬美元。2016-11 起的歷史由 TradingView 的 ETF 資金流欄一次匯出；之後的週由發行商每日流通單位數×淨值接續。"}
+
+
 # ── 狀態列與判讀 ────────────────────────────────────────────────────────────
-def build_status(fms, cot, aaii, naaim, flows):
+def build_status(fms, cot, aaii, naaim, flows, lev=None):
     st = []
     if fms.get("latest"):
         L = fms["latest"]
@@ -352,6 +433,20 @@ def build_status(fms, cot, aaii, naaim, flows):
                        "value": f"流入最多 {top_in[1]['zh']} {top_in[1]['flow_4w_pct_aum']:+.1f}%；流出最多 {top_out[1]['zh']} {top_out[1]['flow_4w_pct_aum']:+.1f}%",
                        "sub": f"S&P 500 與 11 個產業 ETF 加 SMH；資料到 {E.get('SPY', E.get('SMH'))['asof']}",
                        "band": "", "hot": False})
+    if lev and lev.get("etfs"):
+        L = lev["etfs"]
+        def seg(bull, bear, name):
+            parts = [f"{name}：多 {L[t]['flow_4w'] / 100:+.0f} 億" if t == bull else f"空 {L[t]['flow_4w'] / 100:+.0f} 億"
+                     for t in (bull, bear) if t in L]
+            return "、".join(parts)
+        hi = [t for t, v in L.items() if v["pct_4w"] >= 95]
+        lo = [t for t, v in L.items() if v["pct_4w"] <= 5]
+        band = "；".join(x for x in [("十年分位 ≥95：" + "、".join(hi)) if hi else "", ("≤5：" + "、".join(lo)) if lo else ""] if x)
+        asof = max(v["asof"] for v in L.values())
+        st.append({"key": "lev", "label": "槓桿 ETF 多空流量（近四週，美元）",
+                   "value": "；".join(x for x in [seg("SOXL", "SOXS", "半導體"), seg("TQQQ", "SQQQ", "Nasdaq")] if x),
+                   "sub": f"3 倍多空各一檔；2016 年起週資料，到 {asof} 那週",
+                   "band": band, "hot": bool(hi or lo)})
     return st
 
 
@@ -361,6 +456,7 @@ def main():
     aaii = build_aaii()
     naaim = build_naaim()
     flows = build_flows()
+    lev = build_lev()
     readings = []
     if os.path.exists(READINGS):
         with open(READINGS, encoding="utf-8") as f:
@@ -370,9 +466,9 @@ def main():
     payload = {
         "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "asof": asof,
-        "status": build_status(fms, cot, aaii, naaim, flows),
+        "status": build_status(fms, cot, aaii, naaim, flows, lev),
         "readings": readings,
-        "fms": fms, "cot": cot, "aaii": aaii, "naaim": naaim, "flows": flows,
+        "fms": fms, "cot": cot, "aaii": aaii, "naaim": naaim, "flows": flows, "lev": lev,
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     s = json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
@@ -385,7 +481,7 @@ def main():
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(s)
     print(f"dash.json：寫入 {len(s):,} bytes；FMS {fms['coverage']}，COT {len(cot['markets'])} 市場到 {cot.get('asof')}，"
-          f"AAII {aaii.get('n', 0)} 週，NAAIM {naaim.get('n', 0)} 週，ETF {len(flows['etfs'])} 檔")
+          f"AAII {aaii.get('n', 0)} 週，NAAIM {naaim.get('n', 0)} 週，ETF {len(flows['etfs'])} 檔，槓桿 ETF {len(lev['etfs'])} 檔")
 
 
 if __name__ == "__main__":
