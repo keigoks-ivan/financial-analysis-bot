@@ -33,6 +33,27 @@ body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);
 .rv-badge{display:inline-block;font-size:.72rem;font-weight:600;line-height:1;padding:.25em .6em;border-radius:999px;border:1px solid currentColor;background:color-mix(in srgb,currentColor 12%,transparent);font-family:var(--sans)}
 .rv-ok{color:var(--pos,#1a7f4b)}.rv-warn{color:var(--warn,#c98a0b)}.rv-bad{color:var(--neg,#c0392b)}
 .how{font-size:.86rem;color:var(--sec);border-top:1px solid var(--line);margin-top:2rem;padding-top:1rem}
+.rv-month{padding:16px 18px;margin:0 0 20px}
+.rv-month:empty{display:none}
+.rv-head{display:flex;justify-content:space-between;align-items:baseline;gap:.8rem;flex-wrap:wrap;margin-bottom:.6rem}
+.rv-head .t-h2{margin:0}
+.rv-sum{font-family:var(--mono);font-size:.74rem;color:var(--sec)}
+.rv-sec{font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sec);margin:1rem 0 .35rem}
+.rv-rows{list-style:none;margin:0;padding:0}
+.rv-rows li{padding:.5rem 0;border-top:1px solid var(--line-soft);font-size:.9rem}
+.rv-rows li:first-child{border-top:0}
+.rv-rows a{color:var(--ink);font-weight:600;text-decoration:none}
+.rv-rows a:hover{text-decoration:underline}
+.rv-act{font-family:var(--mono);font-size:.7rem;color:var(--sec);margin-left:.4rem}
+.rv-thesis{color:var(--body);margin-top:.15rem;line-height:1.6}
+.rv-month details{margin-top:.4rem}
+.rv-month summary{cursor:pointer;font-size:.86rem;color:var(--sec)}
+.rv-watch{list-style:none;margin:0;padding:0;font-size:.86rem}
+.rv-watch li{display:flex;gap:.6rem;padding:.22rem 0}
+.rv-watch .d{font-family:var(--mono);font-size:.76rem;color:var(--sec);flex:0 0 3.2em}
+.rv-watch .who{color:var(--muted);font-size:.78rem;white-space:nowrap}
+.rv-scen{font-size:.86rem;margin:.2rem 0}
+.rv-scen .num{font-family:var(--mono)}
 </style>
 </head>
 <body>
@@ -131,9 +152,10 @@ body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);
 <div class="wrap">
 <h1 class="t-h1">投資想法</h1>
 <p class="sub">一個想法一頁：推論、查核點、可能受惠的公司。早報每天把判成新事實的新聞比對到查核點，再標支持或推翻。</p>
+<div id="monthly" class="imq-card rv-month"></div>
 <div id="list"><p class="sub">讀取中</p></div>
 <div class="how">
-<p>運作方式：每月檢視一次，結果放在每頁主張下方，正文只在檢視判定重寫時才改；股價表每日更新。早報每天 06:15 先用公司名和關鍵字比對，再由 Jev 判斷支持、推翻或無關。</p>
+<p>運作方式：每月 1 日全面檢視一次，判定列在本頁上方，每頁主張下方放完整檢視；正文只在檢視判定重寫時才改；股價表每日更新。早報每天 06:15 先用公司名和關鍵字比對，再由 Jev 判斷支持、推翻或無關。</p>
 <p>這些是研究推論，不是投資建議。</p>
 </div>
 <footer class="imq-foot">
@@ -177,8 +199,57 @@ body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);
       +'｜最後查核 '+esc(dateLabel);
     return '<div class="cpstatus-line'+(keystoneRefuted?' alert':'')+'">'+text+'</div>';
   }
+  var VORDER={'被推翻':0,'動搖':1,'成立':2}, AORDER={'整頁重寫':0,'改幾句':1,'不動':2};
+  function mmdd(d){d=String(d||'');return d.length>=10?d.slice(5).replace('-','/'):d;}
+  function renderMonthly(ideas, rv){
+    var box=document.getElementById('monthly');
+    if(!box||!rv||!rv.reviews||!rv.reviews.length) return;
+    var byId={}; ideas.forEach(function(it){byId[it.id]=it;});
+    var dates=rv.reviews.map(function(r){return String(r.date||'');}).filter(Boolean).sort();
+    var latest=dates[dates.length-1];
+    var cur={};
+    rv.reviews.filter(function(r){return String(r.date)===latest;}).forEach(function(r){cur[r.idea]=r;});
+    var rows=Object.keys(cur).map(function(k){return cur[k];}).sort(function(a,b){
+      var v=(VORDER[a.verdict]||9)-(VORDER[b.verdict]||9); if(v) return v;
+      var c=(AORDER[a.action]||9)-(AORDER[b.action]||9); if(c) return c;
+      return String(a.idea).localeCompare(String(b.idea));
+    });
+    var n={'成立':0,'動搖':0,'被推翻':0}, m={'整頁重寫':0,'改幾句':0,'不動':0};
+    rows.forEach(function(r){if(n.hasOwnProperty(r.verdict))n[r.verdict]++; if(m.hasOwnProperty(r.action))m[r.action]++;});
+    function name(r){var it=byId[r.idea]; return it?('<a href="'+esc(it.url)+'">'+esc(it.short||it.title)+'</a>'):esc(r.idea);}
+    function row(r){
+      return '<li><span class="rv-badge rv-'+(VCLS[r.verdict]||'warn')+'">'+esc(r.verdict)+'</span> '+name(r)
+        +(r.action&&r.action!=='不動'?'<span class="rv-act">'+esc(r.action)+'</span>':'')
+        +(r.thesis?'<div class="rv-thesis">'+esc(r.thesis)+'</div>':'')+'</li>';
+    }
+    var flagged=rows.filter(function(r){return r.verdict!=='成立';}), ok=rows.filter(function(r){return r.verdict==='成立';});
+    var html='<div class="rv-head"><h2 class="t-h2">月檢視 '+esc(latest)+'</h2><span class="rv-sum">'+rows.length+' 頁：成立 '+n['成立']+'、動搖 '+n['動搖']+'、被推翻 '+n['被推翻']
+      +'｜整頁重寫 '+m['整頁重寫']+'、改幾句 '+m['改幾句']+'、不動 '+m['不動']+'</span></div>';
+    if(flagged.length){html+='<div class="rv-sec">要注意的 '+flagged.length+' 頁</div><ol class="rv-rows">'+flagged.map(row).join('')+'</ol>';}
+    if(ok.length){html+='<details'+(flagged.length?'':' open')+'><summary>成立的 '+ok.length+' 頁</summary><ol class="rv-rows">'+ok.map(row).join('')+'</ol></details>';}
+    var sc=[];
+    rows.forEach(function(r){
+      var ch=(r.scenarios||[]).filter(function(s){return s.prev!=null&&s.prob!=null&&Number(s.prev)!==Number(s.prob);});
+      if(ch.length) sc.push('<div class="rv-scen">'+name(r)+'：'+ch.map(function(s){return esc(s.name)+' <span class="num">'+esc(s.prev)+'→'+esc(s.prob)+'%</span>';}).join('、')+'</div>');
+    });
+    if(sc.length){html+='<div class="rv-sec">情境機率有改的</div>'+sc.join('');}
+    var w=[];
+    rows.forEach(function(r){(r.watch||[]).forEach(function(x){if(x&&x.date&&x.text)w.push({date:String(x.date),text:x.text,who:(byId[r.idea]||{}).short||r.idea});});});
+    w.sort(function(a,b){return a.date.localeCompare(b.date);});
+    if(w.length){
+      var wi=function(x){return '<li><span class="d">'+esc(mmdd(x.date))+'</span><span>'+esc(x.text)+' <span class="who">'+esc(x.who)+'</span></span></li>';};
+      var cut=Math.min(w.length,10), head=w.slice(0,cut), rest=w.slice(cut);
+      html+='<div class="rv-sec">接下來看什麼</div><ul class="rv-watch">'+head.map(wi).join('')+'</ul>';
+      if(rest.length) html+='<details><summary>再往後 '+rest.length+' 項</summary><ul class="rv-watch">'+rest.map(wi).join('')+'</ul></details>';
+    }
+    var older={}; dates.forEach(function(d){if(d!==latest)older[d]=(older[d]||0)+1;});
+    var ok2=Object.keys(older).sort().reverse();
+    if(ok2.length){html+='<details><summary>更早的檢視</summary><ul class="rv-watch">'+ok2.map(function(d){return '<li><span class="d" style="flex-basis:6.5em">'+esc(d)+'</span><span>'+older[d]+' 頁，完整內容在各頁主張下方</span></li>';}).join('')+'</ul></details>';}
+    box.innerHTML=html;
+  }
   Promise.all([ideasP,hitsP,researchP,reviewP]).then(function(a){
     var ideas=a[0].ideas||[], hits=a[1].hits||[], research=a[2], rv=a[3], html='';
+    try{renderMonthly(ideas, rv);}catch(e){}
     ideas.forEach(function(it){
       var h=hits.filter(function(x){return x.idea===it.id && x.verdict!=='unrelated';});
       var sup=h.filter(function(x){return x.verdict==='supports';}).length, ref=h.filter(function(x){return x.verdict==='refutes';}).length;
