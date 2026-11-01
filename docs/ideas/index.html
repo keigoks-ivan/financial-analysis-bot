@@ -54,6 +54,11 @@ body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);
 .rv-watch .who{color:var(--muted);font-size:.78rem;white-space:nowrap}
 .rv-scen{font-size:.86rem;margin:.2rem 0}
 .rv-scen .num{font-family:var(--mono)}
+.rv-old{border-top:1px solid var(--line-soft);padding:.3rem 0}
+.rv-old>summary{display:flex;justify-content:space-between;align-items:baseline;gap:.8rem;flex-wrap:wrap;color:var(--ink)}
+.rv-old>summary .t-h3{font-size:.95rem}
+.rv-old>summary .t-h3::before{content:'▸ ';color:var(--sec)}
+.rv-old[open]>summary .t-h3::before{content:'▾ '}
 </style>
 </head>
 <body>
@@ -205,46 +210,53 @@ body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);
     var box=document.getElementById('monthly');
     if(!box||!rv||!rv.reviews||!rv.reviews.length) return;
     var byId={}; ideas.forEach(function(it){byId[it.id]=it;});
-    var dates=rv.reviews.map(function(r){return String(r.date||'');}).filter(Boolean).sort();
-    var latest=dates[dates.length-1];
-    var cur={};
-    rv.reviews.filter(function(r){return String(r.date)===latest;}).forEach(function(r){cur[r.idea]=r;});
-    var rows=Object.keys(cur).map(function(k){return cur[k];}).sort(function(a,b){
-      var v=(VORDER[a.verdict]||9)-(VORDER[b.verdict]||9); if(v) return v;
-      var c=(AORDER[a.action]||9)-(AORDER[b.action]||9); if(c) return c;
-      return String(a.idea).localeCompare(String(b.idea));
-    });
-    var n={'成立':0,'動搖':0,'被推翻':0}, m={'整頁重寫':0,'改幾句':0,'不動':0};
-    rows.forEach(function(r){if(n.hasOwnProperty(r.verdict))n[r.verdict]++; if(m.hasOwnProperty(r.action))m[r.action]++;});
+    var byDate={};
+    rv.reviews.forEach(function(r){var d=String(r.date||''); if(!d) return; (byDate[d]=byDate[d]||{})[r.idea]=r;});
+    var dates=Object.keys(byDate).sort().reverse();
     function name(r){var it=byId[r.idea]; return it?('<a href="'+esc(it.url)+'">'+esc(it.short||it.title)+'</a>'):esc(r.idea);}
     function row(r){
       return '<li><span class="rv-badge rv-'+(VCLS[r.verdict]||'warn')+'">'+esc(r.verdict)+'</span> '+name(r)
         +(r.action&&r.action!=='不動'?'<span class="rv-act">'+esc(r.action)+'</span>':'')
         +(r.thesis?'<div class="rv-thesis">'+esc(r.thesis)+'</div>':'')+'</li>';
     }
-    var flagged=rows.filter(function(r){return r.verdict!=='成立';}), ok=rows.filter(function(r){return r.verdict==='成立';});
-    var html='<div class="rv-head"><h2 class="t-h2">月檢視 '+esc(latest)+'</h2><span class="rv-sum">'+rows.length+' 頁：成立 '+n['成立']+'、動搖 '+n['動搖']+'、被推翻 '+n['被推翻']
-      +'｜整頁重寫 '+m['整頁重寫']+'、改幾句 '+m['改幾句']+'、不動 '+m['不動']+'</span></div>';
-    if(flagged.length){html+='<div class="rv-sec">要注意的 '+flagged.length+' 頁</div><ol class="rv-rows">'+flagged.map(row).join('')+'</ol>';}
-    if(ok.length){html+='<details'+(flagged.length?'':' open')+'><summary>成立的 '+ok.length+' 頁</summary><ol class="rv-rows">'+ok.map(row).join('')+'</ol></details>';}
-    var sc=[];
-    rows.forEach(function(r){
-      var ch=(r.scenarios||[]).filter(function(s){return s.prev!=null&&s.prob!=null&&Number(s.prev)!==Number(s.prob);});
-      if(ch.length) sc.push('<div class="rv-scen">'+name(r)+'：'+ch.map(function(s){return esc(s.name)+' <span class="num">'+esc(s.prev)+'→'+esc(s.prob)+'%</span>';}).join('、')+'</div>');
-    });
-    if(sc.length){html+='<div class="rv-sec">情境機率有改的</div>'+sc.join('');}
-    var w=[];
-    rows.forEach(function(r){(r.watch||[]).forEach(function(x){if(x&&x.date&&x.text)w.push({date:String(x.date),text:x.text,who:(byId[r.idea]||{}).short||r.idea});});});
-    w.sort(function(a,b){return a.date.localeCompare(b.date);});
-    if(w.length){
-      var wi=function(x){return '<li><span class="d">'+esc(mmdd(x.date))+'</span><span>'+esc(x.text)+' <span class="who">'+esc(x.who)+'</span></span></li>';};
-      var cut=Math.min(w.length,10), head=w.slice(0,cut), rest=w.slice(cut);
-      html+='<div class="rv-sec">接下來看什麼</div><ul class="rv-watch">'+head.map(wi).join('')+'</ul>';
-      if(rest.length) html+='<details><summary>再往後 '+rest.length+' 項</summary><ul class="rv-watch">'+rest.map(wi).join('')+'</ul></details>';
+    function period(d, latest){
+      var cur=byDate[d];
+      var rows=Object.keys(cur).map(function(k){return cur[k];}).sort(function(a,b){
+        var v=(VORDER[a.verdict]||9)-(VORDER[b.verdict]||9); if(v) return v;
+        var c=(AORDER[a.action]||9)-(AORDER[b.action]||9); if(c) return c;
+        return String(a.idea).localeCompare(String(b.idea));
+      });
+      var n={'成立':0,'動搖':0,'被推翻':0}, m={'整頁重寫':0,'改幾句':0,'不動':0};
+      rows.forEach(function(r){if(n.hasOwnProperty(r.verdict))n[r.verdict]++; if(m.hasOwnProperty(r.action))m[r.action]++;});
+      var sum=rows.length+' 頁：成立 '+n['成立']+'、動搖 '+n['動搖']+'、被推翻 '+n['被推翻']+'｜整頁重寫 '+m['整頁重寫']+'、改幾句 '+m['改幾句']+'、不動 '+m['不動'];
+      var flagged=rows.filter(function(r){return r.verdict!=='成立';}), ok=rows.filter(function(r){return r.verdict==='成立';});
+      var html='';
+      if(flagged.length){html+='<div class="rv-sec">要注意的 '+flagged.length+' 頁</div><ol class="rv-rows">'+flagged.map(row).join('')+'</ol>';}
+      if(ok.length){html+='<details'+(flagged.length?'':' open')+'><summary>成立的 '+ok.length+' 頁</summary><ol class="rv-rows">'+ok.map(row).join('')+'</ol></details>';}
+      var sc=[];
+      rows.forEach(function(r){
+        var ch=(r.scenarios||[]).filter(function(s){return s.prev!=null&&s.prob!=null&&Number(s.prev)!==Number(s.prob);});
+        if(ch.length) sc.push('<div class="rv-scen">'+name(r)+'：'+ch.map(function(s){return esc(s.name)+' <span class="num">'+esc(s.prev)+'→'+esc(s.prob)+'%</span>';}).join('、')+'</div>');
+      });
+      if(sc.length){html+='<div class="rv-sec">情境機率有改的</div>'+sc.join('');}
+      var w=[];
+      rows.forEach(function(r){(r.watch||[]).forEach(function(x){if(x&&x.date&&x.text)w.push({date:String(x.date),text:x.text,who:(byId[r.idea]||{}).short||r.idea});});});
+      w.sort(function(a,b){return a.date.localeCompare(b.date);});
+      if(w.length){
+        var wi=function(x){return '<li><span class="d">'+esc(mmdd(x.date))+'</span><span>'+esc(x.text)+' <span class="who">'+esc(x.who)+'</span></span></li>';};
+        if(latest){
+          var cut=Math.min(w.length,10), head=w.slice(0,cut), rest=w.slice(cut);
+          html+='<div class="rv-sec">接下來看什麼</div><ul class="rv-watch">'+head.map(wi).join('')+'</ul>';
+          if(rest.length) html+='<details><summary>再往後 '+rest.length+' 項</summary><ul class="rv-watch">'+rest.map(wi).join('')+'</ul></details>';
+        }else{
+          html+='<details><summary>當時列的觀察項 '+w.length+' 項</summary><ul class="rv-watch">'+w.map(wi).join('')+'</ul></details>';
+        }
+      }
+      if(latest) return '<div class="rv-head"><h2 class="t-h2">月檢視 '+esc(d)+'</h2><span class="rv-sum">'+sum+'</span></div>'+html;
+      return '<details class="rv-old"><summary><span class="t-h3">月檢視 '+esc(d)+'</span><span class="rv-sum">'+sum+'</span></summary>'+html+'</details>';
     }
-    var older={}; dates.forEach(function(d){if(d!==latest)older[d]=(older[d]||0)+1;});
-    var ok2=Object.keys(older).sort().reverse();
-    if(ok2.length){html+='<details><summary>更早的檢視</summary><ul class="rv-watch">'+ok2.map(function(d){return '<li><span class="d" style="flex-basis:6.5em">'+esc(d)+'</span><span>'+older[d]+' 頁，完整內容在各頁主張下方</span></li>';}).join('')+'</ul></details>';}
+    var html=period(dates[0], true);
+    if(dates.length>1){html+='<div class="rv-sec">更早的檢視</div>'+dates.slice(1).map(function(d){return period(d,false);}).join('');}
     box.innerHTML=html;
   }
   Promise.all([ideasP,hitsP,researchP,reviewP]).then(function(a){
