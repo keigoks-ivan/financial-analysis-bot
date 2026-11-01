@@ -231,7 +231,7 @@ DS 觸發語現一律觸發 `industry-analyst`；legacy DS 維護走 `id-review 
 
 **定位（2026-11-01 起 v2.0）**：`/crowding/` 是一頁持續更新的儀表，不再出月刊（創刊號 `CROWDING_20260705.html` 留作檔案）。五個來源：BofA 基金經理人調查的最擁擠交易與現金水位（月）、CFTC 15 市場投機部位（週）、AAII 散戶（週，1987 起）、NAAIM 顧問曝險（週，2006 起）、S&P 500 與 11 個產業 ETF 加 SMH 的資金流（日）。每條有歷史序列與現在的分位，狀態列由程式依分位自動產生。**描述器非擇時訊號**，不給買賣指令。
 
-**誰更新**：`scripts/crowding/fetch_sentiment.py`（抓 AAII／NAAIM 官方 Excel）＋`scripts/crowding/build_dash.py`（組 `docs/crowding/data/dash.json`、累積 `data/crowding_monitor/etf_flows_daily.csv`）掛在 `intel-2-daily.yml` 週日步驟，接在 `build_crowding.py`（COT 與 `latest.json`，detective 仍在讀）之後。skill 的人工工作只有兩件：每月中旬補 `docs/crowding/data/bofa_fms_monthly.csv` 一列；數字換區間時在 `docs/crowding/data/readings.json` 寫一則幾句話的判讀。細節見 skill。
+**誰更新**：`scripts/crowding/fetch_sentiment.py`（抓 AAII／NAAIM 官方 Excel）＋`scripts/crowding/build_dash.py`（組 `docs/crowding/data/dash.json`、累積 `data/crowding_monitor/etf_flows_daily.csv`）掛在 `intel-2-daily.yml` 週日步驟，接在 `build_crowding.py`（COT 與 `latest.json`，detective 仍在讀）之後。`docs/crowding/data/bofa_fms_monthly.csv` 每月那一列由雲端 `idea-watch`（每天 05:15）在 12 日以後自動搜尋補上並重跑 build_dash（2026-11-01 起）；skill 的人工工作只剩數字換區間時在 `docs/crowding/data/readings.json` 寫一則幾句話的判讀，以及自動補失敗時手動補列。細節見 skill。
 
 **硬規則**：中文全形；描述器定位禁買賣指令句；每個數字帶日期與來源、找不到留空不捏造；不改 `build_crowding.py` 的 COT 與主題分數部分；只 add 自己動的檔；commit 前跑 `scripts/qc.py`。
 

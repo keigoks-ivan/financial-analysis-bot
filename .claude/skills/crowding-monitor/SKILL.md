@@ -28,6 +28,7 @@ changelog:
 正本副本：AAII／NAAIM／ETF 累積檔正本在本 repo（CI 寫），`~/v7-backtest/data/crowding_monitor/` 是副本；BofA 月序列正本在本 repo `docs/crowding/data/`，v7 同名資料夾放副本。
 
 ## 每月工作：補 BofA 調查
+2026-11-01 起由雲端 `idea-watch` 每天 05:15 自動做（12 日以後、CSV 缺本月那列時搜尋並補列，見 `.claude/skills/idea-watch/SKILL.md` 步驟 3）。以下是它照的格式，也是自動補失敗時人工補的步驟。
 1. BofA Global Fund Manager Survey 每月第二或第三個星期二發布。用 WebSearch 搜 `"most crowded trade" "fund manager survey" <月份> <年>`，Reuters、Bloomberg、CNBC、ZeroHedge、Investing.com 與 Hartnett 相關的 X 貼文都會轉。
 2. 在 `docs/crowding/data/bofa_fms_monthly.csv` 末尾加一列。欄位：`survey_month,publish_date,top_trade,top_pct,second_trade,second_pct,third_trade,third_pct,cash_pct,source,tier,note`。`top_trade` 用 BofA 原文英文（例如 `Long global semiconductors`）；`tier` 一手＝報告原文或原圖轉述、二手＝媒體文字；找不到的欄位留空，不猜；兩個來源數字不同時 `note` 寫明。數字不用千分位，文字含逗號用雙引號。
 3. 跑 `python3 scripts/crowding/build_dash.py`，確認輸出列的 FMS 覆蓋多了一個月。

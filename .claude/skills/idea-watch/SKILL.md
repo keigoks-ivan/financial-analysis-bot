@@ -34,6 +34,7 @@ description: 投資想法查核點的每日深入查核（雲端 routine `idea-w
      - `verdict` 是 `candidate`（早報判斷失敗）：用 WebFetch 讀原文，照步驟 4 判斷。
      - 每一列都寫一筆 `candidate_reviews`（含 unrelated）。
    - **週一全面複查**（2026-09-24 使用者要求）：把每個狀態不是 `no_data` 的查核點，拿它目前 `reason` 裡的每個數字與事實，回到原文逐一核對（WebFetch 讀原文；公司新聞稿、SEC、證交所、TrendForce 優先）。數字對不上就改 `reason`；核對後證據不足以支撐原狀態，就照步驟 5 改狀態並寫 `changes`（`reason` 開頭寫「週一複查：」）。每個查核點寫一筆 `kind: "reverify"` 的 entry，`summary` 寫核對結果（例：「週一複查：3 個數字與原文一致」或「週一複查：營收 650 億美元原文是 7 月底年化，已更正」）。同一週已複查過（`entries` 裡本週一已有 `reverify`）就不重做。
+   - **每月補 BofA 基金經理人調查**（2026-11-01 持有人要求，每天檢查、一個月只做一次）：台北日期在 12 日以後，且 `docs/crowding/data/bofa_fms_monthly.csv` 還沒有本月（`survey_month` 等於今年今月）那一列時，WebSearch `"most crowded trade" "fund manager survey" <英文月份> <年>`（BofA 通常第二或第三個星期二發布；Reuters、Bloomberg、CNBC、ZeroHedge、Investing.com、MaceNews、Atrani Capital Substack、Hartnett 相關 X 貼文都會轉）。搜到本月調查就照 `.claude/skills/crowding-monitor/SKILL.md`「每月工作」的欄位格式在 CSV 末尾加一列（第一名到第三名的交易原文與比例、現金水位、來源、一手／二手、矛盾寫 note；找不到的欄位留空，不猜、不拿上月的數字填），然後跑 `python3 scripts/crowding/build_dash.py`。還沒發布或搜不到就什麼都不寫，明天再試；月底前都沒找到也不補空列。這一步不寫進 research.json 的 entries。
 4. **逐則判斷**：每則證據對照該查核點的「成立／推翻」條件，給 `verdict`：
    - `supports`：符合成立條件。
    - `refutes`：符合推翻條件。
@@ -47,7 +48,7 @@ description: 投資想法查核點的每日深入查核（雲端 routine `idea-w
    - 狀態有變化時寫一筆 `changes`。
 6. **關鍵查核點的狀態變化要冷讀**：`keystone: true` 的查核點狀態有任何變化時，用 `Agent` 工具開一個 subagent 冷讀（寫者與審者不同模型：routine 用 opus，冷讀用 sonnet），給它證據原文連結、查核點條件、你的判斷，要它只回報「同意／不同意＋理由」。不同意就維持原狀態，把理由寫進 `changes[].review`。
 7. **寫 `docs/ideas/data/research.json`**（格式見下），`python3 -c "import json;json.load(open('docs/ideas/data/research.json'))"` 驗證，`python3 scripts/qc.py docs/ideas/data/research.json` 必須通過。
-8. 只 stage `docs/ideas/data/research.json`（**不得 `git add -A`**），commit 訊息「idea-watch YYYY-MM-DD：N 則新證據，M 個狀態變化」，`git pull --rebase origin main`，`git push origin main`，失敗重試 3 次。
+8. 只 stage `docs/ideas/data/research.json`（**不得 `git add -A`**；當天有補 BofA 調查時，另外 stage `docs/crowding/data/bofa_fms_monthly.csv` 與 `docs/crowding/data/dash.json`，訊息尾加「＋FMS YYYY-MM」），commit 訊息「idea-watch YYYY-MM-DD：N 則新證據，M 個狀態變化」，`git pull --rebase origin main`，`git push origin main`，失敗重試 3 次。
 9. 任何步驟失敗：不改狀態，只把 `run.status` 設 `failed`、`run.reason` 寫原因，照步驟 8 單獨 commit push（Email 工作流會寄失敗信）。
 
 ## research.json 格式（schema `idea-research-v1`）
