@@ -1,6 +1,6 @@
 ---
 name: idea-review
-description: 投資想法頁（docs/ideas/*.html）的每月全面檢視（雲端 routine `idea-review-auto`，每月 1 日 06:30 台北，排在 idea-watch 05:15 之後）。每頁重答五題（主張還對不對、什麼事實變了、反方多強、對錢的意義、下個月看什麼），給判定與處置，有主觀機率的頁重打機率，追加一筆到 docs/ideas/data/review.json，寫一份 review_YYYY-MM.md 給持有人讀，commit push。不改想法頁、不改 ideas.json。使用者說「跑想法月檢視」「idea review」「想法頁全面檢視」時也可手動執行。
+description: 投資想法頁（docs/ideas/*.html）的每月全面檢視（雲端 routine `idea-review-auto`，每月 1 日 09:00 台北，排在 idea-watch 05:15 之後）。每頁重答五題（主張還對不對、什麼事實變了、反方多強、對錢的意義、下個月看什麼），給判定與處置，有主觀機率的頁重打機率，追加一筆到 docs/ideas/data/review.json，寫一份 review_YYYY-MM.md 給持有人讀，commit push。不改想法頁、不改 ideas.json。使用者說「跑想法月檢視」「idea review」「想法頁全面檢視」時也可手動執行。
 ---
 
 # idea-review：投資想法頁每月全面檢視
@@ -11,7 +11,7 @@ description: 投資想法頁（docs/ideas/*.html）的每月全面檢視（雲�
 
 - 早報（每天 06:15）：新聞關鍵字比對，結果在 `docs/briefing/data/idea_hits.json`。
 - idea-watch（每天 05:15）：每個查核點現在是支持、動搖還是推翻，結果在 `docs/ideas/data/research.json`。
-- **本 skill（每月 1 日 06:30 台北）**：整頁看一次。查核點只管單一事件，本 skill 回答「這篇想法整體還站不站得住、頁面要不要改」。
+- **本 skill（每月 1 日 09:00 台北）**：整頁看一次。查核點只管單一事件，本 skill 回答「這篇想法整體還站不站得住、頁面要不要改」。
 
 全面檢視不是只核對數字。每頁要重答五題，再給處置：
 
@@ -249,7 +249,7 @@ EOF
 
 ## routine prompt
 
-給 `/schedule` 建 `idea-review-auto` 用，排每月 1 日 06:30 台北，模型 opus：
+給 `/schedule` 建 `idea-review-auto` 用，排每月 1 日 09:00 台北，模型 opus：
 
 ```
 照 .claude/skills/idea-review/SKILL.md 跑本月想法頁檢視。只追加 review.json、寫當月 md，只 add 這兩檔；不改想法頁與 ideas.json；不寫買賣建議；數字找不到留空；禁 git add -A、--no-verify、--amend。
@@ -257,4 +257,4 @@ EOF
 
 ## 版本
 
-- v1.0 2026-11-01：初版。同日持有人拍板每月檢視一次（五題＋處置＋重打主觀機率留軌跡），第一份由人工檢視寫成（日期 2026-11-01），routine 從 2026-12-01 起跑。
+- v1.0 2026-11-01：初版。同日持有人拍板每月檢視一次（五題＋處置＋重打主觀機率留軌跡），第一份由人工檢視寫成（日期 2026-11-01），routine 從 2026-12-01 起跑（trig_0184mV1afLzkLn1hubdjdvgQ，01:00 UTC；06:30 台北在月頻 cron 寫不出來，改 09:00）。
