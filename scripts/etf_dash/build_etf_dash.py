@@ -86,6 +86,7 @@ import anchor_history  # noqa: E402
 import price_history  # noqa: E402
 import flows  # noqa: E402
 import long_pe  # noqa: E402
+import flows_weekly  # noqa: E402
 import ishares_us  # noqa: E402
 import pe_daily  # noqa: E402
 import strength  # noqa: E402
@@ -4386,6 +4387,9 @@ def build_overview_json(strength_by_fund: dict | None = None) -> dict:
             "flow_1m_net": _flow_amount_since(flows_data, 30, d.get("as_of") or ""),
             "flow_nav_currency": flows_data.get("nav_currency"),
             "flows_skipped": bool(flows_data.get("skipped")),
+            # 2026-11-01 加：近四週淨申購在 2016-11 起四週滾動值裡的分位（chart.flows_weekly，見 flows_weekly.py）
+            "flow_4w_pct_10y": ((((d.get("chart") or {}).get("flows_weekly") or {}).get("stats") or {}).get("pct_4w_10y")),
+            "flow_4w_asof": (((d.get("chart") or {}).get("flows_weekly") or {}).get("asof")),
             # 2026-10-29 加：強弱（對 SPY 的含息超額報酬，百分點，見 strength.py）與判讀
             # （隱含本益比 3M 變動 ±500 bps，判讀邏輯只在 strength.align_label_zh()）。
             "rel_spy_3m_pct": (strength_by_fund or {}).get(etf_key, {}).get("rel_spy_3m_pct"),
@@ -4523,6 +4527,12 @@ def main() -> int:
     except Exception as e:  # noqa: BLE001
         print(f"[etf_dash] WARNING long_pe refresh failed: {e}", file=sys.stderr)
         long_pe_series = {}
+    # 資金流十年週序列（見 flows_weekly.py）：週檔只讀一次，給每檔基金掛 chart.flows_weekly。
+    try:
+        flows_weekly_index = flows_weekly.load_weekly_csv()
+    except Exception as e:  # noqa: BLE001
+        print(f"[etf_dash] WARNING flows_weekly csv read failed: {e}", file=sys.stderr)
+        flows_weekly_index = {}
     print(f"[etf_dash] price_history: {len(price_days)} day(s) on file; "
           f"us_sector_lookup covers {len(us_sector_lookup)} ticker(s); "
           f"tw_industry_map covers {len(tw_industry_map)} code(s)")
@@ -4541,6 +4551,14 @@ def main() -> int:
             n_fail += 1
             continue
         data["chart"]["long_pe"] = long_pe.build_long_pe(etf_key, long_pe_series)
+        # 資金流十年週序列；週檔沒有這檔（TAIEX）就不掛，失敗不影響其他圖。
+        try:
+            fw = flows_weekly.build_flows_weekly(etf_key, flows_weekly_index,
+                                                 flows.load_rows(etf_key) if etf_key != "TAIEX" else None)
+            if fw:
+                data["chart"]["flows_weekly"] = fw
+        except Exception as e:  # noqa: BLE001
+            print(f"[etf_dash] WARNING {etf_key}: flows_weekly failed: {e}", file=sys.stderr)
         # 每日本益比紀錄（FULL／PRICE 都記）；Exhibit 3 推算線被抑制時改用這份紀錄，
         # 見 pe_daily.py。紀錄失敗不影響其他圖。
         try:

@@ -524,6 +524,14 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
   <div class="chapter-head" data-toggle><span class="ch-title">資金流</span><span class="ch-toggle">展開 ▾</span></div>
   <div class="chapter-body">
     <div class="ex-sub" id="flowsSub"></div>
+    <div id="flowsLongWrap" style="display:none">
+      <div class="ex-title" style="font-size:.85rem" id="flwTitle">每週淨申購與累計</div>
+      <div class="ex-sub" id="flwSub"></div>
+      <div class="chart-box" style="height:200px"><canvas id="chartFlowsWeekly"></canvas></div>
+      <div class="chart-box" style="height:130px;margin-top:6px"><canvas id="chartFlowsCum"></canvas></div>
+      <div class="conclusion" id="flwStats"></div>
+      <div class="ex-src" id="flwNote"></div>
+    </div>
     <div id="flowsWeeklyWrap"></div>
     <div class="stat-row" id="flowsStatRow"></div>
   </div>
@@ -1128,6 +1136,77 @@ function renderFlows(d){
   }).join('');
 }
 
+// 2026-11-01 加：資金流十年週序列（chart.flows_weekly，見 scripts/etf_dash/flows_weekly.py）。
+// 分兩層：上層柱＝每週淨申購，下層線＝自序列起點累計（雙軸的兩個零點對不齊，手機上難讀），
+// 單位都是百萬＋原幣。兩層 y 軸寬度固定，x 對齊；x 軸只在換年時標年份。
+// 最後一週若還沒過完（partial），那根柱用淡色，統計數字不算它（後端已排除）。
+var flowsWeeklyChartInstance = null, flowsCumChartInstance = null;
+function fmtSignedM(v, nd){
+  if(v===null||v===undefined||Number.isNaN(v)) return '無資料';
+  return (v>=0?'+':'−')+fmtNum(Math.abs(v), nd===undefined?0:nd);
+}
+function renderFlowsWeeklyChart(d){
+  var fw = (d.chart && d.chart.flows_weekly) || null;
+  var wrap = document.getElementById('flowsLongWrap');
+  if(flowsWeeklyChartInstance){ flowsWeeklyChartInstance.destroy(); flowsWeeklyChartInstance = null; }
+  if(flowsCumChartInstance){ flowsCumChartInstance.destroy(); flowsCumChartInstance = null; }
+  if(!fw || !(fw.series||[]).length || !fw.stats){ wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+  var ser = fw.series, unit = fw.unit_zh || ('百萬 '+(fw.currency||'')), st = fw.stats;
+  var sinceY = String(fw.since).slice(0,4);
+  var pctLabel = sinceY <= '2016' ? '十年分位' : sinceY+' 年起分位';
+  var labels = ser.map(function(x){ return x[0]; });
+  var vals = ser.map(function(x){ return x[1]; });
+  var cum = [], c = 0;
+  vals.forEach(function(v){ c += v; cum.push(Math.round(c*10)/10); });
+  var pIdx = fw.partial ? labels.indexOf(fw.partial_week) : -1;
+  var barCol = vals.map(function(v, i){
+    var a = i === pIdx ? 0.35 : 0.9;
+    return v >= 0 ? 'rgba(42,120,214,'+a+')' : 'rgba(227,73,72,'+a+')';
+  });
+  document.getElementById('flwSub').textContent = '上圖是每週淨申購，下圖是 '+String(fw.since).slice(0,7)+' 起的累計，單位'+unit+'。'+
+    (sinceY > '2016' ? '這檔從 '+fw.since+' 那週才有資料。' : '');
+  var stTxt = '近四週 '+fmtSignedM(st.flow_4w_m)+'，'+pctLabel+' '+(st.pct_4w_10y!=null?Math.round(st.pct_4w_10y)+'%':'無資料')+
+    '；近十三週 '+fmtSignedM(st.flow_13w_m)+'；'+st.ytd_year+' 年累計 '+fmtSignedM(st.ytd_m)+
+    '。歷史最大四週 '+fmtSignedM(st.max_4w_m)+'（截至 '+esc(st.max_4w_week)+' 那週），最小四週 '+fmtSignedM(st.min_4w_m)+
+    '（截至 '+esc(st.min_4w_week)+' 那週）。單位'+unit+'，算到 '+esc(fw.asof)+' 那週。';
+  document.getElementById('flwStats').textContent = stTxt;
+  var notes = [fw.note_zh || ''];
+  if(pIdx >= 0) notes.push('最後一根淡色柱是 '+fw.partial_week+' 那週，本週未結，資料到 '+(fw.partial_last_date||'—')+'，不算進上面的統計。');
+  document.getElementById('flwNote').textContent = notes.join('');
+
+  function xAxis(){ return {ticks:{color:COL.muted, font:{size:9}, autoSkip:false, maxRotation:0,
+                callback:function(v, i){
+                  if(i === 0) return '';
+                  var y = String(this.getLabelForValue(v)).slice(0,4);
+                  return y !== String(this.getLabelForValue(i-1)).slice(0,4) ? y : '';
+                }}, grid:{display:false}}; }
+  function yAxis(color){
+    return {position:'left', afterFit:function(sc){ sc.width = 56; },
+            ticks:{color:color, font:{size:9}, maxTicksLimit:5, callback:function(v){ return fmtNum(v); }}, grid:{color:COL.line}};
+  }
+  function tip(name){
+    return {callbacks:{
+      title:function(items){ var i = items[0].dataIndex; return labels[i]+' 那週'+(i===pIdx?'（本週未結）':''); },
+      label:function(ctx){ return ' '+name+' '+fmtSignedM(ctx.parsed.y, 1)+' '+unit; }
+    }};
+  }
+  flowsWeeklyChartInstance = new Chart(document.getElementById('chartFlowsWeekly'), {
+    type:'bar',
+    data:{labels:labels, datasets:[{label:'週淨申購', data:vals, backgroundColor:barCol, borderWidth:0, barPercentage:1, categoryPercentage:1}]},
+    options:{responsive:true, maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false},
+      scales:{x:xAxis(), y:yAxis(COL.muted)},
+      plugins:{legend:{display:false}, tooltip:tip('週淨申購')}}
+  });
+  flowsCumChartInstance = new Chart(document.getElementById('chartFlowsCum'), {
+    type:'line',
+    data:{labels:labels, datasets:[{label:'累計', data:cum, borderColor:COL.navy, pointRadius:0, borderWidth:1.4}]},
+    options:{responsive:true, maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false},
+      scales:{x:xAxis(), y:yAxis(COL.navy)},
+      plugins:{legend:{display:false}, tooltip:tip('累計')}}
+  });
+}
+
 // ── 風格快照 ────────────────────────────────────────────────────────────
 function renderStyleSnapshot(d){
   var s = d.style_snapshot || {};
@@ -1408,6 +1487,7 @@ function render(d){
   renderBreadth(d);
   renderPriceContribution(d);
   renderFlows(d);
+  renderFlowsWeeklyChart(d);
   renderStyleSnapshot(d);
   renderMethodsNote(d);
   wireCollapsibleSections();
@@ -1440,6 +1520,7 @@ var OV_COLUMNS = [
   {key:'eps_chg_pct_30d', grp:'其他', label:'EPS 1M', full:'EPS 變動（1個月）', numeric:true, heat:true, ref:true},
   {key:'breadth_90d', grp:'其他', label:'修正廣度', full:'EPS 修正廣度（近三個月，上修/持平/下修權重佔比）', numeric:false, sortable:false, ref:true},
   {key:'flow_1m_net', grp:'其他', label:'資金流 1M', full:'資金流淨額（近一個月，Δ受益權份額×NAV；美元計價不標幣別）', numeric:true, ref:true},
+  {key:'flow_4w_pct_10y', grp:'其他', label:'資金流 4 週分位', full:'近四週淨申購合計，在 2016 年 11 月起每個四週滾動合計裡的分位（0～100%；較晚上市的基金從有資料那週算）。≥95% 標藍、≤5% 標紅，只是描述，不是買賣訊號', numeric:true, ref:true},
   {key:'eps_as_of', grp:'其他', label:'EPS 更新', full:'EPS 預估更新日', numeric:false, ref:true}
 ];
 var OV_DEFAULT_SORT_KEY = 'rel_spy_12m_pct';
@@ -1465,6 +1546,13 @@ function ovHeatStyle(v, key){
   var r = Math.min(1, Math.abs(v) / max);
   if(r < 0.04) return '';
   return ' style="background:'+(v>0?'rgba(42,120,214,':'rgba(227,73,72,')+(0.06 + 0.5*r).toFixed(3)+')"';
+}
+// 資金流 4 週分位：只在兩端上色（≥95 藍、≤5 紅，同熱圖藍紅一對），中間不上色。
+function ovFlowPctStyle(v){
+  if(v==null || Number.isNaN(v)) return '';
+  if(v >= 95) return ' style="background:rgba(42,120,214,.45)"';
+  if(v <= 5) return ' style="background:rgba(227,73,72,.45)"';
+  return '';
 }
 function ovPctCell(v){ return (v==null || Number.isNaN(v)) ? fwdDash() : fmtPct(v, 1); }
 
@@ -1541,6 +1629,8 @@ function ovRowHtml(row){
     '<td class="num ov-ref ov-gs"'+ovHeatStyle(row.eps_chg_pct_30d,'eps_chg_pct_30d')+'>'+ovPctCell(row.eps_chg_pct_30d)+'</td>'+
     '<td class="ov-ref">'+ovBreadthCellHtml(row.breadth_90d)+'</td>'+
     '<td class="num ov-ref">'+flowTxt+'</td>'+
+    '<td class="num ov-ref"'+ovFlowPctStyle(row.flow_4w_pct_10y)+(row.flow_4w_asof?' title="算到 '+esc(row.flow_4w_asof)+' 那週"':'')+'>'+
+      (row.flow_4w_pct_10y!=null ? Math.round(row.flow_4w_pct_10y)+'%' : fwdDash())+'</td>'+
     '<td class="ov-ref" title="'+esc(row.eps_as_of||'')+'">'+esc(row.eps_as_of ? row.eps_as_of.slice(5) : '—')+'</td></tr>';
 }
 

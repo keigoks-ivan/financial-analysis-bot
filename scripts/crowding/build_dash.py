@@ -13,7 +13,9 @@
   docs/crowding/data/readings.json            手寫短判讀（有日期）
 輸出：
   docs/crowding/data/dash.json
-  data/crowding_monitor/etf_flows_daily.csv   ETF 每日資金流的累積檔（etf-dash 只留 200 天，這裡不丟）
+  data/crowding_monitor/etf_flows_daily.csv   ETF 每日資金流的累積檔（etf-dash 只留 200 天，這裡不丟；flows 資料夾全部基金）
+  data/crowding_monitor/etf_flows_weekly.csv  每日檔算出的新週會寫回這裡（source=issuer；本檔是週檔唯一寫入者，
+                                              etf-dash 只讀不寫）
   data/crowding_monitor/leveraged_etf_flows_weekly.csv  每日檔算出的新週會寫回這裡（source=issuer）
 用法：python3 scripts/crowding/build_dash.py
 """
@@ -49,6 +51,10 @@ FLOW_ETFS = {
     "XLRE": "不動產", "XLU": "公用事業", "SMH": "半導體",
 }  # QQQ 的流通單位數有來源切換造成的跳動、SOXX 只有 2026-10 起，先不用
 # SMH 2026-06-17 +1,090 萬單位、06-22 −1,090 萬單位是一組互相抵銷的資料跳動：略過這兩天（06-18～06-21 單位數不變，略過後 06-23 對 06-16 的差就是真實變化）
+# 併成新週只用發行商逐日歷史（SPDR、VanEck）。yfinance 快照（另外 37 檔）的流通單位數常停在同一個數字好幾天，
+# 2026-10-19 那週拿來跟 TradingView 對：SPDR 各檔差 1～3%，yfinance 各檔差到數倍或方向相反（0050 50,100 對 28,020
+# 百萬台幣、QQQ 0 對 2,694、EWZ 0 對 21）。這些基金的週序列先停在 TradingView 匯出的最後一週，每日檔照樣累積。
+WEEKLY_MERGE_SOURCES = {"ssga_navhist", "vaneck_navhist_derived"}
 SKIP_FLOW_DAYS = {("SMH", "2026-06-17"), ("SMH", "2026-06-18"), ("SMH", "2026-06-19"), ("SMH", "2026-06-20"), ("SMH", "2026-06-21"), ("SMH", "2026-06-22")}
 COT_ORDER = ["13874A", "209742", "239742", "1170E1", "020601", "043602", "044601", "042601",
              "098662", "099741", "097741", "088691", "084691", "085692", "067651"]
@@ -260,45 +266,59 @@ def load_flow_jsonl(t):
             except json.JSONDecodeError:
                 continue
             if r.get("shares_outstanding") and r.get("nav"):
-                rows.append((r["date"][:10], float(r["shares_outstanding"]), float(r["nav"])))
+                rows.append((r["date"][:10], float(r["shares_outstanding"]), float(r["nav"]), r.get("source") or ""))
     rows.sort()
     return rows
+
+
+def same_source(a, b):
+    """份額來源相同才算當日流量。舊列沒有 source 欄（空字串）時視為與相鄰列相同。"""
+    return not a or not b or a == b
 
 
 def build_flows():
     acc = {}
     for r in read_csv(FLOWS_ACC):
         try:
-            acc[(r["etf"], r["date"])] = (float(r["shares"]), float(r["nav"]))
+            acc[(r["etf"], r["date"])] = (float(r["shares"]), float(r["nav"]), (r.get("source") or "").strip())
         except (KeyError, ValueError):
             continue
-    for t in FLOW_ETFS:
-        for d, sh, nav in load_flow_jsonl(t):
-            acc[(t, d)] = (sh, nav)
-    # 累積檔
+    # flows 資料夾裡全部基金都累積（週檔要接 50 檔）；儀表板輸出仍只用 FLOW_ETFS 的 13 檔
+    all_etfs = sorted(os.path.basename(p)[:-6] for p in os.listdir(FLOWS_DIR) if p.endswith(".jsonl")) \
+        if os.path.isdir(FLOWS_DIR) else []
+    for t in all_etfs:
+        for d, sh, nav, src in load_flow_jsonl(t):
+            acc[(t, d)] = (sh, nav, src)
+    # 累積檔：前後兩天份額來源不同（例如 yfinance 直接值與推算值互換）的那一天，流量記 0
     os.makedirs(os.path.dirname(FLOWS_ACC), exist_ok=True)
     keys = sorted(acc)
     with open(FLOWS_ACC, "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["date", "etf", "shares", "nav", "flow_usd_m"])
+        w.writerow(["date", "etf", "shares", "nav", "flow_usd_m", "source"])
         prev = {}
         for t, d in keys:
-            sh, nav = acc[(t, d)]
-            flow = round((sh - prev[t]) * nav / 1e6, 2) if t in prev else ""
-            w.writerow([d, t, int(sh), nav, flow])
-            prev[t] = sh
+            sh, nav, src = acc[(t, d)]
+            if t not in prev:
+                flow = ""
+            elif same_source(prev[t][1], src):
+                flow = round((sh - prev[t][0]) * nav / 1e6, 2)
+            else:
+                flow = 0.0
+            w.writerow([d, t, int(sh), nav, flow, src])
+            prev[t] = (sh, src)
     # 週序列：TradingView 匯出的 2016 年起歷史，之後由上面的每日資料併成新週接續
     weekly = load_weekly(FLOWS_WEEKLY)
     daily_by_etf = {}
-    for (t, d), (sh, nav) in acc.items():
-        if t in FLOW_ETFS and (t, d) not in SKIP_FLOW_DAYS:
-            daily_by_etf.setdefault(t, []).append((d, sh, nav))
+    for (t, d), (sh, nav, src) in acc.items():
+        if (t, d) not in SKIP_FLOW_DAYS:
+            daily_by_etf.setdefault(t, []).append((d, sh, nav, src))
     if weekly:
-        weekly = merge_daily_into_weekly(weekly, daily_by_etf, FLOWS_WEEKLY, FLOW_ETFS)
+        weekly = merge_daily_into_weekly(weekly, daily_by_etf, FLOWS_WEEKLY, set(all_etfs) | set(FLOW_ETFS),
+                                         sources=WEEKLY_MERGE_SOURCES)
     # 組輸出
     etfs = {}
     for t, zh in FLOW_ETFS.items():
-        rows = [(d, acc[(t, d)]) for (tt, d) in keys if tt == t]
+        rows = [(d, acc[(t, d)][:2]) for (tt, d) in keys if tt == t]
         if len(rows) < 10:
             continue
         daily, monthly, prev_sh = [], {}, None
@@ -349,9 +369,11 @@ def load_weekly(path):
     return weekly
 
 
-def merge_daily_into_weekly(weekly, daily_by_etf, path, etfs):
-    """daily_by_etf：{etf: [(date, shares, nav), …]}。每日流通單位數變化×淨值併成週（週一起算），
-    只補 TradingView 最後一週之後的週，寫回 path（source=issuer，每次重算）。"""
+def merge_daily_into_weekly(weekly, daily_by_etf, path, etfs, sources=None):
+    """daily_by_etf：{etf: [(date, shares, nav[, source]), …]}。每日流通單位數變化×淨值併成週（週一起算），
+    只補 TradingView 最後一週之後的週，寫回 path（source=issuer，每次重算）。
+    有第四欄 source 時，前後兩天來源不同的那一天不算流量（來源切換造成的假跳動）；
+    一週裡沒有任何一天能算流量就不寫那一週（留空，不寫成 0）。sources 有給時，只有來源在這個集合裡的日子才算。"""
     changed = False
     for t, rows in daily_by_etf.items():
         if t not in etfs:
@@ -359,15 +381,17 @@ def merge_daily_into_weekly(weekly, daily_by_etf, path, etfs):
         rows = sorted(rows)
         last_tv = max((w for (e, w), v in weekly.items() if e == t and v[2] == "tradingview"), default="")
         cur = next((v[3] for (e, w), v in weekly.items() if e == t), "USD")
-        wk, prev = {}, None
-        for d, sh, nav in rows:
-            if prev is not None:
+        wk, prev, prev_src = {}, None, ""
+        for row in rows:
+            d, sh, nav = row[:3]
+            src = row[3] if len(row) > 3 else ""
+            if prev is not None and same_source(prev_src, src) and (sources is None or src in sources):
                 wd = date.fromisoformat(d)
                 monday = (wd - timedelta(days=wd.weekday())).isoformat()
                 wk.setdefault(monday, [0.0, nav])
                 wk[monday][0] += (sh - prev) * nav / 1e6
                 wk[monday][1] = nav
-            prev = sh
+            prev, prev_src = sh, src
         for monday, (fl, nav) in wk.items():
             if monday <= last_tv:
                 continue
