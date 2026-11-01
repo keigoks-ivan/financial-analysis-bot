@@ -34,6 +34,7 @@ NAAIM_CSV = P("data", "crowding_monitor", "naaim_weekly.csv")
 FMS_CSV = P("docs", "crowding", "data", "bofa_fms_monthly.csv")
 FLOWS_DIR = P("data", "etf_dash", "flows")
 FLOWS_ACC = P("data", "crowding_monitor", "etf_flows_daily.csv")
+FLOWS_WEEKLY = P("data", "crowding_monitor", "etf_flows_weekly.csv")
 LEV_WEEKLY = P("data", "crowding_monitor", "leveraged_etf_flows_weekly.csv")
 LEV_DAILY = P("data", "crowding_monitor", "leveraged_etf_daily.csv")
 LEV_ETFS = {"SOXL": ("半導體 3 倍多", "semi", "bull"), "SOXS": ("半導體 3 倍空", "semi", "bear"),
@@ -286,6 +287,14 @@ def build_flows():
             flow = round((sh - prev[t]) * nav / 1e6, 2) if t in prev else ""
             w.writerow([d, t, int(sh), nav, flow])
             prev[t] = sh
+    # 週序列：TradingView 匯出的 2016 年起歷史，之後由上面的每日資料併成新週接續
+    weekly = load_weekly(FLOWS_WEEKLY)
+    daily_by_etf = {}
+    for (t, d), (sh, nav) in acc.items():
+        if t in FLOW_ETFS and (t, d) not in SKIP_FLOW_DAYS:
+            daily_by_etf.setdefault(t, []).append((d, sh, nav))
+    if weekly:
+        weekly = merge_daily_into_weekly(weekly, daily_by_etf, FLOWS_WEEKLY, FLOW_ETFS)
     # 組輸出
     etfs = {}
     for t, zh in FLOW_ETFS.items():
@@ -313,36 +322,43 @@ def build_flows():
                    "flow_4w_pct_aum": round(100 * f4 / aum, 2) if aum else None,
                    "flow_13w_pct_aum": round(100 * f13 / aum, 2) if aum else None,
                    "shares_latest": int(rows[-1][1][0])}
+        ws = weekly_stats(weekly, t) if weekly else None
+        if ws:
+            etfs[t].update({"flow_4w_w": ws["flow_4w_w"], "pct_4w_10y": ws["pct_4w"], "weekly_since": ws["since"],
+                            "weekly_asof": ws["asof"], "weekly_n": ws["n"],
+                            "yearly": sorted((y, round(sum(v for d, v in ws["series"] if d.startswith(y)), 1))
+                                             for y in {d[:4] for d, _ in ws["series"]})})
+            if t == "SMH":
+                etfs[t]["weekly"] = [[d, round(v, 1)] for d, v in ws["series"]]
         if t == "SMH":
             etfs[t]["daily"] = daily
-    return {"etfs": etfs, "note": "資金流＝每日流通單位數變化×淨值（發行商資料）。SMH 2026-06-17 與 06-22 各有一次約 1,090 萬單位的反向跳動，互相抵銷。"}
+    return {"etfs": etfs, "note": "資金流＝每日流通單位數變化×淨值（發行商資料）。SMH 2026-06-17 與 06-22 各有一次約 1,090 萬單位的反向跳動，互相抵銷。"
+                                  "週序列 2016-11 起由 TradingView 匯出一次，之後由發行商每日資料併成新週。"}
 
 
-# ── 槓桿 ETF 多空流量 ───────────────────────────────────────────────────────
-def build_lev():
-    """週淨申購：TradingView 匯出的歷史（2016-11 起）＋發行商每日檔接續的新週。"""
+# ── 週淨申購共用：TradingView 匯出的歷史 ＋ 發行商每日檔接續 ───────────────
+def load_weekly(path):
+    """{(etf, 週一): [close, flow_m, source, currency]}"""
     weekly = {}
-    for r in read_csv(LEV_WEEKLY):
+    for r in read_csv(path):
         try:
             weekly[(r["etf"], r["week"])] = [float(r["close"]) if r.get("close") else None, float(r["flow_usd_m"]),
-                                             r.get("source") or "tradingview"]
+                                             r.get("source") or "tradingview", r.get("currency") or "USD"]
         except (KeyError, ValueError):
             continue
-    if not weekly:
-        return {"etfs": {}}
-    daily = {}
-    if os.path.exists(LEV_DAILY):
-        for r in read_csv(LEV_DAILY):
-            try:
-                daily.setdefault(r["etf"], []).append((r["date"][:10], float(r["shares"]), float(r["nav"])))
-            except (KeyError, ValueError):
-                continue
+    return weekly
+
+
+def merge_daily_into_weekly(weekly, daily_by_etf, path, etfs):
+    """daily_by_etf：{etf: [(date, shares, nav), …]}。每日流通單位數變化×淨值併成週（週一起算），
+    只補 TradingView 最後一週之後的週，寫回 path（source=issuer，每次重算）。"""
     changed = False
-    for t, rows in daily.items():
-        if t not in LEV_ETFS:
+    for t, rows in daily_by_etf.items():
+        if t not in etfs:
             continue
-        rows.sort()
+        rows = sorted(rows)
         last_tv = max((w for (e, w), v in weekly.items() if e == t and v[2] == "tradingview"), default="")
+        cur = next((v[3] for (e, w), v in weekly.items() if e == t), "USD")
         wk, prev = {}, None
         for d, sh, nav in rows:
             if prev is not None:
@@ -355,23 +371,52 @@ def build_lev():
         for monday, (fl, nav) in wk.items():
             if monday <= last_tv:
                 continue
-            new = [round(nav, 4), round(fl, 2), "issuer"]
+            new = [round(nav, 4), round(fl, 2), "issuer", cur]
             if weekly.get((t, monday)) != new:
                 weekly[(t, monday)] = new
                 changed = True
     if changed:
-        with open(LEV_WEEKLY, "w", encoding="utf-8", newline="") as f:
+        with open(path, "w", encoding="utf-8", newline="") as f:
             w = csv.writer(f)
-            w.writerow(["week", "etf", "close", "flow_usd_m", "source"])
-            for (t, wkk), (c, fl, src) in sorted(weekly.items()):
-                w.writerow([wkk, t, c if c is not None else "", fl, src])
+            w.writerow(["week", "etf", "close", "flow_usd_m", "currency", "source"])
+            for (t, wkk), (c, fl, src, cur) in sorted(weekly.items()):
+                w.writerow([wkk, t, c if c is not None else "", fl, cur, src])
+    return weekly
+
+
+def weekly_stats(weekly, t):
+    """近四週（週資料）的合計與它在整段歷史四週滾動值的分位。"""
+    ser = sorted((wkk, v[1]) for (e, wkk), v in weekly.items() if e == t)
+    if len(ser) < 20:
+        return None
+    vals = [v for _, v in ser]
+    r4 = [sum(vals[i - 3:i + 1]) for i in range(3, len(vals))]
+    f4 = sum(vals[-4:])
+    return {"series": ser, "flow_4w_w": round(f4, 1), "pct_4w": pctile(r4, f4), "since": ser[0][0], "asof": ser[-1][0],
+            "n": len(ser), "r4": r4, "source_latest": weekly[(t, ser[-1][0])][2]}
+
+
+# ── 槓桿 ETF 多空流量 ───────────────────────────────────────────────────────
+def build_lev():
+    """週淨申購：TradingView 匯出的歷史（2016-11 起）＋發行商每日檔接續的新週。"""
+    weekly = load_weekly(LEV_WEEKLY)
+    if not weekly:
+        return {"etfs": {}}
+    daily = {}
+    if os.path.exists(LEV_DAILY):
+        for r in read_csv(LEV_DAILY):
+            try:
+                daily.setdefault(r["etf"], []).append((r["date"][:10], float(r["shares"]), float(r["nav"])))
+            except (KeyError, ValueError):
+                continue
+    weekly = merge_daily_into_weekly(weekly, daily, LEV_WEEKLY, LEV_ETFS)
     etfs = {}
     for t, (zh, pair, side) in LEV_ETFS.items():
-        ser = sorted((wkk, v[1]) for (e, wkk), v in weekly.items() if e == t)
-        if len(ser) < 20:
+        ws = weekly_stats(weekly, t)
+        if not ws:
             continue
+        ser, r4 = ws["series"], ws["r4"]
         vals = [v for _, v in ser]
-        r4 = [sum(vals[i - 3:i + 1]) for i in range(3, len(vals))]
         f4, f13 = sum(vals[-4:]), sum(vals[-13:])
         mx = max(r4)
         mxi = r4.index(mx) + 3

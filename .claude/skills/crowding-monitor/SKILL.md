@@ -20,7 +20,7 @@ changelog:
 | 儀表資料 | `docs/crowding/data/dash.json` | `scripts/crowding/build_dash.py`（CI `intel-2-daily.yml` 週日步驟） | 每週日 |
 | AAII、NAAIM | `data/crowding_monitor/aaii_weekly.csv`、`naaim_weekly.csv` | `scripts/crowding/fetch_sentiment.py`（同一 CI 步驟，抓官方 Excel） | 每週日 |
 | CFTC COT | `data/cot_history.json` | `scripts/build_crowding.py`（原有 pipeline，也產 `latest.json` 給 detective） | 每週日 |
-| ETF 資金流 | `data/crowding_monitor/etf_flows_daily.csv`（累積檔） | `build_dash.py` 從 `data/etf_dash/flows/*.jsonl` 累積（etf-dash 只留 200 天） | 每週日 |
+| ETF 資金流 | `data/crowding_monitor/etf_flows_daily.csv`（每日累積檔）＋`etf_flows_weekly.csv`（50 檔週序列，2016-11 起，TradingView 匯出一次） | `build_dash.py` 從 `data/etf_dash/flows/*.jsonl` 累積每日（etf-dash 只留 200 天），再把 13 檔併成新週寫回週檔 | 每週日 |
 | 槓桿 ETF 多空流量 | `data/crowding_monitor/leveraged_etf_flows_weekly.csv`（2016-11 起週，TradingView 匯出一次）＋`leveraged_etf_daily.csv`（發行商每日快照） | `scripts/crowding/fetch_leveraged.py` 抓每日；`build_dash.py` 把每日併成新週寫回週檔 | 每日抓、每週日併 |
 | BofA 基金經理人調查 | `docs/crowding/data/bofa_fms_monthly.csv` | **本 skill，人工** | 每月中旬 |
 | 判讀 | `docs/crowding/data/readings.json` | **本 skill，人工** | 數字換區間時 |
