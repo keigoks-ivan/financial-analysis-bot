@@ -174,6 +174,14 @@ jobs:
         continue-on-error: true
         run: python docs/ideas/data/bond-outlook/data.py --gauges
 
+      # ── 13b. 想法頁靜態「市場已反映」股價表的純價格欄（2026-11-01 新增）：
+      #    ai-scissors／consumer-agents／semis-degross 三張表（china-litho、bond-repricing 因同表他欄與正文停在舊日期，預設不跑）。
+      #    頁面表格已加標記；缺標記的表會略過。任何代號抓不到該列保留舊值，腳本 exit 0。
+      #    見 docs/ideas/data/refresh_prices.py 檔頭。──
+      - name: "[ideas-prices] Refresh ideas static price tables"
+        continue-on-error: true
+        run: python3 docs/ideas/data/refresh_prices.py --apply
+
       # ── 14. 想法頁 /ideas/ai-hardware-cycle.html 的價格類圖與 W52 距離（2026-10-18 新增）：
       #    重抓 yfinance，更新 data.json 的圖 1「現在」路徑、圖 7a／7b、latest（SMH／費半／QQQ 收盤與 52 週均線）。
       #    任何一塊抓不到就沿用上一版並標 stale；腳本 exit 0，這裡再加 continue-on-error。
@@ -221,6 +229,8 @@ jobs:
             docs/ideas/bond-outlook.html \
             docs/ideas/data/bond-outlook/gauges.json \
             docs/ideas/data/bond-outlook/data.json \
+            docs/ideas/*.html \
+            docs/ideas/data/semis-degross/ \
             docs/ideas/data/ai-hardware-cycle/data.json \
             docs/ideas/data/asia-capital-2027/data.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
