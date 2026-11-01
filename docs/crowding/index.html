@@ -1,127 +1,107 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta name="robots" content="noindex,nofollow">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>跨資產擁擠交易監測 — InvestMQuest Research</title>
-  <meta name="description" content="跨資產擁擠交易監測 — CFTC COT 15 市場投機部位、自家主題擁擠引擎、BofA FMS／Flow Show 情緒資金流三層代理三角。描述器非擇時訊號，衡量部位集中與下方緩衝。">
-  <meta property="og:title" content="跨資產擁擠交易監測 — InvestMQuest Research">
-  <meta property="og:site_name" content="InvestMQuest Research">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/imq-base.css">
-  <style>
-:root{
-  --bg:#f7f3ea;--bg-card:#ffffff;--bg-card-hover:#fbf8f1;
-  --border:#e5dfd0;--border-light:#efe9da;
-  --text:#0c1521;--text-secondary:#2a3a52;--text-muted:#9aa7b8;
-  --accent:#0d2244;--accent-hover:#081832;
-  --shadow-sm:0 1px 2px rgba(13,34,68,.05);
-  --shadow-md:0 6px 18px rgba(13,34,68,.07);
-  --radius:10px;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter','Noto Sans TC',system-ui,-apple-system,sans-serif;
-     background:var(--bg);color:var(--text);line-height:1.65;font-size:14px;
-     -webkit-font-smoothing:antialiased}
-a{color:var(--accent);text-decoration:none;transition:color .15s}
-a:hover{color:var(--accent-hover)}
-.container{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>跨資產擁擠交易監測 — InvestMQuest Research</title>
+<meta name="description" content="誰站在同一邊、那一邊有多滿：BofA 基金經理人調查的最擁擠交易與現金水位、CFTC 15 個期貨市場的投機部位、AAII 散戶與 NAAIM 顧問曝險、S&P 500 與 11 個產業 ETF 的資金流。每週更新，附歷史序列與現在的分位。描述器，不是擇時訊號。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{--pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;--mix-bg:#efe9da}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#eef1f6;--body:#c9d2df;--sec:#95a2b6;--muted:#6f7c90;--paper:#0b0d11;--card:#14181f;
+  --line:#28303c;--line-soft:#1f2530;--accent:#9cc0ff;--gold-deep:#d4b576;
+  --pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--pos-bg:#12261a;--neg-bg:#2a1414;--warn-bg:#2a2210;--mix-bg:#1f2530}}
+:root[data-theme="dark"]{
+  --ink:#eef1f6;--body:#c9d2df;--sec:#95a2b6;--muted:#6f7c90;--paper:#0b0d11;--card:#14181f;
+  --line:#28303c;--line-soft:#1f2530;--accent:#9cc0ff;--gold-deep:#d4b576;
+  --pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--pos-bg:#12261a;--neg-bg:#2a1414;--warn-bg:#2a2210;--mix-bg:#1f2530}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);line-height:1.75;font-size:15.5px}
+.wrap{max-width:880px;margin:0 auto;padding:28px 16px 64px}
+a{color:var(--accent)}
+.crumb{font-size:.8rem;color:var(--sec);margin-bottom:10px}
+.crumb a{color:var(--sec)}
+h1{font-family:var(--serif);color:var(--ink);font-size:1.75rem;line-height:1.3;margin:.2rem 0 .6rem}
+h2{font-family:var(--serif);color:var(--ink);font-size:1.3rem;margin:2.4rem 0 .8rem;padding-top:.4rem;border-top:1px solid var(--line);scroll-margin-top:70px}
+h3{font-size:1.02rem;color:var(--ink);margin:1.6rem 0 .4rem;scroll-margin-top:70px}
+.meta{font-family:var(--mono);font-size:.74rem;color:var(--sec);display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.thesis{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--r);padding:18px 20px;margin:20px 0;font-size:1.08rem;color:var(--ink);font-weight:600;line-height:1.6}
+.summary{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 20px 14px 38px;margin:0}
+.summary li{margin:.3rem 0}
+p{margin:.6rem 0}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:12px 0}
+.imq-table{border:1px solid var(--line);border-radius:var(--r)}
+.imq-table td{vertical-align:top}
+.imq-table tr:last-child td{border-bottom:0}
+.imq-table tr.tot td{font-weight:600;color:var(--ink)}
+.imq-table td.est{color:var(--sec)}
+.verdict{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold-deep);border-radius:8px;padding:9px 14px;margin:8px 0 12px;color:var(--ink)}
+.muted{color:var(--sec);font-size:.84rem}
+.note{background:var(--line-soft);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:.86rem;margin:12px 0}
+.note ol ol{margin:.2rem 0}
+.kill li{margin:.35rem 0}
+.chart{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 8px;margin:16px 0}
+.chart .cbox{position:relative;height:var(--h,340px)}
+.chart figcaption{font-size:.84rem;color:var(--sec);margin-top:8px;line-height:1.6}
+.chart .src{font-size:.76rem;color:var(--muted);margin-top:2px}
+.chart .pn-t{font-size:.86rem;font-weight:600;color:var(--ink);margin:2px 0 6px}
+.page-note{margin-top:3rem;font-size:.78rem;color:var(--sec);border-top:1px solid var(--line);padding-top:1rem}
+.badge{display:inline-block;font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:.05em;padding:.14rem .55rem;border-radius:5px;white-space:nowrap;vertical-align:1px}
+.b-sup{color:var(--pos);background:var(--pos-bg)}
+.b-ref{color:var(--neg);background:var(--neg-bg)}
+.b-mix{color:var(--warn);background:var(--warn-bg)}
+.b-un{color:var(--sec);background:var(--mix-bg)}
+.muted-red{color:var(--neg);font-size:.84rem}
+.cpstatus-wrap{margin:14px 0 22px}
+.cpstatus-star{width:1.6em;text-align:center;color:var(--gold-deep);font-size:.9rem}
+.cpstatus-since{font-family:var(--mono);font-size:.78rem;color:var(--sec);white-space:nowrap}
+.cpstatus-note{margin-top:6px}
+.deep-toggle{font-family:var(--mono);font-size:.72rem;color:var(--accent);background:none;border:1px solid var(--line);border-radius:6px;padding:.25rem .6rem;margin:8px 0 2px;cursor:pointer}
+.deep-toggle:hover{background:var(--line-soft)}
+.deep-sources{display:block;font-size:.76rem;color:var(--muted);margin-top:2px}
+.src-type{color:var(--muted)}
+.cp{scroll-margin-top:70px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px;margin:14px 0}
+.cp-head{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+.cp-id{font-family:var(--mono);font-size:.72rem;color:var(--gold-deep);font-weight:600}
+.cp-title{font-weight:700;color:var(--ink);font-size:1rem}
+.cp-when{font-family:var(--mono);font-size:.7rem;color:var(--sec);margin-left:auto}
+.cp-rule{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:.86rem;margin:8px 0 4px}
+.cp-rule span:nth-child(odd){color:var(--sec);white-space:nowrap}
+.ev{list-style:none;margin:8px 0 0;padding:0;border-top:1px dashed var(--line);font-size:.85rem}
+.ev li{padding:6px 0;border-bottom:1px dashed var(--line-soft);display:flex;gap:8px;align-items:baseline}
+.ev li:last-child{border-bottom:0}
+.ev .d{font-family:var(--mono);font-size:.72rem;color:var(--sec);white-space:nowrap}
+.ev .src{color:var(--muted);font-size:.76rem}
+.ev .lbl{font-size:.72rem;color:var(--sec);margin:6px 0 0}
+@media(max-width:600px){.chart .cbox{height:var(--hm,300px)}.chart{padding:10px 8px 6px}h1{font-size:1.4rem}}
 
-/* Hero */
-.hero{padding:3rem 0 2.5rem;background:linear-gradient(180deg,var(--bg-card) 0%,var(--bg) 100%)}
-.hero .eyebrow{display:inline-block;color:var(--accent);font-size:.68rem;font-weight:600;
-               letter-spacing:.1em;margin-bottom:.9rem;text-transform:uppercase;
-               font-family:'IBM Plex Mono',monospace}
-.hero .cadence{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
-               font-weight:600;letter-spacing:.06em;color:var(--text-muted);
-               background:var(--bg-card);border:1px solid var(--border);border-radius:999px;
-               padding:.15rem .55rem;margin-left:.5rem;vertical-align:middle;text-transform:none}
-.hero h1{font-family:var(--serif);font-size:2rem;font-weight:700;letter-spacing:-.01em;color:var(--text)}
-.hero .sub{color:var(--text-secondary);font-size:.95rem;margin-top:.5rem;max-width:720px;line-height:1.7}
-.hero .mandate{margin-top:1rem;max-width:720px;border-left:3px solid var(--accent);
-               background:var(--bg-card);border-radius:0 var(--radius) var(--radius) 0;padding:.85rem 1.1rem;
-               font-size:.85rem;color:var(--text-secondary);line-height:1.7}
-.hero .mandate strong{color:var(--text)}
-.crumb{font-size:.78rem;color:var(--text-muted);margin-bottom:.6rem}
-.crumb a{color:var(--text-muted)}
-.crumb a:hover{color:var(--accent)}
-
-/* Section */
-.section{padding:2.5rem 0 2rem}
-.section-title{font-family:var(--serif);font-size:1.15rem;font-weight:700;margin-bottom:1.2rem;color:var(--text);
-               display:flex;align-items:center;gap:.6rem}
-.section-title .count{font-size:.75rem;font-weight:600;color:var(--text-muted);
-                      background:var(--bg-card);padding:.2rem .7rem;border-radius:5px;
-                      border:1px solid var(--border)}
-
-/* Auto dashboard region (pipeline-managed) */
-.dash-section{padding:2rem 0 .5rem}
-.dash-placeholder{
-  background:var(--bg-card);border:1px dashed var(--border);border-radius:var(--radius);
-  padding:2.25rem 2rem;text-align:center;color:var(--text-muted);
-  font-size:.88rem;line-height:1.7;
-}
-.dash-placeholder strong{color:var(--text-secondary);font-weight:600}
-.dash-placeholder .mono{font-family:'IBM Plex Mono',monospace;font-size:.78rem}
-
-/* Reports list (periodical) */
-.reports{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.65rem}
-.reports li{margin:0}
-.reports a{
-  display:grid;grid-template-columns:1fr auto;gap:.4rem 1.5rem;align-items:center;
-  background:var(--bg-card);border:1px solid var(--border);
-  border-radius:var(--radius);padding:1.15rem 1.35rem 1.1rem;
-  color:var(--text);text-decoration:none;position:relative;overflow:hidden;
-  transition:border-color .15s ease,box-shadow .15s ease;
-}
-.reports a:hover{border-color:#d4cbb6;text-decoration:none;
-  box-shadow:var(--shadow-md)}
-.reports a:hover .report-arrow{color:var(--accent)}
-.reports .report-date{
-  font-family:'IBM Plex Mono',monospace;
-  font-size:.72rem;color:var(--text-muted);font-weight:600;
-  letter-spacing:.06em;text-transform:uppercase;grid-column:1;
-}
-.reports .report-title{
-  font-size:1.02rem;font-weight:700;color:var(--text);
-  letter-spacing:-.005em;grid-column:1;display:flex;align-items:center;gap:.5rem;
-}
-.reports .vol-tag{display:inline-block;padding:.14rem .5rem;border-radius:5px;
-  font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  background:var(--border-light);color:var(--accent)}
-.reports .report-lede{
-  font-size:.86rem;color:var(--text-secondary);
-  line-height:1.6;grid-column:1 / -1;margin-top:.2rem;
-}
-.reports .report-arrow{
-  grid-row:1 / span 2;grid-column:2;
-  font-family:'IBM Plex Mono',monospace;
-  font-size:1.1rem;color:var(--text-muted);align-self:center;
-  transition:color .15s ease,transform .15s ease;
-}
-
-/* Disclaimer */
-.disclaimer{margin:2rem 0;padding:1.2rem 1.5rem;background:var(--bg-card);border:1px solid var(--border);
-            border-radius:var(--radius);font-size:.78rem;color:var(--text-muted);line-height:1.7}
-.disclaimer strong{color:var(--text-secondary)}
-
-/* Footer */
-footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-muted);
-       border-top:1px solid var(--border);margin-top:1rem;line-height:1.8}
-footer a{color:var(--accent)}
-
-/* Mobile */
-@media(max-width:768px){
-  .hero h1{font-size:1.5rem}
-  .reports a{grid-template-columns:1fr auto;gap:.35rem 1rem;padding:1rem 1.15rem}
-  .reports .report-title{font-size:.96rem}
-  .reports .report-lede{font-size:.83rem}
-  header nav{gap:0}
-}
-  </style>
+.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:14px 0 6px}
+.scard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--card)}
+.scard.hot{border-color:var(--warn)}
+.s-label{font-size:.78rem;color:var(--sec);margin-bottom:4px}
+.s-value{font-size:1.02rem;font-weight:600;color:var(--ink);line-height:1.4}
+.s-sub{font-size:.78rem;color:var(--muted);margin-top:4px}
+.pill{display:inline-block;font-size:.72rem;padding:1px 8px;border-radius:999px;border:1px solid var(--line);color:var(--sec);margin-top:6px}
+.scard.hot .pill{border-color:var(--warn);color:var(--warn)}
+.cot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px 14px;margin:10px 0}
+.mini-t{font-size:.8rem;color:var(--ink);display:flex;justify-content:space-between;gap:6px;margin-bottom:2px}
+.mini-t span{color:var(--sec);font-variant-numeric:tabular-nums}
+.mini-t .hotp{color:var(--warn)}.mini-t .coldp{color:var(--accent)}
+.imq-table td.pos{color:var(--pos)}.imq-table td.neg{color:var(--neg)}
+.imq-table td.h1{background:rgba(200,60,40,.10)}.imq-table td.h2{background:rgba(200,60,40,.22)}
+.imq-table td.l1{background:rgba(40,90,170,.10)}.imq-table td.l2{background:rgba(40,90,170,.22)}
+.imq-table caption{text-align:left;font-size:.84rem;color:var(--sec);padding:4px 0}
+.reading{border-left:3px solid var(--accent);padding:4px 12px;margin:10px 0}
+.reading .r-date{font-size:.78rem;color:var(--muted)}
+.reading h4{margin:2px 0 4px;font-size:.98rem}
+.reading p{margin:4px 0}
+details.more summary{cursor:pointer;color:var(--sec);font-size:.86rem}
+</style>
 </head>
 <body>
 <style id="imq-nav-style">
@@ -163,7 +143,7 @@ footer a{color:var(--accent)}
     <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
     <nav class="imq-menu">
       <a href="/">首頁</a>
-      <div class="imq-dd active">
+      <div class="imq-dd">
         <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
         <div class="imq-dd-menu">
           <a href="/market/">市況主控台</a>
@@ -184,7 +164,7 @@ footer a{color:var(--accent)}
           <a href="/kr-chips/">韓股籌碼</a>
         </div>
       </div>
-      <div class="imq-dd">
+      <div class="imq-dd active">
         <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
         <div class="imq-dd-menu">
           <a href="/t/">研究清單</a>
@@ -195,7 +175,7 @@ footer a{color:var(--accent)}
           <a href="/etf-dash/">ETF 儀表板</a>
           <a href="/active-etf/">主動式 ETF</a>
           <a href="/id/">產業研究</a>
-          <a href="/ideas/">投資想法</a>
+          <a href="/ideas/" class="active">投資想法</a>
         </div>
       </div>
       <a href="/cockpit/">選股</a>
@@ -216,80 +196,248 @@ footer a{color:var(--accent)}
   </div>
 </header>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<div class="wrap">
+<div class="crumb"><a href="/">首頁</a> › <a href="/market/">市場</a> › 擁擠交易監測</div>
+<h1>跨資產擁擠交易監測</h1>
+<div class="meta">資料到 <span id="asof">—</span>　·　每週日自動更新；基金經理人調查每月中旬人工補一筆　·　<a href="#sources">資料來源</a></div>
 
-<div class="hero">
-  <div class="container">
-    <div class="crumb"><a href="/">首頁</a> &rsaquo; 擁擠交易監測</div>
-    <span class="eyebrow">Cross-Asset Crowding Monitor</span><span class="cadence">週更 · COT 週五發布</span>
-    <h1>跨資產擁擠交易監測</h1>
-    <p class="sub">誰站在同一邊，以及那一邊有多滿。三層代理三角測量——CFTC COT 15 市場投機部位、自家主題擁擠引擎、BofA FMS／Flow Show／GS Prime 情緒與資金流——收斂成「哪些交易擁擠、下方緩衝有多薄、什麼事件會抽掉那層緩衝」。</p>
-    <div class="mandate">
-      <strong>定位：</strong>本監測是<strong>描述器（describer），不是擇時訊號（timing signal）</strong>。擁擠度衡量部位集中與下方緩衝，它放大回撤幅度與相關性，但<strong>不預測轉折時點</strong>。這是本站對風險儀表的既定裁決語言——儀表的價值在「知道自己站在哪裡」，不在「知道何時離場」。個股與組合的進出依 DD 的 thesis 級證偽，不由本表驅動。
-    </div>
-    <p style="margin-top:.7rem;font-size:.8rem;color:var(--text-muted)">整體市況一頁看：<a href="/market/" style="color:var(--accent);font-weight:600">市況主控台 →</a></p>
-  </div>
+<div class="thesis">這一頁回答一個問題：現在誰站在同一邊，那一邊有多滿。五個來源分別看機構的共識（BofA 基金經理人調查）、投機部位（CFTC 期貨）、散戶與顧問（AAII、NAAIM）、以及錢實際往哪個產業走（ETF 資金流）。每一條都放歷史序列與現在的分位，判讀只有幾句，數字換區間才改。擁擠衡量的是下方緩衝有多薄、反轉時同向的人有多少，不是轉折的時點。</div>
+
+<h2>現在的位置</h2>
+<div class="status-grid" id="status"></div>
+<p class="muted">狀態列由程式依分位自動產生。「極端」的門檻：期貨部位五年分位 ≥90 或 ≤10；AAII 多空差離 1987 年起的平均超過一個標準差；NAAIM 曝險 ≥90% 算高、≤40% 算低；基金經理人調查第一名比例 ≥60% 算共識集中。</p>
+
+<h2>判讀</h2>
+<div id="readings"></div>
+
+<h2>一、機構的共識：BofA 基金經理人調查</h2>
+<p>BofA 每月月初問約兩百位基金經理人、月中發布。這裡用兩個數字：「最擁擠交易」第一名拿到的票數比例，和現金占資產的比例。前者量的是大家認為誰最擠，是認知不是倉位；選項每月由 BofA 自訂，同一項目不是每月都在票上，所以只有「第一名是什麼、多少人選」能連成長序列。後者是 BofA 自己的反向規則：現金低於 4% 算賣出訊號、高於 5% 算買進訊號。</p>
+<figure class="chart"><div class="pn-t">圖 1　最擁擠交易：第一名拿到的比例（月）</div>
+<div class="cbox" style="--h:320px;--hm:280px"><canvas id="c_fms" role="img" aria-label="柱狀圖：BofA 基金經理人調查每月最擁擠交易第一名的受訪者比例，柱子顏色依交易類別。"></canvas></div>
+<figcaption id="cap_fms"></figcaption>
+<div class="src">資料：BofA Global Fund Manager Survey，經媒體轉述整理；一手／二手標記見表。</div></figure>
+<figure class="chart"><div class="pn-t">圖 2　基金經理人現金占資產比例（月）</div>
+<div class="cbox" style="--h:260px;--hm:240px"><canvas id="c_cash" role="img" aria-label="折線圖：BofA 基金經理人調查的現金占資產比例，附 4% 與 5% 兩條參考線。"></canvas></div>
+<figcaption>4% 以下是 BofA 的賣出訊號線，5% 以上是買進訊號線。</figcaption>
+<div class="src">資料：同上。</div></figure>
+<div class="tbl-wrap" id="t_fms"></div>
+
+<h2>二、投機部位：CFTC 期貨持倉</h2>
+<p>CFTC 每週二的持倉報告，取非商業（投機）帳戶的多單減空單，除以未平倉量。這裡放 15 個市場：四個股指與波動率、四個天期的美債、三個匯率、四個商品。分位用過去五年的週資料算，九成以上算極端偏多、一成以下算極端偏空。投機部位的極端本身不是反轉訊號，它告訴你如果反轉，被迫回補的人有多少。</p>
+<figure class="chart"><div class="pn-t">圖 3　15 個市場的投機淨部位，五年分位</div>
+<div class="cbox" style="--h:420px;--hm:400px"><canvas id="c_cotbar" role="img" aria-label="橫條圖：15 個期貨市場投機淨部位的五年分位，極端偏多標暖色、極端偏空標冷色。"></canvas></div>
+<figcaption id="cap_cot"></figcaption>
+<div class="src">資料：CFTC Commitments of Traders（legacy futures-only），每週更新。</div></figure>
+<div class="pn-t">圖 4　各市場 2021 年起的投機淨部位（占未平倉量 %）</div>
+<div class="cot-grid" id="cot-grid"></div>
+<div class="src">同一尺度：正值是淨多、負值是淨空。標題右邊是最新值與五年分位。</div>
+<div class="tbl-wrap" id="t_cot"></div>
+
+<h2>三、散戶與顧問</h2>
+<p>AAII 每週問美國個人投資人未來六個月看多還是看空，1987 年起有資料。這裡看多空差（看多減看空），離長期平均超過一個標準差算極端；它在極端值附近當反向指標的紀錄比它在中間值時好，中間值沒有資訊。NAAIM 是主動管理顧問回報的股票曝險，2006 年起，100% 是滿倉、0% 是空手、超過 100% 是槓桿；它量的是倉位不是情緒，跟指數同步，極端值之後幾週的報酬偏向反向。</p>
+<figure class="chart"><div class="pn-t">圖 5　AAII 散戶多空差，1987 年起（週）</div>
+<div class="cbox" style="--h:300px;--hm:260px"><canvas id="c_aaii" role="img" aria-label="折線圖：AAII 散戶調查看多減看空的百分點，1987 年起每週，附平均與正負一個標準差線。"></canvas></div>
+<figcaption id="cap_aaii"></figcaption>
+<div class="src">資料：AAII Investor Sentiment Survey（sentiment.xls），每週四。1999 年以前只有整數。</div></figure>
+<figure class="chart"><div class="pn-t">圖 6　NAAIM 主動經理人股票曝險，2006 年起（週）</div>
+<div class="cbox" style="--h:300px;--hm:260px"><canvas id="c_naaim" role="img" aria-label="折線圖：NAAIM 曝險指數平均值，2006 年起每週，附第一與第三四分位的帶狀範圍。"></canvas></div>
+<figcaption id="cap_naaim"></figcaption>
+<div class="src">資料：NAAIM Exposure Index（官方 Excel），每週三；官方檔的更新有時落後。</div></figure>
+
+<h2>四、錢往哪個產業走：ETF 資金流</h2>
+<p>用發行商每天公布的流通單位數變化乘淨值，算 S&P 500、11 個產業 ETF 與 SMH 的淨申購。這是實際的錢，不是調查。看的是產業之間的移動：單月流入占資產超過 3% 的產業是資金正在追的，連續流出的是正在被放棄的。序列從 2026 年起，還短，先看方向與相對大小。</p>
+<div class="tbl-wrap" id="t_flows"></div>
+<figure class="chart"><div class="pn-t">圖 7　SMH 累計淨申購（2026 年起，日）</div>
+<div class="cbox" style="--h:260px;--hm:240px"><canvas id="c_smh" role="img" aria-label="折線圖：SMH 自 2026 年 4 月起每日淨申購的累計金額，億美元。"></canvas></div>
+<figcaption id="cap_smh"></figcaption>
+<div class="src">資料：VanEck 每日淨值與流通單位數，經 etf-dash 整理。6 月 17 日與 22 日各有一次約 1,090 萬單位的反向跳動，互相抵銷。</div></figure>
+
+<h2>怎麼讀這一頁</h2>
+<ul>
+<li>五個來源量的東西不同：調查是認知、期貨持倉是投機帳戶的方向、AAII 是散戶心情、NAAIM 是顧問倉位、ETF 流量是錢。同向時讀數可信，分歧時先不要下結論。</li>
+<li>擁擠不等於錯。一個交易可以又擠又對，2023 到 2025 年的大型科技股就是。擁擠告訴你的是反轉時下方緩衝有多薄。</li>
+<li>這一頁不給買賣指令，也不預測轉折時點。指數部位的規則在實單系統，不在這裡。</li>
+</ul>
+
+<h2>期刊檔案</h2>
+<p>2026 年 7 月 5 日的<a href="/crowding/CROWDING_20260705.html">創刊號</a>是長文格式（八筆具名交易、三層三角測量），之後不再出期刊，改成這一頁持續更新。</p>
+
+<h2 id="sources">資料來源與更新</h2>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>來源</th><th>頻率</th><th>起點</th><th>更新方式</th><th>限制</th></tr></thead>
+<tbody>
+<tr><td>BofA Global Fund Manager Survey</td><td>月</td><td id="src_fms_first">—</td><td>每月中旬人工補一筆（媒體轉述）</td><td>報告不公開；只有第一名能連成序列；多數月份是二手</td></tr>
+<tr><td>CFTC Commitments of Traders</td><td>週（週二資料、週五公布）</td><td>2021-01</td><td>每週日 CI 自動</td><td>假期順延；legacy futures-only 口徑</td></tr>
+<tr><td>AAII Investor Sentiment Survey</td><td>週（週四）</td><td>1987-07</td><td>每週日 CI 自動抓官方 Excel</td><td>1999 年以前整數</td></tr>
+<tr><td>NAAIM Exposure Index</td><td>週（週三）</td><td>2006-07</td><td>每週日 CI 自動抓官方 Excel</td><td>官方檔更新不定期落後，缺的週之後自動補</td></tr>
+<tr><td>ETF 資金流（SPDR、VanEck）</td><td>日</td><td>2026-01（SMH 2026-04）</td><td>每日 etf-dash 抓、每週日累積</td><td>序列短；QQQ 單位數有來源切換跳動，未納入</td></tr>
+</tbody></table></div>
+<p class="page-note">本頁為 InvestMQuest Research 內部研究文件，描述器非擇時訊號、非投資建議。所有數字附來源與日期；擁擠度衡量部位集中與下方緩衝，不預測轉折時點。同族描述器：<a href="/rotation/">資產輪動雷達</a>、<a href="/market/">市況主控台</a>。</p>
 </div>
 
-<!-- 自動儀表：內容由週更 pipeline（build_crowding.py）在下方兩個標記之間重生，勿手改標記間內容 -->
-<div class="section dash-section" id="live-dashboard">
-  <div class="container">
-    <h2 class="section-title">即時擁擠儀表 <span class="count">週更</span></h2>
-    <!-- CROWDING_AUTO_DASH_START -->
-<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#12161f;border:1px solid #2a3242;border-radius:12px;padding:18px 20px;color:#e6e9ef;line-height:1.6;font-size:14px"><div style="font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5b9bff;margin-bottom:10px">跨資產擁擠交易 · 自動儀表</div><div style="margin-bottom:8px"><b>COT 極端偏多（5y ≥ 90）：</b><br><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#7f1d1d;color:#fecaca">Nasdaq-100 E-mini 98</span></div><div style="margin-bottom:8px"><b>COT 極端偏空（5y ≤ 10）：</b><br><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#0c4a6e;color:#bae6fd">EUR (Euro FX) 1</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#0c4a6e;color:#bae6fd">WTI Crude 8</span></div><div style="margin:10px 0 6px"><b>自家主題擁擠 Top 5</b>（五維綜合分：動能延伸／相關性收斂／修正追價／成交量異常／自家共識）</div><table style="border-collapse:collapse;width:100%;font-size:13px"><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">1</td><td style="padding:3px 8px">HBM 超級循環</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700;color:#f87171">74.9</td></tr><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">2</td><td style="padding:3px 8px">晶圓廠設備（WFE）與測試設備</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700;color:#f87171">74.0</td></tr><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">3</td><td style="padding:3px 8px">Athletic Footwear Sub-Segments ⚠</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700;color:#f87171">72.7</td></tr><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">4</td><td style="padding:3px 8px">Wafer Fab Equipment Five-Oligopoly</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700;color:#f87171">72.4</td></tr><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">5</td><td style="padding:3px 8px">Athleisure Private Entrants & Dupe Ecosystem ⚠</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700;color:#f87171">70.9</td></tr></table><div style="margin:10px 0 6px"><b>跨資產 ETF 動能極端 Top 3</b></div><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#7c2d12;color:#fed7aa">USO 99</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#7c2d12;color:#fed7aa">UUP 88</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#7c2d12;color:#fed7aa">FXY 62</span><div style="margin-top:12px;font-family:ui-monospace,monospace;font-size:11px;color:#6b7484">COT as-of 2026-10-20 · 更新 2026-10-26 · 描述器非擇時</div></div>
-<!-- CROWDING_AUTO_DASH_END -->
-  </div>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+'use strict';
+var DATA_URL='/crowding/data/dash.json';
+var charts=[], D=null, lastWide=null, domBuilt=false;
+function cv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+function rgb(c){var m;c=(c||'').trim();
+  if((m=/^#([0-9a-f]{3})$/i.exec(c))){c='#'+m[1].split('').map(function(x){return x+x;}).join('');}
+  if((m=/^#([0-9a-f]{6})$/i.exec(c))){return [parseInt(m[1].slice(0,2),16),parseInt(m[1].slice(2,4),16),parseInt(m[1].slice(4,6),16)];}
+  if((m=/^rgba?\(([^)]+)\)/.exec(c))){return m[1].split(',').slice(0,3).map(Number);}
+  return [128,128,128];}
+function alpha(c,a){var v=rgb(c);return 'rgba('+v[0]+','+v[1]+','+v[2]+','+a+')';}
+function P(){return {ink:cv('--ink'),body:cv('--body'),sec:cv('--sec'),muted:cv('--muted'),line:cv('--line'),accent:cv('--accent'),gold:cv('--gold-deep'),pos:cv('--pos'),neg:cv('--neg'),warn:cv('--warn'),card:cv('--card')||'#fff',sans:cv('--sans')||'sans-serif'};}
+function f1(v){return v==null?'—':(v<0?'−':'')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});}
+function f0(v){return v==null?'—':(v<0?'−':'')+Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0});}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function base(c,wide){
+  var fs=wide?12:11;
+  return {responsive:true,maintainAspectRatio:false,animation:false,
+    interaction:{mode:'nearest',intersect:false},
+    plugins:{legend:{labels:{color:c.body,font:{size:fs,family:c.sans},boxWidth:12,boxHeight:12}},
+      tooltip:{backgroundColor:c.card,titleColor:c.ink,bodyColor:c.body,borderColor:c.line,borderWidth:1,titleFont:{family:c.sans},bodyFont:{family:c.sans}}},
+    scales:{x:{grid:{color:alpha(c.line,0.6)},border:{color:c.line},ticks:{color:c.sec,font:{size:fs-1,family:c.sans},maxRotation:0,autoSkip:true}},
+            y:{grid:{color:alpha(c.line,0.6)},border:{color:c.line},ticks:{color:c.sec,font:{size:fs-1,family:c.sans}}}}};
+}
+function pctTick(v){return (v<0?'−':'')+Math.abs(v)+'%';}
+function yearTicks(dates){var first=dates[0]?dates[0].slice(0,4):'';var nFirst=dates.filter(function(d){return d.slice(0,4)===first;}).length;
+  return function(v,i){var d=dates[i];if(!d)return '';if(i===0)return nFirst>=26?d.slice(0,4):'';return dates[i-1].slice(0,4)!==d.slice(0,4)?d.slice(0,4):'';};}
+function constLine(label,n,val,color,dash){return {label:label,data:Array(n).fill(val),borderColor:color,borderWidth:1,borderDash:dash||[4,4],pointRadius:0,fill:false,tension:0};}
+var CAT_COLOR={semis:'warn',tech:'neg',gold:'gold',usd:'accent',bonds:'pos',crypto:'muted',cash:'muted',region:'sec',commod:'sec',other:'muted',"":'muted'};
 
-<div class="section" id="crowding-reports">
-  <div class="container">
-    <h2 class="section-title">期刊 · Monitor Issues</h2>
+/* 圖 1：FMS 最擁擠交易第一名比例 */
+function chartFms(c,wide){
+  var M=D.fms.monthly.filter(function(x){return x.top_pct!=null;});if(!M.length)return null;
+  var labels=M.map(function(x){return x.m;});
+  var o=base(c,wide);o.plugins.legend.display=false;o.scales.y.min=0;o.scales.y.ticks.callback=pctTick;
+  o.scales.x.ticks.callback=function(v,i){var m=labels[i];if(!m)return '';return (i===0||labels[i-1].slice(0,4)!==m.slice(0,4))?m.slice(0,4):'';};o.scales.x.ticks.autoSkip=false;
+  o.plugins.tooltip.callbacks={title:function(it){return M[it[0].dataIndex].m;},label:function(it){var x=M[it.dataIndex];var s=[x.top+' '+f0(x.top_pct)+'%'];if(x.second)s.push('第二 '+x.second+' '+f0(x.second_pct)+'%');if(x.third)s.push('第三 '+x.third+' '+f0(x.third_pct)+'%');if(x.cash!=null)s.push('現金 '+f1(x.cash)+'%');return s;}};
+  return {type:'bar',data:{labels:labels,datasets:[{data:M.map(function(x){return x.top_pct;}),backgroundColor:M.map(function(x){return alpha(c[CAT_COLOR[x.cat]||'muted'],0.8);}),borderWidth:0,barPercentage:0.9,categoryPercentage:1}]},options:o};
+}
+/* 圖 2：現金水位 */
+function chartCash(c,wide){
+  var M=D.fms.monthly.filter(function(x){return x.cash!=null;});if(!M.length)return null;
+  var labels=M.map(function(x){return x.m;});
+  var o=base(c,wide);o.plugins.legend.display=false;o.scales.y.ticks.callback=pctTick;
+  o.scales.x.ticks.callback=function(v,i){var m=labels[i];if(!m)return '';return (i===0||labels[i-1].slice(0,4)!==m.slice(0,4))?m.slice(0,4):'';};o.scales.x.ticks.autoSkip=false;
+  o.plugins.tooltip.callbacks={label:function(it){return it.dataset.label+' '+f1(it.parsed.y)+'%';}};
+  return {type:'line',data:{labels:labels,datasets:[
+    {label:'現金占資產',data:M.map(function(x){return x.cash;}),borderColor:c.accent,backgroundColor:alpha(c.accent,0.1),borderWidth:1.8,pointRadius:2,tension:0.2,fill:true},
+    constLine('賣出訊號 4%',M.length,4,c.neg),constLine('買進訊號 5%',M.length,5,c.pos)]},options:o};
+}
+/* 圖 3：COT 分位條 */
+function chartCotBar(c,wide){
+  var M=D.cot.markets;if(!M.length)return null;
+  var o=base(c,wide);o.indexAxis='y';o.plugins.legend.display=false;o.scales.x.min=0;o.scales.x.max=100;o.scales.x.ticks.callback=function(v){return v;};
+  o.scales.y.grid.display=false;
+  o.plugins.tooltip.callbacks={label:function(it){var m=M[it.dataIndex];return '五年分位 '+f1(m.pct5y)+'，淨部位 '+f1(m.latest)+'% 未平倉量，4 週 '+f1(m.d4w)+'、13 週 '+f1(m.d13w);}};
+  o.plugins.annotationLines=true;
+  var col=function(m){return m.pct5y>=90?alpha(c.warn,0.9):m.pct5y<=10?alpha(c.accent,0.9):m.pct5y>=75?alpha(c.warn,0.45):m.pct5y<=25?alpha(c.accent,0.45):alpha(c.muted,0.5);};
+  return {type:'bar',data:{labels:M.map(function(m){return m.zh;}),datasets:[{data:M.map(function(m){return m.pct5y;}),backgroundColor:M.map(col),borderWidth:0}]},options:o,
+    plugins:[{id:'lines',afterDraw:function(ch){var ctx=ch.ctx,x=ch.scales.x,a=ch.chartArea;ctx.save();ctx.strokeStyle=alpha(c.sec,0.6);ctx.setLineDash([3,3]);[10,90].forEach(function(v){var px=x.getPixelForValue(v);ctx.beginPath();ctx.moveTo(px,a.top);ctx.lineTo(px,a.bottom);ctx.stroke();});ctx.restore();}}]};
+}
+/* 圖 4：COT 小圖 */
+function cotMini(m){return function(c,wide){
+  var dates=m.series.map(function(p){return p[0];});
+  var o=base(c,wide);o.plugins.legend.display=false;o.scales.x.ticks.callback=yearTicks(dates);o.scales.x.ticks.autoSkip=false;o.scales.x.grid.display=false;
+  o.scales.y.ticks.maxTicksLimit=3;o.scales.y.ticks.font.size=9;o.scales.x.ticks.font.size=9;
+  o.plugins.tooltip.callbacks={title:function(it){return dates[it[0].dataIndex];},label:function(it){return f1(it.parsed.y)+'% 未平倉量';}};
+  var col=m.pct5y>=90?c.warn:m.pct5y<=10?c.accent:c.ink;
+  return {type:'line',data:{labels:dates,datasets:[{data:m.series.map(function(p){return p[1];}),borderColor:col,backgroundColor:alpha(col,0.08),borderWidth:1.2,pointRadius:0,tension:0.1,fill:{target:{value:0}}}]},options:o};
+};}
+/* 圖 5：AAII */
+function chartAaii(c,wide){
+  var S=D.aaii.series;if(!S.length)return null;var dates=S.map(function(p){return p[0];});
+  var o=base(c,wide);o.plugins.legend.position='bottom';o.scales.x.ticks.callback=yearTicks(dates);o.scales.x.ticks.autoSkip=false;
+  o.plugins.tooltip.callbacks={title:function(it){return dates[it[0].dataIndex];},label:function(it){if(it.datasetIndex!==0)return null;var p=S[it.dataIndex];return '多空差 '+f1(p[4])+'（多 '+f1(p[1])+'%、空 '+f1(p[3])+'%）';}};
+  var mu=D.aaii.mean_spread,sd=D.aaii.sd_spread;
+  return {type:'line',data:{labels:dates,datasets:[
+    {label:'看多減看空（百分點）',data:S.map(function(p){return p[4];}),borderColor:c.ink,borderWidth:0.9,pointRadius:0,tension:0,fill:false},
+    constLine('平均 '+f1(mu),S.length,mu,c.sec,[2,3]),constLine('+1σ '+f1(mu+sd),S.length,mu+sd,c.warn),constLine('−1σ '+f1(mu-sd),S.length,mu-sd,c.accent)]},options:o};
+}
+/* 圖 6：NAAIM */
+function chartNaaim(c,wide){
+  var S=D.naaim.series;if(!S.length)return null;var dates=S.map(function(p){return p[0];});
+  var o=base(c,wide);o.plugins.legend.position='bottom';o.scales.x.ticks.callback=yearTicks(dates);o.scales.x.ticks.autoSkip=false;o.scales.y.ticks.callback=pctTick;
+  o.plugins.tooltip.callbacks={title:function(it){return dates[it[0].dataIndex];},label:function(it){var p=S[it.dataIndex];if(it.datasetIndex===0)return '平均曝險 '+f1(p[1])+'%';if(it.datasetIndex===1)return '第三四分位 '+f1(p[4])+'%';if(it.datasetIndex===2)return '第一四分位 '+f1(p[2])+'%';return null;}};
+  return {type:'line',data:{labels:dates,datasets:[
+    {label:'平均曝險',data:S.map(function(p){return p[1];}),borderColor:c.ink,borderWidth:1,pointRadius:0,tension:0,fill:false},
+    {label:'第一到第三四分位',data:S.map(function(p){return p[4];}),borderColor:'transparent',backgroundColor:alpha(c.accent,0.15),pointRadius:0,fill:'+1'},
+    {label:'',data:S.map(function(p){return p[2];}),borderColor:'transparent',pointRadius:0,fill:false},
+    constLine('90%',S.length,90,c.warn),constLine('40%',S.length,40,c.accent)]},options:Object.assign(o,{plugins:Object.assign(o.plugins,{legend:{position:'bottom',labels:{color:c.body,font:{size:wide?12:11,family:c.sans},boxWidth:12,filter:function(l){return l.text!=='';}}}})})};
+}
+/* 圖 7：SMH 累計 */
+function chartSmh(c,wide){
+  var E=D.flows.etfs.SMH;if(!E||!E.daily)return null;var dates=E.daily.map(function(p){return p[0];});var cum=0;
+  var vals=E.daily.map(function(p){cum+=p[1];return cum/100;});
+  var o=base(c,wide);o.plugins.legend.display=false;o.scales.y.title={display:true,text:'億美元',color:c.sec};
+  o.scales.x.ticks.callback=function(v,i){var d=dates[i];if(!d)return '';return (i===0||dates[i-1].slice(5,7)!==d.slice(5,7))?String(parseInt(d.slice(5,7),10))+'月':'';};o.scales.x.ticks.autoSkip=false;
+  o.plugins.tooltip.callbacks={title:function(it){return dates[it[0].dataIndex];},label:function(it){return '累計 '+f1(it.parsed.y)+' 億美元；當日 '+f1(E.daily[it.dataIndex][1]/100)+' 億';}};
+  return {type:'line',data:{labels:dates,datasets:[{data:vals,borderColor:c.accent,backgroundColor:alpha(c.accent,0.1),borderWidth:1.6,pointRadius:0,tension:0.1,fill:true}]},options:o};
+}
 
-    <ul class="reports">
-<!--
-  ADDING A NEW ISSUE:
-  Newest issue goes at the TOP (descending date order). Copy the block below INSIDE
-  <ul class="reports"> and update fields. Remove the .vol-tag "最新" from the previously
-  first entry when adding a newer one.
-
-  <li>
-    <a href="CROWDING_YYYYMMDD.html">
-      <div class="report-date">YYYY-MM-DD</div>
-      <div class="report-title">第 N 期 <span class="vol-tag">最新</span></div>
-      <div class="report-lede">[三行摘要：本期主軸 · 跨資產極端 · 情緒結構]</div>
-      <span class="report-arrow">&rarr;</span>
-    </a>
-  </li>
--->
-      <li>
-        <a href="CROWDING_20260705.html">
-          <div class="report-date">2026-07-05</div>
-          <div class="report-title">創刊號 Vol.1 <span class="vol-tag">最新</span></div>
-          <div class="report-lede">半導體個股層擁擠創紀錄（FMS「做多全球半導體」80% 為調查史上最擁擠）vs 指數期貨偏空（Nasdaq-100 投機淨部位 5y 第 8.1 百分位）——擁擠住在個股與槓桿，不住在指數多頭 · 商品／匯率兩個獨立極端：銅 COT 5y 第 96.9、NQ 第 8.1，方向相反 · 機構擁擠且高槓桿（HF 總槓桿約 323%）vs 散戶 AAII 連 21 週偏空，兩群人站在相反邊。</div>
-          <span class="report-arrow">&rarr;</span>
-        </a>
-      </li>
-    </ul>
-
-  </div>
-</div>
-
-<div class="container">
-  <div class="disclaimer">
-    <strong>免責與定位：</strong>
-    本監測為 InvestMQuest Research 內部研究文件，<strong>描述器非擇時訊號、非投資建議</strong>。
-    所有數字附來源與 as-of；擁擠度衡量部位集中與下方緩衝，不預測轉折時點。
-    COT 為 CFTC 公開 futures-only 資料；情緒／資金流為 web 二手來源，信心度逐項標註；
-    自家主題引擎為相對排名。過往統計關係不保證未來重演。
-  </div>
-  <p style="margin:.4rem 0 2rem;font-size:.82rem;color:var(--text-muted);line-height:1.7">同族描述器 · <a href="/rotation/radar.html" style="font-weight:600">資產輪動雷達（RRG）</a>——三宇宙 × 三時間框架互動式相對輪動圖，在圖上直接看資金往哪裡跑。</p>
-</div>
-
-<footer class="imq-foot">
-  <div class="container">
-    <div>© 2026 InvestMQuest Research</div>
-    <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
-  </div>
-</footer>
+/* 狀態列、判讀、表格、小圖容器：資料到了只建一次 */
+function buildDom(){
+  if(domBuilt)return;domBuilt=true;
+  document.getElementById('asof').textContent=D.asof||'—';
+  var st=document.getElementById('status');
+  st.innerHTML=D.status.map(function(s){return '<div class="scard'+(s.hot?' hot':'')+'"><div class="s-label">'+esc(s.label)+'</div><div class="s-value">'+esc(s.value)+'</div><div class="s-sub">'+esc(s.sub)+'</div>'+(s.band?'<span class="pill">'+esc(s.band)+'</span>':'')+'</div>';}).join('');
+  var R=D.readings||[];var rd=document.getElementById('readings');
+  var one=function(r){return '<div class="reading"><div class="r-date">'+esc(r.date)+'</div><h4>'+esc(r.title)+'</h4>'+(r.body||[]).map(function(p){return '<p>'+esc(p)+'</p>';}).join('')+'</div>';};
+  if(!R.length){rd.innerHTML='<p class="muted">還沒有判讀。</p>';}
+  else{rd.innerHTML=R.slice(0,2).map(one).join('')+(R.length>2?'<details class="more"><summary>更早的判讀（'+(R.length-2)+' 則）</summary>'+R.slice(2).map(one).join('')+'</details>':'');}
+  /* FMS 表 */
+  var M=D.fms.monthly.slice(-12).reverse();
+  if(M.length){document.getElementById('t_fms').innerHTML='<table class="imq-table"><caption>表 1　近 12 個月的最擁擠交易前三名與現金水位</caption><thead><tr><th>調查月</th><th>第一名</th><th>%</th><th>第二名</th><th>%</th><th>第三名</th><th>%</th><th>現金 %</th><th>來源</th></tr></thead><tbody>'+
+    M.map(function(x){return '<tr><td>'+x.m+'</td><td>'+esc(x.top||'—')+'</td><td>'+f0(x.top_pct)+'</td><td>'+esc(x.second||'—')+'</td><td>'+f0(x.second_pct)+'</td><td>'+esc(x.third||'—')+'</td><td>'+f0(x.third_pct)+'</td><td>'+f1(x.cash)+'</td><td>'+esc(x.tier||'—')+'</td></tr>';}).join('')+'</tbody></table>';
+    var S=D.fms.stats||{};var L=D.fms.latest;
+    document.getElementById('cap_fms').textContent=(S.n?('第一名比例 '+D.fms.coverage.first+' 起共 '+S.n+' 個月，中位數 '+f0(S.median)+'%、最高 '+f0(S.max)+'%（'+S.max_m+'），超過 60% 的有 '+S.n_ge60+' 個月。'):'')+(L?('最新 '+L.m+'：'+L.top+' '+f0(L.top_pct)+'%。'):'');
+    var cs=D.fms.cash_stats||{};var LC=D.fms.latest_cash;
+    document.getElementById('src_fms_first').textContent=D.fms.coverage.first||'—';
+  }else{document.getElementById('t_fms').innerHTML='<p class="muted">基金經理人調查序列還在回補。</p>';}
+  /* COT 表與小圖 */
+  var C=D.cot.markets;
+  document.getElementById('cap_cot').textContent='資料到 '+D.cot.asof+'。虛線是 10 與 90 分位。';
+  document.getElementById('t_cot').innerHTML='<table class="imq-table"><caption>表 2　投機淨部位與分位（資料到 '+D.cot.asof+'）</caption><thead><tr><th>市場</th><th>淨部位 %OI</th><th>五年分位</th><th>三年分位</th><th>4 週變化</th><th>13 週變化</th><th>狀態</th></tr></thead><tbody>'+
+    C.map(function(m){var cls=m.pct5y>=90?' class="h2"':m.pct5y<=10?' class="l2"':m.pct5y>=75?' class="h1"':m.pct5y<=25?' class="l1"':'';return '<tr><td>'+esc(m.zh)+'</td><td>'+f1(m.latest)+'</td><td'+cls+'>'+f1(m.pct5y)+'</td><td>'+f1(m.pct3y)+'</td><td class="'+(m.d4w>0?'pos':m.d4w<0?'neg':'')+'">'+f1(m.d4w)+'</td><td class="'+(m.d13w>0?'pos':m.d13w<0?'neg':'')+'">'+f1(m.d13w)+'</td><td>'+esc(m.band)+'</td></tr>';}).join('')+'</tbody></table>';
+  var g=document.getElementById('cot-grid');
+  g.innerHTML=C.map(function(m){var pc=m.pct5y>=90?'hotp':m.pct5y<=10?'coldp':'';return '<div class="mini"><div class="mini-t">'+esc(m.zh)+'<span class="'+pc+'">'+f1(m.latest)+'% · 分位 '+f0(m.pct5y)+'</span></div><div class="cbox" style="--h:120px;--hm:110px"><canvas id="cot_'+m.code+'"></canvas></div></div>';}).join('');
+  C.forEach(function(m){BUILD['cot_'+m.code]=cotMini(m);});
+  /* AAII／NAAIM 說明 */
+  if(D.aaii.latest){var A=D.aaii;document.getElementById('cap_aaii').textContent='最新 '+A.latest.date+'：多空差 '+f1(A.latest.spread)+'（看多 '+f1(A.latest.bull)+'%、看空 '+f1(A.latest.bear)+'%），1987 年起分位 '+f0(A.pct_all)+'%，連續 '+A.streak+' 週'+(A.streak_sign>0?'偏多':'偏空')+'。平均 '+f1(A.mean_spread)+'、標準差 '+f1(A.sd_spread)+'。';}
+  if(D.naaim.latest){var N=D.naaim;document.getElementById('cap_naaim').textContent='最新 '+N.latest.date+'：平均曝險 '+f1(N.latest.mean)+'%，2006 年起分位 '+f0(N.pct_all)+'%；第一四分位 '+f1(N.latest.q1)+'%、第三四分位 '+f1(N.latest.q3)+'%。';}
+  /* ETF 流量表 */
+  var E=D.flows.etfs;var keys=Object.keys(E);
+  if(keys.length){
+    var months=[];keys.forEach(function(k){E[k].monthly.forEach(function(mv){if(months.indexOf(mv[0])<0)months.push(mv[0]);});});months.sort();months=months.slice(-6);
+    var order=['SPY','XLK','XLC','XLY','XLP','XLE','XLF','XLV','XLI','XLB','XLRE','XLU','SMH'].filter(function(k){return E[k];});
+    var cell=function(v,aum){if(v==null)return '<td>—</td>';var p=aum?100*v/aum:0;var cls=p>=3?' class="h2"':p>=1?' class="h1"':p<=-3?' class="l2"':p<=-1?' class="l1"':'';return '<td'+cls+'>'+f0(v/100)+'</td>';};
+    document.getElementById('t_flows').innerHTML='<table class="imq-table"><caption>表 3　月淨申購（億美元；底色＝占資產 ±1%、±3%）與近四週、近十三週占資產比例</caption><thead><tr><th>ETF</th>'+months.map(function(m){return '<th>'+m.slice(2).replace('-','/')+'</th>';}).join('')+'<th>近 4 週 %</th><th>近 13 週 %</th><th>資產（億美元）</th></tr></thead><tbody>'+
+      order.map(function(k){var e=E[k];var mm={};e.monthly.forEach(function(mv){mm[mv[0]]=mv[1];});return '<tr><td>'+esc(e.zh)+'<span class="muted"> '+k+'</span></td>'+months.map(function(m){return cell(m in mm?mm[m]*1e0:null,e.aum_usd_m);}).join('')+'<td class="'+(e.flow_4w_pct_aum>0?'pos':'neg')+'">'+f1(e.flow_4w_pct_aum)+'</td><td class="'+(e.flow_13w_pct_aum>0?'pos':'neg')+'">'+f1(e.flow_13w_pct_aum)+'</td><td>'+f0(e.aum_usd_m/100)+'</td></tr>';}).join('')+'</tbody></table>';
+    if(E.SMH){var s=E.SMH;document.getElementById('cap_smh').textContent='資料到 '+s.asof+'：近四週淨申購 '+f1(s.flow_4w/100)+' 億美元（占資產 '+f1(s.flow_4w_pct_aum)+'%），近十三週 '+f1(s.flow_13w/100)+' 億。';}
+  }
+}
+var BUILD={c_fms:chartFms,c_cash:chartCash,c_cotbar:chartCotBar,c_aaii:chartAaii,c_naaim:chartNaaim,c_smh:chartSmh};
+function draw(){
+  var wide=window.innerWidth>=600;lastWide=wide;
+  charts.forEach(function(ch){ch.destroy();});charts=[];
+  var c=P();
+  Object.keys(BUILD).forEach(function(id){var cvs=document.getElementById(id);if(!cvs)return;
+    try{var cfg=BUILD[id](c,wide);if(cfg)charts.push(new Chart(cvs,cfg));else{var b=cvs.parentNode;b.style.height='auto';b.innerHTML='<p class="muted">這個序列還沒有資料。</p>';}}catch(e){console.error('chart '+id,e);}});
+}
+function fail(){document.querySelectorAll('figure.chart .cbox').forEach(function(b){b.style.height='auto';b.innerHTML='<p class="muted">資料沒讀到。</p>';});}
+if(typeof Chart==='undefined'){fail();return;}
+fetch(DATA_URL,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
+  .then(function(j){D=j;buildDom();draw();
+    var mq=window.matchMedia('(prefers-color-scheme: dark)');
+    if(mq.addEventListener)mq.addEventListener('change',draw);else if(mq.addListener)mq.addListener(draw);
+    new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+    var t=null;window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(function(){if((window.innerWidth>=600)!==lastWide)draw();},200);});
+  }).catch(function(e){console.error('crowding dash',e);fail();});
+})();
+</script>
 
 </body>
 </html>

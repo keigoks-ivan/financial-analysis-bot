@@ -229,16 +229,11 @@ DS 觸發語現一律觸發 `industry-analyst`；legacy DS 維護走 `id-review 
 
 當用戶說「跑擁擠交易監測」/「crowding monitor」/「擁擠交易月報」/「新一期 crowding」/「positioning monitor」時，自動觸發 `crowding-monitor` skill（`.claude/skills/crowding-monitor/`）。
 
-**定位**：消費端 skill — 產出新一期 `docs/crowding/CROWDING_YYYYMMDD.html`，把週更資料層＋情緒/資金流 web 掃描（FMS／Flow Show／GS positioning／AAII／VIX-SKEW）收斂成三層代理三角測量。**與首頁風險儀表同家族——描述器（describer）非擇時訊號**，衡量部位集中與下方緩衝、放大回撤與相關性，不預測轉折時點。
+**定位（2026-11-01 起 v2.0）**：`/crowding/` 是一頁持續更新的儀表，不再出月刊（創刊號 `CROWDING_20260705.html` 留作檔案）。五個來源：BofA 基金經理人調查的最擁擠交易與現金水位（月）、CFTC 15 市場投機部位（週）、AAII 散戶（週，1987 起）、NAAIM 顧問曝險（週，2006 起）、S&P 500 與 11 個產業 ETF 加 SMH 的資金流（日）。每條有歷史序列與現在的分位，狀態列由程式依分位自動產生。**描述器非擇時訊號**，不給買賣指令。
 
-**輸出**：
-- HTML：`docs/crowding/CROWDING_{YYYYMMDD}.html`（noindex；規格對齊創刊號 `CROWDING_20260705.html`：Exhibit 編號制、named trades 含 unwind 觸發器、COT 儀表、主題熱力圖、§7 組合 read-through 用 GRP／三軌語言禁 IRR 排序禁買賣指令、反向掃描、方法論血統與 gaps）
-- 索引：`docs/crowding/index.html` 期刊列表最上方 insert 卡片（不動 `<!-- CROWDING_AUTO_DASH_*-->` 標記間內容）
-- 上站路徑：`https://research.investmquest.com/crowding/`
+**誰更新**：`scripts/crowding/fetch_sentiment.py`（抓 AAII／NAAIM 官方 Excel）＋`scripts/crowding/build_dash.py`（組 `docs/crowding/data/dash.json`、累積 `data/crowding_monitor/etf_flows_daily.csv`）掛在 `intel-2-daily.yml` 週日步驟，接在 `build_crowding.py`（COT 與 `latest.json`，detective 仍在讀）之後。skill 的人工工作只有兩件：每月中旬補 `docs/crowding/data/bofa_fms_monthly.csv` 一列；數字換區間時在 `docs/crowding/data/readings.json` 寫一則幾句話的判讀。細節見 skill。
 
-**週更 pipeline（另一 owner，skill 唯讀）**：`scripts/build_crowding.py`＋`.github/workflows/crowding-weekly.yml` cron 每週產 `docs/crowding/data/latest.json`（COT 15 市場＋64+ 主題分數＋15 檔 ETF＋gaps），並替換 index.html 的 AUTO_DASH 標記間即時儀表。**skill 不改 pipeline／data/／workflow。**
-
-**硬規則**：中文標點全形；描述器定位禁買賣指令句；§7 GRP／三軌語言禁 IRR 排序；COT as-of 與各層時效必標；低信心數據掛 lo、未取得數值進 gaps 不捏造；無鷹架語言；發布前 self-review gate（三重檢查）；git flow＝預設停下複審、持有人說 push 才 commit（比照 expectations-synthesis）。
+**硬規則**：中文全形；描述器定位禁買賣指令句；每個數字帶日期與來源、找不到留空不捏造；不改 `build_crowding.py` 的 COT 與主題分數部分；只 add 自己動的檔；commit 前跑 `scripts/qc.py`。
 
 ## Workflow: 市場監測解讀（monitor-read）
 

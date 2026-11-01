@@ -74,7 +74,7 @@ jobs:
       #   kill-watch-weekly: requests
       #   intel-daily:      feedparser pyyaml requests beautifulsoup4 yfinance
       - name: Install dependencies (union of all chained workflows)
-        run: pip install "yfinance>=0.2.40" pandas requests openpyxl feedparser pyyaml beautifulsoup4
+        run: pip install "yfinance>=0.2.40" pandas requests openpyxl feedparser pyyaml beautifulsoup4 xlrd  # xlrd：AAII 的 sentiment.xls（scripts/crowding/fetch_sentiment.py）
 
       - name: Compute dates and weekly-gate
         run: |
@@ -157,6 +157,9 @@ jobs:
               ok=$((ok+1))
             fi
           done
+          # 擁擠交易儀表（/crowding/）：抓 AAII／NAAIM 官方檔，再組 dash.json；失敗只警告、保留上週的檔
+          python scripts/crowding/fetch_sentiment.py || echo "::warning::fetch_sentiment failed — keeping previous csv"
+          python scripts/crowding/build_dash.py || echo "::warning::build_dash failed — keeping previous dash.json"
           T1=$(date +%s)
           if [ $ok -gt 0 ]; then outcome=success; else outcome=failure; echo "::warning::crossasset failed, keeping yesterday's files"; fi
           echo "crossasset|$outcome|$((T1-T0))" >> /tmp/chain_status.txt
@@ -361,7 +364,8 @@ jobs:
             data/rotation_bench.json \
             data/regime_prices.json \
             docs/crowding/data/latest.json \
-            docs/crowding/index.html \
+            docs/crowding/data/dash.json \
+            data/crowding_monitor \
             docs/rotation/data/latest.json \
             docs/rotation/index.html \
             docs/regime/data/latest.json \

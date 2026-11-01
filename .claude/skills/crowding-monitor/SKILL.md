@@ -1,103 +1,50 @@
 ---
-
-**2026-09-02 增補（持有人拍板「判讀必留命題」）**：每次判讀至少 1 條、至多 3 條帶 resolver＋p 的命題進預測帳簿，由本 skill 自行給 p、跑 `scripts/ledger_from_editorial.py` 落帳（命題檔放 `knowledge/editorial_drafts/`）；沒有命題＝判讀未完成。詳見硬規則末條與 schema 的 `forecasts[]`。設計稿：`notes/site-internal/root/_market_cockpit_design_20260902.md` §3。
 name: crowding-monitor
-description: 產出新一期「跨資產擁擠交易監測」HTML（docs/crowding/CROWDING_YYYYMMDD.html）並在期刊列表插卡。消費端 skill——假設 docs/crowding/data/latest.json 由週更 pipeline（build_crowding.py）維護（COT 15 市場＋64+ 主題擁擠分數＋15 檔跨資產 ETF＋gaps）。skill 職責＝把最新資料層＋情緒/資金流 web 掃描（BofA FMS／Flow Show／GS Prime positioning／AAII／VIX-SKEW，每主題 3-5 輪 WebSearch，每個數字帶來源日期與信心）收斂成三層代理三角測量：Exhibit 編號制的 named trades（含 unwind 觸發器與狀態）、COT positioning 儀表、主題擁擠熱力圖、機構 vs 散戶分岔、對本站組合的 read-through（GRP／三軌語言，禁 IRR 排序、禁買賣指令）、反向掃描、方法論血統與 gaps 誠實列出。定位＝描述器非擇時訊號，與首頁風險儀表同家族。觸發：用戶說「跑擁擠交易監測」「crowding monitor」「擁擠交易月報」「新一期 crowding」「positioning monitor」。
-version: v1.0
-date: 2026-07-05
+description: 維護「跨資產擁擠交易監測」儀表頁（docs/crowding/index.html，上站 /crowding/）。v2.0（2026-11-01）起不再出月刊：頁面是一頁持續更新的儀表（BofA 基金經理人調查最擁擠交易與現金水位、CFTC 15 市場投機部位、AAII 散戶、NAAIM 顧問曝險、S&P 500 與 11 個產業 ETF 加 SMH 的資金流），歷史序列與現在的分位由 CI 每週日自動更新。skill 的工作只有兩件：每月中旬 BofA 調查出來後補一列 CSV；數字換區間時寫一則幾句話的判讀。觸發：「跑擁擠交易監測」「crowding monitor」「更新擁擠交易」「補 FMS」「寫擁擠判讀」「positioning monitor」。
+version: v2.0
+date: 2026-11-01
 changelog:
-  - v1.0 (2026-07-05)：initial release。報告規格固化自創刊號 docs/crowding/CROWDING_20260705.html（三層代理三角、Exhibit 編號制、8 筆 named trades、§7 GRP／三軌 read-through）。
+  - v2.0 (2026-11-01)：持有人不滿意月刊式呈現（兩萬字、15 張 Exhibit、英文術語、只出過一期），改成一頁持續更新的儀表＋短判讀。創刊號 CROWDING_20260705.html 保留為檔案，不再出期刊。資料層新增 AAII／NAAIM／BofA FMS 月序列／ETF 資金流累積檔。
+  - v1.0 (2026-07-05)：月刊格式（已退役）。
 ---
 
-# Workflow: crowding-monitor（跨資產擁擠交易監測 · 月度敘事）v1.0
+# crowding-monitor v2.0 — 擁擠交易儀表的維護
 
-> **定位**：消費端 / 綜合層 skill。資料層（COT 15 市場、64+ 主題擁擠分數、15 檔跨資產 ETF、資料 gaps）由**週更 pipeline** `scripts/build_crowding.py` 產出至 `docs/crowding/data/latest.json`——**本 skill 不重算擁擠引擎、不抓 COT、不動 pipeline**。skill 的價值＝把 latest.json 的資料層，疊上**情緒/資金流的 web 掃描**與**對本站組合的 read-through**，收斂成一期可讀的敘事。
->
-> **與首頁風險儀表同家族**：本監測是**描述器（describer），不是擇時訊號（timing signal）**。擁擠度衡量部位集中與下方緩衝，放大回撤幅度與相關性，**不預測轉折時點**。這是本站對風險儀表的既定裁決語言。
+## 定位
+`/crowding/` 回答「現在誰站在同一邊，那一邊有多滿」。描述器，不是擇時訊號：擁擠衡量下方緩衝有多薄、反轉時同向的人有多少，不預測轉折時點。頁面不給買賣指令。
 
----
+## 兩層結構（誰管什麼）
 
-## 環境常數（已鎖定）
+| 層 | 檔案 | 誰更新 | 頻率 |
+|---|---|---|---|
+| 儀表資料 | `docs/crowding/data/dash.json` | `scripts/crowding/build_dash.py`（CI `intel-2-daily.yml` 週日步驟） | 每週日 |
+| AAII、NAAIM | `data/crowding_monitor/aaii_weekly.csv`、`naaim_weekly.csv` | `scripts/crowding/fetch_sentiment.py`（同一 CI 步驟，抓官方 Excel） | 每週日 |
+| CFTC COT | `data/cot_history.json` | `scripts/build_crowding.py`（原有 pipeline，也產 `latest.json` 給 detective） | 每週日 |
+| ETF 資金流 | `data/crowding_monitor/etf_flows_daily.csv`（累積檔） | `build_dash.py` 從 `data/etf_dash/flows/*.jsonl` 累積（etf-dash 只留 200 天） | 每週日 |
+| BofA 基金經理人調查 | `docs/crowding/data/bofa_fms_monthly.csv` | **本 skill，人工** | 每月中旬 |
+| 判讀 | `docs/crowding/data/readings.json` | **本 skill，人工** | 數字換區間時 |
+| 頁面 | `docs/crowding/index.html` | 靜態；本體與圖表程式改了要整頁重組 | 很少 |
 
-- **輸入資料層**：`docs/crowding/data/latest.json`（週更 pipeline 維護；schema 含 COT 15 市場 net %OI 與 5y/3y 百分位＋Δ4w/Δ13w、64+ 主題 A/B/C/E 維度分數與覆蓋、15 檔 ETF 自身百分位、gaps 清單、各層 as-of）。**pipeline 是另一個 owner——本 skill 唯讀 latest.json，絕不改 build_crowding.py／data/／workflow。**
-- **輸出報告**：`docs/crowding/CROWDING_{YYYYMMDD}.html`（noindex；視覺規格見下方「報告規格」，對齊創刊號 `CROWDING_20260705.html`）。
-- **期刊索引**：`docs/crowding/index.html`——在 `<ul class="reports">` **最上方** insert 新一期 `<li>` 卡片（三行 lede：本期主軸 · 跨資產極端 · 情緒結構）；把前一期的 `<span class="vol-tag">最新</span>` 拿掉。**不要動** `<!-- CROWDING_AUTO_DASH_START -->`／`<!-- CROWDING_AUTO_DASH_END -->` 之間的內容（那是 pipeline 管的即時儀表區）。
-- **決策時 critic**（repo 規則）：§7 對本站組合下判讀前，spawn `industry-thesis-critic` 對重疊的擁擠 cluster 對應 ID 冷讀，存 `notes/site-internal/id/_critic_Crowding_{YYYYMMDD}.md`（repo-root notes/，不進 published docs/）。
-- **git flow**：**預設停下複審**——寫完、self-review gate 通過後**不自動 commit**；把本地路徑給持有人看，待持有人說 push 才走 commit flow（比照 expectations-synthesis 政策）。push 前 `git pull --rebase`；只 `git add` 本期真正要動的三個檔（新報告 HTML＋`docs/crowding/index.html`＋critic md），**不盲 `git add -A`**。
+正本副本：AAII／NAAIM／ETF 累積檔正本在本 repo（CI 寫），`~/v7-backtest/data/crowding_monitor/` 是副本；BofA 月序列正本在本 repo `docs/crowding/data/`，v7 同名資料夾放副本。
 
----
+## 每月工作：補 BofA 調查
+1. BofA Global Fund Manager Survey 每月第二或第三個星期二發布。用 WebSearch 搜 `"most crowded trade" "fund manager survey" <月份> <年>`，Reuters、Bloomberg、CNBC、ZeroHedge、Investing.com 與 Hartnett 相關的 X 貼文都會轉。
+2. 在 `docs/crowding/data/bofa_fms_monthly.csv` 末尾加一列。欄位：`survey_month,publish_date,top_trade,top_pct,second_trade,second_pct,third_trade,third_pct,cash_pct,source,tier,note`。`top_trade` 用 BofA 原文英文（例如 `Long global semiconductors`）；`tier` 一手＝報告原文或原圖轉述、二手＝媒體文字；找不到的欄位留空，不猜；兩個來源數字不同時 `note` 寫明。數字不用千分位，文字含逗號用雙引號。
+3. 跑 `python3 scripts/crowding/build_dash.py`，確認輸出列的 FMS 覆蓋多了一個月。
+4. 把 CSV 複製一份到 `~/v7-backtest/data/crowding_monitor/`。
 
-## 觸發
+## 數字換區間時：寫判讀
+`docs/crowding/data/readings.json` 是陣列，最新在最前：`{"date":"YYYY-MM-DD","title":"一句話","body":["段落","段落"]}`。寫之前先載入 `~/.claude/skills/zh-analyst-prose/SKILL.md`。
+- 只在狀態列的「極端」出現或消失、第一名交易換人、現金穿過 4% 或 5%、AAII 穿過 ±1σ 時寫；平常不寫。
+- 三到五句：變了什麼、五個來源同向還是分歧、對本站指數部位的意思只能是「規則照舊」或「看某個查核點」，不寫買賣指令。
+- 每句錨定頁面上的數字與日期。
+- 舊判讀不刪，頁面自動折疊。
 
-- 「跑擁擠交易監測」「crowding monitor」「擁擠交易月報」「新一期 crowding」「positioning monitor」
+## 改頁面本體
+本體與圖表程式在組裝時寫入 `docs/crowding/index.html`（樣板頁首、樣式、選單取自 `docs/ideas/anthropic-ipo.html` 1～176 行）。改文字直接改 HTML 即可；改圖表邏輯改 `<script>` 段。改完 `python3 scripts/qc.py docs/crowding/index.html`，本機 `python3 -m http.server 8765 --bind 127.0.0.1`（cwd docs/）開 `http://127.0.0.1:8765/crowding/` 看圖有沒有畫、主控台有沒有錯。
 
-**不觸發**：純資訊查詢（「擁擠交易是什麼」「creowding 怎麼算」——直接解釋）；要單檔 DD（→ stock-analyst）；要產業深度（→ industry-analyst）。
-
----
-
-## Pipeline（六步）
-
-### Step 0 — 載入資料層 + 確認時效
-1. 讀 `docs/crowding/data/latest.json`。抽出三個資料塊：COT 15 市場、主題擁擠分數（可評分數 / 覆蓋標記）、15 檔 ETF 自身百分位；並記下 `gaps[]` 與**各層 as-of**（COT as-of、主題引擎 as-of、ETF as-of）。
-2. **時效硬規則**：COT 常因假期順延（如 6/30 期因 7/4 順延）。以 latest.json 提供的 as-of 為準，**報告開頭與各表 tbl-src 必標 as-of**；若 COT 已非本週，明說「最新讀數已是 N 天前，短期翻轉可能未反映」。
-3. 若 latest.json 缺失或 pipeline 尚未跑，**停下並回報**（不要自己捏資料層）。
-
-### Step 1 — 情緒／資金流 web 掃描（層三）
-對下列每個主題跑 **3-5 輪 WebSearch/WebFetch**，抽數字時**每個數字帶來源＋as-of 日期＋信心分級**（high＝原文/多源一致；med＝單一二手源或稍舊；low＝方向性推論）：
-- **BofA FMS**（最新月）：最擁擠交易排名、現金水位、股票 overweight、尾部風險排序、Bull & Bear Indicator。
-- **BofA Flow Show**（最新週）：科技/美股/債券/現金週度資金流、record 級進出、比特幣 ETF 流向。
-- **GS Prime**（最新月）：對沖基金總槓桿、板塊淨曝險（半導體等）、downside protection 語言、crowding/concentration 面板。
-- **散戶端**：AAII bull/bear spread（連續數週偏空與否）、CNN Fear & Greed、NAAIM 曝險、equity put/call。
-- **尾部定價**：VIX 收盤、SKEW、VIX/VXV 期限結構。
-- 對每個**未取得**的官方數值（如 FMS equity allocation z-score、GS crowding index 單一讀數），列入 §9 gaps 誠實清單，**不要硬編**。
-
-### Step 2 — 組合 recon（供 §7 read-through）
-1. 讀 `docs/engine/arena.json`（**甲線權威**：`core_seats`／`sat_seats`／`core_bench`）＋ `docs/picks/candidates.json`（`official_baofa`＝乙線循環）＋ stock sleeve handoff（三軌：核心複利／衛星結構／衛星循環）。**2026-07-29 起 candidates.json 已無 `official_changhao`**（長熬組退役，職能與 GRP 席位重疊）——甲線名字只從 arena.json 取，勿再找長熬榜。
-2. 對每個持倉，用 latest.json 的主題引擎排名，標出**所屬主題（排名／分數／覆蓋）**與**擁擠讀數**（分數＋覆蓋信心的定性合成）。
-3. 對重疊最深的擁擠 cluster 對應 ID，spawn `industry-thesis-critic` 冷讀（見環境常數）。
-
-### Step 3 — 合成報告（填規格，見下方「報告規格」）
-把三層收斂。核心敘事＝**三角測量**：三層同向時讀數 robust；三層分歧時（如黃金 COT 偏多 vs ETF 動能鈍化）**誠實標記為不明，不硬給結論**。
-
-### Step 4 — 期刊索引插卡
-`docs/crowding/index.html` 的 `<ul class="reports">` 最上方 insert 新 `<li>`；前一期移除 `最新` tag。
-
-### Step 5 — self-review gate（發布前三重檢查，比照 earnings-synthesis v1.1）
-**寫稿後、給持有人前**逐項過（任一不過就回頭改，不放行）：
-1. **時效與來源**：每個數字都有來源＋as-of？COT as-of 與各層時效在報告開頭與各表都標了？低信心數據都掛了 lo 標記？未取得的數值都進了 §9 gaps 而非被捏造？
-2. **口吻與定位**：全報告零「應買入／應賣出／加碼／減碼」指令句？§7 用 GRP／三軌語言、無 IRR 排序語言？描述器定位在 mandate 與各章重申？無鷹架語言（「本版補齊」「先前漏掉」「更新」「changelog」等）？
-3. **一致性**：Exhibit 1 named trades 的狀態與 Exhibit 2/3 的數字互相對得上？§7 持倉的主題歸屬與 Exhibit 3 排名一致？中文字後標點全形？
-
-### Step 6 — 停下複審 / git flow
-預設**停下**，把本地路徑給持有人。持有人說 push 才 `git pull --rebase` → `git add` 三檔 → commit（訊息格式 `Add crowding monitor: Vol.N YYYY-MM-DD`）→ push main。
-
----
-
-## 報告規格（固化自創刊號，對齊 `CROWDING_20260705.html`）
-
-視覺與 CSS 直接沿用創刊號（深色主題為主＋light media query；`.exec`／`.tbl-wrap`／`.bar`／`.status`／`.callout`／`.src` 等 class）。結構固定如下：
-
-1. **報告頭**：kicker（`Cross-Asset Crowding Monitor · 第 N 期`）＋ h1「跨資產擁擠交易監測」＋ report-meta（發布日＋**COT as-of＋主題引擎 as-of＋情緒/資金流截止日**，三層時效並列）＋ **mandate 段**（描述器非擇時的既定裁決語言）。
-2. **執行摘要**：`.exec` 有序清單，本期 3-5 條判讀，首條 `.hero`。每條數字內嵌 `.src` 來源＋信心。
-3. **Exhibit 1｜named trades**：把三層收斂成 6-8 筆**具名交易**，每筆欄位＝交易／方向／擁擠證據（跨源引用）／5y 百分位·主導維度／**unwind 觸發器（具體事件或數字）**／狀態。狀態詞彙固定：`building`（部位仍累積）／`peak`（已極端）／`unwinding`（去化中）／`extreme-contra`（極端但方向為空）／`structural`（結構長存）。附「如何讀這張表」callout：擁擠 ≠ 錯，擁擠告訴你下方緩衝多薄、什麼事件抽掉緩衝。
-4. **Exhibit 2｜COT positioning 儀表**：15 市場 net %OI ＋方向＋5y/3y 百分位（bar 顏色＝擁擠熱度）＋Δ4w/Δ13w；極端旗標於 5y ≥90 或 ≤10。附「儀表判讀」與「延伸：15 檔跨資產 ETF 自身百分位」子表。tbl-src 必標 COT as-of 與假期順延情形。
-5. **Exhibit 3｜主題擁擠熱力圖**：latest.json 的 64+ 主題（依綜合分數排序）＋A 動能／B 相關／C 上修／E 共識四維＋覆蓋率＋主導維度。**覆蓋薄弱（cov≤5 或 <40%）標 ⚠ 並註明「僅方向性」**；D 量能維度若 NULL 要在方法論說明。附 Top/Bottom 深讀（高信心 vs 低覆蓋分流）。
-6. **§情緒與資金流：機構 vs 散戶分岔**：機構端（擁擠且高槓桿）vs 散戶端（AAII/CNN/put-call）雙卡＋尾部定價背離（VIX 低 vs SKEW 高）＋資金流急轉 callout＋**跨源張力誠實標記**（訊號不一致處攤開，不強行調和）。
-7. **§對本站組合的 read-through**（最需誠實的一章）：(a) 持倉 × 擁擠 cluster 重疊表；(b) 擁擠對持倉的具體後果（回撤放大／相關上升同跌／天然低擁擠對沖）；(c) 哪些 unwind 觸發器是 DD §13 級證偽、哪些只是波動。**硬規則見下。**
-8. **§反向掃描**：投機與動能雙低的資產＋「若要反向需先看到什麼」（描述器，非進場建議；低擁擠 ≠ 該買）。
-9. **§方法論附錄與資料血統**：逐層列 as-of／侷限／已知缺口；三角測量邏輯（同向 robust、分歧標不明）；**gaps 誠實清單**（未取得的官方數值逐項列）。收尾 disclaimer＋footer（`描述器非擇時`）。
-
----
-
-## 硬規則（寫進每一期）
-
-- **中文標點全形**：中文字之後一律全形（，。：；「」）；數字/英文與單位之間照原樣。發布前跑一次標點正規化檢查。
-- **描述器非擇時**：全報告零買賣指令句（「應買入／賣出／加碼／減碼／進場／清倉」皆禁）。只描述**擁擠度、脆弱性、unwind 觸發器**。mandate 與各章重申此定位。
-- **§7 語言鐵律**：對本站組合的 read-through **只用 GRP／三軌語言**（高成長×EPS 上修×股價位置三閘、核心複利／衛星結構／衛星循環）。**禁 IRR 排序語言、禁買賣指令**。本站賣出紀律是 thesis 級（DD pre-mortem／複審觸發表證偽），擁擠度**不是**那個扳機——明說「擁擠告訴持有人回撤會更深、成員會同跌，唯一該重審的是 thesis 級破裂，不是任何一次 positioning 洗盤」。
-- **時效必標**：COT as-of 與各層資料時效在報告開頭與各表 tbl-src 都要標；COT 若非本週，明說落後天數與「短期翻轉可能未反映」。
-- **信心分級必標**：每個 web 數字掛 high／med／lo；未取得的官方數值進 §9 gaps，**不捏造**。
-- **覆蓋率誠實**：主題引擎覆蓋薄者標 ⚠「僅方向性」；區分「相對排名」與「絕對水位」（45 分不代表市場不擁擠，只代表比此宇宙的 AI cluster 不擠）。
-- **無鷹架語言**：不出現「本版補齊／先前漏掉／更新／changelog」等 stingtao 殘留；報告是獨立成期的一份判讀。
-- **不動 pipeline 疆界**：唯讀 latest.json；不改 build_crowding.py、data/、`docs/crowding/data/`、workflow，也不改 index.html 的 AUTO_DASH 標記間內容。
-- **判讀必留命題（2026-09-02 持有人拍板）**：每期報告另存 `knowledge/editorial_drafts/crowding_{YYYYMMDD}.json`（schema 同 monitor-read 的 `forecasts[]`：claim／p／horizon_days／resolver／why，1–3 條，把 named trades 的 unwind 觸發器數值化成可判命題；**p 由本 skill 自己給**），跑 `python scripts/ledger_from_editorial.py --source crowding-monitor --file knowledge/editorial_drafts/crowding_{YYYYMMDD}.json --write`。此檔不在 `docs/crowding/data/`，故不違反「不動 pipeline 疆界」。沒有命題＝該期未完成。kill 登 rule_ledger（SPRT）。
-- **白話呈現條款（2026-09-01 持有人拍板，全站適用）**：所有輸出給讀者的顯示文字遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——①白話為主、術語為輔（對照表已定白話主名的詞一律用白話主名，原代號降小字或首現括號）；②新造術語前先查表，表上沒有的要先照鐵律③讀機制查證、定白話名並回寫對照表；③解釋深入淺出：每個承重判斷用讀者能懂的話講一遍，不堆行話。
+## 硬規則
+- 中文全形標點；描述器定位，禁買賣指令句。
+- 每個數字帶日期與來源；找不到就留空，不捏造。
+- 不改 `scripts/build_crowding.py` 的 COT 與主題分數部分（detective 在讀 `latest.json`）。
+- git：只 add 自己動的檔（CSV、readings.json、index.html），不 `git add -A`；commit 前跑 `scripts/qc.py`。
