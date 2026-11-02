@@ -151,3 +151,12 @@ def test_valdep_override_uses_scenario_meta(tmp_path):
     assert json.loads((tmp_path / "judgment.json").read_text())["decision_inputs"]["valuation_dependent"] is True
     assert ctx.manifest["mechanical_overrides"][0]["judge"] is False
     assert run._valdep_override(ctx) is False  # 已一致就不動
+
+
+def test_q_section_at_top_level_moved_into_answers():
+    # STRL 2026-11-03：answers 提早收尾，q6_how_wrong 落在頂層
+    obj = {"answers": {"q1_business": {"verdict": "ok"}}, "q6_how_wrong": {"verdict": "x"}}
+    out, changes = run.normalize_v20(obj)
+    assert "q6_how_wrong" not in out
+    assert out["answers"]["q6_how_wrong"] == {"verdict": "x"}
+    assert any("誤置於頂層" in c for c in changes)

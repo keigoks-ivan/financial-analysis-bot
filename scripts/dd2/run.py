@@ -1422,6 +1422,11 @@ def normalize_v20(obj, facts=None, date=None):
                 if k != host and k in hd and k not in ans:
                     ans[k] = hd.pop(k)
                     changes.append("answers.{0}: 誤置於 {1} 內 → 搬回 answers（內容不動）".format(k, host))
+        # STRL 2026-11-03：多一個 `}` 讓 answers 提早收尾，q6_how_wrong 落在頂層；頂層有、answers 沒有就搬進去。
+        for k in q_keys:
+            if k not in ans and isinstance(obj.get(k), dict):
+                ans[k] = obj.pop(k)
+                changes.append("answers.{0}: 誤置於頂層 → 搬進 answers（內容不動）".format(k))
         for k in ("scenario_inputs", "counter_evidence", "decision_inputs", "decision_out",
                   "thesis", "appendix_a", "eps_meta", "catalysts"):
             if k in ans and k not in obj:
@@ -1733,11 +1738,23 @@ def _gate_patch(ctx, st, clean, idx):
             and jp.get("$.decision_inputs.wait_for_price_condition"):
         jp["$.decision_inputs.wait_for_price"] = True
         st.setdefault("patch_normalize", []).append("wait_for_price: {0} → true（價格見 condition）".format(wfp))
+    # MPWR 2026-11-03：judged 段收尾時裁決／角色條目已依「當時」裁決改寫成反事實歸因（裁決沒變就沒有裁決條目）。
+    # patch 若翻動裁決，候選驗證會報「漂移未歸因 dca_verdict」整包退回。套用前先回到預留狀態
+    # （與下方套用後的重建同一套），驗證不過就還原原檔。
+    orig_text = jpath.read_text(encoding="utf-8")
+    pre = _load_json(jpath)
+    do_ = pre.get("decision_out") if isinstance(pre.get("decision_out"), dict) else {}
+    held = do_.pop("verdict", None)  # schema 要 verdict：只借拿掉來產生預留條目，產完放回；候選驗證會重算
+    pre, _ = program_drift_entries(ctx, pre, decision_out=None)
+    if held is not None:
+        do_["verdict"] = held
+    jpath.write_text(json.dumps(pre, ensure_ascii=False, indent=1), encoding="utf-8")
     applied, errors = ddreport._apply_patch_map(ctx.run_dir, patches)
     st.setdefault("patches", []).append({"round": idx, "requested": len(patches.get("judgment") or {}),
                                          "applied": applied, "errors": errors[:20]})
     ctx.save()
     if errors:
+        jpath.write_text(orig_text, encoding="utf-8")
         return False, "patch 驗證未過（原檔未動）：\n" + "\n".join(str(e)[:200] for e in errors[:10])
     # patch 可能改了 qc49_inherit_prior；前次裁決／角色與程式歸因條目照 judged 段同一套重建
     jpath = ctx.run_dir / "judgment.json"

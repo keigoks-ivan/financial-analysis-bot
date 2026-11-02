@@ -194,7 +194,31 @@ def strip_json(text):
             return json.loads(stripped[start:] + closers), None
         except json.JSONDecodeError:
             pass
+    # 2026-11-03（STRL）：多了一個 `}`，根物件提早收尾，後段變成 `,"key":…}` 的 Extra data。
+    # 只在根是物件、尾段以逗號接鍵開頭、尾段自成合法物件且鍵不重疊時合併；段落歸位交給 normalize_v20。
+    merged = _merge_extra_tail(snippet)
+    if merged is not None:
+        return merged, None
     return None, err
+
+
+def _merge_extra_tail(text):
+    """根物件提早收尾時，把尾段 `,"k":…}` 併回根物件；任何不合條件都回 None。"""
+    try:
+        obj, end = json.JSONDecoder().raw_decode(text)
+    except json.JSONDecodeError:
+        return None
+    rest = text[end:].lstrip()
+    if not isinstance(obj, dict) or not rest.startswith(","):
+        return None
+    try:
+        tail = json.loads("{" + rest[1:])
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(tail, dict) or set(tail) & set(obj):
+        return None
+    obj.update(tail)
+    return obj
 
 
 def _missing_closers(text):

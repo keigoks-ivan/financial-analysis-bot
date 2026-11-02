@@ -378,3 +378,16 @@ def test_strip_json_none_input_returns_error():
     obj, err = dd2_spawn.strip_json(None)
     assert obj is None
     assert err is not None
+
+
+def test_strip_json_extra_closing_brace_merges_tail():
+    # STRL 2026-11-03：多一個 `}` 讓根物件提早收尾，尾段 `,"k":…}` 併回根物件
+    text = '{"a": {"x": 1}}, "b": {"y": 2}}'
+    obj, err = dd2_spawn.strip_json(text)
+    assert err is None
+    assert obj == {"a": {"x": 1}, "b": {"y": 2}}
+
+
+def test_strip_json_extra_tail_with_duplicate_key_still_fails():
+    obj, err = dd2_spawn.strip_json('{"a": 1}, "a": 2}')
+    assert obj is None and err

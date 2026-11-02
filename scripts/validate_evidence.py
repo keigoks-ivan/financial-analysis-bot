@@ -80,7 +80,8 @@ VALID_DIRECTIONS = {"+", "0", "-"}
 VALID_STATUS = {"found", "none", "not_applicable"}
 
 # v16.2 新增：claim 內硬寫「現價 $N」字面數字 vs numbers.price_at_dd 對帳（CRDO 教訓）
-PRICE_MENTION_RE = re.compile(r"(?:現價約?|trading at)\s*\$\s*([\d,]+(?:\.\d+)?)", re.I)
+# 2026-11-03（VALE）：「平均實現價 $85/t」是商品實現價、不是股價——排除前面是「實」與數字後接「/單位」
+PRICE_MENTION_RE = re.compile(r"(?<!實)(?:現價約?|trading at)\s*\$\s*([\d,]+(?:\.\d+)?)(?![\d,.]|\s*/)", re.I)
 PRICE_MENTION_THRESHOLD_PCT = 10.0
 
 DATE_FORMATS = ["%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"]
