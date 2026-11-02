@@ -1,0 +1,412 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 FSLR（2026-11-03）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/FSLR_20261103/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：FSLR　日期：2026-11-03　archetype：None　前份裁決：2026-09-29　進場｜衛星　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1510B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（640B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（864B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1109B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（972B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（674B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（729B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2109B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（1306B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2566B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（283B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1510           3843-5490      5 條（2–6 內）  
+s3                  8000         640           5152-7360      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        2945          8438-12055      5 條（2–6 內）  
+s6                 11000         674          7228-10326      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         729           1940-2771      5 條（2–6 內）  
+s10                 5000        2109           2024-2891      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2566           2000-2434      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         283            852-1217      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=4520B；至少需散文≈40.48KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−2022
+−62
+−62%
+−55%
+−42
+−42%
+−12.86%
+−12%
+−6.7%
+−3.06
+−0.94
+−0.55%
+−0.44
+−0.24
+0
+0.03
+0.10
+0.11
+0.20
+0.25
+0.28
+0.29%
+0.30
+0.31
+0.32
+0.34
+0.35
+0.36
+0.38
+0.40
+0.5%
+0.5
+0.67%
+0.7
+0.75
+0.78
+01
+1
+1.0748
+1.1
+1.2
+1.4
+1.5
+1.5%
+1.56%
+1.8
+02
+2
+2%
+2.06
+2.1
+2.2
+2.42
+2.5
+2.5%
+2.6
+2.67%
+3
+3.0
+3%
+03
+3.1
+3.236
+3.41
+3.5
+04
+4
+4.2
+4.53%
+4.64%
+5
+5%
+05
+5.30
+06
+6
+6.5%
+6.7%
+7%
+07
+7
+7.84
+8
+8.8%
+09
+9%
+9
+9.3
+9.5
+10%
+10
+10.2%
+10.3
+10.5
+10.54
+11
+12%
+12
+13
+14
+14.21
+15
+15%
+15.28
+15.3
+16
+16.0
+16.00
+16.15
+16.5
+16.5%
+17%
+17.0
+17.48
+18
+18.2
+18.8
+19
+20
+20%
+21
+22.5
+23%
+23.3%
+23.51
+24
+25%
+25
+25.5
+26
+26.5
+27
+27.0
+27.8%
+28
+28.6%
+29
+29.65
+30
+30%
+32
+32%
+34.5%
+35%
+35
+35.56
+36
+36.51
+37%
+37
+37.3
+37.3%
+37.69%
+38
+39%
+39.19%
+40%
+40
+40.5%
+41
+42.4%
+42.5
+42.6%
+42.75%
+43.4
+44%
+44
+44.0
+44.2
+44.2%
+45%
+45
+46
+48
+48%
+48.2
+49
+49.25%
+50
+50.1
+51%
+51.6%
+52
+52.3
+52.7%
+54.47
+57%
+58%
+59.5
+60
+60%
+61%
+65.5
+70
+77%
+80%
+88
+90
+97%
+104
+135
+172.97
+175
+184.21
+200
+201
+214
+232
+250
+260
+262
+280
+400
+476
+494
+529
+624
+650
+2022
+2023
+2024
+2025
+2026
+2027
+2028
+2029
+2030
+2031
+20261103
+5,000
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"FSLR","date":"2026-11-03","schema":"v15.0","contract":"v19","company_name":"First Solar, Inc."},"oneliner":"獲利幾乎全靠45X抵減與232保護；FY2026E本益比10.5倍看似便宜，但在手訂單九個月降12%、新簽轉慢，232生效後兩季訂單數據出來前不加碼","thesis":{"H":[{"id":"H1","text":"Section 232生效後，美國本土製模組的新簽單價明顯高於在手訂單均價（約0.31美元／瓦），且量能恢復","2y":"2027年美國新簽單價≥0.38美元／瓦、單季新簽≥2 GW","5y":null,"10y":null,"threshold":"連兩季美國新簽各≥2 GW且單價≥0.38美元／瓦","source":"季報新聞稿與法說會新簽數據；商務部232最低進口價公告","drift_rule":"新簽單價連2季低於0.36美元（約低5%）為削弱，連3季低於0.34美元（約低10%）為反轉"},{"id":"H2","text":"美國產能占比升到約80%加上CuRe技術加價，含45X的毛利率在FY2027維持45%以上","2y":"FY2027全年毛利率≥45%","5y":null,"10y":null,"threshold":"TTM毛利率≥45%（目前49.25%）","source":"10-Q／10-K損益表；法說會毛利拆解","drift_rule":"TTM毛利率連2季低於42.75%（低5%）為削弱，連3季低於40.5%（低10%）為反轉"},{"id":"H3","text":"2029年後美國可售產能能以不低於在手訂單均價的條件簽滿，在手訂單止跌","2y":null,"5y":"2029–2031年美國廠稼動率維持九成以上，在手訂單回到45 GW以上","10y":null,"threshold":"在手訂單≥40 GW，且2027年起年度新簽對出貨比≥1","source":"季報在手訂單GW、合約金額與交貨年度分布","drift_rule":"在手訂單連4季低於門檻5%以上（38 GW）為削弱，連6季低於門檻10%以上（36 GW）為反轉"}],"R":[{"id":"R1","text":"232保護被豁免、囤貨與第三國繞道稀釋，新單價格發現失敗，客戶持續延後採購","h_ref":"H1","clock":"⚡","threshold":"2027Q1前出現大範圍豁免或最低進口價下調，或連2季美國新簽少於1.5 GW","evidence_refs":["regulatory_antitrust#0","supply_demand_durability#0","supply_demand_durability#1","end_markets#7"]},{"id":"R2","text":"2028年底安全港期限後美國公用事業級需求斷層，加上地方暫停令與電池漲價，2029年後產能簽不滿","h_ref":"H3","clock":"🔥","threshold":"在手訂單連4季下滑且跌破38 GW","evidence_refs":["cyclical_inventory_price_position#3","capital_markets_pricing#0","supply_demand_durability#7","capital_markets_pricing#1","capital_markets_pricing#2"]},{"id":"R3","text":"矽晶TOPCon效率持續拉開、美國本土矽晶產能放量，CdTe溢價縮小","h_ref":"H2","clock":"🐢","threshold":"美國新簽對市場中位價的溢價收斂到0.03美元／瓦以內，或FEOC規則放寬使對手取得本土含量資格","evidence_refs":["substitute_technology#0","competitive_share_entrants#5","competitive_share_entrants#2","cyclical_supply_discipline_capacity#1","cyclical_supply_discipline_capacity#3","cyclical_supply_discipline_capacity#4"]},{"id":"R4","text":"中國碲出口管制收緊或少數供應商斷供，CdTe產線受限","h_ref":"H2","clock":"🔥","threshold":"公司揭露出口許可遭拒，或原料庫存低於一季用量","evidence_refs":["reg_tariff_export#1","geo_supply_chain#1"]},{"id":"R5","text":"Series 7早期品質問題引發保固訴訟擴大（Swift Current案），加上對BP／Lightsource 3.236億美元應收款追討失利與證券集體訴訟","h_ref":"H2","clock":"⚡","threshold":"單案判賠或和解逾3億美元，或集體訴訟通過集體認證","evidence_refs":["major_events#1","major_events#3","lawsuit_class_action#0","lawsuit_class_action#2","customer_concentration_credit#0"]}],"single_thing":{"description":"美國45X先進製造稅額抵減被立法取消、提前退場，或可轉讓與可退還機制被收緊","why_fatal":"2025年認列約16億美元，高於全年淨利15.3億美元；2026年預估產生約21億美元，高於共識淨利約18.8億美元，等於獲利幾乎全部來自這項抵減","if_happens":"每股盈餘回到個位數，終端價值落向空頭情境約90美元以下；法案通過即清倉","how_monitor":"國會稅改與預算法案條文、財政部與IRS對45X及FEOC的指引、公司季報抵減產生額與出售價格","probability":"12–24個月約10%（事實表未涵蓋立法動態；依公司財測假設政策延續、商務部長親自為南卡廠剪綵所示的政策方向推估）"}},"appendix_a":{"growth_durability":5,"quality_score":6,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":7.84,"peg_fy2":0.28,"stress":{"pass":3,"total":6}},"eps_meta":{"base_eps_path":{"FY2025A":14.21,"FY2026E":17.48,"FY2027E":23.51,"FY2028E":29.65},"fy_end_month":12,"eps_basis":"FY2025A取年報稀釋EPS；FY2026E–FY2028E為Koyfin快照共識，事實表未註明GAAP或調整後口徑"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/FSLR_20261103/scenario.json","archetype":{"primary":"循環/商品","secondary":null,"confidence":"高","fingerprint":"近五年有GAAP虧損年（2022年）、毛利率峰谷由2.67%到約58%、太陽能產業、營收受模組單價與政策驅動"},"industry":{"clock_phase":"III","sd_verdict_source":"供給可逆性高：美國市場的供不應求建立在232最低進口價與本土含量規則上，全球模組產能逾1.1 TW對約650 GW需求，政策一鬆過剩產能即可回流；屬政策型持久，非產業結構型持久。","bargaining":{"up":"上游：碲為煉銅副產品，供應商少、認證期長，中國占2024年全球精煉碲約77%且自2025-02起出口管制；上游議價力中等偏強","down":"下游：大型開發商與公用事業，前兩大客戶各約一成；客戶在232後延後採購做價格發現，短期議價力上升","geo":"製造集中美國（俄亥俄、阿拉巴馬、路易斯安那、南卡），2027年約80%產能在美國；印度、越南、馬來西亞為國際產能，馬來西亞2027上半年決定去留"},"profit_pool_dir":"利潤池由中國矽晶廠移向美國本土製造：FSLR營業利益率37.69%，CSIQ、JKS為負；移轉動力是政策，不是成本優勢","tam_table":[{"item":"全球模組需求2026年","value":"529–624 GWdc，近十年首次負成長（產業預估）"},{"item":"美國公用事業級2026年計劃新增","value":"43.4 GW，較前一年增60%（EIA）"},{"item":"美國本土模組產能","value":"2025年底65.5 GW，2024年底42.5 GW"},{"item":"FSLR 2026年出貨","value":"16.0–17.0 GW（10-29下修後財測，原17.0–18.2 GW）"},{"item":"滲透率與營業利益池占比五年前→現","value":"事實表未涵蓋；同業營業利益率對照顯示利潤集中在美國本土製造"}]},"moat":{"mechanism":"CdTe薄膜不需多晶矽，是美國唯一完整整合、不依賴中國矽晶供應鏈的公用事業級模組廠；美國本土產能換到45X抵減與本土含量、FEOC合規溢價","execution":7,"pricing":7,"grade":"C","trend":"→","trend_evidence":"執行面穩定：CuRe在Perrysburg完成導入、首條Series 7轉換2027Q1在印度啟動、南卡第一期Q3投產；定價面穩定偏強：美國新簽0.35–0.36美元／瓦高於在手訂單均價約0.31，232後新談案已提價；量能面轉弱：在手訂單由2025年底50.1 GW降到44.0 GW、自上次法說僅新簽1.4 GW。三者相抵判持平，未見最大客戶份額下滑的證據。","peer_na_reason":"同業ROIC與本益比事實表未涵蓋，以營業利益率差距代理","threats":[{"level":"🔴","text":"232最低進口價遭囤貨、第三國繞道與豁免稀釋：進口商由約200家增至約400家、僅約60家被擋，全球過剩產能逾1 TW形成持續壓力","p":"40%","evidence_refs":["regulatory_antitrust#0","end_markets#7","supply_demand_durability#1"]},{"level":"🟡","text":"美國本土矽晶新產能放量（Qcells、T1），FEOC規則明朗後可能取得本土含量資格","p":"40%","evidence_refs":["cyclical_supply_discipline_capacity#3","cyclical_supply_discipline_capacity#4"]},{"level":"🟡","text":"TOPCon效率領先CdTe數美分且持續提升，中國龍頭仍在擴產；FSLR全球市占僅約2%","p":"35%","evidence_refs":["substitute_technology#0","competitive_share_entrants#5","cyclical_supply_discipline_capacity#1","competitive_share_entrants#2"]},{"level":"🟡","text":"碲原料受中國出口管制、供應商少且認證期長","p":"15%","evidence_refs":["reg_tariff_export#1","geo_supply_chain#1"]}],"roic_durability":{"quadrant":"高利益率×低周轉","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者是電廠、決策者是開發商、付款者是購電的公用事業與資料中心；需求是真的（EIA估2026年美國公用事業級計劃新增43.4 GW、年增60%），但可延後：Q3法說會CEO Mark Widmar稱客戶延後2029年後早期專案採購，一筆2 GW案因州政府暫停令中止，且專案須在2028年底前完工才拿得到安全港，需求向2028年前擠。"},{"item":"決策層級","level":"🟡","text":"決策單位是單一電廠設計：模組在專案初期鎖定，決定組串與電壓配置，交貨前18–24個月定案，同一專案內換供應商成本高、跨專案可換。Q2法說會稱45 GW在手訂單中約41 GW含本土含量要求，加上客戶自評對手FEOC風險，決策層級的替代性低於商品層級。"},{"item":"價值鏈分配","level":"🟡","text":"FSLR拿到45X與本土含量溢價，開發商卻同時承受電池漲價、關稅與通膨（Q3法說會CEO），下游利潤被擠壓會回頭壓模組議價；中國矽晶廠虧損，價值已由中國廠轉到美國本土廠，但這次重分配靠政策維持。"},{"item":"社會容忍度","level":"🔴","text":"獲利約等於政策移轉：2026年預估45X抵減約21億美元，高於共識淨利；232屬總統公告可被豁免或調整，公用事業對價格敏感、業者正在遊說豁免（Q3法說會分析師提問）。45X法源與修法程序事實表未涵蓋。實際定價天花板由政策上限決定，不是經濟上限。"}],"roiic":44.2,"reinvest_rate":37.3,"endo_ceiling":16.5,"formula_note":"增量報酬＝淨利增量÷累計再投資：（2025年淨利15.28億−2022年−0.44億）÷（2023–2025年淨利減自由現金流合計16.15＋16.00＋3.41＝35.56億）≈44.2%。前瞻再投資率上限＝2026年資本支出財測中值7億÷FY2026E共識淨利約18.8億≈37.3%，未扣折舊故為上限（折舊事實表未涵蓋）；歷史再投資率約97%（35.56÷三年淨利36.51億）。內生上界＝44.2%×37.3%≈16.5%。以淨利代替稅後營業利益，含45X抵減。"},"combined":7.0,"score":7.0,"spread_table":[{"metric":"毛利率","FSLR":49.25,"CSIQ":16.43,"JKS":4.75,"ENPH":45.78,"unit":"%"},{"metric":"營業利益率","FSLR":37.69,"CSIQ":-0.55,"JKS":-6.7,"ENPH":4.53,"unit":"%"},{"metric":"FCF 利潤率","FSLR":4.64,"CSIQ":-31.42,"JKS":null,"ENPH":11.17,"unit":"%"},{"metric":"研發密度","FSLR":5.51,"CSIQ":1.67,"JKS":1.64,"ENPH":15.02,"unit":"%"}],"competitors":[{"name":"CSIQ","gm":16.43,"om":-0.55,"fcf_margin":-31.42,"rd_intensity":1.67,"strategy_note":"矽晶模組＋儲能＋電廠開發多角化，模組端在全球過剩下虧損；在美國受232與FEOC審查限制","period":"TTM ending 2026-06-30（4季加總）"},{"name":"JKS","gm":4.75,"om":-6.7,"fcf_margin":null,"rd_intensity":1.64,"strategy_note":"全球出貨龍頭之一，TOPCon產能逾60 GW仍在擴，毛利率低到個位數；FSLR對其提TOPCon專利訴訟","period":"TTM ending 2026-06-30（4季加總）"},{"name":"ENPH","gm":45.78,"om":4.53,"fcf_margin":11.17,"rd_intensity":15.02,"strategy_note":"住宅微型逆變器，非模組同業，只作美國太陽能製造利潤率參照","period":"TTM ending 2026-09-30（4季加總）"}]},"growth":{"driver_mix":"價與產品組合為主、量為輔；回購小、無併購","runway_years":"約2–3年訂單能見度（美國整合產能大致已簽到2028年）；30%滲透率口徑事實表未涵蓋","runway_post_y5":"🟡","endo_ceiling_basis":"內生上界約16.5%（增量報酬約44.2%×前瞻再投資率上限約37.3%），共識三年每股盈餘年化27.8%超出約11個百分點，缺口歸因毛利擴張（本土占比、CuRe加價、232後新單漲價）","segments":[{"item":"美國整合產線（Series 6／7）","value":"2027年約占全球產能80%；產能大致已簽到2028年；新簽0.35–0.36美元／瓦"},{"item":"南卡完工廠（越南半成品）","value":"2027年產量2.2–2.5 GW；第二期2027年中商轉"},{"item":"印度廠","value":"2027年成品2.2–2.6 GW；本地單價約0.20美元／瓦；2026年本地出貨下修約0.7 GW"},{"item":"馬來西亞廠","value":"1.8 GW，2027上半年二選一：滿載或停產；管理層稱不影響經常性獲利"},{"item":"分部營收與毛利拆分","value":"事實表未涵蓋"}],"decay_signals":[{"signal":"毛利率連2季年減","lit":false,"note":"Q2約57%、Q3約58%，年增約20個百分點"},{"signal":"核心市占近12個月縮減","lit":false,"note":"美國市占事實表未涵蓋；在手訂單連降列入觀察"},{"signal":"主力產品提價後銷量下滑","lit":false,"note":"232後新單提價、新簽轉慢，但下修集中在印度與國際Series 6，美國全本土產品出貨區間未變；觀察中"},{"signal":"EPS成長顯著高於營收成長","lit":true,"note":"共識FY2025A→FY2027E每股盈餘年化約28.6%，營收年化約6.7%，差距逾20個百分點"},{"signal":"自由現金流／淨利連2年低於0.75","lit":false,"note":"FY2024約−0.24、FY2025約0.78；TTM自由現金流率僅4.64%，FY2026若低於0.75即亮"},{"signal":"SBC占營收逾5%且上升","lit":false,"note":"Q2約0.67%"},{"signal":"TAM萎縮或被替代技術壓縮","lit":false,"note":"全球需求2026年負成長，但核心的美國公用事業級仍成長"},{"signal":"估值倍數近3年系統性下移","lit":true,"note":"自身本益比在3個年度端點、股價營收比在4個端點皆為最低；產業倍數事實表未涵蓋，以自身倍數代替"},{"signal":"維護性資本支出占自由現金流逾60%","lit":false,"note":"事實表未涵蓋"},{"signal":"停止投資新產能且營收3年內下滑","lit":false,"note":"資本支出下修、2026年營收低於2025年，但南卡第二期與CuRe轉換仍在投入"}],"trap_rating":"價值陷阱風險🟡（亮2項）；長期成長性🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長沒有靠併購撐；股東回報只有新授權的5億美元回購，尚無執行紀錄可評"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"近12個月無併購完成；管理層稱更願意做技術相關併購","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"5億美元回購授權於2026-10-29生效，尚未執行，無買入均價可算","grade":"N/A"},{"year":"—","action":"sbc_dilution","rationale":"Q2單季SBC約占營收0.67%、占營業利益1.56%；淨稀釋率事實表未涵蓋，但SBC規模遠低於每年1.5%門檻","grade":"過"}]},"valuation":{"basis":"Forward P/E（FY2026E），輔以FY2027E","tier":"美國本土受保護模組製造商（同業虧損，無同級可比本益比）","peers":{"expanded":false,"reason":"同業CSIQ、JKS營業利益率為負、本益比無意義，ENPH屬逆變器非同級；同業倍數事實表未涵蓋"},"fwd_pe":10.54,"peg":0.38,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"表面便宜：FY2026E本益比10.54倍、FY2027E 7.84倍、PEG 0.38，本益比與股價營收比都在自身年度端點最低。但分母是爭點：2026年預估45X抵減約21億美元高於共識淨利，Q3毛利率約58%處自身歷史高點，便宜論證不成立。改以情境期望值看：機率加權五年價約262美元，年化約7%，屬合理區。五年分位因只有3個年度端點無法計算，留空。","upside_short_pct":16.0,"upside_mid_pct":52.3},"trap_analysis":{"verdict":"🟡","label":"便宜但獲利靠政策"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"專案須在2028年底前完工才拿得到安全港，客戶目前不下2029年單（Q3法說會CEO Mark Widmar）；在手訂單九個月由50.1降到44.0 GW；2026年全球需求預估近十年首次負成長；10-29下修全年出貨與營收財測","assumption":"基準情境假設2029–2031年每股盈餘維持在25.5–26.5美元","consequence":"若2029年後美國產能只賣出七成、單價回到約0.30美元，每股盈餘降到10美元附近，9倍約90美元，五年虧約51%","ruling":"採納，作為空頭情境主線（機率32%）。與唯一致命點部分重疊：需求斷層是漸進的，45X縮減是離散事件，兩者疊加才是最壞路徑","watch":"在手訂單GW、2029年後交貨占比、單季美國新簽","evidence_refs":["supply_demand_durability#7","cyclical_inventory_price_position#3","capital_markets_pricing#0","supply_demand_durability#0","end_markets#7"],"fact_refs":["f_kpi6_contracted_sales_backlog","f_kpi5_fy2026_guidance_q2"]},{"view":"論點失敗","evidence":"獲利約等於45X抵減；232屬總統公告，可被豁免或調整；201關稅已在2026-02到期，證明保護會到期；Q3法說會分析師提到業者遊說豁免、公用事業對價格敏感","assumption":"45X與232在五年內維持現行力道","consequence":"任一項縮減都直接削去大部分每股盈餘或美國溢價","ruling":"採納：45X列為唯一致命點，232稀釋列為短期風險；社會容忍度判紅","watch":"國會稅改條文、財政部與IRS指引、商務部232豁免公告","evidence_refs":["regulatory_antitrust#0"],"fact_refs":[]},{"view":"論點失敗","evidence":"矽晶效率持續提升，Q3法說會CEO自承Series 7 CuRe對TOPCon仍落後數美分；Qcells與T1在美國加電池產能，中國龍頭仍擴產；FSLR全球市占約2%","assumption":"CdTe在美國保有本土含量與FEOC溢價","consequence":"FEOC規則放寬或對手取得本土含量資格後，FSLR新簽單價被壓回在手訂單均價以下","ruling":"部分反駁：客戶自評對手仍有FEOC風險、CdTe在高溫地區發電表現較佳（CEO），五年內溢價縮小但不消失；反映在多頭機率下調","watch":"FEOC最終指引、對手美國產能稼動與關係人銷售比重","evidence_refs":["substitute_technology#0","competitive_share_entrants#5","competitive_share_entrants#2","cyclical_supply_discipline_capacity#1","cyclical_supply_discipline_capacity#3","cyclical_supply_discipline_capacity#4"],"fact_refs":[]},{"view":"論點失敗","evidence":"中國自2025-02起管制碲出口，占全球精煉碲約77%；公司只向少數供應商採購、換供應商認證期長","assumption":"碲供應不中斷","consequence":"斷供即直接限制CdTe產量","ruling":"反駁為低機率（約15%）：公司已組跨部門小組、申請出口許可並找替代供應；影響大故保留監測","watch":"出口許可狀態、原料庫存天數","evidence_refs":["reg_tariff_export#1","geo_supply_chain#1"],"fact_refs":[]},{"view":"論點成功但股東經濟變差","evidence":"即使232奏效：TTM自由現金流率僅4.64%、Q2單季自由現金流−3.06億美元；45X應收約19億美元、存貨倉儲成本拖累營運資金（CFO）；鈣鈦礦研發2026年由約1億增至1.2億美元、2027年再增；管理層對併購更願意；Swift Current保固訴訟、對BP／Lightsource追討3.236億美元（2023年才續簽4 GW，如今對簿公堂）、證券集體訴訟；前兩大客戶各約一成","assumption":"盈餘成長能轉成每股自由現金流","consequence":"每股盈餘達標，但現金被研發、併購、訴訟與營運資金吃掉，回購只能小量，股價跟不上盈餘","ruling":"部分採納：淨現金與新授權回購提供下限，但基準情境淨回購殖利率只給0.5%","watch":"年度自由現金流／淨利、45X抵減出售或退稅入帳金額、訴訟進度","evidence_refs":["major_events#1","lawsuit_class_action#2","major_events#3","lawsuit_class_action#0","customer_concentration_credit#0"],"fact_refs":["f_kpi3_fcf","f_peer_fslr_fcf_margin_pct"]},{"view":"價格已反映太多","evidence":"共識FY2027E 23.51、FY2028E 29.65美元在10-29下修財測兩天後的快照沒有變動，近三個月FY1只上修0.29%；8月分析師目標價中位260美元在下修前；3月初始財測遠低於共識並引發降評，Morgan Stanley下修出貨與單價","assumption":"現價7.84倍FY2027E的便宜，建立在共識不再下修","consequence":"共識若跟著財測與訂單下修5–10%，便宜幅度跟著縮","ruling":"部分採納：基準情境FY2027E 22.5、FY2028E 27.0美元，低於共識4–9%；利空進入共識前凍結加碼。反駁「已反映太多樂觀」的說法：10.5倍不是追高價位，問題在分母而不在倍數","watch":"共識FY2027E每股盈餘修正幅度","evidence_refs":["capital_markets_pricing#1","capital_markets_pricing#2"],"fact_refs":["f_consensus_rev_fy2_pct","f_consensus_rev_3m_fy1_pct"]}],"max_dd":{"lo":-62,"hi":-42,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 ❌ → 本次 🟠","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=❌","side_b":"本次 ma=🟠","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 172.97 → 本次 184.21（+6.5%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=172.97","side_b":"本次 price_at_dd=184.21","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]裁決由 dd_decision.py 機械路由：前份 進場 → 本次 迴避","cause":"新證據","prior_field":["dca_verdict"],"side_a":"前份 dca_verdict=進場","side_b":"本次 dca_verdict=迴避","ruling":"裁決是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。沒有單一輸入能還原，屬多欄共同：訊號 B→C、估值 🟢→🟡、均線 ❌→🟠。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]角色由 dd_decision.py 機械路由：前份 衛星 → 本次 不持有","cause":"新證據","prior_field":["dca_role"],"side_a":"前份 dca_role=衛星","side_b":"本次 dca_role=不持有","ruling":"角色是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。沒有單一輸入能還原，屬多欄共同：訊號 B→C、估值 🟢→🟡、均線 ❌→🟠。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 172.97 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 172.97 美元：Bull 價 476、Bear 價 88，五年期望值 +52.7%，基準年化 8.8%，不對稱比 3.0","side_b":"本次情境、股價仍用 172.97 美元：Bull 價 494、Bear 價 90，五年期望值 +51.6%，基準年化 10.2%，不對稱比 2.42","ruling":"先換情境、股價不動：五年期望值少 1.1 個百分點，基準年化多 1.4 個百分點。不對稱比由 3.0 變為 2.42。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變差。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 172.97 美元：五年期望值 +51.6%，基準年化 10.2%，不對稱比 2.42","side_b":"本次情境、股價 184.21 美元：五年期望值 +42.4%，基準年化 8.8%，不對稱比 2.06","ruling":"再換股價、情境不動：起點價上漲 6.5%，五年期望值少 9.3 個百分點，基準年化少 1.4 個百分點，不對稱比由 2.42 降到 2.06。合計五年期望值比前份少 10.3 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"2029年後需求與定價","cause":null,"side_a":"管理層（2026-10-29 Q3法說會，CEO Mark Widmar、CFO Alex Bradley）：2028年後可售產能較多，預期定價與合約條件優於現有在手訂單，對2029年後本土產品需求有信心","side_b":"訂單數據：在手訂單由2025年底50.1 GW降到44.0 GW（九個月約−12%）；自上次法說只新簽1.4 GW；客戶延後2029年後早期專案採購，一筆2 GW案因州政府暫停令中止","ruling":"不可調和（方向相反：一邊說2029年後更好，一邊是2029年後沒有人下單）。站訂單數據這邊：價格可以談，量要簽了才算；基準情境2029–2031年每股盈餘高原後微降，不給管理層的定價改善全額","evidence_level":"公司揭露＋第三方報導","settle_metric":"232生效後兩季（2026Q4、2027Q1）美國新簽GW與單價、在手訂單GW","if_then":["若2026Q4與2027Q1美國新簽各≥2 GW且單價≥0.38美元／瓦，重跑判斷，通過才加碼至3%","若在手訂單跌破38 GW且單季新簽少於1 GW，減碼一半","反向：若新簽量回升但單價低於0.34美元／瓦，不加碼，代表以價換量、232保護失效"],"evidence_refs":["cyclical_inventory_price_position#3","capital_markets_pricing#0"]},{"axis":"現在就買的最強論證","cause":null,"side_a":"FY2027E本益比7.84倍、PEG 0.38；淨現金約15億美元加新授權5億美元回購；232推升美國模組價格（Q3法說會分析師估矽晶漲0.10–0.20美元／瓦），FSLR是唯一不依賴中國矽晶供應鏈的整合廠，2027年約80%產能在美國；44 GW在手訂單排到2030年，2027–28年獲利能見度高","side_b":"便宜的分母靠政策；10-29下修財測才兩天，共識未動，利空尚未進模型；毛利率處歷史高點、訂單量轉弱是循環後段特徵","ruling":"不買的理由較強：利空進入共識前不加碼。買進理由要成立，必須看到232生效後新簽量價齊升，條件同上一條","evidence_level":"公司揭露","settle_metric":"共識FY2027E修正幅度、232生效後兩季美國新簽","if_then":["若共識FY2027E下修不到5%且2026Q4美國新簽≥2 GW，買進理由成立，重跑判斷","若共識FY2027E下修逾10%，維持不加碼並檢查空頭機率是否上調"],"evidence_refs":[]},{"axis":"232保護強度","cause":null,"side_a":"232最低進口價0.38美元／瓦、多晶矽衍生品15%關稅，12-04生效；商務部執法積極，已擋約60家進口商","side_b":"201關稅2026-02已到期；232公布後進口商由約200家增至約400家，CEO稱囤貨與繞道從各角度湧入；業者遊說豁免，T1申請電池進口豁免；232前已簽約的約4 GW可選擇量會以舊價成交","ruling":"可調和（程度差異）：方向對FSLR有利，力道要看2027Q1實際進口價與新簽單價；舊價可選擇量讓2027年單價改善有限","evidence_level":"公司揭露＋政府公告","settle_metric":"2027Q1美國新簽單價、232豁免公告","if_then":["若出現涵蓋主要矽晶來源的豁免或最低進口價下調，停止加碼並重估定價假設","若新簽單價≥0.40美元／瓦，定價假設提前驗證"],"evidence_refs":["regulatory_antitrust#0"]},{"axis":"全球過剩與美國漲價並存","cause":null,"side_a":"全球模組產能逾1.1 TW對約650 GW需求，2026年全球需求近十年首次負成長，中國TOPCon出口價約0.11美元／瓦，多晶矽產能約2 TW","side_b":"美國模組中位價2026Q1升到0.28美元／瓦，本土含量合規模組供給短缺至少延續到2027年（EIA）","ruling":"可調和：市場被關稅與本土含量規則切開，切割有效就各走各的；但全球過剩是囤貨與繞道的動力，切割的有效期取決於政策，不是產業結構","evidence_level":"第三方產業資料","settle_metric":"美國模組中位價與中國出口價的價差","if_then":["若美國中位價跌回0.25美元／瓦以下，視為切割失效，空頭機率上調"],"evidence_refs":["end_markets#7","supply_demand_durability#0","supply_demand_durability#1","supply_demand_durability#7"]},{"axis":"管理層前後說法：財測與訂單","cause":null,"side_a":"2026-07-30 Q2法說會：CFO Alex Bradley稱全年財測維持不變、印度廠假設高稼動；CEO Mark Widmar稱另有逾2 GW附先決條件、約2 GW年底前高機率成交","side_b":"2026-10-29 Q3：出貨下修到16.0–17.0 GW、營收到46–49億美元、調整後EBITDA中值少5,000萬美元；印度本地出貨下修約0.7 GW，本地單價僅約0.20美元／瓦；自上次法說僅新簽1.4 GW；3月時初始財測已遠低於共識並引發降評","ruling":"可調和但扣分：下修集中在低毛利的印度與國際產品，美國全本土出貨區間不變，獲利影響小；但管理層對訂單管道的樂觀已落空一次，基準情境對其訂單管道陳述打五折","evidence_level":"公司揭露","settle_metric":"2027年財測（預計2027-02）出貨與營收中值","if_then":["若2027年營收財測中值低於共識59.5億美元10%以上，重跑判斷並下修基準情境"],"evidence_refs":["capital_markets_pricing#0","capital_markets_pricing#1","capital_markets_pricing#2","end_markets#3"]},{"axis":"產業態勢三軸","cause":null,"side_a":"競爭惡化：中國龍頭續擴電池產能，Qcells、T1在美國加電池產能，TOPCon效率領先數美分","side_b":"結構轉好：232與FEOC規則讓本土整合供應鏈稀缺；其他結構變數：客戶由框架合約轉向單一專案合約，能見度縮短","ruling":"雙向拉鋸：政策面結構轉好，競爭面與商業模式面同時轉差，淨效果要看232執行","evidence_level":"公司揭露＋第三方報導","settle_metric":"美國新簽單價對市場中位價的溢價","if_then":["若溢價收斂到0.03美元／瓦以內，判競爭惡化勝出，減碼三分之一"],"evidence_refs":["cyclical_supply_discipline_capacity#1","cyclical_supply_discipline_capacity#3","cyclical_supply_discipline_capacity#4"]},{"axis":"前份漂移：綜合評級、估值結論、循環位置、裁決與角色","cause":"新證據","prior_field":["signal","val","cycle_position"],"side_a":"前份（2026-09-29，股價172.97美元）：綜合評級B、估值🟢、循環位置中循環、裁決進場、角色衛星","side_b":"本次：綜合評級C、估值🟡、循環位置晚循環；裁決與角色由程式依本次輸入重算","ruling":"主因是新證據：10-29下修全年出貨與營收財測；Q3毛利率約58%創新高但營收年減23%；在手訂單降到44 GW、新簽僅1.4 GW；Q3法說揭露2026年預估45X抵減約21億美元、高於共識淨利，分母能否延續成為爭點，便宜論證失效。毛利在峰、量在降、訂單在縮，循環位置由中段移到後段。股價上漲約6.5%只是次要因素","evidence_level":"公司揭露","settle_metric":"232生效後兩季美國新簽與在手訂單","if_then":["若232生效後兩季新簽量價齊升，循環位置回調為中循環並重評綜合評級"],"evidence_refs":["capital_markets_pricing#0","cyclical_inventory_price_position#3"]},{"axis":"前份漂移：維持不變的欄位","cause":"新證據","prior_field":["trap","moat_trend","runway_post_y5","archetype"],"side_a":"前份：陷阱風險🟡、護城河方向→、五年後成長空間🟡、類型循環/商品","side_b":"本次相同","ruling":"新證據雙向抵銷，結論不變：232強化本土定價（正）對上在手訂單連降、對手在美國擴產（負）；衰退信號亮2項，陷阱風險維持；毛利率峰谷擺動逾50個百分點、2022年虧損，循環/商品類型不變","evidence_level":"公司揭露＋第三方報導","settle_metric":"衰退信號亮燈數、在手訂單","if_then":["若FY2026自由現金流／淨利低於0.75，衰退信號增至3項，陷阱風險升為紅"],"evidence_refs":[]},{"axis":"前份漂移：情境機率與回撤","cause":"方法變動","prior_field":["p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份：多頭機率25%、空頭30%、最大回撤−55%（單點）","side_b":"本次：多頭20%、基準48%、空頭32%；最大回撤改為區間−42%至−62%","ruling":"情境樹依本次共識重建：共識三年每股盈餘年化27.8%超出內生上界約16.5%，空頭機率不得低於30%；2029年後需求斷層證據轉強，多頭機率下調5個百分點；回撤改用區間，下緣須覆蓋空頭終點跌幅約51%","evidence_level":"本次推導","settle_metric":"在手訂單與新簽","if_then":["若在手訂單跌破38 GW，空頭機率上調至40%"],"evidence_refs":[]},{"axis":"前份漂移：加碼重啟門檻","cause":"新證據","prior_field":["rearm_trigger"],"side_a":"第三季財報美國新簽 ≥2 GW 且單價 ≥0.34 美元／瓦，且週收盤站回 250 週均線（約 175 美元）之上","side_b":"232生效後連兩季美國新簽各≥2 GW且單價≥0.38美元／瓦，且週收盤站回104週均線（約201美元）之上，才重跑判斷並考慮加碼","ruling":"前份門檻在Q3受測：美國新簽1.4 GW未達2 GW，單價0.36美元達標、股價站上250週均線達標，條件未成立、未觸發。新的加碼門檻改為232生效後兩季，單價提高到0.38美元以反映矽晶漲價、並濾掉232前已談定的訂單；技術面改看104週均線，因股價已在250週均線之上，舊線不再有篩選力","evidence_level":"公司揭露","settle_metric":"2026Q4與2027Q1美國新簽、週收盤價","if_then":["兩季皆達標且站回104週均線，重跑判斷後加碼","任一季新簽少於1 GW，門檻重設並維持不加碼"],"evidence_refs":["cyclical_inventory_price_position#3"]},{"axis":"Single Thing變動","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份Single Thing：無（未記錄）","side_b":"本次Single Thing：美國45X先進製造稅額抵減被立法取消、提前退場或可轉讓／可退還機制被收緊","ruling":"前份未設唯一致命點；本次依最大單一敏感度選定：抵減規模約等於全年淨利，232稀釋或需求斷層的影響都在其一半以下；法案通過即清倉","evidence_level":"公司揭露","settle_metric":"國會立法進度、財政部與IRS指引","if_then":["法案通過即清倉","法案進入委員會審議即減碼一半"],"evidence_refs":[]},{"axis":"前份漂移：減碼與清倉指標","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份：無指標門檻（未記錄）","side_b":"本次：在手訂單跌破38 GW減碼、美國新簽單價連兩季低於0.32美元減碼、TTM毛利率低於40%減碼、45X法源生變清倉、FY2027自由現金流為負停止加碼","ruling":"前份未設，本次新設；門檻取自本次三條論點的反轉線，不沿用前份","evidence_level":"本次推導","settle_metric":"各指標季度讀數","if_then":["任兩項同時觸發，減碼至零"],"evidence_refs":[]}],"triggers":[{"n":1,"text":"232生效後美國新簽量價回升，驗證本土定價重設","type":"假設驗證","maps_to":"H1","metric":"美國季度新簽GW與平均單價（含技術加價）","threshold":"連兩季各≥2 GW且≥0.38美元／瓦","action":"達標即重跑判斷，通過才加碼至3%","source_freq":"季報新聞稿與法說會，每季","date":"2027-05","evidence_refs":[]},{"n":2,"text":"在手訂單持續下滑，2029年後需求斷層成形","type":"風險","maps_to":"R2","metric":"在手訂單GW","threshold":"跌破38 GW，或連4季下滑","action":"減碼一半","source_freq":"季報，每季","date":"2027-02","evidence_refs":["cyclical_inventory_price_position#3","supply_demand_durability#7"]},{"n":3,"text":"45X抵減被立法取消、提前退場或轉讓與退稅機制收緊","type":"Single Thing","maps_to":"single_thing","metric":"45X法源與IRS指引","threshold":"相關法案經國會通過或財政部發布收緊指引","action":"法案通過即清倉；進入委員會審議即減碼一半","source_freq":"國會立法進度、財政部公告，事件驅動","date":null,"evidence_refs":[]},{"n":4,"text":"232保護被豁免或最低進口價下調","type":"風險","maps_to":"R1","metric":"232豁免公告、最低進口價","threshold":"出現涵蓋主要矽晶進口來源的豁免，或最低進口價低於0.38美元／瓦","action":"停止加碼，重估定價假設","source_freq":"商務部公告，事件驅動","date":"2026-12","evidence_refs":["regulatory_antitrust#0","end_markets#7"]},{"n":5,"text":"重新考慮加碼的條件","type":"估值rearm","maps_to":"H1","metric":"美國新簽量價＋週收盤價對104週均線","threshold":"232生效後連兩季美國新簽各≥2 GW且≥0.38美元／瓦，且週收盤高於104週均線（約201美元）","action":"重跑判斷，通過才加碼","source_freq":"季報＋週線，每週","date":"2027-05","evidence_refs":[]},{"n":6,"text":"毛利率從歷史高點回落","type":"減碼","maps_to":"H2","metric":"TTM毛利率（含45X）","threshold":"連兩季低於42.75%","action":"減碼三分之一","source_freq":"10-Q，每季","date":"2027-02","evidence_refs":[]},{"n":7,"text":"Swift Current保固訴訟、BP／Lightsource追討與證券集體訴訟","type":"風險","maps_to":"R5","metric":"判賠或和解金額、集體認證","threshold":"單案逾3億美元，或集體訴訟通過集體認證","action":"減碼一半","source_freq":"10-Q法律程序附註，每季","date":null,"evidence_refs":["major_events#1","major_events#3","lawsuit_class_action#0","lawsuit_class_action#2"]},{"n":8,"text":"碲供應受阻","type":"風險","maps_to":"R4","metric":"出口許可狀態、原料庫存天數","threshold":"許可遭拒或庫存低於一季用量","action":"減碼一半","source_freq":"10-K／10-Q風險因子，每季","date":null,"evidence_refs":["reg_tariff_export#1","geo_supply_chain#1"]},{"n":9,"text":"2027年財測與馬來西亞廠去留複審","type":"複審日期","maps_to":"H3","metric":"2027年出貨、營收、資本支出財測","threshold":"營收財測中值低於共識FY2027E營收59.5億美元10%以上","action":"重跑判斷","source_freq":"年度財測","date":"2027-02","evidence_refs":[]}],"kill_metrics":[{"metric":"在手訂單（GW）","bear_threshold":"跌破38 GW","window":"2027年底前任一季","source":"季報新聞稿","last_status":"warning"},{"metric":"美國新簽平均單價（含技術加價）","bear_threshold":"連兩季低於0.32美元／瓦","window":"2027全年","source":"季報法說會","last_status":"ok"},{"metric":"TTM毛利率（含45X）","bear_threshold":"低於40%","window":"滾動4季","source":"10-Q／10-K","last_status":"ok"},{"metric":"45X先進製造稅額抵減法源","bear_threshold":"立法取消、提前退場或轉讓與退稅機制收緊","window":"未來24個月","source":"國會立法、財政部與IRS公告","last_status":"ok"},{"metric":"年度自由現金流","bear_threshold":"FY2027為負","window":"FY2027","source":"10-K現金流量表","last_status":"warning"}],"evidence_dismissed":[],"decision_out":{"verdict":"迴避","role":"不持有","row_hit":"2","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='C'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":true,"basis":"thesis_irreconcilable=True"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟠'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"QC-49","condition":"qc49_inherit_prior=True 但判斷者宣告 wait_for_price：不得把觀望承繼回進場（只往保守方向）","hit":false,"basis":"wait_for_price=True, prior_verdict='進場', 矩陣機械輸出='迴避'"}],"pacing":[],"holding_cap":"≤3%，深回撤心理準備","requires_critic":[],"rearm_trigger":"232生效後連兩季美國新簽各≥2 GW且單價≥0.38美元／瓦，且週收盤站回104週均線（約201美元）之上，才重跑判斷並考慮加碼","exec_line":"現有部位持有不加、不追；等2026Q4與2027Q1兩季新簽數據；在手訂單跌破38 GW或單季新簽少於1 GW減碼一半；45X法源被取消即清倉"},"reasoning":{"industry":"收錢方式：把CdTe薄膜模組賣給美國公用事業級電廠開發商、獨立發電商、公用事業與大型企業購電方，以多年框架合約或單一專案合約鎖量鎖價，交貨時認列；沒有住宅通路。FY2025年報揭露Silicon Ranch與NextEra各占模組事業營收10%以上，前兩大合計約兩成，未構成集中度風險。最新一季（2026-10-29 Q3法說會，CFO Alex Bradley）：營收約12億美元、年減約23%（第三方模組量下滑），毛利率約58%、年增約20個百分點（美國製占比提高、關稅與稼動成本下降），稀釋每股盈餘5.30美元；前一季GAAP營業利益率42.6%、調整後EBITDA率61%。錢卡在兩個節點：一是美國本土製造換來的45X抵減，2025年認列約16億美元、2026年預估產生約21億美元，都高於當年淨利（FY2026E共識淨利約18.8億美元＝17.48美元×1.0748億股）；二是本土含量與FEOC合規換來的單價溢價。單點依賴在政策而非客戶：10-29下修財測時公司明言展望假設現行美國政策延續。產業時鐘III：全球矽晶產業處收縮期，但FSLR所在的美國受保護市場毛利處歷史高點、新進者在美國加產能、客戶延後下單，屬過熱後段。","moat":"機制：CdTe薄膜不需多晶矽，是美國唯一完整整合、不依賴中國矽晶供應鏈的公用事業級模組廠，2027年約80%產能在美國，同時拿到45X抵減與客戶的本土含量、FEOC合規溢價。可證方向：TTM營業利益率37.69%，對照CSIQ −0.55%、JKS −6.7%、ENPH 4.53%，差距為正，且隨FSLR毛利率由FY2023年39.19%升到TTM 49.25%而擴大（同業ROIC事實表未涵蓋，以營業利益率代理）。評分：執行7（CuRe在Perrysburg完成導入、路易斯安那商轉、南卡第一期投產；扣分在Series 7早期品質問題與馬來西亞低稼動）；定價7（美國新簽0.35–0.36美元／瓦，高於在手訂單均價約0.31與美國市場中位價0.28；扣分在溢價來自政策）；232遭囤貨與豁免稀釋屬生態攻擊扣1分，合併6，等級C。方向：執行穩定、定價穩定偏強、量能轉弱，判持平。報酬持續期：投入資本與稅率事實表未涵蓋，當期ROIC無法計算；依重資產、45X應收約19億美元與存貨倉儲成本研判屬高利益率×低周轉。增量報酬約44%、前瞻再投資率上限約37%、內生上界約16.5%，推導見公式欄；增量報酬含45X，本質是政策報酬。四檢查點中社會容忍度為紅。","growth":"成長來源以價與組合為主：共識FY2027E每股盈餘年增約34.5%（17.48→23.51），營收年增約23.3%（48.2億→59.5億美元），差距來自美國製產品占比提高與CuRe技術加價（最多約6億美元，約20%落在2027年交貨，其餘2028年以後）；回購只有新授權5億美元，約市值2.5%，無併購。共識三年每股盈餘年化約27.8%（FY2025A 14.21→FY2028E 29.65，Koyfin快照，EPS家數事實表未涵蓋；FY1營收共識32位分析師），高於內生上界約16.5%，缺口約11個百分點歸因於毛利擴張，不屬無法歸因。Runway：美國整合產能大致已簽到2028年，之後可售產能較多但客戶尚未下單；專案安全港須在2028年底前完工，2029年後需求有斷層風險；鈣鈦礦試產線2027上半年才就緒，沒有量產證據，不算已證實的第二曲線。","governance":"自由現金流轉換弱：FY2023自由現金流／淨利約−0.94、FY2024約−0.24、FY2025約0.78，TTM自由現金流率4.64%對營業利益率37.69%；Q2單季自由現金流−3.06億美元（由上半年數字反推）。錢卡在45X應收（政府補助應收約19億美元，其中美國約18億）與存貨：CFO Alex Bradley稱框架合約交期變動迫使公司多囤庫存，倉儲成本與營運資金變差。2026年資本支出財測下修到6–8億美元。配置順序：維持15–20億美元淨現金應對循環，Q3末約15億美元；其次技術、研發與併購（Q2法說會CFO稱對併購更願意）；10-29董事會授權5億美元回購、無到期日，尚未執行。SBC占營收約0.67%，稀釋輕微。近三年現金去向四分、債務到期結構事實表未涵蓋。","valuation":"以FY2026E本益比10.54倍、FY2027E 7.84倍計，市場隱含的是盈餘在2028年後明顯縮水。2027–28年有在手訂單撐，我信；2029年後的量價，不信到管理層說的程度。基準情境五年後約280美元（FY2031E 25.5美元×11倍），一年約214美元（FY2027E 22.5美元×9.5倍）。PEG以共識三年每股盈餘年化27.8%計約0.38；分位只有3個年度端點、當前在最低點，非五年分位。同業CSIQ、JKS營業利益率為負，本益比無意義，終端倍數只能錨自身現值。","premortem":"看錯的方向有兩個：一是政策比預期穩，基準情境太保守；二是需求斷層與政策縮減同時發生，空頭情境約90美元。推論與處置寫在反證紀錄，本欄不重寫。26週報酬−12.86%、RSI 54.47，動能不過熱；股價在104週均線之下、250週均線之上。"},"plain":{"six":{"how_it_makes_money":"賺美國公用事業級電廠開發商的錢，獲利卡在美國本土製造換來的45X抵減與本土含量溢價：2026年預估抵減約21億美元，高於共識淨利約18.8億美元","moat":"護城河方向持平（→），等級C：CdTe不碰中國矽晶供應鏈加上美國本土製造，換來45X與本土含量溢價；這道牆是政策砌的，對手正在牆內蓋廠","growth":"五年後成長空間中等（🟡）：2027–28年有44 GW在手訂單與CuRe技術加價撐，2029年後的量與價沒有合約保護，鈣鈦礦第二曲線仍在試產線階段","capital":"資本配置中段：淨現金約15億美元守在目標區下緣，新授權5億美元回購，但自由現金流被45X應收與存貨吃掉","valuation":"現價只要求2028年後盈餘不崩就划算；但這份盈餘幾乎等於45X抵減、毛利率又在歷史高點，我只信2027–28年那一段，估值合理而非便宜","how_wrong":"最可能看錯在政策：若45X延續、232執行到位、2029年後美國本土產品簽滿，現價7.84倍FY2027E就是錯殺"}},"decision_inputs":{"signal":"C","ma":"🟠","cycle_position":"晚循環","cycle_verdict":"頂部觀望","thesis_irreconcilable":true,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":false,"cycle_gates_pass":false,"qc49_inherit_prior":true,"prior_verdict":"進場","prior_role":"衛星","wait_for_price":true,"wait_for_price_condition":"等事件不等價：12-04 Section 232生效後兩季（2026Q4、2027Q1）美國新簽各≥2 GW且單價≥0.38美元／瓦，且週收盤站回104週均線（約201美元）","qc48_result":null,"qc48_note":null,"trap":"🟡","val":"🟡","moat":"C","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"循環/商品","price_at_dd":184.21,"week26_return_pct":-12.86,"consensus_rev_3m_pct":0.29,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"每股盈餘幾乎全數來自45X抵減（2026年預估約21億美元對共識淨利約18.8億美元），且Q3毛利率約58%處自身歷史高點；這份盈餘能否延續正是多空爭點"},"catalysts":[{"date":"2026-12","date_precision":"month","type":"regulatory","event":"Section 232最低進口價與多晶矽衍生品關稅12-04生效","impact":"高","watch":"豁免名單、囤貨執法、232前已進口庫存的消化速度"},{"date":"2027-01","date_precision":"quarter","type":"regulatory","event":"FEOC最終指引公布（管理層預期年底或明年初）","impact":"高","watch":"美國本土矽晶對手能否取得合規資格"},{"date":"2027-02","date_precision":"month","type":"guidance","event":"2026Q4財報與2027全年財測","impact":"高","watch":"美國新簽GW與單價、在手訂單、2027年出貨與營收中值"},{"date":"2027-03","date_precision":"quarter","type":"other","event":"232前舊價可選擇量約4 GW中約一半在5個月內到期決定","impact":"中","watch":"客戶行使比例與成交單價"},{"date":"2027-03","date_precision":"quarter","type":"product","event":"印度廠首條Series 7 CuRe轉換啟動","impact":"中","watch":"轉換良率與對美國後段的供料"},{"date":"2027-06","date_precision":"quarter","type":"capacity","event":"馬來西亞1.8 GW廠滿載或停產二選一；俄亥俄鈣鈦礦試產線就緒；南卡第二期商轉","impact":"中","watch":"國際產品需求、停產費用、鈣鈦礦田間數據"}],"_projected_from":"v19"}
+```
