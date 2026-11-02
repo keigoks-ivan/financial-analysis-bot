@@ -1,0 +1,479 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 F（2026-11-03）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/F_20261103/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：F　日期：2026-11-03　archetype：None　前份裁決：2026-05-24　B｜　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（2266B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（455B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（886B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1313B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（2828B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（956B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（884B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2112B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（3251B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（3088B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（281B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        2266           3314-4734      3 條（2–6 內）  
+s3                  8000         455           5282-7545      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        5027           6981-9973      3 條（2–6 內）  
+s6                 11000         956          7031-10044      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         884           1831-2616      5 條（2–6 內）  
+s10                 5000        2112           2022-2888      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        3088           2000-2000      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         281            853-1219      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=6699B；至少需散文≈38.30KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−146.4
+−91.8
+−82%
+−65%
+−65
+−55%
+−53%
+−44%
+−40
+−40%
+−31%
+−19.8
+−15.9%
+−10.58
+−10%
+−6.1%
+−4.9%
+−3%
+−2.7%
+−2.4
+−2.06
+−1.8%
+−0.67%
+−0.01
+0
+0%
+0.15
+0.18
+0.25%
+0.27
+0.50
+0.5%
+0.6
+0.60
+0.70
+0.7
+0.75
+0.89
+0.9%
+0.95
+1%
+1
+1.02
+1.03
+1.08
+1.1
+1.2
+1.20
+1.35
+1.4
+1.43
+1.5
+1.5%
+1.58
+1.65
+1.70
+1.7%
+1.7
+1.72
+1.8
+1.85
+1.9
+1.91
+1.95
+1.98
+2
+2%
+2.09
+2.1%
+2.2%
+2.25
+2.4
+2.5
+2.6
+2.65
+2.8
+2.82%
+2.9
+2.9%
+3
+3%
+03
+3.1%
+3.2
+3.24
+3.5
+3.6
+4%
+4
+04
+4.6%
+4.6
+4.7
+4.78
+4.8%
+5%
+5
+05
+5.2
+5.4%
+5.5%
+5.6
+6%
+6
+6.3%
+6.57
+6.6
+7%
+07
+7.0
+7
+7.2
+7.3
+7.5%
+8%
+08
+8
+8.03
+8.38%
+8.6%
+8.8
+9%
+09
+9
+9.1%
+9.17%
+9.4%
+10
+10%
+10.86
+10.86%
+11
+11.6%
+11.61
+11.8%
+12
+12%
+12.5%
+12.54
+12.55
+12.61
+12.95
+13
+13.16
+13.65
+13.92
+14%
+14
+14.54
+14.88
+14.93
+15
+15%
+15.9%
+16.65
+17
+17.8
+18
+19
+19%
+19.4
+19.85
+20%
+20
+20.49
+21
+24
+25
+25%
+25.2
+26
+26.58
+27
+28
+30
+30%
+31%
+31
+34
+36
+39.93
+40
+40%
+40.25
+41
+42
+43.47
+43.5
+47
+49
+50%
+50
+52
+52.2
+54
+54.6
+54.7
+55
+58.8
+60
+60%
+65
+66%
+70
+75
+80%
+80
+81.8
+82
+82%
+86%
+87
+88.1
+90
+95
+97
+100
+100%
+104
+104.9
+105
+110
+146
+146.4
+148
+150%
+170
+178
+250
+253
+260
+271
+464
+495
+2006
+2008
+2020
+2022
+2023
+2024
+2025
+2026
+2027
+2028
+2029
+2030
+2031
+20261103
+1,450
+1,550
+1,610
+1,640
+1,650
+1,700
+1,759
+1,759.4
+1,760
+1,761.9
+1,797
+1,850
+1,872.7
+2,500
+28,350
+6,7
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"F","date":"2026-11-03","schema":"v15.0","contract":"v19","company_name":"Ford Motor Company"},"oneliner":"福特靠北美皮卡與商用車賺錢，前瞻本益比 6.6 倍加 4.8% 股息看似便宜，但盈餘處在循環晚段，調整後口徑又排除了幾乎年年出現的減損；基準情境年報酬約 6% 上下，不追，等股價 10 美元以下且車市未破底再研究。","thesis":{"H":[{"id":"H1","text":"北美卡車與商用車利潤池守得住：Ford Pro 加上 F-Series 撐起全公司獲利，2027 年調整後 EBIT 不低於 100 億美元","2y":"2027 年調整後 EBIT ≥ 100 億美元（管理層 2026-10-28 稱與 2026 年大致持平，2026 年指引 105–110 億）；Ford Pro 2027 年 EBIT ≥ 65 億美元","5y":null,"10y":null,"threshold":"Ford Pro 單季 EBIT 利潤率 ≥ 8%（2026 年第三季 9.4%）；公司年度調整後 EBIT ≥ 100 億美元","source":"公司季報新聞稿分部表與法說（2026-10-28 CFO 的分部指引、Davis 的車隊訂單與定價）","drift_rule":"以 TTM 調整後 EBIT 對照 105 億美元：連兩季偏離 ≥ 5% 判削弱，連三季偏離 ≥ 10% 判反轉"},{"id":"H2","text":"Model e 虧損照路徑收斂：Fathom（UEV 首款，起價 28,350 美元）2027 年第四季如期上市，2029 年電動車部門損益兩平","2y":null,"5y":"2028 年 Model e 虧損收窄到 25 億美元以內，2029 年接近損益兩平","10y":null,"threshold":"Model e 年度 EBIT：2026 年約 −40 億；2027 年虧損不超過 50 億（CFO 已說 2027 年費用更高）；2028 年虧損 ≤ 25 億","source":"公司分部揭露；2026-10-28 法說 CFO（2029 年損平、2028 年上半年階躍式改善）與 COO（驗證測試完成九成，主要風險在供應鏈）","drift_rule":"以 TTM Model e 虧損對照上述路徑：連四季差距 ≥ 5% 判削弱，連六季差距 ≥ 10% 判反轉"},{"id":"H3","text":"自由現金流在一次衰退中仍覆蓋定期股息，並維持投資等級","2y":"2026–2027 年調整後自由現金流每年 ≥ 50 億美元（2026 年指引 60–70 億），每季每股 0.15 美元股息不變","5y":"下一次衰退年的調整後自由現金流 ≥ 25 億美元，股息不削減","10y":null,"threshold":"全年調整後自由現金流 ≥ 股息總額的 1.5 倍（約 36 億美元；股息約 0.60 美元 × 39.93 億股 ≈ 24 億）","source":"公司季報、年度指引與股息公告","drift_rule":"TTM 調整後自由現金流低於 36 億美元：連兩季差距 ≥ 5% 判削弱，連三季 ≥ 10% 判反轉；股息一旦削減，直接判反轉"}],"R":[{"id":"R1","text":"美國車市轉弱：產業庫存與獎勵金上升，量價同時回落；Ford Blue 第三季營收已因批發下降而年減 3%","h_ref":"H1","clock":"⚡","threshold":"產業庫存 > 90 天且獎勵金占 MSRP > 7.5%，或 Ford 單季批發量年減 > 10%","evidence_refs":["supply_demand_durability#0","cyclical_inventory_price_position#1","end_markets#2","cyclical_prior_downcycle_behavior#0","cyclical_prior_downcycle_behavior#1","cyclical_prior_downcycle_behavior#2"]},{"id":"R2","text":"成本逆風吃掉改善：大宗商品、記憶體與物流在 2027 年約 20 億美元，再加上關稅、鋁板與稀土的供應中斷；第三季末又遇到短期供應商中斷（2026-10-28 CFO）","h_ref":"H1","clock":"🔥","threshold":"2027 年成本逆風 > 25 億美元，或單季調整後 EBIT 利潤率連兩季 < 4%（2026 年第三季 5.4%）","evidence_refs":["reg_tariff_export#0","reg_tariff_export#1","reg_tariff_export#3","geo_supply_chain#0","geo_supply_chain#1","geo_supply_chain#2"]},{"id":"R3","text":"電動車再次失敗：Fathom 延期或成本不達標，出現第二輪減損；Model e 第三季批發與營收都年減 31%，BlueOval SK 處分已認列 36 億美元","h_ref":"H2","clock":"🔥","threshold":"Fathom 交車延後到 2028 年第一季之後，或 2026 年第四季 Model e 單季虧損 > 13 億美元，或新的電動車減損 > 20 億美元","evidence_refs":["end_markets#1","major_events#0","ma_merger#0"]},{"id":"R4","text":"中國車廠與新進入者：歐洲產能過剩與中國出口先壓到歐洲業務，CEO 稱中國車廠 5–10 年內可能進入美國","h_ref":"H1","clock":"🐢","threshold":"中國品牌取得在美國生產或銷售的實質管道（設廠、併購或取得許可），或 Ford 歐洲業務連兩年虧損擴大","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#4","substitute_technology#1","substitute_technology#2","supply_demand_durability#2","supply_demand_durability#3"]},{"id":"R5","text":"訴訟與安全監管：Hetsler 案判賠 1.03 億美元，上訴中（判決時點未知）；NHTSA 2024-11 同意令罰款 1.65 億，監督期至少三年、約至 2027-11；2024 年保固準備金的證券集體訴訟現況未查證","h_ref":"H3","clock":"🐢","threshold":"單案判賠或罰款 > 10 億美元，或 NHTSA 同意令延長並加罰，或證券集體訴訟通過集體認證","evidence_refs":["major_events#1","lawsuit_class_action#0","lawsuit_class_action#1","product_recall_warning#0"]},{"id":"R6","text":"Ford Credit 在衰退中放大損失（沿用前份風險）；管理層已預告 2027 年 Credit 會遇到總經逆風","h_ref":"H3","clock":"🐢","threshold":"60 天以上逾期率 > 4%，或資產證券化利差擴大 > 100bp（現值事實表未涵蓋，屬資料缺口）"}],"single_thing":{"description":"美國車市進入衰退：輕型車 SAAR 季均連兩季低於 1,450 萬輛（2026 年指引假設 1,650 萬）","why_fatal":"北美卡車與商用車是獲利主體，量價同時回落時營業槓桿最大；2020 年全年調整後 EBIT 利潤率只有 2.2%、第二季 −10%，管理層指引也明說不含美國經濟顯著下滑。EPS 可能從 1.9 美元跌到 0.7 美元左右，股息覆蓋會受威脅","if_happens":"減碼至半倉；若 Ford Credit 逾期率同時 > 4%，清倉。不在衰退初期攤平，等 SAAR 連兩月回升再重做研究","how_monitor":"每月 SAAR、Cox 庫存天數、J.D. Power 獎勵金占 MSRP、Ford Credit 季度逾期率","probability":"12–24 個月內約 25%：產業庫存升到 82 天、獎勵金年增 0.7pp、全球產量預測下修；但美國定價仍年增 1%，Ford 自身庫存偏低"}},"appendix_a":{"growth_durability":4,"quality_score":6,"ai_risk":"🟡","long_term_confidence":"低","fpe_fy2":6.57,"peg_fy2":1.43,"stress":{"pass":null,"total":null}},"eps_meta":{"base_eps_path":{"FY2025A":null,"FY2026E":1.91,"FY2027E":1.91,"FY2028E":2.09},"fy_end_month":12,"eps_basis":"調整後稀釋 EPS（公司 non-GAAP，與 Koyfin 共識同口徑）；FY2025A 的調整後實際值事實表未涵蓋（只有 GAAP −2.06），因此留空，三年共識成長改以 FY2026E 到 FY2028E 兩年年化計算"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/F_20261103/scenario.json","archetype":{"primary":"循環/商品","secondary":"轉機/特殊情境","confidence":"高","fingerprint":"美國皮卡與商用車的需求量循環，加上電動車部門虧損收斂的轉機選擇權，以及自營車貸"},"industry":{"clock_phase":"III","sd_verdict_source":"週期性、將反轉。美國新車庫存 9 月升到 82 天（8 月 75 天），10 月獎勵金占 MSRP 6.3%、年增 0.7pp（Cox、J.D. Power 2026-10）；全球輕型車 2026、2027 年產量預測各下修 170 萬與 250 萬輛（MarkLines 2026-07）。美國定價仍年增約 1%（2026-10-28 法說），尚未轉跌","bargaining":{"up":"上游強勢：2026 年大宗商品逆風接近 25 億美元，鋁板（Novelis）、稀土與車用晶片的供應都很集中","down":"下游中等：經銷商通路加上車隊年度議約；第三季 F-Series 獎勵金最低，車隊定價年增逾 1%","geo":"2025 年關稅對 EBIT 的淨影響約 20 億美元；中國稀土與零組件出口管制已造成停產"},"profit_pool_dir":"北美卡車與商用車利潤池持穩，歐洲乘用車與電動車利潤池在流出","tam_table":{"expanded":false,"reason":"成熟市場，Ford 沒有份額擴張的故事；美國量預測從 2026 年 1,610 萬輛到 2020 年代末 1,640 萬輛，大致持平。影響最大的變數是景氣與利潤率，不是 TAM"}},"moat":{"mechanism":"規模加上品牌與服務網：F-Series、Super Duty、Transit 在美國全尺寸皮卡與商用車領先，Ford Pro 再用車隊管理軟體、維修與融資綁住客戶","execution":6,"pricing":6,"grade":"C","trend":"→","trend_evidence":"執行力在改善：J.D. Power 2026 年新車品質調查居首；保固與材料成本 2025 年降 15 億美元、2026 年再降 10 億；Oakville Super Duty 爬坡進度超前。定價力持穩：第三季 F-Series 營收份額最高、獎勵金最低，車隊定價年增逾 1%，2027 車型年車隊訂單符合預期（2026-10-28 CFO、Frick、Davis）。美國市占下滑讓趨勢不能往上；這項與中國威脅都記在威脅欄，不再重複扣在趨勢上","peer_na_reason":"同業 ROIC 與投入資本事實表未涵蓋，改用營業利益率當可比軸","threats":[{"level":"🔴","text":"中國車廠以軟體定義與低成本電動車擴張，歐洲、東南亞、拉美已受壓，CEO 稱 5–10 年內可能進美國；屬生態攻擊","p":"30%","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#4","substitute_technology#1","substitute_technology#2"]},{"level":"🟡","text":"GM 2027 年初在 Orion 加產汽油全尺寸皮卡與 SUV，產業的折扣與促銷已經重現，F-Series 的價格紀律會受考驗","p":"40%","evidence_refs":["cyclical_supply_discipline_capacity#2","competitive_share_entrants#0"]},{"level":"🟡","text":"美國市占下滑：第二季 11.8% 排第四，第三季美國銷量年減 7%，7 月 Ford 品牌年減 9.1%；部分來自主動停產 Escape 與 Corsair","p":"50%","evidence_refs":["end_markets#3","end_markets#4","competitive_share_entrants#3"]},{"level":"🟡","text":"Hyundai 美國投資加碼到 260 億美元，Metaplant 目標 2028 年年產 50 萬輛，美國產能增加","p":"30%","evidence_refs":["cyclical_supply_discipline_capacity#3"]}],"roic_durability":{"quadrant":"低利益率、周轉率未證：調整後 EBIT 利潤率約 5–6%；合併報表含 Ford Credit 大額融資資產，投入資本周轉率事實表未涵蓋","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"卡車與商用車對車隊客戶是生產工具，屬於需要而非想要，2027 車型年車隊訂單與定價符合預期；但延後換車的代價低。美國量預測到 2020 年代末約 1,640 萬輛，低於疫情前約 1,700 萬，負擔能力是主要障礙（Mobility Global 2026-07）"},{"item":"決策層級","level":"🟡","text":"車隊採購的最小決策單位是年度議約，GM 與 Ram 都能替代。綁定來自 Ford Pro 的車隊管理軟體、維修與融資：同時有軟體訂閱與定期保養的客戶，零件留存率高約 9 個百分點（2026-10-28 CEO），數位車隊管理年底將超過 10 萬台、多數不是 Ford 車。但漲價後的流失率與分客群續約率未揭露"},{"item":"價值鏈分配","level":"🔴","text":"Ford 在上游是價格接受者：2026 年大宗商品逆風接近 25 億美元，2027 年再約 20 億；2025 年關稅對 EBIT 淨影響約 20 億；一座 Novelis 廠供應美國車用鋁板約四成，失火就讓多款車停產；中國稀土與晶片管制造成停產與成本上升。整條價值鏈裡，Ford 只拿到約 5–6% 的調整後 EBIT 利潤率"},{"item":"社會容忍度","level":"🟡","text":"新車負擔能力已是政治議題，美國近半新車成交價低於 4 萬美元，產業定價年增約 1% 已接近上限；NHTSA 1.65 億美元同意令仍在監督期，關稅與 USMCA 修訂直接影響成本；不依賴單一監管授權"}],"roiic":"為負，絕對值算不出。分子：GAAP 營業利益 2023→2024 年減少 2.4 億美元（52.2−54.6），2023→2025 年減少 146.4 億（−91.8−54.6，含特殊費用）。分母取期間累計資本支出（現金口徑），2024、2025 年的金額事實表未涵蓋，但資本支出一定為正，所以可以確定是負值。不含 2025 年大額費用的 2023→2024 年也是負值：營收多 88.1 億（1,850−1,761.9），營業利益反而少 2.4 億，增量營收的營業利益率約 −2.7%","reinvest_rate":"毛額約 86%–100%：2026 年資本支出指引 95–105 億美元 ÷ 調整後 EBIT 指引 105–110 億（下緣 95÷110≈86%，上緣 105÷105＝100%）。這是毛額、稅前的近似值。折舊攤銷與稅後營業利益事實表未涵蓋，所以淨再投資率算不出。用毛額會高估，用稅前分母會低估，兩者合起來偏哪一邊無法確定。維持性與成長性資本支出的拆分未揭露","endo_ceiling":1,"formula_note":"內生成長上界＝增量資本報酬×再投資率。代入後，增量資本報酬為負（見上欄：分子 −2.4 億與 −146.4 億美元，分母為正），再投資率毛額約 86%–100%，兩者相乘為負，公式值低於 0%。數字來源：營收 2023 年 1,761.9 億、2024 年 1,850 億、2025 年 1,872.7 億、2026E 共識 1,759.4 億；GAAP 營業利益 2023 年約 54.6 億（3.1%×1,761.9 億）、2024 年約 52.2 億（2.82%×1,850 億）、2025 年約 −91.8 億（−4.9%×1,872.7 億）。欄位填的 1% 不是公式算出來的，是取整後的下限。公式值為負，表示新增資本沒有換到新增獲利，但不表示盈餘一定萎縮：美國定價仍年增約 1%（2026-10-28 法說），漲價這部分不需要新增資本。1% 比公式值寬鬆，並不保守。改填 0% 時，與共識 EPS 年化約 4.6% 的缺口由 3.6pp 擴大到 4.6pp，但超出內生上界的判定不變，缺口一樣只能用 Model e 減虧與降本帶來的利潤率擴張解釋。可能算錯的地方：分母若改用帳面投入資本，2025 年的電動車減損會把帳面資本一起打掉，分子分母同時為負，算出來反而是正值。這裡用現金口徑，因為錢已經花出去，減損只是在承認這筆投資的報酬為負"},"combined":6.0,"score":6.0,"spread_table":[{"metric":"毛利率","F":2.36,"GM":7.04,"STLA":7.83,"TM":16.76,"unit":"%"},{"metric":"營業利益率","F":-3.82,"GM":2.32,"STLA":0.91,"TM":7.05,"unit":"%"},{"metric":"FCF 利潤率","F":2.75,"GM":-0.19,"STLA":-7.18,"TM":-2.35,"unit":"%"},{"metric":"研發密度","F":null,"GM":null,"STLA":2.53,"TM":null,"period":"TTM ending 2026-09-30（4季加總）","unit":"%"}],"competitors":[{"name":"GM","gm":7.04,"om":2.32,"fcf_margin":-0.19,"rd_intensity":null,"strategy_note":"同樣靠北美全尺寸皮卡與 SUV 賺錢，2027 年初在 Orion 加產汽油車款，是 F-Series 利潤池最直接的對手；TTM 利潤率高於 Ford，但 Ford 的 TTM 含大額特殊費用，口徑不完全可比","period":"TTM ending 2026-09-30（4季加總）"},{"name":"STLA","gm":7.83,"om":0.91,"fcf_margin":-7.18,"rd_intensity":2.53,"strategy_note":"Ram 皮卡在美國與 Ford 正面競爭，但公司正在重整、削減歐洲產能約 80 萬輛，TTM 自由現金流為負，短期內價格侵略性有限","period":"TTM ending 2026-09-30（4季加總）"},{"name":"TM","gm":16.76,"om":7.05,"fcf_margin":-2.35,"rd_intensity":null,"strategy_note":"利潤率明顯領先所有同業，是成本與品質的標竿；在美國全尺寸皮卡份額小，對 Ford 的威脅主要在混合動力與乘用車","period":"TTM ending 2026-06-30（4季加總）"}]},"growth":{"driver_mix":"量持平偏降，價格與組合撐住營收；沒有併購、沒有淨回購；EPS 成長主要靠 Model e 虧損收斂與降成本","runway_years":"不適用（成熟市場，美國市占約 12%）","runway_post_y5":"🟡","endo_ceiling_basis":"增量報酬近零：2023 年到 2026E 營收持平，同期 GAAP 營業利益下滑，內生成長上界取 1%（推導見護城河段的報酬持續期）","segments":[{"item":"Ford Pro（商用車與車隊服務）","value":"2026 年第三季營收 178 億美元（+2%）、EBIT 16.65 億（前年同期 19.85 億）；全年 EBIT 約 70 億"},{"item":"Ford Blue（燃油與混動）","value":"第三季營收 271 億美元（−3%）、EBIT 13.92 億；全年 EBIT 約 55 億"},{"item":"Ford Model e（電動車）","value":"第三季營收 12 億美元（−31%）、EBIT −10.58 億；全年虧損約 40 億，目標 2029 年損平"},{"item":"Ford Credit","value":"第三季 EBT 8.03 億美元（年增 1.72 億）；全年約 28 億"},{"item":"軟體服務與零件（跨分部）","value":"約占第三季營收一成，毛利率高於整車"},{"item":"Ford Energy（儲能）","value":"2027 年底達 20 GWh 年產能，投資約 20 億美元（2026 年花三分之一、2027 年花三分之二）；目前尚無營收"}],"decay_signals":[{"signal":"毛利率連兩季年減","status":"亮","evidence":"季度毛利率事實表未涵蓋；年度 GAAP 毛利率 2022 年 10.86%、2023 年 9.17%、2024 年 8.38%、2025 年 0.9%，連年下滑（2025 年含特殊費用）"},{"signal":"核心市占近 12 個月縮減","status":"亮","evidence":"美國第二季市占 11.8%、排第四；1–9 月美國銷量年減 8.6%，同期產業 SAAR 大致持平"},{"signal":"主力產品提價後銷量下滑","status":"未亮","evidence":"第三季 F-Series 營收份額最高、獎勵金最低；銷量下降主因是停產 Escape、Corsair"},{"signal":"EPS 成長高於營收成長逾 5pp","status":"未亮","evidence":"共識 EPS 兩年年化約 4.6%，營收約 2%，差距約 2.6pp"},{"signal":"FCF 對淨利低於 0.75 倍連兩年","status":"未亮","evidence":"2023 年約 1.5 倍、2024 年約 1.1 倍"},{"signal":"SBC 占營收逾 5% 且逐年上升","status":"未亮","evidence":"年化約 0.25%"},{"signal":"TAM 萎縮或被替代技術壓縮","status":"未亮","evidence":"美國量持平在 1,610–1,640 萬輛；中國軟體定義電動車的威脅記在護城河威脅欄"},{"signal":"產業估值倍數近三年系統性下移","status":"資料缺口","evidence":"同業本益比歷史事實表未涵蓋"},{"signal":"維持性資本支出占 FCF 逾六成","status":"資料缺口","evidence":"資本支出 95–105 億美元高於自由現金流 60–70 億，但維持性與成長性的拆分未揭露"},{"signal":"停止投資新產能且營收三年內下滑","status":"未亮","evidence":"仍在投資 Oakville、UEV 與肯塔基儲能"}],"trap_rating":"🟡（亮兩項）"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購撐；資本回饋只有每季每股 0.15 美元的定期股息，回購與特別股息金額事實表未涵蓋"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"BlueOval SK 電池合資投入後又處分，2026 年第二季認列 36 億美元特殊費用，剩餘現金費用最多 20 億（2026-07-28 CFO）；已實現報酬為負","grade":"不過"},{"year":"—","action":"buyback_yield","rationale":"回購金額事實表未涵蓋，兩場法說都只提定期股息；股數 2023 年至今大致持平","grade":"N/A"},{"year":"—","action":"sbc_dilution","rationale":"前九個月 SBC 3.24 億美元；股數從 2023 年約 40.25 億降到目前 39.93 億，淨稀釋近零，低於每年 1.5%","grade":"過"}]},"valuation":{"basis":"以前瞻本益比（FY2026E 調整後 EPS）為主，自由現金流殖利率與股息覆蓋為輔；EV 倍數因淨負債含 Ford Credit 融資債務而失真，不拿來當錨","tier":"美國傳統車廠","peers":{"expanded":false,"reason":"事實表只有同業利潤率，沒有同業前瞻本益比，無法做倍數對照；終端倍數只能以自身現值 6.6 倍校準，這是本次估值已知的缺口"},"fwd_pe":6.57,"peg":1.43,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"便宜的一面：本益比 6.6 倍、股息殖利率 4.8%、自由現金流殖利率 12–14%。不便宜的一面：調整後 EPS 排除了經常性特殊費用，四年 GAAP EPS 合計近零；P/S 在自身年度端點的高檔，盈餘處在循環晚段；基準情境含一次溫和衰退，年報酬約 6% 上下，低於 8% 的及格線。分母有爭議時，便宜的論證不成立，綜合判斷為合理","targets":{"short_usd":12.95,"mid_usd":13.65,"basis":"短期＝FY2027E 基準 EPS 1.85×7 倍；中期＝FY2031E 基準 EPS 1.95×7 倍"},"upside_short_pct":3.2,"upside_mid_pct":8.8},"trap_analysis":{"verdict":"🟡","label":"低本益比的循環股：便宜可能只是晚段盈餘，加上被排除的經常性減損"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"2008 年全年虧損 146 億美元，股價在 2008–09 年跌 82%；2020 年第二季調整後 EBIT 利潤率 −10%、全年 2.2%。目前產業庫存 82 天且還在升，獎勵金 6.3%、年增 0.7pp，全球輕型車產量預測下修","assumption":"論點假設北美卡車利潤池在下一次衰退中只會縮水，不會崩","consequence":"若 2028 年的衰退與 UEV、儲能的投資高峰重疊，調整後 EPS 可能跌到 0.7 美元、股息被砍，股價落到 5–6 美元（跌幅超過 50%）","ruling":"採納。空頭機率取 30%，最大回撤下緣取 −65%；這條與 Single Thing 指向同一件事（北美衰退），不另設","watch":"每月 SAAR、產業庫存天數、獎勵金占 MSRP、Ford Credit 逾期率","evidence_refs":["cyclical_prior_downcycle_behavior#0","cyclical_prior_downcycle_behavior#1","cyclical_prior_downcycle_behavior#2","cyclical_inventory_price_position#1","supply_demand_durability#0"]},{"view":"論點成功但股東經濟變差","evidence":"BlueOval SK 處分認列 36 億美元特殊費用，剩餘現金費用最多 20 億（2026-07-28 CFO）。2022–2025 年 GAAP 淨利合計約 0.6 億美元（−19.8＋43.5＋58.8－81.8 億）。2026 年資本支出 95–105 億，高於調整後自由現金流 60–70 億；2027 年儲能、UEV、歐洲合作的投資還會再增加","assumption":"假設調整後盈餘改善，就等於股東拿得到的錢","consequence":"就算 2029 年 8% 利潤率達標，只要每隔兩三年就有數十億美元的減損與重組現金支出，每股價值的累積會遠低於調整後 EPS 呈現的樣子，而且股息之外沒有回購","ruling":"採納。估值分母列為有爭議，便宜的論證打折，終端倍數不給回升","watch":"每年特殊項目費用金額、GAAP EPS 占調整後 EPS 的比例","evidence_refs":["major_events#0","ma_merger#0"]},{"view":"價格已反映太多","evidence":"P/S 0.27 倍在自身 4 個年度端點的 97 分位，EV/S 在 87 分位（都不是五年分位）；26 週上漲 11.6%；共識 FY2027E EPS 1.91 與 2026 年持平","assumption":"假設 6.6 倍本益比代表市場已經很悲觀","consequence":"如果現價對應的是晚段盈餘，低本益比就不是安全邊際；衰退一來 EPS 下修，倍數也不會擴張","ruling":"部分採納。現價沒有反映 8% 利潤率，但也沒有反映衰退；循環晚段不追","watch":"FY2027E 共識 EPS 的修正方向；股價相對 52 週均線 13.16 美元的位置","fact_refs":["f_ps_percentile","f_ev_s_percentile","f_week26_return_pct","f_consensus_eps_fy2","f_ma_w52"]}],"max_dd":{"lo":-65,"hi":-40,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 🟡 → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=🟡","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 14.93 → 本次 12.55（-15.9%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=14.93","side_b":"本次 price_at_dd=12.55","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 14.93 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 14.93 美元：五年期望值 前份未列，基準年化 前份未列，前份未列不對稱比","side_b":"本次情境、股價仍用 14.93 美元：Bull 價 25.2、Bear 價 7.2，五年期望值 −6.1%，基準年化 −1.8%，不對稱比 0.89","ruling":"先換情境、股價不動：五年期望值與基準年化前份未列，無法比較。前份未列不對稱比，本次為 0.89。Bull、Bear 價位與股價無關，只受情境影響。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 14.93 美元：五年期望值 −6.1%，基準年化 −1.8%，不對稱比 0.89","side_b":"本次情境、股價 12.55 美元：五年期望值 +11.8%，基準年化 1.7%，不對稱比 1.58","ruling":"再換股價、情境不動：起點價下跌 15.9%，五年期望值多 17.8 個百分點，基準年化多 3.5 個百分點，不對稱比由 0.89 升到 1.58。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"前份漂移：整體評等、護城河方向、價值陷阱","cause":"新證據","prior_field":["signal","moat_trend","trap"],"side_a":"前份（2026-05-24，股價 14.93 美元）：整體評等 B；護城河方向為侵蝕；價值陷阱 🟡","side_b":"本次：整體評等 C；護城河方向 →；價值陷阱 🟡，不變","ruling":"評等下調是因為新證據，不是因為股價。前份第一條假設要求 Ford Pro 利潤率連兩季 ≥ 10%，2026 年第三季只有 9.4%；Pro 全年指引落到前一季區間的下緣，約 70 億；管理層對 2027 年只給與 2026 年大致持平，且 Model e 2027 年費用更高；FY2027、FY2028 共識 EPS 近期各下修約 0.5% 與 1%。護城河方向由侵蝕改為持平：第三季 F-Series 營收份額最高、獎勵金最低，車隊定價年增逾 1%；美國市占下滑主要來自停產車款，改記在威脅欄，不重複扣在趨勢上。價值陷阱同為 🟡，亮的兩項是 GAAP 毛利率連年下滑與核心市占縮減","evidence_level":"公司季報與法說（2026-10-28），以及 Experian 與 Ford Authority 的銷量統計","settle_metric":"2027 年全年調整後 EBIT 指引與 Ford Pro 季利潤率","if_then":["若 2027 年指引 ≥ 105 億美元，且 Ford Pro 季利潤率回到 10% 以上 → 整體評等回到 B","若 F-Series 獎勵金占售價比的年增幅超過產業平均，或車隊定價轉為年減 → 護城河方向改判 ↓，改為迴避"],"evidence_refs":["end_markets#3","end_markets#4"]},{"axis":"前份漂移：估值結論、成長跑道、公司類型、循環位置、回撤與情境機率","cause":"方法變動","prior_field":["val","runway_post_y5","archetype","cycle_position","max_dd_pct","p_bull_pct","p_bear_pct"],"side_a":"前份：估值結論 🟢，第三條假設靠同業前瞻本益比回到 10 倍以上；成長跑道、公司類型、循環位置、最大回撤、多空機率、裁決與角色都沒有輸出","side_b":"本次：估值結論 🟡，不假設倍數回升，改以調整後 EPS 分母有爭議與循環晚段來處理；成長跑道 🟡；類型為循環股（次要為轉機）；循環位置在晚段；最大回撤 −40%～−65%；多頭 20%、空頭 30%；裁決與角色由程式依新輸入產生","ruling":"股價從 14.93 跌到 12.55 美元，本益比更低，估值結論反而由便宜改為合理，主因在方法：前份把倍數回升當基準，本次改用自身盈餘分母校準。2022–2025 年 GAAP EPS 合計約 −0.01 美元，6.6 倍本益比的分母排除了電動車減損，便宜的論證要打折。其餘欄位前份為空，本次依新框架補齊","evidence_level":"公司 2022–2025 年度財報，以及 2026-07-28 法說 CFO 揭露的特殊費用","settle_metric":"2027 年特殊項目費用總額、GAAP EPS 占調整後 EPS 的比例","if_then":["若 2027 年 GAAP EPS ≥ 調整後 EPS 的 80% → 接受調整後分母，估值結論可回到便宜","若 2027 年再認列 ≥ 20 億美元的電動車或重組特殊費用 → 終端倍數下修到 6 倍"],"evidence_refs":["major_events#0"]},{"axis":"前份假設與風險門檻改動","cause":"新證據","prior_field":["thesis.H","thesis.R"],"side_a":"前份：Ford Pro EBIT 利潤率 ≥ 10%（連 2 季）；Model e 2026 年第四季季虧 > 13 億美元為警戒；同業中位前瞻本益比 > 10 倍（倍數回升）；Ford Credit 60 天以上逾期率 > 4%","side_b":"本次：Ford Pro 單季利潤率連兩季 < 8% 才減碼；Model e 第四季季虧 > 13 億美元沿用；倍數回升假設退休；Ford Credit 逾期率 > 4% 沿用（現值為資料缺口）","ruling":"Pro 門檻由 10% 降到 8%，不是重新定義什麼叫成功：前份門檻已在 2026 年第三季跌破（9.4%），這筆記為前份第一條假設削弱。降門檻的依據是第三季壓力來自大宗商品與 Oakville 爬坡的暫時成本（2026-10-28 CFO），車隊定價仍年增逾 1%。若 2027 年 Oakville 爬坡完成後 Pro 季利潤率仍 < 9%，直接視同反轉。倍數回升假設退休，因為 FY2027、FY2028 共識微幅下修，2027 年又只給持平獲利，看不到倍數回升的催化","evidence_level":"公司季報分部表與法說","settle_metric":"2027 年 Ford Pro 季利潤率","if_then":["若 2027 年下半年 Pro 季利潤率 < 9% → 減碼三分之一，Pro 假設判反轉","若連兩季 ≥ 10% → 門檻回到 10%"]},{"axis":"Single Thing 唯一致命點首次設定","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份 Single Thing：未設定（null）","side_b":"本次 Single Thing：美國車市進入衰退，輕型車 SAAR 季均連兩季低於 1,450 萬輛；一旦發生，減碼至半倉","ruling":"前份框架沒有要求唯一致命點。本次依數學上最大的單一敏感度，選北美量價：北美卡車與商用車是獲利主體，2020 年全年調整後 EBIT 利潤率只有 2.2%，公司指引也明說不含美國經濟顯著下滑","evidence_level":"公司指引假設與 2020 年歷史數據","settle_metric":"美國 SAAR 季均","if_then":["若 SAAR 連兩季 < 1,450 萬輛 → 減碼至半倉","若同時 Ford Credit 逾期率 > 4% → 清倉"],"evidence_refs":["cyclical_prior_downcycle_behavior#2"]},{"axis":"減碼與清倉門檻首次設定","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份減碼／清倉指標：未設定（null）","side_b":"本次：SAAR 連兩季 < 1,450 萬輛 → 減碼至半倉；Ford Pro 單季利潤率連兩季 < 8% → 減碼三分之一；全年調整後自由現金流 < 30 億美元或削減股息 → 清倉；Ford Credit 逾期率 > 4% 且 SAAR 門檻同時成立 → 清倉","ruling":"前份只有風險警戒值，沒有對應動作。本次每條門檻都綁定具體動作，避免看到訊號卻沒有執行","evidence_level":"方法調整","settle_metric":"各指標的季度讀數","if_then":["任一減碼門檻觸發 → 依該條減碼","清倉門檻觸發 → 一次清倉，不分批"]},{"axis":"重新研究條件首次設定","cause":"方法變動","prior_field":["rearm_trigger"],"side_a":"前份重新進場條件：未設定（null）","side_b":"本次：股價 ≤ 10 美元，且美國 SAAR 季均仍 ≥ 1,550 萬輛；觸發後重做完整研究，通過才分批建立首筆","ruling":"本次不追的約束是兩件事同時成立：盈餘處在循環晚段，以及調整後分母有爭議。重啟條件就是把這個約束反過來：價格先補償下行風險（10 美元約為 FY2027E 共識的 5.2 倍、股息殖利率 6%），同時景氣尚未破底","evidence_level":"本次的估值與循環位置判斷","settle_metric":"股價與 SAAR","if_then":["兩個條件同時成立 → 重做研究，通過後分批建立首筆","只有股價到位，但 SAAR < 1,550 萬輛 → 不買，等 SAAR 連兩月回升"]},{"axis":"管理層前後說法：Ford Pro 指引與成本逆風","cause":"新證據","prior_field":null,"side_a":"2026-07-28 法說 CFO：Ford Pro 全年 EBIT 70–75 億美元、下半年 36–41 億；大宗商品逆風略高於 20 億；2027 年方向「現在說太早」","side_b":"2026-10-28 法說 CFO：Ford Pro 全年約 70 億（區間下緣）；大宗商品逆風接近 25 億，增加約 5 億；全公司調整後 EBIT 下緣上調到 105 億，Ford Blue 約 55 億，落在區間上緣；CEO 稱 2027 年獲利與 2026 年大致持平","ruling":"可調和，屬程度差異：Pro 下修來自成本而不是定價，全公司靠組合與定價補回。但 Ford Pro 是本檔最強的一塊，指引往下緣走，要算削弱。第四季 Pro EBIT 隱含約 19.4 億美元（70 億 − 上半年 34 億 − 第三季 16.65 億）","evidence_level":"兩場法說逐字稿","settle_metric":"2026 年第四季 Ford Pro EBIT","if_then":["若第四季 Pro EBIT < 17 億美元 → 停止加碼，並把 2027 年 Pro EBIT 預估降到 65 億以下","若 ≥ 20 億美元 → 維持 Pro 假設"]},{"axis":"儲能訂單的證據品質","cause":"新證據","prior_field":null,"side_a":"2026-10-28 CEO：已簽約加上後期議約，合計超過 2028 年產能的八成，預期 2027 年第一季全數承諾","side_b":"同場儲能總裁 Carroll：今天不談 backlog，明年才開始揭露；前一季（2026-07-28）CEO 自稱 2028 年產能的銷售進度在「第三局」，也沒回答是否與超大型雲端業者洽談","ruling":"不採信，也不否定：八成裡含後期議約，不是確定訂單，列為未證、持續監測。若 2027 年首次揭露的已簽約量低於 2028 年產能的 60%（約 12 GWh），判定說法證偽，儲能不計入任何情境；目前只放在多頭情境","evidence_level":"管理層口述，尚無揭露數字","settle_metric":"2027 年首次揭露的儲能已簽約 GWh","if_then":["已簽約 < 12 GWh → 多頭機率由 20% 降到 15%","已簽約 ≥ 20 GWh，且 2029–2030 年也有簽約 → 維持多頭情境，並把儲能列入基準情境"]},{"axis":"便宜與否：低本益比對上循環晚段盈餘","cause":null,"prior_field":null,"side_a":"便宜：前瞻本益比 6.6 倍、股息殖利率 4.8%，調整後自由現金流指引相當於市值的 12–14%，足以支付約 2.5 倍股息","side_b":"不便宜：調整後 EPS 排除了經常性特殊費用（2022–2025 年 GAAP EPS 合計約 −0.01 美元）；P/S 在自身 4 個年度端點的 97 分位；產業庫存與獎勵金上升，盈餘處在循環晚段","ruling":"⚖ 不可調和（方向相反），裁定站在不便宜這一側。依據：基準情境含一次溫和衰退，5 年年報酬約 6% 上下，補償不了 −40%～−65% 的回撤風險；四年 GAAP 盈餘合計近零是硬數據。現在就買的最強論證：自由現金流殖利率 12–14%，F-Series 的定價紀律與 Ford Pro 軟體服務成長都是真的，市場卻只給持平盈餘 6.6 倍；若 2029 年 8% 利潤率兌現，EPS 約 2.6 美元，給 8 倍就是約 21 美元，比現價高約 66%。不採納，因為這個論證完全依賴管理層的調整口徑，以及尚未發生的利潤率目標","evidence_level":"公司年度財報、季報與產業庫存統計","settle_metric":"2027 年 GAAP EPS 占調整後 EPS 的比例、美國 SAAR","if_then":["若股價 ≤ 10 美元且 SAAR 季均 ≥ 1,550 萬輛 → 重做研究，通過後分批建立首筆","反向：若 2027 年 GAAP EPS ≥ 調整後 EPS 的 80%，且調整後 EBIT ≥ 105 億美元 → 接受調整後分母，股價 ≤ 12 美元即分批建立首筆","價格先走、證據未到：股價漲過 14 美元，但 2027 年指引未確認 → 不追；已持有者分批了結三分之一"],"evidence_refs":["cyclical_inventory_price_position#1"]}],"triggers":[{"n":1,"text":"美國車市進入衰退（唯一致命點）","type":"Single Thing","maps_to":"H1","metric":"美國輕型車 SAAR 季均","threshold":"連兩季 < 1,450 萬輛","action":"減碼至半倉；若同時 Ford Credit 60 天以上逾期率 > 4% → 清倉","source_freq":"每月（美國車市銷售統計）","date":null,"evidence_refs":["supply_demand_durability#0","cyclical_inventory_price_position#1"]},{"n":2,"text":"重新研究的價格與景氣條件","type":"估值rearm","maps_to":"H3","metric":"股價與美國 SAAR","threshold":"股價 ≤ 10 美元，且 SAAR 季均 ≥ 1,550 萬輛","action":"重做完整研究，通過後才分批建立首筆","source_freq":"股價每日、SAAR 每月","date":null},{"n":3,"text":"Ford Pro 第四季能否守住全年約 70 億美元的指引","type":"假設驗證","maps_to":"H1","metric":"2026 年第四季 Ford Pro EBIT","threshold":"≥ 19 億美元（70 億 − 上半年 34 億 − 第三季 16.65 億）","action":"< 17 億美元 → 停止加碼","source_freq":"每季財報","date":"2027-Q1"},{"n":4,"text":"2027 年全年指引","type":"假設驗證","maps_to":"H1","metric":"2027 年調整後 EBIT 指引","threshold":"≥ 100 億美元","action":"< 100 億美元 → 已持有者減碼三分之一","source_freq":"年度指引","date":"2027-Q1"},{"n":5,"text":"Model e 第四季虧損（沿用前份門檻）","type":"風險","maps_to":"R3","metric":"2026 年第四季 Model e 單季 EBIT","threshold":"虧損 > 13 億美元","action":"停止加碼","source_freq":"每季財報","date":"2027-Q1","evidence_refs":["end_markets#1"]},{"n":6,"text":"Fathom 上市時程","type":"假設驗證","maps_to":"H2","metric":"Fathom 交車時點","threshold":"延後到 2028 年第一季之後","action":"減碼三分之一，並把 Model e 2029 年損平從基準情境移除","source_freq":"法說與產品公告","date":"2027-Q4","evidence_refs":["major_events#0"]},{"n":7,"text":"產業庫存與獎勵金","type":"風險","maps_to":"R1","metric":"美國新車庫存天數與獎勵金占 MSRP","threshold":"庫存 > 90 天，且獎勵金 > 7.5%","action":"停止加碼；已持有者在 14 美元以上分批了結","source_freq":"每月（Cox、J.D. Power）","date":null,"evidence_refs":["cyclical_inventory_price_position#1"]},{"n":8,"text":"成本逆風吸收失敗","type":"減碼","maps_to":"R2","metric":"單季調整後 EBIT 利潤率","threshold":"連兩季 < 4%（2026 年第三季為 5.4%）","action":"減碼三分之一","source_freq":"每季財報","date":null,"evidence_refs":["reg_tariff_export#1","geo_supply_chain#0"]},{"n":9,"text":"股息覆蓋破功","type":"清倉","maps_to":"H3","metric":"定期股息與全年調整後自由現金流","threshold":"削減每季 0.15 美元股息，或全年調整後自由現金流 < 30 億美元","action":"清倉","source_freq":"每季股息公告、年報","date":null},{"n":10,"text":"Ford Credit 信用惡化（沿用前份門檻）","type":"風險","maps_to":"R6","metric":"Ford Credit 60 天以上逾期率","threshold":"> 4%（現值事實表未涵蓋）","action":"與第 1 條同時成立 → 清倉；單獨成立 → 減碼三分之一","source_freq":"每季 Ford Credit 財報","date":null},{"n":11,"text":"中國車廠進入美國","type":"風險","maps_to":"R4","metric":"中國品牌在美國的生產或銷售管道","threshold":"宣布在美國設廠、併購或取得銷售許可","action":"減碼三分之一","source_freq":"新聞與政策公告","date":null,"evidence_refs":["competitive_share_entrants#4"]},{"n":12,"text":"下一次完整複審","type":"複審日期","maps_to":null,"metric":"2026 年第四季財報與 2027 年指引","threshold":"財報公布後兩週內","action":"重跑完整研究","source_freq":"一次","date":"2027-Q1"}],"kill_metrics":[{"metric":"美國輕型車 SAAR 季均","bear_threshold":"連兩季 < 1,450 萬輛 → 減碼至半倉","window":"每季","source":"美國車市月度銷售統計；公司指引假設 1,650 萬","last_status":"ok"},{"metric":"Ford Pro 單季 EBIT 利潤率","bear_threshold":"連兩季 < 8% → 減碼三分之一（2026 年第三季 9.4%，已跌破前份 10% 門檻）","window":"每季","source":"公司季報新聞稿分部表","last_status":"warning"},{"metric":"全年調整後自由現金流與定期股息","bear_threshold":"自由現金流 < 30 億美元，或削減每季 0.15 美元股息 → 清倉","window":"每年","source":"公司年報與股息公告","last_status":"ok"},{"metric":"Ford Credit 60 天以上逾期率","bear_threshold":"> 4% → 減碼三分之一；與 SAAR 門檻同時成立 → 清倉","window":"每季","source":"Ford Credit 季報（現值事實表未涵蓋）","last_status":"unknown"},{"metric":"美國新車獎勵金占 MSRP","bear_threshold":"> 7.5%，且產業庫存 > 90 天 → 停止加碼","window":"每月","source":"J.D. Power、Cox Automotive","last_status":"warning"},{"metric":"Model e 單季 EBIT 虧損","bear_threshold":"> 13 億美元（沿用前份）→ 停止加碼","window":"每季","source":"公司季報新聞稿分部表","last_status":"ok"}],"evidence_dismissed":[{"ref":"competitive_share_entrants#2","reason":"來源頁面日期是 2006-04-11，摘錄內容是 2006 年市占下滑放緩的舊報導，對不上「Cox 預估 2026 年 GM 與 Ford 市占流失最大、前九月約 12.5%」的說法，數字無法從這個來源核實。美國市占下滑改用日期吻合的兩條來源處理：Experian 第二季 11.8%，以及第三季美國銷量年減 7%"},{"ref":"$.thesis.R","reason":"資本市場定價這一項，如果指的是融資利差與信用評等，第六條風險的門檻已寫明資產證券化利差擴大超過 100bp，第三條假設也要求維持投資等級。閘只看到這兩處沒有掛證據編號，沒有讀到門檻內容。反壟斷監管、通路與商業模式轉變這兩條證據，本輪沒有工具可用，修補包也沒附原文。沒讀過內容就掛到某條風險上，等於只是貼標籤，所以這次不補。留到 2027 年第一季完整複審時讀過原文，再決定掛在第五條風險，或另立一條"},{"ref":"$.decision_inputs.market_wrong_reason_given","reason":"閘把賣方目標價 14.88 美元（比現價高約 19%）讀成股價被低估的對照。但估值段引用這個數字，是要說明它已經過時：資料停在 2026-08，還沒反映 10 月給出的 2027 年持平指引，也沒反映 FY2027、FY2028 共識的微幅下修，所以沒拿來當上檔依據。本判斷沒有主張市場看錯。反證紀錄第三條的結論是：現價既沒反映 2029 年 8% 利潤率，也沒反映衰退。因此「沒給出市場錯在哪」維持否，觀望靠的是等待價格條件。閘也確認了輸入與裁決一致"}],"decision_out":{"role":"追蹤","row_hit":"6,7a","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='C'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":true,"basis":"signal='C'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":true,"basis":"valuation_dependent=True, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='C', runway='🟡', val='🟡', moat_trend='→', week26=11.61, valuation_dependent=True"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='循環/商品', cycle_position='晚循環', moat='C', moat_trend='→', cycle_gates_pass=False"},{"row":"6/7/7a-verdict","condition":"Soft Veto 生效 → 觀望（max-severity wins；8a/8b 未能繞過）","hit":true,"basis":"soft_veto_rows=['6', '7a']"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":"中期 2-5 年","requires_critic":[],"verdict":"觀望","rearm_trigger":"股價 ≤ 10 美元，且美國 SAAR 季均仍 ≥ 1,550 萬輛；觸發後重做完整研究，通過才分批建立首筆","exec_line":"未持有：不追，等重新研究的條件。已持有：不加碼；循環位置在晚段，股價 14 美元以上（約 FY2027E 共識 7.3 倍）分批了結三分之一；Single Thing 觸發就減碼至半倉，削減股息就清倉。"},"reasoning":{"industry":"2026 年第三季營收 495 億美元，調整後 EBIT 26.58 億（利潤率 5.4%），GAAP 營業利益 14.54 億（2.9%），批發 104.9 萬輛。分部：Ford Pro 營收 178 億、EBIT 16.65 億；Ford Blue 營收 271 億、EBIT 13.92 億；Model e 營收 12 億、EBIT −10.58 億；Ford Credit EBT 8.03 億。全年指引調整後 EBIT 105–110 億，其中 Pro 約 70 億、Blue 約 55 億、Model e 約 −40 億、Credit 約 28 億（2026-10-28 CFO）。單點依賴：獲利高度集中在美國全尺寸皮卡與商用車（F-Series、Super Duty、Transit）；上游集中度也高，Novelis 一座廠供應美國車用鋁板約四成，2025 年這座廠失火，曾讓多款車停產。供需持久性屬週期性、將反轉：美國 9 月新車庫存升到 82 天，10 月獎勵金占 MSRP 6.3%、年增 0.7pp，全球 2026–27 年產量預測下修；供給可逆性高（GM 與 Hyundai 在美國擴產、中國出口）。產業態勢是雙向拉鋸：一邊是競爭惡化（中國出口、歐洲產能過剩、美國同業擴產），另一邊是部分結構轉好（Stellantis 削減歐洲產能約 80 萬輛、VW 再減約 100 萬輛）。其他結構變數裡，關稅與稀土管制影響最大。","moat":"機制是規模加上品牌與服務網。F-Series 有望連續第 50 年拿下美國最暢銷皮卡，Transit 是美國最暢銷廂型車；Ford Pro 把車隊管理軟體、維修與融資綁在一起。可比軸方面，同業 ROIC 事實表未涵蓋，改看 TTM 利潤率：Ford 的毛利率與營業利益率都低於 GM、Stellantis、Toyota，但 Ford 的 TTM 含電動車減損與合資處分的特殊費用，同業的調整後數字又未涵蓋，所以利差方向只能確認對 Toyota 是大幅負值。趨勢不往上，是因為美國第二季市占 11.8%、排第四，第三季美國銷量年減 7%。趨勢也不往下，是因為第三季 F-Series 營收份額最高、獎勵金最低，車隊定價年增逾 1%；市占流失主要來自停產 Escape 與 Corsair。報酬持續期：當期 ROIC 無法從事實表算出；以 GAAP 計的增量報酬近零或為負，內生成長上界約 1%。","growth":"成長拆解：量持平偏降，價格與組合撐住營收，沒有併購，也沒有淨回購。共識 EPS：FY2026E 1.91、FY2027E 1.91、FY2028E 2.09 美元（Koyfin 2026-10-31，家數未揭露）。FY2025A 的調整後 EPS 事實表未涵蓋，只能算 FY2026E 到 FY2028E 兩年年化約 4.6%。共識營收 FY2026E 1,759 億、FY2027E 1,797 億（+2.1%）。內生上界約 1%（見護城河段），缺口約 3.6pp，歸因於利潤率擴張：Model e 年虧從約 40 億往 2029 年損平收斂、每年約 10 億美元的材料與保固降本、軟體服務與零件組合提升。缺口可以歸因，不靠倍數回升。跑道：核心市場滲透已到頂，以年數計算不適用；第二條曲線存在，所以不落最差一檔，但量體不足以給寬跑道。衰退訊號亮兩項（GAAP 毛利率連年下滑、核心市占縮減），另有兩項資料缺口（產業倍數三年走勢、維持性資本支出占比）。","governance":"第三季營業現金流 54 億美元、調整後自由現金流 47 億，GAAP 淨利 20.49 億（EPS 0.50）。全年調整後自由現金流指引 60–70 億，資本支出 95–105 億。定期股息每季每股 0.15 美元，以約 39.93 億股計，一年約 24 億美元，自由現金流覆蓋約 2.5–2.9 倍。年度 FCF 對淨利：2023 年約 1.5 倍、2024 年約 1.1 倍（年度 FCF 含 Ford Credit 現金流，與公司的調整後口徑不同）；2025 年淨利為負，不適用。前九個月 SBC 3.24 億美元，年化約占營收 0.25%。股數 2023 年約 40.25 億（淨利 43.47 億÷稀釋 EPS 1.08），目前 39.93 億，淨稀釋近零。季末現金 253 億、總流動性 464 億（2026-10-28 CFO）。現金去向四分、汽車部門債務的到期結構與加權利率、回購金額，事實表皆未涵蓋。","valuation":"前瞻本益比 6.57 倍（12.54÷FY2026E 的 1.91），FY2027E 也是 1.91，等於市場只給持平盈餘。股息殖利率 4.8%，調整後自由現金流指引相當於市值的 12–14%。但分母有爭議：2022–2025 年 GAAP 稀釋 EPS 合計約 −0.01 美元，調整後口徑排除了 2022 年、2025 年與 2026 年第二季的大額特殊費用。P/S 0.27 倍位在自身 4 個年度端點的 97 分位，EV/S 1.02 倍在 87 分位（都不是五年分位；EV 含 Ford Credit 融資債務，EV/S 失真，不拿來當錨）。五年本益比區間事實表未涵蓋，分位留空。PEG 約 1.4（6.57÷FY2026E 到 FY2028E 年化 4.6%）。短期目標 12.95 美元（FY2027E 基準 EPS 1.85×7 倍，+3%）；五年目標 13.65 美元（1.95×7 倍，+9%，不含股息）。賣方均價 14.88 美元（25 家、評等為持有、資料停在 2026-08），比現價高約 19%，但還沒反映 10 月的 2027 年持平指引，以及 FY2027、FY2028 共識的微幅下修。FY2026E 近三個月上修 5.5%，主要反映今年已實現的部分。","premortem":"反證寫在反證紀錄，三個視角各一條。歷史回撤：2008–09 年股價跌 82%（同期標普 −53%），2020 年第二季調整後 EBIT 利潤率 −10%。訴訟與監管：Hetsler 產品責任案判賠 1.03 億美元，上訴中；NHTSA 2024-11 同意令罰款 1.65 億美元，監督期三年；2024 年的證券集體訴訟現況未查證。管理層迴避：前一季（2026-07-28）沒給與同業的成本差距數字，沒回答儲能是否與超大型雲端業者洽談，對 2027 年方向說「現在說太早」；本季（2026-10-28）改口說 2027 年與 2026 年大致持平，儲能的 backlog 仍不揭露。技術面：股價 12.61 美元，在 52 週均線 13.16 之下，在 104 週均線 11.61 與 250 週均線 10.86 之上；250 週均線 13 週斜率 −0.67%；RSI 54.7，不過熱。"},"plain":{"six":{"how_it_makes_money":"賺北美卡車、商用車與車隊客戶的錢。獲利集中在 Ford Pro 與 F-Series 皮卡，再加上 Ford Credit 的車貸利差；電動車部門每年吃掉約 40 億美元。產業處於高檔、開始鬆動的第三階段。","moat":"→：卡車與商用車的定價紀律守住，執行力也在改善，但美國市占下滑，趨勢無法往上。等級 C（執行 6 分、定價 6 分，中國車廠的生態攻擊扣 1 分）。","growth":"🟡：北美核心車市已經飽和；第二條曲線（儲能、軟體服務）有公司提出的證據，但相對 1,760 億美元營收量體太小。成長來自虧損收斂與降成本，不是營收擴張。","capital":"現金流付得起股息，但過去投入電動車的資本大量減損，增量資本報酬差；資本回饋只有股息，沒有回購。","valuation":"現價只要求調整後 EPS 在下一次溫和衰退中守住 1.7 美元以上、股息不砍，就有約 6% 上下的年報酬。要賺得更多，得靠 2029 年 8% 利潤率兌現，這點我只部分相信。估值合理，不算便宜。","how_wrong":"🟡：最可能看錯的方向是太保守。若 2029 年 8% 利潤率兌現，EPS 約 2.6 美元，給 8 倍就是 21 美元。最痛的錯則是太樂觀：衰退若與 UEV、儲能的投資高峰重疊，股價可能回到 5–7 美元。"}},"decision_inputs":{"signal":"C","ma":"🟡","cycle_position":"晚循環","cycle_verdict":"等回踩","thesis_irreconcilable":false,"valuation_dependent":true,"market_wrong_reason_given":false,"momentum_overheated":false,"cycle_gates_pass":false,"qc49_inherit_prior":null,"wait_for_price":true,"wait_for_price_condition":"股價 ≤ 10 美元（約 FY2027E 共識 5.2 倍、股息殖利率 6%），且美國 SAAR 季均仍 ≥ 1,550 萬輛","trap":"🟡","val":"🟡","moat":"C","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"循環/商品","price_at_dd":12.55,"week26_return_pct":11.61,"consensus_rev_3m_pct":5.52,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"調整後 EPS 排除了幾乎每年都有的特殊項目：2022 年與 2025 年 GAAP 虧損，以及 2026 年第二季 BlueOval SK 處分費用 36 億美元；2022–2025 年 GAAP EPS 合計約 −0.01 美元。6.6 倍本益比用的是排除電動車減損後的分母，所以改用自由現金流對股息的覆蓋，以及含衰退的基準情境報酬來判斷"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"other","event":"CFO 在 Barclays 全球汽車與移動科技研討會發言（11 月 18 日）","impact":"低","watch":"2027 年約 20 億美元成本逆風的抵銷進度"},{"date":"2027-Q1","date_precision":"quarter","type":"guidance","event":"2026 年第四季財報與 2027 年全年指引","impact":"高","watch":"調整後 EBIT 指引是否 ≥ 100 億、Model e 2027 年虧損指引、Ford Pro 第四季 EBIT 是否 ≥ 19 億"},{"date":"2027-Q1","date_precision":"quarter","type":"product","event":"Fathom 開放預購；儲能 2028 年產能全數承諾的目標期限","impact":"中","watch":"預購量，以及儲能已簽約量是否首次揭露"},{"date":"2027-Q4","date_precision":"quarter","type":"product","event":"Fathom（UEV 首款）在 Louisville 上市","impact":"高","watch":"是否如期上市、起價 28,350 美元是否維持"},{"date":"2027-Q4","date_precision":"quarter","type":"capacity","event":"肯塔基儲能電池 20 GWh 年產能上線","impact":"中","watch":"是否如期上線，以及 2029–2030 年產能的議約進度"}],"_projected_from":"v19"}
+```
+
+---
+
+## ⑨ 補寫任務（本段優先，取代上面任務頭與寫入指示）
+
+上一輪散文已寫好，只有下列章節篇幅不足、被硬閘擋下。**只重寫這幾章**，其他章節一個字都不要寫。
+
+- `s5`：現在 2,318B，下限 3,000B，**目標 ≥ 3,600B**
+
+做法：保留現稿的論點與結論，補的是深度——用上面 judgment 投影視圖裡已有、但現稿沒寫到的內容（機制、證據、同業對照、反證）。不得灌水重複、不得出現白名單以外的數字、不得心算衍生數字。格式同散文卡 §6：每章前一行 `<!-- SID:sX -->`，緊接完整的 `<section>`（`<h2>`／`<p class="lead">`／`<ul class="pts">`），表格注入標記照現稿保留。
+
+一次 Write 到 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/F_20261103/prose_fix.html`，寫完即停。
+
+現稿：
+
+```html
+<!-- SID:s5 -->
+<section id="s5"><h2>5　護城河與報酬持續期</h2>
+<p class="lead">護城河等級 C，方向持平，上游與中國是主要威脅。</p>
+<ul class="pts">
+<li>護城河來自規模、品牌與服務網。F-Series、Super Duty 與 Transit 在美國全尺寸皮卡與商用車領先，F-Series 有望連續第 50 年成為美國最暢銷皮卡。Ford Pro 再以車隊管理軟體、維修與融資綁住客戶，同時有軟體訂閱與定期保養的客戶，零件留存率高約 9 個百分點，數位車隊管理年底將超過 10 萬台，多數不是 Ford 車。</li>
+<li>執行力 6 分，定價力 6 分，綜合等級 C。執行力在改善，J.D. Power 2026 年新車品質調查居首，保固與材料成本 2025 年降 15 億美元，2026 年再降 10 億美元，Oakville Super Duty 爬坡進度超前。定價力持穩，車隊定價年增逾 1%，2027 車型年車隊訂單符合預期。</li>
+<li>趨勢判為持平。美國市占下滑讓趨勢無法往上，第三季美國銷量年減 7%，7 月 Ford 品牌年減 9.1%，其中有一部分來自主動停產車款。趨勢也不往下，因為定價紀律守住。前份判為侵蝕，這次上調，原因是市占流失已改記在威脅欄，不重複扣分。</li>
+<li>威脅以中國車廠最重，機率 30%。中國車廠以軟體定義與低成本電動車擴張，歐洲、東南亞與拉美已受壓，執行長稱 5 到 10 年內可能進入美國。GM 加產汽油皮卡的機率 40%，美國市占續降 50%，Hyundai 擴產 30%。價格紀律會是下一個受考驗的地方。</li>
+<li>與同業比，福特的 TTM 毛利率 2.36% 與營業利益率 −3.82% 都低於 GM、Stellantis 與 Toyota。但福特 TTM 含電動車減損與合資處分的特殊費用，同業的調整後數字未涵蓋，口徑不完全可比。唯一能確認的是對 Toyota 的利差為大幅負值，Toyota 的營業利益率 7.05%。</li>
+<li>報酬持續期四個檢查點中，價值鏈分配為紅燈，其餘為黃燈。Ford 在上游是價格接受者，整條價值鏈只拿到約 5% 到 6% 的調整後 EBIT 利潤率。需求基礎、決策層級與社會容忍度都是黃燈，車隊每年議約，GM 與 Ram 都能替代，漲價後的流失率與續約率並未揭露。</li>
+</ul>
+<!-- E5 -->
+<!-- E6 -->
+<!-- E7 -->
+</section>
+
+```
