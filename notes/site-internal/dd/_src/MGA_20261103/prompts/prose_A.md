@@ -1,0 +1,431 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 MGA（2026-11-03）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/MGA_20261103/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：MGA　日期：2026-11-03　archetype：None　前份裁決：2026-05-24　B 觀望偏進場（衛星候選）｜　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1791B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（410B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（808B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1569B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1361B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（760B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（1117B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2326B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（3364B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（3173B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（283B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1791           3646-5209      5 條（2–6 內）  
+s3                  8000         410           5313-7590      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3738          7883-11262      5 條（2–6 內）  
+s6                 11000         760          7168-10240      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500        1117           1668-2383      3 條（2–6 內）  
+s10                 5000        2326           1872-2674      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        3173           2000-2000      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         283            852-1217      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=5169B；至少需散文≈39.83KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−55
+−55%
+−35%
+−35
+−10%
+−2.6%
+−2.1%
+−2%
+−1%
+−0.2%
+0
+0.14%
+0.4
+0.52
+0.64
+0.65
+0.7
+0.75
+1%
+1.0
+1
+1.29
+1.4
+1.44
+1.48
+1.6
+1.65
+1.83
+1.9%
+02
+2
+2.0%
+2%
+2.02
+2.1%
+2.18
+2.26%
+2.26
+2.3%
+2.4
+2.6%
+2.93
+03
+3
+3%
+3.07
+3.1
+3.3%
+3.4%
+3.6
+3.6%
+3.7
+3.7%
+4
+4%
+4.3%
+4.5
+4.5%
+4.6
+4.6%
+4.8
+4.85
+5%
+5.0%
+05
+5
+5.2
+5.29
+5.5
+5.5%
+5.52
+5.6%
+5.74
+5.8%
+5.8
+06
+6.0%
+6%
+6
+6.1%
+6.2%
+6.3%
+6.3
+6.4
+6.4%
+6.5%
+6.58
+6.6%
+6.7%
+6.8%
+6.83
+6.85
+6.9%
+07
+7%
+7.00
+7
+7.0%
+7.04
+7.15
+7.2
+7.26
+7.3%
+7.5%
+7.5
+7.7
+7.78
+8%
+8
+8.25
+8.36
+8.46
+8.5
+8.5%
+8.55
+8.75
+8.9
+9
+9%
+9.2
+9.2%
+9.3
+9.35
+9.4
+9.5
+9.8
+9.8%
+10%
+10
+10.2%
+10.5
+10.5%
+10.7
+11
+11.4
+11.5
+11.6
+12
+12.2%
+12.2
+13%
+13.5
+13.75
+14
+14.25
+14.3%
+14.7%
+15
+15%
+16
+17%
+18
+18.5
+18.75
+18.8
+18.8%
+19
+20
+20.8
+21.4
+22%
+24
+24%
+25
+26
+26.8%
+27
+28%
+28
+29.2%
+30
+30%
+31
+32
+35
+35%
+36
+40
+40%
+41
+42
+43.5
+44
+45
+49
+50
+50%
+50.4
+52%
+52
+54
+58
+60%
+60.3
+64.58
+65%
+65.81
+67
+70
+72
+72.7
+73%
+75
+76%
+78%
+78.2
+80%
+80
+90%
+90
+96
+100%
+100
+100.6
+120
+133.4
+150
+150%
+171
+200
+221
+232
+250
+412
+416
+417
+420
+423
+790
+800
+2008
+2009
+2019
+2022
+2023
+2024
+2025
+2026
+2027
+2028
+2030
+2031
+6902
+20261103
+2,500
+2,580
+7,600
+9,200
+9,264
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"MGA","date":"2026-11-03","schema":"v15.0","contract":"v19","company_name":"Magna International Inc."},"oneliner":"營收持平、定價權在車廠，EPS成長靠自救式利益率擴張與每年約一成股數回購；前瞻9.4倍的便宜建立在高檔利益率與排除重組費用的調整後盈餘上，等2027年2月財測驗證6.4%利益率是不是起跳點。","thesis":{"H":[{"id":"H1","text":"調整後EBIT利益率由2025年約5.6%結構性墊高到6.4%以上，之後靠營運卓越每年再加30–40bp","2y":"FY2027調整後EBIT利益率≥6.7%","5y":"FY2030≥7.0%","10y":null,"threshold":"FY2026≥6.3%（指引下緣）；FY2027≥6.7%","source":"公司季報與年度財測（6-K）；Q3 2026法說CEO Kotagiri與CFO Fracassa的起跳點說法","drift_rule":"TTM利益率對6.4%基準：連2季低於6.1%（偏離≥5%）→削弱；連3季低於5.8%（偏離≥10%）→反轉"},{"id":"H2","text":"扣除一次性EV專案回收後，經常性FCF每年≥15億美元，撐住股息與每年淨減股4%以上","2y":"FY2027經常性FCF≥15億美元、稀釋股數年減≥4%","5y":"FY2027–2031累計FCF≥80億美元","10y":null,"threshold":"FY2027 FCF≥15億美元（不含EV回收）；FCF對調整後淨利≥80%","source":"公司年度FCF指引與季報現金流量表（6-K）；Q3 2026法說CFO稱回收不再發生下仍維持高轉換率","drift_rule":"TTM經常性FCF對15億美元基準：連2季偏離≥5%（低於14.25億）→削弱；連3季偏離≥10%（低於13.5億）→反轉"},{"id":"H3","text":"市場產量持平下，靠中國車廠業務、整車組裝附加價值模式與新得標專案維持正的growth over market，抵銷傳統產品萎縮","2y":"FY2027不含整車growth over market≥+1%","5y":"2027–2031年不含整車growth over market平均≥+2%","10y":null,"threshold":"FY2027不含整車≥+1%","source":"公司每季法說揭露的growth over market；Q2 2026法說（2028年業務訂單逾90%）","drift_rule":"不含整車growth over market連4季為負→削弱；連6季低於−2%→反轉"}],"R":[{"id":"R1","text":"原物料（DRAM、樹脂）回收失敗加上Q4商務項目轉負，Q4利益率達不到7%，坐實Q3有提前認列","h_ref":"H1","clock":"⚡","threshold":"Q4 2026調整後EBIT利益率<7.0%；或2027年任一季利益率年減≥50bp連2季","evidence_refs":["supply_demand_durability#1","end_markets#0"]},{"id":"R2","text":"北美貿易規則變動（第232條汽車關稅、美國50%本地含量提案）讓加拿大與墨西哥供美零件的關稅成本轉嫁不出去；目前毛關稅曝險約1.6億美元，客戶去年吸收約八成","h_ref":"H1","clock":"🔥","threshold":"季度淨關稅對利益率拖累≥30bp連2季，或50%本地含量規則實施","evidence_refs":["reg_tariff_export#0","reg_tariff_export#1","reg_tariff_export#2","geo_supply_chain#1"]},{"id":"R3","text":"景氣下行：北美與歐洲產量年減10%以上，利益率回到2022年的4%出頭、FCF腰斬，回購暫停","h_ref":"H2","clock":"🔥","threshold":"北美加歐洲輕型車產量年減≥5%連2季；或單季利益率<5.0%連2季（減碼）","evidence_refs":["cyclical_prior_downcycle_behavior#0","cyclical_prior_downcycle_behavior#1","cyclical_prior_downcycle_behavior#2","supply_demand_durability#1"]},{"id":"R4","text":"份額與含量流失：電子與半導體新進者、車廠自製壓鑄與沖壓、Lear座椅垂直整合、傳統傳動件衰退，加上六大客戶占76%讓議價更弱","h_ref":"H3","clock":"🐢","threshold":"不含整車growth over market連8季累計落後產量200bp以上（沿用前份）","evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#2","substitute_technology#0","substitute_technology#1","customer_concentration_credit#0","customer_concentration_credit#1"]},{"id":"R5","text":"供應鏈中斷：Magna是Nexperia受影響晶片的直接買方，美國鋁板供應商火災曾威脅車廠停產","h_ref":"H1","clock":"⚡","threshold":"單季因供應中斷損失營收≥3%，或因此下修財測","evidence_refs":["geo_supply_chain#0"]}],"single_thing":{"description":"2027年2月公布的FY2027財測，調整後EBIT利益率中點低於6.4%","why_fatal":"利益率是EPS最大的敏感度：每50bp約對應2億美元EBIT、約0.65美元EPS（約FY2027共識的8%）；產量、原物料回收、商務項目轉負都匯總在這個數字。中點低於6.4%等於管理層自己否定6.4%是起跳點，基本情境2027年EPS會落到約7.2美元而非7.7美元，FCF與回購同步縮","if_happens":"不建倉；持有者減碼至一半；Bear機率由30%調到35%重跑情境","how_monitor":"Q4 2026財報與FY2027財測新聞稿（6-K）；投資人日中期利益率框架當提前訊號","probability":"約30%（2027年2月揭曉）"}},"appendix_a":{"growth_durability":4,"quality_score":6,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":8.46,"peg_fy2":0.64,"stress":{"pass":2,"total":4}},"eps_meta":{"base_eps_path":{"FY2025A":5.74,"FY2026E":7.04,"FY2027E":7.78,"FY2028E":8.36},"fy_end_month":12,"eps_basis":"調整後稀釋EPS（Non-GAAP，美元，12月年度）；FY2025A約5.74美元由Q3 2026法說「FY2026中點7.00美元較去年增22%」回推，非事實表直接值；同年GAAP稀釋EPS為2.93美元"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/MGA_20261103/scenario.json","archetype":{"primary":"循環/商品","secondary":null,"confidence":"高","fingerprint":"營收隨車廠產量擺動、利益率對產量與原物料敏感：2008年第四季虧損1.48億美元、2022年利益率掉到約4.3%；資本支出約營收3.6–4%"},"industry":{"clock_phase":"IV","sd_verdict_source":"週期性、溫和下行後回升：北美輕型車產量2026年−0.2%、2027年−2.1%、2028年+4.6%（ITR），全球2027年約9,264萬輛持平、中國下修（GlobalData與MarkLines），沒有結構性緊缺或過剩；供給可逆性高（Magna四年重組或關閉41個以上事業單位，供應商收緊資本支出核准）","bargaining":{"up":"中：鋼鋁多有轉售或指數化；樹脂僅約40%指數化；DRAM與電子零件漲價要向車廠議價回收，Q3淨拖累約50bp","down":"弱：六大車廠占76%，每年例行價格讓步；原物料與關稅回收靠商務談判，去年客戶吸收約八成關稅成本","geo":"加拿大與墨西哥廠供應美國，美國50%本地含量提案與第232條汽車關稅談判未定；中國業務約65%來自中國車廠"},"profit_pool_dir":"利潤池往車廠與電子、半導體端移；機械傳動件長期萎縮，電驅、ADAS感測與整車代工（中國車廠歐洲在地化、Waymo改裝）是Magna想接住的部分","tam_table":{"expanded":false,"reason":"成熟車用零件市場，論點承重在利益率與回購，不在滲透率或份額擴張；全球產量約9,200萬輛持平已寫在供需判讀"}},"moat":{"mechanism":"規模與全產品線（車身結構、座椅、電驅與四驅、ADAS、整車代工）帶來的專案得標與製造整合能力；得標後鎖定車型生命週期，每代車型重新招標，定價權在車廠","execution":7,"pricing":4,"grade":"C","trend":"→","trend_evidence":"執行面擴大（利益率2025年約5.6%→2026年指引中點6.4%，營運卓越每年35–50bp）、定價面縮減（例行價格讓步、原物料回收時差、六大客戶占比73%→76%），兩者相抵判穩定","peer_na_reason":"同業ROIC與投入資本事實表未涵蓋，只能比營業與FCF利益率；Magna TTM FCF利益率含2026年約5億美元一次性EV回收","threats":[{"level":"🟡","text":"電子與半導體廠擴大車用布局、區域式架構整合控制器，壓縮傳統電子含量；Magna ADAS仍在得標（歐洲車廠駕駛監控），目前屬點對點競爭","p":30,"evidence_refs":["competitive_share_entrants#0","substitute_technology#1"]},{"level":"🟡","text":"Lear收購Kongsberg、IGB與Antolin座椅業務做垂直整合，壓迫Magna座椅（全年利益率3.1–3.3%）","p":25,"evidence_refs":["competitive_share_entrants#2"]},{"level":"🟡","text":"手排變速箱、機械式四驅長期衰退與部分產品技術過時；但Q3仍拿到2028年量產的分動箱與後驅、前驅模組，替代速度慢","p":35,"evidence_refs":["substitute_technology#0","substitute_technology#1"]},{"level":"🟡","text":"車廠自製一體壓鑄與沖壓（Q3法說分析師提問）；管理層稱未見負面影響，未證，列監測","p":20,"evidence_refs":[]}],"roic_durability":{"quadrant":"低利益率×高周轉（推定）：稅後營業利益率約5%（6.4%×78%），投入資本周轉率事實表未涵蓋，依接單生產、資本支出約營收3.6%的製造模式判讀，待補資料驗證","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者是駕駛、決策者是車廠工程與採購、付款者是車廠；零件需求由車輛產量衍生，屬可延後的需求：全球產量2026–27年約9,200萬輛持平、北美2027年預測−2.1%，景氣衰退時車廠減產會直接傳到Magna"},{"item":"決策層級","level":"🟡","text":"替代決策在車型專案層級：得標後鎖定5–7年車型生命週期（2028年業務已訂逾90%，Q2法說），但每代車型重新招標、六大客戶占76%、供應商眾多；車廠也在評估自製壓鑄與沖壓，管理層稱未見影響（未證）"},{"item":"價值鏈分配","level":"🔴","text":"價值多被車廠與電子、半導體上游拿走：每年例行價格讓步、DRAM與樹脂漲價要逐案談判回收、Q3原物料淨拖累約50bp；同業營業利益率3.7–10.2%，零件環節整體只拿薄利"},{"item":"社會容忍度","level":"🟢","text":"零件價格不受社會或監管定價限制，優勢也不靠授權；政策風險在貿易面（美國50%本地含量提案、第232條關稅），已列入風險，不構成定價上限"}],"roiic":"事實表未涵蓋（投入資本與增量資本口徑缺）；內生上界用假設值約8–10%代入，未證","reinvest_rate":"約24%（代理）：FY2026 FCF指引中點18.75億美元約等於調整後淨利，扣除約5億美元一次性EV回收後約13.75億美元，差額約5億美元視為淨再投資；稅後營業利益約20.8億美元（416億營收×6.4%×78%）；D&A與營運資金拆分事實表未涵蓋","endo_ceiling":2.0,"formula_note":"內生成長上界＝增量ROIC×再投資率≈8–10%（假設）×24%≈2%／年；業務口徑交叉驗證：市場產量持平＋不含整車growth over market約+1–3%（公司口徑）→營收內生成長約1–3%。共識EPS成長超出部分來自利益率擴張與回購，不是再投資。"},"combined":5.5,"score":5.5,"spread_table":[{"metric":"毛利率","MGA":14.71,"LEA":6.86,"APTV":19.63,"6902.T":15.2,"BWA":19.8,"unit":"%"},{"metric":"營業利益率","MGA":5.48,"LEA":3.67,"APTV":9.75,"6902.T":6.88,"BWA":10.2,"unit":"%"},{"metric":"FCF 利潤率","MGA":7.52,"LEA":3.58,"APTV":3.65,"6902.T":1.95,"BWA":9.16,"unit":"%"}],"competitors":[{"name":"LEA","gm":6.86,"om":3.67,"fcf_margin":3.58,"strategy_note":"座椅與電子系統直接對手，營業利益率3.7%低於Magna，正以收購Kongsberg、IGB與Antolin座椅業務垂直整合，壓的是Magna利益率最低的座椅分部","period":"TTM ending 2026-06-30（4季加總）"},{"name":"APTV","gm":19.63,"om":9.75,"fcf_margin":3.65,"strategy_note":"電子架構與ADAS領先者，營業利益率9.8%但FCF利益率只有3.7%；區域式架構由它與Bosch、Continental主導，Magna電子在這塊是跟隨者","period":"TTM ending 2026-06-30（4季加總）"},{"name":"6902.T","gm":15.2,"om":6.88,"fcf_margin":1.95,"strategy_note":"Denso營業利益率6.9%略高於Magna、FCF利益率2.0%偏低；以日系車廠為主，與Magna客戶重疊有限","period":"TTM ending 2026-06-30（4季加總）"},{"name":"BWA","gm":19.8,"om":10.2,"fcf_margin":9.16,"strategy_note":"BorgWarner營業利益率10.2%、FCF利益率9.2%為同組最高，是Magna電驅與四驅的直接對手，說明傳動領域能賺到比Magna整體更高的利益率","period":"TTM ending 2026-09-30（4季加總）"}]},"growth":{"driver_mix":"量持平、價為負（例行價格讓步）、併購為負（出售照明與車頂）；EPS成長來自利益率擴張與淨回購（近12個月稀釋股數減約6%）","runway_years":"不適用滲透率口徑；利益率由6.4%每年加35–40bp，到7%以上約2年，之後成長回到市場加growth over market加回購","runway_post_y5":"🟡","endo_ceiling_basis":"引護城河段內生上界約2%／年（增量報酬假設8–10%×再投資率約24%，與市場持平加growth over market +1–3%交叉驗證）；共識FY2025→2028調整後EPS年複合約13%，缺口約11個百分點可歸因：2026年利益率+80bp、之後每年營運卓越35–40bp與淨回購4–6%，不是倍數重估","segments":[{"item":"Power & Vision","value":"Q3利益率6.6%（年增150bp，管理層歸因營運執行而非商務回收），扣出售與匯率有機營收約+2%"},{"item":"Seating","value":"2026全年利益率展望3.1–3.3%；Ford Louisville換線2027年中回升、BMW Spartanburg影響延續到2027"},{"item":"Body Exteriors & Structures","value":"Q3 EBIT金額與利益率年增；大型壓鑄有客戶興趣，車廠自製趨勢管理層稱未見影響；營收占比事實表未涵蓋"},{"item":"Complete Vehicles","value":"Q3營收年減8%，改附加價值認列後營收降、利益率升；歐洲產能約15萬輛、中國約18萬輛，Waymo改裝在Mesa量產"}],"decay_signals":[{"signal":"EPS成長顯著高於營收成長（差>5pp）","lit":true,"evidence":"FY2026 EPS中點+22%對營收約−1%；共識三年EPS年複合約13%對營收約持平"},{"signal":"TAM萎縮或被替代技術壓縮","lit":true,"evidence":"公司自述手排變速箱、機械式四驅長期衰退；區域式架構壓縮傳統控制單元含量"},{"signal":"毛利率連2季年減","lit":false,"evidence":"TTM毛利率14.7%高於2025年14.3%，利益率連季擴張"},{"signal":"核心市占近12個月縮減","lit":false,"evidence":"Q3不含整車growth over market約+1%，全年約+1%（較前次指引下修但仍為正）"},{"signal":"主力產品提價後銷量下滑","lit":false,"evidence":"不適用：價格由車廠合約決定"},{"signal":"FCF對淨利連2年<0.75","lit":false,"evidence":"2025、2026年FCF約等於調整後淨利（含一次性回收；扣除後約73%，列觀察）"},{"signal":"SBC對營收>5%且逐年上升","lit":false,"evidence":"SBC金額事實表未涵蓋，但稀釋股數淨減少"},{"signal":"TAM之外的產業估值倍數近3年系統性下移","lit":null,"evidence":"事實表未涵蓋產業倍數序列"},{"signal":"維護性資本支出占FCF>60%","lit":null,"evidence":"事實表未涵蓋維護性資本支出拆分"},{"signal":"停止投資新產能且營收3年內下滑","lit":false,"evidence":"營收2023–2026約持平略降，但資本支出仍約營收3.6%、2027–28年有新專案量產；列觀察"}],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":[{"item":"2026年資本回饋","value":"Q3股息1.29億加回購5.29億美元；近12個月買回逾2,500萬股，舊授權已在10月買完"},{"item":"新回購授權","value":"約2,580萬股（約流通股一成），11月生效"},{"item":"資金來源","value":"FY2026 FCF指引18.5–19億美元，含約5億美元一次性EV回收；另有照明與車頂出售款"},{"item":"槓桿與評等","value":"淨負債對調整後EBITDA低於1倍、評等口徑1.4倍；S&P A-、Moody's A3，展望穩定"}],"capalloc_grade":"A","scorecard":[{"year":"—","action":"ma_roiic","rationale":"近年沒有收購，2026年是出售照明與車頂，沒有已實現的併購報酬可評","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"Q3以5.29億美元買回790萬股、均價約67美元，對FY2026共識EPS 7.04美元的盈餘殖利率約10.5%；10年期公債殖利率事實表未涵蓋，須高於8.5%本項才不過","grade":"過"},{"year":"—","action":"sbc_dilution","rationale":"近12個月稀釋股數減約6%（Q3法說CFO），淨稀釋為負；SBC金額事實表未涵蓋","grade":"過"}]},"valuation":{"basis":"前瞻本益比（FY2026共識調整後EPS）為主，經常性FCF殖利率與EV/S為輔","peers":{"expanded":false,"reason":"事實表同業對照只有利潤率，未涵蓋同業本益比或EV倍數，無法做倍數對照；以自身前瞻本益比與經常性FCF殖利率判讀"},"fwd_pe":9.35,"peg":0.7,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"前瞻本益比9.35倍、FY2027共識約8.5倍；PEG以FY2025調整後約5.74美元為基期約0.7，以FY2026→2028兩年年複合9%算約1.0。表面便宜，但有三點拉回：一、調整後EPS排除每年都有的重組費用，扣除約5億美元一次性EV回收的經常性FCF約13.75億美元，FCF殖利率約8%、相當約12倍；二、EV/S 0.52處自身四個年度端點最高、股價營收比處96分位，利益率也在四年最高，景氣循環股在利益率高檔時的低本益比不是安全邊際；三、現價與賣方目標價均值約67–70美元相近。判合理偏便宜。五年分位不填：事實表只有四個年度端點，不是五年連續序列。短期上行＝FY2027共識7.78美元×現行9.35倍≈72.7美元（+10.5%）；中期＝FY2028共識8.36美元×9.35倍≈78.2美元（+18.8%）。","upside_short_pct":10.5,"upside_mid_pct":18.8},"trap_analysis":{"verdict":"🟡","label":"高檔利益率的景氣循環股"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"2008年第四季虧損1.48億美元、2009年谷底；2022年利益率因銷量、保固與應收準備掉到約4.3%（低於當時4.8–5.0%指引）；美國輕型車銷售歷次峰谷跌20–35%；Q3已因中國減產與組合不利下修全年營收","assumption":"營運卓越帶來的利益率可以抵銷產量下行，6.4%是地板","consequence":"北美與歐洲產量年減10–15%時利益率回到4%出頭，EPS約4.5美元，景氣谷底本益比7倍→股價約30–35美元，五年後虧近50%","ruling":"部分採納：放進Bear情境（30%）與最大回撤−35%～−55%；不當基本情境，因Q3在全球產量年減約3%下利益率仍擴張90bp，且評等A-、淨負債對EBITDA低於1倍，衰退時不會被迫增資。與Single Thing部分重疊：財測中點低於6.4%是這個故事的第一個訊號","watch":"北美加歐洲輕型車產量季度年減幅；單季調整後EBIT利益率","evidence_refs":["cyclical_prior_downcycle_behavior#0","cyclical_prior_downcycle_behavior#1","cyclical_prior_downcycle_behavior#2","supply_demand_durability#1"],"fact_refs":["f_kpi2_adjusted_ebit_margin","f_kpi7_fy2026"]},{"view":"論點失敗","evidence":"FY2025年報：電子與半導體廠擴大車用布局、新進者可提供傳統供應商做不到的方案；公司自述手排變速箱與機械式四驅長期衰退、部分產品技術過時風險升高；Lear以收購強化座椅垂直整合","assumption":"Magna在新架構（電驅、ADAS、大型壓鑄）拿到的含量足以補上傳統產品萎縮","consequence":"growth over market轉負，營收每年縮1–2%，利益率擴張被固定成本吃掉","ruling":"暫不採納為主情境：Q3仍拿到2028年量產的分動箱與後驅、前驅模組及SmartLatch加量，Q2拿到歐洲車廠駕駛監控與奇瑞800V電驅；但替代是慢變數，列為長期風險與門檻監測","watch":"不含整車growth over market；投資人日揭露的新得標專案中電驅與ADAS占比","evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#2","substitute_technology#0","substitute_technology#1"],"fact_refs":[]},{"view":"論點成功但股東經濟變差","evidence":"六大客戶占銷售由73%升到76%；Q3營收年減部分來自客戶價格讓步；原物料（DRAM）回收延到2027年再議","assumption":"營運卓越省下的成本留在Magna，不會在下一輪報價被車廠要走","consequence":"利益率擴張停在6.5%附近，EPS成長只剩回購，五年EPS年複合降到3–4%，股價表現跟股息加回購差不多","ruling":"採納為基本情境的保守處理：基本情境2027年後利益率每年只加約10–20bp，低於管理層的35–40bp","watch":"FY2027利益率指引中點；法說揭露的價格讓步拖累","evidence_refs":["customer_concentration_credit#0","customer_concentration_credit#1","end_markets#0"],"fact_refs":["f_kpi0_sales"]},{"view":"論點成功但股東經濟變差","evidence":"2026年FCF含約5億美元一次性EV專案回收，回購也用到出售照明與車頂的資金；Q2法說管理層拒絕量化非車用（機器人、資料中心）業務規模，留待投資人日","assumption":"經常性FCF足以每年買回約一成股數，多餘現金不會流向報酬未證的非車用多角化","consequence":"2027年回購降到約4–5%，或資金轉往非車用、稀釋報酬","ruling":"部分採納：基本情境淨減股每年約4%而非10%；投資人日若揭露大額非車用投資計畫，重跑資本配置判斷","watch":"投資人日資本配置框架；2027年各季回購金額","evidence_refs":[],"fact_refs":["f_kpi4_free_cash_flow","f_kpi7_fy2026"]},{"view":"價格已反映太多","evidence":"26週漲12.2%、站上52週均線；EV/S 0.52處自身四個年度端點最高、股價營收比處96分位；賣方目標價均值約67–70美元，與現價65.81美元相近；調整後EPS排除每年都有的重組費用（Q3 GAAP稀釋EPS 1.44美元對調整後1.83美元）","assumption":"前瞻9.35倍本益比代表便宜","consequence":"以經常性FCF約13.75億美元計，FCF殖利率約8%、相當約12倍，在利益率高檔時並不便宜；若2027年利益率不再擴張，股價沒有重估空間","ruling":"採納：估值判合理偏便宜而非低估，不追價，等財測驗證後且股價不高於72美元才建倉","watch":"股價對FY2027共識本益比是否超過9.5倍；FY2027經常性FCF","evidence_refs":["capital_markets_pricing#2"],"fact_refs":["f_week26_return_pct","f_ev_s_percentile","f_ps_percentile","f_fwd_pe_latest","f_kpi6_diluted_eps_gaap","f_kpi5_adjusted_eps"]}],"max_dd":{"lo":-55,"hi":-35,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 🟡 → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=🟡","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 64.58 → 本次 65.81（+1.9%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=64.58","side_b":"本次 price_at_dd=65.81","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 64.58 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 64.58 美元：五年期望值 前份未列，基準年化 前份未列，前份未列不對稱比","side_b":"本次情境、股價仍用 64.58 美元：Bull 價 133.4、Bear 價 43.5，五年期望值 +29.2%，基準年化 6.2%，不對稱比 2.18","ruling":"先換情境、股價不動：五年期望值與基準年化前份未列，無法比較。前份未列不對稱比，本次為 2.18。Bull、Bear 價位與股價無關，只受情境影響。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 64.58 美元：五年期望值 +29.2%，基準年化 6.2%，不對稱比 2.18","side_b":"本次情境、股價 65.81 美元：五年期望值 +26.8%，基準年化 5.8%，不對稱比 2.02","ruling":"再換股價、情境不動：起點價上漲 1.9%，五年期望值少 2.4 個百分點，基準年化少 0.4 個百分點，不對稱比由 2.18 降到 2.02。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"利益率是否結構性","cause":null,"prior_field":null,"side_a":"管理層（Q3 2026法說，2026-10-30，CFO Fracassa與CEO Kotagiri）：6.4%是進入2027年的結構性起跳點，Q4利益率將升到約7.3%，2027年營運卓越再加35–40bp","side_b":"同場CFO承認Q3含Q4提前的商務回收、Q4商務項目可能轉負、原物料逆風持平或更大；Q2法說（2026-07-31）CFO稱不預期明年有回收項目拖累，Q3改說未回收部分要到2027年再談；Q2法說CEO與CFO對關稅回收是正是負口徑不一","ruling":"可調和（程度差異）：方向採管理層、幅度打折。一致的部分是營運卓越確實在產量下滑時撐住利益率（Power & Vision利益率+150bp，管理層歸因執行而非回收）；不一致的是2026年數字含一次性項目。這是本次觀望的唯一約束：6.4%能不能當起跳點，要等Q4實績與FY2027財測","evidence_level":"管理層口述加公司6-K","settle_metric":"Q4 2026調整後EBIT利益率（隱含約7.3%）與FY2027利益率指引中點（2027年2月）","if_then":["若Q4 2026利益率≥7.0%且FY2027指引中點≥6.7%，且股價≤72美元→建首倉","若FY2027指引中點<6.4%→不建倉；持有者減碼至一半","若股價在財測前先漲過75美元而證據未到→不追","若股價跌到58美元以下而Q4實績與財測沒有變差→分批反買"],"evidence_refs":["supply_demand_durability#1","end_markets#0"]},{"axis":"growth over market下修","cause":null,"prior_field":null,"side_a":"Q2法說（2026-07-31）：2026年不含整車growth over market +1–3%、合併0–2%，CFO稱2027年將重新加速","side_b":"Q3法說（2026-10-30）CFO：全年合併約持平、不含整車約+1%，原因是中國德系車廠Q3減產約28%與北美、歐洲客戶Q4停產","ruling":"可調和（程度差異）：下修來自客戶組合與暫時停產，不是丟專案；但一季內下修讓2027年重新加速的說法未證，第三條論點門檻設在不含整車+1%，不採管理層說的低到中個位數","evidence_level":"管理層口述","settle_metric":"FY2027 growth over market（2027年2月財測與各季法說）","if_then":["若2027年前兩季不含整車growth over market皆為負→停止加碼","若2027年全年≥+2%→第三條論點升為主要成長來源"],"evidence_refs":["competitive_share_entrants#0","customer_concentration_credit#0"]},{"axis":"產業態勢三軸","cause":null,"prior_field":null,"side_a":"A競爭面惡化：電子與半導體廠擴大車用布局、Lear座椅垂直整合、區域式架構壓縮傳統控制器含量；C其他結構變數惡化：美國50%本地含量提案、第232條汽車關稅談判、手排與機械四驅長期衰退","side_b":"B結構轉好：中國車廠在歐洲在地化（小鵬、廣汽在Graz）與Waymo改裝帶來整車代工需求；2028年業務已訂逾90%；供應商收緊資本支出核准，產能紀律改善","ruling":"雙向拉鋸，偏競爭與關稅壓力：轉好的證據沒有金額（管理層拒絕量化非車用與整車代工規模），惡化的證據有來源與機制；論點只押利益率與回購，不押結構轉好","evidence_level":"公司年報風險因子、法說、產業報導","settle_metric":"投資人日揭露的整車代工與非車用規模；不含整車growth over market","if_then":["若投資人日量化整車代工與非車用營收目標且2028年達營收5%以上→第三條論點上調","若美國實施50%本地含量規則→停止加碼並重跑情境"],"evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#2","substitute_technology#0","substitute_technology#1","reg_tariff_export#1","reg_tariff_export#2"]},{"axis":"現在就買的最強論證","cause":null,"prior_field":null,"side_a":"前瞻9.35倍、FY2027約8.5倍；股息殖利率2.3%加每年約一成股數回購；評等A-、淨負債對EBITDA低於1倍；FCF指引年內兩度上調、Q3利益率超預期；投資人日可能給出7%以上的中期利益率目標，股價可能在財測前先走","side_b":"便宜建立在排除重組費用的調整後盈餘與四年最高的利益率上，經常性FCF口徑約12倍；2027年產量偏軟、原物料回收延到2027年；現價已接近賣方目標價均值","ruling":"不採：等待成本約3個月、錯過的上行約10%（FY2027共識維持現行倍數），驗證失敗的下行約12–17%（FY2027 EPS約7.26美元×7.5–8倍）；不對稱不支持現在搶先","evidence_level":"公司6-K與法說、事實表估值欄","settle_metric":"FY2027財測利益率中點","if_then":["若投資人日後股價漲過75美元而財測未出→不追","若財測達標且股價≤72美元→建首倉"],"evidence_refs":["capital_markets_pricing#2"]},{"axis":"前份漂移：整體評級、陷阱、護城河方向","cause":"新證據","prior_field":["signal","trap","moat_trend"],"side_a":"前份（2026-05-24）：整體評級B、陷阱🟡、護城河方向→","side_b":"本次：整體評級B、陷阱🟡、護城河方向→","ruling":"三欄不變。Q2、Q3新證據兩面相抵：利益率連兩季超預期、FCF指引年內兩度上調；但六大客戶占比升到76%、全年growth over market由0–2%下修到約持平、原物料逆風擴大。執行變強、定價沒變強，方向仍判穩定；衰退信號仍亮兩個","evidence_level":"公司6-K與法說","settle_metric":"FY2027利益率指引與growth over market","if_then":["若FY2027不含整車growth over market轉負→護城河方向改判↓並重跑"],"evidence_refs":["customer_concentration_credit#0","supply_demand_durability#1"]},{"axis":"前份漂移：估值結論、類型、循環位置、成長跑道、情境機率與最大回撤、裁決與角色","cause":"方法變動","prior_field":["val","archetype","cycle_position","runway_post_y5","p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份：估值結論🟢；類型、循環位置、五年後成長跑道未判；沒有情境機率與最大回撤；裁決與角色依當時矩陣","side_b":"本次：估值結論🟡；類型景氣循環；中循環；五年後跑道🟡；情境機率20／50／30；最大回撤−35%～−55%；裁決與角色由程式依本次輸入決定","ruling":"本次改用景氣循環視角並檢查盈餘分母：EV/S與股價營收比處自身四年最高、利益率也在四年最高；調整後EPS排除每年都有的重組費用，扣除一次性EV回收後的經常性FCF約12倍。股價只漲1.9%、FY2026共識近3個月上修3.4%，前瞻倍數其實略降，所以估值結論下修來自方法，不是價格或新證據","evidence_level":"事實表估值欄、公司法說","settle_metric":"FY2027經常性FCF與利益率","if_then":["若FY2027經常性FCF≥15億美元且利益率≥6.7%→估值結論可回到🟢"],"evidence_refs":[]},{"axis":"重啟條件（進場與加碼）","cause":"方法變動","prior_field":["rearm_trigger"],"side_a":"（前份未設重啟條件）","side_b":"Q4 2026利益率≥7.0%且FY2027利益率指引中點≥6.7%，同時股價≤72美元","ruling":"前份只有觀望偏進場的結論，沒有可執行的進場或加碼條件；本次把觀望的唯一約束（6.4%利益率能否當起跳點）寫成事件錨，並加股價上限，避免證據未到時加碼或追價","evidence_level":"公司財測時程","settle_metric":"FY2027財測","if_then":["條件全數成立→建首倉；任一不成立→維持觀望"],"evidence_refs":[]},{"axis":"停損與減碼門檻","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"單季 Adj EBIT margin < 5.0%（連 2 季減倉）","side_b":"單季調整後EBIT利益率<5.0%連2季→減碼至一半；FY2027利益率指引中點<6.4%→不建倉、持有者減碼；年度利益率<5.0%且經常性FCF<10億美元→清倉","ruling":"沿用前份5.0%減碼線，新增財測與FCF兩條；2026年利益率已在6.3–6.5%，5.0%離現況太遠，只當減碼線不當預警，預警交給財測中點","evidence_level":"公司季報與財測","settle_metric":"單季利益率、FY2027財測、經常性FCF","if_then":["任一減碼條件觸發→減碼至一半","清倉條件觸發→清倉"],"evidence_refs":[]},{"axis":"Single Thing（唯一致命點）","cause":"方法變動","prior_field":["single_thing"],"side_a":"（前份未設 Single Thing）","side_b":"2027年2月公布的FY2027財測，調整後EBIT利益率中點低於6.4%","ruling":"前份沒有唯一致命點；本次選利益率指引，因為它是EPS最大的單一敏感度（產量、原物料回收、商務項目都匯總在這個數字），而且是一次揭曉的事件","evidence_level":"公司財測時程","settle_metric":"FY2027利益率指引中點","if_then":["中點<6.4%→不建倉、持有者減碼至一半"],"evidence_refs":[]},{"axis":"論點門檻調整（第一、二條）","cause":"新證據","prior_field":["thesis.H1","thesis.H2"],"side_a":"FY26 全年 Adj EBIT margin ≥ 6.0%；FY27 ≥ 6.5%｜FY26 FCF ≥ .6B；capex/Rev < 4.5%（前份原文金額缺字，應為16億美元）","side_b":"第一條：FY2026≥6.3%、FY2027≥6.7%｜第二條：FY2027經常性FCF≥15億美元、FCF對調整後淨利≥80%","ruling":"FY2026指引6.3–6.5%與FCF 18.5–19億美元已高於前份門檻，舊門檻失去區辨力；FCF改用扣除約5億美元一次性回收的經常性口徑","evidence_level":"公司6-K財測","settle_metric":"FY2027利益率與經常性FCF","if_then":["新門檻未達→對應論點削弱並停止加碼"],"evidence_refs":[]},{"axis":"前份第三條論點（倍數均值回歸）退休","cause":"方法變動","prior_field":["thesis.H3"],"side_a":"Fwd PE 24 月內 ≥ 11x（5Y 均下緣）","side_b":"退休：不以倍數重估當論點；倍數只在情境樹終端倍數表達（基本情境9.5倍）","ruling":"倍數回升不是公司能控制的經營假設；本次基本情境的重估貢獻接近零，避免報酬依賴估值重估；第三條論點改為growth over market","evidence_level":"方法調整","settle_metric":"不適用","if_then":["若日後要以倍數回升為進場理由→須另給市場錯在哪的具體證據"],"evidence_refs":[]},{"axis":"前份風險門檻沿用與調整","cause":"新證據","prior_field":["thesis.R1","thesis.R2","thesis.R3"],"side_a":"R1：單季 Adj EBIT margin < 5.0%（連 2 季減倉）｜R2：單客戶沖銷 > 5% 季度 EBIT｜R3：連 8 季 organic growth underperform LVP > 200bps","side_b":"前份R1沿用為景氣衰退減碼線；前份R2降為監測條件（新興EV客戶占銷售低於5%，2026年反而收到約5億美元EV專案回收）；前份R3沿用為份額流失門檻","ruling":"三條門檻都保留、沒有退休；EV客戶沖銷降為監測，因新證據顯示曝險小","evidence_level":"FY2025年報、Q3法說","settle_metric":"單季利益率、單一客戶沖銷、不含整車growth over market","if_then":["單一客戶沖銷超過當季調整後EBIT的5%→減碼一級"],"evidence_refs":["customer_concentration_credit#0"]}],"triggers":[{"n":1,"text":"Single Thing：FY2027財測調整後EBIT利益率中點低於6.4%","type":"Single Thing","maps_to":"H1","metric":"FY2027調整後EBIT利益率指引中點","threshold":"<6.4%","action":"不建倉；持有者減碼至一半，Bear機率調到35%重跑情境","source_freq":"公司年度財測（6-K），每年2月","date":"2027-02","evidence_refs":["supply_demand_durability#1"]},{"n":2,"text":"第一條論點驗證：Q4 2026利益率是否站上7%","type":"假設驗證","maps_to":"H1","metric":"Q4 2026調整後EBIT利益率","threshold":"≥7.0%（管理層隱含約7.3%）","action":"與FY2027財測合併判斷是否解除觀望","source_freq":"季報（6-K）","date":"2027-02"},{"n":3,"text":"重啟進場：利益率起跳點確認且價格未追高","type":"估值rearm","maps_to":"H1","metric":"Q4 2026利益率、FY2027利益率指引中點、股價","threshold":"Q4≥7.0%且FY2027中點≥6.7%，股價≤72美元（約FY2027共識9.3倍）","action":"建首倉，第二批待2027年Q1利益率年增確認","source_freq":"季報與財測","date":"2027-02"},{"n":4,"text":"第二條論點驗證：扣除一次性回收後的FCF","type":"假設驗證","maps_to":"H2","metric":"FY2027 FCF（不含EV專案回收）","threshold":"≥15億美元","action":"未達→停止加碼，回購假設改為每年淨減股3%重跑情境","source_freq":"年報與季報現金流量表","date":"2028-02"},{"n":5,"text":"關稅與貿易規則吸收失敗","type":"風險","maps_to":"R2","metric":"季度淨關稅對利益率的拖累；美國本地含量規則","threshold":"拖累≥30bp連2季，或美國實施50%本地含量規則且公司未給出吸收方案","action":"停止加碼；Bear機率調到35%重跑情境","source_freq":"季度法說","date":null,"evidence_refs":["reg_tariff_export#0","reg_tariff_export#1","reg_tariff_export#2","geo_supply_chain#1"]},{"n":6,"text":"景氣衰退減碼線（沿用前份）","type":"減碼","maps_to":"R3","metric":"單季調整後EBIT利益率","threshold":"<5.0%連2季","action":"減碼至一半","source_freq":"季報（6-K）","date":null,"evidence_refs":["cyclical_prior_downcycle_behavior#0","cyclical_prior_downcycle_behavior#1","cyclical_prior_downcycle_behavior#2"]},{"n":7,"text":"利益率與現金同時失守","type":"清倉","maps_to":"H2","metric":"年度調整後EBIT利益率與經常性FCF","threshold":"年度利益率<5.0%且經常性FCF<10億美元","action":"清倉","source_freq":"年報","date":null},{"n":8,"text":"份額流失（沿用前份門檻）","type":"風險","maps_to":"R4","metric":"不含整車growth over market","threshold":"連4季為負，或連8季累計落後產量200bp以上","action":"停止加碼；連8季成立則減碼至一半","source_freq":"季度法說","date":null,"evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#2","substitute_technology#0","customer_concentration_credit#1"]},{"n":9,"text":"供應鏈中斷（晶片出口限制、鋁板供應）","type":"風險","maps_to":"R5","metric":"供應中斷造成的營收損失或財測下修","threshold":"單季因供應中斷損失營收≥3%，或公司因此下修全年財測","action":"停止加碼","source_freq":"季度法說與6-K","date":null,"evidence_refs":["geo_supply_chain#0"]},{"n":10,"text":"保固與召回費用","type":"風險","maps_to":"H1","metric":"單季保固與召回費用對利益率的拖累","threshold":"≥20bp","action":"停止加碼並追查是否為系統性品質問題","source_freq":"季報與NHTSA召回公告","date":null,"evidence_refs":["major_events#2","product_recall_warning#0"]},{"n":11,"text":"新興EV客戶沖銷（前份第二條風險降為監測）","type":"風險","maps_to":"H2","metric":"單一客戶應收或資產沖銷","threshold":"超過當季調整後EBIT的5%","action":"減碼一級","source_freq":"季報","date":null},{"n":12,"text":"投資人日複審","type":"複審日期","maps_to":"H1","metric":"中期利益率目標、FCF轉換率、資本配置與非車用投資規模","threshold":"中期利益率目標低於7%，或揭露大額非車用投資計畫","action":"依中期框架複審本判斷","source_freq":"一次性活動","date":"2026-11"}],"kill_metrics":[{"metric":"單季調整後EBIT利益率","bear_threshold":"<5.0%連2季","window":"2026Q4–2028Q4","source":"公司季報（6-K）","last_status":"ok"},{"metric":"FY2027調整後EBIT利益率指引中點","bear_threshold":"<6.4%","window":"2027年2月財測","source":"公司財測（6-K）","last_status":"unknown"},{"metric":"經常性FCF（扣除EV專案回收）","bear_threshold":"FY2027低於12億美元","window":"FY2027","source":"公司年報與季報現金流量表","last_status":"unknown"},{"metric":"不含整車growth over market","bear_threshold":"連4季為負","window":"2027–2028","source":"公司季度法說","last_status":"ok"}],"evidence_dismissed":[{"ref":"regulatory_antitrust#0","reason":"來源是2022年5月的6-K，案件2019年啟動，事實表沒有之後的進度、罰款金額或受影響營收，證據過舊、無法判斷是否仍未決；沒有金額可入情境，日後年報再揭露才重新評估"}],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8(val爭議)","pacing":[],"holding_cap":"≤3%","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='A'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟡', moat_trend='→', week26=12.2, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='循環/商品', cycle_position='中循環', moat='C', moat_trend='→', cycle_gates_pass=False"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈機械讀數判定不可用，baseline rows 8/9/9b/10 的估值條件視為不可判 → 落 row8 觀望（保守方向）","hit":true,"basis":"val_denominator_disputed=True, val(機械讀數)='🟡'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"requires_critic":[],"rearm_trigger":"Q4 2026利益率≥7.0%且FY2027利益率指引中點≥6.7%，同時股價≤72美元","exec_line":"條件成立後分兩批：財測公布後一週內建首批，2027年Q1財報確認利益率年增後建第二批；任何減碼或清倉條件觸發即停止"},"reasoning":{"industry":"Q3 2026營收100.6億美元、年減4%：出售車頂與照明減1.65億美元，另有客戶價格讓步與匯率；有機年減2.1%，對比Magna加權產量年減2.6%，不含整車的growth over market約+1%。調整後EBIT 6.83億美元、利益率6.8%（年增90bp），其中營運量與其他項目貢獻約120bp（商務回收含Q4提前、營運卓越），原物料（DRAM、樹脂、鋁）拖累約50bp。GAAP稅前營業利益5.52億美元、GAAP稀釋EPS 1.44美元，對調整後EPS 1.83美元，差距主要是重組與出售相關費用。TTM毛利率14.7%、營業利益率5.5%。分部：Q3 Power & Vision利益率6.6%，Seating全年利益率展望3.1–3.3%（換線拖累），Complete Vehicles改附加價值認列後營收降、利益率升；分部營收占比事實表未涵蓋。單點依賴：六大客戶占2025年銷售76%（2024年73%），GM與Mercedes-Benz各約15%，前兩大合計約30%，未過40%警戒但集中度上升；中國營收約65%來自中國車廠。FY2026指引：營收412–420億美元、利益率6.3–6.5%、調整後EPS 6.85–7.15美元（中點7.00不變）、FCF 18.5–19億美元。產業時鐘判IV（溫和收縮）：產量持平偏降、價格讓步持續、供應商收緊資本支出；但產量水位低於前高、零件庫存偏低，屬溫和下行，不是高檔反轉。","moat":"執行面擴大：調整後EBIT利益率由2025年約5.6%到2026年指引中點6.4%，營運卓越今年貢獻約50bp、明年預估再35–40bp（Q3法說CEO），Q3在全球產量年減約3%下仍擴張90bp。定價面縮減：例行價格讓步持續、原物料回收慢一到兩季、六大客戶占比由73%升到76%。兩者相抵判穩定。同業TTM營業利益率：MGA 5.5%、Lear 3.7%、Denso 6.9%、Aptiv 9.8%、BorgWarner 10.2%；FCF利益率：MGA 7.5%（含一次性EV回收）、BorgWarner 9.2%、Aptiv 3.7%、Lear 3.6%、Denso 2.0%。同業ROIC與投入資本事實表未涵蓋，算不出ROIC spread，以營業與FCF利益率代理。評分：執行7（重組與營運卓越已兌現、評等A-），定價4（價格讓步、原物料回收要談判）。","growth":"成長拆解：量持平、價為負（例行價格讓步）、併購為負（出售照明與車頂），EPS成長來自利益率擴張與淨回購（近12個月稀釋股數減約6%）。共識調整後EPS：FY2026 7.04、FY2027 7.78、FY2028 8.36美元；以FY2025調整後約5.74美元為基期，三年年複合約13%，FY2026→2028兩年年複合約9%。共識營收FY2026約417億、FY2027約423億美元，年增約1%。內生上界約2%／年（見護城河段），缺口約11個百分點可歸因：2026年利益率+80bp貢獻了FY2026 EPS年增22%的大部分，之後每年營運卓越35–40bp與淨回購4–6%；不是倍數重估。跑道：利益率由6.4%每年加35–40bp，到7%以上約2年，之後成長回到市場加growth over market加回購。衰退信號亮2個（EPS成長遠高於營收、部分產品被替代技術壓縮）。","governance":"FCF轉換：FY2026 FCF指引18.5–19億美元，約等於調整後淨利（CFO），扣除約5億美元一次性EV回收後約73%。現金去向（2026年）：Q3資本支出3.07億美元、全年約15億美元（營收約3.6%）；Q3股息1.29億、回購5.29億美元（790萬股，均價約67美元）；沒有收購，出售照明與車頂回收資金。負債：淨負債約50.4億美元（含租賃）、評等機構口徑槓桿1.4倍，CFO表示不需再降槓桿，會把資產負債表容量用在回購。回購以約67美元買入，對FY2026共識EPS 7.04美元的盈餘殖利率約10.5%；SBC金額事實表未涵蓋，但稀釋股數淨減少。債務到期結構與加權利率事實表未涵蓋。","valuation":"前瞻本益比9.35倍（FY2026共識7.04美元）、FY2027約8.46倍；trailing GAAP本益比21.4倍受Q1出售相關待售資產損失4.85億美元扭曲，不採用。EV約221億美元（市值171億加淨負債50.4億），EV/S 0.52。股息殖利率2.26%，加回購的股東殖利率約一成以上（2026年部分資金來自一次性回收與出售案）。FY1共識近3個月上修3.4%、最近一次快照微降0.14%。26週漲12.2%、股價在52週均線60.3美元之上，週線均線已多頭排列但250週均線斜率約−0.2%走平。同業倍數事實表未涵蓋。","premortem":"依據見反證紀錄三個視角：論點失敗（景氣衰退加關稅加原物料回收失敗、或含量被新進者與替代技術侵蝕）、論點成功但股東經濟變差（效率收益被車廠價格讓步拿走、回購資金部分一次性）、價格已反映太多（EV/S與股價營收比處四年最高、經常性FCF口徑約12倍）。26週漲12.2%、RSI 54，動能沒有過熱。"},"plain":{"six":{"how_it_makes_money":"Magna 賺的是全球車廠按車型專案採購車身結構、座椅、電驅與ADAS零件及整車代工的錢，六大客戶占銷售76%；錢卡在車廠議價這一節：每年例行價格讓步、原物料回收慢一到兩季，近兩年獲利改善來自自身營運效率與出售低利益率業務，不是定價。","moat":"護城河方向→（穩定）：執行力在變強，定價權沒有。機制是規模與全產品線帶來的專案得標與製造整合能力，得標後鎖定車型生命週期，但每代車型重新招標、定價在車廠手上；同業比較營業利益率居中、FCF利益率僅次BorgWarner。","growth":"五年後跑道🟡：終端市場成熟、產量持平，營收內生成長約1–3%；EPS成長主要靠利益率擴張與回購，第二曲線（整車代工中國車廠、Waymo改裝、非車用）管理層未量化。","capital":"資本配置紀律好：近一年買回逾2,500萬股、稀釋股數減約6%，Q3股息加回購回饋6.58億美元，淨負債對調整後EBITDA低於1倍、評等A-與A3；沒有大型併購，管理層只考慮小型補強。隱憂是2026年回購力道有約5億美元一次性EV回收與出售案資金撐腰，2027年經常性FCF約14億美元能否撐住新的約2,580萬股授權（約流通股一成），要看利益率。","valuation":"現價65.81美元隱含調整後EPS照共識由7.04走到8.36美元、前瞻本益比維持約9倍。我部分相信：利益率與回購大致可兌現，但便宜建立在排除重組費用的調整後盈餘與四年最高的利益率上，經常性FCF口徑約12倍；合理偏便宜，不是低估。","how_wrong":"最可能看錯的是把自救式利益率當成景氣中性水準：6.4%建立在產量偏平、商務回收順利、原物料可轉嫁的前提上，一次北美與歐洲減產10–15%就可能回到2022年的4%出頭；其次是調整後盈餘排除每年都有的重組費用，便宜程度被高估。陷阱判🟡：衰退信號亮兩個，資產負債表與FCF讓它不是價值陷阱，但也不是複利股。"}},"decision_inputs":{"signal":"B","ma":"🟡","cycle_position":"中循環","cycle_verdict":"未觸發","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":false,"cycle_gates_pass":false,"qc49_inherit_prior":null,"wait_for_price":true,"wait_for_price_condition":"等2027年2月Q4財報與FY2027財測：Q4利益率≥7.0%且FY2027利益率指引中點≥6.7%；屆時股價≤72美元才建首倉。投資人日（2026年11月）只當提前訊號，不單獨構成進場理由","trap":"🟡","val":"🟡","moat":"C","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"A","archetype":"循環/商品","price_at_dd":65.81,"week26_return_pct":12.2,"consensus_rev_3m_pct":3.38,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"調整後與GAAP差距持續且大：Q3 GAAP稀釋EPS 1.44美元對調整後1.83美元，2025年GAAP稀釋EPS 2.93美元對調整後約5.74美元；排除項含每季都有的重組費用（分析師提問指Q3 Power & Vision歐洲重組約7,600萬美元）。2026年FCF又含約5億美元一次性EV回收。以9.35倍前瞻本益比論便宜不成立，改看經常性FCF約12倍。"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"guidance","event":"紐約投資人日：中期財務框架、營運卓越進度與非車用機會細節","impact":"高","watch":"中期利益率目標是否≥7%、FCF轉換率與回購承諾、非車用投資規模"},{"date":"2026-11","date_precision":"month","type":"other","event":"新一輪約2,580萬股回購授權生效","impact":"中","watch":"Q4實際回購金額"},{"date":"2026-12","date_precision":"quarter","type":"other","event":"其餘照明業務出售案交割","impact":"低","watch":"Power & Vision營收基期與利益率"},{"date":"2026-12","date_precision":"quarter","type":"regulatory","event":"加美貿易談判（第232條汽車關稅）與美國本地含量規則進展","impact":"中","watch":"淨關稅對利益率的拖累"},{"date":"2027-02","date_precision":"month","type":"guidance","event":"Q4 2026財報與FY2027財測","impact":"高","watch":"FY2027利益率指引中點是否≥6.7%、經常性FCF指引"},{"date":"2027-06","date_precision":"quarter","type":"product","event":"Ford Louisville座椅新專案年中量產爬坡","impact":"中","watch":"Seating分部利益率回升"}],"_projected_from":"v19"}
+```
