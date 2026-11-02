@@ -1409,6 +1409,24 @@ def normalize_v20(obj, facts=None, date=None):
     「見 thesis.single_thing」字串，規格要物件；thesis.single_thing 本身是完整物件，
     複製過去即可。回傳 (obj, changes)。"""
     changes = []
+    # MSFT 2026-11-02：判斷者漏了關 answers 的 `}`，strip_json 在結尾補括號後，
+    # scenario_inputs～catalysts 這些頂層段落被包進 answers。頂層沒有、answers 裡有，就原樣搬回頂層。
+    ans = obj.get("answers")
+    if isinstance(ans, dict):
+        q_keys = ("q1_business", "q2_moat", "q3_growth", "q4_capital", "q5_valuation", "q6_how_wrong")
+        for host in q_keys:
+            hd = ans.get(host)
+            if not isinstance(hd, dict):
+                continue
+            for k in q_keys:
+                if k != host and k in hd and k not in ans:
+                    ans[k] = hd.pop(k)
+                    changes.append("answers.{0}: 誤置於 {1} 內 → 搬回 answers（內容不動）".format(k, host))
+        for k in ("scenario_inputs", "counter_evidence", "decision_inputs", "decision_out",
+                  "thesis", "appendix_a", "eps_meta", "catalysts"):
+            if k in ans and k not in obj:
+                obj[k] = ans.pop(k)
+                changes.append("{0}: 誤置於 answers 內 → 搬回頂層（內容不動）".format(k))
     thesis_st = (obj.get("thesis") or {}).get("single_thing")
     q1 = ((obj.get("answers") or {}).get("q1_business") or {}).get("verdict_values")
     if isinstance(q1, dict) and isinstance(q1.get("single_thing"), str) and isinstance(thesis_st, dict):
@@ -1707,6 +1725,14 @@ def _gate_patch(ctx, st, clean, idx):
     if not patches:
         (ctx.run_dir / "gate_patch_raw_{0}.txt".format(idx)).write_text(r["result_text"], encoding="utf-8")
         return False, "patch 回覆解析不到 json:patch 區塊"
+    # GEV 2026-11-02：patch 把 wait_for_price 寫成價格數字（774），schema 要布林。
+    # condition 欄有寫時，數字＝「要等價格」，轉 true，價格本來就寫在 condition 欄。
+    jp = patches.get("judgment") if isinstance(patches.get("judgment"), dict) else {}
+    wfp = jp.get("$.decision_inputs.wait_for_price")
+    if isinstance(wfp, (int, float)) and not isinstance(wfp, bool) \
+            and jp.get("$.decision_inputs.wait_for_price_condition"):
+        jp["$.decision_inputs.wait_for_price"] = True
+        st.setdefault("patch_normalize", []).append("wait_for_price: {0} → true（價格見 condition）".format(wfp))
     applied, errors = ddreport._apply_patch_map(ctx.run_dir, patches)
     st.setdefault("patches", []).append({"round": idx, "requested": len(patches.get("judgment") or {}),
                                          "applied": applied, "errors": errors[:20]})

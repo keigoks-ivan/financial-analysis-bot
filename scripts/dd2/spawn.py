@@ -185,7 +185,40 @@ def strip_json(text):
     try:
         return json.loads(snippet), None
     except json.JSONDecodeError as e:
-        return None, "json.loads failed: {0}".format(e)
+        err = "json.loads failed: {0}".format(e)
+    # 2026-11-02（MSFT）：模型正常結束（end_turn）但漏了結尾的 `}`。只在「字串外、
+    # 括號只缺不錯、結尾不在字串中」時補上缺的右括號再 parse 一次；欄位缺漏仍由下游格式檢查擋。
+    closers = _missing_closers(stripped[start:])
+    if closers:
+        try:
+            return json.loads(stripped[start:] + closers), None
+        except json.JSONDecodeError:
+            pass
+    return None, err
+
+
+def _missing_closers(text):
+    """回傳補齊尾端所需的右括號字串；括號錯配、結尾停在字串內或已平衡時回空字串。"""
+    stack, in_str, esc = [], False, False
+    for ch in text:
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch in "{[":
+            stack.append("}" if ch == "{" else "]")
+        elif ch in "}]":
+            if not stack or stack.pop() != ch:
+                return ""
+    if in_str or not stack:
+        return ""
+    return "".join(reversed(stack))
 
 # ---------------------------------------------------------------------------
 # 串流版單輪（2026-09-17 MU 案例）：`--output-format json` 只回最後一則 assistant 文字，

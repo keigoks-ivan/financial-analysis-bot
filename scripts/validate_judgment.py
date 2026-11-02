@@ -865,10 +865,13 @@ def leak_and_punct_checks(data: dict) -> list:
             continue
         if re.match(r"contradictions\[\d+\]\.axis$", path) and text.startswith("前份漂移："):
             continue
+        # 2026-11-02（2454.TW）：fact_refs／evidence_refs 是程式產生的引用編號（例 f_kpi7_archetype
+        # 由證據標籤轉成英數 slug），不是讀者面文字，不掃外洩詞；標點檢查照做。
+        is_ref_id = bool(re.search(r"(?:^|\.)(?:fact_refs|evidence_refs)\[\d+\]$", path))
         scan_text = text
         if path.startswith("reasoning."):
             scan_text = _QC_ANNOTATION_RE.sub(lambda m: " " * len(m.group(0)), scan_text)
-        for pat_src, pat in _LEAK_CHECK_RES:
+        for pat_src, pat in ([] if is_ref_id else _LEAK_CHECK_RES):
             m = pat.search(scan_text)
             if m:
                 ctx = scan_text[max(0, m.start() - 15):m.start() + 25].strip()
