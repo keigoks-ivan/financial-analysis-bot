@@ -1,0 +1,461 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 FORM（2026-11-03）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/FORM_20261103/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：FORM　日期：2026-11-03　archetype：None　前份裁決：2026-06-29　觀望｜條件式衛星持倉　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1842B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（858B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（1002B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1532B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1203B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（759B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（785B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2225B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（3344B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2672B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（283B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1842           3611-5158      5 條（2–6 內）  
+s3                  8000         858           4999-7142      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3737          7884-11263      5 條（2–6 內）  
+s6                 11000         759          7169-10241      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         785           1900-2715      5 條（2–6 內）  
+s10                 5000        2225           1942-2775      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2672           2000-2328      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         283            852-1217      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=5615B；至少需散文≈39.38KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−67%
+−65%
+−65
+−60%
+−55%
+−40
+−40%
+−34.7%
+−33.01
+−33%
+−3.2%
+−0.5%
+0%
+0
+0.09
+0.10
+0.22
+0.3
+0.40
+0.5%
+0.65
+0.75
+0.83
+0.88
+0.89
+0.93
+01
+1
+1.04
+1.1
+1.14
+1.27
+1.31
+1.4
+1.5
+1.5%
+1.6%
+1.7
+02
+2
+2.1
+2.21
+2.44
+2.5
+2.6
+2.805
+2.85
+2.86
+3.0
+3
+03
+3.1%
+3.15
+3.2
+3.3%
+3.35
+3.5
+3.7
+3.8
+3.99
+4
+4.1
+4.24
+4.6
+4.8
+5%
+5
+05
+5.2
+5.6
+5.88
+6
+6%
+06
+6.2
+6.4
+6.8
+07
+7%
+7
+7.17
+7.2
+7.7%
+8%
+8
+8.1
+8.3%
+8.9
+9
+09
+9%
+10%
+10
+10.2%
+10.8%
+10.9%
+11
+11%
+11.4
+12
+12%
+12.5
+13.0%
+13
+14%
+14
+15
+15%
+15.3
+16%
+16
+16.2
+16.5
+17.6%
+18.1%
+20
+20%
+21
+21.2
+21.23
+22
+22.9%
+23%
+23
+23.1%
+24
+24%
+25%
+25
+25.4%
+26
+26.87
+26.9
+27.4%
+28
+28%
+29
+29%
+29.1%
+29.5%
+30
+30%
+31
+32.5%
+33%
+33.5%
+34.7%
+35
+35%
+35.2
+37%
+39
+40%
+40
+41.3
+42
+45%
+45
+46%
+47%
+48
+48%
+48.2%
+49
+50
+50%
+51%
+51.4
+52%
+52
+52.5
+53
+53%
+55%
+55.3%
+56.5%
+60%
+60.65
+61%
+64.64
+66.6
+66.7%
+70
+76
+78
+90
+90.01
+98
+100
+100%
+101
+114
+121
+134
+137.84
+145.55
+149
+149.31
+150%
+171
+210
+234
+245.36
+300
+380
+400
+410
+500
+600
+860
+880
+2022
+2023
+2024
+2025
+2026
+2027
+2028
+2029
+2030
+2031
+6223
+6857
+20261103
+1,000
+1,050
+1,100
+1,170
+2,295
+2,420
+2,500
+2,800
+3,000
+3,500
+4,000
+5,070
+5,440
+5,950
+6,480
+6,650
+6,960
+7,090
+7,380
+7,500
+7,910
+8,240
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"FORM","date":"2026-11-03","schema":"v15.0","contract":"v19","company_name":"FormFactor, Inc."},"oneliner":"探針卡前兩大廠，現有廠房已到產能上限、基準毛利率升到53%；股價一個月跌約四成後FY2027本益比約21倍，但共識FY2028 EPS已超過公司2030年目標，便宜建立在週期高點利潤率上，等德州新廠爬坡期毛利率守住再進場。","thesis":{"H":[{"id":"H1","text":"德州Farmers Branch新廠2027年線性爬坡到年化約4億美元探針卡產能，爬坡期間非GAAP毛利率（扣一次性）守在約53%的基準","2y":"2027年各季毛利率（扣一次性）≥51%、FY2027營收≥12.5億美元、年底產能目標未下修","5y":null,"10y":null,"threshold":"非GAAP毛利率（扣關稅退款等一次性）≥51%；FY2027營收≥12.5億美元","source":"公司季報新聞稿與法說會（CFO每季更新新廠產能、預生產費用與基準毛利率）","drift_rule":"兩年期：TTM毛利率或營收偏離門檻連2季≥5%為削弱，連3季≥10%為反轉"},{"id":"H2","text":"營收從記憶體單腳走向多腳：GPU、客製ASIC、資料中心CPU與光電探針讓最大客戶占比下降，總營收仍成長","2y":null,"5y":"2030年營收≥14億美元（公司目標16億）、最大單一客戶占比≤20%、光電相關營收占比≥8%","10y":null,"threshold":"Foundry & Logic探針卡2027年起年增≥15%；最大單一客戶占營收≤25%","source":"10-K／10-Q客戶集中度揭露、法說會分市場說明、2026-05-11投資人日目標模型","drift_rule":"五年期：TTM偏離門檻連4季≥5%為削弱，連6季≥10%為反轉"},{"id":"H3","text":"毛利率改善有一大塊是結構性的：下一次需求下滑時，非GAAP毛利率不會回到2022–2025年的39–40%","2y":null,"5y":"下一次營收年減的年度，非GAAP毛利率≥47%、非GAAP EPS≥2美元","10y":null,"threshold":"營收年減年度的非GAAP毛利率≥47%；谷底非GAAP EPS≥2美元","source":"年度10-K與季報；對照2023年營收年減11%、營益率1.5%的前例","drift_rule":"五年期：TTM毛利率低於門檻連4季≥5%為削弱，連6季≥10%為反轉"}],"R":[{"id":"R1","text":"擴產卡關：現有廠房已到上限（Q4營收指引中點只季增約1.6%），德州廠若延誤，或單一來源零件、關稅打斷供應，2027上半年營收停滯、毛利率被爬坡成本吃掉","h_ref":"H1","clock":"⚡","threshold":"2027年任一季營收季減，或毛利率（扣一次性）連2季<51%","evidence_refs":["geo_supply_chain#0","geo_supply_chain#2"]},{"id":"R2","text":"份額之戰：TrendForce預期Technoprobe 2026年成全球第一，台廠借AI拿份額；GPU先進MEMS卡至今主要是對手的生意，10-K承認競爭已造成降價","h_ref":"H2","clock":"🔥","threshold":"2027年底前沒有第二個GPU或客製ASIC量產設計；Foundry & Logic年增<10%","evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#2","end_markets#2"]},{"id":"R3","text":"記憶體客戶集中加週期：SK hynix FY2025占22.9%、單季最高25%，DRAM組合每季跟著HBM／DDR投片移動；記憶體新產能約2028年開出後需求降溫，探針卡量價齊跌","h_ref":"H3","clock":"🔥","threshold":"季營收年增轉負，或單一記憶體客戶占比>30%","evidence_refs":["customer_concentration_credit#0","customer_concentration_credit#1","customer_concentration_credit#3"]},{"id":"R4","text":"出口管制與關稅：中國營收占比已由14%降到7%，單一來源零件遇上關稅與美中科技限制，可能再打斷供應或市場","h_ref":"H2","clock":"🐢","threshold":"關稅單季衝擊毛利率≥1個百分點，或新出口限制涵蓋前五大客戶之一","evidence_refs":["reg_tariff_export#0","reg_tariff_export#2"]}],"single_thing":{"description":"德州Farmers Branch新廠在2027年底前達不到公司說的約4億美元年化探針卡產能（MEMS前段延誤或良率過不了客戶認證）","why_fatal":"現有廠房已到上限（年化約11.4億美元），FY2028共識EPS 5.88美元需要約15–16億美元營收，缺口幾乎全靠新廠；新廠卡住時固定成本照付、GPU／ASIC份額也出不了貨，FY2028 EPS只剩約3.7–4美元，比共識低三成以上","if_happens":"基準情境改用Bear路徑前兩年；持有者清倉，未持有者停止重啟條件、降為觀察","how_monitor":"每季法說的新廠產能與出貨進度、預生產費用由營業費用轉入營業成本的金額、2027各季營收季增率是否≥5%","probability":"15%（12–24個月）：團隊過去一年半效率紀錄好、首張卡提前出貨，但MEMS前段2027年才導入"}},"appendix_a":{"growth_durability":6,"quality_score":6,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":21.23,"peg_fy2":0.65,"stress":{"pass":2,"total":3}},"eps_meta":{"base_eps_path":{"FY2025A":1.27,"FY2026E":3.35,"FY2027E":4.24,"FY2028E":5.88},"fy_end_month":12,"eps_basis":"非GAAP稀釋EPS（Koyfin共識）；FY2025A 1.27美元取自2026-05-11投資人日CFO原話"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/FORM_20261103/scenario.json","archetype":{"primary":"循環/商品","secondary":"品質複利成長","confidence":"中","fingerprint":"設計專用耗材＋半導體資本週期：2022–2025年毛利率39–40%、營益率1.5–7.7%，2023年營收年減11%；2026年營收首度破10億美元、基準毛利率升到53%。"},"industry":{"clock_phase":"II","sd_verdict_source":"SEMI 2026年中預測（設備銷售連五年成長、2028年約2,295億美元）與TrendForce轉述美光看法（記憶體供給緊到FY28、新產能約2028年開出）；判讀：週期性將反轉，時點在2028年新產能開出後。","bargaining":{"up":"部分零件來自單一或有限來源，多數供應商只下採購單、沒有長約，單一供應商漲價會壓毛利；FY2025關稅吃掉1.4個百分點毛利率。","down":"客戶集中：SK hynix FY2025占22.9%，Q2 2026前三大合計35%；短缺期客戶開始為加急與保留產能付費，但管理層說DRAM毛利改善極少來自漲價，議價權仍偏客戶。","geo":"中國營收占比FY2024 14%→FY2025 7%，受美國擴大出口許可影響；德州新廠屬回岸生產，獲德州2,420萬美元補助（2026-07-29法說）。"},"profit_pool_dir":"利潤池往高速與先進封裝測試移動：HBM最終堆疊測試、GPU／客製ASIC先進MEMS卡、CPO光電探針；行動處理器等傳統應用占比下降。5年前→現在的營業利益池占比事實表未涵蓋。","tam_table":[{"item":"探針卡市場規模（CFO，2026-05-11投資人日）","value":"約31億美元→2030年45億美元，年複合約8%；公司目標兩倍於市場成長"},{"item":"先進探針卡口徑（Sudhakar Raman，同場）","value":"28億→2030年40億美元，與CFO口徑不同"},{"item":"晶圓級CPO測試可服務市場（CFO）","value":"2030年約3–4億美元；TRITON 2025年營收0、2026年預期>3,000萬美元"},{"item":"NVIDIA相關潛在市場（德銀2026-10-01，第三方）","value":"約5億美元，2028年最高拿兩成、約2億美元年營收"},{"item":"公司營收","value":"2026年預期首度破10億美元（含Systems），2030目標16億美元"},{"item":"營業利益池占比5年前→現在","value":"事實表未涵蓋"}]},"moat":{"mechanism":"設計專用MEMS探針卡的認證綁定＋高速高並行測試技術（SmartMatrix、HBM最終堆疊測試）＋量產品質；綁定期等於單一設計壽命，下一代重新比稿。","execution":7,"pricing":5,"grade":"C","trend":"→","trend_evidence":"執行力擴大（基準毛利率51%→53%、新廠首張卡提前出貨）；定價權穩定偏弱（短缺期未漲價、10-K承認降價）；份額排名縮減（TrendForce指Technoprobe將成第一）。三者相抵為持平。","peer_na_reason":"Technoprobe、MJC、中華精測等探針卡同業不在事實表同業財務表；同業ROIC與投入資本未提供。","threats":[{"level":"🟡","text":"Technoprobe與台廠（旺矽、中華精測、穎崴）在AI浪潮拿份額，TrendForce預期Technoprobe 2026年成全球第一；10-K承認競爭已造成降價與毛利下滑。","p":"40%","evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#2","end_markets#2"]},{"level":"🟡","text":"對手獨立開發類似技術或繞過專利；每代新設計都重新比稿，技術領先要每一代重新證明。","p":"20%","evidence_refs":["substitute_technology#1"]},{"level":"🟡","text":"測試機大廠入股探針卡廠，若走向測試機加探針卡綁售，開放生態可能被打破；目前Teradyne投資公司並表態支持開放生態。","p":"15%","evidence_refs":["substitute_technology#2"]}],"roic_durability":{"quadrant":"利益率由低轉高（最新一季GAAP營益率29.1%，2022–2025年1.5–7.7%）×投入資本周轉率事實表未涵蓋","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者是客戶測試工程、決策者是客戶品質與產品部門、付款者是晶片廠，三環都成立；每顆新設計都必須做晶圓測試，屬「需要」不是「想要」，HBM每一代測試強度增加約25–30%（投資人日），光電需要已知良品晶粒測試。風險在量隨投片週期起伏，不在需求消失。"},{"item":"決策層級","level":"🟡","text":"替代性在「單一晶片設計×單一測試站」層級決定：設計量產後換卡要重新認證，等於綁定該設計壽命；但下一代設計重新比稿，HBM核心晶粒測試站競爭多，第三家HBM客戶份額較弱（2026-07-29 CEO Slessor）。綁定期短於一個產品世代。"},{"item":"價值鏈分配","level":"🟡","text":"探針卡占晶片成本小、但缺了不能出貨，理論上有定價空間；實際上客戶集中（SK hynix約四分之一營收）、測試機大廠入股探針卡廠，且短缺期公司仍未明顯漲價，只收加急與保產能費用。長期需求存在，不等於這一環能多拿。"},{"item":"社會容忍度","level":"🟢","text":"企業對企業的半導體零組件，沒有民生價格敏感問題，也不靠監管授權；政策風險在出口管制與關稅（中國營收占比已降到7%），列在風險項追蹤。"}],"roiic":35,"reinvest_rate":45,"endo_ceiling":16,"formula_note":"單位：%。增量ROIC約35%：德州廠2026–2027年現金資本支出約2.1億美元（2026年1–1.1億、2027年相近）＋預生產費用約0.3億＋營運資金估約0.75億，換約4億美元年化產能；以Q3非GAAP營益率33.5%、非GAAP稅率17.6%估稅後營業利益約1.1億，1.1÷3.15≈35%。再投資率約45%：擴產資本支出加營運資金增加，約占2027年稅後營業利益四到五成（折舊攤銷事實表未涵蓋，以維持性資本支出約占營收4–5%近似抵銷）。內生成長上界≈35%×45%≈16%。投入資本與當期ROIC事實表未涵蓋，以上依逐字稿數字推估。"},"combined":6.0,"score":6.0,"spread_table":[{"metric":"毛利率","FORM":44.1,"TER":59.41,"6857.T":65.73,"6223.TWO":56.52,"COHU":43.95,"unit":"%"},{"metric":"營業利益率","FORM":15.95,"TER":33.17,"6857.T":45.86,"6223.TWO":30.26,"COHU":-6.19,"unit":"%"},{"metric":"FCF 利潤率","FORM":16.67,"TER":21.59,"6857.T":31.21,"6223.TWO":-11.23,"COHU":6.68,"unit":"%"},{"metric":"研發密度","FORM":13.19,"TER":11.78,"6857.T":null,"6223.TWO":8.45,"COHU":18.6,"unit":"%"}],"competitors":[{"name":"TER","gm":59.41,"om":33.17,"fcf_margin":21.59,"rd_intensity":11.78,"strategy_note":"測試機龍頭之一，10月對公司投資3億美元並擴大合作；利潤率高於公司，是夥伴，也是潛在整合者。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"6857.T","gm":65.73,"om":45.86,"fcf_margin":31.21,"rd_intensity":null,"strategy_note":"Advantest，測試機龍頭，營益率46%遠高於公司；宣布邏輯測試機產能加倍，代表下游需求強，也代表全產業一起擴產。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"6223.TWO","gm":56.52,"om":30.26,"fcf_margin":-11.23,"rd_intensity":8.45,"strategy_note":"旺矽，台灣探針卡廠，毛利率56.5%、營益率30%高於公司TTM，借AI浪潮拿份額；自由現金流為負，正在燒錢擴產。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"COHU","gm":43.95,"om":-6.19,"fcf_margin":6.68,"rd_intensity":18.6,"strategy_note":"測試分選設備，營益率為負，是同產業在週期弱勢時的對照：需求一轉弱，固定成本壓垮利潤。","period":"TTM ending 2026-06-30（4季加總）"}]},"growth":{"driver_mix":"量為主（擴產＋份額）、價為輔（加急與保產能費用）、併購小、回購零","runway_years":"不適用：探針卡已全面滲透，成長來自份額與測試強度","runway_post_y5":"🟡","endo_ceiling_basis":"增量ROIC約35%×再投資率約45%≈16%（德州廠資本支出與產能換算，見護城河段公式說明）","segments":[{"item":"Probe Cards（Q3 FY2026）","value":"約2.21億美元、毛利率55.3%；DRAM與Q2紀錄持平但HBM降、DDR5升；Foundry & Logic季增約10%"},{"item":"Systems（Q3 FY2026）","value":"5,950萬美元創新高、季增23%、毛利率61%（約一半來自不重複項）；TRITON 2026年預期>3,000萬美元，2025年為0"},{"item":"德州Farmers Branch","value":"首張量產卡已出貨，2027年線性爬坡到年化約4億美元探針卡產能，只做Foundry & Logic，騰出Livermore的DRAM產能"},{"item":"2030目標模型","value":"營收16億美元、非GAAP毛利率55%、營業費用占營收23%、EPS 5美元（2026-05-11投資人日）"}],"decay_signals":[{"signal":"毛利率連2季年減","lit":false,"evidence":"Q2、Q3毛利率皆創高"},{"signal":"核心市占近12個月縮減","lit":true,"evidence":"TrendForce預期Technoprobe 2026年超越公司成全球第一，台廠拿份額"},{"signal":"主力產品提價後銷量下滑","lit":false,"evidence":"未見提價"},{"signal":"EPS年複合高於營收年複合5個百分點以上","lit":true,"evidence":"共識FY2025A→FY2028E EPS年複合66.7%，營收FY2025→FY2027約年增29%"},{"signal":"自由現金流對淨利低於0.75連2年","lit":false,"evidence":"2025年0.22、2024年1.14，未連續；2026擴產期要再看"},{"signal":"SBC占營收高於5%且逐年上升","lit":false,"evidence":"Q3為3.1%"},{"signal":"TAM萎縮或被替代技術壓縮","lit":false,"evidence":"市場年增約8%，未見替代技術"},{"signal":"產業估值倍數近3年系統性下移","lit":null,"evidence":"事實表未涵蓋"},{"signal":"維持性資本支出占自由現金流高於60%","lit":null,"evidence":"事實表未涵蓋"},{"signal":"停止投資新產能且收入3年內下滑","lit":false,"evidence":"正在擴產"}],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長靠內部擴產（德州新廠），不靠併購撐；回購只為抵銷股權激勵且近兩季未執行，展開沒有增量資訊"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"Keystone Photonics併購金額與營收貢獻事實表未涵蓋，已實現報酬無法計算","grade":"不過"},{"year":"—","action":"buyback_yield","rationale":"Q2、Q3未回購；7,500萬美元授權僅用約410萬，回購收益率約0%","grade":"不過"},{"year":"—","action":"sbc_dilution","rationale":"SBC單季880萬美元，年化約3,500萬，占市值約0.5%／年（低於1.5%）；Teradyne投資若為增資另計","grade":"過"}]},"valuation":{"basis":"非GAAP前瞻本益比（FY1＝FY2026E），輔以FY2027E","tier":"半導體測試耗材（探針卡）","peers":{"expanded":false,"reason":"事實表同業對照只有利潤率、沒有倍數；Technoprobe、MJC等同類探針卡廠未收錄，無法做同類倍數對照，終端倍數改以公司自身現值為上限參考"},"fwd_pe":26.87,"peg":0.83,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"FY2026本益比26.9倍、FY2027約21.2倍；以FY26→FY28共識年複合32.5%算PEG 0.83，屬便宜區；但市銷率7.17倍與EV／營收6.8倍在近四個年度端點都是最高，落後本益比分位10.9%卻最低，兩者相反代表利潤率在高檔。五年連續分位事實表未涵蓋。合理偏便宜，但分母有爭議，結論為合理。","upside_short_pct":9,"upside_mid_pct":12},"trap_analysis":{"verdict":"🟡","label":"週期高點利潤率陷阱風險中等"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"評論指測試需求有週期性、強勢集中在AI／HBM與CPO；全產業同時擴產：公司新廠加約4億美元年化產能、Advantest宣布邏輯測試機產能加倍、旺矽自由現金流為負仍在擴產；記憶體新產能約2028年開出","assumption":"基準情境假設2028年仍強、2029年只小幅回落","consequence":"若反轉提前到2028年，FY2028 EPS落在2.5–3美元，股價對應40–50美元","ruling":"採納：Bear機率給30%（共識成長超過內生上界、全產業同步擴產、2023年營收年減11%的前例），Bear路徑2029年EPS約2美元。與唯一致命點部分重疊（兩者都打FY2028 EPS），但週期不是單一事件，唯一致命點仍選新廠","watch":"季營收年增率、SEMI年底設備預測是否下修、記憶體客戶資本支出指引","evidence_refs":["supply_demand_durability#3"],"fact_refs":["f_consensus_eps_fy3","f_rev_consensus_fy2_m"]},{"view":"論點失敗","evidence":"9月30日收149.31美元，11月2日90.01美元，26週報酬−33%；Q3優於指引後股價仍在52週均線之下；下跌原因事實表未涵蓋","assumption":"假設下跌是產業估值重估，而不是公司層級的壞消息","consequence":"若原因是客戶砍單、HBM規格下修或Teradyne投資條款不利，基準情境要往Bear移","ruling":"不可裁決至2027年2月Q4財報；在那之前不追價，只有76美元以下的價格條件可以分批","watch":"Q4財報首季指引、10-K揭露的Teradyne投資條款與股數","evidence_refs":["competitive_share_entrants#3"],"fact_refs":["f_price_at_dd","f_week26_return_pct","f_rsi14","f_ma_w52"]},{"view":"論點成功但股東經濟變差","evidence":"2026-01-09 8-K揭露重整與重大減損，重整費用約3,000–4,000萬美元；新廠預生產費用2026年2,500–3,000萬美元；Q3 GAAP EPS 0.93美元對非GAAP 1.04美元；Teradyne 3億美元投資若為增資，價格與股數事實表未涵蓋；7,500萬美元回購授權只用約410萬","assumption":"非GAAP調整項是一次性，股數大致持平","consequence":"若重整與爬坡費用年年出現，股東實拿的EPS比非GAAP低一成到一成五；擴產吃現金、回購停擺，抵不掉增資稀釋","ruling":"部分採納：情境EPS路徑已預留約3–5%股數增加；GAAP與非GAAP EPS差距連兩季超過15%列入警示","watch":"GAAP與非GAAP EPS差距、季末稀釋股數、10-K的Teradyne條款","evidence_refs":["major_events#0"],"fact_refs":["f_kpi1_non_gaap_operating_incom","f_kpi2_gaap_operating_income_ma","f_shares_diluted_m","f_kpi4_sbc_stock_based_compensa"]},{"view":"價格已反映太多","evidence":"市銷率7.17倍、EV／營收6.8倍都在近四個年度端點最高；共識FY2028 EPS 5.88美元已超過公司2030年5美元目標","assumption":"市場與賣方用現在的利潤率外推三年","consequence":"若營益率回到2024年約6%的水準，即使營收守住，合理股價遠低於現價","ruling":"部分採納：本益比看便宜、營收倍數看貴，落差就是利潤率爭點；分母有爭議，便宜論證不單獨成立，基準情境比共識低約12%","watch":"非GAAP毛利率、市銷率、共識修正方向","evidence_refs":[],"fact_refs":["f_ps_current","f_ps_percentile","f_ev_s_current","f_ev_s_percentile","f_pe_percentile","f_consensus_eps_fy3"]}],"max_dd":{"lo":-65,"hi":-40,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 ✅ → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=✅","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 137.84 → 本次 90.01（-34.7%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=137.84","side_b":"本次 price_at_dd=90.01","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]角色由 dd_decision.py 機械路由：前份 條件式衛星持倉 → 本次 追蹤","cause":"價格變動","prior_field":["dca_role"],"side_a":"前份 dca_role=條件式衛星持倉","side_b":"本次 dca_role=追蹤","ruling":"角色是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。沒有單一輸入能還原，屬多欄共同：估值 🟠→🟡、均線 ✅→🟡。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 137.84 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 137.84 美元：Bull 價 245.36、Bear 價 60.65，五年期望值 +13.0%，基準年化 3.3%，前份未列不對稱比","side_b":"本次情境、股價仍用 137.84 美元：Bull 價 234、Bear 價 48，五年期望值 −3.2%，基準年化 −0.5%，不對稱比 0.89","ruling":"先換情境、股價不動：五年期望值少 16.2 個百分點，基準年化少 3.8 個百分點。前份未列不對稱比，本次為 0.89。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變差。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 137.84 美元：五年期望值 −3.2%，基準年化 −0.5%，不對稱比 0.89","side_b":"本次情境、股價 90.01 美元：五年期望值 +48.2%，基準年化 8.3%，不對稱比 2.86","ruling":"再換股價、情境不動：起點價下跌 34.7%，五年期望值多 51.4 個百分點，基準年化多 8.9 個百分點，不對稱比由 0.89 升到 2.86。合計五年期望值比前份多 35.2 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"毛利率是結構性改善還是週期高點","cause":null,"prior_field":null,"side_a":"管理層：Q3扣一次性後毛利率52.5–53%，基準由上季51%再升2個百分點，來源是週期時間、良率與人工效率；2027年新廠爬坡期仍維持約53%，2030年目標55%（2026-10-28 CFO McKinnis）","side_b":"四年年報毛利率39–40%；Q2法說CFO自己把改善拆成三分之一成本、三分之一營收量、三分之一不重複（2026-07-29）；市銷率在近四個年度端點最高而本益比分位最低，是典型週期高點組合；FY2025關稅曾吃掉1.4個百分點，Q3的300bp退款只是還回來","ruling":"⚖不可調和（方向相反）。裁決：成本改善部分採信、量能部分不採信——投資人日把目標模型的毛利率改善拆成量能約600bp、營運效率約500bp、創新約400bp，量能那塊在需求下滑時會吐回；基準情境因此在2029年放一次回落，Bear機率維持30%。硬數據點：2027上半年新廠爬坡期毛利率（扣一次性）。","evidence_level":"一手：公司財報與法說原話","settle_metric":"2027年Q1、Q2非GAAP毛利率（扣關稅退款等一次性項目）","if_then":["若2027年Q1、Q2毛利率（扣一次性）皆≥52%且營收季增→採信結構性改善，基準情境FY2028 EPS上調到共識附近，達重啟條件後建首倉（目標部位三分之一）","若連兩季<50%→判定以週期為主，不進場；已有部位減碼至半倉","反向條件：毛利率守住但營收連兩季季減→需求先轉弱，不追，等營收恢復季增"],"evidence_refs":["reg_tariff_export#1"]},{"axis":"觀望或現在就買","cause":null,"prior_field":null,"side_a":"現在就買的最強論證：9月30日收149.31美元，11月2日剩90.01美元，一個月跌約四成，同期FY2026共識EPS三個月上修37%；FY2027本益比約21倍、FY2028約15倍；Q3營收、毛利率、EPS都高於指引上緣；淨現金約3.7億美元，另有Teradyne投資3億美元；新廠首張卡提前出貨","side_b":"等待的理由：下跌原因事實表未涵蓋，可能是市場先看到週期轉折；共識FY2028 EPS 5.88美元已超過公司2030年5美元目標；現有廠到頂，2027年成長全靠新廠；股價在52週均線之下，跌勢未止","ruling":"可調和（程度差異）：便宜是真的，但便宜的分母是週期高點利潤率。卡住進場的單一約束是新廠爬坡期毛利率是否守住，選擇等事件、不等反彈；若價格先跌而證據未到，跌到76美元以下且基本面未受損就分批反買，不當作停損訊號。","evidence_level":"一手價格與財報，下跌原因缺","settle_metric":"2027年2月Q4財報的首季營收與毛利率指引","if_then":["若股價≤76美元且Q4財報毛利率與新廠進度未受損→分批反買第一批（目標部位三分之一）","若股價先反彈站回52週均線但財報證據未到→不追"],"evidence_refs":["competitive_share_entrants#3"]},{"axis":"賣方共識與公司自己的目標","cause":null,"prior_field":null,"side_a":"共識FY2027 EPS 4.24美元、FY2028 5.88美元，FY2026三個月上修37%","side_b":"公司2026-05-11投資人日目標：2030年營收16億美元、毛利率55%、EPS 5美元；Q3法說仍以此為目標","ruling":"可調和（程度差異）：共識把公司目標提早兩年兌現，等於假設新廠一開出就被填滿、價格不掉。基準情境FY2028取5.2美元，比共識低約12%。賣方目標價64.64–210美元，高低差3.2倍，分歧大，信心與倉位角色都往保守調。","evidence_level":"賣方快照與公司目標","settle_metric":"FY2027實際營收對共識約13億美元","if_then":["若FY2027營收≥13億美元且毛利率≥53%→基準情境向共識靠攏","若FY2027營收<12億美元→基準情境降到Bear與Base中間，停止加碼"],"evidence_refs":["capital_markets_pricing#3"]},{"axis":"最大客戶占比：第三方說法與申報數字","cause":null,"prior_field":null,"side_a":"第三方稱Q1 2026 SK hynix占29.5%、NVIDIA 10.2%（未經一手文件核實）","side_b":"Q2 2026 10-Q：前三大客戶合計35%、SK hynix 24%，去年同期前三大48%；FY2025 SK hynix 22.9%","ruling":"採申報數字。集中度在下降，但仍高於FY2025；單一記憶體客戶占比門檻設30%。","evidence_level":"第三方未核實對一手申報","settle_metric":"10-K客戶集中度揭露","if_then":["若單一記憶體客戶占比>30%→風險升級，停止加碼"],"evidence_refs":["customer_concentration_credit#3","customer_concentration_credit#0"]},{"axis":"全球份額排名","cause":null,"prior_field":null,"side_a":"TrendForce 2026-06：Technoprobe可望2026年超越公司成為全球第一；GPU先進MEMS卡目前主要是對手的生意（2026-07-29 CEO Slessor）","side_b":"德銀2026-10-01：公司已是NVIDIA GPU探針卡第二大供應商；Q3已出貨單一GPU設計數百萬美元等級，2027年要大幅拿份額","ruling":"可調和：公司在GPU是從零起步拿份額，但整體排名在掉；護城河方向給持平，不給向上。","evidence_level":"第三方市調與賣方報告","settle_metric":"2027年GPU／客製ASIC量產設計數與Foundry & Logic年增率","if_then":["若2027年底前沒有第二個GPU或ASIC量產設計→基準情境下調，停止加碼"],"evidence_refs":["competitive_share_entrants#2","competitive_share_entrants#3","end_markets#2"]},{"axis":"產業態勢三軸","cause":null,"prior_field":null,"side_a":"結構轉好：HBM每代測試強度增加25–30%、光電需要已知良品晶粒測試；SEMI預測設備銷售連五年成長到2028，測試設備2027年+18.1%","side_b":"競爭惡化：10-K承認競爭已造成降價，TrendForce指Technoprobe將成第一、台廠拿份額；其他結構變數：出口管制使中國占比由14%降到7%，測試機大廠入股探針卡廠","ruling":"雙向拉鋸：需求面結構轉好有來源，競爭面也在惡化，兩者同時成立；護城河給持平，情境上檔不大幅超出公司目標。","evidence_level":"產業協會預測＋10-K＋第三方市調","settle_metric":"公司份額與毛利率同步方向","if_then":["若份額下滑且毛利率回落同時出現→減碼至半倉"],"evidence_refs":["supply_demand_durability#0","competitive_share_entrants#0","substitute_technology#2"]},{"axis":"估值結論與綜合評級（價格下跌）","cause":"價格變動","prior_field":["val","signal"],"side_a":"前份（2026-06-29，股價137.84美元）：估值偏貴、遠期本益比約50倍、綜合評級B級、裁決觀望","side_b":"本次股價90.01美元，跌約35%；FY2026共識EPS三個月由2.44上修到3.35，FY2026本益比降到26.9倍；估值由偏貴改為合理，綜合評級不變，裁決輸入仍是等事件驗證","ruling":"估值改善主因是價格下跌，其次是共識上修；但改善建立在共識利潤率上，分母有爭議，所以不升級為進場，維持等待。","evidence_level":"價格與共識快照","settle_metric":"2027年2月Q4財報","if_then":["若Q4財報達重啟條件→重跑研究後建首倉"],"evidence_refs":[]},{"axis":"護城河方向、陷阱風險、後五年跑道","cause":"新證據","prior_field":["moat_trend","trap","runway_post_y5"],"side_a":"前份：護城河持平、陷阱風險中等、後五年跑道中等","side_b":"本次三項結論不變但依據換新：正面是基準毛利率51%→53%、首個GPU設計量產、TRITON光電2026年>3,000萬美元、新廠首張卡提前出貨；負面是TrendForce指Technoprobe將成全球第一、共識EPS成長遠快於營收成長、現有廠到頂","ruling":"正負新證據互相抵銷，三項結論維持；若2027年底前拿到第二個GPU／ASIC量產設計且光電營收再翻倍，護城河方向才考慮改為向上。","evidence_level":"法說原話＋第三方市調","settle_metric":"2027年份額與光電營收","if_then":["若第二個GPU／ASIC量產設計落地且光電營收翻倍→護城河方向改評向上"],"evidence_refs":["competitive_share_entrants#2"]},{"axis":"公司類型、週期位置與情境機率","cause":"方法變動","prior_field":["archetype","cycle_position","p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份未標公司類型與週期位置；樂觀28%、悲觀30%、最大回撤−60%","side_b":"本次標為週期型（次類型品質成長）、中循環；情境改用FY2026非GAAP共識EPS為起點，基準情境放入2029年回落；樂觀25%、基準45%、悲觀30%；最大回撤區間−40%～−65%","ruling":"方法改變：前份把公司當結構性成長處理，本次依2023年營收年減11%、營益率掉到1.5%的前例改用週期框架；樂觀機率下調，因為共識已上修到公司2030年目標之上，上檔要再超出共識才成立。","evidence_level":"年度財報","settle_metric":"下一次營收年減年度的毛利率","if_then":["若下一次下滑年度毛利率≥47%→週期框架放寬，悲觀機率可下調"],"evidence_refs":[]},{"axis":"重啟條件（進場與加碼）","cause":"方法變動","prior_field":["rearm_trigger"],"side_a":"前份未設重啟條件（空白）","side_b":"2027年2月Q4財報首季營收指引中點≥2.85億美元且非GAAP毛利率中點≥52%，並且週收盤站回52週均線","ruling":"前份只有監測項目、沒有行動條件，本次補上。卡住進場的單一約束是新廠爬坡期毛利率是否守住，重啟條件就是它的否定，再加週線趨勢確認；觸發後先重跑研究再建首倉，不直接加碼。","evidence_level":"方法補正","settle_metric":"Q4財報指引與週收盤","if_then":["條件全中→重跑研究，通過後建首倉（目標部位三分之一）"],"evidence_refs":[]},{"axis":"減碼與清倉指標","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設減碼與清倉指標（空白）","side_b":"減碼：非GAAP毛利率（扣一次性）連兩季<50%；清倉：新廠2027年底產能目標低於3億美元或延到2028，或季營收年增連兩季為負且毛利率<48%，或最大記憶體客戶HBM最終測試導入量產第二供應商","ruling":"前份只有監測閾值、沒有對應動作；本次把毛利率基準升到53%後的回落幅度、新廠進度與HBM地位寫成可執行的減碼與清倉線。","evidence_level":"方法補正","settle_metric":"季報毛利率、新廠產能、客戶揭露","if_then":["毛利率連兩季<50%→減碼至半倉","新廠產能目標低於3億美元→清倉"],"evidence_refs":[]},{"axis":"Single Thing唯一致命點","cause":"新證據","prior_field":["single_thing"],"side_a":"前份未設唯一致命點（空白）","side_b":"Single Thing：德州Farmers Branch新廠在2027年底前達不到約4億美元年化探針卡產能","ruling":"Q3法說確認現有廠已到上限、Q4成長明顯放緩，2027–28年成長幾乎全押新廠，新廠成為數學上最大的單一敏感項（約占FY2028營收四分之一）；若發生則清倉。","evidence_level":"法說原話","settle_metric":"每季法說的新廠產能進度","if_then":["若產能目標下修到3億美元以下或延到2028→清倉"],"evidence_refs":[]},{"axis":"假設與風險門檻","cause":"新證據","prior_field":["H","R"],"side_a":"前份：非GAAP毛利率≥46%、DRAM／HBM營收年增≥15%、整體探針卡份額≥25%、FY2027遠期本益比>35倍","side_b":"本次：毛利率（扣一次性）≥51%、FY2027營收≥12.5億美元、最大客戶占比≤25%、下一次下滑年度毛利率≥47%；拿掉本益比門檻","ruling":"毛利率基準已升到53%，46%門檻失去警示作用；前份估值假設（本益比不破35倍）已被打破——本益比由約50倍降到26.9倍，這次改由情境樹處理估值，不再當成論點。份額門檻因缺市調更新，改用客戶與分市場指標。","evidence_level":"法說與共識快照","settle_metric":"2027年各季毛利率與營收","if_then":["若2027年毛利率（扣一次性）連兩季<51%→H1削弱，停止加碼"],"evidence_refs":[]}],"triggers":[{"n":1,"text":"新廠爬坡期毛利率守住","type":"假設驗證","maps_to":"H1","metric":"非GAAP毛利率（扣一次性）","threshold":"2027年Q1、Q2皆≥52%且營收季增","action":"達標→重跑研究，通過後建首倉（目標部位三分之一）","source_freq":"每季財報","date":"2027-05","evidence_refs":[]},{"n":2,"text":"現有廠到頂後營收停滯","type":"風險","maps_to":"R1","metric":"季營收季增率","threshold":"2027年任一季季減","action":"停止加碼、不進場","source_freq":"每季財報","date":null,"evidence_refs":["geo_supply_chain#0","geo_supply_chain#2"]},{"n":3,"text":"新廠產能目標下修","type":"Single Thing","maps_to":"single_thing","metric":"公司公布的2027年底年化探針卡產能","threshold":"低於3億美元或延到2028","action":"清倉（若持有）；未持有則停止重啟條件","source_freq":"每季法說","date":"2027-12","evidence_refs":[]},{"n":4,"text":"2027年2月Q4財報首季營收指引中點≥2.85億美元且非GAAP毛利率中點≥52%，並且週收盤站回52週均線","type":"估值rearm","maps_to":"rearm_trigger","metric":"首季營收與毛利率指引；週收盤對52週均線","threshold":"營收指引中點≥2.85億美元、毛利率中點≥52%、週收盤>52週均線","action":"重跑研究，通過後建首倉（目標部位三分之一）","source_freq":"Q4財報＋每週","date":"2027-02","evidence_refs":[]},{"n":5,"text":"價格先跌、基本面未損時分批","type":"加碼","maps_to":"H2","metric":"股價與最近一季毛利率","threshold":"股價≤76美元且最近一季毛利率（扣一次性）≥51%、新廠進度未下修","action":"分批反買第一批（目標部位三分之一）","source_freq":"每日價格＋每季財報","date":null,"evidence_refs":[]},{"n":6,"text":"毛利率回落","type":"減碼","maps_to":"H3","metric":"非GAAP毛利率（扣一次性）","threshold":"連兩季<50%","action":"減碼至半倉","source_freq":"每季財報","date":null,"evidence_refs":["reg_tariff_export#1"]},{"n":7,"text":"週期反轉或HBM地位失守","type":"清倉","maps_to":"R3","metric":"季營收年增率；HBM最終測試供應地位","threshold":"季營收年增連兩季為負且毛利率<48%，或公司證實最大記憶體客戶導入量產第二供應商","action":"清倉","source_freq":"每季財報與10-Q","date":null,"evidence_refs":["customer_concentration_credit#0","customer_concentration_credit#1"]},{"n":8,"text":"GPU／ASIC份額沒拿到","type":"風險","maps_to":"R2","metric":"GPU與客製ASIC量產設計數；Foundry & Logic年增率","threshold":"2027年底前沒有第二個量產設計，或Foundry & Logic年增<10%","action":"停止加碼，基準情境下調","source_freq":"每季法說","date":"2027-12","evidence_refs":["competitive_share_entrants#2","end_markets#2"]},{"n":9,"text":"關稅與出口管制吸收失敗","type":"風險","maps_to":"R4","metric":"關稅對毛利率的單季衝擊；出口限制涵蓋客戶","threshold":"單季衝擊≥1個百分點，或新限制涵蓋前五大客戶之一","action":"停止加碼","source_freq":"每季財報","date":null,"evidence_refs":["reg_tariff_export#0","reg_tariff_export#2"]},{"n":10,"text":"Q4 FY2026財報後複審","type":"複審日期","maps_to":null,"metric":"全份研究","threshold":"財報公布後一週內","action":"重跑研究","source_freq":"一次","date":"2027-02","evidence_refs":[]}],"kill_metrics":[{"metric":"非GAAP毛利率（扣關稅退款等一次性項目）","bear_threshold":"連兩季<50%→減碼至半倉","window":"2027–2028年各季","source":"公司季報新聞稿與法說會","last_status":"ok"},{"metric":"德州新廠2027年底年化探針卡產能目標","bear_threshold":"低於3億美元或延到2028→清倉","window":"2027年各季法說","source":"公司法說會（CFO McKinnis）","last_status":"ok"},{"metric":"季營收年增率","bear_threshold":"連兩季為負且毛利率<48%→清倉","window":"2027–2029年各季","source":"公司季報","last_status":"ok"},{"metric":"HBM最終堆疊測試供應地位","bear_threshold":"公司證實最大記憶體客戶導入量產第二供應商→清倉","window":"持續","source":"10-Q客戶集中揭露、法說會","last_status":"unknown"}],"evidence_dismissed":[],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8(val爭議)","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟡', moat_trend='→', week26=-33.01, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='循環/商品', cycle_position='中循環', moat='C', moat_trend='→', cycle_gates_pass=False"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈機械讀數判定不可用，baseline rows 8/9/9b/10 的估值條件視為不可判 → 落 row8 觀望（保守方向）","hit":true,"basis":"val_denominator_disputed=True, val(機械讀數)='🟡'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":null,"requires_critic":[],"rearm_trigger":"2027年2月Q4財報首季營收指引中點≥2.85億美元且非GAAP毛利率中點≥52%，並且週收盤站回52週均線","exec_line":"觸發後先重跑研究，通過才建首倉，首倉為目標部位三分之一；未觸發前不追價。另一條路：股價≤76美元且最近一季毛利率（扣一次性）≥51%、新廠進度未下修→分批反買第一批。"},"reasoning":{"industry":"收錢方式：探針卡是設計專用耗材，每顆新晶片設計要一張專屬卡，晶片廠在晶圓測試時買卡、磨耗後再買；Systems部門賣工程探針台與TRITON光電測試系統。Q3 FY2026營收2.805億美元，季增9%、年增近四成，幾乎都在同一廠房做出來；其中Systems 5,950萬美元創新高（季增23%），其餘約2.21億為探針卡（逐字稿2026-10-28，CFO McKinnis）。探針卡毛利率55.3%、Systems 61%（約一半是不重複項）。非GAAP毛利率56.5%，含約380bp（1,050萬美元）關稅退款與量子業務零件成本，扣掉後52.5–53%；非GAAP營益率33.5%、GAAP 29.1%。分市場：DRAM與Q2紀錄持平但HBM降、DDR5升；Foundry & Logic季增約10%，動能來自資料中心CPU、首個GPU設計量產與客製ASIC。錢卡在哪：卡在晶圓測試，測試強度隨HBM堆疊、介面速度、先進封裝與光電上升；但每代新設計重新認證，客戶握有比稿權。單點依賴：SK hynix FY2025占22.9%，Q2 2026前三大客戶合計35%（去年同期48%），晶圓代工龍頭與CPU龍頭各約一成；集中度在降，記憶體一家仍是最大單點。產業時鐘在擴張期：SEMI預測設備銷售連五年成長到2028、記憶體供給緊到FY28、探針卡全產業產能吃緊、客戶談付費保產能；同時全產業一起擴產，是擴張後段的訊號。供需持久性：週期性將反轉，時點看2028年記憶體與測試新產能開出。產業態勢雙向拉鋸：需求結構轉好有來源，競爭也在惡化（見反證紀錄）。Q4營收指引2.85億±1,000萬美元，中點只比Q3多1.6%，原因是現有廠已到上限。","moat":"機制：MEMS探針技術加高速高並行測試架構（SmartMatrix），HBM最終堆疊測試最強；每張卡綁一顆設計，量產後整個設計壽命都綁定，但下一代重新比稿。可證方向有三條：一、製造效率變強——同一廠房營收年增近四成，基準毛利率由2022–2025年的39–40%升到53%（投資人日稱2025年起累計改善1,100bp）；二、定價權沒變強——短缺期管理層仍說DRAM毛利改善極少來自漲價，10-K承認競爭已造成降價；三、份額排名下滑——TrendForce預期Technoprobe 2026年超越公司成全球第一，GPU先進MEMS卡目前主要是對手的生意（2026-07-29 CEO Slessor），公司Q3才有第一個GPU設計量產。同業利潤率：公司TTM營益率約16%，低於Teradyne 33%、Advantest 46%、旺矽30%；同業表為GAAP口徑、含公司重整費用，最新一季GAAP營益率29.1%已接近旺矽。投入資本與ROIC事實表未涵蓋，改用利潤率差與份額當可比軸。評分：執行力7（效率與新廠進度都超前）、定價權5（短缺期沒漲價、排名下滑），合計約6分；方向給持平，不給向上。","growth":"成長來源以量為主：擴產（德州廠2027年底年化約4億美元探針卡產能）、GPU／客製ASIC／資料中心CPU份額、光電TRITON；價格貢獻小（管理層稱DRAM毛利改善極少來自漲價）；併購小（Keystone Photonics）；回購為零。共識三年EPS：FY2025A非GAAP 1.27美元（投資人日CFO）→FY2028E 5.88美元，年複合66.7%，但基期是低谷；改看FY2026E→FY2028E，年複合32.5%（Koyfin快照，分析師家數事實表未涵蓋）。內生上界約16%（推導見護城河段）。缺口約16.5個百分點，歸因利潤率擴張：毛利率由約40%升到53%、非GAAP營業費用占營收由Q1的27.4%降到Q3的23%——這是一次性台階，不會每年重複，2029年後成長回到內生上界附近。共識FY2028 EPS已高於公司2030年5美元目標，等於假設目標模型提早兩年兌現。跑道：探針卡已全面滲透，滲透率年限不適用；CFO口徑市場2030年45億美元、年增約8%，公司目標兩倍速靠份額。光電可服務市場2030年約3–4億美元，是有來源的第二條曲線，但只有公司目標營收的兩成上下，撐不起五年後的成長，給中等。","governance":"自由現金流對淨利：2022–2025年自由現金流6,650萬／860萬／7,910萬／1,170萬美元，淨利5,070萬／8,240萬／6,960萬／5,440萬，轉換率1.31／0.10／1.14／0.22，2023與2025兩年偏低但不連續，2025年低是投入新廠。2026年Q3自由現金流6,480萬美元、占營收23.1%，對GAAP淨利7,380萬約0.88。現金去向四分：一、擴產——新廠2026年現金資本支出1–1.1億美元（原估1.4–1.7億，差額移到2027），2027年相近；二、補強型併購——Keystone Photonics，金額與貢獻事實表未涵蓋；三、回購——2025年4月授權7,500萬美元，季末剩7,090萬，Q2、Q3都沒買，用途只是抵銷股權激勵；四、現金累積——季末現金與投資3.99億美元，總債務約2,800萬（含租賃）。SBC單季880萬美元，占營收3.1%、占GAAP營業利益10.8%，以現市值估年化稀釋約0.5%。Teradyne 10月投資3億美元強化資產負債表，管理層說不改變資本配置優先順序；是否為增資、價格與股數事實表未涵蓋。計分：併購已實現報酬無法計算；回購收益率約0，不過；股權激勵稀釋約0.5%／年，過。","valuation":"現價90.01美元。FY2026共識EPS 3.35美元→本益比26.9倍；FY2027 4.24美元→21.2倍；FY2028 5.88美元→15.3倍。PEG以FY26→FY28共識年複合32.5%計為0.83；若用FY2025A低基期算三年年複合66.7%，PEG只有0.40，但那是低谷反彈，不採用。歷史位置只有四個年度端點、沒有連續五年分位：落後本益比41.3倍分位10.9%，市銷率7.17倍與EV／營收6.8倍分位100%——本益比看便宜、營收倍數看最貴，差的就是利潤率。現價要求：FY2027–28共識大致兌現，之後倍數不掉到15倍以下。我的基準情境FY2028 EPS 5.2美元（比共識低約12%），2029年小幅回落，FY2031 6.4美元×21倍≈134美元，五年年化約8%；Bear 3.0美元×16倍≈48美元。短期上檔：FY2027基準EPS 4.1×24倍≈98美元（+9%）；三年：FY2029基準4.8×21倍≈101美元（+12%）。成長熄火壓力測試：共識走到FY2028後成長降到15%／10%／5%、倍數壓到22／16／12倍，對應2030年股價約171／114／78美元，兩過一不過。賣方目標價64.64–210美元、平均145.55（2026-10-02，當時股價約149），高低差3.2倍、分歧大且已過時。淨現金約3.7億美元（另有Teradyne投資3億未入帳），EV約66.6億美元。結論：合理偏便宜，但便宜的分母就是爭點。","premortem":"最可能看錯的三處（詳見反證紀錄）：一、把週期高點毛利率當新常態；二、新廠開出時剛好遇上全產業擴產與記憶體新產能，量價齊跌；三、十月一個月跌約四成的原因不知道，可能是市場先看到我們沒看到的訊息。陷阱信號亮2個（核心市占相對縮減、EPS成長遠快於營收成長），屬中等。歷史最大回撤、空方最強數字：事實表未涵蓋；未見集體訴訟、SEC調查或財報重編，近12個月唯一重大8-K是2026年1月的重整與減損。管理層迴避紀錄：Q2法說未給週期時間與良率改善數字、未給新廠營收貢獻時點與CPO 2027年數字；投資人日未說明目標模型錨定什麼基準。Q3法說補了一部分（2027年底年化約4億美元、線性爬坡），但仍不量化2027年爬坡期毛利率逆風，只說「false sense of precision」。RSI 35、26週報酬−33%，沒有過熱。"},"plain":{"six":{"how_it_makes_money":"賣給晶片廠的設計專用耗材：每顆新晶片設計都要一張專屬探針卡，錢卡在晶圓測試這一關；Q3營收2.805億美元、非GAAP毛利率56.5%（扣一次性約53%），現有廠房已滿載。","moat":"護城河方向持平：製造效率明顯變強，但定價權沒有跟著變強，全球第一的位置正被Technoprobe追過。","growth":"後五年跑道中等：探針卡本業市場年增約8%，公司要靠GPU／ASIC份額與光電探針跑出兩倍速；第二曲線已有營收但規模還小。","capital":"資本配置中等：現金先餵擴產，回購停擺，股權激勵稀釋低；Teradyne 3億美元投資的條款待揭露。","valuation":"現價要求FY2027–28共識大致兌現、毛利率守在53%上下；我只信一半，基準情境五年年化約8%，便宜建立在週期高點利潤率上。","how_wrong":"最可能看錯在把週期高點利潤率當新常態；陷阱風險中等（亮2個信號）。"}},"decision_inputs":{"signal":"B","ma":"🟡","cycle_position":"中循環","cycle_verdict":"未觸發","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":false,"cycle_gates_pass":false,"wait_for_price":true,"wait_for_price_condition":"等2027年2月Q4財報確認新廠爬坡期毛利率守住（首季非GAAP毛利率指引中點≥52%、營收指引中點≥2.85億美元）；或股價≤76美元且最近一季毛利率（扣一次性）≥51%","trap":"🟡","val":"🟡","moat":"C","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"循環/商品","price_at_dd":90.01,"week26_return_pct":-33.01,"consensus_rev_3m_pct":37.3,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"FY2026非GAAP EPS含Q3約0.09美元關稅退款與Q4約70bp退款；FY2027–28共識建立在毛利率53–55%，而2022–2025年毛利率39–40%。分母是否為週期高點正是本案爭點，本益比便宜不能單獨當買進理由。"},"catalysts":[{"date":"2027-02","date_precision":"month","type":"guidance","event":"Q4 FY2026財報與2027年首季指引；10-K揭露客戶集中度與Teradyne投資條款","impact":"高","watch":"首季營收指引中點≥2.85億美元、非GAAP毛利率中點≥52%"},{"date":"2027-06","date_precision":"quarter","type":"capacity","event":"德州Farmers Branch加入Foundry & Logic的MEMS前段製程","impact":"高","watch":"預生產費用轉入營業成本的進度、年底約4億美元產能是否維持"},{"date":"2027-06","date_precision":"quarter","type":"product","event":"GPU與客製ASIC先進MEMS探針卡第二批量產設計","impact":"中","watch":"法說是否點名新設計量產、Foundry & Logic年增率"},{"date":"2026-12","date_precision":"month","type":"macro","event":"SEMI年底設備銷售預測更新","impact":"中","watch":"2027–2028年測試設備與DRAM設備預測是否下修"},{"date":"2027-09","date_precision":"quarter","type":"product","event":"TRITON／CPO與NPO光電測試2027年營收進度","impact":"中","watch":"2027年光電系統營收是否較2026年的3,000萬美元以上再翻倍"}],"_projected_from":"v19"}
+```
+
+---
+
+## ⑨ 補寫任務（本段優先，取代上面任務頭與寫入指示）
+
+上一輪散文已寫好，只有下列章節篇幅不足、被硬閘擋下。**只重寫這幾章**，其他章節一個字都不要寫。
+
+- `s5`：現在 2,468B，下限 3,000B，**目標 ≥ 3,600B**
+
+做法：保留現稿的論點與結論，補的是深度——用上面 judgment 投影視圖裡已有、但現稿沒寫到的內容（機制、證據、同業對照、反證）。不得灌水重複、不得出現白名單以外的數字、不得心算衍生數字。格式同散文卡 §6：每章前一行 `<!-- SID:sX -->`，緊接完整的 `<section>`（`<h2>`／`<p class="lead">`／`<ul class="pts">`），表格注入標記照現稿保留。
+
+一次 Write 到 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/FORM_20261103/prose_fix.html`，寫完即停。
+
+現稿：
+
+```html
+<!-- SID:s5 -->
+<section id="s5"><h2>5　護城河與對手</h2>
+<p class="lead">執行力變強，定價權沒變強，護城河 C 級、方向持平。</p>
+<ul class="pts">
+<li>護城河的機制是設計專用 MEMS 探針卡的認證綁定，加上高速高並行測試技術（SmartMatrix）與 HBM 最終堆疊測試的量產品質。每張卡綁一顆設計，量產後整個設計壽命都鎖住，但下一代重新比稿。這種綁定能保住既有客戶，卻很難讓公司在每一輪漲價，所以我們不給高等級。</li>
+<li>可證的方向有三條，結論各不相同。第一條是製造效率變強，同一廠房營收年增近四成，基準毛利率由 2022–2025 年的 39–40% 升到 53%。第二條是定價權沒變強，10-K 承認競爭已造成降價。第三條是份額排名下滑，TrendForce 預期 Technoprobe 在 2026 年成為全球第一。三者相抵為持平，執行力評 7、定價權評 5。</li>
+<li>同業對照顯示公司利潤率仍低。公司 TTM 營益率約 16%，Teradyne 為 33%，Advantest 為 46%，旺矽為 30%。同業表採 GAAP 口徑，含公司的重整費用，最新一季 GAAP 營益率 29.1%，已接近旺矽。旺矽的自由現金流為負，代表台廠正在燒錢擴產，不是輕鬆拿份額。</li>
+<li>Teradyne 與 Advantest 兩家測試機大廠同時是夥伴與潛在整合者。Teradyne 10 月對公司投資 3 億美元並擴大合作，目前表態支持開放生態。若未來走向測試機加探針卡綁售，開放生態可能被打破，我們給這條威脅 15% 的機率。Advantest 宣布邏輯測試機產能加倍，代表下游需求強，也代表全產業一起擴產。</li>
+<li>三條主要威脅都在黃燈。第一是 Technoprobe 與台廠在 AI 浪潮拿份額，機率 40%，10-K 已承認競爭造成降價與毛利下滑。第二是對手獨立開發類似技術或繞過專利，機率 20%，每代新設計都要重新證明技術領先。第三是前述測試機整合風險。GPU 的先進 MEMS 卡至今主要是對手的生意，FORM 是從零起步。</li>
+<li>報酬持續期的量化結果偏溫和。增量投入資本報酬率約 35%，再投資率約 45%，兩者相乘得內生成長上界約 16%。投入資本與當期 ROIC 事實表沒有涵蓋，這些數字依逐字稿推估。共識 EPS 成長遠高於這個上界，缺口要靠一次性的利潤率台階填補，不能每年重複。</li>
+</ul>
+<!-- E5 -->
+<!-- E6 -->
+<!-- E7 -->
+</section>
+
+```
