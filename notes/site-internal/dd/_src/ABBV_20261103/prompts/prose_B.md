@@ -1,0 +1,448 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 ABBV（2026-11-03）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**後半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/ABBV_20261103/prose_B.html`，依序含 s8、s9、s10、s11、s12、decision（s85 若觸發併入）。前半（s1–s7）由另一通同時在寫，你不要碰；s1 的結論與 decision 段的裁決都以 judgment 投影視圖為準，不需對照前半。
+
+每章 3–6 條，每條 100–200 字；s10（估值與三種未來）與 s12（最可能怎麼賠）至少 1,500 bytes，把情境輸入、終端倍數、反證三視角的裁定鋪開。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：ABBV　日期：2026-11-03　archetype：None　前份裁決：2026-05-25　B 衛星候選（護城河 A 級 9/10 + cliff cohort 最成功 + Skyrizi+Rinvoq 已超 Humira peak + 53 年股息紀錄；但估值 🟡 合理非便宜 Fwd PE 15.13x + Pure MA 🟡 mid-range → 等回測 W104 $190 或 BB 下軌 $190 分批進場）｜　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（2257B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（536B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（997B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1596B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1310B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（741B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（888B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2218B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（4426B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（3229B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（283B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        2257           3320-4743      3 條（2–6 內）  
+s3                  8000         536           5225-7464      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3903          7768-11097      5 條（2–6 內）  
+s6                 11000         741          7181-10259      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         888           1828-2612      5 條（2–6 內）  
+s10                 5000        2218           1947-2782      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        3229           2000-2000      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         283            852-1217      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=5441B；至少需散文≈39.56KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−45
+−45%
+−41.5%
+−39%
+−36.7%
+−30.6%
+−30
+−30%
+−27.6%
+−26.1%
+−26%
+−11.8%
+−1.8%
+−1.2%
+0
+0%
+0.11
+0.14
+0.3
+0.30
+0.44
+0.46
+0.5
+0.6
+0.6%
+0.69
+0.70
+0.75
+0.87%
+0.9%
+01
+1
+1.2
+1.29
+1.49
+1.5
+1.54
+1.8
+1.82
+2
+02
+2.36
+2.4
+2.5%
+3
+03
+3%
+3.82
+4
+04
+4%
+4.2
+4.2%
+05
+5
+5%
+5.2%
+06
+6
+6.5
+6.83
+6.88
+7%
+07
+7
+7.28
+7.3
+7.33
+7.5%
+7.76
+8%
+8
+8.73
+8.8%
+9
+10
+10%
+10.3%
+10.5%
+10.7%
+11
+11.4
+11.7
+11.7%
+12%
+12
+13%
+13
+13.5%
+13.6%
+13.87
+13.9%
+13.95
+13.97
+13.99
+14
+14%
+14.07
+14.12
+14.2
+14.6
+15
+15.0
+15%
+15.1
+15.3
+15.4
+15.8
+16
+16.1%
+16.2
+16.3%
+16.5
+16.6%
+16.8
+17
+17.67
+17.9
+18
+18.1
+18.5
+18.6%
+18.7%
+19
+19%
+19.04
+19.2
+19.5%
+19.6
+19.8
+20
+20.78
+20.8
+21
+21.1%
+21.2%
+21.4
+22.3
+22.9%
+23%
+23
+23.1
+23.6
+24
+24.3%
+25%
+25
+25.6
+26
+26.7%
+27
+28
+28.3%
+29
+29.1%
+29.2%
+30
+30.0%
+30%
+30.6%
+31
+32%
+33.9%
+35%
+35.1%
+36.0%
+38.6%
+40%
+40.9
+41.09
+41.1%
+41.8%
+42
+43%
+45
+45%
+46.7%
+47%
+48.7%
+49
+49.8
+50
+50%
+51%
+51.3%
+53.2%
+57.2%
+60%
+62.67
+66
+70
+71.3%
+75%
+80%
+83
+83.6%
+84.7%
+85.1%
+90
+98
+100%
+100
+103
+104
+109
+121
+129
+130
+140
+150
+150%
+165
+169.5
+174.04
+178
+183.6
+185
+$190
+190
+200
+209.96
+214.5
+218
+220
+228
+230
+242
+250
+274
+275
+277
+289.86
+292
+299
+320
+321
+328
+335
+340
+349
+357
+380
+395
+410
+415
+420
+486.4
+500
+581
+595
+612
+643
+678
+678.2
+737.9
+1000
+2025
+2026
+2027
+2028
+2029
+2030
+2031
+2032
+2033
+20261103
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"ABBV","date":"2026-11-03","schema":"v15.0","contract":"v19","company_name":"AbbVie Inc."},"oneliner":"免疫雙引擎 Skyrizi 與 Rinvoq 帶動營收年增一成、Skyrizi 指引今年三度上修，生意品質好；但半年股價漲四成，全來自倍數擴張（Forward P/E 20.8 倍）。五年基本情境含息年化約 6–7%，等 250 美元以下或 FY2027 指引上修再進場","thesis":{"H":[{"id":"H1","text":"Skyrizi 加 Rinvoq 在口服 IL-23 上市與價格逆風下仍維持雙位數成長，撐到 Skyrizi 法規資料保護到期（2031）","2y":"FY2028 合計 ≥ 420 億美元（2026 指引 321 億，2027 年增 ≥ 15%、2028 年增 ≥ 14%）","5y":"FY2031 合計 ≥ 500 億美元","10y":"Skyrizi 生物相似藥上市後 3 年內，合計營收衰退 ≤ 30%","threshold":"合計季營運成長：2027 年 ≥ 15%、2028 年 ≥ 14%","source":"AbbVie 季度財報新聞稿的產品營收；Q3 2026 電話會 CFO 全年指引（Skyrizi 218 億、Rinvoq 103 億）","drift_rule":"2Y：合計營收 TTM 低於門檻路徑 5% 連 2 季為削弱，低於 10% 連 3 季為反轉；5Y：偏離 5% 以上連 4 季為削弱，偏離 10% 以上連 6 季為反轉"},{"id":"H2","text":"Vraylar 2027 年適用 IRA 價格後，神經科學仍是第二成長引擎","2y":"FY2028 神經科學營收 ≥ 150 億美元（2026 指引 130 億）","5y":"FY2031 ≥ 190 億美元，精神、偏頭痛、巴金森三個系列各自朝 50 億以上前進","10y":null,"threshold":"神經科學 2027 年營運成長 ≥ 7%","source":"AbbVie 季度財報；Q3 2026 電話會 CFO（神經科學 130 億、Vraylar 42 億、Botox 治療 42 億、口服 CGRP 31 億）與 CEO（三個 50 億以上系列）","drift_rule":"2Y：神經科學營收 TTM 低於門檻路徑 5% 連 2 季為削弱，低於 10% 連 3 季為反轉；5Y：偏離 5% 以上連 4 季為削弱，偏離 10% 以上連 6 季為反轉"},{"id":"H3","text":"管線在 Skyrizi 獨占期結束前接棒，2027 年起新產品陸續上市","2y":"2027 年底前，etentamig、Epkinly 一線 DLBCL、Rinvoq 白斑、Rinvoq 圓禿四項中至少三項取得美國核准","5y":"etentamig 與 Temab-A 各自年營收 ≥ 10 億美元","10y":"Skyrizi 生物相似藥上市後 3 年內，公司總營收不衰退","threshold":"2027 年底前美國核准 ≥ 3 項","source":"FDA 核准公告與公司新聞稿；Q3 2026 電話會研發長 Roopal Thakkar 所給時程","drift_rule":"任一項延期 2 季以上為削弱；兩項以上收到 CRL 或試驗失敗為反轉"}],"R":[{"id":"R1","text":"口服 IL-23 與 IBD 競爭侵蝕 Skyrizi 新患份額","h_ref":"H1","clock":"🔥","threshold":"Skyrizi 乾癬新患與轉換擷取率低於 40%，或 Skyrizi 季營運成長連 2 季低於 15%","evidence_refs":["substitute_technology#2","competitive_share_entrants#0"]},{"id":"R2","text":"Skyrizi 獨占期結束（資料保護 2031、組成物專利 2033），接棒管線規模不足；Humira 失去獨占後單季年減三成以上是可預期的樣板","h_ref":"H3","clock":"🐢","threshold":"2029 年前出現 Skyrizi 生物相似藥申請或專利挑戰；或 2030 年前新上市產品合計年營收低於 50 億美元","evidence_refs":["competitive_share_entrants#1","substitute_technology#1","supply_demand_durability#2"]},{"id":"R3","text":"政府定價擴大：Vraylar 2027 年適用 IRA 價格，Botox 2028 年（待上訴），免疫低個位數價格逆風，三年豁免約 2029 年初到期；另有關稅可能推高成本","h_ref":"H2","clock":"🔥","threshold":"Botox 上訴敗訴並公布議價；或最惠國定價延伸到商業保險通路；或神經科學 2027 年營運成長低於 7%","evidence_refs":["regulatory_antitrust#1","end_markets#1","reg_tariff_export#0"]},{"id":"R4","text":"業務開發費用（收購 IPR&D 與里程碑）持續吞噬 EPS；公司指引不含未來 IPR&D，EPS 實績反覆低於指引起點","h_ref":"H1","clock":"⚡","threshold":"FY2027 收購 IPR&D 與里程碑費用超過每股 0.70 美元","evidence_refs":["capital_markets_pricing#1"]},{"id":"R5","text":"製造品質與供應、通路的單點風險：Boey 因製造資訊收到 CRL，PRED MILD 因穩定性規格召回，部分原料單一來源，美國銷售集中在三大批發商","h_ref":"H3","clock":"🐢","threshold":"Boey 重新送件後再收到 CRL；核心產品出現 Class I、II 召回或 FDA 警告信；或任一批發商信評降至非投資級","evidence_refs":["major_events#1","major_events#3","product_recall_warning#0","customer_second_source#0","geo_supply_chain#0","customer_concentration_credit#0"]},{"id":"R6","text":"未決訴訟：Niaspan 反壟斷（應計約 17 億美元）、鴉片類藥物約 335 件、Humira 定價集體訴訟（Camargo，可再提）","h_ref":null,"clock":"🐢","threshold":"Niaspan 應計上調逾 10 億美元，或 Camargo 案重提並獲集體認證","evidence_refs":["regulatory_antitrust#2","major_events#4","lawsuit_class_action#0"]}],"single_thing":{"description":"2029 年前出現 Skyrizi 生物相似藥上市申請，或專利與法規保護被挑戰成功，使獨占期從管理層所說的 2033 年（組成物專利）提前到 2031 年（資料保護到期），甚至更早","why_fatal":"Skyrizi 2026 年指引 218 億美元，約占營收 32%，也是最大的成長來源。獨占期每提前一年，就少一年 200 億美元以上的高毛利營收；市場也會立刻比照 Humira 失去獨占後單季 −30% 到 −39% 的速度，把終端倍數壓到 12 倍以下","if_happens":"持有則減碼至三分之一，未持有則取消進場條件；情境樹 Bear 機率升至 40%，基本情境終端倍數降至 13 倍後重跑","how_monitor":"每季 10-Q、10-K 的訴訟與專利附註；公司電話會對 Skyrizi 生物相似藥的說法；FDA 生物相似藥受理公告","probability":"約 10%（12–24 個月）。依據：Q2 電話會 CEO 稱預期本年代末才會有申請，目前沒有反向證據"}},"appendix_a":{"growth_durability":7,"quality_score":8,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":17.9,"peg_fy2":1.29,"stress":{"pass":2,"total":3}},"eps_meta":{"base_eps_path":{"FY2025A":null,"FY2026E":13.95,"FY2027E":16.2,"FY2028E":18.1},"fy_end_month":12,"eps_basis":"調整後（non-GAAP）稀釋 EPS，含已發生的收購 IPR&D 與里程碑費用。FY2025A 調整後實績事實表未涵蓋（GAAP 2.36 受 IPR&D 扭曲，不作基期），三年共識成長改以 FY2026E→FY2028E 兩年年增約 13.9% 代理"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/ABBV_20261103/scenario.json","archetype":{"primary":"品質複利成長","secondary":null,"confidence":"中","fingerprint":"專利懸崖輪替型大藥廠：Humira 被生物相似藥侵蝕後，由 Skyrizi 與 Rinvoq 接棒；下一個懸崖在 2031–2033 年"},"industry":{"clock_phase":"II","sd_verdict_source":"結構性持久至約 2031 年：IL-23 與 JAK 類別擴大，口服 IL-23 上市後 Skyrizi 新處方未降（Q2 電話會 CCO）。2031 年 Skyrizi 法規資料保護到期後，轉為供給可逆性高（生物相似藥），Humira 的侵蝕速度就是樣板","bargaining":{"up":"上游：部分原料與零組件來自單一供應商（10-K），換供應商需要監管核准；公司正把裝置製造收回自有（收購 West 的 Tempe 廠）","down":"下游：三大批發商幾乎包辦美國藥品銷售，單一家不超過美國毛營收 43%。真正議價的是 PBM 與支付方，免疫讓價為低個位數。政府端有 IRA（Imbruvica、Vraylar 2027、Botox 待上訴），以及 2026-01 自願協議（Medicaid 低價、TrumpRx）","geo":"美國為主（區域比重事實表未涵蓋）。公司以十年 1000 億美元美國投資，換得三年關稅與未來價格強制措施豁免"},"profit_pool_dir":"利潤池正往 IL-23 與 JAK（免疫）、口服 CGRP（偏頭痛）、新機轉巴金森藥與雙特異性抗體（血癌）移動，AbbVie 站在移入端；Humira、Imbruvica、Juvéderm 在流出端","tam_table":{"expanded":false,"reason":"成長來自既有大類別的份額與適應症擴張，不是低滲透新品類。唯一新品類是 Rinvoq 白斑與圓禿：管理層估兩者合計峰值近 20 億美元，現有市場只有數億，對總營收不承重。各適應症 TAM 與滲透率事實表未涵蓋"}},"moat":{"mechanism":"專利與法規資料保護的生物製劑，加上醫師端臨床數據與給藥便利（Skyrizi 季度給藥、皮下誘導、內視鏡療效），以及支付方合約規模。獨占期有到期日，這條護城河會到期","execution":9,"pricing":6,"grade":"B","trend":"→","trend_evidence":"執行面擴大：口服 IL-23 於 2026-03 上市後，Skyrizi 乾癬新患擷取率仍約一半，Skyrizi 全年指引三度上修，神經科學第三季 +19.5%。定價面縮減：免疫低個位數讓價延續到 2027，Vraylar 2027 年起適用 IRA 價格，Botox 2028 年議價待上訴結果，Imbruvica −26.1%，Medicaid 低價協議。兩相抵銷，判持平","peer_na_reason":"同業 ROIC 與投入資本事實表未涵蓋，改以 FCF 利潤率與營業利益率為可比軸；只有單一期間，無法判斷差距方向","threats":[{"level":"🟡","text":"口服 IL-23（嬌生 Icotyde）攻 Skyrizi 乾癬新患；目前擷取率仍約一半，未見實質影響","p":"30%（破壞性劑型，取下限）","evidence_refs":["substitute_technology#2","competitive_share_entrants#0","substitute_technology#0"]},{"level":"🔴","text":"Skyrizi 獨占期結束：法規資料保護至 2031、組成物專利至 2033。Humira 失去獨占後單季年減 30.6%～38.6%，是可預期的侵蝕速度","p":"2031 年後近乎確定；2029 年前提前出現申請約 10%","evidence_refs":["competitive_share_entrants#1","substitute_technology#1","supply_demand_durability#2"]},{"level":"🔴","text":"政府定價擴大：Botox 被選入 2028 年 Medicare 議價（地院判 AbbVie 勝、政府可上訴），Vraylar 2027 年起適用 IRA 價格，Skyrizi 與 Rinvoq 未來數年有低個位數價格逆風；三年價格與關稅豁免約 2029 年初到期","p":"50%（至少一項在 2029 年前對毛利造成可見衝擊）","evidence_refs":["regulatory_antitrust#1","end_markets#1","reg_tariff_export#0"]},{"level":"🟡","text":"腫瘤線受 BTK、ADC、細胞療法競爭，Imbruvica 第三季 −26.1%；Rinvoq 面對 JAK 與 IL-17 點對點競爭","p":"已在發生，影響限於約一成營收的腫瘤線","evidence_refs":["competitive_share_entrants#0","substitute_technology#0"]}],"roic_durability":{"quadrant":"高利益率×低周轉（推定）：調整後營業利益率 48.7%、FCF 利潤率 28.3%，利益率高；但收購留下大量無形資產，另有 643 億美元淨負債。投入資本與周轉率事實表未涵蓋，當期 ROIC 無法計算","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者是病人、決策者是醫師、付款者是保險、PBM 與 Medicare，三個角色都成立。中重度乾癬與 IBD 屬慢性病，延後用藥的代價是病情惡化甚至手術，屬於「需要」而不是「想要」。讀數：第三季 Skyrizi 營運 +22.9%、Rinvoq +24.3%。例外是美容（第三季 −1.8%），屬消費性需求，會隨景氣延後"},{"item":"決策層級","level":"🟡","text":"替代性要在處方決策層看：醫師比的是內視鏡療效、給藥頻率與長期安全性。Skyrizi 季度給藥與皮下誘導數據撐住新患份額，口服 IL-23 上市後擷取率仍約一半。但病人可因無效或保險要求而轉換，IBD in-play 份額對主要對手約五五波，客戶並沒有被鎖死"},{"item":"價值鏈分配","level":"🟡","text":"研發與專利是最難取代的環節，AbbVie 拿走大部分價值；但有三處被分走：PBM 讓價（免疫低個位數）、Skyrizi 權利金（2026 前九個月約 27 億美元）、Epkinly 在美國、波多黎各與日本只認列利潤分成"},{"item":"社會容忍度","level":"🔴","text":"高必要搭配高敏感：IRA 已選中 Imbruvica、Vraylar（2027 起）與 Botox（2028，待上訴）；2026-01 自願協議以 Medicaid 低價與 TrumpRx 換三年豁免，約 2029 年初到期。實際定價上限由政治決定，低於經濟上限"}],"roiic":"事實表未涵蓋（缺投入資本與歷年調整後營業利益）","reinvest_rate":"約 0.44（推估）：2026 年收購淨額約 121 億（Apogee 約 109 億，加上截至第三季 IPR&D 與里程碑每股 0.69×17.67 億股約 12 億），除以 2026 年調整後稅後營業利益約 274 億（營收 678 億×46.7%×(1−13.6%)）；資本支出、折舊與營運資金事實表未涵蓋","endo_ceiling":null,"formula_note":"內生成長率＝增量 ROIC×再投資率。增量 ROIC 無法從事實表求得，故不給上界數字。另外，藥廠主要的再投資是費用化研發（2026 年約 98 億美元），公式算出的再投資率會低估真實再投資"},"combined":7.5,"score":7.5,"spread_table":[{"metric":"毛利率","ABBV":71.48,"LLY":83.63,"MRK":71.31,"BMY":69.24,"AMGN":69.52,"unit":"%"},{"metric":"營業利益率","ABBV":33.94,"LLY":51.25,"MRK":0.87,"BMY":29.19,"AMGN":29.99,"unit":"%"},{"metric":"FCF 利潤率","ABBV":28.28,"LLY":13.52,"MRK":18.72,"BMY":18.56,"AMGN":26.71,"unit":"%"},{"metric":"研發密度","ABBV":15.09,"LLY":17.79,"MRK":53.19,"BMY":21.1,"AMGN":20.03,"unit":"%"}],"competitors":[{"name":"LLY","gm":83.63,"om":51.25,"fcf_margin":13.52,"rd_intensity":17.79,"strategy_note":"毛利率 83.6%、營業利益率 51.3%，都高於 AbbVie 的 GAAP 數字，但 FCF 利潤率只有 13.5%，產能投資重。成長引擎不同，與 AbbVie 的交鋒主要在肥胖，AbbVie 這方面只有早期 amylin 資產","period":"TTM ending 2026-09-30（4季加總）"},{"name":"MRK","gm":71.31,"om":0.87,"fcf_margin":18.72,"rd_intensity":53.19,"strategy_note":"TTM 營業利益率 0.87%、研發密度 53.2%，明顯被一次性費用扭曲，不能當常態比較；毛利率 71.3% 與 AbbVie 相近","period":"TTM ending 2026-09-30（4季加總）"},{"name":"BMY","gm":69.24,"om":29.19,"fcf_margin":18.56,"rd_intensity":21.1,"strategy_note":"營業利益率 29.2%、FCF 利潤率 18.6%，都低於 AbbVie（33.9%、28.3%），研發密度 21.1% 較高；可作同為大藥廠產品輪替的比較組","period":"TTM ending 2026-09-30（4季加總）"},{"name":"AMGN","gm":69.52,"om":29.99,"fcf_margin":26.71,"rd_intensity":20.03,"strategy_note":"營業利益率 30.0%、FCF 利潤率 26.7%，是五家中現金生成與 AbbVie 最接近的一家","period":"TTM ending 2026-06-30（4季加總）"}]},"growth":{"driver_mix":"量為主：Skyrizi、Rinvoq 的新患份額與新適應症，神經科學的 CGRP 與巴金森藥。價：低個位數逆風。併購：Apogee 2027 年每股稀釋 0.46，2032 年起才增厚。回購：無","runway_years":"約 5（至 2031 年 Skyrizi 法規資料保護到期）","runway_post_y5":"🟡","endo_ceiling_basis":"投入資本、增量營業利益與資本支出事實表未涵蓋，增量 ROIC 無法計算，上界留空。再投資率只能由收購端推估約 0.44（見護城河段）；藥廠主要再投資是費用化研發（2026 年約 98 億美元），公式會低估真實再投資","segments":[{"item":"免疫（Skyrizi 218 億、Rinvoq 103 億、Humira 等）","value":"2026 指引 349 億美元，約占 51%；第三季營運成長 16.6%"},{"item":"神經科學","value":"130 億，約占 19%；第三季 +19.5%；Vraylar 42 億、Botox 治療 42 億、口服 CGRP 31 億"},{"item":"腫瘤","value":"66 億，約占 10%；第三季 +0.9%；Venclexta 31 億、Imbruvica 21 億（第三季 −26.1%）"},{"item":"美容","value":"50 億，約占 7%；第三季 −1.8%；Botox 美容 28 億、Juvéderm 第三季 −11.8%"},{"item":"其他","value":"約 83 億（678 億減四大領域合計 595 億），約占 12%；明細事實表未涵蓋"}],"decay_signals":[{"item":"毛利率連 2 季年減","lit":false,"note":"季度年比較事實表未涵蓋；第三季調整後毛利率 85.1%，高於 Q2 的 84.7%"},{"item":"核心市占近 12 個月縮減","lit":false,"note":"乾癬新患擷取率約一半；IBD 份額前後口徑不一，暫不可判（見反證紀錄）"},{"item":"主力產品提價後銷量下滑","lit":false,"note":"免疫價格是低個位數讓價而非提價，量持續成長"},{"item":"EPS 成長顯著高於營收成長（差 5 個百分點以上）","lit":true,"note":"FY2027 共識 EPS +16.1%，營收 +8.8%，差 7.3 個百分點，約 5 個百分點來自 IPR&D 歸零假設"},{"item":"FCF 對淨利低於 0.75 連 2 年","lit":false,"note":"FY2025 FCF 178 億對 GAAP 淨利 42 億，約 4.2 倍"},{"item":"SBC 占營收超過 5% 且上升","lit":null,"note":"事實表未涵蓋"},{"item":"TAM 萎縮或被替代技術壓縮","lit":false,"note":"口服 IL-23 已上市，但 Skyrizi 新處方未降，類別仍在擴大"},{"item":"產業估值倍數近 3 年系統性下移","lit":null,"note":"同業倍數歷史事實表未涵蓋"},{"item":"維護性資本支出占 FCF 超過 60%","lit":null,"note":"事實表未涵蓋；公司承諾十年 1000 億美元美國投資，需追蹤"},{"item":"停止投資新產能且收入 3 年內下滑","lit":false,"note":"未發生：公司持續擴產（收購 West 裝置廠、美國投資承諾），營收仍在成長"}],"trap_rating":"價值陷阱風險中度（亮 1 個）；長期成長性中度"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長主力 Skyrizi 與 Rinvoq 是既有產品；Apogee 屬補強型收購，且 2032 年前稀釋 EPS，成長並非靠併購支撐。歷年現金去向四分事實表未涵蓋"},"capalloc_grade":"C","scorecard":[{"year":"—","action":"ma_roiic","rationale":"收購已實現增量報酬事實表未涵蓋；Apogee 約 109 億美元（債務融資），預期 2026、2027 年每股稀釋 0.14、0.46，2032 年起增厚","grade":"不過"},{"year":"—","action":"buyback_yield","rationale":"Q3 電話會資本配置優先序為股利、業務開發，以及 2–3 年內淨槓桿降至 2 倍，未列回購；回購金額事實表未涵蓋","grade":"N/A"},{"year":"—","action":"sbc_dilution","rationale":"SBC 金額與歷年股數事實表未涵蓋","grade":"不過"}]},"valuation":{"basis":"Forward P/E（FY1 調整後 EPS 13.95）為主，FY2 的 17.9 倍為輔；GAAP trailing 49.8 倍受 IPR&D 與攤銷扭曲，不用","tier":"大型品牌藥（專利輪替期）","peers":{"expanded":false,"reason":"事實表的同業對照只有利潤率，沒有同業 Forward P/E，無法建立同級倍數錨；終端倍數改錨前份 14–17 倍區間，並在此標為資料缺口"},"fwd_pe":20.78,"peg":1.49,"percentile_5y":null,"val_light":"🟠","val_light_derivation":"Forward P/E 20.8 倍（前份 15.1 倍）；P/S 與 EV/S 在可得年度端點中最高；PEG 約 1.5。基本情境 FY2031 EPS 22.3×16 倍，含息年化約 6–7%，低於 8%，判偏貴。不判最貴一級，因為 EPS 仍以雙位數成長，FY2 倍數為 17.9 倍。五年連續分位只有 4 個年度樣本，留空","upside_short_pct":0.6,"upside_mid_pct":23.1},"trap_analysis":{"verdict":"🟡","label":"亮一個衰退信號：共識 EPS 成長明顯快於營收，多來自 IPR&D 歸零假設"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"Humira 失去獨占後，單季營收年減 30.6%（2026 Q3）到 38.6%（2026 Q1）；10-K 指出專利到期後替代品會在短時間內顯著侵蝕銷售；嬌生口服 IL-23 已於 2026-03 上市，直接攻乾癬","assumption":"Skyrizi 的獨占能撐到 2033 年專利到期，管線在 2030 年前補上至少一半缺口","consequence":"若 2029–2030 年出現生物相似藥申請，口服 IL-23 又同時吃掉新患，市場會提前用 Humira 模式折價 Skyrizi：EPS 停在 15 美元、倍數 11–12 倍，股價約 165–185 美元，五年虧損 40% 以上","ruling":"部分採納：Bear 機率給 30%，終端 12 倍。反駁部分：Q2 電話會 CEO 稱組成物專利到 2033 年，預期本年代末才會有申請；口服 IL-23 上市後擷取率仍約一半。這條與唯一致命點是同一件事，已對齊","watch":"Skyrizi 生物相似藥申請與專利挑戰；Skyrizi 乾癬與 IBD 新患擷取率","evidence_refs":["supply_demand_durability#2","competitive_share_entrants#1","substitute_technology#2"],"fact_refs":["f_consensus_eps_fy2"]},{"view":"論點成功但股東經濟變差","evidence":"FCF 由 FY2022 的 242 億、利潤率 41.8%，降到 FY2025 的 178 億、29.1%，同期營收由 581 億升到 612 億；2026 前九個月 FCF 約 140 億，已扣除 Skyrizi 權利金約 27 億；第三季調整後淨利息 6.88 億；十年 1000 億美元美國投資承諾","assumption":"EPS 成長會等比例轉成每股自由現金流與股利","consequence":"Skyrizi 與 Rinvoq 照計畫成長，但權利金、IPR&D 現金、利息與承諾投資吃掉增量。股利已占 FCF 約七成，每股 FCF 成長落後 EPS，股利調幅被壓在 5% 上下","ruling":"採納：基本情境終端倍數不給溢價（16 倍），淨回購殖利率設為 0","watch":"年度 FCF 與 FCF 利潤率；淨槓桿 2 倍目標的進度；股利調幅","evidence_refs":[],"fact_refs":["f_peer_abbv_fcf_margin_pct","f_net_debt_m","f_dividend_yield_ttm"]},{"view":"論點成功但股東經濟變差","evidence":"Botox 被 CMS 選入 2028 年議價（地院 2026-10-29 判 AbbVie 勝訴，政府可上訴）；Vraylar 2027 年起適用 IRA 價格；Skyrizi 與 Rinvoq 未來數年有低個位數價格逆風；2026-01 自願協議以 Medicaid 低價與 TrumpRx 換三年關稅與價格強制措施豁免","assumption":"只要療效好、需求在，價格就能維持在經濟上限附近","consequence":"社會容忍度是看不見的價格天花板。2029 年初豁免到期後，若最惠國定價延伸到商業通路，量增會被價跌抵銷，營收成長從約一成降到中個位數","ruling":"採納：社會容忍度判紅，定價只給 6 分，Bear 路徑納入 2029 年後的價格下修","watch":"Botox 上訴進度；最惠國定價適用範圍；神經科學 2027 年營運成長","evidence_refs":["regulatory_antitrust#1","end_markets#1","reg_tariff_export#0"],"fact_refs":[]},{"view":"價格已反映太多","evidence":"股價 26 週 +41.1%，比前份的 214.5 美元高 35%；同期 FY1 共識 EPS 由約 14.2 降到 13.95（三個月 −1.2%）；Forward P/E 由 15.1 倍升到 20.8 倍；P/S 與 EV/S 都在可得年度端點的最高位；2026-07 賣方平均目標價約 274–277 美元，低於現價","assumption":"市場會在 Skyrizi 獨占期結束前一直維持約 20 倍","consequence":"若倍數回到前份 14–17 倍區間的中段，即使 FY2027 EPS 達到共識 16.2，股價也只有約 250 美元，下跌約 13%","ruling":"採納：不追，進場錨定 250 美元（約 FY2027 共識 15.4 倍）","watch":"Forward P/E；2027-01 公布的 FY2027 指引","evidence_refs":["capital_markets_pricing#2"],"fact_refs":["f_week26_return_pct","f_fwd_pe_latest","f_ps_percentile","f_ev_s_percentile","f_consensus_rev_3m_fy1_pct"]}],"max_dd":{"lo":-45,"hi":-30,"path_risk":"🟡"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 🟡 → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=🟡","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 214.5 → 本次 289.86（+35.1%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=214.5","side_b":"本次 price_at_dd=289.86","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 214.5 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 214.5 美元：五年期望值 前份未列，基準年化 前份未列，前份未列不對稱比","side_b":"本次情境、股價仍用 214.5 美元：Bull 價 486.4、Bear 價 183.6，五年期望值 +57.2%，基準年化 10.7%，不對稱比 7.33","ruling":"先換情境、股價不動：五年期望值與基準年化前份未列，無法比較。前份未列不對稱比，本次為 7.33。Bull、Bear 價位與股價無關，只受情境影響。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 214.5 美元：五年期望值 +57.2%，基準年化 10.7%，不對稱比 7.33","side_b":"本次情境、股價 289.86 美元：五年期望值 +16.3%，基準年化 4.2%，不對稱比 1.54","ruling":"再換股價、情境不動：起點價上漲 35.1%，五年期望值少 40.9 個百分點，基準年化少 6.5 個百分點，不對稱比由 7.33 降到 1.54。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"管理層上修指引 vs FY1 共識下修","cause":null,"prior_field":null,"side_a":"Q3 電話會（2026-10-30，CFO Scott Reents）：全年調整後 EPS 指引中點上調 0.11 美元至 13.95–13.99，全年營收指引今年累計上修 8 億美元","side_b":"Q2 電話會（2026-07-31，同一位 CFO）給的區間是 13.87–14.07，中點 13.97；本次中點仍是 13.97，所謂上修剛好抵掉第三季每股 0.11 的 IPR&D。FY1 共識三個月內由 14.12 降到 13.95；MarketBeat 2026-07-07 的單一來源報導也曾稱指引下修","ruling":"可調和（屬程度差異）：本業確實在上修，營收 +2 億、Skyrizi +1 億、神經科學 +3 億都兌現了 Q2 的說法；EPS 是被 IPR&D 吃掉。但 AbbVie 的指引一律不含未來 IPR&D，公司又持續做業務開發，EPS 實績會反覆低於指引起點。若 FY2027 共識 16.2 假設 IPR&D 歸零，就偏高","evidence_level":"高（公司原文兩季對照）","settle_metric":"FY2027 收購 IPR&D 與里程碑費用的每股金額","if_then":["若 FY2027 IPR&D 每股超過 0.70 美元 → 基本情境 EPS 下修 4%，進場價同步下修","若 FY2027 IPR&D 每股低於 0.30 美元 → 維持共識路徑"],"evidence_refs":["capital_markets_pricing#0","capital_markets_pricing#1"]},{"axis":"IBD 新患份額口徑：75% 還是五五波","cause":null,"prior_field":null,"side_a":"2025 Q4 電話會（2026-02-04）：美國 IBD 一線 in-play 病患擷取率 75%、克隆氏症 80%；乾癬總處方份額逾 45%","side_b":"2026 Q3 電話會（2026-10-30，CCO Jeff Stewart）：IBD in-play 份額對主要競爭者約五五波，Skyrizi 拿下類別內一半新患；乾癬新患與轉換約每兩人一人","ruling":"暫時無法裁決：兩次口徑不同。前者可能是 Skyrizi 加 Rinvoq 合計，或指全部一線患者；後者是對單一對手或類別內。無法據此判定份額下滑。同口徑數據出現前，執行分不因此扣分，也不因 75% 加分","evidence_level":"低（口徑不一致）","settle_metric":"未來兩季電話會的同口徑 IBD 一線擷取率","if_then":["若同口徑 IBD 一線擷取率低於 60% → 執行分由 9 降為 8，護城河方向往縮減側重評","若皮下誘導上市後，2027 上半年克隆氏症新患份額回升 → 維持原判"],"evidence_refs":["competitive_share_entrants#2"]},{"axis":"⚖ 估值：市場給 20.8 倍 vs 本次終端 16 倍（不可調和）","cause":null,"prior_field":null,"side_a":"現在就買的最強論證：Skyrizi 指引今年三度上修，口服 IL-23 未造成實質影響；2027 年有皮下誘導、Rinvoq 皮膚新適應症、etentamig 與 Epkinly 一線等催化；CEO 稱 etentamig、Temab-A，以及三個 50 億美元以上的神經科學系列被賣方低估；股利再升 5.2%。若 FY2027 EPS 達 17 美元、倍數維持 20 倍，股價約 340 美元","side_b":"Skyrizi 法規資料保護到 2031、組成物專利到 2033（Q2 電話會 CEO）；Vraylar 2027、Botox 2028（待上訴）的政府定價，以及 2029 年初價格豁免到期，全都落在五年內。市場在獨占期尾聲前通常不給成長溢價，前份的 14–17 倍才是這家公司的常態區間","ruling":"裁決選 B 側：基本情境終端用 16 倍，現價含息年化約 6–7%，不夠。依據是五年內三個已排定的定價與獨占事件，不是直覺。硬數據點：2027-01 第四季電話會公布的 FY2027 指引，以及 Skyrizi 加 Rinvoq 的 2027 指引","evidence_level":"中","settle_metric":"FY2027 調整後 EPS 指引中點；Skyrizi 加 Rinvoq 2027 指引","if_then":["若 FY2027 指引中點 ≥ 16.5 美元，且 Skyrizi 加 Rinvoq 2027 指引 ≥ 380 億 → 終端倍數上調至 18 倍，進場價上移至 275 美元","若 EPS 未上修而股價續漲破 320 美元 → 不追","若股價跌到 250 美元以下，而 Skyrizi 加 Rinvoq 季營運成長仍 ≥ 15% → 分批反買第一批（目標部位三分之一）","反向：若 FY2027 指引中點低於 15.4 美元 → Bear 機率升至 35%，進場價下修至 220 美元"],"evidence_refs":["capital_markets_pricing#2","capital_markets_pricing#3"]},{"axis":"管理層稱長期管線被低估 vs 共識未動","cause":null,"prior_field":null,"side_a":"Q3 電話會（2026-10-30，CEO Rob Michael）：etentamig、Temab-A 都是數十億美元機會，且多數賣方模型明顯低估；神經科學三個 50 億美元以上系列未反映在長期共識","side_b":"FY3 共識最近一次快照修正為 0%，賣方沒有跟進","ruling":"不採信也不否定：屬管理層主張，尚未驗證，只放進 Bull 路徑（機率 25%）。期限：2027 年底前 etentamig 須取得美國核准並給出首年銷售指引，否則 Bull 機率下調至 15%","evidence_level":"低（單方說法）","settle_metric":"etentamig 核准時點與首年銷售；FY2028 共識 EPS 是否上修","if_then":["若 2027 年底前 etentamig 核准且 FY2028 共識 EPS 上修 3% 以上 → Bull 機率升至 30%","若 etentamig 核准延到 2028 年 → Bull 機率降至 15%"],"evidence_refs":[]},{"axis":"前份漂移：訊號等級與估值結論（價格變動）","cause":"價格變動","prior_field":["signal","val"],"side_a":"前份 2026-05-25：股價 214.5、Forward P/E 15.1 倍，估值合理，訊號等級 B，等 190 美元分批進場","side_b":"本次：股價 289.86、Forward P/E 20.8 倍，估值偏貴；訊號等級維持 B（生意品質撐住，價格扣分）；裁決與角色由新輸入重算","ruling":"前份是等價格的觀望，之後股價漲了 35%，沒有進場，錯過了。是否翻面：漲幅全部來自倍數（FY1 共識同期由約 14.2 降到 13.95），基本面沒有變得更便宜，所以不翻面追價。錯過的原因是前份把進場錨在技術位（190 美元）而不是估值；本次改用估值錨（見進場條件條目）","evidence_level":"高","settle_metric":"股價相對 FY2027 共識 EPS 的倍數","if_then":["若股價回到 250 美元以下且成長沒有失速 → 分批建倉第一批","若 EPS 未上修而股價續漲 → 不追"],"evidence_refs":[]},{"axis":"前份漂移：陷阱風險（新證據）","cause":"新證據","prior_field":["trap"],"side_a":"前份判為低陷阱風險，沒有亮任何衰退信號","side_b":"本次升為中度：共識 FY2027 EPS 年增 16.1%，比營收的 8.8% 快 7.3 個百分點，亮一個衰退信號。成因是 2026 年的 IPR&D（截至第三季每股 0.69）與 Apogee 稀釋，多數發生在前份之後","ruling":"採納升級。這不是基本面惡化，而是提醒 EPS 品質","evidence_level":"高","settle_metric":"FY2027 IPR&D 每股金額；FY2027 EPS 與營收成長的差距","if_then":["若 FY2027 EPS 成長與營收成長的差距 ≤ 5 個百分點 → 回到低陷阱風險"],"evidence_refs":["capital_markets_pricing#0"]},{"axis":"前份漂移：護城河方向、五年後跑道、公司類型、循環位置、情境機率與最大回撤（方法變動）","cause":"方法變動","prior_field":["moat_trend","runway_post_y5","archetype","cycle_position","p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份未判護城河方向、五年後跑道、公司類型與循環位置，也沒有給情境機率與最大回撤；護城河給 A 級 9/10","side_b":"本次：護城河方向持平，B 級（執行 9、定價 6 分開評）；五年後跑道中段；類型為品質複利成長（信心中）；非循環股，不判循環位置；情境機率 Bull 25、Base 45、Bear 30；最大回撤 −30% 到 −45%","ruling":"差異來自本次把定價面獨立評分。Botox 被選入 IRA 與 2026-01 價格協議都發生在前份之前，前份沒有把它們扣進護城河；這不是新事件","evidence_level":"中","settle_metric":null,"if_then":[],"evidence_refs":[]},{"axis":"進場條件改錨：由技術位分批進場，改為估值錨建倉（方法變動）","cause":"方法變動","prior_field":["rearm_trigger"],"side_a":"等回測 W104 $190 或 BB 下軌 $190 分批進場","side_b":"股價 ≤ 250 美元（約 FY2027 共識 EPS 15.4 倍），且 Skyrizi 加 Rinvoq 合計季營運成長仍 ≥ 15%，才分批建倉","ruling":"舊門檻是技術位：104 週均線已上移到 209.96，且 190 美元只對應 FY2027 共識 11.7 倍，與基本面脫節。新門檻由基本情境年化 10% 含息反推，再加上成長沒有失速的條件，避免價格先跌、證據後到","evidence_level":"中","settle_metric":"股價；Skyrizi 加 Rinvoq 合計季營運成長","if_then":["若 FY2027 指引中點 ≥ 16.5 美元 → 進場價上移至 275 美元"],"evidence_refs":[]},{"axis":"減碼與清倉門檻新設（方法變動）","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設減碼與清倉門檻","side_b":"本次：Skyrizi 加 Rinvoq 合計季營運成長連 2 季低於 12% → 減碼一半；Skyrizi 季營運成長低於 5% 或 FY2027 指引中點低於 15.0 美元 → 清倉；乾癬新患擷取率低於 40% → 停止加碼；2029 年前出現 Skyrizi 生物相似藥申請 → 減碼至三分之一","ruling":"前份只有假設表，沒有對應的減碼與清倉數字。本次補上，門檻由情境樹的 Bear 路徑反推","evidence_level":"中","settle_metric":null,"if_then":[],"evidence_refs":[]},{"axis":"Single Thing 新設（方法變動）","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未設唯一致命點","side_b":"Single Thing：2029 年前出現 Skyrizi 生物相似藥申請，或專利與法規保護被挑戰成功，獨占期提前結束","ruling":"選這件事，是因為 Skyrizi 約占營收 32%，又是最大的成長來源，是終端倍數最敏感的單一項；不是因為它最戲劇性","evidence_level":"中","settle_metric":"Skyrizi 生物相似藥申請與專利訴訟","if_then":["若發生 → 減碼至三分之一，Bear 機率升至 40% 後重跑情境"],"evidence_refs":["competitive_share_entrants#1"]}],"triggers":[{"n":1,"text":"價格回到基本情境年化 10% 的位置，且成長沒有失速，才進場","type":"估值rearm","maps_to":"H1","metric":"股價；Skyrizi 加 Rinvoq 合計季營運成長","threshold":"股價 ≤ 250 美元，且合計季營運成長 ≥ 15%","action":"分批建倉第一批（目標部位三分之一）；觸發後先重跑情境再補","source_freq":"每日股價；每季財報","date":null},{"n":2,"text":"FY2027 指引顯示本業上修，IPR&D 假設沒有吃掉成長","type":"加碼","maps_to":"H1","metric":"FY2027 調整後 EPS 指引中點","threshold":"≥ 16.5 美元，且股價 ≤ 275 美元","action":"補第二批，至目標部位三分之二","source_freq":"第四季電話會","date":"2027-01"},{"n":3,"text":"免疫雙引擎失速","type":"減碼","maps_to":"H1","metric":"Skyrizi 加 Rinvoq 合計季營運成長","threshold":"連 2 季低於 12%","action":"持有部位減碼一半；未持有則取消進場條件","source_freq":"每季財報","date":null},{"n":4,"text":"Skyrizi 成長熄火，或 2027 年指引落到 Bear 路徑","type":"清倉","maps_to":"H1","metric":"Skyrizi 季營運成長；FY2027 指引中點","threshold":"Skyrizi 季營運成長低於 5%，或 FY2027 指引中點低於 15.0 美元","action":"清倉","source_freq":"每季財報","date":null},{"n":5,"text":"Skyrizi 獨占期提前結束","type":"Single Thing","maps_to":"R2","metric":"Skyrizi 生物相似藥申請或專利挑戰","threshold":"2029 年前出現任一件","action":"減碼至原部位三分之一，Bear 機率升至 40% 後重跑情境","source_freq":"每季 10-Q、10-K 附註；公司電話會","date":null,"evidence_refs":["competitive_share_entrants#1","substitute_technology#1"]},{"n":6,"text":"口服 IL-23 開始搶走乾癬新患","type":"風險","maps_to":"R1","metric":"Skyrizi 乾癬新患與轉換擷取率","threshold":"低於 40%（目前約一半）","action":"停止加碼，執行分下調 1 分後重跑","source_freq":"每季電話會","date":null,"evidence_refs":["substitute_technology#2","competitive_share_entrants#0"]},{"n":7,"text":"政府定價擴大","type":"風險","maps_to":"R3","metric":"Botox IRA 上訴結果；最惠國定價適用範圍","threshold":"上訴敗訴並公布 Botox 議價；或最惠國定價擴及商業通路","action":"Bear 機率升至 35%，進場價下修至 230 美元","source_freq":"法院判決與 CMS 公告；季報","date":null,"evidence_refs":["regulatory_antitrust#1","reg_tariff_export#0","end_markets#1"]},{"n":8,"text":"訴訟金額擴大或集體訴訟成立","type":"風險","maps_to":"R6","metric":"Niaspan 訴訟應計金額；Camargo 案進度","threshold":"應計上調逾 10 億美元，或 Camargo 案重提、獲集體認證並出現不利和解","action":"減碼一半","source_freq":"每季 10-Q 訴訟附註","date":null,"evidence_refs":["regulatory_antitrust#2","major_events#4","lawsuit_class_action#0"]},{"n":9,"text":"管線接棒進度","type":"假設驗證","maps_to":"H3","metric":"etentamig、Epkinly 一線、Rinvoq 白斑、Rinvoq 圓禿的美國核准數","threshold":"2027 年底前少於 3 項","action":"H3 判削弱，Bull 機率由 25% 降到 15%","source_freq":"FDA 公告；公司新聞稿","date":"2027-12"},{"n":10,"text":"製造品質再出問題","type":"風險","maps_to":"R5","metric":"Boey 重新送件結果；核心產品召回等級","threshold":"再收到 CRL，或出現 Class I、II 召回或 FDA 警告信","action":"停止加碼","source_freq":"FDA 公告；季報","date":"2027-06","evidence_refs":["major_events#1","major_events#3","product_recall_warning#0"]},{"n":11,"text":"FY2027 指引出爐後全面複審","type":"複審日期","maps_to":"H1","metric":"FY2027 指引（營收、EPS、IPR&D 假設）","threshold":"第四季電話會公布","action":"重跑情境樹並重設進場價","source_freq":"第四季電話會","date":"2027-01"},{"n":12,"text":"業務開發費用持續吞噬 EPS","type":"風險","maps_to":"R4","metric":"收購 IPR&D 與里程碑費用（每股）","threshold":"FY2027 超過 0.70 美元","action":"基本情境 EPS 下修 4%，進場價同步下修","source_freq":"每季財報","date":null,"evidence_refs":["capital_markets_pricing#1"]}],"kill_metrics":[{"metric":"Skyrizi 加 Rinvoq 合計季營運成長率","bear_threshold":"連 2 季低於 12% → 減碼一半","window":"2027 Q1 至 2028 Q4 季報","source":"AbbVie 季度財報新聞稿與電話會","last_status":"ok"},{"metric":"Skyrizi 季營運成長率","bear_threshold":"低於 5% → 清倉","window":"每季","source":"AbbVie 季度財報新聞稿","last_status":"ok"},{"metric":"FY2027 調整後 EPS 指引中點","bear_threshold":"低於 15.0 美元 → 清倉；低於 15.4 美元 → Bear 機率升至 35%","window":"2027-01 第四季電話會","source":"AbbVie 第四季財報新聞稿","last_status":"unknown"},{"metric":"Skyrizi 乾癬新患與轉換擷取率","bear_threshold":"低於 40%（目前約一半）→ 停止加碼","window":"每季電話會","source":"AbbVie 電話會管理層揭露","last_status":"ok"},{"metric":"Skyrizi 生物相似藥申請或專利挑戰","bear_threshold":"2029 年前出現任一件 → 減碼至三分之一","window":"至 2029 年底","source":"AbbVie 10-Q、10-K 訴訟與專利附註","last_status":"ok"},{"metric":"收購 IPR&D 與里程碑費用（每股）","bear_threshold":"FY2027 超過 0.70 美元 → 基本情境 EPS 下修 4%","window":"FY2027 四季","source":"AbbVie 季度財報新聞稿","last_status":"unknown"}],"evidence_dismissed":[],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"輸入缺(momentum_overheated=null)，依保守方向處理：不視為觸發","input_gap":["momentum_overheated"]},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場以 FY2027 共識 16.2（隱含收購 IPR&D 歸零）為基準，給 20.8 倍，等於假設倍數能撐過 2031–2033 年 Skyrizi 獨占期結束；但 AbbVie 每年都有業務開發費用，Vraylar 與 Botox 的政府定價、2029 年初價格豁免到期都落在五年內"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":true,"basis":"capalloc_grade='C'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟠', moat_trend='→', week26=41.09, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position=None, moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":true,"basis":"signal='B', val='🟠'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='🟡'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='B', val='🟠', ma='🟡'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='🟡'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":"中期 2-5 年","requires_critic":[],"rearm_trigger":"股價 ≤ 250 美元（約 FY2027 共識 EPS 15.4 倍），且 Skyrizi 加 Rinvoq 合計季營運成長仍 ≥ 15%","exec_line":"現價不追。條件成立時先建目標部位的三分之一；2027-01 FY2027 指引中點 ≥ 16.2 美元再補到三分之二；etentamig 取得美國核准後補滿"},"reasoning":{"industry":"2026 全年指引（Q3 電話會，CFO）：營收約 678 億美元。免疫 349 億（約 51%；Skyrizi 218、Rinvoq 103），神經科學 130 億（約 19%），腫瘤 66 億（約 10%），美容 50 億（約 7%），其餘約 83 億（約 12%）未揭露明細。第三季營收 174.04 億美元，年增 10.3%（營運口徑 +10.5%）；GAAP 營業利益率 36.0%，調整後 48.7%（含收購 IPR&D 1.2 個百分點拖累）；調整後 EPS 3.82。單點依賴：集中在產品，不在客戶。Skyrizi 約占營收 32%，Skyrizi 加 Rinvoq 約 47%。美國三大批發商幾乎包辦美國藥品銷售，單一家不超過美國毛營收 43%；但批發商只是配送節點，付款與定價掌握在 PBM 與政府手上。產業時鐘判 II（擴張）：IL-23、JAK、CGRP 類別仍在擴大，第三季免疫營運成長 16.6%、神經科學 19.5%；量在增，價格有低個位數逆風。產業態勢三軸：競爭面在惡化（口服 IL-23 上市，IBD 對主要對手約五五波）；需求結構在轉好（類別擴大、新適應症）；法規面變動大（IRA、2026-01 價格與關稅協議、340B 試辦）。合起來判為雙向拉鋸。Humira 第三季 6.83 億、營運 −30.6%，占營收已降到約 4%，舊懸崖的拖累接近尾聲。","moat":"機制：專利與法規資料保護的生物製劑，加上醫師端的臨床數據與給藥便利，再加上支付方合約規模。執行給 9 分：口服 IL-23（嬌生 Icotyde）2026-03 上市後，Skyrizi 乾癬新患與轉換擷取率仍約一半（Q3 電話會 CCO）；全年 Skyrizi 指引三度上修至 218 億；Q2 電話會 CCO 稱新處方未見下滑；2026 年取得 Skyrizi 皮下誘導、Juvmo、Decnupaz 等多項 FDA 核准。定價給 6 分：免疫讓價低個位數延續到 2027；Imbruvica 受 IRA 與競爭影響 −26.1%；Vraylar 2027 年起適用 IRA 價格；Botox 被選入 2028 年議價（地院已判 AbbVie 勝訴，政府可上訴）；2026-01 自願協議以 Medicaid 低價換三年價格與關稅豁免。定價上限由政治決定，不由經濟決定。可比軸：同業 ROIC 與投入資本事實表未涵蓋，改看利潤率。AbbVie FCF 利潤率 28.3%，五家最高（AMGN 26.7%、MRK 18.7%、BMY 18.6%、LLY 13.5%）；GAAP 營業利益率 33.9% 低於 LLY 51.3%（AbbVie 調整後 48.7% 則接近）。只有單一期間，看不出差距在擴大還是收窄，所以不給 A。","growth":"成長拆解：FY2027 共識營收 737.9 億美元，比 FY2026 共識 678.2 億年增 8.8%；FY2027 共識 EPS 16.2，比 13.95 年增 16.1%，兩者差 7.3 個百分點。其中約 5 個百分點來自 IPR&D 歸零的假設：FY2026 EPS 已吸收截至第三季每股 0.69 美元的收購 IPR&D 與里程碑費用，而公司指引不含未來 IPR&D。扣回後，本業 EPS 年增約 10.7%，且這是在吸收 Apogee 2027 年每股 0.46 稀釋與 Vraylar IRA 價格之後。其餘差距來自利潤率擴張（Humira 等低成長產品占比下降）。淨回購沒有貢獻（資本配置優先序未列回購），收購短期為負。FY2028 共識 EPS 18.1，年增 11.7%；FY2028 共識營收事實表未涵蓋。內生上界：投入資本與增量報酬事實表未涵蓋，給不出數字。共識成長中約 5 個百分點屬會計假設而非內生成長，情境樹保守視為超出上界，Bear 機率給 30%。跑道：Skyrizi 到 2031 年還有約 5 年獨占。第二曲線已有具體產品：Juvmo 已核准；etentamig 已送件，預期 2027 年核准；Epkinly 一線 DLBCL 第三期正向；lutikizumab 化膿性汗腺炎第三期正向；Rinvoq 白斑與圓禿待核准；Apogee 的 zumilokibart 年底進入第三期。但管理層所說 etentamig 與 Temab-A 的數十億美元機會還沒進共識，FY3 共識最近一次快照修正為 0%。","governance":"現金生成（事實表 financial_history，yfinance 年度現金流，FY2022–FY2025）：FY2025 FCF 178 億美元，FCF 利潤率 29.1%；FY2022 為 242 億、41.8%。2026 前九個月 FCF 約 140 億，已扣除 Skyrizi 權利金約 27 億（Q3 電話會 CFO）。FY2025 的 FCF 約為 GAAP 淨利的 4.2 倍；GAAP 淨利 42 億被收購 IPR&D 與攤銷壓低，轉換率高不代表品質異常。現金去向：季股利自 2027-02 起上調 5.2% 至每股 1.82 美元，年化 7.28 美元，乘以 17.67 億股約 129 億美元，約為 2026 年化 FCF 的七成。Apogee 約 109 億美元以債務融資，淨負債 643 億；管理層承諾 2–3 年內把淨槓桿降到 2 倍；另有十年 1000 億美元美國研發與資本投資承諾。計分卡三項：收購已實現的增量報酬無法驗證（缺投入資本與收購後增量利潤）；回購不適用（未列優先序）；SBC 淨稀釋率事實表未涵蓋。現金去向四分、債務到期與利率結構事實表未涵蓋。營運槓桿：第三季營收 +10.3%，GAAP 營業利益由 19.04 億升至 62.67 億，主因是去年同期的一次性費用基期，不作營運槓桿判讀。","valuation":"起點：股價 289.86，FY1 共識 EPS 13.95，Forward P/E 20.8 倍；以 FY2 的 16.2 計為 17.9 倍。前份（2026-05-25）股價 214.5、Forward P/E 15.1 倍（推回 FY1 約 14.2）。之後股價漲 35%，FY1 共識反而降到 13.95（三個月 −1.2%），漲幅全部是倍數擴張。歷史位置：P/S 7.76 倍、EV/S 8.73 倍都在四個年度端點中最高；GAAP trailing P/E 49.8 倍受 IPR&D 與攤銷扭曲，不採用；只有 4 個年度樣本，五年連續分位事實表未涵蓋。PEG：20.8 倍除以 FY2026→FY2028 共識 EPS 年增 13.9%，約 1.5，落在合理區間的上半。反推：股息殖利率約 2.5%（新季配 1.82 年化 7.28），要年化 10% 含息，股價需年增約 7.5%，FY2031 終端價約 410–415 美元。賣方：2026-07 彙總的平均目標價約 274–277 美元，區間約 200–328；現價已高於平均約 5%，方向支持不追，但資料已舊三個月。短期（12 個月）以 FY2027 EPS 16.2×18 倍約 292 美元計，報酬約 +0.6%；中期（5 年基本情境）FY2031 EPS 22.3×16 倍約 357 美元，約 +23%（不含息）。同業 Forward P/E 事實表未涵蓋，終端倍數只能錨定前份的 14–17 倍區間。","premortem":"衰退信號十類亮 1 個：共識 EPS 年增比營收快 7.3 個百分點，主因是 IPR&D 歸零假設；其餘不亮或屬資料缺口。因此陷阱風險中度、長期成長性中度。成長熄火壓力測試：以 FY2028 共識 18.1 為基期，FY2029 成長分別降到 15%、10%、5%，倍數對應 19、15、12 倍，FY2029 股價約 395、299、228 美元，三種情境中兩種不低於現價。最大回撤範圍與理由見情境樹；歷史最大回撤與空方最強數字事實表未涵蓋。反證細節見反證紀錄。"},"plain":{"six":{"how_it_makes_money":"賺的是美國商業保險、PBM 與 Medicare 為慢性自體免疫、精神神經與血液腫瘤病人付的藥費。錢卡在專利保護的生物製劑與醫師處方習慣上：Skyrizi 一個產品約占三成二營收，議價壓力來自支付方讓價與政府定價","moat":"護城河方向持平：執行面在擴大、定價面在縮減，兩相抵銷；B 級（執行 9 分、定價 6 分）","growth":"五年後跑道屬中段。未來五年成長以量為主，共識 FY2026→FY2028 EPS 年增約 13.9%；但 Skyrizi 2031 年資料保護到期、2033 年組成物專利到期。接棒產品已有核准與送件，能否補上 Skyrizi（2026 年 218 億且仍在成長）的缺口尚未驗證","capital":"資本配置穩健但不出色：自由現金流先付股利，再做補強型收購與降槓桿，回購不在優先序。FCF 利潤率四年間由 41.8% 降到 29.1%，是弱點","valuation":"偏貴。現價要求 FY2031 EPS 走到 Bull 路徑（約 26 美元）並配 16 倍，或走 Base 路徑（22.3 美元）並配約 18.5 倍，才有年化 10% 的含息報酬。在 Skyrizi 獨占期結束前兩年仍給 18 倍以上，我不信","how_wrong":"最可能看錯的地方有兩處：Skyrizi 獨占期結束的時點與接棒產品的規模，以及政府定價擴大的速度。陷阱風險中度"}},"decision_inputs":{"signal":"B","ma":"🟡","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場以 FY2027 共識 16.2（隱含收購 IPR&D 歸零）為基準，給 20.8 倍，等於假設倍數能撐過 2031–2033 年 Skyrizi 獨占期結束；但 AbbVie 每年都有業務開發費用，Vraylar 與 Botox 的政府定價、2029 年初價格豁免到期都落在五年內","momentum_overheated":null,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":true,"wait_for_price_condition":"股價 ≤ 250 美元，且 Skyrizi 加 Rinvoq 合計季營運成長仍 ≥ 15%；若 2027-01 FY2027 指引中點 ≥ 16.5 美元，進場價改為 275 美元","trap":"🟡","val":"🟠","moat":"B","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"C","archetype":"品質複利成長","price_at_dd":289.86,"week26_return_pct":41.09,"consensus_rev_3m_pct":-1.2,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":false,"val_denominator_note":"FY1 EPS 13.95 已扣除截至第三季每股約 0.69 美元的收購 IPR&D 與里程碑費用；扣回後約 14.6，Forward P/E 約 19.8 倍。AbbVie 每年都有業務開發費用，屬經常性，分母不調整。真正的爭點是 FY2027 共識 16.2 是否隱含 IPR&D 歸零"},"catalysts":[{"date":"2026-12","date_precision":"month","type":"product","event":"Rinvoq 化膿性汗腺炎第三期 16 週頂線結果","impact":"中","watch":"HiSCR 50 的安慰劑校正差距；管理層已提示安慰劑漂移風險"},{"date":"2026-12","date_precision":"month","type":"regulatory","event":"Boey（trenibotulinumtoxinE）向 FDA 重新送件，預期審查六個月","impact":"低","watch":"是否如期送件；2027 年中的審查結果"},{"date":"2027-01","date_precision":"month","type":"guidance","event":"第四季電話會公布 FY2027 指引","impact":"高","watch":"EPS 中點相對共識 16.2；Skyrizi 加 Rinvoq 2027 指引；IPR&D 假設"},{"date":"2027-01","date_precision":"quarter","type":"regulatory","event":"Vraylar 適用 IRA 議定價格","impact":"中","watch":"神經科學 2027 年營運成長"},{"date":"2027-03","date_precision":"quarter","type":"regulatory","event":"Rinvoq 白斑、圓禿美國核准（管理層稱未來數月內）","impact":"中","watch":"核准時點；標籤是否允許一線使用"},{"date":"2027-03","date_precision":"quarter","type":"regulatory","event":"Epkinly 一線 DLBCL 送件（管理層稱明年初）","impact":"低","watch":"送件時點；美國等地只認列利潤分成"},{"date":"2027-06","date_precision":"quarter","type":"regulatory","event":"etentamig 多發性骨髓瘤美國核准（預期 2027 年，最快年中上市）","impact":"中","watch":"核准時點與首年銷售指引"},{"date":"2027-12","date_precision":"quarter","type":"product","event":"Skyrizi 對 Entyvio 潰瘍性結腸炎頭對頭數據（管理層只說 2027 年，季別未揭露）","impact":"中","watch":"是否優於對手；潰瘍性結腸炎新患份額"}],"_projected_from":"v19"}
+```
