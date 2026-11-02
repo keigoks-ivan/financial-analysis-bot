@@ -1,0 +1,434 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 GOOGL（2026-11-03）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/GOOGL_20261103/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：GOOGL　日期：2026-11-03　archetype：None　前份裁決：2026-07-23　進場｜核心　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（2036B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（739B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（998B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1590B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1549B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（616B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（906B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2135B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（3736B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（3072B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（283B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        2036           3475-4964      5 條（2–6 內）  
+s3                  8000         739           5083-7261      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        4137          7604-10863      5 條（2–6 內）  
+s6                 11000         616          7269-10384      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         906           1816-2594      5 條（2–6 內）  
+s10                 5000        2135           2005-2865      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        3072           2000-2000      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         283            852-1217      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=5753B；至少需散文≈39.25KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−91
+−50%
+−45
+−45%
+−31%
+−30%
+−30
+−26.09
+−23%
+−17.3%
+−3%
+−0.8%
+−0.5%
+−0.5
+0
+0.22
+0.3%
+0.3
+0.55
+0.6%
+0.73
+0.75
+0.9%
+0.98
+1
+1%
+1.34
+1.5%
+1.5
+1.8
+02
+2
+2.17
+2.3
+2.5
+3
+03
+3.1
+3.48
+3.5
+3.72
+04
+4
+4.1
+4.18
+4.2%
+4.7
+5%
+5
+06
+6%
+6
+6.25%
+6.7%
+6.73
+6.8%
+7
+07
+7.14
+7.38
+8
+8%
+08
+8.5%
+8.8%
+8.9%
+9%
+9
+09
+9.0
+9.4%
+10
+10%
+10.48%
+10.8%
+10.81
+11%
+11
+11.4
+11.89
+11.9%
+12%
+12
+13
+13%
+13.2
+13.6
+13.8
+14
+14%
+14.2%
+14.3
+14.77
+15
+15%
+15.14
+15.5
+15.6%
+16%
+16.2%
+16.2
+16.55
+17%
+17.1
+17.3%
+18%
+18
+18.26
+18.69
+18.7
+19
+19%
+19.1%
+19.8
+20
+20%
+20.58
+20.8
+21%
+21.2%
+21.3%
+22%
+22
+23
+23.5
+23.7%
+24
+24%
+25%
+25
+26%
+26
+26.3
+27.3
+27.6
+28
+28%
+30%
+30
+31
+31.5
+31.8%
+32%
+32.3%
+32.9%
+33.2%
+33.3%
+35%
+36%
+36.2%
+39%
+40%
+40.7%
+41.8%
+42
+45
+45%
+47.1%
+49
+49.5%
+49.5
+50%
+51.0%
+52%
+52
+55%
+55.5
+59
+59.7%
+60.0%
+60.8
+60.9%
+70
+75
+80%
+81%
+82
+84.1%
+84.17%
+86%
+87.28%
+89%
+90
+90%
+100
+100%
+103%
+111
+112
+130
+143
+150%
+164
+172
+195
+197
+219
+220
+230
+246
+250
+274
+282.98
+295
+300
+$300
+307
+320
+329
+342.09
+351
+354
+365
+391
+392
+400
+423
+433
+446
+500
+515
+633
+718
+724.5
+904
+2018
+2022
+2023
+2025
+2026
+2027
+2028
+2029
+11290
+20261103
+1,124
+1,148
+1,251
+1,276
+1,290
+1,322
+1,520
+1,570
+1,599
+1,796
+2,651
+2,957
+3,000
+4,713
+5,140
+5,610
+9,240
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"GOOGL","date":"2026-11-03","schema":"v15.0","contract":"v19","company_name":"Alphabet Inc."},"oneliner":"Cloud 年增 103%、利益率 36% 證明 AI 投資開始變現，但搜尋增速由 17% 降到 12%、單季自由現金流轉負，2027 年資本支出還要大增；股價 26 週跌 26% 後估值中性，成敗看 2028 年自由現金流能否轉正。","thesis":{"H":[{"id":"H1","text":"搜尋在 AI 介面轉型中守住變現：AI Overviews 與 AI Mode 廣告擴大到國際市場與多輪對話後，搜尋營收增速維持雙位數","2y":"2027 全年搜尋及其他營收年增 ≥10%，基期效應消失後的 2027 Q1–Q2 也不低於 10%","5y":"搜尋仍是集團最大利潤池，代理型購物能用廣告或交易抽成變現","10y":null,"threshold":"搜尋及其他營收 TTM 年增 ≥10%（Q3 單季 +12%，Q2 +17%）","source":"公司季報分部營收；法說會對 AI Mode 廣告擴張與變現的說明","drift_rule":"TTM 增速連 2 季低於門檻且偏離 ≥5% 為削弱，連 3 季偏離 ≥10% 為反轉"},{"id":"H2","text":"Google Cloud 的成長與利益率同時守住，算力 backlog 按時程轉成營收，成為與搜尋並列的利潤支柱","2y":"2027 全年 Cloud 年增 ≥30%，營業利益率 ≥30%（含第三方算力成本）","5y":"Cloud 營業利益接近 Services 營業利益的一半，TPU 系統外售成為穩定收入","10y":null,"threshold":"Cloud 年增 ≥30%、營業利益率 ≥30%、backlog 不低於 5,610 億美元","source":"公司季報 Cloud 分部；法說會揭露的 backlog 與認列時程（約 55% 於 24 個月內）","drift_rule":"任一指標連 2 季低於門檻且偏離 ≥5% 為削弱，連 3 季偏離 ≥10% 為反轉"},{"id":"H3","text":"AI 基建投資賺回資金成本：2027 年資本支出大增後，2028 年自由現金流轉正並開始回升","2y":"2028 全年自由現金流大於 0，資本支出占營業現金流降到 80% 以下","5y":"自由現金流利潤率回到 12% 以上","10y":null,"threshold":"2028 全年自由現金流大於 0，且 Cloud 營業利益率 ≥30%","source":"公司年報現金流量表；法說會資本支出指引（2027 年數字在 2027-02 Q4 法說公布）","drift_rule":"TTM 自由現金流連 4 季低於上年同期為削弱；2028 全年仍 ≤0 即反轉"}],"R":[{"id":"R1","text":"搜尋每查詢變現結構性下滑：AI Mode 單價偏低，AI 助理與 AI 瀏覽器分流高意圖查詢，美國份額被 Bing 侵蝕","h_ref":"H1","clock":"🔥","threshold":"搜尋及其他營收單季年增連 2 季低於 8%，或美國搜尋份額低於 80%","evidence_refs":["competitive_share_entrants#1","substitute_technology#0","substitute_technology#1","substitute_technology#2","end_markets#3","channel_business_model_shift#3"]},{"id":"R2","text":"AI 資本支出過度建置：2027 年資本支出大增，而 Cloud 需求或價格轉弱，折舊與第三方算力成本壓低利益率，自由現金流轉正延後","h_ref":"H3","clock":"🔥","threshold":"2027 年資本支出超過 3,000 億美元且 Cloud backlog 季增低於 300 億美元，或 Cloud 利益率連 2 季低於 25%","evidence_refs":["capital_markets_pricing#2","competitive_share_entrants#2"]},{"id":"R3","text":"搜尋反壟斷補救：上訴若維持分發限制，以及向競爭者分享搜尋資料、提供 syndication，使用者的轉換門檻會下降","h_ref":"H1","clock":"🐢","threshold":"上訴判決維持補救，且美國搜尋份額低於 80%","evidence_refs":["regulatory_antitrust#0","lawsuit_class_action#1"]},{"id":"R4","text":"AI 晶片供應鏈單點：TPU 全由台積電代工，部分元件只有單一來源，地緣衝突、關稅或出口管制可能卡住交付","h_ref":"H2","clock":"🐢","threshold":"管理層說明 TPU 系統交付延後一季以上，或第三方算力使用延長到 2027 下半年","evidence_refs":["geo_supply_chain#0","geo_supply_chain#1","geo_supply_chain#2","reg_tariff_export#0"]},{"id":"R5","text":"Cloud 客戶集中：backlog 增量有一部分來自單一 AI 實驗室（Anthropic），TPU 系統存貨依簽約備料，大客戶融資轉弱會同時打到 backlog 與存貨","h_ref":"H2","clock":"⚡","threshold":"backlog 季減，或管理層揭露主要客戶合約調整","evidence_refs":["end_markets#2"]}],"single_thing":{"description":"2027 年 Cloud 營收年增跌破 40%，而同年資本支出超過 3,000 億美元","why_fatal":"資本支出約為 2026 年的 1.5 倍。若 Cloud 增速同時腰斬，新增折舊與第三方算力成本會使 FY2028E 每股盈餘低於共識的 18.26 美元，自由現金流轉正延到 2029 年以後。資本回報與 Cloud 兩個假設會同時失效，倍數也失去現金支撐。","if_happens":"2028-02 Q4 法說確認後減碼至半倉，並重跑完整研究；若同時美國搜尋份額低於 80%，則清倉","how_monitor":"2027-02 Q4 法說的資本支出指引；每季 Cloud 年增、backlog、資本支出與折舊","probability":"約 15%：backlog 5,610 億美元中約 55% 會在 24 個月內認列，加上 TPU 系統 2027 年放量，Cloud 增速要跌破 40%，需要大客戶縮單或價格戰"}},"appendix_a":{"growth_durability":6,"quality_score":6,"ai_risk":"🟡","long_term_confidence":"中","fpe_fy2":18.69,"peg_fy2":0.98,"stress":{"pass":1,"total":3}},"eps_meta":{"base_eps_path":{"FY2025A":10.81,"FY2026E":16.55,"FY2027E":15.14,"FY2028E":18.26},"fy_end_month":12,"eps_basis":"GAAP 稀釋 EPS；FY2025A 淨利 1,322 億美元高於營業利益約 1,290 億美元，FY2026E 也含持股未實現損益（營業外）；推定 FY2027E 起的共識不含市值變動"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/GOOGL_20261103/scenario.json","archetype":{"primary":"品質複利成長","secondary":null,"confidence":"中","fingerprint":"高利益率廣告平台正轉向重資產算力供應商，資本密度兩年內急升"},"industry":{"clock_phase":"II","sd_verdict_source":"Q3 法說會：CEO 與 CFO 說明供給受限、Q4 擴大使用第三方算力；EMARKETER／IAB 對 2027 年廣告放緩的預測","bargaining":{"up":"上游議價力偏強：TPU 全由台積電代工，AI 加速器產能要搶；Q4 起動用第三方算力，橋接成本壓 Cloud 利益率；未來採購承諾 9,240 億美元","down":"下游分散：沒有單一客戶占營收超過 10%，廣告主依投報率投放；Cloud 端 backlog 部分與 Anthropic 相關，屬單點依賴","geo":"國際營收約占 52%，Q3 匯率是搜尋減速的最大因素"},"profit_pool_dir":"利潤池由連結式搜尋移往 AI 介面與算力層。Alphabet 兩端都有部位，但 AI 介面每查詢的變現仍低於傳統搜尋。","tam_table":[{"item":"全球搜尋廣告 2026（WARC）","value":"2,957 億美元，年增 14.2%；2027 年預測 +8.8%"},{"item":"全球廣告 2026（WARC）","value":"1.34 兆美元，+11.9%；Alphabet、Amazon、Meta 合占不含中國市場的 59.7%"},{"item":"美國網路廣告集中度（IAB/PwC）","value":"十家公司拿走 2025 年 84.1%，自 2022 年逐年上升"},{"item":"全球雲端基礎設施份額 Q3 2026（Synergy）","value":"Amazon 26%、Microsoft 19%、Google 16%"},{"item":"Google Cloud backlog","value":"5,610 億美元，約 55% 於 24 個月內認列"},{"item":"利潤池占比 5 年前對現在","value":"事實表未涵蓋"}]},"moat":{"mechanism":"搜尋＝使用習慣＋預設分發＋廣告主競價網路效應；Cloud＝自研 TPU 全端成本優勢＋多年期合約","execution":8,"pricing":8,"grade":"B","trend":"→","trend_evidence":"擴大面：Cloud 份額 16%，Q3 營收 +103%，利益率由 23.7% 升到 36.2%；Gemini 流量份額上升。收縮面：美國搜尋份額 12 個月由 87.28% 降到 84.17%，AI Mode 變現低於傳統搜尋，拖累 Q3 搜尋增速。沒有單一客戶占營收超過 10%，改以份額代理；搜尋份額下滑，所以不判擴大。","peer_na_reason":"同業投入資本報酬率與投入資本事實表未涵蓋，只有利潤率，因此以營業利益率與 FCF 利潤率代理。","threats":[{"level":"🔴","text":"AI 助理與代理型介面分流高意圖查詢，屬生態攻擊：模型商直接接觸使用者，AI 瀏覽器挑戰 Safari 與 Chrome 的預設通路；10-K 自承新進者可能提供更好的體驗。","p":"30%","evidence_refs":["substitute_technology#0","substitute_technology#1","substitute_technology#2","competitive_share_entrants#1","channel_business_model_shift#3"]},{"level":"🟡","text":"Bing 美國搜尋份額升到 10.48% 創新高，屬點對點競爭。","p":"20%","evidence_refs":["end_markets#3"]},{"level":"🟡","text":"AI 加速器產能爭奪：競爭者若先鎖定 GPU 與代工產能，Alphabet 的成本會上升、供給會受限。","p":"25%","evidence_refs":["competitive_share_entrants#2"]}],"roic_durability":{"quadrant":"高利益率×低周轉（周轉率因資本支出下滑中）","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者（免費查詢者）、決策者與付款者（廣告主）三個角色都成立：查詢成長率是近 5 年最高，AI Mode 查詢多為增量。Cloud 端付款者是企業與 AI 實驗室，backlog 5,610 億美元。客戶要解決的問題（找資訊、找客戶、要算力）不會消失，風險在 Google 的解法被替代，而不是需求消失。"},{"item":"決策層級","level":"🟡","text":"替代發生在單次查詢層級，其他產品「一鍵之遙」；美國搜尋份額 12 個月降 3.1 個百分點。Cloud 端轉換成本高：多年期合約，遷移需要改寫程式。TorchTPU 正在降低 PyTorch 移植的門檻，對 Google 是雙面刃。漲價後流失率與分客群續約率事實表未涵蓋。"},{"item":"價值鏈分配","level":"🟡","text":"廣告價值鏈向平台集中：十家公司拿走 2025 年美國網路廣告的 84.1%，TAC 增速低於營收。算力價值鏈則在上游收斂：TPU 全由台積電代工，AI 加速器產能要搶，Q4 動用第三方算力會壓低 Cloud 利益率。未來採購承諾 9,240 億美元，顯示上游議價力不弱。"},{"item":"社會容忍度","level":"🟡","text":"政治上限已經在起作用：搜尋案最終判決限制分發方式，並要求分享搜尋資料，雙方都已上訴；歐盟廣告科技罰款 30 億歐元仍在上訴，Q3 另支付 2018 年歐盟罰款 52 億美元。最壞的結構分拆已在 2026-09 被法院駁回，目前的約束是行為補救，所以判黃而不是紅。"}],"roiic":"約 18%（粗估，方向下滑）","reinvest_rate":"約 80%（淨額估計；毛額為 TTM 資本支出約 1,599 億美元 ÷ 營業現金流 1,796 億美元＝89%，折舊事實表未涵蓋）","endo_ceiling":14,"formula_note":"增量報酬：TTM 營業利益約 1,570 億美元（市值 ÷ 市銷率 7.38 得 TTM 營收約 4,713 億美元，× 33.3%），比 FY2024 的 1,124 億美元多約 446 億美元，除以 TTM 單年資本支出約 1,599 億美元，約 28%。這是未調整值，有三處偏差：一是稅前；二是分子為 FY2024 到 TTM 約七季的增量，分母只算最近一年的投入；三是分母用資本支出毛額，沒扣維持性支出。前兩項使報酬高估，第三項使報酬低估。稅率、前一年資本支出與折舊事實表都未涵蓋，三項都無法精算，18% 是判斷折減，不是算式結果。內生成長上限＝18% × 80% ≈ 14%。若不折減，上限＝28% × 80% ≈ 22%，高於共識 19.1%，所以「共識超出內生上限」取決於折減幅度，信心有限；這組數字只用來和共識成長比較，不作精算。"},"combined":8.0,"score":8.0,"spread_table":[{"metric":"毛利率","GOOGL":60.86,"MSFT":67.66,"AMZN":50.01,"AAPL":48.65,"META":81.03,"unit":"%"},{"metric":"營業利益率","GOOGL":33.32,"MSFT":47.1,"AMZN":12.36,"AAPL":33.17,"META":32.86,"unit":"%"},{"metric":"FCF 利潤率","GOOGL":4.19,"MSFT":17.31,"AMZN":-0.82,"AAPL":29.28,"META":11.86,"unit":"%"},{"metric":"研發密度","GOOGL":15.81,"MSFT":10.52,"AMZN":null,"AAPL":9.19,"META":31.68,"unit":"%"}],"competitors":[{"name":"MSFT","gm":67.66,"om":47.1,"fcf_margin":17.31,"rd_intensity":10.52,"strategy_note":"TTM 營益率 47.1%、FCF 利潤率 17.3%，資本密度上升得比 GOOGL 慢；Azure 份額 19% 高於 Google Cloud 的 16%，是企業 AI 的直接對手。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"AMZN","gm":50.01,"om":12.36,"fcf_margin":-0.82,"rd_intensity":null,"strategy_note":"雲端份額 26% 居首，TTM FCF 利潤率 −0.8%，同樣在大舉投資算力；對 Google Cloud 的威脅在價格與產能，不在技術。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"AAPL","gm":48.65,"om":33.17,"fcf_margin":29.28,"rd_intensity":9.19,"strategy_note":"TTM 營益率 33.2%，與 GOOGL 持平；它既是搜尋預設分發的夥伴，也在最新一代 TPU 上預訓練自家模型；Safari 搜尋量證詞是通路風險的來源。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"META","gm":81.03,"om":32.86,"fcf_margin":11.86,"rd_intensity":31.68,"strategy_note":"毛利率 81% 為五家最高，營益率 32.9% 與 GOOGL 相近；在廣告預算上直接競爭，同時與 Google 合作 TorchTPU。","period":"TTM ending 2026-09-30（4季加總）"}]},"growth":{"driver_mix":"量為主、價為輔；併購與回購貢獻接近零","runway_years":"5–9（粗估）","runway_post_y5":"🟢","endo_ceiling_basis":"引用競爭優勢段的增量報酬率 × 再投資率，粗估 14%；共識三年 EPS 複合成長 19.1%，超出約 5 個百分點，主要歸因 Cloud 利益率擴張與 TPU 系統放量，其餘無法歸因","segments":[{"item":"Google 搜尋及其他","value":"Q3 633 億美元，年增 12%（Q2 +17%）"},{"item":"YouTube 廣告","value":"112 億美元，+9%"},{"item":"Network","value":"75 億美元，+1%"},{"item":"訂閱、平台與裝置","value":"143 億美元，+11%"},{"item":"Google Cloud","value":"307 億美元，+103%，營業利益率 36.2%"},{"item":"Google Services 營業利益","value":"392 億美元，利益率 40.7%（Q2 41.8%）"},{"item":"Other Bets","value":"營收 3.72 億美元，營業虧損 20 億美元"}],"decay_signals":["核心市占近 12 個月縮減：美國搜尋份額由 87.28% 降到 84.17%（WebFX）","自由現金流對淨利比連 2 年低於 0.75：FY2024 0.73、FY2025 0.55，TTM 進一步惡化"],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購撐：Wiz 與 Intersect 合計約占市值 1%，成長主要來自自建算力"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"Wiz 與 Intersect 在 2026-03 完成，合計約 354 億美元，約占市值 1%；完成未滿一年，沒有已實現的增量報酬資料","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"Q3 法說未提回購，另設 400 億美元 ATM 與強制可轉換特別股，回購收益率無法達到 10 年期殖利率加 2 個百分點","grade":"不過"},{"year":"—","action":"sbc_dilution","rationale":"SBC 占營收 6.8% ÷ 市銷率 7.38 倍，約等於每年毛稀釋 0.9%，低於 1.5%；強制可轉換特別股的轉換股數事實表未涵蓋，計入後可能超標","grade":"過"}]},"valuation":{"basis":"前瞻本益比（以 FY2027E 共識 EPS 錨定）","tier":"大型平台","peers":{"expanded":false,"reason":"事實表的同業對照只有利潤率，沒有同業前瞻本益比；本次估值結論不靠同業倍數，終端倍數以自身四個年度端點本益比與成長率校準"},"fwd_pe":17.1,"peg":0.98,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"本益比面偏便宜：FY2027E 18.7 倍、PEG 約 0.98，trailing 14.77 倍低於四個年度端點的全部數值。但分母有爭議，FY2026E 含持股未實現損益。市銷率 7.38 倍位於年度端點 60.8 分位，EV/S 位於 55.5 分位，自由現金流殖利率約 0.6%。三把尺互相抵銷，結論中性。五年連續分位事實表未涵蓋，只有四個年度端點，因此五年分位留空。","upside_short_pct":16.2,"upside_mid_pct":49.5},"trap_analysis":{"verdict":"🟡","label":"中度：美國搜尋份額縮減、現金轉換率偏低，兩項亮起"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"美國搜尋份額 12 個月由 87.28% 降到 84.17%；有報導指網站點擊下降 8.9%，年輕用戶轉向 AI 聊天機器人；Q3 法說承認 AI Mode 變現較低；10-K 自承新進者可能提供更好的體驗。","assumption":"AI 介面帶來的增量查詢最終能以接近傳統搜尋的單價變現，而且 2027–2028 年算力不會供過於求。","consequence":"五年後虧掉一半最可能的故事是這樣：代理型助理把高意圖查詢移出搜尋框，搜尋營收轉為零成長；同期算力供過於求，引發 Cloud 價格戰，利益率回到 20% 以下，2027 年起的巨額折舊吃掉營業利益。結果每股盈餘停在 13–15 美元，倍數 10–13 倍，股價落在 130–195 美元。","ruling":"部分採納：寫進熊市路徑，熊市機率定為 30%。目前證據是增速放緩而不是衰退（Q3 搜尋 +12%，查詢量是 5 年最高），所以不調降基本情境。這條與唯一致命點在 Cloud 那一半重疊，搜尋那一半由第一項假設的門檻監測。","watch":"搜尋及其他營收年增、美國搜尋份額、AI Mode 國際廣告上線後的變現說明","evidence_refs":["substitute_technology#2","end_markets#3","competitive_share_entrants#1"],"fact_refs":["f_kpi7_google_cloud","f_kpi8_google_cloud_backlog"]},{"view":"論點失敗","evidence":"EMARKETER 預測美國媒體廣告 2026 年增 15.6%，2027 年只增 9.4%，部分來自世足賽與期中選舉；IAB 也提醒 2027 年放緩。Q3 法說已經點名世足賽預算提前到 Q2，使媒體娛樂類在 Q3 回落。","assumption":"AI 廣告工具帶來的投報率提升，足以抵銷廣告週期放緩。","consequence":"2027 年 YouTube 與 Network 增速再降，搜尋基期效應與週期疊加，第一項假設的 10% 門檻有被打穿的風險。","ruling":"採納為短期風險，但不當成結構性失敗：週期性放緩在預測範圍內，熊市路徑已經涵蓋；以 YouTube 廣告增速作為早期訊號。","watch":"YouTube 廣告年增、Network 年增、WARC 與 EMARKETER 對 2027 年預測的修正","evidence_refs":["supply_demand_durability#2"],"fact_refs":["f_kpi0_gaap"]},{"view":"論點成功但股東經濟變差","evidence":"自由現金流利潤率由 FY2022 的 21.2% 降到 TTM 4.2%；Q3 自由現金流 −91 億美元；未來採購承諾 9,240 億美元，尚未開始的租約與其他義務 1,520 億美元。資本支出指引上調後高於事前共識，2027 年還會大幅增加。本季未提回購，另有 400 億美元 ATM 與強制可轉換特別股。","assumption":"資本支出強度在 2028 年後回落，自由現金流隨折舊回收而回升。","consequence":"Cloud 與 AI 都贏了，但每股自由現金流多年不成長；回購停擺再加上稀釋，股東拿到的是更大的公司，而不是更多的每股現金。市場一旦改用自由現金流殖利率定價，倍數就會壓縮。","ruling":"採納為主要約束。資本回報假設的門檻改為 2028 全年自由現金流轉正，未達就減碼至半倉；2027-02 資本支出指引公布前不加到滿。","watch":"季度自由現金流、資本支出占營業現金流比、稀釋後股數、TPU 系統存貨","evidence_refs":["capital_markets_pricing#2"],"fact_refs":["f_kpi4","f_kpi9_capex","f_peer_googl_fcf_margin_pct","f_kpi5_sbc_gaap"]},{"view":"價格已反映太多","evidence":"FY2027E 共識 EPS 15.14 美元低於 FY2026E 的 16.55 美元，FY1 共識近 3 個月由 20.58 下修到 16.55；FY2028E 共識 18.26 美元隱含年增 21%。以 FY2027E 計，本益比 18.7 倍；賣方平均目標價 391–433 美元多是 Q3 前的資料。","assumption":"FY2028E 每股盈餘 18.26 美元能兌現。","consequence":"若 2027 年的折舊與第三方算力成本使 FY2028E 再下修 15%，現價對應約 18 倍，就不再便宜。","ruling":"反駁：trailing 本益比低於四個年度端點全部，市銷率位於中段，26 週已跌 26%，股價沒有反映太多。但以自由現金流計價偏貴，所以估值結論定為中性，不是便宜。","watch":"FY2027E、FY2028E 共識 EPS 的修正方向","evidence_refs":[],"fact_refs":["f_fwd_pe_latest","f_pe_percentile","f_ps_percentile","f_consensus_rev_3m_fy1_pct","f_consensus_eps_fy2"]}],"max_dd":{"lo":-45,"hi":-30,"path_risk":"🟡"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 ✅ → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=✅","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 342.09 → 本次 282.98（-17.3%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=342.09","side_b":"本次 price_at_dd=282.98","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]裁決由 dd_decision.py 機械路由：前份 進場 → 本次 觀望","cause":"新證據","prior_field":["dca_verdict"],"side_a":"前份 dca_verdict=進場","side_b":"本次 dca_verdict=觀望","ruling":"裁決是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。沒有單一輸入能還原，屬多欄共同：訊號 A→B、均線 ✅→🟡、陷阱燈 🟢→🟡。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]角色由 dd_decision.py 機械路由：前份 核心 → 本次 追蹤","cause":"新證據","prior_field":["dca_role"],"side_a":"前份 dca_role=核心","side_b":"本次 dca_role=追蹤","ruling":"角色是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。沒有單一輸入能還原，屬多欄共同：訊號 A→B、均線 ✅→🟡、陷阱燈 🟢→🟡。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 342.09 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 342.09 美元：Bull 價 718、Bear 價 246，五年期望值 +51.0%，基準年化 8.5%，不對稱比 4.7","side_b":"本次情境、股價仍用 342.09 美元：Bull 價 724.5、Bear 價 195，五年期望值 +32.3%，基準年化 6.7%，不對稱比 2.17","ruling":"先換情境、股價不動：五年期望值少 18.7 個百分點，基準年化少 1.8 個百分點。不對稱比由 4.7 變為 2.17。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變差。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 342.09 美元：五年期望值 +32.3%，基準年化 6.7%，不對稱比 2.17","side_b":"本次情境、股價 282.98 美元：五年期望值 +60.0%，基準年化 10.8%，不對稱比 4.18","ruling":"再換股價、情境不動：起點價下跌 17.3%，五年期望值多 27.6 個百分點，基準年化多 4.1 個百分點，不對稱比由 2.17 升到 4.18。合計五年期望值比前份多 9.0 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"陷阱風險與整體評等下修","cause":"新證據","prior_field":["signal","trap"],"side_a":"前份：評等 A，陷阱風險低（當時股價 342.09 美元）","side_b":"本次：評等 B，陷阱風險中。新證據包括 Q3 自由現金流 −91 億美元，FY2024 與 FY2025 自由現金流對淨利分別為 0.73、0.55，美國搜尋份額 12 個月降 3.1 個百分點，護城河等級評為 B","ruling":"採 B 側：兩項衰退信號都有出處，方向一致，評等下修一級；護城河方向沒有轉弱，所以不再往下調","evidence_level":"公司財報＋第三方份額資料","settle_metric":"2027 年季度自由現金流、美國搜尋份額","if_then":["若 2027 Q2 起季度自由現金流連 2 季轉正，且美國搜尋份額回到 86% 以上，則評等回升並加碼至目標部位","若美國搜尋份額跌破 80%，則減碼三分之一"],"evidence_refs":["end_markets#3"]},{"axis":"護城河方向、成長跑道與公司類型","cause":"新證據","prior_field":["moat_trend","runway_post_y5","archetype","cycle_position"],"side_a":"前份：護城河持平，五年後跑道寬，類型為品質複利成長，非循環股","side_b":"本次：Cloud 營收 +103%、backlog 增到 5,610 億美元、Gemini app 達 10 億用戶，屬擴大證據；AI Mode 變現較低、美國份額下滑，屬收縮證據。兩邊抵銷，四欄維持不變；類型信心給中，因為資本密度急升使公司更像算力供應商","ruling":"維持：新證據兩個方向都有，淨方向不足以改判。跑道寬的依據由單看 backlog 改為 backlog 加外售 TPU 系統","evidence_level":"公司財報＋法說","settle_metric":"Cloud backlog、美國搜尋份額","if_then":["若 Cloud backlog 連 2 季下降，則跑道判斷降為中並停止加碼"],"evidence_refs":[]},{"axis":"估值結論與回撤範圍","cause":"價格變動","prior_field":["val","max_dd_pct"],"side_a":"前份：股價 342.09 美元，估值中性，最大回撤 −50%","side_b":"本次：股價 282.98 美元，跌 17%。估值仍判中性：FY2027E 本益比 18.7 倍、PEG 約 0.98 偏便宜，但分母有爭議，自由現金流殖利率約 0.6%。最大回撤範圍為 −30% 到 −45%，因為 26 週已跌 26%","ruling":"股價下跌的效果被分母爭議與自由現金流轉負抵銷，估值結論不變；回撤深端由 −50% 收窄到 −45%，因為部分下行已經發生。現在就買的最強論證：營業利益仍年增 30%，Cloud 利益率 36%，淨利下滑來自 SpaceX 持股未實現損失，RSI 24 已超賣","evidence_level":"市場價格＋共識預估","settle_metric":"FY2027E 共識 EPS 修正方向","if_then":["若股價跌到 230 美元以下而搜尋年增仍 ≥10%，則分批反買，每次三分之一","若 FY2027E 共識 EPS 再下修超過 10%，則停止加碼"],"evidence_refs":[]},{"axis":"情境機率與裁決重算","cause":"方法變動","prior_field":["p_bull_pct","p_bear_pct"],"side_a":"前份：牛市 30%，熊市 25%；裁決為進場","side_b":"本次：牛市 25%，基本 45%，熊市 30%。共識三年 EPS 複合成長 19.1% 超出內生上限約 14%，熊市機率下限因此提高到 30%；裁決與部位角色依本次輸入重算","ruling":"採 B 側：共識成長超出內生上限，缺口只有部分能歸因於利益率擴張，熊市機率必須上調","evidence_level":"方法規則＋共識預估","settle_metric":"2027 年 Cloud 營業利益率與全年自由現金流","if_then":["若 2027 全年 Cloud 利益率 ≥35% 且自由現金流轉正，則熊市機率回到 25%"],"evidence_refs":[]},{"axis":"加碼條件改寫","cause":"新證據","prior_field":["rearm_trigger"],"side_a":"加碼觸發：AdX 裁決明朗（結構 vs 行為）或回檔 $300-320 或 2027 capex 指引與 Cloud ROI 對得上","side_b":"加碼：2027-02 法說後 Cloud backlog 季增 ≥500 億美元且 Cloud 營業利益率 ≥30%；或股價 ≤230 美元而搜尋年增仍 ≥10%","ruling":"舊加碼條件三項中已有兩項發生：2026-09 廣告科技案法院駁回結構分拆，只判行為補救；股價已低於 300 美元。剩下的資本支出與 Cloud 回報條件保留並量化，另加價格條件","evidence_level":"10-Q 法律事項＋市場價格","settle_metric":"2027-02 資本支出指引、Cloud backlog","if_then":["若兩項加碼條件都未達成而資本支出指引超過 3,000 億美元，則停止加碼"],"evidence_refs":["regulatory_antitrust#1","major_events#2"]},{"axis":"Single Thing 設定","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未設唯一致命點（空值）","side_b":"2027 年 Cloud 營收年增跌破 40%，而同年資本支出超過 3,000 億美元","ruling":"前份格式沒有要求，本次補設。選這一項是因為它同時打穿 Cloud 與資本回報兩個假設；一旦發生就減碼至半倉","evidence_level":"方法變動","settle_metric":"2027 全年 Cloud 年增與資本支出","if_then":["若 2028-02 確認發生，則減碼至半倉；若同時美國搜尋份額低於 80%，則清倉"],"evidence_refs":[]},{"axis":"減碼與清倉門檻設定","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設（空值）","side_b":"搜尋及其他營收連 2 季年增 <8%；Cloud 利益率連 2 季 <25%；2028 全年自由現金流 ≤0；美國搜尋份額 <80%；Cloud backlog 連 2 季季減","ruling":"前份只有警戒指標，沒有門檻，本次補上。任一項觸發就減碼三分之一，三項以上同時觸發則清倉","evidence_level":"方法變動","settle_metric":"上列五項指標","if_then":["任一項觸發則減碼三分之一","三項以上同時觸發則清倉"],"evidence_refs":[]},{"axis":"資本回報假設的時點","cause":"新證據","prior_field":["H3"],"side_a":"FCF 於 ~2027Q1 越過谷底；漂移觸發：2027 全年 FCF 仍負 + Cloud OM 回落","side_b":"2028 全年自由現金流轉正且 Cloud 營業利益率 ≥30%；2028 全年仍 ≤0 即反轉","ruling":"Q3 自由現金流 −91 億美元，CFO 說 2027 年資本支出會大幅增加，TPU 系統存貨要先付現，2027 年轉正已不實際，門檻延後一年。只延這一次，再延就視為假設失敗","evidence_level":"公司財報＋法說","settle_metric":"2028 全年自由現金流","if_then":["若 2028 全年自由現金流仍 ≤0，則減碼至半倉"],"evidence_refs":["capital_markets_pricing#2"]},{"axis":"反壟斷風險門檻","cause":"新證據","prior_field":["R3"],"side_a":"強制分拆生效；或折舊年限縮短 → EPS 下修 >10%","side_b":"搜尋案上訴維持資料分享與分發限制，且美國搜尋份額跌破 80%","ruling":"2026-09 廣告科技案法院駁回 DOJ 的結構分拆，改判互通、資料存取與競價行為補救，結構分拆的尾部風險已經移除，風險重心轉到搜尋案補救對份額的影響。伺服器折舊年限目前為 6 年，沒有縮短，改由資本回報條目監測","evidence_level":"10-Q 法律事項＋10-K","settle_metric":"搜尋案上訴判決、美國搜尋份額","if_then":["若上訴維持補救且美國搜尋份額跌破 80%，則減碼三分之一"],"evidence_refs":["regulatory_antitrust#1","major_events#2"]},{"axis":"資本支出回報：管理層稱報酬高於資金成本，現金流卻轉負","cause":"新證據","prior_field":null,"side_a":"CFO（2026-10-28）：整個投資週期 ROIC 會明顯高於資金成本；Cloud 營業利益年增超過 3 倍，利益率 36.2%，今年到目前為止 AI 營收達數百億美元","side_b":"Q3 自由現金流 −91 億美元，TTM 197 億美元；未來採購承諾 9,240 億美元；2027 年資本支出會大幅增加，單一來源報導將超過 3,000 億美元；TPU 系統利潤率連兩季拒答","ruling":"性質可調和（時點差異），但要到 2028 年報才能裁決。先選 B 側作為部位約束，理由是報酬目前只有管理層口頭保證，沒有可驗證的增量報酬數字，而現金流出已是事實。硬數據點：2028 全年自由現金流與 Cloud 營業利益率。現在就賣的最強論證：資本密度永久上升，回購停擺且開始增資，0.6% 的自由現金流殖利率沒有安全邊際。反駁：營業利益仍年增 30%，現金流轉負的一部分是已簽約的 TPU 存貨與一次性罰款","evidence_level":"公司財報＋管理層說法","settle_metric":"2028 全年自由現金流；Cloud 營業利益率","if_then":["若 2027-02 指引資本支出超過 3,000 億美元，且 Cloud backlog 季增低於 300 億美元，則停止加碼並把部位上限降到原目標一半","若 2027 全年 Cloud 年增 ≥50% 且利益率 ≥30%，則加碼至目標部位","反向：若 2028 全年自由現金流仍 ≤0，則減碼至半倉"],"evidence_refs":["capital_markets_pricing#2"]},{"axis":"查詢量創五年新高，搜尋營收增速卻放緩","cause":"新證據","prior_field":null,"side_a":"CEO（2026-10-28）：查詢年成長率是近 5 年最高，AI Mode 查詢大多是增量","side_b":"搜尋及其他營收增速由 Q2 的 +17% 降到 Q3 的 +12%；CBO 承認 AI Mode 變現較低是原因之一。CFO 預告 Q4 還會受約 2 點基期效應與匯率拖累，而國際營收約占 52%","ruling":"可調和（程度差異）：查詢量與每查詢變現走相反方向，淨效果仍是正成長。管理層把放緩主要歸因於匯率、垂直產業與基期，屬一次性歸因，不採信也不否定，先標為未證、監測。2027 Q1 基期效應消失後，若搜尋年增連 2 季低於 10%，一次性歸因即被證偽","evidence_level":"管理層說法＋分部營收","settle_metric":"2027 Q1–Q2 搜尋及其他營收年增","if_then":["若 2027 Q1、Q2 搜尋年增都低於 10%，則停止加碼並把熊市機率上調到 35%","若 AI Mode 國際廣告上線後 2027 Q1 搜尋年增回到 13% 以上，則維持部位，視為變現落差收斂"],"evidence_refs":["customer_concentration_credit#2","supply_demand_durability#2"]},{"axis":"管理層前後說法：Q2 預告 Cloud 利益率承壓","cause":"新證據","prior_field":null,"side_a":"CFO（2026-07-22）：Q3 擴大第三方容量會使 Cloud 營業利益率承壓","side_b":"Q3 Cloud 利益率反而升到 36.2%；CFO（2026-10-28）說明第三方算力直到 Q3 最後才上線，壓力移到 Q4","ruling":"可調和：只是時點延後，不是預測錯誤。Q4 利益率才是真正的檢驗，Q3 的高利益率不能外推","evidence_level":"法說逐字稿","settle_metric":"Q4 2026 Cloud 營業利益率","if_then":["若 Q4 Cloud 利益率仍 ≥30%，則 Cloud 假設維持不變","若 Q4 Cloud 利益率跌破 25%，則停止加碼，直到 2027 Q1 回升"],"evidence_refs":[]}],"triggers":[{"n":1,"text":"搜尋及其他營收 TTM 年增跌破 10%","type":"假設驗證","maps_to":"H1","metric":"搜尋及其他營收年增（TTM）","threshold":"低於 10%，連 2 季","action":"停止加碼；連 3 季則減碼三分之一","source_freq":"公司季報，每季","date":"2027-04","evidence_refs":[]},{"n":2,"text":"Cloud 年增或營業利益率跌破 30%","type":"假設驗證","maps_to":"H2","metric":"Google Cloud 營收年增、營業利益率","threshold":"任一項低於 30%，連 2 季","action":"減碼三分之一","source_freq":"公司季報，每季","date":"2027-04","evidence_refs":[]},{"n":3,"text":"2028 全年自由現金流沒有轉正","type":"假設驗證","maps_to":"H3","metric":"全年自由現金流","threshold":"≤0","action":"減碼至半倉","source_freq":"公司年報，每年","date":"2029-02","evidence_refs":[]},{"n":4,"text":"2027 年 Cloud 年增跌破 40%，而同年資本支出超過 3,000 億美元","type":"Single Thing","maps_to":"Single Thing","metric":"Cloud 營收年增；全年資本支出","threshold":"Cloud 低於 40%，且資本支出超過 3,000 億美元","action":"減碼至半倉並重跑完整研究","source_freq":"公司年報，每年","date":"2028-02","evidence_refs":[]},{"n":5,"text":"2027 年資本支出指引大幅上調，backlog 增速沒跟上","type":"風險","maps_to":"R2","metric":"2027 年資本支出指引；Cloud backlog 季增","threshold":"指引超過 3,000 億美元，且 backlog 季增低於 300 億美元","action":"停止加碼","source_freq":"Q4 法說會","date":"2027-02","evidence_refs":["capital_markets_pricing#2","competitive_share_entrants#2"]},{"n":6,"text":"搜尋反壟斷上訴維持資料分享與分發限制","type":"風險","maps_to":"R3","metric":"上訴判決內容；美國搜尋份額","threshold":"補救維持，且美國搜尋份額低於 80%","action":"減碼三分之一","source_freq":"法院判決；WebFX 與 StatCounter 月資料","date":null,"evidence_refs":["regulatory_antitrust#0","lawsuit_class_action#1"]},{"n":7,"text":"證券集體訴訟（Gemini 3.5 Pro 時程揭露）取得集體認證","type":"風險","maps_to":"無對應假設（管理層揭露的可信度）","metric":"加州北區聯邦法院 26-cv-11290 案程序進度","threshold":"集體認證通過，且出現 SEC 調查","action":"減碼一半；只有集體認證則不動","source_freq":"法院案卷、8-K","date":null,"evidence_refs":["major_events#1","lawsuit_class_action#0"]},{"n":8,"text":"TPU 交付被代工、關稅或出口管制卡住","type":"風險","maps_to":"R4","metric":"管理層對 TPU 系統交付與第三方算力的說明","threshold":"交付延後一季以上","action":"停止加碼","source_freq":"季報法說，每季","date":null,"evidence_refs":["geo_supply_chain#0","geo_supply_chain#1","geo_supply_chain#2","reg_tariff_export#0","competitive_share_entrants#2"]},{"n":9,"text":"2027 年廣告週期放緩壓到 YouTube 與 Network","type":"風險","maps_to":"R1","metric":"YouTube 廣告年增","threshold":"低於 5%，連 2 季","action":"停止加碼","source_freq":"公司季報，每季","date":"2027-07","evidence_refs":["supply_demand_durability#2","customer_concentration_credit#2"]},{"n":10,"text":"股價跌到 FY2027E 約 15 倍，基本面未破","type":"估值rearm","maps_to":"H1","metric":"股價；搜尋及其他營收年增","threshold":"股價 ≤230 美元，且搜尋年增 ≥10%","action":"分批反買，每次三分之一","source_freq":"每日股價、季報","date":null,"evidence_refs":[]},{"n":11,"text":"資本支出與 Cloud 回報對得上","type":"加碼","maps_to":"H3","metric":"Cloud backlog 季增、Cloud 營業利益率","threshold":"backlog 季增 ≥500 億美元，且利益率 ≥30%","action":"加碼至目標部位","source_freq":"Q4 法說會","date":"2027-02","evidence_refs":[]},{"n":12,"text":"Q4 2026 法說會後複審","type":"複審日期","maps_to":null,"metric":"2027 年資本支出指引、Cloud backlog、Q4 Cloud 利益率","threshold":"法說會公布日","action":"重跑完整研究","source_freq":"Q4 法說會","date":"2027-02","evidence_refs":[]}],"kill_metrics":[{"metric":"搜尋及其他營收單季年增率","bear_threshold":"連 2 季低於 8%","window":"2027 Q1–Q4","source":"公司季報分部營收","last_status":"ok"},{"metric":"Google Cloud 營業利益率","bear_threshold":"連 2 季低於 25%","window":"2027 全年","source":"公司季報 Cloud 分部損益","last_status":"ok"},{"metric":"Alphabet 全年自由現金流","bear_threshold":"2028 全年 ≤0","window":"FY2028","source":"公司年報現金流量表","last_status":"warning"},{"metric":"美國搜尋份額","bear_threshold":"低於 80%","window":"滾動 12 個月","source":"WebFX、StatCounter","last_status":"warning"},{"metric":"Google Cloud backlog","bear_threshold":"連 2 季季減","window":"2027 全年","source":"季度法說會 CFO 揭露","last_status":"ok"}],"evidence_dismissed":[],"decision_out":{"role":"追蹤","row_hit":"8(val爭議)","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟢'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把 Q3 淨利下滑與單季自由現金流轉負讀成獲利力轉弱。實際上淨利下滑來自 SpaceX 持股未實現損失約 82 億美元，屬營業外，營業利益仍年增 30%；自由現金流轉負有一部分來自已簽約的 TPU 系統存貨，以及 52 億美元歐盟罰款的一次性支付。不過市場對資本密度上升的擔憂是對的，所以只認定市場部分看錯。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟢', val='🟡', moat_trend='→', week26=-26.09, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position=None, moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈機械讀數判定不可用，baseline rows 8/9/9b/10 的估值條件視為不可判 → 落 row8 觀望（保守方向）","hit":true,"basis":"val_denominator_disputed=True, val(機械讀數)='🟡'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":null,"requires_critic":[],"verdict":"觀望","rearm_trigger":"加碼：2027-02 法說後 Cloud backlog 季增 ≥500 億美元且 Cloud 營業利益率 ≥30%；或股價 ≤230 美元而搜尋年增仍 ≥10%","exec_line":"現價不建倉，先列追蹤：FY2026E 每股盈餘含持股未實現損益，估值分母有爭議，現價便宜與否無法判定。建倉條件二擇一：2027-02 法說後 Cloud backlog 季增 ≥500 億美元且 Cloud 營業利益率 ≥30%，可一次建到目標部位；或股價 ≤230 美元而搜尋年增仍 ≥10%，分三批進場，每批三分之一。"},"reasoning":{"industry":"Q3 營收 1,276 億美元，年增 25%；GAAP 營業利益率 31.8%，TTM 毛利率 60.9%。分部（Q3）：搜尋及其他 633 億美元（約 50%，+12%）、Cloud 307 億美元（約 24%，+103%，營業利益率 36.2%）、訂閱平台裝置 143 億美元（約 11%，+11%）、YouTube 廣告 112 億美元（約 9%，+9%）、Network 75 億美元（約 6%，+1%）。Services 營業利益 392 億美元，利益率 40.7%（Q2 為 41.8%）；Cloud 營業利益 111 億美元，占兩大部門營業利益約 22%。供需持久性：算力需求屬結構性持久，Cloud backlog 由 Q2 的 5,140 億美元增到 5,610 億美元，管理層稱供給受限會持續；廣告需求屬週期性，美國媒體廣告增速預測由 2026 年 15.6% 降到 2027 年 9.4%。產業態勢判為雙向拉鋸。競爭面，美國搜尋份額 12 個月降 3.1 個百分點，AI 模型商被列為競爭者；結構面，算力供不應求；其他結構變數方面，搜尋反壟斷補救仍在上訴，廣告科技案 2026-09 只判行為補救。單點依賴有兩處：TPU 全由台積電代工；Cloud backlog 有一部分與 Anthropic 相關，集中度數字事實表未涵蓋。公司未提供 Non-GAAP 營業利益，此項不適用。","moat":"機制分兩塊。搜尋靠使用者習慣、預設分發與廣告主競價形成的雙邊網路效應；Cloud 靠自研 TPU 的全端成本優勢與多年期合約。同業投入資本報酬率事實表未涵蓋，方向改用份額與利益率代理。擴大的證據：Cloud 全球份額 16%（Amazon 26%、Microsoft 19%），Q3 營收年增 103%，利益率由 23.7% 升到 36.2%；Gemini 網頁流量份額上升，ChatGPT 降到 2023 年以來低點。收縮的證據：美國搜尋份額 12 個月由 87.28% 降到 84.17%，Bing 升到 10.48% 創新高；CBO 承認 AI Mode 變現較低，拖累 Q3 搜尋增速。TTM 營業利益率 33.3%，與 META 32.9%、AAPL 33.2% 相當，落後 MSFT 47.1%；FCF 利潤率 4.2% 是五家中第二低，差距擴大反映的是資本密度上升，不是定價力流失。執行力給 8：Gemini 4 與 TPU 領先，但 Gemini 3.5 Pro 時程失誤，Q4 還要靠第三方算力橋接。定價力給 8：算力供不應求，TAC 增速低於營收；搜尋端 AI Mode 的變現仍待證明。扣除 AI 介面分流這項生態攻擊後落在 B 級。當期報酬屬高利益率，但投入資本周轉率因資本支出而下滑，投入資本口徑事實表未涵蓋。","growth":"成長以量為主（查詢量、Cloud 用量、TPU 系統出貨），價為輔（算力稀缺），併購與回購的貢獻接近零：本季未提回購，Wiz 等併購約占市值 1%。共識三年 EPS 複合成長 19.1%（FY2025A 10.81 美元到 FY2028E 18.26 美元，Koyfin 快照，家數未收），但 FY2025A 與 FY2026E 都含持股未實現損益，FY2027E 的 15.14 美元反而低於 FY2026E。內生上限約 14%，缺口約 5 個百分點。缺口主要來自 Cloud 利益率擴張，以及 TPU 系統 2027 年放量帶來的營運槓桿；剩下的部分找不到來源，因此長期信心最高只給中。跑道方面，Cloud 份額 16%，市場總成長事實表未涵蓋，粗估 5–9 年；搜尋份額約 90%，已過高滲透。第二曲線有出處：TPU 系統外售（近 100 家客戶，與 Oracle、Crux AI 合作），Waymo 營運城市擴到 15 個。AI 曝險的分界年定在 2028：AI Mode 廣告全球化後，若 2028 年搜尋仍維持雙位數成長，AI 曝險就轉為淨加分。衰退信號亮了 2 項：美國搜尋份額縮減，自由現金流對淨利比連 2 年低於 0.75。","governance":"現金轉換：自由現金流對淨利 FY2024 為 0.73、FY2025 為 0.55（事實表年度財務史，yfinance 年度財報）；Q3 單季自由現金流 −91 億美元，TTM 197 億美元。Q3 的數字還包含 TPU 系統存貨增加（Cloud 執行長稱只在簽約後備料）與 52 億美元歐盟罰款支付。現金去向：TTM 營業現金流 1,796 億美元中，資本支出約 1,599 億美元，占 89%；股息每季每股 0.22 美元，殖利率 0.3%；併購 Wiz 約 295 億美元、Intersect 約 59 億美元（2026-03 完成）；Q3 法說未提回購，回購金額事實表未涵蓋。融資：2026-06 推出 400 億美元 ATM 與 6.25% 強制可轉換特別股，2026-08 發行 250 億美元優先債；長期債務 1,251 億美元，現金與有價證券 2,651 億美元（其中有價權益證券 904 億美元），淨現金約 1,148 億美元。CFO 在 2026-07-22 表示不打算再回股權市場，ATM 用於 SBC 稅負的部分除外。SBC 占營收 6.8%、占營業利益 21.3%。營運槓桿為正：營收 +25%，營業利益 +30%。債務到期結構與加權利率事實表未涵蓋。","valuation":"現價 282.98 美元。前瞻本益比：對 FY2026E 為 17.1 倍，對 FY2027E 為 18.7 倍，對 FY2028E 為 15.5 倍。FY2026E 分母含持股未實現損益，所以改以 FY2027E 錨定。PEG 約 0.98（18.7 ÷ 三年共識成長 19.1%）。trailing 本益比 14.77 倍低於四個年度端點的全部數值，但分母同樣受營業外損益影響；市銷率 7.38 倍位於 60.8 分位，EV/S 7.14 倍位於 55.5 分位，兩者都不是五年連續序列。前瞻 EV/S 6.73 倍。自由現金流殖利率約 0.6%（TTM 197 億美元 ÷ 市值約 3.48 兆美元）。短期上檔：FY2028E 18.26 美元 × 18 倍 ≈ 329 美元，+16.2%。中期上檔：FY2030E 基本情境 23.5 美元 × 18 倍 ≈ 423 美元，+49.5%。賣方平均目標價 391–433 美元，區間 220–515 美元，最高與最低相差 2.3 倍，未超過 2.5 倍。現價比均值低約 3 成，方向上支持估值不貴，但目標價多在 Q3 前定的，還沒反映 2027 年資本支出上調。同業前瞻本益比事實表未涵蓋，終端倍數無法附同業現值對照，改用自身年度端點校準。","premortem":"歷史最大回撤事實表未涵蓋。回撤範圍推導：熊市路徑 FY2028E 每股盈餘低點 13.2 美元 × 13 倍 ≈ 172 美元，比現價低 39%；加上情緒超調，深端取 −45%；淺端取 −30%，大致對應熊市終點的跌幅。股價 26 週已跌 26%，RSI 24，部分下行已經發生。成長熄火壓力測試以 FY2028E 18.26 美元為三年後基數：之後成長 15%、給 20 倍，約 365 美元，通過；成長 10%、給 15 倍，約 274 美元，−3%，未過；成長 5%、給 12 倍，約 219 美元，−23%，未過。三項只過一項。空方最強的數字：自由現金流利潤率由 FY2022 的 21.2% 降到 TTM 4.2%，未來採購承諾 9,240 億美元。訴訟方面，搜尋案雙方上訴中，時程事實表未涵蓋；證券集體訴訟是原告主張，索賠金額未揭露。法說迴避題：2026-07-22 CFO 未回答 TPU 系統利潤率是否較低，2026-10-28 CFO 與 Cloud 執行長再次不拆分；Q3 也沒有給 2027 年資本支出數字。"},"plain":{"six":{"how_it_makes_money":"賺廣告主與企業 IT 預算的錢：搜尋廣告仍是最大利潤池，Cloud 已是第二支柱；錢卡在使用者查詢意圖與 AI 算力兩個節點，而算力這一端正在吃掉搜尋產生的現金。","moat":"護城河持平：Cloud 與模型層在擴大，搜尋的定價力在收縮，兩邊互相抵銷。","growth":"五年後跑道寬：搜尋已高滲透，但 Cloud（份額 16%、backlog 5,610 億美元）與外售 TPU 系統是有實據的第二、第三條曲線。","capital":"資本配置轉向重資產：本季沒提回購，ATM 與強制可轉換特別股打開了增資的門，資本支出吃掉近九成營業現金流。","valuation":"現價要求 FY2028E 每股盈餘 18.26 美元兌現，並維持 15–19 倍本益比；這點我大致相信。但用自由現金流計價偏貴，估值結論中性。","how_wrong":"最可能看錯的是資本支出回報的時點：Cloud 已經證明需求，但自由現金流轉正一延再延，市場可能改用自由現金流而不是盈餘來計價。"}},"decision_inputs":{"signal":"B","ma":"🟡","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把 Q3 淨利下滑與單季自由現金流轉負讀成獲利力轉弱。實際上淨利下滑來自 SpaceX 持股未實現損失約 82 億美元，屬營業外，營業利益仍年增 30%；自由現金流轉負有一部分來自已簽約的 TPU 系統存貨，以及 52 億美元歐盟罰款的一次性支付。不過市場對資本密度上升的擔憂是對的，所以只認定市場部分看錯。","momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":null,"wait_for_price_condition":null,"trap":"🟡","val":"🟡","moat":"B","moat_trend":"→","runway_post_y5":"🟢","capalloc_grade":"B","archetype":"品質複利成長","price_at_dd":282.98,"week26_return_pct":-26.09,"consensus_rev_3m_pct":-19.58,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"FY2026E 共識 16.55 美元含 Q2 權益證券未實現利得，以及 Q3 SpaceX 未實現損失約 82 億美元；FY2027E 15.14 美元反而較低。FY1 共識在兩份快照間由 11.89 跳到 16.55，近 3 個月又由 20.58 降到 16.55，擺盪來自營業外損益而非營運。trailing 14.77 倍同樣受影響。改以 FY2027E 錨定，得 18.7 倍，便宜的論證不成立。"},"catalysts":[{"date":"2027-02","date_precision":"month","type":"guidance","event":"Q4 2026 法說會：2027 年資本支出指引與 Cloud backlog","impact":"高","watch":"資本支出是否超過 3,000 億美元，backlog 季增是否 ≥500 億美元"},{"date":"2026-Q4","date_precision":"quarter","type":"product","event":"AI Mode 廣告擴展到國際市場，美國推出多輪對話廣告","impact":"中","watch":"Q4 與 2027 Q1 搜尋增速能否回升"},{"date":null,"date_precision":null,"type":"regulatory","event":"搜尋反壟斷案上訴判決（Alphabet 與 DOJ、各州都已上訴）","impact":"高","watch":"資料分享、syndication 與分發限制是否維持"},{"date":"2027-Q1","date_precision":"quarter","type":"capacity","event":"TPU 系統銷售 2027 年放量，第三方算力使用擴大","impact":"中","watch":"Cloud 利益率在第三方算力成本下能否守住 30%"},{"date":"2026-Q4","date_precision":"quarter","type":"product","event":"Gemini 代理功能推向 Gemini app 的 10 億用戶","impact":"中","watch":"代理型查詢能否帶來廣告或交易抽成"}],"_projected_from":"v19"}
+```
