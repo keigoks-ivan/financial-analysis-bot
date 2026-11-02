@@ -1,0 +1,422 @@
+你是 DD 管線 v20 的判斷層閘（gate），標的 SBUX（20261102）。你未參與寫判斷，這是一次跨模型冷讀，單回合、無工具：bundle 全文已附在本訊息「===== BUNDLE =====」分隔線之後，讀完就直接作答，沒有第二輪，也不能查證 bundle 以外的任何資料。
+
+## 任務
+
+依 bundle 內 `gate_card.md` 的 ①–⑧ checklist 逐條複核 `judgment.json`，只揪判斷級的錯，不判斷寫得好不好。判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級問題（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡；無實質問題給 🟢。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：`gate_card.md`（①–⑧ checklist 全文與 🔴／🟡／🟢 口徑）、被引用事實與負向條目子集（核對 `fact_refs` 用）、`scenario_meta.json`（情境樹權威值，對帳 `decision_inputs.irr_base_pct`／`ev5y_pct` 用）、`judgment.json` 全文（被審對象，原樣）。
+
+## 禁
+
+- 禁 WebSearch／WebFetch、禁開 bundle 以外任何檔（包含 `docs/dd/`、`.dd_build/` 下的其他產物）。
+- 禁跑任何腳本（`validate_judgment.py`／`dd_decision.py`／`dd_scenario.py` 已在判斷端跑過，機械層不歸你）。
+- 禁提整段改寫判斷、禁自己動手修補 `judgment.json`——你只出稽核，修補是另一支流程的事。
+- 證據包裡沒有的東西不得臆測補白，只講證據包內找得到依據的話。
+
+
+===== BUNDLE =====
+
+## ① gate_card.md（判斷層閘卡）
+
+<!-- source: scripts/dd_prompts/gate_contract.md sha256:90928128665c694a; .claude/skills/stock-analyst/references/critic-gates.md sha256:8dff4ac45280acfd git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+<!-- 2026-10-20 ⑤ 改程式判定；來源 gate_contract §⑤／critic-gates ⑤ 同日改成同一條規則（核心軸 none 🔴、非核心 🟡）；重新濃縮時以本卡 ⑤ 為準 -->
+
+你是 DD 管線 v20 的判斷層閘（gate），sonnet，單輪、無工具。你未參與寫判斷，這是一次跨模型冷讀。
+輸入：`judgment.json`（待審判斷物）＋ `facts.json`（事實表，每軸 finding 帶 source／as_of／direction）。
+任務只有一件：依下列 checklist 逐條複核 `judgment.json`，只揪**判斷級**的錯，不判斷寫得好不好。
+判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡。
+禁 WebSearch／WebFetch、禁讀輸入以外任何檔、禁改 `judgment.json`，只出稽核清單。
+
+## checklist（①–⑧ 全出，不得跳號、不得「同上」帶過）
+
+① 競爭惡化——份額流失／新進入者／客戶 second-source／大客戶轉單。查 facts.json 對應軸（competitive_share_entrants／customer_second_source／customer_concentration_credit）裡負向、或應被引用的 finding，核對 judgment.json 的 `moat.threats`／`moat.competitors`／`contradictions[]`／`decision_inputs.bear` 是否接住；被引用=N 卻是負向的 finding 即漏接。[gate_contract §①]
+
+② 供需 durability——緊缺或過剩是結構還是週期，供給可逆性是否寫進 bear 機率。facts.json 的 supply_demand_durability 軸負向 finding，若未被引用且未列 `evidence_dismissed`，須在 `premortem`／`decision_inputs.bear` 找到對應處理，找不到即 🔴。[gate_contract §②]
+
+③ 其他結構變數（開放軸）——法規／政策／關稅／反壟斷／補貼、通路重構、商業模式轉移、替代技術、客戶結構轉移。找 facts.json 覆蓋總覽裡「有 finding 卻沒人接住」的軸，對照 `contradictions[]`／`premortem.blind_spots`／`triggers[]`；閘禁搜尋，不重新查有沒有漏掉的產業變化。[gate_contract §③]
+
+④ priced-in——共識與賣方目標價 vs 現價，裁決是否只是把市場已知的事再說一次。看 `decision_inputs.market_wrong_reason_given` 是否有具體內容（非空泛套話），對照 facts.json 的 `latest_quarter_kpis[].vs_consensus` 與 `valuation_current`。判斷寫「不追／等價格」而裁決是進場、`decision_inputs.wait_for_price` 卻沒填 true ＝ 矛盾；填了 true 時裁決落觀望是規則結果，不算矛盾，只看 `wait_for_price_condition` 是否具體可驗。[gate_contract §④]
+
+⑤ 覆蓋面掃描——**燈號由程式判定**（核心軸 none→🔴；只有非核心軸 none→🟡；全 found／not_applicable→🟢），bundle 附程式結果，你回的 ⑤ 燈號會被覆寫。你只評論：facts.json 點名 status="none"／"not_applicable" 的軸，查詢是否切題（不以查詢次數計）、判斷有沒有交代缺口對結論的影響；不得因缺軸自行升 🔴。
+
+⑥ 量化模組完整性抽查（強制）——(i) `moat.roic_durability.reinvest_rate`／`.roiic` 有沒有 `.formula_note` 真算（寫「估計約 X%」無算式＝🔴）；`.endo_ceiling` 是否與共識 EPS CAGR（facts.json）交叉檢查，天花板 < CAGR 且 `reasoning` 未處理＝🔴。(ii) `scenario_inputs` 的 Bull/Base/Bear EPS 是否有實質價差（Bull 幾乎等於 Base、只靠倍數撐估值＝退化，🔴）；`scenario_inputs.valuation_basis`＝`sales_multiple`（虧損公司，程式決定）時改查 Bull/Base 的營收路徑（`rev`）：Bull 終端營收須實質高於 Base、Bull 前兩年不得與 Base 相同，只靠終端 EV/S 撐價差＝退化，🔴；並看 Bear 的 `net_debt_y5`／`shares_y5` 是否反映該情境的融資缺口與稀釋（債重公司 Bear 沿用目前淨負債與股數＝樂觀，🟡）。(iii) `decision_inputs.irr_base_pct`／`ev5y_pct`／`asym_ratio` 缺省或 null 合法（程式回填），但 ROIIC 缺輸入、口徑或算式仍為實質問題。[gate_contract §⑥]
+
+⑦ 數字新鮮度——`judgment.json` 引用的每個營運指標，是否不比 facts.json 的 `latest_quarter_kpis[].as_of` 對應項目舊？有一個更舊即 🔴。`decision_inputs.consensus_rev_3m_pct` 若依附 `stale=true` 來源，確認未被當唯一依據；引用摘要內容的欄位須標「來源：摘要」。[gate_contract §⑦]
+
+⑧ 前份漂移歸因（QC-49）——facts.json 的 `prior_dd` 存在時，`drift_watch` 20 欄中有變動的每一欄是否都映射到 `contradictions[]` 一個帶 `cause` 的條目（可多欄共用一條目）、且主因站得住；**裁決／核心假設／情境方法變更不得併入純價格原因**；漏欄或無歸因＝🔴；前份該欄本身空或缺欄者不計，給 🟡 或 🟢。無前份時填 🟢 並註「無前份」。[gate_contract §⑧]
+  - `axis` 以 `[程式歸因]` 開頭的條目是程式算的（均線、現價、期望報酬拆解、裁決、角色）。「期望報酬拆解」兩條是程式用本次情境先換情境、再換股價算出的數字（asym_ratio／ev5y_pct／irr_base_pct／bull_5y_price／bear_5y_price），視為已歸因，其中「價格變動」只是股價效果，不適用「不得併入純價格原因」。裁決／角色條目是反事實結果（逐一把矩陣輸入改回前份值重算），視為已歸因；其中「價格變動」是反事實證明估值燈單獨改變了裁決，不適用上面「不得併入純價格原因」，不要為此給 🔴（2026-09-24）。
+  - QC-49 承繼（90 天內翻面須引前次已發火觸發器）只比方向：進場／觀望／迴避。「進場」與「進場·條件式」同方向，角色（核心／衛星）變動也不在 QC-49 範圍；判斷者答 `decision_inputs.qc49_inherit_prior`，前次裁決與角色由程式帶入。
+
+## (a)(b) 兩項強制職責（2026-08-06 拍板，不得因精簡拿掉）
+
+(a) 覆蓋面掃描：逐軸點名「哪一軸整個沒查」，做法同 checklist ⑤（燈號由程式判定，你只評論）。
+(b) 量化模組完整性抽查：ROIC×再投資率真算與否、內生天花板對帳共識 CAGR、情境樹 Bull/Base/Bear EPS 價差是否實質、IRR 內部對帳，做法同 checklist ⑥。
+(c) 數字可回溯：判斷引用的歷史數字逐一核對 facts.json 原文的期間與單位；反證條目要查採納理由與後果是否成立，不能只因編號存在就算過。[gate.md.tmpl 2026-09-11 註腳]
+
+## 🔴／🟡／🟢 口徑
+
+判斷級 🔴 限下列三種形狀：
+
+1. **證據包已有而判斷未接**——證據包內存在的 finding／數字，判斷物完全沒接進 `contradictions`／`moat.threats`／`premortem`／`triggers`／`thesis.R`，也沒寫進 `evidence_dismissed[]`；
+2. **算術或機率防線失守**——推導不可複算、內部恆等式不對帳、情境樹退化、機率與其自身依據矛盾；
+3. **裁決與自身輸入矛盾**——`decision_inputs`／`scenario_meta`／`decision_out` 三者互斥，或裁決與判斷物自己寫下的理由相反。
+
+**資料級不算 🔴**（證據包本身缺料、來源不夠新、某軸查不到）——那是 Stage 0 的問題，最多給 🟡 並在附註點名。無實質問題給 🟢；有實質但不改裁決方向的給 🟡。
+
+## 輸出格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
+
+
+---
+
+## ②b 被引用的事實與負向條目（v19；閘要查數字時不必猜）
+
+### 判斷檔 `fact_refs` 引到的事實（37 條）
+- `f_kpi0_revenue_gaap`（q1_business）｜Revenue (GAAP)＝9141.2 USD m｜期間與口徑：Q4 FY2026（季末 2026-09-27，公告於 2026-10-29）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司新聞稿 investor.starbucks.com Q4 FY26 press release／8-K Ex.99.1（numbers.latest_quarter_kpis.items[0]，as_of Q4 FY2026（季末 2026-09-27，公告於 2026-10-29））
+  - 註記：YoY -4.5%（去年同期 9,569.0）、QoQ -1.9%；略低於共識（Benzinga $9.24B、Yonhap 約低 $80m，聚合站口徑不一）；YoY 下滑主因中國合資交易
+- `f_kpi1_non_gaap_operating_margi`（q1_business）｜Non-GAAP operating margin＝14.0 %｜期間與口徑：Q4 FY2026（季末 2026-09-27，公告於 2026-10-29）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司新聞稿 Q4 FY26 press release（numbers.latest_quarter_kpis.items[1]，as_of Q4 FY2026（季末 2026-09-27，公告於 2026-10-29））
+  - 註記：Non-GAAP 營業利益 $1,276.9m；非 GAAP EPS $0.80 vs 共識 $0.70（Benzinga）
+- `f_kpi2_gaap_operating_margin`（q1_business）｜GAAP operating margin＝10.8 %｜期間與口徑：Q4 FY2026（季末 2026-09-27，公告於 2026-10-29）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司新聞稿 Q4 FY26 press release（numbers.latest_quarter_kpis.items[2]，as_of Q4 FY2026（季末 2026-09-27，公告於 2026-10-29））
+  - 註記：GAAP 營業利益 $991.8m；GAAP EPS $0.59
+- `f_kpi5_comparable_coffeehouse_s`（q1_business）｜Comparable coffeehouse sales（全球）＝7.2 %｜期間與口徑：Q4 FY2026（季末 2026-09-27，公告於 2026-10-29）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司新聞稿 Q4 FY26 press release（numbers.latest_quarter_kpis.items[5]，as_of Q4 FY2026（季末 2026-09-27，公告於 2026-10-29））
+  - 註記：平均客單 +5.2%、交易數 +1.8%
+- `f_kpi6_guidance_fy2027_53`（q1_business）｜Guidance FY2027（53 週年度）＝Non-GAAP EPS $3.15–3.25；Non-GAAP 營業利益率 13.5%–14.0%；營收約 -1% YoY（含第 53 週約 $700m）；北美同店約 +4.0%；淨新店約 1,200 range｜期間與口徑：FY2027 指引（公告於 2026-10-29）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：guidance
+  - 來源：公司新聞稿 Q4 FY26 press release（numbers.latest_quarter_kpis.items[6]，as_of FY2027 指引（公告於 2026-10-29））
+  - 註記：Non-GAAP EPS 共識約 $3.13（聚合站）；營收共識約 +1%，指引低於共識；GAAP EPS 指引 $3.07–3.17
+- `f_peer_sbux_gross_margin_pct`（q2_moat）｜SBUX 毛利率＝21.9 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.SBUX.gross_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_sbux_operating_margin_pct`（q2_moat）｜SBUX 營業利益率＝10.17 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.SBUX.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_cmg_operating_margin_pct`（q2_moat）｜CMG 營業利益率＝14.95 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.CMG.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_cmg_gross_margin_pct`（q2_moat）｜CMG 毛利率＝23.84 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.CMG.gross_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_mcd_operating_margin_pct`（q2_moat）｜MCD 營業利益率＝45.71 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.MCD.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_wing_operating_margin_pct`（q2_moat）｜WING 營業利益率＝27.74 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.WING.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_dpz_operating_margin_pct`（q2_moat）｜DPZ 營業利益率＝19.5 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.DPZ.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_consensus_eps_fy1`（q5_valuation）｜FY1 共識 EPS＝3.17 USD/share｜期間與口徑：2026-10-31／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261031.xlsx（numbers.consensus_revision.latest_snapshot.fy1，as_of 2026-10-31）
+- `f_consensus_eps_fy2`（q5_valuation）｜FY2 共識 EPS＝3.75 USD/share｜期間與口徑：2026-10-31／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261031.xlsx（numbers.consensus_revision.latest_snapshot.fy2，as_of 2026-10-31）
+- `f_consensus_eps_fy3`（q5_valuation）｜FY3 共識 EPS＝4.32 USD/share｜期間與口徑：2026-10-31／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261031.xlsx（numbers.consensus_revision.latest_snapshot.fy3，as_of 2026-10-31）
+- `f_rev_consensus_fy1_m`（q5_valuation）｜FY1 共識營收（百萬）＝37844.88 USD m｜期間與口徑：2026-11-02／yfinance revenue_estimate 0y 平均（26 位分析師）；與 f_consensus_eps_fy1 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy1.avg_m，as_of 2026-11-02）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_rev_consensus_fy2_m`（q5_valuation）｜FY2 共識營收（百萬）＝39423.64 USD m｜期間與口徑：2026-11-02／yfinance revenue_estimate +1y 平均（26 位分析師）；與 f_consensus_eps_fy2 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy2.avg_m，as_of 2026-11-02）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_kpi4_stock_based_compensation`（q1_business）｜Stock-based compensation（FY2026 全年）＝368.6 USD m｜期間與口徑：FY2026（截至 2026-09-27，公告於 2026-10-29）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司新聞稿現金流量表；單季未揭露，占營業利益比未算（缺全年營業利益）（numbers.latest_quarter_kpis.items[4]，as_of FY2026（截至 2026-09-27，公告於 2026-10-29））
+  - 註記：無共識可比
+- `f_kpi3_free_cash_flow_fy2026`（q4_capital）｜Free cash flow（FY2026 全年，新聞稿僅揭露年度現金流量）＝3724.8 USD m｜期間與口徑：FY2026（截至 2026-09-27，公告於 2026-10-29）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司新聞稿現金流量表自算：營運現金流 4,988.4 − 資本支出 1,263.6（非公司自報 FCF；單季未揭露）（numbers.latest_quarter_kpis.items[3]，as_of FY2026（截至 2026-09-27，公告於 2026-10-29））
+  - 註記：無共識可比
+- `f_dividend_yield_ttm`（q5_valuation）｜trailing 12個月股息殖利率＝2.393 %｜期間與口徑：2026-11-02／trailing 12個月股息（依除息日加總，非發放日）÷ 判斷日股價 × 100｜kind：realized
+  - 來源：—（numbers.dividend_yield_ttm.value_pct，as_of 2026-11-02）
+- `f_net_debt_m`（q5_valuation）｜目前淨負債（總債務－現金及短投）＝18549.4 USD m｜期間與口徑：2026-11-02／yfinance 最新一季：總債務 22413.6、現金 3864.2（含租賃負債口徑）｜kind：realized
+  - 來源：—（numbers.capital_structure.net_debt_m，as_of 2026-11-02）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_shares_diluted_m`（q5_valuation）｜目前股數（百萬股）＝1140.1 m shares｜期間與口徑：2026-11-02／yfinance impliedSharesOutstanding（各類股合計）｜kind：realized
+  - 來源：—（numbers.capital_structure.shares_diluted_m，as_of 2026-11-02）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_ev_m`（q5_valuation）｜目前企業價值 EV（市值＋淨負債）＝136720.76 USD m｜期間與口徑：2026-11-02／市值 118171.36 ＋ 淨負債 18549.4｜kind：realized
+  - 來源：—（numbers.capital_structure.ev_m，as_of 2026-11-02）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_price_at_dd`（q5_valuation）｜判斷日股價＝103.65 USD｜期間與口徑：2026-10-30（RTH 收盤，UTC）／收盤價，與情境樹起點同源｜kind：realized
+  - 來源：—（numbers.price_at_dd，as_of 2026-10-30（RTH 收盤，UTC））
+- `f_fwd_pe_latest`（q5_valuation）｜Forward P/E（最近快照）＝32.7 x｜期間與口徑：2026-10-31／分母＝FY1 EPS 3.17，分子＝快照價 103.65｜kind：realized
+  - 來源：—（numbers.valuation_history.fwd_recent_window.points[-1]，as_of 2026-10-31）
+- `f_pe_current`（q5_valuation）｜Trailing P/E（現值）＝46.9 x｜期間與口徑：2026-10-30（RTH 收盤，UTC）／4 個年度端點內的分位＝82.6｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.pe，as_of 2026-10-30（RTH 收盤，UTC））
+- `f_pe_percentile`（q5_valuation）｜Trailing P/E 年度端點分位＝82.6 %｜期間與口徑：2026-10-30（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.pe.current_percentile_within_annual_points，as_of 2026-10-30（RTH 收盤，UTC））
+- `f_ps_current`（q5_valuation）｜P/S（現值）＝3.12 x｜期間與口徑：2026-10-30（RTH 收盤，UTC）／4 個年度端點內的分位＝100.0｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.ps，as_of 2026-10-30（RTH 收盤，UTC））
+- `f_ps_percentile`（q5_valuation）｜P/S 年度端點分位＝100.0 %｜期間與口徑：2026-10-30（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.ps.current_percentile_within_annual_points，as_of 2026-10-30（RTH 收盤，UTC））
+- `f_ev_s_current`（q5_valuation）｜EV/S（現值）＝3.61 x｜期間與口徑：2026-10-30（RTH 收盤，UTC）／4 個年度端點內的分位＝100.0｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.ev_s，as_of 2026-10-30（RTH 收盤，UTC））
+- `f_ev_s_percentile`（q5_valuation）｜EV/S 年度端點分位＝100.0 %｜期間與口徑：2026-10-30（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.ev_s.current_percentile_within_annual_points，as_of 2026-10-30（RTH 收盤，UTC））
+- `f_consensus_rev_3m_fy1_pct`（q5_valuation）｜FY1 共識近 3 個月修正＝32.64 %｜期間與口徑：2026-07-30 → 2026-10-31／FY1 共識 EPS 2.39 → 3.17（Koyfin 快照，約 90 天間距）；投影成 decision_inputs.consensus_rev_3m_pct｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261031.xlsx（numbers.consensus_revision.latest_snapshot.fy1 ÷ snapshot_90d_prior.fy1，as_of 2026-10-31）
+- `f_consensus_rev_fy1_pct`（q5_valuation）｜FY1 共識修正＝21.46 %｜期間與口徑：2026-10-31／兩份 Koyfin 快照之間的 EPS 修正幅度（2.61 → 3.17）｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261031.xlsx（numbers.consensus_revision.fy1.revision_pct，as_of 2026-10-31）
+- `f_consensus_rev_fy2_pct`（q5_valuation）｜FY2 共識修正＝19.81 %｜期間與口徑：2026-10-31／兩份 Koyfin 快照之間的 EPS 修正幅度（3.13 → 3.75）｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261031.xlsx（numbers.consensus_revision.fy2.revision_pct，as_of 2026-10-31）
+- `f_rsi14`（q5_valuation）｜RSI(14)＝63.45｜期間與口徑：2026-10-30（RTH 收盤，UTC）／日線 14 期；rsi14_usable=True｜kind：realized
+  - 來源：—（numbers.momentum_26w.rsi14，as_of 2026-10-30（RTH 收盤，UTC））
+- `f_week26_return_pct`（q5_valuation）｜26 週報酬＝-0.97 %｜期間與口徑：2026-10-30（RTH 收盤，UTC）／含息前價格報酬，對照基準 ^GSPC｜kind：realized
+  - 來源：—（numbers.momentum_26w.return_26w_pct，as_of 2026-10-30（RTH 收盤，UTC））
+- `f_ma_state`（q5_valuation）｜週線均線六態（decision_inputs.ma 必須等於此值）＝🟡｜期間與口徑：2026-11-02／timing-appendix §F 週線六態：🟢 價<W52且>W104且三斜率正｜✅ 價>W52>W104>W250且W250斜率>+3%｜🟡 排列過但W250斜率−3~+3%｜🟠 價<W104但>W250｜❌ 價<W250或斜率<−3%｜kind：realized
+  - 來源：程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）（ma_snapshot.json，as_of 2026-11-02）
+  - 原文：「price 103.65 / W52 96.28 / W104 92.79 / W250 88.27 / W250 13週斜率 0.01%」
+
+### findings_digest 中方向為負或來源衝突的條目（18 條）
+- `competitive_share_entrants#0`（competitive_share_entrants｜方向 -｜狀態 ok）：10-K 風險因素：Starbucks 承認並非每個細分市場都居領先，美國大型快餐業者可能壓低客流與客單，全球面臨既有品牌、新進入者與小型專業業者競爭，對手可能以同價或更低價搶份額。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2025-11-14）｜affects：moat_trend、thesis.R、decision_inputs.bear
+- `competitive_share_entrants#1`（competitive_share_entrants｜方向 -｜狀態 ok）：AP/Technomic：星巴克占美國咖啡店消費支出份額由 2023 年 52% 降至 48%，Dutch Bros、Luckin 等連鎖競爭加劇
+  - 來源：AP via Fortune, Starbucks feels the heat as more chains compete for US coffee drinkers（as_of 2026-01-31）｜affects：moat_trend、thesis.R、decision_inputs.bear
+- `competitive_share_entrants#2`（competitive_share_entrants｜方向 -｜狀態 ok）：Luckin 與 Cotti 進入美國市場，以 $2–3 價位低價切入
+  - 來源：eMarketer, Chinese coffee companies Luckin and Cotti plot US expansion（as_of 2025-06-01）｜affects：moat_trend、decision_inputs.bear
+- `supply_demand_durability#3`（supply_demand_durability｜方向 -｜狀態 ok）：業界客流疲弱，評論認為 oversaturation（單位過多）為結構性原因之一，但該說法來自分析師評論與意見文，無單位數據佐證。
+  - 來源：Tagex Brands: Oversaturation in the Restaurant Industry（as_of 2026-01-01）｜affects：thesis.R、decision_inputs.bear
+- `supply_demand_durability#4`（supply_demand_durability｜方向 -｜狀態 ok）：咖啡連鎖競爭者仍擴張：Dutch Bros 2026 Q1 末 1,177 店、計畫至少新開 185 店；7 Brew 朝 1,000 店；Luckin 約 36,000 店。
+  - 來源：Restaurant Dive 7Brew; 綜合咖啡連鎖擴張報導（as_of 2026-06-01）｜affects：moat_trend、thesis.R
+- `regulatory_antitrust#0`（regulatory_antitrust｜方向 -｜狀態 ok）：10-K FY2025 風險因子：個資法規快速演變，FTC 與各州檢察長正將消費者保護法適用於線上資料作法，可能帶來罰款與訴訟（屬資料隱私監管，非反壟斷）。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2025-11-14）｜affects：decision_inputs.bear
+- `regulatory_antitrust#2`（regulatory_antitrust｜方向 -｜狀態 ok）：2026-10 有集體訴訟指星巴克八款「sugar-free」蛋白飲含 13–21 克糖，可能牴觸聯邦標示規範（私人訴訟，未見監管機關行動）。
+  - 來源：Simply Wall St 經 Webull 轉載（as_of 2026-10-15）｜affects：decision_inputs.bear
+- `reg_tariff_export#0`（reg_tariff_export｜方向 -｜狀態 ok）：FY2025 10-K 風險因子：關稅已影響、未來也可能影響咖啡採購成本；公司對咖啡價格上漲的避險能力有限，且供應給授權店的策略性產品（含咖啡）轉嫁成本能力有限。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2025-11-14）｜affects：decision_inputs.bear、valuation
+- `reg_tariff_export#1`（reg_tariff_export｜方向 -｜狀態 ok）：10-K 列示貿易政策／關稅／進出口法規變動為風險，過去已對公司造成不利影響。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2025-11-14）｜affects：thesis.R、decision_inputs.bear
+- `reg_tariff_export#2`（reg_tariff_export｜方向 -｜狀態 ok）：MD&A：預期新關稅與咖啡價格波動的總體挑戰持續；關稅直接影響商品價格與可得性及營運結果。
+  - 來源：SEC EDGAR 10-K FY2025 Item 7 MD&A（as_of 2025-11-14）｜affects：valuation、thesis.R
+- `geo_supply_chain#0`（geo_supply_chain｜方向 -｜狀態 ok）：FY2025 10-K 揭露在 89 個市場營運，面對多元地緣政治環境；風險清單含關稅、制裁與地緣不穩造成的勞動中斷
+  - 來源：Starbucks Form 10-K FY2025（as_of 2025-11-14）｜affects：decision_inputs.bear、thesis.R
+- `geo_supply_chain#1`（geo_supply_chain｜方向 -｜狀態 ok）：FY2024 10-K 列出中國業務特有的資料隱私與網路安全風險
+  - 來源：Starbucks Form 10-K FY2024（as_of 2024-11-15）｜affects：thesis.R
+- `geo_supply_chain#2`（geo_supply_chain｜方向 -｜狀態 ok）：Panjiva 資料顯示哥倫比亞占 Starbucks 進口約 29.5%（原產地集中）；巴西咖啡豆受關稅影響
+  - 來源：Panjiva: Colombia's Coffee Leadership May Slip as Starbucks Stockpiling Ends, Tariffs Bite（as_of 2025-09-01）｜affects：thesis.R、decision_inputs.bear
+- `geo_supply_chain#3`（geo_supply_chain｜方向 -｜狀態 ok）：2026 年 10 月報導美國眾議院中國委員會主席要求 Starbucks 關閉新疆兩家新店；中國外交部否認
+  - 來源：TIKR blog（as_of 2026-10-05）｜affects：thesis.R、triggers
+- `end_markets#2`（end_markets｜方向 -｜狀態 ok）：Technomic 數據：星巴克美國咖啡店支出占比由2023年52%降至2024–25年約48%，外帶車道與低價競爭者擴張；USDA預估2026外食通膨4.6%
+  - 來源：StoneX - Starbucks losing share in US market despite firm demand（as_of 2025-12-31）｜affects：moat_trend、decision_inputs.bear
+- `major_events#1`（major_events｜方向 -｜狀態 ok）：2026-09-22 董事會核准「Back to Starbucks」進一步行動：關閉北美約 1% 門市，重組費用約 3 億美元（約 2 億現金、1 億非現金）；FY2026 淨新開店指引由 600–650 降至約 440。
+  - 來源：SEC EDGAR 8-K（2026-09-24，Item 2.05）（as_of 2026-09-24）｜affects：thesis.R、decision_inputs.bear、valuation
+- `lawsuit_class_action#0`（lawsuit_class_action｜方向 -｜狀態 ok）：2024 年提起的證券集體訴訟（W.D. Wash.，class period 2023-11-02 至 2024-04-30，因 2024-04-30 下修財測股價單日跌逾15%）仍為主要訴訟；2026-01 另有律所宣布對董事／管理層受託責任的衍生訴訟調查。搜尋未見 2026 年和解或判決消息，現況未確認。
+  - 來源：Kirby McInerney / Business Wire：Securities Class Action on Behalf of Starbucks SBUX Investors（2024-09-27）；Johnson Fistel 2026-01 新聞稿（as_of 2024-09-27）｜affects：thesis.R、decision_inputs.bear
+- `product_recall_warning#0`（product_recall_warning｜方向 -｜狀態 ok）：比利時聯邦食品鏈安全局公告召回部分 Starbucks 品牌 ASIA 茶飲（丙二醇 E1520 含量過高），經香港食安中心轉載（2026-02-13）。屬歐洲授權品項，未見美國 2026 年召回。
+  - 來源：Hong Kong Centre for Food Safety 轉載比利時 AFSCA 公告（as_of 2026-02-13）｜affects：thesis.R
+
+### 事實表自陳的缺口（2 條）
+- q2_moat：evidence.numbers.peer_financials 該欄整欄為 null（常見於未單獨揭露研發的業者），事實表 agent 若能從財報補就補，補不到即為缺口，判斷者不得自行估。
+- q6_how_wrong：digest.qa_flags 有 11 條管理層迴避紀錄，內容須由事實表 agent 逐條落成事實或缺口
+
+---
+
+scenario_meta.json sidecar（判斷層情境樹權威，checklist ⑥(iii) 對帳用）
+
+（來源：/Users/ivanchang/financial-analysis-bot/.dd_build/runs/SBUX_20261102/scenario_meta.json）
+（以下 JSON 為緊湊格式（省空白），內容完整）
+```json
+{"bull_5y_price":162.9,"bear_5y_price":58.5,"p_bull_pct":25,"p_bear_pct":30,"upside_5y_pct":9.7,"ev5y_pct":5.6,"irr_base_pct":1.9,"asym_ratio":1.1,"scenario_tree":{"terminal_label":"FY2031E","start":{"eps":3.17,"pe":32.7,"basis":"FY2027 共識非 GAAP EPS 3.17（前瞻一年口徑，Koyfin 2026-10-31）對股價 103.65；終端倍數同為前瞻一年口徑"},"eps":{"bull":[3.3,3.9,4.4,4.9,5.43],"base":[3.2,3.62,3.92,4.22,4.55],"bear":[2.95,3.0,3.05,3.15,3.25]},"pe":{"bull":30,"base":25,"bear":18},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":2.393,"net_buyback":0.5},"second_stage":{"bull_cagr_pct":10,"base_cagr_pct":7},"valuation_dependent":false}}
+```
+
+---
+
+## ④b 舊逐字稿摘錄（前一季＋投資人日；對照管理層以前說過什麼）
+
+### SBUX_Q3_2026_Earnings_Call_20260729.md
+- 2026-07-29｜CFO｜guidance：FY26 EPS 指引上調兩端至 $2.55–$2.65（原話："we are raising our EPS guidance at both ends of the range"）
+- 2026-07-29｜CFO｜guidance：FY26 合併營業利益率指引上調至 >11%（原話："2026 consolidated margin guidance to greater than 11%."）
+- 2026-07-29｜CFO｜guidance：FY26 合併營收預期持平至微增（原話："net revenues to be flat to slightly higher year-over-year"）
+- 2026-07-29｜CFO｜guidance：Q4 美國同店成長預期 6.5% 或更好（原話："fourth quarter comp growth in the U.S. to be 6.5% or"）
+- 2026-07-29｜CFO｜guidance：全年美國同店約略高於 6%（原話："U.S. comp growth of a little more than 6%"）
+- 2026-07-29｜CFO｜guidance：Q4 有效稅率回到中 20% 區間（原話："returns to a more normal level in the mid-20s"）
+- 2026-07-29｜CFO｜guidance：咖啡價格壓力 Q4 持續緩解（原話："we expect coffee price pressures to continue easing in Q4"）
+- 2026-07-29｜CFO｜guidance：FY26 淨新增店數 600–650 不變（原話："approximately 600 to 650 net new"）
+- 2026-07-29｜CFO｜guidance：北美可能出現關店，因對績效不佳門市有更深能見度（原話："we are gaining deeper visibility into some underperforming"）
+- 2026-07-29｜CFO｜margin：Q3 關稅退款大致抵銷前三季關稅，管理層稱年初至今為較正常口徑（原話："The refunds we received in Q3 largely offset"）
+- 2026-07-29｜CFO｜margin：Q3 產品與配送成本率之正常化參考為年初至今 32.3%（原話："the year-to-date metric of 32.3%"）
+- 2026-07-29｜CFO｜margin：扣除關稅退款後北美利潤率仍成長逾 100 bp（原話："Q3 North America margin improved more than"）
+- 2026-07-29｜CFO｜margin：Q3 合併 G&A 年減約 20%（原話："Consolidated G&A decreased by approximately 20% in the"）
+- 2026-07-29｜CFO｜margin：7.9% 同店中約半數或略少來自關店、銷售轉移與外送（原話："about half of it or a little bit less"）
+- 2026-07-29｜CFO｜margin：定價對客單成長貢獻不到 1 點（原話："Pricing contributed less than 1 point of ticket growth"）
+- 2026-07-29｜CFO｜margin：Q3 中國營收 $53M，納入國際部門（原話："we reported $53 million of net revenues attributable to"）
+- 2026-07-29｜CFO｜margin：管理層稱關稅退款已大致取得應得部分（原話："we've largely gotten the refunds we're entitled to"）
+- 2026-07-29｜CEO｜margin：外送目前對利潤率無取捨（原話："there's no trade-off on margins"）
+- 2026-07-29｜CFO｜commitment：$2B 成本節省計畫維持進度（原話："We remain on track with our $2 billion cost savings plan."）
+- 2026-07-29｜CFO｜commitment：FY26 G&A 金額維持低於 FY23（原話："G&A dollars to run below fiscal 2023 levels"）
+- 2026-07-29｜CEO｜commitment：門市 uplift 目標調升至 FY26 底至少 1,500 家（原話："completing at least 1,500 uplifts by fiscal year-end 2026"）
+- 2026-07-29｜CEO｜commitment：FY27 uplift 將明顯加速（原話："meaningful step-up in '27"）
+- 2026-07-29｜CEO｜commitment：管理層稱先拉營收、獲利隨後（原話："We said we would drive sales growth"）
+- 2026-07-29｜CFO｜commitment：中國合資長期門市目標上看 20,000 家（原話："reach up to 20,000 coffeehouses over time"）
+- 2026-07-29｜CFO｜capital_allocation：動用中國交易款償還約 $1.8B 債務（原話："repaid approximately $1.8 billion of our debt"）
+- 2026-07-29｜CFO｜capital_allocation：uplift 平均單店投入約 $150,000（原話："a very low level of investment, as we've shared, $150,000 on"）
+- 2026-07-29｜CEO｜capital_allocation：美國與國際新店組成可能演變，資源轉向 uplift（原話："the composition of U.S. and international new store growth"）
+- 2026-07-29｜CEO｜capital_allocation：北美公司營新店淨成長 FY27 前可能偏低（原話："may remain modest through fiscal 2027"）
+- 2026-07-29｜CEO｜capital_allocation：國際約 90% 已為授權結構（原話："about 90% of our international portfolio is"）
+- 2026-07-29｜CEO｜capital_allocation：FY27 為科技系統現代化年（原話："fiscal 2027 will be an important"）
+- 2026-07-29｜CEO｜capital_allocation：行銷費用約占營收 2% 多，不設上限（原話："we spend a little bit more than 2% of sales on marketing"）
+- 2026-07-29｜CEO｜competition：Refreshers 定位：自稱原創者（原話："we're the original when it comes to refreshers"）
+- 2026-07-29｜CEO｜competition：目標取得超過合理份額（原話："only our fair share, but more than our fair share."）
+- 2026-07-29｜CEO｜competition：下午時段競爭升溫（原話："you see the competition really heating up in that space"）
+- 2026-07-29｜CEO｜product：測試氣泡類飲品（原話："we'll begin testing sparkling beverages in select"）
+- 2026-07-29｜CEO｜customer：90 天活躍會員 3,580 萬（原話："We now have 35.8 million 90-day active members in the U.S."）
+- 2026-07-29｜CEO｜customer：成長涵蓋各世代與收入族群（原話："Sales growth in Q3 was broad-based across"）
+- 2026-07-29｜CFO｜product：通路發展營收成長 22%，部分來自咖啡通膨（原話："helped by coffee inflation"）
+- 2026-07-29｜CEO｜risk：美國消費者信心仍承壓（原話："the continued pressure on U.S. consumer sentiment"）
+- 2026-07-29｜CFO｜risk：Q4 面臨去年同期客流基期與消費環境變動（原話："the continued variability in the broader consumer landscape"）
+- 2026-07-29｜CFO｜risk：北美授權門市 Q3 淨關店 41 家（原話："41 net closures within our licensed portfolio"）
+- 2026-07-29｜CEO｜risk：CEO 承認 2–3 年前開發策略不佳（原話："we did not have a great development strategy when"）
+- 2026-07-29｜CEO｜product：24 小時重點在補貨而非門市營業，後者非目前焦點（原話："that's not a focus area"）
+- 2026-07-29｜CEO｜product：下午時段仍有成長空間（原話："there still is a lot of room for growth"）
+
+### SBUX_Analyst_Investor_Day_Starbucks_Corporation_20260129.md
+- 2026-01-29｜CEO｜guidance：FY2028 目標：營業利益率區間與 EPS 區間（CEO 開場先給）（原話："between 13.5% and 15%, which means $3.35 to $4 in earnings"）
+- 2026-01-29｜CEO｜guidance：FY2028 框架的前提：中國零售維持現況（原話："this framework assumes our China retail operations are a"）
+- 2026-01-29｜CFO｜guidance：FY2026 全球可比銷售指引（原話："comparable sales to grow 3% or better, underpinned by a 3%"）
+- 2026-01-29｜CFO｜guidance：FY2026 合併淨營收與可比銷售成長同步（原話："Our consolidated net revenues will be in line with our comp"）
+- 2026-01-29｜CFO｜guidance：FY2026 營業利益率預期小幅改善，下半年起改善（原話："We expect consolidated operating margins to improve"）
+- 2026-01-29｜CFO｜guidance：FY2026 EPS 指引區間（原話："$2.15 to $2.40 balances sustainable growth"）
+- 2026-01-29｜CFO｜guidance：FY2027 起獲利成長快於營收（原話："Starting in fiscal 2027, earnings will outpace revenue"）
+- 2026-01-29｜CFO｜guidance：中國改合資後 FY2028 EPS 約少 0.15 美元（現行指引未含）（原話："then the fiscal 2028 EPS would be approximately $0.15 less."）
+- 2026-01-29｜CFO｜margin：中國合資對合併營業利益率的年化影響（CFO 數字口徑）（原話："it's about 40 basis points improvement in margin"）
+- 2026-01-29｜CEO, Starbucks International｜margin：國際部門營業利益率預期因中國改授權而升至高十位數（原話："which we expect to climb to the high teens."）
+- 2026-01-29｜CEO, Starbucks International｜margin：國際部門營業利益率 FY28 可能超過 20%（原話："exceed 20% by FY '28."）
+- 2026-01-29｜CFO｜margin：FY2026 之後的利益率改善來源拆解：銷售槓桿與成本節省各半（原話："from equal part sales leverage and cost savings."）
+- 2026-01-29｜CFO｜margin：目標性調價主要用來抵銷通膨（原話："pricing mostly to offset inflation."）
+- 2026-01-29｜CFO｜margin：成本節省管線：90 項以上專案、分階段關卡（原話："current pipeline is comprised of over 90 initiatives"）
+- 2026-01-29｜CEO｜margin：CEO 對成本節省規模的說法：約 20 億美元、2 年、其中 8 億較明確（原話："$2 billion over the next couple of years, 2 years, $800"）
+- 2026-01-29｜CFO｜margin：CFO 更正節省規模與期間（20 億、2026–2028 三年）（原話："It's not $2 billion to $3 billion, $2 billion."）
+- 2026-01-29｜CFO｜margin：CFO 更正節省期間為 2026、27、28 三年（原話："So it's 2026, '27 and '28. So think about it over the 3"）
+- 2026-01-29｜CEO｜margin：CEO 稱成本節省與福利、薪資、勞動投資無關（原話："it doesn't really have anything to do with our benefits or"）
+- 2026-01-29｜CFO｜margin：CFO 估計近期要 1% 至 2% 可比銷售才能覆蓋固定成本（原話："we probably need in that 1% to 2% comp range"）
+- 2026-01-29｜CFO｜margin：CFO 稱公司歷史上每筆新增交易的流動率約 65%，目前尚未達到（原話："the company historically has seen around a 65-or-so"）
+- 2026-01-29｜CEO｜margin：CEO 稱 2028 之後有能力回到 2019 年 17%–18% 利潤率（原話："2019, which is those 17%, 18% margins you're referencing."）
+- 2026-01-29｜CFO｜commitment：CFO 對股東的財務承諾：穩定可比銷售成長（原話："consistent, reliable same-store sales growth year after year"）
+- 2026-01-29｜CFO｜commitment：CFO 稱所有要素都在公司掌控內（原話："Every element is in our control."）
+- 2026-01-29｜CEO｜commitment：CEO 稱進度超前（原話："Comps and transactions across our key markets are growing."）
+- 2026-01-29｜CEO｜commitment：每日補貨目標：2026 曆年底前（原話："we're going to have daily replenishment by the end of"）
+- 2026-01-29｜COO｜commitment：COO 供應鏈目標：美國 90% 門市每日補貨（原話："90% of our U.S. coffeehouses receiving daily replenishment."）
+- 2026-01-29｜COO｜commitment：COO 的 Mastrena 3 推出時程與效益（原話："it will cut that 70 seconds in half"）
+- 2026-01-29｜Global Chief Brand Officer｜commitment：忠誠計畫新版 3 月 10 日上線（原話："Our reimagined program, which launches on March 10"）
+- 2026-01-29｜COO｜commitment：COO 承諾提拔零售領導職位（原話："commitment to promote 90% of retail leadership roles"）
+- 2026-01-29｜CFO｜commitment：正式指引僅涵蓋至 FY2028（原話："we want to focus our formal guidance on the"）
+- 2026-01-29｜CFO｜guidance：全球淨新增門市：FY2026 為 600–650 家，FY2028 逾 2,000 家（原話："accelerates from 600 to 650 in fiscal 2026 to"）
+- 2026-01-29｜CFO｜guidance：FY2028 國際淨新增門市至少 1,500 家（原話："we expect international net new openings will be at least"）
+- 2026-01-29｜CFO｜guidance：新店開發原則：單店建置成本降約 20%（原話："build cost by approximately 20%."）
+- 2026-01-29｜CFO｜guidance：新店目標三年現金回收期（原話："yielding a 3-year cash-on-cash payback in the coming years."）
+- 2026-01-29｜CFO｜capital_allocation：資本支出約占合併淨營收 5%（原話："our CapEx to be at a rate of about 5% on a consolidated net"）
+- 2026-01-29｜CFO｜capital_allocation：近期優先降槓桿而非回購（原話："delevering our balance sheet over share repurchases"）
+- 2026-01-29｜CFO｜capital_allocation：股利政策：逐步成長至約 50% 配息率（原話："time with measured increases until we reach approximately"）
+- 2026-01-29｜CEO｜capital_allocation：美國店型：預期利潤率回到高水位後會想持有更多自營（原話："building, we're actually going to want to be owning."）
+- 2026-01-29｜CEO｜capital_allocation：CEO 對日本、英國是否再授權：持續評估所有權結構（原話："we're always going to evaluate what the right ownership"）
+- 2026-01-29｜CEO｜capital_allocation：國際策略定調為九成授權（原話："we're going to be 90% licensed."）
+- 2026-01-29｜CEO, Starbucks International｜capital_allocation：中國 8,000 家門市由自營轉授權（原話："we're shifting our 8,000 coffeehouses from a"）
+- 2026-01-29｜CEO, Starbucks International｜capital_allocation：國際授權比例由約 55% 升至 90%（原話："licensed to 90% licensed"）
+- 2026-01-29｜CEO, Starbucks International｜capital_allocation：國際部門 pro forma 營收約 50 億美元（原約 80 億）（原話："approximately $5 billion. Yes, that's a little bit lower"）
+- 2026-01-29｜COO｜capital_allocation：美國單店更新（Uplift）每店成本約 15 萬美元（原話："These uplift costs roughly $150,000, are completed mostly"）
+- 2026-01-29｜COO｜capital_allocation：更新計畫進度與完成時間（原話："expect to surpass 1,000 by fiscal 2026 and finish the"）
+- 2026-01-29｜COO｜capital_allocation：美國新店機會：看得到 5,000 家（原話："we see up to 5,000 new coffeehouse"）
+- 2026-01-29｜COO｜capital_allocation：Green Apron Service 追加 5 億美元人力投資（原話："investing $500 million to ensure we have the right number"）
+- 2026-01-29｜Global Chief Brand Officer｜customer：忠誠會員 90 天活躍數創高（原話："a new all-time high of over 35 million, 90-day active"）
+- 2026-01-29｜Global Chief Brand Officer｜customer：Rewards 會員占美國自營營收近六成（原話："Rewards showed nearly 60% of U.S. company-operated revenue"）
+- 2026-01-29｜Global Chief Brand Officer｜customer：新忠誠計畫的營收測算（原話："And we believe it has the power to deliver up to a"）
+- 2026-01-29｜CEO｜customer：一季轉為交易量驅動的同店成長（原話："U.S., in every major market around the world, driven by"）
+- 2026-01-29｜Global Chief Brand Officer｜customer：Rewards 與非 Rewards 交易量近 4 年首度同時成長（原話："we grew Rewards and non-rewards transactions for the first"）
+- 2026-01-29｜Global Chief Brand Officer｜customer：消費者價格感受改善（原話："improvements in affordability perceptions driven by all age"）
+- 2026-01-29｜CFO｜customer：CFO 稱可比銷售以交易量優先（原話："we always believe in transaction growth first"）
+- 2026-01-29｜Global Chief Brand Officer｜customer：約三分之一消費者視星巴克為離家咖啡首選（原話："Starbucks is their first choice for coffee or tea away"）
+- 2026-01-29｜CEO｜product：CEO 稱 2026 轉為進攻與創新（原話："we are shifting to playing offense and innovating."）
+- 2026-01-29｜Global Chief Brand Officer｜product：能量 Refreshers 春季推出（原話："changing the game again with energy refreshers."）
+- 2026-01-29｜CEO｜product：CEO 承認在能量飲品類別起步較晚（原話："we've been late to the game on some of these"）
+- 2026-01-29｜Global Chief Brand Officer｜product：午後時段營收規模與第二高峰目標（原話："dayparts already generate $11 billion after 11:00 a.m."）
+- 2026-01-29｜Global Chief Brand Officer｜product：創造午後第二高峰（原話："there's room to create a true second peak."）
+- 2026-01-29｜COO｜product：Green Apron 試點店交易量領先（原話："650 pilot stores, pilot locations continue to outperform"）
+- 2026-01-29｜COO｜product：尖峰服務時間不到 4 分鐘（原話："we achieved less than 4-minute"）
+- 2026-01-29｜COO｜product：Grow 計畫：五星門市可比銷售為整體 3 倍（原話："5 Shot coffeehouses delivered 3x the same-store comp"）
+- 2026-01-29｜COO｜competition：COO 稱完整體驗下競爭者難以撼動（原話："customers don't -- competitors do not move the needle."）
+- 2026-01-29｜COO｜competition：COO 承認目前得來速並非最快（原話："in America. We do not today. It's good. It's competitive."）
+- 2026-01-29｜CEO｜competition：CEO 稱約 1,000 個競品所在地點方圓一英里內沒有星巴克（原話："there's like 1,000 sites out there where there are"）
+- 2026-01-29｜COO｜risk：COO 描述接手前的營運問題：決策過度集中（原話："too much centralized decision-making from Seattle"）
+- 2026-01-29｜COO｜risk：COO 描述行動點單先前的問題（原話："orders created chaos instead of convenience."）
+- 2026-01-29｜CEO｜risk：CEO 承認缺貨頻繁（原話："we were out of stock way too often."）
+- 2026-01-29｜CFO｜risk：CFO 承認單一來源採購過多（原話："at our scale and maturity, we have too many of them."）
+- 2026-01-29｜CFO｜risk：CFO 對中國合資後成長的保留說法（原話："But we don't want to get ahead of ourselves."）
+- 2026-01-29｜CEO｜risk：中國年開店逾 1,000 家的時點（原話："It's not going to happen this year or next year,"）
+- 2026-01-29｜CEO, Starbucks International｜risk：國際開店成長前緩後快（原話："Growth will be moderate through 2026, but it will then"）
+
+### 問答異常語氣（迴避／改口／保留）
+- SBUX_Q3_2026_Earnings_Call_20260729.md｜問：Bernstein：公司營與授權門市的同店與營運表現比較｜答法：Niccol 先確認問題後以定性回答（授權店也有好季、GROW 報告），未提供兩者數字差距
+- SBUX_Q3_2026_Earnings_Call_20260729.md｜問：Wells Fargo：Q4 是否還有關稅退款、指引是否含入｜答法：Smith 未給 Q4 金額，改建議以年初至今口徑為錨，並稱已大致取得應得退款
+- SBUX_Q3_2026_Earnings_Call_20260729.md｜問：JPMorgan：Green Apron 工時是否已到位、未來有無效率空間｜答法：Niccol 以營運者管理良好及成長空間回答，未給工時數字或方向
+- SBUX_Analyst_Investor_Day_Starbucks_Corporation_20260129.md｜問：Eric Gonzalez：20–30 億節省是否多數流入獲利、與步調｜答法：CFO 先更正為 20 億、期間 2026–2028 三年，與 CEO 先前『2 年、其中 8 億』說法不同；對流入獲利比例只答『a little bit of both』，未給比例
+- SBUX_Analyst_Investor_Day_Starbucks_Corporation_20260129.md｜問：Lauren Silberman：達成 3% 以上可比銷售能否到 EPS 高標｜答法：CEO 以『需要銷售與成本紀律』作答，未給槓桿數字
+- SBUX_Analyst_Investor_Day_Starbucks_Corporation_20260129.md｜問：Dennis Geiger／Danilo Gargiulo：北美利潤率所需可比銷售門檻與邊際流動率｜答法：CFO 給 1%–2% 區間與歷史約 65% 流動率，稱『we're not there today』並請 6 個月後再問
+- SBUX_Analyst_Investor_Day_Starbucks_Corporation_20260129.md｜問：Jeff Bernstein：2028 後 EPS 成長基準｜答法：CEO、CFO 皆只說獲利成長要快於營收，未給 2028 後 EPS 成長數字
+- SBUX_Analyst_Investor_Day_Starbucks_Corporation_20260129.md｜問：Jacob Aiken-Phillips：利潤率擴張哪些部分有執行風險｜答法：CEO 以專案有負責人與期限、管線持續補充作答，未指出特定高風險部分
+- SBUX_Analyst_Investor_Day_Starbucks_Corporation_20260129.md｜問：Andrew Charles：是否再授權日本、英國、加拿大及資金用途｜答法：CEO 稱『always going to evaluate』，未答資金用途與時程
+- SBUX_Analyst_Investor_Day_Starbucks_Corporation_20260129.md｜問：Brian Bittner：3,550 萬會員在三層級的分布｜答法：Tressie 稱多數最佳客戶落在 Gold 與 Reserve，未給人數分布
+- SBUX_Analyst_Investor_Day_Starbucks_Corporation_20260129.md｜問：未具名分析師：午後時段貢獻是否已含在 2028 展望，或屬上行｜答法：CEO 稱午後有『big incremental opportunity』，未回答是否已計入展望
+
+---
+
+| axis | status | n_findings | n_queries |
+|---|---|---|---|
+| competitive_share_entrants | found | 3 | 2 |
+| customer_second_source | not_applicable | 0 | 0 |
+| customer_concentration_credit | not_applicable | 0 | 0 |
+| supply_demand_durability | found | 5 | 4 |
+| regulatory_antitrust | found | 3 | 3 |
+| reg_tariff_export | found | 4 | 1 |
+| geo_supply_chain | found | 4 | 2 |
+| end_markets | found | 5 | 3 |
+| substitute_technology | found | 1 | 2 |
+| channel_business_model_shift | found | 3 | 2 |
+| capital_markets_pricing | found | 5 | 4 |
+| major_events | found | 3 | 4 |
+
+未涵蓋／不適用軸的查詢詞原文（供判相關性）：
+- **customer_second_source**（not_applicable）：（無查詢記錄）
+- **customer_concentration_credit**（not_applicable）：（無查詢記錄）
+
+---
+
+## 前份判斷摘要（含 drift_watch_prior 20 欄前份值；漂移歸因對帳用）
+
+```json
+{"date":"20260901","verdict":"進場","role":"衛星","H":{"status":"ok","format":"table","rows":[{"id":"H1","text":"門市本體需求動能可持續（剝離關店移轉/外送/中國JV效應後，北美流量正且≥2.5%）","columns":{"2Y驗證點":"FY27美國comp≥+4%，門市本體≥+2.5%","5Y驗證點":"美國comp穩定+3%以上","10Y驗證點":"uplift全鋪設後生產力續升","具體數字門檻":"門市本體comp≥+2.5%連4季（Q3：總comp+7.9%、交易量+4.2pp）","信息來源":"Q3法說Cathy Smith：「約一半或略少於一半」來自關店/移轉/外送","漂移觸發條件":"連2季"}},{"id":"H2","text":"利潤率階梯可走完——非GAAP合併OM自FY25約10.2%走到FY26>11%、FY28 13.5-15%，sales leverage與$2B計畫「各半」貢獻真的落地","columns":{"2Y驗證點":"FY26>11.0%→FY27邁向12%+","5Y驗證點":"FY28 13.5-15%（Investor Day框架）","10Y驗證點":"邁向管理層長期願景17-18%（未正式guide）","具體數字門檻":"FY27全年OM≥12.0%；COGS率不YoY擴張>100bp","信息來源":"Investor Day財務框架＋Q2法說「一半top line、一半cost savings」","漂移觸發條件":"FY27全年OM"}},{"id":"H3","text":"倍數不下修到QSR水準——FY+2 Fwd P/E維持28-34x，正常化退坡至24-27x","columns":{"2Y驗證點":"Fwd P/E不連4季","5Y驗證點":"24-27x brand premium守住","10Y驗證點":"長期22-25x","具體數字門檻":"Fwd P/E不連4季","信息來源":"自算5年realized-NTM區間20.9x／32.1x／49.9x（§10.1）","漂移觸發條件":"共識EPS連4季下修+Fwd P/E"}}]},"R":{"status":"ok","format":"table","rows":[{"id":"R1","text":"關店移轉順風退潮＋boycott實質流量損失——Q3 comp約一半來自關店/移轉/外送","columns":{"對應假設":"H1","時間尺度":"⚡短期","監測指標":"門市本體comp；boycott城市comp離散度","警戒閾值":"門市本體comp連2季"}},{"id":"R2","text":"SBWU全國合約鎖定永久性人力成本，boycott升高簽約壓力","columns":{"對應假設":"H2","時間尺度":"🔥中期","監測指標":"SBWU談判進度；boycott趨勢","警戒閾值":"合約鎖最低三人配置或$17底薪→opex+100-150bp"}},{"id":"R3","text":"Niccol依賴＋中國40%權益殘值折讓（JV僅運作3個月，Q3貢獻僅$5,300萬）","columns":{"對應假設":"H1+H2+H3","時間尺度":"🐢長期","監測指標":"Niccol/Smith留任；JV貢獻軌跡","警戒閾值":"Niccol離任（即時重跑）；JV貢獻連4季近零"}},{"id":"R4","text":"咖啡豆成本——ICE arabica庫存跌至26年低位，現貨~$3.40/lb，FY27對沖簿將重定價","columns":{"對應假設":"H2","時間尺度":"🔥中期","監測指標":"arabica現貨；COGS率","警戒閾值":"COGS率連2季YoY擴張>100bp；arabica連4週≥$3.60/lb"}},{"id":"R5","text":"相對QSR估值溢價擴大至+80.6%（前份+69%），復甦完成後收斂風險上升","columns":{"對應假設":"H3","時間尺度":"🐢長期","監測指標":"SBUX vs餐飲中位Fwd P/E差","警戒閾值":"溢價收斂50%至~40%→約$85"}},{"id":"R6","text":"GLP-1對含糖飲品與早餐時段的長期需求侵蝕（咖啡為受衝擊第二大品類，含糖飲料支出約−7%，高收入早餐客群占比高）","columns":{"對應假設":"H1","時間尺度":"🐢長期","監測指標":"含糖冷飲品項占比；早餐時段交易量YoY","警戒閾值":"兩指標連續下滑且無protein/低糖品項對沖跡象"}}]},"single_thing":null,"kill_metrics":null,"rearm_trigger":"starter 1/3·帽3%·加碼＝FY27 OM guidance（2026-10-29）≥12.5%或回檔至~$94（W52均線）；門市本體comp連2季<+2.5%則停止加碼","irr_base_pct":4.0,"ev5y_pct":10.3,"drift_watch_prior":{"dca_verdict":"進場","dca_role":"衛星","signal":"B","val":"🟠","ma":"🟡","trap":"🟡","moat_trend":"→","runway_post_y5":"🟡","asym_ratio":1.05,"ev5y_pct":10.3,"irr_base_pct":4.0,"max_dd_pct":-60.0,"bull_5y_price":172.0,"bear_5y_price":54.0,"p_bull_pct":25.0,"p_bear_pct":30.0,"rearm_trigger":"starter 1/3·帽3%·加碼＝FY27 OM guidance（2026-10-29）≥12.5%或回檔至~$94（W52均線）；門市本體comp連2季<+2.5%則停止加碼","price_at_dd":106.25,"archetype":"品質複利成長","cycle_position":null}}
+```
+
+---
+
+## judgment.json 全文（被審對象，緊湊格式）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"SBUX","date":"2026-11-02","schema":"v15.0","contract":"v19","company_name":"Starbucks Corporation"},"oneliner":"轉機已落地：Q4 全球同店 +7.2%、營益率年增 450bp，FY2027 指引提前碰到 FY2028 框架下緣；但 FY2028 共識已隱含約 15% 營益率，前瞻 32.7 倍下基本情境報酬偏薄，持股不追價，等 $92 或交易數與營益率雙雙超標再加碼","facts_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/SBUX_20261102/facts.json","scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/SBUX_20261102/scenario.json","answers":{"q1_business":{"verdict":"賺北美日常咖啡習慣的錢，北美約占營收八成；錢卡在門市人力與商品成本這一節，Q4 非 GAAP 營益率 14.0%（GAAP 10.8%），利潤回升靠同店槓桿與成本節省","reasoning":"分部（Q4 FY26，總營收 $91.4 億、年減 4.5%，主因中國改合資）：北美 $73.3 億（約 80%，年增 6.3%，營益率約 16%）、國際 $13 億（約 14%，年減 37%，營業利益 $2.6 億）、通路發展 $4.9 億（約 5%，年減 8.9%）。最新一季非 GAAP 營益率 14.0%、GAAP 10.8%，TTM 毛利率 21.9%。收錢方式：北美以自營門市直接賣飲品與食物為主，授權店收權利金與產品銷售，國際約九成改授權，通路發展透過雀巢聯盟授權。價量：Q4 全球同店 +7.2%（客單 +5.2%、交易 +1.8%），美國同店 +7.7%（交易 +2.4%）。單點依賴：無客戶集中，集中風險在地理與消費端，北美約占八成營收，投資人日稱會員占美國自營營收近六成；品牌與會員是護城河證據，也是集中風險。錢卡在門市人力與商品成本：咖啡價格與關稅由公司吸收、避險有限，Green Apron 人力投資已在 2026-08 滿一年進入基期。FY2027 指引營收約 −1%（含第 53 週約 $7 億）、非 GAAP EPS $3.15–3.25、北美同店約 +4%。產業時鐘判 I（復甦）：NRA 估 2026 美國實質餐飲銷售 +0.8%（由 1.3% 下修），2027 預期轉強至 +4.8%，但 Black Box 估 2027 客流大致持平，復甦力道存疑。","fact_refs":["f_kpi0_revenue_gaap","f_kpi1_non_gaap_operating_margi","f_kpi2_gaap_operating_margin","f_kpi5_comparable_coffeehouse_s","f_kpi6_guidance_fy2027_53","f_peer_sbux_gross_margin_pct"],"verdict_values":{"revenue_quality":"高頻小額、預收儲值，無客戶集中；營收短期受中國去合併拖累（FY2027 約 −1%，含第 53 週約 $7 億），北美同店與交易數才是有機成長的真實讀數","unit_econ_note":"門市翻新每店約 $15 萬（投資人日 COO），新店建置成本目標降約 20%、三年現金回收（投資人日 CFO，尚未驗證）；CFO 稱歷史上新增交易約 65% 流到利潤，投資人日時尚未回到；Q4 北美營益率約 16%、年增 440bp，顯示槓桿正在回來","archetype":{"primary":"品質複利成長","secondary":"轉機/特殊情境","confidence":"中","fingerprint":"全球咖啡品牌加會員數位生態；北美自營為主、國際約九成授權；利潤率自 FY2025 谷底回升中，EPS 成長主要來自營益率修復"},"industry":{"clock_phase":"I","sd_verdict_source":"供給可逆性高：咖啡店展店門檻低、對手持續加店（Dutch Bros、7 Brew、Luckin），星巴克自己也在關店；需求面 2026 美國實質餐飲 +0.8%、咖啡簡餐店市場 +0.2%，屬低成長而非結構性擴張。來源：NRA、IBISWorld、Restaurant Dive、2026-09 8-K","bargaining":{"up":"咖啡生豆供應分散，但期貨與關稅成本由公司吸收、10-K 自承避險有限且對授權店轉嫁有限；哥倫比亞約占進口 29.5%","down":"顧客分散、無單一客戶；外送平台分走部分利潤，FY2027 Q2 起外送整合進自有 App 可收回部分議價","geo":"89 個市場營運；中國改合資持股 40%，新疆門市遭美國國會議員施壓，中國資料隱私與網安有特有風險"},"profit_pool_dir":"美國咖啡店支出往得來速與低價連鎖分散（星巴克份額 52%→48%）；國際利潤池由自營零售轉成授權權利金，星巴克改拿較少但資本更輕的一塊","tam_table":[{"item":"美國咖啡簡餐店市場（2026，IBISWorld）","value":"$755 億、年增約 0.2%"},{"item":"星巴克占美國咖啡店支出（Technomic）","value":"2023 年 52% → 2024–25 年約 48%"},{"item":"中國咖啡市場（分析師估）","value":"2025 年 $187 億，至 2030 年年增近 6%"},{"item":"美國餐飲實質銷售（NRA）","value":"2026 年 +0.8%（原估 1.3%），2027 年預期 +4.8%"},{"item":"營業利益池占比 5 年前→現","value":"事實表未涵蓋"}]}}},"q2_moat":{"verdict":"護城河 B 級、方向持平：營運面明顯修復，但定價權受低價與得來速對手牽制","reasoning":"機制：品牌加會員數位生態加第三空間門市網路，帶來高頻習慣性消費。方向判持平：執行面擴大（全球同店連五季正成長、北美逾 80% 自營門市同店為正、Q4 營益率年增 450bp），定價面縮減（Technomic 份額 52%→48%、管理層主動把漲價壓在 CPI 以下）。可證方向：ROIC 差距事實表未涵蓋，改用自營模式最接近的 CMG 比營益率，TTM 星巴克 10.17% 對 CMG 14.95%，差約 4.8pp；FY2027 指引 13.5%–14% 若兌現可收窄到約 1pp。份額資料只到 2025，FY2026 美國同店 +6.5% 遠高於產業實質成長（2026 約 +0.8%），推測份額已止跌，但缺 sourced 份額數字前不得判上升。評分：執行 7、定價 7。持續期四檢查點皆 🟡，超額報酬能延續但沒有結構性鎖定；增量報酬事實表未涵蓋，歷史對照 FY2022→FY2026 營業利益近乎持平。","fact_refs":["f_peer_sbux_operating_margin_pct","f_peer_cmg_operating_margin_pct","f_peer_sbux_gross_margin_pct","f_peer_cmg_gross_margin_pct","f_peer_mcd_operating_margin_pct","f_peer_wing_operating_margin_pct","f_peer_dpz_operating_margin_pct","f_kpi5_comparable_coffeehouse_s","f_kpi1_non_gaap_operating_margi"],"verdict_values":{"moat":{"mechanism":"品牌加會員數位生態（美國 90 天活躍會員 3,600 萬、投資人日稱約六成美國自營營收來自會員）加第三空間門市網路與每日補貨供應鏈，形成習慣性高頻消費；北美居家與即飲咖啡第一（雀巢聯盟授權）","execution":7,"pricing":7,"grade":"B","trend":"→","trend_evidence":"執行面擴大：五季同店正成長、北美逾 80% 自營門市同店為正（一年前不到 50%）、Q4 營益率年增 450bp；定價面縮減：Technomic 份額 52%→48%（2023→2025），管理層主動把漲價壓在 CPI 以下，客單成長靠搭售與組合；兩相抵銷判持平。份額下滑有 sourced 證據，不得判上升","competitor_notes":[{"name":"CMG","strategy_note":"最接近的自營模式同業，營益率高出星巴克約 5pp，是利潤率修復的合理對照錨；FY2027 指引若達成，差距可收窄大半"},{"name":"MCD","strategy_note":"以加盟收租金與權利金為主，利潤率結構不可直接比；在美國以低價咖啡搶早餐客，是客流競爭者而非利潤率對照"},{"name":"WING","strategy_note":"加盟為主的權利金模式，與星巴克同店驅動的自營模式不同軌，只作資本輕模式的利潤率上限參考"},{"name":"DPZ","strategy_note":"加盟加供應鏈模式，外送能力是可借鏡處；星巴克外送營收五年增逾三倍、FY2027 整合進自有 App，正往同方向走"},{"name":"Dutch Bros","strategy_note":"得來速專門連鎖，年開店至少 185 家，是美國份額流失的主要承接者之一（事實表未收財務數字）"},{"name":"Luckin","strategy_note":"中國約 36,000 店的規模，以 $2–3 價位切入美國；在美國屬點對點威脅，在中國是合資公司的直接對手"}],"spread_notes":null,"peer_na_reason":"事實表同業只有毛利率、營益率、FCF 利潤率，未收錄投入資本與 ROIC，無法算 ROIC 差距；MCD、WING、DPZ 以加盟為主，利潤率結構與自營為主的星巴克不可直接比，可比軸改用自營的 CMG 與份額數據","threats":[{"level":"🟡","text":"得來速專門連鎖擴張（Dutch Bros 1,177 店、計畫至少新開 185 店；7 Brew 朝 1,000 店），直接搶早晨與下午時段的車道客，屬點對點競爭","p":"50%","evidence_refs":["supply_demand_durability#4","competitive_share_entrants#1","end_markets#2"]},{"level":"🟡","text":"Luckin、Cotti 以 $2–3 價位進入美國，壓低價格敏感客群的客單；Luckin 在中國的規模可支撐長期補貼","p":"30%","evidence_refs":["competitive_share_entrants#2"]},{"level":"🟡","text":"大型速食業者以低價咖啡搶客流，10-K 自承並非每個細分市場都領先","p":"30%","evidence_refs":["competitive_share_entrants#0"]}],"roic_durability":{"quadrant":"低利益率×高周轉（傾向判讀；投入資本事實表未涵蓋）","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者、決策者、付款者多為同一人；需求是日常習慣、屬想要不是需要：Q4 交易數在各時段與收入層都成長、90 天活躍會員 3,600 萬創新高，但高價咖啡可延後或降級到 $2–3 的替代品，Q3 法說 CEO 承認美國消費者信心承壓"},{"item":"決策層級","level":"🟡","text":"替代性要看單杯購買：每天每杯都是重新選擇，沒有合約或遷移成本；會員分級（Green／Gold／Reserve）與儲值是軟性轉換成本，Q4 法說稱升級主要靠頻次提升；漲價後流失率事實表未涵蓋"},{"item":"價值鏈分配","level":"🟡","text":"品牌與門市端拿走價值鏈大部分利潤；上游生豆供應分散，但期貨與關稅成本由公司吸收、10-K 自承避險有限；外送平台抽成將因外送整合進自有 App 部分收回；國際改授權後零售利潤讓給在地營運商，星巴克收權利金與產品銷售"},{"item":"社會容忍度","level":"🟡","text":"管理層刻意把漲價壓在 CPI 以下，等於承認社會價格天花板低於經濟上限；勞動（工會合約）、健康標示（無糖蛋白飲集體訴訟）、地緣（新疆門市）三方面都有壓力，尚未改變定價或營運"}],"roiic":"事實表未涵蓋（投入資本、折舊攤銷未收錄）。歷史對照：GAAP 營業利益 FY2022 約 $44.3 億（營收 $322.5 億×13.74%），FY2026 TTM 約 $38.5 億（約 $379 億×10.17%），即使用非 GAAP 11.9% 也只有約 $45 億，四年再投資（門市翻新、人力、展店）後營業利益未增，歷史增量報酬近零；前瞻依管理層目標為翻新每店約 $15 萬、新店三年現金回收，未經驗證","reinvest_rate":"事實表未涵蓋折舊攤銷與營運資金變動，無法依公式計算；FY2026 資本支出 $12.6 億、FY2027 指引約營收 5%（約 $19 億），淨再投資率需折舊數字才能定","endo_ceiling":null,"formula_note":"內生成長率＝增量 ROIC×再投資率，兩項輸入皆缺，不硬算；以淨開店約 2.9%（1,200÷41,607，多為資本輕的授權店）加北美同店約 4% 作有機營收引擎的質性上界，約中個位數；共識 EPS 年化 16.7% 與之差距歸因於利潤率擴張"}}}},"q3_growth":{"verdict":"五年後跑道中等：北美同店約 4% 加以授權為主的國際展店，FY2028 之後 EPS 成長回到高個位數，共識 3 年 16.7% 的大半來自利潤率回升","reasoning":"成長拆解：FY2027 營收約 −1%（中國去合併，含第 53 週約 $7 億），EPS 指引中點 3.20 較 FY2026 實際 2.72 增約 18%，幾乎全來自營益率中點擴張約 190bp 與第 53 週約 $0.10。共識 3 年 EPS 年化：(4.32÷2.72)^(1/3)−1≈16.7%（FY2026 實際 2.72 取自 Q4 法說，非 GAAP；共識取自 Koyfin 2026-10-31 快照，家數未揭露）。內生天花板事實表無法算（投入資本與折舊未收錄），以淨開店約 2.9% 加北美同店約 4% 看，有機營收引擎約中個位數；缺口歸因利潤率擴張為主、第 53 週次之、淨回購約 0.8%／年再次，無收購。跑道：不適用滲透率口徑，管理層白地為北美再 5,000 家、國際由 23,431 家朝近 40,000 家，以每年 1,200–2,000 家淨增約需 11–18 年，屬管理層說法未經驗證。五年後判 🟡：美國份額約 48%，遠高於 35%，且沒有 sourced 第二條成長曲線，國際授權展店主要增加權利金，營收貢獻小。衰退信號亮 2 個（年度毛利率連降、EPS 成長遠高於營收成長），長期成長性中等。","fact_refs":["f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_kpi6_guidance_fy2027_53","f_rev_consensus_fy1_m","f_rev_consensus_fy2_m","f_kpi5_comparable_coffeehouse_s","f_kpi4_stock_based_compensation","f_kpi3_free_cash_flow_fy2026"],"verdict_values":{"growth":{"driver_mix":"FY2027–28 以利潤率為主（營益率中點 +190bp、第 53 週約 $0.10），價（客單：搭售、組合、低於 CPI 的定價）次之，量（交易數、淨開店約 2.9%）再次，淨回購約 0.8%／年；無收購","runway_years":"11–18（以管理層白地與每年淨增 1,200–2,000 家推估，未經驗證；不適用滲透率口徑）","runway_post_y5":"🟡","endo_ceiling_basis":"投入資本與折舊攤銷事實表未涵蓋，無法算增量 ROIC×再投資率；以淨開店約 2.9% 加北美同店約 4% 作有機營收引擎的質性上界（中個位數），共識 EPS 年化 16.7% 超出部分歸因利潤率擴張","segments":[{"item":"北美（Q4 FY26）","value":"營收 $73.3 億、年增 6.3%、占約 80%；營益率約 16%（年增 440bp）；FY2027 同店指引約 +4%，淨增 90–100 家"},{"item":"國際（Q4 FY26）","value":"營收 $13 億、年減 37%（中國去合併）、營業利益 $2.613 億（約 20%）；FY2027 淨增約 1,100 家，中國約一半"},{"item":"通路發展（Q4 FY26）","value":"營收 $4.944 億、年減 8.9%；營益率長期中高 40% 區間；FY2027 營收預期約 −10%"}],"decay_signals":[{"signal":"毛利率連2季年減","status":"亮","note":"年度毛利率 FY2023 27.4%→FY2024 26.8%→FY2025 22.8%→TTM 21.9%；季度口徑事實表未涵蓋，且中國去合併改變組合"},{"signal":"核心市占近12個月縮減","status":"不確定","note":"Technomic 份額 52%→48% 只到 2025；FY2026 美國同店 +6.5% 遠高於產業，推測止跌但無數字"},{"signal":"主力產品提價後銷量下滑","status":"未亮","note":"Q4 美國客單 +5.2% 同時交易 +2.4%"},{"signal":"EPS 成長顯著高於營收成長（差 >5pp）","status":"亮","note":"共識 3 年 EPS 年化 16.7%，FY2027 營收約 −1%、FY2028 共識 +4.2%，差距來自利潤率回升"},{"signal":"FCF／淨利 <0.75 連2年","status":"未亮","note":"FY2024 0.88、FY2025 1.32"},{"signal":"股權酬勞／營收 >5% 且逐年上升","status":"未亮","note":"FY2026 約 1.0%"},{"signal":"TAM 萎縮或被替代技術壓縮","status":"未亮","note":"美國咖啡簡餐店 2026 年增約 0.2%，持平未萎縮；機器人咖啡師市場數字為促銷稿，未驗證"},{"signal":"產業估值倍數近3年系統性下移","status":"不確定","note":"事實表未涵蓋同業倍數歷史"},{"signal":"維護性資本支出占 FCF >60%","status":"未亮","note":"FY2026 總資本支出 $12.6 億約 FCF 的 34%，維護性部分更低"},{"signal":"停止投資新產能且營收3年內下滑","status":"未亮","note":"FY2027 營收約 −1% 屬中國去合併的會計效果，全球仍淨增約 1,200 家"}],"trap_rating":"🟡"}}},"q4_capital":{"verdict":"資本配置中等：股權稀釋低，但配息加 $10 億回購已略超過自由現金流，且在約 3% 盈餘殖利率回購並不划算","reasoning":"FY2026 自由現金流 $37.2 億（營運現金流 $49.9 億減資本支出 $12.6 億，自算）；FCF／淨利 FY2024 0.88、FY2025 1.32，轉換率正常。股權酬勞 $3.69 億，約營收 1.0%、市值 0.3%。現金去向：季配息調到 $0.63，年化約 $28.7 億；FY2027 回購約 $10 億；FY2026 以中國交易款償債約 $18 億（Q3 法說 CFO）；資本支出約營收 5%。配息加回購約 $38.7 億，略高於 FY2026 自由現金流，回購要靠 FY2027 利潤率提升或舉債；淨負債 $185 億（含租賃）。投資人日 CFO 定調先降槓桿、配息率逐步回到約 50%（目前約為 FY2027 共識 EPS 的 79%）。計分：收購不適用；回購以盈餘殖利率約 3.1% 買進，不過關；股權稀釋過關。","fact_refs":["f_kpi3_free_cash_flow_fy2026","f_kpi4_stock_based_compensation","f_dividend_yield_ttm","f_net_debt_m","f_shares_diluted_m","f_ev_m","f_consensus_eps_fy1","f_price_at_dd"],"verdict_values":{"capalloc":{"items":[{"name":"ma_roiic","applicable":false,"passed":null,"input":"近三年無重大收購；中國業務 60% 出售予博裕（約 $40 億）屬處分，無已實現收購報酬可算"},{"name":"buyback_yield","applicable":true,"passed":false,"input":"FY2027 共識 EPS 3.17÷股價 103.65＝盈餘殖利率約 3.1%；事實表未收 10 年期殖利率，但要過『10 年期加 2%』需 10 年期 ≤1.1%，判不過"},{"name":"sbc_dilution","applicable":true,"passed":true,"input":"FY2026 股權酬勞 $3.686 億，約市值 $1,181.7 億的 0.3%；FY2027 回購約 $10 億足以抵銷，淨稀釋 <1.5%／年"}]},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購撐，配息與回購要點已寫在判斷句；近三年現金去向四分與回購均價事實表未涵蓋"}}}},"q5_valuation":{"verdict":"現價要的是 FY2028 營益率走到 15% 上下且之後還能續升；營運趨勢支持方向，但倍數已先反映，我只信一半","reasoning":"現價 103.65 對 FY2027 共識 3.17 是 32.7 倍、對 FY2028 共識 3.75 是 27.6 倍。FY2028 共識落在投資人日框架（$3.35–4.00，中國改合資後約少 $0.15，即 $3.20–3.85）的約 85% 位置，倒推營益率約 15%，即框架上緣；所以現價要求 FY2028 營益率走到 15% 上下、之後還能續升到 16% 以上。方向我信，但不認為速度足以支撐 32.7 倍：基本情境 FY2028 EPS 3.62、FY2031 4.55，終端 25 倍，五年價格報酬約 +10%，加股息約 2.4% 與淨回購約 0.5%，年化報酬偏薄。PEG 以 3 年共識 EPS 年化 16.7% 計為 1.96，但這段成長多半是利潤率從谷底回升，常態成長約高個位數，實質 PEG 逾 2.5。落後 GAAP 本益比 46.9 倍受 FY2025 GAAP EPS 1.63 低谷與重組費用拖累，不作錨。股價營收比 3.12 倍、EV／營收 3.61 倍皆為可得 4 個年度端點的最高。賣方目標價平均約 $107（Benzinga，日期不明）至 $110–112（MarketBeat，2026-07-30，Q4 前），對現價上檔 3%–8%。共識近 3 個月 +32.6% 是財年滾動造成，同財年比 FY2027 只由約 3.13 升到 3.17。","fact_refs":["f_price_at_dd","f_fwd_pe_latest","f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_pe_current","f_pe_percentile","f_ps_current","f_ps_percentile","f_ev_s_current","f_ev_s_percentile","f_consensus_rev_3m_fy1_pct","f_consensus_rev_fy1_pct","f_consensus_rev_fy2_pct","f_dividend_yield_ttm","f_rsi14","f_week26_return_pct","f_ma_state"],"verdict_values":{"valuation":{"basis":"前瞻本益比（FY2027／FY2028 共識非 GAAP EPS）加 PEG；落後 GAAP 本益比因分母低谷不作錨","peers":{"expanded":false,"reason":"事實表同業對照只有利潤率，未收錄同業前瞻本益比；MCD、WING、DPZ 以加盟為主，不同軌；本份估值不以同業倍數承重，改以自身前瞻倍數與管理層框架為錨"},"fwd_pe":32.7,"peg":1.96,"percentile_5y":null,"val_light":"🟠","val_light_derivation":"前瞻 32.7 倍（FY2027）、27.6 倍（FY2028）；PEG 1.96，剔除利潤率回升後常態成長約高個位數，實質 PEG 逾 2.5；股價營收比 3.12 倍、EV／營收 3.61 倍居可得 4 個年度端點最高；五年分位事實表未涵蓋（只有 4 個年度端點，非五年高低點，故留空）。上檔：12 個月約 +6%（基本情境 FY2028 EPS 3.62 乘約 31 倍前瞻，與賣方目標 $107–112 相近）；5 年約 +10%（FY2031 EPS 4.55 乘 25 倍）。偏貴但未到極端，判 🟠","upside_short_pct":6,"upside_mid_pct":9.7,"denominator_disputed":false,"denominator_note":"以 FY2027 前瞻非 GAAP EPS 為錨；落後 GAAP 本益比 46.9 倍受 FY2025 GAAP EPS 1.63 低谷與重組費用拖累，不採用；FY2027 分母含第 53 週約 $0.10（約 3%），影響小，非爭點"}}},"q6_how_wrong":{"verdict":"最可能看錯在同店的非經常成分與 FY2028 利潤率；陷阱風險中等","reasoning":"最可能看錯的三處都寫在反證紀錄：一是同店裡關店移轉與定價的非經常成分退潮後交易數轉負；二是共識已把 FY2028 營益率推到框架上緣，指引若低於 14.5% 會同時打掉 EPS 與倍數（唯一致命點）；三是非 GAAP 與 GAAP 營益率差 320bp，一年兩次重組，股東實得低於調整後數字。衰退信號亮 2 個，陷阱風險判中等。","fact_refs":["f_kpi5_comparable_coffeehouse_s","f_kpi1_non_gaap_operating_margi","f_kpi2_gaap_operating_margin","f_consensus_eps_fy2"],"verdict_values":{"trap":{"verdict":"🟡","label":"利潤率回升型復甦：不是價值陷阱，但成長多半來自成本與定價，份額仍待證"}}}},"scenario_inputs":{"terminal_label":"FY2031E","start":{"eps":3.17,"pe":32.7,"basis":"FY2027 共識非 GAAP EPS 3.17（前瞻一年口徑，Koyfin 2026-10-31）對股價 103.65；終端倍數同為前瞻一年口徑"},"eps":{"bull":[3.3,3.9,4.4,4.9,5.43],"base":[3.2,3.62,3.92,4.22,4.55],"bear":[2.95,3.0,3.05,3.15,3.25]},"pe":{"bull":30,"base":25,"bear":18},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":2.4,"net_buyback":0.5},"second_stage":{"bull_cagr_pct":10,"base_cagr_pct":7},"max_dd":{"lo":-55,"hi":-35,"basis":"下緣 −55%：空頭終點 EPS 3.25 乘 18 倍約 $58.5（約 −44%），同店轉負與倍數壓縮同時發生時路徑通常先超跌，再加約 10pp；上緣 −35%：FY2028 營益率指引落空的單一事件（FY2028 EPS 約 3.3 乘 21 倍約 $69，約 −33%）再加少量超跌。事實表未收錄歷史最大回撤；2024-04-30 下修財測單日跌逾 15% 為急跌速度參考","trigger_time":null},"basis":{"bull":"FY2028 營益率走到約 15.6%、FY2031 約 17.5%（CEO 所稱回到 2019 年水準），營收年增約 6%（北美同店 4% 以上、國際授權展店、外送整合），終端 30 倍反映品牌溢價維持","base":"FY2027 落在指引中點，FY2028 營益率約 14.7%（扣第 53 週約 $0.10），之後每年擴張約 25bp 到 FY2031 約 15.5%，營收年增約 4.5%，終端 25 倍對應高個位數成長加 2.4% 殖利率；同業現值倍數事實表未涵蓋，以自身 FY2028 前瞻 27.6 倍為對照","bear":"關店移轉與定價貢獻退去後北美同店降到 1%–2%（CFO 稱僅夠覆蓋固定成本），營益率卡在約 13%，得來速與低價對手續搶份額，終端 18 倍對應成長熄火至約 5%"},"endo_ceiling_exceeded":true},"counter_evidence":{"blind_spots":[{"view":"論點失敗","evidence":"Technomic：星巴克占美國咖啡店支出由 2023 年 52% 降到約 48%；Dutch Bros 1,177 店、年開至少 185 家，7 Brew 朝 1,000 店，Luckin、Cotti 以 $2–3 進入美國；Q4 美國同店約 200bp 來自關店移轉；投資人日 CFO 稱 1%–2% 同店才夠覆蓋固定成本、新增交易利潤流入率尚未回到歷史約 65%","assumption":"新品平台（蛋白、Refreshers、抹茶、午後時段）、2,000 家翻新與外送整合能接棒關店移轉與定價貢獻","consequence":"五年後虧五成的故事：FY2027 下半年起移轉效應退去，北美同店降到 1% 上下、交易數轉負，營益率卡在約 13%，FY2028 EPS 約 3.0，市場改用成熟餐飲倍數約 18 倍，股價約 $55","ruling":"部分採納：空頭機率給 30%，不再上調，因 Q4 交易數在各時段、各收入層都成長，北美逾 80% 門市同店為正，屬廣泛性成長而非移轉撐出；與唯一致命點部分重疊（同店轉弱是 FY2028 營益率指引落空最可能的成因），已用交易數門檻補上前段預警","watch":"北美自營交易數年增（季）；Technomic 份額（年）","evidence_refs":["competitive_share_entrants#1","supply_demand_durability#4","end_markets#2"],"fact_refs":["f_kpi5_comparable_coffeehouse_s","f_consensus_eps_fy2"]},{"view":"論點成功但股東經濟變差","evidence":"Q4 非 GAAP 營益率 14.0% 對 GAAP 10.8%，差 320bp；2026 年 5 月、9 月兩次重組（9 月約 $3 億，其中約 $2 億現金）；季配息 $0.63 年化約 $28.7 億加 FY2027 回購約 $10 億，合計約 $38.7 億，高於 FY2026 自由現金流 $37.2 億；淨負債 $185 億（含租賃）；國際約九成改授權後，展店主要增加權利金而非零售利潤","assumption":"調整項確屬一次性，且利潤率提升帶來的現金足以覆蓋配息與回購","consequence":"同店與營益率都達標，但每股價值成長落後非 GAAP EPS：重組費用年年出現、回購在約 3% 盈餘殖利率買進、配息占 EPS 近八成壓縮再投資彈性","ruling":"採納一半：基本情境終端倍數取 25 倍而非過去高檔，並預先登記重組常態化門檻（FY2027 再認列 ≥$1 億或 GAAP 落差連2季 >200bp 即改 GAAP 口徑）；前份的工會合約風險原樣保留，本期事實表未涵蓋談判進度","watch":"GAAP 與非 GAAP 營益率差（季）；自由現金流對配息加回購覆蓋率（年）","evidence_refs":["major_events#1"],"fact_refs":["f_kpi1_non_gaap_operating_margi","f_kpi2_gaap_operating_margin","f_kpi3_free_cash_flow_fy2026","f_net_debt_m","f_dividend_yield_ttm","f_kpi4_stock_based_compensation"]},{"view":"價格已反映太多","evidence":"前瞻本益比 32.7 倍（FY2027）、27.6 倍（FY2028）；FY2028 共識 3.75 落在中國調整後框架 $3.20–3.85 的約 85% 位置，倒推營益率約 15%；股價營收比與 EV／營收在可得 4 個年度端點中最高；Q4 前賣方平均目標價 $107–112，上檔 3%–8%","assumption":"市場會持續給品牌溢價，且 FY2028 之後營益率還能往 17%–18% 走","consequence":"論點全部成立，五年報酬也只有股息加低個位數的價格報酬，倍數由 32.7 倍向 25 倍收斂吃掉大部分 EPS 成長","ruling":"採納：不追價，加碼改等 $92 或交易數與營益率雙雙超標；前份相對餐飲同業溢價門檻（溢價收斂一半約 $85）原樣保留，本期事實表未收同業倍數，標資料缺口","watch":"同財年共識 EPS 修正；前瞻本益比相對 EPS 修正的方向","evidence_refs":["capital_markets_pricing#2","capital_markets_pricing#3"],"fact_refs":["f_fwd_pe_latest","f_consensus_eps_fy2","f_ps_percentile","f_ev_s_percentile","f_pe_current"]}],"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 🟡 → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=🟡","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 106.25 → 本次 103.65（-2.4%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=106.25","side_b":"本次 price_at_dd=103.65","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]裁決由 dd_decision.py 機械路由：前份 進場 → 本次 觀望","cause":"方法變動","prior_field":["dca_verdict"],"side_a":"前份 dca_verdict=進場","side_b":"本次 dca_verdict=觀望","ruling":"裁決是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。矩陣輸入無可比對的前份值。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]角色由 dd_decision.py 機械路由：前份 衛星 → 本次 追蹤","cause":"方法變動","prior_field":["dca_role"],"side_a":"前份 dca_role=衛星","side_b":"本次 dca_role=追蹤","ruling":"角色是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。矩陣輸入無可比對的前份值。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 106.25 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 106.25 美元：Bull 價 172、Bear 價 54，五年期望值 +10.3%，基準年化 4.0%，不對稱比 1.05","side_b":"本次情境、股價仍用 106.25 美元：Bull 價 162.9、Bear 價 58.5，五年期望值 +3.0%，基準年化 1.4%，不對稱比 0.99","ruling":"先換情境、股價不動：五年期望值少 7.3 個百分點，基準年化少 2.6 個百分點。不對稱比由 1.05 變為 0.99。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變差。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 106.25 美元：五年期望值 +3.0%，基準年化 1.4%，不對稱比 0.99","side_b":"本次情境、股價 103.65 美元：五年期望值 +5.6%，基準年化 1.9%，不對稱比 1.09","ruling":"再換股價、情境不動：起點價下跌 2.4%，五年期望值多 2.6 個百分點，基準年化多 0.5 個百分點，不對稱比由 0.99 升到 1.09。合計五年期望值比前份少 4.7 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"一致判斷：營運修復屬實","cause":null,"prior_field":null,"side_a":"管理層（2026-10-29 Q4 法說，Niccol）：轉機計畫已轉為成長計畫，銷售、利潤率、獲利都超前 FY2028 框架","side_b":"數據：全球同店連五季正成長、Q4 美國同店 +7.7%（交易 +2.4%），北美逾 80% 自營門市同店為正（一年前不到 50%），Q4 非 GAAP 營益率 14.0%、年增 450bp，FY2026 EPS 2.72 超過上修後指引上緣 2.65","ruling":"一致：修復有交易數支撐，不是只靠定價或會計調整；本輪不再爭論轉機是否成立，爭點移到 FY2028 之後利潤率還能走多高","evidence_level":"高","settle_metric":null,"if_then":[],"evidence_refs":["end_markets#0","capital_markets_pricing#0"]},{"axis":"同店品質：門市本體還是移轉效應","cause":null,"prior_field":null,"side_a":"CEO（Q4 法說）：成長來自基本面，交易數在各時段、各收入層都成長","side_b":"CFO（Q4 法說）：美國同店約 200bp 來自關店移轉，客單 +5.2% 約一半是定價與外送；Q3 法說稱約一半或略少來自關店、移轉與外送；FY2027 將偏重客單而非交易數","ruling":"可調和（程度差異）：剔除移轉後 Q4 美國同店仍約 +5.7%，門市本體健康；但 FY2027 約 +4% 指引裡交易數占比會下降，交易數才是判斷需求的硬指標，改用交易數作減碼條件","evidence_level":"中（拆解為管理層口述，非正式揭露）","settle_metric":"北美自營同店交易數年增（季）","if_then":["若 FY2027 Q1–Q2 北美交易數年增皆 ≥+2% 且營益率年增 ≥150bp，視為門市本體成長成立，即使股價未回落也加碼至目標部位三分之二","若交易數連2季 ≤0，減碼至現有部位一半"],"evidence_refs":["major_events#1","end_markets#0"]},{"axis":"現在就買的最強論證","cause":null,"prior_field":null,"side_a":"FY2027 營益率指引 13.5%–14% 已達 FY2028 框架下緣，$20 億節省才過半且後段落在銷貨成本；咖啡價格轉為順風、外送整合進自有 App、2,000 家翻新與 FY2028 美國新建逾 300 家都還沒反映；CEO 稱 FY2028 框架不是終點、長期 17%–18% 營益率做得到；股價半年持平（26 週約 −1%）而 Q4 EPS 年增約 54%，倍數已自行消化","side_b":"這些利多多數已在共識內：FY2028 共識 3.75 落在中國調整後框架 $3.20–3.85 的上緣；前瞻 32.7 倍仍高於品牌餐飲的常態倍數，基本情境五年報酬約股息加低個位數；17%–18% 是 CEO 口頭願景，CFO 只正式指引到 FY2028","ruling":"不追：買進論證成立的前提是 FY2028 營益率超過 15%，這正是共識已經買單的部分；只有在價格回到 $92 以下，或 FY2027 上半年交易數與營益率雙雙超標時才加碼","evidence_level":"中","settle_metric":"FY2027 上半年非 GAAP 營益率年增幅與北美交易數","if_then":["若 2027-04 前北美交易數連2季 ≥+2% 且營益率年增 ≥150bp，加碼至目標部位三分之二","若股價先跌到 $92 以下而交易數仍為正，分批反買，不視為停損訊號"],"evidence_refs":["capital_markets_pricing#2","capital_markets_pricing#3","reg_tariff_export#3"]},{"axis":"共識上修幅度的口徑","cause":null,"prior_field":null,"side_a":"快照數字：FY1 共識 EPS 近 3 個月 +32.6%（2.39→3.17）、FY2 +19.8%、FY3 +16.1%，看似大幅上修","side_b":"兩份快照之間財年已滾動：舊 FY1 2.61 是 FY2026（另一來源 FY2026 共識 2.67），新 FY1 3.17 是 FY2027；同一財年比，FY2027 由約 3.13 到 3.17（約 +1.3%）、FY2028 由 3.72 到 3.75（約 +0.8%）","ruling":"採 B 側：真實的共識修正很小，Q4 財報後的指引大致符合預期；不得把快照幅度當成上修動能的證據","evidence_level":"高（快照分子分母可直接核對）","settle_metric":"同一財年共識 EPS 30／90 天變化","if_then":["若 FY2028 共識同財年 90 天內上修 ≥5%，上修基本情境 EPS 路徑並重跑"],"evidence_refs":["capital_markets_pricing#1"]},{"axis":"FY2028：管理層框架對共識","cause":null,"prior_field":null,"side_a":"管理層（2026-01-29 投資人日）：FY2028 營益率 13.5%–15%、EPS $3.35–4.00，中國改合資後約少 $0.15；Q4 法說稱進度超前、框架不是終點","side_b":"共識 FY2028 EPS 3.75，落在調整後區間 $3.20–3.85 的約 85% 位置，倒推營益率約 15%（框架上緣）","ruling":"可調和但已定價：管理層超前與共識偏高可同時成立；基本情境 FY2028 EPS 3.62（營益率約 14.7%），比共識低約 3%，理由是 FY2028 要扣掉第 53 週約 $0.10、關店移轉效應退去；市場錯在把『不是終點』當基本情境，不是錯在方向","evidence_level":"中","settle_metric":"2027-10 公布的 FY2028 營益率指引中點","if_then":["指引中點 ≥15%：上修基本情境 EPS 路徑並重跑","指引中點 <14.5%：清倉"],"evidence_refs":[]},{"axis":"一次性費用是否真的一次性","cause":null,"prior_field":null,"side_a":"管理層：2026-05 與 2026-09 兩次重組屬一次性，非 GAAP 排除","side_b":"Q4 非 GAAP 營益率 14.0% 對 GAAP 10.8%，差 320bp；一年內兩次重組，9 月一次約 $3 億（約 $2 億現金）","ruling":"不採信也不否定，標為未證、監測：預先登記，FY2027 若再出現 ≥$1 億重組費用，或 GAAP 與非 GAAP 營益率差連2季 >200bp，即認定重組為常態成本，估值改用 GAAP EPS","evidence_level":"中","settle_metric":"季度 GAAP 與非 GAAP 營益率差","if_then":["落差連2季 >200bp：基本情境 EPS 路徑下修約 5% 並重跑，期間停止加碼","落差收斂到 <100bp：維持非 GAAP 口徑"],"evidence_refs":["major_events#1","major_events#2"]},{"axis":"展店承諾的兌現","cause":null,"prior_field":null,"side_a":"投資人日（2026-01-29，CFO）：全球淨增由 FY2026 600–650 家加速到 FY2028 逾 2,000 家；COO：美國看得到 5,000 家新店","side_b":"2026-09 8-K 把 FY2026 淨增下修到約 440 家並關閉北美約 1% 門市，實際 FY2026 淨增 617 家；FY2027 北美淨增僅 90–100 家，自營約一半；CEO 在 Q3 法說承認兩三年前的開發策略不佳","ruling":"可調和：國際授權撐起數量、北美自營管線在重建，實際 617 家高於下修後的 440 家，顯示 9 月的下修偏保守；北美新店經濟性仍未驗證，FY2028 美國新建逾 300 家是展店假設的關鍵門檻","evidence_level":"中","settle_metric":"FY2028 美國自營新建家數與新店三年現金回收","if_then":["FY2028 美國新建指引 <200 家：展店假設判反轉，基本情境營收成長下修 1pp 並重跑","新店三年回收有數據佐證：展店假設升為高確信"],"evidence_refs":["major_events#1","supply_demand_durability#1"]},{"axis":"產業態勢（競爭、結構、其他）","cause":null,"prior_field":null,"side_a":"競爭惡化：份額 52%→48%（2023→2025），Dutch Bros 1,177 店且年開至少 185 家、7 Brew 朝 1,000 店、Luckin 與 Cotti 以 $2–3 進入美國","side_b":"結構轉好：國際授權比例升至約九成、中國改合資轉為資本輕；外送整合進自有 App、每日補貨覆蓋近九成北美自營門市；其他結構變數為關稅與咖啡價格（10-K 自承避險有限）","ruling":"雙向拉鋸：美國競爭惡化與商業模式結構轉好同時發生，前者打定價權、後者提升資本報酬，護城河方向因此判持平","evidence_level":"中","settle_metric":"美國份額與北美交易數","if_then":["份額再降至 ≤46%：重跑護城河判斷，方向改判下降則減碼一半"],"evidence_refs":["competitive_share_entrants#1","supply_demand_durability#4","competitive_share_entrants#2","channel_business_model_shift#1","reg_tariff_export#0"]},{"axis":"$20 億成本節省：期間與落點","cause":null,"prior_field":null,"side_a":"投資人日 CEO：約 $20 億、兩年、其中 $8 億較明確","side_b":"同場 CFO 更正：$20 億、2026–2028 三年；Q4 法說 CFO：已達成逾五成，FY2027–28 轉向銷貨成本，需等既有合約到期","ruling":"採 CFO 版本：三年期、後段落在銷貨成本；後段節省牽涉換供應商與新品上線，執行風險高於前段 G&A，FY2027 產品與配送成本率是驗證點","evidence_level":"中","settle_metric":"產品與配送成本率（季）","if_then":["產品與配送成本率連2季年增 >100bp：停止加碼"],"evidence_refs":[]},{"axis":"基本面判讀：與前份相同","cause":"新證據","prior_field":["signal","trap","moat_trend","runway_post_y5","archetype","cycle_position"],"side_a":"前份（2026-09-01）：品質訊號 B、陷阱風險 🟡、護城河方向持平、五年後跑道 🟡、品質複利成長型、非循環股","side_b":"本次：全部維持","ruling":"Q4 新證據（同店、營益率、FY2027 指引）強化執行面，但份額資料仍顯示 2023→2025 流失、衰退信號亮 2 個（年度毛利率連降、EPS 成長遠高於營收成長），結構判讀不變","evidence_level":"中","settle_metric":null,"if_then":[],"evidence_refs":["end_markets#0","competitive_share_entrants#1"]},{"axis":"價格與估值結論","cause":"價格變動","prior_field":["val"],"side_a":"前份：股價 106.25，估值偏貴（🟠），裁決進場、試單部位","side_b":"本次：股價 103.65（−2.4%），前瞻倍數改以 FY2027 共識 3.17 計為 32.7 倍、FY2028 27.6 倍；估值結論維持 🟠；本次輸入改為等價或等交易數驗證，裁決與部位由程式依本次輸入重算","ruling":"價格小跌、財年滾動使前瞻倍數下降，但 FY2028 共識已含框架上緣，估值結論不變；不因小幅回落而加碼","evidence_level":"高","settle_metric":null,"if_then":[],"evidence_refs":[]},{"axis":"回撤範圍與情境機率","cause":"方法變動","prior_field":["max_dd_pct","p_bull_pct","p_bear_pct"],"side_a":"前份：最大回撤單點 −60%；多頭 25%、空頭 30%","side_b":"本次：最大回撤改給範圍 −35% 至 −55%，下緣以空頭終點約 −44% 加路徑超跌推出、上緣對應 FY2028 營益率指引落空單一事件；機率維持多頭 25%、基本 45%、空頭 30%","ruling":"範圍取代單點，下緣比前份淺 5pp，因空頭倍數錨明定為 18 倍（成長熄火至約 5%）；空頭機率不低於 30%，因共識成長超過有機營收引擎、差距靠利潤率擴張","evidence_level":"中","settle_metric":null,"if_then":[],"evidence_refs":[]},{"axis":"加碼條件：前份已發火","cause":"新證據","prior_field":["rearm_trigger"],"side_a":"starter 1/3·帽3%·加碼＝FY27 OM guidance（2026-10-29）≥12.5%或回檔至~$94（W52均線）；門市本體comp連2季<+2.5%則停止加碼","side_b":"股價≤$92，或FY27上半年北美自營交易數連2季≥+2%且營益率年增≥150bp，二擇一即加碼至目標部位三分之二；交易數連2季≤0減碼一半","ruling":"前份加碼條件已在 2026-10-29 發火（FY2027 營益率指引 13.5%–14%，高於 12.5%），本輪刻意不執行加碼：該門檻設定時共識尚未把 FY2028 推到框架上緣，如今 FY2028 共識 3.75 已隱含約 15% 營益率，基本情境報酬約股息加低個位數，低於 8% 門檻。綁定約束是估值，因此價格錨由 W52 均線（現 96.28）改為 $92（W104 均線 92.79 下方，基本情境年化約 7%–8%）；證據分支是另一條解除約束的路：上半年交易數與營益率雙雙超標會上修 EPS 路徑，使現價報酬回到門檻以上。停止加碼的口徑由『門市本體同店』改為公司正式揭露的交易數","evidence_level":"高","settle_metric":"FY2027 上半年北美交易數與營益率年增；股價","if_then":["若 2027-04 前交易數連2季 ≥+2% 且營益率年增 ≥150bp：加碼至目標部位三分之二（前份加碼訊號證實為對）","若股價先跌破 $92 而交易數仍為正：分批反買","若交易數連2季 ≤0：減碼一半，不再加碼"],"evidence_refs":["end_markets#1"]},{"axis":"Single Thing（唯一致命點）新設","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未設唯一致命點（null）","side_b":"2027-10 公布 FY2028 指引時，合併非 GAAP 營益率指引中點低於 14.5% → 清倉","ruling":"Single Thing 方法補正：前份把利潤率風險分散在多條風險裡，沒有指出數學上最大的單一敏感度；營益率每 100bp 約值 FY2028 EPS $0.26，加上倍數以利潤率續升為前提，是唯一能同時打掉 EPS 與倍數的離散事件","evidence_level":"中","settle_metric":"FY2028 營益率指引中點","if_then":["指引中點 <14.5%：清倉"],"evidence_refs":[]},{"axis":"減碼與清倉門檻","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設清倉指標（null）；停止加碼門檻為『門市本體同店連2季低於 +2.5%』；風險門檻含工會合約鎖最低三人配置或 $17 底薪、阿拉比卡連4週 ≥$3.60/lb、相對餐飲同業溢價收斂一半約 $85、GLP-1 相關品項占比連續下滑","side_b":"本次：北美交易數連2季 ≤0 減碼一半；FY2027 營益率 <13.5% 或 FY2028 指引中點 <14.5% 清倉；產品與配送成本率連2季年增 >100bp 停止加碼；份額 ≤46% 重跑；前份工會、阿拉比卡、同業溢價、GLP-1 四條門檻原樣保留，本期事實表未涵蓋其讀數，標資料缺口","ruling":"門市本體同店公司不正式揭露，只能靠法說口述拆解，改用正式揭露的交易數；新增清倉門檻對應唯一致命點與指引下緣","evidence_level":"中","settle_metric":null,"if_then":[],"evidence_refs":[]}],"triggers":[{"n":1,"text":"北美自營交易數維持正成長","type":"假設驗證","maps_to":"H1","metric":"北美自營同店交易數年增","threshold":"每季 >0；FY2027 上半年連2季 ≥+2% 為超標","action":"達標維持；超標且營益率同步超標則加碼至目標部位三分之二","source_freq":"季度（新聞稿與法說）","date":"2027-01-27","evidence_refs":[]},{"n":2,"text":"利潤率按指引擴張","type":"假設驗證","maps_to":"H2","metric":"合併非 GAAP 營業利益率年增幅","threshold":"FY2027 每季 ≥+100bp，上半年 ≥+150bp 為超標；全年 ≥13.5%","action":"連2季年增 <100bp：停止加碼","source_freq":"季度（新聞稿）","date":"2027-01-27","evidence_refs":[]},{"n":3,"text":"展店重啟","type":"假設驗證","maps_to":"H3","metric":"全球淨增店數；美國自營新建指引","threshold":"FY2027 全球淨增 ≥1,000 家；FY2028 美國新建指引 ≥250 家","action":"FY2028 美國新建指引 <200 家：基本情境營收成長下修 1pp 並重跑","source_freq":"年度（Q4 法說）","date":"2027-10","evidence_refs":[]},{"n":4,"text":"加碼條件（等價或等證據）","type":"估值rearm","maps_to":"H1+H2","metric":"股價；北美交易數與營益率年增","threshold":"股價 ≤$92，或 FY2027 上半年交易數連2季 ≥+2% 且營益率年增 ≥150bp","action":"加碼至目標部位三分之二","source_freq":"每日股價／季度財報","date":"2027-04","evidence_refs":[]},{"n":5,"text":"交易數轉負","type":"減碼","maps_to":"R1","metric":"北美自營同店交易數年增","threshold":"連2季 ≤0","action":"減碼至現有部位一半，停止加碼","source_freq":"季度","date":null,"evidence_refs":["major_events#1"]},{"n":6,"text":"FY2028 營益率指引落空","type":"Single Thing","maps_to":"Single Thing","metric":"FY2028 合併非 GAAP 營益率指引中點","threshold":"<14.5%","action":"清倉","source_freq":"年度（Q4 法說）","date":"2027-10","evidence_refs":[]},{"n":7,"text":"FY2027 營益率低於指引下緣","type":"清倉","maps_to":"H2","metric":"FY2027 全年合併非 GAAP 營業利益率","threshold":"<13.5%","action":"清倉","source_freq":"年度","date":"2027-10","evidence_refs":[]},{"n":8,"text":"商品與關稅成本吸收失敗","type":"風險","maps_to":"R3","metric":"產品與配送成本率","threshold":"連2季年增 >100bp","action":"停止加碼","source_freq":"季度（10-Q）","date":null,"evidence_refs":["reg_tariff_export#0","geo_supply_chain#2"]},{"n":9,"text":"美國份額續失","type":"風險","maps_to":"R2","metric":"星巴克占美國咖啡店支出份額","threshold":"≤46%","action":"重跑護城河判斷，方向改判下降則減碼一半","source_freq":"年度（Technomic 經媒體轉載）","date":null,"evidence_refs":["competitive_share_entrants#1"]},{"n":10,"text":"中國、地緣與經營團隊","type":"風險","maps_to":"R6","metric":"新疆門市議題；中國合資權益收益；CEO 與 CFO 在任","threshold":"美國立法或制裁行動；權益收益連4季近零；Niccol 或 Smith 離任","action":"即時重跑判斷，重跑前停止加碼","source_freq":"事件","date":null,"evidence_refs":["geo_supply_chain#3"]},{"n":11,"text":"重組費用常態化","type":"風險","maps_to":"R5","metric":"重組費用；GAAP 與非 GAAP 營益率差","threshold":"FY2027 再認列 ≥$1 億，或差距連2季 >200bp","action":"估值改用 GAAP EPS 重跑","source_freq":"季度","date":null,"evidence_refs":["major_events#1"]},{"n":12,"text":"FY2027 Q1 法說後複審","type":"複審日期","maps_to":null,"metric":null,"threshold":null,"action":"重跑判斷","source_freq":"一次","date":"2027-01-27","evidence_refs":[]}],"kill_metrics":[{"metric":"北美自營同店交易數年增","bear_threshold":"連2季 ≤0%","window":"FY2027 各季（2027-01 至 2027-10）","source":"公司季報新聞稿與法說","last_status":"ok"},{"metric":"合併非 GAAP 營業利益率（全年）","bear_threshold":"FY2027 <13.5%（指引下緣）","window":"FY2027，2027-10 公布","source":"公司新聞稿","last_status":"ok"},{"metric":"FY2028 合併非 GAAP 營益率指引中點","bear_threshold":"<14.5%","window":"2027-10 法說","source":"公司新聞稿與法說","last_status":"unknown"},{"metric":"產品與配送成本率","bear_threshold":"連2季年增 >100bp","window":"FY2027 各季","source":"10-Q 損益表","last_status":"unknown"},{"metric":"星巴克占美國咖啡店支出份額","bear_threshold":"≤46%","window":"年度","source":"Technomic（媒體轉載）","last_status":"warning"}],"evidence_dismissed":[{"ref":"supply_demand_durability#3","reason":"來源是餐飲品牌顧問公司的部落格意見文，原文自承無單位數據佐證，也未區分咖啡連鎖與整體餐飲；星巴克自身門市過多的問題已由 2026-09 8-K（關閉北美約 1% 門市）這條一手證據承接，不重複計入"},{"ref":"product_recall_warning#0","reason":"召回品項是比利時市場授權的 ASIA 茶飲，屬歐洲授權產品線，非星巴克自營門市或北美供應鏈；且為香港食安中心二手轉載，未見美國 2026 年召回，與本份論點的北美門市需求與利潤率無對應關係"}],"action_conditions":{"rearm_trigger":"股價≤$92，或FY27上半年北美自營交易數連2季≥+2%且營益率年增≥150bp，二擇一即加碼至目標部位三分之二","exec_line":"維持現有試單、不追價；股價 ≤$92 或交易數與營益率雙雙超標才加碼至目標部位三分之二；交易數連2季 ≤0 減碼一半；FY2027 營益率 <13.5% 或 FY2028 指引中點 <14.5% 清倉"}},"decision_inputs":{"signal":"B","ma":"🟡","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":false,"wait_for_price":true,"wait_for_price_condition":"等股價 ≤$92（基本情境年化約 7%–8%），或 FY2027 上半年北美自營交易數連2季 ≥+2% 且營益率年增 ≥150bp；任一成立再加碼","asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null},"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟠', moat_trend='→', week26=-0.97, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position=None, moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":true,"basis":"signal='B', val='🟠'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='🟡'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='B', val='🟠', ma='🟡'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='🟡'"},{"row":"QC-49","condition":"qc49_inherit_prior=False，不套用","hit":false,"basis":"qc49_inherit_prior=False"},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"pacing":[],"holding_cap":null,"requires_critic":[]},"thesis":{"H":[{"id":"H1","text":"北美自營門市在關店移轉與外送效應退去後，仍有交易數帶動的同店成長","2y":"FY2027 北美自營同店約 +4%（指引），交易數全年為正","5y":"FY2028 起北美同店穩定 +3% 以上，交易數貢獻至少三分之一","10y":null,"threshold":"北美自營同店每季 ≥+3% 且交易數年增 >0（Q4 FY26 美國同店 +7.7%：交易 +2.4%、客單 +5.2%，其中約 200bp 來自關店移轉）","source":"公司季報新聞稿與法說（CFO 拆解同店組成）","drift_rule":"連2季同店低於 +3% 或交易數轉負＝削弱；連3季同店低於 +2%＝反轉（投資人日 CFO 稱 1%–2% 同店才夠覆蓋固定成本）"},{"id":"H2","text":"利潤率階梯提前走完：FY2027 非 GAAP 營益率 13.5%–14%，FY2028 達 14.5% 以上，$20 億成本節省後段落在銷貨成本","2y":"FY2027 全年 ≥13.5%；FY2028 指引中點 ≥14.5%","5y":"FY2031 前營益率約 15.5%","10y":null,"threshold":"FY2027 合併非 GAAP 營益率 ≥13.5%（Q4 FY26 為 14.0%、年增 450bp；FY2026 全年 11.9%）","source":"新聞稿非 GAAP 營業利益率；法說成本節省進度（Q4 法說 CFO：已達成逾五成）","drift_rule":"季度營益率年增連2季 <100bp＝削弱；FY2027 全年 <13.5% 或 FY2028 指引中點 <14.5%＝反轉"},{"id":"H3","text":"展店重啟且以授權為主，資本輕的國際單位成長撐住中長期營收","2y":"FY2027 全球淨增約 1,200 家（國際約 1,100、中國約一半）","5y":"FY2028 起美國自營新建逾 300 家／年，全球淨增朝 2,000 家","10y":"北美再增約 5,000 家、國際由 23,431 家朝近 40,000 家（管理層長期白地）","threshold":"FY2027 全球淨增 ≥1,000 家；FY2028 美國自營新建指引 ≥250 家","source":"季報店數表；Q4 法說與投資人日展店指引","drift_rule":"FY2027 全球淨增 <1,000 家＝削弱；FY2028 美國新建 <200 家或全球淨增 <1,500 家＝反轉"}],"R":[{"id":"R1","text":"同店裡的非經常成分退潮：Q4 美國同店約 200bp 來自關店移轉，客單約一半來自定價與外送；2026-09 再關閉北美約 1% 門市後，移轉效應在 FY2027 退去，管理層已表明 FY2027 偏重客單，交易數成長放緩","h_ref":"H1","clock":"⚡","threshold":"北美自營交易數年增連2季 ≤0","evidence_refs":["major_events#1"]},{"id":"R2","text":"美國份額流失與得來速、低價對手擴張：星巴克占美國咖啡店支出由 52%（2023）降至約 48%，Dutch Bros、7 Brew 持續加店，Luckin、Cotti 以 $2–3 價位切入，10-K 自承並非每個細分市場都領先","h_ref":"H1","clock":"🔥","threshold":"Technomic 份額再降至 ≤46%，或北美交易數連4季低於產業客流","evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#1","competitive_share_entrants#2","supply_demand_durability#4","end_markets#2"]},{"id":"R3","text":"咖啡豆與關稅成本：10-K 自承避險能力有限、對授權店轉嫁有限，關稅過去已造成不利影響，進口約 29.5% 來自哥倫比亞；FY2027 指引假設咖啡小幅通縮，價格反彈即吃掉順風","h_ref":"H2","clock":"🔥","threshold":"產品與配送成本率連2季年增 >100bp；或阿拉比卡現貨連4週 ≥$3.60/lb（前份門檻原樣保留，本期事實表未收現貨價，讀數為資料缺口）","evidence_refs":["reg_tariff_export#0","reg_tariff_export#1","reg_tariff_export#2","geo_supply_chain#2"]},{"id":"R4","text":"勞動成本：工會全國合約若鎖定最低人力配置或底薪，在 Green Apron 人力投資之外再添永久成本（前份風險，本期事實表未涵蓋談判進度）","h_ref":"H2","clock":"🔥","threshold":"合約鎖最低三人配置或時薪底 $17，營業費用率 +100–150bp（前份門檻原樣保留；讀數為資料缺口）","evidence_refs":[]},{"id":"R5","text":"重組反覆：2026 年 5 月與 9 月兩度重組（9 月約 $3 億、關閉北美約 1% 門市），Q4 非 GAAP 營益率 14.0% 對 GAAP 10.8%，差 320bp；若一次性費用年年出現，股東實得低於非 GAAP","h_ref":"H2","clock":"🐢","threshold":"FY2027 再認列 ≥$1 億重組費用，或 GAAP 與非 GAAP 營益率差連2季 >200bp，改以 GAAP 口徑估值","evidence_refs":["major_events#1"]},{"id":"R6","text":"中國合資與地緣：中國 40% 權益收益規模小，新疆兩家新店遭美國眾議院中國委員會主席要求關閉，FY2024 10-K 列中國資料隱私與網安特有風險，89 個市場面對制裁與地緣不穩；另有 Niccol 主導轉機的關鍵人依賴","h_ref":"H3","clock":"🐢","threshold":"中國合資權益收益連4季近零；或新疆議題演變為美國立法、制裁或中國反制；Niccol 或 Smith 離任即時重跑","evidence_refs":["geo_supply_chain#0","geo_supply_chain#1","geo_supply_chain#3"]},{"id":"R7","text":"健康趨勢與標示爭議：GLP-1 壓抑含糖飲品與早餐支出（前份風險），2026-10 集體訴訟指八款『無糖』蛋白飲含 13–21 克糖，正好打到公司主推的蛋白與無糖平台","h_ref":"H1","clock":"🐢","threshold":"含糖冷飲占比與早餐時段交易數連續下滑且無蛋白、低糖品項對沖（前份門檻原樣保留，本期品項占比為資料缺口）；或標示訴訟獲集體認證","evidence_refs":["regulatory_antitrust#2"]},{"id":"R8","text":"法律與監管：2024 年證券集體訴訟（2024-04-30 下修財測後單日跌逾 15%）未見和解或判決，2026-01 另有衍生訴訟調查；FTC 與各州檢察長把消費者保護法用於線上資料作法，會員資料是潛在曝險","h_ref":"H2","clock":"🐢","threshold":"集體認證後和解或判決金額 ≥$5 億，或 FTC、州檢察長對會員資料作法正式起訴","evidence_refs":["lawsuit_class_action#0","regulatory_antitrust#0"]}],"single_thing":{"description":"2027 年 10 月 Q4 FY27 法說公布 FY2028 指引時，合併非 GAAP 營業利益率指引中點低於 14.5%","why_fatal":"FY2028 共識 EPS 3.75 已隱含營益率約 15%（FY2027 共識 3.17 對應指引中點約 13.75%，營收共識 +4.2%、回購約 0.8%，倒推需 15% 上下）；營益率每 100bp 約值 FY2028 EPS $0.26，倍數又以利潤率續升為前提，指引中點落在 14.5% 以下等於承認框架上緣做不到，EPS 與倍數同時下修","if_happens":"FY2028 EPS 落到約 3.3–3.5，前瞻倍數由約 28 倍壓到 21–23 倍，股價約 $70–80（約 −25% 至 −32%）；執行清倉","how_monitor":"每季非 GAAP 營益率年增幅（≥150bp 才在軌道上）、產品與配送成本率、G&A 金額；2027-01-27 與 2027-04 法說的成本節省進度","probability":"約 30%（12–24 個月）"}},"appendix_a":{"growth_durability":6,"quality_score":7,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":27.6,"peg_fy2":1.65,"stress":{"pass":6,"total":10}},"eps_meta":{"base_eps_path":{"FY2026A":2.72,"FY2027E":3.17,"FY2028E":3.75,"FY2029E":4.32},"fy_end_month":9,"eps_basis":"非 GAAP 稀釋 EPS；FY2026A 2.72 取自 Q4 FY26 法說 CEO 口述；FY2027E–FY2029E 為 Koyfin 2026-10-31 快照共識，分析師家數未揭露；FY2027 為 53 週年度，含約 $0.10 第 53 週貢獻"},"catalysts":[{"date":"2027-01-27","type":"guidance","event":"FY2027 Q1 法說（暫定）：第一季北美同店與交易數、營益率年增幅","impact":"高","watch":"北美自營交易數是否為正；營益率年增是否 ≥150bp"},{"date":"2027-03","date_precision":"quarter","type":"product","event":"外送整合進 Starbucks App，外送訂單可累積與兌換星星（FY2027 Q2 開始）","impact":"中","watch":"外送營收與會員交易頻次"},{"date":"2027-09","date_precision":"quarter","type":"capacity","event":"FY2027 完成逾 2,000 家門市翻新、全球淨增約 1,200 家","impact":"中","watch":"翻新店交易數提升幅度；美國自營新建管線"},{"date":"2027-10","date_precision":"month","type":"guidance","event":"Q4 FY27 法說公布 FY2028 指引（唯一致命點觀測時點）","impact":"高","watch":"FY2028 營益率指引中點是否 ≥14.5%"}]}
+```
+
+---
+
+## ⑤ 覆蓋面（程式判定，你回的 ⑤ 燈號會被覆寫）
+
+燈號 🟢：核心軸皆有證據或不適用，非核心軸也沒有空軸。核心軸由採證 agent 自報不適用（燈號不變，請看 note 理由）：customer_concentration_credit。
+
+⑤ 的 reason 只需評論：空軸的查詢詞是否切題、判斷有沒有交代缺口對結論的影響。
+
+---
+
+## 尾段：回覆格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```json
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
