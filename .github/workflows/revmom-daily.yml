@@ -11,6 +11,10 @@ name: RevMom Daily
 # 資料約 150MB，不進 git，放在 Release asset；只有 push 成功才覆蓋上傳，push 失敗時下次會從舊資料重抓。
 # 任何一步失敗：不 push 頁面、不上傳資料，job 標紅（GitHub 會寄排程失敗通知），摘要寫在 step summary。
 # 名單本身每月只換一次（11 日以後第一個交易日），其他交易日只更新報酬數字。
+#
+# 2026-11-03 加：/trough-picks/（翻身突破名單，scripts/build_trough_picks.py，程式是 v7 src/trough_breakout/ 的副本
+# scripts/trough_breakout/）。用同一份 data/revmom/ 資料，放在 revmom 產頁之後、commit 之前。這一步失敗時 job 標紅，
+# 但 revmom 的頁面照常 commit、push，資料照常回傳 Release（commit／上傳／部署三步改看 build 與 commit 的結果，不看這一步）。
 
 on:
   schedule:
@@ -101,21 +105,35 @@ jobs:
           python -m scripts.revmom_backtest.generate_page
           python -m scripts.revmom_backtest.generate_picks_page
 
+      - name: Trough-breakout pick list (/trough-picks/)
+        id: trough
+        if: steps.update.outputs.go == 'true'
+        continue-on-error: false
+        run: python scripts/build_trough_picks.py | tee /tmp/trough.log
+
       - name: Commit and push pages
         id: commit_and_push
-        if: steps.update.outputs.go == 'true'
+        if: ${{ !cancelled() && steps.update.outputs.go == 'true' && steps.build.outcome == 'success' }}
         env:
           IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+          TROUGH: ${{ steps.trough.outcome }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/backtest/revmom/index.html docs/revmom-picks/index.html
+          WHAT="月營收動能名單與回測頁"
+          if [ "$TROUGH" = "success" ]; then
+            git add docs/trough-picks
+            WHAT="${WHAT}、翻身突破名單"
+          else
+            echo "::warning::trough-picks step ${TROUGH}; committing revmom pages only"
+          fi
           if git diff --cached --quiet; then
             echo "pages unchanged"
             exit 0
           fi
           LAST=$(python -c "import json; print(json.load(open('data/revmom/meta.json'))['last_date'])")
-          git commit -m "revmom：月營收動能名單與回測頁自動更新（資料到 ${LAST}）
+          git commit -m "revmom：${WHAT}自動更新（資料到 ${LAST}）
 
           Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
           python3 scripts/qc.py
@@ -132,7 +150,7 @@ jobs:
           exit 1
 
       - name: Save pipeline data (Release revmom-data)
-        if: steps.update.outputs.go == 'true'
+        if: ${{ !cancelled() && steps.update.outputs.go == 'true' && steps.build.outcome == 'success' && steps.commit_and_push.outcome == 'success' }}
         run: |
           tar czf /tmp/revmom-data.tar.gz --exclude=.gitignore --exclude=ledger_revmom.json \
             --exclude='revenue_pubdates*.csv' --exclude=job.log data/revmom data/revmom_raw results/revmom
@@ -140,7 +158,7 @@ jobs:
           gh release upload revmom-data /tmp/revmom-data.tar.gz --clobber
 
       - name: Deploy Pages now
-        if: steps.commit_and_push.outputs.pushed == 'true'
+        if: ${{ !cancelled() && steps.commit_and_push.outputs.pushed == 'true' }}
         run: gh workflow run deploy-pages.yml --ref main
 
       - name: Step summary
@@ -148,15 +166,21 @@ jobs:
         env:
           UPDATE_JSON: ${{ steps.update.outputs.json }}
           BUILD: ${{ steps.build.outcome }}
+          TROUGH: ${{ steps.trough.outcome }}
           PUSHED: ${{ steps.commit_and_push.outputs.pushed || 'no' }}
           STATUS: ${{ job.status }}
         run: |
           {
             echo "## RevMom Daily"
             echo "- update_data: \`${UPDATE_JSON:-（沒跑到）}\`"
-            echo "- build: ${BUILD:-skipped}；push: ${PUSHED}"
+            echo "- build: ${BUILD:-skipped}；trough-picks: ${TROUGH:-skipped}；push: ${PUSHED}"
+            [ -s /tmp/trough.log ] && echo "- trough: \`$(tail -1 /tmp/trough.log | cut -c1-400)\`"
             [ -s /tmp/picks.log ] && echo "- picks: \`$(cut -c1-400 /tmp/picks.log)\`"
-            [ "$STATUS" != "success" ] && echo "- **失敗：頁面沒有 push，資料沒有上傳。**看上面失敗的 step log。"
+            if [ "$STATUS" != "success" ] && [ "$PUSHED" = "true" ]; then
+              echo "- **翻身突破名單那一步失敗**：revmom 頁面已 push，/trough-picks/ 沒有更新。看上面失敗的 step log。"
+            elif [ "$STATUS" != "success" ]; then
+              echo "- **失敗：頁面沒有 push，資料沒有上傳。**看上面失敗的 step log。"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
           true
 

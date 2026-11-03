@@ -414,6 +414,7 @@ PREFIX_ACTIVE = [
     ("qgm/", ("pick", None)),
     ("qgm-tw/", ("pick", None)),
     ("revmom-picks/", ("pick", None)),  # 2026-10-30 generate_picks_page.py 寫死 ("pick", None)；補映射避免全站注入丟掉選股高亮
+    ("trough-picks/", ("pick", None)),  # 2026-11-03 build_trough_picks.py 寫死 ("pick", None)；同 revmom-picks，補映射避免全站注入丟掉選股高亮
     ("screeners.html", ("research", "rs")),
     ("screener.html", ("research", "rs")),
     ("screener-tw.html", ("research", "rs")),
