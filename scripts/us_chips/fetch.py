@@ -556,9 +556,13 @@ def aggregate_zip(path: Path, tickers: set) -> list[dict]:
     sh = pd.to_numeric(tr["TRANS_SHARES"], errors="coerce")
     px = pd.to_numeric(tr["TRANS_PRICEPERSHARE"], errors="coerce")
     tr["amt"] = sh * px
-    # 申報人手誤（單價或股數多打幾個零，2017-08 AMD 一個月算出 2e16 美元）：單價 > 5,000 美元或單筆 > 50 億美元的金額不計；
+    # 申報人手誤（單價或股數多打幾個零，2017-08 AMD 一個月算出 2e16 美元）：單價偏離同一檔同月成交單價中位數 30 倍以上，
+    # 或單筆 > 50 億美元的金額不計。用相對標準而不是固定價位，Booking、NVR 這類股價本來就高於 5,000 美元的才不會被剔掉；
+    # 30 倍留給同月內的分割（Amazon 20 比 1）。
     # 同一家公司、同一天、同股數同單價的同方向交易只算一筆（母公司與關係企業各自申報同一筆交易的重複列）
-    tr["amt"] = tr["amt"].where((tr["amt"] > 0) & (px <= 5000) & (tr["amt"] <= 5e9))
+    med = px.where(px > 0).groupby([tr["t"], tr["m"]]).transform("median")
+    ok_px = (px > 0) & (px <= med * 30) & (px >= med / 30)
+    tr["amt"] = tr["amt"].where((tr["amt"] > 0) & ok_px & (tr["amt"] <= 5e9))
     dup = tr.duplicated(["t", "TRANS_DATE", "TRANS_CODE", "TRANS_SHARES", "TRANS_PRICEPERSHARE"])
     tr["amt"] = tr["amt"].where(~dup)
     rows = []

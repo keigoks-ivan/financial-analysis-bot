@@ -389,7 +389,7 @@ function buildSpecs(){
     head:{arr:SI.ratio, fmt:FMT.d3, name:'放空股數占流通份額', unit:'%', extra:function(i){ return '，回補 '+FMT.d2(SI.dtc[i])+' 天，'+FMT.int(SI.short[i])+' 股'; }},
     subs:[
       {h:230, title:'放空股數占流通份額（%）', series:siSeries,
-       read:'比例升高，代表借來放空的份額變多。ETF 的放空多半來自造市商避險與套利，所以要看趨勢變化，不要直接當成看空。'},
+       read:'比例升高，代表借來放空的份額變多。'},
       {h:170, title:'回補天數（天）', series:dtcSeries,
        read:'天數越大，代表放空部位相對於日成交量越大，要買回的話需要更多天；ETF 的天數普遍很低，因為成交量大。'}]});
 
@@ -421,7 +421,7 @@ function buildSpecs(){
   /* 6 選擇權分帳戶成交量 */
   var O = D.occ;
   sp.push({id:'occ', title:'選擇權分帳戶成交量（'+E.join('＋')+'）', freq:'每日（OCC 只提供近 2 年，本頁自 2024-10 起逐日累積）',
-    note:'資料是 OCC（美國選擇權清算公司）按帳戶別公布的成交量，C 是客戶、F 是券商自營、M 是造市商，合併所有交易所、含週選擇權。客戶 put／call 比＝客戶 put 成交量除以 call 成交量，20 日值＝近 20 個交易日合計相除。',
+    note:'資料是 OCC（美國選擇權清算公司）按帳戶別公布的成交量，分成客戶、券商自營、造市商三類，合併所有交易所、含週選擇權。客戶 put／call 比＝客戶 put 成交量除以 call 成交量，20 日值＝近 20 個交易日合計相除。',
     head:{arr:O.pc20, fmt:FMT.d2, name:'客戶 put／call 比（20 日）', unit:'', extra:function(i){ return '，當日 '+FMT.d2(O.pc[i]); }},
     subs:[
       {h:220, title:'客戶 put／call 比', series:[
@@ -491,14 +491,14 @@ function insiderSpec(){
   var who = D.etfs.join('＋');
   return {id:'ins', title:'成分股內部人買賣（'+who+' 今天的成分股）', freq:'每月（SEC 季度資料集，季底後才發布）',
     note:'資料是 SEC 的 Form 4 季度資料集，只算公開市場買進（交易代碼 P）與賣出（S），依交易日所在月份彙總，不含 4/A 更正。人數是各公司買進或賣出的不同申報人數相加；淨金額＝買進金額減賣出金額（股數乘單價，百萬美元）。成分股用的是今天的持股名單（'+I.n_tickers+' 檔），過去被剔除的公司不在內。SEC 季度資料在季底後一到三個月才發布，所以最新一個月是上一個季底。',
-    head:{arr:I.net, fmt:sgn2, name:'淨金額', unit:'百萬美元', extra:function(i){ return '，買進 '+I.nb[i]+' 人、賣出 '+I.ns[i]+' 人'; }},
+    head:{arr:I.net, fmt:sgnInt, name:'淨金額', unit:'百萬美元', extra:function(i){ return '，買進 '+I.nb[i]+' 人、賣出 '+I.ns[i]+' 人'; }},
     subs:[
       {h:210, title:'買進與賣出人數（每月）', series:[
         S('inb', '買進人數', 'line', I.nb, 'up', FMT.int, {sparse:true}),
         S('ins', '賣出人數', 'line', I.ns, 'down', FMT.int, {sparse:true})],
        read:'賣出人數長期多於買進人數，部分原因是員工的股票獎酬要賣出變現，所以看買進人數的變化，比看賣出人數有意義。'},
       {h:210, title:'買進減賣出淨金額（百萬美元，每月）', series:[
-        S('inet', '淨金額', 'hist', I.net, 'c1', sgn2, {sign:true})],
+        S('inet', '淨金額', 'hist', I.net, 'c1', sgnInt, {sign:true})],
        read:'淨金額多數月份為負，因為賣出金額遠大於買進，要看的是當月數字相對自己歷史水位的高低。這裡沒有檢定過內部人買賣能不能預測走勢。'}]};
 }
 
