@@ -1,0 +1,142 @@
+name: "Supertrend weekly/monthly alert"
+
+# Supertrend(10,3) 週線／月線翻轉提醒（SMH 倫敦、SMH 美國、QQQ、0050、2330），持有人 2026-11-03 要求。
+# 這是提醒，不是實單規則；只在翻轉（或週五預警）時寄 email 與 Discord。程式 scripts/supertrend_alert.py。
+on:
+  schedule:
+    # 每天台北 08:30（週二～週六）：確認已收完的週線／月線 K 棒（美股、倫敦週五收盤在台北週六早上確認）
+    - cron: '30 0 * * 2-6'
+    # 週五台北 14:40：台股週線收盤確認＋倫敦／美股還沒收的週線預警
+    - cron: '40 6 * * 5'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'confirm＝只看已收完的 K 棒；warn＝另加還沒收完的預警'
+        type: choice
+        options: [confirm, warn]
+        default: confirm
+      test_notify:
+        description: '寄一則標題含「測試」的測試信（email＋Discord），不改狀態檔'
+        type: boolean
+        default: false
+      no_notify:
+        description: '只更新狀態檔，不寄 email／Discord'
+        type: boolean
+        default: false
+      retry:
+        description: >-
+          內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pandas numpy yfinance
+
+      - name: Check Supertrend signals
+        env:
+          SCHED: ${{ github.event.schedule }}
+          IN_MODE: ${{ inputs.mode }}
+          TEST_NOTIFY: ${{ inputs.test_notify }}
+          NO_NOTIFY: ${{ inputs.no_notify }}
+        run: |
+          MODE="confirm"
+          if [ "$SCHED" = "40 6 * * 5" ]; then MODE="warn"; fi
+          if [ -n "$IN_MODE" ]; then MODE="$IN_MODE"; fi
+          ARGS="--mode $MODE"
+          if [ "$TEST_NOTIFY" = "true" ]; then ARGS="$ARGS --test-alert"; fi
+          if [ "$NO_NOTIFY" = "true" ]; then ARGS="$ARGS --no-notify"; fi
+          python scripts/supertrend_alert.py $ARGS
+
+      - name: Read alert
+        id: stalert
+        run: |
+          if [ -f st_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "title=$(head -n 1 st_title.txt)" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # MAIL_USERNAME／MAIL_APP_PASSWORD 與其他提醒共用；缺少時略過寄信，不讓 workflow 失敗。
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email alert
+        if: steps.stalert.outputs.changed == 'true' && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.stalert.outputs.title }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://st_mail.html
+
+      - name: Discord notify
+        if: steps.stalert.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+          NOTIFY_TITLE: ${{ steps.stalert.outputs.title }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file st_alert.txt --url https://research.investmquest.com/backtest/supertrend_vs_live/
+
+      - name: Commit and push
+        id: commit_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add data/supertrend_alert/state.json
+          git diff --staged --quiet && exit 0
+          git commit -m "Auto update supertrend alert state: $(date -u '+%Y-%m-%d')"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
