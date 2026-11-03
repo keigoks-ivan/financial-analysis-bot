@@ -361,6 +361,7 @@ DD_SCREENER_SUBNAV = [
     # 2026-10-09 台股池（build_dd_screener.py --universe tw → tw/latest.json，
     # 頁面由 build_dd_screener_tw_page.py 從主頁衍生），緊接總覽之後。
     ("/dd-screener/tw/", "台股池"),
+    ("/dd-screener/roic-matrix.html", "ROIC 矩陣"),
     ("/dd-screener/pipeline.html", "Pipeline"),
     ("/dd-screener/quality-entry.html", "Quality-Entry"),
     ("/dd-screener/cyclical-track.html", "衛星·循環軌"),

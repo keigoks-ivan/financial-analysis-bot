@@ -44,6 +44,9 @@ SCHEMA_VERSION = "1.0"
 NOTE = ("早報用台股寬名單：市值前 500 大有 EPS 預估，含金融與興櫃；只供早報創高名單查數字，"
         "不進席位／stages／FunnelRank，不排名。EPS 為 Koyfin 美元 × 一個匯率換成新台幣，"
         "eps_year_ago 為 yfinance 新台幣實際值。")
+ROIC_DECOMP_KEYS = ("nopat_margin_pct", "ic_turnover_x", "roic_quadrant", "roic_quadrant_code",
+                    "roic_3y_avg_pct", "roic_trend_5y", "incremental_roic_pct", "incremental_roic_note",
+                    "incremental_roic_clamped", "reinvest_rate_pct", "capital")
 YA_FETCH_GAP = 0.5   # 秒；FYE／year-ago 兩種 yfinance 呼叫之間的最小間隔（避免限流）
 
 
@@ -53,7 +56,7 @@ def usd_to_local(v, rate):
 
 
 def build_row(code: str, rec: dict, listing: dict | None, rate: float, ya: dict, fiscal_year_end,
-              growth_fn) -> dict:
+              growth_fn, decomp_fn=None) -> dict:
     """一檔 -> latest.json 的一列。listing＝tw_listing_suffix.resolve_tw_codes 的一筆（None＝解不出）。"""
     fy = {"eps_fy_curr": rec.get("fy1"), "eps_fy_next": rec.get("fy2"), "eps_fy3": rec.get("fy3")}
     row = {
@@ -76,6 +79,12 @@ def build_row(code: str, rec: dict, listing: dict | None, rate: float, ya: dict,
     })
     for k, v in fy.items():
         row[k + "_usd_orig"] = v
+    if decomp_fn is not None:
+        # 2026-11-04：ROIC × 增量 ROIC 矩陣用；與主名單同一個 compute_roic_decomposition，只加欄位。
+        d = decomp_fn(rec, rec.get("roic_pct"))
+        row["roic_5y_avg_pct"] = rec.get("roic_5y_avg_pct")
+        for k in ROIC_DECOMP_KEYS:
+            row[k] = d.get(k)
     return row
 
 
@@ -183,7 +192,8 @@ def main() -> int:
         cur_fye = bds.year_ago_fye(last_fye, today) if last_fye else None
         ya = pick_year_ago(code, ticker, cur_fye, prev_rows,
                            lambda t: paced(fetch, t), bds.decide_year_ago_carry)
-        stocks.append(build_row(code, snap.tickers[code], listing, rate, ya, last_fye, bds._koyfin_eps_growth))
+        stocks.append(build_row(code, snap.tickers[code], listing, rate, ya, last_fye, bds._koyfin_eps_growth,
+                                bds.compute_roic_decomposition))
 
     src = [s["eps_year_ago_source"] for s in stocks]
     now = datetime.now(timezone(timedelta(hours=8)))

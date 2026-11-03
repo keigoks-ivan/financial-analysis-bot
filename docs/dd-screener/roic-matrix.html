@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROIC 矩陣 — InvestMQuest Research</title>
+<meta name="color-scheme" content="light dark">
+<style>
+:root{
+  --bg:#f7f3ea;--card:#ffffff;--ink:#0c1521;--mute:#5b6675;--line:#d9d3c4;--grid:#e8e3d6;
+  --q1:#1a7f4b;--q2:#2b6cb0;--q3:#b7791f;--q4:#8a8f98;--edge:#9aa0a8;--hi:#d9381e;--accent:#2563eb;
+  --tip-bg:#0f172a;--tip-ink:#f1f5f9;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e141c;--card:#161e29;--ink:#e8edf3;--mute:#9aa6b5;--line:#2b3644;--grid:#222c39;
+    --q1:#4cc38a;--q2:#6aa6ee;--q3:#e0a84a;--q4:#8d97a5;--edge:#6b7480;--hi:#ff6b52;--accent:#6aa6ee;
+    --tip-bg:#e8edf3;--tip-ink:#0c1521;
+  }
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+.wrap{max-width:1140px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.6rem;line-height:1.25;margin-bottom:6px}
+.sub{color:var(--mute);font-size:.9rem;margin-bottom:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button,.ctl button{font:inherit;font-size:.88rem;padding:6px 14px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;cursor:pointer}
+.tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.ctl{display:flex;gap:10px 16px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:.88rem}
+.ctl select,.ctl input[type=search]{font:inherit;font-size:.88rem;padding:5px 8px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:6px;max-width:100%}
+.ctl label{display:flex;gap:5px;align-items:center}
+.chart{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;position:relative}
+svg{width:100%;height:auto;display:block;touch-action:manipulation}
+svg text{font-family:inherit;fill:var(--mute)}
+.qn{font-size:15px;font-weight:700}
+.qc{font-size:12px}
+.lbl{font-size:11px;fill:var(--ink);paint-order:stroke;stroke:var(--card);stroke-width:3px;stroke-linejoin:round}
+.pt{cursor:pointer}
+.pt:hover{stroke:var(--ink);stroke-width:1.5}
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--tip-bg);color:var(--tip-ink);font-size:12.5px;line-height:1.5;padding:8px 10px;border-radius:7px;max-width:270px;display:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#tip b{font-size:13.5px}
+.legend{font-size:.8rem;color:var(--mute);margin:8px 2px 0}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:14px}
+summary{cursor:pointer;font-weight:600;font-size:.92rem}
+.excl{margin-top:8px;font-size:.84rem;color:var(--mute);column-width:220px;column-gap:18px}
+.excl div{break-inside:avoid}
+h2{font-size:1.15rem;margin:26px 0 10px}
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.qcard{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:10px;padding:10px 12px;min-width:0}
+.qcard h3{font-size:.98rem;color:var(--c)}
+.qcard p{font-size:.78rem;color:var(--mute);margin-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:3px 4px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+td:nth-child(2){overflow:hidden;text-overflow:ellipsis;max-width:7em}
+th{color:var(--mute);font-weight:500}
+a.tk{color:var(--accent);cursor:pointer;text-decoration:none}
+a.tk:hover{text-decoration:underline}
+.how{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:.92rem}
+.how h3{font-size:1rem;margin:12px 0 4px}
+.how h3:first-child{margin-top:0}
+.how p,.how li{margin-bottom:6px}
+.how ul{padding-left:1.2em}
+@media(max-width:640px){
+  .wrap{padding:14px 16px 40px}
+  h1{font-size:1.3rem}
+  .grid4{grid-template-columns:1fr}
+  .qcard{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+/* 2026-10-29 持有人不要連結沒點藍、點過變紫：:where 權重為 0，各頁自己寫的連結顏色都會蓋過，只取代瀏覽器預設色 */
+:where(a){color:#0d2244}
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/markets.html">風險偏好儀表</a>
+          <a href="/earnings/">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/us-chips/">美股籌碼</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/" class="active">DD Screener</a>
+          <a href="/screeners.html">RS 排行</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<div class="imq-subnav"><div class="imq-subnav-inner"><a href="/dd-screener/">總覽</a><a href="/dd-screener/tw/">台股池</a><a href="/dd-screener/roic-matrix.html" class="active">ROIC 矩陣</a><a href="/dd-screener/pipeline.html">Pipeline</a><a href="/dd-screener/quality-entry.html">Quality-Entry</a><a href="/dd-screener/cyclical-track.html">衛星·循環軌</a><a href="/dd-screener/sop-funnel.html">SOP Funnel</a><a href="/dd-screener/sop-funnel-backtest.html">SOP 回測</a></div></div>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<div class="wrap">
+  <h1>ROIC × 增量 ROIC 資本回報矩陣</h1>
+  <div class="sub" id="meta">載入中…</div>
+  <div class="tabs" id="tabs"></div>
+  <div class="ctl">
+    <span id="indWrap" style="display:none"><label>產業 <select id="ind"></select></label></span>
+    <label id="finWrap" style="display:none"><input type="checkbox" id="fin"> 加回金融保險業</label>
+    <label>搜尋 <input type="search" id="q" placeholder="代號或名稱"></label>
+    <button id="clr" type="button">清除高亮</button>
+  </div>
+  <div class="chart"><svg id="svg" viewBox="0 0 900 600" role="img" aria-label="ROIC 與增量 ROIC 散佈圖"></svg></div>
+  <div class="legend">圓點為實際值；三角形貼在邊界，代表超出軸範圍（淺灰）或增量 ROIC 為夾值（分母太小，不是真數字）。軸範圍 X −10%～80%、Y −50%～100%。</div>
+  <details id="exclBox"><summary id="exclSum">未上圖的公司</summary><div class="excl" id="excl"></div></details>
+
+  <h2>各象限前 15 檔（依 ROIC + 增量 ROIC 排序）</h2>
+  <div class="grid4" id="tables"></div>
+
+  <h2>怎麼讀</h2>
+  <div class="how">
+    <h3>四個象限</h3>
+    <p>X 軸是目前 ROIC，Y 軸是近 3 年增量 ROIC，兩條 15% 虛線把圖分成四格。右上「高品質複利型」現有資本與新增資本的回報都高。右下「成熟現金牛型」現有資本回報高，新投資的回報趨於平穩。左上「再投資潛力型」現有回報中等，新投資的回報高。左下「觀察調整型」兩者都偏低。</p>
+    <h3>增量 ROIC 的算法</h3>
+    <p>增量 ROIC ＝（最新財年稅後營業利益 − 3 年前財年稅後營業利益）÷（最新財年投入資本 − 3 年前財年投入資本）。它回答的是：這 3 年多投進去的每一塊錢，多賺回來多少。前後兩年用同一個稅率，所以差額只反映營業利益與資本的變化，不含稅率變動。</p>
+    <h3>夾值點不要當真</h3>
+    <p>分子分母都是 3 年差額，投入資本只增加一點點時，比值會暴衝。程式把結果夾在 +500% 與 −200% 之間，碰到這兩個值的點是哨兵值，不是真數字。圖上這些點貼在邊界、畫成三角形，四格表也不排名；它們仍然依正負方向計入所在象限的檔數。</p>
+    <h3>資本縮減的公司算不出來</h3>
+    <p>3 年內投入資本下降的公司，分母為負，增量 ROIC 沒有意義，因此不上圖，列在圖下的展開區塊。這類公司多半在買回股票或收縮業務。若利潤持平或成長，資本越用越少，可能比圖上右下角的公司更符合現金牛的定義，要逐檔看。</p>
+    <h3>ROIC 的口徑</h3>
+    <p>投入資本取自 Koyfin，包含租賃負債。便利商店、餐飲等店面租約大的公司，資本被墊高，ROIC 會偏低。例如全家的 Koyfin ROIC 約 3%，不代表這門生意賺不到錢。金融保險業的資本結構不同，ROIC 對銀行與保險沒有意義，台股預設排除。</p>
+    <h3>15% 是固定值</h3>
+    <p>15% 是人為訂的分界，沒有經過回測，也沒有因產業或市場調整。接近 15% 的公司，落在哪一格只是差幾個百分點的事，不要因此分出好壞。</p>
+  </div>
+</div>
+<div id="tip"></div>
+<script>
+(function(){
+var SETS=[
+ {key:'twwide',label:'台股寬名單',url:'tw-wide/latest.json',tw:true},
+ {key:'tw',label:'台股池',url:'tw/latest.json',tw:true},
+ {key:'us',label:'美股主名單',url:'latest.json',tw:false},
+ {key:'sc',label:'美股中小型',url:'smallcap/latest.json',tw:false}
+];
+var QN={
+ q1:{n:'高品質複利型',d:'ROIC 與增量 ROIC 皆 ≥ 15%',c:'var(--q1)'},
+ q2:{n:'成熟現金牛型',d:'ROIC ≥ 15%、增量 ROIC < 15%',c:'var(--q2)'},
+ q3:{n:'再投資潛力型',d:'ROIC < 15%、增量 ROIC ≥ 15%',c:'var(--q3)'},
+ q4:{n:'觀察調整型',d:'ROIC 與增量 ROIC 皆 < 15%',c:'var(--q4)'}
+};
+var XMIN=-10,XMAX=80,YMIN=-50,YMAX=100,TH=15;
+var W=900,H=600,L=56,R=16,T=14,B=44,PW=W-L-R,PH=H-T-B;
+function px(x){return L+(x-XMIN)/(XMAX-XMIN)*PW}
+function py(y){return T+(YMAX-y)/(YMAX-YMIN)*PH}
+var cache={},cur=SETS[0],hi={}; // hi: ticker->true
+var $=function(i){return document.getElementById(i)};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function f1(v){return v==null?'—':(Math.round(v*10)/10).toFixed(1)+'%'}
+function quad(r,i){return r>=TH?(i>=TH?'q1':'q2'):(i>=TH?'q3':'q4')}
+function fmt(v){return v==null?'—':Number(v).toLocaleString('en-US',{maximumFractionDigits:0})}
+
+function load(s){
+  if(cache[s.key])return Promise.resolve(cache[s.key]);
+  return fetch(s.url).then(function(r){return r.json()}).then(function(d){cache[s.key]=d;return d});
+}
+function buildTabs(){
+  var t=$('tabs');t.innerHTML='';
+  SETS.forEach(function(s){
+    var b=document.createElement('button');b.type='button';b.textContent=s.label;
+    if(s===cur)b.className='on';
+    b.onclick=function(){cur=s;hi={};$('q').value='';buildTabs();show()};
+    t.appendChild(b);
+  });
+}
+function isFin(s){return s.tw_industry==='金融保險業'}
+function show(){
+  load(cur).then(function(d){
+    var all=d.stocks;
+    // 產業選單
+    var indSel=$('ind');
+    if(cur.tw){
+      $('indWrap').style.display='';$('finWrap').style.display='';
+      var cnt={};all.forEach(function(s){var k=s.tw_industry||'（未分類）';cnt[k]=(cnt[k]||0)+1});
+      var keep=indSel.dataset.set===cur.key?indSel.value:'';
+      var ks=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]});
+      indSel.innerHTML='<option value="">全部（'+all.length+'）</option>'+ks.map(function(k){return '<option value="'+esc(k)+'">'+esc(k)+'（'+cnt[k]+'）</option>'}).join('');
+      indSel.value=keep;indSel.dataset.set=cur.key;
+    }else{$('indWrap').style.display='none';$('finWrap').style.display='none'}
+    render(d);
+  });
+}
+function render(d){
+  var all=d.stocks,ind=cur.tw?$('ind').value:'',addFin=cur.tw&&$('fin').checked;
+  var pool=all.filter(function(s){
+    if(!cur.tw)return true;
+    if(!addFin&&isFin(s)&&ind!=='金融保險業')return false;
+    if(ind&&(s.tw_industry||'（未分類）')!==ind)return false;
+    return true;
+  });
+  var plot=[],excl=[];
+  pool.forEach(function(s){
+    var r=s.roic,i=s.incremental_roic_pct;
+    if(r==null||isNaN(r)){excl.push({s:s,why:'缺 ROIC'});return}
+    if(s.incremental_roic_note==='資本縮減'){excl.push({s:s,why:'資本縮減'});return}
+    if(i==null||isNaN(i)){excl.push({s:s,why:'缺增量 ROIC'});return}
+    var cl=!!s.incremental_roic_clamped;
+    plot.push({s:s,r:r,i:i,cl:cl,q:quad(r,i),out:(r<XMIN||r>XMAX||i<YMIN||i>YMAX)});
+  });
+  var finN=cur.tw?all.filter(isFin).length:0;
+  $('meta').textContent='資料日期 '+d.as_of+'　上圖 '+plot.length+' 檔／名單 '+all.length+' 檔'+
+    (cur.tw&&!addFin&&!ind&&finN?'（已排除金融保險業 '+finN+' 檔）':'')+(ind?'（產業：'+ind+'）':'');
+  // 象限
+  var byQ={q1:[],q2:[],q3:[],q4:[]};
+  plot.forEach(function(p){byQ[p.q].push(p)});
+  var lab={};
+  ['q1','q2','q3','q4'].forEach(function(q){
+    var rk=byQ[q].filter(function(p){return !p.cl}).sort(function(a,b){return (b.r+b.i)-(a.r+a.i)});
+    (q==='q4'?rk.slice(-3):rk.slice(0,3)).forEach(function(p){lab[p.s.ticker]=1});
+  });
+  var q=$('q').value.trim().toLowerCase(),match={};
+  if(q){plot.forEach(function(p){
+    if((p.s.ticker||'').toLowerCase().indexOf(q)>=0||(p.s.name||'').toLowerCase().indexOf(q)>=0)match[p.s.ticker]=1;
+  })}
+  drawSvg(plot,byQ,lab,match);
+  drawExcl(excl);
+  drawTables(byQ);
+}
+function drawSvg(plot,byQ,lab,match){
+  var o=[];
+  o.push('<rect x="'+L+'" y="'+T+'" width="'+PW+'" height="'+PH+'" fill="none" stroke="var(--line)"/>');
+  for(var x=-10;x<=80;x+=10){o.push('<line x1="'+px(x)+'" y1="'+T+'" x2="'+px(x)+'" y2="'+(T+PH)+'" stroke="var(--grid)"/><text x="'+px(x)+'" y="'+(T+PH+16)+'" font-size="11" text-anchor="middle">'+x+'%</text>')}
+  for(var y=-50;y<=100;y+=25){o.push('<line x1="'+L+'" y1="'+py(y)+'" x2="'+(L+PW)+'" y2="'+py(y)+'" stroke="var(--grid)"/><text x="'+(L-6)+'" y="'+(py(y)+4)+'" font-size="11" text-anchor="end">'+y+'%</text>')}
+  o.push('<text x="'+(L+PW/2)+'" y="'+(H-6)+'" font-size="12" text-anchor="middle">目前 ROIC</text>');
+  o.push('<text transform="translate(14,'+(T+PH/2)+') rotate(-90)" font-size="12" text-anchor="middle">近 3 年增量 ROIC</text>');
+  o.push('<line x1="'+px(TH)+'" y1="'+T+'" x2="'+px(TH)+'" y2="'+(T+PH)+'" stroke="var(--ink)" stroke-dasharray="6 4" opacity=".55"/>');
+  o.push('<line x1="'+L+'" y1="'+py(TH)+'" x2="'+(L+PW)+'" y2="'+py(TH)+'" stroke="var(--ink)" stroke-dasharray="6 4" opacity=".55"/>');
+  var cn=[['q1',L+PW-8,T+20,'end'],['q2',L+PW-8,T+PH-26,'end'],['q3',L+8,T+20,'start'],['q4',L+8,T+PH-26,'start']];
+  cn.forEach(function(c){
+    o.push('<text class="qn" x="'+c[1]+'" y="'+c[2]+'" text-anchor="'+c[3]+'" style="fill:'+QN[c[0]].c+'">'+QN[c[0]].n+'</text><text class="qc" x="'+c[1]+'" y="'+(c[2]+16)+'" text-anchor="'+c[3]+'">'+byQ[c[0]].length+' 檔</text>');
+  });
+  var pts=[],lbls=[];
+  // 先畫普通點，再畫高亮
+  plot.slice().sort(function(a,b){return ((hi[a.s.ticker]||match[a.s.ticker])?1:0)-((hi[b.s.ticker]||match[b.s.ticker])?1:0)}).forEach(function(p){
+    var cx=px(Math.max(XMIN,Math.min(XMAX,p.r))),cy=py(Math.max(YMIN,Math.min(YMAX,p.i)));
+    var edge=p.out||p.cl,on=hi[p.s.ticker]||match[p.s.ticker];
+    var col=edge?'var(--edge)':QN[p.q].c;
+    var idx=plot.indexOf(p);
+    var shape;
+    if(edge){shape='<polygon class="pt" data-i="'+idx+'" points="'+cx+','+(cy-6)+' '+(cx+5.5)+','+(cy+4)+' '+(cx-5.5)+','+(cy+4)+'" fill="'+col+'" fill-opacity=".75"'+(on?' stroke="var(--hi)" stroke-width="2.5"':'')+'/>'}
+    else{shape='<circle class="pt" data-i="'+idx+'" cx="'+cx+'" cy="'+cy+'" r="'+(on?7:4.5)+'" fill="'+col+'" fill-opacity="'+(on?1:.65)+'"'+(on?' stroke="var(--hi)" stroke-width="2.5"':'')+'/>'}
+    pts.push(shape);
+    if(on||lab[p.s.ticker]){
+      var left=cx>L+PW-120;
+      lbls.push('<text class="lbl" x="'+(left?cx-8:cx+8)+'" y="'+(cy-6)+'" text-anchor="'+(left?'end':'start')+'"'+(on?' style="font-weight:700;fill:var(--hi)"':'')+'>'+esc(p.s.name&&p.s.name!==p.s.ticker?p.s.name:p.s.ticker)+'</text>');
+    }
+  });
+  var svg=$('svg');svg.innerHTML=o.join('')+pts.join('')+lbls.join('');
+  svg._plot=plot;
+}
+function drawExcl(excl){
+  $('exclSum').textContent='未上圖的公司（'+excl.length+' 檔：資本縮減或缺資料）';
+  $('excl').innerHTML=excl.length?excl.sort(function(a,b){return (b.s.roic==null?-1e9:b.s.roic)-(a.s.roic==null?-1e9:a.s.roic)}).map(function(e){
+    return '<div>'+esc(e.s.ticker)+' '+esc(e.s.name)+'　ROIC '+f1(e.s.roic)+'　<span style="opacity:.8">'+e.why+'</span></div>'}).join(''):'<div>無</div>';
+}
+function drawTables(byQ){
+  var h='';
+  ['q1','q2','q3','q4'].forEach(function(q){
+    var rk=byQ[q].filter(function(p){return !p.cl}).sort(function(a,b){return (b.r+b.i)-(a.r+a.i)}).slice(0,15);
+    h+='<div class="qcard" style="--c:'+QN[q].c+'"><h3>'+QN[q].n+'（'+byQ[q].length+' 檔）</h3><p>'+QN[q].d+'；夾值點不排名</p><table><tr><th>代號</th><th>名稱</th><th>ROIC</th><th>增量</th></tr>'+
+    (rk.length?rk.map(function(p){return '<tr><td><a class="tk" data-t="'+esc(p.s.ticker)+'">'+esc(p.s.ticker.replace(/\.TWO?$/,''))+'</a></td><td>'+esc(p.s.name)+'</td><td>'+f1(p.r)+'</td><td>'+f1(p.i)+'</td></tr>'}).join(''):'<tr><td colspan="4">無</td></tr>')+'</table></div>';
+  });
+  $('tables').innerHTML=h;
+}
+// tooltip
+var tip=$('tip');
+function tipFor(p){
+  var s=p.s,c=s.capital||{},t='<b>'+esc(s.name)+'</b>　'+esc(s.ticker);
+  t+='<br>ROIC '+f1(s.roic);
+  if(p.cl)t+='<br>增量 ROIC '+(s.incremental_roic_pct>=0?'超過 +500%':'低於 −200%')+'（分母太小）';
+  else t+='<br>增量 ROIC '+f1(s.incremental_roic_pct);
+  t+='<br>5 年平均 ROIC '+f1(s.roic_5y_avg_pct)+'<br>再投資率 '+f1(s.reinvest_rate_pct);
+  t+='<br>投入資本 FY-3→FY：'+fmt(c.ic_fy3)+' → '+fmt(c.ic_fy)+'（百萬美元）';
+  if(s.tw_industry)t+='<br>'+esc(s.tw_industry);
+  return t;
+}
+function place(e){
+  var x=e.clientX+14,y=e.clientY+14;
+  tip.style.display='block';
+  var w=tip.offsetWidth,h=tip.offsetHeight;
+  if(x+w>innerWidth-6)x=e.clientX-w-14;
+  if(x<6)x=6;
+  if(y+h>innerHeight-6)y=e.clientY-h-14;
+  if(y<6)y=6;
+  tip.style.left=x+'px';tip.style.top=y+'px';
+}
+var svg=$('svg');
+function ptOf(e){var t=e.target;if(t.classList&&t.classList.contains('pt'))return svg._plot[+t.getAttribute('data-i')];return null}
+svg.addEventListener('mousemove',function(e){var p=ptOf(e);if(p){tip.innerHTML=tipFor(p);place(e)}else tip.style.display='none'});
+svg.addEventListener('mouseleave',function(){tip.style.display='none'});
+svg.addEventListener('click',function(e){var p=ptOf(e);if(p){tip.innerHTML=tipFor(p);place(e)}else tip.style.display='none'});
+$('tables').addEventListener('click',function(e){
+  var t=e.target.getAttribute&&e.target.getAttribute('data-t');
+  if(!t)return;hi={};hi[t]=1;$('q').value='';
+  load(cur).then(render);
+  $('svg').scrollIntoView({behavior:'smooth',block:'center'});
+});
+$('q').addEventListener('input',function(){hi={};load(cur).then(render)});
+$('clr').onclick=function(){hi={};$('q').value='';load(cur).then(render)};
+$('ind').onchange=function(){hi={};load(cur).then(render)};
+$('fin').onchange=function(){load(cur).then(render)};
+buildTabs();show();
+window.__roic={get:function(){return svg._plot}};
+})();
+</script>
+</body>
+</html>

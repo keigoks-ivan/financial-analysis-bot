@@ -52,6 +52,19 @@ def test_build_row_unresolved_keeps_bare_code():
     assert row["eps_fy_curr"] is None and row["eps_fy1_fy3_cagr_pct"] is None and row["eps_year_ago"] is None
 
 
+def test_build_row_roic_decomp_matches_main_function():
+    """2026-11-04：寬名單用主名單同一個 compute_roic_decomposition（王品 2727 xlsx 1103 數字）。"""
+    rec = dict(REC, roic_pct=15.11, roic_5y_avg_pct=10.68, ebit_margin_pct=7.8, tax_rate_pct=22.51,
+               rev_fy=747.18, rev_fy3=595.98, ebit_fy=58.28, ebit_fy3=15.31, ic_fy=328.02, ic_fy3=257.66)
+    row = bw.build_row("2727", rec, None, 32.0, {}, None, bds._koyfin_eps_growth,
+                       bds.compute_roic_decomposition)
+    want = bds.compute_roic_decomposition(rec, 15.11)
+    assert row["incremental_roic_pct"] == want["incremental_roic_pct"] == 47.32
+    assert row["roic_5y_avg_pct"] == 10.68 and row["capital"]["ic_fy3"] == 257.66
+    # 沒傳 decomp_fn（舊呼叫法）就不加欄位
+    assert "incremental_roic_pct" not in bw.build_row("2727", rec, None, 32.0, {}, None, bds._koyfin_eps_growth)
+
+
 def test_year_ago_carry_before_fetch_and_fye_roll():
     prev_wide = {"2330.TW": {"eps_year_ago": 66.25, "eps_year_ago_fye": "2025-12-31"}}
     prev_main = {"2881.TW": {"eps_year_ago": 5.0, "eps_year_ago_fye": "2025-12-31"}}
