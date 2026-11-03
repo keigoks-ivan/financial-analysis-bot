@@ -107,6 +107,11 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
 .sec-head .meta{flex-basis:100%;font-family:var(--mono);font-size:11px;color:var(--muted)}
 .read{margin:2px 0 6px;font-size:12.5px;color:var(--sec);line-height:1.7}
 .nodata{margin:8px 0 4px;padding:10px 12px;border:1px dashed var(--line);border-radius:var(--r);font-size:13px;color:var(--sec);line-height:1.7}
+.grp{margin:30px 0 6px;padding:0 2px}
+.grp h3{margin:0 0 4px;font-size:18px;color:var(--ink)}
+.grp p{margin:0;font-size:13px;color:var(--sec);line-height:1.7}
+.verdict{margin:8px 0 6px;padding:8px 12px;border-left:3px solid var(--c1);background:var(--chip-bg);border-radius:0 var(--r) var(--r) 0;font-size:13.5px;line-height:1.75;color:var(--body)}
+.verdict a{color:inherit;text-decoration:underline}
 .src ul{margin:6px 0;padding-left:1.2em}
 </style>
 </head>
@@ -210,6 +215,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);
     <h1>美股籌碼趨勢</h1>
     <p>分成 SPY（S&amp;P 500）、QQQ（Nasdaq-100）、費半（費城半導體指數）三個分頁，看 ETF 申購贖回、期貨大戶部位、放空、槓桿 ETF 流量、選擇權分帳戶成交量、波動率和融資餘額的變化。所有圖共用同一條時間軸，拖曳、縮放、移動十字線時各圖同步。</p>
     <p>這一頁用來看趨勢，不是進出場訊號。台股籌碼頁的六個指標在事前登記的檢定裡都沒有通過，這裡的美股指標沒有做過同樣的檢定，不能假設比較有用。美股沒有台股那種每天公布的三大法人現貨買賣超，所以改用 ETF 申購贖回、期貨申報部位、放空和選擇權帳戶別成交量來代表籌碼。</p>
+    <p>下面的區塊照參考價值排序，分成三組：比較值得看的放最前面，只能描述誰在買賣的放中間，雜訊多的放最後。排序的根據是公開研究和每項資料怎麼產生，每個區塊開頭的框寫了理由。</p>
     <div class="asof" id="asof">資料載入中…</div>
   </div>
 
@@ -341,6 +347,7 @@ function buildSpecs(){
         read:'兩檔的規模和持股不同。方向一致時，合計的數字比較有代表性；方向相反時，合計會互相抵銷，要分開看。'});
     }
     sp.push({id:'flows', title:'ETF 申購贖回（週）', freq:'每週',
+      verdict:'資金通常在上漲之後才流入，會落後價格。適合用來確認某個方向是不是已經很擁擠，不適合拿來抓進出場時機。',
       note:'週淨申購＝週內流通份額的變化乘以淨值，單位百萬美元。2016-11 起的週資料直接讀 ETF 儀表板的資金流檔（早期由 TradingView 匯出，之後由發行商的每日份額乘淨值併成），本頁不另外抓取。'+(sox?' 費半沒有單一的追蹤 ETF，這裡用 SOXX 和 SMH 兩檔合計。':''),
       head:{arr:flowArr, fmt:sgnInt, name:(sox?'兩檔合計':E[0])+'週淨申購', unit:'百萬美元'}, subs:subs});
   } else {
@@ -356,14 +363,21 @@ function buildSpecs(){
       S('lv_'+sfx, '避險基金', 'line', C['lv_'+sfx], 'c3', sfx==='p'?sgn1:sgnInt, {sparse:true}),
       S('ot_'+sfx, '其他申報者', 'line', C['ot_'+sfx], 'c4', sfx==='p'?sgn1:sgnInt, {sparse:true, w:1}),
       S('nr_'+sfx, '散戶（未達申報門檻）', 'line', C['nr_'+sfx], 'idx', sfx==='p'?sgn1:sgnInt, {sparse:true, w:1})]; };
-    sp.push({id:'cot', title:'期貨大戶部位（'+(tab==='spy'?'S&P 500':'Nasdaq-100')+' 期貨，CFTC）', freq:'每週（調查日週二，週五公布）',
+    var futName = tab==='spy'?'S&P 500':'Nasdaq-100';
+    sp.push({id:'cot', title:'期貨大戶部位：資產管理人（'+futName+' 期貨，CFTC）', freq:'每週（調查日週二，週五公布）',
+      verdict:'資產管理人是退休基金、共同基金、保險公司這類長線機構，部位有方向性，比避險基金那條乾淨。極端偏多代表長線資金已經接近滿倉，但這種狀態可以維持很久，不能當成反轉訊號。',
       note:'資料是 CFTC 的金融期貨持倉報告（Traders in Financial Futures）。淨部位＝多單口數減空單口數，不含跨月價差單。口數用 CFTC 的合併口徑（Consolidated），比只算迷你契約略大：2026-10-27 的未平倉量，S&P 500 合併 1,978,590 口、迷你契約 1,955,711 口，Nasdaq-100 合併 281,669 口、迷你契約 268,508 口。CFTC 在 2023-05-02 把合併檔的契約單位從 250 美元（S&P 500）與 100 美元（Nasdaq-100）改成 50 美元與 20 美元，同樣的部位口數變成 5 倍；圖上把更早的口數乘以 5，統一成現在的單位。',
-      head:{arr:C.lv_n, fmt:sgnInt, name:'避險基金淨部位', unit:'口'},
+      head:{arr:C.am_n, fmt:sgnInt, name:'資產管理人淨部位', unit:'口'},
       subs:[
         {h:260, title:'五類交易人淨部位（口）', series:five('n'),
-         read:'資產管理人是長線機構，通常站在多方；交易商和避險基金多半在空方。避險基金的淨空單擴大，可能是增加放空，也可能是做期貨空單配現貨多單的基差交易，不能直接當成看空。'},
+         read:'資產管理人通常站在多方，交易商和避險基金多半在空方。'},
         {h:200, title:'淨部位占未平倉量（%）', series:five('p'),
-         read:'除以未平倉量之後，不同年份的部位大小可以直接比較。看一個類別目前站在自己歷史區間的哪個位置，比看口數有意義。'},
+         read:'除以未平倉量之後，不同年份的部位大小可以直接比較。看資產管理人目前站在自己歷史區間的哪個位置，比看口數有意義。'}]});
+    sp.push({id:'cotlv', title:'避險基金期貨多空單（'+futName+' 期貨，CFTC）', freq:'每週（調查日週二，週五公布）',
+      verdict:'避險基金的期貨淨空單多半是「空期貨、買現貨」的基差交易，賺的是期貨和現貨之間的價差，淨空擴大不能讀成看空。',
+      note:'資料來源和口數單位同上面的「期貨大戶部位」。',
+      head:{arr:C.lv_n, fmt:sgnInt, name:'避險基金淨部位', unit:'口'},
+      subs:[
         {h:170, title:'避險基金多單與空單（口）', series:[
           S('lv_l', '避險基金多單', 'line', C.lv_l, 'up', FMT.int, {sparse:true}),
           S('lv_s', '避險基金空單', 'line', C.lv_s, 'down', FMT.int, {sparse:true})],
@@ -371,7 +385,7 @@ function buildSpecs(){
         {h:150, title:'未平倉量（口）', series:[S('oi', '未平倉量', 'line', C.oi, 'c1', FMT.int, {sparse:true})],
          read:'未平倉量是期貨市場的總規模，擴大代表有更多部位進場，季度換約前後會出現規律的起伏。'}]});
   } else {
-    sp.push({id:'cot', title:'期貨大戶部位（CFTC）', freq:'每週', nodata:'費半沒有對應的指數期貨，所以沒有 CFTC 持倉報告。半導體權重高的 Nasdaq-100 期貨部位，可以看 QQQ 分頁。'});
+    sp.push({id:'cot', title:'期貨大戶部位：資產管理人（CFTC）', freq:'每週', nodata:'費半沒有對應的指數期貨，所以沒有 CFTC 持倉報告。半導體權重高的 Nasdaq-100 期貨部位，可以看 QQQ 分頁。'});
   }
 
   /* 4 放空 */
@@ -385,7 +399,8 @@ function buildSpecs(){
     });
   }
   sp.push({id:'si', title:'放空餘額（'+E.join('＋')+'）', freq:'每月兩次（結算日約 15 日與月底，約 7 個營業日後公布）',
-    note:'FINRA 每月兩次公布全市場合併的放空餘額，以結算日為準。占流通份額＝放空股數除以結算日的 ETF 流通份額（發行商公布值）；回補天數＝放空股數除以近期日均成交量（FINRA 公布值）。ETF 的放空多半來自造市商避險和套利，高低不等於看空，看變化比看水位有用。'+(sox?'費半用 SMH 與 SOXX 合計，分母是兩檔流通份額合計。':''),
+    verdict:'ETF 的放空大部分是造市商避險和申購贖回套利，比例高低都不代表有人看空。',
+    note:'FINRA 每月兩次公布全市場合併的放空餘額，以結算日為準。占流通份額＝放空股數除以結算日的 ETF 流通份額（發行商公布值）；回補天數＝放空股數除以近期日均成交量（FINRA 公布值）。'+(sox?'費半用 SMH 與 SOXX 合計，分母是兩檔流通份額合計。':''),
     head:{arr:SI.ratio, fmt:FMT.d3, name:'放空股數占流通份額', unit:'%', extra:function(i){ return '，回補 '+FMT.d2(SI.dtc[i])+' 天，'+FMT.int(SI.short[i])+' 股'; }},
     subs:[
       {h:230, title:'放空股數占流通份額（%）', series:siSeries,
@@ -394,7 +409,8 @@ function buildSpecs(){
        read:'天數越大，代表放空部位相對於日成交量越大，要買回的話需要更多天；ETF 的天數普遍很低，因為成交量大。'}]});
 
   sp.push({id:'svol', title:'每日放空量比率（'+E.join('＋')+'）', freq:'每日（美股收盤後約 6 點公布）',
-    note:'每日放空量比率＝當日放空成交股數除以總成交股數，資料是 FINRA 的 Reg SHO 每日放空量（交易所與場外合併）。這個比率包含造市商為了提供流動性和避險而做的放空，長期都在相當高的水位，不等於看空比例；看的是偏離自己 20 日平均的程度。',
+    verdict:'這個比率包含造市商為了提供流動性而做的放空，長期大多在四成五到七成之間，高低不代表看空。',
+    note:'每日放空量比率＝當日放空成交股數除以總成交股數，資料是 FINRA 的 Reg SHO 每日放空量（交易所與場外合併）。',
     head:{arr:SV.r20, fmt:FMT.d2, name:'20 日平均', unit:'%', extra:function(i){ return '，當日 '+FMT.d2(SV.ratio[i])+'%'; }},
     subs:[{h:230, title:'放空成交量占總成交量（%）', series:[
         S('sv_d', '每日', 'line', SV.ratio, 'c2', FMT.d2, {w:1}),
@@ -405,6 +421,7 @@ function buildSpecs(){
   D.lev.forEach(function(L, k){
     var pairName = L.bull+'（'+L.name+'多）與 '+L.bear+'（'+L.name+'空）';
     sp.push({id:'lev'+k, title:'槓桿 ETF 多空流量：'+pairName, freq:'每週',
+      verdict:k===0 ? '槓桿 ETF 的買家以散戶為主，流量反映散戶的情緒，只有到極端的時候才值得注意。' : null,
       note:k===0 ? '週淨申購＝週內流通份額變化乘以淨值，單位百萬美元，2016-11 起。TQQQ、SQQQ、SOXL、SOXS 沿用擁擠交易儀表的週檔；UPRO、SPXU、SSO、SDS 由 ProShares 官方每日份額自算，口徑相同。Direxion 的 SPXL、SPXS 沒有公開的歷史份額，這頁不放。' : null,
       head:{arr:L.bull_w, fmt:sgnInt, name:L.bull+' 週淨申購', unit:'百萬美元', extra:function(i){ return '，'+L.bear+' '+sgnInt(L.bear_w[i])+' 百萬美元'; }},
       subs:[
@@ -421,6 +438,7 @@ function buildSpecs(){
   /* 6 選擇權分帳戶成交量 */
   var O = D.occ;
   sp.push({id:'occ', title:'選擇權分帳戶成交量（'+E.join('＋')+'）', freq:'每日（OCC 只提供近 2 年，本頁自 2024-10 起逐日累積）',
+    verdict:'資料只有兩年，還不夠判斷有沒有用。',
     note:'資料是 OCC（美國選擇權清算公司）按帳戶別公布的成交量，分成客戶、券商自營、造市商三類，合併所有交易所、含週選擇權。客戶 put／call 比＝客戶 put 成交量除以 call 成交量，20 日值＝近 20 個交易日合計相除。',
     head:{arr:O.pc20, fmt:FMT.d2, name:'客戶 put／call 比（20 日）', unit:'', extra:function(i){ return '，當日 '+FMT.d2(O.pc[i]); }},
     subs:[
@@ -438,17 +456,19 @@ function buildSpecs(){
   if(D.vol){
     var vn = D.vol.name;
     sp.push({id:'vol', title:'波動率指數（'+vn+'）', freq:'每日',
+      verdict:'對「未來一個月震盪有多大」，'+vn+' 是這一頁預測得最穩的一項，適合用來判斷風險環境、決定部位大小，但看不出漲跌方向。本站實單規則用過去的實際波動調整部位，'+vn+' 是市場對未來同一件事的報價。本站的貪婪／恐懼溫度計也用到 VIX，拿它調整實單槓桿的回測沒有通過。',
       note:vn==='VIX' ? 'VIX 是 Cboe 用 S&P 500 選擇權報價算出的未來 30 天預期波動。' : 'VXN 是 Cboe 用 Nasdaq-100 選擇權報價算出的未來 30 天預期波動。',
       head:{arr:D.vol.v, fmt:FMT.d2, name:vn, unit:''},
       subs:[{h:220, series:[S('vol', vn, 'line', D.vol.v, 'c1', FMT.d2)],
         read:'數字越高，代表市場預期未來一個月震盪越大；它多半在股價下跌時急升，在上漲時緩慢下滑。'}]});
   } else {
-    sp.push({id:'vol', title:'波動率指數', freq:'每日', nodata:'費半沒有 Cboe 公布的對應波動率指數，這個分頁不放。'});
+    sp.push({id:'vol', title:'波動率指數', freq:'每日', nodata:'費半沒有 Cboe 公布的對應波動率指數。半導體權重高的 Nasdaq-100 波動率（VXN），可以看 QQQ 分頁。'});
   }
 
   /* 8 SKEW */
   if(D.skew){
     sp.push({id:'skew', title:'SKEW 尾部避險指數', freq:'每日',
+      verdict:'研究多半發現 SKEW 預測不了大跌，本站的資料也一樣：1990 年以來，SKEW 落在最高一成的日子，之後一個月 S&amp;P 500 跌超過 10% 的比例是 1.2%，比所有日子的 4.1% 還低。',
       note:'SKEW 是 Cboe 用 S&P 500 價外選擇權報價算出的尾部風險指數，100 代表報酬分布對稱，數字越高，代表市場為大跌買保護願意付的價格越高。只放在 SPY 分頁。',
       head:{arr:D.skew, fmt:FMT.d2, name:'SKEW', unit:''},
       subs:[{h:220, series:[S('skew', 'SKEW', 'line', D.skew, 'c4', FMT.d2)],
@@ -458,6 +478,7 @@ function buildSpecs(){
   /* 9 融資餘額 */
   if(EX.margin){
     sp.push({id:'margin', title:'全市場融資餘額（FINRA）', freq:'每月（次月下旬公布）',
+      verdict:'融資跟著股價漲跌。年增率超過 30% 的高水位出現過好幾次，之後的走勢不一樣：2000 年和 2007 年離股市高點都不到一年，2004 年和 2013 年之後股市還漲了一年以上，2021 年從升破 30% 到 S&amp;P 500 見頂隔了 13 個月。高水位只代表槓桿擴張得快，不能用來抓高點。',
       note:'這是美股全市場券商客戶的融資餘額（margin debit），不是該指數專屬，三個分頁放同一條線。資料直接讀擁擠交易與恐懼貪婪頁已在每日更新的 FINRA 檔，單位百萬美元；年增率＝當月餘額相對去年同月。',
       head:{arr:EX.margin, fmt:FMT.int, name:'融資餘額', unit:'百萬美元', extra:function(i){ return '，年增率 '+sgn1(EX.marginYoy[i])+'%'; }},
       subs:[
@@ -470,6 +491,7 @@ function buildSpecs(){
   /* 10 全市場 put／call 比 */
   var P = D.pcr;
   sp.push({id:'pcr', title:'全市場選擇權 put／call 比（Cboe）', freq:'每日',
+    verdict:'台股籌碼頁的 put／call 比做過事前登記的檢定，沒有通過。美股這邊沒有檢定過，一般只在極端值時參考。',
     note:'這是 Cboe 四個交易所全市場選擇權成交量的 put／call 比，不分指數，三個分頁放同一條線。2019-10-04 以前取自 Cboe 的歷史檔（總計、指數、股票三項，沒有 ETF 產品分項）；2019-10-07 起取自 Cboe 每日統計檔，多了 ETF 產品分項，兩段在 2019-10-04 與 2019-10-07 之間直接相接。',
     head:{arr:P.total, fmt:FMT.d2, name:'總計 put／call 比', unit:''},
     subs:[
@@ -484,12 +506,21 @@ function buildSpecs(){
        read:'指數選擇權的比值通常最高，指數 put 常被拿來避險；股票選擇權的比值通常低於 1，代表 call 的成交量比較大。'}]});
 
   if(D.ins) sp.push(insiderSpec());
-  return sp;
+
+  /* 依參考價值排序，分三組（理由寫在各區塊的 verdict） */
+  var by = {}; sp.forEach(function(s){ by[s.id] = s; });
+  var G = function(t, d){ return {group:t, desc:d}; };
+  var order = ['price',
+    G('比較值得看', '這兩項讀得出最多東西，但都沒有證明能預測漲跌。'), 'vol', 'cot',
+    G('看得出誰在買賣，不能抓時機', '這幾項描述資金和部位往哪裡去，適合用來確認擁擠程度。'), 'flows', 'lev0', 'lev1', 'ins', 'margin',
+    G('雜訊多，只當背景', '這幾項大部分反映造市商避險和套利，或是資料太短，數字高低不代表市場看法。'), 'si', 'svol', 'cotlv', 'skew', 'pcr', 'occ'];
+  return order.map(function(o){ return typeof o==='string' ? by[o] : o; }).filter(Boolean);
 }
 function insiderSpec(){
   var I = D.ins, sgnInt = FMT.sgn(FMT.int);
   var who = D.etfs.join('＋');
   return {id:'ins', title:'成分股內部人買賣（'+who+' 今天的成分股）', freq:'每月（SEC 季度資料集，季底後才發布）',
+    verdict:'學術研究發現，整個市場的內部人買進有資訊含量。本站檢驗過個股層面的版本：2009 年以來挑出「多位內部人同時買進」的股票，在設計規則時沒用過的 2019 年以後資料裡，沒有贏過同一批股票的等權平均（<a href="/backtest/insider/">檢驗結果</a>）。這裡的資料又晚一到三個月、只算今天的成分股，參考價值要再打折。',
     note:'資料是 SEC 的 Form 4 季度資料集，只算公開市場買進（交易代碼 P）與賣出（S），依交易日所在月份彙總，不含 4/A 更正。人數是各公司買進或賣出的不同申報人數相加；淨金額＝買進金額減賣出金額（股數乘單價，百萬美元）。成分股用的是今天的持股名單（'+I.n_tickers+' 檔），過去被剔除的公司不在內。SEC 季度資料在季底後一到三個月才發布，所以最新一個月是上一個季底。'+(D.etfs.indexOf('SOXX')>=0?'台積電從 2026-03 起才向 SEC 申報 Form 4，之後每月約 30 人小額買進（每月合計多在 100 萬美元以下），所以費半的買進人數從這時起墊高，不能跟更早的月份直接比。':''),
     head:{arr:I.net, fmt:sgnInt, name:'淨金額', unit:'百萬美元', extra:function(i){ return '，買進 '+I.nb[i]+' 人、賣出 '+I.ns[i]+' 人'; }},
     subs:[
@@ -499,7 +530,7 @@ function insiderSpec(){
        read:'賣出人數長期多於買進人數，部分原因是員工的股票獎酬要賣出變現，所以看買進人數的變化，比看賣出人數有意義。'},
       {h:210, title:'買進減賣出淨金額（百萬美元，每月）', series:[
         S('inet', '淨金額', 'hist', I.net, 'c1', sgnInt, {sign:true})],
-       read:'淨金額多數月份為負，因為賣出金額遠大於買進，要看的是當月數字相對自己歷史水位的高低。這裡沒有檢定過內部人買賣能不能預測走勢。'}]};
+       read:'淨金額多數月份為負，因為賣出金額遠大於買進，要看的是當月數字相對自己歷史水位的高低。'}]};
 }
 
 /* ---------------- 繪圖 ---------------- */
@@ -665,8 +696,13 @@ function headline(spec, sec){
 var secNo = 0;
 function buildSection(spec){
   if(!spec) return;
-  secNo++;
   var root = document.getElementById('charts');
+  if(spec.group){
+    var g = document.createElement('div'); g.className='grp';
+    g.innerHTML = '<h3>'+spec.group+'</h3><p>'+spec.desc+'</p>'; root.appendChild(g);
+    return;
+  }
+  secNo++;
   var sec = document.createElement('section'); sec.className='sec'; sec.id='s-'+spec.id; root.appendChild(sec);
   var head = document.createElement('div'); head.className='sec-head'; sec.appendChild(head);
   var rg = spec.nodata ? null : specRange(spec);
@@ -676,6 +712,7 @@ function buildSection(spec){
     var nd = document.createElement('div'); nd.className='nodata'; nd.textContent = spec.nodata; sec.appendChild(nd);
     return;
   }
+  if(spec.verdict){ var vd=document.createElement('p'); vd.className='verdict'; vd.innerHTML=spec.verdict; sec.appendChild(vd); }
   if(spec.note){ var nt=document.createElement('p'); nt.className='hint'; nt.textContent=spec.note; sec.appendChild(nt); }
   var legend = document.createElement('div'); legend.className='legend'; sec.appendChild(legend);
   var wrap = document.createElement('div'); sec.appendChild(wrap);
