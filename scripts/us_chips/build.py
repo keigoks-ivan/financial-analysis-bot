@@ -280,6 +280,50 @@ def block_lev(cal, n, pairs, weekly):
     return out
 
 
+def load_insider() -> dict:
+    """data/us_chips/insider/{季}.jsonl → {(代號, 月): [買進人數, 賣出人數, 買進金額, 賣出金額]}，各季相加
+    （同一個月的交易會出現在多個季度檔：晚申報的那幾筆落在之後的季度）。"""
+    tot: dict = {}
+    files = sorted((SRC / "insider").glob("*.jsonl"))
+    if not files:
+        return tot
+    last_q = files[-1].stem                         # 例 2026q3：交易日期晚於該季季末的列是申報時打錯日期，不收
+    hi = f"{last_q[:4]}-{int(last_q[5]) * 3:02d}"
+    for p in files:
+        for line in p.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                r = json.loads(line)
+                if not ("2009-01" <= r["m"] <= hi):
+                    continue
+                a = tot.setdefault((r["t"], r["m"]), [0, 0, 0.0, 0.0])
+                a[0] += r["nb"]; a[1] += r["ns"]; a[2] += r["buy"]; a[3] += r["sell"]
+    return tot
+
+
+def block_ins(cal, n, tickers: set, tot: dict):
+    months: dict = {}
+    for (t, m), v in tot.items():
+        if t in tickers:
+            a = months.setdefault(m, [0, 0, 0.0, 0.0])
+            for i in range(4):
+                a[i] += v[i]
+    if not months:
+        return None
+
+    def end(m):
+        y, mo = int(m[:4]), int(m[5:])
+        return (dt.date(y + (mo == 12), mo % 12 + 1, 1) - dt.timedelta(days=1)).isoformat()
+    ms = sorted(months)
+    return {
+        "nb": spread(cal, n, [(end(m), months[m][0]) for m in ms]),
+        "ns": spread(cal, n, [(end(m), months[m][1]) for m in ms]),
+        "net": spread(cal, n, [(end(m), (months[m][2] - months[m][3]) / 1e6) for m in ms], 2),
+        "buy": spread(cal, n, [(end(m), months[m][2] / 1e6) for m in ms], 2),
+        "sell": spread(cal, n, [(end(m), months[m][3] / 1e6) for m in ms], 2),
+        "n_tickers": len(tickers),
+    }
+
+
 # ---------------------------------------------------------------- CSV
 
 CSV_COLS = {
@@ -328,6 +372,13 @@ def export_csv() -> dict:
         for tk, d in wk.items():
             for k in sorted(d):
                 w.writerow([k, tk, d[k]])
+    tot = load_insider()
+    if tot:
+        with (CSV_OUT / "insider_ticker_month.csv").open("w", encoding="utf-8", newline="") as f:
+            w = csv.writer(f, lineterminator="\n")
+            w.writerow(["date", "ticker", "buyer_count", "seller_count", "buy_amount_usd", "sell_amount_usd"])
+            for (t, m), v in sorted(tot.items(), key=lambda kv: (kv[0][1], kv[0][0])):
+                w.writerow([m + "-01", t, v[0], v[1], round(v[2], 2), round(v[3], 2)])
     return info
 
 
@@ -345,6 +396,8 @@ def main() -> int:
     vols = {"vix": load("vix"), "vxn": load("vxn")}
     skew = load("skew")
     pcr = block_pcr(cal, n)
+    ins_tot = load_insider()
+    cons = json.loads((SRC / "constituents.json").read_text(encoding="utf-8"))["etfs"] if (SRC / "constituents.json").exists() else {}
     dump("cal.json", {"t": cal})
     for tab, cfg in TABS.items():
         etfs = cfg["etfs"]
@@ -360,6 +413,7 @@ def main() -> int:
             "vol": ({"name": cfg["vol"].upper(), "v": daily(ci, n, vols[cfg["vol"]], lambda r: r["v"], 2)} if cfg["vol"] else None),
             "skew": daily(ci, n, skew, lambda r: r["v"], 2) if tab == "spy" else None,
             "pcr": pcr,
+            "ins": block_ins(cal, n, set().union(*[set(cons.get(e, [])) for e in etfs]), ins_tot) if ins_tot else None,
         }
         dump(f"{tab}.json", obj)
     info = export_csv()

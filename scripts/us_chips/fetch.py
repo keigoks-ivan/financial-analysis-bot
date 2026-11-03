@@ -490,9 +490,140 @@ def fetch_lev(backfill=False):
     return ", ".join(msgs)
 
 
+# ------------------------------------------------------------------ 內部人買賣（SEC Form 3/4/5 季度資料集）
+
+INSIDER_DIR = DATA / "insider"
+SEC_UA = "InvestMQuest Research admin@investmquest.com"
+SEC_URLS = [
+    "https://www.sec.gov/files/datastandardsinnovation/data/insider-transactions-data-sets/{q}_form345.zip",   # 2026q2 起的新路徑
+    "https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/{q}_form345.zip",
+]
+INSIDER_FIRST = (2009, 1)
+
+
+def norm_ticker(t: str) -> str:
+    return "".join(c for c in (t if isinstance(t, str) else "").upper() if c.isalnum())
+
+
+def constituents() -> dict:
+    """etf-dash 現有持股名單（今天的成分股）。回傳 {etf: [norm ticker]}，並存一份快照到 data/us_chips/constituents.json。"""
+    out = {}
+    for e in ETFS:
+        j = json.loads((ROOT / "docs" / "etf-dash" / "data" / f"{e}.json").read_text(encoding="utf-8"))
+        out[e] = sorted({norm_ticker(c["ticker"]) for c in j["constituents"] if c.get("ticker")})
+        asof = j.get("holdings_as_of")
+    DATA.mkdir(parents=True, exist_ok=True)
+    (DATA / "constituents.json").write_text(json.dumps({"asof": asof, "etfs": out}, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+    return out
+
+
+def quarters_until(today: dt.date):
+    y, q = INSIDER_FIRST
+    while dt.date(y, 3 * q - 2, 1) <= today:
+        yield f"{y}q{q}"
+        q += 1
+        if q == 5:
+            y, q = y + 1, 1
+
+
+def quarter_end(qs: str) -> dt.date:
+    y, q = int(qs[:4]), int(qs[5])
+    m = 3 * q
+    return (dt.date(y + (m == 12), m % 12 + 1, 1) - dt.timedelta(days=1))
+
+
+def aggregate_zip(path: Path, tickers: set) -> list[dict]:
+    """只算公開市場買進（P）與賣出（S）的 Form 4（不含 4/A 更正）。依『交易日所在月份』與代號彙總：
+    nb／ns＝該月有買進／賣出的不同申報人數，buy／sell＝成交金額（股數 × 單價，美元；缺單價的列不計金額）。"""
+    import zipfile
+    import pandas as pd
+    with zipfile.ZipFile(path) as z:
+        def rd(name, cols):
+            with z.open(name) as f:
+                return pd.read_csv(f, sep="\t", usecols=cols, dtype=str, low_memory=False, encoding="latin-1")
+        sub = rd("SUBMISSION.tsv", ["ACCESSION_NUMBER", "DOCUMENT_TYPE", "ISSUERTRADINGSYMBOL"])
+        own = rd("REPORTINGOWNER.tsv", ["ACCESSION_NUMBER", "RPTOWNERCIK"])
+        tr = rd("NONDERIV_TRANS.tsv", ["ACCESSION_NUMBER", "TRANS_DATE", "TRANS_CODE", "TRANS_SHARES", "TRANS_PRICEPERSHARE"])
+    sub = sub[sub["DOCUMENT_TYPE"] == "4"].copy()
+    sub["t"] = sub["ISSUERTRADINGSYMBOL"].map(norm_ticker)
+    sub = sub[sub["t"].isin(tickers)][["ACCESSION_NUMBER", "t"]]
+    tr = tr[tr["TRANS_CODE"].isin(["P", "S"])].merge(sub, on="ACCESSION_NUMBER")
+    if tr.empty:
+        return []
+    d = pd.to_datetime(tr["TRANS_DATE"], format="%d-%b-%Y", errors="coerce")
+    tr = tr.assign(m=d.dt.strftime("%Y-%m"))
+    tr = tr[tr["m"].notna()]
+    sh = pd.to_numeric(tr["TRANS_SHARES"], errors="coerce")
+    px = pd.to_numeric(tr["TRANS_PRICEPERSHARE"], errors="coerce")
+    tr["amt"] = sh * px
+    # 申報人手誤（單價或股數多打幾個零，2017-08 AMD 一個月算出 2e16 美元）：單價 > 5,000 美元或單筆 > 50 億美元的金額不計；
+    # 同一家公司、同一天、同股數同單價的同方向交易只算一筆（母公司與關係企業各自申報同一筆交易的重複列）
+    tr["amt"] = tr["amt"].where((tr["amt"] > 0) & (px <= 5000) & (tr["amt"] <= 5e9))
+    dup = tr.duplicated(["t", "TRANS_DATE", "TRANS_CODE", "TRANS_SHARES", "TRANS_PRICEPERSHARE"])
+    tr["amt"] = tr["amt"].where(~dup)
+    rows = []
+    owners = tr[["ACCESSION_NUMBER", "t", "m", "TRANS_CODE"]].drop_duplicates().merge(own, on="ACCESSION_NUMBER")
+    nown = owners.groupby(["t", "m", "TRANS_CODE"])["RPTOWNERCIK"].nunique()
+    amt = tr.groupby(["t", "m", "TRANS_CODE"])["amt"].sum()
+    keys = sorted(set(nown.index) | set(amt.index))
+    by: dict = {}
+    for t, m, c in keys:
+        r = by.setdefault((t, m), {"t": t, "m": m, "nb": 0, "ns": 0, "buy": 0.0, "sell": 0.0})
+        n = int(nown.get((t, m, c), 0)); a = float(amt.get((t, m, c), 0.0))
+        if c == "P":
+            r["nb"], r["buy"] = n, round(a, 2)
+        else:
+            r["ns"], r["sell"] = n, round(a, 2)
+    return [by[k] for k in sorted(by)]
+
+
+def fetch_insider(backfill=False):
+    import os
+    import tempfile
+    cons = constituents()
+    tickers = set().union(*cons.values())
+    st = load_state()
+    done = set(st.get("insider_done", []))
+    raw_dir = os.environ.get("US_CHIPS_INSIDER_RAW")        # 本機已有的原始 zip（v7-backtest/data/insider/raw），有就不重抓
+    today = today_et()
+    INSIDER_DIR.mkdir(parents=True, exist_ok=True)
+    msgs, notyet = [], []
+    for qs in quarters_until(today):
+        if qs in done:
+            continue
+        zp = Path(raw_dir) / f"{qs}_form345.zip" if raw_dir else None
+        tmp = None
+        if not (zp and zp.exists()):
+            for tmpl in SEC_URLS:
+                time.sleep(0.2)
+                r = _s.get(tmpl.format(q=qs), headers={"User-Agent": SEC_UA}, timeout=120)
+                if r.status_code == 200 and r.content[:2] == b"PK":
+                    tmp = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
+                    tmp.write(r.content); tmp.close()
+                    zp = Path(tmp.name)
+                    break
+            else:
+                notyet.append(qs)
+                continue
+        try:
+            rows = aggregate_zip(zp, tickers)
+        finally:
+            if tmp:
+                os.unlink(tmp.name)
+        with (INSIDER_DIR / f"{qs}.jsonl").open("w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n")
+        if quarter_end(qs) < today - dt.timedelta(days=5):
+            done.add(qs)
+        msgs.append(f"{qs}:{len(rows)}")
+    st["insider_done"] = sorted(done)
+    save_state(st)
+    return f"insider 新處理 {len(msgs)} 季{('（' + ' '.join(msgs[-3:]) + '）') if msgs else ''}；尚未發布 {notyet or '無'}"
+
+
 SOURCES = {
     "idx": fetch_idx, "cot": fetch_cot, "si": fetch_si, "svol": fetch_svol, "occ": fetch_occ,
-    "vol": fetch_vol, "pcr": fetch_pcr, "shares": fetch_shares, "lev": fetch_lev,
+    "vol": fetch_vol, "pcr": fetch_pcr, "shares": fetch_shares, "lev": fetch_lev, "insider": fetch_insider,
 }
 
 

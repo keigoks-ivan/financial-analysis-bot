@@ -483,7 +483,23 @@ function buildSpecs(){
         S('pq', '股票選擇權', 'line', P.equity, 'c2', FMT.d2, {w:1})],
        read:'指數選擇權的比值通常最高，指數 put 常被拿來避險；股票選擇權的比值通常低於 1，代表 call 的成交量比較大。'}]});
 
+  if(D.ins) sp.push(insiderSpec());
   return sp;
+}
+function insiderSpec(){
+  var I = D.ins, sgn2 = FMT.sgn(FMT.d2);
+  var who = D.etfs.join('＋');
+  return {id:'ins', title:'成分股內部人買賣（'+who+' 今天的成分股）', freq:'每月（SEC 季度資料集，季底後才發布）',
+    note:'資料是 SEC 的 Form 4 季度資料集，只算公開市場買進（交易代碼 P）與賣出（S），依交易日所在月份彙總，不含 4/A 更正。人數是各公司買進或賣出的不同申報人數相加；淨金額＝買進金額減賣出金額（股數乘單價，百萬美元）。成分股用的是今天的持股名單（'+I.n_tickers+' 檔），過去被剔除的公司不在內。SEC 季度資料在季底後一到三個月才發布，所以最新一個月是上一個季底。',
+    head:{arr:I.net, fmt:sgn2, name:'淨金額', unit:'百萬美元', extra:function(i){ return '，買進 '+I.nb[i]+' 人、賣出 '+I.ns[i]+' 人'; }},
+    subs:[
+      {h:210, title:'買進與賣出人數（每月）', series:[
+        S('inb', '買進人數', 'line', I.nb, 'up', FMT.int, {sparse:true}),
+        S('ins', '賣出人數', 'line', I.ns, 'down', FMT.int, {sparse:true})],
+       read:'賣出人數長期多於買進人數，部分原因是員工的股票獎酬要賣出變現，所以看買進人數的變化，比看賣出人數有意義。'},
+      {h:210, title:'買進減賣出淨金額（百萬美元，每月）', series:[
+        S('inet', '淨金額', 'hist', I.net, 'c1', sgn2, {sign:true})],
+       read:'淨金額多數月份為負，因為賣出金額遠大於買進，要看的是當月數字相對自己歷史水位的高低。這裡沒有檢定過內部人買賣能不能預測走勢。'}]};
 }
 
 /* ---------------- 繪圖 ---------------- */

@@ -1,6 +1,6 @@
 # 美股籌碼資料庫（data/us_chips/）
 
-美股「籌碼」的長期共用資料：S&P 500、Nasdaq-100、費城半導體三個指數日線，期貨大戶部位（CFTC），SPY／QQQ／SMH／SOXX 四檔 ETF 的放空餘額與每日放空量（FINRA）、分帳戶選擇權成交量（OCC）、流通份額（發行商），槓桿 ETF 份額與淨值（ProShares），VIX、VXN、SKEW，全市場 put／call 比（Cboe）。網頁 `/us-chips/` 讀這裡建出的 `docs/us-chips/data/*.json`。
+美股「籌碼」的長期共用資料：S&P 500、Nasdaq-100、費城半導體三個指數日線，期貨大戶部位（CFTC），SPY／QQQ／SMH／SOXX 四檔 ETF 的放空餘額與每日放空量（FINRA）、分帳戶選擇權成交量（OCC）、流通份額（發行商），槓桿 ETF 份額與淨值（ProShares），VIX、VXN、SKEW，全市場 put／call 比（Cboe），成分股內部人買賣（SEC）。網頁 `/us-chips/` 讀這裡建出的 `docs/us-chips/data/*.json`。
 
 不在本資料夾、由網頁直接讀其他頁已有檔案的兩塊（不另外抓、不複製）：
 
@@ -13,14 +13,17 @@
 | 路徑 | 內容 |
 |---|---|
 | `{series}.jsonl` | 原始存檔，一天（或一期）一行，鍵 `d`（YYYY-MM-DD）。欄位名是短名（下面逐一解釋）。append-only：同日內容沒變不寫，有修正就在檔尾加一行，讀入以同鍵最後一行為準。 |
+| `insider/{YYYYqN}.jsonl` | 內部人買賣，每個 SEC 季度資料集一個檔，每列＝一個代號一個月。 |
 | `csv/{series}.csv` | 由 jsonl 扁平化而來，第一欄 `date`，欄名是英文全名，pandas 直接能讀。每次 `build.py` 重新產生，不要手改。 |
-| `_state.json` | 抓取進度：`no_data`（平日但來源沒檔，多半是休市）。 |
+| `constituents.json` | 內部人彙總用的成分股名單（etf-dash 當時的持股，代號只留英數字）。 |
+| `_state.json` | 抓取進度：`no_data`（平日但來源沒檔，多半是休市）、`insider_done`（已處理完的內部人季度）。 |
 
 ## 更新方式
 
 - 日常：`python3 scripts/us_chips/fetch.py`（只抓缺的），再 `python3 scripts/us_chips/build.py`。
 - GitHub Actions：`.github/workflows/us-chips-daily.yml`，台北週二至週六 08:41。
 - 回補：`fetch.py --backfill`（svol 自 2018-08-01、pcr 自 2019-10-07、occ 自 2024-10-23），可用 `--only svol,occ` 指定來源。
+- 本機有 SEC 原始 zip 時，`US_CHIPS_INSIDER_RAW=~/v7-backtest/data/insider/raw` 可省下載。
 - 單一來源失敗不影響其他來源，log 會寫 `FAIL <來源>`。
 
 ---
@@ -87,3 +90,12 @@
 - 最早日：UPRO、SPXU 2009-06-23，SSO 2006-06-19，SDS 2006-07-11。
 - 週淨申購（`csv/lev_weekly.csv`）＝逐日（份額變化 × 當日淨值）併成週（週一為週標籤），百萬美元，2016-11-07 起，口徑同 `scripts/crowding/build_dash.py`。
 - Direxion 的 SPXL、SPXS 沒有公開歷史份額，不收。
+
+## insider/ — 成分股內部人買賣（月）
+
+- 來源：SEC Form 3/4/5 季度資料集（`https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/<YYYY>q<N>_form345.zip`；2026q2 起改放 `.../files/datastandardsinnovation/data/insider-transactions-data-sets/`）。原始 zip 在 v7-backtest `data/insider/raw/`（2009q1 起）。
+- 做法：只取 Form 4（不含 4/A 更正）的公開市場買進（交易代碼 P）與賣出（S）；依交易日所在月份與公司代號彙總。每列：`t` 代號（只留英數字）、`m` 月、`nb`／`ns` 該月買進／賣出的不同申報人數、`buy`／`sell` 成交金額（股數 × 單價，美元；缺單價的列不計金額；單價高於 5,000 美元或單筆超過 50 億美元視為申報手誤不計金額，同公司同日同股數同單價同方向的重複列只算一筆）。
+- 成分股：etf-dash 今天的持股名單（SPY、QQQ、SOXX 與 SMH，四檔的聯集 `constituents.json`）。**用的是今天的成分股，過去被剔除的公司不在內**；用代號比對，改過代號的公司可能對不上。
+- 頁面上每個分頁把名單內的代號相加：人數是「公司別的申報人數相加」，同一人在兩家公司買賣會算兩次。
+- 時間落差：SEC 每季資料集在季底後一到三個月才發布，最新資料到上一個季底。同一個月的交易會出現在多個季度檔（晚申報的），build.py 把各季相加，所以每個季度只要處理一次。
+- 範圍：2009-01 起（2009q1 起的 zip）；交易日期晚於該季季末的列視為申報打錯，不收。
