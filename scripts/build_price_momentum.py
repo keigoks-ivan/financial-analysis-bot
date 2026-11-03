@@ -186,8 +186,16 @@ names + SPY and re-marks both lines on that close: holdings, units, cash and
 ranks are untouched and it never rebalances — the monthly rebalance still
 happens only in the weekly full build above. nav_series rows are dated by the
 close (price_as_of) rather than the run date from 2026-10-30 on; trading days
-a missed run skipped are backfilled on the then-current holdings
-(gap_nav_rows). as_of keeps meaning "last full build".
+a missed run skipped are backfilled on the then-current holdings.
+as_of keeps meaning "last full build".
+
+PRICE INTEGRITY (2026-11-03, plumbing only — no PREREG change)
+---------------------------------------------------------------
+Every row since the last rebalance is re-marked on each run with closes dated
+exactly on that day (unadjusted for dividends); a missing close is refetched,
+then carried forward with the row flagged `provisional` until a later run
+finds it. A rebalance needs this close for every held name and buy, or it
+aborts. See scripts/p10_price_integrity.py.
 """
 
 import io
@@ -213,6 +221,8 @@ except ImportError:
     import yfinance as yf
 
 import requests
+
+import p10_price_integrity as PI
 
 ROOT = Path(__file__).resolve().parent.parent
 TRACK_JSON = ROOT / 'docs' / 'research' / 'price-momentum' / 'track.json'
@@ -281,6 +291,15 @@ DEPLOY_NOTE_20261030 = (
     "淨值序列的日期從這天起標收盤日（之前標的是執行日，通常是週六，對應週五收盤）；"
     "漏跑的交易日，下次執行時用當時的持股補算。"
 )
+DEPLOY_NOTE_20261103 = (
+    "2026-11-03 起淨值只用當天的收盤：持股缺當天收盤時先重抓，仍缺就用前一筆暫代並標「暫估」，"
+    "之後每次執行把上次換股以來的每一列整段重算，資料出來就改成正式值；重算用不含股息還原的收盤（價格報酬口徑）。"
+    "換股當天持股或要買進的股票缺當天收盤就不換股，排程重試。"
+    "起因：台股 11-02 那列誤用前一交易日的持股收盤，美股同一套程式一併修正。"
+    "S&P 500 成分股抓取失敗改為自動重試三次。只動資料處理，選股與換股規則不變。"
+)
+KEYS = ('nav_spy', 'spy_close', 'spy_close_inception')
+LISTING_RETRY_WAIT = (0.0, 20.0, 60.0)  # 成分股抓取：第 1、2、3 次前的等待秒數（2026-11-03）
 
 PREREG = {
     "title": "P10 純價格動能 paper track — v0（雙線 L12/L6，PREREG，2026-09-01 凍結）",
@@ -389,16 +408,22 @@ class FailSafeAbort(Exception):
 def scrape_sp500():
     """S&P 500 constituents from Wikipedia — identical approach to
     scripts/build_momentum5.py (same URL, same browser UA, `.` -> `-`)."""
-    try:
-        html = requests.get(WIKI_URL, headers={'User-Agent': BROWSER_UA}, timeout=60).text
-        tables = pd.read_html(io.StringIO(html))
-        cons = tables[0]
-        cons['yf'] = cons['Symbol'].str.replace('.', '-', regex=False)
-        sector = dict(zip(cons['yf'], cons['GICS Sector']))
-        tickers = cons['yf'].tolist()
-    except Exception as e:
-        raise FailSafeAbort(f"Wikipedia scrape failed ({type(e).__name__}: {e})")
-    return tickers, sector
+    last = None
+    for attempt, wait in enumerate(LISTING_RETRY_WAIT, start=1):  # 2026-11-03: transient failures retried
+        if wait:
+            time.sleep(wait + random.uniform(0, 5))
+        try:
+            html = requests.get(WIKI_URL, headers={'User-Agent': BROWSER_UA}, timeout=60).text
+            tables = pd.read_html(io.StringIO(html))
+            cons = tables[0]
+            cons['yf'] = cons['Symbol'].str.replace('.', '-', regex=False)
+            sector = dict(zip(cons['yf'], cons['GICS Sector']))
+            tickers = cons['yf'].tolist()
+            return tickers, sector
+        except Exception as e:
+            last = e
+            print(f"    ! Wikipedia 成分股第 {attempt} 次抓取失敗（{type(e).__name__}: {e}）")
+    raise FailSafeAbort(f"Wikipedia scrape failed ({type(last).__name__}: {last})")
 
 
 def build_universe():
@@ -609,34 +634,6 @@ def _close_on_or_before(c, date_str):
     return float(c.iloc[-1]) if len(c) else None
 
 
-def gap_nav_rows(state, px, spy, after_date, before_date):
-    """NAV rows for every SPY trading day strictly between after_date and
-    before_date, marked with each line's CURRENT (pre-rebalance) holdings,
-    units and cash — the same arithmetic as mark_to_market, read-only (no
-    last_price writes). Backfills the days a missed daily run skipped."""
-    closes = {h['ticker']: _close_series(px, h['ticker'])
-              for lk in LINE_KEYS for h in state['lines'][lk]['holdings']}
-    rows = []
-    for ts, spy_close in spy.items():
-        d = ts.strftime('%Y-%m-%d')
-        if not (after_date < d < before_date):
-            continue
-        entry = {'date': d}
-        for lk in LINE_KEYS:
-            ls = state['lines'][lk]
-            total = float(ls['cash'])
-            for h in ls['holdings']:
-                p = _close_on_or_before(closes[h['ticker']], d)
-                if p is None:
-                    p = h.get('last_price', h['entry_price'])
-                total += h['units'] * p
-            entry[f'nav_{lk}'] = round(total, 2)
-        entry['nav_spy'] = round(100.0 * float(spy_close) / state['spy_close_inception'], 2)
-        entry['spy_close'] = round(float(spy_close), 2)
-        rows.append(entry)
-    return rows
-
-
 def _upsert_nav_row(state, entry):
     """A row for a date already present is overwritten in place, never
     duplicated; nav_series stays in date order."""
@@ -683,14 +680,16 @@ def apply_splits(state, upto_date):
 
 
 def download_holdings_prices(tickers):
-    """Mark-only download: held names + SPY, same yf.download kwargs as the
-    full build except the shorter period. Same retry/backoff budget; raises
-    FailSafeAbort if SPY never comes back."""
+    """Held names (plus rebalance candidates in a full build) + SPY.
+    2026-11-03: auto_adjust=False — Close is split adjusted but not dividend
+    adjusted, so re-marked past rows stay price-return; the latest bar is
+    identical to the full build's auto_adjust=True close. Same retry/backoff
+    budget; raises FailSafeAbort if SPY never comes back."""
     all_tickers = sorted(set(tickers)) + ['SPY']
     last_reason = None
     for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
         try:
-            px = yf.download(all_tickers, period=MARK_ONLY_PERIOD, interval='1d', auto_adjust=True,
+            px = yf.download(all_tickers, period=MARK_ONLY_PERIOD, interval='1d', auto_adjust=False,
                              group_by='ticker', progress=False, threads=True)
             spy = px['SPY']['Close'].dropna()
         except Exception as e:
@@ -919,10 +918,37 @@ def build():
     data_gaps = []
     nav_now = {}
     split_events = apply_splits(state, px_date) if state else []
-    # trading days a missed daily run skipped, marked on the PRE-rebalance
-    # holdings — computed before process_line_update touches any state
-    gap_rows = (gap_nav_rows(state, px, spy, state['nav_series'][-1]['date'], px_date)
-                if state and state['nav_series'] else [])
+    # 2026-11-03: every row since the last rebalance, up to this build's close,
+    # is (re)marked on the PRE-rebalance holdings with closes dated exactly on
+    # each day (p10_price_integrity) — computed before process_line_update
+    # touches any state. Held names and (in a rebalance month) the buy
+    # candidates must have this close's own price, never an older one.
+    pre_rows, raw = [], {}
+    if state:
+        is_new_month = month_of(as_of) != state.get('last_rebalance_month')
+        start = PI.window_start(state, LINE_KEYS)
+        held = sorted({h['ticker'] for lk in LINE_KEYS for h in state['lines'][lk]['holdings']})
+        cands = (sorted({t for lk in LINE_KEYS for t in elig[lk].head(2 * N_SEATS).index} - set(held))
+                 if is_new_month else [])
+        rpx, rspy = download_holdings_prices(held + cands)
+        if PI.day(rspy.index[-1]) < px_date:
+            raise FailSafeAbort(f"unadjusted SPY close for {px_date} missing")
+        trading = PI.trading_days(rpx, 'SPY', rspy)
+        trade_date = [d for d in trading if d <= px_date][-1]
+        rdates = PI.plan_dates(state, trading, start, px_date)
+        raw = {t: _close_series(rpx, t) for t in held + cands}
+        raw = PI.ensure_exact(raw, held, [d for d, _ in rdates], MARK_ONLY_PERIOD, False, 'P10 持股')
+        if cands:
+            raw = PI.ensure_exact(raw, cands, [trade_date], MARK_ONLY_PERIOD, False, 'P10 換股候選')
+        for t in held + cands:
+            p = PI.close_on(raw.get(t), trade_date)
+            if p is not None:
+                price_now[t] = p
+            elif t in price_now:
+                del price_now[t]  # never mark or trade on an older close
+        pre_rows = PI.mark_rows(state, LINE_KEYS, raw, rspy, rdates, KEYS) if rdates else []
+        if is_new_month and pre_rows and pre_rows[-1].get('provisional'):
+            raise FailSafeAbort(f"rebalance needs {trade_date} closes; missing for held {pre_rows[-1]['provisional']}")
 
     if state is None:
         # ── INCEPTION (both lines, same day) ──
@@ -960,6 +986,10 @@ def build():
             if event:
                 changelog_events.append(event)
         if is_new_month:
+            lacking = sorted({h['ticker'] for lk in LINE_KEYS for h in state['lines'][lk]['holdings']
+                              if PI.close_on(raw.get(h['ticker']), trade_date) is None})
+            if lacking:
+                raise FailSafeAbort(f"rebalance needs {trade_date} closes; missing for buys {lacking}")
             state['last_rebalance_month'] = month_of(as_of)
             for event in changelog_events:
                 state['changelog'].append({'date': as_of, 'event': event})
@@ -977,11 +1007,14 @@ def build():
     # this build leaves behind — otherwise a rebalance week keeps a row
     # marked on the outgoing holdings.
     state['nav_series'] = [r for r in state['nav_series'] if r['date'] <= px_date]
-    for row in gap_rows:
-        _upsert_nav_row(state, row)
-    _upsert_nav_row(state, nav_entry)
+    if pre_rows:
+        PI.merge_rows(state, pre_rows, LINE_KEYS, 'nav_spy')
+        PI.add_gaps(state, PI.provisional_gaps(pre_rows, 'price not yet published (full build)'))
+        nav_entry = pre_rows[-1]
+    else:
+        _upsert_nav_row(state, nav_entry)  # inception, or a same-day rerun right after a rebalance
     state['as_of'] = as_of
-    state['price_as_of'] = px_date
+    state['price_as_of'] = trade_date if state.get('nav_series') and pre_rows else px_date
     state['prereg'] = PREREG  # numbers are frozen; keep the verbatim block in sync regardless
     state['data_gaps'] = (state.get('data_gaps') or []) + data_gaps
 
@@ -998,28 +1031,43 @@ def build():
     #    note above — must not re-append on every future weekly build. ──
     if not any(e.get('event') == DEPLOY_NOTE_20260908 for e in state.get('changelog', [])):
         state.setdefault('changelog', []).append({'date': '2026-09-08', 'event': DEPLOY_NOTE_20260908})
-    if not any(e.get('event') == DEPLOY_NOTE_20261030 for e in state.get('changelog', [])):
-        state.setdefault('changelog', []).append({'date': '2026-10-30', 'event': DEPLOY_NOTE_20261030})
+    _add_deploy_notes(state)
     for event in split_events:
         state['changelog'].append({'date': px_date, 'event': event})
 
-    if gap_rows:
-        print(f"    backfilled nav rows: {[r['date'] for r in gap_rows]}")
-    print(f"    nav_L12={nav_now['L12']:.2f}  nav_L6={nav_now['L6']:.2f}  nav_spy={nav_spy:.2f}")
+    print(f"    {nav_entry['date']}: nav_L12={nav_entry['nav_L12']:.2f}  nav_L6={nav_entry['nav_L6']:.2f}  "
+          f"nav_spy={nav_entry['nav_spy']:.2f}{'  暫估 ' + str(nav_entry['provisional']) if nav_entry.get('provisional') else ''}")
     for lk in LINE_KEYS:
         ls = state['lines'][lk]
         print(f"    {lk}: cash={ls['cash']:.2f}  holdings={[h['ticker'] for h in ls['holdings']]}  "
               f"flags={ls['flags']}")
 
+    if pre_rows:
+        coverage['stale_provisional'] = PI.stale_provisional(state, [r['date'] for r in pre_rows], start)
+        coverage['provisional'] = nav_entry.get('provisional')
     return state, coverage
 
 
-def build_mark_only():
+def _add_deploy_notes(state):
+    log = state.setdefault('changelog', [])
+    for d, note in (('2026-10-30', DEPLOY_NOTE_20261030), ('2026-11-03', DEPLOY_NOTE_20261103)):
+        if not any(e.get('event') == note for e in log):
+            log.append({'date': d, 'event': note})
+
+
+def build_mark_only(upto=None):
     """Daily mark-to-market (2026-10-30, `--mark-only`). Only nav_series, each
     holding's last_price, price_as_of and data_gaps change; holdings, units,
     cash, ranks, last_rebalance_month and as_of stay exactly as the last full
     build wrote them. Never rebalances — the monthly rebalance stays with the
-    weekly full build."""
+    weekly full build.
+
+    2026-11-03: re-marks EVERY row since the last rebalance (holdings are
+    unchanged over that window) with closes dated exactly on each day; a
+    missing close is refetched, then carried forward and the row flagged
+    `provisional` until a later run finds the real close (p10_price_integrity).
+    `upto` (YYYY-MM-DD, `--upto`) caps the latest close used — for audits and
+    for re-running while the market is open."""
     state = load_state()
     if state is None or not state.get('nav_series'):
         raise FailSafeAbort("no track.json yet — inception needs a full build")
@@ -1027,48 +1075,41 @@ def build_mark_only():
     print(f"=== Price-Momentum (P10) mark-only: {len(held)} held tickers + SPY ===")
 
     px, spy = download_holdings_prices(held)
-    px_date = spy.index[-1].strftime('%Y-%m-%d')
+    if upto:
+        spy = spy[spy.index.strftime('%Y-%m-%d') <= upto]
+        if spy.empty:
+            raise FailSafeAbort(f"no SPY close on or before {upto}")
+    px_date = PI.day(spy.index[-1])
     last_date = state['nav_series'][-1]['date']
     if px_date < last_date:
         raise FailSafeAbort(f"latest SPY close {px_date} is older than the last nav row {last_date}")
 
+    start = PI.window_start(state, LINE_KEYS)
+    dates = PI.plan_dates(state, PI.trading_days(px, 'SPY', spy), start, px_date)
     split_events = apply_splits(state, px_date)
-    gap_rows = gap_nav_rows(state, px, spy, last_date, px_date)
-    price_now = {}
-    for t in held:
-        p = _close_on_or_before(_close_series(px, t), px_date)
-        if p is not None:
-            price_now[t] = p
-
-    data_gaps = []
-    nav_now = {}
+    closes = {t: _close_series(px, t) for t in held}
+    closes = PI.ensure_exact(closes, held, [d for d, _ in dates], MARK_ONLY_PERIOD, False, 'P10')
+    rows = PI.mark_rows(state, LINE_KEYS, closes, spy, dates, KEYS)
+    changes = PI.merge_rows(state, rows, LINE_KEYS, 'nav_spy')
     for lk in LINE_KEYS:
-        ls = state['lines'][lk]
-        nav_now[lk], stale = mark_to_market(ls['cash'], ls['holdings'], price_now)
-        if stale:
-            print(f"    ! [{lk}] stale price carried forward for {stale}")
-            data_gaps.append({'date': px_date, 'line': lk, 'reason': 'stale price (mark-only)', 'tickers': stale})
+        for h in state['lines'][lk]['holdings']:
+            p = PI.close_on(closes.get(h['ticker']), dates[-1][0]) if dates else None
+            if p is not None:
+                h['last_price'] = p
 
-    spy_close = float(spy.iloc[-1])
-    nav_spy = round(100.0 * spy_close / state['spy_close_inception'], 2)
-    for row in gap_rows:
-        _upsert_nav_row(state, row)
-    _upsert_nav_row(state, {
-        'date': px_date, 'nav_L12': round(nav_now['L12'], 2), 'nav_L6': round(nav_now['L6'], 2),
-        'nav_spy': nav_spy, 'spy_close': round(spy_close, 2),
-    })
-    state['price_as_of'] = px_date
-    state['data_gaps'] = (state.get('data_gaps') or []) + data_gaps
-    if not any(e.get('event') == DEPLOY_NOTE_20261030 for e in state.get('changelog', [])):
-        state.setdefault('changelog', []).append({'date': '2026-10-30', 'event': DEPLOY_NOTE_20261030})
+    state['price_as_of'] = dates[-1][0] if dates else px_date
+    PI.add_gaps(state, PI.provisional_gaps(rows, 'price not yet published (mark-only)'))
+    _add_deploy_notes(state)
     for event in split_events:
         state['changelog'].append({'date': px_date, 'event': event})
 
-    if gap_rows:
-        print(f"    backfilled nav rows: {[r['date'] for r in gap_rows]}")
-    print(f"    {px_date}: nav_L12={nav_now['L12']:.2f}  nav_L6={nav_now['L6']:.2f}  nav_spy={nav_spy:.2f}")
-    return state, {'mode': 'mark-only', 'price_as_of': px_date,
-                   'backfilled': [r['date'] for r in gap_rows]}
+    last = rows[-1] if rows else state['nav_series'][-1]
+    print(f"    re-marked {len(rows)} rows since {start}; {len(changes)} changed")
+    print(f"    {last['date']}: nav_L12={last['nav_L12']:.2f}  nav_L6={last['nav_L6']:.2f}  nav_spy={last['nav_spy']:.2f}"
+          f"{'  暫估 ' + str(last['provisional']) if last.get('provisional') else ''}")
+    return state, {'mode': 'mark-only', 'price_as_of': state['price_as_of'], 'remarked': len(rows), 'changed': changes,
+                   'provisional': last.get('provisional'),
+                   'stale_provisional': PI.stale_provisional(state, [r['date'] for r in rows], start)}
 
 
 def _existing_track_as_of():
@@ -1104,17 +1145,23 @@ def _emit_gh_skip_warning(reason):
 
 
 def main():
-    mark_only = '--mark-only' in sys.argv[1:]
+    # Exit codes (2026-11-03; previously always 0, so a skipped build showed as
+    # a green run): 0 ok · PI.EXIT_ABORT nothing written, the workflow retries
+    # and turns red · PI.EXIT_DATA_WARNING written, but a row has stayed
+    # provisional too long (needs a human).
+    args = sys.argv[1:]
+    mark_only = '--mark-only' in args
+    upto = args[args.index('--upto') + 1] if '--upto' in args else None
     try:
-        result = build_mark_only() if mark_only else build()
+        result = build_mark_only(upto) if mark_only else build()
     except FailSafeAbort as e:
         print(f"  ✗ fail-safe triggered: {e} — track.json left unchanged")
         _emit_gh_skip_warning(f"fail-safe triggered: {e}")
-        sys.exit(0)
+        sys.exit(PI.EXIT_ABORT)
     except Exception as e:
         print(f"  ✗ build failed ({type(e).__name__}: {e}) — track.json left unchanged")
         _emit_gh_skip_warning(f"build failed ({type(e).__name__}: {e})")
-        sys.exit(0)
+        sys.exit(PI.EXIT_ABORT)
 
     state, coverage = result
     TRACK_JSON.parent.mkdir(parents=True, exist_ok=True)
@@ -1126,6 +1173,13 @@ def main():
         print(f"    {lk} holdings ({len(ls['holdings'])}): "
               f"{[(h['ticker'], h['rank'], h['score'], h.get('heat')) for h in ls['holdings']]}")
         print(f"    {lk} flags: {ls['flags']}")
+    if coverage.get('provisional'):
+        PI.gh_annotate('warning', 'P10 暫估',
+                       f"{state['price_as_of']} 缺當天收盤，先用前一筆暫代：{coverage['provisional']}；下次執行自動補正")
+    if coverage.get('stale_provisional'):
+        PI.gh_annotate('error', 'P10 暫估太久',
+                       f"這些日期的淨值到現在還在用舊收盤：{coverage['stale_provisional']}")
+        sys.exit(PI.EXIT_DATA_WARNING)
 
 
 if __name__ == '__main__':

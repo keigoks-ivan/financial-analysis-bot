@@ -4,7 +4,8 @@ name: Daily Price-Momentum NAV (P10 US + TW)
 # 持股、單位數、現金、排名都不動，也不換股。換股仍由週六的完整建置負責：
 # 美股在 weekly-market-update.yml，台股在 weekly-price-momentum-tw.yml。
 # 美股只排週一～週四：週五收盤由週六完整建置記錄，避免兩邊同時推同一份 track.json。
-# 漏跑的交易日，下一次執行會用當時的持股補算（gap_nav_rows），所以排程延遲或跳過不會留洞。
+# 每次執行把上次換股以來的每一列整段重算，只用當天的收盤；缺價先標「暫估」，資料出來自動補正，
+# 所以排程延遲、跳過或 Yahoo 晚出資料都不會留洞（2026-11-03，scripts/p10_price_integrity.py）。
 
 on:
   schedule:
@@ -35,7 +36,7 @@ concurrency:
 jobs:
   mark-nav:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -49,6 +50,8 @@ jobs:
         run: pip install "yfinance>=0.2.40"
 
       - name: Mark P10 NAV to the latest close
+        id: p10
+        continue-on-error: true
         env:
           SCHEDULE: ${{ github.event.schedule }}
           MARKET_INPUT: ${{ github.event.inputs.market || 'both' }}
@@ -59,12 +62,14 @@ jobs:
             *)               MARKET="$MARKET_INPUT" ;;
           esac
           echo "market=$MARKET"
+          rc=0
           if [ "$MARKET" = "us" ] || [ "$MARKET" = "both" ]; then
-            python scripts/build_price_momentum.py --mark-only
+            bash scripts/ci/p10_run.sh 2 300 python scripts/build_price_momentum.py --mark-only || rc=$?
           fi
           if [ "$MARKET" = "tw" ] || [ "$MARKET" = "both" ]; then
-            python scripts/build_price_momentum_tw.py --mark-only
+            bash scripts/ci/p10_run.sh 2 300 python scripts/build_price_momentum_tw.py --mark-only || rc=$?
           fi
+          exit $rc
 
       - name: Commit and push if changed
         id: commit_push
@@ -99,3 +104,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/ci/retrigger_once.sh
+
+      - name: Mark the run failed if a P10 build was skipped
+        # 2026-11-03：建置中止（安全機制）或暫估太久時，前面的步驟照常提交其他資料，
+        # 這一步讓整次執行顯示失敗，GitHub 才會寄失敗通知（以前一律成功，10-31 台股建置沒寫入也沒人知道）。
+        if: steps.p10.outcome == 'failure'
+        run: |
+          echo "::error::P10 價格動能建置沒有完成，詳見上方建置步驟的 log"
+          exit 1

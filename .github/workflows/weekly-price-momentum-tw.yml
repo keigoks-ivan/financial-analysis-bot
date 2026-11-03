@@ -23,7 +23,7 @@ concurrency:
 jobs:
   update-price-momentum-tw:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -37,7 +37,10 @@ jobs:
         run: pip install "yfinance>=0.2.40" requests lxml
 
       - name: Build Price-Momentum TW (P10-TW) paper track
-        run: python scripts/build_price_momentum_tw.py
+        id: p10
+        continue-on-error: true
+        # 中止（名冊或價格抓不到）時隔 10 分鐘重跑，最多 3 次（2026-11-03）
+        run: bash scripts/ci/p10_run.sh 3 600 python scripts/build_price_momentum_tw.py
 
       - name: Commit and push if changed
         id: commit_push
@@ -71,3 +74,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/ci/retrigger_once.sh
+
+      - name: Mark the run failed if a P10 build was skipped
+        # 2026-11-03：建置中止（安全機制）或暫估太久時，前面的步驟照常提交其他資料，
+        # 這一步讓整次執行顯示失敗，GitHub 才會寄失敗通知（以前一律成功，10-31 台股建置沒寫入也沒人知道）。
+        if: steps.p10.outcome == 'failure'
+        run: |
+          echo "::error::P10 價格動能建置沒有完成，詳見上方建置步驟的 log"
+          exit 1
