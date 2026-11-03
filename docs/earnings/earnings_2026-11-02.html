@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Analysis · 2026-11-02 — InvestMQuest Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --bg-subtle:#fafaf9; --surface:#ffffff; --surface-2:#f7f7f5;
+  --border:#e5e5e2; --border-strong:#1a1a1a;
+  --text:#1a1a1a; --text-muted:#666; --text-dim:#999;
+  --accent:#2563eb; --green:#15803d; --green-bg:#f0fdf4;
+  --red:#b91c1c; --red-bg:#fef2f2; --amber:#b45309; --amber-bg:#fffbeb;
+  --orange:#c2410c; --orange-bg:#fff7ed; --radius:8px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+
+.imq-nav{display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+  padding:12px 28px;border-bottom:1px solid var(--border);background:var(--bg-subtle);
+  font-size:13px;position:sticky;top:0;z-index:50;}
+.imq-nav a{color:var(--text-muted);text-decoration:none;}
+.imq-nav a:hover{color:var(--accent);}
+.imq-brand{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--text)!important;
+  letter-spacing:-.3px;margin-right:8px;}
+.imq-dd{position:relative;}
+.imq-dd-label{color:var(--text-muted);cursor:default;}
+.imq-dd:hover .imq-dd-label{color:var(--accent);}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:-12px;padding:8px 0;min-width:150px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:0 6px 20px rgba(0,0,0,.07);}
+.imq-dd:hover .imq-dd-menu{display:block;}
+.imq-dd-menu a{display:block;padding:6px 16px;white-space:nowrap;}
+.imq-dd.active > .imq-dd-label{color:var(--text);font-weight:500;}
+.imq-dd-menu a.active{color:var(--accent);font-weight:500;}
+
+.container{max-width:880px;margin:0 auto;padding:32px 24px 80px;}
+.breadcrumb{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:24px;}
+.breadcrumb a{color:var(--text-dim);text-decoration:none;}
+.breadcrumb a:hover{color:var(--accent);}
+
+.report-header{border-bottom:2px solid var(--border-strong);padding-bottom:24px;margin-bottom:32px;}
+.report-header h1{font-size:32px;line-height:1.25;margin:0 0 10px;letter-spacing:-.6px;}
+.report-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px;}
+.report-lede{border-left:3px solid var(--accent);padding:14px 18px;background:var(--surface-2);
+  border-radius:0 var(--radius) var(--radius) 0;font-size:15px;}
+
+.toc{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 22px;margin-bottom:40px;}
+.toc-title{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text-dim);margin-bottom:10px;}
+.toc ol{margin:0;padding-left:20px;font-size:14px;}
+.toc li{margin:4px 0;}
+.toc a{color:var(--text);text-decoration:none;}
+.toc a:hover{color:var(--accent);}
+
+h2{font-size:23px;margin:52px 0 18px;padding-bottom:9px;border-bottom:1px solid var(--border-strong);
+  letter-spacing:-.3px;}
+h3{font-size:17px;margin:32px 0 10px;}
+h4{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text-muted);margin:20px 0 8px;}
+p{margin:0 0 14px;}
+ul{margin:0 0 14px;padding-left:20px;}
+li{margin:5px 0;}
+
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:14px;}
+th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--text-muted);padding:8px 10px;border-bottom:1px solid var(--border-strong);
+  font-weight:500;}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+tbody tr:hover{background:var(--surface-2);}
+
+.company-card{border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;
+  margin:22px 0;background:var(--surface);}
+.company-header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+.ticker{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;letter-spacing:-.4px;}
+.meta-right{font-size:12.5px;color:var(--text-muted);text-align:right;}
+
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;
+  padding:2px 7px;border-radius:4px;letter-spacing:.4px;white-space:nowrap;}
+.tag.beat{background:var(--green-bg);color:var(--green);}
+.tag.miss{background:var(--red-bg);color:var(--red);}
+.tag.inline{background:var(--amber-bg);color:var(--amber);}
+.tag.raise{background:var(--green-bg);color:var(--green);}
+.tag.maintain{background:var(--amber-bg);color:var(--amber);}
+.tag.lower{background:var(--red-bg);color:var(--red);}
+
+.stock-move{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;
+  padding:2px 7px;border-radius:4px;}
+.stock-move.up{background:var(--green-bg);color:var(--green);}
+.stock-move.down{background:var(--red-bg);color:var(--red);}
+
+.lede-list{margin:.45rem 0 0 1.15rem;padding:0;}
+.lede-list li{margin:.3rem 0;}
+.stat-strip{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;}
+.stat-chip{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;
+  padding:4px 10px;border-radius:4px;background:var(--surface-2);border:1px solid var(--border);white-space:nowrap;}
+.stat-chip .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-right:6px;}
+.stat-chip.good{background:var(--green-bg);color:var(--green);border-color:transparent;}
+.stat-chip.bad{background:var(--red-bg);color:var(--red);border-color:transparent;}
+.stat-chip.mid{background:var(--amber-bg);color:var(--amber);border-color:transparent;}
+.stat-chip.na{color:var(--text-muted);}
+.bottom-line{border-left:3px solid var(--border-strong);background:var(--surface-2);
+  padding:10px 14px;margin:12px 0 4px;font-size:14.5px;border-radius:0 var(--radius) var(--radius) 0;}
+.bottom-line strong{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:.7px;color:var(--text-muted);margin-right:8px;}
+.trend-list{list-style:none;padding:0;margin:0 0 28px;}
+.trend-list li{margin:9px 0;}
+.tl{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);
+  border-radius:4px;padding:1px 7px;margin-right:8px;white-space:nowrap;vertical-align:1px;}
+.trend-list li.impl .tl{color:var(--accent);border-color:var(--accent);background:transparent;}
+
+.winner-row td:first-child{border-left:3px solid var(--green);font-family:'IBM Plex Mono',monospace;font-weight:500;}
+.loser-row td:first-child{border-left:3px solid var(--red);font-family:'IBM Plex Mono',monospace;font-weight:500;}
+
+.contradiction{background:var(--orange-bg);border-left:3px solid var(--orange);
+  border-radius:0 var(--radius) var(--radius) 0;padding:16px 20px;margin:18px 0;}
+.contradiction h4{color:var(--orange);font-size:12px;margin:0 0 8px;}
+.contradiction p{margin:0 0 10px;font-size:14.5px;}
+.implication{margin-bottom:0!important;color:var(--text);}
+
+.summary-list{list-style:none;padding:0;}
+.summary-list li{border-left:3px solid var(--accent);background:var(--surface-2);
+  padding:12px 16px;margin:10px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:14.5px;}
+
+.noncon{background:#fdf4ff;border-left:3px solid #9333ea;border-radius:0 var(--radius) var(--radius) 0;
+  padding:14px 18px;margin:14px 0;}
+.noncon h4{color:#9333ea;margin-top:0;}
+
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 20px;margin-top:48px;font-size:12.5px;color:var(--text-muted);line-height:1.65;}
+footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+  margin-top:28px;padding-top:20px;border-top:1px solid var(--border);}
+footer a{color:var(--text-dim);text-decoration:none;}
+
+@media (max-width:720px){
+  .container{padding:22px 16px 60px;}
+  .report-header h1{font-size:24px;}
+  .company-card{padding:18px 16px;}
+  .company-header{flex-direction:column;align-items:flex-start;}
+  .meta-right{text-align:left;}
+  table{font-size:13px;}
+  th,td{padding:7px 6px;}
+  .imq-nav{gap:14px;padding:10px 14px;}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+:where(a){color:#0d2244}
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/markets.html">風險偏好儀表</a>
+          <a href="/earnings/" class="active">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/screeners.html">RS 排行</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<!-- PLAIN_PRIMER_START -->
+<details style="max-width:900px;margin:16px auto;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:2px 18px 14px;font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.9;color:#334155">
+<summary style="cursor:pointer;padding:12px 0;font-weight:600;color:#1E3A5F;font-size:13.5px">📖 第一次讀這種報告？點開看怎麼讀</summary>
+<div style="margin:2px 0 4px;padding-top:8px;border-top:1px solid #E2E8F0">
+<p style="margin:6px 0">這是財報分析報告，整理公司公布財報當下的數字重點與市場反應。</p>
+<p style="margin:6px 0"><strong>結論在哪：</strong>通常在後段的「總結」；部分報告後面附加「Phase R 覆核」，是同一份報告針對特定結論的後續補充，不是新報告。</p>
+<p style="margin:6px 0"><strong>常見詞：</strong>「EPS」是每股盈餘；「財測」（guidance）是公司自己對未來業績的預估；「優於預期／不如預期」是跟市場原本的共識預估比較後的結果，不是絕對的好壞——公司賺錢又成長，也可能因為「不如預期」股價當天下跌。</p>
+<p style="margin:6px 0"><strong>時效提醒：</strong>這是財報「當天」的即時反應紀錄，之後股價與基本面可能已經變化，相關個股最新結論請看 <a href="/research/" style="color:#2563EB;text-decoration:underline">/research/</a>。</p>
+<p style="margin:6px 0 0">想查其他詞的意思，見<a href="/learn/glossary.html" style="color:#2563EB;text-decoration:underline">投資詞彙表</a>。</p>
+</div>
+</details>
+<!-- PLAIN_PRIMER_END -->
+
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-11-02
+  </div>
+
+  <header class="report-header">
+    <h1>美股 11/2 財報日深度分析</h1>
+    <div class="report-meta">11 companies analyzed · $50B+ 7家 + DD快篩名單4家 · 多數盤後發布，本晚為初步反應</div>
+    <div class="report-lede">
+      <strong>核心發現：</strong>
+      <ul class="lede-list">
+        <li>PLTR營收首次破$23億創紀錄仍續跌——Rule of 40達158%換不到股價買單（§4矛盾1）。</li>
+        <li>AAPL新任CEO Ternus法說首秀、EPS/營收雙beat——盤後仍跌2.75%（§4矛盾6）。</li>
+        <li>VRTX非GAAP EPS小幅miss——GAAP因Crinetics併購費重摔39%（§4矛盾2）。</li>
+        <li>IDXX單日噴出收漲+21.85%——EPS大超共識8%，與ON小跌形成對比（§4矛盾4）。</li>
+        <li>MAR營收/RevPAR雙超guide收漲4.26%，為本日唯一BMO強力正向（§1）。</li>
+        <li>BWXT headline beat藏revenue miss——盤後續跌3.19%（§4矛盾3）。</li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="toc">
+    <div class="toc-title">目錄</div>
+    <ol>
+      <li><a href="#s1">各公司財報重點</a></li>
+      <li><a href="#s2">產業與子產業趨勢</a></li>
+      <li><a href="#s3">贏家與輸家</a></li>
+      <li><a href="#s4">互相矛盾與不合邏輯之處</a></li>
+      <li><a href="#s5">總結</a></li>
+    </ol>
+  </div>
+
+  <h2 id="s1">§1 各公司財報重點</h2>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">AAPL · Apple</span>
+      <span class="meta-right">~$5.0T · 盤後（11/2 FY26 Q4）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>BEAT +6.1%</span>
+      <span class="stat-chip good"><span class="k">營收</span>BEAT +0.9%</span>
+      <span class="stat-chip mid"><span class="k">指引</span>未正式揭露</span>
+      <span class="stat-chip bad"><span class="k">股價</span>盤後-2.75%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>EPS $2.10與營收$114.5B雙雙優於共識及自身guided區間上緣，但本季是新任CEO Tim Ternus首次主持法說會，盤後股價仍續跌。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP EPS</td><td>$2.10</td><td>$1.98（Benzinga共識）</td><td><span class="tag beat">BEAT</span> +6.1%；含$0.05關稅退款挹注</td></tr>
+        <tr><td>營收</td><td>$114.5B</td><td>$113.49B共識；公司guide $111.69-113.74B</td><td><span class="tag beat">BEAT</span> +12% YoY</td></tr>
+        <tr><td>毛利率</td><td>47.9%</td><td>—</td><td>含約1pp關稅退款挹注</td></tr>
+        <tr><td>iPhone / Services</td><td>$57.58B / $31.57B</td><td>—</td><td>+17.5% / +9.8% YoY</td></tr>
+        <tr><td>FQ1 2027 guidance</td><td>未取得</td><td>—</td><td><span class="stat-chip na">未正式揭露</span>（法說會口頭財測未取得transcript）</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>CEO交接首秀</strong>：本次法說會為Tim Ternus接任CEO後首次主持，CFO Kevan Parekh同台，為市場重新評估管理層溝通風格與資本配置優先序的首個樣本。</li>
+      <li><strong>iPhone強勁回補</strong>：iPhone營收$57.58B年增17.5%，大幅優於Mac/iPad/穿戴裝置，是本季營收beat的主要貢獻來源。</li>
+      <li><strong>關稅退款挹注</strong>：EPS中$0.05、毛利率中約1個百分點均來自關稅退款，屬一次性項目但公司已主動拆分揭露，非隱藏式灌水。</li>
+      <li><strong>缺乏正式財測</strong>：公司慣例不在新聞稿中給出書面下季財測，本次法說會逐字稿未取得，無法確認管理層對FQ1 2027的口頭展望，為本卡最大資訊缺口。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得。公開報導僅確認本次為Ternus首次以CEO身分主持法說、Parekh同台擔任CFO，具體發言內容與分析師Q&amp;A暫缺，僅能依SEC 8-K新聞稿摘要撰寫。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中收跌 <span class="stock-move down">-1.83%</span> 至$338.32（11/2 4:00PM ET，財報發布前的全日收盤，二源確認）。</li>
+      <li>盤後初步反應：<span class="stock-move down">-2.75%</span> 至$329.03（11/2 7:57PM ET，二源確認：stockanalysis.com + 官方8-K同步）。</li>
+      <li>跌因：雖EPS/營收雙beat且優於guide上緣，但公司未提供書面下季財測，疊加新任CEO首秀的不確定性，市場傾向保守解讀。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前共識目標價約$330.53（39位分析師，MarketBeat），Morgan Stanley財報前已將目標價由$240上修至$298，反映財報前基調偏多。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">PLTR · Palantir Technologies</span>
+      <span class="meta-right">~$446B · 盤後（11/2 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>BEAT +7~10%</span>
+      <span class="stat-chip good"><span class="k">營收</span>BEAT +6~6.5%</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE 全年</span>
+      <span class="stat-chip bad"><span class="k">股價</span>盤後-3.01%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>營收首次單季突破$23億（+96% YoY）、Rule of 40達158%、美國商業營收首度超過美國政府營收，全年guidance再度上修，股價卻盤後續跌（§4矛盾1）。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>營收</td><td>$2.313B</td><td>$2.17-2.18B（多來源共識）</td><td><span class="tag beat">BEAT</span> +96% YoY</td></tr>
+        <tr><td>GAAP／調整後EPS</td><td>$0.44／$0.44</td><td>$0.40-0.41共識</td><td><span class="tag beat">BEAT</span></td></tr>
+        <tr><td>美國商業營收</td><td>$984M</td><td>—</td><td>+148% YoY；首度超過美國政府營收</td></tr>
+        <tr><td>美國政府營收</td><td>$953M</td><td>—</td><td>+96% YoY</td></tr>
+        <tr><td>調整後營業利益率</td><td>62%</td><td>—</td><td>Rule of 40達158%（前季155%）</td></tr>
+        <tr><td>Q4 2026 guidance</td><td>營收$2.649-2.653B／調整後營業利益$1.640-1.644B</td><td>—</td><td><span class="tag raise">RAISE</span>全年guide同步上修至$8.530-8.534B</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>美國商業首超政府業務</strong>：本季是公司歷史上美國商業營收首次超越美國政府營收的里程碑，顯示AI平台商業化已不再僅依賴政府合約單一引擎。</li>
+      <li><strong>Rule of 40遠超及格線</strong>：158%的Rule of 40分數（成長率+利潤率）遠超40%及格門檻近4倍，且較上季155%再度提升，顯示成長與獲利能力同步擴張而非此消彼長。</li>
+      <li><strong>guidance連續上修</strong>：全年營收guide由8月的$8.150-8.158B上修至$8.530-8.534B，本季為近幾季連續第二次上修，顯示管理層對需求能見度持續樂觀。</li>
+      <li><strong>財報前隱含波動極高</strong>：財報前選擇權市場定價±12-13%的隱含波動，顯示市場本就預期本次為高不確定性事件，股價盤後-3.01%落在隱含區間內緣，而非超預期的意外重摔。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得。新聞稿標題明確點名「美國商業營收首次超過美國政府營收」為本季最大敘事里程碑，CEO Alex Karp／CFO原話與分析師Q&amp;A暫缺，僅能依SEC 8-K新聞稿摘要撰寫。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中收跌 <span class="stock-move down">-3.13%</span> 至$178.34（11/2 4:00PM ET，財報發布前的全日收盤，二源確認）。</li>
+      <li>盤後初步反應：<span class="stock-move down">-3.01%</span> 至$172.97（11/2 7:59PM ET，二源確認）。</li>
+      <li>跌因：財報本身是教科書級beat+raise，但財報前股價已反映極高估值預期（選擇權定價±12-13%波動），市場解讀為「超預期幅度不足以支撐進一步上修估值」的獲利了結（§4矛盾1）。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前共識目標價約$182.20（8月數據，目標價區間$70-255分歧極大，反映市場對估值合理性長期存在分歧）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">VRTX · Vertex Pharmaceuticals</span>
+      <span class="meta-right">~$128B · 盤後（11/2 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>非GAAP MISS -0.8%</span>
+      <span class="stat-chip good"><span class="k">營收</span>BEAT +1.5%</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE 全年營收</span>
+      <span class="stat-chip good"><span class="k">股價</span>盤後+0.52%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>營收$3.44B優於共識，非GAAP EPS $4.76小幅低於共識$4.80，但GAAP EPS因Crinetics收購費用年減39%，兩口徑落差接近50%強制追查門檻（§4矛盾2）。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>總營收</td><td>$3.44B</td><td>$3.39B（Benzinga共識）</td><td><span class="tag beat">BEAT</span> +12% YoY</td></tr>
+        <tr><td>GAAP EPS</td><td>$2.56</td><td>—</td><td><span class="tag miss">年減39%</span>（去年同期$4.20）；主因Crinetics收購費用</td></tr>
+        <tr><td>非GAAP EPS</td><td>$4.76</td><td>$4.80（Benzinga共識）</td><td><span class="tag miss">MISS</span> -0.8%；YoY亦小降（去年$4.80）</td></tr>
+        <tr><td>ALYFTREK銷售</td><td>$705.8M</td><td>—</td><td>+186% YoY，彌補TRIKAFTA/KAFTRIO -8%下滑</td></tr>
+        <tr><td>FY26 guidance</td><td>總營收$13.15-13.25B</td><td>前次$13.1-13.2B</td><td><span class="tag raise">RAISE</span>；R&amp;D/SG&amp;A費用guide同步上修</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>GAAP與非GAAP落差逼近50%門檻</strong>：|$2.56-$4.76|/$4.76≈46.2%，雖未正式觸及規則強制追查的50%門檻，但已屬本季財報日目前最大落差樣本，主因為Crinetics Pharmaceuticals收購相關一次性費用。</li>
+      <li><strong>產品組合換擋</strong>：ALYFTREK（新一代囊纖維化藥物）+186%YoY成長已足以彌補TRIKAFTA/KAFTRIO -8%的下滑，顯示公司主力藥物正在完成世代交替而非單純衰退。</li>
+      <li><strong>非GAAP EPS罕見年減</strong>：非GAAP EPS年比持平略降（$4.80→$4.76），是公司近幾季少見的非GAAP口徑未成長樣本，與營收+12%成長形成反差，R&amp;D/AIPR&amp;D/SG&amp;A費用guide同步大幅上修（非GAAP版本由$5.65-5.75B上修至約$6.0B）是主要解釋。</li>
+      <li><strong>povetacicept管線催化劑在即</strong>：IgA腎病變加速核准申請PDUFA日期訂在11/30，為未來一個月內的明確二元事件，尚未反映在本季財測基礎中。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release（Exhibit 99.1）摘要撰寫，管理層原話與分析師Q&amp;A暫缺。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中收跌 <span class="stock-move down">-1.03%</span> 至$553.15（11/2 4:00PM ET，財報發布前的全日收盤，二源確認）。</li>
+      <li>盤後初步反應：<span class="stock-move up">+0.52%</span> 至$556.00（11/2 7:47PM ET，二源確認）。</li>
+      <li>反應邏輯：儘管非GAAP EPS小幅miss，但營收beat、FY guidance上修、且投資人已普遍理解GAAP落差來自可解釋的併購費用，市場給予溫和正向評價而非懲罰。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前共識目標價約$553.93（27位分析師，8月數據，Buy共識），與財報後盤後價$556已基本貼近。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">MAR · Marriott International</span>
+      <span class="meta-right">~$94B · 盤前（11/2 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>BEAT +7~10%</span>
+      <span class="stat-chip good"><span class="k">營收</span>BEAT +8%</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE 全年</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲4.26%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>調整後EPS $3.02大幅優於自身Q3 guide上緣$2.82，全球RevPAR+6.5%遠超guide的3.5-4.0%，全年guidance同步上修，收漲4.26%為本日唯一BMO強力正向反應。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>調整後EPS</td><td>$3.02</td><td>公司Q3 guide $2.74-2.82；市場共識約$2.88</td><td><span class="tag beat">BEAT</span> +22% YoY，優於guide上緣約7.1%</td></tr>
+        <tr><td>總營收</td><td>$7.005B</td><td>—</td><td>+8% YoY</td></tr>
+        <tr><td>全球RevPAR</td><td>+6.5%（固定匯率）</td><td>公司guide +3.5-4.0%</td><td><span class="tag beat">BEAT</span> 美加+7.4%／國際+4.4%</td></tr>
+        <tr><td>淨房間成長</td><td>約2.01萬間（+4.6% YoY）</td><td>—</td><td>—</td></tr>
+        <tr><td>FY26 guidance</td><td>RevPAR +4.5-5.0%；調整後EPS $12.07-12.14</td><td>前次RevPAR guide較低區間</td><td><span class="tag raise">RAISE</span>資本回饋目標至少$48億</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>RevPAR大幅超越自身guide</strong>：+6.5%實際值接近guide上緣4.0%的兩倍，美加區域+7.4%為本季最強單一地區，顯示美國旅宿需求復甦力度優於公司自身預期。</li>
+      <li><strong>EPS優於guide非僅優於共識</strong>：$3.02不僅優於市場共識，更超越公司自己guide區間的上緣$2.82，屬於「guide本身即保守」而非單純分析師低估的訊號。</li>
+      <li><strong>資本回饋力度加碼</strong>：全年股東回饋目標上修至至少$48億，顯示現金流強勁足以支撐持續買回與股息。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release（Exhibit 99）摘要撰寫，管理層原話與分析師Q&amp;A暫缺。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+4.26%</span> 至$416.30（11/2 4:00PM ET，較前收盤$399.30，二源確認，為盤前發布故此為全日最終反應）。</li>
+      <li>漲因：RevPAR與EPS雙雙大幅優於公司自身guide、全年guidance同步上修，市場對旅宿需求復甦力度給予明確正向評價。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前共識為Hold（2.58/5），目標價$393.07（8月數據），財報後實際股價$416.30已超越該目標價，顯示財報前共識目標價偏保守。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">WMB · Williams Companies</span>
+      <span class="meta-right">~$86B · 盤後（11/2 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip mid"><span class="k">EPS</span>調整後MISS -2~4%</span>
+      <span class="stat-chip na"><span class="k">營收</span>未取得</span>
+      <span class="stat-chip mid"><span class="k">指引</span>MAINTAIN（上緣）</span>
+      <span class="stat-chip bad"><span class="k">股價</span>盤後-0.06%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>GAAP EPS $0.56與調整後EPS $0.54基本符合共識，公司表示全年Adjusted EBITDA guide朝$8.3-8.5B區間上緣靠近，但盤前能源股普遍走弱下盤後反應近乎持平。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP EPS</td><td>$0.56</td><td>約$0.55-0.56（多來源共識）</td><td><span class="tag inline">INLINE</span> +8% YoY；淨利$699M</td></tr>
+        <tr><td>調整後EPS</td><td>$0.54</td><td>約$0.55-0.56</td><td><span class="tag miss">小幅MISS</span>約2-4%；調整後淨利$663M +10% YoY</td></tr>
+        <tr><td>調整後EBITDA</td><td>$2.039B</td><td>—</td><td>+6% YoY（+$119M）</td></tr>
+        <tr><td>營收</td><td>未取得二源確認</td><td>Zacks財報前估計約$3.2B</td><td><span class="stat-chip na">未確認beat/miss</span></td></tr>
+        <tr><td>FY26 guidance</td><td>朝EBITDA $8.3-8.5B區間上緣靠近</td><td>—</td><td><span class="tag maintain">MAINTAIN</span>（偏正向但非正式上修區間）</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>現金流覆蓋穩健</strong>：AFFO $1.589B，股息覆蓋倍數2.42x（以AFFO計），顯示資本回饋能力未受本季小幅miss影響。</li>
+      <li><strong>併購與擴產同步推進</strong>：完成Momentum Midstream收購，並宣布Clay Basin儲氣擴建9.4 Bcf，顯示公司持續在天然氣中游基建加碼資本支出。</li>
+      <li><strong>營收數字缺口</strong>：搜尋未能取得本季正式營收數字二源確認，故本卡不對營收標示beat/miss，僅呈現財報前估計供參考。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release摘要撰寫，管理層原話與分析師Q&amp;A暫缺。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中收跌 <span class="stock-move down">-4.25%</span> 至$71.19（11/2 4:00PM ET，財報發布前的全日收盤，二源確認；同日能源板塊普遍走弱）。</li>
+      <li>盤後初步反應：<span class="stock-move down">-0.06%</span> 至$71.15（11/2 7:42PM ET，二源確認），近乎持平。</li>
+      <li>反應邏輯：調整後EPS小幅miss但EBITDA guide朝上緣靠近，市場對財報本身反應中性，當日跌幅主要來自盤中能源板塊整體走弱而非財報本身（§4矛盾5）。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前共識目標價約$83.75（27位分析師，7月數據，Buy共識），Morgan Stanley年內已上修至$98。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">FANG · Diamondback Energy</span>
+      <span class="meta-right">~$50B · 盤後（11/2 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip na"><span class="k">EPS</span>未取得</span>
+      <span class="stat-chip na"><span class="k">營收</span>未取得</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE 全年產量</span>
+      <span class="stat-chip bad"><span class="k">股價</span>盤後-0.40%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>Q3油產量525 MBO/d落於guide區間內、全年油產量guide上修至522+ MBO/d，自由現金流$2.1B並加碼股息與買回，但EPS/營收正式數字未能二源確認，法說會訂於11/3中部時間早上。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>EPS</td><td>未取得二源確認</td><td>$5.53共識（29位分析師）</td><td><span class="stat-chip na">未確認beat/miss</span></td></tr>
+        <tr><td>營收</td><td>未取得二源確認</td><td>$4.72B共識</td><td><span class="stat-chip na">未確認beat/miss</span></td></tr>
+        <tr><td>Q3油產量</td><td>525 MBO/d</td><td>公司guide 517-527 MBO/d</td><td><span class="tag inline">區間內</span>（偏guide上半）</td></tr>
+        <tr><td>自由現金流／調整後FCF</td><td>$2.1B／$2.2B</td><td>—</td><td>經營現金流$2.6B</td></tr>
+        <tr><td>FY26油產量guidance</td><td>522+ MBO/d</td><td>前次520+ MBO/d</td><td><span class="tag raise">RAISE</span>（小幅）</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>EPS/營收數字缺口</strong>：搜尋預算內未能取得本季正式EPS與營收數字的二源確認，僅能以SEC 8-K中的產量與現金流數字呈現，依協議誠實標注「未取得」而非自行推測填補。</li>
+      <li><strong>股東回饋加碼</strong>：基本股息上修至每股$4.72，並以約$251M回購130萬股，顯示現金流品質足以支撐持續性回饋。</li>
+      <li><strong>法說會尚未舉行</strong>：公司財報於11/2盤後發布，但法說會排定於11/3中部時間上午8點舉行，故本卡的管理層評論與分析師Q&amp;A在本次執行時尚未產生。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>法說會尚未舉行（排定11/3中部時間8:00AM），Transcript未取得。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中收跌 <span class="stock-move down">-5.82%</span> 至$199.74（11/2 4:00PM ET，財報發布前的全日收盤，二源確認；同日能源板塊普遍走弱，與WMB同步）。</li>
+      <li>盤後初步反應：<span class="stock-move down">-0.40%</span> 至$198.95（11/2 7:46PM ET，二源確認）。</li>
+      <li>反應邏輯：產量與FCF數據穩健但EPS/營收數字未確認、法說會尚未舉行，市場在資訊不完整下盤後反應溫和，當日跌幅主要反映能源板塊整體走弱。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時，法說會尚未舉行）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">O · Realty Income</span>
+      <span class="meta-right">~$51B · 盤後（11/2 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">AFFO</span>BEAT +1.8%</span>
+      <span class="stat-chip na"><span class="k">營收</span>未取得</span>
+      <span class="stat-chip na"><span class="k">指引</span>未取得更新</span>
+      <span class="stat-chip good"><span class="k">股價</span>盤後+0.16%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>AFFO/股$1.12優於共識$1.10，淨利$403.9M，並宣布與KKR成立聯合投資平台拓展歐洲私募資本業務，盤後反應溫和正向。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>AFFO／股</td><td>$1.12</td><td>$1.10共識</td><td><span class="tag beat">BEAT</span> +3.7% YoY</td></tr>
+        <tr><td>淨利（歸屬普通股）</td><td>$403.9M（$0.43/股）</td><td>—</td><td>—</td></tr>
+        <tr><td>營收</td><td>未取得二源確認</td><td>約$1.46B共識</td><td><span class="stat-chip na">未確認beat/miss</span></td></tr>
+        <tr><td>資本市場活動</td><td>與KKR成立歐洲聯合投資平台（初始€528M）；發行$10億2031到期可轉債</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>AFFO穩健優於共識</strong>：$1.12優於共識$1.10約1.8%，YoY成長3.7%，延續淨租賃REIT穩定複利的特性。</li>
+      <li><strong>私募資本平台國際擴張</strong>：與KKR成立聯合投資平台進軍歐洲，初始投入€5.28億，為公司資本輕量化、擴大管理資產規模的新成長引擎。</li>
+      <li><strong>FY guidance更新未取得</strong>：搜尋未能取得本季是否更新全年guidance的具體數字，暫以AFFO beat本身作為正向訊號判斷依據。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release摘要撰寫。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+1.14%</span> 至$57.58（11/2 4:00PM ET，較前收盤$56.93，二源確認）。</li>
+      <li>盤後初步反應：<span class="stock-move up">+0.16%</span> 至$57.67（11/2 7:48PM ET，二源確認）。</li>
+      <li>漲因：AFFO穩健優於共識，疊加KKR聯合投資平台的國際擴張敘事，市場給予溫和正向評價，波動幅度遠低於成長股同業。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前共識未查證（搜尋預算限制）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">IDXX · IDEXX Laboratories</span>
+      <span class="meta-right">~$50B · 盤前（11/2 Q3 2026；DD快篩名單）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>BEAT +8.1%</span>
+      <span class="stat-chip good"><span class="k">營收</span>BEAT（+10%YoY）</span>
+      <span class="stat-chip mid"><span class="k">指引</span>未取得更新</span>
+      <span class="stat-chip good"><span class="k">股價</span>收漲+21.85%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>EPS $4.01遠超共識$3.71，CAG Diagnostics經常性營收年增11%，inVue Dx分析儀安裝基數近1.1萬台，股價單日暴漲21.85%為本日最大正向反應。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>EPS（稀釋）</td><td>$4.01</td><td>$3.71共識</td><td><span class="tag beat">BEAT</span> +8.1%；YoY +18%（可比口徑+22%）</td></tr>
+        <tr><td>營收成長</td><td>+10% YoY（如實）／+11%有機</td><td>共識隱含約$1.19B</td><td><span class="tag beat">BEAT</span>（精確美元數字未取得）</td></tr>
+        <tr><td>CAG Diagnostics經常性營收</td><td>+11% YoY（如實與有機一致）</td><td>—</td><td>核心業務動能加速</td></tr>
+        <tr><td>FY26 guidance（8月設定，本季未確認是否更新）</td><td>EPS $14.69-14.94；營收$4.70-4.745B</td><td>—</td><td><span class="stat-chip na">本次更新未取得</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>EPS beat幅度顯著</strong>：+8.1%優於共識的幅度遠高於同日其他EPS beat個股（AAPL +6.1%、BWXT +5.9%），且YoY可比成長率達22%，是本季財報日目前最大的EPS正向驚喜之一。</li>
+      <li><strong>新產品裝機量加速</strong>：本季新增逾1,900台inVue Dx分析儀，累計裝機基數近1.1萬台，顯示公司在癌症篩檢新產品線的滲透速度持續加快，有助抵銷同店門診量的疲弱。</li>
+      <li><strong>同店門診量仍為隱憂</strong>：公司8月曾揭露同店門診量年減1.3%（含健康門診-3%），本次新聞稿未明確更新該數字，是否持續拖累下半年仍待法說會說明。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release摘要撰寫，管理層原話與分析師Q&amp;A暫缺。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收漲 <span class="stock-move up">+21.85%</span> 至$671.64（11/2 4:00PM ET，較前收盤約$551.21，二源確認；盤前發布故此為全日最終反應）。</li>
+      <li>漲因：EPS大幅超越共識、新產品裝機量加速，市場對公司能否在門診量疲弱環境下持續靠新產品線驅動成長給予高度正向重新評價。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前共識未查證（搜尋預算限制）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">ON · ON Semiconductor</span>
+      <span class="meta-right">~$33B · 盤後（11/2 Q3 2026；DD快篩名單）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>BEAT（guide上緣內）</span>
+      <span class="stat-chip mid"><span class="k">營收</span>約+11%YoY</span>
+      <span class="stat-chip na"><span class="k">指引</span>未取得Q4</span>
+      <span class="stat-chip bad"><span class="k">股價</span>盤後-0.37%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>非GAAP EPS $0.90落在公司guide $0.81-0.93區間內、CFO指出EPS年增逾40%遠快於營收+11%，但股價盤後續跌，與同日IDXX的EPS beat形成反應兩極對比（§4矛盾4）。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP EPS</td><td>$0.79</td><td>—</td><td>—</td></tr>
+        <tr><td>非GAAP EPS</td><td>$0.90</td><td>公司guide $0.81-0.93；共識約$0.83-0.88</td><td><span class="tag beat">BEAT</span>（guide中上緣）；CFO稱YoY+40%以上</td></tr>
+        <tr><td>營收</td><td>約$1.63B（估算，CFO稱+11%YoY，精確數字未取得）</td><td>公司guide $1.65-1.75B</td><td><span class="tag inline">約落guide下緣附近</span></td></tr>
+        <tr><td>經營現金流</td><td>$516M</td><td>—</td><td>+23% YoY</td></tr>
+        <tr><td>Q4 2026 guidance</td><td>未取得</td><td>—</td><td><span class="stat-chip na">未取得</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>EPS成長遠快於營收</strong>：CFO於新聞稿中強調EPS年增逾40%、營收僅+11%，隱含毛利率或費用控管改善為EPS成長的主要驅動力，而非營收規模擴張本身。</li>
+      <li><strong>營收precise數字缺口</strong>：搜尋未能取得本季精確營收美元數字，僅能依CFO口頭揭露的YoY成長率反推估算約$1.63B，落在guide區間下緣附近，與IDXX/MAR等「超越guide上緣」的樣本性質不同。</li>
+      <li><strong>Q4財測缺口</strong>：搜尋未能取得公司對Q4 2026的新財測數字，為本卡最大資訊缺口。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>CFO在新聞稿中表示：「每股盈餘年增超過40%，營收成長11%」，具體法說會逐字稿與分析師Q&amp;A未取得。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中收跌 <span class="stock-move down">-2.18%</span> 至$70.11（11/2 4:00PM ET，財報發布前的全日收盤，二源確認）。</li>
+      <li>盤後初步反應：<span class="stock-move down">-0.37%</span> 至$69.85（11/2 7:54PM ET，二源確認）。</li>
+      <li>反應邏輯：EPS落在guide中上緣但營收偏guide下緣、且無Q4新財測，市場在成長能見度不足下延續盤中跌勢，與IDXX同為EPS beat卻股價反應兩極（§4矛盾4）。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前共識未查證（搜尋預算限制）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">FOXA · Fox Corporation</span>
+      <span class="meta-right">~$27B · 盤前（11/2 FY27 Q1；DD快篩名單）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">淨利</span>+57%YoY創紀錄</span>
+      <span class="stat-chip good"><span class="k">營收</span>$4.57B創Q1紀錄</span>
+      <span class="stat-chip na"><span class="k">指引</span>公司慣例不發</span>
+      <span class="stat-chip bad"><span class="k">股價</span>收跌-0.76%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>營收$4.57B、淨利$957M（+57%YoY）、調整後EBITDA $1.64B均創公司Q1歷史紀錄，廣告與發行營收同步成長，但股價小幅收跌。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>營收</td><td>$4.57B</td><td>—</td><td>公司稱為Q1歷史新高</td></tr>
+        <tr><td>淨利</td><td>$957M</td><td>—</td><td>+57% YoY（去年同期$609M）</td></tr>
+        <tr><td>調整後EBITDA</td><td>$1.64B</td><td>—</td><td>公司稱為Q1歷史新高</td></tr>
+        <tr><td>內容及其他營收</td><td>$406M</td><td>—</td><td>約持平（去年$411M）</td></tr>
+        <tr><td>調整後EPS</td><td>未取得</td><td>共識約$2.04（3位分析師）</td><td><span class="stat-chip na">未確認beat/miss</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>淨利成長遠超營收</strong>：淨利+57%遠快於整體營收成長速度，顯示利潤率擴張為本季主要驅動力，惟精確調整後EPS數字未取得，無法與共識$2.04直接比較beat/miss幅度。</li>
+      <li><strong>廣告與發行雙引擎</strong>：公司新聞稿點名廣告與發行營收成長為本季記錄的主要貢獻來源，內容及其他營收則大致持平。</li>
+      <li><strong>Roku收購進度</strong>：公司重申Tubi與Roku的收購交易預計2027年上半年完成，尚未反映在本季財務數字中。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>CEO Lachlan Murdoch在新聞稿中將本季記錄歸因於廣告與發行營收成長，具體法說會逐字稿與分析師Q&amp;A未取得。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>收跌 <span class="stock-move down">-0.76%</span> 至$62.76（11/2 4:00PM ET，較前收盤$63.24，二源確認；盤前發布故此為全日最終反應）。</li>
+      <li>反應邏輯：儘管營收/淨利創Q1紀錄，但缺乏明確EPS對比基準、且公司未提供前瞻財測，市場對記錄本身的反應有限，股價小幅收跌。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前共識EPS約$2.04（3位分析師，樣本量小，可信度有限）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">BWXT · BWX Technologies</span>
+      <span class="meta-right">~$12B · 盤後（11/2 Q3 2026；DD快篩名單）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>BEAT +5.9%</span>
+      <span class="stat-chip bad"><span class="k">營收</span>MISS -2.1%</span>
+      <span class="stat-chip mid"><span class="k">指引</span>MAINTAIN（窄化）</span>
+      <span class="stat-chip bad"><span class="k">股價</span>盤後-3.19%</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>非GAAP EPS $1.26優於共識約$1.19，但營收$953.0M低於共識$973.3M，headline beat下藏著營收miss，盤後續跌3.19%（§4矛盾3）。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP EPS</td><td>$1.11</td><td>—</td><td>淨利$102.0M</td></tr>
+        <tr><td>非GAAP EPS</td><td>$1.26</td><td>約$1.19共識（Benzinga）</td><td><span class="tag beat">BEAT</span> +5.9%</td></tr>
+        <tr><td>營收</td><td>$953.0M</td><td>約$973.3M共識（Benzinga）</td><td><span class="tag miss">MISS</span> -2.1%</td></tr>
+        <tr><td>調整後EBITDA</td><td>$179.7M</td><td>—</td><td>—</td></tr>
+        <tr><td>FY26 guidance</td><td>非GAAP EPS窄化至$4.72-4.77；FCF $350-360M</td><td>—</td><td><span class="tag maintain">MAINTAIN</span>（區間窄化，非上修）；另給2027年高單位數成長初步展望</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>Headline beat藏revenue miss</strong>：市場新聞標題多聚焦於EPS beat，但營收實際低於共識2.1%，是本日最清晰的「標題式beat掩蓋營收缺口」案例，盤後股價走勢更貼近營收數字而非EPS標題。</li>
+      <li><strong>核能業務新里程碑</strong>：BANR小型模組化反應爐技術獲選用於美軍Janus計畫（Fort Campbell）以及加拿大Prodigy Clean Energy可移動核電廠專案，為公司長期成長管線的新增催化劑，惟尚未反映在本季營收數字中。</li>
+      <li><strong>guidance窄化而非上修</strong>：FY26非GAAP EPS guide窄化至$4.72-4.77（區間收斂而非上修中樞），市場解讀為管理層對下半年能見度轉為謹慎而非更樂觀。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul><li>Transcript未取得，僅依SEC 8-K press release摘要撰寫，管理層原話與分析師Q&amp;A暫缺。</li></ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中收跌 <span class="stock-move down">-0.18%</span> 至$130.47（11/2 4:00PM ET，財報發布前的全日收盤，二源確認）。</li>
+      <li>盤後初步反應：<span class="stock-move down">-3.19%</span> 至$126.31（11/2 7:50PM ET，二源確認）。</li>
+      <li>跌因：營收miss疊加guidance窄化而非上修，市場對「EPS beat」標題背後的營收缺口給予明確負向評價（§4矛盾3）。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）；財報前共識未查證（搜尋預算限制）。</li></ul>
+  </div>
+
+  <h2 id="s2">§2 產業與子產業趨勢</h2>
+
+  <h3>消費硬體巨頭換帥承壓——AAPL</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>AAPL本季EPS與營收雙雙優於共識及自身guide上緣，但新任CEO Ternus首次主持法說且未提供書面下季財測，股價盤後仍續跌，顯示「數字乾淨」不足以抵銷管理層交接的不確定性折價。</li>
+    <li><span class="tl">細節</span>iPhone營收$57.58B年增17.5%為營收beat主要貢獻，EPS $2.10含$0.05關稅退款挹注，公司已主動拆分揭露而非隱藏。</li>
+    <li><span class="tl">跨日比較</span>與10/28報告中的MSFT/GOOGL（同屬超大規模科技巨頭，財報乾淨但股價反應分化）相比，AAPL本次疊加CEO交接的額外變數，使股價反應比單純「數字優於預期」的基準情境更負面。</li>
+    <li><span class="tl">上下游一致性</span>iPhone需求端的強勁（+17.5%YoY）與公司整體營收beat方向一致，顯示本季下跌並非反映硬體需求轉弱，而是管理層溝通缺口（無書面財測）的市場定價。</li>
+    <li><span class="tl">可證偽</span>若AAPL股價在未來1-2週內逐步回補跌幅，或下次法說會Ternus提供明確量化財測後市場回補，則本次下跌應視為「資訊缺口」的暫時性折價；若跌幅持續擴大，則代表市場對新任CEO的執行力存在更深層疑慮。</li>
+    <li class="impl"><span class="tl">Implication</span>CEO交接期間，即使財務數字本身乾淨優於預期，市場仍可能因缺乏前瞻溝通而給予折價，凸顯「guidance溝通的連續性」本身已成為獨立於財務數字之外的估值變數。</li>
+  </ul>
+
+  <h3>AI數據分析平台估值修正——PLTR</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>PLTR營收首次突破$23億、Rule of 40達158%、guidance連續上修，是教科書級的beat+raise，但股價盤中與盤後雙雙下跌，是本季目前「AI軟體類股估值修正」最極端的樣本之一。</li>
+    <li><span class="tl">細節</span>美國商業營收$984M（+148%YoY）首度超過美國政府營收$953M（+96%YoY），全年guide由8月$8.150-8.158B上修至$8.530-8.534B，上修幅度約4.6%。</li>
+    <li><span class="tl">跨日比較</span>與8/3財報（股價盤後一度+12-17%、三日內累計+29.5%）相比，本次同為beat+raise卻方向完全相反，顯示財報前股價起點（估值水位）已成為決定股價反應方向的關鍵變數，而非財報內容本身的品質。</li>
+    <li><span class="tl">上下游一致性</span>美國商業營收首次超車政府業務，顯示AI平台商業化已從單一政府合約引擎轉為更廣泛的企業需求驅動，與10/28-10/29報告中MSFT/GOOGL/AMZN等雲端巨頭的AI capex需求端訊號方向一致。</li>
+    <li><span class="tl">可證偽</span>若PLTR股價在未來1-2週內回補當日跌幅，則本次下跌應視為短期估值修正雜訊；若Q4 2026實際數字未能達到guide（$2.649-2.653B），則「估值修正先行、基本面滯後」的判斷需要修正為基本面轉弱的早期訊號。</li>
+    <li class="impl"><span class="tl">Implication</span>當個股財報前估值已反映極度樂觀預期，即使財報本身無可挑剔，股價仍可能因「驚喜程度不足以支撐進一步估值擴張」而下跌——這與10/30報告中NVT「四度上調guide仍重摔」的模式屬同一邏輯在不同產業的延伸（§4矛盾1）。</li>
+  </ul>
+
+  <h3>特殊製藥併購整合代價——VRTX</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>VRTX營收優於共識但非GAAP EPS小幅miss，GAAP EPS因Crinetics收購費用年減39%，是本季財報日GAAP/非GAAP落差最接近50%強制追查門檻的樣本。</li>
+    <li><span class="tl">細節</span>ALYFTREK銷售+186%YoY已足以彌補主力藥物TRIKAFTA/KAFTRIO -8%的下滑，顯示產品組合換擋正在發生而非單純衰退；FY26營收guide小幅上修至$13.15-13.25B。</li>
+    <li><span class="tl">跨日比較</span>與10/30報告中ABBV/AZN/REGN三檔製藥股「全數beat且GAAP落差可控」的乾淨樣本相比，VRTX的GAAP落差（46.2%）明顯更大，是本季財報日製藥族群中首個觸及門檻邊緣的樣本。</li>
+    <li><span class="tl">上下游一致性</span>公司R&amp;D/SG&amp;A費用guide同步大幅上修（非GAAP版本上修至約$6.0B），與GAAP EPS年減方向一致，顯示本季獲利下滑主要是主動投資（併購整合+研發費用）而非營運惡化。</li>
+    <li><span class="tl">可證偽</span>若Q4 2026非GAAP EPS未能恢復YoY成長，則本季「併購整合期雜訊」的判斷需修正為結構性利潤率壓縮；povetacicept的11/30 PDUFA決定將是下一個驗證點。</li>
+    <li class="impl"><span class="tl">Implication</span>GAAP與非GAAP口徑落差接近50%門檻時，市場若能清楚理解落差來源（如本例的併購費用），股價仍可能給予溫和正向而非懲罰性評價，顯示「落差本身」與「落差是否可解釋」是兩個獨立的市場定價維度。</li>
+  </ul>
+
+  <h3>全球旅宿需求強勁復甦——MAR</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>MAR全球RevPAR+6.5%遠超公司自身guide的3.5-4.0%，EPS優於guide上緣，全年guidance同步上修，是本日唯一BMO報告且股價反應最強的正向樣本。</li>
+    <li><span class="tl">細節</span>美加區域RevPAR+7.4%為最強單一地區，國際區域+4.4%相對溫和，顯示復甦力度存在地區分化；全年資本回饋目標上修至至少$48億。</li>
+    <li><span class="tl">跨日比較</span>與8月設定guide時的保守基調相比，本次RevPAR實際值接近guide上緣的近兩倍，顯示公司管理層在財報前明顯低估了美國旅宿需求的復甦速度，與10/27報告中部分工業股「guide本身即保守」的模式類似。</li>
+    <li><span class="tl">上下游一致性</span>RevPAR beat（需求端量價齊升）與淨房間成長+4.6%（供給端持續擴張）同步出現，顯示旅宿業本季是需求與供給兩端同時健康成長，而非單純價格上漲掩蓋入住率疲弱。</li>
+    <li><span class="tl">可證偽</span>若下季美加RevPAR成長率明顯回落至guide區間內，則本季+6.5%應視為單季加速而非結構性上修基準；若連續兩季維持5%以上，則代表旅宿需求復甦具有持續性。</li>
+    <li class="impl"><span class="tl">Implication</span>當公司自身guide被實際數字大幅超越（而非僅優於分析師共識）時，市場傾向給予更強的正向重新評價，顯示「打敗自己的保守guide」比「打敗分析師共識」本身更具催化力。</li>
+  </ul>
+
+  <h3>北美能源價值鏈分化——WMB／FANG</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>WMB（天然氣中游管網）與FANG（Permian頁岩上游）同日盤中分別大跌4.25%與5.82%，財報本身皆無明顯重大利空，顯示本次下跌主因是能源板塊整體走弱而非個股財報品質。</li>
+    <li><span class="tl">細節</span>WMB調整後EPS $0.54小幅低於共識，但EBITDA guide朝上緣靠近；FANG油產量525 MBO/d落在guide區間、FY產量guide小幅上修至522+ MBO/d，兩者財報內容皆屬中性至正向。</li>
+    <li><span class="tl">跨日比較</span>與10/30報告中XOM/CVX（上游+煉油雙擎、股價雙雙收漲）相比，本日WMB/FANG盤中跌幅明顯更大，顯示即使財報內容穩健，中游/頁岩上游細分領域本次並未複製10/30整合型油企的正向評價模式。</li>
+    <li><span class="tl">上下游一致性</span>WMB與FANG盤後反應（分別-0.06%與-0.40%）均遠小於盤中跌幅，顯示財報本身對股價的邊際影響有限，當日主要跌幅來自財報發布前的板塊系統性賣壓（§4矛盾5）。</li>
+    <li><span class="tl">可證偽</span>若WMB/FANG股價在未來1-2個交易日內隨能源板塊整體回穩而同步反彈，則本次下跌應歸因於板塊系統性因素；若兩者相對能源板塊持續跑輸，則代表財報本身存在市場尚未充分消化的隱憂。</li>
+    <li class="impl"><span class="tl">Implication</span>評估能源個股財報反應時，須先拆分「板塊系統性走勢」與「個股財報特定訊號」兩個層次，避免將板塊性賣壓誤判為對個股財報內容本身的負面評價。</li>
+  </ul>
+
+  <h3>淨租賃地產信託韌性——O</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>O本季AFFO穩健優於共識，疊加與KKR成立歐洲聯合投資平台的國際擴張敘事，股價溫和正向反應，延續淨租賃REIT低波動、穩定複利的特性。</li>
+    <li><span class="tl">細節</span>AFFO/股$1.12優於共識$1.10（+1.8%），YoY成長3.7%；KKR合作初始投入€5.28億，為資本輕量化擴張管理資產規模的新成長引擎。</li>
+    <li><span class="tl">跨日比較</span>與本日其他高波動個股（PLTR盤後-3.01%、IDXX+21.85%）相比，O的盤中+1.14%／盤後+0.16%波動幅度明顯最小，印證淨租賃REIT作為低波動資產類別的定位。</li>
+    <li><span class="tl">上下游一致性</span>AFFO穩健成長與國際擴張策略方向一致，顯示公司在維持核心淨租賃業務穩定現金流的同時，透過資本輕量化平台尋求額外成長曲線，兩者互不衝突。</li>
+    <li><span class="tl">可證偽</span>若公司FY guidance在後續披露中出現下修，或KKR合作平台首年募資規模明顯低於預期，則「國際擴張為新成長引擎」的敘事需要降溫。</li>
+    <li class="impl"><span class="tl">Implication</span>淨租賃REIT類股的財報反應幅度與AI/成長股形成鮮明對比，適合作為資金配置中「低波動現金流」與「高波動成長性」兩種倉位屬性的參照基準。</li>
+  </ul>
+
+  <h3>動物保健與核能國防利基製造——IDXX／BWXT</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>IDXX與BWXT分屬完全不同終端市場（獸醫診斷／核能國防），本季財報皆有EPS beat元素，但股價反應兩極：IDXX暴漲21.85%，BWXT盤後續跌3.19%。</li>
+    <li><span class="tl">細節</span>IDXX EPS beat幅度達8.1%且營收加速成長；BWXT非GAAP EPS beat 5.9%但營收miss 2.1%、guidance窄化而非上修，headline beat掩蓋底層訊號轉弱。</li>
+    <li><span class="tl">跨日比較</span>與10/29報告中MPWR/RMD等利基型醫療/工業個股（財報乾淨、股價正向）相比，IDXX本次的beat幅度與反應強度為本季新高，BWXT則加入10/30 NVT「漂亮數字未必獲賞」陣營的反向案例（惟BWXT的問題出在營收本身，而非估值過高）。</li>
+    <li><span class="tl">上下游一致性</span>IDXX裝機量加速（新產品滲透）與EPS beat方向一致，顯示成長動能具體可見；BWXT營收miss與guidance窄化方向一致，顯示管理層對下半年能見度轉為謹慎，兩者的「一致性」恰好指向相反的投資含義。</li>
+    <li><span class="tl">可證偽</span>若IDXX下季同店門診量持續年減超過1.3%，則本次+21.85%的反應可能過度；若BWXT Q4訂單/backlog數字顯示本季營收miss為一次性timing問題，則當前的負向評價可能過度悲觀。</li>
+    <li class="impl"><span class="tl">Implication</span>「EPS beat」作為單一標題指標的解釋力正在減弱——投資人須同時檢視營收品質與guidance方向，才能判斷beat是否真正反映業務動能加速（§4矛盾4）。</li>
+  </ul>
+
+  <h3>類比／功率半導體——ON</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>ON本季EPS落在guide中上緣、EPS成長速度（+40%以上）遠超營收成長（+11%），顯示獲利能力改善主要來自毛利率/費用控管而非規模擴張，但股價盤中盤後雙雙續跌。</li>
+    <li><span class="tl">細節</span>營收估算約$1.63B落在guide區間下緣附近，與guide上緣相比明顯保守，且公司未提供Q4新財測，為市場保守解讀的主要原因。</li>
+    <li><span class="tl">跨日比較</span>與8月Q2財報（EPS beat、股價隨財測上修而上漲）相比，本次Q3營收落guide下緣且缺乏Q4財測，顯示類比/功率半導體類股對「成長能見度」的要求高於單純EPS數字本身。</li>
+    <li><span class="tl">上下游一致性</span>ON作為AI資料中心與電動車功率半導體供應商，其營收增速放緩（+11%）與PLTR等AI軟體端的強勁需求（+96%）形成上下游訊號不一致，顯示AI資本支出熱度尚未完全傳導至所有半導體子領域。</li>
+    <li><span class="tl">可證偽</span>若ON在未來法說會補充發布Q4財測且優於市場隱含預期，則本次股價續跌應視為資訊缺口的暫時性折價；若Q4財測確認保守，則代表類比半導體需求復甦力度確實低於AI軟體端。</li>
+    <li class="impl"><span class="tl">Implication</span>AI資本支出熱度在不同半導體子領域（運算晶片／功率類比晶片）的傳導速度並不一致，投資人須區分「直接受益於AI資料中心建置」與「間接受益於整體電子需求復甦」兩類半導體股的基本面節奏差異。</li>
+  </ul>
+
+  <h3>⚠️ 非共識觀察：AI商業化是否已過熱——PLTR</h3>
+  <div class="noncon">
+    <h4>市場敘事可能誤讀為「AI軟體需求降溫」，但數字顯示的是估值起點問題而非基本面轉弱</h4>
+    <p>PLTR本季營收+96%YoY首次突破$23億、Rule of 40達158%、美國商業營收首度超越政府業務、全年guidance連續第二次上修——這是一份在成長性、獲利能力、業務結構多維度均創紀錄的財報。股價卻盤中盤後雙雙下跌，若僅看股價表現，市場敘事可能簡化為「AI軟體股需求開始降溫」或「企業AI支出不如預期」。</p>
+    <p>但財報內容完全不支持這個解讀——公司guidance是連續上修而非下修，美國商業業務的加速（+148%YoY）顯示企業端需求仍在擴大而非萎縮。更可能的解釋是財報前股價已反映極高估值預期（選擇權市場財報前定價±12-13%隱含波動），股價下跌更接近「驚喜幅度不足以支撐進一步估值擴張」的估值修正，而非基本面轉弱。這與10/30 NVT案例（教科書級beat+raise仍重摔）屬同一邏輯在不同產業的延伸，不應被簡化為「AI退潮」的產業性訊號。</p>
+  </div>
+
+  <h3>AI capex鏈條追蹤（固定檢查項目）</h3>
+  <ul class="trend-list">
+    <li><span class="tl">本日涵蓋層</span>AI軟體/應用端（PLTR：美國商業營收加速、guidance連續上修）、功率/類比半導體端（ON：EPS beat但營收增速放緩、缺Q4財測）。本日無上游設備／代工／超大規模業者資本支出層的公司報告財報。</li>
+    <li><span class="tl">訊號一致性</span>PLTR的應用端需求訊號（企業AI支出加速）與ON的供給端訊號（功率半導體營收僅+11%）方向並不一致，顯示AI資本支出熱度在「軟體應用層」與「功率/類比半導體層」之間的傳導速度存在明顯落差。</li>
+    <li><span class="tl">錯配點</span>PLTR應用端數字加速卻股價重摔、ON供給端數字放緩同樣股價下跌，兩者股價方向一致（雙跌）但基本面訊號方向相反，顯示本日AI鏈條的股價反應更多由「估值起點」與「財測能見度」主導，而非單純的需求方向判斷。</li>
+    <li class="impl"><span class="tl">Implication</span>AI相關個股的股價反應正逐漸與「業務基本面方向」脫鉤，轉而更依賴財報前估值水位與財測能見度——這進一步驗證10/30以來「AI基建需求強勁不再是股價上漲充分條件」的規律正從硬體基建層擴散至軟體應用與功率半導體層。</li>
+  </ul>
+
+  <h3>傳統媒體廣播廣告韌性——FOXA</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>FOXA營收、淨利、調整後EBITDA三項均創公司Q1歷史紀錄，廣告與發行營收同步成長，但缺乏明確EPS對比基準且公司未提供前瞻財測，股價小幅收跌。</li>
+    <li><span class="tl">細節</span>淨利$957M年增57%遠快於營收成長速度，顯示利潤率擴張為主要驅動力；內容及其他營收大致持平，顯示成長主要來自廣告與發行兩大傳統收入線，而非內容授權擴張。</li>
+    <li><span class="tl">跨日比較</span>與8月財報（EPS beat、股價+6.1%反應正向）相比，本次雖同樣創紀錄但股價反應明顯轉為中性偏負，顯示市場對「創紀錄」本身的邊際反應正在遞減，須搭配明確的EPS對比基準才能驅動股價。</li>
+    <li><span class="tl">上下游一致性</span>廣告與發行營收同步成長，顯示傳統媒體平台的核心收入引擎仍具韌性，與公司持續推進的Tubi/Roku收購整合（串流轉型敘事）方向互補而非衝突。</li>
+    <li><span class="tl">可證偽</span>若下季調整後EPS數字公開後明確優於共識，則本次股價的中性反應應歸因於「資訊不完整」而非「市場不買單創紀錄本身」；若EPS確認低於共識，則創紀錄的營收/淨利數字可能隱藏了股數稀釋或一次性因素。</li>
+    <li class="impl"><span class="tl">Implication</span>傳統媒體股即使交出創紀錄財報，若缺乏可直接比較的EPS共識基準，市場的正向反應力度會明顯打折，凸顯「可比較性」本身是財報能否轉化為股價催化劑的前提條件。</li>
+  </ul>
+
+  <h2 id="s3">§3 贏家與輸家</h2>
+
+  <h3>贏家</h3>
+  <table>
+    <thead><tr><th style="width:70px;">公司</th><th style="width:220px;">股價</th><th>原因（20字內）</th></tr></thead>
+    <tbody>
+      <tr class="winner-row"><td>IDXX</td><td>收漲+21.85%至$671.64（11/2）</td><td>EPS大超共識8%，新產品加速</td></tr>
+      <tr class="winner-row"><td>MAR</td><td>收漲+4.26%至$416.30（11/2）</td><td>RevPAR/EPS雙超guide上緣</td></tr>
+      <tr class="winner-row"><td>VRTX</td><td>盤後+0.52%至$556.00（初步）</td><td>營收beat，GAAP落差可解釋</td></tr>
+      <tr class="winner-row"><td>O</td><td>盤後+0.16%至$57.67（初步）</td><td>AFFO beat，KKR歐洲平台擴張</td></tr>
+    </tbody>
+  </table>
+
+  <h3>輸家</h3>
+  <table>
+    <thead><tr><th style="width:70px;">公司</th><th style="width:220px;">股價</th><th>原因（20字內）</th></tr></thead>
+    <tbody>
+      <tr class="loser-row"><td>BWXT</td><td>盤後-3.19%至$126.31（初步）</td><td>headline beat藏revenue miss</td></tr>
+      <tr class="loser-row"><td>PLTR</td><td>盤後-3.01%至$172.97（初步）</td><td>beat+raise仍遭棄，估值已偏緊</td></tr>
+      <tr class="loser-row"><td>AAPL</td><td>盤後-2.75%至$329.03（初步）</td><td>雙beat但新CEO缺書面財測</td></tr>
+      <tr class="loser-row"><td>FOXA</td><td>收跌-0.76%至$62.76（11/2）</td><td>創紀錄但缺EPS對比基準</td></tr>
+      <tr class="loser-row"><td>ON</td><td>盤後-0.37%至$69.85（初步）</td><td>EPS達標但缺Q4財測</td></tr>
+      <tr class="loser-row"><td>FANG</td><td>盤後-0.40%至$198.95（初步）</td><td>產量穩健但EPS/營收未確認</td></tr>
+      <tr class="loser-row"><td>WMB</td><td>盤後-0.06%至$71.15（初步，近乎持平）</td><td>EPS小幅miss，板塊系統性弱</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:13px;color:var(--text-muted);">本日11家中3家（MAR／IDXX／FOXA）為盤前發布財報，其股價已是11/2正式收盤的最終反應；其餘8家為盤後發布，股價為11/2晚間盤後延伸交易的初步反應，次日正式交易日收盤的最終判決需待後續覆核確認。</p>
+
+  <h2 id="s4">§4 互相矛盾與不合邏輯之處</h2>
+
+  <div class="contradiction">
+    <h4>矛盾 1：PLTR營收首次破$23億、Rule of 40達158%、guidance連續上修，股價卻盤中盤後雙雙下跌</h4>
+    <p>PLTR本季營收+96%YoY、美國商業營收首度超越政府業務、全年guide由$8.150-8.158B上修至$8.530-8.534B——多維度創紀錄的教科書級beat+raise，股價盤中收跌3.13%、盤後再跌3.01%。財報前選擇權市場已定價±12-13%的高波動預期，顯示市場原本就預期本次為高不確定性事件。</p>
+    <p class="implication">→ <strong>Implication：</strong>當個股財報前已處於極高估值與高隱含波動狀態，即使交出多維度創紀錄的beat+raise，股價仍可能因「驚喜幅度不足以支撐進一步估值擴張」而下跌——這是10/30報告中NVT「四度上調guide仍重摔8.81%」模式在AI軟體類股的延伸樣本，顯示該模式已從硬體基建擴散至應用層。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 2：VRTX非GAAP EPS小幅miss（-0.8%）但股價盤後正向+0.52%，GAAP EPS年減39%卻未引發股價懲罰</h4>
+    <p>VRTX非GAAP EPS $4.76低於共識$4.80，GAAP EPS因Crinetics收購費用由$4.20重摔至$2.56（-39%），兩口徑落差達46.2%、逼近50%強制追查門檻。若單看任一口徑的「miss」或「年減」字面，容易得出負面結論，但股價盤後反而上漲。</p>
+    <p class="implication">→ <strong>Implication：</strong>當GAAP/非GAAP落差的成因可被清楚歸因（本例為併購整合費用而非營運惡化），且營收本身優於共識、guidance同步上修，市場願意穿透口徑噪音評估核心業務動能，顯示「落差是否可解釋」比「落差大小本身」對股價的影響更關鍵。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 3：BWXT非GAAP EPS beat 5.9%的新聞標題下，實際藏著營收miss 2.1%與guidance窄化，盤後續跌3.19%</h4>
+    <p>多數財經媒體標題聚焦BWXT「EPS beat」，但營收$953.0M實際低於共識$973.3M（-2.1%），且FY26非GAAP EPS guide是窄化區間（$4.72-4.77）而非上修中樞。股價盤後下跌3.19%，顯示市場反應更貼近營收與guidance的實際訊號，而非EPS標題本身。</p>
+    <p class="implication">→ <strong>Implication：</strong>「EPS beat」作為單一headline指標正越來越不足以預測股價反應方向——投資人必須同時檢視營收品質與guidance區間變化（上修vs窄化vs維持），才能正確判斷財報的真實訊號強度。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 4：IDXX與ON同為「EPS beat」類股，股價反應卻呈現+21.85%對-2.18%（盤中）的兩極對比</h4>
+    <p>IDXX EPS $4.01優於共識$3.71（+8.1%），且新產品裝機量加速；ON非GAAP EPS $0.90落在guide中上緣但營收偏guide下緣、缺乏Q4新財測。兩者都屬於「EPS優於預期」的大類，但股價反應方向與幅度截然不同。</p>
+    <p class="implication">→ <strong>Implication：</strong>「EPS beat」的品質差異（beat幅度、營收是否同步加速、是否有明確前瞻財測）才是決定股價反應強度的真正變數——粗略將個股歸類為「beat」或「miss」的二元框架，在本日已不足以解釋股價反應的巨大分歧。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 5：WMB與FANG財報內容皆屬中性至正向，但盤中跌幅（-4.25%／-5.82%）遠大於財報發布後的盤後反應（-0.06%／-0.40%）</h4>
+    <p>WMB調整後EPS小幅miss但EBITDA guide朝上緣靠近；FANG油產量落在guide區間且FY guide小幅上修——兩者財報內容均無重大利空。但兩股在財報發布前的盤中交易時段（即財報發布前的全日表現）已分別大跌4.25%與5.82%，財報發布後的盤後反應反而溫和。</p>
+    <p class="implication">→ <strong>Implication：</strong>當日盤中大跌主要反映能源板塊系統性賣壓而非財報本身內容，顯示評估財報當日股價表現時，必須區分「財報發布前的板塊系統性走勢」與「財報發布後的個股特定反應」兩個獨立訊號，避免將板塊性賣壓誤判為市場對財報內容的負面裁決。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 6：AAPL EPS/營收雙beat且優於自身guide上緣，股價盤中盤後卻累計下跌逾4.5%</h4>
+    <p>AAPL EPS $2.10優於共識$1.98（+6.1%）、營收$114.5B優於guide上緣$113.74B，財報數字本身找不到明顯瑕疵。但盤中已收跌1.83%，盤後再跌2.75%，累計跌幅達4.5%以上，且公司本次未提供書面下季財測，法說會首次由新任CEO Ternus主持。</p>
+    <p class="implication">→ <strong>Implication：</strong>管理層交接期間缺乏前瞻財測溝通，可能使市場對即使乾淨優於預期的財務數字也打上「不確定性折價」，顯示「財測溝通的連續性」正成為獨立於財務數字品質之外的股價決定因子，與PLTR/BWXT等案例共同指向「本日財報反應的決定因子已從『數字好壞』轉向『能見度與可解釋性』」的季度性規律。</p>
+  </div>
+
+  <h2 id="s5">§5 總結</h2>
+
+  <ul class="summary-list">
+    <li>PLTR創紀錄beat+raise仍續跌——估值修正模式從硬體基建擴散至AI應用層（§4矛盾1）。</li>
+    <li>AAPL新CEO Ternus首秀雙beat卻缺書面財測——盤後累計跌逾4.5%（§4矛盾6）。</li>
+    <li>IDXX／ON同屬EPS beat卻股價兩極——beat品質細節已取代二元beat/miss框架（§4矛盾4）。</li>
+    <li>BWXT headline beat藏revenue miss——市場反應貼近真實訊號而非標題（§4矛盾3）。</li>
+    <li>WMB／FANG盤中重跌主因板塊系統性賣壓，非個股財報本身（§4矛盾5）。</li>
+  </ul>
+
+  <h3>驗證點日曆</h3>
+  <table>
+    <thead><tr><th>本日推論</th><th>驗證事件</th><th style="width:150px;">預定日期</th></tr></thead>
+    <tbody>
+      <tr><td>PLTR的賣壓是估值修正雜訊，還是企業AI支出開始降溫的早期訊號</td><td>PLTR股價未來1-2週走勢／Q4 2026實際數字能否達guide（$2.649-2.653B）</td><td>11月中、約2027年2月</td></tr>
+      <tr><td>AAPL新任CEO Ternus的財測溝通缺口是否為暫時性折價</td><td>下次法說會是否提供明確FQ1 2027書面財測</td><td>約2027年1月底</td></tr>
+      <tr><td>VRTX非GAAP EPS小幅miss是否為Crinetics整合期的暫時雜訊</td><td>Q4 2026非GAAP EPS能否恢復YoY成長；povetacicept PDUFA決定</td><td>11/30、約2027年2月</td></tr>
+      <tr><td>BWXT營收miss是否為一次性timing問題而非需求轉弱</td><td>BWXT Q4訂單/backlog揭露</td><td>約2027年2月</td></tr>
+      <tr><td>IDXX+21.85%反應是否過度，需看同店門診量疲弱是否持續拖累</td><td>IDXX股價未來2週走勢／FY guidance是否正式對外更新</td><td>11月中</td></tr>
+    </tbody>
+  </table>
+
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，
+    僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。
+    過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+    <br><br>
+    <strong>本日資料完整性說明：</strong>11/2為美股交易日（週一），11家公司中3家（MAR／IDXX／FOXA）為盤前發布財報、8家為盤後發布（$50B+門檻7家：AAPL/PLTR/VRTX/MAR/WMB/FANG/O＋DD快篩名單4家：ON/IDXX/FOXA/BWXT）。由於本次執行時間為美東時間11/2晚間7-8點，盤後發布公司的股價反應僅為初步反應，次日（11/3）正式交易日收盤的最終判決需待後續覆核補上。部分公司（WMB/FANG/O的精確營收數字、ON的精確營收與Q4財測、多數公司的法說會逐字稿、財報後券商評級與目標價更新）因搜尋預算或資料發布時點限制未能二源確認，已誠實標注「未取得」，未自行推測填補。經查核，上一份報告（earnings_2026-10-30.html）已於生成當時完成100%最終判決確認，本次執行無需對其進行Phase R覆核。
+  </div>
+
+  <footer>
+    © 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a>
+  </footer>
+</div>
+</body>
+</html>
