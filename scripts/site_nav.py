@@ -286,6 +286,7 @@ MENU = {
         ("aicredit", "/ai-credit/", "AI 信用監測"),  # 2026-10-16 AI 信用風險 12 條指標（每日更新、越線時通知）
         ("tchips", "/tw-chips/", "台股籌碼"),  # 2026-10-17 台股籌碼十年趨勢（外資／投信／融資／期貨選擇權，每日更新）
         ("kchips", "/kr-chips/", "韓股籌碼"),  # 2026-10-17 韓股籌碼十年趨勢（外資／機構／個人／預託金／融資／借券，每日更新）
+        ("uchips", "/us-chips/", "美股籌碼"),  # 2026-11-03 美股籌碼趨勢（ETF 申購贖回／期貨大戶／放空／槓桿 ETF／選擇權帳戶別／波動率／融資，每日更新）
     ],
     # 2026-08-23 系統群瘦身（8→4，見 notes/site-internal/root/
     # _consolidation_system_20260823.md）：市場偵探／裁決實績／持倉週掃／實單
@@ -432,6 +433,7 @@ PREFIX_ACTIVE = [
     ("active-etf/", ("research", "aetf")),  # 主動式 ETF（2026-09-25 新增）
     ("tw-chips/", ("macrochip", "tchips")),  # 台股籌碼趨勢（2026-10-17 新增）
     ("kr-chips/", ("macrochip", "kchips")),  # 韓股籌碼趨勢（2026-10-17 新增）
+    ("us-chips/", ("macrochip", "uchips")),  # 美股籌碼趨勢（2026-11-03 新增）
     ("canslim/", ("research", "canslim")),  # CAN SLIM 選股名單（2026-10-17 新增）
     ("ideas/", ("research", "ideas")),  # 投資想法（2026-09-23 新增）
     ("research/synthesis/", ("research", "thub")),
