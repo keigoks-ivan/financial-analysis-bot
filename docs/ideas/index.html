@@ -25,7 +25,18 @@ body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);
 .wrap{max-width:880px;margin:0 auto;padding:28px 16px 64px}
 .sub{color:var(--sec);font-size:.92rem;margin:.3rem 0 1.6rem}
 .idea-card{padding:16px 18px;margin:12px 0}
-.idea-card h2{margin:0 0 .3rem}
+.idea-card{display:block;text-decoration:none}
+.idea-card h2{margin:0}
+.ic-head{display:flex;align-items:center;gap:.5rem .7rem;flex-wrap:wrap;margin-bottom:.45rem}
+.ic-chip{font-size:.74rem;color:var(--sec);font-family:var(--sans)}
+.ic-concl{font-size:.98rem;line-height:1.65;color:var(--ink);margin:0 0 .6rem;overflow-wrap:anywhere}
+.ic-lab{font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:.08em;color:var(--sec);margin:.5rem 0 .15rem}
+.ic-watch{list-style:none;margin:0;padding:0;font-size:.84rem;line-height:1.55;color:var(--body)}
+.ic-watch li{display:flex;gap:.6rem;padding:.1rem 0}
+.ic-watch .d{font-family:var(--mono);font-size:.74rem;color:var(--sec);flex:0 0 3.4em}
+.ic-watch .past{color:var(--muted)}
+.ic-caut{font-size:.84rem;line-height:1.55;color:var(--sec);margin:.25rem 0 0;overflow-wrap:anywhere}
+.idea-card .row{margin-top:.6rem}
 .row{font-family:var(--mono);font-size:.74rem;color:var(--sec);display:flex;gap:.8rem;flex-wrap:wrap}
 .pos{color:var(--pos)}.neg{color:var(--neg)}
 .cpstatus-line{font-size:.78rem;color:var(--sec);margin-top:.4rem}
@@ -184,6 +195,36 @@ body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);
     var r=rs[0], d=String(r.date||'');
     return '<span><span class="rv-badge rv-'+(VCLS[r.verdict]||'warn')+'">'+esc(r.verdict)+'</span> 檢視 '+esc(d.slice(5).replace('-','/'))+'</span>';
   }
+  function latestReview(id, rv){
+    if(!rv || !rv.reviews) return null;
+    var rs=rv.reviews.filter(function(r){return r.idea===id;}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+    return rs.length?rs[0]:null;
+  }
+  function todayStr(){var t=new Date();function p(n){return (n<10?'0':'')+n;}return t.getFullYear()+'-'+p(t.getMonth()+1)+'-'+p(t.getDate());}
+  function statusChip(r){
+    if(!r) return '<span class="ic-chip">尚未檢視</span>';
+    var d=String(r.date||'');
+    return '<span class="rv-badge rv-'+(VCLS[r.verdict]||'warn')+'">'+esc(r.verdict)+'</span><span class="ic-chip">'+esc(d.slice(5))+' 檢視</span>';
+  }
+  function watchBlock(r){
+    var w=((r&&r.watch)||[]).filter(function(x){return x&&x.text;});
+    if(!w.length) return '';
+    var today=todayStr(), up=w.filter(function(x){return String(x.date||'')>=today;}).sort(function(a,b){return String(a.date).localeCompare(String(b.date));});
+    var items, past=false;
+    if(up.length){items=up.slice(0,3);}
+    else{past=true; items=w.slice().sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));}).slice(0,3).reverse();}
+    return '<ul class="ic-watch">'+items.map(function(x){
+      return '<li'+(past?' class="past"':'')+'><span class="d">'+esc(String(x.date||'').slice(5))+'</span><span>'+esc(x.text)+(past?'（已過）':'')+'</span></li>';}).join('')+'</ul>';
+  }
+  function cardBody(it, r){
+    var concl=(r&&r.thesis)||it.conclusion||'';
+    var h='<div class="ic-head"><h2 class="t-h2" title="'+esc(it.title)+'">'+esc(it.short||it.title)+'</h2>'+statusChip(r)+'</div>';
+    if(concl) h+='<p class="ic-concl">'+esc(concl)+'</p>';
+    var wb=watchBlock(r);
+    if(wb) h+='<div class="ic-lab">要注意</div>'+wb;
+    if(it.caution) h+=(wb?'':'<div class="ic-lab">要注意</div>')+'<p class="ic-caut">'+esc(it.caution)+'</p>';
+    return h;
+  }
   function cpstatusLine(it, research){
     if(!research || !research.status || !research.status[it.id]) return '';
     var st = research.status[it.id];
@@ -267,7 +308,7 @@ body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);
       var h=hits.filter(function(x){return x.idea===it.id && x.verdict!=='unrelated';});
       var sup=h.filter(function(x){return x.verdict==='supports';}).length, ref=h.filter(function(x){return x.verdict==='refutes';}).length;
       var last=h.map(function(x){return x.date||'';}).sort().pop();
-      html+='<a class="imq-card idea-card" href="'+esc(it.url)+'"><h2 class="t-h2">'+esc(it.title)+'</h2><div class="row">'+reviewTag(it.id, rv)+'<span>建立 '+esc(it.created)+'</span><span>查核點 '+(it.checkpoints||[]).length+' 個</span>'
+      html+='<a class="imq-card idea-card" href="'+esc(it.url)+'">'+cardBody(it, latestReview(it.id, rv))+'<div class="row"><span>建立 '+esc(it.created)+'</span><span>查核點 '+(it.checkpoints||[]).length+' 個</span>'
         +'<span>早報證據 '+h.length+' 則（<span class="pos">支持 '+sup+'</span>、<span class="neg">推翻 '+ref+'</span>）</span>'
         +(last?'<span>最近一則 '+esc(last)+'</span>':'')+'</div>'+cpstatusLine(it, research)+'</a>';
     });
