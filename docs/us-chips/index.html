@@ -487,10 +487,10 @@ function buildSpecs(){
   return sp;
 }
 function insiderSpec(){
-  var I = D.ins, sgn2 = FMT.sgn(FMT.d2);
+  var I = D.ins, sgnInt = FMT.sgn(FMT.int);
   var who = D.etfs.join('＋');
   return {id:'ins', title:'成分股內部人買賣（'+who+' 今天的成分股）', freq:'每月（SEC 季度資料集，季底後才發布）',
-    note:'資料是 SEC 的 Form 4 季度資料集，只算公開市場買進（交易代碼 P）與賣出（S），依交易日所在月份彙總，不含 4/A 更正。人數是各公司買進或賣出的不同申報人數相加；淨金額＝買進金額減賣出金額（股數乘單價，百萬美元）。成分股用的是今天的持股名單（'+I.n_tickers+' 檔），過去被剔除的公司不在內。SEC 季度資料在季底後一到三個月才發布，所以最新一個月是上一個季底。',
+    note:'資料是 SEC 的 Form 4 季度資料集，只算公開市場買進（交易代碼 P）與賣出（S），依交易日所在月份彙總，不含 4/A 更正。人數是各公司買進或賣出的不同申報人數相加；淨金額＝買進金額減賣出金額（股數乘單價，百萬美元）。成分股用的是今天的持股名單（'+I.n_tickers+' 檔），過去被剔除的公司不在內。SEC 季度資料在季底後一到三個月才發布，所以最新一個月是上一個季底。'+(D.etfs.indexOf('SOXX')>=0?'台積電從 2026-03 起才向 SEC 申報 Form 4，之後每月約 30 人小額買進（每月合計多在 100 萬美元以下），所以費半的買進人數從這時起墊高，不能跟更早的月份直接比。':''),
     head:{arr:I.net, fmt:sgnInt, name:'淨金額', unit:'百萬美元', extra:function(i){ return '，買進 '+I.nb[i]+' 人、賣出 '+I.ns[i]+' 人'; }},
     subs:[
       {h:210, title:'買進與賣出人數（每月）', series:[
