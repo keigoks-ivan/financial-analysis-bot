@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>美國資料中心 2027：機房跟得上晶片，延誤落在 PJM 與新創雲 — 投資想法 | InvestMQuest Research</title>
+<meta name="description" content="美國排定 2027 年上線的 36.3 GW 資料中心，約 4～8 GW 會額外延到 2028 年以後，延誤集中在 PJM、北維吉尼亞與靠第三方機房的新創雲；機房大致裝得下晶片，太空算力 2030 年前補不到 1%。附瓶頸拆解、股價已反映多少、三種情境與六個查核點。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{--pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;--mix-bg:#efe9da}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#eef1f6;--body:#c9d2df;--sec:#95a2b6;--muted:#6f7c90;--paper:#0b0d11;--card:#14181f;
+  --line:#28303c;--line-soft:#1f2530;--accent:#9cc0ff;--gold-deep:#d4b576;
+  --pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--pos-bg:#12261a;--neg-bg:#2a1414;--warn-bg:#2a2210;--mix-bg:#1f2530}}
+:root[data-theme="dark"]{
+  --ink:#eef1f6;--body:#c9d2df;--sec:#95a2b6;--muted:#6f7c90;--paper:#0b0d11;--card:#14181f;
+  --line:#28303c;--line-soft:#1f2530;--accent:#9cc0ff;--gold-deep:#d4b576;
+  --pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--pos-bg:#12261a;--neg-bg:#2a1414;--warn-bg:#2a2210;--mix-bg:#1f2530}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--body);font-family:var(--sans);line-height:1.75;font-size:15.5px}
+.wrap{max-width:880px;margin:0 auto;padding:28px 16px 64px}
+a{color:var(--accent)}
+.crumb{font-size:.8rem;color:var(--sec);margin-bottom:10px}
+.crumb a{color:var(--sec)}
+h1{font-family:var(--serif);color:var(--ink);font-size:1.75rem;line-height:1.3;margin:.2rem 0 .6rem}
+h2{font-family:var(--serif);color:var(--ink);font-size:1.3rem;margin:2.4rem 0 .8rem;padding-top:.4rem;border-top:1px solid var(--line)}
+h3{font-size:1.02rem;color:var(--ink);margin:1.6rem 0 .4rem}
+.meta{font-family:var(--mono);font-size:.74rem;color:var(--sec);display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.thesis{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--r);padding:18px 20px;margin:20px 0;font-size:1.08rem;color:var(--ink);font-weight:600;line-height:1.6}
+.summary{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 20px 14px 38px;margin:0}
+.summary li{margin:.3rem 0}
+p{margin:.6rem 0}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:12px 0}
+.imq-table{border:1px solid var(--line);border-radius:var(--r)}
+.imq-table td{vertical-align:top}
+.imq-table tr:last-child td{border-bottom:0}
+.chain{display:flex;flex-direction:column;gap:6px;margin:14px 0}
+.step{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 14px;font-size:.92rem}
+.step b{color:var(--ink)}
+.step small{color:var(--sec);display:block}
+.arrow{color:var(--muted);text-align:center;font-size:.8rem;line-height:1}
+.badge{display:inline-block;font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:.05em;padding:.14rem .55rem;border-radius:5px;white-space:nowrap;vertical-align:1px}
+.b-sup{color:var(--pos);background:var(--pos-bg)}
+.b-ref{color:var(--neg);background:var(--neg-bg)}
+.b-mix{color:var(--warn);background:var(--warn-bg)}
+.b-un{color:var(--sec);background:var(--mix-bg)}
+.muted-red{color:var(--neg);font-size:.84rem}
+.cpstatus-wrap{margin:14px 0 22px}
+.cpstatus-star{width:1.6em;text-align:center;color:var(--gold-deep);font-size:.9rem}
+.cpstatus-since{font-family:var(--mono);font-size:.78rem;color:var(--sec);white-space:nowrap}
+.cpstatus-note{margin-top:6px}
+.deep-toggle{font-family:var(--mono);font-size:.72rem;color:var(--accent);background:none;border:1px solid var(--line);border-radius:6px;padding:.25rem .6rem;margin:8px 0 2px;cursor:pointer}
+.deep-toggle:hover{background:var(--line-soft)}
+.deep-sources{display:block;font-size:.76rem;color:var(--muted);margin-top:2px}
+.src-type{color:var(--muted)}
+.cp{scroll-margin-top:70px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px;margin:14px 0}
+.cp-head{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+.cp-id{font-family:var(--mono);font-size:.72rem;color:var(--gold-deep);font-weight:600}
+.cp-title{font-weight:700;color:var(--ink);font-size:1rem}
+.cp-when{font-family:var(--mono);font-size:.7rem;color:var(--sec);margin-left:auto}
+.cp-rule{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:.86rem;margin:8px 0 4px}
+.cp-rule span:nth-child(odd){color:var(--sec);white-space:nowrap}
+.ev{list-style:none;margin:8px 0 0;padding:0;border-top:1px dashed var(--line);font-size:.85rem}
+.ev li{padding:6px 0;border-bottom:1px dashed var(--line-soft);display:flex;gap:8px;align-items:baseline}
+.ev li:last-child{border-bottom:0}
+.ev .d{font-family:var(--mono);font-size:.72rem;color:var(--sec);white-space:nowrap}
+.ev .src{color:var(--muted);font-size:.76rem}
+.ev .lbl{font-size:.72rem;color:var(--sec);margin:6px 0 0}
+.muted{color:var(--sec);font-size:.84rem}
+.note{background:var(--line-soft);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:.86rem;margin:12px 0}
+.kill li{margin:.35rem 0}
+.page-note{margin-top:3rem;font-size:.78rem;color:var(--sec);border-top:1px solid var(--line);padding-top:1rem}
+@media(max-width:600px){h1{font-size:1.4rem}.cp-when{margin-left:0}.cp-rule{grid-template-columns:1fr}.ev li{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+/* 2026-10-29 持有人不要連結沒點藍、點過變紫：:where 權重為 0，各頁自己寫的連結顏色都會蓋過，只取代瀏覽器預設色 */
+:where(a){color:#0d2244}
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/markets.html">風險偏好儀表</a>
+          <a href="/earnings/">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/us-chips/">美股籌碼</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/screeners.html">RS 排行</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/" class="active">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<div class="wrap">
+<div class="crumb"><a href="/ideas/">投資想法</a> › 美國資料中心 2027</div>
+<h1>美國資料中心 2027：機房跟得上晶片，延誤落在 PJM 與新創雲</h1>
+<div class="meta"><span>建立 2026-11-03</span><span>·</span><span>數據截至 2026-11-02</span><span>·</span><span class="badge b-sup">追蹤中</span><span>·</span><span id="hit-total">早報新證據：讀取中</span></div>
+
+<div class="thesis">到 2027 年底，美國機房的上電量大致裝得下當年買得到的晶片。排定 2027 年上線的 36.3 GW，約有 4～8 GW 會額外延到 2028 年以後，延誤集中在 PJM（美東電網營運商）、北維吉尼亞，以及靠第三方機房的新創雲（neocloud）。太空算力 2030 年前補不到地面每年新增量的 1%。股價已反映晶片、美國伺服器與獨立發電端的延誤，戴爾、台灣組裝廠與 Vertiv、EMCOR 還沒有。</div>
+
+<div class="cpstatus-wrap" id="cpstatus"></div>
+<div class="review-wrap" id="review"></div>
+
+<h2>一頁摘要</h2>
+<ul class="summary">
+<li>Goldman 排定美國 2027 年新增 36.3 GW，估未來一到兩年準時率五到六成。</li>
+<li>歷史準時率約七成，多出來的延誤約 4～8 GW，會移到 2028 年以後。</li>
+<li>已發生的延誤在第三方機房，Microsoft 2026 年因此少花約 50 億美元。</li>
+<li>PJM 2028/29 年度容量拍賣短缺 6,831 MW，連續第三次以上限價結算。</li>
+<li>Nvidia 說供給只夠七成需求，一處機房延後，晶片會轉給別的客戶。</li>
+<li>太空算力受限於 Starship 發射次數，2027 年補不到全球新增量的 0.3%。</li>
+<li>Nvidia 本益比 16.9 倍是 5 年最低，折價大過延誤能解釋的幅度。</li>
+<li>戴爾本益比比 5 年中位數高 35%，台灣組裝廠、Vertiv、EMCOR 也沒有替延誤打折。</li>
+<li>撐住結論的是供需與瓶頸：晶片比機房更缺，延誤改的是出貨對象與時點。</li>
+</ul>
+
+<h2>2027 年排了多少、會晚多少</h2>
+<p><b>美國 2027 年排定新增 36.3 GW，照目前的瓶頸，約 4～8 GW 會額外延到 2028 年以後。</b>電力容量以 GW（吉瓦，1 GW 等於 1,000 MW）計。Goldman 統計過去排定上線的容量，約 72% 在四季內做到，它估未來一年約 60%、兩年約 50%（<a href="https://www.publicpower.org/node/30450">美國公共電力協會轉述 Goldman 5 月報告</a>，二手）。多出來的 12～22 個百分點，可以看成目前電力與設備瓶頸造成的額外延誤，乘上 36.3 GW 約 4.4～8.0 GW（推定）。另外約 10 GW 是過去常態下也會發生的延誤，不算在這個區間裡。</p>
+<p>2027 年的排程是 2026 年 13.6 GW 的約 2.7 倍。Goldman 統計的實際上線量是 2024 年 6.4 GW、2025 年 8.5 GW、2026 年第一季 2.2 GW。錢已經在花：美國普查局的資料中心營建支出 2026 年 9 月年率 965 億美元，年增 90.3%，同期全美營建支出年減 2.7%（<a href="https://www.census.gov/construction/c30/xlsx/privsatime.xlsx">普查局</a>，11/2，站內整理）。施工量不缺，不確定的是上電日。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>來源</th><th>美國 2027 年新增</th><th>怎麼來</th></tr></thead>
+<tbody>
+<tr><td>Goldman 5 月排程</td><td>排定 36.3 GW，準時 18.2～21.8 GW</td><td>排程乘上 Goldman 估的準時率 50～60%（推定）</td></tr>
+<tr><td>Goldman 10 月總量</td><td>約 26 GW</td><td>2027 年底 90 GW 減 2026 年底 64 GW（二手轉述，推定）</td></tr>
+<tr><td>SemiAnalysis</td><td>約 28 GW</td><td>全球不含中國 51.2 GW 乘上美國占比 55%（推定）</td></tr>
+</tbody></table></div>
+<p>三個算法落在 18～28 GW，含非 AI 的一般機房。基準用 Goldman，因為只有它有分年排程與歷史準時率。各機構的施工中數字差很多，範圍也不同，不能相加：CBRE 北美八大主要市場 7,481 MW，Cushman &amp; Wakefield 美洲 37.7 GW，JLL 北美逾 66 GW，Wood Mackenzie 含開發案清單的美國近 80 GW。這些是施工中的存量，都沒有分年。SemiAnalysis 那一列的美國占比 55% 來自 Synergy 的搜尋摘要，原文沒有讀到。</p>
+<p>Goldman 10 月版只讀到 <a href="https://www.datacenterfrontier.com/hyperscale/article/55415349/the-50-gigawatt-test-semianalysis-sees-a-historic-data-center-surge-in-2027">Data Center Frontier 的轉述</a>。兩個年底總量相減，2027 年新增約 26 GW，比 5 月的排程少約 10 GW，但仍高於 5 月版自己的準時量 18.2～21.8 GW，可能含往年延誤的案子。26 GW 也剛好等於 36.3 GW 乘上歷史準時率 72%，照這個讀法，額外延誤接近零（見反方 1）。原文讀到之前，不拿它改本頁的區間。</p>
+
+<h2>卡在哪：電網、渦輪、變壓器</h2>
+<p><b>2027 年能上電的，大多是 2024～2025 年就排進電網、訂到設備的案子。</b>今天新下訂的渦輪、新申請的大負載，對 2027 年沒有增量。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>瓶頸</th><th>交期或排隊</th><th>對 2027 年</th><th>最早鬆動</th></tr></thead>
+<tbody>
+<tr><td>電網併網</td><td>Dominion 洽談逾 54 GW，已簽供電合約的逾 12 GW</td><td>能接的以已簽約者為主</td><td>規則面 2027 年起，實體容量 2028 年後（推定）</td></tr>
+<tr><td>燃氣渦輪</td><td>GE Vernova 新預訂排到 2032 年（二手）；三菱重工說約 2031 年</td><td>只能用已排好的機組</td><td>GE Vernova 年產能 2028 年 24 GW、2030 年 30 GW</td></tr>
+<tr><td>變壓器、開關設備</td><td>80～100 週（Bernstein，二手）；大型機組最長 4 年（PwC）</td><td>影響變電站與升壓變壓器</td><td>美國新廠 2027 年初起陸續投產</td></tr>
+<tr><td>現場發電</td><td>燃料電池交期找不到一手數字</td><td>2027 年主要的補缺管道</td><td>已在擴產</td></tr>
+<tr><td>營建人力</td><td>電工最缺</td><td>案例中多拖一到兩季</td><td>找不到鬆動的證據</td></tr>
+<tr><td>晶片與記憶體</td><td>供給約滿足七成需求</td><td>與電力同時限制</td><td>Nvidia 說至少到 FY2028 年底</td></tr>
+</tbody></table></div>
+<p><b>PJM 最緊。</b>容量拍賣是電網預先買下未來的供電能力。PJM 2028/29 年度結清 138,318 MW，比可靠度需求少 6,831 MW，以每日每 MW 325 美元的上限價結算，連續第三次碰到上限。前一次少 6,516 MW（<a href="https://www.pjm.com/-/media/DotCom/about-pjm/newsroom/2026-releases/20260714-pjm-capacity-auction-procures-138318-mw-of-generation-resources.pdf">PJM 新聞稿</a>，7/14）。短缺只比前一次多約 300 MW，沒有快速擴大。下一次拍賣（2029/30 年度）在 12 月。</p>
+<p>北維吉尼亞屬於 PJM。Dominion 第三季說，逾 54 GW 的資料中心容量在不同簽約階段，其中逾 12 GW 已簽電力服務合約，比 2025 年底多 6 GW（<a href="https://www.earningswhispers.com/transcript/D/Q32026">法說逐字稿</a>，10/30，第三方版本）。洽談量與已簽約量差 42 GW，洽談量不能當成 2027 年的供給。</p>
+<p><b>渦輪的交期還在拉長。</b>GE Vernova 第三季燃氣設備的在手訂單加預訂協議是 122 GW（訂單 64、預訂 58），當季有 13 GW 預訂轉成訂單（<a href="https://www.sec.gov/Archives/edgar/data/0001996810/000199681026000162/gevpressrelease3q26.htm">GE Vernova 新聞稿</a>，10/28）。Utility Dive 報導公司正在接 2032 年交貨的預訂，新合約約八成來自傳統客戶、兩成來自資料中心（<a href="https://www.utilitydive.com/news/ge-vernova-in-9b-deal-to-buy-high-voltage-manufacturer-as-gas-turbine-orde/873223/">Utility Dive</a>，10/29，二手）。美國能源資訊署（EIA）的發電機組清單上，2027 年計畫併網的燃氣只有 10.7 GW，2028 年 19.7 GW（<a href="https://www.eia.gov/electricity/data/eia860m/">EIA-860M</a> 2026 年 9 月版，站內整理）。</p>
+<p>電源本身也常延期。EIA 清單上，2025 年初計畫當年上線的 63.7 GW，只有 40.6 GW（64%）如期上線，21.4 GW 延到 2026 年以後，1.1 GW 取消。2025 年底計畫 2026 年上線的 87.0 GW，到 9 月已上線 37.2 GW，15.9 GW 已延到 2027 年以後，3.6 GW 取消或無限期延後。</p>
+<p><b>自備發電在補缺，換來的是等許可、等燃料。</b>Bloom Energy 第三季營收 12.358 億美元，年增 138.1%，全年財測上調到 44～46 億美元（<a href="https://www.sec.gov/Archives/edgar/data/0001664703/000162828026066890/ex991_q326financialresults.htm">Bloom 新聞稿</a>，10/22）。Oracle 新墨西哥 Jupiter 園區改用燃料電池，供氣管線的路權仍兩度被州土地局駁回（<a href="https://thenextweb.com/news/oracle-force-majeure-project-jupiter-new-mexico">The Next Web 轉述 Bloomberg</a>，9/24）。</p>
+
+<h2>機房跟晶片，哪個先不夠</h2>
+<p><b>2027 年總量上比較可能是機房等晶片。</b>Nvidia 財務長 8/26 說，客戶的預測指向明年成長翻倍，公司預期約 70%，「因為受供給限制」。黃仁勳說目前的供給「大約夠 70%」，瓶頸至少到 FY2028 年底，也就是 2028 年 1 月（<a href="https://s201.q4cdn.com/141608511/files/content_files/TRANSCRIPT_-NVIDIA-Corp-NVDA-US-Q2-2027-Earnings-Call-26-August-2026-5_00-PM-ET.pdf">Nvidia 法說逐字稿</a>）。</p>
+<p>把晶片換成電力粗算。Nvidia 第三季營收指引 1,080 億美元，資料中心占第二季營收 92.7%，年化後除以每 GW 的 Nvidia 營收（黃仁勳說 Blackwell 約 250 億、Vera Rubin 約 400 億美元），目前出貨約當每年 10～16 GW。FY2028 再成長 70% 約 17～27 GW，美國占 55% 約 9～15 GW（推定）。美國 2027 年可交付約 18～28 GW，裡面還要裝 Google TPU、Amazon Trainium 這類自研晶片與一般機房。自研晶片的 GW 數字找不到，所以這個比較只能說機房不明顯少於晶片。</p>
+<p>晶片不夠的時候，延誤改變的是誰先拿到。一處機房延後，晶片轉給已經上電的客戶，總出貨受的影響小。Microsoft 是目前唯一講明的例子：第三方 GPU 租用產能原訂 FY27 第一、二季交付，延到 FY27 下半年，也就是 2027 年 1～6 月，日曆年 2026 年資本支出從 7 月說的約 1,750 億降到約 1,700 億美元（<a href="https://www.microsoft.com/en-us/investor/events/fy-2027/earnings-fy-2027-q1">Microsoft FY27 第一季法說</a>，10/28）。Nvidia 說算力「在我們服務的每一朵雲都滿載」。出貨後大量裝不上去的統計找不到，反方向的說法只有 Nadella 2025 年 11 月說「可能有一批晶片放在庫存裡插不上電」，只見標題。</p>
+<p>這個判斷怕的是兩件事同時發生：Goldman 10 月版的 26 GW 是對的，而且 Nvidia 補上供給缺口比預期快。那時 2027 年下半年會變成機櫃等機房（情境 3）。</p>
+
+<h2>延誤落在哪些案子</h2>
+<p><b>有具體延誤數字的案子，延一到兩季居多。</b>延一年以上的，都和燃料管線、許可或第三方開發商有關。雲端業者自建、已在施工的大園區，找不到延一年以上的例子。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>案子</th><th>規模</th><th>延多久</th><th>原因</th></tr></thead>
+<tbody>
+<tr><td>Microsoft 第三方 GPU 租用</td><td>未揭露</td><td>一到兩季，延到 2027 年 1～6 月</td><td>第三方產能延後交付，供應商未具名</td></tr>
+<tr><td>Nebius 紐澤西 Vineland（Microsoft 合約）</td><td>2026 年底 328 MW</td><td>第一期 50 MW 原訂 4 個月，花了 6 個月</td><td>部分供應商晚交貨</td></tr>
+<tr><td>Stargate Abilene（Oracle、Crusoe、OpenAI）</td><td>1.2 GW</td><td>約兩季：9 月交了 618 MW，Epoch 估全區 2026 年第四季</td><td>未說明</td></tr>
+<tr><td>Oracle Jupiter（新墨西哥）</td><td>2.2～2.45 GW</td><td>SemiAnalysis 把首次供電從 2027 年移到 2029 年，Oracle 說照計畫</td><td>供氣管線路權被駁回、空氣許可延後</td></tr>
+<tr><td>Oracle Lighthouse（威斯康辛）</td><td>約 1.3 GW</td><td>最多約一年（第三方估）</td><td>未說明</td></tr>
+<tr><td>CoreWeave（2025 年 11 月）</td><td>年底在用目標 900→850 MW（二手）</td><td>延到 2026 年初</td><td>第三方機房業者未如期交付</td></tr>
+</tbody></table></div>
+<p class="muted">來源：Microsoft 法說、<a href="https://www.investing.com/news/earnings/nebius-earnings-in-focus-as-vineland-delays-test-execution-93CH-4851969">Investing.com</a>、<a href="https://epoch.ai/data/ai-data-centers/directory/openai-stargate-abilene">Epoch AI</a>、<a href="https://newsletter.semianalysis.com/p/stop-saying-half-of-2026-us-datacenter">SemiAnalysis</a>、<a href="https://www.power-eng.com/renewables/america-data-center-construction-delays/">Power Engineering 引 Aterio</a>、<a href="https://www.bisnow.com/news/national/data-center-capital-markets/data-center-delays-trigger-selloff-of-ai-cloud-firm-coreweave-131860">Bisnow</a>。Meta、Google、xAI 不公布分棟進度，找不到延誤不等於沒有延誤。</p>
+
+<h2>延誤的損失落在誰身上</h2>
+<p><b>損失落在營收要等上電才起算、又借錢蓋的人。已經上電的機房與長交期設備，延誤反而讓它們更值錢。</b></p>
+<p><b>新創雲受傷最直接。</b>它們出租 GPU 算力，營收跟著已上電的 MW 走，利息照付。CoreWeave 2025 年 11 月就因第三方機房延遲交屋下修過營收財測。今年第二季在用 1.5 GW，年底目標上調到逾 1.85 GW，法說沒有提新的延誤（<a href="https://siliconangle.com/2026/08/11/coreweave-coasts-solid-earnings-beat-sending-stock-higher-hours/">SiliconANGLE</a>，8/11）。十月新創雲五檔跌 26.9%～53.9%，CoreWeave 跌 37.0%。跌最重的兩天是 10/14 與 10/16，前後就是 CoreWeave 債券跌破 80 美分與信用違約交換（CDS）創紀錄，這一組的跌幅主要對應信用。</p>
+<p><b>已上電的機房與長交期設備受惠。</b>機房 REIT（不動產投資信託）十月 Equinix 漲 0.2%、Digital Realty 漲 2.9%。GE Vernova 管理層說「沒有退出預訂」（William Blair 引述，二手）。Apollo 首席經濟學家 Slok 10/21 列的贏家也是既有機房、長交期設備與自有發電（<a href="https://www.apollo.com/wealth/insights-news/insights/daily-spark/winners-and-losers-if-the-data-center-buildout-is-delayed">Apollo</a>）。</p>
+<p><b>跟著工地進度認列營收的設備與營建商，延誤是營收往後挪。</b>Vertiv 說電力、許可、工地技工是決定進度的項目，第二季延後的 1～1.5 億美元營收移到第三季（<a href="https://singjupost.com/?p=64906">法說逐字稿</a>，10/28）。EMCOR 的未完工訂單約 47% 是資料中心。這兩家的訂單不會因延誤消失，但認列時點會往後。</p>
+<p><b>晶片與組裝廠，變的是出貨對象與時點。</b>供給只夠七成需求時，Nvidia 的總出貨受影響小。台灣組裝廠要看單一客戶的拉貨時點：廣達 9 月營收 3,253 億元、月減 23.3%，公司說單月波動主要是「客戶出貨時程安排影響」（<a href="https://udn.com/news/story/7252/9800848">經濟日報</a>，10/7）。組裝廠把延後出貨歸因於客戶機房或電力的說法，找不到。</p>
+<p>價格只在一天照這個方向走。10/29，Microsoft 公布第三方延誤的隔天，各組等權：新創雲 −6.6%、美國伺服器 −3.8%、晶片 −2.4%，機房 REIT +2.3%、電力設備 +0.7%。同一天還有 Alphabet 財報與 ServiceNow −26.9%，分不出是延誤還是融資。整個十月，電力設備跟新創雲的每日報酬相關 0.72，跟晶片 0.76，市場大致把它們當成同一筆 AI 資本支出在交易。延誤若是主因，兩組應該往相反方向走。</p>
+
+<h2>太空算力：供給量由 Starship 的發射次數決定</h2>
+<p><b>2030 年前，太空算力補不到地面每年新增量的 1%，上限看 Starship 一年飛幾次。</b>2027 年各家已公布功率的示範機合計約 0.22 MW：Starcloud-2 兩顆共 16 kW、北京一期星座 200 kW、Google 原型約 1 kW。</p>
+<p>物理上卡在散熱。真空只能靠輻射散熱，1 MW 算力要約 3,200 平方公尺太陽能板、1,580 平方公尺輻射器（攝氏 20 度，<a href="https://starcloud.com/wp">Starcloud 白皮書</a>、<a href="https://angadh.com/space-data-centers-1">Angadh Nanjangud</a>）。用國際太空站的輻射器，1 MW 光輻射器就 22～28 公噸（換算）。各家估的每 MW 發射重量從 10 公噸（馬斯克）到 41～48 公噸（國際太空站等級硬體）都有，Starcloud 白皮書另主張約 5 公噸。</p>
+<p>光運費就比地面的建築加 5 年電費貴。用 Starlink 衛星的重量功率比（每 MW 20.5 公噸）、今天 Falcon 9 每公斤 3,600 美元算，1 MW 光運費約 7,400 萬美元。地面每 MW 建築加 5 年電費約 1,400～2,600 萬美元，運費是它的 2.8～5.2 倍（換算）。Google 自己算的打平點是每公斤 200 美元，約在 2035 年，前提是 Starship 每年飛約 180 次（<a href="https://arxiv.org/abs/2511.19468">Google 論文第二版</a>，6/17）。Starship 2026 年到 10 月飛了 3 次，只有 9/28 那次入軌，放出 26 顆 Starlink V3（<a href="https://en.wikipedia.org/wiki/List_of_Starship_launches">Wikipedia</a>）。</p>
+<p>SpaceX 說 2027 年底要做到每年部署 1 GW（<a href="https://lightreading.com/data-centers/musk-magic-not-needed-for-spacex-s-orbital-ai-data-center-plan">Light Reading</a>，6/10），這要 100～477 次 Starship 專用發射（換算）。照 2026 年的節奏，最多 5 次全部拿來載算力，2027 年上限 11～50 MW，占全球每年新增約 19.4 GW 的 0.06%～0.26%。到 2030 年，已公布的原型只多一個 Cowboy Space 的 1 MW 節點，合計約 1.2 MW。要越過 1%（約 194 MW），每年要有約 20～90 次 Starship 只載算力（換算）。要到 Google 打平點的每年 180 次，上限才有 0.4～1.8 GW，占 2.1%～9.3%。分母用的是 JLL 估的全球 2025～2030 年平均（<a href="https://www.jll.com/en-us/insights/market-outlook/data-center-outlook">JLL 全球展望</a>），美國 2027 年單年就有 18～28 GW，換成美國的數字，太空占比只會更低。</p>
+<p>先收到錢的是發射與晶片。Google 原型與 Cowboy Space 的示範星都搭 SpaceX 共乘，每公斤 7,000 美元。Nvidia 投資 Starcloud 2,500 萬美元，Starcloud、Cowboy Space、SpaceX 都排了 Nvidia Vera Rubin 太空版（<a href="https://techcrunch.com/2026/08/21/starcloud-raises-200-million-for-orbital-data-centers-as-launch-options-dry-up/">TechCrunch</a>、<a href="https://www.lightreading.com/satellite/with-nvidia-on-board-spacex-orbital-data-centers-to-hit-significant-scale-in-2028">Light Reading</a>）。用的是同一批晶片，太空只是多一個出貨地點。SpaceX 的太空機櫃自己設計，台灣伺服器廠參與太空專案的紀錄找不到。已公布的用途集中在對頻寬要求低的工作：地球觀測影像、政府機構推論、主權儲存、比特幣挖礦。大型訓練每條星間鏈路約要 10 Tbps，現有商用鏈路是 1～100 Gbps。</p>
+
+<h2>市場已反映什麼（股價截至 10/30）</h2>
+<p>十月整條鏈的跌在反映什麼，拆在 <a href="/ideas/ai-hardware-cycle.html#oct-drop">AI 硬體頁「十月的跌在反映什麼」</a>：主要是資金與信用重新定價，交付延誤不到一成。本節只看延誤這一塊有沒有進到價格。</p>
+<p><b>市場把晶片、美超微與獨立發電定價在接近情境 4、5 的位置，卻把戴爾、台灣組裝廠、Vertiv、EMCOR 定價在情境 1、2 的位置，兩邊只有一邊對。</b>新創雲用信用價格反映。若是情境 2，這四組不需要重新定價，「還沒反映」不等於一定會跌，差在延後還是取消（六種情境見下一節）。</p>
+<p>算法：現價本益比除以 5 年中位數本益比再減 1，是倍數回到中位數時現價隱含的獲利缺口。延誤對獲利的上限，是額外延誤占排程的 12～22% 乘上營收綁 2027 年新上電的比例，找不到比例的用 100%。缺口大過上限就算已反映。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>代表股</th><th>十月</th><th>未來 12 個月本益比</th><th>對 5 年中位數</th><th>營收綁 2027 年新上電</th><th>判斷</th><th>DD</th></tr></thead>
+<tbody>
+<tr><td>Nvidia</td><td>−10.4%</td><td>16.9（5 年最低）</td><td>−51%</td><td>找不到，用 100%</td><td>已反映，缺口大過 22%</td><td><a href="/dd/DD_NVDA_20260831.html">08-31</a></td></tr>
+<tr><td>美超微</td><td>−19.8%</td><td>7.1</td><td>−45%</td><td>主要來自 AI 平台，用 100%</td><td>已反映</td><td></td></tr>
+<tr><td>戴爾</td><td>−21.0%</td><td>15.1</td><td>+35%</td><td>39%：AI 伺服器營收指引對全年營收（二手）</td><td>沒反映，倍數還高於中位數</td><td><a href="/dd/DD_DELL_20260903.html">09-03</a></td></tr>
+<tr><td>鴻海／廣達／緯穎</td><td>−2.4%／−4.6%／−13.4%</td><td>明年度 10.6／9.9／9.4</td><td>5 年歷史找不到</td><td>找不到 AI 伺服器占比</td><td>在大和 4 月寫的 9～12 倍內，沒有另外折價</td><td><a href="/dd/DD_2317.TW_20261020.html">鴻海</a>、<a href="/dd/DD_6669.TW_20261012.html">緯穎</a></td></tr>
+<tr><td>Vertiv</td><td>−3.7%</td><td>25.2</td><td>−3%</td><td>找不到，用 100%</td><td>沒反映</td><td><a href="/dd/DD_VRT_20261102.html">11-02</a></td></tr>
+<tr><td>EMCOR</td><td>−9.9%</td><td>18.7</td><td>0%</td><td>47%：資料中心占未完工訂單</td><td>沒反映</td><td><a href="/dd/DD_EME_20261103.html">11-03</a></td></tr>
+<tr><td>GE Vernova</td><td>−9.7%</td><td>36.8</td><td>−31%</td><td>約 20%：資料中心占新合約（二手）</td><td>已反映，延誤的直接影響小</td><td><a href="/dd/DD_GEV_20260723.html">07-23</a></td></tr>
+<tr><td>Vistra（獨立發電）</td><td>0.0%</td><td>14.1</td><td>−5%</td><td>最多約 9%</td><td>已反映</td><td></td></tr>
+<tr><td>CoreWeave</td><td>−37.0%</td><td>預估虧損，不適用</td><td>—</td><td>100%</td><td>用信用反映：CDS 10/15 盤中 1,194.5 基點（二手）</td><td><a href="/dd/DD_CRWV_20261012.html">10-12</a></td></tr>
+<tr><td>Equinix（機房 REIT）</td><td>+0.2%</td><td>51.3</td><td>−30%</td><td>只影響新增容量</td><td>延誤讓既有機房更值錢</td><td></td></tr>
+</tbody></table></div>
+<p class="muted">十月＝9/30 收盤到 10/30 收盤，Yahoo 還原收盤。美股本益比＝10/30 收盤 ÷ Koyfin 未來 12 個月每股盈餘預估，5 年＝2021/10/29 到 2026/10/30 每日值。台股用 Yahoo 台幣明年度每股盈餘，歷史倍數找不到。綁新上電的比例：戴爾是 AI 伺服器營收指引 740 億對 FY2027 營收約 1,920 億美元，EMCOR 是資料中心 87.4 億對未完工訂單 185.7 億美元，Vistra 是 Cogentrix 與 Meta 合約約 7 億美元對 2027 年 EBITDA 74～78 億美元。</p>
+<p>5 年中位數含 2024～2026 年的 AI 行情。Nvidia 的 34.4 倍是在高成長預期下形成的，拿它當參考會高估已反映的程度。換成 S&amp;P 500 明年度本益比 17.64 倍，Nvidia 的缺口是 27%，仍大過 22%。</p>
+<p>跌的是本益比，獲利預估還在上修：Nvidia 明年度每股盈餘預估 90 天上修 24.2%，戴爾 +45.2%、美超微 +47.2%。往下修的只有獨立發電，Vistra −5.7%、NRG −8.3%，原因是德州電力遠期價格轉弱，跟機房延誤無關。還沒反映的那幾檔，在情境 3、4、5 要靠每股盈餘下修來反映。Vertiv 下一季起不再揭露訂單，外界看到延誤的時間會變晚。</p>
+
+<h2>六種情境</h2>
+<p><b>情境分兩條軸：誰付錢，以及機房交不交得出來。</b>需求軸直接用 <a href="/ideas/ai-hardware-cycle.html">AI 硬體頁</a> 10/30 版的三種情境：A 消化期已近尾聲 15%、B 消化期拉長 35%、C 循環頂 50%，本頁不另估。A 加 B 是「需求撐住」50%，C 是「付錢的人撐不住」50%。硬體頁的機率改了，這一軸跟著改，每月檢視時對一次。</p>
+<p>交付軸是本頁自己的判斷。需求撐住時，兩邊到位、機房慢、晶片追上約 24%／56%／20%；需求撐不住時，延後的案子多半變成取消。主張句的 4～8 GW 是情境 2，占需求撐住時的 56%、全部的 28%。單一情境裡機率最高的是情境 4（30%），那時延誤會被需求縮減蓋過去。機率是主觀判斷，沒有歷史頻率可以校準。</p>
+<p>「2028 年補不補回」那一欄，是戴爾、台灣組裝廠、Vertiv、EMCOR 要不要重新定價的分界：延後的營收 2028 年會回來，取消的不會。太空算力在六個情境裡都不是變數，2030 年前補不到地面每年新增量的 1%。</p>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>情境</th><th>機率</th><th>對應硬體頁</th><th>定義</th><th>2028 年補不補回</th><th>先看到的訊號</th><th>誰受惠、誰受傷</th></tr></thead>
+<tbody>
+<tr><td>1 兩邊到位</td><td>12%</td><td>A＋B</td><td>額外延誤低於 4 GW</td><td>不用補</td><td>Microsoft 1 月說第三方產能已經到位；EIA 2027 年計畫量不再往後移；Goldman 準時率回到 70% 以上</td><td>受惠：Vertiv、EMCOR、組裝廠照工地進度出貨，新創雲信用回穩。受傷：沒有，PJM 容量價仍在上限</td></tr>
+<tr><td>2 機房慢、晶片轉手（基準）</td><td>28%</td><td>A＋B</td><td>延 4～8 GW、一到三季，集中在 PJM、北維吉尼亞與第三方案子</td><td>補回</td><td>PJM 12 月拍賣短缺持平；Goldman 準時率 50～60%；Nvidia 11/19 仍說受供給限制</td><td>受惠：已上電的機房 REIT、有自備電的案子。受傷：靠第三方機房的新創雲多付一到三季利息；組裝廠月營收波動變大，年度不變</td></tr>
+<tr><td>3 晶片追上、機架等電</td><td>10%</td><td>A＋B</td><td>CoWoS 與 HBM 放量，或 TPU、Trainium 分流，可出貨的晶片多過可上電的機房</td><td>補回，但等電期間晶片換代</td><td>Nvidia 說供給已能滿足需求；組裝廠存貨與應收對營收同時拉高；組裝廠說客戶機房或電力未就緒</td><td>受惠：已上電機房、自備燃氣（GE Vernova、Bloom）。受傷：組裝廠存貨墊高，戴爾、Vertiv 下修，Nvidia 出貨延後</td></tr>
+<tr><td>4 需求先縮、延誤被掩蓋</td><td>30%</td><td>C</td><td>四大雲有一家砍下一年指引，或 OpenAI 募資卡住；第三方案子從延後變取消，蓋好沒人租，北美空置率從 1% 回升</td><td>不補回</td><td>硬體頁的機械規則觸發（任一家指引下緣下移）；GE Vernova 出現退訂；JLL、CBRE 半年報空置率升破 3% 而施工量沒降；組裝廠的用詞從「延後」變成「取消」</td><td>受傷：新創雲（信用）、組裝廠（存貨加應收）、Vertiv 與 EMCOR（取消的案子）、戴爾。相對受惠：已簽長約的 REIT 與電力公司</td></tr>
+<tr><td>5 雙重過剩</td><td>10%</td><td>C 的最壞版</td><td>需求縮，同時晶片供給放量；GPU 二手價跌，Nvidia 提列存貨與應收損失</td><td>不補回</td><td>情境 3 與情境 4 的訊號同時出現</td><td>受傷：全鏈，Nvidia 也在內，記憶體合約價轉跌。受惠：買二手算力的推論業者</td></tr>
+<tr><td>6 電網與政治反制</td><td>10%</td><td>橫跨兩軸，機率記在 C 這一組</td><td>PJM 容量價停在上限，引發州級限制（暫停併網、資料中心專屬費率、要求自備電），或 FERC 對電廠旁共址供電的裁定不利；建置從北維吉尼亞、PJM 移到 ERCOT 與自備燃氣</td><td>部分補回，換地點的案子要重跑許可</td><td>PJM 12 月拍賣結果；FERC 裁定；維吉尼亞與賓州州議會；ERCOT 大型負載研究</td><td>受惠：GE Vernova、Bloom、燃氣與德州電力。受傷：Dominion、北維吉尼亞的機房 REIT、沒有自備電方案的新創雲</td></tr>
+</tbody></table></div>
+<p><b>情境 1：兩邊到位（12%）。</b>第三方產能照 2027 年 1～6 月的新時程到位，Goldman 的準時率回到歷史的七成，延誤只剩常態的部分。這時交付面沒有人受傷，Nvidia 的折價只能用付錢那一面解釋。</p>
+<p><b>情境 2：機房慢、晶片轉手（28%，基準）。</b>延誤落在 PJM、北維吉尼亞與第三方開發商，延一到三季，晶片轉給已上電的客戶，Nvidia 的總出貨不變。新創雲多付幾季利息，組裝廠的月營收起伏變大，年度數字不變。戴爾、組裝廠、Vertiv、EMCOR 在這個情境不需要大幅重新定價，變的只是認列時點。</p>
+<p><b>情境 3：晶片追上、機架等電（10%）。</b>CoWoS 與 HBM 放量，或 Google TPU、Amazon Trainium 分走一部分需求，可出貨的晶片多過可上電的機房。營收 2028 年會補回，但等電期間晶片會換代，Rubin 上市時 Blackwell 可能還在倉庫。這是「機房裝得下晶片」被推翻的情境，最早的訊號是組裝廠存貨與應收對營收同時拉高。</p>
+<p><b>情境 4：需求先縮、延誤被掩蓋（30%）。</b>這是硬體頁情境 C 在交付面的樣子：四大雲有一家砍指引，或 OpenAI 募資卡住，第三方案子從延後變成取消。機房延誤反而替業主省了錢，蓋好的機房沒人租，北美空置率從 1% 回升。「還沒反映」的四組在這裡要重新定價，台灣組裝廠 9～11 倍的本益比會往美超微的 7 倍靠。</p>
+<p><b>情境 5：雙重過剩（10%）。</b>需求縮的同時晶片供給放量，是硬體頁情境 C 的最壞版。GPU 二手價下跌，Nvidia 提列存貨與應收損失，記憶體合約價轉跌，全鏈都受傷，受惠的只有買二手算力的推論業者。</p>
+<p><b>情境 6：電網與政治反制（10%）。</b>PJM 容量價連續停在上限，州政府開始設限，或 FERC 的共址裁定不利，建置從北維吉尼亞、PJM 移到德州 ERCOT 與自備燃氣。總量不一定變少，但地點與時點重排，延誤可能超過 8 GW，原因不在需求。這個情境在需求撐住或撐不住時都可能發生，單獨列出是因為訊號來自電網與州議會，跟其他五個情境不同。</p>
+<p>最早的分界是 11/10 CoreWeave 第三季財報、11/19 的 Nvidia 財報與 12 月的 PJM 拍賣。Microsoft 1 月下旬的法說決定第三方延誤是不是照新的時程走，四大雲 2027 年 1～2 月的指引決定站在需求軸的哪一邊。</p>
+
+<h2>對錢的意義</h2>
+<p><b>本頁不改 W52 規則的曝險，改的是幾份 DD 要多看的數字：營收是延後還是取消。</b></p>
+<ul>
+<li><b>W52 規則</b>：不改。規則看的是 SMH、QQQ 週收盤本身，不因單一想法改。六個情境裡會動到大盤方向的是情境 4、5，那是硬體頁付錢面的事。</li>
+<li><b>SMH</b>：Nvidia 的折價已大過延誤的上限，十月的跌勢主因在付錢那一面（見 <a href="/ideas/ai-hardware-cycle.html">AI 硬體頁</a>）。情境 1、2 裡，交付面沒有理由再替 Nvidia 打折；情境 5 例外，Nvidia 會提列存貨與應收損失，記憶體合約價也會轉跌。目前找不到機房延誤壓到記憶體需求的證據。</li>
+<li><b>台股腿</b>：台積電十月跌 4.4%。組裝廠 DD 要把「延後」和「取消」分開看：延後（情境 2）只改月營收的時點；客戶機房未就緒而存貨墊高（情境 3），或客戶取消（情境 4），才改年度數字。目前只有廣達 9 月營收月減 23.3%，公司說是客戶出貨時程。</li>
+<li><b>戴爾</b>：本益比比 5 年中位數高 35%，AI 伺服器約占全年營收 39%（二手）。情境 2 只是時點後移；情境 3、4 要靠每股盈餘下修重新定價，DD 的盈餘假設要看客戶機房的上電時點，以及客戶用的是「延後」還是「取消」。</li>
+<li><b>電力設備</b>：GE Vernova 對 5 年中位數已折 31%，資料中心約占新合約兩成（二手），情境 3、6 它是受惠方。Vertiv、EMCOR 的營收跟著工地進度走，股價還沒折價，情境 4 取消的案子會直接減少它們的營收；Vertiv 下一季起不再揭露訂單。</li>
+<li><b>新創雲</b>：用信用價格反映，CoreWeave 五年期 CDS 10/15 盤中 1,194.5 基點（二手）。情境 2 是多付一到三季利息，情境 4 是蓋好沒人租。11/10 財報看年底逾 1.85 GW 在用的目標有沒有下修。</li>
+</ul>
+<p>相關的站內頁：<a href="/ideas/ai-hardware-cycle.html">AI 硬體：誰付錢</a>看資金鏈，<a href="/ideas/ai-scissors.html">AI 剪刀差</a>看交期與漲價，<a href="/ideas/semis-degross.html">半導體去槓桿</a>看同一段跌勢裡的避險基金部位。</p>
+
+<h2>反方意見</h2>
+<div class="note">以下由獨立審稿角色冷讀本文後寫成。第 5 點列的前後不一致與數字問題，標「已改」的已改正文。第 1～4 點的建議會動到主張句的區間、主觀機率與「已反映」的判斷，本頁暫不改，影響寫在各點下方。</div>
+
+<h3>1. 4～8 GW 這個區間，兩個方向的證據都不支持</h3>
+<p>Goldman 10 月版的 2027 年新增約 26 GW，剛好等於 36.3 GW 乘上歷史準時率 72%（26.1 GW）。照這個讀法，更新後的預測是額外延誤接近零，落在情境 1（兩邊到位，額外延誤低於 4 GW），本頁只給 12%，需求撐住時也只占 24%。2026 年延誤的案子滑進 2027 年，也會讓 2027 年的淨新增變多，這同樣往延誤較少的方向推。</p>
+<p>營建支出往另一個方向推。普查局 9 月的資料中心營建支出年率 965 億美元，JLL 估 2026 年每 MW 的建築與機電約 1,130 萬美元，相除約每年 8.5 GW（換算）。這跟 Goldman 統計的 2025 年實際上線 8.5 GW 接近，離 2027 年要的 26～36 GW 很遠。支出年增 90% 只說明在加速，還不夠 2027 年用。普查局的分類涵蓋多少超大型園區沒有查證，如果涵蓋得完整，2027 年的排程本身偏高，延誤會超過 8 GW。</p>
+<p>12～22 個百分點也混了期間：72% 是排定後四季內做到的歷史值，60% 是未來一年、50% 是未來兩年。三個數相減只得到一個範圍，沒有針對 2027 年這一批的估計。</p>
+<p class="muted">對本文的影響：削弱主張句「約 4～8 GW 會額外延到 2028 年以後」的精確度，也削弱交付軸 24%／56%／20% 的配比。審稿人建議把區間寫成「接近 0 到 8 GW 以上」，並調高情境 1 的機率。不影響「2027 年的排程比 2026 年大很多」。正文已補上 26 GW 等於 72% 乘 36.3 GW 的讀法，基準仍用 Goldman 5 月版，因為只有它有分年排程與歷史準時率。</p>
+
+<h3>2. 「延誤集中在 PJM、北維吉尼亞」，案例撐不撐得住？</h3>
+<p>延誤案例表六件裡，Stargate Abilene 在德州，Jupiter 在新墨西哥，Lighthouse 在威斯康辛，都不在 PJM。在 PJM 裡的只有 Nebius 紐澤西 Vineland，第一期 50 MW 從 4 個月變 6 個月，差兩個月。北維吉尼亞沒有一個延誤案例，Dominion 的數字反而偏正面：已簽電力服務合約的資料中心容量逾 12 GW，比 2025 年底多 6 GW。</p>
+<p>PJM 短缺 6,831 MW 是 2028/29 年度的發電容量缺口，量的是那一年電廠夠不夠，2027 年資料中心併網會不會晚要看別的數字，而且短缺只比前一次多約 300 MW。它能支持「PJM 之後會更緊」，支持不了「2027 年的延誤集中在 PJM」。</p>
+<p>新創雲的證據也薄。十月五檔跌 26.9%～53.9%，正文自己說主要對應 CoreWeave 的債券與信用違約交換。CoreWeave 第二季把年底在用目標上調到逾 1.85 GW，法說沒提新延誤，確定的新創雲延誤只有 2025 年 11 月那一次。整個十月電力設備跟新創雲的相關是 0.72、跟晶片是 0.76，價格上看不到「延誤」這個單獨的因素。</p>
+<p class="muted">對本文的影響：削弱主張句「延誤集中在 PJM、北維吉尼亞與靠第三方機房的新創雲」，以及損失落在新創雲的因果。不影響「額外延誤確實存在」，Microsoft、Nebius、Abilene 都有證據。審稿人建議改成「PJM 電力偏緊，但 2027 年已知延誤案例分散在各電網，北維吉尼亞還沒有案例」，並把新創雲十月的跌幅明講是信用事件。</p>
+
+<h3>3. 本益比低於中位數，能說延誤已反映嗎？</h3>
+<p>這個檢定只能說折價夠大，說不出折價是延誤造成的。「對錢的意義」自己寫 SMH 十月的跌勢主因在付錢那一面。Nvidia 明年度每股盈餘預估 90 天上修 24.2%，本益比 16.9 倍也可以讀成市場預期獲利會回落，那是比延誤更大的風險。改用 S&amp;P 500 的 17.64 倍當參考，Nvidia 的缺口是 27%，只比 22% 的上限多 5 個百分點。</p>
+<p>「沒反映」那一側也弱。Vertiv −3%、EMCOR 0% 的意思是在中位數附近，不等於該打折而沒打折。戴爾十月跌 21.0%，同期每股盈餘預估上修 45.2%，本益比已經往下，只是還高於中位數。台灣組裝廠沒有 5 年歷史倍數，套不進本頁自己的檢定，主張句卻寫它們「還沒有」。</p>
+<p class="muted">對本文的影響：削弱主張句最後一句「股價已反映晶片、美國伺服器與獨立發電端的延誤，戴爾、台灣組裝廠與 Vertiv、EMCOR 還沒有」。不影響各檔的本益比與預估數字。審稿人建議把「已反映」改成「折價已大於延誤的上限，但折價的成因不只延誤」，並把台灣組裝廠從「還沒有」拿掉，改寫「沒有歷史倍數可比，不下判斷」。</p>
+
+<h3>4. 「機房裝得下晶片」的比較，誤差有多大？</h3>
+<p>美國占 55% 來自 Synergy 的超大型資料中心容量占比，拿來當 Nvidia 出貨的美國占比，口徑不同。18～28 GW 含一般機房，也含自研晶片要用的容量，這部分找不到。每 GW 的 Nvidia 營收是系統價格，跟電力的 GW 是不是同一個口徑，正文沒說。兩端的誤差都大，正文也只寫得出「不明顯少於」。</p>
+<p>兩個 70% 的基準也不同。財務長說客戶的預測指向明年翻倍、公司預期成長約 70%，換算是明年需求的約 85%。黃仁勳說的「大約夠 70%」是對目前的需求。</p>
+<p>「一處機房延後，晶片轉給別的客戶」是推論，正文沒有找到轉單的紀錄。Microsoft 因第三方產能延後，2026 年資本支出從約 1,750 億降到約 1,700 億美元，是延誤直接讓客戶少花錢的例子。Nadella 2025 年 11 月說「可能有一批晶片放在庫存裡插不上電」是對這個論點最直接的反面說法，正文只見標題。</p>
+<p class="muted">對本文的影響：削弱主張句第一句「美國機房的上電量大致裝得下當年買得到的晶片」的確定程度。不影響「2027 年晶片供給仍緊」。審稿人建議改成「上電量與買得到的晶片大致相當，誤差很大，自研晶片沒算進去」。Nadella 原文已列入「還沒查到的」。</p>
+
+<h3>5. 前後不一致與數字問題</h3>
+<ul>
+<li>查核點 6 把「組裝廠說客戶機房未就緒」列為成立，收回條件第二條卻把同一件事列為收回。（已改：查核點 6 列為推翻，與收回條件一致。）</li>
+<li>查核點 1 只防延誤變大，SemiAnalysis 上修代表延誤變小，卻標成支持。（已改：準時率高於 60%、即延誤低於 4 GW 也算推翻，SemiAnalysis 那筆標兩面。）</li>
+<li>Vertiv 同時被當成延誤的受惠者，又被列為該打折而沒打折的一方。（已改：Vertiv 與 EMCOR 另寫一段，延誤讓營收往後挪，訂單不會消失。）</li>
+<li>EIA 的 63.7 GW 拆項相加只有 62.0 GW。（已改：補上取消的 1.1 GW，2026 年那批補上 3.6 GW 取消或無限期延後。）</li>
+<li>摘要第一條把未來一年 60%、兩年 50% 合寫成一個範圍；36.3 對 13.6 是 2.7 倍，寫「近三倍」偏高。（已改。）</li>
+<li>主張寫到 2030 年，太空的算式只到 2027 年，1.2 公噸怎麼來也沒說明。（已改：補上 2030 年原型合計約 1.2 MW、越過 1% 要每年約 20～90 次只載算力的 Starship（換算），1.2 公噸約等於每 MW 10 公噸。）</li>
+<li>主張句把戴爾與組裝廠列為「還沒反映」，但照正文的機制，延誤多數時候只改它們的出貨時點。（已改：情境表加了「2028 年補不補回」，四組在情境 2 不需要重新定價，情境 3、4、5 才要。）</li>
+<li>情境 2 允許延一到三季，收回條件卻是 Microsoft 再延一季。Microsoft 已延約兩季，再延一季仍在情境 2 的範圍內。（未改。）</li>
+<li>收回條件只涵蓋 4～8 GW、裝得下晶片、太空三句，「集中在 PJM」與「已反映／沒反映」沒有收回條件；太空的收回門檻（2027 年飛超過 100 次）遠高於越過 1% 所需的次數。（未改。）</li>
+</ul>
+<p class="muted">對本文的影響：已改的各點不影響主張。未改的兩點是收回條件偏鬆，月檢視時要一起看。</p>
+
+<h2>什麼情況收回這個想法</h2>
+<ul class="kill">
+<li>「4～8 GW」建立在 Goldman 歷史準時率 72% 與現在估的 50～60% 之差。若 Goldman 準時率下修到 50% 以下，或 Microsoft 的第三方延誤再延一季、擴大到自建案，收回。</li>
+<li>「機房裝得下晶片」建立在 Nvidia 說供給只夠七成需求。若 Nvidia 說供給已追上需求，或台灣組裝廠說客戶機房未就緒而延後出貨，收回。</li>
+<li>「太空補不到 1%」建立在 Starship 2026 年只飛 3 次、每 MW 至少 10 公噸。若 2027 年 Starship 飛超過 100 次，且 SpaceX 公布 AI1 衛星每顆低於 1.2 公噸（約每 MW 10 公噸），收回。</li>
+</ul>
+
+<h2>還沒查到的</h2>
+<p>本頁標「推定」「換算」的是自己的計算，標「二手」的是轉述、沒有回原文核對。以下是結論依賴、但還沒有一手資料的事：</p>
+<ul>
+<li>Goldman 10 月修正的原文，只讀到 Data Center Frontier 的轉述，2027 年新增約 26 GW 是兩個年底總量相減。</li>
+<li>美國 2026、2027 年分年交付 GW 的一手數字，CBRE、JLL 等都沒有分年。</li>
+<li>Google TPU、Amazon Trainium 的 GW 數字與每 GW 成本，「機房裝得下晶片」的比較缺這一塊。</li>
+<li>Synergy「美國占全球超大型資料中心容量 55%」的原文，GW 換算靠它。</li>
+<li>已交付、還沒上架的 GPU 總量，以及蓋好機殼等電的容量。</li>
+<li>台灣組裝廠的 AI 伺服器營收占比與 5 年本益比，以及把延後拉貨歸因於客戶機房的說法。</li>
+<li>Microsoft 第三方延誤的供應商名稱。</li>
+<li>Nvidia 營收裡美國資料中心的占比，Vertiv 的資料中心營收占比。</li>
+<li>SpaceX AI1 衛星每顆的重量、Starship 2027 年的發射目標、衛星本體每 MW 的造價。</li>
+<li>Nadella 2025 年 11 月「可能有一批晶片放在庫存裡插不上電」的原文，只見標題。</li>
+<li>FERC（聯邦能源管制委員會）對 PJM 申請的結果，ERCOT（德州電網營運商）第零批研究的完成日。</li>
+<li>GE Vernova 第三季訂單金額：兩個來源分別寫 218 億與 290 億美元，可能一個是燃氣部門、一個是全公司，本頁只用兩邊一致的 122 GW。</li>
+</ul>
+
+<h2>事件時程</h2>
+<div class="tbl-wrap"><table class="imq-table">
+<thead><tr><th>日期</th><th>事件</th><th>看什麼</th></tr></thead>
+<tbody>
+<tr><td>約 11/10</td><td>台灣組裝廠 10 月營收</td><td>三個月平均年增，單一客戶拉貨</td></tr>
+<tr><td>11/10</td><td>CoreWeave 第三季財報</td><td>年底逾 1.85 GW 在用目標，在用與簽約的差距</td></tr>
+<tr><td>不早於 11/12</td><td>Starship Flight 15</td><td>第一次用發射塔接住二級</td></tr>
+<tr><td>11 月中</td><td>鴻海、廣達、緯穎第三季財報（法定期限 11/14）</td><td>存貨、應收餘額對營收</td></tr>
+<tr><td>約 11/19</td><td>Nvidia FQ3 財報</td><td>供給夠幾成需求，存貨與應收天數</td></tr>
+<tr><td>11/24</td><td>EIA-860M 新一版</td><td>2027 年計畫併網量有沒有往 2028 年移</td></tr>
+<tr><td>12 月</td><td>PJM 2029/30 年度容量拍賣</td><td>短缺有沒有比 6,831 MW 擴大</td></tr>
+<tr><td>不早於 12/10</td><td>Starship Flight 16</td><td>第一次從甘迺迪 39A 發射</td></tr>
+<tr><td>約 2027-01 上旬</td><td>JLL 年度資料中心展望</td><td>新租約的交屋年份</td></tr>
+<tr><td>約 2027-01 下旬</td><td>Microsoft FY27 第二季法說</td><td>第三方產能是否照 2027 年 1～6 月到位</td></tr>
+<tr><td>2027 年初</td><td>Google／Planet 兩顆原型</td><td>實測星間頻寬離 10 Tbps 多遠</td></tr>
+<tr><td>2027 年</td><td>Starcloud-2 共乘發射</td><td>月份未公布</td></tr>
+</tbody></table></div>
+
+<h2>查核點</h2>
+<div class="note">每個查核點下面有兩種證據：<b>建立時</b>是查證過的事實；<b>早報</b>是之後每天自動比對進來的新聞，由 Claude 讀原文判斷支持、推翻或無關。各查核點的成立與推翻條件寫在卡片上。另外兩項跟既有頁共用，不在本頁另編號：GE Vernova 預訂轉訂單、交期與退訂看 <a href="/ideas/ai-scissors.html#cp4">AI 剪刀差查核點 4</a>；Nvidia 供給夠幾成需求看 <a href="/ideas/ai-hardware-cycle.html#cp2">AI 硬體頁查核點 2</a> 與 <a href="/ideas/ai-hardware-cycle.html#cp6">查核點 6</a>。</div>
+<div id="cps"></div>
+
+<h2>資料來源</h2>
+<ul class="muted">
+<li>交付量與準時率：Goldman 5 月報告（<a href="https://www.publicpower.org/node/30450">美國公共電力協會轉述</a>）；Goldman 10 月修正與 SemiAnalysis 2027 年預估（<a href="https://www.datacenterfrontier.com/hyperscale/article/55415349/the-50-gigawatt-test-semianalysis-sees-a-historic-data-center-surge-in-2027">Data Center Frontier</a>，10/29）；<a href="https://newsletter.semianalysis.com/p/stop-saying-half-of-2026-us-datacenter">SemiAnalysis</a>（6/18）；<a href="https://www.srgresearch.com/articles/synergy-reports-that-us-data-center-capacity-will-continue-to-balloon-despite-increasing-headwinds">Synergy</a>（7/23）。</li>
+<li>施工中容量：<a href="https://www.cbre.com/press-releases/north-american-data-center-demand-continues-to-outpace-supply-despite-record-construction">CBRE</a>（9/8）、<a href="https://www.jll.com/en-us/insights/market-dynamics/north-america-data-centers.html">JLL</a>（8/11）、<a href="https://irei.com/news/cushman-wakefield-power-availability-redraws-data-center-map-as-americas-development-hits-record-37-7gw/">Cushman &amp; Wakefield（IREI 轉述）</a>、<a href="https://www.woodmac.com/press-releases/us-data-centre-additions-return-to-growth-in-q2-2026-as-developers-push-construction-and-pipeline-continues-to-expand2/">Wood Mackenzie</a>（10/28）。營建支出：<a href="https://www.census.gov/construction/c30/xlsx/privsatime.xlsx">美國普查局</a>（11/2）。</li>
+<li>電網與電源：<a href="https://www.pjm.com/-/media/DotCom/about-pjm/newsroom/2026-releases/20260714-pjm-capacity-auction-procures-138318-mw-of-generation-resources.pdf">PJM 2028/29 年度容量拍賣</a>；Dominion 第三季<a href="https://www.earningswhispers.com/transcript/D/Q32026">法說逐字稿</a>（第三方）；<a href="https://www.eia.gov/electricity/data/eia860m/">EIA-860M</a> 2024-12 到 2026-09 共 8 版，站內整理存於 v7-backtest/data/us_power_buildout/。</li>
+<li>設備：GE Vernova 第三季<a href="https://www.sec.gov/Archives/edgar/data/0001996810/000199681026000162/gevpressrelease3q26.htm">新聞稿</a>、<a href="https://www.utilitydive.com/news/ge-vernova-in-9b-deal-to-buy-high-voltage-manufacturer-as-gas-turbine-orde/873223/">Utility Dive</a>；三菱重工（<a href="https://www.energyconnects.com/news/renewables/2026/october/high-demand-for-gas-turbines-is-pushing-out-deliveries-to-2031-mitsubishi-power-says/">Energy Connects</a>）；變壓器交期（<a href="https://www.tribuneindia.com/news/business/data-center-pipeline-faces-construction-delays-cancellations-to-mount-through-2027-bernstein/">Bernstein 轉述</a>、<a href="https://pv-magazine-usa.com/2026/05/11/u-s-transformer-market-faces-severe-supply-constraints-as-lead-times-extend-to-four-years/">pv magazine 引 PwC</a>）；Bloom Energy 第三季<a href="https://www.sec.gov/Archives/edgar/data/0001664703/000162828026066890/ex991_q326financialresults.htm">新聞稿</a>；營建人力（<a href="https://www.agc.org/news/2026/09/03/construction-workforce-shortages-remain-acute-despite-soft-market-conditions-data-centers-strain">AGC／NCCER</a>）。</li>
+<li>晶片與雲端：Nvidia FY2027 第二季<a href="https://s201.q4cdn.com/141608511/files/content_files/TRANSCRIPT_-NVIDIA-Corp-NVDA-US-Q2-2027-Earnings-Call-26-August-2026-5_00-PM-ET.pdf">法說逐字稿</a>；Microsoft FY27 第一季<a href="https://www.microsoft.com/en-us/investor/events/fy-2027/earnings-fy-2027-q1">法說</a>；CoreWeave 第二季（<a href="https://siliconangle.com/2026/08/11/coreweave-coasts-solid-earnings-beat-sending-stock-higher-hours/">SiliconANGLE</a>）與第三季<a href="https://investors.coreweave.com/news/news-details/2026/CoreWeave-Announces-Date-of-Third-Quarter-2026-Financial-Results-and-Conference-Call/default.aspx">財報日公告</a>（10/27）；CoreWeave 信用（<a href="https://letsdatascience.com/blog/coreweave-debt-60-percent-default-odds-104-billion-backlog">letsdatascience 引 Bloomberg</a>，二手）。</li>
+<li>延期案例：Epoch AI、SemiAnalysis、Power Engineering（引 Aterio）、Investing.com、Bisnow、The Next Web（轉述 Bloomberg），網址見各段。</li>
+<li>太空：<a href="https://arxiv.org/abs/2511.19468">Google 論文 arXiv:2511.19468 第二版</a>、<a href="https://research.google/blog/exploring-a-space-based-scalable-ai-infrastructure-system-design/">Google Research</a>、<a href="https://technews.tw/2026/10/02/project-suncatcher-prototype-satellite-reaches-orbit/">科技新報</a>、<a href="https://starcloud.com/wp">Starcloud 白皮書</a>、<a href="https://angadh.com/space-data-centers-1">Angadh Nanjangud 重量分析</a>、<a href="https://techcrunch.com/2026/08/21/starcloud-raises-200-million-for-orbital-data-centers-as-launch-options-dry-up/">TechCrunch</a>、<a href="https://lightreading.com/data-centers/musk-magic-not-needed-for-spacex-s-orbital-ai-data-center-plan">Light Reading 6/10</a>、<a href="https://www.lightreading.com/satellite/with-nvidia-on-board-spacex-orbital-data-centers-to-hit-significant-scale-in-2028">8/25</a>、<a href="https://en.wikipedia.org/wiki/List_of_Starship_launches">Starship 發射紀錄</a>、<a href="https://newspaceeconomy.ca/2026/02/27/spacex-rideshare-pricing-as-of-february-2026-what-it-costs-whats-included-and-how-buyers-budget-a-mission/">SpaceX 共乘價格</a>、<a href="https://www.ncsti.gov.cn/kjdt/xwjj/202511/t20251128_230415.html">北京太空數據中心規劃</a>、<a href="https://www.jll.com/en-us/insights/market-outlook/data-center-outlook">JLL 全球展望</a>（分母）。</li>
+<li>股價與估值：Yahoo 收盤（站內共用價格庫）；Koyfin 未來 12 個月與年度每股盈餘預估（10/29～10/31）；Yahoo 預估趨勢。公司說法：Vertiv 第三季<a href="https://singjupost.com/?p=64906">逐字稿</a>、<a href="https://www.apollo.com/wealth/insights-news/insights/daily-spark/winners-and-losers-if-the-data-center-buildout-is-delayed">Apollo Slok</a>（10/21）。台灣：廣達 9 月營收（<a href="https://udn.com/news/story/7252/9800848">經濟日報</a>）、大和組裝廠倍數（<a href="https://money.udn.com/money/amp/story/5607/9432255">經濟日報</a>，4/10）、緯穎第三季營收（<a href="https://www.ctee.com.tw/news/20261028700287-439901">工商時報</a>）。</li>
+</ul>
+
+<footer class="page-note">本頁是研究推論，不是投資建議。起始分析 2026-11-03；每月檢視一次，結果放在主張下方；正文只在檢視判定重寫時才改。</footer>
+<footer class="imq-foot">
+  <div>&copy; 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
+</div>
+<script>
+(function(){
+  var IDEA = 'us-datacenter-2027';
+  var CPS = [
+    {id:'cp1', t:'2027 年交付預估與北美空置率：Goldman、SemiAnalysis、JLL、CBRE', when:'不定期（JLL 年度展望約 2027-01 上旬、JLL／CBRE 半年報）', keystone:true,
+     yes:'Goldman 兩年準時率維持 50～60%，SemiAnalysis 2027 年預估不再下修，JLL 新租約的交屋年份停在 2028 年，北美空置率維持在 3% 以下', no:'Goldman 準時率跑出 50～60%：低於 50% 是延誤超過 8 GW，高於 60% 是低於 4 GW（情境 1）；或 Goldman、SemiAnalysis 的 2027 年預估連兩版下修；或 JLL、CBRE 半年報的北美空置率從 1% 升破 3% 而施工量沒降（情境 4 的訊號）',
+     seed:[
+      ['5 月','sup','Goldman：2027 年美國排定新增 36.3 GW；歷史準時率約 72%，估未來一年約 60%、兩年約 50%','美國公共電力協會轉述（6/15）'],
+      ['10 月','mix','Goldman 10 月版年底總量 2026 年 64 GW、2027 年 90 GW，相減 2027 年新增約 26 GW，原文沒讀到','Data Center Frontier 轉述（10/29）'],
+      ['10/19','mix','SemiAnalysis：2027 年全球不含中國新增約 51.2 GW，先前估約 43 GW；上修代表延誤比本頁假設小','Data Center Frontier 轉述'],
+      ['8/11','sup','JLL：北美施工中逾 66 GW，空置率 1%，新簽租約多是 2028 年交屋','JLL 北美年中報告']]},
+    {id:'cp2', t:'PJM 容量短缺與北維吉尼亞簽約', when:'每次拍賣（2029/30 年度 2026-12）、Dominion 每季', keystone:false,
+     yes:'12 月拍賣的短缺維持在前兩次 6,516～6,831 MW 附近，Dominion 已簽約的資料中心 GW 每季續增', no:'12 月拍賣的短缺比 6,831 MW 擴大且仍以上限價結算，或 Dominion 已簽約量連兩季不增',
+     seed:[
+      ['7/14','mix','PJM 2028/29 年度比可靠度需求少 6,831 MW，以每日每 MW 325 美元的上限價結算，連續第三次碰到上限；前一次少 6,516 MW','PJM 新聞稿'],
+      ['10/30','sup','Dominion：逾 54 GW 資料中心容量在不同簽約階段，逾 12 GW 已簽電力服務合約，比 2025 年底多 6 GW','Dominion 法說逐字稿（第三方）']]},
+    {id:'cp3', t:'Microsoft 第三方產能何時到位', when:'每季（FY27 第二季法說約 2027-01 下旬）', keystone:true,
+     yes:'FY27 第二季法說說第三方產能照 FY27 下半年（2027 年 1～6 月）到位', no:'第三方產能再延一季，或延誤擴大到自建案',
+     seed:[
+      ['10/28','mix','部分預期在第一季交付的第三方產能延後，第三方合約移到 FY27 下半年；日曆年 2026 年資本支出約 1,700 億美元，7 月時約 1,750 億','Microsoft FY27 第一季法說'],
+      ['10/28','mix','財務長 Hood：客戶需求持續超過可用供給，沒有給供給趕上的時間','Microsoft FY27 第一季法說']]},
+    {id:'cp4', t:'Starship 年飛行次數與第三方酬載', when:'每次發射（Flight 15 不早於 11/12、Flight 16 不早於 12/10）', keystone:false,
+     yes:'2027 年飛行次數遠低於 100 次，載的仍是自家 Starlink', no:'2027 年飛超過 100 次，且 SpaceX 公布 AI1 衛星每顆低於 1.2 公噸',
+     seed:[
+      ['10 月','sup','Starship 2026 年到 10 月飛 3 次，載的都是 SpaceX 自家 Starlink，第三方商業酬載找不到紀錄','Wikipedia（Starship 發射紀錄）'],
+      ['9/28','mix','Flight 14 第一次入軌，放出 26 顆 Starlink V3；V3 近地軌道酬載 100 公噸','Interesting Engineering'],
+      ['6/10','mix','馬斯克：2027 年底達到每年部署 1 GW 太空算力；AI1 衛星重量沒有公布','Light Reading']]},
+    {id:'cp5', t:'Starcloud-2 與 Google 原型的進度', when:'不定期（Google／Planet 2027 年初、Starcloud-2 2027 年）', keystone:false,
+     yes:'Starcloud-2 兩顆 8 kW 衛星在 2027 年共乘入軌，Google 2027 年初兩顆原型實測星間雷射，各家在軌合計仍在 1 MW 以下', no:'有公司公布 MW 級的付費算力合約，或在軌星間頻寬實測接近大型訓練要的 10 Tbps',
+     seed:[
+      ['8/21','sup','Starcloud-2 兩顆、每顆 8 kW，2027 年共乘發射；2025 年 12 月時排在 2026 年 10 月','TechCrunch'],
+      ['10/01','sup','Google Project Suncatcher 原型入軌，4 顆 TPU、約 1 kW；2027 年初再發 2 顆測星間雷射','科技新報、Google Research'],
+      ['6/17','sup','Google 論文：大型訓練每條星間鏈路約要 10 Tbps，現有商用星間雷射 1～100 Gbps','arXiv 2511.19468 第二版']]},
+    {id:'cp6', t:'延誤傳到戴爾與台灣組裝廠：延後還是取消', when:'每月營收（約每月 10 日）、每季財報（第三季 11 月中）', keystone:false,
+     yes:'組裝廠與戴爾說的是「延後」：訂單保留、出貨時點往後，存貨與應收對營收沒有同時拉高，月營收三個月平均年增續升，每股盈餘預估沒有因此下修（情境 2）', no:'兩種分開記。延後：原因是客戶機房或電力未就緒，且存貨、應收餘額對營收同時拉高（情境 3，收回「機房裝得下晶片」）。取消：客戶撤單或案子不做（情境 4，四組要重新定價）',
+     seed:[
+      ['10/07','mix','廣達 9 月營收 3,253 億元、月減 23.3%，公司說單月波動主要是客戶出貨時程安排','經濟日報'],
+      ['10/28','sup','緯穎第三季營收 4,346 億元、季增 56.25%，創新高','工商時報'],
+      ['10/30','sup','戴爾明年度每股盈餘預估 90 天上修 45.2%，未來 12 個月本益比仍比 5 年中位數高 35%','Koyfin、Yahoo 預估']]}
+  ];
+  var VB = {sup:['b-sup','支持'], ref:['b-ref','推翻'], mix:['b-mix','兩面'], un:['b-un','未判斷'],
+            supports:['b-sup','支持'], refutes:['b-ref','推翻'], unjudged:['b-un','未判斷'], candidate:['b-un','可能相關']};
+  var STATUS_VB = {supports:['b-sup','支持'], shaky:['b-mix','動搖'], refutes:['b-ref','推翻'], no_data:['b-un','尚無資料']};
+  var ENTRY_VB = {supports:['b-sup','支持'], refutes:['b-ref','推翻'], shaky:['b-mix','動搖'], neutral:['b-un','中性']};
+  var KIND_LABEL = {search:'主動搜尋', earnings:'財報', transcript:'法說逐字稿', reverify:'週一複查', candidate:'早報候選'};
+  var SRC_TYPE_LABEL = {official:'官方', data:'數據', media:'媒體'};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function badge(v){var b=VB[v]||VB.un;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
+  function statusBadge(s){var b=STATUS_VB[s]||STATUS_VB.no_data;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
+  function entryBadge(v){var b=ENTRY_VB[v]||ENTRY_VB.neutral;return '<span class="badge '+b[0]+'">'+b[1]+'</span>';}
+  function keystoneOf(c, keystoneMap){
+    if(keystoneMap && Object.prototype.hasOwnProperty.call(keystoneMap, c.id)) return keystoneMap[c.id];
+    return !!c.keystone;
+  }
+  function statusOf(research, cpid){
+    return research && research.status && research.status[IDEA] && research.status[IDEA][cpid];
+  }
+  function entriesFor(research, cpid){
+    var list = ((research && research.entries) || []).filter(function(e){return e.idea===IDEA && e.checkpoint===cpid;});
+    list.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    return list;
+  }
+  function sourcesHtml(sources){
+    if(!sources || !sources.length) return '';
+    return sources.map(function(s){
+      var t = SRC_TYPE_LABEL[s.type] || s.type || '';
+      var link = s.url ? '<a href="'+esc(s.url)+'" rel="noopener">'+esc(s.title||s.url)+'</a>' : esc(s.title||'');
+      return '<span class="src-link">'+link+(t?'<span class="src-type">（'+esc(t)+'）</span>':'')+'</span>';
+    }).join('　');
+  }
+  function deepEntryLine(e){
+    var kind = KIND_LABEL[e.kind] || e.kind || '';
+    var src = sourcesHtml(e.sources);
+    return '<li><span class="d">'+esc((e.date||'').slice(5))+'</span>'+entryBadge(e.verdict)
+      +'<span>'+esc(e.summary||'')+(kind?' <span class="src">'+esc(kind)+'</span>':'')
+      +(src?'<span class="deep-sources">'+src+'</span>':'')+'</span></li>';
+  }
+  function deepBlock(research, researchState, cpid){
+    var head = '<div class="lbl muted" style="margin-top:8px">深入查核（每天 05:15）</div>';
+    if(researchState==='loading') return head+'<ul class="ev"><li class="muted">讀取中</li></ul>';
+    if(researchState==='error') return head+'<ul class="ev"><li class="muted">深入查核資料沒讀到</li></ul>';
+    var list = entriesFor(research, cpid);
+    if(!list.length) return head+'<ul class="ev"><li class="muted">還沒有深入查核紀錄</li></ul>';
+    var shown = list.slice(0,10), rest = list.slice(10);
+    var html = head+'<ul class="ev">';
+    shown.forEach(function(e){ html += deepEntryLine(e); });
+    html += '</ul>';
+    if(rest.length){
+      var mid = 'deep-more-'+cpid;
+      html += '<ul class="ev deep-more" id="'+mid+'" hidden>';
+      rest.forEach(function(e){ html += deepEntryLine(e); });
+      html += '</ul>';
+      html += '<button type="button" class="deep-toggle" data-target="'+mid+'">顯示全部（其餘 '+rest.length+' 則）</button>';
+    }
+    return html;
+  }
+  function fmtRunTime(run){
+    var t = (run && (run.finished || run.date)) || '';
+    var m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(t);
+    return m ? (m[1]+' '+m[2]) : t;
+  }
+  function statusHead(researchState, research){
+    if(researchState==='loading') return '<div class="muted">讀取中</div>';
+    if(researchState==='error') return '<div class="muted">深入查核資料沒讀到</div>';
+    var run = research && research.run;
+    if(!run || !run.status || run.status==='pending') return '<div class="muted">每天 05:15 自動查核，尚未開始</div>';
+    if(run.status==='failed') return '<div class="muted-red">最近一次查核失敗：'+esc(run.reason||'')+'</div>';
+    return '<div class="muted">最後查核 '+esc(fmtRunTime(run))+'</div>';
+  }
+  function statusTable(researchState, research, keystoneMap){
+    var rows='';
+    CPS.forEach(function(c,i){
+      var st = researchState==='ok' ? statusOf(research, c.id) : null;
+      var statusKey = st ? st.status : 'no_data';
+      var reason = st ? (st.reason||'') : (researchState==='ok' ? '尚未查核' : '');
+      var since = st ? (st.since||'') : '';
+      rows += '<tr><td class="cpstatus-star">'+(keystoneOf(c,keystoneMap)?'★':'')+'</td>'
+        +'<td><a href="#'+c.id+'">查核點 '+(i+1)+'：'+esc(c.t)+'</a></td>'
+        +'<td>'+statusBadge(statusKey)+'</td>'
+        +'<td>'+esc(reason)+'</td>'
+        +'<td class="cpstatus-since">'+esc(since)+'</td></tr>';
+    });
+    return '<div class="tbl-wrap"><table class="imq-table cpstatus-tbl"><thead><tr><th></th><th>查核點</th><th>狀態</th><th>理由</th><th>最近確認</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+  function mountStatus(researchState, research, keystoneMap){
+    document.getElementById('cpstatus').innerHTML = statusHead(researchState, research)
+      + statusTable(researchState, research, keystoneMap)
+      + '<div class="muted cpstatus-note">★ 關鍵查核點：轉為推翻時整篇重新評估。</div>';
+  }
+  function render(hits, hitsState, researchState, research, keystoneMap){
+    var html='';
+    CPS.forEach(function(c,i){
+      var h = hits.filter(function(x){return x.checkpoint===c.id;});
+      var st = researchState==='ok' ? statusOf(research, c.id) : null;
+      var statusKey = st ? st.status : 'no_data';
+      html+='<div class="cp" id="'+c.id+'"><div class="cp-head"><span class="cp-id">查核點 '+(i+1)+'</span><span class="cp-title">'+(keystoneOf(c,keystoneMap)?'★ ':'')+esc(c.t)+'</span>'+statusBadge(statusKey)+'<span class="cp-when">'+esc(c.when)+'</span></div>';
+      html+='<div class="cp-rule"><span>成立</span><span>'+esc(c.yes)+'</span><span>推翻</span><span>'+esc(c.no)+'</span></div>';
+      html+=deepBlock(research, researchState, c.id);
+      html+='<div class="lbl muted" style="margin-top:10px">早報新證據</div><ul class="ev">';
+      if(h.length){
+        h.forEach(function(x){
+          var title = x.url ? '<a href="'+esc(x.url)+'" rel="noopener">'+esc(x.headline)+'</a>' : esc(x.headline);
+          html+='<li><span class="d">'+esc((x.date||'').slice(5))+'</span>'+badge(x.verdict)+'<span>'+title+' <span class="src">'+esc(x.source||'')+'</span></span></li>';
+        });
+      } else {
+        html+='<li class="muted">'+(hitsState==='ok'?'還沒有新證據':hitsState)+'</li>';
+      }
+      html+='</ul>';
+      if(c.seed.length){
+        html+='<div class="lbl muted" style="margin-top:10px">建立時的證據</div><ul class="ev">';
+        c.seed.forEach(function(s){html+='<li><span class="d">'+esc(s[0])+'</span>'+badge(s[1])+'<span>'+esc(s[2])+' <span class="src">'+esc(s[3])+'</span></span></li>';});
+        html+='</ul>';
+      }
+      html+='</div>';
+    });
+    document.getElementById('cps').innerHTML=html;
+    document.querySelectorAll('.deep-toggle').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var t = document.getElementById(btn.getAttribute('data-target'));
+        if(!t) return;
+        if(t.hasAttribute('hidden')){ t.removeAttribute('hidden'); btn.textContent='收合'; }
+        else { t.setAttribute('hidden',''); btn.textContent='顯示全部'; }
+      });
+    });
+  }
+  render([], '讀取中', 'loading', null, null);
+  mountStatus('loading', null, null);
+
+  var hitsP = fetch('/briefing/data/idea_hits.json',{cache:'no-store'}).then(function(r){
+    if(r.status===404) throw new Error('404'); if(!r.ok) throw new Error('http');
+    return r.json();
+  }).then(function(d){
+    var hits=(d.hits||[]).filter(function(x){return x.idea===IDEA && x.verdict!=='unrelated';});
+    hits.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    var sup=hits.filter(function(x){return x.verdict==='supports';}).length, ref=hits.filter(function(x){return x.verdict==='refutes';}).length;
+    var t='早報新證據 '+hits.length+' 則（支持 '+sup+'、推翻 '+ref+'）';
+    if(d.history==='unavailable') t+='，較早紀錄沒讀到';
+    document.getElementById('hit-total').textContent=t;
+    return {hits:hits, state:'ok'};
+  }).catch(function(e){
+    var msg = e.message==='404' ? '早報還沒開始比對，每天 06:15 更新' : '早報紀錄沒讀到';
+    document.getElementById('hit-total').textContent=msg;
+    return {hits:[], state:msg};
+  });
+
+  var researchP = fetch('/ideas/data/research.json',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('http');
+    return r.json();
+  }).then(function(d){ return {state:'ok', data:d}; }).catch(function(){ return {state:'error', data:null}; });
+
+  var ideasP = fetch('/ideas/ideas.json',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('http');
+    return r.json();
+  }).catch(function(){ return null; });
+
+  Promise.all([hitsP, researchP, ideasP]).then(function(res){
+    var h=res[0], rs=res[1], ideasData=res[2];
+    var keystoneMap = null;
+    if(ideasData && ideasData.ideas){
+      var idea = ideasData.ideas.filter(function(x){return x.id===IDEA;})[0];
+      if(idea && idea.checkpoints){
+        keystoneMap = {};
+        idea.checkpoints.forEach(function(cp){ keystoneMap[cp.id] = !!cp.keystone; });
+      }
+    }
+    render(h.hits, h.state, rs.state, rs.data, keystoneMap);
+    mountStatus(rs.state, rs.data, keystoneMap);
+  });
+})();
+</script>
+<script type="application/json" id="idea-meta">
+{
+ "id": "us-datacenter-2027",
+ "type": "idea",
+ "version": "1.0",
+ "date": "2026-11-03",
+ "thesis": "到 2027 年底，美國機房的上電量大致裝得下當年買得到的晶片。排定 2027 年上線的 36.3 GW，約有 4～8 GW 會額外延到 2028 年以後，延誤集中在 PJM、北維吉尼亞與靠第三方機房的新創雲。太空算力 2030 年前補不到地面每年新增量的 1%。股價已反映晶片、美國伺服器與獨立發電端的延誤，戴爾、台灣組裝廠與 Vertiv、EMCOR 還沒有。",
+ "scenario_probs": {
+  "s1_both_on_time": 0.12,
+  "s2_dc_slow_chips_redirected": 0.28,
+  "s3_chips_catch_up_racks_wait": 0.1,
+  "s4_demand_shrinks_delays_masked": 0.3,
+  "s5_double_glut": 0.1,
+  "s6_grid_policy_backlash": 0.1
+ },
+ "scenario_probs_note": "主觀判斷。需求軸引用 ai-hardware-cycle 10/30 版（A 15%、B 35%、C 50%）：情境 1～3 對應 A＋B 共 50%，情境 4、5 對應 C，情境 6 橫跨兩軸、機率記在 C 這一組。需求撐住時交付軸約 24／56／20。硬體頁機率改了，本頁需求軸跟著改，每月檢視時對一次",
+ "monitors": [
+  "Goldman / SemiAnalysis / JLL 2027 US data center delivery forecasts and on-time rate",
+  "PJM capacity auction shortfall vs reliability requirement",
+  "Dominion contracted data center GW",
+  "Microsoft third-party capacity delivery timing",
+  "EIA-860M planned 2027 capacity by vintage",
+  "Starship flight rate and third-party payloads",
+  "Starcloud-2 and Google Suncatcher prototypes",
+  "Dell and Taiwan ODM shipment delays, inventory and receivables vs revenue, EPS revisions",
+  "CRWV CDS and in-service power target"
+ ],
+ "falsifiers": [
+  "Goldman 準時率下修到 50% 以下，或 Microsoft 第三方延誤再延一季、擴大到自建案 → 4～8 GW 收回",
+  "Nvidia 說供給已追上需求，或台灣組裝廠說客戶機房未就緒而延後出貨 → 機房裝得下晶片收回",
+  "2027 年 Starship 飛超過 100 次，且 SpaceX 公布 AI1 每顆低於 1.2 公噸 → 太空補不到 1% 收回"
+ ],
+ "shared_checkpoints": [
+  "ai-scissors cp4（GE Vernova 預訂轉訂單、交期與退訂）",
+  "ai-hardware-cycle cp2、cp6（Nvidia 供給夠幾成需求、存貨與應收）"
+ ],
+ "next_events": [
+  "2026-11-10 Taiwan ODM October revenue (approx)",
+  "2026-11-10 CoreWeave Q3",
+  "2026-11-12 Starship Flight 15 (no earlier than)",
+  "2026-11-14 Hon Hai / Quanta / Wiwynn Q3 (deadline)",
+  "2026-11-19 Nvidia FQ3 (approx)",
+  "2026-11-24 EIA-860M",
+  "2026-12 PJM 2029/30 capacity auction",
+  "2026-12-10 Starship Flight 16 (no earlier than)",
+  "2027-01 JLL data center outlook (approx)",
+  "2027-01 Microsoft FY27 Q2 (approx)",
+  "2027 early Google / Planet prototypes",
+  "2027 Starcloud-2 rideshare"
+ ],
+ "rulebook_layer": "regime_context_only",
+ "data_asof": "2026-11-02",
+ "data_last_trading_day": "2026-10-30",
+ "sources": [
+  "Goldman Sachs via APPA and Data Center Frontier",
+  "SemiAnalysis",
+  "PJM",
+  "EIA-860M",
+  "US Census construction spending",
+  "Dominion Q3 call transcript",
+  "GE Vernova Q3 press release",
+  "Utility Dive",
+  "Nvidia FY27 Q2 call transcript",
+  "Microsoft FY27 Q1 call",
+  "CBRE / JLL / Cushman & Wakefield / Wood Mackenzie",
+  "Google arXiv:2511.19468",
+  "Starcloud / TechCrunch / Light Reading / Wikipedia",
+  "Koyfin and Yahoo estimates",
+  "yfinance via site price store"
+ ]
+}
+</script>
+<script src="data/review.js" defer></script>
+</body>
+</html>
