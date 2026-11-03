@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>美股籌碼趨勢 — InvestMQuest Research</title>
+<meta name="description" content="美股籌碼趨勢：S&P 500、Nasdaq-100、費城半導體三個分頁，看 ETF 申購贖回、期貨大戶部位、放空、槓桿 ETF 流量、選擇權分帳戶成交量、波動率、融資餘額與全市場 put/call 比，所有圖時間軸同步，每日自動更新。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+:root{
+  --up:#1e8e5a; --down:#c0392b;            /* 美股慣例：綠＝流入／上漲，紅＝流出／下跌 */
+  --c1:#173564; --c2:#a77c2a; --c3:#2f8577; --c4:#7a4fa3; --idx:#8996ab;
+  --chip-bg:#f1ece0;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#eef1f6; --body:#d3dae6; --sec:#a3afc2; --muted:#7f8ca0;
+    --paper:#0e1522; --card:#151e2f; --line:#2a364b; --line-soft:#1f2a3d;
+    --accent:#8fb0cf; --gold-deep:#d4b576; --gold-bg:#2a2414; --gold-soft:#4a3d1c;
+    --up:#4cc38a; --down:#ff6b61;
+    --c1:#8fb0cf; --c2:#e0b95c; --c3:#5fcab8; --c4:#b79ae0; --idx:#6f7f98;
+    --chip-bg:#1c2639;
+  }
+}
+*{box-sizing:border-box;min-width:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.6;font-size:14px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px 60px}
+.page-head{padding:22px 0 8px}
+.page-head h1{margin:2px 0 6px;font-family:var(--serif);font-size:1.6rem;line-height:1.25;color:var(--ink)}
+.page-head p{margin:0;color:var(--sec);font-size:.9rem;line-height:1.75}
+.asof{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:6px}
+
+/* 控制列：區間按鈕 */
+.ctl{position:sticky;top:var(--nav-h,52px);z-index:50;background:var(--paper);padding:8px 0;border-bottom:1px solid var(--line);margin-top:10px}
+.ctl-inner{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.ctl-label{font-size:12px;color:var(--sec)}
+.rng{display:flex;flex-wrap:wrap;gap:4px}
+.rng button{font-family:var(--mono);font-size:12px;font-weight:600;padding:.3rem .65rem;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--body);cursor:pointer}
+.rng button:hover{border-color:var(--accent)}
+.rng button.on{background:var(--accent);border-color:var(--accent);color:var(--card)}
+@media (prefers-color-scheme: dark){ .rng button.on{color:#0e1522} }
+
+/* 最新數字小卡 */
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;box-shadow:var(--sh-1)}
+.card .k{font-size:11.5px;color:var(--sec);margin-bottom:2px}
+.card .v{font-family:var(--mono);font-size:1.15rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.25;overflow-wrap:anywhere}
+.card .s{font-family:var(--mono);font-size:11.5px;color:var(--sec);font-variant-numeric:tabular-nums}
+.card .d{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px}
+.up{color:var(--up)} .dn{color:var(--down)}
+@media (max-width:900px){ .cards{grid-template-columns:repeat(3,1fr)} }
+@media (max-width:560px){ .cards{grid-template-columns:repeat(2,1fr)} .card .v{font-size:1.02rem} }
+
+/* 圖區塊 */
+.sec{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin:16px 0;padding:14px 14px 10px;box-shadow:var(--sh-1)}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.sec-head h2{margin:0;font-family:var(--sans);font-size:1rem;font-weight:700;color:var(--ink)}
+.sec-head .n{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-right:2px}
+.sec-head .latest{font-family:var(--mono);font-size:.9rem;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.sec-head .latest small,.sec-head .chg small{font-weight:400;color:var(--muted);font-size:.72rem}
+.sec-head .chg{font-family:var(--mono);font-size:.82rem;color:var(--sec);font-variant-numeric:tabular-nums}
+.sec-head .cumhd{flex-basis:100%;font-size:.78rem}
+.sec-head .tools{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:12px;color:var(--sec)}
+.tools label{display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+.tools select{font:inherit;font-size:12px;padding:.15rem .3rem;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--body)}
+.hint{margin:4px 0 8px;font-size:12.5px;color:var(--sec);line-height:1.7}
+.legend{display:flex;flex-wrap:wrap;gap:4px 8px;margin:0 0 6px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:.1rem .5rem;border-radius:999px;background:var(--chip-bg);color:var(--body);cursor:pointer;user-select:none;border:1px solid transparent}
+.chip i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.chip.off{opacity:.4;text-decoration:line-through}
+.sub-title{font-size:11.5px;color:var(--muted);margin:8px 0 2px}
+.cbox{position:relative;width:100%}
+.cbox + .cbox{margin-top:6px}
+.readout{position:absolute;left:86px;top:4px;z-index:5;pointer-events:none;font-family:var(--mono);font-size:11px;line-height:1.45;background:color-mix(in srgb,var(--card) 82%,transparent);padding:2px 6px;border-radius:5px;color:var(--body);max-width:calc(100% - 140px)}
+.readout b{font-weight:600;color:var(--ink)}
+.readout i{display:inline-block;width:7px;height:7px;border-radius:2px;margin:0 3px 0 8px;vertical-align:baseline}
+.readout i:first-of-type{margin-left:4px}
+@media (max-width:640px){ .readout{left:70px;max-width:calc(100% - 76px)} }
+.note{font-size:11.5px;color:var(--muted);margin:4px 0 0}
+
+/* 頁尾資料來源 */
+.src{margin-top:26px}
+.src h2{font-size:1rem;color:var(--ink);margin:0 0 8px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+.src table{width:100%;border-collapse:collapse;font-size:12.5px}
+.src th{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;color:var(--sec);text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);white-space:nowrap}
+.src td{padding:.45rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);vertical-align:top}
+.src td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.src .fine{font-size:12px;color:var(--sec);line-height:1.8;margin-top:10px}
+.fcast .lead{margin:6px 0 8px;font-size:14px;color:var(--ink);line-height:1.7}
+.fcast p{margin:0 0 10px;font-size:13px;color:var(--body);line-height:1.8}
+.fcast .tbl-wrap{margin:10px 0}
+.fcast table{width:100%;border-collapse:collapse;font-size:12.5px}
+.fcast th{font-size:11.5px;font-weight:600;color:var(--sec);text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);white-space:nowrap}
+.fcast td{padding:.45rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);vertical-align:top}
+.fcast td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.fcast .note{line-height:1.7}
+.err{padding:20px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--down)}
+.tabs{display:flex;gap:6px;margin-right:12px}
+.tabs button{font-family:var(--sans);font-size:13px;font-weight:700;padding:.35rem .9rem;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--body);cursor:pointer}
+.tabs button.on{background:var(--ink);border-color:var(--ink);color:var(--card)}
+.sec-head .meta{flex-basis:100%;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.read{margin:2px 0 6px;font-size:12.5px;color:var(--sec);line-height:1.7}
+.nodata{margin:8px 0 4px;padding:10px 12px;border:1px dashed var(--line);border-radius:var(--r);font-size:13px;color:var(--sec);line-height:1.7}
+.src ul{margin:6px 0;padding-left:1.2em}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+/* 2026-10-29 持有人不要連結沒點藍、點過變紫：:where 權重為 0，各頁自己寫的連結顏色都會蓋過，只取代瀏覽器預設色 */
+:where(a){color:#0d2244}
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/markets.html">風險偏好儀表</a>
+          <a href="/earnings/">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/us-chips/" class="active">美股籌碼</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/screeners.html">RS 排行</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<main class="wrap">
+  <div class="page-head">
+    <div class="t-overline">US FLOWS</div>
+    <h1>美股籌碼趨勢</h1>
+    <p>分成 SPY（S&amp;P 500）、QQQ（Nasdaq-100）、費半（費城半導體指數）三個分頁，看 ETF 申購贖回、期貨大戶部位、放空、槓桿 ETF 流量、選擇權分帳戶成交量、波動率和融資餘額的變化。所有圖共用同一條時間軸，拖曳、縮放、移動十字線時各圖同步。</p>
+    <p>這一頁用來看趨勢，不是進出場訊號。台股籌碼頁的六個指標在事前登記的檢定裡都沒有通過，這裡的美股指標沒有做過同樣的檢定，不能假設比較有用。美股沒有台股那種每天公布的三大法人現貨買賣超，所以改用 ETF 申購贖回、期貨申報部位、放空和選擇權帳戶別成交量來代表籌碼。</p>
+    <div class="asof" id="asof">資料載入中…</div>
+  </div>
+
+  <div class="ctl" id="ctl">
+    <div class="ctl-inner">
+      <div class="tabs" id="tabs">
+        <button data-t="spy">SPY</button><button data-t="qqq">QQQ</button><button data-t="sox">費半</button>
+      </div>
+      <span class="ctl-label">區間</span>
+      <div class="rng" id="rng">
+        <button data-m="3">3 月</button><button data-m="12" class="on">1 年</button><button data-m="36">3 年</button>
+        <button data-m="60">5 年</button><button data-m="120">10 年</button><button data-m="0">全部</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="charts"></div>
+  <section class="src" id="src"></section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+(function(){
+'use strict';
+var LWC = window.LightweightCharts;
+var V = String(Date.now()).slice(0,8);          // 資料檔快取：每約 11 天自然換一次，另由 meta.updated 補強
+var TAB_LABEL = {spy:'SPY（S&P 500）', qqq:'QQQ（Nasdaq-100）', sox:'費半（SOX）'};
+var IDX_NAME = {spy:'S&P 500 指數', qqq:'Nasdaq-100 指數', sox:'費城半導體指數（SOX）'};
+var CAL = [], CAL_IDX = {}, META = null;
+var D = null, EX = null, curTab = 'spy', curMonths = 12;
+var charts = [];            // 所有圖：{chart, box, readout, series:[{def,api,visible}]}
+var syncing = false, cumStart = -1, cumEnd = -1, cumTimer = 0;
+
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function theme(){
+  return {bg:css('--card'), text:css('--body'), grid:css('--line-soft'), border:css('--line'),
+    up:css('--up'), down:css('--down'), c1:css('--c1'), c2:css('--c2'), c3:css('--c3'), c4:css('--c4'),
+    idx:css('--idx'), ref:css('--muted')};
+}
+var FMT = {
+  int:function(v){ return v==null?'—':Math.round(v).toLocaleString('en-US'); },
+  d1:function(v){ return v==null?'—':v.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1}); },
+  d2:function(v){ return v==null?'—':v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); },
+  d3:function(v){ return v==null?'—':v.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3}); },
+  sgn:function(f){ var g=function(v){ return v==null?'—':(v>0?'+':'')+f(v); }; g.p=f.p; return g; }
+};
+FMT.int.p=0; FMT.d1.p=1; FMT.d2.p=2; FMT.d3.p=3;
+function firstIdx(arr){ for(var i=0;i<arr.length;i++){ if(arr[i]!=null) return i; } return -1; }
+function lastIdx(arr){ for(var i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return i; } return -1; }
+function prevIdx(arr, i){ for(var j=i-1;j>=0;j--){ if(arr[j]!=null) return j; } return -1; }
+function place(d){            // 最後一個 ≤ d 的交易日索引
+  var lo=0, hi=CAL.length-1, r=-1;
+  while(lo<=hi){ var m=(lo+hi)>>1; if(CAL[m]<=d){ r=m; lo=m+1; } else hi=m-1; }
+  return r;
+}
+function addDays(d, n){ var x=new Date(d+'T00:00:00Z'); x.setUTCDate(x.getUTCDate()+n); return x.toISOString().slice(0,10); }
+function fetchJ(u){ return fetch(u).then(function(r){ if(!r.ok) throw new Error(u+' '+r.status); return r.json(); }); }
+function fetchT(u){ return fetch(u).then(function(r){ if(!r.ok) throw new Error(u+' '+r.status); return r.text(); }); }
+function nulls(){ var a=new Array(CAL.length), i; for(i=0;i<a.length;i++) a[i]=null; return a; }
+
+/* ---------------- 外部資料：ETF 申購贖回（etf-dash）、全市場融資餘額（fear-greed） ---------------- */
+function weeklyAlign(series){        // [[週一, 值]] → 對齊到該週最後一個交易日
+  var a = nulls();
+  (series||[]).forEach(function(p){ var i=place(addDays(p[0],4)); if(i>=0) a[i]=p[1]; });
+  return a;
+}
+function buildExt(flowJs, marginTxt){
+  var ex = {flow:{}, flowSum:null, flowInfo:{}, margin:null, marginYoy:null, marginInfo:null};
+  D.etfs.forEach(function(e, k){
+    var j = flowJs[k]; if(!j || !j.chart || !j.chart.flows_weekly) return;
+    var fw = j.chart.flows_weekly;
+    ex.flow[e] = weeklyAlign(fw.series);
+    ex.flowInfo[e] = {since:fw.since, asof:fw.asof, n:(fw.series||[]).length, partial:!!fw.partial};
+  });
+  if(D.etfs.length>1 && D.etfs.every(function(e){ return ex.flow[e]; })){
+    ex.flowSum = nulls();
+    for(var i=0;i<CAL.length;i++){
+      var s=0, ok=true;
+      D.etfs.forEach(function(e){ var v=ex.flow[e][i]; if(v==null) ok=false; else s+=v; });
+      if(ok) ex.flowSum[i]=Math.round(s*100)/100;
+    }
+  }
+  if(marginTxt){
+    var m = nulls(), yo = nulls(), byYm = {}, rows = [];
+    marginTxt.split(/\r?\n/).slice(1).forEach(function(l){
+      var p=l.split(','); if(p.length<2 || !p[0]) return;
+      var v=parseFloat(p[1]); if(isNaN(v)) return;
+      rows.push([p[0], v]); byYm[p[0].slice(0,7)] = v;
+    });
+    rows.forEach(function(r){
+      var y=+r[0].slice(0,4), mo=+r[0].slice(5,7);
+      var end = new Date(Date.UTC(y, mo, 0)).toISOString().slice(0,10);      // 該月最後一天
+      var i = place(end); if(i<0) return;
+      m[i] = r[1];
+      var prevKey = (y-1)+'-'+(mo<10?'0':'')+mo, pv = byYm[prevKey];
+      if(pv) yo[i] = Math.round((r[1]/pv-1)*10000)/100;
+    });
+    ex.margin = m; ex.marginYoy = yo;
+    ex.marginInfo = {first:rows[0][0].slice(0,7), last:rows[rows.length-1][0].slice(0,7), n:rows.length};
+  }
+  return ex;
+}
+
+/* ---------------- 圖表定義 ---------------- */
+// kind: line | hist；col: 主題色 key；sign: 柱狀圖依正負上色（綠流入／紅流出）；sparse: 週、月頻序列只畫有值的點
+function S(k, name, kind, arr, col, fmt, o){ return Object.assign({k:k, name:name, kind:kind, arr:arr, col:col, fmt:fmt}, o||{}); }
+function buildSpecs(){
+  var sp = [];
+  var tab = curTab, E = D.etfs, sox = tab==='sox';
+  var sgnInt = FMT.sgn(FMT.int), sgn2 = FMT.sgn(FMT.d2), sgn1 = FMT.sgn(FMT.d1);
+
+  /* 1 指數 */
+  sp.push({id:'price', title:IDX_NAME[tab]+'日線', freq:'每日（美股收盤後）',
+    head:{arr:D.idx.c, fmt:FMT.d2, name:IDX_NAME[tab], unit:'點'},
+    subs:[{h:300, series:[S('c', IDX_NAME[tab], 'line', D.idx.c, 'c1', FMT.d2)],
+      read:'日收盤價。下面各區塊的部位和資金變化，可以對照這裡看發生在上漲還是下跌的那一段。'}]});
+
+  /* 2 ETF 申購贖回 */
+  var flowArr = sox ? EX.flowSum : (EX.flow[E[0]]||null);
+  if(flowArr){
+    var subs = [{h:230, title:(sox?'SOXX＋SMH 合計':E[0])+' 週淨申購（百萬美元）與累計', series:[
+        S('fl', '週淨申購', 'hist', flowArr, 'c1', sgnInt, {sign:true}),
+        S('fl_c', '累計（自畫面起點）', 'line', nulls(), 'c1', sgnInt, {axis:'right', cumOf:flowArr, zero:true, sparse:true})],
+      read:'綠柱是資金淨流入，紅柱是淨流出。累計線往上代表這段期間持續有資金流入，斜率轉平代表流入停下來；連續多週同方向才算趨勢，單週的大額數字不一定代表趨勢。'}];
+    if(sox){
+      subs.push({h:190, title:'兩檔各自的週淨申購（百萬美元）', series:[
+        S('f1', 'SOXX', 'line', EX.flow.SOXX, 'c2', sgnInt, {sparse:true, zero:true}),
+        S('f2', 'SMH', 'line', EX.flow.SMH, 'c3', sgnInt, {sparse:true})],
+        read:'兩檔的規模和持股不同。方向一致時，合計的數字比較有代表性；方向相反時，合計會互相抵銷，要分開看。'});
+    }
+    sp.push({id:'flows', title:'ETF 申購贖回（週）', freq:'每週',
+      note:'週淨申購＝週內流通份額的變化乘以淨值，單位百萬美元。2016-11 起的週資料直接讀 ETF 儀表板的資金流檔（早期由 TradingView 匯出，之後由發行商的每日份額乘淨值併成），本頁不另外抓取。'+(sox?' 費半沒有單一的追蹤 ETF，這裡用 SOXX 和 SMH 兩檔合計。':''),
+      head:{arr:flowArr, fmt:sgnInt, name:(sox?'兩檔合計':E[0])+'週淨申購', unit:'百萬美元'}, subs:subs});
+  } else {
+    sp.push({id:'flows', title:'ETF 申購贖回（週）', freq:'每週', nodata:'ETF 儀表板的資金流檔這次沒有載入成功，這個區塊暫時不放。'});
+  }
+
+  /* 3 期貨大戶部位 */
+  if(D.cot){
+    var C = D.cot;
+    var five = function(sfx){ return [
+      S('dl_'+sfx, '交易商', 'line', C['dl_'+sfx], 'c1', sfx==='p'?sgn1:sgnInt, {sparse:true, zero:true}),
+      S('am_'+sfx, '資產管理人', 'line', C['am_'+sfx], 'c2', sfx==='p'?sgn1:sgnInt, {sparse:true}),
+      S('lv_'+sfx, '避險基金', 'line', C['lv_'+sfx], 'c3', sfx==='p'?sgn1:sgnInt, {sparse:true}),
+      S('ot_'+sfx, '其他申報者', 'line', C['ot_'+sfx], 'c4', sfx==='p'?sgn1:sgnInt, {sparse:true, w:1}),
+      S('nr_'+sfx, '散戶（未達申報門檻）', 'line', C['nr_'+sfx], 'idx', sfx==='p'?sgn1:sgnInt, {sparse:true, w:1})]; };
+    sp.push({id:'cot', title:'期貨大戶部位（'+(tab==='spy'?'S&P 500':'Nasdaq-100')+' 期貨，CFTC）', freq:'每週（調查日週二，週五公布）',
+      note:'資料是 CFTC 的金融期貨持倉報告（Traders in Financial Futures）。淨部位＝多單口數減空單口數，不含跨月價差單。口數用 CFTC 的合併口徑（Consolidated），比只算迷你契約略大：2026-10-27 的未平倉量，S&P 500 合併 1,978,590 口、迷你契約 1,955,711 口，Nasdaq-100 合併 281,669 口、迷你契約 268,508 口。CFTC 在 2023-05-02 把合併檔的契約單位從 250 美元（S&P 500）與 100 美元（Nasdaq-100）改成 50 美元與 20 美元，同樣的部位口數變成 5 倍；圖上把更早的口數乘以 5，統一成現在的單位。',
+      head:{arr:C.lv_n, fmt:sgnInt, name:'避險基金淨部位', unit:'口'},
+      subs:[
+        {h:260, title:'五類交易人淨部位（口）', series:five('n'),
+         read:'資產管理人是長線機構，通常站在多方；交易商和避險基金多半在空方。避險基金的淨空單擴大，可能是增加放空，也可能是做期貨空單配現貨多單的基差交易，不能直接當成看空。'},
+        {h:200, title:'淨部位占未平倉量（%）', series:five('p'),
+         read:'除以未平倉量之後，不同年份的部位大小可以直接比較。看一個類別目前站在自己歷史區間的哪個位置，比看口數有意義。'},
+        {h:170, title:'避險基金多單與空單（口）', series:[
+          S('lv_l', '避險基金多單', 'line', C.lv_l, 'up', FMT.int, {sparse:true}),
+          S('lv_s', '避險基金空單', 'line', C.lv_s, 'down', FMT.int, {sparse:true})],
+         read:'淨部位變化來自多單減少還是空單增加，要分開看。兩邊同時增加，代表部位總量變大。'},
+        {h:150, title:'未平倉量（口）', series:[S('oi', '未平倉量', 'line', C.oi, 'c1', FMT.int, {sparse:true})],
+         read:'未平倉量是期貨市場的總規模，擴大代表有更多部位進場，季度換約前後會出現規律的起伏。'}]});
+  } else {
+    sp.push({id:'cot', title:'期貨大戶部位（CFTC）', freq:'每週', nodata:'費半沒有對應的指數期貨，所以沒有 CFTC 持倉報告。半導體權重高的 Nasdaq-100 期貨部位，可以看 QQQ 分頁。'});
+  }
+
+  /* 4 放空 */
+  var SI = D.si, SV = D.svol;
+  var siSeries = [S('si_r', sox?'兩檔合計':E[0], 'line', SI.ratio, 'c1', FMT.d3, {sparse:true})];
+  var dtcSeries = [S('dtc', sox?'兩檔合計':E[0], 'line', SI.dtc, 'c1', FMT.d2, {sparse:true})];
+  if(sox){
+    SI.parts.forEach(function(p, k){
+      siSeries.push(S('si_r'+k, p.name, 'line', p.ratio, k?'c3':'c2', FMT.d3, {sparse:true, w:1}));
+      dtcSeries.push(S('dtc'+k, p.name, 'line', p.dtc, k?'c3':'c2', FMT.d2, {sparse:true, w:1}));
+    });
+  }
+  sp.push({id:'si', title:'放空餘額（'+E.join('＋')+'）', freq:'每月兩次（結算日約 15 日與月底，約 7 個營業日後公布）',
+    note:'FINRA 每月兩次公布全市場合併的放空餘額，以結算日為準。占流通份額＝放空股數除以結算日的 ETF 流通份額（發行商公布值）；回補天數＝放空股數除以近期日均成交量（FINRA 公布值）。ETF 的放空多半來自造市商避險和套利，高低不等於看空，看變化比看水位有用。'+(sox?'費半用 SMH 與 SOXX 合計，分母是兩檔流通份額合計。':''),
+    head:{arr:SI.ratio, fmt:FMT.d3, name:'放空股數占流通份額', unit:'%', extra:function(i){ return '，回補 '+FMT.d2(SI.dtc[i])+' 天，'+FMT.int(SI.short[i])+' 股'; }},
+    subs:[
+      {h:230, title:'放空股數占流通份額（%）', series:siSeries,
+       read:'比例升高，代表借來放空的份額變多。ETF 的放空多半來自造市商避險與套利，所以要看趨勢變化，不要直接當成看空。'},
+      {h:170, title:'回補天數（天）', series:dtcSeries,
+       read:'天數越大，代表放空部位相對於日成交量越大，要買回的話需要更多天；ETF 的天數普遍很低，因為成交量大。'}]});
+
+  sp.push({id:'svol', title:'每日放空量比率（'+E.join('＋')+'）', freq:'每日（美股收盤後約 6 點公布）',
+    note:'每日放空量比率＝當日放空成交股數除以總成交股數，資料是 FINRA 的 Reg SHO 每日放空量（交易所與場外合併）。這個比率包含造市商為了提供流動性和避險而做的放空，長期都在相當高的水位，不等於看空比例；看的是偏離自己 20 日平均的程度。',
+    head:{arr:SV.r20, fmt:FMT.d2, name:'20 日平均', unit:'%', extra:function(i){ return '，當日 '+FMT.d2(SV.ratio[i])+'%'; }},
+    subs:[{h:230, title:'放空成交量占總成交量（%）', series:[
+        S('sv_d', '每日', 'line', SV.ratio, 'c2', FMT.d2, {w:1}),
+        S('sv_20', '20 日平均', 'line', SV.r20, 'c1', FMT.d2)],
+      read:'20 日平均往上，代表放空成交的占比在升高。單日數字波動大，看 20 日平均比較穩。'}]});
+
+  /* 5 槓桿 ETF */
+  D.lev.forEach(function(L, k){
+    var pairName = L.bull+'（'+L.name+'多）與 '+L.bear+'（'+L.name+'空）';
+    sp.push({id:'lev'+k, title:'槓桿 ETF 多空流量：'+pairName, freq:'每週',
+      note:k===0 ? '週淨申購＝週內流通份額變化乘以淨值，單位百萬美元，2016-11 起。TQQQ、SQQQ、SOXL、SOXS 沿用擁擠交易儀表的週檔；UPRO、SPXU、SSO、SDS 由 ProShares 官方每日份額自算，口徑相同。Direxion 的 SPXL、SPXS 沒有公開的歷史份額，這頁不放。' : null,
+      head:{arr:L.bull_w, fmt:sgnInt, name:L.bull+' 週淨申購', unit:'百萬美元', extra:function(i){ return '，'+L.bear+' '+sgnInt(L.bear_w[i])+' 百萬美元'; }},
+      subs:[
+        {h:200, title:'週淨申購（百萬美元）', series:[
+          S('lb', L.bull+'（做多）', 'line', L.bull_w, 'up', sgnInt, {sparse:true, zero:true}),
+          S('ls', L.bear+'（做空）', 'line', L.bear_w, 'down', sgnInt, {sparse:true})],
+         read:'做多 ETF 持續淨流入，代表有資金在加碼做多；做空 ETF 的淨流入增加，代表加碼放空或避險。'},
+        {h:170, title:'累計淨申購（百萬美元，自畫面起點）', series:[
+          S('lb_c', L.bull, 'line', nulls(), 'up', sgnInt, {cumOf:L.bull_w, zero:true, sparse:true}),
+          S('ls_c', L.bear, 'line', nulls(), 'down', sgnInt, {cumOf:L.bear_w, sparse:true})],
+         read:'累計線從目前畫面最左邊那週起算，切換區間會重新歸零。兩條線的差距擴大，代表多空兩邊的資金累積走向不同。'}]});
+  });
+
+  /* 6 選擇權分帳戶成交量 */
+  var O = D.occ;
+  sp.push({id:'occ', title:'選擇權分帳戶成交量（'+E.join('＋')+'）', freq:'每日（OCC 只提供近 2 年，本頁自 2024-10 起逐日累積）',
+    note:'資料是 OCC（美國選擇權清算公司）按帳戶別公布的成交量，C 是客戶、F 是券商自營、M 是造市商，合併所有交易所、含週選擇權。客戶 put／call 比＝客戶 put 成交量除以 call 成交量，20 日值＝近 20 個交易日合計相除。',
+    head:{arr:O.pc20, fmt:FMT.d2, name:'客戶 put／call 比（20 日）', unit:'', extra:function(i){ return '，當日 '+FMT.d2(O.pc[i]); }},
+    subs:[
+      {h:220, title:'客戶 put／call 比', series:[
+        S('pc', '每日', 'line', O.pc, 'c2', FMT.d2, {w:1, ref:1}),
+        S('pc20', '20 日', 'line', O.pc20, 'c1', FMT.d2)],
+       read:'比值升高，代表客戶成交的 put 相對 call 變多，避險或看空需求增加；比值低，代表客戶以 call 為主。'},
+      {h:200, title:'分帳戶成交量（合約數）', series:[
+        S('cu', '客戶', 'line', O.cust, 'c1', FMT.int, {w:1}),
+        S('fi', '券商自營', 'line', O.firm, 'c2', FMT.int, {w:1}),
+        S('mm', '造市商', 'line', O.mm, 'c3', FMT.int, {w:1})],
+       read:'造市商是客戶的另一邊，量體主要跟著客戶端活動走。三類帳戶的量體水位不同，要看各自的變化，不要直接比大小。'}]});
+
+  /* 7 波動率 */
+  if(D.vol){
+    var vn = D.vol.name;
+    sp.push({id:'vol', title:'波動率指數（'+vn+'）', freq:'每日',
+      note:vn==='VIX' ? 'VIX 是 Cboe 用 S&P 500 選擇權報價算出的未來 30 天預期波動。' : 'VXN 是 Cboe 用 Nasdaq-100 選擇權報價算出的未來 30 天預期波動。',
+      head:{arr:D.vol.v, fmt:FMT.d2, name:vn, unit:''},
+      subs:[{h:220, series:[S('vol', vn, 'line', D.vol.v, 'c1', FMT.d2)],
+        read:'數字越高，代表市場預期未來一個月震盪越大；它多半在股價下跌時急升，在上漲時緩慢下滑。'}]});
+  } else {
+    sp.push({id:'vol', title:'波動率指數', freq:'每日', nodata:'費半沒有 Cboe 公布的對應波動率指數，這個分頁不放。'});
+  }
+
+  /* 8 SKEW */
+  if(D.skew){
+    sp.push({id:'skew', title:'SKEW 尾部避險指數', freq:'每日',
+      note:'SKEW 是 Cboe 用 S&P 500 價外選擇權報價算出的尾部風險指數，100 代表報酬分布對稱，數字越高，代表市場為大跌買保護願意付的價格越高。只放在 SPY 分頁。',
+      head:{arr:D.skew, fmt:FMT.d2, name:'SKEW', unit:''},
+      subs:[{h:220, series:[S('skew', 'SKEW', 'line', D.skew, 'c4', FMT.d2)],
+        read:'SKEW 升高代表大跌保護變貴。它和 VIX 不一定同向，要看它相對自己歷史區間的位置。'}]});
+  }
+
+  /* 9 融資餘額 */
+  if(EX.margin){
+    sp.push({id:'margin', title:'全市場融資餘額（FINRA）', freq:'每月（次月下旬公布）',
+      note:'這是美股全市場券商客戶的融資餘額（margin debit），不是該指數專屬，三個分頁放同一條線。資料直接讀擁擠交易與恐懼貪婪頁已在每日更新的 FINRA 檔，單位百萬美元；年增率＝當月餘額相對去年同月。',
+      head:{arr:EX.margin, fmt:FMT.int, name:'融資餘額', unit:'百萬美元', extra:function(i){ return '，年增率 '+sgn1(EX.marginYoy[i])+'%'; }},
+      subs:[
+        {h:220, title:'融資餘額（百萬美元）', series:[S('mg', '融資餘額', 'line', EX.margin, 'c1', FMT.int, {sparse:true})],
+         read:'餘額是市場槓桿水位的指標，餘額下降代表槓桿部位在縮減。'},
+        {h:170, title:'年增率（%）', series:[S('mgy', '融資餘額年增率', 'line', EX.marginYoy, 'c2', sgn1, {sparse:true, zero:true})],
+         read:'年增率轉負，代表槓桿水位低於去年同期。'}]});
+  }
+
+  /* 10 全市場 put／call 比 */
+  var P = D.pcr;
+  sp.push({id:'pcr', title:'全市場選擇權 put／call 比（Cboe）', freq:'每日',
+    note:'這是 Cboe 四個交易所全市場選擇權成交量的 put／call 比，不分指數，三個分頁放同一條線。2019-10-04 以前取自 Cboe 的歷史檔（總計、指數、股票三項，沒有 ETF 產品分項）；2019-10-07 起取自 Cboe 每日統計檔，多了 ETF 產品分項，兩段在 2019-10-04 與 2019-10-07 之間直接相接。',
+    head:{arr:P.total, fmt:FMT.d2, name:'總計 put／call 比', unit:''},
+    subs:[
+      {h:220, title:'總計 put／call 比', series:[
+        S('pt', '每日', 'line', P.total, 'c2', FMT.d2, {w:1, ref:1}),
+        S('pt20', '20 日平均', 'line', P.total20, 'c1', FMT.d2)],
+       read:'高於 1 代表 put 成交量多於 call。比值快速升高，代表避險需求集中出現；長期偏低則是 call 交易活躍的階段。'},
+      {h:200, title:'分項：指數、ETF 產品、股票', series:[
+        S('pi', '指數選擇權', 'line', P.index, 'c1', FMT.d2, {w:1, ref:1}),
+        S('pe', 'ETF 產品', 'line', P.etp, 'c3', FMT.d2, {w:1}),
+        S('pq', '股票選擇權', 'line', P.equity, 'c2', FMT.d2, {w:1})],
+       read:'指數選擇權的比值通常最高，指數 put 常被拿來避險；股票選擇權的比值通常低於 1，代表 call 的成交量比較大。'}]});
+
+  return sp;
+}
+
+/* ---------------- 繪圖 ---------------- */
+function mkData(def, T){
+  var n = CAL.length, out = [], i;
+  if(def.kind==='hist' && def.sign){
+    out = new Array(n);
+    for(i=0;i<n;i++){ var v=def.arr[i]; out[i] = v==null ? {time:CAL[i]} : {time:CAL[i],value:v,color:v>=0?T.up:T.down}; }
+  } else if(def.sparse){
+    for(i=0;i<n;i++){ if(def.arr[i]!=null) out.push({time:CAL[i],value:def.arr[i]}); }
+  } else {
+    out = new Array(n);
+    for(i=0;i<n;i++) out[i] = def.arr[i]==null ? {time:CAL[i]} : {time:CAL[i],value:def.arr[i]};
+  }
+  return out;
+}
+function pf(def){
+  var p = def.fmt && def.fmt.p!=null ? def.fmt.p : 2;
+  return {type:'price', precision:p, minMove:Math.pow(10,-p)};
+}
+function narrow(){ return window.innerWidth < 640; }
+function baseOptions(T, h, width){
+  var nr = narrow();
+  return {
+    width:width, height:h,
+    layout:{background:{type:'solid',color:T.bg}, textColor:T.text, fontFamily:"'Inter','Noto Sans TC',sans-serif", fontSize:nr?10:11},
+    grid:{vertLines:{color:T.grid}, horzLines:{color:T.grid}},
+    leftPriceScale:{visible:true, minimumWidth:nr?70:80, borderColor:T.border, scaleMargins:{top:0.08,bottom:0.08}},
+    rightPriceScale:{visible:!nr, minimumWidth:66, borderColor:T.border, scaleMargins:{top:0.08,bottom:0.08}},
+    timeScale:{borderColor:T.border, rightOffset:2, minBarSpacing:0.04, fixLeftEdge:true, timeVisible:false},
+    crosshair:{mode:0, vertLine:{labelVisible:true}, horzLine:{labelVisible:true}},
+    localization:{locale:'zh-TW'},
+    handleScale:{axisPressedMouseMove:{time:true, price:true}},
+    kineticScroll:{touch:true, mouse:false}
+  };
+}
+function makeChart(parent, h, title, defs, read){
+  var T = theme();
+  if(title){ var st=document.createElement('div'); st.className='sub-title'; st.textContent=title; parent.appendChild(st); }
+  var box = document.createElement('div'); box.className='cbox'; parent.appendChild(box);
+  var ro = document.createElement('div'); ro.className='readout'; box.appendChild(ro);
+  var chart = LWC.createChart(box, baseOptions(T, h, box.clientWidth||300));
+  var item = {chart:chart, box:box, readout:ro, series:[], defs:defs};
+  defs.forEach(function(def){
+    var col = def.col ? T[def.col] : null, api;
+    if(def.kind==='hist'){
+      api = chart.addHistogramSeries({priceScaleId:'left', priceFormat:pf(def), priceLineVisible:false, lastValueVisible:false, color:col||T.c1});
+    } else {
+      api = chart.addLineSeries({priceScaleId:def.axis||'left', color:col, lineWidth:def.w||2, priceLineVisible:false, lastValueVisible:false,
+        crosshairMarkerVisible:true, priceFormat:pf(def)});
+    }
+    api.setData(mkData(def, T));
+    if(def.zero) api.createPriceLine({price:0, color:T.ref, lineWidth:1, lineStyle:2, axisLabelVisible:false});
+    if(def.ref!=null) api.createPriceLine({price:def.ref, color:T.ref, lineWidth:1, lineStyle:2, axisLabelVisible:true, title:''});
+    item.series.push({def:def, api:api, visible:true});
+  });
+  var pad = chart.addLineSeries({priceScaleId:'left', priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false});
+  pad.setData(CAL.map(function(d){ return {time:d}; }));      // 空白序列把時間軸撐到全部交易日，所有圖逐像素對齊
+  wireSync(item);
+  if(typeof ResizeObserver!=='undefined'){
+    new ResizeObserver(function(){ var w=box.clientWidth; if(w>0) chart.applyOptions({width:w}); }).observe(box);
+  }
+  charts.push(item);
+  if(read){ var rd=document.createElement('p'); rd.className='read'; rd.textContent=read; parent.appendChild(rd); }
+  return item;
+}
+
+/* 累計（自畫面起點）：以目前畫面最左邊那一天為起點逐日加總，起點之前不畫；區間、拖曳、縮放後重算 */
+function scheduleCum(){
+  if(cumTimer) return;
+  cumTimer = requestAnimationFrame(function(){ cumTimer = 0; recomputeCum(false); });
+}
+function recomputeCum(force){
+  if(!charts.length) return;
+  var r = charts[0].chart.timeScale().getVisibleLogicalRange();
+  if(!r) return;
+  var n = CAL.length, start = Math.max(0, Math.min(n-1, Math.ceil(r.from)));
+  if(!force && start===cumStart) return;
+  cumStart = start;
+  var T = theme();
+  charts.forEach(function(o){
+    o.series.forEach(function(s){
+      var d = s.def;
+      if(!d.cumOf) return;
+      var out = new Array(n), acc = 0;
+      for(var i=0;i<n;i++){
+        if(i<start){ out[i]=null; continue; }
+        var v = d.cumOf[i];
+        if(v!=null){ acc += v; out[i] = Math.round(acc*100)/100; }
+        else out[i] = null;
+      }
+      d.arr = out;
+      s.api.setData(mkData(d, T));
+    });
+  });
+  readouts(null);
+}
+function wireSync(item){
+  item.chart.timeScale().subscribeVisibleLogicalRangeChange(function(r){
+    scheduleCum();
+    if(syncing || !r) return;
+    syncing = true;
+    charts.forEach(function(o){ if(o!==item) o.chart.timeScale().setVisibleLogicalRange(r); });
+    syncing = false;
+  });
+  item.chart.subscribeCrosshairMove(function(p){
+    if(syncing) return;
+    syncing = true;
+    if(!p || !p.time){
+      charts.forEach(function(o){ o.chart.clearCrosshairPosition(); });
+      readouts(null);
+    } else {
+      var i = CAL_IDX[p.time];
+      charts.forEach(function(o){
+        if(o===item) return;
+        var s = o.series[0], arr = s.def.arr, v = arr[i];
+        if(v==null){ var j=lastIdx(arr.slice(0,i+1)); v = j>=0?arr[j]:0; }
+        o.chart.setCrosshairPosition(v, p.time, s.api);
+      });
+      readouts(i);
+    }
+    syncing = false;
+  });
+}
+function readouts(i){
+  var T = theme();
+  charts.forEach(function(o){
+    var idx = i;
+    if(idx==null){ idx = -1; o.series.forEach(function(s){ var li=lastIdx(s.def.arr); if(li>idx) idx=li; }); }
+    if(idx<0) idx = CAL.length-1;
+    var html = '<b>'+CAL[idx]+'</b>';
+    o.series.forEach(function(s){
+      if(!s.visible) return;
+      var d = s.def, col = d.sign ? T.up : T[d.col];
+      var v = d.arr[idx], tail = '';
+      if(v==null){ var jj = lastIdx(d.arr.slice(0, idx+1)); if(jj>=0 && d.sparse){ v = d.arr[jj]; tail = '（'+CAL[jj].slice(2)+'）'; } }
+      html += '<i style="background:'+col+'"></i>'+d.name+' '+d.fmt(v)+tail+'&ensp;';
+    });
+    o.readout.innerHTML = html;
+  });
+}
+
+/* ---------------- 區段 ---------------- */
+function specRange(spec){
+  var lo = null, hi = null;
+  (spec.subs||[]).forEach(function(sub){ sub.series.forEach(function(s){
+    if(s.cumOf) return;
+    var a = firstIdx(s.arr), b = lastIdx(s.arr);
+    if(a>=0 && (lo==null || a<lo)) lo=a;
+    if(b>=0 && (hi==null || b>hi)) hi=b;
+  }); });
+  return lo==null ? null : [CAL[lo], CAL[hi]];
+}
+function headline(spec, sec){
+  var h = spec.head; if(!h) return;
+  var i = lastIdx(h.arr), el = sec.querySelector('.latest'), cg = sec.querySelector('.chg');
+  if(i<0){ el.textContent='—'; return; }
+  var ex = h.extra ? h.extra(i) : '';
+  el.innerHTML = h.name+' '+h.fmt(h.arr[i])+' '+(h.unit||'')+ex+' <small>'+CAL[i]+'</small>';
+  var j = prevIdx(h.arr, i);
+  cg.innerHTML = j<0 ? '' : '較前一期 '+FMT.sgn(h.fmt===FMT.int||h.fmt.p===0?FMT.int:(h.fmt.p===3?FMT.d3:(h.fmt.p===1?FMT.d1:FMT.d2)))(h.arr[i]-h.arr[j])+' <small>('+CAL[j]+')</small>';
+}
+var secNo = 0;
+function buildSection(spec){
+  if(!spec) return;
+  secNo++;
+  var root = document.getElementById('charts');
+  var sec = document.createElement('section'); sec.className='sec'; sec.id='s-'+spec.id; root.appendChild(sec);
+  var head = document.createElement('div'); head.className='sec-head'; sec.appendChild(head);
+  var rg = spec.nodata ? null : specRange(spec);
+  head.innerHTML = '<span class="n">'+secNo+'</span><h2>'+spec.title+'</h2><span class="latest"></span><span class="chg"></span>'+
+    '<span class="meta">更新頻率：'+spec.freq+(rg ? '・資料自 '+rg[0]+' 起・最新 '+rg[1] : '')+'</span>';
+  if(spec.nodata){
+    var nd = document.createElement('div'); nd.className='nodata'; nd.textContent = spec.nodata; sec.appendChild(nd);
+    return;
+  }
+  if(spec.note){ var nt=document.createElement('p'); nt.className='hint'; nt.textContent=spec.note; sec.appendChild(nt); }
+  var legend = document.createElement('div'); legend.className='legend'; sec.appendChild(legend);
+  var wrap = document.createElement('div'); sec.appendChild(wrap);
+  var items = [];
+  spec.subs.forEach(function(sub){
+    var defs = sub.series.map(function(d){ return Object.assign({}, d); });
+    items.push(makeChart(wrap, sub.h, sub.title, defs, sub.read));
+  });
+  var T = theme();
+  var groups = {}, order = [];
+  items.forEach(function(it){
+    it.series.forEach(function(s){
+      var key = s.def.name+'|'+(s.def.col||'');      // 同一區段的圖用同樣的序列名稱時，圖例只列一次，點一下全部一起開關
+      if(!groups[key]){ groups[key] = []; order.push(key); }
+      groups[key].push(s);
+    });
+  });
+  var T = theme();
+  order.forEach(function(key){
+    var list = groups[key], s0 = list[0];
+    var chip = document.createElement('span'); chip.className='chip';
+    var col = s0.def.sign ? T.up : T[s0.def.col];
+    chip.innerHTML = '<i style="background:'+col+'"></i>'+s0.def.name;
+    chip.addEventListener('click', function(){
+      var on = !s0.visible;
+      list.forEach(function(s){ s.visible = on; s.api.applyOptions({visible:on}); });
+      chip.classList.toggle('off', !on); readouts(null);
+    });
+    legend.appendChild(chip);
+  });
+  headline(spec, sec);
+}
+
+/* ---------------- 區間 ---------------- */
+function setRange(months){
+  curMonths = months;
+  var n = CAL.length, from = 0;
+  if(months>0){
+    var last = new Date(CAL[n-1]+'T00:00:00Z');
+    last.setUTCMonth(last.getUTCMonth()-months);
+    var tgt = last.toISOString().slice(0,10);
+    for(var i=0;i<n;i++){ if(CAL[i]>=tgt){ from=i; break; } }
+  }
+  var r = {from:from-0.5, to:n-1+2};
+  syncing = true;
+  charts.forEach(function(o){ o.chart.timeScale().setVisibleLogicalRange(r); });
+  syncing = false;
+  [].forEach.call(document.querySelectorAll('#rng button'), function(b){ b.classList.toggle('on', +b.dataset.m===months); });
+  recomputeCum(true);
+}
+
+/* ---------------- 頁尾 ---------------- */
+var SRCS = [
+  {label:'指數日線（S&P 500、Nasdaq-100、費城半導體）', src:'Yahoo Finance（^GSPC、^NDX、^SOX）', freq:'每日', ids:['idx']},
+  {label:'期貨大戶部位（S&P 500）', src:'CFTC Traders in Financial Futures，S&P 500 Consolidated（13874+）', freq:'每週', ids:['cot_spx']},
+  {label:'期貨大戶部位（Nasdaq-100）', src:'CFTC Traders in Financial Futures，NASDAQ-100 Consolidated（20974+）', freq:'每週', ids:['cot_ndx']},
+  {label:'放空餘額（SPY、QQQ、SMH、SOXX）', src:'FINRA consolidatedShortInterest', freq:'每月兩次', ids:['si_SPY','si_QQQ','si_SMH','si_SOXX']},
+  {label:'ETF 流通份額（算占比用）', src:'發行商每日份額（SSGA、Invesco、VanEck、iShares，沿用 ETF 儀表板的抓法）', freq:'每日', ids:['shares_SPY','shares_QQQ','shares_SMH','shares_SOXX']},
+  {label:'每日放空量', src:'FINRA Reg SHO 每日放空量（CNMSshvol）', freq:'每日', ids:['svol_SPY','svol_QQQ','svol_SMH','svol_SOXX']},
+  {label:'槓桿 ETF（SPY 分頁）', src:'ProShares 官方每日份額與淨值（UPRO、SPXU、SSO、SDS）', freq:'每日', ids:['lev_UPRO','lev_SPXU','lev_SSO','lev_SDS']},
+  {label:'選擇權分帳戶成交量', src:'OCC volume-query（SPY、QQQ、SMH、SOXX）', freq:'每日', ids:['occ_SPY','occ_QQQ','occ_SMH','occ_SOXX']},
+  {label:'VIX', src:'Cboe VIX_History.csv', freq:'每日', ids:['vix']},
+  {label:'VXN', src:'Cboe VXN_History.csv', freq:'每日', ids:['vxn']},
+  {label:'SKEW', src:'Cboe SKEW_History.csv', freq:'每日', ids:['skew']},
+  {label:'全市場 put／call 比', src:'Cboe 歷史 CSV（至 2019-10-04）＋每日統計檔（2019-10-07 起）', freq:'每日', ids:['pcr']}
+];
+function buildSource(){
+  var m = META, rows = SRCS.map(function(s){
+    var f=null, l=null, n=0;
+    s.ids.forEach(function(id){ var x=m.series[id]; if(!x) return; if(!f||x.first<f) f=x.first; if(!l||x.last>l) l=x.last; if(x.n>n) n=x.n; });
+    return '<tr><td>'+s.label+'</td><td>'+s.src+'</td><td>'+s.freq+'</td><td class="num">'+(f||'—')+'</td><td class="num">'+(l||'—')+'</td><td class="num">'+(n?n.toLocaleString('en-US'):'—')+'</td></tr>';
+  });
+  var fi = Object.keys(EX.flowInfo).map(function(e){ var x=EX.flowInfo[e]; return e+' '+x.since+' 至 '+x.asof+'（'+x.n+' 週）'; }).join('；');
+  rows.push('<tr><td>ETF 申購贖回（週）</td><td>ETF 儀表板資金流檔（/etf-dash/data/），本頁直接讀取</td><td>每週</td><td class="num" colspan="3">'+(fi||'—')+'</td></tr>');
+  if(EX.marginInfo) rows.push('<tr><td>全市場融資餘額</td><td>FINRA margin statistics，沿用恐懼貪婪頁每日更新的檔（/fear-greed/data/raw/）</td><td>每月</td><td class="num">'+EX.marginInfo.first+'</td><td class="num">'+EX.marginInfo.last+'</td><td class="num">'+EX.marginInfo.n+'</td></tr>');
+  document.getElementById('src').innerHTML =
+    '<h2>資料來源與涵蓋期間</h2><div class="tbl-wrap"><table><thead><tr><th>序列</th><th>來源</th><th>頻率</th><th>最早日</th><th>最新日</th><th>筆數</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'+
+    '<p class="fine">資料每個美股交易日收盤後由排程自動更新，最近一次建檔時間：'+m.updated+'（台北）。日期一律是美東交易日。'+
+    'CFTC 週資料以調查日（週二）為準，週五公布；FINRA 放空餘額以結算日為準；週淨申購放在該週最後一個交易日。<br>'+
+    '每日放空量從 2018-08-01 起（FINRA 更早的檔案不開放下載）；OCC 帳戶別成交量只提供近兩年，本頁自 2024-10 起逐日累積，之後不會再往前補。<br>'+
+    '所有圖表使用 TradingView Lightweight Charts。</p>';
+  document.getElementById('asof').textContent = '指數資料至 '+m.cal_last+'・最近建檔 '+m.updated+'（台北）・所有圖自 '+m.cal_first+' 起';
+}
+
+/* ---------------- 主題切換 ---------------- */
+function reTheme(){
+  var T = theme();
+  charts.forEach(function(o){
+    o.chart.applyOptions({
+      layout:{background:{type:'solid',color:T.bg}, textColor:T.text},
+      grid:{vertLines:{color:T.grid}, horzLines:{color:T.grid}},
+      leftPriceScale:{borderColor:T.border}, rightPriceScale:{borderColor:T.border}, timeScale:{borderColor:T.border}
+    });
+    o.series.forEach(function(s){
+      var d = s.def;
+      if(d.kind==='line') s.api.applyOptions({color:T[d.col]});
+      else s.api.setData(mkData(d, T));
+    });
+  });
+  readouts(null);
+}
+
+/* ---------------- 啟動 ---------------- */
+function fixNavOffset(){
+  var nav = document.querySelector('.imq-nav-root');
+  if(nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight+'px');
+}
+function clearCharts(){
+  charts.forEach(function(o){ try{ o.chart.remove(); }catch(e){} });
+  charts = []; cumStart = -1; secNo = 0;
+  document.getElementById('charts').innerHTML = '';
+}
+function showTab(tab){
+  curTab = tab;
+  [].forEach.call(document.querySelectorAll('#tabs button'), function(b){ b.classList.toggle('on', b.dataset.t===tab); });
+  try{ history.replaceState(null, '', '#'+tab); }catch(e){}
+  clearCharts();
+  document.getElementById('charts').innerHTML = '<div class="nodata">載入中…</div>';
+  window.__chipsReady = false;
+  fetchJ('data/'+tab+'.json?v='+V).then(function(d){
+    D = d;
+    return Promise.all([
+      Promise.all(D.etfs.map(function(e){ return fetchJ('/etf-dash/data/'+e+'.json?v='+V).catch(function(){ return null; }); })),
+      fetchT('/fear-greed/data/raw/finra_margin.csv?v='+V).catch(function(){ return null; })
+    ]);
+  }).then(function(res){
+    EX = buildExt(res[0], res[1]);
+    clearCharts();
+    buildSpecs().forEach(buildSection);
+    buildSource();
+    setRange(curMonths);
+    setTimeout(function(){ setRange(curMonths); }, 500);      // 圖剛建好時寬度還在調整，再套一次區間才會停在對的位置
+    readouts(null);
+    window.__us = {charts:charts, CAL:CAL, D:D, EX:EX};
+    window.__chipsReady = true;
+  }).catch(function(e){
+    document.getElementById('charts').innerHTML = '<div class="err">資料載入失敗：'+String(e.message||e)+'。請稍後重新整理。</div>';
+    window.__chipsError = String(e.message||e);
+  });
+}
+Promise.all([fetchJ('data/cal.json?v='+V), fetchJ('data/meta.json?v='+V)]).then(function(res){
+  CAL = res[0].t; META = res[1];
+  CAL.forEach(function(d,i){ CAL_IDX[d]=i; });
+  fixNavOffset(); window.addEventListener('resize', fixNavOffset);
+  [].forEach.call(document.querySelectorAll('#rng button'), function(b){
+    b.addEventListener('click', function(){ setRange(+b.dataset.m); });
+  });
+  [].forEach.call(document.querySelectorAll('#tabs button'), function(b){
+    b.addEventListener('click', function(){ if(b.dataset.t!==curTab) showTab(b.dataset.t); });
+  });
+  if(window.matchMedia){
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    (mq.addEventListener ? mq.addEventListener.bind(mq,'change') : mq.addListener.bind(mq))(reTheme);
+  }
+  var h = (location.hash||'').replace('#','');
+  showTab(TAB_LABEL[h] ? h : 'spy');
+}).catch(function(e){
+  document.getElementById('charts').innerHTML = '<div class="err">資料載入失敗：'+String(e.message||e)+'。請稍後重新整理。</div>';
+  window.__chipsError = String(e.message||e);
+});
+})();
+</script>
+</body>
+</html>

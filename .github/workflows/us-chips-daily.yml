@@ -1,0 +1,106 @@
+name: US Chips Daily Data
+
+# 美股籌碼（/us-chips/）每日資料管線：
+#   1. scripts/us_chips/fetch.py  — 只抓缺的日子，append 進 data/us_chips/{series}.jsonl
+#      （指數：Yahoo Finance；期貨大戶部位：CFTC；放空餘額與每日放空量：FINRA；
+#      選擇權分帳戶成交量：OCC；VIX／VXN／SKEW 與全市場 put/call：Cboe；
+#      ETF 流通份額：發行商；槓桿 ETF 份額：ProShares）。
+#   2. scripts/us_chips/build.py  — 轉成 docs/us-chips/data/*.json 與 data/us_chips/csv/。
+#
+# 排程：台北週二至週六 08:41（＝UTC 週一至週五 00:41）。美東前一天 19:41，美股已收盤、
+# FINRA 每日放空量（約 18:00）與 OCC 成交量都已公布；週六那班接得到 CFTC 週五（美東 15:30）發布的 COT。
+# 分鐘數避開整點與半點。fetch.py 本身是增量的，漏跑一天下一班會補上。
+#
+# 每個來源獨立失敗：log 會寫 `FAIL <來源>: 原因`，其他來源照常抓、照常 build、照常 commit。
+# 只有 3 個以上來源同時失敗（代表被擋或改版）才讓 job 標紅。
+#
+# Push 迴圈與 rebase 衝突處理照 scripts/ci/ 共用腳本（見 tw-chips-daily.yml 同款）。
+
+on:
+  schedule:
+    - cron: "41 0 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      retry:
+        description: "內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0"
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy requests openpyxl xlrd lxml
+
+      - name: Fetch missing days (Yahoo / CFTC / FINRA / OCC / Cboe / issuers / ProShares)
+        id: fetch
+        continue-on-error: true
+        run: |
+          set +e
+          python3 scripts/us_chips/fetch.py 2>&1 | tee /tmp/fetch.log
+          rc=${PIPESTATUS[0]}
+          n_fail=$(grep -c '^FAIL ' /tmp/fetch.log || true)
+          echo "n_fail=${n_fail:-0}" >> "$GITHUB_OUTPUT"
+          echo "fetch rc=$rc n_fail=${n_fail:-0}"
+          exit $rc
+
+      - name: Build page data (docs/us-chips/data/)
+        run: python3 scripts/us_chips/build.py
+
+      - name: Commit and push if changed
+        id: commit_and_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/us_chips/ docs/us-chips/data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+            git commit -m "data: us chips daily snapshot ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            for i in 1 2 3 4 5 6; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+              bash scripts/ci/rebase_or_flag.sh || exit 1
+              sleep $((RANDOM % 20 + 5))
+            done
+            echo "Push failed after 6 attempts"
+            exit 1
+          fi
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
+
+      - name: Fail the job if many sources failed
+        if: always() && steps.fetch.outcome == 'failure'
+        run: |
+          echo "::error::${{ steps.fetch.outputs.n_fail }} sources failed to fetch (>=3) — a source may have blocked this runner or changed its format. See the fetch step log."
+          exit 1
