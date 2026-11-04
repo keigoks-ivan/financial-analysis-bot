@@ -51,7 +51,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                                  'key': 'comb_acct',
                                  'zone': 1,
                                  'status': 'live',
-                                 'desc': '頁內結論：「最深那一跌只比兩腳各自平均淺一點點—— 兩邊實質同一個賭注」'},
+                                 'desc': '頁內結論：美台合併帳戶分散比 0.816，有部分分散但沒達事先設的 0.80（2026-11-04 台股窗改 2006-09 起後重算；原 2014 起窗為 0.962，判為同一個賭注）'},
  '/backtest/slow_bear_base_rate/': {'title': '慢熊多久來一次、起點認得出來嗎？（慢熊 base rate 與起點檢定）',
                                     'short': '慢熊 base rate 與起點',
                                     'key': 'slow_bear',
