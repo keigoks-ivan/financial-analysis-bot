@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """貪婪／恐懼溫度計：每週更新（美股 4 項材料、台股 3 項材料）→ 頁面 /fear-greed/、latest.json、狀態改變通知。
 
-定位：提醒，不是交易規則。只服務 30% 個股部位與現金，不碰 70% W52 引擎，不改任何 long-track 的計算。
+定位：提醒，不是交易規則。只服務 30% 個股部位與現金，不碰 70% 指數部實單，不改任何 long-track 的計算。
 研究出處：v7-backtest docs/FearGreed_Cap_Spec.md（事前登記）與 experiments/fear_greed/thermo.py。
 研究結論：拿來調引擎槓桿（H1）兩市場皆不通過；保留「進入恐懼」當長期加碼提醒。
 
@@ -573,7 +573,7 @@ def build_market_block(market: str, hist: pd.DataFrame, mats: dict, target: pd.T
 # ---------------------------------------------------------------------------
 # 通知檔
 # ---------------------------------------------------------------------------
-REMIND = "長期加碼提醒：去看 30% 個股與現金部位，不是買進訊號；不影響 70% W52 引擎。"
+REMIND = "長期加碼提醒：去看 30% 個股與現金部位，不是買進訊號；不影響 70% 指數部實單。"
 GREED_NOTE = "僅供參考，不作操作。"
 TW_NOTE = "台股材料歷史較短（分數最早從 2013 年底才有，材料至少要 5 年資料），僅供參考。"
 
@@ -824,7 +824,7 @@ footer{{padding:2rem 0 3rem;font-size:.8rem;color:var(--muted)}}
   <div class="sub">每週五收盤後更新。美股用 4 項材料、台股用 3 項材料，各自換算成過去 10 年的百分位後取平均，得到 0 到 100 分。</div>
 </div></div>
 <div class="container">
-<div class="remind"><b>這是提醒你去看的訊號，不是買進訊號。</b>分數進入恐懼區時，請回頭檢視 30% 個股與現金部位。它不影響 70% 指數部的 W52 引擎，也不改動 long-track 的任何計算。</div>
+<div class="remind"><b>這是提醒你去看的訊號，不是買進訊號。</b>分數進入恐懼區時，請回頭檢視 30% 個股與現金部位。它不影響 70% 指數部的實單規則，也不改動 long-track 的任何計算。</div>
 {stale_html}
 
 <div class="section"><div class="section-title">本週讀數（資料週 {us["week"]}）</div>
@@ -908,7 +908,7 @@ def main() -> int:
         "thresholds": {"greed_in": GREED_IN, "greed_out": GREED_OUT, "fear_in": FEAR_IN, "fear_out": FEAR_OUT},
         "us": blocks["us"],
         "tw": blocks["tw"],
-        "note": "提醒，不是買進訊號；不影響 70% W52 引擎。台股歷史短，僅供參考。",
+        "note": "提醒，不是買進訊號；不影響 70% 指數部實單。台股歷史短，僅供參考。",
     }
     if a.no_fetch and prior.get("fetch"):
         latest["fetch"] = prior["fetch"]

@@ -26,37 +26,37 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                                      'short': '證據總覽',
                                      'key': 'evidence_hub',
                                      'zone': 1,
-                                     'status': 'live',
+                                     'status': 'note',
                                      'desc': '頁內結論：「證據強度整體算中等」'},
  '/backtest/w52_adaptive_oos/': {'title': '換一批沒看過的標的，舊實單規則還有效嗎？（W52×自適應 σ 跨標的前瞻證偽）',
                                  'short': '跨標的前瞻證偽',
                                  'key': 'w52_oos',
                                  'zone': 1,
-                                 'status': 'live',
+                                 'status': 'note',
                                  'desc': '頁內結論：「過尺率 29.4% Wilson 95% CI [16.8%, 46.2%]」'},
  '/backtest/insurance_premium/': {'title': '深熊保險的價格：均線閘門、跨資產分散、現金稀釋三種比較',
                                   'short': '深熊保險價格',
                                   'key': 'ins_prem',
                                   'zone': 1,
-                                  'status': 'live',
+                                  'status': 'note',
                                   'desc': '頁內結論：「均線閘門買到的保險仍然比「單純少放一點錢」划算」'},
  '/backtest/adopted_bootstrap/': {'title': '打亂歷史重跑一千次：舊實單優勢是本事還是運氣？',
                                   'short': '打亂歷史重跑',
                                   'key': 'adopt_boot',
                                   'zone': 1,
-                                  'status': 'live',
+                                  'status': 'note',
                                   'desc': '兩種重抽方式結論相反：固定段長判「過尺是運氣」，整段牛熊判「穩健」，頁首說明原因。'},
  '/backtest/combined_account/': {'title': '美股＋台股合成一個帳戶，實際回撤有多深？（美台合併帳戶層）',
                                  'short': '美台合併帳戶',
                                  'key': 'comb_acct',
                                  'zone': 1,
-                                 'status': 'live',
+                                 'status': 'note',
                                  'desc': '頁內結論：美台合併帳戶分散比 0.816，有部分分散但沒達事先設的 0.80（2026-11-04 台股窗改 2006-09 起後重算；原 2014 起窗為 0.962，判為同一個賭注）'},
  '/backtest/slow_bear_base_rate/': {'title': '慢熊多久來一次、起點認得出來嗎？（慢熊 base rate 與起點檢定）',
                                     'short': '慢熊 base rate 與起點',
                                     'key': 'slow_bear',
                                     'zone': 1,
-                                    'status': 'live',
+                                    'status': 'note',
                                     'desc': '慢熊約十年一遇，保費要用十年攤；剛開始時 11 個候選變數都分不出來。'},
  '/backtest/f_comfort/': {'title': '現役股票 70％＋三資產保險 30％的抱得住度回測（F70）',
                           'short': 'F70 抱得住度',
@@ -170,7 +170,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                                   'short': 'Supertrend 對實單',
                                   'key': 'supertrend_live',
                                   'zone': 3,
-                                  'status': 'live',
+                                  'status': 'note',
                                   'desc': '2026-11-06 收盤起實單改用這套（持有人 11-04 決定，債金同日也改 Supertrend）。Supertrend 週線 70%＋月線 30%（美股 ATR 14、倍數 3，台股 ATR 14、倍數 2，參數與權重都是看過結果後才選，有挑選偏誤，成績偏樂觀）對舊實單規則（W52 週線閘門×自適應波動率，11-05 以前）的描述性比較：美股年化多 1.1 點、最大跌幅多 1.4 點，Calmar 打平；台股 2006 年 9 月起 20 年，年化多 2.25 點、最大跌幅淺 10.4 點，領先主要來自 2007 到 2009 年，2010 年以後兩者接近。拔靴檢定兩個市場都分不出顯著差異；附逐年、不同行情型態、策略特性與單一訊號持有段。'},
  '/backtest/tw_crash/': {'title': '台股含崩盤樣本（2000＋2008）：趨勢能不能打贏買進持有？',
                          'short': '台股含崩盤驗證',
@@ -584,7 +584,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                    'short': '台股總覽',
                    'key': 'tw20y',
                    'zone': 8,
-                   'status': 'live',
+                   'status': 'note',
                    'desc': '頁內結論：「台股實單規則自 2026-10-19 起為不借錢版（上限 100%）」'},
  '/backtest/multi/': {'title': '多資產回測總覽',
                       'short': '多資產總覽',
@@ -714,7 +714,7 @@ ZONE_ORDER = {z: [u for u, p in PAGES.items() if p["zone"] == z] for z in ZONES}
 # 實盤證據：首頁第①區只留一個入口（/long-track/#evidence），這些頁在系統主控台列出。
 EVIDENCE_URLS = ZONE_ORDER[1]
 
-REF_LINE = "本頁所述系統（STX50／E3）自 2026-07-18 起為對照線，現已歸檔。2026-10-19 起的實單規則是：美股債金版（股票上限 100%、不借錢，另加公債與黃金各最多 20%），台股不借錢版（上限 100%，不加債金）。本頁僅供對照，不是現行配置。"
+REF_LINE = "本頁所述系統（STX50／E3）自 2026-07-18 起為對照線，現已歸檔。2026-11-06 起的實單規則是 Supertrend（指數部四檔各看週線七成、月線三成，只做多、不借錢，美股另加公債與黃金各最多 20%），見<a href=\"/backtest/supertrend_vs_live/\">Supertrend 對實單</a>。本頁僅供對照，不是現行配置。"
 RET_LINE = "本頁為存檔：六狀態機已於 2026-07-04 退役，頁內數字不再更新，僅供對照。"
 # 頂端加對照線橫幅的頁（合併主頁的各章橫幅已在章節內）
 REF_BANNER_URLS = ["/backtest/long_track_smh/", "/backtest/long_track_tw/", "/backtest/leverage_voltarget/",
@@ -728,15 +728,20 @@ RET_BANNER = {"/backtest/six_state/status/": "本頁為存檔：六狀態機已�
 # 2026-10-19 規則切換：這些頁檢驗或描述的是 2026-07-18～10-16 的舊實單規則（曝險上限 150%），不再標「實盤」。
 # 只改頁首標籤（_apply_meta 讀 CHIP_OVERRIDE）；子導覽與首頁的狀態字樣仍照 STATUS。
 OLD_RULE_LABEL = "舊實單規則（2026-07-18～10-16）的證據"
-OLD_RULE_DEF = '檢驗或描述的是 2026-07-18～10-16 的實單規則（曝險上限 150%）。2026-10-19 起的實單規則見<a href="/long-track-w52-adaptive/">長線追蹤</a>。'
+OLD_RULE_DEF = '檢驗或描述的是 2026-07-18～10-16 的實單規則（曝險上限 150%）。2026-11-06 起的實單規則見<a href="/long-track-w52-adaptive/">長線追蹤</a>。'
 OLD_RULE_URLS = ["/backtest/live_system_evidence/", "/backtest/w52_adaptive_oos/", "/backtest/insurance_premium/",
                  "/backtest/adopted_bootstrap/", "/backtest/combined_account/", "/backtest/slow_bear_base_rate/",
                  "/backtest/tw/", "/backtest/slow_bear_onset/", "/backtest/regime_bootstrap/"]
+# 2026-11-04 持有人決定實單改 Supertrend（2026-11-06 收盤訊號起生效）：舊規則研究頁加橫幅，內文與數字不動。
+OLD_RULE_BANNER = '2026-11-06 起實單改用 Supertrend（<a href="/backtest/supertrend_vs_live/">看比較</a>），本頁研究的是之前的 W52 規則，現為對照線。'
+for _u in OLD_RULE_URLS + ["/backtest/nonequity/", "/backtest/leverage/", "/backtest/vol_targeting/adaptive.html",
+                           "/backtest/vol_targeting/tw.html", "/backtest/vol_targeting/leverage.html"]:
+    RET_BANNER[_u] = OLD_RULE_BANNER
 CHIP_OVERRIDE = {u: (OLD_RULE_LABEL, OLD_RULE_DEF, "note") for u in OLD_RULE_URLS}
 CHIP_OVERRIDE["/backtest/a0_proposal/"] = (
-    "已採用", "提案的不借錢上限 100% 已於 2026-10-17 由持有人拍板，2026-10-19 起生效。", "live")
+    "已採用", "提案的不借錢上限 100% 已於 2026-10-17 由持有人拍板，2026-10-19 起生效。", "note")
 CHIP_OVERRIDE["/backtest/nonequity/"] = (
-    "部分已採用", "黃金（GLD）與公債（IEF）已於 2026-10-19 進入美股實單，各最多 20%；商品與長天期美債（TLT）未採用。", "live")
+    "部分已採用", "黃金（GLD）與公債（IEF）已於 2026-10-19 進入美股實單，各最多 20%；商品與長天期美債（TLT）未採用。", "note")
 
 
 def aliases() -> dict[str, str]:

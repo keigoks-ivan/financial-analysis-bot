@@ -1520,8 +1520,8 @@ def live_backtest_blocks(mkt: dict, appendix: str, sigs: dict) -> str:
     bt = _lev.BT_US if mkt["key"] == "us" else _lev.BT_TW
     rows = ""
     for lab, cagr, mdd, calmar, ui, martin in bt["rows"]:
-        shown = lab.replace("（本頁追蹤）", "（現行實盤的股票部分）")
-        hl = ("rowhl" if "現行實盤" in shown else ("rowbh" if "買進持有" in shown else ""))
+        shown = lab.replace("（本頁追蹤）", "（W52 規則的股票部分，11-05 以前的實單）")
+        hl = ("rowhl" if "11-05 以前的實單" in shown else ("rowbh" if "買進持有" in shown else ""))
         rows += (f'<tr class="{hl}"><td>{shown}</td><td class="num">{cagr:.2f}%</td>'
                  f'<td class="num">{mdd:.1f}%</td><td class="num">{calmar:.3f}</td>'
                  f'<td class="num">{ui:.2f}</td><td class="num">{martin:.2f}</td></tr>\n')
@@ -2105,11 +2105,12 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
                     f"{RULE_REVISION_DATE} 起加日線均線確認，全對 cap_eff=1.5、否則 1.0）× 執行層 · 這是 2026-07-18 至 {sw} 前的實單規則，"
                     f"<b>{sw} 起降為對照線</b>，紀錄與實盤在生效日前逐筆相同"),
             "pills": (f'<a href="/long-track-w52-adaptive/" style="{PILL_ON}">實單主系統（現行）</a>'
+                      f'<a href="/long-track-w52-adaptive/w52.html" style="{PILL_ON}">W52 對照線</a>'
                       f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_ON}">舊規則 cap 1.5（本頁）</a>'),
             "banner": (f'<div class="oos-banner">\n  <span class="tag-loud">對照線・{sw} 起不下單、不寄信</span>\n'
                        f'  <div style="font-size:.86rem">本頁保留 {sw} 前的實單規則（<b>W52 閘門 × 自適應波動率 cap_eff 最高 1.5 × 執行層 A2</b>，'
-                       f'{RULE_REVISION_DATE} 起含日線均線確認），每交易日照常更新，用來和現行實盤並排看：不借錢、加公債與黃金，到底比舊規則好還是差。'
-                       f'現行實盤見<a href="/long-track-w52-adaptive/">實單主系統頁</a>。以下規則說明與回測數字都是舊規則的版本。</div>\n</div>\n\n'),
+                       f'{RULE_REVISION_DATE} 起含日線均線確認），每交易日照常更新，用來和之後的規則並排看。'
+                       f'2026-11-06 起實單改用 Supertrend（週線＋月線），見<a href="/long-track-w52-adaptive/">實單主系統頁</a>；10-19 至 11-05 的 W52 不借錢＋債金版見<a href="/long-track-w52-adaptive/w52.html">W52 對照線</a>。以下規則說明與回測數字都是舊規則的版本。</div>\n</div>\n\n'),
             "above_cards": "",
             "rules": old_rules,
             "footer": f"W52 × 自適應波動率 150%（美+台）· 舊規則對照線（{sw} 起）",

@@ -17,7 +17,7 @@
 `source: "system-selected"`。三塊：
 
 - **`index_sleeve`** — 指數部：讀 `docs/long-track-w52-adaptive/state.json` 的
-  W52×自適應波動率引擎美台目標曝險與成分（QQQ／SMH／0050／2330，含各自 executed_pct
+  實單（2026-11-06 起 Supertrend，此前 W52×自適應波動率）的美台目標曝險與成分（QQQ／SMH／0050／2330，含各自 executed_pct
   與 gate）。這是規則引擎的產出，沒有個股論點，故監控只摘要其目標曝險、不跑論點掃描。
 - **`stock_sleeve`** — 個股部：決策引擎**席位擂台的在席者**（`core_seats` 核心＋
   `sat_seats` 衛星），每檔含 seat、上位日期（`seat_since`，由 `docs/engine/arena-ledger.json`

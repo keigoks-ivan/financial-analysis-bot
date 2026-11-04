@@ -141,7 +141,7 @@ def render() -> str:
              '🇹🇼 台股(2330/0050 E3・舊實倉對照 · NT$ · 不同市場/幣別，僅參照)</td></tr>'
              '<tr><td><strong><a href="/backtest/long_track_tw/">2330/0050 E3（舊實倉・對照）</a></strong>'
              '<br><span style="font-size:.72rem;color:var(--muted)">50/50 · {W40·W52·TSMOM} 各⅓ · '
-             '2026-06-23 採用，2026-07-18 起降為對照(實單改用 W52 × 自適應波動率) · NT$ · 近 10 年(2016~) · 詳見 '
+             '2026-06-23 採用，2026-07-18 起降為對照(實單改用 W52 × 自適應波動率，2026-11-06 起實單改用 Supertrend) · NT$ · 近 10 年(2016~) · 詳見 '
              '<a href="/backtest/tw/">台股總覽</a></span></td>'
              '<td style="font-weight:700;color:var(--green)">+26.63%</td>'
              '<td style="color:var(--red)">-23.75%</td><td>1.37</td><td>1.12</td><td>$19.0M</td>'
