@@ -22,13 +22,13 @@ ZONES = {1: ('我現在持有什麼、憑什麼', '實盤系統的規則、證�
  7: ('總經與房市', '殖利率倒掛、衰退訊號、降息後的股市，以及各國房價與所得的關係。'),
  8: ('方法與術語', '評估標準、術語對照表與各系統的總覽比較。')}
 
-PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼：十一項獨立檢驗總覽',
+PAGES = {'/backtest/live_system_evidence/': {'title': 'W52 系統憑什麼：十一項獨立檢驗總覽',
                                      'short': '證據總覽',
                                      'key': 'evidence_hub',
                                      'zone': 1,
                                      'status': 'note',
                                      'desc': '頁內結論：「證據強度整體算中等」'},
- '/backtest/w52_adaptive_oos/': {'title': '換一批沒看過的標的，舊實單規則還有效嗎？（W52×自適應 σ 跨標的前瞻證偽）',
+ '/backtest/w52_adaptive_oos/': {'title': '換一批沒看過的標的，W52 規則還有效嗎？（W52×自適應 σ 跨標的前瞻證偽）',
                                  'short': '跨標的前瞻證偽',
                                  'key': 'w52_oos',
                                  'zone': 1,
@@ -40,7 +40,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                                   'zone': 1,
                                   'status': 'note',
                                   'desc': '頁內結論：「均線閘門買到的保險仍然比「單純少放一點錢」划算」'},
- '/backtest/adopted_bootstrap/': {'title': '打亂歷史重跑一千次：舊實單優勢是本事還是運氣？',
+ '/backtest/adopted_bootstrap/': {'title': '打亂歷史重跑一千次：W52 優勢是本事還是運氣？',
                                   'short': '打亂歷史重跑',
                                   'key': 'adopt_boot',
                                   'zone': 1,
@@ -51,7 +51,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                                  'key': 'comb_acct',
                                  'zone': 1,
                                  'status': 'note',
-                                 'desc': '頁內結論：美台合併帳戶分散比 0.816，有部分分散但沒達事先設的 0.80（2026-11-04 台股窗改 2006-09 起後重算；原 2014 起窗為 0.962，判為同一個賭注）'},
+                                 'desc': '頁內結論：美台合併帳戶分散比 0.816，有部分分散但沒達事先設的 0.80（台股窗 2006-09 起；原 2014 起窗為 0.962，判為同一個賭注）'},
  '/backtest/slow_bear_base_rate/': {'title': '慢熊多久來一次、起點認得出來嗎？（慢熊 base rate 與起點檢定）',
                                     'short': '慢熊 base rate 與起點',
                                     'key': 'slow_bear',
@@ -64,12 +64,12 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                           'zone': 1,
                           'status': 'ret',
                           'desc': 'F70 的評估，2026-10-18 歸檔，不再追蹤；含不借錢版（A0＋D1）與戰術配置錦標賽。'},
- '/backtest/a0_proposal/': {'title': '10 月回顧點提案：實單從 cap 1.5 降為不借錢 cap 1.0（A0 提案，已採用）',
+ '/backtest/a0_proposal/': {'title': '10 月回顧點提案：cap 1.5 降為不借錢 cap 1.0（A0 提案）',
                             'short': 'A0 提案',
                             'key': 'a0_proposal',
                             'zone': 1,
                             'status': 'cand',
-                            'desc': '建議 10 月回顧點採用 A0；持有人 2026-10-17 拍板，2026-10-19 起生效。'},
+                            'desc': '建議 10 月回顧點採用 A0。'},
  '/backtest/f_portfolio/': {'title': '疊兩種保險（均線閘門＋跨資產分散）的四關證偽（F 組合）',
                             'short': '疊兩種保險',
                             'key': 'f_portfolio',
@@ -93,7 +93,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                          'key': 'lev20y',
                          'zone': 2,
                          'status': 'note',
-                         'desc': '舊法（STX50＋MNQ）已降級；舊實單引擎（2026-07-18～10-16）的三種曝險設計並列。'},
+                         'desc': 'STX50＋MNQ 與 W52 引擎的三種曝險設計並列。'},
  '/backtest/vol_targeting/': {'title': '波動率目標倉位：免保費的降回撤套袖（vol targeting）',
                               'short': '波動率目標倉位',
                               'key': 'vol_targeting',
@@ -166,12 +166,12 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                            'zone': 3,
                            'status': 'note',
                            'desc': '頁內結論：「三個標的全部輸給 W52 單成員」'},
- '/backtest/supertrend_vs_live/': {'title': 'Supertrend 對實單：美股打平，台股贏在 2008',
-                                  'short': 'Supertrend 對實單',
+ '/backtest/supertrend_vs_live/': {'title': 'Supertrend 對 W52：美股打平，台股贏在 2008',
+                                  'short': 'Supertrend 對 W52',
                                   'key': 'supertrend_live',
                                   'zone': 3,
                                   'status': 'note',
-                                  'desc': '2026-11-04 收盤起實單改用這套（持有人 11-04 決定，債金同日也改 Supertrend）。Supertrend 週線 70%＋月線 30%（美股 ATR 14、倍數 3，台股 ATR 14、倍數 2，參數與權重都是看過結果後才選，有挑選偏誤，成績偏樂觀）對舊實單規則（W52 週線閘門×自適應波動率，11-03 以前）的描述性比較：美股年化多 1.1 點、最大跌幅多 1.4 點，Calmar 打平；台股 2006 年 9 月起 20 年，年化多 2.25 點、最大跌幅淺 10.4 點，領先主要來自 2007 到 2009 年，2010 年以後兩者接近。拔靴檢定兩個市場都分不出顯著差異；附逐年、不同行情型態、策略特性與單一訊號持有段。'},
+                                  'desc': 'Supertrend 週線 70%＋月線 30%（美股 ATR 14、倍數 3，台股 ATR 14、倍數 2，參數與權重都是看過結果後才選，有挑選偏誤，成績偏樂觀）對 W52 週線閘門×自適應波動率的描述性比較：美股年化多 1.1 點、最大跌幅多 1.4 點，Calmar 打平；台股 2006 年 9 月起 20 年，年化多 2.25 點、最大跌幅淺 10.4 點，領先主要來自 2007 到 2009 年，2010 年以後兩者接近。拔靴檢定兩個市場都分不出顯著差異；附逐年、不同行情型態、策略特性與單一訊號持有段。'},
  '/backtest/tw_crash/': {'title': '台股含崩盤樣本（2000＋2008）：趨勢能不能打贏買進持有？',
                          'short': '台股含崩盤驗證',
                          'key': 'twcrash',
@@ -219,7 +219,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                                'key': 'w52_reentry',
                                'zone': 3,
                                'status': 'rej',
-                               'desc': '頁內結論：「實單維持 W52」'},
+                               'desc': '頁內結論：維持單純的 W52 閘門'},
  '/backtest/dual_track/': {'title': '雙軌：多空版維持否決，分散版是另一個問題',
                            'short': '雙軌',
                            'key': 'dual',
@@ -292,7 +292,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                           'zone': 4,
                           'status': 'note',
                           'desc': '頁內結論：「Z2 否決 · Z1 證據不足，列 Forward 觀察」'},
- '/backtest/vendor/': {'title': '外部策略檢驗（子專區）：139 支外部期貨策略對實單台股半邊',
+ '/backtest/vendor/': {'title': '外部策略檢驗（子專區）：139 支外部期貨策略對 W52 台股半邊',
                        'short': '外部策略檢驗',
                        'key': 'vendor',
                        'zone': 4,
@@ -585,7 +585,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                    'key': 'tw20y',
                    'zone': 8,
                    'status': 'note',
-                   'desc': '頁內結論：「台股實單規則自 2026-10-19 起為不借錢版（上限 100%）」'},
+                   'desc': 'W52 週線閘門 × 自適應波動率在台股的表現（上限 100%，不借錢）'},
  '/backtest/multi/': {'title': '多資產回測總覽',
                       'short': '多資產總覽',
                       'key': 'multi20y',
@@ -593,14 +593,14 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                       'status': 'note',
                       'desc': '頁內結論：「採用候選 · 組合系統(80/20)」'}}
 
-MEMBERS = {'/backtest/long_track_smh/': {'title': 'SMH/QQQ 長軌加 Supertrend 半倉閘門（STX50，2026-07-18 起為對照線）',
+MEMBERS = {'/backtest/long_track_smh/': {'title': 'SMH/QQQ 長軌加 Supertrend 半倉閘門（STX50，對照線）',
                                'short': 'SMH/QQQ 進攻',
                                'status': 'note',
                                'main': '/backtest/long_track/',
                                'anchor': 'smh',
                                'chapter': '四、加 Supertrend 半倉閘門（STX50，SMH/QQQ）',
                                'key': 'smh'},
- '/backtest/long_track_tw/': {'title': '台股 2330/0050 三訊號長軌（E3，2026-07-18 起為對照線）',
+ '/backtest/long_track_tw/': {'title': '台股 2330/0050 三訊號長軌（E3，對照線）',
                               'short': '2330/0050 E3 長軌',
                               'status': 'note',
                               'main': '/backtest/long_track/',
@@ -649,7 +649,7 @@ MEMBERS = {'/backtest/long_track_smh/': {'title': 'SMH/QQQ 長軌加 Supertrend 
                                 'anchor': 'onset',
                                 'chapter': '二、慢熊剛開始時認得出來嗎',
                                 'key': 'slow_bear_onset'},
- '/backtest/regime_bootstrap/': {'title': '以整段牛熊為單位重抽：舊實單優勢站得住嗎？（保留 regime 的 bootstrap）',
+ '/backtest/regime_bootstrap/': {'title': '以整段牛熊為單位重抽：W52 優勢站得住嗎？（保留 regime 的 bootstrap）',
                                  'short': '保留 regime 的 bootstrap',
                                  'status': 'live',
                                  'main': '/backtest/adopted_bootstrap/',
@@ -714,7 +714,7 @@ ZONE_ORDER = {z: [u for u, p in PAGES.items() if p["zone"] == z] for z in ZONES}
 # 實盤證據：首頁第①區只留一個入口（/long-track/#evidence），這些頁在系統主控台列出。
 EVIDENCE_URLS = ZONE_ORDER[1]
 
-REF_LINE = "本頁所述系統（STX50／E3）自 2026-07-18 起為對照線，現已歸檔。2026-11-04 起的實單規則是 Supertrend（指數部四檔各看週線七成、月線三成，只做多、不借錢，美股另加公債與黃金各最多 20%），見<a href=\"/backtest/supertrend_vs_live/\">Supertrend 對實單</a>。本頁僅供對照，不是現行配置。"
+REF_LINE = "本頁研究 STX50／E3 系統，為對照線，已歸檔；實單規則是 Supertrend（指數部四檔各看週線七成、月線三成，只做多、不借錢，美股另加公債與黃金各最多 20%），見<a href=\"/backtest/supertrend_vs_live/\">Supertrend 對 W52</a>。"
 RET_LINE = "本頁為存檔：六狀態機已於 2026-07-04 退役，頁內數字不再更新，僅供對照。"
 # 頂端加對照線橫幅的頁（合併主頁的各章橫幅已在章節內）
 REF_BANNER_URLS = ["/backtest/long_track_smh/", "/backtest/long_track_tw/", "/backtest/leverage_voltarget/",
@@ -722,26 +722,25 @@ REF_BANNER_URLS = ["/backtest/long_track_smh/", "/backtest/long_track_tw/", "/ba
 RET_BANNER = {"/backtest/six_state/status/": "本頁為存檔：六狀態機已於 2026-07-04 退役，以下是 2026-07-03 的最後一次狀態，不再運作。",
               # 2026-10-18 F70 歸檔；文字同 scripts/archive_banner.py 的 ARCHIVE_TEXT["f70"]
               "/backtest/f_comfort/": "已歸檔・2026-10-18 停止更新。持有人 2026-10-18 決定歸檔。「股票以外要不要放別的資產」改由債金版回答。",
-              # 2026-10-19 規則切換：這份決策備忘的提案已被採用
-              "/backtest/a0_proposal/": "決策已做：持有人 2026-10-17 拍板，2026-10-19 起實單的股票部分上限 100%、不借錢（美股另加公債與黃金各最多 20%，台股不加）。本頁是提案當時（2026-10-17）的備忘，文中的「現行」「A」指當時的 cap 1.5 配置。"}
+              "/backtest/a0_proposal/": "本頁是 cap 1.5 與不借錢上限 100% 的比較備忘，文中的「現行」「A」指 cap 1.5 配置；實單規則是 Supertrend。"}
 
-# 2026-10-19 規則切換：這些頁檢驗或描述的是 2026-07-18～10-16 的舊實單規則（曝險上限 150%），不再標「實盤」。
+# 這些頁檢驗或描述的是 W52 週線閘門 × 自適應波動率規則（曝險上限 150%），不標「實盤」。
 # 只改頁首標籤（_apply_meta 讀 CHIP_OVERRIDE）；子導覽與首頁的狀態字樣仍照 STATUS。
-OLD_RULE_LABEL = "舊實單規則（2026-07-18～10-16）的證據"
-OLD_RULE_DEF = '檢驗或描述的是 2026-07-18～10-16 的實單規則（曝險上限 150%）。2026-11-04 起的實單規則見<a href="/long-track-w52-adaptive/">長線追蹤</a>。'
+OLD_RULE_LABEL = "W52 規則的證據"
+OLD_RULE_DEF = '檢驗或描述的是 W52 週線閘門 × 自適應波動率規則（曝險上限 150%）。實單規則見<a href="/long-track-w52-adaptive/">長線追蹤</a>。'
 OLD_RULE_URLS = ["/backtest/live_system_evidence/", "/backtest/w52_adaptive_oos/", "/backtest/insurance_premium/",
                  "/backtest/adopted_bootstrap/", "/backtest/combined_account/", "/backtest/slow_bear_base_rate/",
                  "/backtest/tw/", "/backtest/slow_bear_onset/", "/backtest/regime_bootstrap/"]
-# 2026-11-04 持有人決定實單改 Supertrend（2026-11-04 收盤訊號起生效）：舊規則研究頁加橫幅，內文與數字不動。
-OLD_RULE_BANNER = '2026-11-04 起實單改用 Supertrend（<a href="/backtest/supertrend_vs_live/">看比較</a>），本頁研究的是之前的 W52 規則，現為對照線。'
+# W52 規則研究頁加橫幅，內文與數字不動。
+OLD_RULE_BANNER = '本頁研究 W52 規則，W52 為對照線；實單規則是 <a href="/backtest/supertrend_vs_live/">Supertrend</a>。'
 for _u in OLD_RULE_URLS + ["/backtest/nonequity/", "/backtest/leverage/", "/backtest/vol_targeting/adaptive.html",
                            "/backtest/vol_targeting/tw.html", "/backtest/vol_targeting/leverage.html"]:
     RET_BANNER[_u] = OLD_RULE_BANNER
 CHIP_OVERRIDE = {u: (OLD_RULE_LABEL, OLD_RULE_DEF, "note") for u in OLD_RULE_URLS}
 CHIP_OVERRIDE["/backtest/a0_proposal/"] = (
-    "已採用", "提案的不借錢上限 100% 已於 2026-10-17 由持有人拍板，2026-10-19 起生效。", "note")
+    "決策備忘", "比較 cap 1.5 與不借錢上限 100%；實單規則是 Supertrend。", "note")
 CHIP_OVERRIDE["/backtest/nonequity/"] = (
-    "部分已採用", "黃金（GLD）與公債（IEF）已於 2026-10-19 進入美股實單，各最多 20%；商品與長天期美債（TLT）未採用。", "note")
+    "部分已採用", "黃金（GLD）與公債（IEF）已在美股實單，各最多 20%；商品與長天期美債（TLT）未採用。", "note")
 
 
 def aliases() -> dict[str, str]:

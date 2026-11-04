@@ -26,7 +26,7 @@ GREEN, RED, GREY = "#16a34a", "#dc2626", "#9ca3af"
 
 LIVE_CARD = {
     "name": "0050/2330 · W52×自適應波動率（cap 1.5）", "tag": "舊實單規則（2026-07-18～10-16）",
-    "sub": "50/50 0050/2330 · W52 週線閘門 × 自適應 σ 波動率目標 cap 1.5 × 執行層（20pp 門檻＋10% 取整，2026-07-22 起；下列績效為 2006-09～2026-09 窗（0050 證交所官方資料）的回測值，2014-01 起舊窗為 +22.98%／-18.9%／Calmar 1.217） · 舊規則可上槓桿至 150%；2026-10-19 起上限 100%、不借錢；2026-11-04 起實單改用 Supertrend",
+    "sub": "50/50 0050/2330 · W52 週線閘門 × 自適應 σ 波動率目標 cap 1.5 × 執行層（20pp 門檻＋10% 取整，2026-07-22 起；下列績效為 2006-09～2026-09 窗（0050 證交所官方資料）的回測值，2014-01 起舊窗為 +22.98%／-18.9%／Calmar 1.217） · cap 1.5 版可上槓桿至 150%，上限 100% 版不借錢",
     "cagr": "+16.99%", "mdd": "-33.4%", "martin": "1.43", "calmar": "0.509",
     "url": "/backtest/vol_targeting/tw.html", "live_url": "/long-track-w52-adaptive/",
 }
@@ -260,7 +260,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <!-- LIVE -->
 <div class="section">
 <h2 class="section-title">實單系統</h2>
-<div class="section-sub">台股實單規則自 2026-10-19 起為不借錢版：<a href="/long-track-w52-adaptive/">W52 週線閘門 × 自適應波動率目標</a>，上限 100%，0050/2330 各 50%，不加債金、不再用期貨槓桿段。2026-07-18 至 10-16 的舊規則（cap 1.5）改為<a href="/long-track-w52-adaptive/cap15.html">對照線</a>，下方卡片與績效是舊規則的回測值。前代 2330/0050 E3 於 2026-07-18 降為對照線，效能列在下方「波段系統」表。即時訊號見 <a href="/long-track-w52-adaptive/">每日狀態頁</a>。</div>
+<div class="section-sub">本頁研究 <a href="/long-track-w52-adaptive/">W52 週線閘門 × 自適應波動率目標</a>在台股的表現：上限 100% 版不借錢，0050/2330 各 50%，不加債金；<a href="/long-track-w52-adaptive/cap15.html">cap 1.5 版</a>可借錢到 150%，下方卡片與績效是 cap 1.5 版的回測值。前代 2330/0050 E3 為對照線，效能列在下方「波段系統」表。即時訊號見 <a href="/long-track-w52-adaptive/">每日狀態頁</a>。</div>
 <div class="live-wrap">%CARD%</div>
 </div>
 
