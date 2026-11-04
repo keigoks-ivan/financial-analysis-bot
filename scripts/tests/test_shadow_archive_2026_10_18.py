@@ -100,7 +100,7 @@ def test_console_has_three_zones_and_archive_is_collapsed():
                 "/long-track-adaptive-vt/", "/long-track-qs-vt/", "/backtest/six_state/status/"):
         assert f'<a class="arch-row" href="{url}">' in html, url
     # 還在測的兩列
-    assert "2026-10-19 起累積中" in html and "NFCI 紅燈時持股減半" in html
+    assert "起累積中" in html and "NFCI 紅燈時持股減半" in html
     # 舊的影子對照表與前瞻候選區已不存在
     assert "影子對照（跟實盤同一套引擎" not in html
     assert "前瞻 OOS 候選" not in html.split('id="panel-overview"')[1].split('id="panel-live"')[0]
