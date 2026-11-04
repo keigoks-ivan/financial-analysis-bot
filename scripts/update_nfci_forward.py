@@ -18,7 +18,8 @@
                                   前日現持 × 當日報酬、現金利率、換手 7 bps）、fetch_us_cash_series、MARKETS
 影子線與實單用同一個簿記函式、同一份價格，唯一差別是目標權重在紅燈時乘 0.5。
 
-輸入  docs/long-track-w52-adaptive/state.json 的 history_us／history_tw（實單每日目標）
+輸入  docs/long-track-w52-adaptive/w52_state.json 的 history_us／history_tw（原規則 W52 對照線的每日目標；
+      2026-11-04 實單改 Supertrend 後，事前登記的比較對象仍是原規則，所以不讀 state.json）
       docs/long-track/data/nfci_releases.csv（每週三公布值存檔，只增不改）
 輸出  docs/long-track/data/nfci_forward_state.json（影子線狀態，每次由存檔與實單紀錄整段重算）
 
@@ -68,7 +69,8 @@ DOCS = _w52.DOCS
 DATA_DIR = DOCS / "long-track" / "data"
 RELEASES_CSV = DATA_DIR / "nfci_releases.csv"
 STATE_OUT = DATA_DIR / "nfci_forward_state.json"
-LIVE_STATE = _w52.STATE_JSON
+# 2026-11-04 起實單改 Supertrend；事前登記比的是原規則（W52 × 自適應 × A2），所以讀 W52 對照線的紀錄，不讀實單 state.json
+LIVE_STATE = DOCS / "long-track-w52-adaptive" / "w52_state.json"
 SCOREBOARD_JSON = _lsb.OUT_JSON
 
 ALFRED_URL = "https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=NFCI&vintage_date={d}"
@@ -599,7 +601,7 @@ def run(args) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="NFCI 紅燈減半影子線（事前登記往前測）")
-    ap.add_argument("--live-state", default=str(LIVE_STATE), help="實單 state.json")
+    ap.add_argument("--live-state", default=str(LIVE_STATE), help="原規則 W52 對照線 w52_state.json")
     ap.add_argument("--releases", default=str(RELEASES_CSV), help="每週三公布值存檔（只增不改）")
     ap.add_argument("--out", default=str(STATE_OUT), help="影子線狀態檔")
     ap.add_argument("--start-date", default=START_DATE, help="（測試用）起始日")

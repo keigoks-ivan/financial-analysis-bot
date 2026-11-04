@@ -450,7 +450,7 @@ def combo_card() -> str:
     c = COMBO
     return (
         '<div class="section"><h2 class="section-title">組合層：疊進美股實盤系統</h2>'
-        + _plain('這格 sleeve 不是單獨看，而是<b>混進你真正在跑的美股實盤系統</b>（cap 1.5＋A2）：'
+        + _plain('這格 sleeve 不是單獨看，而是<b>混進你真正在跑的美股實盤系統</b>（cap 1.5＋A2；2026-11-04 起實單改用 Supertrend）：'
                  f'兩者月報酬<b>幾乎不相關（{_mn(c["corr_full"])}）</b>＝真分散。撥 20% 給黃金主列後，'
                  f'整體風險調整報酬（Calmar）由 {_mn(c["cap15_soc"])} 抬到 <b>{_mn(c["cap15_80"])}</b>。')
         + '<div class="card"><div class="tbl-wrap"><table><thead><tr><th>基準</th>'

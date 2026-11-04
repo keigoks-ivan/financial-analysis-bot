@@ -4,12 +4,12 @@ name: "NFCI Forward Shadow"
 # 不下單、不寄信。每次實單 workflow 跑完就接著跑：
 #   1. scripts/update_nfci_forward.py
 #        - 補抓尚未存檔的週三 NFCI 版本（ALFRED，週三版本在週四 UTC 起才抓）→ docs/long-track/data/nfci_releases.csv（只增不改）
-#        - 讀實單 state.json 的每日目標，起始日（2026-10-19）起整段重算影子線 → docs/long-track/data/nfci_forward_state.json
+#        - 讀原規則（W52）對照線 w52_state.json 的每日目標（2026-11-04 實單改 Supertrend 後，登記的比較對象仍是原規則），起始日（2026-10-19）起整段重算影子線 → docs/long-track/data/nfci_forward_state.json
 #   2. scripts/build_long_track_index.py：系統主控台「還在測的」NFCI 那一列讀上面的狀態檔
 #   3. commit 自己的三個檔（存檔、狀態檔、主控台）並 push
 #
-# 為何接在實單 workflow 之後（workflow_run）而不是自己排程：影子線的目標就是實單當天寫進 state.json 的
-# 目標，實單每天跑兩次（台股、美股收盤後），影子線必須讀到實單剛寫好的那一版，才不會用到舊的。
+# 為何接在實單 workflow 之後（workflow_run）而不是自己排程：影子線的目標就是原規則對照線當天寫進 w52_state.json
+# 的目標，該 workflow 每天跑兩次（台股、美股收盤後），影子線必須讀到剛寫好的那一版，才不會用到舊的。
 # workflow_run 預設 checkout 的是觸發那次 run 的「起始 sha」（早於實單的資料 commit），所以明確指定 ref: main。
 # 實單 workflow 失敗時（conclusion != success）不跑，等下一次。
 #

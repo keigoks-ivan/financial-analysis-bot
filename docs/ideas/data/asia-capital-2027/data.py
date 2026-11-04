@@ -13,7 +13,7 @@
   融資：台股 margin.jsonl 的 mga（仟元，今日餘額）；韓股 credit.jsonl 的 tot（百萬韓元）。
   融資占市值：台股上市融資÷上市總市值週報（mktcap.jsonl，億元）；韓股 credit.jsonl 的 kospi÷kospi.jsonl 的 mcap（皆百萬韓元）。
 - gap52：兩個指數的週五收盤距 52 週均線 %（最近 52 個週五收盤平均，含當週），2026 年起。
-- latest：實盤六檔（QQQ、SMH、0050、2330、IEF、GLD）的收盤與週線條件，yfinance 還原權息。
+- latest：長線六檔（QQQ、SMH、0050、2330、IEF、GLD）的收盤與原 W52 規則、債金三條件讀數，yfinance 還原權息（2026-11-04 起實單改 Supertrend，本檔不讀實單狀態，讀數固定用原規則）。
   股票四檔：52 週均線與距離；IEF、GLD：40 週均線、52 週均線、52 週前收盤三條件各算一次。
 任何一塊抓不到：該塊保留 data.json 上一版並標 stale: true，程式照常 exit 0。
 
