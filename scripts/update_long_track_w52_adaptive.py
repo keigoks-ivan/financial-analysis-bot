@@ -1217,6 +1217,46 @@ LWC_RESERVE_H = 32                         # 時間軸列＋pane 分隔線佔用
 LWC_TOTAL_H = sum(LWC_PANE_H) + LWC_RESERVE_H
 
 
+LC_CSS = """
+.lc-wrap{--ch-surface:#ffffff;--ch-ink:#0c1521;--ch-muted:#5b6778;--ch-grid:rgba(12,21,33,.09);--ch-bull:#1a7f5a;--ch-bear:#c2410c;--ch-level:#1565c0;--ch-border:#e5dfd0;
+  background:var(--ch-surface);color:var(--ch-ink);border-radius:10px;padding:.2rem 0 0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lc-wrap{--ch-surface:#1a1a19;--ch-ink:#ece8df;--ch-muted:#a8a498;--ch-grid:rgba(236,232,223,.11);--ch-bull:#1f9d70;--ch-bear:#d9631f;--ch-level:#5b9bd5;--ch-border:#37362f;padding:.7rem}}
+:root[data-theme="dark"] .lc-wrap{--ch-surface:#1a1a19;--ch-ink:#ece8df;--ch-muted:#a8a498;--ch-grid:rgba(236,232,223,.11);--ch-bull:#1f9d70;--ch-bear:#d9631f;--ch-level:#5b9bd5;--ch-border:#37362f;padding:.7rem}
+.lc-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:.6rem}
+.lc-hint{font-size:.76rem;color:var(--ch-muted)}
+.lc-btns{display:flex;gap:.3rem}
+.lc-btn{font:inherit;font-size:.76rem;font-weight:600;padding:.25rem .7rem;border-radius:6px;border:1px solid var(--ch-border);background:transparent;color:var(--ch-muted);cursor:pointer}
+.lc-btn.active{background:var(--ch-ink);color:var(--ch-surface);border-color:var(--ch-ink)}
+.lc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+.lc-card{min-width:0}
+.lc-head{margin-bottom:.35rem}
+.lc-name{font-size:1.05rem;font-weight:800;letter-spacing:-.01em;display:block}
+.lc-read{display:flex;flex-wrap:wrap;gap:.1rem .75rem;font-size:.76rem;color:var(--ch-muted);min-height:1.2rem;font-variant-numeric:tabular-nums}
+.lc-read b{color:var(--ch-ink);font-weight:600}
+.lc-kv{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap}
+.lc-kv i{font-style:normal}
+.lc-chip{display:inline-flex;align-items:center;gap:.25rem;font-weight:700;color:var(--ch-ink)}
+.lc-chip:before{content:"";width:8px;height:8px;border-radius:2px;background:var(--c)}
+.lc-up{--c:var(--ch-bull)}.lc-dn{--c:var(--ch-bear)}
+.lc-hostwrap{position:relative;width:100%}
+.lc-host{width:100%}
+.lc-pt{position:absolute;left:8px;font-size:.7rem;font-weight:700;color:var(--ch-muted);pointer-events:none;z-index:3;
+  background:color-mix(in srgb,var(--ch-surface) 82%,transparent);padding:.05rem .35rem;border-radius:4px}
+.lc-tip{position:absolute;top:30px;z-index:5;pointer-events:none;display:none;min-width:168px;background:var(--ch-surface);color:var(--ch-ink);
+  border:1px solid var(--ch-border);border-radius:8px;padding:.45rem .65rem;font-size:.74rem;box-shadow:0 6px 18px rgba(0,0,0,.16);font-variant-numeric:tabular-nums}
+.lc-tip-d{font-weight:700;margin-bottom:.2rem}.lc-tip-d span{color:var(--ch-muted);font-weight:600;margin-left:.3rem}
+.lc-tip-r{display:flex;justify-content:space-between;gap:1rem;margin-top:.15rem}.lc-tip-r i{font-style:normal;color:var(--ch-muted)}
+.lc-tip-s{font-size:.7rem;color:var(--ch-muted);text-align:right}
+.lc-legend{display:flex;flex-wrap:wrap;gap:.35rem 1.1rem;margin-top:.8rem;font-size:.74rem;color:var(--ch-muted);align-items:center}
+.lc-li{display:inline-flex;align-items:center;gap:.4rem}
+.lc-sw{display:inline-block;width:20px;height:0;border-top:2.5px solid var(--ch-ink)}
+.lc-sw-up{border-color:var(--ch-bull)}.lc-sw-dn{border-color:var(--ch-bear)}
+.lc-sw-dash{border-top:2px dashed var(--ch-muted)}
+.lc-sw-area{height:10px;border:0;border-top:2.5px solid var(--ch-level);background:color-mix(in srgb,var(--ch-level) 35%,transparent)}
+@media(max-width:768px){.lc-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.lc-tip{display:none!important}.lc-hint{flex:1 1 100%}}
+"""
+
 def lwc_total_h() -> int:
     """Supertrend 生效後主圖只有兩個 pane（價格＋線、曝險），少掉 RV20 vs σ_t 那一格。"""
     return (sum(LWC_PANE_H[:2]) if ST_MODE else sum(LWC_PANE_H)) + LWC_RESERVE_H
@@ -1565,6 +1605,21 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict, leg_pa
             "has_revision": (MARKER_DATE() in dates) and not PURE,
             "ma60_now": {a: pa["ma60_now"], b: pb["ma60_now"]},
         })
+        if PURE:        # 實盤頁主圖：每檔一張（價格＋週／月 Supertrend 線＋水位），資料取自顯示層的歷史
+            leg_rows = []
+            for t in legs:
+                rows = [r["tickers"][t]["st"] for r in history]
+                th = stc.thresholds(sigs[t]["st"])
+                leg_rows.append({
+                    "t": t,
+                    "c": [None if v is None else round(v, 2) for v in leg_panel[t]["close"]],
+                    "w": [round(r["w_line"], 2) for r in rows], "m": [round(r["m_line"], 2) for r in rows],
+                    "wd": [r["w"] for r in rows], "md": [r["m"] for r in rows],
+                    "lv": [int(r["level_pct"]) for r in rows],
+                    "thr": {"w": {"d": th["week"]["dir"], "v": round(th["week"]["thr"], 2)},
+                            "m": {"d": th["month"]["dir"], "v": round(th["month"]["thr"], 2)}},
+                })
+            chart["pure_legs"] = json.dumps(leg_rows, separators=(",", ":"), ensure_ascii=False)
 
     return {
         "legs": legs, "a": a, "b": b, "combined": combined, "exec_combined": exec_combined,
@@ -1674,6 +1729,43 @@ def _st_legend(legs) -> str:
 </div>"""
 
 
+LC_H_PRICE, LC_H_LEVEL = 280, 140     # 實盤頁主圖：價格 pane／水位 pane 的高度比（像素）
+
+
+def _pure_chart_html(mkt: dict) -> str:
+    """實盤頁主圖（Supertrend 顯示層）：每檔一張圖，上價格＋週月 Supertrend 線，下水位階梯。JS 見 market_js_pure。"""
+    suf, legs = mkt["key"], mkt["legs"]
+    cards = "".join(f"""<div class="lc-card">
+  <div class="lc-head"><span class="lc-name">{t}</span><div class="lc-read" id="lc-read-{suf}-{k}" aria-live="polite"></div></div>
+  <div class="lc-hostwrap">
+    <div class="lc-host" id="lc-chart-{suf}-{k}" style="height:{LC_H_PRICE + LC_H_LEVEL + 30}px"></div>
+    <div class="lc-pt" style="top:8px">價格與 Supertrend 線</div>
+    <div class="lc-pt" id="lc-pt1-{suf}-{k}" style="top:{LC_H_PRICE + 8}px">水位（0～100%）</div>
+    <div class="lc-tip" id="lc-tip-{suf}-{k}"></div>
+  </div>
+</div>""" for k, t in enumerate(legs))
+    return f"""<div class="lc-wrap" id="lc-wrap-{suf}">
+<div class="lc-toolbar">
+  <div class="lc-hint">游標或手指停在圖上看逐日數值；拖曳平移、滾輪縮放；兩張圖同步。</div>
+  <div class="lc-btns">
+    <button type="button" class="lc-btn active" onclick="lcRange_{suf}(1,this)">1Y</button>
+    <button type="button" class="lc-btn" onclick="lcRange_{suf}(3,this)">3Y</button>
+    <button type="button" class="lc-btn" onclick="lcRange_{suf}(5,this)">5Y</button>
+  </div>
+</div>
+<div class="lc-grid">{cards}</div>
+<div class="lc-legend">
+  <span class="lc-li"><span class="lc-sw lc-sw-px"></span>收盤價</span>
+  <span class="lc-li"><span class="lc-sw lc-sw-up"></span>週線 Supertrend 線：多</span>
+  <span class="lc-li"><span class="lc-sw lc-sw-dn"></span>週線 Supertrend 線：空</span>
+  <span class="lc-li"><span class="lc-sw lc-sw-dash"></span>月線 Supertrend 線（虛線，顏色同多空）</span>
+  <span class="lc-li"><span class="lc-sw lc-sw-area"></span>水位（藍色階梯與底色，格線 100／70／30／0%）</span>
+  <span class="lc-li">▲▼ 水位變化日（訊號日收盤判定，數字為變化後水位）</span>
+  <span class="lc-li">價格圖底色：週線多偏綠、空偏橙；右側橫虛線是目前的翻轉價</span>
+</div>
+</div>"""
+
+
 def market_html(mkt: dict, sigs: dict, md: dict) -> str:
     """2026-09-15 重做：Chart.js 全部移除，主圖改 Lightweight Charts 三 pane
     （容器＋1Y/3Y/5Y 按鈕＋自訂 hover 圖例，JS 見 market_js）。每腿卡片改由
@@ -1683,7 +1775,9 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
     legs = mkt["legs"]
     suf = mkt["key"]
     chart = md["chart"]
-    if chart["has_chart"]:
+    if chart["has_chart"] and PURE:
+        chart_html = _pure_chart_html(mkt)
+    elif chart["has_chart"]:
         title_top_0 = 8
         title_top_1 = LWC_PANE_H[0] + 8
         title_top_2 = LWC_PANE_H[0] + LWC_PANE_H[1] + 8
@@ -1739,6 +1833,9 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
         details_hdr = f"{mkt['short']} 回測與統計（點開看完整數字：回測堆疊表、逐年績效、曝險分布、利差敏感度、壓力統計、近 8 週閘門軌跡{'、2330 長窗附錄' if appendix else ''}）"
     ST_CHART_NOTE = (f"""兩個垂直排列的圖：<b>價格</b>（{legs[0]}／{legs[1]} 各自正規化為近 1260 個交易日前＝100，實線是週線 Supertrend 線、虛線是月線 Supertrend 線）、"""
                      f"""<b>指數部股票曝險（兩檔水位相加再除以 2，0～100%）</b>（{'' if PURE else '現持粗階梯；'}{chart_desc}）。{'' if PURE else f'{ST_CUTOVER_DATE} 以前實際照 W52 規則，圖上的 Supertrend 線只是同一段價格上的對照。'}拖曳可平移、滾輪可縮放，游標停在圖上看逐日數值。""")
+    if PURE:
+        ST_CHART_NOTE = (f"""每檔一張圖，上半是<b>收盤價</b>與週線、月線 Supertrend 線（線在價格下方是多、在上方是空），下半是<b>該檔水位</b>"""
+                         f"""（100／70／30／0%，水位變化日標箭頭；{legs[0]} 與 {legs[1]} 各占指數部一半）。""")
     return f"""<div class="mkt-section" id="mkt-{suf}" data-market="{suf}">
 <div class="mkt-hd"><span class="mkt-tag">{mkt['name']} — 主圖（近一年，可切 1Y／3Y／5Y）</span></div>
 
@@ -1763,106 +1860,178 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 """
 
 
-def market_js_pure(mkt: dict, md: dict) -> str:
-    """實盤頁顯示層的主圖 JS（Lightweight Charts v5 兩 pane）：價格＋週／月 Supertrend 線、指數部股票曝險（水位平均）。
-    與 market_js 的 W52 版分開寫，頁面原始碼裡不帶任何舊規則的變數與標籤。"""
-    suf = mkt["key"]
-    legs = mkt["legs"]
-    chart = md["chart"]
-    H = md["H"]
-    return f"""
-// ===== market: {suf}（Lightweight Charts v5） =====
-(function(){{
-  var DATES_{suf} = {chart['dates']};
-  var A_NORM_{suf} = {chart['a_norm']}, B_NORM_{suf} = {chart['b_norm']};
-  var A_WKN_{suf} = {chart['a_w52_norm']}, B_WKN_{suf} = {chart['b_w52_norm']};
-  var A_RAW_{suf} = {chart['a_raw']}, B_RAW_{suf} = {chart['b_raw']};
-  var A_WKR_{suf} = {chart['a_w52_raw']}, B_WKR_{suf} = {chart['b_w52_raw']};
-  var A_MON_{suf} = {chart['a_stm_norm']}, B_MON_{suf} = {chart['b_stm_norm']};
-  var A_MOR_{suf} = {chart['a_stm_raw']}, B_MOR_{suf} = {chart['b_stm_raw']};
-  var RIBBON_{suf} = {chart['ribbon']};
-  var LEVEL_{suf} = {H['cexe']};
+PURE_LC_JS = r'''
+// ===== market: __SUF__（Lightweight Charts v5；每檔一張：價格＋Supertrend 線、水位階梯） =====
+(function(){
+  var SUF = '__SUF__', DATES = __DATES__, LEGS = __LEGS__, HP = __HP__, HL = __HL__;
+  var wrap = document.getElementById('lc-wrap-' + SUF);
+  if (!wrap || typeof LightweightCharts === 'undefined') { return; }
+  var S = LightweightCharts, LAST = DATES.length - 1;
+  function css(n){ return getComputedStyle(wrap).getPropertyValue(n).trim(); }
+  function rgba(hex, a){
+    var h = hex.replace('#', ''); if (h.length === 3) { h = h.split('').map(function(c){ return c + c; }).join(''); }
+    var n = parseInt(h, 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  function pal(){
+    return { ink: css('--ch-ink'), muted: css('--ch-muted'), grid: css('--ch-grid'), bull: css('--ch-bull'),
+             bear: css('--ch-bear'), level: css('--ch-level'), border: css('--ch-border'), surface: css('--ch-surface') };
+  }
+  function fmtP(v){ return (v === null || v === undefined) ? '—' : v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+  function lvFmt(v){ var r = Math.round(v); return (Math.abs(v - r) < 1e-6 && (r === 0 || r === 30 || r === 70 || r === 100)) ? r + '%' : ''; }
+  function chip(d){ return '<span class="lc-chip ' + (d === 1 ? 'lc-up' : 'lc-dn') + '">' + (d === 1 ? '多' : '空') + '</span>'; }
+  var views = [], syncing = false;
 
-  function _pts(vals){{ var out=[]; for(var i=0;i<vals.length;i++){{ if(vals[i]!==null && vals[i]!==undefined){{ out.push({{time:DATES_{suf}[i], value:vals[i]}}); }} }} return out; }}
+  function buildLeg(L, k){
+    var host = document.getElementById('lc-chart-' + SUF + '-' + k);
+    var readEl = document.getElementById('lc-read-' + SUF + '-' + k);
+    var ptEl = document.getElementById('lc-pt1-' + SUF + '-' + k);
+    var tip = document.getElementById('lc-tip-' + SUF + '-' + k);
+    var P = pal();
+    var ch = S.createChart(host, {
+      width: host.clientWidth, height: HP + HL + 30,
+      layout: { background: {color: 'transparent'}, textColor: P.muted, fontSize: 11, fontFamily: getComputedStyle(document.body).fontFamily,
+                panes: {separatorColor: P.border, separatorHoverColor: P.border} },
+      grid: { vertLines: {visible: false}, horzLines: {color: P.grid} },
+      rightPriceScale: { borderVisible: false, minimumWidth: 54 },
+      localization: { dateFormat: 'yyyy-MM-dd' },
+      timeScale: { borderVisible: false, rightOffset: 3 },
+      crosshair: { vertLine: {color: P.muted, labelBackgroundColor: P.ink}, horzLine: {visible: false, labelVisible: false} }
+    });
+    var pf = {type: 'custom', formatter: lvFmt, minMove: 1};
+    var range = function(){ return {priceRange: {minValue: -6, maxValue: 124}}; };
+    // pane 0：週線方向底色、月線線、週線線、價格
+    var bg = ch.addSeries(S.AreaSeries, {priceScaleId: 'bg', lineVisible: false, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, autoscaleInfoProvider: function(){ return {priceRange: {minValue: 0, maxValue: 1}}; }}, 0);
+    bg.priceScale().applyOptions({scaleMargins: {top: 0, bottom: 0}, visible: false});
+    var mo = ch.addSeries(S.LineSeries, {lineWidth: 1.5, lineStyle: S.LineStyle.Dashed, lineType: S.LineType.WithSteps,
+      priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false}, 0);
+    var wk = ch.addSeries(S.LineSeries, {lineWidth: 2, lineType: S.LineType.WithSteps,
+      priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false}, 0);
+    var px = ch.addSeries(S.LineSeries, {lineWidth: 2, priceLineVisible: false, lastValueVisible: true, crosshairMarkerRadius: 4}, 0);
+    ch.priceScale('right', 0).applyOptions({scaleMargins: {top: 0.08, bottom: 0.08}});
+    // pane 1：水位（面積＋階梯）
+    ch.addPane();
+    var lvA = ch.addSeries(S.AreaSeries, {lineVisible: false, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: pf, autoscaleInfoProvider: range}, 1);
+    var lvL = ch.addSeries(S.LineSeries, {lineWidth: 2, lineType: S.LineType.WithSteps, priceLineVisible: false, lastValueVisible: true,
+      priceFormat: pf, autoscaleInfoProvider: range, crosshairMarkerRadius: 4}, 1);
+    var lvLines = [0, 30, 70, 100].map(function(v){
+      return lvL.createPriceLine({price: v, color: P.grid, lineWidth: 1, lineStyle: S.LineStyle.Dotted, axisLabelVisible: true, title: '',
+        axisLabelColor: P.surface, axisLabelTextColor: P.muted});
+    });
+    var markers = S.createSeriesMarkers(lvL, []);
+    ch.panes()[0].setStretchFactor(HP);
+    ch.panes()[1].setStretchFactor(HL);
+    // 目前的翻轉價（週、月各一條）
+    var flips = [];
+    [['w', '週'], ['m', '月']].forEach(function(a){
+      var t = L.thr[a[0]]; if (!t) { return; }
+      flips.push({key: a[0], d: t.d, line: px.createPriceLine({price: t.v, color: P.muted, lineWidth: 1,
+        lineStyle: a[0] === 'w' ? S.LineStyle.Dashed : S.LineStyle.LargeDashed, axisLabelVisible: true,
+        title: a[1] + (t.d === 1 ? '跌破翻空' : '站上翻多')})});
+    });
+    // 水位變化日
+    var evs = {}, evList = [];
+    for (var i = 1; i < DATES.length; i++) {
+      if (L.lv[i] !== L.lv[i - 1]) { evs[i] = L.lv[i - 1] + '%→' + L.lv[i] + '%'; evList.push(i); }
+    }
 
-  var el_{suf} = document.getElementById('lwc-chart-{suf}');
-  var chart_{suf} = LightweightCharts.createChart(el_{suf}, {{
-    width: el_{suf}.clientWidth, height: {lwc_total_h()},
-    layout: {{ background:{{color:'transparent'}}, textColor:'{TEXT_HEX}',
-      panes:{{separatorColor:'{BORDER_HEX}', separatorHoverColor:'{BORDER_HEX}'}} }},
-    grid: {{ vertLines:{{color:'rgba(0,0,0,0.06)'}}, horzLines:{{color:'rgba(0,0,0,0.06)'}} }},
-    rightPriceScale: {{ borderColor:'{BORDER_HEX}' }},
-    timeScale: {{ borderColor:'{BORDER_HEX}' }},
-  }});
+    function paint(){
+      P = pal();
+      ch.applyOptions({ layout: {textColor: P.muted, panes: {separatorColor: P.border, separatorHoverColor: P.border}},
+        grid: {horzLines: {color: P.grid}}, crosshair: {vertLine: {color: P.muted, labelBackgroundColor: P.ink}} });
+      var bgD = [], moD = [], wkD = [], pxD = [], aD = [], lD = [];
+      for (var i = 0; i < DATES.length; i++) {
+        var d = DATES[i], up = L.wd[i] === 1, mu = L.md[i] === 1;
+        var bc = rgba(up ? P.bull : P.bear, up ? 0.07 : 0.14); bgD.push({time: d, value: 1, topColor: bc, bottomColor: bc});
+        moD.push({time: d, value: L.m[i], color: rgba(mu ? P.bull : P.bear, 0.8)});
+        wkD.push({time: d, value: L.w[i], color: up ? P.bull : P.bear});
+        if (L.c[i] !== null) { pxD.push({time: d, value: L.c[i]}); }
+        var lv = L.lv[i], al = lv >= 100 ? 0.3 : lv >= 70 ? 0.2 : lv >= 30 ? 0.12 : 0;
+        var lc = rgba(P.level, al); aD.push({time: d, value: lv, topColor: lc, bottomColor: lc});
+        lD.push({time: d, value: lv});
+      }
+      bg.setData(bgD); mo.setData(moD); wk.setData(wkD); px.setData(pxD); lvA.setData(aD); lvL.setData(lD);
+      px.applyOptions({color: P.ink}); lvL.applyOptions({color: P.level});
+      lvLines.forEach(function(l){ l.applyOptions({color: P.grid, axisLabelColor: P.surface, axisLabelTextColor: P.muted}); });
+      flips.forEach(function(f){ f.line.applyOptions({color: f.d === 1 ? P.bear : P.bull}); });
+      markers.setMarkers(evList.map(function(i){
+        var up = L.lv[i] > L.lv[i - 1];
+        return {time: DATES[i], position: up ? 'belowBar' : 'aboveBar', shape: up ? 'arrowUp' : 'arrowDown',
+                color: up ? P.bull : P.bear, text: String(L.lv[i])};
+      }));
+    }
+    function readHtml(i){
+      return '<span class="lc-kv"><i>' + DATES[i] + '</i></span>' +
+        '<span class="lc-kv"><i>收盤</i><b>' + fmtP(L.c[i]) + '</b></span>' +
+        '<span class="lc-kv"><i>週線</i>' + chip(L.wd[i]) + '<b>' + fmtP(L.w[i]) + '</b></span>' +
+        '<span class="lc-kv"><i>月線</i>' + chip(L.md[i]) + '<b>' + fmtP(L.m[i]) + '</b></span>' +
+        '<span class="lc-kv"><i>水位</i><b>' + L.lv[i] + '%</b></span>';
+    }
+    function gap(c, l){ return (c === null || l === null) ? '—' : ((c / l - 1) * 100 >= 0 ? '+' : '') + ((c / l - 1) * 100).toFixed(1) + '%'; }
+    function tipHtml(i){
+      return '<div class="lc-tip-d">' + DATES[i] + ' <span>' + L.t + '</span></div>' +
+        '<div class="lc-tip-r"><i>收盤</i><b>' + fmtP(L.c[i]) + '</b></div>' +
+        '<div class="lc-tip-r"><i>週線</i><b>' + chip(L.wd[i]) + ' ' + fmtP(L.w[i]) + '</b></div>' +
+        '<div class="lc-tip-s">收盤相對週線 ' + gap(L.c[i], L.w[i]) + '</div>' +
+        '<div class="lc-tip-r"><i>月線</i><b>' + chip(L.md[i]) + ' ' + fmtP(L.m[i]) + '</b></div>' +
+        '<div class="lc-tip-s">收盤相對月線 ' + gap(L.c[i], L.m[i]) + '</div>' +
+        '<div class="lc-tip-r"><i>水位</i><b>' + L.lv[i] + '%</b></div>' +
+        (evs[i] ? '<div class="lc-tip-s">這天水位變化 ' + evs[i] + '（隔日調整）</div>' : '');
+    }
+    function placeTitle(){
+      try { ptEl.style.top = (ch.panes()[0].getHeight() + 8) + 'px'; } catch (e) {}
+    }
+    ch.subscribeCrosshairMove(function(p){
+      if (!p.point || !p.time || p.point.x < 0 || p.point.y < 0) { tip.style.display = 'none'; readEl.innerHTML = readHtml(LAST); return; }
+      var i = DATES.indexOf(typeof p.time === 'string' ? p.time : p.time.year + '-' + String(p.time.month).padStart(2, '0') + '-' + String(p.time.day).padStart(2, '0'));
+      if (i < 0) { return; }
+      readEl.innerHTML = readHtml(i);
+      tip.innerHTML = tipHtml(i); tip.style.display = 'block';
+      var w = host.clientWidth, tw = tip.offsetWidth;
+      tip.style.left = (p.point.x > w / 2 ? Math.max(4, p.point.x - tw - 14) : Math.min(w - tw - 4, p.point.x + 14)) + 'px';
+    });
+    ch.timeScale().subscribeVisibleLogicalRangeChange(function(r){
+      if (syncing || !r) { return; }
+      syncing = true;
+      views.forEach(function(v){ if (v.ch !== ch) { v.ch.timeScale().setVisibleLogicalRange(r); } });
+      syncing = false;
+    });
+    if (window.ResizeObserver) {
+      new ResizeObserver(function(){ var w = host.clientWidth; if (w > 0) { ch.applyOptions({width: w}); placeTitle(); } }).observe(host);
+    }
+    paint(); readEl.innerHTML = readHtml(LAST);
+    return {ch: ch, paint: paint, placeTitle: placeTitle};
+  }
 
-  // ---- pane 0：價格（正規化 100＝近 1260 交易日前）＋週線 Supertrend 線（實線）＋月線 Supertrend 線（虛線）----
-  var pxA_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
-    {{color:'{BLUE_HEX}', lineWidth:2, priceLineVisible:false, lastValueVisible:false}}, 0);
-  var pxB_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
-    {{color:'{AMBER_HEX}', lineWidth:2, priceLineVisible:false, lastValueVisible:false}}, 0);
-  var wkA_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
-    {{color:'rgba(21,101,192,0.6)', lineWidth:1, priceLineVisible:false, lastValueVisible:false}}, 0);
-  var wkB_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
-    {{color:'rgba(217,119,6,0.6)', lineWidth:1, priceLineVisible:false, lastValueVisible:false}}, 0);
-  var moA_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
-    {{color:'rgba(21,101,192,0.55)', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, priceLineVisible:false, lastValueVisible:false}}, 0);
-  var moB_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
-    {{color:'rgba(217,119,6,0.55)', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, priceLineVisible:false, lastValueVisible:false}}, 0);
-  chart_{suf}.priceScale('right').applyOptions({{scaleMargins:{{top:0.08, bottom:0.08}}}});
-  pxA_{suf}.setData(_pts(A_NORM_{suf}));
-  pxB_{suf}.setData(_pts(B_NORM_{suf}));
-  wkA_{suf}.setData(_pts(A_WKN_{suf}));
-  wkB_{suf}.setData(_pts(B_WKN_{suf}));
-  moA_{suf}.setData(_pts(A_MON_{suf}));
-  moB_{suf}.setData(_pts(B_MON_{suf}));
+  LEGS.forEach(function(L, k){ views.push(buildLeg(L, k)); });
 
-  // ---- pane 1：指數部股票曝險（兩檔水位平均）階梯；水位 0% 的期間鋪紅色底 ----
-  chart_{suf}.addPane();
-  var ribbon_{suf} = chart_{suf}.addSeries(LightweightCharts.HistogramSeries,
-    {{priceScaleId:'ribbon', priceLineVisible:false, lastValueVisible:false}}, 1);
-  ribbon_{suf}.priceScale().applyOptions({{scaleMargins:{{top:0, bottom:0}}, visible:false}});
-  ribbon_{suf}.setData(RIBBON_{suf}.map(function(r){{
-    return {{time:r[0], value:1, color:'rgba(185,28,28,0.10)'}};
-  }}));
-  var levelSeries_{suf} = chart_{suf}.addSeries(LightweightCharts.LineSeries,
-    {{color:'{GREEN_HEX}', lineWidth:3, lineType:LightweightCharts.LineType.WithSteps,
-      priceLineVisible:false, lastValueVisible:false}}, 1);
-  levelSeries_{suf}.setData(_pts(LEVEL_{suf}));
-  levelSeries_{suf}.createPriceLine({{price:100, color:'rgba(120,120,120,0.6)',
-    lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, title:'100%', axisLabelVisible:true}});
-
-  chart_{suf}.panes()[0].setStretchFactor({LWC_PANE_H[0]});
-  chart_{suf}.panes()[1].setStretchFactor({LWC_PANE_H[1]});
-  chart_{suf}.timeScale().fitContent();
-
-  // ---- 1Y/3Y/5Y 範圍按鈕 ----
-  window.lwcRange_{suf} = function(years, btnEl){{
-    var n = Math.min(DATES_{suf}.length - 1, Math.round(years * 252));
-    var from = DATES_{suf}[Math.max(0, DATES_{suf}.length - 1 - n)];
-    var to = DATES_{suf}[DATES_{suf}.length - 1];
-    chart_{suf}.timeScale().setVisibleRange({{from: from, to: to}});
-    if (btnEl) {{
-      var wrap = btnEl.parentElement;
-      Array.prototype.forEach.call(wrap.children, function(b){{ b.classList.remove('active'); }});
+  window['lcRange_' + SUF] = function(years, btnEl){
+    var n = Math.min(DATES.length - 1, Math.round(years * 252));
+    var r = {from: DATES[Math.max(0, DATES.length - 1 - n)], to: DATES[LAST]};
+    syncing = true;
+    views.forEach(function(v){ v.ch.timeScale().setVisibleRange(r); });
+    syncing = false;
+    views.forEach(function(v){ v.placeTitle(); });
+    if (btnEl) {
+      Array.prototype.forEach.call(btnEl.parentElement.children, function(b){ b.classList.remove('active'); });
       btnEl.classList.add('active');
-    }}
-  }};
-  lwcRange_{suf}(1, null);
+    }
+  };
+  window['lcRange_' + SUF](1, null);
 
-  // ---- 十字線 hover 圖例 ----
-  var legendEl_{suf} = document.getElementById('lwc-legend-{suf}');
-  chart_{suf}.subscribeCrosshairMove(function(param){{
-    var i = _lwcIdx(param, DATES_{suf});
-    if (i < 0 || i >= DATES_{suf}.length) {{ return; }}
-    var fmt = function(v, dp){{ return (v===null||v===undefined) ? '—' : v.toFixed(dp===undefined?2:dp); }};
-    legendEl_{suf}.innerHTML =
-      '<b>' + DATES_{suf}[i] + '</b>　' +
-      '{legs[0]} ' + fmt(A_RAW_{suf}[i]) + '（週線 ' + fmt(A_WKR_{suf}[i]) + '／月線 ' + fmt(A_MOR_{suf}[i]) + '）　' +
-      '{legs[1]} ' + fmt(B_RAW_{suf}[i]) + '（週線 ' + fmt(B_WKR_{suf}[i]) + '／月線 ' + fmt(B_MOR_{suf}[i]) + '）　' +
-      '指數部股票曝險 ' + fmt(LEVEL_{suf}[i], 0) + '%';
-  }});
-}})();
-"""
+  function repaintAll(){ views.forEach(function(v){ v.paint(); }); }
+  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', repaintAll); } catch (e) {}
+  try { new MutationObserver(repaintAll).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']}); } catch (e) {}
+})();
+'''
+
+
+def market_js_pure(mkt: dict, md: dict) -> str:
+    """實盤頁顯示層的主圖 JS（Lightweight Charts v5）：每檔一張，價格 pane 畫收盤價、週線／月線 Supertrend 線（顏色依多空）
+    與目前翻轉價，水位 pane 畫階梯與面積並標出水位變化日。顏色全部讀 .lc-wrap 的 CSS 變數，亮暗主題共用。
+    與 market_js 的舊版分開寫，頁面原始碼裡不帶任何舊規則的變數與標籤。"""
+    chart = md["chart"]
+    return (PURE_LC_JS.replace("__SUF__", mkt["key"]).replace("__DATES__", chart["dates"])
+            .replace("__LEGS__", chart["pure_legs"]).replace("__HP__", str(LC_H_PRICE)).replace("__HL__", str(LC_H_LEVEL)))
 
 
 def market_js(mkt: dict, md: dict) -> str:
@@ -2674,6 +2843,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 .lwc-chart{{position:relative;width:100%;height:{lwc_total_h()}px}}
 .lwc-pane-title{{position:absolute;left:8px;font-size:.72rem;font-weight:700;color:var(--muted);
   background:rgba(255,255,255,.72);padding:.05rem .4rem;border-radius:4px;pointer-events:none;z-index:3}}
+{LC_CSS}
 .grid2{{display:grid;grid-template-columns:1fr 1fr;gap:1rem}}
 .tablewrap{{overflow-x:auto}}
 @media(max-width:768px){{.tgrid-4{{grid-template-columns:1fr 1fr}}.status-exposure{{font-size:2rem}}table{{font-size:.74rem}}th,td{{padding:.4rem .45rem}}
