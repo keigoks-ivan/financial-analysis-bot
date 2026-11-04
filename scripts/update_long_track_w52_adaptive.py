@@ -1715,8 +1715,8 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
     if PROFILE == "live" and (ST_MODE or not SHADOW):
         if PURE:
             chart_desc = "附 100% 參考線，並用底色標出水位 0% 的期間"
-            details_body = ""
-            details_hdr = f"{mkt['short']} Supertrend 近幾根 K 棒軌跡（點開看）"
+            details_body = stp.backtest_card_pure()
+            details_hdr = f"{mkt['short']} 回測與統計（點開看 Supertrend 回測、近幾根 K 棒軌跡）"
         elif ST_MODE:
             chart_desc = f"附 100% 參考線、{ST_CUTOVER_DATE} 改看 Supertrend 的標記，並用底色標出水位 0% 的期間"
             # Supertrend 生效後，實單頁的回測區只放 Supertrend（含與原規則的並排比較卡）；W52 的回測表、債金三條件回測、

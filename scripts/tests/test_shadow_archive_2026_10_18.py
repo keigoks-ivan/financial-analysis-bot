@@ -81,11 +81,7 @@ def test_live_and_cap15_pages_do_not_link_archived_pages():
         hrefs = _hrefs(W52 / name)
         for h in hrefs:
             assert not any(f in h for f in FORBIDDEN), (name, h)
-    live = _hrefs(W52 / "_body.html")
-    # 實單頁只留「上線前的影子紀錄：不借錢版、債金版」這一行（兩個連結）
-    for h in ALLOWED_SHADOW_LINKS:
-        assert h in live
-    assert "上線前的影子紀錄" in (W52 / "_body.html").read_text(encoding="utf-8")
+    # 2026-11-04：實單頁顯示層不再放「上線前的影子紀錄」那一行，只要求不連到歸檔頁（上面的 FORBIDDEN）
     assert not any(h in _hrefs(W52 / "cap15.html") for h in ALLOWED_SHADOW_LINKS)
 
 

@@ -289,3 +289,23 @@ def rules_pure() -> str:
 </div>
 {W52_LINE}
 """
+
+
+def backtest_card_pure() -> str:
+    """Supertrend 回測（只放 Supertrend 與買進持有）。靜態轉錄自 v7-backtest results/supertrend_vs_live/results.json，
+    資料到 2026-10-16，不隨每日資料重算。美股列為指數部 Supertrend 加債金 Supertrend（年化 14.7%、最大跌幅 −19.9%、Calmar 0.74）。"""
+    return f"""<div class="card">
+<h3>Supertrend 回測（資料到 2026-10-16）</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
+數字轉錄自 <a href="{PAGE_URL}">Supertrend 回測頁</a>（v7-backtest results/supertrend_vs_live/results.json，資料到 2026-10-16）。每邊成本 7 個基點、現金有利息、收盤出訊號、下一個交易日成交；台股計入證交稅；美股含公債黃金的 Supertrend。買進持有是兩檔各半、一直滿倉。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>市場與期間</th><th>配置</th><th class="num">年化</th><th class="num">最大跌幅</th><th class="num">Calmar</th><th class="num">指數部每年下單次數</th></tr></thead>
+<tbody>
+<tr class="rowhl"><td rowspan="2">美股 2005-01 至 2026-10</td><td>Supertrend 70/30</td><td class="num">14.7%</td><td class="num">−19.9%</td><td class="num">0.74</td><td class="num">3.1</td></tr>
+<tr class="rowbh"><td>買進持有</td><td class="num">17.0%</td><td class="num">−56.9%</td><td class="num">0.30</td><td class="num">0</td></tr>
+<tr class="rowhl"><td rowspan="2">台股 2006-09 至 2026-10</td><td>Supertrend 70/30</td><td class="num">15.2%</td><td class="num">−20.2%</td><td class="num">0.75</td><td class="num">5.5</td></tr>
+<tr class="rowbh"><td>買進持有</td><td class="num">19.8%</td><td class="num">−49.3%</td><td class="num">0.40</td><td class="num">0</td></tr>
+</tbody></table></div>
+<div class="takeaway">Supertrend 的年化比一直抱著少 2.3 個百分點（美股）與 4.7 個百分點（台股），換到最大跌幅從 −57%、−49% 縮到 −20% 上下，Calmar 約為買進持有的兩倍。<br>
+<b>要保守看待的地方</b>：參數是看過鄰近表之後才選的，這些數字是挑選後的上界；台股的優勢集中在 2008 年那一次大跌。</div>
+</div>"""
