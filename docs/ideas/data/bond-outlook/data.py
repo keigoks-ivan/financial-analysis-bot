@@ -304,7 +304,7 @@ def fetch_legs():
     sys.path.insert(0, str(REPO / "scripts"))
     import update_long_track_w52_adaptive as w52
     import update_long_track_w52_adaptive_c1 as c1
-    # 2026-11-06 起實單債金改 Supertrend；本頁量表追蹤的是週線三條件讀數，固定用三條件算（只改本程式內的模組變數，不影響實單）
+    # 2026-11-04 起實單債金改 Supertrend；本頁量表追蹤的是週線三條件讀數，固定用三條件算（只改本程式內的模組變數，不影響實單）
     w52.DEFENSIVE_RULE = "three_condition"
 
     cache = {}
@@ -359,7 +359,7 @@ def check_against_state(rows):
         if not row or not s:
             info(f"state.json 沒有 {k} 的 overlay，略過核對")
         elif s.get("rule") == "supertrend":
-            info(f"{k}：實單債金已改 Supertrend（2026-11-06 起），本頁三條件讀數不再與 state.json 核對")
+            info(f"{k}：實單債金已改 Supertrend（2026-11-04 起），本頁三條件讀數不再與 state.json 核對")
         elif s.get("week_date") != row["asof"]:
             info(f"{k}：state.json 週線日 {s.get('week_date')}、本次 {row['asof']}，週線日不同，未核對")
         elif s.get("n") != row["value"]:

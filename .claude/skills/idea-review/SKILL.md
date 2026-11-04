@@ -47,7 +47,7 @@ description: 投資想法頁（docs/ideas/*.html）的每月全面檢視（雲�
 6. `docs/earnings/earnings_YYYY-MM-DD.html`：日期在證據窗內的全部。每份約 100KB，先用該頁查核點的 `companies` 與 `company_names` 搜尋，只讀命中的段落。當天若已有 `docs/earnings/synthesis_<D>.html`（月度財報統整）也讀；沒有不等。
 7. 週報：`docs/weekly/` 下日期在證據窗內的檔，有才讀（2026-06-21 之後沒有新檔）。
 8. 對錢的意義要用的兩個檔：
-   - `docs/long-track-w52-adaptive/state.json`：`tickers.QQQ／SMH／0050／2330.executed_pct`（占指數部 %，水位＝乘以 2，用整數算）、`overlay.ief`／`overlay.gld`、`last_change_desc`。`overlay` 每腿有兩種格式，兩種都要能讀：`rule` 等於 `"supertrend"`（2026-11-06 起）時，讀 `w`、`m`（週線、月線 Supertrend 方向，1 多、0 空；欄名也可能是 `st_w`／`st_m`）與 `target_pct`（目標水位 %），`n` 會是 null，不要拿來用；否則（舊格式）讀 `n`（週線三條件過幾條）與 `target_pct`。
+   - `docs/long-track-w52-adaptive/state.json`：`tickers.QQQ／SMH／0050／2330.executed_pct`（占指數部 %，水位＝乘以 2，用整數算）、`overlay.ief`／`overlay.gld`、`last_change_desc`。`overlay` 每腿有兩種格式，兩種都要能讀：`rule` 等於 `"supertrend"`（2026-11-04 起）時，讀 `w`、`m`（週線、月線 Supertrend 方向，1 多、0 空；欄名也可能是 `st_w`／`st_m`）與 `target_pct`（目標水位 %），`n` 會是 null，不要拿來用；否則（舊格式）讀 `n`（週線三條件過幾條）與 `target_pct`。
    - `docs/engine/roster_notify_state.json`：美股看板（`us`）、台股（`tw`）、精選榜十倍組（`tb`）三套席位的 `seats`。
 9. 下個月看什麼要用的日曆：`ideas.json` 的 `due`、`docs/catalyst/calendar.json`（財報日，`type: earnings`）、總經類頁加 `docs/monitor/data/macro_calendar.json`。
 10. 上網：可以 WebSearch／WebFetch 查原始財報、10-Q／8-K、公司新聞稿、央行與政府數據。一手來源優先，媒體只在一手讀不到時用。
@@ -96,7 +96,7 @@ description: 投資想法頁（docs/ideas/*.html）的每月全面檢視（雲�
 
 - 對照實單與席位講受惠、受壓：實單是 QQQ／SMH 各半（美股指數部）、0050／2330 各半（台股指數部）、IEF／GLD 各最多 20% 的債金腿，每檔水位由週線七成加月線三成的 Supertrend 決定；席位是三套名單的 `seats`。寫成「SMH 水位 80%、台積電在台股席位，主張若對兩者受壓」這種具體句。
 - 同一欄要交代收回條件現在離成立多遠。
-- 實單只照 Supertrend 規則（2026-11-06 起；之前是 W52 規則與執行層）調整，想法頁不改部位。不寫加碼、減碼、買進、賣出建議。和實單、席位都沒有直接部位時直說「實單與席位沒有直接部位」，再講影響哪類公司。
+- 實單只照 Supertrend 規則（2026-11-04 起；之前是 W52 規則與執行層）調整，想法頁不改部位。不寫加碼、減碼、買進、賣出建議。和實單、席位都沒有直接部位時直說「實單與席位沒有直接部位」，再講影響哪類公司。
 
 ### 下個月看什麼（watch）
 

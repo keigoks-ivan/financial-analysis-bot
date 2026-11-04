@@ -70,7 +70,7 @@ GROUPS = [
     ("實單主系統", "live", True, [
         {"name": "Supertrend 週線＋月線（美股債金版・台股不借錢版）", "url": "/long-track-w52-adaptive/",
          "one": "兩市場各 70% 指數部＝每檔 70% 看週線、30% 看月線的 Supertrend，水位 100／70／30／0%，不借錢。"
-                "<b>2026-11-06 收盤的訊號起生效（11-09 第一次下單）；美股另加公債（IEF）與黃金（GLD）各最多 20%，同日也改看 Supertrend。</b>"
+                "<b>2026-11-04 收盤的訊號起生效（11-05 第一次下單）；美股另加公債（IEF）與黃金（GLD）各最多 20%，同日也改看 Supertrend。</b>"
                 "此前的 W52 × 自適應波動率（2026-10-19 起上限 100%）與更早的 cap 1.5 ＋日線均線確認，現降為對照線，每日更新、不寄信。",
          "status": ("實單", "live"), "freq": "每交易日 × 2（台／美收盤後）", "email": "✅ 有"},
     ]),
@@ -78,10 +78,10 @@ GROUPS = [
 
 # 還在測的：每列一個還沒答案的問題。q／start／due／now／name／url（url 為 None 表示頁面還沒建）。
 TESTING = [
-    {"q": "Supertrend 週線＋月線（2026-11-06 收盤的訊號起）比 W52 × 自適應波動率（2026-10-19 起）好嗎？",
-     "start": "2026-11-06",
+    {"q": "Supertrend 週線＋月線（2026-11-04 收盤的訊號起）比 W52 × 自適應波動率（2026-10-19 起）好嗎？",
+     "start": "2026-11-04",
      "due": "退回條件待持有人訂（規則帳本 2026-11-04）",
-     "now": "2026-11-06 起累積中",
+     "now": "2026-11-04 起累積中",
      "name": "W52 規則對照線", "url": "/long-track-w52-adaptive/w52.html"},
     {"q": "新規則（2026-10-19 起：美股債金版、台股不借錢版）比舊規則（股票上限 150%，加日線均線確認）好嗎？",
      "start": "2026-10-19",
@@ -623,7 +623,7 @@ def render() -> str:
 </div>
 <div class="console-tab-panel" id="panel-overview">{overview_body}</div>
 <div class="console-tab-panel" id="panel-live">
-  <p class="console-embed-note">Supertrend 週線＋月線（美股債金版・台股不借錢版）· 2026-11-06 收盤起實單主系統（之前為 W52 × 自適應波動率） · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/live_system_evidence/">這套系統的證據總覽（12 頁，白話）→</a> · <a href="#scoreboard">跳到記分板 →</a></p>
+  <p class="console-embed-note">Supertrend 週線＋月線（美股債金版・台股不借錢版）· 2026-11-04 收盤起實單主系統（之前為 W52 × 自適應波動率） · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/live_system_evidence/">這套系統的證據總覽（12 頁，白話）→</a> · <a href="#scoreboard">跳到記分板 →</a></p>
   <iframe class="console-embed-frame" id="live-frame" data-src="/long-track-w52-adaptive/_body.html" title="實單主系統" scrolling="no" loading="lazy"></iframe>
 </div>
 <div class="console-tab-panel" id="panel-scoreboard">

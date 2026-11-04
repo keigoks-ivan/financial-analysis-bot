@@ -7,6 +7,22 @@ sigs（含 st 欄位）與執行層重放結果。文字依 zh-analyst-prose：�
 from __future__ import annotations
 
 import supertrend_core as stc
+from datetime import date as _date, timedelta as _td
+
+_WD = "一二三四五六日"
+
+
+def _wd(ds: str) -> str:
+    """ISO 日期 -> 星期幾（一～日）。"""
+    return _WD[_date.fromisoformat(ds).weekday()]
+
+
+def _next_day_label(ds: str) -> str:
+    """訊號日之後的下一個平日（不查休市日），回傳「MM-DD，週X」。"""
+    d = _date.fromisoformat(ds) + _td(days=1)
+    while d.weekday() >= 5:
+        d += _td(days=1)
+    return f"{d.strftime('%m-%d')}，週{_WD[d.weekday()]}"
 
 PAGE_URL = "/backtest/supertrend_vs_live/"
 CROSS_NOTE = "v7-backtest docs/Supertrend_Cross_Market_Results.md"
@@ -70,7 +86,7 @@ def status_card(sigs: dict, legs: list, exec_last: dict, mode: str, cutover: str
                  f'{"" if cur_lv is None or abs(cur_lv - lv) <= 1e-9 else f" → <b>{lv}%</b>"}</td></tr>\n')
     if mode == "preview":
         title = f"Supertrend 預覽（{cutover} 收盤起實單照這套，現在還沒生效）"
-        lead = (f"實單指數部四檔從 {cutover}（週五）收盤的訊號起改看 Supertrend，下一個交易日下單；在那之前仍照 W52 規則。"
+        lead = (f"實單指數部四檔從 {cutover}（週{_wd(cutover)}）收盤的訊號起改看 Supertrend，下一個交易日下單；在那之前仍照 W52 規則。"
                 "下表是用現在的價格算出來的結果，只供預覽。")
         if moves:
             lead += "如果今天就切換，要調整：" + "、".join(moves) + "。"
@@ -114,23 +130,23 @@ def recent_table(t: str, st: dict | None) -> str:
 def backtest_card(cutover: str) -> str:
     """Supertrend 回測數字（靜態轉錄自 /backtest/supertrend_vs_live/ 與 v7 跨標的結果，不隨每日資料重算）。"""
     return f"""<div class="card">
-<h3>Supertrend 對現行規則的回測（描述性比較，沒有事前登記）</h3>
+<h3>Supertrend 對原規則的回測（描述性比較，沒有事前登記）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-數字轉錄自 <a href="{PAGE_URL}">Supertrend 對實單</a> 頁（資料到 2026-10-16），兩套放進同一個回測引擎：每邊成本 7 個基點、現金有利息、收盤出訊號、下一個交易日成交；台股計入證交稅，美股兩套都加同一套公債黃金。「現行規則」指 W52 × 自適應波動率 × 執行層（上限 100%，不借錢）。</p>
+數字轉錄自 <a href="{PAGE_URL}">Supertrend 對實單</a> 頁（資料到 2026-10-16），兩套放進同一個回測引擎：每邊成本 7 個基點、現金有利息、收盤出訊號、下一個交易日成交；台股計入證交稅，美股兩套都加同一套公債黃金。「原規則」指 W52  × 自適應波動率 × 執行層（上限 100%，不借錢）。</p>
 <div class="tablewrap"><table>
 <thead><tr><th>市場與期間</th><th>規則</th><th class="num">年化</th><th class="num">最大跌幅</th><th class="num">Calmar</th><th class="num">每年下單次數</th></tr></thead>
 <tbody>
 <tr class="rowhl"><td rowspan="2">美股 2005-01 至 2026-10</td><td>Supertrend 70/30</td><td class="num">15.2%</td><td class="num">−19.9%</td><td class="num">0.78</td><td class="num">3.1</td></tr>
-<tr><td>現行規則（W52）</td><td class="num">14.1%</td><td class="num">−18.5%</td><td class="num">0.76</td><td class="num">7.7</td></tr>
+<tr><td>原規則（W52，已改為對照線）</td><td class="num">14.1%</td><td class="num">−18.5%</td><td class="num">0.76</td><td class="num">7.7</td></tr>
 <tr class="rowhl"><td rowspan="2">台股 2006-09 至 2026-10</td><td>Supertrend 70/30</td><td class="num">15.2%</td><td class="num">−20.2%</td><td class="num">0.75</td><td class="num">5.5</td></tr>
-<tr><td>現行規則（W52）</td><td class="num">12.9%</td><td class="num">−30.6%</td><td class="num">0.42</td><td class="num">8.1</td></tr>
+<tr><td>原規則（W52，已改為對照線）</td><td class="num">12.9%</td><td class="num">−30.6%</td><td class="num">0.42</td><td class="num">8.1</td></tr>
 <tr class="rowhl"><td rowspan="2">台股 2010 至 2026-10</td><td>Supertrend 70/30</td><td class="num">15.4%</td><td class="num">—</td><td class="num">0.76</td><td class="num">—</td></tr>
-<tr><td>現行規則（W52）</td><td class="num">14.8%</td><td class="num">—</td><td class="num">0.83</td><td class="num">—</td></tr>
+<tr><td>原規則（W52，已改為對照線）</td><td class="num">14.8%</td><td class="num">—</td><td class="num">0.83</td><td class="num">—</td></tr>
 </tbody></table></div>
-<div class="takeaway">美股打平：Supertrend 年化多 1.1 個百分點、最大跌幅深 1.4 個百分點，Calmar 差 0.02，下單次數少六成。台股 2006 到 2009 年那一次（2008 年金融海嘯）Supertrend 少賠很多，2010 年以後兩者接近，現行規則的 Calmar 略高。兩邊的年化差距，統計上都分不出誰好（成對拔靴 90% 區間跨過 0）。<br>
+<div class="takeaway">美股打平：Supertrend 年化多 1.1 個百分點、最大跌幅深 1.4 個百分點，Calmar 差 0.02，下單次數少六成。台股 2006 到 2009 年那一次（2008 年金融海嘯）Supertrend 少賠很多，2010 年以後兩者接近，原規則的 Calmar 略高。兩邊的年化差距，統計上都分不出誰好（成對拔靴 90% 區間跨過 0）。<br>
 <b>要保守看待的地方</b>：參數是持有人看過 9 格鄰近表之後才選的（美股 ATR 14／倍數 3 是 9 格裡 Calmar 最高的一格；台股 ATR 14／倍數 2 選擇當時是第二高），2014 年以後的數字是挑選後的上界；台股的優勢集中在一次大跌。
 <b>債金也改 Supertrend 的版本</b>：上表美股兩列的債金疊加都是週線三條件。實單 {cutover} 起債金也改 Supertrend（指數部 Supertrend ＋ 債金 Supertrend，ATR 14／倍數 3，2005-01 至 2026-10）時，美股整體是年化 14.7%、最大跌幅 −19.9%、Calmar 0.74，債金每年變動約 15 次降到約 4 次。<br>
-跨標的對照（33 檔從未看過的標的，{CROSS_NOTE}）：Supertrend 的 Calmar 高於現行規則的只有 14 檔，Calmar 比值的中位數 0.88，最大跌幅中位數深 1.5 個百分點；差別主要在下單次數，中位數每年 1.9 次對 4.4 次。</div>
+跨標的對照（33 檔從未看過的標的，{CROSS_NOTE}）：Supertrend 的 Calmar 高於原規則的只有 14 檔，Calmar 比值的中位數 0.88，最大跌幅中位數深 1.5 個百分點；差別主要在下單次數，中位數每年 1.9 次對 4.4 次。</div>
 </div>"""
 
 
@@ -139,7 +155,7 @@ def pre_notice(cutover: str, decision: str) -> str:
     """切換前（現在到 cutover 之前）置於頁首的說明橫幅。"""
     return f"""<div class="oos-banner" style="background:linear-gradient(135deg,#eef4ff 0%,#e3edfb 100%);border-color:var(--brand)">
   <span class="tag-loud" style="background:var(--brand)">{cutover} 收盤起改規則</span>
-  <div style="font-size:.86rem">持有人 {decision} 決定，實單指數部四檔（QQQ、SMH、0050、2330）從 <b>{cutover}（週五）收盤的訊號</b>起，由 W52 規則改為 <b>Supertrend</b>，下一個交易日（11-09，週一）第一次照新規則下單。在那之前，下面的今天結論、水位與換倉提醒仍然是 W52 規則。債金疊加（美股公債 IEF、黃金 GLD）同一天也改成 Supertrend（見下方）。<br>
+  <div style="font-size:.86rem">持有人 {decision} 決定，實單指數部四檔（QQQ、SMH、0050、2330）從 <b>{cutover}（週{_wd(cutover)}）收盤的訊號</b>起，由 W52 規則改為 <b>Supertrend</b>，下一個交易日（{_next_day_label(cutover)}）第一次照新規則下單。在那之前，下面的今天結論、水位與換倉提醒仍然是 W52 規則。債金疊加（美股公債 IEF、黃金 GLD）同一天也改成 Supertrend（見下方）。<br>
   切換當天的提醒信會列出每檔從現持水位一次調到 Supertrend 水位。現行的 W52 規則會繼續每天更新，放在<a href="/long-track-w52-adaptive/w52.html">對照線頁</a>，不寄信。Supertrend 的目前狀態與回測見下方「Supertrend 預覽」與「回測與統計」。</div>
 </div>
 

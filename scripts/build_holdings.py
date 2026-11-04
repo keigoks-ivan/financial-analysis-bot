@@ -3,7 +3,7 @@
 
 核心設計（用戶 2026-07-19 拍板）：**系統選出來的組合＝真實組合**。
 持倉檔不是手填的券商部位，而是選股系統自己的產出——
-  · 指數部（index_sleeve）＝ 實單（Supertrend，2026-11-06 起；此前 W52×自適應波動率）的美台目標曝險與成分
+  · 指數部（index_sleeve）＝ 實單（Supertrend，2026-11-04 起；此前 W52×自適應波動率）的美台目標曝險與成分
     （讀 docs/long-track-w52-adaptive/state.json）；
   · 個股部（stock_sleeve）＝ 決策引擎席位擂台的在席者（核心席位＋衛星席位），
     含每檔對應最新 DD 檔名／dca_verdict／funnel_rank（讀 docs/dd-screener/latest.json）

@@ -171,7 +171,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': '舊實單系統憑什麼�
                                   'key': 'supertrend_live',
                                   'zone': 3,
                                   'status': 'note',
-                                  'desc': '2026-11-06 收盤起實單改用這套（持有人 11-04 決定，債金同日也改 Supertrend）。Supertrend 週線 70%＋月線 30%（美股 ATR 14、倍數 3，台股 ATR 14、倍數 2，參數與權重都是看過結果後才選，有挑選偏誤，成績偏樂觀）對舊實單規則（W52 週線閘門×自適應波動率，11-05 以前）的描述性比較：美股年化多 1.1 點、最大跌幅多 1.4 點，Calmar 打平；台股 2006 年 9 月起 20 年，年化多 2.25 點、最大跌幅淺 10.4 點，領先主要來自 2007 到 2009 年，2010 年以後兩者接近。拔靴檢定兩個市場都分不出顯著差異；附逐年、不同行情型態、策略特性與單一訊號持有段。'},
+                                  'desc': '2026-11-04 收盤起實單改用這套（持有人 11-04 決定，債金同日也改 Supertrend）。Supertrend 週線 70%＋月線 30%（美股 ATR 14、倍數 3，台股 ATR 14、倍數 2，參數與權重都是看過結果後才選，有挑選偏誤，成績偏樂觀）對舊實單規則（W52 週線閘門×自適應波動率，11-03 以前）的描述性比較：美股年化多 1.1 點、最大跌幅多 1.4 點，Calmar 打平；台股 2006 年 9 月起 20 年，年化多 2.25 點、最大跌幅淺 10.4 點，領先主要來自 2007 到 2009 年，2010 年以後兩者接近。拔靴檢定兩個市場都分不出顯著差異；附逐年、不同行情型態、策略特性與單一訊號持有段。'},
  '/backtest/tw_crash/': {'title': '台股含崩盤樣本（2000＋2008）：趨勢能不能打贏買進持有？',
                          'short': '台股含崩盤驗證',
                          'key': 'twcrash',
@@ -714,7 +714,7 @@ ZONE_ORDER = {z: [u for u, p in PAGES.items() if p["zone"] == z] for z in ZONES}
 # 實盤證據：首頁第①區只留一個入口（/long-track/#evidence），這些頁在系統主控台列出。
 EVIDENCE_URLS = ZONE_ORDER[1]
 
-REF_LINE = "本頁所述系統（STX50／E3）自 2026-07-18 起為對照線，現已歸檔。2026-11-06 起的實單規則是 Supertrend（指數部四檔各看週線七成、月線三成，只做多、不借錢，美股另加公債與黃金各最多 20%），見<a href=\"/backtest/supertrend_vs_live/\">Supertrend 對實單</a>。本頁僅供對照，不是現行配置。"
+REF_LINE = "本頁所述系統（STX50／E3）自 2026-07-18 起為對照線，現已歸檔。2026-11-04 起的實單規則是 Supertrend（指數部四檔各看週線七成、月線三成，只做多、不借錢，美股另加公債與黃金各最多 20%），見<a href=\"/backtest/supertrend_vs_live/\">Supertrend 對實單</a>。本頁僅供對照，不是現行配置。"
 RET_LINE = "本頁為存檔：六狀態機已於 2026-07-04 退役，頁內數字不再更新，僅供對照。"
 # 頂端加對照線橫幅的頁（合併主頁的各章橫幅已在章節內）
 REF_BANNER_URLS = ["/backtest/long_track_smh/", "/backtest/long_track_tw/", "/backtest/leverage_voltarget/",
@@ -728,12 +728,12 @@ RET_BANNER = {"/backtest/six_state/status/": "本頁為存檔：六狀態機已�
 # 2026-10-19 規則切換：這些頁檢驗或描述的是 2026-07-18～10-16 的舊實單規則（曝險上限 150%），不再標「實盤」。
 # 只改頁首標籤（_apply_meta 讀 CHIP_OVERRIDE）；子導覽與首頁的狀態字樣仍照 STATUS。
 OLD_RULE_LABEL = "舊實單規則（2026-07-18～10-16）的證據"
-OLD_RULE_DEF = '檢驗或描述的是 2026-07-18～10-16 的實單規則（曝險上限 150%）。2026-11-06 起的實單規則見<a href="/long-track-w52-adaptive/">長線追蹤</a>。'
+OLD_RULE_DEF = '檢驗或描述的是 2026-07-18～10-16 的實單規則（曝險上限 150%）。2026-11-04 起的實單規則見<a href="/long-track-w52-adaptive/">長線追蹤</a>。'
 OLD_RULE_URLS = ["/backtest/live_system_evidence/", "/backtest/w52_adaptive_oos/", "/backtest/insurance_premium/",
                  "/backtest/adopted_bootstrap/", "/backtest/combined_account/", "/backtest/slow_bear_base_rate/",
                  "/backtest/tw/", "/backtest/slow_bear_onset/", "/backtest/regime_bootstrap/"]
-# 2026-11-04 持有人決定實單改 Supertrend（2026-11-06 收盤訊號起生效）：舊規則研究頁加橫幅，內文與數字不動。
-OLD_RULE_BANNER = '2026-11-06 起實單改用 Supertrend（<a href="/backtest/supertrend_vs_live/">看比較</a>），本頁研究的是之前的 W52 規則，現為對照線。'
+# 2026-11-04 持有人決定實單改 Supertrend（2026-11-04 收盤訊號起生效）：舊規則研究頁加橫幅，內文與數字不動。
+OLD_RULE_BANNER = '2026-11-04 起實單改用 Supertrend（<a href="/backtest/supertrend_vs_live/">看比較</a>），本頁研究的是之前的 W52 規則，現為對照線。'
 for _u in OLD_RULE_URLS + ["/backtest/nonequity/", "/backtest/leverage/", "/backtest/vol_targeting/adaptive.html",
                            "/backtest/vol_targeting/tw.html", "/backtest/vol_targeting/leverage.html"]:
     RET_BANNER[_u] = OLD_RULE_BANNER

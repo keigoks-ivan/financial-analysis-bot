@@ -28,10 +28,10 @@ W_WEEK, W_MONTH = 0.7, 0.3
 TF = {"week": ("W-FRI", "週線"), "month": ("ME", "月線")}
 SETTLE = timedelta(minutes=45)   # 收盤後多久才視為定案
 
-# 實單切換：資料日（訊號日）>= 此日的紀錄照 Supertrend；2026-11-06（週五）收盤訊號、11-09（週一）第一次下單。
+# 實單切換：資料日（訊號日）>= 此日的紀錄照 Supertrend；2026-11-04（週三）收盤訊號、11-05（週四）第一次下單。
 # 環境變數 W52_ST_CUTOVER_DATE 只供本機模擬用，CI 不設。
 import os as _os
-ST_CUTOVER_DATE = _os.environ.get("W52_ST_CUTOVER_DATE") or "2026-11-06"
+ST_CUTOVER_DATE = _os.environ.get("W52_ST_CUTOVER_DATE") or "2026-11-04"
 ST_CUTOVER_DECISION_DATE = "2026-11-04"
 
 

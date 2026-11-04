@@ -152,10 +152,10 @@ EXEC_ASYM_DATE = "2026-10-30"   # 資料日：10-30（週五）收盤那筆起�
 EXEC_ASYM_DECISION_DATE = "2026-10-31"
 EXEC_ASYM_DATE = _os.environ.get("W52_EXEC_ASYM_DATE") or EXEC_ASYM_DATE   # 測試用覆寫，CI 不設
 
-# ---- 2026-11-06 規則切換（持有人 2026-11-04 拍板）：指數部四檔改 Supertrend -------------------------------
+# ---- 2026-11-04 規則切換（持有人 2026-11-04 拍板）：指數部四檔改 Supertrend -------------------------------
 # 資料日（訊號日）>= ST_CUTOVER_DATE 的紀錄，每檔水位＝0.7 × 週線 Supertrend ＋ 0.3 × 月線 Supertrend
 # （多=1、空=0，只做多），所以水位只有 100／70／30／0% 四種；沒有槓桿、沒有 A2 執行層（水位本來就離散，
-# 目標即現持）。2026-11-06（週五）收盤出訊號、11-09（週一）第一次下單。算法與參數見 supertrend_core.py
+# 目標即現持）。2026-11-04（週三）收盤出訊號、11-05（週四）第一次下單。算法與參數見 supertrend_core.py
 # （美股 ATR 14／倍數 3，台股 ATR 14／倍數 2；未調股息 OHLC，同 TradingView 預設畫法）。
 # 生效日前的紀錄一律不改寫；舊規則（W52 × 自適應 × A2）以 --profile w52 續跑成對照線（w52.html／w52_state.json），
 # 每日更新、不寄信。紀錄的 rule 標籤：RULE_TAG／NEW_RULE_TAG（W52 兩個階段）、ST_RULE_TAG（Supertrend）。
@@ -793,7 +793,7 @@ def sleeve_state(px: pd.Series) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Supertrend（2026-11-06 起實盤；之前只算「預覽」，不影響任何目標）
+# Supertrend（2026-11-04 起實盤；之前只算「預覽」，不影響任何目標）
 # ---------------------------------------------------------------------------
 def st_leg_state(t: str, asof, recent: bool = False) -> dict | None:
     """腿 t 在資料日 asof 的 Supertrend 狀態：週線／月線各「最後一根已收完的 K 棒」（方向、線值、K 棒日、收盤），
@@ -1520,8 +1520,8 @@ def live_backtest_blocks(mkt: dict, appendix: str, sigs: dict) -> str:
     bt = _lev.BT_US if mkt["key"] == "us" else _lev.BT_TW
     rows = ""
     for lab, cagr, mdd, calmar, ui, martin in bt["rows"]:
-        shown = lab.replace("（本頁追蹤）", "（W52 規則的股票部分，11-05 以前的實單）")
-        hl = ("rowhl" if "11-05 以前的實單" in shown else ("rowbh" if "買進持有" in shown else ""))
+        shown = lab.replace("（本頁追蹤）", "（W52 規則的股票部分，11-03 以前的實單）")
+        hl = ("rowhl" if "11-03 以前的實單" in shown else ("rowbh" if "買進持有" in shown else ""))
         rows += (f'<tr class="{hl}"><td>{shown}</td><td class="num">{cagr:.2f}%</td>'
                  f'<td class="num">{mdd:.1f}%</td><td class="num">{calmar:.3f}</td>'
                  f'<td class="num">{ui:.2f}</td><td class="num">{martin:.2f}</td></tr>\n')
@@ -1591,8 +1591,10 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
     if PROFILE == "live" and (ST_MODE or not SHADOW):
         if ST_MODE:
             chart_desc = f"附 100% 參考線、{ST_CUTOVER_DATE} 改看 Supertrend 的標記，並用底色標出水位 0% 的期間"
-            details_body = stp.backtest_card(ST_CUTOVER_DATE) + "\n" + live_backtest_blocks(mkt, appendix, sigs)
-            details_hdr = f"{mkt['short']} 回測與統計（點開看 Supertrend 回測、W52 規則回測{'、債金疊加' if suf == 'us' else ''}、Supertrend 近幾根 K 棒軌跡{'、2330 長窗附錄' if appendix else ''}）"
+            # Supertrend 生效後，實單頁的回測區只放 Supertrend（含與原規則的並排比較卡）；W52 的回測表、債金三條件回測、
+            # 2330 長窗附錄、近 8 週閘門軌跡都是原規則的數字，留在 w52.html 對照線頁，不再放在實單頁。
+            details_body = stp.backtest_card(ST_CUTOVER_DATE) + f'\n<div class="takeaway">原規則（W52 × 自適應波動率）的回測表、逐年績效與近 8 週閘門軌跡，見<a href="/long-track-w52-adaptive/w52.html">W52 對照線頁</a>。</div>'
+            details_hdr = f"{mkt['short']} 回測與統計（點開看 Supertrend 回測、Supertrend 近幾根 K 棒軌跡{'、債金 Supertrend' if suf == 'us' else ''}）"
         else:
             chart_desc = (f"附 100% 參考線〈新規則上限〉、{RULE_SWITCH_DATE} 規則切換的標記，並用底色標出閘門出場與舊規則期間 cap_eff 被壓回 1.0 的期間")
             details_body = stp.backtest_card(ST_CUTOVER_DATE) + "\n" + live_backtest_blocks(mkt, appendix, sigs)
@@ -1625,7 +1627,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 <summary style="cursor:pointer;font-weight:600;font-size:.88rem">{details_hdr}</summary>
 <div style="margin-top:.9rem">
 {details_body}
-{"".join(stp.recent_table(t, sigs[t].get("st")) for t in legs) if ST_MODE else ""}{"".join(recent_table(t, sigs[t]) for t in legs)}
+{"".join(stp.recent_table(t, sigs[t].get("st")) for t in legs) if ST_MODE else "".join(recent_table(t, sigs[t]) for t in legs)}
 </div>
 </details>
 </div>
@@ -2110,7 +2112,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
             "banner": (f'<div class="oos-banner">\n  <span class="tag-loud">對照線・{sw} 起不下單、不寄信</span>\n'
                        f'  <div style="font-size:.86rem">本頁保留 {sw} 前的實單規則（<b>W52 閘門 × 自適應波動率 cap_eff 最高 1.5 × 執行層 A2</b>，'
                        f'{RULE_REVISION_DATE} 起含日線均線確認），每交易日照常更新，用來和之後的規則並排看。'
-                       f'2026-11-06 起實單改用 Supertrend（週線＋月線），見<a href="/long-track-w52-adaptive/">實單主系統頁</a>；10-19 至 11-05 的 W52 不借錢＋債金版見<a href="/long-track-w52-adaptive/w52.html">W52 對照線</a>。以下規則說明與回測數字都是舊規則的版本。</div>\n</div>\n\n'),
+                       f'2026-11-04 起實單改用 Supertrend（週線＋月線），見<a href="/long-track-w52-adaptive/">實單主系統頁</a>；10-19 至11-03 的 W52 不借錢＋債金版見<a href="/long-track-w52-adaptive/w52.html">W52 對照線</a>。以下規則說明與回測數字都是舊規則的版本。</div>\n</div>\n\n'),
             "above_cards": "",
             "rules": old_rules,
             "footer": f"W52 × 自適應波動率 150%（美+台）· 舊規則對照線（{sw} 起）",
@@ -3113,7 +3115,7 @@ def seed_w52_state(live_state_path: Path) -> dict:
 def main():
     global PROFILE, STATE_JSON, OUTPUT, NAV_BLOCK, SHADOW, ST_MODE, NOW_OVERRIDE, DEF_ST_ON
     parser = argparse.ArgumentParser()
-    parser.add_argument("--now", help="模擬用：假裝現在是這個時間（ISO 8601，含時區，例 2026-11-07T00:30:00+08:00）。"
+    parser.add_argument("--now", help="模擬用：假裝現在是這個時間（ISO 8601，含時區，例 2026-11-05T09:00:00+08:00）。"
                                       "資料截到各交易所當地的那一天，未收盤的當天日線不採用；CI 不用。")
     parser.add_argument("--render-only", action="store_true",
                         help="只用既有 state.json 重繪 _body.html：不抓價（無網路呼叫）、"
@@ -3318,7 +3320,8 @@ def main():
     # 「債金條件數改變」。cap15 對照線不寫 alert、不寄信，但仍記 last_change 供頁面顯示。
     alert_events = list(changes) + overlay_change_lines(overlay_changes)
     if changes:
-        last_change_date = data_date
+        # data_date 是週線標籤（本週五，週間為未來日期）；最近一次變動要記實際的最新交易日
+        last_change_date = max(px_map[t].index[-1] for t in ALL_TICKERS).strftime("%Y-%m-%d")
         last_change_desc = "; ".join(c.replace("<b>", "").replace("</b>", "") for c in changes)
         print(f"CHANGES: {last_change_desc}")
     else:
@@ -3330,7 +3333,7 @@ def main():
     delay_lines, delay_state = delay_lines_for(delays), None
     if PROFILE == "live" and not SHADOW:
         if alert_events:
-            lines = build_alert_lines(alert_events, sigs, exp, data_date, cap_flips, ov)
+            lines = build_alert_lines(alert_events, sigs, exp, max(px_map[t].index[-1] for t in ALL_TICKERS).strftime("%Y-%m-%d"), cap_flips, ov)
             # 結尾必帶換行：workflow 的 `cat lt_w52a_alert.txt` 後緊接 `echo "ALERT_EOF"`，
             # 若檔尾無換行，最後一行內容會與 ALERT_EOF 黏在同列，$GITHUB_OUTPUT heredoc
             # 找不到匹配分隔符而讓整個 job 失敗（只在真有可行動變化的日子才觸發，故隱蔽）。

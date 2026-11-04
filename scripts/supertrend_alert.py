@@ -5,7 +5,7 @@
 （auto_adjust=False，已調拆股），週線以週五為一週最後一天、月線以月底。持股參考＝週線 70%＋月線 30%
 （只做多；翻空那份放現金）。參數 2026-11-04 起用實盤參數：SMH 倫敦／SMH 美國／QQQ 為 ATR 14、倍數 3，
 0050／2330 為 ATR 14、倍數 2（supertrend_core.ST_PARAMS，與實單主系統共用同一份）。
-2026-11-06 收盤起實單的指數部照這套規則（supertrend_core.ST_CUTOVER_DATE）；之前實單照 W52 引擎。
+2026-11-04 收盤起實單的指數部照這套規則（supertrend_core.ST_CUTOVER_DATE）；之前實單照 W52 引擎。
 實單換檔另由實單系統信通知，本腳本只負責「週線／月線翻轉」的即時提醒。研究頁 /backtest/supertrend_vs_live/。
 
 兩種模式：
