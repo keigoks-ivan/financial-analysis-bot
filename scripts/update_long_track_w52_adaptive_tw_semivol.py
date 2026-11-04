@@ -942,7 +942,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 {ARCHIVE_BANNER}
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track-w52-adaptive/">W52 × 自適應波動率（實單主系統）</a> / 台股 B-ii 影子追蹤</div>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track-w52-adaptive/">長線追蹤</a> / 台股 B-ii 影子追蹤</div>
     <h1>台股 B-ii 影子追蹤 — 下跌半變異套袖</h1>
     <div class="sub">台股 0050+2330 · 週線 W52 單線閘門 × <b>B-ii 下跌半變異套袖</b> × cap 1.5 × 執行層 A2 · <b>唯讀影子追蹤頁</b>：與<a href="/long-track-w52-adaptive/">實單主系統</a>訊號完全相同、<b>唯一差異＝台股腿套袖分母改用下跌半變異 D20</b>（美股不在本頁範圍）· 無獨立 email · 不構成倉位建議</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
@@ -1126,9 +1126,7 @@ def main():
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map, main_state)
     html = _w52.inject_delay_banner(html, _w52.delay_lines_for(delays))
-    html = _w52.inject_switch_banner(html, "實盤自此改為美股債金版、台股不借錢版（股票部分上限 100%），原實單規則（cap 1.5＋日線均線確認）降為"
-                                      "<a href=\"/long-track-w52-adaptive/cap15.html\">對照線</a>。本頁文字中的「主系統」指 2026-10-19 前的那套規則，"
-                                      "對照卡讀的是該對照線；本頁維持原規則（只換台股波動分母）繼續每日更新，不受切換影響。")
+    html = _w52.inject_switch_banner(html, "本頁研究 W52 規則，W52 為對照線；實單規則是<a href=\"/long-track-w52-adaptive/\">週線加月線 Supertrend</a>。")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")

@@ -399,7 +399,7 @@ td{{font-variant-numeric:tabular-nums}}td.num,th.num{{text-align:right}}
 {archive_banner('c1')}
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">系統主控台</a> / <a href="/long-track-w52-adaptive/">實單主系統</a> / 債金版影子對照</div>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">系統主控台</a> / <a href="/long-track-w52-adaptive/">長線追蹤</a> / 債金版影子對照</div>
     <h1>債金版影子對照（美股）</h1>
     <div class="sub">股票部分同不借錢版（技術名 cap 1.0，上限 100%），另疊 IEF、GLD 週線趨勢 · 與實單主系統並排追蹤 · 無 email</div>
   </div>
@@ -552,9 +552,7 @@ def main():
         st = build()
         bt = json.loads(BT_JSON.read_text(encoding="utf-8"))
         html = render(st, bt)
-        html = _w52.inject_switch_banner(html, "債金版自此即實盤（美股）。本頁文字中的「實單主系統」「實盤」指 2026-10-19 前的舊規則（cap 1.5＋日線均線確認），"
-                                          "現為<a href=\"/long-track-w52-adaptive/cap15.html\">對照線</a>，本頁的對比線讀的是該對照線；債金版與不借錢版兩條線的算法不變，"
-                                          "生效日後的數字改以實盤主系統頁為準。")
+        html = _w52.inject_switch_banner(html, "本頁研究 W52 規則，W52 為對照線；實單規則是<a href=\"/long-track-w52-adaptive/\">週線加月線 Supertrend</a>。")
     except Abort as e:
         print(f"  ✗ fail-safe: {e} — outputs left unchanged")
         sys.exit(0)

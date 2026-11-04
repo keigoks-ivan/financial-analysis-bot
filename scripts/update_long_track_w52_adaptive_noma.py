@@ -1150,7 +1150,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </div>
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">W52 × 自適應波動率（實單主系統）</a> / 舊規則版</div>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/#live">長線追蹤</a> / W52 無均線版</div>
     <h1>舊規則版 — 唯讀影子</h1>
     <div class="sub">技術名：cap 1.5，無均線層 · 美股 QQQ+SMH ＋ 台股 0050+2330 · 2026-07-18～2026-09-14 的實單規則（cap 固定 <b>1.5</b>，無均線條件）；持有人 {MA_LAYER_START_DATE} 拍板為股票腿加日線均線確認後，本頁降為唯讀影子，供均線層 kill condition 對帳。閘門、套袖分母、執行層與<a href="/long-track/#live">實單主系統</a>逐位元相同。<b>本頁唯讀、不採用為實單、無 email</b>。</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
@@ -1393,9 +1393,7 @@ def main():
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map,
                          main_state=main_state, last_change_desc=last_change_desc)
     html = _w52.inject_delay_banner(html, _w52.delay_lines_for(delays))
-    html = _w52.inject_switch_banner(html, "實盤自此改為美股債金版、台股不借錢版（股票部分上限 100%），原實單規則（cap 1.5＋日線均線確認）降為"
-                                      "<a href=\"/long-track-w52-adaptive/cap15.html\">對照線</a>。本頁文字中的「實單主系統」指 2026-10-19 前的那套規則，"
-                                      "對照卡讀的是該對照線；本頁追蹤的舊規則（無均線層）不受切換影響，繼續每日更新。")
+    html = _w52.inject_switch_banner(html, "本頁研究 W52 規則，W52 為對照線；實單規則是<a href=\"/long-track-w52-adaptive/\">週線加月線 Supertrend</a>。")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")

@@ -1620,7 +1620,7 @@ def _book_quotes(long_track_data, gaps):
         close, w52 = leg.get("wk_close"), leg.get("w52")
         dist = round((close / w52 - 1) * 100, 1) if close and w52 else None
         quotes[f"book:{sym}_w52_dist"] = {
-            "label": f"{sym} 收盤距 52 週均線" + ("（參考，實單已改用 Supertrend）" if st_leg else "（週線閘門）"),
+            "label": f"{sym} 收盤距 52 週均線" + ("（參考）" if st_leg else "（週線閘門）"),
             "val": (f"{dist:+.1f}%" if dist is not None else None),
             "num": dist, "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
         }

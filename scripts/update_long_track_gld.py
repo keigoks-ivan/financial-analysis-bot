@@ -450,7 +450,7 @@ def combo_card() -> str:
     c = COMBO
     return (
         '<div class="section"><h2 class="section-title">組合層：疊進美股實盤系統</h2>'
-        + _plain('這格 sleeve 不是單獨看，而是<b>混進你真正在跑的美股實盤系統</b>（cap 1.5＋A2；2026-11-04 起實單改用 Supertrend）：'
+        + _plain('這格 sleeve 不是單獨看，而是<b>混進你真正在跑的美股實盤系統</b>（週線加月線 Supertrend）：'
                  f'兩者月報酬<b>幾乎不相關（{_mn(c["corr_full"])}）</b>＝真分散。撥 20% 給黃金主列後，'
                  f'整體風險調整報酬（Calmar）由 {_mn(c["cap15_soc"])} 抬到 <b>{_mn(c["cap15_80"])}</b>。')
         + '<div class="card"><div class="tbl-wrap"><table><thead><tr><th>基準</th>'
@@ -575,7 +575,7 @@ def generate_html(sig: dict, change: str | None, last_change_date: str | None,
 
     banner = ('<div class="oos-banner">⚠ <b>前瞻 OOS 追蹤中・尚非實單</b>'
               '——本頁為 GLD 金 sleeve 的<b>候選追蹤</b>（決策前研究通過後開始紙上前瞻紀錄），'
-              '<b>非實際持倉</b>。凍結當時實單非股票部位為 0%；2026-10-19 起美股實單已含黃金與公債腿（各最多 20%）。</div>')
+              '<b>非實際持倉</b>。美股實單已含黃金與公債腿（各最多 20%）。</div>')
 
     plain = ('<div class="plain-box"><span class="pb-tag">💬 白話</span><span class="pb-body">'
              '這頁在做什麼：把「決策前研究」裡驗證過的<b>黃金持有規則</b>（趨勢紅綠燈＋看波動'

@@ -940,7 +940,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 {ARCHIVE_BANNER}
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%（實單主系統）</a> / 不借錢版</div>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track-w52-adaptive/">長線追蹤</a> / W52 不借錢版</div>
     <h1>不借錢版 — 影子對照</h1>
     <div class="sub">技術名：cap 1.0（W52 × 自適應波動率 100%）· 美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應 σ 波動率目標 × 執行層 · <b>cap 1.0（100%）影子對照頁</b>：訊號與<a href="/long-track-w52-adaptive/">實單主系統（cap 1.5）</a>完全相同、只把曝險上限收回 1.0 · 無獨立 email · <span style="opacity:.7">研究代號 變體 C</span></div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
@@ -1136,10 +1136,7 @@ def main():
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map)
     html = _w52.inject_delay_banner(html, _w52.delay_lines_for(delays))
-    html = _w52.inject_switch_banner(html, "這條規則（上限 100%、不借錢）自此即實盤：台股用它，美股的股票部分用它（美股另加公債與黃金，見"
-                                      "<a href=\"/long-track-w52-adaptive/c1-shadow.html\">債金版頁</a>）。本頁維持獨立的一份紀錄，從 2021 年回放起算、自己重放執行層，"
-                                      "當作對實盤的獨立核對；下文「實單主系統」「主系統」指 2026-10-19 前的 cap 1.5 規則，現為"
-                                      "<a href=\"/long-track-w52-adaptive/cap15.html\">對照線</a>。")
+    html = _w52.inject_switch_banner(html, "本頁研究 W52 規則，W52 為對照線；實單規則是<a href=\"/long-track-w52-adaptive/\">週線加月線 Supertrend</a>。")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
