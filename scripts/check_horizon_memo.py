@@ -137,7 +137,7 @@ def brief():
     for r in h["risks"]:
         print(f"- {r['title']}：{r['value']}")
     for s in h["stress"]:
-        print(f"- 壓力（權重紀錄到 11-03 為原規則）{s['label']}：SPY {s['spy']}｜實單美不動 {s['live_us_hold']}／照規則 {s['live_us_rule']}"
+        print(f"- 壓力{s['label']}：SPY {s['spy']}｜實單美不動 {s['live_us_hold']}／照規則 {s['live_us_rule']}"
               f"｜實單台不動 {s['live_tw_hold']}／照規則 {s['live_tw_rule']}｜席位 {s['seats']}")
     print("\n## 盲點（沒配到任何一題的故事線）")
     for b in h["blind_spots"]:

@@ -677,18 +677,18 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
 
   <!-- ══ LONG-TRACK W52-ADAPTIVE STATE ══ -->
   <section class="dt-ep" id="long-track-state">
-    <div class="dt-ep-head"><h2>長線引擎狀態（實單主系統／舊規則對照線／槓桿／台股半年化波動）</h2><span class="dt-path">/long-track-w52-adaptive/{state,leverage_state,tw_semivol_state}.json</span></div>
-    <p class="dt-purpose">長線引擎的完整機制與歷史：<code>state.json</code>＝實單主系統（美 QQQ/SMH、台 0050/2330；2026-11-04 收盤訊號起每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，只做多、不借錢，美股另加 IEF／GLD 各最多 20%；此前為 W52 × 自適應波動率，歷史紀錄不改寫）、<code>w52_state.json</code>＝舊規則（W52 × 自適應波動率 × A2 執行層）對照線、<code>cap15_state.json</code>＝cap 1.5 對照線、<code>leverage_state.json</code>＝槓桿版研究對照（已歸檔，停更）、<code>tw_semivol_state.json</code>＝台股半年化波動變體（非實單訊號，已歸檔，停更）。驅動 <a href="/long-track/#live">系統主控台・實單主系統</a>分頁與各自獨立頁。</p>
+    <div class="dt-ep-head"><h2>長線引擎狀態（實單主系統／W52 對照線／槓桿／台股半年化波動）</h2><span class="dt-path">/long-track-w52-adaptive/{state,leverage_state,tw_semivol_state}.json</span></div>
+    <p class="dt-purpose">長線引擎的完整機制與歷史：<code>state.json</code>＝實單主系統（美 QQQ/SMH、台 0050/2330；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，只做多、不借錢，美股另加 IEF／GLD 各最多 20%）、<code>w52_state.json</code>＝W52 × 自適應波動率 × A2 執行層的對照線、<code>cap15_state.json</code>＝cap 1.5 對照線、<code>leverage_state.json</code>＝槓桿版研究對照（已歸檔，停更）、<code>tw_semivol_state.json</code>＝台股半年化波動變體（非實單訊號，已歸檔，停更）。驅動 <a href="/long-track/#live">系統主控台・實單主系統</a>分頁與各自獨立頁。</p>
     <div class="dt-facts">
-      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每個交易日兩班（台股收盤後 07:00 UTC＝台北 15:00；美股收盤後 21:35 UTC＝台北隔日 05:35）· workflow <code>update_long_track_w52_adaptive</code> 依序跑主系統與兩條舊規則對照線（<code>--profile cap15</code>、<code>--profile w52</code>）；<code>leverage_state.json</code>、<code>tw_semivol_state.json</code> 已於 2026-10-18 歸檔，不在排程內</span></div>
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每個交易日兩班（台股收盤後 07:00 UTC＝台北 15:00；美股收盤後 21:35 UTC＝台北隔日 05:35）· workflow <code>update_long_track_w52_adaptive</code> 依序跑主系統與兩條對照線（<code>--profile cap15</code>、<code>--profile w52</code>）；<code>leverage_state.json</code>、<code>tw_semivol_state.json</code> 已於 2026-10-18 歸檔，不在排程內</span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>data_date</code> = 權重計算基準的週線資料日；<code>generated_at</code> = 產生時戳；<code>ruleset_locked_date</code> = 規則凍結日</span></div>
     </div>
     <div class="dt-tablewrap"><table class="dt-schema">
       <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
       <tbody>
-        <tr><td class="f">mechanism</td><td class="ty">string</td><td>文字描述門檻與 cap（W52 閘門 × 自適應 σ_t × 股票上限 100% × 執行層 A2；美股另有公債、黃金週線疊加）</td></tr>
+        <tr><td class="f">mechanism</td><td class="ty">string</td><td>文字描述水位規則（週線 70％＋月線 30％ Supertrend、股票上限 100％；美股另有公債、黃金疊加）</td></tr>
         <tr><td class="f">status</td><td class="ty">string</td><td>LIVE（主系統）／研究對照（槓桿版、tw-semivol）+ 生效日與復審條件</td></tr>
-        <tr><td class="f">leverage</td><td class="ty">string</td><td>僅主系統另有：2026-10-19 起不借錢的說明與美股公債、黃金疊加的資金來源；此前為槓桿段融資假設（台股須用期貨）</td></tr>
+        <tr><td class="f">leverage</td><td class="ty">string</td><td>僅主系統另有：不借錢的說明與美股公債、黃金疊加的資金來源</td></tr>
         <tr><td class="f">last_change_date / last_change_desc</td><td class="ty">string</td><td>最近一次曝險變動日期與說明（無變動為 null）</td></tr>
         <tr><td class="f">weights / combined_exposure_us_pct / combined_exposure_tw_pct</td><td class="ty">object/number</td><td>各成分權重、美／台合併曝險百分比</td></tr>
         <tr><td class="f">tickers</td><td class="ty">object</td><td>逐檔：market／gate／sigma_base_pct／sigma_t_pct／rv20_pct／raw_ratio／levered／sleeve_weight／final_weight_pct／executed_pct／wk_date／wk_close／w52／w104／w250／s104_pos／s250_pos</td></tr>

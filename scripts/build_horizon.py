@@ -384,6 +384,37 @@ def sim_live(hist, legs, px, start, end):
     return round((nav - 1) * 100, 1)
 
 
+ST_SYM = {"QQQ": "QQQ", "SMH": "SMH", "0050": "0050.TW", "2330": "2330.TW"}
+
+
+def st_history(legs, since="2018-06-01"):
+    """Supertrend 規則逐日回推的權重歷史（格式同 state.json 的 history_*：final_pct＝帳戶內該腿持股 %）。
+    每檔水位＝0.7×週線＋0.3×月線（只用當天已收完的 K 棒），占該市場 50%；
+    前一個交易日收盤的訊號在隔天收盤調到位，所以每列用前一日的水位，最後一列用最新訊號。"""
+    import pandas as pd
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import supertrend_core as stc
+    lv, idx = {}, None
+    for l in legs:
+        sym = ST_SYM[l]
+        ohlc, _ = stc.fetch_ohlc(sym)
+        n, f = stc.ST_PARAMS[sym]
+        frames = stc.make_frames(ohlc, n, f)
+        dates = [d for d in ohlc.index if str(d.date()) >= since]
+        lv[l] = {}
+        for d in dates:
+            st = stc.state_asof(frames, d)
+            if st.get("week") and st.get("month"):
+                lv[l][d] = stc.level_pct(st["week"]["dir"], st["month"]["dir"])
+        idx = sorted(set(lv[l]) if idx is None else set(idx) & set(lv[l]))
+    rows = []
+    for i, d in enumerate(idx):
+        src = idx[i] if i == len(idx) - 1 else idx[i - 1] if i > 0 else d
+        rows.append({"date": str(d.date()),
+                     "tickers": {l: {"final_pct": lv[l][src] * 0.5} for l in legs}})
+    return rows
+
+
 # ───────────────────────── 主流程 ─────────────────────────
 
 def main():
@@ -398,6 +429,13 @@ def main():
     ledger = load(DOCS / "engine" / "arena-ledger.json", {}) or {}
     cards = load(DOCS / "engine" / "cards.json", {}) or {}
     live = load(DOCS / "long-track-w52-adaptive" / "state.json", {}) or {}
+    if not no_prices:
+        try:   # 權重歷史改用 Supertrend 逐日回推（state.json 的舊紀錄不用於績效與壓力測試）
+            live = dict(live)
+            live["history_us"] = st_history(["QQQ", "SMH"])
+            live["history_tw"] = st_history(["0050", "2330"])
+        except Exception as e:  # noqa: BLE001
+            print(f"  Supertrend 權重回推失敗，沿用 state.json：{type(e).__name__}: {e}")
     threads = (load(DOCS / "intel" / "data" / "threads.json", {}) or {}).get("threads", [])
     sahm = compute_sahm(load(ROOT / "data" / "sahm_rule.json", {}) or {})
 
@@ -604,7 +642,7 @@ def main():
         if p1:
             strategy.append({"label": label, "window": "近 1 年", "ret": p1["ret"], "bench": p1["bench"],
                              "bench_label": "同標的等權持有", "diff": round(p1["ret"] - p1["bench"], 1),
-                             "note": "權重含回測期（實單 2026-07-18 起）",
+                             "note": "權重為 Supertrend 規則逐日回推",
                              "link": "/long-track-w52-adaptive/"})
     # 席位：現任名單自上次換席日以來等權報酬 vs SPY
     sd = parse_date(snap.get("date"))
