@@ -266,7 +266,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
     </nav>
   </div>
 </header>
-<div class="imq-subnav"><div class="imq-subnav-inner"><a href="/dd-screener/">總覽</a><a href="/dd-screener/tw/">台股池</a><a href="/dd-screener/roic-matrix.html">ROIC 矩陣</a><a href="/dd-screener/pipeline.html">Pipeline</a><a href="/dd-screener/quality-entry.html">Quality-Entry</a><a href="/dd-screener/cyclical-track.html">衛星·循環軌</a><a href="/dd-screener/sop-funnel.html">SOP Funnel</a><a href="/dd-screener/sop-funnel-backtest.html">SOP 回測</a></div></div>
+<div class="imq-subnav"><div class="imq-subnav-inner"><a href="/dd-screener/">總覽</a><a href="/dd-screener/tw/">台股池</a><a href="/dd-screener/roic-matrix.html">ROIC 矩陣</a><a href="/cockpit/#pipeline">選股主控台</a><a href="/dd-screener/sop-funnel.html">SOP Funnel</a><a href="/dd-screener/sop-funnel-backtest.html">SOP 回測</a></div></div>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
 
 <div class="hero">
@@ -284,12 +284,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
 <section class="ath-spotlight" id="ath-spotlight" aria-label="近 ATH 個股快速導航">
   <span class="ath-label">近 5Y 新高（日線 ≥ −2% · ≤ 10D）：</span>
   <span class="ath-empty" id="ath-empty-placeholder" style="display:none">暫無 ticker 觸頂</span>
-</section>
-
-<section class="pe-track" id="pe-track" aria-label="近期財報修正">
-  <div class="pe-head"><b>近期財報修正</b><span class="pe-sub" id="pe-sub"></span></div>
-  <div class="pe-note">財報公布後的頭兩個交易日，分析師把篩選用的兩個年度的 EPS 預估改了多少。這是研究用的檢視，不進排名，也不是買賣訊號。</div>
-  <div class="pe-body" id="pe-body"></div>
 </section>
 
 <div class="filter-row">
@@ -431,11 +425,11 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
 
       <div style="display:flex;flex-direction:column;gap:11px">
         <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--line-soft);border-left:3px solid var(--accent);border-radius:6px">
-          <div><strong style="color:var(--ink)">形狀掃描 — 橫切雷達（找候選）</strong>（明細已移駐 <a href="/dd-screener/pipeline.html">Pipeline</a> 發現層）<br>
+          <div><strong style="color:var(--ink)">形狀掃描 — 橫切雷達（找候選）</strong>（明細已移駐 <a href="/cockpit/#pipeline">選股主控台</a>）<br>
           <span style="color:var(--sec)"><strong style="color:var(--ink)">這是「找多倍股」的核心表格。</strong>用形狀過濾（不用覆蓋、不用市值過濾）：系統性掃全市場（美股主板自訂條件 screen，非當日漲幅榜）撈「營收成長加速（+20% 以上）+ 股價轉強 + 毛利穩定」的股票——過去多倍股起漲的長相。trailing 之上疊<strong style="color:var(--ink)">前瞻確認</strong>：多倍股的本質是「市場尚未 price in 的持續成長」，所以用分析師預估（universe 內 Koyfin FY1→FY3 EPS CAGR 與主表同源；外用 FY+1 營收預估）標 🟢續強/🔴反轉/⚪無預估，<strong style="color:var(--ink)">排序取 min(trailing, 前瞻)</strong>——trailing 數據強勁但前瞻反轉的基期效應/週期頂自動沉底。再加<strong style="color:var(--ink)">加速度（📈 營運槓桿點火中）、覆蓋狀態（🔭盲區/🟡有ID/✅有DD）、市值級距、連續在榜週數</strong>四層標籤而非剔除。大型股照樣翻倍（NVDA $300B→$3T、MU 記憶體循環），只是靠週期/重定價而非「尚未被發現」。<em style="color:var(--sec);font-style:normal">用途：這是候選清單——📈×🟢×✅有DD 疊加是最強訊號；尚未覆蓋者（尤其🔭盲區）列為建 DD 優先順序。它找的是「候選」不是「確定多倍股」，是否進場由 DD 判斷。</em></span></div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--line-soft);border-left:3px solid var(--accent);border-radius:6px">
-          <div><strong style="color:var(--warn)">管線① 多倍候選池 — ID 已見、未建 DD</strong>（縱向管線起點｜明細已移駐 <a href="/dd-screener/pipeline.html">Pipeline</a> 發現層）<br>
+          <div><strong style="color:var(--warn)">管線① 多倍候選池 — ID 已見、未建 DD</strong>（縱向管線起點｜明細已移駐 <a href="/cockpit/#pipeline">選股主控台</a>）<br>
           <span style="color:var(--sec)">產業報告 §9 標為 <strong style="color:var(--ink)">🔴 核心受益</strong>、但還沒做個股 DD 的名單。排序刻意<strong style="color:var(--ink)">按市值（小 / 中優先）× 純度 × 5 年需求倍數</strong>，不按「被幾份 ID 提到」——後者量的是研究注意力重疊，與未被發現的多倍股反相關。<em style="color:var(--sec);font-style:normal">用途：決定下一份 DD 的研究預算配置對象。</em></span></div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--paper);border-left:3px solid var(--accent);border-radius:6px">
@@ -687,6 +681,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
   </div><!-- /.col-footnote -->
 
 </div>
+
+<section class="pe-track" id="pe-track" aria-label="近期財報修正">
+  <div class="pe-head"><b>近期財報修正</b><span class="pe-sub" id="pe-sub"></span></div>
+  <div class="pe-note">財報公布後的頭兩個交易日，分析師把篩選用的兩個年度的 EPS 預估改了多少。這是研究用的檢視，不進排名，也不是買賣訊號。</div>
+  <div class="pe-body" id="pe-body"></div>
+</section>
 
 <script>
 // 護城河評等白話對照（字母代碼降小字，主名用等第詞）— 對應 moat_grade / moat_trend。
