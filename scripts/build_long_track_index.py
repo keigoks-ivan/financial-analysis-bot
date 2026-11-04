@@ -352,14 +352,22 @@ def render_today_strip() -> str:
 
     tickers = state.get("tickers", {})
     data_date = state.get("data_date", "—")
-    last_change_date = state.get("last_change_date") or "—"
-    _desc = state.get("last_change_desc") or "尚無紀錄"
+    # 實盤頁顯示層（state.display）：整段歷史當作一直都是 Supertrend，水位即現持；有就優先用，沒有才走下面的舊欄位
+    disp = state.get("display") if isinstance(state.get("display"), dict) and state["display"].get("tickers") else None
+    last_change_date = (disp or state).get("last_change_date") or "—"
+    _desc = (disp or state).get("last_change_desc") or "尚無紀錄"
     # 顯示換算：state 舊格式 desc（組合 pp）→ 水位；與主程式共用同一個 _desc_levels，state 不改
     from update_long_track_w52_adaptive import _desc_levels  # noqa: E402
     _desc = _desc_levels(_desc)
     last_change_desc = html.escape(_desc, quote=False)
 
     def leg_span(t):
+        if disp:
+            dk = disp["tickers"].get(t)
+            if not dk:
+                return f'<span class="leg"><b>{t}</b>：—</span>'
+            return (f'<span class="leg"><b>{t}</b> 週線{"多" if dk.get("w") else "空"}／月線{"多" if dk.get("m") else "空"}'
+                    f'｜水位 {dk.get("level_pct", "—")}%</span>')
         tk = tickers.get(t)
         if not tk:
             return f'<span class="leg"><b>{t}</b>：—</span>'
@@ -374,6 +382,12 @@ def render_today_strip() -> str:
         return (f'<span class="leg"><b>{t}</b> {gate}｜水位 目標 {final}%｜現持 {exe}%</span>')
 
     def mkt_block(name, legs, exp_key):
+        if disp:
+            rows = "".join(leg_span(t) for t in legs)
+            return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
+                    f'<div class="tstrip-exp">指數部股票曝險（Supertrend 週線 70%＋月線 30%，每檔水位只有 100／70／30／0%，兩檔水位平均）'
+                    f'<b>{disp.get(exp_key, "—")}%</b></div>'
+                    f'<div class="tstrip-legs">{rows}</div></div>')
         exp = state.get(exp_key, "—")
         vals = [tickers[t].get("held_before_pct", tickers[t]["executed_pct"]) for t in legs if isinstance(tickers.get(t), dict) and "executed_pct" in tickers[t]]
         exec_sum = round(sum(vals), 1) if len(vals) == len(legs) and legs else "—"
@@ -390,8 +404,8 @@ def render_today_strip() -> str:
 
     us_block = mkt_block("美股 QQQ + SMH", ["QQQ", "SMH"], "combined_exposure_us_pct")
     tw_block = mkt_block("台股 0050 + 2330", ["0050", "2330"], "combined_exposure_tw_pct")
-    change_line = f'最近一次執行層變動：<b>{last_change_date}</b>｜{last_change_desc}'
-    ov = state.get("overlay") or {}
+    change_line = f'最近一次{"水位" if disp else "執行層"}變動：<b>{last_change_date}</b>｜{last_change_desc}'
+    ov = (disp or {}).get("overlay") or state.get("overlay") or {}
     if all(k in ov for k in ("ief", "gld")):
         def _ov(k, nm):
             o = ov[k]
@@ -623,7 +637,7 @@ def render() -> str:
 </div>
 <div class="console-tab-panel" id="panel-overview">{overview_body}</div>
 <div class="console-tab-panel" id="panel-live">
-  <p class="console-embed-note">Supertrend 週線＋月線（美股債金版・台股不借錢版）· 2026-11-04 收盤起實單主系統（之前為 W52 × 自適應波動率） · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/live_system_evidence/">這套系統的證據總覽（12 頁，白話）→</a> · <a href="#scoreboard">跳到記分板 →</a></p>
+  <p class="console-embed-note">Supertrend 週線＋月線（美股債金版・台股不借錢版）· 實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/live_system_evidence/">這套系統的證據總覽（12 頁，白話）→</a> · <a href="#scoreboard">跳到記分板 →</a></p>
   <iframe class="console-embed-frame" id="live-frame" data-src="/long-track-w52-adaptive/_body.html" title="實單主系統" scrolling="no" loading="lazy"></iframe>
 </div>
 <div class="console-tab-panel" id="panel-scoreboard">

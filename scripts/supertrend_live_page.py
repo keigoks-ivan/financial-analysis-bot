@@ -82,8 +82,10 @@ def status_card(sigs: dict, legs: list, exec_last: dict, mode: str, cutover: str
         rows += (f'<tr><td><b>{t}</b></td><td>{_dir_pill(w["dir"])}</td>{cell("week", w)}'
                  f'<td>{_dir_pill(m["dir"])}</td>{cell("month", m)}'
                  f'<td class="num"><b>{lv}%</b></td>'
-                 f'<td class="num">{"—" if cur_lv is None else f"{cur_lv:.0f}%"}'
-                 f'{"" if cur_lv is None or abs(cur_lv - lv) <= 1e-9 else f" → <b>{lv}%</b>"}</td></tr>\n')
+                 + ('' if mode == "pure" else
+                    f'<td class="num">{"—" if cur_lv is None else f"{cur_lv:.0f}%"}'
+                    f'{"" if cur_lv is None or abs(cur_lv - lv) <= 1e-9 else f" → <b>{lv}%</b>"}</td>')
+                 + '</tr>\n')
     if mode == "preview":
         title = f"Supertrend 預覽（{cutover} 收盤起實單照這套，現在還沒生效）"
         lead = (f"實單指數部四檔從 {cutover}（週{_wd(cutover)}）收盤的訊號起改看 Supertrend，下一個交易日下單；在那之前仍照 W52 規則。"
@@ -93,6 +95,11 @@ def status_card(sigs: dict, legs: list, exec_last: dict, mode: str, cutover: str
         elif any(sigs[t].get("st") for t in legs):
             lead += "如果今天就切換，這個市場的水位不用動。"
         lvl_hdr = "預覽水位"
+    elif mode == "pure":
+        title = "Supertrend 現況"
+        lead = ("每檔水位＝70% 看週線、30% 看月線，各自多頭才持有；所以水位只會是 100／70／30／0%。"
+                "週線在每週最後一個交易日收盤後判定、月線在月底收盤後判定，下一個交易日調整。")
+        lvl_hdr = "水位"
     else:
         title = "Supertrend 現況"
         lead = ("每檔水位＝70% 看週線、30% 看月線，各自多頭才持有；所以水位只會是 100／70／30／0%。"
@@ -104,7 +111,7 @@ def status_card(sigs: dict, legs: list, exec_last: dict, mode: str, cutover: str
 <h3 style="color:var(--brand)">{title}</h3>
 <p style="font-size:.82rem;color:var(--muted);margin-bottom:.7rem">{lead}</p>
 <div class="tablewrap"><table>
-<thead><tr><th>檔</th><th>週線</th><th class="num">線值</th><th>翻轉門檻</th><th>月線</th><th class="num">線值</th><th>翻轉門檻</th><th class="num">{lvl_hdr}</th><th class="num">{"現持水位（下單前）" if mode != "preview" else "現持水位"}</th></tr></thead>
+<thead><tr><th>檔</th><th>週線</th><th class="num">線值</th><th>翻轉門檻</th><th>月線</th><th class="num">線值</th><th>翻轉門檻</th><th class="num">{lvl_hdr}</th>{'' if mode == "pure" else f'<th class="num">{"現持水位（下單前）" if mode != "preview" else "現持水位"}</th>'}</tr></thead>
 <tbody>{rows}</tbody></table></div>
 <div style="font-size:.76rem;color:var(--muted);margin-top:.5rem">多頭時線在價格下方、當作支撐；空頭時線在價格上方、當作壓力。門檻是進行中那根 K 棒目前的線值，收完前會小幅移動，以收盤為準。＊ 新的一根 K 棒還沒開始，先用上一根的線值近似。參數：美股 ATR 14、倍數 3，台股 ATR 14、倍數 2，用沒有調整股息的 K 線。</div>
 </div>"""
@@ -165,7 +172,7 @@ def pre_notice(cutover: str, decision: str) -> str:
 def banner_live(cutover: str, decision: str, shadow_url: str) -> str:
     return f"""<div class="oos-banner">
   <span class="tag-loud">實單主系統・{cutover} 收盤起：指數部四檔照 Supertrend・email 提醒換檔</span>
-  <div style="font-size:.86rem">本頁是實單主系統。<b>{cutover} 起（持有人 {decision} 拍板）</b>指數部四檔（美股 QQQ、SMH，台股 0050、2330）改看 <b>Supertrend</b>：每檔 70% 看週線、30% 看月線，各自多頭才持有，所以每檔水位只有 100%、70%、30%、0% 四種。不借錢，也沒有執行層門檻：週線在每週最後一個交易日收盤後判定、月線在月底收盤後判定，下一個交易日一次調到目標水位。
+  <div style="font-size:.86rem">本頁是實單主系統。<b>{cutover} 起（持有人 {decision} 拍板）</b>指數部四檔（美股 QQQ、SMH，台股 0050、2330）改看 <b>Supertrend</b>：每檔 70% 看週線、30% 看月線，各自多頭才持有，所以每檔水位只有 100%、70%、30%、0% 四種。不借錢，也沒有調整門檻：週線在每週最後一個交易日收盤後判定、月線在月底收盤後判定，下一個交易日一次調到目標水位。
   <br><br><b>怎麼讀</b>：線在價格下方是多頭、當作支撐，收盤跌破就翻空；線在價格上方是空頭，收盤站上就翻多。美股用 ATR 14、倍數 3，台股用 ATR 14、倍數 2，K 線用沒有調整股息的價格。下方「Supertrend 現況」列出每檔目前的方向、線值，以及這一週、這個月收盤到哪個價位會翻。
   <br><br><b>債金疊加</b>：美股公債（IEF）與黃金（GLD）各最多 20%（占指數部淨值）同一天也改成 Supertrend，各自 70% 週線＋30% 月線，每項只有 20%、14%、6%、0% 四種水位；ATR 14、倍數 3。換倉方式不變，只是每次的量變成水位差。生效日前仍是週線三個條件。台股沒有債金。
   <br><br><b>為什麼改，以及要保守看的地方</b>：回測裡美股 Supertrend 與原規則打平（Calmar 0.78 對 0.76），下單次數少六成；台股領先主要來自 2008 年，2010 年以後兩者接近。參數是看過鄰近表才選的，跨標的檢驗 33 檔裡只有 14 檔的 Calmar 勝過原規則。數字在下方「回測與統計」。<b>退回條件目前尚未訂定</b>，由持有人另訂後寫進規則帳本。
@@ -230,4 +237,55 @@ def shadow_banner(cutover: str, live_url: str) -> str:
   <div style="font-size:.86rem">本頁保留 {cutover} 前的實單規則（<b>W52 閘門 × 自適應波動率 × 執行層，上限 100%、不借錢，美股另加債金</b>），每交易日照常更新，用來和現行實單（<a href="{live_url}">Supertrend</a>）並排看。{cutover} 起實單改看 Supertrend；本頁的紀錄與實單在生效日前逐筆相同，之後各自往下走。以下規則說明與回測數字是 W52 規則的版本。</div>
 </div>
 
+"""
+
+
+def banner_pure() -> str:
+    """實單頁頂端說明（顯示層：整段歷史當作一直都是 Supertrend，不提舊規則）。"""
+    return """<div class="oos-banner">
+  <span class="tag-loud">實單主系統・指數部四檔照 Supertrend・email 提醒換檔</span>
+  <div style="font-size:.86rem">本頁是實單主系統。指數部四檔（美股 QQQ、SMH，台股 0050、2330）每檔 <b>70% 看週線、30% 看月線</b>的 Supertrend，各自多頭才持有，所以每檔水位只有 100%、70%、30%、0% 四種。不借錢，也沒有調整門檻：週線在每週最後一個交易日收盤後判定、月線在月底收盤後判定，下一個交易日一次調到目標水位。
+  <br><br><b>怎麼讀</b>：線在價格下方是多頭、當作支撐，收盤跌破就翻空；線在價格上方是空頭，收盤站上就翻多。美股用 ATR 14、倍數 3，台股用 ATR 14、倍數 2，K 線用沒有調整股息的價格。下方「Supertrend 現況」列出每檔目前的方向、線值，以及這一週、這個月收盤到哪個價位會翻。
+  <br><br><b>債金疊加</b>：美股公債（IEF）與黃金（GLD）各最多 20%（占指數部淨值），同樣各自 70% 週線＋30% 月線，每項只有 20%、14%、6%、0% 四種水位；ATR 14、倍數 3。台股沒有債金。
+  <br><br><b>要保守看的地方</b>：參數是看過鄰近表之後才選的，回測數字是挑選後的上界，不是預期值。</div>
+</div>
+
+"""
+
+
+W52_LINE = ('<div style="font-size:.82rem;color:var(--muted);margin:.8rem 0 1rem">'
+            '原規則（W52）的對照線見 <a href="/long-track-w52-adaptive/w52.html">/long-track-w52-adaptive/w52.html</a></div>')
+
+
+def rules_pure() -> str:
+    """規則說明（顯示層）：Supertrend 規則、債金疊加、揭露；不放沿革，結尾只留一行對照線連結。"""
+    return f"""<div class="card">
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則說明（點開看 Supertrend 規則、債金疊加與揭露，白話版）</summary>
+<div style="margin-top:.9rem">
+<div class="card">
+<h3>追蹤主系統規則（Supertrend）</h3>
+<div class="rule-list">
+① <b>四檔、兩市場</b>：美股 {{QQQ、SMH}}、台股 {{0050、2330}}，每檔各有自己的水位。兩檔各占各市場指數部的一半，所以水位 ÷ 2 就是該檔占指數部淨值的比例。個股部位不在這個系統內。<br>
+② <b>Supertrend 是什麼</b>：一條依平均真實波幅（ATR，近 14 根 K 棒的平均波動）上下推開的追蹤線，算法照 TradingView 內建的 <code>ta.supertrend</code>，取 K 棒高低點中間價。收盤站上線是多頭，跌破線是空頭；倍數越大，線離價格越遠，訊號越慢。美股 ATR 14、倍數 3，台股 ATR 14、倍數 2；TradingView 預設是 ATR 10、倍數 3，要對照請先改成這兩組。K 線用沒有調整股息的價格（已調整拆股）。<br>
+③ <b>水位</b>＝70% × 週線（多為 1、空為 0）＋30% × 月線（多為 1、空為 0），只做多，所以只有 100%、70%、30%、0% 四種。週線以週五為一週最後一天，月線以日曆月底；一根 K 棒要等那一期最後一個平日收盤後才算數，沒收完的那根只看門檻、不下單。<br>
+④ <b>執行</b>：訊號日收盤判定，下一個交易日調到目標水位，一次到位，不分段、不設門檻、不取整。成本與回測一致（每邊 7 個基點）。不借錢，水位上限 100%。<br>
+⑤ <b>債金疊加（美股）</b>：IEF 與 GLD 各最多 20%（占指數部淨值），各看 Supertrend，70% 週線＋30% 月線，水位 20／14／6／0%，週五或月底收盤判定、下一個交易日換倉。台股沒有這一層。<br>
+⑥ <b>資料</b>：yfinance 未調股息日 K；台股最新一兩根若 yfinance 晚到，用證交所官方日 K 補，補不上就標「資料延遲」、不換倉。<br>
+<span style="color:var(--muted);font-size:.78rem">本頁每交易日更新（台股收盤後、美股收盤後各一次）。週線或月線翻轉當天水位一定會變，會出現在換倉提醒裡；另有「Supertrend 週線／月線翻轉通知」在翻轉確認時，以及週五預警（K 棒還沒收完就站到線的另一邊）時另外寄信。</span>
+</div>
+</div>
+
+<div class="card" style="border:2px solid var(--amber-border);background:var(--amber-bg)">
+<h3 style="color:var(--amber-text)">誠實揭露（採用前必讀）</h3>
+<div class="rule-list" style="font-size:.82rem">
+① <b>參數是看過結果才選的</b>：看過 9 格鄰近表之後選了美股 ATR 14／倍數 3、台股 ATR 14／倍數 2，回測數字是挑選後的上界，不是預期值。<br>
+② <b>急跌時留三成</b>：月線那 30% 在急跌時不會賣，疫情那一段美股只用月線的版本跌幅和一直抱著幾乎一樣。<br>
+③ <b>債金疊加只在美股測過</b>，債券與黃金在 2005 至 2026 年整體順風，升息期（2022 至 2023 年）沒有保護。
+</div>
+</div>
+</div>
+</details>
+</div>
+{W52_LINE}
 """
