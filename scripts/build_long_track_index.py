@@ -410,9 +410,7 @@ def render_today_strip() -> str:
                         f'{_ov("ief", "公債（IEF）")}；{_ov("gld", "黃金（GLD）")}')
 
     shadow_entries = [   # (顯示名, market key, shadow key)
-        ("S-60（美）", "us", "s60"), ("S-F（美）", "us", "sf"),
-        ("S-A10（美）", "us", "sa10"), ("S-F70（美）", "us", "sf70"),
-        ("S-60（台）", "tw", "s60"), ("S-A10（台）", "tw", "sa10"),
+        ("S-60（美）", "us", "s60"), ("S-60（台）", "tw", "s60"),
     ]
     shadows = scoreboard.get("shadows", {})
     shadow_rows = ""

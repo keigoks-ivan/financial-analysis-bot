@@ -582,7 +582,7 @@ def inject_switch_banner(html: str, text_html: str) -> str:
     「實單主系統」「現行」在 2026-10-19 前後各指哪一套規則。"""
     banner = ('<div style="background:#eef4ff;border:1px solid #c9d9f5;border-radius:8px;'
               'padding:.8rem 1.1rem;margin:1rem 0;font-size:.86rem;color:#0f1f3d;line-height:1.7">'
-              f'<b>{RULE_SWITCH_DATE} 規則切換</b>　{text_html}</div>\n')
+              f'{text_html}</div>\n')
     i = html.find('class="page-hdr"')
     j = html.find('<div class="container">', i) if i >= 0 else -1
     if j >= 0:
@@ -2333,25 +2333,23 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
     old_banner／old_rules 是舊實盤頁原文（cap15 對照線沿用，live 另寫新文）。"""
     sw = RULE_SWITCH_DATE
     if PROFILE == "cap15":
-        old_rules = old_rules.replace("本頁為實單主系統、發 email 提醒", f"本頁自 {sw} 起為對照線、不寄信")
+        old_rules = old_rules.replace("本頁為實單主系統、發 email 提醒", "本頁為對照線、不寄信")
         return {
-            "title": "W52 × 自適應波動率 150%｜舊規則對照線（cap 1.5＋均線） | InvestMQuest Research",
-            "desc": f"{sw} 前的實單規則（cap 1.5＋日線均線確認），{sw} 起降為對照線，每日照常更新、不下單、不寄信。",
-            "crumb": "W52 × 自適應波動率 150%（舊規則對照線）",
-            "h1": "W52 × 自適應波動率 150% — 舊規則對照線",
+            "title": "W52 × 自適應波動率 150%｜對照線（cap 1.5＋均線） | InvestMQuest Research",
+            "desc": "W52 閘門 × 自適應波動率 cap 1.5＋日線均線確認的對照線，每日照常更新、不下單、不寄信；實單規則是 Supertrend。",
+            "crumb": "W52 × 自適應波動率 150%（對照線）",
+            "h1": "W52 × 自適應波動率 150% — 對照線",
             "sub": (f"美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應波動率 <b>cap_eff</b>（w = 閘門 × min(cap_eff, σ_t/RV20)；"
-                    f"{RULE_REVISION_DATE} 起加日線均線確認，全對 cap_eff=1.5、否則 1.0）× 執行層 · 這是 2026-07-18 至 {sw} 前的實單規則，"
-                    f"<b>{sw} 起降為對照線</b>，紀錄與實盤在生效日前逐筆相同"),
+                    f"{RULE_REVISION_DATE} 起加日線均線確認，全對 cap_eff=1.5、否則 1.0）× 執行層 · 對照線"),
             "pills": (f'<a href="/long-track-w52-adaptive/" style="{PILL_ON}">實單主系統（現行）</a>'
                       f'<a href="/long-track-w52-adaptive/w52.html" style="{PILL_ON}">W52 對照線</a>'
-                      f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_ON}">舊規則 cap 1.5（本頁）</a>'),
-            "banner": (f'<div class="oos-banner">\n  <span class="tag-loud">對照線・{sw} 起不下單、不寄信</span>\n'
-                       f'  <div style="font-size:.86rem">本頁保留 {sw} 前的實單規則（<b>W52 閘門 × 自適應波動率 cap_eff 最高 1.5 × 執行層 A2</b>，'
-                       f'{RULE_REVISION_DATE} 起含日線均線確認），每交易日照常更新，用來和之後的規則並排看。'
-                       f'2026-11-04 起實單改用 Supertrend（週線＋月線），見<a href="/long-track-w52-adaptive/">實單主系統頁</a>；10-19 至 11-03 的 W52 不借錢＋債金版見<a href="/long-track-w52-adaptive/w52.html">W52 對照線</a>。以下規則說明與回測數字都是舊規則的版本。</div>\n</div>\n\n'),
+                      f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_ON}">cap 1.5 對照線（本頁）</a>'),
+            "banner": ('<div class="oos-banner">\n  <span class="tag-loud">對照線・不下單、不寄信</span>\n'
+                       '  <div style="font-size:.86rem">本頁研究 W52 規則，W52 為對照線；實單規則是<a href="/long-track-w52-adaptive/">Supertrend</a>。'
+                       '以下規則說明與回測數字都是 W52 cap 1.5＋均線版本（W52 閘門 × 自適應波動率 cap_eff 最高 1.5 × 執行層 A2）。</div>\n</div>\n\n'),
             "above_cards": "",
             "rules": old_rules,
-            "footer": f"W52 × 自適應波動率 150%（美+台）· 舊規則對照線（{sw} 起）",
+            "footer": "W52 × 自適應波動率 150%（美+台）· 對照線",
         }
     # ---- live（新實盤）----
     s_us = sigs["QQQ"].get("rule") == NEW_RULE_TAG
@@ -2454,19 +2452,19 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
     cut, dec = ST_CUTOVER_DATE, ST_CUTOVER_DECISION_DATE
     if SHADOW:       # W52 對照線：沿用 W52 規則全文，只換抬頭與橫幅
         pg.update({
-            "title": "W52 × 自適應波動率｜Supertrend 切換前的實單規則（對照線） | InvestMQuest Research",
-            "desc": f"{cut} 前的實單規則（W52 閘門 × 自適應波動率 × 執行層，上限 100%、不借錢，美股另加債金）；{cut} 起實單改看 Supertrend，本頁降為對照線，每日更新、不寄信。",
+            "title": "W52 × 自適應波動率｜對照線 | InvestMQuest Research",
+            "desc": "W52 閘門 × 自適應波動率 × 執行層（上限 100%、不借錢，美股另加債金）的對照線，每日更新、不寄信；實單規則是 Supertrend。",
             "crumb": "W52 × 自適應波動率（對照線）",
             "h1": "W52 × 自適應波動率 — 對照線",
-            "sub": f"美股 QQQ+SMH（債金版）＋ 台股 0050+2330（不借錢版）· 週線 W52 閘門 × 自適應波動率 × 執行層 · {cut} 前的實單規則，{cut} 起降為對照線，紀錄與實單在生效日前逐筆相同",
+            "sub": "美股 QQQ+SMH（債金版）＋ 台股 0050+2330（不借錢版）· 週線 W52 閘門 × 自適應波動率 × 執行層 · 對照線",
             "pills": (f'<a href="{live_url}" style="{PILL_OFF}">實單主系統（Supertrend）</a>'
                       f'<a href="{shadow_url}" style="{PILL_ON}">W52 規則（本頁）</a>'
                       f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5</a>'
-                      f'<a href="/backtest/supertrend_vs_live/" style="{PILL_OFF}">Supertrend 對實單</a>'),
+                      f'<a href="/backtest/supertrend_vs_live/" style="{PILL_OFF}">Supertrend 對 W52</a>'),
             "banner": stp.shadow_banner(cut, live_url),
-            "footer": f"W52 × 自適應波動率 · 對照線（{cut} 起；實單改看 Supertrend）",
+            "footer": "W52 × 自適應波動率 · 對照線",
         })
-        pg["rules"] = pg["rules"].replace("本頁為實單主系統、發 email 提醒", f"本頁自 {cut} 起為對照線、不寄信")
+        pg["rules"] = pg["rules"].replace("本頁為實單主系統、發 email 提醒", "本頁為對照線、不寄信")
         return pg
     if PURE:         # 實盤頁顯示層：整頁當作一直都是 Supertrend，頁面不提舊規則（只留一行對照線連結）
         pg.update({
@@ -2493,7 +2491,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
             "pills": (f'<a href="{live_url}" style="{PILL_ON}">實單主系統（本頁）</a>'
                       f'<a href="{shadow_url}" style="{PILL_OFF}">W52 規則（對照線）</a>'
                       f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5（對照線）</a>'
-                      f'<a href="/backtest/supertrend_vs_live/" style="{PILL_OFF}">Supertrend 對實單</a>'),
+                      f'<a href="/backtest/supertrend_vs_live/" style="{PILL_OFF}">Supertrend 對 W52</a>'),
             "banner": stp.banner_live(cut, dec, shadow_url),
             "above_cards": stp.status_card(sigs, ALL_TICKERS, HELD_BEFORE, "live", cut) + overlay_card(overlay, overlay_changes),
             "rules": stp.rules_live(cut, dec, shadow_url),

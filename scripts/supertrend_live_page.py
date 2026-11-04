@@ -233,8 +233,8 @@ def rules_live(cutover: str, decision: str, shadow_url: str) -> str:
 
 def shadow_banner(cutover: str, live_url: str) -> str:
     return f"""<div class="oos-banner">
-  <span class="tag-loud">對照線・{cutover} 前的實單規則・不下單、不寄信</span>
-  <div style="font-size:.86rem">本頁保留 {cutover} 前的實單規則（<b>W52 閘門 × 自適應波動率 × 執行層，上限 100%、不借錢，美股另加債金</b>），每交易日照常更新，用來和現行實單（<a href="{live_url}">Supertrend</a>）並排看。{cutover} 起實單改看 Supertrend；本頁的紀錄與實單在生效日前逐筆相同，之後各自往下走。以下規則說明與回測數字是 W52 規則的版本。</div>
+  <span class="tag-loud">對照線・不下單、不寄信</span>
+  <div style="font-size:.86rem">本頁研究 W52 規則，W52 為對照線；實單規則是<a href="{live_url}">Supertrend</a>。以下規則說明與回測數字是 W52 規則的版本（W52 閘門 × 自適應波動率 × 執行層，上限 100%、不借錢，美股另加債金）。W52 規則的實際前瞻紀錄（凍結至 2026-10-16）：<a href="/long-track/_scoreboard_w52_body.html">記分板</a>、<a href="/market/data/live_scoreboard_w52.json">JSON</a>。</div>
 </div>
 
 """
