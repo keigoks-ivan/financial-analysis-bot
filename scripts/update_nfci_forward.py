@@ -71,7 +71,7 @@ RELEASES_CSV = DATA_DIR / "nfci_releases.csv"
 STATE_OUT = DATA_DIR / "nfci_forward_state.json"
 # 2026-11-04 起實單改 Supertrend；事前登記比的是原規則（W52 × 自適應 × A2），所以讀 W52 對照線的紀錄，不讀實單 state.json
 LIVE_STATE = DOCS / "long-track-w52-adaptive" / "w52_state.json"
-SCOREBOARD_JSON = _lsb.OUT_JSON
+SCOREBOARD_JSON = _lsb.OUT_JSON_W52
 
 ALFRED_URL = "https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=NFCI&vintage_date={d}"
 RELEASE_COLS = ["release_date", "last_obs_date", "value", "value_2dp", "value_4w_ago_date",

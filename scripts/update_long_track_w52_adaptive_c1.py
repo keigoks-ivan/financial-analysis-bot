@@ -62,7 +62,7 @@ if not STATE_IN.exists():
 BT_JSON = DIR / "c1_backtest.json"
 OUT_HTML = DIR / "c1-shadow.html"
 OUT_STATE = DIR / "c1_shadow_state.json"
-SCOREBOARD_JSON = DOCS / "market" / "data" / "live_scoreboard.json"
+SCOREBOARD_JSON = DOCS / "market" / "data" / "live_scoreboard_w52.json"
 
 # ── 研究凍結常數（run_a_defensive_fill／PREREG；不得調整）──
 W_OVERLAY = 0.20                  # IEF、GLD 各最多 20%

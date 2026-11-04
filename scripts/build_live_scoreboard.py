@@ -41,6 +41,9 @@ DOCS = ROOT / "docs"
 STATE_JSON = DOCS / "long-track-w52-adaptive" / "state.json"
 OUT_JSON = DOCS / "market" / "data" / "live_scoreboard.json"
 OUT_BODY = DOCS / "long-track" / "_scoreboard_body.html"
+# 前一版規則（W52 × 自適應波動率）的實際前瞻紀錄，凍結在 2026-10-16；用 --w52 重建才會寫這兩個檔。
+OUT_JSON_W52 = DOCS / "market" / "data" / "live_scoreboard_w52.json"
+OUT_BODY_W52 = DOCS / "long-track" / "_scoreboard_w52_body.html"
 
 sys.path.insert(0, str(ROOT / "scripts"))
 import score_flowmap as _sf  # noqa: E402  (top-level imports stdlib-only; reuse SPRT helper + latch)
@@ -821,6 +824,212 @@ def build_combined_twd(mkt_us, mkt_tw, gaps, judgment_calls):
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# Supertrend 版記分板：水位用 supertrend_core 逐日回推（只用已收完的 K 棒），
+# 之後走與上面相同的日報酬簿記、稀釋基準、月樣本、SPRT。
+# ═══════════════════════════════════════════════════════════════════════
+
+ST_SYMBOL = {"QQQ": "QQQ", "SMH": "SMH", "IEF": "IEF", "GLD": "GLD", "0050": "0050.TW", "2330": "2330.TW"}
+ST_START = "2026-07-17"          # 記分板原本的起算日（兩市場相同）
+ST_AXIS_FROM = "2026-07-06"      # 起算日之前多取幾天，讓起算日有「前一日」錨點
+ST_OVERLAY = ["IEF", "GLD"]      # 只有美股
+ST_OVERLAY_SCALE = 0.20          # 債金每檔最多 20%：水位 100／70／30／0 → 20／14／6／0
+ST_LABEL = "2026-11-04 以前為照規則回推，之後為實際紀錄。"
+
+PREREG_ST = {
+    "title": "實單前瞻記分板",
+    "rule": ("美股 QQQ／SMH、台股 0050／2330 各 50%；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
+             "只做多，水位 100／70／30／0%。美股另加 IEF／GLD，各最多 20%（水位 20／14／6／0%）。"
+             "美股 ATR 14／倍數 3，台股 ATR 14／倍數 2。訊號日收盤判定（只用已收完的週線、月線），下一個交易日調到目標水位。"),
+    "labeling": ST_LABEL,
+    "daily_return_formula": ("系統日報酬 ＝ Σ腿 持股率(前一日) × 腿日報酬 ＋ 現金部分 × 現金日率（美 ^IRX／台 1%） "
+                             "− 借款部分 × 1.5%/252 − |Δ持股率| × 7 bps。腿日報酬用還原收盤價。"),
+    "benchmarks": PREREG["benchmarks"],
+    "scoring": PREREG["scoring"],
+    "shadows": {
+        "definitions": {"s60": SHADOW_DEFINITIONS["s60"]},
+        "scoring": SHADOW_SPRT_TEXT,
+    },
+    "disclosure": "樣本只有幾個月，n_eff 20 個月以前一律「進行中」；本頁不寫任何配置或停單建議。",
+}
+
+
+def _fetch_adj_close(sym):
+    import yfinance as yf
+    df = yf.download(sym, period="3y", progress=False, auto_adjust=True)
+    if hasattr(df.columns, "get_level_values"):
+        df.columns = df.columns.get_level_values(0)
+    c = df["Close"].dropna()
+    if getattr(c.index, "tz", None) is not None:
+        c.index = c.index.tz_localize(None)
+    return c
+
+
+def st_level_series(sym_key, axis_dates):
+    """回傳 {日期: 水位%}（100／70／30／0），日期 d 的水位只用 d 當天已收完的週線、月線。"""
+    import supertrend_core as stc
+    sym = ST_SYMBOL[sym_key]
+    ohlc, _notes = stc.fetch_ohlc(sym)
+    n, f = stc.ST_PARAMS[sym]
+    frames = stc.make_frames(ohlc, n, f)
+    import pandas as pd
+    out = {}
+    for d in axis_dates:
+        st = stc.state_asof(frames, pd.Timestamp(d))
+        if not st.get("week") or not st.get("month"):
+            raise FailSafeAbort(f"{sym} 在 {d} 還沒有完整的週線／月線 Supertrend")
+        out[d] = stc.level_pct(st["week"]["dir"], st["month"]["dir"])
+    last = ohlc.index[-1].strftime("%Y-%m-%d")
+    return out, last
+
+
+def build_market_st(mkt, gaps, judgment_calls):
+    key, legs = mkt["key"], mkt["legs"]
+    overlay = ST_OVERLAY if key == "us" else []
+    all_legs = list(legs) + overlay
+
+    px = {}
+    for t in all_legs:
+        sr = _w52.fetch_close(t) if t in _w52.YF_SYMBOL else _fetch_adj_close(t)
+        px[t] = {ts.strftime("%Y-%m-%d"): float(c) for ts, c in sr.items()}
+    px_dates = {t: sorted(px[t].keys()) for t in all_legs}
+
+    common = set(px[all_legs[0]])
+    for t in all_legs[1:]:
+        common &= set(px[t])
+    axis = sorted(d for d in common if d >= ST_AXIS_FROM)
+
+    levels, ohlc_last = {}, []
+    for t in all_legs:
+        levels[t], last = st_level_series(t, axis)
+        ohlc_last.append(last)
+    end = min([axis[-1]] + ohlc_last)
+    axis = [d for d in axis if d <= end]
+    if ST_START not in axis:
+        raise FailSafeAbort(f"[{key}] 起算日 {ST_START} 不在交易日序列內")
+
+    # 持股率（%）：股票腿 ＝ 50% × 水位；債金腿 ＝ 20% × 水位。
+    # 位置 i 的持股率＝前一個交易日收盤的訊號，在第 i 日收盤調到位（下一個交易日成交）。
+    executed = {}
+    for t in all_legs:
+        scale = (50.0 if t in legs else ST_OVERLAY_SCALE * 100.0) / 100.0
+        seq = []
+        for i, d in enumerate(axis):
+            sig_d = axis[i - 1] if i > 0 else d
+            seq.append(levels[t][sig_d] * scale)
+        executed[t] = seq
+
+    history = [{"date": d} for d in axis]
+    date_to_idx = {d: i for i, d in enumerate(axis)}
+    live_dates = [d for d in axis if d >= ST_START]
+    inception, data_through = live_dates[0], live_dates[-1]
+
+    if mkt["cash_ticker"] == "^IRX":
+        cash_series = fetch_us_cash_series()
+        cash_dates = sorted(cash_series.keys())
+    else:
+        cash_series, cash_dates = None, None
+
+    gaps_before = len(gaps)
+    rows = leg_daily_returns_generic(mkt, all_legs, history, live_dates, date_to_idx, executed,
+                                     px, px_dates, cash_series, cash_dates, gaps, tag="ST")
+    if len(gaps) > gaps_before:
+        raise FailSafeAbort(f"[{key}] 缺腿收盤價：{gaps[gaps_before]['reason']}")
+    nav_series = nav_from_returns(rows, inception)
+
+    # 水位變化事件（顯示用）：from/to 存成「顯示值÷2」，與舊版 render 的 ×2 對齊
+    exec_events = []
+    for t in all_legs:
+        prev = None
+        for i, d in enumerate(axis):
+            v = levels[t][d]
+            if prev is not None and v != prev and d >= inception:
+                exec_events.append({"date": axis[i + 1] if i + 1 < len(axis) else d, "leg": t,
+                                    "from": prev * (0.5 if t in legs else ST_OVERLAY_SCALE * 0.5) ,
+                                    "to": v * (0.5 if t in legs else ST_OVERLAY_SCALE * 0.5)})
+            prev = v
+    exec_events.sort(key=lambda e: e["date"])
+
+    # 基準：與舊版相同（50/50 B&H，稀釋到 k，月末再平衡，7bps）
+    p0 = {t: (px[t].get(inception) or px_at_or_before(px[t], px_dates[t], inception)) for t in legs}
+    raw_units = {t: 50.0 / p0[t] for t in legs}
+    raw_bh = [{"date": d, "nav": round(sum(raw_units[t] * (px[t].get(d) or px_at_or_before(px[t], px_dates[t], d))
+                                           for t in legs), 4)} for d in live_dates]
+
+    def build_diluted(k):
+        out = []
+        basket_units = {t: (k * 100.0 / len(legs)) / p0[t] for t in legs}
+        cash = (1.0 - k) * 100.0
+        for i, d in enumerate(live_dates):
+            if d == inception:
+                out.append({"date": d, "nav": 100.0})
+                continue
+            basket_val = sum(basket_units[t] * (px[t].get(d) or px_at_or_before(px[t], px_dates[t], d)) for t in legs)
+            if mkt["cash_ticker"] == "^IRX":
+                r_c = cash_daily_return_us(cash_series, cash_dates, d)
+                if r_c is None:
+                    raise FailSafeAbort(f"[{key}] ^IRX 查無 <= {d} 現金利率資料（基準稀釋腿）")
+            else:
+                r_c = TW_CASH_ANNUAL / TRADING_DAYS
+            cash = cash * (1.0 + r_c)
+            nav_pre = basket_val + cash
+            is_month_end = (i == len(live_dates) - 1) or (month_of(live_dates[i + 1]) != month_of(d))
+            if is_month_end and nav_pre > 0:
+                turnover = abs(k - basket_val / nav_pre)
+                nav_post = nav_pre - turnover * TURNOVER_COST_FRAC * nav_pre
+                basket_units = {t: (k * nav_post / len(legs)) / (px[t].get(d) or px_at_or_before(px[t], px_dates[t], d)) for t in legs}
+                cash = (1.0 - k) * nav_post
+                out.append({"date": d, "nav": round(nav_post, 4)})
+            else:
+                out.append({"date": d, "nav": round(nav_pre, 4)})
+        return out
+
+    b_cagr, b_mdd, nav_s60 = build_diluted(mkt["k_cagr"]), build_diluted(mkt["k_mdd"]), build_diluted(S60_K)
+    ms_cagr, _ = compute_monthly_samples(nav_series, b_cagr)
+    ms_mdd, n_closed = compute_monthly_samples(nav_series, b_mdd)
+    sprt_cagr, sprt_mdd = build_sprt_block(ms_cagr, None), build_sprt_block(ms_mdd, None)
+
+    return {
+        "market": key, "label": mkt["label"], "legs": legs, "overlay_legs": overlay,
+        "inception": inception, "data_through": data_through, "n_live_days": len(live_dates),
+        "nav_sys": nav_series, "nav_b_cagr": b_cagr, "nav_b_mdd": b_mdd, "nav_raw_bh": raw_bh,
+        "exec_events": [e for e in exec_events if e["date"] >= inception],
+        "monthly_samples_cagr": ms_cagr, "monthly_samples_mdd": ms_mdd,
+        "n_closed_months": n_closed,
+        "sprt_b_cagr": sprt_cagr, "sprt_b_mdd": sprt_mdd,
+        "current_dd_pct": current_drawdown_pct(nav_series),
+        "cum_diff_vs_b_cagr": round(nav_series[-1]["nav"] - b_cagr[-1]["nav"], 4),
+        "cum_diff_vs_b_mdd": round(nav_series[-1]["nav"] - b_mdd[-1]["nav"], 4),
+        "sys_returns_by_date": {r["date"]: r["ret"] for r in rows},
+        "nav_s60": nav_s60,
+        "last_levels_pct": {t: levels[t][axis[-1]] for t in all_legs},
+    }
+
+
+def build_st():
+    gaps, judgment_calls = [], [
+        "水位回推：每個交易日只用當天已收完的週線、月線 K 棒（supertrend_core.state_asof），"
+        "前一個交易日收盤的訊號在下一個交易日收盤調到位。",
+        "美股債金腿的資金來自賣股票換債金、另一帳戶加期貨，本頁簡化為在股票全額之外加債金，"
+        "總持股率超過 100% 的部分照借款計 1.5% 利差。",
+        "月末再平衡＋7bps 的稀釋基準、SPRT 參數與舊版相同。",
+    ]
+    markets_out = {m["key"]: build_market_st(m, gaps, judgment_calls) for m in MARKETS}
+    combined = build_combined_twd(markets_out.get("us"), markets_out.get("tw"), gaps, judgment_calls)
+    shadows_out = {}
+    for mk, m in markets_out.items():
+        samples_nav = m.get("nav_s60") or []
+        shadows_out[mk] = {"s60": build_shadow_block("s60", m, samples_nav, None)}
+    as_of = max(m["data_through"] for m in markets_out.values())
+    return {
+        "schema": SCHEMA, "rule": "supertrend", "labeling": ST_LABEL,
+        "prereg": PREREG_ST, "as_of": as_of, "markets": markets_out,
+        "combined_twd": combined, "shadows": shadows_out, "backtest_prior": None,
+        "data_gaps": gaps, "judgment_calls": judgment_calls,
+        "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # Render — nav-less iframe fragment（比照 _body.html 慣例）
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -840,9 +1049,9 @@ def mkt_section(mkt):
     n = mkt["n_live_days"]
     tiles = f"""
 <div class="lsb-tiles">
-  <div class="lsb-tile"><div class="lsb-k">實錄起始</div><div class="lsb-v">{esc(mkt['inception'])}</div></div>
+  <div class="lsb-tile"><div class="lsb-k">起算日</div><div class="lsb-v">{esc(mkt['inception'])}</div></div>
   <div class="lsb-tile"><div class="lsb-k">資料截至</div><div class="lsb-v">{esc(mkt['data_through'])}</div></div>
-  <div class="lsb-tile"><div class="lsb-k">實錄天數</div><div class="lsb-v">{n}</div></div>
+  <div class="lsb-tile"><div class="lsb-k">交易日數</div><div class="lsb-v">{n}</div></div>
   <div class="lsb-tile"><div class="lsb-k">已收月數</div><div class="lsb-v">{mkt['n_closed_months']}</div></div>
   <div class="lsb-tile"><div class="lsb-k">當前回撤（從近期最高點跌了多少）</div><div class="lsb-v">{mkt['current_dd_pct']}%</div></div>
 </div>
@@ -870,7 +1079,7 @@ def mkt_section(mkt):
   new Chart(document.getElementById('{canvas_id}').getContext('2d'), {{
     type: 'line',
     data: {{ labels: {json.dumps(labels)}, datasets: [
-      {{ label: '系統（實錄）', data: {json.dumps(sys_data)}, borderColor: '#1a7f37', borderWidth:2, pointRadius:0 }},
+      {{ label: '系統', data: {json.dumps(sys_data)}, borderColor: '#1a7f37', borderWidth:2, pointRadius:0 }},
       {{ label: 'B-mdd（k={mkt['sprt_b_mdd']['n_required'] and ''}稀釋）', data: {json.dumps(mdd_data)}, borderColor: '#cf222e', borderWidth:1, pointRadius:0 }},
       {{ label: 'B-cagr（稀釋）', data: {json.dumps(cagr_data)}, borderColor: '#9a6700', borderWidth:1, pointRadius:0 }}
     ]}},
@@ -899,7 +1108,7 @@ def mkt_section(mkt):
 {chart_js}
 <table class="lsb-table"><thead><tr><th>月</th><th class="num">系統報酬</th><th class="num">B-mdd 基準報酬</th><th>命中</th></tr></thead>
 <tbody>{hit_rows}</tbody></table>
-<table class="lsb-table"><thead><tr><th>日期</th><th>檔</th><th>執行層變化（水位；舊規則期間上限 150%）</th></tr></thead>
+<table class="lsb-table"><thead><tr><th>日期</th><th>檔</th><th>執行層變化（水位）</th></tr></thead>
 <tbody>{ev_rows}</tbody></table>
 </div>"""
 
@@ -914,7 +1123,7 @@ def shadow_market_section(mk, mkt, shadows):
     canvas_id = f"lsb-shadow-chart-{mk}"
     labels = [r["date"] for r in mkt["nav_sys"]]
     sys_data = [r["nav"] for r in mkt["nav_sys"]]
-    datasets = [f"{{ label: '系統（實錄）', data: {json.dumps(sys_data)}, borderColor: '#1a7f37', borderWidth:2, pointRadius:0 }}"]
+    datasets = [f"{{ label: '系統', data: {json.dumps(sys_data)}, borderColor: '#1a7f37', borderWidth:2, pointRadius:0 }}"]
     for key, block in shadows.items():
         by_date = {r["date"]: r["nav"] for r in block["nav"]}
         data = [by_date.get(d) for d in labels]
@@ -1023,6 +1232,24 @@ def render_body(out):
     adopt_html = adoption_banner(out)
 
     prereg_json = json.dumps(out["prereg"], ensure_ascii=False, indent=1)
+    is_st = out.get("rule") == "supertrend"
+    if is_st:
+        top_html = (f'<div class="lsb-plain">{esc(ST_LABEL)}</div>\n{gaps_html}\n'
+                    '<div class="lsb-plain">💬 白話：每個月記一次，系統有沒有贏過同標的的稀釋基準（<b>SPRT</b>＝序貫檢定，累積證據到夠強才判定；'
+                    '<b>LLR</b>＝累積證據強度；<b>命中</b>＝當月系統報酬贏過基準；<b>稀釋基準</b>＝把 50/50 買進持有的一部分換成現金，讓風險與系統相近再比）。'
+                    '判紅只代表「證據支持系統不比稀釋好」，是待持有人檢討的訊號，不是自動平倉指令；本頁面不下任何買賣或配置建議。</div>')
+        shadow_intro = ('<h2 style="margin:1.4rem 0 .3rem;font-size:1.05rem">對照帳戶</h2>\n'
+                        '<div class="lsb-plain">💬 白話：S-60 是同標的 50/50 買進持有固定持有六成、其餘放現金的帳戶，月再平衡。'
+                        '這裡的 SPRT 問的是相反方向的問題：這條對照帳戶會不會比系統好。判綠代表對照帳戶目前贏過系統，只是參考，不觸發任何動作。</div>')
+        prereg_summary = "規則與判準（逐字條文）"
+        footer = f"as_of {esc(out['as_of'])} · built_at {esc(out['built_at'])}"
+    else:
+        top_html = ('<div class="lsb-plain">舊規則階段已凍結：只算到 2026-10-16，最後計入的月份是 2026-09。</div>\n'
+                    + f'{gaps_html}\n{adopt_html}\n<div class="lsb-plain">'
+                    + '💬 白話：這不是回測，是「只用實際發生過的紀錄」每個月記一次系統有沒有贏過同標的的稀釋基準（<b>SPRT</b>＝序貫檢定，累積證據到夠強才判定；<b>LLR</b>＝累積證據強度；<b>命中</b>＝當月系統報酬贏過基準；<b>稀釋基準</b>＝把 50/50 買進持有的一部分換成現金，讓風險與系統相近再比）的淘汰賽。判紅只代表「證據支持系統不比稀釋好」，是登記進帳本待持有人檢討的訊號，不是自動平倉指令；本頁面不下任何買賣或配置建議。</div>' + '\n')
+        shadow_intro = '<h2 style="margin:1.4rem 0 .3rem;font-size:1.05rem">影子帳戶：如果當初選別的</h2>\n' + '<div class="lsb-plain">💬 白話：這裡的兩條線不是本站現在真的在跑的東西，是「如果 10 月回顧點當初選了別的做法，帳會怎麼記」的平行對照——S-60 是不解方程、事前就能執行的固定六成持股版本；S-A10 是拿掉槓桿上限的系統本尊。上面每個市場的 SPRT 淘汰賽問的是「系統有沒有贏過稀釋現金的基準」，這裡的 SPRT 問的是相反方向的問題：「如果當初選了這條影子帳戶，會不會比現在的系統好」。判紅只代表某條影子帳戶的實錄目前不如系統，判綠代表某條影子帳戶目前贏過系統——兩者都只是留給 10 月回顧點參考的證據，不會觸發任何帳本動作或配置調整。原有的 S-F、S-F70 兩條已於 2026-10-19 移除，原因與停算日的數字見下方 PREREG 修訂紀錄。</div>'
+        prereg_summary = "PREREG（逐字條文）"
+        footer = f"as_of {esc(out['as_of'])} · built_at {esc(out['built_at'])} · 回測先驗：{esc(out['backtest_prior'])}"
 
     return f"""<!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1048,20 +1275,15 @@ details.lsb-prereg summary{{cursor:pointer;font-size:.82rem;color:#57606a;margin
 details.lsb-prereg pre{{max-height:280px;overflow:auto;background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:.6rem;font-size:.72rem;white-space:pre-wrap}}
 </style></head>
 <body>
-<div class="lsb-plain">舊規則階段已凍結：這個記分板檢驗的是 2026-10-19 以前的實單規則，只算到 2026-10-16，最後計入的月份是 2026-09。新規則（美股債金版、台股不借錢版）不在這裡判，2026-11-04 起改用的 Supertrend 規則也不在這裡判。</div>
-{gaps_html}
-{adopt_html}
-<p class="lsb-note"><a href="/backtest/live_system_evidence/">這套系統的九項證據總覽 →</a></p>
-<div class="lsb-plain">💬 白話：這不是回測，是「只用實際發生過的紀錄」每個月記一次系統有沒有贏過同標的的稀釋基準（<b>SPRT</b>＝序貫檢定，累積證據到夠強才判定；<b>LLR</b>＝累積證據強度；<b>命中</b>＝當月系統報酬贏過基準；<b>稀釋基準</b>＝把 50/50 買進持有的一部分換成現金，讓風險與系統相近再比）的淘汰賽。判紅只代表「證據支持系統不比稀釋好」，是登記進帳本待持有人檢討的訊號，不是自動平倉指令；本頁面不下任何買賣或配置建議。</div>
+{top_html}
 {us_sec}
 {tw_sec}
 {combined_note}
-<h2 style="margin:1.4rem 0 .3rem;font-size:1.05rem">影子帳戶：如果當初選別的</h2>
-<div class="lsb-plain">💬 白話：這裡的兩條線不是本站現在真的在跑的東西，是「如果 10 月回顧點當初選了別的做法，帳會怎麼記」的平行對照——S-60 是不解方程、事前就能執行的固定六成持股版本；S-A10 是拿掉槓桿上限的系統本尊。上面每個市場的 SPRT 淘汰賽問的是「系統有沒有贏過稀釋現金的基準」，這裡的 SPRT 問的是相反方向的問題：「如果當初選了這條影子帳戶，會不會比現在的系統好」。判紅只代表某條影子帳戶的實錄目前不如系統，判綠代表某條影子帳戶目前贏過系統——兩者都只是留給 10 月回顧點參考的證據，不會觸發任何帳本動作或配置調整。原有的 S-F、S-F70 兩條已於 2026-10-19 移除，原因與停算日的數字見下方 PREREG 修訂紀錄。</div>
+{shadow_intro}
 {us_shadow_sec}
 {tw_shadow_sec}
-<details class="lsb-prereg"><summary>PREREG（預先寫死、事後不能改的規則，展開查看逐字條文）</summary><pre>{esc(prereg_json)}</pre></details>
-<p class="lsb-note">as_of {esc(out['as_of'])} · built_at {esc(out['built_at'])} · 回測先驗（保險價格頁 2010 起月勝率）：{esc(out['backtest_prior'])}</p>
+<details class="lsb-prereg"><summary>{prereg_summary}</summary><pre>{esc(prereg_json)}</pre></details>
+<p class="lsb-note">{footer}</p>
 </body></html>
 """
 
@@ -1071,6 +1293,8 @@ details.lsb-prereg pre{{max-height:280px;overflow:auto;background:#f6f8fa;border
 # ═══════════════════════════════════════════════════════════════════════
 
 def build():
+    if "--w52" not in sys.argv:
+        return build_st()
     gaps, judgment_calls = [], []
     judgment_calls.append(
         "NAV inception：以每市場第一筆 source=='live' 紀錄日為 NAV=100 基準日（該日不計報酬，"
@@ -1085,7 +1309,7 @@ def build():
     if not state:
         raise FailSafeAbort(f"{STATE_JSON} 讀不到或為空")
 
-    prior_out = load_json(OUT_JSON) or {}
+    prior_out = load_json(OUT_JSON_W52) or {}
     prior_sprt_map = {}
     for mk in ("us", "tw"):
         m = (prior_out.get("markets") or {}).get(mk) or {}
@@ -1146,13 +1370,15 @@ def main():
         print(f"  ✗ build failed ({type(e).__name__}: {e}) — outputs left unchanged")
         sys.exit(0)
 
-    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    OUT_JSON.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    print(f"  ✓ wrote {OUT_JSON.relative_to(ROOT)}")
+    w52 = "--w52" in sys.argv
+    o_json, o_body = (OUT_JSON_W52, OUT_BODY_W52) if w52 else (OUT_JSON, OUT_BODY)
+    o_json.parent.mkdir(parents=True, exist_ok=True)
+    o_json.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    print(f"  ✓ wrote {o_json.relative_to(ROOT)}")
 
-    OUT_BODY.parent.mkdir(parents=True, exist_ok=True)
-    OUT_BODY.write_text(render_body(out), encoding="utf-8")
-    print(f"  ✓ wrote {OUT_BODY.relative_to(ROOT)}")
+    o_body.parent.mkdir(parents=True, exist_ok=True)
+    o_body.write_text(render_body(out), encoding="utf-8")
+    print(f"  ✓ wrote {o_body.relative_to(ROOT)}")
 
     for mk, m in out["markets"].items():
         if not m:
