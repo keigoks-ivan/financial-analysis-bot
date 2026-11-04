@@ -385,8 +385,8 @@ def build_mail_html(headline: str, state: dict, w52a_text: str | None, *, is_tes
         button_url=LIVE_PAGE_URL,
         accent="navy",
         disclaimer=("本信為機械化訊號通知，非投資建議。" +
-                    (f"{ST_CUTOVER_DATE} 收盤起實盤指數部四檔照 Supertrend（週線 70%＋月線 30%，不借錢），美股另加公債與黃金；"
-                     "W52 規則與舊 cap 1.5 規則為對照線、不寄信。"
+                    ("實盤指數部四檔照 Supertrend（週線 70%＋月線 30%，不借錢），美股另加公債與黃金；"
+                     "W52 規則與 cap 1.5 規則為對照線、不寄信。"
                      if any((tickers.get(t) or {}).get("rule") == ST_RULE_TAG for t in tickers) else
                      "2026-10-19 起實盤為美股債金版、台股不借錢版（股票部分上限 100%，美股另加公債與黃金），舊 cap 1.5 規則降為對照線、不寄信。") +
                     "今天結論與債金疊加數字取自 state.json（與頁面同一來源），本信不重新抓價、不重算訊號。"),
