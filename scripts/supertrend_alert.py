@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Supertrend 週線／月線翻轉通知（email＋Discord）。持有人 2026-11-03 要求。
 
-規則：Supertrend(ATR 10, 倍數 3, hl2)，算法同 TradingView 內建 ta.supertrend；K 線用 Yahoo 未調股息
+規則：Supertrend(hl2)，算法同 TradingView 內建 ta.supertrend；K 線用 Yahoo 未調股息
 （auto_adjust=False，已調拆股），週線以週五為一週最後一天、月線以月底。持股參考＝週線 70%＋月線 30%
-（只做多；翻空那份放現金）。這是提醒，不是實單規則；實單照 W52 引擎。研究頁 /backtest/supertrend_vs_live/。
+（只做多；翻空那份放現金）。參數 2026-11-04 起用實盤參數：SMH 倫敦／SMH 美國／QQQ 為 ATR 14、倍數 3，
+0050／2330 為 ATR 14、倍數 2（supertrend_core.ST_PARAMS，與實單主系統共用同一份）。
+2026-11-06 收盤起實單的指數部照這套規則（supertrend_core.ST_CUTOVER_DATE）；之前實單照 W52 引擎。
+實單換檔另由實單系統信通知，本腳本只負責「週線／月線翻轉」的即時提醒。研究頁 /backtest/supertrend_vs_live/。
 
 兩種模式：
   confirm（每天台北 08:30）：K 棒收完才算數。週線或月線的「已收完」狀態跟上次記錄不同就通知。
   warn   （週五台北 14:40）：先做 confirm（台股此時週線已收完）；再看還沒收完的 K 棒，
           目前狀態跟上一根已收完的不同就寄預警（月線只在月底前 7 天內才列入）。
-第一次執行（state 檔沒有該標的）只記錄現狀，不通知。
+第一次執行（state 檔沒有該標的，或該標的記錄的參數與現行參數不同）只記錄現狀，不通知。
 
 輸出（有事才寫）：st_title.txt、st_alert.txt、st_mail.html；狀態檔 data/supertrend_alert/state.json。
 Usage: python scripts/supertrend_alert.py --mode confirm|warn [--test-alert] [--no-notify] [--dry-run]
@@ -20,86 +23,32 @@ import argparse
 import html
 import json
 import sys
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from supertrend_core import (  # noqa: E402  算法、K 棒、收完判斷、參數與切換日與實單主系統共用同一份
+    fetch_official_ohlc, reconcile_ohlc,
+    ST_CUTOVER_DATE, ST_PARAMS, TF, W_MONTH, W_WEEK, bars, is_complete, supertrend,
+)
+
+ROOT = HERE.parent
 STATE = ROOT / "data" / "supertrend_alert" / "state.json"
 PAGE_URL = "https://research.investmquest.com/backtest/supertrend_vs_live/"
-ATR_N, MULT = 10, 3.0
-W_WEEK, W_MONTH = 0.7, 0.3
 TICKERS = [  # (Yahoo 代號, 顯示名, 交易所時區, 收盤時間)
     ("SMH.L", "SMH 倫敦（UCITS，美元）", "Europe/London", time(16, 35)),
     ("SMH", "SMH 美國", "America/New_York", time(16, 0)),
     ("QQQ", "QQQ", "America/New_York", time(16, 0)),
     ("0050.TW", "0050", "Asia/Taipei", time(13, 30)),
     ("2330.TW", "2330 台積電", "Asia/Taipei", time(13, 30)),
+    ("IEF", "公債 IEF（債金疊加）", "America/New_York", time(16, 0)),    # 2026-11-04 起：債金疊加也看 Supertrend
+    ("GLD", "黃金 GLD（債金疊加）", "America/New_York", time(16, 0)),
 ]
-TF = {"week": ("W-FRI", "週線"), "month": ("ME", "月線")}
-SETTLE = timedelta(minutes=45)   # 收盤後多久才視為定案
-
-
-# ---------------------------------------------------------------- Supertrend
-def supertrend(b: pd.DataFrame, n: int = ATR_N, f: float = MULT) -> pd.DataFrame:
-    """回傳每根 K 棒的 dir（1 多、0 空）、line（多頭時是下方支撐線、空頭時是上方壓力線）。"""
-    h, l, c = b.high.values, b.low.values, b.close.values
-    k = len(c)
-    out = pd.DataFrame({"dir": np.nan, "line": np.nan, "lo": np.nan, "up": np.nan}, index=b.index)
-    if k <= n:
-        return out
-    pc = np.r_[np.nan, c[:-1]]
-    tr = np.where(np.isnan(pc), h - l, np.maximum.reduce([h - l, np.abs(h - pc), np.abs(l - pc)]))
-    atr = np.full(k, np.nan)
-    atr[n - 1] = tr[:n].mean()
-    for i in range(n, k):
-        atr[i] = (atr[i - 1] * (n - 1) + tr[i]) / n
-    hl2 = (h + l) / 2
-    up0, lo0 = hl2 + f * atr, hl2 - f * atr
-    up, lo = up0.copy(), lo0.copy()
-    d, st = np.full(k, np.nan), np.full(k, np.nan)
-    for i in range(k):
-        if np.isnan(atr[i]):
-            continue
-        if i > 0 and not np.isnan(atr[i - 1]):
-            lo[i] = lo0[i] if (lo0[i] > lo[i - 1] or c[i - 1] < lo[i - 1]) else lo[i - 1]
-            up[i] = up0[i] if (up0[i] < up[i - 1] or c[i - 1] > up[i - 1]) else up[i - 1]
-        if i == 0 or np.isnan(atr[i - 1]):
-            d[i] = 1
-        elif st[i - 1] == up[i - 1]:
-            d[i] = -1 if c[i] > up[i] else 1
-        else:
-            d[i] = 1 if c[i] < lo[i] else -1
-        st[i] = lo[i] if d[i] == -1 else up[i]
-    out["dir"] = np.where(np.isnan(d), np.nan, (d == -1).astype(float))
-    out["line"] = st
-    out["lo"], out["up"] = lo, up   # 翻轉門檻：多頭時收盤低於 lo 翻空，空頭時收盤高於 up 翻多
-    return out
-
-
-def bars(d: pd.DataFrame, rule: str) -> pd.DataFrame:
-    g = d.resample(rule)
-    b = pd.DataFrame({"high": g.high.max(), "low": g.low.min(), "close": g.close.last(),
-                      "last_day": g.close.apply(lambda s: s.index.max() if len(s) else pd.NaT)})
-    return b.dropna(subset=["close"])
-
-
-def last_weekday(d: pd.Timestamp) -> pd.Timestamp:
-    while d.weekday() >= 5:
-        d -= pd.Timedelta(days=1)
-    return d
-
-
-def is_complete(label: pd.Timestamp, last_data: pd.Timestamp, now_local: datetime, close_t: time) -> bool:
-    """週期（日曆標籤 label）是否已收完：之後已有資料，或最後一個平日已收盤且資料到那天。"""
-    if last_data > label:
-        return True
-    end = last_weekday(label)
-    close_dt = datetime.combine(end.date(), close_t, tzinfo=now_local.tzinfo) + SETTLE
-    return last_data.normalize() == end.normalize() and now_local >= close_dt
+OVERLAY_SYMS = {"IEF", "GLD"}      # 這兩檔的水位上限是占指數部 20%，文字另算
 
 
 # ---------------------------------------------------------------- 取價
@@ -110,7 +59,17 @@ def fetch(tk: str) -> pd.DataFrame:
         raise RuntimeError(f"{tk}: Yahoo 沒有資料")
     d.index = pd.to_datetime(d.index).tz_localize(None).normalize()
     d = d.rename(columns=str.lower)[["high", "low", "close"]].dropna()   # Yahoo 未定稿的最新一根會是 NaN
-    return d[~d.index.duplicated(keep="last")]
+    d = d[~d.index.duplicated(keep="last")]
+    if tk.endswith(".TW"):
+        # 台股：Yahoo 偶爾少一天或晚到，用證交所官方日 K 補（與實單頁同一個函式）；官方抓不到就照 Yahoo
+        try:
+            from zoneinfo import ZoneInfo as _Z
+            off = fetch_official_ohlc(tk.split(".")[0], d.index[-1] - pd.Timedelta(days=7),
+                                      datetime.now(timezone.utc).astimezone(_Z("Asia/Taipei")))
+            d, _ = reconcile_ohlc(d, off)
+        except Exception as e:  # noqa: BLE001
+            print(f"[{tk}] 官方日 K 補值失敗，照 Yahoo：{type(e).__name__}: {e}", file=sys.stderr)
+    return d
 
 
 def analyse(tk, name, tz, close_t, now_utc):
@@ -120,7 +79,7 @@ def analyse(tk, name, tz, close_t, now_utc):
     res = {"ticker": tk, "name": name, "last_date": str(last_data.date()), "close": float(d.close.iloc[-1]), "tf": {}}
     for key, (rule, label) in TF.items():
         b = bars(d, rule)
-        s = supertrend(b[["high", "low", "close"]])
+        s = supertrend(b[["high", "low", "close"]], *ST_PARAMS[tk])
         done = [is_complete(ix, last_data, now_local, close_t) for ix in b.index]
         b, s = b.assign(done=done), s
         comp = s[b.done].dropna()
@@ -152,16 +111,24 @@ def target(w, m):
 
 
 def status_lines(results):
-    out = ["", "五檔目前狀態（已收完的 K 棒）："]
+    out = ["", "目前狀態（已收完的 K 棒）："]
     for r in results:
         w, m = r["tf"]["week"]["confirmed"], r["tf"]["month"]["confirmed"]
         out.append(f"・{r['name']}：收盤 {fmt(r['close'])}（{r['last_date']}）｜週線{zh(w['dir'])}，"
                    f"{'支撐' if w['dir'] == 1 else '壓力'} {fmt(w['line'])}｜月線{zh(m['dir'])}，"
-                   f"{'支撐' if m['dir'] == 1 else '壓力'} {fmt(m['line'])}｜70/30 持股 {target(w['dir'], m['dir'])}%")
+                   f"{'支撐' if m['dir'] == 1 else '壓力'} {fmt(m['line'])}｜70/30 持股 {target(w['dir'], m['dir'])}%"
+                   + (f"（占指數部 {target(w['dir'], m['dir']) * 0.2:.0f}%）" if r["ticker"] in OVERLAY_SYMS else ""))
     return out
 
 
-FOOTER = ["", "這是提醒，不是實單規則（實單照 W52 引擎）。規則：Supertrend(10, 3)，週線 70%＋月線 30%，只做多。",
+def params_text() -> str:
+    us = ST_PARAMS["QQQ"]
+    tw = ST_PARAMS["0050.TW"]
+    return f"美股／倫敦 ATR {us[0]}、倍數 {us[1]:g}；台股 ATR {tw[0]}、倍數 {tw[1]:g}"
+
+
+FOOTER = ["", f"規則：Supertrend，{params_text()}，週線 70%＋月線 30%，只做多。"
+          f"{ST_CUTOVER_DATE} 收盤起實單的指數部照這套規則；換檔另有實單系統信。",
           f"回測比較：{PAGE_URL}"]
 
 
@@ -203,6 +170,11 @@ def main(argv=None):
     now_utc = datetime.fromisoformat(a.now).replace(tzinfo=ZoneInfo("UTC")) if a.now else datetime.now(ZoneInfo("UTC"))
 
     state = json.loads(STATE.read_text(encoding="utf-8")) if STATE.exists() else {"signals": {}, "history": []}
+    # 參數記在狀態檔裡：某檔記錄的參數跟現行不同（2026-11-04 由 10/3 改實盤參數）→ 該檔只重新記錄現狀、不通知，
+    # 免得改參數本身被當成一堆「翻轉」。參數沒變的日常執行不受影響。
+    state.setdefault("params", {})
+    cur_params = {tk: list(ST_PARAMS[tk]) for tk, *_ in TICKERS}
+    rebase = {tk for tk, p in cur_params.items() if state["params"].get(tk) != p}
     results, errors = [], []
     for tk, name, tz, ct in TICKERS:
         try:
@@ -217,7 +189,7 @@ def main(argv=None):
             c = v["confirmed"]
             sk = f"{r['ticker']}|{key}"
             prev = state["signals"].get(sk)
-            if prev is None:
+            if prev is None or r["ticker"] in rebase:
                 baseline.append(sk)
             elif c["bar_end"] > prev["bar_end"] and c["dir"] != prev["dir"]:
                 events.append((r, key, prev, c))
@@ -257,7 +229,8 @@ def main(argv=None):
             heads.append(f"{r['name'].split('（')[0]} {lab}翻{zh(c['dir'])}")
             lines.append(f"・{r['name']} {lab}確認翻{zh(c['dir'])}：K 棒 {c['bar_end']} 收在 {fmt(c['close'])}，"
                          f"{'站上壓力線' if c['dir'] == 1 else '跌破支撐線'}（新的{'支撐' if c['dir'] == 1 else '壓力'}線 {fmt(c['line'])}）。"
-                         f"照 70/30，這檔持股 {a0}% → {a1}%。")
+                         + (f"照 70/30，債金水位 {a0}% → {a1}%（占指數部 {a0 * 0.2:.0f}% → {a1 * 0.2:.0f}%）。" if r["ticker"] in OVERLAY_SYMS
+                            else f"照 70/30，這檔持股 {a0}% → {a1}%。"))
         out = ("【Supertrend】" + "、".join(heads), lines + status_lines(results) + FOOTER)
         state["history"].extend({"ts": now_utc.isoformat(timespec="minutes"), "ticker": r["ticker"], "tf": key,
                                  "dir": c["dir"], "bar_end": c["bar_end"]} for r, key, prev, c in events)
@@ -283,6 +256,9 @@ def main(argv=None):
         print("抓價失敗：", errors, file=sys.stderr)
     if baseline:
         print("首次記錄（不通知）：", baseline)
+    if not a.dry_run and not a.test_alert:
+        state["params"] = {**state["params"], **{tk: p for tk, p in cur_params.items()
+                                                 if tk not in {e.split(":")[0] for e in errors}}}
     if out and not a.no_notify:
         write_out(out[0], out[1], a.dry_run)
     elif out:

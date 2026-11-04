@@ -68,16 +68,21 @@ SPRT_MEANING = {          # 見 build_live_scoreboard.py 的 green/yellow/red �
 # 實單主系統：每組＝(分類、色、突出、系統清單)；系統 dict：name／url／one／status／freq／email
 GROUPS = [
     ("實單主系統", "live", True, [
-        {"name": "W52 × 自適應波動率（美股債金版・台股不借錢版）", "url": "/long-track-w52-adaptive/",
-         "one": "兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 ＋ A2 執行層。"
-                "<b>2026-10-19 起：美股股票部分上限 100% 不借錢，另加公債（IEF）與黃金（GLD）各最多 20% 的週線疊加；台股上限 100%、不借錢。</b>"
-                "此前（2026-07-18 至 10-16）用 cap 1.5 ＋日線均線確認，現降為對照線，每日更新、不寄信。",
+        {"name": "Supertrend 週線＋月線（美股債金版・台股不借錢版）", "url": "/long-track-w52-adaptive/",
+         "one": "兩市場各 70% 指數部＝每檔 70% 看週線、30% 看月線的 Supertrend，水位 100／70／30／0%，不借錢。"
+                "<b>2026-11-06 收盤的訊號起生效（11-09 第一次下單）；美股另加公債（IEF）與黃金（GLD）各最多 20% 的週線疊加，照舊。</b>"
+                "此前的 W52 × 自適應波動率（2026-10-19 起上限 100%）與更早的 cap 1.5 ＋日線均線確認，現降為對照線，每日更新、不寄信。",
          "status": ("實單", "live"), "freq": "每交易日 × 2（台／美收盤後）", "email": "✅ 有"},
     ]),
 ]
 
 # 還在測的：每列一個還沒答案的問題。q／start／due／now／name／url（url 為 None 表示頁面還沒建）。
 TESTING = [
+    {"q": "Supertrend 週線＋月線（2026-11-06 收盤的訊號起）比 W52 × 自適應波動率（2026-10-19 起）好嗎？",
+     "start": "2026-11-06",
+     "due": "退回條件待持有人訂（規則帳本 2026-11-04）",
+     "now": "2026-11-06 起累積中",
+     "name": "W52 規則對照線", "url": "/long-track-w52-adaptive/w52.html"},
     {"q": "新規則（2026-10-19 起：美股債金版、台股不借錢版）比舊規則（股票上限 150%，加日線均線確認）好嗎？",
      "start": "2026-10-19",
      "due": "上線滿 60 個交易日，或組合首次出現 10% 以上回撤時回顧（退回條件持有人 2026-10-19 確認）",
@@ -359,8 +364,10 @@ def render_today_strip() -> str:
         if not tk:
             return f'<span class="leg"><b>{t}</b>：—</span>'
         gate = "在場" if tk.get("gate") else "出場"
+        if tk.get("rule") == "st_live" and isinstance(tk.get("st"), dict):
+            gate = f'週線{"多" if tk["st"].get("w") else "空"}／月線{"多" if tk["st"].get("m") else "空"}'
         final = tk.get("final_weight_pct")
-        exe = tk.get("executed_pct")
+        exe = tk.get("held_before_pct", tk.get("executed_pct"))
         # 顯示換算：每檔水位（0～100%）＝組合 pp × 2
         final = f"{final * 2:.0f}" if isinstance(final, (int, float)) else "—"
         exe = f"{exe * 2:.0f}" if isinstance(exe, (int, float)) else "—"
@@ -368,9 +375,14 @@ def render_today_strip() -> str:
 
     def mkt_block(name, legs, exp_key):
         exp = state.get(exp_key, "—")
-        vals = [tickers[t]["executed_pct"] for t in legs if isinstance(tickers.get(t), dict) and "executed_pct" in tickers[t]]
+        vals = [tickers[t].get("held_before_pct", tickers[t]["executed_pct"]) for t in legs if isinstance(tickers.get(t), dict) and "executed_pct" in tickers[t]]
         exec_sum = round(sum(vals), 1) if len(vals) == len(legs) and legs else "—"
         rows = "".join(leg_span(t) for t in legs)
+        if all((tickers.get(t) or {}).get("rule") == "st_live" for t in legs):
+            return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
+                    f'<div class="tstrip-exp">指數部股票曝險：目標（Supertrend 週線 70%＋月線 30%，每檔水位只有 100／70／30／0%，兩檔水位平均）<b>{exp}%</b>'
+                    f' ／ 現持（下單前的持股率；換檔當天會和目標不同，其餘日子等於目標）<b>{exec_sum}%</b></div>'
+                    f'<div class="tstrip-legs">{rows}</div></div>')
         return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
                 f'<div class="tstrip-exp">指數部股票曝險：目標（訊號，週線閘門 × 自適應套袖算出的理論持股率，兩檔水位平均）<b>{exp}%</b>'
                 f' ／ 現持（執行層，實際已調整到的持股率——每檔水位分六格，目標比現持高兩格（40%）以上才加、低一格（20%）以上就減，故常與目標有差）<b>{exec_sum}%</b></div>'
@@ -383,6 +395,8 @@ def render_today_strip() -> str:
     if all(k in ov for k in ("ief", "gld")):
         def _ov(k, nm):
             o = ov[k]
+            if o.get("rule") == "supertrend":
+                return f'{nm} 週線{"多" if o.get("st_w") else "空"}／月線{"多" if o.get("st_m") else "空"}，目標 <b>{o.get("target_pct", "—")}%</b>'
             return f'{nm} <b>{o.get("n", "—")}／3</b> 條成立，目標 <b>{o.get("target_pct", "—")}%</b>'
         ov_state = "已生效" if ov.get("active") else f'{ov.get("active_from", "2026-10-19")} 起生效，目前為預覽'
         change_line += (f'<br>美股債金疊加（占指數部淨值，各最多 20%，{ov_state}）：'

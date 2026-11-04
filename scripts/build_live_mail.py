@@ -49,6 +49,7 @@ from update_long_track_w52_adaptive import (  # noqa: E402
     MARKETS,
     _leg_trigger_text,
     NEW_RULE_TAG, RULE_SWITCH_DATE, OVERLAY_LEGS, OVERLAY_NAME, OVERLAY_VEHICLE, OVERLAY_W,
+    ST_RULE_TAG, NEWSTYLE_TAGS, ST_CUTOVER_DATE,
     lvl,
 )
 
@@ -74,13 +75,15 @@ def _bullets(text: str | None) -> list[str]:
     return [ln[2:].strip() for ln in text.splitlines() if ln.startswith("• ")]
 
 
-def build_headline(w52a_text: str | None, is_test: bool) -> str:
-    """一句總結：哪個系統觸發＋該做什麼。純文字比對 alert 原文的事件行，不重算訊號。"""
+def build_headline(w52a_text: str | None, is_test: bool, st_markets: frozenset = frozenset()) -> str:
+    """一句總結：哪個系統觸發＋該做什麼。純文字比對 alert 原文的事件行，不重算訊號。
+    st_markets＝目前已照 Supertrend 的市場 key（"us"／"tw"），這些市場的換倉說明改寫成「一次調到目標水位」。"""
     w52a_bul = _bullets(w52a_text)
     ov_hit = any(("公債" in b or "黃金" in b) and "美股" in b for b in w52a_bul)   # 美股債金條件數改變
     us_hit = any("美股" in b and not ("公債" in b or "黃金" in b) for b in w52a_bul)  # QQQ／SMH 現持調整
     tw_hit = any("台股" in b for b in w52a_bul)
-    switch_hit = any("規則切換" in b for b in w52a_bul)
+    switch_hit = any("規則切換" in b and "不借錢版單檔上限" in b for b in w52a_bul)
+    st_switch = any("改照 Supertrend" in b for b in w52a_bul)
 
     triggers = []
     if us_hit:
@@ -93,11 +96,17 @@ def build_headline(w52a_text: str | None, is_test: bool) -> str:
     line = "今天觸發：" + "、".join(triggers) + "。" if triggers else "今天無實單訊號變化。"
 
     actions = []
-    if us_hit:
+    if st_switch:
+        actions.append(f"規則切換：{ST_CUTOVER_DATE} 收盤起指數部四檔改照 Supertrend（週線 70%＋月線 30%）。下一個交易日各檔從現持水位一次調到下方目標水位，不分段、不等門檻。")
+    if us_hit and "us" in st_markets:
+        actions.append("美股 QQQ／SMH 目標水位和現持不同，下一個交易日照下方「怎麼下單」一次調到目標。")
+    elif us_hit:
         actions.append("美股 QQQ／SMH 水位現持與目標差達門檻，下一個交易日照下方「怎麼下單」調整（對到最近一格，不是調到目標）。")
     if ov_hit:
         actions.append("美股公債或黃金的週線條件數改變，依下方「債金疊加」換倉：指數部帳戶換 XNAS 與 CBU0／IGLN，另一帳戶以 MNQ 維持股票曝險。")
-    if tw_hit:
+    if tw_hit and "tw" in st_markets:
+        actions.append("台股 0050／2330 目標水位和現持不同，下一個交易日照下方「怎麼下單」一次調到目標。")
+    elif tw_hit:
         actions.append("台股 0050／2330 水位現持與目標差達門檻" + ("或高於新規則上限" if switch_hit else "") + "，下一個交易日照下方「怎麼下單」調整（對到最近一格，不是調到目標）。")
     if switch_hit:
         actions.append("規則切換後台股不再需要槓桿段：2330 小型個股期與小台指部位（若有）一併平掉，2330 現貨腿先拉回上限，不等兩格門檻。")
@@ -115,24 +124,41 @@ def build_headline(w52a_text: str | None, is_test: bool) -> str:
 # _leg_trigger_text（不傳 ma60_now，本檔不抓價，故只給 W52 進出場價位，等同網站
 # --render-only 路徑〈leg_panel_map 為空〉時的呈現，不是新行為）。
 # ---------------------------------------------------------------------------
+def _held(tk: dict) -> float:
+    """下單前的現持（組合 pp）：Supertrend 期間 state 另記 held_before_pct；其他情況就是 executed_pct。"""
+    return tk.get("held_before_pct", tk["executed_pct"])
+
+
+def _lvl_cell(tk: dict) -> str:
+    """水位欄：目標與下單前現持不同時 '30% ← 現持 100%'，相同只寫一個數字。"""
+    tgt, held = lvl(tk["final_weight_pct"]), lvl(_held(tk))
+    return f"{tgt:.0f}%" if abs(tgt - held) < 1e-9 else f"{tgt:.0f}% ← 現持 {held:.0f}%"
+
+
 def market_section(m: dict, tickers: dict) -> str:
     legs = m["legs"]
-    exec_combined = sum(tickers[t]["executed_pct"] for t in legs)
+    st_mkt = all(tickers[t].get("rule") == ST_RULE_TAG for t in legs)
+    exec_combined = sum((_held(tickers[t]) if st_mkt else tickers[t]["executed_pct"]) for t in legs)
     target_combined = sum(tickers[t]["final_weight_pct"] for t in legs)
     tile_html = tiles([
-        ("指數部股票曝險：現持（執行層）", f"{exec_combined:.0f}%", None),
+        ("指數部股票曝險：現持（下單前）" if st_mkt else "指數部股票曝險：現持（執行層）", f"{exec_combined:.0f}%", None),
         ("指數部股票曝險：目標（訊號）", f"{target_combined:.0f}%", None),
     ])
-    new_rule = all(tickers[t].get("rule") == NEW_RULE_TAG for t in legs)
+    new_rule = all(tickers[t].get("rule") in NEWSTYLE_TAGS for t in legs)
     rows = []
-    if new_rule:     # 2026-10-19 起：上限 100%、不看均線層，沒有 cap_eff 欄
-        headers = ["檔", "閘門", "水位：目標／現持", "下一個會動的價位"]
+    if new_rule:     # 2026-10-19 起：上限 100%、不看均線層，沒有 cap_eff 欄；Supertrend 期間「閘門」欄改顯示週線／月線
+        headers = ["檔", "狀態", "水位：目標 ← 現持（下單前）" if st_mkt else "水位：目標／現持", "下一個會動的價位"]
         for t in legs:
             tk = tickers[t]
-            gate_pill = pill("在場", "green") if tk["gate"] else pill("出場", "gray")
-            trig = _leg_trigger_text(t, {"gate": tk["gate"], "w52": tk["w52"], "rule": tk.get("rule")}, None)
+            if tk.get("rule") == ST_RULE_TAG and tk.get("st"):
+                gate_pill = (pill("週多", "green") if tk["st"]["w"] else pill("週空", "gray")) + " " + \
+                            (pill("月多", "green") if tk["st"]["m"] else pill("月空", "gray"))
+            else:
+                gate_pill = pill("在場", "green") if tk["gate"] else pill("出場", "gray")
+            trig = _leg_trigger_text(t, {"gate": tk["gate"], "w52": tk["w52"], "rule": tk.get("rule"), "st": tk.get("st")}, None)
             rows.append([f"<strong>{esc(t)}</strong>", gate_pill,
-                         f"{lvl(tk['final_weight_pct']):.0f}% ／ {lvl(tk['executed_pct']):.0f}%", esc(trig)])
+                         (_lvl_cell(tk) if tk.get("rule") == ST_RULE_TAG else
+                          f"{lvl(tk['final_weight_pct']):.0f}% ／ {lvl(tk['executed_pct']):.0f}%"), esc(trig)])
         return section(f"{m['key'].upper()} TODAY", f"{m['name']} — 今天結論",
                         tile_html + table(headers, rows, numeric_cols={2}))
     headers = ["腿", "閘門", "均線", "cap_eff", "目標／現持", "下一個會動的價位"]
@@ -160,13 +186,21 @@ def _overlay_active(state: dict) -> dict | None:
     return ov if ov.get("active") and all(k in ov for k in OVERLAY_LEGS) else None
 
 
-def _overlay_action(w52a_text: str | None, leg: str) -> str:
+def _overlay_action(w52a_text: str | None, leg: str, st: bool = False) -> str:
     name = OVERLAY_NAME[leg]
     for b in _bullets(w52a_text):
         if name in b:
             return b.split("：", 1)[1] if "：" in b else b
     veh, what = OVERLAY_VEHICLE[leg]
+    if st:
+        return (f"今天沒有變動。之後水位每升一級（0→6→14→20%）：指數部帳戶賣 XNAS 換 {veh}（{what}），另一帳戶加 MNQ 維持股票曝險，量＝水位差；降一級反向。")
     return (f"今天沒有變動。之後每多一條成立：指數部帳戶賣 XNAS 換 {veh}（{what}），另一帳戶加 MNQ 維持股票曝險；少一條反向。")
+
+
+def _st_trigger(o: dict) -> str:
+    """債金 Supertrend 的下一個翻轉價位（與頁面共用 supertrend_live_page.trigger_text）。"""
+    import supertrend_live_page as _stp
+    return _stp.trigger_text(o)
 
 
 def overlay_section(state: dict, w52a_text: str | None) -> str:
@@ -174,14 +208,26 @@ def overlay_section(state: dict, w52a_text: str | None) -> str:
     if ov is None:
         return ""
     rows = []
+    st_ov = any(ov[k].get("rule") == "supertrend" for k in OVERLAY_LEGS)
     for k in OVERLAY_LEGS:
         o = ov[k]
+        if o.get("rule") == "supertrend":
+            trig_o = esc(_st_trigger(o)) if "w_thr" in o else ""
+            rows.append([f"<strong>{esc(OVERLAY_NAME[k])}</strong>", f"週{'多' if o['st_w'] else '空'}／月{'多' if o['st_m'] else '空'}",
+                         f"線 {o['w_line']:.2f}／{o['m_line']:.2f}" + (f"<br>{trig_o}" if trig_o else ""),
+                         f"{o['target_pct']:.1f}%", esc(_overlay_action(w52a_text, k, True))])
+            continue
         det = "／".join(("✓" if o[c] else "✕") for c in ("c_ma40", "c_ma52", "c_px52"))
         rows.append([f"<strong>{esc(OVERLAY_NAME[k])}</strong>", f"{o['n']}／3", det,
                      f"{o['target_pct']:.1f}%", esc(_overlay_action(w52a_text, k))])
-    body = table(["資產", "現在成立", "40 週均／52 週均／52 週前", "目標（占指數部）", "怎麼換"], rows, numeric_cols={1, 3})
-    body += note(f"每個資產各最多 {OVERLAY_W*100:.0f}%，週線三個條件每成立一條加三分之一；週線截至 "
-                 f"{esc(ov['ief']['week_date'])}。實盤起始持有 0%，條件數改變才會寄信。")
+    if st_ov:
+        body = table(["資產", "Supertrend", "週線／月線線值", "目標（占指數部）", "怎麼換"], rows, numeric_cols={3})
+        body += note(f"每個資產各最多 {OVERLAY_W*100:.0f}%，週線 70%＋月線 30% Supertrend，水位 20／14／6／0%；週線截至 "
+                     f"{esc(ov['ief']['week_date'])}。水位改變才會寄信。")
+    else:
+        body = table(["資產", "現在成立", "40 週均／52 週均／52 週前", "目標（占指數部）", "怎麼換"], rows, numeric_cols={1, 3})
+        body += note(f"每個資產各最多 {OVERLAY_W*100:.0f}%，週線三個條件每成立一條加三分之一；週線截至 "
+                     f"{esc(ov['ief']['week_date'])}。實盤起始持有 0%，條件數改變才會寄信。")
     return section("OVERLAY", "債金疊加（美股）", body)
 
 
@@ -243,15 +289,18 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
     lines = [f"⚡ 實單系統 可行動變化（美＋台）（數據截至 {main_data_date}）", "",
              headline, "", "今天結論："]
     for m in MARKETS:
-        exec_combined = sum(tickers[t]["executed_pct"] for t in m["legs"])
+        exec_combined = sum((_held(tickers[t]) if tickers[t].get("rule") == ST_RULE_TAG else tickers[t]["executed_pct"]) for t in m["legs"])
         target_combined = sum(tickers[t]["final_weight_pct"] for t in m["legs"])
         lines.append(f"  {m['name']}：指數部股票曝險 現持 {exec_combined:.0f}% ／ 目標 {target_combined:.0f}%")
         for t in m["legs"]:
             tk = tickers[t]
             cond = tk.get("ma_cond") or {}
             ma_str = f"{sum(1 for v in cond.values() if v)}/5" if cond else "—"
-            trig = _leg_trigger_text(t, {"gate": tk["gate"], "w52": tk["w52"], "rule": tk.get("rule")}, None)
-            if tk.get("rule") == NEW_RULE_TAG:
+            trig = _leg_trigger_text(t, {"gate": tk["gate"], "w52": tk["w52"], "rule": tk.get("rule"), "st": tk.get("st")}, None)
+            if tk.get("rule") == ST_RULE_TAG and tk.get("st"):
+                lines.append(f"    {t}：週線{'多' if tk['st']['w'] else '空'}（線 {tk['st']['w_line']:,.2f}）· 月線{'多' if tk['st']['m'] else '空'}"
+                             f"（線 {tk['st']['m_line']:,.2f}）· 水位 {_lvl_cell(tk)}{'（現持為下單前）' if abs(lvl(tk['final_weight_pct']) - lvl(_held(tk))) > 1e-9 else ''} · 下一個會動的價位：{trig}")
+            elif tk.get("rule") == NEW_RULE_TAG:
                 lines.append(f"    {t}：閘門{'在場' if tk['gate'] else '出場'} · "
                              f"水位 現持 {lvl(tk['executed_pct']):.0f}% ／ 目標 {lvl(tk['final_weight_pct']):.0f}% · 下一個會動的價位：{trig}")
             else:
@@ -264,6 +313,11 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
         lines.append(f"債金疊加（美股，各最多 {OVERLAY_W*100:.0f}%，占指數部淨值）：")
         for k in OVERLAY_LEGS:
             o = ov[k]
+            if o.get("rule") == "supertrend":
+                lines.append(f"    {OVERLAY_NAME[k]}：週線{'多' if o['st_w'] else '空'}（線 {o['w_line']:.2f}）、月線{'多' if o['st_m'] else '空'}（線 {o['m_line']:.2f}），目標 {o['target_pct']:.1f}%"
+                             + (f"；下一個會動的價位：{_st_trigger(o)}" if "w_thr" in o else ""))
+                lines.append(f"      怎麼換：{_overlay_action(w52a_text, k, True)}")
+                continue
             det = "、".join(f"{lab}{'成立' if o[c] else '未成立'}" for lab, c in
                            (("週收>40週均", "c_ma40"), ("週收>52週均", "c_ma52"), ("週收>52週前", "c_px52")))
             lines.append(f"    {OVERLAY_NAME[k]}：現在 {o['n']}／3 條成立（{det}），目標 {o['target_pct']:.1f}%")
@@ -308,6 +362,9 @@ def build_mail_html(headline: str, state: dict, w52a_text: str | None, *, is_tes
     body += order_section(w52a_text)
     body += overlay_section(state, w52a_text)
     body += changes_section(w52a_text)
+    if any((tickers.get(t) or {}).get("rule") == ST_RULE_TAG for t in tickers):
+        body += note(f"Supertrend 規則（{ST_CUTOVER_DATE} 收盤起）：每檔 70% 看週線、30% 看月線，各自多頭才持有，水位只有 100／70／30／0%；"
+                     "訊號日收盤判定，下一個交易日一次調到目標水位，沒有門檻也不分段。")
     body += note(f'完整頁面：<a href="{esc(LIVE_PAGE_URL)}">實單主系統「今天結論」</a> · '
                  f'<a href="{esc(SCOREBOARD_URL)}">記分板</a>。')
     if is_test:
@@ -321,9 +378,12 @@ def build_mail_html(headline: str, state: dict, w52a_text: str | None, *, is_tes
         button_label="前往「今天結論」頁面 →",
         button_url=LIVE_PAGE_URL,
         accent="navy",
-        disclaimer="本信為機械化訊號通知，非投資建議。2026-10-19 起實盤為美股債金版、台股不借錢版"
-                   "（股票部分上限 100%，美股另加公債與黃金），舊 cap 1.5 規則降為對照線、不寄信。"
-                   "今天結論與債金疊加數字取自 state.json（與頁面同一來源），本信不重新抓價、不重算訊號。",
+        disclaimer=("本信為機械化訊號通知，非投資建議。" +
+                    (f"{ST_CUTOVER_DATE} 收盤起實盤指數部四檔照 Supertrend（週線 70%＋月線 30%，不借錢），美股另加公債與黃金；"
+                     "W52 規則與舊 cap 1.5 規則為對照線、不寄信。"
+                     if any((tickers.get(t) or {}).get("rule") == ST_RULE_TAG for t in tickers) else
+                     "2026-10-19 起實盤為美股債金版、台股不借錢版（股票部分上限 100%，美股另加公債與黃金），舊 cap 1.5 規則降為對照線、不寄信。") +
+                    "今天結論與債金疊加數字取自 state.json（與頁面同一來源），本信不重新抓價、不重算訊號。"),
     )
 
 
@@ -341,7 +401,9 @@ def main():
 
     state = json.loads(STATE_JSON.read_text(encoding="utf-8"))
 
-    headline = build_headline(w52a_text, args.test_email)
+    tk_ = state.get("tickers") or {}
+    st_markets = frozenset(m["key"] for m in MARKETS if all((tk_.get(t) or {}).get("rule") == ST_RULE_TAG for t in m["legs"]))
+    headline = build_headline(w52a_text, args.test_email, st_markets)
     html = build_mail_html(headline, state, w52a_text, is_test=args.test_email)
     LIVE_MAIL_HTML.write_text(html, encoding="utf-8")
     print(f"Mail HTML written: {LIVE_MAIL_HTML}")

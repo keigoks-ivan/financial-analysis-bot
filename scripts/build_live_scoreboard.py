@@ -227,6 +227,14 @@ PREREG = {
                              "累計淨值比系統高，S-F 為 2.34 pp、S-F70 為 1.55 pp。兩條線沒有結案判定，"
                              "也沒有觸發任何帳本動作；逐日序列留在本次修訂前的版本紀錄，不回填、不改寫",
             },
+            {
+                "date": "2026-11-04",
+                "what": "實單指數部四檔自 2026-11-06 收盤的訊號起改為 Supertrend 週線＋月線（2026-11-09 第一次下單），記分板仍只計到 2026-10-16，"
+                        "Supertrend 階段同樣不在這裡判",
+                "why": "持有人 2026-11-04 決定。事前登記的對象是 2026-10-19 以前的舊規則；W52 規則改為對照線 w52.html 續跑",
+                "unchanged": "SPRT 參數、判定門檻、影子帳戶定義、既有月樣本與判定語意全部不變；凍結日仍是 2026-10-16。"
+                             "Supertrend 階段不另外事前登記，退回條件待持有人訂，見規則帳本（knowledge/rule_ledger.md）2026-11-04",
+            },
         ],
         "disclosure": (
             "影子帳戶與系統共用同一段實錄期，樣本同樣只有幾個月；它們的價值在累積，不在現在的數字。"
@@ -1040,7 +1048,7 @@ details.lsb-prereg summary{{cursor:pointer;font-size:.82rem;color:#57606a;margin
 details.lsb-prereg pre{{max-height:280px;overflow:auto;background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:.6rem;font-size:.72rem;white-space:pre-wrap}}
 </style></head>
 <body>
-<div class="lsb-plain">舊規則階段已凍結：這個記分板檢驗的是 2026-10-19 以前的實單規則，只算到 2026-10-16，最後計入的月份是 2026-09。新規則（美股債金版、台股不借錢版）不在這裡判。</div>
+<div class="lsb-plain">舊規則階段已凍結：這個記分板檢驗的是 2026-10-19 以前的實單規則，只算到 2026-10-16，最後計入的月份是 2026-09。新規則（美股債金版、台股不借錢版）不在這裡判，2026-11-06 起改用的 Supertrend 規則也不在這裡判。</div>
 {gaps_html}
 {adopt_html}
 <p class="lsb-note"><a href="/backtest/live_system_evidence/">這套系統的九項證據總覽 →</a></p>

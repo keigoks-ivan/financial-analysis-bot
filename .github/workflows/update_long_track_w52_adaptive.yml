@@ -46,6 +46,8 @@ jobs:
         run: pip install "yfinance>=0.2.40" pandas numpy
 
       - name: Run W52 × adaptive vol-target update (LIVE main system)
+        # 2026-11-06 收盤的訊號起，指數部四檔改 Supertrend 週線＋月線（持有人 2026-11-04 拍板，生效日見 scripts/supertrend_core.py）；
+        # 債金疊加照舊。檔名與步驟名稱沿用舊稱，免得改動排程與引用。
         # 2026-10-19 起實盤主系統：美股債金版（股票上限 100% 不借錢＋IEF／GLD 週線疊加）、
         # 台股不借錢版（上限 100%）。生效日前的紀錄按舊規則保留、不改寫（state.json 每筆帶 rule 標籤）。
         # 可行動變化寫 lt_w52a_alert.txt（含債金條件數改變），由下方 build_live_mail.py 合成寄出。
@@ -58,6 +60,13 @@ jobs:
         # 失敗不擋實單更新。
         continue-on-error: true
         run: python scripts/update_long_track_w52_adaptive.py --profile cap15
+
+      - name: Run W52 control line (former LIVE rule before Supertrend)
+        # 2026-11-06 收盤的訊號起實單指數部改 Supertrend；原規則（W52 × 自適應 × A2，債金照舊）以 --profile w52
+        # 續跑成對照線，每日更新、不寄信、不寫 alert。輸出 w52_state.json／w52.html。失敗不擋實單更新。
+        # 第一次執行會從實單 state.json 複製 Supertrend 生效日前的 history，之後各自往下走。
+        continue-on-error: true
+        run: python scripts/update_long_track_w52_adaptive.py --profile w52
 
       - name: Run live scoreboard (PREREG 2026-09-05 forward SPRT vs diluted B&H)
         # 只用 state.json 的 source=='live' 實錄，date-keyed 冪等；讀不到資料/例外一律
@@ -167,7 +176,7 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/cap15.html docs/long-track-w52-adaptive/cap15_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/index.html
+          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/cap15.html docs/long-track-w52-adaptive/cap15_state.json docs/long-track-w52-adaptive/w52.html docs/long-track-w52-adaptive/w52_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/index.html
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then
