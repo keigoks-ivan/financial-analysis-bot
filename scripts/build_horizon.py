@@ -835,9 +835,12 @@ def main():
     depts.append({"label": "實單主系統目標曝險", "value": f"美 {exp_us}%・台 {exp_tw}%", "tone": "info",
                   "link": "/long-track-w52-adaptive/"})
     if overlay:
+        def _leg_txt(o):   # Supertrend 版（n 為空）寫週線／月線方向，三條件版寫條件數
+            if o.get("rule") == "supertrend":
+                return f"週{'多' if o.get('st_w') else '空'}月{'多' if o.get('st_m') else '空'}・{(o.get('target_pct') or 0):g}%"
+            return f"{o.get('n') or 0}/3 條件・{(o.get('target_pct') or 0):g}%"
         depts.append({"label": "實單債金腿",
-                      "value": f"公債 {ief_o.get('n', 0)}/3 條件・{(ief_o.get('target_pct') or 0):g}%；"
-                               f"黃金 {gld_o.get('n', 0)}/3 條件・{(gld_o.get('target_pct') or 0):g}%",
+                      "value": f"公債 {_leg_txt(ief_o)}；黃金 {_leg_txt(gld_o)}",
                       "tone": "info", "link": "/long-track-w52-adaptive/"})
     depts.append({"label": "席位引擎", "value": f"核心 {len(seats_core)}＋衛星 {len(seats_sat)} 席（{snap.get('date')}）",
                   "tone": "info", "link": "/cockpit/"})

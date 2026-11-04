@@ -22,7 +22,7 @@
 - 這兩個欄位的白話規則（引用 zh-analyst-prose）：一句只講一個意思，一句一個主數字；專有名詞第一次出現就用白話解釋或直接換成白話（「高收益債利差」可寫「垃圾債多付的利息」）；中文與數字之間半形空格，標點全形；不用比喻（煞車、天花板、雪崩、骨牌一類）；不寫「不是 A，是 B」的收尾句；不預測、不寫買賣建議；數字只能取自 evidence.json。
 - 兩個欄位由 `check_market_read.py` 第 19 項檢查（字數、數字個數、ref 在 observations），沒過依訊息改寫，併入④b 的 3 輪。
 - scenarios[]：基準／偏強／偏弱各含 name_zh、horizon、conditions_zh、falsifiers_zh、asset_implications_zh、refs。
-- sector（2026-10-15 起必寫）：{"body_zh", "refs":[{"ref","why"}]}，講費半與那斯達克的走勢與集中度、那斯達克期貨部位與主題擁擠、實盤指數部押在半導體的比例與離週線閘門多遠；refs ≥3，費半（monitor:sox／monitor:sox_ndx）、那斯達克（monitor:ndx／internals:qqew_qqq／internals:qqq_dvol_z／cot:Nasdaq-100 E-mini）、實盤部位（book:*）各至少一條。細則見 SKILL「sector」條。
+- sector（2026-10-15 起必寫）：{"body_zh", "refs":[{"ref","why"}]}，講費半與那斯達克的走勢與集中度、那斯達克期貨部位與主題擁擠、實盤指數部押在半導體的比例與離週線閘門多遠（2026-11-04 收盤起實單看週線 Supertrend，用 book:*_st_gap；book:*_w52_dist 只當參考）；refs ≥3，費半（monitor:sox／monitor:sox_ndx）、那斯達克（monitor:ndx／internals:qqew_qqq／internals:qqq_dvol_z／cot:Nasdaq-100 E-mini）、實盤部位（book:*）各至少一條。細則見 SKILL「sector」條。
 
 as_of 必須是今天（台北）。同源指標不當多份獨立證據。正文裡每一個數字（含週變動、日變動、差距）都必須在 evidence.json 或 request.json 的 history_context 逐字可查；查不到的數字一律不寫，不得用心算、外推或站內其他檔案補上。
 

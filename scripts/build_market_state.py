@@ -431,7 +431,10 @@ def build_environment(regime_data, macro_clock_data, detective_data, monitor_dat
     tiles.append({
         "key": "system_cockpit", "label": "實單執行層（系統主控台）",
         "value": (f"美 {us:.1f}% · 台 {tw:.1f}%" if us is not None and tw is not None else "—"),
-        "sub": (f"現持 美 {exec_us:.1f}%／台 {exec_tw:.1f}% · 52 週線動能 × 自適應波動率 · 週線 bar {data_date}"
+        "sub": (f"現持 美 {exec_us:.1f}%／台 {exec_tw:.1f}% · "
+                + ("週線＋月線 Supertrend" if any(v.get("rule") == "st_live" for v in tickers.values())
+                   else "52 週線動能 × 自適應波動率")
+                + f" · 週線 bar {data_date}"
                 if long_track_data is not None else None),
         "as_of": lt_as_of, "cadence": cadence_label("daily"),
         "stale": (True if long_track_data is None else stale),
@@ -1606,10 +1609,18 @@ def _book_quotes(long_track_data, gaps):
             "val": (f"{exe * 2:.1f}%" if exe is not None else None),   # 顯示換算：水位＝組合 pp × 2
             "num": (exe * 2 if exe is not None else None), "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
         }
+        st_leg = leg.get("st") if leg.get("rule") == "st_live" else None
+        if st_leg and st_leg.get("w_gap_pct") is not None:
+            # 2026-11-04 收盤起實單看 Supertrend：週線翻轉價離收盤多遠（w_gap_pct＝收盤距翻轉價的 %）
+            quotes[f"book:{sym}_st_gap"] = {
+                "label": f"{sym} 收盤距週線 Supertrend 翻轉價（實單用這條）",
+                "val": f"{st_leg['w_gap_pct']:+.1f}%", "num": st_leg["w_gap_pct"],
+                "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+            }
         close, w52 = leg.get("wk_close"), leg.get("w52")
         dist = round((close / w52 - 1) * 100, 1) if close and w52 else None
         quotes[f"book:{sym}_w52_dist"] = {
-            "label": f"{sym} 收盤距週線閘門（52 週均線）",
+            "label": f"{sym} 收盤距 52 週均線" + ("（參考，實單已改用 Supertrend）" if st_leg else "（週線閘門）"),
             "val": (f"{dist:+.1f}%" if dist is not None else None),
             "num": dist, "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
         }

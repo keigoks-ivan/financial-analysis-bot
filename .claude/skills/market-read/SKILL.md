@@ -38,7 +38,7 @@ description: market-read — 市況主控台判讀層（週頻＋事件觸發，
    - `forces` 2–4 張，每張 refs ≥2、每個 ref 一句「為什麼看它」。
    - `transmission` 四格（erp／credit／split／liquidity）各一句判讀。
    - `positioning_zh`：機械賣家 vs 裁量避險、波動錯價。
-   - `sector`（2026-10-15 起每期必寫，`check_market_read.py` 第 18 項；起因：10/05–10/14 費半領跌、判讀只看 SPY 而漏看）：`{"body_zh": "…", "refs": [{"ref": "…", "why": "…"}]}`。`body_zh` 講三件事：①費半與那斯達克的走勢與集中度（`monitor:sox`／`monitor:sox_ndx`／`monitor:ndx`／`internals:qqew_qqq`）；②那斯達克期貨投機部位與主題擁擠（`cot:Nasdaq-100 E-mini`、`theme:*`）；③實盤指數部押在半導體的比例與離週線閘門多遠（`book:*`，例如 SMH 現持 50%、SMH 每跌 10% 美股指數部少 5%）。只描述集中程度與距離，不寫任何加減部位的話。refs ≥3，費半、那斯達克、實盤部位各至少一條；第一句是標題句（≤ 40 字、最多 1 個數字）；被引用的 ref 一樣要進 `observations`。
+   - `sector`（2026-10-15 起每期必寫，`check_market_read.py` 第 18 項；起因：10/05–10/14 費半領跌、判讀只看 SPY 而漏看）：`{"body_zh": "…", "refs": [{"ref": "…", "why": "…"}]}`。`body_zh` 講三件事：①費半與那斯達克的走勢與集中度（`monitor:sox`／`monitor:sox_ndx`／`monitor:ndx`／`internals:qqew_qqq`）；②那斯達克期貨投機部位與主題擁擠（`cot:Nasdaq-100 E-mini`、`theme:*`）；③實盤指數部押在半導體的比例與離週線閘門多遠（`book:*`；2026-11-04 收盤起實單看週線 Supertrend，距離用 `book:*_st_gap`，`book:*_w52_dist` 只當參考；例如 SMH 現持 50%、SMH 每跌 10% 美股指數部少 5%）。只描述集中程度與距離，不寫任何加減部位的話。refs ≥3，費半、那斯達克、實盤部位各至少一條；第一句是標題句（≤ 40 字、最多 1 個數字）；被引用的 ref 一樣要進 `observations`。
    - `analogs` 2–4 個：吻合特徵各附 today_ref，**必附不同之處**與當年結果。
    - `falsifiers` 6–10 條，**至少 2 條轉多**；可用 `field: "chg30_pct"` 對 30 天變化設門檻。
    - `deviations_from_tables`：固定 `[]`（不再有機率可比）。頂層加 `"mode": "commentary"`。
