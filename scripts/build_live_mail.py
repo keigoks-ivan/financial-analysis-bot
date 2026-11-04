@@ -283,9 +283,15 @@ def changes_section(w52a_text: str | None) -> str:
 # ---------------------------------------------------------------------------
 # 純文字版（lt_live_alert.txt，email body 用）
 # ---------------------------------------------------------------------------
+def _latest_date(state: dict) -> str:
+    """信裡的「數據截至」：用各檔 Supertrend 區塊的實際最新交易日；state 的 data_date 是週線標籤（週間會是未來的週五）。"""
+    ds = [str((tk.get("st") or {}).get("asof")) for tk in (state.get("tickers") or {}).values() if (tk.get("st") or {}).get("asof")]
+    return max(ds) if ds else state.get("data_date", "—")
+
+
 def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
     tickers = state.get("tickers") or {}
-    main_data_date = state.get("data_date", "—")
+    main_data_date = _latest_date(state)
     lines = [f"⚡ 實單系統 可行動變化（美＋台）（數據截至 {main_data_date}）", "",
              headline, "", "今天結論："]
     for m in MARKETS:
@@ -354,7 +360,7 @@ def _headline_block(text: str) -> str:
 
 def build_mail_html(headline: str, state: dict, w52a_text: str | None, *, is_test: bool) -> str:
     tickers = state.get("tickers") or {}
-    main_data_date = state.get("data_date", "—")
+    main_data_date = _latest_date(state)
 
     body = _headline_block(headline)
     for m in MARKETS:

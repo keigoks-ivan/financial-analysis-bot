@@ -2112,7 +2112,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
             "banner": (f'<div class="oos-banner">\n  <span class="tag-loud">對照線・{sw} 起不下單、不寄信</span>\n'
                        f'  <div style="font-size:.86rem">本頁保留 {sw} 前的實單規則（<b>W52 閘門 × 自適應波動率 cap_eff 最高 1.5 × 執行層 A2</b>，'
                        f'{RULE_REVISION_DATE} 起含日線均線確認），每交易日照常更新，用來和之後的規則並排看。'
-                       f'2026-11-04 起實單改用 Supertrend（週線＋月線），見<a href="/long-track-w52-adaptive/">實單主系統頁</a>；10-19 至11-03 的 W52 不借錢＋債金版見<a href="/long-track-w52-adaptive/w52.html">W52 對照線</a>。以下規則說明與回測數字都是舊規則的版本。</div>\n</div>\n\n'),
+                       f'2026-11-04 起實單改用 Supertrend（週線＋月線），見<a href="/long-track-w52-adaptive/">實單主系統頁</a>；10-19 至 11-03 的 W52 不借錢＋債金版見<a href="/long-track-w52-adaptive/w52.html">W52 對照線</a>。以下規則說明與回測數字都是舊規則的版本。</div>\n</div>\n\n'),
             "above_cards": "",
             "rules": old_rules,
             "footer": f"W52 × 自適應波動率 150%（美+台）· 舊規則對照線（{sw} 起）",
