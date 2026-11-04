@@ -183,9 +183,9 @@ def test_leg_row_shape_and_no_account_strings():
     st = bo.streak_of([1, 0, 0], ["2026-10-02", "2026-10-09", "2026-10-16"])
     r = bo.leg_row("ief", _ov(0), st)
     assert r["id"] == "ief_3cond" and r["kind"] == "leg" and r["value_text"] == "0/3"
-    assert r["zone"] == "off" and r["zone_label"] == "不持有"
+    assert r["zone"] == "off" and r["zone_label"] == "都不成立"
     on = bo.leg_row("gld", _ov(2), bo.streak_of([0, 2], ["2026-10-09", "2026-10-16"]))
-    assert on["zone"] == "on" and on["zone_label"] == "持有 2/3"
+    assert on["zone"] == "on" and on["zone_label"] == "成立 2/3"
     blob = json.dumps([r, on], ensure_ascii=False)
     for bad in ("MNQ", "XNAS", "CBU0", "IGLN", "UCITS", "帳戶"):
         assert bad not in blob

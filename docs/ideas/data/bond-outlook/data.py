@@ -287,7 +287,7 @@ def leg_row(k, ov, st):
     return {
         "id": LEG_ID[k], "kind": "leg", "label": LEG_LABEL[k],
         "value": n, "value_text": f"{n}/3", "unit": "",
-        "asof": ov["week_date"], "zone": "on" if n else "off", "zone_label": f"持有 {n}/3" if n else "不持有",
+        "asof": ov["week_date"], "zone": "on" if n else "off", "zone_label": f"成立 {n}/3" if n else "都不成立",
         "conditions": {"ma40": ov["c_ma40"], "ma52": ov["c_ma52"], "px52": ov["c_px52"]},
         "streak_start": st["start"], "streak_weeks": st["weeks"], "prev_n": st["prev_n"],
         "streak_text": text,
@@ -304,6 +304,8 @@ def fetch_legs():
     sys.path.insert(0, str(REPO / "scripts"))
     import update_long_track_w52_adaptive as w52
     import update_long_track_w52_adaptive_c1 as c1
+    # 2026-11-06 起實單債金改 Supertrend；本頁量表追蹤的是週線三條件讀數，固定用三條件算（只改本程式內的模組變數，不影響實單）
+    w52.DEFENSIVE_RULE = "three_condition"
 
     cache = {}
     orig_fetch = c1.fetch_adj
@@ -356,6 +358,8 @@ def check_against_state(rows):
         s = ov.get(k)
         if not row or not s:
             info(f"state.json 沒有 {k} 的 overlay，略過核對")
+        elif s.get("rule") == "supertrend":
+            info(f"{k}：實單債金已改 Supertrend（2026-11-06 起），本頁三條件讀數不再與 state.json 核對")
         elif s.get("week_date") != row["asof"]:
             info(f"{k}：state.json 週線日 {s.get('week_date')}、本次 {row['asof']}，週線日不同，未核對")
         elif s.get("n") != row["value"]:
