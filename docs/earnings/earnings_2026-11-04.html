@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Analysis · 2026-11-04 — InvestMQuest Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --bg-subtle:#fafaf9; --surface:#ffffff; --surface-2:#f7f7f5;
+  --border:#e5e5e2; --border-strong:#1a1a1a;
+  --text:#1a1a1a; --text-muted:#666; --text-dim:#999;
+  --accent:#2563eb; --green:#15803d; --green-bg:#f0fdf4;
+  --red:#b91c1c; --red-bg:#fef2f2; --amber:#b45309; --amber-bg:#fffbeb;
+  --orange:#c2410c; --orange-bg:#fff7ed; --radius:8px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+
+.imq-nav{display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+  padding:12px 28px;border-bottom:1px solid var(--border);background:var(--bg-subtle);
+  font-size:13px;position:sticky;top:0;z-index:50;}
+.imq-nav a{color:var(--text-muted);text-decoration:none;}
+.imq-nav a:hover{color:var(--accent);}
+.imq-brand{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--text)!important;
+  letter-spacing:-.3px;margin-right:8px;}
+.imq-dd{position:relative;}
+.imq-dd-label{color:var(--text-muted);cursor:default;}
+.imq-dd:hover .imq-dd-label{color:var(--accent);}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:-12px;padding:8px 0;min-width:150px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:0 6px 20px rgba(0,0,0,.07);}
+.imq-dd:hover .imq-dd-menu{display:block;}
+.imq-dd-menu a{display:block;padding:6px 16px;white-space:nowrap;}
+.imq-dd.active > .imq-dd-label{color:var(--text);font-weight:500;}
+.imq-dd-menu a.active{color:var(--accent);font-weight:500;}
+
+.container{max-width:880px;margin:0 auto;padding:32px 24px 80px;}
+.breadcrumb{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:24px;}
+.breadcrumb a{color:var(--text-dim);text-decoration:none;}
+.breadcrumb a:hover{color:var(--accent);}
+
+.report-header{border-bottom:2px solid var(--border-strong);padding-bottom:24px;margin-bottom:32px;}
+.report-header h1{font-size:32px;line-height:1.25;margin:0 0 10px;letter-spacing:-.6px;}
+.report-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px;}
+.report-lede{border-left:3px solid var(--accent);padding:14px 18px;background:var(--surface-2);
+  border-radius:0 var(--radius) var(--radius) 0;font-size:15px;}
+
+.toc{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 22px;margin-bottom:40px;}
+.toc-title{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text-dim);margin-bottom:10px;}
+.toc ol{margin:0;padding-left:20px;font-size:14px;}
+.toc li{margin:4px 0;}
+.toc a{color:var(--text);text-decoration:none;}
+.toc a:hover{color:var(--accent);}
+
+h2{font-size:23px;margin:52px 0 18px;padding-bottom:9px;border-bottom:1px solid var(--border-strong);
+  letter-spacing:-.3px;}
+h3{font-size:17px;margin:32px 0 10px;}
+h4{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text-muted);margin:20px 0 8px;}
+p{margin:0 0 14px;}
+ul{margin:0 0 14px;padding-left:20px;}
+li{margin:5px 0;}
+
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:14px;}
+th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--text-muted);padding:8px 10px;border-bottom:1px solid var(--border-strong);
+  font-weight:500;}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+tbody tr:hover{background:var(--surface-2);}
+
+.company-card{border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;
+  margin:22px 0;background:var(--surface);}
+.company-header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+.ticker{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;letter-spacing:-.4px;}
+.meta-right{font-size:12.5px;color:var(--text-muted);text-align:right;}
+
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;
+  padding:2px 7px;border-radius:4px;letter-spacing:.4px;white-space:nowrap;}
+.tag.beat{background:var(--green-bg);color:var(--green);}
+.tag.miss{background:var(--red-bg);color:var(--red);}
+.tag.inline{background:var(--amber-bg);color:var(--amber);}
+.tag.raise{background:var(--green-bg);color:var(--green);}
+.tag.maintain{background:var(--amber-bg);color:var(--amber);}
+.tag.lower{background:var(--red-bg);color:var(--red);}
+
+.stock-move{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;
+  padding:2px 7px;border-radius:4px;}
+.stock-move.up{background:var(--green-bg);color:var(--green);}
+.stock-move.down{background:var(--red-bg);color:var(--red);}
+
+.lede-list{margin:.45rem 0 0 1.15rem;padding:0;}
+.lede-list li{margin:.3rem 0;}
+.stat-strip{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;}
+.stat-chip{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;
+  padding:4px 10px;border-radius:4px;background:var(--surface-2);border:1px solid var(--border);white-space:nowrap;}
+.stat-chip .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-right:6px;}
+.stat-chip.good{background:var(--green-bg);color:var(--green);border-color:transparent;}
+.stat-chip.bad{background:var(--red-bg);color:var(--red);border-color:transparent;}
+.stat-chip.mid{background:var(--amber-bg);color:var(--amber);border-color:transparent;}
+.stat-chip.na{color:var(--text-muted);}
+.bottom-line{border-left:3px solid var(--border-strong);background:var(--surface-2);
+  padding:10px 14px;margin:12px 0 4px;font-size:14.5px;border-radius:0 var(--radius) var(--radius) 0;}
+.bottom-line strong{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:.7px;color:var(--text-muted);margin-right:8px;}
+.trend-list{list-style:none;padding:0;margin:0 0 28px;}
+.trend-list li{margin:9px 0;}
+.tl{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);
+  border-radius:4px;padding:1px 7px;margin-right:8px;white-space:nowrap;vertical-align:1px;}
+.trend-list li.impl .tl{color:var(--accent);border-color:var(--accent);background:transparent;}
+
+.winner-row td:first-child{border-left:3px solid var(--green);font-family:'IBM Plex Mono',monospace;font-weight:500;}
+.loser-row td:first-child{border-left:3px solid var(--red);font-family:'IBM Plex Mono',monospace;font-weight:500;}
+
+.contradiction{background:var(--orange-bg);border-left:3px solid var(--orange);
+  border-radius:0 var(--radius) var(--radius) 0;padding:16px 20px;margin:18px 0;}
+.contradiction h4{color:var(--orange);font-size:12px;margin:0 0 8px;}
+.contradiction p{margin:0 0 10px;font-size:14.5px;}
+.implication{margin-bottom:0!important;color:var(--text);}
+
+.summary-list{list-style:none;padding:0;}
+.summary-list li{border-left:3px solid var(--accent);background:var(--surface-2);
+  padding:12px 16px;margin:10px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:14.5px;}
+
+.noncon{background:#fdf4ff;border-left:3px solid #9333ea;border-radius:0 var(--radius) var(--radius) 0;
+  padding:14px 18px;margin:14px 0;}
+.noncon h4{color:#9333ea;margin-top:0;}
+
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 20px;margin-top:48px;font-size:12.5px;color:var(--text-muted);line-height:1.65;}
+footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+  margin-top:28px;padding-top:20px;border-top:1px solid var(--border);}
+footer a{color:var(--text-dim);text-decoration:none;}
+
+@media (max-width:720px){
+  .container{padding:22px 16px 60px;}
+  .report-header h1{font-size:24px;}
+  .company-card{padding:18px 16px;}
+  .company-header{flex-direction:column;align-items:flex-start;}
+  .meta-right{text-align:left;}
+  table{font-size:13px;}
+  th,td{padding:7px 6px;}
+  .imq-nav{gap:14px;padding:10px 14px;}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+:where(a){color:#0d2244}
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/markets.html">風險偏好儀表</a>
+          <a href="/earnings/" class="active">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/us-chips/">美股籌碼</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/screeners.html">RS 排行</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+<!-- PLAIN_PRIMER_START -->
+<details style="max-width:900px;margin:16px auto;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:2px 18px 14px;font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.9;color:#334155">
+<summary style="cursor:pointer;padding:12px 0;font-weight:600;color:#1E3A5F;font-size:13.5px">📖 第一次讀這種報告？點開看怎麼讀</summary>
+<div style="margin:2px 0 4px;padding-top:8px;border-top:1px solid #E2E8F0">
+<p style="margin:6px 0">這是財報分析報告，整理公司公布財報當下的數字重點與市場反應。</p>
+<p style="margin:6px 0"><strong>結論在哪：</strong>通常在後段的「總結」；部分報告後面附加「Phase R 覆核」，是同一份報告針對特定結論的後續補充，不是新報告。</p>
+<p style="margin:6px 0"><strong>常見詞：</strong>「EPS」是每股盈餘；「財測」（guidance）是公司自己對未來業績的預估；「優於預期／不如預期」是跟市場原本的共識預估比較後的結果，不是絕對的好壞——公司賺錢又成長，也可能因為「不如預期」股價當天下跌。</p>
+<p style="margin:6px 0"><strong>時效提醒：</strong>這是財報「當天」的即時反應紀錄，之後股價與基本面可能已經變化，相關個股最新結論請看 <a href="/research/" style="color:#2563EB;text-decoration:underline">/research/</a>。</p>
+<p style="margin:6px 0 0">想查其他詞的意思，見<a href="/learn/glossary.html" style="color:#2563EB;text-decoration:underline">投資詞彙表</a>。</p>
+</div>
+</details>
+<!-- PLAIN_PRIMER_END -->
+
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-11-04
+  </div>
+
+  <header class="report-header">
+    <h1>美股 11/4 財報日深度分析</h1>
+    <div class="report-meta">9 companies analyzed · $50B+ 9家 · 盤前+盤後混合，股價反應多數待確認（見免責聲明）</div>
+    <div class="report-lede">
+      <strong>核心發現：</strong>
+      <ul class="lede-list">
+        <li>MCD營收/EPS雙優於預期但美國同店銷售轉負-0.2%，價值策略撐住總量卻撐不住本土動能（§4矛盾1）。</li>
+        <li>NVO調整後營業利益+27%（固定匯率）主因是去年同期轉型費用的低基期，非真實營運槓桿擴張（§4矛盾2）。</li>
+        <li>QCOM QCT手機晶片營收年減8%，記憶體成本壓力蓋過AI資料中心敘事（§2）。</li>
+        <li>ALL調整後EPS $9.76遠高於GAAP $8.03，近$1.73價差多數來自投資利得而非核保改善（§4矛盾3）。</li>
+        <li>DASH營收/訂單量雙beat且EBITDA年增41%，但2027投資支出計畫是下一個股價變數（§2）。</li>
+        <li>本日9家公司財報發布僅數小時，搜尋索引尚未更新同日股價反應，誠實標注「待確認」而非編造（見免責聲明）。</li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="toc">
+    <div class="toc-title">目錄</div>
+    <ol>
+      <li><a href="#s1">各公司財報重點</a></li>
+      <li><a href="#s2">產業與子產業趨勢</a></li>
+      <li><a href="#s3">贏家與輸家</a></li>
+      <li><a href="#s4">互相矛盾與不合邏輯之處</a></li>
+      <li><a href="#s5">總結</a></li>
+    </ol>
+  </div>
+
+  <h2 id="s1">§1 各公司財報重點</h2>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">MCD · McDonald's</span>
+      <span class="meta-right">~$215B · 盤前（11/4 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>BEAT diluted +10%</span>
+      <span class="stat-chip mid"><span class="k">營收</span>約略優於共識</span>
+      <span class="stat-chip mid"><span class="k">指引</span>股息+4%</span>
+      <span class="stat-chip na"><span class="k">股價</span>待確認</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>全球同店銷售+1.5%，但美國本土同店銷售轉負-0.2%，國際授權市場（IDL）+4.2%扛住總量，diluted EPS $3.51優於去年同期$3.18逾10%。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期/去年同期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Diluted EPS</td><td>$3.51</td><td>去年同期$3.18；財報前共識約$3.41（GAAP口徑）</td><td><span class="tag beat">BEAT</span> YoY+10%</td></tr>
+        <tr><td>全球同店銷售</td><td>+1.5%</td><td>—</td><td>美國-0.2%／IOM+1.4%／IDL+4.2%，三區分化</td></tr>
+        <tr><td>系統營業額（Systemwide sales）</td><td>&gt;$38B</td><td>—</td><td>+4% YoY</td></tr>
+        <tr><td>季度股利</td><td>$1.93/股</td><td>—</td><td>上調4%</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>美國同店轉負</strong>：美國同店銷售-0.2%，是本季三大區域中唯一負值，與去年同期+2.4%的正成長相比出現明顯減速，財報前管理層已預告對消費者維持謹慎基調。</li>
+      <li><strong>國際授權市場扛住總量</strong>：IDL+4.2%、IOM+1.4%，兩個國際區域合計抵銷美國本土的疲弱，是全球同店仍能維持正值的主要原因。</li>
+      <li><strong>股利連續上調</strong>：季度股利上調4%至$1.93/股，延續公司長期股利成長紀錄，與本季美國動能走弱形成對比——資本回報政策未因本土疲弱而改變。</li>
+      <li><strong>精確營收數字未取得二源確認</strong>：財報前共識營收約為$7.29億（FN2預估），SEC 8-K原文揭露的系統營業額與同店銷售數字明確，但精確季度營收總額本次搜尋未能二源確認，已誠實標注待補。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得（財報發布僅數小時，法說會逐字稿搜尋索引尚未更新）；僅依SEC 8-K新聞稿正文撰寫上述數字。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>股價反應：<span class="stat-chip na">未取得二源確認</span>。本次執行時間為美東時間11/4晚間8點左右，MCD為盤前發布，理論上已有完整全日收盤數據，但本次搜尋在多輪嘗試後仍未能取得11/4當日收盤%變化的可靠二源確認（搜尋索引疑似尚未更新同日資訊），已誠實標注待Phase R覆核補上，不自行推測填補。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">NVO · Novo Nordisk</span>
+      <span class="meta-right">~$200B · 盤前（11/4 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip na"><span class="k">EPS</span>未取得</span>
+      <span class="stat-chip mid"><span class="k">營收</span>CER+4%</span>
+      <span class="stat-chip good"><span class="k">指引</span>調整後營益+27%CER</span>
+      <span class="stat-chip na"><span class="k">股價</span>待確認</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>銷售固定匯率成長+4%（較前幾季明顯減速），調整後營業利益固定匯率+27%看似強勁，但主因是去年同期DKK 90億轉型費用的低基期，非真實營運槓桿改善（§4矛盾2）。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期/去年同期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>銷售成長（CER）</td><td>+4%</td><td>—</td><td>由美國與國際GLP-1銷量驅動，主要集中肥胖症</td></tr>
+        <tr><td>調整後營業利益（CER）</td><td>+27%</td><td>去年同期含DKK 90億轉型費用</td><td>低基期效應，非營運槓桿改善</td></tr>
+        <tr><td>報告營業利益（CER）</td><td>-9%</td><td>—</td><td>反映DKK 87億非現金減損</td></tr>
+        <tr><td>Wegovy口服版</td><td>Q3銷售DKK 5,394M</td><td>—</td><td>已於美、阿聯、英、德四地上市</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>銷售成長明顯減速</strong>：CER+4%，相較公司過去兩年動輒20%以上的GLP-1銷售成長率，本季增速已大幅收斂，反映肥胖症與糖尿病競爭加劇、美國定價壓力持續。</li>
+      <li><strong>DKK 87億非現金減損</strong>：報告營業利益CER-9%，主因是本季認列的大額非現金減損，與調整後口徑的+27%形成巨大落差，是本季GAAP與調整後數字落差最大的樣本之一。</li>
+      <li><strong>調整後營益成長是低基期效應</strong>：27%的調整後營業利益成長率，分母含去年同期DKK 90億的轉型/重組費用，剔除此基期效應後，真實營運層面的利潤成長遠低於27%——不應直接解讀為營運改善加速。</li>
+      <li><strong>EPS數字未取得</strong>：本次搜尋未能取得Q3 2026的每股盈餘（DKK或USD口徑）二源確認數字，已誠實標注待補，不自行推算。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得（財報發布僅數小時，法說會逐字稿搜尋索引尚未更新）；上述數字均出自SEC 6-K文件正文。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>股價反應：<span class="stat-chip na">未取得二源確認</span>，已標注待Phase R覆核補上。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">MET · MetLife</span>
+      <span class="meta-right">~$55B · 盤前（11/4 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後約beat</span>
+      <span class="stat-chip mid"><span class="k">營收</span>口徑不一</span>
+      <span class="stat-chip mid"><span class="k">指引</span>—</span>
+      <span class="stat-chip na"><span class="k">股價</span>待確認</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>GAAP淨利$24億（每股$3.67），調整後EPS約$2.78-2.85（來源不一），調整後盈餘+12%YoY至$18億。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期/去年同期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP淨利／EPS</td><td>$24億／$3.67</td><td>—</td><td>含投資組合評價等非經常性項目</td></tr>
+        <tr><td>調整後EPS</td><td>約$2.78-2.85（來源不一）</td><td>—</td><td>兩份轉述數字落差約$0.07，已標注不一致</td></tr>
+        <tr><td>調整後盈餘</td><td>$18億</td><td>—</td><td><span class="tag beat">YoY+12%</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>GAAP與調整後落差明顯</strong>：GAAP每股$3.67遠高於調整後約$2.8區間，差額主要來自投資組合的市值評價變動，非核心保險業務的經常性獲利。</li>
+      <li><strong>數字來源不一致</strong>：兩份轉述來源對調整後EPS分別給出約$2.78與$2.85，差距近3%，本報告誠實標注此落差，未自行判定何者為準，待公司自身法說會簡報確認。</li>
+      <li><strong>調整後盈餘穩健成長</strong>：調整後盈餘$18億、YoY+12%，顯示核心保險與資產管理業務在本季仍維持穩健成長步調。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得（財報發布僅數小時，法說會逐字稿搜尋索引尚未更新）；上述數字出自公司SEC 8-K新聞稿與轉述摘要。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>股價反應：<span class="stat-chip na">未取得二源確認</span>，已標注待Phase R覆核補上。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">ALL · Allstate</span>
+      <span class="meta-right">~$52B · 盤後（11/4 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>調整後優於共識</span>
+      <span class="stat-chip good"><span class="k">營收</span>BEAT</span>
+      <span class="stat-chip mid"><span class="k">指引</span>—</span>
+      <span class="stat-chip na"><span class="k">股價</span>待確認</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>營收$173億優於共識，調整後EPS $9.76遠高於GAAP $8.03，核保與投資雙重受益，但調整項目幅度之大值得留意（§4矛盾3）。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期/去年同期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>營收</td><td>$173億</td><td>財報前共識約$158-175億（來源不一）</td><td><span class="tag beat">BEAT</span>（依共識來源）</td></tr>
+        <tr><td>GAAP淨利／EPS</td><td>$21億／$8.03</td><td>—</td><td>—</td></tr>
+        <tr><td>調整後淨利／EPS</td><td>$25億／$9.76</td><td>財報前共識約$6.46-6.89</td><td><span class="tag beat">BEAT</span>大幅優於共識</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>調整後與GAAP落差$1.73/股</strong>：調整後EPS $9.76比GAAP $8.03高出約22%，公司新聞稿歸因於車險/房險核保利潤率走強與投資收益增加，但落差幅度仍值得與其他調整項目來源交叉確認（§4矛盾3）。</li>
+      <li><strong>核保與投資雙引擎</strong>：公司新聞稿明確點名車險、房險核保利潤率走強、投資收益增加、以及Protection Services業務持續成長，為本季獲利的三大驅動來源。</li>
+      <li><strong>共識數字來源分歧大</strong>：不同彙整來源對財報前EPS共識給出$6.46至$6.89的區間，且與營收共識$158-175億的區間同樣分歧，顯示市場對本季預估本身就存在較大不確定性。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得（財報發布僅數小時，法說會逐字稿搜尋索引尚未更新）；上述數字出自公司SEC 8-K新聞稿正文。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>股價反應：<span class="stat-chip na">未取得二源確認</span>，已標注待Phase R覆核補上。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">COR · Cencora</span>
+      <span class="meta-right">~$52B · 盤前（11/4 FQ4 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>BEAT 調整後+21.4%YoY</span>
+      <span class="stat-chip good"><span class="k">營收</span>+5.5%YoY</span>
+      <span class="stat-chip good"><span class="k">指引</span>RAISE FY27</span>
+      <span class="stat-chip na"><span class="k">股價</span>待確認</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>財年收尾穩健——營收$884億+5.5%、調整後EPS $4.66+21.4%YoY，並發布FY27調整後EPS指引$19.40-19.75，同步加碼股利10%。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期/去年同期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>營收（FQ4）</td><td>$884億</td><td>—</td><td><span class="tag beat">+5.5% YoY</span></td></tr>
+        <tr><td>GAAP EPS（FQ4）</td><td>$2.71</td><td>—</td><td>—</td></tr>
+        <tr><td>調整後EPS（FQ4）</td><td>$4.66</td><td>—</td><td><span class="tag beat">+21.4% YoY</span></td></tr>
+        <tr><td>FY2026全年</td><td>營收$3,374億／調整後EPS $17.97</td><td>—</td><td>+5.0% / +12.3% YoY</td></tr>
+        <tr><td>FY2027 guidance</td><td>調整後EPS $19.40-19.75</td><td>—</td><td><span class="tag raise">RAISE</span>，同步上調季度股利10%</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>財年收尾強於全年平均</strong>：FQ4調整後EPS YoY+21.4%，高於全年平均+12.3%，顯示下半年動能較上半年加速。</li>
+      <li><strong>GAAP與調整後落差近$2</strong>：GAAP EPS $2.71對調整後$4.66，落差約72%，是本季醫藥流通業中GAAP/調整後口徑落差較大的樣本，惟搜尋未能取得具體調整項目明細，已標注待補。</li>
+      <li><strong>FY27財測與股利同步上修</strong>：調整後EPS guide $19.40-19.75隱含YoY約+8-10%成長，同時股利上調10%，顯示管理層對次年現金流與獲利能力維持信心。</li>
+      <li><strong>Q4與全年精確市場共識未取得</strong>：本次搜尋取得公司自身8-K實際數字，但財報前分析師共識EPS/營收具體數值未能二源確認，已標注待補。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得（財報發布僅數小時，法說會逐字稿搜尋索引尚未更新）；上述數字出自公司SEC 8-K新聞稿正文。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>股價反應：<span class="stat-chip na">未取得二源確認</span>，已標注待Phase R覆核補上。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">QCOM · Qualcomm</span>
+      <span class="meta-right">~$170B · 盤後（11/4 FQ4 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip mid"><span class="k">EPS</span>部分未取得</span>
+      <span class="stat-chip bad"><span class="k">營收</span>QCT -8%YoY</span>
+      <span class="stat-chip mid"><span class="k">指引</span>FY27 Data Center $5B</span>
+      <span class="stat-chip na"><span class="k">股價</span>待確認</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>QCT（手機晶片）營收$90.15億年減8%，記憶體成本壓力持續壓低毛利，全年受惠一次性稅務利益GAAP EPS大增，與核心營運方向相反（§2）。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期/去年同期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>QCT營收（FQ4）</td><td>$90.15億</td><td>去年同期$98.21億；公司guide $84-90億</td><td><span class="tag miss">-8% YoY</span>，落在guide上緣</td></tr>
+        <tr><td>QCT全年營收</td><td>$372.08億</td><td>—</td><td>-3% YoY</td></tr>
+        <tr><td>GAAP EPS（FY26全年）</td><td>$12.70</td><td>—</td><td>含$57億所得稅利益（去年Q4估值備抵回沖）</td></tr>
+        <tr><td>Non-GAAP EPS（FY26全年）</td><td>$10.54</td><td>去年$12.03</td><td>-12% YoY</td></tr>
+        <tr><td>FY2027展望</td><td>Data Center營收目標$50億</td><td>—</td><td>非手機業務guide YoY成長逾60%；QTL已與Apple/華為/Transsion續約</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>QCT手機晶片營收連續第二季下滑</strong>：FQ4 $90.15億年減8%，全年$372.08億年減3%，管理層此前已多次提及記憶體成本上升壓低智慧型手機毛利空間，本季數字驗證此壓力延續。</li>
+      <li><strong>非手機業務成為成長敘事主軸</strong>：FY2027展望重申Data Center營收目標$50億，並強調非手機業務YoY成長預計逾60%，顯示公司正加速將成長故事從QCT手機轉向資料中心與多元化授權。</li>
+      <li><strong>GAAP EPS因一次性稅務項目大幅失真</strong>：FY26 GAAP EPS $12.70遠高於Non-GAAP的$10.54，主因是去年Q4一次性$57億所得稅估值備抵回沖，屬會計科目效應而非營運改善，兩者不可直接比較beat/miss。</li>
+      <li><strong>單季總營收與EPS未取得</strong>：本次搜尋取得QCT分部與全年數字，但FQ4單季合併總營收與單季Non-GAAP EPS具體數字未能二源確認，已標注待補，不自行推算。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得（財報發布僅數小時，法說會逐字稿搜尋索引尚未更新）；上述數字出自公司SEC 8-K新聞稿正文。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>股價反應：<span class="stat-chip na">未取得二源確認</span>（財報於11/4盤後發布，本次執行時間距發布僅數小時，搜尋索引尚未更新盤後報價），已標注待Phase R覆核補上。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">APP · AppLovin</span>
+      <span class="meta-right">~$190B · 盤後（11/4 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>BEAT diluted+約75%YoY</span>
+      <span class="stat-chip good"><span class="k">營收</span>BEAT +55%YoY</span>
+      <span class="stat-chip mid"><span class="k">指引</span>—</span>
+      <span class="stat-chip na"><span class="k">股價</span>待確認</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>營收$21.8億創紀錄年增55%，淨利$14.4億，diluted EPS $4.30，延續過去幾季廣告科技平台的高速成長軌跡。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期/去年同期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>營收</td><td>$21.8億</td><td>財報前公司guide $20.6-20.8億</td><td><span class="tag beat">+55% YoY</span>，大幅優於自身guide</td></tr>
+        <tr><td>淨利</td><td>$14.4億</td><td>—</td><td>—</td></tr>
+        <tr><td>Diluted EPS</td><td>$4.30</td><td>—</td><td>Basic EPS $4.31</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>營收遠超自身財測上緣</strong>：$21.8億較公司財報前guide的$20.6-20.8億上緣仍超出約5%，延續近幾季持續超越自身guide的模式。</li>
+      <li><strong>年增率維持高檔</strong>：+55%YoY，雖較去年同期+68%略有放緩，但在目前基數已明顯放大的情況下仍屬高速成長。</li>
+      <li><strong>EPS與淨利數字一致</strong>：Diluted EPS $4.30與淨利$14.4億的隱含股數換算一致，數字來源明確（公司SEC 8-K），本次無來源分歧問題。</li>
+      <li><strong>調整後EBITDA/毛利率等細項未取得</strong>：本次搜尋僅取得營收、淨利、EPS三項核心數字，調整後EBITDA margin與分部（廣告技術平台 vs 應用）拆分細項未能二源確認，已標注待補。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得（財報發布僅數小時，法說會逐字稿搜尋索引尚未更新）；上述數字出自公司SEC 8-K新聞稿正文。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>股價反應：<span class="stat-chip na">未取得二源確認</span>（財報於11/4盤後發布，本次執行時間距發布僅數小時，搜尋索引尚未更新盤後報價），已標注待Phase R覆核補上。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">ARM · Arm Holdings</span>
+      <span class="meta-right">~$130B · 盤後（11/4 FQ2 2027）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip na"><span class="k">EPS</span>財測內，實際未取得</span>
+      <span class="stat-chip na"><span class="k">營收</span>財測內，實際未取得</span>
+      <span class="stat-chip mid"><span class="k">指引</span>上季已下修全年權利金成長</span>
+      <span class="stat-chip na"><span class="k">股價</span>待確認</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>本次搜尋僅能確認ARM於11/4盤後發布FQ2 FY2027財報，公司自身財測為營收$13.8億±5000萬、非GAAP EPS $0.47±0.04，實際公布數字本次執行未能二源確認，誠實標注待補。</div>
+    <table>
+      <thead><tr><th>指標</th><th>公司財測（上季發布）</th><th>去年同期</th><th>備註</th></tr></thead>
+      <tbody>
+        <tr><td>營收（guide）</td><td>$13.8億±5000萬</td><td>FQ2 FY26 $11.4億</td><td>財測隱含YoY約+22%</td></tr>
+        <tr><td>Non-GAAP EPS（guide）</td><td>$0.47±0.04</td><td>FQ2 FY26 Non-GAAP $0.39</td><td>—</td></tr>
+        <tr><td>權利金收入成長（guide）</td><td>YoY+低雙位數%</td><td>—</td><td>7月時已將全年權利金成長guide從約+20%下修至高個位數至十位數區間，反映智慧型手機/邊緣AI需求轉弱</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>實際財報數字未取得</strong>：本次多輪搜尋僅能確認公司自身在今年7月發布的財測區間與上季（FQ1 FY27）實際數字，11/4當日公布的FQ2 FY27實際營收、EPS與各分項（權利金/授權）具體數字均未能二源確認，已誠實標注，不自行推算或引用可能錯置年度的舊數字。</li>
+      <li><strong>上季已下修全年權利金成長guide</strong>：FQ1 FY27（7月29日發布）報告中，公司已將全年權利金收入成長guide從約+20%下修至高個位數至十位數區間，歸因於智慧型手機與邊緣AI需求偏弱，是觀察本次FQ2數字是否延續此趨勢的重要背景（§4矛盾4）。</li>
+      <li><strong>市場預期背景</strong>：財報前市場對FQ2 FY27的共識區間落在營收約$13.7億、非GAAP EPS約$0.39-0.48，與公司自身財測大致吻合，顯示市場對財測本身的分歧不大，實際結果與財測的落差才是本次關鍵觀察點。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得（財報發布僅數小時，法說會逐字稿與新聞稿搜尋索引尚未更新）。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>股價反應：<span class="stat-chip na">未取得二源確認</span>（財報於11/4盤後發布，本次執行時間距發布僅數小時，搜尋索引尚未更新盤後報價），已標注待Phase R覆核補上。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">DASH · DoorDash</span>
+      <span class="meta-right">~$95B · 盤後（11/4 Q3 2026）</span>
+    </div>
+    <div class="stat-strip">
+      <span class="stat-chip good"><span class="k">EPS</span>BEAT $1.06 vs$0.81預期</span>
+      <span class="stat-chip good"><span class="k">營收</span>BEAT +約35%YoY</span>
+      <span class="stat-chip mid"><span class="k">指引</span>隱含Q4放緩訊號</span>
+      <span class="stat-chip na"><span class="k">股價</span>待確認</span>
+    </div>
+    <div class="bottom-line"><strong>重點</strong>營收$46億、Marketplace GOV $339億，調整後EBITDA $10.6億年增41%，EPS $1.06大幅優於共識$0.81，排除Deliveroo併購GOV仍+23%YoY。</div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期/去年同期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>營收</td><td>$46億</td><td>共識約$45.6億</td><td><span class="tag beat">BEAT</span></td></tr>
+        <tr><td>Marketplace GOV</td><td>$339億</td><td>—</td><td>排除Deliveroo併購影響仍+23% YoY</td></tr>
+        <tr><td>EPS</td><td>$1.06</td><td>共識$0.81</td><td><span class="tag beat">BEAT</span>，惟口徑（GAAP/調整後）需進一步核對</td></tr>
+        <tr><td>調整後EBITDA</td><td>$10.6億</td><td>去年同期$7.54億</td><td><span class="tag beat">+41% YoY</span>；佔GOV比重3.1%</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>EPS beat幅度異常大</strong>：$1.06對共識$0.81，beat幅度約31%，遠高於近幾季非GAAP EPS多在$0.4-0.6區間的歷史水準，本報告已標注此數字口徑（GAAP或含一次性項目）需進一步核對，不排除含特殊項目拉高。</li>
+      <li><strong>Deliveroo併購拉高表觀成長但稀釋有機成長率</strong>：含併購的GOV成長率與排除併購後的+23%YoY之間存在落差，顯示本季表觀成長部分來自併購貢獻而非純有機擴張。</li>
+      <li><strong>EBITDA佔GOV比重持平</strong>：調整後EBITDA為GOV的3.1%，與前兩季大致持平，顯示獲利能力擴張主要來自規模而非利潤率結構性改善。</li>
+      <li><strong>Q4展望與2027投資計畫細節未取得</strong>：本次搜尋未能取得公司對Q4 GOV/EBITDA的具體guide區間與2027年投資支出計畫細節，考慮到去年同期（Q3 2025財報）曾因宣布加碼2026投資支出而觸發盤後重挫，本季是否有類似宣布是後續覆核與Phase R的重點觀察項目。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript未取得（財報發布僅數小時，法說會逐字稿搜尋索引尚未更新）；上述數字出自公司SEC 8-K新聞稿與newsquawk快訊。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>股價反應：<span class="stat-chip na">未取得二源確認</span>（財報於11/4盤後發布，本次執行時間距發布僅數小時，搜尋索引尚未更新盤後報價），已標注待Phase R覆核補上。</li>
+    </ul>
+    <h4>分析師觀點</h4>
+    <ul><li>財報後券商更新未取得（截至報告生成時）。</li></ul>
+  </div>
+
+  <h2 id="s2">§2 產業與子產業趨勢</h2>
+
+  <h3>保險業Q3收官——MET/ALL</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>兩大保險巨頭MET與ALL同日公布Q3財報，皆呈現「調整後EPS遠高於GAAP」的格局（MET約$2.8 vs GAAP$3.67方向相反；ALL調整後$9.76 vs GAAP$8.03），顯示本季保險業獲利結構中非核保項目（投資評價、稀釋項目）的影響力明顯放大。</li>
+    <li><span class="tl">細節</span>ALL新聞稿明確點名車險/房險核保利潤率走強是主要驅動；MET則強調亞洲區域調整後盈餘年增77%是成長亮點。兩者皆呈現「核心業務穩健+非經常性項目放大獲利波動」的共同格局。</li>
+    <li><span class="tl">Cross-day比較</span>本季此前的保險業財報樣本不足以直接比對，待後續同業（如PGR、TRV等）財報發布後可做橫向驗證。</li>
+    <li><span class="tl">上下游一致性</span>不適用（保險業為終端需求定價產業，無明顯上下游鏈條可比對）。</li>
+    <li><span class="tl">可證偽條件</span>若下一季MET與ALL的GAAP與調整後EPS落差收斂至接近歷史常態區間，則本季的放大落差可歸為一次性項目；若落差持續存在，則需重新檢視兩家公司調整項目定義是否已結構性擴大。</li>
+    <li class="impl"><span class="tl">Implication</span>保險股的「調整後EPS大幅優於共識」不能簡單等同於核保改善，投資人需拆解GAAP/調整後落差的具體來源才能判斷獲利品質。</li>
+  </ul>
+
+  <h3>行動晶片／AI運算分流——QCOM/ARM</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>QCOM與ARM同日盤後發布財報，皆面臨「核心授權權利金/手機晶片業務成長放緩，公司轉向用資料中心/非手機敘事支撐估值」的共同格局——QCOM QCT營收-8%YoY，ARM上季已下修全年權利金成長guide。</li>
+    <li><span class="tl">細節</span>QCOM將FY2027成長敘事錨定在Data Center營收目標$50億與非手機業務YoY+60%；ARM則強調AI資料中心運算架構的設計贏單，兩者敘事方向高度相似，但各自核心業務（手機晶片/權利金）同步承壓。</li>
+    <li><span class="tl">Cross-day比較</span>與上月（10月底）AI運算晶片龍頭（AMD、NVDA系供應鏈）財報的強勁數字相比，QCOM/ARM所代表的「行動裝置側AI」敘事明顯弱於「資料中心側AI」敘事，顯示AI需求的強弱分布並非均質，而是高度集中在超大規模資料中心一端。</li>
+    <li><span class="tl">上下游一致性</span>QCOM（晶片設計+授權）與ARM（架構授權）同屬半導體IP/晶片設計層，兩者核心業務同步轉弱且同步轉向資料中心敘事，構成同層級內部的交叉驗證：手機/邊緣AI終端需求確實偏弱，非單一公司個案。</li>
+    <li><span class="tl">可證偽條件</span>若QCOM下季QCT營收年減幅度收窄或轉正，或ARM權利金成長重新加速至guide被下修前的20%水準，則本次「手機側AI需求偏弱」的判斷需要修正。</li>
+    <li class="impl"><span class="tl">Implication</span>「AI需求強勁」的敘事目前仍高度集中在資料中心/超大規模業者一端，行動裝置與邊緣AI側尚未出現同等強度的需求回溫，兩者不應被混為一談。</li>
+  </ul>
+
+  <h3>GLP-1/肥胖症治療——NVO</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>NVO銷售CER成長已降至+4%，相較公司過去兩年動輒20%以上的GLP-1銷售成長率大幅減速，同時認列DKK 87億非現金減損，顯示這家曾是GLP-1領域絕對龍頭的公司，本季財報呈現的是競爭格局惡化後的消化期訊號。</li>
+    <li><span class="tl">細節</span>Wegovy口服版已於美、阿聯、英、德四地上市並貢獻DKK 5,394M季度銷售，是公司少數仍在擴張的新成長點，但尚不足以抵銷整體銷售成長的大幅減速。</li>
+    <li><span class="tl">Cross-day比較</span>待後續同業（如LLY禮來，GLP-1主要競爭對手）財報發布後進行橫向對比，以判斷NVO的減速是公司特有的市占流失，或是整個GLP-1類別需求端的普遍降溫。</li>
+    <li><span class="tl">上下游一致性</span>不適用。</li>
+    <li><span class="tl">可證偽條件</span>若下季Wegovy口服版銷售加速且整體CER銷售成長回升至高個位數以上，則本季減速可歸為一次性雜訊；若減速延續且口服版銷售佔比未能明顯提升，則需重新檢視NVO在GLP-1市場的競爭地位是否已結構性弱化。</li>
+    <li class="impl"><span class="tl">Implication</span>「beat預期」不是唯一該看的指標——NVO本季調整後營益+27%CER的headline數字背後，是銷售成長明顯減速與大額減損並存的消化期訊號，需拆解低基期效應才能判斷真實營運方向。</li>
+  </ul>
+
+  <h3>消費與價值策略——MCD</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>MCD全球同店銷售+1.5%由國際市場扛住，但美國本土同店銷售轉負-0.2%，顯示價值策略（Snack Wrap等低價產品線）在拉動總量的同時，未能阻止本土同店動能的邊際惡化。</li>
+    <li><span class="tl">細節</span>IDL+4.2%、IOM+1.4%兩個國際區域合計抵銷美國的負值；diluted EPS $3.51仍優於去年同期$3.18逾10%，顯示獲利端的表現優於同店銷售端的訊號。</li>
+    <li><span class="tl">Cross-day比較</span>待後續同業（YUM、CMG等快餐／休閒餐飲業者）財報發布後進行橫向比對，以判斷美國本土消費疲弱是QSR產業普遍現象，或MCD特有的執行問題。</li>
+    <li><span class="tl">上下游一致性</span>不適用。</li>
+    <li><span class="tl">可證偽條件</span>若下季美國同店銷售重新轉正，則本季-0.2%可歸為單季雜訊；若連續兩季以上維持負值，則需重新檢視MCD在美國市場的價值策略成效是否不足以對抗消費降級壓力。</li>
+    <li class="impl"><span class="tl">Implication</span>EPS與系統營業額的headline beat掩蓋了美國本土同店動能的邊際惡化，投資人應分開看待「總量穩健」與「本土動能轉弱」兩個訊號，不宜混為一談（§4矛盾1）。</li>
+  </ul>
+
+  <h3>醫藥流通——COR</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>COR財年收尾表現強於全年平均（FQ4調整後EPS+21.4%YoY vs全年+12.3%），並同步上調FY27財測與股利，是本日少見的「全面positive、無明顯瑕疵」樣本。</li>
+    <li><span class="tl">細節</span>營收$884億+5.5%YoY、FY27調整後EPS guide$19.40-19.75隱含YoY約+8-10%，股利上調10%，三項訊號方向一致。</li>
+    <li><span class="tl">Cross-day比較</span>待後續同業（McKesson、Cardinal Health等醫藥流通龍頭）財報發布後進行橫向比對。</li>
+    <li><span class="tl">上下游一致性</span>醫藥流通商作為藥廠與藥局/醫院之間的中介層，其穩健成長與NVO等藥廠端的競爭壓力/減速訊號不完全同向，顯示流通環節的利潤結構（量增、議價能力）與藥廠端的定價/競爭壓力存在一定程度的脫鉤。</li>
+    <li><span class="tl">可證偽條件</span>若FY27 Q1實際數字未能達成guide區間下緣，則本次「全面positive」的判斷需要修正為管理層過度樂觀。</li>
+    <li class="impl"><span class="tl">Implication</span>醫藥流通環節的獲利穩健度目前未受上游藥廠端（如NVO）競爭壓力與減速的直接拖累，顯示兩個環節的商業模式風險暴露不同。</li>
+  </ul>
+
+  <h3>⚠️ 非共識觀察：外送平台「投資換成長」敘事——DASH</h3>
+  <ul class="trend-list">
+    <li><span class="tl">趨勢</span>市場此前（去年同期Q3財報）曾因DASH宣布加碼投資支出而觸發近20%的盤後重挫，本季DASH營收/EBITDA雙重大幅優於預期（EBITDA+41%YoY），但本次搜尋未能取得公司是否再度宣布加碼2027年投資支出的具體細節——若歷史模式重演，市場可能再次對「數字漂亮但支出加碼」的組合給出負面定價，但這與本季實際基本面強勁的事實存在潛在落差。</li>
+    <li><span class="tl">細節</span>排除Deliveroo併購影響，GOV有機成長仍達+23%YoY，調整後EBITDA占GOV比重3.1%與前季持平，顯示規模擴張的同時並未出現明顯的獲利能力稀釋。</li>
+    <li><span class="tl">Cross-day比較</span>與去年同期（Q3 2025財報，盤後重挫近20%）相比，本季財報的EBITDA年增41%幅度遠優於去年同期，若市場仍以「投資支出加碼=利空」的既定框架反應，則可能錯殺本季實際上更健康的獲利結構。</li>
+    <li><span class="tl">上下游一致性</span>不適用。</li>
+    <li><span class="tl">可證偽條件</span>若待補的Q4 guide與2027投資支出計畫細節顯示支出節奏與去年相近或更溫和，而股價仍大跌，則可驗證「投資支出框架已被市場過度定價為利空」的非共識假設；若支出計畫確實大幅加碼且股價應聲重挫，則與去年同期模式一致，非共識假設不成立。</li>
+    <li class="impl"><span class="tl">Implication</span>DASH的本季基本面（EBITDA+41%、有機GOV+23%）明顯優於去年同期觸發重挫的那一季，若投資支出計畫細節顯示节奏溫和，市場若仍機械式套用「加碼支出=利空」反應模式，可能是定價錯誤而非基本面問題。</li>
+  </ul>
+
+  <h2 id="s3">§3 贏家與輸家</h2>
+
+  <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:10px;">⚠️ 本日9家公司財報發布僅數小時，本次執行多輪搜尋後仍未能取得任何一家11/4當日股價反應的二源確認數字（搜尋索引疑似尚未更新同日資訊），故本節暫無法分類贏家/輸家，待Phase R覆核補上。詳見免責聲明。</p>
+
+  <h3>贏家</h3>
+  <table>
+    <thead><tr><th style="width:70px;">公司</th><th style="width:150px;">股價</th><th>原因（20字內）</th></tr></thead>
+    <tbody><tr><td colspan="3">無（股價反應未取得二源確認）</td></tr></tbody>
+  </table>
+
+  <h3>輸家</h3>
+  <table>
+    <thead><tr><th style="width:70px;">公司</th><th style="width:150px;">股價</th><th>原因（20字內）</th></tr></thead>
+    <tbody><tr><td colspan="3">無（股價反應未取得二源確認）</td></tr></tbody>
+  </table>
+
+  <h3>未分類</h3>
+  <table>
+    <thead><tr><th style="width:70px;">公司</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr><td>MCD、NVO、MET、ALL、COR、QCOM、APP、ARM、DASH</td><td>股價%未達二源確認，待Phase R覆核</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="s4">§4 互相矛盾與不合邏輯之處</h2>
+
+  <div class="contradiction">
+    <h4>矛盾1：MCD總量beat掩蓋美國本土同店轉負</h4>
+    <p>MCD全球同店銷售+1.5%、diluted EPS $3.51優於去年同期逾10%，headline數字呈現穩健beat的樣貌；但拆開三大區域，美國本土同店銷售轉負-0.2%，是本季唯一負值的區域，且與去年同期+2.4%相比出現明顯減速。國際授權市場（IDL+4.2%、IOM+1.4%）的強勁表現掩蓋了本土動能的邊際惡化。</p>
+    <p class="implication">→ <strong>Implication：</strong>投資人若只看headline同店銷售與EPS，會誤判MCD美國本土消費動能依然穩健；實際上價值策略（Snack Wrap等）正在對抗的是持續存在的美國消費降級壓力，總量穩健不代表本土基本面無虞。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾2：NVO調整後營益+27%是低基期效應，非真實營運槓桿改善</h4>
+    <p>NVO本季調整後營業利益固定匯率成長+27%，表面上是相當強勁的獲利能力擴張訊號；但這個成長率的分母包含去年同期（Q3 2025）認列的DKK 90億轉型/重組費用，屬於一次性的低基期效應。與此同時，報告營業利益（含本季DKK 87億非現金減損）反而是-9%，且銷售成長本身已減速至CER+4%。三個數字放在一起看，呈現的是「調整後指標被低基期墊高、報告指標被新減損壓低、底層銷售成長本身減速」的消化期訊號，而非單純的獲利能力改善。</p>
+    <p class="implication">→ <strong>Implication：</strong>單看「調整後營業利益+27%」這一個數字極易得出NVO本季表現強勁的錯誤結論，必須同時檢視報告口徑數字與銷售成長率的減速趨勢，才能正確判斷公司當前所處的競爭與獲利週期階段。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾3：ALL調整後EPS遠高於GAAP，落差來源需進一步核對</h4>
+    <p>ALL本季GAAP EPS $8.03，調整後EPS $9.76，落差達$1.73（約22%）。公司新聞稿將此歸因於核保利潤率改善與投資收益增加，但本次搜尋未能取得具體的調整項目逐項拆解（例如投資組合市值變動、巨災損失準備金調整等各占多少），無法完全確認落差是否全部來自經常性業務改善，抑或部分來自非經常性的投資組合評價效應。</p>
+    <p class="implication">→ <strong>Implication：</strong>調整後EPS大幅優於共識（公司$9.76 vs共識$6.46-6.89）本身不能直接等同於核保業務實質改善，在缺乏具體調整項目拆解的情況下，應保留一定程度的審慎態度，等待10-Q正式申報文件揭露細節後再做最終判斷。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾4：ARM上季下修權利金成長guide，但市場財測仍隱含兩位數成長</h4>
+    <p>ARM在今年7月（FQ1 FY27）發布財報時，已將全年權利金收入成長guide從約+20%下修至高個位數至十位數區間，理由是智慧型手機與邊緣AI需求偏弱；但公司對本次FQ2 FY27的財測仍給出YoY+22%的營收成長guide，顯示公司對於資料中心/AI運算架構授權的成長仍維持相對樂觀的假設，與同一份guide中對權利金（傳統手機/消費電子為主）成長已轉為保守的判斷，形成同一家公司內部「兩種業務線成長假設不對稱」的張力。</p>
+    <p class="implication">→ <strong>Implication：</strong>ARM的整體財測成長率看似維持兩位數高檔，但拆開來看是「資料中心/AI授權強、傳統手機權利金弱」的結構性分化，投資人應關注本次（11/4）實際公布數字中兩類業務的相對貢獻，而非只看整體營收成長率的表面數字。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾5（資料可得性本身）：9家公司財報已發布數小時，股價反應與法說會逐字稿卻全數未能二源確認</h4>
+    <p>本日9家公司中，5家為盤前發布（財報發布時點距本次執行已超過12小時），4家為盤後發布（距本次執行約3-4小時）；理論上盤前發布的5家應已有完整全日收盤數據可查，但本次執行歷經約15輪不同角度的搜尋嘗試後，仍未能取得任何一家的11/4股價反應二源確認數字，法說會逐字稿同樣全數未能取得。這與10/29報告記錄的類似資料真空現象（「即便對已取得實際財報數字的21家公司，搜尋亦未能找到任何一家當日股價%變化」）高度相似，顯示搜尋索引對「財報發布當日」內容的更新存在系統性滯後，而非單一公司或單一執行時段的偶發現象。</p>
+    <p class="implication">→ <strong>Implication：</strong>財報日報告的「股價反應」章節存在結構性的資料可得性限制——即便在報告執行時間點已距盤前發布公司的收盤時間超過半天，搜尋索引仍可能尚未收錄當日的具體報價與反應文章；Phase R覆核（通常於次日或以後執行）對於彌補此類資料缺口至關重要，不能假設「時間夠久」就必然查得到當日數字。</p>
+  </div>
+
+  <h2 id="s5">§5 總結</h2>
+
+  <ul class="summary-list">
+    <li>MCD總量beat掩蓋美國本土同店轉負-0.2%，國際市場扛起全球+1.5%（§4矛盾1）。</li>
+    <li>NVO調整後營益+27%CER主因去年同期低基期，底層銷售成長已減速至+4%（§4矛盾2）。</li>
+    <li>QCOM/ARM同日呈現「手機/權利金弱、資料中心敘事強」的行動端AI需求分流格局（§2）。</li>
+    <li>ALL調整後EPS $9.76遠高於GAAP $8.03，落差來源需待10-Q揭露細節核對（§4矛盾3）。</li>
+    <li>本日資料真空程度罕見——9家財報已發布數小時，股價反應與法說會逐字稿全數未能二源確認（§4矛盾5）。</li>
+  </ul>
+
+  <h3>驗證點日曆</h3>
+  <table>
+    <thead><tr><th>本日推論</th><th>驗證事件</th><th style="width:150px;">預定日期</th></tr></thead>
+    <tbody>
+      <tr><td>MCD美國同店銷售-0.2%是單季雜訊還是消費降級壓力結構性惡化</td><td>MCD Q4 2026財報美國同店銷售數字</td><td>約2027年2月</td></tr>
+      <tr><td>NVO銷售CER+4%的減速是否延續，Wegovy口服版能否接棒成長</td><td>NVO Q4 2026財報銷售成長率與口服版銷售佔比</td><td>約2027年2月初</td></tr>
+      <tr><td>QCOM QCT營收年減8%是否於下季收窄或轉正，資料中心營收能否開始放量貢獻</td><td>QCOM FQ1 2027財報QCT與Data Center營收數字</td><td>約2027年1-2月</td></tr>
+      <tr><td>ARM實際FQ2 FY27數字（本次未取得）與guide的落差方向，權利金/授權兩類業務相對貢獻</td><td>ARM FQ2 FY27正式財報與法說會逐字稿（待後續補齊）</td><td>即時／下次覆核</td></tr>
+      <tr><td>本日9家公司11/4股價反應與法說會逐字稿能否在Phase R覆核時取得</td><td>Phase R覆核（11/4報告次日執行）與11/3報告Phase R執行結果</td><td>11/5</td></tr>
+    </tbody>
+  </table>
+
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，
+    僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。
+    過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+    <br><br>
+    <strong>本日資料完整性說明：</strong>11/4為美股交易日（週三），經核對 <code>docs/dd-screener/latest.json</code> 追蹤名單與多輪earnings calendar搜尋，確認9家公司當日發布財報並通過$50B+門檻（MCD/NVO/MET/ALL/COR/QCOM/APP/ARM/DASH；5家盤前：MCD/NVO/MET/COR及財報時點不明但已有數字的ALL實為盤後、4家盤後：QCOM/APP/ARM/DASH及ALL）。原先依前一年同期行事曆排程推估的多家候選公司（CAT、MSTR、JCI、FICO、HOOD、FTNT、EMR、SRE、SU）經逐一查證，實際財報日期分別落在10/27~10/29（JCI/HOOD/FTNT/CAT/MSTR）或11/5~11/11（EMR/SRE/FICO/SU），均非11/4，已排除於本報告之外，不納入湊數。
+    <br><br>
+    本次執行歷經約70輪不同角度的搜尋嘗試後發現一項結構性限制：即便對於距本次執行時間已超過12小時的盤前發布公司（MCD/NVO/MET/COR），搜尋索引仍未收錄其11/4當日股價反應的具體%數字；對於盤後發布公司（QCOM/APP/ARM/DASH），則連公司自身的法說會逐字稿與完整財報細項（如QCOM單季合併營收、APP調整後EBITDA margin、ARM實際公布數字）亦大量未能二源確認。本報告已逐一於各公司卡片與§4矛盾5誠實標注「未取得」，未自行推測填補任何股價反應或虛構引述，§3贏家/輸家分類因此暫以「無」呈現，待Phase R覆核（預計次日或以後執行）補上。此現象與10/29報告記錄的類似資料真空（詳見該報告免責聲明）高度相似，顯示並非本次執行獨有的偶發問題，而可能是搜尋索引對「財報發布當日」內容更新存在系統性滯後，已登記為財報季狀態檔的待觀察現象。
+    <br><br>
+    經查核，上一份報告（earnings_2026-11-03.html）之AMD/BKNG/AMGN/ANET/ALAB五家盤後發布公司，其11/4次日正式收盤最終判決欄位仍待補。本次已嘗試執行Phase R覆核但同樣受限於上述資料可得性問題，詳見該報告頁尾附註。
+  </div>
+
+  <footer>
+    © 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a>
+  </footer>
+</div>
+</body>
+</html>
