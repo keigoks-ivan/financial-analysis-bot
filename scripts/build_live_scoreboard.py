@@ -837,7 +837,7 @@ ST_LABEL = "2026-11-04 以前為照規則回推，之後為實際紀錄。"
 
 PREREG_ST = {
     "title": "實單前瞻記分板",
-    "rule": ("美股 QQQ 70／SMH 30（2026-11-05 收盤訊號起，之前各半）、台股 0050／2330 各 50%；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
+    "rule": ("美股 QQQ 70／SMH 30（2026-11-04 收盤訊號起，之前各半）、台股 0050／2330 各 50%；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
              "只做多，水位 100／70／30／0%。美股另加 IEF／GLD，各最多 20%（水位 20／14／6／0%）。"
              "美股 ATR 14／倍數 3，台股 ATR 14／倍數 2。訊號日收盤判定（只用已收完的週線、月線），下一個交易日調到目標水位。"),
     "labeling": ST_LABEL,
@@ -921,7 +921,7 @@ def build_market_st(mkt, gaps, judgment_calls):
         for i, d in enumerate(axis):
             sig_d = axis[i - 1] if i > 0 else d
             if t in legs:
-                # 股票腿占指數部權重依訊號日分段：< 2026-11-05 各 0.5；之後 supertrend_core.leg_weights（美股 QQQ 0.7／SMH 0.3，台股不變）
+                # 股票腿占指數部權重依訊號日分段：< 2026-11-04 各 0.5；之後 supertrend_core.leg_weights（美股 QQQ 0.7／SMH 0.3，台股不變）
                 scale = _st_leg_weight(t, sig_d)
             else:
                 scale = ST_OVERLAY_SCALE * 100.0 / 100.0

@@ -201,8 +201,8 @@ LVL_DS = None    # 顯示換算用的資料日（美股最新資料日，main �
 
 
 def wt(t: str, ds=None) -> float:
-    """該檔占各市場指數部的權重。實盤 profile 且資料日 >= stc.LEG_WEIGHTS_CUTOVER_DATE（2026-11-05）時
-    美股 QQQ 0.7／SMH 0.3（依據 rule_ledger 2026-11-05），其餘情況（舊 W52 對照線、切換日前、台股）一律 WEIGHTS（0.5）。"""
+    """該檔占各市場指數部的權重。實盤 profile 且資料日 >= stc.LEG_WEIGHTS_CUTOVER_DATE（2026-11-04）時
+    美股 QQQ 0.7／SMH 0.3（依據 rule_ledger 2026-11-05 拍板），其餘情況（舊 W52 對照線、切換日前、台股）一律 WEIGHTS（0.5）。"""
     if ds is not None and PROFILE == "live" and not SHADOW and _ds(ds) >= stc.LEG_WEIGHTS_CUTOVER_DATE:
         return stc.leg_weights(_ds(ds))[YF_SYMBOL[t]]
     return WEIGHTS[t]
@@ -215,17 +215,17 @@ def _held_lvl(t: str, pp: float) -> float:
 
 
 def _expo_how(legs) -> str:
-    """曝險圖標題／狀態句的算法說明（PURE 實盤頁）：美股 2026-11-05 起水位加權，台股兩檔平均。"""
-    return ("兩檔水位加權，QQQ 70／SMH 30（2026-11-05 起，之前各半）" if list(legs) == US_TICKERS else "兩檔水位平均")
+    """曝險圖標題／狀態句的算法說明（PURE 實盤頁）：美股 2026-11-04 起水位加權，台股兩檔平均。"""
+    return ("兩檔水位加權，QQQ 70／SMH 30（2026-11-04 起，之前各半）" if list(legs) == US_TICKERS else "兩檔水位平均")
 
 
 def _expo_sum(legs) -> str:
-    return ("兩檔水位 × 權重相加，QQQ 70／SMH 30（2026-11-05 起，之前各半）" if list(legs) == US_TICKERS
+    return ("兩檔水位 × 權重相加，QQQ 70／SMH 30（2026-11-04 起，之前各半）" if list(legs) == US_TICKERS
             else "兩檔水位相加再除以 2")
 
 
 def _leg_share_txt(legs) -> str:
-    return ("QQQ 占指數部 70%、SMH 占 30%（2026-11-05 收盤的訊號起，之前各占一半）" if list(legs) == US_TICKERS
+    return ("QQQ 占指數部 70%、SMH 占 30%（2026-11-04 收盤的訊號起，之前各占一半）" if list(legs) == US_TICKERS
             else f"{legs[0]} 與 {legs[1]} 各占指數部一半")
 
 
@@ -1104,7 +1104,7 @@ def pure_st_history(hist: list, legs: list) -> list:
             s_ = series[t][r["date"]]
             if s_ is None:
                 raise RuntimeError(f"{t} {r['date']}: Supertrend K 棒不足，無法回補顯示歷史")
-            fin = round(wt(t, r["date"]) * s_["level_pct"], 1)   # 2026-11-05 起美股 QQQ 70／SMH 30
+            fin = round(wt(t, r["date"]) * s_["level_pct"], 1)   # 2026-11-04 起美股 QQQ 70／SMH 30
             comb += fin
             tk[t] = {"gate": s_["level_pct"] > 0, "rule": ST_RULE_TAG, "final_pct": fin,
                      "rv20_pct": None, "sigma_t_pct": None, "st": s_}
@@ -1319,7 +1319,7 @@ def fmt_pct(v, dp=2):
 def lvl(pp: float, t: str = None) -> float:
     """每檔水位（%）＝組合 pp ÷ 該檔權重（各半時＝pp × 2，每腿滿載 50pp＝水位 100%）。只用於 live profile 的顯示換算，
     不參與任何計算；state.json 與執行層一律維持組合 pp。傳入 t 時依 LVL_DS（美股資料日）取權重，
-    2026-11-05 起 QQQ 滿載 70pp、SMH 滿載 30pp；不傳 t 一律各半（舊規則）。水位六格：0／20／40／60／80／100%。"""
+    2026-11-04 起 QQQ 滿載 70pp、SMH 滿載 30pp；不傳 t 一律各半（舊規則）。水位六格：0／20／40／60／80／100%。"""
     return pp / (wt(t, LVL_DS) if t else 0.5)
 
 
@@ -2369,7 +2369,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
 <div class="rule-list" style="font-size:.85rem;margin-top:.8rem">{changed}</div>
 <div style="font-size:.72rem;color:var(--muted);margin-top:.6rem;line-height:1.7">
 名詞：<b>Supertrend</b>＝依近 14 根 K 棒平均波動上下推開的追蹤線，收盤站上線是多頭、跌破線是空頭；
-<b>水位</b>＝70% 看週線、30% 看月線，各自多頭才持有，所以每檔只有 100／70／30／0% 四種，該檔占指數部淨值＝水位 × 該檔權重（美股 QQQ 70%／SMH 30%，2026-11-05 收盤的訊號起，之前各半；台股各半）；
+<b>水位</b>＝70% 看週線、30% 看月線，各自多頭才持有，所以每檔只有 100／70／30／0% 四種，該檔占指數部淨值＝水位 × 該檔權重（美股 QQQ 70%／SMH 30%，2026-11-04 收盤的訊號起，之前各半；台股各半）；
 <b>債金疊加</b>＝美股另外各最多 20% 配置公債（IEF）與黃金（GLD），{"各看週線與月線的 Supertrend" if DEF_ST_ON else "各看週線三個條件，每成立一條加三分之一"}。
 訊號日收盤判定，下一個交易日一次調到目標水位，沒有門檻也不分段。
 </div>
@@ -3320,7 +3320,7 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
     body += tiles(tile_items)
     body += section("TARGET LEVELS", "各檔目標水位（0～100%）", table(headers, rows, numeric_cols={4} if st_mail else {3, 4, 5}))
     if ORDER_LINES:
-        body += section("ORDERS", "怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股各半；2026-11-05 前美股各半）",
+        body += section("ORDERS", "怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股各半；2026-11-04 前美股各半）",
                         "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(o)}</div>' for o in ORDER_LINES))
     st_legs = [t for t in ALL_TICKERS if sigs[t].get("rule") == ST_RULE_TAG]
     new_legs = [t for t in ALL_TICKERS if sigs[t].get("rule") == NEW_RULE_TAG]
@@ -3518,7 +3518,7 @@ def build_alert_lines(events: list, sigs: dict, exp: dict, data_date, cap_flips:
     for c in ev:
         lines.append("• " + c)
     if new_fmt and ORDER_LINES:
-        lines += ["", "怎麼下單（各檔占指數部淨值的 % ＝ 水位 × 權重：美股 QQQ 70／SMH 30、台股各半；2026-11-05 前美股各半）："]
+        lines += ["", "怎麼下單（各檔占指數部淨值的 % ＝ 水位 × 權重：美股 QQQ 70／SMH 30、台股各半；2026-11-04 前美股各半）："]
         lines += ["  " + o for o in ORDER_LINES]
     if st_fmt:
         lines += ["", "當前各檔 Supertrend 狀態與目標水位（不借錢，單檔上限 100%）："]

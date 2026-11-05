@@ -57,7 +57,7 @@ def trigger_text(st: dict) -> str:
 
 def status_card(sigs: dict, legs: list, exec_last: dict, mode: str, cutover: str, held_lvl=None) -> str:
     """每檔的週線／月線 Supertrend 狀態表。mode＝"preview"（切換前，僅預覽）或 "live"（已生效）。
-    held_lvl(t, pp)＝把下單前現持（組合 pp）換成該檔水位的函式；預設 pp × 2（各半）。2026-11-05 起美股權重 70／30，
+    held_lvl(t, pp)＝把下單前現持（組合 pp）換成該檔水位的函式；預設 pp × 2（各半）。2026-11-04 起美股權重 70／30，
     由呼叫端傳入依前一個資料日權重換算的版本。"""
     rows = ""
     moves = []
@@ -211,7 +211,7 @@ def rules_live(cutover: str, decision: str, shadow_url: str) -> str:
 • <b>2026-10-19</b>（持有人 10-17 拍板）：美股改債金版、台股改不借錢版，股票上限 100%。<br>
 • <b>2026-10-30 收盤起</b>：執行層減碼門檻由兩格降為一格，加碼維持兩格。<br>
 • <b>{cutover}</b>（持有人 {decision} 拍板）：<b>指數部四檔改 Supertrend</b>，週線 70%＋月線 30%；同日債金疊加（IEF、GLD）也改 Supertrend（14／3，水位 20／14／6／0%），依據是持有人看過比較後的決定。生效日起的紀錄帶 <code>rule: "st_live"</code>，生效日前的 history 不改寫；切換當日每檔從現持水位一次調到 Supertrend 水位。原 W52 規則以 <a href="{shadow_url}">對照線</a> 續跑，不寄信。state.json 的 <code>rule_changes</code> 有這一筆。<br>
-• <b>{lw_date}</b>（持有人 {lw_date} 拍板）：<b>美股指數部權重由 QQQ 50%／SMH 50% 改為 QQQ 70%／SMH 30%</b>，台股各半不變；Supertrend 規則、債金疊加不動。理由是降低單一循環曝險（SMH 的獲利預估集中在記憶體），不是績效；依據見規則帳本 2026-11-05。{lw_date} 收盤的訊號起生效，當天一次調到位，之前的紀錄不改寫。 <a href="/long-track/why-qqq70-smh30.html">為什麼改 QQQ 70／SMH 30 →</a><br>
+• <b>{lw_date}</b>（持有人 {stc.LEG_WEIGHTS_DECISION_DATE} 拍板）：<b>美股指數部權重由 QQQ 50%／SMH 50% 改為 QQQ 70%／SMH 30%</b>，台股各半不變；Supertrend 規則、債金疊加不動。理由是降低單一循環曝險（SMH 的獲利預估集中在記憶體），不是績效；依據見規則帳本 2026-11-05。{lw_date} 收盤的訊號起生效、下一個交易日一次調到位，之前的紀錄不改寫。 <a href="/long-track/why-qqq70-smh30.html">為什麼改 QQQ 70／SMH 30 →</a><br>
 </div>
 </details>
 </div>

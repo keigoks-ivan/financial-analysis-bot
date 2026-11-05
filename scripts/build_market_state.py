@@ -1616,11 +1616,11 @@ def _book_quotes(long_track_data, gaps):
         hist = (long_track_data.get(BOOK_MARKET_HISTORY.get(market, "")) or [])
         as_of = hist[-1].get("date") if hist else None
         exe = leg.get("executed_pct")
-        # 顯示換算：水位＝組合 pp ÷ 該檔權重（台股各 0.5；美股 2026-11-05 起 QQQ 0.7／SMH 0.3，之前各 0.5）
+        # 顯示換算：水位＝組合 pp ÷ 該檔權重（台股各 0.5；美股 2026-11-04 起 QQQ 0.7／SMH 0.3，之前各 0.5）
         lw = _book_leg_weight(sym, as_of)
         lvl_now = (exe / lw) if (exe is not None and lw) else None
         quotes[f"book:{sym}_exec"] = {
-            "label": f"實盤 {sym} 現持水位（單檔 0～100%，占{market}指數部＝水位 × 權重；美股 2026-11-05 起 QQQ 70／SMH 30，其餘各半）",
+            "label": f"實盤 {sym} 現持水位（單檔 0～100%，占{market}指數部＝水位 × 權重；美股 2026-11-04 起 QQQ 70／SMH 30，其餘各半）",
             "val": (f"{lvl_now:.1f}%" if lvl_now is not None else None),
             "num": lvl_now, "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
         }

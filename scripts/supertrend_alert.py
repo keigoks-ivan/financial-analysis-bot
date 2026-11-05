@@ -112,7 +112,7 @@ def target(w, m):
 
 
 def share(r, level) -> str:
-    """主腿（QQQ、SMH／SMH.L、0050、2330）占指數部的 %＝水位 × 權重（leg_weights(資料日)，2026-11-05 起美股 QQQ 70／SMH 30）。
+    """主腿（QQQ、SMH／SMH.L、0050、2330）占指數部的 %＝水位 × 權重（leg_weights(資料日)，2026-11-04 起美股 QQQ 70／SMH 30）。
     債金不算（另有占指數部 20% 的算法）。"""
     return f"{level * leg_weights(r['last_date'])[r['ticker']]:.0f}"
 

@@ -69,7 +69,7 @@ SPRT_MEANING = {          # 見 build_live_scoreboard.py 的 green/yellow/red �
 GROUPS = [
     ("實單主系統", "live", True, [
         {"name": "Supertrend 週線＋月線（美股債金版・台股不借錢版）", "url": "/long-track-w52-adaptive/",
-         "one": "兩市場各 70% 指數部＝每檔 70% 看週線、30% 看月線的 Supertrend，水位 100／70／30／0%，不借錢；指數部內美股 QQQ 70／SMH 30（2026-11-05 起，之前各半）、台股 0050／2330 各半。"
+         "one": "兩市場各 70% 指數部＝每檔 70% 看週線、30% 看月線的 Supertrend，水位 100／70／30／0%，不借錢；指數部內美股 QQQ 70／SMH 30（2026-11-04 起，之前各半）、台股 0050／2330 各半。"
                 "美股另加公債（IEF）與黃金（GLD）各最多 20%，同樣各自 70% 週線＋30% 月線 Supertrend。"
                 "",
          "status": ("實單", "live"), "freq": "每交易日 × 2（台／美收盤後）", "email": "✅ 有"},

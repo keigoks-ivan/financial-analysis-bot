@@ -133,7 +133,7 @@ def _held(tk: dict) -> float:
 
 def _lv_pair(tk: dict, t: str) -> tuple:
     """(目標水位, 下單前現持水位)，單位 %。目標直接讀 st.level_pct；現持是前一個資料日的部位（組合 pp），
-    用前一天的權重換算（2026-11-05 美股改 QQQ 70／SMH 30，切換日當天現持仍是各半的 pp）。"""
+    用前一天的權重換算（2026-11-04 起美股改 QQQ 70／SMH 30，切換日當天現持仍是各半的 pp）。"""
     st = tk.get("st") or {}
     if "level_pct" in st and st.get("asof"):
         prev = pd.Timestamp(st["asof"]) - pd.Timedelta(days=1)
@@ -267,7 +267,7 @@ def order_section(w52a_text: str | None) -> str:
     if not rows:
         return ""
     body = "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(r)}</div>' for r in rows)
-    body += note("占指數部淨值的 %＝水位 × 權重（美股 QQQ 70／SMH 30，2026-11-05 收盤的訊號起，之前各半；台股各半）。債金部位另列於下方「債金疊加」。")
+    body += note("占指數部淨值的 %＝水位 × 權重（美股 QQQ 70／SMH 30，2026-11-04 收盤的訊號起，之前各半；台股各半）。債金部位另列於下方「債金疊加」。")
     return section("ORDERS", "怎麼下單", body)
 
 
@@ -343,7 +343,7 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
     lines.append("")
     ords = _order_lines(w52a_text)
     if ords:
-        lines.append("怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股各半；2026-11-05 前美股各半）：")
+        lines.append("怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股各半；2026-11-04 前美股各半）：")
         lines += [f"    {o}" for o in ords]
         lines.append("")
 
