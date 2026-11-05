@@ -188,26 +188,44 @@ def build_status(tickers, entries: dict, decision_date, prev_holdings: dict | No
 
 
 # ---------------------------------------------------------------- 套用到選席
-def apply_overlay(pool_ranked: list, prev_core, status: dict):
+def apply_overlay(pool_ranked: list, prev_core, status: dict, all_rows=None):
     """回傳 (給選席函式的池, 給選席函式的上期名單, st_removed[(ticker, 原因)])。
-    已切換的現任：燈號副本改成亮燈（不吃紅燈、200 日線、大盤例外）；仍在池內且週線 Supertrend 翻空者從上期名單拿掉、
-    寫成「週線 Supertrend 翻空」下席，且本週不從池補回（燈號副本設紅）；不在池內者留給選席函式判成「出池」
-    （同一週兩者並存記為出池，引擎先判資格）。沒切換的現任原封不動。切換條件都不成立時回傳原物件。"""
+    已切換的現任：燈號副本改成亮燈（不吃紅燈、200 日線、大盤例外）；「出池」只看基本面（grp.grp_score 的
+    fundamental_pass＝成長閘、品質閘、上修否決、體質拒絕、衰退 ⛔、180 天內 DD 迴避；持有人 2026-11-05 拍板），
+    不看站上 52 週線、估值閘、融券、市值帶——所以基本面還過、但不在池內的已切換現任，會用 all_rows 裡的列補回池尾。
+    仍在基本面內且週線 Supertrend 翻空者從上期名單拿掉、寫成「週線 Supertrend 翻空」下席，且本週不從池補回
+    （燈號副本設紅）；基本面不合格者留給選席函式判成「出池」（同一週兩者並存記為出池，引擎先判資格）。
+    沒切換的現任原封不動（照網站現行全部出池條件）。切換條件都不成立時回傳原物件。
+    market_ok 是結構性限制，母體入口已先濾掉，這裡不重複。"""
     prev = list(prev_core or [])
     sw = {t: s for t, s in (status or {}).items() if t in prev and s.get("switched")}
     if not sw:
         return pool_ranked, prev, []
+    by_all = {r["ticker"]: r for r in (all_rows or [])}
     in_pool = {r["ticker"] for r in pool_ranked}
     new_pool, bear = [], set()
+
+    def lit_copy(r, st_dir):
+        code = "red" if st_dir == "bear" else "yellow"
+        return dict(r, lamp=dict(r.get("lamp") or {}, code=code))
+
     for r in pool_ranked:
         s = sw.get(r["ticker"])
         if s is None:
             new_pool.append(r)
-        elif s.get("st_dir") == "bear":
+            continue
+        if s.get("st_dir") == "bear":
             bear.add(r["ticker"])
-            new_pool.append(dict(r, lamp=dict(r.get("lamp") or {}, code="red")))
-        else:
-            new_pool.append(dict(r, lamp=dict(r.get("lamp") or {}, code="yellow")))
+        new_pool.append(lit_copy(r, s.get("st_dir")))
+    for t, s in sw.items():           # 基本面還過、但被 52 週線／估值／市值／融券擋在池外的已切換現任：補回
+        if t in in_pool:
+            continue
+        r = by_all.get(t)
+        if r is not None and (r.get("grp") or {}).get("fundamental_pass"):
+            if s.get("st_dir") == "bear":
+                bear.add(t)
+            new_pool.append(lit_copy(r, s.get("st_dir")))
+            in_pool.add(t)
     removed = [(t, BEAR_WHY) for t in prev if t in bear and t in in_pool]
     prev_for = [t for t in prev if t not in bear]
     return new_pool, prev_for, removed
@@ -245,6 +263,89 @@ def public_view(s: dict) -> dict:
             "week": s.get("week"), "data_ok": bool(s.get("data_ok"))}
 
 
+# ---------------------------------------------------------------- 每週記帳（退回條件用）
+NAV_SCHEMA = "seat-st-nav-1.0"
+NAV_START = "2026-11-07"
+REVIEW_DATE = "2027-11-06"
+SLOTS = 5
+
+
+def last_complete_friday(decision_date) -> pd.Timestamp:
+    d = pd.Timestamp(str(decision_date)[:10]).normalize()
+    return d - pd.Timedelta(days=(d.weekday() - 4) % 7)
+
+
+def _close_at(daily, label):
+    if daily is None or not len(daily):
+        return None
+    px = daily.dropna(subset=["close"]).loc[:pd.Timestamp(label), "close"]
+    return None if px.empty else float(px.iloc[-1])
+
+
+def update_nav(doc: dict, decision_date, new_pos: dict, legacy_pos: dict, loader, slots: int = SLOTS) -> dict:
+    """每週淨值（只在 --ledger 週跑呼叫）。new_pos／legacy_pos＝{ticker: 倉位係數}，是這次決策後要持有的在席者與倉位
+    （新規則：已切換者 1.0、其餘時機燈倉位；舊規則：現行倉位）。每個席位占 1/slots 資金，空席與未投入的部分是現金。
+    報酬＝上次記帳週五收盤到這次週五收盤（還原收盤）。同一週重跑不重複計入。回傳新的 doc。"""
+    wk = last_complete_friday(decision_date).date().isoformat()
+    doc = json.loads(json.dumps(doc)) if doc else {}
+    doc.setdefault("schema", NAV_SCHEMA)
+    doc["start"] = NAV_START
+    doc["review_date"] = REVIEW_DATE
+    doc["slots"] = slots
+    series = doc.setdefault("series", [])
+    hold = doc.get("holdings") or {}
+    if not series:
+        series.append({"week": wk, "new": 1.0, "legacy": 1.0, "new_ret": 0.0, "legacy_ret": 0.0, "missing": []})
+    elif hold.get("asof") and hold["asof"] < wk:
+        row = {"week": wk, "missing": []}
+        for key in ("new", "legacy"):
+            tot = 0.0
+            for t, size in (hold.get(key) or {}).items():
+                d = loader(t)
+                p0, p1 = _close_at(d, hold["asof"]), _close_at(d, wk)
+                if p0 and p1:
+                    tot += (size / slots) * (p1 / p0 - 1.0)
+                else:
+                    row["missing"].append(t)
+            row[f"{key}_ret"] = round(tot, 6)
+            row[key] = round(series[-1][key] * (1.0 + tot), 6)
+        row["missing"] = sorted(set(row["missing"]))
+        series.append(row)
+    doc["holdings"] = {"asof": wk, "new": {t: float(v) for t, v in new_pos.items()},
+                       "legacy": {t: float(v) for t, v in legacy_pos.items()}}
+    return doc
+
+
+def nav_summary(doc: dict | None) -> dict | None:
+    """兩條線目前的累計報酬與最大跌幅（含起點 1.0）。沒有記帳回 None。"""
+    series = (doc or {}).get("series") or []
+    if not series:
+        return None
+    out = {"weeks": len(series) - 1, "start": (doc or {}).get("start"), "last_week": series[-1]["week"],
+           "review_date": (doc or {}).get("review_date", REVIEW_DATE)}
+    for key in ("new", "legacy"):
+        peak, mdd = 1.0, 0.0
+        for r in series:
+            peak = max(peak, r[key])
+            mdd = min(mdd, r[key] / peak - 1.0)
+        out[key] = {"cum": round(series[-1][key] - 1.0, 4), "mdd": round(mdd, 4)}
+    out["retreat"] = bool(out["new"]["cum"] < out["legacy"]["cum"] and out["new"]["mdd"] < out["legacy"]["mdd"])
+    return out
+
+
+def load_nav(path: Path) -> dict:
+    try:
+        d = json.loads(path.read_text(encoding="utf-8"))
+        return d if d.get("schema") == NAV_SCHEMA else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def save_nav(path: Path, doc: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
+
 # ---------------------------------------------------------------- 顯示
 def exit_label(st: dict | None) -> tuple[str, str] | None:
     """(短標籤, 完整說明)。st＝public_view()。"""
@@ -279,7 +380,7 @@ RULE_HTML = (
     '進場、補席、排隊順序都不變。這是持有人的裁量決定，不是回測通過；比較頁見 <a href="/backtest/seat_supertrend/">選股席位 Supertrend 比較</a>。</div>')
 
 
-def legacy_html(legacy: dict | None, label: str, name_of=lambda t: t) -> str:
+def legacy_html(legacy: dict | None, label: str, name_of=lambda t: t, nav: dict | None = None) -> str:
     """收合的舊規則對照區塊。legacy＝{core, removed, filled, as_of}。"""
     from html import escape
     if not legacy:
@@ -289,7 +390,19 @@ def legacy_html(legacy: dict | None, label: str, name_of=lambda t: t) -> str:
                    ((x[0], x[1]) for x in legacy.get("removed") or [])) or "—"
     return ('<details class="bw-legacy"><summary>舊規則對照（只供比較，不寄信）</summary>'
             f'<div class="bw-note-line">{escape(label)}若仍用舊出場規則（跌 10% 紅燈就賣、跌破 200 日線等），'
-            f'今天的在席名單是：{core_l}。本週舊規則下席：{rm}。</div></details>')
+            f'今天的在席名單是：{core_l}。本週舊規則下席：{rm}。</div>' + _nav_line(nav) + '</details>')
+
+
+def _nav_line(nav: dict | None) -> str:
+    if not nav:
+        return ('<div class="bw-note-line">兩條線的週淨值從 2026-11-07 起累積，每週六追加一筆；'
+                f'2027-11-06 回顧一次。</div>')
+    pc = lambda x: f"{x * 100:+.1f}%"  # noqa: E731
+    return ('<div class="bw-note-line">'
+            f'自 {nav["start"]} 起（共 {nav["weeks"]} 週，到 {nav["last_week"]}）：新規則累計報酬 {pc(nav["new"]["cum"])}、'
+            f'最大跌幅 {pc(nav["new"]["mdd"])}；舊規則對照線累計報酬 {pc(nav["legacy"]["cum"])}、'
+            f'最大跌幅 {pc(nav["legacy"]["mdd"])}。每個席位占 1/5 資金，空席是現金。'
+            f'{nav["review_date"]} 回顧：新規則報酬落後、而且最大跌幅比對照線深，才改回舊規則；兩者不同時成立就維持。</div>')
 
 
 # ---------------------------------------------------------------- 抓價與狀態檔（有 I/O）

@@ -777,7 +777,12 @@ def grp_score(s: dict) -> dict:
         why = [w for w in why if not w.startswith("上修閘未過")]
     own_v2 = own_score(s, g)     # v2 公式原封不動，供對照一輪（own_v2，見檔頭 v4 段第 4 點）
     q = quality_gate(s)
+    # 2026-11-05 折衷組（engine/seat_st.py）：已切換 Supertrend 的持股「出池」只看基本面——成長閘、品質閘、
+    # 上修否決、體質拒絕、衰退 ⛔、DD 迴避（＝veto）。不看站上 52 週線、估值閘、融券、市值帶。只是 pass 的分項，
+    # 不改 pass 的任何行為。
+    fundamental_pass = bool(g_pass and (not veto) and q["pass"])
     return {"pass": all_pass and q["pass"], "veto": veto,
+            "g_pass": g_pass, "fundamental_pass": fundamental_pass,
             # v4 硬否決細項（build_arena.hard_veto_v4/v5 月度輪動用，避免對 why[] 字串解析）：
             "veto_revision": r_veto, "veto_quality_reject": veto_quality,
             "veto_decline": veto_decline, "veto_dd_avoid": veto_dd_avoid,

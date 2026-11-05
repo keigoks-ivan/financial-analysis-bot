@@ -265,3 +265,92 @@ def test_roster_alert_shows_supertrend_bear_reason():
     text = al._describe(al.diff_segment(prev, cur))
     assert "出席 AAA 甲（週線 Supertrend 翻空）" in text
     assert al.compute(None, {"us": cur}, "2026-11-07")["new_state"]["segments"]["us"].get("why") is None
+
+
+# ── 已切換持股的「出池」只看基本面（2026-11-05 持有人拍板）─────────────────────
+
+def _full(t, fundamental=True, grp_pass=True, code="red"):
+    r = _row(t, code)
+    r["grp"] = {"pass": grp_pass, "fundamental_pass": fundamental}
+    return r
+
+
+def test_switched_not_sold_when_only_non_fundamental_gates_fail():
+    # 跌破 52 週線、估值變紅、市值跌破門檻、融券過高：grp.pass 為 False（不在池），但基本面還過 → 不賣
+    a = _full("A", fundamental=True, grp_pass=False)
+    b = _row("B", "green")
+    pool = [b]                                                    # A 不在池內
+    rot = _roster_all(pool, ["A", "B"], {"A": _status()}, BULL_US, [a, b])
+    assert rot["core"] == ["A", "B"] or sorted(rot["core"]) == ["A", "B"]
+    assert rot["removed"] == []
+
+
+def test_switched_sold_when_fundamentals_fail():
+    a = _full("A", fundamental=False, grp_pass=False)             # 品質／成長／上修／體質／衰退／DD 任一不過
+    b = _row("B", "green")
+    rot = _roster_all([b], ["A", "B"], {"A": _status()}, BULL_US, [a, b])
+    assert rot["core"] == ["B"] and rot["removed"] == [("A", "出池（資格不成立）")]
+
+
+def test_unswitched_still_uses_full_pool_rule():
+    a = _full("A", fundamental=True, grp_pass=False, code="green")   # 沒切換：不在池就賣，不管基本面
+    b = _row("B", "green")
+    rot = _roster_all([b], ["A", "B"], {"A": _status(switched=False)}, BULL_US, [a, b])
+    assert rot["core"] == ["B"] and rot["removed"] == [("A", "出池（資格不成立）")]
+
+
+def _roster_all(pool, prev, status, market, all_rows):
+    pool2, prev2, removed = st.apply_overlay(pool, prev, status, all_rows)
+    rot = seat_tm.select_roster(pool2, prev2, market, ba.select_hold_roster)
+    rot["removed"] = list(rot["removed"]) + removed
+    return rot
+
+
+def test_grp_fundamental_pass_components_and_pass_unchanged():
+    from engine import grp
+    base = _stock("1111.TW", **_rev(10))
+    base[grp.QUALITY_RULE_KEY] = grp.Q_RULE_MARGIN10
+    base["fcf"] = base["ocf"]      # 同 tw_row：台股品質閘讀營業現金流
+    ok = grp.grp_score(base)
+    assert ok["fundamental_pass"] is True and ok["pass"] is True
+    below52 = dict(base, ma=dict(base["ma"], above_w52=False))
+    g = grp.grp_score(below52)
+    assert g["pass"] is False and g["fundamental_pass"] is True        # 位置閘只擋 pass，不擋基本面
+    red_val = grp.grp_score(dict(base, live_peg=9.0))
+    assert red_val["pass"] is False and red_val["fundamental_pass"] is True   # 估值閘同上
+    assert grp.grp_score(dict(base, eps_fy1_fy3_cagr_pct=1.0, eps_fy3=None))["fundamental_pass"] is False   # 成長
+    assert grp.grp_score(dict(base, fcf=1.0))["fundamental_pass"] is False      # 品質（營業現金流版）
+    assert grp.grp_score(dict(base, eps_rev_since_earnings_pct=-9.0, eps_rev_anchor="earnings",
+                              eps_rev_since_earnings_baseline_date="2026-10-09"))["fundamental_pass"] is False   # 上修 ≤−5%
+    assert grp.grp_score(dict(base, quality_veto_level="拒絕"))["fundamental_pass"] is False
+    assert grp.grp_score(dict(base, decline_signal_light="⛔"))["fundamental_pass"] is False
+    assert grp.grp_score(dict(base, dca_verdict="迴避", dd_age_days=10))["fundamental_pass"] is False
+    assert grp.grp_score(dict(base, short_interest_pct_float=30.0))["fundamental_pass"] is True   # 融券只擋 pass
+
+
+def test_tw_switched_below_52w_line_stays_via_real_rows():
+    s = _inc(ma={'above_w52': False, 'dist_ath_pct': -15.0, 'vs_200ma_pct': 5.0, 'price': 100})
+    assert _sel_tw([s], BULL, None)["core"] == []                 # 現行：跌破 52 週線＝出池
+    sel = _sel_tw([s], BULL, {"1000.TW": _status()})
+    assert [r["ticker"] for r in sel["core"]] == ["1000.TW"]
+    bad = _inc(ocf=1.0)
+    assert _sel_tw([bad], BULL, {"1000.TW": _status()})["core"] == []
+
+
+# ── 每週記帳 ────────────────────────────────────────────────────────────────
+
+def test_nav_accumulates_weekly_and_is_idempotent():
+    d = daily_from_weekly([100, 110, 121, 100])
+    lab = [weekly_label(d, k).date().isoformat() for k in range(4)]
+    loader = lambda t: d  # noqa: E731
+    doc = st.update_nav({}, lab[0], {"A": 1.0}, {"A": 0.5}, loader)
+    assert doc["series"][0]["new"] == 1.0
+    doc = st.update_nav(doc, lab[0], {"A": 1.0}, {"A": 0.5}, loader)          # 同一週重跑不重複
+    assert len(doc["series"]) == 1
+    doc = st.update_nav(doc, lab[1], {"A": 1.0}, {"A": 0.5}, loader)
+    assert doc["series"][-1]["new"] == pytest.approx(1 + 0.1 / 5)             # 1/5 資金 × 滿倉 × +10%
+    assert doc["series"][-1]["legacy"] == pytest.approx(1 + 0.5 * 0.1 / 5)
+    doc = st.update_nav(doc, lab[3], {"A": 1.0}, {"A": 0.5}, loader)
+    summ = st.nav_summary(doc)
+    assert summ["weeks"] == 2 and summ["new"]["mdd"] < 0
+    assert summ["retreat"] is False       # 新規則報酬與跌幅都不是同時輸給對照線

@@ -191,6 +191,7 @@ STAGE_CODE_ASCII = {"S0": "WEAK", "S1": "TURN", "S2": "BASE", "S5": "HIGH",
 W_STAGE = 4
 CARDS_JSON = OUT_DIR / "cards.json"
 LEDGER_JSON = OUT_DIR / "arena-ledger.json"   # 席位變動帳本（append-only）
+ST_NAV_JSON = OUT_DIR / "seat_st_nav.json"       # 新舊規則名單的每週淨值（退回條件用，只在 --ledger 週跑追加）
 ST_STATE_JSON = OUT_DIR / "seat_st_state.json"   # 2026-11-05 折衷組：每檔持股的買進日／切換狀態（見 engine/seat_st.py）
 STATE_JSON = OUT_DIR / "arena_state.json"      # v5.7：在席者最近一次非紅燈的倉位（大盤多頭續抱用）
 SPY_PRICES_JSON = ROOT / "data" / "flowmap_prices.json"   # v5.7：SPY 還原收盤（flowmap-daily 每日更新）
@@ -2414,13 +2415,13 @@ def _find_last_rotation_date(snapshots: list[dict]) -> str | None:
 
 
 
-def _market_note_with_st(market, st_on: bool, legacy_view) -> str:
+def _market_note_with_st(market, st_on: bool, legacy_view, nav=None) -> str:
     """賣法說明：折衷組生效後，新規則段落放最前，舊規則段落改標「還沒切換的持股」，再接收合的舊規則對照名單。"""
     note = seat_tm.market_note_html(market)
     if not st_on:
         return note
     note = note.replace("<b>賣法</b>", "<b>還沒切換的持股，賣法</b>", 1)
-    return seat_st.RULE_HTML + note + seat_st.legacy_html(legacy_view, "美股看板")
+    return seat_st.RULE_HTML + note + seat_st.legacy_html(legacy_view, "美股看板", nav=nav)
 
 
 def main() -> int:
@@ -2624,7 +2625,7 @@ def main() -> int:
         if st_on:
             ent0 = seat_st.entry_dates(prev_core_roster or [], ledger0.get("snapshots"), st_hold_prev, as_of)
             st0 = seat_st.build_status(prev_core_roster or [], ent0, decision_date, st_hold_prev, st_loader)
-            pool_sel, prev_sel, st_removed = seat_st.apply_overlay(pool_rows, prev_core_roster, st0)
+            pool_sel, prev_sel, st_removed = seat_st.apply_overlay(pool_rows, prev_core_roster, st0, universe_rows)
             rotation = seat_tm.select_roster(pool_sel, prev_sel, market, select_hold_roster)
             rotation["removed"] = list(rotation["removed"]) + st_removed
         else:
@@ -2649,6 +2650,20 @@ def main() -> int:
     tm_held = {t for t in tm_held if not (st_status.get(t) or {}).get("switched")}   # 已切換者不吃大盤多頭續抱例外
     seat_tm.apply_hold(core_seats, tm_held, tm_state)
     seat_st.mark_core_rows(core_seats, st_status)
+    st_nav_doc = seat_st.load_nav(ST_NAV_JSON)
+    if st_on and args.ledger:
+        def _legacy_size(t):
+            r = all_by_ticker.get(t) or {}
+            lamp = r.get("lamp") or {}
+            if lamp.get("code") in LIT_LAMP_CODES:
+                return lamp.get("size") or 0.0
+            if lamp.get("code") == "red" and market.get("mode") == "tm" and t in pool_by_ticker:
+                return (tm_state.get(t) or {}).get("size", seat_tm.TM_DEFAULT_SIZE)   # 大盤多頭續抱：沿用最近非紅燈倉位
+            return 0.0
+        st_nav_doc = seat_st.update_nav(
+            st_nav_doc, decision_date,
+            {r["ticker"]: (r.get("lamp") or {}).get("size") or 0.0 for r in core_seats},
+            {t: _legacy_size(t) for t in legacy_rotation["core"]}, st_loader)
     tm_new_state = seat_tm.update_state(tm_state, core_seats, as_of, LIT_LAMP_CODES)
     if tm_new_state != tm_state:
         STATE_JSON.write_text(json.dumps({"schema_version": "arena-state-1.0", "last_nonred": tm_new_state},
@@ -2784,6 +2799,7 @@ def main() -> int:
         if st_on:
             ledger["roster_legacy"] = {"core": legacy_rotation["core"]}   # 舊規則對照線的在席名單（獨立滾動）
             seat_st.save_state(ST_STATE_JSON, st_status, as_of)
+            seat_st.save_nav(ST_NAV_JSON, st_nav_doc)
         LEDGER_JSON.parent.mkdir(parents=True, exist_ok=True)
         LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
                                encoding="utf-8")
@@ -2823,7 +2839,7 @@ def main() -> int:
                                    prev, entered, lamp_map, rev_data_as_of=rev_data_as_of,
                                    price_as_of=price_as_of, lamp_as_of=as_of,
                                    last_rotation_date=last_rotation_date,
-                                   market_note=_market_note_with_st(market, st_on, legacy_view))
+                                   market_note=_market_note_with_st(market, st_on, legacy_view, seat_st.nav_summary(st_nav_doc)))
     BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
         "schema_version": "5.0",
@@ -2851,7 +2867,8 @@ def main() -> int:
         "run_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "regime": dial,
         "seat_st": {"active": st_on, "cutover_date": seat_st.CUTOVER_DATE, "decision_date": decision_date,
-                    "status": {t: seat_st.public_view(v) for t, v in st_status.items()}},
+                    "status": {t: seat_st.public_view(v) for t, v in st_status.items()},
+                    "nav": seat_st.nav_summary(st_nav_doc)},
         "legacy_rule": legacy_view,
         "rotation": {"rotated": rotation["rotated"], "current_month": current_month,
                     "removed": [{"ticker": t, "why": w} for t, w in rotation["removed"]],

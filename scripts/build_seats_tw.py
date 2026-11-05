@@ -123,6 +123,7 @@ OUT_DIR = ROOT / 'docs' / 'cockpit-tw' / 'data'
 BODY_HTML = OUT_DIR / '_seats_tw_body.html'
 SEATS_JSON = OUT_DIR / 'seats_tw.json'
 LEDGER_JSON = OUT_DIR / 'seats_tw_ledger.json'
+ST_NAV_JSON = OUT_DIR / 'seat_st_nav_tw.json'   # 新舊規則名單的每週淨值（退回條件用，只在 --ledger 週跑追加）
 ST_STATE_JSON = OUT_DIR / 'seat_st_state_tw.json'   # 2026-11-05 折衷組：買進日／切換狀態（engine/seat_st.py）
 STATE_NAME = 'seats_tw_state.json'     # path resolved from OUT_DIR at run time (see _state_path)
 MARKET_CSV = ROOT / 'data' / 'macro_db' / 'series' / 'tw.twse_tri.csv'   # 發行量加權股價報酬指數
@@ -215,6 +216,10 @@ def bear_no_buy(rotation, pool, prev_core):
     return {'core': core, 'rotated': False,
             'removed': [x for x in rotation['removed'] if x[0] not in core],
             'filled': [], 'blocked': [t for _, t in rotation['filled']]}
+
+
+def x1_market(market):
+    return bool(market) and market.get('mode') == 'x1'
 
 
 def _x1_dist_only(r):
@@ -337,7 +342,7 @@ def select(rows, prev_core, reselect, last_snap=None, market=None, st_status=Non
             roster_pool = [_as_lit(r) if r['ticker'] in incumbents and _x1_dist_only(r) else r
                            for r in pool]
         # 2026-11-05 折衷組：已切換 Supertrend 的現任不吃紅燈／200 日線／看大盤切換，只在週線 Supertrend 翻空或出池下席
-        roster_pool, prev_sel, st_removed = seat_st.apply_overlay(roster_pool, prev_core, st_status)
+        roster_pool, prev_sel, st_removed = seat_st.apply_overlay(roster_pool, prev_core, st_status, rows)
         rotation = ba.select_hold_roster(roster_pool, prev_sel, core_slots=CORE_SLOTS)
         if market and market.get('status') == 'bear':
             rotation = bear_no_buy(rotation, roster_pool, prev_sel)
@@ -622,6 +627,21 @@ def build(reselect, today=None):
                 r['x1_hold'] = False
     apply_x1_hold(sel, state)
     seat_st.mark_core_rows(sel['core'], st_status)
+    st_nav_doc = seat_st.load_nav(ST_NAV_JSON)
+    if st_on and reselect:
+        by_row = {r['ticker']: r for r in rows}
+
+        def _legacy_size(t):
+            lamp = (by_row.get(t) or {}).get('lamp') or {}
+            if lamp.get('code') in ba.LIT_LAMP_CODES:
+                return lamp.get('size') or 0.0
+            if lamp.get('code') == 'red' and x1_market(market):
+                return (state.get(t) or {}).get('size', X1_DEFAULT_SIZE)   # 大盤多頭續抱：沿用最近非紅燈倉位
+            return 0.0
+        st_nav_doc = seat_st.update_nav(
+            st_nav_doc, decision_date,
+            {r['ticker']: (r.get('lamp') or {}).get('size') or 0.0 for r in sel['core']},
+            {t: _legacy_size(t) for t in legacy_sel['rotation']['core']}, st_loader)
     if st_on:
         if legacy_sel is not None:
             legacy_view = {'core': legacy_sel['rotation']['core'], 'removed': list(legacy_sel['rotation']['removed']),
@@ -634,7 +654,7 @@ def build(reselect, today=None):
                 'as_of': ls.get('date')}
         names = {s0['ticker']: s0.get('name') for s0 in doc['stocks']}
         nm = lambda t: f"{t.split('.')[0]} {names.get(t) or ''}".strip()  # noqa: E731
-        st_html = seat_st.RULE_HTML + seat_st.legacy_html(legacy_view, '台股席位', nm)
+        st_html = seat_st.RULE_HTML + seat_st.legacy_html(legacy_view, '台股席位', nm, nav=seat_st.nav_summary(st_nav_doc))
     else:
         legacy_view, st_html = None, ''
     new_state = update_state(state, sel['core'], as_of)
@@ -661,6 +681,7 @@ def build(reselect, today=None):
         if st_on:
             ledger['roster_legacy'] = {'core': legacy_sel['rotation']['core']}
             seat_st.save_state(ST_STATE_JSON, st_status, as_of)
+            seat_st.save_nav(ST_NAV_JSON, st_nav_doc)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     BODY_HTML.write_text(render_html(as_of, rev_as_of, lamp_doc.get('as_of'), last_rotation_date,
@@ -676,7 +697,8 @@ def build(reselect, today=None):
         'rotation': {'removed': [{'ticker': t, 'why': w} for t, w in sel['rotation'].get('removed') or []],
                      'filled': [{'ticker': t} for _, t in sel['rotation'].get('filled') or []]},
         'seat_st': {'active': st_on, 'cutover_date': seat_st.CUTOVER_DATE, 'decision_date': decision_date,
-                    'status': {t: seat_st.public_view(v) for t, v in st_status.items()}},
+                    'status': {t: seat_st.public_view(v) for t, v in st_status.items()},
+                    'nav': seat_st.nav_summary(st_nav_doc)},
         'legacy_rule': legacy_view,
         'counts': {'universe': len(rows), 'eligible': len(sel['eligible']), 'pool': len(sel['pool']),
                    'with_revision': sum(1 for v in views.values() if v.get('rev_used_pct') is not None),
