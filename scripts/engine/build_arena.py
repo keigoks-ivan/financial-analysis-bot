@@ -157,6 +157,7 @@ from dd_screener_quality import load_qgm_durability_index  # noqa: E402
 from peg_unified import compute_peg_unified  # noqa: E402
 from engine import seat_tm  # noqa: E402
 from engine import seat_st  # noqa: E402
+from engine import seat_valhold  # noqa: E402
 
 WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"   # 非 DD 池週線 fallback（見 build_radar.py 檔頭 docstring）
 QGM_US = ROOT / "docs" / "qgm" / "latest.json"
@@ -195,6 +196,7 @@ ST_NAV_JSON = OUT_DIR / "seat_st_nav.json"       # 新舊規則名單的每週�
 ST_STATE_JSON = OUT_DIR / "seat_st_state.json"   # 2026-11-05 折衷組：每檔持股的買進日／切換狀態（見 engine/seat_st.py）
 ST_HYPO_JSON = OUT_DIR / "seat_st_hypo.json"      # 第三條對照線：假設折衷組從 2024-01-02 起一直在跑（只在 --ledger 週跑更新）
 ST_HYPO_SEED_JSON = OUT_DIR / "seat_st_hypo_seed.json"   # 該線的種子（一次性回放結果，不改）
+VALHOLD_JSON = OUT_DIR / "seat_valhold_state.json"   # 2026-11-05 估值偏貴現任續抱：轉紅前最後一次的倉位（三條線各一份，見 engine/seat_valhold.py）
 STATE_JSON = OUT_DIR / "arena_state.json"      # v5.7：在席者最近一次非紅燈的倉位（大盤多頭續抱用）
 SPY_PRICES_JSON = ROOT / "data" / "flowmap_prices.json"   # v5.7：SPY 還原收盤（flowmap-daily 每日更新）
 ARENA_JSON = OUT_DIR / "arena.json"
@@ -472,6 +474,10 @@ def cross_check_r(r: dict, yf_rev) -> dict:
         r["grp"] = g = dict(g)
         g["veto"] = True
         g["pass"] = False
+        # 2026-11-05 實作漏接修正：事後改 pass 時，pass_ex_valuation（③b、估值偏貴現任續抱判定）與
+        # fundamental_pass（已切換持股的出池判定，持有人定義含上修否決）要一起改，否則這個否決會被當成「只差估值」或被已切換持股漏掉。
+        g["pass_ex_valuation"] = False
+        g["fundamental_pass"] = False
         g["why"] = [f"上修閘保守否決：yfinance 30 天預估重下修 {yf_rev:+.1f}%（Koyfin 正向不足以豁免）"] \
                    + list(g["why"])
     return r
@@ -1036,7 +1042,7 @@ def _down_reasons(ticker: str, rows: list) -> list:
 
     if r.get("st_exit"):
         add(r["st_exit"], "已切換 Supertrend 的持股：週線 Supertrend 翻空才賣，不看時機燈與 200 日線")
-    if not g.get("pass"):
+    if not g.get("pass") and not r.get("vh_exempt"):   # vh_exempt：只差估值閘的現任續抱（seat_valhold），估值紅不是下席原因
         for w in (g.get("why") or []):
             add(*(_match_chip(w) or (w, w)))
     code = lamp.get("code")
@@ -1185,7 +1191,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     L.append("倉位（還沒切換 Supertrend 的持股；已切換者固定滿倉）：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。")
     L.append("池：資格全過的名字（v5.7 起沒有上修門檻），依 PEG（現價 ÷ 明年預估 EPS ÷ 三年成長）由低到高排（PEG 缺值或 ≤0 的排最後）；同值先比財報後上修，再比隱含成長率、盈餘殖利率。"
              "綜合對照分只供對照，不決定排序。"
-             "核心席：現任抱著；還沒切換 Supertrend 的在席者在出池或時機燈轉紅時下席，已切換者只在週線 Supertrend 翻空或基本面出池時下席（2026-11-07 起）；空席才從池內亮燈（綠／黃／橘）的名字依 PEG 由低到高補，每週六（台北）依週五收盤判斷，"
+             "核心席：現任抱著；還沒切換 Supertrend 的在席者在出池或時機燈轉紅時下席（只差估值閘紅燈不算出池，續抱但不加碼，2026-11-07 起），已切換者只在週線 Supertrend 翻空或基本面出池時下席（2026-11-07 起）；空席才從池內亮燈（綠／黃／橘）的名字依 PEG 由低到高補，每週六（台北）依週五收盤判斷，"
              "亮燈不足就空席；週中燈號只管倉位。沒進核心的池成員：②可買＝今天亮燈（綠／黃／橘），"
              "分突破帶／🟡接近新高／🟡資料缺三段；③等待池＝燈號還沒亮，分🔴拉回中／⚫不合格或資料缺，組內依 PEG 排序。")
     L.append("耐久：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均、三年平均、現值三者都 ≥15%；"
@@ -1215,8 +1221,8 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
                                  lamp_as_of, last_rotation_date))
 
     _too_exp = too_expensive_rows(rows)
-    L.append(f"== ③b 太貴不入池（共 {len(_too_exp)} 檔；其他資格全過、只有估值紅。持有者看這裡：不加碼，"
-             "不是賣出訊號；已切換 Supertrend 的看週線 Supertrend 與基本面（衰退⛔／體質拒絕／DD 迴避），還沒切換的另外看時機燈轉紅）")
+    L.append(f"== ③b 太貴不入池（共 {len(_too_exp)} 檔；其他資格全過、只有估值紅。持有者看這裡："
+             "已在席的不賣、不加碼，沒在席的不補；已切換 Supertrend 的看週線 Supertrend 與基本面（衰退⛔／體質拒絕／DD 迴避），還沒切換的另外看時機燈轉紅）")
     if _too_exp:
         L.append(_POOL_ASCII_HDR_IDX)
         for i, r in enumerate(_too_exp[:40], 1):
@@ -1662,6 +1668,7 @@ def _flat_view(r: dict) -> dict:
             "moat": r.get("moat"), "src": r.get("src"), "seat_note": r.get("seat_note"),
             "ddn": r.get("ddn"),   # 2026-10-21：dd-screener 數字欄，見 dd_numbers()
             "st": r.get("st"),     # 2026-11-05 折衷組：出場方式／切換狀態／停損線，見 engine/seat_st.py
+            **({"val_hold": True} if r.get("val_hold") else {}),   # 2026-11-05 估值偏貴現任續抱不加碼（只有被標到才有這個鍵）
             "dd_path": r.get("dd_path")}
 
 
@@ -2003,8 +2010,8 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 <div class="bw-note-line"><b>第二關 排序</b>：看 PEG，即現價除以明年預估 EPS，再除以三年 EPS 年化成長。池內依 PEG 由低到高排，PEG 缺值或不大於 0 的排最後。同值先比財報後上修幅度，再比隱含成長率、盈餘殖利率。財報後上修仍是資格否決條件，只是不再決定名次。不看股價漲幅。綜合對照分只在「上修%（財報後）」欄的滑鼠提示裡顯示，不參與排序。</div>
 <div class="bw-note-line"><b>第三關 時機燈</b>：量股價離歷史新高多遠，燈號直接決定倉位，判定見下表。例外有兩種：大盤多頭時續抱的紅燈在席者，倉位沿用最近一次非紅燈的倉位；已切換 Supertrend 的在席者不看燈號，倉位固定滿倉。過熱與頂點不擋資格；相對強度與生命週期階段只在滑鼠提示顯示，不影響燈號。</div>
 {lamp_rules}
-<div class="bw-note-line"><b>席次怎麼分</b>：核心＝現任抱著到出場，空席才從池內亮燈者依 PEG 由低到高補，每週六判斷。還沒切換 Supertrend 的在席者轉紅時，大盤空頭週六下席；大盤多頭續抱，只有失去資格才下席。已切換者出池只看基本面（成長閘、品質閘、上修否決、體質拒絕、衰退 ⛔、DD 迴避），站上 52 週線、估值閘、市值與融券不算。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依 PEG 排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依 PEG 排序。</div>
-<div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場照賣法：已切換 Supertrend 的看週線 Supertrend 與基本面（衰退 ⛔、體質拒絕、DD 迴避），還沒切換的另外看時機燈轉紅。</div>
+<div class="bw-note-line"><b>席次怎麼分</b>：核心＝現任抱著到出場，空席才從池內亮燈者依 PEG 由低到高補，每週六判斷。還沒切換 Supertrend 的在席者轉紅時，大盤空頭週六下席；大盤多頭續抱，只有失去資格才下席（只差估值閘紅燈不算失去資格，續抱但不加碼）。已切換者出池只看基本面（成長閘、品質閘、上修否決、體質拒絕、衰退 ⛔、DD 迴避），站上 52 週線、估值閘、市值與融券不算。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依 PEG 排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依 PEG 排序。</div>
+<div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：已在席的不賣、不加碼（席位上標「估值偏貴・不加碼」，倉位不超過估值轉紅前的倉位），沒在席的不補進空席；要不要出場照賣法：已切換 Supertrend 的看週線 Supertrend 與基本面（衰退 ⛔、體質拒絕、DD 迴避），還沒切換的另外看時機燈轉紅。</div>
 <div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排②可買裡 🟡 接近新高組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。結果顯示在備註欄，例如「底部 緊 2段」；距歷史新高超過 10% 的不放標籤。</div>
 <div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只是顯示，不影響席位與排序。有護城河評級時在本欄滑鼠提示。</div>
 <div class="bw-note-line"><b>備註欄</b>：以下都只是顯示，不進資格與排序。耐久 ✓、底部＝上面兩段說明的結果；⚠ 頂點＝ROIC 高於五年平均 1.3 倍；基期＝三年 CAGR 因 FY1→FY2 低基期跳增，改用 FY2→FY3 成長率；循環守門＝循環股（毛利率跨距大或資本支出佔營收高）且 PEG 低到可疑；循環＝循環股但未觸發守門；財報前＝距下次財報 ≤7 天；內部人買／內部人賣＝近 3 個月內部人淨買賣方向；新席／現任／遞補＝本期席位異動狀態。</div>
@@ -2043,7 +2050,7 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 def too_expensive_rows(rows: list) -> list:
     """v5.1（2026-09-18 持有人）：「③b 太貴不入池」的名單——其他資格全過（grp.pass_ex_valuation）
     但估值閘紅燈（grp.pass 為 False）的列，依池排序鍵（上修降冪）排。給持有者看：名字在這裡
-    ＝不要加碼，不是賣出訊號；出場只看衰退 ⛔／體質拒絕／DD 迴避／跌破 200 日線。"""
+    ＝已在席的不賣、不加碼，沒在席的不補；出場只看衰退 ⛔／體質拒絕／DD 迴避／跌破 200 日線。"""
     def _key(r: dict):
         g = r.get("grp") or {}
         ey = ((g.get("own") or {}).get("raw") or {}).get("ey")
@@ -2056,8 +2063,8 @@ def too_expensive_rows(rows: list) -> list:
 def _too_expensive_section_html(rows_list: list, lamp_map: dict) -> str:
     """『③b 太貴不入池』區塊（見 too_expensive_rows()）。"""
     return (f'<details class="bw-fold bw-secfold"><summary>③b 太貴不入池（{len(rows_list)} 檔）</summary>'
-            '<div class="bw-sub">其他資格全過，只有估值閘紅燈。給持有者看：名字在這裡代表不加碼，'
-            '不是賣出訊號；要不要出場照賣法：已切換 Supertrend 的看週線 Supertrend 與基本面（衰退 ⛔、體質拒絕、DD 迴避），還沒切換的另外看時機燈轉紅。依上修排序。</div>'
+            '<div class="bw-sub">其他資格全過，只有估值閘紅燈。給持有者看：已在席的不賣、不加碼（席位上標「估值偏貴・不加碼」，倉位不超過估值轉紅前的倉位），'
+            '沒在席的不補進空席；要不要出場照賣法：已切換 Supertrend 的看週線 Supertrend 與基本面（衰退 ⛔、體質拒絕、DD 迴避），還沒切換的另外看時機燈轉紅。依上修排序。</div>'
             + (_pool_table_html(rows_list, lamp_map) if rows_list
                else '<div class="bw-note-line">目前沒有名字只差估值。</div>')
             + '</details>')
@@ -2560,6 +2567,7 @@ def main() -> int:
         if not ok:
             r["grp"] = dict(r["grp"])
             r["grp"]["pass"] = False
+            r["grp"]["pass_ex_valuation"] = False   # 2026-11-05 實作漏接修正：市值不足不是「只差估值」（③b、估值偏貴續抱都靠這欄）
             r["grp"]["why"] = (["市值資料缺漏，資格從嚴不予通過"] if ok is None
                                else [f"市值 {r['mktcap']/1e9:.0f}B 低於門檻 {MKTCAP_MIN/1e9:.0f}B"]) \
                               + list(r["grp"]["why"])
@@ -2635,16 +2643,28 @@ def main() -> int:
     st_on = seat_st.active(decision_date)
     st_hold_prev = seat_st.load_state(ST_STATE_JSON).get("holdings") or {}
     st_loader = seat_st.make_loader()
+    # 2026-11-05 估值偏貴現任續抱、不加碼（engine/seat_valhold.py）：決策日 >= seat_valhold.CUTOVER_DATE 才生效；
+    # 三條線（實際新規則、舊規則對照、假設線）都在選席前把「還沒切換、只差估值閘」的現任補回池尾。
+    vh_on = seat_valhold.active(decision_date)
+    vh_pre = seat_valhold.load_pre(VALHOLD_JSON) if vh_on else {k: {} for k in seat_valhold.LINES}
+
+    for _r in universe_rows:
+        if vh_on and seat_valhold.is_val_hold(_r):
+            _r["vh_exempt"] = True
+
+    def _pool_for(prev, status=None):
+        return seat_valhold.augment_pool(pool_rows, prev, universe_rows, status, vh_on)
     legacy_rotation = None
     if args.ledger:
         legacy_prev = (ledger0.get("roster_legacy") or {}).get("core") if st_on else None
+        _lg_prev = prev_core_roster if legacy_prev is None else legacy_prev
         legacy_rotation = seat_tm.select_roster(
-            pool_rows, prev_core_roster if legacy_prev is None else legacy_prev, market, select_hold_roster)
+            _pool_for(_lg_prev), _lg_prev, market, select_hold_roster)
         if st_on:
             ent0 = seat_st.entry_dates(prev_core_roster or [], ledger0.get("snapshots"), st_hold_prev, as_of)
             st0 = seat_st.build_status(prev_core_roster or [], ent0, decision_date, st_hold_prev, st_loader)
             rotation = seat_st.new_rule_rotation(
-                pool_rows, prev_core_roster, st0, universe_rows,
+                _pool_for(prev_core_roster, st0), prev_core_roster, st0, universe_rows,
                 lambda p, pv: seat_tm.select_roster(p, pv, market, select_hold_roster))
         else:
             rotation = legacy_rotation
@@ -2667,21 +2687,38 @@ def main() -> int:
     except (OSError, json.JSONDecodeError):
         state_doc = {}
     tm_state = state_doc.get("last_nonred") or {}
-    tm_held = seat_tm.held_tickers(core_seats, set(pool_by_ticker), market, LIT_LAMP_CODES)
+    vh_held = seat_valhold.held_set(core_seats, set(pool_by_ticker), st_status, vh_on)   # 估值偏貴、續抱不加碼的在席者
+    tm_held = seat_tm.held_tickers(core_seats, set(pool_by_ticker) | vh_held, market, LIT_LAMP_CODES)
     tm_held = {t for t in tm_held if not (st_status.get(t) or {}).get("switched")}   # 已切換者不吃大盤多頭續抱例外
     seat_tm.apply_hold(core_seats, tm_held, tm_state)
     seat_st.mark_core_rows(core_seats, st_status)
+    tm_new_state = seat_tm.update_state(tm_state, core_seats, as_of, LIT_LAMP_CODES)   # 先於估值上限：狀態檔記未加上限的倉位
+    seat_valhold.cap_rows(core_seats, vh_held, vh_pre["new"])
+    vh_pre_new = dict(vh_pre)   # 三條線轉紅前倉位的新狀態，只在 --ledger 週寫檔
+    if vh_on and args.ledger:
+        _sz = {r["ticker"]: (r.get("lamp") or {}).get("size") for r in core_seats}
+        vh_pre_new["new"] = seat_valhold.next_pre(vh_pre["new"], list(_sz), vh_held, _sz.get, as_of)
     st_nav_doc = seat_st.load_nav(ST_NAV_JSON)
     hypo_doc = seat_st.load_hypo(ST_HYPO_JSON) or seat_st.load_hypo(ST_HYPO_SEED_JSON)
     if st_on and args.ledger:
-        def _legacy_size(t):
+        def _legacy_size_raw(t):
             r = all_by_ticker.get(t) or {}
             lamp = r.get("lamp") or {}
             if lamp.get("code") in LIT_LAMP_CODES:
                 return lamp.get("size") or 0.0
-            if lamp.get("code") == "red" and market.get("mode") == "tm" and t in pool_by_ticker:
+            if lamp.get("code") == "red" and market.get("mode") == "tm" and (
+                    t in pool_by_ticker or (vh_on and seat_valhold.is_val_hold(r))):
                 return (tm_state.get(t) or {}).get("size", seat_tm.TM_DEFAULT_SIZE)   # 大盤多頭續抱：沿用最近非紅燈倉位
             return 0.0
+
+        def _vh_line_held(roster, switched=lambda t: False):
+            return {t for t in roster if vh_on and t not in pool_by_ticker and not switched(t)
+                    and seat_valhold.is_val_hold(all_by_ticker.get(t) or {})}
+
+        def _legacy_size(t):   # 估值偏貴的現任：取現行倉位與轉紅前倉位較小者
+            return seat_valhold.capped(_legacy_size_raw(t), vh_pre["legacy"].get(t)) \
+                if t in _legacy_vh else _legacy_size_raw(t)
+        _legacy_vh = _vh_line_held(legacy_rotation["core"])
         st_nav_doc = seat_st.update_nav(
             st_nav_doc, decision_date,
             {r["ticker"]: (r.get("lamp") or {}).get("size") or 0.0 for r in core_seats},
@@ -2690,12 +2727,21 @@ def main() -> int:
         hypo_doc = seat_st.hypo_step(
             hypo_doc, decision_date, as_of,
             lambda prev, st0: seat_st.new_rule_rotation(
-                pool_rows, prev, st0, universe_rows,
+                _pool_for(prev, st0), prev, st0, universe_rows,
                 lambda p, pv: seat_tm.select_roster(p, pv, market, select_hold_roster)),
-            lambda t, sw: 1.0 if sw else _legacy_size(t), st_loader, known=set(all_by_ticker),
+            lambda t, sw: 1.0 if sw else (seat_valhold.capped(_legacy_size_raw(t), vh_pre["hypo"].get(t))
+                                           if (vh_on and t not in pool_by_ticker and seat_valhold.is_val_hold(all_by_ticker.get(t) or {}))
+                                           else _legacy_size_raw(t)), st_loader, known=set(all_by_ticker),
             name_of=lambda t: (n if (n := (all_by_ticker.get(t) or {}).get("name")) and n != t else None))
         st_nav_doc = seat_st.attach_hypo_to_nav(st_nav_doc, hypo_doc)
-    tm_new_state = seat_tm.update_state(tm_state, core_seats, as_of, LIT_LAMP_CODES)
+        if vh_on:   # 舊規則線與假設線也記下「估值轉紅前最後一次」的倉位（新規則線在上面 cap_rows 之後記）
+            _hh = hypo_doc.get("holdings") or {}
+            _hyp_roster = hypo_doc.get("roster") or []
+            vh_pre_new["legacy"] = seat_valhold.next_pre(vh_pre["legacy"], legacy_rotation["core"], _legacy_vh,
+                                                         _legacy_size_raw, as_of)
+            vh_pre_new["hypo"] = seat_valhold.next_pre(
+                vh_pre["hypo"], _hyp_roster,
+                _vh_line_held(_hyp_roster, lambda t: bool((_hh.get(t) or {}).get("switched"))), _legacy_size_raw, as_of)
     if tm_new_state != tm_state:
         STATE_JSON.write_text(json.dumps({"schema_version": "arena-state-1.0", "last_nonred": tm_new_state},
                                          ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
@@ -2720,6 +2766,8 @@ def main() -> int:
             r["seat_note"] += "・Supertrend 持有"
         elif (r.get("lamp") or {}).get("code") not in LIT_LAMP_CODES:
             r["seat_note"] += "・大盤多頭續抱" if t in tm_held else "・週中轉紅，週六複判"
+        if t in vh_held:
+            r["seat_note"] += "・" + seat_valhold.TAG
         r["track"] = "core"
     for r in waiting_pool:
         r["track"] = "pool"   # 2026-09-17：backward-compat 標記，見 payload["sat_seats"] 註解
@@ -2832,6 +2880,8 @@ def main() -> int:
             seat_st.save_state(ST_STATE_JSON, st_status, as_of)
             seat_st.save_nav(ST_NAV_JSON, st_nav_doc)
             seat_st.save_hypo(ST_HYPO_JSON, hypo_doc)
+        if vh_on:
+            seat_valhold.save_pre(VALHOLD_JSON, vh_pre_new, decision_date)
         LEDGER_JSON.parent.mkdir(parents=True, exist_ok=True)
         LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
                                encoding="utf-8")

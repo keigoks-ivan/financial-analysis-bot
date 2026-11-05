@@ -115,6 +115,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from engine import build_arena as ba  # noqa: E402
 from engine import grp  # noqa: E402
 from engine import seat_st  # noqa: E402
+from engine import seat_valhold  # noqa: E402
 import tw_filing_calendar  # noqa: E402
 
 TW_POOL_JSON = ROOT / 'docs' / 'dd-screener' / 'tw' / 'latest.json'
@@ -127,6 +128,7 @@ ST_NAV_JSON = OUT_DIR / 'seat_st_nav_tw.json'   # 新舊規則名單的每週淨
 ST_STATE_JSON = OUT_DIR / 'seat_st_state_tw.json'   # 2026-11-05 折衷組：買進日／切換狀態（engine/seat_st.py）
 ST_HYPO_JSON = OUT_DIR / 'seat_st_hypo_tw.json'   # 第三條對照線：假設折衷組從 2024-01-02 起一直在跑（只在週六重選時更新）
 ST_HYPO_SEED_JSON = OUT_DIR / 'seat_st_hypo_seed_tw.json'   # 該線的種子（一次性回放結果，不改）
+VALHOLD_JSON = OUT_DIR / 'seat_valhold_state_tw.json'   # 2026-11-05 估值偏貴現任續抱：轉紅前最後一次的倉位（三條線各一份，見 engine/seat_valhold.py）
 STATE_NAME = 'seats_tw_state.json'     # path resolved from OUT_DIR at run time (see _state_path)
 MARKET_CSV = ROOT / 'data' / 'macro_db' / 'series' / 'tw.twse_tri.csv'   # 發行量加權股價報酬指數
 MKT_MA = 200            # 大盤均線天數（登記 SeatExitSwitch_Prereg.md 第三節）
@@ -322,7 +324,7 @@ def _pool_key(r):
     return grp.pool_sort_key(r['grp'].get('rev_used_pct'), r.get('implied_growth_pct'), ey)
 
 
-def select(rows, prev_core, reselect, last_snap=None, market=None, st_status=None):
+def select(rows, prev_core, reselect, last_snap=None, market=None, st_status=None, valhold=False):
     """Split rows into the board sections. Pure apart from the inputs.
 
     reselect=False keeps prev_core and carries the last rotation's removed/filled
@@ -331,18 +333,22 @@ def select(rows, prev_core, reselect, last_snap=None, market=None, st_status=Non
     market（v5.4）：market_state() 的結果。status 'bear'（v5.6）時不補新席，見 bear_no_buy()。mode 'x1'（大盤多頭）時，在席者只要仍在池內
     （資格成立）且沒跌破自己的 200 日線，就算留任候選，仍依池序競爭前 5；
     沒有 market 或 mode 'e1'＝現行賣法，與 v5.3 逐位元相同。
+    valhold（2026-11-05，engine/seat_valhold.py）：True 時，還沒切換、只差估值閘的現任當作池內成員參與留任判定（續抱不加碼）；
+    非現任不補。倉位上限與標籤在 build() 套用。False＝與現行逐位相同。
     """
     eligible = [r for r in rows if r['grp'].get('pass')]
     pool = sorted(eligible, key=_pool_key)   # v5.7：資格全過即入池，上修只排序（不再 ≥5% 門檻）
     by_t = {r['ticker']: r for r in rows}
     x1 = bool(market) and market.get('mode') == 'x1'
     pool_set = {r['ticker'] for r in pool}
+    if valhold:   # 估值偏貴的現任算池內成員（x1 續抱判定用）；不改 pool／waiting，空席補人只看原池
+        pool_set |= {t for t in (prev_core or []) if t in by_t and seat_valhold.is_val_hold(by_t[t])}
     if reselect:
-        roster_pool = pool
+        roster_pool = seat_valhold.augment_pool(pool, prev_core, rows, st_status, valhold)
         if x1:
             incumbents = set(prev_core or [])
             roster_pool = [_as_lit(r) if r['ticker'] in incumbents and _x1_dist_only(r) else r
-                           for r in pool]
+                           for r in roster_pool]
         # 2026-11-05 折衷組：已切換 Supertrend 的現任不吃紅燈／200 日線／看大盤切換，只在週線 Supertrend 翻空或出池下席
         roster_pool, prev_sel, st_removed = seat_st.apply_overlay(roster_pool, prev_core, st_status, rows)
         rotation = ba.select_hold_roster(roster_pool, prev_sel, core_slots=CORE_SLOTS)
@@ -445,8 +451,8 @@ def _table(views, lamp_map, seat_prefix=None, empty_seats=0):
 
 def _legend():
     return """<details class="bw-fold" open><summary>怎麼讀這張表</summary>
-<div class="bw-note-line"><b>三關一燈</b>：先過資格，再依財報後上修排序，最後由時機燈決定倉位。核心席每週六（台北）依週五收盤判斷：現任抱著；還沒切換 Supertrend 的在席者在出池或時機燈轉紅時下席，已切換者只在週線 Supertrend 翻空或基本面出池時下席（2026-11-07 起，細節見上方賣法）；空席才從池內時機燈亮著的名字依上修由高到低補，亮燈不足就空席；週中燈號只管倉位。規則跟美股核心席相同，只有品質條件、市值門檻與大盤例外按台股設定。這是研究名單，不是帳戶持倉。</div>
-<div class="bw-note-line"><b>資格</b>：三年成長、品質、站上 52 週線三項全過。三年成長＝Koyfin 今年到後年的每股盈餘年化成長 ≥15%，沒有第三年預估就不算過。品質＝投入資本報酬率（ROIC）≥15% 且營業現金流利潤率 ≥10%，或 ROIC ≥25% 且營業現金流利潤率不為負。台股資本支出重，所以品質看營業現金流，美股看自由現金流。另外五種情況直接出局：體質拒絕、衰退 ⛔、180 天內的 DD 迴避、財報後上修 ≤−5%、估值閘紅燈（PEG &gt;2.0 或本益比相對五年均值 &gt;1.75 倍）。市值不另設門檻，台股池本身已是 10 億美元以上。</div>
+<div class="bw-note-line"><b>三關一燈</b>：先過資格，再依財報後上修排序，最後由時機燈決定倉位。核心席每週六（台北）依週五收盤判斷：現任抱著；還沒切換 Supertrend 的在席者在出池或時機燈轉紅時下席（只差估值閘紅燈不算出池，續抱但不加碼，2026-11-07 起），已切換者只在週線 Supertrend 翻空或基本面出池時下席（2026-11-07 起，細節見上方賣法）；空席才從池內時機燈亮著的名字依上修由高到低補，亮燈不足就空席；週中燈號只管倉位。規則跟美股核心席相同，只有品質條件、市值門檻與大盤例外按台股設定。這是研究名單，不是帳戶持倉。</div>
+<div class="bw-note-line"><b>資格</b>：三年成長、品質、站上 52 週線三項全過。三年成長＝Koyfin 今年到後年的每股盈餘年化成長 ≥15%，沒有第三年預估就不算過。品質＝投入資本報酬率（ROIC）≥15% 且營業現金流利潤率 ≥10%，或 ROIC ≥25% 且營業現金流利潤率不為負。台股資本支出重，所以品質看營業現金流，美股看自由現金流。另外五種情況直接出局：體質拒絕、衰退 ⛔、180 天內的 DD 迴避、財報後上修 ≤−5%、估值閘紅燈（PEG &gt;2.0 或本益比相對五年均值 &gt;1.75 倍；已在席且還沒切換 Supertrend 的持股例外，續抱但不加碼）。市值不另設門檻，台股池本身已是 10 億美元以上。</div>
 <div class="bw-note-line"><b>上修</b>：分析師把每股盈餘預估調高了幾 %。基準是這檔股票最近一次財報前的 Koyfin 快照，缺財報錨定時看近三個月。財報日先看 yfinance，沒有就用公開資訊觀測站上董事會通過財報的日期，兩邊都沒有就取該季季底前的快照。資格全過就入池（v5.7 起沒有上修門檻），池內由高到低排，同值先比隱含成長率，再比盈餘殖利率。上修只管排序。</div>
 <div class="bw-note-line"><b>時機燈</b>：量的是距還原權息歷史新高多遠，燈號直接對應還沒切換 Supertrend 的持股倉位（已切換者固定滿倉）：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉。🟡 接近＝差 3%～10% 且站上 200 日線，同樣正常倉。距歷史新高資料缺的黃燈標「🟡 資料缺」，暫列半倉。🟠 過熱＝已在突破帶，但近 12 個月（扣最近一個月）漲幅 &gt;150%，半倉。🔴 拉回中＝差超過 10% 或跌破 200 日線，零倉。⚫ 不合格＝未站上 52 週線。🟢🟡🟠 算亮燈。滑過燈號可看階段燈，階段燈不影響時機燈。</div>
 <div class="bw-note-line"><b>v5.7 變更（2026-10-21）</b>：拿掉「上修 ≥5% 才入池」，資格全過就入池，上修只決定排序。這是持有人的破例決定，不是回測登記通過。原因是決定當天資格全過 30 檔，上修最高不到 3%，核心席從 10 月 9 日上線以來一直空著。回測（席位全格子測試）用的台股規則本來就沒有上修門檻，因為台股沒有歷史預估；估值閘和三年成長閘回測也沒有。研究依據見 <a href="/cockpit/#seats-grid">席位全格子測試</a>。當時其餘規則不變：時機燈亮著取前 5、看大盤切換出場、大盤空頭週不補新席。賣法已於 2026-11-07 改為盤整突破或停損線高過買進價的持股看 Supertrend，沒切換的才適用這裡的看大盤切換出場。</div>
@@ -553,7 +559,7 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + (''.join(waiting_parts) or '<div class="bw-note-line">（無）</div>')
         + '</details>'
         + f'<details class="bw-fold bw-secfold"><summary>③b 太貴不入池（{len(sel["too_expensive"])} 檔）</summary>'
-        + '<div class="bw-sub">其他資格全過，只有估值閘紅燈。名字在這裡代表不加碼，不是賣出訊號。</div>'
+        + '<div class="bw-sub">其他資格全過，只有估值閘紅燈。已在席的不賣、不加碼，沒在席的不補。</div>'
         + _table(v(sel['too_expensive']), lamp_map)
         + '</details>'
         + '</div>'
@@ -605,18 +611,20 @@ def build(reselect, today=None):
     st_on = seat_st.active(decision_date)
     st_hold_prev = seat_st.load_state(ST_STATE_JSON).get('holdings') or {}
     st_loader = seat_st.make_loader()
+    vh_on = seat_valhold.active(decision_date)   # 2026-11-05 估值偏貴現任續抱、不加碼（三條線都套用）
+    vh_pre = seat_valhold.load_pre(VALHOLD_JSON) if vh_on else {k: {} for k in seat_valhold.LINES}
     legacy_sel = None
     st_prev = None
     if st_on and reselect:
         legacy_prev = (ledger.get('roster_legacy') or {}).get('core')
         legacy_sel = select(copy.deepcopy(rows), prev_core if legacy_prev is None else legacy_prev, True,
-                            last_snap=snaps[-1] if snaps else None, market=market)
+                            last_snap=snaps[-1] if snaps else None, market=market, valhold=vh_on)
         ent0 = seat_st.entry_dates(prev_core, snaps, st_hold_prev, as_of)
         st_prev = seat_st.build_status(prev_core, ent0, decision_date, st_hold_prev, st_loader)
     elif st_on:
         st_prev = {}   # 平日刷新：名單沿用上次週六，下面對在席者另算顯示用狀態
     sel = select(rows, prev_core, reselect, last_snap=snaps[-1] if snaps else None, market=market,
-                 st_status=st_prev)
+                 st_status=st_prev, valhold=vh_on)
     state_doc = _load_json(_state_path(), {})
     state = state_doc.get('last_nonred') or {}
     st_status = {}
@@ -629,18 +637,36 @@ def build(reselect, today=None):
                 r['x1_hold'] = False
     apply_x1_hold(sel, state)
     seat_st.mark_core_rows(sel['core'], st_status)
+    new_state = update_state(state, sel['core'], as_of)   # 先於估值上限：狀態檔記未加上限的倉位
+    vh_held = seat_valhold.held_set(sel['core'], {r['ticker'] for r in sel['pool']}, st_status, vh_on)
+    seat_valhold.cap_rows(sel['core'], vh_held, vh_pre['new'])
+    for r in sel['core']:
+        if r['ticker'] in vh_held:
+            r['seat_note'] += '・' + seat_valhold.TAG
+    vh_pre_new = dict(vh_pre)   # 三條線轉紅前倉位的新狀態，只在週六重選時寫檔
+    if vh_on and reselect:
+        _sz = {r['ticker']: (r.get('lamp') or {}).get('size') for r in sel['core']}
+        vh_pre_new['new'] = seat_valhold.next_pre(vh_pre['new'], list(_sz), vh_held, _sz.get, as_of)
     st_nav_doc = seat_st.load_nav(ST_NAV_JSON)
     hypo_doc = seat_st.load_hypo(ST_HYPO_JSON) or seat_st.load_hypo(ST_HYPO_SEED_JSON)
     if st_on and reselect:
         by_row = {r['ticker']: r for r in rows}
 
-        def _legacy_size(t):
+        def _legacy_size_raw(t):
             lamp = (by_row.get(t) or {}).get('lamp') or {}
             if lamp.get('code') in ba.LIT_LAMP_CODES:
                 return lamp.get('size') or 0.0
             if lamp.get('code') == 'red' and x1_market(market):
                 return (state.get(t) or {}).get('size', X1_DEFAULT_SIZE)   # 大盤多頭續抱：沿用最近非紅燈倉位
             return 0.0
+
+        def _vh_line_held(roster, switched=lambda t: False):
+            return {t for t in roster if vh_on and not switched(t) and t in by_row
+                    and not by_row[t]['grp'].get('pass') and seat_valhold.is_val_hold(by_row[t])}
+        _legacy_vh = _vh_line_held(legacy_sel['rotation']['core'])
+
+        def _legacy_size(t):   # 估值偏貴的現任：取現行倉位與轉紅前倉位較小者
+            return seat_valhold.capped(_legacy_size_raw(t), vh_pre['legacy'].get(t)) if t in _legacy_vh else _legacy_size_raw(t)
         st_nav_doc = seat_st.update_nav(
             st_nav_doc, decision_date,
             {r['ticker']: (r.get('lamp') or {}).get('size') or 0.0 for r in sel['core']},
@@ -649,10 +675,20 @@ def build(reselect, today=None):
         hypo_doc = seat_st.hypo_step(
             hypo_doc, decision_date, as_of,
             lambda prev, st0: select(copy.deepcopy(rows), prev, True, last_snap=snaps[-1] if snaps else None,
-                                     market=market, st_status=st0)['rotation'],
-            lambda t, sw: 1.0 if sw else _legacy_size(t), st_loader, known=set(by_row),
+                                     market=market, st_status=st0, valhold=vh_on)['rotation'],
+            lambda t, sw: 1.0 if sw else (seat_valhold.capped(_legacy_size_raw(t), vh_pre['hypo'].get(t))
+                                           if t in _vh_line_held([t]) else _legacy_size_raw(t)),
+            st_loader, known=set(by_row),
             name_of=lambda t: (by_row.get(t) or {}).get('name'))
         st_nav_doc = seat_st.attach_hypo_to_nav(st_nav_doc, hypo_doc)
+        if vh_on:   # 舊規則線與假設線也記下「估值轉紅前最後一次」的倉位（新規則線在上面 cap_rows 之後記）
+            _hh = hypo_doc.get('holdings') or {}
+            _hyp_roster = hypo_doc.get('roster') or []
+            vh_pre_new['legacy'] = seat_valhold.next_pre(vh_pre['legacy'], legacy_sel['rotation']['core'], _legacy_vh,
+                                                         _legacy_size_raw, as_of)
+            vh_pre_new['hypo'] = seat_valhold.next_pre(
+                vh_pre['hypo'], _hyp_roster,
+                _vh_line_held(_hyp_roster, lambda t: bool((_hh.get(t) or {}).get('switched'))), _legacy_size_raw, as_of)
     if st_on:
         if legacy_sel is not None:
             legacy_view = {'core': legacy_sel['rotation']['core'], 'removed': list(legacy_sel['rotation']['removed']),
@@ -673,7 +709,6 @@ def build(reselect, today=None):
                          else t.split('.')[0])
         st_html += seat_st.hypo_html(hypo_doc, seat_st.hypo_summary(hypo_doc, st_nav_doc), seat_st.nav_summary(st_nav_doc),
                                      '台股席位', hnm)
-    new_state = update_state(state, sel['core'], as_of)
     views = {r['ticker']: flat(r, today) for r in rows}
     industry = {s['ticker']: s.get('tw_industry') for s in doc['stocks']}
     for t, v in views.items():
@@ -699,6 +734,8 @@ def build(reselect, today=None):
             seat_st.save_state(ST_STATE_JSON, st_status, as_of)
             seat_st.save_nav(ST_NAV_JSON, st_nav_doc)
             seat_st.save_hypo(ST_HYPO_JSON, hypo_doc)
+        if vh_on:
+            seat_valhold.save_pre(VALHOLD_JSON, vh_pre_new, decision_date)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     BODY_HTML.write_text(render_html(as_of, rev_as_of, lamp_doc.get('as_of'), last_rotation_date,

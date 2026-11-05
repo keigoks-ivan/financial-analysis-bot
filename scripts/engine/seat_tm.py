@@ -127,7 +127,7 @@ def update_state(state: dict, core_rows: list, as_of: str, lit_codes) -> dict:
 def market_note_html(market) -> str:
     """頁面用：賣法一句話＋目前大盤狀態一行＋v5.7 註記（HTML 片段，已跳脫過的固定文字＋數字）。"""
     rule = ("<div class=\"bw-note-line\"><b>賣法</b>：大盤多頭（SPY 還原收盤在 200 日線之上）時，紅燈在席者續抱（不論離歷史新高多遠、有沒有跌破 200 日線），"
-            "只有資格不成立（出池，含站上 52 週線這一條）才賣；大盤空頭時，時機燈轉紅就賣（距歷史新高超過 10% 或跌破 200 日線）。"
+            "只有資格不成立（出池，含站上 52 週線這一條；只差估值閘紅燈不算出池，續抱但不加碼）才賣；大盤空頭時，時機燈轉紅就賣（距歷史新高超過 10% 或跌破 200 日線）。"
             "續抱者倉位沿用最近一次非紅燈的倉位。</div>")
     st = (market or {}).get("status")
     d = (market or {}).get("data_date") or "—"
