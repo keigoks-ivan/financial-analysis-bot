@@ -1032,6 +1032,8 @@ def _down_reasons(ticker: str, rows: list) -> list:
             seen.add(short)
             out.append((short, title or short))
 
+    if r.get("st_exit"):
+        add(r["st_exit"], "已切換 Supertrend 的持股：週線 Supertrend 翻空才賣，不看時機燈與 200 日線")
     if not g.get("pass"):
         for w in (g.get("why") or []):
             add(*(_match_chip(w) or (w, w)))
@@ -1133,14 +1135,14 @@ def _lamp_rules_html() -> str:
     rows = "".join(
         f'<tr><td>{escape(c["label"])}</td><td>{escape(cond)}</td>'
         f'<td class="n">{"0" if c["size"] == 0 else format(c["size"], ".1f")}</td>'
-        f'<td>{"亮燈，可入席" if c["code"] in LIT_LAMP_CODES else ("不入席；在席者大盤多頭時續抱，大盤空頭時週六下席" if c["code"] == "red" else "不入席；在席者週六下席（失去資格）")}</td></tr>'
+        f'<td>{"亮燈，可入席" if c["code"] in LIT_LAMP_CODES else ("不入席；未切換者依賣法處理，已切換者不看燈號" if c["code"] == "red" else "不入席；未切換者週六下席，已切換者只看基本面")}</td></tr>'
         for c, cond in cases)
     return ('<!--LAMP_RULES--><div class="bw-lamp-rules"><table>'
             '<thead><tr><th>燈號</th><th>條件</th><th>倉位</th><th>核心席</th></tr></thead>'
             f'<tbody>{rows}</tbody></table>'
             '<div class="bw-lamp-foot">歷史新高＝還原權息後的全歷史最高收盤價；200 日線、52 週線都是收盤均線。'
-            '燈號和倉位每天更新；核心席每週六（台北）依週五收盤重算。在席者週中轉紅：大盤空頭週倉位降到 0、週六下席；'
-            '大盤多頭週續抱，倉位沿用最近一次非紅燈的倉位。</div>'
+            '燈號和倉位每天更新；核心席每週六（台北）依週五收盤重算。還沒切換 Supertrend 的在席者週中轉紅：大盤空頭週倉位降到 0、週六下席；'
+            '大盤多頭週續抱，倉位沿用最近一次非紅燈的倉位。已切換 Supertrend 的在席者不看燈號，倉位固定滿倉（2026-11-07 起）。</div>'
             '</div><!--/LAMP_RULES-->')
 
 
@@ -1178,10 +1180,10 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
     L.append("資格：市值 200 億美元以上、品質閘（ROIC ≥15% 且自由現金流 >0）、三年成長 15%、站上 52 週線；"
              "耐久只當旗標。排序：財報後上修。時機燈：距還原權息歷史新高 10% 內且站上 200 日線就亮。"
              "核心席每週六（台北）重算，可空席；其餘每天重排。這是研究名單，不是帳戶持倉。")
-    L.append("倉位：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。")
+    L.append("倉位（還沒切換 Supertrend 的持股；已切換者固定滿倉）：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。")
     L.append("池：資格全過的名字（v5.7 起沒有上修門檻），依 PEG（現價 ÷ 明年預估 EPS ÷ 三年成長）由低到高排（PEG 缺值或 ≤0 的排最後）；同值先比財報後上修，再比隱含成長率、盈餘殖利率。"
              "綜合對照分只供對照，不決定排序。"
-             "核心席：現任抱著，只在出池或時機燈轉紅時下席；空席才從池內亮燈（綠／黃／橘）的名字依 PEG 由低到高補，每週六（台北）依週五收盤判斷，"
+             "核心席：現任抱著；還沒切換 Supertrend 的在席者在出池或時機燈轉紅時下席，已切換者只在週線 Supertrend 翻空或基本面出池時下席（2026-11-07 起）；空席才從池內亮燈（綠／黃／橘）的名字依 PEG 由低到高補，每週六（台北）依週五收盤判斷，"
              "亮燈不足就空席；週中燈號只管倉位。沒進核心的池成員：②可買＝今天亮燈（綠／黃／橘），"
              "分突破帶／🟡接近新高／🟡資料缺三段；③等待池＝燈號還沒亮，分🔴拉回中／⚫不合格或資料缺，組內依 PEG 排序。")
     L.append("耐久：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均、三年平均、現值三者都 ≥15%；"
@@ -1212,7 +1214,7 @@ def render_board_text(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
 
     _too_exp = too_expensive_rows(rows)
     L.append(f"== ③b 太貴不入池（共 {len(_too_exp)} 檔；其他資格全過、只有估值紅。持有者看這裡：不加碼，"
-             "不是賣出訊號；出場看衰退⛔／體質拒絕／DD 迴避／跌破 200 日線）")
+             "不是賣出訊號；已切換 Supertrend 的看週線 Supertrend 與基本面（衰退⛔／體質拒絕／DD 迴避），還沒切換的另外看時機燈轉紅）")
     if _too_exp:
         L.append(_POOL_ASCII_HDR_IDX)
         for i, r in enumerate(_too_exp[:40], 1):
@@ -1993,14 +1995,14 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
 
     lamp_rules = _lamp_rules_html()
     legend = f"""<details class="bw-fold" open><summary>怎麼讀這張表</summary>
-<div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看價格相對成長貴不貴（PEG，排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心席每週六（台北）依週五收盤判斷：現任抱著到出場，空席才從池內亮燈者依 PEG 由低到高補，亮燈不足就空席。賣法是大盤空頭才看紅燈（見上方賣法）。這是研究名單，不是帳戶持倉。</div>
+<div class="bw-note-line"><b>三關一燈</b>：第一關看公司夠不夠好（資格），第二關看價格相對成長貴不貴（PEG，排序），第三關看股價離歷史新高多遠（時機燈，決定倉位）。核心席每週六（台北）依週五收盤判斷：現任抱著到出場，空席才從池內亮燈者依 PEG 由低到高補，亮燈不足就空席。賣法自 2026-11-07 起分兩種：盤整突破或停損線高過買進價的持股改看週線 Supertrend，其餘照原規則（見上方賣法）。這是研究名單，不是帳戶持倉。</div>
 <div class="bw-note-line"><b>第一關 資格</b>：市值 200 億美元以上、品質閘（ROIC ≥15% 且自由現金流 &gt;0）、三年成長 15%、站上 52 週線。四項全過才有資格；耐久只是旗標。資格全過就入池（v5.7 起沒有上修門檻）。另外六種情況直接出局：體質拒絕、衰退 ⛔、DD 迴避、融券占流通股比 &gt;10%、財報後上修低於 −5%（缺財報錨定時退回三個月）、估值閘紅燈（PEG &gt;2.0 或 PE 相對五年均倍數 &gt;1.75x，任一則紅；兩者皆缺不算否決，標 ⚪ 缺值）。不設產業上限。</div>
 <div class="bw-note-line"><b>耐久</b>：兩種算法擇一達標即可。QGM 五年 ROIC 穩定度 ≥75%；或 Koyfin 五年平均、三年平均、現值三者都 ≥15%。看的是一致性，不是單一年份。只當旗標，不擋資格；達標的在備註欄顯示「耐久 ✓」。</div>
 <div class="bw-note-line"><b>第二關 排序</b>：看 PEG，即現價除以明年預估 EPS，再除以三年 EPS 年化成長。池內依 PEG 由低到高排，PEG 缺值或不大於 0 的排最後。同值先比財報後上修幅度，再比隱含成長率、盈餘殖利率。財報後上修仍是資格否決條件，只是不再決定名次。不看股價漲幅。綜合對照分只在「上修%（財報後）」欄的滑鼠提示裡顯示，不參與排序。</div>
-<div class="bw-note-line"><b>第三關 時機燈</b>：量股價離歷史新高多遠，燈號直接決定倉位，判定見下表。例外是大盤多頭時續抱的紅燈在席者，倉位沿用最近一次非紅燈的倉位。過熱與頂點不擋資格；相對強度與生命週期階段只在滑鼠提示顯示，不影響燈號。</div>
+<div class="bw-note-line"><b>第三關 時機燈</b>：量股價離歷史新高多遠，燈號直接決定倉位，判定見下表。例外有兩種：大盤多頭時續抱的紅燈在席者，倉位沿用最近一次非紅燈的倉位；已切換 Supertrend 的在席者不看燈號，倉位固定滿倉。過熱與頂點不擋資格；相對強度與生命週期階段只在滑鼠提示顯示，不影響燈號。</div>
 {lamp_rules}
-<div class="bw-note-line"><b>席次怎麼分</b>：核心＝現任抱著到出場，空席才從池內亮燈者依 PEG 由低到高補，每週六判斷。在席者轉紅時，大盤空頭週六下席；大盤多頭續抱，只有失去資格才下席。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依 PEG 排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依 PEG 排序。</div>
-<div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。</div>
+<div class="bw-note-line"><b>席次怎麼分</b>：核心＝現任抱著到出場，空席才從池內亮燈者依 PEG 由低到高補，每週六判斷。還沒切換 Supertrend 的在席者轉紅時，大盤空頭週六下席；大盤多頭續抱，只有失去資格才下席。已切換者出池只看基本面（成長閘、品質閘、上修否決、體質拒絕、衰退 ⛔、DD 迴避），站上 52 週線、估值閘、市值與融券不算。沒進核心的池成員依燈號分兩區：②可買＝今天時機燈亮著（綠／黃／橘），再分突破帶／🟡 接近新高（組內先看底部緊不緊，再依 PEG 排序）／🟡 資料缺；③等待池＝燈號還沒亮，再分 🔴 拉回中／⚫ 不合格或資料缺，組內依 PEG 排序。</div>
+<div class="bw-note-line"><b>太貴不入池（③b）</b>：其他資格全過、只有估值閘紅燈的名字放這區。給持有者看：名字在這裡代表不加碼，不是賣出訊號；要不要出場照賣法：已切換 Supertrend 的看週線 Supertrend 與基本面（衰退 ⛔、體質拒絕、DD 迴避），還沒切換的另外看時機燈轉紅。</div>
 <div class="bw-note-line"><b>底部緊度</b>：量的是股價回檔的樣子。回檔一次比一次小、量縮、離底部最高點近，都算緊，否則算鬆，只在距歷史新高 10% 以內的名字才算。只用來排②可買裡 🟡 接近新高組的順序，緊的排前面；🟢／🟠 兩種燈號改標「緊縮後突破」或「鬆散突破」。不改燈號，也不改倉位。結果顯示在備註欄，例如「底部 緊 2段」；距歷史新高超過 10% 的不放標籤。</div>
 <div class="bw-note-line"><b>DD</b>：個股報告的裁決標籤。180 天內的「迴避」會排除資格，其餘只是顯示，不影響席位與排序。有護城河評級時在本欄滑鼠提示。</div>
 <div class="bw-note-line"><b>備註欄</b>：以下都只是顯示，不進資格與排序。耐久 ✓、底部＝上面兩段說明的結果；⚠ 頂點＝ROIC 高於五年平均 1.3 倍；基期＝三年 CAGR 因 FY1→FY2 低基期跳增，改用 FY2→FY3 成長率；循環守門＝循環股（毛利率跨距大或資本支出佔營收高）且 PEG 低到可疑；循環＝循環股但未觸發守門；財報前＝距下次財報 ≤7 天；內部人買／內部人賣＝近 3 個月內部人淨買賣方向；新席／現任／遞補＝本期席位異動狀態。</div>
@@ -2024,7 +2026,7 @@ def _pool_section_html(core_seats, buyable, waiting_rest, prev_snap, rows, lamp_
                 if (lamp_as_of or last_rotation_date) else "")
 
     return ('<h3 class="bw-sec">① 核心席（5）</h3>'
-           + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字補空席，依 PEG 由低到高；現任抱著，不因排名被換掉；亮燈不足就空席，不拿紅燈湊數。週中燈號只管倉位，席位等週六複判；大盤多頭時紅燈的現任續抱（見賣法）。</div>'
+           + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字補空席，依 PEG 由低到高；現任抱著，不因排名被換掉；亮燈不足就空席，不拿紅燈湊數。週中燈號只管倉位，席位等週六複判。賣法見上方：已切換 Supertrend 的現任不看紅燈，還沒切換的現任在大盤多頭時紅燈續抱。</div>'
            + freshness + market_note + _seat_view_bar_html() + core_tbl + legend + changes_html
            + f'<h3 class="bw-sec">② 可買（{len(buyable)} 檔）</h3>'
            + '<div class="bw-sub">池內沒進核心、今天時機燈亮著（綠／黃／橘）的名字，依燈號分組。可能是空清單。</div>'
@@ -2053,7 +2055,7 @@ def _too_expensive_section_html(rows_list: list, lamp_map: dict) -> str:
     """『③b 太貴不入池』區塊（見 too_expensive_rows()）。"""
     return (f'<details class="bw-fold bw-secfold"><summary>③b 太貴不入池（{len(rows_list)} 檔）</summary>'
             '<div class="bw-sub">其他資格全過，只有估值閘紅燈。給持有者看：名字在這裡代表不加碼，'
-            '不是賣出訊號；要不要出場看衰退 ⛔、體質拒絕、DD 迴避、跌破 200 日線這四個。依上修排序。</div>'
+            '不是賣出訊號；要不要出場照賣法：已切換 Supertrend 的看週線 Supertrend 與基本面（衰退 ⛔、體質拒絕、DD 迴避），還沒切換的另外看時機燈轉紅。依上修排序。</div>'
             + (_pool_table_html(rows_list, lamp_map) if rows_list
                else '<div class="bw-note-line">目前沒有名字只差估值。</div>')
             + '</details>')
@@ -2153,7 +2155,7 @@ def render_board_html(as_of, rows, core_seats, buyable, waiting_rest, not_in_poo
                  "核心＝現任抱著到出場，空席才從池內亮燈者依 PEG 由低到高補，每週六（台北）判斷、可空席；其餘為等待池。不設產業上限；內部人買賣只是備註。"
                  "細節見下方「怎麼讀這張表」。")
     timing_note = ("過熱（12-1 月動能 >150%）與頂點不擋資格，只影響時機燈（🟠 半倉）或純顯示。"
-                   "倉位對應：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。"
+                   "倉位對應（還沒切換 Supertrend 的持股；已切換者固定滿倉）：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。"
                    "時機燈與倉位每日重算，不進排序。")
 
     return (
@@ -2418,8 +2420,6 @@ def _find_last_rotation_date(snapshots: list[dict]) -> str | None:
 def _market_note_with_st(market, st_on: bool, legacy_view, nav=None) -> str:
     """賣法說明：折衷組生效後，新規則段落放最前，舊規則段落改標「還沒切換的持股」，再接收合的舊規則對照名單。"""
     note = seat_tm.market_note_html(market)
-    if not st_on:
-        return note
     note = note.replace("<b>賣法</b>", "<b>還沒切換的持股，賣法</b>", 1)
     return seat_st.RULE_HTML + note + seat_st.legacy_html(legacy_view, "美股看板", nav=nav)
 
@@ -2633,6 +2633,9 @@ def main() -> int:
     else:
         rotation = {"core": [t for t in (prev_core_roster or []) if t in all_by_ticker],
                     "rotated": False, "removed": [], "filled": []}
+    for _t, _w in rotation["removed"]:
+        if _w == seat_st.BEAR_WHY and _t in all_by_ticker:
+            all_by_ticker[_t]["st_exit"] = _w   # 下席原因顯示用（_down_reasons）
     core_seats = [pool_by_ticker.get(t) or all_by_ticker.get(t) for t in rotation["core"]]
     core_seats = [r for r in core_seats if r is not None]
     core_seated = {r["ticker"] for r in core_seats}
@@ -2860,7 +2863,7 @@ def main() -> int:
                   "（黃燈由 0.5 改 1.0，依 v7-backtest SeatSizing_Results.md 與 SeatSizing_Results_v2.md；登記判準形式上未過，持有人依兩次回測決定改）。核心＝現任抱著到出場，空席才從池內亮燈者依 PEG 由低到高補，每週六（台北）判斷、可空席（v5.2；v5.10 起補席排序改 PEG；v5.11 起現任抱著）"
                   "（每月第一次排程整批重選一次，期間僅硬否決能換人、空位由池遞補）；衛星軌已取消，池扣掉"
                   "核心即「等待池」，依時機燈分②可買／③等待池顯示。無產業集中度上限；內部人買賣僅備註，"
-                  "不進資格與排序。"),
+                  "不進資格與排序。賣法自 2026-11-07 起：盤整突破或停損線高過買進價的持股改看週線 Supertrend，只在週線翻空或基本面出池才賣、倉位滿倉；沒切換的照上述時機燈規則。"),
         "universe_n": len(universe_rows),
         "seats_without_card": sorted(r["ticker"] for r in core_seats + waiting_pool if r["ticker"] not in card_stats),
         "own_board": own_board,
@@ -2988,9 +2991,9 @@ def main() -> int:
 <b>耐久</b>（QGM 五年穩定度 ≥75%，或 Koyfin 五年∧三年∧現值三者皆 ≥15%）只當旗標，不擋資格。
 排序＝<b>只看財報後上修</b>（缺值看近三個月），由高到低；同值先比隱含成長率，再比盈餘殖利率。資格全過就進「池」（v5.7 起沒有上修 ≥5% 門檻；缺上修數字的排最後），池就是候選的全部。<b>綜合對照分</b>（財報後上修、12-1 月動能、成長封頂 30、品質、盈餘殖利率五個百分位平均）只供逐檔對照，不參與排序。成長遇<b>基期效應</b>（FY1→FY2 因低基期跳增 &gt;1.6x 且 FY2→FY3 成長 &lt;20%）改用 FY2→FY3 成長率（這項仍作用於成長閘本身）。
 <b>過熱／頂點不是資格閘</b>：12-1 月動能 &gt;150%（缺值看 26 週漲幅 &gt;80%）＝過熱，只影響時機燈（🟠 過熱，半倉），不排除核心候選；ROIC 高於五年平均 1.3 倍＝頂點，純顯示（⚠）。<b>內部人買賣</b>（近 3 個月淨股數）只是備註，不進資格與排序。
-<b>倉位</b>：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。
+<b>倉位</b>（還沒切換 Supertrend 的持股；已切換者固定滿倉）：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。
 <b>DD 選配</b>：不是入池前提，只做迴避否決（180 天內）；觀望／進場只當角色標籤顯示。
-<b>每週亮燈選席</b>：每週六（台北）依週五收盤，核心席＝池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字依上修取前 5；紅燈者下席，亮燈不足就空席；週中燈號只管倉位。
+<b>每週亮燈選席</b>：每週六（台北）依週五收盤，核心席＝池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）的名字依上修取前 5；還沒切換 Supertrend 的紅燈者下席，已切換者只在週線 Supertrend 翻空或基本面出池時下席（2026-11-07 起，見席位排序頁的賣法）；亮燈不足就空席；週中燈號只管倉位。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（席位與主榜資格；雷達發現層照掃全市場）。
 <b>母體＝美股含 ADR；台股另建</b>（.TW 不在本看板）。不設產業／主題集中度上限。
 <b>快審卡</b>：等待池另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評），與三年成長閘、DD 皆無關。

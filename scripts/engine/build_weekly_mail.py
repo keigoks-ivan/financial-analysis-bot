@@ -183,6 +183,8 @@ def exit_reason(ticker: str, track: str, arena: dict) -> str:
             return "DD 裁決轉迴避，觸發否決失去資格"
         # v5.2（2026-10-09）核心席＝池內亮燈者：還在池、資格全過、但時機燈紅 → 紅燈下席
         lamp = row.get("lamp") or {}
+        if row.get("st_exit"):
+            return "已切換 Supertrend 的持股，週線 Supertrend 翻空"
         if track == "core" and lamp.get("code") not in LIT_LAMP_CODES:
             return f"時機燈轉紅，依 v5.2 亮燈選席下席——{lamp.get('why') or '距歷史新高 <−10% 或跌破 200 日線'}"
         # grp.pass=true 且非迴避（含觀望／進場／無裁決），但未坐席 → 分數被擠下
@@ -515,7 +517,7 @@ def main() -> int:
     # ── 一分鐘版三句 ──
     sent1 = ("本週核心席位由「品質派資格」（品質閘×三年成長×站上 52 週線）"
              "過閘後，在池內<strong>時機燈亮著</strong>（綠／橘／黃，距歷史新高 ≥−10% 且站上 200 日線）"
-             "的名字中，<strong>現任抱著</strong>，只在出池或時機燈轉紅時下席；空席才依<strong>PEG</strong>（現價 ÷ 明年預估 EPS ÷ 三年成長）由低到高補；亮燈不足就空席，不拿紅燈湊數。"
+             "的名字中，<strong>現任抱著</strong>；還沒切換 Supertrend 的在席者在出池或時機燈轉紅時下席，已切換者（盤整突破或停損線高過買進價）只在週線 Supertrend 翻空或基本面出池時下席（2026-11-07 起）；空席才依<strong>PEG</strong>（現價 ÷ 明年預估 EPS ÷ 三年成長）由低到高補；亮燈不足就空席，不拿紅燈湊數。"
              "DD 報告只負責否決不合格公司，或標示核心角色。等待池＝池扣掉核心的"
              "其餘合格名字。")
     if degrade:
