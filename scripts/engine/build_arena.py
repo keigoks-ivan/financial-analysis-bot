@@ -156,6 +156,7 @@ from engine.grp import (  # noqa: E402
 from dd_screener_quality import load_qgm_durability_index  # noqa: E402
 from peg_unified import compute_peg_unified  # noqa: E402
 from engine import seat_tm  # noqa: E402
+from engine import seat_st  # noqa: E402
 
 WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"   # 非 DD 池週線 fallback（見 build_radar.py 檔頭 docstring）
 QGM_US = ROOT / "docs" / "qgm" / "latest.json"
@@ -190,6 +191,7 @@ STAGE_CODE_ASCII = {"S0": "WEAK", "S1": "TURN", "S2": "BASE", "S5": "HIGH",
 W_STAGE = 4
 CARDS_JSON = OUT_DIR / "cards.json"
 LEDGER_JSON = OUT_DIR / "arena-ledger.json"   # 席位變動帳本（append-only）
+ST_STATE_JSON = OUT_DIR / "seat_st_state.json"   # 2026-11-05 折衷組：每檔持股的買進日／切換狀態（見 engine/seat_st.py）
 STATE_JSON = OUT_DIR / "arena_state.json"      # v5.7：在席者最近一次非紅燈的倉位（大盤多頭續抱用）
 SPY_PRICES_JSON = ROOT / "data" / "flowmap_prices.json"   # v5.7：SPY 還原收盤（flowmap-daily 每日更新）
 ARENA_JSON = OUT_DIR / "arena.json"
@@ -1654,6 +1656,7 @@ def _flat_view(r: dict) -> dict:
             "dd_tag": r.get("dd_tag"), "verdict": r.get("verdict"),
             "moat": r.get("moat"), "src": r.get("src"), "seat_note": r.get("seat_note"),
             "ddn": r.get("ddn"),   # 2026-10-21：dd-screener 數字欄，見 dd_numbers()
+            "st": r.get("st"),     # 2026-11-05 折衷組：出場方式／切換狀態／停損線，見 engine/seat_st.py
             "dd_path": r.get("dd_path")}
 
 
@@ -1725,6 +1728,8 @@ def _seat_remark(v: dict) -> str:
         bits.append(_chip_html("內部人賣", f"近 3 個月內部人淨賣超 {insT}——僅供備註，不進資格與排序"))
     if v.get("seat_note"):
         bits.append(escape(v["seat_note"]))
+    if v.get("st"):
+        bits.append(seat_st.chip_html(v["st"]))
     # route_why（「…只能衛星」「快審卡（衛星限定）」）不再顯示：衛星軌已取消，耐久另有
     # 專欄——與台股席位頁 build_seats_tw.flat() 把 route_why 設 None 同一理由。
     return "".join(bits) or '<span class="bw-muted">—</span>'
@@ -2409,6 +2414,15 @@ def _find_last_rotation_date(snapshots: list[dict]) -> str | None:
 
 
 
+def _market_note_with_st(market, st_on: bool, legacy_view) -> str:
+    """賣法說明：折衷組生效後，新規則段落放最前，舊規則段落改標「還沒切換的持股」，再接收合的舊規則對照名單。"""
+    note = seat_tm.market_note_html(market)
+    if not st_on:
+        return note
+    note = note.replace("<b>賣法</b>", "<b>還沒切換的持股，賣法</b>", 1)
+    return seat_st.RULE_HTML + note + seat_st.legacy_html(legacy_view, "美股看板")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--ledger", action="store_true",
@@ -2597,14 +2611,34 @@ def main() -> int:
     except ValueError:   # as_of 是 "—" 等無法解析的日期：視為大盤資料缺，退回現行賣法
         market = {"mode": "e1", "status": "missing", "decision_date": None,
                   "data_date": None, "close": None, "ma200": None}
+    # 2026-11-05 折衷組（engine/seat_st.py）：決策日 >= seat_st.CUTOVER_DATE 時，已切換 Supertrend 的現任只在
+    # 「週線 Supertrend 翻空」或「出池」下席；沒切換的照舊。舊規則名單另算（roster_legacy），只寫 json。
+    st_on = seat_st.active(decision_date)
+    st_hold_prev = seat_st.load_state(ST_STATE_JSON).get("holdings") or {}
+    st_loader = seat_st.make_loader()
+    legacy_rotation = None
     if args.ledger:
-        rotation = seat_tm.select_roster(pool_rows, prev_core_roster, market, select_hold_roster)
+        legacy_prev = (ledger0.get("roster_legacy") or {}).get("core") if st_on else None
+        legacy_rotation = seat_tm.select_roster(
+            pool_rows, prev_core_roster if legacy_prev is None else legacy_prev, market, select_hold_roster)
+        if st_on:
+            ent0 = seat_st.entry_dates(prev_core_roster or [], ledger0.get("snapshots"), st_hold_prev, as_of)
+            st0 = seat_st.build_status(prev_core_roster or [], ent0, decision_date, st_hold_prev, st_loader)
+            pool_sel, prev_sel, st_removed = seat_st.apply_overlay(pool_rows, prev_core_roster, st0)
+            rotation = seat_tm.select_roster(pool_sel, prev_sel, market, select_hold_roster)
+            rotation["removed"] = list(rotation["removed"]) + st_removed
+        else:
+            rotation = legacy_rotation
     else:
         rotation = {"core": [t for t in (prev_core_roster or []) if t in all_by_ticker],
                     "rotated": False, "removed": [], "filled": []}
     core_seats = [pool_by_ticker.get(t) or all_by_ticker.get(t) for t in rotation["core"]]
     core_seats = [r for r in core_seats if r is not None]
     core_seated = {r["ticker"] for r in core_seats}
+    st_status: dict = {}
+    if st_on:
+        ent1 = seat_st.entry_dates([r["ticker"] for r in core_seats], ledger0.get("snapshots"), st_hold_prev, as_of)
+        st_status = seat_st.build_status([r["ticker"] for r in core_seats], ent1, decision_date, st_hold_prev, st_loader)
     # v5.7：大盤多頭下只因距新高轉紅的在席者續抱，燈號維持紅、倉位沿用最近一次非紅燈的倉位（狀態檔）。
     try:
         state_doc = json.loads(STATE_JSON.read_text(encoding="utf-8"))
@@ -2612,7 +2646,9 @@ def main() -> int:
         state_doc = {}
     tm_state = state_doc.get("last_nonred") or {}
     tm_held = seat_tm.held_tickers(core_seats, set(pool_by_ticker), market, LIT_LAMP_CODES)
+    tm_held = {t for t in tm_held if not (st_status.get(t) or {}).get("switched")}   # 已切換者不吃大盤多頭續抱例外
     seat_tm.apply_hold(core_seats, tm_held, tm_state)
+    seat_st.mark_core_rows(core_seats, st_status)
     tm_new_state = seat_tm.update_state(tm_state, core_seats, as_of, LIT_LAMP_CODES)
     if tm_new_state != tm_state:
         STATE_JSON.write_text(json.dumps({"schema_version": "arena-state-1.0", "last_nonred": tm_new_state},
@@ -2634,7 +2670,9 @@ def main() -> int:
     for r in core_seats:
         t = r["ticker"]
         r["seat_note"] = "新席" if t in filled_tickers else "現任"   # v5.2：無遞補概念
-        if (r.get("lamp") or {}).get("code") not in LIT_LAMP_CODES:
+        if (st_status.get(t) or {}).get("switched"):
+            r["seat_note"] += "・Supertrend 持有"
+        elif (r.get("lamp") or {}).get("code") not in LIT_LAMP_CODES:
             r["seat_note"] += "・大盤多頭續抱" if t in tm_held else "・週中轉紅，週六複判"
         r["track"] = "core"
     for r in waiting_pool:
@@ -2705,6 +2743,9 @@ def main() -> int:
             "rotated": rotation["rotated"],
             "removed": [{"ticker": t, "why": w} for t, w in rotation["removed"]],
             "rule_version": "v5"}
+    if args.ledger and st_on:
+        snap["legacy_core"] = legacy_rotation["core"]
+        snap["legacy_removed"] = [{"ticker": t, "why": w} for t, w in legacy_rotation["removed"]]
     changes = []
     # 比較基準＝嚴格早於今天的最後一筆——同日重跑不可拿「今天已寫入的自己」當基準
     # （self-referential bug：會把「今天跟今天比較」的假差異當成真變動，見檔頭說明）。
@@ -2740,6 +2781,9 @@ def main() -> int:
         ledger["last_rotation_month"] = current_month
         ledger["last_decision_date"] = as_of   # v5.7：平日刷燈用這天的大盤狀態
         ledger["roster"] = {"core": [r["ticker"] for r in core_seats]}   # v5：等待池不持久化，見上
+        if st_on:
+            ledger["roster_legacy"] = {"core": legacy_rotation["core"]}   # 舊規則對照線的在席名單（獨立滾動）
+            seat_st.save_state(ST_STATE_JSON, st_status, as_of)
         LEDGER_JSON.parent.mkdir(parents=True, exist_ok=True)
         LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
                                encoding="utf-8")
@@ -2757,6 +2801,19 @@ def main() -> int:
     # v5.2：席位每週六（台北）決定，rotated 恆 False——顯示「席位更新」改用本次 --ledger 跑的日期，
     # 否則取帳本最後一筆快照日（週跑才追加）。
     last_rotation_date = as_of if args.ledger else ((ledger.get("snapshots") or [{}])[-1].get("date"))
+    if st_on:
+        if legacy_rotation is not None:
+            legacy_view = {"core": legacy_rotation["core"], "removed": list(legacy_rotation["removed"]),
+                           "filled": [t for _, t in legacy_rotation["filled"]], "as_of": as_of}
+        else:
+            ls = next((x for x in reversed(ledger.get("snapshots") or []) if x.get("legacy_core") is not None), {})
+            legacy_view = {"core": (ledger.get("roster_legacy") or {}).get("core", ls.get("legacy_core")),
+                           "removed": [(x["ticker"], x["why"]) for x in ls.get("legacy_removed") or []],
+                           "filled": [], "as_of": ls.get("date")}
+        if legacy_view["core"] is None:
+            legacy_view = None
+    else:
+        legacy_view = None
     board_text = render_board_text(as_of, universe_rows, core_seats, buyable, waiting_rest, not_in_pool_rows,
                                    prev, entered, lamp_map, rev_data_as_of=rev_data_as_of,
                                    price_as_of=price_as_of, lamp_as_of=as_of,
@@ -2766,7 +2823,7 @@ def main() -> int:
                                    prev, entered, lamp_map, rev_data_as_of=rev_data_as_of,
                                    price_as_of=price_as_of, lamp_as_of=as_of,
                                    last_rotation_date=last_rotation_date,
-                                   market_note=seat_tm.market_note_html(market))
+                                   market_note=_market_note_with_st(market, st_on, legacy_view))
     BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
         "schema_version": "5.0",
@@ -2793,6 +2850,9 @@ def main() -> int:
         "own_board": own_board,
         "run_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "regime": dial,
+        "seat_st": {"active": st_on, "cutover_date": seat_st.CUTOVER_DATE, "decision_date": decision_date,
+                    "status": {t: seat_st.public_view(v) for t, v in st_status.items()}},
+        "legacy_rule": legacy_view,
         "rotation": {"rotated": rotation["rotated"], "current_month": current_month,
                     "removed": [{"ticker": t, "why": w} for t, w in rotation["removed"]],
                     "filled": [{"track": tr, "ticker": t} for tr, t in rotation["filled"]]},

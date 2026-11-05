@@ -114,6 +114,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'scripts'))
 from engine import build_arena as ba  # noqa: E402
 from engine import grp  # noqa: E402
+from engine import seat_st  # noqa: E402
 import tw_filing_calendar  # noqa: E402
 
 TW_POOL_JSON = ROOT / 'docs' / 'dd-screener' / 'tw' / 'latest.json'
@@ -122,6 +123,7 @@ OUT_DIR = ROOT / 'docs' / 'cockpit-tw' / 'data'
 BODY_HTML = OUT_DIR / '_seats_tw_body.html'
 SEATS_JSON = OUT_DIR / 'seats_tw.json'
 LEDGER_JSON = OUT_DIR / 'seats_tw_ledger.json'
+ST_STATE_JSON = OUT_DIR / 'seat_st_state_tw.json'   # 2026-11-05 折衷組：買進日／切換狀態（engine/seat_st.py）
 STATE_NAME = 'seats_tw_state.json'     # path resolved from OUT_DIR at run time (see _state_path)
 MARKET_CSV = ROOT / 'data' / 'macro_db' / 'series' / 'tw.twse_tri.csv'   # 發行量加權股價報酬指數
 MKT_MA = 200            # 大盤均線天數（登記 SeatExitSwitch_Prereg.md 第三節）
@@ -313,7 +315,7 @@ def _pool_key(r):
     return grp.pool_sort_key(r['grp'].get('rev_used_pct'), r.get('implied_growth_pct'), ey)
 
 
-def select(rows, prev_core, reselect, last_snap=None, market=None):
+def select(rows, prev_core, reselect, last_snap=None, market=None, st_status=None):
     """Split rows into the board sections. Pure apart from the inputs.
 
     reselect=False keeps prev_core and carries the last rotation's removed/filled
@@ -334,9 +336,12 @@ def select(rows, prev_core, reselect, last_snap=None, market=None):
             incumbents = set(prev_core or [])
             roster_pool = [_as_lit(r) if r['ticker'] in incumbents and _x1_dist_only(r) else r
                            for r in pool]
-        rotation = ba.select_hold_roster(roster_pool, prev_core, core_slots=CORE_SLOTS)
+        # 2026-11-05 折衷組：已切換 Supertrend 的現任不吃紅燈／200 日線／看大盤切換，只在週線 Supertrend 翻空或出池下席
+        roster_pool, prev_sel, st_removed = seat_st.apply_overlay(roster_pool, prev_core, st_status)
+        rotation = ba.select_hold_roster(roster_pool, prev_sel, core_slots=CORE_SLOTS)
         if market and market.get('status') == 'bear':
-            rotation = bear_no_buy(rotation, roster_pool, prev_core)
+            rotation = bear_no_buy(rotation, roster_pool, prev_sel)
+        rotation['removed'] = list(rotation['removed']) + st_removed
     else:
         last_snap = last_snap or {}
         rotation = {'core': [t for t in (prev_core or []) if t in by_t], 'rotated': False,
@@ -348,7 +353,9 @@ def select(rows, prev_core, reselect, last_snap=None, market=None):
     for r in core:
         r['seat_note'] = '新席' if r['ticker'] in filled else '現任'
         r['x1_hold'] = False
-        if not _lit(r):
+        if (st_status or {}).get(r['ticker'], {}).get('switched'):
+            r['seat_note'] += '・Supertrend 持有'
+        elif not _lit(r):
             if x1 and r['ticker'] in pool_set and _x1_dist_only(r):
                 r['x1_hold'] = True
                 r['seat_note'] += '・大盤多頭續抱'
@@ -488,7 +495,7 @@ def _market_html(market):
 
 
 def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_universe,
-                lamp_map, conc=None, market=None):
+                lamp_map, conc=None, market=None, st_html=''):
     core_v = [views[r['ticker']] for r in sel['core']]
     rev_n = sum(1 for v in views.values() if v.get('rev_used_pct') is not None)
     head = f"台股核心席 · 資料日 {as_of} · 台股池 {n_universe} 檔"
@@ -519,7 +526,8 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + '<h3 class="bw-sec">① 核心席（5）</h3>'
         + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）'
           '的名字補空席，依上修由高到低；現任抱著，不因排名被換掉；亮燈不足就空席，不拿紅燈湊數。</div>'
-        + fresh + _market_html(market) + status
+        + fresh + st_html + (_market_html(market).replace('<b>賣法</b>', '<b>還沒切換的持股，賣法</b>', 1)
+                             if st_html else _market_html(market)) + status
         + ba._seat_view_bar_html()
         + _table(core_v, lamp_map, seat_prefix='C', empty_seats=CORE_SLOTS - len(core_v))
         + (f'<div class="bw-note-line">空席 {CORE_SLOTS - len(core_v)}：'
@@ -586,10 +594,49 @@ def build(reselect, today=None):
     # v5.4：賣法看決策日的大盤狀態。週六重選用當次 as_of；平日只刷燈號，沿用上次週六的決策日。
     decision_date = as_of if reselect else (ledger.get('last_rotation_date') or as_of)
     market = market_state(load_market_series(), decision_date)
-    sel = select(rows, prev_core, reselect, last_snap=snaps[-1] if snaps else None, market=market)
+    # 2026-11-05 折衷組（engine/seat_st.py）：決策日 >= seat_st.CUTOVER_DATE 才生效；舊規則名單另算，只寫 json
+    st_on = seat_st.active(decision_date)
+    st_hold_prev = seat_st.load_state(ST_STATE_JSON).get('holdings') or {}
+    st_loader = seat_st.make_loader()
+    legacy_sel = None
+    st_prev = None
+    if st_on and reselect:
+        legacy_prev = (ledger.get('roster_legacy') or {}).get('core')
+        legacy_sel = select(copy.deepcopy(rows), prev_core if legacy_prev is None else legacy_prev, True,
+                            last_snap=snaps[-1] if snaps else None, market=market)
+        ent0 = seat_st.entry_dates(prev_core, snaps, st_hold_prev, as_of)
+        st_prev = seat_st.build_status(prev_core, ent0, decision_date, st_hold_prev, st_loader)
+    elif st_on:
+        st_prev = {}   # 平日刷新：名單沿用上次週六，下面對在席者另算顯示用狀態
+    sel = select(rows, prev_core, reselect, last_snap=snaps[-1] if snaps else None, market=market,
+                 st_status=st_prev)
     state_doc = _load_json(_state_path(), {})
     state = state_doc.get('last_nonred') or {}
+    st_status = {}
+    if st_on:
+        core_t = [r['ticker'] for r in sel['core']]
+        ent1 = seat_st.entry_dates(core_t, snaps, st_hold_prev, as_of)
+        st_status = seat_st.build_status(core_t, ent1, decision_date, st_hold_prev, st_loader)
+        for r in sel['core']:   # 已切換者不吃看大盤切換的續抱
+            if st_status[r['ticker']].get('switched'):
+                r['x1_hold'] = False
     apply_x1_hold(sel, state)
+    seat_st.mark_core_rows(sel['core'], st_status)
+    if st_on:
+        if legacy_sel is not None:
+            legacy_view = {'core': legacy_sel['rotation']['core'], 'removed': list(legacy_sel['rotation']['removed']),
+                           'filled': [t for _, t in legacy_sel['rotation']['filled']], 'as_of': as_of}
+        else:
+            ls = next((x for x in reversed(snaps) if x.get('legacy_core') is not None), {})
+            lc = (ledger.get('roster_legacy') or {}).get('core', ls.get('legacy_core'))
+            legacy_view = None if lc is None else {
+                'core': lc, 'removed': [tuple(x) for x in ls.get('legacy_removed') or []], 'filled': [],
+                'as_of': ls.get('date')}
+        names = {s0['ticker']: s0.get('name') for s0 in doc['stocks']}
+        nm = lambda t: f"{t.split('.')[0]} {names.get(t) or ''}".strip()  # noqa: E731
+        st_html = seat_st.RULE_HTML + seat_st.legacy_html(legacy_view, '台股席位', nm)
+    else:
+        legacy_view, st_html = None, ''
     new_state = update_state(state, sel['core'], as_of)
     views = {r['ticker']: flat(r, today) for r in rows}
     industry = {s['ticker']: s.get('tw_industry') for s in doc['stocks']}
@@ -606,12 +653,18 @@ def build(reselect, today=None):
         snaps.append({'date': as_of, 'rev_data_as_of': rev_as_of, 'core': sel['rotation']['core'],
                       'removed': sel['rotation']['removed'], 'filled': sel['rotation']['filled'],
                       'blocked': sel['rotation'].get('blocked', [])})
+        if st_on:
+            snaps[-1]['legacy_core'] = legacy_sel['rotation']['core']
+            snaps[-1]['legacy_removed'] = [list(x) for x in legacy_sel['rotation']['removed']]
         ledger = {'schema_version': 'tw-1.0', 'roster': {'core': sel['rotation']['core']},
                   'last_rotation_date': last_rotation_date, 'snapshots': snaps}
+        if st_on:
+            ledger['roster_legacy'] = {'core': legacy_sel['rotation']['core']}
+            seat_st.save_state(ST_STATE_JSON, st_status, as_of)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     BODY_HTML.write_text(render_html(as_of, rev_as_of, lamp_doc.get('as_of'), last_rotation_date,
-                                     sel, views, len(rows), lamp_map, conc, market), encoding='utf-8')
+                                     sel, views, len(rows), lamp_map, conc, market, st_html), encoding='utf-8')
     if new_state != state:
         _state_path().write_text(json.dumps({'schema_version': 'tw-state-1.0', 'last_nonred': new_state},
                                             ensure_ascii=False, indent=1, sort_keys=True) + '\n', encoding='utf-8')
@@ -620,6 +673,11 @@ def build(reselect, today=None):
         'schema_version': 'tw-1.0',
         'as_of': as_of, 'rev_data_as_of': rev_as_of, 'stage_lamp_as_of': lamp_doc.get('as_of'),
         'last_rotation_date': last_rotation_date, 'market': market,
+        'rotation': {'removed': [{'ticker': t, 'why': w} for t, w in sel['rotation'].get('removed') or []],
+                     'filled': [{'ticker': t} for _, t in sel['rotation'].get('filled') or []]},
+        'seat_st': {'active': st_on, 'cutover_date': seat_st.CUTOVER_DATE, 'decision_date': decision_date,
+                    'status': {t: seat_st.public_view(v) for t, v in st_status.items()}},
+        'legacy_rule': legacy_view,
         'counts': {'universe': len(rows), 'eligible': len(sel['eligible']), 'pool': len(sel['pool']),
                    'with_revision': sum(1 for v in views.values() if v.get('rev_used_pct') is not None),
                    'candidates': len(sel['candidates'])},

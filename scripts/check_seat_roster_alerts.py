@@ -76,6 +76,16 @@ def _entries(rows) -> list[dict]:
     return [e for e in (_entry(r) for r in rows) if e]
 
 
+def _why_map(removed) -> dict:
+    """arena.json／seats_tw.json 的 rotation.removed（[{ticker, why}]）→ {ticker: 下席原因}。
+    2026-11-05 起折衷組會寫「週線 Supertrend 翻空」或「出池（資格不成立）」，通知的出席行附上原因。"""
+    out = {}
+    for x in removed or []:
+        if isinstance(x, dict) and x.get("ticker") and x.get("why"):
+            out[x["ticker"]] = str(x["why"])
+    return out
+
+
 def _rank_key(row: dict):
     pr = row.get("pool_rank") if isinstance(row, dict) else None
     return pr if isinstance(pr, (int, float)) else float("inf")
@@ -92,7 +102,8 @@ def load_segments() -> tuple[dict, str | None]:
             and isinstance(arena.get("buyable_seats"), list):
         # sorted 是穩定排序：pool_rank 缺值的維持檔內順序排在後面
         bq = sorted(arena["buyable_seats"], key=_rank_key)
-        out["us"] = {"seats": _entries(arena["core_seats"]), "queue": _entries(bq)[:QUEUE_N]}
+        out["us"] = {"seats": _entries(arena["core_seats"]), "queue": _entries(bq)[:QUEUE_N],
+                     "why": _why_map((arena.get("rotation") or {}).get("removed"))}
         d = str(arena.get("run_timestamp") or "")[:10]
         if d:
             dates.append(d)
@@ -100,7 +111,8 @@ def load_segments() -> tuple[dict, str | None]:
     tw = _load_json(TW_JSON)
     if isinstance(tw, dict) and isinstance(tw.get("core_seats"), list) \
             and isinstance(tw.get("buyable"), list):
-        out["tw"] = {"seats": _entries(tw["core_seats"]), "queue": _entries(tw["buyable"])[:QUEUE_N]}
+        out["tw"] = {"seats": _entries(tw["core_seats"]), "queue": _entries(tw["buyable"])[:QUEUE_N],
+                     "why": _why_map((tw.get("rotation") or {}).get("removed"))}
         if tw.get("as_of"):
             dates.append(str(tw["as_of"])[:10])
 
@@ -135,7 +147,8 @@ def diff_segment(prev: dict, cur: dict) -> dict:
     q_in = [t for t in cq if t not in pq]
     q_out = [t for t in pq if t not in cq]
     return {"seat_in": seat_in, "seat_out": seat_out, "q_in": q_in, "q_out": q_out,
-            "seated_now": set(cs), "seated_before": set(ps), "names": names}
+            "seated_now": set(cs), "seated_before": set(ps), "names": names,
+            "why": cur.get("why") or {}}
 
 
 def _describe(d: dict) -> str | None:
@@ -145,7 +158,9 @@ def _describe(d: dict) -> str | None:
     if d["seat_in"]:
         parts.append("進席 " + "、".join(_label(t, nm) for t in d["seat_in"]))
     if d["seat_out"]:
-        parts.append("出席 " + "、".join(_label(t, nm) for t in d["seat_out"]))
+        why = d.get("why") or {}
+        parts.append("出席 " + "、".join(_label(t, nm) + (f"（{why[t]}）" if why.get(t) else "")
+                                        for t in d["seat_out"]))
     qi = [_label(t, nm) + ("（剛出席）" if t in d["seat_out"] else "") for t in d["q_in"]]
     qo = [_label(t, nm) + ("（改進席）" if t in d["seat_in"] else "") for t in d["q_out"]]
     if qi or qo:
@@ -174,7 +189,7 @@ def compute(state, segments: dict, as_of: str | None) -> dict:
             if isinstance(prev, dict):
                 new_segs[key] = prev
             continue
-        new_segs[key] = cur
+        new_segs[key] = {k: v for k, v in cur.items() if k != "why"}   # 原因只用於當次通知，不進狀態檔
         if baseline or not isinstance(prev, dict) or "seats" not in prev or "queue" not in prev:
             continue  # 首跑或這套第一次出現：只建基準
         text = _describe(diff_segment(prev, cur))
