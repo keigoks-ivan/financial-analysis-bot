@@ -148,7 +148,7 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_APP_PASSWORD }}
-          subject: "⚡ 實單系統 可行動變化（美＋台）${{ steps.livealert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          subject: "⚡ 實單系統 可行動變化（美＋台）${{ steps.livealert.outputs.changed != 'true' && '(測試信)' || '' }}"
           to: keigoks@gmail.com
           from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
           html_body: file://live_mail.html
@@ -165,7 +165,7 @@ jobs:
         continue-on-error: true
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
-          NOTIFY_TITLE: "⚡ 實單系統 可行動變化（美＋台）${{ steps.livealert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          NOTIFY_TITLE: "⚡ 實單系統 可行動變化（美＋台）${{ steps.livealert.outputs.changed != 'true' && '(測試信)' || '' }}"
           NOTIFY_BODY: "${{ steps.livealert.outputs.changed == 'true' && steps.livealert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}"
         run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/long-track/#live
 
