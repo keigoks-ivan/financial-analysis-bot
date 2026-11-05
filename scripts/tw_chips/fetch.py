@@ -70,7 +70,8 @@ BACKOFF = [20, 60, 180, 300]   # 退避秒數；用完仍失敗就放棄該請�
 TZ_TAIPEI = dt.timezone(dt.timedelta(hours=8))
 
 SERIES = ["taiex", "turnover", "inst", "margin", "sbl", "mktcap", "fut_inst", "opt_inst", "pcr", "large", "usdtwd",
-          "mtx_inst", "tmf_inst", "mtx_mkt", "tmf_mkt", "tx_daily", "vix", "dtrade", "otc_inst", "otc_margin"]
+          "mtx_inst", "tmf_inst", "mtx_mkt", "tmf_mkt", "tx_daily", "vix", "dtrade", "otc_inst", "otc_margin",
+          "limit_down", "ma_breadth", "margin_ratio"]
 
 
 # ---------------------------------------------------------------- 純解析函式（有單元測試）
@@ -420,6 +421,414 @@ def parse_tpex_margin(payload: dict, d: str) -> dict | None:
     if None in vals.values():
         return None
     return {"d": d, **vals}
+
+
+# ---- 收盤鎖跌停家數（上市＋上櫃）----
+# 母體＝4 碼普通股代號（排除 00 開頭 ETF、91 開頭存託憑證），含當天無成交的股票。
+# 鎖跌停＝當天有成交，且收盤價 ≤ 跌停價。跌停價＝參考價 ×（1 − L），L＝10%（2015-06-01 前 7%），
+# 依跌停價所在價位的升降單位向上取整；參考價＝收盤價 − 漲跌價差。全部用整數「分」計算。
+LIMIT_CHANGE = "2015-06-01"
+
+
+def _cents(x) -> int | None:
+    v = to_num(x)
+    if v is None:
+        return None
+    return int(round(float(v) * 100))
+
+
+def limit_down_cents(ref_c: int, d: str) -> int:
+    lim = 7 if d < LIMIT_CHANGE else 10
+    num = ref_c * (100 - lim)                 # 單位：0.01 分
+    tick = (1 if num < 1_000 * 100 else 5 if num < 5_000 * 100 else 10 if num < 10_000 * 100
+            else 50 if num < 50_000 * 100 else 100 if num < 100_000 * 100 else 500)
+    return -((-num) // (100 * tick)) * tick   # 向上取到升降單位
+
+
+def _keep_code(c: str) -> bool:
+    return bool(re.fullmatch(r"\d{4}", c)) and not c.startswith("00") and not c.startswith("91")
+
+
+def _twse_sign(s) -> int | None:
+    t = str(s or "")
+    if "X" in t:
+        return None
+    if "-" in t or "green" in t:
+        return -1
+    if "+" in t or "red" in t:
+        return 1
+    return 0
+
+
+def _limit_stats(rows: list[tuple], d: str) -> dict:
+    """rows：(code, close_c, chg_c, value, bid_c, bidv, askv)。回傳 n／ld／nt／zb／askv／up／dn。
+    上漲／下跌＝當天有成交，收盤價高於／低於參考價。"""
+    n = ld = nt = zb = askv = up = dn = 0
+    for code, close_c, chg_c, value, bid_c, bidv, av in rows:
+        if not _keep_code(code):
+            continue
+        n += 1
+        traded = close_c is not None and close_c > 0 and (value or 0) > 0
+        if not traded:
+            nt += 1
+            continue
+        if chg_c is None:
+            continue
+        ref_c = close_c - chg_c
+        if ref_c <= 0:
+            continue
+        if close_c > ref_c:
+            up += 1
+        elif close_c < ref_c:
+            dn += 1
+        if close_c <= limit_down_cents(ref_c, d):
+            ld += 1
+            if not bid_c or not bidv:
+                zb += 1
+            askv += int(av or 0)
+    return {"n": n, "ld": ld, "nt": nt, "zb": zb, "askv": askv, "up": up, "dn": dn}
+
+
+def twse_quote_rows(payload: dict) -> list[tuple] | None:
+    """證交所 MI_INDEX（type=ALLBUT0999）每日收盤行情 → (code, close_c, chg_c, value, bid_c, bidv, askv) 列；查無資料回 None。"""
+    if payload.get("stat") != "OK":
+        return None
+    for t in payload.get("tables") or []:
+        f = t.get("fields") or []
+        if "證券代號" in f and "收盤價" in f and t.get("data"):
+            ix = {k: i for i, k in enumerate(f)}
+            rows = []
+            for r in t["data"]:
+                sg = _twse_sign(r[ix["漲跌(+/-)"]])
+                diff = _cents(r[ix["漲跌價差"]])
+                chg = None if sg is None or diff is None else sg * diff
+                rows.append((str(r[ix["證券代號"]]).strip(), _cents(r[ix["收盤價"]]), chg,
+                             to_num(r[ix["成交金額"]]), _cents(r[ix["最後揭示買價"]]),
+                             to_num(r[ix["最後揭示買量"]]), to_num(r[ix["最後揭示賣量"]])))
+            return rows
+    return None
+
+
+def parse_twse_limit(payload: dict, d: str) -> dict | None:
+    """證交所每日收盤行情 → 鎖跌停統計。"""
+    rows = twse_quote_rows(payload)
+    return None if rows is None else _limit_stats(rows, d)
+
+
+def tpex_quote_rows(payload: dict) -> list[tuple] | None:
+    """櫃買中心 dailyQuotes（type=EW）上櫃股票行情 → 同上格式的列；查無資料回 None。"""
+    rows = []
+    for t in payload.get("tables") or []:
+        f = t.get("fields") or []
+        if "代號" in f and "收盤" in f and t.get("data"):
+            ix = {k: i for i, k in enumerate(f)}
+            # 2025-03 前的欄名是「(千股)」，之後改「(張數)」；1 千股＝1 張，單位相同
+            bq = ix["最後買量(張數)"] if "最後買量(張數)" in ix else ix["最後買量(千股)"]
+            sq = ix["最後賣量(張數)"] if "最後賣量(張數)" in ix else ix["最後賣量(千股)"]
+            for r in t["data"]:
+                rows.append((str(r[ix["代號"]]).strip(), _cents(r[ix["收盤"]]), _cents(r[ix["漲跌"]]),
+                             to_num(r[ix["成交金額(元)"]]), _cents(r[ix["最後買價"]]),
+                             to_num(r[bq]), to_num(r[sq])))
+    return rows or None
+
+
+def parse_tpex_limit(payload: dict, d: str) -> dict | None:
+    """櫃買中心每日收盤行情 → 鎖跌停統計。"""
+    rows = tpex_quote_rows(payload)
+    return None if rows is None else _limit_stats(rows, d)
+
+
+def limit_row(tw: dict | None, tp: dict | None, d: str) -> dict | None:
+    """兩市場都有資料才記一筆（只有一邊代表另一邊尚未公布）。"""
+    if not tw or not tp or not tw["n"] or not tp["n"]:
+        return None
+    return {"d": d, "n": tw["n"] + tp["n"], "ld": tw["ld"] + tp["ld"], "nt": tw["nt"] + tp["nt"],
+            "up": tw["up"] + tp["up"], "dn": tw["dn"] + tp["dn"],
+            "ld_tw": tw["ld"], "ld_otc": tp["ld"], "zb": tw["zb"] + tp["zb"], "askv": tw["askv"] + tp["askv"],
+            "src": "official"}
+
+
+# ---- 當日全部 4 碼普通股行情快取（_quotes/）＋站上均線家數 ----
+# 每個交易日存一份 data/tw_chips/_quotes/YYYY-MM-DD.json：{代號: [收盤價(分)或 null=當天無成交, 參考價(分)或 null]}，
+# 只留最近 QUOTE_KEEP 個交易日。用途：每天算「站上 20／60 日均線的股票比例」所需的還原價，
+# 以及融資維持率取當天收盤價。雲端 CI 讀不到本機日線面板，所以自己留一份短窗口。
+QUOTES = DATA / "_quotes"
+QUOTE_KEEP = 70
+MA_WINDOWS = (20, 60)
+_day_rows_cache: dict = {}
+
+
+def day_quote_rows(d: str):
+    """同一天只向證交所、櫃買各抓一次（limit_down、_quotes、融資維持率共用）。回傳 (上市列, 上櫃列)；
+    上市查無資料（非交易日）回 (None, None)；上櫃尚未公布回 (上市列, None)。被擋時拋 Blocked，不快取。"""
+    if d in _day_rows_cache:
+        return _day_rows_cache[d]
+    tw = twse_quote_rows(twse_json("afterTrading/MI_INDEX", {"date": d.replace("-", ""), "type": "ALLBUT0999"}))
+    tp = None
+    if tw is not None:
+        tp = tpex_quote_rows(tpex_json("afterTrading/dailyQuotes", {"date": d.replace("-", "/"), "type": "EW"}))
+    _day_rows_cache[d] = (tw, tp)
+    return tw, tp
+
+
+def quote_payload(tw_rows, tp_rows) -> dict:
+    out = {}
+    for code, close_c, chg_c, value, _b, _bv, _av in list(tw_rows) + list(tp_rows):
+        if not _keep_code(code):
+            continue
+        traded = close_c is not None and close_c > 0 and (value or 0) > 0
+        ref = close_c - chg_c if traded and chg_c is not None and close_c - chg_c > 0 else None
+        out[code] = [close_c if traded else None, ref]
+    return out
+
+
+def write_quotes(d: str, tw_rows, tp_rows):
+    QUOTES.mkdir(parents=True, exist_ok=True)
+    (QUOTES / f"{d}.json").write_text(
+        json.dumps(quote_payload(tw_rows, tp_rows), separators=(",", ":"), sort_keys=True), encoding="utf-8")
+
+
+def ensure_quotes(d: str) -> bool:
+    """該日 _quotes 檔不存在就抓；上市、上櫃任一邊尚未公布回 False。"""
+    if (QUOTES / f"{d}.json").exists():
+        return True
+    tw, tp = day_quote_rows(d)
+    if not tw or not tp:
+        return False
+    write_quotes(d, tw, tp)
+    return True
+
+
+def load_quotes(d: str) -> dict:
+    p = QUOTES / f"{d}.json"
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+
+
+def prune_quotes(keep: int = QUOTE_KEEP):
+    files = sorted(QUOTES.glob("*.json")) if QUOTES.exists() else []
+    for p in files[:-keep]:
+        p.unlink()
+
+
+def ma_breadth_counts(days: list, windows=MA_WINDOWS) -> dict:
+    """days＝由舊到新、每天一份 {代號: [收盤分或 None, 參考分或 None]}（該日無檔給 {}）。
+    還原價指數＝每日 收盤÷參考價 的連乘（沒成交沿用前一個收盤、當天因子 1）；站上＝最後一天指數
+    嚴格大於含當天的 N 日簡單平均；分母＝最後 N 個交易日每天都有行情且有價格的股票。
+    平手（價格連續 N 天不動）用相對 1e-9 容差判成不站上，避免浮點最後一位造成誤判。"""
+    res = {n: [0, 0] for n in windows}
+    if not days:
+        return {n: (0, 0) for n in windows}
+    for code in days[-1]:
+        idx = []                 # 每天的指數，None＝當天無行情或尚無價格
+        mark = None
+        level = 1.0
+        for day in days:
+            q = day.get(code)
+            if q is None:
+                idx.append(None)
+                continue
+            close, ref = q
+            if close is not None:
+                if mark is not None and ref:
+                    level *= (close / ref)
+                mark = close
+            elif mark is None:
+                idx.append(None)
+                continue
+            idx.append(level)
+        for n in windows:
+            w = idx[-n:]
+            if len(w) < n or any(v is None for v in w):
+                continue
+            res[n][1] += 1
+            s = sum(w)
+            if w[-1] * n - s > 1e-9 * s:
+                res[n][0] += 1
+    return {n: tuple(v) for n, v in res.items()}
+
+
+def fetch_ma_breadth(st, start, today, backfill, limit):
+    """接在種子（日線面板算的歷史）之後逐日往前推：每天用最近 QUOTE_KEEP 個交易日的 _quotes 算一列。"""
+    store = Store("ma_breadth")
+    cal = Store("taiex").dates()
+    last = store.last()
+    if not last:
+        log("ma_breadth：尚無種子資料，略過")
+        return
+    todo = [d for d in cal if last < d <= today.isoformat() and st.gap_attempts("ma_breadth", d) < 3]
+    log(f"ma_breadth：待算 {len(todo)} 天")
+    fails = 0
+    for d in todo:
+        win = [x for x in cal if x <= d][-QUOTE_KEEP:]
+        try:
+            for x in win:
+                if not ensure_quotes(x):
+                    if x == d:
+                        raise LookupError(x)
+                    log(f"  ma_breadth：{x} 查無行情，窗口留空")
+        except LookupError:
+            st.bump_gap("ma_breadth", d)
+            log(f"  ma_breadth {d} 行情尚未公布（第 {st.gap_attempts('ma_breadth', d)} 次）")
+            break                  # 不能跳日：這天沒有，後面的日子也先不算
+        except Blocked as e:
+            fails += 1
+            log(f"FAIL ma_breadth {d}：{e}")
+            break
+        c = ma_breadth_counts([load_quotes(x) for x in win])
+        store.add({"d": d, "n20": c[20][1], "a20": c[20][0], "n60": c[60][1], "a60": c[60][0], "src": "quotes"})
+        log(f"  ma_breadth {d}：20 日 {c[20][0]}/{c[20][1]}，60 日 {c[60][0]}/{c[60][1]}")
+    prune_quotes()
+    st.save()
+    if fails:
+        raise Blocked("ma_breadth 被擋")
+
+
+# ---- 融資維持率（自算估計）----
+# 官方只公布每檔融資餘額與當日買進、賣出、現金償還，沒有每筆融資的成本，所以個股的融資金額（loan）要推估：
+# 第一次出現時以當天收盤價 × 融資成數估一次；之後每天，被賣出或償還的部分按平均成本扣掉，
+# 新買進的部分以當天收盤價 × 成數加上去。維持率＝餘額市值 ÷ loan。全部用整數「分」運算，
+# 門檻比較用交叉相乘（市值 × 100 < 門檻 × loan），不做浮點除法。
+MARGIN_STATE = DATA / "_margin_state.json"
+MARGIN_PCT = {"t": 60, "o": 50}             # 融資成數：上市 60%、上櫃 50%
+MARGIN_TH = (130, 140, 150, 160)           # 維持率門檻（%）
+
+
+def _int(s):
+    t = str(s).replace(",", "").strip() if s is not None else ""
+    if t in ("", "-", "--"):
+        return None
+    try:
+        return int(float(t))
+    except ValueError:
+        return None
+
+
+def parse_margin_detail_twse(payload: dict):
+    """MI_MARGN（selectType=ALL）→ ({代號: [融資買進, 賣出, 現金償還, 前日餘額, 今日餘額]（張）}, 融資金額今日餘額（仟元）)；
+    查無資料回 None。"""
+    if payload.get("stat") != "OK":
+        return None
+    rows, tot = {}, None
+    for t in payload.get("tables") or []:
+        f = t.get("fields") or []
+        for r in t.get("data") or []:
+            if r and r[0] == "融資金額(仟元)":
+                tot = _int(r[5])
+            elif len(r) >= 7 and f and f[0] == "代號":
+                rows[str(r[0]).strip()] = [_int(r[2]), _int(r[3]), _int(r[4]), _int(r[5]), _int(r[6])]
+    return (rows, tot) if rows else None
+
+
+def parse_margin_detail_tpex(payload: dict):
+    """櫃買 margin/balance → 同上格式（今日餘額、前日餘額欄位順序不同，這裡已對齊）。"""
+    rows, tot = {}, None
+    for t in payload.get("tables") or []:
+        f = t.get("fields") or []
+        if not f or f[0] != "代號":
+            continue
+        for r in t.get("data") or []:
+            if len(r) >= 7:
+                rows[str(r[0]).strip()] = [_int(r[3]), _int(r[4]), _int(r[5]), _int(r[2]), _int(r[6])]
+        for s in t.get("summary") or []:
+            if len(s) > 6 and "融資金" in str(s[1]):
+                tot = _int(s[6])
+    return (rows, tot) if rows else None
+
+
+def margin_step(state: dict, raw_by_mkt: dict, closes: dict) -> dict:
+    """推進一天。state＝{代號: [今日餘額, loan（分）, 市場 't'／'o', 最後收盤（分）]}（會被就地更新）；
+    raw_by_mkt＝{'t': 上市 rows, 'o': 上櫃 rows}；closes＝{代號: 收盤分或 None}。
+    回傳當天統計：各市場 ln（loan 合計，分）、mv（市值合計，分）、n（有融資餘額家數）、b（低於各門檻家數）。"""
+    out = {m: {"ln": 0, "mv": 0, "n": 0, "b": [0] * len(MARGIN_TH)} for m in ("t", "o")}
+    for mkt, rows in raw_by_mkt.items():
+        pct = MARGIN_PCT[mkt]
+        for code, r in rows.items():
+            if not _keep_code(code):
+                continue
+            buy, sell, rep, prev, bal = [(x or 0) for x in r]
+            old = state.get(code)
+            close = closes.get(code)
+            if close is None and old:
+                close = old[3]
+            if bal <= 0:
+                state.pop(code, None)
+                continue
+            if close is None:
+                continue                        # 沒有任何收盤價可用（新股剛掛牌無成交）
+            unit = close * 1000 * pct // 100    # 每張的融資金額（分）
+            if old is None or old[0] <= 0:
+                loan = bal * unit
+            else:
+                carried = max(prev - sell - rep, 0)
+                loan = (old[1] * carried + old[0] // 2) // old[0]
+                loan += buy * unit
+                exp = carried + buy
+                if exp != bal:
+                    loan = (loan * bal + exp // 2) // exp if exp > 0 else bal * unit
+            state[code] = [bal, loan, mkt, close]
+            val = bal * 1000 * close
+            o = out[mkt]
+            o["ln"] += loan
+            o["mv"] += val
+            o["n"] += 1
+            for i, th in enumerate(MARGIN_TH):
+                if val * 100 < th * loan:
+                    o["b"][i] += 1
+    return out
+
+
+def margin_row(d: str, o: dict, tot_tw) -> dict:
+    t, u = o["t"], o["o"]
+    pc = lambda a: round(a["mv"] * 100.0 / a["ln"], 2) if a["ln"] else None
+    both = {"mv": t["mv"] + u["mv"], "ln": t["ln"] + u["ln"]}
+    return {"d": d, "m": pc(both), "m_tw": pc(t), "m_otc": pc(u),
+            "n": t["n"] + u["n"], "n_tw": t["n"], "n_otc": u["n"],
+            "b": [x + y for x, y in zip(t["b"], u["b"])], "b_tw": t["b"], "b_otc": u["b"],
+            "ln_tw": round(t["ln"] / 1e10, 2), "ln_otc": round(u["ln"] / 1e10, 2),
+            "tot_tw": None if tot_tw is None else round(tot_tw / 1e5, 2), "src": "calc"}
+
+
+def load_margin_state() -> dict:
+    if MARGIN_STATE.exists():
+        return json.loads(MARGIN_STATE.read_text(encoding="utf-8"))
+    return {"last": None, "s": {}}
+
+
+def save_margin_state(ms: dict):
+    MARGIN_STATE.write_text(json.dumps(ms, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n",
+                            encoding="utf-8")
+
+
+def fetch_margin_ratio(st, start, today, backfill, limit):
+    """接在狀態檔最後日期之後逐日往前推，不能跳日：任一邊資料尚未公布就停在那天，下一班補。"""
+    ms = load_margin_state()
+    if not ms["last"]:
+        log("margin_ratio：尚無狀態檔（需先用歷史資料建好），略過")
+        return
+    store = Store("margin_ratio")
+    cal = Store("taiex").dates()
+    todo = [d for d in cal if ms["last"] < d <= today.isoformat()]
+    log(f"margin_ratio：待算 {len(todo)} 天")
+    for d in todo:
+        age = (today - dt.date.fromisoformat(d)).days
+        skip = st.gap_attempts("margin_ratio", d) >= 3 and age > 5
+        if skip:
+            log(f"  margin_ratio {d} 多次查無資料且已非近期，略過該日（下一天用官方前日餘額續推）")
+            continue
+        d8 = d.replace("-", "")
+        tw = parse_margin_detail_twse(twse_json("marginTrading/MI_MARGN", {"date": d8, "selectType": "ALL"}))
+        tp = parse_margin_detail_tpex(tpex_json("margin/balance", {"date": d.replace("-", "/"), "id": ""})) if tw else None
+        if not tw or not tp or not ensure_quotes(d):
+            st.bump_gap("margin_ratio", d)
+            log(f"  margin_ratio {d} 資料尚未公布（第 {st.gap_attempts('margin_ratio', d)} 次），停在這天")
+            break
+        closes = {c: v[0] for c, v in load_quotes(d).items()}
+        out = margin_step(ms["s"], {"t": tw[0], "o": tp[0]}, closes)
+        ms["last"] = d
+        store.add(margin_row(d, out, tw[1]))
+        save_margin_state(ms)
+        log(f"  margin_ratio {d}：大盤維持率 {store.rows[d]['m']}%，有融資 {store.rows[d]['n']} 檔，低於 130% 共 {store.rows[d]['b'][0]} 檔")
+    st.save()
 
 
 def _csv_rows(text: str) -> list[dict]:
@@ -1164,6 +1573,20 @@ def fetch_usdtwd(start, today, backfill):
     log(f"usdtwd：新增/更新 {n} 筆；最新 {store.last()}")
 
 
+def fetch_limit_down(st, start, today, backfill, limit):
+    recent = set(Store("taiex").dates()[-QUOTE_KEEP:])
+
+    def getter(d):
+        tw_rows, tp_rows = day_quote_rows(d)
+        if tw_rows is None:
+            return None
+        row = limit_row(_limit_stats(tw_rows, d), _limit_stats(tp_rows, d) if tp_rows else None, d)
+        if row is not None and d in recent:
+            write_quotes(d, tw_rows, tp_rows)      # 順手留一份行情，給站上均線與融資維持率用
+        return row
+    fetch_daily_series("limit_down", st, start, today, backfill, limit, getter)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--backfill", action="store_true", help="回補 10 年（2016-10 起），可續跑")
@@ -1190,7 +1613,7 @@ def main():
             failed.append(label)
             log(f"FAIL {label}：{type(e).__name__}: {e}")
 
-    if {"taiex", "turnover"} & set(only) or {"inst", "margin", "sbl", "dtrade", "otc_inst", "otc_margin"} & set(only):
+    if {"taiex", "turnover"} & set(only) or {"inst", "margin", "sbl", "dtrade", "otc_inst", "otc_margin", "limit_down", "ma_breadth", "margin_ratio"} & set(only):
         run("taiex/turnover", fetch_taiex_turnover, st, TAIEX_START, today)
     daily = [s for s in ("inst", "margin") if s in only]
     if daily:
@@ -1227,6 +1650,12 @@ def main():
         run("otc_inst", fetch_otc_inst, st, start, today, args.backfill, args.limit or None)
     if "otc_margin" in only:
         run("otc_margin", fetch_otc_margin, st, start, today, args.backfill, args.limit or None)
+    if "limit_down" in only:
+        run("limit_down", fetch_limit_down, st, start, today, args.backfill, args.limit or None)
+    if "ma_breadth" in only:
+        run("ma_breadth", fetch_ma_breadth, st, start, today, args.backfill, args.limit or None)
+    if "margin_ratio" in only:
+        run("margin_ratio", fetch_margin_ratio, st, start, today, args.backfill, args.limit or None)
 
     if args.backfill:       # 回補完整理檔案：依日期排序、每日一行
         for s in only:

@@ -289,6 +289,34 @@ def _csv_columns() -> dict:
               (f"{name}_net_yi", lambda r, k=k: yuan_to_yi(r[k][0] - r[k][1]) if k in r else None)]
     cols["otc_inst"] = c
     cols["otc_margin"] = cols["margin"]
+    pct = lambda k: (lambda r: ratio_pct(r[k], r["n"]))
+    cols["limit_down"] = [("universe_count", lambda r: r["n"]), ("locked_limit_down_count", lambda r: r["ld"]),
+                          ("locked_limit_down_pct", pct("ld")), ("advancing_count", lambda r: r.get("up")),
+                          ("advancing_pct", lambda r: ratio_pct(r["up"], r["n"]) if "up" in r else None),
+                          ("declining_count", lambda r: r.get("dn")),
+                          ("declining_pct", lambda r: ratio_pct(r["dn"], r["n"]) if "dn" in r else None),
+                          ("no_trade_count", lambda r: r["nt"]),
+                          ("twse_locked_limit_down_count", lambda r: r.get("ld_tw")),
+                          ("tpex_locked_limit_down_count", lambda r: r.get("ld_otc")),
+                          ("locked_zero_bid_count", lambda r: r.get("zb")),
+                          ("locked_ask_volume_lots", lambda r: r.get("askv")),
+                          ("source", lambda r: r["src"])]
+    cols["ma_breadth"] = [("above_ma20_count", lambda r: r["a20"]), ("ma20_universe_count", lambda r: r["n20"]),
+                          ("above_ma20_pct", lambda r: ratio_pct(r["a20"], r["n20"])),
+                          ("above_ma60_count", lambda r: r["a60"]), ("ma60_universe_count", lambda r: r["n60"]),
+                          ("above_ma60_pct", lambda r: ratio_pct(r["a60"], r["n60"])),
+                          ("source", lambda r: r["src"])]
+    c = [("margin_ratio_pct", lambda r: r["m"]), ("margin_ratio_twse_pct", lambda r: r["m_tw"]),
+         ("margin_ratio_tpex_pct", lambda r: r["m_otc"]),
+         ("margin_stock_count", lambda r: r["n"]), ("margin_stock_count_twse", lambda r: r["n_tw"]),
+         ("margin_stock_count_tpex", lambda r: r["n_otc"])]
+    for i, th in enumerate((130, 140, 150, 160)):
+        c += [(f"below_{th}_count", lambda r, i=i: r["b"][i]),
+              (f"below_{th}_count_twse", lambda r, i=i: r["b_tw"][i]),
+              (f"below_{th}_count_tpex", lambda r, i=i: r["b_otc"][i])]
+    c += [("est_loan_twse_yi", lambda r: r["ln_tw"]), ("est_loan_tpex_yi", lambda r: r["ln_otc"]),
+          ("official_margin_amount_twse_yi", lambda r: r["tot_tw"]), ("source", lambda r: r["src"])]
+    cols["margin_ratio"] = c
     return cols
 
 
@@ -373,6 +401,9 @@ def main() -> int:
     tx_daily, vix = load_jsonl("tx_daily"), load_jsonl("vix")
     dtrade = load_jsonl("dtrade")
     otc_inst, otc_margin = load_jsonl("otc_inst"), load_jsonl("otc_margin")
+    limit = load_jsonl("limit_down")
+    ma_b = load_jsonl("ma_breadth")
+    mratio = load_jsonl("margin_ratio")
 
     dump("cal.json", {"t": cal})
 
@@ -491,6 +522,36 @@ def main() -> int:
         "ratio": [ratio_pct(s_, m_) for s_, m_ in zip(osh, omg)],
     })
 
+    # 14. 漲跌家數與收盤鎖跌停家數（上市＋上櫃，占母體 %）
+    dump("breadth.json", {
+        "ld_p": align(cal, limit, lambda r: ratio_pct(r["ld"], r["n"])),
+        "up_p": align(cal, limit, lambda r: ratio_pct(r["up"], r["n"])),
+        "dn_p": align(cal, limit, lambda r: ratio_pct(r["dn"], r["n"])),
+        "n": align(cal, limit, lambda r: r["n"]),
+        "ld": align(cal, limit, lambda r: r["ld"]),
+        "up": align(cal, limit, lambda r: r["up"]),
+        "dn": align(cal, limit, lambda r: r["dn"]),
+        "ld_tw": align(cal, limit, lambda r: r.get("ld_tw")),
+        "ld_otc": align(cal, limit, lambda r: r.get("ld_otc")),
+        "zb": align(cal, limit, lambda r: r.get("zb")),
+        "askv": align(cal, limit, lambda r: r.get("askv")),
+        "ma20_p": align(cal, ma_b, lambda r: ratio_pct(r["a20"], r["n20"], 1)),
+        "ma60_p": align(cal, ma_b, lambda r: ratio_pct(r["a60"], r["n60"], 1)),
+        "ma20_a": align(cal, ma_b, lambda r: r["a20"]),
+        "ma20_n": align(cal, ma_b, lambda r: r["n20"]),
+        "ma60_a": align(cal, ma_b, lambda r: r["a60"]),
+        "ma60_n": align(cal, ma_b, lambda r: r["n60"]),
+    })
+
+    # 15. 融資維持率（自算估計，只含普通股）
+    mr = {"m": align(cal, mratio, lambda r: r["m"]),
+          "m_tw": align(cal, mratio, lambda r: r["m_tw"]),
+          "m_otc": align(cal, mratio, lambda r: r["m_otc"]),
+          "n": align(cal, mratio, lambda r: r["n"])}
+    for i, th in enumerate((130, 140, 150, 160)):
+        mr[f"b{th}"] = align(cal, mratio, lambda r, i=i: r["b"][i])
+    dump("mratio.json", mr)
+
     # 序列摘要（頁尾資料來源表用）
     def info(name, rows, label, unit, source):
         ds = sorted(d for d in rows if d >= DISPLAY_START)
@@ -523,6 +584,12 @@ def main() -> int:
         info("dtrade", dtrade, "上市當日沖銷統計", "億元／%", "TWSE dayTrading/TWTB4U"),
         info("otc_inst", otc_inst, "上櫃三大法人買賣超", "億元", "TPEx insti/summary"),
         info("otc_margin", otc_margin, "上櫃融資融券餘額", "億元／張", "TPEx margin/balance"),
+        info("limit_down", limit, "漲跌家數與收盤鎖跌停家數（上市＋上櫃）", "家／%",
+             "2024 年底前由台股官方日線計算；2025 年起 TWSE MI_INDEX＋TPEx dailyQuotes"),
+        info("ma_breadth", ma_b, "站上 20 日、60 日均線的股票家數（上市＋上櫃）", "家／%",
+             "2026-11-04 前由台股官方日線計算；之後 TWSE MI_INDEX＋TPEx dailyQuotes"),
+        info("margin_ratio", mratio, "融資維持率（自算估計，上市＋上櫃普通股）", "%／家",
+             "TWSE MI_MARGN（ALL）＋TPEx margin/balance 個股融資餘額，搭配當日收盤價推估"),
     ]
     dump("meta.json", {
         "updated": dt.datetime.now(TZ_TAIPEI).strftime("%Y-%m-%d %H:%M"),
