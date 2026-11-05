@@ -135,7 +135,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': 'W52 系統憑什麼：十
                                'key': 'seat_supertrend',
                                'zone': 5,
                                'status': 'note',
-                               'desc': '選股席位三套改用個股週線 Supertrend 進出場與現行規則的描述性比較：空席變少，三套長期最大跌幅都變深；台股保留大盤閘後跌幅回到 −36%，但空席回到 0.7 席；只讓盤整突破的持股改看 Supertrend 出場，三套 Calmar 都沒有明顯比現行好，切換後只看 Supertrend 則更低；附今年每一筆進出明細。沒有事前判準，由持有人裁量。'},
+                               'desc': '選股席位三套改用個股週線 Supertrend 進出場與現行規則的描述性比較：空席變少，三套長期最大跌幅都變深；台股保留大盤閘後跌幅回到 −36%，但空席回到 0.7 席；只讓盤整突破的持股改看 Supertrend 出場，三套 Calmar 都沒有明顯比現行好，切換後只看 Supertrend 則更低，翻空或出池才賣則回到上一組水準；附今年每一筆進出明細。沒有事前判準，由持有人裁量。'},
  '/backtest/long_track/': {'title': '週線長軌：從 SPY/QQQ 基準版到 STX50、台股 E3 的五個版本（Long Track）',
                            'short': '週線長軌',
                            'key': 'long',
