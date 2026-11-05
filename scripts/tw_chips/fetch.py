@@ -759,6 +759,10 @@ def margin_step(state: dict, raw_by_mkt: dict, closes: dict) -> dict:
             if old is None or old[0] <= 0:
                 loan = bal * unit
             else:
+                # 當天融資買進又賣出的張數（當沖）視為當天進出：兩邊各扣掉重疊的 min(買進, 賣出) 張，
+                # 否則賣出會按舊成本扣、買進按今天收盤價加，漲勢中融資金額會被一路墊高。
+                dt_ = min(buy, sell)
+                buy, sell = buy - dt_, sell - dt_
                 carried = max(prev - sell - rep, 0)
                 loan = (old[1] * carried + old[0] // 2) // old[0]
                 loan += buy * unit
@@ -777,11 +781,17 @@ def margin_step(state: dict, raw_by_mkt: dict, closes: dict) -> dict:
     return out
 
 
-def margin_row(d: str, o: dict, tot_tw) -> dict:
+def margin_row(d: str, o: dict, tot_tw, tot_otc=None) -> dict:
+    """tot_tw／tot_otc＝官方上市／上櫃融資金額今日餘額（仟元，含 ETF）。m_off＝普通股融資市值 ÷ 官方融資金額，不用推估的 loan。"""
     t, u = o["t"], o["o"]
     pc = lambda a: round(a["mv"] * 100.0 / a["ln"], 2) if a["ln"] else None
     both = {"mv": t["mv"] + u["mv"], "ln": t["ln"] + u["ln"]}
-    return {"d": d, "m": pc(both), "m_tw": pc(t), "m_otc": pc(u),
+    m_off = None
+    if tot_tw and tot_otc:
+        m_off = round((t["mv"] + u["mv"]) / 100.0 * 100.0 / ((tot_tw + tot_otc) * 1000), 2)
+    return {"d": d, "m": pc(both), "m_tw": pc(t), "m_otc": pc(u), "m_off": m_off,
+            "mv_tw": round(t["mv"] / 1e10, 2), "mv_otc": round(u["mv"] / 1e10, 2),
+            "tot_otc": None if tot_otc is None else round(tot_otc / 1e5, 2),
             "n": t["n"] + u["n"], "n_tw": t["n"], "n_otc": u["n"],
             "b": [x + y for x, y in zip(t["b"], u["b"])], "b_tw": t["b"], "b_otc": u["b"],
             "ln_tw": round(t["ln"] / 1e10, 2), "ln_otc": round(u["ln"] / 1e10, 2),
@@ -825,7 +835,7 @@ def fetch_margin_ratio(st, start, today, backfill, limit):
         closes = {c: v[0] for c, v in load_quotes(d).items()}
         out = margin_step(ms["s"], {"t": tw[0], "o": tp[0]}, closes)
         ms["last"] = d
-        store.add(margin_row(d, out, tw[1]))
+        store.add(margin_row(d, out, tw[1], tp[1]))
         save_margin_state(ms)
         log(f"  margin_ratio {d}：大盤維持率 {store.rows[d]['m']}%，有融資 {store.rows[d]['n']} 檔，低於 130% 共 {store.rows[d]['b'][0]} 檔")
     st.save()

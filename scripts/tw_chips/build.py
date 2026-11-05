@@ -306,7 +306,9 @@ def _csv_columns() -> dict:
                           ("above_ma60_count", lambda r: r["a60"]), ("ma60_universe_count", lambda r: r["n60"]),
                           ("above_ma60_pct", lambda r: ratio_pct(r["a60"], r["n60"])),
                           ("source", lambda r: r["src"])]
-    c = [("margin_ratio_pct", lambda r: r["m"]), ("margin_ratio_twse_pct", lambda r: r["m_tw"]),
+    c = [("margin_ratio_official_denominator_pct", lambda r: r["m_off"]),
+         ("margin_market_value_twse_yi", lambda r: r["mv_tw"]), ("margin_market_value_tpex_yi", lambda r: r["mv_otc"]),
+         ("margin_ratio_pct", lambda r: r["m"]), ("margin_ratio_twse_pct", lambda r: r["m_tw"]),
          ("margin_ratio_tpex_pct", lambda r: r["m_otc"]),
          ("margin_stock_count", lambda r: r["n"]), ("margin_stock_count_twse", lambda r: r["n_tw"]),
          ("margin_stock_count_tpex", lambda r: r["n_otc"])]
@@ -315,7 +317,8 @@ def _csv_columns() -> dict:
               (f"below_{th}_count_twse", lambda r, i=i: r["b_tw"][i]),
               (f"below_{th}_count_tpex", lambda r, i=i: r["b_otc"][i])]
     c += [("est_loan_twse_yi", lambda r: r["ln_tw"]), ("est_loan_tpex_yi", lambda r: r["ln_otc"]),
-          ("official_margin_amount_twse_yi", lambda r: r["tot_tw"]), ("source", lambda r: r["src"])]
+          ("official_margin_amount_twse_yi", lambda r: r["tot_tw"]),
+          ("official_margin_amount_tpex_yi", lambda r: r["tot_otc"]), ("source", lambda r: r["src"])]
     cols["margin_ratio"] = c
     return cols
 
@@ -545,6 +548,7 @@ def main() -> int:
 
     # 15. 融資維持率（自算估計，只含普通股）
     mr = {"m": align(cal, mratio, lambda r: r["m"]),
+          "m_off": align(cal, mratio, lambda r: r["m_off"]),
           "m_tw": align(cal, mratio, lambda r: r["m_tw"]),
           "m_otc": align(cal, mratio, lambda r: r["m_otc"]),
           "n": align(cal, mratio, lambda r: r["n"])}
