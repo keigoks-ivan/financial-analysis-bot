@@ -197,6 +197,38 @@ def is_st_rule(ts) -> bool:
     return PROFILE == "live" and not SHADOW and _ds(ts) >= ST_CUTOVER_DATE
 
 
+LVL_DS = None    # 顯示換算用的資料日（美股最新資料日，main 設定）；None＝各半
+
+
+def wt(t: str, ds=None) -> float:
+    """該檔占各市場指數部的權重。實盤 profile 且資料日 >= stc.LEG_WEIGHTS_CUTOVER_DATE（2026-11-05）時
+    美股 QQQ 0.7／SMH 0.3（依據 rule_ledger 2026-11-05），其餘情況（舊 W52 對照線、切換日前、台股）一律 WEIGHTS（0.5）。"""
+    if ds is not None and PROFILE == "live" and not SHADOW and _ds(ds) >= stc.LEG_WEIGHTS_CUTOVER_DATE:
+        return stc.leg_weights(_ds(ds))[YF_SYMBOL[t]]
+    return WEIGHTS[t]
+
+
+def _held_lvl(t: str, pp: float) -> float:
+    """下單前現持（組合 pp）換成水位：現持是前一個資料日的部位，用前一天的權重（切換日當天仍是各半）。"""
+    prev = (pd.Timestamp(LVL_DS) - pd.Timedelta(days=1)) if LVL_DS else None
+    return pp / wt(t, prev)
+
+
+def _expo_how(legs) -> str:
+    """曝險圖標題／狀態句的算法說明（PURE 實盤頁）：美股 2026-11-05 起水位加權，台股兩檔平均。"""
+    return ("兩檔水位加權，QQQ 70／SMH 30（2026-11-05 起，之前各半）" if list(legs) == US_TICKERS else "兩檔水位平均")
+
+
+def _expo_sum(legs) -> str:
+    return ("兩檔水位 × 權重相加，QQQ 70／SMH 30（2026-11-05 起，之前各半）" if list(legs) == US_TICKERS
+            else "兩檔水位相加再除以 2")
+
+
+def _leg_share_txt(legs) -> str:
+    return ("QQQ 占指數部 70%、SMH 占 30%（2026-11-05 收盤的訊號起，之前各占一半）" if list(legs) == US_TICKERS
+            else f"{legs[0]} 與 {legs[1]} 各占指數部一半")
+
+
 def is_new_rule(ts) -> bool:
     """該資料日是否適用新規則：只有實盤 profile、且資料日 >= 生效日。cap15 對照線恆為舊規則。"""
     if PROFILE != "live":
@@ -858,7 +890,7 @@ def compute_ticker(t: str, px: pd.Series) -> dict:
         if st is None:
             raise RuntimeError(f"{t}: Supertrend 生效期間算不出狀態（OHLC 缺或比收盤價舊），中止、不退回舊規則")
         lv = st["level_pct"] / 100.0
-        out.update({"w52_gate": g["gate"], "gate": lv > 0, "fill": lv, "final": WEIGHTS[t] * lv, "rule": ST_RULE_TAG})
+        out.update({"w52_gate": g["gate"], "gate": lv > 0, "fill": lv, "final": wt(t, px.index[-1]) * lv, "rule": ST_RULE_TAG})
     return out
 
 
@@ -886,7 +918,7 @@ def _daily_record(px_map: dict, legs: list, d: pd.Timestamp, source: str) -> dic
             st = st_leg_state(t, pxd.index[-1])
             if st is None:
                 raise RuntimeError(f"{t} {d.date()}: Supertrend 生效期間算不出狀態，中止、不退回舊規則")
-            gate, final = st["level_pct"] > 0, WEIGHTS[t] * st["level_pct"] / 100.0
+            gate, final = st["level_pct"] > 0, wt(t, d) * st["level_pct"] / 100.0
             st_fields = {"st": st_record(st)}
         combined += final
         rec["tickers"][t] = {
@@ -958,6 +990,13 @@ def next_exec(held: float, target: float, clamp: float, down: float = EXEC_BAND)
     return cur
 
 
+def _st_event_reason(date, t: str) -> str:
+    """Supertrend 期間現持變動的原因：美股權重切換日當天標「權重切換」，其餘為「Supertrend 換檔」。"""
+    if t in US_TICKERS and _ds(date) == stc.LEG_WEIGHTS_CUTOVER_DATE and PROFILE == "live" and not SHADOW:
+        return "權重切換（QQQ 50→70、SMH 50→30）"
+    return "Supertrend 換檔"
+
+
 def band_exec_replay(history: list, legs: list) -> dict:
     """對每腿的最終權重（組合 pp）重放執行層：executed 初始 0，逐日若目標比 executed 高 ≥ 20pp、
     或低 ≥ 減碼門檻（exec_down_band_for：實單 EXEC_ASYM_DATE 起 10pp，之前 20pp），
@@ -981,11 +1020,11 @@ def band_exec_replay(history: list, legs: list) -> dict:
             if tk.get("rule") == ST_RULE_TAG:
                 # Supertrend 紀錄：水位本來就離散（100／70／30／0%），沒有 A2 門檻與取整，目標即現持
                 # （訊號日收盤判定、下一個交易日一次調到目標）。第一筆 Supertrend 紀錄是規則切換日。
-                cur[t] = min(target, clamp)
+                cur[t] = min(target, 100.0 * wt(t, r["date"]))      # 單檔上限＝水位 100% × 該檔權重
                 if cur[t] != before:
                     switch_ = prev_rule[t] != ST_RULE_TAG
                     events.append({"date": r["date"], "leg": t, "from": before, "to": cur[t],
-                                   "reason": "規則切換" if switch_ else "Supertrend 換檔"})
+                                   "reason": "規則切換" if switch_ else _st_event_reason(r["date"], t)})
                 executed[t].append(cur[t])
                 prev_gate[t] = gate
                 prev_rule[t] = ST_RULE_TAG
@@ -1065,7 +1104,7 @@ def pure_st_history(hist: list, legs: list) -> list:
             s_ = series[t][r["date"]]
             if s_ is None:
                 raise RuntimeError(f"{t} {r['date']}: Supertrend K 棒不足，無法回補顯示歷史")
-            fin = round(WEIGHTS[t] * s_["level_pct"], 1)
+            fin = round(wt(t, r["date"]) * s_["level_pct"], 1)   # 2026-11-05 起美股 QQQ 70／SMH 30
             comb += fin
             tk[t] = {"gate": s_["level_pct"] > 0, "rule": ST_RULE_TAG, "final_pct": fin,
                      "rv20_pct": None, "sigma_t_pct": None, "st": s_}
@@ -1079,12 +1118,16 @@ def pure_exec_replay(history: list, legs: list) -> dict:
     executed = {t: [] for t in legs}
     combined, events = [], []
     cur = {t: None for t in legs}
+    cur_lv = {t: None for t in legs}
     for r in history:
         for t in legs:
             target = r["tickers"][t]["final_pct"]
+            lv_now = r["tickers"][t]["st"]["level_pct"]
             if cur[t] is not None and target != cur[t]:
-                events.append({"date": r["date"], "leg": t, "from": cur[t], "to": target, "reason": "Supertrend 換檔"})
-            cur[t] = target
+                # from_lvl／to_lvl＝該檔水位（%）；pp 欄位仍是組合 pp（水位 × 權重）
+                events.append({"date": r["date"], "leg": t, "from": cur[t], "to": target, "from_lvl": cur_lv[t],
+                               "to_lvl": lv_now, "reason": _st_event_reason(r["date"], t)})
+            cur[t], cur_lv[t] = target, lv_now
             executed[t].append(target)
         combined.append(round(sum(cur[t] for t in legs), 1))
     date_idx = {r["date"]: i for i, r in enumerate(history)}
@@ -1100,7 +1143,9 @@ def pure_last_change(exec_map: dict) -> tuple:
     if not evs:
         return None, None
     d = max(e["date"] for e in evs)
-    desc = "；".join(f"{e['leg']} 水位 {e['from'] * 2:.0f}% → {e['to'] * 2:.0f}%" for e in evs if e["date"] == d)
+    desc = "；".join((f"{e['leg']} 權重切換（占指數部 {e['from']:.0f}% → {e['to']:.0f}%，水位不變）" if e["reason"].startswith("權重切換") else
+                      f"{e['leg']} 水位 {e.get('from_lvl', e['from'] * 2):.0f}% → {e.get('to_lvl', e['to'] * 2):.0f}%")
+                     for e in evs if e["date"] == d)
     return d, desc
 
 
@@ -1166,11 +1211,11 @@ def events_card(mkt: dict, events: list) -> str:
     else:
         body = ""
         for ev in reversed(recent_events):          # 倒序（最新在上）
-            rc = "var(--blue-text)" if ev["reason"] in ("閘門翻轉", "Supertrend 換檔") else "var(--amber-text)"
+            rc = "var(--blue-text)" if ev["reason"] in ("閘門翻轉", "Supertrend 換檔") or ev["reason"].startswith("權重切換") else "var(--amber-text)"
             # live 規則切換那筆的舊值是舊規則（上限 150%）期間的持股，水位會超過 100%，標明出處
             old_tag = "（舊規則）" if PROFILE == "live" and ev["reason"] == "規則切換" else ""
             body += (f'<tr><td>{ev["date"]}</td><td><b>{ev["leg"]}</b></td>'
-                     f'<td>{ev["from"]*_k:.0f}%{old_tag} → {ev["to"]*_k:.0f}%</td>'
+                     f'<td>{ev.get("from_lvl", ev["from"]*_k):.0f}%{old_tag} → {ev.get("to_lvl", ev["to"]*_k):.0f}%</td>'
                      f'<td style="color:{rc}">{ev["reason"]}</td></tr>\n')
     if PURE:
         events_note = (f"只有當{events_band_txt}才調整，倒序列出最近一年內的全部事件；日期是訊號日（收盤判定），下一個交易日調整；"
@@ -1271,10 +1316,11 @@ def fmt_pct(v, dp=2):
     return f"{'+' if v >= 0 else ''}{v:.{dp}f}%"
 
 
-def lvl(pp: float) -> float:
-    """每檔水位（%）＝組合 pp × 2（每腿滿載 50pp＝水位 100%）。只用於 live profile 的顯示換算，
-    不參與任何計算；state.json 與執行層一律維持組合 pp。水位六格：0／20／40／60／80／100%。"""
-    return pp * 2
+def lvl(pp: float, t: str = None) -> float:
+    """每檔水位（%）＝組合 pp ÷ 該檔權重（各半時＝pp × 2，每腿滿載 50pp＝水位 100%）。只用於 live profile 的顯示換算，
+    不參與任何計算；state.json 與執行層一律維持組合 pp。傳入 t 時依 LVL_DS（美股資料日）取權重，
+    2026-11-05 起 QQQ 滿載 70pp、SMH 滿載 30pp；不傳 t 一律各半（舊規則）。水位六格：0／20／40／60／80／100%。"""
+    return pp / (wt(t, LVL_DS) if t else 0.5)
 
 
 def fill_color(fill):
@@ -1296,7 +1342,7 @@ def ticker_card(t: str, d: dict, exec_pct: float = None) -> str:
         st = d["st"]
         th = stc.thresholds(st)
         col = fill_color(st["level_pct"] / 100)
-        exec_txt = f"{lvl(exec_pct):.0f}%" if exec_pct is not None else "—"
+        exec_txt = f"{lvl(exec_pct, t):.0f}%" if exec_pct is not None else "—"
 
         def _row(lab, key, tf):
             x = th[key]
@@ -1792,7 +1838,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 <div style="position:relative">
   <div id="lwc-chart-{suf}" class="lwc-chart"></div>
   <div class="lwc-pane-title" style="top:{title_top_0}px">價格（正規化 100）</div>
-  <div class="lwc-pane-title" style="top:{title_top_1}px">{'指數部股票曝險（兩檔水位平均）' if PURE else '指數部股票曝險（兩檔水位平均，現持粗線／目標細線）' if PROFILE == 'live' else '曝險（現持粗線／目標細線）'}</div>
+  <div class="lwc-pane-title" style="top:{title_top_1}px">{f'指數部股票曝險（{_expo_how(legs)}）' if PURE else '指數部股票曝險（兩檔水位平均，現持粗線／目標細線）' if PROFILE == 'live' else '曝險（現持粗線／目標細線）'}</div>
   {'' if ST_MODE else f'<div class="lwc-pane-title" style="top:{title_top_2}px">RV20 vs σ_t</div>'}
 </div>
 {_st_legend(legs) if ST_MODE else f"""<div class="legend-note">
@@ -1832,10 +1878,10 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 {appendix}"""
         details_hdr = f"{mkt['short']} 回測與統計（點開看完整數字：回測堆疊表、逐年績效、曝險分布、利差敏感度、壓力統計、近 8 週閘門軌跡{'、2330 長窗附錄' if appendix else ''}）"
     ST_CHART_NOTE = (f"""兩個垂直排列的圖：<b>價格</b>（{legs[0]}／{legs[1]} 各自正規化為近 1260 個交易日前＝100，實線是週線 Supertrend 線、虛線是月線 Supertrend 線）、"""
-                     f"""<b>指數部股票曝險（兩檔水位相加再除以 2，0～100%）</b>（{'' if PURE else '現持粗階梯；'}{chart_desc}）。{'' if PURE else f'{ST_CUTOVER_DATE} 以前實際照 W52 規則，圖上的 Supertrend 線只是同一段價格上的對照。'}拖曳可平移、滾輪可縮放，游標停在圖上看逐日數值。""")
+                     f"""<b>指數部股票曝險（{_expo_sum(legs)}，0～100%）</b>（{'' if PURE else '現持粗階梯；'}{chart_desc}）。{'' if PURE else f'{ST_CUTOVER_DATE} 以前實際照 W52 規則，圖上的 Supertrend 線只是同一段價格上的對照。'}拖曳可平移、滾輪可縮放，游標停在圖上看逐日數值。""")
     if PURE:
         ST_CHART_NOTE = (f"""每檔一張圖，上半是<b>收盤價</b>與週線、月線 Supertrend 線（線在價格下方是多、在上方是空），下半是<b>該檔水位</b>"""
-                         f"""（100／70／30／0%，水位變化日標箭頭；{legs[0]} 與 {legs[1]} 各占指數部一半）。""")
+                         f"""（100／70／30／0%，水位變化日標箭頭；{_leg_share_txt(legs)}）。""")
     return f"""<div class="mkt-section" id="mkt-{suf}" data-market="{suf}">
 <div class="mkt-hd"><span class="mkt-tag">{mkt['name']} — 主圖（近一年，可切 1Y／3Y／5Y）</span></div>
 
@@ -2284,7 +2330,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
             trig = _leg_trigger_text(t, d, ma60_now)
             if d.get("rule") == ST_RULE_TAG and d.get("st"):
                 st_ = d["st"]
-                held_lv, tgt_lv = lvl(exec_last.get(t, 0.0)), st_["level_pct"]
+                held_lv, tgt_lv = lvl(exec_last.get(t, 0.0), t), st_["level_pct"]
                 lvl_txt = (f'水位 <b>{tgt_lv}%</b>' if PURE else
                            f'目標 <b>{tgt_lv}%</b> ← 現持 <b>{held_lv:.0f}%</b>（下一個交易日調整）' if abs(held_lv - tgt_lv) > 1e-9
                            else f'水位 <b>{tgt_lv}%</b>（目標＝現持）')
@@ -2303,7 +2349,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
         mkt_cards += f"""<div class="today-mkt hero-{ccol}">
   <div class="today-mkt-name">{m['name']}</div>
   <div class="today-mkt-num" style="color:var(--{ccol})">{exec_combined:.0f}%</div>
-  <div class="today-mkt-sub">{(('指數部股票曝險（兩檔水位平均）' if round(exec_combined) == round(target_combined) else f'指數部股票曝險（兩檔水位平均）現持 · 下一個交易日調到 {target_combined:.0f}%') if all(sigs[t].get("rule") == ST_RULE_TAG for t in m["legs"]) else ('指數部股票曝險（兩檔水位平均）現持（執行層）' if PROFILE == 'live' else '現持曝險（執行層）') + f'· 目標 {target_combined:.0f}%（訊號）')}</div>
+  <div class="today-mkt-sub">{((f'指數部股票曝險（{_expo_how(m["legs"])}）' if round(exec_combined) == round(target_combined) else f'指數部股票曝險（{_expo_how(m["legs"])}）現持 · 下一個交易日調到 {target_combined:.0f}%') if all(sigs[t].get("rule") == ST_RULE_TAG for t in m["legs"]) else ('指數部股票曝險（兩檔水位平均）現持（執行層）' if PROFILE == 'live' else '現持曝險（執行層）') + f'· 目標 {target_combined:.0f}%（訊號）')}</div>
   {leg_rows}
 </div>"""
 
@@ -2323,7 +2369,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
 <div class="rule-list" style="font-size:.85rem;margin-top:.8rem">{changed}</div>
 <div style="font-size:.72rem;color:var(--muted);margin-top:.6rem;line-height:1.7">
 名詞：<b>Supertrend</b>＝依近 14 根 K 棒平均波動上下推開的追蹤線，收盤站上線是多頭、跌破線是空頭；
-<b>水位</b>＝70% 看週線、30% 看月線，各自多頭才持有，所以每檔只有 100／70／30／0% 四種，該檔占指數部淨值＝水位 ÷ 2；
+<b>水位</b>＝70% 看週線、30% 看月線，各自多頭才持有，所以每檔只有 100／70／30／0% 四種，該檔占指數部淨值＝水位 × 該檔權重（美股 QQQ 70%／SMH 30%，2026-11-05 收盤的訊號起，之前各半；台股各半）；
 <b>債金疊加</b>＝美股另外各最多 20% 配置公債（IEF）與黃金（GLD），{"各看週線與月線的 Supertrend" if DEF_ST_ON else "各看週線三個條件，每成立一條加三分之一"}。
 訊號日收盤判定，下一個交易日一次調到目標水位，沒有門檻也不分段。
 </div>
@@ -2662,7 +2708,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
                       f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5（對照線）</a>'
                       f'<a href="/backtest/supertrend_vs_live/" style="{PILL_OFF}">Supertrend 對 W52</a>'),
             "banner": stp.banner_live(cut, dec, shadow_url),
-            "above_cards": stp.status_card(sigs, ALL_TICKERS, HELD_BEFORE, "live", cut) + overlay_card(overlay, overlay_changes),
+            "above_cards": stp.status_card(sigs, ALL_TICKERS, HELD_BEFORE, "live", cut, held_lvl=_held_lvl) + overlay_card(overlay, overlay_changes),
             "rules": stp.rules_live(cut, dec, shadow_url),
             "footer": f"Supertrend 週線＋月線 · 實單主系統（{cut} 起；美股債金版、台股不借錢版）",
         })
@@ -3007,7 +3053,7 @@ def detect_changes(prev: dict, sigs: dict, skip_legs=(), leg_dates: dict | None 
         # 與 band_exec_replay 的「先拉回上限」同一式（next_exec）。
         if st_rule:
             # Supertrend：水位離散、無門檻，目標即現持；現持與目標不同就要調（一次調到位）
-            new_exec = min(target, clamp)
+            new_exec = min(target, 100.0 * wt(t, leg_dates[t]) if leg_dates else clamp)   # 單檔上限＝100% × 權重
             drift = held is None or round(held, 1) != round(new_exec, 1)
         elif held is None:
             drift, new_exec = True, min(round(target / EXEC_GRID) * EXEC_GRID, clamp)
@@ -3027,8 +3073,13 @@ def detect_changes(prev: dict, sigs: dict, skip_legs=(), leg_dates: dict | None 
                 parts.append("閘門 " + ("出場→在場" if sigs[t]["gate"] else "在場→出場"))
             if PROFILE == "live" and st_rule:
                 sw_ = pt.get("rule") != ST_RULE_TAG
-                arrow = (f"水位 {lvl(held):.0f}% → {lvl(new_exec):.0f}%" if held is not None
-                         else f"水位 → {lvl(new_exec):.0f}%")
+                _hl = (pt["st"]["level_pct"] if pt.get("rule") == ST_RULE_TAG and pt.get("st") else
+                       (lvl(held) if held is not None else None))      # 前一筆的水位（前一筆的權重下）
+                arrow = (f"水位 {_hl:.0f}% → {sigs[t]['st']['level_pct']:.0f}%" if _hl is not None
+                         else f"水位 → {sigs[t]['st']['level_pct']:.0f}%")
+                if (leg_dates and held is not None and not sw_ and t in US_TICKERS
+                        and _ds(leg_dates[t]) == stc.LEG_WEIGHTS_CUTOVER_DATE):
+                    arrow += f"（權重切換：{t} 占指數部 {held:.0f}% → {new_exec:.0f}%）"
                 if sw_:
                     arrow += "（規則切換：改照 Supertrend 水位，一次調到目標，不分段）"
                 ORDER_LINES.append(
@@ -3257,7 +3308,7 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
             rows.append([f"<strong>{esc(t)}</strong>", esc(TICKER_MARKET[t]),
                          pill("多", "green") if wd else pill("空", "gray"),
                          pill("多", "green") if md_ else pill("空", "gray"),
-                         f"{lvl(d['final']*100):.0f}%"])
+                         f"{lvl(d['final']*100, t):.0f}%"])
             continue
         gate_pill = pill("在場", "green") if d["gate"] else pill("出場", "gray")
         row = [f"<strong>{esc(t)}</strong>", esc(TICKER_MARKET[t]), gate_pill,
@@ -3268,7 +3319,7 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
     body += tiles(tile_items)
     body += section("TARGET LEVELS", "各檔目標水位（0～100%）", table(headers, rows, numeric_cols={4} if st_mail else {3, 4, 5}))
     if ORDER_LINES:
-        body += section("ORDERS", "怎麼下單（各檔占指數部淨值的 %＝水位 ÷ 2，兩檔各占一半）",
+        body += section("ORDERS", "怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股各半；2026-11-05 前美股各半）",
                         "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(o)}</div>' for o in ORDER_LINES))
     st_legs = [t for t in ALL_TICKERS if sigs[t].get("rule") == ST_RULE_TAG]
     new_legs = [t for t in ALL_TICKERS if sigs[t].get("rule") == NEW_RULE_TAG]
@@ -3466,7 +3517,7 @@ def build_alert_lines(events: list, sigs: dict, exp: dict, data_date, cap_flips:
     for c in ev:
         lines.append("• " + c)
     if new_fmt and ORDER_LINES:
-        lines += ["", "怎麼下單（各檔占指數部淨值的 % ＝ 水位 ÷ 2，兩檔各占一半）："]
+        lines += ["", "怎麼下單（各檔占指數部淨值的 % ＝ 水位 × 權重：美股 QQQ 70／SMH 30、台股各半；2026-11-05 前美股各半）："]
         lines += ["  " + o for o in ORDER_LINES]
     if st_fmt:
         lines += ["", "當前各檔 Supertrend 狀態與目標水位（不借錢，單檔上限 100%）："]
@@ -3478,7 +3529,7 @@ def build_alert_lines(events: list, sigs: dict, exp: dict, data_date, cap_flips:
         d = sigs[t]
         if d.get("rule") == ST_RULE_TAG and d.get("st"):
             stx = d["st"]
-            lines.append(f"  {TICKER_MARKET[t]} {t}: 水位 {lvl(d['final']*100):.0f}%  "
+            lines.append(f"  {TICKER_MARKET[t]} {t}: 水位 {lvl(d['final']*100, t):.0f}%  "
                          f"(週線{'多' if stx['week']['dir'] else '空'} 線 {stx['week']['line']:,.2f}, "
                          f"月線{'多' if stx['month']['dir'] else '空'} 線 {stx['month']['line']:,.2f})；"
                          f"{_leg_trigger_text(t, d, None)}")
@@ -3546,7 +3597,7 @@ def build_pure_display(sigs: dict, hist_map: dict, us_date_ts: pd.Timestamp) -> 
         if not st:
             raise RuntimeError(f"{t}: 沒有 Supertrend 狀態，無法產生實盤頁的顯示層")
         lv = st["level_pct"] / 100.0
-        sigs_d[t] = {**sigs[t], "rule": ST_RULE_TAG, "gate": lv > 0, "fill": lv, "final": WEIGHTS[t] * lv}
+        sigs_d[t] = {**sigs[t], "rule": ST_RULE_TAG, "gate": lv > 0, "fill": lv, "final": wt(t, us_date_ts) * lv}
     hist_d = {m["key"]: pure_st_history(hist_map[m["key"]], m["legs"]) for m in MARKETS}
     exec_d = {m["key"]: pure_exec_replay(hist_d[m["key"]], m["legs"]) for m in MARKETS}
     lc_date, lc_desc = pure_last_change(exec_d)
@@ -3563,7 +3614,7 @@ def build_pure_display(sigs: dict, hist_map: dict, us_date_ts: pd.Timestamp) -> 
         "overlay": ov,
         "history_start": {k: hist_d[k][0]["date"] if hist_d[k] else None for k in hist_d},
         "n_level_changes": {m["key"]: len(exec_d[m["key"]]["events"]) for m in MARKETS},
-        "recent_changes": [{"date": e["date"], "leg": e["leg"], "from": e["from"] * 2, "to": e["to"] * 2}
+        "recent_changes": [{"date": e["date"], "leg": e["leg"], "from": e.get("from_lvl", e["from"] * 2), "to": e.get("to_lvl", e["to"] * 2)}
                            for e in sorted((e for m in MARKETS for e in exec_d[m["key"]]["events"]),
                                            key=lambda e: e["date"])[-10:]],
     }
@@ -3572,7 +3623,7 @@ def build_pure_display(sigs: dict, hist_map: dict, us_date_ts: pd.Timestamp) -> 
 
 
 def main():
-    global PROFILE, STATE_JSON, OUTPUT, NAV_BLOCK, SHADOW, ST_MODE, NOW_OVERRIDE, DEF_ST_ON, PURE
+    global PROFILE, STATE_JSON, OUTPUT, NAV_BLOCK, SHADOW, ST_MODE, NOW_OVERRIDE, DEF_ST_ON, PURE, LVL_DS
     parser = argparse.ArgumentParser()
     parser.add_argument("--now", help="模擬用：假裝現在是這個時間（ISO 8601，含時區，例 2026-11-05T09:00:00+08:00）。"
                                       "資料截到各交易所當地的那一天，未收盤的當天日線不採用；CI 不用。")
@@ -3622,6 +3673,7 @@ def main():
         # 由既有 state.json 逐欄還原 sigs（不重抓價）；欄位對應見 compute_ticker／main
         # 正常路徑寫入 state 時的欄位名。"recent"（近 8 週背景表）需要價格序列，
         # state.json 不存，留 None，recent_table 會顯示說明而非報錯。
+        LVL_DS = (prev_state.get("history_us") or [{}])[-1].get("date")   # 顯示換算用權重的資料日（最後一筆美股紀錄）
         sigs = {}
         for t in ALL_TICKERS:
             tk = prev_state["tickers"][t]
@@ -3715,6 +3767,7 @@ def main():
 
     # ---- 債金疊加（只在實盤 profile；美股）。抓不到 → 沿用前次、標 stale、不報變化。
     us_date_ts = max(px_map[t].index[-1] for t in US_TICKERS)
+    LVL_DS = _ds(us_date_ts)
     us_new = PROFILE == "live" and is_new_rule(us_date_ts)
     ov, overlay_changes, overlay_blk = None, [], None
     if PROFILE == "live":

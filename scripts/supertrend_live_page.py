@@ -55,8 +55,10 @@ def trigger_text(st: dict) -> str:
     return "；".join(parts)
 
 
-def status_card(sigs: dict, legs: list, exec_last: dict, mode: str, cutover: str) -> str:
-    """每檔的週線／月線 Supertrend 狀態表。mode＝"preview"（切換前，僅預覽）或 "live"（已生效）。"""
+def status_card(sigs: dict, legs: list, exec_last: dict, mode: str, cutover: str, held_lvl=None) -> str:
+    """每檔的週線／月線 Supertrend 狀態表。mode＝"preview"（切換前，僅預覽）或 "live"（已生效）。
+    held_lvl(t, pp)＝把下單前現持（組合 pp）換成該檔水位的函式；預設 pp × 2（各半）。2026-11-05 起美股權重 70／30，
+    由呼叫端傳入依前一個資料日權重換算的版本。"""
     rows = ""
     moves = []
     for t in legs:
@@ -68,7 +70,7 @@ def status_card(sigs: dict, legs: list, exec_last: dict, mode: str, cutover: str
         w, m = st["week"], st["month"]
         lv = st["level_pct"]
         cur = exec_last.get(t)
-        cur_lv = None if cur is None else cur * 2
+        cur_lv = None if cur is None else (held_lvl(t, cur) if held_lvl else cur * 2)
         if cur_lv is not None and abs(cur_lv - lv) > 1e-9:
             moves.append(f"{t} {cur_lv:.0f}% → {lv}%")
 
@@ -183,6 +185,7 @@ def banner_live(cutover: str, decision: str, shadow_url: str) -> str:
 
 
 def rules_live(cutover: str, decision: str, shadow_url: str) -> str:
+    lw_date = stc.LEG_WEIGHTS_CUTOVER_DATE
     return f"""<div class="card">
 <details>
 <summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則說明（點開看 Supertrend 規則、債金疊加、沿革與揭露，白話版）</summary>
@@ -190,7 +193,7 @@ def rules_live(cutover: str, decision: str, shadow_url: str) -> str:
 <div class="card">
 <h3>追蹤主系統規則（Supertrend；{cutover} 收盤起，持有人 {decision} 拍板）</h3>
 <div class="rule-list">
-① <b>四檔、兩市場</b>：美股 {{QQQ、SMH}}、台股 {{0050、2330}}，每檔各有自己的水位。兩檔各占各市場指數部的一半，所以水位 ÷ 2 就是該檔占指數部淨值的比例。個股部位不在這個系統內。<br>
+① <b>四檔、兩市場</b>：美股 {{QQQ、SMH}}、台股 {{0050、2330}}，每檔各有自己的水位。美股 QQQ 占指數部 70%、SMH 占 30%（{lw_date} 收盤的訊號起，持有人 {lw_date} 拍板；之前各占一半），台股 0050、2330 各占一半。該檔占指數部淨值＝水位 × 該檔權重，例如 QQQ 水位 100% 占 70%、SMH 水位 100% 占 30%。個股部位不在這個系統內。<br>
 ② <b>Supertrend 是什麼</b>：一條依平均真實波幅（ATR，近 14 根 K 棒的平均波動）上下推開的追蹤線，算法照 TradingView 內建的 <code>ta.supertrend</code>，取 K 棒高低點中間價。收盤站上線是多頭，跌破線是空頭；倍數越大，線離價格越遠，訊號越慢。美股 ATR 14、倍數 3，台股 ATR 14、倍數 2；TradingView 預設是 ATR 10、倍數 3，要對照請先改成這兩組。K 線用沒有調整股息的價格（已調整拆股）。<br>
 ③ <b>水位</b>＝70% × 週線（多為 1、空為 0）＋30% × 月線（多為 1、空為 0），只做多，所以只有 100%、70%、30%、0% 四種。週線以週五為一週最後一天，月線以日曆月底；一根 K 棒要等那一期最後一個平日收盤後才算數，沒收完的那根只看門檻、不下單。<br>
 ④ <b>執行</b>：訊號日收盤判定，下一個交易日調到目標水位，一次到位，不分段、不設門檻、不取整。成本與回測一致（每邊 7 個基點）。不借錢，水位上限 100%。<br>
@@ -208,6 +211,7 @@ def rules_live(cutover: str, decision: str, shadow_url: str) -> str:
 • <b>2026-10-19</b>（持有人 10-17 拍板）：美股改債金版、台股改不借錢版，股票上限 100%。<br>
 • <b>2026-10-30 收盤起</b>：執行層減碼門檻由兩格降為一格，加碼維持兩格。<br>
 • <b>{cutover}</b>（持有人 {decision} 拍板）：<b>指數部四檔改 Supertrend</b>，週線 70%＋月線 30%；同日債金疊加（IEF、GLD）也改 Supertrend（14／3，水位 20／14／6／0%），依據是持有人看過比較後的決定。生效日起的紀錄帶 <code>rule: "st_live"</code>，生效日前的 history 不改寫；切換當日每檔從現持水位一次調到 Supertrend 水位。原 W52 規則以 <a href="{shadow_url}">對照線</a> 續跑，不寄信。state.json 的 <code>rule_changes</code> 有這一筆。<br>
+• <b>{lw_date}</b>（持有人 {lw_date} 拍板）：<b>美股指數部權重由 QQQ 50%／SMH 50% 改為 QQQ 70%／SMH 30%</b>，台股各半不變；Supertrend 規則、債金疊加不動。理由是降低單一循環曝險（SMH 的獲利預估集中在記憶體），不是績效；依據見規則帳本 2026-11-05。{lw_date} 收盤的訊號起生效，當天一次調到位，之前的紀錄不改寫。<br>
 </div>
 </details>
 </div>
@@ -259,6 +263,7 @@ W52_LINE = ('<div style="font-size:.82rem;color:var(--muted);margin:.8rem 0 1rem
 
 def rules_pure() -> str:
     """規則說明（顯示層）：Supertrend 規則、債金疊加、揭露；不放沿革，結尾只留一行對照線連結。"""
+    lw_date = stc.LEG_WEIGHTS_CUTOVER_DATE
     return f"""<div class="card">
 <details>
 <summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則說明（點開看 Supertrend 規則、債金疊加與揭露，白話版）</summary>
@@ -266,7 +271,7 @@ def rules_pure() -> str:
 <div class="card">
 <h3>追蹤主系統規則（Supertrend）</h3>
 <div class="rule-list">
-① <b>四檔、兩市場</b>：美股 {{QQQ、SMH}}、台股 {{0050、2330}}，每檔各有自己的水位。兩檔各占各市場指數部的一半，所以水位 ÷ 2 就是該檔占指數部淨值的比例。個股部位不在這個系統內。<br>
+① <b>四檔、兩市場</b>：美股 {{QQQ、SMH}}、台股 {{0050、2330}}，每檔各有自己的水位。美股 QQQ 占指數部 70%、SMH 占 30%（{lw_date} 收盤的訊號起，持有人 {lw_date} 拍板；之前各占一半），台股 0050、2330 各占一半。該檔占指數部淨值＝水位 × 該檔權重，例如 QQQ 水位 100% 占 70%、SMH 水位 100% 占 30%。個股部位不在這個系統內。<br>
 ② <b>Supertrend 是什麼</b>：一條依平均真實波幅（ATR，近 14 根 K 棒的平均波動）上下推開的追蹤線，算法照 TradingView 內建的 <code>ta.supertrend</code>，取 K 棒高低點中間價。收盤站上線是多頭，跌破線是空頭；倍數越大，線離價格越遠，訊號越慢。美股 ATR 14、倍數 3，台股 ATR 14、倍數 2；TradingView 預設是 ATR 10、倍數 3，要對照請先改成這兩組。K 線用沒有調整股息的價格（已調整拆股）。<br>
 ③ <b>水位</b>＝70% × 週線（多為 1、空為 0）＋30% × 月線（多為 1、空為 0），只做多，所以只有 100%、70%、30%、0% 四種。週線以週五為一週最後一天，月線以日曆月底；一根 K 棒要等那一期最後一個平日收盤後才算數，沒收完的那根只看門檻、不下單。<br>
 ④ <b>執行</b>：訊號日收盤判定，下一個交易日調到目標水位，一次到位，不分段、不設門檻、不取整。成本與回測一致（每邊 7 個基點）。不借錢，水位上限 100%。<br>

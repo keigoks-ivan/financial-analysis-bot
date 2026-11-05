@@ -34,6 +34,21 @@ import os as _os
 ST_CUTOVER_DATE = _os.environ.get("W52_ST_CUTOVER_DATE") or "2026-11-04"
 ST_CUTOVER_DECISION_DATE = "2026-11-04"
 
+# 美股指數部權重切換：資料日（訊號日）>= 此日的紀錄，QQQ 0.7／SMH（含 SMH.L）0.3；之前各 0.5。
+# 2026-11-05 收盤的訊號、11-06 下單。環境變數 W52_LEG_WEIGHTS_CUTOVER_DATE 只供本機模擬用，CI 不設。
+LEG_WEIGHTS_CUTOVER_DATE = _os.environ.get("W52_LEG_WEIGHTS_CUTOVER_DATE") or "2026-11-05"
+LEG_WEIGHTS_DECISION_DATE = "2026-11-05"
+
+
+def leg_weights(ds: str) -> dict:
+    """每檔占各市場指數部的權重（鍵＝Yahoo 代號）。依據 knowledge/rule_ledger.md「2026-11-05：美股指數部權重由
+    QQQ 50／SMH 50 改為 QQQ 70／SMH 30」（持有人 2026-11-05 拍板）：資料日 >= LEG_WEIGHTS_CUTOVER_DATE 時
+    美股 QQQ 0.7、SMH／SMH.L 0.3，之前全部 0.5；台股 0050／2330 永遠各 0.5。
+    每檔占指數部淨值＝水位 × 該檔權重；只給實盤 profile 用，舊 W52 對照線維持各半。"""
+    new = str(ds)[:10] >= LEG_WEIGHTS_CUTOVER_DATE
+    return {"QQQ": 0.7 if new else 0.5, "SMH": 0.3 if new else 0.5, "SMH.L": 0.3 if new else 0.5,
+            "0050.TW": 0.5, "2330.TW": 0.5}
+
 
 # ---------------------------------------------------------------- Supertrend
 def supertrend(b: pd.DataFrame, n: int, f: float) -> pd.DataFrame:

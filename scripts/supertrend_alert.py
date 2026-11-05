@@ -34,6 +34,7 @@ sys.path.insert(0, str(HERE))
 from supertrend_core import (  # noqa: E402  算法、K 棒、收完判斷、參數與切換日與實單主系統共用同一份
     fetch_official_ohlc, reconcile_ohlc,
     ST_CUTOVER_DATE, ST_PARAMS, TF, W_MONTH, W_WEEK, bars, is_complete, supertrend,
+    LEG_WEIGHTS_CUTOVER_DATE, leg_weights,
 )
 
 ROOT = HERE.parent
@@ -110,6 +111,32 @@ def target(w, m):
     return int(round((W_WEEK * w + W_MONTH * m) * 100))
 
 
+def share(r, level) -> str:
+    """主腿（QQQ、SMH／SMH.L、0050、2330）占指數部的 %＝水位 × 權重（leg_weights(資料日)，2026-11-05 起美股 QQQ 70／SMH 30）。
+    債金不算（另有占指數部 20% 的算法）。"""
+    return f"{level * leg_weights(r['last_date'])[r['ticker']]:.0f}"
+
+
+def weight_switch_block(by: dict) -> list:
+    """權重切換日（第一次資料日 >= LEG_WEIGHTS_CUTOVER_DATE 的執行）的換倉指示：以當天水位算，
+    QQQ 占指數部 50%×水位 → 70%×水位、SMH 30%×水位。SMH 用美國版水位（訊號用 SMH，持有 UCITS 版同水位）。"""
+    old, new = 0.5, leg_weights(LEG_WEIGHTS_CUTOVER_DATE)
+    lines = [f"美股指數部權重今天起改為 QQQ 70%／SMH 30%（{LEG_WEIGHTS_CUTOVER_DATE} 收盤的訊號起，原各 50%）；台股各半不變。"
+             "請在下一個交易日一次調到位（水位不變，只是兩檔比例改變）：", ]
+    tot0 = tot1 = 0.0
+    for tk, nm in (("QQQ", "QQQ"), ("SMH", "SMH")):
+        r = by.get(tk)
+        if not r:
+            continue
+        w, m = r["tf"]["week"]["confirmed"], r["tf"]["month"]["confirmed"]
+        lv = target(w["dir"], m["dir"])
+        a0, a1 = lv * old, lv * new[tk]
+        tot0, tot1 = tot0 + a0, tot1 + a1
+        lines.append(f"・{nm}：水位 {lv}%，占指數部 {old * 100:.0f}%×{lv}% = {a0:.0f}% → {new[tk] * 100:.0f}%×{lv}% = {a1:.0f}%")
+    lines.append(f"・美股指數部股票合計：{tot0:.0f}% → {tot1:.0f}%")
+    return lines
+
+
 def status_lines(results):
     out = ["", "目前狀態（已收完的 K 棒）："]
     for r in results:
@@ -117,7 +144,8 @@ def status_lines(results):
         out.append(f"・{r['name']}：收盤 {fmt(r['close'])}（{r['last_date']}）｜週線{zh(w['dir'])}，"
                    f"{'支撐' if w['dir'] == 1 else '壓力'} {fmt(w['line'])}｜月線{zh(m['dir'])}，"
                    f"{'支撐' if m['dir'] == 1 else '壓力'} {fmt(m['line'])}｜70/30 持股 {target(w['dir'], m['dir'])}%"
-                   + (f"（占指數部 {target(w['dir'], m['dir']) * 0.2:.0f}%）" if r["ticker"] in OVERLAY_SYMS else ""))
+                   + (f"（占指數部 {target(w['dir'], m['dir']) * 0.2:.0f}%）" if r["ticker"] in OVERLAY_SYMS
+                      else f"（占指數部 {share(r, target(w['dir'], m['dir']))}%）"))
     return out
 
 
@@ -129,6 +157,7 @@ def params_text() -> str:
 
 FOOTER = ["", f"規則：Supertrend，{params_text()}，週線 70%＋月線 30%，只做多。"
           f"{ST_CUTOVER_DATE} 收盤起實單的指數部照這套規則；換檔另有實單系統信。",
+          f"指數部權重：美股 QQQ 70%／SMH 30%（{LEG_WEIGHTS_CUTOVER_DATE} 收盤的訊號起，之前各半）、台股 0050／2330 各半；占指數部＝水位 × 權重。",
           f"回測比較：{PAGE_URL}"]
 
 
@@ -230,7 +259,7 @@ def main(argv=None):
             lines.append(f"・{r['name']} {lab}確認翻{zh(c['dir'])}：K 棒 {c['bar_end']} 收在 {fmt(c['close'])}，"
                          f"{'站上壓力線' if c['dir'] == 1 else '跌破支撐線'}（新的{'支撐' if c['dir'] == 1 else '壓力'}線 {fmt(c['line'])}）。"
                          + (f"照 70/30，債金水位 {a0}% → {a1}%（占指數部 {a0 * 0.2:.0f}% → {a1 * 0.2:.0f}%）。" if r["ticker"] in OVERLAY_SYMS
-                            else f"照 70/30，這檔持股 {a0}% → {a1}%。"))
+                            else f"照 70/30，這檔持股 {a0}% → {a1}%（占指數部 {share(r, a0)}% → {share(r, a1)}%）。"))
         out = ("【Supertrend】" + "、".join(heads), lines + status_lines(results) + FOOTER)
         state["history"].extend({"ts": now_utc.isoformat(timespec="minutes"), "ticker": r["ticker"], "tf": key,
                                  "dir": c["dir"], "bar_end": c["bar_end"]} for r, key, prev, c in events)
@@ -251,6 +280,18 @@ def main(argv=None):
                    + status_lines(results) + FOOTER)
         else:
             out = (wt, lines + status_lines(results) + FOOTER)
+
+    # 權重切換日：第一次資料日 >= LEG_WEIGHTS_CUTOVER_DATE 的執行寄一段換倉指示（狀態檔記旗標，只寄一次）
+    lw_pending = (not a.test_alert and not state.get("leg_weights_notified")
+                  and "QQQ" in by and by["QQQ"]["last_date"] >= LEG_WEIGHTS_CUTOVER_DATE)
+    if lw_pending:
+        blk = weight_switch_block(by)
+        if out:
+            out = (out[0] + "；另有權重切換", blk + [""] + out[1])
+        else:
+            out = ("【Supertrend】美股指數部權重切換 QQQ 70／SMH 30", blk + status_lines(results) + FOOTER)
+        if not a.dry_run:
+            state["leg_weights_notified"] = by["QQQ"]["last_date"]
 
     if errors:
         print("抓價失敗：", errors, file=sys.stderr)

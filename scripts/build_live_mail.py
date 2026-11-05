@@ -37,6 +37,8 @@ import json
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
@@ -50,7 +52,7 @@ from update_long_track_w52_adaptive import (  # noqa: E402
     _leg_trigger_text,
     NEW_RULE_TAG, RULE_SWITCH_DATE, OVERLAY_LEGS, OVERLAY_NAME, OVERLAY_VEHICLE, OVERLAY_W,
     ST_RULE_TAG, NEWSTYLE_TAGS, ST_CUTOVER_DATE,
-    lvl,
+    lvl, wt,
 )
 
 ROOT = HERE.parent
@@ -129,9 +131,19 @@ def _held(tk: dict) -> float:
     return tk.get("held_before_pct", tk["executed_pct"])
 
 
-def _lvl_cell(tk: dict) -> str:
+def _lv_pair(tk: dict, t: str) -> tuple:
+    """(目標水位, 下單前現持水位)，單位 %。目標直接讀 st.level_pct；現持是前一個資料日的部位（組合 pp），
+    用前一天的權重換算（2026-11-05 美股改 QQQ 70／SMH 30，切換日當天現持仍是各半的 pp）。"""
+    st = tk.get("st") or {}
+    if "level_pct" in st and st.get("asof"):
+        prev = pd.Timestamp(st["asof"]) - pd.Timedelta(days=1)
+        return float(st["level_pct"]), _held(tk) / wt(t, prev)
+    return lvl(tk["final_weight_pct"]), lvl(_held(tk))
+
+
+def _lvl_cell(tk: dict, t: str) -> str:
     """水位欄：目標與下單前現持不同時 '30% ← 現持 100%'，相同只寫一個數字。"""
-    tgt, held = lvl(tk["final_weight_pct"]), lvl(_held(tk))
+    tgt, held = _lv_pair(tk, t)
     return f"{tgt:.0f}%" if abs(tgt - held) < 1e-9 else f"{tgt:.0f}% ← 現持 {held:.0f}%"
 
 
@@ -157,7 +169,7 @@ def market_section(m: dict, tickers: dict) -> str:
                 gate_pill = pill("在場", "green") if tk["gate"] else pill("出場", "gray")
             trig = _leg_trigger_text(t, {"gate": tk["gate"], "w52": tk["w52"], "rule": tk.get("rule"), "st": tk.get("st")}, None)
             rows.append([f"<strong>{esc(t)}</strong>", gate_pill,
-                         (_lvl_cell(tk) if tk.get("rule") == ST_RULE_TAG else
+                         (_lvl_cell(tk, t) if tk.get("rule") == ST_RULE_TAG else
                           f"{lvl(tk['final_weight_pct']):.0f}% ／ {lvl(tk['executed_pct']):.0f}%"), esc(trig)])
         return section(f"{m['key'].upper()} TODAY", f"{m['name']} — 今天結論",
                         tile_html + table(headers, rows, numeric_cols={2}))
@@ -255,7 +267,7 @@ def order_section(w52a_text: str | None) -> str:
     if not rows:
         return ""
     body = "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(r)}</div>' for r in rows)
-    body += note("占指數部淨值的 %＝水位 ÷ 2（兩檔各占指數部一半）。債金部位另列於下方「債金疊加」。")
+    body += note("占指數部淨值的 %＝水位 × 權重（美股 QQQ 70／SMH 30，2026-11-05 收盤的訊號起，之前各半；台股各半）。債金部位另列於下方「債金疊加」。")
     return section("ORDERS", "怎麼下單", body)
 
 
@@ -305,7 +317,7 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
             trig = _leg_trigger_text(t, {"gate": tk["gate"], "w52": tk["w52"], "rule": tk.get("rule"), "st": tk.get("st")}, None)
             if tk.get("rule") == ST_RULE_TAG and tk.get("st"):
                 lines.append(f"    {t}：週線{'多' if tk['st']['w'] else '空'}（線 {tk['st']['w_line']:,.2f}）· 月線{'多' if tk['st']['m'] else '空'}"
-                             f"（線 {tk['st']['m_line']:,.2f}）· 水位 {_lvl_cell(tk)}{'（現持為下單前）' if abs(lvl(tk['final_weight_pct']) - lvl(_held(tk))) > 1e-9 else ''} · 下一個會動的價位：{trig}")
+                             f"（線 {tk['st']['m_line']:,.2f}）· 水位 {_lvl_cell(tk, t)}{'（現持為下單前）' if abs(_lv_pair(tk, t)[0] - _lv_pair(tk, t)[1]) > 1e-9 else ''} · 下一個會動的價位：{trig}")
             elif tk.get("rule") == NEW_RULE_TAG:
                 lines.append(f"    {t}：閘門{'在場' if tk['gate'] else '出場'} · "
                              f"水位 現持 {lvl(tk['executed_pct']):.0f}% ／ 目標 {lvl(tk['final_weight_pct']):.0f}% · 下一個會動的價位：{trig}")
@@ -331,7 +343,7 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
     lines.append("")
     ords = _order_lines(w52a_text)
     if ords:
-        lines.append("怎麼下單（各檔占指數部淨值的 %＝水位 ÷ 2，兩檔各占一半）：")
+        lines.append("怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股各半；2026-11-05 前美股各半）：")
         lines += [f"    {o}" for o in ords]
         lines.append("")
 
