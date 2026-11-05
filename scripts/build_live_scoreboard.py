@@ -837,7 +837,7 @@ ST_LABEL = "2026-11-04 以前為照規則回推，之後為實際紀錄。"
 
 PREREG_ST = {
     "title": "實單前瞻記分板",
-    "rule": ("美股 QQQ／SMH、台股 0050／2330 各 50%；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
+    "rule": ("美股 QQQ 70／SMH 30（2026-11-05 收盤訊號起，之前各半）、台股 0050／2330 各 50%；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
              "只做多，水位 100／70／30／0%。美股另加 IEF／GLD，各最多 20%（水位 20／14／6／0%）。"
              "美股 ATR 14／倍數 3，台股 ATR 14／倍數 2。訊號日收盤判定（只用已收完的週線、月線），下一個交易日調到目標水位。"),
     "labeling": ST_LABEL,
@@ -882,6 +882,12 @@ def st_level_series(sym_key, axis_dates):
     return out, last
 
 
+def _st_leg_weight(t, ds):
+    """該股票腿占各市場指數部的權重（與 update_long_track_w52_adaptive.wt 同一來源 supertrend_core.leg_weights）。"""
+    import supertrend_core as stc
+    return stc.leg_weights(ds)[ST_SYMBOL[t]]
+
+
 def build_market_st(mkt, gaps, judgment_calls):
     key, legs = mkt["key"], mkt["legs"]
     overlay = ST_OVERLAY if key == "us" else []
@@ -907,14 +913,18 @@ def build_market_st(mkt, gaps, judgment_calls):
     if ST_START not in axis:
         raise FailSafeAbort(f"[{key}] 起算日 {ST_START} 不在交易日序列內")
 
-    # 持股率（%）：股票腿 ＝ 50% × 水位；債金腿 ＝ 20% × 水位。
+    # 持股率（%）：股票腿 ＝ 權重 × 水位（權重見 _st_leg_weight，100 × 權重＝單檔滿載 pp）；債金腿 ＝ 20% × 水位。
     # 位置 i 的持股率＝前一個交易日收盤的訊號，在第 i 日收盤調到位（下一個交易日成交）。
     executed = {}
     for t in all_legs:
-        scale = (50.0 if t in legs else ST_OVERLAY_SCALE * 100.0) / 100.0
         seq = []
         for i, d in enumerate(axis):
             sig_d = axis[i - 1] if i > 0 else d
+            if t in legs:
+                # 股票腿占指數部權重依訊號日分段：< 2026-11-05 各 0.5；之後 supertrend_core.leg_weights（美股 QQQ 0.7／SMH 0.3，台股不變）
+                scale = _st_leg_weight(t, sig_d)
+            else:
+                scale = ST_OVERLAY_SCALE * 100.0 / 100.0
             seq.append(levels[t][sig_d] * scale)
         executed[t] = seq
 
