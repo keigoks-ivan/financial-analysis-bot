@@ -1,5 +1,12 @@
 """席位規則卡（engine/rulecard.py）：門檻與日期從程式常數讀、三張卡都產得出來、精選榜標記可原地更新。"""
 import re
+import sys
+from pathlib import Path
+
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+
 from engine import grp, rulecard, seat_st, seat_tm, seat_valhold
 
 
