@@ -389,7 +389,7 @@ ST_SYM = {"QQQ": "QQQ", "SMH": "SMH", "0050": "0050.TW", "2330": "2330.TW"}
 
 def st_history(legs, since="2018-06-01"):
     """Supertrend 規則逐日回推的權重歷史（格式同 state.json 的 history_*：final_pct＝帳戶內該腿持股 %）。
-    每檔水位＝0.7×週線＋0.3×月線（只用當天已收完的 K 棒），占該市場 50%；
+    每檔水位＝0.7×週線＋0.3×月線（只用當天已收完的 K 棒），占該市場指數部的權重照 stc.leg_weights（台股各 50%，美股 2026-11-05 起 QQQ 70／SMH 30）；
     前一個交易日收盤的訊號在隔天收盤調到位，所以每列用前一日的水位，最後一列用最新訊號。"""
     import pandas as pd
     sys.path.insert(0, str(ROOT / "scripts"))
@@ -411,7 +411,7 @@ def st_history(legs, since="2018-06-01"):
     for i, d in enumerate(idx):
         src = idx[i] if i == len(idx) - 1 else idx[i - 1] if i > 0 else d
         rows.append({"date": str(d.date()),
-                     "tickers": {l: {"final_pct": lv[l][src] * 0.5} for l in legs}})
+                     "tickers": {l: {"final_pct": lv[l][src] * stc.leg_weights(str(src.date()))[ST_SYM[l]]} for l in legs}})
     return rows
 
 

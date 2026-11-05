@@ -1588,6 +1588,18 @@ BOOK_MARKET_HISTORY = {"美股": "history_us", "台股": "history_tw"}
 THEME_TOP_N = 8
 
 
+def _book_leg_weight(sym, as_of):
+    """該檔占各市場指數部的權重，與實單頁同一來源 supertrend_core.leg_weights；讀不到時退回 0.5。"""
+    try:
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import supertrend_core as stc
+        key = sym if sym in ("QQQ", "SMH") else f"{sym}.TW"
+        return stc.leg_weights(as_of or "1900-01-01")[key]
+    except Exception:
+        return 0.5
+
+
 def _book_quotes(long_track_data, gaps):
     """2026-10-15：實盤指數部四條腿的現持曝險與離週線閘門的距離，給判讀的
     「那斯達克與半導體」段落引用（持有人要求把市況判讀接到實際部位）。
@@ -1604,10 +1616,13 @@ def _book_quotes(long_track_data, gaps):
         hist = (long_track_data.get(BOOK_MARKET_HISTORY.get(market, "")) or [])
         as_of = hist[-1].get("date") if hist else None
         exe = leg.get("executed_pct")
+        # 顯示換算：水位＝組合 pp ÷ 該檔權重（台股各 0.5；美股 2026-11-05 起 QQQ 0.7／SMH 0.3，之前各 0.5）
+        lw = _book_leg_weight(sym, as_of)
+        lvl_now = (exe / lw) if (exe is not None and lw) else None
         quotes[f"book:{sym}_exec"] = {
-            "label": f"實盤 {sym} 現持水位（單檔 0～100%，{market}指數部兩檔各占一半）",
-            "val": (f"{exe * 2:.1f}%" if exe is not None else None),   # 顯示換算：水位＝組合 pp × 2
-            "num": (exe * 2 if exe is not None else None), "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+            "label": f"實盤 {sym} 現持水位（單檔 0～100%，占{market}指數部＝水位 × 權重；美股 2026-11-05 起 QQQ 70／SMH 30，其餘各半）",
+            "val": (f"{lvl_now:.1f}%" if lvl_now is not None else None),
+            "num": lvl_now, "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
         }
         st_leg = leg.get("st") if leg.get("rule") == "st_live" else None
         if st_leg and st_leg.get("w_gap_pct") is not None:
