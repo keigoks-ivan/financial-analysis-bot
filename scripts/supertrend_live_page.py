@@ -211,7 +211,7 @@ def rules_live(cutover: str, decision: str, shadow_url: str) -> str:
 • <b>2026-10-19</b>（持有人 10-17 拍板）：美股改債金版、台股改不借錢版，股票上限 100%。<br>
 • <b>2026-10-30 收盤起</b>：執行層減碼門檻由兩格降為一格，加碼維持兩格。<br>
 • <b>{cutover}</b>（持有人 {decision} 拍板）：<b>指數部四檔改 Supertrend</b>，週線 70%＋月線 30%；同日債金疊加（IEF、GLD）也改 Supertrend（14／3，水位 20／14／6／0%），依據是持有人看過比較後的決定。生效日起的紀錄帶 <code>rule: "st_live"</code>，生效日前的 history 不改寫；切換當日每檔從現持水位一次調到 Supertrend 水位。原 W52 規則以 <a href="{shadow_url}">對照線</a> 續跑，不寄信。state.json 的 <code>rule_changes</code> 有這一筆。<br>
-• <b>{lw_date}</b>（持有人 {lw_date} 拍板）：<b>美股指數部權重由 QQQ 50%／SMH 50% 改為 QQQ 70%／SMH 30%</b>，台股各半不變；Supertrend 規則、債金疊加不動。理由是降低單一循環曝險（SMH 的獲利預估集中在記憶體），不是績效；依據見規則帳本 2026-11-05。{lw_date} 收盤的訊號起生效，當天一次調到位，之前的紀錄不改寫。<br>
+• <b>{lw_date}</b>（持有人 {lw_date} 拍板）：<b>美股指數部權重由 QQQ 50%／SMH 50% 改為 QQQ 70%／SMH 30%</b>，台股各半不變；Supertrend 規則、債金疊加不動。理由是降低單一循環曝險（SMH 的獲利預估集中在記憶體），不是績效；依據見規則帳本 2026-11-05。{lw_date} 收盤的訊號起生效，當天一次調到位，之前的紀錄不改寫。 <a href="/long-track/why-qqq70-smh30.html">為什麼改 QQQ 70／SMH 30 →</a><br>
 </div>
 </details>
 </div>
