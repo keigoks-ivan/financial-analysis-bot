@@ -103,6 +103,7 @@ if HERE not in sys.path:
 
 from engine import grp  # noqa: E402
 from engine import build_arena as arena  # noqa: E402
+from engine import rulecard  # noqa: E402
 
 PICKS = os.path.join(DOCS, "picks", "picks.json")
 OUT = os.path.join(DOCS, "picks", "tenbagger.json")
@@ -493,6 +494,11 @@ def main(argv=None):
 
     # ── console summary ──
     print(f"[build_tenbagger] wrote {OUT}")
+    # 精選榜頁的席位規則卡由 rulecard.py 產生（門檻與日期從程式常數讀）；OUT 同目錄沒有 _embed.html 時（測試）不動
+    try:
+        rulecard.refresh_picks_embed(os.path.join(os.path.dirname(OUT), "_embed.html"))
+    except Exception as e:  # noqa: BLE001
+        warn(f"規則卡更新失敗：{e}")
     print(f"[build_tenbagger] as_of={as_of}  universe={universe_size}")
     print("[build_tenbagger] gate funnel（v5 小市值池）：")
     prev = None

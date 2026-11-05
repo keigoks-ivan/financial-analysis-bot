@@ -10,7 +10,8 @@
 - 已切換的持股：只有「週線 Supertrend 翻空」或「出池」才賣；跌 10% 紅燈、跌破 200 日線、台股看大盤切換出場、
   美股看板大盤多頭續抱例外，一律不看；倉位固定滿倉。
 - 沒切換的持股：照現行全部出場規則與時機燈倉位。
-- 「出池」＝網站現行資格判定（grp.grp_score 的 pass、市值帶 cap_ok、market_ok），本檔不另寫。
+- 已切換者的「出池」只看基本面（grp.grp_score 的 fundamental_pass：成長閘、品質閘、上修否決含 yfinance 保守否決、體質拒絕、
+  衰退 ⛔、180 天內 DD 迴避），不看站上 52 週線、估值閘、融券、市值帶；沒切換者的出池是網站現行全部資格判定（pass）。
 
 Supertrend 一律用 scripts/supertrend_core.supertrend()（與實單同一支）。價格＝Yahoo 還原權息日線（auto_adjust=True）
 的週 K；買進價與停損線同一價格尺度。買進價缺紀錄時用進席日（帳本快照日）的還原收盤，且每次執行都用最新抓到的還原序列重取，
@@ -498,23 +499,6 @@ def chip_html(st: dict | None) -> str:
     cls = "bw-chip"
     text = f"出場：{short}" + (f" · 停損 {st['st_line']:,.2f}" if st.get("st_line") is not None else "")
     return f'<span class="{cls}" title="{escape(title)}">{escape(text)}</span>'
-
-
-RULE_HTML = (
-    '<div class="bw-note-line"><b>賣法（2026-11-07 週六席位排程起）</b>：持股只要盤整突破，或週線 Supertrend 的停損線高過買進價，'
-    '就改看 Supertrend，之後只在週線 Supertrend 翻空，或基本面不合格時才賣。進場、補席、排隊順序都不變。</div>'
-    '<div class="bw-note-line"><b>怎麼切換</b>：每週五收盤，用還原權息的週收盤判定一次，任一成立就切換，切換後不改回來。'
-    '盤整突破＝這週收盤高於之前所有週的收盤，而且離上一次創新高至少 8 週。停損線＝這檔週線 Supertrend（ATR 14、倍數 3）為多方時，'
-    '畫在價格下方的那條線；它高於買進價，代表現在賣出至少不虧。</div>'
-    '<div class="bw-note-line"><b>已切換的持股</b>：不看距新高跌 10% 的紅燈、不看 200 日線，也不吃大盤多頭續抱的例外，倉位固定滿倉。'
-    '只有兩種情況賣：週線 Supertrend 翻空，或基本面不合格。基本面不合格指三年成長或品質閘沒過、財報後上修 −5% 以下、體質拒絕、'
-    '衰退訊號 ⛔、180 天內的 DD 迴避。站上 52 週線、估值閘、市值門檻、融券比不再是賣出理由。</div>'
-    '<div class="bw-note-line"><b>還沒切換的持股</b>：照原本的賣法與時機燈倉位，下方「還沒切換的持股，賣法」就是原規則。例外：估值閘轉紅、其他資格都還過的在席者續抱、不加碼，倉位不超過估值轉紅前的倉位，標「估值偏貴・不加碼」（2026-11-07 起）。</div>'
-    '<div class="bw-note-line"><b>依據與退回條件</b>：依據是<a href="/backtest/seat_supertrend/">選股席位 Supertrend 比較頁</a>。這一組美股看板 Calmar 0.38、現行 0.36，'
-    '台股席位 0.78 對 0.78，等於打平，沒有改善；17 組試驗都是看過前面結果才加的。採用的理由是跟實單的做法一致，由持有人裁量，不是績效通過。'
-    '2027-11-06 回顧一次：新規則實際名單的報酬落後舊規則對照線，而且最大跌幅比對照線深，兩者同時成立就改回舊規則，否則維持；中途不因落後而改。'
-    '美股看板與台股席位各自判斷。</div>'
-    '<div class="bw-note-line"><b>精選榜沒有改</b>：比較頁裡精選榜（中小型）換成這套賣法的結果比現行差，所以精選榜仍是「時機燈轉紅就賣」。</div>')
 
 
 def legacy_html(legacy: dict | None, label: str, name_of=lambda t: t, nav: dict | None = None) -> str:

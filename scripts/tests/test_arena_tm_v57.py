@@ -182,7 +182,7 @@ def test_e2e_bull_week_red_incumbent_stays_with_last_nonred_size(tmp_path, monke
     state = json.loads(paths["STATE_JSON"].read_text(encoding="utf-8"))["last_nonred"]
     assert state["PQRSA"]["size"] == 0.5 and state["PQRSB"]["size"] == 1.0     # 紅燈者保留舊值，亮燈者更新
     html = paths["BOARD_HTML"].read_text(encoding="utf-8")
-    assert "v5.7 變更" in html and "/cockpit/#seats-grid" in html and "多頭" in html
+    assert "席位規則（美股看板）" in html and "不賣（續抱）" in html and "多頭" in html
 
 
 def test_e2e_bull_week_missing_state_uses_one_and_logs(tmp_path, monkeypatch, capsys):

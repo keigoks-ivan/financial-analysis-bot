@@ -122,26 +122,3 @@ def update_state(state: dict, core_rows: list, as_of: str, lit_codes) -> dict:
         elif t in state:
             new[t] = state[t]
     return new
-
-
-def market_note_html(market) -> str:
-    """頁面用：賣法一句話＋目前大盤狀態一行＋v5.7 註記（HTML 片段，已跳脫過的固定文字＋數字）。"""
-    rule = ("<div class=\"bw-note-line\"><b>賣法</b>：大盤多頭（SPY 還原收盤在 200 日線之上）時，紅燈在席者續抱（不論離歷史新高多遠、有沒有跌破 200 日線），"
-            "只有資格不成立（出池，含站上 52 週線這一條；只差估值閘紅燈不算出池，續抱但不加碼）才賣；大盤空頭時，時機燈轉紅就賣（距歷史新高超過 10% 或跌破 200 日線）。"
-            "續抱者倉位沿用最近一次非紅燈的倉位。</div>")
-    st = (market or {}).get("status")
-    d = (market or {}).get("data_date") or "—"
-    if not market or st in ("stale", "missing"):
-        line = (f"大盤資料未更新，本週照空頭處理，用「時機燈轉紅就賣」（最近一筆資料日期 {d}）。")
-    else:
-        nums = f"SPY 還原收盤 {market['close']:,.2f}"
-        nums += (f"，200 日線 {market['ma200']:,.2f}" if market.get("ma200") is not None
-                 else "，200 日線資料不足，算多頭")
-        word, way = (("多頭", "本週紅燈不賣，只在出池才賣") if st == "bull"
-                     else ("空頭", "本週用「時機燈轉紅就賣」"))
-        line = f"大盤狀態（{d} 收盤）：{nums}，<b>{word}</b>。{way}。"
-    note = ("<div class=\"bw-note-line\"><b>v5.7 變更（2026-10-21）</b>：賣法由「時機燈轉紅就賣」改成「大盤空頭才看紅燈」。"
-            "這是持有人的破例決定，不是回測登記通過。依據是美股大型股在配對格全期 100%、前段 81%、後段 91% 變好，"
-            "但大型股在登記裡只當參考，判定母體（美股中小型）偏好紅燈就賣。研究依據見 "
-            "<a href=\"/cockpit/#seats-grid\">席位全格子測試</a>。入場、排序、倉位係數不變。</div>")
-    return rule + f"<div class=\"bw-note-line\">{line}</div>" + note

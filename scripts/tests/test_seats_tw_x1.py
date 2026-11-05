@@ -396,10 +396,9 @@ def test_page_shows_rule_and_state_line_without_changelog(env):
     env.pool_json([_stock('1111.TW')], '2026-10-16')
     tw.build(False, today=date(2026, 10, 17))
     html = env.html()
-    assert ('大盤多頭（加權報酬指數在 200 日線之上）時，在席者離歷史新高再遠也續抱，跌破自己的 200 日線才賣；'
-            '大盤空頭時，時機燈轉紅就賣（距歷史新高超過 10% 或跌破 200 日線）。') in html
+    assert '席位規則（台股席位）' in html and '跌破自己的 200 日線' in html     # 規則改由 rulecard 產生的規則卡負責
     assert '大盤狀態（2026-10-15 收盤）：加權報酬指數 110.00，200 日線 100.05，<b>多頭</b>' in html
-    assert '大盤多頭續抱' in html and '倉位沿用最近一次非紅燈的倉位' in html
+    assert '不賣（續抱）' in html
     assert '變更紀錄' not in html and '現行賣法' not in html
     assert '台股核心席 · 資料日' in html and '台股核心席 v5' not in html
 

@@ -120,8 +120,8 @@ _seat_engine_v5_1_20260918.md §1／knowledge/rule_ledger.md「v5.1 估值閘」
 資格閘加估值閘，機械取代 DD 報告的估值判斷：紅＝PEG（只讀 live_peg＝現價÷明年預估 EPS÷三年成長，缺值就不看這一半）
 >2.0，或 PE NTM 相對五年均倍數（pe_vs_5y_x，dd-screener 已算好）>1.75，任一則紅
 （valuation_gate()）；紅燈整體排除、不進池，兩者皆缺不算否決（標 ⚪ 缺值）。是
-入池／月頻換席的資格閘，**不是**月中硬否決——不進 build_arena.hard_veto_v5() 的
-七項之列，核心席不因估值轉紅在月中被踢（下次月頻整批重選才會反映）。
+入池資格閘。2026-11-07 起：還沒切換 Supertrend 的現任只差估值閘時續抱、不加碼（seat_valhold）；
+非現任仍要全過才能補進空席。月頻輪動與 hard_veto_v5() 早已不呼叫（v5.2 起每週六重選）。
 
 v5.2（2026-10-09 持有人拍板，見 knowledge/rule_ledger.md 同日三列）——
   1. 成長閘統一 15%：取消 v4 對 durable_5y 放寬至 10%。
@@ -258,7 +258,7 @@ PEAK_ROIC_X = 1.3          # roic_vs_5y_x ≥ 此值 → peak（純顯示註記�
 # 融券比不是排序因子、不是資格閘——只比照 overheated 的待遇，排除核心候選資格
 # （衛星照樣能坐）。依據：高融券預測低報酬的學術證據集中在尾巴（>10-20% 流通股），
 # 大型優質股母體內 1-3% 的差異是雜訊，故不進 own_score 排序。
-SI_CORE_EXCLUDE_PCT = 10.0   # short_interest_pct_float > 此值 → high_short_interest（只能衛星）
+SI_CORE_EXCLUDE_PCT = 10.0   # short_interest_pct_float > 此值 → high_short_interest（v5 起整體資格排除，不是只能衛星）
 # v4.1（2026-09-17，見 rule_ledger「v4.1 基期效應＋循環股守門」列）：基期效應與
 # 循環股守門的門檻常數，DD 技能既有機械規則搬進引擎，不新創判準。
 BASE_EFFECT_STEP12_X = 1.6     # FY1→FY2 跳增倍數門檻（f2/f1）
@@ -398,9 +398,8 @@ def valuation_gate(s: dict) -> dict:
     五年均倍數代替）。紅燈：PEG（只讀 s["live_peg"]＝現價÷明年預估 EPS÷三年成長，
     2026-10-21 全站口徑統一；不再退回 QGM／yfinance 的 s["peg"]）
     > VAL_PEG_MAX，或 PE NTM 相對五年均倍數（s["pe_vs_5y_x"]，dd-screener 已算好）
-    > VAL_PE_VS_5Y_MAX，任一項紅即紅。這是入池／月頻換席時的資格閘，不是月中硬否決
-    （見 build_arena.hard_veto_v5() 同段註解——`veto_valuation` 不在七個硬否決之列，
-    核心席不因估值轉紅在月中被踢）。
+    > VAL_PE_VS_5Y_MAX，任一項紅即紅。這是入池資格閘。2026-11-07 起，還沒切換 Supertrend 的現任
+    只差這一道時續抱、不加碼（seat_valhold.py）；非現任仍要全過才能補進空席。
 
     缺值：兩者皆缺 → 不否決，燈號 ⚪ 缺值（僅記錄在本函式回傳的 `why`，不視為紅燈）；
     缺一個 → 只用另一個判定（不因為只有一個數字就從嚴或從寬）。

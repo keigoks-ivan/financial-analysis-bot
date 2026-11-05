@@ -116,6 +116,7 @@ from engine import build_arena as ba  # noqa: E402
 from engine import grp  # noqa: E402
 from engine import seat_st  # noqa: E402
 from engine import seat_valhold  # noqa: E402
+from engine import rulecard  # noqa: E402
 import tw_filing_calendar  # noqa: E402
 
 TW_POOL_JSON = ROOT / 'docs' / 'dd-screener' / 'tw' / 'latest.json'
@@ -451,13 +452,9 @@ def _table(views, lamp_map, seat_prefix=None, empty_seats=0):
 
 def _legend():
     return """<details class="bw-fold" open><summary>怎麼讀這張表</summary>
-<div class="bw-note-line"><b>三關一燈</b>：先過資格，再依財報後上修排序，最後由時機燈決定倉位。核心席每週六（台北）依週五收盤判斷：現任抱著；還沒切換 Supertrend 的在席者在出池或時機燈轉紅時下席（只差估值閘紅燈不算出池，續抱但不加碼，2026-11-07 起），已切換者只在週線 Supertrend 翻空或基本面出池時下席（2026-11-07 起，細節見上方賣法）；空席才從池內時機燈亮著的名字依上修由高到低補，亮燈不足就空席；週中燈號只管倉位。規則跟美股核心席相同，只有品質條件、市值門檻與大盤例外按台股設定。這是研究名單，不是帳戶持倉。</div>
-<div class="bw-note-line"><b>資格</b>：三年成長、品質、站上 52 週線三項全過。三年成長＝Koyfin 今年到後年的每股盈餘年化成長 ≥15%，沒有第三年預估就不算過。品質＝投入資本報酬率（ROIC）≥15% 且營業現金流利潤率 ≥10%，或 ROIC ≥25% 且營業現金流利潤率不為負。台股資本支出重，所以品質看營業現金流，美股看自由現金流。另外五種情況直接出局：體質拒絕、衰退 ⛔、180 天內的 DD 迴避、財報後上修 ≤−5%、估值閘紅燈（PEG &gt;2.0 或本益比相對五年均值 &gt;1.75 倍；已在席且還沒切換 Supertrend 的持股例外，續抱但不加碼）。市值不另設門檻，台股池本身已是 10 億美元以上。</div>
+<div class="bw-note-line"><b>規則在哪裡</b>：進池條件、補席、倉位、賣法、切換 Supertrend、退回條件與版本史，見上方「席位規則」。這是研究名單，不是帳戶持倉。</div>
 <div class="bw-note-line"><b>上修</b>：分析師把每股盈餘預估調高了幾 %。基準是這檔股票最近一次財報前的 Koyfin 快照，缺財報錨定時看近三個月。財報日先看 yfinance，沒有就用公開資訊觀測站上董事會通過財報的日期，兩邊都沒有就取該季季底前的快照。資格全過就入池（v5.7 起沒有上修門檻），池內由高到低排，同值先比隱含成長率，再比盈餘殖利率。上修只管排序。</div>
 <div class="bw-note-line"><b>時機燈</b>：量的是距還原權息歷史新高多遠，燈號直接對應還沒切換 Supertrend 的持股倉位（已切換者固定滿倉）：綠 1.0／黃 1.0／橘 0.5／紅 0／不合格 0。🟢 可進＝距新高 3% 以內且站上 200 日線，正常倉。🟡 接近＝差 3%～10% 且站上 200 日線，同樣正常倉。距歷史新高資料缺的黃燈標「🟡 資料缺」，暫列半倉。🟠 過熱＝已在突破帶，但近 12 個月（扣最近一個月）漲幅 &gt;150%，半倉。🔴 拉回中＝差超過 10% 或跌破 200 日線，零倉。⚫ 不合格＝未站上 52 週線。🟢🟡🟠 算亮燈。滑過燈號可看階段燈，階段燈不影響時機燈。</div>
-<div class="bw-note-line"><b>v5.7 變更（2026-10-21）</b>：拿掉「上修 ≥5% 才入池」，資格全過就入池，上修只決定排序。這是持有人的破例決定，不是回測登記通過。原因是決定當天資格全過 30 檔，上修最高不到 3%，核心席從 10 月 9 日上線以來一直空著。回測（席位全格子測試）用的台股規則本來就沒有上修門檻，因為台股沒有歷史預估；估值閘和三年成長閘回測也沒有。研究依據見 <a href="/cockpit/#seats-grid">席位全格子測試</a>。當時其餘規則不變：時機燈亮著取前 5、看大盤切換出場、大盤空頭週不補新席。賣法已於 2026-11-07 改為盤整突破或停損線高過買進價的持股看 Supertrend，沒切換的才適用這裡的看大盤切換出場。</div>
-<div class="bw-note-line"><b>大盤多頭續抱（還沒切換 Supertrend 的持股）</b>：大盤多頭時，只因離歷史新高超過 10% 而轉紅、仍在池內的在席者照樣續抱，燈號標「🔴 續抱」，倉位沿用最近一次非紅燈的倉位。</div>
-<div class="bw-note-line"><b>回測（舊賣法）</b>：照舊規則回測 2013-03 至 2026-09，持有全部合格股年化報酬 13.21%，最大回撤 −57.01%；同期買進持有 0050 年化 20.32%，最大回撤 −33.96%。報酬和回撤都不如 0050。</div>
 <div class="bw-note-line"><b>下次財報</b>：「≤N 天」是公司還沒公告日期，依法定期限推算（第一季 5/15、第二季 8/14、第三季 11/14、年報 3/31），實際可能更早。距財報 7 天內標橘色。</div>
 <div class="bw-note-line"><b>底部</b>：只在距歷史新高 10% 以內才算。回檔一次比一次小、量縮、離底部高點近算「緊」，否則算「鬆」。只排 ② 可買裡 🟡 接近新高組的順序，不改燈號或倉位。結果顯示在備註欄，例如「底部 緊 2段」。</div>
 <div class="bw-note-line"><b>耐久</b>：QGM 五年 ROIC 穩定度 ≥75%，或 Koyfin 五年平均、三年平均、現值三者都 ≥15%，兩種擇一達標。只是旗標，不擋資格；達標的在備註欄顯示「耐久 ✓」。</div>
@@ -485,10 +482,10 @@ RULE_LINE = ('大盤多頭（加權報酬指數在 200 日線之上）時，在�
 BUY_LINE = '大盤空頭的週六不補新席，空席放現金；大盤回到多頭的下一個週六照常補。'
 
 
-def _market_html(market):
+def _market_html(market, rules=True):
     """賣法一句話＋目前大盤狀態一行（v5.4）。market＝market_state() 的結果。"""
     rule = (f'<div class="bw-note-line"><b>賣法</b>：{RULE_LINE}</div>'
-            f'<div class="bw-note-line"><b>補位</b>：{BUY_LINE}</div>')
+            f'<div class="bw-note-line"><b>補位</b>：{BUY_LINE}</div>') if rules else ''
     if not market:
         return rule
     st = market.get('status')
@@ -538,9 +535,8 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + f'<div class="bw-rule">{escape(rule)}</div>'
         + '<h3 class="bw-sec">① 核心席（5）</h3>'
         + '<div class="bw-sub">每週六（台北）依週五收盤：池內時機燈亮著（距歷史新高 ≥−10% 且站上 200 日線）'
-          '的名字補空席，依上修由高到低；現任抱著，不因排名被換掉；亮燈不足就空席，不拿紅燈湊數。已切換 Supertrend 的現任不看紅燈，賣法見上方。</div>'
-        + fresh + st_html + (_market_html(market).replace('<b>賣法</b>', '<b>還沒切換的持股，賣法</b>', 1)
-                             if st_html else _market_html(market)) + status
+          '的名字補空席，依上修由高到低；現任抱著，不因排名被換掉；亮燈不足就空席，不拿紅燈湊數。賣法與完整規則見上方「席位規則」。</div>'
+        + fresh + rulecard.tw_card_html(_market_html(market, rules=False)) + st_html + status
         + ba._seat_view_bar_html()
         + _table(core_v, lamp_map, seat_prefix='C', empty_seats=CORE_SLOTS - len(core_v))
         + (f'<div class="bw-note-line">空席 {CORE_SLOTS - len(core_v)}：'
@@ -559,7 +555,7 @@ def render_html(as_of, rev_as_of, lamp_as_of, last_rotation_date, sel, views, n_
         + (''.join(waiting_parts) or '<div class="bw-note-line">（無）</div>')
         + '</details>'
         + f'<details class="bw-fold bw-secfold"><summary>③b 太貴不入池（{len(sel["too_expensive"])} 檔）</summary>'
-        + '<div class="bw-sub">其他資格全過，只有估值閘紅燈。已在席的不賣、不加碼，沒在席的不補。</div>'
+        + '<div class="bw-sub">其他資格全過，只有估值偏貴。已在席、還沒切換的現任不賣、不加碼；已切換的不看估值；空席不補這些名字。</div>'
         + _table(v(sel['too_expensive']), lamp_map)
         + '</details>'
         + '</div>'
@@ -701,9 +697,9 @@ def build(reselect, today=None):
                 'as_of': ls.get('date')}
         names = {s0['ticker']: s0.get('name') for s0 in doc['stocks']}
         nm = lambda t: f"{t.split('.')[0]} {names.get(t) or ''}".strip()  # noqa: E731
-        st_html = seat_st.RULE_HTML + seat_st.legacy_html(legacy_view, '台股席位', nm, nav=seat_st.nav_summary(st_nav_doc))
+        st_html = seat_st.legacy_html(legacy_view, '台股席位', nm, nav=seat_st.nav_summary(st_nav_doc))
     else:
-        legacy_view, st_html = None, seat_st.RULE_HTML   # 生效日前也先寫明新賣法與生效日
+        legacy_view, st_html = None, ''
     if hypo_doc:
         hnm = lambda t: (f"{t.split('.')[0]} {h['name']}" if (h := (hypo_doc.get('holdings') or {}).get(t)) and h.get('name')  # noqa: E731
                          else t.split('.')[0])

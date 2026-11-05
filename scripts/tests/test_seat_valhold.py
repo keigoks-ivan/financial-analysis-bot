@@ -240,7 +240,7 @@ def test_end_to_end_three_lines_all_apply_and_size_is_the_smaller_one(venv):
     pre = json.loads((out / 'seat_valhold_state_tw.json').read_text(encoding='utf-8'))['lines']
     assert all(pre[k]['1000.TW']['size'] == 0.5 and 'fallback' not in pre[k]['1000.TW'] for k in ('new', 'legacy', 'hypo'))
     html = (out / '_seats_tw_body.html').read_text(encoding='utf-8')
-    assert '估值偏貴・不加碼' in html and '已在席的不賣、不加碼，沒在席的不補' in html
+    assert '估值偏貴・不加碼' in html and '已在席、還沒切換的現任不賣、不加碼' in html
 
     # 週 3：大盤翻空，現任又紅燈 → 照樣下席，三條線都下
     env.market([100.0] * 259 + [90.0], date(2026, 11, 26))
