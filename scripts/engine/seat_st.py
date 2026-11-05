@@ -231,6 +231,15 @@ def apply_overlay(pool_ranked: list, prev_core, status: dict, all_rows=None):
     return new_pool, prev_for, removed
 
 
+def new_rule_rotation(pool_rows: list, prev_core, status: dict, all_rows, selector) -> dict:
+    """新規則的一次選席（實際新規則線與假設線共用）：套 apply_overlay 後交給 selector(池, 上期名單)，
+    再把「週線 Supertrend 翻空」下席併進 removed。"""
+    pool_sel, prev_sel, st_removed = apply_overlay(pool_rows, prev_core, status, all_rows)
+    rot = selector(pool_sel, prev_sel)
+    rot["removed"] = list(rot["removed"]) + st_removed
+    return rot
+
+
 def mark_core_rows(core_rows: list, status: dict) -> None:
     """在席列掛上 r['st']（顯示用），已切換者倉位固定滿倉。直接改列。"""
     for r in core_rows:
@@ -260,7 +269,7 @@ def public_view(s: dict) -> dict:
             "switch_reason_text": REASON_TEXT.get(s.get("reason")) if s.get("switched") else None,
             "entry_date": s.get("entry_date"), "entry_price": rnd(s.get("entry_price")),
             "st_dir": s.get("st_dir"), "st_line": rnd(s.get("st_line")),
-            "week": s.get("week"), "data_ok": bool(s.get("data_ok"))}
+            "week": s.get("week"), "data_ok": bool(s.get("data_ok")), "name": s.get("name")}
 
 
 # ---------------------------------------------------------------- 每週記帳（退回條件用）
@@ -282,6 +291,19 @@ def _close_at(daily, label):
     return None if px.empty else float(px.iloc[-1])
 
 
+def _hold_return(positions: dict, asof: str, wk: str, loader, slots: int = SLOTS):
+    """持倉（{ticker: 倉位係數}，每席 1/slots 資金）從 asof 週五到 wk 週五的報酬（還原收盤）。回傳 (報酬, 缺價代號)。"""
+    tot, missing = 0.0, []
+    for t, size in (positions or {}).items():
+        d = loader(t)
+        p0, p1 = _close_at(d, asof), _close_at(d, wk)
+        if p0 and p1:
+            tot += (size / slots) * (p1 / p0 - 1.0)
+        else:
+            missing.append(t)
+    return tot, missing
+
+
 def update_nav(doc: dict, decision_date, new_pos: dict, legacy_pos: dict, loader, slots: int = SLOTS) -> dict:
     """每週淨值（只在 --ledger 週跑呼叫）。new_pos／legacy_pos＝{ticker: 倉位係數}，是這次決策後要持有的在席者與倉位
     （新規則：已切換者 1.0、其餘時機燈倉位；舊規則：現行倉位）。每個席位占 1/slots 資金，空席與未投入的部分是現金。
@@ -299,14 +321,8 @@ def update_nav(doc: dict, decision_date, new_pos: dict, legacy_pos: dict, loader
     elif hold.get("asof") and hold["asof"] < wk:
         row = {"week": wk, "missing": []}
         for key in ("new", "legacy"):
-            tot = 0.0
-            for t, size in (hold.get(key) or {}).items():
-                d = loader(t)
-                p0, p1 = _close_at(d, hold["asof"]), _close_at(d, wk)
-                if p0 and p1:
-                    tot += (size / slots) * (p1 / p0 - 1.0)
-                else:
-                    row["missing"].append(t)
+            tot, miss = _hold_return(hold.get(key) or {}, hold["asof"], wk, loader, slots)
+            row["missing"].extend(miss)
             row[f"{key}_ret"] = round(tot, 6)
             row[key] = round(series[-1][key] * (1.0 + tot), 6)
         row["missing"] = sorted(set(row["missing"]))
@@ -345,6 +361,118 @@ def save_nav(path: Path, doc: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
+
+
+# ---------------------------------------------------------------- 第三條對照線：假設新規則從 2024-01-02 起一直在跑
+HYPO_SCHEMA = "seat-st-hypo-1.0"
+HYPO_START = "2024-01-02"
+
+
+def load_hypo(path: Path) -> dict:
+    try:
+        d = json.loads(path.read_text(encoding="utf-8"))
+        return d if d.get("schema") == HYPO_SCHEMA else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def save_hypo(path: Path, doc: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
+
+def _hypo_holding(s: dict) -> dict:
+    return {"entry_date": s.get("entry_date"),
+            "entry_price": None if s.get("entry_price") is None else round(float(s["entry_price"]), 4),
+            "switched": bool(s.get("switched")), "switch_week": s.get("switch_week"),
+            "switch_reason": s.get("reason"), "st_dir": s.get("st_dir"),
+            "st_line": None if s.get("st_line") is None else round(float(s["st_line"]), 4),
+            "week": s.get("week"), "data_ok": bool(s.get("data_ok"))}
+
+
+def hypo_step(doc: dict, decision_date, as_of, rotate, size_of, loader, slots: int = SLOTS, known=None, name_of=None) -> dict:
+    """假設線每週維護（只在 --ledger 週跑呼叫）。與實際新規則線用同一組函式：build_status（切換判定）、
+    apply_overlay（已切換者只看基本面出池／週線翻空；由呼叫端的 rotate 內呼叫）。
+    rotate(prev_core, status_prev) → {core, removed, filled}；size_of(ticker, switched) → 倉位係數。
+    起點是種子（doc 內的 roster／holdings／nav）。同一週重跑從上一週的狀態重算，結果相同。"""
+    wk = last_complete_friday(decision_date).date().isoformat()
+    doc = json.loads(json.dumps(doc))
+    base = doc["prev"] if doc.get("step_week") == wk and doc.get("prev") else \
+        {k: doc[k] for k in ("roster", "holdings", "events", "nav")}
+    base = json.loads(json.dumps(base))
+    prev, holds = list(base["roster"]), base["holdings"]
+    ent0 = {t: (holds[t]["entry_date"], None) for t in prev}
+    st0 = build_status(prev, ent0, decision_date, holds, loader)
+    # known＝網站母體內的代號集合；不在母體內的假設持股（回放母體較寬）網站看不到基本面：
+    # 已切換且週線沒翻空者續抱並占一席，其餘賣出（原因「不在網站母體」）。
+    miss = [t for t in prev if known is not None and t not in known]
+    keep_miss = [t for t in miss if st0[t].get("switched") and st0[t].get("st_dir") != "bear"]
+    rot = rotate([t for t in prev if t not in miss], st0)
+    rot = dict(rot, removed=list(rot.get("removed") or []), filled=list(rot.get("filled") or []))
+    for t in miss:
+        if t not in keep_miss:
+            rot["removed"].append((t, BEAR_WHY if st0[t].get("st_dir") == "bear" and st0[t].get("switched") else "不在網站母體"))
+    room = max(slots - len(keep_miss), 0)
+    core = keep_miss + list(rot["core"])[:room]
+    dropped = set(rot["core"][room:])
+    rot["filled"] = [x for x in rot["filled"] if x[1] not in dropped]
+    ent1 = entry_dates(core, [], {t: holds[t] for t in core if t in holds}, as_of)
+    st1 = build_status(core, ent1, decision_date, holds, loader)
+    events = list(base.get("events") or [])
+    day = str(as_of)[:10]
+    events += [{"date": day, "ticker": t, "kind": "賣出", "why": w} for t, w in rot.get("removed") or []]
+    events += [{"date": day, "ticker": t, "kind": "買進", "why": "補席"} for _, t in rot.get("filled") or []]
+    nav = base["nav"]
+    series = list(nav["series"])
+    if nav.get("asof") and nav["asof"] < wk:
+        ret, miss = _hold_return(nav.get("positions") or {}, nav["asof"], wk, loader, slots)
+        series.append({"week": wk, "nav": round(series[-1]["nav"] * (1.0 + ret), 6), "ret": round(ret, 6),
+                       "missing": sorted(set(miss)), "source": "site"})
+    new_nav = {"series": series, "asof": wk,
+               "positions": {t: float(size_of(t, bool(st1[t]["switched"]))) for t in core}}
+    out = {k: v for k, v in doc.items() if k not in ("prev", "step_week")}
+    hold_new = {t: _hypo_holding(st1[t]) for t in core}
+    for t, h in hold_new.items():     # 名稱：沿用舊的，新進席由呼叫端 name_of 補
+        h["name"] = (holds.get(t) or {}).get("name") or (name_of(t) if name_of else None)
+    out.update(roster=core, holdings=hold_new, events=events, nav=new_nav,
+               decision_date=str(decision_date)[:10], as_of=day, prev=base, step_week=wk)
+    return out
+
+
+def attach_hypo_to_nav(nav_doc: dict, hypo: dict | None) -> dict:
+    """把假設線的週淨值抄一份進新舊規則的週淨值檔（key＝hypo），三條線放在同一份檔案。新規則與舊規則的欄位不動。"""
+    out = json.loads(json.dumps(nav_doc)) if nav_doc else {}
+    if hypo and (hypo.get("nav") or {}).get("series"):
+        out["hypo"] = {"start": hypo.get("start", HYPO_START), "series": hypo["nav"]["series"]}
+    return out
+
+
+def _mdd(vals) -> float:
+    peak, m = vals[0], 0.0
+    for v in vals:
+        peak = max(peak, v)
+        m = min(m, v / peak - 1.0)
+    return m
+
+
+def hypo_summary(hypo: dict | None, nav_doc: dict | None = None) -> dict | None:
+    """三條線的數字。全程＝假設線從 2024-01-02 起；同窗＝與實際新規則線、舊規則對照線同一個起點（實際記帳第一週）。"""
+    series = ((hypo or {}).get("nav") or {}).get("series") or []
+    if not series:
+        return None
+    navs = [r["nav"] for r in series]
+    out = {"start": (hypo or {}).get("start", HYPO_START), "first_week": series[0]["week"], "last_week": series[-1]["week"],
+           "weeks": len(series) - 1,
+           "full": {"cum": round(navs[-1] / navs[0] - 1.0, 4), "mdd": round(_mdd(navs), 4)}}
+    ns = (nav_doc or {}).get("series") or []
+    if ns:
+        w0 = ns[0]["week"]
+        idx = [i for i, r in enumerate(series) if r["week"] >= w0]
+        if idx and series[idx[0]]["week"] == w0:
+            seg = navs[idx[0]:]
+            out["window"] = {"from": w0, "weeks": len(seg) - 1, "cum": round(seg[-1] / seg[0] - 1.0, 4),
+                             "mdd": round(_mdd(seg), 4)}
+    return out
 
 # ---------------------------------------------------------------- 顯示
 def exit_label(st: dict | None) -> tuple[str, str] | None:
@@ -400,6 +528,52 @@ def legacy_html(legacy: dict | None, label: str, name_of=lambda t: t, nav: dict 
     return ('<details class="bw-legacy"><summary>舊規則對照（只供比較，不寄信）</summary>'
             f'<div class="bw-note-line">{escape(label)}若仍用舊出場規則（跌 10% 紅燈就賣、跌破 200 日線等），'
             f'今天的在席名單是：{core_l}。本週舊規則下席：{rm}。</div>' + _nav_line(nav) + '</details>')
+
+
+def hypo_html(hypo: dict | None, summ: dict | None, nav: dict | None, label: str, name_of=lambda t: t) -> str:
+    """收合的第三條對照線區塊：假設新規則從 2024-01-02 起一直在跑。只供對照。"""
+    from html import escape
+    if not hypo:
+        return ""
+    pc = lambda x: f"{x * 100:+.1f}%"  # noqa: E731
+    seed = hypo.get("seed") or {}
+    rows = []
+    for t in hypo.get("roster") or []:
+        h = hypo["holdings"][t]
+        if h["switched"]:
+            why = {"a": "盤整突破", "b": "停損線高過買進價", "ab": "盤整突破且停損線高過買進價"}.get(h.get("switch_reason"), "")
+            short = f"Supertrend 或出池（自 {h.get('switch_week') or '—'}，{why}）"
+        else:
+            short = "尚未切換，照原規則（轉紅燈就賣）"
+        ep = f"{h['entry_price']:,.2f}" if h.get("entry_price") is not None else "—"
+        ln = f"{h['st_line']:,.2f}" if h.get("st_line") is not None else "—"
+        rows.append(f"<li><b>{escape(name_of(t))}</b>：買進日 {escape(str(h['entry_date']))}，買進價 {ep}（還原），"
+                    f"出場方式 {escape(short)}，目前停損線 {ln}。</li>")
+    table = ('<ul class="bw-hypo-list">' + "".join(rows) + '</ul>') if rows else \
+        '<div class="bw-note-line">假設線目前空手。</div>'
+    nums = ""
+    if summ:
+        nums = (f'<div class="bw-note-line"><b>假設線從 {escape(summ["start"])} 到 {escape(summ["last_week"])}</b>'
+                f'（共 {summ["weeks"]} 週）累計報酬 {pc(summ["full"]["cum"])}，最大跌幅 {pc(summ["full"]["mdd"])}。'
+                f'{escape(seed.get("decision_date") or "")} 以前是回放淨值，已扣交易成本。之後由網站每週記帳，未扣成本，每席占 1/5 資金。</div>')
+        if summ.get("window") and nav:
+            w = summ["window"]
+            nums += ('<div class="bw-note-line"><b>三條線同一起點比較</b>'
+                     f'（{escape(w["from"])} 起，共 {w["weeks"]} 週）：實際新規則累計 {pc(nav["new"]["cum"])}，最大跌幅 {pc(nav["new"]["mdd"])}。'
+                     f'舊規則對照線累計 {pc(nav["legacy"]["cum"])}，最大跌幅 {pc(nav["legacy"]["mdd"])}。'
+                     f'假設一直在跑累計 {pc(w["cum"])}，最大跌幅 {pc(w["mdd"])}。</div>')
+        else:
+            nums += '<div class="bw-note-line">實際新規則與舊規則對照線從 2026-11-06 起記帳，三條線同一起點的比較等第一筆記帳出來後才有。</div>'
+    diffs = "".join(f"<li>{escape(d)}</li>" for d in seed.get("differences") or [])
+    return ('<details class="bw-legacy"><summary>第三條對照線：假設新規則從 2024-01-02 起一直在跑（只供對照，不寄信）</summary>'
+            f'<div class="bw-note-line"><b>這是假設路徑，沒有實際下單，也不是下單依據。</b>假設新規則從 2024-01-02 起就一直在跑，'
+            f'{escape(label)}今天會坐下面這幾檔。起點的名單由歷史回放算到 {escape(seed.get("decision_date") or "")}，'
+            f'從 2026-11-06 收盤的週訊號（11-07 週六排程）起由網站接續，之後每週六照同一套規則更新。</div>'
+            + table + nums +
+            '<div class="bw-note-line"><b>這張表不能照著買。</b>表上的買進價是 2024 年起那條路徑的價位，'
+            '「停損線高過買進價」這類切換條件都用那個價位判斷。今天才買進的話買進價不同，切換狀態不會跟表上一樣，賣法也會不同。</div>'
+            + (f'<div class="bw-note-line">回放和網站規則有這些差異，種子只能做到這個程度：<ul>{diffs}</ul></div>' if diffs else '')
+            + '</details>')
 
 
 def _nav_line(nav: dict | None) -> str:

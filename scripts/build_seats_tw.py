@@ -125,6 +125,8 @@ SEATS_JSON = OUT_DIR / 'seats_tw.json'
 LEDGER_JSON = OUT_DIR / 'seats_tw_ledger.json'
 ST_NAV_JSON = OUT_DIR / 'seat_st_nav_tw.json'   # 新舊規則名單的每週淨值（退回條件用，只在 --ledger 週跑追加）
 ST_STATE_JSON = OUT_DIR / 'seat_st_state_tw.json'   # 2026-11-05 折衷組：買進日／切換狀態（engine/seat_st.py）
+ST_HYPO_JSON = OUT_DIR / 'seat_st_hypo_tw.json'   # 第三條對照線：假設折衷組從 2024-01-02 起一直在跑（只在週六重選時更新）
+ST_HYPO_SEED_JSON = OUT_DIR / 'seat_st_hypo_seed_tw.json'   # 該線的種子（一次性回放結果，不改）
 STATE_NAME = 'seats_tw_state.json'     # path resolved from OUT_DIR at run time (see _state_path)
 MARKET_CSV = ROOT / 'data' / 'macro_db' / 'series' / 'tw.twse_tri.csv'   # 發行量加權股價報酬指數
 MKT_MA = 200            # 大盤均線天數（登記 SeatExitSwitch_Prereg.md 第三節）
@@ -628,6 +630,7 @@ def build(reselect, today=None):
     apply_x1_hold(sel, state)
     seat_st.mark_core_rows(sel['core'], st_status)
     st_nav_doc = seat_st.load_nav(ST_NAV_JSON)
+    hypo_doc = seat_st.load_hypo(ST_HYPO_JSON) or seat_st.load_hypo(ST_HYPO_SEED_JSON)
     if st_on and reselect:
         by_row = {r['ticker']: r for r in rows}
 
@@ -642,6 +645,14 @@ def build(reselect, today=None):
             st_nav_doc, decision_date,
             {r['ticker']: (r.get('lamp') or {}).get('size') or 0.0 for r in sel['core']},
             {t: _legacy_size(t) for t in legacy_sel['rotation']['core']}, st_loader)
+        # 第三條對照線（假設一直在跑）：同一個 select（含大盤空頭不補席），起點是種子，名單只在週六重選時前進
+        hypo_doc = seat_st.hypo_step(
+            hypo_doc, decision_date, as_of,
+            lambda prev, st0: select(copy.deepcopy(rows), prev, True, last_snap=snaps[-1] if snaps else None,
+                                     market=market, st_status=st0)['rotation'],
+            lambda t, sw: 1.0 if sw else _legacy_size(t), st_loader, known=set(by_row),
+            name_of=lambda t: (by_row.get(t) or {}).get('name'))
+        st_nav_doc = seat_st.attach_hypo_to_nav(st_nav_doc, hypo_doc)
     if st_on:
         if legacy_sel is not None:
             legacy_view = {'core': legacy_sel['rotation']['core'], 'removed': list(legacy_sel['rotation']['removed']),
@@ -657,6 +668,11 @@ def build(reselect, today=None):
         st_html = seat_st.RULE_HTML + seat_st.legacy_html(legacy_view, '台股席位', nm, nav=seat_st.nav_summary(st_nav_doc))
     else:
         legacy_view, st_html = None, seat_st.RULE_HTML   # 生效日前也先寫明新賣法與生效日
+    if hypo_doc:
+        hnm = lambda t: (f"{t.split('.')[0]} {h['name']}" if (h := (hypo_doc.get('holdings') or {}).get(t)) and h.get('name')  # noqa: E731
+                         else t.split('.')[0])
+        st_html += seat_st.hypo_html(hypo_doc, seat_st.hypo_summary(hypo_doc, st_nav_doc), seat_st.nav_summary(st_nav_doc),
+                                     '台股席位', hnm)
     new_state = update_state(state, sel['core'], as_of)
     views = {r['ticker']: flat(r, today) for r in rows}
     industry = {s['ticker']: s.get('tw_industry') for s in doc['stocks']}
@@ -682,6 +698,7 @@ def build(reselect, today=None):
             ledger['roster_legacy'] = {'core': legacy_sel['rotation']['core']}
             seat_st.save_state(ST_STATE_JSON, st_status, as_of)
             seat_st.save_nav(ST_NAV_JSON, st_nav_doc)
+            seat_st.save_hypo(ST_HYPO_JSON, hypo_doc)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     BODY_HTML.write_text(render_html(as_of, rev_as_of, lamp_doc.get('as_of'), last_rotation_date,
@@ -699,6 +716,10 @@ def build(reselect, today=None):
         'seat_st': {'active': st_on, 'cutover_date': seat_st.CUTOVER_DATE, 'decision_date': decision_date,
                     'status': {t: seat_st.public_view(v) for t, v in st_status.items()},
                     'nav': seat_st.nav_summary(st_nav_doc)},
+        'seat_st_hypo': None if not hypo_doc else {
+            'decision_date': hypo_doc.get('decision_date'), 'roster': hypo_doc.get('roster'),
+            'holdings': hypo_doc.get('holdings'), 'summary': seat_st.hypo_summary(hypo_doc, st_nav_doc),
+            'events_tail': (hypo_doc.get('events') or [])[-10:]},
         'legacy_rule': legacy_view,
         'counts': {'universe': len(rows), 'eligible': len(sel['eligible']), 'pool': len(sel['pool']),
                    'with_revision': sum(1 for v in views.values() if v.get('rev_used_pct') is not None),
