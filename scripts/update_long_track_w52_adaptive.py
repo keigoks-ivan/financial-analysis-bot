@@ -3227,7 +3227,8 @@ def detect_overlay_changes(prev_state: dict, ov: dict | None, active: bool) -> l
                             "target_prev": round(t_prev, 2), "target_now": t_now, "info": ov[k]})
         return out
     for k in OVERLAY_LEGS:
-        n_prev = int((prev.get(k) or {}).get("n", 0)) if prev.get("active") else 0
+        # 前次紀錄若是 Supertrend 版（n 為 None；美股資料日落後一天時會回到三條件分支），當 0 條件，不能丟 TypeError
+        n_prev = int((prev.get(k) or {}).get("n") or 0) if prev.get("active") else 0
         n_now = ov[k]["n"]
         if n_now != n_prev:
             out.append({"leg": k, "n_prev": n_prev, "n_now": n_now,
