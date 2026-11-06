@@ -40,7 +40,7 @@ PROVIDERS = {
 }
 ALLOWED_HOSTS = {
     "fred.stlouisfed.org", "api.stlouisfed.org", "data.financialresearch.gov",
-    "cdn.cboe.com", "www.cboe.com", "publicreporting.cftc.gov", "www.cftc.gov",
+    "cdn.cboe.com", "cdn-api.cboe.com", "www.cboe.com", "publicreporting.cftc.gov", "www.cftc.gov",
     "markets.newyorkfed.org", "www.newyorkfed.org", "data-api.ecb.europa.eu",
     "data.ecb.europa.eu", "stats.bis.org", "data.bis.org", "www.bis.org",
     "www.stat-search.boj.or.jp", "api.stat-search.boj.or.jp", "www.boj.or.jp",
