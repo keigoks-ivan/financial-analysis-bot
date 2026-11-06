@@ -635,6 +635,7 @@ FUND_REGISTRY = {
         "holdings_url": "https://www.ishares.com/us/products/239675/ishares-msci-philippines-etf/latest-holdings.csv",
         "holdings_page_url": "https://www.ishares.com/us/products/239675/ishares-msci-philippines-etf",
         "other_listings": [],
+        "eps_unavailable_zh": "沒有資料來源：Yahoo Finance 沒有菲律賓交易所個股的盈餘預估，本檔不提供 EPS 修正、預估本益比與 PEG。",
     },
     "ENZL": {
         "label_zh": "iShares MSCI 紐西蘭 ETF（ENZL，美國掛牌）",
@@ -1965,9 +1966,20 @@ def normalize_price_quote(price: float | None, raw_currency: str | None) -> tupl
     return price, ccy.upper(), 1
 
 
+# Yahoo Finance 沒有菲律賓交易所（PSE）的個股行情與盈餘預估（2026-11-07 實測：.PS／.PH／.PM／.PSE
+# 後綴全 404，OTC ADR 如 BDOUY／ICTEY 也有行情但 eps_trend 是空表）。這類代號不送 yfinance，
+# 直接標「沒有資料來源」，免得每天白打 34 次 404，也免得 reason 寫成像是暫時抓失敗。
+NO_EPS_SOURCE_SUFFIXES = (".PS",)
+NO_EPS_SOURCE_REASON_ZH = "Yahoo Finance 沒有此交易所個股的盈餘預估資料來源"
+
+
 def fetch_ticker_eps_and_price(ticker: str) -> dict:
     global EPS_TREND_CALL_COUNT
     result = {"ticker": ticker, "status": "ok", "reason": None}
+    if ticker.endswith(NO_EPS_SOURCE_SUFFIXES):
+        result["status"] = "no_eps_source"
+        result["reason"] = NO_EPS_SOURCE_REASON_ZH
+        return result
     try:
         t = yf.Ticker(ticker)
         EPS_TREND_CALL_COUNT += 1
@@ -3430,6 +3442,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         "holdings_approximation_zh": holdings_approximation_zh,
         "n_holdings": len(constituents) + len(excluded),
         "n_holdings_covered": len(constituents),
+        "eps_unavailable_zh": cfg.get("eps_unavailable_zh"),
         "price": {"close": today_price_pt["close"], "date": today_price_pt["date"], "currency": pe_basis_ccy},
         "periods": periods,
         "weighted_forward_pe": {
@@ -3677,6 +3690,7 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         "holdings_approximation_zh": eps_cache.get("holdings_approximation_zh"),
         "n_holdings": len(constituents) + len(excluded),
         "n_holdings_covered": len(constituents),
+        "eps_unavailable_zh": cfg.get("eps_unavailable_zh"),
         "price": {"close": today_price_pt["close"], "date": today_price_pt["date"], "currency": pe_basis_ccy},
         "periods": periods,
         "weighted_forward_pe": {
@@ -4436,6 +4450,7 @@ def build_overview_json(strength_by_fund: dict | None = None) -> dict:
             # 2026-10-30 加：RS（總覽全部基金一起排名的近期強弱分數，算法見 strength.py）。
             **{f: (strength_by_fund or {}).get(etf_key, {}).get(f) for f in strength.RS_FIELDS},
             "eps_coverage_90d_pct": cov90,
+            "eps_unavailable_zh": d.get("eps_unavailable_zh"),
             "align_label_zh": ALIGN_LOW_COVERAGE_ZH if low_cov else strength.align_label_zh(pe90),
         })
     funds.sort(key=lambda f: f["etf_key"])

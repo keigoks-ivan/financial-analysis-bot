@@ -750,6 +750,9 @@ function renderInfoStrip(d){
     '<span><b>成分股數</b> '+d.n_holdings+'（EPS 有資料 '+d.n_holdings_covered+'）</span>',
     '<span><b>ISIN</b> '+esc(d.isin||'—')+'</span>'
   ];
+  if(d.eps_unavailable_zh){
+    bits.push('<span class="stale-flag">'+esc(d.eps_unavailable_zh)+'</span>');
+  }
   if(d.holdings_stale){
     bits.push('<span class="stale-flag">⚠ 今日持股抓取失敗，沿用上次成功快取（as of 上述日期）</span>');
   }
@@ -2041,7 +2044,7 @@ function renderOverviewTab(ov, tabKey){
   if(lows.length){
     lcEl.style.display = '';
     lcEl.innerHTML = '† 有分析師 EPS 預估的成分股不到七成權重（多為虧損股或沒有預估），本益比與判讀只代表有預估的部分。本頁受影響的是：'+
-      lows.map(function(r){ return esc(fundShortName(r))+'（'+esc(r.etf_key)+'，涵蓋 '+(r.eps_coverage_90d_pct!=null?Math.round(r.eps_coverage_90d_pct):0)+'%）'; }).join('、')+'。';
+      lows.map(function(r){ return esc(fundShortName(r))+'（'+esc(r.etf_key)+'，'+(r.eps_unavailable_zh?'沒有資料來源，Yahoo 沒有該市場個股的盈餘預估':'涵蓋 '+(r.eps_coverage_90d_pct!=null?Math.round(r.eps_coverage_90d_pct):0)+'%')+'）'; }).join('、')+'。';
   } else { lcEl.style.display = 'none'; lcEl.textContent = ''; }
 }
 
