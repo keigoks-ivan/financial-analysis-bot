@@ -146,6 +146,17 @@ def _period_to_start(period, end):
     return end - timedelta(days=n * _UNIT_DAYS[unit])
 
 
+def _yf_symbol(t):
+    """Site ticker → yfinance symbol (LVMH → MC.PA, RMS → RMS.PA, ABB → ABBNY …).
+    Table lives in dd_screener_quality.yf_symbol; identity if it can't be
+    imported. The cache and every caller keep the ORIGINAL ticker."""
+    try:
+        from dd_screener_quality import yf_symbol  # type: ignore
+        return yf_symbol(t)
+    except Exception:
+        return t
+
+
 def _fetch_missing(missing, auto_adjust):
     """Download `missing` tickers at CACHE_PERIOD in DOWNLOAD_BATCH_SIZE
     batches (each batch retried up to MAX_BATCH_RETRIES times on exception).
@@ -158,9 +169,10 @@ def _fetch_missing(missing, auto_adjust):
         chunk = missing[i:i + DOWNLOAD_BATCH_SIZE]
         chunk_no = i // DOWNLOAD_BATCH_SIZE + 1
         px = None
+        yf_of = {t: _yf_symbol(t) for t in chunk}
         for batch_attempt in range(1, MAX_BATCH_RETRIES + 1):
             try:
-                px = yf.download(chunk, period=CACHE_PERIOD, interval='1d',
+                px = yf.download(list(dict.fromkeys(yf_of.values())), period=CACHE_PERIOD, interval='1d',
                                   auto_adjust=auto_adjust, group_by='ticker',
                                   progress=False, threads=True)
                 break
@@ -175,7 +187,7 @@ def _fetch_missing(missing, auto_adjust):
             continue
         for t in chunk:
             try:
-                df = px[t]
+                df = px[yf_of[t]]
             except Exception:
                 continue
             if df is None or 'Close' not in df.columns:

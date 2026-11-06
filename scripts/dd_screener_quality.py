@@ -28,6 +28,7 @@ trade with US-format tickers in yfinance and don't need a suffix.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Optional
@@ -217,8 +218,38 @@ def _extract_qgm_quality(hfd: dict) -> dict:
 # ===== yfinance fallback =====================================================
 
 
+# Koyfin-style "{code}-{exchange}" (5246-KL, 3081-TWO, 6857-T, LYC-AX, VACN-SW) →
+# yfinance "{code}.{exchange}". Dash form is NOT a yfinance symbol.
+_KOYFIN_DASH_RE = re.compile(r"^([A-Z0-9]+)-(KL|TWO|TW|AX|SW|HK|KS)$")
+_KOYFIN_DASH_T_RE = re.compile(r"^(\d{4,6})-T$")
+# US class shares: BRK.B → BRK-B (letters-only code, single-letter class).
+_CLASS_SHARE_RE = re.compile(r"^[A-Z]+\.[A-Z]$")
+
+
+def yf_symbol(ticker: str) -> str:
+    """Site/DD ticker → yfinance symbol (shared by every price / info fetch).
+
+    Order: explicit override (LVMH → MC.PA, ABB → ABBNY) → EU suffix map
+    (RMS → RMS.PA) → Koyfin dash exchange suffix to dot (5246-KL → 5246.KL)
+    → US class share dot to dash (BRK.B → BRK-B) → unchanged. Dotted exchange
+    symbols (6857.T, LYC.AX, 3081.TWO, VACN.SW) pass through untouched.
+    """
+    t = str(ticker or "").strip()
+    if t in TICKER_YF_OVERRIDE:
+        return TICKER_YF_OVERRIDE[t]
+    if t in EU_SUFFIX_MAP:
+        return f"{t}{EU_SUFFIX_MAP[t]}"
+    m = _KOYFIN_DASH_RE.match(t) or _KOYFIN_DASH_T_RE.match(t)
+    if m:
+        return f"{m.group(1)}.{t.rsplit('-', 1)[1]}"
+    if _CLASS_SHARE_RE.match(t):
+        return t.replace(".", "-")
+    return t
+
+
 def _yf_ticker_for(dd_ticker: str) -> str:
-    """Resolve DD ticker → yfinance ticker (handle EU suffix; TW/JP pass through)."""
+    """Resolve DD ticker → yfinance ticker (override → EU suffix → pass-through).
+    Kept as-is for callers that must not get class-share / dash conversion."""
     # TW: "2330.TW" stays "2330.TW"
     # JP: "6857.T" stays "6857.T"
     # Explicit override (e.g. "LVMH" → "MC.PA") takes precedence

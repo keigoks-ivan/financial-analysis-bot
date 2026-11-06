@@ -43,12 +43,13 @@ OUT_HTML = os.path.join(ROOT, "docs", "track-record", "_body.html")
 CANONICAL = os.path.join(ROOT, "docs", "mental-models", "index.html")
 
 WINDOWS = [("d30", 30), ("d90", 90), ("d180", 180)]
-# Non-US suffix -> yfinance symbol override for the own-cache fetch.
-NONUS_MAP = {
-    "5274.TW": "5274.TWO", "8299.TW": "8299.TWO",
-    "BESI": "BESI.AS", "AENA": "AENA.MC", "LVMH": "MC.PA",
-    "RMS": "RMS.PA", "SU": "SU.PA", "ABB": "ABB",
-}
+
+
+def _yf_sym(t):
+    """DD ticker → yfinance symbol; table shared in dd_screener_quality.yf_symbol
+    (lazy import: it pulls pandas/yfinance, only needed when fetching)."""
+    from dd_screener_quality import yf_symbol
+    return yf_symbol(t)
 
 
 def warn(msg):
@@ -696,7 +697,7 @@ def main():
     weekly = load_weekly_series()
     # tickers absent from weekly_cache
     missing = sorted({o["ticker"] for o in obs if o["ticker"] not in weekly})
-    need = {t: NONUS_MAP.get(t, t) for t in missing}
+    need = {t: _yf_sym(t) for t in missing}
     need["SPY"] = "SPY"  # always refresh SPY into own cache for freshness/alignment
     if args.no_fetch:
         print("  --no-fetch: skipping yfinance")
