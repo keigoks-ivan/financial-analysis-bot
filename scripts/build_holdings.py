@@ -183,7 +183,7 @@ def build() -> dict:
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "as_of": stock_as_of,
         "source": "system-selected",
-        "note": "組合＝系統產出（指數部＝實單目標曝險；個股部＝決策引擎席位擂台在席者）。換席永遠人工拍板。",
+        "note": "組合＝系統產出（指數部＝實單目標曝險；個股部＝決策引擎席位擂台在席者）。席位名單由規則每週六更新；實際買賣由持有人自己把關，本檔不是成交紀錄。",
         "index_sleeve": _index_sleeve(state),
         "stock_sleeve": {
             "as_of": stock_as_of,

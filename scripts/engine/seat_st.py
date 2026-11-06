@@ -486,7 +486,7 @@ def exit_label(st: dict | None) -> tuple[str, str] | None:
         return ("Supertrend 或出池", f"自 {sw} 起：{st.get('switch_reason_text') or '—'}。只有週線 Supertrend 翻空或出池才賣，"
                                      f"不看跌 10% 紅燈與 200 日線，倉位滿倉。買進 {st.get('entry_date')}，買進價 "
                                      f"{st['entry_price']:,.2f}（還原）。{line}。")
-    return ("跌 10% 紅燈", f"尚未切換：照原規則（時機燈轉紅就賣）。買進 {st.get('entry_date')}，買進價 "
+    return ("時機燈與大盤多空", f"尚未切換：照時機燈與大盤多空出場（見規則卡）。買進 {st.get('entry_date')}，買進價 "
                           f"{st['entry_price']:,.2f}（還原）。{line}。")
 
 
@@ -528,7 +528,7 @@ def hypo_html(hypo: dict | None, summ: dict | None, nav: dict | None, label: str
             why = {"a": "盤整突破", "b": "停損線高過買進價", "ab": "盤整突破且停損線高過買進價"}.get(h.get("switch_reason"), "")
             short = f"Supertrend 或出池（自 {h.get('switch_week') or '—'}，{why}）"
         else:
-            short = "尚未切換，照原規則（轉紅燈就賣）"
+            short = "尚未切換，照時機燈與大盤多空（見規則卡）"
         ep = f"{h['entry_price']:,.2f}" if h.get("entry_price") is not None else "—"
         ln = f"{h['st_line']:,.2f}" if h.get("st_line") is not None else "—"
         rows.append(f"<li><b>{escape(name_of(t))}</b>：買進日 {escape(str(h['entry_date']))}，買進價 {ep}（還原），"

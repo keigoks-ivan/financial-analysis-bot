@@ -208,7 +208,7 @@ def test_exit_label_texts():
     sw = st.public_view(dict(_status(), entry_date="2026-10-24", entry_price=10.0, st_line=9.0, data_ok=True))
     short, full = st.exit_label(sw)
     assert short == "Supertrend 或出池" and "2026-11-06" in full and "9.00" in full
-    assert st.exit_label(dict(sw, switched=False))[0] == "跌 10% 紅燈"
+    assert st.exit_label(dict(sw, switched=False))[0] == "時機燈與大盤多空"
 
 
 # ── 選席：台股席位 ───────────────────────────────────────────────────────────
