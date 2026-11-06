@@ -43,6 +43,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
+from dd_screener_quality import yf_symbol as _yf_symbol  # noqa: E402
 
 UNIVERSE = ROOT / "data" / "engine" / "universe.json"
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
@@ -226,7 +227,7 @@ def stage2_revisions(cands: list[str], prev: dict[str, dict]) -> dict[str, dict]
     out: dict[str, dict] = {}
     for i, t in enumerate(cands, 1):
         try:
-            tr = yf.Ticker(t.replace(".", "-")).eps_trend
+            tr = yf.Ticker(_yf_symbol(t)).eps_trend
             row = tr.loc["+1y"] if "+1y" in tr.index else tr.iloc[-1]
             cur, d30 = float(row["current"]), float(row["30daysAgo"])
             rev = (cur / d30 - 1) * 100 if d30 else None

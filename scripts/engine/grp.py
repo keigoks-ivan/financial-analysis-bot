@@ -215,6 +215,57 @@ def load_caps() -> dict:
         return {}
 
 
+# 海外掛牌市值換美元（2026-11-07 補）：原本代號一律 t.replace(".", "-")，6857.T 變 6857-T、
+# LVMH 直接送 Yahoo，海外名字的市值全部抓不到、資格從嚴不予通過。改用站內共用代號對照
+# （dd_screener_quality.yf_symbol），原幣市值 ÷ USD{幣別}=X 收盤換成美元，與 MKTCAP_MIN 同單位。
+_SUBUNIT = {"GBp": ("GBP", 100.0), "GBX": ("GBP", 100.0), "ILA": ("ILS", 100.0),
+            "ZAc": ("ZAR", 100.0), "ZAC": ("ZAR", 100.0)}
+_FX_RATE: dict[str, float | None] = {}
+
+
+def _yf_symbol(t: str) -> str:
+    try:
+        from dd_screener_quality import yf_symbol
+        return yf_symbol(t)
+    except Exception:
+        return t.replace(".", "-")
+
+
+def _ccy_per_usd(yf, ccy: str) -> float | None:
+    if ccy not in _FX_RATE:
+        rate = None
+        try:
+            px = yf.Ticker(f"USD{ccy}=X").history(period="10d")["Close"].dropna()
+            rate = float(px.iloc[-1]) if len(px) else None
+        except Exception:
+            rate = None
+        _FX_RATE[ccy] = rate
+    return _FX_RATE[ccy]
+
+
+def _usd_mktcap(yf, t: str) -> float | None:
+    """美元市值；幣別或匯率拿不到就回 None（資格從嚴，不用原幣硬比）。"""
+    sym = _yf_symbol(t)
+    fi = yf.Ticker(sym).fast_info
+    mc = fi["marketCap"]
+    if not mc:
+        return None
+    try:
+        ccy = fi["currency"]
+    except Exception:
+        ccy = None
+    if not ccy:
+        # 沒有幣別：只有美股代號（無交易所後綴）才當美元
+        return float(mc) if "." not in sym else None
+    div = 1.0
+    if ccy in _SUBUNIT:
+        ccy, div = _SUBUNIT[ccy]
+    if ccy == "USD":
+        return float(mc) / div
+    rate = _ccy_per_usd(yf, ccy)
+    return float(mc) / div / rate if rate else None
+
+
 def fetch_caps(tickers: list[str], caps: dict | None = None) -> dict:
     """補抓缺少的市值（yfinance fast_info），寫回 cache。失敗沿用舊值（fail-open 顯示、
     fail-closed 資格——無市值資料者不給席位資格，但標示「市值未知」而非靜默通過）。"""
@@ -225,9 +276,9 @@ def fetch_caps(tickers: list[str], caps: dict | None = None) -> dict:
             import yfinance as yf
             for t in missing:
                 try:
-                    v = yf.Ticker(t.replace(".", "-")).fast_info["marketCap"]
+                    v = _usd_mktcap(yf, t)
                     if v:
-                        caps[t] = float(v)
+                        caps[t] = v
                 except Exception:
                     pass
         except ImportError:
