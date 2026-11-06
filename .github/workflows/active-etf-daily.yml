@@ -141,14 +141,12 @@ jobs:
           mkdir -p docs/active-etf/data
           cp data/active_etf/ticker_names.json docs/active-etf/data/ticker_names.json
 
-      - name: Fail the job if too many funds failed
-        if: steps.fetch.outputs.n_fail > 5 || steps.build.outcome == 'failure'
-        run: |
-          echo "::error::${{ steps.fetch.outputs.n_fail }} fund(s) failed to fetch (>5), or the build step itself errored — see previous steps' logs. This looks systemic, not a single issuer's site changing shape."
-          exit 1
-
+      # 失敗檔數超過 5 檔時，先把抓成功的基金提交，再讓 job 標紅（下一步）。
+      # 2026-11-05、11-06 曾因 8 檔失敗，連成功的 14 檔也整批沒提交。
+      # build 步驟本身出錯時不提交，避免寫進不完整的分析檔。
       - name: Commit and push if changed
         id: commit_and_push
+        if: steps.build.outcome != 'failure'
         env:
           IS_RETRY: ${{ github.event.inputs.retry || '0' }}
         run: |
@@ -173,6 +171,12 @@ jobs:
             echo "Push failed after 6 attempts"
             exit 1
           fi
+
+      - name: Fail the job if too many funds failed
+        if: always() && (steps.fetch.outputs.n_fail > 5 || steps.build.outcome == 'failure')
+        run: |
+          echo "::error::${{ steps.fetch.outputs.n_fail }} fund(s) failed to fetch (>5), or the build step itself errored — see previous steps' logs. This looks systemic, not a single issuer's site changing shape."
+          exit 1
 
       - name: Self-retrigger once after rebase conflict
         if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
