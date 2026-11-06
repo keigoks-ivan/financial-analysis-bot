@@ -1614,3 +1614,14 @@ def test_extend_price_series_back_to_fetch_failure_keeps_original(monkeypatch):
     monkeypatch.setattr(m, "fetch_etf_price_history", fail)
     series = [{"date": "2026-06-01", "close": 2.0}]
     assert m.extend_price_series_back_to("X", series, "2026-05-19") is series
+
+
+def test_holdings_age_stale_threshold_is_twice_refresh_cadence():
+    from datetime import date
+    t = date(2026, 11, 7)
+    assert m.holdings_age_stale("2026-09-23", t, "weekly") is True      # RSP：45 天
+    assert m.holdings_age_stale("2026-10-24", t, "weekly") is False     # 14 天，剛好不算
+    assert m.holdings_age_stale("2026-10-23", t, "weekly") is True      # 15 天
+    assert m.holdings_age_stale("2026-10-16", t, "monthly") is False    # TOPIX：22 天，月更新檔門檻 70 天
+    assert m.holdings_age_stale("2026-08-28", t, "monthly") is True     # 71 天
+    assert m.holdings_age_stale(None, t, "weekly") is True

@@ -1072,6 +1072,21 @@ def save_eps_cache(etf_key: str, data: dict) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+# 持股本身的過期門檻（2026-11-07 補）：原本 holdings_stale 只在「FULL 當天抓取失敗、退回快取」才為
+# True，PRICE 模式一律寫死 False，所以 RSP 的持股（Invesco API 失敗後退回 SPY 等權近似、快取停在
+# 2026-09-23，已 45 天）從來沒被標出過期。程式原本沒有針對持股的門檻，這裡用「超過該檔更新頻率的兩倍」：
+# weekly 檔 14 天、monthly 檔（TOPIX）70 天（即 EPS_CACHE_MAX_AGE_DAYS／_MONTHLY 的兩倍）。
+def holdings_age_stale(holdings_as_of, today, full_refresh: str = "weekly") -> bool:
+    """holdings_as_of 讀不出日期視為過期（保守，壞資料不硬撐）。today 為 date 或 datetime。"""
+    max_age = 2 * (EPS_CACHE_MAX_AGE_DAYS_MONTHLY if full_refresh == "monthly" else EPS_CACHE_MAX_AGE_DAYS)
+    try:
+        d = datetime.strptime(holdings_as_of, "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return True
+    t = today.date() if isinstance(today, datetime) else today
+    return (t - d).days > max_age
+
+
 def is_first_saturday_of_month(d) -> bool:
     """d 是 date（或 datetime）——每月只有一個週六的 day <= 7（週六彼此間隔 7
     天，同月第二個週六 day 必定 >= 8），不需要另外算「這個月第一天是星期
@@ -3411,7 +3426,7 @@ def build_fund_full(etf_key: str, cfg: dict, ticker_cache: dict, fx_cache: dict,
         "holdings_as_of": as_of_holdings,
         "holdings_source_url": source_url,
         "holdings_issuer_zh": cfg["holdings_issuer_zh"],
-        "holdings_stale": used_stale,
+        "holdings_stale": bool(used_stale or holdings_age_stale(as_of_holdings, today, cfg.get("full_refresh", "weekly"))),
         "holdings_approximation_zh": holdings_approximation_zh,
         "n_holdings": len(constituents) + len(excluded),
         "n_holdings_covered": len(constituents),
@@ -3656,7 +3671,9 @@ def build_fund_price(etf_key: str, cfg: dict, eps_cache: dict, fx_cache: dict, r
         "holdings_as_of": eps_cache.get("holdings_as_of"),
         "holdings_source_url": eps_cache.get("holdings_source_url"),
         "holdings_issuer_zh": cfg["holdings_issuer_zh"],
-        "holdings_stale": False,  # 不是抓取失敗，是設計上這週沒重抓——見 mode／methods_note_zh
+        # 沿用上次 FULL 的旗標（抓取失敗退回快取），再加持股本身的年齡檢查（見 holdings_age_stale()）
+        "holdings_stale": bool(eps_cache.get("holdings_stale")
+                                or holdings_age_stale(eps_cache.get("holdings_as_of"), today, cfg.get("full_refresh", "weekly"))),
         "holdings_approximation_zh": eps_cache.get("holdings_approximation_zh"),
         "n_holdings": len(constituents) + len(excluded),
         "n_holdings_covered": len(constituents),
