@@ -43,7 +43,9 @@ UNREC = "us-gaap:UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount"
 # 尚未起租的資料中心租約：(tag, 維度成員集合；空集合＝無維度)
 LEASE_RULES = {
     "ORCL": ("orcl:LesseeOperatingLeaseLeaseNotYetCommencedLeaseCommitments", set()),
-    "MSFT": (UNREC, {"msft:FinanceLeaseMember"}),
+    # MSFT 2026-09-30 10-Q 起把尚未起租租約併成單一總額（$364.6B，附註 12），維度成員為 OperatingLeaseMember；
+    # 舊版曾用 FinanceLeaseMember，已不再出現。
+    "MSFT": (UNREC, {"msft:OperatingLeaseMember"}),
     "GOOGL": (UNREC, {"us-gaap:OperatingLeaseLeaseNotYetCommencedMember"}),
     "META": (UNREC, set()),
     "AMZN": (UNREC, {"amzn:OperatingAndFinanceLeasesLeaseNotYetCommencedMember"}),
