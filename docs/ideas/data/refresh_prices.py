@@ -28,7 +28,9 @@ import difflib
 import html as htmllib
 import json
 import re
+import os
 import sys
+import tempfile
 import warnings
 from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
@@ -38,7 +40,8 @@ warnings.filterwarnings("ignore")
 
 HERE = Path(__file__).resolve().parent
 IDEAS = HERE.parent
-PREVIEW_DIR = Path("/private/tmp/claude-501/-Users-ivanchang/934d6593-d3e8-450a-a3c0-17ada4a98a21/scratchpad/refresh_prices_preview")
+# 預覽只給本機看；原本寫死某次對話的暫存路徑，CI 上建不了資料夾，整支在寫表前就中止（11-02～11-06）。
+PREVIEW_DIR = Path(os.environ.get("REFRESH_PRICES_PREVIEW_DIR") or Path(tempfile.gettempdir()) / "refresh_prices_preview")
 STORE_DIR = Path.home() / "v7-backtest" / "data" / "price_store" / "daily"
 MINUS = "−"
 ASIA_SUFFIX = (".T", ".SS", ".SZ", ".KS", ".TW", ".HK")
@@ -68,8 +71,9 @@ SPEC = {
             ("股價截至 10/30 收盤；共識預估", "10/30", "m/d"),
             ("<th>7/14 至 10/30 股價</th>", "10/30", "m/d"),
             ("股價三欄是 10/30 收盤", "10/30", "m/d"),
+            ("7/14 至 10/30 股價三欄", "10/30", "m/d"),
         ],
-        "note": "Siemens Energy 原本整列停在 10/13（muted 段寫『沒有 10/30 收盤資料』），重算後該句要人工刪；正文 L309 引用表中數字不更新。",
+        "note": "Siemens Energy 那句『沒有 10/30 收盤資料』11-07 已刪（該列已有收盤）；正文 L309 引用表中數字不更新。",
     },
     "consumer-agents": {
         "page": "consumer-agents.html", "autorun": True, "field": "close", "ref": "AMD",
