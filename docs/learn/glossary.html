@@ -176,30 +176,34 @@
   <div id="gl-empty">沒有符合的詞條，換個關鍵字試試。</div>
 
   <section class="gl-group" id="gl-cockpit">
-    <h2>選股主控台與決策引擎（GRP 三閘、L0–L4）</h2>
-    <p class="gl-group-note">股票分析主控台 /cockpit/ 背後的決策引擎——三閘評分把候選名單一路收斂到席位。</p>
+    <h2>選股主控台與席位規則</h2>
+    <p class="gl-group-note">股票分析主控台 /cockpit/ 的席位怎麼選、怎麼賣。完整門檻以主控台「席位排序」分頁最上方的席位規則卡為準，這裡只解釋名詞。</p>
     <div class="gl-list">
-      <div class="gl-item"><div class="gl-name">三閘評分<span class="gl-code">GRP</span></div><p class="gl-def">成長、上修、位置三個活數據閘的合稱，三個都過才算資格到齊。</p></div>
-      <div class="gl-item"><div class="gl-name">成長閘<span class="gl-code">G 閘</span></div><p class="gl-def">要求未來三年（FY1 到 FY3）盈餘複合成長率達到 15% 以上，抓不到第三年資料時改用兩年成長率替代。</p></div>
-      <div class="gl-item"><div class="gl-name">上修閘<span class="gl-code">R 閘</span></div><p class="gl-def">明年盈餘預估被分析師調升 2% 以上，或兩年複合成長率調升 1 個百分點以上；單月被下修超過 2% 就直接淘汰。</p></div>
-      <div class="gl-item"><div class="gl-name">位置閘<span class="gl-code">P 閘</span></div><p class="gl-def">股價要站上 52 週均線，同時還沒漲過頭（收盤價未觸及週線布林通道上緣的 2 個標準差）。</p></div>
+      <div class="gl-item"><div class="gl-name">三閘評分<span class="gl-code">GRP</span></div><p class="gl-def">席位引擎在程式裡的名稱。進池要過八項資格：市值、品質、三年成長、價位、財報後上修、基本面否決、融券、估值，資料缺漏一律算沒過。</p></div>
+      <div class="gl-item"><div class="gl-name">成長閘<span class="gl-code">G 閘</span></div><p class="gl-def">未來三年（今年到後年）每股盈餘年化成長 15% 以上；沒有第三年預估就不過。</p></div>
+      <div class="gl-item"><div class="gl-name">上修閘<span class="gl-code">R 閘</span></div><p class="gl-def">最近一次財報後的盈餘預估修正要大於 −5%，下修更多就排除。上修幅度不是進池門檻：美股看板只在 PEG 同值時拿來比，台股席位與精選榜拿來排序。</p></div>
+      <div class="gl-item"><div class="gl-name">位置閘<span class="gl-code">P 閘</span></div><p class="gl-def">股價要站在 52 週均線之上。</p></div>
+      <div class="gl-item"><div class="gl-name">估值閘</div><p class="gl-def">PEG 大於 2，或預估本益比超過自己五年均值 1.75 倍，就算估值偏貴，不進池。已在席、還沒切換 Supertrend 的現任遇到估值偏貴，不賣、也不加碼（2026-11-07 起）。</p></div>
+      <div class="gl-item"><div class="gl-name">時機燈</div><p class="gl-def">看股價離還原權息歷史新高多遠、有沒有站上 200 日線：距新高 3% 以內是綠燈，3% 到 10% 是黃燈，近一年漲幅超過 150% 的綠燈改橘燈、只放半倉；距新高超過 10% 或跌破 200 日線是紅燈。空席只補亮燈（綠、黃、橘）的名字。</p></div>
+      <div class="gl-item"><div class="gl-name">切換 Supertrend<span class="gl-code">席位賣法</span></div><p class="gl-def">席位持股出現盤整突破（週收盤創新高、距上次新高至少 8 週），或週線 Supertrend 停損線高過買進價，就改看 Supertrend：之後只在週線翻空或基本面不合格時賣，不再看時機燈。2026-11-07 起適用美股看板與台股席位，精選榜不適用。</p></div>
+      <div class="gl-item"><div class="gl-name">席位規則卡</div><p class="gl-def">主控台與台股席位頁上的規則說明，三套席位各一張，由程式從同一份規則常數產生，是席位規則的正本。</p></div>
       <div class="gl-item"><div class="gl-name">突破帶／回踩到位／趨勢帶內<span class="gl-code">p_label</span></div><p class="gl-def">股價相對高點的位置分類：距 52 週高點 5% 以內算突破帶，回檔 8% 至 25% 但趨勢還在算回踩到位，其餘趨勢內的情況算趨勢帶內。</p></div>
-      <div class="gl-item"><div class="gl-name">三閘全過</div><p class="gl-def">成長、上修、位置三個閘門同一天全部通過。</p></div>
-      <div class="gl-item"><div class="gl-name">板機亮／待命 A2／待命 B／待命 C／低熱可執行／過熱等回踩／無時機訊號</div><p class="gl-def">主控台上常見的時機狀態字樣：板機亮代表進場訊號今天亮了，規則上今天就是出手日；待命 A2、B、C 代表訊號型態已經符合續勢型、第二班車或冷卻等待重試，但今天還沒觸發；低熱可執行與過熱等回踩看的是過去 12 個月漲幅有沒有衝過熱、要不要等回檔；無時機訊號代表目前沒有可執行的進出場點。</p></div>
-      <div class="gl-item"><div class="gl-name">陣容</div><p class="gl-def">核心加衛星席位的完整名單，是唯一算數的持股清單。</p></div>
+      <div class="gl-item"><div class="gl-name">三閘全過</div><p class="gl-def">席位資格全部通過。現在進池要過八項，見上方「三閘評分」。</p></div>
+      <div class="gl-item"><div class="gl-name">板機亮／待命 A2／待命 B／待命 C／低熱可執行／過熱等回踩／無時機訊號</div><p class="gl-def">主控台上常見的時機狀態字樣：板機亮代表進場訊號今天亮了，規則上今天就是出手日；待命 A2、B、C 代表訊號型態已經符合續勢型、第二班車或冷卻等待重試，但今天還沒觸發；低熱可執行與過熱等回踩看的是過去 12 個月漲幅有沒有衝過熱、要不要等回檔；無時機訊號代表目前沒有可執行的進出場點。2026-10-20 起買進時機改看時機燈，這些字樣只剩 SOP 漏斗頁在用，供參考。</p></div>
+      <div class="gl-item"><div class="gl-name">陣容</div><p class="gl-def">目前坐在席位上的名單：美股看板、台股席位各 5 席，精選榜 10 席。名單由規則選出，實際買不買由持有人看過研究後決定。</p></div>
       <div class="gl-item"><div class="gl-name">席位排序</div><p class="gl-def">決策引擎底下把候選人排出順序的子頁面，分雷達、擂台、自動結算三段。</p></div>
       <div class="gl-item"><div class="gl-name">精選榜</div><p class="gl-def">在正式席位規格之外，另外設的兩個獵場，分別收爆發型與十倍型候選。</p></div>
-      <div class="gl-item"><div class="gl-name">換席</div><p class="gl-def">席位持有人變動，一律人工拍板，不是系統自動執行。</p></div>
+      <div class="gl-item"><div class="gl-name">換席</div><p class="gl-def">席位上的名字換人。每週六依週五收盤由規則判斷，人只改規則、不改名單；實際買賣由持有人自己把關。</p></div>
       <div class="gl-item"><div class="gl-name">板凳</div><p class="gl-def">還沒上席、但排名很接近的候選名單。</p></div>
-      <div class="gl-item"><div class="gl-name">空位</div><p class="gl-def">衛星席刻意留白不硬填滿，屬於倉位管理的一部分。</p></div>
+      <div class="gl-item"><div class="gl-name">空位</div><p class="gl-def">沒有符合條件的名字時，席位就空著放現金，不拿紅燈的名字湊數。</p></div>
       <div class="gl-item"><div class="gl-name">雷達／決策卡／席位擂台／記分板<span class="gl-code">L0–L4</span></div><p class="gl-def">決策引擎的五層架構：雷達先掃出候選，接著做形狀分類路由，寫成決策卡，送進席位擂台比較，最後留在記分板算績效。</p></div>
-      <div class="gl-item"><div class="gl-name">核心席／衛星席</div><p class="gl-def">護城河評等 S、A 級的公司進核心席，其餘進衛星席。</p></div>
+      <div class="gl-item"><div class="gl-name">核心席／衛星席</div><p class="gl-def">核心席是規則選出的席位名單（美股看板 5 席），現在不依護城河評等分席。衛星席只剩席位擂台頁上的對照組快照，不是持股名單。</p></div>
       <div class="gl-item"><div class="gl-name">三閘評分結構線<span class="gl-code">甲線</span></div><p class="gl-def">站上兩條長抱邏輯之一：靠三閘評分挑出的結構性長抱倉位；另一條是看景氣循環轉折時機的循環拐點線（乙線）。</p></div>
       <div class="gl-item"><div class="gl-name">長基期突破帶／循環轉折／動能重估／主題下沉<span class="gl-code">四形狀</span></div><p class="gl-def">雷達辨識候選人的四種技術型態：長基期突破帶是盤整夠久後出現的新高，循環轉折是景氣循環正在轉折，動能重估是市場正在重新評價它的動能，主題下沉是主題股資金正在往中小型股下沉。</p></div>
       <div class="gl-item"><div class="gl-name">大盤情境倍率<span class="gl-code">Regime 撥盤</span></div><p class="gl-def">依大盤（SPY）目前是進攻、中性還是防守，換算出的曝險倍率參考值。</p></div>
       <div class="gl-item"><div class="gl-name">快審卡／完整 DD</div><p class="gl-def">快審卡是簡化版盡職調查，只夠拿到衛星倉位資格；完整 DD 才是全套深度研究。</p></div>
       <div class="gl-item"><div class="gl-name">已驗證／已觸發／監測中／待結算／已結算<span class="gl-code">決策卡宣稱</span></div><p class="gl-def">決策卡裡每個量化宣稱目前的結算狀態。</p></div>
-      <div class="gl-item"><div class="gl-name">GRP 守門</div><p class="gl-def">席位每週自動重新驗證一次三閘是否還過關，過不了就退場。</p></div>
+      <div class="gl-item"><div class="gl-name">GRP 守門</div><p class="gl-def">席位每週六重新檢查一次資格，不合格就下席。已切換 Supertrend 的持股只看基本面，不看價位類條件。</p></div>
       <div class="gl-item"><div class="gl-name">5 年期望值×勝算把握度<span class="gl-code">EV5y×確定性</span></div><p class="gl-def">用五年期望報酬乘以護城河與財務品質綜合分算出的參考排序，現在只當次要排序鍵。</p></div>
       <div class="gl-item"><div class="gl-name">築底週數<span class="gl-code">基期</span></div><p class="gl-def">股價築底盤整的週數，通常越長代表底部越紮實。</p></div>
       <div class="gl-item"><div class="gl-name">距歷史高點<span class="gl-code">距 ATH</span></div><p class="gl-def">目前股價距離歷史最高價的百分比。</p></div>
@@ -400,7 +404,7 @@
       <div class="gl-item"><div class="gl-name">選股主控台<span class="gl-code">曾誤稱選股駕駛艙，已統一</span></div><p class="gl-def">就是 /cockpit/ 這個頁面，統一以主控台為準，不再混用駕駛艙。</p></div>
       <div class="gl-item"><div class="gl-name">市場現況（四磚）</div><p class="gl-def">首頁四塊即時資訊磚：實單曝險、風險儀表、威脅指針、壓力分數。</p></div>
       <div class="gl-item"><div class="gl-name">市場脈動</div><p class="gl-def">首頁側欄的每日簡報摘要。</p></div>
-      <div class="gl-item"><div class="gl-name">Supertrend 長線系統<span class="gl-code">Supertrend</span></div><p class="gl-def">實單指數部的規則：每檔水位＝週線 Supertrend 占 70%、月線 Supertrend 占 30%，只做多、不借錢。頁面網址沿用 /long-track-w52-adaptive/。</p></div>
+      <div class="gl-item"><div class="gl-name">Supertrend 長線系統<span class="gl-code">Supertrend</span></div><p class="gl-def">實單指數部的規則：每檔水位＝週線 Supertrend 占 70%、月線 Supertrend 占 30%，只做多、不借錢。美股 QQQ 占七成、SMH 占三成，台股 0050、2330 各半。週線空、月線多時，若週收盤跌到 20 週均線下方 2.5 個標準差，水位由 30 改 50（下軌接回，2026-11-06 收盤起）。頁面網址沿用 /long-track-w52-adaptive/。</p></div>
       <div class="gl-item"><div class="gl-name">槓桿上限 1.5 倍／1.0 倍<span class="gl-code">cap 1.5／cap 1.0</span></div><p class="gl-def">曝險可以放大的槓桿倍數上限。</p></div>
       <div class="gl-item"><div class="gl-name">TXF／微型<span class="gl-code">台指期貨代碼</span></div><p class="gl-def">台指期貨的代碼，微型是它的小型合約版本。</p></div>
       <div class="gl-item"><div class="gl-name">資料快取狀態<span class="gl-code">Data Cache 狀態</span></div><p class="gl-def">站內快取資料層目前新不新鮮的健康狀態頁，給想確認資料時效的進階讀者用。</p></div>
