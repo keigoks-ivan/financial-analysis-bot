@@ -55,6 +55,36 @@ def trigger_text(st: dict) -> str:
     return "；".join(parts)
 
 
+def takeback_info(st: dict) -> dict | None:
+    """下軌接回進行中時回傳 {start, trigger_z, ma, w_thr, m_thr}，否則 None。st 可以是主腳本的 sigs[t]["st"]
+    （巢狀，接回狀態在 st["tb"]）或 state.json 的 tickers[t]["st"]（扁平，接回狀態在 st["tb_info"]）。"""
+    if not st:
+        return None
+    if "week" in st:
+        tb = st.get("tb")
+        if not tb or not tb.get("active"):
+            return None
+        th = stc.thresholds(st)
+        return {"start": tb["start"], "trigger_z": tb["trigger_z"], "ma": tb["ma"],
+                "w_thr": th["week"]["thr"], "m_thr": th["month"]["thr"], "w_exact": th["week"]["exact"]}
+    tb = st.get("tb_info")
+    if not tb:
+        return None
+    return {"start": tb["start"], "trigger_z": tb["trigger_z"], "ma": tb["ma"], "w_thr": st["w_thr"], "m_thr": st["m_thr"],
+            "w_exact": st.get("w_exact", True)}
+
+
+def takeback_text(st: dict) -> str:
+    """下軌接回進行中的一句白話（頁面與信件共用）；沒有接回回傳空字串。"""
+    tb = takeback_info(st)
+    if tb is None:
+        return ""
+    z = f"{tb['trigger_z']:.2f}".replace("-", "−")
+    return (f"下軌接回中：{str(tb['start'])[5:]} 週收盤 z {z} 跌破 2.5σ 下軌，水位 30 改 50。"
+            f"結束條件，先到的為準：週收盤站上 {_fmt(tb['w_thr'])}（週線翻多{'' if tb['w_exact'] else '，新一週開始後微調'}）、"
+            f"週收盤回到 20 週均線 {_fmt(tb['ma'])}（均線每週更新）、月收盤跌破 {_fmt(tb['m_thr'])}（月線翻空）。")
+
+
 def status_card(sigs: dict, legs: list, exec_last: dict, mode: str, cutover: str, held_lvl=None) -> str:
     """每檔的週線／月線 Supertrend 狀態表。mode＝"preview"（切換前，僅預覽）或 "live"（已生效）。
     held_lvl(t, pp)＝把下單前現持（組合 pp）換成該檔水位的函式；預設 pp × 2（各半）。2026-11-04 起美股權重 70／30，
@@ -99,22 +129,25 @@ def status_card(sigs: dict, legs: list, exec_last: dict, mode: str, cutover: str
         lvl_hdr = "預覽水位"
     elif mode == "pure":
         title = "Supertrend 現況"
-        lead = ("每檔水位＝70% 看週線、30% 看月線，各自多頭才持有；所以水位只會是 100／70／30／0%。"
+        lead = ("每檔水位＝70% 看週線、30% 看月線，各自多頭才持有；所以水位通常是 100／70／30／0%（週線空、月線多的 30% 遇到週收盤跌破 20 週下軌 2.5σ 時，改為 50%，稱為下軌接回）。"
                 "週線在每週最後一個交易日收盤後判定、月線在月底收盤後判定，下一個交易日調整。")
         lvl_hdr = "水位"
     else:
         title = "Supertrend 現況"
-        lead = ("每檔水位＝70% 看週線、30% 看月線，各自多頭才持有；所以水位只會是 100／70／30／0%。"
+        lead = ("每檔水位＝70% 看週線、30% 看月線，各自多頭才持有；所以水位通常是 100／70／30／0%（週線空、月線多的 30% 遇到週收盤跌破 20 週下軌 2.5σ 時，改為 50%，稱為下軌接回）。"
                 "週線在每週最後一個交易日收盤後判定、月線在月底收盤後判定，下一個交易日調整。")
         lvl_hdr = "目標水位"
         if moves:
             lead += "下一個交易日要調整：" + "、".join(moves) + "（現持是下單前的水位）。"
+    tb_notes = "".join(f'<p style="font-size:.82rem;margin:.5rem 0 0"><b>{t}</b>　{takeback_text(sigs[t].get("st"))}</p>'
+                       for t in legs if takeback_text(sigs[t].get("st")))
     return f"""<div class="card" style="border:2px solid var(--brand);background:#f5f8ff">
 <h3 style="color:var(--brand)">{title}</h3>
 <p style="font-size:.82rem;color:var(--muted);margin-bottom:.7rem">{lead}</p>
 <div class="tablewrap"><table>
 <thead><tr><th>檔</th><th>週線</th><th class="num">線值</th><th>翻轉門檻</th><th>月線</th><th class="num">線值</th><th>翻轉門檻</th><th class="num">{lvl_hdr}</th>{'' if mode == "pure" else f'<th class="num">{"現持水位（下單前）" if mode != "preview" else "現持水位"}</th>'}</tr></thead>
 <tbody>{rows}</tbody></table></div>
+{tb_notes}
 <div style="font-size:.76rem;color:var(--muted);margin-top:.5rem">多頭時線在價格下方、當作支撐；空頭時線在價格上方、當作壓力。門檻是進行中那根 K 棒目前的線值，收完前會小幅移動，以收盤為準。＊ 新的一根 K 棒還沒開始，先用上一根的線值近似。參數：美股 ATR 14、倍數 3，台股 ATR 14、倍數 2，用沒有調整股息的 K 線。</div>
 </div>"""
 

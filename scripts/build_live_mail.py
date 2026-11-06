@@ -43,6 +43,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 from mail_html import esc, frame, note, pill, section, table, tiles  # noqa: E402
+from supertrend_live_page import takeback_text as _tb_text  # noqa: E402
 # 逐字沿用主系統的呈現常數與純文字函式（不重算訊號、不重寫其邏輯，見檔頭）：
 # MARKETS 只取其 key/name/legs（市場與四腿的唯一權威定義）；_leg_trigger_text 是純文字
 # 輔助函式，不做任何訊號計算。import 這個模組只是載入模組層定義（含大型回測
@@ -171,8 +172,10 @@ def market_section(m: dict, tickers: dict) -> str:
             rows.append([f"<strong>{esc(t)}</strong>", gate_pill,
                          (_lvl_cell(tk, t) if tk.get("rule") == ST_RULE_TAG else
                           f"{lvl(tk['final_weight_pct']):.0f}% ／ {lvl(tk['executed_pct']):.0f}%"), esc(trig)])
+        tb_html = "".join(note(f"<strong>{esc(t)}</strong>　{esc(_tb_text(tickers[t]['st']))}")
+                          for t in legs if tickers[t].get("rule") == ST_RULE_TAG and _tb_text(tickers[t].get("st")))
         return section(f"{m['key'].upper()} TODAY", f"{m['name']} — 今天結論",
-                        tile_html + table(headers, rows, numeric_cols={2}))
+                        tile_html + table(headers, rows, numeric_cols={2}) + tb_html)
     headers = ["腿", "閘門", "均線", "cap_eff", "目標／現持", "下一個會動的價位"]
     for t in legs:
         tk = tickers[t]
@@ -381,7 +384,7 @@ def build_mail_html(headline: str, state: dict, w52a_text: str | None, *, is_tes
     body += overlay_section(state, w52a_text)
     body += changes_section(w52a_text)
     if any((tickers.get(t) or {}).get("rule") == ST_RULE_TAG for t in tickers):
-        body += note(f"Supertrend 規則（{ST_CUTOVER_DATE} 收盤起）：每檔 70% 看週線、30% 看月線，各自多頭才持有，水位只有 100／70／30／0%；"
+        body += note(f"Supertrend 規則（{ST_CUTOVER_DATE} 收盤起）：每檔 70% 看週線、30% 看月線，各自多頭才持有，水位只有 100／70／30／0%（週線空、月線多的 30% 遇到週收盤跌破 20 週下軌 2.5σ 時改為 50%，稱為下軌接回）；"
                      "訊號日收盤判定，下一個交易日一次調到目標水位，沒有門檻也不分段。")
     body += note(f'完整頁面：<a href="{esc(LIVE_PAGE_URL)}">實單主系統「今天結論」</a> · '
                  f'<a href="{esc(SCOREBOARD_URL)}">記分板</a>。')

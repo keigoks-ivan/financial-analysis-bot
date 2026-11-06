@@ -35,7 +35,9 @@ from supertrend_core import (  # noqa: E402  算法、K 棒、收完判斷、參
     fetch_official_ohlc, reconcile_ohlc,
     ST_CUTOVER_DATE, ST_PARAMS, TF, W_MONTH, W_WEEK, bars, is_complete, supertrend,
     LEG_WEIGHTS_CUTOVER_DATE, leg_weights,
+    last_weekday, state_asof, takeback_asof,
 )
+from supertrend_live_page import takeback_text  # noqa: E402  下軌接回的一句白話（頁面、信件、本通知共用）
 
 ROOT = HERE.parent
 STATE = ROOT / "data" / "supertrend_alert" / "state.json"
@@ -78,9 +80,11 @@ def analyse(tk, name, tz, close_t, now_utc):
     now_local = now_utc.astimezone(ZoneInfo(tz))
     last_data = d.index[-1]
     res = {"ticker": tk, "name": name, "last_date": str(last_data.date()), "close": float(d.close.iloc[-1]), "tf": {}}
+    frames = {}
     for key, (rule, label) in TF.items():
         b = bars(d, rule)
         s = supertrend(b[["high", "low", "close"]], *ST_PARAMS[tk])
+        frames[key] = (b, s)
         done = [is_complete(ix, last_data, now_local, close_t) for ix in b.index]
         b, s = b.assign(done=done), s
         comp = s[b.done].dropna()
@@ -95,6 +99,15 @@ def analyse(tk, name, tz, close_t, now_utc):
                 "bar_end": str(b.index[-1].date()),
                 "close": float(b.close.iloc[-1]), "as_of": str(b.last_day.iloc[-1].date())},
         }
+    if tk not in OVERLAY_SYMS:
+        # 下軌接回（2026-11-06 起，supertrend_core.takeback_asof）：以本檔「已收完」（照本腳本的時鐘判斷）的最後一根
+        # 週線、月線的完成日為資料日；整段歷史重播，不存狀態。債金疊加不適用。
+        d_done = max(last_weekday(pd.Timestamp(res["tf"][k]["confirmed"]["bar_end"])) for k in ("week", "month"))
+        tb = takeback_asof(frames, d_done)
+        if tb is not None:
+            res["takeback"] = tb
+            if tb["active"]:      # 頁面共用的文字函式要巢狀狀態（含翻轉門檻）；進行中那根 K 棒的門檻用最新資料日算
+                res["takeback_text"] = takeback_text({**state_asof(frames, last_data), "tb": tb})
     return res
 
 
@@ -109,6 +122,13 @@ def fmt(x):
 
 def target(w, m):
     return int(round((W_WEEK * w + W_MONTH * m) * 100))
+
+
+def cur_level(r) -> int:
+    """這檔現在的水位（%）：趨勢水位，下軌接回進行中時為 50（債金沒有接回）。"""
+    w, m = r["tf"]["week"]["confirmed"], r["tf"]["month"]["confirmed"]
+    tb = r.get("takeback")
+    return tb["level"] if tb and tb.get("level") is not None else target(w["dir"], m["dir"])
 
 
 def share(r, level) -> str:
@@ -143,9 +163,10 @@ def status_lines(results):
         w, m = r["tf"]["week"]["confirmed"], r["tf"]["month"]["confirmed"]
         out.append(f"・{r['name']}：收盤 {fmt(r['close'])}（{r['last_date']}）｜週線{zh(w['dir'])}，"
                    f"{'支撐' if w['dir'] == 1 else '壓力'} {fmt(w['line'])}｜月線{zh(m['dir'])}，"
-                   f"{'支撐' if m['dir'] == 1 else '壓力'} {fmt(m['line'])}｜70/30 持股 {target(w['dir'], m['dir'])}%"
+                   f"{'支撐' if m['dir'] == 1 else '壓力'} {fmt(m['line'])}｜70/30 持股 {cur_level(r)}%"
                    + (f"（占指數部 {target(w['dir'], m['dir']) * 0.2:.0f}%）" if r["ticker"] in OVERLAY_SYMS
-                      else f"（占指數部 {share(r, target(w['dir'], m['dir']))}%）"))
+                      else f"（占指數部 {share(r, cur_level(r))}%）")
+                   + (f"｜{r['takeback_text']}" if r.get("takeback_text") else ""))
     return out
 
 
@@ -158,6 +179,8 @@ def params_text() -> str:
 FOOTER = ["", f"規則：Supertrend，{params_text()}，週線 70%＋月線 30%，只做多。"
           f"{ST_CUTOVER_DATE} 收盤起實單的指數部照這套規則；換檔另有實單系統信。",
           f"指數部權重：美股 QQQ 70%／SMH 30%（{LEG_WEIGHTS_CUTOVER_DATE} 收盤的訊號起，之前各半）、台股 0050／2330 各半；占指數部＝水位 × 權重。",
+          "下軌接回（2026-11-06 收盤的訊號起）：週線空、月線多（水位 30）時，週收盤跌破 20 週均線下方 2.5 個標準差，水位改 50；"
+          "週收盤回到 20 週均線，或週線翻多、月線翻空，就結束。債金不適用。",
           f"回測比較：{PAGE_URL}"]
 
 
@@ -213,6 +236,12 @@ def main(argv=None):
             print("ERROR", tk, e, file=sys.stderr)
 
     events, baseline = [], []
+    tb_chg = {}     # 代號 -> (開始／結束, 上次記錄的水位, 現在水位)；下軌接回開始或結束也要通知（只變疊加層時沒有翻轉可偵測）
+    for r in results:
+        if "takeback" in r and r["ticker"] not in rebase and any(f"{r['ticker']}|{k}" in state["signals"] for k in r["tf"]):
+            was = (state.get("takeback") or {}).get(r["ticker"]) or {}
+            if bool(was.get("active")) != bool(r["takeback"]["active"]):
+                tb_chg[r["ticker"]] = ("開始" if r["takeback"]["active"] else "結束", was.get("level"), cur_level(r))
     for r in results:
         for key, v in r["tf"].items():
             c = v["confirmed"]
@@ -224,6 +253,11 @@ def main(argv=None):
                 events.append((r, key, prev, c))
             state["signals"][sk] = {"dir": c["dir"], "line": round(c["line"], 4), "bar_end": c["bar_end"],
                                     "close": round(c["close"], 4)}
+
+    for r in results:       # 下軌接回的上次狀態（下次比對用）；狀態檔舊欄位不動
+        if "takeback" in r:
+            state.setdefault("takeback", {})[r["ticker"]] = {"active": bool(r["takeback"]["active"]), "level": cur_level(r),
+                                                               "asof": r["last_date"]}
 
     warns = []
     if a.mode == "warn":
@@ -250,16 +284,30 @@ def main(argv=None):
     if a.test_alert:
         lines = ["這是測試訊息，不是真實訊號。", "收到這封代表 email 與 Discord 都接好了。"] + status_lines(results) + FOOTER
         out = ("【測試】Supertrend 週線／月線提醒", lines)
-    elif events:
+    elif events or tb_chg:
         heads, lines = [], []
         for r, key, prev, c in events:
             lab = TF[key][1]
             a0, a1 = move(r, key, c["dir"])
+            tbc = tb_chg.get(r["ticker"])
+            if tbc and tbc[1] is not None:       # 同一次有下軌接回開始／結束：前後水位改用記錄的上次水位與現在水位
+                a0, a1 = tbc[1], tbc[2]
             heads.append(f"{r['name'].split('（')[0]} {lab}翻{zh(c['dir'])}")
             lines.append(f"・{r['name']} {lab}確認翻{zh(c['dir'])}：K 棒 {c['bar_end']} 收在 {fmt(c['close'])}，"
                          f"{'站上壓力線' if c['dir'] == 1 else '跌破支撐線'}（新的{'支撐' if c['dir'] == 1 else '壓力'}線 {fmt(c['line'])}）。"
                          + (f"照 70/30，債金水位 {a0}% → {a1}%（占指數部 {a0 * 0.2:.0f}% → {a1 * 0.2:.0f}%）。" if r["ticker"] in OVERLAY_SYMS
                             else f"照 70/30，這檔持股 {a0}% → {a1}%（占指數部 {share(r, a0)}% → {share(r, a1)}%）。"))
+        flipped = {r["ticker"] for r, *_ in events}
+        for tk_, (kind, lv0, lv1) in tb_chg.items():
+            r_ = by[tk_]
+            heads.append(f"{r_['name'].split('（')[0]} 下軌接回{kind}")
+            lv0 = lv0 if lv0 is not None else (r_["takeback"]["trend"] if kind == "開始" else None)
+            move_txt = (f"水位 {lv0}% → {lv1}%（占指數部 {share(r_, lv0)}% → {share(r_, lv1)}%）。" if lv0 is not None
+                        else f"水位 {lv1}%（占指數部 {share(r_, lv1)}%）。")
+            if kind == "開始":
+                lines.append(f"・{r_['name']} {r_['takeback_text']}{move_txt}")
+            elif tk_ not in flipped:       # 翻轉那一行已寫水位變化，只在沒有翻轉時補一行
+                lines.append(f"・{r_['name']} 下軌接回結束（週收盤回到 20 週均線）：{move_txt}")
         out = ("【Supertrend】" + "、".join(heads), lines + status_lines(results) + FOOTER)
         state["history"].extend({"ts": now_utc.isoformat(timespec="minutes"), "ticker": r["ticker"], "tf": key,
                                  "dir": c["dir"], "bar_end": c["bar_end"]} for r, key, prev, c in events)

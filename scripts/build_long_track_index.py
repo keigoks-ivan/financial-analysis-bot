@@ -69,7 +69,7 @@ SPRT_MEANING = {          # 見 build_live_scoreboard.py 的 green/yellow/red �
 GROUPS = [
     ("實單主系統", "live", True, [
         {"name": "Supertrend 週線＋月線（美股債金版・台股不借錢版）", "url": "/long-track-w52-adaptive/",
-         "one": "兩市場各 70% 指數部＝每檔 70% 看週線、30% 看月線的 Supertrend，水位 100／70／30／0%，不借錢；指數部內美股 QQQ 70／SMH 30（2026-11-04 起，之前各半）、台股 0050／2330 各半。"
+         "one": "兩市場各 70% 指數部＝每檔 70% 看週線、30% 看月線的 Supertrend，水位 100／70／30／0%（下軌接回期間另有 50%），不借錢；指數部內美股 QQQ 70／SMH 30（2026-11-04 起，之前各半）、台股 0050／2330 各半。"
                 "美股另加公債（IEF）與黃金（GLD）各最多 20%，同樣各自 70% 週線＋30% 月線 Supertrend。"
                 "",
          "status": ("實單", "live"), "freq": "每交易日 × 2（台／美收盤後）", "email": "✅ 有"},
@@ -360,7 +360,7 @@ def render_today_strip() -> str:
             if not dk:
                 return f'<span class="leg"><b>{t}</b>：—</span>'
             return (f'<span class="leg"><b>{t}</b> 週線{"多" if dk.get("w") else "空"}／月線{"多" if dk.get("m") else "空"}'
-                    f'｜水位 {dk.get("level_pct", "—")}%</span>')
+                    f'｜水位 {dk.get("level_pct", "—")}%{"（下軌接回）" if dk.get("tb") else ""}</span>')
         tk = tickers.get(t)
         if not tk:
             return f'<span class="leg"><b>{t}</b>：—</span>'
@@ -378,7 +378,7 @@ def render_today_strip() -> str:
         if disp:
             rows = "".join(leg_span(t) for t in legs)
             return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
-                    f'<div class="tstrip-exp">指數部股票曝險（Supertrend 週線 70%＋月線 30%，每檔水位只有 100／70／30／0%，美股依權重 QQQ 70／SMH 30 加總、台股兩檔平均）'
+                    f'<div class="tstrip-exp">指數部股票曝險（Supertrend 週線 70%＋月線 30%，每檔水位通常是 100／70／30／0%，下軌接回期間為 50%，美股依權重 QQQ 70／SMH 30 加總、台股兩檔平均）'
                     f'<b>{disp.get(exp_key, "—")}%</b></div>'
                     f'<div class="tstrip-legs">{rows}</div></div>')
         exp = state.get(exp_key, "—")
@@ -387,7 +387,7 @@ def render_today_strip() -> str:
         rows = "".join(leg_span(t) for t in legs)
         if all((tickers.get(t) or {}).get("rule") == "st_live" for t in legs):
             return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
-                    f'<div class="tstrip-exp">指數部股票曝險：目標（Supertrend 週線 70%＋月線 30%，每檔水位只有 100／70／30／0%，美股依權重 QQQ 70／SMH 30 加總、台股兩檔平均）<b>{exp}%</b>'
+                    f'<div class="tstrip-exp">指數部股票曝險：目標（Supertrend 週線 70%＋月線 30%，每檔水位通常是 100／70／30／0%，下軌接回期間為 50%，美股依權重 QQQ 70／SMH 30 加總、台股兩檔平均）<b>{exp}%</b>'
                     f' ／ 現持（下單前的持股率；換檔當天會和目標不同，其餘日子等於目標）<b>{exec_sum}%</b></div>'
                     f'<div class="tstrip-legs">{rows}</div></div>')
         return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'

@@ -838,7 +838,7 @@ ST_LABEL = "2026-11-04 以前為照規則回推，之後為實際紀錄。"
 PREREG_ST = {
     "title": "實單前瞻記分板",
     "rule": ("美股 QQQ 70／SMH 30（2026-11-04 收盤訊號起，之前各半）、台股 0050／2330 各 50%；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
-             "只做多，水位 100／70／30／0%。美股另加 IEF／GLD，各最多 20%（水位 20／14／6／0%）。"
+             "只做多，水位 100／70／30／0%（下軌接回期間另有 50%）。美股另加 IEF／GLD，各最多 20%（水位 20／14／6／0%）。"
              "美股 ATR 14／倍數 3，台股 ATR 14／倍數 2。訊號日收盤判定（只用已收完的週線、月線），下一個交易日調到目標水位。"),
     "labeling": ST_LABEL,
     "daily_return_formula": ("系統日報酬 ＝ Σ腿 持股率(前一日) × 腿日報酬 ＋ 現金部分 × 現金日率（美 ^IRX／台 1%） "
@@ -864,8 +864,9 @@ def _fetch_adj_close(sym):
     return c
 
 
-def st_level_series(sym_key, axis_dates):
-    """回傳 {日期: 水位%}（100／70／30／0），日期 d 的水位只用 d 當天已收完的週線、月線。"""
+def st_level_series(sym_key, axis_dates, takeback=False):
+    """回傳 {日期: 水位%}（100／70／30／0；takeback=True 的股票腿在下軌接回期間為 50），日期 d 的水位只用 d 當天已收完的週線、月線。
+    下軌接回（supertrend_core.takeback_daily，訊號日 >= BB_TAKEBACK_CUTOVER_DATE 才套用）只給指數部股票腿，債金疊加不用。"""
     import supertrend_core as stc
     sym = ST_SYMBOL[sym_key]
     ohlc, _notes = stc.fetch_ohlc(sym)
@@ -878,6 +879,11 @@ def st_level_series(sym_key, axis_dates):
         if not st.get("week") or not st.get("month"):
             raise FailSafeAbort(f"{sym} 在 {d} 還沒有完整的週線／月線 Supertrend")
         out[d] = stc.level_pct(st["week"]["dir"], st["month"]["dir"])
+    if takeback and out:
+        tb = stc.takeback_daily(frames, pd.DatetimeIndex([pd.Timestamp(d) for d in out]))
+        for d, v in zip(list(out), tb.values):
+            if v == v:
+                out[d] = int(v)
     last = ohlc.index[-1].strftime("%Y-%m-%d")
     return out, last
 
@@ -906,7 +912,7 @@ def build_market_st(mkt, gaps, judgment_calls):
 
     levels, ohlc_last = {}, []
     for t in all_legs:
-        levels[t], last = st_level_series(t, axis)
+        levels[t], last = st_level_series(t, axis, takeback=t in legs)
         ohlc_last.append(last)
     end = min([axis[-1]] + ohlc_last)
     axis = [d for d in axis if d <= end]

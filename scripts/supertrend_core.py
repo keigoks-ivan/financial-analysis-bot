@@ -6,7 +6,8 @@
 K 線用 Yahoo 未調股息價（auto_adjust=False，已調拆股），與 v7-backtest src/supertrend_vs_live/run.py
 的 supertrend()／bars() 同一寫法（驗證見交付說明）。
 
-每檔水位 = 0.7 × 週線（多=1／空=0）＋ 0.3 × 月線；只做多，所以水位只有 100／70／30／0% 四種。
+每檔水位 = 0.7 × 週線（多=1／空=0）＋ 0.3 × 月線；只做多，所以趨勢水位只有 100／70／30／0% 四種。
+2026-11-06 訊號起加下軌接回（takeback_*）：趨勢水位 30 時週收盤跌破 2.5σ 下軌改成 50。
 週線 W-FRI，月線取日曆月底；一根 K 棒要等該期最後一個平日收盤後才算數（is_complete／complete_asof）。
 """
 from __future__ import annotations
@@ -155,6 +156,101 @@ def state_asof(frames: dict, d: pd.Timestamp) -> dict:
 def level_pct(w_dir: int, m_dir: int) -> int:
     """水位（%）＝ 70 × 週線 ＋ 30 × 月線；整數 %，只會是 100／70／30／0。"""
     return int(round((W_WEEK * w_dir + W_MONTH * m_dir) * 100))
+
+
+# ---------------------------------------------------------------- 下軌接回（持有人 2026-11-06 拍板）
+# 依據 knowledge/rule_ledger.md「2026-11-06：指數部加下軌接回」；回測 v7-backtest docs/BB_Extreme_Overlay_Results.md
+# 「追加：接到 50」（fe66464，帳本 BB_EXTREME_OVERLAY-023／028 那組）。每一腿各自算：
+# - z ＝（週收盤 − 20 週均線）÷ 20 週母體標準差；週收盤用跟 Supertrend 同一份未調股息週 K，只用已收完的週。
+# - 觸發：週收盤 z ≤ −2.5，而且當週趨勢水位剛好 30（週線空、月線多）→ 水位改成 50。
+# - 結束（先到的為準）：週收盤 z ≥ 0（回到 20 週均線，水位回 30）；趨勢水位離開 30（週線翻多 → 100、月線翻空 → 0）。
+#   不設時間上限、不設價格停損。z 要先回到 −1 以上才能再觸發。
+# - 同一天先處理結束、再處理重新觸發、最後處理觸發；之後若趨勢水位不是 30 就結束（跟回測同順序）。
+# 從頭重播整段歷史，不存狀態；資料日（訊號日）>= BB_TAKEBACK_CUTOVER_DATE 才套用。環境變數只供本機模擬。
+BB_TAKEBACK_CUTOVER_DATE = _os.environ.get("W52_BB_TAKEBACK_CUTOVER_DATE") or "2026-11-06"
+BB_TAKEBACK_DECISION_DATE = "2026-11-06"
+BB_K, BB_REARM, BB_LEVEL, BB_WIN = 2.5, -1.0, 50, 20
+
+
+def weekly_z(wclose: pd.Series, win: int = BB_WIN) -> pd.DataFrame:
+    """20 週均線、母體標準差與 z（跟 v7 src/weekly_bb_put/signals.weekly_z 同算法）。"""
+    ma = wclose.rolling(win).mean()
+    sd = wclose.rolling(win).std(ddof=0)
+    return pd.DataFrame({"ma": ma, "sd": sd, "z": (wclose - ma) / sd})
+
+
+def takeback_table(frames: dict) -> pd.DataFrame:
+    """依完成日（標籤所在週／月的最後一個平日）逐一重播。回傳以完成日為索引的狀態表：
+    trend（趨勢水位）、level（接回後水位，未套生效日）、active、z、ma、sd、start（觸發那週標籤）、
+    trigger_z、ended（這天結束的原因，沒有就空字串）。資料日 d 的狀態＝完成日 <= d 的最後一列。"""
+    wb, ws = frames["week"]
+    mb, ms = frames["month"]
+    zt = weekly_z(wb["close"])
+    ev: dict = {}
+    for ix in wb.index:
+        ev.setdefault(last_weekday(ix).normalize(), {})["w"] = ix
+    for ix in mb.index:
+        ev.setdefault(last_weekday(ix).normalize(), {})["m"] = ix
+    w_dir = m_dir = None
+    active, armed = None, True
+    rows = []
+    for key in sorted(ev):
+        e = ev[key]
+        if "w" in e and ws["dir"].notna()[e["w"]]:
+            w_dir = int(ws["dir"][e["w"]])
+        if "m" in e and ms["dir"].notna()[e["m"]]:
+            m_dir = int(ms["dir"][e["m"]])
+        trend = level_pct(w_dir, m_dir) if (w_dir is not None and m_dir is not None) else None
+        ended = ""
+        z = ma = sd = np.nan
+        if "w" in e:
+            z, ma, sd = (float(zt[c][e["w"]]) for c in ("z", "ma", "sd"))
+            if z == z:
+                if active is not None and z >= 0:
+                    active, ended = None, "回到 20 週均線"
+                if z > BB_REARM:
+                    armed = True
+                if active is None and armed and z <= -BB_K and trend == 30:
+                    active = {"start": e["w"], "trigger_z": z}
+                    armed = False
+        if active is not None and trend != 30:
+            active, ended = None, ("週線翻多" if trend == 100 else "月線翻空" if trend == 0 else f"趨勢水位變成 {trend}")
+        rows.append({"date": key, "trend": trend, "level": BB_LEVEL if active is not None else trend,
+                     "active": active is not None, "z": z, "ma": ma, "sd": sd,
+                     "start": active["start"] if active is not None else pd.NaT,
+                     "trigger_z": active["trigger_z"] if active is not None else np.nan, "ended": ended})
+    return pd.DataFrame(rows).set_index("date")
+
+
+def takeback_asof(frames: dict, d, table: pd.DataFrame | None = None) -> dict | None:
+    """資料日 d 當下的接回狀態；已套生效日（d < BB_TAKEBACK_CUTOVER_DATE 時 applied=False、level＝trend）。
+    回傳 {trend, level, applied, active, start, trigger_z, z, ma, sd, z_bar}；z／ma／sd 是最後一根已收完週 K 的值。"""
+    t = takeback_table(frames) if table is None else table
+    d = pd.Timestamp(d).normalize()
+    t = t[t.index <= d]
+    if t.empty:
+        return None
+    r = t.iloc[-1]
+    wz = t[t["z"].notna()]
+    applied = str(d.date()) >= BB_TAKEBACK_CUTOVER_DATE
+    act = bool(r["active"]) and applied
+    return {"trend": None if pd.isna(r["trend"]) else int(r["trend"]),
+            "level": int(r["level"]) if act else (None if pd.isna(r["trend"]) else int(r["trend"])),
+            "applied": applied, "active": act,
+            "start": str(pd.Timestamp(r["start"]).date()) if act else None,
+            "trigger_z": float(r["trigger_z"]) if act else None,
+            "z": float(wz["z"].iloc[-1]) if len(wz) else None, "ma": float(wz["ma"].iloc[-1]) if len(wz) else None,
+            "sd": float(wz["sd"].iloc[-1]) if len(wz) else None, "z_bar": str(wz.index[-1].date()) if len(wz) else None}
+
+
+def takeback_daily(frames: dict, idx: pd.DatetimeIndex) -> pd.Series:
+    """每個資料日的最終水位（整數 %）：生效日以前＝趨勢水位，生效日起接回中＝50。給歷史重播／頁面用。"""
+    t = takeback_table(frames)
+    pos = t.index.searchsorted(pd.DatetimeIndex(idx).normalize(), side="right") - 1
+    lv = np.where(pos >= 0, t["level"].values[np.clip(pos, 0, None)], np.nan).astype(float)
+    tr = np.where(pos >= 0, t["trend"].values[np.clip(pos, 0, None)], np.nan).astype(float)
+    on = np.array([str(x.date()) >= BB_TAKEBACK_CUTOVER_DATE for x in pd.DatetimeIndex(idx)])
+    return pd.Series(np.where(on, lv, tr), index=idx)
 
 
 # ---------------------------------------------------------------- 取價

@@ -402,10 +402,11 @@ def st_history(legs, since="2018-06-01"):
         frames = stc.make_frames(ohlc, n, f)
         dates = [d for d in ohlc.index if str(d.date()) >= since]
         lv[l] = {}
-        for d in dates:
+        tb = stc.takeback_daily(frames, pd.DatetimeIndex(dates))     # 下軌接回：訊號日 >= 生效日才改 30 → 50
+        for d, tbv in zip(dates, tb.values):
             st = stc.state_asof(frames, d)
             if st.get("week") and st.get("month"):
-                lv[l][d] = stc.level_pct(st["week"]["dir"], st["month"]["dir"])
+                lv[l][d] = int(tbv) if tbv == tbv else stc.level_pct(st["week"]["dir"], st["month"]["dir"])
         idx = sorted(set(lv[l]) if idx is None else set(idx) & set(lv[l]))
     rows = []
     for i, d in enumerate(idx):
