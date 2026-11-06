@@ -4,7 +4,7 @@
   1. 列表頁 /sj/zxfb/index.html、index_1.html… 找標題「X年X月份70个大中城市商品住宅销售价格变动情況」的連結
   2. 內頁第 1 張表＝新建商品住宅、第 2 張表＝二手住宅；每列兩組欄位各 35 城（城市／環比／同比），指數皆為「＝100」
 每個內頁約 1.4–2.2 MB，統計局回應慢（單頁 45–85 秒），所以：
-  - 平常只看列表第 1 頁，只抓「store 還沒有」的最新 2 期（每月通常只多 1 頁）；沒有新一期就不抓內頁、直接回傳 store 現有資料
+  - 平常從列表第 1 頁往後翻到湊滿最近 2 期（最多 6 頁），只抓「store 還沒有」的最新 2 期（每月通常只多 1 頁）；沒有新一期就不抓內頁、直接回傳 store 現有資料
   - 回補模式 MACRO_DB_BACKFILL=1：列表翻頁到底，抓回最近 60 期（3 條並行，同站請求仍間隔 ≥ 1 秒）。
     可另設 MACRO_DB_HP70_CACHE=<目錄> 把每期解析結果存成 JSON，中斷後重跑只補沒抓到的期別。
     統計局網站的列表只留到 2021 年 10 月那一期之後，更早的期別抓不到。
@@ -140,7 +140,11 @@ def collect_periods(s, backfill: bool) -> dict:
                 raise
             break
         page += 1
-        if not backfill or len(found) >= BACKFILL_N or page > 120:
+        if backfill:
+            if len(found) >= BACKFILL_N or page > 120:
+                break
+        elif len(found) >= RECENT or page >= 6:
+            # 平常翻到湊滿最近 RECENT 期為止：當月 70 城發布會被之後的其他發布擠到第 2 頁以後（2026-10 起第 1 頁已看不到）
             break
     return found
 

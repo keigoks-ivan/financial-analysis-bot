@@ -48,12 +48,18 @@ def parse_gscpi(df):
 
 
 def parse_mct(text):
-    """第 4 欄起為資料；第 2 欄是 m/d/yyyy 日期，第 4 欄（索引 3）是 MCT 中值（年化 %）。"""
+    """第 4 欄起為資料；第 2 欄是日期（舊版 m/d/yyyy，後來改成 yyyy-mm-dd，兩種都收），第 4 欄（索引 3）是 MCT 中值（年化 %）。"""
     obs = []
     for r in csv.reader(io.StringIO(text)):
-        if len(r) < 4 or not re.match(r"\d+/\d+/\d{4}$", r[1].strip()):
+        if len(r) < 4:
             continue
-        m, _, y = r[1].strip().split("/")
+        c = r[1].strip()
+        if re.match(r"\d+/\d+/\d{4}$", c):
+            m, _, y = c.split("/")
+        elif re.match(r"\d{4}-\d{2}-\d{2}$", c):
+            y, m, _ = c.split("-")
+        else:
+            continue
         v = to_float(r[3])
         if v is not None:
             obs.append(("%s-%02d-01" % (y, int(m)), v))
