@@ -29,10 +29,22 @@ name: US Close Stale Recheck
 #
 # 不改 daily-us-close.yml、不改上述三支 script——本 workflow 只是在它們之外
 # 補一次「隔天過期重查」，用同一條指令、同一批輸出路徑。
+#
+# 2026-11-07 補兩件事：
+#   1. 收盤帶其餘輸出（stages／rs-turn／screener／market_state／prices-us／首頁
+#      pulse）也一起查。10-30 到 11-06 每班都落後一個交易日：收盤帶延到 UTC 午夜
+#      後才跑，Yahoo 前一交易日那根還沒定稿（ai-hardware-cycle 直接 yf.download
+#      也只拿到再前一天），原本只補 radar 一檔。以 stages/lamp.json 與
+#      screener/market_state.json 的日期判斷，過期就整個重觸發 Daily US Close Band
+#      （該 workflow 沒有寄信，寫檔 zero-churn）。
+#   2. 美股盤中不重跑。15:23 台北這班常延到 UTC 15 點後，正好在美股盤中，
+#      11-06 radar 就是用盤中價重算、as_of 標成 11-06。紐約時間平日 09:00–16:45
+#      一律跳過；另加 11:53 台北一班，延遲後多半仍落在美股開盤前。
 # ─────────────────────────────────────────────────────────────────────────
 
 on:
   schedule:
+    - cron: "53 3 * * 2-6"  # Tue-Sat 03:53 UTC = 11:53 Taipei（延遲數小時後多半仍在美股開盤前）
     - cron: "23 7 * * 2-6"  # Tue-Sat 07:23 UTC = 15:23 Taipei（離尖峰排程時段錯開）
   workflow_dispatch:
     inputs:
@@ -89,10 +101,16 @@ jobs:
 
           targets = {
               "radar": ("docs/rotation/data/radar.json", "as_of"),
+              "lamp": ("docs/stages/data/lamp.json", "as_of"),
+              "mstate": ("docs/screener/market_state.json", "data_date"),
           }
 
-          lines = [f"expected={expected}"]
-          print(f"[stale-check] NY now: {ny_now.isoformat()} | expected trading date: {expected}")
+          # 美股盤中（紐約平日 09:00–16:45，含開盤前 30 分緩衝）重跑會拿到盤中價，跳過。
+          hm = ny_now.hour * 60 + ny_now.minute
+          unsafe = ny_now.weekday() < 5 and 9 * 60 <= hm < 16 * 60 + 45
+          band_stale = False
+          lines = [f"expected={expected}", f"unsafe={'true' if unsafe else 'false'}"]
+          print(f"[stale-check] NY now: {ny_now.isoformat()} | expected trading date: {expected} | market-hours skip: {unsafe}")
           for key, (path, field) in targets.items():
               date_val, stale = "", "true"
               if os.path.exists(path):
@@ -107,6 +125,9 @@ jobs:
               lines.append(f"{key}_date={date_val}")
               lines.append(f"{key}_stale={stale}")
               print(f"[stale-check] {key}: date={date_val or '(none)'} stale={stale}")
+              if key in ("lamp", "mstate") and stale == "true":
+                  band_stale = True
+          lines.append(f"band_stale={'true' if band_stale else 'false'}")
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write("\n".join(lines) + "\n")
@@ -114,9 +135,18 @@ jobs:
 
       # ── 2. 只重跑過期的那個——指令與 daily-us-close.yml 對應 step 完全一致 ──
       - name: "[rotation-radar] Rerun build_rotation_radar.py (stale)"
-        if: steps.check.outputs.radar_stale == 'true'
+        if: steps.check.outputs.radar_stale == 'true' && steps.check.outputs.unsafe != 'true'
         continue-on-error: true
         run: python scripts/build_rotation_radar.py
+
+      # stages／rs-turn／screener 等其餘輸出過期：整個重觸發 Daily US Close Band
+      # （步驟與輸出路徑多，不在這裡逐條複製；該 workflow 無寄信、寫檔 zero-churn）。
+      - name: "[us-close-band] Re-dispatch Daily US Close Band (stages/screener stale)"
+        if: steps.check.outputs.band_stale == 'true' && steps.check.outputs.unsafe != 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run daily-us-close.yml -f retry=0 && echo "dispatched daily-us-close.yml"
 
       # ── 3. 重跑後再查一次同樣三個欄位 ──
       - name: Re-check staleness after rerun
@@ -161,7 +191,12 @@ jobs:
           RADAR_NOW: ${{ steps.recheck.outputs.radar_stale }}
           RADAR_DATE: ${{ steps.recheck.outputs.radar_date }}
           EXPECTED: ${{ steps.recheck.outputs.expected }}
+          UNSAFE: ${{ steps.check.outputs.unsafe }}
+          BAND_STALE: ${{ steps.check.outputs.band_stale }}
         run: |
+          if [ "$UNSAFE" = "true" ] && { [ "$RADAR_WAS" = "true" ] || [ "$BAND_STALE" = "true" ]; }; then
+            echo "::warning::US market hours (New York) — skipped rerun to avoid intraday bars (radar_stale=${RADAR_WAS}, band_stale=${BAND_STALE})"
+          fi
           if [ "$RADAR_WAS" = "true" ] && [ "$RADAR_NOW" = "true" ]; then
             echo "::warning::docs/rotation/data/radar.json still stale after rerun (as_of=${RADAR_DATE:-none}, expected=${EXPECTED})"
           fi
