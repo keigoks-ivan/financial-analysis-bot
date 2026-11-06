@@ -125,6 +125,7 @@ SPECS = [
 def hp_net(listing=None, page=None, **extra):
     routes = {"index.html": listing if listing is not None else tload("hp70_list.html"),
               "t20260915_1965304": page if page is not None else tload("hp70_page.html")}
+    routes["index_1.html"] = RuntimeError("HTTP 404")   # 第 1 頁只有 1 期時會往後翻一頁
     routes.update(extra)
     return FakeNet(routes)
 
@@ -135,13 +136,13 @@ def test_hp70_fetch_incremental_fetches_page_then_skips_when_stored(monkeypatch)
     monkeypatch.setattr(hp.store, "read", lambda sid, *a: [])
     res = hp.fetch(SPECS)
     assert res["t.bj_yoy"]["obs"] == [("2026-08-01", 97.7)] and res["t.up"]["obs"][0][0] == "2026-08-01"
-    assert len(net.calls) == 2                                           # 列表第 1 頁＋最新一期內頁
+    assert len(net.calls) == 3                                           # 列表第 1、2 頁（湊不滿 2 期往後翻）＋最新一期內頁
     # store 已經有最新一期：只看列表，不抓內頁，回傳 store 現有資料（不是空的）
     net2 = hp_net()
     monkeypatch.setattr(cn_common, "http_backoff", net2)
     monkeypatch.setattr(hp.store, "read", lambda sid, *a: [("2026-08-01", 97.7), ("2026-07-01", 98.0)])
     res = hp.fetch(SPECS)
-    assert len(net2.calls) == 1 and res["t.bj_yoy"]["obs"] == [("2026-07-01", 98.0), ("2026-08-01", 97.7)]
+    assert len(net2.calls) == 2 and res["t.bj_yoy"]["obs"] == [("2026-07-01", 98.0), ("2026-08-01", 97.7)]
 
 
 def test_hp70_fetch_listing_unparsable_is_error_not_empty(monkeypatch):
