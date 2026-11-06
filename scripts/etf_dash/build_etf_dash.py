@@ -1920,6 +1920,24 @@ def get_holdings_with_fallback(etf_key: str, cfg: dict) -> tuple[str, list[dict]
         print(f"[etf_dash] WARNING holdings fetch failed for {etf_key}: {e}", file=sys.stderr)
         if cache_path.exists():
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
+            # RSP 的快取本身就是 SPY 等權近似時，用這次 run 最新的 SPY 成分股重算，
+            # 不沿用舊近似（2026-11-07：快取停在 09-23 的近似，之後 Invesco 每次都失敗）。
+            if etf_key == "RSP" and cached.get("approximation_note_zh"):
+                try:
+                    as_of, rows, non_equity, spy_src = build_rsp_equal_weight_fallback()
+                except Exception as e2:  # noqa: BLE001
+                    print(f"[etf_dash] WARNING RSP: SPY equal-weight rebuild failed ({e2}); keeping cached approximation",
+                          file=sys.stderr)
+                else:
+                    if as_of > cached["as_of"]:
+                        print(f"[etf_dash] WARNING RSP: rebuilt SPY equal-weight approximation "
+                              f"(as_of {cached['as_of']} → {as_of}, n={len(rows)})", file=sys.stderr)
+                        cache_path.write_text(json.dumps({
+                            "as_of": as_of, "holdings": rows, "non_equity": non_equity, "source_url": spy_src,
+                            "fetched_at": datetime.now(timezone.utc).isoformat(),
+                            "approximation_note_zh": RSP_APPROXIMATION_NOTE_ZH,
+                        }, ensure_ascii=False, indent=2), encoding="utf-8")
+                        return as_of, rows, non_equity, spy_src, False, RSP_APPROXIMATION_NOTE_ZH
             print(f"[etf_dash] WARNING falling back to cached holdings for {etf_key} "
                   f"(as_of={cached['as_of']}, fetched_at={cached.get('fetched_at')})", file=sys.stderr)
             return (cached["as_of"], cached["holdings"], cached.get("non_equity", []),
