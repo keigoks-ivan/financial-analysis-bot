@@ -194,7 +194,7 @@ def finalize_items(deduped, seen_store, date, fetched_at):
     """Assign ids, mark seen_before against the rolling store, and return
     the updated store (pruned to SEEN_WINDOW_DAYS). Pure aside from not
     touching disk, so it's directly testable."""
-    cutoff = (datetime.now(timezone.utc).date() - timedelta(days=SEEN_WINDOW_DAYS)).isoformat()
+    cutoff = (datetime.strptime(date, "%Y-%m-%d").date() - timedelta(days=SEEN_WINDOW_DAYS)).isoformat()
     ids = {k: v for k, v in seen_store.get("ids", {}).items() if v >= cutoff}
     final_items = []
     for it in deduped:
