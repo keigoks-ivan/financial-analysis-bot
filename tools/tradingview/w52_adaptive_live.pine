@@ -1,0 +1,378 @@
+//@version=6
+// =============================================================================
+// W52 × 自適應波動率 — 實單對帳版（跟實單頁逐日一致）
+// -----------------------------------------------------------------------------
+// 對齊 research.investmquest.com/long-track/#overview（實單頁 /long-track-w52-adaptive/）
+// 來源實作：financial-analysis-bot/scripts/update_long_track_w52_adaptive.py（profile=live）
+//           band_exec_replay()／exec_down_band_for()／_sleeve_from()／_gate_core()
+//           債金三條件：scripts/update_long_track_w52_adaptive_c1.py e3_weekly()
+//
+// 規則（逐位元移植）：
+//   1. 週線 W52 單線閘門：週收 > 52 週均在場、否則出場。只用已收完的週：週一到週四沿用
+//      上一個週五的判定，週五收盤才定稿；週五休市的週要等下週一才採用。
+//   2. 自適應套袖：RV20＝20 日對數報酬標準差（ddof=1）× √252；σ_t＝RV20 近 756 日中位數
+//      （至少 252 筆）；w＝min(上限, σ_t/RV20)。暖機期 w＝min(上限, 1)。
+//   3. 執行層 A2（水位：這檔滿倉＝100%，六格 0／20／40／60／80／100%）：目標比現持高兩格
+//      （40%）以上才加碼、低一格（20%）以上就減碼，調整時對到最近一格。現持高於上限先拉回
+//      上限（網站叫「規則切換」，不經過門檻）。
+//   4. 債金疊加（美股）：公債 IEF、黃金 GLD 各最多占指數部 20%；週收 > 40 週均、> 52 週均、
+//      > 52 週前週收，每條 1/3，只用已收完的週。台股沒有這一層。
+//
+// 歷史分段（網站的現持是從歷史紀錄一路重放出來的；舊規則期間的紀錄沒有重算，本檔照抄）：
+//   資料日 ～2026-09-13（台股 ～09-14）：上限 1.5（水位最高 150%），加減碼都要差兩格。
+//   2026-09-14（台股 09-15）～10-16：上限 1.5 要日線均線五條件全對，否則 1.0。
+//     五條件＝收盤 > 60／120／200 日均（各帶 1% 遲滯）、120 日均與 200 日均都比 20 日前高。
+//   2026-10-19 起：上限 1.0（不借錢）；當天水位超過 100% 的拉回 100%。
+//   2026-10-30（週五）收盤那筆起：減碼門檻改一格（11-02 第一次照新門檻下單）。
+//
+// 取整（跟網站一樣）：目標先四捨五入到 0.1pp（每腿滿倉 50pp 計），門檻在整數空間比較；
+//   對格時恰好落在兩格正中間取偶數格（Python round 的規則）：目標水位 10／30／50／70／90%
+//   分別對到 0／40／40／80／80%。用一般四捨五入，SMH 會從 2023-05 起跟網站差 229 天。
+//
+// 預設「網站規則」關閉：整段歷史都用上限 1.0（不借錢，水位不超過 100%），門檻與格用下方
+//   預設值（加 40／減 20／格 20、不平滑＝現行實單），減碼門檻同樣從 2026-10-30 起改一格，
+//   從圖上第一根起算。跟網站只差在 10-19 以前的歷史，以及 QQQ 2026-10-19～10-29 共 9 天
+//   （本檔 80%、網站 100%，網站是從舊規則 150% 拉回來的），10-30 起四檔一致。
+//   要跟網站逐日對帳（含 10-19 以前的 150% 段）就打開「網站規則」，下面的歷史分段只在開啟時套用。
+//
+// 用法：套在【日線】圖，圖表設定打開「股息調整」（來源用 auto_adjust 還原價）。
+//   市場模式「自動」：美國交易所＝美股債金版；TWSE／TPEX＝台股不借錢版。
+//   官方四腿（QQQ／SMH／0050／2330）可把「滿載權重」填 50，面板括號就是實單頁的組合 pp。
+//
+// 驗證（2026-11-02，用共用價格庫照本檔演算法重放，對網站 state.json 的現持）：
+//   QQQ 1,299 天、0050 1,295 天、2330 1,296 天全部一致；SMH 1,299 天差 1 天（見下）。
+//
+// 誠實邊界：
+//   · 重放起點預設跟網站歷史第一筆相同（美股 2021-08-30、台股 2021-07-01）。網站歷史上限
+//     1,320 筆，之後起點會往後移；改從圖上第一根起算，只有 2021～2022 年初會不同。
+//   · 網站某天的紀錄用到舊價格時，那天會差一天。已知一例：SMH 2026-09-01 網站沿用 08-31 的
+//     價格，加碼晚一天（本檔 09-01 加、網站 09-02 加）。
+//   · TradingView 的價格與股息調整跟 yfinance 不完全相同，貼著門檻的日子可能差一天。
+//   · 週五盤中讀數會隨價格變動；網站的美股紀錄等收盤那一輪才寫。
+//   · 在台股圖上看 IEF／GLD，美股週五休市時本檔會比網站早一天採用。
+//   · 本引擎只在 QQQ／SMH／0050／2330 上驗過，套到其他商品不是已驗證的績效宣稱。
+// =============================================================================
+
+indicator("W52 × 自適應波動率 — 實單（2026-10-19 起）", shorttitle="實單 W52×σt", overlay=false, precision=1)
+
+// ---- 引擎參數（凍結值，改動＝改規則）----------------------------------------
+grpR     = "引擎參數（凍結 2026-07-17；上限 2026-10-19 改 1.0）"
+cap      = input.float(1.0,  "曝險上限 cap（實單 1.0＝不借錢）", minval=1.0, maxval=3.0, step=0.1, group=grpR, tooltip="2026-10-19 起實單 1.0。網站規則開啟時只影響 10-19 以後；之前照網站分段（1.5／均線確認）。改動＝改規則，不是調參。", display=display.none)
+rvWin    = input.int(20,     "RV 視窗（日）",            minval=5,   group=grpR, display=display.none)
+annIn    = input.int(0,      "年化因子 0=自動", minval=0, maxval=366, group=grpR, tooltip="0 = 自動：加密商品用 365，其餘用 252。也可直接填 252 / 365 覆寫。", display=display.none)
+medWin   = input.int(756,    "σ_t 中位數視窗（日）",      minval=60,  group=grpR, display=display.none)
+medMin   = input.int(252,    "σ_t 最少樣本（expanding）", minval=20,  group=grpR, display=display.none)
+gateWin  = input.int(52,     "閘門週均線（週）",          minval=4,   group=grpR, display=display.none)
+
+// ---- 滿載定義 ----------------------------------------------------------------
+grpP     = "部位刻度"
+slot     = input.float(100.0, "本標的滿載權重（%）", minval=1, step=5, group=grpP, tooltip="這檔在你的組合裡「滿倉」等於多少百分比。單一商品獨立看＝100；官方四腿各填 50，括號內讀數就等於實單頁的組合 pp。", display=display.none)
+normDisp = input.bool(true, "以滿載＝100% 顯示", group=grpP, tooltip="預設開啟：圖上一律 0~100%。關閉則以滿載權重的原刻度顯示，滿載填 50 就是 0~50 組合 pp。", display=display.none)
+
+// ---- 執行層 A2 ---------------------------------------------------------------
+grpE     = "執行層 A2（升格 2026-07-22；單腿上限 2026-10-19 改 50pp；減碼門檻 2026-10-30 收盤起 10pp）"
+official = input.bool(false, "網站規則（逐日對帳用）", group=grpE, tooltip="關閉（預設）＝整段歷史都用上限 1.0（水位不超過 100%），門檻用下方的值（預設＝現行實單）。開啟＝照網站：加碼 40／減碼 20（2026-10-30 前 40）／格 20、不平滑，歷史照網站分段（10-19 前上限 1.5、09-14 起要均線確認），舊規則期間水位最高 150%。", display=display.none)
+siteStart = input.bool(true, "重放起點同網站（美 2021-08-30／台 2021-07-01）", group=grpE, tooltip="開啟：從網站歷史第一筆那天由 0% 起算，之前不畫現持。關閉：從圖上第一根起算，2021～2022 年初的現持會跟網站不同，之後一樣。只在網站規則開啟、且市場模式是美股或台股時有作用。", display=display.none)
+bandPct  = input.float(40.0, "加碼門檻（滿載的 %）", minval=0, step=5, group=grpE, tooltip="網站規則關閉時使用。預設 40＝現行實單（高兩格才加；20pp 對 50pp 腿）。", display=display.none)
+downPct  = input.float(20.0, "減碼門檻（滿載的 %）", minval=0, step=5, group=grpE, tooltip="網站規則關閉時使用。預設 20＝現行實單（低一格就減；10pp 對 50pp 腿）；生效日前一律用加碼門檻。", display=display.none)
+asymFrom = input.time(timestamp("30 Oct 2026 00:00 +0000"), "減碼門檻生效日（資料日）", group=grpE, tooltip="自訂值（網站規則開啟時固定 2026-10-30）。資料日在這天以前的 bar，加減碼都用加碼門檻。", display=display.none)
+gridPct  = input.float(20.0, "取整格（滿載的 %）", minval=1, step=5, group=grpE, tooltip="網站規則關閉時使用。預設 20＝現行實單（水位六格 0／20／40／60／80／100%）。", display=display.none)
+smoothN  = input.int(1, "套袖平滑（日，1=關）", minval=1, maxval=60, group=grpE, tooltip="網站規則關閉時使用。預設 1＝不平滑（＝實單）。填 N 則對套袖 w 取 N 日簡單均線再算目標；W52 閘門不經過平滑。", display=display.none)
+
+// ---- 債金疊加（美股實單）------------------------------------------------------
+grpO     = "債金疊加（美股實單限定，2026-10-19 起）"
+mktMode  = input.string("自動", "市場模式", options=["自動", "美股（債金版）", "台股（不借錢版）"], group=grpO, tooltip="自動：NASDAQ／NYSE／AMEX／CBOE／BATS → 美股債金版；TWSE／TPEX → 台股不借錢版；其他交易所不顯示債金層。股票部分的規則兩市場相同。", display=display.none)
+iefSym   = input.symbol("NASDAQ:IEF", "公債腿", group=grpO, display=display.none)
+gldSym   = input.symbol("AMEX:GLD",   "黃金腿", group=grpO, display=display.none)
+ovW      = input.float(20.0, "各腿最大權重（占指數部 %）", minval=0, step=5, group=grpO, tooltip="研究凍結值 20。每成立一條加 1/3。", display=display.none)
+ovMa1    = input.int(40, "條件①：週收 > N 週均", minval=2, group=grpO, display=display.none)
+ovMa2    = input.int(52, "條件②：週收 > N 週均", minval=2, group=grpO, display=display.none)
+ovLook   = input.int(52, "條件③：週收 > N 週前週收", minval=1, group=grpO, display=display.none)
+showOv   = input.bool(true, "畫出債金目標（占指數部 %，細虛線）", group=grpO, tooltip="注意刻度：股票線是「滿載的 %」，債金線是「占指數部淨值的 %」。官方腿填滿載 50 時兩者同為組合 pp。", display=display.none)
+
+grpD     = "顯示"
+showBig  = input.bool(true,  "右側大字顯示目前現持", group=grpD, display=display.none)
+showTgt  = input.bool(true,  "顯示目標曝險（細線）", group=grpD, display=display.none)
+showNear = input.bool(true,  "標示閘門臨界區", group=grpD, tooltip="收盤價距 W52 在臨界寬度內時底色轉琥珀：週五收盤前的翻轉是低資訊量訊號。顯示層輔助，不改任何規則。", display=display.none)
+nearAuto = input.bool(true, "臨界區寬度自適應（0.5×週波動）", group=grpD, tooltip="寬度＝0.5 × RV20/√52，限制在 0.5%~6%。關閉用下方固定值。", display=display.none)
+nearPct  = input.float(2.0, "臨界區固定寬度（%）", minval=0.5, maxval=10, step=0.5, group=grpD, display=display.none)
+showTbl  = input.bool(true,  "顯示現況面板", group=grpD, display=display.none)
+
+isCrypto = syminfo.type == "crypto"
+annFac   = annIn > 0 ? annIn : (isCrypto ? 365 : 252)
+effSm    = official ? 1 : smoothN
+mult     = normDisp ? 100.0 / slot : 1.0               // 顯示倍率（滿載＝100%）
+unit     = normDisp ? "%" : (slot == 100.0 ? "%" : " pp")
+
+pfx   = syminfo.prefix
+isUSx = pfx == "NASDAQ" or pfx == "NYSE" or pfx == "AMEX" or pfx == "CBOE" or pfx == "BATS"
+isTWx = pfx == "TWSE" or pfx == "TPEX"
+usMode = mktMode == "美股（債金版）" or (mktMode == "自動" and isUSx)
+twMode = mktMode == "台股（不借錢版）" or (mktMode == "自動" and isTWx)
+modeTag = usMode ? "美股・債金版" : (twMode ? "台股・不借錢版" : "不借錢版")
+
+// ---- 前置檢查：引擎只在日線成立 ---------------------------------------------
+notDaily = not timeframe.isdaily
+var label warnLbl = na
+if notDaily and barstate.islast
+    label.delete(warnLbl)
+    warnLbl := label.new(bar_index, 0, "本指標須套在日線圖：RV20 / σ_t / 執行層皆定義在日線", color=color.new(color.red, 15), textcolor=color.white, style=label.style_label_center, size=size.large)
+
+// ---- 規則分段：用交易所時區的資料日（yyyymmdd 整數）判斷，不受 UTC 時差影響 ----------
+f_ymd(int ts) =>
+    year(ts, "UTC") * 10000 + month(ts, "UTC") * 100 + dayofmonth(ts, "UTC")
+barD     = year(time, syminfo.timezone) * 10000 + month(time, syminfo.timezone) * 100 + dayofmonth(time, syminfo.timezone)
+D_SWITCH = 20261019                                    // 新規則（不借錢＋債金）生效資料日
+D_MA     = usMode ? 20260914 : 20260915                // 均線確認層併入實單的第一筆資料日
+D_ASYM   = official ? 20261030 : f_ymd(asymFrom)       // 減碼門檻 10pp 生效資料日
+startD   = official and siteStart ? (usMode ? 20210830 : (twMode ? 20210701 : 0)) : 0
+newRule  = not official or barD >= D_SWITCH            // 自訂模式全段用同一個上限
+maEra    = official and barD >= D_MA and barD < D_SWITCH
+inReplay = barD >= startD
+
+// =============================================================================
+// 週線工具：只用「已收完的週」
+//   新的一週開始時，把上一週的最後收盤推進已收完陣列；週五當根 bar 視為本週已收
+//   （pandas W-FRI 標籤＝週五，資料最後一日＝週五時該週即採用）。週一到週四進行中的
+//   週不進決策——逐位元對齊來源 _gate_core 的 reindex+ffill 與 compute_overlay 的
+//   「只採用日期 <= asof 的已收完週五 bar」。週五休市的週要等下週一才被採用。
+// =============================================================================
+isFri = dayofweek == dayofweek.friday
+newWk = timeframe.change("W")
+
+f_weekly(float px, int keep) =>
+    var float[] done = array.new_float()
+    var float   cur  = na
+    if newWk and not na(cur)
+        array.push(done, cur)
+        if array.size(done) > keep
+            array.shift(done)
+    if not na(px)
+        cur := px
+    float[] eff = array.copy(done)
+    if isFri and not na(cur)
+        array.push(eff, cur)
+        if array.size(eff) > keep
+            array.shift(eff)
+    eff
+
+f_avgLast(float[] a, int k) =>
+    n = array.size(a)
+    float r = na
+    if n >= k
+        s = 0.0
+        for i = n - k to n - 1
+            s += array.get(a, i)
+        r := s / k
+    r
+
+f_last(float[] a) =>
+    n = array.size(a)
+    n > 0 ? array.get(a, n - 1) : na
+
+f_back(float[] a, int k) =>
+    n = array.size(a)
+    n > k ? array.get(a, n - 1 - k) : na
+
+// =============================================================================
+// 1. 週線 W52 單線閘門（已收完週）
+// =============================================================================
+wkArr = f_weekly(close, gateWin)
+wkC   = f_last(wkArr)                                   // 決策用週收（週一到四＝上週五收）
+w52   = f_avgLast(wkArr, gateWin)
+gate  = not na(w52) and wkC > w52
+
+// 預估：若本週以現價收盤，W52 與閘門會是什麼（顯示層，不進決策）
+float[] liveArr = array.copy(wkArr)
+if not isFri
+    array.push(liveArr, close)
+    if array.size(liveArr) > gateWin
+        array.shift(liveArr)
+w52Live  = f_avgLast(liveArr, gateWin)
+gateLive = not na(w52Live) and close > w52Live
+
+// =============================================================================
+// 2. 自適應套袖：RV20 → σ_t（近三年中位數）→ w = min(上限, σ_t/RV20)
+// =============================================================================
+priceOk = close > 0 and close[1] > 0
+lr = priceOk ? math.log(close / close[1]) : na
+rv = ta.stdev(lr, rvWin, false) * math.sqrt(annFac)    // biased=false ＝ ddof 1，對齊 pandas .std()
+
+var float[] rvBuf = array.new_float()
+if not na(rv)
+    array.push(rvBuf, rv)
+    if array.size(rvBuf) > medWin
+        array.shift(rvBuf)
+nSig  = array.size(rvBuf)
+sigma = nSig >= medMin ? array.median(rvBuf) : na
+
+// 均線確認層（只在 2026-09-14／15 ～ 10-16 影響上限）：逐位元對齊來源 _ma_conditions
+//   三個價格條件帶 1% 遲滯：關→收盤 > 均線才開；開→收盤 < 均線×0.99 才關；中間沿用前值。
+//   注意：Pine v6 的 and 會短路，遲滯狀態必須先各自算好再組合。
+ma60  = ta.sma(close, 60)
+ma120 = ta.sma(close, 120)
+ma200 = ta.sma(close, 200)
+f_hyst(float ma) =>
+    var bool st = false
+    if close > ma
+        st := true
+    else if close < ma * 0.99
+        st := false
+    st
+h60  = f_hyst(ma60)
+h120 = f_hyst(ma120)
+h200 = f_hyst(ma200)
+s120 = ma120 > ma120[20]
+s200 = ma200 > ma200[20]
+ma5  = h60 and h120 and h200 and s120 and s200
+
+capEff   = newRule ? cap : (maEra and not ma5 ? 1.0 : 1.5)
+hasVol   = not na(sigma) and not na(rv) and rv > 0
+rawRatio = hasVol ? sigma / rv : 1.0                   // 暖機期比照來源實作，套袖視為 1.0
+sleeve   = hasVol ? math.min(capEff, rawRatio) : math.min(capEff, 1.0)
+calm     = rawRatio >= 1.0                             // 波動低於自身常態 → 滿載（不借錢，不再加碼）
+
+// =============================================================================
+// 3. 目標曝險與執行層 A2（整數空間）
+//   內部單位 q＝0.1pp（實單每腿滿倉 50pp＝500 q）。目標先四捨五入到 q（＝網站 final_pct 取一位小數），
+//   門檻 20pp＝200 q、10pp＝100 q、格 10pp＝100 q、上限 50pp＝500 q（舊規則 75pp＝750 q）。
+// =============================================================================
+sleeveSm  = math.min(capEff, effSm > 1 ? ta.sma(sleeve, effSm) : sleeve)
+fillFrac  = (gate ? 1.0 : 0.0) * sleeveSm               // 0 ~ 上限；閘門硬規則不平滑
+targetPos = slot * fillFrac
+
+FULLQ  = 500.0
+tgtQ   = math.round(fillFrac * FULLQ)
+clampQ = newRule ? math.round(cap * FULLQ) : 750
+upQ    = official ? 200 : math.round(bandPct * 5)
+downQ  = barD >= D_ASYM ? (official ? 100 : math.round(downPct * 5)) : upQ
+gridQ  = official ? 100 : math.max(1, math.round(gridPct * 5))
+
+// 對格：四捨六入、正中間取偶數格（Python round；例 250 q → 200 q、350 q → 400 q）
+f_gridHE(int t, int g) =>
+    lo = math.floor(t / g)
+    r  = t - lo * g
+    k  = 2 * r > g ? lo + 1 : (2 * r < g ? lo : (lo % 2 == 0 ? lo : lo + 1))
+    k * g
+
+f_disp(int q) =>
+    slot * q / FULLQ * mult
+
+gateFlip = not notDaily and bar_index > 0 and gate != gate[1]
+
+var int    heldQ    = 0                                // 現持（執行層，q 單位）
+var string lastChg  = "—"
+posChanged = false
+if not notDaily and inReplay
+    before = heldQ
+    forced = false
+    if heldQ > clampQ                                  // 上限下調時先拉回上限（來源「規則切換」步驟）
+        heldQ  := clampQ
+        forced := true
+    if tgtQ - heldQ >= upQ or heldQ - tgtQ >= downQ
+        heldQ := math.min(f_gridHE(tgtQ, gridQ), clampQ)
+    if heldQ != before
+        posChanged := true
+        reason  = gateFlip ? "閘門翻轉" : (forced and heldQ == clampQ ? "規則切換" : "波動調整")
+        lastChg := str.format_time(time, "yyyy-MM-dd", syminfo.timezone) + "　" + str.tostring(f_disp(before), "#.#") + unit + " → " + str.tostring(f_disp(heldQ), "#.#") + unit + "（" + reason + "）"
+heldPos = slot * heldQ / FULLQ                          // 現持（滿載權重刻度）
+
+nearW    = nearAuto and not na(rv) ? math.min(6.0, math.max(0.5, 0.5 * rv * 100 / math.sqrt(52))) : nearPct
+nearGate = not na(w52Live) and w52Live > 0 and math.abs(close / w52Live - 1) * 100 < nearW
+
+// =============================================================================
+// 4. 債金疊加（美股）：IEF／GLD 週線三條件，各 1/3，只用已收完週
+// =============================================================================
+iefT  = ticker.modify(iefSym, adjustment = adjustment.dividends)
+gldT  = ticker.modify(gldSym, adjustment = adjustment.dividends)
+iefPx = request.security(iefT, "D", close)
+gldPx = request.security(gldT, "D", close)
+
+f_e3(float px) =>
+    arr  = f_weekly(px, math.max(ovMa1, ovMa2, ovLook + 1))
+    c    = f_last(arr)
+    m1   = f_avgLast(arr, ovMa1)
+    m2   = f_avgLast(arr, ovMa2)
+    p52  = f_back(arr, ovLook)
+    c1   = not na(c) and not na(m1)  and c > m1
+    c2   = not na(c) and not na(m2)  and c > m2
+    c3   = not na(c) and not na(p52) and c > p52
+    n    = (c1 ? 1 : 0) + (c2 ? 1 : 0) + (c3 ? 1 : 0)
+    [n, c1, c2, c3]
+
+[iefN, iefC1, iefC2, iefC3] = f_e3(iefPx)
+[gldN, gldC1, gldC2, gldC3] = f_e3(gldPx)
+iefTgt = ovW * iefN / 3.0
+gldTgt = ovW * gldN / 3.0
+ovChanged = usMode and not notDaily and bar_index > 0 and (iefN != iefN[1] or gldN != gldN[1])
+
+// =============================================================================
+// 繪圖
+// =============================================================================
+heldV  = notDaily or not inReplay ? na : heldPos   * mult
+tgtV   = notDaily ? na : targetPos * mult
+
+posCol = not gate or heldQ == 0 ? color.new(#e05252, 0) : (heldPos >= slot ? color.new(#2e9e5b, 0) : color.new(#3d7bd6, 0))
+
+bgcolor(not notDaily and not gate ? color.new(#e05252, 93) : na, title="閘門出場")
+bgcolor(showNear and not notDaily and nearGate ? color.new(#f59e0b, 78) : na, title="閘門臨界區")
+
+plot(notDaily ? na : slot * mult, "滿載線（實單上限）", color=color.new(#2e9e5b, 50), linewidth=1, display=display.pane)
+plot(notDaily or clampQ <= FULLQ ? na : f_disp(clampQ), "上限（舊規則 150%／cap>1 研究用）", color=color.new(#8a8f98, 60), linewidth=1, display=display.pane)
+hline(0, "0", color=color.new(color.gray, 60), linestyle=hline.style_dotted)
+
+// 主角：現持曝險（執行層）
+pH = plot(heldV, "現持曝險（執行層）", color=posCol, linewidth=3, style=plot.style_stepline)
+p0 = plot(notDaily ? na : 0.0, "zero", color=color.new(color.gray, 100), display=display.none)
+fill(pH, p0, color=color.new(posCol, 86))
+plot(showTgt ? tgtV : na, "目標曝險（訊號）", color=color.new(#8a8f98, 25), linewidth=1)
+
+// 債金目標（占指數部 %）
+plot(showOv and usMode and not notDaily ? iefTgt : na, "公債 IEF 目標（占指數部 %）", color=color.new(#0ea5e9, 20), linewidth=1, style=plot.style_stepline)
+plot(showOv and usMode and not notDaily ? gldTgt : na, "黃金 GLD 目標（占指數部 %）", color=color.new(#eab308, 20), linewidth=1, style=plot.style_stepline)
+
+// ---- 右側大字：目前現持 ------------------------------------------------------
+var table bigT = table.new(position.middle_right, 1, 1)
+if showBig and barstate.islast and not notDaily
+    table.cell(bigT, 0, 0, str.tostring(heldPos * mult, "#.#") + unit, text_size=size.large, text_color=posCol, bgcolor=color.new(color.black, 78))
+
+// ---- 現況面板 ---------------------------------------------------------------
+var table tbl = table.new(position.top_right, 2, 13, border_width=1)
+fnum(v, fmt) => na(v) ? "—" : str.tostring(v, fmt)
+trow(i, k, v, col) =>
+    table.cell(tbl, 0, i, k, text_size=size.small, text_halign=text.align_left, text_color=color.gray, bgcolor=color.new(color.black, 88))
+    table.cell(tbl, 1, i, v, text_size=size.small, text_halign=text.align_right, text_color=col, bgcolor=color.new(color.black, 88))
+e3txt(bool c1, bool c2, bool c3) =>
+    (c1 ? "①" : "") + (c2 ? "②" : "") + (c3 ? "③" : "")
+
+if showTbl and barstate.islast and not notDaily
+    warm  = nSig < medMin or na(w52)
+    ppTag = (normDisp and slot != 100.0) ? "（" + str.tostring(heldPos, "#.#") + " pp）" : ""
+    custom = bandPct != 40.0 or downPct != 20.0 or gridPct != 20.0 or smoothN != 1 or cap != 1.0
+    trow(0, syminfo.ticker + " 現持（" + modeTag + (official ? "・網站分段" : (custom ? "・自訂" : "")) + "）", fnum(heldPos * mult, "#.#") + unit + ppTag, posCol)
+    trow(1, "目標曝險（訊號）", fnum(targetPos * mult, "#.#") + unit + ((normDisp and slot != 100.0) ? "（" + str.tostring(targetPos, "#.#") + " pp）" : ""), color.silver)
+    trow(2, "W52 閘門（已收完週）", gate ? "在場" : "出場", gate ? #2e9e5b : #e05252)
+    trow(3, "決策週收 / W52", fnum(wkC, format.mintick) + " / " + fnum(w52, format.mintick), color.silver)
+    trow(4, (nearGate ? "若本週收現價（臨界區±" + str.tostring(nearW, "#.#") + "%）" : "若本週收現價"), na(w52Live) ? "—" : (gateLive ? "在場" : "出場") + "　距 W52 " + ((close / w52Live - 1) >= 0 ? "+" : "") + str.tostring((close / w52Live - 1) * 100, "#.#") + "%", nearGate ? #d97706 : (na(w52Live) ? color.gray : (gateLive ? #2e9e5b : #e05252)))
+    trow(5, "RV20（年化 " + str.tostring(annFac) + "）", fnum(rv * 100, "#.#") + "%", color.silver)
+    trow(6, "σ_t（近 3 年中位）", fnum(sigma * 100, "#.#") + "%", color.silver)
+    trow(7, "σ_t / RV20", fnum(rawRatio, "#.###") + (calm ? "（平靜，滿載）" : "（波動高，減碼）"), calm ? #2e9e5b : #d97706)
+    trow(8, "套袖 w = min(" + str.tostring(capEff, "#.#") + ", σ_t/RV20)" + (effSm > 1 ? "（" + str.tostring(effSm) + " 日平滑）" : ""), fnum(sleeveSm, "#.##") + (effSm > 1 ? "（原始 " + str.tostring(sleeve, "#.##") + "）" : ""), color.silver)
+    trow(9, warm ? "暖機中 σ_t 樣本" : "σ_t 樣本", str.tostring(nSig) + " / " + str.tostring(medWin), warm ? #d98a2b : color.gray)
+    trow(10, "最近一次執行層變動", lastChg, color.silver)
+    if usMode
+        trow(11, "公債 IEF（週線三條件）", str.tostring(iefN) + "／3 條　目標 " + str.tostring(iefTgt, "#.#") + "%" + (iefN > 0 ? "　成立" + e3txt(iefC1, iefC2, iefC3) : ""), iefN == 3 ? #2e9e5b : (iefN > 0 ? #0ea5e9 : color.gray))
+        trow(12, "黃金 GLD（週線三條件）", str.tostring(gldN) + "／3 條　目標 " + str.tostring(gldTgt, "#.#") + "%" + (gldN > 0 ? "　成立" + e3txt(gldC1, gldC2, gldC3) : ""), gldN == 3 ? #2e9e5b : (gldN > 0 ? #eab308 : color.gray))
+    else
+        trow(11, "債金疊加", twMode ? "台股不借錢版，無此層" : "未啟用（市場模式）", color.gray)
+
+// ---- 提醒 -------------------------------------------------------------------
+alertcondition(posChanged, "執行層調整", "W52×σt：現持曝險變動")
+alertcondition(gateFlip,   "閘門翻轉",   "W52×σt：週線閘門翻轉（已收完週）")
+alertcondition(ovChanged,  "債金條件變動", "W52×σt：IEF／GLD 週線條件數變動")
+if not notDaily and (posChanged or gateFlip or ovChanged) and barstate.isconfirmed
+    m1 = syminfo.ticker + " | 現持 " + str.tostring(heldPos * mult, "#.#") + unit + " | 目標 " + str.tostring(targetPos * mult, "#.#") + unit
+    m2 = m1 + " | 閘門 " + (gate ? "在場" : "出場") + " | 套袖 " + str.tostring(sleeveSm, "#.##")
+    m3 = m2 + (usMode ? " | IEF " + str.tostring(iefN) + "/3 目標 " + str.tostring(iefTgt, "#.#") + "% | GLD " + str.tostring(gldN) + "/3 目標 " + str.tostring(gldTgt, "#.#") + "%" : "")
+    m4 = m3 + (posChanged ? " | 執行層：" + lastChg : (gateFlip ? " | 閘門翻轉（未達門檻不調整）" : " | 債金條件數變動"))
+    alert(m4, alert.freq_once_per_bar_close)

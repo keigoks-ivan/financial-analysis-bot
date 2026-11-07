@@ -1,0 +1,602 @@
+{
+ "schema": "claim-tree-jev-v0",
+ "ticker": "NVDA",
+ "notes": "Questions are in English because Jev's accuracy on CJK text is lower (docs.typesafe.ai/models). Chinese fields are display only. Every question asks about evidence PRESENT in `news`; none asks Jev to forecast. Arithmetic, dates and thresholds stay in code.",
+ "thresholds": {
+  "relevance_noul_min": 0.5,
+  "choice_auto_flip_confidence": 0.85,
+  "choice_review_confidence": 0.6,
+  "risk_noul_alert": 0.9,
+  "risk_noul_review": 0.5
+ },
+ "relevance_filter": {
+  "type": "noul",
+  "instructions": "Is `item` about NVIDIA's products, customers, suppliers, competitors' chips, hyperscalers' data-center spending plans, or regulators acting on NVIDIA?",
+  "criteria": {
+   "true": "The item mentions NVIDIA, or a customer's or competitor's choice of AI accelerators, or TSMC/HBM supply, or a hyperscaler's (Microsoft, Alphabet, Amazon, Meta) capital-expenditure plan, or antitrust or export rules that touch NVIDIA",
+   "false": "The item is about an unrelated company, general market moves, or macro news with no link to NVIDIA"
+  }
+ },
+ "claims": [
+  {
+   "id": "A1",
+   "pillar": "A",
+   "weight": "key",
+   "zh": "沒有前沿實驗室公開把旗艦模型訓練移出 NVIDIA",
+   "answered_by": "jev",
+   "due": "2027-06-30",
+   "jev": {
+    "type": "choice",
+    "instructions": "Based only on `news`, has a frontier AI lab (OpenAI, Anthropic, Google DeepMind, Meta, xAI) publicly stated that it trains, or will train, its flagship foundation model primarily on non-NVIDIA accelerators?",
+    "criteria": {
+     "broken": "A named frontier lab, or a credible report citing it, says flagship model TRAINING runs or will run primarily on TPU, Trainium, AMD, or another non-NVIDIA chip",
+     "holds": "A named frontier lab says or is reported to keep NVIDIA as its primary training platform, or a report explicitly says a switch to another chip is only for inference or for smaller models",
+     "no_relevant_evidence": "`news` says nothing about which chips a frontier lab uses to train its flagship model"
+    }
+   }
+  },
+  {
+   "id": "A2",
+   "pillar": "A",
+   "weight": "load",
+   "zh": "AMD MI450 在 Anthropic／Meta 只用於推論",
+   "answered_by": "jev",
+   "due": "2027-12-31",
+   "jev": {
+    "type": "choice",
+    "instructions": "Does `news` state that the AMD MI450 clusters ordered by Anthropic or Meta will be used to TRAIN models, rather than only to serve (inference) them?",
+    "criteria": {
+     "broken": "Anthropic, Meta, AMD, or a credible report says MI450 clusters will be used for model training",
+     "holds": "The MI450 deployment is described as inference-only or serving-only",
+     "no_relevant_evidence": "`news` does not describe what the MI450 clusters are used for"
+    }
+   }
+  },
+  {
+   "id": "A3",
+   "pillar": "A",
+   "weight": "load",
+   "zh": "漲價後兩季毛利率回到 72% 以上",
+   "answered_by": "code+jev",
+   "metric": "gm_ltm_pct",
+   "due": "2027-08-31",
+   "jev": {
+    "type": "choice",
+    "instructions": "Does `news` contain a statement from NVIDIA about the price increase it planned for the next fiscal year?",
+    "criteria": {
+     "broken": "NVIDIA says the planned price increase is cancelled, postponed, or smaller than previously stated",
+     "holds": "NVIDIA confirms the price increase is going ahead or has taken effect",
+     "no_relevant_evidence": "`news` does not mention NVIDIA's pricing plans"
+    }
+   },
+   "rule": {
+    "metric": "gm_ltm_pct",
+    "op": ">=",
+    "value": 71,
+    "value_at_due": 72
+   }
+  },
+  {
+   "id": "A4",
+   "pillar": "A",
+   "weight": "load",
+   "zh": "2027 年 CoWoS 配額仍過半",
+   "answered_by": "jev+human",
+   "due": "2027-12-31",
+   "jev": {
+    "type": "choice",
+    "instructions": "Does `news` report that a competitor of NVIDIA (AMD, Broadcom, Google, Amazon, Microsoft, or Meta) has secured TSMC CoWoS advanced-packaging capacity or HBM memory supply for 2027?",
+    "criteria": {
+     "broken": "A competitor is reported to have secured 2027 CoWoS or HBM supply described as comparable to or larger than NVIDIA's",
+     "holds": "A report says NVIDIA keeps the majority of 2027 CoWoS or HBM supply",
+     "no_relevant_evidence": "`news` does not discuss CoWoS or HBM allocation"
+    }
+   }
+  },
+  {
+   "id": "A5",
+   "pillar": "A",
+   "weight": "support",
+   "zh": "第三方估 AI 加速器份額不跌破 60%",
+   "answered_by": "jev+human",
+   "due": "2027-03-31",
+   "jev": {
+    "type": "choice",
+    "instructions": "If `news` cites a market-research estimate of NVIDIA's share of AI accelerator revenue, which range does the cited number fall in?",
+    "criteria": {
+     "below_60_percent": "The cited NVIDIA share is below 60 percent",
+     "60_to_75_percent": "The cited NVIDIA share is between 60 and 75 percent",
+     "above_75_percent": "The cited NVIDIA share is above 75 percent",
+     "not_stated": "`news` cites no market-share estimate for NVIDIA"
+    }
+   }
+  },
+  {
+   "id": "A6",
+   "pillar": "A",
+   "weight": "support",
+   "zh": "網路業務增速高於資料中心整體",
+   "answered_by": "code",
+   "metric": "networking_yoy_vs_dc_yoy",
+   "rule": {
+    "metric": "networking_yoy_minus_dc_yoy_pp",
+    "op": ">",
+    "value": 0
+   }
+  },
+  {
+   "id": "A7",
+   "pillar": "A",
+   "weight": "load",
+   "zh": "Rubin Ultra 量產不延誤超過六個月",
+   "answered_by": "jev",
+   "due": "2027-12-31",
+   "jev": {
+    "type": "choice",
+    "instructions": "Does `news` report a change to the production or shipment schedule of NVIDIA's Rubin Ultra platform?",
+    "criteria": {
+     "broken": "NVIDIA or a supply-chain source says Rubin Ultra production or shipments are delayed",
+     "holds": "NVIDIA or a supply-chain source says Rubin Ultra is on schedule or ahead of schedule",
+     "no_relevant_evidence": "`news` does not mention the Rubin Ultra schedule"
+    }
+   }
+  },
+  {
+   "id": "A8",
+   "pillar": "A",
+   "weight": "support",
+   "zh": "沒有監管機關下令 NVIDIA 拆解交易或解綁產品",
+   "answered_by": "jev",
+   "due": "2027-06-30",
+   "jev": {
+    "type": "choice",
+    "instructions": "Based only on `news`, what is the status of antitrust or regulatory action against NVIDIA's deals or product bundling by the U.S. DOJ or FTC, the European Commission, or China's SAMR?",
+    "criteria": {
+     "broken": "A regulator or court has ordered NVIDIA to unwind a deal, pay a fine, or unbundle products such as CUDA, NVLink, networking, or the Groq license",
+     "under_investigation": "A regulator has opened or widened an investigation, issued subpoenas, or found that NVIDIA broke the law, but no fine or remedy has been ordered yet",
+     "holds": "A regulator has closed its review of NVIDIA without any action",
+     "no_relevant_evidence": "`news` says nothing about regulatory action against NVIDIA"
+    }
+   }
+  },
+  {
+   "id": "B1",
+   "pillar": "B",
+   "weight": "key",
+   "zh": "FY28 共識 EPS 兩季內不下修超過 10%",
+   "answered_by": "code",
+   "metric": "eps_fy_next_vs_baseline_pct",
+   "due": "2027-03-31",
+   "rule": {
+    "metric": "eps_next_fy",
+    "op": ">=",
+    "value": 14.11,
+    "baseline": 15.68,
+    "note": "baseline = FY28 consensus on 2026-09-22; threshold = baseline x 0.9",
+    "fy": "FY28"
+   }
+  },
+  {
+   "id": "B2",
+   "pillar": "B",
+   "weight": "load",
+   "zh": "11 月財報資料中心營收年增高於 60%",
+   "answered_by": "code",
+   "metric": "dc_rev_yoy_pct",
+   "due": "2026-11-18",
+   "rule": {
+    "metric": "dc_rev_yoy_pct",
+    "op": ">",
+    "value": 60,
+    "resolve_at_due": true
+   }
+  },
+  {
+   "id": "B3",
+   "pillar": "B",
+   "weight": "load",
+   "zh": "11 月財報 EPS 高於共識",
+   "answered_by": "code",
+   "metric": "eps_surprise_pct",
+   "due": "2026-11-18",
+   "rule": {
+    "metric": "eps_surprise_latest_pct",
+    "op": ">",
+    "value": 0,
+    "resolve_at_due": true
+   }
+  },
+  {
+   "id": "B4",
+   "pillar": "B",
+   "weight": "load",
+   "zh": "下季財測高於共識",
+   "answered_by": "jev",
+   "due": "2026-11-18",
+   "jev": {
+    "type": "choice",
+    "instructions": "Does `news` state how NVIDIA's revenue guidance for the next quarter compared with the analyst consensus at the time?",
+    "criteria": {
+     "above_consensus": "Guidance is described as above, ahead of, or beating consensus or expectations",
+     "in_line_or_below": "Guidance is described as in line with, matching, below, or missing consensus or expectations",
+     "not_stated": "`news` does not compare NVIDIA's guidance with consensus"
+    }
+   }
+  },
+  {
+   "id": "B5",
+   "pillar": "B",
+   "weight": "support",
+   "zh": "30 天分析師上修多於下修",
+   "answered_by": "code",
+   "metric": "analyst_revisions_30d",
+   "rule": {
+    "metric": "analyst_up_minus_down_30d_next_fy",
+    "op": ">",
+    "value": 0
+   }
+  },
+  {
+   "id": "B6",
+   "pillar": "B",
+   "weight": "load",
+   "zh": "四大 hyperscaler 2027 資本支出指引合計年增不低於 20%",
+   "answered_by": "jev+code",
+   "due": "2027-02-28",
+   "jev": {
+    "type": "choice",
+    "instructions": "Does `news` report a change to the 2027 capital-expenditure plan of Microsoft, Alphabet, Amazon, or Meta?",
+    "criteria": {
+     "cut": "A named hyperscaler lowered its 2027 capital-expenditure plan or guidance",
+     "raised_or_maintained": "A named hyperscaler raised or reaffirmed its 2027 capital-expenditure plan or guidance",
+     "not_stated": "`news` does not mention a hyperscaler's 2027 capital-expenditure plan"
+    }
+   },
+   "rule": {
+    "metric": "hyperscaler_capex_2027_yoy_pct",
+    "op": ">=",
+    "value": 20,
+    "resolve_at_due": true
+   }
+  },
+  {
+   "id": "B7",
+   "pillar": "B",
+   "weight": "key",
+   "zh": "供應承諾不被下修",
+   "answered_by": "jev+code",
+   "due": "2026-11-18",
+   "jev": {
+    "type": "choice",
+    "instructions": "Does `news` state that NVIDIA changed the size of its total supply or purchase commitments?",
+    "criteria": {
+     "broken": "NVIDIA's supply or purchase commitments are reported as reduced from the prior quarter",
+     "holds": "NVIDIA's supply or purchase commitments are reported as unchanged or increased",
+     "no_relevant_evidence": "`news` does not mention NVIDIA's supply or purchase commitments"
+    }
+   },
+   "rule": {
+    "metric": "supply_commitments_qoq_usd",
+    "op": ">=",
+    "value": 0,
+    "resolve_at_due": true
+   }
+  },
+  {
+   "id": "C1",
+   "pillar": "C",
+   "weight": "key",
+   "zh": "FCF 利潤率維持 35% 以上",
+   "answered_by": "code",
+   "metric": "fcf_margin_pct",
+   "rule": {
+    "metric": "fcf_margin_pct",
+    "op": ">=",
+    "value": 35
+   }
+  },
+  {
+   "id": "C2",
+   "pillar": "C",
+   "weight": "load",
+   "zh": "LTM ROIC 不跌破 50%",
+   "answered_by": "code",
+   "metric": "roic_ltm_pct",
+   "rule": {
+    "metric": "roic_ltm_pct",
+    "op": ">=",
+    "value": 50
+   }
+  },
+  {
+   "id": "C3",
+   "pillar": "C",
+   "weight": "load",
+   "zh": "應收帳款天數不拉長超過 15 天",
+   "answered_by": "code",
+   "metric": "dso_days",
+   "data_gap": true,
+   "rule": {
+    "metric": "dso_change_days_yoy",
+    "op": "<=",
+    "value": 15
+   }
+  },
+  {
+   "id": "C4",
+   "pillar": "C",
+   "weight": "support",
+   "zh": "股票薪酬占營收低於 5%",
+   "answered_by": "code",
+   "metric": "sbc_pct_rev",
+   "rule": {
+    "metric": "sbc_pct_rev",
+    "op": "<",
+    "value": 5
+   }
+  },
+  {
+   "id": "C5",
+   "pillar": "C",
+   "weight": "load",
+   "zh": "對客戶投資回流的晶片採購占資料中心營收低於 10%",
+   "answered_by": "jev+human",
+   "due": "2027-02-28",
+   "jev": {
+    "type": "noul",
+    "instructions": "Does `news` give a figure for how much of NVIDIA's investment in a customer (such as OpenAI or Anthropic) comes back to NVIDIA as purchases of NVIDIA chips?",
+    "criteria": {
+     "true": "A dollar amount or percentage of the investment that returns to NVIDIA as chip purchases is stated",
+     "false": "No such figure is stated, even if the investment itself is mentioned"
+    }
+   },
+   "initial_state": "不明"
+  },
+  {
+   "id": "C6",
+   "pillar": "C",
+   "weight": "support",
+   "zh": "單季庫存減損不超過 20 億美元",
+   "answered_by": "code",
+   "metric": "inventory_writedown_usd",
+   "rule": {
+    "metric": "inventory_writedown_usd_q",
+    "op": "<=",
+    "value": 2000000000.0
+   }
+  },
+  {
+   "id": "D1",
+   "pillar": "D",
+   "weight": "key",
+   "zh": "現價隱含 FY28 EPS 低於共識",
+   "answered_by": "code",
+   "metric": "implied_eps_vs_consensus",
+   "rule": {
+    "metric": "implied_eps_minus_consensus",
+    "op": "<",
+    "value": 0,
+    "note": "implied EPS = close / (5y avg NTM P/E / 2)"
+   }
+  },
+  {
+   "id": "D2",
+   "pillar": "D",
+   "weight": "load",
+   "zh": "近三月股價漲幅低於 EPS 上修幅度",
+   "answered_by": "code",
+   "metric": "price_vs_eps_3m",
+   "rule": {
+    "metric": "price_minus_eps_chg_3m_pp",
+    "op": "<",
+    "value": 0,
+    "note": "tree says 60 straight days; only the point value is available, so this uses the current 3-month comparison"
+   }
+  },
+  {
+   "id": "D3",
+   "pillar": "D",
+   "weight": "load",
+   "zh": "PEG 低於 1",
+   "answered_by": "code",
+   "metric": "peg",
+   "rule": {
+    "metric": "peg_live",
+    "op": "<",
+    "value": 1
+   }
+  },
+  {
+   "id": "D4",
+   "pillar": "D",
+   "weight": "support",
+   "zh": "五年空頭情境前提未成立（連動 A）",
+   "answered_by": "code",
+   "metric": "pillar_A_state",
+   "rule": {
+    "metric": "pillar_A_not_loosened",
+    "op": "==",
+    "value": true
+   }
+  },
+  {
+   "id": "D5",
+   "pillar": "D",
+   "weight": "support",
+   "zh": "收盤未跌破 211",
+   "answered_by": "code",
+   "metric": "close_vs_support",
+   "rule": {
+    "metric": "close",
+    "op": ">=",
+    "value": 211.32
+   }
+  },
+  {
+   "id": "E1",
+   "pillar": "E",
+   "weight": "risk",
+   "zh": "台海衝突或封鎖使台積電停產",
+   "answered_by": "jev",
+   "jev": {
+    "type": "noul",
+    "instructions": "Does `news` report an armed conflict, blockade, or quarantine involving Taiwan that has halted TSMC production or that TSMC says will halt its production?",
+    "criteria": {
+     "true": "Such an event is reported as having happened",
+     "false": "No such event is reported; military exercises, warnings, or analyst scenarios alone count as no"
+    }
+   }
+  },
+  {
+   "id": "E2",
+   "pillar": "E",
+   "weight": "risk",
+   "zh": "反壟斷正式裁罰要求解綁",
+   "answered_by": "jev",
+   "jev": {
+    "type": "noul",
+    "instructions": "Does `news` report that a regulator (U.S. DOJ, European Commission, or China's SAMR) has issued a formal ruling, fine, or remedy order against NVIDIA that requires it to unbundle CUDA, NVLink, or networking products?",
+    "criteria": {
+     "true": "A formal ruling, fine, or remedy order is reported",
+     "false": "Only an investigation, complaint, or hearing is reported, or nothing at all"
+    }
+   }
+  },
+  {
+   "id": "E3",
+   "pillar": "E",
+   "weight": "risk",
+   "zh": "新出口管制關掉現有市場",
+   "answered_by": "jev",
+   "jev": {
+    "type": "noul",
+    "instructions": "Does `news` report a new U.S. export-control rule that bars NVIDIA from selling data-center accelerators to a country or customer group it currently sells to?",
+    "criteria": {
+     "true": "A new rule taking effect is reported",
+     "false": "Only proposals, discussions, or rules already in force are reported, or nothing at all"
+    }
+   }
+  },
+  {
+   "id": "E4",
+   "pillar": "E",
+   "weight": "risk",
+   "zh": "兩家以上 hyperscaler 下修 2027 資本支出",
+   "answered_by": "code",
+   "metric": "count_of_B6_cut_events",
+   "rule": {
+    "metric": "hyperscalers_cutting_count",
+    "op": ">=",
+    "value": 2,
+    "note": "risk: 'true' means the bad event happened"
+   }
+  },
+  {
+   "id": "E5",
+   "pillar": "E",
+   "weight": "risk",
+   "zh": "主要客戶違約或客戶投資減損",
+   "answered_by": "jev",
+   "jev": {
+    "type": "noul",
+    "instructions": "Does `news` report that a major NVIDIA customer missed a payment or defaulted, or that NVIDIA wrote down the value of an investment in a customer?",
+    "criteria": {
+     "true": "A missed payment, default, or write-down is reported",
+     "false": "Only concerns, downgrades, or analyst warnings are reported, or nothing at all"
+    }
+   }
+  },
+  {
+   "id": "E6",
+   "pillar": "E",
+   "weight": "risk",
+   "zh": "執行長離任",
+   "answered_by": "jev",
+   "jev": {
+    "type": "noul",
+    "instructions": "Does `news` report that Jensen Huang is stepping down as CEO of NVIDIA or has been replaced?",
+    "criteria": {
+     "true": "A departure or replacement is reported",
+     "false": "No such report"
+    }
+   }
+  }
+ ],
+ "cleaning": {
+  "_comment": "2026-09-22: added by the evidence layer (scripts/jev/fetch_evidence.py, clean_evidence.py). Not part of the claim tree; used to tag each incoming news item before importance is computed in code. `item` is replaced with `items[i]` the same way relevance_filter is, above.",
+  "topic": {
+   "type": "choice",
+   "instructions": "Which one topic does `item` mostly concern?",
+   "criteria": {
+    "customer_lock_in": "The item is about a customer's or partner's commitment, investment, deal structure, or exclusivity with NVIDIA or a competitor — how tied a customer is to one supplier",
+    "supply_and_capacity": "The item is about chip manufacturing capacity, TSMC CoWoS or HBM allocation, production yields, or supply-chain constraints",
+    "pricing_and_margin": "The item is about NVIDIA's or a competitor's product pricing, price increases or cuts, or gross margin",
+    "regulation_and_export": "The item is about a regulator, court, antitrust action, or export-control rule affecting NVIDIA or its chips",
+    "competitor_move": "The item is about a competing chipmaker's (AMD, Broadcom, Google, Intel, or a custom ASIC) product, deal, or market share, with no NVIDIA pricing or supply angle",
+    "demand_and_capex": "The item is about a customer's or hyperscaler's AI spending plan, capital-expenditure guidance, or data-center buildout",
+    "management_and_governance": "The item is about NVIDIA's executives, board, or corporate governance",
+    "other": "None of the above topics fit, or the item is general market commentary with no specific topic"
+   }
+  },
+  "kind": {
+   "type": "choice",
+   "instructions": "What kind of source or statement produced `item`?",
+   "criteria": {
+    "dated_company_statement": "A company (NVIDIA, a customer, a supplier, or a competitor) making a statement, in its own name, about something it did, is doing, or has decided — a press release, earnings statement, executive quote, or company blog post",
+    "dated_third_party_report": "A named news outlet or wire service reporting a specific fact, event, or figure, often citing sources, without an accompanying buy or sell opinion",
+    "regulator_or_court_action": "A regulator (such as the DOJ, SAMR, or the European Commission) or a court taking or announcing an action, ruling, filing, or investigation",
+    "analyst_opinion": "A sell-side analyst's or research firm's rating, price target, or opinion about a stock",
+    "market_commentary_or_price_move": "General commentary about a stock's price movement, a 'stocks to watch' style article, or macro or market commentary with no specific NVIDIA-related fact",
+    "other": "None of the above kinds fit"
+   }
+  }
+ },
+ "unknowns": [
+  {
+   "id": "F1",
+   "zh": "訓練端是否已有實驗室私下轉單",
+   "becomes_knowable": "實驗室發表模型時的技術報告",
+   "weight": "unknown",
+   "jev": {
+    "type": "noul",
+    "instructions": "Based only on `news`, does a frontier AI lab disclose which chips it used to train a flagship model, for example in a technical report or model card?"
+   }
+  },
+  {
+   "id": "F2",
+   "zh": "對手實際拿到的 CoWoS 與 HBM 配額量級",
+   "becomes_knowable": "台積電法說或供應鏈報導",
+   "weight": "unknown",
+   "jev": {
+    "type": "noul",
+    "instructions": "Based only on `news`, is there a figure for how much TSMC CoWoS packaging capacity or HBM memory supply a competitor of NVIDIA (AMD, Broadcom, Google, Amazon, Microsoft, or Meta) has secured?"
+   }
+  },
+  {
+   "id": "F3",
+   "zh": "中國市場是否重新開放、共識有沒有算",
+   "becomes_knowable": "出口許可公告",
+   "weight": "unknown",
+   "jev": {
+    "type": "noul",
+    "instructions": "Based only on `news`, is there news about whether NVIDIA may sell data-center chips in China, or about China's stance on buying them?"
+   }
+  },
+  {
+   "id": "F4",
+   "zh": "279B 供應承諾裡多少是記憶體預付",
+   "becomes_knowable": "10-K 附註",
+   "weight": "unknown",
+   "jev": {
+    "type": "noul",
+    "instructions": "Based only on `news`, is there a breakdown of NVIDIA's supply or purchase commitments by type, such as memory prepayments?"
+   }
+  },
+  {
+   "id": "F5",
+   "zh": "選擇權隱含波動率（快照失效）",
+   "becomes_knowable": "下次抓取",
+   "weight": "unknown"
+  }
+ ]
+}
