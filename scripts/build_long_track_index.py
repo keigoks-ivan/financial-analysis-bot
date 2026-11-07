@@ -628,7 +628,7 @@ def render() -> str:
 </div>
 <div class="console-tab-panel" id="panel-overview">{overview_body}</div>
 <div class="console-tab-panel" id="panel-live">
-  <p class="console-embed-note">Supertrend 週線＋月線（美股債金版・台股不借錢版）· 實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/supertrend_vs_live/">這套規則的回測與比較 →</a> · <a href="/long-track/why-qqq70-smh30.html">為什麼改 QQQ 70／SMH 30 →</a> · <a href="#scoreboard">跳到記分板 →</a></p>
+  <p class="console-embed-note">Supertrend 週線＋月線（美股債金版・台股不借錢版）· 實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/supertrend_vs_live/">這套規則的回測與比較 →</a> · <a href="/long-track/why-qqq70-smh30.html">為什麼改 QQQ 70／SMH 30 →</a> · <a href="/long-track/live-system-profile.html">交易系統體檢 →</a> · <a href="#scoreboard">跳到記分板 →</a></p>
   <iframe class="console-embed-frame" id="live-frame" data-src="/long-track-w52-adaptive/_body.html" title="實單主系統" scrolling="no" loading="lazy"></iframe>
 </div>
 <div class="console-tab-panel" id="panel-scoreboard">
