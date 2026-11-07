@@ -664,6 +664,15 @@ def fetch_close(ticker: str) -> pd.Series:
         if off and sim_cut is not None:
             off = {k: v for k, v in off.items() if k.date() <= sim_cut} or None
         c, notes = reconcile_with_official(c, off)
+        # 2026-11-07：證交所休市日（颱風假、補假）Yahoo 常印一根收盤抄前一天的假 K 棒（2026-10-23），
+        # 當天就被記成台股交易日。官方月檔涵蓋的日期內、官方沒有的日子一律刪掉。
+        if off:
+            lo, hi = min(off), max(off)
+            phantom = c.index[(c.index >= lo) & (c.index <= hi) & ~c.index.isin(list(off))]
+            if len(phantom):
+                print(f"  {ticker}: 證交所休市日的 Yahoo K 棒刪掉 {[str(d.date()) for d in phantom]}")
+                c = c.drop(phantom)
+                notes["dropped_closed_days"] = [str(d.date()) for d in phantom]
         FETCH_NOTES[ticker] = notes
         if notes["appended"] or notes["refreshed"]:
             print(f"  {ticker}: 官方收盤補值 appended={notes['appended']} refreshed={notes['refreshed']}")
