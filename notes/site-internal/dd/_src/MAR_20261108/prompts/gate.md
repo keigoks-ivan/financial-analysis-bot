@@ -1,0 +1,311 @@
+你是 DD 管線 v20 的判斷層閘（gate），標的 MAR（20261108）。你未參與寫判斷，這是一次跨模型冷讀，單回合、無工具：bundle 全文已附在本訊息「===== BUNDLE =====」分隔線之後，讀完就直接作答，沒有第二輪，也不能查證 bundle 以外的任何資料。
+
+## 任務
+
+依 bundle 內 `gate_card.md` 的 ①–⑧ checklist 逐條複核 `judgment.json`，只揪判斷級的錯，不判斷寫得好不好。判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級問題（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡；無實質問題給 🟢。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：`gate_card.md`（①–⑧ checklist 全文與 🔴／🟡／🟢 口徑）、被引用事實與負向條目子集（核對 `fact_refs` 用）、`scenario_meta.json`（情境樹權威值，對帳 `decision_inputs.irr_base_pct`／`ev5y_pct` 用）、`judgment.json` 全文（被審對象，原樣）。
+
+## 禁
+
+- 禁 WebSearch／WebFetch、禁開 bundle 以外任何檔（包含 `docs/dd/`、`.dd_build/` 下的其他產物）。
+- 禁跑任何腳本（`validate_judgment.py`／`dd_decision.py`／`dd_scenario.py` 已在判斷端跑過，機械層不歸你）。
+- 禁提整段改寫判斷、禁自己動手修補 `judgment.json`——你只出稽核，修補是另一支流程的事。
+- 證據包裡沒有的東西不得臆測補白，只講證據包內找得到依據的話。
+
+
+===== BUNDLE =====
+
+## ① gate_card.md（判斷層閘卡）
+
+<!-- source: scripts/dd_prompts/gate_contract.md sha256:90928128665c694a; .claude/skills/stock-analyst/references/critic-gates.md sha256:8dff4ac45280acfd git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+<!-- 2026-10-20 ⑤ 改程式判定；來源 gate_contract §⑤／critic-gates ⑤ 同日改成同一條規則（核心軸 none 🔴、非核心 🟡）；重新濃縮時以本卡 ⑤ 為準 -->
+
+你是 DD 管線 v20 的判斷層閘（gate），sonnet，單輪、無工具。你未參與寫判斷，這是一次跨模型冷讀。
+輸入：`judgment.json`（待審判斷物）＋ `facts.json`（事實表，每軸 finding 帶 source／as_of／direction）。
+任務只有一件：依下列 checklist 逐條複核 `judgment.json`，只揪**判斷級**的錯，不判斷寫得好不好。
+判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡。
+禁 WebSearch／WebFetch、禁讀輸入以外任何檔、禁改 `judgment.json`，只出稽核清單。
+
+## checklist（①–⑧ 全出，不得跳號、不得「同上」帶過）
+
+① 競爭惡化——份額流失／新進入者／客戶 second-source／大客戶轉單。查 facts.json 對應軸（competitive_share_entrants／customer_second_source／customer_concentration_credit）裡負向、或應被引用的 finding，核對 judgment.json 的 `moat.threats`／`moat.competitors`／`contradictions[]`／`decision_inputs.bear` 是否接住；被引用=N 卻是負向的 finding 即漏接。[gate_contract §①]
+
+② 供需 durability——緊缺或過剩是結構還是週期，供給可逆性是否寫進 bear 機率。facts.json 的 supply_demand_durability 軸負向 finding，若未被引用且未列 `evidence_dismissed`，須在 `premortem`／`decision_inputs.bear` 找到對應處理，找不到即 🔴。[gate_contract §②]
+
+③ 其他結構變數（開放軸）——法規／政策／關稅／反壟斷／補貼、通路重構、商業模式轉移、替代技術、客戶結構轉移。找 facts.json 覆蓋總覽裡「有 finding 卻沒人接住」的軸，對照 `contradictions[]`／`premortem.blind_spots`／`triggers[]`；閘禁搜尋，不重新查有沒有漏掉的產業變化。[gate_contract §③]
+
+④ priced-in——共識與賣方目標價 vs 現價，裁決是否只是把市場已知的事再說一次。看 `decision_inputs.market_wrong_reason_given` 是否有具體內容（非空泛套話），對照 facts.json 的 `latest_quarter_kpis[].vs_consensus` 與 `valuation_current`。判斷寫「不追／等價格」而裁決是進場、`decision_inputs.wait_for_price` 卻沒填 true ＝ 矛盾；填了 true 時裁決落觀望是規則結果，不算矛盾，只看 `wait_for_price_condition` 是否具體可驗。[gate_contract §④]
+
+⑤ 覆蓋面掃描——**燈號由程式判定**（核心軸 none→🔴；只有非核心軸 none→🟡；全 found／not_applicable→🟢），bundle 附程式結果，你回的 ⑤ 燈號會被覆寫。你只評論：facts.json 點名 status="none"／"not_applicable" 的軸，查詢是否切題（不以查詢次數計）、判斷有沒有交代缺口對結論的影響；不得因缺軸自行升 🔴。
+
+⑥ 量化模組完整性抽查（強制）——(i) `moat.roic_durability.reinvest_rate`／`.roiic` 有沒有 `.formula_note` 真算（寫「估計約 X%」無算式＝🔴）；`.endo_ceiling` 是否與共識 EPS CAGR（facts.json）交叉檢查，天花板 < CAGR 且 `reasoning` 未處理＝🔴。(ii) `scenario_inputs` 的 Bull/Base/Bear EPS 是否有實質價差（Bull 幾乎等於 Base、只靠倍數撐估值＝退化，🔴）；`scenario_inputs.valuation_basis`＝`sales_multiple`（虧損公司，程式決定）時改查 Bull/Base 的營收路徑（`rev`）：Bull 終端營收須實質高於 Base、Bull 前兩年不得與 Base 相同，只靠終端 EV/S 撐價差＝退化，🔴；並看 Bear 的 `net_debt_y5`／`shares_y5` 是否反映該情境的融資缺口與稀釋（債重公司 Bear 沿用目前淨負債與股數＝樂觀，🟡）。(iii) `decision_inputs.irr_base_pct`／`ev5y_pct`／`asym_ratio` 缺省或 null 合法（程式回填），但 ROIIC 缺輸入、口徑或算式仍為實質問題。[gate_contract §⑥]
+
+⑦ 數字新鮮度——`judgment.json` 引用的每個營運指標，是否不比 facts.json 的 `latest_quarter_kpis[].as_of` 對應項目舊？有一個更舊即 🔴。`decision_inputs.consensus_rev_3m_pct` 若依附 `stale=true` 來源，確認未被當唯一依據；引用摘要內容的欄位須標「來源：摘要」。[gate_contract §⑦]
+
+⑧ 前份漂移歸因（QC-49）——facts.json 的 `prior_dd` 存在時，`drift_watch` 20 欄中有變動的每一欄是否都映射到 `contradictions[]` 一個帶 `cause` 的條目（可多欄共用一條目）、且主因站得住；**裁決／核心假設／情境方法變更不得併入純價格原因**；漏欄或無歸因＝🔴；前份該欄本身空或缺欄者不計，給 🟡 或 🟢。無前份時填 🟢 並註「無前份」。[gate_contract §⑧]
+  - `axis` 以 `[程式歸因]` 開頭的條目是程式算的（均線、現價、期望報酬拆解、裁決、角色）。「期望報酬拆解」兩條是程式用本次情境先換情境、再換股價算出的數字（asym_ratio／ev5y_pct／irr_base_pct／bull_5y_price／bear_5y_price），視為已歸因，其中「價格變動」只是股價效果，不適用「不得併入純價格原因」。裁決／角色條目是反事實結果（逐一把矩陣輸入改回前份值重算），視為已歸因；其中「價格變動」是反事實證明估值燈單獨改變了裁決，不適用上面「不得併入純價格原因」，不要為此給 🔴（2026-09-24）。
+  - QC-49 承繼（90 天內翻面須引前次已發火觸發器）只比方向：進場／觀望／迴避。「進場」與「進場·條件式」同方向，角色（核心／衛星）變動也不在 QC-49 範圍；判斷者答 `decision_inputs.qc49_inherit_prior`，前次裁決與角色由程式帶入。
+
+## (a)(b) 兩項強制職責（2026-08-06 拍板，不得因精簡拿掉）
+
+(a) 覆蓋面掃描：逐軸點名「哪一軸整個沒查」，做法同 checklist ⑤（燈號由程式判定，你只評論）。
+(b) 量化模組完整性抽查：ROIC×再投資率真算與否、內生天花板對帳共識 CAGR、情境樹 Bull/Base/Bear EPS 價差是否實質、IRR 內部對帳，做法同 checklist ⑥。
+(c) 數字可回溯：判斷引用的歷史數字逐一核對 facts.json 原文的期間與單位；反證條目要查採納理由與後果是否成立，不能只因編號存在就算過。[gate.md.tmpl 2026-09-11 註腳]
+
+## 🔴／🟡／🟢 口徑
+
+判斷級 🔴 限下列三種形狀：
+
+1. **證據包已有而判斷未接**——證據包內存在的 finding／數字，判斷物完全沒接進 `contradictions`／`moat.threats`／`premortem`／`triggers`／`thesis.R`，也沒寫進 `evidence_dismissed[]`；
+2. **算術或機率防線失守**——推導不可複算、內部恆等式不對帳、情境樹退化、機率與其自身依據矛盾；
+3. **裁決與自身輸入矛盾**——`decision_inputs`／`scenario_meta`／`decision_out` 三者互斥，或裁決與判斷物自己寫下的理由相反。
+
+**資料級不算 🔴**（證據包本身缺料、來源不夠新、某軸查不到）——那是 Stage 0 的問題，最多給 🟡 並在附註點名。無實質問題給 🟢；有實質但不改裁決方向的給 🟡。
+
+## 輸出格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
+
+
+---
+
+## ②b 被引用的事實與負向條目（v19；閘要查數字時不必猜）
+
+### 判斷檔 `fact_refs` 引到的事實（31 條）
+- `f_kpi0_total_revenues_gaap`（q1_business）｜Total revenues (GAAP)＝7005 US$M｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-02）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 IR 新聞稿 Q3 2026（https://marriott.gcs-web.com/node/37681；SEC 8-K Ex.99 mar-2026q3xex99earningsrel.htm）（numbers.latest_quarter_kpis.items[0]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-02））
+  - 註記：未查得
+- `f_kpi1_adjusted_operating_incom`（q1_business）｜Adjusted operating income＝1267 US$M｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-02）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 IR 新聞稿 Q3 2026（https://marriott.gcs-web.com/node/37681；SEC 8-K Ex.99 mar-2026q3xex99earningsrel.htm）（numbers.latest_quarter_kpis.items[1]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-02））
+  - 註記：未查得
+- `f_kpi3_adjusted_ebitda`（q1_business）｜Adjusted EBITDA＝1512 US$M｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-02）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 IR 新聞稿 Q3 2026（https://marriott.gcs-web.com/node/37681；SEC 8-K Ex.99 mar-2026q3xex99earningsrel.htm）（numbers.latest_quarter_kpis.items[3]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-02））
+  - 註記：未查得
+- `f_kpi4_adjusted_diluted_eps`（q1_business）｜Adjusted diluted EPS＝3.02 US$｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-02）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 IR 新聞稿 Q3 2026（https://marriott.gcs-web.com/node/37681；SEC 8-K Ex.99 mar-2026q3xex99earningsrel.htm）（numbers.latest_quarter_kpis.items[4]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-02））
+  - 註記：未查得
+- `f_kpi5_gross_fee_revenues`（q1_business）｜Gross fee revenues＝1522 US$M｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-02）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 IR 新聞稿 Q3 2026（https://marriott.gcs-web.com/node/37681；SEC 8-K Ex.99 mar-2026q3xex99earningsrel.htm）（numbers.latest_quarter_kpis.items[5]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-02））
+  - 註記：n/a
+- `f_kpi6_worldwide_revpar_growth`（q1_business）｜Worldwide RevPAR growth＝6.5 % YoY｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-02）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 IR 新聞稿 Q3 2026（https://marriott.gcs-web.com/node/37681；SEC 8-K Ex.99 mar-2026q3xex99earningsrel.htm）（numbers.latest_quarter_kpis.items[6]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-02））
+  - 註記：n/a
+- `f_kpi9_net_rooms_pipeline`（q1_business）｜Net rooms／pipeline＝634000 rooms（管線）｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-02）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 IR 新聞稿 Q3 2026（https://marriott.gcs-web.com/node/37681；SEC 8-K Ex.99 mar-2026q3xex99earningsrel.htm）（numbers.latest_quarter_kpis.items[9]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-02））
+  - 註記：n/a
+- `f_peer_mar_gross_margin_pct`（q2_moat）｜MAR 毛利率＝19.87 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.MAR.gross_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_mar_operating_margin_pct`（q2_moat）｜MAR 營業利益率＝15.93 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.MAR.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_mar_fcf_margin_pct`（q2_moat）｜MAR FCF 利潤率＝12.71 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.MAR.fcf_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_hlt_operating_margin_pct`（q2_moat）｜HLT 營業利益率＝24.01 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.HLT.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_hlt_fcf_margin_pct`（q2_moat）｜HLT FCF 利潤率＝14.49 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.HLT.fcf_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_h_operating_margin_pct`（q2_moat）｜H 營業利益率＝8.38 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.H.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_peer_chh_operating_margin_pct`（q2_moat）｜CHH 營業利益率＝25.1 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.CHH.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+  - 註記：Research And Development 該公司未單獨揭露（常見於硬體/非軟體業者）
+- `f_consensus_eps_fy1`（q5_valuation）｜FY1 共識 EPS＝11.96 USD/share｜期間與口徑：2026-11-07／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy1，as_of 2026-11-07）
+- `f_consensus_eps_fy2`（q5_valuation）｜FY2 共識 EPS＝13.39 USD/share｜期間與口徑：2026-11-07／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy2，as_of 2026-11-07）
+- `f_consensus_eps_fy3`（q5_valuation）｜FY3 共識 EPS＝15.04 USD/share｜期間與口徑：2026-11-07／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy3，as_of 2026-11-07）
+- `f_rev_consensus_fy1_m`（q5_valuation）｜FY1 共識營收（百萬）＝27965.37 USD m｜期間與口徑：2026-11-08／yfinance revenue_estimate 0y 平均（22 位分析師）；與 f_consensus_eps_fy1 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy1.avg_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_rev_consensus_fy2_m`（q5_valuation）｜FY2 共識營收（百萬）＝29612.86 USD m｜期間與口徑：2026-11-08／yfinance revenue_estimate +1y 平均（22 位分析師）；與 f_consensus_eps_fy2 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy2.avg_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_dividend_yield_ttm`（q5_valuation）｜trailing 12個月股息殖利率＝0.672 %｜期間與口徑：2026-11-08／trailing 12個月股息（依除息日加總，非發放日）÷ 判斷日股價 × 100｜kind：realized
+  - 來源：—（numbers.dividend_yield_ttm.value_pct，as_of 2026-11-08）
+- `f_net_debt_m`（q5_valuation）｜目前淨負債（總債務－現金及短投）＝17225.0 USD m｜期間與口徑：2026-11-08／yfinance 最新一季：總債務 17678.0、現金 453.0（含租賃負債口徑）｜kind：realized
+  - 來源：—（numbers.capital_structure.net_debt_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_shares_diluted_m`（q5_valuation）｜目前股數（百萬股）＝257.5 m shares｜期間與口徑：2026-11-08／yfinance impliedSharesOutstanding（各類股合計）｜kind：realized
+  - 來源：—（numbers.capital_structure.shares_diluted_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_price_at_dd`（q5_valuation）｜判斷日股價＝416.47 USD｜期間與口徑：2026-11-06（RTH 收盤，UTC）／收盤價，與情境樹起點同源｜kind：realized
+  - 來源：—（numbers.price_at_dd，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_fwd_pe_latest`（q5_valuation）｜Forward P/E（最近快照）＝34.82 x｜期間與口徑：2026-11-07／分母＝FY1 EPS 11.96，分子＝快照價 416.47｜kind：realized
+  - 來源：—（numbers.valuation_history.fwd_recent_window.points[-1]，as_of 2026-11-07）
+- `f_pe_current`（q5_valuation）｜Trailing P/E（現值）＝41.52 x｜期間與口徑：2026-11-06（RTH 收盤，UTC）／4 個年度端點內的分位＝100.0｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.pe，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_pe_percentile`（q5_valuation）｜Trailing P/E 年度端點分位＝100.0 %｜期間與口徑：2026-11-06（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.pe.current_percentile_within_annual_points，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_ps_current`（q5_valuation）｜P/S（現值）＝14.15 x｜期間與口徑：2026-11-06（RTH 收盤，UTC）／4 個年度端點內的分位＝100.0｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.ps，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_ev_s_current`（q5_valuation）｜EV/S（現值）＝16.42 x｜期間與口徑：2026-11-06（RTH 收盤，UTC）／4 個年度端點內的分位＝100.0｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.ev_s，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_ev_s_fwd`（q5_valuation）｜EV/S（EV ÷ FY1 共識營收）＝4.45 x｜期間與口徑：2026-11-08／f_ev_m ÷ f_rev_consensus_fy1_m（前瞻口徑；f_ev_s_current 是 trailing 12 個月營收口徑）｜kind：estimate
+  - 來源：—（numbers.capital_structure.ev_m ÷ revenue_consensus.fy1.avg_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_consensus_rev_3m_fy1_pct`（q5_valuation）｜FY1 共識近 3 個月修正＝2.4 %｜期間與口徑：2026-08-13 → 2026-11-07／FY1 共識 EPS 11.68 → 11.96（Koyfin 快照，約 90 天間距）；投影成 decision_inputs.consensus_rev_3m_pct｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy1 ÷ snapshot_90d_prior.fy1，as_of 2026-11-07）
+- `f_week26_return_pct`（q5_valuation）｜26 週報酬＝18.39 %｜期間與口徑：2026-11-06（RTH 收盤，UTC）／含息前價格報酬，對照基準 ^GSPC｜kind：realized
+  - 來源：—（numbers.momentum_26w.return_26w_pct，as_of 2026-11-06（RTH 收盤，UTC））
+
+### findings_digest 中方向為負或來源衝突的條目（10 條）
+- `competitive_share_entrants#1`（competitive_share_entrants｜方向 -｜狀態 ok）：10-K 風險因子：新增客房供給可能壓抑部分市場的房價與入住率。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-10）｜affects：thesis.R、decision_inputs.bear
+- `regulatory_antitrust#0`（regulatory_antitrust｜方向 -｜狀態 ok）：英國 CMA 對 CoStar、Hilton、IHG、Marriott 展開調查，懷疑經由酒店數據服務商共享競爭敏感資訊，可能違反 Competition Act 1998 第 I 章；案件狀態 Open，2026-03-02 開案，2026-08-05 更新行政時程。
+  - 來源：UK CMA case page：Suspected anti-competitive conduct in relation to hotel accommodation services（as_of 2026-03-02）｜affects：decision_inputs.bear、thesis.R
+- `reg_tariff_export#2`（reg_tariff_export｜方向 -｜狀態 ok）：CoStar：關稅推高建材與 FF&E 成本，高建造成本是新酒店交易的主要障礙
+  - 來源：CoStar: while more hotels open in california fewer enter development pipeline（as_of 2026-01-15）｜affects：thesis.R、decision_inputs.bear
+- `geo_supply_chain#0`（geo_supply_chain｜方向 -｜狀態 ok）：中東約占全球房量4%、開發管線7%、費用4%；伊朗衝突造成中東旅遊需求下滑
+  - 來源：Skift, Marriott Sees Middle East Travel Dip, Expands AI Tools（as_of 2026-03-12）｜affects：decision_inputs.bear、thesis.R
+- `substitute_technology#0`（substitute_technology｜方向 -｜狀態 ok）：10-K 風險因子載明：若訂房偏好由自有數位通路移向網路旅遊中介，將推高訂房成本並損及獲利；搜尋引擎也可能把業務導離自有通路。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-10）｜affects：moat_trend、decision_inputs.bear
+- `substitute_technology#1`（substitute_technology｜方向 -｜狀態 ok）：10-K 載明公司正進行訂房、物業管理與忠誠度系統的多年轉型，部署可能有延遲、系統中斷或資安影響；且若技術更新不如競爭對手快，競爭地位可能受損。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-10）｜affects：moat_trend、thesis.R
+- `substitute_technology#2`（substitute_technology｜方向 -｜狀態 ok）：Mews 預期 2035 年前多數飯店搜尋與訂房將透過單一 AI 對話進行（產業預測，非實測）。
+  - 來源：Hotel Management: Mews Outlook（as_of 2026-01-01）｜affects：moat_trend、thesis.R
+- `capital_markets_pricing#1`（capital_markets_pricing｜方向 -｜狀態 ok）：Q3 2026 EPS 指引 $2.74–$2.82，低於共識 $2.88（近期指引較共識保守）
+  - 來源：MarketBeat：Marriott International updates Q3 2026 earnings guidance (2026-08-03)（as_of 2026-08-03）｜affects：valuation、triggers
+- `major_events#1`（major_events｜方向 -｜狀態 ok）：FY2025 10-K Item 3：2025 Q2 收到 EPA 信函，就某管理飯店涉嫌違反 Clean Air Act 提議和解討論；公司認為無重大不利影響。
+  - 來源：SEC EDGAR 10-K FY2025 Item 3（as_of 2026-02-10）｜affects：thesis.R
+- `lawsuit_class_action#0`（lawsuit_class_action｜方向 -｜狀態 ok）：Starwood 資料外洩消費者集體訴訟：2025-06-03 第四巡迴推翻集體認證，部分原告改在紐約州法院個別提告，MDL 原告調解中。
+  - 來源：SEC EDGAR 10-K FY2025 Note 7（as_of 2026-02-10）｜affects：thesis.R、decision_inputs.bear
+
+### 事實表自陳的缺口（2 條）
+- q2_moat：evidence.numbers.peer_financials 該欄整欄為 null（常見於未單獨揭露研發的業者），事實表 agent 若能從財報補就補，補不到即為缺口，判斷者不得自行估。
+- q6_how_wrong：digest.qa_flags 有 3 條管理層迴避紀錄，內容須由事實表 agent 逐條落成事實或缺口
+
+---
+
+scenario_meta.json sidecar（判斷層情境樹權威，checklist ⑥(iii) 對帳用）
+
+（來源：/Users/ivanchang/financial-analysis-bot/.dd_build/runs/MAR_20261108/scenario_meta.json）
+（以下 JSON 為緊湊格式（省空白），內容完整）
+```json
+{"bull_5y_price":748.8,"bear_5y_price":252.7,"p_bull_pct":25,"p_bear_pct":30,"upside_5y_pct":30.0,"ev5y_pct":21.6,"irr_base_pct":5.4,"asym_ratio":1.7,"scenario_tree":{"terminal_label":"FY2031E","start":{"eps":11.96,"pe":34.82,"basis":"FY2026E 共識調整後 EPS（FY1），終端倍數分母同為該年度調整後 EPS"},"eps":{"bull":[13.75,15.75,18.05,20.6,23.4],"base":[13.3,14.9,16.55,18.25,20.05],"bear":[12.7,11.0,11.7,12.6,13.3]},"pe":{"bull":32,"base":27,"bear":19},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":0.672,"net_buyback":0},"second_stage":{"bull_cagr_pct":11,"base_cagr_pct":8},"valuation_dependent":false}}
+```
+
+---
+
+## ④b 舊逐字稿摘錄（前一季＋投資人日；對照管理層以前說過什麼）
+
+### MAR_Q2_2026_Earnings_Call_20260803.md
+- 2026-08-03｜CEO｜guidance：CEO 宣布將 2026 全年全球 RevPAR 財測上調至 3%～3.5%（原話："raising our full year 2026 guidance range to 3% to 3.5%"）
+- 2026-08-03｜CFO｜guidance：第三季全球 RevPAR 預期成長 3.5%～4%（原話："global RevPAR is expected to increase 3.5% to 4%."）
+- 2026-08-03｜CFO｜guidance：全年總費用收入預期上調至 60.3～60.6 億美元（原話："could rise 11% to $6.03 billion to $6.06 billion"）
+- 2026-08-03｜CFO｜guidance：全年 IMF（獎勵管理費）預期年增 3%～5%（原話："IMF are now expected to rise 3% to 5% year-over-year."）
+- 2026-08-03｜CFO｜guidance：全年調整後 EBITDA 預期成長 11%～12%（原話："Full year adjusted EBITDA could increase between 11% and 12%"）
+- 2026-08-03｜CFO｜guidance：全年調整後稀釋 EPS 成長預期 16%～18%（原話："adjusted diluted EPS growth between 16% and 18%."）
+- 2026-08-03｜CFO｜guidance：第三季調整後 EBITDA 預期成長 7%～9%（原話："Adjusted EBITDA is expected to increase 7% to 9%."）
+- 2026-08-03｜CFO｜guidance：全年自有／租賃及其他淨收入指引 1.75～1.85 億美元，並計入 ITR 獎勵影響（原話："$175 million to $185 million in 2026"）
+- 2026-08-03｜CFO｜guidance：全年 G&A 仍預期年增 1%～3%，下半年（尤其第四季）有時點效益（原話："G&A expense is still anticipated to increase just 1% to 3%"）
+- 2026-08-03｜CFO｜guidance：2026 全年投資支出上調至 12.5～13.5 億美元（原話："$1.25 billion to $1.35 billion, an increase versus our prior"）
+- 2026-08-03｜CEO｜guidance：全年淨房數成長較可能落在原 4.5%～5% 區間的低端，主因中東工程延誤（原話："towards the low end of our previous 4.5% to 5% range"）
+- 2026-08-03｜CFO｜guidance：全年信用卡費用預期成長高 30% 區間（含新約，部分被日圓貶值抵銷）（原話："credit card fees to rise in the high 30% range"）
+- 2026-08-03｜CFO｜guidance：管理層提示第四季美加不再有世足賽加持（原話："a small negative impact from November's midterm elections"）
+- 2026-08-03｜CEO｜guidance：CEO 談 2027：可能延續強勁的全球 RevPAR 成長，但提到時機尚早（原話："We could see continued strong global RevPAR growth next year"）
+- 2026-08-03｜CEO｜guidance：CEO 指出 2027 EMEA 可望因中東復甦而強勁成長（原話："over-year growth in EMEA as the Middle East recovers"）
+- 2026-08-03｜CFO｜guidance：CFO 描述 2027 團體訂房目前走勢：持平、價升量微降（原話："it looks flattish, rate up and room nights down slightly"）
+- 2026-08-03｜CFO｜margin：第二季 IMF 6% 增至 2.12 億美元，美加大增抵銷 EMEA（中東）下滑（原話："rose 6% to $212 million in the second quarter"）
+- 2026-08-03｜CFO｜margin：第二季自有／租賃及其他淨額下滑，管理層歸因於 2,700 萬美元訴訟應計等（原話："primarily due to a $27 million property-"）
+- 2026-08-03｜CFO｜margin：ITR 獎勵由 Marriott 自行負擔、記入自有／租賃及其他費用，而非系統基金（原話："paid for by Marriott and not the system fund"）
+- 2026-08-03｜CFO｜margin：ITR 獎勵規格：最高相當總客房收入 50 個基點的費用返還（原話："up to 50 basis points of gross room revenue"）
+- 2026-08-03｜CFO｜margin：管理層說明 Q4 是中東全年營收最大的一季，並面對高基期 ADR（原話："35% of the Middle East full year revenue happens in Q4"）
+- 2026-08-03｜CFO｜margin：管理層量化中東對全年全球 RevPAR 的拖累約 100 個基點（上季為 100～125）（原話："full year global RevPAR to be about 100 basis points"）
+- 2026-08-03｜CFO｜margin：世足賽對全年全球 RevPAR 的貢獻上修為約 45 個基點（原 30～35）（原話："closer to 45 basis points globally"）
+- 2026-08-03｜CEO｜margin：第二季中東 RevPAR 大幅下滑 43%，略優於預期（原話："Middle East RevPAR declined 43% in the quarter"）
+- 2026-08-03｜CEO｜margin：美加第二季 RevPAR 成長 5%，為 13 季以來最高（原話："the highest quarterly increase in 13 quarters"）
+- 2026-08-03｜CFO｜margin：2026 全年團體訂房 pace 約 +5%，與上季相同（原話："Full year group pace is up about 5%."）
+- 2026-08-03｜CFO｜commitment：管理層重申資本配置原則未變（原話："Our capital allocation philosophy has not changed."）
+- 2026-08-03｜CFO｜commitment：2026 年預計回饋股東超過 45 億美元（原話："return over $4.5 billion to shareholders in 2026."）
+- 2026-08-03｜CEO｜commitment：CEO 量化新信用卡約對 2028 全年共品牌卡費用的影響為 1～1.25 億美元（版稅率 26%）（原話："somewhere between $100 million and $125 million"）
+- 2026-08-03｜CEO｜commitment：CEO 重申未來數年淨房數維持中個位數成長（原話："in line with the broad guidance we've provided"）
+- 2026-08-03｜CFO｜commitment：科技轉型（DTT）相關支出管理層預期長期會下降，但持續投資科技（原話："On tech and DTT spend, that over time will go down"）
+- 2026-08-03｜CFO｜capital_allocation：管理層預期 key money 隨系統規模成長而增加（原話："key money grow with that"）
+- 2026-08-03｜CFO｜capital_allocation：管理層說明投資支出組成：合約取得成本占 40%～45%（原話："Contract acquisition costs are now expected to be around"）
+- 2026-08-03｜CEO｜capital_allocation：CEO 稱 key money 為競爭中常見的武器，且已出現在新中階品牌（原話："key money seems to be the weapon of choice"）
+- 2026-08-03｜CEO｜competition：CEO 稱新中階品牌開始少量使用 key money（原話："we are seeing some small amounts of key money being used"）
+- 2026-08-03｜CEO｜competition：CEO 稱相較同業，Marriott 談判的 key money 較少（自述為軼事觀察）（原話："negotiate a bit less key money than some of our peers"）
+- 2026-08-03｜CEO｜competition：CEO 回應中階品牌 RevPAR 轉強是否降低業主對品牌需求：稱觀察相反（原話："what we see and what we hear from the owner community"）
+- 2026-08-03｜CEO｜customer：CEO 以首半年簽約量創歷史新高說明業主信心（原話："we signed more deals in the first half of 2026, than in any"）
+- 2026-08-03｜CEO｜customer：年初起忠誠計畫 charge-out 費率下調約 5%（管理層稱為業界最低）（原話："charge-out rates across our global system by roughly 5%"）
+- 2026-08-03｜CEO｜product：全球開發管線創新高，約 62.9 萬間（原話："a new record of approximately 629,000 rooms"）
+- 2026-08-03｜CEO｜product：轉換案占上半年簽約 34%、開業 40%（原話："34% of signings and 40% of openings"）
+- 2026-08-03｜CEO｜product：CEO 說明大中華將導入 Series by Marriott，約 100 間（原話："add approximately 100 hotels under this collection brand"）
+- 2026-08-03｜CEO｜product：CEO 不認為景氣好轉、新建案回升會以轉換案為代價（原話："believe that will be the trend going forward"）
+- 2026-08-03｜CEO｜product：AI：與 Google 等 AI 平台合作，因應旅遊搜尋與商務工具演進（原話："leading AI platform providers as their travel search"）
+- 2026-08-03｜CEO｜risk：CEO 承認業主社群來信（owner letter）並稱雙方討論中，但不公開回應（原話："I'm not going to give an official response"）
+- 2026-08-03｜CEO｜risk：被問及費用轉嫁與自行吸收比重，CEO 稱財測已反映討論對 P&L 的預期影響（原話："guidance is reflective of our expectations of the impact"）
+
+### 問答異常語氣（迴避／改口／保留）
+- MAR_Q2_2026_Earnings_Call_20260803.md｜問：Truist 的 Scholes 請 CEO 對業主公開信（owner letter）給出具體正式公開回應｜答法：CEO 明確表示不給官方回應，改談業主與 Marriott 利益相連、已開過多次會議、對進展感到鼓舞，未給具體內容或數字
+- MAR_Q2_2026_Earnings_Call_20260803.md｜問：Jefferies 的 Katz 詢問平台費／報銷項目的調整，以及 Marriott 轉嫁與自行吸收的比重｜答法：CEO 只稱討論『collaborative and constructive and ongoing』，並說財測已反映預期影響，未拆分轉嫁與吸收金額
+- MAR_Q2_2026_Earnings_Call_20260803.md｜問：JPMorgan 的 Politzer 詢問未來幾年淨投資支出走向｜答法：CFO 稱談 2027 太早，僅對各類別給方向性描述（科技支出長期下降、key money 隨規模增加），未給數字
+
+---
+
+| axis | status | n_findings | n_queries |
+|---|---|---|---|
+| competitive_share_entrants | found | 3 | 2 |
+| customer_second_source | not_applicable | 0 | 0 |
+| customer_concentration_credit | found | 1 | 1 |
+| supply_demand_durability | found | 4 | 3 |
+| regulatory_antitrust | found | 2 | 1 |
+| reg_tariff_export | found | 3 | 4 |
+| geo_supply_chain | found | 1 | 2 |
+| end_markets | found | 6 | 3 |
+| substitute_technology | found | 4 | 2 |
+| channel_business_model_shift | found | 3 | 2 |
+| capital_markets_pricing | found | 5 | 4 |
+| major_events | found | 3 | 5 |
+
+未涵蓋／不適用軸的查詢詞原文（供判相關性）：
+- **customer_second_source**（not_applicable）：（無查詢記錄）
+
+---
+
+## 前份判斷摘要（含 drift_watch_prior 20 欄前份值；漂移歸因對帳用）
+
+```json
+{"date":"20260710","verdict":"觀望","role":"核心","H":{"status":"ok","format":"table","rows":[{"id":"H1","text":"全球旅遊需求後疫情正規化，RevPAR 維持低單位數正成長","columns":{"2Y 驗證點":"FY26-27 全球 RevPAR 2-3%","5Y 驗證點":"穿越一次完整需求週期仍正","10Y 驗證點":"10Y RevPAR CAGR ≥ 2%","具體數字門檻":"全球 RevPAR YoY ≥ 1.5%（floor，2026 guide 下緣）；國際 RevPAR ≥ 4%","來源":"MAR Q1 FY26 release 2026-05-06（全球 +4.2%／US +4.0%／intl +4.6%）；PwC US Hospitality Directions May 2026（2026 RevPAR ~2.8%）","漂移觸發":"連 2 季全球 RevPAR YoY"}},{"id":"H2","text":"資產輕模式下 pipeline 持續轉化為淨房間成長 ≥ 4%，推動 fee revenue 有機成長","columns":{"2Y 驗證點":"淨房間 +4.5-5%、pipeline ≥ 600K","5Y 驗證點":"fee revenue 5Y CAGR ~7-8%","10Y 驗證點":"系統規模再擴 ~40-50%（國際轉化）","具體數字門檻":"淨房間成長 ≥ 4%（floor，當前 +4.5%）；pipeline ≥ 600K（當前 618K）；Bonvoy 會員淨增 > 0","來源":"MAR Q1 FY26（pipeline 618K，conversions 40% openings）；MAR IR FY30 target","漂移觸發":"淨房間"}},{"id":"H3","text":"估值不進一步擴張，但在品質溢價支撐下維持 Forward PE 24-31x 區間","columns":{"2Y 驗證點":"Fwd PE 維持 24-31x（不跌穿 22x）","5Y 驗證點":"倍數均值回歸至 ~26-27x（5Y 均）","10Y 驗證點":"倍數守住複利級（非收租級","具體數字門檻":"Fwd PE(FY+2) 24-31x；分析師中位 PT ≥ $340（floor，當前中位 $381-394）","來源":"yfinance / 分析師共識 2026-07；5Y PE 分布","漂移觸發":"Fwd PE 連 6 月 5% → 反轉（估值燈 🟠→🟡→進場機會）"}}]},"R":{"status":"ok","format":"table","rows":[{"id":"R1","text":"全球衰退壓制旅遊需求，RevPAR 轉負 2-3 季，fee revenue 下滑；同時倍數 de-rate（樞紐變數，同打 H1+H3）","columns":{"對應假設":"H1 / H3","時間尺度":"🔥 中期（4-6 季）","監測指標":"全球 RevPAR YoY；商務差旅指標；Fwd PE","警戒閾值":"RevPAR 連 2 季"}},{"id":"R2","text":"淨房間成長份額流失——Hilton/Hyatt 淨單位成長 6-7% 持續領先 MAR 的 4.5-5%，pipeline 轉化放緩或加盟商離心","columns":{"對應假設":"H2","時間尺度":"🔥 中期（4-6 季）","監測指標":"淨房間成長；signings/openings 比；vs peer NUG 差距","警戒閾值":"淨房間 3pp 連 2 半年"}},{"id":"R3","text":"AI travel agent 去中介化 + OTA 佣金侵蝕削弱 Bonvoy 直訂護城河，忠誠度溢價壓縮，倍數收租化","columns":{"對應假設":"H3","時間尺度":"🐢 長期（2+ 年慢變數）","監測指標":"Bonvoy 直訂/會員房晚份額；直訂率；AI 訂房平台市佔","警戒閾值":"會員房晚份額連 2 半年"}},{"id":"R4","text":"資料隱私監管拖尾——20 年 FTC consent order 合規成本 + 消費者集體訴訟（44M 消費者、6 州，MAR + Accenture）判賠或和解放大","columns":{"對應假設":"H1（間接）","時間尺度":"🐢 長期（2+ 年慢變數）","監測指標":"consumer class action docket；合規費用","警戒閾值":"不利集體認證 + 大額和解（> 市值 1%）"}}]},"single_thing":null,"kill_metrics":null,"rearm_trigger":"Fwd PE(FY+2) 回落至 ~24x（~$310）或全球 RevPAR 連 2 季轉負（衰退重置）；或 Fwd PE 連 6 月 <22x 且分析師目標中位下修","irr_base_pct":5.5,"ev5y_pct":24.2,"drift_watch_prior":{"dca_verdict":"觀望","dca_role":"核心","signal":"B","val":"🟠","ma":"✅","trap":"🟡","moat_trend":"→","runway_post_y5":"🟡","asym_ratio":2.3,"ev5y_pct":24.2,"irr_base_pct":5.5,"max_dd_pct":-55.0,"bull_5y_price":670.0,"bear_5y_price":266.0,"p_bull_pct":25.0,"p_bear_pct":30.0,"rearm_trigger":"Fwd PE(FY+2) 回落至 ~24x（~$310）或全球 RevPAR 連 2 季轉負（衰退重置）；或 Fwd PE 連 6 月 <22x 且分析師目標中位下修","price_at_dd":372.47,"archetype":"品質複利成長","cycle_position":null}}
+```
+
+---
+
+## judgment.json 全文（被審對象，緊湊格式）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"MAR","date":"2026-11-08","schema":"v15.0","contract":"v19","company_name":"Marriott International"},"oneliner":"萬豪的費用、淨房數與回購都在運轉，但 416 美元已是 FY2026 預估本益比 34.8 倍，基準情境五年年化約 6%，不追，等回到約 348 美元再重新評估。","facts_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/MAR_20261108/facts.json","scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/MAR_20261108/scenario.json","answers":{"q1_business":{"verdict":"萬豪賺的是飯店業主與發卡銀行付的品牌費，錢卡在 Bonvoy 會員與全球訂房系統這一節點，最新一季總費用收入 15.22 億美元，年增 14%。","reasoning":"第三季總營收 70.05 億美元，總費用收入 15.22 億美元，占 21.7%，其餘分項金額事實表未涵蓋。TTM 毛利率 19.87%、營業利益率 15.93%，分母含代墊成本，不能直接當獲利能力看。第三季費用成長來自 RevPAR 6.5%、淨房數 4.6% 與聯名卡費。管理層預估 2026 全年聯名卡費增加高 30% 區間，住宅品牌費增逾 90%，這兩項的增速不會年年重演。單點依賴方面，Host 的客戶資料停在 FY2021，不足以判斷現況；目前看得到的集中點是聯名卡合約，金額與合作方占比事實表未涵蓋。產業處於擴張期，依據是第三季全球 RevPAR 增 6.5%，美加不含世足賽仍增 6.2%。反例是大中華約持平、中東年減 12%，擴張並非全面。","fact_refs":["f_kpi0_total_revenues_gaap","f_kpi1_adjusted_operating_incom","f_kpi3_adjusted_ebitda","f_kpi4_adjusted_diluted_eps","f_kpi5_gross_fee_revenues","f_kpi6_worldwide_revpar_growth","f_kpi9_net_rooms_pipeline","f_peer_mar_gross_margin_pct","f_peer_mar_operating_margin_pct"],"verdict_values":{"revenue_quality":"費用型收入品質高，但 2026 年增量有相當部分來自聯名卡新約與住宅品牌費，持續性低於特許與基本管理費。","unit_econ_note":"RevPAR 每變動 1 個百分點，全年相關費用約變動 5500 萬～6500 萬美元（2026-11-02 財務長）。單房新增資本與合約年限事實表未涵蓋。","archetype":{"primary":"品質複利成長","secondary":"旅宿需求循環","confidence":"中","fingerprint":"輕資產收費，靠回購放大每股盈餘，需求隨景氣波動"},"industry":{"clock_phase":"II","sd_verdict_source":"週期性將反轉，但供給緩衝厚：CoStar 預估美國 2026、2027 供給僅增約 0.4%、0.6%，在建量為 12 年低點；需求端 2027 面對世足賽高基期，CoStar 預估美國 RevPAR 放緩至 2.1%。","bargaining":{"up":"上游是業主。公司已把忠誠度費率下調約 5%，並自費提供最高 50 個基點的返還，議價空間變窄。","down":"下游是旅客與發卡銀行。Bonvoy 約 3.09 億會員支撐直訂與卡費，但業界分析認為 OTA 占比十年未明顯下降。","geo":"中東占開業客房 3%、管線 6%、2025 總費用 3%；大中華 RevPAR 約持平。"},"profit_pool_dir":"費用端有一部分回吐給業主，卡費則往品牌方集中，淨方向要等 2027 指引確認。","tam_table":{"expanded":false,"reason":"證據包沒有全球客房總量、品牌滲透率與利潤池歷史序列，無法填 TAM、滲透率或五年利潤池變化；本次論點也不建立在低滲透或新品類上。"}}}},"q2_moat":{"verdict":"護城河方向穩定：規模與管線仍在擴大，但維持這個位置要付更多 key money 與業主讓利。","reasoning":"機制是雙邊網路：Bonvoy 約 3.09 億會員帶來直訂，吸引業主加入，634,000 間管線再擴大會員可用的飯店。執行面在變強，前九個月有機簽約創新高，轉換案占開業逾 40%。定價面在變弱，公司下調忠誠度費率約 5%，自費提供最高 50 個基點返還，CEO 也說 key money 是競爭中的常用武器。兩者相抵判為穩定。可能看錯的地方是同業 ROIC 差距與份額事實表未涵蓋；若希爾頓的淨房數領先持續擴大，方向就應改為縮減。TTM 利潤率低於希爾頓不能當證據，因為兩家代墊成本比重未拆開。","fact_refs":["f_peer_mar_gross_margin_pct","f_peer_mar_operating_margin_pct","f_peer_mar_fcf_margin_pct","f_peer_hlt_operating_margin_pct","f_peer_hlt_fcf_margin_pct","f_peer_h_operating_margin_pct","f_peer_chh_operating_margin_pct","f_kpi9_net_rooms_pipeline"],"verdict_values":{"moat":{"mechanism":"Bonvoy 會員與全球訂房系統形成的雙邊網路，業主付費換取直訂與品牌溢價。","execution":8,"pricing":7,"grade":"B","trend":"→","trend_evidence":"管線年增逾 6% 至 634,000 間、淨房數 4.6%，代表執行力仍強；費率下調、最高 50 個基點返還與 key money 上升，代表定價權受壓。","competitor_notes":[{"name":"HLT","strategy_note":"利潤率表面高於萬豪，但代墊成本比重未拆開，不能直接當護城河差距；前份追蹤的淨房數差距本次事實表未涵蓋。"},{"name":"H","strategy_note":"營業利益率與自由現金流利潤率都明顯低於萬豪，事實表沒有足以比較品牌力的數字。"},{"name":"IHG","strategy_note":"事實表無財務資料，無法判讀。"},{"name":"CHH","strategy_note":"利潤率高於萬豪；萬豪在中階市場已接近 600 家飯店，雙方競爭可能升高。"}],"spread_notes":null,"peer_na_reason":"事實表只有同業毛利率、營業利益率與自由現金流利潤率，沒有投入資本與 ROIC，無法計算報酬差距；IHG 財務資料也缺。","threats":[{"level":"🟡","text":"AI 目前主要改變旅遊探索，訂房端較慢。附著點是 Bonvoy 帳號與直訂流量；若 2030 年前代理式訂房繞過 Bonvoy，威脅應升級。外部長期預測不是實測。","p":"30%","evidence_refs":["substitute_technology#0","substitute_technology#2"]},{"level":"🟡","text":"訂房、物業管理與忠誠度系統多年改造已遷移逾 3,000 家飯店，較複雜的全服務與豪華飯店還在後面，延誤或中斷會直接傷害業主信任。","p":"20%","evidence_refs":["substitute_technology#1"]},{"level":"🟡","text":"轉換案競爭推高 key money，同業用資本搶業主，壓低新增合約報酬。","p":"40%","evidence_refs":["channel_business_model_shift#2"]}],"roic_durability":{"quadrant":"高利益率×高周轉","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"第三季休閒、團體、商務 RevPAR 分別增 7%、6%、4%，需求廣泛；但旅遊可以延後，訂房窗口約 21 天，能見度短。"},{"item":"決策層級","level":"🟡","text":"決策單位是個別業主。前九個月簽約創新高，代表品牌仍受青睞；轉換案比重高也代表業主可以換牌，合約年限與違約條款事實表未涵蓋。"},{"item":"價值鏈分配","level":"🟡","text":"業主集體反映成本，公司以降費率、返還與 key money 回應，同時聯名卡費集中在品牌方，分配爭議尚未解決。"},{"item":"社會容忍度","level":"🟢","text":"沒有看到房價管制或費率上限的證據。英國 CMA 調查的是資訊交換，屬合規風險，不是價格天花板。"}],"roiic":"事實表未涵蓋，無法用定義式計算","reinvest_rate":"定義式事實表未涵蓋；粗略參考為 2026 投資支出 12.5～13.5 億美元，約等於 FY2025 營業利益 41.4 億美元的 31%，屬稅前且未扣折舊。","endo_ceiling":8.5,"formula_note":"增量報酬的定義式需要投入資本、折舊與營運資金變動，事實表未涵蓋。內生天花板改用輕資產代理式：淨房數 4.75% 與 RevPAR 3.5% 相乘，(1.0475×1.035)−1≈8.4%，取 8.5%，不含淨回購與利潤率擴張。可能高估的地方是沒有扣除 key money 的資本成本。"}}}},"q3_growth":{"verdict":"五年後跑道中等：淨房數仍有中個位數成長，但滲透率事實表未涵蓋，也沒有足以單獨撐起成長的第二曲線。","reasoning":"調整後 EPS 基期約 10.02 美元，由 2026-08-03 指引 11.64～11.81 美元與年增 16%～18% 反推；到 FY2028E 15.04 美元，三年複合 14.5%。內生天花板 8.5%，缺口 6.0 個百分點。其中淨回購約 3.8～4.1 個百分點：2026 股東回饋至少 48 億美元，扣股息約 7.2 億美元後占市值 3.8%，FY2025 稀釋均股減 4.1%。其餘約 2 個百分點來自費用增速高於 G&A 的利潤率擴張。缺口可以歸因，不必靠倍數上修，但每股盈餘成長約四分之一來自回購。反例是淨房數若由轉換案與中階品牌加速，內生天花板會高於 8.5%。","fact_refs":["f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_kpi6_worldwide_revpar_growth","f_kpi9_net_rooms_pipeline","f_rev_consensus_fy1_m","f_rev_consensus_fy2_m","f_dividend_yield_ttm"],"verdict_values":{"growth":{"driver_mix":"量（淨房數 4.6%）＋價（RevPAR 6.5%）＋聯名卡與住宅品牌費＋回購；近 12 個月沒有併購。","runway_years":"滲透率事實表未涵蓋，無法換算","runway_post_y5":"🟡","endo_ceiling_basis":"內生天花板 8.5%，共識三年複合 14.5%，差 6.0 個百分點，歸因於淨回購與利潤率擴張。","segments":[{"item":"總費用收入（第三季）","value":"15.22 億美元，年增 14%"},{"item":"獎勵管理費（第三季）","value":"1.81 億美元，年增 22%；第四季預估約持平"},{"item":"聯名卡費（2026 全年）","value":"預估增加高 30% 區間；新約對 2028 全年影響 1 億～1.25 億美元"},{"item":"住宅品牌費（2026 全年）","value":"預估增逾 90%；第三季因交屋時點年減 35%"},{"item":"分時度假費（2026 全年）","value":"1.10 億～1.15 億美元，大致持平"}],"decay_signals":[{"signal":"毛利率連兩季年減","status":"資料缺口","note":"事實表沒有季度毛利率，年度數字又受代墊成本影響。"},{"signal":"核心市占縮減","status":"資料缺口","note":"同業淨房數與份額事實表未涵蓋。"},{"signal":"提價後銷量下滑","status":"未亮","note":"法說稱多數市場房晚與房價並進，沒有相反數據。"},{"signal":"EPS 成長顯著高於營收成長","status":"亮","note":"三年 EPS 複合 14.5%，FY2026 至 FY2027 共識營收約增 5.9%，差距超過 5 個百分點。"},{"signal":"自由現金流對淨利連兩年低於 0.75","status":"未亮","note":"FY2022 至 FY2025 分別約 0.86、0.88、0.84、1.00。"},{"signal":"SBC 占營收高且上升","status":"資料缺口","note":"SBC 金額事實表未涵蓋。"},{"signal":"TAM 萎縮或被替代技術壓縮","status":"未亮","note":"AI 目前主要影響探索，尚無訂房份額移轉數據。"},{"signal":"產業倍數系統性下移","status":"資料缺口","note":"同業歷史倍數事實表未涵蓋。"},{"signal":"維持性資本支出占自由現金流過高","status":"資料缺口","note":"維持性支出未拆分。"},{"signal":"停止投資且收入下滑","status":"未亮","note":"管線創新高，FY2022 至 FY2025 營收逐年成長。"}],"trap_rating":"🟡"}}},"q4_capital":{"verdict":"資本配置穩定而偏積極：2026 股東回饋至少 48 億美元，高於自由現金流，差額需要舉債支應。","reasoning":"FY2022 至 FY2025 自由現金流對淨利約 0.86、0.88、0.84、1.00，現金轉換良好。以 TTM 自由現金流利潤率 12.71% 乘 FY2026 共識營收，自由現金流約 35.5 億美元，低於 48 億美元的股東回饋。淨負債 172.25 億美元，含租賃，約為第三季年化 EBITDA 的 2.85 倍，季節性未調整；管理層承諾維持投資等級，循環信貸也由 45 億美元增至 50 億美元。SBC 占營收、四類現金去向、債務到期結構與回購均價事實表未涵蓋。可能看錯的地方是回購紀律：股價越高，同樣金額買回的股數越少，EPS 增厚效果會下降。","fact_refs":["f_net_debt_m","f_shares_diluted_m","f_dividend_yield_ttm","f_peer_mar_fcf_margin_pct","f_kpi3_adjusted_ebitda","f_rev_consensus_fy1_m"],"verdict_values":{"capalloc":{"items":[{"name":"ma_roiic","applicable":false,"passed":null,"input":"近 12 個月 8-K 沒有併購協議，無已實現併購報酬可評分。"},{"name":"buyback_yield","applicable":true,"passed":false,"input":"回購均價事實表未涵蓋。以 52 週均線 347.51 美元與 FY1 EPS 11.96 美元代入，盈餘殖利率約 3.44%，現價約 2.87%；要過關，十年期公債殖利率需低於約 1.44%。十年期殖利率事實表未涵蓋。"},{"name":"sbc_dilution","applicable":true,"passed":true,"input":"由淨利除以稀釋 EPS 反推稀釋均股：3.257、3.028、2.851、2.735 億股，每年淨減 4.1%～7.0%。SBC 金額事實表未涵蓋，毛稀釋率無法計算。"}]},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購；近三年現金去向與債務到期結構事實表未涵蓋，只有 2026 全年股東回饋至少 48 億美元的指引。"}}}},"q5_valuation":{"verdict":"現價要求未來五年 EPS 年增超過一成，而且本益比續守 30 倍上下；需求與回購我相信，倍數我不信。","reasoning":"現價 416.47 美元，FY1 預估本益比 34.82 倍，FY+2 為 31.1 倍，高於前份 24～31 倍區間上緣。PEG 以 34.82 倍除以三年複合 14.5%，約 2.40，屬偏貴。五年分位事實表未涵蓋，只有四個年度端點，現值位於最高。短期目標以 FY2027E 13.30 美元乘 30 倍得 399 美元，較現價 −4.2%；中期以 FY2029E 16.55 美元乘 28 倍得 463 美元，較現價 +11.3%。30 倍來自前份 FY+2 五年均值 26～27 倍，乘共識 FY2027 與 FY2026 EPS 比值後換算。賣方目標價平均約 385～391 美元，最高 446 美元，但多為七月資料，第三季上修後可能偏舊，只作低權重參考。反例是 EPS 指引持續上修，2026 成長指引已由 16%～18% 升到 20%～21%，連續超預期時市場可能繼續給高倍數。","fact_refs":["f_price_at_dd","f_fwd_pe_latest","f_pe_current","f_pe_percentile","f_ps_current","f_ev_s_current","f_ev_s_fwd","f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_consensus_rev_3m_fy1_pct","f_week26_return_pct"],"verdict_values":{"valuation":{"basis":"FY2026E 共識調整後 EPS 的預估本益比，並以 FY+2 本益比對照前份區間","tier":"高品質輕資產飯店品牌","peers":{"expanded":false,"reason":"事實表只有同業利潤率，沒有同業預估本益比，無法做跨公司倍數對照。"},"fwd_pe":34.82,"peg":2.4,"percentile_5y":null,"val_light":"🔴","val_light_derivation":"FY+2 本益比 31.1 倍高於前份區間上緣，PEG 2.40 高於 2，四個年度端點中位於最高，基準情境五年年化約 6%，低於 8%。五年分位缺資料，結論不依賴它。","upside_short_pct":-4.2,"upside_mid_pct":11.3,"denominator_disputed":false,"denominator_note":"世足賽約 45 個基點 RevPAR，換算費用約 2500 萬～2900 萬美元，不足以改變倍數判讀；住宅品牌費的絕對金額事實表未涵蓋。EV/S 有 16.42 與 4.45 兩個數字，分母口徑明顯不同，本案不用 EV/S 定價。"}}},"q6_how_wrong":{"verdict":"最可能看錯的是低估連續超預期的力量；對股東最大的傷害則來自需求轉負時 EPS 與倍數一起下修。","reasoning":"2026 全球 RevPAR 指引由 1.5%～2.5% 一路升到 4.5%～5%，管理層指引明顯保守，因此觀望可能錯過續漲。另一方面，第二季法說管理層不正式回應業主公開信，也未拆分轉嫁與自行吸收的金額；第三季被問到扣除卡費與住宅費後的費用成長時，只回答權利金率沒有壓縮，未給數字。歷史最大回撤、訴訟金額事實表未涵蓋。價值陷阱風險中度，唯一亮起的衰退信號是 EPS 成長遠高於營收成長。","fact_refs":["f_price_at_dd","f_fwd_pe_latest","f_kpi6_worldwide_revpar_growth","f_consensus_eps_fy3","f_net_debt_m"],"verdict_values":{"trap":{"verdict":"🟡","label":"生意不差，但每股成長高度依賴回購與費率以外的步階收入"}}}},"scenario_inputs":{"terminal_label":"FY2031E","start":{"eps":11.96,"pe":34.82,"basis":"FY2026E 共識調整後 EPS（FY1），終端倍數分母同為該年度調整後 EPS"},"eps":{"bull":[13.75,15.75,18.05,20.6,23.4],"base":[13.3,14.9,16.55,18.25,20.05],"bear":[12.7,11.0,11.7,12.6,13.3]},"pe":{"bull":32,"base":27,"bear":19},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":0.67,"net_buyback":0},"second_stage":{"bull_cagr_pct":11,"base_cagr_pct":8},"max_dd":{"lo":-55,"hi":-35,"basis":"用空方路徑推算：FY2028 谷底 EPS 11.00 美元乘 18 倍約 198 美元，跌 52%；溫和下修 EPS 12.70 美元乘 21 倍約 267 美元，跌 36%；取 −55%～−35%。歷史最大回撤事實表未涵蓋，前份估 −55%。","trigger_time":null},"basis":{"bull":"2027 RevPAR 達 4.5% 以上，淨房數 5% 以上，卡費與中階品牌放量，回購維持；五年 EPS 年化約 14.4%。終端 32 倍參考前份 24～31 倍區間上緣，同業現值倍數事實表未涵蓋。","base":"2027 RevPAR 約 3.5%～4%，之後回到長期約 3%，淨房數 4.5%～5%，EPS 年化約 10.9%，略低於共識。終端 27 倍參考前份五年均值 26～27 倍並考慮成長放緩，同業現值倍數事實表未涵蓋。路徑已含回購縮股，2026 回購約占市值 3.8%，淨回購殖利率填 0 以免重複計算。","bear":"2028 年全球 RevPAR 轉為年減，費用與獎勵管理費下滑，回購縮手，EPS 谷底 11.00 美元，五年後 13.30 美元。終端 19 倍對應成長放緩至 10% 左右。空方機率 30%，因共識成長高於內生天花板，RevPAR 也接近景氣高位。"},"endo_ceiling_exceeded":true},"counter_evidence":{"blind_spots":[{"view":"論點失敗","evidence":"RevPAR 每少 1 個百分點，相關費用少 5500 萬～6500 萬美元；現價 FY+2 本益比 31.1 倍，淨負債約為第三季年化 EBITDA 的 2.85 倍。","assumption":"需求持續正成長，倍數維持 30 倍上下。","consequence":"RevPAR 由 +4% 轉為 −5%，費用約少 5 億～6 億美元，每股稅前約少 2 美元；倍數壓回 18～20 倍時，股價可能到 200～240 美元，跌 42%～52%。","ruling":"採納。這是五年虧損五成最可能的路徑，也就是唯一致命點，因此不另立第二個故事。","watch":"全球 RevPAR 年增率、團體訂房進度、訂房窗口。","evidence_refs":["supply_demand_durability#3","end_markets#3"],"fact_refs":["f_kpi6_worldwide_revpar_growth","f_net_debt_m","f_shares_diluted_m"]},{"view":"論點成功但股東經濟變差","evidence":"公司下調忠誠度費率約 5%，自費提供最高 50 個基點返還；key money 約 5 億～6 億美元且預期續增；全球新建案開工前三季減約 24%，資料品質受管理層保留。","assumption":"淨房數與 RevPAR 達標，費用就會等比例流到股東。","consequence":"系統越做越大，但新增房間的取得成本上升，費用成長落後系統成長，EPS 更依賴舉債回購。","ruling":"部分採納。目前讓利規模仍小於費用增量，但放進基準情境的 EPS 略低於共識，並設定 key money 與費用落差的監測門檻。","watch":"key money 金額與占比、特許與基本費增速減 RevPAR 與淨房數的落差。","evidence_refs":["channel_business_model_shift#2","competitive_share_entrants#1","reg_tariff_export#2"],"fact_refs":["f_kpi5_gross_fee_revenues","f_kpi9_net_rooms_pipeline"]},{"view":"價格已反映太多","evidence":"FY1 預估本益比 34.82 倍，PEG 約 2.40，四個年度端點中位於最高；七月賣方目標價平均低於現價。","assumption":"市場會繼續為回購驅動的雙位數 EPS 付 30 倍以上。","consequence":"即使 EPS 年化 10.9%，倍數回到 27 倍後，股價年化僅約 5.4%，加股息約 6%。","ruling":"採納，這是目前不進場的唯一綁定原因。","watch":"FY+2 預估本益比；賣方第三季後更新的目標價。","evidence_refs":["capital_markets_pricing#2","capital_markets_pricing#3"],"fact_refs":["f_fwd_pe_latest","f_pe_percentile","f_consensus_eps_fy2"]}],"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 ✅ → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=✅","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 372.47 → 本次 416.47（+11.8%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=372.47","side_b":"本次 price_at_dd=416.47","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]角色由 dd_decision.py 機械路由：前份 核心 → 本次 追蹤","cause":"價格變動","prior_field":["dca_role"],"side_a":"前份 dca_role=核心","side_b":"本次 dca_role=追蹤","ruling":"角色是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。沒有單一輸入能還原，屬多欄共同：估值 🟠→🔴、均線 ✅→🟡。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 372.47 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 372.47 美元：Bull 價 670、Bear 價 266，五年期望值 +24.2%，基準年化 5.5%，不對稱比 2.3","side_b":"本次情境、股價仍用 372.47 美元：Bull 價 748.8、Bear 價 252.7，五年期望值 +36.0%，基準年化 7.8%，不對稱比 2.62","ruling":"先換情境、股價不動：五年期望值多 11.8 個百分點，基準年化多 2.3 個百分點。不對稱比由 2.3 變為 2.62。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變好。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 372.47 美元：五年期望值 +36.0%，基準年化 7.8%，不對稱比 2.62","side_b":"本次情境、股價 416.47 美元：五年期望值 +21.6%，基準年化 5.4%，不對稱比 1.69","ruling":"再換股價、情境不動：起點價上漲 11.8%，五年期望值少 14.4 個百分點，基準年化少 2.4 個百分點，不對稱比由 2.62 降到 1.69。合計五年期望值比前份少 2.6 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"估值結論與裁決","cause":"價格變動","prior_field":["val","p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份股價 372.47 美元，FY+2 本益比約 29 倍，估值偏貴，裁決觀望。","side_b":"本次股價 416.47 美元，FY+2 本益比 31.1 倍，高於前份區間上緣，估值轉為昂貴；情境機率維持 25／45／30，最大回撤區間 −55%～−35%。","ruling":"變化主要來自股價上漲 11.8%，FY+2 EPS 由約 12.9 美元升至 13.39 美元只抵銷一部分，因此仍是不追。","evidence_level":"事實表價格與共識數字；前份 EPS 由 24 倍對 310 美元反推","settle_metric":"FY+2 預估本益比","if_then":["若 FY+2 本益比降到 26 倍以下，重跑研究後分批反買。","若股價續漲但 2027 指引未高於 4.5%，不追。"],"evidence_refs":[]},{"axis":"品質判斷未改","cause":"新證據","prior_field":["signal","trap","moat_trend","runway_post_y5","archetype","cycle_position"],"side_a":"前份總評 B、價值陷阱中度、護城河方向穩定、五年後跑道中等，屬品質複利成長，循環位置未填。","side_b":"本季 RevPAR 與管線更強，但業主讓利、key money 與費用品質的疑慮也更明確。","ruling":"正負證據相抵，上述判斷都不變。公司按品質複利成長看待，循環位置本次同樣不填。","evidence_level":"2026-08-03 與 2026-11-02 法說、公司新聞稿","settle_metric":"2027 年 2 月的費用與淨房數指引","if_then":["若特許與基本費增速連兩季落後 RevPAR 加淨房數超過 2 個百分點，護城河方向改為縮減並停止加碼。","若落差收斂且管線持續成長，維持原判。"],"evidence_refs":["end_markets#0","channel_business_model_shift#2"]},{"axis":"進場條件改以報酬反解","cause":"方法變動","prior_field":["rearm_trigger"],"side_a":"Fwd PE(FY+2) 回落至 ~24x（~$310）或全球 RevPAR 連 2 季轉負（衰退重置）；或 Fwd PE 連 6 月 <22x 且分析師目標中位下修","side_b":"FY+2 預估本益比回到 26 倍以下（約 348 美元）；觸發後重跑研究再定首倉，不直接進場","ruling":"舊條件以歷史倍數為錨，本次改成基準情境五年年化約 10% 反解的進場價。衰退分支移到唯一致命點處理，避免把價格與事件兩個條件混在一起。","evidence_level":"情境樹算術","settle_metric":"FY+2 預估本益比","if_then":["價格達標後先重跑研究，通過才以小額首倉進場。","若 EPS 共識下修超過 5%，進場價同步下移，不沿用 348 美元。"],"evidence_refs":[]},{"axis":"Single Thing 由未設改為全球 RevPAR 連兩季年減","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未設（原欄位為空）","side_b":"全球 RevPAR 連續兩季年減","ruling":"需求轉負是數學上最大的單一敏感度，同時打擊 EPS 與倍數，其規模大於聯名卡新約或業主讓利。","evidence_level":"2026-11-02 財務長敏感度","settle_metric":"季度全球 RevPAR 年增率","if_then":["發生時，未持有者等 FY+2 本益比 22 倍以下，重跑研究後分批反買。","發生時，已持有者若倍數仍高於 26 倍就減碼三分之一。"],"evidence_refs":["supply_demand_durability#3"]},{"axis":"新增量化減碼與清倉門檻","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設（原欄位為空）","side_b":"全球 RevPAR 連兩季年減就檢視減碼；淨房數低於 4% 連兩季停止加碼；key money 超過 7 億美元或占投資支出逾 50% 停止加碼；同時出現淨房數低於 3% 與費用落差超過 4 個百分點才清倉。","ruling":"本次把前份風險表的觀察項改成可執行門檻，前份的淨房數、集體訴訟與會員房晚指標都保留在風險清單，取不到的值標資料缺口。","evidence_level":"判斷者設定，依據公司指引與敏感度","settle_metric":"季度財報","if_then":["達到單一門檻時先停止加碼或減碼，不直接清倉。","兩項結構性門檻同時成立才清倉。"],"evidence_refs":[]},{"axis":"假設門檻上調與改寫","cause":"新證據","prior_field":["H1.threshold","H3.threshold"],"side_a":"全球 RevPAR 年增 ≥1.5%；Fwd PE(FY+2) 24-31x","side_b":"全球 RevPAR 年增 ≥2.5%；第三項假設改看 EPS、費用落差與 key money","ruling":"2027 初步區間已到 3.5%～4.5%，舊底線太低。現價已高於舊倍數區間上緣，倍數改由進場條件處理，第三項假設改驗證業主讓利下的每股經濟。","evidence_level":"2026-11-02 法說","settle_metric":"2027 年 2 月正式指引","if_then":["若正式指引下緣低於 3%，第一項假設判為削弱並不追。","若 2028 共識 EPS 跌破 14.5 美元，停止加碼。"],"evidence_refs":["supply_demand_durability#0","end_markets#2"]},{"axis":"2027 需求展望","cause":null,"side_a":"管理層初步看全球 RevPAR 3.5%～4.5%，世足賽高基期可由 EMEA 低基期抵銷。","side_b":"CoStar／Tourism Economics 預估 2027 美國 RevPAR 僅增 2.1%，且房價成長低於通膨。","ruling":"可調和，兩者地區範圍不同，管理層 2026 年也持續上修。基準情境取 3.5%～4%，不採上緣；這項要到正式預算才能裁定。","evidence_level":"公司前瞻與第三方預測，都不是實績","settle_metric":"2027 年 2 月全球與美加 RevPAR 指引","if_then":["若美加指引低於 2.5%，下修基準 EPS 並不追。","若全球指引高於 4.5%，基準 EPS 上修後重算進場價。"],"evidence_refs":["supply_demand_durability#0","supply_demand_durability#3","end_markets#2","end_markets#3"]},{"axis":"費用成長品質","cause":null,"side_a":"2026-11-02 財務長表示特許與基本費權利金率沒有壓縮。","side_b":"同場 Rothschild 分析師指出，扣除聯名卡與住宅費後，費用成長落後 RevPAR 與淨房數；全年總費用增約 13%，高於 4.75% 與 4.6% 的簡單加總。","ruling":"可調和但未證實。管理層沒有提供扣除後數字，本次不採信也不否定；先預登記，若 2027 年前兩季落差仍超過 2 個百分點，就視為費率受壓。","evidence_level":"法說問答，缺分項資料","settle_metric":"特許與基本費增速減 RevPAR 與淨房數增速","if_then":["連兩季落差超過 2 個百分點就停止加碼。","連四季落差超過 4 個百分點就減碼。"],"evidence_refs":["channel_business_model_shift#2"]},{"axis":"業主關係與 key money","cause":null,"side_a":"2026-08-03 CEO 說談判用的 key money 比部分同業少，2026-11-02 又說討論透明、合作、具建設性，不會有重大宣布。","side_b":"同一位 CEO 也稱 key money 是競爭中的常用武器，財務長預期合約取得成本續增；CEO 拒絕正式回應業主公開信，也未拆分轉嫁與自行吸收金額。key money 案件每房價值溢價 65%～75% 是公司自算，缺成本端。","ruling":"可調和：新業主仍願意簽約，既有業主仍在爭取分配。CEO 對同業的比較自述為軼事，不採為證據。方向判定維持穩定，但列為第一順位監測。","evidence_level":"法說管理層陳述，缺獨立數據","settle_metric":"key money 金額與占投資支出比重","if_then":["key money 超過 7 億美元或占比逾 50% 就停止加碼。","若公司同意分享聯名卡費，重算 EPS 後再決定是否減碼。"],"evidence_refs":["channel_business_model_shift#1","channel_business_model_shift#2"]},{"axis":"中東復甦說法","cause":null,"side_a":"2026-08-03 CEO 指 2027 EMEA 可望隨中東復甦強勁成長；外部報導列中東占房量 4%、管線 7%、費用 4%。","side_b":"2026-11-02 CEO 改為假設旅遊干擾持續、2027 逐步改善，並列中東占開業客房 3%、管線 6%、2025 總費用 3%。","ruling":"口徑較前一季保守，暴露比例採公司最新說法。沙烏地活動取消使第四季年減幅擴大，但 3% 費用占比不足以單獨改變論點。","evidence_level":"法說一手說法與二手報導","settle_metric":"2027 第一季中東 RevPAR 與管線流失","if_then":["若 2027 第一季中東 RevPAR 仍年減逾 20%，把 2027 RevPAR 假設降到區間下緣並不追。","若管線流失超出正常水準，淨房數假設下修並停止加碼。"],"evidence_refs":["geo_supply_chain#0"]},{"axis":"產業態勢三軸","cause":null,"side_a":"競爭端惡化：轉換案競爭推高 key money，業主要求更多回饋。","side_b":"結構端轉好：美國新供給處於 12 年低點，公司轉換案占開業逾 40%；其他結構變數是 AI 改變旅遊探索與英國 CMA 調查。","ruling":"雙向拉鋸。供給緩衝支持費用，取得新合約的成本卻在上升，兩者方向相反但都還不足以改變護城河方向。","evidence_level":"法說、CoStar、CMA 案件頁","settle_metric":"key money、淨房數與美國供給成長","if_then":["若美國新建開工持續增加 20% 且供給預估高於 2%，下修 RevPAR 假設並不追。","若 key money 回落且淨房數高於 5%，上修基準情境。"],"evidence_refs":["supply_demand_durability#2","competitive_share_entrants#1","regulatory_antitrust#0"]},{"axis":"現在就買的最強論證","cause":null,"side_a":"指引不斷上修，2026 RevPAR 由 1.5%～2.5% 升到 4.5%～5%；EPS 增 20%～21%；管線與會員都創新高；美國供給低，2027 仍有 3.5%～4.5% 的初步看法。好公司很少跌到便宜價，觀望可能錯過多年複利。","side_b":"即使基準 EPS 年化 10.9%，倍數由 34.8 倍回到 27 倍，股價年化只有約 5.4%；空方機率 30%，上下檔比約 1.7，新資金的安全邊際不足。","ruling":"選擇不追。這不是對公司品質的否定，而是現價已預付多年成長。市場若持續給 30 倍以上，這個判斷會錯，但錯的代價是少賺，買在高位遇到衰退的代價是跌五成。","evidence_level":"情境樹與法說","settle_metric":"FY+2 預估本益比與 2027 指引","if_then":["若股價續漲但指引未再上修，不追。","若股價跌但費用與淨房數門檻未破，到 348 美元附近重跑研究後分批反買。","若 2027 指引高於 4.5% 且 FY2028 EPS 共識升到 16 美元以上，重算進場價；否則維持不追。"],"evidence_refs":["end_markets#1","capital_markets_pricing#4"]}],"triggers":[{"n":1,"text":"股價回到基準報酬約 10% 的區間，重跑研究再決定首倉。","type":"估值rearm","maps_to":"進場條件","metric":"FY+2 預估本益比","threshold":"≤26 倍（約 348 美元）","action":"重跑研究，通過後分批反買","source_freq":"每週，收盤價與最新共識","date":null},{"n":2,"text":"全球需求進入衰退，EPS 與倍數同時下修。","type":"Single Thing","maps_to":"R1","metric":"全球 RevPAR 年增率","threshold":"連兩季 <0%","action":"未持有者等 22 倍以下分批反買；持有且倍數高於 26 倍則減碼三分之一","source_freq":"每季財報","date":null,"evidence_refs":["supply_demand_durability#3"]},{"n":3,"text":"2027 正式指引驗證需求假設。","type":"假設驗證","maps_to":"H1","metric":"2027 全球 RevPAR 指引下緣","threshold":"≥3%","action":"低於門檻就不追並下修基準 EPS","source_freq":"第四季財報","date":"2027-02"},{"n":4,"text":"系統成長與管線轉化。","type":"假設驗證","maps_to":"H2","metric":"淨房數年增、管線、施工中客房","threshold":"淨房數 ≥4%；管線 ≥60 萬間；施工中 ≥26 萬間","action":"連兩季低於門檻就停止加碼","source_freq":"每季財報","date":null,"evidence_refs":["competitive_share_entrants#1","reg_tariff_export#2"]},{"n":5,"text":"業主讓利與新增合約成本升高。","type":"風險","maps_to":"R2","metric":"key money 金額與占投資支出比重；費用增速落差","threshold":"key money >7 億美元或占比 >50%；落差連兩季 >2 個百分點","action":"停止加碼","source_freq":"每季財報與法說","date":null,"evidence_refs":["channel_business_model_shift#2"]},{"n":6,"text":"中東干擾拖累 RevPAR 與管線。","type":"風險","maps_to":"R6","metric":"中東 RevPAR 年增率與管線流失","threshold":"2027 第一季年減逾 20% 或管線流失超出正常水準","action":"下修 2027 假設並不追","source_freq":"每季法說","date":"2027-05","evidence_refs":["geo_supply_chain#0"]},{"n":7,"text":"資料外洩訴訟與英國競爭法調查出現不利結果。民事和解由財務影響決定動作，若出現刑事介入則重新評估治理並可清倉。","type":"風險","maps_to":"R5","metric":"和解或裁罰金額、調查結論","threshold":"合計超過市值 1%（約 11 億美元）","action":"減碼三分之一；刑事介入則清倉","source_freq":"10-K、10-Q、CMA 案件頁","date":null,"evidence_refs":["lawsuit_class_action#0","regulatory_antitrust#0"]},{"n":8,"text":"持有者的估值上限。","type":"減碼","maps_to":"R1","metric":"FY+2 預估本益比","threshold":"≥36 倍（約 482 美元）","action":"減碼三分之一","source_freq":"每週","date":null},{"n":9,"text":"第四季財報與 2027 正式指引後複審。","type":"複審日期","maps_to":"H1","metric":"RevPAR、費用、淨房數、key money 指引","threshold":"完整更新","action":"重算情境與進場價","source_freq":"第四季財報","date":"2027-02"}],"kill_metrics":[{"metric":"全球 RevPAR 年增率","bear_threshold":"連兩季低於 0%","window":"2 季","source":"公司季度財報","last_status":"ok"},{"metric":"淨房數年增率","bear_threshold":"低於 4% 連兩季；低於 3% 為結構性破位","window":"2 季","source":"公司季度財報","last_status":"ok"},{"metric":"key money 金額與占投資支出比重","bear_threshold":"超過 7 億美元或占比逾 50%","window":"1 個會計年度","source":"公司法說與新聞稿","last_status":"ok"},{"metric":"特許與基本費增速減 RevPAR 與淨房數增速","bear_threshold":"連兩季落後超過 2 個百分點；連四季超過 4 個百分點","window":"2～4 季","source":"公司財報；分項資料目前是缺口","last_status":"unknown"},{"metric":"FY2027 共識 EPS","bear_threshold":"低於 12.72 美元，即較 13.39 美元下修 5%","window":"2027 年 6 月前","source":"Koyfin 共識快照","last_status":"ok"}],"evidence_dismissed":[{"ref":"capital_markets_pricing#1","reason":"這是 2026-08-03 對第三季的指引，已被實績取代：第三季調整後 EPS 3.02 美元，高於指引上緣 2.82 美元，也高於當時共識 2.88 美元。"},{"ref":"major_events#1","reason":"與同份 10-K 的另一條 EPA 紀錄是同一事件，重複收錄且方向標記不一致；內容只涉及一家受管飯店，未揭露金額，也沒有指向費用或合約的傳導路徑。"}],"action_conditions":{"rearm_trigger":"FY+2 預估本益比回到 26 倍以下（約 348 美元）；觸發後重跑研究再定首倉，不直接進場","exec_line":"現價不建倉、不追；回到約 348 美元先重跑研究，通過後以小額首倉分批進場；已持有者續抱，FY+2 本益比達 36 倍（約 482 美元）時減碼三分之一。"}},"decision_inputs":{"signal":"B","ma":"🟡","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把 2026 年的步階式成長當成常態：全年總費用增約 13%，高於 RevPAR 4.75% 加淨房數 4.6%，差額主要來自聯名卡新約與住宅品牌費，這些增速不會重演；同時以 34.8 倍為部分靠回購驅動的 EPS 定價。","momentum_overheated":null,"cycle_gates_pass":null,"wait_for_price":true,"wait_for_price_condition":"等 FY+2 預估本益比回到 26 倍以下，約 348 美元，再重跑研究。"},"thesis":{"H":[{"id":"H1","text":"全球旅宿需求維持正成長：2027 全球 RevPAR 落在管理層初步區間，穿越一次景氣循環後仍有 2.5% 以上的年化成長。","2y":"FY2027 全球 RevPAR 增 3.5%～4.5%，FY2028 不低於 2.5%","5y":"含一次衰退，五年年化不低於 2.5%","10y":null,"threshold":"全球 RevPAR 年增 ≥2.5%；美加 ≥2%；2027 正式指引下緣 ≥3%","source":"公司季度新聞稿與法說；CoStar／Tourism Economics 美國預測","drift_rule":"兩年期驗證：與門檻偏離 ≥5% 連兩季為削弱，偏離 ≥10% 連三季為反轉。"},{"id":"H2","text":"輕資產系統持續擴張：淨房數維持中個位數成長，管線能轉成開業，費用隨系統成長。","2y":"FY2026 淨房數約 4.5%，FY2027 不低於 4.5%，管線不低於 63 萬間","5y":"至 FY2031 淨房數年化不低於 4.5%","10y":"系統規模再擴四成以上，國際比重提高","threshold":"淨房數年增 ≥4%；管線 ≥60 萬間；施工中客房 ≥26 萬間；轉換案占開業 ≥30%","source":"公司季度新聞稿與法說","drift_rule":"兩年期驗證：與門檻偏離 ≥5% 連兩季為削弱，偏離 ≥10% 連三季為反轉；五年期驗證用連四季與連六季。"},{"id":"H3","text":"業主讓利可控、費用率不被壓縮，EPS 能靠費用成長與回購維持雙位數複合。","2y":"FY2028 調整後 EPS 不低於 14.5 美元","5y":"FY2031 調整後 EPS 不低於 19 美元","10y":null,"threshold":"FY2028 共識 EPS ≥14.5 美元；特許與基本費增速與 RevPAR 加淨房數的落差不超過 2 個百分點；key money ≤投資支出 45%；維持投資等級","source":"Koyfin 共識快照；公司財報與法說；信用評等公告","drift_rule":"兩年期驗證：與門檻偏離 ≥5% 連兩季為削弱，偏離 ≥10% 連三季為反轉。"}],"R":[{"id":"R1","text":"全球衰退使 RevPAR 轉負，費用下滑，高倍數同時下修。","h_ref":"H1","clock":"🔥","threshold":"全球 RevPAR 連兩季低於 0%","evidence_refs":["supply_demand_durability#3"]},{"id":"R2","text":"業主要求更多回饋，key money、費率讓利或聯名卡費分享侵蝕股東經濟。","h_ref":"H3","clock":"🔥","threshold":"key money 超過 7 億美元或占投資支出逾 50%；返還超過客房收入 50 個基點；公司同意分享聯名卡費","evidence_refs":["channel_business_model_shift#2"]},{"id":"R3","text":"新供給、建造成本與同業競爭壓低淨房數與管線轉化。","h_ref":"H2","clock":"🔥","threshold":"淨房數低於 4%；施工中客房低於 26 萬間；與希爾頓淨房數差距 ≥3 個百分點連兩個半年，同業數字目前是資料缺口","evidence_refs":["competitive_share_entrants#1","reg_tariff_export#2"]},{"id":"R4","text":"AI 代理式訂房與 OTA 分流削弱 Bonvoy 直訂優勢。","h_ref":"H3","clock":"🐢","threshold":"Bonvoy 會員房晚占比連兩個半年下滑；公司未在本包揭露，目前是資料缺口","evidence_refs":["substitute_technology#0","substitute_technology#2"]},{"id":"R5","text":"Starwood 資料外洩訴訟與英國 CMA 資訊交換調查帶來賠償、裁罰與合規成本。第四巡迴已推翻集體認證，部分原告改為個別提告，調解仍在進行。","h_ref":"H3","clock":"🐢","threshold":"和解或裁罰合計超過市值 1%，約 11 億美元；出現不利集體認證或 CMA 違法認定","evidence_refs":["lawsuit_class_action#0","regulatory_antitrust#0"]},{"id":"R6","text":"中東衝突使 2026 第四季與 2027 上半年 RevPAR 持續承壓，並拖慢管線。","h_ref":"H1","clock":"⚡","threshold":"2027 第一季中東 RevPAR 仍年減逾 20%，或管線流失超出正常水準","evidence_refs":["geo_supply_chain#0"]}],"single_thing":{"description":"全球 RevPAR 連續兩季年減。","why_fatal":"這是最大的單一敏感度：RevPAR 每 1 個百分點對應 5500 萬～6500 萬美元費用，由 +4% 轉為 −5% 約少 5 億～6 億美元，每股稅前約 2 美元。現價含 31.1 倍 FY+2 本益比，需求轉負時 EPS 與倍數會一起下修；聯名卡新約對 2028 年的 1 億～1.25 億美元影響小得多。","if_happens":"這是估值重置，不等於生意毀損。未持有者等 FY+2 本益比 22 倍以下，重跑研究後分批反買；已持有者若當時倍數仍高於 26 倍就減碼三分之一，低於 26 倍不因波動賣出。","how_monitor":"每季財報的全球 RevPAR 年增率；領先指標看團體訂房進度與訂房窗口，第三季全球訂房窗口約 21 天，年比大致持平。","probability":"12～24 個月約 15%～20%，屬主觀估計，事實表沒有衰退機率資料。"}},"appendix_a":{"growth_durability":7,"quality_score":7.5,"ai_risk":"🟡","long_term_confidence":"中","fpe_fy2":31.1,"peg_fy2":2.14,"stress":{"pass":null,"total":null}},"eps_meta":{"base_eps_path":{"FY2025A":10.02,"FY2026E":11.96,"FY2027E":13.39,"FY2028E":15.04},"fy_end_month":12,"eps_basis":"FY2026E 至 FY2028E 為 Koyfin 共識調整後 EPS。FY2025A 調整後 EPS 事實表未涵蓋，由 2026-08-03 全年指引 11.64～11.81 美元與年增 16%～18% 反推約 10.02 美元；GAAP 稀釋 EPS 為 9.51 美元，口徑不同，未用於成長率計算。三年複合 14.5%。"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"macro","event":"美國期中選舉","impact":"低","watch":"第四季美加 RevPAR 是否只受小幅影響"},{"date":"2026-12","date_precision":"month","type":"other","event":"紐約分析師交流會","impact":"低","watch":"是否提前透露 2027 費用、key money 或業主方案"},{"date":"2027-02","date_precision":"month","type":"guidance","event":"第四季財報與 2027 正式指引","impact":"高","watch":"RevPAR、特許與基本費、聯名卡費、key money、淨房數"},{"date":"2027-06","date_precision":"month","type":"macro","event":"開始面對世足賽高基期","impact":"中","watch":"美加 RevPAR 扣除賽事基期後的成長"},{"date":"2027-12","date_precision":"month","type":"product","event":"全服務與豪華飯店科技系統遷移波次延續至年底","impact":"中","watch":"系統中斷、業主投訴與導入進度"},{"date":null,"date_precision":null,"type":"regulatory","event":"英國 CMA 飯店資訊交換調查進度","impact":"中","watch":"是否出現違法認定、裁罰金額或資料服務調整"}],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8","pacing":[],"holding_cap":null,"audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"輸入缺(momentum_overheated=null)，依保守方向處理：不視為觸發","input_gap":["momentum_overheated"]},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把 2026 年的步階式成長當成常態：全年總費用增約 13%，高於 RevPAR 4.75% 加淨房數 4.6%，差額主要來自聯名卡新約與住宅品牌費，這些增速不會重演；同時以 34.8 倍為部分靠回購驅動的 EPS 定價。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🔴', moat_trend='→', week26=18.39, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position=None, moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":true,"basis":"signal='B', val='🔴'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='B', val='🔴', ma='🟡'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='B', val='🔴', ma='🟡'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🔴', ma='🟡'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"requires_critic":[]}}
+```
+
+---
+
+## ⑤ 覆蓋面（程式判定，你回的 ⑤ 燈號會被覆寫）
+
+燈號 🟢：核心軸皆有證據或不適用，非核心軸也沒有空軸。
+
+⑤ 的 reason 只需評論：空軸的查詢詞是否切題、判斷有沒有交代缺口對結論的影響。
+
+---
+
+## 尾段：回覆格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```json
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
