@@ -1,36 +1,12 @@
 #!/usr/bin/env python3
-"""系統主控台 /long-track/ 產生器（fab）— 2026-08-23 系統群整併，2026-09-10 總覽儀表板化＋分頁重分組，
-2026-09-10 移除「個股：持倉週掃」分頁。
+"""系統主控台 /long-track/ 產生器（fab）。2026-11-08 整頁改版（持有人拍板）：美股、台股各一個分頁，內容順序相同：
+下一個交易日要做的事（每個標的應持有多少 %，分母是該市場總資金）、個股席位、下週會動的價位、實盤紀錄、系統績效、
+一年水位變化與 K 棒軌跡（收起）、規則與揭露（收起）。第三個分頁放對照與歸檔。
 
-四分頁單一入口：
-  #overview   總覽        — 頂部「今天」儀表板（讀 state.json／live_scoreboard.json，見
-                            render_today_strip；今天曝險＋影子帳戶一覽，不重算任何數字）
-                            ＋家族地圖三區（2026-10-18 整理）：實單主系統大卡片／還在測的
-                            （一張小表，每列一個還沒答案的問題）／歸檔（預設收起的 details，
-                            每條一句結論，文字來自 scripts/archive_banner.py）；沿革白話盒
-                            收進 details，inline
-  #live       美股即時    — iframe 嵌入 /long-track-w52-adaptive/_body.html
-  #scoreboard 記分板      — iframe 嵌入 /long-track/_scoreboard_body.html（2026-09-10 由
-                            #live 拆出獨立分頁；#live 內保留一個跳轉連結）
-  #record     個股：裁決實績 — iframe 嵌入 /track-record/_body.html
-
-「個股：持倉週掃」（#positions，原本 iframe 嵌 /pm/_body.html）已於 2026-09-10 移除——
-它是一份人工個股研究報告（最後更新 2026-08-24），不屬於本系統主控台的機械化追蹤
-範圍。docs/pm/ 本身未動、仍可獨立造訪；本檔的 console-tabbar／CONSOLE_JS 已不再嵌入它。
-console-tabbar／CONSOLE_JS 的 TABS 白名單機制原本就會把未知 hash 落回 #overview，
-所以舊的 /long-track/#positions 連結會自動 fallback 到總覽分頁，不會出錯。
-
-舊獨立 URL（/long-track-w52-adaptive/、/track-record/）已改為
-meta-refresh redirect stub，指回對應分頁錨點；來源頁的 builder
-（update_long_track_w52_adaptive.py／build_track_record.py）
-改產 nav-less _body.html 片段，已加入 scripts/site_nav.py 的 SKIP_FILES。
-/long-track-w52-adaptive/leverage.html 與 tw-semivol.html 維持獨立完整頁，
-不在此整併範圍內。
-
-nav 用 full_nav_block("system","lthub")（追蹤總覽，MENU 條目本身未改動——
-nav 瘦身留待下一批）。設計沿用本頁既有 token 體系（--brand:#1a56db 等），
-未套用 /assets/imq-base.css 的 --line/--paper/--accent 等 token（本頁未載入
-該檔），tabbar 樣式改用本頁既有配色以避免未定義變數。
+資料都讀現成檔案，本檔不算訊號：state.json（指數部）、arena-ledger.json／seats_tw_ledger.json（席位）、
+data/system_profile.json（體檢摘要）。實盤紀錄切自 _scoreboard_body.html，圖表與規則切自 long-track-w52-adaptive/_body.html，
+樣式加前綴後直接放進頁面，不用內嵌框。切不到就顯示連結，不讓整頁壞掉。
+舊錨點：#overview／#live／#scoreboard 落到美股分頁；#record 轉到 /track-record/；#evidence／#archive 落到對照與歸檔。
 
 用法：python3 scripts/build_long_track_index.py
 """
@@ -38,7 +14,9 @@ from __future__ import annotations
 
 import html
 import json
+import re
 import sys
+from datetime import date, timedelta
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -53,30 +31,8 @@ import _page_meta as _PM  # noqa: E402
 from archive_banner import ARCHIVE_DATE, ARCHIVE_TEXT  # noqa: E402  (歸檔區每條線的一句結論)
 OUT = HERE.parent / "docs" / "long-track" / "index.html"
 
-# 2026-09-10 總覽儀表板化：讀既有兩份 JSON 產生「今天」區塊，本檔不重新計算任何數字——
-# 缺欄位一律顯示「—」，絕不捏造。
 STATE_JSON = HERE.parent / "docs" / "long-track-w52-adaptive" / "state.json"
-SCOREBOARD_JSON = HERE.parent / "docs" / "market" / "data" / "live_scoreboard.json"
 
-SPRT_MEANING = {          # 見 build_live_scoreboard.py 的 green/yellow/red 定義
-    "green": ("綠", "影子勝過系統"),
-    "red": ("紅", "系統勝過影子"),
-    "yellow": ("黃", "樣本不足，尚未能判定"),
-}
-
-# 三區（2026-10-18 影子／對照線整理，持有人拍板）：實單主系統／還在測的／歸檔。
-# 實單主系統：每組＝(分類、色、突出、系統清單)；系統 dict：name／url／one／status／freq／email
-GROUPS = [
-    ("實單主系統", "live", True, [
-        {"name": "Supertrend 週線＋月線（美股債金版・台股不借錢版）", "url": "/long-track-w52-adaptive/",
-         "one": "兩市場各 70% 指數部＝每檔 70% 看週線、30% 看月線的 Supertrend，水位 100／70／30／0%（下軌接回期間另有 50%），不借錢；指數部內美股 QQQ 70／SMH 30（2026-11-04 起，之前各半）、台股 0050／2330 各半。"
-                "美股另加公債（IEF）與黃金（GLD）各最多 20%，同樣各自 70% 週線＋30% 月線 Supertrend。"
-                "",
-         "status": ("實單", "live"), "freq": "每交易日 × 2（台／美收盤後）", "email": "✅ 有"},
-    ]),
-]
-
-# 還在測的：每列一個還沒答案的問題。q／start／due／now／name／url（url 為 None 表示頁面還沒建）。
 TESTING = [
     {"q": "Supertrend 週線＋月線比 W52 × 自適應波動率好嗎？",
      "start": "2026-11-04",
@@ -238,91 +194,91 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.01em}
 .console-tab-btn:hover{color:var(--text)}
 .console-tab-btn.active{color:var(--brand);border-bottom-color:var(--brand)}
-.console-tab-panel{display:none}
-.console-tab-panel.active{display:block}
-.console-embed-frame{width:100%;border:0;display:block;min-height:70vh;background:transparent}
-.console-embed-note{font-size:.72rem;color:var(--muted);margin:.9rem 0 .6rem;font-family:ui-monospace,Menlo,monospace}
-.console-embed-note a{color:var(--brand)}
 @media(max-width:640px){.console-tab-btn{padding:.55rem .65rem;font-size:.82rem}}
+:root{--lt-muted:#5f6b7a}
+.lt-next{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin:.4rem 0 .9rem}
+.lt-next-h{font-size:.78rem;font-weight:800;color:var(--lt-muted);margin-bottom:.3rem}
+.lt-next-row{display:flex;flex-wrap:wrap;gap:.15rem .6rem;align-items:baseline;padding:.15rem 0}
+.lt-next-row b{min-width:2.4rem}
+.lt-next-row small{color:var(--lt-muted);font-size:.76rem}
+.lt-cap{font-size:.78rem;color:var(--lt-muted);margin:.1rem 0 .65rem;max-width:80ch}
+.lt-panel.lt-hidden{display:none}
+.lt-sec{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.95rem 1.1rem;margin-bottom:.9rem}
+.lt-sec h2{font-size:1.02rem;font-weight:800;margin-bottom:.3rem}
+.lt-h3{font-size:.86rem;font-weight:700;margin:.9rem 0 .35rem}
+.lt-scroll{overflow-x:auto}
+.lt-tbl{width:100%;border-collapse:collapse;font-size:.9rem}
+.lt-tbl th{font-size:.76rem;color:var(--lt-muted);font-weight:600;text-align:left;border-bottom:1px solid var(--border);padding:.3rem .4rem;white-space:nowrap}
+.lt-tbl td{border-bottom:1px solid var(--border);padding:.45rem .4rem;vertical-align:top}
+.lt-tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lt-sub{display:block;font-size:.74rem;color:var(--lt-muted)}
+.lt-target{font-weight:800}
+.lt-buy{color:var(--green-text);font-weight:800}
+.lt-sell{color:var(--red-text,#b91c1c);font-weight:800}
+.lt-hold,.lt-muted{color:var(--lt-muted)}
+.lt-total td{font-weight:700;border-bottom:0;background:var(--bg)}
+.lt-stale{background:var(--red-bg,#fbeceb);color:var(--red-text,#b91c1c);border-radius:6px;padding:.45rem .65rem;font-size:.84rem;margin-bottom:.6rem}
+.lt-fold>summary{cursor:pointer;font-weight:700;font-size:.92rem}
+.lt-fold[open]>summary{margin-bottom:.7rem}
+.lt-links{list-style:none;display:flex;flex-direction:column;gap:.3rem;font-size:.9rem}
 """
 
 CONSOLE_JS = """
 <script>
 (function(){
   "use strict";
-  var TABS = ['overview','live','scoreboard','record'];
-  // 2026-09-10 分頁重新分組：live（美股即時）與 scoreboard（記分板）各自獨立分頁
-  // （先前 F1 修法把兩個 iframe 疊在同一個 live 分頁下，本次拆開，#live／
-  // #record 舊錨點維持可用，新增 #scoreboard）。「個股：持倉週掃」（#positions）
-  // 已於同日移除（人工報告、非本系統機械化追蹤範圍）——不在 TABS 白名單內的
-  // hash 一律落回 #overview，故舊的 #positions 連結不會出錯。每個 tab 對應一個
-  // id 陣列。
-  var FRAME_ID = {live:['live-frame'], scoreboard:['scoreboard-frame'],
-                  record:['record-frame']};
-
-  function sizeFrame(fr){
-    try{
-      var d = fr.contentDocument || fr.contentWindow.document;
-      if(!d) return;
-      var h = Math.max(d.documentElement ? d.documentElement.scrollHeight : 0,
-                       d.body ? d.body.scrollHeight : 0);
-      if(h > 0) fr.style.height = (h + 24) + 'px';
-    }catch(e){}
-  }
-  function wireSize(fr){
-    fr.addEventListener('load', function(){
-      sizeFrame(fr);
-      var n = 0, iv = setInterval(function(){ sizeFrame(fr); if(++n > 16) clearInterval(iv); }, 400);
-    });
-  }
-  var frames = {};
-  Object.keys(FRAME_ID).forEach(function(k){
-    var arr = [];
-    FRAME_ID[k].forEach(function(id){
-      var fr = document.getElementById(id);
-      if(fr){ arr.push(fr); wireSize(fr); }
-    });
-    if(arr.length) frames[k] = arr;
-  });
-
-  function ensureLoaded(k){
-    var arr = frames[k];
-    if(!arr) return;
-    arr.forEach(function(fr){
-      var src = fr.getAttribute('data-src');
-      if(fr._loadedSrc === src){ sizeFrame(fr); return; }
-      fr._loadedSrc = src;
-      fr.src = src;
-    });
-  }
-
-  function activate(tab){
-    var anchor = null;
-    if(tab === 'evidence' || tab === 'archive'){ anchor = tab; tab = 'overview'; }
-    if(TABS.indexOf(tab) < 0) tab = 'overview';
+  var TABS = ['us','tw','ref'];
+  var ALIAS = {overview:'us', live:'us', scoreboard:'us', evidence:'ref', archive:'ref'};
+  // 站頭會黏在畫面上方，分頁列要停在它下面
+  var nav = document.querySelector('.imq-nav-root'), bar = document.querySelector('.console-tabbar');
+  if(nav && bar && getComputedStyle(nav).position !== 'static'){ bar.style.top = nav.offsetHeight + 'px'; }
+  // 圖表要在看得見的時候才量得到寬度，建好才收起來、切分頁
+  document.querySelectorAll('details[data-lt-close]').forEach(function(d){ d.open = false; });
+  function activate(raw){
+    if(raw === 'record'){ location.replace('/track-record/'); return; }
+    var tab = TABS.indexOf(raw) >= 0 ? raw : (ALIAS[raw] || 'us');
     document.querySelectorAll('.console-tab-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-ctab') === tab);
     });
-    document.querySelectorAll('.console-tab-panel').forEach(function(p){
-      p.classList.toggle('active', p.id === 'panel-' + tab);
+    document.querySelectorAll('.lt-panel').forEach(function(p){
+      p.classList.toggle('lt-hidden', p.id !== 'panel-' + tab);
     });
-    if(frames[tab]) ensureLoaded(tab);
-    if(anchor){ var el = document.getElementById(anchor); if(el){ if(el.tagName === 'DETAILS') el.open = true; el.scrollIntoView(); } }
+    if(raw === 'evidence' || raw === 'archive'){
+      var el = document.getElementById(raw);
+      if(el){ if(el.tagName === 'DETAILS') el.open = true; el.scrollIntoView(); }
+    }
   }
-
   document.querySelectorAll('.console-tab-btn').forEach(function(b){
     b.addEventListener('click', function(){
       var t = b.getAttribute('data-ctab');
-      if(('#' + t) !== location.hash){ location.hash = t; }
-      else { activate(t); }
+      if(('#' + t) !== location.hash){ location.hash = t; } else { activate(t); }
     });
   });
-  window.addEventListener('hashchange', function(){
-    activate((location.hash || '#overview').replace('#',''));
-  });
+  window.addEventListener('hashchange', function(){ activate((location.hash || '#us').replace('#','')); });
+  activate((location.hash || '#us').replace('#',''));
 
-  var initial = (location.hash || '#overview').replace('#','');
-  activate(initial);
+  // 看頁面當下檢查：最新一個該收完的交易日，資料有沒有到（只看平日，休市日可能多提醒一次）
+  function wall(tz){
+    var o = {};
+    new Intl.DateTimeFormat('en-CA', {timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false})
+      .formatToParts(new Date()).forEach(function(x){ o[x.type] = x.value; });
+    return o;
+  }
+  function expected(h, m, tz){
+    var n = wall(tz);
+    var d = new Date(Date.UTC(+n.year, +n.month - 1, +n.day));
+    if((+n.hour % 24) * 60 + (+n.minute) < h * 60 + m) d.setUTCDate(d.getUTCDate() - 1);
+    while(d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+  document.querySelectorAll('[data-asof]').forEach(function(el){
+    var c = el.getAttribute('data-close').split(',');
+    var exp = expected(+c[0], +c[1], c[2]), asof = el.getAttribute('data-asof');
+    if(asof && asof < exp){
+      el.hidden = false;
+      el.textContent = '資料只到 ' + asof + '，' + exp + ' 的收盤還沒算進來，下面的動作可能還是舊的。' + exp + ' 休市的話可以忽略。';
+    }
+  });
 })();
 </script>
 """
@@ -335,112 +291,383 @@ def _load_json(path: Path) -> dict:
         return {}
 
 
-def render_today_strip() -> str:
-    """總覽最上方「今天」區塊：美股／台股各自的目標曝險（訊號）／現持曝險（執行層）
-    ／每腿閘門在場出場／最近一次執行層變動，讀 long-track-w52-adaptive/state.json；
-    下方影子帳戶一覽讀 market/data/live_scoreboard.json。本函式不計算任何新數字，
-    缺欄位一律顯示「—」。"""
-    state = _load_json(STATE_JSON)
-    scoreboard = _load_json(SCOREBOARD_JSON)
+DOCS = HERE.parent / "docs"
+SCOREBOARD_JSON = DOCS / "market" / "data" / "live_scoreboard.json"
+BODY_HTML = DOCS / "long-track-w52-adaptive" / "_body.html"
+SCOREBOARD_HTML = DOCS / "long-track" / "_scoreboard_body.html"
+PROFILE_JSON = DOCS / "long-track" / "data" / "system_profile.json"
+ARENA_JSON = DOCS / "engine" / "arena.json"
+ARENA_LEDGER = DOCS / "engine" / "arena-ledger.json"
+TW_SEATS_JSON = DOCS / "cockpit-tw" / "data" / "seats_tw.json"
+TW_LEDGER = DOCS / "cockpit-tw" / "data" / "seats_tw_ledger.json"
 
-    tickers = state.get("tickers", {})
-    data_date = state.get("data_date", "—")
-    # 實盤頁顯示層（state.display）：整段歷史當作一直都是 Supertrend，水位即現持；有就優先用，沒有才走下面的舊欄位
-    disp = state.get("display") if isinstance(state.get("display"), dict) and state["display"].get("tickers") else None
-    last_change_date = (disp or state).get("last_change_date") or "—"
-    _desc = (disp or state).get("last_change_desc") or "尚無紀錄"
-    # 顯示換算：state 舊格式 desc（組合 pp）→ 水位；與主程式共用同一個 _desc_levels，state 不改
-    from update_long_track_w52_adaptive import _desc_levels  # noqa: E402
-    _desc = _desc_levels(_desc)
-    last_change_desc = html.escape(_desc, quote=False)
+IDX_SHARE = 0.7    # 兩市場指數部各占該市場資金 70%
+SEAT_PCT = 6.0     # 個股 30% 分 5 席，每席 6%
+WD = "一二三四五六日"
+MKT = {
+    "us": {"name": "美股", "legs": ["QQQ", "SMH"], "hist": "history_us", "close": [16, 45, "America/New_York"],
+           "seat_link": ("/cockpit/", "美股看板")},
+    "tw": {"name": "台股", "legs": ["0050", "2330"], "hist": "history_tw", "close": [14, 15, "Asia/Taipei"],
+           "seat_link": ("/cockpit-tw/", "台股席位")},
+}
 
-    def leg_span(t):
-        if disp:
-            dk = disp["tickers"].get(t)
-            if not dk:
-                return f'<span class="leg"><b>{t}</b>：—</span>'
-            return (f'<span class="leg"><b>{t}</b> 週線{"多" if dk.get("w") else "空"}／月線{"多" if dk.get("m") else "空"}'
-                    f'｜水位 {dk.get("level_pct", "—")}%{"（下軌接回）" if dk.get("tb") else ""}</span>')
-        tk = tickers.get(t)
-        if not tk:
-            return f'<span class="leg"><b>{t}</b>：—</span>'
-        gate = "在場" if tk.get("gate") else "出場"
-        if tk.get("rule") == "st_live" and isinstance(tk.get("st"), dict):
-            gate = f'週線{"多" if tk["st"].get("w") else "空"}／月線{"多" if tk["st"].get("m") else "空"}'
-        final = tk.get("final_weight_pct")
-        exe = tk.get("held_before_pct", tk.get("executed_pct"))
-        # 顯示換算：每檔水位（0～100%）＝組合 pp × 2
-        final = f"{final * 2:.0f}" if isinstance(final, (int, float)) else "—"
-        exe = f"{exe * 2:.0f}" if isinstance(exe, (int, float)) else "—"
-        return (f'<span class="leg"><b>{t}</b> {gate}｜水位 目標 {final}%｜現持 {exe}%</span>')
 
-    def mkt_block(name, legs, exp_key):
-        if disp:
-            rows = "".join(leg_span(t) for t in legs)
-            return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
-                    f'<div class="tstrip-exp">指數部股票曝險（Supertrend 週線 70%＋月線 30%，每檔水位通常是 100／70／30／0%，下軌接回期間為 50%，美股依權重 QQQ 70／SMH 30 加總、台股兩檔平均）'
-                    f'<b>{disp.get(exp_key, "—")}%</b></div>'
-                    f'<div class="tstrip-legs">{rows}</div></div>')
-        exp = state.get(exp_key, "—")
-        vals = [tickers[t].get("held_before_pct", tickers[t]["executed_pct"]) for t in legs if isinstance(tickers.get(t), dict) and "executed_pct" in tickers[t]]
-        exec_sum = round(sum(vals), 1) if len(vals) == len(legs) and legs else "—"
-        rows = "".join(leg_span(t) for t in legs)
-        if all((tickers.get(t) or {}).get("rule") == "st_live" for t in legs):
-            return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
-                    f'<div class="tstrip-exp">指數部股票曝險：目標（Supertrend 週線 70%＋月線 30%，每檔水位通常是 100／70／30／0%，下軌接回期間為 50%，美股依權重 QQQ 70／SMH 30 加總、台股兩檔平均）<b>{exp}%</b>'
-                    f' ／ 現持（下單前的持股率；換檔當天會和目標不同，其餘日子等於目標）<b>{exec_sum}%</b></div>'
-                    f'<div class="tstrip-legs">{rows}</div></div>')
-        return (f'<div class="tstrip-mkt"><div class="tstrip-mkt-h">{name}</div>'
-                f'<div class="tstrip-exp">指數部股票曝險：目標（訊號，週線閘門 × 自適應套袖算出的理論持股率，兩檔水位平均）<b>{exp}%</b>'
-                f' ／ 現持（執行層，實際已調整到的持股率——每檔水位分六格，目標比現持高兩格（40%）以上才加、低一格（20%）以上就減，故常與目標有差）<b>{exec_sum}%</b></div>'
-                f'<div class="tstrip-legs">{rows}</div></div>')
+def _num(x) -> str:
+    return f"{x:.1f}".rstrip("0").rstrip(".") if isinstance(x, (int, float)) else "—"
 
-    us_block = mkt_block("美股 QQQ + SMH", ["QQQ", "SMH"], "combined_exposure_us_pct")
-    tw_block = mkt_block("台股 0050 + 2330", ["0050", "2330"], "combined_exposure_tw_pct")
-    change_line = f'最近一次{"水位" if disp else "執行層"}變動：<b>{last_change_date}</b>｜{last_change_desc}'
-    ov = (disp or {}).get("overlay") or state.get("overlay") or {}
-    if all(k in ov for k in ("ief", "gld")):
-        def _ov(k, nm):
-            o = ov[k]
-            if o.get("rule") == "supertrend":
-                return f'{nm} 週線{"多" if o.get("st_w") else "空"}／月線{"多" if o.get("st_m") else "空"}，目標 <b>{o.get("target_pct", "—")}%</b>'
-            return f'{nm} <b>{o.get("n", "—")}／3</b> 條成立，目標 <b>{o.get("target_pct", "—")}%</b>'
-        ov_state = "已生效" if ov.get("active") else f'{ov.get("active_from", "2026-10-19")} 起生效，目前為預覽'
-        change_line += (f'<br>美股債金疊加（占指數部淨值，各最多 20%，{ov_state}）：'
-                        f'{_ov("ief", "公債（IEF）")}；{_ov("gld", "黃金（GLD）")}')
 
-    shadow_entries = [   # (顯示名, market key, shadow key)
-        ("S-60（美）", "us", "s60"), ("S-60（台）", "tw", "s60"),
-    ]
-    shadows = scoreboard.get("shadows", {})
-    shadow_rows = ""
-    for label, mkey, skey in shadow_entries:
-        sh = shadows.get(mkey, {}).get(skey) if isinstance(shadows.get(mkey), dict) else None
-        if not sh:
+def _px(x) -> str:
+    return f"{x:,.2f}" if isinstance(x, (int, float)) else "—"
+
+
+def _next_session(ds: str) -> str:
+    """資料日的下一個平日（不查休市日）。"""
+    d = date.fromisoformat(ds) + timedelta(days=1)
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d.isoformat()
+
+
+def _md(ds: str) -> str:
+    d = date.fromisoformat(ds)
+    return f"{d.month:02d}-{d.day:02d}（週{WD[d.weekday()]}）"
+
+
+def _action(before: float, target: float) -> tuple[str, str]:
+    """離散比較在整數空間（千分位）做，避免浮點誤差。"""
+    b, t = round(before * 10), round(target * 10)
+    if t == b:
+        return "不動", "hold"
+    return (f"買 {_num(abs(t - b) / 10)}", "buy") if t > b else (f"賣 {_num(abs(t - b) / 10)}", "sell")
+
+
+def _share(pct_of_index: float) -> float:
+    return round(float(pct_of_index) * IDX_SHARE, 1)
+
+
+def _signal_txt(st: dict) -> str:
+    txt = f'週{"多" if st.get("w") else "空"}月{"多" if st.get("m") else "空"}'
+    return txt + "・下軌接回中" if st.get("tb_info") else txt
+
+
+def _index_rows(state: dict, key: str) -> list[dict]:
+    """指數部每個標的：現在、應持有（占該市場資金）。"""
+    cfg, rows = MKT[key], []
+    for t in cfg["legs"]:
+        k = state.get("tickers", {}).get(t)
+        if not k:
             continue
-        defi = html.escape(sh.get("definition", "—"), quote=False)
-        diff = sh.get("cum_diff_vs_sys")
-        diff_txt = f"{diff:+.2f} pp" if isinstance(diff, (int, float)) else "—"
-        months = sh.get("n_closed_months", "—")
-        status = (sh.get("sprt") or {}).get("status")
-        col, meaning = SPRT_MEANING.get(status, ("—", "—"))
-        shadow_rows += (f'<tr><td>{label}</td><td class="ts-def">{defi}</td>'
-                        f'<td class="num">{diff_txt}</td><td class="num">{months}</td>'
-                        f'<td><span class="sprt-pill sprt-{status or "na"}">{col}</span> {meaning}</td></tr>')
-    if not shadow_rows:
-        shadow_rows = '<tr><td colspan="5" style="color:var(--muted)">影子帳戶資料未就緒</td></tr>'
-    as_of = scoreboard.get("as_of", "—")
+        st = k.get("st") or {}
+        target_idx = float(k["executed_pct"])
+        before_idx = float(k.get("held_before_pct", target_idx))
+        rows.append({"t": t, "before": _share(before_idx), "target": _share(target_idx),
+                     "note": f'{_signal_txt(st)}｜水位 {st.get("level_pct", "—")}%｜占指數部 {_num(target_idx)}%'})
+    if key == "us":
+        hist = state.get("history_us") or []
+        cur = (hist[-1].get("overlay") or {}) if hist else {}
+        prev = (hist[-2].get("overlay") or {}) if len(hist) > 1 else cur
+        ov = state.get("overlay") or {}
+        for t, k, nm in (("IEF", "ief", "公債"), ("GLD", "gld", "黃金")):
+            target_idx = float(cur.get(f"{k}_target_pct") or 0.0)
+            before_idx = float(prev.get(f"{k}_target_pct") or 0.0)
+            o = ov.get(k) or {}
+            rows.append({"t": t, "before": _share(before_idx), "target": _share(target_idx),
+                         "note": f'{nm}｜週{"多" if o.get("w") else "空"}月{"多" if o.get("m") else "空"}｜占指數部 {_num(target_idx)}%'})
+    return rows
 
-    return f"""<div class="tstrip">
-  <div class="tstrip-hdr">今天</div>
-  <div class="tstrip-grid">{us_block}{tw_block}</div>
-  <div class="tstrip-change">{change_line}</div>
-  <div class="tstrip-note">影子帳戶＝同一套實單系統的訊號，換一種資金配置或槓桿規則跑出的對照組合（例如固定持股不動、加一塊分散資產、不加槓桿）——用來檢驗「現行規則真的比較好」這個問題本身，不是另一套建議操作。SPRT＝一種一邊累積樣本、一邊持續檢定的統計方法，樣本不夠前會停在「黃」。</div>
-  <div class="tstrip-shadow-wrap"><table class="tstrip-shadow">
-  <thead><tr><th>影子帳戶</th><th>定義</th><th class="num">累計淨值差（pp）</th><th class="num">已收月數</th><th>SPRT 判定</th></tr></thead>
-  <tbody>{shadow_rows}</tbody></table></div>
-  <div class="tstrip-src">數字讀自 state.json（數據截至 {data_date}）與 live_scoreboard.json（as of {as_of}），本頁不重新計算。</div>
-</div>"""
+
+def _names(obj, out=None) -> dict:
+    """在 JSON 裡遞迴找 {ticker, name}，給台股代號配中文名。"""
+    out = {} if out is None else out
+    if isinstance(obj, dict):
+        if isinstance(obj.get("ticker"), str) and isinstance(obj.get("name"), str) and obj["name"]:
+            out[obj["ticker"]] = obj["name"]
+        for v in obj.values():
+            _names(v, out)
+    elif isinstance(obj, list):
+        for v in obj:
+            _names(v, out)
+    return out
+
+
+def _seat_rows(key: str) -> tuple[list[dict], str, str]:
+    """個股席位：回傳 (每列 {t, target, act, note}, 決策日, 補充說明)。"""
+    rows: list[dict] = []
+    if key == "us":
+        snap = (_load_json(ARENA_LEDGER).get("snapshots") or [{}])[-1]
+        size = {c.get("ticker"): (c.get("lamp") or {}).get("size", 1.0) for c in _load_json(ARENA_JSON).get("core_seats") or []}
+        add, out = [], []
+        for c in snap.get("changes") or []:
+            if c.get("track") == "core":
+                add += c.get("in") or []
+                out += c.get("out") or []
+        rows += [{"t": t, "target": 0.0, "act": "賣出", "cls": "sell", "note": ""} for t in out]
+        for t in snap.get("core") or []:
+            pct = round(SEAT_PCT * float(size.get(t) or 1.0), 1)
+            rows.append({"t": t, "target": pct, "act": "買進" if t in add else "續抱", "cls": "buy" if t in add else "hold", "note": ""})
+        return rows, snap.get("date") or "", ""
+    seats = _load_json(TW_SEATS_JSON)
+    names = _names(seats)
+    snap = (_load_json(TW_LEDGER).get("snapshots") or [{}])[-1]
+    label = lambda t: f'{t.split(".")[0]} {names.get(t, "")}'.strip()
+    filled = [x if isinstance(x, str) else x.get("ticker") for x in snap.get("filled") or []]
+    for r in snap.get("removed") or []:
+        t, why = (r[0], r[1]) if isinstance(r, (list, tuple)) else (r.get("ticker"), r.get("why", ""))
+        rows.append({"t": label(t), "target": 0.0, "act": "賣出", "cls": "sell", "note": why})
+    for t in snap.get("core") or []:
+        rows.append({"t": label(t), "target": SEAT_PCT, "act": "買進" if t in filled else "續抱",
+                     "cls": "buy" if t in filled else "hold", "note": ""})
+    extra = "大盤跌破 200 日線，不補新席，這 30% 放現金。" if (seats.get("market") or {}).get("status") == "bear" else ""
+    return rows, snap.get("date") or "", extra
+
+
+def _next_steps(index_rows: list[dict], seat_rows: list[dict]) -> str:
+    parts = []
+    for r in index_rows:
+        txt, cls = _action(r["before"], r["target"])
+        if cls != "hold":
+            verb, n = txt.split(" ")
+            parts.append(f'{verb} {r["t"]} {n}')
+    sell = [r["t"].split(" ")[0] for r in seat_rows if r["cls"] == "sell"]
+    buy = [r["t"].split(" ")[0] for r in seat_rows if r["cls"] == "buy"]
+    seat = "、".join(x for x in (f'賣 {"、".join(sell)}' if sell else "", f'買 {"、".join(buy)}' if buy else "") if x)
+    txt = "、".join(parts)
+    if seat:
+        txt = f"{txt}；個股 {seat}" if txt else f"個股 {seat}"
+    return txt or "不用動作"
+
+
+def _sec(title: str, body: str, cap: str = "") -> str:
+    cap_html = f'<p class="lt-cap">{cap}</p>' if cap else ""
+    return f'<section class="lt-sec"><h2>{title}</h2>{cap_html}{body}</section>'
+
+
+def _action_table(key: str, rows: list[dict]) -> str:
+    name = MKT[key]["name"]
+    head = (f'<thead><tr><th>標的</th><th class="num">現在</th><th class="num">應持有</th><th class="num">動作</th></tr></thead>')
+    body = ""
+    for r in rows:
+        txt, cls = _action(r["before"], r["target"])
+        body += (f'<tr><td><b>{r["t"]}</b><span class="lt-sub">{r["note"]}</span></td><td class="num">{_num(r["before"])}%</td>'
+                 f'<td class="num lt-target">{_num(r["target"])}%</td><td class="num lt-{cls}">{txt}</td></tr>')
+    stock = [r for r in rows if r["t"] not in ("IEF", "GLD")]
+    b, t = sum(r["before"] for r in stock), sum(r["target"] for r in stock)
+    body += (f'<tr class="lt-total"><td>指數部股票合計</td><td class="num">{_num(b)}%</td><td class="num lt-target">{_num(t)}%</td><td class="num"></td></tr>')
+    return f'<div class="lt-scroll"><table class="lt-tbl" aria-label="{name}指數部目標持股">{head}<tbody>{body}</tbody></table></div>'
+
+
+def _seat_table(key: str, rows: list[dict], decided: str, extra: str, index_rows: list[dict]) -> str:
+    url, label = MKT[key]["seat_link"]
+    body = ""
+    idx_target = {r["t"]: r["target"] for r in index_rows}
+    for r in rows:
+        code = r["t"].split(" ")[0]
+        txt = r["note"]
+        if code in idx_target:
+            both = f'指數部另持有，上表應持有 {_num(idx_target[code])}%，這裡只算席位這一塊'
+            txt = f"{txt}。{both}" if txt else both
+        note = f'<span class="lt-sub">{html.escape(txt, quote=False)}</span>' if txt else ""
+        body += f'<tr><td><b>{html.escape(r["t"], quote=False)}</b>{note}</td><td class="num lt-target">{_num(r["target"])}%</td><td class="num lt-{r["cls"]}">{r["act"]}</td></tr>'
+    if not rows:
+        body = '<tr><td colspan="3" class="lt-muted">本週沒有持股，也沒有進出。</td></tr>'
+    total = sum(r["target"] for r in rows) + sum(r["target"] for r in index_rows)
+    body += f'<tr class="lt-total"><td>未投入（現金）</td><td class="num lt-target">{_num(round(100 - total, 1))}%</td><td></td></tr>'
+    cap = f'{decided} 週六決策的名單，占{MKT[key]["name"]}資金，每席 {_num(SEAT_PCT)}%。{extra}<a href="{url}">看{label} →</a>'
+    return _sec("個股席位", f'<div class="lt-scroll"><table class="lt-tbl"><thead><tr><th>標的</th><th class="num">應持有</th><th class="num">動作</th></tr></thead><tbody>{body}</tbody></table></div>', cap)
+
+
+def _level_rows(t: str, st: dict, overlay: bool = False) -> str:
+    w, m = int(st.get("w") or 0), int(st.get("m") or 0)
+    # 公債、黃金最多占指數部 20%，水位 100／70／30／0 對應 20／14／6／0
+    lv = (lambda a, b: f"占指數部 {14 * a + 6 * b}%") if overlay else (lambda a, b: f"水位 {70 * a + 30 * b}%")
+    approx = lambda k: "" if st.get(f"{k}_exact") else "約 "
+    conds = [f'週五收盤{"跌破" if w else "站上"} {approx("w")}{_px(st.get("w_thr"))} → {lv(1 - w, m)}',
+             f'月底收盤{"跌破" if m else "站上"} {approx("m")}{_px(st.get("m_thr"))} → {lv(w, 1 - m)}']
+    tb = st.get("tb_info")
+    if tb and isinstance(tb.get("ma"), (int, float)):
+        conds.insert(1, f'週五收盤回到 20 週均線 約 {_px(tb["ma"])} → 水位 30%')
+    return f'<tr><td><b>{t}</b></td><td>{"<br>".join(conds)}</td></tr>'
+
+
+def _levels_table(state: dict, key: str) -> str:
+    rows = ""
+    for t in MKT[key]["legs"]:
+        k = state.get("tickers", {}).get(t) or {}
+        if k.get("st"):
+            rows += _level_rows(t, k["st"])
+    if key == "us":
+        ov = state.get("overlay") or {}
+        for t, k in (("IEF", "ief"), ("GLD", "gld")):
+            if ov.get(k):
+                rows += _level_rows(t, {**ov[k], "tb_info": None, "w_exact": ov[k].get("w_exact", True), "m_exact": ov[k].get("m_exact", True)}, overlay=True)
+    cap = "每項只列下一個會改變水位的條件，先到的為準。週線門檻每週會小幅移動，以週五收盤為準。水位 30 時週收盤跌破 2.5 個標準差下軌，改為 50。"
+    return _sec("下週會動的價位", f'<div class="lt-scroll"><table class="lt-tbl"><thead><tr><th>標的</th><th>條件與新水位</th></tr></thead><tbody>{rows}</tbody></table></div>', cap)
+
+
+def _balance(frag: str) -> str:
+    """切出來的片段補齊或去掉多餘的 div 收尾。"""
+    opened = len(re.findall(r"<div\b", frag))
+    closed = len(re.findall(r"</div>", frag))
+    if closed > opened:
+        for _ in range(closed - opened):
+            k = frag.rfind("</div>")
+            frag = frag[:k] + frag[k + 6:]
+    return frag + "</div>" * max(0, opened - closed)
+
+
+def _scope_css(css: str, scope: str) -> tuple[str, str]:
+    """把樣式表加上範圍前綴。回傳 (全域的 :root 變數, 加了前綴的其餘規則)。"""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    tokens, rules, i = [], [], 0
+    while True:
+        j = css.find("{", i)
+        if j < 0:
+            break
+        head, depth, k = css[i:j].strip(), 1, j + 1
+        while k < len(css) and depth:
+            depth += (css[k] == "{") - (css[k] == "}")
+            k += 1
+        block = css[j + 1:k - 1]
+        i = k
+        if head.startswith("@media (prefers-color-scheme"):
+            continue  # 頁面只有淺色，跟著系統深色的規則不帶進來
+        if head.startswith(("@media", "@supports")):
+            t, r = _scope_css(block, scope)
+            if t:
+                tokens.append(f"{head}{{{t}}}")
+            if r:
+                rules.append(f"{head}{{{r}}}")
+        elif head.startswith("@"):
+            rules.append(f"{head}{{{block}}}")
+        else:
+            root, scoped = [], []
+            for sel in (x.strip() for x in head.split(",")):
+                m = re.match(r"^(:root|html)(\[[^\]]*\])?(?:\s+(.*))?$", sel)
+                if sel == "body":
+                    scoped.append(scope)
+                elif sel.startswith("body "):
+                    scoped.append(f"{scope} {sel[5:]}")
+                elif m and not m.group(3):
+                    root.append(sel)
+                elif m:
+                    scoped.append(f'{m.group(1)}{m.group(2) or ""} {scope} {m.group(3)}')
+                else:
+                    scoped.append(f"{scope} {sel}")
+            if root:
+                tokens.append(f'{",".join(root)}{{{block}}}')
+            if scoped:
+                rules.append(f'{",".join(scoped)}{{{block}}}')
+    return "".join(tokens), "".join(rules)
+
+
+def _detail_parts() -> dict:
+    """從實單明細頁切出兩市場的圖表區塊、規則區塊、樣式與圖表程式。切不到回傳空字串。"""
+    empty = {"us": "", "tw": "", "rules": "", "tokens": "", "css": "", "js": ""}
+    try:
+        s = BODY_HTML.read_text(encoding="utf-8")
+    except OSError:
+        return empty
+    us, tw, rule = s.find('<div class="mkt-section" id="mkt-us"'), s.find('<div class="mkt-section" id="mkt-tw"'), s.find("規則說明（點開看")
+    src = s.find("<script src=")
+    if not (0 <= us < tw < rule < src):
+        return empty
+    rule = s.rfind('<div class="card">', 0, rule)
+    end = s.find("<footer", rule)      # 規則區塊到頁尾為止，頁尾和外層容器不要帶進來
+    end = end if 0 <= end < src else src
+    # 換掉 class：明細頁的 switchMarket 只切 .mkt-section，這裡兩市場分放在各自分頁，不讓它動
+    fix = lambda f: _balance(f).replace('class="mkt-section"', 'class="lt-mkt-section"')
+    style = re.search(r"<style[^>]*>(.*?)</style>", s, flags=re.S)
+    tokens, css = _scope_css(style.group(1), ".lt-detail") if style else ("", "")
+    scripts = re.findall(r"<script[^>]*>(.*?)</script>", s[src:], flags=re.S)
+    js = max(scripts, key=len) if scripts else ""
+    lib = re.search(r'<script src="([^"]+lightweight-charts[^"]+)"', s[src:])
+    return {"us": fix(s[us:tw]), "tw": fix(s[tw:rule]), "rules": _balance(s[rule:end]), "tokens": tokens, "css": css,
+            "js": f'<script src="{lib.group(1)}"></script>\n<script>{js}</script>' if lib and js else ""}
+
+
+def _plain_scoreboard(f: str) -> str:
+    """記分板片段的欄名換白話，只動顯示文字。"""
+    for a, b in (("系統 vs B-mdd（同風險稀釋基準，主判準）", "對同風險基準（主要判準）"),
+                 ("系統 vs B-cagr（同報酬稀釋基準，並列）", "對同報酬基準"),
+                 ("累積差 vs B-mdd", "累積差：對同風險基準"), ("累積差 vs B-cagr", "累積差：對同報酬基準"),
+                 ("B-mdd 基準報酬", "同風險基準報酬"), ("執行層變化（水位）", "水位變化")):
+        f = f.replace(a, b)
+    f = f.replace("'B-mdd（k=稀釋）'", "'同風險基準'").replace("'B-cagr（稀釋）'", "'同報酬基準'")
+    f = re.sub(r"<p class='lsb-note'>兩市場合併.*?</p>", "", f, flags=re.S)
+    # 手機上照寬高比只剩 81px 高，圖建立之前先把畫布比例改高
+    f = re.sub(r'(<canvas id="lsb-[^"]+" height="90"></canvas>)',
+               r"\1<script>if(innerWidth<640)document.currentScript.previousElementSibling.height=200;</script>", f)
+    return re.sub(r"(-?\d+\.\d)\d{3}%", r"\1%", f)
+
+
+def _live_summary(key: str) -> str:
+    """上線以來報酬、回撤，跟同期一直抱著比。缺資料回空字串。"""
+    m = (_load_json(SCOREBOARD_JSON).get("markets") or {}).get(key) or {}
+    def stats(k):
+        nav = [x["nav"] for x in m.get(k) or []]
+        if len(nav) < 2:
+            return None
+        peak, worst = nav[0], 0.0
+        for v in nav:
+            peak = max(peak, v)
+            worst = min(worst, v / peak - 1)
+        return (nav[-1] / nav[0] - 1) * 100, worst * 100
+    a, b = stats("nav_sys"), stats("nav_raw_bh")
+    if not a or not b:
+        return ""
+    return (f'{m.get("inception", "")} 起累計 {a[0]:+.1f}%，最大回撤 {a[1]:.1f}%。'
+            f'同期一直抱著 {b[0]:+.1f}%，最大回撤 {b[1]:.1f}%。')
+
+
+def _scoreboard_parts() -> dict:
+    """從記分板片段切出美股、台股實盤紀錄與兩市場影子帳戶。"""
+    empty = {"us": "", "tw": "", "us_shadow": "", "tw_shadow": "", "plain": "", "prereg": "", "css": ""}
+    try:
+        s = SCOREBOARD_HTML.read_text(encoding="utf-8")
+    except OSError:
+        return empty
+    marks = [m.start() for m in re.finditer(r'<div class="lsb-market">', s)]
+    h2, det = s.find('<h2 style="margin:1.4rem'), s.find("<details")
+    if len(marks) != 4 or not (marks[1] < h2 < marks[2]) or det < marks[3]:
+        return empty
+    style = re.search(r"<style[^>]*>(.*?)</style>", s, flags=re.S)
+    tokens, css = _scope_css(style.group(1), ".lt-lsb") if style else ("", "")
+    first = re.search(r'<div class="lsb-plain">(.*?)</div>', s, flags=re.S)
+    end = s.find("</body>")
+    return {"us": _plain_scoreboard(_balance(s[marks[0]:marks[1]])), "tw": _plain_scoreboard(_balance(s[marks[1]:h2])),
+            "us_shadow": _plain_scoreboard(_balance(s[marks[2]:marks[3]])), "tw_shadow": _plain_scoreboard(_balance(s[marks[3]:det])), "plain": first.group(1) if first else "", "prereg": _balance(s[det:end]), "css": tokens + css}
+
+
+def _perf_block(key: str) -> str:
+    d = _load_json(PROFILE_JSON)
+    m = d.get(key)
+    link = '<a href="/long-track/live-system-profile.html">看體檢全文 →</a>'
+    if not isinstance(m, dict):
+        return _sec("系統績效", f"<p>{link}</p>")
+    def v(k, unit=""):
+        x = m.get(k)
+        return f"{x:.2f}{unit}" if isinstance(x, (int, float)) else "—"
+    rows = "".join(f'<tr><td>{n}</td><td class="num lt-target">{v(k, u)}</td><td class="num">{v("bh_" + k, u)}</td></tr>'
+                   for n, k, u in (("年化報酬", "cagr", "%"), ("最大回撤", "mdd", "%"), ("夏普值（每承受一單位波動多賺多少）", "sharpe", ""),
+                                   ("年化報酬除以最大回撤（Calmar）", "calmar", "")))
+    t1 = f'<div class="lt-scroll"><table class="lt-tbl"><thead><tr><th></th><th class="num">系統</th><th class="num">一直抱著</th></tr></thead><tbody>{rows}</tbody></table></div>'
+    lay = ""
+    for k, n in (("week", "週線那塊"), ("month", "月線那塊"), ("takeback", "下軌接回")):
+        x = (m.get("layers") or {}).get(k) or {}
+        g = lambda f, dec=2, u="": f"{x[f]:.{dec}f}{u}" if isinstance(x.get(f), (int, float)) else "—"
+        lay += (f'<tr><td>{n}</td><td class="num">{g("n", 0)}</td><td class="num">{g("win_rate", 0, "%")}</td><td class="num">{g("payoff")}</td>'
+                f'<td class="num">{g("avg_hold_days", 0)}</td><td class="num">{g("max_lose_streak", 0)}</td></tr>')
+    t2 = (f'<h3 class="lt-h3">逐筆交易（只算做完的，筆數少的那塊只當描述）</h3><div class="lt-scroll"><table class="lt-tbl"><thead><tr><th></th><th class="num">筆數</th><th class="num">勝率</th>'
+          f'<th class="num">賺賠比</th><th class="num">平均持有（天）</th><th class="num">最長連虧</th></tr></thead><tbody>{lay}</tbody></table></div>')
+    alt = m.get("alt") or {}
+    alt_txt = ""
+    if alt:
+        alt_txt = (f'不含 2008 年（{alt["start"]} 起）：系統年化 {alt["cagr"]:.2f}%、最大回撤 {alt["mdd"]:.1f}%、夏普值 {alt["sharpe"]:.2f}，'
+                   f'一直抱著 {alt["bh_cagr"]:.2f}%、{alt["bh_mdd"]:.1f}%、{alt["bh_sharpe"]:.2f}。')
+    cap = (f'{m.get("start", "")} 起到 {d.get("asof", "")}，訊號用{(d.get("signal_basis") or {}).get(key, "")} K 線。'
+           f'平均持股 {m.get("avg_exposure", 0):.0f}%，一年下單 {m.get("adj_days_per_yr", 0):.1f} 天，成本每年 {m.get("cost_per_yr", 0):.2f} 個百分點。{alt_txt}'
+           f'現行規則套回整段歷史算出來的，參數與接回都是看過結果才定，當成上限看。{link}')
+    return _sec("系統績效", t1 + t2, cap)
 
 
 NFCI_FORWARD_JSON = HERE.parent / "docs" / "long-track" / "data" / "nfci_forward_state.json"
@@ -562,47 +789,64 @@ def render_evidence() -> str:
     return (f'<div class="grp live" id="evidence"><div class="grp-h">實盤證據</div>{intro}{body}{dead_html}</div>\n')
 
 
-def render_overview_body() -> str:
-    """總覽分頁本體（家族地圖）— 獨立於 page chrome，供 console 殼內嵌 Tab 1。
-    2026-09-10 改版：頂部加「今天」儀表板（見 render_today_strip），實單主系統維持
-    大卡片，沿革白話盒移到底部 details。
-    2026-10-18 整理成三區：實單主系統／還在測的（一張小表）／歸檔（預設收起，含七條新歸檔
-    與六條早已退役）。實盤證據清單（render_evidence）維持在還在測的之後。"""
-    today_strip = render_today_strip()
-    lede = ('<div class="ov-lede">看這三件事就好：上面「今天」區塊的<b>今天曝險</b>'
-            '（目標／現持曝險與各檔在場／出場）、<b>最近一次變動</b>（哪一天、哪一檔調整了多少）、'
-            '區塊底部影子帳戶表的<b>影子帳戶怎麼說</b>（累計淨值差與 SPRT 判定是否已經足夠判斷現行規則比對照組好）。'
-            '還沒有答案的問題，看下面「還在測的」。</div>')
+def render_market_panel(key: str, state: dict, idx: list, seats: tuple, dp: dict, sb: dict) -> str:
+    cfg = MKT[key]
+    hist = state.get(cfg["hist"]) or []
+    asof = hist[-1]["date"] if hist else ""
+    h, m, tz = cfg["close"]
+    stale = f'<div class="lt-stale" hidden data-asof="{asof}" data-close="{h},{m},{tz}"></div>'
+    when = f'資料到 {_md(asof)}。下單日 {_md(_next_session(asof))}（遇休市順延），一次調到「應持有」。' if asof else ""
+    cap = f'{when}百分比都是占{cfg["name"]}總資金：指數部 70%、個股 30%。動作的單位是百分點。'
+    rows, decided, extra = seats
+    parts = [_sec("下一個交易日要做的事", stale + _action_table(key, idx), cap),
+             _seat_table(key, rows, decided, extra, idx),
+             _levels_table(state, key)]
+    if sb.get(key):
+        parts.append(_sec("實盤紀錄", f'<div class="lt-lsb">{sb[key]}</div>', f'{_live_summary(key)}{sb.get("plain", "")}'))
+    else:
+        parts.append(_sec("實盤紀錄", '<p><a href="/long-track/_scoreboard_body.html">看記分板 →</a></p>'))
+    parts.append(_perf_block(key))
+    if dp.get(key):
+        parts.append(f'<details class="lt-sec lt-fold" open data-lt-close><summary>一年水位變化、K 棒軌跡</summary><div class="lt-detail">{dp[key]}</div></details>')
+    else:
+        parts.append(_sec("一年水位變化、K 棒軌跡", '<p><a href="/long-track-w52-adaptive/_body.html">看明細頁 →</a></p>'))
+    if dp.get("rules"):
+        parts.append(f'<div class="lt-detail">{dp["rules"]}</div>')
+    return f'<div class="lt-panel" id="panel-{key}">{"".join(parts)}</div>'
 
-    live_title, live_cls, _, live_systems = GROUPS[0]
-    live_rows = ""
-    for s in live_systems:
-        st_txt, st_cls = s["status"]
-        live_rows += (
-            f'<a class="sys" href="{s["url"]}">'
-            f'<div class="sys-top"><span class="sys-name">{s["name"]}</span>'
-            f'<span class="pill {st_cls}">{st_txt}</span><span class="arr">→</span></div>'
-            f'<div class="sys-one">{s["one"]}</div>'
-            f'<div class="sys-meta"><span>更新頻率：<b>{s["freq"]}</b></span>'
-            f'<span>Email 通知：<b>{s["email"]}</b></span></div></a>')
-    groups_html = f'<div class="grp {live_cls}"><div class="grp-h">{live_title}</div>{live_rows}</div>\n'
 
-    groups_html += (f'<div class="grp shadow"><div class="grp-h">還在測的</div>'
-                    f'{render_testing_table(TESTING)}</div>\n')
-
-    groups_html += render_evidence()
-
-    retired_html = render_archive()
-
-    history_html = (f'<details class="ov-history"><summary>沿革</summary>'
-                    f'<div class="plain-box" style="margin-top:.6rem">'
-                    f'<span class="pb-tag">💬 白話</span><span class="pb-body">{PLAIN}</span></div></details>')
-
-    return f'{today_strip}{lede}{groups_html}{retired_html}{history_html}'
+def render_ref_panel(sb: dict) -> str:
+    parts = []
+    if sb.get("us_shadow"):
+        parts.append(_sec("影子帳戶", f'<div class="lt-lsb">{sb["us_shadow"]}{sb["tw_shadow"]}</div>',
+                          "同標的各半一直抱著、只放六成、其餘放現金的帳戶，每月調回六成。用來看系統有沒有輸給這種最簡單的做法，只是參考，不觸發動作。"))
+    parts.append(f'<div class="grp shadow"><div class="grp-h">還在測的</div>{render_testing_table(TESTING)}</div>')
+    parts.append(render_evidence())
+    parts.append(render_archive())
+    parts.append(f'<details class="ov-history"><summary>沿革</summary><div class="plain-box" style="margin-top:.6rem">'
+                 f'<span class="pb-tag">💬 白話</span><span class="pb-body">{PLAIN}</span></div></details>')
+    if sb.get("prereg"):
+        parts.append(f'<div class="lt-lsb" style="margin-top:.9rem">{sb["prereg"]}</div>')
+    links = ('<ul class="lt-links"><li><a href="/long-track/live-system-profile.html">實單主系統體檢</a></li>'
+             '<li><a href="/backtest/supertrend_vs_live/">Supertrend 對 W52 的比較</a></li>'
+             '<li><a href="/long-track/why-qqq70-smh30.html">為什麼改 QQQ 70／SMH 30</a></li>'
+             '<li><a href="/long-track-w52-adaptive/w52.html">舊規則 W52 對照線</a></li>'
+             '<li><a href="/track-record/">個股裁決實績</a></li></ul>')
+    parts.append(f'<div style="margin-top:.9rem">{_sec("相關頁面", links)}</div>')
+    return f'<div class="lt-panel" id="panel-ref">{"".join(parts)}</div>'
 
 
 def render() -> str:
-    overview_body = render_overview_body()
+    state = _load_json(STATE_JSON)
+    dp, sb = _detail_parts(), _scoreboard_parts()
+    data = {k: (_index_rows(state, k), _seat_rows(k)) for k in MKT}
+    next_rows = ""
+    for k, (idx, seats) in data.items():
+        hist = state.get(MKT[k]["hist"]) or []
+        day = f'<small>下單日 {_md(_next_session(hist[-1]["date"]))}</small>' if hist else ""
+        next_rows += f'<div class="lt-next-row"><b>{MKT[k]["name"]}</b><span>{_next_steps(idx, seats[0])}</span>{day}</div>'
+    panels = "".join(render_market_panel(k, state, data[k][0], data[k][1], dp, sb) for k in MKT) + render_ref_panel(sb)
+    extra_css = dp["tokens"] + dp["css"] + sb["css"]
     return f"""<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -610,37 +854,28 @@ def render() -> str:
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>系統主控台 | InvestMQuest Research</title>
-<style>{CSS}</style>
+<link rel="stylesheet" href="/assets/imq-base.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>{CSS}{extra_css}</style>
 </head>
 <body>
 {NAV_BLOCK}
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 系統主控台</div>
   <h1>系統主控台</h1>
-  <div class="sub">總覽 · 美股即時 · 記分板 · 個股：裁決實績 — 四分頁單一入口，一頁看清整個追蹤家族的定位、現況與紀律紀錄。</div>
+  <div class="sub">實單主系統：每個標的下一個交易日該持有多少，美股、台股分開看。</div>
 </div></div>
 <div class="container">
+<div class="lt-next"><div class="lt-next-h">下一步（占該市場總資金的百分點）</div>{next_rows}</div>
 <div class="console-tabbar" role="tablist">
-  <button type="button" class="console-tab-btn" data-ctab="overview" role="tab">總覽</button>
-  <button type="button" class="console-tab-btn" data-ctab="live" role="tab">美股即時</button>
-  <button type="button" class="console-tab-btn" data-ctab="scoreboard" role="tab">記分板</button>
-  <button type="button" class="console-tab-btn" data-ctab="record" role="tab">個股：裁決實績</button>
+  <button type="button" class="console-tab-btn" data-ctab="us" role="tab">美股</button>
+  <button type="button" class="console-tab-btn" data-ctab="tw" role="tab">台股</button>
+  <button type="button" class="console-tab-btn" data-ctab="ref" role="tab">對照與歸檔</button>
 </div>
-<div class="console-tab-panel" id="panel-overview">{overview_body}</div>
-<div class="console-tab-panel" id="panel-live">
-  <p class="console-embed-note">Supertrend 週線＋月線（美股債金版・台股不借錢版）· 實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/supertrend_vs_live/">這套規則的回測與比較 →</a> · <a href="/long-track/why-qqq70-smh30.html">為什麼改 QQQ 70／SMH 30 →</a> · <a href="/long-track/live-system-profile.html">交易系統體檢 →</a> · <a href="#scoreboard">跳到記分板 →</a></p>
-  <iframe class="console-embed-frame" id="live-frame" data-src="/long-track-w52-adaptive/_body.html" title="實單主系統" scrolling="no" loading="lazy"></iframe>
-</div>
-<div class="console-tab-panel" id="panel-scoreboard">
-  <p class="console-embed-note">實單前瞻記分板（NAV／回撤／基準差／資料缺口，PREREG 2026-09-05） · <a href="/long-track/_scoreboard_body.html">獨立片段</a></p>
-  <iframe class="console-embed-frame" id="scoreboard-frame" data-src="/long-track/_scoreboard_body.html" title="實單前瞻記分板" scrolling="no" loading="lazy"></iframe>
-</div>
-<div class="console-tab-panel" id="panel-record">
-  <p class="console-embed-note">本站個股 DD 裁決的回顧性前瞻報酬統計，描述器語言、非績效宣傳 · <a href="/track-record/">獨立頁</a></p>
-  <iframe class="console-embed-frame" id="record-frame" data-src="/track-record/_body.html" title="裁決實績" scrolling="no" loading="lazy"></iframe>
-</div>
+{panels}
 </div>
 <footer><div class="container">&copy; 2026 InvestMQuest Research · 系統主控台 · 僅供研究參考</div></footer>
+{dp["js"]}
 {CONSOLE_JS}
 </body>
 </html>"""
