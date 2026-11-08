@@ -1,0 +1,412 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 SU.PA（2026-11-08）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/SU.PA_20261108/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：SU.PA　日期：2026-11-08　archetype：None　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1443B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（691B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（995B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1579B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（2622B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（700B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（1211B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2340B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（3620B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（3161B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（281B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1443           3890-5557      5 條（2–6 內）  
+s3                  8000         691           5116-7309      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        5196           6863-9804      3 條（2–6 內）  
+s6                 11000         700          7210-10300      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500        1211           1602-2289      3 條（2–6 內）  
+s10                 5000        2340           1862-2660      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        3161           2000-2000      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         281            853-1219      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=6848B；至少需散文≈38.15KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−40%
+−40
+−39%
+−23%
+−23
+−20%
+−15.3%
+−14.81
+0%
+0
+0.1
+0.15%
+0.3
+0.75
+0.8
+0.94
+0.97
+1
+1.0
+1.05
+1.10
+1.13
+1.31
+1.5
+1.5%
+1.59
+1.7
+1.84
+2%
+02
+2
+2.07
+2.1
+2.3
+2.4
+2.5
+2.9
+3%
+3
+3.1
+3.4
+3.58
+3.6%
+4%
+4
+4.20
+4.5%
+05
+5%
+5
+06
+6%
+6
+7%
+7
+07
+7.33
+7.5%
+8
+08
+8%
+8.31%
+8.45
+8.75
+8.75%
+9
+9%
+9.0
+10%
+10
+10.3%
+10.3
+10.37
+10.6
+10.9%
+11
+11.2
+11.3
+11.4
+11.4%
+11.43%
+11.8%
+12
+12%
+12.1%
+12.15%
+12.2%
+12.2
+12.59
+12.9
+12.98%
+13.29%
+13.5
+13.7
+13.8%
+13.84%
+14
+14%
+14.2%
+14.81%
+15
+15%
+15.3
+15.3%
+15.6%
+16
+16%
+16.8
+16.9%
+16.9
+17
+17.32%
+17.5%
+17.6%
+17.8
+18%
+18
+18.16
+18.2
+18.4
+18.5%
+18.7
+18.7%
+18.8%
+19
+19.11%
+19.3%
+19.9%
+20%
+20
+20.0%
+20.2
+21
+21%
+21.4%
+21.8%
+22
+22.05
+22.1%
+22.5%
+22.5
+23%
+24
+24%
+25%
+25
+26
+26.1%
+28%
+30%
+30
+31
+31.1%
+32.85
+35
+35%
+35.05%
+37
+40%
+40
+40.12%
+40.5
+42
+42%
+42.08%
+42.5%
+47
+48
+49
+49.66%
+50
+50%
+52
+57.6
+60
+61%
+62%
+70%
+70
+73.5
+76%
+79%
+81.8
+90
+90%
+96.2
+97.1
+100%
+100
+104
+110%
+114.6
+120
+139
+150%
+160
+162.9
+170
+175
+193.61
+210
+212
+226
+228.65
+242.47
+250
+259.25
+300.78
+315
+330
+336
+340
+368
+504.96
+565.4
+567.9
+587.71
+800
+2022
+2023
+2024
+2025
+2026
+2027
+2028
+2029
+2030
+2031
+20261108
+1,343.8
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"SU.PA","date":"2026-11-08","schema":"v15.0","contract":"v19","company_name":"Schneider Electric S.E."},"oneliner":"資料中心與電氣化訂單創高、全年指引兩度上修，但約 210 億歐元的 PTC 併購把資本報酬與融資風險放進論點；現價約 22 倍本年度獲利，合理但不算便宜。","thesis":{"H":[{"id":"H1","text":"資料中心與其他終端市場的需求，足以支撐 2027 年有機營收成長至少 10％。","2y":"2027 年有機營收成長 10％ 以上，2026 年底在手訂單年增 15％ 以上","5y":null,"10y":null,"threshold":"2027 年有機營收成長 10％ 以上","source":"公司季度營收稿、全年財報；FY2 共識營收 504.96 億歐元","drift_rule":"TTM 有機成長低於門檻的幅度連 2 季達 5％ 為削弱，連 3 季達 10％ 為反轉"},{"id":"H2","text":"定價與生產力能把調整後 EBITA 利潤率推到 2030 年至少 21％，毛利率不靠一次性項目。","2y":null,"5y":"2030 年調整後 EBITA 利潤率 21％ 以上，毛利率不低於 42％","10y":null,"threshold":"2030 年調整後 EBITA 利潤率 21％ 以上","source":"公司半年報毛利率與利潤率橋","drift_rule":"TTM 利潤率低於路徑的幅度連 4 季達 5％ 為削弱，連 6 季達 10％ 為反轉"},{"id":"H3","text":"PTC 與 Cognite 併購後，集團 ROCE 在交割滿一年後回到 15％～20％，並維持 A 類信評。","2y":null,"5y":"2028 年 ROCE 15％ 以上，PTC 案第五年 ROCE 高於 WACC","10y":null,"threshold":"交割滿一年後 ROCE 15％ 以上","source":"公司年報 ROCE、評等機構公告","drift_rule":"ROCE 低於門檻的幅度連 4 季達 5％ 為削弱，連 6 季達 10％ 為反轉"}],"R":[{"id":"R1","text":"資料中心訂單見頂，大客戶調整建置節奏，高基期使 2027 年下半年成長明顯放慢。","h_ref":"H1","clock":"🔥","threshold":"在手訂單年增低於 0％","evidence_refs":["end_markets#2","supply_demand_durability#0"]},{"id":"R2","text":"定價追不上關稅與半導體、記憶體、銅的第二波成本，毛利率修復只是關稅退款造成。","h_ref":"H2","clock":"🔥","threshold":"扣除一次性項目後毛利率連兩個半年度年減","evidence_refs":["reg_tariff_export#0"]},{"id":"R3","text":"PTC 約 210 億歐元併購回報低於預期，負債升高；新任 CFO 上任不到一年就要執行融資，營收綜效與 WACC 都不揭露細節。","h_ref":"H3","clock":"🐢","threshold":"交割滿一年後 ROCE 低於 15％，或信評跌出 A 類","evidence_refs":["major_events#0","major_events#1","ma_merger#0","ma_merger#1","regulatory_antitrust#1"]},{"id":"R4","text":"800V 直流與固態變壓器讓新進者切入配電架構，sidecar 過渡方案被跳過。","h_ref":"H2","clock":"🐢","threshold":"2028 年底前無超大型客戶量產案，而對手已有","evidence_refs":["substitute_technology#0","substitute_technology#1"]},{"id":"R5","text":"監管與產品安全事件衝擊通路定價與品牌：法國案罰款 2.07 億歐元、智利電池模組警示；受影響營收事實表未涵蓋。","h_ref":"H2","clock":"🐢","threshold":"上訴敗訴且新增提列超過 1 億歐元，或歐美主管機關發布召回","evidence_refs":["regulatory_antitrust#0","major_events#2","product_recall_warning#0"]},{"id":"R6","text":"零組件與記憶體短缺、中東情勢影響短期交付，第四季放緩超過指引隱含幅度。","h_ref":"H1","clock":"⚡","threshold":"2026 年全年有機成長低於 12％","evidence_refs":["geo_supply_chain#1"]}],"single_thing":{"description":"集團在手訂單總額在任一半年度揭露時出現年減（2025 年底為逾 250 億歐元）。","why_fatal":"資料中心與網路占營收 30％ 以上，是最大單一敏感度來源：需求回落 25％ 約使 EPS 減 14％，高於 PTC 成本綜效完全落空的約 3％，而且會發生在併購後負債最高的時候。","if_happens":"Base 的 2028 年以後路徑失效，轉向 Bear，倍數同時被壓縮，股價區間看 139 至 175 歐元，減碼一半。","how_monitor":"每半年查在手訂單金額與年增率；第三季營收稿看資料中心需求描述；追蹤超大型雲端客戶資本支出指引。","probability":"12 至 24 個月約 20％；本包沒有訂單時間序列可校準，屬判斷。"}},"appendix_a":{"growth_durability":7,"quality_score":7,"ai_risk":"🟡","long_term_confidence":"中","fpe_fy2":18.16,"peg_fy2":1.31,"stress":{"pass":null,"total":null}},"eps_meta":{"base_eps_path":{"FY2025A":7.33,"FY2026E":10.37,"FY2027E":12.59,"FY2028E":null},"fy_end_month":12,"eps_basis":"FY2025A 為財報稀釋 EPS；FY2026E、FY2027E 為 yfinance 共識，未標口徑，數值接近調整後 EPS（2025 年調整後淨利約 48 億歐元，推算每股約 8.45），兩者不同源。FY2028E 共識事實表未涵蓋，留空；EPS 預估家數也未涵蓋。事實表幣別標美元，實際為歐元。"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/SU.PA_20261108/scenario.json","archetype":{"primary":"品質複利成長","secondary":"循環/商品","confidence":"中","fingerprint":"利潤率穩定上升、自由現金流約等於淨利，但資料中心占比上升使循環性增加。"},"industry":{"clock_phase":"II","sd_verdict_source":"供需判斷：電氣化與電網屬結構性持久，資料中心三位數需求成長屬週期高點讀數；公司每季滾動檢視三年產能並與 Foxconn 合作，供給在 18 至 24 個月內可擴張，供給可逆性中等。集團仍在擴張期，住宅與 Process、Hybrid 尚未同步，未到全面過熱。","bargaining":{"up":"銅、銀、半導體與記憶體成本上行，CFO 2026-10-16 說下一波投入成本正在來；公司以多區域採購與提高安全庫存因應。","down":"經銷通路分散，對公司議價力有限；超大型客戶維持多供應商，議價力較強，但以共同設計與產能承諾換取供貨確定性。","geo":"目標每個區域 90％ 銷售在當地製造或採購；中國是第二大市場，北美約占營收 40％。"},"profit_pool_dir":"利潤池往資料中心與系統移動，系統在毛利層稀釋、在 EBITA 層約中性；軟體要到這個週期才轉為加分。各環節營業利益池五年占比事實表未涵蓋。","tam_table":[{"item":"可觸及市場 2025～2030 年增","value":"6％～7％（CFO，2025-12-11）"},{"item":"純資料中心 2025～2030 年複合成長","value":"12％～14％（CFO，2025-12-11）"},{"item":"資料中心與網路整體","value":"超過 10％（CFO，2025-12-11）"},{"item":"建築與工業","value":"4％～5％（CFO，2025-12-11）"},{"item":"基礎設施","value":"5％～7％（CFO，2025-12-11）"},{"item":"800V 直流影響的需求比重","value":"到 2030 年 15％～25％（CEO，2026-02-26）"},{"item":"滲透率與營業利益池占比","value":"事實表未涵蓋"}]},"moat":{"mechanism":"裝機基礎與規格權（低壓規模在 2023 年為第二名 2 倍）、全球經銷通路、與超大型客戶共同設計後凍結規格的轉換成本；AVEVA 流失率低於 2％、留存 110％，加深軟體黏著。","execution":8,"pricing":7,"grade":"B","trend":"→","trend_evidence":"份額與市場同步，看不到擴大也看不到流失；毛利率扣除關稅退款後尚未轉正，第三季定價轉強但還沒有反映在可驗證的毛利率上。","peer_na_reason":"Schneider 同期間 TTM 利潤率在事實表為空，同業 ROIC 也未涵蓋，無法計算 ROIC spread，改用份額方向判斷。","threats":[{"level":"🔴","text":"800V 直流與固態變壓器可能跳過 Schneider 現行 sidecar 過渡方案；公司預計 2028 年才備妥完整架構，CEO 估 2030 年影響 15％～25％ 需求。","p":30,"evidence_refs":["substitute_technology#0","substitute_technology#1"]},{"level":"🟡","text":"專業廠商在資料中心份額幾乎並列，大客戶維持多供應商，Schneider 的份額只與市場同步。","p":35,"evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#1","customer_second_source#0"]},{"level":"🟡","text":"AI 代理可能繞過軟體介面層，併入 PTC 後軟體與服務約占營收 24％，曝險上升；產品附著在工業資料與關鍵基礎設施上，判斷強化多於替代，分界年暫看 2028 年，淨增量公司未揭露。","p":25,"evidence_refs":[]},{"level":"🟡","text":"法國轉售價格案罰款 2.07 億歐元，涉及 Rexel、Sonepar 兩大經銷商，顯示通路定價受監管檢視；上訴結果未見。","p":20,"evidence_refs":["regulatory_antitrust#0"]},{"level":"🟡","text":"客戶集中度上升但看不到全貌：資料中心與網路 2025 年底占營收 30％，CFO 說今年再上升，超大型與新興雲端的訂單拆分公司兩度拒絕揭露，前 1 至 2 大客戶是否超過 40％ 事實表未涵蓋。大客戶一旦調節奏，會發生在併購後負債最高、公司又承諾維持 A 類信評的時候；機率沿用在手訂單年減的判斷，沒有客戶資料可校準。","p":20,"evidence_refs":["end_markets#0","customer_second_source#0","customer_concentration_credit#0"]}],"roic_durability":{"quadrant":"高利益率×低周轉","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"配電與冷卻是資料中心和電氣化的必要投入，延後的代價高；但急迫性不等於持久性，資料中心三位數需求成長屬高點讀數，大客戶也曾放慢節奏。"},{"item":"決策層級","level":"🟡","text":"型錄產品由電工與經銷商指定，換品牌要重新認證與訓練，黏著高；資料中心在設計凍結後 18 至 24 個月鎖定，但下一代專案可換供應商，Digital Realty 維持多供應商。"},{"item":"價值鏈分配","level":"🟡","text":"系統占比上升拉低毛利，超大型客戶集中議價；電力架構由 NVIDIA 的產品節奏決定，關鍵互補品集中在單一廠商，公司能分到多少尚待驗證。"},{"item":"社會容忍度","level":"🟡","text":"企業對企業的設備沒有消費者漲價爭議，但法國轉售價格案顯示通路定價有監管上限，上訴結果未見。"}],"roiic":"本業層代理值 17.5％（公司 ROCE 目標 15％～20％ 中點），是平均報酬而非實測增量報酬，增量投入資本事實表未涵蓋；公司只揭露目前 ROCE 超過 15％，17.5％ 可能已含部分利潤率改善，和利潤率缺口有重疊，只能當粗估。併購層另算：PTC 以 2027 年調整後 EBITA 計，未計綜效稅後報酬約 3.6％，計成本綜效約 4.5％，稅率取 24％；Cognite、Shelly 的報酬事實表未涵蓋，暫用同一報酬。約 250 億歐元乘 3.6％～4.5％，得稅後利益約 9.0 億至 11.3 億歐元；年 NOPAT 約 73.5 億歐元（250 億除以 1.7 再除以 2），所以獲利一次墊高 12.2％～15.3％，攤到五年每年約 2.3～2.9 個百分點，扣掉增資稀釋約 4％（每年約 0.8）後約 1.5～2.1。融資利率事實表未涵蓋，這是扣利息前的數字。本業層 8.75％ 加併購層得 10.3％～10.9％，ROCE 取 20％ 時最高約 12.1％，都低於 Base 的 12.15％，所以維持超過上界的判定。反向風險：3.6％～4.5％ 是 2027 年的報酬，CFO 說第五年 ROCE 才超過 WACC，WACC 未揭露，終端年報酬若明顯升高，併購層會高於上述數字，這部分無法複算。","reinvest_rate":"本業層代理值 50％：2025 年每股股息 4.20 歐元對調整後 EPS 約 8.45 歐元的留存比率。定義式所需的折舊、營運資金與收購淨額事實表未涵蓋，算不出實際值。這個代理值的偏誤是雙向的：併購面，2026 至 2027 年收購合計約 250 億歐元，約為兩年 NOPAT 的 1.7 倍，實際再投資率遠高於 50％，但報酬只有 3.6％～4.5％，已改在增量報酬欄單獨計算；本業面，2025 年自由現金流約為淨利 1.10 倍，暗示本業淨再投資可能遠低於 50％。因此 8.75％ 只是本業層的粗略讀數，不是含併購的上界。","endo_ceiling":8.75,"formula_note":"內生上界＝17.5％×50％＝8.75％，ROCE 用 15％～20％ 時區間為 7.5％～10％。ROIC 約等於稅後利潤率 14.2％（2025 年調整後 EBITA 約 18.7％ 乘 76％）乘周轉率約 1.05 倍，周轉率由公司揭露 ROCE 超過 15％ 反推，投入資本口徑事實表未涵蓋。"},"combined":7.5,"score":7.5,"spread_table":[{"metric":"毛利率","SU.PA":null,"ETN":35.05,"ABBN.SW":40.12,"LR.PA":49.66,"SIE.DE":39.36,"unit":"%"},{"metric":"營業利益率","SU.PA":null,"ETN":17.32,"ABBN.SW":17.6,"LR.PA":19.11,"SIE.DE":12.98,"unit":"%"},{"metric":"FCF 利潤率","SU.PA":null,"ETN":11.87,"ABBN.SW":13.29,"LR.PA":13.51,"SIE.DE":14.61,"unit":"%"},{"metric":"研發密度","SU.PA":null,"ETN":2.75,"ABBN.SW":3.86,"LR.PA":4.07,"SIE.DE":8.31,"unit":"%"}],"competitors":[{"name":"ETN","gm":35.05,"om":17.32,"fcf_margin":11.87,"rd_intensity":2.75,"strategy_note":"毛利率 35.05％ 低於 Schneider 2025 年的 42.08％，營業利益率 17.32％ 卻接近，費用效率較好；期間不同，只看方向。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"ABBN.SW","gm":40.12,"om":17.6,"fcf_margin":13.29,"rd_intensity":3.86,"strategy_note":"毛利率 40.12％、營業利益率 17.6％，自由現金流利潤率 13.29％ 高於 Schneider 2025 年的 11.43％，現金轉換較佳。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"LR.PA","gm":49.66,"om":19.11,"fcf_margin":13.51,"rd_intensity":4.07,"strategy_note":"毛利率 49.66％、營業利益率 19.11％，是低壓通路定價權的上限參考；Schneider 的系統與自動化拉低整體利潤。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"SIE.DE","gm":39.36,"om":12.98,"fcf_margin":14.61,"rd_intensity":8.31,"strategy_note":"營業利益率 12.98％、研發密度 8.31％，自動化與軟體投入最重；Schneider 買 PTC 後，兩家在工業軟體的正面競爭會增加，此為判斷。","period":"TTM ending 2026-06-30（4季加總）"}]},"growth":{"driver_mix":"量為主，價格次之，併購附加；回購不是成長來源，2027、2028 年暫停。","runway_years":"集團層滲透率事實表未涵蓋，無法換算年數；服務業務目前服務裝機約 16％。","runway_post_y5":"🟢","endo_ceiling_basis":"引護城河段再投資推算的 8.75％，區間 7.5％～10％，只算本業層；共識與 Base 都超過，Base 缺口中利潤率擴張約 2.4～3.1 個百分點可複算，其餘約 0.3～1.0 個百分點是殘差，不能確認來自併購。","segments":[{"item":"能源管理","value":"2026 Q3 有機 +18.8％，2025 年 +10％，利潤率 21.8％"},{"item":"工業自動化","value":"2025 年 +3％，下半年 +7％，利潤率 14.2％，目標 2028 年 18％；Process 與 Hybrid 仍弱"},{"item":"系統","value":"2026 Q2 成長 28％，毛利率低於集團，EBITA 層約中性"},{"item":"軟體與服務","value":"AVEVA ARR 約 +10％；併入 PTC 後以 2025 年為基準約占營收 24％"},{"item":"產品","value":"2025 Q4 +4％，約一半來自價格"},{"item":"區域","value":"北美約占 40％，2026 Q3 +19.9％；中國及東亞 +26.1％"}],"decay_signals":[{"item":"毛利率連 2 季年減","status":"亮燈","note":"2025 年有機年減 40 個基點，2026 上半年扣除關稅退款約年減 37 個基點；公司只半年揭露"},{"item":"EPS 成長顯著高於營收成長","status":"亮燈","note":"共識 FY2 EPS 年增 21.4％，營收年增約 11.4％，差約 10 個百分點"},{"item":"核心市占縮減","status":"未亮","note":"第三方資料顯示與市場同步"},{"item":"提價後銷量下滑","status":"未亮","note":"事實表未見銷量下滑"},{"item":"自由現金流對淨利低於 0.75","status":"未亮","note":"2025 年約 1.10 倍"},{"item":"替代技術壓縮市場","status":"觀察","note":"固態變壓器仍在產業化，2028 年前後才有營收影響"},{"item":"SBC、產業倍數、維護性資本支出","status":"資料缺口","note":"事實表未涵蓋"},{"item":"停止投資新產能","status":"未亮","note":"持續擴充區域產能"}],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":[{"item":"股息","value":"2025 年每股 4.20 歐元，連續 16 年累進"},{"item":"回購","value":"2026～2030 年計畫 25～35 億歐元，2026 上半年 2.5 億歐元，2027、2028 年暫停"},{"item":"併購","value":"Cognite 31 億美元、PTC 約 226 億美元現金、Shelly 約 12 億歐元"},{"item":"融資","value":"股權 50～60 億歐元，優先債 160～170 億歐元，時點未定"},{"item":"信評","value":"Moody's A2，公司承諾維持 A 類"}],"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"已實現併購報酬事實表未涵蓋。CFO 自述 PTC 第五年 ROCE 才超過 WACC，WACC 未揭露；2027 年未計綜效稅後報酬約 3.6％。","grade":"不過"},{"year":"—","action":"buyback_yield","rationale":"2026 上半年回購 2.5 億歐元，買入均價與 10 年期殖利率事實表未涵蓋；2027、2028 年暫停。","grade":"不過"},{"year":"—","action":"sbc_dilution","rationale":"由淨利除以稀釋 EPS 推算股數：2022 年約 565.4 百萬股，2025 年約 567.9 百萬股，年增約 0.15％，低於 1.5％。SBC 金額事實表未涵蓋；PTC 增資約稀釋 4％，屬融資，不計入此項。","grade":"過"}]},"valuation":{"basis":"FY1 共識 EPS 本益比，輔以 FY2 本益比與 EV/S","peers":{"expanded":false,"reason":"事實表只有同業利潤率，沒有同業估值倍數，無法做跨公司倍數對照。"},"fwd_pe":22.05,"peg":1.59,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"FY1 本益比 22.05 倍，PEG 約 1.59（第三年共識缺，改用自己 Base 的 FY2026E 到 FY2029E EPS 年增 13.84％），落在 1 到 2 的合理帶；Base 含股息年化約 11.8％。EV/S 在四個年度端點的 97.1 分位，P/S 在 81.8 分位，Trailing P/E 只在 57.6 分位；真正的五年分位與同業倍數事實表未涵蓋，所以只判合理，不判便宜。","upside_short_pct":12.0,"upside_mid_pct":40.5},"trap_analysis":{"verdict":"🟡","label":"價值陷阱風險中等：毛利率與獲利品質兩項信號亮燈，需求與現金尚未受損。"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"資料中心與網路 2025 年底占營收 30％ 且上升，第三季需求三位數成長；2026 至 2027 年併購約 250 億歐元，粗估備考淨負債約 368 億歐元。","assumption":"超大型雲端資本支出持續到 2028 年以後，客戶不調節奏。","consequence":"以 2027 年資料中心約占營收 35％、需求回落 25％、遞減利潤率 30％ 粗估，EPS 約減 14％；疊加倍數壓到 13.5 至 17 倍，股價約 139 至 175 歐元。","ruling":"採納，列為 Bear 主路徑與唯一致命事件，機率 30％。","watch":"在手訂單年增率、超大型客戶資本支出指引。","evidence_refs":["end_markets#2","supply_demand_durability#0"],"fact_refs":["f_rev_consensus_fy2_m","f_net_debt_m"]},{"view":"論點成功但股東經濟變差","evidence":"系統業務 2026 年第二季成長 28％，毛利率低於集團；PTC 2027 年未計綜效稅後報酬約 3.6％，回購 2027、2028 年暫停，增資稀釋約 4％。","assumption":"營收成長能同時轉成每股價值與更高的資本報酬。","consequence":"營收達標但 ROCE 低於 15％ 的時間拉長；調整後 EPS 看起來增厚，財報 EPS 被購買價格分攤拉開。","ruling":"部分採納：Base EPS 低於共識約 3％，且不計入營收綜效上緣。","watch":"交割滿一年後的 ROCE、調整後與財報 EPS 的差距。","evidence_refs":["major_events#0","ma_merger#0"],"fact_refs":["f_consensus_eps_fy2"]},{"view":"價格已反映太多","evidence":"EV/S 3.58 倍在四個年度端點的 97.1 分位，P/S 在 81.8 分位；Trailing P/E 在 57.6 分位，FY1 約 22 倍。","assumption":"資料中心高成長已反映在營收倍數上。","consequence":"倍數回到 15 倍時，Bear 五年約 −20％。","ruling":"部分反駁：分位只有四個端點，不足以代表五年區間；FY2 約 18.2 倍。但已跌不是安全邊際，所以結論只到合理。","watch":"FY2 共識 EPS 是否因 PTC 融資下修、增資定價。","evidence_refs":["capital_markets_pricing#1"],"fact_refs":["f_ev_s_percentile","f_ps_percentile","f_pe_percentile","f_week26_return_pct","f_consensus_eps_fy2"]}],"max_dd":{"lo":-40,"hi":-23,"path_risk":"🟡"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 None → 本次 🟠","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=None","side_b":"本次 ma=🟠","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 None → 本次 228.65","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=None","side_b":"本次 price_at_dd=228.65","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"併購承諾對照實際行動","cause":null,"prior_field":null,"side_a":"2025-12-11 投資人日，CEO Blum：目前不計畫大型收購，中期目標都是有機。","side_b":"2026-06-30 宣布 Cognite 31 億美元，2026-10-05 宣布 PTC 約 226 億美元現金收購，約市值 15.6％，同時暫停 2027、2028 年回購。","ruling":"方向相反，不可調和。採後者的事實：管理層十個月內改變資本配置框架。CFO 2026-10-05 說相對投資人日承諾不變，只能視為財務目標不變。併購報酬列為未證假設，Base 不計入營收綜效上緣。","evidence_level":"管理層原話與併購公告","settle_metric":"交割滿一年後集團 ROCE 是否回到 15％～20％，PTC ARR 是否維持約 10％ 成長","if_then":["若 2028 年全年 ROCE 低於 15％，減碼至原倉位一半","若交割前再宣布超過市值 5％ 的併購，停止加碼至 2028 年 ROCE 公布","反向：若 2028 年 ROCE 達 15％ 以上且維持 A 類信評，加碼至目標倉位"],"evidence_refs":["major_events#0","major_events#1","ma_merger#0","ma_merger#1"]},{"axis":"毛利率修復的品質","cause":null,"prior_field":null,"side_a":"2026-07-30 CFO：上半年毛利率 42.5％，年增 10 個基點；2026-10-16 CFO：第三季產品定價金額約等於整個上半年。","side_b":"同一場 CFO 說毛利率橋含約 1 億歐元第二季關稅退款，以上半年營收 212 億歐元算約 47 個基點，扣掉後約年減 37 個基點；關稅影響倍數的報導也有出入。","ruling":"程度差異，可調和。定價轉強是真的，但毛利率轉正尚未被乾淨數字證明。關稅退款按一次性處理，歸因標為未證，以下兩個半年度驗證。","evidence_level":"管理層原話與自行換算","settle_metric":"2026 下半年與 2027 上半年扣除一次性項目後的毛利率年變化","if_then":["若兩期都年減，減碼三分之一","若兩期都年增，加碼至目標倉位"],"evidence_refs":["reg_tariff_export#0"]},{"axis":"訂單能見度對照需求見頂","cause":null,"prior_field":null,"side_a":"2026-10-16 CEO：第三季資料中心需求再度三位數成長，能見度延伸到 2027、2028 年。","side_b":"2025-12-11 投資人日高管：大型客戶會調節奏，微軟去年曾放慢；2026-07-30 CEO 提到以 Foxconn 合作緩和放緩；公司兩度拒絕揭露客戶拆分。","ruling":"可調和。能見度是需求規劃的能見度，不等於不可取消的訂單；取消條款事實表未涵蓋，訂單持久性不可裁決至 2027 年 7 月半年報。","evidence_level":"管理層原話，缺合約條款","settle_metric":"2026 年底與 2027 年中在手訂單年增率","if_then":["若 2026 年底在手訂單年增低於 15％，停止加碼","若任一半年度在手訂單年減，減碼一半"],"evidence_refs":["end_markets#2","supply_demand_durability#0","supply_demand_durability#2"]},{"axis":"800V 與固態變壓器時程","cause":null,"prior_field":null,"side_a":"2025-12-11 技術長：2027 年前不預期固態變壓器大規模應用；2026-10-16 CFO：沒有人問 800V。","side_b":"2026-02-26 CEO：2030 年可能影響 15％～25％ 需求，完整架構 2028 年才備妥；Uptime 指部分設計可能不需 sidecar，Navitas 與 EPFL 已展示 250kW 樣機。","ruling":"可調和。2027 年前沒有營收衝擊，但 sidecar 過渡方案有被跳過的風險，投資人日被問到自建、合作或收購時也沒有回答。2026-07-30 CEO 已提到自研方案，先不下修護城河。","evidence_level":"管理層原話與第三方技術報告","settle_metric":"2028 年底前公司固態變壓器方案的超大型客戶設計採用","if_then":["若 2028 年底前無量產案而對手已有，減碼至倉位上限一半","若 2028 年底前取得至少一家超大型客戶量產案，解除此項加碼限制"],"evidence_refs":["substitute_technology#0","substitute_technology#1"]},{"axis":"基本面對照股價走勢","cause":null,"prior_field":null,"side_a":"第三季有機成長 16.9％，高於共識 13.8％，全年指引第二次上修。","side_b":"26 週股價跌 14.81％，RSI 32.85，股價低於 52 週線 259.25 歐元與 104 週線 242.47 歐元。","ruling":"可調和。下跌主因是併購融資與軟體疑慮，需求面沒有同步惡化；已跌不等於安全邊際。","evidence_level":"公司公告與價格資料","settle_metric":"增資定價、2026 全年毛利率","if_then":["若股價先站上 52 週線 259.25 歐元而毛利率證據未到，不追","若股價跌到 250 週線 193.61 歐元且在手訂單仍年增，分批反買"],"evidence_refs":["capital_markets_pricing#0"]},{"axis":"平衡曝險的說法","cause":null,"prior_field":null,"side_a":"2026-02-26 CEO：三大終端市場各約三分之一，曝險非常平衡。","side_b":"2026-10-16 CFO：去年底資料中心與網路占營收 30％，今年集中度上升。","ruling":"程度差異，可調和，但平衡的敘事正在減弱，資料中心已是最大單一敏感度來源。","evidence_level":"管理層原話","settle_metric":"2026 年終端市場訂單占比","if_then":["若資料中心與網路占 2026 年訂單超過 40％，停止加碼至在手訂單客戶結構揭露"],"evidence_refs":["end_markets#0"]},{"axis":"中國需求的說法轉向","cause":null,"prior_field":null,"side_a":"2025-12-11 CEO：中國通縮，正向定價能力非常有限；2026-02-26 CFO：中國僅低個位數成長。","side_b":"2026-10-16 CEO：中國這個成長水準至少可延續到 2027 年，自承年初較保守；第三季中國及東亞成長 26.1％。","ruling":"可調和。成長回升主要跟資料中心有關，建築與住宅仍慢，定價是否改善尚未證實，不把中國列入 Base 的利潤率上修。","evidence_level":"管理層原話","settle_metric":"2027 上半年中國成長與定價說明","if_then":["若 2027 上半年中國成長回落到個位數，停止加碼"],"evidence_refs":["end_markets#1","geo_supply_chain#0"]},{"axis":"產業態勢三軸","cause":null,"prior_field":null,"side_a":"結構轉好：電氣化與資料中心需求創高，在手訂單創紀錄，CEO 稱四大終端市場需求健康。","side_b":"競爭與替代：專業廠商份額並列，固態變壓器進入產業化，關稅與第二波投入成本持續。","ruling":"雙向拉鋸。需求面結構轉好，競爭與替代技術同時施壓，價值分配尚未定案。","evidence_level":"第三方份額資料、公司公告","settle_metric":"份額資料與扣除一次性項目的毛利率","if_then":["若第三方資料顯示連續兩年份額下降，減碼三分之一"],"evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#2","substitute_technology#0"]},{"axis":"最強反方論證","cause":null,"prior_field":null,"side_a":"現在就買：第三季高於共識 3.1 個百分點，指引兩度上修，股價反而下跌；FY2 只有 18.16 倍，Bear 五年約 −20％，Base 約 +61％。","side_b":"現在就賣：資料中心需求是高峰讀數，下一步是基期變難；公司在需求最好時舉債買軟體，還有 50～60 億歐元增資沒有定價。","ruling":"兩邊都成立。裁定基本面可以持有，但不在增資定價前一次買足。","evidence_level":"公司公告、情境估算","settle_metric":"增資定價折價與 2026 全年在手訂單","if_then":["若增資折價超過 8％ 但在手訂單仍年增，分批反買","若 2026 年底在手訂單年增低於 15％，停止加碼"],"evidence_refs":["capital_markets_pricing#0","regulatory_antitrust#1"]}],"triggers":[{"n":1,"text":"2026 年全年財報確認在手訂單延續成長","type":"假設驗證","maps_to":"H1","metric":"年底在手訂單年增率","threshold":"2026 年底年增 15％ 以上","action":"達標維持假設；未達標列為削弱並停止加碼","source_freq":"公司全年財報，每半年揭露","date":"2027-02"},{"n":2,"text":"集團在手訂單總額首次年減","type":"Single Thing","maps_to":"H1","metric":"在手訂單年增率","threshold":"任一半年度低於 0％","action":"減碼一半","source_freq":"公司半年報與全年財報","date":"2027-02 起逐期"},{"n":3,"text":"定價無法吸收關稅與原料成本","type":"風險","maps_to":"R2","metric":"扣除一次性項目後毛利率年變化，及損益橋淨價格","threshold":"連兩個半年度毛利率年減，或淨價格轉負","action":"減碼三分之一","source_freq":"公司半年報毛利率橋","date":"2027-07","evidence_refs":["reg_tariff_export#0"]},{"n":4,"text":"併購融資使信評跌出 A 類","type":"風險","maps_to":"R3","metric":"信用評等類別","threshold":"任一主要評等機構評等低於 A 類","action":"減碼三分之一並停止加碼","source_freq":"評等機構公告，事件驅動","date":"2027-12 前","evidence_refs":["customer_concentration_credit#0","major_events#0"]},{"n":5,"text":"增資定價完成且毛利率過關","type":"加碼","maps_to":"H2","metric":"增資折價與 2026 下半年毛利率","threshold":"折價不超過 8％，且扣除一次性項目後毛利率年增","action":"補足至目標倉位","source_freq":"公司公告與全年財報","date":"2027-02"},{"n":6,"text":"股價先跌到長期均線而基本面無損","type":"估值rearm","maps_to":"H1","metric":"股價與在手訂單年增率","threshold":"股價不高於 193.61 歐元，約 FY2026E 的 18.7 倍，且在手訂單仍年增","action":"分批反買","source_freq":"每日股價，半年度訂單","date":null},{"n":7,"text":"股價超過合理上緣","type":"減碼","maps_to":"H1","metric":"股價對 FY2027E 共識 EPS 倍數","threshold":"股價不低於 315 歐元，約 25 倍","action":"減碼三分之一","source_freq":"每日股價","date":null},{"n":8,"text":"需求與資產負債表同時失守","type":"清倉","maps_to":"H1","metric":"在手訂單年增率與信評類別","threshold":"在手訂單年減，且信評跌出 A 類，同時成立","action":"清倉","source_freq":"公司財報、評等機構公告","date":null},{"n":9,"text":"固態變壓器競爭落後","type":"風險","maps_to":"R4","metric":"超大型客戶設計採用與量產案","threshold":"2028 年底前公司無量產案，而對手已有","action":"減碼至倉位上限一半","source_freq":"法說與產業報告，每季","date":"2028-12","evidence_refs":["substitute_technology#0","substitute_technology#1"]},{"n":10,"text":"電池模組安全警示擴大","type":"風險","maps_to":"R5","metric":"召回範圍與提列金額","threshold":"歐美主管機關發布同型號召回，或提列超過 1 億歐元","action":"停止加碼至召回範圍與費用揭露","source_freq":"監管機關與公司公告，事件驅動","date":null,"evidence_refs":["major_events#2","product_recall_warning#0"]},{"n":11,"text":"通路定價監管升級","type":"風險","maps_to":"R5","metric":"法國案上訴結果與新調查","threshold":"上訴敗訴且新增提列超過 1 億歐元，或歐盟層級啟動同類調查","action":"停止加碼至影響營收揭露","source_freq":"公司與監管機關公告，事件驅動","date":null,"evidence_refs":["regulatory_antitrust#0"]},{"n":12,"text":"2026 年全年財報後完整複審","type":"複審日期","maps_to":"H1","metric":"日期","threshold":"全年財報公布後","action":"重跑完整研究","source_freq":"一次性","date":"2027-02"}],"kill_metrics":[{"metric":"集團在手訂單年增率","bear_threshold":"低於 0％","window":"每半年，2027-02 起","source":"公司全年財報與半年報","last_status":"ok"},{"metric":"扣除一次性項目後毛利率年變化","bear_threshold":"連兩個半年度年減","window":"2026 下半年、2027 上半年","source":"公司半年報毛利率橋","last_status":"warning"},{"metric":"集團 ROCE","bear_threshold":"PTC 交割滿一年後低於 15％","window":"2028 年度財報","source":"公司年報","last_status":"unknown"},{"metric":"信用評等類別","bear_threshold":"跌出 A 類，目前 Moody's A2","window":"融資起至交割後 24 個月","source":"評等機構公告","last_status":"ok"}],"evidence_dismissed":[{"ref":"$.decision_inputs.wait_for_price","reason":"閘把增資定價讀成等待股價的條件。原判斷寫的是事件條件：增資完成定價、折價不超過 8％，加上 2026 下半年毛利率扣除一次性項目後年增，兩項都成立才補足倉位，這個條件已完整寫在補足倉位條件與第 5 條觸發，沒有對應的股價水準可填。第 6 條 193.61 歐元是基本面無損時的反買價，第 7 條 315 歐元是減碼價，都不是增資前的等待價，硬填會造出原判斷沒有的進場價。"}],"decision_out":{"role":"追蹤","row_hit":"8(val爭議)","pacing":[],"holding_cap":null,"audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟠'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟢'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把併購融資與 AI 軟體疑慮放大到本業：股價 26 週跌 14.81％，但第三季有機成長高於共識 3.1 個百分點，全年指引兩度上修，在手訂單創高。市場對資本報酬的擔心有道理，對需求的折價目前沒有數據支持。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟢', val='🟡', moat_trend='→', week26=-14.81, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position='中循環', moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈機械讀數判定不可用，baseline rows 8/9/9b/10 的估值條件視為不可判 → 落 row8 觀望（保守方向）","hit":true,"basis":"val_denominator_disputed=True, val(機械讀數)='🟡'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"requires_critic":[],"verdict":"觀望","rearm_trigger":"增資定價完成且折價不超過 8％，加上 2026 下半年毛利率扣除一次性項目後年增，兩項都成立才補足倉位。","exec_line":"不追高，分兩段：確認前只放首筆，上限為目標倉位三分之一；PTC 增資定價與 2026 全年毛利率都過關才補足；在手訂單轉為年減就停止加碼並減碼一半。"},"reasoning":{"industry":"2026 年第三季營收 114.6 億歐元，有機成長 16.9％；其中能源管理 96.2 億歐元，有機 +18.8％，推算工業自動化約 18.4 億歐元。第三季只公布營收，沒有單季毛利率與利益率，最新可用是 2026 上半年：毛利率 42.5％、調整後 EBITA 利潤率 19.3％。2025 年能源管理利潤率 21.8％，工業自動化 14.2％，獲利重心在能源管理。經銷商約占總銷售 50％、型錄產品 70％，這是低壓業務的收費節點；資料中心則靠系統與預製方案，和客戶共同設計後凍結規格。單點依賴：資料中心與網路 2025 年底占營收 30％，CFO 說今年集中度上升，而超大型雲端與新興雲端的訂單拆分公司兩度拒絕揭露，前 1 至 2 大客戶是否超過 40％ 事實表未涵蓋。","moat":"機制是裝機基礎與規格權、全球經銷通路，再加上和超大型客戶共同設計後凍結規格的轉換成本。執行力給 8 分：2026 年兩度上修指引，第三季有機成長高於共識 3.1 個百分點，在手訂單創高。定價權給 7 分：2025 年毛利率有機年減 40 個基點，CFO 承認定價偏慢；2026 上半年毛利率年增 10 個基點，但含約 1 億歐元關稅退款，約當 47 個基點，扣掉後約年減 37 個基點；第三季產品定價金額約等於整個上半年，是修復的第一個乾淨訊號。對最強同業的 ROIC spread 取不到，改看份額：Dell'Oro 1Q 2025 顯示與 Vertiv 差距約 0.1 個百分點，Bernstein 認為銷售與訂單與市場同步。同業利潤率的期間與 Schneider 不同（同業為 2026 TTM，Schneider 只有 2025 年度），只能看方向。產業態勢裁定雙向拉鋸：資料中心與電氣化讓結構轉好，固態變壓器與專業廠商在同一塊市場施壓。","growth":"成長以量為主，第三季有機 16.9％ 主要來自資料中心系統，價格在第二季約貢獻產品成長 4 個百分點，併購是附加，回購不是來源。共識只有兩年：FY2026E 10.37 到 FY2027E 12.59，年增 21.4％，同期共識營收年增約 11.4％。基期口徑不同：財報 2025 年稀釋 EPS 7.33，換算到 FY2027E 年化 31.1％；用調整後約 8.45 起算則為 22.1％，第三年共識與 EPS 預估家數事實表未涵蓋。Base 情境 EPS 五年年增 12.15％，高於內生上界 8.75％（只算本業層），缺口 3.4 個百分點。其中利潤率擴張約 2.4～3.1 個百分點可複算，算式是 2031 年約 22.5％ 除以起點後開五次方減 1：起點用 Base 每年擴約 50 個基點回推的 2026 年約 20.0％ 得 2.4，用最新可用的 2026 上半年 19.3％ 得 3.1。其餘約 0.3～1.0 個百分點是殘差，融資利率事實表未涵蓋，不能確認來自併購。缺口不靠倍數上升。跑道判斷的依據是公司目前服務的裝機基礎只有約 16％，目標 2030 年軟體與服務占營收 25％；集團層滲透率事實表未涵蓋。","governance":"自由現金流對淨利：2022 年 0.94 倍、2023 年 1.13 倍、2024 年 0.97 倍、2025 年 1.10 倍，2026 上半年自由現金流 16 億歐元，部分因去年基期含法國罰款。現金去向以股息為主，2025 年每股 4.20 歐元，連續 16 年累進；回購 2026 上半年 2.5 億歐元，2027、2028 年暫停。PTC 企業價值約 210 億歐元，約市值 15.6％，以 50～60 億歐元股權加 160～170 億歐元優先債融資。目前淨負債約 162.9 億歐元，加上 PTC 債務與 Cognite、Shelly，粗估備考淨負債約 368 億歐元，尚未扣除期間自由現金流，約為 2027 年合併 EBITA 的 3 倍多。CFO 說會維持 A 類信評，WACC 拒絕揭露；CEO 說交割大概在明年第二季，CFO 簡報寫第三季前，兩者沒有對齊。SBC 金額與債務到期結構事實表未涵蓋。","valuation":"事實表把股價與 EPS 標為美元，但 228.65 乘 587.71 百萬股正好等於市值 1,343.8 億歐元，所以實際幣別是歐元，本文一律以歐元讀。現價對 FY2026E 共識 EPS 10.37 為 22.05 倍，對 FY2027E 12.59 為 18.16 倍。要有年化 8％ 的股價報酬，2031 年股價要到約 336 歐元，以 20 倍計需要 EPS 約 16.8 歐元。公司 2030 年目標是有機成長 7％～10％ 加上利潤率再擴 250 個基點，這個要求可信。併購報酬不會很快兌現，所以 Base 倍數從 22 倍降到 20 倍，2027 年 EPS 也低於共識約 3％。賣方目標價均值 300.78 歐元（區間 250～340）是 2026-06-19 的資料，早於 PTC 案，現價低於當時最低目標，但資料過期，不拿來支持進場。PTC 融資是否已進共識無法確認，消息距今不到一季，所以首筆之後先凍結加碼。","premortem":"三個主要錯誤來源。第一，資料中心訂單基期在 2027 年變得極難比，公司不揭露客戶拆分，能見度說法也沒有取消條款佐證。第二，PTC 的回報要到第五年才超過 WACC，而 WACC 不揭露、8 億歐元營收綜效不拆分、股權融資時點未定。第三，毛利率修復目前混有關稅退款。法說迴避紀錄中，最影響判斷的是這三項，加上 2027 年漲價幅度與第四季放緩原因沒有正面回答。資料限制：本包的全文逐字稿是 2026-02-26 的全年法說，2026-07-30 與 2026-10-16 只有摘錄；歷史最大回撤、空方數字事實表未涵蓋；26 週跌 14.81％、RSI 32.85 只代表股價已修正，不代表安全邊際。價值陷阱風險中等，兩項衰退信號亮燈。"},"plain":{"six":{"how_it_makes_money":"賺的是資料中心、建築、工業與基礎設施業主的電力配電與自動化支出，錢卡在低壓規格、系統整合和經銷通路這幾個節點。","moat":"護城河方向持平（→）：規模與通路仍穩，資料中心份額與市場同步，定價權剛從 2025 年的落後開始修復。","growth":"五年後仍有跑道（🟢），靠電氣化與裝機服務延伸，但資料中心這段高速成長不能外推。","capital":"現金創造強，但資本配置正從保守轉向重押，PTC 改變了原本以有機成長為主的承諾。","valuation":"現價要求 EPS 五年年增約 10％ 且倍數守住 20 倍，才有年化 8％ 的股價報酬；獲利路徑我相信，併購回報還要驗證，估值只算合理。","how_wrong":"最可能看錯的地方，是把資料中心需求高峰當成新常態，同時低估併購把資本報酬拉低多久。"}},"decision_inputs":{"signal":"B","ma":"🟠","cycle_position":"中循環","cycle_verdict":"未觸發","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把併購融資與 AI 軟體疑慮放大到本業：股價 26 週跌 14.81％，但第三季有機成長高於共識 3.1 個百分點，全年指引兩度上修，在手訂單創高。市場對資本報酬的擔心有道理，對需求的折價目前沒有數據支持。","momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":null,"wait_for_price_condition":null,"trap":"🟡","val":"🟡","moat":"B","moat_trend":"→","runway_post_y5":"🟢","capalloc_grade":"B","archetype":"品質複利成長","price_at_dd":228.65,"week26_return_pct":-14.81,"consensus_rev_3m_pct":null,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"共識 EPS 未標明口徑，數值接近調整後 EPS；2025 年財報 EPS 7.33 對調整後約 8.45，差約 15％，PTC 交割後購買價格分攤會再拉開差距。PTC 融資是否已計入共識也未揭露，因此本文不主張便宜。短期上行用 FY2027E Base EPS 12.2 乘 21 倍，中期用 FY2029E 15.3 乘 21 倍。"},"catalysts":[{"date":"2027-02","date_precision":"month","type":"guidance","event":"2026 年全年財報與 2027 年指引","impact":"高","watch":"在手訂單年增率、扣除一次性項目後毛利率、2027 年有機成長指引"},{"date":null,"date_precision":null,"type":"other","event":"PTC 增資 50～60 億歐元定價，時點未定","impact":"高","watch":"折價幅度、股權與債務的先後順序"},{"date":"2027-Q1","date_precision":"quarter","type":"regulatory","event":"Shelly Group 約 12 億歐元收購預計完成","impact":"低","watch":"要約結果與監管核准"},{"date":"2027-07","date_precision":"month","type":"guidance","event":"2027 年上半年財報","impact":"高","watch":"毛利率橋、在手訂單、資料中心基期效應"},{"date":"2027-Q3","date_precision":"quarter","type":"regulatory","event":"PTC 交割期限，CFO 口徑第三季前，CEO 口徑大概第二季","impact":"高","watch":"CFIUS 等審批、競標者介入、人才留任"}],"_projected_from":"v19"}
+```
