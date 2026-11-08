@@ -17,6 +17,8 @@ a self-contained docs/track-record/_body.html + zero-churn data/latest.json.
 三段不再組進輸出（iframe 片段不掛站 nav，避免內嵌選單）。_body.html 與 index.html 皆已
 加入 scripts/site_nav.py 的 SKIP_FILES。
 
+2026-11-08 /long-track/ 改版：裁決實績移到研究區，輸出改回獨立頁 docs/track-record/index.html（含站頭），_body.html 不再產生。
+
 描述器紀律：retrospective description only, no forward-looking claims.
 Read-only w.r.t. data/weekly_cache. Owns data/track_record_prices.json cache.
 No git operations.
@@ -32,6 +34,7 @@ import statistics
 import sys
 
 from dd_meta_reader import iter_dd_paths  # 2026-09-07：候選集合改走共用 iterator（含 brief/）
+from site_nav import full_nav_block
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DD_DIR = os.path.join(ROOT, "docs", "dd")
@@ -39,7 +42,7 @@ WEEKLY_CACHE = os.path.join(ROOT, "data", "weekly_cache")
 ROTATION_BENCH = os.path.join(ROOT, "data", "rotation_bench.json")
 OWN_CACHE = os.path.join(ROOT, "data", "track_record_prices.json")
 OUT_JSON = os.path.join(ROOT, "docs", "track-record", "data", "latest.json")
-OUT_HTML = os.path.join(ROOT, "docs", "track-record", "_body.html")
+OUT_HTML = os.path.join(ROOT, "docs", "track-record", "index.html")
 CANONICAL = os.path.join(ROOT, "docs", "mental-models", "index.html")
 
 WINDOWS = [("d30", 30), ("d90", 90), ("d180", 180)]
@@ -567,8 +570,7 @@ def render_cohort(cohort_tbl):
 
 def render_html(payload, tables, extr, cohort_tbl, latest_tbl):
     fonts_tokens, _nav_style, _nav_header, _nav_script, footer = extract_canonical()
-    # nav_style/nav_header/nav_script intentionally unused: this output is now a
-    # nav-less iframe fragment (see 2026-08-23 module docstring note above).
+    # 2026-11-08 起是獨立頁（研究區選單），站頭用 site_nav 產生，canonical 那份不用。
     meta = payload["meta"]
     as_of = meta["data_as_of"]
 
@@ -594,7 +596,7 @@ def render_html(payload, tables, extr, cohort_tbl, latest_tbl):
   </style>
 </head>
 <body>
-
+{full_nav_block("research", "tr")}
 <section class="tr-hero">
   <div class="tr-overline">TRACK RECORD · 回顧性裁決實績</div>
   <h1 class="tr-title">裁決實績 <em>Track Record</em></h1>

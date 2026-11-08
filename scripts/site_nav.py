@@ -255,6 +255,7 @@ MENU = {
         ("aetf", "/active-etf/", "主動式 ETF"),  # 2026-09-25 新增，緊接 ETF 儀表板之後
         ("id", "/id/", "產業研究"),
         ("ideas", "/ideas/", "投資想法"),
+        ("tr", "/track-record/", "個股裁決實績"),  # 2026-11-08 持有人拍板：/long-track/ 改版後移到研究區，獨立成頁
     ],
     # 2026-08-20 intel 2.0 Phase C：市場群 13→7 收斂——monitor／detective／crowding／
     # regime／rotation（產業輪動）／catalyst 六個監看入口整併進情報監視器分頁殼
@@ -471,7 +472,7 @@ PREFIX_ACTIVE = [
     ("detective/", ("market", "intel")),  # 市場偵探（2026-07-16 新增；2026-08-20 曾掛系統群；2026-08-23 改掛市場群 intel）
     # 系統群（2026-08-23 瘦身：det/tr/pm/voltrack 四個 item 鍵自 MENU["system"]
     # 移除，收斂進「系統主控台」單一入口，故以下前綴一律改掛 lthub）
-    ("track-record/", ("system", "lthub")),  # 裁決實績（2026-07-11 新增；2026-08-23 併入系統主控台）
+    ("track-record/", ("research", "tr")),  # 裁決實績（2026-07-11 新增；2026-08-23 併入系統主控台；2026-11-08 移到研究區）
     ("pm/", ("system", "lthub")),  # 持倉週掃（2026-07-19 復活；2026-08-23 併入系統主控台）
     # 2026-08-23 voltrack 項移除，實單主系統與三個 vt 家族頁改掛 lthub。
     ("long-track-w52-adaptive/", ("system", "lthub")),
@@ -558,8 +559,6 @@ SKIP_FILES = {
     "long-track-w52-adaptive/_body.html",        # iframe 片段（實單主系統分頁）
     "pm/index.html",                             # redirect stub -> /long-track/#positions
     "pm/_body.html",                             # iframe 片段（持倉週掃分頁）
-    "track-record/index.html",                   # redirect stub -> /long-track/#record
-    "track-record/_body.html",                   # iframe 片段（裁決實績分頁）
     # 2026-09-23：/stock-dash/full.html 是 assemble_prod.py::build_full_redirect() 產出的純
     # meta-refresh redirect stub（不含 <body> 實質內容），每次 assemble_prod.py 跑都會整檔改寫
     # 回這個純版本——若不排除，site_nav.py 全站 sweep 會注入 nav，下次 assemble_prod.py 一跑
