@@ -196,6 +196,9 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 .console-tab-btn.active{color:var(--brand);border-bottom-color:var(--brand)}
 @media(max-width:640px){.console-tab-btn{padding:.55rem .65rem;font-size:.82rem}}
 :root{--lt-muted:#5f6b7a}
+@media(max-width:640px){.lt-sec .lt-lsb .lsb-tiles{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+  .lt-sec .lt-lsb table th,.lt-sec .lt-lsb table td{white-space:nowrap}
+  .lt-sec .lt-lsb table{display:block;overflow-x:auto}}
 .lt-next{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin:.4rem 0 .9rem}
 .lt-next-h{font-size:.78rem;font-weight:800;color:var(--lt-muted);margin-bottom:.3rem}
 .lt-next-row{display:flex;flex-wrap:wrap;gap:.15rem .6rem;align-items:baseline;padding:.15rem 0}
@@ -211,6 +214,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 .lt-tbl th{font-size:.76rem;color:var(--lt-muted);font-weight:600;text-align:left;border-bottom:1px solid var(--border);padding:.3rem .4rem;white-space:nowrap}
 .lt-tbl td{border-bottom:1px solid var(--border);padding:.45rem .4rem;vertical-align:top}
 .lt-tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lt-nowrap td,.lt-nowrap th{white-space:nowrap}
 .lt-sub{display:block;font-size:.74rem;color:var(--lt-muted)}
 .lt-target{font-weight:800}
 .lt-buy{color:var(--green-text);font-weight:800}
@@ -305,9 +309,9 @@ IDX_SHARE = 0.7    # 兩市場指數部各占該市場資金 70%
 SEAT_PCT = 6.0     # 個股 30% 分 5 席，每席 6%
 WD = "一二三四五六日"
 MKT = {
-    "us": {"name": "美股", "legs": ["QQQ", "SMH"], "hist": "history_us", "close": [16, 45, "America/New_York"],
+    "us": {"name": "美股", "legs": ["QQQ", "SMH"], "hist": "history_us", "close": [23, 0, "America/New_York"],
            "seat_link": ("/cockpit/", "美股看板")},
-    "tw": {"name": "台股", "legs": ["0050", "2330"], "hist": "history_tw", "close": [14, 15, "Asia/Taipei"],
+    "tw": {"name": "台股", "legs": ["0050", "2330"], "hist": "history_tw", "close": [23, 30, "Asia/Taipei"],
            "seat_link": ("/cockpit-tw/", "台股席位")},
 }
 
@@ -585,18 +589,25 @@ def _detail_parts() -> dict:
             "js": f'<script src="{lib.group(1)}"></script>\n<script>{js}</script>' if lib and js else ""}
 
 
+LIVE_NOTE = ("同風險基準是同標的一直抱著、只放一部分資金、其餘放現金，讓回撤跟系統相近再比；同報酬基準是放到報酬跟系統相近。"
+             "每個月比一次，滿 20 筆才判定，判定只供檢討，不觸發買賣。")
+
+
 def _plain_scoreboard(f: str) -> str:
     """記分板片段的欄名換白話，只動顯示文字。"""
     for a, b in (("系統 vs B-mdd（同風險稀釋基準，主判準）", "對同風險基準（主要判準）"),
                  ("系統 vs B-cagr（同報酬稀釋基準，並列）", "對同報酬基準"),
-                 ("累積差 vs B-mdd", "累積差：對同風險基準"), ("累積差 vs B-cagr", "累積差：對同報酬基準"),
-                 ("B-mdd 基準報酬", "同風險基準報酬"), ("執行層變化（水位）", "水位變化")):
+                 ("累積差 vs B-mdd", "領先同風險基準（百分點）"), ("累積差 vs B-cagr", "領先同報酬基準（百分點）"),
+                 ("B-mdd 基準報酬", "同風險基準報酬"), ("執行層變化（水位）", "水位變化"),
+                 ("S-60（固定 60% B&amp;H） vs 系統", "六成一直抱著對系統"), ("S-60（固定 60% B&amp;H）", "六成一直抱著"),
+                 (r'"S-60\uff08\u56fa\u5b9a 60% B&H\uff09"', '"六成一直抱著"')):
         f = f.replace(a, b)
     f = f.replace("'B-mdd（k=稀釋）'", "'同風險基準'").replace("'B-cagr（稀釋）'", "'同報酬基準'")
     f = re.sub(r"<p class='lsb-note'>兩市場合併.*?</p>", "", f, flags=re.S)
     # 手機上照寬高比只剩 81px 高，圖建立之前先把畫布比例改高
     f = re.sub(r'(<canvas id="lsb-[^"]+" height="90"></canvas>)',
                r"\1<script>if(innerWidth<640)document.currentScript.previousElementSibling.height=200;</script>", f)
+    f = re.sub(r'(class="lsb-v">-?\d+\.\d{2})\d{2}<', r"\1<", f)
     return re.sub(r"(-?\d+\.\d)\d{3}%", r"\1%", f)
 
 
@@ -657,7 +668,7 @@ def _perf_block(key: str) -> str:
         g = lambda f, dec=2, u="": f"{x[f]:.{dec}f}{u}" if isinstance(x.get(f), (int, float)) else "—"
         lay += (f'<tr><td>{n}</td><td class="num">{g("n", 0)}</td><td class="num">{g("win_rate", 0, "%")}</td><td class="num">{g("payoff")}</td>'
                 f'<td class="num">{g("avg_hold_days", 0)}</td><td class="num">{g("max_lose_streak", 0)}</td></tr>')
-    t2 = (f'<h3 class="lt-h3">逐筆交易（只算做完的，筆數少的那塊只當描述）</h3><div class="lt-scroll"><table class="lt-tbl"><thead><tr><th></th><th class="num">筆數</th><th class="num">勝率</th>'
+    t2 = (f'<h3 class="lt-h3">逐筆交易（只算做完的，筆數少的那塊只當描述）</h3><div class="lt-scroll"><table class="lt-tbl lt-nowrap"><thead><tr><th></th><th class="num">筆數</th><th class="num">勝率</th>'
           f'<th class="num">賺賠比</th><th class="num">平均持有（天）</th><th class="num">最長連虧</th></tr></thead><tbody>{lay}</tbody></table></div>')
     alt = m.get("alt") or {}
     alt_txt = ""
@@ -802,7 +813,7 @@ def render_market_panel(key: str, state: dict, idx: list, seats: tuple, dp: dict
              _seat_table(key, rows, decided, extra, idx),
              _levels_table(state, key)]
     if sb.get(key):
-        parts.append(_sec("實盤紀錄", f'<div class="lt-lsb">{sb[key]}</div>', f'{_live_summary(key)}{sb.get("plain", "")}'))
+        parts.append(_sec("實盤紀錄", f'<div class="lt-lsb">{sb[key]}</div>', f'{_live_summary(key)}{sb.get("plain", "")}{LIVE_NOTE}'))
     else:
         parts.append(_sec("實盤紀錄", '<p><a href="/long-track/_scoreboard_body.html">看記分板 →</a></p>'))
     parts.append(_perf_block(key))

@@ -1993,7 +1993,7 @@ PURE_LC_JS = r'''
       grid: { vertLines: {visible: false}, horzLines: {color: P.grid} },
       rightPriceScale: { borderVisible: false, minimumWidth: 54 },
       localization: { dateFormat: 'yyyy-MM-dd' },
-      timeScale: { borderVisible: false, rightOffset: 3 },
+      timeScale: { borderVisible: false, rightOffset: 3, minBarSpacing: 0.05 },
       crosshair: { vertLine: {color: P.muted, labelBackgroundColor: P.ink}, horzLine: {visible: false, labelVisible: false} }
     });
     var pf = {type: 'custom', formatter: lvFmt, minMove: 1};
