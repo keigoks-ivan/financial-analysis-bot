@@ -652,7 +652,7 @@ def _scoreboard_parts() -> dict:
 def _perf_block(key: str) -> str:
     d = _load_json(PROFILE_JSON)
     m = d.get(key)
-    link = '<a href="/long-track/live-system-profile.html">看體檢全文 →</a>'
+    link = '<a href="/long-track/live-system-profile.html">看完整回測報告 →</a>'
     if not isinstance(m, dict):
         return _sec("系統績效", f"<p>{link}</p>")
     def v(k, unit=""):
@@ -838,7 +838,7 @@ def render_ref_panel(sb: dict) -> str:
                  f'<span class="pb-tag">💬 白話</span><span class="pb-body">{PLAIN}</span></div></details>')
     if sb.get("prereg"):
         parts.append(f'<div class="lt-lsb" style="margin-top:.9rem">{sb["prereg"]}</div>')
-    links = ('<ul class="lt-links"><li><a href="/long-track/live-system-profile.html">實單主系統體檢</a></li>'
+    links = ('<ul class="lt-links"><li><a href="/long-track/live-system-profile.html">實單主系統回測報告</a></li>'
              '<li><a href="/backtest/supertrend_vs_live/">Supertrend 對 W52 的比較</a></li>'
              '<li><a href="/long-track/why-qqq70-smh30.html">為什麼改 QQQ 70／SMH 30</a></li>'
              '<li><a href="/long-track-w52-adaptive/w52.html">舊規則 W52 對照線</a></li>'
