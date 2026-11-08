@@ -1703,6 +1703,38 @@ def _gate_once(ctx, st, idx):
     return True, clean, reds, yellows
 
 
+_CONTRA_PATCH_PATH = re.compile(r"^\$\.counter_evidence\.contradictions\[(\d+)\](.*)$")
+
+
+def _remap_contradiction_patch_paths(patches, before, after):
+    """修補回的 contradictions 索引是照閘與修補者看到的清單（before）寫的。
+    套用前回到預留狀態會把裁決／角色條目併成一條，後面的條目位置前移，照舊索引寫會蓋到下一條
+    （2026-11-08 FICO、WLDN 因此丟掉 rearm_trigger／signal 的歸因，AMD 修到錯的條目）。
+    依條目內容換成預留狀態的新位置；對不到的條目（程式條目，套用後會重建）丟棄這筆修補。回傳紀錄。"""
+    jp = patches.get("judgment")
+    if not isinstance(jp, dict):
+        return []
+    notes, out = [], {}
+    for path, val in jp.items():
+        m = _CONTRA_PATCH_PATH.match(path)
+        if not m or int(m.group(1)) >= len(before):
+            out[path] = val
+            continue
+        i, target = int(m.group(1)), before[int(m.group(1))]
+        new_i = next((j for j, e in enumerate(after) if e == target), None)
+        if new_i is None and isinstance(target, dict) and target.get("axis"):
+            new_i = next((j for j, e in enumerate(after)
+                          if isinstance(e, dict) and e.get("axis") == target.get("axis")), None)
+        if new_i is None:
+            notes.append("contradictions[{0}]：預留狀態找不到此條目，修補丟棄".format(i))
+            continue
+        if new_i != i:
+            notes.append("contradictions[{0}] → [{1}]".format(i, new_i))
+        out["$.counter_evidence.contradictions[{0}]{1}".format(new_i, m.group(2))] = val
+    patches["judgment"] = out
+    return notes
+
+
 def _gate_patch(ctx, st, clean, idx):
     """閘紅燈後的一通定點修補：Fable 單輪回 patch map，程式用舊鏈的候選目錄驗證後套用。回 (ok, note)。"""
     agents_dir = ctx.run_dir / "agents"
@@ -1745,9 +1777,14 @@ def _gate_patch(ctx, st, clean, idx):
     pre = _load_json(jpath)
     do_ = pre.get("decision_out") if isinstance(pre.get("decision_out"), dict) else {}
     held = do_.pop("verdict", None)  # schema 要 verdict：只借拿掉來產生預留條目，產完放回；候選驗證會重算
+    contra_before = list((pre.get("counter_evidence") or {}).get("contradictions") or [])
     pre, _ = program_drift_entries(ctx, pre, decision_out=None)
     if held is not None:
         do_["verdict"] = held
+    remap = _remap_contradiction_patch_paths(patches, contra_before,
+                                             (pre.get("counter_evidence") or {}).get("contradictions") or [])
+    if remap:
+        st.setdefault("patch_normalize", []).extend(remap)
     jpath.write_text(json.dumps(pre, ensure_ascii=False, indent=1), encoding="utf-8")
     applied, errors = ddreport._apply_patch_map(ctx.run_dir, patches)
     st.setdefault("patches", []).append({"round": idx, "requested": len(patches.get("judgment") or {}),
