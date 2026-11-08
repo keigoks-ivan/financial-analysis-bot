@@ -1,0 +1,306 @@
+你是 DD 管線 v20 的判斷層閘（gate），標的 APP（20261108）。你未參與寫判斷，這是一次跨模型冷讀，單回合、無工具：bundle 全文已附在本訊息「===== BUNDLE =====」分隔線之後，讀完就直接作答，沒有第二輪，也不能查證 bundle 以外的任何資料。
+
+## 任務
+
+依 bundle 內 `gate_card.md` 的 ①–⑧ checklist 逐條複核 `judgment.json`，只揪判斷級的錯，不判斷寫得好不好。判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級問題（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡；無實質問題給 🟢。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：`gate_card.md`（①–⑧ checklist 全文與 🔴／🟡／🟢 口徑）、被引用事實與負向條目子集（核對 `fact_refs` 用）、`scenario_meta.json`（情境樹權威值，對帳 `decision_inputs.irr_base_pct`／`ev5y_pct` 用）、`judgment.json` 全文（被審對象，原樣）。
+
+## 禁
+
+- 禁 WebSearch／WebFetch、禁開 bundle 以外任何檔（包含 `docs/dd/`、`.dd_build/` 下的其他產物）。
+- 禁跑任何腳本（`validate_judgment.py`／`dd_decision.py`／`dd_scenario.py` 已在判斷端跑過，機械層不歸你）。
+- 禁提整段改寫判斷、禁自己動手修補 `judgment.json`——你只出稽核，修補是另一支流程的事。
+- 證據包裡沒有的東西不得臆測補白，只講證據包內找得到依據的話。
+
+
+===== BUNDLE =====
+
+## ① gate_card.md（判斷層閘卡）
+
+<!-- source: scripts/dd_prompts/gate_contract.md sha256:90928128665c694a; .claude/skills/stock-analyst/references/critic-gates.md sha256:8dff4ac45280acfd git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+<!-- 2026-10-20 ⑤ 改程式判定；來源 gate_contract §⑤／critic-gates ⑤ 同日改成同一條規則（核心軸 none 🔴、非核心 🟡）；重新濃縮時以本卡 ⑤ 為準 -->
+
+你是 DD 管線 v20 的判斷層閘（gate），sonnet，單輪、無工具。你未參與寫判斷，這是一次跨模型冷讀。
+輸入：`judgment.json`（待審判斷物）＋ `facts.json`（事實表，每軸 finding 帶 source／as_of／direction）。
+任務只有一件：依下列 checklist 逐條複核 `judgment.json`，只揪**判斷級**的錯，不判斷寫得好不好。
+判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡。
+禁 WebSearch／WebFetch、禁讀輸入以外任何檔、禁改 `judgment.json`，只出稽核清單。
+
+## checklist（①–⑧ 全出，不得跳號、不得「同上」帶過）
+
+① 競爭惡化——份額流失／新進入者／客戶 second-source／大客戶轉單。查 facts.json 對應軸（competitive_share_entrants／customer_second_source／customer_concentration_credit）裡負向、或應被引用的 finding，核對 judgment.json 的 `moat.threats`／`moat.competitors`／`contradictions[]`／`decision_inputs.bear` 是否接住；被引用=N 卻是負向的 finding 即漏接。[gate_contract §①]
+
+② 供需 durability——緊缺或過剩是結構還是週期，供給可逆性是否寫進 bear 機率。facts.json 的 supply_demand_durability 軸負向 finding，若未被引用且未列 `evidence_dismissed`，須在 `premortem`／`decision_inputs.bear` 找到對應處理，找不到即 🔴。[gate_contract §②]
+
+③ 其他結構變數（開放軸）——法規／政策／關稅／反壟斷／補貼、通路重構、商業模式轉移、替代技術、客戶結構轉移。找 facts.json 覆蓋總覽裡「有 finding 卻沒人接住」的軸，對照 `contradictions[]`／`premortem.blind_spots`／`triggers[]`；閘禁搜尋，不重新查有沒有漏掉的產業變化。[gate_contract §③]
+
+④ priced-in——共識與賣方目標價 vs 現價，裁決是否只是把市場已知的事再說一次。看 `decision_inputs.market_wrong_reason_given` 是否有具體內容（非空泛套話），對照 facts.json 的 `latest_quarter_kpis[].vs_consensus` 與 `valuation_current`。判斷寫「不追／等價格」而裁決是進場、`decision_inputs.wait_for_price` 卻沒填 true ＝ 矛盾；填了 true 時裁決落觀望是規則結果，不算矛盾，只看 `wait_for_price_condition` 是否具體可驗。[gate_contract §④]
+
+⑤ 覆蓋面掃描——**燈號由程式判定**（核心軸 none→🔴；只有非核心軸 none→🟡；全 found／not_applicable→🟢），bundle 附程式結果，你回的 ⑤ 燈號會被覆寫。你只評論：facts.json 點名 status="none"／"not_applicable" 的軸，查詢是否切題（不以查詢次數計）、判斷有沒有交代缺口對結論的影響；不得因缺軸自行升 🔴。
+
+⑥ 量化模組完整性抽查（強制）——(i) `moat.roic_durability.reinvest_rate`／`.roiic` 有沒有 `.formula_note` 真算（寫「估計約 X%」無算式＝🔴）；`.endo_ceiling` 是否與共識 EPS CAGR（facts.json）交叉檢查，天花板 < CAGR 且 `reasoning` 未處理＝🔴。(ii) `scenario_inputs` 的 Bull/Base/Bear EPS 是否有實質價差（Bull 幾乎等於 Base、只靠倍數撐估值＝退化，🔴）；`scenario_inputs.valuation_basis`＝`sales_multiple`（虧損公司，程式決定）時改查 Bull/Base 的營收路徑（`rev`）：Bull 終端營收須實質高於 Base、Bull 前兩年不得與 Base 相同，只靠終端 EV/S 撐價差＝退化，🔴；並看 Bear 的 `net_debt_y5`／`shares_y5` 是否反映該情境的融資缺口與稀釋（債重公司 Bear 沿用目前淨負債與股數＝樂觀，🟡）。(iii) `decision_inputs.irr_base_pct`／`ev5y_pct`／`asym_ratio` 缺省或 null 合法（程式回填），但 ROIIC 缺輸入、口徑或算式仍為實質問題。[gate_contract §⑥]
+
+⑦ 數字新鮮度——`judgment.json` 引用的每個營運指標，是否不比 facts.json 的 `latest_quarter_kpis[].as_of` 對應項目舊？有一個更舊即 🔴。`decision_inputs.consensus_rev_3m_pct` 若依附 `stale=true` 來源，確認未被當唯一依據；引用摘要內容的欄位須標「來源：摘要」。[gate_contract §⑦]
+
+⑧ 前份漂移歸因（QC-49）——facts.json 的 `prior_dd` 存在時，`drift_watch` 20 欄中有變動的每一欄是否都映射到 `contradictions[]` 一個帶 `cause` 的條目（可多欄共用一條目）、且主因站得住；**裁決／核心假設／情境方法變更不得併入純價格原因**；漏欄或無歸因＝🔴；前份該欄本身空或缺欄者不計，給 🟡 或 🟢。無前份時填 🟢 並註「無前份」。[gate_contract §⑧]
+  - `axis` 以 `[程式歸因]` 開頭的條目是程式算的（均線、現價、期望報酬拆解、裁決、角色）。「期望報酬拆解」兩條是程式用本次情境先換情境、再換股價算出的數字（asym_ratio／ev5y_pct／irr_base_pct／bull_5y_price／bear_5y_price），視為已歸因，其中「價格變動」只是股價效果，不適用「不得併入純價格原因」。裁決／角色條目是反事實結果（逐一把矩陣輸入改回前份值重算），視為已歸因；其中「價格變動」是反事實證明估值燈單獨改變了裁決，不適用上面「不得併入純價格原因」，不要為此給 🔴（2026-09-24）。
+  - QC-49 承繼（90 天內翻面須引前次已發火觸發器）只比方向：進場／觀望／迴避。「進場」與「進場·條件式」同方向，角色（核心／衛星）變動也不在 QC-49 範圍；判斷者答 `decision_inputs.qc49_inherit_prior`，前次裁決與角色由程式帶入。
+
+## (a)(b) 兩項強制職責（2026-08-06 拍板，不得因精簡拿掉）
+
+(a) 覆蓋面掃描：逐軸點名「哪一軸整個沒查」，做法同 checklist ⑤（燈號由程式判定，你只評論）。
+(b) 量化模組完整性抽查：ROIC×再投資率真算與否、內生天花板對帳共識 CAGR、情境樹 Bull/Base/Bear EPS 價差是否實質、IRR 內部對帳，做法同 checklist ⑥。
+(c) 數字可回溯：判斷引用的歷史數字逐一核對 facts.json 原文的期間與單位；反證條目要查採納理由與後果是否成立，不能只因編號存在就算過。[gate.md.tmpl 2026-09-11 註腳]
+
+## 🔴／🟡／🟢 口徑
+
+判斷級 🔴 限下列三種形狀：
+
+1. **證據包已有而判斷未接**——證據包內存在的 finding／數字，判斷物完全沒接進 `contradictions`／`moat.threats`／`premortem`／`triggers`／`thesis.R`，也沒寫進 `evidence_dismissed[]`；
+2. **算術或機率防線失守**——推導不可複算、內部恆等式不對帳、情境樹退化、機率與其自身依據矛盾；
+3. **裁決與自身輸入矛盾**——`decision_inputs`／`scenario_meta`／`decision_out` 三者互斥，或裁決與判斷物自己寫下的理由相反。
+
+**資料級不算 🔴**（證據包本身缺料、來源不夠新、某軸查不到）——那是 Stage 0 的問題，最多給 🟡 並在附註點名。無實質問題給 🟢；有實質但不改裁決方向的給 🟡。
+
+## 輸出格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
+
+
+---
+
+## ②b 被引用的事實與負向條目（v19；閘要查數字時不必猜）
+
+### 判斷檔 `fact_refs` 引到的事實（33 條）
+- `f_kpi0_revenue_gaap`（q1_business）｜Revenue (GAAP)＝2184.8 USD mn｜期間與口徑：Q3 2026（季末 2026-09-30，公告於 2026-11-04）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 8-K Exhibit 99.1 Q3 2026 新聞稿 https://www.sec.gov/Archives/edgar/data/0001751008/000175100826000068/exhibit991-3q26earningspre.htm（numbers.latest_quarter_kpis.items[0]，as_of Q3 2026（季末 2026-09-30，公告於 2026-11-04））
+  - 註記：高於公司自身指引上緣約 $100mn（Q3 指引 $2,055–2,085mn，來源：Q2 新聞稿）；外部共識未取得
+- `f_kpi1_gaap_operating_income`（q1_business）｜GAAP operating income＝1709.0 USD mn｜期間與口徑：Q3 2026（季末 2026-09-30，公告於 2026-11-04）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 8-K Exhibit 99.1 Q3 2026 新聞稿 https://www.sec.gov/Archives/edgar/data/0001751008/000175100826000068/exhibit991-3q26earningspre.htm（numbers.latest_quarter_kpis.items[1]，as_of Q3 2026（季末 2026-09-30，公告於 2026-11-04））
+  - 註記：未取得
+- `f_kpi2_adjusted_ebitda_non_gaap`（q1_business）｜Adjusted EBITDA（公司未報 non-GAAP 營業利益，以此代）＝1842.2 USD mn｜期間與口徑：Q3 2026（季末 2026-09-30，公告於 2026-11-04）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 8-K Exhibit 99.1 Q3 2026 新聞稿 https://www.sec.gov/Archives/edgar/data/0001751008/000175100826000068/exhibit991-3q26earningspre.htm（numbers.latest_quarter_kpis.items[2]，as_of Q3 2026（季末 2026-09-30，公告於 2026-11-04））
+  - 註記：未取得；Q4 前 Q3 指引 $1,710–1,740mn
+- `f_kpi3_free_cash_flow`（q1_business）｜Free cash flow＝1418.4 USD mn｜期間與口徑：Q3 2026（季末 2026-09-30，公告於 2026-11-04）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 8-K Exhibit 99.1 Q3 2026 新聞稿 https://www.sec.gov/Archives/edgar/data/0001751008/000175100826000068/exhibit991-3q26earningspre.htm（numbers.latest_quarter_kpis.items[3]，as_of Q3 2026（季末 2026-09-30，公告於 2026-11-04））
+  - 註記：未取得
+- `f_kpi5_guidance_q4_2026_revenue`（q1_business）｜Guidance Q4 2026 revenue＝2,365–2,395 USD mn｜期間與口徑：Q3 2026（季末 2026-09-30，公告於 2026-11-04）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：guidance
+  - 來源：公司 8-K Exhibit 99.1 Q3 2026 新聞稿 https://www.sec.gov/Archives/edgar/data/0001751008/000175100826000068/exhibit991-3q26earningspre.htm（numbers.latest_quarter_kpis.items[5]，as_of Q3 2026（季末 2026-09-30，公告於 2026-11-04））
+  - 註記：未取得
+- `f_kpi6_guidance_q4_2026_adjuste`（q1_business）｜Guidance Q4 2026 Adjusted EBITDA＝1,995–2,025 USD mn｜期間與口徑：Q3 2026（季末 2026-09-30，公告於 2026-11-04）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：guidance
+  - 來源：公司 8-K Exhibit 99.1 Q3 2026 新聞稿 https://www.sec.gov/Archives/edgar/data/0001751008/000175100826000068/exhibit991-3q26earningspre.htm（numbers.latest_quarter_kpis.items[6]，as_of Q3 2026（季末 2026-09-30，公告於 2026-11-04））
+  - 註記：未取得
+- `f_peer_app_gross_margin_pct`（q2_moat）｜APP 毛利率＝88.78 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.APP.gross_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_peer_app_operating_margin_pct`（q2_moat）｜APP 營業利益率＝77.78 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.APP.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_peer_app_fcf_margin_pct`（q2_moat）｜APP FCF 利潤率＝64.07 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.APP.fcf_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_peer_meta_operating_margin_pct`（q2_moat）｜META 營業利益率＝32.86 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.META.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_peer_googl_operating_margin_pct`（q2_moat）｜GOOGL 營業利益率＝33.32 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.GOOGL.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_peer_ttd_operating_margin_pct`（q2_moat）｜TTD 營業利益率＝19.61 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.TTD.operating_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_u_operating_margin_pct`（q2_moat）｜U 營業利益率＝-31.46 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.U.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_consensus_eps_fy1`（q5_valuation）｜FY1 共識 EPS＝16.65 USD/share｜期間與口徑：2026-11-07／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy1，as_of 2026-11-07）
+- `f_consensus_eps_fy2`（q5_valuation）｜FY2 共識 EPS＝20.01 USD/share｜期間與口徑：2026-11-07／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy2，as_of 2026-11-07）
+- `f_consensus_eps_fy3`（q5_valuation）｜FY3 共識 EPS＝24.27 USD/share｜期間與口徑：2026-11-07／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy3，as_of 2026-11-07）
+- `f_rev_consensus_fy1_m`（q5_valuation）｜FY1 共識營收（百萬）＝8337.19 USD m｜期間與口徑：2026-11-08／yfinance revenue_estimate 0y 平均（25 位分析師）；與 f_consensus_eps_fy1 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy1.avg_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_rev_consensus_fy2_m`（q5_valuation）｜FY2 共識營收（百萬）＝10431.08 USD m｜期間與口徑：2026-11-08／yfinance revenue_estimate +1y 平均（32 位分析師）；與 f_consensus_eps_fy2 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy2.avg_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_kpi4_sbc`（q4_capital）｜SBC＝84.2 USD mn｜期間與口徑：Q3 2026（季末 2026-09-30，公告於 2026-11-04）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 8-K Exhibit 99.1 Q3 2026 新聞稿 https://www.sec.gov/Archives/edgar/data/0001751008/000175100826000068/exhibit991-3q26earningspre.htm（numbers.latest_quarter_kpis.items[4]，as_of Q3 2026（季末 2026-09-30，公告於 2026-11-04））
+  - 註記：n/a
+- `f_net_debt_m`（q5_valuation）｜目前淨負債（總債務－現金及短投）＝342.41 USD m｜期間與口徑：2026-11-08／yfinance 最新一季：總債務 3516.14、現金 3173.73（含租賃負債口徑）｜kind：realized
+  - 來源：—（numbers.capital_structure.net_debt_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_shares_diluted_m`（q5_valuation）｜目前股數（百萬股）＝331.32 m shares｜期間與口徑：2026-11-08／yfinance impliedSharesOutstanding（各類股合計）｜kind：realized
+  - 來源：—（numbers.capital_structure.shares_diluted_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_price_at_dd`（q5_valuation）｜判斷日股價＝391.22 USD｜期間與口徑：2026-11-06（RTH 收盤，UTC）／收盤價，與情境樹起點同源｜kind：realized
+  - 來源：—（numbers.price_at_dd，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_pe_current`（q5_valuation）｜Trailing P/E（現值）＝26.34 x｜期間與口徑：2026-11-06（RTH 收盤，UTC）／3 個年度端點內的分位＝0.0｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.pe，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_fwd_pe_latest`（q5_valuation）｜Forward P/E（最近快照）＝23.5 x｜期間與口徑：2026-11-07／分母＝FY1 EPS 16.65，分子＝快照價 391.22｜kind：realized
+  - 來源：—（numbers.valuation_history.fwd_recent_window.points[-1]，as_of 2026-11-07）
+- `f_ps_current`（q5_valuation）｜P/S（現值）＝17.04 x｜期間與口徑：2026-11-06（RTH 收盤，UTC）／4 個年度端點內的分位＝42.2｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.ps，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_ev_s_current`（q5_valuation）｜EV/S（現值）＝17.08 x｜期間與口徑：2026-11-06（RTH 收盤，UTC）／4 個年度端點內的分位＝40.9｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.ev_s，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_ev_m`（q5_valuation）｜目前企業價值 EV（市值＋淨負債）＝129962.2 USD m｜期間與口徑：2026-11-08／市值 129619.79 ＋ 淨負債 342.41｜kind：realized
+  - 來源：—（numbers.capital_structure.ev_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_rsi14`（q5_valuation）｜RSI(14)＝76.31｜期間與口徑：2026-11-06（RTH 收盤，UTC）／日線 14 期；rsi14_usable=True｜kind：realized
+  - 來源：—（numbers.momentum_26w.rsi14，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_week26_return_pct`（q5_valuation）｜26 週報酬＝-16.5 %｜期間與口徑：2026-11-06（RTH 收盤，UTC）／含息前價格報酬，對照基準 ^GSPC｜kind：realized
+  - 來源：—（numbers.momentum_26w.return_26w_pct，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_consensus_rev_3m_fy1_pct`（q5_valuation）｜FY1 共識近 3 個月修正＝0.85 %｜期間與口徑：2026-08-13 → 2026-11-07／FY1 共識 EPS 16.51 → 16.65（Koyfin 快照，約 90 天間距）；投影成 decision_inputs.consensus_rev_3m_pct｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy1 ÷ snapshot_90d_prior.fy1，as_of 2026-11-07）
+- `f_ma_w52`（q5_valuation）｜52 週均線＝451.12 USD｜期間與口徑：2026-11-08／週線收盤 SMA（yfinance auto_adjust）｜kind：realized
+  - 來源：程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）（ma_snapshot.json，as_of 2026-11-08）
+- `f_ma_w104`（q5_valuation）｜104 週均線＝425.32 USD｜期間與口徑：2026-11-08／週線收盤 SMA（yfinance auto_adjust）｜kind：realized
+  - 來源：程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）（ma_snapshot.json，as_of 2026-11-08）
+- `f_ma_w250`（q5_valuation）｜250 週均線＝205.15 USD｜期間與口徑：2026-11-08／週線收盤 SMA（yfinance auto_adjust）｜kind：realized
+  - 來源：程式計算：dd_screener_ma.compute_ma_snapshot（yfinance 週線收盤，W52/W104/W250 SMA，W250 斜率＝13 週變化）（ma_snapshot.json，as_of 2026-11-08）
+
+### findings_digest 中方向為負或來源衝突的條目（15 條）
+- `competitive_share_entrants#0`（competitive_share_entrants｜方向 -｜狀態 ok）：10-K FY2025 列示競爭者包含 Meta、Google、Amazon、Unity，部分同時是合作夥伴與客戶，客戶可能自建產品取代 AppLovin。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-19）｜affects：moat_trend、decision_inputs.bear
+- `competitive_share_entrants#2`（competitive_share_entrants｜方向 -｜狀態 ok）：新進入者 CloudX 推出 SDK-less AI 廣告產品，APP 當日股價下跌
+  - 來源：Marketbeat/Nasdaq 文章（as_of 2026-03-01）｜affects：moat_trend、decision_inputs.bear
+- `regulatory_antitrust#0`（regulatory_antitrust｜方向 -｜狀態 ok）：10-K FY2025 Item 3 列示的法律程序為證券集體訴訟（class period 2024-11-07 至 2025-03-27），未列反壟斷案件；風險因子僅泛稱反壟斷法可能限制併購。
+  - 來源：SEC EDGAR 10-K FY2025 Item 3 Legal Proceedings（as_of 2026-02-19）｜affects：thesis.R、decision_inputs.bear
+- `regulatory_antitrust#1`（regulatory_antitrust｜方向 -｜狀態 ok）：SEC 調查仍在進行（Bloomberg 2026-02 報導），範圍未公開、未對公司或高管提出指控；起因報導為違反平台夥伴服務協議以推送更多定向廣告。屬證券／資料收集監管，非反壟斷。
+  - 來源：The Star（Bloomberg 轉載）SEC probe involving AppLovin still active（as_of 2026-02-21）｜affects：thesis.R、decision_inputs.bear
+- `regulatory_antitrust#2`（regulatory_antitrust｜方向 -｜狀態 ok）：報導稱 FTC 調查 AppLovin 的用戶資料收集方式（隱私，非反壟斷）
+  - 來源：Game World Observer（as_of 2025-10-07）｜affects：thesis.R、decision_inputs.bear
+- `reg_tariff_export#0`（reg_tariff_export｜方向 -｜狀態 ok）：10-K 風險因素：公司在中國有營運，美中緊張可能影響業務；美國對部分產品／技術輸往中國要求出口許可，但公司目前產品不受這些管制限制；中國政府曾對美國關稅與出口管制報復，可能間接影響公司。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-19）｜affects：thesis.R、decision_inputs.bear
+- `geo_supply_chain#0`（geo_supply_chain｜方向 -｜狀態 ok）：10-Q（2026-09 期）稱大量營收透過有限數量第三方發行平台（Apple App Store、Google Play、Meta）
+  - 來源：AppLovin 10-Q FY2026 (SEC)（as_of 2026-11-05）｜affects：thesis.R、decision_inputs.bear
+- `geo_supply_chain#1`（geo_supply_chain｜方向 -｜狀態 ok）：風險追蹤站稱 AppLovin 在中國與以色列有營運/員工，受美中緊張與中東衝突成本影響
+  - 來源：policyrisk.com APP（as_of 2026-10-01）｜affects：thesis.R
+- `substitute_technology#0`（substitute_technology｜方向 -｜狀態 ok）：AppLovin 10-K FY2025 風險因素稱廣告生態技術變動快，競爭對手可能更快或更有效採用新興技術或商業模式，做出技術上更優越的產品；並提到需因應 AI 對廣告生態的影響。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-19）｜affects：moat_trend、decision_inputs.bear
+- `substitute_technology#1`（substitute_technology｜方向 -｜狀態 ok）：CloudX 以 SDK-less 模式上市，被視為對 AppLovin 護城河的潛在技術威脅，APP 當日股價大跌；創辦人稱定位為補充而非搶客。
+  - 來源：Motley Fool: Why AppLovin fell double digits this week（as_of 2026-02-06）｜affects：moat_trend、decision_inputs.bear
+- `substitute_technology#2`（substitute_technology｜方向 -｜狀態 ok）：CloudX 推出後 APP 股價下跌，散戶稱可忽略雜訊。
+  - 來源：Asianet Newsable: APP stock falls following CloudX launch（as_of 2026-02-04）｜affects：moat_trend
+- `major_events#0`（major_events｜方向 -｜狀態 ok）：證券集體訴訟（10b-5）自 2025-03 起在加州北區提起，修正訴狀列 Foroughi、Stumpf、Chen、Shikin 為被告，集體期間 2024-11-07 至 2025-03-27，仍在進行（FY2025 10-K）。
+  - 來源：SEC EDGAR 10-K FY2025 Item 3（as_of 2026-02-19）｜affects：thesis.R、decision_inputs.bear
+- `major_events#1`（major_events｜方向 -｜狀態 ok）：Bloomberg 報導 SEC 調查 AppLovin 資料蒐集／廣告做法（2025-10，股價單日約 -14%）；搜尋結果未見 2026 年結案或執法進展。
+  - 來源：StreetInsider/Reuters: AppLovin probed by US SEC over data-collection practices, Bloomberg News reports（as_of 2025-10-06）｜affects：thesis.R、decision_inputs.bear、triggers
+- `lawsuit_class_action#0`（lawsuit_class_action｜方向 -｜狀態 ok）：證券集體訴訟進行中，集體期間 2024-11-07 至 2025-03-27。
+  - 來源：SEC EDGAR 10-K FY2025 Item 3（as_of 2026-02-19）｜affects：thesis.R、decision_inputs.bear
+- `sec_investigation_restatement#0`（sec_investigation_restatement｜方向 -｜狀態 ok）：Bloomberg 報導 SEC 調查資料蒐集做法（2025-10）；未見2026年進展，近12個月8-K無Item 4.02重編。
+  - 來源：StreetInsider/Reuters: AppLovin probed by US SEC over data-collection practices, Bloomberg News reports（as_of 2025-10-06）｜affects：thesis.R、decision_inputs.bear、triggers
+
+### 事實表自陳的缺口（1 條）
+- q6_how_wrong：digest.qa_flags 有 3 條管理層迴避紀錄，內容須由事實表 agent 逐條落成事實或缺口
+
+---
+
+scenario_meta.json sidecar（判斷層情境樹權威，checklist ⑥(iii) 對帳用）
+
+（來源：/Users/ivanchang/financial-analysis-bot/.dd_build/runs/APP_20261108/scenario_meta.json）
+（以下 JSON 為緊湊格式（省空白），內容完整）
+```json
+{"bull_5y_price":1207.5,"bear_5y_price":253.5,"p_bull_pct":25,"p_bear_pct":30,"upside_5y_pct":79.4,"ev5y_pct":77.3,"irr_base_pct":12.4,"asym_ratio":4.9,"scenario_tree":{"terminal_label":"FY2031E","start":{"eps":16.65,"pe":23.5,"basis":"FY2026E 共識 EPS（FY1），與終端年以當年度 EPS 計算的倍數同口徑；Y1 為 FY2027E"},"eps":{"bull":[22.8,29.0,36.5,44.5,52.5],"base":[21.0,25.5,30.0,34.5,39.0],"bear":[18.5,18.0,18.0,18.8,19.5]},"pe":{"bull":23,"base":18,"bear":13},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":0,"net_buyback":0},"second_stage":{"bull_cagr_pct":15,"base_cagr_pct":10},"valuation_dependent":false}}
+```
+
+---
+
+## ④b 舊逐字稿摘錄（前一季＋投資人日；對照管理層以前說過什麼）
+
+### APP_Q2_2026_Earnings_Call_20260805.md
+- 2026-08-05｜Matt Stumpf｜guidance：Q3 營收指引 20.55–20.85 億美元，年增 46–48%、季增 7–8%（原話："We expect revenue between $2.055 billion and $2.085 billion"）
+- 2026-08-05｜Matt Stumpf｜guidance：Q3 調整後 EBITDA 指引 17.1–17.4 億美元，利潤率約 83%（原話："adjusted EBITDA margin of approximately 83%"）
+- 2026-08-05｜Matt Stumpf｜guidance：Q3 指引不含尚未部署的新模型釋出（原話："It does not assume additional"）
+- 2026-08-05｜Matt Stumpf｜guidance：本季指引納入已上線模型改善與已增加的算力成本，與過去指引哲學的差異（原話："we've guided inclusive of the model"）
+- 2026-08-05｜Matt Stumpf｜guidance：全年自由現金流轉換率預期正常化至調整後 EBITDA 約 75%，Q3 改善（原話："normalize to roughly 75% of adjusted"）
+- 2026-08-05｜Adam Foroughi｜guidance：CEO 稱長期可年複合成長約 30%（原話："this business can compound at roughly 30%"）
+- 2026-08-05｜Adam Foroughi｜guidance：CEO 承認 Q2 營收略低於指引中點、EBITDA 略低於區間（原話："And this quarter, we fell short of that standard."）
+- 2026-08-05｜Matt Stumpf｜margin：Q2 營收 19.2 億美元，年增 53%、季增 4%（原話："second quarter revenue of $1.92 billion, growing"）
+- 2026-08-05｜Matt Stumpf｜margin：Q2 調整後 EBITDA 16.1 億美元，年增 58%，利潤率較去年同期擴張約 300bp（原話："Adjusted EBITDA was $1.61 billion, up 58% year-over-year"）
+- 2026-08-05｜Matt Stumpf｜margin：季增成本上升主因為訓練與新模型開發的算力；管理層以 EBITDA 金額與自由現金流而非利潤率管理（原話："We manage this business to EBITDA dollars and free cash flow rather than"）
+- 2026-08-05｜Matt Stumpf｜margin：Q2 季對季增量營收轉 EBITDA 的流入率 70%（原話："Quarter-over-quarter flow-through to adjusted"）
+- 2026-08-05｜Matt Stumpf｜margin：算力口徑：每增加一美元營收約花 0.10 美元於算力，預期維持，長期可能有波動（原話："of the incremental dollar in revenue, we're spending about $0.10 on"）
+- 2026-08-05｜Matt Stumpf｜margin：長期仍高度有信心 EBITDA 利潤率維持在低 80% 區間，並預告短期可能波動（原話："kind of that 80, the low 80% EBITDA margin."）
+- 2026-08-05｜Matt Stumpf｜margin：Q2 自由現金流 8.63 億美元，低於正常轉換率，歸因於國際現金稅與利息支付時點（原話："Free cash flow for the quarter was $863 million."）
+- 2026-08-05｜Adam Foroughi｜risk：Q2 失誤歸因於模型改善步伐低於正常，下一次升級在季末後才落地；稱無需求或競爭變化（原話："nothing we saw suggested weakening advertiser demand or a change in the competitive"）
+- 2026-08-05｜Adam Foroughi｜risk：管理層承認模型提升屬研發性質，無法保證每季都有提升（原話："there's no guarantee that we're"）
+- 2026-08-05｜Matt Stumpf｜risk：SEC 查詢已結束，無建議採取行動（原話："concluded its inquiry with no recommended action."）
+- 2026-08-05｜Adam Foroughi｜competition：MAX 發行商收益季增雙位數，瀑布流份額維持一致（原話："MAX publisher earnings grew double digits quarter-over-quarter"）
+- 2026-08-05｜Adam Foroughi｜competition：回應 Android 份額問題：Android 較競爭，因 Google 為大型競爭者（原話："the Android platform is more competitive because there's a very big competitor"）
+- 2026-08-05｜Adam Foroughi｜competition：管理層稱遊戲買量並非零和市場（原話："we've proven the space is not zero-sum"）
+- 2026-08-05｜Adam Foroughi｜competition：回應手遊生態健康度質疑（下載下滑、CPI 上升）：稱 CPI 上升不代表價值下降，且資料遺漏站外內購（原話："So as the cost goes"）
+- 2026-08-05｜Adam Foroughi｜customer：電商/消費端廣告主支出創新高，較 Q4 2025 高 28%（原話："finishing 28% above Q4 2025 levels"）
+- 2026-08-05｜Adam Foroughi｜customer：消費端目前是少數廣告主貢獻較多，焦點為中型市場品牌（原話："that few advertisers contributing more today."）
+- 2026-08-05｜Adam Foroughi｜customer：消費端廣告主尚未達到支出天花板，平台被視為測試類預算（原話："We're deemed a new bucket, so a testing"）
+- 2026-08-05｜Adam Foroughi｜customer：新客首年總支出 7 萬美元的指標，預期隨夥伴與中型市場策略而上升（原話："It will likely go up as we do partnership deals and target mid-market."）
+- 2026-08-05｜Matt Stumpf｜customer：美國 vs 國際營收：國際近乎持平，管理層稱無重大特別原因（原話："No, nothing material."）
+- 2026-08-05｜Adam Foroughi｜product：平台以原名 AppLovin Ads Manager 對外公開，並先從中型市場廣告主切入，靠夥伴關係推進（原話："AppLovin Ads Manager."）
+- 2026-08-05｜Adam Foroughi｜product：創意仍是最大障礙；30–60 秒高品質影片尚無法開箱即用產出（原話："The creative is the biggest hurdle"）
+- 2026-08-05｜Adam Foroughi｜product：潛在客戶開發（lead gen）業務仍在測試，無新進展（原話："Lead gen business is still work in progress."）
+- 2026-08-05｜Adam Foroughi｜product：供給擴張路徑：先到非遊戲 App，再開放網路，最後 CTV；目前不具備執行條件（原話："We're just not at the point yet where we can go execute on it."）
+- 2026-08-05｜Adam Foroughi｜product：合作夥伴策略：透過電商分析公司等第三方，以更精準方式引入廣告主（原話："it's a more targeted way to get the"）
+- 2026-08-05｜Matt Stumpf｜capital_allocation：Q2 回購與扣繳約 114 萬股、5.51 億美元，剩餘授權約 18 億美元（原話："approximately 1.14 million shares"）
+- 2026-08-05｜Matt Stumpf｜capital_allocation：回購步調較 Q1 約 10 億美元放緩，歸因於現金流較低，稱非信念改變（原話："does not indicate a change in"）
+- 2026-08-05｜Matt Stumpf｜capital_allocation：期末現金 30.5 億美元、總債務 37 億美元，淨槓桿約 0.1 倍，長期預期營運於約 1 倍（原話："puts net"）
+- 2026-08-05｜Adam Foroughi｜commitment：只要額外算力帶來顯著更多營收，管理層承諾繼續投入（原話："that's a trade we'll make every day."）
+- 2026-08-05｜Adam Foroughi｜commitment：管理層稱 Q3 開局強勁、業務回到預期軌道並重新加速（原話："Q3 is off to a strong start, and the business is back on the"）
+- 2026-08-05｜Matt Stumpf｜commitment：管理層稱只在看到增量營收時才增加支出，並說明未來若算力占比增加會溝通原因（原話："we'll communicate that and the reasons behind why we've increased compute"）
+- 2026-08-05｜Adam Foroughi｜commitment：管理層不給消費端廣告主擴張到全市場的時間表（原話："We can't tell you"）
+
+### 問答異常語氣（迴避／改口／保留）
+- APP_Q2_2026_Earnings_Call_20260805.md｜問：Ralph Schackart：為何沒拿到預期的模型提升、能否診斷？｜答法：回答以「這是研發、無保證」為主，未給出具體原因診斷，也未量化 Q3 提升幅度
+- APP_Q2_2026_Earnings_Call_20260805.md｜問：Omar Dessouky：開放平台約 6 週的廣告主導入表現是否符合預期、數量趨勢｜答法：未提供廣告主數量，改談中型市場焦點與長期過程，並稱無法預測何時擴大
+- APP_Q2_2026_Earnings_Call_20260805.md｜問：Aaron Lee：Q3 之後算力投入是否維持墊高、能見度多高｜答法：重申每增量一美元營收約 0.10 美元算力，未給 Q3 後的具體數字，保留「長期可能有變動」
+
+---
+
+| axis | status | n_findings | n_queries |
+|---|---|---|---|
+| competitive_share_entrants | found | 3 | 2 |
+| customer_second_source | found | 1 | 2 |
+| customer_concentration_credit | found | 2 | 2 |
+| supply_demand_durability | found | 4 | 2 |
+| regulatory_antitrust | found | 3 | 3 |
+| reg_tariff_export | found | 2 | 1 |
+| geo_supply_chain | found | 2 | 2 |
+| end_markets | found | 5 | 3 |
+| substitute_technology | found | 3 | 2 |
+| channel_business_model_shift | found | 2 | 2 |
+| capital_markets_pricing | found | 4 | 3 |
+| major_events | found | 3 | 2 |
+
+---
+
+## 前份判斷摘要（含 drift_watch_prior 20 欄前份值；漂移歸因對帳用）
+
+```json
+{"date":"20260710","verdict":"進場","role":"衛星","H":{"status":"ok","format":"table","rows":[{"id":"H1","text":"AXON 的 ROAS 優勢是合法的 AI 護城河（源自規模 + 模型飛輪），且能通過 SEC 檢驗","columns":{"2Y 驗證點":"SEC 無重大處分結案／和解；AXON 廣告 rev YoY 維持 ≥40%","5Y 驗證點":"後 ATT 世界 AXON 仍為圍牆外成效標竿","10Y 驗證點":"模型飛輪隨資料量自我強化，不依賴單一夥伴資料","具體數字門檻":"SEC 調查無 Wells Notice；AXON 廣告 rev YoY ≥40%（Q4'25 +90%、Q1'26 +59%）","信息來源":"APP Q1'26 法說（2026-05-06）；SEC 對 Bloomberg 確認 active（2026）","漂移觸發":"SEC 發 Wells Notice 單事件即觸發即時重評；AXON rev YoY 連 2 季 &lt;25%（TTM）"}},{"id":"H2","text":"e-commerce/consumer 第二曲線兌現（AXON 走出手遊）","columns":{"2Y 驗證點":"self-serve 年化 ARR ≥ $1.45B；go-live 轉換率升破 65%","5Y 驗證點":"非遊戲廣告成為營收主力之一","10Y 驗證點":"AXON 成為圍牆外電商投放預設層","具體數字門檻":"FY2026 consumer vertical 年化 ARR ≥ $1.45B；self-serve 2026-06 全球 GA（已達成）；go-live 轉換率由 ~57% 升","信息來源":"Q1'26 法說；BofA 估 e-com Q1'26 net rev ~$90M（run-rate $360M+）；管理層揭露 57% qualified→go-live","漂移觸發":"ARR 連 2 季 &lt;$300M 年化，或 go-live 轉換率連 2 季不升破 65%（新增閘，回應轉換瓶頸）"}},{"id":"H3","text":"市場在 FY2027 EPS 兌現 + SEC 陰霾散去後重新定價","columns":{"2Y 驗證點":"Fwd PE FY+2 分位回到 &gt;60%（現 ~35%）","5Y 驗證點":"估值回到與成長相稱的 25-30x","10Y 驗證點":"——","具體數字門檻":"FY2027E EPS 共識 ≥ $21.9（現 $21.93）；分析師中位目標價 $647（高 $860／低 $340，n≈36）","信息來源":"Excel buy-side snapshot 2026-06-23；yfinance 共識；MarketBeat／S&amp;P Global","漂移觸發":"FY+2 EPS 共識連 4 季偏離下修 ≥10%，或 SEC 惡化使 de-rating 固化"}}]},"R":{"status":"ok","format":"table","rows":[{"id":"R1","text":"SEC 認定資料實務越界 / App Store 協議判違約——GM 88% 被重估為越界紅利","columns":{"對應假設":"H1","時間尺度":"⚡ 短期（1-2 季可觸發）","監測指標":"SEC docket、8-K 監管往來揭露、App Store 政策","警戒閾值":"Wells Notice 發出 → 連 2 季不需，單事件即減倉"}},{"id":"R2","text":"e-com 擴張因 go-live 轉換瓶頸（~57%）與競爭（Meta/Amazon/Shopify Ads）而不如預期","columns":{"對應假設":"H2","時間尺度":"🔥 中期（4-6 季）","監測指標":"self-serve ARR、go-live 轉換率、GenAI 創意工具滲透","警戒閾值":"ARR 連 2 季 &lt;$300M 年化 或 轉換率連 2 季不升破 65%"}},{"id":"R3","text":"行動廣告 + 手遊需求週期性下行（2025 全球手遊廣告投放僅 +3%／$25B），拉低整體量能","columns":{"對應假設":"H1/H2","時間尺度":"🐢 長期（2+ 年慢變數）","監測指標":"APP 自身 gaming 廣告 YoY、iOS 廣告收入份額（Q1'26 ~39%）","警戒閾值":"gaming 廣告 YoY 轉負且非季節性，連 3 季 → 重評 §6 成長假設"}}]},"single_thing":null,"kill_metrics":null,"rearm_trigger":"SEC 資料實務調查無重大處分結案／和解，或 e-com self-serve 年化 ARR 站上 $1.45B 且 go-live 轉換率升破 70%；回檔 $430-460 分批加碼","irr_base_pct":9.7,"ev5y_pct":55.0,"drift_watch_prior":{"dca_verdict":"進場","dca_role":"衛星","signal":"B","val":"🟡","ma":"🟢","trap":"🟡","moat_trend":"→","runway_post_y5":"🟢","asym_ratio":4.3,"ev5y_pct":55.0,"irr_base_pct":9.7,"max_dd_pct":-60.0,"bull_5y_price":1170.0,"bear_5y_price":336.0,"p_bull_pct":30.0,"p_bear_pct":25.0,"rearm_trigger":"SEC 資料實務調查無重大處分結案／和解，或 e-com self-serve 年化 ARR 站上 $1.45B 且 go-live 轉換率升破 70%；回檔 $430-460 分批加碼","price_at_dd":520.43,"archetype":"品質複利成長","cycle_position":null}}
+```
+
+---
+
+## judgment.json 全文（被審對象，緊湊格式）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"APP","date":"2026-11-08","schema":"v15.0","contract":"v19","company_name":"AppLovin Corporation"},"oneliner":"現價 391.22 美元只隱含未來十年自由現金流年增約 11%，新一代模型卻才部分上線；好生意配偏低價格，但財報後短線過熱宜分批。最大風險是模型提升斷檔，使 FY2027 營收年增跌破 20%。","facts_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/APP_20261108/facts.json","scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/APP_20261108/scenario.json","answers":{"q1_business":{"verdict":"賺遊戲與消費品牌廣告主的成效預算，錢卡在 AXON 預測模型加 MAX 拍賣這一節點，Q3 淨收入 21.8 億美元，營益率 78%。","reasoning":"收錢方式：廣告主按成效目標投放，AppLovin 在單一拍賣中競價買曝光，以淨收入計算營收。Q3 2026 營收 2,184.8 百萬美元，年增 55%；GAAP 營業利益 1,709.0 百萬美元，營益率 78.2%；調整後 EBITDA 利潤率 84.3%；TTM 毛利率 88.8%。公司已出售 apps，不再分段揭露。遊戲 Q3 年增近 50%，消費端年增三位數，金額都未揭露。景氣位置判在擴張期，依據是 Q3 消費端季增雙位數、MAX 供給維持強雙位數成長（2026-11-04 法說），不是股價。單點依賴有三個：Apple、Google、Meta 等少數發行平台；遊戲廣告仍是主體；成長靠模型團隊持續做出提升，管理層自己說節奏無法預測。客戶端不集中，FY2025 無單一客戶超過營收 10%。總投放約 200 億美元年化是 JPMorgan 分析師在 Q3 法說上的轉述，對照淨收入年化約 87 億美元，推算抽成約 44%；管理層不談抽成。","fact_refs":["f_kpi0_revenue_gaap","f_kpi1_gaap_operating_income","f_kpi2_adjusted_ebitda_non_gaap","f_kpi3_free_cash_flow","f_kpi5_guidance_q4_2026_revenue","f_kpi6_guidance_q4_2026_adjuste","f_peer_app_gross_margin_pct"],"verdict_values":{"revenue_quality":"現金品質高，FY2025 自由現金流為淨利 1.18 倍；但需求沒有合約，廣告主可隨時調整預算，能見度低，管理層明說無法提供預測性指標。","unit_econ_note":"Q3 季對季增量營收轉 EBITDA 的比率 87%；CFO 於 2026-08-05 說每增加一美元營收約花 0.10 美元算力。轉換率略高於 1%，CEO 說每 1,000 次曝光約 987 次賠錢，獲利靠預測準確度。","archetype":{"primary":"品質複利成長","secondary":null,"confidence":"中","fingerprint":"TTM 營益率 77.8%、FCF 利潤率 64.1%，成長來自模型提升與新廣告主，主要投入走費用而非資產"},"industry":{"clock_phase":"II","sd_verdict_source":"結構性持久，但持久的是成效預算需求，不是單一公司的份額。依據：2026-11-04 法說稱 MAX 供給維持強雙位數成長；Oberlo 預估 in-app 廣告 2026 至 2028 年由 4,262 億美元增至 4,982 億美元。","bargaining":{"up":"上游是 MAX 發行商與 Apple、Google、Meta 等發行平台；CEO 承認發行商收益隨拍賣上漲，公司要靠技術進步吸收。","down":"廣告主分散，無單一客戶占營收 10% 以上，以成效計價，沒有合約鎖定。","geo":"在中國與以色列有營運；亞太消費端廣告主增加，法說說明部分網站是專為此通路開設。"},"profit_pool_dir":"利潤往預測最準的圍牆外平台集中，五年占比事實表未涵蓋。","tam_table":[{"item":"全球 in-app 廣告","value":"2026 年 4,262 億美元、2028 年 4,982 億美元（Oberlo，2025-01 圖表，口徑含大型封閉平台）"},{"item":"APP 總投放金額","value":"接近 200 億美元年化（2026-11-04 法說，JPMorgan 分析師轉述）"},{"item":"滲透率","value":"約 4.7%"},{"item":"MAX 手遊中介份額","value":"70% 以上（JPMorgan 估算，賣方資料）"},{"item":"營業利益池五年占比","value":"事實表未涵蓋"}]}}},"q2_moat":{"verdict":"→ 護城河方向持平：Q3 遊戲重新加速證明模型能力仍在，但新架構只是部分上線，Q2 又剛出現模型斷檔，單季不足以上調。","reasoning":"機制：MAX 中介在手遊占 70% 以上、AppLovin Ads 占 DSP 40% 以上（JPMorgan 估算），曝光回饋訓練 AXON，模型越準出價越高，再吸引更多預算。方向用利潤率代替 ROIC 差距：APP 營益率 FY2024 59.3%、FY2025 75.8%、TTM 77.8%，高於 META 32.9%、GOOGL 33.3%、TTD 19.6%；同業歷史序列與 ROIC 事實表未涵蓋，且 APP 以淨收入計，比較會偏高。執行面擴大：Q3 超過指引上緣約 1 億美元，管理層自述 16 季有 14 季超過上緣。定價力穩定：CEO 明說領先才能多拿，跟上市場則持平，落後就會被壓縮。兩者合起來判持平。當期 ROIC 無法計算，因投入資本事實表未涵蓋；FY2024、FY2025 自由現金流都高於淨利，再投資率接近零甚至為負，成長主要靠費用化的研發與算力，公式算出的內生成長上界沒有參考價值。","fact_refs":["f_peer_app_gross_margin_pct","f_peer_app_operating_margin_pct","f_peer_app_fcf_margin_pct","f_peer_meta_operating_margin_pct","f_peer_googl_operating_margin_pct","f_peer_ttd_operating_margin_pct","f_peer_u_operating_margin_pct"],"verdict_values":{"moat":{"mechanism":"MAX 拍賣的供給規模加 AXON 預測模型形成資料飛輪：單一拍賣跨遊戲與消費廣告主，預測越準，出價與預算越多。","execution":9,"pricing":7,"grade":"B","trend":"→","trend_evidence":"上行：Q3 遊戲年增近 50%，新架構部分上線即帶動超預期；消費端增加拍賣密度。下行：Q2 模型斷檔造成未達指引，CEO 承認多家對手同時表現很好，Android 較競爭。份額只有 2026 年 Q1 的賣方查核，沒有最新數字，所以不上調。","competitor_notes":[{"name":"META","strategy_note":"TTM 營益率 32.9%、研發密度 31.7%，賣方點名的潛在競爭者，資源遠大於 APP；Q3 未見 APP 受損。"},{"name":"GOOGL","strategy_note":"Android 上的大型對手，CEO 於 2026-08-05 承認 Android 較競爭，同時掌握 Google Play 規則。"},{"name":"TTD","strategy_note":"同為獨立廣告技術公司，營益率 19.6%、FCF 利潤率 28.4%，資料截至 2026-06；本包沒有份額資料。"},{"name":"U","strategy_note":"Unity Vector 被賣方點名為威脅，TTM 營益率 −31.5%、FCF 利潤率 24.7%、研發密度 50.2%，投入重但利潤尚未跟上。"}],"spread_notes":{"method":"同業 ROIC 無資料，以營業利益率差距代替。","caveat":"APP 營收是淨收入，推算抽成約 44%，與總額認列的同業比較時利潤率差距會被放大。"},"peer_na_reason":"同業 ROIC 與投入資本事實表未涵蓋，改用營益率差距。","threats":[{"level":"🔴","text":"生態攻擊：Google 在 Android 上既是平台也是大型對手，Apple、Google、Meta 掌握發行與資料規則；Meta、Amazon、Unity 同時是客戶與對手，可能改用自家方案。APP 研發密度 5.0%，遠低於 META 31.7%、GOOGL 15.8%，模型競賽的資源不對等。","p":"30%","evidence_refs":["competitive_share_entrants#0","geo_supply_chain#0"]},{"level":"🟡","text":"點對點：CloudX 以免 SDK 模式切入，2026-02 推出時 APP 股價下跌約 13%；Wedbush 指出 Google 等過去嘗試類似模式，創辦人也定位為補充。Q3 遊戲年增近 50%，沒有看到受損，本包也沒有 CloudX 的營收或份額數字。","p":"15%","evidence_refs":["competitive_share_entrants#2","substitute_technology#1","substitute_technology#2"]},{"level":"🟡","text":"點對點：10-K 提醒對手可能更快採用新技術。Q3 法說 UBS 提到部分廣告主預期拍賣價格上漲而先把預算移往對手，CEO 認為這類調查樣本有偏誤，但沒有提供份額數字。","p":"25%","evidence_refs":["substitute_technology#0"]}],"roic_durability":{"quadrant":"高利益率×高周轉（投入資本事實表未涵蓋，依輕資產與自由現金流高於淨利推定）","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者是玩家，決策者是投手，付款者是廣告主，三者都成立；廣告主以 ROAS 自付，CEO 稱每年帶來數百億美元營收。風險是消費端仍被部分廣告主視為測試預算（2026-08-05 法說）。"},{"item":"決策層級","level":"🟡","text":"替代性要看單一廣告活動與單一曝光。投手可以當天移走預算，沒有合約；供給端 MAX 份額 70% 以上有黏性，需求端主要靠效果留客，消費端廣告主還要跑增量測試才放量。"},{"item":"價值鏈分配","level":"🟡","text":"抽成推算約 44%，CEO 說領先才能多拿，落後就會被壓縮。Apple、Google、Meta 控制發行，發行商收益隨拍賣上漲。"},{"item":"社會容忍度","level":"🟡","text":"全螢幕廣告佔滿畫面，CEO 稱平均觀看超過 35 秒；資料做法曾受 SEC 與 FTC 關注。CFO 說 SEC 查詢已結束，FTC 未見進展，證券集體訴訟仍在進行。"}],"roiic":"無法計算：投入資本事實表未涵蓋；FY2024 到 FY2025 營業利益增加約 22.4 億美元，新增有形資本很少，比值沒有意義。","reinvest_rate":"接近零或為負：FY2024、FY2025 自由現金流分別為淨利 1.31、1.18 倍；資本支出、折舊與營運資金明細事實表未涵蓋。","endo_ceiling":null,"formula_note":"增量報酬乘再投資率的公式不適用於費用化投入的輕資產模式。公式上界趨近零，共識成長必然超過，因此情境以超過上界處理，Bear 機率取 30%。"}}}},"q3_growth":{"verdict":"🟢 跑道寬：消費端仍在早期且已有實際成長，總投放滲透率僅約 5%；但第二曲線的金額未揭露，確信度只到中等。","reasoning":"成長組成：量與模型提升為主，併購為零，回購每年約貢獻 2%。共識 EPS 三年 CAGR 35.5%（FY2025A 9.75 到 FY2028E 24.27，Koyfin 快照，事實表未列家數），其中 FY2026 已大致兌現，FY2026E 到 FY2028E 只有 20.7%。共識營收 FY2027 年增 25.1%，管理層長期目標約 30%。缺口歸因於費用化的研發與算力、利潤率擴張與回購。跑道年數：總投放約 200 億美元，對 in-app 廣告 4,262 億美元約 4.7%；以 30% 成長、市場年增約 8%，約 10 年達 30% 滲透率，但分母包含大型封閉平台，實際可及市場較小，因此只給中等確信。衰退信號亮 1 個：FY2025 到 FY2027 EPS CAGR 43.3% 高於營收 CAGR 38.0%，差 5.3 個百分點，主因是 FY2026 的利潤率與股數；FY2026 之後反轉為 EPS 成長低於營收。","fact_refs":["f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_rev_consensus_fy1_m","f_rev_consensus_fy2_m"],"verdict_values":{"growth":{"driver_mix":"量與模型提升為主，消費端新客為第二動力，併購為零，淨回購約貢獻每年 2% 的每股成長。","runway_years":10,"runway_post_y5":"🟢","endo_ceiling_basis":"再投資率接近零，公式上界趨近零，無法給有意義的數字。成長投入走費用：算力、研發與新客開發；Base 淨利率由 66% 降到 60%，反映這筆投入。","segments":[{"item":"遊戲廣告","value":"Q3 年增近 50%，金額未揭露；CEO 稱遊戲公司幾乎都已在平台上，成長靠模型與供給"},{"item":"消費端廣告","value":"Q3 季增雙位數、年增三位數，金額未揭露；Needham 估 2026 年 14.5 億美元（二手摘要）"},{"item":"聯網電視","value":"試點階段，CEO 表示短期不要計入數字，情境未計入"}],"decay_signals":[{"signal":"毛利率連 2 季年減","lit":false,"note":"FY2025 87.9%，TTM 88.8%；季度年比事實表未涵蓋"},{"signal":"核心市占近 12 個月縮減","lit":false,"note":"賣方查核 2026 年 Q1 上升；Q2 之後沒有份額資料"},{"signal":"提價後銷量下滑","lit":null,"note":"拍賣定價，不適用"},{"signal":"EPS CAGR 高於營收 CAGR 超過 5 個百分點","lit":true,"note":"FY2025 到 FY2027 差 5.3 個百分點"},{"signal":"FCF 除以淨利連 2 年低於 0.75","lit":false,"note":"FY2024 1.31、FY2025 1.18"},{"signal":"SBC 占營收超過 5% 且上升","lit":false,"note":"Q3 為 3.9%"},{"signal":"TAM 萎縮或被替代技術壓縮","lit":false,"note":"目前未見，CloudX 持續觀察"},{"signal":"產業倍數近 3 年系統性下移","lit":null,"note":"同業倍數事實表未涵蓋"},{"signal":"維持性資本支出占 FCF 超過 60%","lit":false,"note":"輕資產模式，明細未涵蓋"},{"signal":"停止投資且收入下滑","lit":false,"note":"算力投入增加，營收成長"}],"trap_rating":"🟡"}}},"q4_capital":{"verdict":"資本配置良好：稀釋股數連 8 季下降，累計回購均價 90 美元遠低於現價，SBC 低。","reasoning":"FY2025 自由現金流為淨利 1.18 倍，FY2024 為 1.31 倍。Q3 SBC 84.2 百萬美元，占營收 3.9%。Q3 回購與扣繳 410 萬股共 14 億美元，約等於當季自由現金流，均價約 341 美元；董事會增加授權 32 億美元，總授權 36 億美元。累計 1.04 億股、94 億美元，均價 90 美元，占期間自由現金流 85%。淨槓桿低於 0.1 倍，公司長期目標約 1 倍。現金去向四分與債務到期結構事實表未涵蓋。主要風險是 CEO 提到可能用併購買資料與客戶關係，目前沒有具體案子。","fact_refs":["f_kpi3_free_cash_flow","f_kpi4_sbc","f_net_debt_m","f_shares_diluted_m"],"verdict_values":{"capalloc":{"items":[{"name":"ma_roiic","applicable":false,"passed":null,"input":"近 12 個月沒有重大併購；MoPub 的回本只有管理層說法，沒有已實現報酬數字。"},{"name":"buyback_yield","applicable":true,"passed":true,"input":"累計回購均價 90 美元，以 FY2026E EPS 16.65 美元計，買入收益率約 18.5%；Q3 均價約 341 美元時只有約 4.9%。10 年期殖利率事實表未涵蓋，以累計成本判過關。"},{"name":"sbc_dilution","applicable":true,"passed":true,"input":"稀釋股數連 8 季下降，年減約 2%；SBC 年化約 3.4 億美元，占市值約 0.26%，淨稀釋為負。"}]},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購，近 12 個月沒有重大併購；回購紀錄已在計分項交代，若出現併購案再展開。"}}}},"q5_valuation":{"verdict":"現價要求未來十年自由現金流年增約 11% 到 15%，我相信做得到，估值偏便宜；但財報後短線過熱，不宜一次買滿。","reasoning":"TTM 營收約 76.1 億美元（EV 1,299.6 億美元除以 EV/S 17.08 倍），FCF 利潤率 64.07%，TTM 自由現金流約 48.7 億美元。以折現率 10%、永續成長 3% 反推，現價需要自由現金流十年年增約 11%；折現率 12% 時約 15%。Base 十年平均 EPS 成長約 14%，高於前者、略低於後者。同業倍數事實表未涵蓋，終端倍數無法附同業現值對照，只能用公司現值 23.5 倍與終端成長率推定，這是缺口。短線 14 日 RSI 76.31，26 週報酬 −16.5%，屬於跌深後的跳升。","fact_refs":["f_price_at_dd","f_pe_current","f_fwd_pe_latest","f_ps_current","f_ev_s_current","f_ev_m","f_net_debt_m","f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_rsi14","f_week26_return_pct","f_consensus_rev_3m_fy1_pct","f_peer_app_fcf_margin_pct"],"verdict_values":{"valuation":{"basis":"FY2026E Forward 本益比，搭配自由現金流反推隱含成長","tier":"大型獨立廣告技術平台","peers":{"expanded":false,"reason":"同業倍數事實表未涵蓋，只有利潤率對照；估值不使用跨類型同業作錨。"},"fwd_pe":23.5,"peg":0.66,"percentile_5y":null,"val_light":"🟢","val_light_derivation":"Forward 本益比 23.5 倍、FY2027E 19.6 倍。PEG 以三年 EPS CAGR 35.5% 算為 0.66，但其中 FY2026 已大致實現；改用 FY2026E 到 FY2028E 的 20.7%，Forward 本益比對應 1.13，FY2027E 本益比對應 0.94，本次採用後者的讀法，落在合理偏便宜。五年分位無法提供：事實表只有 3 到 4 個年度端點，不是五年序列。Base 年化報酬約 12%，高於前份 9.7%。反例：要求報酬提高到 12% 時，現價只算合理；若 78% 營益率是高峰，EPS 分母會被高估。短期空間以 FY2027E 21.0 美元乘 22 倍估 12 個月，中期以 FY2029E 30.0 美元乘 20 倍估 3 年。賣方目標價資料約為 2026-02，平均 714 美元，舊於最新財報，不納入判斷。","upside_short_pct":18.1,"upside_mid_pct":53.4,"denominator_disputed":false,"denominator_note":"分母沒有明顯一次性項目爭議，但 Koyfin EPS 快照在財報前後同為 16.65、20.01、24.27，可能尚未反映 Q3 與 Q4 指引；以 FY2027E 共識營收 104 億美元、淨利率 66%、3.25 億股粗算，EPS 約 21 美元。"}}},"q6_how_wrong":{"verdict":"最可能看錯的是把 Q3 當成新一輪模型週期的開始；Q2 的斷檔若重演，EPS 與倍數會一起下修。","reasoning":"五年敏感度以 Base 的 FY2031E EPS 39 美元、終端價 702 美元為準：營收 CAGR 少 5 個百分點，EPS 約 −19%，年化報酬降到 7.7%；淨利率少 5 個百分點，EPS 約 −8%，報酬 10.5%；不回購，EPS 約 −9%，報酬 10.2%；終端倍數少 3 倍，價格 −17%，報酬 8.4%。營收成長是最大的單一敏感項，四項壓力中有三項年化仍高於 8%。事實表未涵蓋歷史最大回撤，訴訟金額與時點也未揭露。2026-08-05 法說有三次迴避：模型斷檔原因未具體診斷、開放平台後的廣告主數量未提供、Q3 之後的算力金額未給。2026-11-04 法說 CEO 也不談抽成，並表示外界只能自己猜。","fact_refs":["f_ma_w52","f_ma_w104","f_ma_w250","f_rsi14","f_week26_return_pct"],"verdict_values":{"trap":{"verdict":"🟡","label":"低本益比可能建立在高峰利潤率上，衰退信號亮一個"}}}},"scenario_inputs":{"terminal_label":"FY2031E","start":{"eps":16.65,"pe":23.5,"basis":"FY2026E 共識 EPS（FY1），與終端年以當年度 EPS 計算的倍數同口徑；Y1 為 FY2027E"},"eps":{"bull":[22.8,29.0,36.5,44.5,52.5],"base":[21.0,25.5,30.0,34.5,39.0],"bear":[18.5,18.0,18.0,18.8,19.5]},"pe":{"bull":23,"base":18,"bear":13},"p":{"bull":25,"base":45,"bear":30},"yield_pct":{"dividend":0,"net_buyback":0},"second_stage":{"bull_cagr_pct":15,"base_cagr_pct":10},"max_dd":{"lo":-65,"hi":-45,"basis":"事實表未涵蓋歷史最大回撤。上緣：跌回 250 週均線 205.15 美元約 −48%，取 −45%。下緣：Bear EPS 18 美元乘 10 倍約 180 美元，約 −54%，再考慮今年曾在基本面未惡化時下跌約 46%（Marketbeat 標題），取 −65%。若發生而論點未破，不因波動減碼，要有深回撤的心理準備。","trigger_time":null},"basis":{"bull":"營收年增 31%、28%、24%、20%、17%，FY2031 約 243 億美元，淨利率約 64%，股數每年減約 2.3%；新架構全面上線且消費端放量。","base":"營收年增 27%、22%、18%、15%、13%，FY2031 約 198 億美元，淨利率由 66% 降到 60%，股數每年減約 2%；EPS 已含縮股，淨回購殖利率填 0 以免重複計入。","bear":"模型提升斷檔、競爭壓縮抽成：FY2027 接近 Q4 2026 單季年化水準，之後營收年增約 5% 到 8%，淨利率降到約 50%，倍數採成長降到 10% 時的 13 倍。機率 30%，依據是 Q2 才發生一次模型斷檔，且共識成長超過資本公式上界。"},"endo_ceiling_exceeded":true},"counter_evidence":{"blind_spots":[{"view":"論點失敗","evidence":"2026-08-05 CEO 說模型提升沒有保證，Q2 營收略低於指引中點；2026-11-04 再說無法承諾全面上線時間，遊戲公司幾乎都已在平台上。","assumption":"每年都能做出足以支撐 25% 以上成長的模型提升。","consequence":"FY2027 營收年增跌破 20%，EPS 停在 18 到 20 美元，倍數壓到 13 倍，股價約 250 美元，五年虧約 35%，途中可能腰斬。","ruling":"採納，列為 Bear 主路徑，機率 30%，與唯一致命數字是同一件事。","watch":"每季營收對指引上緣與中點、遊戲年增率。","evidence_refs":["supply_demand_durability#0"],"fact_refs":["f_kpi0_revenue_gaap","f_kpi5_guidance_q4_2026_revenue"]},{"view":"論點失敗","evidence":"消費端金額未揭露，CEO 拒絕提供預測性指標；亞太 Pixel 帳戶增加可能是同一客戶開多個網站，小型商家自助要到五年後才成熟。","assumption":"消費端是可持續的第二曲線，而不是少數廣告主的短期測試。","consequence":"約 30% 的長期目標少掉一半支撐，成長回到遊戲單腳。","ruling":"部分採納。Q3 年增三位數是事實，但規模未知，Base 五年營收 CAGR 只給約 19%，低於管理層的 30%。","watch":"管理層是否持續揭露年增方向、賣方消費端估算、第三方 Pixel 統計。","evidence_refs":["end_markets#2","channel_business_model_shift#1"],"fact_refs":["f_rev_consensus_fy2_m"]},{"view":"論點成功但股東經濟變差","evidence":"CEO 說會尋找能買到資料與客戶關係的交易，並以 MoPub 為例；CFO 預期長期淨槓桿約 1 倍；算力持續增加，發行商收益隨拍賣上漲。","assumption":"成長能維持接近 78% 的營益率，現金繼續回饋股東。","consequence":"營收成長但淨利率由 66% 降到 55%，或一筆超過市值 5% 的併購把回購現金轉走，EPS 少 8% 以上。","ruling":"採納。Base 淨利率已降到 60%；併購沒有具體案件，列為觸發條件。","watch":"調整後 EBITDA 利潤率、併購金額占市值比、回購金額。","fact_refs":["f_kpi2_adjusted_ebitda_non_gaap","f_ev_m"]},{"view":"論點成功但股東經濟變差","evidence":"UBS 在 2026-11-04 法說提到部分廣告主預期消費端加入後拍賣價格上漲，先把預算移往對手；CEO 認為 CPM 上升時 ROAS 也會上升。","assumption":"新增需求不會壓縮既有遊戲客戶的報酬。","consequence":"總營收成長，但遊戲預算外流，混合抽成與留存下降。","ruling":"反駁但保留監測。Q3 遊戲年增近 50%，方向相反；不過這只是新架構第一季，投手行為要到 Q4 旺季後才看得清楚。","watch":"Q1 2027 遊戲年增率、MAX 份額的賣方查核。","evidence_refs":["end_markets#3"]},{"view":"價格已反映太多","evidence":"財報後盤後上漲 24% 到 25%，14 日 RSI 76.31；TTM 營益率 77.8% 是資料期內最高，FY2022 僅 −1.7%；淨收入口徑使利潤率比同業好看。","assumption":"現有利潤率可以延續，本益比分母沒有高估。","consequence":"若營益率回到 65%，EPS 約少 17%，Forward 本益比約 28 倍，便宜的說法不成立。","ruling":"反駁估值太貴，採納短線過熱。現在就賣的最強論證是利潤率在高峰且指標不透明，但自由現金流反推只要求十年年增 11% 到 15%。第一筆只建一半。","watch":"RSI、營益率、財報後 FY2027 EPS 共識更新。","evidence_refs":["capital_markets_pricing#2"],"fact_refs":["f_rsi14","f_peer_app_operating_margin_pct","f_fwd_pe_latest"]}],"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 🟢 → 本次 🟠","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=🟢","side_b":"本次 ma=🟠","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 520.43 → 本次 391.22（-24.8%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=520.43","side_b":"本次 price_at_dd=391.22","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 520.43 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 520.43 美元：Bull 價 1,170、Bear 價 336，五年期望值 +55.0%，基準年化 9.7%，不對稱比 4.3","side_b":"本次情境、股價仍用 520.43 美元：Bull 價 1,207.5、Bear 價 253.5，五年期望值 +33.3%，基準年化 6.2%，不對稱比 2.14","ruling":"先換情境、股價不動：五年期望值少 21.7 個百分點，基準年化少 3.5 個百分點。不對稱比由 4.3 變為 2.14。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變差。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 520.43 美元：五年期望值 +33.3%，基準年化 6.2%，不對稱比 2.14","side_b":"本次情境、股價 391.22 美元：五年期望值 +77.3%，基準年化 12.4%，不對稱比 4.94","ruling":"再換股價、情境不動：起點價下跌 24.8%，五年期望值多 44.0 個百分點，基準年化多 6.2 個百分點，不對稱比由 2.14 升到 4.94。合計五年期望值比前份多 22.3 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"估值與裁決變動","cause":"價格變動","prior_field":["val"],"side_a":"前份股價 520.43 美元，估值中性，裁決為進場。","side_b":"本次股價 391.22 美元，Forward 本益比 23.5 倍，FY2027E 19.6 倍，估值偏便宜。","ruling":"股價下跌 24.8%，大於 FY2027E 共識 EPS 的下修 8.8%（21.93 到 20.01，兩次來源不同，僅看方向），所以估值結論上調。裁決與倉位角色依本次輸入重新計算。","evidence_level":"事實表價格與共識快照","settle_metric":"財報後更新的 FY2027E 共識 EPS 與 Forward 本益比","if_then":["若股價續漲而 Q4 財報尚未公布，不追，第二筆不提前。","若股價下跌但營收仍高於指引上緣，分批反買。"],"evidence_refs":[]},{"axis":"綜合訊號與價值陷阱","cause":"新證據","prior_field":["signal","trap"],"side_a":"前份綜合訊號居中，陷阱風險中性。","side_b":"Q3 重新加速降低陷阱風險，但 Q2 模型斷檔與 EPS 高於營收成長的信號仍在。","ruling":"兩項都維持不變。好消息與壞消息互相抵銷，短線過熱也不支持上調。","evidence_level":"公司財報與法說","settle_metric":"Q4 2026 與 Q1 2027 營收對指引","if_then":["若連 2 季超過指引上緣，加碼至倉位上限。","若再次低於指引中點，減碼至一半。"],"evidence_refs":[]},{"axis":"護城河方向","cause":"新證據","prior_field":["moat_trend"],"side_a":"2026-08-05：Q2 模型提升斷檔，市場擔心競爭，CEO 說無需求或競爭變化。","side_b":"2026-11-04：新架構部分上線，遊戲年增近 50%，營收高於指引上緣約 1 億美元。","ruling":"維持持平。單季反彈不足以上調，新架構尚未全面上線；也沒有證據顯示份額下滑，不下調。","evidence_level":"法說逐字稿，份額僅賣方估算","settle_metric":"未來 2 季營收對指引與遊戲年增率","if_then":["若 Q4 與 Q1 都超過指引上緣且遊戲年增不低於 30%，方向上調，加碼至倉位上限。","若再次低於指引中點，方向下調並減碼至一半。"],"evidence_refs":["competitive_share_entrants#1","end_markets#3"]},{"axis":"第二曲線與跑道","cause":"新證據","prior_field":["runway_post_y5"],"side_a":"Q3 消費端季增雙位數、年增三位數，第二曲線有實際成長。","side_b":"消費端金額未揭露；CEO 說走自助的小型商家要五年後才成熟，成功案例靠人工協助或成熟客戶。","ruling":"維持寬。總投放滲透率約 4.7%，且有已成長的第二曲線；但只給中等確信，Base 不採用管理層的 30%。","evidence_level":"法說與賣方估算","settle_metric":"消費端年增率與管理層揭露程度","if_then":["若連 2 季年增低於 50%，減碼三分之一並下調跑道。"],"evidence_refs":["end_markets#2","supply_demand_durability#1"]},{"axis":"情境機率與回撤口徑","cause":"方法變動","prior_field":["p_bull_pct","p_bear_pct","max_dd_pct","archetype","cycle_position"],"side_a":"前份 Bull 30%、Bear 25%，最大回撤 −60%，類型為品質複利成長，循環位置未填。","side_b":"本次 Bull 25%、Bear 30%，最大回撤 −45% 到 −65%，類型相同，循環位置仍不適用。","ruling":"Bear 上調是因為共識成長超過資本公式上界，並反映 Q2 模型斷檔；最大回撤由單點改為範圍。公司不是循環股，類型不變。","evidence_level":"分析判斷","settle_metric":"FY2027 營收年增率","if_then":[],"evidence_refs":[]},{"axis":"成長門檻","cause":"新證據","prior_field":["H1"],"side_a":"AXON 廣告營收年增不低於 40%；連 2 季低於 25% 觸發重評。","side_b":"FY2027 營收不低於 104 億美元（年增約 25%）；單季年增連 2 季低於 25% 重評並減碼。","ruling":"下限 25% 延續，40% 取消。Q4 指引已是 43% 到 44%，共識 FY2027 為 25%，40% 不再是合理基準；apps 出售後，併表營收可作為廣告營收。","evidence_level":"公司指引與共識","settle_metric":"FY2027 季度營收","if_then":["若單季年增連 2 季低於 25%，減碼至一半。"],"evidence_refs":["end_markets#1"]},{"axis":"SEC 調查","cause":"新證據","prior_field":["R1"],"side_a":"證據索引仍記載 SEC 調查進行中（2026-02 報導），前份以 Wells Notice 為單事件減碼條件。","side_b":"CFO 於 2026-08-05 法說表示 SEC 已結束查詢，沒有建議採取行動。","ruling":"採信後者，因為它是較新的公司一手陳述，索引只是沒有抓到更新。本包沒有 SEC 結案文件或 10-Q 原文可核對，這是缺口。Wells Notice 減碼條件退休，改監測 FTC 與證券集體訴訟。","evidence_level":"管理層法說陳述，未見監管機關文件","settle_metric":"下一份 10-K 法律程序章節","if_then":["若 10-K 或新報導顯示 SEC 重啟調查，減碼至一半。"],"evidence_refs":["regulatory_antitrust#1","major_events#1","sec_investigation_restatement#0"]},{"axis":"重新定價論點","cause":"新證據","prior_field":["H3"],"side_a":"FY2027E EPS 共識不低於 21.9；Forward 分位回到 60% 以上；連 4 季下修 10% 才算偏離。","side_b":"FY2027E 共識 20.01，較前份低 8.8%；本次不再把倍數回升當論點，改為現金轉換與回購。","ruling":"舊論點還沒到正式反轉門檻，但股價由 520 美元跌到 391 美元，倍數回升沒有發生。Base 終端倍數 18 倍低於現值 23.5 倍，報酬不靠重新定價。","evidence_level":"共識快照，前後來源不同","settle_metric":"Base 報酬拆解中的倍數貢獻","if_then":[],"evidence_refs":[]},{"axis":"消費端門檻","cause":"方法變動","prior_field":["R2"],"side_a":"年化 ARR 連 2 季低於 3 億美元，或 go-live 轉換率連 2 季不升破 65%。","side_b":"保留上述門檻並標資料缺口；新增消費端年增連 2 季低於 50%，作為可觀察的減碼條件。","ruling":"公司不揭露 ARR 與轉換率，舊門檻取不到值，所以不刪除，但改用管理層每季會說的年增方向。","evidence_level":"法說口頭揭露","settle_metric":"消費端年增率","if_then":["若管理層不再揭露方向，視同未達，停止加碼。"],"evidence_refs":[]},{"axis":"加碼與重新進場條件","cause":"新證據","prior_field":["rearm_trigger"],"side_a":"SEC 資料實務調查無重大處分結案／和解，或 e-com self-serve 年化 ARR 站上 $1.45B 且 go-live 轉換率升破 70%；回檔 $430-460 分批加碼","side_b":"第二筆加碼條件：Q4 財報（約 2027 年 2 月）營收不低於 23.95 億美元，或 14 日 RSI 回到 60 以下且營收論點未破","ruling":"舊條件的 SEC 一項依公司說法已達成，回檔區間也已跌穿；ARR 與轉換率公司不揭露，無法使用。新條件改看財報與動能，加碼分兩筆，減碼與清倉條件列在觸發清單。","evidence_level":"法說與事實表價格","settle_metric":"Q4 2026 營收","if_then":["若營收低於指引中點，取消第二筆。"],"evidence_refs":[]},{"axis":"Single Thing 唯一致命點","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未設定唯一致命點（原文為空）。","side_b":"FY2027 全年營收年增率跌破 20%，也就是低於約 100 億美元，等於新架構沒有帶來下一輪成長。","ruling":"本次補上 Single Thing，選營收成長而不是監管事件，因為 SEC 依公司說法已結束，而營收成長是 Y5 EPS 最大的單一敏感項。若發生則清倉。","evidence_level":"敏感度計算","settle_metric":"FY2027 全年營收","if_then":["若 FY2027 營收低於約 100 億美元，清倉。"],"evidence_refs":[]},{"axis":"減碼與清倉門檻","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設此欄；風險表的減碼條件為 Wells Notice 單事件、年化 ARR 連 2 季低於 3 億美元、遊戲廣告年增轉負連 3 季。","side_b":"本次設五項：FY2027 營收年增低於 20% 清倉；連 2 季低於指引中點減碼；EBITDA 利潤率連 2 季低於 75% 減碼；遊戲廣告年增轉負連 3 季減碼；消費端年增連 2 季低於 50% 減碼。","ruling":"把分散在風險表的條件集中成可檢查的清單，遊戲廣告門檻照舊，SEC 條件退休，ARR 改用可觀察的年增方向。","evidence_level":"分析判斷","settle_metric":"各項季度數字","if_then":[],"evidence_refs":[]},{"axis":"Q2 失誤歸因","cause":null,"prior_field":null,"side_a":"2026-08-05 CEO：Q2 失誤是模型改善步伐低於正常，沒有需求或競爭變化。","side_b":"同場問答未給具體診斷；2026-11-04 CEO 稱是自身失誤，Q3 遊戲年增近 50% 才提供旁證，但也說多家對手同時表現很好。","ruling":"未證、監測。Q3 支持這個說法，但一季反彈無法排除競爭因素。預先登記：連 2 季低於指引中點且管理層仍歸因模型，視為歸因不成立。","evidence_level":"法說逐字稿","settle_metric":"未來 2 季營收對指引中點","if_then":["若連 2 季低於指引中點，減碼至一半。"],"evidence_refs":["supply_demand_durability#0"]},{"axis":"管理層前後說法","cause":null,"prior_field":null,"side_a":"2026-08-05 CFO：全年 FCF 轉換率約 75%。同日 CEO：創意是最大障礙；供給擴張先到非遊戲 App、再到開放網路、最後才是 CTV，目前不具備執行條件。","side_b":"2026-11-04 CFO：70% 到 75%。同日 CEO：創意不算障礙，是機會成本；CTV 列入明年重點，已有試點。","ruling":"轉換率下緣放寬屬小幅改口；創意措辭變軟但沒有數據；CTV 提前，但 CEO 自己說短期不要計入，情境也沒有計入。","evidence_level":"兩場法說逐字稿","settle_metric":"FY2026 全年 FCF 除以調整後 EBITDA","if_then":["若 FY2026 轉換率低於 70%，停止加碼。"],"evidence_refs":[]},{"axis":"產業態勢三軸","cause":null,"prior_field":null,"side_a":"競爭：多家對手同時表現好，Android 較競爭，CloudX 等新進入者出現。","side_b":"結構：MAX 供給強雙位數成長，消費端擴大拍賣密度。其他結構變數：發行平台規則與 FTC 調查未決。","ruling":"雙向拉鋸。Q3 年增 55%，大型平台約 10% 到 20% 多，結構順風大於競爭壓力，但競爭壓力確實存在。","evidence_level":"法說與賣方估算","settle_metric":"MAX 份額與遊戲年增率","if_then":[],"evidence_refs":["end_markets#3","competitive_share_entrants#1"]}],"triggers":[{"n":1,"text":"Q4 2026 營收超過指引上緣，驗證新模型動能延續。","type":"假設驗證","maps_to":"H1","metric":"Q4 2026 營收","threshold":"不低於 23.95 億美元","action":"補上第二筆至目標倉位","source_freq":"公司 8-K，每季","date":"2027-02","evidence_refs":["capital_markets_pricing#1"]},{"n":2,"text":"FY2027 全年營收年增跌破 20%。","type":"Single Thing","maps_to":"H1","metric":"FY2027 營收年增率","threshold":"低於 20%（約 100 億美元）","action":"清倉","source_freq":"公司 8-K，每年","date":"2028-02"},{"n":3,"text":"營收連續兩季低於公司指引中點。","type":"減碼","maps_to":"R1","metric":"單季營收與指引中點差距","threshold":"連 2 季為負","action":"減碼至一半","source_freq":"公司 8-K，每季","date":"每季財報"},{"n":4,"text":"連兩季超過指引上緣且遊戲廣告維持高成長。","type":"加碼","maps_to":"H1","metric":"單季營收對指引上緣、遊戲廣告年增率","threshold":"連 2 季高於上緣，且遊戲年增不低於 30%","action":"加碼至倉位上限","source_freq":"8-K 與法說，每季","date":"2027-05"},{"n":5,"text":"消費端成長明顯放慢，或管理層不再揭露方向。","type":"風險","maps_to":"R2","metric":"消費端廣告支出年增率","threshold":"連 2 季低於 50%","action":"減碼三分之一","source_freq":"法說口頭揭露，每季","date":"每季財報"},{"n":6,"text":"發行平台改變規則，影響資料或 SDK。","type":"風險","maps_to":"R4","metric":"8-K、10-Q 揭露及 Apple、Google 政策公告","threshold":"公司揭露重大影響，或單季營收低於指引下緣","action":"減碼至一半","source_freq":"事件","date":"持續","evidence_refs":["geo_supply_chain#0"]},{"n":7,"text":"FTC 調查或證券集體訴訟程序惡化。","type":"風險","maps_to":"R5","metric":"10-K 法律程序章節、法院紀錄","threshold":"集體認證加不利和解；或刑事程序介入","action":"前者減碼至一半，後者清倉","source_freq":"事件","date":"持續","evidence_refs":["regulatory_antitrust#0","regulatory_antitrust#2","lawsuit_class_action#0","major_events#0"]},{"n":8,"text":"調整後 EBITDA 利潤率跌破管理層長期區間太多。","type":"減碼","maps_to":"H3","metric":"調整後 EBITDA 利潤率","threshold":"連 2 季低於 75%","action":"減碼至一半","source_freq":"公司 8-K，每季","date":"每季財報"},{"n":9,"text":"出現超過市值 5% 的資料或客戶併購。","type":"風險","maps_to":"H3","metric":"併購金額占市值","threshold":"超過 5%","action":"停止加碼並重做報告","source_freq":"8-K，事件","date":"持續"},{"n":10,"text":"日線過熱消退，可補第二筆。","type":"估值rearm","maps_to":"H1","metric":"14 日 RSI","threshold":"回到 60 以下且營收論點未破","action":"補上第二筆","source_freq":"每日","date":"持續"},{"n":11,"text":"Q4 財報後複審全部假設。","type":"複審日期","maps_to":null,"metric":"Q4 2026 財報、Q1 2027 指引","threshold":"財報公布","action":"重新檢查情境與門檻","source_freq":"公司 8-K","date":"2027-02"}],"kill_metrics":[{"metric":"FY2027 全年營收年增率","bear_threshold":"低於 20%（約 100 億美元）","window":"FY2027 全年，2028 年 2 月確認","source":"公司 8-K 新聞稿","last_status":"ok"},{"metric":"單季營收與公司指引中點比較","bear_threshold":"連 2 季低於指引中點","window":"每季","source":"公司 8-K 新聞稿","last_status":"ok"},{"metric":"調整後 EBITDA 利潤率","bear_threshold":"連 2 季低於 75%","window":"每季","source":"公司 8-K 新聞稿","last_status":"ok"},{"metric":"遊戲廣告年增率","bear_threshold":"轉負且非季節性，連 3 季","window":"每季","source":"法說口頭揭露","last_status":"ok"},{"metric":"消費端廣告支出年增率","bear_threshold":"連 2 季低於 50%，或管理層不再揭露方向","window":"每季","source":"法說口頭揭露；金額未揭露","last_status":"ok"}],"evidence_dismissed":[],"action_conditions":{"rearm_trigger":"第二筆加碼條件：Q4 財報（約 2027 年 2 月）營收不低於 23.95 億美元，或 14 日 RSI 回到 60 以下且營收論點未破","exec_line":"股價財報後跳升、日線過熱，第一筆只建目標倉位一半，第二筆依加碼條件執行。跌到 250 週均線附近本身不是賣出理由，賣出只看論點門檻。"}},"decision_inputs":{"signal":"B","ma":"🟠","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把 Q2 單季模型斷檔外推成成長熄火：現價只隱含未來十年自由現金流年增 11% 到 15%，但 Q4 指引仍年增 43% 到 44%，共識 FY2027 營收年增 25%，管理層長期目標約 30%。","momentum_overheated":true,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":null,"wait_for_price_condition":null,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null},"thesis":{"H":[{"id":"H1","text":"新一代模型讓廣告業務維持高成長，併表營收在 2027 年仍年增 25% 以上。","2y":"FY2027 營收不低於 104 億美元，FY2028 年增不低於 20%","5y":"FY2031 營收約 198 億美元","10y":null,"threshold":"FY2027 營收不低於 104 億美元；單季年增連 2 季不低於 25%","source":"公司 8-K 與季報、2026-11-04 法說；共識來自 yfinance","drift_rule":"TTM 偏離連 2 季達 5% 削弱，連 3 季達 10% 反轉；單季年增連 2 季低於 25% 即重評"},{"id":"H2","text":"消費端廣告成為第二條成長線，非遊戲收入成為主力之一。","2y":"消費端年增維持 50% 以上到 2028 年 Q1，年化營收不低於 14.5 億美元","5y":"非遊戲營收成為主力之一，占比待公司揭露","10y":"成為圍牆外電商投放的預設選項之一","threshold":"消費端年增連 2 季不低於 50%；年化營收不低於 14.5 億美元（公司未揭露，資料缺口）；go-live 轉換率不低於 65%（資料缺口）","source":"法說口頭揭露；Needham 估 2026 年電商營收 14.5 億美元（二手摘要）；第三方 Pixel 統計","drift_rule":"連 4 季偏離達 5% 削弱，連 6 季達 10% 反轉；管理層不再揭露方向視同未達"},{"id":"H3","text":"高現金轉換與回購把營收成長轉成每股成長，股東報酬不需要倍數回升。","2y":"EBITDA 利潤率維持 80% 以上，FCF 轉換率 70% 到 75%","5y":"稀釋股數累計減少約 10%","10y":null,"threshold":"調整後 EBITDA 利潤率不低於 80%；稀釋股數年減不低於 1%；淨槓桿不高於 1 倍","source":"公司季報、CFO 於 2026-08-05 與 2026-11-04 法說","drift_rule":"連 2 季偏離達 5% 削弱，連 3 季達 10% 反轉"}],"R":[{"id":"R1","text":"模型提升再次斷檔，營收重演 Q2 的低於預期。","h_ref":"H1","clock":"⚡","threshold":"連 2 季低於指引中點","evidence_refs":["supply_demand_durability#0"]},{"id":"R2","text":"消費端擴張不如預期，受轉換瓶頸、創意門檻與競爭影響。","h_ref":"H2","clock":"🔥","threshold":"消費端年增連 2 季低於 50%；年化 ARR 連 2 季低於 3 億美元或轉換率連 2 季不升破 65%（後兩項資料缺口）","evidence_refs":[]},{"id":"R3","text":"手遊需求轉弱，遊戲廣告成長放慢甚至衰退。","h_ref":"H1","clock":"🐢","threshold":"遊戲廣告年增轉負且非季節性，連 3 季","evidence_refs":["supply_demand_durability#2"]},{"id":"R4","text":"Apple、Google、Meta 等發行平台改變規則，大量營收依賴有限的第三方平台。","h_ref":"H1","clock":"🔥","threshold":"公司揭露重大影響，或單季營收低於指引下緣","evidence_refs":["geo_supply_chain#0","customer_second_source#0"]},{"id":"R5","text":"資料做法的監管與訴訟風險：FTC 調查未見進展，證券集體訴訟仍在進行，SEC 查詢依公司說法已結束。金額與時點事實表未涵蓋。","h_ref":"H1","clock":"🔥","threshold":"集體認證加不利和解減碼至一半；刑事程序介入清倉；SEC 重啟調查減碼至一半","evidence_refs":["regulatory_antitrust#0","regulatory_antitrust#1","regulatory_antitrust#2","major_events#0","major_events#1","lawsuit_class_action#0","sec_investigation_restatement#0"]},{"id":"R6","text":"美中緊張與中東衝突影響中國、以色列營運及亞太廣告主；公司自述目前產品不受出口管制限制。","h_ref":"H2","clock":"🐢","threshold":"國際營收連 2 季年減，且管理層歸因於管制或衝突","evidence_refs":["reg_tariff_export#0","geo_supply_chain#1"]}],"single_thing":{"description":"FY2027 全年營收年增率跌破 20%，也就是低於約 100 億美元，等於新架構沒有帶來下一輪成長。","why_fatal":"營收成長是 Y5 EPS 最大的單一敏感項。五年 CAGR 少 5 個百分點，FY2031E EPS 少約 19%，約 30% 的長期目標也會失效，倍數跟著下修。Q4 指引年化已約 95 億美元，跌破 100 億美元代表 2027 年幾乎沒有季增。","if_happens":"清倉，H1 反轉；股價路徑接近 Bear，約 250 美元。","how_monitor":"每季營收對指引上緣與中點、遊戲與消費端年增描述；2028 年 2 月以全年數字確認，提前的領先條件是連 2 季低於指引中點。","probability":"15%（12 到 24 個月）"}},"appendix_a":{"growth_durability":7,"quality_score":8,"ai_risk":"🟡","long_term_confidence":"中","fpe_fy2":19.55,"peg_fy2":0.94,"stress":{"pass":3,"total":4}},"eps_meta":{"base_eps_path":{"FY2025A":9.75,"FY2026E":16.65,"FY2027E":20.01,"FY2028E":24.27},"fy_end_month":12,"eps_basis":"基期為 yfinance 年報稀釋 EPS；FY2026E 至 FY2028E 為 Koyfin 共識快照，事實表未標 GAAP 或調整後口徑"},"catalysts":[{"date":"2027-02","date_precision":"month","type":"guidance","event":"Q4 2026 財報與 Q1 2027 指引，首次檢驗新模型與電商旺季","impact":"高","watch":"營收是否不低於 23.95 億美元，遊戲與消費端年增描述"},{"date":"2027-02","date_precision":"month","type":"regulatory","event":"FY2026 10-K 更新法律程序與 SEC、FTC 相關揭露","impact":"中","watch":"SEC 結案文字、FTC 進度、集體訴訟階段"},{"date":"2027-05","date_precision":"month","type":"guidance","event":"Q1 2027 財報，消費端季節性回落後的第一個讀數","impact":"高","watch":"季增是否仍為正，新架構部署進度"}],"decision_out":{"verdict":"進場","role":"衛星","row_hit":"9b","pacing":["row5：動能過熱，進場節奏強制條件式分批（首階小倉＋回檔加碼），頁首掛「⚠️ 動能過熱，勿追高」"],"holding_cap":null,"audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟠'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":true,"basis":"momentum_overheated=True"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟢'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把 Q2 單季模型斷檔外推成成長熄火：現價只隱含未來十年自由現金流年增 11% 到 15%，但 Q4 指引仍年增 43% 到 44%，共識 FY2027 營收年增 25%，管理層長期目標約 30%。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='A'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟢', val='🟢', moat_trend='→', week26=-16.5, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position=None, moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":false,"basis":"signal='B', val='🟢'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='B', val='🟢', ma='🟠'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":true,"basis":"signal='B', val='🟢', ma='🟠'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟢', ma='🟠'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]}],"requires_critic":[]}}
+```
+
+---
+
+## ⑤ 覆蓋面（程式判定，你回的 ⑤ 燈號會被覆寫）
+
+燈號 🟢：核心軸皆有證據或不適用，非核心軸也沒有空軸。
+
+⑤ 的 reason 只需評論：空軸的查詢詞是否切題、判斷有沒有交代缺口對結論的影響。
+
+---
+
+## 尾段：回覆格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```json
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
