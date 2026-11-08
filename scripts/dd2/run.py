@@ -1706,6 +1706,34 @@ def _gate_once(ctx, st, idx):
 _CONTRA_PATCH_PATH = re.compile(r"^\$\.counter_evidence\.contradictions\[(\d+)\](.*)$")
 
 
+def _endo_text_to_note(holder, ceil_key, note_key):
+    """把寫在 endo_ceiling 的文字收拾好：純數字轉數字；其他併進 formula_note，數字欄填 null。回傳紀錄。"""
+    text = holder[ceil_key].strip()
+    m = re.fullmatch(r"(-?\d+(?:\.\d+)?)\s*[%％]?", text)
+    if m:
+        holder[ceil_key] = float(m.group(1))
+        return "endo_ceiling: 文字「{0}」→ 數字".format(text)
+    prev = holder.get(note_key)
+    holder[note_key] = "{0}；{1}".format(prev.rstrip("；。 "), text) if isinstance(prev, str) and prev.strip() else text
+    holder[ceil_key] = None
+    return "endo_ceiling: 文字說明併入 formula_note，數字欄填 null"
+
+
+def _normalize_endo_ceiling_patch(patches):
+    """MPWR 2026-11-03、NET 2026-11-08：閘點名內生上限算不出來時，修補把算式整段寫進 endo_ceiling。
+    schema 只收數字或 null，整份修補因此作廢。程式不替它猜數字，說明搬到同層 formula_note，由重閘判斷。"""
+    jp = patches.get("judgment")
+    if not isinstance(jp, dict):
+        return []
+    notes = []
+    for path, val in list(jp.items()):
+        if path.endswith(".roic_durability.endo_ceiling") and isinstance(val, str):
+            notes.append(_endo_text_to_note(jp, path, path[:-len("endo_ceiling")] + "formula_note"))
+        elif path.endswith(".roic_durability") and isinstance(val, dict) and isinstance(val.get("endo_ceiling"), str):
+            notes.append(_endo_text_to_note(val, "endo_ceiling", "formula_note"))
+    return notes
+
+
 def _remap_contradiction_patch_paths(patches, before, after):
     """修補回的 contradictions 索引是照閘與修補者看到的清單（before）寫的。
     套用前回到預留狀態會把裁決／角色條目併成一條，後面的條目位置前移，照舊索引寫會蓋到下一條
@@ -1770,6 +1798,9 @@ def _gate_patch(ctx, st, clean, idx):
             and jp.get("$.decision_inputs.wait_for_price_condition"):
         jp["$.decision_inputs.wait_for_price"] = True
         st.setdefault("patch_normalize", []).append("wait_for_price: {0} → true（價格見 condition）".format(wfp))
+    endo_notes = _normalize_endo_ceiling_patch(patches)
+    if endo_notes:
+        st.setdefault("patch_normalize", []).extend(endo_notes)
     # MPWR 2026-11-03：judged 段收尾時裁決／角色條目已依「當時」裁決改寫成反事實歸因（裁決沒變就沒有裁決條目）。
     # patch 若翻動裁決，候選驗證會報「漂移未歸因 dca_verdict」整包退回。套用前先回到預留狀態
     # （與下方套用後的重建同一套），驗證不過就還原原檔。
