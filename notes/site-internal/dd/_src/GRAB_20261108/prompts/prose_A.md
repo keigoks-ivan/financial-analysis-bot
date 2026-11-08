@@ -1,0 +1,414 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 GRAB（2026-11-08）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/GRAB_20261108/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：GRAB　日期：2026-11-08　archetype：None　前份裁決：2026-09-05　進場｜衛星　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1909B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（403B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（993B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1546B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（976B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（638B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（1117B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2052B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（3801B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2921B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（282B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1909           3564-5091      5 條（2–6 內）  
+s3                  8000         403           5318-7597      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3515          8039-11485      5 條（2–6 內）  
+s6                 11000         638          7253-10362      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500        1117           1668-2383      3 條（2–6 內）  
+s10                 5000        2052           2064-2948      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2921           2000-2079      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         282            853-1218      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=4817B；至少需散文≈40.18KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−60
+−60%
+−58.6%
+−48%
+−42.5%
+−42
+−42%
+−22%
+−8.33
+−0.55
+−0.45%
+−0.3%
+0.0
+0
+0.06
+0.1
+0.11
+0.12
+0.13
+0.14
+0.17
+0.21
+0.26
+0.27
+0.30
+0.3%
+0.305
+0.31
+0.36
+0.37
+0.47
+0.48
+0.58
+0.6
+0.75
+0.8
+0.9
+1
+1.08
+1.4%
+1.41
+1.5
+1.5%
+1.7
+1.8
+1.84
+1.96
+2.0
+02
+2
+2.01
+2.1%
+2.22
+2.36
+2.37
+2.4
+2.5
+2.6
+2.6%
+2.61
+2.67
+2.68
+2.7%
+2.74
+2.79
+2.86
+3
+03
+3.0
+3%
+3.41
+3.42
+3.49
+3.5
+3.5%
+3.79
+3.91
+4
+4%
+4.0%
+04
+4.1%
+4.20
+4.4%
+4.44
+4.45
+4.6
+5.0%
+05
+5%
+5
+5.17
+5.20
+5.33
+5.37
+5.49
+5.5
+5.55%
+5.61
+5.75
+5.8
+5.82
+6
+6%
+6.01
+6.30
+07
+7
+7.4
+7.42%
+08
+8
+8.24%
+8.5%
+8.9%
+9%
+9
+09
+9.3
+9.7%
+10%
+10
+10.5%
+10.95%
+11
+11.12
+11.3
+11.4
+11.5%
+12
+12.44%
+12.5
+12.5%
+12.76
+12.91%
+13%
+13.6%
+13.6
+13.7%
+14%
+14
+14.9%
+15%
+16
+16%
+16.92%
+17%
+17
+17.5
+18%
+18
+20
+20%
+20.7
+21%
+22%
+22
+22.5%
+23.2%
+23.2
+23.35
+24
+24%
+24.36
+24.4
+24.6%
+24.8%
+25
+25%
+26
+26%
+27
+27.11
+28
+29%
+30
+30%
+31%
+31.81%
+35%
+38.27
+39%
+42
+43%
+44.34%
+44.45%
+45%
+45
+48%
+49
+50%
+51.8%
+51.91%
+52.5
+52.5%
+60
+66.31
+69%
+70
+71%
+76%
+85%
+90
+93.7%
+95.7%
+96.3%
+99
+100
+100%
+115%
+124%
+126
+150%
+200%
+250
+533
+553
+800
+2026
+2027
+2028
+2030
+2036
+20261108
+1,200
+4,900
+5,500
+5,720
+6,000
+7,100
+−1,200
+−4,400
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"GRAB","date":"2026-11-08","schema":"v15.0","contract":"v19","company_name":"Grab Holdings Limited"},"oneliner":"東南亞出行、外送與金融服務平台，三大分部首次同時獲利；現價只要五年 EPS 年化約 17% 就有 10% 年報酬，成敗在放款放大後的信用成本。","thesis":{"H":[{"id":"H1","text":"營運槓桿帶動集團利潤率續升，2028 年調整後 EBITDA 至少達公司目標的八成。","2y":"FY2027 不低於 11 億美元，FY2028 不低於 14 億美元","5y":null,"10y":null,"threshold":"FY2027 Adj. EBITDA ≥11 億美元；FY2028 ≥14 億美元（公司目標 17 億）","source":"每季財報、年度指引","drift_rule":"TTM 較路徑偏離 5% 以上連兩季為削弱；偏離 10% 以上連三季為反轉。"},{"id":"H2","text":"金融服務規模放大而信用成本受控，成為第三個獲利引擎。","2y":"2028 年放款組合不低於 60 億美元、分部 EBITDA 不低於 3 億美元","5y":"FY2031 分部 EBITDA 不低於 6 億美元，90 天以上逾期率不高於 3.5%","10y":null,"threshold":"90 天以上逾期率 ≤3.5%；2028 年分部 EBITDA ≥3 億美元（公司目標 5 億）","source":"季報補充資料的逾期率與風險調整後報酬","drift_rule":"2 年期連兩季偏離 5% 以上削弱、連三季偏離 10% 以上反轉；5 年期連四季偏離 5% 以上削弱、連六季偏離 10% 以上反轉。"},{"id":"H3","text":"網絡密度維持領先，外送與出行利潤率兌現，AI 與自駕留在平台內。","2y":"FY2028 外送分部利潤率不低於 3.5%，出行維持 8.5%～9%","5y":"外送分部利潤率不低於 4%，On-Demand 抽成不低於 13%","10y":"自駕與人車混合派單仍由 Grab 協調，外部自駕業者需要其入口","threshold":"外送分部利潤率逐年上升，出行不低於 8.5%，On-Demand 抽成不低於 13%","source":"季報分部資料，S&P 預期抽成 13%～15% 作為外部對照（口徑可能不同）","drift_rule":"5 年期連四季偏離 5% 以上削弱、連六季偏離 10% 以上反轉；10 年期跨兩個年度削弱、跨三個年度反轉。"}],"R":[{"id":"R1","text":"放款一年變三倍，逾期率的分母剛放大，Atome 再把風險推向無擔保消費信貸。","h_ref":"H2","clock":"🔥","threshold":"90 天以上逾期率 ≥4.0%，或逾期餘額增速連兩季高於放款增速","evidence_refs":["regulatory_antitrust#0","major_events#1"]},{"id":"R2","text":"印尼兩輪車佣金框架已生效、外送準則待公布，馬來西亞零工法與 RM160 百萬福利方案上路，新增法規與稅負是持續風險，反壟斷機關持續審視；菲律賓競爭委員會的 800 萬披索罰款金額小，但印證審查強度。","h_ref":"H3","clock":"⚡","threshold":"出行分部利潤率連兩季低於 8.5%，或外送分部利潤率連兩季同比下滑","evidence_refs":["regulatory_antitrust#0","regulatory_antitrust#1","regulatory_antitrust#4","major_events#1","major_events#2","product_recall_warning#0","reg_tariff_export#1"]},{"id":"R3","text":"油價推高司機成本，誘因與補貼長期化，對手低價競爭使定價權難以恢復；第一季誘因占 On-Demand GMV 10.5%。","h_ref":"H1","clock":"🔥","threshold":"誘因占比連四季高於 11.5%","evidence_refs":["supply_demand_durability#2","competitive_share_entrants#0","end_markets#2"]},{"id":"R4","text":"Atome 併購規模不明，加上 5 億美元回購、放款投入與自駕投資，淨現金可能快速下降；CFO 未回答放款需要多少公司資本。","h_ref":"H2","clock":"🔥","threshold":"扣除銀行存款後淨現金轉負"},{"id":"R5","text":"AI 代理與自駕改變入口，AI 侵權主張與雲端中斷是營運尾部風險。","h_ref":"H3","clock":"🐢","threshold":"代理訂單占外送 GMV 超過 20% 且廣告占比下滑","evidence_refs":["substitute_technology#0","substitute_technology#1","geo_supply_chain#1"]},{"id":"R6","text":"幾乎全部營收在東南亞，區域政治與總體波動無法分散。","h_ref":"H1","clock":"🐢","threshold":"On-Demand GMV 固定匯率年增率連四季低於 10%","evidence_refs":["geo_supply_chain#0"]}],"single_thing":{"description":"公司正式下修 2028 年金融服務 5 億美元 EBITDA 目標，或 90 天以上逾期率單季升破 4.0%（第三季 2.6%）。","why_fatal":"這是數學上最大的單一敏感項：金融服務占 2028 年 17 億美元目標的 29%。若只達 1.5 億，集團 EBITDA 少 3.5 億，約兩成，還會同時帶走市場對放款擴張與淨現金的信任。","if_happens":"減碼一半；若連兩季逾期率仍在 4.0% 以上，清倉。","how_monitor":"每季財報補充資料的逾期率與風險調整後報酬；Atome 併入後分開看消費信貸與司機商家放款；逾期餘額增速連兩季高於放款增速作為提前警示。","probability":"20%～25%（12～24 個月）。依據是放款年增 200%，事實表沒有歷史壞帳序列，屬判斷值。"}},"appendix_a":{"growth_durability":7,"quality_score":6,"ai_risk":"🟡","long_term_confidence":"中","fpe_fy2":24.36,"peg_fy2":1.08,"stress":{"pass":2,"total":3}},"eps_meta":{"base_eps_path":{"FY2025A":0.06,"FY2026E":0.14,"FY2027E":0.14,"FY2028E":0.21},"fy_end_month":12,"eps_basis":"FY2025A 為年報稀釋 EPS；FY2026E 至 FY2028E 為 Koyfin 共識快照（2026-11-07），財年 12 月底。共識是否全為 IFRS 口徑事實表未說明。"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/GRAB_20261108/scenario.json","archetype":{"primary":"品質複利成長","secondary":"金融","confidence":"中","fingerprint":"三邊網絡平台加內嵌放款，FY2025 才首度全年獲利"},"industry":{"clock_phase":"II","sd_verdict_source":"擴張期：MTU 5,720 萬創新高，On-Demand GMV 固定匯率年增 22%，活躍司機年增 20%。需求屬結構性持久，但供給端可逆性不低：司機受油價壓力，要靠誘因留住。","bargaining":{"up":"司機可多棲且受油價壓力，公司要用補貼和誘因留人，上游議價力中等偏高。","down":"消費者可多棲；商家依賴流量，商家出資促銷年增 48%，平台對商家有議價力。","geo":"印尼、馬來西亞政府直接介入司機分潤，新加坡與台灣競爭主管機關限制併購。"},"profit_pool_dir":"新增利潤向金融服務與廣告移動；五年利潤池歷史事實表未涵蓋。","tam_table":{"expanded":false,"reason":"事實表未涵蓋 TAM、滲透率與利潤池歷史；管理層只說消費信貸可再大十倍，沒有可核對的基數，無法展開。"}},"moat":{"mechanism":"司機、商家、消費者三邊網絡的本地密度，加上內嵌支付與放款資料；每一單都可多棲，靠會員與跨服務黏著降低流失。","execution":8,"pricing":6,"grade":"B","trend":"→","trend_evidence":"執行面擴大：活躍司機年增 20%、MTU 年增約 20% 到 5,720 萬、外送分部利潤率由 2.1% 升至 2.7%、GrabUnlimited 用戶貢獻外送 GMV 35%。定價面縮減：第三季出行 GMV 增 14%、營收只增 10%，saver 產品壓低客單價，印尼兩輪車新佣金框架 7 月生效，司機誘因上升。","peer_na_reason":"事實表沒有同業 ROIC 與投入資本，無法計算報酬差距，改用毛利率、營業利益率與 FCF 利潤率比較。","threats":[{"level":"🟡","text":"區域與單一市場對手（ShopeeFood、Gojek、Xanh SM、Maxim、InDrive）以低價搶單，印尼補貼戰壓抑定價；沒有 2026 年實際市占，份額方向無法驗證。","p":"30%","evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#1","end_markets#2"]},{"level":"🟡","text":"Uber 若買下 Delivery Hero，會透過 Foodpanda 留在東南亞；2026-08-04 法說 CEO 沒有正面回答，只提出售持股後一年內不得競爭的條款。","p":"15%"},{"level":"🟡","text":"ShopeePay、GoPay、Dana 等支付與數位銀行對手爭奪同一批用戶，金融服務的低獲客成本優勢只在 Grab 生態內成立。","p":"30%","evidence_refs":["substitute_technology#0"]},{"level":"🟡","text":"AI 代理把下單入口移到 app 外，傷的是廣告曝光，而廣告是外送利潤率的第二驅動力。履約、庫存與付款仍留在 Grab，分界年約 2030；自駕方面 COO 估混合期約十年，分界年約 2036。","p":"15%","evidence_refs":["substitute_technology#1"]}],"roic_durability":{"quadrant":null,"checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者、決策者、付款者多半同一人，出行與外送是高頻生活需求。MTU 創高，GrabUnlimited 用戶頻率約 3 倍。短期壓力來自通膨縮減家庭支出，不影響需求本身。"},{"item":"決策層級","level":"🟡","text":"替代性要用每一單衡量：消費者和司機都能多棲，對手名單長，還有主打低價者。會員制和跨服務能降低流失，同時買 Food 與 Mart 的用戶占外送 GMV 43%；漲價後流失率事實表未涵蓋。"},{"item":"價值鏈分配","level":"🟡","text":"司機與商家是最大的議價對手。油價上升時公司自行吸收司機補貼，法規方向也是保障司機收入與費用透明；另一方面商家出資促銷年增 48%、活躍廣告主年增 39%，廣告把部分利潤移回平台。"},{"item":"社會容忍度","level":"🔴","text":"實際定價上限是政治上限。印尼兩輪車新佣金框架 7 月生效、外送準則待公布，馬來西亞零工法上路且要共同出資 RM160 百萬，新加坡與台灣競爭主管機關先後擋下併購，放款利率也被印尼 KPPU 調查。"}],"roiic":"投入資本事實表未涵蓋，無法計算。FY2024 至 FY2025 營業利益由約 −0.55 億增至約 2.22 億美元，增量營業利益率約 48%，多來自營運槓桿，不是新資本的報酬。","reinvest_rate":"依公司調節表，第三季放款應收增加 4.45 億、客戶存款流入 1.84 億，淨投入 2.61 億美元，是當季營業利益 1.08 億的 2.4 倍；完整再投資率事實表未涵蓋。","endo_ceiling":null,"formula_note":"內生成長率＝增量 ROIC × 再投資率，兩項都缺投入資本，不硬算；情境按共識已超出內生上界處理。"},"combined":7.0,"score":7.0,"spread_table":[{"metric":"毛利率","GRAB":44.45,"SE":44.34,"UBER":43.21,"DASH":51.91,"MELI":42.02,"unit":"%"},{"metric":"營業利益率","GRAB":10.95,"SE":8.24,"UBER":12.44,"DASH":5.55,"MELI":7.42,"unit":"%"},{"metric":"FCF 利潤率","GRAB":-0.45,"SE":16.92,"UBER":18.44,"DASH":12.91,"MELI":31.81,"unit":"%"},{"metric":"研發密度","GRAB":10.4,"SE":4.24,"UBER":7.35,"DASH":10.85,"MELI":7.16,"unit":"%"}],"competitors":[{"name":"SE","gm":44.34,"om":8.24,"fcf_margin":16.92,"rd_intensity":4.24,"strategy_note":"毛利率 44.34% 與 GRAB 接近，FCF 利潤率 16.92% 明顯較好；ShopeeFood 與 ShopeePay 在外送和支付直接競爭，是生態最完整的對手。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"UBER","gm":43.21,"om":12.44,"fcf_margin":18.44,"rd_intensity":7.35,"strategy_note":"營業利益率 12.44% 高於 GRAB，是股東也是合作方；出售持股後一年內不得在核心市場競爭，若買下 Delivery Hero 會改變這個平衡。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"DASH","gm":51.91,"om":5.55,"fcf_margin":12.91,"rd_intensity":10.85,"strategy_note":"毛利率 51.91% 最高、營業利益率 5.55% 較低，FCF 利潤率 12.91%；市場不重疊，只作外送經濟模型對照。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"MELI","gm":42.02,"om":7.42,"fcf_margin":31.81,"rd_intensity":7.16,"strategy_note":"FCF 利潤率 31.81% 與 GRAB 差距最大，事實表未拆出放款現金流，差距不能全歸因於經營品質。","period":"TTM ending 2026-09-30（4季加總）"}]},"growth":{"driver_mix":"量為主（MTU、頻次、放款規模），價為負貢獻（抽成與客單價下滑），併購貢獻 Superbank、Stash 與待批的 Atome，回購為輔。","runway_years":"事實表未涵蓋滲透率，無法換算","runway_post_y5":"🟢","endo_ceiling_basis":"投入資本事實表未涵蓋，內生上界無法量化；共識 EPS 成長主要來自利潤率擴張和回購，按超出上界處理。","segments":[{"item":"外送","value":"第三季營收 5.61 億美元（+21%），GMV 45 億美元（+21%），分部利潤率 2.7%，長期目標 4% 以上；雜貨 GMV 成長為餐飲 1.8 倍。"},{"item":"出行","value":"第三季營收 3.49 億美元（+10%），GMV 23.35 億美元（+14%），分部利潤率 8.9%，管理層區間 8.5%～9%。"},{"item":"金融服務","value":"第三季營收 2.01 億美元（+124%），分部 EBITDA 1,200 萬美元，2028 年目標 5 億美元、放款 60 億美元以上，其中 3 億 EBITDA 來自 Atome 與 Superbank。"}],"decay_signals":[{"signal":"EPS 複合成長高於營收 5 個百分點以上","status":"成立","note":"FY2025A 到 FY2028E EPS 年化 51.8%，FY2025A 到 FY2027E 營收年化 24.8%，靠利潤率擴張。"},{"signal":"FCF/NI 連兩年低於 0.75","status":"成立","note":"FY2025 FCF −4,400 萬美元對淨利 2.68 億；TTM FCF 利潤率 −0.45%，主因放款投入。"}],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":[{"item":"回購","value":"9、10 月買回 4 億美元，尚餘 5 億美元，承諾 2027 年 9 月前完成並註銷。"},{"item":"累計授權","value":"上限 17.5 億美元（CFO，2026-08-04）。"},{"item":"併購","value":"Stash、Superbank 已併入；foodpanda 台灣遭否決；Atome 待批，金額事實表未涵蓋。"},{"item":"股息","value":"事實表未涵蓋，情境以 0 計。"}],"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"Stash 與 Superbank 併入不到一年，併購金額與增量獲利事實表未涵蓋，已實現報酬無法計算；foodpanda 台灣遭否決，Atome 待批。","grade":"不過"},{"year":"—","action":"buyback_yield","rationale":"FY2026E EPS 0.14 除以 9、10 月股價約 2.79～3.42，買入收益率約 4.1%～5.0%。10 年期殖利率事實表未涵蓋，要過門檻須低於約 3%，保守判未過；回購均價未揭露。","grade":"不過"},{"year":"—","action":"sbc_dilution","rationale":"第三季 SBC 4,900 萬美元，年化 1.96 億，占市值 1.4%，低於 1.5%；扣除回購後股數淨減少。","grade":"過"}]},"valuation":{"basis":"EPS 乘本益比為主；EV/銷售與 EV/EBITDA 只作對照，因淨現金口徑有爭議。","peers":{"expanded":false,"reason":"事實表只有同業利潤率，沒有同業倍數，無法做倍數對照，屬資料缺口。"},"fwd_pe":24.36,"peg":1.08,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"現價 3.41 美元，FY2026E 本益比 24.36 倍，PEG 1.08（FY2025A 基期公式得 0.47，是低基期假象，不採用；改用 FY2026E 到 FY2028E 年化 22.5%）。EV/FY1 營收 2.36 倍，在四個年度端點內最低，但五年區間分位事實表未涵蓋。12 個月以 FY2028E EPS 0.21×20 倍得 4.20，上檔 23.2%；24 個月以 FY2029E 0.26×20 倍得 5.20，上檔 52.5%。結論是合理價，不是便宜價。","upside_short_pct":23.2,"upside_mid_pct":52.5},"trap_analysis":{"verdict":"🟡","label":"放款擴張把 FCF 壓成負值，獲利成長靠利潤率擴張"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"放款組合一年變三倍到 27.11 億美元，90 天以上逾期率 2.6% 的分母剛放大；金融服務營收 2.01 億、EBITDA 1,200 萬，離 2028 年 5 億美元還很遠，其中 3 億要靠 Atome 與 Superbank。","assumption":"放款擴張到 60 億美元以上，逾期率仍可維持在 3.5% 以下，消費信貸模型在東南亞適用。","consequence":"信用循環轉差時，放款損失、收緊放款和淨現金下降同時發生，FY2031 EPS 停在 0.14，股價約 1.96，五年虧 43%；極端情況下虧損超過 50%。","ruling":"採納，列為唯一致命項。此視角與唯一致命事件直接重疊，不另寫第二個故事。空頭機率維持 30%。","watch":"逾期餘額增速相對放款增速；Atome 併入後分開看消費信貸。","evidence_refs":["regulatory_antitrust#0"],"fact_refs":["f_kpi10"]},{"view":"論點成功但股東經濟變差","evidence":"第三季 Adj. FCF 2.86 億美元，簡單 FCF 卻是 −1,200 萬；放款淨投入 2.61 億。Adj. EBITDA 2.37 億排除 SBC 4,900 萬與折舊攤銷，營業利益只有 1.08 億。","assumption":"營收和 EBITDA 目標達成，股東就分得到現金。","consequence":"目標達成但放款長期吃掉現金，回購靠既有現金而不是自由現金流，17 億美元 EBITDA 對股東的價值要打折。","ruling":"部分採納：估值以 EPS 為準，不用 Adj. EBITDA 或 Adj. FCF；基本情境終端倍數壓到 18 倍。","watch":"簡單 FCF、扣除銀行存款後淨現金、銀行占放款比重。","fact_refs":["f_kpi3_adjusted_free_cash_flow","f_kpi4_ocf_fcf_ocf","f_kpi5_sbc"]},{"view":"論點成功但股東經濟變差","evidence":"印尼兩輪車新佣金框架 7 月生效，外送準則待公布；馬來西亞零工法上路並共同出資 RM160 百萬；競爭主管機關擋下併購。社會容忍度是四項持續期檢查中最弱的一項。","assumption":"抽成率維持 13% 以上，監管只要求透明，不壓實質分潤。","consequence":"平台規模繼續擴大，但新增的經濟利益被分給司機，利潤率停在目前水準。","ruling":"採納為中期風險。管理層說不影響指引，但指引只到 2026 年底，不能當作風險已解除。","watch":"出行分部利潤率 8.5% 下限、On-Demand 抽成 13%。","evidence_refs":["regulatory_antitrust#1","regulatory_antitrust#4"]},{"view":"價格已反映太多","evidence":"FY2026E 本益比 24.36 倍，FY2027E 共識 EPS 零成長；若把 27 億美元銀行存款視為負債，EV 由 99 億美元升至約 126 億，EV/FY1 營收由 2.36 倍升至約 3.0 倍。","assumption":"淨現金 38.27 億美元都是可用現金，且 2028 年 17 億美元 EBITDA 能達成。","consequence":"EV 對 2028 年 EBITDA 目標 5.8～7.4 倍的低倍數可能是假象，真實倍數取決於目標打幾折。","ruling":"反駁一半：就算用 126 億美元 EV、目標打八折（13.6 億），也只有約 9.3 倍。但 24 倍本益比本身不便宜，因此估值結論定為合理而非便宜。","watch":"2027 年指引、Atome 付款方式、銀行占放款比重。","fact_refs":["f_fwd_pe_latest","f_ev_m","f_ev_s_fwd","f_net_debt_m"]}],"max_dd":{"lo":-60,"hi":-42,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 ❌ → 本次 ❌","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=❌","side_b":"本次 ma=❌","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 3.42 → 本次 3.41（-0.3%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=3.42","side_b":"本次 price_at_dd=3.41","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]裁決由 dd_decision.py 機械路由：前份 進場 → 本次 觀望","cause":"方法變動","prior_field":["dca_verdict"],"side_a":"前份 dca_verdict=進場","side_b":"本次 dca_verdict=觀望","ruling":"裁決是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。矩陣輸入無可比對的前份值。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]角色由 dd_decision.py 機械路由：前份 衛星 → 本次 追蹤","cause":"方法變動","prior_field":["dca_role"],"side_a":"前份 dca_role=衛星","side_b":"本次 dca_role=追蹤","ruling":"角色是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。矩陣輸入無可比對的前份值。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 3.42 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 3.42 美元：Bull 價 12.5、Bear 價 2，五年期望值 +93.7%，基準年化 13.6%，不對稱比 5.17","side_b":"本次情境、股價仍用 3.42 美元：Bull 價 12.76、Bear 價 1.96，五年期望值 +95.7%，基準年化 13.6%，不對稱比 5.33","ruling":"先換情境、股價不動：五年期望值多 2.0 個百分點，基準年化多 0.0 個百分點。不對稱比由 5.17 變為 5.33。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變好。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 3.42 美元：五年期望值 +95.7%，基準年化 13.6%，不對稱比 5.33","side_b":"本次情境、股價 3.41 美元：五年期望值 +96.3%，基準年化 13.7%，不對稱比 5.37","ruling":"再換股價、情境不動：起點價下跌 0.3%，五年期望值多 0.6 個百分點，基準年化多 0.1 個百分點，不對稱比由 5.33 升到 5.37。合計五年期望值比前份多 2.6 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"基本面結論與前份比較","cause":"新證據","prior_field":["signal","val","trap","moat_trend","runway_post_y5","archetype","cycle_position"],"side_a":"2026-09-05：綜合評等 B、估值 🟡、價值陷阱 🟡、護城河 →、五年後成長空間 🟢、類型為品質複利成長、未標循環位置，裁決進場。","side_b":"2026-11-08：上述基本面結論不變。第三季金融服務提前轉盈、全年指引第二次上修；但印尼新佣金框架已生效、foodpanda 台灣遭否決、外送準則細節未定，正負相抵。","ruling":"維持前份方向，裁決與角色依本次輸入重算。","evidence_level":"公司財報與法說（2026-11-03）","settle_metric":"下次財報的 2027 年指引與逾期率","if_then":["若 2027 年 Adj. EBITDA 指引低於 10 億美元，停止加碼。","若指引不低於 11 億美元且逾期率低於 3%，分批反買補足保留部位。"]},{"axis":"情境機率與回撤範圍","cause":"方法變動","prior_field":["p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份多頭機率 25%、空頭 30%、最大回撤 −48%（單點）。","side_b":"本次多頭 25%、空頭 30%、最大回撤 −60% 至 −42%（範圍）。","ruling":"機率不動：金融服務提前轉盈的利多，與消費信貸併入、印尼法規未定的風險相抵。回撤改寫成範圍並納入極端空頭。","evidence_level":"情境假設"},{"axis":"行動門檻重設（減碼、清倉）","cause":"方法變動","prior_field":["rearm_trigger","kill_metrics"],"side_a":"前份摘要未附門檻原文，再進場條件與退出指標皆為 null。","side_b":"90 天以上逾期率 ≥4.0% 減碼一半，連兩季清倉；再進場條件為 Atome 獲批且 2027 年 Adj. EBITDA 指引不低於 11 億美元，或股價回落至 2.74 附近而指引未下修。","ruling":"前份門檻原文不可得，本次全部重新設定，無法判斷與前份差異；前份觸發器是否發火也無從逐條核對，繼承前份的欄位留空。","evidence_level":"前份摘要資料缺口"},{"axis":"Single Thing 重設","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份摘要未附唯一致命點原文（null）。","side_b":"公司正式下修 2028 年金融服務 5 億美元 EBITDA 目標，或 90 天以上逾期率單季升破 4.0%。","ruling":"以數學敏感度選定 Single Thing：金融服務占 2028 年目標 29%，若只達 1.5 億美元，集團 EBITDA 少約兩成，大於印尼 Ojol（占出行 GMV 6%）的直接影響。","evidence_level":"公司目標與法說（2026-11-03、2026-08-04）","settle_metric":"每季 90 天以上逾期率與 2028 年目標是否維持"},{"axis":"調整後 FCF 與簡單 FCF","side_a":"CFO：自由現金流幾乎翻倍，第三季 Adj. FCF 2.86 億美元、TTM 5.33 億。","side_b":"第三季 OCF 5,500 萬、資本支出 7,100 萬，簡單 FCF −1,200 萬；TTM FCF 利潤率 −0.45%，四家同業為 12.91%～31.81%。","ruling":"可調和：差額主要是放款擴張，放款是有利息收入的資產，不是營運虧損；但它也是真實資本投入，Adj. FCF 不能當作可分配現金。","evidence_level":"公司調節表","settle_metric":"金融服務的公司資本需求與銀行占放款比重，事實表未涵蓋","if_then":["若扣除銀行存款後淨現金轉負，停止加碼。","若銀行占放款比重上升且簡單 FCF 轉正，分批反買補足保留部位。"]},{"axis":"第四季指引隱含 EBITDA 約略不變","side_a":"CFO 歸因於旺季投資、司機補貼與新產品行銷，屬刻意選擇。","side_b":"指引隱含第四季 EBITDA 與第三季相近，連續擴張的斜率放緩；FY2027 共識 EPS 也與 FY2026 同為 0.14。","ruling":"可調和，但歸因未證、需監測，不採信也不否定。","evidence_level":"管理層說法，尚無後續數據","settle_metric":"2027 年第一、二季 Adj. EBITDA 利潤率","if_then":["若 2027 年第一、二季 Adj. EBITDA 利潤率連兩季低於 20%，季節性投資的說法視為不成立，減碼三分之一。"]},{"axis":"管理層前後說法","side_a":"2026-08-04 法說：CFO 稱 foodpanda 台灣進度符合預期、年底前完成；COO 稱全年指引假設 Ojol 佣金結構維持現行。","side_b":"2026-11-03 法說：CFO 說否決結果「we were anticipating it」；CEO 說印尼兩輪車新佣金框架 7 月已生效，早於 8 月那場法說。","ruling":"可調和。財務承諾都兌現：出行利潤率 8.9% 落在 8.5%～9%、金融服務提前轉盈、指引兩度上修。併購與監管的口徑偏樂觀，要自行打折。Ojol 佣金的說法可能指新框架實施後的現行結構，摘錄不足以確認。","evidence_level":"兩場法說逐字稿","settle_metric":"Atome 審批時程與印尼準則內容"},{"axis":"監管影響的時間範圍","side_a":"COO：不預期印尼新準則對指引有實質影響。","side_b":"指引只涵蓋到 2026 年底，只剩兩個月；準則細節尚未公布，影響落在 2027 年以後。第一季與第三季管理層都提到燃油與印尼法規逆風。","ruling":"不可裁決至準則細節公布。管理層的說法不能當作風險解除，保留一半部位等待。","evidence_level":"法說逐字稿，決勝資料尚不存在","settle_metric":"印尼外送準則內容；出行與外送分部利潤率","if_then":["若準則公布後出行利潤率連兩季低於 8.5%，減碼三分之一。","若準則公布後 2027 年指引未受影響，分批反買補足保留部位。"],"evidence_refs":["supply_demand_durability#2","regulatory_antitrust#1","regulatory_antitrust#4"]},{"axis":"賣方目標價","side_a":"賣方平均目標價 5.82～6.01 美元，較現價高 71%～76%，最高 8、最低 4.6，高低比 1.7 倍。","side_b":"本次 12 個月約 4.20、24 個月約 5.20；五月 Mizuho、JPMorgan 下調目標價，當時指引尚未上修。","ruling":"方向支持，幅度不採。賣方目標隱含約 28 倍 FY2028E EPS，高於目前 24.4 倍；高低比未達 2.5 倍，不必因分歧下調信心。五月的下調已被之後兩次指引上修蓋過。","evidence_level":"賣方彙整，日期不一","settle_metric":"第三季財報後目標價更新","evidence_refs":["capital_markets_pricing#4"]},{"axis":"產業態勢","side_a":"競爭面：對手名單長、印尼補貼戰持續，沒有 2026 年份額資料。","side_b":"結構面：S&P 升評至 BB、展望正面，三大分部全部獲利。其他結構變數在監管：台灣否決併購、印尼新佣金框架生效、反壟斷機關持續審視。","ruling":"雙向拉鋸：執行面轉好，定價與併購空間被監管壓縮。","evidence_level":"評級機構與 20-F","settle_metric":"On-Demand 抽成是否守住 13%"},{"axis":"現在就賣的最強論證","side_a":"股價仍在 250 週均線 3.79 下方；放款一年變三倍，逾期率的分母剛放大；FY2027 共識 EPS 零成長；Atome 規模不明而消費信貸風險最高；兩週已反彈約 22%。","side_b":"現價只要五年 EPS 年化約 17%、終端 18 倍就有 10% 年報酬，金融服務提前轉盈，淨現金與 9 億美元回購提供下檔支撐。","ruling":"可調和。賣的論證中以放款分母問題最有力，已列為唯一致命項，其餘反映在 30% 空頭機率，暫不賣。","evidence_level":"財報、共識與週線資料","settle_metric":"逾期率、2027 年指引、股價是否站回 3.79","if_then":["若股價續漲到 4.44 而逾期率與印尼準則都沒有新資料，不追。","若股價跌破 2.74 而指引未下修，分批反買。","若股價跌破 2.74 且指引下修、逾期率升破 3.5%，停止加碼。"]}],"triggers":[{"n":1,"text":"金融服務信用事件：90 天以上逾期率單季升破 4.0%，或公司下修 2028 年金融服務 5 億美元目標。","type":"Single Thing","maps_to":"Single Thing","metric":"90 天以上逾期率；2028 年金融服務 EBITDA 目標","threshold":"≥4.0%，或目標下修","action":"減碼一半；連兩季仍 ≥4.0% 則清倉","source_freq":"每季財報補充資料","date":"2027-02","evidence_refs":["regulatory_antitrust#0"]},{"n":2,"text":"2027 年指引檢驗利潤率路徑。","type":"假設驗證","maps_to":"H1","metric":"FY2027 Adj. EBITDA 指引","threshold":"低於 10 億美元","action":"停止加碼","source_freq":"年度指引","date":"2027-02"},{"n":3,"text":"逾期餘額增速領先放款增速，提前警示信用成本。","type":"假設驗證","maps_to":"H2","metric":"90 天以上逾期餘額增速減放款增速","threshold":"連兩季為正","action":"停止加碼","source_freq":"每季財報補充資料","date":"2027-05"},{"n":4,"text":"司機分潤法規或補貼吃掉出行利潤率。","type":"風險","maps_to":"R2","metric":"出行分部利潤率","threshold":"連兩季低於 8.5%","action":"減碼三分之一","source_freq":"每季財報","date":"2027-02","evidence_refs":["regulatory_antitrust#4","regulatory_antitrust#1"]},{"n":5,"text":"印尼 KPPU 對司機合作安排或 P2P 利率卡特爾作出不利裁定；屬行政程序，受影響營收事實表未涵蓋，裁定日未知。","type":"風險","maps_to":"R2","metric":"裁定罰款與營運限制","threshold":"罰款超過 1 億美元，或要求改變司機合作安排","action":"減碼三分之一","source_freq":"KPPU 公告、年報法律程序章節","date":null,"evidence_refs":["regulatory_antitrust#0","major_events#1"]},{"n":6,"text":"誘因長期化，定價權進一步流失。","type":"風險","maps_to":"R3","metric":"誘因占 On-Demand GMV","threshold":"連四季高於 11.5%（第一季 10.5%）","action":"減碼三分之一","source_freq":"每季財報","date":"2027-11","evidence_refs":["supply_demand_durability#2"]},{"n":7,"text":"兩個具名不確定事件落地，解鎖保留的一半部位。","type":"加碼","maps_to":"H2","metric":"Atome 審批；印尼外送準則","threshold":"Atome 獲批，且準則公布後 2027 年指引未受影響","action":"補足保留的一半部位","source_freq":"公司公告、法說","date":"2027"},{"n":8,"text":"股價先行兌現基本情境的中期價值。","type":"減碼","maps_to":"H1","metric":"股價","threshold":"≥6.30 美元（FY2028E EPS 0.21 的 30 倍）","action":"減碼三分之一","source_freq":"每日","date":null},{"n":9,"text":"再進場條件。","type":"估值rearm","maps_to":"H1","metric":"Atome 審批、2027 年指引、股價","threshold":"Atome 獲批且 2027 年 Adj. EBITDA 指引不低於 11 億美元；或股價回落至 2.74 附近而指引未下修","action":"重跑研究後分批建倉","source_freq":"法說、每日股價","date":"2027-02"},{"n":10,"text":"第四季財報後全面複審。","type":"複審日期","maps_to":"H1","metric":"2026 年第四季財報與 2027 年指引","threshold":"財報發布","action":"重跑研究","source_freq":"一次性","date":"2027-02"},{"n":11,"text":"資本緩衝消失且信用惡化同時發生。","type":"清倉","maps_to":"R4","metric":"扣除銀行存款後淨現金；90 天以上逾期率","threshold":"淨現金轉負且逾期率 ≥4.0%","action":"清倉","source_freq":"每季財報","date":null}],"kill_metrics":[{"metric":"放款組合 90 天以上逾期率","bear_threshold":"單季 ≥4.0%（第三季 2.6%）","window":"2026 年第四季至 2028 年第四季","source":"每季財報補充資料","last_status":"ok"},{"metric":"出行分部利潤率","bear_threshold":"連兩季低於 8.5%（第三季 8.9%）","window":"2026 年第四季起","source":"每季財報","last_status":"ok"},{"metric":"外送分部利潤率同比變化","bear_threshold":"連兩季同比下滑（第三季 2.7%，去年同期 2.1%）","window":"2026 年第四季起","source":"每季財報","last_status":"ok"},{"metric":"誘因占 On-Demand GMV","bear_threshold":"連四季高於 11.5%（2026 年第一季 10.5%）","window":"2026 年第四季至 2027 年第四季","source":"每季財報；第三季數字事實表未涵蓋","last_status":"unknown"},{"metric":"FY2027 Adj. EBITDA 指引","bear_threshold":"低於 10 億美元","window":"2026 年第四季法說","source":"公司年度指引","last_status":"unknown"},{"metric":"扣除銀行存款後淨現金","bear_threshold":"轉負（目前約 11.3 億美元，以淨現金 38.27 億減存款 27 億估算）","window":"Atome 完成後每季","source":"每季資產負債表","last_status":"ok"}],"evidence_dismissed":[],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8(val爭議)","pacing":["row4：週線❌，進場節奏強制分批（starter 1/3＋趨勢確認後加碼），頁首掛「⚠️ 週線趨勢未確認，逢回分批勿接刀」"],"holding_cap":null,"audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":true,"basis":"ma='❌'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"輸入缺(momentum_overheated=null)，依保守方向處理：不視為觸發","input_gap":["momentum_overheated"]},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟢'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把放款擴張吃掉的現金當成本業燒錢（簡單 FCF −1,200 萬美元、Adj. FCF 2.86 億），並對 2028 年 17 億美元 EBITDA 打很深的折；即使用較高的 EV，目標打八折也只有約 9.3 倍。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟢', val='🟡', moat_trend='→', week26=-8.33, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position=None, moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈機械讀數判定不可用，baseline rows 8/9/9b/10 的估值條件視為不可判 → 落 row8 觀望（保守方向）","hit":true,"basis":"val_denominator_disputed=True, val(機械讀數)='🟡'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"requires_critic":[],"rearm_trigger":"Atome 獲批且 2027 年 Adj. EBITDA 指引不低於 11 億美元；或股價回落至 2.74 附近而指引未下修","exec_line":"首筆不超過計畫部位一半，理由是股價兩週內由約 2.79 彈到 3.41，不追高。其餘一半等印尼外送準則細節公布且 Atome 審批有結果才加。股價跌破 2.74 而指引未下修則分批反買，指引下修則停止加碼。股價到 6.30（FY2028E EPS 0.21 的 30 倍）減碼三分之一。週線仍在 250 週均線 3.79 下方；若 2027 年 5 月前未站回且第一季指引下修，視為趨勢訊號正確，停止加碼。"},"reasoning":{"industry":"第三季營收 11.12 億美元，外送 5.61 億（+21%）、出行 3.49 億（+10%）、金融服務 2.01 億（+124%），占比約 50%、31%、18%。營業利益 1.08 億，營益率 9.7%；單季毛利率事實表未涵蓋，TTM 為 44.45%。以 GMV 推算，外送抽成約 12.5%、出行約 14.9%。成長最快的是金融服務，放款組合 27.11 億美元，年增 200%（不含 Superbank 為 115%），當季首次轉盈 1,200 萬美元。單點依賴在地區而非客戶：20-F 載明無重大客戶信用集中，但幾乎全部營收在東南亞，印尼監管是最敏感的單點；印尼占營收比重事實表未涵蓋。","moat":"機制是三邊網絡的本地密度，加上內嵌支付與放款資料。同業 ROIC 與投入資本事實表未涵蓋，改用利潤率比較：TTM 營業利益率 10.95%，高於 SE 8.24%、MELI 7.42%、DASH 5.55%，低於 UBER 12.44%；毛利率 44.45% 與 SE 44.34% 接近。FCF 利潤率 −0.45%，遠低於四家同業的 12.91%～31.81%，公司自身差距主要來自放款投入，事實表未拆出同業的放款現金流。可能看錯的地方：2026 年實際市占沒有資料，定價權縮減可能比抽成數字顯示的更快。","growth":"成長以量為主，價格是負貢獻。FY2026 營收含 Superbank 與 Stash 併入，管理層 2028 年營收年複合 30% 以上的目標含待批的 Atome。三年共識 EPS 由 FY2025A 0.06 到 FY2028E 0.21，公式 CAGR 51.8%，是低基期結果；FY2026E 到 FY2028E 年化 22.5%，才是可用的前瞻成長。EPS 家數事實表未涵蓋，營收共識為 18 家。缺口來源以利潤率擴張為主，其次是回購與 Atome；內生上界無法量化，情境按已超出處理。","governance":"FY2025 FCF −4,400 萬美元、淨利 2.68 億，轉換率為負；SBC 占營收 4.4%、占營業利益 45%。9、10 月回購 4 億美元，CFO 承諾 2027 年 9 月前完成其餘 5 億並註銷。foodpanda 台灣遭否決，5.5 億美元留在帳上，第四季認列 6,000 萬美元違約金。CFO 被問到放款需要多少公司資本時沒有給數字。法說逐字稿寫 TTM Adj. FCF 553，新聞稿為 533，以新聞稿為準。近三年現金去向四分、債務到期與回購均價事實表未涵蓋。","valuation":"3.41 美元以 10% 年報酬滾五年約需 5.49，除以 18 倍得 EPS 0.305，較 FY2026E 0.14 年化約 17%。基本情境 FY2031 EPS 0.36，高於這個要求，差距來自利潤率擴張。同業倍數事實表未涵蓋，終端倍數只能對照公司目前 24.36 倍。可能看錯的地方：FY2027E 共識 EPS 與 FY2026E 同為 0.14，起點若含一次性項目，年化要求會更高。","premortem":"成長熄火測試以 FY2028E EPS 0.21 為起點：之後年增 15%、終端 18 倍得 5.75；年增 10%、14 倍得 3.91；年增 5%、11 倍得 2.67，對現價分別 +69%、+15%、−22%，三個情境中兩個不虧。十項衰退訊號成立兩項，都和放款投入或低基期有關。歷史最大回撤與四週漲幅事實表未涵蓋；RSI 66.31 未超過 70，另知股價由 10 月 26 日附近約 2.79 反彈到 3.41。法說未正面回答的有：第三季金融服務 EBITDA 拆分、放款需要多少公司資本、印尼準則細節（2026-11-03）；出行抽成下半年走向、Uber 收購 Delivery Hero 的影響（2026-08-04）。"},"plain":{"six":{"how_it_makes_money":"賺東南亞消費者、商家與借款人的錢：外送出行抽成、廣告和放款利息；錢卡在派單密度與放款定價兩個節點。","moat":"護城河方向穩定（→）：執行力擴大，定價權縮減，兩者相抵；等級 B。","growth":"五年後成長空間仍寬（🟢）：核心滲透率事實表未涵蓋，依據是已有來源的第二條曲線消費信貸，但它尚未經過信用循環。","capital":"資本配置 B 級：回購力道強、股權稀釋低，但放款吃掉現金，併購報酬尚待驗證。","valuation":"現價要求 FY2031 年 EPS 達約 0.30、終端 18 倍，才有 10% 年報酬；我相信做得到，但要放款信用成本守住。","how_wrong":"最可能看錯在放款信用成本與監管分潤，其次才是競爭；價值陷阱風險中等。"}},"decision_inputs":{"signal":"B","ma":"❌","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把放款擴張吃掉的現金當成本業燒錢（簡單 FCF −1,200 萬美元、Adj. FCF 2.86 億），並對 2028 年 17 億美元 EBITDA 打很深的折；即使用較高的 EV，目標打八折也只有約 9.3 倍。","momentum_overheated":null,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":null,"wait_for_price_condition":null,"trap":"🟡","val":"🟡","moat":"B","moat_trend":"→","runway_post_y5":"🟢","capalloc_grade":"B","archetype":"品質複利成長","price_at_dd":3.41,"week26_return_pct":-8.33,"consensus_rev_3m_pct":7.69,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"兩個分母都有爭議。EPS：FY2026E 與 FY2027E 共識同為 0.14，營收卻增 24.6%，事實表無法判斷是否混有一次性項目或併購攤提。EV：淨現金 38.27 億美元未扣數位銀行存款 27 億（總債務 20.7 億小於存款，存款不可能全列在內）；若存款資金仍多放在現金，EV 最高約 126 億，EV/FY1 營收約 3.0 倍。"},"catalysts":[{"date":"2027-02","date_precision":"month","type":"guidance","event":"2026 年第四季財報與 2027 年指引（月份為估計）","impact":"高","watch":"FY2027 Adj. EBITDA 指引是否不低於 11 億美元，以及 90 天以上逾期率。"},{"date":"2026-Q4","date_precision":"quarter","type":"regulatory","event":"印尼外送與物流準則細節公布（時點未定，管理層稱細節開始浮現）","impact":"高","watch":"司機分潤與費用透明的具體規定，對外送利潤率的影響。"},{"date":"2027","date_precision":null,"type":"regulatory","event":"Atome 併購審批，CFO 稱目標在明年完成","impact":"高","watch":"交易金額、付款方式與 2028 年目標是否維持。"},{"date":"2027-09","date_precision":"month","type":"other","event":"9 億美元回購計畫的完成期限，買回股份將註銷","impact":"中","watch":"剩餘 5 億美元的執行速度與均價。"},{"date":"2026-Q4","date_precision":"quarter","type":"product","event":"新加坡自駕服務開始商業收費","impact":"低","watch":"車隊擴充與派單整合進度，短期不影響獲利。"}],"_projected_from":"v19"}
+```
