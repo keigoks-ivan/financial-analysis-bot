@@ -259,7 +259,7 @@ details{margin:8px 0} summary{cursor:pointer;font-weight:600}
 <li>逐家詢問（優先中信、國泰、玉山、台新、星展、匯豐）：有無資產折算內規、各類資產折數與放滿期間、複委託與海外資產、配偶資產、是否要求在該行有一定往來資產。</li>
 <li>銀行與券商跨業聯徵是否已上線，你的券商融資或借貸是否會被計入負債。</li>
 <li>央行 2026-09 版本中「名下有房者第 1 戶不得有寬限期」原文。</li>
-<li>內湖：確切的移轉登記日（已知持有約 6 年，約 2020-11 取得，屬房地合一 2.0，不適用舊制）、取得成本、可認列費用、土地漲價總數額、土增稅估計。</li>
+<li>內湖：確切的移轉登記日（已知持有約 6 年，約 2020-11 取得，屬房地合一 2.0，不適用舊制）、可認列費用、土地漲價總數額、土增稅估計（取得成本 4,250 已確認）。</li>
 <li>內湖自住優惠：持有與設籍都已滿 6 年；剩下要確認本人、配偶、未成年子女在交易前 6 年內是否用過自住優惠（全家 6 年一次），以及設籍起日是否早於持有起日之後的任何中斷。</li>
 <li>自住優惠與重購退稅能否併用。</li>
 <li>林口交屋後，配偶戶籍留在內湖但人住林口，國稅局是否仍認定內湖「實際居住」（影響自住優惠與重購退稅）。</li>
@@ -287,7 +287,7 @@ function defaults(){return{
   repatAmt:0, repatM:YM(2027,6), giftAmt:0, giftM:YM(2027,6),
   merge:true, scope:'all', approvalRatio:74.6,
   lk:{V:4160, appr:92, g:2, rate:2.3, term:30, paid:416, constr:208, cStart:YM(2026,11), cEnd:YM(2027,10), grace:false, graceYears:2, rent:92, hold:0},
-  nh:{V:5500, appr:92, g:2, B:3888, rate:2.4, P:16.0, cost:4500, acq:YM(2020,11), exp:0, landInc:0, lvt:0, lvtRefund:0, hold:0, selfUse6y:true, oldRegime:false, oldTax:0},
+  nh:{V:5500, appr:92, g:2, B:3888, rate:2.4, P:16.0, cost:4250, acq:YM(2020,11), exp:0, landInc:0, lvt:0, lvtRefund:0, hold:0, selfUse6y:true, oldRegime:false, oldTax:0},
   qp:{V:1800, appr:92, g:2, B:1119, rate:2.35, P:4.5, cost:1700, acq:YM(2026,6), exp:0, landInc:0, lvt:0, hold:0},
   capFirst:80, capSecond:70, capThird:30, highPrice:6000,
   feePct:2, living:0, tempRent:5, bufferMonths:12, refundLag:3,
@@ -485,7 +485,7 @@ const $=s=>document.querySelector(s);
 const fmt=(x,d=0)=>x==null||isNaN(x)?'—':Number(x).toLocaleString('zh-TW',{minimumFractionDigits:d,maximumFractionDigits:d});
 const pct=(x,d=1)=>x==null||isNaN(x)?'—':(x*100).toFixed(d)+'%';
 const COLORS=['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)'];
-const KEY='linkou-loan-model-v2';
+const KEY='linkou-loan-model-v3';
 let P=defaults(), SC=defaultScenarios();
 try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.P&&s.SC){P=Object.assign(defaults(),s.P);['lk','nh','qp'].forEach(k=>P[k]=Object.assign(defaults()[k],s.P[k]||{}));SC=s.SC;}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify({P,SC}));}catch(e){}}
@@ -531,7 +531,7 @@ const CTRL=[
   ['nh.B','撥款時貸款餘額',0,5000,1,'萬'],
   ['nh.rate','房貸利率',1.5,3.5,0.05,'%'],
   ['nh.P','月付',0,40,0.1,'萬'],
-  ['nh.cost','取得成本（待確認）',0,8000,10,'萬'],
+  ['nh.cost','取得成本',0,8000,10,'萬'],
   ['nh.acq','取得（登記）月份（持有滿 6 年，約 2020-11）','month'],
   ['nh.exp','可認列費用',0,500,1,'萬'],
   ['nh.landInc','土地漲價總數額',0,2000,5,'萬'],
