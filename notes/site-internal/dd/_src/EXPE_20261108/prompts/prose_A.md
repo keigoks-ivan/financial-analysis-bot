@@ -1,0 +1,400 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 EXPE（2026-11-08）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/EXPE_20261108/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：EXPE　日期：2026-11-08　archetype：None　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1522B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（638B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（990B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1601B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1019B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（528B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（1036B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2372B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（4177B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2597B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（283B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1522           3835-5478      5 條（2–6 內）  
+s3                  8000         638           5153-7362      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3610          7973-11390      5 條（2–6 內）  
+s6                 11000         528          7330-10472      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500        1036           1725-2464      5 條（2–6 內）  
+s10                 5000        2372           1840-2628      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2597           2000-2403      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         283            852-1217      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=5037B；至少需散文≈39.96KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−56%
+−55
+−55%
+−37%
+−35%
+−35
+−31%
+−13.99
+0
+0.05%
+0.36%
+0.4%
+0.6%
+0.68
+0.71
+0.71%
+0.75
+0.8
+0.85
+0.9
+1
+1%
+1.1
+1.157
+1.22
+1.6
+1.8
+1.89
+1.9
+2
+02
+2%
+2.2%
+2.2
+2.3
+2.4
+2.43%
+2.9
+3%
+3
+3.1%
+3.3%
+3.4%
+3.5%
+4
+4%
+04
+4.8
+5%
+05
+5
+5.2%
+5.5
+5.76
+5.9%
+6
+6%
+6.5%
+6.76
+7%
+7
+7.25%
+7.5
+7.8%
+8%
+08
+8
+8.04%
+9
+9.81
+10%
+10
+10.19%
+10.5%
+10.56
+11%
+11
+11.4
+12%
+12
+12.4
+12.41
+12.5%
+12.94
+13
+13%
+13.13
+13.26
+13.31
+13.8%
+13.8
+14
+14.4
+14.5%
+14.68%
+15%
+15
+15.2
+15.6%
+16
+17
+17.5%
+18.19%
+18.39%
+19
+19%
+19.5
+20%
+20
+20.89
+21%
+21.5
+22.5%
+23
+23%
+23.09%
+23.5%
+23.8
+24
+24.33%
+24.55
+25%
+25
+25.6
+26
+26%
+26.5
+26.7
+26.9%
+27%
+27.5%
+27.92
+29.6
+29.9
+30%
+30
+30.2
+30.65
+31%
+31.1
+32.0
+32.5
+32.78%
+32.84%
+33.9%
+33.9
+35%
+35
+35.4
+36.9
+36.93%
+37
+37.5
+40%
+40
+42
+43%
+43.4%
+45
+49
+49.38
+50
+50%
+52
+55.67
+56.89
+60%
+62%
+70
+85.8%
+88
+90
+90.12%
+100%
+100
+104
+115
+134
+150%
+150
+163.7
+164
+164.3
+174.5
+180
+200
+223
+227
+239
+250
+259.24
+267
+269
+271
+278
+281.5
+281.6
+288
+295
+300
+307
+319
+340.08
+347
+381
+389
+416
+460
+500
+2024
+2025
+2026
+2027
+2028
+20261108
+1,314
+1,319
+9,670
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"EXPE","date":"2026-11-08","schema":"v15.0","contract":"v19","company_name":"Expedia Group, Inc."},"oneliner":"全球兩大線上旅遊平台之一，B2B 帶成長、B2C 行銷效率帶利潤。12.4 倍預估本益比定價的是 AI 代理搶走訂房入口的疑慮，B2C 利潤率守不守得住，決定這個折價該不該收斂。","thesis":{"H":[{"id":"H1","text":"第四季放緩主要是一次性與基期因素，2027 年總預訂額回到中高個位數成長。","2y":"FY2027 匯率中性總預訂額成長至少 6%，營收接近共識 174.5 億美元。","5y":null,"10y":null,"threshold":"FY2027 匯率中性總預訂額成長 ≥6%","source":"季報新聞稿與法說的總預訂額及匯率影響","drift_rule":"兩年期口徑：TTM 較門檻偏離連兩季達 5% 為削弱，連三季達 10% 為反轉"},{"id":"H2","text":"B2C 行銷效率與固定成本紀律是結構性改善，利潤率還能逐步擴張。","2y":null,"5y":"到 FY2031，調整後 EBITDA 利潤率較 FY2026 再高 200～300bp，第三季 B2C 利潤率不低於 43%。","10y":null,"threshold":"FY2027 調整後 EBITDA 利潤率擴張 ≥50bp；第三季 B2C 利潤率 ≥43%","source":"季報新聞稿分部資料與全年指引","drift_rule":"五年期口徑：TTM 較門檻偏離連四季達 5% 為削弱，連六季達 10% 為反轉"},{"id":"H3","text":"B2B 是第二成長來源，規模放大後利潤率守得住。","2y":null,"5y":"B2B 總預訂額五年 CAGR 至少 12%，調整後 EBITDA 利潤率維持 26% 以上，營收占比由約 35% 升到 40% 以上。","10y":null,"threshold":"B2B 預訂成長 ≥12%，利潤率 ≥26%","source":"季報新聞稿分部資料與法說夥伴數","drift_rule":"五年期口徑：TTM 較門檻偏離連四季達 5% 為削弱，連六季達 10% 為反轉"}],"R":[{"id":"R1","text":"AI 代理與 Google 等上層入口收過路費，B2C 利潤率反轉。","h_ref":"H2","clock":"🔥","threshold":"B2C 利潤率連兩季年減 ≥150bp，且 B2C 預訂成長低於 5%；或直接訂房占比低於 60%","evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#3","substitute_technology#0","substitute_technology#1"]},{"id":"R2","text":"第四季減速延伸成趨勢，地緣事件與美國內需偏弱持續壓抑旅遊。","h_ref":"H1","clock":"⚡","threshold":"2027 年第一、二季匯率中性預訂成長都低於 6%","evidence_refs":["end_markets#2","geo_supply_chain#2"]},{"id":"R3","text":"B2B 夥伴升級與投資持續壓低利潤率，成長品質下降。","h_ref":"H3","clock":"🔥","threshold":"B2B 利潤率連兩季低於 25%，且預訂成長低於 12%","evidence_refs":["end_markets#1","channel_business_model_shift#1"]},{"id":"R4","text":"Andrews 訴 Expedia 全美反壟斷集體訴訟（2026 年 10 月，華盛頓西區聯邦法院，民事）指控平價條款與排名懲罰抬高房價，公司稱無理由。受影響營收與求償金額事實表未涵蓋。另有 Helms-Burton 四件、以色列集體認證待決與各地住宿稅訴訟。","h_ref":"H2","clock":"🐢","threshold":"集體認證通過、不利和解，或政府調查介入","evidence_refs":["regulatory_antitrust#0","regulatory_antitrust#1","regulatory_antitrust#2","major_events#1","lawsuit_class_action#0"]},{"id":"R5","text":"平台關鍵功能遷移到 AWS 後形成單點依賴，2025 年 10 月的中斷事件已波及公司。","h_ref":"H1","clock":"🐢","threshold":"管理層將單次中斷列為當季預訂成長減少至少 1 個百分點的原因","evidence_refs":["geo_supply_chain#0","geo_supply_chain#1"]},{"id":"R6","text":"現金流高於盈餘的部分可能縮小，回購能力下降。","h_ref":"H2","clock":"🔥","threshold":"TTM FCF 低於 30 億美元","evidence_refs":[]}],"single_thing":{"description":"B2C 行銷效率反轉：B2C 調整後 EBITDA 利潤率連兩季年減至少 150bp，同時 B2C 總預訂額成長低於 5%。","why_fatal":"共識 EPS 兩年成長中約 5 個百分點靠利潤率，B2C 又是第三季 EBITDA 的主要來源。B2C 利潤率每少 100bp，FY2031 EPS 約少 1.1 美元；少 500bp 約少 5.5 美元，再加倍數由 13 倍降到 9 倍，目標價由 460 美元掉到約 269 美元，是模型裡最大的單一敏感項。","if_happens":"代表花錢買不到成長，入口議價權已轉移。清倉，等新的全年指引與通路條款明朗後重做研究。","how_monitor":"每季財報新聞稿的 B2C 營收、調整後 EBITDA 與總預訂額；第三季基準為利潤率 43.4%、預訂 +7%。","probability":"12～24 個月內約 20%"}},"appendix_a":{"growth_durability":6,"quality_score":7,"ai_risk":"🟡","long_term_confidence":"中","fpe_fy2":10.56,"peg_fy2":0.68,"stress":{"pass":3,"total":4}},"eps_meta":{"base_eps_path":{"FY2025A":9.81,"FY2026E":20.89,"FY2027E":24.55,"FY2028E":27.92},"fy_end_month":12,"eps_basis":"FY2026E 至 FY2028E 為 Koyfin 共識，對照 GAAP TTM 約 17 美元推定為非 GAAP 口徑。FY2025A 的 9.81 美元是 GAAP 稀釋 EPS，非 GAAP 基期事實表未涵蓋，兩者不可直接算成長率；成長率改用 FY2026E 至 FY2028E 兩年 CAGR 15.6%。"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/EXPE_20261108/scenario.json","archetype":{"primary":"品質複利成長","secondary":"轉機/特殊情境","confidence":"中","fingerprint":"資產輕、靠旅客預付款周轉，2024 到 2026 年指引累積擴張逾 4 個百分點利潤率，需求仍有循環。"},"industry":{"clock_phase":"II","sd_verdict_source":"週期在擴張段後半，需求放緩屬週期性，線上化屬結構性。第三季間夜 +7%，ADR 由第二季 +5 放緩到 +2，第四季預訂指引 +3.3%～+5.2%。美國飯店供給 2026 年 +0.4%、2027 年 +0.6%，在建客房 12 年低點（CoStar／STR）；Phocuswright 估全球旅遊預訂由 2024 年約 1.6 兆美元增至 2027 年逾 1.8 兆美元，約三分之二線上。","bargaining":{"up":"上游是飯店與航空。頭部供應商積極導直營，長尾獨立飯店較依賴平台帶客。美國新增供給低，飯店不缺定價空間。","down":"旅客每次訂房都能換平台，轉換成本接近零，靠會員與價格維持。B2B 夥伴做大會升級分潤等級，是該分部利潤率下滑的第一原因。","geo":"美國、EMEA 與其他地區都有曝險，第四季指引點名中東與歐洲的長程航線受擾；沒有單一製造或供應產地風險。"},"profit_pool_dir":"利潤正往上層入口與頭部供應商兩端被擠，平台中間層靠規模與售後守住；5 年營業利益池占比事實表未涵蓋。","tam_table":[{"item":"全球旅遊總預訂","value":"2024 年約 1.6 兆美元，2027 年估逾 1.8 兆美元，約三分之二線上（Phocuswright，2025）"},{"item":"公司總預訂額占比","value":"2026 年指引 1,314～1,319 億美元，約當全球 7%～8%"},{"item":"B2B 可觸及市場","value":"CEO 定義為逾 3 兆美元旅遊市場扣掉供應商直營與最大幾家線上旅遊平台後的其餘部分，未量化，口徑與 Phocuswright 不同，公司份額未揭露"},{"item":"營業利益池 5 年占比變化","value":"事實表未涵蓋"}]},"moat":{"mechanism":"雙邊市場規模加 B2B 供貨基礎設施，連接全球庫存、價格、付款與售後，並以會員與直接入口留住旅客。","execution":8,"pricing":6,"grade":"B","trend":"→","trend_evidence":"執行面擴大：2024 到 2026 年指引利潤率累積擴張逾 4 個百分點，第三季總預訂額 +11%，公司稱優於產業。定價權穩定：Vrbo 費用調整預期不影響整體變現率，但 B2B 夥伴升級壓低利潤率、廣告放緩。兩者合併判為穩定。","peer_na_reason":"同業 ROIC 與投入資本事實表未涵蓋，改用營業利益率與 FCF 利潤率比較，只有單一 TTM 時點，無法判斷差距方向。","threats":[{"level":"🔴","text":"AI 代理與 Google 的上層入口：代理擅長發現，若訂房也留在代理內，Expedia 會變成付通路費的供貨商。目前流量很小、經濟條款未定，公司自家調查只有 8% 旅客願意透過 AI 平台訂購。若代理直連供應商、繞過平台，才升級為架構替代。分界年看 2028 年。","p":35,"evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#3","substitute_technology#0","substitute_technology#1"]},{"level":"🟡","text":"飯店與航空直營：10-K 點名供應商積極搶直接分銷，會員權益與價格有時優於平台。頭部連鎖壓力大，長尾獨立飯店仍需平台帶客。","p":40,"evidence_refs":["competitive_share_entrants#1","channel_business_model_shift#0"]},{"level":"🟡","text":"同業條款競爭：部分對手給供應商與旅客更好的條款與介面，Booking 的規模差距使行銷戰不對等。","p":30,"evidence_refs":["competitive_share_entrants#2"]}],"roic_durability":{"quadrant":"高利益率×高周轉（定性判斷）：營業利益率 18.39%，資產輕；投入資本事實表未涵蓋，數值無法計算。","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者、決策者與付款者多半是同一位旅客，需求成立。旅遊是想要大於需要，短期可延後，第四季地緣事件就是例子；長期全球預訂仍在成長。問題不會消失，受挑戰的是「用線上旅遊平台解決」這個方案。"},{"item":"決策層級","level":"🟡","text":"替代要看每一次訂房。旅客換平台幾乎沒有成本，靠會員與直接入口留人，三分之二訂單來自直接入口，活躍會員只有低個位數成長。B2B 合約部分獨家、部分非獨家，整合成本較高，但夥伴升級會分走更多利潤。"},{"item":"價值鏈分配","level":"🟡","text":"上游有供應商直營，下游有流量入口收費。Booking 與 Expedia 占線上旅遊平台逾 200 億美元行銷支出的四分之三以上，利潤有一大塊付給上層流量。入口由單家分散成多家 AI，議價力可能改善；若收斂成少數代理，會更差。"},{"item":"社會容忍度","level":"🟡","text":"2026 年 10 月的全美反壟斷集體訴訟指控平價條款抬高房價，公司過去也曾在多國因平價條款被調查並作出自願承諾。目前沒有判決或罰款，但這是平台抽成的實際上限。"}],"roiic":"事實表未涵蓋：投入資本、資本支出、折舊攤銷與營運資金變動均未收錄，無法計算增量報酬。","reinvest_rate":"事實表未涵蓋：只知 2026 年前九個月收購支出 6.76 億美元，其餘再投資項目未收錄。","endo_ceiling":null,"formula_note":"內生成長率＝增量 ROIC × 再投資率，本輪輸入不足未計算。成長題改用 FY2027 共識營收成長 6.5% 當代理上界，並以保守方式視為共識 EPS 成長超過內生天花板。"},"combined":7.0,"score":7.0,"spread_table":[{"metric":"毛利率","EXPE":90.48,"BKNG":null,"ABNB":82.9,"TCOM":80.05,"TRIP":91.86,"unit":"%"},{"metric":"營業利益率","EXPE":18.39,"BKNG":32.78,"ABNB":20.81,"TCOM":18.19,"TRIP":3.1,"unit":"%"},{"metric":"FCF 利潤率","EXPE":23.09,"BKNG":32.84,"ABNB":36.93,"TCOM":null,"TRIP":-1.18,"unit":"%"},{"metric":"研發密度","EXPE":8.04,"BKNG":null,"ABNB":18.89,"TCOM":24.33,"TRIP":null,"unit":"%"}],"competitors":[{"name":"BKNG","gm":null,"om":32.78,"fcf_margin":32.84,"rd_intensity":null,"strategy_note":"規模與利益率最強對手，TTM 營業利益率 32.78%，是行銷效率與直接訂房的標竿。2026 年 4 月也下修成長預期，但稱需求完好。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"ABNB","gm":82.9,"om":20.81,"fcf_margin":36.93,"rd_intensity":18.89,"strategy_note":"住宿替代品，與 Vrbo 直接競爭，FCF 利潤率 36.93%（TTM 至 6 月）。Vrbo 調整房東費用，管理層稱產業結構正在靠攏。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"TCOM","gm":80.05,"om":18.19,"fcf_margin":null,"rd_intensity":24.33,"strategy_note":"亞洲主要平台，營業利益率 18.19%（TTM 至 6 月）與 Expedia 接近，研發密度 24.33% 高於 Expedia 的 8.04%。雙方重疊程度事實表未涵蓋。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"TRIP","gm":91.86,"om":3.1,"fcf_margin":-1.18,"rd_intensity":null,"strategy_note":"內容與導流型平台，營業利益率 3.1%、FCF 為負，說明沒有交易與供給閉環的旅遊入口很難變現，是「只做發現」的負面對照。","period":"TTM ending 2026-09-30（4季加總）"}]},"growth":{"driver_mix":"第三季總預訂額 +11%，由間夜 +7%、ADR +3%（匯率中性）貢獻，機票票價偏高也有幫助。EPS 端再加淨回購約 4% 與利潤率擴張，併購目前不重大。","runway_years":"不適用：線上滲透約三分之二，公司約占全球 7%～8%，用 30% 滲透率換算年限沒有意義。","runway_post_y5":"🟡","endo_ceiling_basis":"投入資本與再投資明細事實表未涵蓋，無法算增量報酬。以 FY2027 共識營收成長 6.5% 當內生成長代理上界，共識 EPS 兩年 CAGR 15.6% 超過此上界，超出部分靠利潤率與回購。","segments":[{"item":"B2C","value":"第三季營收 30.65 億美元（+6%），總預訂額 +7%，調整後 EBITDA 13.31 億美元，利潤率 43.4%，美國加速"},{"item":"B2B","value":"第三季營收 +23%，總預訂額 +19%，利潤率 27.5%（年減 134bp），所有區域雙位數成長，夥伴 7.5 萬家，CarTrawler 9 月併入"},{"item":"廣告","value":"第三季成長由 13% 放緩至 7%，公司稱產品改版中，金額事實表未涵蓋"}],"decay_signals":["未亮｜毛利率連兩季年減：年度毛利率由 FY2022 的 85.8% 升到 FY2025 的 90.12%，季度年減資料事實表未涵蓋","未亮｜核心市占縮減：第三季公司稱優於產業，同業份額事實表未涵蓋","未亮｜提價後銷量下滑：Vrbo 費用調整才開始，尚無資料","亮燈｜EPS 成長顯著高於營收成長：共識兩年 EPS CAGR 15.6%，FY2027 營收成長 6.5%，差 9 個百分點","未亮｜FCF 對淨利低於 0.75：FY2025 為 2.4 倍","未亮｜SBC 占營收超過 5%：第三季 2.43%","未亮｜TAM 被替代技術壓縮：10-K 列為風險，尚無量化證據","未亮｜產業倍數系統性下移：同業歷史倍數事實表未涵蓋","未亮｜維護性資本支出占 FCF 超過 60%：資本支出事實表未涵蓋","未亮｜停止投資且收入下滑：營收自 FY2022 起每年成長"],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"成長不靠併購支撐：併購金額約市值 2.2%，管理層稱不重大，回購與併購的判斷已寫在三個計分項。"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"2026 年前九個月收購三家合計 6.76 億美元，約市值 2.2%，交易剛併入，管理層稱單一交易對業績不重大，已實現增量報酬尚無資料。","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"第三季約 200 萬股、5.76 億美元，均價約 288 美元；第二季 88 萬股、2 億美元，均價約 227 美元。以 FY2026 共識 EPS 計，第三季買入盈餘殖利率約 7.25%，以 GAAP TTM 計約 5.9%。10 年期公債殖利率事實表未涵蓋，無法判斷是否達標。","grade":"不過"},{"year":"—","action":"sbc_dilution","rationale":"第三季調整後加權股數年減 4%，SBC 占營收 2.43%，淨稀釋為負。","grade":"過"}]},"valuation":{"basis":"FY2026 共識 EPS 的預估本益比，輔以 FCF 殖利率與營收倍數","tier":"成熟線上旅遊平台","peers":{"expanded":false,"reason":"同業預估本益比事實表未涵蓋，只有利潤率對照，無法做倍數比較。"},"fwd_pe":12.41,"peg":0.8,"percentile_5y":null,"val_light":"🟢","val_light_derivation":"預估本益比 12.41 倍、PEG 約 0.8、TTM FCF 約 37 億美元對市值 307 億美元約 12%，都落在便宜區。真五年分位事實表未涵蓋，只有 4 個年度端點，不能當五年分位使用。","upside_short_pct":13.8,"upside_mid_pct":33.9},"trap_analysis":{"verdict":"🟡","label":"利潤率高點下的低本益比，要靠 B2C 行銷效率證明不是陷阱"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"AI 代理經濟條款未定，FY2025 10-K 首度點名代理式 AI，第三季法說承認流量在分散，公司也願意接受較低報酬去測試新通路。","assumption":"訂房最後仍回到可信任的品牌，新通路費率不會高於現有搜尋廣告。","consequence":"若代理掌握訂房並收費，B2C 利潤率掉 500bp 以上，EPS 停在 20 美元附近，倍數 9 倍，五年後約 180 美元，虧 31%；再遇需求下行可虧到 50% 以上。","ruling":"部分採納，以 30% 機率進 Bear。這與唯一致命點是同一件事，不重複計算。反駁在於目前沒有直接流量受損的證據，但證據時間窗蓋不到 2028 年後的風險，不能說風險已解。","watch":"B2C 利潤率年增減、直接訂房占比、代理流量首次量化揭露。","evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#3","substitute_technology#0","substitute_technology#1"],"fact_refs":["f_fwd_pe_latest"]},{"view":"論點成功但股東經濟變差","evidence":"B2B 營收 +23%，利潤率卻年減 134bp 至 27.5%，低於 B2C 的 43.4%；TTM FCF 一季少約 8 億美元；Reserve Now, Pay Later 已在所有品牌上線。","assumption":"組合轉向 B2B 後整體利潤率仍能擴張，旅客預付款仍隨預訂成長。","consequence":"預訂達標，但 EPS 增速少 2～3 個百分點，FCF 對淨利倍數下降，回購能力縮小。","ruling":"採納，基準情境 FY2028 EPS 已低於共識約 4%。先訂後付對現金流的影響是推論，公司沒有揭露數字。","watch":"B2B 利潤率、TTM FCF、第四季現金流說明。","evidence_refs":["end_markets#1","channel_business_model_shift#1"],"fact_refs":["f_kpi3_fcf"]},{"view":"價格已反映太多","evidence":"P/S 1.89 倍、EV/S 1.9 倍在年度端點分位 49 與 37，並非低檔；2024 到 2026 年指引利潤率擴張逾 4 點，CFO 對未來只說逐步進展。","assumption":"12.4 倍是便宜，不是對高點利潤率的合理定價。","consequence":"若利潤率回吐、FY2027 EPS 只有 21.5 美元，同倍數約 267 美元，上檔幾乎沒有。","ruling":"部分反駁：扣除 SBC 後 FCF 殖利率仍約 10.5%，現價沒有要求成長溢價。但同意便宜程度被本益比誇大，所以加碼要等第四季財報與 FY2027 指引。","watch":"FY2027 利潤率指引、營收倍數。","evidence_refs":[],"fact_refs":["f_ps_percentile","f_ev_s_percentile"]}],"max_dd":{"lo":-55,"hi":-35,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 None → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=None","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 None → 本次 259.24","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=None","side_b":"本次 price_at_dd=259.24","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"第四季減速的性質","cause":null,"prior_field":null,"side_a":"CFO 2026-11-04：第四季放緩來自美國選舉周期、中東與歐洲地緣事件、B2B 促銷基期、秋季特賣提前。","side_b":"第四季總預訂額指引 +3.3%～+5.2%，第三季為 +11%，ADR 由第二季 +5 放緩到 +2，間夜也一起減速。","ruling":"可調和，屬程度差異。第四季指引中點 281.5 億美元和八月指引隱含的約 281.6 億美元幾乎一樣，第三季多出的約 15 億美元全留在第三季，沒有下修也沒有上修。合併下半年成長約 7.8%，這才是底層速度。一次性歸因標記為未證、監測。","evidence_level":"中：數字來自公司財報，歸因沒有量化","settle_metric":"2027 年第一、二季匯率中性總預訂額年增率","if_then":["若 2027 年第一、二季匯率中性總預訂額成長都低於 6%，則一次性歸因證偽，減碼一半","若 2027 年第一季回到 8% 以上，則解除加碼凍結，加碼至目標倉位","若股價先漲但第一季數據未到，則不追；若股價下跌但基本面未破，則分批反買"],"evidence_refs":["end_markets#2","geo_supply_chain#2","supply_demand_durability#0"]},{"axis":"AI 代理是通路還是替代","cause":null,"prior_field":null,"side_a":"CEO 2026-11-04：代理流量很小、意向高，沒有影響直接流量，入口分散對公司有利，過去都能談到不錯的通路條件。","side_b":"FY2025 10-K 首次點名代理式 AI 可能帶來新進入者與競爭加劇；CEO 同場承認經濟條款還在談，公司願意接受較低報酬去測試。","ruling":"方向相反，屬不可調和，2028 年前不可裁決。現階段採公司側作工作假設，依據是第二、三季法說都說流量很小，第三季明確說未影響直接流量；Bear 機率 30% 反映另一側。不得宣稱風險已解。","evidence_level":"低：雙方都沒有量化資料","settle_metric":"直接訂房占比、B2C 利潤率年增減、代理流量占比首次揭露","if_then":["若直接訂房占比跌破 60%，或代理流量揭露超過 10% 而 B2C 利潤率年減，則減碼至一半","若 2028 年前代理流量超過 10% 且 B2C 利潤率仍年增，則 Bear 機率下調至 20%，加碼至目標倉位"],"evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#3","substitute_technology#1"]},{"axis":"對話式 AI 的轉換效果說法","cause":null,"prior_field":null,"side_a":"CEO 2026-08-05：對話式功能目前沒有帶動轉換，主要收穫是多 60% 以上的旅客意圖資訊。","side_b":"CEO 2026-11-04：同類體驗帶來更高轉換與更大訂單，活動代理使用者七日內訂購機率為兩倍。","ruling":"可調和，但要打折。一季之內說法由未帶動轉為有帶動，公司沒給轉換率數字，也承認流量小，不算進基準情境的利潤率。","evidence_level":"低：管理層口述，無數字","settle_metric":"公司揭露的轉換率或訂單金額變化","if_then":["若連兩季仍不提供轉換率數字，則繼續不計入基準情境，也不因此加碼"],"evidence_refs":[]},{"axis":"B2B 的量與質","cause":null,"prior_field":null,"side_a":"第三季 B2B 預訂 +19%、營收 +23%，所有區域雙位數成長，第二季時已連續 20 季雙位數。","side_b":"利潤率年減 134bp 至 27.5%，CFO 在 2026-08-05 與 2026-11-04 都歸因夥伴組合與投資。2026-11-04 被問成長拆分時管理層未提供，2026-08-05 被問銷售費用也沒有正面回答。","ruling":"可調和。成長是真的，利潤率壓力也不是暫時的，因為夥伴做大升級就會分走更多。基準情境假設 B2B 利潤率 26%～27%。","evidence_level":"中：分部數字可靠，拆分未揭露","settle_metric":"B2B 調整後 EBITDA 利潤率與預訂成長","if_then":["若 B2B 利潤率連兩季低於 25% 且預訂成長低於 12%，則減碼三分之一"],"evidence_refs":["end_markets#1","channel_business_model_shift#1","channel_business_model_shift#2"]},{"axis":"回購是否機會性","cause":null,"prior_field":null,"side_a":"CFO 2026-08-05 與 2026-11-04 都說回購是機會性。","side_b":"第二季均價約 227 美元只買 2 億美元，第三季均價約 288 美元買 5.76 億美元，價格高 27%，金額反而是 2.9 倍。","ruling":"採後者。回購確實減股，但時點不算機會性，現價已低於第三季均價 10%。","evidence_level":"高：公司揭露金額與股數","settle_metric":"第四季回購金額與均價","if_then":["若第四季股價低於第三季均價而回購金額縮小，則確認為順勢回購，下調 FY2028 之後的減股假設"],"evidence_refs":[]},{"axis":"現金流品質","cause":null,"prior_field":null,"side_a":"CFO 2026-11-04：TTM FCF 37 億美元，年增 25%。","side_b":"CFO 2026-08-05：同一指標為 45 億美元，一季少約 8 億美元，公司沒有說明。","ruling":"兩個數字都對，後者更重要。未獲解釋前，不把 TTM FCF 當作回購能力的穩定基礎。","evidence_level":"中：數字來自法說，原因缺","settle_metric":"FY2026 全年 FCF 與營運資金說明","if_then":["若 TTM FCF 低於 30 億美元，則減碼三分之一並下修回購假設","若全年 FCF 回到 40 億美元以上，則撤銷此項疑慮"],"evidence_refs":[]},{"axis":"利潤率還能擴張多少","cause":null,"prior_field":null,"side_a":"CFO 2026-11-04：衡量與調校能力更持久，還有機會逐步進展。","side_b":"2026-08-05 被問 2027 年 B2C 利潤率跑道時沒有回答；2026-11-04 改說行銷槓桿速度略減，共識 FY2027 EPS 仍要 +17.5%，其中約 6 點靠利潤率。","ruling":"採後者。基準情境 FY2027 EPS 23.8 美元，比共識低約 3%。","evidence_level":"中：管理層用語變化加共識拆解","settle_metric":"FY2027 全年利潤率指引","if_then":["若 FY2027 利潤率指引擴張低於 50bp，則 FY2027 EPS 下修至 23 美元以下，停止加碼"],"evidence_refs":[]},{"axis":"產業態勢","cause":null,"prior_field":null,"side_a":"競爭惡化：10-K 指出對手條款更好、供應商搶直營，AI 帶來新進入者。","side_b":"結構轉好：線上占比約三分之二且仍在成長，美國飯店新增供給低，Expedia 第三季稱優於產業。","ruling":"雙向拉鋸。其他結構變數中，AI 入口與平價條款訴訟最重要，方向都還沒定。","evidence_level":"中：多為公司揭露與產業機構預測","settle_metric":"B2C 利潤率與直接訂房占比","if_then":["若 B2C 利潤率連兩季年減且直接訂房占比下降，則改判競爭惡化中，減碼一半"],"evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","supply_demand_durability#2","supply_demand_durability#3"]},{"axis":"現在就賣的最強論證","cause":null,"prior_field":null,"side_a":"利潤率剛到高點，下一季預訂增速減半以上，AI 條款未定，反壟斷集體訴訟剛開始，股價略低於 52 週均線。","side_b":"現價隱含永續成長約 2%，公司連六季超過財測高標，TTM FCF 殖利率約 12%。","ruling":"賣出論證成立的部分已反映在 Bear 30% 與低於共識的基準情境，不足以推翻買進，但足以限制首筆規模。","evidence_level":"中","settle_metric":"FY2027 指引與 2027 年第一季數據","if_then":["若 FY2027 指引同時低於共識營收與 50bp 利潤率擴張，則不加碼，並重算基準情境"],"evidence_refs":["regulatory_antitrust#2"]}],"triggers":[{"n":1,"text":"管理層把第四季放緩歸因於一次性因素，要用 2027 年上半年驗證。","type":"假設驗證","maps_to":"H1","metric":"匯率中性總預訂額年增率","threshold":"2027 年第一、二季都低於 6%","action":"減碼一半","source_freq":"季報新聞稿與法說，每季","date":"2027-08","evidence_refs":["end_markets#2","geo_supply_chain#2"]},{"n":2,"text":"B2C 花更多行銷費，預訂卻長得更慢。","type":"Single Thing","maps_to":"Single Thing","metric":"B2C 調整後 EBITDA 利潤率年增減與 B2C 總預訂額成長","threshold":"連兩季年減 ≥150bp，且 B2C 總預訂額成長低於 5%","action":"清倉","source_freq":"季報新聞稿，每季","date":"每季","evidence_refs":["competitive_share_entrants#0"]},{"n":3,"text":"B2B 成長放緩的同時利潤率繼續走低。","type":"風險","maps_to":"R3","metric":"B2B 調整後 EBITDA 利潤率與預訂成長","threshold":"利潤率連兩季低於 25%，且預訂成長低於 12%","action":"減碼三分之一","source_freq":"季報新聞稿，每季","date":"每季","evidence_refs":[]},{"n":4,"text":"反壟斷集體訴訟進入不利階段。","type":"風險","maps_to":"R4","metric":"Andrews 訴 Expedia 案程序進度","threshold":"集體認證通過或不利和解；刑事或政府調查介入則另列","action":"集體認證通過或不利和解時減碼一半，刑事介入時清倉","source_freq":"法院文件與 10-Q，事件驅動","date":"時程事實表未涵蓋","evidence_refs":["regulatory_antitrust#1","regulatory_antitrust#2"]},{"n":5,"text":"直接訂房占比下降，代表入口開始流失。","type":"風險","maps_to":"R1","metric":"直接訂房占總訂單比","threshold":"低於 60%","action":"減碼至一半","source_freq":"法說管理層揭露，每季","date":"每季","evidence_refs":["substitute_technology#1"]},{"n":6,"text":"第四季財報與第一季數據都確認需求回升，解除加碼凍結。","type":"加碼","maps_to":"H1","metric":"FY2027 利潤率指引與第一季匯率中性預訂成長","threshold":"利潤率擴張 ≥50bp，且第一季預訂成長 ≥8%","action":"加碼至目標倉位","source_freq":"季報與法說，每季","date":"2027-05","evidence_refs":[]},{"n":7,"text":"股價下跌但基本面未破時分批買回。","type":"估值rearm","maps_to":"H2","metric":"股價與 B2C 利潤率","threshold":"股價 ≤223 美元（104 週均線），且 B2C 利潤率未年減","action":"分批反買","source_freq":"週線收盤與最新季報","date":"持續","evidence_refs":[]},{"n":8,"text":"股價先走到倍數上限時先收一部分。","type":"減碼","maps_to":"H2","metric":"股價對 FY2027 基準 EPS 的倍數","threshold":"股價 ≥381 美元（基準 EPS 的 16 倍），且 EPS 未上修","action":"減碼三分之一","source_freq":"日線收盤與共識快照","date":"持續","evidence_refs":[]},{"n":9,"text":"第四季財報後重新檢查全部假設。","type":"複審日期","maps_to":"H1","metric":"FY2027 指引、TTM FCF、B2C 與 B2B 利潤率","threshold":"財報公布後重看，不設數字門檻","action":"重看情境與倉位","source_freq":"季報與法說","date":"2027-02","evidence_refs":[]}],"kill_metrics":[{"metric":"B2C 調整後 EBITDA 利潤率年增減","bear_threshold":"連兩季年減 ≥150bp，且 B2C 總預訂額成長低於 5%","window":"連兩季","source":"季報新聞稿分部資料","last_status":"ok"},{"metric":"匯率中性總預訂額年增率","bear_threshold":"2027 年第一、二季都低於 6%","window":"2027 年上半年","source":"季報新聞稿與法說","last_status":"warning"},{"metric":"直接訂房占總訂單比","bear_threshold":"低於 60%（目前約三分之二）","window":"每季法說","source":"法說管理層揭露","last_status":"ok"},{"metric":"B2B 調整後 EBITDA 利潤率","bear_threshold":"連兩季低於 25%，且 B2B 總預訂額成長低於 12%","window":"連兩季","source":"季報新聞稿分部資料","last_status":"warning"},{"metric":"TTM 自由現金流","bear_threshold":"低於 30 億美元","window":"最近四季","source":"季報現金流量表","last_status":"ok"}],"decision_out":{"verdict":"進場","role":"衛星","row_hit":"9","pacing":[],"holding_cap":null,"audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把 AI 入口的未來風險提前打進今天的倍數：12.41 倍只隱含約 2% 永續成長，但三分之二訂單仍來自直接入口，兩次法說都說代理流量很小。第四季指引也沒有低於八月隱含值，市場把既有的放緩讀成新壞消息。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟢', moat_trend='→', week26=13.13, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position=None, moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":false,"basis":"signal='B', val='🟢'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":true,"basis":"signal='B', val='🟢', ma='🟡'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='B', val='🟢', ma='🟡'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟢', ma='🟡'"},{"row":"9-verdict","condition":"命中 row9 → 進場","hit":true,"basis":"row_hit=9"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]}],"requires_critic":[],"rearm_trigger":"FY2027 指引利潤率擴張至少 50bp 且第一季匯率中性預訂成長達 8%，或股價回到 223 美元而基本面未破。","exec_line":"首筆不超過目標倉位一半，理由是 2026 年 10 月的反壟斷新案與第四季減速都未滿一季，尚未被確認。第二筆等 2027 年 2 月第四季財報與 FY2027 指引，第三筆綁第一季數據。股價先漲而數據未到不追；下跌但 B2C 利潤率未破則分批反買。"},"reasoning":{"industry":"第三季營收 49.38 億美元、總預訂額 340.08 億美元、間夜 1.157 億，變現率 14.5%（旺季，全年指引約 12.5%）。依 2026-11-04 財報新聞稿，B2C 營收 30.65 億美元，占 62%，調整後 EBITDA 13.31 億美元，利潤率 43.4%；B2B 營收年增 23%，利潤率 27.5%，年減 134bp。GAAP 營業利益 13.26 億美元，單季利益率 26.9%，TTM 18.39%。第四季營收指引 36.9～37.5 億美元，全年 163.7～164.3 億美元。單點依賴有兩個：流量依賴 Google 等上層入口，基礎設施依賴 AWS，2025 年 10 月 US-East-1 中斷時公司在受影響名單內。B2B 夥伴 7.5 萬家，管理層稱沒有過度集中，前幾大占比事實表未涵蓋。","moat":"機制是雙邊規模加 B2B 供貨基礎設施：全球庫存、即時價格、付款與售後一次接好，三分之二訂單直接進自有入口，夥伴用同一套供貨。可證方向改用利潤率軸：TTM 營業利益率 18.39% 對 Booking 32.78%，FCF 利潤率 23.09% 對 32.84%；同業 ROIC 與歷史序列事實表未涵蓋，差距是否收斂無法驗證。公司自身利益率由 FY2022 的 10.19% 升到 FY2025 的 14.68%。評分：執行 8，已連六季超過財測高標，第三季管理費用只增 1%；定價權原 7，AI 上層入口屬生態攻擊扣一分，為 6。可能看錯的地方是第三季廣告成長由 13% 掉到 7%、活躍會員只有低個位數成長，定價權若再轉弱，方向要下修。","growth":"共識 EPS 為 FY2026 20.89、FY2027 24.55、FY2028 27.92 美元，兩年 CAGR 15.6%；FY2027 共識營收成長只有 6.5%。缺口約 9 個百分點，約 5 點靠利潤率擴張、約 4 點靠淨回購，併購不重大，可以歸因，但都不是內生成長。三年口徑缺 FY2025 非 GAAP 基期，事實表未涵蓋，改用兩年。CFO 2026-11-04 把行銷槓桿的說法改成速度略減，未來利潤率只說逐步進展，這是共識最脆弱的部分。B2B 第三季預訂 +19%，但 2026-11-04 被問到夥伴數與單一夥伴成長的拆分時，管理層沒有提供。","governance":"FY2025 FCF 31.1 億美元、淨利 12.94 億美元，FCF 對淨利 2.4 倍，FY2024 為 1.9 倍、FY2023 為 2.3 倍，現金流明顯高於盈餘，不能全當盈餘看。第三季 FCF −13.99 億美元，TTM FCF 由 2026-08-05 CFO 說的 45 億美元降到 2026-11-04 的 37 億美元，一季少約 8 億美元，公司只講年增 25%，營運資金明細事實表未涵蓋。SBC 占第三季營收 2.43%。現金去向：今年前九個月回購約 15 億美元、併購 6.76 億美元，股息按 0.71% 殖利率換算約 2.2 億美元，資本支出事實表未涵蓋。總債務 56.89 億美元、現金 55.67 億美元，淨負債 1.22 億美元；依線上旅遊收款模式推定現金含旅客預付款，帳面淨負債可能低估真實槓桿，遞延商家預訂款事實表未涵蓋。25 億美元循環信貸簽約時未動用，Moody's Baa2 展望正向，S&P 與 Fitch 為 BBB。","valuation":"12.41 倍 FY2026 共識 EPS，以 10% 要求報酬、盈餘全數可分配換算，隱含永續成長約 2%；用 GAAP TTM 15.2 倍換算約 3.4%。PEG 用兩年 CAGR 15.6% 約 0.8。便宜要打折：P/S 與 EV/S 的年度端點分位是 49 和 37，營收倍數並未被壓到底，本益比低主要來自利潤率上升，利潤率一回吐就沒那麼便宜。賣方平均目標價 271～278 美元，只比現價高 4%～7%，但多數早於八月上調與第三季財報，全距資料缺，只當背景，不當依據。共識三年 EPS 兩份快照間下修 0.05%～0.36%，幅度很小。基準情境 FY2027 EPS 23.8 美元乘 12.41 倍約 295 美元，上檔 13.8%；FY2028 EPS 26.7 美元乘 13 倍約 347 美元，上檔 33.9%。","premortem":"衰退十項亮一項，就是共識 EPS 成長比營收成長多 9 個百分點。壓力測試以基準 FY2031 EPS 35.4 美元、13 倍、460 美元為起點，假設稅率 21%、FY2031 股數約 9,670 萬股：營收成長每年少 2 個百分點，EPS 約 32.0，價格約 416 美元；B2C 利潤率少 500bp，EPS 約 29.9，價格約 389 美元；倍數壓到 9 倍，價格約 319 美元；三者同時，EPS 約 26.5，價格約 239 美元，低於現價 8%。四項過三項。2026-08-05 法說有五題沒有正面回答，其中 2027 年 B2C 利潤率跑道與 B2B 銷售費用兩題正好落在本論點的關鍵處。歷史最大回撤、訴訟金額事實表未涵蓋。"},"plain":{"six":{"how_it_makes_money":"賺的是住宿佣金與商家差價，另有機票、廣告與 B2B 供貨收入。錢卡在「誰掌握訂房入口」這一節：入口在自己手上利潤率就高，入口在 Google 或 AI 代理手上就得付過路費。","moat":"護城河方向穩定，等級 B。執行面在擴大，定價權穩定，但營業利益率仍比 Booking 低 14.4 個百分點，AI 代理會不會拿走入口要到 2028 年前後才看得清。","growth":"五年後的成長跑道屬中等：線上化已到約三分之二，沒有已驗證的第二條曲線可以算進來。B2B 是最接近的候選，但公司不給份額數字。","capital":"資本配置屬中等：股數真的在減、帳面槓桿低，但回購買得不算便宜，併購還沒有報酬可驗。","valuation":"12.4 倍等於假設 FY2026 之後永續成長約 2%，現價只要求 EPS 不要倒退。我相信未來三年成長高於這個數，但低於共識。","how_wrong":"最可能看錯在兩處：把高點利潤率當常態，以及低估 AI 入口收過路費的速度。價值陷阱風險中等。"}},"decision_inputs":{"signal":"B","ma":"🟡","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把 AI 入口的未來風險提前打進今天的倍數：12.41 倍只隱含約 2% 永續成長，但三分之二訂單仍來自直接入口，兩次法說都說代理流量很小。第四季指引也沒有低於八月隱含值，市場把既有的放緩讀成新壞消息。","momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":null,"wait_for_price_condition":null,"trap":"🟡","val":"🟢","moat":"B","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"品質複利成長","price_at_dd":259.24,"week26_return_pct":13.13,"consensus_rev_3m_pct":null,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":false,"val_denominator_note":"FY2026 只剩一季未實現，分母未見一次性項目，不算爭點。要留意兩件事：共識推定為非 GAAP，GAAP TTM 本益比 15.2 倍；FCF 含 SBC 加回，以第三季占比粗算每年約 4.8 億美元，扣除後 FCF 殖利率約 10.5%。"},"catalysts":[{"date":"2027-02","date_precision":"month","type":"guidance","event":"第四季財報與 FY2027 指引","impact":"高","watch":"總預訂額指引、利潤率擴張幅度、TTM FCF 說明"},{"date":"2027-05","date_precision":"month","type":"guidance","event":"2027 年第一季財報","impact":"高","watch":"匯率中性預訂成長是否回到 8%，B2C 與 B2B 利潤率"},{"date":null,"date_precision":null,"type":"regulatory","event":"Andrews 反壟斷集體訴訟的駁回聲請或集體認證裁定","impact":"中","watch":"程序進度與求償金額，時程事實表未涵蓋"}],"_projected_from":"v19"}
+```
