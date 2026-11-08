@@ -1,0 +1,458 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 UBER（2026-11-08）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/UBER_20261108/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：UBER　日期：2026-11-08　archetype：None　前份裁決：2026-08-08　進場｜衛星　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1444B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（620B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（994B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（965B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（975B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（578B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（986B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2263B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（4019B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2474B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（283B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1444           3889-5556      5 條（2–6 內）  
+s3                  8000         620           5166-7380      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        2934          8446-12066      5 條（2–6 內）  
+s6                 11000         578          7295-10422      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         986           1760-2514      5 條（2–6 內）  
+s10                 5000        2263           1916-2737      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2474           2000-2526      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         283            852-1217      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=4393B；至少需散文≈40.61KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−58%
+−58
+−45%
+−35
+−35%
+−34%
+−9.09
+−7.6%
+−1.77%
+−1.7%
+−0.45%
+−0.4%
+0.0%
+0
+0.5%
+0.56
+0.65
+0.70
+0.73
+0.75
+0.84
+0.88
+0.90
+0.95
+0.97
+0.99
+01
+1
+1.04
+1.16
+1.2%
+1.5%
+1.7%
+1.8
+1.8%
+2%
+2.0
+2
+02
+2.15
+2.5
+3
+3%
+3.2
+3.36
+3.4%
+3.4
+3.55
+3.6%
+3.75
+3.9%
+3.95
+4%
+4.0%
+4.0
+04
+4
+4.1
+4.11
+4.2
+4.25
+4.3
+4.30
+4.41
+4.55
+4.6%
+4.73
+05
+5
+5%
+5.0%
+5.2
+5.4%
+5.50
+5.5
+5.5%
+5.55%
+5.65
+5.66
+5.7%
+5.75
+6
+6.10
+6.1
+6.89
+7%
+7
+7.0%
+7.1
+7.4%
+7.6%
+7.85
+8
+8%
+08
+8.6
+9%
+9
+9.8%
+10%
+10
+10.3
+10.95%
+11
+11.3
+11.4
+12
+12.4%
+12.44%
+12.5%
+13%
+13
+13.9
+14
+14%
+14.2%
+15
+15%
+15.55
+15.9%
+16
+16%
+16.43%
+16.6%
+17%
+17
+18
+18%
+18.4%
+18.5%
+20%
+20
+20.41
+21
+22%
+23%
+23
+24
+24.7%
+25%
+25.2
+26
+26.1%
+26.5
+27.9%
+30
+30%
+31
+32.78%
+32.84%
+34%
+35%
+35
+37.5
+39%
+39.4%
+39.75%
+40
+40%
+40.35
+40.8%
+41.50
+42
+43.21%
+45
+46
+47.1
+48
+48.1
+49
+50%
+50.3
+51.2
+51.6
+52
+55
+59.83
+60%
+60.7%
+67
+68.59
+69.1%
+70%
+70
+74.21
+75%
+75
+83.0%
+90
+94.3%
+96
+97%
+100%
+100
+101
+103
+104
+114.66
+129
+148
+150
+150%
+236.9
+264
+285
+295
+476
+500
+598
+659
+2023
+2024
+2025
+2026
+2027
+2028
+2030
+2031
+2036
+20261108
+10,053
+14,766
+147,723
+2,000
+2,125
+2,161
+2,169
+2,364
+2,535
+2,639
+5,500
+59,819
+6,895
+7,669
+9,763
+9,856
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"UBER","date":"2026-11-08","schema":"v15.0","contract":"v19","company_name":"Uber Technologies, Inc."},"oneliner":"Q3 訂單仍年增 20%、外送加速，現價約今年非 GAAP EPS 20 倍，FCF 隱含永續成長僅 2～3%；最大不確定是自營自駕車隊是否繞過平台，以及 Mobility 供給缺口能否在 Q4 收斂。","thesis":{"H":[{"id":"H1","text":"訂單維持高成長，利潤率繼續提升。","2y":"FY2027 非 GAAP EPS 達 4.0 美元以上，訂單固定匯率成長維持 15% 以上。","5y":null,"10y":null,"threshold":"訂單固定匯率年增 15% 以上；Adjusted EBITDA 占訂單不低於 4.6%；FY2027 EPS 達 4.0 美元（約共識 4.41 美元的九成）。","source":"公司季報與法說","drift_rule":"TTM 偏離門檻連 2 季達 5% 為削弱，連 3 季達 10% 為反轉。"},{"id":"H2","text":"自駕放量後，Uber 仍是主要需求入口。","2y":null,"5y":"到 2031 年自駕趟次利潤率與人類司機相當，車隊資金以第三方為主。","10y":null,"threshold":"2027 年底 2,000 輛以上；2028 年起車隊資金以第三方為主；自駕城市 Mobility 訂單維持年增；單車利用率高於自營 30%。","source":"公司法說與簡報；Waymo 與 Tesla 營運數據","drift_rule":"連 4 季偏離 5% 為削弱，連 6 季偏離 10% 為反轉。"},{"id":"H3","text":"滲透率提升與品類延伸支撐長期成長。","2y":null,"5y":null,"10y":"2036 年前十大市場滲透率達 20% 以上，雜貨與零售成為重要獲利來源。","threshold":"滲透率 20% 以上（現約 10%）；Uber One 占訂單維持 50% 以上。","source":"公司法說與年報","drift_rule":"跨 2 個年度偏離為削弱，跨 3 個年度為反轉。"}],"R":[{"id":"R1","text":"Mobility 供給缺口由巴西擴大到印度與加拿大，補貼轉向司機後可能壓低成長與利潤。管理層的短期歸因未證，連 2 季未改善即視為歸因不成立。","h_ref":"H1","clock":"⚡","threshold":"Mobility 固定匯率訂單年增低於 13% 連 2 季，或分部營業利益率低於 7%。","evidence_refs":["supply_demand_durability#1","end_markets#0"]},{"id":"R2","text":"Delivery Hero 全現金收購金額超過市值 5%，交割預計 2027 下半年，需反壟斷核准；總對價事實表未涵蓋，整合與槓桿風險未定價。","h_ref":"H1","clock":"🔥","threshold":"交割後淨負債對年化 Adjusted EBITDA 高於 2.5 倍，或交割延後超過 2027 年底。","evidence_refs":["major_events#0","major_events#1","major_events#2","ma_merger#0","ma_merger#1"]},{"id":"R3","text":"自駕的資本與安全負擔回到 Uber：早期車輛自擔，100 億美元承諾的損益影響未揭露；合作夥伴 Avride 遭 NHTSA 調查 16 起事故，代表夥伴安全事件會牽動平台。","h_ref":"H2","clock":"🐢","threshold":"自駕投入超過 100 億美元承諾，或 2028 年車隊融資仍以 Uber 資產負債表為主。","evidence_refs":["product_recall_warning#0"]},{"id":"R4","text":"監管與訴訟：FTC 加 21 州與 DC 控告 Uber One，屬民事案件，Uber One 占過半訂單；DOJ、FTC 另有多項調查，競爭法趨嚴。和解時點與金額事實表未涵蓋。","h_ref":"H1","clock":"🔥","threshold":"法院或和解要求變更 Uber One 計費與取消流程且會員數季減；或出現刑事介入。","evidence_refs":["regulatory_antitrust#0","regulatory_antitrust#1","regulatory_antitrust#2","major_events#3","lawsuit_class_action#0","lawsuit_class_action#1"]},{"id":"R5","text":"油價、零件關稅與地緣衝突推高司機成本，減少供給時數，影響在新興市場最明顯。不預測油價，以公司損益是否吸收為判準。","h_ref":"H1","clock":"⚡","threshold":"Adjusted EBITDA 占訂單低於 4.6% 連 2 季。","evidence_refs":["reg_tariff_export#0","reg_tariff_export#1","geo_supply_chain#0","geo_supply_chain#1"]}],"single_thing":{"description":"公司或第三方數據證實，美國自駕已營運城市的 Uber Mobility 訂單年增率連續兩季轉負。","why_fatal":"這是情境樹最大的單一敏感項：Base 與 Bear 的終端 EPS 差 3.55 美元、終端倍數差 5 倍，主要取決於自駕是否繞過平台。CFO 2026-08-05 稱相關城市占美國訂單 30%、獲利 25%，一旦負成長，市場會把其他城市按相同路徑定價。","if_happens":"清倉，並重做情境樹，不等下一季確認。","how_monitor":"每季法說的美國分城市說明；第三方 App 與信用卡數據；Waymo 與 Tesla 單車日趟次；Waymo 2028 年 1 月起的奧斯汀與亞特蘭大安排。","probability":"12 至 24 個月內約 15%"}},"appendix_a":{"growth_durability":7,"quality_score":6,"ai_risk":"🟡","long_term_confidence":"中","fpe_fy2":15.55,"peg_fy2":0.56,"stress":{"pass":2,"total":3}},"eps_meta":{"base_eps_path":{"FY2025A":4.73,"FY2026E":3.36,"FY2027E":4.41,"FY2028E":5.5},"fy_end_month":12,"eps_basis":"共識來自 Koyfin 快照；依 Q3 的 0.88 美元與 Q4 指引 0.95 至 0.99 美元反推，口徑應為非 GAAP。FY2025A 的 4.73 美元為 GAAP 稀釋 EPS，含稅務與投資重估，非 GAAP 基期事實表未涵蓋，不可與 FY2026E 相比計算成長率。EPS 分析師家數事實表未涵蓋；營收共識為 46 與 48 家。"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/UBER_20261108/scenario.json","archetype":{"primary":"品質複利成長","secondary":null,"confidence":"中","fingerprint":"輕資產雙邊平台；FCF 利潤率由 FY2022 的 1.2% 升至 TTM 18.4%；GAAP 營業利益率仍只有 12.4%"},"industry":{"clock_phase":"II","sd_verdict_source":"擴張期，依據是 MAPC 年增 14%、趟次年增 16%。需求屬結構性持久；短期受限於司機與外送員供給，這部分可用補貼修復，可逆性高，但移民因素可能較持久。來源為 Q3 法說與 10-Q。","bargaining":{"up":"對司機與外送員的議價力有限，油價與移民壓力下需把補貼轉給供給端。","down":"10-K 自述消費者切換成本低，Uber One 部分抵銷；商家因 DoorDash 與 Instacart 可能合併而尋求替代通路，對 Uber 有利。","geo":"巴西、印度受油價影響最大，加拿大受移民政策影響。"},"profit_pool_dir":"利潤池往會員、外送與雜貨延伸；自駕放量後，Mobility 利潤可能部分移往車隊與技術方。五年營業利益池占比事實表未涵蓋。","tam_table":[{"item":"前十大市場可服務人口滲透率","value":"約 10%，過去 5 年翻倍（CFO，Q3 法說）"},{"item":"美國稀疏市場近 12 個月使用率","value":"低於 10%，密集市場為 50%（CFO，Q3 法說）"},{"item":"雜貨與零售","value":"年化 150 億美元、年增 40%；管理層稱 TAM 為 10 兆美元，未獨立查證"},{"item":"自駕占總趟次","value":"低於 0.5%（CEO，2026-08-05）"},{"item":"五年營業利益池變化","value":"事實表未涵蓋，無法檢查利潤池是否流出"}]},"moat":{"mechanism":"雙邊網路密度加跨業務會員：需求越密，供給等待時間越短，Uber One 再提高兩項業務的使用頻率。","execution":9,"pricing":7,"grade":"B","trend":"→","trend_evidence":"執行面擴大：連續五季訂單成長 20% 以上，TTM FCF 達 104 億美元創新高。定價面持平：Uber One 約 5,500 萬人，但補貼轉向司機，10-K 自承切換成本低。前份同為持平。","peer_na_reason":"同業投入資本與 ROIC 事實表未涵蓋。","threats":[{"level":"🔴","text":"自駕自營：Waymo 與 Tesla 自建 App 與車隊，可能繞過平台；Waymo 計畫 2028 年 1 月起在奧斯汀與亞特蘭大自營（二手資料，未核原文）。目前自駕不到總趟次 0.5%，傷害要到 2028 年後才可能反映。","p":35,"evidence_refs":["competitive_share_entrants#0","substitute_technology#0","geo_supply_chain#2"]},{"level":"🟡","text":"外送對手：DoorDash 若併 Instacart 將集中線上雜貨份額，巴西有 DiDi Food 與美團進場。10-K 自述對手曾趁負面報導增資搶份額；第三方 App 使用量的說法未附數字，只作方向參考。","p":30,"evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#3"]},{"level":"🟡","text":"AI 助理中介：10-K 列為風險。萬聖節當週約 3.2 億趟中，代理程式僅約 500 筆外送與 4 趟乘車，尚無實質影響。資料、會員與履約長在自有資產上，屬強化；第三方代理若成主要入口才算替代，分界年抓 2028 年。","p":15,"evidence_refs":["substitute_technology#1"]}],"roic_durability":{"quadrant":"低利益率×高周轉（周轉率事實表未涵蓋，依輕資產結構判斷）","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者與付款者多為同一人，需求由通勤、用餐與日常採購構成。MAPC 年增 14%，公司稱受限於供給而非需求，前十大市場滲透率僅約 10%。"},{"item":"決策層級","level":"🟡","text":"替代性在每一趟、每一單決定，10-K 自承切換成本低。75% 乘車一鍵完成、Uber One 占過半訂單可降低比價，但僅約 20% 用戶同時使用乘車與外送。"},{"item":"價值鏈分配","level":"🟡","text":"目前 Uber 掌握配對節點。自駕放量後，技術方與車隊可能分走利潤；管理層目標只是自駕毛利與人類司機相當，尚未驗證。"},{"item":"社會容忍度","level":"🟡","text":"FTC 與 21 州加 DC 控告 Uber One 計費與取消做法，DOJ、FTC 另有多項調查，主要市場競爭法趨嚴；定價上限受監管與司機待遇爭議限制。"}],"roiic":"事實表未涵蓋（投入資本與收購淨額未入表）","reinvest_rate":"事實表未涵蓋（折舊、營運資金與收購淨額未入表）","endo_ceiling":null,"formula_note":"Q3 資本支出約 104 百萬美元（營運現金流 2,639 減 FCF 2,535），低於 Adjusted EBITDA 與非 GAAP 營業利益的差額 659 百萬美元，有機再投資率接近零甚至為負。已知外部投入為 Q2 購入 Delivery Hero 股票約 40 億美元、自駕 100 億美元承諾，增量報酬尚未揭露。"},"combined":8.0,"score":8.0,"spread_table":[{"metric":"毛利率","UBER":43.21,"DASH":51.91,"LYFT":45.52,"GRAB":44.45,"BKNG":null,"unit":"%"},{"metric":"營業利益率","UBER":12.44,"DASH":5.55,"LYFT":-1.77,"GRAB":10.95,"BKNG":32.78,"unit":"%"},{"metric":"FCF 利潤率","UBER":18.44,"DASH":12.91,"LYFT":16.43,"GRAB":-0.45,"BKNG":32.84,"unit":"%"},{"metric":"研發密度","UBER":7.35,"DASH":10.85,"LYFT":6.98,"GRAB":10.4,"BKNG":null,"unit":"%"}],"competitors":[{"name":"DASH","gm":51.91,"om":5.55,"fcf_margin":12.91,"rd_intensity":10.85,"period":"TTM ending 2026-09-30（4季加總）"},{"name":"LYFT","gm":45.52,"om":-1.77,"fcf_margin":16.43,"rd_intensity":6.98,"period":"TTM ending 2026-06-30（4季加總）"},{"name":"GRAB","gm":44.45,"om":10.95,"fcf_margin":-0.45,"rd_intensity":10.4,"period":"TTM ending 2026-09-30（4季加總）"},{"name":"BKNG","gm":null,"om":32.78,"fcf_margin":32.84,"rd_intensity":null,"period":"TTM ending 2026-09-30（4季加總）"}]},"growth":{"driver_mix":"量為主：Q3 趟次年增 16%、MAPC 年增 14%，單趟訂單額約增 3.4%；併購貢獻有限，Delivery Hero 尚未計入；股數下降約 1.7%。","runway_years":8,"runway_post_y5":"🟢","endo_ceiling_basis":"內生上界無法計算，投入資本、折舊與收購淨額未入表。有機業務資本支出極低，公式不具約束力；共識成長主要靠利潤率與股數，不靠再投資，情境樹按超出處理，Bear 機率維持 30% 以上。","segments":[{"item":"Mobility","value":"訂單 295 億美元，固定匯率年增 17%；分部營業利益率 Q2 為 7.6%，Q3 分析師引述約 8%"},{"item":"Delivery","value":"訂單 285 億美元，固定匯率年增 23%，美國有機成長連兩季加速"},{"item":"Freight","value":"訂單 18 億美元，年增 35%，連三季加速"},{"item":"雜貨與零售","value":"年化 150 億美元，年增 40%"},{"item":"企業與高階產品","value":"U4B 年增近 50%，高階產品年增 35%"}],"decay_signals":[{"signal":"毛利率連 2 季年減","lit":false,"note":"季度毛利率事實表未涵蓋；年度由 39.4% 升至 39.75%"},{"signal":"核心市占近 12 個月縮減","lit":false,"note":"近 12 個月份額事實表未涵蓋；CEO 2026-08-05 稱巴西份額持平"},{"signal":"提價後銷量下滑","lit":false,"note":"Q3 減少乘客補貼，Mobility 低於預期 1 至 2 個百分點，公司歸因供給，列監測"},{"signal":"EPS 成長高於營收成長 5 個百分點以上","lit":true,"note":"共識 EPS 年化 27.9%，FY2027 營收成長 15.9%，差 12 個百分點"},{"signal":"FCF 對淨利連 2 年低於 0.75","lit":false,"note":"FY2024 為 0.70，FY2025 為 0.97"},{"signal":"SBC 占營收超過 5% 且逐年上升","lit":false,"note":"Q3 為 4.0%"},{"signal":"TAM 萎縮或被替代技術壓縮","lit":false,"note":"自駕不到總趟次 0.5%，尚未壓縮"},{"signal":"產業倍數近 3 年系統性下移","lit":false,"note":"同業倍數歷史事實表未涵蓋"},{"signal":"維護性資本支出占 FCF 超過 60%","lit":false,"note":"Q3 資本支出約 1.04 億美元，占 FCF 約 4%"},{"signal":"停止投資新產能且營收下滑","lit":false,"note":"營收仍在成長"}],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":[{"item":"TTM FCF","value":"約 104 億美元"},{"item":"回購","value":"CFO 稱約 50% FCF；2026-08-05 前當年約 35 億美元"},{"item":"Delivery Hero","value":"每股 €41.50 現金收購，Q2 已購股約 40 億美元；總對價事實表未涵蓋"},{"item":"收購融資","value":"€45 億票據；定期貸款使過橋額度減少 €40 億"},{"item":"自駕投資","value":"100 億美元承諾，損益影響未揭露"}],"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"已實現併購 ROIIC 事實表未涵蓋；管理層稱併購標的高於交易預期，未給數字。","grade":"不過"},{"year":"—","action":"buyback_yield","rationale":"回購均價與十年期殖利率事實表未涵蓋。","grade":"不過"},{"year":"—","action":"sbc_dilution","rationale":"由淨利除以稀釋 EPS 反推 FY2023 至 FY2025 稀釋股數約 2,169、2,161、2,125 百萬股，年變動 −0.4%、−1.7%，淨稀釋低於 1.5%。","grade":"過"}]},"valuation":{"basis":"FY2026E 非 GAAP 前瞻本益比，以扣 SBC 後的 FCF 殖利率交叉檢查","tier":"大型獲利平台","peers":{"expanded":false,"reason":"事實表只有同業利潤率，沒有同業倍數，無法作為估值錨。"},"fwd_pe":20.41,"peg":0.73,"percentile_5y":null,"val_light":"🟢","val_light_derivation":"FY2026E 本益比 20.41 倍除以兩年 EPS 年化 27.9%，PEG 為 0.73，低於 1。扣股份報酬後對市值的 FCF 殖利率仍有 5.7%，結論是便宜。五年分位事實表未涵蓋，只有少量年度端點分位：本益比 50.3、P/S 48.1、EV/S 47.1，不當作五年分位使用。","upside_short_pct":26.5,"upside_mid_pct":51.2},"trap_analysis":{"verdict":"🟡","label":"中等，一項衰退信號亮燈"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"五年後虧 50% 最可能的故事：Waymo 與 Tesla 的自營車隊在美國大都會達到成本優勢，Uber 的自駕城市 Mobility 訂單轉負，市場把 20 倍倍數降到 10 倍出頭。","assumption":"自駕放量時需求仍走 Uber，且管理層宣稱的利用率優勢持久。","consequence":"Bear 終端 EPS 4.30 美元、12 倍，股價約 52 美元；倍數再壓縮時，回撤可達 −58%。","ruling":"採納，列為唯一致命項。目前自駕不到總趟次 0.5%，風險窗在 2028 年後，現有證據蓋不到這段時間，不能宣稱風險已解。","watch":"自駕城市 Mobility 訂單年增率、Waymo 2028 年合約走向","evidence_refs":["substitute_technology#0","geo_supply_chain#2"],"fact_refs":["f_price_at_dd"]},{"view":"論點成功但股東經濟變差","evidence":"自駕成功但資本與利潤外流：100 億美元投資承諾、早期車輛放在自己的資產負債表，Delivery Hero 全現金收購，再加上補貼常態化。Q2 與 Q3 分析師問自駕損益與資本回報，管理層都沒有給數字。","assumption":"第三方資金會接手車隊，Delivery Hero 的報酬高於資金成本。","consequence":"訂單照長，但每股 FCF 被折舊、利息與夥伴分潤吃掉，EPS 趨近 Bear 路徑。","ruling":"部分採納。Base EPS 已低於共識 3.6% 與 5.5%，資本回流風險列入長期風險。","watch":"首筆自駕融資條款、Delivery Hero 交割後淨負債倍數","evidence_refs":["major_events#0","major_events#1","ma_merger#0"],"fact_refs":["f_net_debt_m","f_kpi6_adjusted_ebitda"]},{"view":"價格已反映太多","evidence":"20.41 倍的分母未扣股份報酬，扣除年化每股約 1.16 美元後約 31 倍；TTM GAAP 本益比 40.35 倍；共識 EPS 年化 27.9% 遠高於營收 15.9%，需要利潤率持續擴張。","assumption":"非 GAAP EPS 能代表股東實得，且利潤率擴張持續到 FY2028。","consequence":"若利潤率擴張提前結束，FY2029E EPS 可能低於 Base 的 6.10 美元，倍數也難維持。","ruling":"反駁。TTM FCF 對市值殖利率 7.4%，扣股份報酬後 5.7%，以 9% 折現率只隱含永續成長 2～3%，遠低於目前成長。GAAP 本益比含 Q3 股權重估虧損 476 百萬美元，不適合單獨當錨。","watch":"Adjusted EBITDA 占訂單；GAAP 營業利益增速","fact_refs":["f_fwd_pe_latest","f_pe_current","f_kpi4_sbc_gaap","f_kpi3_free_cash_flow"]}],"max_dd":{"lo":-58,"hi":-35,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 🟠 → 本次 🟠","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=🟠","side_b":"本次 ma=🟠","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 74.21 → 本次 68.59（-7.6%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=74.21","side_b":"本次 price_at_dd=68.59","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 74.21 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 74.21 美元：Bull 價 264、Bear 價 55，五年期望值 +94.3%，基準年化 16.6%，不對稱比 5.65","side_b":"本次情境、股價仍用 74.21 美元：Bull 價 236.9、Bear 價 51.6，五年期望值 +69.1%，基準年化 12.5%，不對稱比 4.11","ruling":"先換情境、股價不動：五年期望值少 25.2 個百分點，基準年化少 4.1 個百分點。不對稱比由 5.65 變為 4.11。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變差。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 74.21 美元：五年期望值 +69.1%，基準年化 12.5%，不對稱比 4.11","side_b":"本次情境、股價 68.59 美元：五年期望值 +83.0%，基準年化 14.2%，不對稱比 5.66","ruling":"再換股價、情境不動：起點價下跌 7.6%，五年期望值多 13.9 個百分點，基準年化多 1.8 個百分點，不對稱比由 4.11 升到 5.66。合計五年期望值比前份少 11.3 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"美國 Mobility 成長的前後說法","cause":"新證據","prior_field":["signal"],"side_a":"2026-08-05 CFO Balaji Krishnamurthy：預期美國全年逐季加速。","side_b":"2026-11-04 CFO：美國 Q3 成長略為放緩，但比國際市場穩。","ruling":"採 B 側事實，上季說法已落空。兩者可調和，放緩幅度小，加州與稀疏市場仍強，訊號等級維持前份的 B。供給因素的歸因標為未證、持續監測；連 2 季 Mobility 低於 15% 即視為歸因不成立。","evidence_level":"高，同一講者兩季逐字稿","settle_metric":"Q4 Mobility 固定匯率訂單成長是否回到 17% 以上","if_then":["如果 Q4 Mobility 固定匯率成長達 17% 以上，則買第二批","如果 Mobility 連 2 季低於 15%，則停止加碼"],"evidence_refs":["supply_demand_durability#1","end_markets#0"]},{"axis":"價值陷阱評估","cause":"新證據","prior_field":["trap"],"side_a":"前份結論為 🟢。","side_b":"本次為 🟡：共識 EPS 年化 27.9%，高於 FY2027 營收成長 15.9%，差距超過 5 個百分點；Q3 起補貼由乘客轉給司機。","ruling":"採 B。差距可由利潤率擴張與股數下降解釋，故只到 🟡。","evidence_level":"中","settle_metric":"Adjusted EBITDA 占訂單是否維持 5.0% 附近","if_then":["如果 Adjusted EBITDA 占訂單連 2 季低於 4.6%，則停止加碼","如果占訂單升至 5.5% 以上且 GAAP 營業利益同步成長，則回到 🟢"]},{"axis":"護城河方向與成長跑道","cause":"新證據","prior_field":["moat_trend","runway_post_y5"],"side_a":"前份為持平與寬跑道。","side_b":"本次維持。新增正面：Uber One 約 5,500 萬人、外送有機加速。新增負面：Mobility 供給、Delivery Hero 整合、DoorDash 與 Instacart 可能合併。","ruling":"正負相抵，結論不變。","evidence_level":"中","settle_metric":"Uber One 占訂單比重、前十大市場滲透率","if_then":["如果 Uber One 會員數連 2 季下降，則護城河方向下調並減碼","如果自駕城市訂單成長持續高於美國平均，則維持原倉位計畫"]},{"axis":"估值結論與情境機率","cause":"價格變動","prior_field":["val","p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份股價 74.21 美元，估值結論 🟢，機率 20／45／35，最大回撤 −58%。","side_b":"本次股價 68.59 美元，FY2026E 本益比 20.41 倍，結論維持 🟢，機率不變，最大回撤範圍 −58% 至 −35%。","ruling":"股價下跌 7.6% 使估值略為改善，但新增的負面證據抵銷了降低 Bear 機率的理由，因此機率不動。","evidence_level":"高","settle_metric":"FY2027E 共識 EPS 修正方向","if_then":["如果股價跌破 59.83 美元而 Q4 訂單成長達 18% 以上，則分批反買","如果股價先漲而 Q4 數據未到，則不追"]},{"axis":"裁決、角色與公司類型","cause":"方法變動","prior_field":["archetype","cycle_position"],"side_a":"前份裁決進場、角色衛星、品質複利成長、無循環定位。","side_b":"本次裁決與角色由程式依本輪輸入決定；公司類型維持品質複利成長；非循環股，循環定位仍為空白。","ruling":"公司類型與循環定位沒有新證據足以改變。","evidence_level":"中","settle_metric":"無","if_then":["如果 FCF 利潤率回落到 10% 以下，則重新檢查公司類型並停止加碼"]},{"axis":"加碼條件新增，減碼條件見觸發器","cause":"方法變動","prior_field":["rearm_trigger"],"side_a":"N/A（裁決為進場，非觀望）","side_b":"Q4 財報固定匯率訂單成長達 18% 以上，且 Mobility 固定匯率成長回到 17% 以上，才買第二批；否則停止加碼","ruling":"前份未設條件。Mobility 利空出現不到一季，能否進入賣方模型無法確認，因此第二批等 Q4 數據。減碼與清倉條件另列於觸發器。","evidence_level":"中","settle_metric":"2027 年 2 月 Q4 財報","if_then":["如果 Q4 達標，則買第二批","如果 Q4 訂單成長低於 18%，則停止加碼"]},{"axis":"監控門檻新增（含減碼與清倉）","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份摘要未記載（null）","side_b":"訂單年增低於 15% 連 2 季；Mobility 低於 13% 連 2 季減碼；Adjusted EBITDA 占訂單低於 4.6% 連 2 季；自駕城市訂單轉負連 2 季清倉；淨負債倍數高於 2.5 倍減碼。","ruling":"前份摘要沒有門檻，本次首次明訂，數字依 Q3 實際值與情境路徑設定。","evidence_level":"中","settle_metric":"每季財報","if_then":["如果任一減碼門檻觸發，則減碼一半","如果自駕城市訂單轉負連 2 季，則清倉"]},{"axis":"Single Thing 新增","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份摘要未記載（null）","side_b":"公司或第三方數據證實，美國自駕已營運城市的 Uber Mobility 訂單年增率連續兩季轉負。","ruling":"前份摘要此欄為空，本次首次明訂 Single Thing，取情境樹最大的單一敏感項。","evidence_level":"中","settle_metric":"自駕城市 Mobility 訂單年增率","if_then":["如果事件發生，則清倉","如果到 2028 年底未發生，則下調 Bear 機率並重做情境樹"]},{"axis":"自駕：夥伴或替代者","cause":"新證據","prior_field":null,"side_a":"CFO 2026-11-04：Uber 混合部署單車日趟次為高 20 趟，Waymo 與 Tesla 新市場只有低十幾趟，利用率優勢持久。","side_b":"10-K 列 Waymo、Zoox、Tesla 為競爭者；Waymo 計畫 2028 年 1 月起在奧斯汀與亞特蘭大自營（二手資料）。","ruling":"不可調和的部分要到 2028 年才能驗證。裁定 2027 年前採 A，但不採信其持久性：利用率是管理層自選的比較，對手新市場也非成熟值。Bear 機率維持 35%。","evidence_level":"中","settle_metric":"自駕營運城市 Mobility 訂單年增率；Waymo 2028 年合約走向","if_then":["如果自駕城市 Mobility 訂單連 2 季轉負，則清倉","如果 2028 年底自駕城市成長仍高於美國平均，則 Bear 機率降到 25%，並加碼至目標倉位上限","如果股價先漲但上述數據未出現，則不追"],"evidence_refs":["substitute_technology#0","geo_supply_chain#2"]},{"axis":"自駕車隊由誰出資","cause":"新證據","prior_field":null,"side_a":"CFO 2026-11-04：長期應由第三方資金支應，不用 Uber 的資產負債表。","side_b":"CEO 2026-11-04：殘值尚未建立，早期會把車輛放在自己的資產負債表。","ruling":"可調和，早期自擔、長期外包。第三方融資尚未成形，CFO 也表示還不能多說，資本回流風險列入長期風險。","evidence_level":"中","settle_metric":"2027 年首筆自駕車隊融資條款與 Uber 擔保比例","if_then":["如果 2028 年車隊融資仍以 Uber 資產負債表為主，則減碼一半","如果第三方資金承擔過半車隊成本，則維持原倉位計畫"]},{"axis":"Q3 非 GAAP EPS 是否低於預期","cause":"新證據","prior_field":null,"side_a":"Zacks：0.88 美元低於共識 0.90 美元，並歸因股權重估虧損 476 百萬美元。","side_b":"公司 Q3 指引 0.84 至 0.88 美元，實際落在上緣；事實表未查得共識值。","ruling":"採 B 作為判斷基礎。事實表把該筆虧損列在 GAAP EPS 內，A 的歸因存疑；0.90 美元只有單一來源，無法交叉核對。","evidence_level":"低","settle_metric":"Q4 非 GAAP EPS 對 0.95 至 0.99 美元指引的落點","if_then":["如果 Q4 EPS 低於 0.95 美元，則停止加碼","如果 Q4 EPS 達 0.99 美元以上，則維持第二批計畫"],"evidence_refs":["capital_markets_pricing#1"]},{"axis":"產業態勢（競爭、結構、其他）","cause":"新證據","prior_field":null,"side_a":"競爭惡化：DoorDash 與 Instacart 可能合併，巴西有 DiDi Food 與美團進場，自駕自營增加。","side_b":"結構轉好：會員占過半訂單，雜貨年增 40%，美國保險成本順風。其他結構變數為監管，FTC 訴訟與競爭法趨嚴。","ruling":"雙向拉鋸。依據是 Q3 外送有機加速，但 Mobility 供給與自駕競爭同時升溫。","evidence_level":"中","settle_metric":"Delivery 與 Mobility 的固定匯率成長差","if_then":["如果 Delivery 成長連 2 季低於 18%，則停止加碼","如果兩項業務同時回到 20% 以上，則維持原倉位計畫"],"evidence_refs":["competitive_share_entrants#3","regulatory_antitrust#1"]},{"axis":"現在就賣與現在就買的最強論證","cause":"新證據","prior_field":null,"side_a":"賣：便宜來自未扣股份報酬的分母，Mobility 供給問題由巴西擴大到印度與加拿大，上季說美國加速卻放緩，Delivery Hero 對價未知，股價低於 52 與 104 週線。","side_b":"買：扣股份報酬後 FCF 殖利率仍有 5.7%，訂單成長 20%，Q4 EPS 指引年增 34% 至 39%，自駕仍不到總趟次 0.5%。","ruling":"不賣。賣方論點多數是風險窗在 2028 年後或需要 Q4 驗證，現價已反映部分疑慮；因此分兩批建立，第二批等 Q4。","evidence_level":"中","settle_metric":"2027 年 2 月 Q4 財報","if_then":["如果 Q4 訂單與 Mobility 達標，則買第二批","如果股價跌破 59.83 美元但基本面無損，則分批反買","如果股價先漲而 Q4 數據未到，則不追"],"evidence_refs":["end_markets#0"]}],"triggers":[{"n":1,"text":"Q4 財報驗證訂單成長與利潤率","type":"假設驗證","maps_to":"H1","metric":"總訂單固定匯率年增率；Adjusted EBITDA 占訂單","threshold":"18% 以上；不低於 4.6%","action":"達標則買第二批","source_freq":"公司季報，每季","date":"2027-02"},{"n":2,"text":"Mobility 成長放緩","type":"風險","maps_to":"R1","metric":"Mobility 固定匯率訂單年增率","threshold":"低於 15% 連 2 季","action":"停止加碼","source_freq":"公司季報，每季","date":null,"evidence_refs":["supply_demand_durability#1","end_markets#0"]},{"n":3,"text":"Mobility 惡化到需要降低部位","type":"減碼","maps_to":"R1","metric":"Mobility 固定匯率訂單年增率；分部營業利益率","threshold":"低於 13% 連 2 季，或利潤率低於 7%","action":"減碼一半","source_freq":"公司季報，每季","date":null},{"n":4,"text":"自駕城市訂單轉負","type":"Single Thing","maps_to":"R3","metric":"美國自駕已營運城市 Mobility 訂單年增率","threshold":"轉負連續 2 季","action":"清倉","source_freq":"法說分城市說明與第三方數據，每季","date":"2028-12","evidence_refs":["substitute_technology#0","geo_supply_chain#2"]},{"n":5,"text":"Delivery Hero 槓桿與時程","type":"風險","maps_to":"R2","metric":"淨負債對年化 Adjusted EBITDA；交割時間","threshold":"高於 2.5 倍，或交割延後超過 2027 年底","action":"減碼一半","source_freq":"公司季報與 8-K，每季","date":"2027-12","evidence_refs":["major_events#0","ma_merger#1"]},{"n":6,"text":"Uber One 訴訟進展","type":"風險","maps_to":"R4","metric":"法院命令或和解內容；會員數","threshold":"須變更計費與取消流程且會員數季減；或出現刑事介入","action":"民事不利結果減碼一半，刑事介入清倉","source_freq":"法院文件與公司季報，事件驅動","date":null,"evidence_refs":["regulatory_antitrust#2","lawsuit_class_action#1"]},{"n":7,"text":"油價與關稅未能吸收","type":"風險","maps_to":"R5","metric":"Adjusted EBITDA 占訂單","threshold":"低於 4.6% 連 2 季","action":"停止加碼","source_freq":"公司季報，每季","date":null,"evidence_refs":["reg_tariff_export#0","geo_supply_chain#1"]},{"n":8,"text":"價跌而基本面無損","type":"加碼","maps_to":"H1","metric":"股價；總訂單固定匯率年增率","threshold":"股價低於 59.83 美元，且訂單年增 18% 以上","action":"分批反買","source_freq":"每日股價與季報","date":null},{"n":9,"text":"第二批買進條件","type":"估值rearm","maps_to":"H1","metric":"Q4 訂單與 Mobility 固定匯率成長","threshold":"訂單 18% 以上，Mobility 17% 以上","action":"買第二批","source_freq":"公司季報","date":"2027-02"},{"n":10,"text":"股價超過自身合理倍數","type":"減碼","maps_to":"H1","metric":"股價對 FY2027E 共識 EPS 的倍數","threshold":"26 倍，約 114.66 美元","action":"減碼三分之一","source_freq":"每日股價","date":null},{"n":11,"text":"年度複審","type":"複審日期","maps_to":"H2","metric":"自駕車隊規模與融資條款","threshold":"2027 年底 2,000 輛進度","action":"重做情境樹","source_freq":"年度","date":"2027-11-08"}],"kill_metrics":[{"metric":"總訂單固定匯率年增率","bear_threshold":"低於 15% 連 2 季","window":"2027 全年","source":"公司季報","last_status":"ok"},{"metric":"Mobility 固定匯率訂單年增率","bear_threshold":"低於 13% 連 2 季則減碼","window":"2027 全年","source":"公司季報與 10-Q","last_status":"warning"},{"metric":"Adjusted EBITDA 占訂單","bear_threshold":"低於 4.6% 連 2 季","window":"2027 全年","source":"公司季報","last_status":"ok"},{"metric":"美國自駕已營運城市 Mobility 訂單年增率","bear_threshold":"轉負連 2 季則清倉","window":"至 2028 年底","source":"法說說明與第三方數據","last_status":"unknown"},{"metric":"淨負債對年化 Adjusted EBITDA","bear_threshold":"高於 2.5 倍則減碼","window":"Delivery Hero 交割後 4 季","source":"公司季報","last_status":"ok"}],"decision_out":{"verdict":"進場","role":"衛星","row_hit":"9b","pacing":[],"holding_cap":null,"audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟠'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟢'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把 2028 年後才能驗證的自駕替代風險，連同 Mobility 的短期供給問題一起壓進倍數；現價只隱含 FCF 永續成長 2～3%，而 Q3 訂單仍成長 20%、Q4 EPS 指引年增 34% 至 39%。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟢', val='🟢', moat_trend='→', week26=-9.09, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position=None, moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":false,"basis":"signal='B', val='🟢'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='B', val='🟢', ma='🟠'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":true,"basis":"signal='B', val='🟢', ma='🟠'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟢', ma='🟠'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]}],"requires_critic":[],"rearm_trigger":"Q4 財報固定匯率訂單成長達 18% 以上，且 Mobility 固定匯率成長回到 17% 以上，才買第二批；否則停止加碼","exec_line":"現價附近先買目標部位的一半；2027 年 2 月 Q4 財報達標再買另一半。股價跌破 59.83 美元而訂單成長仍達 18% 則分批反買，未經驗證的上漲不追。"},"reasoning":{"industry":"Q3 營收占訂單約 24.7%（14,766÷59,819）。依 10-Q，固定匯率訂單成長為 Mobility 17%（295 億美元）、Delivery 23%（285 億美元）、Freight 35%（18 億美元）。Mobility 營收約 75 億美元、Delivery 約 55 億美元（搜尋摘要，未逐字核），Freight 約 18 億美元為餘數，三塊都超過營收 10%。最新一季 GAAP 營業利益率 9.8%，季度毛利率事實表未涵蓋，TTM 為 43.21%。需求端極度分散，2023 至 2025 年無單一客戶占營收 10% 以上。單點依賴在供給側：司機與外送員時數決定訂單能否成交，Q3 的國際市場缺口就來自這裡；自駕車隊若集中到少數技術方，依賴會更明顯。","moat":"機制是雙邊密度：乘客與餐客多，司機與外送員等待時間短，會員再把兩個業務綁在一起。可驗證的方向有三個。第一，MAPC 2.15 億人年增 14%，趟次年增 16%，規模仍在擴大。第二，TTM 營業利益率 12.44%，高於 DoorDash 5.55%、Grab 10.95%、Lyft −1.77%，但同業 ROIC 事實表未涵蓋，無法判斷差距擴大或收窄。第三，定價權沒有變強：10-K 自承切換成本低，Q3 把乘客補貼轉給司機，CEO 也承認乘客可能付更高價格。美國外送份額最新資料停在 2024 年底，Uber Eats 26.1%、DoorDash 60.7%，近 12 個月份額事實表未涵蓋。","growth":"成長以量為主。共識 EPS 由 FY2026 的 3.36 美元到 FY2028 的 5.50 美元，年化 27.9%，EPS 分析師家數事實表未涵蓋；FY2025 非 GAAP 基期未入表，因此以兩年計算。FY2027 共識營收僅成長 15.9%，相差 12 個百分點，歸因於利潤率擴張與股數下降，其中稀釋股數 FY2025 年減約 1.7%，其餘主要靠利潤率。Q4 指引 18% 至 22%，下緣已低於連續五季 20% 以上的紀錄。前十大市場滲透率過去 5 年翻倍至約 10%，以年增約 15% 推算，約 8 年可達 30%，屬中等確信。Delivery Hero 預計 2027 下半年交割，是否納入共識事實表未涵蓋。","governance":"FCF 對淨利的轉換率 FY2025 為 97%（9,763÷10,053）、FY2024 為 70%（6,895÷9,856），淨利受稅務與投資重估影響，FCF 較可靠。SBC 占 Q3 營收 4.0%、占 GAAP 營業利益 40.8%。現金去向方面，CFO 2026-08-05 稱約 50% FCF 用於回購，今年當時已回購約 35 億美元，Q2 另以約 40 億美元購入 Delivery Hero 股票。Q3 法說稱明年重心轉向有機成長、自駕與伺機回購，併購放緩。Delivery Hero 總對價事實表未涵蓋，已知融資包括 €45 億票據與定期貸款，後者使過橋額度減少 €40 億。淨負債 7,669 百萬美元，約年化 Adjusted EBITDA 的 0.65 倍，尚未含收購對價。","valuation":"現價 68.59 美元，FY2026E 非 GAAP 本益比 20.41 倍，FY2027E 15.55 倍。TTM FCF 約 104 億美元，對 EV 147,723 百萬美元的殖利率約 7.0%；扣年化 SBC 2,364 百萬美元後約 5.4%。以 9% 折現率反推，永續成長率只需約 1.8%～3.4%，而 Q3 訂單仍成長 20%。風險在自駕與 Delivery Hero 的現金需求尚未計入。賣方九月中平均目標價約 101 至 103 美元，區間 75 至 150 美元，高低比 2.0 倍；快照早於 Q3 財報，只作方向參考。FY1 至 FY3 共識修正全部為 0.0%，財報前後完全不動並不合理，可能是快照未更新，不能當作賣方未下修的證據。短期空間以 FY2027E Base EPS 4.25 美元乘現行倍數，中期以 FY2029E 6.10 美元乘 17 倍計算。","premortem":"衰退信號亮 1 個，即共識 EPS 成長高於營收 12 個百分點，評為中等。成長熄火壓力測試以 Base 的 FY2029E EPS 6.10 美元為起點，後兩年成長 15%、10%、5%，終端 16、13、10 倍，FY2031E 股價約 129、96、67 美元，三種情境中兩種高於現價。管理層迴避點：自駕 100 億美元對損益的影響，Q2 與 Q3 都沒給數字；Q2 問到 Waymo 媒體報導時未正面回應；AI 對消費者轉換的整體提升也未量化。歷史最大回撤與空方數字事實表未涵蓋。"},"plain":{"six":{"how_it_makes_money":"Uber 向乘客、餐客與商家收款後抽取撮合費，錢卡在即時配對這一節點；Q3 的 598 億美元訂單轉成 148 億美元營收。","moat":"護城河方向持平：訂單密度與會員帶來的規模優勢仍在擴大，定價權則受司機供給與自駕新供給牽制，兩者相抵。","growth":"成長跑道寬：前十大市場滲透率約 10%，雜貨與零售是已起量的第二曲線。","capital":"資本配置評 B：股數持續下降，但併購與回購報酬缺資料，無法給更高評分。","valuation":"現價只要求 FCF 永續成長約 2～3% 就合理，我認為要求不高，前提是自駕不在 2030 年前吃掉 Mobility 的利潤池。","how_wrong":"最可能看錯在三處：自駕的資本與利潤分配、Delivery Hero 的價格與整合、Mobility 供給問題變成結構性。"}},"decision_inputs":{"signal":"B","ma":"🟠","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把 2028 年後才能驗證的自駕替代風險，連同 Mobility 的短期供給問題一起壓進倍數；現價只隱含 FCF 永續成長 2～3%，而 Q3 訂單仍成長 20%、Q4 EPS 指引年增 34% 至 39%。","momentum_overheated":false,"cycle_gates_pass":null,"trap":"🟡","val":"🟢","moat":"B","moat_trend":"→","runway_post_y5":"🟢","capalloc_grade":"B","archetype":"品質複利成長","price_at_dd":68.59,"week26_return_pct":-9.09,"consensus_rev_3m_pct":0.0,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":false,"val_denominator_note":"非 GAAP EPS 未扣 SBC，扣除年化每股約 1.16 美元（未計稅盾）後本益比約 31 倍；TTM GAAP 本益比 40.35 倍又含重估損益。便宜的結論改由扣 SBC 後的 FCF 殖利率支撐，不依賴這個分母。Delivery Hero 的對價與 EPS 貢獻尚未反映在 EV 內。"},"catalysts":[{"date":"2026-11","date_precision":"month","type":"product","event":"Zoox 在拉斯維加斯上線 Uber，Motional 隨後轉為全無人營運","impact":"中","watch":"單車日趟次與上線時程"},{"date":"2027-02","date_precision":"month","type":"guidance","event":"Q4 2026 財報與 2027 年展望","impact":"高","watch":"訂單成長 18% 以上、Mobility 17% 以上、EPS 0.95 至 0.99 美元"},{"date":"2027-Q3","date_precision":"quarter","type":"regulatory","event":"Delivery Hero 反壟斷審查與交割，公司預期 2027 下半年完成","impact":"高","watch":"總對價、處分條件、交割後淨負債倍數"},{"date":"2027-12","date_precision":"month","type":"product","event":"全無人車輛達 2,000 輛以上的目標期限","impact":"中","watch":"車輛數、利用率與第三方融資進度"},{"date":"2028-01","date_precision":"month","type":"other","event":"Waymo 計畫在奧斯汀與亞特蘭大自營（二手資料，未核原文）","impact":"高","watch":"Uber 在兩地的 Mobility 訂單年增率"}],"_projected_from":"v19"}
+```
+
+---
+
+## ⑨ 補寫任務（本段優先，取代上面任務頭與寫入指示）
+
+上一輪散文已寫好，只有下列章節（篇幅不足，或含判斷／事實表裡沒有的數字）被硬閘擋下。**只重寫這幾章**，其他章節一個字都不要寫。
+
+- `decision`：含 1 個未覆蓋數字（見下方清單）；現在 1,731B
+
+### 未覆蓋數字（不在判斷物／事實表裡，驗證器逐個擋）
+
+`decision`：
+- `250` ｜ …有：續抱。週線結構在 104 週線之下、250 週線之上，符合長波段佈局的條件式進場，…
+
+處理方式：那幾個數字**要嘛刪掉**（連同只靠它撐起來的半句），**要嘛改用判斷物／事實表（白名單與判斷投影視圖）裡已有的數字**，逐字照抄；**不得自行推算新數字**（差值、比率、加總、幾個百分點都算新數字）。改寫時保留該章的論點與結論，其餘沒被點名的數字不要動。
+
+格式同散文卡 §6：每章前一行 `<!-- SID:sX -->`，緊接完整的 `<section>`（`<h2>`／`<p class="lead">`／`<ul class="pts">`），表格注入標記照現稿保留。
+
+一次 Write 到 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/UBER_20261108/prose_fix.html`，寫完即停。
+
+現稿：
+
+```html
+<!-- SID:decision -->
+<section id="decision"><h2>13　最終裁決</h2>
+<p class="lead"><span class="chip" style="background:#166534;color:#fff;padding:2px 8px;border-radius:4px">進場</span>　角色：衛星。先買一半，第二批等 Q4。</p>
+<ul class="pts">
+<li>新資金：現價附近先買目標部位的一半，2027 年 2 月 Q4 財報達標再買另一半。達標的定義是總訂單固定匯率成長 18% 以上，且 Mobility 固定匯率成長回到 17% 以上，否則停止加碼。股價跌破 59.83 美元而訂單成長仍達 18%，則分批反買，未經驗證的上漲不追。</li>
+<li>已持有：續抱。週線結構在 104 週線之下、250 週線之上，符合長波段佈局的條件式進場，所以不追高也不急著賣。減碼一半的條件有三項：Mobility 固定匯率成長低於 13% 連 2 季或分部利潤率低於 7%、Adjusted EBITDA 占訂單低於 4.6% 連 2 季、Delivery Hero 交割後淨負債倍數高於 2.5。總訂單成長低於 15% 連 2 季也要檢討。</li>
+<li>清倉：美國自駕已營運城市的 Mobility 訂單年增率轉負連續 2 季，立刻清倉並重做情境樹，不等下一季確認。Uber One 案若出現刑事介入同樣清倉，民事不利結果則減碼一半。股價漲到 FY2027E 共識 EPS 的 26 倍，約 114.66 美元，減碼三分之一。</li>
+<li>放寬：Q4 達標會買第二批。若到 2028 年底自駕城市成長仍高於美國平均，Bear 機率由 35% 降到 25%，並加碼至目標倉位上限。年度複審在 2027-11-08，檢查 2027 年底 2,000 輛的自駕車隊進度與融資條款。</li>
+</ul>
+<!-- AUDIT -->
+<!-- E12 -->
+<!-- E12_NOTE -->
+<p>完整的假設驗證、風險與觸發器門檻見上表。</p>
+
+</section>
+
+```
