@@ -1,0 +1,527 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 MP（2026-11-08）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/MP_20261108/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：MP　日期：2026-11-08　archetype：None　前份裁決：2026-05-25　觀望偏進場｜　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（2302B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（572B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（1000B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1610B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1063B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（523B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（663B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2477B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（3239B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2183B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（283B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        2302           3289-4698      3 條（2–6 內）  
+s3                  8000         572           5200-7428      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3673          7929-11327      5 條（2–6 內）  
+s6                 11000         523          7334-10477      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         663           1986-2837      5 條（2–6 內）  
+s10                 5000        2477           1766-2523      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2183           2000-2817      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         283            852-1217      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=5029B；至少需散文≈39.97KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−1200
+−946.09%
+−800
+−75%
+−75
+−69.2%
+−62.09%
+−55
+−55%
+−47.49
+−45.1%
+−36.5%
+−34.06%
+−32.76%
+−25.67%
+−16.15%
+−15.0%
+−8.3%
+−7.0
+−1.252
+−0.5
+−0.01
+0
+0.01
+0.24
+0.50
+0.7
+0.72%
+0.74
+1
+1%
+1.00
+01
+1.01
+$1.10
+1.161
+1.2018
+1.31
+1.32
+1.335
+1.4
+1.477
+1.5%
+1.5
+1.50
+1.67
+1.7823
+1.85
+1.9
+2
+02
+2.05
+2.08
+2.2
+2.5
+2.66
+2.8
+2.9%
+2.932
+3
+3%
+03
+3.3%
+3.54
+3.6
+3.74%
+3.8
+4%
+4
+4.14
+4.20
+4.3
+4.4
+4.53
+5%
+05
+5
+5.18
+5.3%
+5.3
+6
+06
+6.5
+6.6
+6.9
+7
+07
+7.25
+7.7
+7.7%
+7.86
+$7.9
+$8
+8%
+8
+08
+8.5
+09
+9
+9.5
+9.7
+10
+10%
+$10
+10.89
+$10.89
+11
+11.49
+11.7
+12%
+12
+13.15
+13.38
+13.9
+14
+14.13
+15%
+15.5
+15.6%
+16%
+$16
+16
+16.27%
+17
+17.8%
+18
+18%
+20%
+20
+21%
+21.1
+21.1%
+22
+23%
+23
+23.47%
+24
+25%
+25
+$25
+26%
+26
+27.03
+$28
+30
+30%
+32%
+33%
+$34.12
+$35.41
+35.41
+37%
+$37.3
+40%
+$40.9
+$41.71
+42
+$42.9
+45%
+45.1%
+47.49%
+47.85
+49
+50%
+50
+52.1
+$55
+55
+56%
+57.21%
+58.6
+59%
+59.57
+$60
+60
+$62
+63.1
+64.46
+$64.46
+$66
+69%
+70
+$76
+77%
+78
+79.04%
+84
+$84.00
+$85
+90
+90%
+$90
+94%
+$95
+$98
+$99
+100%
+$100
+100
+104
+105
+$107
+$110
+110
+110%
+120
+$130
+132%
+150%
+176%
+200
+205
+225
+232
+250
+440
+450
+453.16
+500
+530
+550
+650
+680
+690
+760
+800
+810
+830
+900
+950
+1180
+1200
+1400
+1550
+1600
+2021
+2022
+2024
+2025
+2026
+2027
+2028
+2029
+2030
+2031
+2035
+2037
+2050
+2400
+20261108
+1,000
+1,018
+1,020
+1,130
+1,200
+1,350
+1,800
+1,860
+1,996
+10,000
+15,700
+2,000
+2,070
+2,500
+2,800
+3,000
+3,160
+3,830
+4,110
+4,520
+4,600
+4,780
+5,000
+5,370
+5,500
+56,000
+6,000
+6,500
+7,000
+8,000
+−1,120
+−1,865.38%
+−2,210
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"MP","date":"2026-11-08","schema":"v15.0","contract":"v19","company_name":"MP Materials Corp."},"oneliner":"股價半年腰斬後，MP 的礦、資金與政府合約都還在，但第三季營收有 21% 來自一次性賣庫存，磁鐵要到 2028 年才看得出獲利；基本情境五年只賺約 18%，先等 2027 下半年的磁鐵與成本數字。","thesis":{"H":[{"id":"H1","text":"Mountain Pass 在 2027 下半年穩定跑到每月 450～500 噸 NdPr，靠固定成本攤提與氯鹼自製降低單位成本，Materials 在底價保護下成為穩定的現金來源。","2y":"FY2028 NdPr 產量 ≥ 5,500 噸，Materials 調整後 EBITDA ≥ 2.5 億美元（不含一次性銷售）","5y":"FY2031 NdPr 產量 ≥ 6,500 噸（含第三方原料），Materials EBITDA ≥ 4 億美元","10y":"2035 年底價到期後，不靠補貼仍有正 EBITDA","threshold":"2027 Q4 單季產量 ≥ 1,350 噸，且扣除一次性銷售後的 Materials 調整後 EBITDA ≥ 5,000 萬美元","source":"公司季度新聞稿與法說","drift_rule":"TTM 產量或部門 EBITDA 連 2 季偏離目標路徑 ≥5% 視為削弱，連 3 季 ≥10% 視為反轉"},{"id":"H2","text":"Independence 在 2027 下半年進入量產節奏，Magnetics 在 2028 年靠真實磁鐵出貨賺錢，而不是靠前驅物遞延收入，10X 按時在 2028 年底試車。","2y":"FY2028 Magnetics 營收 ≥ 3 億美元，部門 EBITDA 率 ≥ 25%","5y":"FY2031 磁鐵年出貨 ≥ 8,000 噸，Magnetics 營收 ≥ 9 億美元","10y":null,"threshold":"2027 Q4 單季 Magnetics 營收 ≥ 5,000 萬美元，部門 EBITDA 率 ≥ 20%；10X 2028 年底前試車","source":"公司季度新聞稿、法說與 8-K","drift_rule":"TTM 部門營收連 2 季偏離目標路徑 ≥5% 視為削弱，連 3 季 ≥10% 視為反轉"},{"id":"H3","text":"DoW 協議如約履行（底價、10X 包銷、最低 EBITDA），且部分 10X 產能轉給願付更高價格的商業客戶，在合約到期前建立不靠補貼的獲利基礎。","2y":"PPA 每季依差額入帳、無撥款延遲；2028 年底前至少 1 份具名商業客戶承接 10X 產能","5y":"10X 商業客戶占比 ≥ 30%，10X EBITDA 高於 1.4 億美元保障線","10y":"2035 年前完成續約或找到商業替代","threshold":"PPA 單季入帳不中斷；DPA 撥款不低於依當季差額推算的年付款；2028 年底前具名商業合約 ≥ 1 份","source":"10-Q PPA 附註、國防授權與撥款文件、公司 8-K","drift_rule":"連 4 季偏離 ≥5% 視為削弱，連 6 季 ≥10% 視為反轉"}],"R":[{"id":"R1","text":"NdPr 現貨續弱，Materials 愈來愈靠補貼維持；前一輪下行曾讓營收減半、EBITDA 轉負，精礦外銷也已停止。","h_ref":"H1","clock":"⚡","threshold":"Ex-China NdPr 連 2 季均價低於 $85/kg，或單季 PPA 每公斤低於差額 40% 以上","evidence_refs":["cyclical_prior_downcycle_behavior#0","cyclical_prior_downcycle_behavior#1","cyclical_prior_downcycle_behavior#2","cyclical_prior_downcycle_behavior#3","end_markets#1"]},{"id":"R2","text":"磁鐵爬坡慢於預期，客戶集中使單一計畫延遲直接反映到營收。","h_ref":"H2","clock":"🔥","threshold":"連 4 季 Magnetics 營收低於 Base 路徑 20%，或 10X 試車延後超過 2 季","evidence_refs":["customer_concentration_credit#0","customer_concentration_credit#3"]},{"id":"R3","text":"政府依賴：PPA 與包銷需要年度撥款，也帶來稽核、調查與貿易政策變動的風險。","h_ref":"H3","clock":"🐢","threshold":"DPA 撥款低於推算的年付款，或出現政府稽核、False Claims Act 調查","evidence_refs":["customer_concentration_credit#1","regulatory_antitrust#0","reg_tariff_export#0"]},{"id":"R4","text":"全球與美國磁鐵新產能超前需求，10X 轉單時的議價力低於管理層描述。","h_ref":"H2","clock":"🐢","threshold":"美國或盟友對手取得 OEM 量產定點，或 2028 年底前 10X 沒有具名商業合約","evidence_refs":["supply_demand_durability#1","supply_demand_durability#2","competitive_share_entrants#1"]}],"single_thing":{"description":"DoW 協議被實質打折：NdPr 底價或 10X 最低 EBITDA 保障因撥款不足、重新議約或稽核爭議而無法足額入帳。","why_fatal":"這是模型裡最大的單一敏感項。假設 NdPr 回到 $60/kg，底價價值約（110−60）×6,000 噸＝3 億美元，加上 10X 最低 EBITDA 1.4 億美元，合計 4.4 億美元，約占 Base FY2031 EBITDA 6.6 億的三分之二。","if_happens":"Base 的 FY2031 EBITDA 跌回約 2.2 億美元，情境改用無保護的 Bear，股價低於 $10，10X 的回收假設也要重估；清倉。","how_monitor":"每季 10-Q 的 PPA 收入與應收款；DPA 撥款與國防授權法案；10-Q 風險因子是否新增稽核或調查字眼。","probability":"8%（2026-11 至 2028-11）。Litinsky 2026-11-05 稱合約具約束力，也有兩黨支持，但撥款仍須國會年度處理。"}},"appendix_a":{"growth_durability":6,"quality_score":4,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":47.85,"peg_fy2":null,"stress":{"pass":3,"total":5}},"eps_meta":{"base_eps_path":{"FY2025A":-0.5,"FY2026E":-0.01,"FY2027E":0.74,"FY2028E":1.31},"fy_end_month":12,"eps_basis":"FY2025A 為 GAAP 稀釋 EPS，FY2026E～FY2028E 為 Koyfin 共識；基期為負，三年 CAGR 無法計算。分析師家數依 Chartmill 為 23 位（2026-10，原文未核）。"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/MP_20261108/scenario.json","archetype":{"primary":"循環/商品","secondary":"未獲利高成長","confidence":"中","fingerprint":"FY2022 毛利率 79.04%，FY2024 −32.76%；GAAP 連兩年虧損，營收受 NdPr 價格驅動；磁鐵合約段屬於另一種生意。"},"industry":{"clock_phase":"II","sd_verdict_source":"供給可逆性高：非中國供應的溢價來自出口管制，2025-11 美中協議已顯示管制可以暫停；Benchmark 在 2026-08 報 Ex-China NdPr 跌破 $110 且供給轉寬。產業仍在擴張投資期，判斷依據是量與資本形成，不是股價。","bargaining":{"up":"自有礦，對外依賴主要是試劑；管理層稱試劑占成本比重高，氯鹼廠 2027 年第一階段啟用後依賴下降。","down":"客戶議價力強：前兩大客戶占第三季營收 56%，DoW 包銷 10X 全部產量，合約條款鎖定獲利區間。","geo":"中國 2026-06-22 把 MP 列入出口管制清單；精礦自 2025-07 起停售中國；管理層 2026-08-06 稱對試劑與成本影響極小，這點尚未獨立驗證。"},"profit_pool_dir":"政策把部分利潤從中國分離與磁材環節移往受保護的美國供應鏈，方向明確，金額與占比事實表未涵蓋。","tam_table":[{"item":"全球 NdFeB 磁鐵市場","value":"約 25 萬噸／年，中國占 90% 以上（Litinsky，2026-11-05 法說）"},{"item":"MP 規劃磁鐵產能占比","value":"Independence 約 3,000 噸＋10X 7,000 噸＝10,000 噸，約全球 4%"},{"item":"美國開發中磁鐵產能","value":"至少 56,000 噸（Argus，2026-09）"},{"item":"全球產能利用率預測","value":"2037 年降至 59%（IDTechEx）"},{"item":"利潤池 5 年前後占比","value":"事實表未涵蓋"}]},"moat":{"mechanism":"美國唯一從礦到磁鐵的整合供應鏈，加上 DoW 底價與包銷合約，以及 2021 年做到 2026 年才完成的車規認證門檻。","execution":7,"pricing":5,"grade":"C","trend":"→","trend_evidence":"執行面擴大：GM 認證完成，2026 Q4 開始出貨。定價面收縮：Ex-China NdPr 約 $95/kg，低於 $110，美國開發中磁鐵產能至少 56,000 噸。沒有資料顯示最大客戶流失，客戶 C 比重下降來自前驅物收入遞減。","peer_na_reason":"最接近的 Lynas 無財報資料，其他同業沒有投入資本資料，ROIC 差距無法計算。","threats":[{"level":"🔴","text":"美國與亞洲磁鐵新產能排隊，USAR、JS Link、Energy Fuels、EMAT 與 Lynas 同時擴張，壓縮 10X 轉單給商業客戶時的議價力。","p":"40%","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","competitive_share_entrants#3","cyclical_supply_discipline_capacity#0","cyclical_supply_discipline_capacity#1","cyclical_supply_discipline_capacity#3","cyclical_supply_discipline_capacity#4","cyclical_supply_discipline_capacity#5","cyclical_supply_discipline_capacity#6"]},{"level":"🟡","text":"無稀土馬達替代，IDTechEx 估 2035 年近 30% 電動車採用；影響電動車部分，不影響 DoW 包銷。","p":"30%","evidence_refs":["substitute_technology#0","substitute_technology#1"]},{"level":"🟡","text":"中國把 MP 列入出口管制清單，影響設備、試劑與兩用物項取得；管理層稱影響極小，尚未獨立驗證。","p":"已發生，實質衝擊機率 20%","evidence_refs":["reg_tariff_export#3","geo_supply_chain#0"]}],"roic_durability":{"quadrant":"低利益率×低周轉：TTM 營益率 −34.06%，投入資本周轉率事實表未涵蓋，當期 ROIC 為負。","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者（GM、Apple）、決策者（DoW、車廠採購）與付款者都已具體存在，但 GM 要先用完既有供應，機器人需求仍停在未具名 RFQ，SMM 估 2027 年新能源車 NdFeB 只成長 3.74%。"},{"item":"決策層級","level":"🟢","text":"認證要審到每台設備與作業指導書，MP 從 2021 年做到 2026 年才通過，單一車型計畫的更換成本高。代理讀數：GM 按專案與工廠逐步切換。"},{"item":"價值鏈分配","level":"🟡","text":"DoW 包銷 10X，並分走 $110 以上 30% 的利益，買方與政府都有議價力；若 10X 能轉給機器人客戶，分配會改善，但沒有單價證據。"},{"item":"社會容忍度","level":"🟡","text":"優勢依賴 DoW 協議與年度撥款，FY26 DPA 請求 2.66 億美元；以 6,000 噸計，NdPr 要跌到約 $66/kg，年付款才會超過這個額度，目前差額約 $10/kg，還沒有壓力。10-K 已列出稽核、國會關注與 False Claims Act 風險。"}],"roiic":"實績為負：FY2022 到 FY2025 營業利益由正轉負，投入資本持續增加。前瞻假設：Base 到 FY2031 增量稅後利益約 3.6 億美元÷增量投入約 17 億美元＝約 21%，本檔自估，尚未證實。","reinvest_rate":"TTM 無法計算，稅後營業利益為負；FY2026 資本支出指引 5～6 億美元，相當於 FY2026E 共識營收的 110%～132%。","endo_ceiling":null,"formula_note":"內生成長率＝增量 ROIC×再投資率；稅後營業利益為負時公式無解，因此留空，並視為共識成長超過內生能力。"},"combined":6.0,"score":6.0,"spread_table":[{"metric":"毛利率","MP":-16.15,"LYC.AX":null,"ALB":25.84,"USAR":-11.22,"UUUU":47.9,"unit":"%"},{"metric":"營業利益率","MP":-34.06,"LYC.AX":null,"ALB":16.27,"USAR":-946.09,"UUUU":-62.09,"unit":"%"},{"metric":"FCF 利潤率","MP":-165.23,"LYC.AX":null,"ALB":23.47,"USAR":-1865.38,"UUUU":-95.79,"unit":"%"},{"metric":"研發密度","MP":8.0,"LYC.AX":null,"ALB":0.54,"USAR":278.35,"UUUU":null,"unit":"%"}],"competitors":[{"name":"LYC.AX","gm":null,"om":null,"fcf_margin":null,"rd_intensity":null,"strategy_note":"中國以外唯一已量產的大型整合分離商，至 2026-03 的單季 NdPr 1,996 噸、年增 32%，約為 MP 第三季的兩倍；財報資料事實表缺，利潤率無法比較。"},{"name":"ALB","gm":25.84,"om":16.27,"fcf_margin":23.47,"rd_intensity":0.54,"strategy_note":"同屬政策敏感的礦業商品，TTM 營益率 16.27%、FCF 率 23.47%，只用來對照商品礦業的正常利潤，不是直接對手。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"USAR","gm":-11.22,"om":-946.09,"fcf_margin":-1865.38,"rd_intensity":278.35,"strategy_note":"直接對手，Stillwater 目標 2027 年 1,200 噸，TTM FCF 率 −1,865.38%，資金與原料都弱於 MP；MP 已對其提出營業秘密訴訟。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"UUUU","gm":47.9,"om":-62.09,"fcf_margin":-95.79,"rd_intensity":null,"strategy_note":"目標年產約 15,700 噸磁鐵，有 7.25 億美元有條件融資但尚待正式協議；TTM 營益率 −62.09%，產能目標遠大於目前現金流所能支撐。","period":"TTM ending 2026-09-30（4季加總）"}]},"growth":{"driver_mix":"量為主；價格被底價與分潤截斷；併購為零；回購未計。","runway_years":"10 年以上（滿產占全球約 4%，距 30% 滲透率很遠；實際上限是原料與合約）","runway_post_y5":"🟢","endo_ceiling_basis":"TTM 稅後營業利益為負，內生上界無法計算；成長資金來自 13.38 億美元現金與 Apple、DoW 的合約資金，不是自身盈餘。","segments":[{"item":"Materials","value":"第三季營收 1.335 億、調整後 EBITDA 4,780 萬（含一次性 SEG+）；Base FY2031 外銷 NdPr 約 4.3 億＋重稀土等 1.5 億"},{"item":"Magnetics","value":"第三季營收 1,860 萬、調整後 EBITDA 530 萬，幾乎等於前驅物遞延收入轉列；Base FY2031 約 9.7 億，含 10X 約六成開工"},{"item":"PPA 收入","value":"第三季 810 萬，不計入營收；第四季指引約 $8/kg"}],"decay_signals":[{"item":"毛利率連 2 季年減","status":"未亮","note":"單季毛利率事實表未涵蓋，TTM −16.15% 優於 FY2025 的 −25.67%"},{"item":"核心市占縮減","status":"資料缺口","note":"事實表沒有 NdPr 份額時間序列"},{"item":"提價後銷量下滑","status":"未亮","note":"銷量年增 94%"},{"item":"EPS CAGR 高於營收 CAGR 超過 5pp","status":"資料缺口","note":"EPS 基期為負"},{"item":"FCF 對淨利轉換偏低連 2 年","status":"亮燈","note":"FCF 連三年為負，累計 −7.0 億美元"},{"item":"SBC 占營收超過 5% 且逐年上升","status":"資料缺口","note":"第三季 7.7%，趨勢事實表未涵蓋"},{"item":"TAM 被替代技術壓縮","status":"亮燈","note":"IDTechEx 估 2035 年近 30% 電動車用無稀土馬達"},{"item":"產業倍數系統性下移","status":"資料缺口","note":"事實表沒有同業倍數序列"},{"item":"維護性資本支出占 FCF 過高","status":"不適用","note":"FCF 為負"},{"item":"停止投資新產能且收入下滑","status":"未亮","note":"仍在擴產"}],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"公司無股利，回購金額事實表未涵蓋，成長也不靠併購，這張表沒有可用數字。"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"未見併購實績，沙烏地合資尚未產生報酬","grade":"N/A"},{"year":"—","action":"buyback_yield","rationale":"2024 年回購的金額與均價事實表未涵蓋","grade":"N/A"},{"year":"—","action":"sbc_dilution","rationale":"單季 SBC 1,130 萬，年化÷市值＝0.72%／年，低於 1.5%；未含 DoW 股權工具與增資","grade":"過"}]},"valuation":{"basis":"EV/S（FY1 共識為虧損，改用銷售倍數），另以隱含 EBITDA 倍數檢查","peers":{"expanded":false,"reason":"事實表同業只有毛利率、營益率、FCF 率與研發密度，沒有倍數，無法建立同業倍數表。"},"fwd_pe":null,"peg":null,"percentile_5y":null,"val_light":"🟠","val_light_derivation":"現價對應 FY2026E EV/S 13.15 倍、FY2027E 本益比 47.85 倍、FY2028E 本益比 27.03 倍。Bull 20%、Base 50%、Bear 30% 加權後五年價值約 $40.9，年化約 2.9%，以 10% 折現的現值約 $25，現價高出約四成，所以判斷偏貴。五年分位與 PEG 都無法計算：事實表只有 4 個年度端點，EPS 基期為負。反例：若以本檔估的 FY2028 EBITDA 約 4.3 億計，EV/EBITDA 約 13.9 倍，對高成長期不算離譜，倍數並非明顯泡沫。","upside_short_pct":5.3,"upside_mid_pct":21.1},"trap_analysis":{"verdict":"🟡","label":"現金流仍負的未證實成長，不是便宜陷阱，但倍數跌得沒有股價多"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"第三季 Magnetics 營收 1,860 萬，遞延收入同期減少約 1,800 萬，真實磁鐵獲利尚未出現；FY2023 營收減半、2024 Q1 調整後 EBITDA −1,120 萬，顯示 NdPr 下行時舊業務沒有抗跌力。","assumption":"假設磁鐵毛利足以讓約 17 億美元新增投入賺到超過資金成本的報酬。","consequence":"Bear 路徑 FY2031 營收 9 億、EV/S 3 倍，股價約 $10.89，五年跌 69%。","ruling":"採納，Bear 機率 30%。與唯一致命點部分重疊，這裡補上合約照付但磁鐵賺不到錢的路徑。","watch":"2027 Q4 Magnetics 單季營收與 EBITDA 率；2028 年全年部門利潤率。","evidence_refs":["cyclical_prior_downcycle_behavior#0","cyclical_prior_downcycle_behavior#1","end_markets#1"],"fact_refs":["f_kpi5","f_peer_mp_operating_margin_pct"]},{"view":"論點失敗","evidence":"2025-11 中國同意暫停擴大管制，顯示管制可用政策解除；PrNd 氧化物 2022～2024 年跌約三分之二；但中國 2026-06 又把 MP 列管，方向並不單一。","assumption":"假設中國的管制和價格壓力是長期結構。","consequence":"管制解除會壓低 NdPr 與稀缺溢價，政府也較難持續撥款。","ruling":"部分採納，放在 Bear 內，不另加機率。","watch":"中國出口管制公告；DPA 撥款。","evidence_refs":["cyclical_prior_downcycle_behavior#2"]},{"view":"論點成功但股東經濟變差","evidence":"NdPr 高於 $110 時政府分走 30%；10X 由 DoW 包銷並保證 EBITDA 至少 1.4 億美元，保底之外的獲利要靠轉單給商業客戶；股本可能因 DoW 工具與 SBC 增加，完整條款事實表未涵蓋。","assumption":"假設營收與產量達標，利益會全部留給普通股東。","consequence":"Base 股數由 1.7823 億升到 2.05 億，終端 EV/S 5 倍；營收增加三倍多，每股價值只多 18%。","ruling":"採納，已反映在 Base 的股數與倍數；商業轉單的高毛利在證據出現前不計入。","watch":"具名商業合約與單價；每季股數變化。","evidence_refs":["customer_concentration_credit#1","regulatory_antitrust#0"],"fact_refs":["f_shares_diluted_m"]},{"view":"論點成功但股東經濟變差","evidence":"FY2025 10-K 揭露與營建總包商的仲裁，已估列損失，金額與裁決時點事實表未涵蓋。","assumption":"假設仲裁不影響資本計畫。","consequence":"不利結果會增加建設成本，影響範圍無法量化。","ruling":"列入監測，金額與時點是資料缺口，不納入情境。","watch":"10-Q 或爭議附註的金額更新。","evidence_refs":["major_events#2"]},{"view":"價格已反映太多","evidence":"FY2026E EV/S 13.15 倍、FY2028E 本益比 27.03 倍；下一財年 EPS 共識 3 個月下修 57.21%（Chartmill，原文未核），Koyfin 最近快照修正為 0；11 月法說的 2027 磁鐵偏弱可能還沒進入共識。","assumption":"假設跌 47.49% 後已反映壞消息。","consequence":"共識再下修時，Base $41.71 這個錨也會往下。","ruling":"採納。現價約為合約保底價值 $16～18 的兩倍，仍在為未驗證的成長付費；利空進入賣方模型前凍結加碼。","watch":"2027-02 法說後的 FY2027E 共識 EPS 與營收。","evidence_refs":["capital_markets_pricing#1"],"fact_refs":["f_ev_s_fwd","f_consensus_rev_fy2_pct","f_week26_return_pct"]}],"max_dd":{"lo":-75,"hi":-55,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 ✅ → 本次 🟠","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=✅","side_b":"本次 ma=🟠","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 64.46 → 本次 35.41（-45.1%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=64.46","side_b":"本次 price_at_dd=35.41","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 64.46 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 64.46 美元：五年期望值 前份未列，基準年化 前份未列，前份未列不對稱比","side_b":"本次情境、股價仍用 64.46 美元：Bull 價 84、Bear 價 10.89，五年期望值 −36.5%，基準年化 −8.3%，不對稱比 0.24","ruling":"先換情境、股價不動：五年期望值與基準年化前份未列，無法比較。前份未列不對稱比，本次為 0.24。Bull、Bear 價位與股價無關，只受情境影響。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 64.46 美元：五年期望值 −36.5%，基準年化 −8.3%，不對稱比 0.24","side_b":"本次情境、股價 35.41 美元：五年期望值 +15.6%，基準年化 3.3%，不對稱比 1.32","ruling":"再換股價、情境不動：起點價下跌 45.1%，五年期望值多 52.1 個百分點，基準年化多 11.7 個百分點，不對稱比由 0.24 升到 1.32。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"NdPr 是長期瓶頸，還是供過於求","cause":null,"prior_field":null,"side_a":"管理層（Litinsky，2026-08-06 與 2026-11-05）：NdPr 是限制性資源，RFQ 已明顯超過 10X 產能。","side_b":"Benchmark 2026-08 報 Ex-China NdPr 約 $95/kg，跌破 $110 且供給轉寬；IDTechEx 預期 2037 年全球磁鐵產能利用率 59%；Argus 統計美國開發中產能至少 56,000 噸。","ruling":"不可調和，選 B 側作為 2031 年前的現貨判斷，依據是 B 側有報價與產能清單，A 側只有未具名 RFQ。合約磁鐵需求不受影響，所以這項裁決只影響 NdPr 外銷與 10X 轉單定價，不推翻 Base。","evidence_level":"A 側為管理層陳述，B 側為第三方報價與預測","settle_metric":"Ex-China NdPr 季均價；10X 具名商業合約數與單價","if_then":["若 2028 年底前簽下至少 1 份具名商業 10X 合約且單價高於 DoW 條件，重跑研究，Base 終端 EV/S 上調至 6 倍，首倉上限 3%。","反向：若 Ex-China NdPr 連 2 季低於 $85/kg 且仍無具名合約，不追；已持有者減碼至 1%。","股價續漲但上述證據未到，不追；股價下跌而產量與磁鐵營收達標，分批反買。"],"evidence_refs":["supply_demand_durability#1","supply_demand_durability#2","cyclical_prior_downcycle_behavior#3","cyclical_supply_discipline_capacity#0"]},{"axis":"第三季是實力，還是一次性撐高","cause":null,"prior_field":null,"side_a":"營收年增 176%，調整後 EBITDA 年增 5,370 萬；Corbett 稱 SEG+ 代表資產負債表上未被理解的內含價值。","side_b":"扣除 3,160 萬 SEG+ 後營收 1.161 億，低於約 1.2018 億共識；Corbett 同時稱這是一次性銷售，並拒絕揭露成本。","ruling":"可調和。NdPr 量價進步是真的，SEG+ 的經常性未證實，不採信也不否定。Base 不計 SEG+ 再現；若之後連 4 季沒有非磁鐵重稀土外銷，就認定為一次性。","evidence_level":"公司財報與法說，共識原文未核","settle_metric":"未來 4 季重稀土與中間產品外銷收入及毛利揭露","if_then":["若 2027 Q3 前再出現 2,000 萬美元以上外銷且揭露毛利，Base 其他產品營收上調，但不追高。","反向：若連 4 季沒有外銷，維持一次性認定，不追。"],"evidence_refs":[]},{"axis":"底價是否足額補差","cause":null,"prior_field":null,"side_a":"協議底價 $110/kg，低於即由政府補差；Corbett 2026-08-06 指引第三季 PPA 約 $10/kg。","side_b":"第三季 PPA 810 萬÷1,020 噸＝約 $7.9/kg，實現價約 $99，合計約 $107；第四季指引約 $8/kg，且庫存精礦不認列。","ruling":"可調和。差額來自產品組合與計價口徑，管理層未拆解。Base 以約 $107/kg 的實得金額計算，不用 $110。","evidence_level":"公司財報與兩次法說","settle_metric":"每季 PPA 收入÷銷量，對照當季差額","if_then":["若連 2 季補貼低於差額 40% 以上，下修 Materials EBITDA，不追；持有者減碼一半。","反向：若補貼回到差額的 90% 以上，維持 Base。"],"evidence_refs":[]},{"axis":"現在就買的最強論證","cause":null,"prior_field":null,"side_a":"13.38 億現金、淨現金 3.54 億、GM 認證完成、Apple 2027 年開始貢獻、底價到 2035 年、10X 100% 包銷；股價貼近 250 週線 $34.12，賣方平均目標是現價兩倍以上。","side_b":"基本情境五年只多 18%；磁鐵 2028 年才看得見；共識可能未下修；NdPr 已跌破底價。","ruling":"買方論點要成立，合約價值必須足以支撐現價。依合約最低保障估的 FY2031 EBITDA 約 3.8 億，乘 10 倍每股約 $16～18，現價仍為未證實的成長付了一倍溢價，因此不現在買。","evidence_level":"事實表與本檔推算","settle_metric":"2027 Q4 NdPr 產量與 Magnetics 營收","if_then":["若 2027 Q4 前兩項營運條件達成，重跑研究，首倉上限 3%。","若 2027-08 前股價漲過 $55 而磁鐵營收仍未達標，不追。"],"evidence_refs":[]},{"axis":"產業態勢三軸","cause":null,"prior_field":null,"side_a":"結構轉好：DoW 協議、Section 232 關鍵礦物公告、2027-01-01 國防供應鏈禁用中國來源材料。","side_b":"競爭惡化：美國開發中磁鐵產能至少 56,000 噸，Lynas 擴產。其他結構變數：無稀土馬達替代、中國把 MP 列管。","ruling":"雙向拉鋸。政策給的保護到 2035 年，競爭供給的壓力從 2028 年後開始。","evidence_level":"公告、公司文件與第三方報告","settle_metric":"OEM 量產定點名單；NdPr 季均價","if_then":["若對手取得 OEM 量產定點，下調定價評分，不追。","反向：若多家開發案在 2027 年停工，上調定價評分並重跑研究。"],"evidence_refs":["cyclical_supply_discipline_capacity#0"]},{"axis":"商品段的循環位置","cause":null,"prior_field":null,"side_a":"偏買：NdPr 銷量年增 94%、TTM 毛利率 −16.15% 接近自身低點、賣方目標約現價兩倍、26 週跌 47.49%。","side_b":"偏賣：美國開發中產能至少 56,000 噸，公司存貨升至 2.932 億美元，NdPr 約 $95～100 仍接近 2026 年初約 $98～104/kg 的高點。P/B 事實表未涵蓋。","ruling":"訊號互相矛盾，商品段判中循環，不建立循環部位。毛利率低點來自爬坡成本，不是價格谷底，不能當便宜訊號。磁鐵合約段另計，不隨循環賣出。","evidence_level":"第三方價格與公司財報","settle_metric":"Ex-China NdPr 季均價與公司存貨","if_then":["若 NdPr 連 2 季低於 $85/kg 且新產能延後或取消，改判早循環並重跑研究。","若 NdPr 高於 $130/kg 且對手加速投產，改判晚循環，不追。"],"evidence_refs":[]},{"axis":"管理層答覆與實績的落差","cause":null,"prior_field":null,"side_a":"8 月法說有 5 題未正面回答：下半年成本、低重稀土磁鐵績效、2027 磁鐵節奏、新合約、GM 回饋。","side_b":"11 月只有 GM 認證有明確結果；但 8 月的量化承諾（1,000 噸、$90 高段、第四季出貨、Dy/Tb 開機、資本支出 5～6 億）都達成或維持。","ruling":"可調和。進度型承諾可信，獲利型資訊不透明，所以營運進度看管理層說法，獲利要等財報。","evidence_level":"兩次法說對照","settle_metric":"2027-02 法說是否提供 2027 磁鐵量或單位成本","if_then":["若 2027-02 仍不提供磁鐵量或單位成本，維持不追。","反向：若提供且高於 Base，重跑研究。"],"evidence_refs":[]},{"axis":"估值結論與股價","cause":"價格變動","prior_field":["val"],"side_a":"前份股價 $64.46，估值結論偏貴。","side_b":"現價 $35.41，跌 45%，估值結論仍偏貴。","ruling":"價格下跌只改善了一部分：前份 FY2027 EPS 門檻 $1.10，現共識 0.74，低 33%，以此計本益比只由 58.6 倍降到 47.85 倍，2027 年磁鐵指引又偏弱。","evidence_level":"事實表價格與共識","settle_metric":"FY2027E 共識 EPS 與股價","if_then":["若股價跌到約 $28 且營運指標未惡化，分批反買至 1%。","反向：若 FY2027E 共識再下修 20% 以上，$28 這個價位同步下移，不追。"],"evidence_refs":[]},{"axis":"進場訊號與陷阱判斷","cause":"新證據","prior_field":["signal","trap"],"side_a":"前份進場訊號 B，陷阱風險中等。","side_b":"本次進場訊號 C，陷阱風險中等。","ruling":"訊號降一級，原因是第三季獲利品質、NdPr 跌破底價，以及前份 FY2027 EPS 門檻未達。陷阱判斷不變，FCF 連三年為負與替代技術兩項亮燈。","evidence_level":"公司財報與第三方報價","settle_metric":"扣除一次性後的部門 EBITDA","if_then":["若 2027 Q4 兩項營運條件達成，訊號回升並重跑研究。","反向：若 FCF 在 10X 主要支出結束後仍為負，陷阱判斷轉差，減碼至 1%。"],"evidence_refs":[]},{"axis":"前份沒有的欄位","cause":"方法變動","prior_field":["moat_trend","runway_post_y5","archetype","cycle_position","max_dd_pct","p_bull_pct","p_bear_pct"],"side_a":"前份這些欄位為空。","side_b":"本次首次填入：護城河方向穩定、後續跑道寬、循環與商品型、中循環、最大回撤 −55%～−75%、Bull 20%、Bear 30%；裁決與角色由程式算出。","ruling":"前份沒有這些欄位，這裡是新增紀錄，不是看法改變。","evidence_level":"方法差異","settle_metric":"下次研究延用同一組欄位","if_then":[],"evidence_refs":[]},{"axis":"重新評估條件與清倉、減碼門檻","cause":"方法變動","prior_field":["rearm_trigger"],"side_a":"前份未設定重新評估條件與清倉門檻。","side_b":"重新評估：2027 Q4 前 NdPr 單季 1,350 噸且 Magnetics 單季營收 5,000 萬美元、部門 EBITDA 率 20%。清倉：DoW 協議實質打折或現金低於 5 億。減碼：Ex-China NdPr 連 2 季低於 $85/kg。","ruling":"新設門檻，把觀望的約束點明為磁鐵獲利未證實。","evidence_level":"方法差異","settle_metric":"2027 Q4 財報","if_then":[],"evidence_refs":[]},{"axis":"Single Thing 新增","cause":"方法變動","prior_field":null,"side_a":"前份未設定唯一致命點。","side_b":"DoW 協議被實質打折：NdPr 底價或 10X 最低 EBITDA 保障因撥款不足、重新議約或稽核爭議而無法足額入帳。","ruling":"Single Thing 設為這一項，因為它是模型最大的單一敏感項，約占 Base FY2031 EBITDA 的三分之二。","evidence_level":"本檔推算","settle_metric":"PPA 每季入帳","if_then":[],"evidence_refs":[]},{"axis":"前份論點門檻調整","cause":"新證據","prior_field":null,"side_a":"前份：NdPr 季均價 ≥ $110；FY2027 EPS 共識 ≥ $1.10，本益比收斂至 50～55 倍。","side_b":"本次：改看產量、扣除一次性後的部門 EBITDA、Magnetics 營收、DoW 履約與商業合約；FY2027 EPS 共識 0.74。","ruling":"前份價格假設已不成立：第三季實現價約 $99，第四季指引約 $100，都低於 $110，但有底價補差。前份 EPS 門檻低於 33%，倍數修復不再作為論點。新門檻直接對應現金流來源。","evidence_level":"公司財報、共識","settle_metric":"FY2027E、FY2028E 共識 EPS","if_then":["若 FY2027 EPS 共識跌破 0.50 或 FY2028 跌破 1.00，下修 Base 營收，不追。","反向：若 FY2028 共識回到 1.50 以上且磁鐵營收達標，重跑研究。"],"evidence_refs":[]}],"triggers":[{"n":1,"text":"NdPr 產量驗證","type":"假設驗證","maps_to":"H1","metric":"NdPr 單季產量","threshold":"2027 Q4 ≥ 1,350 噸","action":"與第 2 條同時達標才重跑完整研究，首倉上限 3%；否則不追","source_freq":"公司季報，每季","date":"2028-02"},{"n":2,"text":"磁鐵獲利驗證","type":"假設驗證","maps_to":"H2","metric":"Magnetics 單季營收與部門 EBITDA 率","threshold":"2027 Q4 營收 ≥ 5,000 萬美元，EBITDA 率 ≥ 20%","action":"與第 1 條同時達標才重跑完整研究，首倉上限 3%；否則不追","source_freq":"公司季報，每季","date":"2028-02"},{"n":3,"text":"NdPr 現貨跌破保護帶","type":"風險","maps_to":"R1","metric":"Ex-China NdPr 季均價","threshold":"連 2 季低於 $85/kg","action":"持有者減碼至 1%，未持有者不追","source_freq":"Benchmark、Argus，按季判斷","date":null,"evidence_refs":["cyclical_prior_downcycle_behavior#3"]},{"n":4,"text":"DoW 協議被打折","type":"Single Thing","maps_to":"H3","metric":"PPA 入帳、DPA 撥款、最低 EBITDA 條款","threshold":"任一季 PPA 應入未入，或協議重談後保障降低","action":"清倉","source_freq":"每季 10-Q、年度撥款文件","date":null,"evidence_refs":["customer_concentration_credit#1","regulatory_antitrust#0"]},{"n":5,"text":"價格先到、證據未到","type":"估值rearm","maps_to":"H2","metric":"股價與營運指標","threshold":"股價 ≤ $28，且 NdPr 與磁鐵指標未惡化","action":"分批反買至 1%","source_freq":"每日股價、每季報告","date":null},{"n":6,"text":"磁鐵爬坡失敗","type":"減碼","maps_to":"R2","metric":"Magnetics 單季營收","threshold":"2027 Q4 低於 2,500 萬美元","action":"持有者減碼一半，停止加碼","source_freq":"公司季報，每季","date":"2028-02","evidence_refs":["customer_concentration_credit#3"]},{"n":7,"text":"流動性破線","type":"清倉","maps_to":"R2","metric":"期末現金與短期投資","threshold":"10X 完工前低於 5 億美元","action":"清倉","source_freq":"公司季報，每季","date":null},{"n":8,"text":"對手取得車規量產定點","type":"風險","maps_to":"R4","metric":"美國或盟友對手的 OEM 量產定點","threshold":"任一家取得","action":"不追，下調定價評分","source_freq":"公司公告與新聞，不定期","date":null,"evidence_refs":["competitive_share_entrants#2","cyclical_supply_discipline_capacity#1"]},{"n":9,"text":"2026 Q4 財報複審","type":"複審日期","maps_to":"H1","metric":"2027 磁鐵指引與單位成本揭露","threshold":"2027-02 法說","action":"未達重新評估條件則不追","source_freq":"公司法說","date":"2027-02"}],"kill_metrics":[{"metric":"PPA 收入實際入帳","bear_threshold":"現貨低於 $110/kg 時，單季 PPA 為零或遭扣減","window":"任一季","source":"公司 8-K、10-Q","last_status":"ok"},{"metric":"Magnetics 單季營收","bear_threshold":"2027 Q4 低於 2,500 萬美元","window":"2027 Q4","source":"公司季報","last_status":"unknown"},{"metric":"NdPr 單季產量","bear_threshold":"2027 Q4 低於 1,200 噸","window":"2027 Q4","source":"公司季報","last_status":"unknown"},{"metric":"10X 試車時程","bear_threshold":"2028 年底試車延後超過 2 季","window":"至 2029 Q2","source":"公司法說與 8-K","last_status":"ok"},{"metric":"期末現金與短期投資","bear_threshold":"10X 完工前低於 5 億美元","window":"至 10X 完工","source":"公司季報","last_status":"ok"}],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"6","pacing":[],"holding_cap":"首倉不超過 3%","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='C'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟠'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":true,"basis":"signal='C'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟢'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='C', runway='🟢', val='🟠', moat_trend='→', week26=-47.49, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='循環/商品', cycle_position='中循環', moat='C', moat_trend='→', cycle_gates_pass=False"},{"row":"6/7/7a-verdict","condition":"Soft Veto 生效 → 觀望（max-severity wins；8a/8b 未能繞過）","hit":true,"basis":"soft_veto_rows=['6']"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"requires_critic":[],"rearm_trigger":"2027 Q4 前 NdPr 單季產量達 1,350 噸，且 Magnetics 單季營收達 5,000 萬美元、部門 EBITDA 率達 20%，觸發後重跑研究","exec_line":"現在不建倉；條件達成後重跑研究，首倉上限 3%；若價格先跌到 $28 而兩項營運指標未惡化，可先建 1%。"},"reasoning":{"industry":"Materials 賣 NdPr 氧化物與金屬給日本經銷商和美國大型工業客戶，Magnetics 目前主要認列前驅物收入，政府用 PPA 補足 $110/kg 底價的差額。第三季營收 1.477 億美元，Materials 1.335 億、Magnetics 1,860 萬，部門間沖銷約 440 萬；營業利益 −2,210 萬，營益率 −15.0%，最新單季毛利率事實表未涵蓋，只有截至 6 月的 TTM −16.15%。Materials 營收裡有 3,160 萬是一次性 SEG+ 銷售，占合併營收 21%，扣除後 1.161 億，低於會前約 1.2018 億的共識（該共識原文未核，也無法確認是否含這筆）。調整後 EBITDA 4,110 萬同樣被這筆銷售墊高，而管理層在 2026-11-05 拒絕揭露成本，底層獲利無法還原。客戶集中：第三季客戶 A 33%、B 23%、C 12%，前九月 37%、26%、16%，A、B 都在 Materials；公司預期 DoW 會成為最大磁鐵客戶，集中度只是換對象。","moat":"機制是三件事疊加：美國本土從礦到磁鐵的整合、DoW 合約的價格與包銷保護、長達數年的車規認證。執行面：GM 認證完成，第四季開始出貨，Dy/Tb 分離線開機，第三季 1,018 噸符合 8 月「超過 1,000 噸」的指引。定價面：NdPr 是受保護的價格接受者，Ex-China 價格在 2026-08 跌破 $110，第三季補貼約 $7.9/kg，低於 8 月所說的約 $10/kg；磁鐵高毛利目前只是管理層口徑，RFQ 沒有具名客戶或單價。對手面：中國以外的大型整合商只有 Lynas 一家，新進者多半卡在資金與原料，但 56,000 噸開發中產能足以壓縮 2030 年後的議價。ROIC 差距無法計算，事實表只有同業利潤率；MP TTM 營益率 −34.06%，低於 ALB 的 16.27%，高於 UUUU 的 −62.09% 與 USAR 的 −946.09%。反例：若 USAR 或其他對手在 2028 年前通過車規認證並取得獨立原料，執行面的領先會快速縮小，方向應改為向下。","growth":"成長由量帶動：NdPr 2027 年目標 5,000 噸以上，磁鐵從零開始爬坡，價格被底價與 30% 分潤截斷，併購為零、回購未計。共識 EPS 由 FY2026E −0.01 到 FY2028E 1.31，基期為負，三年 CAGR 不能算；FY2027E 到 FY2028E 年增 77%。TTM 稅後營業利益為負，內生上界無法用實績算出，前瞻約 21% 的增量報酬只是假設。共識與內生能力的缺口，來源是固定成本攤提與 PPA 帶來的利潤率擴張，不是回購或併購。本檔 FY2027E 營收 6.9 億，低於共識 7.86 億 12%，因為 CFO 在 2026-11-05 說 2027 年磁鐵貢獻仍小、2028 年才看得見，而 S&P 9 月引用的 2027 年 Magnetics 營收 2.08 億是在這段話之前的數字。反例：若 GM 導入比預期快、Apple 提前放量，FY2027 可能接近共識。","governance":"單季 FCF −1.252 億、GAAP 淨損 2,070 萬，FCF 對淨利的轉換沒有意義；FY2023 至 FY2025 FCF 連三年為負，累計 −7.0 億。SBC 占營收 7.7%，年化 4,520 萬÷市值 63.1 億＝0.72%，未含 DoW 股權工具與歷次增資，完整條款事實表未涵蓋。現金去向只有資本支出可追：九個月約 4.14 億至 4.20 億（法說與新聞稿口徑差約 650 萬），約六成投入磁鐵；併購、回購金額事實表未涵蓋，2024 年回購只見分析師口頭提及。Litinsky 在 2026-11-05 表示已收緊支出，並提到未來要趁亂「清理垃圾」，這是併購機會，也代表新資本可能投向尚未驗證的資產。","valuation":"現價 $35.41，EV 59.57 億，FY2026E EV/S 13.15 倍，FY2027E 本益比 47.85 倍，FY2028E 27.03 倍。Base 終值 $41.71，五年多 17.8%；Bull $84.00，Bear $10.89。12% 年化需要五年後股價約 $62，在 2.05 億股與 8 億淨現金下，EV 約 120 億。12 個月參考價：FY2027E 營收 6.9 億×10 倍，淨現金約 0，÷1.85 億股＝$37.3（+5.3%）。兩年參考價：FY2028E 9.5 億×8.5 倍＋淨現金約 0.7 億，÷1.9 億股＝$42.9（+21.1%）。終端倍數找不到同業現值對照，因為事實表同業只有利潤率沒有倍數，改用隱含 EBITDA 倍數判斷：Base 約 12 倍、Bear 約 10 倍、Bull 約 16 倍；ALB TTM 營益率 16.27% 只能對照利潤水準。賣方平均目標 $76～78（2026-08、09，區間 $60～100，高低比 1.67）明顯高於本檔 Base，這些目標多在最近一輪下跌與第三季法說之前，Koyfin 最近兩份快照修正為 0，可能尚未反映 2027 年磁鐵貢獻仍小。26 週跌 47.49% 不是安全邊際：前份 FY2027 EPS 門檻 $1.10，現共識 0.74，以此計算的本益比只由 58.6 倍降到 47.85 倍。","premortem":"第一，Magnetics 第三季營收 1,860 萬，而前驅物遞延收入由 8 月的 4,600 萬降到 2,800 萬，減少 1,800 萬，這季部門收入幾乎全是遞延收入轉列（本檔推算，公司未揭露），不能拿來外推磁鐵獲利。第二，8 月被問的五題（下半年成本、低重稀土磁鐵績效、2027 磁鐵節奏、新合約、GM 回饋），到 11 月只有 GM 認證有明確結果；2028 年是否達 3,000 噸、SEG+ 成本、GM 與另一供應商的爭議，11 月都未作答。第三，五項壓力測試過三項：現金撐過 10X 建設、NdPr 跌到 $60 而底價照付、磁鐵延後一年仍有流動性，這三項過；PPA 中止，以及管制解除、價格回到上輪低點並疊加磁鐵延遲，這兩項不過。歷史最大回撤幅度事實表未涵蓋。商品段缺乏穿越循環的獲利紀錄，適用循環交易紀律，不適用長抱抗波動的紀律。"},"plain":{"six":{"how_it_makes_money":"MP 賺的是美國與盟友為了擺脫中國供應而願意多付的錢，錢現在卡在 Mountain Pass 的 NdPr 產量與單位成本，2028 年後卡在磁鐵廠的良率與合約單價。","moat":"→：執行面在擴大（GM 認證完成、重稀土分離開機、降重稀土配方），定價面在收縮（Ex-China NdPr 跌破底價、美國新產能排隊），兩者抵銷，方向穩定。","growth":"🟢：以全球 25 萬噸市場看，MP 滿產只占 4%，還有重稀土與機器人兩條尚未兌現的新曲線；但 5 年內的成長大多是已簽約產能，5 年後的成長要看原料與新合約。","capital":"資本配置目前還算穩健：13.38 億美元現金足以支應建設期，但新資本的報酬還沒有實績。","valuation":"現價要賺到 12% 年化，FY2031 營收必須到約 24 億美元（等於 Bull），或 15.5 億營收配 7.7 倍 EV/S；我不把這當基本情境。","how_wrong":"最可能看錯的不是礦和合約，而是磁鐵到底賺多少錢；2028 年前沒有數字能驗證，現在的每個判斷都帶著未決風險。"}},"decision_inputs":{"signal":"C","ma":"🟠","cycle_position":"中循環","cycle_verdict":"未觸發","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":false,"cycle_gates_pass":false,"wait_for_price":true,"wait_for_price_condition":"等 2027 下半年磁鐵與成本數字；若數字未到而股價先跌到約 $28，且營運指標未惡化，只建 1%。","trap":"🟡","val":"🟠","moat":"C","moat_trend":"→","runway_post_y5":"🟢","capalloc_grade":"B","archetype":"循環/商品","price_at_dd":35.41,"week26_return_pct":-47.49,"consensus_rev_3m_pct":null,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"EV/S 分母有三個問題：FY2026E 含 3,160 萬一次性 SEG+，扣除後前瞻 EV/S 為 14.13 倍；PPA 收入不計營收卻計入 EPS，營收口徑低估底價保護下的獲利；trailing EV/S 11.49 倍低於前瞻 13.15 倍，但營收正在高成長，trailing 分母隱含約 5.18 億美元，與 FY2026E 共識 4.53 億矛盾，所以 2.5 和 7.7 的年度端點分位不當作便宜的依據。3,830 倍的前瞻本益比分母只有 0.01，同樣不使用。"},"catalysts":[{"date":"2027-01","date_precision":"month","type":"regulatory","event":"美國國防供應鏈對中國來源材料的禁令生效，政府曾考慮延長部分取用","impact":"中","watch":"是否延期，以及 MP 是否取得新增國防訂單"},{"date":"2027-02","date_precision":"month","type":"guidance","event":"2026 Q4 財報，首批 GM 磁鐵出貨與 2027 年展望","impact":"高","watch":"磁鐵量、單位成本與 2027 指引是否量化"},{"date":"2027-Q1","date_precision":"quarter","type":"capacity","event":"氯鹼廠第一階段啟動，年初成本可能波動","impact":"中","watch":"停機天數與單位成本"},{"date":"2027-Q3","date_precision":"quarter","type":"product","event":"Apple 磁鐵開始貢獻，GM 放量","impact":"高","watch":"Magnetics 單季營收與部門 EBITDA 率"},{"date":"2028-Q2","date_precision":"quarter","type":"product","event":"釤與釓計畫預計於上半年首度生產","impact":"中","watch":"投產時程與合約毛利"},{"date":"2028-Q4","date_precision":"quarter","type":"capacity","event":"10X 預計試車","impact":"高","watch":"時程、資本支出與具名商業合約"}],"_projected_from":"v19"}
+```
+
+---
+
+## ⑨ 補寫任務（本段優先，取代上面任務頭與寫入指示）
+
+上一輪散文已寫好，只有下列章節（篇幅不足，或含判斷／事實表裡沒有的數字）被硬閘擋下。**只重寫這幾章**，其他章節一個字都不要寫。
+
+- `s5`：現在 2,556B，下限 3,000B，**目標 ≥ 3,600B**
+- `s10`：含 1 個未覆蓋數字（見下方清單）；現在 1,999B，下限 1,200B（改完仍須達標）
+
+### 未覆蓋數字（不在判斷物／事實表裡，驗證器逐個擋）
+
+`s10`：
+- `69.2%` ｜ …r $10.89，機率 30%，五年跌 69.2%。加權後約 $40.9，年化 2.9%，…
+
+處理方式：那幾個數字**要嘛刪掉**（連同只靠它撐起來的半句），**要嘛改用判斷物／事實表（白名單與判斷投影視圖）裡已有的數字**，逐字照抄；**不得自行推算新數字**（差值、比率、加總、幾個百分點都算新數字）。改寫時保留該章的論點與結論，其餘沒被點名的數字不要動。
+
+篇幅不足的章節（上面沒列未覆蓋數字的那幾章）：保留現稿的論點與結論，補的是深度——用上面 judgment 投影視圖裡已有、但現稿沒寫到的內容（機制、證據、同業對照、反證）。不得灌水重複、不得出現白名單以外的數字、不得心算衍生數字。
+
+格式同散文卡 §6：每章前一行 `<!-- SID:sX -->`，緊接完整的 `<section>`（`<h2>`／`<p class="lead">`／`<ul class="pts">`），表格注入標記照現稿保留。
+
+一次 Write 到 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/MP_20261108/prose_fix.html`，寫完即停。
+
+現稿：
+
+```html
+<!-- SID:s5 -->
+<section id="s5"><h2>5　護城河與競爭地位</h2>
+<p class="lead">護城河評 C，方向穩定：執行面擴大，定價面收縮。</p>
+<ul class="pts">
+<li>護城河的機制是三件事疊加：美國本土從礦到磁鐵的整合、國防部合約的價格與包銷保護，以及長達數年的車規認證。執行面評 7 分，定價面評 5 分，合計等級為 C。GM 認證完成，2026 年第四季開始出貨，Dy/Tb 重稀土分離線開機，這些都是競爭對手短期內複製不了的進度。</li>
+<li>定價面是弱點。NdPr 對 MP 來說是受保護的價格接受者。Ex-China 價格在 2026-08 跌破 $110，第三季 PPA 補貼約 $7.9/kg，低於 8 月所說的約 $10/kg。實現價約 $99，兩者合計約 $107，不是合約寫的 $110。磁鐵的高毛利目前只是管理層口徑，詢價沒有具名客戶或單價。</li>
+<li>最大的威脅是新產能排隊，機率 40%。USAR、JS Link、Energy Fuels、EMAT 與 Lynas 同時擴張，壓縮 10X 轉單給商業客戶時的議價力。第二項是無稀土馬達替代，機率 30%。第三項是中國在 2026-06-22 把 MP 列入出口管制清單，管理層稱對試劑與成本影響極小，這點尚未獨立驗證，實質衝擊機率估 20%。</li>
+<li>客戶集中度高。第三季客戶 A 占 33%、B 占 23%、C 占 12%，前兩大合計 56%，A 與 B 都在 Materials。公司預期國防部會成為最大磁鐵客戶，所以集中度只是換了對象。客戶議價力強，國防部在 $110 以上還分走 30% 的利益，買方與政府都握有定價權。</li>
+<li>對手面的位置相對有利，但領先有期限。中國以外的大型整合商只有 Lynas 一家，新進者多半卡在資金與原料。MP 的 TTM 營益率 −34.06%，低於 ALB 的 16.27%，高於 UUUU 的 −62.09% 與 USAR 的 −946.09%。若 USAR 或其他對手在 2028 年前通過車規認證並取得獨立原料，領先會快速縮小，方向應改為向下。</li>
+<li>護城河的長期可持續性要看認證與合約兩條線。認證要審到每台設備與作業指導書，MP 從 2021 年做到 2026 年才通過，單一車型計畫的更換成本高。合約線則靠年度撥款，FY26 國防部撥款請求 2.66 億美元。以 6,000 噸計，NdPr 要跌到約 $66/kg，年付款才會超過這個額度，目前差額約 $10/kg，還沒有壓力。</li>
+</ul>
+<h3>§5　二維評分與數字對照</h3>
+<!-- E5 -->
+<h3>§5.F　對手財務深度對照</h3>
+<!-- E6 -->
+<h3>§5.R　報酬持續期檢核</h3>
+<!-- E7 -->
+</section>
+
+```
+
+```html
+<!-- SID:s10 -->
+<section id="s10"><h2>10　估值與三種未來</h2>
+<p class="lead">加權後五年年化約 2.9%，現價比現值高出約四成，估值偏貴。</p>
+<!-- E11 -->
+<ul class="pts">
+<li>現價 $35.41，企業價值 59.57 億美元，FY2026E 前瞻 EV/S 為 13.15 倍，FY2027E 本益比 47.85 倍，FY2028E 為 27.03 倍。FY1 共識為虧損，所以主尺用銷售倍數，並以隱含 EBITDA 倍數檢查。事實表同業只有利潤率，沒有倍數，無法建同業倍數表。</li>
+<li>三種未來的五年終值：Bull $84.00，機率 20%。Base $41.71，機率 50%，五年多 17.8%。Bear $10.89，機率 30%，五年跌 69.2%。加權後約 $40.9，年化 2.9%，以 10% 折現的現值約 $25。Base 的股數由 1.7823 億增至 2.05 億，終端 EV/S 為 5 倍。Bear 為 FY2031 營收 9 億、EV/S 3 倍。</li>
+<li>隱含 EBITDA 倍數：Base 約 12 倍，Bear 約 10 倍，Bull 約 16 倍。若用本檔估的 FY2028 EBITDA 約 4.3 億計，EV/EBITDA 約 13.9 倍，對高成長期不算離譜。所以倍數不是明顯泡沫，問題在盈餘尚未出現。</li>
+<li>要賺 12% 年化，五年後股價需要約 $62，在 2.05 億股與 8 億淨現金下，企業價值約 120 億。這需要 FY2031 營收到約 24 億，等於 Bull，或 15.5 億營收配 7.7 倍 EV/S。本檔不把這當基本情境。</li>
+<li>12 個月參考價：FY2027E 營收 6.9 億乘 10 倍，淨現金約 0，除以 1.85 億股，為 $37.3，空間 5.3%。兩年參考價：FY2028E 營收 9.5 億乘 8.5 倍，加淨現金約 0.7 億，除以 1.9 億股，為 $42.9，空間 21.1%。</li>
+<li>股價下跌的貢獻要分開看。情境固定、股價放在前份 $64.46 時，五年期望值為 −36.5%，基準年化 −8.3%，不對稱比 0.24。換成現價 $35.41 後，期望值為 15.6%，基準年化 3.3%，不對稱比 1.32。起點價下跌 45.1%，多出 52.1 個百分點。賣方平均目標 $76～78，區間 $60～100，多在這輪下跌前，不採用。</li>
+</ul></section>
+
+```
