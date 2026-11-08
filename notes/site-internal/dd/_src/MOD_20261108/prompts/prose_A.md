@@ -1,0 +1,424 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 MOD（2026-11-08）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/MOD_20261108/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：MOD　日期：2026-11-08　archetype：None　前份裁決：2026-07-10　進場｜衛星　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1930B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（438B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（816B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1360B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（926B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（373B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（803B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2130B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（3573B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2304B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（283B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1930           3549-5070      5 條（2–6 內）  
+s3                  8000         438           5293-7562      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3102          8329-11898      5 條（2–6 內）  
+s6                 11000         373          7439-10627      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500         803           1888-2697      5 條（2–6 內）  
+s10                 5000        2130           2009-2870      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2304           2000-2696      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         283            852-1217      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=4174B；至少需散文≈40.83KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−320
+−160
+−140.6
+−64.61
+−60.3%
+−60
+−60%
+−40
+−40%
+−28.3%
+−6.8%
+−5.7%
+−0.27%
+0
+0.35
+0.36
+0.37%
+0.41
+0.45
+0.5%
+0.70
+0.75
+0.8
+0.87
+0.9
+01
+1
+1.25
+1.42
+1.5
+1.5%
+1.61
+1.65
+1.67
+1.85
+1.99
+02
+2
+2.1
+2.11
+2.26
+2.35
+2.5
+2.9
+3
+03
+3.63
+3.75
+4
+4%
+04
+4.12
+4.2
+4.7
+4.8
+4.83
+4.9
+5.0
+5%
+5
+05
+5.1
+5.10
+5.13
+5.5
+5.74
+6
+6%
+6.0
+6.5
+6.8
+7
+07
+7.1%
+7.34
+08
+8
+8.2
+9
+9.61
+9.8%
+9.944
+10%
+10
+10.05
+10.2
+10.4
+11%
+11
+11.4
+11.96
+12
+12%
+12.2
+12.8
+13
+13.0
+13.5%
+13.8
+14
+14.99%
+15%
+15
+15.1%
+15.4%
+16%
+16
+16.43%
+16.5%
+16.5
+17%
+17
+17.5%
+17.92%
+18%
+18
+18.8
+18.94
+19
+19%
+19.2
+19.5%
+20
+20%
+20.6%
+20.7%
+21%
+21
+21.73%
+22
+22%
+22.5%
+22.98%
+23%
+23.74%
+24
+24.78
+25
+25%
+25.57%
+25.6%
+25.6
+26%
+26
+27.3
+28
+29.2
+30
+30%
+31%
+31
+31.5
+32%
+32
+32.83
+33.25%
+34.99%
+35%
+35
+36.71%
+37
+37%
+38.12%
+39.6
+40
+40%
+40.42
+41
+41.0%
+42
+43%
+44.3
+45
+49%
+49
+50%
+50
+53%
+53.2
+56.1
+57%
+60
+60.3%
+60.5
+62
+62%
+64.61%
+69.3
+70
+70%
+73
+80%
+80
+80.6%
+82
+88%
+90%
+90
+95%
+96.61
+100
+100%
+105.4
+108.9
+113
+126
+150%
+166
+172.8
+$200
+200
+215
+226
+243.5
+250
+263
+270
+278.2
+311.8
+355
+357
+358
+360
+370.9
+375
+460
+528
+716.4
+735
+2026
+2027
+2028
+2029
+2030
+20261108
+1,000
+1,200
+1,300
+1,500
+3,200
+5,139
+6,061
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"MOD","date":"2026-11-08","schema":"v15.0","contract":"v19","company_name":"Modine Manufacturing Company"},"oneliner":"資料中心需求仍超過產能，但 7 月承諾的第二季 19–20% 利潤率只做到 15.4%；股價 96.61 美元已反映多數疑慮，第三季利潤率驗證前不加碼。","thesis":{"H":[{"id":"H1","text":"資料中心需求兌現：FY27 年增 80–90% 後，FY28 仍維持 50% 以上。","2y":"FY28 資料中心營收達 30 億美元以上","5y":"FY32 資料中心營收達 50 億美元以上","10y":null,"threshold":"FY27 年增 80–90%；FY28 年增不低於 50%，低於 30% 視為反轉；季營收環比不得連 2 季低於 +10%；訂單對出貨比不得連 2 季低於 1。","source":"公司財報與法說，每季；FY28 架構見 2026-07-30 法說 CEO，2026-11-18 投資人日更新。","drift_rule":"兩年期：TTM 偏離連 2 季達 5% 削弱、連 3 季達 10% 反轉；環比資料缺口待分部揭露補上。"},{"id":"H2","text":"利潤率壓縮是爬坡與成本回收的時間差，第四季起資料中心回到 20% 上下。","2y":"FY27 第四季資料中心調整後 EBITDA 率不低於 18%，管理層目標 20%；FY28 全公司調整後 EBITDA 率約 17.5% 以上","5y":"FY32 全公司調整後 EBITDA 率 18% 以上","10y":null,"threshold":"第三季 16.5–17.5%；第四季低於 18% 視為反轉；商用 HVAC 全年約增 100 基點。","source":"公司財報與法說，每季；指引見 2026-11-04 法說 CFO。","drift_rule":"兩年期：連 2 季低於當季下限削弱，第四季低於 18% 直接反轉。"},{"id":"H3","text":"成長可以自籌，FY27 自由現金流轉正，FY28 起現金轉換恢復。","2y":"FY28 自由現金流率 5% 以上，資本支出低於 FY27 指引 1.5–2 億美元","5y":"FY32 自由現金流占淨利 0.9 以上","10y":null,"threshold":"FY27 全年自由現金流為正；FY28 自由現金流率不低於 5%。","source":"公司財報與 10-Q，每季；指引見 2026-11-04 法說 CFO。","drift_rule":"兩年期：TTM 自由現金流率連 2 季低於目標 5 個百分點以上削弱；FY27 全年為負直接反轉。"}],"R":[{"id":"R1","text":"成本回收落後或再遇新漲價，資料中心利潤率第二次失準；7 月資料中心事業負責人離職、CEO 暫代，加重執行風險。","h_ref":"H2","clock":"⚡","threshold":"第三季資料中心 EBITDA 率低於 16.5%，或第四季低於 18%。","evidence_refs":["geo_supply_chain#0"]},{"id":"R2","text":"AI 資本支出放緩或電力瓶頸延後交付；冷卻設備是站點最後進場的產品，需求退潮會比開工放緩晚 12–18 個月反映。","h_ref":"H1","clock":"🔥","threshold":"資料中心環比連 2 季低於 +10%；訂單對出貨比連 2 季低於 1；雲端客戶宣布自建或獨家整廠冷卻協議。","evidence_refs":["supply_demand_durability#2"]},{"id":"R3","text":"大客戶集中：前十大占 49%，最大客戶約 11%，逾 40 億美元協議據搜尋摘要轉述無購買保證，預付款只有 1.65 億美元。","h_ref":"H1","clock":"🔥","threshold":"最大客戶占資料中心營收高於 40% 且出現第二來源（占比資料缺口）；2028 年協議出貨低於原定 35% 比重。","evidence_refs":["customer_concentration_credit#0","customer_concentration_credit#2","customer_concentration_credit#3"]},{"id":"R4","text":"關稅、貿易政策與地緣衝突推高材料與運費，轉嫁有時間差；不預測政策，只看損益是否吸收失敗。","h_ref":"H2","clock":"⚡","threshold":"材料與關稅淨逆風占資料中心營收超過 375 基點，連 2 季。","evidence_refs":["reg_tariff_export#0","reg_tariff_export#1","geo_supply_chain#3"]},{"id":"R5","text":"營運資金與資本支出繼續吃現金，全年自由現金流只能略為轉正或轉負。","h_ref":"H3","clock":"⚡","threshold":"FY27 全年自由現金流為負，或為擴產增資。","evidence_refs":[]},{"id":"R6","text":"架構替代：浸沒或乾冷路線侵蝕冰水機需求。","h_ref":"H1","clock":"🐢","threshold":"浸沒與乾冷架構市佔於 2030 年前高於 20%（資料缺口）。","evidence_refs":[]}],"single_thing":{"description":"FY27 第四季（2027 年 1–3 月，預估 2027-05 公布）資料中心調整後 EBITDA 率低於 18%。","why_fatal":"以 FY28 資料中心營收約 32 億美元計，每 100 基點約等於 3,200 萬美元 EBITDA、每股 0.45 美元，且沒有其他項目可抵銷；短缺期客戶縮量還能把產能轉給別人，利潤率沒有這個緩衝。第四季低於 18% 等於連續失準，代表短缺下的定價權不存在，FY28 EPS 會落到 6 上下。","if_happens":"清倉，FY28 EPS 改用 Bear 路徑 6.0。","how_monitor":"第三季 16.5–17.5% 是前哨；每季看分部 EBITDA 率、材料逆風基點與已談定的價格回收。","probability":"12–24 個月約 30%"}},"appendix_a":{"growth_durability":6,"quality_score":6,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":10.05,"peg_fy2":0.41,"stress":{"pass":3,"total":4}},"eps_meta":{"base_eps_path":{"FY2026A":2.26,"FY2027E":5.1,"FY2028E":9.61,"FY2029E":11.96},"fy_end_month":3,"eps_basis":"FY2027E–FY2029E 為 Koyfin 共識調整後 EPS（2026-11-07 快照，家數事實表未涵蓋），FY2027E 已不含分拆事業。FY2026A 為含分拆事業的 GAAP 稀釋 EPS，與共識不同口徑，成長率改用 FY27E→FY29E 兩年 CAGR 53%。"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/MOD_20261108/scenario.json","archetype":{"primary":"循環/商品","secondary":"品質複利成長","confidence":"中","fingerprint":"單一資本支出循環約占營收三分之二，毛利率低於大型同業 13–16 個百分點，訂單對出貨比大於 2，自由現金流暫時轉負。"},"industry":{"clock_phase":"II","sd_verdict_source":"擴張期：訂單連四季創高、需求超過產能，但短缺漲價與客戶提前拉貨已帶偏後段徵兆。供需判斷：未來 24 個月偏結構性持久；2028 年以後偏週期性，供給可逆性高。來源：2026-11-04 法說 CEO、Dell'Oro 2026-08-19、Motley Fool 2026-05-22。","bargaining":{"up":"風扇、壓縮機、蒸發器等關鍵零件供不應求，公司付高價鎖量；風扇與蒸發器已簽長約或一年期採購單，壓縮機仍在談判，盤管自製。","down":"前十大客戶占銷售 49%、應收帳款 53%；合約可重開價，但回收有時間差，客戶也開始直接指定二級供應商。","geo":"墨西哥 IMMEX 廠區與關稅是主要曝險；續營業務受關稅影響的金額事實表未涵蓋。"},"profit_pool_dir":"近兩季短缺帶來的好處流向上游零件商與下游雲端客戶，公司尚未留住；五年利潤池占比事實表未涵蓋。","tam_table":[{"item":"資料中心實體基礎設施市場 2030 年","value":"1,200 億美元（Dell'Oro，2026-08-19）；熱管理是成長最快區塊"},{"item":"公司資料中心營收 FY27 指引推算","value":"約 20 億美元（FY26 11 億美元×1.85）"},{"item":"SAM、滲透率、份額、段 CAGR、營業利益池占比","value":"事實表未涵蓋"}]},"moat":{"mechanism":"以低 PUE、低 WUE 的應用熱工程切入資料中心，配合自製盤管（CEO 稱全球最大獨立盤管廠）與客製產線認證，形成短中期卡位。","execution":6,"pricing":5,"grade":"C","trend":"→","trend_evidence":"執行力穩定：9、10 月冰水機廠準時交付率 100%，產線 13 條、目標 20 條；但第二季利潤率低於自身預期，資料中心事業負責人 7 月離職。定價權穩定：已談定至少 250 基點回收、新案前置定價，但第二季材料逆風約 375 基點尚未收回。","peer_na_reason":"同業 ROIC 差距事實表未涵蓋，改用毛利率、營業利益率與 FCF 率對照。","threats":[{"level":"🟡","text":"大型同業與整併後競爭者：10-K 提示供應鏈整併與垂直整合可能帶來新對手，新產品延遲會失去份額；目前未見份額流失證據，份額數字事實表未涵蓋。","p":"35%","evidence_refs":["competitive_share_entrants#0","competitive_share_entrants#1"]},{"level":"🟡","text":"客戶集中與議價：前十大客戶占 49%，資料中心銷售集中於少數客戶；雲端客戶開始直接指定二級供應商，短期帶來盤管機會，長期可能壓縮中間環節。","p":"30%","evidence_refs":["customer_concentration_credit#0","customer_concentration_credit#2"]},{"level":"🟡","text":"Airedale 校用熱泵通風機火災召回：美國約 6,061 台、加拿大約 735 台，11 起起火、財損至少 270 萬美元，無傷亡。Airedale 也用於資料中心產品，品牌與負債影響的金額事實表未涵蓋。","p":"15%","evidence_refs":["major_events#2","product_recall_warning#0"]},{"level":"🟡","text":"架構替代：浸沒或乾冷路線可能侵蝕冰水機；公司已收購 TMGcore 技術因應，架構市佔事實表未涵蓋。","p":"20%","evidence_refs":[]}],"roic_durability":{"quadrant":"低利益率×周轉未知（投入資本事實表未涵蓋）","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者是資料中心營運商，決策與付款者是雲端客戶，三角色都成立，散熱不能延後。第二季訂單對出貨比大於 2、需求高於產能。但 CEO 稱 2028 年以後的站點與規模仍有不確定，急迫不等於持久。"},{"item":"決策層級","level":"🟡","text":"替代要看單一站點或產品世代。產品 70–80% 可共用、20–30% 客製，新一代設計時客戶可重新選供應商；CEO 稱非商品化，但漲價後流失率與合約違約條款事實表未涵蓋。"},{"item":"價值鏈分配","level":"🔴","text":"目前兩頭受壓：上游零件短缺，公司付高價鎖量；下游前十大客戶占 49%，並開始直接指定二級供應商。TTM 毛利率低於 VRT 約 16 個百分點，第二季材料逆風約 375 基點、已談定回收約 250 基點。"},{"item":"社會容忍度","level":"🟡","text":"資料中心的用電與用水受地方社區關注，CEO 認為高能效產品因此受益；站點審批若收緊，總量會受影響。未見針對公司售價的監管或社會壓力。"}],"roiic":25.6,"reinvest_rate":62,"endo_ceiling":16,"formula_note":"以 FY25→FY26 年度資料粗估，稅率 25% 為假設：營業利益由 311.8 增至 370.9 百萬美元，增量稅後營業利益 44.3；FY26 稅後營業利益 278.2 減自由現金流 105.4，淨再投資 172.8。增量報酬＝44.3÷172.8＝25.6%，再投資率＝172.8÷278.2＝62%，內生上界約 16%。未計收購支出，含已分拆事業；投入資本事實表未涵蓋，當期 ROIC 無法計算。"},"combined":5.5,"score":5.5,"spread_table":[{"metric":"毛利率","MOD":21.73,"VRT":38.12,"AAON":25.57,"TT":34.99,"JCI":36.71,"unit":"%"},{"metric":"營業利益率","MOD":10.73,"VRT":20.35,"AAON":11.13,"TT":17.92,"JCI":14.99,"unit":"%"},{"metric":"FCF 利潤率","MOD":-0.27,"VRT":23.74,"AAON":-6.8,"TT":16.43,"JCI":12.03,"unit":"%"}],"competitors":[{"name":"VRT","gm":38.12,"om":20.35,"fcf_margin":23.74,"strategy_note":"TTM 毛利率 38.12%、FCF 率 23.74%，同一波需求下定價與現金轉換明顯較佳。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"AAON","gm":25.57,"om":11.13,"fcf_margin":-6.8,"strategy_note":"TTM 毛利率 25.57%、FCF 率 −6.8%，同樣處於擴產期，是現金結構最接近的對照。","period":"TTM ending 2026-06-30（4季加總）"},{"name":"TT","gm":34.99,"om":17.92,"fcf_margin":16.43,"strategy_note":"TTM 營業利益率 17.92%、FCF 率 16.43%，大型 HVAC 平台的獲利水準高於公司。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"JCI","gm":36.71,"om":14.99,"fcf_margin":12.03,"strategy_note":"TTM 毛利率 36.71%、營業利益率 14.99%，毛利高但費用重；報導將其列為 AI 冷卻的較大對手。","period":"TTM ending 2026-09-30（4季加總）"}]},"growth":{"driver_mix":"量為主、成本轉嫁型漲價為輔；併購與回購目前都不是主要驅動。","runway_years":"事實表未涵蓋","runway_post_y5":"🟡","endo_ceiling_basis":"引用競爭優勢題的增量報酬估計，以 FY26 年度資料粗估約 16%，含已分拆事業、未含收購。","segments":[{"item":"資料中心","value":"FY26 約 11 億美元；FY27 指引年增 80–90%；第二季年增 95%，調整後 EBITDA 率 15.4%。"},{"item":"商用 HVAC","value":"FY27 指引年增 10–15%；第二季年增 23%，調整後 EBITDA 率 15.1%；盤管對資料中心銷售是增量來源。"}],"decay_signals":["毛利率同比下滑：FY26 第四季 −320 基點至 22.5%、FY27 第二季 −160 基點至 20.7%；第一季單季值事實表未涵蓋，以 TTM 21.73% 低於 FY26 的 22.98% 佐證。","EPS 成長高於營收成長逾 5 個百分點：FY1→FY2 EPS 增 88%、營收增 31%，依賴利潤率擴張。"],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":{"expanded":false,"reason":"FY26 氣候解決方案總成長 43%、有機 32%，成長主要不靠併購；近三年現金去向事實表未涵蓋。"},"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"Scott Springfield、LB White 等併購的投入金額與已實現報酬事實表未涵蓋，無法判定。","grade":"不過"},{"year":"—","action":"buyback_yield","rationale":"目前無回購；CFO 於 2026-11-04 稱將提交董事會討論。","grade":"N/A"},{"year":"—","action":"sbc_dilution","rationale":"第二季 SBC 4.7 百萬美元，年化 18.8 百萬美元，除以市值 5,139 百萬美元約 0.37%，低於 1.5% 門檻；數字待對 10-Q 複核。","grade":"過"}]},"valuation":{"basis":"FY1 前瞻 P/E，分母為已不含分拆事業的共識調整後 EPS。公司循環來自資本支出而非商品價格，P/B 也未收，因此不用 P/B。","peers":{"expanded":false,"reason":"事實表只有同業利潤率，未收同業 Fwd P/E；估值結論以自身前瞻倍數與隱含盈餘為準，不做跨公司倍數對照。"},"fwd_pe":18.94,"peg":0.36,"percentile_5y":null,"val_light":"🟡","val_light_derivation":"FY1 P/E 18.94 倍、FY2 10.05 倍、PEG 0.36 看起來便宜，但分母未經驗證，因此判合理，不判便宜。Trailing P/E 40.42 倍、P/S 1.42 倍、EV/S 1.61 倍都含已分拆事業，分位只有 4 個年度端點（37、29.2、31.5），不是五年分位；五年分位事實表未涵蓋，故留空。EV 使用的淨負債 716.4 百萬美元含租賃，且是 10 月 1 日收到 1.99 億美元之前的數字，EV 約高估 2 億美元。","upside_short_pct":27.3,"upside_mid_pct":56.1},"trap_analysis":{"verdict":"🟡","label":"利潤率承諾尚待驗證的低價"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"分析師警告 2026 下半年至 2027 年電力與冷卻產能可能過剩；逾 40 億美元協議據搜尋摘要轉述無購買保證，預付款 1.65 億美元約為協議金額 4%。","assumption":"雲端客戶在 2028 年仍依原定 35–40% 比重提貨，20 條產線持續滿載。","consequence":"若資本支出進入消化期，FY30 EPS 可能跌到 4.2 上下，以 10 倍計約 42 美元，較現價再跌約 57%。","ruling":"採納為 Bear 主路徑，機率 35%，不列基礎情境：站點已取得許可，訂單對出貨比大於 2，Dell'Oro 也預期到 2030 年維持兩位數成長。此路徑與唯一致命點部分重疊，需求退潮會讓利潤率守不住，因此需求面另立環比與訂單門檻。","watch":"訂單對出貨比、資料中心季營收環比、2028 年協議提貨比重。","evidence_refs":["supply_demand_durability#2","customer_concentration_credit#3"],"fact_refs":["f_kpi8_backlog_book_to_bill"]},{"view":"論點成功但股東經濟變差","evidence":"FY27 指引營收上修約 2.1 億美元，同口徑 EBITDA 反而少約 1,300 萬美元；第二季自由現金流 −140.6 百萬美元；公司付高價向供應商鎖量；7 月 CFO 提到分拆後要準備併購，CEO 也考慮垂直整合。","assumption":"量的成長能轉成每股現金。","consequence":"營收達標但 EBITDA 率停在 17% 上下、自由現金流率低於 5%，EPS 低於共識約兩成，倍數不會回升。","ruling":"部分採納，基礎情境 FY28 EBITDA 率只給 17.5%。不全採納的理由：CFO 指出約 1 億美元非常態現金項目不會延續，資本支出也會回落，但仍高於每年 1 億美元。","watch":"FY28 自由現金流率是否達 5%、大型併購金額。","evidence_refs":["geo_supply_chain#0"],"fact_refs":["f_kpi5_fcf","f_kpi7_fy2027_performance_techn"]},{"view":"價格已反映太多","evidence":"股價 26 週跌 64.61%，但 FY2 10.05 倍的前提是 EPS 由 5.10 增至 9.61；10 月 17 日的 EPS 共識仍在下修。","assumption":"跌幅等於安全邊際，且共識不再下修。","consequence":"若 FY2 EPS 下修到 6 左右，現價等於約 16 倍，便宜的結論消失。","ruling":"反駁跌多就安全的說法，已跌幅度不當作安全邊際；共識若續降，Bear 地板會跟著下移，上下檔比只當參考，不作進場依據。但現價已不要求 FY29 之後的成長，估值不再是主要反對理由。","watch":"FY28 EPS 共識、第三季實績。","evidence_refs":["capital_markets_pricing#3"],"fact_refs":["f_week26_return_pct","f_consensus_eps_fy2"]}],"max_dd":{"lo":-60,"hi":-40,"path_risk":"🔴"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 ✅ → 本次 🟠","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=✅","side_b":"本次 ma=🟠","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 243.5 → 本次 96.61（-60.3%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=243.5","side_b":"本次 price_at_dd=96.61","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]裁決由 dd_decision.py 機械路由：前份 進場 → 本次 觀望","cause":"新證據","prior_field":["dca_verdict"],"side_a":"前份 dca_verdict=進場","side_b":"本次 dca_verdict=觀望","ruling":"裁決是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。沒有單一輸入能還原，屬多欄共同：估值 🟠→🟡、均線 ✅→🟠、五年後跑道 🟢→🟡。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]角色由 dd_decision.py 機械路由：前份 衛星 → 本次 追蹤","cause":"新證據","prior_field":["dca_role"],"side_a":"前份 dca_role=衛星","side_b":"本次 dca_role=追蹤","ruling":"角色是矩陣輸出，判斷者寫稿時看不到；變動原因由程式反事實歸因（逐一把矩陣輸入改回前份值重算）。沒有單一輸入能還原，屬多欄共同：估值 🟠→🟡、均線 ✅→🟠、五年後跑道 🟢→🟡。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 243.5 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 243.5 美元：Bull 價 528、Bear 價 126，五年期望值 +41.0%，基準年化 7.1%，不對稱比 2.9","side_b":"本次情境、股價仍用 243.5 美元：Bull 價 357、Bear 價 60.5，五年期望值 −28.3%，基準年化 −5.7%，不對稱比 0.35","ruling":"先換情境、股價不動：五年期望值少 69.3 個百分點，基準年化少 12.8 個百分點。不對稱比由 2.9 變為 0.35。Bull、Bear 價位與股價無關，只受情境影響。情境樹重建本身讓期望報酬變差。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 243.5 美元：五年期望值 −28.3%，基準年化 −5.7%，不對稱比 0.35","side_b":"本次情境、股價 96.61 美元：五年期望值 +80.6%，基準年化 13.5%，不對稱比 4.12","ruling":"再換股價、情境不動：起點價下跌 60.3%，五年期望值多 108.9 個百分點，基準年化多 19.2 個百分點，不對稱比由 0.35 升到 4.12。合計五年期望值比前份多 39.6 個百分點。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"資料中心利潤率：時間差還是結構問題","cause":"新證據","prior_field":["signal","trap"],"side_a":"2026-07-30 CFO 預期第二季資料中心 EBITDA 率回到 19–20%，CEO 稱壓力是時間差、非結構性；2026-11-04 CFO 稱已談定至少 250 基點的價格回收，第三季 16.5–17.5%、第四季 20% 以上。","side_b":"第二季實際 15.4%，差 360–460 基點；材料逆風約 375 基點且持續更久；利潤率改善速度下修，全年自由現金流由營收 4–6% 改成只說為正；資料中心事業負責人 7 月離職，由 CEO 暫代。","ruling":"性質為程度差異，可調和。採 A 側方向、B 側幅度：成本回收有合約與已談定金額支持，但管理層上季預測失準，第四季 20% 不作基礎情境，基礎情境 FY28 全公司 EBITDA 率只給約 17.5%。管理層的時間差歸因未證，若第三、四季連兩季低於各自下限，視為證偽。證據出來前維持不加碼。","evidence_level":"一手法說與公司指引，尚無下一季實績。","settle_metric":"資料中心調整後 EBITDA 率：第三季 16.5–17.5%（預估 2027-02 公布）、第四季 20%（預估 2027-05 公布）。","if_then":["若第三季資料中心 EBITDA 率不低於 16.5% 且全年自由現金流維持為正，則分批反買至原定上限。","若第三季低於 16.5%，則停止加碼，等第四季結果。","若第四季低於 18%，則清倉。","若股價先反彈而第三季尚未公布，則不追。","若股價再跌但第三季達標且訂單對出貨比仍大於 1，則分批反買，不作停損。"],"evidence_refs":["geo_supply_chain#0"]},{"axis":"估值與情境機率","cause":"價格變動","prior_field":["val","p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份股價 243.5 美元，判定偏貴，牛熊機率 30／25，最大回撤假設 −60%。","side_b":"現價 96.61 美元，FY1 P/E 18.94 倍、FY2 10.05 倍。跌幅含 10 月 1 日分拆配發的價值，依前份約 10 億美元企業價值與 2.1 億美元現金推算約每股 15 美元，其餘多數是盈餘預期與倍數重估。","ruling":"估值由偏貴轉為合理，但不判便宜，因為便宜只在 FY28 盈餘兌現時成立。熊機率由 25 升至 35、牛機率由 30 降至 20，最大回撤改為 −40% 至 −60% 區間；機率變動同時反映第二季新證據。","evidence_level":"市場價格與共識快照。","settle_metric":"FY28 共識 EPS 9.61 在投資人日與第三季後是否維持。","if_then":["若 FY28 共識 EPS 降到 8 以下且股價未跌，則不追。","若 FY28 共識維持且第三季達標，則分批反買。"],"evidence_refs":[]},{"axis":"第五年後成長空間","cause":"新證據","prior_field":["runway_post_y5"],"side_a":"前份判定第五年後成長空間寬，依據是資料中心冷卻的長期結構受益。","side_b":"分拆後資料中心約占營收三分之二；CEO 稱 2028 年以後站點與規模仍有不確定；Dell'Oro 指容量新增的年增速 2026 見頂後放緩；事實表沒有滲透率或份額數字。","ruling":"下修為中等。需求沒有轉弱，但無法證明滲透率低，第二曲線也還在談判。","evidence_level":"法說與產業研究，滲透率缺口。","settle_metric":"盤管供應雲端客戶液冷的實際訂單、投資人日揭露的長期目標。","if_then":["若盤管新案取得具體訂單且揭露金額足以改變商用 HVAC 營收結構，則上調為寬，並延長持有年限。","若 FY29 指引已見資料中心成長低於 30%，則下修為窄並減碼。"],"evidence_refs":[]},{"axis":"公司歸類與循環位置","cause":"新證據","prior_field":["archetype","cycle_position"],"side_a":"前份歸為品質複利成長，未標循環位置。","side_b":"10 月 1 日分拆後只剩資料中心與商用 HVAC，資料中心約占三分之二；TTM 自由現金流率 −0.27%，毛利率低於大型同業 13–16 個百分點，獲利與單一資本支出循環綁定。","ruling":"改歸循環型資本設備，信心中等。循環位置判中段：未來 24 個月有訂單與站點支撐，但短缺漲價與客戶提前拉貨已是偏後段徵兆。","evidence_level":"公司指引、法說與同業財務。","settle_metric":"訂單對出貨比、資料中心環比、循環下行時的利潤率。","if_then":["若訂單對出貨比連 2 季低於 1，則改判晚循環並減碼。"],"evidence_refs":[]},{"axis":"競爭優勢方向","cause":"新證據","prior_field":["moat_trend"],"side_a":"訂單連四季創高、新增大型專案、準時交付率回到 100%，支持地位未受損。","side_b":"利潤率遠低於同業，短缺環境下公司未能先行漲價，雲端客戶開始介入下游採購。","ruling":"維持持平。訂單證據與定價證據方向相反，互相抵銷；沒有客戶份額下滑的證據，也沒有定價權擴大的證據。","evidence_level":"法說與同業財務，份額缺口。","settle_metric":"第四季資料中心 EBITDA 率、最大客戶第二來源動作。","if_then":["若最大客戶出現第二來源且公司份額下滑，則改判下行並減碼。","若第四季資料中心 EBITDA 率達 20% 且 FY28 維持，則上調定價權評分。"],"evidence_refs":[]},{"axis":"加碼條件變更","cause":"新證據","prior_field":["rearm_trigger"],"side_a":"分批 starter 已建；加碼待 RMT 分拆完成（2026Q4-2027Q1）確認純 Climate Solutions re-rate，或回檔至 $200-215（Fwd PE FY27 ~26-28x）","side_b":"第三季資料中心調整後 EBITDA 率不低於 16.5%，且全年自由現金流維持為正；觸發後重新做完整分析再建倉。","ruling":"舊條件已失效：分拆如期完成卻沒有帶來重估，200–215 美元也已跌破。加碼改用事件條件，不設進場價，因為目前約束是利潤率未驗證，不是價格。","evidence_level":"公司公告與股價。","settle_metric":"第三季資料中心 EBITDA 率與全年自由現金流指引。","if_then":["若第三季達標，則分批反買。","若第三季未達標，則停止加碼。"],"evidence_refs":[]},{"axis":"Single Thing 新增","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份 Single Thing 欄位為空。","side_b":"FY27 第四季（2027 年 1–3 月，預估 2027-05 公布）資料中心調整後 EBITDA 率低於 18%。","ruling":"本次新增 Single Thing。利潤率是未來 24 個月最大且無法靠其他客戶抵銷的敏感項；協議客戶縮量在短缺期可轉給其他客戶，因此列為風險，不列唯一致命點。","evidence_level":"法說與敏感度推算。","settle_metric":"第四季資料中心調整後 EBITDA 率。","if_then":["若低於 18%，則清倉。","若介於 18% 與 20%，則停止加碼。"],"evidence_refs":[]},{"axis":"清倉與減碼門檻","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未列獨立的清倉或減碼門檻，只在假設與風險表標示：資料中心連 2 季環比低於 +10%、年增低於 +30%、毛利率低於 22%、最大客戶占比高於 40% 且出現第二來源。","side_b":"清倉：第四季資料中心 EBITDA 率低於 18%，或 FY28 資料中心年增低於 +30%。減碼：連 2 季環比低於 +10%、訂單對出貨比連 2 季低於 1、FY27 全年自由現金流為負、最大客戶占比高於 40% 且出現第二來源。","ruling":"保留舊的環比、年增與客戶門檻，新增利潤率、訂單與現金門檻。毛利率 22% 改用分部 EBITDA 率，理由見舊假設處置條目。","evidence_level":"前份門檻與新法說。","settle_metric":"各門檻對應的季度揭露。","if_then":["任一清倉門檻觸發則清倉。","任一減碼門檻觸發則減碼。"],"evidence_refs":[]},{"axis":"舊假設與風險的處置","cause":"方法變動","prior_field":["H2","H3","R1"],"side_a":"舊 H3 與 R1 是分拆完成與延宕風險；舊 H2 是氣候解決方案毛利率回升至 26%，低於 22% 反轉。","side_b":"分拆已於 2026-10-01 完成；FY27 起分部改為資料中心與商用 HVAC，舊氣候解決方案毛利率取不到。","ruling":"分拆風險退休，因事件已完成，新 H3 改看現金轉換。舊毛利率門檻改為分部 EBITDA 率，第二季全公司毛利率 20.7% 含分拆事業，不能直接對舊門檻；舊 22% 門檻標資料缺口，待 10-Q 分部資料補上。","evidence_level":"8-K 與法說。","settle_metric":"10-Q 分部毛利、分部 EBITDA 率。","if_then":["若 10-Q 揭露兩個續營部門合計毛利率低於 22% 且連 2 季下滑，則減碼。"],"evidence_refs":[]},{"axis":"賣方目標價與共識","cause":"新證據","prior_field":null,"side_a":"賣方平均目標價落在 263–358 美元，FY2027 EPS 共識 7.34 美元（10 月 17 日）。","side_b":"現價 96.61 美元；可得目標價都在第二季財報之前，最低 73 美元、最高 355 美元，相差 4.9 倍；FY1 共識已是 5.10。","ruling":"目標價已過時，不支持也不反對本判斷，不採用。全距超過 2.5 倍，代表分歧很大，下調自身報酬估計的信心。新利空只有 4 天，FY2、FY3 是否完整入模無法確認，因此凍結加碼到第一個實績出現。","evidence_level":"第三方聚合資料，時點早於財報。","settle_metric":"投資人日後一個月內的共識與目標價。","if_then":["若 FY2 共識降幅超過 15% 且股價上漲，則不追。"],"evidence_refs":["capital_markets_pricing#3"]},{"axis":"指引上修的品質","cause":"新證據","prior_field":null,"side_a":"資料中心成長指引由 60–80% 上修至 80–90%，商用 HVAC 由 5–10% 上修至 10–15%，換算營收中點約增 2.1 億美元。","side_b":"舊 EBITDA 指引 6.5–6.8 億美元扣分拆事業年化約 1.67 億美元後為 4.83–5.13 億美元，新指引 4.7–5.0 億美元，同口徑約少 1,300 萬美元，其中含 1,000–1,500 萬美元過渡成本。","ruling":"營收確實上修，但新增營收沒有帶來利潤；扣除過渡成本後，增量 EBITDA 約為零。指引品質低於標題數字。","evidence_level":"公司指引，分拆事業年化值為推算。","settle_metric":"第三、四季資料中心 EBITDA 率。","if_then":["若第三季營收超指引但利潤率低於 16.5%，則停止加碼。"],"evidence_refs":[]},{"axis":"現在就買的最強論證","cause":"價格變動","prior_field":null,"side_a":"訂單對出貨比大於 2、連四季訂單創高，資料中心指引上修到 80–90%，9、10 月準時交付率 100%，至少 250 基點價格回收已談定；現價只要 FY2032 EPS 約 12.2 就有 12% 年報酬。RSI 24.78，26 週已跌 64.61%。","side_b":"利潤率承諾上季剛失準，下一個實績約三個月後就有，等待的代價只是可能買貴一些；投資人日也在 10 天後。","ruling":"選擇等待。綁定條件是利潤率回收尚無實績，不是估值。","evidence_level":"法說與市場資料。","settle_metric":"第三季資料中心 EBITDA 率。","if_then":["若等待期間股價先漲而實績未到，則不追。","若第三季達標，則分批反買。"],"evidence_refs":[]},{"axis":"產業態勢","cause":"新證據","prior_field":null,"side_a":"競爭面：10-K 提示整併與垂直整合，報導列 Vertiv、Johnson Controls 為較大對手，雲端客戶開始直接指定二級供應商。","side_b":"結構面：需求高於供給，熱管理是資料中心基礎設施成長最快區塊，自製盤管在短缺中成為優勢。","ruling":"雙向拉鋸。競爭尚未反映在訂單上，結構順風也沒反映在利潤率上；其他結構變數以關稅與材料成本為主。","evidence_level":"10-K、法說、Dell'Oro。","settle_metric":"資料中心 EBITDA 率與客戶份額揭露。","if_then":["若訂單續強但利潤率連 2 季低於下限，則判競爭或議價惡化並減碼。"],"evidence_refs":[]}],"triggers":[{"n":1,"text":"第三季資料中心利潤率是否進入管理層給的區間","type":"假設驗證","maps_to":"H2","metric":"FY27 第三季資料中心調整後 EBITDA 率","threshold":"不低於 16.5%","action":"達標且全年自由現金流維持為正，才解除加碼凍結","source_freq":"公司財報與法說；每季","date":"2027-02"},{"n":2,"text":"第四季資料中心利潤率是唯一致命點","type":"Single Thing","maps_to":"H2","metric":"FY27 第四季資料中心調整後 EBITDA 率","threshold":"低於 18%","action":"清倉","source_freq":"公司財報與法說；每季","date":"2027-05"},{"n":3,"text":"利潤率與現金同時過關後重新進場","type":"估值rearm","maps_to":"H2","metric":"第三季資料中心 EBITDA 率與全年自由現金流指引","threshold":"不低於 16.5%，且全年自由現金流維持為正","action":"重新做完整分析後分批反買","source_freq":"公司財報與法說；每季","date":"2027-02"},{"n":4,"text":"投資人日公布 FY28、FY29 展望與長期目標","type":"複審日期","maps_to":"H1","metric":"資料中心 FY28 成長與中期 EBITDA 率目標","threshold":"FY28 成長不低於 50%、中期 EBITDA 率目標不低於 20%","action":"低於門檻則停止加碼；達標也不單獨構成加碼","source_freq":"公司投資人日；一次性","date":"2026-11-18"},{"n":5,"text":"需求轉弱的領先訊號","type":"風險","maps_to":"R2","metric":"訂單對出貨比、資料中心季營收環比","threshold":"訂單對出貨比連 2 季低於 1，或環比連 2 季低於 +10%","action":"減碼","source_freq":"公司財報與法說；每季","date":null,"evidence_refs":["supply_demand_durability#2"]},{"n":6,"text":"大客戶提貨或第二來源變化","type":"風險","maps_to":"R3","metric":"最大客戶占資料中心營收、2028 年協議出貨比重","threshold":"占比高於 40% 且出現第二來源，或 2028 年出貨低於協議 35% 比重","action":"減碼","source_freq":"10-K、法說；每年與每季","date":null,"evidence_refs":["customer_concentration_credit#3"]},{"n":7,"text":"關稅與材料成本吸收失敗","type":"風險","maps_to":"R4","metric":"材料與關稅淨逆風占資料中心營收","threshold":"連 2 季超過 375 基點","action":"停止加碼","source_freq":"公司法說；每季","date":null,"evidence_refs":["reg_tariff_export#0","reg_tariff_export#1","geo_supply_chain#3"]},{"n":8,"text":"全年現金未轉正","type":"減碼","maps_to":"H3","metric":"FY27 全年自由現金流","threshold":"低於 0","action":"減碼","source_freq":"公司財報與 10-K；每年","date":"2027-05"},{"n":9,"text":"資料中心成長中斷","type":"清倉","maps_to":"H1","metric":"FY28 資料中心營收年增率","threshold":"低於 +30%","action":"清倉","source_freq":"公司財報；每季","date":"2028-05"}],"kill_metrics":[{"metric":"資料中心調整後 EBITDA 率（FY27 第四季）","bear_threshold":"低於 18%","window":"FY27 第四季，預估 2027-05 公布","source":"公司新聞稿與法說","last_status":"warning"},{"metric":"資料中心季營收環比","bear_threshold":"連 2 季低於 +10%","window":"連續 2 季","source":"公司財報與法說；分部季額待補","last_status":"unknown"},{"metric":"資料中心營收年增率","bear_threshold":"低於 +30%","window":"FY28","source":"公司財報與法說","last_status":"ok"},{"metric":"訂單對出貨比","bear_threshold":"連 2 季低於 1","window":"連續 2 季","source":"公司法說","last_status":"ok"},{"metric":"全年自由現金流","bear_threshold":"低於 0","window":"FY27","source":"公司財報與 10-K","last_status":"warning"},{"metric":"最大客戶占資料中心營收","bear_threshold":"高於 40% 且出現第二來源","window":"每年 10-K","source":"10-K；占比資料缺口","last_status":"unknown"},{"metric":"浸沒與乾冷架構市佔","bear_threshold":"2030 年前高於 20%","window":"至 2030 年","source":"產業研究；資料缺口","last_status":"unknown"}],"evidence_dismissed":[{"ref":"reg_tariff_export#2","reason":"這筆 1,000 萬美元原料與關稅影響只量測 Performance Technologies，該事業已於 2026-10-01 分拆，不在續營成本結構內；續營業務改用 2026-11-04 法說的資料中心材料逆風約 375 基點。"}],"decision_out":{"verdict":"觀望","role":"追蹤","row_hit":"8(val爭議)","pacing":[],"holding_cap":"驗證前不高於現有部位","audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟠'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=市場把第二季 15.4% 當成新常態；但至少 250 基點的價格回收已談定，新案改為出貨前定價，第三季 16.5–17.5% 可驗證。此理由尚未經實績確認。"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟡', moat_trend='→', week26=-64.61, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='循環/商品', cycle_position='中循環', moat='C', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈機械讀數判定不可用，baseline rows 8/9/9b/10 的估值條件視為不可判 → 落 row8 觀望（保守方向）","hit":true,"basis":"val_denominator_disputed=True, val(機械讀數)='🟡'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"requires_critic":[],"rearm_trigger":"第三季資料中心調整後 EBITDA 率不低於 16.5%，且全年自由現金流維持為正；觸發後重新做完整分析再建倉。","exec_line":"未持有者不建倉；已持有者續抱不加碼。第三季達標才分批反買，第四季資料中心利潤率低於 18% 清倉。"},"reasoning":{"industry":"分拆 Performance Technologies 後只剩資料中心與商用 HVAC 兩部門。FY27 指引營收 31–32 億美元、調整後 EBITDA 4.7–5.0 億美元，資料中心年增 80–90%、商用 HVAC 年增 10–15%，以 FY26 資料中心 11 億美元推算，資料中心約占三分之二。第二季全公司營收 9.944 億美元、毛利率 20.7%、GAAP 營業利益率約 9.8%，這些數字仍含已分拆事業。資料中心營收年增 95%，新訂單首次超過 10 億美元，訂單對出貨比大於 2，在手訂單金額未揭露。單點依賴屬集中度風險，不是護城河證據：FY26 前十大客戶占銷售 49%，一家全球科技客戶約 11%，2027–2029 年逾 40 億美元協議據搜尋摘要轉述並無購買保證。","moat":"機制是高能效的應用熱工程，加上自製盤管與客製產線認證。同業 ROIC 差距取不到，改用利潤率與最大客戶訂單判方向。TTM 毛利率 21.73%，VRT 38.12%、JCI 36.71%、TT 34.99%、AAON 25.57%；公司數字含低毛利的已分拆事業，續營口徑事實表未涵蓋。訂單方向有利：連四季創高，近期再獲逾 4 億美元空氣處理機專案。定價方向尚未改善：短缺環境下公司先替供應商的漲價付錢，再向客戶追回。兩者相抵，執行力與定價權都判穩定。","growth":"成長以量為主，價格多為成本轉嫁，併購不是主要來源（FY26 氣候解決方案總成長 43%、有機 32%）。共識 EPS 由 FY27E 5.10 到 FY29E 11.96，兩年 CAGR 53%；FY26 實際 EPS 為含分拆事業的 GAAP 數字，不能當同口徑基期。內生上界約 16%，缺口約 37 個百分點，歸因於利潤率擴張與已投產能的營運槓桿：資料中心 EBITDA 率由 15.4% 往 20% 以上、分拆成本消失，不是淨回購或收購，也不依賴倍數重估。基礎情境 FY27E→FY32E EPS CAGR 約 20.6%，仍超過上界，因此 Bear 機率不低於 30%。盤管供應雲端客戶液冷供應鏈是增量，但仍在談判，與資料中心同屬一個循環，不算獨立第二曲線。","governance":"自由現金流占淨利 FY25 0.70、FY26 0.87，TTM 自由現金流率 −0.27%，第二季 −140.6 百萬美元（待對 10-Q 複核）。全年自由現金流由 7 月的營收 4–6% 改為只說為正。CFO 稱今年約 1 億美元屬非常態現金項目。公司口徑淨負債第二季末約 5.74 億美元（上年度底 3.63 億加 2.11 億），10 月 1 日收到 1.99 億美元後約 3.75 億，約為 FY27 EBITDA 指引中點的 0.8 倍。SBC 單季 4.7 百萬美元，占營收約 0.5%（待複核）。回購尚未決定，CFO 只說會提交董事會。現金去向四分事實表未涵蓋。","valuation":"以 12% 年報酬、14 倍終端倍數反推，96.61 美元對應 FY2032 EPS 約 12.2，約等於 FY2029 共識 11.96 之後三年幾乎不成長。FY2 EPS 9.61 粗估需要全公司調整後 EBITDA 率約 19%（股數 53.2 百萬、稅率 25%、年折舊與利息合計約 1.25 億美元，後兩項為假設），FY27 指引中點約 15.4%，目前沒有一季實績支持。若利潤率過關，現價沒有計入 FY29 以後的續增。FY1 近 3 個月下修 33.25% 大部分是分拆移出的口徑差，以分拆事業年化 EBITDA 約 1.67 億美元、稅率 25% 推算約每股 2.35 美元上限，同口徑至少下修約 4%；折舊未揭露，實際更多。","premortem":"衰退信號亮兩個：毛利率同比下滑、EPS 成長遠高於營收成長，屬中度風險。自由現金流占淨利 FY25 0.70、FY26 0.87，尚未連兩年低於 0.75，但 TTM 已為負，FY27 若只略為轉正就會亮燈。壓力測試四項過三項：FY30 之後成長降到 15%、10%、5%，搭配 15、12、9 倍，估值約 226、166、113 美元，都高於現價；Bear 倍數打八折、EPS 打八五折時約 41 美元，不過關。資料限制：第二季自由現金流與 SBC 待 10-Q 複核。7 月法說對 7 月量能、各廠啟用日與 FY28 架構未正面回答，本次 FY28 訂單覆蓋也推到投資人日，屬未回答事項。"},"plain":{"six":{"how_it_makes_money":"賺雲端與 AI 資料中心散熱設備的錢，現階段的錢卡在產能爬坡與零組件成本回收。","moat":"競爭優勢持平：需求與認證地位還在，定價權尚未證明。","growth":"第五年後的成長空間中等：到 FY29 有訂單支撐，更遠的第二曲線還沒落地。","capital":"現金轉換轉弱，但分拆現金入帳後資產負債表不構成壓力。","valuation":"現價大約只要求 FY29 共識盈餘實現後不再成長；我信一半，因為利潤率還沒驗證。","how_wrong":"不算價值陷阱，但證據還不足以排除；利潤率回不到 20% 是最可能看錯的地方。"}},"decision_inputs":{"signal":"B","ma":"🟠","cycle_position":"中循環","cycle_verdict":"未觸發","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"市場把第二季 15.4% 當成新常態；但至少 250 基點的價格回收已談定，新案改為出貨前定價，第三季 16.5–17.5% 可驗證。此理由尚未經實績確認。","momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":true,"wait_for_price_condition":"等 FY27 第三季財報（預估 2027 年 2 月）：資料中心調整後 EBITDA 率不低於 16.5%，且全年自由現金流維持為正；11 月 18 日投資人日只作輔證。","trap":"🟡","val":"🟡","moat":"C","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"循環/商品","price_at_dd":96.61,"week26_return_pct":-64.61,"consensus_rev_3m_pct":-33.25,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":true,"val_denominator_note":"FY1 EPS 5.10 已不含分拆事業，但 FY1 營收共識 32.83 億美元高於公司指引上限 32 億美元，口徑可能混雜。FY2 EPS 9.61 需要利潤率大幅回升，正是爭點；便宜的論證只在 FY2 兌現時成立。"},"catalysts":[{"date":"2026-11-18","type":"guidance","event":"分析師與投資人日，公布 FY28、FY29 展望與新長期財務目標","impact":"高","watch":"資料中心 FY28 成長是否維持 50–70%、中期 EBITDA 率目標、資本支出與回購"},{"date":"2027-02","date_precision":"month","type":"guidance","event":"FY27 第三季財報（日期為預估，公司未公告）","impact":"高","watch":"資料中心調整後 EBITDA 率是否達 16.5–17.5%、全年自由現金流指引"},{"date":"2027-03","date_precision":"month","type":"capacity","event":"財年底 20 條冰水機產線目標期限","impact":"中","watch":"運轉線數、準時交付率"},{"date":"2027-05","date_precision":"month","type":"guidance","event":"FY27 第四季與全年財報（日期為預估，公司未公告）","impact":"高","watch":"資料中心調整後 EBITDA 率是否達 20%、全年自由現金流"}],"_projected_from":"v19"}
+```
