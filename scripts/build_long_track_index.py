@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """系統主控台 /long-track/ 產生器（fab）。2026-11-08 整頁改版（持有人拍板）：美股、台股各一個分頁，內容順序相同：
-下一個交易日要做的事（每個標的應持有多少 %，分母是該市場總資金）、個股席位、下週會動的價位、實盤紀錄、系統績效、
+下一個交易日要做的事（每個標的應持有多少 %，分母是該市場總資金）、個股席位（只有美股）、下週會動的價位、實盤紀錄、系統績效、
 一年水位變化與 K 棒軌跡（收起）、規則與揭露（收起）。第三個分頁放對照與歸檔。
 
-資料都讀現成檔案，本檔不算訊號：state.json（指數部）、arena-ledger.json／seats_tw_ledger.json（席位）、
+資料都讀現成檔案，本檔不算訊號：state.json（指數部）、arena-ledger.json（美股席位）、
 data/system_profile.json（體檢摘要）。實盤紀錄切自 _scoreboard_body.html，圖表與規則切自 long-track-w52-adaptive/_body.html，
 樣式加前綴後直接放進頁面，不用內嵌框。切不到就顯示連結，不讓整頁壞掉。
 舊錨點：#overview／#live／#scoreboard 落到美股分頁；#record 轉到 /track-record/；#evidence／#archive 落到對照與歸檔。
@@ -302,17 +302,14 @@ SCOREBOARD_HTML = DOCS / "long-track" / "_scoreboard_body.html"
 PROFILE_JSON = DOCS / "long-track" / "data" / "system_profile.json"
 ARENA_JSON = DOCS / "engine" / "arena.json"
 ARENA_LEDGER = DOCS / "engine" / "arena-ledger.json"
-TW_SEATS_JSON = DOCS / "cockpit-tw" / "data" / "seats_tw.json"
-TW_LEDGER = DOCS / "cockpit-tw" / "data" / "seats_tw_ledger.json"
 
-IDX_SHARE = 0.7    # 兩市場指數部各占該市場資金 70%
-SEAT_PCT = 6.0     # 個股 30% 分 5 席，每席 6%
+SEAT_PCT = 6.0     # 美股個股 30% 分 5 席，每席 6%
 WD = "一二三四五六日"
 MKT = {
     "us": {"name": "美股", "legs": ["QQQ", "SMH"], "hist": "history_us", "close": [23, 0, "America/New_York"],
-           "seat_link": ("/cockpit/", "美股看板")},
+           "idx_share": 0.7, "seat_link": ("/cockpit/", "美股看板")},
     "tw": {"name": "台股", "legs": ["0050", "2330"], "hist": "history_tw", "close": [23, 30, "Asia/Taipei"],
-           "seat_link": ("/cockpit-tw/", "台股席位")},
+           "idx_share": 1.0},  # 持有人 2026-11-08：台股不預設持有個股（2330 在指數部），台股資金全部照水位配
 }
 
 
@@ -345,8 +342,8 @@ def _action(before: float, target: float) -> tuple[str, str]:
     return (f"買 {_num(abs(t - b) / 10)}", "buy") if t > b else (f"賣 {_num(abs(t - b) / 10)}", "sell")
 
 
-def _share(pct_of_index: float) -> float:
-    return round(float(pct_of_index) * IDX_SHARE, 1)
+def _share(pct_of_index: float, key: str) -> float:
+    return round(float(pct_of_index) * MKT[key]["idx_share"], 1)
 
 
 def _signal_txt(st: dict) -> str:
@@ -364,8 +361,10 @@ def _index_rows(state: dict, key: str) -> list[dict]:
         st = k.get("st") or {}
         target_idx = float(k["executed_pct"])
         before_idx = float(k.get("held_before_pct", target_idx))
-        rows.append({"t": t, "before": _share(before_idx), "target": _share(target_idx),
-                     "note": f'{_signal_txt(st)}｜水位 {st.get("level_pct", "—")}%｜占指數部 {_num(target_idx)}%'})
+        note = f'{_signal_txt(st)}｜水位 {st.get("level_pct", "—")}%'
+        if key == "us":
+            note += f'｜占指數部 {_num(target_idx)}%'
+        rows.append({"t": t, "before": _share(before_idx, key), "target": _share(target_idx, key), "note": note})
     if key == "us":
         hist = state.get("history_us") or []
         cur = (hist[-1].get("overlay") or {}) if hist else {}
@@ -375,27 +374,13 @@ def _index_rows(state: dict, key: str) -> list[dict]:
             target_idx = float(cur.get(f"{k}_target_pct") or 0.0)
             before_idx = float(prev.get(f"{k}_target_pct") or 0.0)
             o = ov.get(k) or {}
-            rows.append({"t": t, "before": _share(before_idx), "target": _share(target_idx),
+            rows.append({"t": t, "before": _share(before_idx, key), "target": _share(target_idx, key),
                          "note": f'{nm}｜週{"多" if o.get("w") else "空"}月{"多" if o.get("m") else "空"}｜占指數部 {_num(target_idx)}%'})
     return rows
 
 
-def _names(obj, out=None) -> dict:
-    """在 JSON 裡遞迴找 {ticker, name}，給台股代號配中文名。"""
-    out = {} if out is None else out
-    if isinstance(obj, dict):
-        if isinstance(obj.get("ticker"), str) and isinstance(obj.get("name"), str) and obj["name"]:
-            out[obj["ticker"]] = obj["name"]
-        for v in obj.values():
-            _names(v, out)
-    elif isinstance(obj, list):
-        for v in obj:
-            _names(v, out)
-    return out
-
-
 def _seat_rows(key: str) -> tuple[list[dict], str, str]:
-    """個股席位：回傳 (每列 {t, target, act, note}, 決策日, 補充說明)。"""
+    """個股席位：回傳 (每列 {t, target, act, note}, 決策日, 補充說明)。台股不預設持有個股，回空列。"""
     rows: list[dict] = []
     if key == "us":
         snap = (_load_json(ARENA_LEDGER).get("snapshots") or [{}])[-1]
@@ -410,19 +395,7 @@ def _seat_rows(key: str) -> tuple[list[dict], str, str]:
             pct = round(SEAT_PCT * float(size.get(t) or 1.0), 1)
             rows.append({"t": t, "target": pct, "act": "買進" if t in add else "續抱", "cls": "buy" if t in add else "hold", "note": ""})
         return rows, snap.get("date") or "", ""
-    seats = _load_json(TW_SEATS_JSON)
-    names = _names(seats)
-    snap = (_load_json(TW_LEDGER).get("snapshots") or [{}])[-1]
-    label = lambda t: f'{t.split(".")[0]} {names.get(t, "")}'.strip()
-    filled = [x if isinstance(x, str) else x.get("ticker") for x in snap.get("filled") or []]
-    for r in snap.get("removed") or []:
-        t, why = (r[0], r[1]) if isinstance(r, (list, tuple)) else (r.get("ticker"), r.get("why", ""))
-        rows.append({"t": label(t), "target": 0.0, "act": "賣出", "cls": "sell", "note": why})
-    for t in snap.get("core") or []:
-        rows.append({"t": label(t), "target": SEAT_PCT, "act": "買進" if t in filled else "續抱",
-                     "cls": "buy" if t in filled else "hold", "note": ""})
-    extra = "大盤跌破 200 日線，不補新席，這 30% 放現金。" if (seats.get("market") or {}).get("status") == "bear" else ""
-    return rows, snap.get("date") or "", extra
+    return rows, "", ""
 
 
 def _next_steps(index_rows: list[dict], seat_rows: list[dict]) -> str:
@@ -456,7 +429,10 @@ def _action_table(key: str, rows: list[dict]) -> str:
                  f'<td class="num lt-target">{_num(r["target"])}%</td><td class="num lt-{cls}">{txt}</td></tr>')
     stock = [r for r in rows if r["t"] not in ("IEF", "GLD")]
     b, t = sum(r["before"] for r in stock), sum(r["target"] for r in stock)
-    body += (f'<tr class="lt-total"><td>指數部股票合計</td><td class="num">{_num(b)}%</td><td class="num lt-target">{_num(t)}%</td><td class="num"></td></tr>')
+    total_label = "指數部股票合計" if key == "us" else "股票合計"
+    body += (f'<tr class="lt-total"><td>{total_label}</td><td class="num">{_num(b)}%</td><td class="num lt-target">{_num(t)}%</td><td class="num"></td></tr>')
+    if key == "tw":
+        body += (f'<tr class="lt-total"><td>未投入（現金）</td><td class="num">{_num(round(100 - b, 1))}%</td><td class="num lt-target">{_num(round(100 - t, 1))}%</td><td class="num"></td></tr>')
     return f'<div class="lt-scroll"><table class="lt-tbl" aria-label="{name}指數部目標持股">{head}<tbody>{body}</tbody></table></div>'
 
 
@@ -807,11 +783,15 @@ def render_market_panel(key: str, state: dict, idx: list, seats: tuple, dp: dict
     h, m, tz = cfg["close"]
     stale = f'<div class="lt-stale" hidden data-asof="{asof}" data-close="{h},{m},{tz}"></div>'
     when = f'資料到 {_md(asof)}。下單日 {_md(_next_session(asof))}（遇休市順延），一次調到「應持有」。' if asof else ""
-    cap = f'{when}百分比都是占{cfg["name"]}總資金：指數部 70%、個股 30%。動作的單位是百分點。'
+    if key == "us":
+        cap = f'{when}百分比都是占美股總資金：指數部 70%、個股 30%。動作的單位是百分點。'
+    else:
+        cap = f'{when}百分比都是占台股總資金，動作的單位是百分點。台股只照水位持有 0050、2330，其餘放現金。<a href="/cockpit-tw/">台股席位</a>只當研究名單，不算預設持股。'
     rows, decided, extra = seats
-    parts = [_sec("下一個交易日要做的事", stale + _action_table(key, idx), cap),
-             _seat_table(key, rows, decided, extra, idx),
-             _levels_table(state, key)]
+    parts = [_sec("下一個交易日要做的事", stale + _action_table(key, idx), cap)]
+    if key == "us":
+        parts.append(_seat_table(key, rows, decided, extra, idx))
+    parts.append(_levels_table(state, key))
     if sb.get(key):
         parts.append(_sec("實盤紀錄", f'<div class="lt-lsb">{sb[key]}</div>', f'{_live_summary(key)}{sb.get("plain", "")}{LIVE_NOTE}'))
     else:

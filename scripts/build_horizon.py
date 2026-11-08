@@ -565,10 +565,10 @@ def main():
     ai_seats = [t for t in seats if any(t in fmap[i]["my_seats"] for i in AI_SEAT_QIDS if i in fmap)]
     ai_money = None
     if seats and (smh_pct is not None or tsmc_pct is not None):
-        # 下限：QQQ、0050 裡的 AI 股和台股個股沒算。美股 70% 指數部、30% 個股；台股只算 70% 指數部裡的台積電
+        # 下限：QQQ、0050 裡的 AI 股沒算。美股 70% 指數部、30% 個股；台股資金全部是指數部（持有人 2026-11-08），只算台積電
         ai_money = {
             "us_pct": round(0.7 * smh_pct + 0.3 * len(ai_seats) / len(seats) * 100, 1) if smh_pct is not None else None,
-            "tw_pct": round(0.7 * tsmc_pct, 1) if tsmc_pct is not None else None,
+            "tw_pct": round(tsmc_pct, 1) if tsmc_pct is not None else None,
             "smh_pct": smh_pct, "tsmc_pct": tsmc_pct,
             "n_ai_seats": len(ai_seats), "n_seats": len(seats), "ai_seats": ai_seats,
         }
