@@ -1,0 +1,428 @@
+你是 stock-analyst v20 的**散文層（prose）agent**，標的 CAH（2026-11-08）。判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物——你的工作是把定案的裁決鋪成外資報告式的條列白話。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：任務頭（標的／日期／archetype／前份裁決一行）、已生成的機械表格清單、各段散文目標 bytes 表、數字白名單、C-1 機械段清單（`revlog`／`s14`／`appA` 已機械生成，你不寫這三段）、散文卡（`prose_card.md`，章節順序、篇幅預算、口吻與禁令、HTML 形狀全文）、judgment 投影視圖（緊湊 JSON，承重數字唯一來源）。**不讀** evidence.json 全文——承重數字一律來自 judgment 投影視圖。
+
+## 寫（只有 Write 工具，最多 4 輪）
+
+本通只負責**前半**：輸出一個檔 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/CAH_20261108/prose_A.html`，依序含 s1、s2、s3、s4、s5、s6、s7 七段。後半由另一通同時在寫，你不要碰。
+
+**s3 到 s7 是整份報告的重心**（商業本質五章）：每章 4–6 條，每條 120–200 字，把 judgment 投影視圖裡對應問題的 reasoning、數字、反方依據全部鋪開，不要一句話帶過；s5 至少 3,000 bytes、s3／s4／s6 至少 1,500 bytes，低於直接 FAIL。
+
+每段前面獨立一行標記 `<!-- SID:sX -->`（`decision` 段寫 `<!-- SID:decision -->`），緊接該段完整外層元素，格式與每段固定三塊（`<h2>`／`<p class="lead">`／`<ul class="pts">`）見散文卡 §6。表格注入標記依散文卡 §3 放在對應位置。
+
+動筆前只列大綱（每章一句主張＋要用的白名單數字），列完就寫，不在腦中預演全文；每章寫完不回頭改。寫壞即交卷不補——這一輪沒有機械閘回饋、沒有第二次機會。
+
+## 呈現硬規則
+
+- 正文承重數字須能在 judgment 投影視圖追溯（原樣或四捨五入到小數點後 1 位），逐字複製數字白名單裡的字串（含 −／%／$ 符號）。
+- 不寫 `s14`／`appA`／`appB`／`appC`／`revlog`／頁首儀表板——全部已由機械層生成，你補一句說明也不必要。
+- 裁決單一居所：統一裁決只完整陳述於頁首與 `decision` 段，其餘章節提及僅一行「見§13」。
+- 比較符 `<` `>` 一律寫 `&lt;` `&gt;`。
+- 不渲染流程劇場（「自查發現 X」「我跑了驗證」這類過程對帳），只渲染結論本身。
+
+## 禁
+
+- WebSearch／WebFetch、Read 任何 `docs/dd/`、重讀自己剛寫過的檔。
+- 改 `judgment.json` 任何欄位（發現判斷有問題只能在回覆中提一句，不得自行修改判斷）。
+
+
+===== BUNDLE =====
+
+## ① 任務頭
+
+標的：CAH　日期：2026-11-08　archetype：None　前份裁決：2026-05-25　B 衛星候選｜　角色：stock-analyst v17 散文（prose）agent。
+
+判斷已由判斷 agent 與判斷層閘定案，你不做任何判斷、不改判斷物。輸出 `prose_A.html`（s1–s7，含條件性 s8.5）與 `prose_B.html`（s8–s12、decision，含條件性 appB），每段以 `<!-- SID:sX -->` 起始獨立一行、緊接該段完整外層元素；`revlog`／`s14`／`appA` 三段已由腳本機械生成（見 §⑦），你不寫這三段。
+
+---
+
+## ④ 已生成的機械表格片段（`gen_dd_tables.py` 產物；散文只放注入標記，不重寫表格內容）
+
+- `e2.html`（1932B）→ `s2` 段 `<!-- E2 -->`：§2.B 三假設 H1-H3 表
+- `e3.html`（382B）→ `s3` 段 `<!-- E3 -->`：§3.F 逐段 TAM/SAM + 利潤池
+- `e5.html`（805B）→ `s5` 段 `<!-- E5 -->`：§5 二維評分 + Moat-to-Numbers
+- `e6.html`（1149B）→ `s5` 段 `<!-- E6 -->`：§5.F 對手 P&L 對照
+- `e7.html`（1242B）→ `s5` 段 `<!-- E7 -->`：§5.R 四檢查點
+- `e8.html`（650B）→ `s6` 段 `<!-- E8 -->`：§6.I 分部前瞻 build
+- `e9.html`（261B）→ `s7` 段 `<!-- E9 -->`：§7.E DuPont + CCC
+- `e10.html`（1318B）→ `s9` 段 `<!-- E10 -->`：§9.D 資本配置 track
+- `e11.html`（2164B）→ `s10` 段 `<!-- E11 -->`：情境樹 Bull/Base/Bear 合一表
+- `audit.html`（4130B）→ `decision` 段 `<!-- AUDIT -->`：決策矩陣稽核表（audit_rows 非空才有）
+- `e12.html`（2916B）→ `decision` 段 `<!-- E12 -->`：監測與觸發器表
+- `appA-table.html`（281B）→ `appA` 段 `<!-- APPA_TABLE -->`：附錄 A 一列式機械評等表
+
+---
+
+## ⑤ 各段散文目標 bytes 表（`dd_prose_budget.py`，已扣掉將注入的表格 bytes）
+
+```
+段                  預算(B)     表格bytes           散文目標區間(B)           建議條列數  備註
+s1                  4000           0           2800-4000      5 條（2–6 內）  
+s2                  7000        1932           3548-5068      5 條（2–6 內）  
+s3                  8000         382           5333-7618      5 條（2–6 內）  
+s4                  5000           0           3500-5000      5 條（2–6 內）  
+s5                 15000        3196          8263-11804      5 條（2–6 內）  
+s6                 11000         650          7245-10350      5 條（2–6 內）  
+s7                  5000         261           3317-4739      5 條（2–6 內）  
+s8                  3000           0           2100-3000      5 條（2–6 內）  
+s85                  無上限           0                   —               —  無上限
+s9                  3500        1318           1527-2182      3 條（2–6 內）  
+s10                 5000        2164           1985-2836      3 條（2–6 內）  
+s11                 3000           0           2100-3000      5 條（2–6 內）  
+s12                 2500           0           1750-2500      5 條（2–6 內）  
+decision       4000-5000        2916           2000-2084      3 條（2–6 內）  
+s14                 2000           0           1400-2000      5 條（2–6 內）  
+appA                1500         281            853-1219      5 條（2–6 內）  
+revlog               無上限           0                   —               —  無上限
+sources              無上限           0                   —               —  無上限
+
+商業本質(s3-s7)含表格≥45%提示：目標整檔≈100KB × 45% ≈ 45.0KB；已知表格bytes=4489B；至少需散文≈40.51KB
+建議條列數是提示不是硬性 gate（v19 條列風格＋段尾 .mach 小字通常遠低於上面 bytes 區間的舊制上界，見本檔 _suggest_bullets 註解）；每段仍以「2–6 條、寧可多條短的不要少條長的」為準繩，實際條數依證據深淺增減。
+```
+
+---
+
+## ⑥ 數字白名單（動筆前逐字複製，不要自己心算或重新排版衍生新數字；只收 judgment 數字，理由見程式註解）
+
+```
+−45
+−45%
+−30
+−30%
+0.08
+0.16%
+0.31
+0.33
+0.40
+0.47%
+0.5
+0.63
+0.7%
+0.75
+0.76
+0.76%
+0.87%
+0.9
+1%
+1.00
+1.0%
+1
+1.09
+1.1%
+1.15%
+1.19%
+1.19
+1.25%
+1.25
+1.26%
+1.26
+1.35%
+1.42%
+1.44%
+1.5%
+1.54
+1.57
+1.58
+1.64%
+1.67%
+1.7%
+1.72
+1.79
+1.8
+1.93
+2.0
+02
+2
+2.00%
+2.2
+2.48
+2.58
+2.64%
+2.64
+3
+03
+3%
+3.6
+3.7
+3.9
+3.9%
+04
+4
+4.12%
+4.4
+4.7%
+5
+05
+5%
+5.3
+5.4%
+5.5
+06
+6
+6%
+6.1%
+6.2
+6.3
+6.5%
+6.7
+07
+7
+7%
+7.0
+7.2%
+7.23
+7.53
+7.83
+08
+8%
+8
+9%
+9
+9.2%
+9.9%
+10
+10%
+10.01
+10.8%
+10.8
+10.9%
+10.95
+11
+11%
+11.12
+11.26
+11.4
+11.5%
+12%
+12
+12.05
+12.5%
+12.55%
+12.56
+12.80
+12.8%
+12.90
+12.9
+13
+13.00
+13.1%
+13.2
+13.4
+13.5
+13.6%
+13.7
+13.98
+14.00
+14%
+14
+14.06
+14.2
+14.3
+14.8
+15%
+15.4
+15.61
+15.85
+16%
+16.9
+17
+17%
+17.14
+17.45
+18
+18%
+18.5
+19%
+19
+19.05
+19.2
+19.33
+20%
+20
+20.65
+21
+21.06
+21.63
+21.7
+22%
+23%
+23.5
+24
+24%
+24.40
+24.4
+25
+25%
+26%
+26
+26.2%
+28
+28%
+30
+30%
+31.59%
+33%
+34%
+35%
+35
+35.4%
+40
+40%
+41
+42
+43%
+44.7
+45.25
+48.6%
+48.62
+49
+50
+50%
+52
+60%
+60
+70
+70.9%
+75%
+90
+92%
+100
+100%
+104
+127
+130
+150%
+155
+157
+180.24
+182
+200%
+200.68
+201
+219
+220
+231
+232
+233
+253
+256
+271.72
+272
+275
+322
+340
+398
+400
+423
+500
+512.4
+626
+628
+675
+2023
+2025
+2026
+2027
+2028
+2029
+2032
+20261108
+2,348
+2,542
+2,900
+3,430
+```
+
+---
+
+## ⑦ C-1 機械段（已由腳本生成，禁止散文 agent 撰寫或覆寫）
+
+已生成：（無，prepare 步驟可能未跑機械段）
+`decision` 段仍由你撰寫，但段落內 `<!-- E12 -->` 標記之後會由系統自動接一句機械說明（觸發器見上表、重啟條件），你不需要、也不應該自己寫這句話。
+
+---
+
+## prose_card.md（散文卡）
+
+<!-- source: .claude/skills/stock-analyst/references/v16/render-rules.md sha256:5c3eb1d20588e8d5 git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+
+# DD v20 散文卡
+
+## 0 任務
+你是v20散文agent，標的{ticker}（{date}）。判斷已由judge定案，你不判斷、不改judgment.json，只把thesis/moat/scenario_inputs/counter_evidence/decision_inputs五塊鋪成外資報告白話條列。工具只有Write，上限6輪，無Bash、無補寫輪：一次寫對，寫壞即FAIL。[design§4.4]
+
+## 1 章節順序（＊=機械已生成，禁止重寫）
+頁首儀表板＊→s1→s2→s3→s4→s5(§5.R/§5.F)→s6(§6.I)→s7→s8→s85(條件)→s9→s10→s11→s12→decision(§13)→s14＊→appA＊→appB＊(條件·循環)→appC＊(條件)→revlog＊ [render§1][render§2b]
+五承重子模組標題字樣固定不可省併：§5.R報酬持續期檢核／§5.F對手財務深度對照／§6.I分部前瞻／§3.F／§9.D。[render§0.1][render§7]
+內部下筆順序：archetype→s2→s3→s4→s5→s6→s7→s8→s9→s10→appA→(appB)→s11→s12→decision→s14→s1→頁首（後兩者回頭補）。[render§1]
+
+## 2 篇幅預算（數字原文照抄；**下限是硬閘，寫短直接 FAIL、沒有補寫輪**）
+全檔75–105KB(~100KB)，含s85上界115KB，**hard floor 70KB，低於直接FAIL不補寫**[design§4.4]。**散文本體(s1-s12+decision，不含表格)合計≥20KB；s5≥3KB、s3/s4/s6/s12≥1.5KB、s7/s10≥1.2KB**，低於任一即FAIL。**不得心算衍生數字**(季增幾個百分點、差值、比率都算新數字)，只用白名單裡的原數。實測警訊：2026-09-16 TXN 首跑只寫了 21KB 被擋，每條條列要把 judgment 的推導、數字、反方依據都鋪出來，不是一句話帶過。[run.py _gates_v20]Part I≥60%／商業本質(s3-s7)≥45%／估值(s10+appA)≤6.5KB／決策層(s11+s12+decision+s14)≤12KB／decision(s13)下限≥4KB／可見表格≤14張。[render§7][CLAUDE.md篇幅預算]
+衝突flag：prose.tmpl(09-11)曾取消整檔bytes硬擋、改純結構驗收；design§4.4(09-16)已恢復floor+FAIL。本卡以design§4.4為準。[prose.tmpl][design§4.4]
+
+## 3 每章寫什麼／judgment欄位／機械段
+sid：寫什麼(render§7省法) → 主要欄位
+s1：白話開場2-4句(這是什麼生意/為何此裁決/什麼會改變) → thesis
+s2：引子一段話，H1-H3表自證(E2標記注入不重寫) → thesis
+s3：市場空間+利潤池，E3保留解釋合併 → thesis(§3.F固定標題)
+s4：Munger門檻，E4自證 → thesis
+s5：核心，承重子模組留解釋餘自證 → moat
+s6：只留進裁決子區塊解釋 → moat(§6.I固定標題)
+s7：E9收斂為關鍵年+變化率 → moat(§7.E固定標題)
+s8：beat/miss+guidance變化 → thesis/counter_evidence
+s85：不砍，無上限(條件觸發才寫) → thesis
+s9：E10自證 → decision_inputs(§9.D固定標題)
+s10：只留裁決用的尺+E11情境樹 → scenario_inputs
+s11：矛盾點→裁定表 → counter_evidence
+s12：死法top3+MaxDD範圍，三視角(論點失敗／論點成功但股東經濟變差／價格已反映太多)各≥1條 → counter_evidence [prose.tmpl]
+decision：chip(進場#166534／觀望#92400E／迴避#991B1B)+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列(E12注入)，新資金／已持有／清倉／放寬四條各自獨立成`<li>` → decision_inputs [render§8][prose.tmpl]
+表格注入標記(放對位置，未放則程式退到段尾)：`<!-- E2 -->`→s2「B｜」`<h3>`之後(H1-H3表)｜`<!-- E11 -->`→s10(情境樹合一表)｜`<!-- AUDIT -->`→decision(決策矩陣檢核，須在E12之前)｜`<!-- E12 -->`→decision(監測與觸發器表)｜`<!-- APPA_TABLE -->`→appA。[render§2]
+機械禁寫：頁首儀表板(五卡/24格/改變主意三條)、s14、appA、appB、appC、revlog、全部E1-E12表格本體——你只放對應注釋標記，表格內容不寫。[render§2b][prose.tmpl]
+欄位對映非精確schema：v20 judgment.json只五塊，比舊版(growth/valuation/contradictions/premortem/decision_out分field)粗，上表為粗配對；找不到對應內容以thesis/moat兜底，不得外推新數字。[design§4.2]
+
+## 4 動筆方式（2026-09-16 改：不預演全文）
+動筆前只列一張大綱：每章一句主張、要用到的白名單數字各列出來。列完就寫，**不要在腦中把全文先寫一遍**，每章寫完就交，不回頭改。**Write是唯一寫入動作，禁止先寫短稿再加字湊篇幅、禁止逐輪加字**。某段低於下界先查對應judgment欄位有沒有推導漏寫，不是灌水填充句。表格觸發leaks/標點問題，不得自行改表格檔。[render§0 改寫]
+v20無Bash、無check_cmd、無FAIL後重寫一輪的機制——寫完即交卷。篇幅、數字白名單、禁用詞、標點由程式閘驗，不必自我核對。[design§4.4]
+
+## 5 口吻與禁令
+外資報告：白話、深入淺出、結論先行、能條列就條列。固定形狀：`<h2>標題`+`<p class="lead">`一句結論(≤40字)+`<ul class="pts"><li>`3-6條(每條一件事，80-200字，句號收尾，**整份不得出現「；」**，一句一個動詞)。**不要寫任何機器代號小字**(signal/val/row/moat 燈號等會被機器語言閘擋下)。[prose.tmpl][zh]
+
+AI痕跡(看到就改)：
+1.對比句「不是A是B／這就是」一頁最多一次，其餘直述具體主詞、不用抽象名詞(寫「銀行放款」不寫「主導因子」)。
+2.每句一個主數字；括號排名只在是重點時寫成中文；t/p值/n只留計分卡與論點第一條。
+3.不括號套括號、不用「——」「；」串子句——一句一動詞一個意思；「詳見」每條最多一個放句尾。
+4.刪自我說明句(本頁不對…／值得注意的是)；三段最多一段收結論句，其餘講完事實就停。
+5.有幾個講幾個不湊三個一組；一段最多兩個粗體，只給主張裡最重要的數字。
+6.英文縮寫第一次中文+原文、第二次只用中文；中文與數字間半形空格，標點全形。
+7.不用比喻(吹出/煞車/天花板等)，直述事實，引述原話例外。[zh-analyst-prose§一]
+
+機器語言洩漏(禁渲染六類，render-rules§5)：①自我稽核紀錄(校驗紀錄/Guardrail✓✗)②機械三段顯示過程③skill機制詞(硬接線/(必填)/(防X教訓)/(QC-XX))④dd-meta路由/一致性註記⑤給自己看的提醒⑥章節標題不帶原始編號括注。判準：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」。`<``>`比較符一律`&lt;``&gt;`。[render§5][render§8]
+裁決單一居所：統一裁決只完整陳述於頁首+decision段，其餘章節提及僅一行「見§13」，禁止重述數字組合。[render§6]
+
+呈現硬規則：正文承重數字須能在judgment.json追溯(原樣或四捨五入到小數點後1位)，§x.y／E1-E12／H1-H3／R1-R3／#n／FYxx／Qx等代號與4位數年份／≤12小整數不算新數字，不得心算外推出新數字。不寫流程對帳句(「自查發現X」「我跑了驗證」)，只渲染結論本身。同一結論性數字只在首次出現處寫全，其餘章節「見§X」引用不重貼。佔位文字(「（略）」「TODO」「待補」整段)一律不算寫完。[render§3][render§7][prose.tmpl]
+
+## 6 輸出格式
+每章一片段：獨立一行`<!-- SID:sX -->`，緊接完整外層元素`<section id="sX"><h2>N　標題</h2><p class="lead">…</p><ul class="pts">…</ul><div class="mach">…</div></section>`(decision用`id="decision"`)。只有Write+6輪，比照prose.tmpl分兩批：Write→{prose_a_path}(s1-s7)、Write→{prose_b_path}(s8-s12+decision，s85觸發併入b)。兩次Write完成，不逐段個別開檔。程式讀SID標記切成`prose/{sid}.html`。[prose.tmpl][render§1]
+
+
+---
+
+## ②c 理由文字禁用詞表（QC-40 機器語言，命中任一＝FAIL；這些是給程式看的代號，不是給讀者的話）
+
+以下為 regex 原文，逐條避開（含變體）：
+
+`row ?\d`　`Hard Veto`　`Soft Veto`　`signal ?[ABCX]\b`　`估值燈`　`val ?[🟢🟡🟠🔴]`　`MA ?[✅❌🟢🟡🟠]`　`Pure MA`　`盲點 ?\d`　`PREREG`　`dd-meta`　`runway_post_y5`　`capalloc`　`QC-\d`　`archetype`　`metadata`　`硬接線`　`接線[:：]`　`Guardrail`　`校驗紀錄`　`判定規則`　`\bgate\b`　`\bF2\b`　`row 8[ab]`　`爆發候選路徑`　`循環衛星進場路徑`
+
+改寫原則：說結論本身，不說「燈號／閘／row／QC／驗算」這類流程代號。例：「估值燈色不變」→「估值結論不變」；「row 8a」→ 直接寫進場條件本身，不用路徑代號。
+
+---
+
+## judgment 投影視圖（dd_project.view_for，緊湊 JSON）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"CAH","date":"2026-11-08","schema":"v15.0","contract":"v19","company_name":"Cardinal Health"},"oneliner":"CVS 續到 2032 年、財測再上修，生意比半年前更穩；但股價已由 201 美元漲到 272 美元，倍數由約 17 倍升到 21 倍。基本面沒壞，五年年化報酬只剩約 7%，等 232 美元以下再買。","thesis":{"H":[{"id":"H1","text":"Pharma 部門利潤成長能吸收 CVS 等大客戶續約讓利，靠專科與學名藥量維持高於 9% 的年增","2y":"FY27 年增 10–12%，FY28 不低於 9%","5y":null,"10y":null,"threshold":"FY27 全年 Pharma 部門利潤年增 ≥10%；FY28 ≥9%；部門利潤率維持在 1.15% 以上（FY27 Q1 1.25%，FY26 約 1.19%）","source":"公司季報新聞稿、法說與 10-K","drift_rule":"TTM 偏離門檻 ≥5% 連 2 季削弱，≥10% 連 3 季反轉"},{"id":"H2","text":"Other 三個事業與專科接棒成為第二成長曲線，五年後降低對傳統配送的依賴","2y":null,"5y":"Other 占三部門利潤由 19% 升到 25% 以上，專科營收維持雙位數年增","10y":null,"threshold":"FY2031 Other 占三部門利潤 ≥25%；專科營收年增 ≥10%；專科營業利益占比為資料缺口，待公司揭露","source":"10-K 與 10-Q 分部揭露、法說","drift_rule":"TTM 偏離門檻 ≥5% 連 4 季削弱，≥10% 連 6 季反轉"},{"id":"H3","text":"CVS 與 Red Oak 的關係穿越 2028 年 CVS 分拆與 2029 年合資到期，合約基礎不變","2y":null,"5y":"CVS 正式合約持續至 2032-06-30，Red Oak 展延到 2029 年之後","10y":null,"threshold":"前五大客戶營收占比 ≥40%（FY2026 43%）；CVS 服務範圍不變；Red Oak 於 2029 年到期前完成展延","source":"10-K、8-K 與法說","drift_rule":"CVS 正式合約未在 2027-06-30 前完成視同削弱；Red Oak 未展延或條款實質縮減即反轉"},{"id":"H4","text":"GMPD 改善計畫把部門利潤拉回，關稅與品質問題不再拖累","2y":"FY27 部門利潤 2.0–2.2 億美元，FY28 高於 FY27","5y":null,"10y":null,"threshold":"FY27 ≥2.0 億美元（FY2026 扣退款約 1.58 億）；FY28 年增為正","source":"公司季報與法說","drift_rule":"TTM 偏離門檻 ≥5% 連 2 季削弱，≥10% 連 3 季反轉"}],"R":[{"id":"R1","text":"續約讓利比指引假設更重，Q2、Q3 放緩不只是時點；CFO Aaron Alt 2026-11-05 的時點解釋未證","h_ref":"H1","clock":"⚡","threshold":"FY27 Q2、Q3 Pharma 部門利潤年增率連兩季 <6% 則減碼；Q4 未回到 12% 以上，時點解釋視為不成立","evidence_refs":["customer_second_source#0","customer_concentration_credit#0"]},{"id":"R2","text":"關稅與成本轉嫁失敗：GMPD 的替代關稅、品牌藥關稅與學名藥 2028 年起 100% 的聲明","h_ref":"H1","clock":"🔥","threshold":"GMPD FY27 部門利潤 <2.0 億美元；或學名藥關稅實施後 Pharma 部門利潤率連兩季 <1.15%","evidence_refs":["reg_tariff_export#0","reg_tariff_export#2","reg_tariff_export#3","reg_tariff_export#4"]},{"id":"R3","text":"新商業模式、藥廠直配或新進者削弱配送環節分潤；CEO Jason Hollar 2026-08-11 說配送模式會演變，2026-11-05 改為強調核心配送耐久，兩次都沒給量化指標","h_ref":"H3","clock":"🐢","threshold":"TTM 營業利益率對 MCK 的差距擴大到 60 基點以上（現 41 基點），或前五大客戶占比跌破 40%","evidence_refs":["competitive_share_entrants#0","substitute_technology#0","channel_business_model_shift#0"]},{"id":"R4","text":"法律與監管：司法部 2023-11 起的反回扣民事調查涉及 MSO 與 GPO 少數股權交易，IVC 濾器訴訟續辯（應計 2,900 萬美元）","h_ref":"H2","clock":"🐢","threshold":"轉刑事則清倉；民事提告或和解逾 5 億美元則減碼；受影響營收事實表未涵蓋","evidence_refs":["regulatory_antitrust#0","major_events#0","lawsuit_class_action#0"]},{"id":"R5","text":"GMPD 品質與供應商合規：中國代工針筒的 FDA 警告信、酒精棉片召回，可能迫使營運調整","h_ref":"H4","clock":"🔥","threshold":"12 個月內再出現涉及 GMPD 主要產品的 FDA 警告信或全國召回，停止加碼","evidence_refs":["geo_supply_chain#0","geo_supply_chain#1","major_events#3","product_recall_warning#0"]},{"id":"R6","text":"MSO 併購撐成長但報酬不明，整合失誤或高價收購會吃掉現金","h_ref":"H2","clock":"🔥","threshold":"FY28 起有機 Pharma 部門利潤年增 <7% 且併購支出續增，或單筆併購逾市值 5% 且未揭露報酬目標","evidence_refs":["ma_merger#0"]}],"single_thing":{"description":"Red Oak 合資在 2029 年到期前未能展延，或 CVS 2028 年分拆時條款被實質縮減。","why_fatal":"財務長 2026-08-11 說學名藥轉換的獲利較佳，Red Oak 是學名藥採購規模的來源；CVS 配送已鎖到 2032 年，剩下未決的最大單一事件就是這份獨立合約。學名藥利潤占比事實表未涵蓋，無法給精確金額，CVS 占營收 28% 只能當影響範圍參考。","if_happens":"採購成本優勢縮水，Pharma 部門利潤率下滑，Base EPS 路徑失效。合資終止則清倉，條款實質縮減則減碼一半並重算情境。","how_monitor":"每季法說與 8-K。CEO 2026-11-05 說會相對很快處理這份合約，若 2028-06 前仍無展延公告，列為警訊。","probability":"12–24 個月內約 5–10%"}},"appendix_a":{"growth_durability":7,"quality_score":7,"ai_risk":"🟢","long_term_confidence":"中","fpe_fy2":19.33,"peg_fy2":1.54,"stress":{"pass":null,"total":null}},"eps_meta":{"base_eps_path":{"FY2026A":10.95,"FY2027E":12.56,"FY2028E":14.06,"FY2029E":15.61},"fy_end_month":6,"eps_basis":"非 GAAP 稀釋 EPS；FY2026A 用排除一次性關稅退款後的 10.95（公告值 11.26）；FY2027E–FY2029E 為 2026-11-07 Koyfin 共識，FY2027E 是財報前快照，已低於公司新指引 12.80–13.00；EPS 預估家數事實表未涵蓋。"},"scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/CAH_20261108/scenario.json","archetype":{"primary":"品質複利成長","secondary":"受監管公用/穩定內需","confidence":"中","fingerprint":"三強寡占配送，低利益率、現金流充裕，管理層長期 EPS 年增目標 12–14%，需求受醫療剛性支撐"},"industry":{"clock_phase":"II","sd_verdict_source":"結構性持久：擴張期依據是專科單位需求與學名藥量，FY27 Q1 專科年增 18%、學名藥量略高於長期目標，未見供給過剩；來源為 2026-11-05 法說財務長發言與 FY2026 10-K。","bargaining":{"up":"品牌藥價格由藥廠決定，配送商靠服務費與採購量賺差價；學名藥端透過 Red Oak 與 CVS 合組採購，議價力較強。","down":"CVS 占營收 28%、前五大 43%，買方集中，續約時會要價；FY27 指引已納入 CVS 續約影響。","geo":"地理營收占比事實表未涵蓋；CEO 2025-07 稱約一成產品來自中國，關稅與供應商合規風險集中在 GMPD。"},"profit_pool_dir":"利潤往專科、學名藥採購和 Other 三個事業移動；FY27 Q1 Other 占三部門利潤 19%。五年歷史占比事實表未涵蓋。","tam_table":{"expanded":false,"reason":"事實表未涵蓋 TAM、滲透率與五年營業利益池占比，無法展開；成長判斷改用分部利潤拆解。"}},"moat":{"mechanism":"全國配送規模加上 Red Oak 學名藥聯合採購，形成三強寡占與只在合約到期時才發生的轉換成本。","execution":8,"pricing":6,"grade":"B","trend":"→","trend_evidence":"執行面穩定偏強：近 12 個月續下近三分之二營收，Pharma 與 GMPD 各前兩大客戶都續約。定價面穩定：10-K 自述持續有定價壓力，續約影響已進指引，但 IRA 標價調整未傷利潤。兩面都沒有變寬的數字證據，份額與同業 ROIC 差距事實表未涵蓋，所以標穩定。","peer_na_reason":"同業 ROIC 與投入資本事實表未涵蓋，以營業利益率與 FCF 利潤率代替。","threats":[{"level":"🟡","text":"新商業模式、藥廠直配與新進者：10-K 列為風險，但未揭露份額或具名對手；2026-08-11 CEO Jason Hollar 也說配送模式會演變。","p":"15%","evidence_refs":["competitive_share_entrants#0","substitute_technology#0","channel_business_model_shift#0"]},{"level":"🟡","text":"客戶集中：CVS 占營收 28%、應收帳款毛額 22%，前五大 43%；CVS 2028 年分拆後議價主體會變。","p":"20%","evidence_refs":["customer_second_source#0","customer_concentration_credit#0"]},{"level":"🟡","text":"關稅進入藥品供應鏈：品牌藥關稅已公告，學名藥 2028 年 100%、2029 年 200% 的聲明若實施，會改變採購成本和學名藥供給。","p":"25%","evidence_refs":["reg_tariff_export#3","reg_tariff_export#4"]}],"roic_durability":{"quadrant":"低利益率×高周轉（周轉率未量化：投入資本與營運週轉天數事實表未涵蓋）","checkpoints":[{"item":"需求基礎值","level":"🟢","text":"使用者是病人，決策者是處方醫師，付款者是保險和政府，三者都成立。用藥延後代價高，FY27 Q1 專科年增 18%，學名藥量略高於長期目標。藥要送到是不變的問題，目前解法是三強配送，短期沒有替代。GLP-1 需求 10-Q 自稱難預測，但對部門利潤本來就沒有實質貢獻。"},{"item":"決策層級","level":"🟡","text":"替代性要在整個連鎖或院所網絡的合約層級看。三家全國配送商都能接單，買方一次決定就能搬走大量營收；10-K 提到客戶整併可能從兩家留一家。代理讀數：CVS 合約延到 2032-06-30，近 12 個月續約近三分之二營收且多為長約。漲價後流失率與分客群續約率事實表未涵蓋。"},{"item":"價值鏈分配","level":"🟡","text":"配送環節只拿 TTM 3.9% 毛利、1.26% 營業利益，上游藥廠定價、下游 CVS 占 28%，兩頭都強。IRA 標價調整扣營收約 400 基點，管理層稱對利潤沒有不利影響，報酬機制目前守得住。Red Oak 讓學名藥端有議價力，但合約 2029 年到期，尚未展延。"},{"item":"社會容忍度","level":"🟡","text":"藥價政治敏感，IRA、340B、OPPS 都在變動，CEO 2026-11-05 稱政策影響多在醫療服務提供端，對公司屬第二層影響。配送商整體利潤率約 1%，不是藥價爭議的主要目標，但持有 MSO 後直接暴露在給付政策和反回扣調查。CEO 沒有量化 340B 的量移轉。"}],"roiic":"事實表未涵蓋","reinvest_rate":"事實表未涵蓋","endo_ceiling":null,"formula_note":"內生成長率＝增量 ROIC×再投資率。折舊、營運資金變動與投入資本都不在本包，只知 FY27 資本支出約 7 億美元、Solaris 約 19 億、Strive 與 AdaptHealth 糖尿病業務約 3.6 億，不足以計算，不推估，所以上界留空。共識對照改用拆解：三年 EPS 年化 12.5%，營收約 5.4%（FY1 到 FY2 為 6.1%），淨回購約 0.9 點，兩項合計 6.3–7.0 點，其餘 5.5–6.2 點要靠利潤率擴張、稅率和併購，其中併購不屬內生。共識是否超過內生上界無法確認，所以情境保守處理：Base 年化 9.9%，低於共識；Bear 機率 30%，理由之一就是這個缺口。"},"combined":7.0,"score":7.0,"spread_table":[{"metric":"毛利率","CAH":3.9,"MCK":3.67,"COR":4.12,"HSIC":31.59,"period":"TTM ending 2026-09-30（4季加總）","unit":"%"},{"metric":"營業利益率","CAH":1.26,"MCK":1.67,"COR":1.44,"HSIC":5.79,"period":"TTM ending 2026-09-30（4季加總）","unit":"%"},{"metric":"FCF 利潤率","CAH":1.9,"MCK":1.64,"COR":0.47,"HSIC":3.64,"period":"TTM ending 2026-09-30（4季加總）","unit":"%"}],"competitors":[{"name":"MCK","gm":3.67,"om":1.67,"fcf_margin":1.64,"strategy_note":"TTM 營業利益率 1.67%，三強最高，FCF 利潤率 1.64%；法說中分析師提到其往臨床試驗延伸，與 CAH 重押 MSO 和居家的路線不同。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"COR","gm":4.12,"om":1.44,"fcf_margin":0.47,"strategy_note":"毛利率 4.12% 三強最高，營業利益率 1.44%，但 TTM FCF 利潤率只有 0.47%，現金轉換三強最低。","period":"TTM ending 2026-09-30（4季加總）"},{"name":"HSIC","gm":31.59,"om":5.79,"fcf_margin":3.64,"strategy_note":"毛利率 31.59%，遠高於藥品配送三強，產品結構不同，不列入同層對照。","period":"TTM ending 2026-09-30（4季加總）"}]},"growth":{"driver_mix":"量（專科與學名藥單位）為主，併購次之，回購淨貢獻約 0.9 點，藥價幾乎沒有貢獻。","runway_years":"事實表未涵蓋滲透率，無法推算","runway_post_y5":"🟡","endo_ceiling_basis":"投入資本、折舊與營運資金變動事實表未涵蓋，內生上界無法計算；改以營收、淨回購和利潤率拆解共識成長。","segments":[{"item":"Pharma","value":"FY2026 營收 2,348 億美元（+15%），部門利潤 28 億（+23%）；FY27 Q1 營收 626 億（+6%），利潤 7.83 億（+17%）；FY27 指引營收 +3–5%、利潤 +10–12%。"},{"item":"GMPD","value":"FY2026 營收 127 億（+1%），部門利潤 2.58 億，扣 1 億退款約 1.58 億；FY27 Q1 利潤 0.33 億；FY27 指引 2.0–2.2 億，管理層稱偏向下緣。"},{"item":"Other","value":"FY27 Q1 營收 18 億（+7%），利潤 1.93 億（+16%）；FY27 指引營收 +12–14%、利潤 +17–20%；占三部門利潤 19%。"}],"decay_signals":[{"item":"毛利率連 2 季年減","lit":false,"note":"Q1 毛利年增 12%，快於營收 5%"},{"item":"核心市占近 12 個月縮減","lit":false,"note":"未見流失；市占數字事實表未涵蓋"},{"item":"主力產品提價後銷量下滑","lit":false,"note":"配送商不主導藥價，不適用"},{"item":"EPS CAGR 高於營收 CAGR 逾 5 點","lit":true,"note":"共識三年 EPS 12.5% 對營收約 5.4%，差約 7 點"},{"item":"FCF／淨利連 2 年低於 0.75","lit":false,"note":"FY2025 1.19 倍、FY2026 2.64 倍"},{"item":"SBC／營收逾 5% 且上升","lit":false,"note":"Q1 約 0.16%"},{"item":"TAM 萎縮或被替代技術壓縮","lit":false,"note":"10-K 未點名替代技術"},{"item":"產業倍數近 3 年系統性下移","lit":false,"note":"本檔倍數上移；同業倍數事實表未涵蓋"},{"item":"維護性資本支出占 FCF 逾 60%","lit":false,"note":"FY27 資本支出約 7 億美元，約為調整後自由現金流指引的兩成，且未區分維護性"},{"item":"停止投資新產能且收入 3 年內下滑","lit":false,"note":"St. Louis、Sacramento 新設施在建"}],"trap_rating":"🟡"},"quality":{},"governance":{"capital_returns":[{"item":"FY2026 回購","value":"13.5 億美元"},{"item":"FY27 Q1 回購","value":"5 億美元加速回購"},{"item":"FY27 回購承諾","value":"至少 10 億美元，董事會新增授權 50 億美元"},{"item":"FY27 Q1 股息","value":"約 1.25 億美元"},{"item":"FY27 資本支出","value":"約 7 億美元"},{"item":"近年併購","value":"Solaris 約 19 億美元（約 75% 股權，宣布於 2025-08）；Strive 與 AdaptHealth 糖尿病業務約 3.6 億美元"}],"capalloc_grade":"B","scorecard":[{"year":"—","action":"ma_roiic","rationale":"Solaris 約 19 億美元、Strive 與 AdaptHealth 糖尿病業務約 3.6 億美元；2026-11-05 財務長稱 Solaris 結果至少符合商業計畫，但增量利潤與投入資本數字事實表未涵蓋。","grade":"不過"},{"year":"—","action":"buyback_yield","rationale":"FY2026 回購 13.5 億美元，FY27 Q1 加速回購 5 億；均價與 10 年期殖利率事實表未涵蓋。以現價算盈餘收益率約 4.7%（指引中值 12.90 除以 271.72）。","grade":"不過"},{"year":"—","action":"sbc_dilution","rationale":"Q1 SBC 占非 GAAP 營業利益 10.9%，約 1.09 億美元，年化 4.4 億，除以市值 628 億約 0.7%，低於每年 1.5%；FY27 稀釋股數指引 231–232 百萬股，低於 Q1 的 233 百萬股。","grade":"過"}]},"valuation":{"basis":"Fwd P/E 與 PEG，起點用 FY2027 指引中值 12.90","tier":"藥品配送三強","peers":{"expanded":false,"reason":"事實表只有同業利潤率，沒有同業倍數，不得自行補值；終端倍數只能對照本檔現值與前份當時倍數。"},"fwd_pe":21.63,"peg":1.72,"percentile_5y":null,"val_light":"🟠","val_light_derivation":"21 倍對 PEG 1.72 本身不算離譜，偏貴來自三點：Base 年化約 7%，低於 8%；上下檔比約 1.8 倍，低於 2；半年內倍數升約 26%，盈餘只上修約 7%。","upside_short_pct":5.3,"upside_mid_pct":10.8},"trap_analysis":{"verdict":"🟡","label":"價值陷阱風險低至中：十項衰退信號亮一項，共識 EPS 年增比營收快約 7 點"},"premortem":{"blind_spots":[{"view":"論點失敗","evidence":"CVS 占營收 28%、前五大 43%，10-K 稱客戶整併可能從兩家供應商只留一家；Red Oak 是獨立合約，CEO 2026-11-05 說還有工作要做；CVS 2028 年分拆。","assumption":"分拆後的 CVS 零售仍把配送和學名藥採購都留給 Cardinal。","consequence":"五年虧 50% 最可能的路徑：Red Oak 破局，Pharma 部門利潤率跌破 1.0%，EPS 停在 13–14 美元，倍數掉到 10–11 倍，股價落在 130–155 美元。","ruling":"反駁但保留：CVS 剛以具約束力意向書延到 2032 年，短期不太可能發生；與 Single Thing 同一路徑，不另立。","watch":"CVS 正式合約、Red Oak 展延公告。","evidence_refs":["customer_second_source#0","customer_concentration_credit#0","competitive_share_entrants#0"],"fact_refs":["f_price_at_dd"]},{"view":"論點成功但股東經濟變差","evidence":"專科靠 MSO 併購：Solaris 約 19 億美元，CEO 說還會再整併，司法部的反回扣調查正是針對 MSO 和 GPO 的交易；FY27 Q1 非 GAAP 與 GAAP 營業利益差 2.48 億美元，占非 GAAP 約 25%。","assumption":"併購報酬高於資金成本，非 GAAP 排除項不會常態化。","consequence":"EPS 達標，但現金被併購吃掉，GAAP 盈餘追不上，市場給的倍數下移。","ruling":"採納為觀察項：報酬數字揭露前，併購不計入護城河加分。","watch":"併購金額、增量利潤揭露、GAAP 對非 GAAP 比率、司法部調查進度。","evidence_refs":["regulatory_antitrust#0"],"fact_refs":["f_kpi1_non_gaap","f_kpi2_gaap"]},{"view":"論點成功但股東經濟變差","evidence":"GMPD 持續承受替代關稅成本且調價未完全抵銷；品牌藥關稅已公告，學名藥 2028 年起的關稅聲明仍不確定；OPPS 的 340B 給付規則 2026-11-04 晚間定案，CEO 說現在預測量的移轉還太早。","assumption":"成本能轉嫁，流出醫院的量會按市占回到公司的其他通路。","consequence":"營收成長維持，但利潤率被關稅或給付變動侵蝕。","ruling":"不採信也不否定，標為未證、監測。OPPS 規則不足一季，尚未看到反映在賣方模型的證據，首個財報數據出來前不加碼。","watch":"FY27 Q2 Pharma 部門利潤率與醫院客戶量；GMPD 全年利潤是否低於 2.0 億美元。","evidence_refs":["reg_tariff_export#0","reg_tariff_export#2","reg_tariff_export#3","reg_tariff_export#4"],"fact_refs":["f_kpi6_fy2027_non_gaap_eps"]},{"view":"價格已反映太多","evidence":"26 週上漲 48.6%，現價比 52 週均線 219 美元高 24%，倍數半年內由約 17 倍升到 21 倍；8 月平均目標價 253 美元、最高 275 美元，現價高於平均，但目標價是財報前資料。","assumption":"21 倍的定價要公司五年都達成 12–14% 目標。","consequence":"任何一季放緩都可能讓倍數回到 18 倍，股價約 232 美元，跌 15%。","ruling":"採納，這是本次不追的主因；管理層已預告 Q2、Q3 放緩。","watch":"FY27 Q2、Q3 Pharma 部門利潤年增率與財報後賣方上修幅度。","evidence_refs":["capital_markets_pricing#3"],"fact_refs":["f_week26_return_pct","f_ma_w52","f_fwd_pe_latest"]}],"max_dd":{"lo":-45,"hi":-30,"path_risk":"🟡"}},"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 ✅ → 本次 🟡","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=✅","side_b":"本次 ma=🟡","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；此欄變動屬方法變動，不是基本面新證據。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 200.68 → 本次 271.72（+35.4%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=200.68","side_b":"本次 price_at_dd=271.72","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 200.68 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 200.68 美元：五年期望值 前份未列，基準年化 前份未列，前份未列不對稱比","side_b":"本次情境、股價仍用 200.68 美元：Bull 價 512.4、Bear 價 182，五年期望值 +70.9%，基準年化 13.1%，不對稱比 11.12","ruling":"先換情境、股價不動：五年期望值與基準年化前份未列，無法比較。前份未列不對稱比，本次為 11.12。Bull、Bear 價位與股價無關，只受情境影響。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 200.68 美元：五年期望值 +70.9%，基準年化 13.1%，不對稱比 11.12","side_b":"本次情境、股價 271.72 美元：五年期望值 +26.2%，基準年化 6.5%，不對稱比 1.79","ruling":"再換股價、情境不動：起點價上漲 35.4%，五年期望值少 44.7 個百分點，基準年化少 6.7 個百分點，不對稱比由 11.12 降到 1.79。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"續約是護城河證明還是讓利","cause":null,"prior_field":null,"side_a":"2026-11-05 CEO Jason Hollar：近 12 個月續約涵蓋近三分之二企業營收，CVS 延到 2032 年。","side_b":"2026-11-05 CFO Aaron Alt：FY27 原始利潤指引已大致納入 CVS 續約影響，Q2、Q3 放緩部分來自續約時點。","ruling":"可調和，差別在程度：客戶留下來了，價格也讓了一些。護城河判穩定，不判變寬。管理層的時點解釋未證，列入監測。","evidence_level":"公司法說，尚無逐客戶利潤數字","settle_metric":"FY27 Q2、Q3、Q4 Pharma 部門利潤年增率","if_then":["若 Q2、Q3 連兩季低於 6%，減碼一半","若 Q4 未回到 12% 以上，時點解釋不成立，停止加碼","若 Q4 回到 12% 以上，時點解釋成立，維持原判斷"],"evidence_refs":["customer_second_source#0","customer_second_source#1"]},{"axis":"學名藥量的說法三個月內轉強","cause":null,"prior_field":null,"side_a":"2026-08-11 CEO Jason Hollar：FY27 學名藥量成長仍未到 2–3% 區間。","side_b":"2026-11-05 CFO Aaron Alt：學名藥量成長略高於長期目標。","ruling":"可調和但要看持續性：只有一季，FY27 指引以強勁需求延續為前提。2029 年起專利到期潮是第二個支撐，要到 FY29 才能驗證。","evidence_level":"公司法說","settle_metric":"FY27 Q2、Q3 法說對學名藥量的描述與 Pharma 部門利潤","if_then":["若下兩季學名藥量回到長期目標以下且 Pharma 利潤指引未上修，停止加碼"],"evidence_refs":[]},{"axis":"現在就買的最強論證","cause":null,"prior_field":null,"side_a":"共識 12.56 還沒更新，指引下緣 12.80 已高於共識；Q1 EPS 超預期約 11%，Pharma 利潤指引上修；CVS 鎖到 2032 年，2029 年起專利到期潮有利學名藥。","side_b":"指引中值計 21 倍，Base 年化約 7%，上下檔比約 1.8 倍；半年倍數升約 26%，管理層又預告 Q2、Q3 放緩。","ruling":"可調和，好生意與好價格是兩件事。限制條件只有價格，不追現價，232 美元以下才買。","evidence_level":"事實表與公司法說","settle_metric":"收盤價與 FY28 EPS 指引中值","if_then":["若股價續漲而 Pharma 部門利潤尚未驗證，不追","若股價跌到 232 美元以下且基本面門檻未觸發，分批反買，先買三分之一","反向條件：若 2027-08 FY28 EPS 指引中值 ≥14.2 美元且 Q4 Pharma 部門利潤年增 ≥12%，進場價上移到 256 美元後分批反買"],"evidence_refs":["capital_markets_pricing#0","capital_markets_pricing#1"]},{"axis":"歷史分位互相衝突","cause":null,"prior_field":null,"side_a":"Trailing P/E 在 4 個年度端點的分位 15.4，看起來便宜。","side_b":"P/S 與 EV/S 分位 100，看起來最貴。","ruling":"兩邊都不採用。4 個點不是五年分位，FY2023 GAAP EPS 只有 1.00，把過去的本益比墊高；營收分母又受 GLP-1 與 IRA 標價影響。","evidence_level":"程式計算，樣本 4 點","settle_metric":"連續五年前瞻本益比序列，事實表未涵蓋","if_then":["取得連續序列前，不以分位作為買賣依據"],"evidence_refs":[]},{"axis":"併購成長的增量報酬","cause":null,"prior_field":null,"side_a":"2026-11-05 CFO Aaron Alt：Solaris 結果至少符合商業計畫；CEO Jason Hollar 稱 MSO 還有整併機會。","side_b":"併購後增量利潤與投入資本都未揭露，增量報酬算不出來。","ruling":"不可裁決，要等公司揭露併購後增量利潤或事實表補齊投入資本。在此之前併購不列入護城河加分，長期信心上限為中。","evidence_level":"管理層說法，無數字","settle_metric":"併購投入金額與併購後部門利潤增量","if_then":["若 FY28 有機 Pharma 部門利潤年增低於 7% 且併購支出續增，停止加碼"],"evidence_refs":["ma_merger#0"]},{"axis":"前份漂移：股價帶動的估值變化","cause":"價格變動","prior_field":["signal","val"],"side_a":"前份股價 200.68 美元，估值中性，訊號評級 B。","side_b":"本次股價 271.72 美元，上漲 35%，倍數由約 17 倍升到 21 倍，估值轉為偏貴，訊號評級維持 B。","ruling":"漲幅中盈餘上修只占約 7%，主因是倍數擴張；評級不因上漲調升，也因基本面轉強而不調降。","evidence_level":"事實表","settle_metric":"股價除以 FY27 指引中值","if_then":[],"evidence_refs":[]},{"axis":"前份漂移：價值陷阱判斷","cause":"新證據","prior_field":["trap"],"side_a":"前份價值陷阱判斷為🟢。","side_b":"本次為🟡：共識 EPS 年增比營收快約 7 點，衰退信號亮一項。","ruling":"差距來自利潤率與稅率，指引上修的 0.40 美元中約 0.08 美元來自稅率下調 0.5 點；不是生意變差，但成長品質需要多打折。","evidence_level":"事實表與公司法說","settle_metric":"EPS 與營收成長差距、Pharma 部門利潤率","if_then":[],"evidence_refs":[]},{"axis":"前份漂移：前份未填欄位本次首度填入","cause":"方法變動","prior_field":["moat_trend","runway_post_y5","archetype","cycle_position","max_dd_pct","p_bull_pct","p_bear_pct"],"side_a":"前份這些欄位為空。","side_b":"本次首度填入：護城河方向穩定、五年後跑道中等、類型為品質複利成長、中循環、最大回撤 −30% 到 −45%、機率 20／50／30；裁決與角色由程式產生。","ruling":"屬格式與方法補齊，不代表基本面變動。各欄依據不同：護城河方向看續約與利潤率，五年後跑道看專科、MSO 和 Other 的接棒，類型與循環位置看三強寡占結構和專科、學名藥需求，最大回撤和機率是本次情境假設；前份沒有值，無從比較變動幅度。","evidence_level":"判斷輸出","settle_metric":null,"if_then":[],"evidence_refs":[]},{"axis":"行動門檻：清倉、減碼與重新進場條件","cause":"方法變動","prior_field":["kill_metrics","rearm_trigger"],"side_a":"前份未設清倉、減碼門檻與重新進場條件（欄位為空）。","side_b":"清倉：Red Oak 到期前未展延；減碼：Pharma 部門利潤年增率連兩季 <6% 或利潤率連兩季 <1.15%；重新進場：收盤 ≤232 美元且基本面門檻未觸發。","ruling":"新設門檻，232 美元約為 FY27 指引中值 18 倍，在此價位 Base 年化約 10.8%、上下檔比約 3.7 倍。","evidence_level":"本次情境推算","settle_metric":"收盤價、Pharma 部門利潤年增率與利潤率","if_then":[],"evidence_refs":[]},{"axis":"Single Thing 新設","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未設 Single Thing（欄位為空）。","side_b":"Single Thing：Red Oak 合資在 2029 年到期前未能展延，或 CVS 2028 年分拆時條款被實質縮減。","ruling":"CVS 配送合約已有具約束力意向書，Red Oak 是剩下未決的最大單一事件；具體利潤占比事實表未涵蓋。","evidence_level":"公司法說","settle_metric":"Red Oak 展延公告","if_then":["若終止，清倉","若條款實質縮減，減碼一半"],"evidence_refs":["customer_second_source#1"]},{"axis":"R1 門檻：由營收改看利潤（減碼條件）","cause":"新證據","prior_field":["R1"],"side_a":"季度 Pharma 營收 YoY 跌破 5%（暗示大客戶流失，已知 baseline ~9%）","side_b":"FY27 Q2、Q3 Pharma 部門利潤年增率連兩季 <6% 則減碼一半。","ruling":"舊門檻已失效：公司 FY27 指引就是營收年增 3–5%，IRA 標價調整扣掉約 400 基點，營收低於 5% 不代表客戶流失，改看利潤。","evidence_level":"公司法說與 FY27 指引","settle_metric":"Pharma 部門利潤年增率","if_then":[],"evidence_refs":["customer_second_source#0"]},{"axis":"R2 與 H2 門檻：利潤率基準修正（減碼條件）","cause":"方法變動","prior_field":["R2","H2"],"side_a":"連兩季 ≤ 1.35%（FY25 = 1.42%，跌 5bp 即削弱 H2）","side_b":"Pharma 部門利潤率連兩季 <1.15% 則減碼一半（FY27 Q1 1.25%，FY26 約 1.19%）。","ruling":"前份 1.42% 的基準對不上本次資料：以 FY2026 10-K 營收 2,348 億、年增 15%，利潤 28 億、年增 23% 回推，FY25 約 1.1%，FY26 約 1.19%，都低於 1.35%。照用舊門檻等於一直處於警戒，屬基準問題，不是利潤率惡化；前份口徑本包無法查證。","evidence_level":"10-K 數字回推，營收與利潤皆為四捨五入值","settle_metric":"Pharma 部門利潤率","if_then":[],"evidence_refs":[]},{"axis":"H1 與 R3 門檻：專科的驗證方式","cause":"方法變動","prior_field":["H1","R3"],"side_a":"FY28 Specialty OI 占比 ≥ 22%；Specialty 營收 YoY ≥ 18%；2027-2028 期間 Specialty 整體 YoY 連 4 季","side_b":"專科營收年增連 4 季 <10% 則削弱並停止加碼；專科營業利益占比維持為資料缺口。","ruling":"專科營業利益占比本包沒有揭露，保留指標但標資料缺口。營收年增門檻由 18% 降到 10%，依據是公司 FY27 指引的雙位數，且 Solaris 在 Q2 滿週年後基期變高。GLP-1 與生物相似藥的舊風險退休，因 10-Q 已說 GLP-1 對部門利潤沒有實質貢獻。","evidence_level":"公司法說與 10-Q","settle_metric":"專科營收年增率","if_then":[],"evidence_refs":[]},{"axis":"H3 門檻：客戶占比","cause":"新證據","prior_field":["H3"],"side_a":"Top 10 客戶占比 ≥ 60%（穩定）；FY25 10-K 揭露 5 大客戶占比 50%+","side_b":"前五大客戶營收占比 ≥40%（FY2026 43%）；CVS 服務範圍不變；Red Oak 到期前展延。","ruling":"前十大占比本包沒有，保留為資料缺口，改用 10-K 有揭露的前五大。前份的 50% 以上與 FY2026 的 43% 差距，本包無法判斷是客戶結構變動還是口徑不同。","evidence_level":"FY2026 10-K","settle_metric":"10-K 前五大客戶營收占比","if_then":[],"evidence_refs":["customer_concentration_credit#0"]}],"triggers":[{"n":1,"text":"FY27 Q2、Q3 Pharma 部門利潤年增率連兩季低於 6%，判定續約讓利超過預期。","type":"假設驗證","maps_to":"H1","metric":"Pharma 部門利潤年增率","threshold":"連兩季 <6%","action":"減碼一半並停止加碼","source_freq":"季報／每季","date":"2027-05","evidence_refs":["customer_second_source#0","customer_concentration_credit#0"]},{"n":2,"text":"關稅成本吸收失敗：GMPD 全年利潤低於指引下緣，或學名藥關稅實施後 Pharma 利潤率跌破門檻。","type":"風險","maps_to":"R2","metric":"GMPD 部門利潤、Pharma 部門利潤率","threshold":"GMPD FY27 <2.0 億美元；或 Pharma 部門利潤率連兩季 <1.15%","action":"停止加碼；兩條同時成立則減碼一半","source_freq":"季報／每季","date":"2027-08","evidence_refs":["reg_tariff_export#0","reg_tariff_export#2","reg_tariff_export#3","reg_tariff_export#4"]},{"n":3,"text":"Red Oak 未展延，或 CVS 分拆時條款被實質縮減。","type":"Single Thing","maps_to":"Single Thing","metric":"Red Oak 合約狀態","threshold":"2029 年到期前未展延，或條款實質縮減","action":"終止則清倉，縮減則減碼一半","source_freq":"法說與 8-K／不定期","date":"2029","evidence_refs":["customer_second_source#0"]},{"n":4,"text":"股價回到 232 美元以下，約 FY27 指引中值 18 倍，且基本面門檻未觸發。","type":"估值rearm","maps_to":"H1","metric":"收盤價與 Pharma 部門利潤年增率","threshold":"收盤 ≤232 美元，且第 1 條未觸發","action":"分批反買，先買三分之一","source_freq":"每日收盤","date":null,"evidence_refs":[]},{"n":5,"text":"FY27 Q4 財報確認放緩只是時點，且 FY28 指引 EPS 年增不低於 10%。","type":"加碼","maps_to":"H1","metric":"FY27 Q4 Pharma 部門利潤年增率、FY28 EPS 指引中值","threshold":"Q4 ≥12% 且 FY28 指引中值 ≥14.2 美元","action":"進場價上移到 256 美元後分批反買","source_freq":"2027-08 財報","date":"2027-08","evidence_refs":[]},{"n":6,"text":"股價達 FY27 指引中值 25 倍而利潤指引未同步上修，已持有者減碼。","type":"減碼","maps_to":"H1","metric":"收盤價除以 FY27 指引中值","threshold":"收盤 ≥322 美元且 Pharma 利潤成長指引未上修","action":"減碼三分之一","source_freq":"每日收盤","date":null,"evidence_refs":[]},{"n":7,"text":"司法部反回扣調查轉為正式提告或刑事程序；IVC 訴訟出現超出應計金額的不利和解。程序目前為民事調查，受影響營收事實表未涵蓋，無解決日期。","type":"清倉","maps_to":"R4","metric":"司法部調查程序狀態、和解金額","threshold":"轉刑事；民事提告或和解逾 5 億美元則減碼","action":"轉刑事清倉，民事不利和解減碼一半","source_freq":"10-Q 與 8-K／每季","date":null,"evidence_refs":["regulatory_antitrust#0","major_events#0","lawsuit_class_action#0"]},{"n":8,"text":"GMPD 再出現涉及主要產品的 FDA 警告信或全國召回，代表供應商合規問題未解決。","type":"風險","maps_to":"R5","metric":"FDA 警告信與全國召回件數","threshold":"12 個月內再發生 1 起","action":"停止加碼","source_freq":"FDA 公告與 10-Q／不定期","date":null,"evidence_refs":["geo_supply_chain#0","geo_supply_chain#1","major_events#3","product_recall_warning#0"]},{"n":9,"text":"FY27 Q2 財報後複審第 1 條門檻。","type":"複審日期","maps_to":"H1","metric":"FY27 Q2 Pharma 部門利潤年增率","threshold":"2027 年 2 月財報發布","action":"若未觸發門檻且股價高於 232 美元，維持不追","source_freq":"一次","date":"2027-02","evidence_refs":[]}],"kill_metrics":[{"metric":"Pharma 部門利潤年增率","bear_threshold":"FY27 Q2、Q3 連兩季 <6%，減碼一半","window":"FY27 Q2–Q3","source":"公司季報新聞稿","last_status":"ok"},{"metric":"Pharma 部門利潤率（部門利潤除以部門營收）","bear_threshold":"連兩季 <1.15%，減碼一半（FY27 Q1 1.25%）","window":"每季滾動","source":"公司季報新聞稿","last_status":"ok"},{"metric":"GMPD 部門利潤","bear_threshold":"FY27 全年 <2.0 億美元，停止加碼","window":"FY27 全年","source":"公司季報；2026-11-05 財務長稱已往指引下緣靠近","last_status":"warning"},{"metric":"調整後自由現金流","bear_threshold":"FY27 <35 億美元，停止加碼","window":"FY27 全年","source":"公司季報與法說","last_status":"ok"},{"metric":"Red Oak 合資展延","bear_threshold":"2029 年到期前未展延則清倉；條款實質縮減則減碼一半","window":"至 2029 年","source":"法說、8-K","last_status":"unknown"},{"metric":"CVS 配送協議定案","bear_threshold":"2027-06-30 前未轉成正式合約，停止加碼","window":"至 2027-06-30","source":"8-K、10-Q","last_status":"unknown"}],"evidence_dismissed":[{"ref":"$.answers.q2_moat.verdict_values.moat.roic_durability","reason":"對照共識 12.5% 的部分已補進此欄的公式說明。不採納的只有要算出增量 ROIC、再投資率和內生上界這一半：審查把缺資料讀成漏算，但這三個數都要用投入資本、折舊與營運資金變動，事實表都沒有。資本支出和併購金額只是再投資的一部分，據此填數字就是編造，所以維持無資料的寫法。"},{"ref":"$.counter_evidence.contradictions","reason":"供需持久性的負向發現是審查拿到的資料沒有列出，不是判斷漏接，審查自己也查無漏接。業務段的結構性持久以專科年增 18%、學名藥量略高於長期目標為據，續約與關稅的下行已寫進 Bear 情境。這輪看不到該軸的原始發現，硬加一條矛盾沒有根據，所以不新增。"},{"ref":"$.decision_inputs.market_wrong_reason_given","reason":"這個欄位問的是買進論點有沒有靠市場看錯，審查把它讀成必須寫出市場錯在哪。本判斷不主張現價買進，232 美元是等價格，不是等市場認錯，所以這欄維持否。現價隱含 EPS 年增約 12.8%、我只信到約 10% 的落差已寫在估值段，等待條件也具體可驗，不必另立市場看錯的理由。"}],"decision_out":{"role":"追蹤","row_hit":"8","pacing":[],"holding_cap":null,"audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":false,"basis":"signal='B'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='B'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟡'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"輸入缺(momentum_overheated=null)，依保守方向處理：不視為觸發","input_gap":["momentum_overheated"]},{"row":"6","condition":"基本面評級 signal = C → ≥ 觀望","hit":false,"basis":"signal='B'"},{"row":"7","condition":"runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）","hit":false,"basis":"runway_post_y5='🟡'"},{"row":"7a","condition":"§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年","hit":false,"basis":"valuation_dependent=False, market_wrong_reason_given=False"},{"row":"7b","condition":"dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）","hit":false,"basis":"capalloc_grade='B'"},{"row":"8a","condition":"無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）","hit":false,"basis":"signal='B', runway='🟡', val='🟠', moat_trend='→', week26=48.62, valuation_dependent=False"},{"row":"8b","condition":"無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）","hit":false,"basis":"archetype='品質複利成長', cycle_position='中循環', moat='B', moat_trend='→', cycle_gates_pass=None"},{"row":"11.4b-denom","condition":"§11 4b.1 分母爭議檢查成立 → val 燈判定不可用（否則沿用機械讀數）","hit":false,"basis":"val_denominator_disputed=False"},{"row":"8","condition":"無 Hard Veto + signal≥B + val∈{🟠,🔴} → 觀望（等估值）","hit":true,"basis":"signal='B', val='🟠'"},{"row":"9","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟢,✅,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='🟡'"},{"row":"9b","condition":"無 Veto + signal≥B + val≤🟡 + MA∈{🟠,-}（價<W104 但>W250，或樣本不足）→ 進場·條件式（長波段佈局）","hit":false,"basis":"signal='B', val='🟠', ma='🟡'"},{"row":"10","condition":"無 Veto + signal≥A + MA∈{🟢,✅,🟡} + val∈{🟢,🟡} → 進場","hit":false,"basis":"signal='B', val='🟠', ma='🟡'"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]},{"row":"role-held_now","condition":"觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role","hit":false,"basis":"輸入缺(held_now=null)，依保守方向處理：維持預設追蹤","input_gap":["held_now"]}],"requires_critic":[],"verdict":"觀望","rearm_trigger":"收盤價≤232美元（約FY27指引中值18倍），且FY27 Q2、Q3 Pharma部門利潤年增率未連兩季低於6%","exec_line":"不追現價；收盤 ≤232 美元且基本面門檻未觸發時分批買進，先買三分之一，下一季財報確認後補足。已持有者續抱不加碼，收盤 ≥322 美元且利潤指引未上修時減碼三分之一。"},"reasoning":{"industry":"FY2026 營收 2,542 億美元，Pharma 2,348 億占約 92%，部門利潤 28 億美元、年增 23%；GMPD 營收 127 億，部門利潤 2.58 億，其中 1 億是不會重複的關稅退款。FY27 Q1 營收 675 億美元，非 GAAP 營業利益 10.01 億；Pharma、GMPD、Other 部門利潤分別是 7.83 億、0.33 億、1.93 億。TTM 毛利率 3.9%、營業利益率 1.26%。集中度：CVS 占 FY2026 營收 28%，前五大 43%，CVS 已以具約束力意向書延到 2032-06-30，但尚未定案。供需判斷是結構性持久：專科 Q1 年增 18%，學名藥量略高於長期目標。GLP-1 帶來約 500 基點營收，10-Q 稱對部門利潤沒有實質貢獻，IRA 標價調整扣掉約 400 基點，所以要看利潤，不能看營收。產業態勢屬雙向拉鋸：競爭面 10-K 只有一般性風險描述、未見具名新進者；結構面專科與學名藥專利到期有利；其他面關稅和 340B 政策仍未定。客戶別利潤、單價與量的結構化數字事實表未涵蓋。","moat":"機制是全國配送網加上聯合採購，單位成本低於小對手，客戶要換商得搬整個藥局或院所網絡，轉換多半只在合約到期時發生。投入資本事實表未涵蓋，無法算同業 ROIC 差距，方向改看最大客戶份額：CVS 服務範圍不變延長，搜尋未見第二供應商或自建配送，份額持平。留客有代價，2026-11-05 財務長 Aaron Alt 說 FY27 原始指引已納入續約影響。CAH 營業利益率由 FY2023 的 0.87% 升到 FY2026 的 1.25%，TTM 1.26% 仍低於 MCK 的 1.67%、COR 的 1.44%；對 MCK 的落差全來自營業費用率（2.64% 對 2.00%），原因是業務組合還是效率事實表未涵蓋。再投資報酬同樣因缺投入資本算不出，利潤率上升不等於增量報酬高。","growth":"FY27 指引 EPS 年增 17–19%（基期 10.95），Pharma 部門利潤年增 10–12%，其中已宣布併購貢獻 2–3 點（2026-08-11 財務長 Aaron Alt），其餘主要來自專科與學名藥的量。共識三年 EPS 年化 12.5%（10.95 到 FY2029E 15.61，若用含退款的 11.26 為 11.5%），但 FY1 共識 12.56 是財報前快照，已低於指引下緣 12.80。內生上界因投入資本缺資料算不出，缺口改用拆解：營收共識 FY1 到 FY2 年增 6.1%，淨回購約 0.9 點（年回購 10 億美元扣 SBC 後除以市值），其餘約 5 點要靠利潤率擴張、稅率和併購，主因歸在利潤率擴張。第二曲線證據：專科 Q1 年增 18%，Other FY27 利潤指引上調到 17–20%，Theranostics 近 30%、PET 逾 20%（2026-08-11 CEO Jason Hollar），MSO 市場仍分散。若 Other 占三部門利潤升破 25% 且併購有報酬數字，才升為寬。","governance":"FY2026 FCF 45.25 億美元，是 GAAP 淨利 17.14 億的 2.64 倍；FY2025 為 18.5 億、1.19 倍，兩年落差大，事實表未拆原因，FY27 調整後自由現金流指引 35–40 億較能代表常態。Q1 營業現金流 13.98 億，資本支出 1.57 億，回購 5 億，股息約 1.25 億。SBC 占非 GAAP 營業利益 10.9%，年化約 4.4 億美元，占營收 0.16%，占市值約 0.7%。董事會新增 50 億美元回購授權，FY27 至少回購 10 億。近三年現金四分去向、債務到期與回購均價事實表未涵蓋。","valuation":"以年化 10% 報酬反推：股息 0.76% 之外股價要年增 9.2%，五年後約 423 美元。終端 18 倍需要 EPS 23.5 美元，較指引中值 12.90 年增 12.8%；維持 21 倍則只需年增 9.2%。Base 假設 EPS 年增 9.9%、終端 18 倍，股價年化約 6.5%，加股息約 7.2%，屬弱區；EPS 路徑已含回購，報酬不應再加一次。股價比前份判斷上漲 35%，用 8 月財報前共識 12.05 近似前份當時分母，盈餘預期上修只有約 7%，其餘是倍數由約 17 倍升到 21 倍。PEG 1.72（Fwd P/E 21.63 除以三年 EPS 年化 12.55%）。共識 12.56 是財報前快照，改用指引中值的倍數是 21.06 倍。五年分位與同業倍數事實表未涵蓋，只能對照本檔自身。RSI 資料標為不可用，四週漲幅未提供，動能是否過熱不做判斷。","premortem":"反證與裁定見反證紀錄，這裡只補敏感度：Pharma 部門利潤率每少 5 基點，以 FY2032 營收約 3,430 億美元、稅率 19%、約 220 百萬股估算，EPS 少約 0.63 美元，約占 Base 終端 EPS 3%，以 18 倍計股價少約 11 美元。歷史最大回撤與空方數字事實表未涵蓋。法說問答中管理層未量化的項目包括 340B 與 OPPS 的量移轉、超額需求與強勁需求的差距、學名藥專利到期對利潤的貢獻。"},"plain":{"six":{"how_it_makes_money":"賺藥廠、藥局與醫療體系之間的配送和採購價差，錢卡在全美三強寡占的配送節點，再靠學名藥採購、專科服務和 Other 三個事業加厚；最大單點依賴是 CVS。","moat":"穩定（→）：規模物流與 Red Oak 採購撐住三強寡占，CVS 續到 2032 年證明份額沒掉，但續約要讓利，營業利益率仍比 McKesson 低 41 基點，看不到護城河變寬。","growth":"中等（🟡）：核心配送沒有滲透空間，五年後要靠專科、MSO 和 Other 接棒；曲線已在長，但 TAM、滲透率與併購報酬都沒有數字可驗。","capital":"現金創造強、回饋穩定；三項資本配置檢查只有股權稀釋確定過關，併購和回購報酬缺資料，暫列中等。","valuation":"現價要求五年 EPS 年增約 12.8% 且終端仍有 18 倍，或倍數一直維持 21 倍；前者等於公司五年都達成 12–14% 目標，我只信到約 10%，所以不追。","how_wrong":"最可能看錯的是倍數：若續約讓利和併購風險都比想的輕，21 倍撐得住，等回檔就會錯過；反過來 Red Oak 或 CVS 出事，下跌會超過本次假設區間。"}},"decision_inputs":{"signal":"B","ma":"🟡","cycle_position":"中循環","cycle_verdict":"等回踩","thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":false,"momentum_overheated":null,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":true,"wait_for_price_condition":"等收盤價回到 232 美元以下（約 FY27 指引中值 18 倍），且 FY27 Q2、Q3 Pharma 部門利潤年增率未連兩季低於 6%；或 2027-08 財報確認 FY28 指引中值不低於 14.2 美元後，進場價上移到該指引的 18 倍。","trap":"🟡","val":"🟠","moat":"B","moat_trend":"→","runway_post_y5":"🟡","capalloc_grade":"B","archetype":"品質複利成長","price_at_dd":271.72,"week26_return_pct":48.62,"consensus_rev_3m_pct":0.48,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null,"val_denominator_disputed":false,"val_denominator_note":"起點分母已改用指引中值，基期排除 FY2026 一次性關稅退款 0.31 美元。Trailing GAAP 分母波動極大（FY2023 EPS 1.00、FY2026 7.23），4 個年度端點的分位不採用。非 GAAP 與 GAAP 的差距仍大（FY27 Q1 營業利益 10.01 億對 7.53 億），列入反證。"},"catalysts":[{"date":"2027-02","date_precision":"month","type":"guidance","event":"FY27 Q2 財報（月份依往年推估）","impact":"高","watch":"Pharma 部門利潤年增率是否低於 6%"},{"date":"2027-03","date_precision":"quarter","type":"other","event":"AdaptHealth 糖尿病業務交割，管理層只說在跨年之後","impact":"低","watch":"整合進度與 Other 利潤"},{"date":"2027-05","date_precision":"month","type":"guidance","event":"FY27 Q3 財報（月份依往年推估）","impact":"高","watch":"連兩季門檻是否成立"},{"date":"2027-08","date_precision":"month","type":"guidance","event":"FY27 Q4 財報與 FY28 指引","impact":"高","watch":"Q4 Pharma 部門利潤年增是否回到 12% 以上，FY28 EPS 指引中值是否達 14.2 美元"},{"date":"2027-12","date_precision":"month","type":"capacity","event":"St. Louis 3PL 與冷鏈設施預計 2027 年底前營運","impact":"低","watch":"BioPharma Solutions 產能與新合約"},{"date":null,"date_precision":null,"type":"other","event":"CVS 2028 年分拆，法說未給月份","impact":"高","watch":"分拆後配送與 Red Oak 條款是否變動"},{"date":null,"date_precision":null,"type":"regulatory","event":"學名藥 2028 年起 100% 關稅的聲明，實施仍不確定","impact":"高","watch":"正式公告內容與 Pharma 部門利潤率"},{"date":null,"date_precision":null,"type":"other","event":"Red Oak 合資 2029 年到期前的展延","impact":"高","watch":"展延公告與條款"}],"_projected_from":"v19"}
+```
