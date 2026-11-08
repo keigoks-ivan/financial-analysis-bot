@@ -1,0 +1,329 @@
+你是 DD 管線 v20 的判斷層閘（gate），標的 NVTS（20261108）。你未參與寫判斷，這是一次跨模型冷讀，單回合、無工具：bundle 全文已附在本訊息「===== BUNDLE =====」分隔線之後，讀完就直接作答，沒有第二輪，也不能查證 bundle 以外的任何資料。
+
+## 任務
+
+依 bundle 內 `gate_card.md` 的 ①–⑧ checklist 逐條複核 `judgment.json`，只揪判斷級的錯，不判斷寫得好不好。判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級問題（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡；無實質問題給 🟢。
+
+## 讀（bundle 全文接在本訊息之後，之外不存在）
+
+bundle 依序包含：`gate_card.md`（①–⑧ checklist 全文與 🔴／🟡／🟢 口徑）、被引用事實與負向條目子集（核對 `fact_refs` 用）、`scenario_meta.json`（情境樹權威值，對帳 `decision_inputs.irr_base_pct`／`ev5y_pct` 用）、`judgment.json` 全文（被審對象，原樣）。
+
+## 禁
+
+- 禁 WebSearch／WebFetch、禁開 bundle 以外任何檔（包含 `docs/dd/`、`.dd_build/` 下的其他產物）。
+- 禁跑任何腳本（`validate_judgment.py`／`dd_decision.py`／`dd_scenario.py` 已在判斷端跑過，機械層不歸你）。
+- 禁提整段改寫判斷、禁自己動手修補 `judgment.json`——你只出稽核，修補是另一支流程的事。
+- 證據包裡沒有的東西不得臆測補白，只講證據包內找得到依據的話。
+
+
+===== BUNDLE =====
+
+## ① gate_card.md（判斷層閘卡）
+
+<!-- source: scripts/dd_prompts/gate_contract.md sha256:90928128665c694a; .claude/skills/stock-analyst/references/critic-gates.md sha256:8dff4ac45280acfd git:8cfc0d5bd condensed:2026-09-16 model:sonnet -->
+<!-- 2026-10-20 ⑤ 改程式判定；來源 gate_contract §⑤／critic-gates ⑤ 同日改成同一條規則（核心軸 none 🔴、非核心 🟡）；重新濃縮時以本卡 ⑤ 為準 -->
+
+你是 DD 管線 v20 的判斷層閘（gate），sonnet，單輪、無工具。你未參與寫判斷，這是一次跨模型冷讀。
+輸入：`judgment.json`（待審判斷物）＋ `facts.json`（事實表，每軸 finding 帶 source／as_of／direction）。
+任務只有一件：依下列 checklist 逐條複核 `judgment.json`，只揪**判斷級**的錯，不判斷寫得好不好。
+判斷級 🔴 限三形狀：①證據包已有而判斷未接；②算術或機率防線失守；③裁決與自身輸入矛盾。資料級（facts.json 本身缺料、來源不夠新、某軸查不到）不算 🔴，最多 🟡。
+禁 WebSearch／WebFetch、禁讀輸入以外任何檔、禁改 `judgment.json`，只出稽核清單。
+
+## checklist（①–⑧ 全出，不得跳號、不得「同上」帶過）
+
+① 競爭惡化——份額流失／新進入者／客戶 second-source／大客戶轉單。查 facts.json 對應軸（competitive_share_entrants／customer_second_source／customer_concentration_credit）裡負向、或應被引用的 finding，核對 judgment.json 的 `moat.threats`／`moat.competitors`／`contradictions[]`／`decision_inputs.bear` 是否接住；被引用=N 卻是負向的 finding 即漏接。[gate_contract §①]
+
+② 供需 durability——緊缺或過剩是結構還是週期，供給可逆性是否寫進 bear 機率。facts.json 的 supply_demand_durability 軸負向 finding，若未被引用且未列 `evidence_dismissed`，須在 `premortem`／`decision_inputs.bear` 找到對應處理，找不到即 🔴。[gate_contract §②]
+
+③ 其他結構變數（開放軸）——法規／政策／關稅／反壟斷／補貼、通路重構、商業模式轉移、替代技術、客戶結構轉移。找 facts.json 覆蓋總覽裡「有 finding 卻沒人接住」的軸，對照 `contradictions[]`／`premortem.blind_spots`／`triggers[]`；閘禁搜尋，不重新查有沒有漏掉的產業變化。[gate_contract §③]
+
+④ priced-in——共識與賣方目標價 vs 現價，裁決是否只是把市場已知的事再說一次。看 `decision_inputs.market_wrong_reason_given` 是否有具體內容（非空泛套話），對照 facts.json 的 `latest_quarter_kpis[].vs_consensus` 與 `valuation_current`。判斷寫「不追／等價格」而裁決是進場、`decision_inputs.wait_for_price` 卻沒填 true ＝ 矛盾；填了 true 時裁決落觀望是規則結果，不算矛盾，只看 `wait_for_price_condition` 是否具體可驗。[gate_contract §④]
+
+⑤ 覆蓋面掃描——**燈號由程式判定**（核心軸 none→🔴；只有非核心軸 none→🟡；全 found／not_applicable→🟢），bundle 附程式結果，你回的 ⑤ 燈號會被覆寫。你只評論：facts.json 點名 status="none"／"not_applicable" 的軸，查詢是否切題（不以查詢次數計）、判斷有沒有交代缺口對結論的影響；不得因缺軸自行升 🔴。
+
+⑥ 量化模組完整性抽查（強制）——(i) `moat.roic_durability.reinvest_rate`／`.roiic` 有沒有 `.formula_note` 真算（寫「估計約 X%」無算式＝🔴）；`.endo_ceiling` 是否與共識 EPS CAGR（facts.json）交叉檢查，天花板 < CAGR 且 `reasoning` 未處理＝🔴。(ii) `scenario_inputs` 的 Bull/Base/Bear EPS 是否有實質價差（Bull 幾乎等於 Base、只靠倍數撐估值＝退化，🔴）；`scenario_inputs.valuation_basis`＝`sales_multiple`（虧損公司，程式決定）時改查 Bull/Base 的營收路徑（`rev`）：Bull 終端營收須實質高於 Base、Bull 前兩年不得與 Base 相同，只靠終端 EV/S 撐價差＝退化，🔴；並看 Bear 的 `net_debt_y5`／`shares_y5` 是否反映該情境的融資缺口與稀釋（債重公司 Bear 沿用目前淨負債與股數＝樂觀，🟡）。(iii) `decision_inputs.irr_base_pct`／`ev5y_pct`／`asym_ratio` 缺省或 null 合法（程式回填），但 ROIIC 缺輸入、口徑或算式仍為實質問題。[gate_contract §⑥]
+
+⑦ 數字新鮮度——`judgment.json` 引用的每個營運指標，是否不比 facts.json 的 `latest_quarter_kpis[].as_of` 對應項目舊？有一個更舊即 🔴。`decision_inputs.consensus_rev_3m_pct` 若依附 `stale=true` 來源，確認未被當唯一依據；引用摘要內容的欄位須標「來源：摘要」。[gate_contract §⑦]
+
+⑧ 前份漂移歸因（QC-49）——facts.json 的 `prior_dd` 存在時，`drift_watch` 20 欄中有變動的每一欄是否都映射到 `contradictions[]` 一個帶 `cause` 的條目（可多欄共用一條目）、且主因站得住；**裁決／核心假設／情境方法變更不得併入純價格原因**；漏欄或無歸因＝🔴；前份該欄本身空或缺欄者不計，給 🟡 或 🟢。無前份時填 🟢 並註「無前份」。[gate_contract §⑧]
+  - `axis` 以 `[程式歸因]` 開頭的條目是程式算的（均線、現價、期望報酬拆解、裁決、角色）。「期望報酬拆解」兩條是程式用本次情境先換情境、再換股價算出的數字（asym_ratio／ev5y_pct／irr_base_pct／bull_5y_price／bear_5y_price），視為已歸因，其中「價格變動」只是股價效果，不適用「不得併入純價格原因」。裁決／角色條目是反事實結果（逐一把矩陣輸入改回前份值重算），視為已歸因；其中「價格變動」是反事實證明估值燈單獨改變了裁決，不適用上面「不得併入純價格原因」，不要為此給 🔴（2026-09-24）。
+  - QC-49 承繼（90 天內翻面須引前次已發火觸發器）只比方向：進場／觀望／迴避。「進場」與「進場·條件式」同方向，角色（核心／衛星）變動也不在 QC-49 範圍；判斷者答 `decision_inputs.qc49_inherit_prior`，前次裁決與角色由程式帶入。
+
+## (a)(b) 兩項強制職責（2026-08-06 拍板，不得因精簡拿掉）
+
+(a) 覆蓋面掃描：逐軸點名「哪一軸整個沒查」，做法同 checklist ⑤（燈號由程式判定，你只評論）。
+(b) 量化模組完整性抽查：ROIC×再投資率真算與否、內生天花板對帳共識 CAGR、情境樹 Bull/Base/Bear EPS 價差是否實質、IRR 內部對帳，做法同 checklist ⑥。
+(c) 數字可回溯：判斷引用的歷史數字逐一核對 facts.json 原文的期間與單位；反證條目要查採納理由與後果是否成立，不能只因編號存在就算過。[gate.md.tmpl 2026-09-11 註腳]
+
+## 🔴／🟡／🟢 口徑
+
+判斷級 🔴 限下列三種形狀：
+
+1. **證據包已有而判斷未接**——證據包內存在的 finding／數字，判斷物完全沒接進 `contradictions`／`moat.threats`／`premortem`／`triggers`／`thesis.R`，也沒寫進 `evidence_dismissed[]`；
+2. **算術或機率防線失守**——推導不可複算、內部恆等式不對帳、情境樹退化、機率與其自身依據矛盾；
+3. **裁決與自身輸入矛盾**——`decision_inputs`／`scenario_meta`／`decision_out` 三者互斥，或裁決與判斷物自己寫下的理由相反。
+
+**資料級不算 🔴**（證據包本身缺料、來源不夠新、某軸查不到）——那是 Stage 0 的問題，最多給 🟡 並在附註點名。無實質問題給 🟢；有實質但不改裁決方向的給 🟡。
+
+## 輸出格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
+
+
+---
+
+## ②b 被引用的事實與負向條目（v19；閘要查數字時不必猜）
+
+### 判斷檔 `fact_refs` 引到的事實（31 條）
+- `f_kpi0_gaap`（q1_business）｜營收（GAAP）＝14.0 US$M｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-03）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 Q3 2026 新聞稿（8-K Ex.99.1）https://www.sec.gov/Archives/edgar/data/0001821769/000162828026069489/exhibit991-navitassemicond.htm（numbers.latest_quarter_kpis.items[0]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-03））
+- `f_kpi2_non_gaap`（q1_business）｜Non-GAAP 營業利益率＝-78.1 %｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-03）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 Q3 2026 新聞稿（8-K Ex.99.1）https://www.sec.gov/Archives/edgar/data/0001821769/000162828026069489/exhibit991-navitassemicond.htm（numbers.latest_quarter_kpis.items[2]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-03））
+- `f_kpi4_gaap`（q1_business）｜GAAP 營業利益率＝-245.7 %｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-03）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 Q3 2026 新聞稿（8-K Ex.99.1）https://www.sec.gov/Archives/edgar/data/0001821769/000162828026069489/exhibit991-navitassemicond.htm（numbers.latest_quarter_kpis.items[4]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-03））
+- `f_kpi5_non_gaap`（q1_business）｜Non-GAAP 毛利率＝40.0 %｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-03）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 Q3 2026 新聞稿（8-K Ex.99.1）https://www.sec.gov/Archives/edgar/data/0001821769/000162828026069489/exhibit991-navitassemicond.htm（numbers.latest_quarter_kpis.items[5]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-03））
+- `f_kpi7_q4_2026`（q1_business）｜管理層 Q4 2026 指引＝營收 16.0M ± 0.5M；Non-GAAP 毛利率 40.5% ± 100bps；Non-GAAP 營業費用 25.0M ± 1.0M（含 Claros） text｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-03）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：guidance
+  - 來源：公司 Q3 2026 新聞稿（8-K Ex.99.1）https://www.sec.gov/Archives/edgar/data/0001821769/000162828026069489/exhibit991-navitassemicond.htm（numbers.latest_quarter_kpis.items[7]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-03））
+- `f_kpi8_backlog`（q1_business）｜Backlog＝record，延伸至 2027 年中；新聞稿未給金額 text｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-03）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 Q3 2026 新聞稿（8-K Ex.99.1）https://www.sec.gov/Archives/edgar/data/0001821769/000162828026069489/exhibit991-navitassemicond.htm（numbers.latest_quarter_kpis.items[8]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-03））
+- `f_kpi9_book_to_bill`（q1_business）｜Book-to-bill＝well above one（新聞稿未給數字） text｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-03）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 Q3 2026 新聞稿（8-K Ex.99.1）https://www.sec.gov/Archives/edgar/data/0001821769/000162828026069489/exhibit991-navitassemicond.htm（numbers.latest_quarter_kpis.items[9]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-03））
+- `f_peer_nvts_gross_margin_pct`（q2_moat）｜NVTS 毛利率＝38.61 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.NVTS.gross_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_peer_powi_gross_margin_pct`（q2_moat）｜POWI 毛利率＝53.32 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.POWI.gross_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_peer_mpwr_gross_margin_pct`（q2_moat）｜MPWR 毛利率＝55.26 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.MPWR.gross_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_peer_on_gross_margin_pct`（q2_moat）｜ON 毛利率＝38.68 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.ON.gross_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_peer_wolf_gross_margin_pct`（q2_moat）｜WOLF 毛利率＝-34.9 %｜期間與口徑：TTM ending 2026-06-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.WOLF.gross_margin_pct，as_of TTM ending 2026-06-30（4季加總））
+- `f_peer_nvts_operating_margin_pct`（q2_moat）｜NVTS 營業利益率＝-272.56 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.NVTS.operating_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+- `f_rev_consensus_fy1_m`（q5_valuation）｜FY1 共識營收（百萬）＝48.67 USD m｜期間與口徑：2026-11-08／yfinance revenue_estimate 0y 平均（6 位分析師）；與 f_consensus_eps_fy1 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy1.avg_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_rev_consensus_fy2_m`（q5_valuation）｜FY2 共識營收（百萬）＝78.38 USD m｜期間與口徑：2026-11-08／yfinance revenue_estimate +1y 平均（7 位分析師）；與 f_consensus_eps_fy2 同一財年｜kind：estimate
+  - 來源：—（numbers.capital_structure.revenue_consensus.fy2.avg_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_consensus_eps_fy1`（q5_valuation）｜FY1 共識 EPS＝-0.15 USD/share｜期間與口徑：2026-11-07／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy1，as_of 2026-11-07）
+- `f_consensus_eps_fy2`（q5_valuation）｜FY2 共識 EPS＝-0.12 USD/share｜期間與口徑：2026-11-07／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy2，as_of 2026-11-07）
+- `f_consensus_eps_fy3`（q5_valuation）｜FY3 共識 EPS＝-0.1 USD/share｜期間與口徑：2026-11-07／Koyfin 快照共識值；財年口徑見判斷檔 eps_meta.eps_basis｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy3，as_of 2026-11-07）
+- `f_kpi6_sbc`（q4_capital）｜SBC 占營收＝64.3 %｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-03）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 Q3 2026 新聞稿（8-K Ex.99.1）https://www.sec.gov/Archives/edgar/data/0001821769/000162828026069489/exhibit991-navitassemicond.htm（numbers.latest_quarter_kpis.items[6]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-03））
+- `f_kpi10`（q1_business）｜期末現金＝531.5 US$M｜期間與口徑：Q3 FY2026（季末 2026-09-30，公告於 2026-11-03）／evidence.numbers.latest_quarter_kpis 逐項口徑照抄（metric 名稱即口徑）｜kind：realized
+  - 來源：公司 Q3 2026 新聞稿（8-K Ex.99.1）https://www.sec.gov/Archives/edgar/data/0001821769/000162828026069489/exhibit991-navitassemicond.htm（numbers.latest_quarter_kpis.items[10]，as_of Q3 FY2026（季末 2026-09-30，公告於 2026-11-03））
+- `f_net_debt_m`（q5_valuation）｜目前淨負債（總債務－現金及短投）＝-524.88 USD m｜期間與口徑：2026-11-08／yfinance 最新一季：總債務 6.6、現金 531.48（含租賃負債口徑）｜kind：realized
+  - 來源：—（numbers.capital_structure.net_debt_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_shares_diluted_m`（q5_valuation）｜目前股數（百萬股）＝269.51 m shares｜期間與口徑：2026-11-08／yfinance impliedSharesOutstanding（各類股合計）｜kind：realized
+  - 來源：—（numbers.capital_structure.shares_diluted_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_price_at_dd`（q5_valuation）｜判斷日股價＝8.61 USD｜期間與口徑：2026-11-06（RTH 收盤，UTC）／收盤價，與情境樹起點同源｜kind：realized
+  - 來源：—（numbers.price_at_dd，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_ev_m`（q5_valuation）｜目前企業價值 EV（市值＋淨負債）＝1795.58 USD m｜期間與口徑：2026-11-08／市值 2320.46 ＋ 淨負債 -524.88｜kind：realized
+  - 來源：—（numbers.capital_structure.ev_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_ev_s_fwd`（q5_valuation）｜EV/S（EV ÷ FY1 共識營收）＝36.89 x｜期間與口徑：2026-11-08／f_ev_m ÷ f_rev_consensus_fy1_m（前瞻口徑；f_ev_s_current 是 trailing 12 個月營收口徑）｜kind：estimate
+  - 來源：—（numbers.capital_structure.ev_m ÷ revenue_consensus.fy1.avg_m，as_of 2026-11-08）
+  - 註記：股數＝目前流通股數（各類股合計）或最新季稀釋均股，未含未行使選擇權／可轉債的完整稀釋，終端股數的稀釋由判斷者在 shares_y5 自行反映；共識營收 FY3：yfinance 只有 0y／+1y 兩個年度，無第三年，留 null
+- `f_ev_s_current`（q5_valuation）｜EV/S（現值）＝44.43 x｜期間與口徑：2026-11-06（RTH 收盤，UTC）／4 個年度端點內的分位＝100.0｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.ev_s，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_ps_current`（q5_valuation）｜P/S（現值）＝57.42 x｜期間與口徑：2026-11-06（RTH 收盤，UTC）／4 個年度端點內的分位＝100.0｜kind：realized
+  - 來源：trailing 口徑：以年度財報 fiscal-year-end 對應最近週線收盤價，逐年估算 trailing P/E／P/S／EV/S（yfinance 免費層年度財報僅回溯 4-5 年，非連續日頻 5 年序列——樣本點數見各子欄 n_points）。fwd_recent_window 另用本站 data/eps-estimates/ 月度快照 archive（現存約 2026-05 起）算一段短窗真 fwd PE，非 5 年歷史，勿與 trailing 混用。（numbers.valuation_history.trailing.ps，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_ps_percentile`（q5_valuation）｜P/S 年度端點分位＝100.0 %｜期間與口徑：2026-11-06（RTH 收盤，UTC）／**非五年分位**：只用 4 個年度端點，valuation.percentile_5y 另有口徑｜kind：realized
+  - 來源：—（numbers.valuation_history.trailing.ps.current_percentile_within_annual_points，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_consensus_rev_3m_fy1_pct`（q5_valuation）｜FY1 共識近 3 個月修正＝0.0 %｜期間與口徑：2026-08-13 → 2026-11-07／FY1 共識 EPS -0.15 → -0.15（Koyfin 快照，約 90 天間距）；投影成 decision_inputs.consensus_rev_3m_pct｜kind：estimate
+  - 來源：DD_universe_EPS_estimates_20261107.xlsx（numbers.consensus_revision.latest_snapshot.fy1 ÷ snapshot_90d_prior.fy1，as_of 2026-11-07）
+- `f_week26_return_pct`（q5_valuation）｜26 週報酬＝-52.69 %｜期間與口徑：2026-11-06（RTH 收盤，UTC）／含息前價格報酬，對照基準 ^GSPC｜kind：realized
+  - 來源：—（numbers.momentum_26w.return_26w_pct，as_of 2026-11-06（RTH 收盤，UTC））
+- `f_peer_nvts_fcf_margin_pct`（q2_moat）｜NVTS FCF 利潤率＝-189.08 %｜期間與口徑：TTM ending 2026-09-30（4季加總）／yfinance quarterly_income_stmt／quarterly_cashflow（TTM sum，最近可得季數）｜kind：realized
+  - 來源：—（numbers.peer_financials.NVTS.fcf_margin_pct，as_of TTM ending 2026-09-30（4季加總））
+
+### findings_digest 中方向為負或來源衝突的條目（30 條）
+- `competitive_share_entrants#1`（competitive_share_entrants｜方向 -｜狀態 ok）：10-K 風險因子：可能出現新競爭者或傳統大廠推出 GaN／高壓 SiC 方案；設計一旦被採用，客戶通常要到下一代才換，失去設計案將損失份額。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-27）｜affects：moat_trend、decision_inputs.bear
+- `competitive_share_entrants#2`（competitive_share_entrants｜方向 -｜狀態 ok）：10-K：營收受份額得失與設計案進展影響，且行動／消費市場受競爭與定價壓力，與公司轉向高功率有關。
+  - 來源：SEC EDGAR 10-K FY2025 Item 7（as_of 2026-02-27）｜affects：moat_trend、thesis.R
+- `competitive_share_entrants#3`（competitive_share_entrants｜方向 -｜狀態 ok）：onsemi 2026-06 推出面向 AI 資料中心的 GaN 產品組合 GaNEXUS；ST 2026-05 推出 700V GaN 供 AI 伺服器，大廠加入 GaN 競爭。
+  - 來源：Nasdaq/Zacks: NVTS Shifts to 8-Inch GaN（as_of 2026-07-01）｜affects：moat_trend、decision_inputs.bear
+- `customer_second_source#0`（customer_second_source｜方向 -｜狀態 ok）：FY2025 10-K風險因子：end customer可能延遲、變更或取消產品計畫、更換供應商；失去design win或關鍵客戶會嚴重影響營收；美國出口管制可能促使客戶自行開發替代方案或轉向不受限的競爭對手。為一般性風險揭露，未點名特定客戶導入第二供應商或自製。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-27）｜affects：thesis.R、decision_inputs.bear
+- `customer_second_source#1`（customer_second_source｜方向 -｜狀態 ok）：10-K風險因子：美國法規與制裁可能促使end customers自行開發解決方案取代NVTS產品，或向不受限制的競爭對手取得替代品。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-27）｜affects：thesis.R、moat_trend
+- `customer_concentration_credit#0`（customer_concentration_credit｜方向 -｜狀態 ok）：FY2025 10-K：2025 年無單一經銷商占比揭露於 Distributor A 欄（*），Distributor B 占營收 46%、Distributor C 占 11%（2024 年 Distributor A 占 56%）；Distributor A 經銷協議於 2024 年底終止，2024 年認列 750 萬美元呆帳費用；2025 年底應收帳款 Distributor A1 44%（2024）、B 26%、C 18%、D 13%、E 12%（欄位對應依表格原文）。
+  - 來源：SEC EDGAR 10-K FY2025 Item 8 Note 12（as_of 2026-02-27）｜affects：thesis.R、decision_inputs.bear
+- `customer_concentration_credit#1`（customer_concentration_credit｜方向 -｜狀態 ok）：2026 Q3 10-Q：經銷商客戶集中度與應收帳款集中度（Distributor A 應收 33%、Distributor C 29%）
+  - 來源：SEC EDGAR 10-Q Q3 2026（as_of 2026-11-05）｜affects：thesis.R、decision_inputs.bear
+- `regulatory_antitrust#0`（regulatory_antitrust｜方向 -｜狀態 ok）：FY2025 10-K 風險因子：公司認為其 GaN/SiC 產品一般不受美國 EAR 管制，但受出口法規限制，進一步行動可能對含特定技術產品（含售予中國終端客戶）增加限制。
+  - 來源：SEC EDGAR 10-K FY2025 風險因子（as_of 2026-02-27）｜affects：thesis.R、decision_inputs.bear
+- `reg_tariff_export#0`（reg_tariff_export｜方向 -｜狀態 ok）：FY2025 10-K 風險因素：公司明列受美國出口管制與制裁法規約束，可能限制對中國終端客戶的產品出口；美中關稅或貿易戰可能對財務與營運結果造成重大不利影響。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-27）｜affects：decision_inputs.bear、thesis.R
+- `reg_tariff_export#1`（reg_tariff_export｜方向 -｜狀態 ok）：10-K 指出美國法規已將化合物半導體與寬能隙半導體（GaN、SiC）歸類為「對國家安全關鍵」，涉及 CFIUS 審查與出口許可風險。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-27）｜affects：decision_inputs.bear、thesis.R
+- `reg_tariff_export#2`（reg_tariff_export｜方向 -｜狀態 ok）：10-K 指出出口限制可能促使終端客戶自研替代方案或轉向不受限制的競爭對手。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-27）｜affects：moat_trend、decision_inputs.bear
+- `reg_tariff_export#3`（reg_tariff_export｜方向 -｜狀態 ok）：2025 Q1 10-Q：中國報復性關稅或非關稅壁壘可能在未來 12–18 個月侵蝕 SiC 產品定價競爭力，因目前依賴單一美國來源。
+  - 來源：SEC EDGAR 10-Q Q1 2025（as_of 2025-05-12）｜affects：thesis.R、decision_inputs.bear
+- `geo_supply_chain#0`（geo_supply_chain｜方向 -｜狀態 ok）：FY2025 10-K：Navitas 營運據點含美、愛爾蘭、中國、台灣、德國、南韓、菲律賓；絕大多數產品由美國境外第三方製造、組裝、測試與封裝。
+  - 來源：Navitas Form 10-K FY2025 (SEC)（as_of 2026-03-01）｜affects：decision_inputs.bear、thesis.R
+- `geo_supply_chain#1`（geo_supply_chain｜方向 -｜狀態 ok）：FY2025 10-K 風險因子：部分前段製造依賴單一來源，無晶圓代工長期供貨合約。
+  - 來源：Navitas Form 10-K FY2025 (SEC)（as_of 2026-03-01）｜affects：decision_inputs.bear、thesis.R
+- `geo_supply_chain#2`（geo_supply_chain｜方向 -｜狀態 ok）：FY2022 10-K：GaN 晶圓代工廠位於台灣，大量第三方分包商與供應商在台灣；FY2024 10-K 為 GaN 單一代工廠、SiC 另一單一代工廠。
+  - 來源：Navitas Form 10-K FY2024 (SEC)（as_of 2025-03-01）｜affects：decision_inputs.bear、thesis.R
+- `end_markets#1`（end_markets｜方向 -｜狀態 ok）：mobile 營收占比預期於 2026 年底趨近「insignificant」；消費型 GaN 充電器被認為加速商品化，Q3 2025 提及中國 mobile 價格壓力
+  - 來源：搜尋摘要彙整（Q1 2026 財報摘要、Q3 2025 業績）（as_of 2026-05-04）｜affects：thesis.R、moat_trend
+- `substitute_technology#0`（substitute_technology｜方向 -｜狀態 ok）：10-K 風險因子：新產品、新或替代技術的市場接受度或新產業標準，可能使公司現有或未來產品失去競爭力、過時；高功率市場下尤其明顯。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-27）｜affects：moat_trend、decision_inputs.bear
+- `substitute_technology#1`（substitute_technology｜方向 -｜狀態 ok）：10-K：美國出口限制與制裁可能促使終端客戶自行開發方案取代公司產品，或轉向不受限制的競爭對手之類似／替代品。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-27）｜affects：moat_trend、decision_inputs.bear
+- `substitute_technology#2`（substitute_technology｜方向 -｜狀態 ok）：10-K：TSMC 宣布 2027 年 7 月停止 GaN 生產，公司改與力積電及 GlobalFoundries 合作；新替代代工的驗證與量產有延遲風險。
+  - 來源：SEC EDGAR 10-K FY2025 Item 1A（as_of 2026-02-27）｜affects：thesis.R、decision_inputs.bear
+- `channel_business_model_shift#1`（channel_business_model_shift｜方向 -｜狀態 ok）：Navitas 2.0 轉型：退出行動與低階消費市場，轉向 AI 資料中心與電網高功率；搜尋摘要稱 2026 為過渡年，營收在轉型期下滑（二手評論）。
+  - 來源：Zacks/MetaTrader 新聞：Can NVTS' Pivot to High-Power AI Markets Fuel Long-Term Growth?（as_of 2026-09-01）｜affects：moat_trend、thesis.R
+- `major_events#2`（major_events｜方向 -｜狀態 ok）：2026-07 Wolfspeed 在德拉瓦聯邦地院對 Navitas 提起專利侵權訴訟，Navitas 稱指控無理由（搜尋摘要）。
+  - 來源：Barchart / Webull 報導（as_of 2026-07-31）｜affects：decision_inputs.bear、thesis.R
+- `unprofitable_nrr_rule40_band#0`（unprofitable_nrr_rule40_band｜方向 -｜狀態 ok）：multiples.vc 列示 NVTS Rule of 40 分數約 -129%（LTM 營收成長約 -7%、EBITDA 率約 -65%）
+  - 來源：multiples.vc Navitas Semiconductor valuation multiples（as_of 2025-10-26）｜affects：valuation、decision_inputs.bear
+- `unprofitable_nrr_rule40_band#1`（unprofitable_nrr_rule40_band｜方向 -｜狀態 ok）：Trefis 同業比較（QCOM、FSLR、SLAB、POWI）：NVTS 營業利益率 -181.4% 為最低、近 12 個月營收成長 -38.1% 落後
+  - 來源：Trefis How Does Navitas Semiconductor Stock Compare With Peers?（as_of 2025-11-11）｜affects：valuation、decision_inputs.bear
+- `unprofitable_dilution_trajectory#0`（unprofitable_dilution_trajectory｜方向 -｜狀態 ok）：StockAnalysis 列 NVTS 流通股 230.79M，一年增 17.17%、QoQ +3.44%（資料未標日期）
+  - 來源：StockAnalysis - Navitas Semiconductor Statistics（as_of 2026-06-30）｜affects：decision_inputs.bear、valuation
+- `unprofitable_dilution_trajectory#1`（unprofitable_dilution_trajectory｜方向 -｜狀態 ok）：2026-06-04 8-K：發行 3,283,844 股 Class A，主要用於 2021 年 5 月合併協議 Triggering Event II 的 earnout；原股東仍可再領至多 1,000 萬股
+  - 來源：quiverquant / stockti 新聞摘要（引 8-K）（as_of 2026-06-04）｜affects：decision_inputs.bear、valuation
+- `unprofitable_dilution_trajectory#2`（unprofitable_dilution_trajectory｜方向 -｜狀態 ok）：2026-05-11 簽訂 ATM 銷售協議，可分次賣最多 1.25 億美元 Class A 股（來源間金額不一，TIKR 稱 5 億美元，待核 SEC 文件）
+  - 來源：Quiver Quant / TIKR 報導（as_of 2026-06-24）｜affects：decision_inputs.bear、valuation
+- `unprofitable_dilution_trajectory#3`（unprofitable_dilution_trajectory｜方向 -｜狀態 ok）：Trefis 列 SBC/營收 LTM 約 44%；Business Quant 列 2026Q2 SBC 8.4M、TTM 27.1M；Digrin 列 2026-06-30 SBC 18.7M，聚合站數字互相矛盾，須以 10-Q 為準
+  - 來源：Trefis / Business Quant / Digrin（as_of 2026-08-01）｜affects：decision_inputs.bear
+- `unprofitable_dilution_trajectory#4`（unprofitable_dilution_trajectory｜方向 -｜狀態 ok）：稀釋後股數長期上升：約 39M → 206M（頁面 2026-03），年增 12.67%／8.01%／15.91%；AlphaQuery 2025Q3 加權稀釋股數 212.68M
+  - 來源：AlphaQuery weighted average shares outstanding diluted（as_of 2025-09-30）｜affects：decision_inputs.bear
+- `unprofitable_path_to_profitability#1`（unprofitable_path_to_profitability｜方向 -｜狀態 ok）：Q3 後損益兩平門檻上移，Q3 營收13.99M、Q4指引16.0M，Claros 支出使損益兩平更遠
+  - 來源：Finviz/Earnings Whispers: Navitas matches the whisper... breakeven further out（as_of 2026-11-04）｜affects：thesis.R、decision_inputs.bear
+- `lawsuit_class_action#0`（lawsuit_class_action｜方向 -｜狀態 ok）：2026-07 Wolfspeed 專利侵權訴訟（德拉瓦）；搜尋未見證券集體訴訟。
+  - 來源：Barchart 報導（as_of 2026-07-31）｜affects：decision_inputs.bear、thesis.R
+
+### 事實表自陳的缺口（1 條）
+- q6_how_wrong：digest.qa_flags 有 6 條管理層迴避紀錄，內容須由事實表 agent 逐條落成事實或缺口
+
+---
+
+scenario_meta.json sidecar（判斷層情境樹權威，checklist ⑥(iii) 對帳用）
+
+（來源：/Users/ivanchang/financial-analysis-bot/.dd_build/runs/NVTS_20261108/scenario_meta.json）
+（以下 JSON 為緊湊格式（省空白），內容完整）
+```json
+{"bull_5y_price":33.5,"bear_5y_price":1.6,"p_bull_pct":20,"p_bear_pct":35,"upside_5y_pct":25.4,"ev5y_pct":40.9,"irr_base_pct":4.6,"asym_ratio":2.0,"scenario_tree":{"terminal_label":"FY2031E","valuation_basis":"sales_multiple","start":{"rev":48.67,"ev_s":36.89,"basis":"起點營收取 FY2026 共識，EV/S 為目前 EV÷FY2026 共識營收；終端 EV/S 分母同為當年度營收。目前 EV 用 2026-09-30 現金，尚未扣 10 月付給 Claros 的約 1.26 億美元。"},"rev":{"bull":[100,200,380,600,850],"base":[82,140,225,320,420],"bear":[68,88,112,140,170]},"ev_s":{"bull":12,"base":8,"bear":3},"net_debt_y5":{"bull":-350,"base":-150,"bear":-60},"shares_y5":{"bull":315,"base":325,"bear":350},"net_debt_now":-524.88,"shares_now":269.51,"p":{"bull":20,"base":45,"bear":35},"yield_pct":{"dividend":0,"net_buyback":0},"second_stage":null,"valuation_dependent":false}}
+```
+
+---
+
+## ④b 舊逐字稿摘錄（前一季＋投資人日；對照管理層以前說過什麼）
+
+### NVTS_Q2_2026_Earnings_Call_20260727.md
+- 2026-07-27｜CFO Tonya Stevens｜guidance：CFO 給 Q3 營收財測：季增 28% 至 13.5M，±0.5M。（原話："revenue increasing 28% to $13.5 million, plus or minus $0.5 million"）
+- 2026-07-27｜CFO Tonya Stevens｜guidance：Q3 non-GAAP 毛利率財測 39.7%±100bp。（原話："Non-GAAP gross margin is expected to be 39.7%, plus or minus 100 basis points"）
+- 2026-07-27｜CFO Tonya Stevens｜guidance：Q3 non-GAAP 營業費用財測區間 15.5M–17.5M。（原話："Non-GAAP operating expenses are anticipated to range between $15.5 million to $17.5 million."）
+- 2026-07-27｜CEO Chris Allexandre｜guidance：CEO 表示下半年持續季度雙位數成長，全年達中個位數營收成長，Q3 回到年增。（原話："This also translates to achieving mid-single-digit revenue growth for the full year"）
+- 2026-07-27｜CEO Chris Allexandre｜guidance：CEO 預期年底 AI 基礎設施占總銷售超過三分之一。（原話："We expect AI infrastructure market will represent more than 1/3 of our total sales by year-end"）
+- 2026-07-27｜CEO Chris Allexandre｜guidance：管理層不給 2027 財測，只方向性說明 Q4。（原話："Of course, we're not going to guide '27."）
+- 2026-07-27｜CFO Tonya Stevens｜margin：Q2 non-GAAP 毛利率 39.5%，季增 50bp、年增 100bp，管理層歸因於產品組合與規模。（原話："gross margin expanded by 50 basis points sequentially and 100 basis points year-over-year to 39.5%"）
+- 2026-07-27｜CFO Tonya Stevens｜margin：Q2 營收 10.5M、季增 22%，高功率市場年增超過 50%，數字口徑為 non-GAAP。（原話："increasing 22% sequentially to $10.5 million"）
+- 2026-07-27｜CFO Tonya Stevens｜margin：Q2 營業費用 15.5M（Q1 為 15.0M），位於財測高端；營業虧損 11.4M。（原話："Operating expenses for the second quarter were $15.5 million compared to $15.0 million in the prior quarter"）
+- 2026-07-27｜CFO Tonya Stevens｜margin：CFO 說明 Q3 起季度 OpEx 增加約 1.0–1.5M（約 10%），並稱低於營收成長率。（原話："a prudent increase of approximately $1.0 million to $1.5 million in quarterly OpEx beginning in the third quarter"）
+- 2026-07-27｜CFO Tonya Stevens｜margin：GAAP 含 2.03 億美元非現金 earn-out 費用，稱已全數認列、不再發生。（原話："a noncash charge of $203 million related to the October 2021"）
+- 2026-07-27｜CFO Tonya Stevens｜margin：存貨 19.5M（前季 14.9M），另預付款項增加約 15M，為 TSMC 晶圓緩衝庫存。（原話："we ended the second quarter with $19.5 million of inventory compared to $14.9 million in the prior quarter"）
+- 2026-07-27｜CEO Chris Allexandre｜commitment：CEO 承諾毛利率逐步擴張並維持邁向獲利的路徑。（原話："gradual gross margin expansion through improving mix and scale"）
+- 2026-07-27｜CEO Chris Allexandre｜commitment：CEO 強調獲利目標未變，OpEx 增幅為營收成長的一部分。（原話："our focus and eyes on getting this company to get profitable has not"）
+- 2026-07-27｜CEO Chris Allexandre｜commitment：管理層預期年底行動與低階消費業務變得微不足道，且稱比原預期早一季。（原話："we are 1 quarter ahead of my expectation in terms of mobile being gone"）
+- 2026-07-27｜CEO Chris Allexandre｜commitment：GlobalFoundries 8 吋 GaN：年底前送樣與驗證，2027 初有合格產品。（原話："we expect to have initial qualified product in early"）
+- 2026-07-27｜CEO Chris Allexandre｜commitment：計畫 Q3 發表 6.5 kV SiC 技術，並預告數週內公布 10 kV 開發。（原話："planned third quarter release of our new 6.5 kV SiC technology"）
+- 2026-07-27｜CFO Tonya Stevens｜capital_allocation：季內募資約 3.73 億美元，均價 21.89 美元，無負債。（原話："additional capital raised during the quarter of approximately $373"）
+- 2026-07-27｜CFO Tonya Stevens｜capital_allocation：現金數字口徑不一：CFO 說 557M，CEO 說 567M（原文如此）。（原話："Cash and cash equivalents at the end of the second quarter 2026 were"）
+- 2026-07-27｜CEO Chris Allexandre｜capital_allocation：CEO 稱現金 567M，列出資金用途含 Foundry Plus、產能擴張與潛在併購。（原話："with $567 million of cash at quarter end"）
+- 2026-07-27｜CEO Chris Allexandre｜capital_allocation：CEO 說明提前加碼投資的決定：成長來得比預期早，是有意識的決定。（原話："we decided to pull"）
+- 2026-07-27｜CEO Chris Allexandre｜product：CEO 描述 800V 四個拐點，第一個為 2026 下半年起、2027 上半年加速的 AC/DC PSU 以 SiC 取代矽，與 800V 無關。（原話："SiC adoption in AC/DC PSUs is being driven by power scaling and density requirement independent of the 800V DC initiatives."）
+- 2026-07-27｜CEO Chris Allexandre｜product：CEO 稱 800V 架構轉換預計 2027 年發生。（原話："the transition to 800V architecture for next-generaton AI data"）
+- 2026-07-27｜CEO Chris Allexandre｜product：新 1.2kV JFET 產品線預計明年初推出，稱增加約 10 億美元 2030 年 TAM。（原話："opens door to address an additional $1 billion of"）
+- 2026-07-27｜CEO Chris Allexandre｜product：授權 Magnachip GeneSiC Gen 4/5 技術，CEO 稱主要目的為擴大 SAM 與第二晶圓來源，授權收入非首要目標。（原話："this is not so much about the licensing."）
+- 2026-07-27｜CEO Chris Allexandre｜product：高效能運算電源升級，筆電充電器 280W，單機 GaN 含量約 5–6 美元。（原話："you have about $5 to $6 of content of GaN"）
+- 2026-07-27｜CEO Chris Allexandre｜customer：CEO 敘事變化：成長不再只靠單一大 GaN 插槽，而是數十個專案、多客戶。（原話："it's 10s and 20s of programs, different programs, different board, different customers"）
+- 2026-07-27｜CFO Tonya Stevens｜customer：CFO 稱 AI 基礎設施 Q1、Q2 皆季增超過 50%，預期持續加速。（原話："AI infrastructure is growing at over 50% quarter-on-quarter, both in Q1 and in Q2"）
+- 2026-07-27｜CEO Chris Allexandre｜customer：CEO 稱第二拐點已進入大量系統級測試，非原型階段。（原話："this is not anymore prototype, right?"）
+- 2026-07-27｜CEO Chris Allexandre｜competition：CEO 稱優先 AI 基礎設施而非車用，與部分競爭者不同。（原話："prioritize AI infrastructure over automotive, unlike some of our"）
+- 2026-07-27｜CFO Tonya Stevens｜competition：CFO 稱同時擁有 GaN 與 SiC 的競爭者很少。（原話："A few competitors have both and having both allows us to participate"）
+- 2026-07-27｜CEO Chris Allexandre｜competition：價格：CEO 稱核心市場漲價目前不是公司重點，不給具體說法。（原話："has not been so far a focus on our side."）
+- 2026-07-27｜CEO Chris Allexandre｜risk：Wolfspeed 專利訴訟（GaN 與 SiC）；CEO 不評論細節，並稱 Wolfspeed 訴訟是騷擾與恫嚇。（原話："a campaign of harassment and intimidation through litigation"）
+- 2026-07-27｜CEO Chris Allexandre｜risk：Renesas 於法說前一週另提訴訟；CEO 指其持有 Wolfspeed 最多 39%。（原話："Renesas sued us."）
+- 2026-07-27｜CEO Chris Allexandre｜risk：分析師問 800V 延遲與 NVIDIA Kyber 機櫃傳聞對 2027 的影響，CEO 答不改變展望。（原話："do we see that as a change in the outlook of [indiscernible]? The answer is no."）
+
+### 問答異常語氣（迴避／改口／保留）
+- NVTS_Q2_2026_Earnings_Call_20260727.md｜問：Quinn Bolton 問 NVIDIA Kyber 機櫃傳聞與 800V 延遲是否影響 2027 營收展望｜答法：CEO 表示不評論 NVIDIA 與 Kyber，改談多個拐點與 GaN/SiC 兩種技術；僅回答對展望的影響為「no」，無數字
+- NVTS_Q2_2026_Earnings_Call_20260727.md｜問：Madison de Paola 問 2027 成長中已承諾專案與仍在驗證專案的比例｜答法：CFO 稱不拆分已承諾或積壓訂單比例，改談拐點疊加與驗證階段專案數；CEO 稱不給 2027 財測
+- NVTS_Q2_2026_Earnings_Call_20260727.md｜問：Tristan Gerra 團隊問年底高端運算與資料中心的營收組合｜答法：CFO 與 CEO 皆稱不拆分數字，只重述 AI 基礎設施年底占 1/3 以上
+- NVTS_Q2_2026_Earnings_Call_20260727.md｜問：分析師問 Wolfspeed 訴訟機率與風險｜答法：CEO 稱無法評論，但長篇陳述訴訟背景與時機，未回答勝算與可能損失
+- NVTS_Q2_2026_Earnings_Call_20260727.md｜問：Jonathan Tanwanteng 問 Magnachip 交易是按量或固定費用、何時貢獻營收｜答法：CEO 未回答計價結構與貢獻時點，只稱授權非首要目的
+- NVTS_Q2_2026_Earnings_Call_20260727.md｜問：分析師問產品是否漲價｜答法：CEO 稱不談與客戶的具體漲價，只說目前焦點在客戶採用新技術
+
+---
+
+| axis | status | n_findings | n_queries |
+|---|---|---|---|
+| competitive_share_entrants | found | 4 | 2 |
+| customer_second_source | found | 3 | 2 |
+| customer_concentration_credit | found | 2 | 1 |
+| supply_demand_durability | found | 5 | 4 |
+| regulatory_antitrust | found | 1 | 2 |
+| reg_tariff_export | found | 4 | 2 |
+| geo_supply_chain | found | 4 | 2 |
+| end_markets | found | 3 | 3 |
+| substitute_technology | found | 3 | 2 |
+| channel_business_model_shift | found | 4 | 2 |
+| capital_markets_pricing | found | 3 | 2 |
+| major_events | found | 3 | 4 |
+| unprofitable_nrr_rule40_band | found | 2 | 3 |
+| unprofitable_dilution_trajectory | found | 6 | 3 |
+| unprofitable_path_to_profitability | found | 3 | 3 |
+
+---
+
+## 前份判斷摘要（含 drift_watch_prior 20 欄前份值；漂移歸因對帳用）
+
+```json
+{"date":"20260524","verdict":"X 迴避：估值 🔴 P/S 163x（同業 8x 的 20 倍）+ MA 動能末段（4 週 +144% 漂移）+ 體質 veto 4 項不過 + 共識目標 .88 隱含 −56% 下行。NVIDIA 800V HVDC thesis 真實但已透支；等回測 Bollinger 中軌  區或 2027H1 Rubin Ultra Kyber 量產驗證後再重評。","role":null,"H":{"status":"ok","format":"table","rows":[{"id":"H1","text":"Navitas 2.0 high-power 業務翻轉成功，2027 high-power 占營收 &gt; 70%","columns":{"2Y 驗證點":"2026Q3 high-power 占比 &gt; 55%；Q4 達 &gt; 65%；FY26 revenue ≥ $41M guide 下緣","5Y 驗證點":"FY27 revenue ≥ $72M consensus（high-power 主導）；FY28 ≥ $120M","10Y 驗證點":"FY30 revenue ≥ $300M（SAM 10% 滲透）","具體數字門檻":"FY26 $41M guide / FY27 $72M sell-side / FY30 $300M = 公司 SAM 推估的 10% 滲透","信息來源":"FY26 公司 guidance + yfinance 8 位分析師共識 + Navitas IR 2025-08 AI 數據中心 SAM deck","漂移觸發條件":"連 2 季 TTM revenue &lt; consensus −10% → H1 削弱；連 3 季 → H1 反轉"}},{"id":"H2","text":"NVIDIA 800V HVDC 中 NVTS 維持 ≥ 25% BoM share（GaN 高功率 + SiC reference）","columns":{"2Y 驗證點":"2027H1 Rubin Ultra Kyber 系統第一波量產，NVTS 公告 design win / shipment 數據；2027Q1 報季 high-power 中 data center 占比可拆","5Y 驗證點":"2028-29 Vera Rubin + 後續代次規模化期間，NVTS share 不被 POWI / Infineon / ST 擠至 &lt; 20%","10Y 驗證點":"2030 800V HVDC 成為 hyperscaler 主流時 NVTS 仍是 top 3 GaN / SiC 高功率供應商","具體數字門檻":"NVIDIA Kyber rack BoM 中 GaN + SiC 含量 ≥ $300/GPU；NVTS share ≥ 25% = $75/GPU；Rubin Ultra 年產量假設 200K-500K GPU → NVTS data center 年營收 $15-37.5M（單一架構）","信息來源":"NVIDIA 官方文件 + 第三方 teardown（ChipRebel / TechInsights）+ NVTS 法說會揭露","漂移觸發條件":"連 2 季 NVIDIA data center revenue 占比 NVTS 總營收 &lt; 30% → H2 削弱；2027H1 Kyber 量產確認 NVTS BoM share &lt; 15% → H2 反轉"}},{"id":"H3","text":"估值倍數從現價 P/S 95-165x 收斂至 25-30x 同業溢價區間之前不再大幅向上（前提：基本面兌現速度 = 倍數壓縮速度，股價橫盤或溫和回測）","columns":{"2Y 驗證點":"2026H2 股價回測 $15-20 區間（從 $29.25 −30% 至 −48%），對應 P/S 50-70x","5Y 驗證點":"2027-28 隨 FY27/28 revenue 兌現至 $72M/$120M，P/S 自然壓至 30-50x 區","10Y 驗證點":"2030 估值 reset 至 $200M+ revenue × 15-20x P/S = 市值 $3-4B（−40-55%）","具體數字門檻":"P/S 在 FY+2 = 30x 是 NVTS pure-play GaN 溢價合理上緣；&gt; 50x 需要敘事繼續放大、&gt; 80x 不可持續","信息來源":"POWI / WOLF / IFNNY 同業比較 + Navitas 自身 IPO 後估值區間","漂移觸發條件":"連 2 季 P/S（FY+2 基礎）維持 &gt; 80x → 估值倍數脫鉤；單季回測 &lt; 50x → 倍數壓縮如預期"}}]},"R":{"status":"ok","format":"table","rows":[{"id":"R1","text":"Q2/Q3 2026 high-power 業務 ramp 不如預期（client design-in 延後、distributor 庫存堆積）","columns":{"對應假設":"H1","時間尺度":"⚡ 短期（1-2 季可觸發）","監測指標":"Q2 revenue 實際 vs guide 中緣 $10M；high-power 占比；distributor inventory days","警戒閾值":"單季 miss &gt; 10% + 連 2 季 high-power 占比未升 &gt; 5%pt → R1 觸發"}},{"id":"R2","text":"POWI / Infineon / Innoscience 在 NVIDIA 800V HVDC 中拿走更大 BoM share，NVTS 被擠到 &lt; 15%","columns":{"對應假設":"H2","時間尺度":"🔥 中期（4-6 季）","監測指標":"NVIDIA Rubin Ultra 量產時 NVTS 公告 design win 數量、shipped units、ASP 揭露；POWI 揭露 NVIDIA data center revenue","警戒閾值":"2027H1 Kyber 量產確認 NVTS share &lt; 15% → R2 觸發；POWI 公告 NVIDIA AI revenue &gt; $200M / 年 → R2 觸發"}},{"id":"R3","text":"800V HVDC 範式被 ±400V bipolar（Vicor 主推）或其他替代架構分流，hyperscaler 標準分裂","columns":{"對應假設":"H1 + H2","時間尺度":"🐢 長期（2+ 年慢變數）","監測指標":"OCP（Open Compute Project）標準制定動向；Meta / Microsoft / Google 對 ±400V vs 800V 表態；NVIDIA + AMD 對立路線","警戒閾值":"2028 之前若 OCP 接受多架構並存且 hyperscaler &gt; 1 家公開選 ±400V → R3 進入觀察；&gt; 50% 機率時才大動作 — 短期單一公告不觸發"}}]},"single_thing":null,"kill_metrics":null,"rearm_trigger":null,"irr_base_pct":null,"ev5y_pct":null,"drift_watch_prior":{"dca_verdict":null,"dca_role":null,"signal":"X","val":"🔴","ma":"🟠","trap":"🟡","moat_trend":null,"runway_post_y5":null,"asym_ratio":null,"ev5y_pct":null,"irr_base_pct":null,"max_dd_pct":null,"bull_5y_price":null,"bear_5y_price":null,"p_bull_pct":null,"p_bear_pct":null,"rearm_trigger":null,"price_at_dd":29.25,"archetype":null,"cycle_position":null}}
+```
+
+---
+
+## judgment.json 全文（被審對象，緊湊格式）
+
+（以下 JSON 為緊湊格式（省空白），內容完整）
+
+```json
+{"meta":{"ticker":"NVTS","date":"2026-11-08","schema":"v15.0","contract":"v19","company_name":"Navitas Semiconductor Corporation"},"oneliner":"題材是真的，Q3 營收季增 33%、訂單出貨比約 2 倍，但 EV 仍是 FY2027 共識營收的 22.9 倍，損益兩平要季營收 6,000 萬美元以上，目前不值得買。","facts_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/NVTS_20261108/facts.json","scenario_ref":"/Users/ivanchang/financial-analysis-bot/.dd_build/runs/NVTS_20261108/scenario.json","answers":{"q1_business":{"verdict":"賣 GaN、SiC 功率元件給 AI 資料中心與電網的電源廠，多經經銷商出貨；錢卡在能否拿到電源插槽的第一供應商位置，目前每季營收只有 1,400 萬美元，還賺不到錢。","reasoning":"Q3 營收 1,400 萬美元，季增 33%、年增 38%；非 GAAP 毛利率 40.0%，非 GAAP 營業利益率 −78.1%，GAAP 營業利益率 −245.7%。Q4 指引 1,600 萬美元，AI 基礎設施占比超過 40%，行動業務降到低個位數。公司只給占比，不給分部金額，2026 年 AI 基礎設施全年基期也沒有數字，所以「2027 年成長三倍」還無法換算成美元。客戶集中：FY2025 最大經銷商占營收 46%，背後終端客戶未揭露。事實表有一條寫 Q3 經銷商占營收 29%，但對應金額 169.2 萬美元只等於 Q3 營收 12%，應是應收帳款占比，Q3 營收集中度事實表未涵蓋。單點依賴在代工：TSMC 預定 2027 年 7 月停止 GaN 生產，公司轉往 GlobalFoundries 與力積電，第一批美國製晶圓 2026 年 9 月才出貨。","fact_refs":["f_kpi0_gaap","f_kpi2_non_gaap","f_kpi4_gaap","f_kpi5_non_gaap","f_kpi7_q4_2026","f_kpi8_backlog","f_kpi9_book_to_bill"],"verdict_values":{"revenue_quality":"訂單看到 2027 年中，金額未揭露；CEO 口述 Q3 訂單出貨比為 2 倍。Q4 起營收才幾乎全是高功率，之前仍有行動業務尾單。","unit_econ_note":"TTM 毛利率 38.61%，比 POWI 低 14.71 個百分點、比 MPWR 低 16.65 個百分點，與 ON 相當。TTM 研發占營收 136.57%，現階段規模撐不起費用。","archetype":{"primary":"未獲利高成長","secondary":"轉機/特殊情境","confidence":"高","fingerprint":"TTM 營業利益率 −272.56%，營收連續季增雙位數，無負債，靠增資支應虧損與併購。"},"industry":{"clock_phase":"I","sd_verdict_source":"產業位置為復甦：公司 Q3 是 2024 年以來首次營收年增，AI 用 GaN 首批 800V 商用約在 2027 年（Yole，經 Meticulous 摘要）。供需判斷為結構性持久但供給可逆性高：功率需求來自機櫃功率上升，onsemi、ST 已推出 AI 用 GaN。先進製程與記憶體吃緊的資料不適用功率半導體。","bargaining":{"up":"弱。GaN 與 SiC 各有單一來源依賴，無代工長期供貨合約，TSMC 將退出 GaN；公司用緩衝存貨與共同投資補位。","down":"弱。架構由處理器廠與雲端廠決定，FY2025 最大經銷商占營收 46%；每個電源方案通常 2 到 3 家供應商。","geo":"絕大多數製造在美國境外，GaN 正移往美國 GlobalFoundries 與台灣力積電；出口管制可能影響中國終端客戶。"},"profit_pool_dir":"利潤池往 AI 資料中心電源移動，目前高利潤在 MPWR 這類已站穩的電源晶片廠（TTM 營益率 29.5%）；GaN、SiC 專業廠的五年利潤池占比事實表未涵蓋。","tam_table":[{"item":"公司口徑 2030 年 SAM（含 Claros）","value":"超過 80 億美元，管理層數字，未經第三方驗證"},{"item":"GaN 功率元件 2026 年市場","value":"約 8 億到 13 億美元，各家口徑差異大"},{"item":"公司 FY2026 共識營收占 2030 年 SAM","value":"約 0.6%"},{"item":"五年利潤池變化","value":"事實表未涵蓋"}]}}},"q2_moat":{"verdict":"護城河方向穩定（→），評為 C：技術與設計導入有進展，但份額沒有第三方證據，定價力也弱於獲利同業。","reasoning":"機制是自有 GaN 製程 IP、GeneSiC 的 SiC 技術與系統級參考設計，先進入一代電源方案後，客戶通常到下一代才換（10-K）。對同業 ROIC 差距與第三方份額都取不到，改看兩個替代軸。毛利率方面，TTM 38.61% 低於 POWI 與 MPWR，Q3 較一年前升 130 個基點，來源是產品組合。份額方面，CEO 2026-11-03 說每個方案 2 到 3 家供應商，長期可拿 30% 到 40%，這是管理層估計；高功率營收成長 125% 快於市場的說法也沒有附市場數字。CEO 2026-07-27 說漲價目前不是重點。執行面擴大，定價力穩定，合併為穩定。不標上升，因為份額未經驗證；不標下降，因為大廠進場尚未反映在可量測的份額或毛利率。當期 ROIC 為負，投入資本事實表未涵蓋。另外，Q3 逐字稿寫授權給 Microchip，Q2 法說與 2026-09 的 8-K 對象是 Magnachip，我判斷是轉錄錯誤，無法對原始音檔查證。","fact_refs":["f_peer_nvts_gross_margin_pct","f_peer_powi_gross_margin_pct","f_peer_mpwr_gross_margin_pct","f_peer_on_gross_margin_pct","f_peer_wolf_gross_margin_pct","f_peer_nvts_operating_margin_pct"],"verdict_values":{"moat":{"mechanism":"自有 GaN、SiC 元件 IP 加系統級設計導入，靠搶先進入一代電源方案取得插槽；轉換成本只保護一代產品，沒有規模或成本優勢。","execution":7,"pricing":4,"grade":"C","trend":"→","trend_evidence":"執行面擴大：Q3 營收達指引高端，AI 基礎設施年底占比從三分之一以上提高到 40% 以上，並拿到 100 萬顆 GaN 的 800V 訂單。定價力穩定：毛利率年增 130 個基點，主要來自組合，仍比 POWI 低 14.71 個百分點。","competitor_notes":[{"name":"POWI","strategy_note":"10-K 列為 GaN 對手，毛利率 53.32%、營益率 7.67%，有獲利支撐研發，是毛利率的直接比較基準。"},{"name":"MPWR","strategy_note":"毛利率 55.26%、營益率 29.5%，證明電源晶片可以賺高利潤；其 GaN、SiC 或 IVR 布局事實表未涵蓋。"},{"name":"ON","strategy_note":"2026-06 推出 AI 資料中心用 GaN 產品組合，毛利率 38.68% 與公司相當，營益率 19.12%，差距來自規模。"},{"name":"WOLF","strategy_note":"TTM 毛利率 −34.9%、營益率 −74.77%，SiC 同業仍在虧損；也是 2026-07 專利侵權訴訟的原告。"}],"peer_na_reason":"同業 ROIC 與份額事實表未涵蓋，改用毛利率差。","threats":[{"level":"🔴","text":"Infineon、TI、Renesas 與 onsemi、ST 都在 GaN 或 SiC 對手名單內，財力與客戶關係強過公司，可用完整產品組合爭取插槽。","p":"50%","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","competitive_share_entrants#3","customer_second_source#0"]},{"level":"🟡","text":"客戶自研，或因出口限制轉向不受限的對手；垂直整合的處理器與雲端廠掌握電源架構。","p":"30%","evidence_refs":["customer_second_source#1","reg_tariff_export#2","substitute_technology#1"]},{"level":"🟡","text":"IVR 賽道有 Ferric、Empower 等對手，業界也在併購 IVR 公司，Claros 的模組化優勢目前只有管理層與客戶回饋的口徑。","p":"40%"}],"roic_durability":{"quadrant":"低利益率×低周轉","checkpoints":[{"item":"需求基礎值","level":"🟡","text":"使用者是電源設計團隊，決策者是雲端與處理器廠，付款者多為電源廠與經銷商。省電等於增加算力，需求成立；第一拐點與 800V 無關，已進營收。第三、第四拐點 2028 年才有實質營收，金額只有管理層口徑。"},{"item":"決策層級","level":"🟡","text":"決策單位是單一電源方案的插槽，通常 2 到 3 家供應商，公司有時是第一供應商，有時是第二。10-K 說設計採用後客戶多半到下一代才換，轉換成本只保護一代產品。"},{"item":"價值鏈分配","level":"🔴","text":"架構由處理器與雲端廠決定，買方集中，代工端又有單一來源依賴。公司毛利率比 POWI 與 MPWR 低 15 到 17 個百分點，CEO 2026-07-27 說漲價不是重點，目前看不到公司能多分到利潤。"},{"item":"社會容忍度","level":"🟢","text":"電源元件是企業對企業採購，沒有消費者或監管對漲價的壓力。政策風險來自出口管制，已列入風險項，不影響定價上限。"}],"roiic":"不適用：營業利潤為負。Q3 非 GAAP 增量營益率約 15%（營收年增約 386 萬美元，營業虧損改善 60 萬美元），只是早期訊號，Q4 費用上升後會轉負。","reinvest_rate":"不適用：營業利潤為負，再投資率公式沒有意義。實際資金來自 2026 Q2 增資約 3.73 億美元。","endo_ceiling":null,"formula_note":"內生成長率＝增量 ROIC×再投資率，兩項目前都沒有意義，上界留空；情境樹視同超過內生上界，空方機率不低於 30%。"}}}},"q3_growth":{"verdict":"成長跑道寬（🟢）：公司營收只占自估 2030 年 SAM 的 0.6%，IVR 是有來源的第二曲線；但 SAM 是管理層數字，IVR 最快 2028 年底才放量。","reasoning":"成長靠量與產品組合，高功率產品取代行動產品；Claros 在 2028 年底前沒有實質營收。2026 年營收指引增 7%，CEO 口徑高功率成長 125%。共識營收 FY2026 4,867 萬美元、FY2027 7,838 萬美元，增 61%，約等於 2027 年每季季增 10%。三年共識 EPS 為 −0.15、−0.12、−0.10 美元，都是虧損，CAGR 沒有意義。內生上界無法計算，成長資金來自增資與併購，所以缺口歸因於外部融資與收購。跑道估算：以 Base 年化 54% 成長，營收到 SAM 的 30% 約需 9 年，屬中等長度。第二曲線是 IVR，錨定客戶是垂直整合的處理器與系統廠，2028 年底到 2029 年放量。GaN 功率元件 2026 年市場約 8 億到 13 億美元，與 80 億美元 SAM 口徑不同，不宜直接比較。","fact_refs":["f_rev_consensus_fy1_m","f_rev_consensus_fy2_m","f_consensus_eps_fy1","f_consensus_eps_fy2","f_consensus_eps_fy3","f_kpi7_q4_2026","f_kpi8_backlog"],"verdict_values":{"growth":{"driver_mix":"量與產品組合為主，價格沒有證據，併購在 2028 年底前沒有貢獻，沒有回購。","runway_years":9,"runway_post_y5":"🟢","endo_ceiling_basis":"營業利潤為負，內生成長率公式不適用；現階段成長由增資與併購支應。","segments":[{"item":"AI 基礎設施（資料中心加電網）","value":"Q4 指引占營收超過 40%，約 640 萬美元以上；管理層預期 2027 年約三倍，全年基期未揭露"},{"item":"其他高功率","value":"管理層 2027 年模型假設大致持平"},{"item":"行動與低階消費","value":"2025 年占多數營收，2026 年底降到低個位數"},{"item":"IVR（Claros）","value":"目前無營收，錨定客戶 2028 年底到 2029 年放量"}],"decay_signals":["亮燈：SBC 占營收 64.3%，高於 FY2025 的約 31.5%","未亮：毛利率 Q2、Q3 都年增","未亮：TAM 未見萎縮，行動業務是主動退出","無法判斷：市占變化沒有第三方資料","無法判斷：產業估值倍數三年走勢事實表未涵蓋","不適用：EPS 與 FCF 為負，EPS 對營收成長差與 FCF 轉換率沒有意義"]}}},"q4_capital":{"verdict":"資本配置目前偏弱：沒有回購，股數增長遠超每年 1.5%，Claros 尚無報酬；明顯加分只有在每股 21.89 美元募到約 3.73 億美元。","reasoning":"FCF 連四年為負，FY2022 到 FY2025 合計 −2.05 億美元；淨利為負，FCF 對淨利的轉換率沒有意義。Q3 SBC 占營收 64.3%。Q3 末現金 5.315 億美元，扣掉 10 月付給 Claros 約 1.26 億美元後約 4.05 億美元，公司無負債，Q3 未動用 ATM。Q4 非 GAAP 營業虧損約 1,850 萬美元，加上存貨與產能預付，每季約燒 3,000 萬到 4,000 萬美元，跑道約 10 到 13 季，超過 12 個月。稀釋壓力仍在：SPAC 原股東還可再領最多 1,000 萬股，ATM 額度在不同來源有 1.25 億與 5 億美元兩種說法，待核對 SEC 文件。近三年完整現金去向與 SBC 年度序列事實表未涵蓋。Q2 法說 CEO 口述現金 5.67 億美元，與 CFO 及 Q3 對照值 5.574 億美元不同，以後者為準。","fact_refs":["f_kpi6_sbc","f_kpi10","f_net_debt_m","f_shares_diluted_m"],"verdict_values":{"capalloc":{"items":[{"name":"ma_roiic","applicable":true,"passed":false,"input":"Claros 約 2.33 億美元（搜尋摘要，現金部分約 1.26 億美元），2026-10-05 完成，錨定客戶 2028 年底到 2029 年才放量，已實現報酬為零。"},{"name":"buyback_yield","applicable":false,"passed":null,"input":"公司沒有回購。"},{"name":"sbc_dilution","applicable":true,"passed":false,"input":"Q3 SBC 占營收 64.3%；流通股約一年增 17.17%（StockAnalysis，未標日期），遠高於每年 1.5%。"}]},"governance":{"capital_returns":{"expanded":false,"reason":"公司沒有配息與回購，現金用途是虧損、存貨與併購，已在本題判讀寫明。"}}}},"q5_valuation":{"verdict":"現價要有 12% 年化報酬，FY2031 營收要到約 6 億美元，五年複合約 65%，再維持 8 倍 EV/S；我不相信這是基本情境，估值偏貴。","reasoning":"目前 EV 17.96 億美元，等於 FY2026 共識營收 36.89 倍、FY2027 共識營收 22.9 倍。事實表的 EV 用 9 月底現金，扣掉 Claros 付款後約 19.2 億美元，FY2027 倍數約 24.5 倍。以 40% 毛利率換算，EV／毛利約 57 倍。終端倍數 8 倍的對照只有前份記載的同業 P/S 約 8 倍（2026-05），同業現值事實表未涵蓋。12% 報酬的算法：8.61×1.12^5≈15.17 美元，乘 3.25 億股，減淨現金 1.5 億美元，再除以 8 倍，得營收約 6 億美元，比 Base 高約 42%。賣方平均目標 14.74 美元（2026-07）、最高 21、最低 6，高低差 3.5 倍，且都在 Q3 財報前，不能當支持依據，也降低我對情境報酬的信心。短期估計：2027 年底用 18 倍 FY2027 營收 8,200 萬美元，加淨現金 2.88 億美元，除以 2.83 億股，得約 6.23 美元。中期估計：2028 年底用 12 倍 1.4 億美元，加淨現金 1.98 億美元，除以 2.95 億股，得約 6.37 美元。歷史分位只有 4 個年度端點，不是五年分位，不使用。","fact_refs":["f_price_at_dd","f_ev_m","f_ev_s_fwd","f_ev_s_current","f_ps_current","f_ps_percentile","f_rev_consensus_fy1_m","f_rev_consensus_fy2_m","f_consensus_rev_3m_fy1_pct","f_net_debt_m","f_shares_diluted_m"],"verdict_values":{"valuation":{"basis":"EV/S 為主，EV／毛利為輔；公司虧損，本益比與 PEG 不適用。","tier":"小型未獲利功率半導體","peers":[{"item":"公司 EV÷FY2026 共識營收","value":"36.89 倍"},{"item":"公司 EV÷FY2027 共識營收","value":"22.9 倍"},{"item":"同業 P/S","value":"約 8 倍，來自前份判斷（2026-05）；現值事實表未涵蓋"}],"fwd_pe":null,"peg":null,"percentile_5y":null,"val_light":"🔴","val_light_derivation":"EV 是 FY2027 共識營收 22.9 倍，遠高於前份記載的同業約 8 倍；Rule-of-40 約 −151；12% 年化報酬所需營收比 Base 高約 42%，判為最貴一檔。五年分位資料不足，未納入。","upside_short_pct":-28,"upside_mid_pct":-26,"denominator_disputed":false,"denominator_note":"分母不是爭點：用 TTM（44.43 倍）、FY2026（36.89 倍）或 Q4 指引年化 6,400 萬美元（約 28 倍），結論都是昂貴。分子要注意 Claros 付款後 EV 約多 1.26 億美元。"}}},"q6_how_wrong":{"verdict":"最可能看錯在太保守：若 2027 年每季季增 20%，FY2027 營收破億美元，現在的倍數就不算離譜；但 Rule-of-40 約 −151、股數一年增 17%，目前仍列迴避。","reasoning":"看多的最強版本是 Q3 訂單出貨比 2 倍、訂單看到 2027 年中，AI 基礎設施年底占比指引從三分之一以上提高到 40% 以上。看空的最強數字有三個：Rule-of-40 約 −151（Q3 年增 38% 加 TTM FCF 利潤率 −189.08%）；股數一年增 17%；損益兩平門檻升到季營收 6,000 萬美元出頭。未獲利高成長的五項體質標準只過現金跑道一項。股價 2026-05-24 起已跌 70.6%，跌幅本身不是安全邊際。管理層迴避的問題要當缺口看待：2026-07-27 與 2026-11-03 都不拆 2027 年已承諾訂單比例；2026-07-27 不拆資料中心營收、不答訴訟勝算與 Magnachip 收費結構；2026-11-03 再次不談訴訟。專利訴訟是民事個案，受影響營收與結案日事實表未涵蓋，不能裁定風險已解。","fact_refs":["f_week26_return_pct","f_price_at_dd","f_kpi6_sbc","f_peer_nvts_fcf_margin_pct","f_shares_diluted_m"],"verdict_values":{"trap":{"verdict":"🟡","label":"題材真實，但股東報酬要等稀釋後的規模兌現"}}}},"scenario_inputs":{"valuation_basis":"sales_multiple","terminal_label":"FY2031E","start":{"rev":48.67,"ev_s":36.89,"basis":"起點營收取 FY2026 共識，EV/S 為目前 EV÷FY2026 共識營收；終端 EV/S 分母同為當年度營收。目前 EV 用 2026-09-30 現金，尚未扣 10 月付給 Claros 的約 1.26 億美元。"},"rev":{"bull":[100,200,380,600,850],"base":[82,140,225,320,420],"bear":[68,88,112,140,170]},"ev_s":{"bull":12,"base":8,"bear":3},"net_debt_y5":{"bull":-350,"base":-150,"bear":-60},"shares_y5":{"bull":315,"base":325,"bear":350},"p":{"bull":20,"base":45,"bear":35},"yield_pct":{"dividend":0,"net_buyback":0},"max_dd":{"lo":-85,"hi":-55,"basis":"股價 26 週已跌 52.69%，2026-05-24 以來跌 70.6%，波動本來就大。下緣對應空方情境終點約跌 81%，再留一點空間。上緣約對應 FY2027 營收 6,800 萬美元、EV/S 13 倍、淨現金 2.6 億美元、2.9 億股，每股約 3.9 美元。","trigger_time":null},"basis":{"bull":"2027 年每季季增約 20%，第二、第三拐點與 IVR 都按管理層時程，FY2030 營收 6 億美元，約占公司口徑 2030 年 SAM 的 7.5%；成長仍快，給 12 倍。","base":"2027 年季增約 10%，略高於共識；800V 原生 2028 年貢獻，IVR 2029 年開始，FY2030 約占 SAM 4%；毛利率約 50%、營益率兩位數，給 8 倍，與前份同業 P/S 約 8 倍同級。","bear":"機率 35%：份額只有管理層口徑、大廠已進場、再投資報酬為負。2027 年季增掉到 3% 左右，800V 延後，IVR 未放量，FY2031 營收 1.7 億美元，給 3 倍；同業現值事實表未涵蓋，3 倍是低毛利情境假設。現金燒到約 6,000 萬美元，SBC 與小額增資使股數到 3.5 億。"},"endo_ceiling_exceeded":true},"counter_evidence":{"blind_spots":[{"view":"論點失敗","evidence":"2027 年第二、第三拐點放量時，Infineon、onsemi、ST 等大廠同時供貨，公司只拿到第二供應商份額；GaN 又要在 TSMC 停產前換廠。","assumption":"電源方案維持 2 到 3 家供應商，公司長期拿 30% 到 40%。","consequence":"FY2031 營收停在約 1.7 億美元，EV/S 3 倍，每股約 1.63 美元，較現價跌約 81%。","ruling":"採納為空方情境，機率 35%，因為份額只有管理層口徑，再投資報酬又為負。與唯一致命事件部分重疊：FY2027 營收低於 7,000 萬美元是這條故事最早的訊號。","watch":"每季毛利率、第二拐點轉營收進度、GlobalFoundries 合格時點。","evidence_refs":["competitive_share_entrants#3","customer_second_source#0","substitute_technology#2"]},{"view":"論點成功但股東經濟變差","evidence":"損益兩平門檻從季營收 3,000 多萬美元後段升到 6,000 萬美元出頭；Q4 費用指引 2,500 萬美元，較 Q3 增 52%；Q3 SBC 占營收 64.3%。","assumption":"毛利率 50% 需要 IVR，而 IVR 的錨定客戶 2028 年底到 2029 年才放量。","consequence":"營收達到 Base 路徑，股數仍增至 3.25 億股，每股成果被攤薄約 17%。沒有 IVR 時，毛利率約 43%、季費用 3,200 萬美元，損益兩平約 7,400 萬美元。","ruling":"採納。營收成長不等於股東報酬，Base 五年終值只比現價高約 25%。","watch":"費用占營收比、股數年增率、ATM 使用。","evidence_refs":["unprofitable_path_to_profitability#1","unprofitable_dilution_trajectory#0","unprofitable_dilution_trajectory#1","unprofitable_dilution_trajectory#2","unprofitable_dilution_trajectory#4"]},{"view":"價格已反映太多","evidence":"EV 是 FY2027 共識營收 22.9 倍，扣掉 Claros 現金後約 24.5 倍，EV／毛利約 57 倍。","assumption":"12% 年化報酬需要 FY2031 營收約 6 億美元，再給 8 倍 EV/S，超過公司口徑 2030 年 SAM 的 7%。","consequence":"Base 路徑成立時年化報酬只有約 4.6%；短中期倍數壓縮時股價可能先跌到 6 美元多。","ruling":"採納。現在就買的最強論證是股價跌過半而基本面加速，且現金約占市值 17%；但倍數還在同業數倍以上，這個論證不足以支持建倉。","watch":"EV÷FY2027 營收是否降到 15 倍，以及共識營收是否上修。"}],"contradictions":[{"axis":"[程式歸因]週線均線六態由程式算（timing-appendix §F）：前份 🟠 → 本次 🟠","cause":"方法變動","prior_field":["ma"],"side_a":"前份 ma=🟠","side_b":"本次 ma=🟠","ruling":"均線六態改由程式從週線收盤與 W52/W104/W250 計算，判斷者照抄；與前份相同。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]判斷日現價由事實表帶入：前份 29.25 → 本次 8.61（-70.6%）","cause":"價格變動","prior_field":["price_at_dd"],"side_a":"前份 price_at_dd=29.25","side_b":"本次 price_at_dd=8.61","ruling":"現價是機械輸入，不構成判斷理由；起點價變動連帶影響的 IRR／EV／不對稱由 scenario 腳本重算，判斷者只需歸因情境輸入本身的改變。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：情境樹重建（股價固定在前份 29.25 美元重算）","cause":"方法變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct","bull_5y_price","bear_5y_price"],"side_a":"前份情境、股價 29.25 美元：五年期望值 前份未列，基準年化 前份未列，前份未列不對稱比","side_b":"本次情境、股價仍用 29.25 美元：Bull 價 33.49、Bear 價 1.63，五年期望值 −58.5%，基準年化 −18.1%，不對稱比 0.09","ruling":"先換情境、股價不動：五年期望值與基準年化前份未列，無法比較。前份未列不對稱比，本次為 0.09。Bull、Bear 價位與股價無關，只受情境影響。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"[程式歸因]期望報酬拆解：股價變動（情境固定為本次重算）","cause":"價格變動","prior_field":["asym_ratio","ev5y_pct","irr_base_pct"],"side_a":"本次情境、股價 29.25 美元：五年期望值 −58.5%，基準年化 −18.1%，不對稱比 0.09","side_b":"本次情境、股價 8.61 美元：五年期望值 +40.9%，基準年化 4.6%，不對稱比 2.04","ruling":"再換股價、情境不動：起點價下跌 70.6%，五年期望值多 99.4 個百分點，基準年化多 22.7 個百分點，不對稱比由 0.09 升到 2.04。拆解順序為先情境後股價。","evidence_level":"程式計算","settle_metric":"—","if_then":[],"evidence_refs":[]},{"axis":"產業態勢三軸","cause":null,"prior_field":null,"side_a":"競爭惡化：onsemi 2026-06 推 AI 用 GaN，ST 2026-05 推 700V GaN；Infineon、TI、Renesas 也在對手名單。","side_b":"結構轉好：CEO 2026-11-03 稱 800V 轉換已確定，Yole 預期 800V GaN 首批商用約 2027 年。其他結構變數：TSMC 退出 GaN、專利訴訟、出口管制。","ruling":"雙向拉鋸。需求轉好的證據比份額轉好的證據強，份額未證實前，題材只支持觀察，不支持溢價。","evidence_level":"大廠產品為二手報導，800V 時程為管理層與 Yole 摘要","settle_metric":"2027 年上半年季增率與毛利率","if_then":["若 2027 年連兩季季增 ≥12% 且毛利率上升，判結構性轉好，重跑研究","若毛利率連兩季季減，判競爭惡化，不追"],"evidence_refs":["competitive_share_entrants#3"]},{"axis":"現在就買的最強論證與估值","cause":null,"prior_field":null,"side_a":"現在就買：股價 26 週跌 52.69%，同期營收加速，Q4 指引高於共識，Q3 訂單出貨比 2 倍，現金 4.05 億美元約占市值 17%。","side_b":"不買：EV 仍是 FY2027 共識營收 22.9 倍，12% 年化報酬要 FY2031 營收約 6 億美元，Rule-of-40 約 −151。","ruling":"選不買。股價下跌是倍數從 P/S 163 倍回到 57 倍，還不夠便宜。兩邊是程度差異，可由更低價格或更快成長調和。","evidence_level":"價格與共識為事實表；訂單為管理層口徑","settle_metric":"EV÷FY2027 營收、2027 年上半年累計營收","if_then":["若股價上漲但季增率未達 12%，不追","若股價跌到約 5.8 美元且季增率與毛利率達標，重跑研究後分批反買","若 FY2027 上半年累計營收超過 4,200 萬美元，代表我看錯，取消估值條件並用 Bull 路徑重跑研究"],"evidence_refs":["unprofitable_path_to_profitability#1"]},{"axis":"損益兩平門檻上移","cause":null,"prior_field":null,"side_a":"2026-05 公司說法：季營收 3,000 多萬美元後段可損益兩平。","side_b":"CEO 2026-11-03：毛利率 50%、費用 3,000 萬美元出頭時，損益兩平約 6,000 萬美元出頭。","ruling":"採用新門檻，並加上條件：50% 毛利率要靠 IVR。沒有 IVR 時損益兩平約 7,400 萬美元。","evidence_level":"管理層口徑，IVR 毛利率尚無實績","settle_metric":"IVR 量產後的合併毛利率","if_then":["若 2029 年底前季營收未達 6,000 萬美元，持有者減碼，未持有者不追","若 2028 年毛利率已達 46% 以上且費用占比下降，把獲利時點提前一年重跑研究"],"evidence_refs":["unprofitable_path_to_profitability#1"]},{"axis":"費用紀律承諾與指引","cause":null,"prior_field":null,"side_a":"CFO 2026-07-27：Q3 起季度費用約增 100 萬到 150 萬美元，增幅低於營收成長。","side_b":"Q4 指引費用 2,500 萬美元，季增 52%，營收季增 14%。","ruling":"Claros 帶來一次性跳升，管理層的歸因目前未證實，先監測。預先定下檢驗：2027 年連兩季費用增速高於營收增速，就視為費用紀律承諾失敗。","evidence_level":"公司指引","settle_metric":"2027 年季度費用與營收增速差","if_then":["若 2027 年連兩季費用增速高於營收增速，持有者減碼，未持有者不追","若 2027 年連四季費用增速低於營收增速，獲利假設不扣分"]},{"axis":"賣方 EPS 是否反映 Claros 費用","cause":null,"prior_field":null,"side_a":"FY2027 共識 EPS −0.12 美元，近 3 個月修正 0%。","side_b":"用 FY2027 共識營收、42% 毛利率、每季費用 2,500 萬美元估算，每股虧損約 0.18 到 0.24 美元；利息收入事實表未涵蓋，以每年 0 到 1,600 萬美元估。","ruling":"判定這項利空還沒進賣方模型，在 2027-02 指引前不把共識 EPS 當依據，也不考慮進場。","evidence_level":"事實表共識加本次估算","settle_metric":"2027-02 財報後的 FY2027 EPS 共識","if_then":["若共識下修到 −0.18 美元以下而股價未跌，不追","若共識維持且公司費用低於指引，重算虧損路徑後才考慮分批反買"],"evidence_refs":["unprofitable_path_to_profitability#1"]},{"axis":"管理層承諾與實績","cause":null,"prior_field":null,"side_a":"2026-07-27 的財測：Q3 營收 1,350 萬美元、毛利率 39.7%、費用 1,550 萬到 1,750 萬美元；全年中個位數成長；AI 基礎設施年底占比超過三分之一；CEO 表示不給 2027 年財測。","side_b":"2026-11-03 實績：營收 1,400 萬美元、毛利率 40.0%、費用 1,650 萬美元；全年約增 7%；AI 占比提高到 40% 以上；CEO 改口給出 2027 年季增雙位數與 AI 三倍。","ruling":"短期承諾都做到，這是執行分給 7 的依據。2027 年的口徑變積極，但仍不拆已承諾訂單比例，只能算方向性說法。","evidence_level":"法說與新聞稿","settle_metric":"FY2027 季度營收","if_then":["若 2027 年第一季未達季增 10%，不追","若連兩季季增 ≥12%，納入重新研究條件"]},{"axis":"估值結論與前份比較","cause":"價格變動","prior_field":["val"],"side_a":"前份（2026-05-24）股價 29.25 美元，P/S 163 倍，結論很貴。","side_b":"本次股價 8.61 美元，P/S 57.42 倍，FY2027 EV/S 22.9 倍，結論仍偏貴。","ruling":"結論不變，差距縮小。變化主要來自股價下跌 70.6%，FY2027 共識營收只從 7,200 萬美元升到 7,838 萬美元。","evidence_level":"事實表價格與倍數","settle_metric":"EV÷FY2027 營收","if_then":["若倍數降到 15 倍且營運條件成立，才打開重新研究","若倍數回到 30 倍以上而營收未跟上，不追"]},{"axis":"迴避結論的理由更換","cause":"新證據","prior_field":["signal","trap"],"side_a":"前份迴避，理由是估值、動能末段、體質四項不過；價值陷阱風險中等。","side_b":"本次仍迴避，動能不再過熱（RSI 44.08），但 Rule-of-40 約 −151、股數年增超過 10%；價值陷阱風險維持中等，只有 SBC 一項亮燈。","ruling":"結論維持，動能理由消失，新增損益兩平上移與 Claros 費用。前份迴避後股價跌 70.6%，判斷方向對，但不能據此推論現在還會跌。","evidence_level":"事實表與公司財報","settle_metric":"Rule-of-40、股數年增率","if_then":["若 Rule-of-40 轉到 20 以上且股數年增低於 10%，解除體質上的迴避理由","若跑道降到 12 個月以下且沒有轉正路徑，持有者清倉"]},{"axis":"前份空白欄位補齊","cause":"方法變動","prior_field":["moat_trend","runway_post_y5","archetype","cycle_position","p_bull_pct","p_bear_pct","max_dd_pct"],"side_a":"前份這些欄位為空。","side_b":"本次定為未獲利高成長，護城河方向穩定，成長跑道寬，情境機率 20／45／35，最大回撤 −55% 到 −85%；循環位置不適用。","ruling":"屬於口徑補齊，不代表基本面轉向。情境樹改用營收乘 EV/S，因為公司仍虧損。","evidence_level":"方法說明","settle_metric":"無","if_then":[]},{"axis":"重新進場條件","cause":"新證據","prior_field":["rearm_trigger"],"side_a":"前份欄位為空；裁決文字寫等回測布林中軌區（原文價位缺漏）或 2027H1 Rubin Ultra Kyber 量產驗證後再重評。","side_b":"三項同時成立才重跑研究：EV÷FY2027 營收 ≤15 倍（約 5.8 美元）、連兩季季增 ≥12%、非 GAAP 毛利率 ≥42%。","ruling":"舊的技術位置已跌破，失去意義。新條件同時看價格與營運，滿足前不追，滿足後重跑研究再決定進場，不直接建倉。","evidence_level":"本次情境計算","settle_metric":"EV÷FY2027 營收、季增率、毛利率","if_then":["三項同時成立，重跑研究","任一項未成立，不追"]},{"axis":"Single Thing 改設","cause":"方法變動","prior_field":["single_thing"],"side_a":"前份未設（null）","side_b":"FY2027 全年營收低於 7,000 萬美元，即管理層說的季增雙位數沒有發生。","ruling":"前份沒有這一欄，本次選終端營收敏感度最大、又最早能驗證的事件；發生時若持有則清倉。","evidence_level":"情境敏感度計算","settle_metric":"FY2027 全年營收","if_then":["若 FY2027 營收低於 7,000 萬美元，持有者清倉，未持有者不追"]},{"axis":"停損指標改設","cause":"方法變動","prior_field":["kill_metrics"],"side_a":"前份未設（null）","side_b":"FY2027 營收低於 7,000 萬美元清倉；季增連兩季低於 5%、毛利率連兩季低於 39%，或股數年增超過 10% 且營收落後路徑則減碼。","ruling":"前份沒有這一欄，本次補上可量測門檻，對應清倉與減碼動作。","evidence_level":"公司財報可驗證","settle_metric":"季度營收、毛利率、股數","if_then":["觸發清倉門檻就清倉","觸發減碼門檻就減碼一半"]},{"axis":"前份 NVIDIA 份額假設退休","cause":"新證據","prior_field":["thesis.H2"],"side_a":"每顆 GPU 的 GaN 加 SiC 含量 ≥300 美元，公司份額 ≥25%。","side_b":"CEO 2026-11-03 說每個電源方案 2 到 3 家供應商，長期 30% 到 40%；公司不拆 NVIDIA 營收。","ruling":"舊門檻取不到值，列為資料缺口，不再當主要假設；份額低於 15% 的警戒保留在大廠搶份額風險。","evidence_level":"管理層口徑，無第三方份額","settle_metric":"第三方拆解或公司揭露的份額","if_then":["若第三方確認份額低於 15%，持有者減碼，未持有者不追"]}],"triggers":[{"n":1,"text":"Q4 財報驗證指引","type":"假設驗證","maps_to":"H1","metric":"Q4 2026 營收與非 GAAP 毛利率","threshold":"營收 ≥1,550 萬美元且毛利率 ≥39.5%","action":"未達就不追，FY2027 路徑改用空方情境","source_freq":"公司新聞稿，每季","date":"2027-02"},{"n":2,"text":"FY2027 放量檢驗","type":"Single Thing","maps_to":"Single Thing","metric":"FY2027 全年營收","threshold":"低於 7,000 萬美元；上半年累計低於 3,400 萬美元提前示警","action":"持有者清倉，未持有者不追","source_freq":"公司新聞稿，每季","date":"2028-02"},{"n":3,"text":"重新研究條件","type":"估值rearm","maps_to":"H1","metric":"EV÷FY2027 營收、季增率、非 GAAP 毛利率","threshold":"≤15 倍、連兩季 ≥12%、≥42%，三項同時成立","action":"重跑完整研究，不直接建倉","source_freq":"每日收盤與每季財報","date":null},{"n":4,"text":"800V 原生量產時點","type":"假設驗證","maps_to":"H2","metric":"800V 原生方案量產與營收貢獻","threshold":"2027 年底前未量產，或 2028 年仍無實質營收","action":"不追，Base 路徑下修","source_freq":"法說，每季","date":"2028-02"},{"n":5,"text":"GaN 換廠","type":"風險","maps_to":"R4","metric":"GlobalFoundries GaN 合格與量產時點","threshold":"2027 年 6 月底前未取得合格產品","action":"持有者減碼一半，未持有者不追","source_freq":"法說與新聞稿，每季","date":"2027-07","evidence_refs":["substitute_technology#2"]},{"n":6,"text":"現金消耗與增資","type":"風險","maps_to":"R5","metric":"季度現金減少額、股數年增率","threshold":"連兩季現金季減超過 4,000 萬美元，或股數年增超過 10% 且營收落後路徑","action":"持有者減碼，未持有者不追","source_freq":"10-Q，每季","date":null,"evidence_refs":["unprofitable_dilution_trajectory#2"]},{"n":7,"text":"專利訴訟里程碑","type":"風險","maps_to":"R6","metric":"Wolfspeed 與 Renesas 訴訟裁定","threshold":"法院發出初步禁制令，或和解金超過現金 10%","action":"初步禁制令就清倉，和解金超限則減碼","source_freq":"法院公告與 8-K，不定期；受影響營收與結案日未知","date":null,"evidence_refs":["major_events#2","lawsuit_class_action#0"]},{"n":8,"text":"大廠搶份額","type":"風險","maps_to":"R2","metric":"非 GAAP 毛利率、第三方份額","threshold":"毛利率連兩季季減，或 2027 上半年確認份額低於 15%","action":"持有者減碼，未持有者不追","source_freq":"每季財報；第三方拆解不定期","date":"2027-08","evidence_refs":["competitive_share_entrants#3"]},{"n":9,"text":"下次複審","type":"複審日期","maps_to":"H1","metric":"FY2026 全年財報與 2027 年首季指引","threshold":"財報公布後一週內","action":"更新情境路徑與各項門檻","source_freq":"一次性","date":"2027-02"}],"kill_metrics":[{"metric":"FY2027 全年營收","bear_threshold":"低於 7,000 萬美元","window":"FY2027，2028-02 公布","source":"公司新聞稿","last_status":"unknown"},{"metric":"季營收季增率","bear_threshold":"連兩季低於 5%","window":"2027 年各季","source":"公司新聞稿","last_status":"ok"},{"metric":"非 GAAP 毛利率","bear_threshold":"連兩季低於 39%","window":"2027 年各季","source":"公司新聞稿","last_status":"ok"},{"metric":"扣除 Claros 後現金（目前約 4.05 億美元）","bear_threshold":"低於 2.5 億美元且季營收低於 3,000 萬美元","window":"2028 年底前","source":"10-Q","last_status":"ok"},{"metric":"股數年增率","bear_threshold":"超過 10% 且營收落後路徑","window":"每年檢查","source":"10-Q","last_status":"triggered"},{"metric":"GlobalFoundries GaN 合格時點","bear_threshold":"2027 年 6 月底前未取得合格產品","window":"2027 上半年","source":"法說與新聞稿","last_status":"unknown"}],"evidence_dismissed":[{"ref":"unprofitable_nrr_rule40_band#0","reason":"資料日 2025-10-26，摘要寫 −129%，摘錄寫 75%，來源自相矛盾，且該站註明只適用 SaaS；本次改用 Q3 年增率加 TTM FCF 利潤率計算，約 −151。"},{"ref":"unprofitable_nrr_rule40_band#1","reason":"資料截至 2025-11-11，早於轉型完成，同業組含 QCOM、FSLR 這類非功率半導體公司；本次改用 TTM 營業利益率與功率半導體同業對照。"},{"ref":"unprofitable_dilution_trajectory#3","reason":"三個聚合站的 SBC 數字互相矛盾，來源本身註明須以 10-Q 為準；本次改用公司 Q3 新聞稿的 SBC 占營收 64.3%。"}],"action_conditions":{"rearm_trigger":"三項同時成立才重跑研究：EV÷FY2027 營收 ≤15 倍（約 5.8 美元）、連兩季季增 ≥12%、非 GAAP 毛利率 ≥42%","exec_line":"目前不建倉。三項條件同時成立才重跑研究，研究通過後首筆只試單；FY2027 上半年累計營收超過 4,200 萬美元則取消估值條件。","holding_cap":"不建倉"}},"decision_inputs":{"signal":"X","ma":"🟠","cycle_position":null,"cycle_verdict":null,"thesis_irreconcilable":false,"valuation_dependent":false,"market_wrong_reason_given":"賣方平均目標 14.74 美元多在 Q3 前設定，隱含 FY2027 EV/S 約 45 倍；錯在倍數基準沿用題材高點，且共識 EPS 尚未計入 Claros 費用。","momentum_overheated":false,"cycle_gates_pass":null,"qc49_inherit_prior":null,"wait_for_price":null,"wait_for_price_condition":null,"asym_ratio":null,"irr_base_pct":null,"ev5y_pct":null},"thesis":{"H":[{"id":"H1","text":"AI 基礎設施放量：2027 年 AI 基礎設施營收達 2026 年三倍，其餘高功率業務持平，帶動全年營收成長。","2y":"FY2027 營收 ≥8,000 萬美元，全年每季季增 ≥10%。","5y":null,"10y":null,"threshold":"FY2027 營收 ≥8,000 萬美元；上半年累計 ≥3,700 萬美元。","source":"公司季度新聞稿與法說；賣方共識 7,838 萬美元（7 位分析師）。","drift_rule":"TTM 營收連 2 季落後路徑 ≥5% 算削弱，連 3 季落後 ≥10% 算反轉。"},{"id":"H2","text":"800V 原生架構與 IVR 接力：第三拐點 2028 年形成實質營收，Claros 錨定客戶 2028 年底到 2029 年放量，FY2031 營收達 4 億美元以上。","2y":null,"5y":"FY2030 營收 ≥3.2 億美元，約占公司口徑 2030 年 SAM 的 4%；FY2031 ≥4.2 億美元。","10y":"十年後仍是 GaN、SiC 高功率前三大供應商，屆時需第三方份額資料。","threshold":"FY2030 營收 ≥3.2 億美元；Claros 至少兩家客戶進入量產。","source":"公司新聞稿與法說；Yole 等第三方市場資料。","drift_rule":"TTM 營收連 4 季落後路徑 ≥5% 算削弱，連 6 季落後 ≥10% 算反轉；十年論點跨 2 個年度落後算削弱，跨 3 個年度算反轉。"},{"id":"H3","text":"獲利路徑成立：毛利率靠 IVR 升到 50% 以上，費用增速低於營收，季營收 6,000 萬美元出頭時損益兩平。","2y":"FY2028 非 GAAP 毛利率 ≥43%，費用占營收比逐季下降。","5y":"2029 年底前季營收 ≥6,000 萬美元，非 GAAP 營業利益轉正。","10y":null,"threshold":"2029 年底前季營收 ≥6,000 萬美元、毛利率 ≥50%、非 GAAP 營業利益為正。","source":"公司新聞稿；CEO 2026-11-03 的損益兩平模型。","drift_rule":"兩年指標連 2 季偏離 ≥5% 算削弱，連 3 季偏離 ≥10% 算反轉；五年指標連 4 季偏離 ≥5% 算削弱，連 6 季偏離 ≥10% 算反轉。"}],"R":[{"id":"R1","text":"高功率放量不如預期：客戶延後導入或經銷商庫存堆積，轉型缺口露出。","h_ref":"H1","clock":"⚡","threshold":"單季營收低於指引中點 10% 以上，或連 2 季季增低於 5%。前份的高功率占比條件保留，但 Q4 起占比接近全部，已失去鑑別力。","evidence_refs":["customer_concentration_credit#0","customer_concentration_credit#1","channel_business_model_shift#1","end_markets#1"]},{"id":"R2","text":"大廠搶份額：Infineon、onsemi、ST、POWI 等在 800V 方案拿走更多份額。","h_ref":"H2","clock":"🔥","threshold":"沿用前份：2027 上半年確認公司份額低於 15%，或 POWI 公告 NVIDIA AI 營收每年超過 2 億美元；份額目前是資料缺口。新增：毛利率連 2 季季減。","evidence_refs":["competitive_share_entrants#1","competitive_share_entrants#2","competitive_share_entrants#3","customer_second_source#0"]},{"id":"R3","text":"架構分流或技術替代：±400V 與 800V 並存，或新技術讓現有方案過時。CEO 2026-11-03 已把 ±400V 放進第二拐點，公司兩邊都賣，風險低於前份。","h_ref":"H2","clock":"🐢","threshold":"沿用前份：2028 年前 OCP 接受多架構並存且超過一家雲端廠公開選 ±400V 進入觀察；機率超過 50% 才大動作。","evidence_refs":["substitute_technology#0"]},{"id":"R4","text":"代工換廠：TSMC 2027 年 7 月停止 GaN 生產，GlobalFoundries 與力積電的驗證或量產延遲，製造又多在美國境外且有單一來源。","h_ref":"H1","clock":"🔥","threshold":"2027 年 6 月底前 GlobalFoundries 未取得合格產品，或緩衝存貨用完前出現缺貨。","evidence_refs":["substitute_technology#2","geo_supply_chain#0","geo_supply_chain#1","geo_supply_chain#2"]},{"id":"R5","text":"損益兩平變遠與持續稀釋：Claros 拉高費用，ATM、SBC 與 earnout 持續增加股數。","h_ref":"H3","clock":"🔥","threshold":"股數年增超過 10% 且營收落後路徑，或 2028 年底季營收仍低於 4,000 萬美元。","evidence_refs":["unprofitable_path_to_profitability#1","unprofitable_dilution_trajectory#0","unprofitable_dilution_trajectory#1","unprofitable_dilution_trajectory#2","unprofitable_dilution_trajectory#4"]},{"id":"R6","text":"專利訴訟：Wolfspeed 在德拉瓦提告，Renesas 也提告，屬民事個案；受影響營收與結案日事實表未涵蓋。","h_ref":"H1","clock":"🔥","threshold":"法院發出初步禁制令，或和解金超過現金 10%。","evidence_refs":["major_events#2","lawsuit_class_action#0"]},{"id":"R7","text":"出口管制與關稅：GaN、SiC 被列為國安關鍵技術，可能限制對中國終端客戶出貨，或壓縮 SiC 價格競爭力。","h_ref":"H1","clock":"🐢","threshold":"毛利率因關稅單季下滑 ≥200 個基點，或公司揭露受限營收超過總營收 10%；中國營收占比事實表未涵蓋。","evidence_refs":["regulatory_antitrust#0","reg_tariff_export#0","reg_tariff_export#1","reg_tariff_export#3"]}],"single_thing":{"description":"FY2027 全年營收低於 7,000 萬美元，即管理層說的季增雙位數沒有發生。","why_fatal":"情境樹裡最敏感的是終端營收：Base 與 Bear 的 FY2031 營收差 2.5 倍，每股價值差 6.6 倍；FY2027 是第一個能檢驗的年度。現價是 FY2027 共識營收 22.9 倍，放量落空時營收與倍數會一起掉。","if_happens":"改用空方情境，FY2031 每股約 1.6 美元；若持有則清倉，不因股價已跌而攤平。","how_monitor":"每季新聞稿的營收與季增率；FY2027 上半年累計低於 3,400 萬美元就提前示警。","probability":"25%（未來 12 到 24 個月）；上半年有訂單支撐，風險集中在下半年。"}},"appendix_a":{"growth_durability":6,"quality_score":3,"ai_risk":"🟢","long_term_confidence":"低","fpe_fy2":null,"peg_fy2":null,"stress":{"pass":1,"total":5}},"eps_meta":{"base_eps_path":{"FY2025A":-0.57,"FY2026E":-0.15,"FY2027E":-0.12,"FY2028E":-0.1},"fy_end_month":12,"eps_basis":"FY2025A 為 yfinance GAAP 稀釋 EPS，含 earnout 公允價值變動；FY2026E 到 FY2028E 為 Koyfin 共識，來源未標明是否 Non-GAAP，判斷接近 Non-GAAP，兩者不可直接算成長率。"},"catalysts":[{"date":"2027-02","date_precision":"month","type":"guidance","event":"Q4 2026 財報與 2027 年首季指引","impact":"高","watch":"營收是否 ≥1,550 萬美元，Q1 指引是否季增 ≥10%"},{"date":"2027-03","date_precision":"quarter","type":"capacity","event":"GlobalFoundries GaN 首批合格產品","impact":"高","watch":"是否在 2027 年初取得合格"},{"date":"2027-07","date_precision":"month","type":"capacity","event":"TSMC 停止 GaN 生產","impact":"高","watch":"緩衝存貨與換廠銜接"},{"date":"2027-12","date_precision":"quarter","type":"product","event":"800V 原生方案進入量產","impact":"高","watch":"2028 年是否形成實質營收"},{"date":"2028-12","date_precision":"quarter","type":"product","event":"Claros 錨定客戶開始放量","impact":"中","watch":"IVR 營收與合併毛利率"}],"decision_out":{"verdict":"迴避","role":"不持有","row_hit":"1","pacing":[],"holding_cap":null,"audit_rows":[{"row":"1","condition":"基本面評級 signal = X → 迴避","hit":true,"basis":"signal='X'"},{"row":"2","condition":"§11 強制裁決：thesis 不可調和不成立 → 迴避","hit":false,"basis":"thesis_irreconcilable=False"},{"row":"3","condition":"moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避","hit":false,"basis":"moat_trend='→', moat='C'"},{"row":"4","condition":"週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）","hit":false,"basis":"ma='🟠'"},{"row":"5","condition":"動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）","hit":false,"basis":"momentum_overheated=False"},{"row":"QC-49","condition":"90 天內翻面須引前次已發火觸發器，否則承繼前次裁決","hit":false,"basis":"輸入缺(qc49_inherit_prior=null)，依保守方向處理：不套用（維持矩陣機械輸出）","input_gap":["qc49_inherit_prior"]}],"requires_critic":[]}}
+```
+
+---
+
+## ⑤ 覆蓋面（程式判定，你回的 ⑤ 燈號會被覆寫）
+
+燈號 🟢：核心軸皆有證據或不適用，非核心軸也沒有空軸。
+
+⑤ 的 reason 只需評論：空軸的查詢詞是否切題、判斷有沒有交代缺口對結論的影響。
+
+---
+
+## 尾段：回覆格式
+
+只回一個 JSON 陣列，①–⑧ 每條一個元素，八個全出，不得跳號、不得多列，陣列外不得有任何文字（不加前言、不加 markdown 圍欄、不加附註）：
+
+```json
+[{"item": "①", "light": "🔴|🟡|🟢", "judgment_path": "$.路徑", "reason": "一句話"}]
+```
