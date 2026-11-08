@@ -156,7 +156,7 @@ EXEC_ASYM_DATE = _os.environ.get("W52_EXEC_ASYM_DATE") or EXEC_ASYM_DATE   # 測
 # 資料日（訊號日）>= ST_CUTOVER_DATE 的紀錄，每檔水位＝0.7 × 週線 Supertrend ＋ 0.3 × 月線 Supertrend
 # （多=1、空=0，只做多），所以水位只有 100／70／30／0% 四種；沒有槓桿、沒有 A2 執行層（水位本來就離散，
 # 目標即現持）。2026-11-04（週三）收盤出訊號、11-05（週四）第一次下單。算法與參數見 supertrend_core.py
-# （美股 ATR 14／倍數 3，台股 ATR 14／倍數 2；未調股息 OHLC，同 TradingView 預設畫法）。
+# （美股 ATR 14／倍數 3、未調股息 OHLC，同 TradingView 預設畫法；台股 ATR 14／倍數 2，2026-11-08 起還原全息 OHLC）。
 # 生效日前的紀錄一律不改寫；舊規則（W52 × 自適應 × A2）以 --profile w52 續跑成對照線（w52.html／w52_state.json），
 # 每日更新、不寄信。紀錄的 rule 標籤：RULE_TAG／NEW_RULE_TAG（W52 兩個階段）、ST_RULE_TAG（Supertrend）。
 ST_CUTOVER_DATE = stc.ST_CUTOVER_DATE
@@ -177,7 +177,7 @@ ST_MODE = False         # main 在算完訊號後設定：實盤 profile 且至�
 PURE = False            # 實盤頁（非對照線）顯示層：把整段歷史當作一直都是 Supertrend 呈現（2026-11-04 持有人要求）；
                         # 只影響 generate_html 的輸入與文字，state.json 既有欄位、email、對照線輸出都不變
 NOW_OVERRIDE = None     # --now 模擬用（UTC datetime）；CI 不設
-OHLC_MAP: dict = {}     # 腿 -> 未調股息 OHLC（Supertrend 用）；main 抓價後填入
+OHLC_MAP: dict = {}     # 腿 -> Supertrend 用的 OHLC（美股未調股息、台股還原全息）；main 抓價後填入
 ST_FRAMES: dict = {}    # 腿 -> supertrend_core.make_frames 的結果
 ST_TB: dict = {}        # 腿 -> supertrend_core.takeback_table 的結果（下軌接回逐週重播表，每腿算一次）
 
@@ -2800,10 +2800,14 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
     daily_dates = [hist_map[m["key"]][-1]["date"] for m in MARKETS if hist_map.get(m["key"])]
     latest_daily = max(daily_dates) if daily_dates else data_date
     week_provisional = latest_daily < data_date
+    # 美股、台股分開標資料日（2026-11-08：週五美股收盤漏算時，頁面只寫台股的日期，看起來像兩邊都是最新）
+    _mkt_dates = {m["key"]: hist_map[m["key"]][-1]["date"] for m in MARKETS if hist_map.get(m["key"])}
+    _by_mkt = "、".join(f'{"美股" if k == "us" else "台股"} {v}' for k, v in _mkt_dates.items()) or latest_daily
+    _all_closed = all(v >= data_date for v in _mkt_dates.values())
     data_asof_label = (
-        f"數據截至 {latest_daily}（本週最新交易日｜週線 bar 進行中，週五 {data_date} 收盤前為暫定）"
+        f"數據截至 {_by_mkt}（本週 K 棒進行中，週五 {data_date} 收盤前為暫定）"
         if week_provisional else
-        f"數據截至 {data_date}（週五收盤）")
+        f"數據截至 {_by_mkt}" + ("（週五收盤）" if _all_closed else "（有市場的週五收盤還沒算進來）"))
 
     md_map = {m["key"]: _market_data(m, sigs, hist_map.get(m["key"], []), exec_map[m["key"]],
                                      leg_panel_map.get(m["key"], {})) for m in MARKETS}
@@ -3791,7 +3795,7 @@ def main():
     for t in ALL_TICKERS:
         print(f"Fetching {YF_SYMBOL[t]}...")
         px_map[t] = fetch_close(t)
-        # Supertrend 要未調股息 OHLC。抓不到不擋 W52 對照；但 Supertrend 生效期間 compute_ticker 會因缺資料而中止。
+        # Supertrend 的 OHLC（美股未調股息、台股還原全息）。抓不到不擋 W52 對照；但 Supertrend 生效期間 compute_ticker 會因缺資料而中止。
         try:
             oh, oh_notes = stc.fetch_ohlc(YF_SYMBOL[t], NOW_OVERRIDE)
             oh = oh.loc[:px_map[t].index[-1]]
@@ -3800,7 +3804,7 @@ def main():
             if oh_notes.get("appended") or oh_notes.get("refreshed"):
                 print(f"  {t}: OHLC 官方補值 appended={oh_notes['appended']} refreshed={oh_notes['refreshed']}")
         except Exception as e:  # noqa: BLE001
-            print(f"[supertrend][WARN] {t} 未調股息 OHLC 取得失敗：{type(e).__name__}: {e}", file=sys.stderr)
+            print(f"[supertrend][WARN] {t} Supertrend OHLC 取得失敗：{type(e).__name__}: {e}", file=sys.stderr)
         d = compute_ticker(t, px_map[t])
         sigs[t] = d
         print(f"  {t}: gate={'IN' if d['gate'] else 'OUT'} RV20={d['rv20']*100:.1f}% "

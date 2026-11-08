@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Supertrend 週線／月線翻轉通知（email＋Discord）。持有人 2026-11-03 要求。
 
-規則：Supertrend(hl2)，算法同 TradingView 內建 ta.supertrend；K 線用 Yahoo 未調股息
-（auto_adjust=False，已調拆股），週線以週五為一週最後一天、月線以月底。持股參考＝週線 70%＋月線 30%
+規則：Supertrend(hl2)，算法同 TradingView 內建 ta.supertrend；K 線：美股用 Yahoo 未調股息
+（auto_adjust=False，已調拆股），台股 2026-11-08 起用還原全息，週線以週五為一週最後一天、月線以月底。持股參考＝週線 70%＋月線 30%
 （只做多；翻空那份放現金）。參數 2026-11-04 起用實盤參數：SMH 倫敦／SMH 美國／QQQ 為 ATR 14、倍數 3，
 0050／2330 為 ATR 14、倍數 2（supertrend_core.ST_PARAMS，與實單主系統共用同一份）。
 2026-11-04 收盤起實單的指數部照這套規則（supertrend_core.ST_CUTOVER_DATE）；之前實單照 W52 引擎。
@@ -33,6 +33,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from supertrend_core import (  # noqa: E402  算法、K 棒、收完判斷、參數與切換日與實單主系統共用同一份
     fetch_official_ohlc, reconcile_ohlc,
+    yahoo_daily as stc_yahoo_daily, tw_adjust as stc_tw_adjust,
     ST_CUTOVER_DATE, ST_PARAMS, TF, W_MONTH, W_WEEK, bars, is_complete, supertrend,
     LEG_WEIGHTS_CUTOVER_DATE, leg_weights,
     last_weekday, state_asof, takeback_asof,
@@ -56,12 +57,8 @@ OVERLAY_SYMS = {"IEF", "GLD"}      # 這兩檔的水位上限是占指數部 20%
 
 # ---------------------------------------------------------------- 取價
 def fetch(tk: str) -> pd.DataFrame:
-    import yfinance as yf
-    d = yf.Ticker(tk).history(period="max", interval="1d", auto_adjust=False)
-    if d.empty:
-        raise RuntimeError(f"{tk}: Yahoo 沒有資料")
-    d.index = pd.to_datetime(d.index).tz_localize(None).normalize()
-    d = d.rename(columns=str.lower)[["high", "low", "close"]].dropna()   # Yahoo 未定稿的最新一根會是 NaN
+    raw = stc_yahoo_daily(tk)
+    d = raw[["high", "low", "close"]].dropna()   # Yahoo 未定稿的最新一根會是 NaN
     d = d[~d.index.duplicated(keep="last")]
     if tk.endswith(".TW"):
         # 台股：Yahoo 偶爾少一天或晚到，用證交所官方日 K 補（與實單頁同一個函式）；官方抓不到就照 Yahoo
@@ -72,6 +69,7 @@ def fetch(tk: str) -> pd.DataFrame:
             d, _ = reconcile_ohlc(d, off)
         except Exception as e:  # noqa: BLE001
             print(f"[{tk}] 官方日 K 補值失敗，照 Yahoo：{type(e).__name__}: {e}", file=sys.stderr)
+        d = stc_tw_adjust(d, raw)   # 台股訊號用還原全息，美股未調股息
     return d
 
 
@@ -173,7 +171,7 @@ def status_lines(results):
 def params_text() -> str:
     us = ST_PARAMS["QQQ"]
     tw = ST_PARAMS["0050.TW"]
-    return f"美股／倫敦 ATR {us[0]}、倍數 {us[1]:g}；台股 ATR {tw[0]}、倍數 {tw[1]:g}"
+    return f"美股／倫敦 ATR {us[0]}、倍數 {us[1]:g}（未調股息 K 線）；台股 ATR {tw[0]}、倍數 {tw[1]:g}（還原全息 K 線）"
 
 
 FOOTER = ["", f"規則：Supertrend，{params_text()}，週線 70%＋月線 30%，只做多。"

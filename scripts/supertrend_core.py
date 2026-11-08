@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Supertrend 共用核心：算法、K 棒、收完判斷、實盤參數、未調股息 OHLC 抓取。
+"""Supertrend 共用核心：算法、K 棒、收完判斷、實盤參數、OHLC 抓取（美股未調股息、台股還原全息）。
 
 實單主系統（update_long_track_w52_adaptive.py）與提醒腳本（supertrend_alert.py）共用這一份，
 避免兩邊各寫一份算法而漂移。算法照 TradingView ta.supertrend（ATR 用 RMA、價格取 hl2），
-K 線用 Yahoo 未調股息價（auto_adjust=False，已調拆股），與 v7-backtest src/supertrend_vs_live/run.py
+K 線：美股用 Yahoo 未調股息價（auto_adjust=False，已調拆股）；台股（.TW）2026-11-08 起用還原全息（持有人拍板，tw_adjust），算法與 v7-backtest src/supertrend_vs_live/run.py
 的 supertrend()／bars() 同一寫法（驗證見交付說明）。
 
 每檔水位 = 0.7 × 週線（多=1／空=0）＋ 0.3 × 月線；只做多，所以趨勢水位只有 100／70／30／0% 四種。
@@ -119,7 +119,7 @@ def complete_asof(label: pd.Timestamp, d: pd.Timestamp) -> bool:
 
 # ---------------------------------------------------------------- 週／月狀態
 def make_frames(ohlc: pd.DataFrame, n: int, f: float) -> dict:
-    """ohlc 需含 high／low／close（未調股息）。回傳 {tf: (K 棒表, Supertrend 表)}。"""
+    """ohlc 需含 high／low／close（美股未調股息、台股還原全息）。回傳 {tf: (K 棒表, Supertrend 表)}。"""
     out = {}
     for key, (rule, _) in TF.items():
         b = bars(ohlc, rule)
@@ -161,7 +161,7 @@ def level_pct(w_dir: int, m_dir: int) -> int:
 # ---------------------------------------------------------------- 下軌接回（持有人 2026-11-06 拍板）
 # 依據 knowledge/rule_ledger.md「2026-11-06：指數部加下軌接回」；回測 v7-backtest docs/BB_Extreme_Overlay_Results.md
 # 「追加：接到 50」（fe66464，帳本 BB_EXTREME_OVERLAY-023／028 那組）。每一腿各自算：
-# - z ＝（週收盤 − 20 週均線）÷ 20 週母體標準差；週收盤用跟 Supertrend 同一份未調股息週 K，只用已收完的週。
+# - z ＝（週收盤 − 20 週均線）÷ 20 週母體標準差；週收盤用跟 Supertrend 同一份週 K，只用已收完的週。
 # - 觸發：週收盤 z ≤ −2.5，而且當週趨勢水位剛好 30（週線空、月線多）→ 水位改成 50。
 # - 結束（先到的為準）：週收盤 z ≥ 0（回到 20 週均線，水位回 30）；趨勢水位離開 30（週線翻多 → 100、月線翻空 → 0）。
 #   不設時間上限、不設價格停損。z 要先回到 −1 以上才能再觸發。
@@ -369,16 +369,42 @@ TZ_OF = {"QQQ": "America/New_York", "SMH": "America/New_York", "IEF": "America/N
          "SMH.L": "Europe/London", "0050.TW": "Asia/Taipei", "2330.TW": "Asia/Taipei"}
 
 
-def fetch_ohlc(sym: str, now_utc: datetime | None = None) -> tuple[pd.DataFrame, dict]:
-    """未調股息日 K（high／low／close，已調拆股）。台股最新一兩根用證交所官方日 K 補值；
-    當地時間還沒到定案時間的當天那根丟掉；now_utc 給了就把資料截到那一刻（模擬用）。"""
+def yahoo_daily(sym: str, tries: int = 3, wait_s: int = 40) -> pd.DataFrame:
+    """Yahoo 日線（auto_adjust=False、欄名小寫、index 為日期）。UTC 午夜後最新一根可能還沒定稿、OHLC 全 NaN
+    （2026-11-07 美股週五收盤因此漏算），最新一根有 NaN 就等一下重抓；重抓後還是 NaN 就照舊交給呼叫端 dropna。"""
+    import time as _time
     import yfinance as yf
+    h = pd.DataFrame()
+    for i in range(tries):
+        h = yf.Ticker(sym).history(period="max", interval="1d", auto_adjust=False)
+        if h.empty:
+            raise RuntimeError(f"{sym}: Yahoo 沒有資料")
+        if h[["High", "Low", "Close"]].iloc[-1].notna().all():
+            break
+        print(f"  {sym}: Yahoo 最新一根 {h.index[-1].date()} 還沒定稿（第 {i + 1} 次）")
+        if i < tries - 1:
+            _time.sleep(wait_s)
+    h.index = pd.to_datetime(h.index).tz_localize(None).normalize()
+    return h.rename(columns=str.lower)
+
+
+def tw_adjust(d: pd.DataFrame, raw: pd.DataFrame) -> pd.DataFrame:
+    """台股訊號用還原全息（持有人 2026-11-08 拍板）：高、低、收 × Adj Close／Close。raw＝yahoo_daily 的結果。
+    證交所官方補上的最新幾根 Yahoo 還沒有比值，沿用最後一個比值（最近一次除權息之後比值是 1）。"""
+    r = (raw["adj close"] / raw["close"]).dropna()
+    r = r[~r.index.duplicated(keep="last")].reindex(d.index).ffill().bfill()
+    out = d.copy()
+    for c in ("high", "low", "close"):
+        out[c] = d[c] * r
+    return out
+
+
+def fetch_ohlc(sym: str, now_utc: datetime | None = None) -> tuple[pd.DataFrame, dict]:
+    """日 K（high／low／close，已調拆股）：美股未調股息，台股還原全息（tw_adjust）。台股最新一兩根用證交所官方日 K 補值；
+    當地時間還沒到定案時間的當天那根丟掉；now_utc 給了就把資料截到那一刻（模擬用）。"""
     now_utc = now_utc or datetime.now(timezone.utc)
-    d = yf.Ticker(sym).history(period="max", interval="1d", auto_adjust=False)
-    if d.empty:
-        raise RuntimeError(f"{sym}: Yahoo 沒有資料")
-    d.index = pd.to_datetime(d.index).tz_localize(None).normalize()
-    d = d.rename(columns=str.lower)[["high", "low", "close"]].dropna()   # Yahoo 未定稿的最新一根會是 NaN
+    raw = yahoo_daily(sym)
+    d = raw[["high", "low", "close"]].dropna()   # Yahoo 未定稿的最新一根會是 NaN
     d = d[~d.index.duplicated(keep="last")]
     notes = {"official": False, "appended": [], "refreshed": [], "skipped": None}
     tz = TZ_OF[sym]
@@ -394,6 +420,8 @@ def fetch_ohlc(sym: str, now_utc: datetime | None = None) -> tuple[pd.DataFrame,
     if d.index[-1].date() == local.date() and local.time() < SETTLE_LOCAL[tz]:
         print(f"  {sym}: 當地 {local:%H:%M} 未到定案時間，不採用 {d.index[-1].date()} 這根")
         d = d.iloc[:-1]
+    if sym.endswith(".TW"):
+        d = tw_adjust(d, raw)
     return d, notes
 
 

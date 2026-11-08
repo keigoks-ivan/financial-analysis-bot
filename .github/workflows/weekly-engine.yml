@@ -225,6 +225,11 @@ jobs:
           NOTIFY_BODY: ${{ steps.roster_alert.outputs.body }}
         run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/cockpit/
 
+      - name: Rebuild /long-track/ action block (seat changes)
+        # 總覽的「下一個交易日要做的事」讀席位帳本，週六席位更新後要重建。失敗不擋席位更新。
+        continue-on-error: true
+        run: python scripts/build_long_track_index.py
+
       - name: Commit and push if changed
         id: commit_push
         env:
@@ -235,7 +240,8 @@ jobs:
           git add data/engine/universe.json \
                   data/weekly_cache_universe/ \
                   docs/engine/ \
-                  docs/pm/holdings.json
+                  docs/pm/holdings.json \
+                  docs/long-track/index.html
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
