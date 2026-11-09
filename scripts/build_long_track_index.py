@@ -786,7 +786,7 @@ def render_evidence() -> str:
     if dead:
         dead_html = (f'<details class="ov-retired" style="margin-top:.8rem"><summary>已否決與已退役（{len(dead)}）</summary>'
                      f'<div class="retired-list">{"".join(row(u) for u in dead)}</div></details>')
-    intro = (f'<div class="ev-intro">支撐實單配置的檢驗，共 {len(urls)} 頁，先看第一頁的總覽。'
+    intro = (f'<div class="ev-intro">這些檢驗大多做在 2026-11-04 以前的 W52 規則上，共 {len(urls)} 頁，先看第一頁的總覽。現行 Supertrend 的回測看<a href="/long-track/live-system-profile.html">完整回測報告</a>。'
              f'每頁的結論和判斷依據都寫在頁內；網址在回測區，狀態標籤與回測區首頁一致。</div>')
     return (f'<div class="grp live" id="evidence"><div class="grp-h">實盤證據</div>{intro}{body}{dead_html}</div>\n')
 

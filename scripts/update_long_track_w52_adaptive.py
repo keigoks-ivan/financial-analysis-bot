@@ -1602,7 +1602,7 @@ def appendix_2330_section() -> str:
 <tbody>{rows}</tbody></table>
 <div class="takeaway"><b>深熊退化證實</b>：含崩盤樣本時 W52 × 自適應波動率 Calmar <b>0.437 反而略劣於舊系統 score5×自適應（0.445）</b>；
 GFC 段兩者 MDD 同為 −36.4%，純 W52 閘門更深（−38.6%）。與美股 GFC 分期一致：<b>W52 的優勢是無崩盤期的快速再進場，
-對慢熊誘多（跌破 W52 又拉回、反覆穿越）的抵抗較弱</b>。故全窗較優<b>不可外推</b>到未見的下一次深熊——這正是本系統雖已上實單、仍<b>設「上線後回顧點」（60 交易日 OR 首次 ≥10% 回撤）</b>的核心理由，且槓桿放大這個深熊未測風險。</div>
+對慢熊誘多（跌破 W52 又拉回、反覆穿越）的抵抗較弱</b>。故全窗較優<b>不可外推</b>到未見的下一次深熊——這正是本系統上實單時仍<b>設「上線後回顧點」（60 交易日 OR 首次 ≥10% 回撤）</b>的核心理由，且槓桿放大這個深熊未測風險。</div>
 </div>"""
 
 
@@ -1806,7 +1806,7 @@ def live_backtest_blocks(mkt: dict, appendix: str, sigs: dict) -> str:
     stock_card = f"""<div class="card">
 <h3>{mkt['short']} 不借錢版股票部分回測（窗 {bt['window']}）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-藍底列是 2026-10-19 起實盤的股票部分：週線 W52 閘門 × 自適應波動率（上限 100%）× 執行層（加碼、減碼都要差兩格，調整時對到最近一格；{EXEC_ASYM_DATE} 起實單減碼改為差一格就動，表中回測仍是加減碼都差兩格的版本）。其他列為同窗對照。數字轉錄自不借錢版頁，台股為 7 bps 均一成本，含證交稅的真實成本版約再降 0.5 個百分點年化。{'台股段：回測段的 0050 自 2026-11-04 起改用證交所官方資料（2003-06 起），台股回測窗自 2006-09 起，含 2008 金融海嘯。' if mkt['key'] == 'tw' else ''}</p>
+藍底列是 2026-10-19 至 11-03 實盤的股票部分：週線 W52 閘門 × 自適應波動率（上限 100%）× 執行層（加碼、減碼都要差兩格，調整時對到最近一格；{EXEC_ASYM_DATE} 起實單減碼改為差一格就動，表中回測仍是加減碼都差兩格的版本）。其他列為同窗對照。數字轉錄自不借錢版頁，台股為 7 bps 均一成本，含證交稅的真實成本版約再降 0.5 個百分點年化。{'台股段：回測段的 0050 自 2026-11-04 起改用證交所官方資料（2003-06 起），台股回測窗自 2006-09 起，含 2008 金融海嘯。' if mkt['key'] == 'tw' else ''}</p>
 <table><thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Ulcer</th><th class="num">Martin</th></tr></thead>
 <tbody>{rows}</tbody></table>
 <div class="takeaway">逐年績效、槓桿堆疊、融資利差敏感度與壓力統計屬於舊規則（cap 1.5＋均線），保留在 <a href="/long-track-w52-adaptive/cap15.html">舊規則對照線頁</a>。</div>
@@ -3973,9 +3973,9 @@ def main():
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
 
     if ST_MODE:
-        mechanism = ("Supertrend (TradingView ta.supertrend, hl2, ATR via RMA, unadjusted OHLC; US ATR 14 / mult 3, TW ATR 14 / mult 2): "
+        mechanism = ("Supertrend (TradingView ta.supertrend, hl2, ATR via RMA; OHLC unadjusted for dividends in the US, adjusted for splits and dividends in TW from 2026-11-08; US ATR 14 / mult 3, TW ATR 14 / mult 2): "
                      "per leg level = 0.7 x weekly + 0.3 x monthly (long only; weekly W-FRI, monthly calendar month end; a bar counts only after "
-                     "the last weekday of its period has closed) -> 100/70/30/0%%. No leverage, no execution band: level is already discrete, "
+                     "the last weekday of its period has closed) -> 100/70/30/0%%, or 50%% during a lower-band takeback (from data date 2026-11-06). No leverage, no execution band: level is already discrete, "
                      "signal at the close, trade the next trading day in one step. In force from data date %s; before that the W52 x adaptive sigma_t "
                      "rule (cap 1.0 from %s, A2 exec layer) applied and history is not rewritten. US keeps the IEF/GLD overlay (defensive rule: %s)."
                      % (ST_CUTOVER_DATE, RULE_SWITCH_DATE, DEFENSIVE_RULE))
@@ -3983,7 +3983,7 @@ def main():
                   "The previous W52 rule runs on as a control line (w52_state.json), no email. "
                   "Email on actionable change (a leg's target level differs from the held level, or IEF/GLD overlay change)"
                   % (ST_CUTOVER_DATE, ST_CUTOVER_DECISION_DATE))
-        leverage = "No borrowing: each leg 0-100%% of its half of the index part (levels 100/70/30/0)."
+        leverage = "No borrowing: each leg holds level x weight of the index part (US QQQ 70 / SMH 30, TW 0050 50 / 2330 50; level 100/70/30/0, or 50 during a lower-band takeback)."
         revision_date = ST_CUTOVER_DATE
     elif SHADOW:
         mechanism = ("CONTROL LINE (live rule before Supertrend): W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x exec layer A2 "
@@ -4027,7 +4027,7 @@ def main():
         "leverage": leverage,
         "last_change_date": last_change_date,
         "last_change_desc": last_change_desc,
-        "weights": WEIGHTS,
+        "weights": {t: wt(t, data_date) for t in WEIGHTS},
         "combined_exposure_us_pct": round(exp["us"], 1),
         "combined_exposure_tw_pct": round(exp["tw"], 1),
         "tickers": {
