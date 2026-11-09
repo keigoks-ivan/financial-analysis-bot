@@ -2508,7 +2508,7 @@ def _legacy_rules() -> str:
 <div class="card">
 <h3>期貨實務實作（研究，非下單指令）</h3>
 <div class="rule-list" style="font-size:.86rem">
-<b>美股</b>：用 <b>MNQ 微型 Nasdaq 期貨</b>加曝險。<span style="color:var(--amber-text)">MNQ 對 SMH 腿有 tracking 偏差（MNQ ≈ NDX、非半導體），以 MNQ 複製 SMH 槓桿會有基差／beta 落差。</span>——<b>研究判定美股槓桿 Calmar 較低、不划算；知情仍採 cap 1.5 求兩市場一致性（見頁首知情決策）。</b><br>
+<b>美股</b>：用 <b>微型 Nasdaq 期貨</b>加曝險。<span style="color:var(--amber-text)">這檔期貨對 SMH 腿有 tracking 偏差（追蹤 NDX、非半導體），用它複製 SMH 槓桿會有基差／beta 落差。</span>——<b>研究判定美股槓桿 Calmar 較低、不划算；知情仍採 cap 1.5 求兩市場一致性（見頁首知情決策）。</b><br>
 <b>台股（候選）</b>：<b>不能用融資（利率 6～7%）</b>，改用 <b>2330 小型個股期</b>（100 股/口 ≈ NT$11 萬名目）＋<b>小台指</b>。<b>口數換算例</b>（NT$10M sleeve、峰值 140% ＝ 額外 40% ＝ NT$4M）：2330 約 NT$2M ÷ 11 萬 ≈ <b>18 口</b>小型個股期；大盤約 NT$2M 以小台（每點 50 元、指數 ~23000 ≈ 名目 115 萬/口）≈ <b>1～2 口</b>。實際依當時價格與保證金重算。<br>
 <b>峰值上限壓 140%</b>（非研究理論值 150%）留保證金緩衝；<b>轉倉／基差摩擦估 0.3～0.5pp/年</b>未計入回測，實際增益要再打折。
 </div>

@@ -466,7 +466,14 @@ def _seat_table(key: str, rows: list[dict], decided: str, extra: str, index_rows
     if not rows:
         body = '<tr><td colspan="3" class="lt-muted">本週沒有持股，也沒有進出。</td></tr>'
     total = sum(r["target"] for r in rows) + sum(r["target"] for r in index_rows)
-    body += f'<tr class="lt-total"><td>未投入（現金）</td><td class="num lt-target">{_num(round(100 - total, 1))}%</td><td></td></tr>'
+    # 上週現金＝100－上週指數部各檔－上一期席位。帳本 core_meta 的 size 從 2026-10-31 那筆起才有，缺就留空。
+    snaps = _load_json(ARENA_LEDGER).get("snapshots") or []
+    prev = (snaps[-2].get("core_meta") or []) if len(snaps) >= 2 else []
+    txt, cls = "", "hold"
+    if prev and all("size" in m for m in prev):
+        before = 100 - sum(r["last_week"] for r in index_rows) - sum(SEAT_PCT * float(m["size"]) for m in prev)
+        txt, cls = _change(before, 100 - total)
+    body += f'<tr class="lt-total"><td>未投入（現金）</td><td class="num lt-target">{_num(round(100 - total, 1))}%</td><td class="num lt-{cls}">{txt}</td></tr>'
     cap = f'{decided} 週六決策的名單，占{MKT[key]["name"]}資金，每席 {_num(SEAT_PCT)}%。{extra}<a href="{url}">看{label} →</a>'
     return _sec("個股席位", f'<div class="lt-scroll"><table class="lt-tbl"><thead><tr><th>標的</th><th class="num">應持有</th><th class="num">跟上週</th></tr></thead><tbody>{body}</tbody></table></div>', cap)
 
@@ -590,6 +597,7 @@ def _plain_scoreboard(f: str) -> str:
                  ("系統 vs B-cagr（同報酬稀釋基準，並列）", "對同報酬基準"),
                  ("累積差 vs B-mdd", "領先同風險基準（百分點）"), ("累積差 vs B-cagr", "領先同報酬基準（百分點）"),
                  ("B-mdd 基準報酬", "同風險基準報酬"), ("執行層變化（水位）", "水位變化"),
+                 ("<th>日期</th><th>檔</th>", "<th>下單日</th><th>檔</th>"),
                  ("S-60（固定 60% B&amp;H） vs 系統", "六成一直抱著對系統"), ("S-60（固定 60% B&amp;H）", "六成一直抱著"),
                  (r'"S-60\uff08\u56fa\u5b9a 60% B&H\uff09"', '"六成一直抱著"')):
         f = f.replace(a, b)

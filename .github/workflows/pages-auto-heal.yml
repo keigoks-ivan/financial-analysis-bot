@@ -1,9 +1,9 @@
 name: Pages Auto-Heal
 
-# v2（2026-07-05）：站點已遷移至 Actions 部署管線（deploy-pages.yml），
-# 本工作流簡化為「最新 Deploy Pages run 失敗 → 自動 rerun」的兜底。
-# （legacy 時代的 POST /pages/builds 已不適用；漏觸發問題屬 legacy 管線特有，
-#  Actions push 觸發可靠，不再檢查。）
+# v3（2026-11-09）：改成「最新 Deploy Pages run 失敗 → 派一次新的部署」。
+# 原本的 `gh run rerun --failed` 只重跑部署那一步，會因同一次 run 有兩份 github-pages 部署檔而失敗
+# （"Multiple artifacts named github-pages"，run 42529060351 第 2 次），所以失敗的部署從來補不回來。
+# 同一個 commit 最多派到 3 次，GitHub 自己故障時不會每 15 分鐘一直重派；有新 commit 就重新計算。
 
 on:
   schedule:
@@ -23,23 +23,32 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Rerun latest Deploy Pages run if it failed
+      - name: Dispatch a fresh deploy if the latest Deploy Pages run failed
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          MAX_DISPATCH: "3"
         run: |
           set -e
           R=$(gh run list --repo "$REPO" --workflow deploy-pages.yml --branch main --limit 1 \
-              --json databaseId,status,conclusion \
-              --jq '.[0] | "\(.databaseId) \(.status) \(.conclusion)"' || true)
+              --json databaseId,status,conclusion,headSha \
+              --jq '.[0] | "\(.databaseId) \(.status) \(.conclusion) \(.headSha)"' || true)
           if [ -z "$R" ]; then echo "no deploy runs yet"; exit 0; fi
           ID=$(echo "$R" | awk '{print $1}')
           ST=$(echo "$R" | awk '{print $2}')
           CC=$(echo "$R" | awk '{print $3}')
-          echo "latest deploy run: $ID $ST $CC"
-          if [ "$ST" = "completed" ] && [ "$CC" = "failure" ]; then
-            echo "→ rerunning failed deploy"
-            gh run rerun "$ID" --failed --repo "$REPO"
-          else
-            echo "→ nothing to heal"
+          SHA=$(echo "$R" | awk '{print $4}')
+          echo "latest deploy run: $ID $ST $CC $SHA"
+          case "$ST $CC" in
+            "completed failure"|"completed timed_out"|"completed startup_failure") ;;
+            *) echo "→ nothing to heal"; exit 0 ;;
+          esac
+          N=$(gh run list --repo "$REPO" --workflow deploy-pages.yml --branch main --event workflow_dispatch --limit 30 \
+              --json headSha --jq "[.[] | select(.headSha == \"$SHA\")] | length")
+          echo "manual dispatches already on this commit: $N"
+          if [ "$N" -ge "$MAX_DISPATCH" ]; then
+            echo "→ reached $MAX_DISPATCH dispatches on this commit, waiting for the next commit"
+            exit 0
           fi
+          echo "→ dispatching a fresh deploy"
+          gh workflow run deploy-pages.yml --repo "$REPO" --ref main

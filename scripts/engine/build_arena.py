@@ -2821,6 +2821,7 @@ def main() -> int:
             "durable_5y": r.get("durable_5y"),
             "route": r.get("route"),
             "price": (r.get("grp") or {}).get("price"),
+            "size": (r.get("lamp") or {}).get("size", 1.0),   # 倉位大小，主控台算現金「跟上週」用（2026-11-09 起）
         }
 
     snap = {"date": as_of,

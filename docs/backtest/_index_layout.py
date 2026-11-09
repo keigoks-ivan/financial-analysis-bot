@@ -71,8 +71,8 @@ def _zone_html(z: int) -> str:
     if z == 1:
         n = len(urls)
         body = (f'<ul class="ov-list"><li class="ov-entry"><span class="ov-st ov-st-live">{PM.STATUS["live"]}</span>'
-                f'<div class="ov-main"><a class="ov-title" href="{LONG_TRACK_URL}">系統主控台：實單系統的每日狀態與 {n} 頁實盤證據</a>'
-                f'<div class="ov-desc">實單配置、每日訊號與追蹤紀錄，以及支撐它的檢驗（前瞻證偽、重抽樣、保險價格、合併帳戶、慢熊頻率、候選方案與已否決方案）。證據頁的網址不變，列表在主控台的「實盤證據」一節。</div></div></li></ul>')
+                f'<div class="ov-main"><a class="ov-title" href="{LONG_TRACK_URL}">系統主控台：實單系統的每日狀態與 {n} 頁歷史檢驗</a>'
+                f'<div class="ov-desc">實單配置、每日訊號與追蹤紀錄，以及 W52 規則時期留下的檢驗（前瞻證偽、重抽樣、保險價格、合併帳戶、慢熊頻率、候選方案與已否決方案）。證據頁的網址不變，列表在主控台的「實盤證據」一節。</div></div></li></ul>')
         count = 1
     else:
         live = [u for u in urls if PM.PAGES[u]["status"] not in DEAD]

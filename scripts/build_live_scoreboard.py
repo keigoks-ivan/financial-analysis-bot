@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -356,6 +356,14 @@ def px_at_or_before(series_dict, dates_sorted, ymd):
 # ═══════════════════════════════════════════════════════════════════════
 # 影子帳戶：S-A10 執行層重放（同 A2 band/grid，clamp 隨 cap 改變）
 # ═══════════════════════════════════════════════════════════════════════
+
+def _next_weekday(ds: str) -> str:
+    """資料日的下一個平日（不查休市日），最新一筆水位變化還沒有下一個交易日時用。"""
+    d = date.fromisoformat(ds) + timedelta(days=1)
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d.isoformat()
+
 
 def band_exec_replay_capped(history, legs, weights, clamp):
     """S-A10：對每腿逐日重放執行層，target 用「系統規則但 cap 1.0」——
@@ -959,7 +967,7 @@ def build_market_st(mkt, gaps, judgment_calls):
         for i, d in enumerate(axis):
             v = levels[t][d]
             if prev is not None and v != prev and d >= inception:
-                exec_events.append({"date": axis[i + 1] if i + 1 < len(axis) else d, "leg": t,
+                exec_events.append({"date": axis[i + 1] if i + 1 < len(axis) else _next_weekday(d), "leg": t,
                                     "from": prev * (0.5 if t in legs else ST_OVERLAY_SCALE * 0.5) ,
                                     "to": v * (0.5 if t in legs else ST_OVERLAY_SCALE * 0.5)})
             prev = v

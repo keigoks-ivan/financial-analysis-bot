@@ -93,7 +93,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': 'W52 系統憑什麼：十
                          'key': 'lev20y',
                          'zone': 2,
                          'status': 'note',
-                         'desc': 'STX50＋MNQ 與 W52 引擎的三種曝險設計並列。'},
+                         'desc': 'STX50＋期貨與 W52 引擎的三種曝險設計並列。'},
  '/backtest/vol_targeting/': {'title': '波動率目標倉位：免保費的降回撤套袖（vol targeting）',
                               'short': '波動率目標倉位',
                               'key': 'vol_targeting',
