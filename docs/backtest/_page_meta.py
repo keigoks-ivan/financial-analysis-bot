@@ -316,6 +316,12 @@ PAGES = {'/backtest/live_system_evidence/': {'title': 'W52 系統憑什麼：十
                              'zone': 4,
                              'status': 'rej',
                              'desc': '頁內結論：「日內趨勢線關檔」'},
+ '/backtest/txf_bb3_touch/': {'title': '台指期碰到布林 3σ：跌破下軌做多，要抱一週以上才有優勢',
+                               'short': '台指布林 3σ',
+                               'key': 'txf_bb3_touch',
+                               'zone': 4,
+                               'status': 'cand',
+                               'desc': '頁內結論：「日線 3σ 下軌做多抱 5 天以上勝率高過隨便進場，上軌做空與 60 分以下週期沒有優勢」'},
  '/backtest/txf_short_zone/': {'title': '台指期 60 分 K 空單：200 日線下虧得少，改法都沒轉正',
                                 'short': '台指空單分區',
                                 'key': 'txf_short_zone',
@@ -603,7 +609,13 @@ PAGES = {'/backtest/live_system_evidence/': {'title': 'W52 系統憑什麼：十
                       'key': 'multi20y',
                       'zone': 8,
                       'status': 'note',
-                      'desc': '頁內結論：「採用候選 · 組合系統(80/20)」'}}
+                      'desc': '頁內結論：「採用候選 · 組合系統(80/20)」'},
+ '/backtest/viable/': {'title': '可行策略專區：扣成本後賺錢、比不做好、下得了單',
+                       'short': '可行策略專區',
+                       'key': 'viable',
+                       'zone': 8,
+                       'status': 'note',
+                       'desc': '把符合「賺錢、比不做好、下得了單」的策略放在一起，每張卡片寫明次數、最慘的一筆和驗證到哪一步'}}
 
 MEMBERS = {'/backtest/long_track_smh/': {'title': 'SMH/QQQ 長軌加 Supertrend 半倉閘門（STX50，對照線）',
                                'short': 'SMH/QQQ 進攻',
@@ -749,6 +761,7 @@ for _u in OLD_RULE_URLS + ["/backtest/nonequity/", "/backtest/leverage/", "/back
                            "/backtest/vol_targeting/tw.html", "/backtest/vol_targeting/leverage.html"]:
     RET_BANNER[_u] = OLD_RULE_BANNER
 CHIP_OVERRIDE = {u: (OLD_RULE_LABEL, OLD_RULE_DEF, "note") for u in OLD_RULE_URLS}
+CHIP_OVERRIDE["/backtest/viable/"] = ("專區", "把目前符合收錄條件的策略放在一起，收錄條件寫在本頁。", "note")
 CHIP_OVERRIDE["/backtest/a0_proposal/"] = (
     "決策備忘", "比較 cap 1.5 與不借錢上限 100%；實單規則是 Supertrend。", "note")
 CHIP_OVERRIDE["/backtest/nonequity/"] = (

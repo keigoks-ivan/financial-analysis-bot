@@ -189,6 +189,10 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .ov-jump a:hover{background:var(--line);text-decoration:none}
 .ov-legend{list-style:none;display:flex;flex-wrap:wrap;gap:.35rem 1.2rem;margin-top:.9rem;font-size:.78rem;color:var(--sec)}
 .ov-legend li{display:flex;align-items:center;gap:.4rem;min-width:0}
+.ov-viable{display:block;margin-top:1.4rem;padding:.8rem 1rem;background:var(--card,#fff);border:1px solid var(--line,#e5e7eb);border-left:4px solid #1a56db;border-radius:8px}
+.ov-viable:hover{text-decoration:none;background:#f3f4f6}
+.ov-viable b{font-family:var(--serif);font-size:1.05rem;color:var(--ink)}
+.ov-viable span{display:block;font-size:.84rem;color:var(--sec);margin-top:.15rem}
 .ov-zone{margin-top:2.2rem}
 .ov-zone-hd{font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--ink);padding-top:1rem;border-top:2px solid var(--ink);display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap}
 .ov-zone-n{font-family:var(--sans);font-size:.76rem;font-weight:500;color:var(--sec)}
@@ -231,6 +235,8 @@ footer{background:var(--card);border-top:1px solid var(--line);color:var(--sec);
 </div></div>
 
 <div class="container">
+
+<a class="ov-viable" href="/backtest/viable/"><b>可行策略專區</b><span>扣成本後賺錢、比什麼都不做好、實際下得了單的策略放在一起看。</span></a>
 
 %ZONES%
 
