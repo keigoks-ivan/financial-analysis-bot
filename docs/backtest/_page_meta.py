@@ -617,7 +617,14 @@ PAGES = {'/backtest/live_system_evidence/': {'title': 'W52 系統憑什麼：十
                        'status': 'note',
                        'desc': '把符合「賺錢、比不做好、下得了單」的策略放在一起，每張卡片寫明次數、最慘的一筆和驗證到哪一步'}}
 
-MEMBERS = {'/backtest/long_track_smh/': {'title': 'SMH/QQQ 長軌加 Supertrend 半倉閘門（STX50，對照線）',
+MEMBERS = {'/backtest/viable/ma_slope/': {'title': '台指期均線斜率只做多：能躲大跌，多賺的證據不足',
+                               'short': '均線斜率只做多',
+                               'status': 'cand',
+                               'main': '/backtest/viable/',
+                               'anchor': 'ma-slope',
+                               'chapter': '均線斜率只做多',
+                               'key': 'viable_ma_slope'},
+ '/backtest/long_track_smh/': {'title': 'SMH/QQQ 長軌加 Supertrend 半倉閘門（STX50，對照線）',
                                'short': 'SMH/QQQ 進攻',
                                'status': 'note',
                                'main': '/backtest/long_track/',
