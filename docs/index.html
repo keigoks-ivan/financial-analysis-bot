@@ -753,8 +753,10 @@ footer a{color:var(--muted)}
       var tgt=(typeof o.target_pct==='number')?o.target_pct.toFixed(1)+'%':'—';
       h+='<div class="ms-sleeve-leg"><span>'+x[1]+dots+(stOv?'':(typeof o.n==='number'?o.n:'—')+'／3')+'</span><span>目標 '+tgt+'</span></div>';
     });
-    h+='<div class="ms-sleeve-leg"><span>台股 0050／2330</span><span>'+tp('0050')+' · '+tp('2330')+'</span></div>';
-    h+='<div class="ms-sleeve-date">'+(isST?'債金：週線七成＋月線三成 Supertrend（燈：週、月）':'美股債金：週線 40 週均 · 52 週均 · 52 週前，各 1/3')+(d.data_date?' · 資料日 '+mcEsc(d.data_date):'')+'</div>';
+    var l2=d.tw_l2, l2On=!!(l2&&l2.applied&&typeof l2.target_pct==='number');
+    h+='<div class="ms-sleeve-leg"><span>台股 '+(l2On?'00631L／':'')+'0050／2330</span><span>'+(l2On?Math.round(l2.target_pct)+'% · ':'')+tp('0050')+' · '+tp('2330')+'</span></div>';
+    var asof=[d.history_us,d.history_tw].map(function(a){return a&&a.length?a[a.length-1].date:'';}).sort().pop()||d.data_date;
+    h+='<div class="ms-sleeve-date">'+(isST?'債金：週線七成＋月線三成 Supertrend（燈：週、月）':'美股債金：週線 40 週均 · 52 週均 · 52 週前，各 1/3')+(asof?' · 資料日 '+mcEsc(asof):'')+'</div>';
     var b=el('ms1pos'); b.innerHTML=h; b.hidden=false; anyData=true;
   }).catch(function(){});
   ['ms1pos'].forEach(function(id){el(id).addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();location.href=this.getAttribute('data-href');});});

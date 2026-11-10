@@ -417,7 +417,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
 <script>
 /* 資料源（全部是既有系統的輸出，本頁不寫任何檔）：
    monitor  /monitor/data/latest.json                 加權指數（key=twii）
-   lt       /long-track-w52-adaptive/state.json       實單台股指數部曝險（0050／2330）
+   lt       /long-track-w52-adaptive/state.json       實單台股指數部曝險（00631L／0050／2330）
    dd       /dd-screener/tw/latest.json               DD Screener 台股池
    rs       /screener/tw_latest.json                  台股 RS 雷達
    p10      /research/price-momentum-tw/track.json    P10 台股（只讀 NAV，不列持股：PREREG 規定不進 cockpit 清單）
@@ -532,9 +532,16 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     if(lt && lt.tickers){
       var ex = 0, has = false;
       Object.keys(lt.tickers).forEach(function(k){ var t = lt.tickers[k]; if(t.market === '台股' && num(t.executed_pct)){ ex += t.executed_pct; has = true; } });
+      var l2 = lt.tw_l2, l2On = !!(l2 && l2.applied);
+      if(l2On && num(l2.exposure_pct)){ ex += l2.exposure_pct; has = true; }
       cells += '<div class="env-cell"><div class="env-k">台股指數部曝險</div>'+
         '<div class="env-v num">'+pct(lt.combined_exposure_tw_pct,1)+' <small>目標</small></div>'+
-        '<div class="env-s">現持 '+(has?pct(ex,1):'—')+' · 週線 '+esc(lt.data_date||'')+'</div></div>';
+        '<div class="env-s">現持 '+(has?pct(ex,1):'—')+' · 資料 '+esc((lt.history_tw&&lt.history_tw.length?lt.history_tw[lt.history_tw.length-1].date:lt.data_date)||'')+'</div></div>';
+      if(l2On){
+        cells += '<div class="env-cell"><div class="env-k">00631L</div>'+
+          '<div class="env-v '+(l2.w===1?'v-in':'v-avoid')+'">'+(l2.w===1?'週多':'週空')+(l2.tb?'・接回':'')+'・水位 '+l2.level_pct+'%</div>'+
+          '<div class="env-s">目標 '+pct(l2.target_pct,1)+' · 曝險 '+pct(l2.exposure_pct,1)+'</div></div>';
+      }
       ['0050','2330'].forEach(function(k){
         var t = lt.tickers[k]; if(!t) return;
         var st = t.st || {};

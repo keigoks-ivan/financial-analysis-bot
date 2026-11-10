@@ -849,7 +849,7 @@ ST_LABEL = "2026-11-04 以前為照規則回推，之後為實際紀錄。"
 
 PREREG_ST = {
     "title": "實單前瞻記分板",
-    "rule": ("美股 QQQ 70／SMH 30（2026-11-04 收盤訊號起，之前各半）、台股 0050／2330 各 50%（2026-11-10 收盤訊號起各 40%，另加 00631L 20%，只看 0050 週線：週線多水位 100、週線空 0，下軌接回 30）；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
+    "rule": ("美股 QQQ 70／SMH 30（2026-11-04 收盤訊號起，之前各半）、台股 00631L 20%／0050 40%／2330 40%（2026-11-10 收盤訊號起，之前 0050／2330 各半；00631L 只看 0050 週線：週線多水位 100、週線空 0，下軌接回 30）；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
              "只做多，水位 100／70／30／0%（下軌接回期間另有 50%）。美股另加 IEF／GLD，各最多 20%（水位 20／14／6／0%）。"
              "美股 ATR 14／倍數 3，台股 ATR 14／倍數 2。訊號日收盤判定（只用已收完的週線、月線），下一個交易日調到目標水位。"),
     "labeling": ST_LABEL,
@@ -1146,7 +1146,7 @@ def mkt_section(mkt):
         ev_rows = '<tr><td colspan="3" style="text-align:center;color:#888">實錄窗內無執行層調整事件</td></tr>'
 
     return f"""<div class="lsb-market">
-<h3>{esc(mkt['label'])}（{'／'.join(mkt['legs'])}）</h3>
+<h3>{esc(mkt['label'])}（{'／'.join(([ST_L2] if ST_L2 in (mkt.get('overlay_legs') or []) else []) + list(mkt['legs']))}）</h3>
 {tiles}
 {chart_js}
 <table class="lsb-table"><thead><tr><th>月</th><th class="num">系統報酬</th><th class="num">B-mdd 基準報酬</th><th>命中</th></tr></thead>
