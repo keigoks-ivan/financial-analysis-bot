@@ -704,7 +704,7 @@ def _perf_block(key: str) -> str:
         alt_txt = (f'不含 2008 年（{alt["start"]} 起）：系統年化 {alt["cagr"]:.2f}%、最大回撤 {alt["mdd"]:.1f}%、夏普值 {alt["sharpe"]:.2f}，'
                    f'一直抱著 {alt["bh_cagr"]:.2f}%、{alt["bh_mdd"]:.1f}%、{alt["bh_sharpe"]:.2f}。')
     cap = (f'{m.get("start", "")} 起到 {d.get("asof", "")}，訊號用{(d.get("signal_basis") or {}).get(key, "")} K 線。'
-           f'平均持股 {m.get("avg_exposure", 0):.0f}%，一年下單 {m.get("adj_days_per_yr", 0):.1f} 天，成本每年 {m.get("cost_per_yr", 0):.2f} 個百分點。{alt_txt}'
+           f'平均持股 {m.get("avg_exposure", 0):.0f}%{"（股票曝險，正二按 2 倍算）" if key == "tw" else ""}，一年下單 {m.get("adj_days_per_yr", 0):.1f} 天，成本每年 {m.get("cost_per_yr", 0):.2f} 個百分點。{alt_txt}'
            f'現行規則套回整段歷史算出來的，參數與接回都是看過結果才定，當成上限看。{link}')
     return _sec("系統績效", t1 + t2, cap)
 
