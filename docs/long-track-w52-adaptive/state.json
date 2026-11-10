@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-11-10T03:46:08Z",
+  "generated_at": "2026-11-10T04:07:38Z",
   "profile": "live",
   "data_date": "2026-11-13",
   "ruleset_locked_date": "2026-07-17",
   "ruleset_revision_date": "2026-11-04",
-  "mechanism": "Supertrend (TradingView ta.supertrend, hl2, ATR via RMA; OHLC unadjusted for dividends in the US, adjusted for splits and dividends in TW from 2026-11-08; US ATR 14 / mult 3, TW ATR 14 / mult 2): per leg level = 0.7 x weekly + 0.3 x monthly (long only; weekly W-FRI, monthly calendar month end; a bar counts only after the last weekday of its period has closed) -> 100/70/30/0%, or 50% during a lower-band takeback (from data date 2026-11-06). No leverage, no execution band: level is already discrete, signal at the close, trade the next trading day in one step. In force from data date 2026-11-04; before that the W52 x adaptive sigma_t rule (cap 1.0 from 2026-10-19, A2 exec layer) applied and history is not rewritten. US keeps the IEF/GLD overlay (defensive rule: supertrend).",
+  "mechanism": "Supertrend (TradingView ta.supertrend, hl2, ATR via RMA; OHLC unadjusted for dividends in the US, adjusted for splits and dividends in TW from 2026-11-08; US ATR 14 / mult 3, TW ATR 14 / mult 2): per leg level = 0.7 x weekly + 0.3 x monthly (long only; weekly W-FRI, monthly calendar month end; a bar counts only after the last weekday of its period has closed) -> 100/70/30/0%, or 50% during a lower-band takeback (from data date 2026-11-06). From data date 2026-11-13 the TW index part also holds 00631L at 20% (0050 weekly Supertrend only: 100 up, 0 down, 30 during its own takeback). No leverage, no execution band: level is already discrete, signal at the close, trade the next trading day in one step. In force from data date 2026-11-04; before that the W52 x adaptive sigma_t rule (cap 1.0 from 2026-10-19, A2 exec layer) applied and history is not rewritten. US keeps the IEF/GLD overlay (defensive rule: supertrend).",
   "status": "LIVE main system. Since 2026-11-04: index legs follow Supertrend 70% weekly + 30% monthly (decided 2026-11-04). The previous W52 rule runs on as a control line (w52_state.json), no email. Email on actionable change (a leg's target level differs from the held level, or IEF/GLD overlay change)",
-  "leverage": "No borrowing: each leg holds level x weight of the index part (US QQQ 70 / SMH 30, TW 0050 50 / 2330 50; level 100/70/30/0, or 50 during a lower-band takeback).",
+  "leverage": "No borrowing: each leg holds level x weight of the index part (US QQQ 70 / SMH 30; TW 0050 50 / 2330 50 before data date 2026-11-13, then 0050 40 / 2330 40 / 00631L 20; level 100/70/30/0, or 50 during a lower-band takeback). 00631L is a 2x fund, so TW stock exposure can reach 120%.",
   "last_change_date": "2026-11-06",
   "last_change_desc": "美股 QQQ：週線翻空、下軌接回開始（11-06 週收盤 z −2.52 跌破 2.5σ 下軌，水位 30 改 50） → 水位 100% → 50%; 美股 SMH：下軌接回開始（11-06 週收盤 z −2.77 跌破 2.5σ 下軌，水位 30 改 50） → 水位 30% → 50%",
   "weights": {
@@ -228,7 +228,7 @@
         "m": 1,
         "level_pct": 50,
         "w_line": 2421.8269,
-        "m_line": 2083.949,
+        "m_line": 2083.9489,
         "w_bar": "2026-11-06",
         "m_bar": "2026-10-31",
         "trend_pct": 30,
@@ -242,7 +242,7 @@
         "w_exact": true,
         "w_gap_pct": -7.71,
         "w_px": 2235.0,
-        "m_thr": 2083.949,
+        "m_thr": 2083.9489,
         "m_exact": true,
         "m_gap_pct": 7.25,
         "m_px": 2235.0,
@@ -61997,7 +61997,7 @@
             "m": 1,
             "level_pct": 50,
             "w_line": 2421.8269,
-            "m_line": 2083.949,
+            "m_line": 2083.9489,
             "w_bar": "2026-11-06",
             "m_bar": "2026-10-31",
             "trend_pct": 30,
@@ -62067,6 +62067,18 @@
       "history_policy": "生效日前的 history_us／history_tw 紀錄不改寫；生效日當天各檔從 W52 階段的現持水位一次調到 Supertrend 水位",
       "control_line": "W52 規則以 --profile w52 續跑成對照線，輸出 w52_state.json／w52.html，不寄信；cap15 對照線不變",
       "research": "/backtest/supertrend_vs_live/；退回條件待持有人訂，見 knowledge/rule_ledger.md 2026-11-04"
+    },
+    {
+      "effective": "2026-11-13",
+      "decided": "2026-11-10",
+      "from_tag": "st_live",
+      "to_tag": "st_live+tw_l2",
+      "summary": "持有人拍板：台股指數部改為 00631L 20%、0050 40%、2330 40%。00631L 只看 0050 週線 Supertrend，週線多水位 100、週線空水位 0，週線空時週收盤跌破 20 週下軌 2.5σ 水位改 30，週收盤回到 20 週均線或週線翻多結束。0050、2330 的訊號規則不動，美股不動。",
+      "us": "不變",
+      "tw": "00631L 20%（只看 0050 週線）；0050、2330 各 40%；正二本身有 2 倍曝險，台股指數部股票曝險最高 120%",
+      "history_policy": "生效日前的 history_tw 不改寫；生效日當天 0050、2330 由各 50% 調到各 40%，正二由 0 調到目標水位",
+      "control_line": "不另開對照線；現行配置的比較在持有人的測試頁",
+      "research": "v7-backtest src/l2_vs_981a/sleeve_20_40_40.py；帳本 TW-SLEEVE-L2-20-40-40；退回條件見 knowledge/rule_ledger.md 2026-11-10"
     }
   ],
   "overlay": {
@@ -62120,6 +62132,29 @@
       "last_close_date": "2026-11-09"
     },
     "note": "實盤起始持有 0%；條件數由前次紀錄比對，未生效前只預覽、不寄信。"
+  },
+  "tw_l2": {
+    "ticker": "00631L",
+    "signal": "0050",
+    "applied": false,
+    "active_from": "2026-11-13",
+    "asof": "2026-11-09",
+    "stale": false,
+    "weight_pct": 20.0,
+    "level_pct": 30,
+    "target_pct": 6.0,
+    "exposure_pct": 0.0,
+    "w": 0,
+    "w_line": 107.26,
+    "w_date": "2026-11-06",
+    "w_thr": 107.2585,
+    "w_exact": true,
+    "tb": true,
+    "tb_start": "2026-11-06",
+    "tb_trigger_z": -2.746,
+    "z": -2.746,
+    "ma": 105.96,
+    "lower": 93.71
   },
   "defensive_rule": "supertrend",
   "display": {
