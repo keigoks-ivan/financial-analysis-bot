@@ -94,6 +94,14 @@ jobs:
       # c1_backtest.json 不能刪。對照線 cap15 照常每日更新。
       # 原先接在這裡的「總覽再重建一次」只是為了讓影子表追上當日，影子表已移除，故一併拿掉。
 
+      - name: Daily confirm line (one Discord line per market and data date)
+        # 2026-11-10 持有人拍板：實單信只在水位變了才寄，「沒收到信」分不出是沒訊號、排程壞了、還是資料沒抓到。
+        # 每次算完由 live_notify.py 讀剛寫好的 state.json，決定要不要貼一行確認（資料日、各檔水位、有沒有變動），
+        # 寫進 live_confirm.txt；資料日不是應有的最近交易日、各檔日期不一致時改成警告。去重狀態在
+        # data/live_notify/state.json（下方 commit 步驟一起提交）。不抓價、不改 state.json；失敗不擋實單信。
+        continue-on-error: true
+        run: python scripts/live_notify.py
+
       - name: Build synthesized live mail (today conclusion + bond/gold overlay)
         # 2026-10-19 起：實單 alert 含「美股債金條件數改變」與「現持高於新上限」；舊 cap 1.5 規則
         # （cap15 對照線）不寫 alert、不寄信。
@@ -175,6 +183,18 @@ jobs:
           NOTIFY_BODY: "${{ steps.livealert.outputs.changed == 'true' && steps.livealert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}"
         run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/long-track/#live
 
+      - name: Discord daily confirm
+        # live_confirm.txt 每行一則（通常是 0～2 行：美股、台股各自有新資料日才貼）；webhook 沒設時 notify_discord.py 會略過。
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+        run: |
+          [ -f live_confirm.txt ] || { echo "no confirm line this run"; exit 0; }
+          while IFS= read -r line || [ -n "$line" ]; do
+            [ -z "$line" ] && continue
+            NOTIFY_TITLE="$line" python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --url https://research.investmquest.com/long-track/
+          done < live_confirm.txt
+
       - name: Commit and push
         id: commit_push
         env:
@@ -183,6 +203,7 @@ jobs:
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/cap15.html docs/long-track-w52-adaptive/cap15_state.json docs/long-track-w52-adaptive/w52.html docs/long-track-w52-adaptive/w52_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/index.html
+          if [ -f data/live_notify/state.json ]; then git add data/live_notify/state.json; fi
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then
