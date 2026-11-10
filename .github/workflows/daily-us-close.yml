@@ -270,3 +270,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/ci/retrigger_once.sh
+
+      - name: Discord notify on failure
+        if: failure() && !(steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1')
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+          NOTIFY_TITLE: "排程失敗：每日美股收盤 daily-us-close"
+          NOTIFY_BODY: "每日美股收盤 daily-us-close 執行失敗：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
