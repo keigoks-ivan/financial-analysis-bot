@@ -41,8 +41,8 @@ LEG_WEIGHTS_CUTOVER_DATE = _os.environ.get("W52_LEG_WEIGHTS_CUTOVER_DATE") or "2
 LEG_WEIGHTS_DECISION_DATE = "2026-11-05"
 
 # 台股指數部加正二：資料日（訊號日）>= 此日的紀錄，00631L 0.2、0050 0.4、2330 0.4；之前 0050／2330 各 0.5。
-# 2026-11-13（週五）收盤的訊號起、11-16 第一次下單（持有人 2026-11-10 拍板）。環境變數 W52_TW_L2_CUTOVER_DATE 只供本機模擬用，CI 不設。
-TW_L2_CUTOVER_DATE = _os.environ.get("W52_TW_L2_CUTOVER_DATE") or "2026-11-13"
+# 2026-11-10（週二）收盤的訊號起、11-11 第一次下單（持有人 2026-11-10 拍板，原訂 11-13 收盤，同日提前）。環境變數 W52_TW_L2_CUTOVER_DATE 只供本機模擬用，CI 不設。
+TW_L2_CUTOVER_DATE = _os.environ.get("W52_TW_L2_CUTOVER_DATE") or "2026-11-10"
 TW_L2_DECISION_DATE = "2026-11-10"
 TW_L2_WEIGHT = 0.2
 TW_L2_TB_LEVEL = 30

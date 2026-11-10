@@ -3491,7 +3491,7 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
     body += tiles(tile_items)
     body += section("TARGET LEVELS", "各檔目標水位（0～100%）", table(headers, rows, numeric_cols={4} if st_mail else {3, 4, 5}))
     if ORDER_LINES:
-        body += section("ORDERS", "怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股 0050／2330 各 40、正二 20；美股 2026-11-04 前、台股 2026-11-13 前各半）",
+        body += section("ORDERS", "怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股 0050／2330 各 40、正二 20；美股 2026-11-04 前、台股 2026-11-10 前各半）",
                         "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(o)}</div>' for o in ORDER_LINES))
     st_legs = [t for t in ALL_TICKERS if sigs[t].get("rule") == ST_RULE_TAG]
     new_legs = [t for t in ALL_TICKERS if sigs[t].get("rule") == NEW_RULE_TAG]
@@ -3702,7 +3702,7 @@ def build_alert_lines(events: list, sigs: dict, exp: dict, data_date, cap_flips:
     for c in ev:
         lines.append("• " + c)
     if new_fmt and ORDER_LINES:
-        lines += ["", "怎麼下單（各檔占指數部淨值的 % ＝ 水位 × 權重：美股 QQQ 70／SMH 30、台股 0050／2330 各 40、正二 20；美股 2026-11-04 前、台股 2026-11-13 前各半）："]
+        lines += ["", "怎麼下單（各檔占指數部淨值的 % ＝ 水位 × 權重：美股 QQQ 70／SMH 30、台股 0050／2330 各 40、正二 20；美股 2026-11-04 前、台股 2026-11-10 前各半）："]
         lines += ["  " + o for o in ORDER_LINES]
     if st_fmt:
         lines += ["", "當前各檔 Supertrend 狀態與目標水位（不借錢，單檔上限 100%）："]
@@ -4114,7 +4114,7 @@ def main():
     if ST_MODE:
         mechanism = ("Supertrend (TradingView ta.supertrend, hl2, ATR via RMA; OHLC unadjusted for dividends in the US, adjusted for splits and dividends in TW from 2026-11-08; US ATR 14 / mult 3, TW ATR 14 / mult 2): "
                      "per leg level = 0.7 x weekly + 0.3 x monthly (long only; weekly W-FRI, monthly calendar month end; a bar counts only after "
-                     "the last weekday of its period has closed) -> 100/70/30/0%%, or 50%% during a lower-band takeback (from data date 2026-11-06). From data date 2026-11-13 the TW index part also holds 00631L at 20%% (0050 weekly Supertrend only: 100 up, 0 down, 30 during its own takeback). No leverage, no execution band: level is already discrete, "
+                     "the last weekday of its period has closed) -> 100/70/30/0%%, or 50%% during a lower-band takeback (from data date 2026-11-06). From data date 2026-11-10 the TW index part also holds 00631L at 20%% (0050 weekly Supertrend only: 100 up, 0 down, 30 during its own takeback). No leverage, no execution band: level is already discrete, "
                      "signal at the close, trade the next trading day in one step. In force from data date %s; before that the W52 x adaptive sigma_t "
                      "rule (cap 1.0 from %s, A2 exec layer) applied and history is not rewritten. US keeps the IEF/GLD overlay (defensive rule: %s)."
                      % (ST_CUTOVER_DATE, RULE_SWITCH_DATE, DEFENSIVE_RULE))
@@ -4122,7 +4122,7 @@ def main():
                   "The previous W52 rule runs on as a control line (w52_state.json), no email. "
                   "Email on actionable change (a leg's target level differs from the held level, or IEF/GLD overlay change)"
                   % (ST_CUTOVER_DATE, ST_CUTOVER_DECISION_DATE))
-        leverage = "No borrowing: each leg holds level x weight of the index part (US QQQ 70 / SMH 30; TW 0050 50 / 2330 50 before data date 2026-11-13, then 0050 40 / 2330 40 / 00631L 20; level 100/70/30/0, or 50 during a lower-band takeback). 00631L is a 2x fund, so TW stock exposure can reach 120%."
+        leverage = "No borrowing: each leg holds level x weight of the index part (US QQQ 70 / SMH 30; TW 0050 50 / 2330 50 before data date 2026-11-10, then 0050 40 / 2330 40 / 00631L 20; level 100/70/30/0, or 50 during a lower-band takeback). 00631L is a 2x fund, so TW stock exposure can reach 120%."
         revision_date = ST_CUTOVER_DATE
     elif SHADOW:
         mechanism = ("CONTROL LINE (live rule before Supertrend): W52 gate x adaptive sigma_t (RV20 rolling(756,252) median) x exec layer A2 "

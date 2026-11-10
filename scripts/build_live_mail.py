@@ -282,7 +282,7 @@ def order_section(w52a_text: str | None) -> str:
     if not rows:
         return ""
     body = "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(r)}</div>' for r in rows)
-    body += note("占指數部淨值的 %＝水位 × 權重（美股 QQQ 70／SMH 30，2026-11-04 收盤的訊號起，之前各半；台股 0050／2330 各 40、正二 20，2026-11-13 收盤的訊號起，之前各半）。債金部位另列於下方「債金疊加」。")
+    body += note("占指數部淨值的 %＝水位 × 權重（美股 QQQ 70／SMH 30，2026-11-04 收盤的訊號起，之前各半；台股 0050／2330 各 40、正二 20，2026-11-10 收盤的訊號起，之前各半）。債金部位另列於下方「債金疊加」。")
     return section("ORDERS", "怎麼下單", body)
 
 
@@ -361,7 +361,7 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
     lines.append("")
     ords = _order_lines(w52a_text)
     if ords:
-        lines.append("怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股 0050／2330 各 40、正二 20；美股 2026-11-04 前、台股 2026-11-13 前各半）：")
+        lines.append("怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股 0050／2330 各 40、正二 20；美股 2026-11-04 前、台股 2026-11-10 前各半）：")
         lines += [f"    {o}" for o in ords]
         lines.append("")
 

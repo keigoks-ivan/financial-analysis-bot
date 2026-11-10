@@ -839,7 +839,7 @@ def render_market_panel(key: str, state: dict, idx: list, seats: tuple, dp: dict
     if key == "us":
         cap = f'{when}百分比都是占美股總資金：指數部 70%、個股 30%。{LAST_WEEK_NOTE}'
     else:
-        cap = f'{when}百分比都是占台股總資金。{LAST_WEEK_NOTE}台股照水位持有 0050、2330，2026-11-13 收盤的訊號起改為 00631L 20%、0050 40%、2330 40%，其餘放現金。00631L 是 2 倍產品，這裡的百分比是占資金的比例，不是曝險。<a href="/cockpit-tw/">台股席位</a>只當研究名單，不算預設持股。'
+        cap = f'{when}百分比都是占台股總資金。{LAST_WEEK_NOTE}台股照水位持有 00631L 20%、0050 40%、2330 40%（2026-11-10 收盤的訊號起，之前 0050、2330 各半），其餘放現金。00631L 是 2 倍產品，這裡的百分比是占資金的比例，不是曝險。<a href="/cockpit-tw/">台股席位</a>只當研究名單，不算預設持股。'
     rows, decided, extra = seats
     parts = [_sec("每個標的應持有", stale + _action_table(key, idx), cap)]
     if key == "us":
