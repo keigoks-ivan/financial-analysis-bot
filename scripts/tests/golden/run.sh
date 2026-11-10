@@ -8,6 +8,7 @@
 #       純重構不加選項（全部要一樣）；改規則加 --expect-same-before <生效日> --signals-only。
 #   scripts/tests/golden/run.sh selftest <快照目錄>
 #       自我檢驗：同一 commit 重播兩次要全同；四種故意破壞（權重、下軌門檻、浮點尾數、主控台 idx_share）要被抓到；
+#       快照 commit 早於規則正本（P1）就改程式常數，晚於 P1 就改 knowledge/live_rules.toml（樣板找不到的那組略過）；
 #       環境變數覆寫生效日要看得到差異、且生效日前訊號不變。
 #
 # 不寫受測 repo、不連網（重播時封鎖 socket）、不寄信：子行程的環境變數從零組起，不帶任何通知金鑰。
@@ -48,12 +49,23 @@ case "$cmd" in
     for case in "w041|supertrend_core.py|tw = 0.4 if str(ds)[:10] >= TW_L2_CUTOVER_DATE else 0.5|tw = 0.41 if str(ds)[:10] >= TW_L2_CUTOVER_DATE else 0.5" \
                 "bbk24|supertrend_core.py|BB_K, BB_REARM, BB_LEVEL, BB_WIN = 2.5,|BB_K, BB_REARM, BB_LEVEL, BB_WIN = 2.4," \
                 "tail|supertrend_core.py|\"SMH\": 0.3 if new else 0.5|\"SMH\": (1 - 0.7) if new else 0.5" \
-                "idx071|build_long_track_index.py|\"idx_share\": 0.7,|\"idx_share\": 0.71,"; do
+                "idx071|build_long_track_index.py|\"idx_share\": 0.7,|\"idx_share\": 0.71," \
+                "w041t|../knowledge/live_rules.toml|\"0050.TW\" = 0.4\\n\"2330.TW\" = 0.4|\"0050.TW\" = 0.41\\n\"2330.TW\" = 0.39" \
+                "bbk24t|../knowledge/live_rules.toml|trigger = -2.5|trigger = -2.4" \
+                "tailt|../knowledge/live_rules.toml|\"SMH\" = 0.3|\"SMH\" = 0.30000000000000004" \
+                "idx071t|../knowledge/live_rules.toml|us_index_share = 0.70|us_index_share = 0.71"; do
       IFS='|' read -r name file old new <<<"$case"
       mkdir -p "$WORK/$name"; git -C "$REPO" archive "$BASE" scripts | tar -x -C "$WORK/$name"
+      if git -C "$REPO" cat-file -e "$BASE:knowledge/live_rules.toml" 2>/dev/null; then    # P1 起程式讀規則正本
+        git -C "$REPO" archive "$BASE" knowledge/live_rules.toml | tar -x -C "$WORK/$name"
+      fi
       if ! "$PY" - "$WORK/$name/scripts/$file" "$old" "$new" <<'EOF'
+import os
 import sys
 p, old, new = sys.argv[1:4]
+old, new = old.replace("\\n", "\n"), new.replace("\\n", "\n")     # 樣板裡的 \n（兩個字元）＝換行
+if not os.path.exists(p):
+    sys.exit(f"這個 commit 沒有 {os.path.normpath(p)}（P1 以前沒有規則正本）")
 s = open(p, encoding="utf-8").read()
 if s.count(old) != 1:
     sys.exit(f"樣板找不到（程式已改寫？）：{old}")

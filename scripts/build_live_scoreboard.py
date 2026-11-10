@@ -48,6 +48,8 @@ OUT_BODY_W52 = DOCS / "long-track" / "_scoreboard_w52_body.html"
 sys.path.insert(0, str(ROOT / "scripts"))
 import score_flowmap as _sf  # noqa: E402  (top-level imports stdlib-only; reuse SPRT helper + latch)
 import update_long_track_w52_adaptive as _w52  # noqa: E402  (reuse fetch_close / band_exec_replay / WEIGHTS)
+import live_rules as _lr  # noqa: E402  實盤規則正本 knowledge/live_rules.toml
+import supertrend_core as _stc  # noqa: E402  正二權重 TW_L2_WEIGHT（同樣讀正本）
 
 SCHEMA = "live-scoreboard-v0"
 
@@ -840,8 +842,9 @@ ST_SYMBOL = {"QQQ": "QQQ", "SMH": "SMH", "IEF": "IEF", "GLD": "GLD", "0050": "00
 ST_START = "2026-07-17"          # 記分板原本的起算日（兩市場相同）
 ST_AXIS_FROM = "2026-07-06"      # 起算日之前多取幾天，讓起算日有「前一日」錨點
 ST_OVERLAY = ["IEF", "GLD"]      # 只有美股
-ST_OVERLAY_SCALE = 0.20          # 債金每檔最多 20%：水位 100／70／30／0 → 20／14／6／0
-ST_L2 = "00631L"                 # 台股正二：只看 0050 週線，資料日 >= TW_L2_CUTOVER_DATE 才持有，占指數部 20%（水位 × 0.2，縮放跟債金相同）
+ST_OVERLAY_SCALE = _lr.param("params.overlay.max_weight")   # 債金上限：每檔最多 20%，水位 100／70／30／0 → 20／14／6／0
+ST_L2 = "00631L"                 # 台股正二：只看 0050 週線，資料日 >= TW_L2_CUTOVER_DATE 才持有，占指數部 20%（水位 × ST_L2_SCALE）
+ST_L2_SCALE = _stc.TW_L2_WEIGHT   # 正二權重（正本 tw-l2 那條改動）；跟債金上限是兩個來源，數值現在剛好都是 0.2
 ST_LABEL = "2026-11-04 以前為照規則回推，之後為實際紀錄。"
 
 PREREG_ST = {
@@ -907,6 +910,11 @@ def l2_level_series(axis_dates):
     return {d: int(x) for d, x in zip(axis_dates, v.values)}, ohlc.index[-1].strftime("%Y-%m-%d")
 
 
+def _st_extra_scale(t):
+    """指數部股票腿以外的縮放：正二用正二權重，債金用債金上限。"""
+    return ST_L2_SCALE if t == ST_L2 else ST_OVERLAY_SCALE
+
+
 def _st_leg_weight(t, ds):
     """該股票腿占各市場指數部的權重（與 update_long_track_w52_adaptive.wt 同一來源 supertrend_core.leg_weights）。"""
     import supertrend_core as stc
@@ -949,7 +957,7 @@ def build_market_st(mkt, gaps, judgment_calls):
                 # 股票腿占指數部權重依訊號日分段：< 2026-11-04 各 0.5；之後 supertrend_core.leg_weights（美股 QQQ 0.7／SMH 0.3，台股不變）
                 scale = _st_leg_weight(t, sig_d)
             else:
-                scale = ST_OVERLAY_SCALE * 100.0 / 100.0
+                scale = _st_extra_scale(t) * 100.0 / 100.0
             seq.append(levels[t][sig_d] * scale)
         executed[t] = seq
 
@@ -979,8 +987,8 @@ def build_market_st(mkt, gaps, judgment_calls):
             v = levels[t][d]
             if prev is not None and v != prev and d >= inception:
                 exec_events.append({"date": axis[i + 1] if i + 1 < len(axis) else _next_weekday(d), "leg": t,
-                                    "from": prev * (0.5 if t in legs else ST_OVERLAY_SCALE * 0.5) ,
-                                    "to": v * (0.5 if t in legs else ST_OVERLAY_SCALE * 0.5)})
+                                    "from": prev * (0.5 if t in legs else _st_extra_scale(t) * 0.5) ,
+                                    "to": v * (0.5 if t in legs else _st_extra_scale(t) * 0.5)})
             prev = v
     exec_events.sort(key=lambda e: e["date"])
 

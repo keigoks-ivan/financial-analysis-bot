@@ -48,6 +48,8 @@ DOCS_INPUTS = [
     "docs/backtest/_page_meta.py",
 ]
 STATE_REL = "docs/long-track-w52-adaptive/state.json"
+# 實盤規則正本（2026-11-10 P1 起 supertrend_core 等程式讀它）。受測來源有這個檔就一起放進副本，沒有（P1 以前的 commit）就不放。
+RULES_REL = "knowledge/live_rules.toml"
 US_LEGS, TW_LEGS = ("QQQ", "SMH"), ("0050", "2330")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # 全史表最後幾個交易日另外走實單路徑（st_leg_state／l2_asof／state_asof）交叉核對
@@ -305,7 +307,8 @@ def freeze_time(now_utc, root: Path):
 # 拋棄式副本
 # =============================================================================
 def prepare_root(src_scripts: Path, root: Path, inputs: dict):
-    """root/scripts ← src_scripts（不含 tests、__pycache__）；root/<rel> ← inputs[rel]（快照裡的輸入檔）。"""
+    """root/scripts ← src_scripts（不含 tests、__pycache__）；root/<rel> ← inputs[rel]（快照裡的輸入檔）；
+    root/knowledge/live_rules.toml ← 受測來源的同一檔（有的話）。"""
     root.mkdir(parents=True, exist_ok=True)
     dst = root / "scripts"
     ok = False
@@ -319,6 +322,10 @@ def prepare_root(src_scripts: Path, root: Path, inputs: dict):
     shutil.rmtree(dst / "tests", ignore_errors=True)
     for p in dst.rglob("__pycache__"):
         shutil.rmtree(p, ignore_errors=True)
+    rules = src_scripts.parent / RULES_REL
+    if rules.is_file():
+        (root / RULES_REL).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(rules, root / RULES_REL)
     for rel, srcf in inputs.items():
         out = root / rel
         out.parent.mkdir(parents=True, exist_ok=True)

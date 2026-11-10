@@ -81,6 +81,7 @@ try:                                       # fab: scripts/site_nav.py
 except ImportError:                        # v7-backtest: repo-root snippet
     from site_nav_snippet import full_nav_block  # noqa: E402,F401
 import supertrend_core as stc  # noqa: E402  Supertrend 算法／參數／切換日（與 supertrend_alert.py 共用）
+import live_rules as _lr  # noqa: E402  實盤規則正本 knowledge/live_rules.toml（債金上限、債金規則）
 import supertrend_live_page as stp  # noqa: E402  實單頁的 Supertrend 區塊（HTML 片段）
 try:                                       # fab: scripts/mail_html.py（v7-backtest 無此檔時
     from mail_html import esc, frame, note, one_minute, pill, section, table, tiles  # noqa: E402
@@ -137,7 +138,7 @@ RULE_SWITCH_DECISION_DATE = "2026-10-17"   # 持有人拍板日
 NEW_RULE_TAG = "w52a_c1_live"
 NEW_CAP = 1.0                              # 新規則股票部分曝險上限（不借錢）
 EXEC_CLAMP_NEW = 50.0 * NEW_CAP            # 新規則執行層 clamp（單腿滿載 50pp）
-OVERLAY_W = 0.20                           # IEF、GLD 各最多 20%（研究凍結值，同 c1 影子）
+OVERLAY_W = _lr.param("params.overlay.max_weight")   # IEF、GLD 各最多 20%（研究凍結值，同 c1 影子；正本 [params.overlay]）
 OVERLAY_LEGS = ("ief", "gld")
 OVERLAY_SYM = {"ief": "IEF", "gld": "GLD"}
 OVERLAY_NAME = {"ief": "公債（IEF）", "gld": "黃金（GLD）"}
@@ -167,7 +168,7 @@ NEWSTYLE_TAGS = (NEW_RULE_TAG, ST_RULE_TAG)   # 「單檔水位 0～100%、不�
 # "supertrend"＝IEF／GLD 各自 0.7 週線＋0.3 月線 Supertrend（ATR 14／倍數 3，未調股息 OHLC），水位 20／14／6／0%（占指數部）；
 #   資料日 < ST_CUTOVER_DATE 的部分仍照週線三條件（IEF／GLD 各最多 20%，每成立一條加三分之一），生效日前不改寫。
 # "three_condition"＝全程三條件（退回用）。
-DEFENSIVE_RULE = "supertrend"
+DEFENSIVE_RULE = _lr.at(ST_CUTOVER_DATE)["overlay"]["rule"]   # 正本 st-index 那條改動的 overlay.rule
 DEF_ST_ON = False       # compute_overlay 本次實際走了 Supertrend 版就設 True（頁面與信件文字依它切換）
 DEFENSIVE_ST_LEVELS = (20.0, 14.0, 6.0, 0.0)
 

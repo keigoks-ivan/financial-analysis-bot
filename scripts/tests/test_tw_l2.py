@@ -4,6 +4,7 @@
 結束後 z 要先回到 −1 以上才能再觸發；不看月線；資料日 >= TW_L2_CUTOVER_DATE 才持有，0050／2330 權重同日由各 0.5 改各 0.4。
 """
 import sys
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -13,6 +14,8 @@ import supertrend_core as stc  # noqa: E402
 
 WEEKS = pd.date_range("2026-01-02", periods=52, freq="W-FRI")
 MONTHS = pd.date_range("2026-01-31", periods=12, freq="ME")
+# 生效日讀正本（knowledge/live_rules.toml 的 tw-l2-20-40-40，經 supertrend_core）；改生效日不用改測試
+DAY_BEFORE = (date.fromisoformat(stc.TW_L2_CUTOVER_DATE) - timedelta(days=1)).isoformat()
 
 
 def base_closes():
@@ -82,10 +85,10 @@ def test_asof_daily_and_weights_cutover():
     d_trig = WEEKS[30]
     a = stc.l2_asof(fr, d_trig)
     assert a["level"] == 30 and a["active"] and a["applied"] == (str(d_trig.date()) >= stc.TW_L2_CUTOVER_DATE)
-    idx = pd.DatetimeIndex([pd.Timestamp("2026-11-09"), pd.Timestamp(stc.TW_L2_CUTOVER_DATE)])
+    idx = pd.DatetimeIndex([pd.Timestamp(DAY_BEFORE), pd.Timestamp(stc.TW_L2_CUTOVER_DATE)])
     v = stc.l2_daily(fr, idx)
     assert v.iloc[0] == 0
-    before, after = stc.leg_weights("2026-11-09"), stc.leg_weights(stc.TW_L2_CUTOVER_DATE)
+    before, after = stc.leg_weights(DAY_BEFORE), stc.leg_weights(stc.TW_L2_CUTOVER_DATE)
     assert before["0050.TW"] == before["2330.TW"] == 0.5
     assert after["0050.TW"] == after["2330.TW"] == 0.4
     assert after["QQQ"] == 0.7 and after["SMH"] == 0.3

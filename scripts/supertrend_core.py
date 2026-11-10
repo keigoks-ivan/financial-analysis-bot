@@ -18,47 +18,44 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
-# ---- 實盤參數（持有人 2026-11-04 拍板；v7 /backtest/supertrend_vs_live/ 第十三節鄰近表後選定）----
-# 鍵＝Yahoo 代號。美股／倫敦 ATR 14、倍數 3；台股 ATR 14、倍數 2；IEF／GLD 只在債金換規則時用（ATR 14、倍數 3）。
-ST_PARAMS = {
-    "QQQ": (14, 3.0), "SMH": (14, 3.0), "SMH.L": (14, 3.0),
-    "0050.TW": (14, 2.0), "2330.TW": (14, 2.0),
-    "IEF": (14, 3.0), "GLD": (14, 3.0),
-}
-W_WEEK, W_MONTH = 0.7, 0.3
-TF = {"week": ("W-FRI", "週線"), "month": ("ME", "月線")}
+# ---- 實盤參數：全部讀規則正本 knowledge/live_rules.toml（scripts/live_rules.py）----
+# 讀不到或格式錯就丟 live_rules.RulesError，import 本模組的程式一起停；不設程式內備援常數。
+# 常數名稱與型別照舊（日期是 ISO 字串、靠字串比較）。各值的來源寫在右邊，規則內容與歷史看正本與帳本。
+import live_rules as _lr  # noqa: E402
+
+_R = _lr.load()
+_ST = _R["params"]["supertrend"]
+# 鍵＝Yahoo 代號，值＝(ATR 長度, 倍數)。正本 [params.supertrend.atr]。
+ST_PARAMS = {sym: tuple(v) for sym, v in _ST["atr"].items()}
+W_WEEK, W_MONTH = _ST["w_week"], _ST["w_month"]
+TF = {"week": (_ST["week_rule"], "週線"), "month": (_ST["month_rule"], "月線")}
 SETTLE = timedelta(minutes=45)   # 收盤後多久才視為定案
 
-# 實單切換：資料日（訊號日）>= 此日的紀錄照 Supertrend；2026-11-04（週三）收盤訊號、11-05（週四）第一次下單。
-# 環境變數 W52_ST_CUTOVER_DATE 只供本機模擬用，CI 不設。
-import os as _os
-ST_CUTOVER_DATE = _os.environ.get("W52_ST_CUTOVER_DATE") or "2026-11-04"
-ST_CUTOVER_DECISION_DATE = "2026-11-04"
+# 生效日＝資料日（訊號日）>= 此日的紀錄套新規則；正本各 [[change]] 的 effective（env_override 的環境變數只供本機模擬，CI 不設）。
+ST_CUTOVER_DATE = _lr.effective("st-index")                       # 環境變數 W52_ST_CUTOVER_DATE
+ST_CUTOVER_DECISION_DATE = _lr.change("st-index")["decided"]
 
-# 美股指數部權重切換：資料日（訊號日）>= 此日的紀錄，QQQ 0.7／SMH（含 SMH.L）0.3；之前各 0.5。
-# 2026-11-04 收盤的訊號起、11-05 下單（持有人 11-05 拍板，當天生效）。環境變數 W52_LEG_WEIGHTS_CUTOVER_DATE 只供本機模擬用，CI 不設。
-LEG_WEIGHTS_CUTOVER_DATE = _os.environ.get("W52_LEG_WEIGHTS_CUTOVER_DATE") or "2026-11-04"
-LEG_WEIGHTS_DECISION_DATE = "2026-11-05"
+# 美股指數部權重切換（QQQ／SMH 的權重見 leg_weights）。
+LEG_WEIGHTS_CUTOVER_DATE = _lr.effective("us-weights-70-30")      # 環境變數 W52_LEG_WEIGHTS_CUTOVER_DATE
+LEG_WEIGHTS_DECISION_DATE = _lr.change("us-weights-70-30")["decided"]
 
-# 台股指數部加正二：資料日（訊號日）>= 此日的紀錄，00631L 0.2、0050 0.4、2330 0.4；之前 0050／2330 各 0.5。
-# 2026-11-10（週二）收盤的訊號起、11-11 第一次下單（持有人 2026-11-10 拍板，原訂 11-13 收盤，同日提前）。環境變數 W52_TW_L2_CUTOVER_DATE 只供本機模擬用，CI 不設。
-TW_L2_CUTOVER_DATE = _os.environ.get("W52_TW_L2_CUTOVER_DATE") or "2026-11-10"
-TW_L2_DECISION_DATE = "2026-11-10"
-TW_L2_WEIGHT = 0.2
-TW_L2_TB_LEVEL = 30
-TW_L2_MULT = 2
+# 台股指數部加正二：資料日 >= 此日 00631L 才實際持有（l2_daily／l2_asof），0050／2330 權重同日改（leg_weights）。
+_TW_L2 = _lr.change("tw-l2-20-40-40")
+TW_L2_CUTOVER_DATE = _lr.effective("tw-l2-20-40-40")              # 環境變數 W52_TW_L2_CUTOVER_DATE
+TW_L2_DECISION_DATE = _TW_L2["decided"]
+TW_L2_WEIGHT = _TW_L2["set"]["weights"][_R["params"]["l2"]["symbol"]]   # 占台股指數部的權重
+TW_L2_TB_LEVEL = _R["params"]["l2"]["takeback_level"]
+TW_L2_MULT = _R["params"]["l2"]["exposure_multiple"]
+_LEG_KEYS = (tuple(_R["markets"]["us"]["legs"]) + tuple(_R["markets"]["us"]["alias"])
+             + tuple(_R["markets"]["tw"]["legs"]))                # QQQ、SMH、SMH.L、0050.TW、2330.TW
 
 
 def leg_weights(ds: str) -> dict:
-    """每檔占各市場指數部的權重（鍵＝Yahoo 代號）。依據 knowledge/rule_ledger.md「2026-11-05：美股指數部權重由
-    QQQ 50／SMH 50 改為 QQQ 70／SMH 30」（持有人 2026-11-05 拍板）：資料日 >= LEG_WEIGHTS_CUTOVER_DATE 時
-    美股 QQQ 0.7、SMH／SMH.L 0.3，之前全部 0.5。台股依 rule_ledger「2026-11-10：台股指數部加正二 20%」：
-    資料日 >= TW_L2_CUTOVER_DATE 時 0050／2330 各 0.4（正二 0.2 不在這張表，見 l2_table），之前各 0.5。
+    """每檔占各市場指數部的權重（鍵＝Yahoo 代號；SMH.L 跟 SMH 相同）：訊號資料日 ds 當天正本時間軸的權重
+    （[timeline.weights] 加上生效日 <= ds 的 [[change]]）。正二不在這張表（見 TW_L2_WEIGHT、l2_table）。
     每檔占指數部淨值＝水位 × 該檔權重；只給實盤 profile 用，舊 W52 對照線維持各半。"""
-    new = str(ds)[:10] >= LEG_WEIGHTS_CUTOVER_DATE
-    tw = 0.4 if str(ds)[:10] >= TW_L2_CUTOVER_DATE else 0.5
-    return {"QQQ": 0.7 if new else 0.5, "SMH": 0.3 if new else 0.5, "SMH.L": 0.3 if new else 0.5,
-            "0050.TW": tw, "2330.TW": tw}
+    w = _lr.weights(str(ds)[:10], _R)
+    return {k: w[k] for k in _LEG_KEYS}
 
 
 # ---------------------------------------------------------------- Supertrend
@@ -177,9 +174,11 @@ def level_pct(w_dir: int, m_dir: int) -> int:
 #   不設時間上限、不設價格停損。z 要先回到 −1 以上才能再觸發。
 # - 同一天先處理結束、再處理重新觸發、最後處理觸發；之後若趨勢水位不是 30 就結束（跟回測同順序）。
 # 從頭重播整段歷史，不存狀態；資料日（訊號日）>= BB_TAKEBACK_CUTOVER_DATE 才套用。環境變數只供本機模擬。
-BB_TAKEBACK_CUTOVER_DATE = _os.environ.get("W52_BB_TAKEBACK_CUTOVER_DATE") or "2026-11-06"
-BB_TAKEBACK_DECISION_DATE = "2026-11-06"
-BB_K, BB_REARM, BB_LEVEL, BB_WIN = 2.5, -1.0, 50, 20
+BB_TAKEBACK_CUTOVER_DATE = _lr.effective("takeback")             # 環境變數 W52_BB_TAKEBACK_CUTOVER_DATE
+BB_TAKEBACK_DECISION_DATE = _lr.change("takeback")["decided"]
+# 正本 [params.zband]、[params.takeback]。正本寫觸發門檻 trigger＝−2.5（z ≤ trigger），這裡的 BB_K 是它的絕對值（取負號是精確運算）。
+BB_K, BB_REARM, BB_LEVEL, BB_WIN = (-_R["params"]["zband"]["trigger"], _R["params"]["zband"]["rearm"],
+                                    _R["params"]["takeback"]["level"], _R["params"]["zband"]["window_weeks"])
 
 
 def weekly_z(wclose: pd.Series, win: int = BB_WIN) -> pd.DataFrame:

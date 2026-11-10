@@ -44,6 +44,10 @@ def resolve_scripts(args, work: Path) -> tuple[Path, dict]:
         dst.mkdir(parents=True)
         arc = subprocess.run(["git", "-C", str(repo), "archive", sha, "scripts"], capture_output=True, check=True)
         subprocess.run(["tar", "-x", "-C", str(dst)], input=arc.stdout, check=True)
+        if subprocess.run(["git", "-C", str(repo), "cat-file", "-e", f"{sha}:{G.RULES_REL}"],
+                          capture_output=True).returncode == 0:      # P1 起的 commit 才有規則正本
+            arc = subprocess.run(["git", "-C", str(repo), "archive", sha, G.RULES_REL], capture_output=True, check=True)
+            subprocess.run(["tar", "-x", "-C", str(dst)], input=arc.stdout, check=True)
         return dst / "scripts", {"kind": "commit", "repo": str(repo), "commit": sha}
     src = Path(args.src).resolve()
     scripts = src / "scripts" if (src / "scripts").is_dir() else src
@@ -51,7 +55,8 @@ def resolve_scripts(args, work: Path) -> tuple[Path, dict]:
     r = subprocess.run(["git", "-C", str(src), "rev-parse", "HEAD"], capture_output=True, text=True)
     if r.returncode == 0:
         desc["commit"] = r.stdout.strip()
-        st = subprocess.run(["git", "-C", str(src), "status", "--porcelain", "--", "scripts"], capture_output=True, text=True)
+        st = subprocess.run(["git", "-C", str(src), "status", "--porcelain", "--", "scripts", G.RULES_REL],
+                            capture_output=True, text=True)
         desc["dirty_scripts"] = [ln for ln in st.stdout.splitlines() if "scripts/tests/golden/" not in ln]
     return scripts, desc
 

@@ -22,6 +22,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from site_nav import full_nav_block  # noqa: E402
+import live_rules as _lr  # noqa: E402  實盤規則正本 knowledge/live_rules.toml（資金換算 [params.capital]）
 
 NAV_BLOCK = full_nav_block("system", "lthub")
 
@@ -303,13 +304,14 @@ PROFILE_JSON = DOCS / "long-track" / "data" / "system_profile.json"
 ARENA_JSON = DOCS / "engine" / "arena.json"
 ARENA_LEDGER = DOCS / "engine" / "arena-ledger.json"
 
-SEAT_PCT = 6.0     # 美股個股 30% 分 5 席，每席 6%
+_CAP = _lr.param("params.capital")
+SEAT_PCT = _CAP["us_seat_pct"]     # 美股個股 30% 分 5 席，每席 6%
 WD = "一二三四五六日"
 MKT = {
     "us": {"name": "美股", "legs": ["QQQ", "SMH"], "hist": "history_us", "close": [23, 0, "America/New_York"],
-           "idx_share": 0.7, "seat_link": ("/cockpit/", "美股看板")},
+           "idx_share": _CAP["us_index_share"], "seat_link": ("/cockpit/", "美股看板")},
     "tw": {"name": "台股", "legs": ["0050", "2330"], "hist": "history_tw", "close": [23, 30, "Asia/Taipei"],
-           "idx_share": 1.0},  # 持有人 2026-11-08：台股不預設持有個股（2330 在指數部），台股資金全部照水位配
+           "idx_share": _CAP["tw_index_share"]},  # 持有人 2026-11-08：台股不預設持有個股（2330 在指數部），台股資金全部照水位配
 }
 
 

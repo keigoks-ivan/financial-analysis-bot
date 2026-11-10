@@ -1,0 +1,186 @@
+# fab knowledge/live_rules.toml — 實盤規則正本（指數部；第一階段 P1，2026-11-10）
+# 程式常數從這裡讀：scripts/supertrend_core.py、update_long_track_w52_adaptive.py、build_live_scoreboard.py、
+# build_long_track_index.py。讀取與檢查：~/.venvs/v7bt/bin/python scripts/live_rules.py check｜show
+# 讀不到或格式錯，上面幾支程式（以及 import 它們的地平線、市況、席位引擎）會直接停，不設程式內備援常數。
+# 帳本 knowledge/rule_ledger.md 記理由與已知弱點；這裡記現在怎麼算、哪天起改。
+#
+# 兩種欄位，語意不同：
+#   [markets.*] [params.*]  全史適用：重播整段歷史都用現值。改它會改變頁面回推的歷史水位，但不改 state.json 已記下的紀錄。
+#                           程式不支援「某日起才改」這類參數；[[change]] 要記它只能用 replay = "whole_history" ＋ [change.params]，
+#                           而且值要等於上面的現值（只作紀錄）。寫進 [change.set] 會被 check 擋下。
+#   [timeline.*]            依生效日分段：這裡寫第一個 [[change]] 之前的值（W52 時代，程式裡凍結），每個 [[change]] 從 effective 起覆蓋。
+# effective＝訊號資料日（當天收盤判定，美股用紐約日期）；first_trade＝第一次下單日；decided＝持有人拍板日。
+# env_override＝本機模擬用的環境變數（CI 不設），設了就用它取代 effective。
+# 數字照寫、不推導：TOML 沒有算式，SMH 寫 0.3，不寫 1 − 0.7；比例欄一律寫小數（1.0 不寫成 1，型別會變）。
+# 有些欄位程式寫死、正本只能照寫（例如 z ≥ 0 結束、台股還原全息），改了 check 會擋，要連程式一起改；清單在 live_rules.py 的 CODE_FIXED。
+
+schema = "live-rules-1"
+ledger = "knowledge/rule_ledger.md"
+
+[names]
+"QQQ" = "QQQ"
+"SMH" = "SMH"
+"SMH.L" = "SMH（倫敦）"
+"0050.TW" = "0050"
+"2330.TW" = "2330 台積電"
+"00631L.TW" = "00631L 正二"
+"IEF" = "公債（IEF）"
+"GLD" = "黃金（GLD）"
+
+# ═════════ 全史適用 ═════════
+[markets.us]
+name = "美股"
+legs = ["QQQ", "SMH"]
+alias = { "SMH.L" = "SMH" }            # 實際持有倫敦 UCITS 版，訊號看美股 SMH；權重跟 SMH 相同，不單獨設
+ohlc = "unadjusted_dividends"          # Yahoo auto_adjust=False，已調拆股
+
+[markets.tw]
+name = "台股"
+legs = ["0050.TW", "2330.TW"]
+leveraged = ["00631L.TW"]
+ohlc = "adjusted_total_return"         # 高低收 × Adj Close／Close（change tw-ohlc-adjusted，全史）
+
+[params.supertrend]
+algo = "tradingview"                   # ta.supertrend：ATR 用 RMA、價格 hl2
+week_rule = "W-FRI"
+month_rule = "ME"
+w_week = 0.7
+w_month = 0.3
+levels = [100, 70, 30, 0]              # ＝ 100 × (w_week × 週 ＋ w_month × 月)，check 驗算
+
+[params.supertrend.atr]                # [ATR 長度, 倍數]
+"QQQ" = [14, 3.0]
+"SMH" = [14, 3.0]
+"SMH.L" = [14, 3.0]
+"0050.TW" = [14, 2.0]
+"2330.TW" = [14, 2.0]
+"IEF" = [14, 3.0]
+"GLD" = [14, 3.0]
+
+[params.zband]                         # 週收盤 z＝（週收盤 − 20 週均線）÷ 20 週母體標準差；下軌接回與正二共用
+window_weeks = 20
+std_ddof = 0
+trigger = -2.5                         # 週收盤 z ≤ −2.5 觸發
+rearm = -1.0                           # 結束後 z 要先 > −1 才能再觸發
+exit = 0.0                             # 週收盤 z ≥ 0 結束
+
+[params.takeback]                      # 下軌接回（債金不適用）
+legs = ["QQQ", "SMH", "0050.TW", "2330.TW"]
+when_trend = 30                        # 趨勢水位剛好 30（週線空、月線多）才觸發
+level = 50
+
+[params.l2]                            # 台股正二
+symbol = "00631L.TW"
+signal = "0050.TW"
+uses = "week_only"                     # 只看 0050 週線，不看月線
+level_up = 100
+level_down = 0
+takeback_level = 30                    # 週線空時 z ≤ −2.5 → 30；z ≥ 0 或週線翻多結束
+exposure_multiple = 2
+
+[params.overlay]                       # 美股債金疊加（Supertrend 14／3，同 0.7 週＋0.3 月）
+legs = ["IEF", "GLD"]
+max_weight = 0.20                      # 各最多占指數部 20%：水位 100／70／30／0 → 20／14／6／0
+
+[params.exposure]                      # 現行權重下的股票曝險上限（正二按倍數算），check 用最後一段權重驗算
+us_stock_max_pct = 100
+tw_stock_max_pct = 120
+
+[params.capital]                       # 主控台把「占指數部」換成「占該市場資金」
+us_index_share = 0.70
+us_seat_count = 5                      # 美股個股 30% 分 5 席
+us_seat_pct = 6.0                      # 每席 6%；照寫，不用 (1 − 0.70) ÷ 5 推（會變 6.000000000000001）。check 驗 7000 + 5 × 600 = 10000 bps
+tw_index_share = 1.0                   # change tw-no-stock-seats：台股不預設持有個股
+
+# ═════════ 依生效日分段（第一個 change 之前的值）═════════
+[timeline.index]
+engine = "w52_adaptive"                # W52 時代的參數凍結在程式裡，不進正本
+[timeline.overlay]
+rule = "three_condition"
+[timeline.takeback]
+enabled = false
+[timeline.weights]
+"QQQ" = 0.5
+"SMH" = 0.5
+"0050.TW" = 0.5
+"2330.TW" = 0.5
+"00631L.TW" = 0.0
+
+# ═════════ 改動（依 effective 排序）═════════
+[[change]]
+id = "st-index"
+title = "指數部四檔與債金改 Supertrend 週線＋月線"
+effective = 2026-11-04
+first_trade = 2026-11-05
+decided = 2026-11-04
+env_override = "W52_ST_CUTOVER_DATE"
+ledger = "2026-11-04：實單指數部四檔由 W52 × 自適應波動率改為 Supertrend"
+commits = ["2cfef1b217", "6fc767ada2"]
+note = "原訂 11-06 收盤，同日晚改成立即切換"
+[change.set.index]
+engine = "supertrend"
+[change.set.overlay]
+rule = "supertrend"
+
+[[change]]
+id = "us-weights-70-30"
+title = "美股指數部 QQQ 70%／SMH 30%"
+effective = 2026-11-04
+first_trade = 2026-11-05
+decided = 2026-11-05
+env_override = "W52_LEG_WEIGHTS_CUTOVER_DATE"
+ledger = "2026-11-05：美股指數部權重由 QQQ 50／SMH 50 改為 QQQ 70／SMH 30"
+commits = ["99cd0ee07c", "aa605bf76c"]
+note = "原寫 11-05 收盤起，同日提前一天；比例改變不需等新訊號"
+[change.set.weights]
+"QQQ" = 0.7
+"SMH" = 0.3
+
+[[change]]
+id = "takeback"
+title = "下軌接回"
+effective = 2026-11-06
+first_trade = 2026-11-09
+decided = 2026-11-06
+env_override = "W52_BB_TAKEBACK_CUTOVER_DATE"
+ledger = "2026-11-06：指數部加「下軌接回」"
+commits = ["ec48b8d7d6"]
+[change.set.takeback]
+enabled = true
+
+[[change]]
+id = "tw-ohlc-adjusted"
+title = "台股指數 Supertrend 的 K 線改還原全息"
+effective = 2026-11-08                 # 只作紀錄
+replay = "whole_history"
+decided = 2026-11-08
+ledger = "2026-11-08：台股指數 Supertrend 的 K 線改還原全息"
+commits = ["ea9f73720e"]
+[change.params]
+"markets.tw.ohlc" = "adjusted_total_return"   # 改前 unadjusted_dividends
+
+[[change]]
+id = "tw-no-stock-seats"
+title = "台股不預設持有個股，台股資金全部照水位配"
+effective = 2026-11-09                 # 下單日；只影響主控台換算
+replay = "whole_history"
+decided = 2026-11-08
+ledger = "2026-11-08：台股不預設持有個股"
+commits = ["92773e3d0b"]
+[change.params]
+"params.capital.tw_index_share" = 1.0         # 改前 0.70
+
+[[change]]
+id = "tw-l2-20-40-40"
+title = "台股指數部 00631L 20%、0050 40%、2330 40%"
+effective = 2026-11-10
+first_trade = 2026-11-11
+decided = 2026-11-10
+env_override = "W52_TW_L2_CUTOVER_DATE"
+ledger = "2026-11-10：台股指數部改為 00631L 20%、0050 40%、2330 40%"
+commits = ["4d38208061", "c8007188f9"]
+note = "原訂 2026-11-13 收盤、11-16 下單，持有人同日提前"
+[change.set.weights]
+"0050.TW" = 0.4
+"2330.TW" = 0.4
+"00631L.TW" = 0.2
