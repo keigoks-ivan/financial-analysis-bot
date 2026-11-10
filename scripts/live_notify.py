@@ -204,6 +204,40 @@ def alert_markets(alert_text: str | None) -> set:
     return out
 
 
+def state_change(state: dict, mk: str, asof: date):
+    """state.json 裡這個市場、資料日 asof 有沒有發生過可行動變化（不看這一班有沒有提醒檔）。
+    回傳 (True|False|None, 說明或 None)；None＝判斷不出來。
+    來源：頂層 last_change_date／last_change_desc（主程式 changes 的最近一次，事件以「台股 ／美股 」開頭，
+    含正二權重切換）與 overlay.last_change_date（美股債金）。日期用 >=：主程式記的是各檔最新日的最大值，可能比這個市場的資料日晚。"""
+    name = MKT[mk]["name"]
+    segs, hit = [], False
+    try:
+        if "last_change_date" not in state:
+            return None, None
+        lc = state.get("last_change_date")
+        if lc and date.fromisoformat(str(lc)[:10]) >= asof:
+            desc = str(state.get("last_change_desc") or "")
+            parts = [x.strip() for x in desc.replace("；", ";").split(";") if x.strip()]
+            if not any(x.startswith(("台股", "美股")) for x in parts):
+                return None, None          # 有變動但看不出是哪個市場
+            mine = [x[len(name):].strip() for x in parts if x.startswith(name)]
+            if mine:
+                hit, segs = True, mine
+        if mk == "us":
+            ov = state.get("overlay") or {}
+            oc = ov.get("last_change_date")
+            if oc and date.fromisoformat(str(oc)[:10]) >= asof:
+                hit = True
+                if ov.get("last_change_desc"):
+                    segs.append(str(ov["last_change_desc"]))
+    except Exception:  # noqa: BLE001 — 讀不懂就當判斷不出來，寧可請持有人自己看
+        return None, None
+    if not hit:
+        return False, None
+    txt = "；".join(segs)
+    return True, (txt if len(txt) <= 160 else txt[:159] + "…") if txt else None
+
+
 def _lv_txt(legs: list, prev: dict | None = None) -> str:
     parts = []
     for nm, lv, _ in legs:
@@ -243,15 +277,27 @@ def assess(state: dict, mk: str, clock: datetime, changed: bool, prev_levels: di
         return {"kind": "warn", "date": None, "levels": levels, "key": f"stale|{exp}|{dmin}",
                 "text": f"⚠ {name}資料沒跟上：應該算到 {_md(exp)}收盤，這次只抓到 {_md(dmin)}，{why}。"
                         f"水位 {lv_now} 是舊資料算的。下一班會重抓，到隔天還是這樣就手動重跑實單排程。"}
-    tail = "有變動，見實單信。" if changed else (
-        "跟上一則確認不同，但這次沒有實單信，請開實單主控台核對。" if prev_levels and prev_levels != levels else "沒有變動，不用下單。")
+    # 有沒有變動以「這個資料日是否發生過可行動變化」為準（讀 state.json），不是這一班有沒有提醒檔：
+    # 同一天第一班已寄信、後一班就沒有提醒檔，但變動仍然存在。
+    sc, sc_desc = state_change(state, mk, dmin)
+    changed = changed or sc is True
+    unsure = sc is None and not changed
+    if changed:
+        tail = "有變動，見實單信。" + (f"變動：{sc_desc}。" if sc_desc else "")
+    elif unsure:
+        tail = "可能有變動，請看實單信與主控台。"
+    elif prev_levels and prev_levels != levels:
+        tail = "跟上一則確認不同，但這次沒有實單信，請開實單主控台核對。"
+    else:
+        tail = "沒有變動，不用下單。"
+    flag = "|chg" if changed else ("|unsure" if unsure else "")   # 先貼無變動、後來才有變動時，key 不同才會再貼一次更正
     lv_show = _lv_txt(legs, prev_levels if changed or (prev_levels and prev_levels != levels) else None)
     if fr["status"] == "unknown":
-        return {"kind": "unknown", "date": str(dmin), "levels": levels, "key": f"unknown|{dmin}|{json.dumps(levels, sort_keys=True)}",
+        return {"kind": "unknown", "date": str(dmin), "levels": levels, "key": f"unknown|{dmin}|{json.dumps(levels, sort_keys=True)}{flag}",
                 "text": f"❔ {name} {_md(dmin)}收盤已算完，水位 {lv_show}，{tail}"
                         f"無法確認這是不是最新交易日：{_md(fr['unknown_day'])}是否休市不在程式的假日表裡。"}
-    icon = "🔔" if changed else "✅"
-    return {"kind": "ok", "date": str(dmin), "levels": levels, "key": f"ok|{dmin}|{json.dumps(levels, sort_keys=True)}",
+    icon = "🔔" if changed or unsure else "✅"
+    return {"kind": "ok", "date": str(dmin), "levels": levels, "key": f"ok|{dmin}|{json.dumps(levels, sort_keys=True)}{flag}",
             "text": f"{icon} {name} {_md(dmin)}收盤已算完，水位 {lv_show}，{tail}"}
 
 
