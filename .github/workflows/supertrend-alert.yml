@@ -3,12 +3,11 @@ name: "Supertrend weekly/monthly alert"
 # Supertrend 週線／月線翻轉提醒（SMH 倫敦、SMH 美國、QQQ 用 ATR 14／倍數 3；0050、2330 用 ATR 14／倍數 2；債金疊加的 IEF、GLD 用 14／3，2026-11-04 加入、首次只記錄），持有人 2026-11-03 要求。
 # 2026-11-04 起參數與實單規則同一份（scripts/supertrend_core.py），改參數後第一次執行只重建狀態檔、不補寄。
 # 實單規則自 2026-11-04 收盤的訊號起用同一套 Supertrend；這裡仍是單獨的翻轉提醒（含週五預警）；只在翻轉（或週五預警）時寄 email 與 Discord。程式 scripts/supertrend_alert.py。
+# 2026-11-10 持有人拍板：排程停用，翻轉說明、週五預警、SMH 倫敦版翻轉都併進實單 workflow
+# （update_long_track_w52_adaptive.yml：scripts/live_notify.py＋build_live_mail.py，共用 data/live_notify/state.json）。
+# 只拿掉排程、保留手動觸發與失敗通知：檔案與狀態檔留著，第一次併入時 live_notify.py 從這裡的狀態檔接 SMH 倫敦版的上次記錄。
+# 不要再手動跑 confirm／warn：這裡的狀態檔從 11-10 起不再更新，手動跑會把之後已由實單信寄過的翻轉再寄一次。
 on:
-  schedule:
-    # 每天台北 08:30（週二～週六）：確認已收完的週線／月線 K 棒（美股、倫敦週五收盤在台北週六早上確認）
-    - cron: '30 0 * * 2-6'
-    # 週五台北 14:40：台股週線收盤確認＋倫敦／美股還沒收的週線預警
-    - cron: '40 6 * * 5'
   workflow_dispatch:
     inputs:
       mode:

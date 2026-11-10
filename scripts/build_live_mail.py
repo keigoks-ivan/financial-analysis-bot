@@ -21,9 +21,16 @@ live_mail.html（email html_body 用）；不存在 → 不寫任何檔，exit 0
 FAIL-SAFE（比照 scripts/build_f70_alert.py 的既有慣例）：任何例外 → print 警告、
 exit 0、不寫任何檔案——通知器不可擋排程。
 
-CI 主旨規則（.github/workflows/update_long_track_w52_adaptive.yml 用；本檔不產生
-subject，只供 workflow 的 email step 讀）：
-    正常：⚡ 實單系統 可行動變化（美＋台）
+2026-11-10 持有人拍板：原本另外寄的 Supertrend 翻轉提醒（supertrend_alert.py）併進這封信。
+- 有可行動變化時加「為什麼變」：哪檔週線／月線翻了、收盤對 Supertrend 線、下軌接回的 z 與下軌，
+  數字全取自 state.json（不另抓價）。
+- 讀 scripts/live_notify.py 寫的 live_extra.json（可能不存在）：週五預警、SMH 倫敦版（UCITS）翻轉參考。
+  只有這兩樣、沒有可行動變化時也寄信，主旨另寫。
+
+CI 主旨（寫進 live_mail_title.txt，workflow 讀；--test-email 不寫，workflow 用測試信主旨）：
+    有可行動變化：⚡ 實單系統 可行動變化（美＋台），另有預警或倫敦版參考時加「；另有週五預警」「；另有 SMH 倫敦參考」
+    只有週五預警：⚠ 實單系統 週五預警：QQQ 週線可能翻空…
+    只有倫敦版翻轉：實單系統 參考：SMH 倫敦 週線翻多（不影響下單）
     測試信：⚡ 實單系統 可行動變化（美＋台）(測試信)
 
 Usage:
@@ -34,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -63,6 +71,9 @@ STATE_JSON = DOCS / "long-track-w52-adaptive" / "state.json"
 W52A_ALERT = ROOT / "lt_w52a_alert.txt"
 LIVE_ALERT = ROOT / "lt_live_alert.txt"
 LIVE_MAIL_HTML = ROOT / "live_mail.html"
+LIVE_TITLE = ROOT / "live_mail_title.txt"
+EXTRA_JSON = ROOT / "live_extra.json"
+BASE_TITLE = "⚡ 實單系統 可行動變化（美＋台）"
 
 LIVE_PAGE_URL = "https://research.investmquest.com/long-track/#live"
 SCOREBOARD_URL = "https://research.investmquest.com/long-track/#scoreboard"
@@ -308,6 +319,195 @@ def changes_section(w52a_text: str | None) -> str:
 
 
 # ---------------------------------------------------------------------------
+# 為什麼變（2026-11-10 起）——讀 alert 事件行判斷哪檔、哪個週期翻了（事件行是主程式寫的，
+# 見 update_long_track_w52_adaptive.detect_changes／overlay_change_lines／l2_change_line），
+# 數字從 state.json 取：收盤、翻轉後的線、下軌接回的 z／20 週均線／下軌。不抓價、不重算。
+# ---------------------------------------------------------------------------
+WHY_RE = re.compile(r"^(美股|台股) (QQQ|SMH|0050|2330|00631L|公債（IEF）|黃金（GLD）)：(.*)$")
+OV_KEY = {"公債（IEF）": "ief", "黃金（GLD）": "gld"}
+LV_DIRS = {100: (1, 1), 70: (1, 0), 30: (0, 1), 0: (0, 0)}       # 水位 → (週線, 月線)
+
+
+def _n(x) -> str:
+    return f"{float(x):,.2f}"
+
+
+def _flip_text(lab: str, d: int, bar: str, line: float, px: float, exact: bool, asof: str) -> str:
+    """一個週期翻轉的說明。exact 為假＝資料剛好停在這根 K 棒收完那天，px 就是這根 K 棒的收盤；
+    為真＝之後又開了新 K 棒，px 是最新收盤，不是翻轉那根的收盤，照實寫。"""
+    to, side = ("多", "支撐") if d else ("空", "壓力")
+    cross = "站上壓力線" if d else "跌破支撐線"
+    if not exact:
+        gap = (px / line - 1) * 100
+        return (f"{lab}翻{to}：{bar} 那根 K 棒收在 {_n(px)}，{cross}。翻{to}後的{side}線是 {_n(line)}，"
+                f"收盤{'高' if gap >= 0 else '低'}於這條線 {abs(gap):.1f}%。")
+    return (f"{lab}翻{to}：{bar} 那根 K 棒收盤{cross}。翻{to}後的{side}線是 {_n(line)}；"
+            f"這次資料到 {asof}，最新收盤 {_n(px)}。")
+
+
+def _tb_start_text(start: str, z: float, ma: float | None, lower: float | None, what: str) -> str:
+    zs = f"{z:.2f}".replace("-", "−")
+    band = f"（20 週均線 {_n(ma)}，下軌 {_n(lower)}，下軌＝均線減 2.5 個標準差）" if ma is not None and lower is not None else ""
+    return f"下軌接回開始：{start} 那週週收盤 z {zs}，跌破下軌{band}，{what}。"
+
+
+def _why_st(tk_name: str, st: dict, rest: str) -> list:
+    reason = rest.split(" → ", 1)[0] if " → " in rest else ""
+    out = []
+    flips = [("週線", "w") for x in ("週線翻多", "週線翻空") if x in reason] + \
+            [("月線", "m") for x in ("月線翻多", "月線翻空") if x in reason]
+    for lab, k in flips:
+        out.append(_flip_text(lab, int(st[k]), st[f"{k}_bar"], float(st[f"{k}_line"]), float(st[f"{k}_px"]),
+                              bool(st.get(f"{k}_exact")), st.get("asof", "")))
+    if "下軌接回開始" in reason:
+        tbi = st.get("tb_info") or {}
+        if tbi:
+            same = tbi.get("z_bar") == tbi.get("start")
+            lower = tbi["ma"] - 2.5 * tbi["sd"] if same else None
+            out.append(_tb_start_text(tbi["start"], float(tbi["trigger_z"]), tbi["ma"] if same else None, lower,
+                                      "週線空、月線多的水位 30 改成 50"))
+        else:
+            out.append("下軌接回開始：週收盤跌破 20 週下軌 2.5σ，水位 30 改成 50。")
+    if "下軌接回結束" in reason:
+        out.append("下軌接回跟著結束：接回只在週線空、月線多（水位 30）時有效。" if flips else
+                   f"下軌接回結束：週收盤回到 20 週均線以上，水位回到趨勢水位 {st.get('level_pct')}%。")
+    if not out:
+        if "權重切換" in rest:
+            out.append("沒有翻轉：權重切換，水位沒變，只是這檔占指數部的比例改了。")
+        elif "規則切換" in rest:
+            out.append("沒有翻轉：規則切換，一次調到新規則的水位。")
+        else:
+            out.append("這次沒有翻轉，但現持和目標不同（可能是前幾次沒調到位），照「怎麼下單」調到目標。")
+    return [f"{tk_name}　{x}" for x in out]
+
+
+def _why_overlay(name: str, o: dict, rest: str) -> list:
+    m = re.search(r"目標 ([\d.]+)% → ([\d.]+)%", rest)
+    if "規則切換" in rest or not m:
+        return [f"{name}　規則切換：債金改照 Supertrend，一次調到目標。"]
+    lv0 = int(round(float(m.group(1)) / OVERLAY_W))
+    w0, m0 = LV_DIRS.get(lv0, (None, None))
+    out = []
+    if w0 is not None and w0 != int(o["st_w"]):
+        out.append(_flip_text("週線", int(o["st_w"]), o["week_date"], float(o["w_line"]), float(o["close"]), False, ""))
+    if m0 is not None and m0 != int(o["st_m"]):
+        to, side = ("多", "支撐") if o["st_m"] else ("空", "壓力")
+        out.append(f"月線翻{to}：{o['month_date']} 那根月 K 棒收盤{'站上壓力線' if o['st_m'] else '跌破支撐線'}。翻{to}後的{side}線是 "
+                   f"{_n(o['m_line'])}；最新收盤 {_n(o['last_close'])}（{o['last_close_date']}）。")
+    return [f"{name}　{x}" for x in (out or ["週線、月線方向和水位對不起來，請以頁面為準。"])]
+
+
+def _why_l2(blk: dict, st0050: dict, rest: str) -> list:
+    if "權重切換" in rest:
+        x = (f"台股指數部改配置（{blk.get('active_from')} 收盤起），開始持有正二：0050 週線{'多' if blk['w'] else '空'}"
+             + ("、下軌接回中" if blk.get("tb") else "") + f"，水位 {blk['level_pct']}%。")
+    elif "下軌接回開始" in rest:
+        same = str(blk.get("tb_start")) == str(blk.get("w_date"))
+        x = _tb_start_text(blk["tb_start"], float(blk["tb_trigger_z"]), blk.get("ma") if same else None,
+                           blk.get("lower") if same else None, "0050 週線空，正二水位 0 改成 30")
+    elif "下軌接回結束" in rest:
+        x = ("下軌接回結束：0050 週線翻多。" if blk["w"] else "下軌接回結束：0050 週收盤回到 20 週均線以上，正二水位回到 0%。")
+        if blk["w"] and st0050:
+            x += _flip_text("0050 週線", 1, st0050["w_bar"], float(st0050["w_line"]), float(st0050["w_px"]),
+                            bool(st0050.get("w_exact")), st0050.get("asof", ""))
+    elif "週線翻" in rest and st0050:
+        x = _flip_text("0050 週線", int(blk["w"]), st0050["w_bar"], float(st0050["w_line"]), float(st0050["w_px"]),
+                       bool(st0050.get("w_exact")), st0050.get("asof", ""))
+    else:
+        x = "請以頁面為準。"
+    return [f"00631L　{x}"]
+
+
+def why_lines(state: dict, w52a_text: str | None) -> list:
+    tickers = state.get("tickers") or {}
+    ov = state.get("overlay") or {}
+    out = []
+    for b in _bullets(w52a_text):
+        mo = WHY_RE.match(b)
+        if not mo:
+            continue
+        mk, tk, rest = mo.groups()
+        try:
+            if tk in OV_KEY:
+                out += _why_overlay(f"{mk} {tk}", ov[OV_KEY[tk]], rest)
+            elif tk == "00631L":
+                out += _why_l2(state.get("tw_l2") or {}, (tickers.get("0050") or {}).get("st") or {}, rest)
+            elif (tickers.get(tk) or {}).get("st"):
+                out += _why_st(f"{mk} {tk}", tickers[tk]["st"], rest)
+        except (KeyError, TypeError, ValueError) as e:   # 欄位缺：這檔不寫原因，不擋整封信
+            print(f"build_live_mail: 為什麼變 {tk} 略過（{e!r}）")
+    return out
+
+
+def why_section(lines: list) -> str:
+    if not lines:
+        return ""
+    body = "".join(f'<div style="font-size:14px;line-height:1.8;margin:0 0 4px;">{esc(x)}</div>' for x in lines)
+    body += note("Supertrend 以 K 棒收盤判定；水位＝週線 70%＋月線 30%，週線空、月線多時週收盤跌破 20 週下軌另有接回。")
+    return section("WHY", "為什麼變", body)
+
+
+# ---------------------------------------------------------------------------
+# 週五預警、SMH 倫敦版參考（live_notify.py 寫的 live_extra.json）
+# ---------------------------------------------------------------------------
+def load_extra() -> dict | None:
+    try:
+        return json.loads(EXTRA_JSON.read_text(encoding="utf-8")) if EXTRA_JSON.exists() else None
+    except Exception as e:  # noqa: BLE001
+        print(f"build_live_mail: live_extra.json 讀不到，略過預警與倫敦版（{e!r}）")
+        return None
+
+
+def _warn(extra: dict | None) -> dict:
+    return (extra or {}).get("warn") or {"heads": [], "lines": []}
+
+
+def _smhl(extra: dict | None) -> dict:
+    return (extra or {}).get("smhl") or {"heads": [], "lines": [], "status": None}
+
+
+def warn_section(extra: dict | None) -> str:
+    w = _warn(extra)
+    if not w["lines"]:
+        return ""
+    body = note(esc(w.get("intro", "")))
+    body += "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(x)}</div>' for x in w["lines"])
+    body += note("現在不用下單。真的翻了，收盤後的實單信會列出新的目標水位。")
+    return section("FRIDAY WARNING", "週五預警（還沒收盤，不用下單）", body)
+
+
+def smhl_section(extra: dict | None, events: bool) -> str:
+    """events＝True 只在有翻轉時輸出（放在信件前段）；False 只在沒有翻轉、只有現況時輸出（放在信件後段）。"""
+    s = _smhl(extra)
+    if bool(s["lines"]) != events or (not s["lines"] and not s.get("status")):
+        return ""
+    body = "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(x)}</div>' for x in s["lines"])
+    if s.get("status"):
+        body += note(esc(s["status"]))
+    return section("SMH LONDON", "SMH 倫敦版（參考，不影響下單）", body)
+
+
+def mail_title(w52a_text: str | None, extra: dict | None) -> str:
+    w, s = _warn(extra), _smhl(extra)
+    if w52a_text:
+        return BASE_TITLE + ("；另有週五預警" if w["lines"] else "") + ("；另有 SMH 倫敦參考" if s["lines"] else "")
+    if w["lines"]:
+        t = "⚠ 實單系統 週五預警：" + "、".join(w["heads"])
+        return (t if len(t) <= 120 else t[:118] + "…") + ("；另有 SMH 倫敦參考" if s["lines"] else "")
+    return "實單系統 參考：" + "、".join(s["heads"]) + "（不影響下單）"
+
+
+def extra_headline(w52a_text: str | None, extra: dict | None) -> str:
+    w, s = _warn(extra), _smhl(extra)
+    out = ""
+    if w["lines"]:
+        out += f" 另有週五預警：{'、'.join(w['heads'])}。要等收盤才算數，現在不用下單。"
+    if s["lines"]:
+        out += f" 另有參考：{'、'.join(s['heads'])}。實單看美股 SMH，這項不影響下單。"
+    return out
+
+
+# ---------------------------------------------------------------------------
 # 純文字版（lt_live_alert.txt，email body 用）
 # ---------------------------------------------------------------------------
 def _latest_date(state: dict) -> str:
@@ -316,11 +516,23 @@ def _latest_date(state: dict) -> str:
     return max(ds) if ds else state.get("data_date", "—")
 
 
-def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
+def build_plain_text(headline: str, state: dict, w52a_text: str | None, extra: dict | None = None,
+                     title: str = BASE_TITLE) -> str:
     tickers = state.get("tickers") or {}
     main_data_date = _latest_date(state)
-    lines = [f"⚡ 實單系統 可行動變化（美＋台）（數據截至 {main_data_date}）", "",
-             headline, "", "今天結論："]
+    lines = [f"{title}（數據截至 {main_data_date}）", "", headline, ""]
+    why = why_lines(state, w52a_text)
+    if why:
+        lines += ["為什麼變："] + [f"  {x}" for x in why] + [""]
+    w = _warn(extra)
+    if w["lines"]:
+        lines += ["週五預警（還沒收盤，不用下單）：", f"  {w.get('intro', '')}"] + [f"  {x}" for x in w["lines"]] + [""]
+    sm = _smhl(extra)
+    sm_lines = ["SMH 倫敦版（參考，不影響下單）："] + [f"  {x}" for x in sm["lines"]] + \
+               ([f"  {sm['status']}"] if sm.get("status") else []) + [""]
+    if sm["lines"]:
+        lines += sm_lines
+    lines.append("今天結論：")
     for m in MARKETS:
         exec_combined = sum((_held(tickers[t]) if tickers[t].get("rule") == ST_RULE_TAG else tickers[t]["executed_pct"]) for t in m["legs"])
         target_combined = sum(tickers[t]["final_weight_pct"] for t in m["legs"])
@@ -365,6 +577,8 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
         lines += [f"    {o}" for o in ords]
         lines.append("")
 
+    if not sm["lines"] and sm.get("status"):
+        lines += sm_lines
     lines.append("變了什麼：")
     if w52a_text:
         lines.append("[實單主系統 alert 原文]")
@@ -388,16 +602,21 @@ def _headline_block(text: str) -> str:
             f'color:#0f1f3d;">{esc(text)}</div>')
 
 
-def build_mail_html(headline: str, state: dict, w52a_text: str | None, *, is_test: bool) -> str:
+def build_mail_html(headline: str, state: dict, w52a_text: str | None, *, is_test: bool,
+                    extra: dict | None = None) -> str:
     tickers = state.get("tickers") or {}
     main_data_date = _latest_date(state)
 
     body = _headline_block(headline)
+    body += why_section(why_lines(state, w52a_text))
+    body += warn_section(extra)
+    body += smhl_section(extra, events=True)
     for m in MARKETS:
         body += market_section(m, tickers, state.get("tw_l2"))
     body += order_section(w52a_text)
     body += overlay_section(state, w52a_text)
     body += l2_section(state)
+    body += smhl_section(extra, events=False)
     body += changes_section(w52a_text)
     if any((tickers.get(t) or {}).get("rule") == ST_RULE_TAG for t in tickers):
         body += note(f"Supertrend 規則（{ST_CUTOVER_DATE} 收盤起）：每檔 70% 看週線、30% 看月線，各自多頭才持有，水位只有 100／70／30／0%（週線空、月線多的 30% 遇到週收盤跌破 20 週下軌 2.5σ 時改為 50%，稱為下軌接回）；"
@@ -431,24 +650,30 @@ def main():
     args = parser.parse_args()
 
     w52a_text = W52A_ALERT.read_text(encoding="utf-8") if W52A_ALERT.exists() else None
+    extra = load_extra()
+    has_extra = bool(_warn(extra)["lines"] or _smhl(extra)["lines"])
+    if LIVE_TITLE.exists():
+        LIVE_TITLE.unlink()
 
-    if not args.test_email and w52a_text is None:
-        print("build_live_mail: alert 檔不存在，無可行動變化，不產出。")
+    if not args.test_email and w52a_text is None and not has_extra:
+        print("build_live_mail: alert 檔不存在、也沒有週五預警或倫敦版翻轉，不產出。")
         return
 
     state = json.loads(STATE_JSON.read_text(encoding="utf-8"))
 
     tk_ = state.get("tickers") or {}
     st_markets = frozenset(m["key"] for m in MARKETS if all((tk_.get(t) or {}).get("rule") == ST_RULE_TAG for t in m["legs"]))
-    headline = build_headline(w52a_text, args.test_email, st_markets)
-    html = build_mail_html(headline, state, w52a_text, is_test=args.test_email)
+    headline = build_headline(w52a_text, args.test_email, st_markets) + extra_headline(w52a_text, extra)
+    title = mail_title(w52a_text, extra)
+    html = build_mail_html(headline, state, w52a_text, is_test=args.test_email, extra=extra)
     LIVE_MAIL_HTML.write_text(html, encoding="utf-8")
     print(f"Mail HTML written: {LIVE_MAIL_HTML}")
 
     if not args.test_email:
-        text = build_plain_text(headline, state, w52a_text)
+        text = build_plain_text(headline, state, w52a_text, extra, title)
         LIVE_ALERT.write_text(text, encoding="utf-8")
-        print(f"Alert file written: {LIVE_ALERT}")
+        LIVE_TITLE.write_text(title + "\n", encoding="utf-8")
+        print(f"Alert file written: {LIVE_ALERT}（主旨：{title}）")
     else:
         print("--test-email：lt_live_alert.txt 未寫入（測試模式）")
 

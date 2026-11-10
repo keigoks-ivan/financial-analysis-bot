@@ -16,6 +16,9 @@ on:
     # 2026-11-09：平日 21:35 UTC 那班同樣常拖過 UTC 午夜、讀不到當天美股收盤，下一班 07:00 UTC 又常拖到美股開盤後；
     # 月底收盤落在平日時，月線訊號可能開盤後才進系統。台北中午補跑一次（台股當天那根未到 14:15 不採用，不影響台股）。
     - cron: '17 4 * * 2-5'
+    # 2026-11-10：原 supertrend-alert.yml 的週五預警（台北週五 14:40）併進這條線，時間不變。live_notify.py 只在台北週五
+    # 14:15 以後才做預警，所以 07:00 UTC 那班也會補做（同一根 K 棒、同一方向只預警一次）。
+    - cron: '40 6 * * 5'
   workflow_dispatch:  # Manual trigger anytime
     inputs:
       test_email:
@@ -43,6 +46,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
+
+      - name: Start from the latest main
+        # 2026-11-10：排隊中的 run 會用排進佇列當下的 commit 起跑。週五 14:40（預警）與 15:00 兩班只差 20 分鐘，
+        # 後一班常在前一班推送前就排進佇列，會拿舊的 state.json 比對、把同一個變化再寄一次。起跑前先對齊最新 main；
+        # 抓不到就照原本的 checkout 繼續。
+        run: git fetch --quiet --depth=1 origin main && git reset --quiet --hard FETCH_HEAD || echo "::warning::fetch latest main failed; using the checked-out commit"
 
       - uses: actions/setup-python@v6
         with:
@@ -94,11 +103,13 @@ jobs:
       # c1_backtest.json 不能刪。對照線 cap15 照常每日更新。
       # 原先接在這裡的「總覽再重建一次」只是為了讓影子表追上當日，影子表已移除，故一併拿掉。
 
-      - name: Daily confirm line (one Discord line per market and data date)
+      - name: Daily confirm line, Friday warning, SMH London reference
+        # 週五預警與 SMH 倫敦版（UCITS）翻轉參考 2026-11-10 起由這裡做（原 supertrend-alert.yml，排程已停）：
+        # 結果寫 live_extra.json，由下一步 build_live_mail.py 併進實單信；只有預警或倫敦版翻轉時也會寄信，主旨另寫。
         # 2026-11-10 持有人拍板：實單信只在水位變了才寄，「沒收到信」分不出是沒訊號、排程壞了、還是資料沒抓到。
         # 每次算完由 live_notify.py 讀剛寫好的 state.json，決定要不要貼一行確認（資料日、各檔水位、有沒有變動），
         # 寫進 live_confirm.txt；資料日不是應有的最近交易日、各檔日期不一致時改成警告。去重狀態在
-        # data/live_notify/state.json（下方 commit 步驟一起提交）。不抓價、不改 state.json；失敗不擋實單信。
+        # data/live_notify/state.json（下方 commit 步驟一起提交）。除了 SMH 倫敦版不抓價、不改 state.json；失敗不擋實單信。
         continue-on-error: true
         run: python scripts/live_notify.py
 
@@ -123,6 +134,10 @@ jobs:
         run: |
           if [ -f lt_live_alert.txt ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
+            # 主旨由 build_live_mail.py 寫（可行動變化／只有週五預警／只有倫敦版參考各不同）；讀不到就用原主旨
+            TITLE="⚡ 實單系統 可行動變化（美＋台）"
+            [ -s live_mail_title.txt ] && TITLE="$(head -n1 live_mail_title.txt)"
+            echo "title=$TITLE" >> "$GITHUB_OUTPUT"
             {
               echo "body<<LIVEALERT_EOF"
               awk 1 lt_live_alert.txt   # 保證恰好一個尾換行（不論來源檔有無），避免最後一行與 LIVEALERT_EOF 黏連
@@ -162,7 +177,7 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_APP_PASSWORD }}
-          subject: "⚡ 實單系統 可行動變化（美＋台）${{ steps.livealert.outputs.changed != 'true' && '(測試信)' || '' }}"
+          subject: "${{ steps.livealert.outputs.changed == 'true' && steps.livealert.outputs.title || '⚡ 實單系統 可行動變化（美＋台）(測試信)' }}"
           to: keigoks@gmail.com
           from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
           html_body: file://live_mail.html
@@ -179,7 +194,7 @@ jobs:
         continue-on-error: true
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
-          NOTIFY_TITLE: "⚡ 實單系統 可行動變化（美＋台）${{ steps.livealert.outputs.changed != 'true' && '(測試信)' || '' }}"
+          NOTIFY_TITLE: "${{ steps.livealert.outputs.changed == 'true' && steps.livealert.outputs.title || '⚡ 實單系統 可行動變化（美＋台）(測試信)' }}"
           NOTIFY_BODY: "${{ steps.livealert.outputs.changed == 'true' && steps.livealert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}"
         run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/long-track/#live
 

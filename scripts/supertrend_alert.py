@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Supertrend 週線／月線翻轉通知（email＋Discord）。持有人 2026-11-03 要求。
 
+2026-11-10 起排程停用（持有人拍板）：翻轉說明、週五預警、SMH 倫敦版翻轉改由實單 workflow 的
+scripts/live_notify.py 與 build_live_mail.py 寄出。本檔留作對照，狀態檔 data/supertrend_alert/state.json 不再更新。
+
 規則：Supertrend(hl2)，算法同 TradingView 內建 ta.supertrend；K 線：美股用 Yahoo 未調股息
 （auto_adjust=False，已調拆股），台股 2026-11-08 起用還原全息，週線以週五為一週最後一天、月線以月底。持股參考＝週線 70%＋月線 30%
 （只做多；翻空那份放現金）。參數 2026-11-04 起用實盤參數：SMH 倫敦／SMH 美國／QQQ 為 ATR 14、倍數 3，

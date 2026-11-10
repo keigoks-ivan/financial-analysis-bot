@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""實單這條線的每日確認（持有人 2026-11-10 拍板）。不抓價、不算訊號、不改 state.json。
+"""實單這條線的通知補充（持有人 2026-11-10 拍板）：每日確認、週五預警、SMH 倫敦版參考。不算實單訊號、不改 state.json。
+
+一、每日確認
 
 實單信只在水位變了才寄，「沒收到信」分不出是沒訊號、排程壞了、還是資料沒抓到（2026-11-07 抓不到週五美股收盤、
 QQQ 水位寫錯，排程卻顯示成功）。所以實單 workflow 每次算完，往 Discord 實單頻道貼一行：這次用的資料日期、各檔水位、
@@ -19,8 +21,18 @@ QQQ 水位寫錯，排程卻顯示成功）。所以實單 workflow 每次算完
 Yahoo 在 UTC 午夜後最新一根常是 NaN，主程式會丟掉那根，資料日就會比應有的早一天，這裡照實報成警告。
 已知漏洞：臨時休市（颱風假、國喪）不在規則或表裡時會誤報成「資料沒更新」；台股 2027 年起要補假日表。
 
+二、週五預警（原 supertrend_alert.py 的 warn 班，2026-11-10 併進實單這條線、共用 state.json 與上面的去重狀態檔）
+台北週五 14:15 以後的任何一班（workflow 另有台北週五 14:40 那班）：讀 state.json 每檔「還沒收完的 K 棒」與翻轉門檻，
+目前收盤已經在線的另一邊就列預警（月線只在月底前 7 天內）；美股、倫敦這時週五還沒開盤，台股週線已收完、不會列。
+同一根 K 棒、同一個方向只預警一次。寫進 live_extra.json，由 build_live_mail.py 併進實單信。
+
+三、SMH 倫敦版（持有的 UCITS 版）參考
+原翻轉提醒會寄 SMH.L 的週線／月線翻轉與下軌接回；實單訊號看美股 SMH，所以這只是參考。這裡每次抓一次 SMH.L
+（實單主程式沒有抓它），用 supertrend_core 同一套算法比對上次記錄，翻了就寫進 live_extra.json 由實單信帶出，不影響下單。
+第一次執行沿用 data/supertrend_alert/state.json 裡 SMH.L 的最後記錄，不會漏掉兩套交接之間的翻轉。
+
 Usage:
-  python scripts/live_notify.py                 # CI：寫 live_confirm.txt 並更新去重狀態
+  python scripts/live_notify.py                 # CI：寫 live_confirm.txt、live_extra.json 並更新去重狀態
   python scripts/live_notify.py --dry-run       # 只印出會貼的內容，不寫任何檔
   python scripts/live_notify.py --now 2026-11-11T02:00:00+00:00 --notify-state /tmp/x.json   # 模擬
 """
@@ -40,6 +52,8 @@ STATE_JSON = ROOT / "docs" / "long-track-w52-adaptive" / "state.json"
 ALERT_TXT = ROOT / "lt_w52a_alert.txt"
 NOTIFY_STATE = ROOT / "data" / "live_notify" / "state.json"
 CONFIRM_TXT = ROOT / "live_confirm.txt"
+EXTRA_JSON = ROOT / "live_extra.json"
+OLD_ALERT_STATE = ROOT / "data" / "supertrend_alert" / "state.json"   # 2026-11-10 前翻轉提醒的狀態檔，只讀（SMH.L 接續用）
 TPE = ZoneInfo("Asia/Taipei")
 
 MKT = {
@@ -267,6 +281,191 @@ def confirm_lines(state: dict, alert_text: str | None, ns: dict, now_utc: dateti
     return out
 
 
+# ---------------------------------------------------------------- 週五預警
+WARN_NAMES = {"QQQ": "QQQ", "SMH": "SMH 美國", "0050": "0050", "2330": "2330 台積電",
+              "IEF": "公債 IEF", "GLD": "黃金 GLD", "SMH.L": "SMH 倫敦"}
+TF_LAB = {"week": "週線", "month": "月線"}
+WARN_INTRO = "下面這幾檔還沒收完的 K 棒，目前已經在 Supertrend 線的另一邊。要等收盤才算數，收盤前可能再翻回來。"
+
+
+def friday_warn_on(now_utc: datetime) -> bool:
+    """台北週五、台股收盤定案（14:15）之後。美股、倫敦這時週五還沒開盤，週線還在進行中。"""
+    t = now_utc.astimezone(TPE)
+    return t.weekday() == 4 and t.time() >= time(14, 15)
+
+
+def _bar_end(tf: str, asof: date) -> date:
+    """資料日 asof 所在、還沒收完那根 K 棒的標籤日：週線＝該週週五，月線＝該月最後一天。"""
+    if tf == "week":
+        return asof + timedelta(days=(4 - asof.weekday()) % 7)
+    return date(asof.year + (asof.month == 12), asof.month % 12 + 1, 1) - timedelta(days=1)
+
+
+def warn_items(state: dict, smhl: dict | None, today: date) -> list:
+    """還沒收完、目前收盤已在線另一邊的 K 棒。主腿讀 state.json tickers[t].st（w／m、*_thr、*_exact、*_px），
+    債金讀 overlay（st_w／st_m、*_thr、*_exact、last_close），SMH.L 讀這次抓的 partial。*_exact 為真才有進行中的 K 棒。"""
+    rows = []
+
+    def add(tk, tf, d, thr, px, as_of, bar_end, l2=False):
+        flipped = px < thr if d == 1 else px > thr          # 多頭收盤低於下軌翻空；空頭收盤高於上軌翻多（同 supertrend()）
+        if not flipped or bar_end < today:
+            return
+        if tf == "month" and (bar_end - today).days > 7:    # 月線只在月底前 7 天內列（同原翻轉提醒）
+            return
+        rows.append({"tk": tk, "tf": tf, "dir": d, "pdir": 1 - d, "thr": thr, "px": px, "as_of": as_of,
+                     "bar_end": str(bar_end), "l2": l2})
+    tickers = state.get("tickers") or {}
+    for t in ("QQQ", "SMH", "0050", "2330"):
+        st = (tickers.get(t) or {}).get("st") or {}
+        if not st.get("asof"):
+            continue
+        asof = date.fromisoformat(st["asof"])
+        for tf, k in (("week", "w"), ("month", "m")):
+            if st.get(f"{k}_exact") and st.get(f"{k}_thr") is not None and st.get(f"{k}_px") is not None:
+                add(t, tf, int(st[k]), float(st[f"{k}_thr"]), float(st[f"{k}_px"]), st["asof"], _bar_end(tf, asof),
+                    l2=(t == "0050" and tf == "week" and bool((state.get("tw_l2") or {}).get("applied"))))
+    ov = state.get("overlay") or {}
+    if not ov.get("stale"):
+        for k, nm in (("ief", "IEF"), ("gld", "GLD")):
+            o = ov.get(k) or {}
+            if o.get("rule") != "supertrend" or not o.get("last_close_date"):
+                continue
+            asof = date.fromisoformat(o["last_close_date"])
+            for tf, kk, dk in (("week", "w", "st_w"), ("month", "m", "st_m")):
+                if o.get(f"{kk}_exact") and o.get(f"{kk}_thr") is not None:
+                    add(nm, tf, int(o[dk]), float(o[f"{kk}_thr"]), float(o["last_close"]), o["last_close_date"], _bar_end(tf, asof))
+    if smhl:
+        for tf in ("week", "month"):
+            c = smhl[tf]
+            p = c.get("partial")
+            if p:
+                add("SMH.L", tf, int(c["dir"]), float(p["lo"] if c["dir"] == 1 else p["up"]), float(p["close"]), p["as_of"],
+                    date.fromisoformat(p["bar_end"]))
+    return rows
+
+
+def warn_text(rows: list) -> tuple:
+    """(標題片段, 每檔一行)。文字沿用原翻轉提醒的寫法。"""
+    heads, lines = [], []
+    for r in rows:
+        nm, lab = WARN_NAMES[r["tk"]], TF_LAB[r["tf"]]
+        to = "多" if r["pdir"] == 1 else "空"
+        heads.append(f"{nm} {lab}可能翻{to}")
+        gap = (r["px"] / r["thr"] - 1) * 100
+        when = "本週五" if r["tf"] == "week" else "月底"
+        cond = f"收盤低於 {r['thr']:,.2f} 就確認翻空" if r["dir"] == 1 else f"收盤高於 {r['thr']:,.2f} 就確認翻多"
+        ln = (f"・{nm} {lab}：目前 {r['px']:,.2f}（{r['as_of']}），離門檻 {gap:+.1f}%。{when}{cond}"
+              f"（門檻是這根 K 棒目前的{'支撐' if r['dir'] == 1 else '壓力'}線，收完前可能小幅移動）。")
+        if r["l2"]:
+            ln += ("00631L 同一天翻多，水位改 100%。" if r["pdir"] == 1
+                   else "00631L 同一天翻空，水位改 0%；週收盤若同時跌破 20 週下軌 2.5σ 則改 30%。")
+        if r["tk"] == "SMH.L":
+            ln += "倫敦版只供參考，實單看美股 SMH。"
+        lines.append(ln)
+    return heads, lines
+
+
+# ---------------------------------------------------------------- SMH 倫敦版參考
+SMHL = "SMH.L"
+SMHL_NAME = "SMH 倫敦（持有的 UCITS 版）"
+
+
+def analyse_smhl(now_utc: datetime | None) -> dict:
+    """抓 SMH.L 日 K（未調股息，倫敦 17:20 前不採用當天），算週線／月線 Supertrend 與下軌接回，跟實單同一套函式。"""
+    sys.path.insert(0, str(HERE))
+    import supertrend_core as stc
+    oh, _ = stc.fetch_ohlc(SMHL, now_utc)
+    fr = stc.make_frames(oh, *stc.ST_PARAMS[SMHL])
+    last = oh.index[-1]
+    s = stc.state_asof(fr, last)
+    if not s.get("week") or not s.get("month"):
+        raise ValueError("SMH.L Supertrend K 棒不足")
+    trend = stc.level_pct(s["week"]["dir"], s["month"]["dir"])
+    tb = stc.takeback_asof(fr, last)
+    if tb is not None and tb["trend"] != trend:
+        tb = None
+    return {"asof": str(last.date()), "close": float(oh.close.iloc[-1]), "week": s["week"], "month": s["month"],
+            "trend": trend, "level": tb["level"] if tb is not None else trend,
+            "tb_active": bool(tb and tb["active"]), "tb": tb, "params": list(stc.ST_PARAMS[SMHL])}
+
+
+def _seed_smhl(params: list) -> dict | None:
+    """去重狀態檔還沒有 SMH.L 時，沿用舊翻轉提醒最後記錄的 SMH.L（參數相同才用），免得交接那幾天的翻轉被當成第一次記錄而漏寄。"""
+    try:
+        old = json.loads(OLD_ALERT_STATE.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+    sig = old.get("signals") or {}
+    if (old.get("params") or {}).get(SMHL) != params or f"{SMHL}|week" not in sig or f"{SMHL}|month" not in sig:
+        return None
+    tb = (old.get("takeback") or {}).get(SMHL) or {}
+    return {"week": sig[f"{SMHL}|week"], "month": sig[f"{SMHL}|month"], "params": params,
+            **({"tb_active": bool(tb["active"])} if "active" in tb else {}), "seeded_from": "supertrend_alert"}
+
+
+def smhl_events(a: dict, ns: dict) -> tuple:
+    """(標題片段, 事件行)。比對去重狀態檔裡上次的 SMH.L，翻轉（K 棒日往前、方向不同）或下軌接回開始／結束才算；並更新狀態。"""
+    prev = ns.get("smhl")
+    if not prev or prev.get("params") != a["params"]:
+        prev = _seed_smhl(a["params"])
+    heads, lines = [], []
+    if prev:
+        for tf in ("week", "month"):
+            p, c = prev.get(tf) or {}, a[tf]
+            if p and c["bar_end"] > p["bar_end"] and c["dir"] != p["dir"]:
+                to = "多" if c["dir"] == 1 else "空"
+                heads.append(f"SMH 倫敦 {TF_LAB[tf]}翻{to}")
+                lines.append(f"・{SMHL_NAME}{TF_LAB[tf]}確認翻{to}：K 棒 {c['bar_end']} 收在 {c['close']:,.2f}，"
+                             f"{'站上壓力線' if c['dir'] == 1 else '跌破支撐線'}，新的{'支撐' if c['dir'] == 1 else '壓力'}線 {c['line']:,.2f}。")
+        if "tb_active" in prev and bool(prev["tb_active"]) != a["tb_active"]:
+            kind = "開始" if a["tb_active"] else "結束"
+            heads.append(f"SMH 倫敦 下軌接回{kind}")
+            if a["tb_active"]:
+                z = f"{a['tb']['trigger_z']:.2f}".replace("-", "−")
+                lines.append(f"・{SMHL_NAME}下軌接回開始：{a['tb']['start']} 那週週收盤 z {z}，跌破 20 週下軌 2.5σ，水位 30 改 50。")
+            else:
+                lines.append(f"・{SMHL_NAME}下軌接回結束，水位 {a['level']}%。")
+    ns["smhl"] = {tf: {k: (round(a[tf][k], 4) if isinstance(a[tf][k], float) else a[tf][k])
+                       for k in ("dir", "line", "bar_end", "close")} for tf in ("week", "month")}
+    ns["smhl"].update({"tb_active": a["tb_active"], "level": a["level"], "asof": a["asof"], "params": a["params"]})
+    return heads, lines
+
+
+def smhl_status(a: dict) -> str:
+    w, m = a["week"], a["month"]
+
+    def tf(c, lab):
+        return f"{lab}{'多' if c['dir'] == 1 else '空'}、{'支撐' if c['dir'] == 1 else '壓力'}線 {c['line']:,.2f}"
+    return (f"{SMHL_NAME}：收盤 {a['close']:,.2f}（{a['asof']}），{tf(w, '週線')}，{tf(m, '月線')}，水位 {a['level']}%"
+            + ("，下軌接回中" if a["tb_active"] else "") + "。實單訊號看美股 SMH，這行只供參考。")
+
+
+def build_extra(state: dict, ns: dict, now_utc: datetime, warn_mode: str, smhl_on: bool, sim: bool) -> dict:
+    """週五預警＋SMH 倫敦參考 → live_extra.json 的內容；就地更新去重狀態 ns。"""
+    extra = {"warn": {"intro": WARN_INTRO, "heads": [], "lines": []}, "smhl": {"heads": [], "lines": [], "status": None}}
+    a = None
+    if smhl_on:
+        try:
+            a = analyse_smhl(now_utc if sim else None)
+            extra["smhl"]["heads"], extra["smhl"]["lines"] = smhl_events(a, ns)
+            extra["smhl"]["status"] = smhl_status(a)
+        except Exception as e:  # noqa: BLE001 — 倫敦版只是參考，抓不到不擋其他通知，狀態檔維持上次
+            print(f"[SMH.L] 抓價或計算失敗，這次略過：{type(e).__name__}: {e}", file=sys.stderr)
+            extra["smhl"]["error"] = f"{type(e).__name__}"
+    on = warn_mode == "on" or (warn_mode == "auto" and friday_warn_on(now_utc))
+    if on:
+        today = now_utc.astimezone(TPE).date()
+        rows = warn_items(state, a, today)
+        seen = ns.setdefault("friday_warn", [])
+        new = [r for r in rows if f"{r['tk']}|{r['tf']}|{r['bar_end']}|{r['pdir']}" not in seen]
+        for r in new:
+            seen.append(f"{r['tk']}|{r['tf']}|{r['bar_end']}|{r['pdir']}")
+        ns["friday_warn"] = seen[-80:]
+        extra["warn"]["heads"], extra["warn"]["lines"] = warn_text(new)
+        print(f"週五預警：{len(rows)} 檔 K 棒在線的另一邊，其中 {len(new)} 檔第一次預警。")
+    return extra
+
+
 # ---------------------------------------------------------------- 主程式
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
@@ -275,16 +474,23 @@ def main(argv=None) -> int:
     ap.add_argument("--alert", default=str(ALERT_TXT))
     ap.add_argument("--notify-state", default=str(NOTIFY_STATE))
     ap.add_argument("--out", default=str(CONFIRM_TXT))
+    ap.add_argument("--extra-out", default=str(EXTRA_JSON))
+    ap.add_argument("--friday-warn", choices=("auto", "on", "off"), default="auto",
+                    help="auto＝台北週五 14:15 以後才做週五預警（CI 用）；on／off 給測試")
+    ap.add_argument("--no-smhl", action="store_true", help="不抓 SMH.L（測試用）")
     ap.add_argument("--dry-run", action="store_true", help="只印出會貼的內容，不寫 live_confirm.txt、不改去重狀態")
     a = ap.parse_args(argv)
     now_utc = datetime.fromisoformat(a.now).astimezone(timezone.utc) if a.now else datetime.now(timezone.utc)
-    out_p, ns_p = Path(a.out), Path(a.notify_state)
-    if out_p.exists() and not a.dry_run:
-        out_p.unlink()
+    out_p, ns_p, ex_p = Path(a.out), Path(a.notify_state), Path(a.extra_out)
+    if not a.dry_run:
+        for p_ in (out_p, ex_p):
+            if p_.exists():
+                p_.unlink()
     try:
         ns = json.loads(ns_p.read_text(encoding="utf-8")) if ns_p.exists() else {}
     except Exception:  # noqa: BLE001 — 狀態檔壞了就當第一次
         ns = {}
+    state = {}
     try:
         state = json.loads(Path(a.state).read_text(encoding="utf-8"))
         alert_p = Path(a.alert)
@@ -297,12 +503,23 @@ def main(argv=None) -> int:
         if ns.get("error_day") != day:
             lines = [f"⚠ 實單每日確認程式出錯（{type(e).__name__}），這次沒辦法確認水位，請看這次執行的紀錄。"]
             ns["error_day"] = day
+    extra = None
+    try:
+        extra = build_extra(state, ns, now_utc, a.friday_warn, not a.no_smhl, bool(a.now))
+    except Exception:  # noqa: BLE001 — 預警與參考出錯不擋每日確認；沒有 live_extra.json，實單信照舊
+        traceback.print_exc()
     ns["updated"] = now_utc.isoformat(timespec="minutes")
     print("\n".join(lines) if lines else "（這次不用貼確認）")
+    if extra:
+        for k in ("warn", "smhl"):
+            for ln in extra[k]["lines"]:
+                print(f"[{k}] {ln}")
     if a.dry_run:
         return 0
     if lines:
         out_p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if extra:
+        ex_p.write_text(json.dumps(extra, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     ns_p.parent.mkdir(parents=True, exist_ok=True)
     ns_p.write_text(json.dumps(ns, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     return 0
