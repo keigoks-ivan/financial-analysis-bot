@@ -692,7 +692,7 @@ def main():
             "title": "實單曝險",
             "value": f"美股 {exp_us}%、台股 {exp_tw}%{bond_gold}",
             "level": "high" if max(exp_tw or 0, exp_us or 0) > 100 else "low",
-            "detail": "10-19 起兩邊都不借錢，股票上限 100%。台股兩條腿是 0050 與台積電，跟上一條的 AI 題目重疊。",
+            "detail": "美股不借錢，股票上限 100%。台股 2026-11-13 收盤的訊號起加正二 20%，股票曝險最高 120%。台股三檔都重押台積電，跟上一條的 AI 題目重疊。",
             "link": "/long-track-w52-adaptive/",
         })
     geo = [t for t in threads if t.get("category") == "geo" and any(

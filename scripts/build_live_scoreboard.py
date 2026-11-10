@@ -841,11 +841,12 @@ ST_START = "2026-07-17"          # 記分板原本的起算日（兩市場相同
 ST_AXIS_FROM = "2026-07-06"      # 起算日之前多取幾天，讓起算日有「前一日」錨點
 ST_OVERLAY = ["IEF", "GLD"]      # 只有美股
 ST_OVERLAY_SCALE = 0.20          # 債金每檔最多 20%：水位 100／70／30／0 → 20／14／6／0
+ST_L2 = "00631L"                 # 台股正二：只看 0050 週線，資料日 >= TW_L2_CUTOVER_DATE 才持有，占指數部 20%（水位 × 0.2，縮放跟債金相同）
 ST_LABEL = "2026-11-04 以前為照規則回推，之後為實際紀錄。"
 
 PREREG_ST = {
     "title": "實單前瞻記分板",
-    "rule": ("美股 QQQ 70／SMH 30（2026-11-04 收盤訊號起，之前各半）、台股 0050／2330 各 50%；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
+    "rule": ("美股 QQQ 70／SMH 30（2026-11-04 收盤訊號起，之前各半）、台股 0050／2330 各 50%（2026-11-13 收盤訊號起各 40%，另加 00631L 20%，只看 0050 週線：週線多水位 100、週線空 0，下軌接回 30）；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
              "只做多，水位 100／70／30／0%（下軌接回期間另有 50%）。美股另加 IEF／GLD，各最多 20%（水位 20／14／6／0%）。"
              "美股 ATR 14／倍數 3，台股 ATR 14／倍數 2。訊號日收盤判定（只用已收完的週線、月線），下一個交易日調到目標水位。"),
     "labeling": ST_LABEL,
@@ -896,6 +897,16 @@ def st_level_series(sym_key, axis_dates, takeback=False):
     return out, last
 
 
+def l2_level_series(axis_dates):
+    """台股正二的水位 {日期: 水位%}（生效日前 0）。訊號只用 0050 已收完的週線（supertrend_core.l2_daily）。"""
+    import pandas as pd
+    import supertrend_core as stc
+    ohlc, _notes = stc.fetch_ohlc("0050.TW")
+    frames = stc.make_frames(ohlc, *stc.ST_PARAMS["0050.TW"])
+    v = stc.l2_daily(frames, pd.DatetimeIndex([pd.Timestamp(d) for d in axis_dates]))
+    return {d: int(x) for d, x in zip(axis_dates, v.values)}, ohlc.index[-1].strftime("%Y-%m-%d")
+
+
 def _st_leg_weight(t, ds):
     """該股票腿占各市場指數部的權重（與 update_long_track_w52_adaptive.wt 同一來源 supertrend_core.leg_weights）。"""
     import supertrend_core as stc
@@ -904,12 +915,12 @@ def _st_leg_weight(t, ds):
 
 def build_market_st(mkt, gaps, judgment_calls):
     key, legs = mkt["key"], mkt["legs"]
-    overlay = ST_OVERLAY if key == "us" else []
+    overlay = ST_OVERLAY if key == "us" else [ST_L2]
     all_legs = list(legs) + overlay
 
     px = {}
     for t in all_legs:
-        sr = _w52.fetch_close(t) if t in _w52.YF_SYMBOL else _fetch_adj_close(t)
+        sr = _w52.fetch_close(t) if t in _w52.YF_SYMBOL else _fetch_adj_close(f"{t}.TW" if t == ST_L2 else t)
         px[t] = {ts.strftime("%Y-%m-%d"): float(c) for ts, c in sr.items()}
     px_dates = {t: sorted(px[t].keys()) for t in all_legs}
 
@@ -920,7 +931,7 @@ def build_market_st(mkt, gaps, judgment_calls):
 
     levels, ohlc_last = {}, []
     for t in all_legs:
-        levels[t], last = st_level_series(t, axis, takeback=t in legs)
+        levels[t], last = l2_level_series(axis) if t == ST_L2 else st_level_series(t, axis, takeback=t in legs)
         ohlc_last.append(last)
     end = min([axis[-1]] + ohlc_last)
     axis = [d for d in axis if d <= end]

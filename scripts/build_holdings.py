@@ -118,6 +118,10 @@ def _index_sleeve(state: dict) -> dict:
             "sleeve_weight": v.get("sleeve_weight"),
             "levered": v.get("levered"),
         })
+    l2 = state.get("tw_l2") or {}
+    if l2.get("applied"):
+        comps.append({"ticker": "00631L", "market": "台股", "gate": l2.get("level_pct", 0) > 0, "executed_pct": l2.get("target_pct"),
+                      "final_weight_pct": l2.get("target_pct"), "sleeve_weight": (l2.get("level_pct") or 0) / 100, "levered": True})
     comps.sort(key=lambda c: (c.get("market") or "", c["ticker"]))
     return {
         "as_of": state.get("data_date"),

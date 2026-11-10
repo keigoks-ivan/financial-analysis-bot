@@ -37,6 +37,7 @@ from supertrend_core import (  # noqa: E402  算法、K 棒、收完判斷、參
     ST_CUTOVER_DATE, ST_PARAMS, TF, W_MONTH, W_WEEK, bars, is_complete, supertrend,
     LEG_WEIGHTS_CUTOVER_DATE, leg_weights,
     last_weekday, state_asof, takeback_asof,
+    l2_asof, TW_L2_CUTOVER_DATE, TW_L2_WEIGHT,
 )
 from supertrend_live_page import takeback_text  # noqa: E402  下軌接回的一句白話（頁面、信件、本通知共用）
 
@@ -106,6 +107,8 @@ def analyse(tk, name, tz, close_t, now_utc):
             res["takeback"] = tb
             if tb["active"]:      # 頁面共用的文字函式要巢狀狀態（含翻轉門檻）；進行中那根 K 棒的門檻用最新資料日算
                 res["takeback_text"] = takeback_text({**state_asof(frames, last_data), "tb": tb})
+        if tk == "0050.TW":     # 台股正二：只看 0050 週線，訊號跟 0050 共用同一份週 K（2026-11-10 拍板，資料日 >= TW_L2_CUTOVER_DATE 才持有）
+            res["l2"] = l2_asof(frames, d_done)
     return res
 
 
@@ -155,6 +158,31 @@ def weight_switch_block(by: dict) -> list:
     return lines
 
 
+def tw_l2_switch_block(by: dict) -> list:
+    """台股改配置（第一次資料日 >= TW_L2_CUTOVER_DATE 的執行）的換倉指示：0050、2330 由各 50% 改各 40%，加 00631L 20%。"""
+    new = leg_weights(TW_L2_CUTOVER_DATE)
+    lines = [f"台股指數部今天起改為 00631L 20%、0050 40%、2330 40%（{TW_L2_CUTOVER_DATE} 收盤的訊號起，原 0050、2330 各 50%）。"
+             "請在下一個交易日一次調到位："]
+    for tk, nm in (("0050.TW", "0050"), ("2330.TW", "2330")):
+        r = by.get(tk)
+        if r:
+            lv = cur_level(r)
+            lines.append(f"・{nm}：水位 {lv}%，占指數部 50%×{lv}% = {lv * 0.5:.0f}% → {new[tk] * 100:.0f}%×{lv}% = {lv * new[tk]:.0f}%")
+    l2 = (by.get("0050.TW") or {}).get("l2")
+    if l2:
+        lines.append(f"・00631L：水位 {l2['level']}%，占指數部 0% → 20%×{l2['level']}% = {l2['level'] * TW_L2_WEIGHT:.0f}%")
+    return lines
+
+
+def l2_status_line(r) -> list:
+    """目前狀態裡的正二一行（放在 0050 後面）；沒有資料回空。"""
+    l2 = r.get("l2")
+    if not l2:
+        return []
+    return [f"・00631L（只看 0050 週線）：水位 {l2['level']}%（占指數部 {l2['level'] * TW_L2_WEIGHT:.0f}%）"
+            + ("，下軌接回中" if l2["active"] else "") + ("" if l2["applied"] else f"；{TW_L2_CUTOVER_DATE} 收盤的訊號起生效，目前只是預覽")]
+
+
 def status_lines(results):
     out = ["", "目前狀態（已收完的 K 棒）："]
     for r in results:
@@ -165,6 +193,7 @@ def status_lines(results):
                    + (f"（占指數部 {target(w['dir'], m['dir']) * 0.2:.0f}%）" if r["ticker"] in OVERLAY_SYMS
                       else f"（占指數部 {share(r, cur_level(r))}%）")
                    + (f"｜{r['takeback_text']}" if r.get("takeback_text") else ""))
+        out += l2_status_line(r)
     return out
 
 
@@ -176,7 +205,8 @@ def params_text() -> str:
 
 FOOTER = ["", f"規則：Supertrend，{params_text()}，週線 70%＋月線 30%，只做多。"
           f"{ST_CUTOVER_DATE} 收盤起實單的指數部照這套規則；換檔另有實單系統信。",
-          f"指數部權重：美股 QQQ 70%／SMH 30%（{LEG_WEIGHTS_CUTOVER_DATE} 收盤的訊號起，之前各半）、台股 0050／2330 各半；占指數部＝水位 × 權重。",
+          f"指數部權重：美股 QQQ 70%／SMH 30%（{LEG_WEIGHTS_CUTOVER_DATE} 收盤的訊號起，之前各半）、台股 0050／2330 各半（{TW_L2_CUTOVER_DATE} 收盤的訊號起改為各 40%，另加 00631L 20%）；占指數部＝水位 × 權重。",
+          "00631L 只看 0050 週線：週線多水位 100、週線空水位 0；週線空時週收盤跌破 20 週下軌 2.5σ，水位 30，週收盤回到 20 週均線或週線翻多就結束。",
           "下軌接回（2026-11-06 收盤的訊號起）：週線空、月線多（水位 30）時，週收盤跌破 20 週均線下方 2.5 個標準差，水位改 50；"
           "週收盤回到 20 週均線，或週線翻多、月線翻空，就結束。債金不適用。",
           f"回測比較：{PAGE_URL}"]
@@ -252,6 +282,14 @@ def main(argv=None):
             state["signals"][sk] = {"dir": c["dir"], "line": round(c["line"], 4), "bar_end": c["bar_end"],
                                     "close": round(c["close"], 4)}
 
+    l2_evt = None       # 正二水位改變（只在生效後通知）：(上次水位, 現在水位, 現在是否接回中, 上次是否接回中)
+    r50 = next((r for r in results if r.get("l2")), None)
+    if r50:
+        was_l2, now_l2 = state.get("tw_l2") or {}, r50["l2"]
+        if now_l2["applied"] and was_l2.get("applied") and was_l2.get("level") != now_l2["level"]:
+            l2_evt = (was_l2.get("level"), now_l2["level"], now_l2["active"], bool(was_l2.get("active")))
+        state["tw_l2"] = {"level": now_l2["level"], "active": now_l2["active"], "applied": now_l2["applied"], "asof": r50["last_date"]}
+
     for r in results:       # 下軌接回的上次狀態（下次比對用）；狀態檔舊欄位不動
         if "takeback" in r:
             state.setdefault("takeback", {})[r["ticker"]] = {"active": bool(r["takeback"]["active"]), "level": cur_level(r),
@@ -282,7 +320,7 @@ def main(argv=None):
     if a.test_alert:
         lines = ["這是測試訊息，不是真實訊號。", "收到這封代表 email 與 Discord 都接好了。"] + status_lines(results) + FOOTER
         out = ("【測試】Supertrend 週線／月線提醒", lines)
-    elif events or tb_chg:
+    elif events or tb_chg or l2_evt:
         heads, lines = [], []
         for r, key, prev, c in events:
             lab = TF[key][1]
@@ -306,6 +344,10 @@ def main(argv=None):
                 lines.append(f"・{r_['name']} {r_['takeback_text']}{move_txt}")
             elif tk_ not in flipped:       # 翻轉那一行已寫水位變化，只在沒有翻轉時補一行
                 lines.append(f"・{r_['name']} 下軌接回結束（週收盤回到 20 週均線）：{move_txt}")
+        if l2_evt:
+            why = ("下軌接回開始" if l2_evt[2] and not l2_evt[3] else "下軌接回結束" if l2_evt[3] and not l2_evt[2] else "0050 週線翻轉")
+            heads.append(f"00631L {why}")
+            lines.append(f"・00631L {why}：水位 {l2_evt[0]}% → {l2_evt[1]}%（占指數部 {l2_evt[0] * TW_L2_WEIGHT:.0f}% → {l2_evt[1] * TW_L2_WEIGHT:.0f}%）。")
         out = ("【Supertrend】" + "、".join(heads), lines + status_lines(results) + FOOTER)
         state["history"].extend({"ts": now_utc.isoformat(timespec="minutes"), "ticker": r["ticker"], "tf": key,
                                  "dir": c["dir"], "bar_end": c["bar_end"]} for r, key, prev, c in events)
@@ -319,7 +361,9 @@ def main(argv=None):
             cond = (f"收盤低於 {fmt(thr)} 就確認翻空" if c["dir"] == 1 else f"收盤高於 {fmt(thr)} 就確認翻多")
             gap = (p["close"] / thr - 1) * 100
             lines.append(f"・{r['name']} {lab}：目前 {fmt(p['close'])}（{p['as_of']}），離門檻 {gap:+.1f}%。"
-                         f"{when}{cond}（門檻是這根 K 棒目前的{'支撐' if c['dir'] == 1 else '壓力'}線，收完前可能小幅移動）。")
+                         f"{when}{cond}（門檻是這根 K 棒目前的{'支撐' if c['dir'] == 1 else '壓力'}線，收完前可能小幅移動）。"
+                         + (("00631L 同一天翻多，水位改 100%。" if p["dir"] == 1 else "00631L 同一天翻空，水位改 0%；週收盤若同時跌破 20 週下軌 2.5σ 則改 30%。")
+                            if key == "week" and r.get("l2") else ""))
         wt = "【Supertrend 預警】" + "、".join(heads)
         if out:   # 同一次同時有確認與預警：合併成一封
             out = (out[0] + "；另有預警", out[1][:-len(FOOTER) - len(status_lines(results))] + ["", "預警："] + lines[1:]
@@ -338,6 +382,19 @@ def main(argv=None):
             out = ("【Supertrend】美股指數部權重切換 QQQ 70／SMH 30", blk + status_lines(results) + FOOTER)
         if not a.dry_run:
             state["leg_weights_notified"] = by["QQQ"]["last_date"]
+
+    # 台股改配置：第一次資料日 >= TW_L2_CUTOVER_DATE 的執行寄一段換倉指示（狀態檔記旗標，只寄一次）
+    tw_l2_pending = (not a.test_alert and not state.get("tw_l2_notified")
+                     and "0050.TW" in by and by["0050.TW"]["last_date"] >= TW_L2_CUTOVER_DATE
+                     and (by["0050.TW"].get("l2") or {}).get("applied"))
+    if tw_l2_pending:
+        blk = tw_l2_switch_block(by)
+        if out:
+            out = (out[0] + "；另有台股改配置", blk + [""] + out[1])
+        else:
+            out = ("【Supertrend】台股指數部改配置 00631L 20／0050 40／2330 40", blk + status_lines(results) + FOOTER)
+        if not a.dry_run:
+            state["tw_l2_notified"] = by["0050.TW"]["last_date"]
 
     if errors:
         print("抓價失敗：", errors, file=sys.stderr)

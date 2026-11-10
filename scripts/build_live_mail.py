@@ -49,6 +49,7 @@ from supertrend_live_page import takeback_text as _tb_text  # noqa: E402
 # 輔助函式，不做任何訊號計算。import 這個模組只是載入模組層定義（含大型回測
 # 常數），不觸發抓價或任何 I/O。
 from update_long_track_w52_adaptive import (  # noqa: E402
+    l2_status_lines,
     MARKETS,
     _leg_trigger_text,
     NEW_RULE_TAG, RULE_SWITCH_DATE, OVERLAY_LEGS, OVERLAY_NAME, OVERLAY_VEHICLE, OVERLAY_W,
@@ -108,7 +109,7 @@ def build_headline(w52a_text: str | None, is_test: bool, st_markets: frozenset =
     if ov_hit:
         actions.append("美股公債或黃金的週線條件數改變，依下方「債金疊加」換倉：指數部帳戶換 XNAS 與 CBU0／IGLN，另一帳戶以 MNQ 維持股票曝險。")
     if tw_hit and "tw" in st_markets:
-        actions.append("台股 0050／2330 目標水位和現持不同，下一個交易日照下方「怎麼下單」一次調到目標。")
+        actions.append("台股指數部目標水位和現持不同，下一個交易日照下方「怎麼下單」一次調到目標。")
     elif tw_hit:
         actions.append("台股 0050／2330 水位現持與目標差達門檻" + ("或高於新規則上限" if switch_hit else "") + "，下一個交易日照下方「怎麼下單」調整（對到最近一格，不是調到目標）。")
     if switch_hit:
@@ -148,15 +149,17 @@ def _lvl_cell(tk: dict, t: str) -> str:
     return f"{tgt:.0f}%" if abs(tgt - held) < 1e-9 else f"{tgt:.0f}% ← 現持 {held:.0f}%"
 
 
-def market_section(m: dict, tickers: dict) -> str:
+def market_section(m: dict, tickers: dict, l2: dict | None = None) -> str:
     legs = m["legs"]
     st_mkt = all(tickers[t].get("rule") == ST_RULE_TAG for t in legs)
     exec_combined = sum((_held(tickers[t]) if st_mkt else tickers[t]["executed_pct"]) for t in legs)
     target_combined = sum(tickers[t]["final_weight_pct"] for t in legs)
+    l2_on = m["key"] == "tw" and bool(l2 and l2.get("applied"))
+    head = "0050＋2330 曝險" if l2_on else "指數部股票曝險"
     tile_html = tiles([
-        ("指數部股票曝險：現持（下單前）" if st_mkt else "指數部股票曝險：現持（執行層）", f"{exec_combined:.0f}%", None),
-        ("指數部股票曝險：目標（訊號）", f"{target_combined:.0f}%", None),
-    ])
+        (f"{head}：現持（下單前）" if st_mkt else f"{head}：現持（執行層）", f"{exec_combined:.0f}%", None),
+        (f"{head}：目標（訊號）", f"{target_combined:.0f}%", None),
+    ] + ([("00631L 占指數部（股票曝險按 2 倍算）", f"{l2['target_pct']:.0f}%", None)] if l2_on else []))
     new_rule = all(tickers[t].get("rule") in NEWSTYLE_TAGS for t in legs)
     rows = []
     if new_rule:     # 2026-10-19 起：上限 100%、不看均線層，沒有 cap_eff 欄；Supertrend 期間「閘門」欄改顯示週線／月線
@@ -265,12 +268,21 @@ def _order_lines(w52a_text: str | None) -> list[str]:
     return out
 
 
+def l2_section(state: dict) -> str:
+    """台股正二的現況（讀 state.json 的 tw_l2，與頁面同一來源）。"""
+    blk = state.get("tw_l2")
+    if not blk:
+        return ""
+    body = "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(x.strip())}</div>' for x in l2_status_lines(blk))
+    return section("TW 2X", "台股正二 00631L", body)
+
+
 def order_section(w52a_text: str | None) -> str:
     rows = _order_lines(w52a_text)
     if not rows:
         return ""
     body = "".join(f'<div style="font-size:14px;line-height:1.8;">{esc(r)}</div>' for r in rows)
-    body += note("占指數部淨值的 %＝水位 × 權重（美股 QQQ 70／SMH 30，2026-11-04 收盤的訊號起，之前各半；台股各半）。債金部位另列於下方「債金疊加」。")
+    body += note("占指數部淨值的 %＝水位 × 權重（美股 QQQ 70／SMH 30，2026-11-04 收盤的訊號起，之前各半；台股 0050／2330 各 40、正二 20，2026-11-13 收盤的訊號起，之前各半）。債金部位另列於下方「債金疊加」。")
     return section("ORDERS", "怎麼下單", body)
 
 
@@ -312,7 +324,8 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
     for m in MARKETS:
         exec_combined = sum((_held(tickers[t]) if tickers[t].get("rule") == ST_RULE_TAG else tickers[t]["executed_pct"]) for t in m["legs"])
         target_combined = sum(tickers[t]["final_weight_pct"] for t in m["legs"])
-        lines.append(f"  {m['name']}：指數部股票曝險 現持 {exec_combined:.0f}% ／ 目標 {target_combined:.0f}%")
+        _l2_on = m["key"] == "tw" and (state.get("tw_l2") or {}).get("applied")
+        lines.append(f"  {m['name']}：{'0050＋2330 曝險' if _l2_on else '指數部股票曝險'} 現持 {exec_combined:.0f}% ／ 目標 {target_combined:.0f}%")
         for t in m["legs"]:
             tk = tickers[t]
             cond = tk.get("ma_cond") or {}
@@ -328,6 +341,8 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
                 lines.append(f"    {t}：閘門{'在場' if tk['gate'] else '出場'} · 均線 {ma_str} · "
                              f"cap_eff {tk['cap_eff']:.1f} · 目標 {tk['final_weight_pct']:.0f}% ／ "
                              f"現持 {tk['executed_pct']:.0f}% · 下一個會動的價位：{trig}")
+    if state.get("tw_l2"):
+        lines += ["", "台股正二（只看 0050 週線，占台股指數部最多 20%）："] + l2_status_lines(state["tw_l2"])
     ov = _overlay_active(state)
     if ov:
         lines.append("")
@@ -346,7 +361,7 @@ def build_plain_text(headline: str, state: dict, w52a_text: str | None) -> str:
     lines.append("")
     ords = _order_lines(w52a_text)
     if ords:
-        lines.append("怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股各半；2026-11-04 前美股各半）：")
+        lines.append("怎麼下單（各檔占指數部淨值的 %＝水位 × 權重：美股 QQQ 70／SMH 30、台股 0050／2330 各 40、正二 20；美股 2026-11-04 前、台股 2026-11-13 前各半）：")
         lines += [f"    {o}" for o in ords]
         lines.append("")
 
@@ -379,9 +394,10 @@ def build_mail_html(headline: str, state: dict, w52a_text: str | None, *, is_tes
 
     body = _headline_block(headline)
     for m in MARKETS:
-        body += market_section(m, tickers)
+        body += market_section(m, tickers, state.get("tw_l2"))
     body += order_section(w52a_text)
     body += overlay_section(state, w52a_text)
+    body += l2_section(state)
     body += changes_section(w52a_text)
     if any((tickers.get(t) or {}).get("rule") == ST_RULE_TAG for t in tickers):
         body += note(f"Supertrend 規則（{ST_CUTOVER_DATE} 收盤起）：每檔 70% 看週線、30% 看月線，各自多頭才持有，水位只有 100／70／30／0%（週線空、月線多的 30% 遇到週收盤跌破 20 週下軌 2.5σ 時改為 50%，稱為下軌接回）；"

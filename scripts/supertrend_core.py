@@ -40,15 +40,25 @@ ST_CUTOVER_DECISION_DATE = "2026-11-04"
 LEG_WEIGHTS_CUTOVER_DATE = _os.environ.get("W52_LEG_WEIGHTS_CUTOVER_DATE") or "2026-11-04"
 LEG_WEIGHTS_DECISION_DATE = "2026-11-05"
 
+# 台股指數部加正二：資料日（訊號日）>= 此日的紀錄，00631L 0.2、0050 0.4、2330 0.4；之前 0050／2330 各 0.5。
+# 2026-11-13（週五）收盤的訊號起、11-16 第一次下單（持有人 2026-11-10 拍板）。環境變數 W52_TW_L2_CUTOVER_DATE 只供本機模擬用，CI 不設。
+TW_L2_CUTOVER_DATE = _os.environ.get("W52_TW_L2_CUTOVER_DATE") or "2026-11-13"
+TW_L2_DECISION_DATE = "2026-11-10"
+TW_L2_WEIGHT = 0.2
+TW_L2_TB_LEVEL = 30
+TW_L2_MULT = 2
+
 
 def leg_weights(ds: str) -> dict:
     """每檔占各市場指數部的權重（鍵＝Yahoo 代號）。依據 knowledge/rule_ledger.md「2026-11-05：美股指數部權重由
     QQQ 50／SMH 50 改為 QQQ 70／SMH 30」（持有人 2026-11-05 拍板）：資料日 >= LEG_WEIGHTS_CUTOVER_DATE 時
-    美股 QQQ 0.7、SMH／SMH.L 0.3，之前全部 0.5；台股 0050／2330 永遠各 0.5。
+    美股 QQQ 0.7、SMH／SMH.L 0.3，之前全部 0.5。台股依 rule_ledger「2026-11-10：台股指數部加正二 20%」：
+    資料日 >= TW_L2_CUTOVER_DATE 時 0050／2330 各 0.4（正二 0.2 不在這張表，見 l2_table），之前各 0.5。
     每檔占指數部淨值＝水位 × 該檔權重；只給實盤 profile 用，舊 W52 對照線維持各半。"""
     new = str(ds)[:10] >= LEG_WEIGHTS_CUTOVER_DATE
+    tw = 0.4 if str(ds)[:10] >= TW_L2_CUTOVER_DATE else 0.5
     return {"QQQ": 0.7 if new else 0.5, "SMH": 0.3 if new else 0.5, "SMH.L": 0.3 if new else 0.5,
-            "0050.TW": 0.5, "2330.TW": 0.5}
+            "0050.TW": tw, "2330.TW": tw}
 
 
 # ---------------------------------------------------------------- Supertrend
@@ -251,6 +261,72 @@ def takeback_daily(frames: dict, idx: pd.DatetimeIndex) -> pd.Series:
     tr = np.where(pos >= 0, t["trend"].values[np.clip(pos, 0, None)], np.nan).astype(float)
     on = np.array([str(x.date()) >= BB_TAKEBACK_CUTOVER_DATE for x in pd.DatetimeIndex(idx)])
     return pd.Series(np.where(on, lv, tr), index=idx)
+
+
+# ---------------------------------------------------------------- 台股正二（持有人 2026-11-10 拍板）
+# 依據 knowledge/rule_ledger.md「2026-11-10：台股指數部加正二 20%」；回測 v7-backtest src/l2_vs_981a/sleeve_20_40_40.py
+# （帳本 TW-SLEEVE-L2-20-40-40）。00631L 占台股指數部 20%，訊號只看 0050 的週線 Supertrend（跟 0050 同一份週 K，14／2、還原全息）：
+# - 週線多水位 100、週線空水位 0；不看月線。
+# - 接回：週線空時週收盤 z ≤ −2.5 → 水位 30（占指數部 6%）；週收盤 z ≥ 0 或週線翻多就結束；z 回到 −1 以上才能再觸發。
+#   不設時間上限、不設價格停損；同一天先結束、再解鎖、後觸發（跟 takeback_table 同順序）。
+# 從頭重播整段歷史，不存狀態；資料日 >= TW_L2_CUTOVER_DATE 才實際持有，之前只預覽。
+
+
+def l2_table(frames: dict) -> pd.DataFrame:
+    """依週線完成日逐一重播，回傳以完成日為索引的狀態表：trend（100／0）、level（接回後水位）、active、z、ma、sd、start、trigger_z、ended。"""
+    wb, ws = frames["week"]
+    zt = weekly_z(wb["close"])
+    w_dir = None
+    active, armed = None, True
+    rows = []
+    for ix in wb.index:
+        if ws["dir"].notna()[ix]:
+            w_dir = int(ws["dir"][ix])
+        trend = None if w_dir is None else 100 * w_dir
+        ended = ""
+        z, ma, sd = (float(zt[c][ix]) for c in ("z", "ma", "sd"))
+        if z == z:
+            if active is not None and z >= 0:
+                active, ended = None, "回到 20 週均線"
+            if z > BB_REARM:
+                armed = True
+            if active is None and armed and z <= -BB_K and trend == 0:
+                active = {"start": ix, "trigger_z": z}
+                armed = False
+        if active is not None and trend != 0:
+            active, ended = None, "週線翻多"
+        rows.append({"date": last_weekday(ix).normalize(), "trend": trend,
+                     "level": TW_L2_TB_LEVEL if active is not None else trend,
+                     "active": active is not None, "z": z, "ma": ma, "sd": sd,
+                     "start": active["start"] if active is not None else pd.NaT,
+                     "trigger_z": active["trigger_z"] if active is not None else np.nan, "ended": ended})
+    return pd.DataFrame(rows).set_index("date")
+
+
+def l2_asof(frames: dict, d, table: pd.DataFrame | None = None) -> dict | None:
+    """資料日 d 當下的正二狀態（水位不受生效日影響，生效日前當預覽；applied 表示是否已實際持有）。"""
+    t = l2_table(frames) if table is None else table
+    d = pd.Timestamp(d).normalize()
+    t = t[t.index <= d]
+    if t.empty or pd.isna(t["trend"].iloc[-1]):
+        return None
+    r = t.iloc[-1]
+    wz = t[t["z"].notna()]
+    act = bool(r["active"])
+    return {"trend": int(r["trend"]), "level": int(r["level"]), "applied": str(d.date()) >= TW_L2_CUTOVER_DATE, "active": act,
+            "start": str(pd.Timestamp(r["start"]).date()) if act else None,
+            "trigger_z": float(r["trigger_z"]) if act else None,
+            "z": float(wz["z"].iloc[-1]) if len(wz) else None, "ma": float(wz["ma"].iloc[-1]) if len(wz) else None,
+            "sd": float(wz["sd"].iloc[-1]) if len(wz) else None, "z_bar": str(wz.index[-1].date()) if len(wz) else None}
+
+
+def l2_daily(frames: dict, idx: pd.DatetimeIndex) -> pd.Series:
+    """每個資料日的正二水位（整數 %）：生效日以前 0（還沒持有），生效日起照 l2_table。給記分板重播用。"""
+    t = l2_table(frames)
+    pos = t.index.searchsorted(pd.DatetimeIndex(idx).normalize(), side="right") - 1
+    lv = np.where(pos >= 0, t["level"].values[np.clip(pos, 0, None)], np.nan).astype(float)
+    on = np.array([str(x.date()) >= TW_L2_CUTOVER_DATE for x in pd.DatetimeIndex(idx)])
+    return pd.Series(np.where(on, lv, 0.0), index=idx)
 
 
 # ---------------------------------------------------------------- 取價

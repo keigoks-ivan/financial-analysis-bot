@@ -424,6 +424,8 @@ def build_environment(regime_data, macro_clock_data, detective_data, monitor_dat
     tickers = lt.get("tickers") or {}
     exec_us = sum((v.get("executed_pct") or 0) for v in tickers.values() if v.get("market") == "美股")
     exec_tw = sum((v.get("executed_pct") or 0) for v in tickers.values() if v.get("market") == "台股")
+    if (lt.get("tw_l2") or {}).get("applied"):      # 正二按 2 倍算進股票曝險
+        exec_tw += lt["tw_l2"].get("exposure_pct") or 0
     lt_as_of = long_track_as_of(lt)
     data_date = lt.get("data_date")
     stale, _st = classify_stale(lt_as_of, today, "daily")

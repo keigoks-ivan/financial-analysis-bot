@@ -394,6 +394,15 @@ def _index_rows(state: dict, key: str) -> list[dict]:
             last_idx = float((ref.get("overlay") or {}).get(f"{k}_target_pct") or 0.0)
             rows.append({"t": t, "before": _share(before_idx, key), "last_week": _share(last_idx, key), "target": _share(target_idx, key),
                          "note": f'{nm}｜週{"多" if o.get("w") else "空"}月{"多" if o.get("m") else "空"}｜占指數部 {_num(target_idx)}%'})
+    l2 = state.get("tw_l2") or {}
+    if key == "tw" and l2.get("applied"):      # 正二：只看 0050 週線，占指數部最多 20%；今天／昨天／上週的目標都讀 history 的 l2 欄（生效前沒有這欄＝0）
+        hist = state.get("history_tw") or []
+        cur = (hist[-1].get("l2") or {}) if hist else {}
+        prev = (hist[-2].get("l2") or {}) if len(hist) > 1 else {}
+        target_idx = float(cur.get("target_pct", l2.get("target_pct") or 0.0))
+        rows.append({"t": "00631L", "before": _share(float(prev.get("target_pct") or 0.0), key),
+                     "last_week": _share(float((ref.get("l2") or {}).get("target_pct") or 0.0), key), "target": _share(target_idx, key),
+                     "note": f'正二｜0050 週{"多" if l2.get("w") else "空"}{"・下軌接回中" if l2.get("tb") else ""}｜水位 {l2.get("level_pct")}%'})
     return rows
 
 
@@ -491,6 +500,20 @@ def _level_rows(t: str, st: dict, overlay: bool = False) -> str:
     return f'<tr><td><b>{t}</b></td><td>{"<br>".join(conds)}</td></tr>'
 
 
+def _l2_level_row(l2: dict) -> str:
+    thr = f'{"" if l2.get("w_exact") else "約 "}{_px(l2["w_thr"])}'
+    if l2.get("w"):
+        conds = [f"週五收盤跌破 {thr} → 水位 0%"]
+    else:
+        conds = [f"週五收盤站上 {thr} → 水位 100%"]
+        if l2.get("tb"):
+            conds.append(f'週五收盤回到 20 週均線 約 {_px(l2["ma"])} → 水位 0%')
+        elif l2.get("lower") is not None:
+            conds.append(f'週五收盤跌破 20 週下軌 約 {_px(l2["lower"])} → 水位 30%')
+    tag = "" if l2.get("applied") else f'<span class="lt-sub">{l2.get("active_from")} 收盤起生效</span>'
+    return f'<tr><td><b>00631L</b>{tag}</td><td>{"<br>".join(conds)}</td></tr>'
+
+
 def _levels_table(state: dict, key: str) -> str:
     rows = ""
     for t in MKT[key]["legs"]:
@@ -503,6 +526,10 @@ def _levels_table(state: dict, key: str) -> str:
             if ov.get(k):
                 rows += _level_rows(t, {**ov[k], "tb_info": None, "w_exact": ov[k].get("w_exact", True), "m_exact": ov[k].get("m_exact", True)}, overlay=True)
     cap = "每項只列下一個會改變水位的條件，先到的為準。週線門檻每週會小幅移動，以週五收盤為準。水位 30 時週收盤跌破 2.5 個標準差下軌，改為 50。"
+    l2 = state.get("tw_l2") or {}
+    if key == "tw" and l2.get("w_thr") is not None:
+        rows += _l2_level_row(l2)
+        cap += "00631L 只看 0050 週線，價位都是 0050 的價格，門檻是 0050 週線，不看月線。"
     return _sec("下週會動的價位", f'<div class="lt-scroll"><table class="lt-tbl"><thead><tr><th>標的</th><th>條件與新水位</th></tr></thead><tbody>{rows}</tbody></table></div>', cap)
 
 
@@ -812,7 +839,7 @@ def render_market_panel(key: str, state: dict, idx: list, seats: tuple, dp: dict
     if key == "us":
         cap = f'{when}百分比都是占美股總資金：指數部 70%、個股 30%。{LAST_WEEK_NOTE}'
     else:
-        cap = f'{when}百分比都是占台股總資金。{LAST_WEEK_NOTE}台股只照水位持有 0050、2330，其餘放現金。<a href="/cockpit-tw/">台股席位</a>只當研究名單，不算預設持股。'
+        cap = f'{when}百分比都是占台股總資金。{LAST_WEEK_NOTE}台股照水位持有 0050、2330，2026-11-13 收盤的訊號起改為 00631L 20%、0050 40%、2330 40%，其餘放現金。00631L 是 2 倍產品，這裡的百分比是占資金的比例，不是曝險。<a href="/cockpit-tw/">台股席位</a>只當研究名單，不算預設持股。'
     rows, decided, extra = seats
     parts = [_sec("每個標的應持有", stale + _action_table(key, idx), cap)]
     if key == "us":
