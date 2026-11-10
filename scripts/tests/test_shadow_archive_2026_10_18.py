@@ -113,9 +113,10 @@ def test_workflows_no_longer_run_archived_lines():
               "update_long_track_w52_adaptive_tw_semivol.py", "update_long_track_w52_adaptive_c1.py",
               "build_f70_alert.py"):
         assert f"run: python scripts/{s}" not in main, s
-    # 實單與對照線兩個 step 還在
+    # 實單與 W52 對照線兩個 step 還在；cap 1.5 對照線 2026-11-10 起停跑（持有人拍板）
     assert "python scripts/update_long_track_w52_adaptive.py\n" in main
-    assert "python scripts/update_long_track_w52_adaptive.py --profile cap15" in main
+    assert "run: python scripts/update_long_track_w52_adaptive.py --profile w52" in main
+    assert "run: python scripts/update_long_track_w52_adaptive.py --profile cap15" not in main
     for gone in ("update_long_track_gld.yml", "update_turtle_sleeve.yml", "f70-test-mail.yml"):
         assert not (wf / gone).exists(), gone
     us_close = (wf / "daily-us-close.yml").read_text(encoding="utf-8")

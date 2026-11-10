@@ -16,6 +16,9 @@ Tier Matrix（/id/tier_matrix.html）、衛星·循環軌（/dd-screener/cyclica
 SCREEN_ARCHIVE，日期標籤是 2026-10-19，連結指向各自的上一層（不是長線系統主控台）。上面七條長線的 PAGES、
 ARCHIVE_TEXT 與 ARCHIVE_LABEL 完全不動。
 
+2026-11-10 追加 cap 1.5 對照線（/long-track-w52-adaptive/cap15.html，key＝cap15，持有人拍板停更）：
+文字與日期放在 CONTROL_STOP，標籤「2026-11-10 起停止更新」；實單主腳本 --profile cap15 手動重產時也會帶上。
+
 F70 的頁面（/backtest/f_comfort/）走回測區既有的「退役橫幅」機制（docs/backtest/_page_meta.py 的
 RET_BANNER），文字同 ARCHIVE_TEXT["f70"]。
 
@@ -106,6 +109,17 @@ SCREEN_ARCHIVE = {
     },
 }
 
+# ── 2026-11-10 對照線停更 ──────────────────────────────────────────────────────
+CONTROL_STOP_LABEL = "2026-11-10 起停止更新"
+CONTROL_STOP = {
+    "cap15": {
+        "page": "docs/long-track-w52-adaptive/cap15.html",
+        "text": "持有人 2026-11-10 決定停更：這條對照線不寄信、不影響下單，每天重算只多花執行時間。"
+                "以下數字停在最後一次更新的版本，不是今天的狀態；以後要比較 Supertrend 和舊規則，用重跑的回測。",
+        "link": ("/long-track/", "系統主控台 →"),
+    },
+}
+
 START = "<!--archive-banner-->"
 END = "<!--/archive-banner-->"
 
@@ -114,6 +128,16 @@ def archive_banner(key: str) -> str:
     """單行 HTML（自帶行內樣式，不依賴各頁的 CSS 變數），夾在標記之間。"""
     if key in SCREEN_ARCHIVE:
         return _screen_banner(key)
+    if key in CONTROL_STOP:
+        spec = CONTROL_STOP[key]
+        href, link_text = spec["link"]
+        return (
+            f'{START}<div style="background:#f4f4f5;border-bottom:1px solid #d4d4d8;border-left:6px solid #71717a;'
+            f'color:#3f3f46;padding:.8rem 1.2rem;font-size:.9rem;line-height:1.7">'
+            f'<div style="max-width:1080px;margin:0 auto"><b>{CONTROL_STOP_LABEL}</b>　{spec["text"]}'
+            f'　<a href="{href}" style="color:#1a56db;font-weight:600;white-space:nowrap">{link_text}</a>'
+            f'</div></div>{END}'
+        )
     if key in MANUAL_ARCHIVE:
         label, txt, href, link_text = MANUAL_ARCHIVE[key]
         link = (f'　<a href="{href}" target="_top" style="color:#1a56db;font-weight:600;white-space:nowrap">{link_text}</a>'
@@ -184,7 +208,8 @@ def main(argv: list[str]) -> int:
         print(__doc__)
         return 2
     bad = 0
-    all_pages = {**PAGES, **MANUAL_PAGES, **{k: v["page"] for k, v in SCREEN_ARCHIVE.items()}}
+    all_pages = {**PAGES, **MANUAL_PAGES, **{k: v["page"] for k, v in SCREEN_ARCHIVE.items()},
+                 **{k: v["page"] for k, v in CONTROL_STOP.items()}}
     for key, rel in all_pages.items():
         p = root / rel
         text = p.read_text(encoding="utf-8")

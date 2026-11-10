@@ -2421,7 +2421,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
 
     if any_new:
         glossary_cap = ("<b>曝險上限</b>＝2026-10-19 起股票部分最高 100%，不借錢（此前美台為 cap_eff 最高 150%，此後只在對照線 "
-                        "<a href=\"/long-track-w52-adaptive/cap15.html\">cap15.html</a> 繼續追蹤）；"
+                        "<a href=\"/long-track-w52-adaptive/cap15.html\">cap15.html</a> 追蹤到 2026-11-10，之後停止更新）；"
                         "<b>債金疊加</b>＝美股另外各最多 20% 配置公債（IEF）與黃金（GLD），各看週線三個條件，每成立一條加三分之一；")
     else:
         glossary_cap = ("<b>cap_eff</b>＝套袖目前的曝險上限：日線均線五條件（收盤 &gt; MA60／MA120／MA200、MA120／MA200 斜率向上）"
@@ -2617,7 +2617,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
         old_rules = old_rules.replace("本頁為實單主系統、發 email 提醒", "本頁為對照線、不寄信")
         return {
             "title": "W52 × 自適應波動率 150%｜對照線（cap 1.5＋均線） | InvestMQuest Research",
-            "desc": "W52 閘門 × 自適應波動率 cap 1.5＋日線均線確認的對照線，每日照常更新、不下單、不寄信；實單規則是 Supertrend。",
+            "desc": "W52 閘門 × 自適應波動率 cap 1.5＋日線均線確認的對照線，2026-11-10 起停止更新，不下單、不寄信；實單規則是 Supertrend。",
             "crumb": "W52 × 自適應波動率 150%（對照線）",
             "h1": "W52 × 自適應波動率 150% — 對照線",
             "sub": (f"美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應波動率 <b>cap_eff</b>（w = 閘門 × min(cap_eff, σ_t/RV20)；"
@@ -2643,7 +2643,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
         "sub": (f"美股 QQQ+SMH 用<b>債金版</b>，台股 0050+2330 用<b>不借錢版</b> · 週線 W52 單線閘門 × 自適應波動率（w = 閘門 × min(1, σ_t/RV20)）× 執行層 · "
                 f"Long only · <b>{sw} 起生效</b>；生效日前的紀錄按舊規則（cap 1.5＋均線）保留，不改寫"),
         "pills": (f'<a href="/long-track-w52-adaptive/" style="{PILL_ON}">實單主系統（本頁）</a>'
-                  f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5（對照線）</a>'
+                  f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5（已停更）</a>'
                   f'<a href="/backtest/vol_targeting/leverage.html" style="{PILL_OFF}">槓桿研究頁</a>'
                   # 2026-10-18 影子線整理：不借錢版、債金版已歸檔（停止更新），只留這一行連到上線前的影子紀錄；
                   # 其餘歸檔線（舊規則版、台股下跌半變異、黃金單腿、商品組合、F70）的連結一律不放在實單頁。
@@ -2655,7 +2655,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
   <div style="font-size:.86rem">本頁是實單主系統。<b>{sw} 起（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）</b>美股用<b>債金版</b>，台股用<b>不借錢版</b>。底層不變：週線 W52 閘門決定在場或出場，自適應波動率決定持股比例，執行層把每檔水位分成六格（0／20／40／60／80／100%），目標比現持高兩格（40%）以上才加、低一格（20%）以上就減，調整時對到最近一格；減碼 {EXEC_ASYM_DATE} 前也要差兩格。
   <br><br><b>改了什麼</b>：股票部分的曝險上限從 150% 收回 100%，不再借錢加碼，日線均線確認那一層因此不再影響曝險。美股另外把公債（IEF）與黃金（GLD）各最多 20% 配進來，各看週線三個條件（週收盤高於 40 週均線、高於 52 週均線、高於 52 週前的收盤），每成立一條加三分之一。台股只有不借錢，沒有債金。
   <br><br><b>為什麼改</b>：研究期回測裡，美股債金版和舊規則比：最大回撤差距在事前登記的容許範圍內（五個錨點中位數略好），Ulcer（回撤深度與時間的綜合指標）與低於前高 10% 的時間明顯縮短，年化沒有下降（數字見下方「回測與統計」）。代價是升息期債券與股票同跌時，債金疊加沒有保護；債券與黃金在 2005 至 2026 年整體順風，結論只測了美股，也只在這段樣本成立。
-  <br><br><b>誠實紀律</b>：<b>①</b> 六條判準是事前登記的，但全窗數字在定門檻前已經看過，所以全窗不算新證據。<b>②</b> 記分板與前瞻 SPRT 事前登記的對象是舊規則；{sw} 是規則斷點，這一天之後的數字不能與之前連成同一條實績，見記分板頁的修訂說明。<b>③</b> 舊規則（cap 1.5＋均線）改為<a href="/long-track-w52-adaptive/cap15.html">對照線</a>，每日照常更新、不寄信；生效日前的 history 一律不改寫。<b>④</b> 台股 2330 在生效日水位 120%，高於新上限 100%，生效日第一個交易日先拉回上限，不等兩格門檻。可行動變化包含：任一檔目標比現持高兩格以上或低一格以上（{EXEC_ASYM_DATE} 前低兩格）、現持高於新上限，以及美股公債或黃金的週線條件數改變。</div>
+  <br><br><b>誠實紀律</b>：<b>①</b> 六條判準是事前登記的，但全窗數字在定門檻前已經看過，所以全窗不算新證據。<b>②</b> 記分板與前瞻 SPRT 事前登記的對象是舊規則；{sw} 是規則斷點，這一天之後的數字不能與之前連成同一條實績，見記分板頁的修訂說明。<b>③</b> 舊規則（cap 1.5＋均線）改為<a href="/long-track-w52-adaptive/cap15.html">對照線</a>，不寄信，2026-11-10 起停止更新；生效日前的 history 一律不改寫。<b>④</b> 台股 2330 在生效日水位 120%，高於新上限 100%，生效日第一個交易日先拉回上限，不等兩格門檻。可行動變化包含：任一檔目標比現持高兩格以上或低一格以上（{EXEC_ASYM_DATE} 前低兩格）、現持高於新上限，以及美股公債或黃金的週線條件數改變。</div>
 </div>
 
 """,
@@ -2677,7 +2677,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
 ⑧ <b>水位</b> = 閘門(0/1) × 套袖權重，每檔各自計算，最高 100%；該檔占指數部淨值＝水位 ÷ 2。<br>
 ⑨ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；回測段的 0050 自 2026-11-04 起改用證交所官方資料（2003-06 起），台股回測窗自 2006-09 起，含 2008 金融海嘯。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。0050 資料若晚到，先用證交所官方收盤補值，補不上就標「資料延遲」、不換倉。<br>
 ⑩ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：每檔水位分六格（0／20／40／60／80／100%）。目標比現持高兩格（40%）以上才加、低一格（20%）以上就減（減碼 {EXEC_ASYM_DATE} 前也要差兩格），調整時對到最近一格、再 clamp 於單檔上限。上限在 {sw} 前是水位 150%（市場合計 150%），起是 100%（市場合計 100%）；現持高於新上限時，先拉回上限，再看門檻。回測主數字含此執行層（加減都要差兩格的對稱版）。<br>
-<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一檔今日目標比現持（執行層）高兩格（40%）以上或低一格（20%）以上、現持高於新上限，或美股公債／黃金的週線條件數改變；<b>閘門翻轉本身不觸發通知，須一併達到門檻</b>。舊規則（cap 1.5＋均線）以<a href="/long-track-w52-adaptive/cap15.html">對照線</a>續跑，不寄信。</span>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一檔今日目標比現持（執行層）高兩格（40%）以上或低一格（20%）以上、現持高於新上限，或美股公債／黃金的週線條件數改變；<b>閘門翻轉本身不觸發通知，須一併達到門檻</b>。舊規則（cap 1.5＋均線）以<a href="/long-track-w52-adaptive/cap15.html">對照線</a>續跑到 2026-11-10，不寄信，之後停止更新。</span>
 </div>
 </div>
 
@@ -2689,7 +2689,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
 • <b>2026-07-18</b>：正式採用 cap 1.5（真波動率目標，w = 閘門 × clip(σ_t/RV, 上限 1.5)）為實單主系統。<br>
 • <b>2026-07-22</b>：執行層由「差一格（20% 水位）就調、對到 10% 水位」改為 A2（差兩格（40%）才調、對到最近一格 20%、取整後 clamp 於單檔上限）。採用理由＝調整頻率下降（美股約 28→13 次／年、台股約 27→12 次／年，約 −55%）；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。<br>
 • <b>{RULE_REVISION_DATE}</b>（持有人拍板）：股票部分加<b>日線均線確認</b>——五條件全對 cap_eff=1.5、否則退回 1.0；三個價格條件加 1% 遲滯。history 既有紀錄不重算，新紀錄帶 <code>rule: "{RULE_TAG}"</code>。舊規則（無均線層）轉為唯讀影子（2026-10-18 已歸檔，停止更新）。<br>
-• <b>{sw}</b>（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）：<b>美股改債金版</b>（股票上限 100% 不借錢，另加 IEF／GLD 各最多 20% 的週線三條件疊加）、<b>台股改不借錢版</b>（上限 100%，不加債金）。生效日起的紀錄帶 <code>rule: "{NEW_RULE_TAG}"</code>，生效日前的 history 不改寫；2330 水位 120% 於生效日先拉回新上限 100%。舊規則（cap 1.5＋均線）以 <a href="/long-track-w52-adaptive/cap15.html">cap15.html</a> 續跑為對照線，每日更新、不寄信。state.json 的 <code>rule_changes</code> 記有這一筆。<br>
+• <b>{sw}</b>（持有人 {RULE_SWITCH_DECISION_DATE} 拍板）：<b>美股改債金版</b>（股票上限 100% 不借錢，另加 IEF／GLD 各最多 20% 的週線三條件疊加）、<b>台股改不借錢版</b>（上限 100%，不加債金）。生效日起的紀錄帶 <code>rule: "{NEW_RULE_TAG}"</code>，生效日前的 history 不改寫；2330 水位 120% 於生效日先拉回新上限 100%。舊規則（cap 1.5＋均線）以 <a href="/long-track-w52-adaptive/cap15.html">cap15.html</a> 續跑為對照線、不寄信，2026-11-10 起停止更新。state.json 的 <code>rule_changes</code> 記有這一筆。<br>
 • <b>{EXEC_ASYM_DATE} 收盤起</b>（持有人 {EXEC_ASYM_DECISION_DATE} 拍板）：執行層<b>減碼門檻由兩格（40% 水位）降為一格（20%）</b>，加碼門檻維持兩格，取整格與單檔上限不變。事前登記的判準沒過：快崩區間少跌通過，但年化少 0.7～0.9 個百分點、台股每年調整次數多 44%；持有人知情採用。生效日前的紀錄照舊用加減都要差兩格重放，不改寫；對照線不變。<br>
 </div>
 </details>
@@ -2740,7 +2740,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
             "sub": "美股 QQQ+SMH（債金版）＋ 台股 0050+2330（不借錢版）· 週線 W52 閘門 × 自適應波動率 × 執行層 · 對照線",
             "pills": (f'<a href="{live_url}" style="{PILL_OFF}">實單主系統（Supertrend）</a>'
                       f'<a href="{shadow_url}" style="{PILL_ON}">W52 規則（本頁）</a>'
-                      f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5</a>'
+                      f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5（已停更）</a>'
                       f'<a href="/backtest/supertrend_vs_live/" style="{PILL_OFF}">Supertrend 對 W52</a>'),
             "banner": stp.shadow_banner(cut, live_url),
             "footer": "W52 × 自適應波動率 · 對照線",
@@ -2771,7 +2771,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
                     f"<b>{cut} 收盤起生效</b>；生效日前的紀錄按 W52 規則保留，不改寫"),
             "pills": (f'<a href="{live_url}" style="{PILL_ON}">實單主系統（本頁）</a>'
                       f'<a href="{shadow_url}" style="{PILL_OFF}">W52 規則（對照線）</a>'
-                      f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5（對照線）</a>'
+                      f'<a href="/long-track-w52-adaptive/cap15.html" style="{PILL_OFF}">舊規則 cap 1.5（已停更）</a>'
                       f'<a href="/backtest/supertrend_vs_live/" style="{PILL_OFF}">Supertrend 對 W52</a>'),
             "banner": stp.banner_live(cut, dec, shadow_url),
             "above_cards": stp.status_card(sigs, ALL_TICKERS, HELD_BEFORE, "live", cut, held_lvl=_held_lvl) + overlay_card(overlay, overlay_changes) + l2_card(TW_L2),
@@ -3747,7 +3747,7 @@ def build_alert_lines(events: list, sigs: dict, exp: dict, data_date, cap_flips:
     else:
         lines += ["", f"美股組合曝險 {exp['us']:.0f}% · 台股組合曝險 {exp['tw']:.0f}% · 下一個交易日調整至上列目標。", ""]
     if st_fmt:
-        lines.append("Supertrend 週線＋月線 實盤主系統（{} 收盤起；債金疊加同日也改 Supertrend；W52 規則降為對照線 w52.html、舊 cap 1.5 為 cap15.html，皆不寄信）。"
+        lines.append("Supertrend 週線＋月線 實盤主系統（{} 收盤起；債金疊加同日也改 Supertrend；W52 規則降為對照線 w52.html、不寄信；舊 cap 1.5 對照線 cap15.html 2026-11-10 起停止更新）。"
                      "詳細： https://research.investmquest.com/long-track-w52-adaptive/".format(ST_CUTOVER_DATE))
     elif new_fmt:
         lines.append("W52 × 自適應波動率 實盤主系統（{} 起：美股債金版、台股不借錢版；舊 cap 1.5 規則降為對照線、不寄信）。"
@@ -3837,9 +3837,11 @@ def main():
     PROFILE = "live" if args.profile == "w52" else args.profile
     SHADOW = args.profile == "w52"
     if PROFILE == "cap15":
+        # 2026-11-10 持有人拍板停更：CI 不再跑這個 profile。手動重產時頁首照樣帶「2026-11-10 起停止更新」橫幅（scripts/archive_banner.py）
+        from archive_banner import archive_banner
         STATE_JSON = DOCS / "long-track-w52-adaptive" / "cap15_state.json"
         OUTPUT = DOCS / "long-track-w52-adaptive" / "cap15.html"
-        NAV_BLOCK = full_nav_block("system", "lthub")
+        NAV_BLOCK = full_nav_block("system", "lthub") + archive_banner("cap15")
     elif SHADOW:
         STATE_JSON = DOCS / "long-track-w52-adaptive" / "w52_state.json"
         OUTPUT = DOCS / "long-track-w52-adaptive" / "w52.html"
