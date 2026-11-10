@@ -3639,7 +3639,7 @@ ST_CUTOVER_ENTRY = {
     "tw": "Supertrend ATR 14／倍數 2；不借錢、無債金",
     "history_policy": "生效日前的 history_us／history_tw 紀錄不改寫；生效日當天各檔從 W52 階段的現持水位一次調到 Supertrend 水位",
     "control_line": "W52 規則以 --profile w52 續跑成對照線，輸出 w52_state.json／w52.html，不寄信；cap15 對照線不變",
-    "research": "/backtest/supertrend_vs_live/；退回條件待持有人訂，見 knowledge/rule_ledger.md 2026-11-04",
+    "research": "/backtest/supertrend_vs_live/；不設績效退回，2027-11-04 回顧只記錄（持有人 2026-11-10 訂），見 knowledge/rule_ledger.md 2026-11-04",
 }
 TW_L2_ENTRY = {
     "effective": stc.TW_L2_CUTOVER_DATE,

@@ -36,7 +36,7 @@ STATE_JSON = HERE.parent / "docs" / "long-track-w52-adaptive" / "state.json"
 TESTING = [
     {"q": "Supertrend 週線＋月線比 W52 × 自適應波動率好嗎？",
      "start": "2026-11-04",
-     "due": "退回條件待持有人訂（規則帳本 2026-11-04）",
+     "due": "不設績效退回，2027-11-04 回顧只記錄、不改（規則帳本 2026-11-04）",
      "now": "2026-11-04 起累積中",
      "name": "W52 對照線", "url": "/long-track-w52-adaptive/w52.html"},
     {"q": "NFCI 紅燈時持股減半，能不能讓回撤變淺？",
