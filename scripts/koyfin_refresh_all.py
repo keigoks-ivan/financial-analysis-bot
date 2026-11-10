@@ -255,7 +255,7 @@ DOWNSTREAM_CMDS = [
     ["{PY312}", "scripts/build_dd_screener.py", "--include-non-dd"],
     ["{PY312}", "scripts/build_dd_screener.py", "--universe", "smallcap"],
     ["{PY312}", "scripts/build_tenbagger.py"],
-    ["python3", "scripts/engine/build_arena.py"],
+    ["{PY312}", "scripts/engine/build_arena.py"],  # 間接讀規則正本（tomllib，需 3.11+）
     # 2026-10-09 TW pool: isolated output (docs/dd-screener/tw/), read by no
     # US consumer. Last in the chain so a TW failure cannot stop the US steps
     # above (run_downstream stops at the first failure).
