@@ -636,7 +636,7 @@ MEMBERS = {'/backtest/viable/rsi2/': {'title': '台指期急跌反彈只做多�
                                'status': 'cand',
                                'main': '/backtest/viable/',
                                'anchor': 'ma-slope',
-                               'chapter': '均線斜率只做多',
+                               'chapter': '均線系統',
                                'key': 'viable_ma_slope'},
  '/backtest/viable/bb3_lower/': {'title': '台指期日線 3σ 下軌做多：約一年一次，21 筆賺 19 筆',
                                'short': '日線 3σ 下軌做多',
