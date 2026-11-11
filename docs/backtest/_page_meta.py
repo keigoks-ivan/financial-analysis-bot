@@ -624,7 +624,7 @@ MEMBERS = {'/backtest/viable/rsi2/': {'title': '台指期急跌反彈只做多�
                                'anchor': 'rsi2',
                                'chapter': '急跌反彈只做多',
                                'key': 'viable_rsi2'},
- '/backtest/viable/txf_combo/': {'title': '台指期三條策略合成：夏普值最高、回撤最淺，獲利仍靠近兩年',
+ '/backtest/viable/txf_combo/': {'title': '台指期三條策略合成：夏普值高、回撤淺，獲利仍靠近兩年',
                                'short': '三條策略合成',
                                'status': 'cand',
                                'main': '/backtest/viable/',
