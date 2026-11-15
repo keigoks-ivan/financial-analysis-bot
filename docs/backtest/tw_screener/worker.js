@@ -36,8 +36,24 @@ async function init(b) {
     store.finishReturns();
     ready = true;
     postMessage({ type: 'ready', ms: Date.now() - t0, bytes: bytes });
+    try { postMessage(marketStats()); } catch (e) { /* 分布只是輔助資訊，算不出來就不顯示 */ }
     if (pending) { var m = pending; pending = null; doRun(m); }
   } catch (e) { postMessage({ type: 'error', msg: String(e && e.message || e) }); }
+}
+
+// 最新一期全市場各因子的分布（第 25、50、75 百分位，介面單位），給頁面在門檻旁邊顯示「這項的行情」。
+function marketStats() {
+  var last = -1; store.snapByDay.forEach(function (v, d) { if (d > last) last = d; });
+  var F = store.factors(last), q = {};
+  TWS.FACTORS.forEach(function (f) {
+    var a = [], v = F.v[f.k];
+    for (var i = 0; i < F.n; i++) if (F.valid[i] && !isNaN(v[i])) a.push(v[i] * f.mul);
+    a.sort(function (x, y) { return x - y; });
+    var at = function (p) { var h = (a.length - 1) * p, lo = Math.floor(h), hi = Math.ceil(h); return a[lo] + (a[hi] - a[lo]) * (h - lo); };
+    if (a.length >= 20) q[f.k] = [at(0.25), at(0.5), at(0.75), a.length];
+  });
+  var nv = 0; for (var j = 0; j < F.n; j++) nv += F.valid[j];
+  return { type: 'stats', date: store.ymd[last], n: nv, q: q };
 }
 
 function plain(res) {
