@@ -274,7 +274,8 @@
       '<li>跌幅壓到 −20% 後：年化 <b>' + pct(sc.ann) + '</b>，0050 為 ' + pct(sc.ann50) + tipI('tip-c-sc') + '</li>';
     if (prevOk()) {
       var pa = prev.r.m.ann, pm = prev.r.m.mdd, dA = r.m.ann - pa, dM = r.m.mdd - pm;
-      h += '<li>跟上一組比：年化' + (dA >= 0 ? '高 ' : '低 ') + ab(dA) + ' 個百分點（上一組 ' + pct(pa) + '），最大跌幅' + (dM >= 0 ? '淺 ' : '深 ') + ab(dM) + ' 個百分點（上一組 ' + pct(pm) + '）</li>';
+      var same = function (d) { return Math.abs(d * 100) < 0.05; };
+      h += '<li>跟上一組比：年化' + (same(dA) ? '差不到 0.1 個百分點' : (dA > 0 ? '高 ' : '低 ') + ab(dA) + ' 個百分點') + '（上一組 ' + pct(pa) + '），最大跌幅' + (same(dM) ? '差不到 0.1 個百分點' : (dM > 0 ? '淺 ' : '深 ') + ab(dM) + ' 個百分點') + '（上一組 ' + pct(pm) + '）</li>';
     }
     h += '</ul>' +
       '<div class="tws-tipbox" id="tip-c-rc" hidden>每期從同一個池子隨機抽同樣檔數、等權，換股日與成本一樣，重複幾百次。用「不扣成本」的年化比：這組設定減隨機組，取 2.5% 到 97.5% 的範圍。整段大於 0，代表排序方式有加分；整段小於 0，代表比隨機挑還差；含 0，代表看不出比在同一個池子裡隨便挑好。</div>' +
