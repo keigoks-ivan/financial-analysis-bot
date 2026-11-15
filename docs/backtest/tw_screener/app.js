@@ -103,8 +103,8 @@
   }
 
   function rowHtml(u) {
-    var f = FIDX[u.k], tag = (f.supp ? '<span class="tws-tag">補的</span>' : '');
-    var tipTxt = '<p>' + esc(f.def) + '</p><p class="tws-muted">資料從 ' + esc(f.start) + ' 起。' + (f.supp ? '標「補的」：這項不在最初那批價格因子裡，是後來補進來算的（財報、營收、股利、投信買賣超、市值、成交額等），公布日或口徑有些是我們自己訂的，細節看上面的定義。' : '') + '</p>';
+    var f = FIDX[u.k], tag = '';
+    var tipTxt = '<p>' + esc(f.def) + '</p><p class="tws-muted">資料從 ' + esc(f.start) + ' 起。' + (f.supp ? '這項用財報、營收、股利或成交資料自己算，哪一天起算「已公布」照上面的定義，跟官方或其他網站的數字可能有小差異。' : '') + '</p>';
     var h = '<div class="tws-cr" data-k="' + u.k + '"><div class="tws-crh"><b>' + esc(UI.nameOf(u.k)) + '</b>' + tag +
       '<span class="tws-sp"></span><button type="button" class="tws-i" data-tip="tip-r-' + u.k + '" aria-label="定義">ⓘ</button><button type="button" class="tws-x" data-del="' + u.k + '" aria-label="移除這項條件">✕</button></div><div class="tws-crb">';
     if (u.rank) h += '<span class="tws-ch" data-m="rank"><em>排名</em><select class="dir"><option value="hi">高的好</option><option value="lo">低的好</option></select><span class="tws-pl">權重</span><input class="w" type="number" min="0" step="0.5"><button type="button" class="tws-cx" data-off="rank" aria-label="不用排名">×</button></span>';
