@@ -244,7 +244,7 @@
     return { k: 'none', short: '看不出來', html: '<b class="mid">看不出來</b>：範圍含 0' + rg };
   }
   function kpiRow(name, m) {
-    return '<tr><td class="lbl">' + name + '</td><td class="num">' + pct(m.ann) + '</td><td class="num">' + (isFinite(m.sharpe) ? m.sharpe.toFixed(2) : '—') + '</td><td class="num ng">' + pct(m.mdd) + '</td><td class="num">' + m.uwYears.toFixed(1) + ' 年</td><td class="num">' + m.total.toFixed(2) + ' 倍</td></tr>';
+    return '<tr><td class="lbl">' + name + '</td><td class="num">' + pct(m.ann) + '</td><td class="num">' + (isFinite(m.sharpe) ? m.sharpe.toFixed(2) : '—') + '</td><td class="num ng">' + pct(m.mdd) + '</td><td class="num">' + (isFinite(m.calmar) ? m.calmar.toFixed(2) : '—') + '</td><td class="num">' + (isFinite(m.sortino) ? m.sortino.toFixed(2) : '—') + '</td><td class="num">' + m.uwYears.toFixed(1) + ' 年</td><td class="num">' + m.total.toFixed(2) + ' 倍</td></tr>';
   }
   function rcTable(m) {
     var s = m.summ, f = function (x) { return (x >= 0 ? '+' : '−') + Math.abs(x * 100).toFixed(1); };
@@ -282,8 +282,8 @@
       '<div class="tws-tipbox" id="tip-c-sc" hidden>每天的報酬乘一個固定倍數（這組 ' + sc.m.toFixed(2) + ' 倍、0050 ' + sc.m50.toFixed(2) + ' 倍），其餘放現金不計息，讓最大跌幅剛好 −20%。多數選股策略的最大跌幅在 −30% 到 −45%，這樣處理之後才能跟 0050 在同樣的跌幅下比年化。</div>' +
       '<div class="tws-cc-s">期間 ' + r.firstTrade + '（第一次成交）到 ' + r.endDay + '，共 ' + r.periods + ' 次換股，平均池子 ' + Math.round(r.poolAvg) + ' 檔。' +
       (r.S.conds.trust ? '用到投信買超強度，判斷日自動從 2015-01-30 起。' : '') + (r.tieShort ? '有 ' + r.tieShort + ' 期因為並列在邊界，入選檔數少於設定值。' : '') + '</div>' +
-      '<details class="tws-more"><summary>更多數字：夏普、最長水下、不扣成本、隨機對照明細</summary>' +
-      '<div class="scroll"><table><thead><tr><th></th><th class="num">年化（日曆年）</th><th class="num">日夏普</th><th class="num">最大跌幅</th><th class="num">最長水下</th><th class="num">累積</th></tr></thead><tbody>' +
+      '<details class="tws-more"><summary>更多數字：夏普、Calmar、Sortino、最長水下、不扣成本、隨機對照明細</summary>' +
+      '<div class="scroll"><table><thead><tr><th></th><th class="num">年化（日曆年）</th><th class="num">日夏普</th><th class="num">最大跌幅</th><th class="num">Calmar</th><th class="num">Sortino</th><th class="num">最長水下</th><th class="num">累積</th></tr></thead><tbody>' +
       kpiRow('這組設定（扣成本）', r.m) + kpiRow('同一組、不扣成本', r.m0) + kpiRow('0050 含息', r.mb) + '</tbody></table></div>' +
       (cur.rc ? rcTable(cur.rc) : '<p class="tws-muted">同池隨機對照計算中…</p>') + '</details></div>';
     var more = $('.tws-more', box), open = more && more.open, openTips = $$('.tws-tipbox:not([hidden])', box).map(function (x) { return x.id; });

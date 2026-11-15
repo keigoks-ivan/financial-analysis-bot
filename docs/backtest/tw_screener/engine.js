@@ -423,7 +423,13 @@
       else { if (uwStart < 0) uwStart = i; var d = nav[i] / peak - 1; if (d < mdd) mdd = d; }
     }
     if (uwStart >= 0) uwBest = Math.max(uwBest, dnumBase[n] - dnumBase[uwStart]);
-    return { ann: Math.pow(nav[n] / nav[0], 1 / yrs) - 1, sharpe: sd > 0 ? mean / sd * Math.sqrt(252) : NaN, mdd: mdd, uwYears: uwBest / 365.25, total: nav[n] / nav[0], days: n, yrs: yrs, r: r };
+    // 新增欄位（不動上面的計算）：Calmar＝年化 ÷ |最大跌幅|；Sortino＝日報酬平均 × 252 ÷（下行標準差 × √252），
+    // 下行標準差＝sqrt(mean(min(r,0)²))，對全部交易日取平均，目標報酬 0，不扣無風險利率（跟日夏普同口徑）
+    var annV = Math.pow(nav[n] / nav[0], 1 / yrs) - 1, dsq = 0;
+    for (i = 0; i < n; i++) if (r[i] < 0) dsq += r[i] * r[i];
+    var dsd = Math.sqrt(dsq / n);
+    return { ann: Math.pow(nav[n] / nav[0], 1 / yrs) - 1, sharpe: sd > 0 ? mean / sd * Math.sqrt(252) : NaN, mdd: mdd, uwYears: uwBest / 365.25, total: nav[n] / nav[0], days: n, yrs: yrs, r: r,
+             calmar: mdd < 0 ? annV / Math.abs(mdd) : NaN, sortino: dsd > 0 ? mean * 252 / (dsd * Math.sqrt(252)) : NaN };
   }
   function mddOf(nav) { var pk = nav[0], m = 0; for (var i = 0; i < nav.length; i++) { if (nav[i] > pk) pk = nav[i]; var d = nav[i] / pk - 1; if (d < m) m = d; } return m; }
   // 每日報酬乘固定倍數 m（≤1，其餘放現金不計息），二分法找最大倍數使最大跌幅不超過 target
