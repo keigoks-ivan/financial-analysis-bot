@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>台股選股回測器：自己挑條件，看贏不贏同池子隨機抽 | InvestMQuest Research</title>
+<meta name="description" content="在瀏覽器裡自己組台股選股策略：19 項條件可調門檻、排名與權重，用每天的報酬回測 2014 年起的資料，輸出年化、夏普、最大跌幅與逐年報酬，縮到最大跌幅 −20% 後的年化，並跟同池子隨機抽同樣檔數比。資料截止 2026-11-04，全部是樣本內回測，不是投資建議。">
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.55rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.88rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.08rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+.card p{font-size:.92rem;max-width:64rem;margin:.55rem 0}
+.card p:first-child{margin-top:0}.card p:last-child{margin-bottom:0}
+.prose p{font-size:.92rem;max-width:64rem;margin:.6rem 0}
+.bul{margin:.2rem 0 .6rem 1.3rem;font-size:.92rem;max-width:64rem}
+.bul li{margin:.35rem 0}
+code{font-size:.84rem;background:#f3f4f6;padding:.05rem .3rem;border-radius:4px;word-break:break-all}
+.tbl-cap{font-size:.86rem;font-weight:700;margin:1.1rem 0 .5rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.68rem;letter-spacing:.03em;color:var(--muted)}
+th.grp{text-align:center;border-left:1px solid var(--border)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{font-weight:500}
+table.wide{min-width:900px}
+tbody tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.table-note{font-size:.83rem;color:var(--muted);margin:.5rem 0}
+.ci{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.verdict{margin:1.25rem 0;border:1px solid var(--border);border-left:4px solid var(--brand);border-radius:8px;background:var(--card);padding:1rem 1.25rem}
+.verdict-hd{font-size:.78rem;font-weight:700;letter-spacing:.06em;color:var(--brand);margin-bottom:.4rem}
+.verdict ol{margin-left:1.2rem;font-size:.97rem;font-weight:600;line-height:1.7}
+.verdict li{margin:.3rem 0}
+.ok{color:#059669;font-weight:700}
+.mid{color:#b45309;font-weight:700}
+.no{color:#dc2626;font-weight:700}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  table{font-size:.74rem}th,td{padding:.4rem .4rem}
+  .container{padding:0 1rem}
+}
+</style>
+<style id="fl-chart">
+.vch{position:relative;margin:.9rem 0 1.3rem;touch-action:pan-y}
+.vch-t{font-size:.92rem;font-weight:700;margin:0 0 .1rem}
+.vch-s{font-size:.78rem;color:var(--muted,#6b7280);margin:0 0 .35rem;max-width:64rem}
+.vch-leg{display:flex;flex-wrap:wrap;gap:.2rem .95rem;font-size:.8rem;margin:.1rem 0 .3rem}
+.vch-leg i{display:inline-block;width:16px;height:3px;margin-right:.3rem;vertical-align:middle;border-radius:2px}
+.vch svg{display:block;width:100%;overflow:visible}
+.vch text{font-size:11px;fill:#6b7280;font-variant-numeric:tabular-nums}
+.vch-tip{position:absolute;display:none;pointer-events:none;background:#fff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.12);padding:.35rem .55rem;font-size:.78rem;line-height:1.5;white-space:nowrap;z-index:5}
+.vch-sw{float:right;display:inline-flex;gap:2px}
+.vch-sw button{font:inherit;font-size:.74rem;padding:.08rem .55rem;border:1px solid #e5e7eb;background:#fff;color:#6b7280;border-radius:4px;cursor:pointer}
+.vch-sw button.on{background:#eff6ff;color:#111827;border-color:#2a78d6}
+td.ng{color:#b42318}
+table.narrow{max-width:26rem}
+.lead{font-size:.98rem!important;font-weight:600;max-width:64rem}
+.sub-title{font-size:.96rem;font-weight:700;margin:1.3rem 0 .3rem}
+.layer-hd{margin:2.4rem 0 .2rem;padding:.55rem .9rem;background:#eff6ff;border-left:4px solid #1a56db;border-radius:4px;font-size:.92rem;font-weight:700;color:#1e3a5f}
+.notice{margin:1rem 0;padding:.7rem 1rem;border:1px solid #fde68a;border-left:4px solid #d97706;background:#fffbeb;border-radius:8px;font-size:.88rem;line-height:1.7;color:#78350f;max-width:64rem}
+ol.toc{margin:.2rem 0 .2rem 1.3rem;font-size:.92rem;columns:2;column-gap:2rem}
+ol.toc li{margin:.25rem 0;break-inside:avoid}
+.card h3.sub-title:first-child{margin-top:0}
+.nm{font-size:.84rem;line-height:1.9;max-width:64rem}
+@media(max-width:640px){ol.toc{columns:1}}
+</style>
+<style id="tws-css">
+.tws-row{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;margin:.2rem 0 .5rem}
+.tws-lb{font-size:.82rem;color:var(--muted);margin-right:.2rem}
+.tws-btn{font:inherit;font-size:.84rem;padding:.35rem .8rem;border:1px solid #cbd5e1;background:#fff;border-radius:999px;cursor:pointer;color:#111827}
+.tws-btn:hover{background:#eff6ff;border-color:#2a78d6}
+.tws-ghost{color:#6b7280}
+.tws-note{font-size:.83rem;color:#4b5563;max-width:64rem;margin:.3rem 0 .6rem}
+.tws-muted{font-size:.83rem;color:var(--muted)}
+.tws-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:.7rem .9rem;margin:.3rem 0 .5rem}
+.tws-grid label,.tws-ff label,.tws-fn{min-width:0}
+.tws-grid label{display:block;font-size:.85rem}
+.tws-grid small{display:block;font-size:.74rem;color:var(--muted);margin-top:.1rem}
+.tws-app input[type=number],.tws-app input[type=date],.tws-app select{font:inherit;font-size:.86rem;padding:.25rem .35rem;border:1px solid #cbd5e1;border-radius:6px;background:#fff;max-width:100%}
+.tws-app input[type=number]{width:5.2rem}
+.tws-grid select{width:100%;max-width:100%;min-width:0}
+.tws-app input[type=date]{max-width:100%;min-width:0}
+.tws-facs{display:grid;gap:.4rem}
+.tws-fr{border:1px solid var(--border);border-radius:8px;padding:.55rem .7rem;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);min-width:0;gap:.4rem .9rem;background:#fff}
+.tws-fr.on{border-color:#2a78d6;background:#f5f9ff}
+.tws-fn b{font-size:.88rem}
+.tws-fd{font-size:.76rem;color:#6b7280;line-height:1.5;margin-top:.15rem}
+.tws-tag{display:inline-block;font-size:.66rem;padding:0 .4rem;margin-left:.35rem;border-radius:999px;background:#fef3c7;color:#92400e;vertical-align:middle}
+.tws-tag2{background:#e5e7eb;color:#374151}
+.tws-ff{display:flex;flex-direction:column;gap:.3rem;font-size:.82rem}
+.tws-ff label{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem}
+.tws-ff .t,.tws-ff .r{display:none}
+.tws-fr.has-t .tws-ff .t,.tws-fr.has-r .tws-ff .r{display:flex}
+.tws-ff input[type=number]{width:4.6rem}
+.tws-ff .u{font-size:.78rem;color:var(--muted)}
+.tws-warn{color:#b42318;font-weight:600}
+#tws-status{font-size:.88rem;margin:.4rem 0}
+#tws-load{font-size:.8rem;color:var(--muted);margin:.2rem 0}
+#tws-trials{font-size:.84rem;margin:.5rem 0;padding:.5rem .8rem;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;max-width:64rem}
+#tws-out.stale{opacity:.5}
+.tws-latest{margin:.4rem 0 1rem;padding:.7rem .9rem;border:1px solid #2a78d6;border-left-width:4px;border-radius:8px;background:#f5f9ff;font-size:.88rem}
+.tws-hist details{border-bottom:1px solid var(--border);padding:.3rem 0;font-size:.86rem}
+.tws-hist summary{cursor:pointer}
+.tws-hist{max-height:26rem;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:.2rem .7rem;background:#fff}
+.tvc{position:relative;margin:.9rem 0 1.3rem;touch-action:pan-y}
+.tvc-t{font-size:.92rem;font-weight:700;margin:0 0 .1rem}
+.tvc-s{font-size:.78rem;color:var(--muted,#6b7280);margin:0 0 .35rem;max-width:64rem}
+.tvc svg{display:block;width:100%;overflow:visible}
+.tvc text{font-size:11px;fill:#6b7280;font-variant-numeric:tabular-nums}
+.vch-tip{position:absolute;display:none;pointer-events:none;background:#fff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.12);padding:.35rem .55rem;font-size:.78rem;line-height:1.5;white-space:nowrap;z-index:5}
+.vch-sw{float:right;display:inline-flex;gap:2px}
+.vch-sw button{font:inherit;font-size:.74rem;padding:.08rem .55rem;border:1px solid #e5e7eb;background:#fff;color:#6b7280;border-radius:4px;cursor:pointer}
+.vch-sw button.on{background:#eff6ff;color:#111827;border-color:#2a78d6}
+.tvc-leg{display:flex;flex-wrap:wrap;gap:.2rem .95rem;font-size:.8rem;margin:.1rem 0 .3rem}
+.tvc-leg i{display:inline-block;width:16px;height:3px;margin-right:.3rem;vertical-align:middle;border-radius:2px}
+td.ng{color:#b42318}
+table.narrow{max-width:34rem}
+@media(max-width:700px){
+  .tws-fr{grid-template-columns:minmax(0,1fr)}
+  .tws-grid{grid-template-columns:minmax(0,1fr)}
+  .tws-app input[type=number]{width:4.4rem}
+  .tws-hist{max-height:22rem}
+}
+</style><style id="bt-meta-style">
+.bt-meta{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.7rem 0 0;font-size:.82rem}
+.bt-st{display:inline-block;font-size:.78rem;font-weight:700;padding:.12rem .6rem;border-radius:999px;line-height:1.5;border:1px solid transparent}
+.bt-st-live{background:#fbf3df;color:#7a5a1a;border-color:#e6cf98}
+.bt-st-cand{background:#e8f0fb;color:#1d4ea0;border-color:#b9cdee}
+.bt-st-note{background:#eef1f4;color:#4b5563;border-color:#d7dce2}
+.bt-st-rej{background:#fbeceb;color:#b42318;border-color:#f0c4c0}
+.bt-st-ret{background:#f1f1f1;color:#6b7280;border-color:#d4d4d4}
+.bt-st-def{color:#6b7280;font-size:.8rem}
+.bt-banner{margin:.7rem 0 0;padding:.6rem .9rem;border-radius:8px;font-size:.86rem;line-height:1.65;border:1px solid;border-left-width:4px}
+.bt-banner a{font-weight:600}
+.bt-banner-ref{background:#fffbeb;border-color:#fde68a;border-left-color:#d97706;color:#78350f}
+.bt-banner-ret{background:#f4f4f5;border-color:#d4d4d8;border-left-color:#71717a;color:#3f3f46}
+.bt-banner-member{background:#eff6ff;border-color:#bfdbfe;border-left-color:#1a56db;color:#1e3a5f}
+.mchap>.bt-banner{margin:.2rem 0 1rem}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+/* 2026-10-29 持有人不要連結沒點藍、點過變紫：:where 權重為 0，各頁自己寫的連結顏色都會蓋過，只取代瀏覽器預設色 */
+:where(a){color:#0d2244}
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(min-width:1280px){.imq-nav-inner,.imq-subnav-inner,html body .wrap,html body .container,html body .masthead-inner,html body .crumb,html body .header-inner,html body .hero-inner,html body .cover-inner,html body header.top .inner,html body header.masthead .inner,html body header.site .inner,html body header.dd-head .hrow,html body header.top .hdr-row,html body .imq-foot .in,html body #tw .container,html body #us .container,html body #global .container,html body .lc-wrap,html body .course-nav-inner,html body .mm-hero,html body .mm-table-wrap,html body .mm-lolla-inner,html body .mm-tray-inner,html body .v19-frame{max-width:max(1240px,min(1700px,calc(100% - 48px)))}html body .shell,html body header.site .hdr-inner{max-width:max(1480px,min(1700px,calc(100% - 48px)))}html.imq-wb body{max-width:max(var(--imq-wb0),min(1700px,calc(100% - 48px)))}html.imq-wm body main,html.imq-wm body main.page{max-width:max(var(--imq-wm0),min(1700px,calc(100% - 48px)))}html body .v19-frame{width:auto}html body.v19-dd main.page{min-width:0}}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/markets.html">風險偏好儀表</a>
+          <a href="/earnings/">財報分析</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">總經與籌碼<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/macro/">總經深度報告</a>
+          <a href="/macro/db/">總經資料庫</a>
+          <a href="/ai-credit/">AI 信用監測</a>
+          <a href="/tw-chips/">台股籌碼</a>
+          <a href="/kr-chips/">韓股籌碼</a>
+          <a href="/us-chips/">美股籌碼</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">研究清單</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/screeners.html">RS 排行</a>
+          <a href="/canslim/">CAN SLIM 選股</a>
+          <a href="/stock-dash/">個股儀表板</a>
+          <a href="/etf-dash/">ETF 儀表板</a>
+          <a href="/active-etf/">主動式 ETF</a>
+          <a href="/id/">產業研究</a>
+          <a href="/ideas/">投資想法</a>
+          <a href="/track-record/">個股裁決實績</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/simulation/">模擬</a>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();(function(){var h=document.documentElement,b=document.body;if(!b)return;function cap(el){var m=parseFloat(getComputedStyle(el).maxWidth);return m>=600&&m<1700?m:0}var m=cap(b);if(m){h.classList.add('imq-wb');h.style.setProperty('--imq-wb0',m+'px')}var p=document.createElement('main');p.className='page';b.appendChild(p);m=cap(p);if(m){h.classList.add('imq-wm');h.style.setProperty('--imq-wm0',m+'px')}b.removeChild(p)})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 台股選股回測器</div>
+    <h1>台股選股回測器：自己挑條件，看贏不贏同池子隨機抽</h1>
+    <div class="sub">互動回測｜資料截止 2026-11-04｜樣本內，沒有樣本外驗證</div><!--bt-meta--><div class="bt-meta"><span class="bt-st bt-st-note">筆記</span><span class="bt-st-def">研究紀錄或對照，沒有採用意圖。</span></div><!--/bt-meta-->
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-tag-live{background:rgba(184,146,74,.2);color:#7a5a1a}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-live{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">① 實盤證據</div><div class="bt-subnav-pills"><a href="/backtest/live_system_evidence/">證據總覽</a><a href="/backtest/w52_adaptive_oos/">跨標的前瞻證偽</a><a href="/backtest/insurance_premium/">深熊保險價格</a><a href="/backtest/adopted_bootstrap/">打亂歷史重跑</a><a href="/backtest/combined_account/">美台合併帳戶</a><a href="/backtest/slow_bear_base_rate/">慢熊 base rate 與起點</a><a href="/backtest/a0_proposal/">A0 提案<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/f_comfort/" class="bt-dead">F70 抱得住度<span class="bt-tag bt-tag-dead">已退役</span></a><a href="/backtest/f_portfolio/" class="bt-dead">疊兩種保險<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/futures_leg/" class="bt-dead">F70 換期貨腿<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/cross_sectional_trend/" class="bt-dead">只持最強幾檔<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">② 槓桿與保險</div><div class="bt-subnav-pills"><a href="/backtest/leverage/">槓桿三頁</a><a href="/backtest/vol_targeting/">波動率目標倉位</a><a href="/backtest/vol_targeting/adaptive.html">波動率變體·美股</a><a href="/backtest/vol_targeting/tw.html">波動率變體·台股</a><a href="/backtest/tw_vcrash/">V 型崩跌防禦</a><a href="/backtest/finlab_eps_breadth/">FinLab 美股盈餘驚喜</a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/weekly_bb_put/" class="bt-dead">週線布林過熱買 put<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">③ 趨勢規則</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">週線長軌</a><a href="/backtest/daily_vs_weekly/">日線 vs 週線</a><a href="/backtest/tw_0050_compare/">0050 趨勢系統</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/slope_filter/">W52 斜率濾網</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/supertrend_vs_live/">Supertrend 對 W52</a><a href="/backtest/supertrend_midweek/">Supertrend 週間先動</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a><a href="/backtest/ma_break_recovery/">跌破均線之後</a><a href="/backtest/ma_cross/" class="bt-dead">MA 交叉<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_deviation/" class="bt-dead">MA 乖離<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_dynband/" class="bt-dead">MA 動態帶<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_squeeze/" class="bt-dead">MA 擠壓<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/w52_reentry_jm/" class="bt-dead">W52 少白跑改法<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/dual_track/" class="bt-dead">雙軌<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/six_state/" class="bt-dead">六狀態機存檔<span class="bt-tag bt-tag-dead">已退役</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">④ 台指期與短線</div><div class="bt-subnav-pills"><a href="/backtest/rsi2_mr/">RSI(2) 均值回歸<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/tw_options/">台股選擇權專區</a><a href="/backtest/txo_vol_seller/">台指選擇權賣方</a><a href="/backtest/txo_put_seller/">台指賣方下檔</a><a href="/backtest/txo_iron_condor/">台指雙賣</a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call</a><a href="/backtest/txo_tail_hedge/">台指尾端避險</a><a href="/backtest/txf_daily/">台指期日線與 60 分 K</a><a href="/backtest/txf_chips/">籌碼偏向</a><a href="/backtest/vendor/">外部策略檢驗</a><a href="/backtest/txf_bb3_touch/">台指布林 3σ<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/txf_intraday/" class="bt-dead">台指當沖<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/txf_short_zone/" class="bt-dead">台指空單分區<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/txf_premium/" class="bt-dead">台指期正價差<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ssf_xsec/" class="bt-dead">個股期橫斷面<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/covered_call/" class="bt-dead">美股選擇權疊加<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">⑤ 選股與因子</div><div class="bt-subnav-pills"><a href="/backtest/seat_supertrend/">席位週線 Supertrend</a><a href="/backtest/pead/">財報驚喜後漂移</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/revmom/">台股月營收動能選股</a><a href="/backtest/finlab_smallcap/">FinLab 台股小型股</a><a href="/backtest/finlab_progtrade/">FinLab 程式交易三策略</a><a href="/backtest/finlab_stocksel/">FinLab 股票選股三策略</a><a href="/backtest/tw_screener/" class="bt-on">台股選股回測器</a><a href="/backtest/p10_finlab_decomp/">P10 換 FinLab 條件</a><a href="/backtest/tw_cb/">台股可轉債專區</a><a href="/backtest/chasing_returns/">漲多了還能追嗎</a><a href="/backtest/country_scan/us.html">各國股市結構</a><a href="/backtest/accruals/">美股獲利品質（應計項目）</a><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/active_etf/">主動式 ETF 與基金</a><a href="/backtest/price_vs_earnings/">價格與獲利誰先動</a><a href="/backtest/asset_growth/" class="bt-dead">美股資產成長異象<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/share_issuance/" class="bt-dead">美股股數增減（發行與回購）<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/profitability/" class="bt-dead">美股獲利能力因子<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/index_inclusion/" class="bt-dead">指數納入效應<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/insider/" class="bt-dead">內部人買賣叢集買進<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ath_patterns/" class="bt-dead">歷史新高型態<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/chart_patterns/" class="bt-dead">看圖型態<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/false_breakout/" class="bt-dead">假突破<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_fan_breakout/" class="bt-dead">均線發散突破<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/ma_bundle_escape/" class="bt-dead">均線糾結脫離<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/vtv_vug_style/" class="bt-dead">成長價值輪流<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/seat_queue_order/" class="bt-dead">補席順序<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/seat_growth_first/" class="bt-dead">成長先補<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/seat_peg_first/" class="bt-dead">PEG 先補<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">⑥ 分散資產</div><div class="bt-subnav-pills"><a href="/backtest/nonequity/">非股票 sleeve<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/crossasset_defense/">跨資產防守<span class="bt-tag bt-tag-watch">候選</span></a><a href="/backtest/turtle/">海龜與商品 sleeve</a><a href="/backtest/clenow/">35 檔 ETF 趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/free_lunch/">分散與免費午餐</a><a href="/backtest/gem/" class="bt-dead">全球雙動能<span class="bt-tag bt-tag-dead">已否決</span></a><a href="/backtest/reits/" class="bt-dead">REITs 延伸<span class="bt-tag bt-tag-dead">已否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">⑦ 總經與房市</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">房價與所得</a><a href="/backtest/yield_curve/">殖利率倒掛</a><a href="/backtest/sahm_rule/">Sahm 法則跨國</a><a href="/backtest/first_cut/">第一次降息後的股市</a><a href="/backtest/midterm_election/">美國選舉前後</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">方法與術語</div><div class="bt-subnav-pills"><a href="/backtest/criteria/">評估標準</a><a href="/backtest/glossary/">術語對照表</a><a href="/backtest/10y/">近 10 年對照</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/viable/">可行策略專區</a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+
+
+<div class='notice'><b>先看這四點</b><ol class='bul' style='margin-top:.3rem'><li>資料從 2014 年起，沒有 2008 年金融海嘯與 2011 年歐債的急跌。</li><li>全部是同一段資料內的回測（in-sample）：條件在看過這段歷史之後才挑，沒有留一段沒看過的資料驗證。</li><li>殖利率、股價淨值比（PB）與市值是我們自己算的，不是交易所公布的數字。</li><li>這不是投資建議。資料固定在 2026-11-04，不會自動更新。</li></ol></div><div class='section' id='pick'><h2 class='section-title'>選條件</h2><div class='card'><p class='lead'>挑條件、調權重、設檔數，結果在下方即時重算。第一次載入要下載約 11 MB 的資料，之後瀏覽器會快取。</p><div class='tws-app' id='tws-app'><div id='tws-load' hidden></div><div id='tws-controls'></div><div id='tws-trials'></div></div></div></div>
+<div class='section' id='result'><h2 class='section-title'>結果</h2><div class='card'><p class='lead'>先看「同池子隨機抽」那一段：範圍含 0，代表這組排序沒有比在同一個池子裡隨便挑好。</p><div class='tws-app'><div id='tws-status'></div><div id='tws-out'><div id='tws-res' hidden><div class='scroll' id='tws-kpi'></div><div id='tws-extra'></div><div class='tvc' id='tws-ch1'><div class='vch-sw'><button type='button' data-s='lin'>線性</button><button type='button' data-s='log' class='on'>對數</button></div><div class='tvc-t'>淨值（第一次成交日起算為 1）</div><p class='tvc-s'>每日淨值，扣成本；0050 為官方含息序列。</p><div class='tvc-leg'><span><i style='background:#2a78d6'></i>這組設定</span><span><i style='background:#eb6834'></i>0050 含息</span></div><div class='vch-plot'></div><div class='vch-tip'></div></div><div class='tvc' id='tws-ch2'><div class='tvc-t'>跌幅</div><p class='tvc-s'>與前一個高點的距離。</p><div class='tvc-leg'><span><i style='background:#2a78d6'></i>這組設定</span><span><i style='background:#eb6834'></i>0050 含息</span></div><div class='vch-plot'></div><div class='vch-tip'></div></div><h3 class='sub-title'>逐年報酬</h3><div class='scroll' id='tws-yearly'></div><h3 class='sub-title'>跟同池子隨機抽比</h3><div id='tws-rc'></div></div></div></div></div></div>
+<div class='section' id='picks'><h2 class='section-title'>每一期的名單</h2><div class='card'><div class='tws-app'><p class='tws-note'>最新一期放在最上面。往下展開每一期，看當時選了哪些股票、權重與市值。</p><div id='tws-picks'></div></div></div></div>
+<div class='section' id='how'><h2 class='section-title'>怎麼讀結果</h2><div class='card'><p>這個頁面讓你自己組一個台股選股策略，用每天的報酬在瀏覽器裡回測。跟 FinLab 的選股工具比，多了三件事：條件與權重可以自由組合；每一組設定都跟「同一個池子隨機抽同樣檔數」的結果比；頁面記下你試過幾組。</p><ul class='bul'><li><b>隨機對照</b>：每期從同一個池子隨機抽同樣檔數、等權，重複 200 次以上。策略年化減隨機組年化的 2.5% 到 97.5% 範圍含 0，就代表排序沒有加分。</li><li><b>跌幅縮到 −20% 後的年化</b>：多數選股策略的最大跌幅在 −30% 到 −45%。每日報酬乘一個固定倍數、其餘放現金，把最大跌幅壓到 −20%，才能跟 0050 公平比較。</li><li><b>試驗次數</b>：只存在你這個瀏覽器裡，沒有上傳。試越多組，越容易挑到碰巧好看的結果。</li></ul></div></div>
+<div class='section' id='data'><h2 class='section-title'>資料與口徑</h2><div class='card'><ul class='bul'><li>價格：證交所與櫃買的官方日線，含已下市的股票，到 2026-11-04。報酬用含息因子，訊號用未還原收盤價。下市股用最後一筆成交價賣出，剩下的放現金。</li><li>財報：公布日之後才可用（第一季 5/15、第二季 8/14、第三季 11/14、年報隔年 3/31）。ROE 是單季淨利含非控制權益除以季末總權益。</li><li>月營收：2014 年起（2013 年口徑不同，捨棄）。次月 10 日的下一個交易日起算已公布，這個日期是補的。</li><li>股數：普通股股本除以 10 元面額，2013-04 起。外幣申報的 KY 公司與少數改過面額的公司，市值會算錯。</li><li>成交：判斷日之後的第一個交易日收盤價成交，沒有滑價。手續費買賣各 0.1425%，賣出另加證交稅 0.3%，預設不打折。</li><li>投信買賣超：上市 2012-05 起、上櫃 2014-12 起，所以投信買超強度的條件從 2015-02 起算。</li><li>容量與每日成交額：資料檔沒有逐日成交額，容量用判斷日的 60 日均成交額代替成交日當天。</li><li>0050：證交所官方還原序列。</li></ul><div class='tbl-cap'>四個預設組合：本頁引擎對 Python 重建版</div><div class='scroll'><table class=''><thead><tr><th>預設組合</th><th>比對期間</th><th class="num">本頁年化</th><th class="num">Python 年化</th><th class="num">本頁最大跌幅</th><th class="num">Python 最大跌幅</th><th class="num">名單完全相同的期數</th></tr></thead><tbody><tr><td class="lbl">FinLab 四因子複合</td><td class="">2014-02-14～2026-11-04</td><td class="num">18.07%</td><td class="num">18.11%</td><td class="num ng">−25.0%</td><td class="num ng">−25.0%</td><td class="num">151 / 153</td></tr><tr><td class="lbl">價值＋品質＋股息</td><td class="">2014-01-02～2026-11-04</td><td class="num">20.04%</td><td class="num">20.09%</td><td class="num ng">−32.6%</td><td class="num ng">−32.6%</td><td class="num">51 / 52</td></tr><tr><td class="lbl">籌碼（投信買超＋動能）</td><td class="">2015-01-30～2026-11-04</td><td class="num">10.51%</td><td class="num">10.50%</td><td class="num ng">−43.8%</td><td class="num ng">−43.8%</td><td class="num">142 / 142</td></tr><tr><td class="lbl">動能輪動</td><td class="">2014-03-14～2026-11-04</td><td class="num">22.12%</td><td class="num">22.18%</td><td class="num ng">−42.4%</td><td class="num ng">−42.5%</td><td class="num">145 / 152</td></tr></tbody></table></div><div class='table-note'>Python 版是我們前幾輪重建 FinLab 策略的程式（<a href='/backtest/finlab_progtrade/'>程式交易</a>與<a href='/backtest/finlab_stocksel/'>股票選股</a>兩頁）。年化差都在 0.5 個百分點內，最大跌幅差都在 1 個百分點內。四個組合合計 499 次換股，名單完全相同的有 489 次，其餘 10 次各差一檔。這 10 次逐次查過：5 次是兩檔的分數在數學上相同，只差浮點數最後幾位，Python 與本頁各自分出先後；另外 5 次是分數差不超過 1.5 個名次單位的幾乎並列，因子值的差距在 16 位元整數的刻度尺度內，判斷是捨入把兩檔對調；其中 4 次用捨入後的因子值在 Python 重算可以重現，1 次（四因子複合 2023-10-13）重現不了，原因沒有完全證實。價值＋品質＋股息這條，Python 版從 2013-10 起算，這裡從 2014-01-02 起比。</div></div></div>
+<script src="engine.js"></script><script src="app.js"></script>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 資料：證交所與櫃買官方日線（含下市股）、FinMind 季報、公開資訊觀測站月營收、證交所與櫃買三大法人買賣超。資料截止 2026-11-04。
+    &middot; 頁面生成 2026-11-15 &middot; 僅供研究參考，不構成投資建議
+  </div>
+</footer>
+<script>
+(function(){
+var C=['#2a78d6','#eb6834','#1baf7a','#b8860b','#7c5cbf','#6b7280'];
+function ds(x){return new Date(x*864e5).toISOString().slice(0,10)}
+function mi(s){return s.replace('-','−')}
+function fm(kind,v){
+  if(v===null||v===undefined)return '—';
+  if(kind==='nav')return (v>=100?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(2))+' 倍';
+  if(kind==='dd')return mi(v.toFixed(1))+'%';
+  return mi(v.toFixed(2))+'%';
+}
+function ticks(lo,hi,n){var r=(hi-lo)||1,s=Math.pow(10,Math.floor(Math.log10(r/n))),e=r/n/s;s*=e<1.5?1:e<3?2:e<7?5:10;var t=[];for(var v=Math.ceil(lo/s)*s;v<=hi+1e-9;v+=s)t.push(+v.toFixed(6));return t}
+function bis(a,x){var i=0,j=a.length-1;if(x<a[0])return 0;while(i<j){var m=(i+j+1)>>1;if(a[m]<=x)i=m;else j=m-1}return i}
+document.querySelectorAll('.vch').forEach(function(el){
+  var cfg=JSON.parse(el.querySelector('script').textContent),box=el.querySelector('.vch-plot'),tip=el.querySelector('.vch-tip');
+  var LOG=cfg.kind==='nav'&&cfg.log!==false,ML=cfg.kind==='nav'?44:50,MR=12,MT=8,MB=22,x0=cfg.x[0],x1=cfg.x[cfg.x.length-1],cur=null;
+  var bl=el.querySelector('[data-s=lin]'),bo=el.querySelector('[data-s=log]');
+  function mode(){if(bl){bl.className=LOG?'':'on';bo.className=LOG?'on':''}}
+  if(bl){bl.onclick=function(){LOG=false;mode();draw()};bo.onclick=function(){LOG=true;mode();draw()};mode()}
+  function draw(){
+    var w=box.clientWidth;if(!w)return;var h=w<520?(cfg.h||260)*.82:(cfg.h||260);
+    var all=[];cfg.s.forEach(function(s){s.y.forEach(function(v){if(v!==null)all.push(LOG?Math.log10(v):v)})});
+    if(cfg.hline)all.push(cfg.hline.y);if(cfg.kind==='dd'||cfg.kind==='pct')all.push(0);
+    var lo=Math.min.apply(null,all),hi=Math.max.apply(null,all),t;
+    if(LOG){t=[];[0.5,1,2,5,10,20,50,100,200,500,1000,2000].forEach(function(m){var v=Math.log10(m);if(v>=lo-.001&&v<=hi+.001)t.push(v)});lo=Math.min(lo,t[0]);hi=Math.max(hi,t[t.length-1])}
+    else{t=ticks(lo,hi,4);lo=Math.min(lo,t[0]);hi=Math.max(hi,t[t.length-1])}
+    if(hi===lo)hi=lo+1;
+    var X=function(x){return ML+(x-x0)/(x1-x0)*(w-ML-MR)},Y=function(v){return MT+(hi-v)/(hi-lo)*(h-MT-MB)},s='';
+    t.forEach(function(v){var lab=LOG?fm('nav',Math.pow(10,v)).replace(' 倍','×'):fm(cfg.kind,v);s+='<line x1="'+ML+'" x2="'+(w-MR)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="'+(Math.abs(v)<1e-9&&!LOG?'#9ca3af':'#e5e7eb')+'"/><text x="'+(ML-6)+'" y="'+(Y(v)+4)+'" text-anchor="end">'+lab+'</text>'});
+    var y0=new Date(x0*864e5).getUTCFullYear(),y1=new Date(x1*864e5).getUTCFullYear(),step=Math.max(1,Math.ceil((y1-y0+1)*46/(w-ML-MR)));
+    for(var y=y0+1;y<=y1;y++){if((y-y0-1)%step)continue;var px=X(Date.UTC(y,0,1)/864e5);s+='<line x1="'+px+'" x2="'+px+'" y1="'+(h-MB)+'" y2="'+(h-MB+4)+'" stroke="#9ca3af"/><text x="'+px+'" y="'+(h-6)+'" text-anchor="middle">'+y+'</text>'}
+    if(cfg.hline){var hy=Y(cfg.hline.y);s+='<line x1="'+ML+'" x2="'+(w-MR)+'" y1="'+hy+'" y2="'+hy+'" stroke="#d6453d" stroke-dasharray="5 4"/><text x="'+(w-MR-4)+'" y="'+(hy-5)+'" text-anchor="end" style="fill:#b42318">'+cfg.hline.label+'</text>'}
+    cfg.s.slice().reverse().forEach(function(se,ri){var i=cfg.s.length-1-ri,d='',on=false;
+      for(var k=0;k<cfg.x.length;k++){var v=se.y[k];if(v===null){on=false;continue}var yv=LOG?Math.log10(v):v;d+=(on?'L':'M')+X(cfg.x[k]).toFixed(1)+' '+Y(yv).toFixed(1);on=true}
+      if(cfg.kind==='dd'&&cfg.s.length===1)s+='<path d="'+d+'L'+X(x1)+' '+Y(0)+'L'+X(x0)+' '+Y(0)+'Z" fill="'+C[i]+'" fill-opacity=".12" stroke="none"/>';
+      s+='<path d="'+d+'" fill="none" stroke="'+C[i]+'" stroke-width="'+(i?1.4:1.9)+'" stroke-linejoin="round"/>'});
+    (cfg.marks||[]).forEach(function(m){s+='<circle cx="'+X(m[0])+'" cy="'+Y(m[1])+'" r="4" fill="#d6453d" stroke="#fff"/><text x="'+(X(m[0])-6)+'" y="'+(Y(m[1])-8)+'" text-anchor="end" style="fill:#b42318">'+m[2]+'</text>'});
+    box.innerHTML='<svg height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+(cfg.label||'')+'">'+s+'<line class="ch" y1="'+MT+'" y2="'+(h-MB)+'" stroke="#6b7280" visibility="hidden"/></svg>';
+    cur={X:X,w:w,h:h};
+  }
+  box.addEventListener('pointermove',function(e){
+    if(!cur)return;var rc=box.getBoundingClientRect(),px=e.clientX-rc.left;
+    if(px<ML||px>cur.w-MR){tip.style.display='none';return}
+    var x=x0+(px-ML)/(cur.w-ML-MR)*(x1-x0),i=bis(cfg.x,x),ch=box.querySelector('.ch'),sx=cur.X(cfg.x[i]);
+    ch.setAttribute('x1',sx);ch.setAttribute('x2',sx);ch.setAttribute('visibility','visible');
+    var hh='<b>'+ds(cfg.x[i])+'</b>';cfg.s.forEach(function(se,k){hh+='<br><span style="color:'+C[k]+'">●</span> '+se.n+' '+fm(cfg.kind,se.y[i])});
+    tip.innerHTML=hh;tip.style.display='block';var tw=tip.offsetWidth,W=el.clientWidth;
+    var left=sx+14+tw>W?Math.max(0,sx-tw-14):sx+14;tip.style.left=left+'px';tip.style.top=(box.offsetTop+10)+'px'});
+  box.addEventListener('pointerleave',function(){tip.style.display='none';var ch=box.querySelector('.ch');if(ch)ch.setAttribute('visibility','hidden')});
+  draw();var to;window.addEventListener('resize',function(){clearTimeout(to);to=setTimeout(draw,120)});
+});
+})();
+</script>
+</body>
+</html>
