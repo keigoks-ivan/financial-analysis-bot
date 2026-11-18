@@ -36,6 +36,7 @@ description: 投資想法頁（docs/ideas/*.html）的每月全面檢視（雲�
 - 檢視日 D：台北時間今天（`YYYY-MM-DD`）。檢視月：D 的年月，檔名與 commit 都用它（12 月 1 日跑的叫 `2026-12`，內容涵蓋 11 月）。
 - 每頁的證據窗：該頁上一筆檢視的 `date` 隔天到 D。沒有上一筆就從 D 的前一個月 1 日起算；頁面建立日（`ideas.json` 的 `created`）比起點晚，就從建立日起算。
 - 同一頁在檢視月已有一筆（例如手動先跑過）就跳過，不重寫、不覆蓋。全部都已有就直接結束，不 commit。
+- 月中加做：持有人要求時不受上一條限制，照常檢視，`date` 用當天，md 檔名用 `review_<D>.md`，commit 第一行用 `idea-review <D>（月中）：…`。同一頁同一天只能一筆。
 
 ## 輸入（讀什麼）
 
@@ -126,9 +127,9 @@ description: 投資想法頁（docs/ideas/*.html）的每月全面檢視（雲�
  ]}
 ```
 
-- 每頁每月一筆。同一頁多筆時，頁面顯示 `date` 最新的一筆，其餘收進「歷次檢視」。
+- 每頁每月一筆，持有人要求時可月中加做；同一頁同一天只能一筆。同一頁多筆時，頁面顯示 `date` 最新的一筆，其餘收進「歷次檢視」。
 - `facts` 2～5 條，`date` 是事件發生日，不是查到的日子；`source` 寫短名（公司 10-Q、新聞稿、FRED、TrendForce）。
-- `by`：routine 與手動都寫 `opus`。
+- `by`：routine 與手動都寫 `opus`；月中加做由 sonnet 寫、opus 審時寫 `sonnet`。
 - 頁面上沒有 `id="review"` 容器的頁照寫，在 md 末尾列出「未掛檢視區塊：<id>」，由持有人決定要不要補。
 
 ## 文字規格
@@ -192,11 +193,11 @@ CJK = re.compile(r"[一-鿿][,.:;!?()]")
 err = []
 if d.get("schema") != "idea-review-v1": err.append("schema 不是 idea-review-v1")
 if d.get("updated") != D: err.append("updated 不是今天")
-month = {}
+day = {}
 for r in d["reviews"]:
-    month.setdefault((r.get("idea"), str(r.get("date"))[:7]), []).append(r)
-for (i, m), rs in month.items():
-    if len(rs) > 1: err.append(f"{i} {m}：同月 {len(rs)} 筆")
+    day.setdefault((r.get("idea"), str(r.get("date"))), []).append(r)
+for (i, m), rs in day.items():
+    if len(rs) > 1: err.append(f"{i} {m}：同一天 {len(rs)} 筆")
 new = [r for r in d["reviews"] if r.get("date") == D]
 for r in new:
     t = r.get("idea")
@@ -257,4 +258,5 @@ EOF
 
 ## 版本
 
+- v1.1 2026-11-18：持有人要求可月中加做（第一次 11-18，13 頁，sonnet 寫、opus 審）；機械檢查由「同月一筆」改成「同一天一筆」。
 - v1.0 2026-11-01：初版。同日持有人拍板每月檢視一次（五題＋處置＋重打主觀機率留軌跡），第一份由人工檢視寫成（日期 2026-11-01），routine 從 2026-12-01 起跑（trig_0184mV1afLzkLn1hubdjdvgQ，01:00 UTC；06:30 台北在月頻 cron 寫不出來，改 09:00）。
