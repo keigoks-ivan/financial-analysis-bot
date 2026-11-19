@@ -368,6 +368,8 @@ def _why_st(tk_name: str, st: dict, rest: str) -> list:
                                       "週線空、月線多的水位 30 改成 50"))
         else:
             out.append("下軌接回開始：週收盤跌破 20 週下軌 2.5σ，水位 30 改成 50。")
+    if "拿掉下軌接回" in reason:
+        out.append(f"台股指數部拿掉下軌接回（持有人拍板）：水位回到趨勢水位 {st.get('level_pct')}%。")
     if "下軌接回結束" in reason:
         out.append("下軌接回跟著結束：接回只在週線空、月線多（水位 30）時有效。" if flips else
                    f"下軌接回結束：週收盤回到 20 週均線以上，水位回到趨勢水位 {st.get('level_pct')}%。")
@@ -405,6 +407,8 @@ def _why_l2(blk: dict, st0050: dict, rest: str) -> list:
         same = str(blk.get("tb_start")) == str(blk.get("w_date"))
         x = _tb_start_text(blk["tb_start"], float(blk["tb_trigger_z"]), blk.get("ma") if same else None,
                            blk.get("lower") if same else None, "0050 週線空，正二水位 0 改成 30")
+    elif "拿掉下軌接回" in rest:
+        x = f"台股指數部拿掉下軌接回（持有人拍板）：正二回到週線水位，現在 {blk['level_pct']}%。"
     elif "下軌接回結束" in rest:
         x = ("下軌接回結束：0050 週線翻多。" if blk["w"] else "下軌接回結束：0050 週收盤回到 20 週均線以上，正二水位回到 0%。")
         if blk["w"] and st0050:
@@ -443,7 +447,7 @@ def why_section(lines: list) -> str:
     if not lines:
         return ""
     body = "".join(f'<div style="font-size:14px;line-height:1.8;margin:0 0 4px;">{esc(x)}</div>' for x in lines)
-    body += note("Supertrend 以 K 棒收盤判定；水位＝週線 70%＋月線 30%，週線空、月線多時週收盤跌破 20 週下軌另有接回。")
+    body += note("Supertrend 以 K 棒收盤判定；水位＝週線 70%＋月線 30%，週線空、月線多時週收盤跌破 20 週下軌另有接回（只限美股；台股 2026-11-19 收盤的訊號起拿掉）。")
     return section("WHY", "為什麼變", body)
 
 
@@ -619,7 +623,7 @@ def build_mail_html(headline: str, state: dict, w52a_text: str | None, *, is_tes
     body += smhl_section(extra, events=False)
     body += changes_section(w52a_text)
     if any((tickers.get(t) or {}).get("rule") == ST_RULE_TAG for t in tickers):
-        body += note(f"Supertrend 規則（{ST_CUTOVER_DATE} 收盤起）：每檔 70% 看週線、30% 看月線，各自多頭才持有，水位只有 100／70／30／0%（週線空、月線多的 30% 遇到週收盤跌破 20 週下軌 2.5σ 時改為 50%，稱為下軌接回）；"
+        body += note(f"Supertrend 規則（{ST_CUTOVER_DATE} 收盤起）：每檔 70% 看週線、30% 看月線，各自多頭才持有，水位只有 100／70／30／0%（週線空、月線多的 30% 遇到週收盤跌破 20 週下軌 2.5σ 時改為 50%，稱為下軌接回，只限美股；台股 2026-11-19 收盤的訊號起拿掉）；"
                      "訊號日收盤判定，下一個交易日一次調到目標水位，沒有門檻也不分段。")
     body += note(f'完整頁面：<a href="{esc(LIVE_PAGE_URL)}">實單主系統「今天結論」</a> · '
                  f'<a href="{esc(SCOREBOARD_URL)}">記分板</a>。')

@@ -64,7 +64,8 @@ def test_core_constants_come_from_rules():
     for const, dec, cid in (("ST_CUTOVER_DATE", "ST_CUTOVER_DECISION_DATE", "st-index"),
                             ("LEG_WEIGHTS_CUTOVER_DATE", "LEG_WEIGHTS_DECISION_DATE", "us-weights-70-30"),
                             ("TW_L2_CUTOVER_DATE", "TW_L2_DECISION_DATE", "tw-l2-20-40-40"),
-                            ("BB_TAKEBACK_CUTOVER_DATE", "BB_TAKEBACK_DECISION_DATE", "takeback")):
+                            ("BB_TAKEBACK_CUTOVER_DATE", "BB_TAKEBACK_DECISION_DATE", "takeback"),
+                            ("TW_TAKEBACK_END_DATE", "TW_TAKEBACK_DECISION_DATE", "tw-no-takeback")):
         assert getattr(stc, const) == lr.effective(cid) and type(getattr(stc, const)) is str
         assert getattr(stc, dec) == lr.change(cid)["decided"] and type(getattr(stc, dec)) is str
     l2 = R["params"]["l2"]

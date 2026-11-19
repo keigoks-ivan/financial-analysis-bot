@@ -849,8 +849,8 @@ ST_LABEL = "2026-11-04 以前為照規則回推，之後為實際紀錄。"
 
 PREREG_ST = {
     "title": "實單前瞻記分板",
-    "rule": ("美股 QQQ 70／SMH 30（2026-11-04 收盤訊號起，之前各半）、台股 00631L 20%／0050 40%／2330 40%（2026-11-10 收盤訊號起，之前 0050／2330 各半；00631L 只看 0050 週線：週線多水位 100、週線空 0，下軌接回 30）；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
-             "只做多，水位 100／70／30／0%（下軌接回期間另有 50%）。美股另加 IEF／GLD，各最多 20%（水位 20／14／6／0%）。"
+    "rule": ("美股 QQQ 70／SMH 30（2026-11-04 收盤訊號起，之前各半）、台股 00631L 20%／0050 40%／2330 40%（2026-11-10 收盤訊號起，之前 0050／2330 各半；00631L 只看 0050 週線：週線多水位 100、週線空 0；2026-11-19 收盤訊號起台股不再有下軌接回）；每檔水位＝0.7×週線 Supertrend＋0.3×月線 Supertrend，"
+             "只做多，水位 100／70／30／0%（美股下軌接回期間另有 50%；台股 2026-11-19 收盤訊號起拿掉）。美股另加 IEF／GLD，各最多 20%（水位 20／14／6／0%）。"
              "美股 ATR 14／倍數 3，台股 ATR 14／倍數 2。訊號日收盤判定（只用已收完的週線、月線），下一個交易日調到目標水位。"),
     "labeling": ST_LABEL,
     "daily_return_formula": ("系統日報酬 ＝ Σ腿 持股率(前一日) × 腿日報酬 ＋ 現金部分 × 現金日率（美 ^IRX／台 1%） "
@@ -892,7 +892,7 @@ def st_level_series(sym_key, axis_dates, takeback=False):
             raise FailSafeAbort(f"{sym} 在 {d} 還沒有完整的週線／月線 Supertrend")
         out[d] = stc.level_pct(st["week"]["dir"], st["month"]["dir"])
     if takeback and out:
-        tb = stc.takeback_daily(frames, pd.DatetimeIndex([pd.Timestamp(d) for d in out]))
+        tb = stc.takeback_daily(frames, pd.DatetimeIndex([pd.Timestamp(d) for d in out]), ticker=sym)
         for d, v in zip(list(out), tb.values):
             if v == v:
                 out[d] = int(v)

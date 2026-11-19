@@ -59,7 +59,7 @@ def test_crash_week_has_z_below_trigger():
 @pytest.mark.parametrize("w,m,trend", [(0, 1, 30), (1, 1, 100), (1, 0, 70), (0, 0, 0)])
 def test_trigger_only_when_trend_is_30(w, m, trend):
     f = make_frames(crash_series(), [w] * 52, [m] * 12)
-    tb = stc.takeback_asof(f, wk(26))
+    tb = stc.takeback_asof(f, wk(26), ticker="QQQ")
     assert tb["trend"] == trend
     assert tb["active"] is (trend == 30)
     assert tb["level"] == (50 if trend == 30 else trend)
@@ -67,18 +67,18 @@ def test_trigger_only_when_trend_is_30(w, m, trend):
 
 def test_active_from_trigger_week_and_stays_until_recovery():
     f = make_frames(crash_series(recover_at=40), [0] * 52, [1] * 12)
-    assert stc.takeback_asof(f, wk(25))["active"] is False
-    a = stc.takeback_asof(f, wk(26))
+    assert stc.takeback_asof(f, wk(25), ticker="QQQ")["active"] is False
+    a = stc.takeback_asof(f, wk(26), ticker="QQQ")
     assert a["active"] and a["level"] == 50 and a["start"] == str(wk(26).date()) and a["trigger_z"] <= -2.5
     # 沒有時間上限、沒有價格停損：一路抱到價格回到均線
-    assert stc.takeback_asof(f, wk(39))["active"] is True
+    assert stc.takeback_asof(f, wk(39), ticker="QQQ")["active"] is True
 
 
 def test_ends_when_weekly_z_back_to_zero():
     f = make_frames(crash_series(recover_at=40), [0] * 52, [1] * 12)
     t = stc.takeback_table(f)
     assert stc.weekly_z(f["week"][0]["close"])["z"].iloc[40] >= 0
-    end = stc.takeback_asof(f, wk(40))
+    end = stc.takeback_asof(f, wk(40), ticker="QQQ")
     assert end["active"] is False and end["level"] == 30           # 回到趨勢水位 30
     assert t.loc[stc.last_weekday(wk(40)), "ended"] == "回到 20 週均線"
 
@@ -88,8 +88,8 @@ def test_ends_when_weekly_flips_bull():
     for i in range(30, 52):
         w[i] = 1
     f = make_frames(crash_series(), w, [1] * 12)       # 價格一直沒回均線，但週線翻多
-    assert stc.takeback_asof(f, wk(29))["active"] is True
-    r = stc.takeback_asof(f, wk(30))
+    assert stc.takeback_asof(f, wk(29), ticker="QQQ")["active"] is True
+    r = stc.takeback_asof(f, wk(30), ticker="QQQ")
     assert r["trend"] == 100 and r["active"] is False and r["level"] == 100
 
 
@@ -98,8 +98,8 @@ def test_ends_when_monthly_flips_bear():
     for i in range(7, 12):       # 8 月底（2026-08-31）起月線翻空；crash 在 2026-07-03 之後
         m[i] = 0
     f = make_frames(crash_series(), [0] * 52, m)
-    assert stc.takeback_asof(f, pd.Timestamp("2026-08-28"))["active"] is True
-    r = stc.takeback_asof(f, pd.Timestamp("2026-08-31"))
+    assert stc.takeback_asof(f, pd.Timestamp("2026-08-28"), ticker="QQQ")["active"] is True
+    r = stc.takeback_asof(f, pd.Timestamp("2026-08-31"), ticker="QQQ")
     assert r["trend"] == 0 and r["active"] is False and r["level"] == 0
 
 
@@ -109,11 +109,11 @@ def test_no_retrigger_until_z_above_minus_one():
     for i in (28, 29):
         w[i] = 1
     f = make_frames(crash_series(low=70.0), w, [1] * 12)
-    assert stc.takeback_asof(f, wk(27))["active"] is True
-    assert stc.takeback_asof(f, wk(28))["active"] is False
-    r = stc.takeback_asof(f, wk(30))
+    assert stc.takeback_asof(f, wk(27), ticker="QQQ")["active"] is True
+    assert stc.takeback_asof(f, wk(28), ticker="QQQ")["active"] is False
+    r = stc.takeback_asof(f, wk(30), ticker="QQQ")
     assert r["trend"] == 30 and r["active"] is False and r["level"] == 30 and r["z"] <= -1.0
-    assert stc.takeback_asof(f, wk(45))["active"] is False
+    assert stc.takeback_asof(f, wk(45), ticker="QQQ")["active"] is False
 
 
 def test_retrigger_after_z_recovers_above_minus_one():
@@ -127,27 +127,93 @@ def test_retrigger_after_z_recovers_above_minus_one():
     f = make_frames(c, [0] * 52, [1] * 12)
     z = stc.weekly_z(pd.Series(c, index=WEEKS))["z"]
     assert z.iloc[30] >= 0 and z.iloc[38] <= -2.5
-    assert stc.takeback_asof(f, wk(30))["active"] is False
-    r = stc.takeback_asof(f, wk(38))
+    assert stc.takeback_asof(f, wk(30), ticker="QQQ")["active"] is False
+    r = stc.takeback_asof(f, wk(38), ticker="QQQ")
     assert r["active"] is True and r["start"] == str(wk(38).date())
 
 
 def test_cutover_gating_before_equals_trend(monkeypatch):
     monkeypatch.setattr(stc, "BB_TAKEBACK_CUTOVER_DATE", str(stc.last_weekday(wk(30)).date()))
     f = make_frames(crash_series(), [0] * 52, [1] * 12)
-    before = stc.takeback_asof(f, wk(29))
+    before = stc.takeback_asof(f, wk(29), ticker="QQQ")
     assert before["applied"] is False and before["active"] is False and before["level"] == 30
-    after = stc.takeback_asof(f, wk(30))
+    after = stc.takeback_asof(f, wk(30), ticker="QQQ")
     assert after["applied"] is True and after["active"] is True and after["level"] == 50
     idx = pd.DatetimeIndex([wk(28), wk(29), wk(30), wk(31)])
-    s = stc.takeback_daily(f, idx)
+    s = stc.takeback_daily(f, idx, ticker="QQQ")
     assert list(s.values) == [30, 30, 50, 50]
 
 
 def test_daily_fills_between_weekly_completions():
     f = make_frames(crash_series(recover_at=40), [0] * 52, [1] * 12)
     idx = pd.bdate_range(wk(25) + pd.Timedelta(days=1), wk(41))       # 逐個交易日
-    s = stc.takeback_daily(f, idx)
+    s = stc.takeback_daily(f, idx, ticker="QQQ")
     assert s[wk(26) - pd.Timedelta(days=1)] == 30                      # 崩跌那週週五收盤前還是 30
     assert s[wk(26)] == 50 and s[wk(26) + pd.Timedelta(days=3)] == 50
     assert s[wk(39)] == 50 and s[wk(40)] == 30
+
+
+# ---------------------------------------------------------------- 台股拿掉下軌接回（持有人 2026-11-19 拍板）
+END = "2026-11-19"
+
+
+def _active_frames():
+    """第 26 週觸發接回、之後一直接回中（週線空、月線多）。"""
+    return make_frames(crash_series(), [1] * 26 + [0] * 26, [1] * 12)
+
+
+def _asof(d, ticker):
+    return stc.takeback_asof(_active_frames(), pd.Timestamp(d), ticker=ticker)
+
+
+def test_tw_before_end_date_unchanged(monkeypatch):
+    monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", "2026-12-31")
+    r = _asof(wk(40), "0050.TW")          # 2026-10-09 < 結束日
+    assert r["active"] is True and r["level"] == 50 and r["retired"] is False
+
+
+def test_tw_at_and_after_end_date_is_trend(monkeypatch):
+    monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", str(wk(45).date()))
+    before = _asof(wk(44), "2330.TW")
+    assert before["active"] is True and before["retired"] is False
+    for t in ("0050.TW", "2330.TW"):
+        at = _asof(wk(45), t)
+        assert at["active"] is False and at["retired"] is True
+        assert at["level"] == at["trend"] == 30
+
+
+def test_us_unaffected_after_end_date(monkeypatch):
+    monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", str(wk(40).date()))
+    for t in ("QQQ", "SMH", "SMH.L"):
+        r = _asof(wk(45), t)
+        assert r["active"] is True and r["level"] == 50 and r["retired"] is False
+
+
+def test_daily_tw_trend_after_end_date_us_unchanged(monkeypatch):
+    monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", str(wk(45).date()))
+    f = _active_frames()
+    idx = pd.DatetimeIndex([wk(44), wk(45)])
+    assert stc.takeback_daily(f, idx, ticker="0050.TW").tolist() == [50, 30]
+    assert stc.takeback_daily(f, idx, ticker="QQQ").tolist() == [50, 50]
+
+
+def test_ticker_is_required():
+    with pytest.raises(TypeError):
+        stc.takeback_asof(_active_frames(), wk(40))
+    with pytest.raises(TypeError):
+        stc.takeback_daily(_active_frames(), pd.DatetimeIndex([wk(40)]))
+
+
+def test_end_date_env_override_new_process():
+    """環境變數 W52_TW_TAKEBACK_END_DATE 在載入時取代正本的生效日（本機模擬用）；新程序裡台股 11-18 就已拿掉。"""
+    import json
+    import os
+    import subprocess
+    env = {**os.environ, "W52_TW_TAKEBACK_END_DATE": "2026-11-18"}
+    code = ("import json, supertrend_core as s; print(json.dumps([s.TW_TAKEBACK_END_DATE, "
+            "s.tw_takeback_retired('0050.TW', '2026-11-18'), s.tw_takeback_retired('QQQ', '2026-11-18'), "
+            "s.tw_takeback_retired('0050.TW', '2026-11-17')]))")
+    out = subprocess.run([sys.executable, "-c", code], cwd=Path(__file__).resolve().parents[1], env=env,
+                         capture_output=True, text=True, check=True)
+    assert json.loads(out.stdout.strip().splitlines()[-1]) == ["2026-11-18", True, False, False]
+    assert stc.TW_TAKEBACK_END_DATE == END

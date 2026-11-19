@@ -176,6 +176,16 @@ def level_pct(w_dir: int, m_dir: int) -> int:
 # 從頭重播整段歷史，不存狀態；資料日（訊號日）>= BB_TAKEBACK_CUTOVER_DATE 才套用。環境變數只供本機模擬。
 BB_TAKEBACK_CUTOVER_DATE = _lr.effective("takeback")             # 環境變數 W52_BB_TAKEBACK_CUTOVER_DATE
 BB_TAKEBACK_DECISION_DATE = _lr.change("takeback")["decided"]
+# 台股拿掉下軌接回（持有人 2026-11-19 拍板，依據 knowledge/rule_ledger.md 2026-11-19 條）：資料日 >= TW_TAKEBACK_END_DATE，
+# 0050、2330 回到趨勢水位，00631L 回到週線水位（100／0）；美股 QQQ、SMH 照舊。takeback_table／l2_table 仍是純規則重播，不套這個日期。
+TW_TAKEBACK_END_DATE = _lr.effective("tw-no-takeback")           # 環境變數 W52_TW_TAKEBACK_END_DATE
+TW_TAKEBACK_DECISION_DATE = _lr.change("tw-no-takeback")["decided"]
+_TW_TB_LEGS = tuple(_R["markets"]["tw"]["legs"])
+
+
+def tw_takeback_retired(ticker: str, d) -> bool:
+    """這檔在資料日 d 的下軌接回是否已被 2026-11-19 的決定拿掉（只有台股腿）。"""
+    return ticker in _TW_TB_LEGS and str(pd.Timestamp(d).date()) >= TW_TAKEBACK_END_DATE
 # 正本 [params.zband]、[params.takeback]。正本寫觸發門檻 trigger＝−2.5（z ≤ trigger），這裡的 BB_K 是它的絕對值（取負號是精確運算）。
 BB_K, BB_REARM, BB_LEVEL, BB_WIN = (-_R["params"]["zband"]["trigger"], _R["params"]["zband"]["rearm"],
                                     _R["params"]["takeback"]["level"], _R["params"]["zband"]["window_weeks"])
@@ -231,9 +241,10 @@ def takeback_table(frames: dict) -> pd.DataFrame:
     return pd.DataFrame(rows).set_index("date")
 
 
-def takeback_asof(frames: dict, d, table: pd.DataFrame | None = None) -> dict | None:
+def takeback_asof(frames: dict, d, table: pd.DataFrame | None = None, *, ticker: str) -> dict | None:
     """資料日 d 當下的接回狀態；已套生效日（d < BB_TAKEBACK_CUTOVER_DATE 時 applied=False、level＝trend）。
-    回傳 {trend, level, applied, active, start, trigger_z, z, ma, sd, z_bar}；z／ma／sd 是最後一根已收完週 K 的值。"""
+    回傳 {trend, level, applied, active, retired, start, trigger_z, z, ma, sd, z_bar}；z／ma／sd 是最後一根已收完週 K 的值。
+    ticker 必填：台股腿在資料日 >= TW_TAKEBACK_END_DATE 起不再接回（level＝trend、active＝False、retired＝True）。"""
     t = takeback_table(frames) if table is None else table
     d = pd.Timestamp(d).normalize()
     t = t[t.index <= d]
@@ -242,23 +253,24 @@ def takeback_asof(frames: dict, d, table: pd.DataFrame | None = None) -> dict | 
     r = t.iloc[-1]
     wz = t[t["z"].notna()]
     applied = str(d.date()) >= BB_TAKEBACK_CUTOVER_DATE
-    act = bool(r["active"]) and applied
+    retired = tw_takeback_retired(ticker, d)
+    act = bool(r["active"]) and applied and not retired
     return {"trend": None if pd.isna(r["trend"]) else int(r["trend"]),
             "level": int(r["level"]) if act else (None if pd.isna(r["trend"]) else int(r["trend"])),
-            "applied": applied, "active": act,
+            "applied": applied, "active": act, "retired": retired,
             "start": str(pd.Timestamp(r["start"]).date()) if act else None,
             "trigger_z": float(r["trigger_z"]) if act else None,
             "z": float(wz["z"].iloc[-1]) if len(wz) else None, "ma": float(wz["ma"].iloc[-1]) if len(wz) else None,
             "sd": float(wz["sd"].iloc[-1]) if len(wz) else None, "z_bar": str(wz.index[-1].date()) if len(wz) else None}
 
 
-def takeback_daily(frames: dict, idx: pd.DatetimeIndex) -> pd.Series:
+def takeback_daily(frames: dict, idx: pd.DatetimeIndex, *, ticker: str) -> pd.Series:
     """每個資料日的最終水位（整數 %）：生效日以前＝趨勢水位，生效日起接回中＝50。給歷史重播／頁面用。"""
     t = takeback_table(frames)
     pos = t.index.searchsorted(pd.DatetimeIndex(idx).normalize(), side="right") - 1
     lv = np.where(pos >= 0, t["level"].values[np.clip(pos, 0, None)], np.nan).astype(float)
     tr = np.where(pos >= 0, t["trend"].values[np.clip(pos, 0, None)], np.nan).astype(float)
-    on = np.array([str(x.date()) >= BB_TAKEBACK_CUTOVER_DATE for x in pd.DatetimeIndex(idx)])
+    on = np.array([str(x.date()) >= BB_TAKEBACK_CUTOVER_DATE and not tw_takeback_retired(ticker, x) for x in pd.DatetimeIndex(idx)])
     return pd.Series(np.where(on, lv, tr), index=idx)
 
 
@@ -303,7 +315,8 @@ def l2_table(frames: dict) -> pd.DataFrame:
 
 
 def l2_asof(frames: dict, d, table: pd.DataFrame | None = None) -> dict | None:
-    """資料日 d 當下的正二狀態（水位不受生效日影響，生效日前當預覽；applied 表示是否已實際持有）。"""
+    """資料日 d 當下的正二狀態（水位不受生效日影響，生效日前當預覽；applied 表示是否已實際持有）。
+    資料日 >= TW_TAKEBACK_END_DATE 起不再接回：level＝trend（100／0）、active＝False、retired＝True。"""
     t = l2_table(frames) if table is None else table
     d = pd.Timestamp(d).normalize()
     t = t[t.index <= d]
@@ -311,8 +324,10 @@ def l2_asof(frames: dict, d, table: pd.DataFrame | None = None) -> dict | None:
         return None
     r = t.iloc[-1]
     wz = t[t["z"].notna()]
-    act = bool(r["active"])
-    return {"trend": int(r["trend"]), "level": int(r["level"]), "applied": str(d.date()) >= TW_L2_CUTOVER_DATE, "active": act,
+    retired = str(d.date()) >= TW_TAKEBACK_END_DATE
+    act = bool(r["active"]) and not retired
+    return {"trend": int(r["trend"]), "level": int(r["trend"]) if retired else int(r["level"]),
+            "applied": str(d.date()) >= TW_L2_CUTOVER_DATE, "active": act, "retired": retired,
             "start": str(pd.Timestamp(r["start"]).date()) if act else None,
             "trigger_z": float(r["trigger_z"]) if act else None,
             "z": float(wz["z"].iloc[-1]) if len(wz) else None, "ma": float(wz["ma"].iloc[-1]) if len(wz) else None,
@@ -324,7 +339,10 @@ def l2_daily(frames: dict, idx: pd.DatetimeIndex) -> pd.Series:
     t = l2_table(frames)
     pos = t.index.searchsorted(pd.DatetimeIndex(idx).normalize(), side="right") - 1
     lv = np.where(pos >= 0, t["level"].values[np.clip(pos, 0, None)], np.nan).astype(float)
-    on = np.array([str(x.date()) >= TW_L2_CUTOVER_DATE for x in pd.DatetimeIndex(idx)])
+    tr = np.where(pos >= 0, t["trend"].values[np.clip(pos, 0, None)], np.nan).astype(float)
+    di = pd.DatetimeIndex(idx)
+    lv = np.where(np.array([str(x.date()) >= TW_TAKEBACK_END_DATE for x in di]), tr, lv)
+    on = np.array([str(x.date()) >= TW_L2_CUTOVER_DATE for x in di])
     return pd.Series(np.where(on, lv, 0.0), index=idx)
 
 

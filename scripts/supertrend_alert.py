@@ -41,6 +41,7 @@ from supertrend_core import (  # noqa: E402  算法、K 棒、收完判斷、參
     LEG_WEIGHTS_CUTOVER_DATE, leg_weights,
     last_weekday, state_asof, takeback_asof,
     l2_asof, TW_L2_CUTOVER_DATE, TW_L2_WEIGHT,
+    TW_TAKEBACK_END_DATE, TW_TAKEBACK_DECISION_DATE, tw_takeback_retired,
 )
 from supertrend_live_page import takeback_text  # noqa: E402  下軌接回的一句白話（頁面、信件、本通知共用）
 
@@ -105,13 +106,19 @@ def analyse(tk, name, tz, close_t, now_utc):
         # 下軌接回（2026-11-06 起，supertrend_core.takeback_asof）：以本檔「已收完」（照本腳本的時鐘判斷）的最後一根
         # 週線、月線的完成日為資料日；整段歷史重播，不存狀態。債金疊加不適用。
         d_done = max(last_weekday(pd.Timestamp(res["tf"][k]["confirmed"]["bar_end"])) for k in ("week", "month"))
-        tb = takeback_asof(frames, d_done)
+        tb = takeback_asof(frames, d_done, ticker=tk)
+        # 台股拿掉下軌接回（2026-11-19 拍板）：生效日看最新資料日，不看週／月收完日（收完日是上一個週五，會晚一週）
+        retired = tw_takeback_retired(tk, last_data)
+        if tb is not None and retired:
+            tb = {**tb, "active": False, "level": tb["trend"], "retired": True}
         if tb is not None:
             res["takeback"] = tb
             if tb["active"]:      # 頁面共用的文字函式要巢狀狀態（含翻轉門檻）；進行中那根 K 棒的門檻用最新資料日算
                 res["takeback_text"] = takeback_text({**state_asof(frames, last_data), "tb": tb})
         if tk == "0050.TW":     # 台股正二：只看 0050 週線，訊號跟 0050 共用同一份週 K（2026-11-10 拍板，資料日 >= TW_L2_CUTOVER_DATE 才持有）
             res["l2"] = l2_asof(frames, d_done)
+            if res["l2"] is not None and retired:
+                res["l2"] = {**res["l2"], "active": False, "level": res["l2"]["trend"], "retired": True}
     return res
 
 
@@ -177,6 +184,28 @@ def tw_l2_switch_block(by: dict) -> list:
     return lines
 
 
+def tw_takeback_end_block(by: dict, prev_tb: dict, prev_l2: dict) -> list:
+    """台股指數部拿掉下軌接回（持有人 TW_TAKEBACK_DECISION_DATE 拍板）的一次性說明與目標水位；水位照現在的計算結果，前一次記錄的水位從狀態檔讀。"""
+    lines = [f"台股指數部 {TW_TAKEBACK_END_DATE} 收盤的訊號起拿掉下軌接回（持有人 {TW_TAKEBACK_DECISION_DATE[5:]} 拍板）："
+             "0050、2330 回到趨勢水位，00631L 回到週線水位。美股照舊。請在下一個交易日一次調到位："]
+    w = leg_weights(TW_TAKEBACK_END_DATE)
+    for tk, nm in (("0050.TW", "0050"), ("2330.TW", "2330")):
+        r = by.get(tk)
+        if not r:
+            continue
+        lv, old = cur_level(r), (prev_tb.get(tk) or {}).get("level")
+        pre = f"{old}% → " if old is not None and old != lv else ""
+        pre_sh = f"{old * w[tk]:.0f}% → " if old is not None and old != lv else ""
+        lines.append(f"・{nm}：水位 {pre}{lv}%（占指數部 {pre_sh}{lv * w[tk]:.0f}%）")
+    l2 = (by.get("0050.TW") or {}).get("l2")
+    if l2:
+        old = prev_l2.get("level")
+        pre = f"{old}% → " if old is not None and old != l2["level"] else ""
+        pre_sh = f"{old * TW_L2_WEIGHT:.0f}% → " if old is not None and old != l2["level"] else ""
+        lines.append(f"・00631L：水位 {pre}{l2['level']}%（占指數部 {pre_sh}{l2['level'] * TW_L2_WEIGHT:.0f}%）")
+    return lines
+
+
 def l2_status_line(r) -> list:
     """目前狀態裡的正二一行（放在 0050 後面）；沒有資料回空。"""
     l2 = r.get("l2")
@@ -209,9 +238,9 @@ def params_text() -> str:
 FOOTER = ["", f"規則：Supertrend，{params_text()}，週線 70%＋月線 30%，只做多。"
           f"{ST_CUTOVER_DATE} 收盤起實單的指數部照這套規則；換檔另有實單系統信。",
           f"指數部權重：美股 QQQ 70%／SMH 30%（{LEG_WEIGHTS_CUTOVER_DATE} 收盤的訊號起，之前各半）、台股 00631L 20%／0050 40%／2330 40%（{TW_L2_CUTOVER_DATE} 收盤的訊號起，之前 0050／2330 各半）；占指數部＝水位 × 權重。",
-          "00631L 只看 0050 週線：週線多水位 100、週線空水位 0；週線空時週收盤跌破 20 週下軌 2.5σ，水位 30，週收盤回到 20 週均線或週線翻多就結束。",
-          "下軌接回（2026-11-06 收盤的訊號起）：週線空、月線多（水位 30）時，週收盤跌破 20 週均線下方 2.5 個標準差，水位改 50；"
-          "週收盤回到 20 週均線，或週線翻多、月線翻空，就結束。債金不適用。",
+          f"00631L 只看 0050 週線：週線多水位 100、週線空水位 0（{TW_TAKEBACK_END_DATE} 收盤的訊號起不再有下軌接回水位 30）。",
+          "下軌接回（2026-11-06 收盤的訊號起，只限美股 QQQ、SMH）：週線空、月線多（水位 30）時，週收盤跌破 20 週均線下方 2.5 個標準差，水位改 50；"
+          f"週收盤回到 20 週均線，或週線翻多、月線翻空，就結束。債金不適用；台股 0050、2330 自 {TW_TAKEBACK_END_DATE} 收盤的訊號起拿掉。",
           f"回測比較：{PAGE_URL}"]
 
 
@@ -266,10 +295,12 @@ def main(argv=None):
             errors.append(f"{tk}: {e}")
             print("ERROR", tk, e, file=sys.stderr)
 
+    prev_tb_state = json.loads(json.dumps(state.get("takeback") or {}))     # 台股拿掉下軌接回的通知要顯示前一次記錄的水位
+    prev_l2_state = dict(state.get("tw_l2") or {})
     events, baseline = [], []
     tb_chg = {}     # 代號 -> (開始／結束, 上次記錄的水位, 現在水位)；下軌接回開始或結束也要通知（只變疊加層時沒有翻轉可偵測）
     for r in results:
-        if "takeback" in r and r["ticker"] not in rebase and any(f"{r['ticker']}|{k}" in state["signals"] for k in r["tf"]):
+        if "takeback" in r and not r["takeback"].get("retired") and r["ticker"] not in rebase and any(f"{r['ticker']}|{k}" in state["signals"] for k in r["tf"]):
             was = (state.get("takeback") or {}).get(r["ticker"]) or {}
             if bool(was.get("active")) != bool(r["takeback"]["active"]):
                 tb_chg[r["ticker"]] = ("開始" if r["takeback"]["active"] else "結束", was.get("level"), cur_level(r))
@@ -289,7 +320,8 @@ def main(argv=None):
     r50 = next((r for r in results if r.get("l2")), None)
     if r50:
         was_l2, now_l2 = state.get("tw_l2") or {}, r50["l2"]
-        if now_l2["applied"] and was_l2.get("applied") and was_l2.get("level") != now_l2["level"]:
+        if now_l2["applied"] and was_l2.get("applied") and was_l2.get("level") != now_l2["level"] and not (
+                now_l2.get("retired") and was_l2.get("active")):     # 因拿掉接回而改水位的那次，由「台股拿掉下軌接回」一段說明
             l2_evt = (was_l2.get("level"), now_l2["level"], now_l2["active"], bool(was_l2.get("active")))
         state["tw_l2"] = {"level": now_l2["level"], "active": now_l2["active"], "applied": now_l2["applied"], "asof": r50["last_date"]}
 
@@ -398,6 +430,18 @@ def main(argv=None):
             out = ("【Supertrend】台股指數部改配置 00631L 20／0050 40／2330 40", blk + status_lines(results) + FOOTER)
         if not a.dry_run:
             state["tw_l2_notified"] = by["0050.TW"]["last_date"]
+
+    # 台股拿掉下軌接回：第一次 0050 資料日 >= TW_TAKEBACK_END_DATE 的執行寄一段說明（狀態檔記旗標，只寄一次）
+    tw_tb_end_pending = (not a.test_alert and not state.get("tw_takeback_end_notified")
+                         and "0050.TW" in by and by["0050.TW"]["last_date"] >= TW_TAKEBACK_END_DATE)
+    if tw_tb_end_pending:
+        blk = tw_takeback_end_block(by, prev_tb_state, prev_l2_state)
+        if out:
+            out = (out[0] + "；另有台股拿掉下軌接回", blk + [""] + out[1])
+        else:
+            out = ("【Supertrend】台股指數部拿掉下軌接回", blk + status_lines(results) + FOOTER)
+        if not a.dry_run:
+            state["tw_takeback_end_notified"] = by["0050.TW"]["last_date"]
 
     if errors:
         print("抓價失敗：", errors, file=sys.stderr)

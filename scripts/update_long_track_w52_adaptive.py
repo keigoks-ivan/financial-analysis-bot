@@ -856,7 +856,7 @@ def _tb_asof(t: str, fr: dict, asof) -> dict | None:
         return None
     if t not in ST_TB:
         ST_TB[t] = stc.takeback_table(fr)
-    return stc.takeback_asof(fr, pd.Timestamp(asof), ST_TB[t])
+    return stc.takeback_asof(fr, pd.Timestamp(asof), ST_TB[t], ticker=YF_SYMBOL[t])
 
 
 def st_leg_state(t: str, asof, recent: bool = False) -> dict | None:
@@ -1044,6 +1044,8 @@ def _st_event_reason(date, t: str, tb_now: bool = False, tb_prev: bool = False) 
     if tb_now and not tb_prev:
         return "下軌接回開始（水位 30 改 50）"
     if tb_prev and not tb_now:
+        if stc.tw_takeback_retired(YF_SYMBOL.get(t, t), date) and PROFILE == "live" and not SHADOW:
+            return "台股拿掉下軌接回"
         return "下軌接回結束"
     return "Supertrend 換檔"
 
@@ -1140,7 +1142,7 @@ def _st_series_from_frames(fr: dict, dates: list, tb_leg: str | None = None) -> 
             rec["level_pct"] = stc.level_pct(rec["w"], rec["m"])
         out[d] = rec if ok else None
     if tb_leg is not None and PROFILE == "live" and not SHADOW:      # 下軌接回（生效日以前＝趨勢水位）
-        lv = stc.takeback_daily(fr, idx)
+        lv = stc.takeback_daily(fr, idx, ticker=YF_SYMBOL[tb_leg])
         for i, d in enumerate(dates):
             if out[d] is not None and not np.isnan(lv.iloc[i]) and int(lv.iloc[i]) != out[d]["level_pct"]:
                 out[d]["trend_pct"] = out[d]["level_pct"]
@@ -2436,7 +2438,7 @@ def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
 <div class="rule-list" style="font-size:.85rem;margin-top:.8rem">{changed}</div>
 <div style="font-size:.72rem;color:var(--muted);margin-top:.6rem;line-height:1.7">
 名詞：<b>Supertrend</b>＝依近 14 根 K 棒平均波動上下推開的追蹤線，收盤站上線是多頭、跌破線是空頭；
-<b>水位</b>＝70% 看週線、30% 看月線，各自多頭才持有，所以每檔通常只有 100／70／30／0% 四種（週線空、月線多的 30% 遇到週收盤跌破 20 週下軌 2.5σ 時，改為 50%，稱為下軌接回；週收盤回到 20 週均線，或趨勢水位離開 30，就結束），該檔占指數部淨值＝水位 × 該檔權重（美股 QQQ 70%／SMH 30%，2026-11-04 收盤的訊號起，之前各半；台股 00631L 20%／0050 40%／2330 40%，2026-11-10 收盤的訊號起，之前 0050、2330 各半）；
+<b>水位</b>＝70% 看週線、30% 看月線，各自多頭才持有，所以每檔通常只有 100／70／30／0% 四種（週線空、月線多的 30% 遇到週收盤跌破 20 週下軌 2.5σ 時，改為 50%，稱為下軌接回，只限美股；台股 2026-11-19 收盤的訊號起拿掉；週收盤回到 20 週均線，或趨勢水位離開 30，就結束），該檔占指數部淨值＝水位 × 該檔權重（美股 QQQ 70%／SMH 30%，2026-11-04 收盤的訊號起，之前各半；台股 00631L 20%／0050 40%／2330 40%，2026-11-10 收盤的訊號起，之前 0050、2330 各半）；
 <b>債金疊加</b>＝美股另外各最多 20% 配置公債（IEF）與黃金（GLD），{"各看週線與月線的 Supertrend" if DEF_ST_ON else "各看週線三個條件，每成立一條加三分之一"}。
 訊號日收盤判定，下一個交易日一次調到目標水位，沒有門檻也不分段。
 </div>
@@ -2751,7 +2753,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
     if PURE:         # 實盤頁顯示層：整頁當作一直都是 Supertrend，頁面不提舊規則（只留一行對照線連結）
         pg.update({
             "title": "Supertrend 週線＋月線｜實單主系統（美股債金版・台股不借錢版） | InvestMQuest Research",
-            "desc": "實單主系統：指數部四檔（QQQ、SMH、0050、2330）每檔 70% 看週線 Supertrend、30% 看月線 Supertrend，水位 100／70／30／0%（下軌接回期間另有 50%）；美股另加公債、黃金疊加；email 提醒換檔。",
+            "desc": "實單主系統：指數部四檔（QQQ、SMH、0050、2330）每檔 70% 看週線 Supertrend、30% 看月線 Supertrend，水位 100／70／30／0%（美股下軌接回期間另有 50%）；美股另加公債、黃金疊加；email 提醒換檔。",
             "crumb": "Supertrend 週線＋月線（實單主系統）",
             "h1": "Supertrend 週線＋月線 — 實單主系統",
             "sub": "美股 QQQ+SMH（債金版）＋ 台股 0050+2330（不借錢版）· 每檔 70% 週線＋30% 月線 Supertrend · Long only、不借錢",
@@ -2765,7 +2767,7 @@ def _page_blocks(sigs: dict, overlay: dict | None, overlay_changes: list | None,
     if ST_MODE:      # Supertrend 已生效：整頁文字換成 Supertrend 規則
         pg.update({
             "title": "Supertrend 週線＋月線｜實單主系統（美股債金版・台股不借錢版） | InvestMQuest Research",
-            "desc": f"實單主系統：{cut} 收盤起指數部四檔（QQQ、SMH、0050、2330）每檔 70% 看週線 Supertrend、30% 看月線 Supertrend，水位 100／70／30／0%（下軌接回期間另有 50%）；美股另加公債、黃金週線疊加；email 提醒換檔。",
+            "desc": f"實單主系統：{cut} 收盤起指數部四檔（QQQ、SMH、0050、2330）每檔 70% 看週線 Supertrend、30% 看月線 Supertrend，水位 100／70／30／0%（美股下軌接回期間另有 50%）；美股另加公債、黃金週線疊加；email 提醒換檔。",
             "crumb": "Supertrend 週線＋月線（實單主系統）",
             "h1": "Supertrend 週線＋月線 — 實單主系統",
             "sub": (f"美股 QQQ+SMH（債金版）＋ 台股 0050+2330（不借錢版）· 每檔 70% 週線＋30% 月線 Supertrend · Long only、不借錢 · "
@@ -3145,7 +3147,10 @@ def detect_changes(prev: dict, sigs: dict, skip_legs=(), leg_dates: dict | None 
                     tbi = sigs[t]["st"]["tb"]
                     parts.append(f"下軌接回開始（{str(tbi['start'])[5:]} 週收盤 z {tbi['trigger_z']:.2f} 跌破 2.5σ 下軌，水位 30 改 50）".replace("z -", "z −"))
                 elif tb_prev and not tb_cur:
-                    parts.append("下軌接回結束" + ("" if parts else "（週收盤回到 20 週均線，水位回到趨勢水位）"))
+                    if stc.tw_takeback_retired(YF_SYMBOL.get(t, t), sigs[t]["st"]["asof"]):
+                        parts.append(f"台股拿掉下軌接回（持有人 {stc.TW_TAKEBACK_DECISION_DATE[5:]} 拍板），水位回到趨勢水位")
+                    else:
+                        parts.append("下軌接回結束" + ("" if parts else "（週收盤回到 20 週均線，水位回到趨勢水位）"))
             elif gate_flip:
                 parts.append("閘門 " + ("出場→在場" if sigs[t]["gate"] else "在場→出場"))
             if PROFILE == "live" and st_rule:
@@ -3349,7 +3354,10 @@ def detect_l2_change(prev: dict | None, cur: dict | None, delayed: bool) -> dict
     elif cur["tb"] and not was.get("tb"):
         why = f"下軌接回開始（{str(cur['tb_start'])[5:]} 週收盤 z {cur['tb_trigger_z']:.2f} 跌破 2.5σ 下軌）".replace("z -", "z −")
     elif was.get("tb") and not cur["tb"]:
-        why = "下軌接回結束" + ("，週線翻多" if cur["w"] else "（週收盤回到 20 週均線）")
+        if stc.tw_takeback_retired("0050.TW", cur["asof"]):
+            why = f"台股拿掉下軌接回（持有人 {stc.TW_TAKEBACK_DECISION_DATE[5:]} 拍板），回到週線水位"
+        else:
+            why = "下軌接回結束" + ("，週線翻多" if cur["w"] else "（週收盤回到 20 週均線）")
     else:
         why = f"0050 週線翻{'多' if cur['w'] else '空'}"
     return {"why": why, "held": held, "target": float(cur["target_pct"]),
@@ -3381,7 +3389,7 @@ def l2_trigger_parts(blk: dict) -> list:
     out = [f"週收盤站上 {thr} → 水位 100%"]
     if blk["tb"]:
         out.append(f"週收盤回到 20 週均線 約 {blk['ma']:,.2f} → 水位 0%")
-    elif blk.get("lower") is not None:
+    elif blk.get("lower") is not None and blk.get("asof", "") < stc.TW_TAKEBACK_END_DATE:
         out.append(f"週收盤跌破 20 週下軌 約 {blk['lower']:,.2f} → 水位 30%（z 要先回到 −1 以上才能再觸發）")
     return out
 
@@ -3393,11 +3401,13 @@ def l2_card(blk: dict | None) -> str:
     tag = ('<span class="tag" style="background:var(--green-bg);color:var(--green-text);margin-left:.4rem">已生效</span>' if blk["applied"] else
            f'<span class="tag" style="background:var(--amber-bg);color:var(--amber-text);margin-left:.4rem">{blk["active_from"]} 收盤起生效・目前為預覽</span>')
     tb = (f"下軌接回中（{str(blk['tb_start'])[5:]} 週收盤 z {blk['tb_trigger_z']:.2f} 跌破 2.5σ 下軌）".replace("z -", "z −") if blk["tb"] else "沒有接回")
+    if not blk["tb"] and blk.get("asof", "") >= stc.TW_TAKEBACK_END_DATE:
+        tb = f"沒有接回（{stc.TW_TAKEBACK_END_DATE} 收盤的訊號起台股拿掉下軌接回）"
     conds = "".join(f"<li>{c}</li>" for c in l2_trigger_parts(blk))
     stale = ('<div style="font-size:.78rem;color:var(--red-text);margin-top:.4rem">資料暫時抓不到，以上沿用前次紀錄。</div>' if blk.get("stale") else "")
     return f"""<div class="card" style="border:2px solid var(--brand);background:#f5f8ff">
 <h3 style="color:var(--brand)">台股正二 00631L{tag}</h3>
-<p style="font-size:.82rem;color:var(--muted);margin-bottom:.7rem">{blk["active_from"]} 收盤的訊號起，台股指數部改為 00631L 20%、0050 40%、2330 40%。00631L 只看 0050 的週線 Supertrend，週線多水位 100、週線空水位 0，不看月線。週線空時週收盤跌破 20 週下軌 2.5σ，水位改 30；週收盤回到 20 週均線或週線翻多就結束。週五收盤判定，下一個交易日一次調到目標。00631L 是 2 倍產品，股票曝險按 2 倍計算。</p>
+<p style="font-size:.82rem;color:var(--muted);margin-bottom:.7rem">{blk["active_from"]} 收盤的訊號起，台股指數部改為 00631L 20%、0050 40%、2330 40%。00631L 只看 0050 的週線 Supertrend，週線多水位 100、週線空水位 0，不看月線。{stc.TW_TAKEBACK_END_DATE} 收盤的訊號起不再有下軌接回，週線空水位就是 0。週五收盤判定，下一個交易日一次調到目標。00631L 是 2 倍產品，股票曝險按 2 倍計算。</p>
 <table style="width:100%"><tbody>
 <tr><td>0050 週線（K 棒 {blk["w_date"]}）</td><td class="num">{"多" if blk["w"] else "空"}，線 {blk["w_line"]:,.2f}</td></tr>
 <tr><td>週收盤 z（20 週）</td><td class="num">{"—" if blk["z"] is None else f'{blk["z"]:.2f}'.replace("-", "−")}</td></tr>
@@ -3498,7 +3508,7 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
     new_legs = [t for t in ALL_TICKERS if sigs[t].get("rule") == NEW_RULE_TAG]
     old_legs = [t for t in ALL_TICKERS if t not in new_legs and t not in st_legs]
     if st_legs:
-        body += note(f"{ST_CUTOVER_DATE} 收盤起指數部改看 Supertrend：每檔 70% 看週線、30% 看月線，各自多頭才持有，水位通常只有 100／70／30／0%（下軌接回期間另有 50%）。"
+        body += note(f"{ST_CUTOVER_DATE} 收盤起指數部改看 Supertrend：每檔 70% 看週線、30% 看月線，各自多頭才持有，水位通常只有 100／70／30／0%（美股下軌接回期間另有 50%）。"
                      f"{'、'.join(st_legs)} 已適用。訊號日收盤判定，下一個交易日一次調到目標水位，沒有門檻也不分段。"
                      "原 W52 規則改為對照線，不再寄信。")
         trig_rows = [[f"<strong>{esc(t)}</strong>", esc(_leg_trigger_text(t, sigs[t], None))] for t in st_legs]
@@ -3540,7 +3550,7 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date, cap_flips: 
         button_label="前往實單主系統頁 →",
         button_url=LT_W52_PAGE_URL,
         accent="navy",
-        disclaimer=((f"實單主系統機械訊號通知（描述器）。{ST_CUTOVER_DATE} 收盤起指數部四檔照 Supertrend（週線 70%＋月線 30%，水位 100／70／30／0%、下軌接回期間另有 50%，不借錢），"
+        disclaimer=((f"實單主系統機械訊號通知（描述器）。{ST_CUTOVER_DATE} 收盤起指數部四檔照 Supertrend（週線 70%＋月線 30%，水位 100／70／30／0%、美股下軌接回期間另有 50%，不借錢），"
                      "美股另加公債、黃金疊加（同日起也看週線 70%＋月線 30% Supertrend）。可行動變化＝任一檔目標水位和現持不同、或美股債金水位改變；訊號日收盤判定，下一個交易日一次調到目標。")
                     if st_mail else
                     f"實單主系統機械訊號通知（描述器）。{RULE_SWITCH_DATE} 起股票部分上限 100%（不借錢），美股另加公債、黃金週線疊加。"
@@ -3635,7 +3645,7 @@ ST_CUTOVER_ENTRY = {
     "from_tag": NEW_RULE_TAG,
     "to_tag": ST_RULE_TAG,
     "summary": ("持有人拍板：指數部四檔（QQQ、SMH、0050、2330）由 W52 × 自適應波動率改為 Supertrend，每檔 70% 週線＋30% 月線，"
-                "只做多，水位 100／70／30／0%（下軌接回期間另有 50%）。訊號日收盤判定，下一個交易日一次調到目標水位。債金疊加（美股 IEF／GLD）同日也改 Supertrend（週 70%＋月 30%，ATR 14／倍數 3，水位 20／14／6／0%）。"),
+                "只做多，水位 100／70／30／0%（美股下軌接回期間另有 50%）。訊號日收盤判定，下一個交易日一次調到目標水位。債金疊加（美股 IEF／GLD）同日也改 Supertrend（週 70%＋月 30%，ATR 14／倍數 3，水位 20／14／6／0%）。"),
     "us": "Supertrend ATR 14／倍數 3（未調股息 OHLC，hl2）；債金疊加同日也改 Supertrend（IEF／GLD 14／3，各最多 20%）",
     "tw": "Supertrend ATR 14／倍數 2；不借錢、無債金",
     "history_policy": "生效日前的 history_us／history_tw 紀錄不改寫；生效日當天各檔從 W52 階段的現持水位一次調到 Supertrend 水位",
@@ -3655,7 +3665,20 @@ TW_L2_ENTRY = {
     "control_line": "不另開對照線；現行配置的比較在持有人的測試頁",
     "research": "v7-backtest src/l2_vs_981a/sleeve_20_40_40.py；帳本 TW-SLEEVE-L2-20-40-40；退回條件見 knowledge/rule_ledger.md 2026-11-10",
 }
-RULE_CHANGE_ENTRIES = (RULE_CHANGE_ENTRY, EXEC_ASYM_ENTRY, ST_CUTOVER_ENTRY, TW_L2_ENTRY)
+TW_TB_END_ENTRY = {
+    "effective": stc.TW_TAKEBACK_END_DATE,
+    "decided": stc.TW_TAKEBACK_DECISION_DATE,
+    "from_tag": ST_RULE_TAG + "+tw_l2",
+    "to_tag": ST_RULE_TAG + "+tw_l2+tw_no_takeback",
+    "summary": ("持有人拍板：台股指數部拿掉下軌接回（0050、2330、00631L）。0050、2330 回到趨勢水位，00631L 回到週線水位（多 100、空 0）。"
+                "美股 QQQ、SMH 的下軌接回照舊。"),
+    "us": "不變",
+    "tw": "0050、2330、00631L 不再有下軌接回；權重不變",
+    "history_policy": "生效日前的 history 不改寫；生效日起 0050、2330 由接回水位 50 回到趨勢水位 30，正二由 30 回到 0（以當時水位為準）",
+    "control_line": "不另開對照線",
+    "research": "見 knowledge/rule_ledger.md 2026-11-19",
+}
+RULE_CHANGE_ENTRIES = (RULE_CHANGE_ENTRY, EXEC_ASYM_ENTRY, ST_CUTOVER_ENTRY, TW_L2_ENTRY, TW_TB_END_ENTRY)
 
 
 def merge_rule_changes(prev_list) -> list:
@@ -3698,7 +3721,7 @@ def build_alert_lines(events: list, sigs: dict, exp: dict, data_date, cap_flips:
     cut_legs = [t for t in ALL_TICKERS if sigs[t].get("rule") == ST_RULE_TAG
                 and (PREV_RULES.get(t) != ST_RULE_TAG)]
     if cut_legs:
-        lines += [f"規則切換：{ST_CUTOVER_DATE} 收盤起，指數部改看 Supertrend（每檔 70% 週線＋30% 月線，水位通常只有 100／70／30／0%，下軌接回期間另有 50%）。"
+        lines += [f"規則切換：{ST_CUTOVER_DATE} 收盤起，指數部改看 Supertrend（每檔 70% 週線＋30% 月線，水位通常只有 100／70／30／0%，美股下軌接回期間另有 50%）。"
                   f"下一個交易日把 {'、'.join(cut_legs)} 各從現持水位一次調到下列 Supertrend 水位，不分段、不等門檻；沒有列出的檔現持已經等於目標，不用動。", ""]
     for c in ev:
         lines.append("• " + c)

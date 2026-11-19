@@ -427,7 +427,7 @@ def analyse_smhl(now_utc: datetime | None) -> dict:
     if not s.get("week") or not s.get("month"):
         raise ValueError("SMH.L Supertrend K 棒不足")
     trend = stc.level_pct(s["week"]["dir"], s["month"]["dir"])
-    tb = stc.takeback_asof(fr, last)
+    tb = stc.takeback_asof(fr, last, ticker=SMHL)
     if tb is not None and tb["trend"] != trend:
         tb = None
     return {"asof": str(last.date()), "close": float(oh.close.iloc[-1]), "week": s["week"], "month": s["month"],

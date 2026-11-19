@@ -92,3 +92,22 @@ def test_asof_daily_and_weights_cutover():
     assert before["0050.TW"] == before["2330.TW"] == 0.5
     assert after["0050.TW"] == after["2330.TW"] == 0.4
     assert after["QQQ"] == 0.7 and after["SMH"] == 0.3
+
+
+def test_l2_after_takeback_end_date_is_trend(monkeypatch):
+    """2026-11-19 起（TW_TAKEBACK_END_DATE）正二不再有接回 30：週線空＝0、多＝100；l2_table 仍是純規則重播。"""
+    c = base_closes()
+    c[30] = 90.0
+    fr = frames(c, [1] * 30 + [0] * 22)
+    d = WEEKS[30]
+    monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", "2026-12-31")
+    a = stc.l2_asof(fr, d)
+    assert a["level"] == 30 and a["active"] and a["retired"] is False
+    monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", str(d.date()))
+    b = stc.l2_asof(fr, d)
+    assert b["level"] == 0 and b["trend"] == 0 and b["active"] is False and b["retired"] is True
+    assert stc.l2_table(fr)["level"].iloc[30] == 30            # 純重播不變
+    monkeypatch.setattr(stc, "TW_L2_CUTOVER_DATE", "2000-01-01")
+    assert stc.l2_daily(fr, pd.DatetimeIndex([d])).iloc[0] == 0
+    monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", "2026-12-31")
+    assert stc.l2_daily(fr, pd.DatetimeIndex([d])).iloc[0] == 30

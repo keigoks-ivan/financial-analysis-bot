@@ -510,7 +510,7 @@ def _l2_level_row(l2: dict) -> str:
         conds = [f"週五收盤站上 {thr} → 水位 100%"]
         if l2.get("tb"):
             conds.append(f'週五收盤回到 20 週均線 約 {_px(l2["ma"])} → 水位 0%')
-        elif l2.get("lower") is not None:
+        elif l2.get("lower") is not None and str(l2.get("asof", "")) < _lr.effective("tw-no-takeback"):
             conds.append(f'週五收盤跌破 20 週下軌 約 {_px(l2["lower"])} → 水位 30%')
     tag = "" if l2.get("applied") else f'<span class="lt-sub">{l2.get("active_from")} 收盤起生效</span>'
     return f'<tr><td><b>00631L</b>{tag}</td><td>{"<br>".join(conds)}</td></tr>'
