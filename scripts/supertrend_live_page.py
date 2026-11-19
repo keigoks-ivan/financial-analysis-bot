@@ -281,7 +281,7 @@ def shadow_banner(cutover: str, live_url: str) -> str:
 
 def banner_pure() -> str:
     """實單頁頂端說明（顯示層：整段歷史當作一直都是 Supertrend，不提舊規則）。"""
-    return """<div class="oos-banner">
+    return f"""<div class="oos-banner">
   <span class="tag-loud">實單主系統・指數部四檔照 Supertrend・email 提醒換檔</span>
   <div style="font-size:.86rem">本頁是實單主系統。指數部四檔（美股 QQQ、SMH，台股 0050、2330）每檔 <b>70% 看週線、30% 看月線</b>的 Supertrend，各自多頭才持有，所以每檔水位通常是 100%、70%、30%、0%；週線空、月線多的 30% 遇到週收盤跌破 20 週下軌 2.5σ 時改為 50%，稱為下軌接回，只限美股；台股 {stc.TW_TAKEBACK_END_DATE} 收盤的訊號起拿掉。不借錢，也沒有調整門檻：週線在每週最後一個交易日收盤後判定、月線在月底收盤後判定，下一個交易日一次調到目標水位。<b>{stc.TW_L2_CUTOVER_DATE} 收盤的訊號起</b>，台股指數部改為 00631L 20%、0050 40%、2330 40%，00631L 是 2 倍產品，規則見正二卡。
   <br><br><b>怎麼讀</b>：線在價格下方是多頭、當作支撐，收盤跌破就翻空；線在價格上方是空頭，收盤站上就翻多。美股用 ATR 14、倍數 3，台股用 ATR 14、倍數 2，美股 K 線用沒有調整股息的價格，台股用還原全息。下方「Supertrend 現況」列出每檔目前的方向、線值，以及這一週、這個月收盤到哪個價位會翻。

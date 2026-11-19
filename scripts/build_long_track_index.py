@@ -527,7 +527,9 @@ def _levels_table(state: dict, key: str) -> str:
         for t, k in (("IEF", "ief"), ("GLD", "gld")):
             if ov.get(k):
                 rows += _level_rows(t, {**ov[k], "tb_info": None, "w_exact": ov[k].get("w_exact", True), "m_exact": ov[k].get("m_exact", True)}, overlay=True)
-    cap = "每項只列下一個會改變水位的條件，先到的為準。週線門檻每週會小幅移動，以週五收盤為準。水位 30 時週收盤跌破 2.5 個標準差下軌，改為 50。"
+    cap = "每項只列下一個會改變水位的條件，先到的為準。週線門檻每週會小幅移動，以週五收盤為準。"
+    cap += ("水位 30 時週收盤跌破 2.5 個標準差下軌，改為 50。" if key == "us"
+            else f"台股 {_lr.effective('tw-no-takeback')} 收盤的訊號起不再有下軌接回。")
     l2 = state.get("tw_l2") or {}
     if key == "tw" and l2.get("w_thr") is not None:
         rows += _l2_level_row(l2)
@@ -691,7 +693,7 @@ def _perf_block(key: str) -> str:
                                    ("年化報酬除以最大回撤（Calmar）", "calmar", "")))
     t1 = f'<div class="lt-scroll"><table class="lt-tbl"><thead><tr><th></th><th class="num">系統</th><th class="num">一直抱著</th></tr></thead><tbody>{rows}</tbody></table></div>'
     lay = ""
-    for k, n in (("week", "週線那塊"), ("month", "月線那塊"), ("takeback", "下軌接回")):
+    for k, n in (("week", "週線那塊"), ("month", "月線那塊")) + ((("takeback", "下軌接回"),) if key != "tw" else ()):
         x = (m.get("layers") or {}).get(k) or {}
         g = lambda f, dec=2, u="": f"{x[f]:.{dec}f}{u}" if isinstance(x.get(f), (int, float)) else "—"
         lay += (f'<tr><td>{n}</td><td class="num">{g("n", 0)}</td><td class="num">{g("win_rate", 0, "%")}</td><td class="num">{g("payoff")}</td>'
@@ -705,7 +707,8 @@ def _perf_block(key: str) -> str:
                    f'一直抱著 {alt["bh_cagr"]:.2f}%、{alt["bh_mdd"]:.1f}%、{alt["bh_sharpe"]:.2f}。')
     cap = (f'{m.get("start", "")} 起到 {d.get("asof", "")}，訊號用{(d.get("signal_basis") or {}).get(key, "")} K 線。'
            f'平均持股 {m.get("avg_exposure", 0):.0f}%{"（股票曝險，正二按 2 倍算）" if key == "tw" else ""}，一年下單 {m.get("adj_days_per_yr", 0):.1f} 天，成本每年 {m.get("cost_per_yr", 0):.2f} 個百分點。{alt_txt}'
-           f'現行規則套回整段歷史算出來的，參數與接回都是看過結果才定，當成上限看。{link}')
+           + ('現行規則套回整段歷史算出來的，參數與接回都是看過結果才定，當成上限看。' if key != "tw" else
+              '現行規則（2026-11-19 起不接回）套回整段歷史算出來的，參數都是看過結果才定，當成上限看。') + link)
     return _sec("系統績效", t1 + t2, cap)
 
 
