@@ -184,6 +184,7 @@ def test_tw_at_and_after_end_date_is_trend(monkeypatch):
 
 def test_us_unaffected_after_end_date(monkeypatch):
     monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", str(wk(40).date()))
+    monkeypatch.setattr(stc, "US_TAKEBACK_END_DATE", "2026-12-31")
     for t in ("QQQ", "SMH", "SMH.L"):
         r = _asof(wk(45), t)
         assert r["active"] is True and r["level"] == 50 and r["retired"] is False
@@ -191,6 +192,7 @@ def test_us_unaffected_after_end_date(monkeypatch):
 
 def test_daily_tw_trend_after_end_date_us_unchanged(monkeypatch):
     monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", str(wk(45).date()))
+    monkeypatch.setattr(stc, "US_TAKEBACK_END_DATE", "2026-12-31")
     f = _active_frames()
     idx = pd.DatetimeIndex([wk(44), wk(45)])
     assert stc.takeback_daily(f, idx, ticker="0050.TW").tolist() == [50, 30]
@@ -217,3 +219,63 @@ def test_end_date_env_override_new_process():
                          capture_output=True, text=True, check=True)
     assert json.loads(out.stdout.strip().splitlines()[-1]) == ["2026-11-18", True, False, False]
     assert stc.TW_TAKEBACK_END_DATE == END
+
+
+# ---------------------------------------------------------------- 美股也拿掉下軌接回（持有人 2026-11-19 拍板，下軌接回整條退役）
+def test_us_before_end_date_unchanged(monkeypatch):
+    monkeypatch.setattr(stc, "US_TAKEBACK_END_DATE", "2026-12-31")
+    for t in ("QQQ", "SMH", "SMH.L"):
+        r = _asof(wk(45), t)
+        assert r["active"] is True and r["level"] == 50 and r["retired"] is False
+
+
+def test_us_at_and_after_end_date_is_trend(monkeypatch):
+    monkeypatch.setattr(stc, "US_TAKEBACK_END_DATE", str(wk(45).date()))
+    for t in ("QQQ", "SMH", "SMH.L"):                    # SMH.L＝倫敦版，也算美股腿
+        before = _asof(wk(44), t)
+        assert before["active"] is True and before["retired"] is False
+        at = _asof(wk(45), t)
+        assert at["active"] is False and at["retired"] is True
+        assert at["level"] == at["trend"] == 30
+        assert _asof(wk(46), t)["level"] == 30           # 之後仍是趨勢水位
+
+
+def test_tw_unaffected_by_us_end_date(monkeypatch):
+    monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", "2026-12-31")
+    monkeypatch.setattr(stc, "US_TAKEBACK_END_DATE", str(wk(40).date()))
+    for t in ("0050.TW", "2330.TW"):
+        r = _asof(wk(45), t)
+        assert r["active"] is True and r["level"] == 50 and r["retired"] is False
+
+
+def test_takeback_retired_dispatch(monkeypatch):
+    monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", "2026-11-19")
+    monkeypatch.setattr(stc, "US_TAKEBACK_END_DATE", "2026-11-25")
+    assert stc.takeback_retired("0050.TW", "2026-11-19") is True and stc.takeback_retired("0050.TW", "2026-11-18") is False
+    for t in ("QQQ", "SMH", "SMH.L"):
+        assert stc.takeback_retired(t, "2026-11-24") is False and stc.takeback_retired(t, "2026-11-25") is True
+
+
+def test_daily_us_trend_after_end_date(monkeypatch):
+    monkeypatch.setattr(stc, "TW_TAKEBACK_END_DATE", "2026-12-31")
+    monkeypatch.setattr(stc, "US_TAKEBACK_END_DATE", str(wk(45).date()))
+    f = _active_frames()
+    idx = pd.DatetimeIndex([wk(44), wk(45)])
+    assert stc.takeback_daily(f, idx, ticker="SMH").tolist() == [50, 30]
+    assert stc.takeback_daily(f, idx, ticker="0050.TW").tolist() == [50, 50]
+    assert stc.takeback_table(f)["level"].loc[wk(45)] == 50      # 純重播不變
+
+
+def test_us_end_date_is_2026_11_19_and_env_override_new_process():
+    """正本是 2026-11-19；環境變數 W52_US_TAKEBACK_END_DATE 在載入時取代它（本機模擬用）。"""
+    import json
+    import os
+    import subprocess
+    assert stc.US_TAKEBACK_END_DATE == "2026-11-19" and stc.US_TAKEBACK_DECISION_DATE == "2026-11-19"
+    env = {**os.environ, "W52_US_TAKEBACK_END_DATE": "2026-11-18"}
+    code = ("import json, supertrend_core as s; print(json.dumps([s.US_TAKEBACK_END_DATE, "
+            "s.takeback_retired('QQQ', '2026-11-18'), s.takeback_retired('SMH.L', '2026-11-18'), "
+            "s.takeback_retired('QQQ', '2026-11-17'), s.takeback_retired('0050.TW', '2026-11-18')]))")
+    out = subprocess.run([sys.executable, "-c", code], cwd=Path(__file__).resolve().parents[1], env=env,
+                         capture_output=True, text=True, check=True)
+    assert json.loads(out.stdout.strip().splitlines()[-1]) == ["2026-11-18", True, True, False, False]

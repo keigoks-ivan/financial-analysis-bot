@@ -432,7 +432,7 @@ def analyse_smhl(now_utc: datetime | None) -> dict:
         tb = None
     return {"asof": str(last.date()), "close": float(oh.close.iloc[-1]), "week": s["week"], "month": s["month"],
             "trend": trend, "level": tb["level"] if tb is not None else trend,
-            "tb_active": bool(tb and tb["active"]), "tb": tb, "params": list(stc.ST_PARAMS[SMHL])}
+            "tb_active": bool(tb and tb["active"]), "tb_retired": bool(tb and tb.get("retired")), "tb_end_date": stc.US_TAKEBACK_END_DATE, "tb": tb, "params": list(stc.ST_PARAMS[SMHL])}
 
 
 def _seed_smhl(params: list) -> dict | None:
@@ -464,11 +464,13 @@ def smhl_events(a: dict, ns: dict) -> tuple:
                 lines.append(f"・{SMHL_NAME}{TF_LAB[tf]}確認翻{to}：K 棒 {c['bar_end']} 收在 {c['close']:,.2f}，"
                              f"{'站上壓力線' if c['dir'] == 1 else '跌破支撐線'}，新的{'支撐' if c['dir'] == 1 else '壓力'}線 {c['line']:,.2f}。")
         if "tb_active" in prev and bool(prev["tb_active"]) != a["tb_active"]:
-            kind = "開始" if a["tb_active"] else "結束"
+            kind = "開始" if a["tb_active"] else ("拿掉" if a.get("tb_retired") else "結束")
             heads.append(f"SMH 倫敦 下軌接回{kind}")
             if a["tb_active"]:
                 z = f"{a['tb']['trigger_z']:.2f}".replace("-", "−")
                 lines.append(f"・{SMHL_NAME}下軌接回開始：{a['tb']['start']} 那週週收盤 z {z}，跌破 20 週下軌 2.5σ，水位 30 改 50。")
+            elif a.get("tb_retired"):
+                lines.append(f"・{SMHL_NAME}下軌接回拿掉（美股指數部 {a['tb_end_date']} 收盤的訊號起不再接回，持有人拍板），水位 {a['level']}%。")
             else:
                 lines.append(f"・{SMHL_NAME}下軌接回結束，水位 {a['level']}%。")
     ns["smhl"] = {tf: {k: (round(a[tf][k], 4) if isinstance(a[tf][k], float) else a[tf][k])

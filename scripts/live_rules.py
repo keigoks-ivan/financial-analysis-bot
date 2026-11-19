@@ -60,7 +60,7 @@ SPEC = {
     "timeline": {
         "index": {"engine": S},
         "overlay": {"rule": S},
-        "takeback": {"enabled": B, "tw": B},
+        "takeback": {"enabled": B, "tw": B, "us": B},
         "weights": {"*": F},
     },
     "change": [{"id": S, "title": S, "effective": D, "first_trade?": D, "decided": D, "env_override?": S,
@@ -94,6 +94,7 @@ CODE_FIXED = {
     "timeline.overlay.rule": "three_condition",
     "timeline.takeback.enabled": False,
     "timeline.takeback.tw": True,                             # takeback_asof／l2_asof 的 TW_TAKEBACK_END_DATE 之前台股腿都有接回
+    "timeline.takeback.us": True,                             # takeback_asof 的 US_TAKEBACK_END_DATE 之前美股腿都有接回
     "timeline.weights": {"QQQ": 0.5, "SMH": 0.5, "0050.TW": 0.5, "2330.TW": 0.5, "00631L.TW": 0.0},  # 主程式 WEIGHTS
 }
 # 時間軸上程式只支援「一次切換」的鍵：鍵 → (唯一能改它的 change, 程式支援的值；None＝不限)。
@@ -103,6 +104,7 @@ SWITCHES = {
     "overlay.rule": ("st-index", ("supertrend", "three_condition")),   # three_condition＝債金退回三條件（主程式 DEFENSIVE_RULE）
     "takeback.enabled": ("takeback", (True,)),
     "takeback.tw": ("tw-no-takeback", (False,)),
+    "takeback.us": ("us-no-takeback", (False,)),
     "weights.00631L.TW": ("tw-l2-20-40-40", None),
 }
 ENV_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
@@ -502,7 +504,7 @@ def show(rules: Rules, d: str | None = None) -> str:
                + "、".join(f"{a}＝{t}" for a, t in mk["us"]["alias"].items()))
     out.append(f"  z 帶：{z['window_weeks']} 週、ddof {z['std_ddof']}；觸發 ≤ {z['trigger']:g}、解鎖 > {z['rearm']:g}、結束 ≥ {z['exit']:g}")
     out.append(f"  下軌接回：{'、'.join(nm[s] for s in tb['legs'])}，趨勢水位 {tb['when_trend']} 時改 {tb['level']}"
-               f"（台股腿 {effective('tw-no-takeback', r)} 起拿掉）")
+               f"（台股腿 {effective('tw-no-takeback', r)}、美股腿 {effective('us-no-takeback', r)} 起拿掉）")
     out.append(f"  正二：{nm[l2['symbol']]} 看 {nm[l2['signal']]} 週線（{l2['uses']}），多 {l2['level_up']}／空 {l2['level_down']}，"
                f"接回 {l2['takeback_level']}（{effective('tw-no-takeback', r)} 起拿掉），曝險 × {l2['exposure_multiple']}")
     out.append(f"  債金：{'、'.join(nm[s] for s in p['overlay']['legs'])} 各最多占指數部 {p['overlay']['max_weight'] * 100:g}%")
@@ -512,7 +514,7 @@ def show(rules: Rules, d: str | None = None) -> str:
     out.append("時間軸（生效日＝訊號資料日；* ＝環境變數覆寫）：")
 
     def seg_line(s):
-        return (f"指數 {s['index']['engine']}、債金 {s['overlay']['rule']}、接回 美{'開' if s['takeback']['enabled'] else '關'}／台{'開' if s['takeback']['enabled'] and s['takeback']['tw'] else '關'}、"
+        return (f"指數 {s['index']['engine']}、債金 {s['overlay']['rule']}、接回 美{'開' if s['takeback']['enabled'] and s['takeback']['us'] else '關'}／台{'開' if s['takeback']['enabled'] and s['takeback']['tw'] else '關'}、"
                 f"美 {_fmt_w(s['weights'], us_legs, nm)}｜台 {_fmt_w(s['weights'], tw_legs, nm)}")
     out.append(f"  {'起始':<10}  {seg_line(_segments(r)[0][1])}")
     for ch in r["change"]:

@@ -65,7 +65,8 @@ def test_core_constants_come_from_rules():
                             ("LEG_WEIGHTS_CUTOVER_DATE", "LEG_WEIGHTS_DECISION_DATE", "us-weights-70-30"),
                             ("TW_L2_CUTOVER_DATE", "TW_L2_DECISION_DATE", "tw-l2-20-40-40"),
                             ("BB_TAKEBACK_CUTOVER_DATE", "BB_TAKEBACK_DECISION_DATE", "takeback"),
-                            ("TW_TAKEBACK_END_DATE", "TW_TAKEBACK_DECISION_DATE", "tw-no-takeback")):
+                            ("TW_TAKEBACK_END_DATE", "TW_TAKEBACK_DECISION_DATE", "tw-no-takeback"),
+                            ("US_TAKEBACK_END_DATE", "US_TAKEBACK_DECISION_DATE", "us-no-takeback")):
         assert getattr(stc, const) == lr.effective(cid) and type(getattr(stc, const)) is str
         assert getattr(stc, dec) == lr.change(cid)["decided"] and type(getattr(stc, dec)) is str
     l2 = R["params"]["l2"]
@@ -143,6 +144,16 @@ def test_env_override_in_process(monkeypatch):
     r3 = lr.load(fresh=True)
     assert lr.effective("tw-l2-20-40-40", r3) == eff
     assert lr.weights(eff, r3)[leg] == ch["set"]["weights"][leg]
+
+
+def test_takeback_us_tw_flags_follow_changes():
+    """時間軸的 takeback.tw／us：各自在 tw-no-takeback、us-no-takeback 生效日前一天是開、當天起關；enabled 不受影響。"""
+    for cid, key in (("tw-no-takeback", "tw"), ("us-no-takeback", "us")):
+        eff = lr.effective(cid)
+        assert lr.at(shift(eff, -1))["takeback"][key] is True
+        assert lr.at(eff)["takeback"][key] is False and lr.at(shift(eff, 1))["takeback"][key] is False
+        assert lr.at(eff)["takeback"]["enabled"] is True
+    assert lr.at(shift(lr.effective("takeback"), -1))["takeback"] == {"enabled": False, "tw": True, "us": True}
 
 
 def test_env_override_new_process():

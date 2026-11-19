@@ -41,7 +41,7 @@ from supertrend_core import (  # noqa: E402  算法、K 棒、收完判斷、參
     LEG_WEIGHTS_CUTOVER_DATE, leg_weights,
     last_weekday, state_asof, takeback_asof,
     l2_asof, TW_L2_CUTOVER_DATE, TW_L2_WEIGHT,
-    TW_TAKEBACK_END_DATE, TW_TAKEBACK_DECISION_DATE, tw_takeback_retired,
+    TW_TAKEBACK_END_DATE, TW_TAKEBACK_DECISION_DATE, US_TAKEBACK_END_DATE, US_TAKEBACK_DECISION_DATE, takeback_retired,
 )
 from supertrend_live_page import takeback_text  # noqa: E402  下軌接回的一句白話（頁面、信件、本通知共用）
 
@@ -83,6 +83,9 @@ def analyse(tk, name, tz, close_t, now_utc):
     now_local = now_utc.astimezone(ZoneInfo(tz))
     last_data = d.index[-1]
     res = {"ticker": tk, "name": name, "last_date": str(last_data.date()), "close": float(d.close.iloc[-1]), "tf": {}}
+    # 已收盤定案的最後一個資料日：盤中跑（最新一根還是未收完的當天）就退一天，拿掉接回的生效判斷與一次性說明都看這個
+    settled = last_data if is_complete(last_data.normalize(), last_data, now_local, close_t) else (d.index[-2] if len(d) > 1 else last_data)
+    res["settled_date"] = str(settled.date())
     frames = {}
     for key, (rule, label) in TF.items():
         b = bars(d, rule)
@@ -107,8 +110,8 @@ def analyse(tk, name, tz, close_t, now_utc):
         # 週線、月線的完成日為資料日；整段歷史重播，不存狀態。債金疊加不適用。
         d_done = max(last_weekday(pd.Timestamp(res["tf"][k]["confirmed"]["bar_end"])) for k in ("week", "month"))
         tb = takeback_asof(frames, d_done, ticker=tk)
-        # 台股拿掉下軌接回（2026-11-19 拍板）：生效日看最新資料日，不看週／月收完日（收完日是上一個週五，會晚一週）
-        retired = tw_takeback_retired(tk, last_data)
+        # 台股、美股拿掉下軌接回（2026-11-19 拍板）：生效日看最新資料日，不看週／月收完日（收完日是上一個週五，會晚一週）
+        retired = takeback_retired(tk, settled)
         if tb is not None and retired:
             tb = {**tb, "active": False, "level": tb["trend"], "retired": True}
         if tb is not None:
@@ -187,7 +190,7 @@ def tw_l2_switch_block(by: dict) -> list:
 def tw_takeback_end_block(by: dict, prev_tb: dict, prev_l2: dict) -> list:
     """台股指數部拿掉下軌接回（持有人 TW_TAKEBACK_DECISION_DATE 拍板）的一次性說明與目標水位；水位照現在的計算結果，前一次記錄的水位從狀態檔讀。"""
     lines = [f"台股指數部 {TW_TAKEBACK_END_DATE} 收盤的訊號起拿掉下軌接回（持有人 {TW_TAKEBACK_DECISION_DATE[5:]} 拍板）："
-             "0050、2330 回到趨勢水位，00631L 回到週線水位。美股照舊。請在下一個交易日一次調到位："]
+             "0050、2330 回到趨勢水位，00631L 回到週線水位。美股 QQQ、SMH 也拿掉，另有說明。請在下一個交易日一次調到位："]
     w = leg_weights(TW_TAKEBACK_END_DATE)
     for tk, nm in (("0050.TW", "0050"), ("2330.TW", "2330")):
         r = by.get(tk)
@@ -203,6 +206,22 @@ def tw_takeback_end_block(by: dict, prev_tb: dict, prev_l2: dict) -> list:
         pre = f"{old}% → " if old is not None and old != l2["level"] else ""
         pre_sh = f"{old * TW_L2_WEIGHT:.0f}% → " if old is not None and old != l2["level"] else ""
         lines.append(f"・00631L：水位 {pre}{l2['level']}%（占指數部 {pre_sh}{l2['level'] * TW_L2_WEIGHT:.0f}%）")
+    return lines
+
+
+def us_takeback_end_block(by: dict, prev_tb: dict) -> list:
+    """美股指數部拿掉下軌接回（持有人 US_TAKEBACK_DECISION_DATE 拍板，下軌接回整條退役）的一次性說明與目標水位；前一次記錄的水位從狀態檔讀。"""
+    lines = [f"美股指數部 {US_TAKEBACK_END_DATE} 收盤的訊號起拿掉下軌接回（持有人 {US_TAKEBACK_DECISION_DATE[5:]} 拍板，台股同日稍早已拿掉，下軌接回整條退役）："
+             "QQQ、SMH 回到趨勢水位（100／70／30／0）。請在下一個交易日一次調到位："]
+    w = leg_weights(US_TAKEBACK_END_DATE)
+    for tk, nm in (("QQQ", "QQQ"), ("SMH", "SMH")):
+        r = by.get(tk)
+        if not r:
+            continue
+        lv, old = cur_level(r), (prev_tb.get(tk) or {}).get("level")
+        pre = f"{old}% → " if old is not None and old != lv else ""
+        pre_sh = f"{old * w[tk]:.0f}% → " if old is not None and old != lv else ""
+        lines.append(f"・{nm}：水位 {pre}{lv}%（占指數部 {pre_sh}{lv * w[tk]:.0f}%）")
     return lines
 
 
@@ -239,8 +258,8 @@ FOOTER = ["", f"規則：Supertrend，{params_text()}，週線 70%＋月線 30%�
           f"{ST_CUTOVER_DATE} 收盤起實單的指數部照這套規則；換檔另有實單系統信。",
           f"指數部權重：美股 QQQ 70%／SMH 30%（{LEG_WEIGHTS_CUTOVER_DATE} 收盤的訊號起，之前各半）、台股 00631L 20%／0050 40%／2330 40%（{TW_L2_CUTOVER_DATE} 收盤的訊號起，之前 0050／2330 各半）；占指數部＝水位 × 權重。",
           f"00631L 只看 0050 週線：週線多水位 100、週線空水位 0（{TW_TAKEBACK_END_DATE} 收盤的訊號起不再有下軌接回水位 30）。",
-          "下軌接回（2026-11-06 收盤的訊號起，只限美股 QQQ、SMH）：週線空、月線多（水位 30）時，週收盤跌破 20 週均線下方 2.5 個標準差，水位改 50；"
-          f"週收盤回到 20 週均線，或週線翻多、月線翻空，就結束。債金不適用；台股 0050、2330 自 {TW_TAKEBACK_END_DATE} 收盤的訊號起拿掉。",
+          "下軌接回（2026-11-06 收盤的訊號起上線）已退役：週線空、月線多（水位 30）時，週收盤跌破 20 週均線下方 2.5 個標準差，水位曾改 50；"
+          f"台股自 {TW_TAKEBACK_END_DATE}、美股自 {US_TAKEBACK_END_DATE} 收盤的訊號起拿掉，現在只看趨勢水位（100／70／30／0）。債金本來就不適用。",
           f"回測比較：{PAGE_URL}"]
 
 
@@ -295,7 +314,7 @@ def main(argv=None):
             errors.append(f"{tk}: {e}")
             print("ERROR", tk, e, file=sys.stderr)
 
-    prev_tb_state = json.loads(json.dumps(state.get("takeback") or {}))     # 台股拿掉下軌接回的通知要顯示前一次記錄的水位
+    prev_tb_state = json.loads(json.dumps(state.get("takeback") or {}))     # 台股、美股拿掉下軌接回的通知要顯示前一次記錄的水位
     prev_l2_state = dict(state.get("tw_l2") or {})
     events, baseline = [], []
     tb_chg = {}     # 代號 -> (開始／結束, 上次記錄的水位, 現在水位)；下軌接回開始或結束也要通知（只變疊加層時沒有翻轉可偵測）
@@ -442,6 +461,18 @@ def main(argv=None):
             out = ("【Supertrend】台股指數部拿掉下軌接回", blk + status_lines(results) + FOOTER)
         if not a.dry_run:
             state["tw_takeback_end_notified"] = by["0050.TW"]["last_date"]
+
+    # 美股拿掉下軌接回：第一次 QQQ 資料日 >= US_TAKEBACK_END_DATE 的執行寄一段說明（狀態檔記旗標，只寄一次）；看美股最新資料日，不看週／月收完日
+    us_tb_end_pending = (not a.test_alert and not state.get("us_takeback_end_notified")
+                         and "QQQ" in by and by["QQQ"]["settled_date"] >= US_TAKEBACK_END_DATE)
+    if us_tb_end_pending:
+        blk = us_takeback_end_block(by, prev_tb_state)
+        if out:
+            out = (out[0] + "；另有美股拿掉下軌接回", blk + [""] + out[1])
+        else:
+            out = ("【Supertrend】美股指數部拿掉下軌接回", blk + status_lines(results) + FOOTER)
+        if not a.dry_run:
+            state["us_takeback_end_notified"] = by["QQQ"]["settled_date"]
 
     if errors:
         print("抓價失敗：", errors, file=sys.stderr)

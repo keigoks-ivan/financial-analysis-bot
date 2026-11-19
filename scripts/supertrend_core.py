@@ -177,15 +177,27 @@ def level_pct(w_dir: int, m_dir: int) -> int:
 BB_TAKEBACK_CUTOVER_DATE = _lr.effective("takeback")             # 環境變數 W52_BB_TAKEBACK_CUTOVER_DATE
 BB_TAKEBACK_DECISION_DATE = _lr.change("takeback")["decided"]
 # 台股拿掉下軌接回（持有人 2026-11-19 拍板，依據 knowledge/rule_ledger.md 2026-11-19 條）：資料日 >= TW_TAKEBACK_END_DATE，
-# 0050、2330 回到趨勢水位，00631L 回到週線水位（100／0）；美股 QQQ、SMH 照舊。takeback_table／l2_table 仍是純規則重播，不套這個日期。
+# 0050、2330 回到趨勢水位，00631L 回到週線水位（100／0）；美股見下。takeback_table／l2_table 仍是純規則重播，不套這個日期。
 TW_TAKEBACK_END_DATE = _lr.effective("tw-no-takeback")           # 環境變數 W52_TW_TAKEBACK_END_DATE
 TW_TAKEBACK_DECISION_DATE = _lr.change("tw-no-takeback")["decided"]
 _TW_TB_LEGS = tuple(_R["markets"]["tw"]["legs"])
+# 美股也拿掉下軌接回（持有人 2026-11-19 拍板，同日稍早已拿掉台股，下軌接回整條退役）：資料日 >= US_TAKEBACK_END_DATE，
+# QQQ、SMH（含倫敦版 SMH.L）回到趨勢水位。債金 IEF、GLD 本來就不接回。
+US_TAKEBACK_END_DATE = _lr.effective("us-no-takeback")           # 環境變數 W52_US_TAKEBACK_END_DATE
+US_TAKEBACK_DECISION_DATE = _lr.change("us-no-takeback")["decided"]
+_US_TB_LEGS = tuple(_R["markets"]["us"]["legs"]) + tuple(_R["markets"]["us"]["alias"])   # QQQ、SMH、SMH.L
 
 
 def tw_takeback_retired(ticker: str, d) -> bool:
-    """這檔在資料日 d 的下軌接回是否已被 2026-11-19 的決定拿掉（只有台股腿）。"""
+    """這檔在資料日 d 的下軌接回是否已被 2026-11-19 的決定拿掉（台股腿，TW_TAKEBACK_END_DATE 起）。"""
     return ticker in _TW_TB_LEGS and str(pd.Timestamp(d).date()) >= TW_TAKEBACK_END_DATE
+
+
+def takeback_retired(ticker: str, d) -> bool:
+    """這檔在資料日 d 的下軌接回是否已拿掉：台股腿看 TW_TAKEBACK_END_DATE、美股腿（QQQ、SMH、SMH.L）看 US_TAKEBACK_END_DATE。"""
+    if ticker in _US_TB_LEGS:
+        return str(pd.Timestamp(d).date()) >= US_TAKEBACK_END_DATE
+    return tw_takeback_retired(ticker, d)
 # 正本 [params.zband]、[params.takeback]。正本寫觸發門檻 trigger＝−2.5（z ≤ trigger），這裡的 BB_K 是它的絕對值（取負號是精確運算）。
 BB_K, BB_REARM, BB_LEVEL, BB_WIN = (-_R["params"]["zband"]["trigger"], _R["params"]["zband"]["rearm"],
                                     _R["params"]["takeback"]["level"], _R["params"]["zband"]["window_weeks"])
@@ -244,7 +256,7 @@ def takeback_table(frames: dict) -> pd.DataFrame:
 def takeback_asof(frames: dict, d, table: pd.DataFrame | None = None, *, ticker: str) -> dict | None:
     """資料日 d 當下的接回狀態；已套生效日（d < BB_TAKEBACK_CUTOVER_DATE 時 applied=False、level＝trend）。
     回傳 {trend, level, applied, active, retired, start, trigger_z, z, ma, sd, z_bar}；z／ma／sd 是最後一根已收完週 K 的值。
-    ticker 必填：台股腿在資料日 >= TW_TAKEBACK_END_DATE 起不再接回（level＝trend、active＝False、retired＝True）。"""
+    ticker 必填：台股腿在資料日 >= TW_TAKEBACK_END_DATE、美股腿在資料日 >= US_TAKEBACK_END_DATE 起不再接回（level＝trend、active＝False、retired＝True）。"""
     t = takeback_table(frames) if table is None else table
     d = pd.Timestamp(d).normalize()
     t = t[t.index <= d]
@@ -253,7 +265,7 @@ def takeback_asof(frames: dict, d, table: pd.DataFrame | None = None, *, ticker:
     r = t.iloc[-1]
     wz = t[t["z"].notna()]
     applied = str(d.date()) >= BB_TAKEBACK_CUTOVER_DATE
-    retired = tw_takeback_retired(ticker, d)
+    retired = takeback_retired(ticker, d)
     act = bool(r["active"]) and applied and not retired
     return {"trend": None if pd.isna(r["trend"]) else int(r["trend"]),
             "level": int(r["level"]) if act else (None if pd.isna(r["trend"]) else int(r["trend"])),
@@ -270,7 +282,7 @@ def takeback_daily(frames: dict, idx: pd.DatetimeIndex, *, ticker: str) -> pd.Se
     pos = t.index.searchsorted(pd.DatetimeIndex(idx).normalize(), side="right") - 1
     lv = np.where(pos >= 0, t["level"].values[np.clip(pos, 0, None)], np.nan).astype(float)
     tr = np.where(pos >= 0, t["trend"].values[np.clip(pos, 0, None)], np.nan).astype(float)
-    on = np.array([str(x.date()) >= BB_TAKEBACK_CUTOVER_DATE and not tw_takeback_retired(ticker, x) for x in pd.DatetimeIndex(idx)])
+    on = np.array([str(x.date()) >= BB_TAKEBACK_CUTOVER_DATE and not takeback_retired(ticker, x) for x in pd.DatetimeIndex(idx)])
     return pd.Series(np.where(on, lv, tr), index=idx)
 
 
