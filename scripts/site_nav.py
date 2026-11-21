@@ -176,6 +176,9 @@ Change log:
     2026-10-29：全站連結不再用瀏覽器預設的藍／紫（持有人拍板）。NAV_STYLE 加
         `:where(a){color:#0d2244}`（權重 0，各頁自訂連結色不受影響，只取代預設色）；
         三個外部 repo 的 NAV_STYLE 副本同步。
+    2026-11-21：研究 ▾ 在「CAN SLIM 選股」之後加「大跌領導股」(leaders, /leaders/)：美股大跌後
+        等 QQQ 週線翻多，用排名版挑 30 檔的名單專頁（產生器 v7 src/drawdown_leaders/generate_page.py）。
+        PREFIX_ACTIVE 加 leaders/ → ("research", "leaders")。外部 3 repo synced literal 同日同步。
 """
 
 import re
@@ -250,6 +253,7 @@ MENU = {
         ("dds", "/dd-screener/", "DD Screener"),  # 2026-10-05 持有人要求加回（08-20 曾移出），緊接研究清單之後
         ("rs", "/screeners.html", "RS 排行"),  # 2026-10-30 持有人拍板：RS 排行表（美股／台股）入口，緊接 DD Screener 之後
         ("canslim", "/canslim/", "CAN SLIM 選股"),  # 2026-10-17 CAN SLIM × 品質關每週名單，緊接 DD Screener 之後
+        ("leaders", "/leaders/", "大跌領導股"),  # 2026-11-21 大跌後等 QQQ 週線翻多、排名版 30 檔（產生器 v7 src/drawdown_leaders/generate_page.py）
         ("sdash", "/stock-dash/", "個股儀表板"),
         ("etfd", "/etf-dash/", "ETF 儀表板"),
         ("aetf", "/active-etf/", "主動式 ETF"),  # 2026-09-25 新增，緊接 ETF 儀表板之後
@@ -436,6 +440,7 @@ PREFIX_ACTIVE = [
     ("kr-chips/", ("macrochip", "kchips")),  # 韓股籌碼趨勢（2026-10-17 新增）
     ("us-chips/", ("macrochip", "uchips")),  # 美股籌碼趨勢（2026-11-03 新增）
     ("canslim/", ("research", "canslim")),  # CAN SLIM 選股名單（2026-10-17 新增）
+    ("leaders/", ("research", "leaders")),  # 大跌領導股（2026-11-21 新增）
     ("ideas/", ("research", "ideas")),  # 投資想法（2026-09-23 新增）
     ("research/synthesis/", ("research", "thub")),
     ("research/", ("research", "thub")),
