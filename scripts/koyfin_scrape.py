@@ -287,6 +287,66 @@ def scrape_one(context, family_key: str, date_str: str, timeout_sec: int) -> int
     return 0
 
 
+SHARED_SESSION_PATH = Path.home() / "scripts" / "koyfin-downloader" / "koyfin_session.json"
+_SESSION_COOKIES = ("auth_token", "refresh_token")
+
+
+def _session_expiry(state: dict):
+    """auth_token 與 refresh_token 兩個 cookie 都在才回傳較早的到期時間（epoch 秒），否則 None。"""
+    exp = {}
+    for c in state.get("cookies", []):
+        if c.get("name") in _SESSION_COOKIES and "koyfin" in c.get("domain", ""):
+            e = c.get("expires", -1)
+            if e and e > 0:
+                exp[c["name"]] = e
+    if not all(n in exp for n in _SESSION_COOKIES):
+        return None
+    return min(exp.values())
+
+
+def export_shared_session(context, dest: Path = SHARED_SESSION_PATH) -> None:
+    """抓取成功後把持久登入的 storage_state 寫回共用的 koyfin_session.json（逐字稿下載器、
+    v7 forward-gp、大跌領導股共用這份）。只在新的 auth_token／refresh_token 到期日比現有檔晚時覆蓋；
+    先備份成 .bak，暫存檔＋rename 原子寫入，chmod 600。任何失敗只印一行、不影響抓取結果。
+    只印 cookie 名稱與到期日，不印值。"""
+    import os
+    import tempfile
+    try:
+        new = context.storage_state()
+        new_exp = _session_expiry(new)
+        if new_exp is None:
+            print("[session] skip: exported state lacks auth_token/refresh_token cookie")
+            return
+        old_exp = None
+        if dest.exists():
+            try:
+                old_exp = _session_expiry(json.loads(dest.read_text()))
+            except Exception:
+                old_exp = None
+        fmt = lambda t: datetime.fromtimestamp(t).strftime("%Y-%m-%d %H:%M") if t else "none"
+        if old_exp is not None and new_exp <= old_exp:
+            print(f"[session] keep existing {dest.name}: new expiry {fmt(new_exp)} <= existing {fmt(old_exp)}")
+            return
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.exists():
+            bak = dest.with_name(dest.name + ".bak")
+            bak.write_bytes(dest.read_bytes())
+            os.chmod(bak, 0o600)
+        fd, tmp = tempfile.mkstemp(dir=str(dest.parent), prefix=dest.name + ".", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump(new, f)
+            os.chmod(tmp, 0o600)
+            os.replace(tmp, dest)
+        except Exception:
+            if os.path.exists(tmp):
+                os.unlink(tmp)
+            raise
+        print(f"[session] updated {dest.name}: expiry {fmt(old_exp)} -> {fmt(new_exp)} (backup .bak)")
+    except Exception as e:  # noqa: BLE001 - 不能讓共用登入的問題弄壞每日抓取
+        print(f"[session] export failed: {type(e).__name__}")
+
+
 def cmd_scrape(profile_dir: Path, names: list[str], date_str: str, headless: bool, timeout_sec: int) -> int:
     from playwright.sync_api import sync_playwright
 
@@ -314,6 +374,10 @@ def cmd_scrape(profile_dir: Path, names: list[str], date_str: str, headless: boo
                           f"automatic here; continuing to next watchlist so a single bad tab doesn't block "
                           f"the others (koyfin_refresh_all.py enforces the hard stop at the fingerprint/"
                           f"gate level per family).")
+            if worst == 0:
+                export_shared_session(context)
+            else:
+                print("[session] skip export: scrape did not fully succeed")
         finally:
             context.close()
     return worst
