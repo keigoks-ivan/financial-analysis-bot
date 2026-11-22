@@ -2716,7 +2716,7 @@ def main() -> int:
         st_nav_doc = seat_st.update_nav(
             st_nav_doc, decision_date,
             {r["ticker"]: (r.get("lamp") or {}).get("size") or 0.0 for r in core_seats},
-            {t: _legacy_size(t) for t in legacy_rotation["core"]}, st_loader)
+            {t: _legacy_size(t) for t in legacy_rotation["core"]}, st_loader, bench="QQQ")
         # 第三條對照線（假設一直在跑）：同一批選席函式，起點是種子，名單只在這裡（週六 --ledger）前進
         hypo_doc = seat_st.hypo_step(
             hypo_doc, decision_date, as_of,

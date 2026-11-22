@@ -305,10 +305,13 @@ def _hold_return(positions: dict, asof: str, wk: str, loader, slots: int = SLOTS
     return tot, missing
 
 
-def update_nav(doc: dict, decision_date, new_pos: dict, legacy_pos: dict, loader, slots: int = SLOTS) -> dict:
+def update_nav(doc: dict, decision_date, new_pos: dict, legacy_pos: dict, loader, slots: int = SLOTS,
+               bench: str | None = None) -> dict:
     """每週淨值（只在 --ledger 週跑呼叫）。new_pos／legacy_pos＝{ticker: 倉位係數}，是這次決策後要持有的在席者與倉位
     （新規則：已切換者 1.0、其餘時機燈倉位；舊規則：現行倉位）。每個席位占 1/slots 資金，空席與未投入的部分是現金。
-    報酬＝上次記帳週五收盤到這次週五收盤（還原收盤）。同一週重跑不重複計入。回傳新的 doc。"""
+    報酬＝上次記帳週五收盤到這次週五收盤（還原收盤）。同一週重跑不重複計入。
+    bench（只有美股傳 "QQQ"）：每列多 qqq（累計淨值）與 qqq_ret，用同一個 loader 的還原收盤買進持有；
+    舊列缺 qqq 時從第一週（1.0）起用收盤重算整條。回傳新的 doc。"""
     wk = last_complete_friday(decision_date).date().isoformat()
     doc = json.loads(json.dumps(doc)) if doc else {}
     doc.setdefault("schema", NAV_SCHEMA)
@@ -330,7 +333,28 @@ def update_nav(doc: dict, decision_date, new_pos: dict, legacy_pos: dict, loader
         series.append(row)
     doc["holdings"] = {"asof": wk, "new": {t: float(v) for t, v in new_pos.items()},
                        "legacy": {t: float(v) for t, v in legacy_pos.items()}}
+    if bench:
+        doc["bench"] = bench
+        _fill_bench(series, bench, loader)
     return doc
+
+
+def _fill_bench(series: list, bench: str, loader) -> None:
+    """補齊 series 各列的 qqq／qqq_ret（只在有缺時整條重算，從第一週 1.0 起，用還原收盤）。"""
+    if all("qqq" in r for r in series):
+        return
+    d = loader(bench)
+    for i, r in enumerate(series):
+        p = _close_at(d, r["week"])
+        if i == 0:
+            r["qqq"], r["qqq_ret"] = 1.0, 0.0
+        else:
+            p0 = _close_at(d, series[i - 1]["week"])
+            ret = (p / p0 - 1.0) if (p and p0) else 0.0
+            r["qqq_ret"] = round(ret, 6)
+            r["qqq"] = round(series[i - 1]["qqq"] * (1.0 + ret), 6)
+            if not (p and p0):
+                r["missing"] = sorted(set(r.get("missing", [])) | {bench})
 
 
 def nav_summary(doc: dict | None) -> dict | None:
@@ -346,6 +370,13 @@ def nav_summary(doc: dict | None) -> dict | None:
             peak = max(peak, r[key])
             mdd = min(mdd, r[key] / peak - 1.0)
         out[key] = {"cum": round(series[-1][key] - 1.0, 4), "mdd": round(mdd, 4)}
+    if all("qqq" in r for r in series):
+        peak, mdd = 1.0, 0.0
+        for r in series:
+            peak = max(peak, r["qqq"])
+            mdd = min(mdd, r["qqq"] / peak - 1.0)
+        out["qqq"] = {"cum": round(series[-1]["qqq"] - 1.0, 4), "mdd": round(mdd, 4)}
+        out["merge_to_index"] = bool(out["new"]["cum"] < out["qqq"]["cum"] and out["new"]["mdd"] < out["qqq"]["mdd"])
     out["retreat"] = bool(out["new"]["cum"] < out["legacy"]["cum"] and out["new"]["mdd"] < out["legacy"]["mdd"])
     return out
 
@@ -565,7 +596,13 @@ def _nav_line(nav: dict | None) -> str:
         return ('<div class="bw-note-line">兩條線的週淨值從 2026-11-07 起累積，每週六追加一筆；'
                 f'2027-11-06 回顧一次。</div>')
     pc = lambda x: f"{x * 100:+.1f}%"  # noqa: E731
-    return ('<div class="bw-note-line">'
+    qqq = ''
+    if nav.get("qqq"):
+        qqq = ('<div class="bw-note-line">'
+               f'看板席位名單（空席算現金）累計 {pc(nav["new"]["cum"])}、最大跌幅 {pc(nav["new"]["mdd"])}；'
+               f'同期 QQQ {pc(nav["qqq"]["cum"])}、{pc(nav["qqq"]["mdd"])}。'
+               f'{nav["review_date"]} 回顧：報酬輸 QQQ、而且跌幅更深，美股個股部位併回指數部。</div>')
+    return qqq + ('<div class="bw-note-line">'
             f'自 {nav["start"]} 起（共 {nav["weeks"]} 週，到 {nav["last_week"]}）：新規則累計報酬 {pc(nav["new"]["cum"])}、'
             f'最大跌幅 {pc(nav["new"]["mdd"])}；舊規則對照線累計報酬 {pc(nav["legacy"]["cum"])}、'
             f'最大跌幅 {pc(nav["legacy"]["mdd"])}。每個席位占 1/5 資金，空席是現金。'
