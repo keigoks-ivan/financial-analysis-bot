@@ -24,6 +24,9 @@ name: Daily Market Detective
 # 沒動就空 diff、不 commit，故重複觸發是冪等的。
 # 2026-10-19：rotation-radar-daily 已刪除（排程清理），workflow_run 清單同步移除
 # "Daily Asset Rotation Radar (RRG)"；"Daily Market Monitor" 仍在。
+# 2026-11-23（持有人拍板）：每日摘要（digest）停寄，改由 market-state-daily.yml 寄
+# 市況主控台每日摘要（scripts/market_cockpit_notify.py）。即時警報與週報照舊；
+# notify_render.py 的 digest 程式碼保留，要恢復就把下面三個 digest 步驟加回來。
 on:
   workflow_run:
     workflows:
@@ -102,15 +105,6 @@ jobs:
             python scripts/notify_render.py --tier immediate
           fi
 
-      - name: Render digest tier
-        if: steps.mode.outputs.weekday_cron == 'true' || steps.mode.outputs.force == 'true'
-        run: |
-          if [ "${{ steps.mode.outputs.force }}" == "true" ]; then
-            python scripts/notify_render.py --tier digest --force
-          else
-            python scripts/notify_render.py --tier digest
-          fi
-
       - name: Render weekly tier
         if: steps.mode.outputs.weekly_cron == 'true' || steps.mode.outputs.force == 'true'
         run: python scripts/notify_render.py --tier weekly
@@ -166,25 +160,6 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_MARKET }}
           NOTIFY_TITLE: "🕵️ 市場偵探 · 即時警報 ${{ steps.mode.outputs.force == 'true' && '【測試】' || '' }}"
         run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file detective_mail_immediate.txt --url https://research.investmquest.com/detective/
-
-      - name: Send digest notification
-        if: ${{ always() && hashFiles('detective_mail_digest.txt') != '' }}
-        uses: ./.github/actions/send-notify
-        with:
-          subject: "🕵️ 市場偵探 · 每日摘要 ${{ steps.mode.outputs.force == 'true' && '【測試】' || '' }}"
-          body_file: detective_mail_digest.txt
-          html_file: detective_mail_digest.html
-          tier: digest
-          mail_username: ${{ secrets.MAIL_USERNAME }}
-          mail_password: ${{ secrets.MAIL_APP_PASSWORD }}
-
-      - name: Discord notify (detective digest)
-        if: ${{ always() && hashFiles('detective_mail_digest.txt') != '' }}
-        continue-on-error: true
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_MARKET }}
-          NOTIFY_TITLE: "🕵️ 市場偵探 · 每日摘要 ${{ steps.mode.outputs.force == 'true' && '【測試】' || '' }}"
-        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file detective_mail_digest.txt --url https://research.investmquest.com/detective/
 
       - name: Send weekly notification
         if: ${{ always() && hashFiles('detective_mail_weekly.txt') != '' }}

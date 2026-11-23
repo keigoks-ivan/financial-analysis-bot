@@ -712,13 +712,13 @@ def render_claim_ids_html(claim_ids) -> str:
     return f'<div style="font-size:11px;color:{COLOR_GRAY};word-break:break-all;">{esc("、".join(claim_ids))}</div>'
 
 
-def render_email_shell_html(as_of: str, status_html: str, body_html: str) -> str:
+def render_email_shell_html(as_of: str, status_html: str, body_html: str, title: str = "市況判讀") -> str:
     return f'''<meta charset="utf-8">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;background-color:{COLOR_BG};" bgcolor="{COLOR_BG}">
 <tr><td align="center" style="padding:24px 12px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;table-layout:fixed;background-color:{COLOR_CARD};border:1px solid {COLOR_BORDER};border-radius:8px;font-family:{FONT_STACK};" bgcolor="{COLOR_CARD}">
 <tr><td style="background-color:{COLOR_NAVY};padding:20px 24px;border-radius:8px 8px 0 0;" bgcolor="{COLOR_NAVY}">
-<div style="color:#ffffff;font-size:18px;font-weight:700;font-family:{FONT_STACK};">市況判讀｜{esc(as_of)}</div>
+<div style="color:#ffffff;font-size:18px;font-weight:700;font-family:{FONT_STACK};">{esc(title)}｜{esc(as_of)}</div>
 {status_html}
 </td></tr>
 <tr><td style="padding:20px 24px 4px 24px;font-family:{FONT_STACK};">

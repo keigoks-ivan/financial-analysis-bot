@@ -86,13 +86,22 @@ jobs:
       - name: Save evidence and coherent release
         run: python scripts/market_refresh.py record --write
 
+      # 2026-11-23（持有人拍板）：市況主控台每日摘要，取代市場偵探的每日摘要。
+      # 當天判讀推上就寄（約 17:30 台北）；最近一個已過 18:30 的平日還沒寄就補寄。
+      # 寄過的日期記在 data/market_cockpit_notify.json，跟下面的 commit 一起推上；
+      # 推不上就不寄，下一班重新判斷。判斷失敗不擋 state.json 的提交。
+      - name: Decide cockpit daily summary
+        id: cockpit_notify
+        continue-on-error: true
+        run: python scripts/market_cockpit_notify.py --text cockpit_mail.txt --html cockpit_mail.html --github-output "$GITHUB_OUTPUT"
+
       - name: Commit and push if changed
         id: commit_and_push
         env:
           IS_RETRY: ${{ github.event.inputs.retry || '0' }}
         run: |
           # 2026-09-13：只提交本步產物，判讀沿用上一份並明示等待重評。
-          PATHS="data/market_sources docs/market/data/state.json docs/market/data/refresh.json docs/market/data/snapshots docs/market/data/releases"
+          PATHS="data/market_sources docs/market/data/state.json docs/market/data/refresh.json docs/market/data/snapshots docs/market/data/releases data/market_cockpit_notify.json"
           if git status --porcelain $PATHS | grep -q .; then
             echo "Changes detected"
           else
@@ -116,6 +125,30 @@ jobs:
           done
           echo "Push failed after 6 attempts"
           exit 1
+
+      - name: Email cockpit daily summary
+        if: steps.cockpit_notify.outputs.send == 'true'
+        uses: dawidd6/action-send-mail@v3
+        continue-on-error: true
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.cockpit_notify.outputs.subject }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://cockpit_mail.html
+          body: file://cockpit_mail.txt
+
+      - name: Discord notify (cockpit daily summary)
+        if: steps.cockpit_notify.outputs.send == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_MARKET }}
+          NOTIFY_TITLE: ${{ steps.cockpit_notify.outputs.subject }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file cockpit_mail.txt --url https://research.investmquest.com/market/
 
       - name: Self-retrigger once after rebase conflict
         if: failure() && steps.commit_and_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
