@@ -1,0 +1,179 @@
+name: Trade Digest
+
+# #調倉 每日一則（持有人 2026-11-24 核准樣板）：台股、美股每個收盤日各發一則 Discord，🔔／⚠ 另寄 Email。
+# 判斷邏輯、去重、保底時間都在 scripts/trade_digest.py 檔頭；這裡只負責觸發、提交去重狀態、發送。
+# 名稱只用 ASCII：workflow_run 對含非 ASCII 名稱的 workflow 疑似不觸發（見 update_long_track_w52_adaptive.yml 2026-10-31 註解），
+# 所以觸發一律用明確的 gh workflow run：
+#   - 實單 update_long_track_w52_adaptive.yml 推送成功後
+#   - 恐慌 panic-multi-daily.yml 推送成功後
+#   - 本機 Mac 推送 data/live_digest/tw_futures.json 後（台指期 3σ、均線多空）
+#   - 下方 cron 保底（GitHub 排程常晚幾小時，每班都只是多一次判斷機會，重複跑不會重發）
+# 每次執行兩個市場都判斷（input market 只影響處理順序）：排隊中的 run 會被較新的取代，只看 input 會漏掉被取代的那個市場。
+# 發送排在 sent.json 推送成功之後；推送失敗就不發，下一次執行重新判斷（同 panic-multi 的做法，寧可晚發不重發）。
+
+on:
+  schedule:
+    - cron: "45 8 * * 1-5"    # 台北 16:45：台股保底，台指期還沒到也照發
+    - cron: "40 23 * * 0-4"   # 台北隔天 07:40：台股期限，實單還沒算出前一個收盤就發 ⚠
+    - cron: "10 5 * * 2-6"    # 台北 13:10：美股保底（實單與恐慌的台北中午班都該跑完）
+    - cron: "10 12 * * 2-6"   # 台北 20:10：美股期限，實單還沒算出前一個收盤就發 ⚠
+  workflow_dispatch:
+    inputs:
+      market:
+        description: "觸發來源的市場（all／tw／us）；兩個市場每次都會判斷"
+        required: false
+        default: "all"
+        type: string
+      dry_run:
+        description: "只組訊息、上傳成 artifact，不發 Discord／Email、不改 sent.json"
+        type: boolean
+        default: false
+      retry:
+        description: 內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: trade-digest
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DRY: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        # build_live_mail／主程式（水位換算、為什麼變）與恐慌模組（進場規格文字）在 import 時需要這些
+        run: pip install "pandas==2.3.3" "numpy<2.5" yfinance
+
+      - name: Build digest
+        env:
+          MARKET: ${{ github.event.inputs.market || 'all' }}
+        run: |
+          if [ "$DRY" = "1" ]; then
+            python scripts/trade_digest.py run --out digest_out --market "$MARKET" --dry-run
+          else
+            python scripts/trade_digest.py run --out digest_out --market "$MARKET"
+          fi
+
+      - name: Commit and push dedup state
+        id: commit_push
+        if: env.DRY != '1'
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add data/live_digest/sent.json
+          git diff --staged --quiet || git commit -m "Trade digest dedup state: $(date -u '+%Y-%m-%d %H:%M')"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Upload preview (dry run)
+        if: env.DRY == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: trade-digest-preview
+          path: digest_out/
+
+      - name: Read digest
+        id: d
+        run: python scripts/trade_digest.py outputs --out digest_out >> "$GITHUB_OUTPUT"
+
+      - name: Discord
+        if: steps.d.outputs.any == 'true' && env.DRY != '1'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          for m in json.load(open("digest_out/manifest.json")):
+              env = dict(os.environ, NOTIFY_TITLE=m["title"])
+              subprocess.run(["python3", "scripts/notify_discord.py", "--title-env", "NOTIFY_TITLE",
+                              "--body-file", f"digest_out/{m['market']}.discord.txt", "--url", m["url"],
+                              "--color", m["color"]], env=env, check=False)
+          PY
+
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email TW
+        if: steps.d.outputs.tw_mail == 'true' && steps.mailcfg.outputs.ready == 'true' && env.DRY != '1'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.d.outputs.tw_subject }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://digest_out/tw.mail.html
+          body: file://digest_out/tw.mail.txt
+
+      - name: Email US
+        if: steps.d.outputs.us_mail == 'true' && steps.mailcfg.outputs.ready == 'true' && env.DRY != '1'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.d.outputs.us_subject }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://digest_out/us.mail.html
+          body: file://digest_out/us.mail.txt
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/retrigger_once.sh
+
+      - name: Discord notify on failure
+        if: failure() && !(steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1')
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+          NOTIFY_TITLE: "排程失敗：#調倉 每日一則 trade-digest（今天的台股／美股訊息可能沒發，請開實單主控台看水位）"
+          NOTIFY_BODY: "trade-digest 執行失敗：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

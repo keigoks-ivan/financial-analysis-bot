@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """實單這條線的通知補充（持有人 2026-11-10 拍板）：每日確認、週五預警、SMH 倫敦版參考。不算實單訊號、不改 state.json。
 
+2026-11-24 起 live_confirm.txt 不再貼到 Discord（每日確認改由 scripts/trade_digest.py 的每日一則負責，它 import 本檔的
+交易日曆與 assess）；live_extra.json 由 trade_digest.py capture 存進 data/live_digest/live_capture.json。
+
 一、每日確認
 
 實單信只在水位變了才寄，「沒收到信」分不出是沒訊號、排程壞了、還是資料沒抓到（2026-11-07 抓不到週五美股收盤、

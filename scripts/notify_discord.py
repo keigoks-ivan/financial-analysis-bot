@@ -43,7 +43,7 @@ def truncate_lines(text, limit):
     return "\n".join(kept).rstrip() + "\n" + TRUNC_LINE
 
 
-def build_payload(title, body, url):
+def build_payload(title, body, url, color=COLOR):
     tail = []
     if url:
         tail.append(f"[打開完整頁面]({url})")
@@ -56,7 +56,7 @@ def build_payload(title, body, url):
     room = MAX_DESC - (len(tail_text) + 2 if tail_text else 0)
     desc = truncate_lines(clean_body(body), room) if body else ""
     desc = (desc + "\n\n" + tail_text).strip() if tail_text else desc
-    embed = {"title": (title or "(no title)")[:256], "color": COLOR}
+    embed = {"title": (title or "(no title)")[:256], "color": color}
     if url:
         embed["url"] = url
     if desc:
@@ -103,6 +103,7 @@ def main():
     ap.add_argument("--body-file")
     ap.add_argument("--url")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--color", help="embed 左邊色條，六位十六進位（例如 3ba55c）；不給用預設藍")
     a = ap.parse_args()
 
     webhook = os.environ.get("DISCORD_WEBHOOK", "").strip()
@@ -121,7 +122,13 @@ def main():
         except OSError:
             body = ""
     try:
-        payload = build_payload(title, body, a.url)
+        color = COLOR
+        if a.color:
+            try:
+                color = int(a.color.lstrip("#"), 16)
+            except ValueError:
+                pass
+        payload = build_payload(title, body, a.url, color)
         if a.dry_run:
             print(json.dumps(payload, ensure_ascii=False, indent=2))
             return 0

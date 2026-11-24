@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """合成實單信 — 今天結論（美＋台四腿）＋債金疊加＋變化原文。
 
+2026-11-24 起 CI 不再執行本檔的 main：#調倉 每個市場每天一則與實單信改由 scripts/trade_digest.py 組
+（trade-digest.yml 發送），它 import 本檔的 _lv_pair、why_lines、_bullets、_order_lines。改這些函式要一起看那邊。
+
 2026-09-15 持有人拍板：把「實單主系統」與「F70 紙上候選」兩封 email 合成一封。
 2026-10-18 F70 歸檔（持有人拍板，停止更新）：本信不再含 F70 帳戶表與 F70 alert 原文，
 主旨、內文都改為「美＋台」；F70 的產生腳本 scripts/build_f70_alert.py 留在 repo，但 CI 已不跑。
