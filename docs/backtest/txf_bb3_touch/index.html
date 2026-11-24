@@ -255,6 +255,9 @@ function jump(d){
 }
 function draw(k){
   var v=cache[k]; cur=v; mk();
+  var tx=v.market==='TXF', pf=tx?{type:'price',precision:0,minMove:1}:{type:'price',precision:2,minMove:0.25};
+  chart.applyOptions({localization:{priceFormatter:function(p){return tx?Math.round(p).toLocaleString('en-US'):p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}}});
+  [S.c,S.m,S.g,S.b].forEach(function(x){x.applyOptions({priceFormat:pf});});
   S.c.setData(v.bars.map(function(b){return {time:b[0],open:b[1],high:b[2],low:b[3],close:b[4]};}));
   S.m.setData(v.mid.map(function(a){return {time:a[0],value:a[1]};}));
   S.g.setData(v.green.map(function(a){return {time:a[0],value:a[1]};}));
