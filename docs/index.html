@@ -555,10 +555,19 @@ footer a{color:var(--muted)}
   .ms-alt{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);margin-bottom:.3rem}
   .dash-grid{grid-template-columns:1fr}
   .ms-cockpit-cta{display:inline-block;font-size:.78rem;font-weight:600;color:var(--accent)}
+  .ms-h2row{display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap}
+  .ms-panic{display:inline-flex;align-items:center;gap:.6rem;flex-wrap:wrap;font-size:.72rem;color:var(--text-sec);text-decoration:none}
+  .ms-panic[hidden]{display:none}
+  .ms-panic:hover{text-decoration:none;color:var(--text)}
+  .ms-panic-t{font-weight:700}
+  .ms-panic .pl{display:inline-flex;align-items:center;gap:.28rem;white-space:nowrap}
+  .ms-panic .pl i{width:9px;height:9px;border-radius:50%;border:1.5px solid #9ca3af;display:inline-block}
+  .ms-panic .pl.on i{background:#dc2626;border-color:#dc2626}
+  .ms-panic .pl.on{color:#b91c1c;font-weight:700}
   </style>
   <div class="container">
     <div class="ms-head">
-      <h2>市場現況</h2>
+      <div class="ms-h2row"><h2>市場現況</h2><a class="ms-panic" id="msPanic" href="/backtest/viable/panic_multi/" hidden><span class="ms-panic-t">恐慌訊號</span><span class="pl" data-m="TW"><i></i>台股</span><span class="pl" data-m="SPX"><i></i>S&amp;P 500</span><span class="pl" data-m="NDX"><i></i>Nasdaq-100</span></a></div>
       <span class="ms-hint">實單曝險 · 市況主控台（風險儀表 · 警戒度 · 壓力分數）· 風險走勢圖</span>
     </div>
     <a class="ms-cockpit" id="msCockpit" href="/market/" hidden>
@@ -585,6 +594,20 @@ footer a{color:var(--muted)}
   </div>
 </section>
 <script src="/market/home-card.js"></script>
+<script>
+// 恐慌訊號燈：讀 panic-multi 每日 CI 寫的 /backtest/viable/panic_multi/lamp.json（亮／不亮的判斷在那邊）。缺檔就不顯示。
+(function(){
+  fetch('/backtest/viable/panic_multi/lamp.json',{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(d){
+    var box=document.getElementById('msPanic'); if(!box||!d||!d.markets)return;
+    box.querySelectorAll('.pl').forEach(function(el){
+      var x=d.markets[el.getAttribute('data-m')]; var on=!!(x&&x.on);
+      el.classList.toggle('on',on);
+      el.setAttribute('aria-label',el.textContent+(on?'：亮':'：沒亮'));
+    });
+    box.hidden=false;
+  }).catch(function(){});
+})();
+</script>
 <script>
 (function(){
   var anyData=false;

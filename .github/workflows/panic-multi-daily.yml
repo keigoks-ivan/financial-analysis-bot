@@ -1,10 +1,11 @@
 name: Panic Multi Daily
 
 # 「多類同時」恐慌訊號（/backtest/viable/panic_multi/）每日更新，2026-11-24 上線。
-# 規則照 v7-backtest docs/Panic_Call_Prereg.md 第 41～77 行，上線版不改規則；程式 scripts/panic_multi/。
+# 規則照 v7-backtest docs/Panic_Call_Prereg.md 第 41～77 行與修改紀錄（2026-11-24 起部位結束就重新待命）；程式 scripts/panic_multi/。
 # 每次跑：美股 yfinance 接最近兩個月、台股證交所加權指數＋期交所台指選擇權（自算台指 VIX）＋
-# Release revmom-data 的上市櫃日線（鎖跌停家數比率）→ 三個市場全史重播 → 寫 data/panic_multi/ 與頁面。
-# 只有某市場出現新事件（訊號日當天）才寄 Email＋發 Discord；同一市場同一天只通知一次（notified.json）。
+# Release revmom-data 的上市櫃日線（鎖跌停家數比率）→ 補進場規格表 → 三個市場全史重播 → 寫 data/panic_multi/、頁面
+# 與首頁燈號 docs/backtest/viable/panic_multi/lamp.json（首頁 docs/index.html 載入時讀它）。
+# 只有某市場的 call 版或期貨版今天亮、明天要進場才寄 Email＋發 Discord；同一市場同一天只通知一次（notified.json）。
 # 通知排在 push 成功之後，push 失敗就不寄，下一輪重跑時再判斷，避免重複寄或漏記。
 #
 # 排程（三個入口，任一輪都同時更新美股與台股；concurrency 讓它們排隊不重疊）：

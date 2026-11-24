@@ -2,16 +2,21 @@
 """「多類同時」恐慌訊號：每天更新資料、全史重播、寫狀態與頁面，新事件才寫通知檔。
 
 頁面 /backtest/viable/panic_multi/，workflow .github/workflows/panic-multi-daily.yml。
-規則照 v7-backtest docs/Panic_Call_Prereg.md 第 41～77 行，上線版不改規則。
+規則照 v7-backtest docs/Panic_Call_Prereg.md 第 41～77 行與修改紀錄。2026-11-24 起重新待命改成「部位結束就待命」：
+call 版、期貨版、賣出賣權價差（對照）各自算紙上部位，上一筆結束之後再亮就算新的一筆。
 
-本資料夾的 signals.py、live_core.py、twvix_core.py、breadth_core.py 是 v7-backtest 的逐字副本
+本資料夾的 signals.py、positions.py、specs_core.py、live_core.py、twvix_core.py、breadth_core.py 是 v7-backtest 的逐字副本
 （`python3 -m src.panic_call.ci_copy` 產生），不要手改。本檔只負責：
   1. 美股：yfinance 抓最近兩個月 ^GSPC、^NDX、^VIX、^VXN、^VIX3M，接到 data/panic_multi/us_inputs.csv。
      舊資料是 v7 共用價格庫的原值，只覆蓋最後 5 列並往後接；五項沒到齊的日子不接。
   2. 台股：證交所 FMTQIK（加權指數收盤）、期交所 dlOptDataDown（台指選擇權每日行情，算自算台指 VIX）、
      Release revmom-data 的上市櫃日線（算鎖跌停家數比率）。三項都到齊的最後一天才算台股狀態。
-  3. 三個市場全史重播（live_core.replay），寫 state.json、state_log.csv、頁面；
-     某市場出現新事件（同一市場同一天只通知一次，記在 notified.json）才寫通知檔。
+  3. 進場規格表 data/panic_multi/entry_specs.csv（每個交易日如果收盤進場的 call 權利金、到期日、賣價差到期日）：
+     歷史由 v7 `python3 -m src.panic_call.entry_specs` 寫入，本檔只補表裡還沒有的新日子（specs_core.py 同一套算法；
+     台股用當天抓到的台指選擇權行情，美股用公式，利率取 ^IRX、股利率沿用表裡最後一列）。
+  4. 三個市場全史重播（live_core.replay），寫 state.json、state_log.csv、頁面；
+     call 版或期貨版今天亮、明天要進場（同一市場同一天只通知一次，記在 notified.json）才寫通知檔。
+     訊號日已經過去的進場不補發通知。
 
 用法：
   python scripts/panic_multi/update.py                     # 抓新資料並更新
@@ -42,12 +47,14 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import live_core as L  # noqa: E402
+import specs_core as SC  # noqa: E402
 import twvix_core as TV  # noqa: E402
 import breadth_core as BC  # noqa: E402
 
 ROOT = HERE.parents[1]
 D = ROOT / "data" / "panic_multi"
 PAGE_URL = "https://research.investmquest.com/backtest/viable/panic_multi/"
+LAMP = ROOT / "docs" / "backtest" / "viable" / "panic_multi" / "lamp.json"
 TPE = ZoneInfo("Asia/Taipei")
 NY = ZoneInfo("America/New_York")
 UA = "Mozilla/5.0 (research data fetch)"
@@ -337,6 +344,55 @@ def tw_frame() -> pd.DataFrame:
     return tw[tw.index <= last]
 
 
+# ───────────────────────── 進場規格表 ─────────────────────────
+def update_specs(frames: dict, us: pd.DataFrame, aux: dict, txo) -> dict:
+    """補 entry_specs.csv 裡還沒有的日子（只往後接，不改舊列），回傳 {市場: 以日期為索引的規格表}。"""
+    p = D / "entry_specs.csv"
+    t = SC.read_table(p)
+    add = []
+    for m, df in frames.items():
+        g = t[t.market == m]
+        last = g.date.max() if len(g) else pd.Timestamp(0)
+        new_days = [d_ for d_ in df.index if d_ > last]
+        if not new_days:
+            continue
+        if m == "TW":
+            if txo is None or txo.empty:
+                log(f"台股規格表到 {last.date()}，這次沒有台指選擇權行情，{len(new_days)} 天補不上")
+                continue
+            tx = txo[txo.cp.isin(["C", "P"])]
+            em = exp_map_for(sorted(tx.expiry.unique()))
+            by = dict(tuple(tx.groupby("date")))
+            for d_ in new_days:
+                day = by.get(d_)
+                if day is None:
+                    log(f"台股 {d_.date()} 沒有台指選擇權行情，規格表先不補")
+                    break
+                add.append(SC.tw_row(day, d_, float(df.loc[d_, "close"]), em))
+        else:
+            r_last, q_last = float(g.r.iloc[-1]), float(g.q.iloc[-1])
+            irx = aux.get("^IRX")
+            r = min(max(irx[1] / 100.0, 0.0), 0.10) if irx else r_last
+            for d_ in new_days:
+                v3 = float(us.loc[d_, "vix3m"]) if m == "SPX" else float("nan")
+                row = SC.us_row(m, d_, float(df.loc[d_, "close"]), float(df.loc[d_, "vol"]), v3, r, q_last)
+                row.update(r=r, q=q_last)
+                add.append(row)
+    if add:
+        a = pd.DataFrame(add)
+        out = pd.concat([t, a], ignore_index=True)
+        for c in ("date", "call_exit", "put_exit"):
+            out[c] = pd.to_datetime(out[c]).dt.strftime("%Y-%m-%d")
+        cols = SC.COLS + ["r", "q"]
+        for c in cols:
+            if c not in out:
+                out[c] = np.nan
+        out[cols].to_csv(p, index=False, float_format="%.10g")
+        log("規格表補上：" + "、".join(f"{m} {d_.date()}" for m, d_ in zip(a.market, a.date)))
+        t = SC.read_table(p)
+    return {m: SC.market_specs(t, m) for m in frames}
+
+
 # ───────────────────────── 隔天要買的規格 ─────────────────────────
 def next_weekday(d: pd.Timestamp) -> pd.Timestamp:
     n = d + pd.Timedelta(days=1)
@@ -453,40 +509,59 @@ def order_tw(st: dict, txo: pd.DataFrame | None) -> dict:
 
 
 # ───────────────────────── 狀態、紀錄、通知 ─────────────────────────
-def build_state(frames: dict, us: pd.DataFrame, aux: dict, txo) -> dict:
+def build_state(frames: dict, specs: dict, us: pd.DataFrame, aux: dict, txo) -> dict:
     out = {}
     for name, df in frames.items():
-        st = L.replay(df)["state"]
+        st = L.replay(df, specs.get(name))["state"]
         st["name"] = NAMES[name]
         st["vol_name"] = VOLNAME[name]
         st["ratio_name"] = RATIONAME[name]
-        st["events_this_year"] = sum(1 for e in st["events"] if e[:4] == st["date"][:4])
-        recent = [e for e in st["events"][-1:] if (pd.Timestamp(st["date"]) - pd.Timestamp(e)).days <= 10]
-        if recent:   # 最近 10 天內有事件（含今天）：用事件那天的資料算隔天要買的規格
-            ev_st = st if st["event_today"] else L.replay(df[df.index <= pd.Timestamp(recent[0])])["state"]
-            st["order"] = order_tw(ev_st, txo) if name == "TW" else order_us(name, ev_st, us, aux)
-            st["order_for_event"] = ev_st["date"]
-            st["event_state"] = {k: ev_st[k] for k in ("date", "close", "classes", "n_lit")}
+        if any(st["versions"][v]["pending"] for v in ("call", "fut")):   # 今天亮、明天要進場：算隔天要買的規格
+            st["order"] = order_tw(st, txo) if name == "TW" else order_us(name, st, us, aux)
+            st["order_for_event"] = st["date"]
+            st["event_state"] = {k: st[k] for k in ("date", "close", "classes", "n_lit")}
         out[name] = st
     return out
+
+
+def pos_word(v: str, x: dict) -> str:
+    """一個版本目前的部位，一句話。"""
+    if x["pending"]:
+        return f"待進場：{x['pending']['sig_date']} 亮，{x['pending']['entry_est']} 收盤進場"
+    p = x["position"]
+    if p:
+        t = f"有部位：{p['entry_date']} 收盤進場（{p['sig_date']} 的訊號），到 {p['end_date']}"
+        if v == "fut":
+            t += f"，收盤停損線 {p['stop_level']:,.1f}"
+        return t
+    le = x["last_entry"]
+    if x.get("over_budget_today"):
+        return "空手：今天有亮，但今年已經進場 4 次，不再進場"
+    return "空手，下次亮就進場" + (f"（上一筆 {le['entry_date']} 進場、{le['exit_date']} {le['how']}）" if le else "")
 
 
 def append_log(state: dict) -> None:
     p = D / "state_log.csv"
     cols = ["date", "market", "close", "vol", "vol_share", "vol_lit", "z3", "z3_share", "accel", "accel_lit",
-            "ratio", "ratio_share", "ratio_lit", "n_lit", "armed_open", "event", "last_event"]
+            "ratio", "ratio_share", "ratio_lit", "n_lit", "call_pos", "fut_pos", "put_pos", "new_today"]
     old = pd.read_csv(p, dtype=str) if p.exists() else pd.DataFrame(columns=cols)
     rows = []
     for m, s in state.items():
         c = s["classes"]
+        vs = s["versions"]
+
+        def code(x):
+            return "待進場" if x["pending"] else ("有部位" if x["position"] else "空手")
         rows.append(dict(date=s["date"], market=m, close=s["close"], vol=c["vol"]["value"], vol_share=c["vol"]["share"],
                          vol_lit=c["vol"]["lit"], z3=c["accel"]["value"], z3_share=c["accel"]["share"],
                          accel=c["accel"]["accel"], accel_lit=c["accel"]["lit"], ratio=c["ratio"]["value"],
                          ratio_share=c["ratio"]["share"], ratio_lit=c["ratio"]["lit"], n_lit=s["n_lit"],
-                         armed_open=s["armed_open"], event=s["event_today"], last_event=s["last_event"]))
+                         call_pos=code(vs["call"]), fut_pos=code(vs["fut"]), put_pos=code(vs["put"]),
+                         new_today="、".join(s["new_today"])))
     new = pd.DataFrame(rows, columns=cols).astype(str)
     out = pd.concat([old, new], ignore_index=True).drop_duplicates(["date", "market"], keep="last")
-    out.sort_values(["date", "market"]).to_csv(p, index=False)
+    allc = list(old.columns) + [c for c in cols if c not in old.columns]
+    out[allc].sort_values(["date", "market"]).to_csv(p, index=False)
 
 
 def pct(x) -> str:
@@ -517,7 +592,10 @@ def order_lines(m: str, st: dict) -> list[str]:
     o = st.get("order") or {}
     if not o:
         return []
-    out = [f"進場：訊號日收盤後確認，隔天（{o.get('entry_est')}，遇休市順延）收盤進場。call 版、期貨版二選一。"]
+    vs = st["versions"]
+    which = [L.VNAME[v] for v in ("call", "fut") if vs[v]["pending"]]
+    out = [f"進場：訊號日收盤後確認，隔天（{o.get('entry_est')}，遇休市順延）收盤進場。這次要進場的是：{'、'.join(which)}"
+           "（兩個版本各自算部位，還抱著的那個版本不加碼）。"]
     if m == "TW":
         if "call" not in o:
             return out + [o.get("note", "")]
@@ -533,8 +611,9 @@ def order_lines(m: str, st: dict) -> list[str]:
                    f"公式估每口約 {c['premium_usd']:,.0f} 美元（隱含波動率 {c['vol_used']}%，下單看實際報價）。抱到到期。{c['alt']}。")
         out.append(f"期貨版：每 1 口 call 改買 {f['per_call']:g} 口 {f['product']}，{f['month']} 月合約，名目一樣。"
                    f"收盤虧損達到同一筆權利金（{st['name']} 從進場價跌約 {f['stop_pts']:,.0f} 點）就在收盤停損，否則抱到 {o['expiry']} 收盤。")
-    out.append("預算：每次權利金＝帳戶的 1%（口數＝帳戶 1% ÷ 每口權利金，取整數），這條訊號一年最多 4 次，"
-               f"今年已亮 {st['events_this_year']} 次。上一筆還沒到期時新訊號不加碼。")
+    yr = "、".join(f"{L.VNAME[v]} {vs[v]['entries_this_year']} 次" for v in ("call", "fut"))
+    out.append("預算：每次權利金＝帳戶的 1%（口數＝帳戶 1% ÷ 每口權利金，取整數），每個版本一年最多進場 4 次，"
+               f"今年含這次：{yr}。")
     return out
 
 
@@ -550,10 +629,12 @@ def alert_text(m: str, st: dict, test: bool) -> tuple[str, str]:
     body.append("")
     body += order_lines(m, st)
     body.append("")
-    body.append(f"下次重新觸發：要等 {st['vol_name']} 收盤回到自己歷史中位數（目前約 {fmt_num(st.get('vol_median_next'))}）以下，"
-                "之後三類再有兩類同一天亮，才算新的一波。")
+    body.append(f"各版本目前的部位（資料到 {st['date']}；規則上的紙上部位，不是實際成交）：")
+    vs = st.get("test_positions") or st["versions"]
+    body += [f"- {L.VNAME[v]}：{pos_word(v, vs[v])}" for v in L.VERSIONS]
+    body.append("下次重新觸發：哪個版本的部位結束（call 到期；期貨停損或到期），之後再有兩類同一天亮，那個版本就算新的一筆。")
     body.append(f"頁面：{PAGE_URL}")
-    body.append("提醒：每個市場的歷史只有 5～12 筆，最賺三筆占大部分獲利；證明不了，只能當線索。")
+    body.append("提醒：每個市場的歷史只有 5～17 筆，最賺三筆占大部分獲利；證明不了，只能當線索。同一波大跌裡可能會買兩三次。")
     return title, "\n".join(body)
 
 
@@ -570,6 +651,19 @@ def write_alert(items: list[tuple[str, str]], test: bool) -> None:
         f"<h2 style='font-size:17px'>{H.escape(title)}</h2>{paras}"
         "<p style='color:#6b7280;font-size:13px'>InvestMQuest · 多類同時恐慌訊號（只在新事件那天寄出）</p></div>",
         encoding="utf-8")
+
+
+def write_lamp(state: dict, gen: str) -> None:
+    """首頁燈號：某市場 call 版或期貨版待進場，而且進場日還沒過（台北今天以前），就亮；其他都不亮。"""
+    today = dt.datetime.now(TPE).date().isoformat()
+    out = {}
+    for m, s in state.items():
+        p = [s["versions"][v]["pending"] for v in ("call", "fut") if s["versions"][v]["pending"]]
+        on = any(x["entry_est"] >= today for x in p)
+        s["lamp"] = on
+        out[m] = dict(name=NAMES[m], on=on, date=s["date"])
+    LAMP.parent.mkdir(parents=True, exist_ok=True)
+    LAMP.write_text(json.dumps(dict(generated=gen, markets=out), ensure_ascii=False, indent=1) + "\n")
 
 
 def main():
@@ -609,7 +703,8 @@ def main():
                 log(f"鎖跌停比率計算失敗，沿用舊資料：{e}")
     frames = us_frames(us)
     frames["TW"] = tw_frame()
-    state = build_state(frames, us, aux, txo)
+    specs = update_specs(frames, us, aux, txo)
+    state = build_state(frames, specs, us, aux, txo)
     notified = json.loads((D / "notified.json").read_text()) if (D / "notified.json").exists() else {}
     items = []
     for m, st in state.items():
@@ -617,12 +712,22 @@ def main():
             items.append(alert_text(m, st, False))
             notified[m] = st["date"]
     if a.test_notify:
-        m = max(state, key=lambda k: state[k]["last_event"] or "")
+        def last_sig(k):
+            es = [e["sig_date"] for v in ("call", "fut") for e in state[k]["versions"][v]["entries"]]
+            return max(es) if es else ""
+        m = max(state, key=last_sig)
         st = dict(state[m])
-        if "event_state" not in st:   # 最近沒有事件：用最近一次事件那天重播
-            ev = L.replay(frames[m][frames[m].index <= pd.Timestamp(st["last_event"])])["state"]
+        if "event_state" not in st:   # 今天沒有新訊號：亮燈與規格用最近一筆進場的訊號日重播，部位用今天的
+            sd = last_sig(m)
+            ev = L.replay(frames[m][frames[m].index <= pd.Timestamp(sd)], specs[m])["state"]
             st["event_state"] = {k: ev[k] for k in ("date", "close", "classes", "n_lit")}
+            ev = dict(ev, name=st["name"])
             st["order"] = order_tw(ev, txo) if m == "TW" else order_us(m, ev, us, aux)
+            st["versions"] = {v: dict(x) for v, x in st["versions"].items()}
+            # 規格那段要寫「這次要進場的版本」：測試信用該訊號日當時待進場的版本
+            for v in ("call", "fut"):
+                st["versions"][v]["pending"] = ev["versions"][v]["pending"]
+            st["test_positions"] = state[m]["versions"]
         items = [alert_text(m, st, True)]
     if items and not a.no_notify:
         write_alert(items, a.test_notify)
@@ -630,9 +735,10 @@ def main():
     if not a.test_notify:
         (D / "notified.json").write_text(json.dumps(notified, ensure_ascii=False, indent=1) + "\n")
     gen = dt.datetime.now(TPE).strftime("%Y-%m-%d %H:%M")
-    slim = {m: {k: v for k, v in s.items() if k != "last_event_i"} for m, s in state.items()}
+    slim = state
     for m, s in state.items():
-        log(f"{m} {s['date']}：亮 {s['n_lit']} 類，可觸發 {s['armed_open']}，今天事件 {s['event_today']}，上次 {s['last_event']}")
+        log(f"{m} {s['date']}：亮 {s['n_lit']} 類；" + "；".join(f"{L.VNAME[v]} {pos_word(v, s['versions'][v])}" for v in L.VERSIONS))
+    write_lamp(state, gen)
     (D / "state.json").write_text(json.dumps(dict(generated=gen, markets=slim, log=LOG), ensure_ascii=False, indent=1) + "\n")
     append_log(state)
     import page

@@ -1,13 +1,16 @@
 """「多類同時」上線版的每日狀態：全史重播，不存狀態。
 
-規則照 docs/Panic_Call_Prereg.md 第 41～77 行，程式直接用同目錄的 signals.py（回測同一支），不改任何規則：
+規則照 docs/Panic_Call_Prereg.md 第 41～77 行與修改紀錄，程式直接用同目錄的 signals.py、positions.py（回測同一支）：
 - 甲類：隱含波動率水位（S&P 500＝VIX、Nasdaq-100＝VXN、台股＝自算台指 VIX）落在最極端 5%。
 - 乙類：連三天加速下跌版本一（三天都跌、跌幅一天比一天大，整數基點），且三日標準化報酬 z3 落在最差 5%。
 - 丙類：美股 VIX ÷ VIX3M、台股鎖跌停家數比率，落在最極端 5%。
 - 三類裡至少兩類同一天亮＝訊號。分位數每天只跟到前一天為止的全部歷史比，整數空間判斷。
-- 同一波只算一次：亮過之後，要等波動率水位回到自己歷史中位數以下（到前一天為止，取偏小的中位數）才能再亮。
+- 重新待命（2026-11-24 改）：部位結束就重新待命。每個版本一次只抱一筆，上一筆結束那天之後任何一天訊號亮著，
+  就算新的一筆，隔天收盤進場。call 版到期結束；期貨版停損或到期，先到的那天結束；賣出賣權價差（對照）到期結束。
+  同一個版本一年最多進 4 次。部位是規則上的紙上部位（進場規格見 specs_core.py），不是持有人的實際成交。
+  （舊規則「波動率回到歷史中位數以下才能再亮」2026-11-24 起不用。）
 
-本檔只依賴 signals.py、numpy、pandas，網站 repo 的 CI 用同一份副本（scripts/panic_multi/，逐字複製）。
+本檔只依賴 signals.py、positions.py、numpy、pandas，網站 repo 的 CI 用同一份副本（scripts/panic_multi/，逐字複製）。
 """
 from __future__ import annotations
 
@@ -17,11 +20,15 @@ import numpy as np
 import pandas as pd
 
 try:
+    from . import positions as PS
     from . import signals as S
 except ImportError:  # 網站 CI 以腳本方式執行
+    import positions as PS  # type: ignore
     import signals as S  # type: ignore
 
 P = 500  # 最極端 5%（基點）
+VERSIONS = ("call", "fut", "put")
+VNAME = {"call": "call 版", "fut": "期貨版", "put": "賣出賣權價差（對照）"}
 
 
 def _sorted_hist(tr: "S.Track", upto: int) -> list:
@@ -52,16 +59,91 @@ def _next_threshold(tr: "S.Track", i: int, high: bool):
     return hist[m] / S.SCALE, n
 
 
-def _median_next(tr: "S.Track", i: int):
-    """明天判斷重新觸發用的中位數（到今天為止的歷史，取偏小的中位數）。"""
-    hist = _sorted_hist(tr, i)
-    if len(hist) < S.BURN:
-        return None
-    return hist[(len(hist) - 1) // 2] / S.SCALE
+def open_fns(df: pd.DataFrame, specs: pd.DataFrame | None) -> dict:
+    """三個版本的進場函式（給 positions.replay）。specs：以日期為索引，欄位 call_exit、call_prem、put_exit
+    （specs_core.py／data/panic_multi/entry_specs.csv）；沒有那一天的規格就進不了場。"""
+    dates = df.index
+    n = len(df)
+    close = df["close"].to_numpy(float)
+    sp = (specs.reindex(dates) if specs is not None else pd.DataFrame(index=dates))
+    ce = sp["call_exit"] if "call_exit" in sp else pd.Series(pd.NaT, index=dates)
+    cp = sp["call_prem"].to_numpy(float) if "call_prem" in sp else np.full(n, np.nan)
+    pe = sp["put_exit"] if "put_exit" in sp else pd.Series(pd.NaT, index=dates)
+    last = dates[-1]
+
+    def end_of(t):
+        if t is None or pd.isna(t):
+            return None
+        t = pd.Timestamp(t)
+        if t > last:
+            return n - 1, True, t
+        return int(dates.searchsorted(t, side="right") - 1), False, t
+
+    def call(e):
+        r = end_of(ce.iloc[e])
+        if r is None:
+            return None, "沒有符合規格的合約或波動率資料"
+        x, op, t = r
+        return dict(exit_i=x, open=op, end_date=str(t.date())), ""
+
+    def fut(e):
+        r = end_of(ce.iloc[e])
+        if r is None or cp[e] != cp[e]:
+            return None, "沒有符合規格的合約或波動率資料"
+        x, op, t = r
+        j, stopped = PS.futures_exit(close, e, x, float(cp[e]))
+        return dict(exit_i=j, open=bool(op and not stopped), stopped=bool(stopped), end_date=str(t.date()),
+                    prem=float(cp[e]), stop_level=float(close[e] - cp[e]), entry_close=float(close[e])), ""
+
+    def put(e):
+        r = end_of(pe.iloc[e])
+        if r is None:
+            return None, "沒有符合規格的合約或波動率資料"
+        x, op, t = r
+        return dict(exit_i=x, open=op, end_date=str(t.date())), ""
+
+    return {"call": call, "fut": fut, "put": put}
 
 
-def replay(df: pd.DataFrame) -> dict:
-    """df：index 為交易日，欄位 close、vol（甲類水位）、ratio（丙類）。回傳全史重播結果與最後一天的狀態。"""
+def next_weekday(d: pd.Timestamp) -> pd.Timestamp:
+    n = d + pd.Timedelta(days=1)
+    while n.weekday() >= 5:
+        n += pd.Timedelta(days=1)
+    return n
+
+
+def version_state(rows: list, dates, close, v: str) -> dict:
+    """一個版本重播完的逐筆與最後一天的部位。"""
+    n = len(dates)
+    last = dates[-1]
+    entries, pending, over = [], None, None
+    for r in rows:
+        sd = str(dates[r["sig_i"]].date())
+        if r["status"] == "進場":
+            x = int(r["exit_i"])
+            how = "持有中" if r["open"] else ("停損" if r.get("stopped") else "到期")
+            e = dict(sig_date=sd, entry_date=str(dates[r["entry_i"]].date()), end_date=r["end_date"],
+                     exit_date=None if r["open"] else str(dates[x].date()), how=how)
+            if v == "fut":
+                e.update(stop_level=r["stop_level"], prem=r["prem"], entry_close=r["entry_close"])
+            entries.append(e)
+        elif r["status"] == "待進場":
+            pending = dict(sig_date=sd, entry_est=str(next_weekday(last).date()))
+        elif r["status"] == "超過年預算" and r["sig_i"] == n - 1:
+            over = dict(sig_date=sd)
+    pos = entries[-1] if entries and entries[-1]["how"] == "持有中" else None
+    yr = last.year
+    n_year = sum(1 for e in entries if e["entry_date"][:4] == str(yr))
+    if pending and pending["entry_est"][:4] == str(yr):
+        n_year += 1
+    return dict(entries=entries, position=pos, pending=pending, over_budget_today=over,
+                entries_this_year=n_year, flat=pos is None and pending is None,
+                last_entry=entries[-1] if entries else None)
+
+
+def replay(df: pd.DataFrame, specs: pd.DataFrame | None = None) -> dict:
+    """df：index 為交易日，欄位 close、vol（甲類水位）、ratio（丙類）。specs：進場規格（見 open_fns）。
+    回傳全史重播結果與最後一天的狀態。"""
     T = S.build(df)
     n = len(df)
     dates = df.index
@@ -69,17 +151,6 @@ def replay(df: pd.DataFrame) -> dict:
     lit_b = T["a1"] & T["z3"].lit[P]
     lit_c = T["ratio"].lit[P]
     multi = S.lit_series(T, "multi", P)
-    ev = S.events(T, "multi", P, n)
-    # 逐日 armed 狀態（跟 signals.events 同一個迴圈）
-    armed_open = np.zeros(n, bool)  # 當天開始時是否可觸發
-    armed = True
-    for i in range(n):
-        armed_open[i] = armed
-        if armed:
-            if multi[i]:
-                armed = False
-        elif S.rearm_ok(T, "multi", i):
-            armed = True
     i = n - 1
     close = df["close"].to_numpy(float)
     r = close[1:] / close[:-1] - 1.0
@@ -101,32 +172,19 @@ def replay(df: pd.DataFrame) -> dict:
     b["last3_ret"] = last3
     b["last3_bp"] = [int(round(x * 1e4)) for x in last3]
     c_ = cls(T["ratio"], True, lit_c, float(df["ratio"].iloc[i]) if "ratio" in df else np.nan)
-    vt = T["vol"]
-    med_today = vt.med[i] / S.SCALE if vt.med[i] is not None else None
+    fns = open_fns(df, specs)
+    rows = {v: PS.replay(multi, dates, fns[v]) for v in VERSIONS}
+    vs = {v: version_state(rows[v], dates, close, v) for v in VERSIONS}
+    new_today = [v for v in VERSIONS if vs[v]["pending"] and vs[v]["pending"]["sig_date"] == str(dates[i].date())]
     state = dict(
         date=str(dates[i].date()), close=float(close[i]),
         classes=dict(vol=a, accel=b, ratio=c_),
         n_lit=int(a["lit"]) + int(b["lit"]) + int(c_["lit"]),
         multi_lit=bool(multi[i]),
-        armed_open=bool(armed_open[i]),
-        event_today=bool(len(ev) and ev[-1] == i),
-        armed_next=bool(armed),
-        vol_median_today=med_today,
-        vol_median_next=_median_next(vt, i),
-        vol_le_median_today=bool(vt.val[i] is not None and vt.med[i] is not None and vt.val[i] <= vt.med[i]),
-        events=[str(dates[k].date()) for k in ev],
-        last_event=str(dates[ev[-1]].date()) if ev else None,
-        last_event_i=int(ev[-1]) if ev else None,
-        rearm_date=None,
+        versions=vs,
+        new_today=new_today,
+        event_today=any(v in new_today for v in ("call", "fut")),   # 通知只看 call 版與期貨版
+        lit_days=[str(dates[k].date()) for k in np.flatnonzero(multi)],
     )
-    # 上一個事件之後第一次回到中位數以下的日子（已重新可觸發時才有）
-    if ev and armed:
-        for k in range(ev[-1] + 1, n):
-            if S.rearm_ok(T, "multi", k):
-                state["rearm_date"] = str(dates[k].date())
-                break
-    hist = pd.DataFrame({"lit_vol": lit_a, "lit_accel": lit_b, "lit_ratio": lit_c, "multi": multi,
-                         "armed_open": armed_open}, index=dates)
-    hist["event"] = False
-    hist.iloc[ev, hist.columns.get_loc("event")] = True
-    return dict(state=state, events=ev, hist=hist, T=T)
+    hist = pd.DataFrame({"lit_vol": lit_a, "lit_accel": lit_b, "lit_ratio": lit_c, "multi": multi}, index=dates)
+    return dict(state=state, rows=rows, hist=hist, T=T)
