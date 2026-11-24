@@ -766,9 +766,12 @@ footer a{color:var(--muted)}
   var pPos=getJSON('/long-track-w52-adaptive/state.json').then(function(d){
     var tk=d.tickers||{}, ov=d.overlay||{};
     if(!tk.QQQ||!tk.SMH||!tk['0050']||!tk['2330'])return;
-    function tp(k){var v=tk[k]&&tk[k].final_weight_pct; return (typeof v==='number')?Math.round(v)+'%':'—';}
+    var wts=d.weights||{};
+    // 權重/水位（例：QQQ 70/30% ＝占指數部權重 70%、目前水位 30%）；水位＝目標持股 ÷ 權重
+    function tp(k){var v=tk[k]&&tk[k].final_weight_pct, w=wts[k]; if(typeof v!=='number')return '—'; if(typeof w!=='number'||!(w>0))return Math.round(v)+'%'; return Math.round(w*100)+'/'+Math.round(v/w)+'%';}
     var isNew=(tk.QQQ.rule==='w52a_c1_live'), isST=(tk.QQQ.rule==='st_live');
     var h='<div class="ms-sleeve-h"><span>實單目前目標持股</span><span class="tg">'+(isST?'Supertrend':(isNew?'新規則':'10-19 起換新規則'))+'</span></div>';
+    h+='<div class="ms-sleeve-leg" style="color:var(--muted);font-size:.72rem"><span></span><span>權重/水位</span></div>';
     h+='<div class="ms-sleeve-leg"><span>美股 QQQ／SMH</span><span>'+tp('QQQ')+' · '+tp('SMH')+'</span></div>';
     [['ief','IEF 公債'],['gld','GLD 黃金']].forEach(function(x){
       var o=ov[x[0]]; if(!o)return;
@@ -778,7 +781,7 @@ footer a{color:var(--muted)}
       h+='<div class="ms-sleeve-leg"><span>'+x[1]+dots+(stOv?'':(typeof o.n==='number'?o.n:'—')+'／3')+'</span><span>目標 '+tgt+'</span></div>';
     });
     var l2=d.tw_l2, l2On=!!(l2&&l2.applied&&typeof l2.target_pct==='number');
-    h+='<div class="ms-sleeve-leg"><span>台股 '+(l2On?'00631L／':'')+'0050／2330</span><span>'+(l2On?Math.round(l2.target_pct)+'% · ':'')+tp('0050')+' · '+tp('2330')+'</span></div>';
+    h+='<div class="ms-sleeve-leg"><span>台股 '+(l2On?'00631L／':'')+'0050／2330</span><span>'+(l2On?(typeof l2.weight_pct==='number'&&typeof l2.level_pct==='number'?Math.round(l2.weight_pct)+'/'+Math.round(l2.level_pct)+'%':Math.round(l2.target_pct)+'%')+' · ':'')+tp('0050')+' · '+tp('2330')+'</span></div>';
     var asof=[d.history_us,d.history_tw].map(function(a){return a&&a.length?a[a.length-1].date:'';}).sort().pop()||d.data_date;
     h+='<div class="ms-sleeve-date">'+(isST?'債金：週線七成＋月線三成 Supertrend（燈：週、月）':'美股債金：週線 40 週均 · 52 週均 · 52 週前，各 1/3')+(asof?' · 資料日 '+mcEsc(asof):'')+'</div>';
     var b=el('ms1pos'); b.innerHTML=h; b.hidden=false; anyData=true;
