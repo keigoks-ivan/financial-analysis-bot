@@ -5,8 +5,9 @@ name: Panic Multi Daily
 # 每次跑：美股 yfinance 接最近兩個月、台股證交所加權指數＋期交所台指選擇權（自算台指 VIX）＋
 # Release revmom-data 的上市櫃日線（鎖跌停家數比率）→ 補進場規格表 → 三個市場全史重播 → 寫 data/panic_multi/、頁面
 # 與首頁燈號 docs/backtest/viable/panic_multi/lamp.json（首頁 docs/index.html 載入時讀它）。
-# 只有某市場的 call 版或期貨版今天亮、明天要進場才寄 Email＋發 Discord；同一市場同一天只通知一次（notified.json）。
-# 通知排在 push 成功之後，push 失敗就不寄，下一輪重跑時再判斷，避免重複寄或漏記。
+# 2026-11-24 起這條線不自己寄 Email、發 Discord：推送成功後派 trade-digest.yml（#調倉 每個市場每天一則），
+# 由它讀 data/panic_multi/state.json，「今天亮、明天要進場」放進「要做的事」，平常只佔「少見事件」一行；
+# 該市場那天的訊息已經發過時補發一則「補充」。update.py 照舊寫 notified.json 與通知檔，只是 workflow 不再送出。
 #
 # 排程（三個入口，任一輪都同時更新美股與台股；concurrency 讓它們排隊不重疊）：
 #   - 22:40 UTC 週一至週五：美股收盤後（冬令 17:40 ET、夏令 18:40 ET；程式丟掉 17:30 ET 前的當日 K 棒），
@@ -23,14 +24,6 @@ on:
     types: [completed]
   workflow_dispatch:
     inputs:
-      test_notify:
-        description: '寄一則標題含「測試」的測試信（email＋Discord），內容是最近一次真實事件'
-        type: boolean
-        default: false
-      no_notify:
-        description: '只更新資料與頁面，不寄 email／Discord'
-        type: boolean
-        default: false
       retry:
         description: 內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0
         required: false
@@ -78,14 +71,10 @@ jobs:
 
       - name: Update signal
         env:
-          TEST_NOTIFY: ${{ inputs.test_notify }}
-          NO_NOTIFY: ${{ inputs.no_notify }}
           REVMOM_OK: ${{ steps.revmom.outcome }}
         run: |
           ARGS=""
           if [ "$REVMOM_OK" = "success" ]; then ARGS="--revmom /tmp/rv/data/revmom"; fi
-          if [ "$TEST_NOTIFY" = "true" ]; then ARGS="$ARGS --test-notify"; fi
-          if [ "$NO_NOTIFY" = "true" ]; then ARGS="$ARGS --no-notify"; fi
           python scripts/panic_multi/update.py $ARGS
 
       - name: Commit and push
@@ -112,61 +101,10 @@ jobs:
         continue-on-error: true
         run: gh workflow run deploy-pages.yml --ref main
 
-      - name: Read alert
-        id: alert
-        run: |
-          if [ -f panic_alert.txt ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "title=$(head -n 1 panic_title.txt)" >> "$GITHUB_OUTPUT"
-            {
-              echo "body<<PANIC_EOF"
-              awk 1 panic_alert.txt
-              echo "PANIC_EOF"
-            } >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Check mail secrets
-        id: mailcfg
-        env:
-          MU: ${{ secrets.MAIL_USERNAME }}
-          MP: ${{ secrets.MAIL_APP_PASSWORD }}
-        run: |
-          if [ -n "$MU" ] && [ -n "$MP" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false (SMTP secrets missing — email skipped)" >&2
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Email new event
-        if: steps.alert.outputs.changed == 'true' && steps.mailcfg.outputs.ready == 'true'
+      - name: Dispatch trade digest
+        # 恐慌狀態推上去之後讓 #調倉 每日一則重新判斷（美股等恐慌燈到齊才發；台股恐慌燈晚到且亮了會補發）。
         continue-on-error: true
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_APP_PASSWORD }}
-          subject: ${{ steps.alert.outputs.title }}
-          to: keigoks@gmail.com
-          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
-          html_body: file://panic_mail.html
-          body: |
-            ${{ steps.alert.outputs.body }}
-
-            —
-            InvestMQuest · 多類同時恐慌訊號（只在新事件那天寄出）
-
-      - name: Discord notify
-        if: steps.alert.outputs.changed == 'true'
-        continue-on-error: true
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
-          NOTIFY_TITLE: ${{ steps.alert.outputs.title }}
-        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file panic_alert.txt --url https://research.investmquest.com/backtest/viable/panic_multi/
+        run: gh workflow run trade-digest.yml --ref main -f market=all -f retry=0
 
       - name: Self-retrigger once after rebase conflict
         if: failure() && steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
