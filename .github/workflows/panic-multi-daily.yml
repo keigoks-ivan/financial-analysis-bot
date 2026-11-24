@@ -1,0 +1,172 @@
+name: Panic Multi Daily
+
+# 「多類同時」恐慌訊號（/backtest/viable/panic_multi/）每日更新，2026-11-24 上線。
+# 規則照 v7-backtest docs/Panic_Call_Prereg.md 第 41～77 行，上線版不改規則；程式 scripts/panic_multi/。
+# 每次跑：美股 yfinance 接最近兩個月、台股證交所加權指數＋期交所台指選擇權（自算台指 VIX）＋
+# Release revmom-data 的上市櫃日線（鎖跌停家數比率）→ 三個市場全史重播 → 寫 data/panic_multi/ 與頁面。
+# 只有某市場出現新事件（訊號日當天）才寄 Email＋發 Discord；同一市場同一天只通知一次（notified.json）。
+# 通知排在 push 成功之後，push 失敗就不寄，下一輪重跑時再判斷，避免重複寄或漏記。
+#
+# 排程（三個入口，任一輪都同時更新美股與台股；concurrency 讓它們排隊不重疊）：
+#   - 22:40 UTC 週一至週五：美股收盤後（冬令 17:40 ET、夏令 18:40 ET；程式丟掉 17:30 ET 前的當日 K 棒），
+#     趕在 UTC 午夜前（Yahoo 午夜後最新一根常是 NaN）。
+#   - 04:17 UTC 週二至週六：補跑，前一輪延誤或抓不到時接上。
+#   - RevMom Daily 跑完：台股上市櫃日線進 Release 後立刻算台股（RevMom 常延到台北清晨才跑完）。
+
+on:
+  schedule:
+    - cron: "40 22 * * 1-5"
+    - cron: "17 4 * * 2-6"
+  workflow_run:
+    workflows: ["RevMom Daily"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      test_notify:
+        description: '寄一則標題含「測試」的測試信（email＋Discord），內容是最近一次真實事件'
+        type: boolean
+        default: false
+      no_notify:
+        description: '只更新資料與頁面，不寄 email／Discord'
+        type: boolean
+        default: false
+      retry:
+        description: 內部用：rebase 衝突後自我重跑時帶 1，防無限迴圈；手動觸發留 0
+        required: false
+        default: "0"
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"  # site_nav.py 用 3.12 的 f-string 語法
+
+      - name: Install dependencies
+        run: pip install "pandas==2.3.3" "numpy<2.5" pyarrow yfinance
+
+      - name: Download listed-stock daily data (Release revmom-data)
+        id: revmom
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/rv
+          for i in 1 2 3; do
+            gh release download revmom-data -p revmom-data.tar.gz -D /tmp --clobber && break
+            echo "::warning::release download failed (attempt $i/3)"; sleep $((i * 20))
+          done
+          test -s /tmp/revmom-data.tar.gz
+          tar xzf /tmp/revmom-data.tar.gz -C /tmp/rv
+          python -c "import json; m=json.load(open('/tmp/rv/data/revmom/meta.json')); print('revmom data to', m['last_date'])"
+
+      - name: Update signal
+        env:
+          TEST_NOTIFY: ${{ inputs.test_notify }}
+          NO_NOTIFY: ${{ inputs.no_notify }}
+          REVMOM_OK: ${{ steps.revmom.outcome }}
+        run: |
+          ARGS=""
+          if [ "$REVMOM_OK" = "success" ]; then ARGS="--revmom /tmp/rv/data/revmom"; fi
+          if [ "$TEST_NOTIFY" = "true" ]; then ARGS="$ARGS --test-notify"; fi
+          if [ "$NO_NOTIFY" = "true" ]; then ARGS="$ARGS --no-notify"; fi
+          python scripts/panic_multi/update.py $ARGS
+
+      - name: Commit and push
+        id: commit_push
+        env:
+          IS_RETRY: ${{ github.event.inputs.retry || '0' }}
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add data/panic_multi docs/backtest/viable/panic_multi
+          git diff --staged --quiet || git commit -m "Auto update panic multi signal: $(date -u '+%Y-%m-%d %H:%M')"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            bash scripts/ci/rebase_or_flag.sh || exit 1
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
+
+      - name: Deploy site
+        continue-on-error: true
+        run: gh workflow run deploy-pages.yml --ref main
+
+      - name: Read alert
+        id: alert
+        run: |
+          if [ -f panic_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "title=$(head -n 1 panic_title.txt)" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<PANIC_EOF"
+              awk 1 panic_alert.txt
+              echo "PANIC_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email new event
+        if: steps.alert.outputs.changed == 'true' && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.alert.outputs.title }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://panic_mail.html
+          body: |
+            ${{ steps.alert.outputs.body }}
+
+            —
+            InvestMQuest · 多類同時恐慌訊號（只在新事件那天寄出）
+
+      - name: Discord notify
+        if: steps.alert.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+          NOTIFY_TITLE: ${{ steps.alert.outputs.title }}
+        run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-file panic_alert.txt --url https://research.investmquest.com/backtest/viable/panic_multi/
+
+      - name: Self-retrigger once after rebase conflict
+        if: failure() && steps.commit_push.outputs.conflict == 'true' && github.event.inputs.retry != '1'
+        run: bash scripts/ci/retrigger_once.sh
