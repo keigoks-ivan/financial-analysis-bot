@@ -488,7 +488,7 @@ def act_text(x: dict) -> str:
             how = f"賣出指數部的 {pp_txt(x['h10'] - x['n10'])}"
         else:
             how = f"買進指數部的 {pp_txt(x['n10'] - x['h10'])}"
-        return f"{x['tk']} {x['lv0']}% → {x['lv1']}%：{how}"
+        return f"{x['tk']} {wl_txt(x['tk'], x['lv0'])} → {wl_txt(x['tk'], x['lv1'])}：{how}"
     if x["kind"] == "overlay":
         B, stc, stp, U = _lib()
         veh = U.OVERLAY_VEHICLE[x["leg"]][0]
@@ -507,8 +507,24 @@ def act_short(x: dict) -> str:
     return x["short"]
 
 
+def _leg_w(t: str) -> int | None:
+    """主腿占指數部的權重（%，整數）；讀 state.json 的 weights 與 tw_l2.weight_pct，讀不到回 None。"""
+    st = _STATE_CACHE.get("state") or {}
+    if t == "00631L":
+        w = (st.get("tw_l2") or {}).get("weight_pct")
+        return int(round(float(w))) if isinstance(w, (int, float)) else None
+    w = (st.get("weights") or {}).get(t)
+    return int(round(float(w) * 100)) if isinstance(w, (int, float)) else None
+
+
+def wl_txt(t: str, lv) -> str:
+    """權重/水位，例：QQQ 70/30%（持有人 11-24 要求首頁、Email、Discord 一致）；沒有權重就只寫水位。"""
+    w = _leg_w(t)
+    return f"{w}/{lv}%" if w is not None else f"{lv}%"
+
+
 def _levels_txt(levels: list) -> str:
-    return "、".join(f"{t} {v}%" if isinstance(v, int) else f"{t} {v}" for t, v in levels)
+    return "、".join(f"{t} {wl_txt(t, v)}" if isinstance(v, int) else f"{t} {v}" for t, v in levels)
 
 
 def _order_levels(mk: str, levels: list) -> list:
@@ -623,12 +639,12 @@ def build_mail_html(mk, kind, s, title, sec, lv, pv, fv, acts, extras, supplemen
             for x in live_acts:
                 if x["kind"] == "live":
                     how = "全部賣出" if x["n10"] == 0 else ("賣出" if x["n10"] < x["h10"] else "買進")
-                    rows.append([f"<strong>{esc(x['tk'])}</strong>", f"{x['lv0']}%", f"{x['lv1']}%", how,
+                    rows.append([f"<strong>{esc(x['tk'])}</strong>", wl_txt(x['tk'], x['lv0']), wl_txt(x['tk'], x['lv1']), how,
                                  f"{pp_txt(x['h10'])} → {pp_txt(x['n10'])}"])
                 else:
                     rows.append([f"<strong>{esc(OV_LONG[x['leg']])}</strong>", "—", "—", esc(act_text(x).split("：", 1)[1]),
                                  f"{pp_txt(x['h10'])} → {pp_txt(x['n10'])}"])
-            body += section("ORDERS", "下單表", table(["標的", "現在水位", "目標水位", "動作", "占指數部"], rows) +
+            body += section("ORDERS", "下單表", table(["標的", "現在 權重/水位", "目標 權重/水位", "動作", "占指數部"], rows) +
                             note("占指數部＝水位 × 權重（台股 00631L 20%、0050 40%、2330 40%；美股 QQQ 70%、SMH 30%）。"
                                  "公債、黃金的數字本身就是占指數部。"))
         if lv.get("why_full") and live_acts:
@@ -642,10 +658,10 @@ def build_mail_html(mk, kind, s, title, sec, lv, pv, fv, acts, extras, supplemen
             for t in MK[mk]["legs"]:
                 st = (tk_all.get(t) or {}).get("st") or {}
                 rows.append([f"<strong>{esc(t)}</strong>", f"週線{'多' if st.get('w') else '空'}、月線{'多' if st.get('m') else '空'}",
-                             f"{st.get('level_pct')}%", esc("；".join(trig.get(t, [])))])
+                             wl_txt(t, st.get('level_pct')), esc("；".join(trig.get(t, [])))])
             if mk == "tw" and lv.get("l2"):
                 b = lv["l2"]
-                rows.append(["<strong>00631L</strong>", f"0050 週線{'多' if b.get('w') else '空'}", f"{b.get('level_pct')}%",
+                rows.append(["<strong>00631L</strong>", f"0050 週線{'多' if b.get('w') else '空'}", wl_txt("00631L", b.get('level_pct')),
                              esc("；".join(trig.get("00631L", [])))])
             if mk == "us" and lv.get("overlay") and lv["overlay"].get("active"):
                 for k in ("ief", "gld"):
@@ -658,7 +674,7 @@ def build_mail_html(mk, kind, s, title, sec, lv, pv, fv, acts, extras, supplemen
             for c, st in pv.get("mail") or []:
                 rows.append([f"<strong>恐慌燈（{esc(PANIC_NAME[c])}）</strong>", f"{st['n_lit']} 類亮", "",
                              "2 類以上同一天亮才算訊號"])
-            body += section("STATUS", "各策略現況", table(["策略", "現況", "水位", "下一個會動的價位"], rows))
+            body += section("STATUS", "各策略現況", table(["策略", "現況", "權重/水位", "下一個會動的價位"], rows))
         pm = _PANIC_MOD.get("m")
         for c, st in pv.get("mail") or []:
             if pm is None:
