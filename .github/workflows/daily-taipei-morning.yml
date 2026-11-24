@@ -27,6 +27,8 @@ name: Daily Taipei Morning Band
 #   08:00 / 11:00 UTC  帶 C · Daily Asia Close Band
 #
 # 被整合的舊 workflow 保留 workflow_dispatch，可隨時手動觸發（排程已停用）。
+#
+# 2026-11-24 持有人拍板：SOP 漏斗板機的 Discord 從 #調倉（DISCORD_WEBHOOK_TRADE）改發 #選股（DISCORD_WEBHOOK_PICKS），Email 不變。
 # ─────────────────────────────────────────────────────────────────────────
 
 on:
@@ -257,10 +259,11 @@ jobs:
             InvestMQuest · 每日收盤後自動掃描
 
       - name: Discord notify (SOP funnel)
+        # 2026-11-24 持有人拍板：SOP 漏斗是選股名單的通知，從 #調倉 搬到 #選股（#調倉 只放收盤後要不要下單的訊號）；Email 照舊。
         if: steps.sop_alert.outputs.triggered == 'true'
         continue-on-error: true
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_TRADE }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_PICKS }}
           NOTIFY_TITLE: "🎯 SOP 漏斗板機 — 今日有通過全部 veto 的進場訊號"
           NOTIFY_BODY: ${{ steps.sop_alert.outputs.body }}
         run: python3 scripts/notify_discord.py --title-env NOTIFY_TITLE --body-env NOTIFY_BODY --url https://research.investmquest.com/dd-screener/sop-funnel.html

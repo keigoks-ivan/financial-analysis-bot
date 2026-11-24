@@ -5,13 +5,15 @@
   ✅ 台股 11/23（一）收盤｜不用下單
   🔔 台股 11/19（四）收盤｜明天要下單          （有要做的事；Email 也寄）
   ⚠ 台股 11/17（二）收盤｜資料沒到齊，先不要下單 （資料有問題只發這一則；Email 也寄）
-內文固定順序：要做的事 → 實單水位 → 台指期（只台股）→ 少見事件（恐慌燈）→ 下一個會動的價位。
+內文固定順序：要做的事 → 實單水位 → 台指期（台股）／NQ 期貨（美股）→ 少見事件（恐慌燈）→ 市場溫度（美股，有更新那次）→ 下一個會動的價位。
 Email 內容跟 Discord 相同，多附下單表與各策略現況表，只在 🔔、⚠ 寄。
 
 讀（都不抓價、不重算訊號）：
   docs/long-track-w52-adaptive/state.json   實單（update_long_track_w52_adaptive.py 寫）
   data/panic_multi/state.json               恐慌訊號多類同時（scripts/panic_multi/update.py 寫）
-  data/live_digest/tw_futures.json          台指期 3σ、均線多空（本機 Mac 算完推上來；可能不存在或落後）
+  data/live_digest/tw_futures.json          台指期 3σ 日線、均線多空、3σ 週線（本機 Mac 算完推上來；可能不存在或落後）
+  data/live_digest/us_futures.json          NQ 3σ 週線收盤確認（本機 Mac 算完推上來，2026-11-24 起；週六早上與平日下午各班）
+  data/live_digest/fear_greed.json          市場溫度計狀態改變時的提醒（update_fear_greed.py 寫，2026-11-24 起不再自己發 Discord／Email）
   data/live_digest/live_capture.json        實單 workflow 每次跑完存的提醒原文、週五預警、SMH 倫敦（本檔 capture 寫）
 寫：
   data/live_digest/sent.json                去重狀態（本檔 run 寫，trade-digest.yml 提交）
@@ -28,13 +30,16 @@ Email 內容跟 Discord 相同，多附下單表與各策略現況表，只在 �
      過了期限（台股 S 隔天台北 07:30、美股 S 隔天台北 20:00）還沒有就發 ⚠。
   2. 實單算了但資料有問題（各檔日期不一致、主程式標資料延遲、讀不到、下單數字跟提醒原文對不起來）：
      S 還沒發過就馬上發一則 ⚠；已經發過正常的那則就不再發（主程式在資料延遲時不改紀錄，之前的決定不變）。
-  3. 實單正常：其他來源到齊（台股等台指期、美股等 S&P 500 與那斯達克 100 恐慌燈）或過了保底時間
+  3. 實單正常：其他來源到齊（台股等台指期、美股等 S&P 500 與那斯達克 100 恐慌燈；S 是那週最後一個交易日時美股也等 NQ 週線）或過了保底時間
      （台股 S 當天台北 16:45、美股 S 隔天台北 13:10）就發 ✅／🔔；之前發過 ⚠ 的話資料一好就發。
   4. 已經發過 S 的正常那則之後，又冒出新的要做的事（恐慌燈晚到、台指期晚到且有動作、實單重跑出變動）：
      補發一則短的「🔔 台股 11/24（二）補充｜…」，只列新的事；沒有新動作就不補發。
      實單還在等的時候冒出恐慌燈或台指期的動作也不跟著等，直接補發（記在該動作的日期底下，之後主訊息不重列）。
   去重狀態 sent.json：{市場: {收盤日: {kind: ok／act／warn／supp, acts: [已發過的動作 key], levels}}}，
-  動作 key 帶日期（實單 live|日期|檔|前|後、恐慌 panic|市場|訊號日、台指期 fut|日期|項目|動作），所以同一個動作只發一次。
+  動作 key 帶日期（實單 live|日期|檔|前|後、恐慌 panic|市場|訊號日、台指期 fut|日期|項目|動作；3σ 週線 fut|週收盤日|bb3w 或 nq_bb3w|entry／exit_target／exit_cap，
+  換月 fut|資料日|bb3w|roll-換月日），所以同一個動作只發一次。市場溫度提醒用 consumed 清單去重（id fg|資料週|市場），只出現在美股那則一次。
+3σ 週線（持有人 2026-11-24 拍板收進 #調倉）：規則是研究登記的版本甲（docs/BB3_TV_Line_Prereg.md）——週收盤在 TradingView 那條線下就買、
+週收盤回到中線或抱滿 20 週就賣，本機 v7 src/bb3_weekly_live 算；本檔只讀它寫的文字與動作，不重算。
 
 用法：
   python scripts/trade_digest.py capture                     # 實單 workflow：存提醒原文、週五預警、SMH 倫敦
@@ -63,6 +68,9 @@ STATE_JSON = ROOT / "docs" / "long-track-w52-adaptive" / "state.json"
 PANIC_JSON = ROOT / "data" / "panic_multi" / "state.json"
 DIG = ROOT / "data" / "live_digest"
 FUT_JSON = DIG / "tw_futures.json"
+US_FUT_JSON = DIG / "us_futures.json"
+FG_JSON = DIG / "fear_greed.json"
+FG_URL = "https://research.investmquest.com/fear-greed/"
 CAPTURE_JSON = DIG / "live_capture.json"
 SENT_JSON = DIG / "sent.json"
 ALERT_TXT = ROOT / "lt_w52a_alert.txt"
@@ -453,16 +461,25 @@ def panic_view(panic: dict | None, mk: str, s: date, now: datetime) -> dict:
     return {"fresh": fresh, "lines": lines, "acts": acts, "mail": mail, "missing": False}
 
 
-FUT_LAB = (("bb3", "3σ 下軌"), ("ma_ls", "均線多空"))
+FUT_LAB = (("bb3", "3σ 下軌"), ("ma_ls", "均線多空"), ("bb3w", "3σ 週線"))
+
+
+def _week_acts(v: dict, short: str, tag: str) -> list:
+    """3σ 週線的動作：本機已經算好 key（週收盤日|項目|動作）與文字。"""
+    return [{"key": f"fut|{a['key']}", "kind": "fut", "text": a["text"], "short": short, "tag": tag}
+            for a in (v.get("acts") or []) if a.get("key") and a.get("text")]
 
 
 def fut_view(fut: dict | None, s: date) -> dict:
     if not fut:
-        return {"fresh": False, "lines": [f"{lab}：還沒更新。" for _, lab in FUT_LAB], "acts": []}
+        lines = [f"{lab}：還沒更新。" for _, lab in FUT_LAB]
+        return {"fresh": False, "lines": lines, "acts": [], "title": "台指期", "rows": list(zip([lab for _, lab in FUT_LAB], lines))}
     sess = str(fut.get("session") or "")[:10]
     fresh = sess == str(s)
     lines, acts = [], []
+    labs = []
     for k, lab in FUT_LAB:
+        labs.append(lab)
         v = fut.get(k)
         if not isinstance(v, dict):
             lines.append(f"{lab}：沒有資料。")
@@ -473,10 +490,46 @@ def fut_view(fut: dict | None, s: date) -> dict:
         else:
             t = str(v.get("text") or "（沒有說明）")
             lines.append(t if t.startswith(lab) else f"{lab}：{t}")     # 本機寫的 text 可能已帶「3σ 下軌：」開頭
-            if v.get("action"):
+            if "acts" in v:
+                acts += _week_acts(v, f"台指期 {lab}", "台指期有動作")
+            elif v.get("action"):
                 acts.append({"key": f"fut|{s}|{k}|{v['action']}", "kind": "fut", "text": f"台指期 {lab}：{v['action']}",
-                             "short": f"台指期 {lab}"})
-    return {"fresh": fresh, "lines": lines, "acts": acts}
+                             "short": f"台指期 {lab}", "tag": "台指期有動作"})
+    return {"fresh": fresh, "lines": lines, "acts": acts, "title": "台指期", "rows": list(zip(labs, lines))}
+
+
+def us_week_needed(s: date) -> date:
+    """美股收盤日 S 的訊息，NQ 週線至少要算到哪一天的週收盤：S 是那週最後一個交易日就是 S，否則是上一週最後一個交易日。"""
+    if next_session("us", s).isocalendar()[:2] != s.isocalendar()[:2]:
+        return s
+    d = s - timedelta(days=s.weekday() + 1)
+    for _ in range(15):
+        x = LN.is_session("us", d)
+        if x is True or (x is None and d.weekday() < 5):
+            return d
+        d -= timedelta(days=1)
+    return d
+
+
+def nq_view(usf: dict | None, s: date) -> dict:
+    lab = "NQ 3σ 週線"
+    v = (usf or {}).get("nq_bb3w")
+    need = us_week_needed(s)
+    out = {"title": "NQ 期貨", "acts": [], "fresh": False, "missing": not usf}
+    if not isinstance(v, dict):
+        ln = f"{lab}：還沒更新。"
+    elif v.get("error"):
+        ln = f"{lab}：計算出錯（{v['error']}）。"
+    elif not v.get("week_end") or d_(v["week_end"]) < need:
+        ln = f"{lab}：還沒更新到 {sd(need)} 那週的週收盤（最後一次算到 {sd(v['week_end']) if v.get('week_end') else '—'}）。"
+    else:
+        out["fresh"] = True
+        t = str(v.get("text") or "（沒有說明）")
+        ln = t if t.startswith(lab) else f"{lab}：{t}"
+        out["acts"] = _week_acts(v, lab, "NQ 有動作")
+    out["lines"] = [ln]
+    out["rows"] = [(lab, ln)]
+    return out
 
 
 # ---------------------------------------------------------------- 組訊息
@@ -569,8 +622,8 @@ def build_message(mk: str, kind: str, s: date, now: datetime, lv: dict, pv: dict
             tags.append(f"{when_word(mk, n, now)}要下單")
         if any(x["kind"] == "panic" for x in acts):
             tags.append("恐慌訊號亮了")
-        if any(x["kind"] == "fut" for x in acts):
-            tags.append("台指期有動作")
+        for tg in dict.fromkeys(x.get("tag", "台指期有動作") for x in acts if x["kind"] == "fut"):
+            tags.append(tg)
         tail = "、".join(tags) if tags else "不用下單"
         title = f"{'🔔' if acts else '✅'} {name} {md(s)}{'補充' if supplement else '收盤'}｜{tail}"
         if supplement == "early":     # 這個收盤日的主訊息還沒發（實單還沒算完），恐慌燈或台指期的動作先發
@@ -587,10 +640,12 @@ def build_message(mk: str, kind: str, s: date, now: datetime, lv: dict, pv: dict
             sec.append(("實單", [f"調完後：{lvt}。" if live_acts else f"{lvt}，跟上一個交易日一樣。"], False))
         if not lv.get("sure", True):
             sec.append(("注意", [f"程式的休市表沒有 {s.year} 年，無法確認 {md(s)} 是不是最新交易日。"], False))
-        if mk == "tw" and fv and (not supplement or any(x["kind"] == "fut" for x in acts)):
-            sec.append(("台指期", fv["lines"], False))
+        if fv and (not supplement or any(x["kind"] == "fut" for x in acts)):
+            sec.append((fv["title"], fv["lines"], False))
         if not supplement or any(x["kind"] == "panic" for x in acts):
             sec.append(("少見事件", pv["lines"], False))
+        if extras.get("fg"):
+            sec.append(("市場溫度（提醒，不是交易規則）", [ln for it in extras["fg"] for ln in it["lines"]], False))
         if not supplement:
             trig = lv["triggers"]
             near = {}
@@ -668,9 +723,10 @@ def build_mail_html(mk, kind, s, title, sec, lv, pv, fv, acts, extras, supplemen
                     o = lv["overlay"][k]
                     rows.append([f"<strong>{esc(OV_LONG[k])}</strong>", f"週線{'多' if o.get('st_w') else '空'}、月線{'多' if o.get('st_m') else '空'}",
                                  f"占指數部 {o.get('target_pct', 0):.0f}%", esc(stp.trigger_text(o)) if "w_thr" in o else "—"])
-            if mk == "tw" and fv:
-                rows += [[f"<strong>台指期 {esc(lab)}</strong>", "", "", esc(ln.split("：", 1)[1] if "：" in ln else ln)]
-                         for (_, lab), ln in zip(FUT_LAB, fv["lines"])]
+            if fv:
+                pre = "台指期 " if mk == "tw" else ""
+                rows += [[f"<strong>{esc(pre + lab)}</strong>", "", "", esc(ln.split("：", 1)[1] if "：" in ln else ln)]
+                         for lab, ln in fv["rows"]]
             for c, st in pv.get("mail") or []:
                 rows.append([f"<strong>恐慌燈（{esc(PANIC_NAME[c])}）</strong>", f"{st['n_lit']} 類亮", "",
                              "2 類以上同一天亮才算訊號"])
@@ -690,12 +746,15 @@ def build_mail_html(mk, kind, s, title, sec, lv, pv, fv, acts, extras, supplemen
             if extra or any(not p.endswith("下次亮就進場") and "空手" not in p for p in pos):
                 body += section("PANIC", f"恐慌訊號 {PANIC_NAME[c]}", extra +
                                 "".join(f'<div style="font-size:13px;color:#555;">{esc(p)}</div>' for p in pos))
+        for it in extras.get("fg") or []:
+            body += section("TEMP", "市場溫度細項", "".join(f'<div style="font-size:13px;line-height:1.7;color:#333;">{esc(x)}</div>'
+                                                      for x in it.get("detail") or []) + note(f'<a href="{FG_URL}">市場溫度頁</a>'))
         if extras.get("smhl_status"):
             body += note(esc(extras["smhl_status"]))
     body += note(f'完整頁面：<a href="{LIVE_URL}">實單主控台</a> · <a href="{PANIC_URL}">恐慌訊號</a>')
     return frame(title=title, date=_STATE_CACHE.get("now", datetime.now(timezone.utc)).astimezone(TPE).strftime("%Y-%m-%d %H:%M"), body_html=body,
                  button_label="打開實單主控台 →", button_url=LIVE_URL, accent="red" if kind == "warn" else "navy",
-                 disclaimer="本信為機械化訊號通知，非投資建議。數字取自實單、恐慌訊號、台指期各自的狀態檔，本信不抓價、不重算訊號。")
+                 disclaimer="本信為機械化訊號通知，非投資建議。數字取自實單、恐慌訊號、台指期、NQ、市場溫度各自的狀態檔，本信不抓價、不重算訊號。")
 
 
 _STATE_CACHE: dict = {}
@@ -703,7 +762,7 @@ _PANIC_MOD: dict = {}
 
 
 # ---------------------------------------------------------------- 判斷與去重
-def decide(mk: str, now: datetime, state, panic, fut, cap, sent: dict) -> dict | None:
+def decide(mk: str, now: datetime, state, panic, fut, cap, sent: dict, usf=None, fg=None) -> dict | None:
     """回傳要發的訊息（含 record 更新）或 None；就地更新 sent。"""
     lv = live_view(state, mk, now, cap)
     s = lv["session"]
@@ -711,7 +770,7 @@ def decide(mk: str, now: datetime, state, panic, fut, cap, sent: dict) -> dict |
     rec = recs.get(str(s))
     done = {k for r in recs.values() for k in r.get("acts", [])}
     pv = panic_view(panic, mk, s, now)
-    fv = fut_view(fut, s) if mk == "tw" else None
+    fv = fut_view(fut, s) if mk == "tw" else nq_view(usf, s)
     other = [x for x in pv["acts"] + (fv["acts"] if fv else []) if x["key"] not in done]
     stamp = now.isoformat(timespec="minutes")
     for k in sorted(recs, reverse=True):     # 資料有問題時「照哪天的水位不動」：優先用上一則已發訊息的水位（持有人照它下過單）
@@ -719,7 +778,7 @@ def decide(mk: str, now: datetime, state, panic, fut, cap, sent: dict) -> dict |
             lv["confirmed"] = {"date": k, "levels": [tuple(x) for x in recs[k]["levels"]]}
             break
     print(f"[{mk}] 收盤日 {s}：實單 {lv['status']}，恐慌 {'到齊' if pv['fresh'] else '未到'}，"
-          + (f"台指期 {'到齊' if fv['fresh'] else '未到'}，" if fv else "") + f"已發 {rec.get('kind') if rec else '無'}")
+          + f"{fv['title']} {'到齊' if fv['fresh'] else '未到'}，" + f"已發 {rec.get('kind') if rec else '無'}")
     if lv["status"] in ("pending", "warn"):
         warn_now = (rec is None or rec.get("kind") == "supp") and (
             lv["status"] == "warn" or now >= at_tpe(s, MK[mk]["deadline"]))
@@ -739,15 +798,16 @@ def decide(mk: str, now: datetime, state, panic, fut, cap, sent: dict) -> dict |
         return None
     acts = [x for x in lv["acts"] if x["key"] not in done] + other
     if rec is None or rec.get("kind") in ("warn", "supp"):
-        waits = fv["fresh"] if mk == "tw" else (pv["fresh"] or pv.get("missing"))
+        # 美股：恐慌燈到齊；S 是那週最後一個交易日時也等 NQ 週線（us_futures.json 不存在就不等）
+        waits = fv["fresh"] if mk == "tw" else ((pv["fresh"] or pv.get("missing")) and (fv["fresh"] or fv.get("missing")))
         if not (waits or (rec or {}).get("kind") == "warn" or now >= at_tpe(s, MK[mk]["fallback"])):
-            print(f"[{mk}] {s} 實單已到，等{'台指期' if mk == 'tw' else '恐慌燈'}（保底 {at_tpe(s, MK[mk]['fallback']):%m-%d %H:%M} 台北）")
+            print(f"[{mk}] {s} 實單已到，等{'台指期' if mk == 'tw' else '恐慌燈、NQ 週線'}（保底 {at_tpe(s, MK[mk]['fallback']):%m-%d %H:%M} 台北）")
             if other:      # 等的時候冒出恐慌燈或台指期的動作：不等，先補發
                 msg = build_message(mk, "ok", s, now, lv, pv, fv, other, {}, supplement="early")
                 _note_acts(recs, s, other, stamp)
                 return msg
             return None
-        extras = take_extras(mk, s, now, cap, sent)
+        extras = take_extras(mk, s, now, cap, sent, fg)
         msg = build_message(mk, "ok", s, now, lv, pv, fv, acts, extras)
         recs[str(s)] = {"kind": "act" if acts else "ok", "acts": sorted({*(rec or {}).get("acts", []), *(x["key"] for x in acts)}),
                         "at": stamp, "levels": [list(x) for x in lv["levels"]]}
@@ -766,12 +826,20 @@ def _note_acts(recs: dict, label, acts: list, stamp: str) -> None:
     r.setdefault("supplements", []).append(stamp)
 
 
-def take_extras(mk: str, s: date, now: datetime, cap: dict | None, sent: dict) -> dict:
-    """還沒發過的週五預警（只放台股週五那則：預警是台北週五 14:15 以後產生的，日期要等於這則的收盤日）
-    與 SMH 倫敦翻轉（美股那則、7 天內）。"""
+def take_extras(mk: str, s: date, now: datetime, cap: dict | None, sent: dict, fg: dict | None = None) -> dict:
+    """還沒發過的週五預警（只放台股週五那則：預警是台北週五 14:15 以後產生的，日期要等於這則的收盤日）、
+    SMH 倫敦翻轉（美股那則、7 天內）與市場溫度提醒（美股那則、8 天內，持有人 2026-11-24 拍板併進來）。"""
     used = set(sent.setdefault("consumed", []))
-    out = {"warn": [], "smhl": [], "smhl_status": (cap or {}).get("smhl_status") if mk == "us" else None}
+    out = {"warn": [], "smhl": [], "fg": [], "smhl_status": (cap or {}).get("smhl_status") if mk == "us" else None}
     today = now.astimezone(TPE).date()
+    if mk == "us":
+        for it in (fg or {}).get("items") or []:
+            if it.get("id") in used or not it.get("lines"):
+                continue
+            if not 0 <= (today - d_(it["made"])).days <= 8:
+                continue
+            out["fg"].append(it)
+            used.add(it["id"])
     for it in (cap or {}).get("items") or []:
         if it["id"] in used or it.get("market") != mk:
             continue
@@ -802,6 +870,7 @@ def cmd_run(a) -> int:
     for p in out.glob("*"):
         p.unlink()
     state, panic, fut, cap = load_json(a.state), load_json(a.panic), load_json(a.futures), load_json(a.capture)
+    usf, fg = load_json(a.us_futures), load_json(a.fear_greed)
     _STATE_CACHE["state"] = state
     _STATE_CACHE["now"] = now
     try:
@@ -813,7 +882,7 @@ def cmd_run(a) -> int:
     markets = list(MK) if a.market in ("all", "", None) else [a.market] + [m for m in MK if m != a.market]
     for mk in markets:
         try:
-            msg = decide(mk, now, state, panic, fut, cap, sent)
+            msg = decide(mk, now, state, panic, fut, cap, sent, usf, fg)
         except Exception as e:  # noqa: BLE001 — 一個市場壞掉不擋另一個；同一天只報一次
             traceback.print_exc()
             day = now.astimezone(TPE).date().isoformat()
@@ -922,6 +991,8 @@ def main(argv=None) -> int:
     r.add_argument("--state", default=str(STATE_JSON))
     r.add_argument("--panic", default=str(PANIC_JSON))
     r.add_argument("--futures", default=str(FUT_JSON))
+    r.add_argument("--us-futures", default=str(US_FUT_JSON))
+    r.add_argument("--fear-greed", default=str(FG_JSON))
     r.add_argument("--capture", default=str(CAPTURE_JSON))
     r.add_argument("--sent", default=str(SENT_JSON))
     r.add_argument("--dry-run", action="store_true", help="不寫 sent.json")

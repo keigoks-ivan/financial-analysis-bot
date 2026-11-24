@@ -27,7 +27,8 @@ TWSE BWIBBU_d 在 2017-04 起欄位順序改變（r[4] 變成「股利年度」1
   台股融資餘額、個股股價淨值比：TWSE MI_MARGN／BWIBBU_d，每月只抓「最後一個週五所在週的最後交易日」
   （TWSE 會封快速連線，故單執行緒慢速、遇封鎖立刻放棄該端點）。
 
-通知（只在狀態改變時）：寫 fg_alert.txt／fg_title.txt／fg_mail.html，由 workflow 寄 email 與 Discord；
+通知（只在狀態改變時）：寫 fg_alert.txt／fg_title.txt／fg_mail.html，並在 data/live_digest/fear_greed.json 追加一則摘要。
+2026-11-24 持有人拍板：不再單獨發 Discord／Email，摘要併進 #調倉 美股那則（scripts/trade_digest.py 讀，發過一次就不再發）。
 本腳本自己不寄任何東西。--no-notify 不寫通知檔。
 
 用法
@@ -648,6 +649,41 @@ def alert_mail_html(title: str, body: str) -> str:
 """
 
 
+DIGEST_JSON = ROOT / "data" / "live_digest" / "fear_greed.json"
+
+
+def write_digest_item(alerts: list[dict], now: datetime) -> None:
+    """給 #調倉 美股那則的一段：每個市場一兩句（分數、狀態變化、提醒），細項（各材料百分位）只放 Email。"""
+    key_code = {"normal": 0, "greed": 1, "fear": -1}
+    lines, detail = [], []
+    for a in alerts:
+        b = a["block"]
+        t = f"{a['phrase']}：{b['score']} 分"
+        if b["prev_score"] is not None:
+            t += f"（上週 {b['prev_score']} 分）"
+        if a["old"] != a["new"]:
+            t += f"，{STATE_ZH[key_code[a['old']]]} → {b['state_zh']}"
+        t += f"，資料週 {b['week']}。"
+        t += REMIND if "fear" in (a["old"], a["new"]) else GREED_NOTE
+        if a["market"] == "tw":
+            t += "台股材料歷史較短（分數 2013 年底起才有）。"
+        lines.append(t)
+        detail.append(f"{MARKET_ZH[a['market']]}各材料貪婪百分位（0＝10 年來最恐懼，100＝最貪婪）：")
+        detail += [f"・{m['label'].split('（')[0]}：{'停更' if m['pct'] is None else m['pct']}（目前 {m['raw_text']}）" for m in b["materials"].values()]
+    week = alerts[0]["block"]["week"]
+    item = {"id": f"fg|{week}|{'+'.join(a['market'] for a in alerts)}", "made": now.strftime("%Y-%m-%d"), "week": week,
+            "title": alert_text(alerts)[0], "lines": lines, "detail": detail, "url": PAGE_URL}
+    try:
+        cur = json.loads(DIGEST_JSON.read_text(encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        cur = {}
+    items = [x for x in cur.get("items") or [] if x.get("id") != item["id"]] + [item]
+    DIGEST_JSON.parent.mkdir(parents=True, exist_ok=True)
+    DIGEST_JSON.write_text(json.dumps({"updated": now.strftime("%Y-%m-%d %H:%M"), "items": items[-10:]}, ensure_ascii=False, indent=1) + "\n",
+                           encoding="utf-8")
+    print("DIGEST ITEM:", item["id"])
+
+
 def write_alert_files(alerts: list[dict]) -> None:
     title, body = alert_text(alerts)
     (ROOT / "fg_title.txt").write_text(title + "\n", encoding="utf-8")
@@ -928,6 +964,7 @@ def main() -> int:
         alerts = build_alerts(latest)
         if alerts:
             write_alert_files(alerts)
+            write_digest_item(alerts, now)
         else:
             print("no state change — no alert")
     return 0
