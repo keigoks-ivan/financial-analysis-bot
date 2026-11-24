@@ -471,7 +471,8 @@ def fut_view(fut: dict | None, s: date) -> dict:
         elif not fresh:
             lines.append(f"{lab}：還沒更新（最後一次是 {sd(sess)}）。" if sess else f"{lab}：還沒更新。")
         else:
-            lines.append(f"{lab}：{v.get('text') or '（沒有說明）'}")
+            t = str(v.get("text") or "（沒有說明）")
+            lines.append(t if t.startswith(lab) else f"{lab}：{t}")     # 本機寫的 text 可能已帶「3σ 下軌：」開頭
             if v.get("action"):
                 acts.append({"key": f"fut|{s}|{k}|{v['action']}", "kind": "fut", "text": f"台指期 {lab}：{v['action']}",
                              "short": f"台指期 {lab}"})
@@ -526,7 +527,7 @@ def _reason_lines(lv: dict, acts: list) -> list:
 
 
 def build_message(mk: str, kind: str, s: date, now: datetime, lv: dict, pv: dict, fv: dict | None,
-                  acts: list, extras: dict, supplement: bool = False) -> dict:
+                  acts: list, extras: dict, supplement: bool | str = False) -> dict:
     """kind：ok／act／warn。回傳 {title, discord, mail_txt, mail_html, email, color, subject}。"""
     name = MK[mk]["name"]
     n = next_session(mk, s)
@@ -556,8 +557,12 @@ def build_message(mk: str, kind: str, s: date, now: datetime, lv: dict, pv: dict
             tags.append("台指期有動作")
         tail = "、".join(tags) if tags else "不用下單"
         title = f"{'🔔' if acts else '✅'} {name} {md(s)}{'補充' if supplement else '收盤'}｜{tail}"
+        if supplement == "early":     # 這個收盤日的主訊息還沒發（實單還沒算完），恐慌燈或台指期的動作先發
+            title = f"🔔 {name} {md(s)}｜{tail}（實單算完另發一則）"
         if acts:
-            sec.append((f"要做的事（{sd(n)}" + (" 開盤）" if acts == live_acts else "）"), [act_text(x) for x in acts], True))
+            # 只有實單要調時才標下單日；恐慌燈的進場日寫在該行，台指期的時間由本機寫在動作裡
+            head = f"要做的事（{sd(n)} 開盤）" if acts == live_acts else (f"要做的事（{sd(n)}）" if live_acts else "要做的事")
+            sec.append((head, [act_text(x) for x in acts], True))
             rl = _reason_lines(lv, acts)
             if rl:
                 sec.append(("為什麼", rl, False))
@@ -711,7 +716,8 @@ def decide(mk: str, now: datetime, state, panic, fut, cap, sent: dict) -> dict |
         if other:
             # 實單還在等（或資料有問題但這天已經發過），恐慌燈、台指期的動作不跟著等：先補發一則
             label = max(d_(x["key"].split("|")[2] if x["kind"] == "panic" else x["key"].split("|")[1]) for x in other)
-            msg = build_message(mk, "ok", label, now, lv, pv, fv, other, {}, supplement=True)
+            early = (recs.get(str(label)) or {}).get("kind") in (None, "supp")
+            msg = build_message(mk, "ok", label, now, lv, pv, fv, other, {}, supplement="early" if early else True)
             _note_acts(recs, label, other, stamp)
             return msg
         return None
@@ -721,7 +727,7 @@ def decide(mk: str, now: datetime, state, panic, fut, cap, sent: dict) -> dict |
         if not (waits or (rec or {}).get("kind") == "warn" or now >= at_tpe(s, MK[mk]["fallback"])):
             print(f"[{mk}] {s} 實單已到，等{'台指期' if mk == 'tw' else '恐慌燈'}（保底 {at_tpe(s, MK[mk]['fallback']):%m-%d %H:%M} 台北）")
             if other:      # 等的時候冒出恐慌燈或台指期的動作：不等，先補發
-                msg = build_message(mk, "ok", s, now, lv, pv, fv, other, {}, supplement=True)
+                msg = build_message(mk, "ok", s, now, lv, pv, fv, other, {}, supplement="early")
                 _note_acts(recs, s, other, stamp)
                 return msg
             return None
