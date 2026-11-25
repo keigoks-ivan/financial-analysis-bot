@@ -48,8 +48,8 @@ fetch_allianz 的「不給 target_date」路徑改成雙向掃描(見 _scan_late
 
 驗證:validate_holdings() 檔股數 ≥10、股票權重合計不超過上限(預設 101%,個別
 基金見 FUND_WEIGHT_BANDS);任何一檔失敗只讓該檔標記 failed,不中斷其他 21 檔
-(see main())。下限(現金緩衝低點)在 daily run 仍是硬性失敗,但 backfill_fund()
-呼叫時降為 low_equity 警示旗標,回填仍會存檔(見 validate_holdings() docstring)。
+(see main())。下限(現金緩衝低點)2026-11-25 起 daily run 也只記 low_equity 旗標照常存檔,
+只有低於 LOW_EQUITY_HARD_FLOOR(50%)才硬性失敗(見 validate_holdings() 內註解)。
 """
 from __future__ import annotations
 
@@ -344,6 +344,9 @@ def ticker_for(code, twse_codes, tpex_codes):
 # 都放過),改成每次 backfill 發現新的合法低點,就把該檔基金加進
 # FUND_WEIGHT_BANDS、附上實測日期與數字(見 00980A/00999A 兩筆),band 仍然是
 # 「這檔基金該有的範圍」而不是全站通用的寬鬆值。
+LOW_EQUITY_HARD_FLOOR = 50.0   # daily run 的硬底（%）；見 validate_holdings 內 2026-11-25 註解
+
+
 def validate_holdings(code, holdings, other, strict=True):
     """結構性檢查(檔數/重複/空白/負值/非有限數值/上限)永遠是硬性失敗,不受
     strict 影響——這些代表解析壞掉,不是合法的基金狀態。股票權重合計「下限」
@@ -372,9 +375,16 @@ def validate_holdings(code, holdings, other, strict=True):
     if total > band_max:
         raise FetchError("{}: 股票持股權重合計 {:.2f}% 超出上限 {}%".format(code, total, band_max))
     low_equity = total < band_min
+    # 2026-11-25 起 daily run 也不因「低於本檔下限」失敗：11-24 七檔同時跌到 73-88%（加權距高點 −26%），
+    # 有揭露現金的 00991A、00995A 股票＋現金合計約 100%，持股檔數 49-57 正常，是投信真的提高現金，不是解析錯誤。
+    # 每檔逐一放寬下限追不上這種全市場同時降持股；改成只在低於 LOW_EQUITY_HARD_FLOOR 時硬性失敗（抓整批漏列），
+    # 本檔下限到硬底之間記 low_equity 旗標照常存檔。strict=False（backfill）維持只記旗標。
+    if strict and total < LOW_EQUITY_HARD_FLOOR:
+        raise FetchError("{}: 股票持股權重合計 {:.2f}% 低於 {}%，像是解析漏列"
+                          .format(code, total, LOW_EQUITY_HARD_FLOOR))
     if low_equity and strict:
-        raise FetchError("{}: 股票持股權重合計 {:.2f}% 超出 {}-{}% 範圍"
-                          .format(code, total, band_min, band_max))
+        print("WARN {}: 股票持股權重合計 {:.2f}% 低於本檔下限 {}%（記 low_equity，照常存檔）"
+              .format(code, total, band_min), file=sys.stderr)
     return round(total, 2), low_equity
 
 
