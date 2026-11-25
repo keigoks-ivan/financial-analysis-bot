@@ -216,6 +216,113 @@ def fin_tables(pk, yt):
            asof=str(inc.columns[0].date()))
 
 
+def _first(df, names, col):
+    for n in names:
+        v = _get(df, n, col) if df is not None and col in df.columns else None
+        if v is not None:
+            return v
+    return None
+
+
+def roic_section(pk, yt):
+    """投入資本報酬率逐年＋拆解＋增量（零 LLM，標籤 [p:roic]）。
+    算法與同業表（peers.py）相同：稅後營業利益＝營業利益×(1－稅率)，稅率＝所得稅÷稅前淨利（限 0～35%），
+    投入資本＝年底（股東權益＋總債務－現金），所以最近一年的數字跟同業表那一格一致。
+    另附 dd-screener（Koyfin 資料）同一檔的欄位；口徑不同，分開列。銀行、保險、券商不算。"""
+    import peers as pr_
+    try:
+        info = yt.info or {}
+    except Exception:
+        info = {}
+    if pr_.is_financial(info):
+        pk.gap("金融業（銀行、保險、券商）不算投入資本報酬率，資本報酬改看同業表的股東權益報酬率")
+        return
+    fin_cur = currency_info(yt)[0]
+    inc, bs = yt.income_stmt, yt.balance_sheet
+    cols = [c for c in list(inc.columns) if _get(inc, "Total Revenue", c) is not None][::-1]  # 舊到新
+    years = []
+    for c in cols:
+        rev, ebit = _get(inc, "Total Revenue", c), _get(inc, "Operating Income", c)
+        tax, pti = _get(inc, "Tax Provision", c), _get(inc, "Pretax Income", c)
+        eq = _first(bs, ["Stockholders Equity", "Common Stock Equity"], c)
+        debt = _first(bs, ["Total Debt"], c)
+        cash = _first(bs, ["Cash And Cash Equivalents", "Cash Cash Equivalents And Short Term Investments"], c)
+        y = {"fy": str(c.date()), "rev": rev, "ebit": ebit, "tax_rate": None, "nopat": None, "ic": None,
+             "nopat_margin": None, "turnover": None, "roic": None}
+        if tax is not None and pti:
+            y["tax_rate"] = min(max(tax / pti, 0.0), 0.35)
+        if ebit is not None and y["tax_rate"] is not None:
+            y["nopat"] = ebit * (1 - y["tax_rate"])
+        if eq is not None and debt is not None and cash is not None:
+            y["ic"] = eq + debt - cash
+        if y["nopat"] is not None and rev:
+            y["nopat_margin"] = y["nopat"] / rev
+        if y["ic"] and y["ic"] > 0:
+            if rev:
+                y["turnover"] = rev / y["ic"]
+            if y["nopat"] is not None:
+                y["roic"] = y["nopat"] / y["ic"]
+        years.append(y)
+    ok = [y for y in years if y["roic"] is not None]
+    if not ok:
+        pk.gap("投入資本報酬率算不出來（yfinance 年報缺營業利益、稅、權益、債務或現金，或投入資本為負）")
+        return
+
+    def p(v):
+        return "—" if v is None else "{0:.1f}%".format(v * 100)
+    rows = [[y["fy"], fmt_m(y["rev"]), fmt_m(y["ebit"]), p(y["tax_rate"]), fmt_m(y["nopat"]), fmt_m(y["ic"]),
+             p(y["nopat_margin"]), "—" if y["turnover"] is None else "{0:.2f}".format(y["turnover"]), p(y["roic"])] for y in years]
+    body = ["### 逐年（程式用 yfinance 年報自算，金額單位：百萬{0}）".format(fin_cur), "",
+            md_table(["年度（年底）", "營收", "營業利益", "稅率", "稅後營業利益", "投入資本", "稅後營業利益率", "投入資本周轉（次）", "投入資本報酬率"], rows),
+            "算法：稅後營業利益＝營業利益×(1－稅率)，稅率＝所得稅費用÷稅前淨利（限制在 0～35%）；投入資本＝年底（股東權益＋總債務－現金）；"
+            "投入資本報酬率＝稅後營業利益÷投入資本＝稅後營業利益率×投入資本周轉，投入資本周轉＝營收÷投入資本。最近一年與同業表 [p:peers] 同一格的算法相同。"
+            "營業利益若含一次性費用（例如收購研發、減損、訴訟和解），當年的報酬率會被壓低，引用時要講。"]
+    inc_ = None
+    a, b = ok[0], ok[-1]
+    if a is not b and a["ic"] and b["ic"]:
+        n = len([y for y in years if a["fy"] < y["fy"] <= b["fy"]])
+        d_ic, d_np = b["ic"] - a["ic"], b["nopat"] - a["nopat"]
+        cum = sum(y["nopat"] for y in years if a["fy"] < y["fy"] <= b["fy"] and y["nopat"] is not None)
+        inc_ = {"from": a["fy"], "to": b["fy"], "years": n, "d_ic": d_ic, "d_nopat": d_np, "cum_nopat": cum,
+                "incremental_roic": d_np / d_ic if d_ic > 0 and a["nopat"] > 0 and b["nopat"] > 0 else None,
+                "reinvest_rate": d_ic / cum if cum > 0 else None}
+        body += ["", "### 增量（{0} → {1}，{2} 個年度）".format(a["fy"], b["fy"], n), ""]
+        body.append("- 投入資本增加 {0} 百萬，稅後營業利益增加 {1} 百萬，期間稅後營業利益累計 {2} 百萬。".format(fmt_m(d_ic), fmt_m(d_np), fmt_m(cum)))
+        if inc_["incremental_roic"] is not None:
+            body.append("- 增量投入資本報酬率＝稅後營業利益增加÷投入資本增加＝{0}。".format(p(inc_["incremental_roic"])))
+        elif a["nopat"] <= 0 or b["nopat"] <= 0:
+            body.append("- 期初或期末稅後營業利益是負的，增量投入資本報酬率不算（虧損縮小不是投資報酬）。")
+        else:
+            body.append("- 投入資本沒有增加，增量投入資本報酬率不算。")
+        if inc_["reinvest_rate"] is not None:
+            body.append("- 再投資率＝投入資本增加÷期間稅後營業利益累計＝{0}。".format(p(inc_["reinvest_rate"])))
+        if inc_["incremental_roic"] is not None and inc_["reinvest_rate"] is not None and inc_["reinvest_rate"] > 0:
+            body.append("- 兩者相乘＝{0}，是「把賺來的錢照這個報酬率再投進去」時稅後營業利益每年能長多少的粗略上限；投入資本靠舉債或增資增加時會高估。".format(
+                p(inc_["incremental_roic"] * inc_["reinvest_rate"])))
+    # dd-screener（Koyfin）
+    try:
+        scr = json.loads((REPO / "docs/dd-screener/latest.json").read_text(encoding="utf-8"))
+        row = next((s for s in scr.get("stocks", []) if s.get("ticker") == pk.t), None)
+    except Exception:
+        row, scr = None, {}
+    if row and row.get("roic") is not None:
+        def f(k, suf="%"):
+            v = row.get(k)
+            return "—" if v is None else "{0}{1}".format(v, suf)
+        body += ["", "### dd-screener 欄位（Koyfin 資料，資料日 {0}；口徑與上表不同，不要混用）".format(scr.get("as_of") or "—"), ""]
+        body.append("- 投入資本報酬率 {0}，三年平均 {1}，五年平均 {2}，現在÷五年平均 {3}（≥1.1 記上升、≤0.9 記下滑）：{4}".format(
+            f("roic"), f("roic_3y_avg_pct"), f("roic_5y_avg_pct"), f("roic_vs_5y_x", " 倍"), row.get("roic_trend_5y") or "—"))
+        body.append("- 拆解：營業利益率 {0}，稅率 {1}，稅後營業利益率 {2}，投入資本周轉 {3}；歸類「{4}」（稅後營業利益率 15% 與周轉 1 次為分界）".format(
+            f("ebit_margin_pct"), f("tax_rate_pct"), f("nopat_margin_pct"), f("ic_turnover_x", " 次"), row.get("roic_quadrant") or "—"))
+        body.append("- 近三個會計年度：增量投入資本報酬率 {0}，再投資率 {1}（投入資本增加÷三年稅後營業利益），相乘 {2}".format(
+            f("incremental_roic_pct"), f("reinvest_rate_pct"), f("implied_growth_pct")))
+        body.append("- Koyfin 的投入資本定義與 yfinance 自算不同（例如是否扣現金、是否含租賃負債），兩組數字差幾個百分點是口徑差，不是錯。")
+    else:
+        pk.gap("dd-screener 沒有這檔的投入資本報酬率欄位，只有程式自算的逐年數字")
+    pk.extra["roic"] = {"currency": fin_cur, "years": years, "incremental": inc_}
+    pk.add("roic", "投入資本報酬率（逐年、拆解、增量）", "\n".join(body), "yfinance 年報自算＋dd-screener（Koyfin）", asof=pk.date)
+
+
 def holders_insiders(pk, yt):
     body = ""
     try:
@@ -771,7 +878,7 @@ def main():
     run.mkdir(parents=True, exist_ok=True)
     yt = yf.Ticker(t)
     steps = [("price", lambda: price_section(pk)), ("fin", lambda: fin_tables(pk, yt)), ("fx", lambda: currency_section(pk, yt)),
-             ("holders", lambda: holders_insiders(pk, yt)), ("consensus", lambda: consensus_section(pk, yt)),
+             ("holders", lambda: holders_insiders(pk, yt)), ("consensus", lambda: consensus_section(pk, yt)), ("roic", lambda: roic_section(pk, yt)),
              ("prior", lambda: prior_section(pk)), ("edgar", lambda: edgar(pk)), ("call", lambda: transcript(pk))]
     for name, fn in steps:
         try:
@@ -780,7 +887,7 @@ def main():
             import traceback
             traceback.print_exc()
             pk.gap("步驟 {0} 失敗：{1}".format(name, str(e)[:120]))
-    order = ["prior", "news", "price", "fx", "consensus", "capital", "val_hist", "fin_annual", "fin_quarter", "routine_fin", "routine_holders",
+    order = ["prior", "news", "price", "fx", "consensus", "capital", "val_hist", "fin_annual", "roic", "fin_quarter", "routine_fin", "routine_holders",
              "pr", "guidance_history", "call", "q_mda", "biz", "risk", "mda"]
     pk.sections.sort(key=lambda s: order.index(s[0]) if s[0] in order else 99)
     md = pk.md()
@@ -800,6 +907,11 @@ def main():
     (run / "pack.md").write_text(md, encoding="utf-8")
     (run / "pack.json").write_text(json.dumps({"ticker": t, "date": a.date, "tags": pk.tags, "gaps": pk.gaps, **pk.extra},
                                               ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+    try:  # 零 LLM 加掛模組資料（錢花到哪裡、現金轉換天數、利潤率走勢、共識修正），排版時插入
+        import extras
+        extras.build(t, run)
+    except Exception as e:
+        print("extras 失敗（不影響資料包）：" + str(e)[:120])
     print("{0}: pack.md {1:,} bytes".format(t, len(md.encode())))
     for tag, ttl, body in pk.sections:
         print("  {0:16s} {1:>7,} 字元".format(tag, len(body)))

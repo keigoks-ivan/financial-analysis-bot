@@ -83,7 +83,7 @@ def snippet(line, pos, n=36):
     return ("…" if a else "") + line[a:pos + n].strip() + ("…" if pos + n < len(line) else "")
 
 
-def lint_text(raw, pack_text=None):
+def lint_text(raw, pack_text=None, extra_refs=None):
     text = clean(raw)
     lines = text.split("\n")
     hits = []
@@ -173,6 +173,14 @@ def lint_text(raw, pack_text=None):
                     add("number_magnitude_pack", "warn", text.count("\n", 0, a[0]) + 1, "「{0}」與資料包原文「{1}」有效數字相同、量級差 {2} 倍，單位可能換算錯".format(
                         a[1], p[1], int(round(max(a[3], p[3]) / min(a[3], p[3])))))
                     break
+    # 數字推導檢查（warn 限定，不擋發布）：算式、表格合計與占比、解釋不了的數字
+    try:
+        import lint_numbers
+        refs = [t for t in [pack_text] + list(extra_refs or []) if t]
+        nh, n_un = lint_numbers.check(text, refs, pack_text)
+        hits.extend(nh)
+    except Exception as e:  # 檢查本身出錯不能擋發布
+        add("lint_numbers_error", "warn", 0, repr(e)[:100])
     return hits
 
 
@@ -180,7 +188,12 @@ def lint_run(run_dir):
     run_dir = Path(run_dir)
     raw = (run_dir / "article.md").read_text(encoding="utf-8")
     pk = run_dir / "pack.md"
-    hits = lint_text(raw, pk.read_text(encoding="utf-8") if pk.exists() else None)
+    extra = []
+    for nm in ("peers.md", "calc.json", "machine.json", "lookups.json", "brief.json"):
+        f = run_dir / nm
+        if f.exists():
+            extra.append(f.read_text(encoding="utf-8"))
+    hits = lint_text(raw, pk.read_text(encoding="utf-8") if pk.exists() else None, extra)
     out = {"ok": not any(h["severity"] == "block" for h in hits), "hits": hits}
     (run_dir / "lint.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     return out

@@ -19,7 +19,7 @@ for p in (str(HERE.parent), str(HERE.parent / "dd2"), str(HERE)):
         sys.path.insert(0, p)
 
 import lint  # noqa: E402
-import render as rd  # noqa: E402
+import render_pretty as rd  # noqa: E402  新版面（內部仍呼叫 render.render）
 
 PILOT = Path.home() / "dd5-pilot"
 

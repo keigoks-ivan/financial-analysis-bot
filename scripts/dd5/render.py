@@ -9,6 +9,7 @@ from __future__ import annotations
 import datetime as dt
 import html
 import json
+import math
 import re
 from pathlib import Path
 import sys
@@ -355,6 +356,63 @@ def price_svg(pc):
     return "".join(s) + leg
 
 
+def roic_block(rc):
+    """{{圖:資本報酬}}：逐年投入資本報酬率長條圖（可為負）＋拆解小表。資料來自 pack.json 的 roic（pack.py roic_section）。"""
+    ys = [y for y in (rc or {}).get("years", []) if y.get("roic") is not None]
+    if not ys:
+        return "<p class='note'>（沒有投入資本報酬率資料，圖略。）</p>"
+    W, H, L, R, T, B = 720, 220, 52, 14, 22, 30
+    vals = [y["roic"] * 100 for y in ys]
+    lo, hi = min(0.0, min(vals)), max(0.0, max(vals))
+    pad = (hi - lo) * 0.12 or 5
+    lo, hi = (lo - pad if lo < 0 else 0.0), hi + pad
+    n = len(ys)
+    bw = (W - L - R) / n * 0.55
+
+    def y(v):
+        return T + (H - T - B) * (1 - (v - lo) / (hi - lo))
+    s = ['<svg viewBox="0 0 {0} {1}" class="chart roic" role="img" aria-label="逐年投入資本報酬率">'.format(W, H)]
+    step = next(st for st in (2, 5, 10, 20, 25, 50, 100, 200) if (hi - lo) / st <= 6)
+    v = math.ceil(lo / step) * step
+    while v <= hi:
+        s.append('<line x1="{0}" x2="{1}" y1="{2:.1f}" y2="{2:.1f}" class="grid"/><text x="{3}" y="{4:.1f}" class="ax" text-anchor="end">{5:.0f}%</text>'.format(L, W - R, y(v), L - 6, y(v) + 4, v))
+        v += step
+    s.append('<line x1="{0}" x2="{1}" y1="{2:.1f}" y2="{2:.1f}" style="stroke:var(--mut);stroke-width:1"/>'.format(L, W - R, y(0)))
+    for i, (yy, v) in enumerate(zip(ys, vals)):
+        cx = L + (W - L - R) * (i + 0.5) / n
+        top, bot = (y(v), y(0)) if v >= 0 else (y(0), y(v))
+        last = i == n - 1
+        s.append('<rect x="{0:.1f}" y="{1:.1f}" width="{2:.1f}" height="{3:.1f}" rx="2" style="fill:{4}"/>'.format(
+            cx - bw / 2, top, bw, max(bot - top, 1), "var(--acc)" if last else "var(--mut)"))
+        ty = top - 6 if v >= 0 else bot + 14
+        s.append('<text x="{0:.1f}" y="{1:.1f}" class="lab" text-anchor="middle">{2:.1f}%</text>'.format(cx, ty, v))
+        s.append('<text x="{0:.1f}" y="{1}" class="ax" text-anchor="middle">{2}</text>'.format(cx, H - 10, yy["fy"][:4]))
+    s.append("</svg>")
+    cur = rc.get("currency") or ""
+
+    def p(v):
+        return "—" if v is None else "{0:.1f}%".format(v * 100)
+
+    def m(v):
+        return "—" if v is None else "{0:,.0f}".format(v / 1e6)
+    rows = [[yy["fy"][:4], m(yy.get("nopat")), m(yy.get("ic")), p(yy.get("nopat_margin")),
+             "—" if yy.get("turnover") is None else "{0:.2f}".format(yy["turnover"]), p(yy.get("roic"))] for yy in rc["years"]]
+    tbl = table_html(["年度", "稅後營業利益（百萬{0}）".format(cur), "投入資本（百萬{0}）".format(cur), "稅後營業利益率", "投入資本周轉（次）", "投入資本報酬率"], rows)
+    inc = rc.get("incremental") or {}
+    extra = ""
+    if inc.get("incremental_roic") is not None or inc.get("reinvest_rate") is not None:
+        bits = []
+        if inc.get("incremental_roic") is not None:
+            bits.append("增量投入資本報酬率 {0}".format(p(inc["incremental_roic"])))
+        if inc.get("reinvest_rate") is not None:
+            bits.append("再投資率 {0}".format(p(inc["reinvest_rate"])))
+        if inc.get("incremental_roic") is not None and (inc.get("reinvest_rate") or 0) > 0:
+            bits.append("相乘 {0}".format(p(inc["incremental_roic"] * inc["reinvest_rate"])))
+        extra = "<p class='note'>{0} 到 {1}：{2}。</p>".format(esc(inc.get("from", "")[:4]), esc(inc.get("to", "")[:4]), "、".join(bits))
+    note = "<p class='note'>程式用 yfinance 年報自算：稅後營業利益÷年底（股東權益＋總債務－現金）；最近一年標藍。</p>"
+    return "".join(s) + tbl + extra + note
+
+
 # ------------------------------------------------------------ Markdown
 def inline(s):
     s = esc(s)
@@ -425,7 +483,7 @@ def md_to_html(md):
 
 
 # ------------------------------------------------------------ 引用
-PLACEHOLDERS = ["表:歷史倍數", "表:獲利乘倍數對照", "表:獲利三檔", "表:追蹤條件", "表:跟上一份比", "表:例行檢查", "圖:股價位置"]
+PLACEHOLDERS = ["表:歷史倍數", "表:獲利乘倍數對照", "表:獲利三檔", "表:追蹤條件", "表:跟上一份比", "表:例行檢查", "圖:股價位置", "圖:資本報酬"]
 OLD_CASE_PLACEHOLDERS = ["表:歷史倍數", "表:獲利乘倍數對照"]  # 舊文章用的佔位：有就照舊排版，新文章不必放，缺了不算缺
 LEGACY_PLACEHOLDERS = ["表:情境估值"]  # 舊版佔位記號：出現時換成空字串，不崩
 
@@ -603,7 +661,8 @@ def render(run, out=None, back_link=None):
     (run / "calc.json").write_text(json.dumps(calc, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     blocks = {"表:歷史倍數": hist_table(mu, pack.get("consensus"), price), "表:獲利乘倍數對照": cases_table(cs, mu), "表:獲利三檔": cases3_table(cs, price, pack.get("price_chart", {}).get("last_date")),
               "表:追蹤條件": tracking_table(machine), "表:跟上一份比": prior_table(machine, pack),
-              "表:例行檢查": routine_table(ask), "圖:股價位置": price_svg(pack.get("price_chart"))}
+              "表:例行檢查": routine_table(ask), "圖:股價位置": price_svg(pack.get("price_chart")),
+              "圖:資本報酬": roic_block(pack.get("roic"))}
     for lp in LEGACY_PLACEHOLDERS:
         blocks[lp] = ""
     left = []
@@ -616,6 +675,8 @@ def render(run, out=None, back_link=None):
             text = pat.sub(lambda m, ph=ph: "\n<!--RAW" + blocks[ph].replace("\n", " ") + "-->\n", text)
         elif ph == "表:跟上一份比" and any("沒有上一份 DD" in g for g in pack.get("gaps", [])):
             pass  # 資料包沒有上一份報告，這張表本來就沒東西可放，不算缺
+        elif ph == "圖:資本報酬" and not (pack.get("roic") or {}).get("years"):
+            pass  # 金融業或算不出來：資料包沒有這一段，不算缺
         elif ph in OLD_CASE_PLACEHOLDERS:
             pass  # 舊佔位：新文章不再要求
         elif ph == "表:獲利三檔" and re.search(r"\{\{\s*表:獲利乘倍數對照\s*\}\}", article):

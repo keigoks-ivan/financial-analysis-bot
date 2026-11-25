@@ -773,7 +773,8 @@ def main():
         elif s == "gate":
             step_gate(run)
         elif s == "render":
-            print(json.dumps(rd.render(run.dir, out=a.out), ensure_ascii=False))
+            import render_pretty as rp  # noqa: E402  新版面
+            print(json.dumps(rp.render(run.dir, out=a.out), ensure_ascii=False))
         run.save()
     print("本檔合計 ${0}；全部試跑累計 ${1:.2f}".format(run.mf.get("total_cost_usd"), total_spent()))
 
