@@ -1,11 +1,63 @@
 ---
 name: ddreport
-version: v5.2
-released: 2026-09-23
-description: "任何 DD 觸發語 → `python3 scripts/dd2/run.py {T}`（v20 管線，2026-09-17 起預設；舊鏈 `scripts/ddreport.py run`／`batch` 於 2026-10-13 退役）。四通 LLM：sonnet 每軸一通採證 → opus 單輪判斷 → sonnet 單輪閘（紅燈一通 patch map 再閘一次，仍紅停下交人）→ sonnet 前後半並行散文；其餘零 LLM，完成自動 finish＋commit＋push。觸發：『{ticker} DD』『個股分析 {ticker}』『{ticker} 定見』『最終判斷 {ticker}』『該不該進場 {ticker}』『買不買 {ticker}』『conviction analysis {ticker}』『{ticker} dca』『{ticker} 全套』『{ticker} 走完整流程』『ddreport {ticker}』『/ddreport {ticker}』。裸 ticker 與『這檔如何／值不值得研究／先篩一下 {ticker}／{ticker} 快篩』仍走 stock-screen-v1。"
+version: v6.0
+released: 2026-11-25
+description: "任何 DD 觸發語 → `python3 scripts/dd5/dd.py {T}`（精簡版，2026-11-25 起預設）：程式備資料 → haiku 點名同業 → 一通 opus 寫完 → 零成本文字檢查 → 發布到個股儀表板 /stock-dash/ 並自動 commit＋push。每檔約 $1、4～8 分鐘。不給買賣裁決、目標價、機率。觸發：『{ticker} DD』『個股分析 {ticker}』『{ticker} 定見』『最終判斷 {ticker}』『該不該進場 {ticker}』『買不買 {ticker}』『conviction analysis {ticker}』『{ticker} dca』『{ticker} 精簡版』『ddreport {ticker}』『/ddreport {ticker}』。只有明講『{ticker} 完整 DD』『{ticker} 全套』『{ticker} 走完整流程』才跑舊的完整流程 `python3 scripts/dd2/run.py {T}`（v20，成品進 docs/dd/、席位引擎讀它）。裸 ticker 與『這檔如何／值不值得研究／先篩一下 {ticker}／{ticker} 快篩』仍走 stock-screen-v1。"
 ---
 
-# ddreport v5.2（v20 管線，dd2）
+# ddreport v6.0（預設＝精簡版，dd5）
+
+> v6.0（2026-11-25 持有人拍板）：DD 觸發語預設改跑精簡版；舊的完整流程（v20，dd2）保留，要明講「完整 DD／全套／走完整流程」才跑。七檔試跑（消費、半導體、工業、金融、虧損公司、台股）每檔 $0.9～1.25。
+
+```bash
+python3 scripts/dd5/dd.py {T}                    # 預設：備資料 → 寫 → 檢查 → 發布（commit＋push）
+python3 scripts/dd5/dd.py {T} --peers A,B,C      # 自己指定同業（否則由 haiku 點名）
+python3 scripts/dd5/dd.py {T} --dry-run          # 只產出到 ~/dd5-pilot/preview/，不發布
+python3 scripts/dd5/dd.py {T} --date YYYYMMDD --reuse   # 用既有的 run 目錄重產頁面並補發，不花 LLM
+```
+
+互動 session 只下這一行，再讀回報。說明見 `scripts/dd5/README.md`。
+
+**成品**：全文頁 `docs/stock-dash/research/{T}_{YYYYMMDD}.html`；個股儀表板 `/stock-dash/?t={T}` 的「研究摘要」區塊讀 `docs/stock-dash/research/index.json`（每檔只留最新一份）。發布在暫時 worktree 進行，不碰主工作區。
+
+**內容**：結論、生意怎麼賺錢、護城河與競爭、獲利品質、管理層說到做到、估值（倍數、同業、歷史位置、現價預設了什麼、獲利三檔 × 歷史倍數對照）、最強反方、接下來看什麼、跟上一份比。規則卡 `scripts/dd5/cards/lite_card.md`。
+
+**不產出**：買賣裁決、倉位角色、目標價、機率、技術面。所以**不寫 docs/dd/、沒有 dd-meta，席位引擎、研究主表、警戒登記簿、決策帳本都不讀它**（2026-11-25 查核）。席位引擎的「DD 迴避」否決仍只認完整流程的結論（180 天內）；要更新那個結論，跑完整流程。
+
+**exit code**：0 成功；3 文字檢查擋下（印出被擋的行）；4 發布前檢查或 commit 被擋；5 推送失敗。
+
+## 回報格式
+
+照抄 dd.py 結尾印的：線上網址（儀表板與全文頁）、花費、文字檢查 block／warn 數與每條 warn、同業名單（模型點名或退回自動名單）、這檔在不在儀表板名單、commit。這檔不在儀表板名單時，明講「儀表板看不到摘要，只能用全文頁網址」。
+
+## 跑完要自己看的（已知會出的錯，文字檢查擋不全）
+
+- 單位換算（billion↔億、同一數字差十倍）：`number_magnitude*` 的 warn 逐條對一次，多數是誤報。
+- 引用其他公司或政策的突發事件是不是最新狀態。
+- 有沒有用自己設的倍數或折現率算出一個價位（等於目標價）。
+- 來源是不是整理站（`low_quality_source`）。
+
+查實是錯的：改 run 目錄的 `article.md`（先備份），再 `--reuse` 補發；改了什麼列給持有人。
+
+## 停下交人的情況
+
+- exit 3：把被擋的行貼給持有人。可查證的事實或用語錯，照上面局部修後 `--reuse`；不要自己重跑 LLM。
+- 同業名單退回自動名單（品質差）：回報，問持有人要不要用 `--peers` 指定後重跑（重跑要再花約 $1）。
+- exit 4、5：貼原文。
+
+## 不做的事
+
+- 不自己加買賣裁決、目標價、機率。
+- 不把成品複製到 docs/dd/，不替它補 dd-meta。
+- 不在鏈外另跑 critic。
+
+---
+
+# 完整流程（v20，dd2）——只在明講「完整 DD／全套／走完整流程」時用
+
+以下是 v5.2 原文，未改。
+
+## ddreport v5.2（v20 管線，dd2）
 
 > v5.2（2026-09-23）：stage0 多做舊逐字稿摘要（前一季＋投資人日／分析師日，sonnet 每篇一通，永久快取），判斷與閘 bundle 加「④b 舊逐字稿摘錄」段；normalize_v20 自動修 `eps_meta.base_eps_path`（基期鍵補 A、陣列改用事實表共識重建）。AMD 實測：摘要兩篇 $2.07（之後免費），判斷引用舊場次 16 處，閘 0 紅。
 > 2026-09-24：plan 前自動跑 Koyfin 下載（最新 30 篇新稿、逾時 240 秒；沒新稿約 6 秒）。登入過期會印重新登入指令並改用磁碟既有逐字稿；`--skip-koyfin`／`--offline` 不抓。
