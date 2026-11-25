@@ -373,9 +373,10 @@ function renderSec7(vm){
 var CKPT_STATUS_ZH = {ok:'正常', warning:'警示', triggered:'已觸發', unknown:'未知'};
 function renderResearchChapter(container, data){
   if(!container) return;
-  if(!data){ container.innerHTML = '<div class="nodata">這檔還沒有本站研究。</div>'; return; }
+  var liteHtml = liteResearchBlock();
+  if(!data){ container.innerHTML = liteHtml || '<div class="nodata">這檔還沒有本站研究。</div>'; return; }
 
-  var parts = [];
+  var parts = [liteHtml];
   var ckpt = data.checkpoint || {};
   var km = ckpt.kill_metrics || [], cats = ckpt.catalysts || [], rearm = ckpt.rearm_trigger || '';
   if(km.length){
@@ -436,6 +437,50 @@ function renderResearchChapter(container, data){
   container.innerHTML = html + '<div class="ex-src">資料來源：/t/data/'+moatEsc(data.ticker)+'.json（個股 DD／所屬產業 ID／供應鏈位置／對比研究／期望落差綜合研判聚合）</div>';
 }
 
+// 精簡版個股研究：docs/stock-dash/research/index.json（每檔一份最新），不在 data/ 裡，部署不會被覆蓋。
+// 抓不到或這檔沒有就是 null，頁面與沒有這項功能時完全一樣。
+var LITE = null;
+function liteResearchBlock(){
+  if(!LITE || !LITE.path) return '';
+  return '<div class="exhibit"><div class="ex-title">精簡版研究</div>'+
+    '<div class="tbl-wrap"><table class="imq-table"><thead><tr><th>日期</th><th>報告</th></tr></thead><tbody>'+
+    '<tr><td>'+moatEsc(LITE.date||'—')+'</td><td><a href="'+moatEsc(LITE.path)+'">'+moatEsc(LITE.title||'精簡版研究')+'</a></td></tr>'+
+    '</tbody></table></div></div>';
+}
+function renderLiteSummary(){
+  var sec = document.getElementById('liteSum'), el = document.getElementById('liteSumBody');
+  if(!sec || !el) return;
+  if(!LITE || !LITE.path){ sec.hidden = true; return; }
+  var mo = LITE.moat || {};
+  var sub = '資料日 '+moatEsc(LITE.date||'—')+(LITE.price!=null ? '｜當時股價 '+fmtNum(LITE.price,2)+(LITE.price_date?'（'+moatEsc(LITE.price_date)+' 收盤）':'') : '');
+  var rows = [];
+  if(LITE.one_liner) rows.push(['一句話結論', moatEsc(LITE.one_liner)]);
+  if(LITE.business_direction) rows.push(['生意方向', '<span class="badge-version" style="margin-left:0">'+moatEsc(LITE.business_direction)+'</span>']);
+  if(LITE.price_implies) rows.push(['現價預設了什麼', moatEsc(LITE.price_implies)]);
+  var moatTxt = [];
+  if(mo.source) moatTxt.push('<b>來源</b>：'+moatEsc(mo.source));
+  if(mo.trend) moatTxt.push('<b>趨勢</b>：'+moatEsc(mo.trend));
+  if(mo.main_threat) moatTxt.push('<b>最大威脅</b>：'+moatEsc(mo.main_threat));
+  if(moatTxt.length) rows.push(['護城河', moatTxt.join('<br>')]);
+  var html = '<div class="ex-sub">'+sub+'</div>';
+  if(rows.length){
+    html += '<div class="tbl-wrap"><table class="kd-table lite-kd">'+
+      rows.map(function(r){return '<tr><td class="k">'+r[0]+'</td><td class="v">'+r[1]+'</td></tr>';}).join('')+'</table></div>';
+  }
+  var tr = LITE.tracking || [];
+  if(tr.length){
+    html += '<div class="ex-title" style="margin-top:12px">追蹤條件</div>'+
+      '<div class="tbl-wrap"><table class="imq-table"><thead><tr><th>要看的事</th><th>正面訊號</th><th>警訊</th><th>下次檢查</th></tr></thead><tbody>'+
+      tr.map(function(t){
+        return '<tr><td>'+moatEsc(t.metric||'—')+'</td><td>'+moatEsc(t.bull_if||'—')+'</td><td>'+moatEsc(t.warn_if||'—')+'</td><td>'+moatEsc(t.next_check||'—')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  }
+  html += '<div class="dd-link" style="margin-top:10px"><a href="'+moatEsc(LITE.path)+'">看全文 →</a></div>'+
+    '<div class="ex-sub" style="margin-top:6px">這是資料日當天的判斷，之後的股價與預估變動請看下方各節。</div>';
+  el.innerHTML = html;
+  sec.hidden = false;
+}
+
 // 2026-09-29 持有人拍板接回研究報告（選 A）：首屏右欄一個小框，只放研究當天的判斷
 // ＋連結。資料來自 judgment_core.dd_screener_fields（dd-screener latest.json 原樣帶出）。
 // ev5y_pct 在 dd-screener 是五年期望報酬換算成每年（研究報告本身寫五年累計），所以標「每年」。
@@ -444,8 +489,9 @@ function renderDdBox(vm){
   var el = document.getElementById('ddBox');
   if(!el) return;
   var c = vm.c6 || {};
+  var liteLink = LITE && LITE.path ? '<div class="dd-link"><a href="'+moatEsc(LITE.path)+'">精簡版研究（'+moatEsc(LITE.date)+'）→</a></div>' : '';
   if(c.status!=='ok' || !c.dd_path){
-    el.innerHTML = '<div class="dd-box"><div class="dd-note">這檔還沒有研究報告。</div></div>';
+    el.innerHTML = liteLink ? '<div class="dd-box">'+liteLink+'</div>' : '<div class="dd-box"><div class="dd-note">這檔還沒有研究報告。</div></div>';
     return;
   }
   var verdict = c.dca_verdict ? moatEsc(c.dca_verdict)+(c.dca_role?'｜'+moatEsc(c.dca_role):'') : '舊版報告未標裁決';
@@ -462,7 +508,7 @@ function renderDdBox(vm){
   el.innerHTML = '<div class="dd-box"><div class="tbl-wrap"><table class="kd-table">'+
     rows.map(function(r){return '<tr><td class="k">'+r[0]+'</td><td class="v">'+r[1]+'</td></tr>';}).join('')+
     '</table></div>'+
-    '<div class="dd-link"><a href="'+moatEsc(c.dd_path)+'">看完整研究報告 →</a></div>'+
+    '<div class="dd-link"><a href="'+moatEsc(c.dd_path)+'">看完整研究報告 →</a></div>'+liteLink+
     '<div class="dd-note">以上是研究當天的判斷，不隨每日行情更新。</div></div>';
 }
 
@@ -486,6 +532,7 @@ function render(D, M){
   renderCover(vm);
   renderOutOfListNotice(vm);
   renderDdBox(vm);
+  renderLiteSummary();
   renderFirstScreen(vm);
   renderSec1(vm); renderSec2(vm); renderSec3(vm); renderMoatChapter(vm); renderSec5(vm); renderSec6(vm); renderSec7(vm);
   buildFunnelBreakdownChart(document.getElementById('chartApxFunnel'), vm);
@@ -507,11 +554,18 @@ function go(){
   if(v) location.href = '?t=' + encodeURIComponent(v);
 }
 
+// 精簡版研究索引：失敗或這檔沒有都當 null，不影響頁面其餘部分
+var LITE_P = fetch('research/index.json').then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+  .then(function(ix){ var e = ix && ix[TICKER]; return (e && e.path) ? e : null; })
+  .catch(function(){ return null; })
+  .then(function(e){ LITE = e; return e; });
+
 Promise.all([
+  LITE_P,
   fetch('data/' + TICKER + '.json').then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); }),
   fetch('data/_market.json').then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); }).catch(function(){ return {status:'no_data'}; })
 ]).then(function(results){
-  render(results[0], results[1]);
+  render(results[1], results[2]);
 }).catch(function(err){
   document.getElementById('coverLeft').innerHTML =
     '<span class="nm">找不到 ' + TICKER + ' 的資料（' + err.message + '）。' +
@@ -520,7 +574,7 @@ Promise.all([
 
 // 「本站研究」獨立 fetch——與主頁資料源不同（/t/data/ 是 build_ticker_hubs.py 輸出），
 // 不進上面的 Promise.all，缺資料或抓取失敗都不擋主頁其餘章節。
-fetch('/t/data/' + TICKER + '.json').then(function(r){
+LITE_P.then(function(){ return fetch('/t/data/' + TICKER + '.json'); }).then(function(r){
   if(!r.ok) throw new Error('http '+r.status);
   return r.json();
 }).then(function(d){
