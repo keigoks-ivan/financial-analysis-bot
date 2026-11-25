@@ -36,6 +36,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import validate_judgment  # 2026-09-11：最終驗收直接讀實際檔案，不正規化或重寫。
 import dd_evidence  # noqa: E402  （2026-10-12：佔位符清理 helper）
+import dd_local_paths  # noqa: E402  （2026-11-25：存檔副本的本機路徑去帳號，repo 是公開的）
 import dd_bundle  # noqa: E402  （WP-C：delta 判斷 prompt 沿用 `_transcript_section` 抓最新一季逐字稿，只 import 不改其內部）
 import dd_codex  # 2026-09-11：明選 Codex 才走直接回傳，不默默改供應商。
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
@@ -5394,6 +5395,13 @@ def _archive_run_dir(run_dir, archive_dir):
     if norm_hits:
         print("[archive] 標點正規化：{0} 個 .md／{1} 處（中文後半形 , . : → ，。：）".format(
             norm_files, norm_hits))
+
+    # 2026-11-25：repo 是公開的——存檔副本裡的本機路徑（Google Drive 資料夾名
+    # 帶信箱、家目錄帶使用者名稱）換成 `~/GoogleDrive/…`、`~/…`。檔名不變，
+    # 沿用舊存查靠檔名比對，不受影響。原 run 目錄不動。
+    scrub_files, scrub_hits = dd_local_paths.scrub_dir(archive_dir)
+    if scrub_hits:
+        print("[archive] 本機路徑去帳號：{0} 個檔／{1} 處".format(scrub_files, scrub_hits))
 
     print("[archive] {0} → {1}（{2} 項）".format(run_dir, archive_dir, len(copied)))
     return copied

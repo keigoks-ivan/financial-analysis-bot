@@ -22,6 +22,11 @@ import re
 import sys
 from pathlib import Path
 
+_SCRIPTS_DIR = str(Path(__file__).resolve().parent.parent)
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+import dd_local_paths  # noqa: E402  （2026-11-25：transcripts.json 不寫本機絕對路徑，repo 是公開的）
+
 # ---------------------------------------------------------------------------
 # 保存期限表（README §2，2026-09-16 拍板）。未知軸 id 一律 90 天。
 # ---------------------------------------------------------------------------
@@ -253,7 +258,8 @@ class FactsStore(object):
         record = {
             "fetched_at": fetched_at_s,
             "run": run_id,
-            "transcripts": transcripts_obj,
+            # 路徑前綴去帳號（檔名不變）；這份只拿來讀 latest_quarter，不拿來開檔。
+            "transcripts": dd_local_paths.scrub_obj(transcripts_obj),
             "latest_quarter": _extract_latest_transcript_date(transcripts_obj),
         }
         _atomic_write_json(self._transcripts_path(), record)

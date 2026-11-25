@@ -52,6 +52,25 @@ if echo "$STAGED_DEL" | grep -qx 'docs/\.nojekyll'; then
   exit 1
 fi
 
+# 2026-11-25：repo 是公開的。Google Drive 的資料夾名帶信箱
+# （GoogleDrive-<信箱>），寫進任何檔案就等於把信箱公開。只看這次新增的行，
+# 刪掉舊的不擋。存查檔請過 scripts/dd_local_paths.py 的 scrub。
+GDRIVE_PAT='GoogleDrive-[^/[:space:]"]+@'
+GDRIVE_LEAK=$(git diff --cached -U0 --no-color --diff-filter=AM -G"$GDRIVE_PAT" \
+  | awk -v pat="$GDRIVE_PAT" '/^\+\+\+ /{f=substr($0,7);next} /^\+/ && $0 ~ pat {print f}' \
+  | sort -u | head -20 || true)
+if [ -n "$GDRIVE_LEAK" ]; then
+  echo ""
+  echo "❌ 新增的內容含 Google Drive 路徑（資料夾名帶信箱）— commit blocked."
+  echo ""
+  echo "$GDRIVE_LEAK" | sed 's/^/     /'
+  echo ""
+  echo "   這個 repo 是公開的。把路徑改成 ~/GoogleDrive/… 再提交："
+  echo "     python3 -c \"import sys; sys.path.insert(0,'scripts'); import dd_local_paths as m; print(m.scrub_dir(sys.argv[1]))\" <資料夾>"
+  echo "   Bypass: --no-verify"
+  exit 1
+fi
+
 STAGED_DD=$(echo "$STAGED" | grep -E '^docs/dd/DD_.*\.html$' || true)
 STAGED_BRIEF=$(echo "$STAGED" | grep -E '^docs/dd/brief/BRIEF_.*\.html$' || true)
 STAGED_ID=$(echo "$STAGED" | grep -E '^docs/id/ID_.*\.html$' || true)
