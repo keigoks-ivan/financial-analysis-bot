@@ -219,6 +219,75 @@ def cases_table(cs, mu):
     return table_html(hdr, rows, "cases") + "<p class='note'>{0}</p>".format(note)
 
 
+CASE_BASIS_NAME = {"eps": "獲利", "sales_per_share": "每股營收", "fcf_per_share": "每股自由現金流"}
+
+
+def cases3_rows(cs, price):
+    """獲利三檔：每檔的帳面、調整後獲利與「現價是這個獲利的幾倍」。獲利 ≤ 0 或沒有現價時倍數為 None。只做現價反推倍數，不算任何價位。"""
+    out = []
+    for r in cs.get("rows", []):
+        def mult(v):
+            try:
+                v = float(v)
+            except (TypeError, ValueError):
+                return None
+            return price / v if (v > 0 and price) else None
+        eps = r.get("eps")
+        adj = r.get("eps_adjusted")
+        try:
+            has_adj = adj is not None and eps is not None and abs(float(adj) - float(eps)) > 1e-9
+        except (TypeError, ValueError):
+            has_adj = False
+        out.append({"label": r.get("label"), "basis": r.get("basis") or "eps", "what": r.get("what", ""), "eps": eps,
+                    "adj": adj if has_adj else None, "m": mult(eps), "m_adj": mult(adj) if has_adj else None})
+    return out
+
+
+def cases3_table(cs, price, price_date=None):
+    if cs.get("error"):
+        return "<p class='bad'>獲利三檔表未產生：{0}。</p>".format(esc(cs["error"]))
+    rows3 = cases3_rows(cs, price)
+    if not rows3:
+        return "<p class='note'>（沒有獲利三檔資料。）</p>"
+    basis = rows3[0]["basis"]
+    unit = CASE_BASIS_NAME.get(basis, "獲利")
+    has_adj = any(r["adj"] is not None for r in rows3)
+    eps_name = {"eps": "每股盈餘", "sales_per_share": "每股營收", "fcf_per_share": "每股自由現金流"}.get(basis, "每股盈餘")
+    hdr = ["檔位", eps_name + ("（帳面口徑）" if has_adj else "")]
+    if has_adj:
+        hdr.append("每股盈餘（調整後）")
+    hdr.append("對應情況")
+    if basis == "eps":
+        hdr.append("現價是帳面獲利的幾倍" if has_adj else "現價是這個獲利的幾倍")
+    else:
+        hdr.append("現價是{0}的幾倍".format(unit))
+    if has_adj:
+        hdr.append("現價是調整後獲利的幾倍")
+
+    def cell(v, d=2):
+        return "—" if v is None else "{0:,.{1}f}".format(float(v), d)
+
+    def mcell(m):
+        return "—" if m is None else "{0:.1f} 倍".format(m)
+    rows = []
+    for r in rows3:
+        line = ["<b>{0}</b>".format(esc(r["label"])), cell(r["eps"])]
+        if has_adj:
+            line.append(cell(r["adj"]) if r["adj"] is not None else "—")
+        line.append(esc(r["what"]))
+        line.append(mcell(r["m"]))
+        if has_adj:
+            line.append(mcell(r["m_adj"]) if r["adj"] is not None else "—")
+        rows.append(line)
+    if cs.get("legacy"):
+        yr = "獲利檔位未標會計年度"
+    else:
+        yr = "獲利檔位是 {0} 會計年度的{1}".format(esc(cs.get("fiscal_year_end")), eps_name + ("（帳面口徑）" if has_adj else ""))
+    note = ("{0}，由作者依正文所述的情況設定，不是預測；倍數＝現價 {1:,.2f}（{2} 收盤）÷ 該檔獲利，獲利 ≤ 0 的檔位不算倍數。"
+            "這張表只說明現價對應哪一檔獲利，不推算任何價位。").format(yr, price, esc(price_date or cs.get("price_date") or "?"))
+    return table_html(hdr, rows, "cases3") + "<p class='note'>{0}</p>".format(note)
+
+
 def tracking_table(machine):
     rows = [[esc(t.get("metric", "")), esc(t.get("bull_if", "")), esc(t.get("warn_if", "")), esc(t.get("next_check", ""))] for t in machine.get("tracking", [])]
     out = table_html(["追蹤指標", "偏樂觀的條件", "警訊條件", "下次檢查"], rows) if rows else ""
@@ -356,7 +425,8 @@ def md_to_html(md):
 
 
 # ------------------------------------------------------------ 引用
-PLACEHOLDERS = ["表:歷史倍數", "表:獲利乘倍數對照", "表:追蹤條件", "表:跟上一份比", "表:例行檢查", "圖:股價位置"]
+PLACEHOLDERS = ["表:歷史倍數", "表:獲利乘倍數對照", "表:獲利三檔", "表:追蹤條件", "表:跟上一份比", "表:例行檢查", "圖:股價位置"]
+OLD_CASE_PLACEHOLDERS = ["表:歷史倍數", "表:獲利乘倍數對照"]  # 舊文章用的佔位：有就照舊排版，新文章不必放，缺了不算缺
 LEGACY_PLACEHOLDERS = ["表:情境估值"]  # 舊版佔位記號：出現時換成空字串，不崩
 
 
@@ -531,7 +601,7 @@ def render(run, out=None, back_link=None):
     cs = cases(machine, mu, price, pack.get("price_chart", {}).get("last_date"), strict=(run / "brief.json").exists())
     calc = {"multiples": mu, "cases": cs}
     (run / "calc.json").write_text(json.dumps(calc, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
-    blocks = {"表:歷史倍數": hist_table(mu, pack.get("consensus"), price), "表:獲利乘倍數對照": cases_table(cs, mu),
+    blocks = {"表:歷史倍數": hist_table(mu, pack.get("consensus"), price), "表:獲利乘倍數對照": cases_table(cs, mu), "表:獲利三檔": cases3_table(cs, price, pack.get("price_chart", {}).get("last_date")),
               "表:追蹤條件": tracking_table(machine), "表:跟上一份比": prior_table(machine, pack),
               "表:例行檢查": routine_table(ask), "圖:股價位置": price_svg(pack.get("price_chart"))}
     for lp in LEGACY_PLACEHOLDERS:
@@ -546,6 +616,10 @@ def render(run, out=None, back_link=None):
             text = pat.sub(lambda m, ph=ph: "\n<!--RAW" + blocks[ph].replace("\n", " ") + "-->\n", text)
         elif ph == "表:跟上一份比" and any("沒有上一份 DD" in g for g in pack.get("gaps", [])):
             pass  # 資料包沒有上一份報告，這張表本來就沒東西可放，不算缺
+        elif ph in OLD_CASE_PLACEHOLDERS:
+            pass  # 舊佔位：新文章不再要求
+        elif ph == "表:獲利三檔" and re.search(r"\{\{\s*表:獲利乘倍數對照\s*\}\}", article):
+            pass  # 舊文章用舊的情境表佔位，不算缺新佔位
         else:
             left.append("正文沒有放 {{" + ph + "}}")
     leftover = re.findall(r"\{\{[^}]*\}\}", text)
@@ -561,6 +635,10 @@ def render(run, out=None, back_link=None):
         for c in r["cells"].values():
             if c:
                 ref_texts.append("{0:.1f} {1:.0f} {2:.1f}".format(c["mult"], c["price"], (c["ann"] or 0) * 100))
+    for r in (cases3_rows(cs, price) if re.search(r"\{\{\s*表:獲利三檔\s*\}\}", article) else []):  # 只有用新佔位的文章才把倍數算進可引用的數字
+        for m_ in (r["m"], r["m_adj"]):
+            if m_ is not None:
+                ref_texts.append("{0:.1f} {1:.0f}".format(m_, m_))
     bad = number_check(article, ref_texts)
     nib = None
     if (run / "brief.json").exists():  # 兩通寫作：文章每個數字要在底稿，或在資料包／查證／程式比較／同業表裡，都沒有的列出（不放寬算式句）

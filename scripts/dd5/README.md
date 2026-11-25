@@ -23,6 +23,12 @@
 3. 文字檢查有 block 就停，印出被擋的行，不發布。
 4. 發布：在暫時 worktree（從 origin/main 開）寫全文頁與 `docs/stock-dash/research/index.json`、注入站上導覽列、跑 `scripts/qc.py`、commit、推到 origin/main；推完若主工作區乾淨就順便 fast-forward。不會碰主工作區的檔案。
 
+## 正文佔位
+
+新文章可放的佔位：`{{表:獲利三檔}}`（機器欄位 `earnings_cases` 三檔，程式算「現價是這個獲利的幾倍」，不算任何價位）、`{{表:追蹤條件}}`、`{{表:跟上一份比}}`、`{{表:例行檢查}}`、`{{圖:股價位置}}`。渲染時缺的、殘留的記在 `number_check.json` 的 `placeholders_missing`、`placeholders_leftover`；新文章不再要求 `{{表:歷史倍數}}`、`{{表:獲利乘倍數對照}}`。
+
+這兩個舊佔位的排版程式保留，舊文章有放就照舊排版，沒放不算缺；舊文章若用 `{{表:獲利乘倍數對照}}` 當情境表，也不會被要求補 `{{表:獲利三檔}}`。
+
 ## 檔案放哪
 
 - run 目錄與花費紀錄：`~/dd5-pilot/runs/<代號>_<日期>/`（留在本機，不進 git）。manifest.json 有每通呼叫的花費。
