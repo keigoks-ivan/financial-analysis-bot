@@ -871,7 +871,15 @@ MEMBERS = {'/backtest/viable/rsi2/': {'title': '台指期急跌反彈只做多�
                            'main': '/backtest/txf_daily/',
                            'anchor': 'hourly',
                            'chapter': '60 分 K 版本',
-                           'key': 'txf_hourly'}}
+                           'key': 'txf_hourly'},
+ '/backtest/xq_blog/xq_data/': {'title': 'XQ 補測：25 條當沖策略扣成本全賠，分 K 補正不改日線結論',
+                                'short': 'XQ 資料補測',
+                                'status': 'note',
+                                'main': '/backtest/xq_blog/',
+                                'anchor': 'xq-data',
+                                'chapter': 'XQ 分 K、盤後欄位與 1 分 K 補測',
+                                'key': 'xq_blog_data',
+                                'desc': '2026-11-23 至 11-25 把 XQ 部落格裡我們資料測不了的策略交給 XQ 端用分 K 回測，XQ 交回交易明細、盤後欄位與 1 分 K：39 條分 K 策略裡 25 條當沖扣成本後平均都是負的，唯一判賺錢的 5784-2 有 88% 的獲利來自三個月、比全市場多賺的區間跨 0；剩下 12 條裡 16143-2 與 12536-1 過了候選，但拆掉開盤委買後只剩 0.05%；盤中題目只有尾盤急拉隔天放空 1 條過候選，DSR 近 0；1 分 K 補正 174 條，停損停利先後與開盤漲停補回不改任何一條判讀。樣本只到 2026-11-13。'}}
 
 FOLDED = {'/backtest/long_track_qqq/': ['/backtest/long_track/', 'qqq'],
  '/backtest/long_track_ensemble/': ['/backtest/long_track/', 'ensemble'],
