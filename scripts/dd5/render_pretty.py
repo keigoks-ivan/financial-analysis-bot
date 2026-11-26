@@ -212,7 +212,18 @@ def hero(machine, pack, calc, ex=None):
             esc(label), '<span class="ar">{0}</span>'.format(arrow) if arrow else "", esc(val), '<div class="cs">{0}</div>'.format(esc(sub)) if sub else "")
     stats = [("現價", "{0:,.2f}".format(price)), ("收盤日", pack["price_chart"]["last_date"])]
     if pe27:
-        stats.append(("2027 預估本益比", "{0:.1f} 倍".format(pe27) if pe27 > 0 else "預估仍虧損"))
+        # 共識 FY2＝下一個會計年度；會計年度不在 12 月結束的公司（AMAT 10 月、KLAC 6 月）不能寫死成 2027
+        lab27 = "下個會計年度預估本益比"
+        try:
+            import datetime as _dt
+            import yfinance as _yf
+            nfy = (_yf.Ticker(pack["ticker"]).info or {}).get("nextFiscalYearEnd")
+            if nfy:
+                e = _dt.datetime.utcfromtimestamp(nfy).date()
+                lab27 = "{0} 預估本益比".format(e.year + 1) if e.month == 12 else "預估本益比（{0}-{1:02d} 結束的年度）".format(e.year + 1, e.month)
+        except Exception:
+            pass
+        stats.append((lab27, "{0:.1f} 倍".format(pe27) if pe27 > 0 else "預估仍虧損"))
     if ttm:
         stats.append(("過去十二個月本益比", "{0:.1f} 倍".format(ttm) if ttm > 0 else "過去仍虧損"))
     hi = None
