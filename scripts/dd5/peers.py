@@ -126,7 +126,10 @@ def _val(yt, info):
     try:
         qi = yt.quarterly_income_stmt
         cols = [c for c in qi.columns if _g(qi, "Total Revenue", c) is not None][:4]
-        if len(cols) == 4:
+        gaps = [(cols[i] - cols[i + 1]).days for i in range(len(cols) - 1)]
+        if len(cols) == 4 and max(gaps) > 100:  # yfinance 缺季：四欄不連續就不算過去十二個月倍數
+            v["notes"].append("最近四季不連續（缺季），過去十二個月本益比與市銷率留空")
+        elif len(cols) == 4:
             if fin and cur and fin != cur:
                 fa, _ = mp.fx_rate(fin, cur, cols[0], "avg")
             es = [_g(qi, "Diluted EPS", c) for c in cols]

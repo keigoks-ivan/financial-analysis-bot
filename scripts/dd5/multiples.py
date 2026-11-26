@@ -144,7 +144,11 @@ def build(ticker, as_of=None, max_years=5, price_override=None):
     try:
         qi, qc, qb = yt.quarterly_income_stmt, yt.quarterly_cashflow, yt.quarterly_balance_sheet
         qcols = [c for c in qi.columns if _g(qi, "Total Revenue", c) is not None][:4]
-        if len(qcols) == 4:
+        # yfinance 單季表有時缺一季（FORM、APH 缺 2026-06）；相鄰兩欄超過 100 天就不是連續四季，不算過去十二個月倍數
+        gaps = [(qcols[i] - qcols[i + 1]).days for i in range(len(qcols) - 1)]
+        if len(qcols) == 4 and max(gaps) > 100:
+            now = {"error": "最近四季不連續（{0} 之間缺季），不算過去十二個月倍數".format("、".join(str(c.date()) for c in qcols))}
+        elif len(qcols) == 4:
             eps = sum(_g(qi, "Diluted EPS", c) or 0 for c in qcols) if all(_g(qi, "Diluted EPS", c) is not None for c in qcols) else None
             rev = sum(_g(qi, "Total Revenue", c) for c in qcols)
             sh = _g(qi, "Diluted Average Shares", qcols[0])
