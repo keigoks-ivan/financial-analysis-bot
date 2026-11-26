@@ -3,14 +3,14 @@
 
 1. 同業：沿用 run 目錄的 peers.json（不重抓，其他章引用的同業數字才不會變）；若還沒有固定名單，順手把這份名單存成固定名單。
 2. 程式算對同業中位數的三年差距與初判（moat_gap.py，零 LLM），寫 moat_gap.md／moat_gap.json，pack.json 登記 [p:moat_gap]。
-3. 一通 opus（不上網、effort low）只重寫「## 護城河與競爭」這一章：保留原章的事實與數字，最後的判斷改成寬度＋走勢，
+3. 一通 opus（effort low；只為了查需求轉弱年度可上網三次）只重寫「## 護城河與競爭」這一章：保留原章的事實與數字，最後的判斷改成寬度＋走勢，
    機器欄位 moat 換成新格式（width、width_basis、width_cap、early_signal、threat_first_sign、unproven_edges）。
 4. 不渲染、不發布：之後跑 `python3 scripts/dd5/dd.py <T> --date <D> --reuse` 重排並發布。
 
 用法：python3 scripts/dd5/add_moat.py TICKER --date YYYYMMDD [--force] [--from-raw]
   --force     machine.json 的 moat 已有 width 時仍重寫
   --from-raw  不呼叫模型，用 run 目錄已存的 raw_moat_add.json 取章（上次解析失敗時用）
-每檔約 0.2 美元、半分鐘到一分鐘。原文備份 article.md.pre_moat、machine.json.pre_moat。
+每檔約 0.25～0.4 美元、一分鐘左右。原文備份 article.md.pre_moat、machine.json.pre_moat。
 """
 from __future__ import annotations
 
@@ -97,7 +97,7 @@ def build_prompt(run_dir, article, gap_md):
 
 {nums}
 
-不上網。
+原則上不上網。只有一個例外：判斷「品牌」上限時，資料包看不到 2020 年或 2008～2009 年這類需求轉弱年度，可以上網查那一年的營收與毛利率（或飯店、郵輪改看營業利益率），最多搜尋三次；查到就照實判，並在正文附連結。
 
 ## 輸出
 
@@ -113,6 +113,27 @@ def build_prompt(run_dir, article, gap_md):
 
 {article}
 """.format(rule=rule, prose=prose, nums=nums, moat_fmt=moat_fmt, ctx=ctx, article=article)
+
+
+def call_with_web(run, prompt):
+    """一通 opus，只為了查「需求轉弱年度」那一條可以上網（最多三次搜尋）；照 step_lite 的寫法呼叫，花費記進 manifest。"""
+    import time
+    import dd_headless
+    import llm
+    run.guard()
+    pp = run.dir / "prompt_moat_add.md"
+    pp.write_text(prompt, encoding="utf-8")
+    llm.NEUTRAL_CWD.mkdir(parents=True, exist_ok=True)
+    out_json = str((run.dir / "raw_moat_add.json").resolve())
+    t0 = time.time()
+    r = dd_headless.spawn(prompt_path=str(pp.resolve()), model="opus", allowed_tools=["WebSearch", "WebFetch"], max_turns=8,
+                          out_json=out_json, cwd=llm.NEUTRAL_CWD,
+                          extra_args=["--setting-sources", "project", "--effort", "low", "--max-budget-usd", "1"])
+    r = rn.sp._augment_with_raw_usage(r, out_json)
+    c = run.record("moat_add", "moat_add", "opus", r, t0)
+    run.save()
+    print("[moat_add] opus ok={0} ${1} {2}s turns={3} out_tok={4}".format(r.get("ok"), c["cost_usd"], c["duration_s"], c["num_turns"], c["output_tokens"]))
+    return rn.need_text(r)
 
 
 def main():
@@ -155,9 +176,7 @@ def main():
         text = raw.get("stitched_text") or (raw.get("result_event") or {}).get("result") or ""
     else:
         prompt = build_prompt(run.dir, article, gap_md)
-        rn.EFFORT.setdefault("moat_add", "low")
-        r = run.oneshot("moat_add", "opus", prompt, "moat_add")
-        text = rn.need_text(r)
+        text = call_with_web(run, prompt)
     body, machine, err = rn.extract_machine(text)
     m = re.search(r"## 護城河與競爭", body)
     if not m:
