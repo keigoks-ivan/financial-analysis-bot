@@ -652,7 +652,7 @@ PAGES = {'/backtest/live_system_evidence/': {'title': 'W52 系統憑什麼：十
                          'zone': 7,
                          'status': 'note',
                          'desc': '台幣對韓元、人民幣、新幣（BIS 貿易權重）三十年實質弱了約三成，主因台灣物價漲得慢，名目差不多；對日圓強了快六成。偏強偏弱段、資金面解釋、會不會回到平均、能不能預測，判準事前寫死。'},
- '/backtest/twd_outlook/': {'title': '台幣匯率系列五｜台幣展望：一年後十次有八次落在 31.1～35.5',
+ '/backtest/twd_outlook/': {'title': '台幣匯率系列五｜台幣展望：方向猜不到，一年後十次有八次落在 31.1～35.5',
                             'short': '台幣五：展望',
                             'key': 'twd_outlook',
                             'zone': 7,
