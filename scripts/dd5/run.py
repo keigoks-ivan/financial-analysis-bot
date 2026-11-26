@@ -407,6 +407,9 @@ def lite_prompt(run, pack):
     if (run.dir / "peers.md").exists():
         extra_txt += "\n\n# 同業對照（程式算好；引用標記 `[p:peers]`）\n\n" + (run.dir / "peers.md").read_text(encoding="utf-8")
     dom = domains.prompt_line()
+    focus = os.environ.get("DD5_FOCUS", "").strip()  # 持有人對這一檔的特別交代（選填），附在規則卡後
+    if focus:
+        card += "\n\n## 持有人特別交代（這一檔）\n\n" + focus
     return (run.pack_md + extra_txt + "\n\n---\n\n" + card + ("\n\n" + dom if dom else "")
             + "\n\n---\n\n今天是 {0}。資料包裡的現價是 {1} 收盤價。".format(dt.date.today().isoformat(), pack.get("price_chart", {}).get("last_date")))
 
