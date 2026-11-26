@@ -249,12 +249,12 @@ MENU = {
     # 個股 DD／供應鏈地圖／多股對比／期望落差綜合研判四條目已在第一階段收進
     # /t/ 或 /id/ 分頁，故選單只留三個真實頂層目的地；下拉形態不變。
     "research": [
+        ("sdash", "/stock-dash/", "個股儀表板"),
         ("thub", "/t/", "研究清單"),  # 2026-09-30 持有人選 A：個股內容已併入個股儀表板，此頁改為報告清單入口
         ("dds", "/dd-screener/", "DD Screener"),  # 2026-10-05 持有人要求加回（08-20 曾移出），緊接研究清單之後
         ("rs", "/screeners.html", "RS 排行"),  # 2026-10-30 持有人拍板：RS 排行表（美股／台股）入口，緊接 DD Screener 之後
         ("canslim", "/canslim/", "CAN SLIM 選股"),  # 2026-10-17 CAN SLIM × 品質關每週名單，緊接 DD Screener 之後
         ("leaders", "/leaders/", "大跌領導股"),  # 2026-11-21 大跌後等 QQQ 週線翻多、排名版 30 檔（產生器 v7 src/drawdown_leaders/generate_page.py）
-        ("sdash", "/stock-dash/", "個股儀表板"),
         ("etfd", "/etf-dash/", "ETF 儀表板"),
         ("aetf", "/active-etf/", "主動式 ETF"),  # 2026-09-25 新增，緊接 ETF 儀表板之後
         ("id", "/id/", "產業研究"),
