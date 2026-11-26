@@ -29,6 +29,7 @@ import render as rd  # noqa: E402
 
 PILOT = Path.home() / "dd5-pilot"
 CARDS = HERE / "cards"
+PEERS_FIXED = Path.home() / "dd5-pilot" / "peers_fixed"  # 每檔固定同業名單（本機，不進 git）；寬度初判才會穩定
 HARD_STOP = 20.0
 import os
 THINK_CAP = int(os.environ.get("DD5_THINK_CAP", "32000"))  # opus 思考 token 上限（第一通 TXN ask 沒設，花 3.9 美元、思考約 13 萬 token）
@@ -303,10 +304,24 @@ def step_peers(run, override=None):
     import peers as pe
     ap_ = run.dir / "ask.json"
     ask = json.loads(ap_.read_text(encoding="utf-8")) if ap_.exists() else {}
-    plist = override or ask.get("peers") or []  # 優先順序：--peers、ask.json 的人工名單、程式自動產生
+    plist = override or ask.get("peers") or []  # 優先順序：--peers、ask.json 的人工名單、固定名單、模型點名（點完存成固定名單）
     auto_notes = []
+    fixed_f = PEERS_FIXED / "{0}.json".format(run.t)
+    if not plist and fixed_f.exists():
+        try:
+            fx = json.loads(fixed_f.read_text(encoding="utf-8"))
+            plist = [x for x in fx.get("peers") or [] if x and x != run.t]
+            auto_notes = ["同業名單沿用固定名單（{0}；要重選就刪掉這個檔）".format(fx.get("source") or fixed_f.name)]
+            print("[peers] 沿用固定名單：", plist)
+        except Exception as e:
+            print("[peers] 固定名單讀取失敗，改由模型點名：", e)
+            plist = []
     if not plist:
         plist, auto_notes = pick_peers(run, pe)
+        if plist and not override:
+            PEERS_FIXED.mkdir(parents=True, exist_ok=True)
+            fixed_f.write_text(json.dumps({"ticker": run.t, "peers": plist, "source": "{0} 模型點名、程式驗過".format(run.date),
+                                           "saved": run.date}, ensure_ascii=False, indent=1), encoding="utf-8")
     md, data, gaps = pe.build(run.t, plist, extra_gaps=auto_notes)
     (run.dir / "peers.md").write_text(md, encoding="utf-8")
     (run.dir / "peers.json").write_text(json.dumps({"data": data, "gaps": gaps}, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
@@ -316,8 +331,12 @@ def step_peers(run, override=None):
     for g in gaps:
         if g not in pj["gaps"]:
             pj["gaps"].append(g)
+    import moat_gap
+    mg = moat_gap.build(run.dir, run.t)
+    if mg:
+        pj["tags"]["moat_gap"] = {"title": "護城河寬度初判（程式用同業對照表算）", "source": "yfinance", "url": "", "asof": run.date}
     (run.dir / "pack.json").write_text(json.dumps(pj, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
-    print("[peers]", len(data), "家；缺口", gaps)
+    print("[peers]", len(data), "家；缺口", gaps, "；護城河初判", (mg or {}).get("width_initial"), (mg or {}).get("trend_initial"))
 
 
 def extract_machine(text):
@@ -406,6 +425,8 @@ def lite_prompt(run, pack):
     extra_txt = ""
     if (run.dir / "peers.md").exists():
         extra_txt += "\n\n# 同業對照（程式算好；引用標記 `[p:peers]`）\n\n" + (run.dir / "peers.md").read_text(encoding="utf-8")
+    if (run.dir / "moat_gap.md").exists():
+        extra_txt += "\n\n" + (run.dir / "moat_gap.md").read_text(encoding="utf-8")
     dom = domains.prompt_line()
     focus = os.environ.get("DD5_FOCUS", "").strip()  # 持有人對這一檔的特別交代（選填），附在規則卡後
     if focus:
@@ -444,6 +465,8 @@ def step_lite(run):
         art = art[m.start():]
     (run.dir / "article.md").write_text(art, encoding="utf-8")
     (run.dir / "machine.json").write_text(json.dumps(machine, ensure_ascii=False, indent=1), encoding="utf-8")
+    import moat_gap
+    moat_gap.merge_into_machine(run.dir)
 
 
 def numbered(article):

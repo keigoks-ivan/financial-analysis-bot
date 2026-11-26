@@ -77,7 +77,7 @@ def publish(t, d, site, scripts_dir=None):
         "one_liner": mach.get("one_liner"),
         "business_direction": mach.get("business_direction"),
         "price_implies": mach.get("price_implies"),
-        "moat": {"source": mo.get("source"), "trend": mo.get("trend"), "main_threat": mo.get("main_threat")},
+        "moat": {"source": mo.get("source"), "width": mo.get("width"), "trend": mo.get("trend"), "main_threat": mo.get("main_threat")},
         "tracking": [{k: x.get(k) for k in ("metric", "bull_if", "warn_if", "next_check")} for x in mach.get("tracking", [])],
         "price": pack.get("last_price"),
         "price_date": (pack.get("price_chart") or {}).get("last_date"),

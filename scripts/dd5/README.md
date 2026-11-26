@@ -35,6 +35,18 @@
 
 重抓年報把 `[p:roic]` 段補進 run 目錄的資料包，一通 opus（不上網、effort low，每檔約 0.2 美元、半分鐘）只寫「## 資本報酬」一章，插在「護城河與競爭」之後；原文備份 `article.md.pre_roic`。之後用 `dd.py <代號> --date <日期> --reuse` 重排並發布。
 
+## 護城河寬度（2026-11-26 起）
+
+寬度（寬／窄／無）與走勢兩軸。`moat_gap.py` 從 `peers.json` 算本檔減同業中位數的三年差距與初判（零 LLM，寫 `moat_gap.md`／`moat_gap.json`，引用標記 `[p:moat_gap]`）；降級上限、份額例外、走勢、未量化優勢由寫稿模型照 `cards/lite_card.md` 判，最後寬度以模型為準，程式數字另存在 machine.json 的 `moat.gap_vs_peer_median`、`width_initial`、`trend_initial`。
+
+同業名單固定：`step_peers` 依序用 `--peers`、ask.json、`~/dd5-pilot/peers_fixed/<代號>.json`，都沒有才請模型點名，點完存成固定名單；要重選就刪掉那個檔。名單變了寬度初判也會變（MELI 換一組同業從窄跳到寬），所以不要每次重點名。
+
+舊文章補寬度只重寫護城河那一章：
+
+    python3 scripts/dd5/add_moat.py <代號> --date <YYYYMMDD> [--force] [--from-raw]
+
+沿用 run 目錄的同業表、不重抓；一通 opus（不上網、effort low，每檔約 0.25 美元、40 秒）重寫「## 護城河與競爭」並換掉機器欄位 moat；原文備份 `article.md.pre_moat`、`machine.json.pre_moat`。之後用 `dd.py <代號> --date <日期> --reuse` 重排並發布。
+
 ## 版面
 
 全文頁由 `render_pretty.py` 產生：先呼叫 `render.render`（數字檢查、佔位、calc.json 照舊），再把正文套進新外殼（頁首結論卡、側邊目錄、同業橫條圖、淺／深色）。render.py 新增的佔位會自動流進新版，不用改 render_pretty。

@@ -228,6 +228,7 @@ def hero(machine, pack, calc, ex=None):
     return ('<section class="hero"><p class="one">{0}</p><div class="cells">{1}{2}{3}</div><div class="stats">{4}</div></section>').format(
         esc(machine.get("one_liner", "")),
         cell("生意方向", machine.get("business_direction", "—")),
+        (cell("護城河寬度", mo.get("width"), mo.get("width_basis", "")) if mo.get("width") else "") +
         cell("護城河趨勢", mo.get("trend", "—"), mo.get("source", "")) +
         (cell("資本報酬趨勢", (machine.get("capital_return") or {}).get("trend", "—"), (machine.get("capital_return") or {}).get("evidence", ""))
          if machine.get("capital_return") else ""),
@@ -282,7 +283,7 @@ tbody tr:hover td{background:color-mix(in srgb,var(--bg2) 60%,transparent)}
 .note{color:var(--mut);font-size:.86rem;line-height:1.7}.warn,.bad{color:var(--bad)}.ok{color:var(--ok)}
 .hero{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:22px 22px 18px;margin:0 0 8px}
 .hero .one{font-size:1.2rem;line-height:1.7;font-weight:650;margin:0 0 18px}
-.cells{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.cell.wide{grid-column:1/-1}
+.cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.cell.wide{grid-column:1/-1}
 .cell{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .cl{font-size:.75rem;color:var(--mut);letter-spacing:.08em}
 .cv{font-size:1.5rem;font-weight:750;line-height:1.4;margin-top:2px}.cv .ar{font-size:.8rem;color:var(--ok);margin-right:6px;vertical-align:.15em}
