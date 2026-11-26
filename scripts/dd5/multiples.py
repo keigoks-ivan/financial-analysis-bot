@@ -148,6 +148,9 @@ def build(ticker, as_of=None, max_years=5, price_override=None):
         gaps = [(qcols[i] - qcols[i + 1]).days for i in range(len(qcols) - 1)]
         if len(qcols) == 4 and max(gaps) > 100:
             now = {"error": "最近四季不連續（{0} 之間缺季），不算過去十二個月倍數".format("、".join(str(c.date()) for c in qcols))}
+        elif qcols and qi.columns[0] > qcols[0]:
+            # 最新一季已出現但營收空白（TER 2026-09），跳過它會拿舊的四季算，倍數落後一季
+            now = {"error": "最新一季（{0}）營收欄位空白，不拿舊的四季算過去十二個月倍數".format(qi.columns[0].date())}
         elif len(qcols) == 4:
             eps = sum(_g(qi, "Diluted EPS", c) or 0 for c in qcols) if all(_g(qi, "Diluted EPS", c) is not None for c in qcols) else None
             rev = sum(_g(qi, "Total Revenue", c) for c in qcols)
