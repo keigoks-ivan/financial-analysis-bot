@@ -220,8 +220,8 @@ def hero(machine, pack, calc, ex=None):
             nfy = (_yf.Ticker(pack["ticker"]).info or {}).get("nextFiscalYearEnd")
             if nfy:
                 e = _dt.datetime.utcfromtimestamp(nfy).date()
-                if e.month == 1 and e.day <= 7:  # 52／53 週制（ONTO 結在 1 月初的星期六）視為 12 月年度
-                    e = _dt.date(e.year - 1, 12, 31)
+                if e.day <= 7:  # 52／53 週制（ONTO 結在 1 月初、CRDO 結在 5 月初的星期六）視為上個月底
+                    e = e.replace(day=1) - _dt.timedelta(days=1)
                 lab27 = "{0} 預估本益比".format(e.year + 1) if e.month == 12 else "預估本益比（{0}-{1:02d} 結束的年度）".format(e.year + 1, e.month)
         except Exception:
             pass
