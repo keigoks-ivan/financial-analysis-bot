@@ -372,7 +372,9 @@ def roic_block(rc):
     def y(v):
         return T + (H - T - B) * (1 - (v - lo) / (hi - lo))
     s = ['<svg viewBox="0 0 {0} {1}" class="chart roic" role="img" aria-label="逐年投入資本報酬率">'.format(W, H)]
-    step = next(st for st in (2, 5, 10, 20, 25, 50, 100, 200) if (hi - lo) / st <= 6)
+    step = next((st for st in (2, 5, 10, 20, 25, 50, 100, 200) if (hi - lo) / st <= 6), None)
+    if step is None:  # 投入資本接近零或為負時報酬率會到上千 %（CRWD FY26），圖沒有意義
+        return "<p class='note'>（投入資本接近零或為負，投入資本報酬率沒有意義，圖略。）</p>"
     v = math.ceil(lo / step) * step
     while v <= hi:
         s.append('<line x1="{0}" x2="{1}" y1="{2:.1f}" y2="{2:.1f}" class="grid"/><text x="{3}" y="{4:.1f}" class="ax" text-anchor="end">{5:.0f}%</text>'.format(L, W - R, y(v), L - 6, y(v) + 4, v))
