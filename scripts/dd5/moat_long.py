@@ -3,8 +3,8 @@
 
 資料（只讀本機共用資料庫，不上網抓財報）：
   - 台股：~/v7-backtest/data/tw_finmind_statements_full（FinMind 單季損益表加總成年，資產負債表取 12 月底）
-  - 美股：~/v7-backtest/data/edgar/facts（SEC companyfacts 快取，取 CY 年度 frame）
-  - 其他市場或本機沒有的代號：退回 yfinance 年報（約四年），標明來源
+  - 美股：~/v7-backtest/data/edgar/facts（SEC companyfacts 快取，取年報約一年期間的數字、依會計年度結帳日；沒標營業利益的用稅前淨利＋利息費用近似）
+  - 其他市場或本機沒有的代號：退回 yfinance 年報（約四年，報酬率也算），標明來源
 算出（2012～2025）：
   - R1 投入資本報酬率＝營業利益×79%÷(權益＋有息負債－現金)，年底值；十年（2016～2025）平均與最低
   - R2 營益率減直接對手（同業名單前兩家），逐年
@@ -48,50 +48,92 @@ def us_annual(t):
     if not p or not p.exists():
         return None
     f = json.loads(p.read_text()).get("facts", {}).get("us-gaap", {})
+    import datetime as _dt
+
+    def _d(s):
+        return _dt.date.fromisoformat(s)
+
+    def fy_of(end):  # 會計年度：年底在 6 月以後算當年，1～5 月結帳的算前一年（跟 yf_annual 一致）
+        e = _d(end)
+        return e.year if e.month >= 6 else e.year - 1
 
     def dur(names):
-        out = {}
+        """年報裡約一年期間的數字，依會計年度結帳日；同一期取最後申報的（含重編）。不靠 CY frame，非 12 月年度的公司才抓得到。"""
+        out, ends = {}, {}
         for n in names:
+            best = {}
             for u in f.get(n, {}).get("units", {}).get("USD", []):
-                fr = u.get("frame") or ""
-                if re.fullmatch(r"CY\d{4}", fr):
-                    y = int(fr[2:])
-                    out[y] = max(out.get(y, float("-inf")), u["val"])
-        return out
+                if not u.get("start") or (u.get("form") or "")[:4] not in ("10-K", "20-F", "40-F"):
+                    continue
+                if not 340 <= (_d(u["end"]) - _d(u["start"])).days <= 380:
+                    continue
+                k = u["end"]
+                if k not in best or u.get("filed", "") > best[k].get("filed", ""):
+                    best[k] = u
+            for k, u in best.items():
+                y = fy_of(k)
+                if y not in out:  # 名單前面的科目優先
+                    out[y], ends[y] = u["val"], k
+        return out, ends
 
     def inst(name):
         out = {}
         for u in f.get(name, {}).get("units", {}).get("USD", []):
-            fr = u.get("frame") or ""
-            if re.fullmatch(r"CY\d{4}Q4I", fr):
-                out[int(fr[2:6])] = u["val"]
-        return out
+            if u.get("start") or (u.get("form") or "")[:4] not in ("10-K", "20-F", "40-F"):
+                continue
+            k = u["end"]
+            if k not in out or u.get("filed", "") > out[k][1]:
+                out[k] = (u["val"], u.get("filed", ""))
+        return {k: v[0] for k, v in out.items()}
 
-    rev = dur(["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet",
-               "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueGoodsNet"])
-    gp = dur(["GrossProfit"])
-    cogs = dur(["CostOfRevenue", "CostOfGoodsAndServicesSold", "CostOfGoodsSold"])
-    oi = dur(["OperatingIncomeLoss"])
-    eq = {}
-    for n in ("StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"):
-        for y, v in inst(n).items():
-            eq.setdefault(y, v)
-    debt = {}
-    for n in ("LongTermDebt", "LongTermDebtNoncurrent", "DebtCurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper"):
-        for y, v in inst(n).items():
-            debt.setdefault(y, {})[n] = v
+    def at(d, end):  # 結帳日的時點值（容許差 7 天）
+        if not end:
+            return None
+        if end in d:
+            return d[end]
+        e = _d(end)
+        for k, v in d.items():
+            if abs((_d(k) - e).days) <= 7:
+                return v
+        return None
+
+    revs = [dur([n])[0] for n in ("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet",
+                                  "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueGoodsNet")]
+    rev = {}
+    for r in revs:
+        for y, v in r.items():
+            rev[y] = max(rev.get(y, float("-inf")), v)
+    _, ends = dur(["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet",
+                   "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueGoodsNet"])
+    gp = dur(["GrossProfit"])[0]
+    cogs = dur(["CostOfRevenue", "CostOfGoodsAndServicesSold", "CostOfGoodsSold"])[0]
+    oi = dur(["OperatingIncomeLoss"])[0]
+    # 有些公司年報不標營業利益（禮來從沒標、KLA 2015 起、TJX 2020 起），改用稅前淨利加回利息費用近似，標 oi_proxy
+    pre = dur(["IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+               "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments"])[0]
+    intx = dur(["InterestExpense", "InterestExpenseNonoperating", "InterestExpenseDebt"])[0]
+    eqs = [inst(n) for n in ("StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest")]
+    dnames = ("LongTermDebt", "LongTermDebtNoncurrent", "DebtCurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper")
+    debts = {n: inst(n) for n in dnames}
     cash = inst("CashAndCashEquivalentsAtCarryingValue")
     rows = {}
     for y in sorted(rev):
         if y < 2010 or y > 2025 or not rev[y]:
             continue
+        end = ends.get(y)
         g = gp.get(y) if y in gp else (rev[y] - cogs[y] if y in cogs else None)
-        d = debt.get(y, {})
+        o, proxy = oi.get(y), False
+        if o is None and y in pre:
+            o, proxy = pre[y] + (intx.get(y) or 0), True
+        d = {n: at(debts[n], end) for n in dnames}
+        d = {k: v for k, v in d.items() if v is not None}
         dsum = (d.get("LongTermDebt") or (d.get("LongTermDebtNoncurrent", 0) + d.get("LongTermDebtCurrent", 0))) \
             + max(d.get("DebtCurrent", 0) - d.get("LongTermDebtCurrent", 0), 0) + d.get("ShortTermBorrowings", 0) + d.get("CommercialPaper", 0)
-        ic = eq[y] + dsum - (cash.get(y) or 0) if y in eq else None
-        rows[y] = {"rev": rev[y], "gm": g / rev[y] * 100 if g is not None else None, "om": oi[y] / rev[y] * 100 if y in oi else None,
-                   "roic": (oi[y] * (1 - TAX) / ic * 100) if (y in oi and ic and ic > 0) else None, "ic_neg": bool(ic is not None and ic <= 0)}
+        e = next((v for v in (at(x, end) for x in eqs) if v is not None), None)
+        ic = e + dsum - (at(cash, end) or 0) if e is not None else None
+        rows[y] = {"rev": rev[y], "gm": g / rev[y] * 100 if g is not None else None, "om": o / rev[y] * 100 if o is not None else None,
+                   "roic": (o * (1 - TAX) / ic * 100) if (o is not None and ic and ic > 0) else None, "ic_neg": bool(ic is not None and ic <= 0),
+                   "oi_proxy": proxy}
     return rows or None
 
 
@@ -139,9 +181,21 @@ def tw_annual(t):
 def yf_annual(t):
     try:
         import yfinance as yf
-        i = yf.Ticker(t).income_stmt
+        tk = yf.Ticker(t)
+        i = tk.income_stmt
     except Exception:
         return None
+    try:
+        b = tk.balance_sheet
+    except Exception:
+        b = None
+
+    def bv(name, c):
+        try:
+            v = float(b.loc[name, c])
+            return None if v != v else v
+        except Exception:
+            return None
     rows = {}
     for c in getattr(i, "columns", []):
         try:
@@ -153,7 +207,13 @@ def yf_annual(t):
         if rv != rv or rv == 0:
             continue
         y = c.year if c.month >= 6 else c.year - 1
-        rows[y] = {"rev": rv, "gm": gp / rv * 100 if gp == gp else None, "om": oi / rv * 100 if oi == oi else None, "roic": None, "ic_neg": False}
+        # 投入資本跟 SEC 版同口徑：權益＋有息負債（不含租賃）－現金
+        e = bv("Stockholders Equity", c) if b is not None else None
+        ic = None
+        if e is not None:
+            ic = e + (bv("Long Term Debt", c) or 0) + (bv("Current Debt", c) or 0) - (bv("Cash And Cash Equivalents", c) or 0)
+        rows[y] = {"rev": rv, "gm": gp / rv * 100 if gp == gp else None, "om": oi / rv * 100 if oi == oi else None,
+                   "roic": (oi * (1 - TAX) / ic * 100) if (oi == oi and ic and ic > 0) else None, "ic_neg": bool(ic is not None and ic <= 0)}
     return rows or None
 
 
