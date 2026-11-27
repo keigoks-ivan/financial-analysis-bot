@@ -303,8 +303,9 @@ def prior_table(machine, pack):
     pm = pack.get("prior_meta") or {}
     head = ""
     if pm:
-        head = "<p class='note'>上一份（{0}，舊流程）：裁決 {1}｜{2}，當時股價 {3}；本份現價 {4:,.2f}。</p>".format(
-            esc(pm.get("date")), esc(pm.get("dca_verdict")), esc(pm.get("dca_role")), esc(pm.get("price_at_dd")), pack.get("last_price", 0))
+        vd = "｜".join(esc(x) for x in (pm.get("dca_verdict"), pm.get("dca_role")) if x not in (None, "", "None"))
+        head = "<p class='note'>上一份（{0}，舊流程）：{1}當時股價 {2}；本份現價 {3:,.2f}。</p>".format(
+            esc(pm.get("date")), "裁決 {0}，".format(vd) if vd else "", esc(pm.get("price_at_dd")), pack.get("last_price", 0))
     if not vp:
         return head
     return head + table_html(["變了什麼", "上一份", "這一份", "對結論的影響"],
