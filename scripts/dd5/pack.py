@@ -853,6 +853,13 @@ def transcript(pk):
     d = DRIVE / pk.t
     fs = sorted(glob.glob(str(d / "{0}_Q*_Earnings_Call_*.md".format(pk.t))), key=lambda f: re.search(r"(\d{8})\.md$", f).group(1))
     fs = [f for f in fs if re.search(r"(\d{8})\.md$", f).group(1) <= pk.date]
+    # 財報與投資人日合開的公司（例如 CLS 2026-10-27）只有投資人日逐字稿；比最新一季法說還新才採用
+    iv = [f for f in glob.glob(str(d / "{0}_Analyst_Investor_Day_*.md".format(pk.t)))
+          if re.search(r"(\d{8})\.md$", f) and re.search(r"(\d{8})\.md$", f).group(1) <= pk.date]
+    if iv:
+        lv = max(iv, key=lambda f: re.search(r"(\d{8})\.md$", f).group(1))
+        if not fs or re.search(r"(\d{8})\.md$", lv).group(1) > re.search(r"(\d{8})\.md$", fs[-1]).group(1):
+            fs.append(lv)
     if not fs:
         pk.gap("磁碟上沒有法說逐字稿")
         return
