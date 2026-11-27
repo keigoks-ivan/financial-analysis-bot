@@ -189,7 +189,7 @@ def lint_run(run_dir):
     raw = (run_dir / "article.md").read_text(encoding="utf-8")
     pk = run_dir / "pack.md"
     extra = []
-    for nm in ("peers.md", "moat_gap.md", "calc.json", "machine.json", "lookups.json", "brief.json"):
+    for nm in ("peers.md", "moat_gap.md", "moat_long.md", "moat_facts.json", "calc.json", "machine.json", "lookups.json", "brief.json"):
         f = run_dir / nm
         if f.exists():
             extra.append(f.read_text(encoding="utf-8"))

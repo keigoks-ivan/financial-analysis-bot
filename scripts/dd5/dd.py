@@ -259,7 +259,7 @@ def main():
         say("== 備資料 ==")
         run_py("pack.py", [t, "--date", d])
         say("== 點名同業、寫稿、渲染、文字檢查 ==")
-        args = [t, "--date", d, "--out", str(run / "article.html"), "--steps", "peers,lite,render,lint"]
+        args = [t, "--date", d, "--out", str(run / "article.html"), "--steps", "peers,lite,moat,render,lint"]
         if given:
             args += ["--peers", ",".join(given)]
         run_py("run.py", args)

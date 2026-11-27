@@ -35,17 +35,23 @@
 
 重抓年報把 `[p:roic]` 段補進 run 目錄的資料包，一通 opus（不上網、effort low，每檔約 0.2 美元、半分鐘）只寫「## 資本報酬」一章，插在「護城河與競爭」之後；原文備份 `article.md.pre_roic`。之後用 `dd.py <代號> --date <日期> --reuse` 重排並發布。
 
-## 護城河寬度（2026-11-26 起）
+## 護城河寬度（2026-11-27 起：競爭結構版）
 
-寬度（寬／窄／無）與走勢兩軸。`moat_gap.py` 從 `peers.json` 算本檔減同業中位數的三年差距與初判（零 LLM，寫 `moat_gap.md`／`moat_gap.json`，引用標記 `[p:moat_gap]`）；降級上限、份額例外、走勢、未量化優勢由寫稿模型照 `cards/lite_card.md` 判，最後寬度以模型為準，程式數字另存在 machine.json 的 `moat.gap_vs_peer_median`、`width_initial`、`trend_initial`。
+問的是「對手為什麼搶不走這家公司的利潤」，判準在 `cards/moat_card.md`：先找結構來源（轉換成本、網路效應、成本優勢、無形資產、有效規模），再查侵蝕四項（份額、新進者與替代、客戶議價、下行年），報酬率只拿來往下否決。輸出寬度、證據強度、走勢。
 
-同業名單固定：`step_peers` 依序用 `--peers`、ask.json、`~/dd5-pilot/peers_fixed/<代號>.json`，都沒有才請模型點名，點完存成固定名單；要重選就刪掉那個檔。名單變了寬度初判也會變（MELI 換一組同業從窄跳到寬），所以不要每次重點名。
+- `moat_long.py`：十年以上年度財報（台股 FinMind、美股 SEC companyfacts，都讀 `~/v7-backtest/data` 本機資料庫；其他市場退回 yfinance 約四年），算 2016～2025 投入資本報酬率、營益率對直接對手（同業名單前兩家）、下行年（本檔或同業中位數營收年減 ≥5%）。零 LLM，寫 `moat_long.json`／`.md`，引用標記 `[p:moat_long]`。
+- 事實檔：一通 opus 上網查八格（份額、家數、新進者、客戶、主力生意、轉換成本、價格），存 `~/dd5-pilot/moat_facts/<代號>_F.json`，180 天內重複用（`DD5_MOAT_FACTS_REFRESH=1` 強制重查）。新研究在 peers 步驟就背景開跑，跟寫稿並行。每檔第一次約 0.5 美元。
+- `moat_judge.py`（run.py 的 `moat` 步，dd.py 排在 lite 之後）：一通 opus（不上網、effort low，約 0.2 美元、半分鐘）照判準卡判定並重寫「## 護城河與競爭」，換掉 machine.json 的 moat（新增 strength、position、erosion、returns_check、roic_10y、rule）。寫稿時 lite_card 的舊規則（`moat_gap.py` 同業中位數差距）還在，只當這一步失敗時的備援。
 
-舊文章補寬度只重寫護城河那一章：
+同業名單固定：`step_peers` 依序用 `--peers`、ask.json、`~/dd5-pilot/peers_fixed/<代號>.json`，都沒有才請模型點名，點完存成固定名單；要重選就刪掉那個檔。
+
+舊文章重判只重寫護城河那一章：
 
     python3 scripts/dd5/add_moat.py <代號> --date <YYYYMMDD> [--force] [--from-raw]
 
-沿用 run 目錄的同業表、不重抓；一通 opus（不上網、effort low，每檔約 0.25 美元、40 秒）重寫「## 護城河與競爭」並換掉機器欄位 moat；原文備份 `article.md.pre_moat`、`machine.json.pre_moat`。之後用 `dd.py <代號> --date <日期> --reuse` 重排並發布。
+沿用 run 目錄的同業表；事實檔沒有就先建；原文備份 `article.md.pre_moat`、`machine.json.pre_moat`。之後用 `dd.py <代號> --date <日期> --reuse` 重排並發布。
+
+試驗紀錄（29 檔：原 13 檔＋8 檔公認寬＋8 檔公認無）在 `~/dd5-pilot/moat_trial/`。最後一輪公認寬 8/8、公認無 6/8 判對（美國航空、長榮判窄），但規則是看過這批結果才調的，不算獨立驗證。
 
 ## 版面
 

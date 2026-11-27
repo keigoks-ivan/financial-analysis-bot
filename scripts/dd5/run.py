@@ -337,6 +337,13 @@ def step_peers(run, override=None):
         pj["tags"]["moat_gap"] = {"title": "護城河寬度初判（程式用同業對照表算）", "source": "yfinance", "url": "", "asof": run.date}
     (run.dir / "pack.json").write_text(json.dumps(pj, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     print("[peers]", len(data), "家；缺口", gaps, "；護城河初判", (mg or {}).get("width_initial"), (mg or {}).get("trend_initial"))
+    import moat_judge  # 護城河：十年財報數字（零 LLM）＋事實檔背景開跑，跟寫稿並行；判定在 moat 步
+    import moat_long
+    ml = moat_long.build(run.dir, run.t, [k for k in data if k != run.t])
+    moat_judge.tag_long(run.dir, run.date, ml)
+    bg = moat_judge.start_facts_bg(run.t, run.dir, ml)
+    print("[moat_long]", (ml or {}).get("source"), "下行年", [d["year"] for d in ml["R3_downturn"]] if ml and isinstance(ml["R3_downturn"], list) else "-",
+          "；事實檔", "背景建立中" if bg else "沿用")
 
 
 def extract_machine(text):
@@ -788,6 +795,9 @@ def main():
             step_lint(run)
         elif s == "lite":
             step_lite(run)
+        elif s == "moat":
+            import moat_judge
+            moat_judge.rewrite(run)
         elif s == "lintfix":
             step_lintfix(run)
         elif s == "recheck":
